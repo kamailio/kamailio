@@ -65,7 +65,8 @@ inline static void release_lock(fl_lock_t* lock)
 	char val;
 	val=0;
 	asm volatile(
-		" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"
+		" movb $0, (%0)" : /*no output*/ : "r"(lock): "memory"
+		/*" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"*/
 	); /* hmm, maybe lock; movb $0, [%1] would be faster ???*/
 #elif defined __sparc
 	asm volatile(
