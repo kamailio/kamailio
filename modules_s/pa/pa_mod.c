@@ -172,15 +172,15 @@ static int pa_mod_init(void)
 	register_timer(timer, 0, timer_interval);
 
 	LOG(L_CRIT, "db_url=%p\n", db_url.s);
-	LOG(L_CRIT, "db_url=%s\n", db_url.s);
-	db_url.len = strlen(db_url.s);
+	LOG(L_CRIT, "db_url=%s\n", ZSW(db_url.s));
+	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LOG(L_CRIT, "db_url.len=%d\n", db_url.len);
 	if (pa_domain.s == NULL)
 	  pa_domain.s = "sip.handhelds.org";
 	LOG(L_CRIT, "pa_domain=%s\n", pa_domain.s);
 	pa_domain.len = strlen(pa_domain.s);
 	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s pa_domain=%s\n", 
-	    use_db, db_url.s, pa_domain.s);
+	    use_db, ZSW(db_url.s), ZSW(pa_domain.s));
 	if (use_db) {
 		if (!db_url.len) {
 			LOG(L_ERR, "pa_mod_init(): no db_url specified but use_db=1\n");
