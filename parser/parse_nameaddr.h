@@ -1,7 +1,7 @@
 /* 
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -41,7 +41,7 @@
 typedef struct name_addr {
 	str name;   /* Display name part */
 	str uri;    /* Uri part without surrounding <> */
-	int len;    /* Total lenght of the field (including all
+	int len;    /* Total length of the field (including all
 		    * whitechars present in the parsed message */
 } name_addr_t;
 

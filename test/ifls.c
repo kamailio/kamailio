@@ -3,7 +3,7 @@
  *
  * test programs, list all interfaces and their ip address
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -314,7 +314,7 @@ int main(int argc, char**argv)
 				break;
 			case '?':
 				if (isprint(optopt))
-					fprintf(stderr, "Unknow option `-%c´\n", optopt);
+					fprintf(stderr, "Unknown option `-%c´\n", optopt);
 				else
 					fprintf(stderr, "Unknown character `\\x%x´\n", optopt);
 				goto error;

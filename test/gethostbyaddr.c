@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 	
 	he=gethostbyname(name);
 	if (he==0){
-			printf("bad adddress <%s>\n", name);
+			printf("bad address <%s>\n", name);
 			goto error;
 	}
 	he=gethostbyaddr(he->h_addr_list[0], he->h_length, he->h_addrtype); 

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -31,7 +31,7 @@
 #define via1 0x3a616976   /* "via:" */
 /*
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *

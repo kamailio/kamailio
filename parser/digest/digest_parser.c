@@ -3,7 +3,7 @@
  *
  * Digest credentials parser
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -117,7 +117,7 @@ static inline int parse_token(str* _s, str* _r)
 	      */
 	_r->s = _s->s;
 
-	     /* Iterate throught the
+	     /* Iterate through the
 	      * token body
 	      */
 	for(i = 0; i < _s->len; i++) {
@@ -200,7 +200,7 @@ static inline int parse_digest_param(str* _s, dig_cred_t* _c)
 	default:            ptr = &dummy;               break;
 	}
 
-	     /* If the first character is qoute, it is
+	     /* If the first character is quote, it is
 	      * a quoted string, otherwise it is a token
 	      */
 	if (_s->s[0] == '\"') {
@@ -302,7 +302,7 @@ static inline int parse_digest_params(str* _s, dig_cred_t* _c)
 		comma = q_memchr(_s->s, ',', _s->len);
 		if (comma) {
 			     /* Yes, there is another, 
-			      * remove any leading whitespaces
+			      * remove any leading white-spaces
 			      * and let _s point to the next
 			      * parameter name
 			      */
@@ -367,7 +367,7 @@ int parse_digest_cred(str* _s, dig_cred_t* _c)
 		tmp.s += DIG_LEN + 1;
 		tmp.len -= DIG_LEN + 1;
 		
-		     /* Again, skip all whitespaces */
+		     /* Again, skip all white-spaces */
 		trim_leading(&tmp);
 
 		     /* And parse digest parameters */

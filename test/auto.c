@@ -2,7 +2,7 @@
 /* test program -> switch speed */
 /*
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -420,7 +420,7 @@ int main(int argc, char** argv)
 								break;
 							case UNKNOWN_HEADER:
 							default:
-								/*printf("found unkown header, state=%d\n", 
+								/*printf("found unknown header, state=%d\n", 
 											state);*/
 								err=1;
 								state=INITIAL;

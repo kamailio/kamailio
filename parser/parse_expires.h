@@ -3,7 +3,7 @@
  *
  * Expires header field body parser
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -37,7 +37,7 @@
 
 typedef struct exp_body {
 	str text;            /* Original text representation */
-	unsigned char valid; /* Was parsing successfull ? */
+	unsigned char valid; /* Was parsing successful ? */
 	int val;             /* Parsed value */
 } exp_body_t;
 

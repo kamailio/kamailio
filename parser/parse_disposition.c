@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -43,7 +43,7 @@
 
 /* parse a string that supposed to be a disposition and fills up the structure
  * Returns: -1 : error
- *           o : sucess */
+ *           o : success */
 int parse_disposition( str *s, struct disposition *disp)
 {
 	enum { FIND_TYPE, TYPE, END_TYPE, FIND_PARAM, PARAM, END_PARAM, FIND_VAL,
@@ -364,7 +364,7 @@ void free_disposition( struct disposition **disp)
 
 
 /* looks inside the message, gets the Content-Disposition hdr, parse it, builds
- * and fills a disposition strucure for it what will be attached to hdr as
+ * and fills a disposition structure for it what will be attached to hdr as
  * parsed link.
  * Returns:  -1 : error
  *            0 : success
@@ -384,7 +384,7 @@ int parse_content_disposition( struct sip_msg *msg )
 		}
 	}
 
-	/* now, we have the headr -> look if it isn't already parsed */
+	/* now, we have the header -> look if it isn't already parsed */
 	if (msg->content_disposition->parsed!=0) {
 		/* already parsed, nothing more to be done */
 		return 0;
@@ -413,7 +413,7 @@ error:
 }
 
 
-/* Prints recursiv a disposition structure */
+/* Prints recursive a disposition structure */
 void print_disposition( struct disposition *disp)
 {
 	struct disposition_param *param;
@@ -421,7 +421,7 @@ void print_disposition( struct disposition *disp)
 	DBG("*** Disposition type=<%.*s>[%d]\n",
 		disp->type.len,disp->type.s,disp->type.len);
 	for( param=disp->params; param; param=param->next) {
-		DBG("*** DIsposition param: <%.*s>[%d]=<%.*s>[%d] is_quoted=%d\n",
+		DBG("*** Disposition param: <%.*s>[%d]=<%.*s>[%d] is_quoted=%d\n",
 			param->name.len,param->name.s, param->name.len,
 			param->body.len,param->body.s, param->body.len,
 			param->is_quoted);

@@ -3,7 +3,7 @@
  *
  * Fast 32-bit Header Field Name Parser
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -43,7 +43,7 @@
 #define LOWER_DWORD(d) ((d) | 0x20202020)
 
 /*
- * Skip all whitechars and return position of the first
+ * Skip all white-chars and return position of the first
  * non-white char
  */
 static inline char* skip_ws(char* p, unsigned int size)

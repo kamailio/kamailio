@@ -2,7 +2,7 @@
 /* test program -> via parse */
 /*
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -64,7 +64,7 @@ enum{	         F_SIP=100,
 		L_PROTO, F_PROTO, P_PROTO
 	};
 
-/* param realated states */
+/* param related states */
 enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
 		HIDDEN1,   HIDDEN2,   HIDDEN3,   HIDDEN4,   HIDDEN5,
 		TTL1,      TTL2,

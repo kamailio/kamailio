@@ -3,7 +3,7 @@
  *
  * Generic Parameter Parser
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -74,9 +74,9 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 		
 	case 'm':
 	case 'M':
-		if ((_p->name.len == 7) &&
-		    (!strncasecmp(_p->name.s + 1, "ethods", 5))) {
-			_p->type = P_METHODS;
+		if ((_p->name.len == 6) &&
+		    (!strncasecmp(_p->name.s + 1, "ethod", 5))) {
+			_p->type = P_METHOD;
 			_h->contact.method = _p;
 		}
 		break;
@@ -207,7 +207,7 @@ static inline int parse_token_param(str* _s, str* _r)
 	      */
 	_r->s = _s->s;
 
-	     /* Iterate throught the
+	     /* Iterate through the
 	      * token body
 	      */
 	for(i = 0; i < _s->len; i++) {
@@ -459,7 +459,7 @@ static inline void print_param(FILE* _o, param_t* _p)
 	case P_OTHER:     type = "P_OTHER";     break;
 	case P_Q:         type = "P_Q";         break;
 	case P_EXPIRES:   type = "P_EXPIRES";   break;
-	case P_METHODS:   type = "P_METHODS";   break;
+	case P_METHOD:    type = "P_METHOD";    break;
 	case P_TRANSPORT: type = "P_TRANSPORT"; break;
 	case P_LR:        type = "P_LR";        break;
 	case P_R2:        type = "P_R2";        break;

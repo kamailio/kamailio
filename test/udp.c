@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2002-2003 Fhg Fokus
+ * Copyright (C) 2002-2003 FhG Fokus
  *
  * This file is sipsak, a free sip testing tool.
  *
@@ -15,7 +15,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -41,9 +41,9 @@
 
 
 /* sipsak written by nils ohlmeier (develop@ohlmeier.de).
-   based up on a modifyed version of shoot.
+   based up on a modified version of shoot.
    set DEBUG on compile will produce much more output. primarily
-   it will print out the sended and received messages before or after
+   it will print out the sent and received messages before or after
    every network action.
 */
 
@@ -158,7 +158,7 @@ void shoot()
 	}
 	printf("BSD compat: %d\n", bsd_compat);
 
-	/* here we go for the number of nretries which healily depends on the 
+	/* here we go for the number of nretries which heavily depends on the 
 	   mode */
 	for (i = 0; i <= nretries; i++)
 	{

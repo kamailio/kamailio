@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -55,7 +55,7 @@ struct disposition {
 
 
 /* looks inside the message, gets the Content-Disposition hdr, parse it, builds
- * and fills a disposition strucure for it what will be attached to hdr as
+ * and fills a disposition structure for it what will be attached to hdr as
  * parsed link.
  * Returns:  -1 : error
  *            0 : success
@@ -66,14 +66,14 @@ int parse_content_disposition( struct sip_msg *msg );
 
 /* parse a string that supposed to be a disposition and fills up the structure
  * Returns: -1 : error
- *           o : sucess */
+ *           o : success */
 int parse_disposition( str *s, struct disposition *disp);
 
 
 /* Frees the entire disposition structure (params + itself) */
 void free_disposition( struct disposition **disp);
 
-/* Prints recursiv a disposition structure */
+/* Prints recursive a disposition structure */
 void print_disposition( struct disposition *disp);
 
 #endif

@@ -3,11 +3,11 @@
  *
  * Event header field body parser.
  * The parser was written for Presence Agent module only.
- * it recognize presence package only, no subpackages, no parameters
- * It should be replaced by a more generic parser if subpackages or
+ * it recognize presence package only, no sub-packages, no parameters
+ * It should be replaced by a more generic parser if sub-packages or
  * parameters should be parsed too.
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *

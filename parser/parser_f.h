@@ -1,7 +1,7 @@
 /* 
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -51,7 +51,7 @@ inline static char* eat_lws_end(char* p, char* pend)
 {
 	while(p<pend) {
 		if (SP(*p)) p++;
-		/* btw--I really dislike line folding; -jiri */
+		/* BTW--I really dislike line folding; -jiri */
 		else if (*p=='\n' && p+1<pend && SP(*(p+1))) p+=2;
 		else if (*p=='\r' && p+2<pend && *(p+1)=='\n' 
 					&& SP(*(p+2))) p+=3;
@@ -86,7 +86,7 @@ inline static int is_empty_end(char* p, char* pend )
 
 
 /*
- * Find a character occurence that is not quoted
+ * Find a character occurrence that is not quoted
  */
 inline static char* find_not_quoted(str* _s, char _c)
 {

@@ -3,7 +3,7 @@
  *
  * Route & Record-Route header field parser
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -30,7 +30,7 @@
 /**
  * History:
  * --------
- * 2003-10-07  parse_rr() splited and added parse_rr_body()
+ * 2003-10-07  parse_rr() split and added parse_rr_body()
  * 2003-10-21  duplicate_rr() duplicate the whole linked list of RR
  */
 #include <string.h>
@@ -83,7 +83,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		s.s = r->nameaddr.name.s + r->nameaddr.len;  /* Point just behind > */
 		s.len -= r->nameaddr.len;
 
-		trim_leading(&s); /* Skip any whitechars */
+		trim_leading(&s); /* Skip any white-chars */
 
 		if (s.len == 0) goto ok; /* Nothing left, finish */
 		

@@ -1,7 +1,7 @@
 /* $Id$ */
 /*
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -231,14 +231,14 @@ int main (int argc, char** argv)
 	puts("Initializing SYS V semaphores\n");
 	semid=semget(IPC_PRIVATE,1,0700);
 	if(semid==-1){
-		fprintf(stderr, "ERROR: could not init sempahore: %s\n",
+		fprintf(stderr, "ERROR: could not init semaphore: %s\n",
 				strerror(errno));
 		goto error;
 	}
 	/*set init value to 1 (mutex)*/
 	su.val=1;
 	if (semctl(semid, 0, SETVAL, su)==-1){
-		fprintf(stderr, "ERROR: could not set initial sempahore value: %s\n",
+		fprintf(stderr, "ERROR: could not set initial semaphore value: %s\n",
 				strerror(errno));
 		semctl(semid, 0, IPC_RMID, (union semun)0);
 		goto error;
@@ -251,9 +251,9 @@ int main (int argc, char** argv)
 		goto error;
 	}
 #elif defined POSIX_SEM
-	puts("Initializing sempahores\n");
+	puts("Initializing semaphores\n");
 	if (sem_init(&sem, 0, 1)<0){
-		fprintf(stderr, "ERROR: could not initialize sempahore: %s\n",
+		fprintf(stderr, "ERROR: could not initialize semaphore: %s\n",
 				strerror(errno));
 		goto error;
 	}

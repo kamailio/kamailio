@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -156,7 +156,7 @@ struct sip_msg {
 	int parsed_flag;               /* Already parsed header field types */
 
 	     /* Via, To, CSeq, Call-Id, From, end of header*/
-	     /* pointers to the first occurances of these headers;
+	     /* pointers to the first occurrences of these headers;
 		  * everything is also saved in 'headers'
 		  * (WARNING: do not deallocate them twice!)*/
 
@@ -196,7 +196,7 @@ struct sip_msg {
 	
 	struct receive_info rcv; /* source & dest ip, ports, proto a.s.o*/
 
-	char* buf;        /* scratch pad, holds a modfied message,
+	char* buf;        /* scratch pad, holds a modified message,
 					   *  via, etc. point into it */
 	unsigned int len; /* message len (orig) */
 
@@ -225,7 +225,7 @@ struct sip_msg {
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
 	
-	     /* index to TM hash table; stored in core to avoid unnecessary calcs */
+	     /* index to TM hash table; stored in core to avoid unnecessary calculations */
 	unsigned int  hash_index;
 	unsigned int msg_flags; /* flags used by core */
 	     /* allows to set various flags on the message; may be used for 

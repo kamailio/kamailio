@@ -32,7 +32,7 @@ regex_t* regexp;
 /* take either a dot.decimal string of ip address or a 
 domain name and returns a NETWORK ordered long int containing
 the address. i chose to internally represent the address as long for speedier
-comparisions.
+comparisons.
 
 any changes to getaddress have to be patched back to the net library.
 contact: farhan@hotfoon.com
@@ -63,7 +63,7 @@ long getaddress(char *host)
 		dotcount++;
 	}
 
-	/* three dots with upto three digits in before, between and after ? */
+	/* three dots with up to three digits in before, between and after ? */
 	if (dotcount == 3 && i > 0 && i <= 3)
 		return inet_addr(host);
 
@@ -72,7 +72,7 @@ long getaddress(char *host)
 	 inspite of what the rfc2543 :D Using SRV DNS Records recommends,
 	 we are leaving it to the operating system to do the name caching.
 
-	 this is an important implementational issue especially in the light
+	 this is an important implementation issue especially in the light
 	 dynamic dns servers like dynip.com or dyndns.com where a dial
 	 ip address is dynamically assigned a sub domain like farhan.dynip.com
 
@@ -95,7 +95,7 @@ long getaddress(char *host)
 shoot:
 takes:
 	1. the text message of buff to 
-	2. the address (network orderd byte order)
+	2. the address (network ordered byte order)
 	3. and port (not network byte ordered).
 
 starting from half a second, times-out on replies and
@@ -199,7 +199,7 @@ void shoot(char *buff, long address, int lport, int rport )
 				retryAfter = 5000;
 			/* we should have retrieved the error code and displayed
 			we are not doing that because there is a great variation
-			in the process of retrieveing error codes between
+			in the process of retrieving error codes between
 			micro$oft and *nix world*/
 			continue;
 		} else if ( ret == -1 ) {
@@ -209,7 +209,7 @@ void shoot(char *buff, long address, int lport, int rport )
                  else if (FD_ISSET(ssock, &fd)) {
 			puts ("\nmessage received\n");
 		} else {
-			puts("\nselect returned succesfuly, nothing received\n");
+			puts("\nselect returned successfully, nothing received\n");
 			continue;
 		}
 

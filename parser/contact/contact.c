@@ -3,7 +3,7 @@
  *
  * Parses one Contact in Contact HF body
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -190,7 +190,7 @@ int parse_contacts(str* _s, contact_t** _c)
 	param_hooks_t hooks;
 
 	while(1) {
-		     /* Allocate and clear contact stucture */
+		     /* Allocate and clear contact structure */
 		c = (contact_t*)pkg_malloc(sizeof(contact_t));
 		if (c == 0) {
 			LOG(L_ERR, "parse_contacts(): No memory left\n");

@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -99,7 +99,7 @@ int parse_accept_hdr( struct sip_msg *msg );
 
 
 /*
- *  parse the body of a Content_-Length header. Also tryes to recognize the
+ *  parse the body of a Content_-Length header. Also tries to recognize the
  *  type specified by this header (see th above defines).
  *  Returns the first chr after the end of the header.
  */

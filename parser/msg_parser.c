@@ -4,7 +4,7 @@
  * sip msg. header proxy parser 
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -62,7 +62,7 @@
 
 #define parse_hname(_b,_e,_h) parse_hname2((_b),(_e),(_h))
 
-/* number of via's encounteded */
+/* number of via's encountered */
 int via_cnt;
 
 /* returns pointer to next header line, and fill hdr_f ;
@@ -252,8 +252,8 @@ error:
    for the same HF which is present only once, it will fail the second
    time; if you call it twice and the HF is found on second time too,
    it's not replaced in the well-known HF pointer but just added to
-   header list; if you want to use a dumbie convenience function which will
-   give you the first occurance of a header you are interested in,
+   header list; if you want to use a dumb convenience function which will
+   give you the first occurrence of a header you are interested in,
    look at check_transaction_quadruple
 */
 int parse_headers(struct sip_msg* msg, int flags, int next)

@@ -4,7 +4,7 @@
  * parser helper  functions
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -41,7 +41,7 @@ char* eat_line(char* buffer, unsigned int len)
 {
 	char* nl;
 
-	/* jku .. replace for search with a library function; not conformant
+	/* jku .. replace for search with a library function; not conforming
  		  as I do not care about CR
 	*/
 	nl=(char *)q_memchr( buffer, '\n', len );

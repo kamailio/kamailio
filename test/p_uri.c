@@ -724,7 +724,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						break;
 					case '?':
 						if (pass){
-							found_user=1; /* no user, pass cannot conaint '?'*/
+							found_user=1; /* no user, pass cannot contain '?'*/
 							pass=0;
 						}
 						break;
@@ -736,7 +736,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	}
 	/*end of uri */
 	switch (state){
-		case URI_INIT: /* error empy uri */
+		case URI_INIT: /* error empty uri */
 			goto error_too_short;
 		case URI_USER:
 			/* this is the host, it can't be the user */

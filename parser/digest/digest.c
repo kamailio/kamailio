@@ -3,7 +3,7 @@
  *
  * Digest credentials parser interface
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -79,7 +79,7 @@ int parse_credentials(struct hdr_field* _h)
 	}
 
 	     /* parse_digest_cred must return < -1 on error otherwise we will be
-	      * unable to distinguis if the error was caused by the server or if the
+	      * unable to distinguish if the error was caused by the server or if the
 	      * credentials are broken
 	      */
 	res = parse_digest_cred(&(_h->body), &(((auth_body_t*)(_h->parsed))->digest));

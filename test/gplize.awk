@@ -28,7 +28,7 @@ status==1 {
 	}
 
 	print " *"
-	print " * Copyright (C) 2001-2003 Fhg Fokus"
+	print " * Copyright (C) 2001-2004 FhG Fokus"
 	print " *"
 	print " * This file is part of ser, a free SIP server."
 	print " *"

@@ -1,7 +1,7 @@
 /* 
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -69,7 +69,7 @@ int parse_nameaddr(str* _s, name_addr_t* _a)
 		return -4;
 	}
 
-	     /* Totat length of the field including <> */
+	     /* Total length of the field including <> */
 	_a->len = uri_end - _a->name.s + 1;
 	
 	_a->uri.len = uri_end - _a->uri.s;
