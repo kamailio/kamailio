@@ -278,7 +278,7 @@ CREATE TABLE pending (
   ha1b varchar(128) NOT NULL default '',
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID),
-  UNIQUE KEY phplib_id (phplib_id),
+  UNIQUE KEY phplib_id (phplib_id)
 ) $TABLE_TYPE;
 
 
