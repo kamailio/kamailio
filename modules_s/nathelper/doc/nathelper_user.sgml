@@ -143,7 +143,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 		<title><function>fix_nated_sdp</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp(3);};
+if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
 </programlisting>
 	    </example>
@@ -159,7 +159,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp(3);};
 		<title><function>force_rtp_proxy</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy(3);};
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 ...
 </programlisting>
 	    </example>
