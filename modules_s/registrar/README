@@ -198,7 +198,7 @@ save("location");
 
    Meaning of the parameters is as follows:
 
-     * domain - Logical domain within registar. If database is
+     * domain - Logical domain within registrar. If database is
        used then this must be na e of the table which stores the
        contacts.
 

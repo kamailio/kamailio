@@ -227,7 +227,7 @@ save("location");
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<emphasis>domain</emphasis> - Logical domain within registar. If database is
+			<emphasis>domain</emphasis> - Logical domain within registrar. If database is
 			used then this must be na e of the table which stores the contacts.
 		    </para>
 		</listitem>
