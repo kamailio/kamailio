@@ -6,13 +6,9 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#include <netdb.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+//#include <sys/types.h>
+//#include <fcntl.h>
 
 #ifdef FLOCK
 #include <sys/file.h>
@@ -20,10 +16,20 @@
 static int lock_fd;
 #endif
 
-#ifdef LIN_SEM
+#ifdef POSIX_SEM
 #include <semaphore.h>
 
 static sem_t sem;
+#endif
+
+#ifdef PTHREAD_MUTEX
+#include <pthread.h>
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+#ifdef FAST_LOCK
+#include "../../fastlock.h"
+fl_lock_t lock;
 #endif
 
 #ifdef SYSV_SEM
@@ -75,11 +81,21 @@ static int semid=-1;
 		flock(lock_fd, LOCK_EX)
 	#define  UNLOCK() \
 		flock(lock_fd, LOCK_UN)
-#elif defined LIN_SEM
+#elif defined POSIX_SEM
 	#define LOCK() \
 		sem_wait(&sem)
 	#define UNLOCK() \
 		sem_post(&sem);
+#elif defined PTHREAD_MUTEX
+	#define LOCK() \
+		pthread_mutex_lock(&mutex)
+	#define UNLOCK() \
+		pthread_mutex_unlock(&mutex)
+#elif defined FAST_LOCK
+	#define LOCK() \
+		get_lock(&lock)
+	#define UNLOCK() \
+		release_lock(&lock)
 #endif
 
 
@@ -93,10 +109,15 @@ static char *version="locking_test 0.1-"
  "sysv_sem"
 #elif defined FLOCK
  "flock"
-#elif defined LIN_SEM
- "lin_sem";
+#elif defined POSIX_SEM
+ "posix_sem"
+#elif defined PTHREAD_MUTEX
+ "pthread_mutext"
+#elif defined FAST_LOCK
+ "fast_lock"
 #endif
 ;
+
 static char* help_msg="\
 Usage: locking_test -n address [-c count] [-v]\n\
 Options:\n\
@@ -111,7 +132,6 @@ Options:\n\
 int main (int argc, char** argv)
 {
 	char c;
-	struct hostent* he;
 	int r;
 	char *tmp;
 	
@@ -190,7 +210,7 @@ int main (int argc, char** argv)
 	if (semctl(semid, 0, SETVAL, su)==-1){
 		fprintf(stderr, "ERROR: could not set initial sempahore value: %s\n",
 				strerror(errno));
-		shmctl(semid, IPC_RMID, (union semun)0);
+		semctl(semid, 0, IPC_RMID, (union semun)0);
 		goto error;
 	}
 #elif defined FLOCK
@@ -200,13 +220,19 @@ int main (int argc, char** argv)
 		fprintf(stderr, "ERROR: could not open file: %s\n", strerror(errno));
 		goto error;
 	}
-#elif defined LIN_SEM
+#elif defined POSIX_SEM
 	puts("Initializing sempahores\n");
 	if (sem_init(&sem, 0, 1)<0){
 		fprintf(stderr, "ERROR: could not initialize sempahore: %s\n",
 				strerror(errno));
 		goto error;
 	}
+#elif defined PTHREAD_MUTEX
+	puts("Initializing mutex -already initialized (statically)\n");
+	/*pthread_mutext_init(&mutex, 0 );*/
+#elif defined FAST_LOCK
+	puts("Initializing fast lock\n");
+	init_lock(lock);
 #endif
 
 
@@ -220,7 +246,7 @@ int main (int argc, char** argv)
 	printf("%d loops\n", count);
 
 #ifdef SYSV_SEM
-	shmctl(semid, IPC_RMID, (union semun)0);
+	semctl(semid, 0, IPC_RMID, (union semun)0);
 #elif defined LIN_SEM
 	sem_destroy(&sem);
 #endif
