@@ -563,6 +563,7 @@ int main_loop()
 		}
 		for(r=0; r<sock_no;r++){
 			for(i=0;i<children_no;i++){
+				process_no++;
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "main_loop: Cannot fork\n");
 					goto error;
@@ -574,23 +575,19 @@ int main_loop()
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
 					}
-
-					process_no=i+1; /*0=main*/
-					process_bit = 1 << i;
+					process_bit = 1 << (i+r*children_no); /*or process_no-1*/
 #ifdef STATS
-					setstats( i );
+					setstats( i+r*children_no );
 #endif
 					return udp_rcv_loop();
 				}else{
-						pids[i+1]=pid; /*should be in shared mem.*/
+						pids[process_no]=pid; /*should be in shared mem.*/
 				}
 			}
 			/*parent*/
 			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
 		}
 	}
-	/* process_no is still at zero ... it was only updated in children */ 
-	process_no=children_no;
 
 	/*this is the main process*/
 	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
@@ -609,7 +606,7 @@ int main_loop()
 			goto error;
 		}else if (pid==0){
 			/* child */
-			/* is_main=0; */ /* warning: we don't keep this process pid*/
+			/* is_main=0; */
 			for(;;){
 				/* debug:  instead of doing something usefull */
 				/* (placeholder for timers, etc.) */
@@ -617,11 +614,20 @@ int main_loop()
 				/* if we received a signal => TIMER_TICK may have not elapsed*/
 				timer_ticker();
 			}
+		}else{
+			pids[process_no]=pid;
 		}
 	}
 
-	process_no=0; /* main */
-	pids[process_no]=getpid();
+	/* main */
+	pids[0]=getpid();
+	/*DEBUG- remove it*/
+	printf("\n% 3d processes, % 3d children * % 3d listening addresses + main + fifo %s\n",
+			process_no+1, children_no, sock_no, (timer_list)?"+ timer":"");
+	for (r=0; r<=process_no; r++){
+		printf("% 3d   % 5d\n", r, pids[r]);
+	}
+	process_no=0; 
 	process_bit = 0;
 	is_main=1;
 	
@@ -1076,17 +1082,6 @@ int main(int argc, char** argv)
 #endif
 	
 	if (working_dir==0) working_dir="/";
-	/*alloc pids*/
-#ifdef SHM_MEM
-	pids=shm_malloc(sizeof(int)*(children_no+1/*timer */+1/*fifo*/));
-#else
-	pids=malloc(sizeof(int)*(children_no+1));
-#endif
-	if (pids==0){
-		fprintf(stderr, "ERROR: out  of memory\n");
-		goto error;
-	}
-	memset(pids, 0, sizeof(int)*(children_no+1));
 
 	if (sock_no==0) {
 		/* try to get all listening ipv4 interfaces */
@@ -1235,8 +1230,27 @@ int main(int argc, char** argv)
 	printf("Aliases: ");
 	for(a=aliases; a; a=a->next) printf("%.*s ", a->alias.len, a->alias.s);
 	printf("\n");
-
-
+	if (sock_no==0){
+		fprintf(stderr, "ERROR: no listening sockets");
+		goto error;
+	}
+	if (dont_fork){
+		fprintf(stderr, "WARNING: no fork mode %s\n", 
+				(sock_no>1)?" and more than one listen address found (will use only the"
+				" the first one)":"");
+	}
+	
+	/*alloc pids*/
+#ifdef SHM_MEM
+	pids=shm_malloc(sizeof(int)*(children_no*sock_no+1/*main*/+1/*timer */+1/*fifo*/));
+#else
+	pids=malloc(sizeof(int)*(children_no*sock_no+1+1+1));
+#endif
+	if (pids==0){
+		fprintf(stderr, "ERROR: out  of memory\n");
+		goto error;
+	}
+	memset(pids, 0, sizeof(int)*(children_no+1));
 	
 	/* init_daemon? */
 	if (!dont_fork){
