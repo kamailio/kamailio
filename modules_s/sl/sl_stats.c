@@ -110,7 +110,7 @@ int static sl_stats_cmd( FILE *pipe, char *response_file )
 
 void sl_stats_destroy()
 {
-	shm_free(sl_stats);
+	if (sl_stats) shm_free(sl_stats);
 }
 
 int init_sl_stats( void ) 
