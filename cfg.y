@@ -46,9 +46,6 @@
  * 2003-10-10  added <,>,<=,>=, != operators support
  *             added msg:len (andrei)
  * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
- * 2003-10-13  added FIFO_DIR & proto:host:port listen/alias support (andrei)
- * 2003-10-24  converted to the new socket_info lists (andrei)
- * 2003-10-28  added tcp_accept_aliases (andrei)
  */
 
 
@@ -69,10 +66,8 @@
 #include "sr_module.h"
 #include "modparam.h"
 #include "ip_addr.h"
-#include "socket_info.h"
 #include "name_alias.h"
 #include "ut.h"
-
 
 #include "config.h"
 #ifdef USE_TLS
@@ -88,9 +83,7 @@
 #undef _ALLOCA_H
 
 struct id_list{
-	char* name;
-	int proto;
-	int port;
+	char* s;
 	struct id_list* next;
 };
 
@@ -104,7 +97,6 @@ static int rt;  /* Type of route block for find_export */
 static str* str_tmp;
 
 void warn(char* s);
-static struct id_list* mk_listen_id(char*, int, int);
  
 
 %}
@@ -149,7 +141,6 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token SET_URI
 %token REVERT_URI
 %token FORCE_RPORT
-%token FORCE_TCP_ALIAS
 %token IF
 %token ELSE
 %token SET_ADV_ADDRESS
@@ -170,9 +161,6 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token AF
 %token MYSELF
 %token MSGLEN 
-%token UDP
-%token TCP
-%token TLS
 
 /* config vars. */
 %token DEBUG
@@ -190,9 +178,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token MEMLOG
 %token SIP_WARNING
 %token FIFO
-%token FIFO_DIR
 %token FIFO_MODE
-%token FIFO_DB_URL
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
 %token LOADMODULE
@@ -204,7 +190,6 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token WDIR
 %token MHOMED
 %token DISABLE_TCP
-%token TCP_ACCEPT_ALIASES
 %token TCP_CHILDREN
 %token DISABLE_TLS
 %token TLSLOG
@@ -257,20 +242,16 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token SLASH
 %token DOT
 %token CR
-%token COLON
-%token STAR
 
 
 /*non-terminals */
 %type <expr> exp exp_elem /*, condition*/
 %type <action> action actions cmd if_cmd stm
-%type <ipaddr> ipv4 ipv6 ipv6addr ip
+%type <ipaddr> ipv4 ipv6 ip
 %type <ipnet> ipnet
 %type <strval> host
 %type <strval> listen_id
 %type <idlst>  id_lst
-%type <idlst>  phostport
-%type <intval> proto port
 %type <intval> equalop strop intop
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -331,25 +312,23 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 						}
 	;
 
-proto:	  UDP	{ $$=PROTO_UDP; }
-		| TCP	{ $$=PROTO_TCP; }
-		| TLS	{ $$=PROTO_TLS; }
-		| STAR	{ $$=0; }
-		;
-
-port:	  NUMBER	{ $$=$1; }
-		| STAR		{ $$=0; }
-;
-
-phostport:	listen_id				{ $$=mk_listen_id($1, 0, 0); }
-			| listen_id COLON port	{ $$=mk_listen_id($1, 0, $3); }
-			| proto COLON listen_id	{ $$=mk_listen_id($3, $1, 0); }
-			| proto COLON listen_id COLON port	{ $$=mk_listen_id($3, $1, $5);}
-			| listen_id COLON error { $$=0; yyerror(" port number expected"); }
-			;
-
-id_lst:		phostport		{  $$=$1 ; }
-		| phostport id_lst	{ $$=$1; $$->next=$2; }
+id_lst:	  listen_id	{	$$=pkg_malloc(sizeof(struct id_list));
+						if ($$==0){
+							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+						}else{
+							$$->s=$1;
+							$$->next=0;
+						}
+					}
+		| listen_id id_lst	{
+						$$=pkg_malloc(sizeof(struct id_list));
+						if ($$==0){
+							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+						}else{
+							$$->s=$1;
+							$$->next=$2;
+						}
+							}
 		;
 
 
@@ -363,7 +342,10 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DNS EQUAL error { yyerror("boolean value expected"); }
 		| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 		| REV_DNS EQUAL error { yyerror("boolean value expected"); }
-		| PORT EQUAL NUMBER   { port_no=$3; }
+		| PORT EQUAL NUMBER   { port_no=$3; 
+								if (sock_no>0) 
+									sock_info[sock_no-1].port_no=port_no;
+							  }
 		| STAT EQUAL STRING {
 					#ifdef STATS
 							stat_file=$3;
@@ -384,12 +366,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
 		| FIFO EQUAL STRING { fifo=$3; }
 		| FIFO EQUAL error { yyerror("string value expected"); }
-		| FIFO_DIR EQUAL STRING { fifo_dir=$3; }
-		| FIFO_DIR EQUAL error { yyerror("string value expected"); }
 		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
 		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
-		| FIFO_DB_URL EQUAL STRING { fifo_db_url=$3; }
-		| FIFO_DB_URL EQUAL error { yyerror("string value expected"); }
 		| USER EQUAL STRING     { user=$3; }
 		| USER EQUAL ID         { user=$3; }
 		| USER EQUAL error      { yyerror("string value expected"); }
@@ -412,14 +390,6 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#endif
 									}
 		| DISABLE_TCP EQUAL error { yyerror("boolean value expected"); }
-		| TCP_ACCEPT_ALIASES EQUAL NUMBER {
-									#ifdef USE_TCP
-										tcp_accept_aliases=$3;
-									#else
-										warn("tcp support not compiled in");
-									#endif
-									}
-		| TCP_ACCEPT_ALIASES EQUAL error { yyerror("boolean value expected"); }
 		| TCP_CHILDREN EQUAL NUMBER {
 									#ifdef USE_TCP
 										tcp_children_no=$3;
@@ -536,13 +506,26 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
 		| LISTEN EQUAL id_lst {
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
-								if (add_listen_iface(	lst_tmp->name,
-														lst_tmp->port,
-														lst_tmp->proto,
-														0
-													)!=0){
-									LOG(L_CRIT,  "ERROR: cfg. parser: failed"
-											" to add listen address\n");
+								if (sock_no < MAX_LISTEN){
+									sock_info[sock_no].name.s=(char*)
+											pkg_malloc(strlen(lst_tmp->s)+1);
+									if (sock_info[sock_no].name.s==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+										break;
+									}else{
+										strncpy(sock_info[sock_no].name.s,
+												lst_tmp->s,
+												strlen(lst_tmp->s)+1);
+										sock_info[sock_no].name.len=
+													strlen(lst_tmp->s);
+										sock_info[sock_no].port_no=port_no;
+										sock_no++;
+									}
+								}else{
+									LOG(L_CRIT, "ERROR: cfg. parser: "
+												"too many listen addresses"
+												"(max. %d).\n", MAX_LISTEN);
 									break;
 								}
 							}
@@ -551,8 +534,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 						"expected"); }
 		| ALIAS EQUAL  id_lst { 
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
-								add_alias(lst_tmp->name, strlen(lst_tmp->name),
-											lst_tmp->port, lst_tmp->proto);
+								add_alias(lst_tmp->s, strlen(lst_tmp->s), 0);
 							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 		| ADVERTISED_ADDRESS EQUAL listen_id {
@@ -637,7 +619,7 @@ ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 												}
 	;
 
-ipv6addr:	IPV6ADDR {
+ipv6:	IPV6ADDR {
 					$$=pkg_malloc(sizeof(struct ip_addr));
 					if ($$==0){
 						LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
@@ -656,10 +638,6 @@ ipv6addr:	IPV6ADDR {
 					}
 				}
 	;
-
-ipv6:	ipv6addr { $$=$1; }
-	| LBRACK ipv6addr RBRACK {$$=$2; }
-;
 
 
 route_stm:  ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
@@ -769,11 +747,9 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 												DSTPORT_O, (void *) $3 ); }
 		| DSTPORT intop error { $$=0; yyerror("number expected"); }
 		| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-		| PROTO intop proto	{ $$=mk_elem(	$2, NUMBER_ST,
+		| PROTO intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												PROTO_O, (void *) $3 ); }
-		| PROTO intop error { $$=0;
-								yyerror("protocol expected (udp, tcp or tls)");
-							}
+		| PROTO intop error { $$=0; yyerror("number expected"); }
 		| PROTO error { $$=0; yyerror("equal/!= operator expected"); }
 		| AF intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												AF_O, (void *) $3 ); }
@@ -1103,6 +1079,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 														$3,
 														0);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1115,6 +1092,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															$3,
 															0);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1127,6 +1105,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															(void*)$3,
 															0);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1139,6 +1118,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															$3,
 															(void*)$5);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1151,6 +1131,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															$3,
 															(void*)$5);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1163,6 +1144,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															 (void*)$3,
 															(void*)$5);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1175,6 +1157,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															0,
 															0);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1189,6 +1172,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															0,
 															(void*)$5);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1201,6 +1185,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 															0,
 															0);
 										#else
+											$$=0;
 											yyerror("tls support not "
 													"compiled in");
 										#endif
@@ -1384,40 +1369,8 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										"string expected"); }
 		| REVERT_URI LPAREN RPAREN { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
-		| FORCE_RPORT LPAREN RPAREN	{
-							#ifdef USE_TCP
-								$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); 
-							#else
-								yyerror("tcp support not compiled in");
-							#endif
-							}
+		| FORCE_RPORT LPAREN RPAREN	{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
 		| FORCE_RPORT				{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
-		| FORCE_TCP_ALIAS LPAREN NUMBER RPAREN	{
-					#ifdef USE_TCP
-						$$=mk_action(FORCE_TCP_ALIAS_T,NUMBER_ST, 0,
-										(void*)$3, 0);
-					#else
-						yyerror("tcp support not compiled in");
-					#endif
-												}
-		| FORCE_TCP_ALIAS LPAREN RPAREN	{
-					#ifdef USE_TCP
-						$$=mk_action(FORCE_TCP_ALIAS_T,0, 0, 0, 0); 
-					#else
-						yyerror("tcp support not compiled in");
-					#endif
-										}
-		| FORCE_TCP_ALIAS				{
-					#ifdef USE_TCP
-						$$=mk_action(FORCE_TCP_ALIAS_T,0, 0, 0, 0);
-					#else
-						yyerror("tcp support not compiled in");
-					#endif
-										}
-		| FORCE_TCP_ALIAS LPAREN error RPAREN	{$$=0; 
-												yyerror("bad argument,"
-														" number expected");
-												}
 		| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 								$$=0;
 								if ((str_tmp=pkg_malloc(sizeof(str)))==0){
@@ -1533,23 +1486,6 @@ void yyerror(char* s)
 			column, s);
 	cfg_errors++;
 }
-
-
-static struct id_list* mk_listen_id(char* host, int proto, int port)
-{
-	struct id_list* l;
-	l=pkg_malloc(sizeof(struct id_list));
-	if (l==0){
-		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
-	}else{
-		l->name=host;
-		l->port=port;
-		l->proto=proto;
-		l->next=0;
-	}
-	return l;
-}
-
 
 /*
 int main(int argc, char ** argv)
