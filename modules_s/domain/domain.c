@@ -57,11 +57,13 @@ inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
 int is_domain_local(str* _host)
 {
 	if (db_mode == 0) {
-		db_key_t keys[] = {domain_domain_col};
+		db_key_t keys[1];
 		db_val_t vals[1];
-		db_key_t cols[] = {domain_domain_col};
+		db_key_t cols[1]; 
 		db_res_t* res;
 
+		keys[0]=domain_domain_col;
+		cols[0]=domain_domain_col;
 		if (db_use_table(db_handle, domain_table) < 0) {
 			LOG(L_ERR, "is_local(): Error while trying to use domain table\n");
 			return -1;

@@ -421,7 +421,7 @@ static int im_get_body_len( struct sip_msg* msg)
 	/* if header is present, trim to get only the string containing numbers */
 	trim_len( foo.len , foo.s , msg->content_length->body );
 	/* convert from string to number */
-	x = str2s( (unsigned char*)foo.s,foo.len,&err);
+	x = str2s( foo.s,foo.len,&err);
 	if (err){
 		LOG(L_ERR, "ERROR: im_get_body_len:"
 			" unable to parse the Content_Length number !\n");

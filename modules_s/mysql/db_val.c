@@ -301,5 +301,5 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 		DBG("val2str(): Unknow data type\n");
 		return -7;
 	}
-	return -8;
+	/*return -8; --not reached*/
 }

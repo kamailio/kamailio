@@ -118,7 +118,7 @@ static int fixup_ext_rewrite(void** param, int param_no)
 
 
 
-inline char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
+static  char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
 {
 	static char buf[MAX_PIPE_BUFFER_LEN];
 	int len;
