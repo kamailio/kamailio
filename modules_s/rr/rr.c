@@ -22,18 +22,18 @@ int findRouteHF(struct sip_msg* _m)
 {
 	struct hdr_field* rh;
 	if (parse_headers(_m, HDR_ROUTE) == -1) {
-		LOG(L_ERR, "findRouteHF(): Error while parsing headers\n");
+		LOG(L_ERR, "DEBUG : findRouteHF(): Error while parsing headers\n");
 		return FALSE;
 	} else {
 		if (_m->route) {
 			rh = _m->route;
 			if (rh->type != HDR_ROUTE) {
-				DBG("findRouteHF(): No Route header fields found\n");
+				DBG("DEBUG : findRouteHF(): No Route header fields found\n");
 				return FALSE;
 			}
 			return TRUE;
 		} else {
-			LOG(L_ERR, "findRouteHF(): Error, msg->route = NULL\n");
+			LOG(L_ERR, "ERROR : findRouteHF(): msg->route = NULL\n");
 			return FALSE;
 		}
 	}
@@ -62,9 +62,13 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 	r = remove_crlf(_m->route);
 
 	uri = find_not_quoted(r->body.s, '<') + 1; /* We will skip < character */
+	if (!uri) {
+		LOG(L_ERR, "parseRouteHF(): Malformed Route HF (no begining found)\n");
+		return FALSE;
+	}
 	uri_end = find_not_quoted(uri, '>');
 	if (!uri_end) {
-		LOG(L_ERR, "parseRouteHF(): Malformed Route HF\n");
+		LOG(L_ERR, "parseRouteHF(): Malformed Route HF (no end found)\n");
 		return FALSE;
 	}
 	*uri_end = '\0';  /* Replace > with 0 */
@@ -129,7 +133,7 @@ int remFirstRoute(struct sip_msg* _m, char* _next)
 		offset = _m->route->name.s - _m->buf;
 		len = _m->route->name.len + _m->route->body.len + 2;
 	}
-	
+
 	if (del_lump(&_m->add_rm, offset, len, 0) == 0) {
 		LOG(L_ERR, "remFirstRoute(): Can't remove Route HF\n");
 		return FALSE;
