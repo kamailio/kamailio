@@ -1,0 +1,154 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This is a module to help with &nat; traversal. In particular, it helps symmetric &ua;s
+	    that don't advertise they are symmetric and are not able to determine their public
+	    address. fix_nated_contact rewrites Contact header field with request's source
+	    address:port pair. fix_nated_sdp adds the active direction indication to &sdp; (flag
+	    0x01) and updates source &ip; address too (flag 0x02).
+	</para>
+	<para>
+	    Known devices that get along over &nat;s with nathelper are ATAs (as clients) and Cisco
+	    Gateways (since 12.2(T)) as servers.  See <ulink
+	    url="http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html">
+		http://www.cisco.com/en/US/products/sw/iosswrel/ps1839/products_feature_guide09186a0080110bf9.html"></ulink>
+	</para>
+	
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>natping_interval</varname> (integer)</title>
+	    <para>
+		Period of time in seconds between sending short &udp; packets to all currently
+		registered &ua;s to keep their &nat; bindings alive. Value of 0 disables this
+		functionality.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>natping_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("module", "natping_interval", 10)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">fix_nated_contact()</function>
+	    </title>
+	    <para>
+		Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
+	    </para>
+	    <example>
+		<title><function>fix_nated_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">fix_nated_sdp(mode)</function>
+	    </title>
+	    <para>
+		Rewrites Contact <acronym>HF</acronym> to contain request's source address:port.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>mode</emphasis> - 0x01 (add direction=active), 0x02 (rewrite media
+			&ip; address with source address of the message).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>fix_nated_sdp</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp(3);};
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">force_rtp_proxy()</function>
+	    </title>
+	    <para>
+		Rewrites &sdp; body to ensure that media is passed through an &rtp; proxy.
+	    </para>
+	    <example>
+		<title><function>force_rtp_proxy</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy(3);};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("nathelper.sgml" "Book" "chapter")
+End:
+-->
