@@ -23,9 +23,6 @@ typedef struct auth_body {
 	      * which credentials are authorized and they will simply
 	      * look into 
 	      * sip_msg->{authorization,proxy_auth}->parsed->authorized
-	      * If the pointer contains 0, then the hook itself contains
-	      * authorized credentials, otherwise they are in hdr_field
-	      * the pointer points to.
 	      */
 	struct hdr_field* authorized;
 	dig_cred_t digest;           /* Parsed digest credentials */

@@ -16,10 +16,16 @@
 #define DIG_LEN 6
 
 #define QOP_AUTH_STR "auth"
+#define QOP_AUTH_STR_LEN 4
+
 #define QOP_AUTHINT_STR "auth-int"
+#define QOP_AUTHINT_STR_LEN 8
 
 #define ALG_MD5_STR "MD5"
+#define ALG_MD5_STR_LEN 3
+
 #define ALG_MD5SESS_STR "MD5-sess"
+#define ALG_MD5SESS_STR_LEN 8
 
 
 /*
@@ -77,13 +83,6 @@ static inline int parse_quoted(str* _s, str* _r)
 static inline int parse_token(str* _s, str* _r)
 {
 	int i;
-
-	     /* There is nothing to parse,
-	      * return error
-	      */
-	if (_s->len == 0) {
-		return -1;
-	}
 
 	     /* Save the begining of the
 	      * token in _r->s
@@ -193,34 +192,48 @@ static inline int parse_digest_param(str* _s, dig_cred_t* _c)
 /*
  * Parse qop parameter body
  */
-static inline int parse_qop(struct qp* _q)
+static inline void parse_qop(struct qp* _q)
 {
-	if (!strncasecmp(_q->qop_str.s, QOP_AUTH_STR, _q->qop_str.len)) {
+	str s;
+
+	s.s = _q->qop_str.s;
+	s.len = _q->qop_str.len;
+
+	trim(&s);
+
+	if ((s.len == QOP_AUTH_STR_LEN) &&
+	    !strncasecmp(s.s, QOP_AUTH_STR, QOP_AUTH_STR_LEN)) {
 		_q->qop_parsed = QOP_AUTH;
-	} else if (!strncasecmp(_q->qop_str.s, QOP_AUTHINT_STR, _q->qop_str.len)) {
+	} else if ((s.len == QOP_AUTHINT_STR_LEN) &&
+		   !strncasecmp(s.s, QOP_AUTHINT_STR, QOP_AUTHINT_STR_LEN)) {
 		_q->qop_parsed = QOP_AUTHINT;
 	} else {
 		_q->qop_parsed = QOP_OTHER;
 	}
-	
-	return 0;
 }
 
 
 /*
  * Parse algorithm parameter body
  */
-static inline int parse_algorithm(struct algorithm* _a)
+static inline void parse_algorithm(struct algorithm* _a)
 {
-	if (!strncasecmp(_a->alg_str.s, ALG_MD5_STR, _a->alg_str.len)) {
+	str s;
+
+	s.s = _a->alg_str.s;
+	s.len = _a->alg_str.len;
+
+	trim(&s);
+
+	if ((s.len == ALG_MD5_STR_LEN) &&
+	    !strncasecmp(s.s, ALG_MD5_STR, ALG_MD5_STR_LEN)) {
 		_a->alg_parsed = ALG_MD5;
-	} else if (!strncasecmp(_a->alg_str.s, ALG_MD5SESS_STR, _a->alg_str.len)) {
+	} else if ((s.len == ALG_MD5SESS_STR_LEN) &&
+		   !strncasecmp(s.s, ALG_MD5SESS_STR, ALG_MD5SESS_STR_LEN)) {
 		_a->alg_parsed = ALG_MD5SESS;
 	} else {
 		_a->alg_parsed = ALG_OTHER;
-	}
-
-	return 0;
+	}	
 }
 
 
@@ -253,16 +266,12 @@ static inline int parse_digest_params(str* _s, dig_cred_t* _c)
 
 	     /* Parse QOP body if the parameter was present */
 	if (_c->qop.qop_str.s != 0) {
-		if (parse_qop(&(_c->qop)) < 0) {
-			return -5;
-		}
+		parse_qop(&(_c->qop));
 	}
 
 	     /* Parse algorithm body if the parameter was present */
 	if (_c->alg.alg_str.s != 0) {
-		if (parse_algorithm(&(_c->alg)) < 0) {
-			return -6;
-		}
+		parse_algorithm(&(_c->alg));
 	}
 
 	return 0;
