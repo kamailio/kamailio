@@ -104,7 +104,7 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
     	}
   	}
 	
-  	/* FIXME: Add sip response code -- status code ,integer only if no method*/
+  	/* Add sip response code -- status code ,integer only if no method*/
   	if (rq->first_line.type == SIP_REPLY) {
 		/* take a reply from message -- that's safe and we don't need to be
 		   worried about TM reply status being changed concurrently */
@@ -364,17 +364,14 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
  	struct to_body *to;						/* Structs containing TO tags */
   	struct sip_msg *rq;					  	/* Reply structure */
 	struct to_body *from;					/* struct to hold FROM tags */
- 
+ 	struct cseq_body *cseq;					/* Cseq body--for Numeric */
+	auth_body_t *cred;						/* Digital Credentials*/
+	str	username;							/* Username string */
+
 	DBG("**************radius_log_ack() CALLED \n");
 
   	rq =  t->uas.request;	
- 	
-	/* Add session ID */
-	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, msg->callid, 0) == NULL) {
-    	DBG("radius_log_ack(): ERROR:PW_ACCT_SESSION_ID, \n");
-		return(ERROR_RC);	
-  	}	
-  	    
+	  	    
   	/*
 	 * Add status type, Accounting START in our case 
    	 *                   1: START
@@ -488,7 +485,8 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	}
    		
   	/* Add sip-cseq string*/
-	tmp = cleanbody(msg->cseq->body);
+	cseq = get_cseq(msg);
+	tmp = cleanbody(cseq->number);
   	if (rc_avpair_add(&send, PW_SIP_CSEQ, tmp, 0) == NULL) {
 		DBG("radius_log_ack(): ERROR:PW_SIP_CSEQ \n");
 		return(ERROR_RC);
@@ -513,11 +511,47 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
     	return(ERROR_RC);
   	}
 
-  	/* Add user name */
-  	if (rc_avpair_add(&send, PW_USER_NAME, uri.user.s, 0) == NULL) {
+  	/*
+	 * If available, take user-name from digest else extract the FROM field.
+	 */
+
+	if (!(msg->authorization)) {
+		     /* No credentials parsed yet */
+		if (parse_headers(msg, HDR_AUTHORIZATION, 0) == -1) {
+			LOG(L_ERR, "radis_log_reply: Error while parsing auth headers\n");
+			return -2;
+		}
+	}
+	
+	/* Parse only if there's something there... */
+	if (msg->authorization) {
+		if (parse_credentials(msg->authorization) != -1) {
+			cred = (auth_body_t*)(msg->authorization->parsed);
+			if (check_dig_cred(&(cred->digest)) != E_DIG_OK) {
+				LOG(L_ERR, "radius_log_reply: Credentials missing\n");
+				return(ERROR_RC);
+			} else {
+				tmp = cleanbody(cred->digest.username);
+			}
+		}
+	} else {
+		/* Extract username from uri */
+		username.s = from->uri.s;
+		username.len = from->uri.len;
+		if (auth_get_username(&username) < 0) {
+        	LOG(L_ERR, "radius_log_reply: "
+							"Error while extracting username\n");
+       	    return(ERROR_RC);
+		}
+		tmp = cleanbody(username);
+	}
+
+  	if (rc_avpair_add(&send, PW_USER_NAME, tmp, 0) == NULL) {
     	DBG("radius_log_ack(): ERROR: \n");
 		return(ERROR_RC);
   	}
+
+	
   	
 	/* Add sip-translated-request-uri string*/
 	if (msg->new_uri.s) {
@@ -537,13 +571,13 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
 	 * ADD ACCT-SESSION ID ---> CALL-ID 
      * start and stop must have the same callid...
      */
-	/*
+	
 	tmp = cleanbody(msg->callid->body);
 	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, 
-					&msg->callid->body.s[0], 0) == NULL) {
+						tmp, 0) == NULL) {
 		DBG("radius_log_ack(): ERROR:PW_ACCT_SESSION_ID \n");
 		return(ERROR_RC); 
-  	}*/	 
+  	}
 
   	/*FIXME: Dorgham and Jiri said that we don't need this
    	 * Acct-session-time
@@ -637,7 +671,6 @@ int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
 	str	username;							/* Username string */
 	
 	DBG("**************rad_acc_request() CALLED \n");
-  	//rq =  t->uas.request;	
 
 	/* 
    	 * Add status type, Accounting START in our case 
