@@ -209,6 +209,8 @@ static inline int nodb_timer(urecord_t* _r)
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 
+			notify_watchers(_r, ptr, PRES_OFFLINE);
+
 			if (ptr->replicate != 0) {
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for replication\n", 
 				    ptr->aor->len, ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
@@ -235,8 +237,6 @@ static inline int nodb_timer(urecord_t* _r)
 				_r->slot->d->expired++;
 
 			}
-			     /* Last contact expired, notify watchers */
-			if (not) notify_watchers(_r, PRES_OFFLINE);
 		} else {
 				/* the contact was unregistered and is not marked 
 				 * for replication so remove it, but the notify was
@@ -276,6 +276,8 @@ static inline int wt_timer(urecord_t* _r)
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 
+			notify_watchers(_r, ptr, PRES_OFFLINE);
+
 			if (ptr->replicate != 0) {
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
 					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
@@ -306,7 +308,6 @@ static inline int wt_timer(urecord_t* _r)
 				mem_delete_ucontact(_r, t);
 				_r->slot->d->expired++;
 			}
-			if (not) notify_watchers(_r, PRES_OFFLINE);
 		} else {
 				/* the contact was unregistered and is not marked 
 				 * for replication so remove it, but the notify was
@@ -350,6 +351,8 @@ static inline int wb_timer(urecord_t* _r)
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 
+			notify_watchers(_r, ptr, PRES_OFFLINE);
+
 			if (ptr->replicate != 0) {
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
 					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
@@ -382,7 +385,6 @@ static inline int wb_timer(urecord_t* _r)
 
 				mem_delete_ucontact(_r, t);
 			}
-			if (not) notify_watchers(_r, PRES_OFFLINE);
 		} else {
 			     /* Determine the operation we have to do */
 			op = st_flush_ucontact(ptr);
@@ -496,7 +498,7 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid,
 		return -1;
 	}
 
-	notify_watchers(_r, PRES_ONLINE);
+	notify_watchers(_r, *_con, PRES_ONLINE);
 
 	if (exists_ulcb_type(UL_CONTACT_INSERT))
 		run_ul_callbacks( UL_CONTACT_INSERT, *_con);
@@ -540,6 +542,8 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 							"database\n");
 			}
 		}
+		notify_watchers(_r, _c, PRES_OFFLINE);
+
 		mem_delete_ucontact(_r, _c);
 	}
 
@@ -548,8 +552,6 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 		if (ptr->state < CS_ZOMBIE_N) return 0;
 		ptr = ptr->next;
 	}
-
-	notify_watchers(_r, PRES_OFFLINE);
 
 	return 0;
 }

@@ -36,13 +36,13 @@
 str dom = {"location", 8};
 
 
-void notify_watchers(struct urecord* _r, int state)
+void notify_watchers(struct urecord* _r, ucontact_t *_c, int state)
 {
 	notify_cb_t* n;
        
 	n = _r->watchers;
         while(n) {
-		n->cb(&_r->aor, state, n->data);
+		n->cb(&_r->aor, &_c->c, state, n->data);
 		n = n->next;
 	}
 }
@@ -51,6 +51,7 @@ void notify_watchers(struct urecord* _r, int state)
 int add_watcher(struct urecord* _r, notcb_t _c, void* _d)
 {
 	notify_cb_t* ptr;
+	ucontact_t *c;
 
 	ptr = (notify_cb_t*)shm_malloc(sizeof(notify_cb_t));
 	if (ptr == 0) {
@@ -63,7 +64,11 @@ int add_watcher(struct urecord* _r, notcb_t _c, void* _d)
 	ptr->next = _r->watchers;
 	_r->watchers = ptr;
 
-	ptr->cb(&_r->aor, (_r->contacts) ? (PRES_ONLINE) : (PRES_OFFLINE), ptr->data);
+	c = _r->contacts;
+	while (c) {
+		ptr->cb(&_r->aor, &c->c, PRES_ONLINE, ptr->data);
+		c = c->next;
+	}
 	return 0;
 }
 
