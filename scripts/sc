@@ -66,12 +66,16 @@ VERSION='$Revision$'
 #### SQL names
 
 # Usr Loc Table
-USRLOC=location
+if [ -z "$UL_TABLE" ] ; then
+	UL_TABLE=location
+fi
 USER_COLUMN=username
 CALLID_COLUMN=callid
 
 # subscriber table
-TABLE=subscriber
+if [ -z "SUB_TABLE" ] ; then
+	SUB_TABLE=subscriber
+fi
 REALM_COLUMN=domain
 HA1_COLUMN=HA1
 HA1B_COLUMN=HA1B
@@ -83,14 +87,18 @@ SUB_MODIFIED_COLUMN=datetime_modified
 PHP_LIB_COLUMN=phplib_id
 
 # acl table
-ACL_TABLE=grp
+if [ -z "$ACL_TABLE" ] ; then
+	ACL_TABLE=grp
+fi
 ACL_USER_COLUMN=username
 ACL_GROUP_COLUMN=grp
 ACL_MODIFIED_COLUMN=last_modified
 ACL_DOMAIN_COLUMN=domain
 
 # aliases table
-A_TABLE=aliases
+if [ -z "$ALS_TABLE" ] ; then
+	ALS_TABLE=aliases
+fi
 A_USER_COLUMN=username
 A_CONTACT_COLUMN=contact
 A_EXPIRES_COLUMN=expires
@@ -319,9 +327,9 @@ usrloc() {
 		exit 1
 	fi
 	if [ "$1" = "alias" ] ; then
-		UL_TABLE="$A_TABLE"
+		USRLOC_TABLE="$ALS_TABLE"
 	elif [ "$1" = "ul" ] ; then
-		UL_TABLE="$USRLOC"
+		USRLOC_TABLE="$UL_TABLE"
 	else
 		echo "usrloc: unknown table name"
 		exit 1
@@ -331,7 +339,7 @@ usrloc() {
 	case $1 in 
 		show)
 			if [ $# -eq 2 ] ; then
-				fifo_cmd ul_show_contact $UL_TABLE $2
+				fifo_cmd ul_show_contact $USRLOC_TABLE $2
 			elif [ $# -eq 1 ] ; then
 				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] "
 				read answer
@@ -357,7 +365,7 @@ usrloc() {
 				exit 1
 			fi
 
-			fifo_cmd ul_add "$UL_TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
+			fifo_cmd ul_add "$USRLOC_TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
 			exit $?
 			;;
 		rm)
@@ -366,7 +374,7 @@ usrloc() {
                 exit 1
             fi
 			shift
-			fifo_cmd ul_rm $UL_TABLE $1
+			fifo_cmd ul_rm $USRLOC_TABLE $1
 
             ;;
 
@@ -467,7 +475,7 @@ acl() {
 # params: user
 # output: false if exists, true otherwise
 is_user() {
-	QUERY="select count(*) from $TABLE \
+	QUERY="select count(*) from $SUB_TABLE \
 		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
 	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
 	if [ "0$CNT" -eq 0 ] ; then
@@ -583,7 +591,7 @@ case $1 in
 			echo non-existent user
 			exit 1
 		fi
-		QUERY="update $TABLE \
+		QUERY="update $SUB_TABLE \
 			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
 			, $SUB_MODIFIED_COLUMN=now() \
 			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
@@ -612,7 +620,7 @@ case $1 in
             exit 1
         fi
 
-		QUERY="insert into $TABLE \
+		QUERY="insert into $SUB_TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
 				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN,  \
 				$PHP_LIB_COLUMN ) \
@@ -659,8 +667,8 @@ case $1 in
 			exit 1
 		fi
 		shift
-		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
-			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+		QUERY="select $SUB_TABLE.$EMAIL_COLUMN from $SUB_TABLE where  \
+			$SUB_TABLE.$SUBSCRIBER_COLUMN='$1'"
 		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
@@ -700,13 +708,13 @@ case $1 in
 
 		shift
 
-		QUERY1="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
-			$TABLE.$SUBSCRIBER_COLUMN='$1'"
-		QUERY2="select $USRLOC.* from $USRLOC where \
-			$USRLOC.$USER_COLUMN='$1' order by expires desc"
-		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN, $USRLOC.$CALLID_COLUMN \
-			from $TABLE, $USRLOC where  \
-			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN  order by $USRLOC.$USER_COLUMN" 
+		QUERY1="select $SUB_TABLE.$EMAIL_COLUMN from $SUB_TABLE where  \
+			$SUB_TABLE.$SUBSCRIBER_COLUMN='$1'"
+		QUERY2="select $UL_TABLE.* from $UL_TABLE where \
+			$UL_TABLE.$USER_COLUMN='$1' order by expires desc"
+		QUERY3="select $UL_TABLE.$USER_COLUMN, $SUB_TABLE.$EMAIL_COLUMN, $UL_TABLE.$CALLID_COLUMN \
+			from $SUB_TABLE, $UL_TABLE where  \
+			$SUB_TABLE.$SUBSCRIBER_COLUMN=$UL_TABLE.$USER_COLUMN  order by $UL_TABLE.$USER_COLUMN" 
 
 		if [ $# -eq 1 ] ; then
 			sql_ro_query "$QUERY1"
@@ -737,7 +745,7 @@ case $1 in
 		$0 acl revoke $1  > /dev/null 2>&1
 
 		# destroy the user now
-        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
+        QUERY="delete from $SUB_TABLE where $SUB_TABLE.$SUBSCRIBER_COLUMN='$1'"
 		sql_query "$QUERY"
 
 		# and also all his contacts
