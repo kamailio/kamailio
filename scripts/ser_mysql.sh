@@ -697,7 +697,7 @@ case $1 in
 			exit 1
 		fi
 		sed "s/[uU][sS][eE][rR]_[iI][dD]/user/g" $tmp_file |
-			sed "s/[uU][sS][eE][rR]/$USERCOL/g" |
+			sed "s/[uU][sS][eE][rR]\($\|[^a-zA-Z]\)/$USERCOL\1/g" |
 			sed "s/[rR][eE][aA][lL][mM]/domain/g"> ${tmp_file}.2
 		#3 drop original database
 		echo "dropping table ($DBNAME)"
