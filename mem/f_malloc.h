@@ -60,7 +60,7 @@
 
 
 
-#define F_MALLOC_OPTIMIZE_FACTOR 11UL /*used below */
+#define F_MALLOC_OPTIMIZE_FACTOR 14UL /*used below */
 #define F_MALLOC_OPTIMIZE  (1UL<<F_MALLOC_OPTIMIZE_FACTOR)
 								/* size to optimize for,
 									(most allocs <= this size),

@@ -439,8 +439,8 @@ static int script_init( struct sip_msg *foo, void *bar)
 
 static int mod_init(void)
 {
-	DBG( "TM - (size of cell=%ld) initializing...\n", 
-			(long)sizeof(struct cell));
+	DBG( "TM - (size of cell=%ld, sip_msg=%ld) initializing...\n", 
+			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
 	if (MAX_BRANCHES+1>31) {

@@ -228,7 +228,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 	}
 	tag=&get_to(ok)->tag_value;
 	if (!tag->s) {
-		LOG(L_ERR, "ERROR: update_totag_set: no tag in to\n");
+		DBG("ERROR: update_totag_set: no tag in to\n");
 		return 0;
 	}
 
