@@ -630,11 +630,40 @@ error:
 	return -1;
 }
 
+/* escape %% to make call to syslog safe; parameters:
+ * 1) destination buffer, 2) source buffer, 3) available length
+ * output: length (0 on overflow)
+ */
+inline static int safe_str(char *cur, str token, int avail )
+{
+		int len;
+
+		len=0;
+		while(token.len) {
+			if (avail<=2) {
+					LOG(L_ERR, "ERROR: xlog/safe_str: no memory\n");
+					return 0;
+			}
+			/* escape */
+			if (*token.s=='%') {
+				*cur='%';
+				cur++; avail--;len++;
+			}
+			/* copy */
+			*cur=*token.s;
+			cur++; avail--;len++;
+			token.s++; token.len--; 
+		}
+		return len;
+}
+
 int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 {
 	int n;
 	str tok;
 	xl_elog_p it;
+	int safe_len;
+	char *cur;
 	
 	if(msg==NULL || log==NULL || buf==NULL || len==NULL)
 		return -1;
@@ -642,42 +671,47 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 	if(*len <= 0)
 		return -1;
 
-	it = log;
-	buf[0] = '\0';
+	*buf = '\0';
+	cur = buf;
+
 	n = 0;
-	while(it)
+	for (it=log; it; it=it->next) 
 	{
-		// put the text
-		if(it->text.s && it->text.len>0)
-		{
-			if(n+it->text.len < *len)
-			{
-				strncat(buf, it->text.s, it->text.len);
-				n += it->text.len;
+		/* put the text */
+		if(it->text.s && it->text.len>0) {
+			if(n+it->text.len+1 <= *len) {
+				LOG(L_ERR, "XLOG: xl_print_log: buffer text overflow ...\n");
+				break;
 			}
-			else
-				goto overflow;
+			memcpy(cur, it->text.s, it->text.len);
+			n += it->text.len;
+			cur+=it->text.len;
 		}
-		// put the value of the specifier
-		if(it->itf && !((*it->itf)(msg, &tok)))
-		{
-			if(n+tok.len < *len)
-			{
-				strncat(buf, tok.s, tok.len);
-				n += tok.len;
+		/* put the value of the specifier; tok includes pointers to received SIP
+		 * mesage 
+		 */
+		if(it->itf && !((*it->itf)(msg, &tok))) {
+			if(n+tok.len + 1 >= *len) {
+				LOG(L_ERR, "XLOG: xl_print_log: buffer specifier overflow ...\n");
+				break;
 			}
-			else
-				goto overflow;
+			/* escape %% to make call to syslog safe; parameters:
+			 * 1) destination buffer, 2) source buffer, 3) available length
+			 * output: length (0 on overflow)
+			 */
+			safe_len=safe_str(cur, tok, *len - n - 1);
+			if (safe_len==0) {
+				LOG(L_ERR, "XLOG: xl_print_log: buffer safe-maker overflow ...\n");
+				break;
+			}
+			n += safe_len;
+			cur +=safe_len;
 		}
-		it = it->next;
 	}
-	goto done;
 	
-overflow:
-	DBG("XLOG: xl_print_log: buffer overflow ...\n");
-done:
 	DBG("XLOG: xl_print_log: final buffer length %d\n", n);
 	*len = n;
+	*buf=0;
 	return 0;
 }
 
