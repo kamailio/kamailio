@@ -31,15 +31,26 @@ inline static int tsl(fl_lock_t* lock)
 	volatile int val;
 
 #ifdef __i386
-	
+
+#ifdef NOSMP
+	val=0;
+	asm volatile(
+		"  btsl $0, %1 \n\t"
+		" adcl $0, %0 \n\t"
+		: "=q" (val), "=m" (*lock) : "0"(val) : "memory"
+	);
+#else
 	val=1;
 	asm volatile( 
 		" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"
 	);
+#endif /*NOSMP*/
 #elif defined __sparc
 	asm volatile(
 			"ldstub [%1], %0 \n\t"
+#ifndef NOSMP
 			"membar #StoreStore | #StoreLoad \n\t"
+#endif
 			: "=r"(val) : "r"(lock):"memory"
 	);
 #else
@@ -80,7 +91,9 @@ inline static void release_lock(fl_lock_t* lock)
 	); 
 #elif defined __sparc
 	asm volatile(
+#ifndef NOSMP
 			"membar #LoadStore | #StoreStore \n\t" /*is this really needed?*/
+#endif
 			"stb %%g0, [%0] \n\t"
 			: /*no output*/
 			: "r" (lock)
