@@ -48,7 +48,7 @@ void print_all_udomains(FILE* _f);
 /*
  * Called from timer
  */
-int timer_handler(void);
+int synchronize_all_udomains(void);
 
 
 /*

@@ -5,11 +5,11 @@
  */
 
 #include "dlist.h"
-#include <string.h>        /* strlen, memcmp */
-#include <stdio.h>         /* printf */
-#include "../../mem/mem.h" /* pkg_malloc, pkg_free */
+#include <string.h>            /* strlen, memcmp */
+#include <stdio.h>             /* printf */
+#include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "udomain.h"       /* new_udomain, free_udomain */
+#include "udomain.h"           /* new_udomain, free_udomain */
 #include "utime.h"
 #include "ul_mod.h"
 
@@ -60,17 +60,17 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	     /* Domains are created before ser forks,
 	      * so we can create them using pkg_malloc
 	      */
-	ptr = (dlist_t*)pkg_malloc(sizeof(dlist_t));
+	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
 	if (ptr == 0) {
 		LOG(L_ERR, "new_dlist(): No memory left\n");
 		return -1;
 	}
 	memset(ptr, 0, sizeof(dlist_t));
 
-	ptr->name.s = (char*)pkg_malloc(_n->len);
+	ptr->name.s = (char*)shm_malloc(_n->len);
 	if (ptr->name.s == 0) {
 		LOG(L_ERR, "new_dlist(): No memory left 2\n");
-		pkg_free(ptr);
+		shm_free(ptr);
 		return -2;
 	}
 
@@ -79,8 +79,8 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 
 	if (new_udomain(&(ptr->name), 512, &(ptr->d)) < 0) {
 		LOG(L_ERR, "new_dlist(): Error while creating domain structure\n");
-		pkg_free(ptr->name.s);
-		pkg_free(ptr);
+		shm_free(ptr->name.s);
+		shm_free(ptr);
 		return -3;
 	}
 
@@ -111,6 +111,21 @@ int register_udomain(const char* _n, udomain_t** _d)
 	if (new_dlist(&s, &d) < 0) {
 		LOG(L_ERR, "register_udomain(): Error while creating new domain\n");
 		return -1;
+	} 
+
+	     /* Preload domain with data from database if we are gonna
+	      * to use database
+	      */
+	if (db_mode != NO_DB) {
+		if (preload_udomain(d->d) < 0) {
+			LOG(L_ERR, "register_udomain(): Error while preloading domain \'%.*s\'\n",
+			    s.len, s.s);
+			
+			free_udomain(d->d);
+			shm_free(d->name.s);
+			shm_free(d);
+			return -2;
+		}
 	}
 
 	d->next = root;
@@ -122,7 +137,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 
 
 /*
- * Free all registered domains
+ * Free all allocated memory
  */
 void free_all_udomains(void)
 {
@@ -131,13 +146,11 @@ void free_all_udomains(void)
 	while(root) {
 		ptr = root;
 		root = root->next;
-	
-		free_udomain(ptr->d);
-		pkg_free(ptr->name.s);
-		pkg_free(ptr);
-	}
 
-	if (db) db_close(db);
+		free_udomain(ptr->d);
+		shm_free(ptr->name.s);
+		shm_free(ptr);
+	}
 }
 
 
@@ -162,7 +175,7 @@ void print_all_udomains(FILE* _f)
 /*
  * Run timer handler of all domains
  */
-int timer_handler(void)
+int synchronize_all_udomains(void)
 {
 	int res = 0;
 	dlist_t* ptr;

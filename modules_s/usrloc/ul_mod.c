@@ -9,6 +9,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../timer.h"     /* register_timer */
+#include "../../globals.h"   /* is_main */
 #include "dlist.h"           /* register_udomain */
 #include "udomain.h"         /* {insert,delete,get,release}_urecord */
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
@@ -137,16 +138,20 @@ static int mod_init(void)
 {
 	printf("usrloc module - initializing\n");
 
+	     /* Register cache timer */
 	register_timer(timer, NULL, timer_interval);
+
+	     /* Initialize fifo interface */
 	init_ul_fifo();
 
-	if (db_mode != NO_DB) {
-		if (bind_dbmod() < 0) {
+	     /* Shall we use database ? */
+	if (db_mode != NO_DB) { /* Yes */
+		if (bind_dbmod() < 0) { /* Find database module */
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");
 			return -1;
 		}
 		
-		DBG("mod_init(): Opening database connection for parent\n");
+		     /* Open database connection in parent */
 		db = db_init(db_url);
 		if (!db) {
 			LOG(L_ERR, "mod_init(): Error while connecting database\n");
@@ -160,28 +165,18 @@ static int mod_init(void)
 }
 
 
-static int child_init(int rank)
+static int child_init(int _rank)
 {
-	if (db_mode != NO_DB) {
-		db = db_init(db_url);
+ 	     /* Shall we use database ? */
+	if (db_mode != NO_DB) { /* Yes */
+		db_close(db); /* Close connection previously opened by parent */
+		db = db_init(db_url); /* Initialize a new separate connection */
 		if (!db) {
-			LOG(L_ERR, "child_init(%d): Error while connecting database\n", rank);
+			LOG(L_ERR, "child_init(%d): Error while connecting database\n", _rank);
 			return -1;
-		} else {
-			if (rank == 0) {
-				     /* Preload_all_domains must be called
-				      * after the whole config file is parsed and
-				      * all domains are created, so we call it from
-				      * the first child, because fork is called after
-				      * the cfg file was parsed
-				      */
-				if (preload_all_udomains() != 0) {
-					LOG(L_ERR, "Error while preloading domains\n");
-					return -1;
-				}				
-			}
 		}
 	}
+
 	return 0;
 }
 
@@ -191,7 +186,18 @@ static int child_init(int rank)
  */
 static void destroy(void)
 {
-	free_all_udomains();
+	     /* Parent only, synchronize the world
+	      * and then nuke it
+	      */
+	if (is_main) {
+		if (synchronize_all_udomains() != 0) {
+			LOG(L_ERR, "timer(): Error while flushing cache\n");
+		}
+		free_all_udomains();
+	}
+	
+	     /* All processes close database connection */
+	if (db) db_close(db);
 }
 
 
@@ -201,8 +207,8 @@ static void destroy(void)
 static void timer(unsigned int ticks, void* param)
 {
 	DBG("Running timer\n");
-	if (timer_handler() != 0) {
-		LOG(L_ERR, "timer(): Error while running timer\n");
+	if (synchronize_all_udomains() != 0) {
+		LOG(L_ERR, "timer(): Error while synchronizing cache\n");
 	}
 	DBG("Timer done\n");
 }
