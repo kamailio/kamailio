@@ -401,7 +401,8 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 	     /* header field value and body length */
 	*len +=   to->len + 
 			((totag && totag->len) ? (TOTAG_LEN + totag->len) : 0) /* To */
-		+ from->len + FROMTAG_LEN + fromtag->len             /* From */
+		+ from->len +  /* From */
+			((fromtag && fromtag->len) ? FROMTAG_LEN + fromtag->len:0)
 		+ cseq_str_len + 1 + msg->len                        /* CSeq */
 		+ callid->len                                        /* Call-ID */
 		+ ((body) ? (content_len_len) : 0)                   /* Content-Length */
@@ -443,12 +444,14 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 
 	     /* From */
 	t->from.s = w;
-	t->from.len = FROM_LEN + from->len + FROMTAG_LEN + fromtag->len;
-
+	t->from.len = FROM_LEN + from->len;
 	memapp(w, FROM, FROM_LEN);
 	memapp(w, from->s, from->len);
-	memapp(w, FROMTAG, FROMTAG_LEN);
-	memapp(w, fromtag->s, fromtag->len);
+  	if (fromtag && fromtag->len ) { 
+		t->from.len+= FROMTAG_LEN + fromtag->len;
+		memapp(w, FROMTAG, FROMTAG_LEN);
+		memapp(w, fromtag->s, fromtag->len);
+	}
 	memapp(w, CRLF, CRLF_LEN);
 	
 	     /* CSeq */
