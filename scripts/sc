@@ -190,6 +190,8 @@ fifo_cmd()
 	done
 	CMD="${CMD}\n"
 
+	trap "rm -f $path; exit 1" 2
+
 	# start reader now so that it is ready for replies
 	# immediately after a request was sent out
 	cat < $path | filter_fl &
@@ -534,7 +536,7 @@ case $1 in
 			echo "error opening read fifo $path"
 			exit 1
 		fi
-		trap "rm $path; clear; echo sc monitor ^C-ed; exit 1" 2
+		trap "rm $path;  clear; echo sc monitor ^C-ed; exit 1" 2
 		attempt=0
 		clear
 		while [ 1 -eq 1 ]; do
