@@ -48,6 +48,7 @@ BEGIN {
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
         rpl406=0;rpl407=0;rpl408=0;rpl410=0;
         rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
+		rpl488=0;
         rpl4xx=0;
 	rpl479=0;
     rpl500=0;rpl501=0;rpl502=0;rpl503=0;rpl5xx=0;
@@ -82,6 +83,7 @@ BEGIN {
 	ua_cisco=0;
 	ua_insipid=0;
 	ua_hostip=0;
+	ua_mxsf=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -149,6 +151,10 @@ ua==0 && /User-Agent:.*Cisco/ {
 }
 ua==0 && /User-Agent:.*Insipid/ {
 	ua_insipid++
+	ua=1
+}
+ua==0 && /User-Agent:.*mxsf/ {
+	ua_mxsf++
 	ua=1
 }
 ua==0 && /User-Agent:.*Hotsip/ {
@@ -343,6 +349,10 @@ reply==0 && request=0 {
     rpl487++
     next
 }
+/SIP\/2\.0 488/ {
+    rpl488++
+    next
+}
 /SIP\/2\.0 479/ {
     rpl479++
     next
@@ -455,6 +465,7 @@ END {
 	print "483 (Too Many Hops): " rpl483 
 	print "486 (Busy Here): " rpl486 
 	print "487 (Request Terminated): " rpl487
+	print "488 (Not Acceptable): " rpl488
 	print "4xx: " rpl4xx  
     print "500 (Server Internal Error): " rpl500 
 	print "501 (Not Implemented): " rpl501 
@@ -478,7 +489,7 @@ END {
 	print "linphone: " ua_linphone " ubiquity: " ua_ubiquity
 	print "3com: " ua_3com " IPDialog: " ua_ipdialog " Epygi: " ua_epygi
 	print "Jasomi: " ua_jasomi " Cisco: " ua_cisco " insipid: " ua_insipid
-	print "Hotsip: " ua_hotsip " UFO: " ua_xx
+	print "Hotsip: " ua_hotsip " mxsf: " ua_mxsf " UFO: " ua_xx
 	print "## Servers"
 	print "Cisco: " server_cisco " ser: " server_ser 
 	print "Intertex: " server_intertex " Hotsip: " server_hotsip
