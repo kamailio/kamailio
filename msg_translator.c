@@ -1586,10 +1586,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	struct lump_rpl   *lump;
 	struct lump_rpl   *body;
 	int               i;
-	str               received = {0,0};
-	str               rport = {0,0};
-	str               warning = {0,0};
-	str               content_len = {0,0};
+	char*             received_buf;
+	unsigned int      received_len;
+	char*             rport_buf;
+	unsigned int      rport_len;
+	char*             warning_buf;
+	unsigned int      warning_len;
+	char*             content_len_buf;
+	unsigned int      content_len_len;
 	unsigned int      text_len;
 	char *after_body;
 	str  to_tag;
@@ -1597,9 +1601,11 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 
 	body = 0;
 	buf=0;
-
+	received_buf=rport_buf=warning_buf=content_len_buf=0;
+	received_len=rport_len=warning_len=content_len_len=0;
+	
 	text_len=strlen(text);
-
+	
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
@@ -1615,7 +1621,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 
 	/* check if received needs to be added */
 	if (received_test(msg)) {
-		if ((received.s=received_builder(msg,&received.len))==0) {
+		if ((received_buf=received_builder(msg,&received_len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
 			goto error00;
@@ -1624,7 +1630,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/* check if rport needs to be updated */
 	if ( (msg->msg_flags&FL_FORCE_RPORT)||
 		(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
-		if ((rport.s=rport_builder(msg, &rport.len))==0){
+		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req:"
 							" rport_builder failed\n");
 			goto error01; /* free everything */
@@ -1652,7 +1658,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 			case HDR_VIA:
 				/* we always add CRLF to via*/
 				len+=(hdr->body.s+hdr->body.len)-hdr->name.s+CRLF_LEN;
-				if (hdr==msg->h_via1) len += received.len+rport.len;
+				if (hdr==msg->h_via1) len += received_len+rport_len;
 				break;
 			case HDR_RECORDROUTE:
 				/* RR only for 1xx and 2xx replies */
@@ -1676,14 +1682,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		len += SERVER_HDR_LEN + CRLF_LEN;
 	/* warning hdr */
 	if (sip_warning) {
-		warning.s = warning_builder(msg,&warning.len);
-		if (warning.s) len += warning.len + CRLF_LEN;
+		warning_buf = warning_builder(msg,&warning_len);
+		if (warning_buf) len += warning_len + CRLF_LEN;
 		else LOG(L_WARN, "WARNING: warning skipped -- too big\n");
 	}
 	/* content length hdr */
 	if (body) {
-		content_len.s = int2str(body->text.len, &content_len.len);
-		len += CONTENT_LENGTH_LEN + content_len.len + CRLF_LEN;
+		content_len_buf = int2str(body->text.len, (int*)&content_len_len);
+		len += CONTENT_LENGTH_LEN + content_len_len + CRLF_LEN;
 	} else {
 		len += CONTENT_LENGTH_LEN + 1/*0*/ + CRLF_LEN;
 	}
@@ -1720,13 +1726,13 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		{
 			case HDR_VIA:
 				if (hdr==msg->h_via1){
-					if (rport.s){
+					if (rport_buf){
 						if (msg->via1->rport){ /* delete the old one */
 							/* copy until rport */
 							append_str_trans( p, hdr->name.s ,
 								msg->via1->rport->start-hdr->name.s-1,msg);
 							/* copy new rport */
-							append_str(p, rport.s, rport.len);
+							append_str(p, rport_buf, rport_len);
 							/* copy the rest of the via */
 							append_str_trans(p, msg->via1->rport->start+
 												msg->via1->rport->size, 
@@ -1737,15 +1743,15 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 							/* normal whole via copy */
 							append_str_trans( p, hdr->name.s , 
 								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
-							append_str(p, rport.s, rport.len);
+							append_str(p, rport_buf, rport_len);
 						}
 					}else{
 						/* normal whole via copy */
 						append_str_trans( p, hdr->name.s , 
 								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
 					}
-					if (received.s)
-						append_str( p, received.s, received.len);
+					if (received_buf)
+						append_str( p, received_buf, received_len);
 				}else{
 					/* normal whole via copy */
 					append_str_trans( p, hdr->name.s,
@@ -1808,17 +1814,17 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		p+=CRLF_LEN;
 	}
 	/* content_length hdr */
-	if (content_len.len) {
+	if (content_len_len) {
 		append_str( p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		append_str( p, content_len.s, content_len.len );
+		append_str( p, content_len_buf, content_len_len );
 		append_str( p, CRLF, CRLF_LEN );
 	} else {
 		append_str( p, CONTENT_LENGTH"0"CRLF,CONTENT_LENGTH_LEN+1+CRLF_LEN);
 	}
 	/* warning header */
-	if (warning.s) {
-		memcpy( p, warning.s, warning.len);
-		p+=warning.len;
+	if (warning_buf) {
+		memcpy( p, warning_buf, warning_len);
+		p+=warning_len;
 		memcpy( p, CRLF, CRLF_LEN);
 		p+=CRLF_LEN;
 	}
@@ -1832,20 +1838,21 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	}
 
 	if (len!=p-buf)
-		LOG(L_CRIT,"BUGGGG!!!! diff len=%d p-buf=%d\n",len,p-buf);
+		LOG(L_CRIT,"BUG:build_res_from_sip_req: diff len=%d p-buf=%d\n",
+					len, (int)(p-buf));
 
 	*(p) = 0;
 	*returned_len = len;
 	/* in req2reply, received_buf is not introduced to lumps and
 	   needs to be deleted here
 	*/
-	if (received.s) pkg_free(received.s);
-	if (rport.s) pkg_free(rport.s);
+	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
 	return buf;
 
 error01:
-	if (received.s) pkg_free(received.s);
-	if (rport.s) pkg_free(rport.s);
+	if (received_buf) pkg_free(received_buf);
+	if (rport_buf) pkg_free(rport_buf);
 error00:
 	*returned_len=0;
 	return 0;

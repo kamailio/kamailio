@@ -63,7 +63,7 @@ struct subst_expr{
 
 struct replace_lst{
 	int offset;
-	int size;   /* at offset, delete size bytes and replace them with rpl */;
+	int size;   /* at offset, delete size bytes and replace them with rpl */
 	str rpl;
 	struct replace_lst *next;
 };

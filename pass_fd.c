@@ -56,7 +56,7 @@ int recv_all(int socket, void* data, int data_len)
 	
 	b_read=0;
 	do{
-		n=recv(socket, data+b_read, data_len-b_read, MSG_WAITALL);
+		n=recv(socket, (char*)data+b_read, data_len-b_read, MSG_WAITALL);
 		if (n<0){
 			/* error */
 			if (errno==EINTR) continue; /* signal, try again */
