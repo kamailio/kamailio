@@ -75,7 +75,7 @@ char *build_local(struct cell *Trans, unsigned int branch,
 
 char *build_uac_request(  str msg_type, str dst, str from,
 	str headers, str body, int branch,
-	struct cell *t, int *len);
+	struct cell *t, unsigned int *len);
 
 int t_calc_branch(struct cell *t,
 	int b, char *branch, int *branch_len);

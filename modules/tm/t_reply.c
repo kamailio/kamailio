@@ -803,7 +803,7 @@ enum rps t_should_relay_response( struct cell *Trans , int new_code,
 }
 
 char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
-	int *ret_len)
+	unsigned int *ret_len)
 {
 	str to;
 

@@ -169,7 +169,7 @@ error:
 
 char *build_uac_request(  str msg_type, str dst, str from,
     	str headers, str body, int branch, 
-		struct cell *t, int *len)
+		struct cell *t, unsigned int *len)
 {
 	char *via;
 	unsigned int via_len;
