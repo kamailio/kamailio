@@ -32,12 +32,14 @@
  */
 
 #include <string.h>
+#include <strings.h>
 #include "../../str.h"
 #include "../../data_lump.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_nameaddr.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "auth_mod.h"
 #include "api.h"
@@ -199,6 +201,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	name_addr_t parsed;
+	str tmp, user;
 	struct sip_uri uri;
 
 	if (rpid_is_e164) return rpid_is_e164;
@@ -208,17 +211,27 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 		goto err;
 	}
 
-	if (parse_nameaddr(&rpid, &parsed) < 0) {
-		LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID\n");
-		goto err;
-	}
-	
-	if (parse_uri(parsed.uri.s, parsed.uri.len, &uri) < 0) {
-		LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID URI\n");
-		goto err;
+	if (find_not_quoted(&rpid, '<')) {
+		if (parse_nameaddr(&rpid, &parsed) < 0) {
+			LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID\n");
+			goto err;
+		}
+		tmp = parsed.uri;
+	} else {
+		tmp = rpid;
 	}
 
-	rpid_is_e164 = (is_e164(&uri.user) ? 1 : -1);
+	if ((tmp.len > 4) && (!strncasecmp(tmp.s, "sip:", 4))) {
+	        if (parse_uri(tmp.s, tmp.len, &uri) < 0) {
+		        LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID URI\n");
+		        goto err;
+	        }
+                user = uri.user;
+        } else {
+	        user = tmp;
+        }
+
+	rpid_is_e164 = ((is_e164(&user) == 1) ? 1 : -1);
 	return rpid_is_e164;
 
  err:
