@@ -155,7 +155,9 @@ other:
 }
 
 
-
+/*
+ * Get message body and check Content-Type header field
+ */
 int extract_body(struct sip_msg *msg, str *body )
 {
 	

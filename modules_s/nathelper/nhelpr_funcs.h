@@ -35,6 +35,5 @@
 
 int extract_body(struct sip_msg * , str *);
 int check_content_type(struct sip_msg * );
-int get_body_len( struct sip_msg* );
 
 #endif
