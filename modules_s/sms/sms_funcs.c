@@ -177,12 +177,15 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	append_str(p,SMS_FROM_TAG,SMS_FROM_TAG_LEN);
 
 	/* Contact header */
-	contact.len = 5 /*"<sip:"*/ + domain.len/*host*/ + 1 /*">"*/;
+	contact.len = 5 /*"<sip:"*/ + from_user->len/*user*/ + 1/*"@"*/
+		+ domain.len/*host*/ + 1 /*">"*/;
 	contact.s = (char*)pkg_malloc(contact.len);
 	if (!contact.s)
 		goto error;
 	p=contact.s;
 	append_str(p,"<sip:",5);
+	append_str(p,from_user->s,from_user->len);
+	*(p++)='@';
 	append_str(p,domain.s,domain.len);
 	*(p++)='>';
 
