@@ -85,6 +85,7 @@ STAT	statistics
 MAXBUFFER maxbuffer
 CHILDREN children
 CHECK_VIA	check_via
+LOOP_CHECKS	loop_checks
 
 LOADMODULE	loadmodule
 
@@ -159,6 +160,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
+<INITIAL>{LOOP_CHECKS}	{ count(); yylval.strval=yytext; return LOOP_CHECKS; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }

@@ -4,7 +4,9 @@
 #include "mem.h"
 #include "dprint.h"
 #include "config.h"
+#include "md5utils.h"
 #include <netdb.h>
+
 
 
 #define MAX_VIA_LINE_SIZE      240
@@ -56,7 +58,7 @@ static inline char* q_inet_itoa(unsigned long ip)
 		q_inet_itoa_buf[offset+2]=c+'0';
 		q_inet_itoa_buf[offset+3]=0;
 	}else if (b){
-		q_inet_itoa_buf[offset]=b+'0';
+		
 		q_inet_itoa_buf[offset+1]=c+'0';
 		q_inet_itoa_buf[offset+2]=0;
 	}else{
@@ -112,7 +114,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_len)
 {
-	unsigned int len, new_len, via_len, received_len, uri_len;
+	unsigned int len, new_len, via_len, received_len, uri_len, branch_len;
 	char* line_buf;
 	char* received_buf;
 	char* tmp;
@@ -144,13 +146,52 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 						names[0], port_no);
 */
 	via_len=MY_VIA_LEN+names_len[0]; /* space included in MY_VIA*/
-	if ((via_len+port_no_str_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
+
+	/* jku: if we compute branches using MD5 it will take 32 bytes */
+	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN) + msg->add_to_branch.len;
+
+	if ((via_len+port_no_str_len+branch_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
 		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
 		memcpy(line_buf+MY_VIA_LEN, names[0], names_len[0]);
 		if (port_no!=SIP_PORT){
 			memcpy(line_buf+via_len, port_no_str, port_no_str_len);
 			via_len+=port_no_str_len;
 		}
+
+		/* jku: branch parameter */
+		memcpy(line_buf+via_len, MY_BRANCH, MY_BRANCH_LEN );
+		via_len+=MY_BRANCH_LEN;
+		/* loop checks ? */
+		if (loop_checks) {
+
+			if (	(msg->from || (parse_headers( msg, HDR_FROM)!=-1 && msg->from)) &&
+				(msg->to|| (parse_headers( msg, HDR_TO)!=-1 && msg->to)) &&
+				(msg->callid|| (parse_headers( msg, HDR_CALLID)!=-1 && msg->callid)) &&
+				(msg->cseq|| (parse_headers( msg, HDR_CSEQ)!=-1 && msg->cseq)) ) {
+
+				str src[5];
+				int r;
+			
+				src[0]= msg->from->body;
+				src[1]= msg->to->body; 
+				src[2]= msg->callid->body; 
+				src[3]= msg->first_line.u.request.uri; 
+				src[4]= ((struct cseq_body *)(msg->cseq->parsed))->number;
+
+				MDStringArray ( line_buf+via_len-1, src, 5 );
+				DBG("DEBUG: build_buf_from_sip_request: branch loop detection: %s, %s, %s, %s, %s -> %s32\n",
+					msg->from->body.s, msg->to->body.s, msg->callid->body.s, 
+					msg->first_line.u.request.uri.s,
+					((struct cseq_body *)(msg->cseq->parsed))->number.s,
+					line_buf+via_len-1 );
+				via_len+=MD5_LEN - 1;
+				
+			} else DBG("DEBUG: build_buf_from_sip_request: required HFs for loop checking missing\n");
+		}
+		/* someone wants me to add something to branch here ? */
+		memcpy(line_buf+via_len, msg->add_to_branch.s, msg->add_to_branch.len );
+		via_len+=msg->add_to_branch.len;
+
 		memcpy(line_buf+via_len, CRLF, CRLF_LEN);
 		via_len+=CRLF_LEN;
 		line_buf[via_len]=0; /* null terminate the string*/

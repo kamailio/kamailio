@@ -93,6 +93,6 @@ void final_response_handler( void *);
 void wait_handler( void *);
 void delete_handler( void *);
 
-
+int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
 
 #endif

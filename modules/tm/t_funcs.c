@@ -186,6 +186,7 @@ int t_lookup_request( struct sip_msg* p_msg )
  */
 int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
 {
+   int	branch = 0;	/* we don't do any forking right now */
    /* it's about the same transaction or not? */
    if ( global_msg_id != p_msg->id )
    {
@@ -208,7 +209,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    }
 
    /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
-   if ( T->outbound_request[0]==NULL )
+   if ( T->outbound_request[branch]==NULL )
    {
       unsigned int dest_ip     = dest_ip_param;
       unsigned int dest_port  = dest_port_param;
@@ -217,8 +218,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
       DBG("DEBUG: t_forward: first time forwarding\n");
       /* allocates a new retrans_buff for the outbound request */
-      T->outbound_request[0] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-      memset( T->outbound_request[0] , 0 , sizeof (struct retrans_buff) );
+      T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+      memset( T->outbound_request[branch] , 0 , sizeof (struct retrans_buff) );
       T->nr_of_outgoings = 1;
 
       /* special case : CANCEL */
@@ -234,8 +235,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
             if ( (T2->status/100)==1 )
             {
                DBG("DEBUG: t_forward: it's CANCEL and I will send to the same place where INVITE went\n");
-               dest_ip    = T2->outbound_request[0]->dest_ip;
-               dest_port = T2->outbound_request[0]->dest_port;
+               dest_ip    = T2->outbound_request[branch]->dest_ip;
+               dest_port = T2->outbound_request[branch]->dest_port;
             }
             else {
                /* transaction exists, but nothing to cancel */
@@ -246,29 +247,33 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       }/* end special case CANCEL*/
 
       /* store */
-      T->outbound_request[0]->tl[0].payload = &(T->outbound_request[0]);
-      T->outbound_request[0]->dest_ip         = dest_ip;
-      T->outbound_request[0]->dest_port      = dest_port;
-      T->outbound_request[0]->to.sin_family = AF_INET;
-      T->outbound_request[0]->to.sin_port     = htonl( dest_port ) ;
-      T->outbound_request[0]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
+      T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload = &(T->outbound_request[branch]);
+      T->outbound_request[branch]->dest_ip         = dest_ip;
+      T->outbound_request[branch]->dest_port      = dest_port;
+      T->outbound_request[branch]->to.sin_family = AF_INET;
+      T->outbound_request[branch]->to.sin_port     = htonl( dest_port ) ;
+      T->outbound_request[branch]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
 
-      buf = build_req_buf_from_sip_req ( p_msg, &len);
+      if (add_branch_label( T, p_msg , branch )==-1) return -1;
+      buf = build_buf_from_sip_request  ( p_msg, &len);
       if (!buf)
          return -1;
-      T->outbound_request[0]->bufflen = len ;
-      T->outbound_request[0]->buffer   = (char*)sh_malloc( len );
-      memcpy( T->outbound_request[0]->buffer , buf , len );
+      T->outbound_request[branch]->bufflen = len ;
+      T->outbound_request[branch]->buffer   = (char*)sh_malloc( len );
+      memcpy( T->outbound_request[branch]->buffer , buf , len );
       free( buf ) ;
    }/* end for the first time */
 
 
    /* sets and starts the RETRANS timer */
-   T->outbound_request[0]->nr_retrans    = 0;
-   T->outbound_request[0]->max_retrans = (T->inbound_request->first_line.u.request.method_value==METHOD_INVITE) ? MAX_INVITE_RETR : MAX_NON_INVITE_RETR;
-   T->outbound_request[0]->timeout         = RETR_T1;
+   T->outbound_request[branch]->nr_retrans    = 0;
+   T->outbound_request[branch]->max_retrans = 
+	(T->inbound_request->first_line.u.request.method_value==METHOD_INVITE) ? 
+	MAX_INVITE_RETR : MAX_NON_INVITE_RETR;
+   T->outbound_request[branch]->timeout         = RETR_T1;
    /* send the request */
-   udp_send( T->outbound_request[0]->buffer , T->outbound_request[0]->bufflen , (struct sockaddr*)&(T->outbound_request[0]->to) , sizeof(struct sockaddr_in) );
+   udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen , 
+		&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 }
 
 
@@ -865,4 +870,12 @@ void delete_handler( void *attr)
        add_to_tail_of_timer_list( hash_table, &(p_cell->tl[DELETE_LIST]), DELETE_LIST, DEL_TIME_OUT );
 }
 
-
+/* append appropriate branch labels for fast reply-transaction matching
+   to outgoing requests
+*/
+int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
+{	trans->label;
+	trans->hash_index;
+	p_msg->add_to_branch;
+	branch;
+}

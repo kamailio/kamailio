@@ -77,6 +77,7 @@ void* f_tmp;
 %token STAT
 %token CHILDREN
 %token CHECK_VIA
+%token LOOP_CHECKS
 %token LOADMODULE
 %token MAXBUFFER
 
@@ -161,6 +162,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| CHILDREN EQUAL error { yyerror("number expected"); } 
 		| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 		| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
+		| LOOP_CHECKS EQUAL NUMBER { loop_checks=$3; }
+		| LOOP_CHECKS EQUAL error { yyerror("boolean value expected"); }
 		| LISTEN EQUAL ipv4  {
 								if (addresses_no < MAX_LISTEN){
 									tmp=inet_ntoa(*(struct in_addr*)&$3);

@@ -33,6 +33,9 @@
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN 17
 
+#define MY_BRANCH ";branch=0"
+#define MY_BRANCH_LEN 9
+
 
 #define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
 #define CRLF "\r\n"

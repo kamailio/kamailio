@@ -80,6 +80,7 @@ static char flags[]="NOCR:"
 static char help_msg[]= "\
 Usage: ser -l address [-l address] [options]\n\
 Options:\n\
+    -c		 Perform loop checks and compute branches\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -p port      Listen on the specified port (default: 5060)\n\
     -l address   Listen on the specified address (multiple -l mean\n\
@@ -145,6 +146,7 @@ int debug = 0;
 int dont_fork = 0;
 int log_stderr = 0;
 int check_via =  0;        /* check if reply first via host==us */
+int loop_checks = 0;	/* calculate branches and check for loops/spirals */
 int received_dns = 0;      /* use dns and/or rdns or to see if we need to 
                               add a ;received=x.x.x.x to via: */
 
@@ -348,7 +350,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:b:l:n:rRvdDEVh";
+	"f:p:b:l:n:rRvcdDEVh";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -401,6 +403,9 @@ int main(int argc, char** argv)
 					break;
 			case 'v':
 					check_via=1;
+					break;
+			case 'c':
+					loop_checks=1;
 					break;
 			case 'r':
 					received_dns|=DO_DNS;

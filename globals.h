@@ -30,6 +30,7 @@ extern int dont_fork;
 extern int log_stderr;
 extern int check_via;
 extern int received_dns;
+extern int loop_checks;
 
 extern int cfg_errors;
 extern unsigned int msg_no;
