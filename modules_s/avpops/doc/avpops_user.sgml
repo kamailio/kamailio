@@ -1,0 +1,589 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+			<revnumber>$Revision$</revnumber>
+			<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>
+		AVPops (AVP-operations) modules implements a set of script
+		functions which allow access and manipulation of user AVPs
+		(preferences). AVPs are a powerful tool for implementing
+		services/preferences per user/domain. Now they are usable
+		directly from configuration script. Functions for interfacing DB 
+		resources (loading/storing/removing), functions for swapping 
+		information between AVPs and SIP messages, function for 
+		testing/checking the value of an AVP.
+		</para>
+		<para>
+		An up-to-date tutorial providing more information (detailed
+		explanations and commented examples) can be found on Voice Sistem
+		documentation web page at http://voice-system.ro/docs/avpops .
+		</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&ser; Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>Optionally a database module</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed 
+				before running &ser; with this module loaded:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>None</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>avp_url</varname> (string)</title>
+			<para>
+			DB URL for database connection.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being NULL.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>avp_url</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","avp_url","mysql://user:passwd@host/database")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>avp_table</varname> (string)</title>
+			<para>
+			DB table to be used.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being NULL.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>avp_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","avp_table","avptable")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>avp_aliases</varname> (string)</title>
+			<para>
+			Contains a multiple definition of aliases for AVP names.
+			</para>
+			<para>
+			<para>
+				<emphasis>
+					This parameter is optional.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>avp_aliases</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:753")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>use_domain</varname> (integer)</title>
+			<para>
+				If the domain part of the an URI should be used for 
+				identifying an AVP in DB operations.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>0 (no)</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>use_domain</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","use_domain","1")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>uuid_column</varname> (string)</title>
+			<para>
+				Name of column containing the uuid (unique user id).
+			</para>
+			<para>
+				<emphasis>Default value is <quote>uuid</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>uuid_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","uuid_column","uuid")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>username_column</varname> (string)</title>
+			<para>
+				Name of column containing the username.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>username</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>username_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","username_column","username")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>domain_column</varname> (string)</title>
+			<para>
+				Name of column containing the domain name.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>domain</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>domain_column</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","domain_column","domain")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>attribute_column</varname> (string)</title>
+			<para>
+				Name of column containing the attribute name (AVP name).
+			</para>
+			<para>
+				<emphasis>Default value is <quote>attribute</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>attribute_column</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","attribute_column","attribute")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>value_column</varname> (string)</title>
+			<para>
+				Name of column containing the AVP value.
+			</para>
+			<para>
+				<emphasis>Default value is <quote>value</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>value_column</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","value_column","value")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>type_column</varname> (integer)</title>
+			<para>
+				Name of column containing the AVP type.
+			<para>
+				<emphasis>Default value is <quote>type</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>type_column</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","type_column","type")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Exported Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_load(source,name)
+				</function>
+			</title>
+			<para>
+			Loads from DB into memory the AVPs corresponding to the given
+			<emphasis>source</emphasis>.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>source</emphasis> - what info is used for 
+				identifying the AVPs. Parameter syntax:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					source = (sip_uri)['/'('username'|'domain')]) | (avp_alias)
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					sip_uri = '$from' | '$to' | '$ruri'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVPs will be loaded
+				from DB into memory. Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = (''|'s:'|'i:'|avp_name|avp_alias)['/'table_name]
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_db_load</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_load("$from","i:678");
+avp_db_load("$ruri/domain","i:/domain_preferences");
+avp_db_load("$uuid","s:404fwd/fwd_table");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_store(source,name)</function>
+			</title>
+			<para>
+			Stores to DB the AVPs corresponding to the given
+			<emphasis>source</emphasis>.
+			</para>
+			<para>The meaning and usage of the parameters are identical as for
+			<emphasis>avp_db_load(source,name)</emphasis>
+			function. Please refer to its description.
+			</para>
+			<example>
+				<title><function>avp_db_store</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_store("$to","i:678");
+avp_db_store("$ruri/username","$email");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_db_delete(source,name)</function>
+			</title>
+			<para>
+			Deletes from DB the AVPs corresponding to the given
+			<emphasis>source</emphasis>.
+			<para>The meaning and usage of the parameters are identical as for
+			<emphasis>avp_db_load(source,name)</emphasis>
+			function. Please refer to its description.
+			</para>
+			<example>
+				<title><function>avp_db_delete</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_db_delete("$to","i:678");
+avp_db_delete("$ruri/username","$email");
+avp_db_delete("$uuid","s:404fwd/fwd_table");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_write(value,name)</function>
+			</title>
+			<para>
+			The function writes some value (given) or some information from
+			the SIP message into a new AVP.
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>value</emphasis> - the value to be written into
+				the AVP.
+				Parameter syntax:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					value = (variable) | (fix_value)
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					variable = '$src_ip' | (sip_uri)['/'('username'|'domain')])
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					sip_uri = '$from' | '$to' | '$ruri'
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					fix_value = 'i:'integer | 's:'string | string
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name</emphasis> - the name of the new written
+				AVP.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = avp_name | avp_alias
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_write</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_write("$to","i:678");
+avp_write("$ruri/username","$email");
+avp_write("$src_ip","s:ip");
+avp_write("i:333","i:6");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_delete(name)
+				</function>
+			</title>
+			<para>
+			Deletes from memory the AVPs with <emphasis>name</emphasis> or,
+			if empty, all AVPs.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVPs will be deleted
+				from memory.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = (''|'s:'|'i:'|avp_name|avp_alias)['/'flag]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flag = 'g'|'G'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_delete</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_delete("i:678/g");
+avp_delete("$email");
+avp_delete("i:");
+avp_write("");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_pushto(destination,name)
+				</function>
+			</title>
+			<para>
+			Pushes the value of AVP(s) into the SIP message.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>destination</emphasis> - as what will be the
+				AVP value pushed into SIP message.
+				Parameter syntax:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					destination = ruri_dst | hdr_dst
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					ruri_dst = '$ruri'['/'('username'|'domain')]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					hdr_dst = 'hdr_name'['/'('request'|'reply')]
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVP(s) should be pushed
+				into the SIP message.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_pushto</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_pushto("$ruri","i:678");
+avp_pushto("$ruri/domain","s:backup_domains/g");
+avp_pushto("Email/reply","s:email");
+avp_pushto("Foo","$bar/g");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_check(name,op_value)
+				</function>
+			</title>
+			<para>
+			Checks the value of the AVP(s) against an operator and value.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>name</emphasis> - which AVP(s) should be 
+				checked.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					name = ( avp_name | avp_alias )
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>op_value</emphasis> - define the operator, 
+				the value and flags for checking.
+				Parameter syntax is:
+				<itemizedlist>
+					<listitem><para><emphasis>
+					op_value = operator '/' value ['/'flags]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					operator = 'eq' | 'lt' | 'gt'
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					value = variable | fix_value
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					variable = '$from'|'$ruri'|'$from'|'$src_ip'|avp_alias
+					<listitem><para><emphasis>
+					fix_value = 'i:'integer | 's:'string | string 
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					flags = 'g' | 'G' | 'i' | 'I'
+					</emphasis></para></listitem>
+				</itemizedlist>
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>avp_check</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_check("i:678", "lt/i:345/g");
+avp_check("s:person","eq/$from/I");
+avp_check("s:foo","gt/$bar/g");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">avp_print()
+				</function>
+			</title>
+			<para>
+			Prints the list with all the AVPs from memory. This is only a
+			helper/debug function.
+			</para>
+			<example>
+				<title><function>avp_print</function> usage</title>
+				<programlisting format="linespecific">
+...
+avp_print();
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Installation & Running</title>
+		<para>The AVPOPS module requires one more column in the 
+		<emphasis>usr_preferences</emphasis> table than how it is created 
+		now by <emphasis>ser_mysql</emphasis> script. The missing column is
+		<emphasis>"type"</emphasis>. Till the discrepancy is fixed, please 
+		add by hand the column <emphasis>"type" integer, not null, default 0
+		</emphasis>.
+		</para>
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("avpops.sgml" "Book" "chapter")
+End:
+-->

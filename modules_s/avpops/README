@@ -1,0 +1,446 @@
+
+AVPops Module
+
+Ramona-Elena Modroiu
+
+   Voice Sistem
+
+Edited by
+
+Ramona-Elena Modroiu
+
+   Copyright © 2004 Voice Sistem
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. avp_url (string)
+              1.3.2. avp_table (string)
+              1.3.3. avp_aliases (string)
+              1.3.4. use_domain (integer)
+              1.3.5. uuid_column (string)
+              1.3.6. username_column (string)
+              1.3.7. domain_column (string)
+              1.3.8. attribute_column (string)
+              1.3.9. value_column (string)
+              1.3.10. type_column (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. avp_db_load(source,name) 
+              1.4.2. avp_db_store(source,name)
+              1.4.3. avp_db_delete(source,name)
+              1.4.4. avp_write(value,name)
+              1.4.5. avp_delete(name) 
+              1.4.6. avp_pushto(destination,name) 
+              1.4.7. avp_check(name,op_value) 
+              1.4.8. avp_print() 
+
+        1.5. Installation & Running
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set avp_url parameter
+   1-2. Set avp_table parameter
+   1-3. Set avp_aliases parameter
+   1-4. Set use_domain parameter
+   1-5. Set uuid_column parameter
+   1-6. Set username_column parameter
+   1-7. Set domain_column parameter
+   1-8. Set attribute_column parameter
+   1-9. Set value_column parameter
+   1-10. Set type_column parameter
+   1-11. avp_db_load usage
+   1-12. avp_db_store usage
+   1-13. avp_db_delete usage
+   1-14. avp_write usage
+   1-15. avp_delete usage
+   1-16. avp_pushto usage
+   1-17. avp_check usage
+   1-18. avp_print usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   AVPops (AVP-operations) modules implements a set of script
+   functions which allow access and manipulation of user AVPs
+   (preferences). AVPs are a powerful tool for implementing
+   services/preferences per user/domain. Now they are usable
+   directly from configuration script. Functions for interfacing
+   DB resources (loading/storing/removing), functions for
+   swapping information between AVPs and SIP messages, function
+   for testing/checking the value of an AVP.
+
+   An up-to-date tutorial providing more information (detailed
+   explanations and commented examples) can be found on Voice
+   Sistem documentation web page at
+   http://voice-system.ro/docs/avpops .
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * Optionally a database module
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. avp_url (string)
+
+   DB URL for database connection.
+
+   This parameter is optional, it's default value being NULL. 
+
+   Example 1-1. Set avp_url parameter
+...
+modparam("avpops","avp_url","mysql://user:passwd@host/database")
+...
+     _________________________________________________________
+
+1.3.2. avp_table (string)
+
+   DB table to be used.
+
+   This parameter is optional, it's default value being NULL. 
+
+   Example 1-2. Set avp_table parameter
+...
+modparam("avpops","avp_table","avptable")
+...
+     _________________________________________________________
+
+1.3.3. avp_aliases (string)
+
+   Contains a multiple definition of aliases for AVP names.
+
+   This parameter is optional. 
+
+   Example 1-3. Set avp_aliases parameter
+...
+modparam("avpops","avp_aliases","uuid=I:660;email=s:email_addr;fwd=i:75
+3")
+...
+     _________________________________________________________
+
+1.3.4. use_domain (integer)
+
+   If the domain part of the an URI should be used for
+   identifying an AVP in DB operations.
+
+   Default value is "0 (no)". 
+
+   Example 1-4. Set use_domain parameter 
+...
+modparam("avpops","use_domain","1")
+...
+     _________________________________________________________
+
+1.3.5. uuid_column (string)
+
+   Name of column containing the uuid (unique user id).
+
+   Default value is "uuid". 
+
+   Example 1-5. Set uuid_column parameter
+...
+modparam("avpops","uuid_column","uuid")
+...
+     _________________________________________________________
+
+1.3.6. username_column (string)
+
+   Name of column containing the username.
+
+   Default value is "username". 
+
+   Example 1-6. Set username_column parameter
+...
+modparam("avpops","username_column","username")
+...
+     _________________________________________________________
+
+1.3.7. domain_column (string)
+
+   Name of column containing the domain name.
+
+   Default value is "domain". 
+
+   Example 1-7. Set domain_column parameter
+...
+modparam("avpops","domain_column","domain")
+...
+     _________________________________________________________
+
+1.3.8. attribute_column (string)
+
+   Name of column containing the attribute name (AVP name).
+
+   Default value is "attribute". 
+
+   Example 1-8. Set attribute_column parameter 
+...
+modparam("avpops","attribute_column","attribute")
+...
+     _________________________________________________________
+
+1.3.9. value_column (string)
+
+   Name of column containing the AVP value.
+
+   Default value is "value". 
+
+   Example 1-9. Set value_column parameter 
+...
+modparam("avpops","value_column","value")
+...
+     _________________________________________________________
+
+1.3.10. type_column (integer)
+
+   Name of column containing the AVP type.
+
+   Default value is "type". 
+
+   Example 1-10. Set type_column parameter 
+...
+modparam("avpops","type_column","type")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. avp_db_load(source,name)
+
+   Loads from DB into memory the AVPs corresponding to the given
+   source.
+
+   Meaning of the parameters is as follows:
+
+     * source - what info is used for identifying the AVPs.
+       Parameter syntax:
+          + source = (sip_uri)['/'('username'|'domain')]) |
+            (avp_alias) 
+          + sip_uri = '$from' | '$to' | '$ruri' 
+     * name - which AVPs will be loaded from DB into memory.
+       Parameter syntax is:
+          + name =
+            (''|'s:'|'i:'|avp_name|avp_alias)['/'table_name] 
+
+   Example 1-11. avp_db_load usage
+...
+avp_db_load("$from","i:678");
+avp_db_load("$ruri/domain","i:/domain_preferences");
+avp_db_load("$uuid","s:404fwd/fwd_table");
+...
+     _________________________________________________________
+
+1.4.2. avp_db_store(source,name)
+
+   Stores to DB the AVPs corresponding to the given source.
+
+   The meaning and usage of the parameters are identical as for
+   avp_db_load(source,name) function. Please refer to its
+   description.
+
+   Example 1-12. avp_db_store usage
+...
+avp_db_store("$to","i:678");
+avp_db_store("$ruri/username","$email");
+...
+     _________________________________________________________
+
+1.4.3. avp_db_delete(source,name)
+
+   Deletes from DB the AVPs corresponding to the given source.
+
+   The meaning and usage of the parameters are identical as for
+   avp_db_load(source,name) function. Please refer to its
+   description.
+
+   Example 1-13. avp_db_delete usage
+...
+avp_db_delete("$to","i:678");
+avp_db_delete("$ruri/username","$email");
+avp_db_delete("$uuid","s:404fwd/fwd_table");
+...
+     _________________________________________________________
+
+1.4.4. avp_write(value,name)
+
+   The function writes some value (given) or some information
+   from the SIP message into a new AVP.
+
+   Meaning of the parameters is as follows:
+
+     * value - the value to be written into the AVP. Parameter
+       syntax:
+          + value = (variable) | (fix_value) 
+          + variable = '$src_ip' |
+            (sip_uri)['/'('username'|'domain')]) 
+          + sip_uri = '$from' | '$to' | '$ruri' 
+          + fix_value = 'i:'integer | 's:'string | string 
+     * name - the name of the new written AVP. Parameter syntax
+       is:
+          + name = avp_name | avp_alias 
+
+   Example 1-14. avp_write usage
+...
+avp_write("$to","i:678");
+avp_write("$ruri/username","$email");
+avp_write("$src_ip","s:ip");
+avp_write("i:333","i:6");
+...
+     _________________________________________________________
+
+1.4.5. avp_delete(name)
+
+   Deletes from memory the AVPs with name or, if empty, all AVPs.
+
+   Meaning of the parameters is as follows:
+
+     * name - which AVPs will be deleted from memory. Parameter
+       syntax is:
+          + name = (''|'s:'|'i:'|avp_name|avp_alias)['/'flag] 
+          + flag = 'g'|'G' 
+
+   Example 1-15. avp_delete usage
+...
+avp_delete("i:678/g");
+avp_delete("$email");
+avp_delete("i:");
+avp_write("");
+...
+     _________________________________________________________
+
+1.4.6. avp_pushto(destination,name)
+
+   Pushes the value of AVP(s) into the SIP message.
+
+   Meaning of the parameters is as follows:
+
+     * destination - as what will be the AVP value pushed into
+       SIP message. Parameter syntax:
+          + destination = ruri_dst | hdr_dst 
+          + ruri_dst = '$ruri'['/'('username'|'domain')] 
+          + hdr_dst = 'hdr_name'['/'('request'|'reply')] 
+     * name - which AVP(s) should be pushed into the SIP message.
+       Parameter syntax is:
+          + name = ( avp_name | avp_alias )['/'flags] 
+          + flags = 'g' 
+
+   Example 1-16. avp_pushto usage
+...
+avp_pushto("$ruri","i:678");
+avp_pushto("$ruri/domain","s:backup_domains/g");
+avp_pushto("Email/reply","s:email");
+avp_pushto("Foo","$bar/g");
+...
+     _________________________________________________________
+
+1.4.7. avp_check(name,op_value)
+
+   Checks the value of the AVP(s) against an operator and value.
+
+   Meaning of the parameters is as follows:
+
+     * name - which AVP(s) should be checked. Parameter syntax
+       is:
+          + name = ( avp_name | avp_alias ) 
+     * op_value - define the operator, the value and flags for
+       checking. Parameter syntax is:
+          + op_value = operator '/' value ['/'flags] 
+          + operator = 'eq' | 'lt' | 'gt' 
+          + value = variable | fix_value 
+          + variable =
+            '$from'|'$ruri'|'$from'|'$src_ip'|avp_alias 
+          + fix_value = 'i:'integer | 's:'string | string 
+          + flags = 'g' | 'G' | 'i' | 'I' 
+
+   Example 1-17. avp_check usage
+...
+avp_check("i:678", "lt/i:345/g");
+avp_check("s:person","eq/$from/I");
+avp_check("s:foo","gt/$bar/g");
+...
+     _________________________________________________________
+
+1.4.8. avp_print()
+
+   Prints the list with all the AVPs from memory. This is only a
+   helper/debug function.
+
+   Example 1-18. avp_print usage
+...
+avp_print();
+...
+     _________________________________________________________
+
+1.5. Installation & Running
+
+   The AVPOPS module requires one more column in the
+   usr_preferences table than how it is created now by ser_mysql
+   script. The missing column is "type". Till the discrepancy is
+   fixed, please add by hand the column "type" integer, not null,
+   default 0 .
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more documentation about this module?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more documentation about this module?
+
+   An up-to-date tutorial providing more information (detailed
+   explanations and commneted examples) can be found on Voice
+   Sistem documentation web page at
+   http://voice-system.ro/docs/avpops .
+
+   3.2. Where can I post a question about this module?
+
+   Sent an email to <support@voice-system.ro> or, if you want to
+   keep the mail private, send it to <ramona@voice-system.ro>.
+
+   Remember: first at all, check if your question was already
+   answered on one of SER mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   3.3. How can I report a bug?
+
+   Accumulate as much as possible information (SER version, ser
+   -V output, your OS (uname -a), SER logs, network dumps, core
+   dump files, configuration file) and send a mail to
+   <support@voice-system.ro>
