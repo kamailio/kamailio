@@ -23,7 +23,7 @@
 	}while(0)
 
 #define trim_r( _mystr ) \
-	do{	static _c; \
+	do{	static char _c; \
 		while( ((_mystr).len) && ((_c=(_mystr).s[(_mystr).len-1]))==0 || _c=='\r' || _c=='\n') \
 			(_mystr).len--; \
 	}while(0)

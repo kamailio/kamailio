@@ -26,9 +26,12 @@ int udp_sock;
 int probe_max_receive_buffer( int udp_sock )
 {
 	int optval, optvallen;
-	int ioptval, ioptvallen;
-	int foptval, foptvallen;
-	int voptval, voptvallen;
+	int ioptval;
+	unsigned int ioptvallen;
+	int foptval;
+	unsigned int foptvallen;
+	int voptval;
+	unsigned int voptvallen;
 	int i;
 	int phase=0;
 
@@ -158,7 +161,7 @@ int udp_rcv_loop()
 #endif
 
 	struct sockaddr_in* from;
-	int fromlen;
+	unsigned int fromlen;
 
 
 	from=(struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));

@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -3-suncc
+EXTRAVERSION = -4-icc
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -141,12 +141,25 @@ ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	MKDEP=$(CC) -xM1 $(DEFS)
 endif
 
+ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
+	# very nice: gcc compatible
+	CC_NAME=icc
+	CC_FULLVER=$(shell echo "$(CC_LONGVER)"|head -1| \
+					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
+	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
+	CC_VER=$(CC) $(CC_FULLVER)
+	MKDEP=$(CC) -MM $(DEFS)
+endif
+
+
 ifeq (,$(CC_NAME))
 #not found
 	CC_NAME=$(CC)
 	CC_SHORTVER=unknown
 	CC_VER=unknown
 	MKDEP=gcc -MM $(DEFS)
+$(warning	Unknown compiler $(CC)\; supported compilers: \
+			gcc, sun cc, intel icc )
 endif
 
 
@@ -181,8 +194,17 @@ endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
 
 else		# CC_NAME, gcc
+ifeq		($(CC_NAME), icc)
+			CFLAGS=-O3  -ipo -ipo_obj -unroll  $(PROFILE) \
+					 -tpp6 -xK  #-openmp  #optimize for PIII 
+				# -prefetch doesn't seem to work
+				#( ty to inline acroos files, unroll loops,prefetch,
+				# optimize for PIII, use PIII instructions & vect.,
+				# mutlithread loops)
+else
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, icc
 endif		#CC_NAME, gcc
 endif	#ARCH, i386
 
@@ -236,6 +258,10 @@ ifeq	($(CC_NAME), gcc)
 	#gcc and maybe others
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
 endif
+ifeq	($(CC_NAME), icc)
+	#gcc and maybe others
+	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+endif
 ifeq	($(CC_NAME), suncc)
 	LDFLAGS+=-xO5 $(PROFILE)
 endif
@@ -245,6 +271,10 @@ endif
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align -Winline $(PROFILE)
+		LDFLAGS+=-g -Wl,-E $(PROFILE)
+endif
+ifeq	($(CC_NAME), icc)
+		CFLAGS=-g  $(PROFILE)
 		LDFLAGS+=-g -Wl,-E $(PROFILE)
 endif
 ifeq	($(CC_NAME), suncc)
@@ -258,6 +288,10 @@ endif #mode=release
 #*FLAGS used for compiling the modules
 ifeq	($(CC_NAME), gcc)
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
+MOD_LDFLAGS=-shared $(LDFLAGS)
+endif
+ifeq	($(CC_NAME), icc)
+MOD_CFLAGS=-Kpic $(CFLAGS)
 MOD_LDFLAGS=-shared $(LDFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
