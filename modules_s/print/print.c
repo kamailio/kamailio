@@ -20,7 +20,7 @@ static struct module_exports print_exports= {	"print_stdout",
 												0, /* response function*/
 												0,  /* destroy function */
 												0,   /* oncancel function */
-						                                                0  /* per-child init function */
+												0 /* per-child init function */
 											};
 
 
