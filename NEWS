@@ -128,7 +128,7 @@ XXX
 rr module:
 ----------
 - addRecordRoute has been replaced with record_route
-- rewriteFromRoute has been replaced with strict_route()
+- rewriteFromRoute has been replaced with loose_route()
 - a new option, "enable_full_lr" can be set to make life
   with misimplemented UAs easier and put LR in from "lr=on"
 
