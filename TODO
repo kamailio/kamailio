@@ -2,6 +2,7 @@ $Id$
 
 ( - todo, x - done)
 
+- add BUG checks for  fd > 0 && fd <= maxfd to all selects?
 x tcp_main_loop: BUG cases should "conitnue;"
 - change len_gt into and expr (e.g msg:len).
 - sipit: uri == myself doesn't match tls port = 5061

@@ -487,11 +487,13 @@ send_it:
 		response[0]=(long)c;
 		response[1]=CONN_ERROR;
 		n=write(unix_tcp_sock, response, sizeof(response));
+		/* CONN_ERROR wil auto-dec refcnt => we must not call tcpconn_put !!*/
 		if (n<0){
-			LOG(L_ERR, "BUG: tcp_send: failed to get fd(write):%s (%d)\n",
+			LOG(L_ERR, "BUG: tcp_send: error return failed (write):%s (%d)\n",
 					strerror(errno), errno);
-			goto release_c;
 		}
+		close(fd);
+		return n; /* error return, no tcpconn_put */
 	}
 end:
 	close(fd);
@@ -853,6 +855,7 @@ read_again:
 					case CONN_ERROR:
 					case CONN_DESTROY:
 					case CONN_EOF:
+						/* WARNING: this will auto-dec. refcnt! */
 						if (pt[r].idx>=0){
 							tcp_children[pt[r].idx].busy--;
 						}else{

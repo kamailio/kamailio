@@ -100,9 +100,9 @@ struct tcp_connection{
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
 	struct tcp_req req; /* request data */
 	volatile int refcnt;
-	int type; /* PROTO_TCP or a protocol over it, e.g. TLS */
+	enum sip_protos type; /* PROTO_TCP or a protocol over it, e.g. TLS */
 	int flags; /* connection related flags */
-	int state; /* connection state */
+	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	int timeout; /* connection timeout, after this it will be removed*/
 	unsigned addr_hash; /* hash indexes in the 2 tables */
