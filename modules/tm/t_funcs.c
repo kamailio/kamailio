@@ -43,6 +43,13 @@
 #define remove_from_timer(hash_table,tl,list_id) \
 	remove_from_timer_list( (hash_table), (tl) , (list_id))
 
+#define unref_T(T_cell) \
+	do{\
+		lock( hash_table->entrys[T_cell->hash_index].mutex );\
+		T_cell->ref_counter--;\
+		DBG("DEBUG: XXXXXXXXXXXXXXXXXXXXX unref_T : T=%p , ref=%d\n",T_cell,T_cell->ref_counter);\
+		unlock( hash_table->entrys[T_cell->hash_index].mutex );\
+	}while(0);
 
 
 
@@ -119,30 +126,27 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    struct cell*    new_cell;
 
    DBG("DEBUG: t_add_transaction: adding......\n");
-   /* it's about the same transaction or not?*/
-   if ( global_msg_id != p_msg->id )
-   {
-      T = T_UNDEFINED;
-      global_msg_id = p_msg->id;
-   }
-
-    /* if the transaction is not found yet we are tring to look for it*/
-   if ( T==T_UNDEFINED )
-      /* if the lookup's result is not 0 means that it's a retransmission */
-      if ( t_lookup_request( p_msg, foo, bar ) )
-      {
-         LOG(L_ERR,"ERROR: t_add_transaction: won't add a retransmission\n");
-         return -1;
-      }
 
    /* sanity check: ACKs can never establish a transaction */
-   if ( p_msg->first_line.u.request.method_value==METHOD_ACK ) {
-	LOG(L_ERR, "ERROR: add_transaction: ACK can't be used to add transaction\n");
-	return -1;
+   if ( p_msg->first_line.u.request.method_value==METHOD_ACK )
+   {
+       LOG(L_ERR, "ERROR: add_transaction: ACK can't be used to add transaction\n");
+      return -1;
+   }
+
+   /* it's about the same transaction or not?*/
+   t_check( p_msg , 0 );
+
+   /* if the lookup's result is not 0 means that it's a retransmission */
+   if ( T )
+   {
+      LOG(L_ERR,"ERROR: t_add_transaction: won't add a retransmission\n");
+      return -1;
    }
 
    /* creates a new transaction */
    new_cell = build_cell( p_msg ) ;
+   DBG("DEBUG: t_add_transaction: new transaction created %p\n", new_cell);
    if  ( !new_cell ){
 	   LOG(L_ERR, "ERROR: add_transaction: out of mem:\n");
 	   sh_status();
@@ -153,6 +157,7 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
 
    T = new_cell;
+   T->ref_counter =1;
    return 1;
 }
 
@@ -163,53 +168,37 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
  *      -1 - transaction wasn't found
  *       1  - transaction found
  */
-int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
+int t_lookup_request( struct sip_msg* p_msg )
 {
    struct cell      *p_cell;
    struct cell      *tmp_cell;
    unsigned int  hash_index=0;
    unsigned int  isACK = 0;
 
-   /* it's about the same transaction or not?*/
-   if ( global_msg_id != p_msg->id )
+   DBG("t_lookup_request: start searching\n");
+
+   /* parse all*/
+   if (check_transaction_quadruple(p_msg)==0)
    {
-      T = T_UNDEFINED;
-      global_msg_id = p_msg->id;
-   }
-
-    /* if  T is previous found -> return found */
-   if ( T!=T_UNDEFINED && T )	{
-      DBG("DEBUG: t_lookup_request: T already exists\n");
-      return 1;
-   }
-
-    /* if T was previous searched and not found -> return not found*/
-   if ( !T )	{
-	DBG("DEBUG: t_lookup_request: T previously sought and not found\n");
+      LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
+      T=0;
       return -1;
    }
 
-   DBG("t_lookup_request: start searching\n");
-   /* parse all*/
-   if (check_transaction_quadruple(p_msg)==0) {
-	   LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
-	   T=T_NULL;
-	   return -1;
-   }
    /* start searching into the table */
    hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  )
       isACK = 1;
    DBG("t_lookup_request: continue searching;  hash=%d, isACK=%d\n",hash_index,isACK);
 
+   /* lock the hole entry*/
+   lock( hash_table->entrys[hash_index].mutex );
+
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
    tmp_cell = 0;
    while( p_cell )
    {
-      /* the transaction is referenceted for reading */
-      ref_cell( p_cell );
-
       /* is it the wanted transaction ? */
       if ( !isACK )
       { /* is not an ACK request */
@@ -224,9 +213,10 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
                                if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                   if ( /*cseq*/ !memcmp( p_cell->inbound_request->cseq->body.s , p_msg->cseq->body.s , p_msg->cseq->body.len ) )
                                      { /* WE FOUND THE GOLDEN EGG !!!! */
-                                        DBG("DEBUG: t_lookup_request: non-ACK found\n");
                                         T = p_cell;
-                                        unref_cell( p_cell );
+                                        T->ref_counter ++;
+                                        DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: non-ACK found ( T=%p , ref=%d)\n",T,T->ref_counter);
+                                        unlock( hash_table->entrys[hash_index].mutex );
                                         return 1;
                                      }
       }
@@ -246,23 +236,22 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
                                      if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                         if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                            { /* WE FOUND THE GOLDEN EGG !!!! */
-                                              DBG("DEBUG: t_lookup_request: ACK found\n");
                                               T = p_cell;
-                                              unref_cell( p_cell );
+                                              T->ref_counter ++;
+                                              DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: ACK found ( T=%p , ref=%d)\n",T,T->ref_counter);
+                                              unlock( hash_table->entrys[hash_index].mutex );
                                                return 1;
                                            }
       } /* end if is ACK or not*/
       /* next transaction */
       tmp_cell = p_cell;
       p_cell = p_cell->next_cell;
-
-      /* the transaction is dereferenceted */
-      unref_cell( tmp_cell );
    }
 
    /* no transaction found */
-   DBG("DEBUG: t_lookup_request: no transaction found\n");
    T = 0;
+   unlock( hash_table->entrys[hash_index].mutex );
+   DBG("DEBUG: t_lookup_request: no transaction found\n");
    return -1;
 }
 
@@ -285,19 +274,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    branch = 0;	/* we don't do any forking right now */
 
    /* it's about the same transaction or not? */
-   if ( global_msg_id != p_msg->id )
-   {
-      T = T_UNDEFINED;
-      global_msg_id = p_msg->id;
-   }
-
-   /* if  T hasn't been previous searched -> search for it */
-   if ( T == T_UNDEFINED )
-      t_lookup_request( p_msg, 0 , 0 );
+   t_check( p_msg  , 0 );
 
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
+   {
+      DBG("DEBUG: t_forward: no transaction found in order  to forward the request\n");
       return -1;
+   }
 
    /*if it's an ACK and the status is not final or is final, but error the ACK is not forwarded*/
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  && (T->status/100)!=2 ) {
@@ -437,19 +421,14 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
    int                      err;
 
    /* it's about the same transaction or not? */
-   if ( global_msg_id != p_msg->id )
-   {
-      T = T_UNDEFINED;
-      global_msg_id = p_msg->id;
-   }
-
-   /* if  T hasn't been previous searched -> search for it */
-   if ( T==T_UNDEFINED )
-      t_lookup_request( p_msg, 0 , 0 );
+   t_check( p_msg , 0);
 
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
+   {
+      DBG("DEBUG: t_forward_uri: no transaction found in order  to forward the request\n");
       return -1;
+   }
 
    /* the original uri has been changed? */
    if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
@@ -506,7 +485,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    struct sip_msg *clone;
    int relay;
 
-   global_msg_id = p_msg->id;
    clone=NULL;
 
    /* parse_headers( p_msg , HDR_EOH ); */ /*????*/
@@ -523,7 +501,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	return 1;
 
    /* we use label-matching to lookup for T */
-   t_reply_matching( hash_table , p_msg , &T , &branch  );
+   t_check( p_msg , &branch );
 
    /* if no T found ->tell the core router to forward statelessly */
    if ( T<=0 )
@@ -593,7 +571,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       {
         T->inbound_response[branch]=NULL;
         sip_msg_free( clone );
-       DBG("DEBUG: t_store_incoming_reply: DONE WITH ERROR!! :((((((((((((((((((((((((((((\n");
         return -1;
       }
    }
@@ -607,8 +584,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    }
 
    /* nothing to do for the ser core */
-
-   DBG("DEBUG: t_store_incoming_reply: DONE WITH SUCCESS!! :)))))))))))))))))))))))\n");
    return 0;
 }
 
@@ -619,7 +594,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
   */
 int t_release_transaction( struct sip_msg* p_msg)
 {
-   t_check( hash_table , p_msg );
+   t_check( p_msg , 0 );
 
    if ( T && T!=T_UNDEFINED )
       return t_put_on_wait( T );
@@ -639,7 +614,7 @@ int t_release_transaction( struct sip_msg* p_msg)
   */
 int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
 {
-   t_check( hash_table, p_msg );
+   t_check( p_msg , 0 );
 
    /* if no transaction exists or no reply to be resend -> out */
    if ( T  && T->outbound_response )
@@ -671,11 +646,11 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    char *b;
 
    DBG("DEBUG: t_send_reply: entered\n");
-   t_check( hash_table, p_msg );
+   t_check( p_msg , 0 );
 
    if (!T)
    {
-      LOG(L_ERR, "ERROR: cannot send a t_reply to a message for which no T-state has been established\n");
+      LOG(L_ERR, "ERROR: t_send_reply: cannot send a t_reply to a message for which no T-state has been established\n");
      return -1;
    }
 
@@ -784,9 +759,6 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    tmp_cell = 0;
    while( p_cell )
    {
-      /* the transaction is referenceted for reading */
-      ref_cell( p_cell );
-
       /* is it the wanted transaction ? */
       /* first only the length are checked */
       if ( /*from length*/ p_cell->inbound_request->from->body.len == p_msg->from->body.len )
@@ -804,15 +776,11 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
                                           if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                              if ( /*req_uri*/ !memcmp( p_cell->inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len ) )
                                              { /* WE FOUND THE GOLDEN EGG !!!! */
-                                                unref_cell( p_cell );
                                                 return p_cell;
                                              }
       /* next transaction */
       tmp_cell = p_cell;
       p_cell = p_cell->next_cell;
-
-      /* the transaction is dereferenceted */
-      unref_cell( tmp_cell );
    }
 
    /* no transaction found */
@@ -852,7 +820,7 @@ int str_unsigned_hex_2_int( char *c, int len )
 /* Returns 0 - nothing found
   *              1  - T found
   */
-int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struct cell **p_Trans , unsigned int *p_branch )
+int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 {
    struct cell*  p_cell;
    struct cell* tmp_cell;
@@ -864,8 +832,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    int scan_space;
 
    /* split the branch into pieces: loop_detection_check(ignored),
-      hash_table_id, synonym_id, branch_id
-   */
+      hash_table_id, synonym_id, branch_id*/
 
    if (! ( p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s) )
 	goto nomatch;
@@ -911,36 +878,34 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
 	hash_index, entry_label, branch_id );
 
    /* sanity check */
-   if (hash_index==-1 || hash_index >=TABLE_ENTRIES ||
-       entry_label==-1 || branch_id==-1 ||
-	branch_id>=MAX_FORK )
-		goto nomatch;
+   if (hash_index<0 || hash_index >=TABLE_ENTRIES ||
+       entry_label<0 || branch_id<0 || branch_id>=MAX_FORK )
+          goto nomatch;
 
+   /* lock the hole entry*/
+   lock( hash_table->entrys[hash_index].mutex );
 
    /*all the cells from the entry are scan to detect an entry_label matching */
    p_cell     = hash_table->entrys[hash_index].first_cell;
    tmp_cell = 0;
    while( p_cell )
    {
-      /* the transaction is referenceted for reading */
-      ref_cell( p_cell );
       /* is it the cell with the wanted entry_label? */
       if ( p_cell->label == entry_label )
       /* has the transaction the wanted branch? */
       if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
       {/* WE FOUND THE GOLDEN EGG !!!! */
-		*p_Trans = p_cell;
-		*p_branch = branch_id;
-		unref_cell( p_cell );
-                              DBG("DEBUG: t_reply_matching: reply matched!\n");
-		return 1;
-	}
+          T = p_cell;
+          *p_branch = branch_id;
+          T->ref_counter ++;
+          unlock( hash_table->entrys[hash_index].mutex );
+          DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching: reply matched (T=%p, ref=%d)!\n",T,T->ref_counter);
+        return 1;
+      }
       /* next cell */
       tmp_cell = p_cell;
       p_cell = p_cell->next_cell;
 
-      /* the transaction is dereferenceted */
-      unref_cell( tmp_cell );
    } /* while p_cell */
 
    /* nothing found */
@@ -949,69 +914,44 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
 nomatch:
    DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
    *p_branch = -1;
-   *p_Trans = NULL;
-   return 0;
+   T = 0;
+   unlock( hash_table->entrys[hash_index].mutex );
+   return -1;
 }
-
-
-
-
-/* We like this incoming reply, so, let's store it, we'll decide
-  * later what to d with that
-  */
-
-/*
-int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
-{
-   DBG("DEBUG: t_store_incoming_reply: starting [%d]....\n",branch);
-   if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
-        !p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
-   {
-      LOG( L_ERR , "ERROR: t_store_incoming_reply: unable to parse headers !\n"  );
-      return -1;
-   }
-   if ( Trans->inbound_response[branch] ) {
-      sip_msg_free( Trans->inbound_response[branch] ) ;
-      DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
-   }
-
-   Trans->inbound_response[branch] = sip_msg_cloner( p_msg );
-   if (!Trans->inbound_response[branch])
-	return -1;
-   Trans->status = p_msg->first_line.u.reply.statuscode;
-   DBG("DEBUG: t_store_incoming_reply: reply stored\n");
-   return 1;
-}
-
-*/
 
 
 
 
 /* Functions update T (T gets either a valid pointer in it or it equals zero) if no transaction
   * for current message exists;
-  * Returns 1 if T was modified or 0 if not.
   */
-int t_check( struct s_table *hash_table , struct sip_msg* p_msg )
+int t_check( struct sip_msg* p_msg , int *param_branch)
 {
-   unsigned int branch;
+   int local_branch;
 
    /* is T still up-to-date ? */
    DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T=%p\n", p_msg->id,global_msg_id,T);
    if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
    {
       global_msg_id = p_msg->id;
+      if ( T && T!=T_UNDEFINED )
+         unref_T(T);
       T = T_UNDEFINED;
       /* transaction lookup */
-     if ( p_msg->first_line.type=SIP_REQUEST )
-         t_lookup_request( p_msg, 0, 0 );
+     if ( p_msg->first_line.type==SIP_REQUEST )
+         t_lookup_request( p_msg );
+     else
+         t_reply_matching( p_msg , ((param_branch!=0)?(param_branch):(&local_branch)) );
+   }
+   else
+   {
+      if (T)
+         DBG("DEBUG: t_check: T alredy found!\n");
       else
-         t_reply_matching( hash_table , p_msg , &T , &branch );
-
-      return 1;
+          DBG("DEBUG: t_check: T previously sought and not found\n");
    }
 
-   return 0;
+   return ((T)?1:-1) ;
 }
 
 
@@ -1459,7 +1399,7 @@ void delete_handler( void *attr)
     }
     else
     {
-       DBG("DEBUG: delete_handler : re post for delete\n");
+       DBG("DEBUG: delete_handler : re post for delete (%d)\n",p_cell->ref_counter);
        /* else it's readded to del list for future del */
        add_to_tail_of_timer( hash_table, (&(p_cell->dele_tl)), DELETE_LIST, DEL_TIME_OUT );
     }

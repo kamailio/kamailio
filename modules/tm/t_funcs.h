@@ -52,7 +52,7 @@ int  t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar  );
  *      -1 - transaction wasn't found
  *       1 - transaction found
  */
-int  t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  );
+int t_check( struct sip_msg* , int *branch );
 
 
 
@@ -112,9 +112,9 @@ int t_send_reply( struct sip_msg * , unsigned int , char *  );
 
 
 struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
-int t_reply_matching( struct s_table* , struct sip_msg* , struct cell** , unsigned int*  );
+int t_reply_matching( struct sip_msg* , unsigned int*  );
 int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
-int t_check( struct s_table* , struct sip_msg*  );
+int  t_lookup_request( struct sip_msg* p_msg );
 int t_all_final( struct cell * );
 int t_build_and_send_ACK( struct cell *Trans , unsigned int brach , struct sip_msg* rpl);
 int t_cancel_branch(unsigned int branch); //TO DO

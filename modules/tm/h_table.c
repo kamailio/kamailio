@@ -58,7 +58,7 @@ void free_cell( struct cell* dead_cell )
    release_cell_lock( dead_cell );
    /* the cell's body */
    sh_free( dead_cell );
-   DBG("DEBUG: free_cell: start\n");
+   DBG("DEBUG: free_cell: done\n");
 }
 
 
@@ -140,12 +140,14 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    struct cell*  new_cell;
    int                i;
 
+    DBG("DEBUG: build_cell : start\n");
     /* do we have the source for the build process? */
    if (!p_msg)
       return NULL;
 
    /* allocs a new cell */
    new_cell = (struct cell*)sh_malloc( sizeof( struct cell ) );
+   DBG("DEBUG: build_cell : malloc done\n");
    if  ( !new_cell )
       return NULL;
 
@@ -164,6 +166,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    if (parse_headers(p_msg, HDR_EOH )==-1)
 	goto error;
    new_cell->inbound_request =  sip_msg_cloner(p_msg) ;
+   DBG("DEBUG: build_cell : clone done\n");
    if (!new_cell->inbound_request)
 	goto error;
    /* inbound response is NULL*/
@@ -181,6 +184,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
    init_cell_lock(  new_cell );
 
+   DBG("DEBUG: build_cell : done\n");
    return new_cell;
 
 error:
@@ -253,20 +257,6 @@ void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell )
 }
 
 
-void ref_cell( struct cell* p_cell)
-{
-   lock( p_cell->mutex );
-   p_cell->ref_counter++;
-  unlock( p_cell->mutex );
-}
-
-
-void unref_cell( struct cell* p_cell)
-{
-   lock( p_cell->mutex );
-   p_cell->ref_counter--;
-   unlock( p_cell->mutex );
-}
 
 
 

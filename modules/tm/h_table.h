@@ -145,9 +145,4 @@ struct cell*  build_cell( struct sip_msg* p_msg );
 void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell );
 void    insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cell );
 
-void      ref_cell( struct cell* p_cell);
-void unref_cell( struct cell* p_cell);
-
-
-
 #endif
