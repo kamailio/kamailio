@@ -507,9 +507,6 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	str  loc;
 	str  script;
 
-	//script.s = 0;
-	//cpl_intr = 0;
-
 	/* get the user_name */
 	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the destination user name */
@@ -527,9 +524,10 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 
 	/* has the user a non-empty script? if not, return normaly, allowing ser to
 	 * continue its script */
-	if ( !script.s || !script.len )
+	if ( !script.s || !script.len ) {
 		shm_free(user.s);
 		return 1;
+	}
 
 	/* build a new script interpreter */
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )

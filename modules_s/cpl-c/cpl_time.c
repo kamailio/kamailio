@@ -585,7 +585,7 @@ time_t ic_parse_datetime(char *_in, struct tm *_tm)
 	_tm->tm_hour = _D(_in[9])*10 + _D(_in[10]);
 	_tm->tm_min = _D(_in[11])*10 + _D(_in[12]);
 	_tm->tm_sec = _D(_in[13])*10 + _D(_in[14]);
-	_tm->tm_isdst = daylight;
+	_tm->tm_isdst = -1 /*daylight*/;
 	return mktime(_tm);
 }
 
@@ -1194,7 +1194,7 @@ int check_byxxx(tmrec_p _trp, ac_tm_p _atp)
 			if(_trp->freq==FREQ_YEARLY)
 			{
 #ifdef EXTRA_DEBUG
-				printf("Req:byday:y: %d==%d && %d==%d\n", _atp->t.tm_wday,
+				DBG("Req:byday:y: %d==%d && %d==%d\n", _atp->t.tm_wday,
 					_trp->byday->xxx[i], _atp->ywday+1, 
 					(_trp->byday->req[i]+_amp->ywday)%_amp->ywday);
 #endif
@@ -1208,7 +1208,7 @@ int check_byxxx(tmrec_p _trp, ac_tm_p _atp)
 				if(_trp->freq==FREQ_MONTHLY)
 				{
 #ifdef EXTRA_DEBUG
-					printf("Req:byday:m: %d==%d && %d==%d\n", _atp->t.tm_wday,
+					DBG("Req:byday:m: %d==%d && %d==%d\n", _atp->t.tm_wday,
 						_trp->byday->xxx[i], _atp->mwday+1, 
 						(_trp->byday->req[i]+_amp->mwday)%_amp->mwday);
 #endif
