@@ -1006,6 +1006,11 @@ void destroy_tcp()
 		shm_free(tcpconn_id_hash);
 		tcpconn_id_hash=0;
 	}
+	
+	if(connection_id){
+		shm_free(connection_id);
+		connection_id=0;
+	}
 }
 
 
