@@ -402,10 +402,10 @@ CREATE TABLE domain (
 #
 CREATE TABLE uri (
   user varchar(50) NOT NULL default '',
-  realm varchar(50) NOT NULL default '',
+  domain varchar(50) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY (user, realm, uri_user)
+  PRIMARY KEY (user, domain, uri_user)
 ) $TABLE_TYPE;
 
 
