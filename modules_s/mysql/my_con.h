@@ -29,15 +29,17 @@
 #ifndef MY_CON_H
 #define MY_CON_H
 
+#include <time.h>
 #include <mysql/mysql.h>
 #include "my_id.h"
 
 struct my_con {
-	struct my_id* id;     /* Connection identifier */
+	struct my_id* id;    /* Connection identifier */
 	int ref;             /* Reference count */
 	MYSQL_RES* res;      /* Actual result */
 	MYSQL* con;          /* Connection representation */
 	MYSQL_ROW row;       /* Actual row in the result */
+	time_t timestamp;    /* Timestamp of last query */
 	struct my_con* next; /* Next connection in the pool */
 };
 
@@ -48,6 +50,7 @@ struct my_con {
 #define CON_RESULT(db_con)     (((struct my_con*)((db_con)->tail))->res)
 #define CON_CONNECTION(db_con) (((struct my_con*)((db_con)->tail))->con)
 #define CON_ROW(db_con)        (((struct my_con*)((db_con)->tail))->row)
+#define CON_TIMESTAMP(db_con)  (((struct my_con*)((db_con)->tail))->timestamp)
 
 
 /*

@@ -27,6 +27,7 @@
  */
 
 #include <string.h>
+#include <time.h>
 #include "my_con.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -68,6 +69,8 @@ struct my_con* new_connection(struct my_id* id)
 		mysql_close(ptr->con);
 		goto err;
 	}
+
+	ptr->timestamp = time(0);
 
 	ptr->id = id;
 	return ptr;
