@@ -239,14 +239,14 @@ char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 	/* check the format of the decoded mime */
 	if ((*mime_type)>>16==TYPE_ALL && ((*mime_type)&0x00ff)!=SUBTYPE_ALL) {
 		LOG(L_ERR,"ERROR:decode_mine_type: invalid mime format found "
-			" <*/submime> in [%.*s]!!\n", end-start,start);
+			" <*/submime> in [%.*s]!!\n", (int)(end-start),start);
 		return 0;
 	}
 
 	return p;
 error:
 	LOG(L_ERR,"ERROR:decode_mine_type: parse error near in [%.*s] char"
-		"[%d][%c] offset=%d\n", end-start,start,*p,*p,(int)(p-start));
+		"[%d][%c] offset=%d\n", (int)(end-start),start,*p,*p,(int)(p-start));
 	return 0;
 }
 
@@ -293,7 +293,7 @@ int parse_content_type_hdr( struct sip_msg *msg )
 		goto error;
 	}
 
-	msg->content_type->parsed = (void*)mime;
+	msg->content_type->parsed = (void*)(long)mime;
 	return mime;
 
 error:
@@ -350,8 +350,8 @@ int parse_accept_hdr( struct sip_msg *msg )
 		if (*ret!=',' || ret+1==end) {
 			LOG(L_ERR,"ERROR:parse_accept_hdr: parse error between mimes at "
 				"char <%x> (offset=%d) in <%.*s>!\n",
-				*ret,ret-msg->accept->body.s,
-				msg->accept->body.len,msg->accept->body.s);
+				*ret, (int)(ret-msg->accept->body.s),
+				msg->accept->body.len, msg->accept->body.s);
 			goto error;
 		}
 		/* skip the ',' */
