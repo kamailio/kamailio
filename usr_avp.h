@@ -39,9 +39,10 @@
 struct usr_avp {
 	unsigned int id;
 	str attr;
+	unsigned int val_type;
 	union {
 		str  str_val;
-		unsigned int int_val;
+		unsigned int uint_val;
 	}val;
 	struct usr_avp *next;
 };
@@ -49,12 +50,16 @@ struct usr_avp {
 extern struct usr_avp   *users_avps;
 
 
+#define AVP_TYPE_INT     1
+#define AVP_TYPE_STR     2
+
+#define AVP_DB_TABLE     "usr_preferences"
+
 #define AVP_USER_RURI    1
 #define AVP_USER_FROM    2
 #define AVP_USER_TO      3
 
 #define AVP_ALL_ATTR     ((char*)0xffffffff)
-
 
 /* init function */
 int init_avp_child( int rank );
@@ -63,6 +68,8 @@ int get_user_type( char *id );
 /* load/free/seach functions */
 void destroy_avps( );
 int load_avp( struct sip_msg *msg, int type, char *attr, int use_dom);
+struct usr_avp *search_avp( str *attr);
+struct usr_avp *search_next_avp( struct usr_avp *avp );
 
 #endif
 
