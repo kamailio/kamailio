@@ -2,6 +2,29 @@
  *
  * Copyright (C) 2004 Dan Pascu
  *
+ * Functions that were taken from other places have a comment above them
+ * marking their origin. They are copyrighted by their respective authors.
+ *
+ * The mediaproxy module shares it's working principle with the nathelper
+ * module. It also uses a similar interface for communicating with SER
+ * (exported functions perform similar actions).
+ * Credits should go to them for all their original ideas also present in
+ * mediaproxy, as well as for the SER interface which they have designed.
+ *
+ * The difference between mediaproxy and nathelper is that mediaproxy tries
+ * to implement the same ideas using a semantically different approach.
+ * Unlike the nathelper module which makes all it's decisions by calling
+ * it's functions with various parameters which change the behavior,
+ * mediaproxy uses parameterless functions and moves the decision logic
+ * into external configuration files (as for detecting asymmetric clients),
+ * or the proxy server / proxy dispatcher engines.
+ * This offers greater flexibility, as it allows changing the behavior more
+ * easily without any need to modify the ser.cfg configuration file.
+ * Other advantages are that the ser.cfg file remains simple and that
+ * changing the behavior can occur in realtime without restarting SER.
+ * Changes are simply done by editing some files or by adding some SRV records
+ * in DNS and SER will catch with them on the fly without the need to restart.
+ *
  * This file is part of ser, a free SIP server.
  *
  * ser is free software; you can redistribute it and/or modify
