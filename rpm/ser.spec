@@ -15,7 +15,7 @@ Source2:      ser.init
 URL:          http://iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
-BuildPrereq:  make flex bison 
+BuildPrereq:  make flex bison
 
 
 %description
@@ -33,7 +33,7 @@ transaction module, registrar and user location.
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
 Requires: ser
-BuildPrereq:  mysql-devel
+BuildPrereq:  mysql-devel zlib-devel
 
 %description mysql
 The ser-mysql package contains MySQL database connectivity that you
