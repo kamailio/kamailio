@@ -160,9 +160,6 @@ static int t_forward_uri(struct sip_msg* msg, char* str, char* str2)
 
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2)
 {
-	DBG("TM module: w_t_forward entered\n");
-	DBG("TM module: w_t_forward params: %x %d\n", 
-			 str, (unsigned int)str2);
 	return t_forward(msg, (unsigned int) str, (unsigned int) str2);
 }
 

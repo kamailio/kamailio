@@ -164,22 +164,22 @@ void lock_cleanup()
 		LOG(L_ERR, "ERROR: lock_cleanup, retrasmission_timer_semaphore cleanup failed\n");
 
 	entry_semaphore = transaction_timer_semaphore = retrasmission_timer_semaphore = 0;
-	
+
 }
 
 /* lock sempahore s */
 int lock( ser_lock_t s )
 {
-	DBG("DEBUG: lock: entering lock\n");
+	//DBG("DEBUG: lock: entering lock\n");
 	return change_semaphore( s, -1 );
-	DBG("DEBUG: lock: leaving lock\n");
+	//DBG("DEBUG: lock: leaving lock\n");
 }
-	
+
 int unlock( ser_lock_t s )
 {
-	DBG("DEBUG: unlock: entering unlock\n");
+	//DBG("DEBUG: unlock: entering unlock\n");
 	return change_semaphore( s, +1 );
-	DBG("DEBUG: unlock: leaving unlock\n");
+	//DBG("DEBUG: unlock: leaving unlock\n");
 }
 
 
@@ -210,7 +210,7 @@ int init_cell_lock( struct cell *cell )
 	   specifically, all cells in an entry use the same one
 	   shared with its entry lock
         */
-	cell->mutex.semaphore_set=entry_semaphore, 
+	cell->mutex.semaphore_set=entry_semaphore,
 	cell->mutex.semaphore_index=cell->hash_index / sem_nr;
 }
 
@@ -221,7 +221,7 @@ int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 	   many partitions as number of available semaphors allows
         */
 	entry->mutex.semaphore_set=entry_semaphore;
-	entry->mutex.semaphore_index = 
+	entry->mutex.semaphore_index =
 		((void *)entry - (void *)(hash_table->entrys ) )
 			/ ( sizeof(struct entry) * sem_nr );
 }

@@ -251,15 +251,17 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
                dest_ip    = T2->outbound_request[branch]->dest_ip;
                dest_port = T2->outbound_request[branch]->dest_port;
             }
-            else {
+            else
+            {
                /* transaction exists, but nothing to cancel */
                DBG("DEBUG: t_forward: it's CANCEL but I have nothing to cancel here\n");
-             return 1;
-	    }
+               return 1;
+            }
          }
       }/* end special case CANCEL*/
 
       /* store */
+      DBG("DEBUG: t_forward: building outbound request\n");
       T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload = &(T->outbound_request[branch]);
       T->outbound_request[branch]->dest_ip         = dest_ip;
       T->outbound_request[branch]->dest_port      = dest_port;
@@ -276,6 +278,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       memcpy( T->outbound_request[branch]->buffer , buf , len );
       free( buf ) ;
 
+      DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
       /*sets and starts the FINAL RESPONSE timer */
       add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
 
@@ -285,6 +288,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
+   DBG("DEBUG: t_forward: sending outbund request from buffer\n");
    /* send the request */
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
