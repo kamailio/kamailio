@@ -429,7 +429,7 @@ int fifo_hash( FILE *stream, char *response_file )
 }
 
 
-int fifo_hash_unx(str* msg)
+int unixsock_hash(str* msg)
 {
 	unsigned int i, ret;
 

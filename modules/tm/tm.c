@@ -89,6 +89,7 @@
 #include "../../fifo_server.h"
 #include "../../usr_avp.h"
 #include "../../mem/mem.h"
+#include "../../unixsock_server.h"
 
 #include "sip_msg.h"
 #include "h_table.h"
@@ -486,7 +487,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (unixsock_register_cmd("t_hash", fifo_hash_unx) < 0) {
+	if (unixsock_register_cmd("t_hash", unixsock_hash) < 0) {
 		LOG(L_CRIT, "cannot register t_hash with the unix server\n");
 		return -1;
 	}
