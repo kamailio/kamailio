@@ -144,7 +144,7 @@ static int mod_init(void)
 
 	vend = rc_dict_findvend(rh, "Cisco");
 	if (vend == NULL) {
-		LOG(L_WARN, "auth_radius: No `Cisco' vendor in Radius "
+		DBG("auth_radius: No `Cisco' vendor in Radius "
 			   "dictionary\n");
 		ciscopec = -1;
 		attrs[A_CISCO_AVPAIR].n = NULL;
