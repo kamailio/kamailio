@@ -145,7 +145,7 @@ void free_cell( struct cell* dead_cell )
 		if (b!=0 && b!=BUSY_BUFFER)
 			shm_free_unsafe( b );
 		rpl=dead_cell->uac[i].reply;
-		if (rpl && rpl!=FAKED_REPLY) {
+		if (rpl && rpl!=FAKED_REPLY && rpl->msg_flags&FL_SHM_CLONE) {
 			sip_msg_free_unsafe( rpl );
 		}
 	}

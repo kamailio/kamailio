@@ -72,6 +72,7 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 #define FL_FORCE_ACTIVE 2  /* force active SDP */
 #define FL_SDP_IP_AFS 4    /* SDP IP rewritten */
 #define FL_SDP_PORT_AFS 8  /* SDP port rewritten */
+#define FL_SHM_CLONE   16  /* msg cloned in SHM as a single chunk */
 
 
 #define IFISMETHOD(methodname,firstchar)                                  \

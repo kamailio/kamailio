@@ -761,14 +761,23 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		   a callback; save branch count to be able to determine
 		   later if new branches were initiated */
 		branch_cnt=Trans->nr_of_outgoings;
+		/* also append the current reply to the transaction to 
+		 * make it available in failure routes - a kind of "fake"
+		 * save of the final reply per branch */
+		Trans->uac[branch].reply = reply;
 
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if ( has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 		|| Trans->on_negative ) {
 			run_failure_handlers( Trans,
-				picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
+				Trans->uac[picked_branch].reply,
 				picked_code);
 		}
+
+		/* now reset it; after the failure logic, the reply may
+		 * not be stored any more and we don't want to keep into
+		 * transaction some broken reference */
+		Trans->uac[branch].reply = 0;
 
 		/* look if the callback perhaps replied transaction; it also
 		   covers the case in which a transaction is replied localy
