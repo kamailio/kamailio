@@ -43,14 +43,14 @@ int tm_shutdown()
 
 
 /* function returns:
- *       0 - a new transaction was created
- *      -1 - retransmission
- *      -2 - error
+ *       1 - a new transaction was created
+ *      -1 - error, including retransmission
  */
 int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
 {
    struct cell*    new_cell;
 
+   DBG("DEBUG: t_add_transaction: adding......\n");
    /* it's about the same transaction or not?*/
    if ( global_msg_id != p_msg->id )
    {
@@ -61,28 +61,29 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
     /* if the transaction is not found yet we are tring to look for it*/
    if ( (int)T==-1 )
       /* if the lookup's result is not 0 means that it's a retransmission */
-      if ( t_lookup_request( p_msg, foo, bar ) )	{
-	 DBG("DEBUG: t_add_transaction: won't add a retransmission\n");
+      if ( t_lookup_request( p_msg, foo, bar ) )
+      {
+         DBG("DEBUG: t_add_transaction: won't add a retransmission\n");
          return -1;
       }
 
    /* creates a new transaction */
    new_cell = build_cell( p_msg ) ;
    if  ( !new_cell )
-      return -2;
+      return -1;
    insert_into_hash_table( hash_table , new_cell );
    DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
 
    T = new_cell;
-   return 0;
+   return 1;
 }
 
 
 
 
 /* function returns:
- *       0 - transaction wasn't found
- *       1 - transaction found
+ *      -1 - transaction wasn't found
+ *       1  - transaction found
  */
 int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
 {
@@ -107,7 +108,7 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
     /* if T was previous searched and not found -> return not found*/
    if ( !T )	{
 	DBG("DEBUG: t_lookup_request: T previously sought and not found\n");
-      return 0;
+      return -1;
    }
 
    DBG("t_lookup_request: start searching\n");
@@ -146,7 +147,7 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
                                if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                   if ( /*cseq*/ !memcmp( p_cell->inbound_request->cseq->body.s , p_msg->cseq->body.s , p_msg->cseq->body.len ) )
                                      { /* WE FOUND THE GOLDEN EGG !!!! */
-					DBG("DEBUG: t_lookup_request: non-ACK found\n");
+                                        DBG("DEBUG: t_lookup_request: non-ACK found\n");
                                         T = p_cell;
                                         unref_cell( p_cell );
                                         return 1;
@@ -168,7 +169,7 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
                                      if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                         if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                            { /* WE FOUND THE GOLDEN EGG !!!! */
-						DBG("DEBUG: t_lookup_request: ACK found\n");
+                                              DBG("DEBUG: t_lookup_request: ACK found\n");
                                               T = p_cell;
                                               unref_cell( p_cell );
                                                return 1;
@@ -185,14 +186,14 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
    /* no transaction found */
    DBG("DEBUG: t_lookup_request: no transaction found\n");
    T = 0;
-   return 0;
+   return -1;
 }
 
 
 
 
 /* function returns:
- *       0 - forward successfull
+ *       1 - forward successfull
  *      -1 - error during forward
  */
 int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
@@ -217,7 +218,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    /*if it's an ACK and the status is not final or is final, but error the ACK is not forwarded*/
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  && (T->status/100)!=2 ) {
       DBG("DEBUG: t_forward: local ACK; don't forward\n");
-      return 0;
+      return 1;
    }
 
    /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
@@ -253,7 +254,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
             else {
                /* transaction exists, but nothing to cancel */
                DBG("DEBUG: t_forward: it's CANCEL but I have nothing to cancel here\n");
-             return 0;
+             return 1;
 	    }
          }
       }/* end special case CANCEL*/
@@ -286,7 +287,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
    /* send the request */
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
-		(struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+                    (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+   return 1;
 }
 
 
@@ -294,8 +296,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
 /*  This function is called whenever a reply for our module is received; we need to register
   *  this function on module initialization;
-  *  Returns :   1 - core router stops
-  *                    0 - core router relay statelessly
+  *  Returns :   0 - core router stops
+  *                    1 - core router relay statelessly
   */
 int t_on_reply_received( struct sip_msg  *p_msg )
 {
@@ -308,7 +310,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    /* if no T found ->tell the core router to forward statelessly */
    if ( !T )
-      return 0;
+      return 1;
 
    /* stop retransmission */
    remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
@@ -333,7 +335,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       if ( p_msg->first_line.u.reply.statusclass==2 )
           t_relay_reply( T , branch , p_msg );
       /* nothing to do for the ser core */
-      return 1;
+      return 0;
    }
    else
    {  /* no reply sent yet or sent but not final*/
@@ -353,7 +355,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	   DBG("DEBUG: t_on_reply_received:  relay ringing and OK immediately \n");
            if ( p_msg->first_line.u.reply.statuscode > T->status )
               t_relay_reply( T , branch , p_msg );
-         return 1;
+         return 0;
       }
 
       /* error final responses are only stored */
@@ -364,7 +366,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
          if ( t_all_final(T) )
               relay_lowest_reply_upstream( T , p_msg );
          /* nothing to do for the ser core */
-         return 1;
+         return 0;
       }
 
       /* global failure responses relay immediately */
@@ -373,7 +375,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	DBG("DEBUG: t_on_reply_received: global failure responses relay immediately (not 100 per cent compliant)\n");
          t_relay_reply( T , branch , p_msg );
          /* nothing to do for the ser core */
-         return 1;
+         return 0;
       }
    }
 }
@@ -381,7 +383,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 
 
-/*
+/*   returns 1 if everything was OK or -1 for error
   */
 int t_put_on_wait(  struct sip_msg  *p_msg  )
 {
@@ -408,7 +410,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
    }
    /* adds to Wait list*/
    add_to_tail_of_timer_list( hash_table, &(T->wait_tl), WT_TIMER_LIST, WT_TIME_OUT );
-   return 0;
+   return 1;
 }
 
 
@@ -416,7 +418,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
 
 /* Retransmits the last sent inbound reply.
   * Returns  -1 -error
-  *                0 - OK
+  *                1 - OK
   */
 int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
 {
@@ -426,7 +428,7 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
    if ( T  && T->inbound_response )
    {
       udp_send( T->inbound_response->buffer , T->inbound_response->bufflen , (struct sockaddr*)&(T->inbound_response->to) , sizeof(struct sockaddr_in) );
-      return 0;
+      return 1;
    }
 
    return -1;
@@ -436,6 +438,7 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
 
 
 /* Force a new response into inbound response buffer.
+  * returns 1 if everything was OK or -1 for erro
   */
 int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 {
@@ -498,6 +501,8 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 
       t_retransmit_reply( p_msg, 0 , 0);
    }
+
+   return 1;
 }
 
 

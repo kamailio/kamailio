@@ -1,4 +1,5 @@
 #include "h_table.h"
+#include "../../dprint.h"
 
 
 /*   Frees the all the containes of a cell and the cell's body itself
@@ -136,7 +137,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    /* filling with 0 */
    memset( new_cell, 0, sizeof( struct cell ) );
    /* hash index of the entry */
-   new_cell->hash_index = hash( p_msg->callid , get_cseq(p_msg)->number );
+   new_cell->hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number );
    /* mutex */
    init_cell_lock(  new_cell );
    /* ref counter is 0 */

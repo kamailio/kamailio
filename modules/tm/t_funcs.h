@@ -34,22 +34,21 @@ int tm_shutdown();
 
 
 /* function returns:
- *       0 - a new transaction was created
- *      -1 - retransmission
- *      -2 - error
+ *       1 - a new transaction was created
+ *      -1 - error, including retransmission
  */
 int  t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar  );
 
 
 /* function returns:
- *       0 - transaction wasn't found
+ *      -1 - transaction wasn't found
  *       1 - transaction found
  */
 int  t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  );
 
 
 /* function returns:
- *       0 - forward successfull
+ *       1 - forward successfull
  *      -1 - error during forward
  */
 int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
@@ -59,15 +58,15 @@ int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
 
 /*  This function is called whenever a reply for our module is received; we need to register
   *  this function on module initialization;
-  *  Returns :   1 - core router stops
-  *                    0 - core router relay statelessly
+  *  Returns :   0 - core router stops
+  *                    1 - core router relay statelessly
   */
 int t_on_reply_received( struct sip_msg  *p_msg ) ;
 
 
 
 
-/*
+/* returns 1 if everything was OK or -1 for error
 */
 int t_put_on_wait(  struct sip_msg  *p_msg  );
 
@@ -75,6 +74,8 @@ int t_put_on_wait(  struct sip_msg  *p_msg  );
 
 
 /* Retransmits the last sent inbound reply.
+  * Returns  -1 -error
+  *                1 - OK
   */
 int t_retransmit_reply( struct sip_msg *, char* , char* );
 
@@ -82,7 +83,8 @@ int t_retransmit_reply( struct sip_msg *, char* , char* );
 
 
 /* Force a new response into inbound response buffer.
-  */
+ * returns 1 if everything was OK or -1 for erro
+ */
 int t_send_reply( struct sip_msg * , unsigned int , char *  );
 
 
