@@ -1,4 +1,3 @@
-
 /*
  * Route & Record-Route module
  *
@@ -14,8 +13,8 @@
 #include "../../action.h"
 #include <stdio.h>
 
-#define RR_PREFIX "Record-Route: <"
-#define RR_PREFIX_LEN 15
+#define RR_PREFIX "Record-Route: <sip:"
+#define RR_PREFIX_LEN 19
 
 
 /*
@@ -194,11 +193,41 @@ int remFirstRoute(struct sip_msg* _m, char* _next)
 
 
 
+static void get_username(str* _s)
+{
+	char* at, *dcolon, *dc;
+	dcolon = find_not_quoted(_s->s, ':');
+
+	if (!dcolon) {
+		_s->len = 0;
+		return;
+	}
+	_s->s = dcolon + 1;
+
+	at = strchr(_s->s, '@');
+	dc = strchr(_s->s, ':');
+	if (at) {
+		if ((dc) && (dc < at)) {
+			_s->len = dc - dcolon - 1;
+			return;
+		}
+		
+		_s->len = at - dcolon - 1;
+		/*	_s->s[_s->len] = '\0'; */
+	} else {
+		_s->len = 0;
+	} 
+	return;
+}
+
+
+
 /*
  * Builds Record-Route line
  */
 int buildRRLine(struct sip_msg* _m, str* _l)
 {
+	str user;
 #ifdef PARANOID
 	if ((!_m) || (!_l)) {
 		LOG(L_ERR, "buildRRLine(): Invalid parameter value\n");
@@ -208,8 +237,22 @@ int buildRRLine(struct sip_msg* _m, str* _l)
 	_l->len = RR_PREFIX_LEN;
 	memcpy(_l->s, RR_PREFIX, _l->len);
 
-	DBG("%d\n", _m->dst_ip);
-	_l->len += sprintf(_l->s + _l->len, "sip:%d.%d.%d.%d", 
+	if (_m->new_uri.s) {
+		user.s = _m->new_uri.s;
+		user.len = _m->new_uri.len;
+	} else {
+		user.s = _m->first_line.u.request.uri.s;
+		user.len = _m->first_line.u.request.uri.len;
+	}
+
+	get_username(&user);
+	if (user.len) {
+		memcpy(_l->s + _l->len, user.s, user.len);
+		_l->len += user.len;
+		*(_l->s + _l->len++) = '@';
+	}
+
+	_l->len += sprintf(_l->s + _l->len, "%d.%d.%d.%d", 
 			   (addresses[0] & 0x000000ff),
 			   (addresses[0] & 0x0000ff00) >>  8,
 			   (addresses[0] & 0x00ff0000) >> 16,
