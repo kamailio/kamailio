@@ -68,20 +68,19 @@
 	<title>The Server Startup</title>
 	<para>
 	    The <function moreinfo="none">main</function> function in file <filename moreinfo="none">main.c</filename>
-	    is the first function called when the server is started. It's purpose is to initialize the server and
+	    is the first function called upon server startup. It's purpose is to initialize the server and
 	    enter main loop. The server initialization will be described in the following sections.
 	</para>
 	
 	<para>
-	    The particular initialization steps are describe in order in which they appear in the 
-	    <function>main</function> function.
+	    Particular initialization steps are described in order in which they appear in <function>main</function> function.
 	</para>
 	
 	<section id="signal-installation">
 	    <title>Installation Of New Signal Handlers</title>
 	    <para>
 		The first step in the initialization process is the installation of new signal handlers. We need
-		our own signal handlers to be able to do gracefull shutdown, print statistics and so on. There is
+		our own signal handlers to be able to do gracefull shutdown, print server statistics and so on. There is
 		only one signal handler function which is function <function moreinfo="none">sig_usr</function> in
 		file <filename moreinfo="none">main.c</filename>.
 	    </para>
@@ -107,7 +106,7 @@
 		filled in upon startup. The initialization is done here, there are two functions that do the
 		job. Function <function moreinfo="none">init_hfname_parser</function> initializes hash table
 		in header field name parser and function <function moreinfo="none">init_digest_parser</function>
-		initializes hash table in digest authentication parser. The parsers' internals will be described
+		initializes hash table in digest authentication parser. The parser's internals will be described
 		later.
 	    </para>
 	</section> <!-- parser-init -->
@@ -139,13 +138,13 @@
 	    <para>
 		Various subsystems of the server must be called periodically regardless of the incoming
 		requests. That's what timer is for. Function <function moreinfo="none">init_timer</function>
-		initializes the timer subsystems. The function is called from <filename moreinfo="none">main.c</filename>
+		initializes the timer subsystem. The function is called from <filename moreinfo="none">main.c</filename>
 		and can be found in <filename moreinfo="none">timer.c</filename> The timer subsystem will
 		be described later.
 	    </para>
 	    <warning>
 		<para>
-		    Timer subsystem must be initialize before config file is parsed !
+		    Timer subsystem must be initialized before config file is parsed !
 		</para>
 	    </warning>
 	</section> <!-- timer-init -->
@@ -160,12 +159,12 @@
 		itself. The function can be found in file <filename moreinfo="none">fifo_server.c</filename>.
 	    </para>
 	    <para>
-		The <acronym>FIFO</acronym> server will be described later.
+		The <acronym>FIFO</acronym> server will be described in <link linkend="fifo-server">another chapter</link>.
 	    </para>
 	</section> <!-- fifo-init -->
 	
 	<section id="builtin-mod-reg">
-	    <title>Builtin Module Initialization</title>
+	    <title>Built-in Module Initialization</title>
 	    <para>
 		Modules can be either loaded dynamically at runtime or compiled in statically. When a module
 		is loaded at runtime, it is registered
@@ -177,7 +176,7 @@
 		</footnote>
 		immediatelly with the 
 		core. When the module is compiled in statically, the registration<footnoteref linkend="regfoot"> 
-		must be performed upon server startup. Function 
+		must be performed during the server startup. Function 
 		<function moreinfo="none">register_buildin_modules</function> does the job.
 	    </para>
 	</section> <!-- builtin-mod-reg -->
@@ -185,7 +184,7 @@
 	<section id="ser-config">
 	    <title>Server Configuration</title>
 	    <para>
-		The server is configured using a configuration file. The configuration file
+		The server is configured through a configuration file. The configuration file
 		is C-Shell like script which defines how incoming requests should be processed.
 		
 		The file cannot be interpreted directly because that would be very slow. Instead
@@ -204,7 +203,7 @@
 	    <section id="lex-analysis">
 		<title>Lexical Analysis</title>
 		<para>
-		    Lexical analysis is a process of converting the input (the configuration file in this
+		    Lexical analysis is process of converting the input (the configuration file in this
 		    case) into a stream of tokens. A token is a set of characters that
 		    'belong' together. Program, that can turn the input into stream of tokens is
 		    called scanner. For example, when scanner encounters a number in the config
@@ -218,11 +217,11 @@
 		    regular expressions. For more details, see flex manual page or info documentation.
 		</para>
 		<para>
-		    The input file for the <acronym>SER</acronym> config file is in file 
+		    Flex input file for the <acronym>SER</acronym> config file is in file 
 		    <filename moreinfo="none">cfg.lex</filename>. The file is processed by flex when the
 		    server is being compiled and the result is written in file 
 		    <filename moreinfo="none">lex.yy.c</filename>. The output file contains the scanner
-		    implemented in C language.
+		    implemented in the C language.
 		</para>
 	    </section> <!-- lex-analysis -->
 	    
@@ -236,16 +235,16 @@
 		</para>
 		<para>
 		    Structure of the configuration file is described using grammar. Grammar is a set of rules
-		    describing valid 'order' or 'combination' of tokens. If the file doesn't conform with it's
+		    describing valid 'order' or 'combination' of tokens. If the file isn't conformable with it's
 		    grammar, it is syntactically invalid and cannot be further processed. In that case an error
-		    will be issued.
+		    will be issued and the server will be aborted.
 		</para>
 		<para>
 		    There is a utility called Bison. Input of the utility is a file containing the grammar of
 		    the configuration file, in addition to the grammar, you can describe what action the parser
 		    should do at various stages of parsing. For example, you can instruct the parser to create a
-		    structure describing an IP address every time it finds the IP address in the configuration
-		    file and convert the address to binary representation.
+		    structure describing an <acronym>IP</acronym> address every time it finds an <acronym>IP</acronym> 
+		    address in the configuration file and convert the address to its binary representation.
 		</para>
 		<para>For more information see Bison documentation.</para>
 		<para>
@@ -270,11 +269,13 @@
 			<para>
 			    <emphasis>Route Statement</emphasis> - The statement describes how incoming requests 
 			    will be processed.
-			    When a request is received, commands in one or more route sections will be executed
-			    in turn. The config file must always contain one main route statement and may contain
-			    several additional route statemens. Request processing always starts at the beginning
-			    of the main route statement. Additional route statements can be called from the main
-			    one or another additional route statements (It it simmilar to function calling).
+			    When a request is received, commands in one or more <quote>route</quote> sections will be executed
+			    step by step. The config file must always contain one main <quote>route</quote> statement and 
+			    may contain several additional <quote>route</quote> statements. Request processing always starts 
+			    at the beginning
+			    of the main <quote>route</quote> statement. Additional <quote>route</quote> statements can be 
+			    called from the main
+			    one or another additional <quote>route</quote> statements (It it simmilar to function calling).
 			</para>
 		    </listitem>
 		    <listitem>
@@ -293,7 +294,7 @@
 			    export functions, that can be called from the configuration file and variables, that
 			    can be configured from the config file. The module statement makes it possible to load
 			    modules and configure them. There are two commands in the statement - 
-			    <function moreinfo="none">loadmodule</function> and <function moreinfo="none">loadparam</function>. 
+			    <function moreinfo="none">loadmodule</function> and <function moreinfo="none">modparam</function>. 
 			    The first can load a module. The second one can configure module's internal
 			    variables.
 			</para>
@@ -308,18 +309,20 @@
 		    <title>Route Statement</title>
 		    <para>The following grammar snippet describes how the route statement is constructed</para>
 		    <programlisting format="linespecific">
-route_stm = "route" "{" actions "}"  { $$ = push($3, &amp;rlist[DEFAULT_RT]); ) }
+route_stm = "route" "{" actions "}"  
+{ 
+    $$ = push($3, &amp;rlist[DEFAULT_RT]); 
+}
 			
-actions   = actions action           { $$ = append_action($1, $2}; }
-	  | action                   { $$ = $1; }
+actions = actions action { $$ = append_action($1, $2}; }
+	| action { $$ = $1; }
 
-action    = cmd SEMICOLON            { $$ = $1; }
-	  | SEMICOLON                { $$ = 0; }
+action = cmd SEMICOLON { $$ = $1; }
+       | SEMICOLON { $$ = 0; }
 
-cmd       = "forward" "(" host ")"   { $$ = mk_action(FORWARD_T, STRING_ST, NUMBER_ST, $3, 0);
-	  | ...
+cmd = "forward" "(" host ")" { $$ = mk_action(FORWARD_T, STRING_ST, NUMBER_ST, $3, 0)
+    | ...
 </programlisting>
-
 		    <para>
 			A config file can contain one or more "route" statements. "route" statement without
 			number will be executed first and is called the main route statement. There can be
@@ -328,7 +331,7 @@ cmd       = "forward" "(" host ")"   { $$ = mk_action(FORWARD_T, STRING_ST, NUMB
 		    </para>
 		    <para>
 			Each route statement consists of a set of actions. Actions in the route statement are
-			executed step by step in the same order they appear in the config file. Actions in the 
+			executed step by step in the same order in which they appear in the config file. Actions in the 
 			route statement are delimited by semicolon.
 		    </para>
 		    <para>
@@ -339,39 +342,41 @@ cmd       = "forward" "(" host ")"   { $$ = mk_action(FORWARD_T, STRING_ST, NUMB
 			full list of available commands.
 		    </para>
 		    <para>
-			Each rule in the grammar contains a section enclosed in curly braces. The section is C code
+			Each rule in the grammar contains a section enclosed in curly braces. The section is the C code
 			snippet that will be executed every time the parser recognizes that rule in the config file.
 		    </para>
 		    <para>
 			For example, when the parser finds <function moreinfo="none">forward</function> command, 
 			<function moreinfo="none">mk_action</function> function (as specified in the
-			grammar snippet above) will be called. The function creates a new structure of type FORWARD_T
-			representing the command. Pointer to the structure will be returned as the return value of the
-			rule.
+			grammar snippet above) will be called. The function creates a new structure with 
+			<structfield>type</structfield> field set to FORWARD_T representing the command. Pointer 
+			to the structure will be returned as the return value of the rule.
 		    </para>
 		    <para>
-			The pointer propagates through action rule to actions rule. Actions rule will create linked
-			list of all commands. The linked list will be then inserted into route table.
-			(Function <function moreinfo="none">push</function> in rule route_stm).
-			Each element of the table represents one route statement of the config file.
+			The pointer propagates through <function moreinfo="none">action</function> rule to 
+			<function moreinfo="none">actions</function> rule. <function moreinfo="none">Actions</function> rule 
+			will create linked list of all commands. The linked list will be then inserted into  
+			<structfield>rlist</structfield> table.
+			(Function <function moreinfo="none">push</function> in rule <function moreinfo="none">route_stm</function>).
+			Each element of the table represents one <quote>route</quote> statement of the config file.
 		    </para>
 		    <para>
 			Each route statement of the configuration file will be represented by a linked list of all
 			actions in the statement. Pointers to all the lists will be stored in rlist array. Additional
-			route statements are identified by number. The number also serves as index to the table.
+			route statements are identified by number. The number also serves as index to the array.
 		    </para>
 		    <para>
-			When the core is about to execute route statement with number n, it will look in the table
+			When the core is about to execute route statement with number n, it will look in the array
 			at position n. If the element at position n is not null then there is a linked list of
-			commands and the commands will be executed in sequence.
+			commands and the commands will be executed step by step.
 		    </para>
 		    <para>
-			Reply-Route statement is translated in the same way. Main differences are:
+			Reply-Route statement is compiled in the same way. Main differences are:
 			<itemizedlist>
 			    <listitem>
 				<para>
-				    Reply-Route statement is executed when a <emphasis>REPLY</emphasis> comes 
-				    (not <emphasis>REQUEST</emphasis>).
+				    Reply-Route statement is executed when a <acronym>SIP</acronym> <emphasis>REPLY</emphasis> 
+				    comes (not ,<acronym>SIP</acronym> <emphasis>REQUEST</emphasis>).
 				</para>
 			    </listitem>
 			    <listitem>
@@ -403,7 +408,7 @@ assign_stm = "children" '=' NUMBER { children_no=$3; }
 		    <para>
 			The number in the config file is assigned to <varname>children_no</varname> variable. 
 			The second statement will be executed if the parameter is not number or is in invalid 
-			format and will issue a warning.
+			format and will issue an error and abort the server.
 		    </para>
 		</section> <!-- assign-stm -->
 		
@@ -415,24 +420,28 @@ assign_stm = "children" '=' NUMBER { children_no=$3; }
 		    <itemizedlist>
 			<listitem>
 			    <para>
-				<emphasis>loadmodule</emphasis> - load the specified module in form of shared object. 
+				<emphasis>loadmodule</emphasis> - Load the specified module in form of a shared object. 
 				The shared object will be loaded using <function moreinfo="none">dlopen</function>.
 			    </para>
 			</listitem>
 			<listitem>
 			    <para>
 				<emphasis>modparam</emphasis> - It is possible to configure a module using this 
-				command. The command accepts 3 parameters: module name, variable name and variable value.
+				command. The command accepts 3 parameters: 
+				<emphasis>module name</emphasis>, <emphasis>variable name</emphasis> 
+				and <emphasis>variable value</emphasis>.
 			    </para>
 			</listitem>
 		    </itemizedlist>
 		    <para>The following grammar snippet describes the module statement:</para>
 		    <programlisting format="linespecific">
-module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
-                                   if (load_module($2)!=0) {
-                                       yyerror("failed to load module");
-                                   }
-                                 }
+module_stm = "loadmodule" STRING 
+{ 
+    DBG("loading module %s\n", $2);
+    if (load_module($2)!=0) {
+        yyerror("failed to load module");
+    }
+}
 	   | "loadmodule" error	 { yyerror("string expected");  }
 	   | "modparam" "(" STRING "," STRING "," STRING ")" 
 			{
@@ -451,11 +460,11 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		    <para>
 			When the parser finds <function moreinfo="none">loadmodule</function> command, it will execute 
 			statement in curly braces.
-			The statemen will call <function moreinfo="none">load_module</function> function.
+			The statement will call <function moreinfo="none">load_module</function> function.
 			The function will load the specified filename using <function moreinfo="none">dlopen</function>.
 			If <function moreinfo="none">dlopen</function> was successfull, the server will look for
-			<structname>exports</structname> structure describing the module interface and register the 
-			module. For more details see module section.
+			<structname>exports</structname> structure describing the module's interface and register the 
+			module. For more details see <link linkend="module-interface">module section</link>.
 		    </para>
 		    <para>
 			If the parser finds <function moreinfo="none">modparam</function> command, it will try to configure 
@@ -473,8 +482,8 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	    <title>Interface Configuration</title>
 	    <para>
 		The server will try to obtain list of all configured interfaces of the host it is running on. If it
-		fails the server tries to convert hostname to IP address and will use interface with the IP address
-		only.
+		fails the server tries to convert hostname to <acronym>IP</acronym> address and will use interface with 
+		the <acronym>IP</acronym> address only.
 	    </para>
 	    <para>
 		Function <function moreinfo="none">add_interfaces</function> will add all configured interfaces to the
@@ -488,7 +497,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	<section id="daemon">
 	    <title>Turning into a Daemon</title>
 	    <para>
-		When configured so, ser becomes a daemon during startup. A process is called daemon
+		When configured so, <acronym>SER</acronym> becomes a daemon during startup. A process is called daemon
 		when it hasn't associated controlling terminal. See function 
 		<function moreinfo="none">daemonize</function> in file 
 		<filename moreinfo="none">main.c</filename> for more details.
@@ -498,13 +507,13 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		<listitem>
 		    <para>
 			<emphasis>chroot</emphasis> is performed if neccessary. That ensures that the server will have
-			access to a particular directory and subdirectories only.
+			access to a particular directory and its subdirectories only.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			Server's working directory is changed if the new working directory was
-			specified.
+			specified (usually it is /).
 		    </para>
 		</listitem>
 		<listitem>
@@ -588,7 +597,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	    <para>
 		Every loaded module can export one or more functions. Each such function can have associated a fixup
 		function, which should do fixing as described in this section. All such fixups of all loaded modules
-		will be called here. That makes it possible for module functions to fix their parameters too.
+		will be called here. That makes it possible for module functions to fix their parameters too if necessary.
 	    </para>
 	</section> <!-- rt-list-fix -->
 
@@ -605,7 +614,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	    <para>
 		UDP socket initialization depends on <varname>dont_fork</varname> variable. If this variable is set 
 		(only one process will
-		be processing requests) and there are multiple listen interfaces, only the first one will be used. This
+		be processing incoming requests) and there are multiple listen interfaces, only the first one will be used. This
 		mode is mainly for debugging.
 	    </para>
 	    <para>
@@ -619,11 +628,12 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	    <title>Forking</title>
 	    <para>
 		The rest of the initialization process depends on value of <varname>dont_fork</varname> variable. 
+		<varname>dont_fork</varname> is a global variable defined in <filename moreinfo="none">main.c</filename>.
 		We will describe both variants separatelly.
 	    </para>
 
 	    <section id="dont-fork-set">
-		<title><varname>dont_fork</varname> is set (not zero)</title>
+		<title><varname>dont_fork</varname> variable is set (not zero)</title>
 		<para>
 		    If <varname>dont_fork</varname> variable is set, the server will be operating in special mode. 
 		    There will be only one process processing incoming requests. This is very slow and was intended mainly 
@@ -664,7 +674,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 			<para>
 			    Initialize the <acronym>FIFO</acronym> server if enabled, this will fork another child.
 			    For more info about the <acronym>FIFO</acronym> server, 
-			    see section <acronym>FIFO</acronym> server.
+			    see section <link linkend="fifo-server">The <acronym>FIFO</acronym> server</link>.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -684,8 +694,8 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 			    all children <emphasis>AFTER</emphasis> fork of the server.
 			</para>
 			<para>
-			    And since we are in dont fork mode and there will no children processing requests (remember
-			    the main process will be processing all requests), the 
+			    And since we are in <quote>dont fork</quote> mode and there will no children processing 
+			    requests (remember the main process will be processing all requests), the 
 			    <function moreinfo="none">init_child</function> wouldn't be called.
 			</para>
 			<para>
@@ -716,7 +726,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		</para>
 
 		<para>
-		    The main process will then initialize <acronym>FIFO</acronym> server. The <acronym>FIFO</acronym> server 
+		    The main process will then initialize the <acronym>FIFO</acronym> server. The <acronym>FIFO</acronym> server 
 		    needs another child to handle communication over <acronym>FIFO</acronym> and thus another child will be 
 		    created. The <acronym>FIFO</acronym> server will be described in more detail later.
 		</para>
@@ -736,14 +746,14 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		</para>
 		<para>
 		    Each child executes <function moreinfo="none">init_child</function> function. The function
-		    will in turn call <function moreinfo="none">child_init</function> functions of all loaded modules.
+		    will sequentially call <function moreinfo="none">child_init</function> functions of all loaded modules.
 		</para>
 		<para>
 		    Becuase the function is called in each child separately, it can initialize per-child
 		    specific data. For example if a module needs to communicate with database, it must open
 		    a database connection. If the connection would be opened in <function moreinfo="none">mod_init</function>
 		    function, all the children would share the same connection and locking would be neccessary
-		    to avoid conflicts. In contrast if the connection was opened in
+		    to avoid conflicts. On the other hand if the connection was opened in
 		    <function moreinfo="none">child_init</function> function, each child will have its own
 		    connection and concurrency conflicts will be handled by the database server.
 		</para>
@@ -779,7 +789,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	</para>
 	<para>
 	    The message is received using <function moreinfo="none">recvfrom</function> function. The received data is
-	    stored in buffer and null terminated. 
+	    stored in buffer and zero terminated. 
 	</para>
 	<para>
 	    If configured so, basic sanity checks over the received message will be performed.
@@ -799,11 +809,12 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		<listitem>
 		    <para>
 			In the server, a request or response is represented by <structname>sip_msg</structname>
-			structure. The structure is allocated in this function. The original message is stored in buf 
+			structure. The structure is allocated in this function. The original message is stored in 
+			<structfield>buf</structfield>
 			attribute of the structure and is zero terminated. Then, another copy of the received message will be
-			created and the copy will be stored in orig attribute. The original copy will be not
-			modified during the server operation. All changes will be made to the copy in buf
-			attribute. The second copy of the message will be removed in the future.
+			created and the copy will be stored in <structfield>orig</structfield> field. The original copy will be not
+			modified during the server operation. All changes will be made to the copy in <structfield>buf</structfield>
+			field. The second copy of the message will be removed in the future.
 		    </para>
 		</listitem>
 		<listitem>
@@ -811,7 +822,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 			The message will be parsed (function <function moreinfo="none">parse_msg</function>). We don't
 			need the whole message header to be parsed at this stage. Only the first line and first Via
 			header need to be parsed. The server needs to know if the message is request or response - hence
-			the first line. The server also needs the first Via to be able to send a response back - hence
+			the first line. The server also needs the first Via to be able to add its own Via - hence
 			the first Via. Nothing else will be parsed at the moment - this saves time. (Message parser
 			as well as <structname>sip_msg</structname> structure will be described later).
 		    </para>
@@ -819,18 +830,18 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		<listitem>
 		    <para>
 			A module may register callbacks. Each callback have associated an event, that
-			will trigger the callback. One such callback is <emphasis>pre-script</emphasis> callback. Such 
-			callback will be called immediatelly before the routing part of the config file will be run. 
+			will trigger the callback. One such callback is <emphasis>pre-script</emphasis> callback. Such
+			callback will be called immediatelly before the routing part of the config file will be executed. 
 			If there are such callbacks registered, they will be executed now.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			As the next step we will determine the message type. If the message being processed is a REQUEST
+			As the next step we will determine type of the message. If the message being processed is a REQUEST
 			then basic sanity checks will be performed (make sure that there is the first Via and parsing was
 			successfull) and the message will be passed to routing engine.
 			The routing engine is one of the most complicated parts of the server and will be in detail
-			described in section ...
+			described in chapter <link linkend="routing-engine">The Routing Engine</link>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -855,9 +866,9 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
     </chapter> <!-- main-loop -->
 
     <chapter id="server-shutdown">
-	<title>Server Shutdown</title>
+	<title>The Server Shutdown</title>
 	<para>
-	    Server shutdown can be triggered by sending a signal to the server. The server will behave differently upon 
+	    The server shutdown can be triggered by sending a signal to the server. The server will behave differently upon 
 	    receiving various types of signals, here is a brief summary:
 	</para>
 	<itemizedlist>
@@ -884,7 +895,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	</para>
 
 	<para>
-	    In normal mode of operation (<varname>dont_fork</varname> is not set), the main server is not processing any 
+	    In normal mode of operation (<varname>dont_fork</varname> variable is not set), the main server is not processing any 
 	    requests, it calls <function moreinfo="none">pause</function> function and will be waiting for signals only. What
 	    happens when a signal arrives is shown in the previous paragraph.
 	</para>
@@ -906,9 +917,9 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	</para>
 	<para>
 	    Upon receipt of SIGINT, SIGPIPE or SIGTERM <function moreinfo="none">destroy_modules</function> will be called.
-	    Each module may register so-called destroy function if it needs to do some cleanup when the server is
-	    terminating (flush of cache to disk  for example). <function moreinfo="none">destroy_modules</function> will
-	    call destroy funtion of all loaded modules.
+	    Each module may register so-called <function moreinfo="none">destroy</function> function if it needs to do some 
+	    cleanup when the server is terminating (flush of cache to disk  for example). 
+	    <function moreinfo="none">destroy_modules</function> will call destroy funtion of all loaded modules.
 	</para>
 
 	<para>
@@ -926,7 +937,7 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	<para>
 	    If one child exited during normal operation, the whole server will be shut down. This is better than let
 	    the server continue - a dead child might hold a lock and that could block the whole server, such situation
-	    cannot be avoided easily. Instead of that it is better to shutdown the whole server and have it restarted.
+	    cannot be avoided easily. Instead of that it is better to shutdown the whole server and let it restart.
 	</para>
     </chapter> <!-- server-shutdown -->
 
@@ -934,14 +945,14 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 	<title>Internal Data Structures</title>
 	<para>
 	    There are some data structures that are important and widely used in the server. We will describe them
-	    in this section.
+	    in detail in this section.
 	</para>
 	
 	<note>
 	    <para>
 		There are many more structures and types defined across the server and modules. We will describe
 		only the most important and common data structure here. The rest will be described in other sections
-		where it will be needed.
+		if needed.
 	    </para>
 	</note>
 
@@ -956,13 +967,14 @@ module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
 		to the beginning of the string and field <structfield>len</structfield> is length of the string. We then
 		calculate length of the string only once and later reuse saved value.
 	    </para>
-	    <note>
+	    <important>
 		<para>
 		    <type>str</type> structure is quite important because it is widely used in
 		    <acronym>SER</acronym> (most functions accept <type>str</type> instead of <type>char*</type>).
 		</para>
-	    </note>
+	    </important>
 
+	    
 	    <para><emphasis><type>str</type> Type Declaration</emphasis></para>
 	    <programlisting format="linespecific">
 struct _str{
@@ -983,9 +995,7 @@ typedef struct _str str;
 		    server are still zero terminated, some are not. Be carefull when using functions like 
 		    <function moreinfo="none">snprintf</function> that rely on the ending zero. You can print 
 		    variable of type <type>str</type> this way:
-		    <programlisting format="linespecific">
-printf("%.*s", mystring->len, mystring->s);
-</programlisting>
+		    <programlisting format="linespecific">printf("%.*s", mystring->len, mystring->s);</programlisting>
 		    That ensures that the string will be printed correctly even if there is no zero character at
 		    the end.
 		</para>
@@ -1026,10 +1036,10 @@ struct hdr_field {
 			types are defined (and recognized by the parser): 
 		    </para>
 		    <para>
-			HDR_VIA1, HDR_VIA2, HDR_TO, HDR_FROM,
-			HDR_CSEQ, HDR_CALLID, HDR_CONTACT, HDR_MAXFORWARDS, HDR_ROUTE, HDR_RECORDROUTE, HDR_CONTENTTYPE,
-			HDR_CONTENTLENGTH, HDR_AUTHORIZATION, HDR_EXPIRES, HDR_PROXYAUTH, HDR_WWWAUTH, HDR_SUPPORTED,
-			HDR_REQUIRE, HDR_PROXYREQUIRE, HDR_UNSUPPORTED, HDR_ALLOW, HDR_EVENT, HDR_OTHER.
+			HDR_VIA1, HDR_VIA2, HDR_TO, HDR_FROM, HDR_CSEQ, HDR_CALLID, HDR_CONTACT, HDR_MAXFORWARDS, 
+			HDR_ROUTE, HDR_RECORDROUTE, HDR_CONTENTTYPE, HDR_CONTENTLENGTH, HDR_AUTHORIZATION, 
+			HDR_EXPIRES, HDR_PROXYAUTH, HDR_WWWAUTH, HDR_SUPPORTED, HDR_REQUIRE, HDR_PROXYREQUIRE, 
+			HDR_UNSUPPORTED, HDR_ALLOW, HDR_EVENT, HDR_OTHER.
 		    </para>
 		    <para>
 			Their meaning is selfexplanatory. HDR_OTHER marks header field not recognized by the parser.
@@ -1037,20 +1047,20 @@ struct hdr_field {
 		</listitem>
 		<listitem>
 		    <para>
-			<structfield>name</structfield> - Name of the header field (part before doublecolon)
+			<structfield>name</structfield> - Name of the header field (the part before colon)
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<structfield>body</structfield> - body of the header field (part after doublecolon)
+			<structfield>body</structfield> - body of the header field (the part after colon)
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<structfield>parsed</structfield> - Each header field body can be further parsed. The field
 			contains pointer to parsed structure if the header field was parsed already. The pointer is
-			of type void* because it can point to different types of structure depending on the header
-			field type.
+			of type <type>void*</type> because it can point to different types of structure depending on 
+			the header field type.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1139,13 +1149,13 @@ struct via_body {
 		<listitem>
 		    <para>
 			<structfield>error</structfield> - The field contains error code when the parser was unable
-			to parse the header field
+			to parse the header field.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<structfield>hdr</structfield>- Header field name, it can be <quote>Via</quote> or <quote>v</quote>
-			in this case
+			in this case.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1216,8 +1226,8 @@ struct via_body {
 		</listitem>
 		<listitem>
 		    <para>
-			<structfield>next</structfield> - If the via is in compact form (more Vias in the same header
-			field), this field contains pointer to the next via.
+			<structfield>next</structfield> - If the Via is in compact form (more Vias in the same header
+			field), this field contains pointer to the next Via.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -1238,7 +1248,7 @@ struct ip_addr{
     union {
         unsigned int   addr32[4];
         unsigned short addr16[8];
-	unsigned char  addr[16];
+        unsigned char  addr[16];
     }u;
 };
 </programlisting>
@@ -1251,7 +1261,8 @@ struct ip_addr{
 		the message will be sent. 
 	    </para>
 	    <para>
-		The structure will be described in more detail later.
+		The structure will be described in more detail later in chapter 
+		<link linkend="sip-msg-modif">SIP Message Modifications</link>.
 	    </para>
 	</section> <!-- lump -->
 	
@@ -1262,7 +1273,8 @@ struct ip_addr{
 		kept in the request and processed when the request is being turned into reply. 
 	    </para>
 	    <para>
-		The structure will be described in more detail later.
+		The structure will be described in more detail later in chapter
+		<link linkend="sip-msg-modif">SIP Message MOdifications</link>.
 	    </para>
 	</section> <!-- lump-rpl -->
 
@@ -1327,7 +1339,7 @@ struct msg_start {
 		<listitem>
 		    <para>
 			<structfield>method_value</structfield> - Parsed method. Field method which is of
-			type str will be converted to integer and stored here. This is good for comparison,
+			type <type>str</type> will be converted to integer and stored here. This is good for comparison,
 			integer comparison is much faster then string comparison.
 		    </para>
 		</listitem>
@@ -1383,7 +1395,9 @@ struct sip_msg {
     int parsed_flag;               /* Already parsed header field types */
 
     /* Via, To, CSeq, Call-Id, From, end of header*/
-    /* first occurance of it; subsequent occurances saved in 'headers' */
+    /* first occurance of it; subsequent occurances 
+     * saved in 'headers' 
+     */
 
     struct hdr_field* h_via1;
     struct hdr_field* h_via2;
@@ -1426,7 +1440,8 @@ struct sip_msg {
     int parsed_uri_ok;         /* 1 if parsed_uri is valid, 0 if not */
     struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
 		
-    struct lump* add_rm;         /* used for all the forwarded requests */
+    struct lump* add_rm;         /* used for all the forwarded 
+                                  * requests */
     struct lump* repl_add_rm;    /* used for all the forwarded replies */
     struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
 
@@ -1629,7 +1644,7 @@ struct sip_msg {
 		</listitem>
 		<listitem>
 		    <para>
-			<structfield>dst_ip</structfield> - Destination <acronym>IP</acronym> address.
+			<structfield>dst_ip</structfield> - Destination's <acronym>IP</acronym> address.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1748,11 +1763,11 @@ struct sip_msg {
 	    be processed (Remember, the config file gets translated into array of linked
 	    lists. Each linked list in the array represents one "route" part of the config
 	    file). The second parameter is <structname>sip_msg</structname> structure
-	    representing the message to be routed.
+	    representing the message to be processed.
 	</para>
 	<para>
 	    Upon a receipt of a request, the linked list representing the main route
-	    part will be processed so the first parameter will be rlist[0]. (The linked
+	    part will be processed so the first parameter will be <varname>rlist[0]</varname>. (The linked
 	    list of main route part is always at index 0).
 	</para>
 	<para>
@@ -1760,7 +1775,7 @@ struct sip_msg {
 	    <function moreinfo="none">do_action</function> function for each element
 	    of the linked list. Return value of the function is important. If the function
 	    returns 0, processing of the list will be stopped. By returning 0 a command
-	    can indicate that processing of the message should be stopped.
+	    can indicate that processing of the message should be stopped and the message will be dropped.
 	</para>
 	<para>
 	    Modules may export so-called <emphasis>on_break handlers</emphasis>.
@@ -1801,10 +1816,10 @@ struct sip_msg {
 		<function moreinfo="none">prefix</function>,
 		<function moreinfo="none">strip</function>,
 		<function moreinfo="none">if</function>,
-		<function moreinfo="none">module</function>,
+		<function moreinfo="none">module</function>.
 	    </para>
 	    <para>
-		Each of the commands is represented by a case statement in the switch.
+		Each of the commands is represented by a <emphasis>case</emphasis> statement in the switch.
 		(For example, if you are interested in implementation of 
 		<function>drop</function> command,
 		look at <quote>case DROP_T:</quote> statement in the function.
@@ -1825,7 +1840,7 @@ struct sip_msg {
 		    <para>
 			<function moreinfo="none">forward</function> - The function will
 			forward the message further. The message will be either forwarded
-			to the request <acronym>URI</acronym> of the message or to 
+			to the Request <acronym>URI</acronym> of the message or to 
 			<acronym>IP</acronym> or host given as parameter.
 		    </para>
 		    <para>
@@ -1851,7 +1866,7 @@ struct sip_msg {
 			<function moreinfo="none">send</function> - This functions sends
 			the message to a third-party host. The message will be sent out
 			as is - i.e. without Request <acronym>URI</acronym> and Via
-			processing.
+			altering.
 		    </para>
 		    <para>
 			Hostname or <acronym>IP</acronym> address of the third-party host
@@ -1866,7 +1881,8 @@ struct sip_msg {
 		    <para>
 			<function moreinfo="none">log</function> - The message given as
 			a parameter will be logged using system logger. It can be either
-			syslog or stderr (depends on configuration). The message is logged
+			<command moreinfo="none">syslog</command> or <varname>stderr</varname> 
+			(depends on configuration). The message is logged
 			using <function moreinfo="none">LOG</function> which is a macro
 			defined in <filename moreinfo="none">dprint.h</filename> header
 			file.
@@ -1880,10 +1896,10 @@ struct sip_msg {
 		    <para>
 			More than one destinations may be associated with a single
 			<acronym>SIP</acronym> request. If the server was configured so,
-			it will use all the destination and fork the request. 
+			it will use all the destinations and fork the request. 
 		    </para>
 		    <para>
-			The server keeps a array of all destinations, that should be
+			The server keeps an array of all destinations, that should be
 			used when forking. The array and related functions can be found
 			in file <filename moreinfo="none">dset.c</filename>. There is
 			function append_branch which adds a new destination to the set.
@@ -1899,7 +1915,7 @@ struct sip_msg {
 			<function moreinfo="none">len_gt</function> - The command accepts
 			one number as a parameter. It then compares the number with length
 			of the message. If the message length is greater or equal then
-			the number - 1 will be returned otherwise the function returns -1.
+			the number then 1 will be returned otherwise the function returns -1.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1908,8 +1924,7 @@ struct sip_msg {
 			message. The command simply 
 			calls <function moreinfo="none">setflags</function> function that
 			will set the flag. Fore more information see file
-			<filename moreinfo="none">flag.c</filename> or chapter regarding
-			to flags.
+			<filename moreinfo="none">flag.c</filename>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1937,9 +1952,9 @@ struct sip_msg {
 			route statement.
 		    </para>
 		    <para>
-			As we mentioned previously, there can be more that one route
+			As we have mentioned already, there can be more that one route
 			statement in the config file. One of them is main (without
-			number), the other are additional. This commands makes it possible
+			number), the other are additional. This command makes it possible
 			to execute an additional route statement.
 		    </para>
 		    <para>
@@ -1949,12 +1964,12 @@ struct sip_msg {
 			<function moreinfo="none">run_actions</function> will be called.
 			The function accepts two parameters. The first one is linked list
 			to execute, the second one is <structname>sip_msg</structname>
-			structure representing the message to be routed.
+			structure representing the message to be processed.
 		    </para>
 		    <para>
 			As you might remember, each route statement was compiled into
 			linked list of commands to be executed and head of the linked
-			list was stored in rlist array. For example, head of linked list
+			list was stored in <varname>rlist</varname> array. For example, head of linked list
 			representing route statement with number 4 will be stored at
 			position 4 in the array (position 0 is reserved for the main
 			route statement).
@@ -1970,10 +1985,10 @@ struct sip_msg {
 			<function moreinfo="none">exec</function> - Execute a shell command.
 		    </para>
 		    <para>
-			The command accepts one parameter of type string. The string given as
+			The command accepts one parameter of type <type>char*</type>. The string given as
 			parameter will be passed to <function moreinfo="none">system</function>
 			function which will in turn execute
-			<function moreinfo="none">/bin/sh -c string</function>.
+			<function moreinfo="none">/bin/sh -c &lt;string&gt;</function>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -2057,10 +2072,10 @@ struct sip_msg {
 		    <para>
 			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield> field,
 			it will be freed. If there is a valid <acronym>URI</acronym> in 
-			<structfield>parsed_uri</structfield> field, it will be freed.
+			<structfield>parsed_uri</structfield> field, it will be freed too.
 		    </para>
 		    <para>
-			Then, <acronym>URI</acronym> given as parameter will be stored in 
+			Then <acronym>URI</acronym> given as parameter will be stored in 
 			<structfield>new_uri</structfield> field. (If <structfield>new_uri</structfield>
 			contains a <acronym>URI</acronym> it will be used instead of Request
 			<acronym>URI</acronym> when forwarding the message).
@@ -2108,7 +2123,7 @@ struct sip_msg {
 			<function moreinfo="none">if</function> command.
 		    </para>
 		    <para>
-			Otherwise, if there is second list, it will be executed in the same way. The
+			Otherwise, if there is the second list, it will be executed in the same way. The
 			second list represents commads of <function moreinfo="none">else</function>
 			statement.
 		    </para>
@@ -2122,7 +2137,7 @@ struct sip_msg {
 			When a command in a route statement is not recognized by the core itself
 			(i.e. it is not one of commands handled by the core itself), list of exported
 			functions of all loaded modules will be searched for a function with corresponding
-			name and corresponding number of parameters.
+			name and number of parameters.
 		    </para>
 		    <para>
 			If the function was found, <function moreinfo="none">module</function> command
@@ -2153,7 +2168,7 @@ struct sip_msg {
 	<title>Memory Management</title>
 	<para>
 	    This section should be written by somebody who really knows how it works. Any volunteers ?
-	    TBD by Andrei or Jiri.
+	    TBD.
 	</para>
     </chapter> <!-- memory-management -->
 
@@ -2183,13 +2198,13 @@ struct sip_msg {
 	<section id="sip-msg-structure">
 	    <title>Structure of a <acronym>SIP</acronym> Message</title>
 	    <para>
-		a <acronym>SIP</acronym> message consists of message header and optional message body. 
+		A <acronym>SIP</acronym> message consists of message header and optional message body. 
 		The header is separated from the body with a empty line (containing CRLF only).
 	    </para>
 	    <para>
 		Message header consists of the first line and one or more header fields. The first line
 		determines type of the message. Header fields provide additional information that is
-		needed by clients and server to be able to process the message.
+		needed by clients and servers to be able to process the message.
 	    </para>
 	    <para>
 		Each header field consists of header field name and header field body. Header field name
@@ -3497,7 +3512,7 @@ typedef struct dig_cred {
     </chapter> <!-- msg-parser -->
 
     <chapter id="module-interface">
-	<title>Module Interface</title>
+	<title>The Module Interface</title>
 	<para>
 	    The server can load additional functionality through modules. Module loading related functions and module
 	    interface will be described in this section.
@@ -3526,7 +3541,7 @@ struct sr_module{
 };
 </programlisting>
 	    <para>
-		Field and their description:
+		<emphasis>Fields and their description:</emphasis>
 		<itemizedlist>
 		    <listitem>
 			<para>
@@ -3573,35 +3588,43 @@ struct sr_module{
 	    <programlisting format="linespecific">
 struct module_exports{
     char* name;                     /* null terminated module name */
-    char** cmd_names;               /* cmd names registered by this modules */
-    cmd_function* cmd_pointers;     /* pointers to the corresponding functions */
-    int* param_no;                  /* number of parameters used by the function */
-    fixup_function* fixup_pointers; /* pointers to functions called to "fix"
-	                             * the params, e.g: precompile a re 
-		                     */
+    char** cmd_names;               /* cmd names registered 
+                                     * by this modules */
+    cmd_function* cmd_pointers;     /* pointers to the corresponding 
+                                     * functions */
+    int* param_no;                  /* number of parameters used by 
+                                     * the function */
+    fixup_function* fixup_pointers; /* pointers to functions 
+                                     * called to "fix"
+	                             * the params, e.g: precompile 
+                                     * a re */
     int cmd_no;                     /* number of registered commands
 		                     * (size of cmd_{names,pointers} 
 		                     */
 
-    char** param_names;      /* parameter names registered by this modules */
+    char** param_names;      /* parameter names registered 
+                              * by this modules */
     modparam_t* param_types; /* Type of parameters */
-    void** param_pointers;   /* Pointers to the corresponding memory locations */
+    void** param_pointers;   /* Pointers to the corresponding 
+                              * memory locations */
     int par_no;              /* number of registered parameters */
 
     init_function init_f;         /* Initilization function */
     response_function response_f; /* function used for responses,
 		                   * returns yes or no; can be null 
 		                   */
-    destroy_function destroy_f;   /* function called when the module should
-		                   * be "destroyed", e.g: on ser exit;
+    destroy_function destroy_f;   /* function called when the module 
+                                   * should be "destroyed", e.g: on 
+                                   * ser exit;
 		                   * can be null 
 		                   */
     onbreak_function onbreak_f;
-    child_init_function init_child_f;  /* function called by all processes after the fork */
+    child_init_function init_child_f;  /* function called by all 
+                                        * processes after the fork */
 };
 </programlisting>
 	    <para>
-		Fields and their description:
+		<emphasis>Fields and their description</emphasis>:
 	    </para>
 	    <itemizedlist>
 		<listitem>
@@ -3620,7 +3643,7 @@ struct module_exports{
 			commands specified in <structfield>cmd_names</structfield> array.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3655,7 +3678,7 @@ struct module_exports{
 			function, corresponding field in the array will contain zero.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3721,7 +3744,7 @@ struct module_exports{
 			doesn't need initialization function.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3740,7 +3763,7 @@ struct module_exports{
 			0 if the module doesn't want to see responses.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3762,7 +3785,7 @@ struct module_exports{
 			is shutting down. Can be 0 if the module doesn't need destroy function.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3777,7 +3800,7 @@ struct module_exports{
 			of a route statement was aborted. Can be 0 if module doesn't need this function.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3791,7 +3814,8 @@ struct module_exports{
 		</listitem>
 		<listitem>
 		    <para>
-			<structfield>init_child_f</structfield> - Child init function. This is an additonal initialization
+			<structfield>init_child_f</structfield> - Child initialization
+			function. This is an additional initialization
 			function. <structfield>init_f</structfield> will be called from the main process 
 			<emphasis>BEFORE</emphasis> the main process forks children. <structfield>init_child_f</structfield>
 			will be called from all children <emphasis>AFTER</emphasis> the fork.
@@ -3801,7 +3825,7 @@ struct module_exports{
 			connection in the function, and so on.
 		    </para>
 		    <para>
-			Function Prototype:
+			<emphasis>Function Prototype</emphasis>:
 		    </para>
 		    <funcsynopsis>
 			<funcprototype>
@@ -3998,7 +4022,7 @@ struct module_exports{
 		    </itemizedlist>
 		</para>
 		<para>
-		    The function will search list of all modules until it find module with given name.
+		    The function will search list of all modules until it finds module with given name.
 		    Then it will search throught all module's exported parameters until it finds parameter
 		    with corresponding name and type. If such parameter was found, pointer to variable holding
 		    the parameter's value will be returned. If the function failed to find either module or
@@ -4012,7 +4036,7 @@ struct module_exports{
 	    <para>This section describes how to find an exported function.</para>
 
 	    <para>
-		If you need to find exported function with given name and number parameters, 
+		If you need to find exported function with given name and number of parameters, 
 		<function moreinfo="none">find_export</function> function is what you need. The function
 		is defined in <filename moreinfo="none">sr_module.c</filename> file.
 		The function accepts two parameters:
@@ -4031,8 +4055,8 @@ struct module_exports{
 	    </para>
 	    <para>
 		The function will search throught list of all loaded modules and in each module through
-		array of all exported functions until it find function with given name and number of
-		parameter. If such exported function was found, <function moreinfo="none">find_exported</function>
+		array of all exported functions until it finds function with given name and number of
+		parameters. If such exported function was found, <function moreinfo="none">find_exported</function>
 		will return pointer to the function, otherwise zero will be returned.
 	    </para>
 	</section> <!--finding-exported -->
@@ -4107,15 +4131,16 @@ struct module_exports{
 	<section id="data-types">
 	    <title>Data types</title>
 	    <para>
-		There are several new data types. All of them are defined in header file db.h,
-		a client must include the header file to be able to use them.
+		There are several data types. All of them are defined in header files under 
+		<filename moreinfo="none">db</filename> subdirectory,
+		a client must include <filename moreinfo="none">db.h</filename> header file to be able to use them.
 	    </para>
 	    <section id="type-db-con">
 		<title>Type <type>db_con_t</type></title>
 		<para>
 		    This type represents a database connection, all database functions (described 
 		    below) use a variable of this type as one argument. In other words, variable 
-		    of db_con_t type serves as a handle for a particular database connection.
+		    of <type>db_con_t</type> type serves as a handle for a particular database connection.
 		</para>
 		<programlisting format="linespecific">
 typedef struct db_con {
@@ -4135,8 +4160,8 @@ typedef struct db_con {
 		<title>Type <type>db_key_t</type></title>
 		<para>
 		    This type represents a database key. Every time you need to specify a key 
-		    value, this type should be used. In fact, this type is identical to const 
-		    char*.
+		    value, this type should be used. In fact, this type is identical to 
+		    <type>const char*</type>.
 		</para>
 		<programlisting format="linespecific">
 		    typedef const char* db_key_t;
@@ -4207,8 +4232,8 @@ typedef enum {
 			    </para>
 			</listitem>
 		    </itemizedlist>
-		    These datatypes are automaticaly recognized, converted from internal database
-		    representation and stored in the variable of corresponding type.
+		    These datatypes are automatically recognized, converted from internal database
+		    representation and stored in a variable of corresponding type.
 		</para>
 		<programlisting format="linespecific">
 typedef struct db_val {
@@ -4217,16 +4242,16 @@ typedef struct db_val {
     union {                      
         int int_val;             /* Integer value */
         double double_val;       /* Double value */
-	time_t time_val;         /* Unix time_t value */
-	const char* string_val;  /* Zero terminated string */
-	str str_val;             /* str structure */
-	str blob_val;            /* Structure describing blob */
+        time_t time_val;         /* Unix time_t value */
+        const char* string_val;  /* Zero terminated string */
+        str str_val;             /* str structure */
+        str blob_val;            /* Structure describing blob */
     } val;
 } db_val_t;
 </programlisting>
 		<note>
 		    <para>
-			All macros expect reference to <type>db_val_t</type> variable as a parameter.
+			All macros expect pinter to <type>db_val_t</type> variable as a parameter.
 		    </para>
 		</note>
 		<itemizedlist>
@@ -4238,7 +4263,7 @@ typedef struct db_val {
 			    Use this macro if you need to set/get the type of the value
 			</para>
 			<example>
-			    <title>VAL_TYPE Macro Example</title>
+			    <title>VAL_TYPE Macro</title>
 			    <programlisting format="linespecific">
 ...
 VAL_TYPE(val) = DB_INT;
@@ -4258,7 +4283,7 @@ if (VAL_TYPE(val) == DB_FLOAT)
 			    terminology).
 			</para>
 			<example>
-			    <title>VAL_NULL Macro Example</title>
+			    <title>VAL_NULL Macro</title>
 			    <programlisting format="linespecific">
 ...
 if (VAL_NULL(val) == 1) {
@@ -4274,10 +4299,10 @@ if (VAL_NULL(val) == 1) {
 			    <function moreinfo="none">VAL_INT(value)</function> Macro.
 			</para>
 			<para>
-			    Use this macro if you need to access integer value in the <type>db_val_t</type> structure.
+			    Use this macro if you need to access <type>integer</type> value in <type>db_val_t</type> structure.
 			</para>
 			<example>
-			    <title>VAL_INT Macro Example</title>
+			    <title>VAL_INT Macro</title>
 			    <programlisting format="linespecific">
 ...
 if (VAL_TYPE(val) == DB_INT) {
@@ -4293,10 +4318,10 @@ if (VAL_TYPE(val) == DB_INT) {
 			    <function moreinfo="none">VAL_DOUBLE(value)</function> Macro.
 			</para>
 			<para>
-			    Use this macro if you need to access double value in the <type>db_val_t</type> structure.
+			    Use this macro if you need to access <type>double</type> value in the <type>db_val_t</type> structure.
 			</para>
 			<example>
-			    <title>VAL_DOUBLE Macro Example</title>
+			    <title>VAL_DOUBLE Macro</title>
 			    <programlisting format="linespecific">
 ...
 if (VAL_TYPE(val) == DB_DOUBLE) {
@@ -4312,10 +4337,10 @@ if (VAL_TYPE(val) == DB_DOUBLE) {
 			    <function moreinfo="none">VAL_TIME(value)</function> Macro.
 			</para>
 			<para>
-			    Use this macro if you need to access <type>time_t</type> value ind <type>b_val_t</type> structure.
+			    Use this macro if you need to access <type>time_t</type> value in <type>db_val_t</type> structure.
 			</para>
 			<example>
-			    <title>VAL_TIME Macro Example</title>
+			    <title>VAL_TIME Macro</title>
 			    <programlisting format="linespecific">
 ...
 time_t tim;
@@ -4332,10 +4357,10 @@ if (VAL_TYPE(val) == DB_DATETIME) {
 			    <function moreinfo="none">VAL_STRING(value)</function> Macro.
 			</para>
 			<para>
-			    Use this macro if you need to access string value in <type>db_val_t</type> structure.
+			    Use this macro if you need to access <type>string</type> value in <type>db_val_t</type> structure.
 			</para>
 			<example>
-			    <title>VAL_STRING Macro Example</title>
+			    <title>VAL_STRING Macro</title>
 			    <programlisting format="linespecific">
 ...
 if (VAL_TYPE(val) == DB_STRING) {
@@ -4354,7 +4379,7 @@ if (VAL_TYPE(val) == DB_STRING) {
 			    Use this macro if you need to access <type>str</type> structure in <type>db_val_t</type> structure.
 			</para>
 			<example>
-			    <title>VAL_STR Macro Example</title>
+			    <title>VAL_STR Macro</title>
 			    <programlisting format="linespecific">
 ...
 if (VAL_TYPE(val) == DB_STR) {
@@ -4370,10 +4395,10 @@ if (VAL_TYPE(val) == DB_STR) {
 			    <function moreinfo="none">VAL_BLOB(value)</function> Macro.
 			</para>
 			<para>
-			    Use this macro if you need to access blob value in <type>db_val_t</type> structure.
+			    Use this macro if you need to access <type>blob</type> value in <type>db_val_t</type> structure.
 			</para>
 			<example>
-			    <title>VAL_STR Macro Example</title>
+			    <title>VAL_STR Macro</title>
 			    <programlisting format="linespecific">
 ...
 if (VAL_TYPE(val) == DB_BLOB) {
@@ -4408,7 +4433,7 @@ typedef struct db_row {
 			    Use this macro to get pointer to array of <type>db_val_t</type> structures.
 			</para>
 			<example>
-			    <title>ROW_VALUES Macro Example</title>
+			    <title>ROW_VALUES Macro</title>
 			    <programlisting format="linespecific">
 ...
 db_val_t* v = ROW_VALUES(row);
@@ -4426,7 +4451,7 @@ if (VAL_TYPE(v) == DB_INT)
 			    Use this macro to get number of cells in a row.
 			</para>
 			<example>
-			    <title>ROW_N Macro Example</title>
+			    <title>ROW_N Macro</title>
 			    <programlisting format="linespecific">
 ...
 db_val_t* val = ROW_VALUES(row);
@@ -4455,7 +4480,7 @@ for(i = 0; i < ROW_N(row); i++) {
 		    <para>
 			A variable of type <type>db_res_t</type> returned by <function moreinfo="none">db_query</function>
 			function uses dynamically allocated memory, don't forget to call 
-			<function moreinfo="none">db_free_query</function> if you don't need  the variable anymore. 
+			<function moreinfo="none">db_free_query</function> if you don't need the variable anymore. 
 			You will encounter memory leaks if you fail to do this !
 		    </para>
 		</note>
@@ -4467,8 +4492,8 @@ for(i = 0; i < ROW_N(row); i++) {
 typedef struct db_res {
     struct {
         db_key_t* keys;    /* Array of column names */
-	db_type_t* types;  /* Array of column types */
-	int n;             /* Number of columns */
+        db_type_t* types;  /* Array of column types */
+        int n;             /* Number of columns */
     } col;
     struct db_row* rows;   /* Array of rows */
     int n;                 /* Number of rows */
@@ -4483,7 +4508,7 @@ typedef struct db_res {
 			    Use this macro if you want to obtain pointer to an array of cell names.
 			</para>
 			<example>
-			    <title>RES_NAMES Macro Example</title>
+			    <title>RES_NAMES Macro</title>
 			    <programlisting format="linespecific">
 ...
 db_key_t* column_names = ROW_NAMES(row);
@@ -4500,10 +4525,10 @@ db_key_t* column_names = ROW_NAMES(row);
 			    Use this macro if you want to get the number of columns in the result.
 			</para>
 			<example>
-			    <title>RES_COL_N Macro Example</title>
+			    <title>RES_COL_N Macro</title>
 			    <programlisting format="linespecific">
 ...
-int ncol = RES_COL_N(res)
+int ncol = RES_COL_N(res);
 for(i = 0; i < ncol; i++) {
     /* do something with the column */
 }
@@ -4520,7 +4545,7 @@ for(i = 0; i < ncol; i++) {
 			    Use this macro if you need to obtain pointer to array of rows.
 			</para>
 			<example>
-			    <title>RES_ROWS Macro Example</title>
+			    <title>RES_ROWS Macro</title>
 			    <programlisting format="linespecific">
 ...
 db_row_t* rows = RES_ROWS(res);
@@ -4537,7 +4562,7 @@ db_row_t* rows = RES_ROWS(res);
 			    Use this macro if you need to obtain the number of rows in the result.
 			</para>
 			<example>
-			    <title>RES_ROW_N Macro Example</title>
+			    <title>RES_ROW_N Macro</title>
 			    <programlisting format="linespecific">
 ...
 int n = RES_ROW_N(res);
@@ -4554,7 +4579,7 @@ int n = RES_ROW_N(res);
 	    <para>
 		There are several functions that implement the database <acronym>API</acronym> logic. All function
 		names start with db_ prefix, except <function moreinfo="none">bind_dbmod</function>. 
-		<function moreinfo="none">bind_dbmod</function>is implemented in <filename moreinfo="none">db.c</filename>
+		<function moreinfo="none">bind_dbmod</function> is implemented in <filename moreinfo="none">db.c</filename>
 		file, all other functions are implemented in a standalone module.
 		Detaileddescription of functions follows.
 	    </para>
@@ -4660,7 +4685,7 @@ int n = RES_ROW_N(res);
 	    <section id="db-query">
 		<title><function moreinfo="none">db_query</function></title>
 		<para>
-		    This function implements SELECT SQL directive.
+		    This function implements SELECT <acronym>SQL</acronym> directive.
 		</para>
 		<funcsynopsis>
 		    <funcprototype>
@@ -4722,7 +4747,7 @@ int n = RES_ROW_N(res);
 			</listitem>
 		    </itemizedlist>
 		    If _k and _v parameters are NULL and _n is zero, you will get the whole table.
-		    if _c is NULL and _nc is zero, you will get all table columns in the result
+		    If _c is NULL and _nc is zero, you will get all table columns in the result
 		</para>
 		<para>
 		    _r will point to a dynamically allocated structure, it is neccessary to call
@@ -4744,7 +4769,7 @@ int n = RES_ROW_N(res);
 		<title><function moreinfo="none">db_free_query</function></title>
 		<para>
 		    This function frees all memory allocated previously in <function moreinfo="none">db_query</function>, 
-		    it is neccessary to call this function on a db_res_t structure if you don't need the
+		    it is neccessary to call this function for a <type>db_res_t</type> structure if you don't need the
 		    structure anymore. You must call this function <emphasis>BEFORE</emphasis> you call 
 		    <function moreinfo="none">db_query</function> again !
 		</para>
@@ -4941,7 +4966,7 @@ int n = RES_ROW_N(res);
 	    <section id="db-use-table">
 		<title><function moreinfo="none">db_use_table</function></title>
 		<para>
-		    The function db_use_table takes a table name and stores it db_con_t structure.
+		    The function db_use_table takes a table name and stores it in db_con_t structure.
 		    All subsequent operations (insert, delete, update, query) are performed on
 		    that table.
 		</para>
@@ -4978,7 +5003,7 @@ int n = RES_ROW_N(res);
     <chapter id="fifo-server">
 	<title>FIFO Server</title>
 	<para>
-	    TBD by Jiri.
+	    TBD.
 	</para>
     </chapter> <!-- fifo-server -->
     
@@ -5011,7 +5036,7 @@ int n = RES_ROW_N(res);
 	<section id="tm">
 	    <title>Transaction Module</title>
 	    <para>
-		TBD by Jiri.
+		TBD.
 	    </para>
 	</section> <!-- tm -->
 	<section id="usrloc">
@@ -5021,34 +5046,39 @@ int n = RES_ROW_N(res);
 	<section id="sms">
 	    <title>SMS Module</title>
 	    <para>
-		TBD by Bogdan.
+		TBD.
 	    </para>
 	</section> <!-- sms -->
 	<section id="jabber">
 	    <title>Jabber Module</title>
 	    <para>
-		TBD by Daniel.
+		TBD.
 	    </para>
 	</section> <!-- jabber -->
 	<section id="im">
 	    <title>Instant Messaging Module</title>
 	    <para>
-		TBD by Bogdan.
+		TBD.
 	    </para>
 	</section> <!-- im -->
 	<section id="ext">
 	    <title>External Module</title>
 	    <para>
-		    TBD by Bogdan or Jiri.
+		TBD.
 	    </para>
 	</section> <!-- ext -->
     </chapter> <!-- basic-modules -->
 
-    <chapter id="message-modif">
+    <chapter id="sip-msg-modif">
 	<title><acronym>SIP</acronym> Message Modifications</title>
-	<para>TBD by Andrei or Jan.</para>
-    </chapter> <!-- message-modif -->
+	<para>TBD.</para>
+    </chapter> <!-- sip-msg-modif -->
 
+    <chapter>
+	<title>The Timer subsystem</title>
+	<para>TBD.</para>
+    </chapter>
+    
     <chapter id="tips">
 	<title>Tips And Tricks</title>
 	<para>
@@ -5078,6 +5108,10 @@ int n = RES_ROW_N(res);
 	    Jak udelat funkce, ktere nepujdou volat ze skriptu, ale jenom z ostatnich
 	    modulu.
 	    FAQ
+	    Dopsat interface configuration sekci.
+	    Use command tag
+	    Use error code tag
+	    qandaset - FAQ
 	</para>
     </chapter> <!-- tips -->
 </book>
