@@ -2,8 +2,8 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
 
 <book label="serdev" id="serdev" lang="EN">
-    <title>SIP Express Router</title>
-    <subtitle>The Developer's Guide</subtitle>
+<?dbhtml filename="index.html">
+    <title>SIP Express Router v0.8.8 - Developer's Guide</title>
     <bookinfo>
 	<authorgroup>
 	    <author>
@@ -11,8 +11,17 @@
 		<surname>Janak</surname>
 		<email>J.Janak@sh.cvut.cz</email>
 	    </author>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Bogdan</firstname>
+		<surname>Iancu</surname>
+		<email>Bogdan.Iancu@fokus.fraunhofer.de</email>
+	    </author>
 	</authorgroup>
-	
 	<copyright>
 	    <year>2001</year>
 	    <year>2002</year>
@@ -6928,6 +6937,6 @@ if (t_newtran()) {
 	    Dopsat interface configuration sekci.
 	    Use command tag
 	    Use error code tag
-	    qandaset - FAQ
+	    qandaset - FAQ    
 -->
 </book>
