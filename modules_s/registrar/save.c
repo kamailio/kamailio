@@ -140,10 +140,12 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		_c = get_next_contact(_c);
 	}
 	
-	if (r && !r->contacts) {
-		ul_delete_urecord(_d, _u);
-	} else {
-		build_contact(r->contacts);
+	if (r) {
+		if (!r->contacts) {
+			ul_delete_urecord(_d, _u);
+		} else {
+			build_contact(r->contacts);
+		}
 	}
 	
 	return 0;
