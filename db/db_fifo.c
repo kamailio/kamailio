@@ -88,8 +88,8 @@
 
 #define trim_spaces(str) \
 	do { \
-		for(;*(str).s==' ';(str).s++,(str).len--);\
-		for(;(str).s[(str).len-1]==' ';(str).s[--(str).len]=='\0');\
+		for(;(str).s[0]==' ';(str).s++,((str).len)--);\
+		for(;(str).s[(str).len-1]==' ';(str).s[--((str).len)]='\0');\
 	}while(0)
 
 #define double_log( _str_ ) \
@@ -451,8 +451,8 @@ parse_error:
 		"offset %d\n",line.len,line.s,*c,*c,c-line.s);
 	double_log("Broken AVP(attr|op|val) in DB command");
 error:
-	for(;*nr;*nr--)
-		pkg_free( (void*)keys[*nr-1] );
+	for(;*nr;(*nr)--)
+		pkg_free( (void*)keys[(*nr)-1] );
 	return -1;
 }
 
@@ -498,8 +498,8 @@ static inline int get_keys( FILE *fifo , db_key_t *keys, int *nr, int max_nr)
 	}
 
 error:
-	for(;*nr;*nr--)
-		pkg_free( (void*)keys[*nr-1] );
+	for(;*nr;(*nr)--)
+		pkg_free( (void*)keys[(*nr)-1] );
 	return -1;
 }
 
