@@ -56,7 +56,6 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 	struct hostent* he;
 	int i;
 
-	return 0;
 	/* maybe we are lucky and name it's an ip */
 	if (strcmp(name, ip_addr2a(ip))==0)
 		return 0;

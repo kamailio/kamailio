@@ -3,6 +3,7 @@
 #include "../globals.h"
 #include "../config.h"
 
+#if 0
 #ifdef PKG_MALLOC
 #       ifdef VQ_MALLOC
 #               include "vq_malloc.h"
@@ -20,7 +21,6 @@
 #		define MY_STATUS qm_status
 #       endif
 #endif
-
 
 void memtest()
 {
@@ -129,5 +129,7 @@ void memtest()
 	
 	exit(0);
 }
+#endif
+
 
 #endif
