@@ -47,6 +47,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ */
 
 
 #include <stdio.h>
@@ -68,35 +73,23 @@ static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
 static void mod_destroy();
 
+
+static cmd_export_t cmds[]={
+	{"sl_send_reply",  w_sl_send_reply,  2, fixup_sl_send_reply},
+	{"sl_reply_error", w_sl_reply_error, 0, 0},
+	{0,0,0,0}
+};
+
+
 #ifdef STATIC_SL
 struct module_exports sl_exports = {
 #else
 struct module_exports exports= {
 #endif
 	"sl_module",
-	(char*[]){
-				"sl_send_reply",
-				"sl_reply_error"
-			},
-	(cmd_function[]){
-					w_sl_send_reply,
-					w_sl_reply_error
-					},
-	(int[]){
-				2,
-				0
-			},
-	(fixup_function[]){
-				fixup_sl_send_reply,
-				0 /* sl_reply_error */
-		},
-	/* 3, */ 2,
-
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
-
+	cmds,
+	0, /* param exports */
+	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	mod_destroy,

@@ -26,6 +26,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-11  updated to the new module interface (andrei)
+ */
 
 
 #include <stdio.h>
@@ -47,44 +51,25 @@ static int child_init(int rank);
 static int int_fixup(void** param, int param_no);
 
 
+static cmd_export_t cmds[]={
+	{"loose_route",  loose_route,   0, 0        },
+	{"strict_route", strict_route,  0, 0        },
+	{"record_route", record_route,  1, int_fixup},
+	{0,0,0,0}
+};
+
+static param_export_t params[]={
+	{"use_fast_cmp",   INT_PARAM,  &use_fast_cmp      },
+	{"append_fromtag", INT_PARAM,  &rr_append_fromtag },
+	{0,0,0}
+};
+
+
 struct module_exports exports = {
 	"rr",
-	(char*[]) {
-		"loose_route",
-		"strict_route",
-		"record_route"
-	},
-	(cmd_function[]) {
-		loose_route,
-		strict_route,
-		record_route
-	},
-	(int[]) {
-		0,
-		0,
-		1
-	},
-	(fixup_function[]) {
-		0,
-		0,
-		int_fixup
-	},
-	3, /* number of functions*/
-
-	(char*[]) { /* Module parameter names */
-		"use_fast_cmp",
-		"append_fromtag"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		INT_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&use_fast_cmp,
-		&rr_append_fromtag
-	},
-	2,         /* Number of module paramers */
-
+	cmds,
+	params,
+	
 	mod_init,  /* initialize module */
 	0,         /* response function*/
 	0,         /* destroy function */
