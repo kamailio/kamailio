@@ -1,0 +1,11 @@
+Things we have omitted for now:
+
+- we don't make a deep copy of msg->lump_list
+- we don't generate CANCELs for forked requests
+- no ACK matching (waiting for To-tag)
+- no SIP-wise HF comparison within T-matching
+  (just memcmp)
+- 6xx should be delayed indeed
+
+To improve:
+- too many memcpies
