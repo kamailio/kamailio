@@ -30,6 +30,12 @@
  */
 
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h> /* for regex */
+#include <regex.h>
+
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
@@ -536,6 +542,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 static int fixup_check_avp(void** param, int param_no)
 {
 	struct fis_param *ap;
+	regex_t* re;
 	char *s;
 
 	s = (char*)*param;
@@ -562,6 +569,34 @@ static int fixup_check_avp(void** param, int param_no)
 			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: failed to parse "
 				"checked value \n");
 			return E_UNSPEC;
+		}
+		/* if REGEXP op -> compile the expresion */
+		if (ap->flags&AVPOPS_OP_RE)
+		{
+			if ( (ap->flags&AVPOPS_VAL_STR)==0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: regexp operation"
+					"requires string value\n");
+				return E_UNSPEC;
+			}
+			re = pkg_malloc(sizeof(regex_t));
+			if (re==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: no more pkg mem\n");
+				return E_OUT_OF_MEM;
+			}
+			DBG("DEBUG:avpops:fixup_check_avp: compiling regexp <%s>\n",
+				ap->val.s->s);
+			if (regcomp(re, ap->val.s->s, REG_EXTENDED|REG_ICASE|REG_NEWLINE))
+			{
+				pkg_free(re);
+				LOG(L_ERR,"ERROR:avpops:fixip_check_avp: bad re <%s>\n",
+					ap->val.s->s);
+				return E_BAD_RE;
+			}
+			/* free the string and link the regexp */
+			pkg_free(ap->val.s);
+			ap->val.s = (str*)re;
 		}
 	}
 

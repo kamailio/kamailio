@@ -67,6 +67,7 @@
 #define AVPOPS_OP_EQ        (1<<16)
 #define AVPOPS_OP_LT        (1<<17)
 #define AVPOPS_OP_GT        (1<<18)
+#define AVPOPS_OP_RE        (1<<19)
 
 /* flags for flags    24..31 */
 #define AVPOPS_FLAG_ALL     (1<<24)

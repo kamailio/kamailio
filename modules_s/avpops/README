@@ -373,7 +373,7 @@ avp_pushto("Foo","$bar/g");
      * op_value - define the operator, the value and flags for
        checking. Parameter syntax is:
           + op_value = operator '/' value ['/'flags] 
-          + operator = 'eq' | 'lt' | 'gt' 
+          + operator = 'eq' | 'lt' | 'gt' | 're' 
           + value = variable | fix_value 
           + variable =
             '$from'|'$ruri'|'$from'|'$src_ip'|avp_alias 
@@ -385,6 +385,7 @@ avp_pushto("Foo","$bar/g");
 avp_check("i:678", "lt/i:345/g");
 avp_check("s:person","eq/$from/I");
 avp_check("s:foo","gt/$bar/g");
+avp_check("s:foo","re/sip:.*@bar.net/g");
 ...
      _________________________________________________________
 

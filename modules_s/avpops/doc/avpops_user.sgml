@@ -522,7 +522,7 @@ avp_pushto("Foo","$bar/g");
 					op_value = operator '/' value ['/'flags]
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
-					operator = 'eq' | 'lt' | 'gt'
+					operator = 'eq' | 'lt' | 'gt' | 're'
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					value = variable | fix_value
@@ -530,7 +530,7 @@ avp_pushto("Foo","$bar/g");
 					<listitem><para><emphasis>
 					variable = '$from'|'$ruri'|'$from'|'$src_ip'|avp_alias
 					<listitem><para><emphasis>
-					fix_value = 'i:'integer | 's:'string | string 
+					fix_value = 'i:'integer | 's:'string | string
 					</emphasis></para></listitem>
 					<listitem><para><emphasis>
 					flags = 'g' | 'G' | 'i' | 'I'
@@ -546,6 +546,7 @@ avp_pushto("Foo","$bar/g");
 avp_check("i:678", "lt/i:345/g");
 avp_check("s:person","eq/$from/I");
 avp_check("s:foo","gt/$bar/g");
+avp_check("s:foo","re/sip:.*@bar.net/g");
 ...
 				</programlisting>
 			</example>

@@ -29,7 +29,10 @@
  *  2004-10-04  first version (ramona)
  */
 
-
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <regex.h>
 
 #include "../../ut.h"
 #include "../../dprint.h"
@@ -814,13 +817,14 @@ error:
 	return -1;
 }
 
-#include <assert.h>
+
 int ops_check_avp( struct sip_msg* msg, struct fis_param* ap,
 													struct fis_param* val)
 {
 	unsigned short    name_type;
 	struct usr_avp    *avp1;
 	struct usr_avp    *avp2;
+	regmatch_t        pmatch;
 	int_str           avp_val;
 	int_str           ck_val;
 	str               s_ip;
@@ -885,7 +889,9 @@ cycle2:
 			}
 		}
 		DBG("DEBUG:avpops:check_avp: check <%.*s> against <%.*s> as str\n",
-			avp_val.s->len,avp_val.s->s, ck_val.s->len,ck_val.s->s);
+			avp_val.s->len,avp_val.s->s,
+			(val->flags&AVPOPS_OP_RE)?6:ck_val.s->len,
+			(val->flags&AVPOPS_OP_RE)?"REGEXP":ck_val.s->s);
 		/* do check */
 		if (val->flags&AVPOPS_OP_EQ)
 		{
@@ -907,6 +913,9 @@ cycle2:
 		} else if (val->flags&AVPOPS_OP_GT) {
 			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
 			if (strncasecmp(avp_val.s->s,ck_val.s->s,n)==1)
+				return 1;
+		} else if (val->flags&AVPOPS_OP_RE) {
+			if (regexec((regex_t*)ck_val.s, avp_val.s->s, 1, &pmatch, 0)==0)
 				return 1;
 		} else {
 			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
@@ -936,7 +945,6 @@ next:
 	/* cycle for the second value (only if avp can have multiple vals) */
 	if ((val->flags&AVPOPS_VAL_AVP)&&(avp2=search_next_avp(avp2,&ck_val))!=0)
 	{
-		//assert(0);
 		ck_flg = avp2->flags&AVP_VAL_STR?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 		goto cycle2;
 	/* cycle for the first value -> next avp */
