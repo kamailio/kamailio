@@ -30,6 +30,7 @@
  * -------
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
+ * 2003-12-15: added suffix parameter to enum_query (jh)
  */
 
 
@@ -52,6 +53,7 @@ static int mod_init(void);
  * Fixup functions
  */
 static int str_fixup(void** param, int param_no);
+static int enum_fixup(void** param, int param_no);
 
 
 /*
@@ -64,14 +66,17 @@ char* domain_suffix = "e164.arpa.";
  * Internal module variables
  */
 str suffix;
+str service;
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        enum_query,        1, str_fixup, REQUEST_ROUTE},
-	{"is_from_user_e164", is_from_user_e164, 0, 0,         REQUEST_ROUTE},
+	{"enum_query",        enum_query_0,      0, 0,          REQUEST_ROUTE},
+	{"enum_query",        enum_query_1,      1, str_fixup,  REQUEST_ROUTE},
+	{"enum_query",        enum_query_2,      2, enum_fixup, REQUEST_ROUTE},
+	{"is_from_user_e164", is_from_user_e164, 0, 0,          REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -106,6 +111,8 @@ static int mod_init(void)
 	
 	suffix.s = domain_suffix;
 	suffix.len = strlen(suffix.s);
+	
+	service.len = 0;
 
 	return 0;
 }
@@ -131,4 +138,17 @@ static int str_fixup(void** param, int param_no)
 	}
 
 	return 0;
+}
+
+/*
+ * Convert both enum_query parameters to str* representation
+ */
+static int enum_fixup(void** param, int param_no)
+{
+       if (param_no == 1) {
+               return str_fixup(param, 1);
+       } else if (param_no == 2) {
+               return str_fixup(param, 1);
+       }
+       return 0;
 }

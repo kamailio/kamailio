@@ -48,7 +48,9 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2);
  * Make enum query and if query succeeds, replace current uri with the
  * result of the query
  */
-int enum_query(struct sip_msg* _msg, char* _service, char* _str2);
+int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2);
+int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2);
+int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service);
 
 
 #endif /* ENUM_H */

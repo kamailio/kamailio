@@ -192,6 +192,21 @@ inline int parse_naptr_regexp(char* first, int len, str* pattern, str* replaceme
 	}
 }
 
+/*
+ * Call enum_query_2 with module parameter suffix and default service.
+ */
+int enum_query_0(struct sip_msg* _msg, char* _str1, char* _str2)
+{
+	return enum_query_2(_msg, (char *)(&suffix), (char *)(&service));
+}
+
+/*
+ * Call enum_query_2 with given suffix and default service.
+ */
+int enum_query_1(struct sip_msg* _msg, char* _suffix, char* _str2)
+{
+	return enum_query_2(_msg, _suffix, (char *)(&service));
+}
 
 /*
  * Makes enum query on user part of current request uri, which must
@@ -201,7 +216,7 @@ inline int parse_naptr_regexp(char* first, int len, str* pattern, str* replaceme
  * returs -1.
  */
 
-int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
+int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 {
 	char *user_s;
 	int user_len, i, j, retval;
@@ -215,7 +230,10 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 	str pattern, replacement, result;
 	char string[17];
 
+	str* suffix;
 	str* service;
+
+	suffix = (str*)_suffix;
 	service = (str*)_service;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
@@ -238,8 +256,7 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 		j = j + 2;
 	}
 
-	memcpy(name + j, suffix.s, suffix.len + 1);
-/*	strcpy(&(name[j]), "e164.arpa."); */
+	memcpy(name + j, suffix->s, suffix->len + 1);
 
 	head = get_record(name, T_NAPTR);
 

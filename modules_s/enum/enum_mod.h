@@ -39,6 +39,7 @@
  * Internal module variables
  */
 extern str suffix;           /* str version of domain_suffix */
+extern str service;          /* default (empty) service */
 
 
 #endif /* ENUM_MOD_H */
