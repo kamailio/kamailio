@@ -37,6 +37,7 @@
 #define PERMISSIONS_H 1
 
 #include "../../sr_module.h"
+#include "../../db/db.h"
 #include "rule.h"
 
 #define DEFAULT_ALLOW_FILE "permissions.allow"
@@ -53,10 +54,14 @@ typedef struct rule_file {
  */
 #define MAX_RULE_FILES 64
 
-int mod_init(void);
-void mod_exit(void);
-int allow_routing_def(struct sip_msg* msg, char* str1, char* str2);
-int allow_routing(struct sip_msg* msg, char* allow_file, char* deny_file);
-int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file);
+extern char* db_url;        /* Database URL */
+extern int db_mode;	    /* Database usage mode: 0=no db, 1=no cache, 2=cache */
+extern char* trusted_table; /* Name of trusted table */
+extern char* source_col;    /* Name of source address column */
+extern char* proto_col;     /* Name of protocol column */
+extern char* from_col;      /* Name of from pattern column */
+
+extern db_con_t* db_handle;
+
 
 #endif

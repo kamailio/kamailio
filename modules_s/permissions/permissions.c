@@ -4,6 +4,8 @@
  * PERMISSIONS module
  *
  * Copyright (C) 2003 Miklós Tirpák (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 iptel.org
+ * Copyright (C) 2003 Juha Heinanen (jh@tutpro.com)
  *
  * This file is part of ser, a free SIP server.
  *
@@ -31,6 +33,7 @@
 #include <stdio.h>
 #include "permissions.h"
 #include "parse_config.h"
+#include "trusted.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
@@ -53,6 +56,16 @@ static char* allow_suffix = ".allow";
 static char* deny_suffix = ".deny";
 
 
+/* for allow_trusted function */
+char* db_url = 0;                  /* Don't connect to the database by default */
+int db_mode = 0;		   /* Database usage mode: 0=no cache, 1=cache */
+char* trusted_table = "trusted";   /* Name of trusted table */
+char* source_col = "src_ip";       /* Name of source address column */
+char* proto_col = "proto";         /* Name of protocol column */
+char* from_col = "from_pattern";   /* Name of from pattern column */
+
+db_con_t* db_handle = 0;
+
 /*
  * By default we check all branches
  */
@@ -71,20 +84,25 @@ static int load_fixup(void** param, int param_no);
  */
 static int single_fixup(void** param, int param_no);
 
+static int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
+static int allow_routing_1(struct sip_msg* msg, char* basename, char* str2);
+static int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
+static int allow_register_1(struct sip_msg* msg, char* basename, char* s);
+static int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 
-int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
-int allow_routing_1(struct sip_msg* msg, char* basename, char* str2);
-int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
-int allow_register_1(struct sip_msg* msg, char* basename, char* s);
-int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
+static int mod_init(void);
+static void mod_exit(void);
+static int child_init(int rank);
+
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-        {"allow_routing",  allow_routing_0,  0, 0,            REQUEST_ROUTE},
-	{"allow_routing",  allow_routing_1,  1, single_fixup, REQUEST_ROUTE},
-	{"allow_routing",  allow_routing_2,  2, load_fixup,   REQUEST_ROUTE},
-	{"allow_register", allow_register_1, 1, single_fixup, REQUEST_ROUTE},
-	{"allow_register", allow_register_2, 2, load_fixup,   REQUEST_ROUTE},
+        {"allow_routing",  allow_routing_0,  0, 0,             REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_routing",  allow_routing_1,  1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_routing",  allow_routing_2,  2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register", allow_register_1, 1, single_fixup,  REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_register", allow_register_2, 2, load_fixup,    REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_trusted",  allow_trusted,    0, 0,             REQUEST_ROUTE | FAILURE_ROUTE},
         {0, 0, 0, 0, 0}
 };
 
@@ -95,6 +113,12 @@ static param_export_t params[] = {
 	{"check_all_branches", INT_PARAM, &check_all_branches},
 	{"allow_suffix",       STR_PARAM, &allow_suffix      },
 	{"deny_suffix",        STR_PARAM, &deny_suffix       },
+	{"db_url",             STR_PARAM, &db_url            },
+	{"db_mode",            INT_PARAM, &db_mode           },
+	{"trusted_table",      STR_PARAM, &trusted_table     },
+	{"source_col",         STR_PARAM, &source_col        },
+	{"proto_col",          STR_PARAM, &proto_col         },
+	{"from_col",           STR_PARAM, &from_col          },
         {0, 0, 0}
 };
 
@@ -107,7 +131,7 @@ struct module_exports exports = {
         0,         /* response function */
         mod_exit,  /* destroy function */
         0,         /* oncancel function */
-        0	   /* child initialization function */
+        child_init /* child initialization function */
 };
 
 
@@ -488,7 +512,7 @@ static contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
 /* 
  * module initialization function 
  */
-int mod_init(void)
+static int mod_init(void)
 {
 	LOG(L_INFO, "permissions - initializing\n");
 
@@ -507,16 +531,26 @@ int mod_init(void)
 	} else {
 		LOG(L_WARN, "Default deny file (%s) not found => empty rule set\n", deny[0].filename);
 	}
+
+	if (init_trusted() != 0) {
+		LOG(L_ERR, "Error while initializing allow_trusted function\n");
+	}
 	
 	rules_num = 1;
 	return 0;
 }
 
 
+static int child_init(int rank)
+{
+	return init_child_trusted(rank);
+}
+
+
 /* 
  * destroy function 
  */
-void mod_exit(void) 
+static void mod_exit(void) 
 {
 	int i;
 
@@ -527,6 +561,8 @@ void mod_exit(void)
 		free_rule(deny[i].rules);
 		pkg_free(deny[i].filename);
 	}
+
+	clean_trusted();
 }
 
 
