@@ -113,7 +113,6 @@
 #include <sys/un.h>
 #include <ctype.h>
 #include <errno.h>
-#include <md5.h>
 #include <netdb.h>
 #include <poll.h>
 #include <stdio.h>
@@ -161,6 +160,7 @@ static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
+static int child_init(int rank);
 
 static usrloc_api_t ul;
 
@@ -190,6 +190,8 @@ static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
 static int umode = 0;
 static int controlfd;
+static pid_t mypid;
+static unsigned int myseqn = 0;
 
 static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -220,16 +222,15 @@ struct module_exports exports={
 	0, /* reply processing */
 	0, /* destroy function */
 	0, /* on_break */
-	0  /* child_init */
+	child_init
 };
 
 static int
 mod_init(void)
 {
-	int rtpp_ver, i;
+	int i;
 	char *cp;
 	bind_usrloc_t bind_usrloc;
-	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
 	struct in_addr addr;
 
 	if (natping_interval > 0) {
@@ -273,11 +274,21 @@ mod_init(void)
 			umode = 0;
 			rtpproxy_sock += 5;
 		}
+	}
 
+	return 0;
+}
+
+static int
+child_init(int rank)
+{
+	int rtpp_ver, n;
+	char *cp;
+	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
+	struct addrinfo hints, *res;
+
+	if (rtpproxy_disable == 0) {
 		if (umode != 0) {
-			int n;
-			struct addrinfo hints, *res;
-
 			cp = strrchr(rtpproxy_sock, ':');
 			if (cp != NULL) {
 				*cp = '\0';
@@ -287,40 +298,18 @@ mod_init(void)
 				cp = CPORT;
 
 			memset(&hints, 0, sizeof(hints));
-			hints.ai_flags = AI_PASSIVE;
+			hints.ai_flags = 0;
 			hints.ai_family = (umode == 6) ? AF_INET6 : AF_INET;
 			hints.ai_socktype = SOCK_DGRAM;
-			if ((n = getaddrinfo(NULL, "0", &hints, &res)) != 0) {
-				LOG(L_ERR, "nathelper: setbindhost: %s\n", gai_strerror(n));
-				pkg_free(rtpproxy_sock);
+			if ((n = getaddrinfo(rtpproxy_sock, cp, &hints, &res)) != 0) {
+				LOG(L_ERR, "nathelper: getaddrinfo: %s\n", gai_strerror(n));
 				return -1;
 			}
 
 			controlfd = socket((umode == 6) ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
 			if (controlfd == -1) {
 				LOG(L_ERR, "nathelper: can't create socket\n");
-				close(controlfd);
 				freeaddrinfo(res);
-				pkg_free(rtpproxy_sock);
-				return -1;
-			}
-			if (bind(controlfd, res->ai_addr, res->ai_addrlen) == -1) {
-				LOG(L_ERR, "nathelper: can't bind to a socket\n");
-				close(controlfd);
-				freeaddrinfo(res);
-				pkg_free(rtpproxy_sock);
-				return -1;
-			}
-			freeaddrinfo(res);
-
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_flags = 0;
-			hints.ai_family = (umode == 6) ? AF_INET6 : AF_INET;
-			hints.ai_socktype = SOCK_DGRAM;
-			if ((n = getaddrinfo(rtpproxy_sock, cp, &hints, &res)) != 0) {
-				LOG(L_ERR, "nathelper: setbindhost: %s\n", gai_strerror(n));
-				close(controlfd);
-				pkg_free(rtpproxy_sock);
 				return -1;
 			}
 
@@ -328,7 +317,6 @@ mod_init(void)
 				LOG(L_ERR, "nathelper: can't connect to a RTP proxy\n");
 				close(controlfd);
 				freeaddrinfo(res);
-				pkg_free(rtpproxy_sock);
 				return -1;
 			}
 			freeaddrinfo(res);
@@ -352,6 +340,7 @@ mod_init(void)
 			LOG(L_WARN, "WARNING: nathelper: support for RTP proxy"
 			    "has been disabled\n");
 	}
+	mypid = getpid();
 
 	return 0;
 }
@@ -934,20 +923,10 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 static char *
 gencookie()
 {
-	long val;
-	MD5_CTX context;
-	struct timeval tv;
 	static char cook[34];
 
-	srandomdev();
-	MD5Init(&context);
-	val = random();
-	MD5Update(&context, (const unsigned char *)&val, sizeof(val));
-	gettimeofday(&tv, NULL);
-	MD5Update(&context, (const unsigned char *)&tv, sizeof(tv));
-	MD5End(&context, cook);
-	cook[sizeof(cook) - 2] = ' ';
-	cook[sizeof(cook) - 1] = '\0';
+	sprintf(cook, "%d_%u ", mypid, myseqn);
+	myseqn++;
 	return cook;
 }
 
