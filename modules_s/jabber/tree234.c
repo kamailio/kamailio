@@ -42,9 +42,9 @@
 #define mknew(typ) ( (typ *) smalloc (sizeof (typ)) )
 
 #ifdef TEST
-#define LOG(x) (printf x)
+#define LOG123(x) (printf x)
 #else
-#define LOG(x)
+#define LOG123(x)
 #endif
 
 typedef struct node234_Tag node234;
@@ -66,7 +66,7 @@ struct node234_Tag {
  */
 tree234 *newtree234(cmpfn234 cmp) {
     tree234 *ret = mknew(tree234);
-    LOG(("created tree %p\n", ret));
+    LOG123(("created tree %p\n", ret));
     ret->root = NULL;
     ret->cmp = cmp;
     return ret;
@@ -152,7 +152,7 @@ static void *add234_internal(tree234 *t, void *e, int index) {
     void *orig_e = e;
     int c, lcount, rcount;
 
-    LOG(("adding node %p to tree %p\n", e, t));
+    LOG123(("adding node %p to tree %p\n", e, t));
     if (t->root == NULL) {
 	t->root = mknew(node234);
 	t->root->elems[1] = t->root->elems[2] = NULL;
@@ -162,7 +162,7 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	t->root->counts[2] = t->root->counts[3] = 0;
 	t->root->parent = NULL;
 	t->root->elems[0] = e;
-	LOG(("  created root %p\n", t->root));
+	LOG123(("  created root %p\n", t->root));
 	return orig_e;
     }
 
@@ -170,7 +170,7 @@ static void *add234_internal(tree234 *t, void *e, int index) {
     while (*np) {
 	int childnum;
 	n = *np;
-	LOG(("  node %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d\n",
+	LOG123(("  node %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d\n",
 	     n,
 	     n->kids[0], n->counts[0], n->elems[0],
 	     n->kids[1], n->counts[1], n->elems[1],
@@ -231,7 +231,7 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 		childnum = 3;
 	}
 	np = &n->kids[childnum];
-	LOG(("  moving to child %d (%p)\n", childnum, *np));
+	LOG123(("  moving to child %d (%p)\n", childnum, *np));
     }
 
     /*
@@ -240,27 +240,27 @@ static void *add234_internal(tree234 *t, void *e, int index) {
     left = NULL;  lcount = 0;
     right = NULL; rcount = 0;
     while (n) {
-	LOG(("  at %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d\n",
+	LOG123(("  at %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d\n",
 	     n,
 	     n->kids[0], n->counts[0], n->elems[0],
 	     n->kids[1], n->counts[1], n->elems[1],
 	     n->kids[2], n->counts[2], n->elems[2],
 	     n->kids[3], n->counts[3]));
-	LOG(("  need to insert %p/%d [%p] %p/%d at position %d\n",
+	LOG123(("  need to insert %p/%d [%p] %p/%d at position %d\n",
 	     left, lcount, e, right, rcount, np - n->kids));
 	if (n->elems[1] == NULL) {
 	    /*
 	     * Insert in a 2-node; simple.
 	     */
 	    if (np == &n->kids[0]) {
-		LOG(("  inserting on left of 2-node\n"));
+		LOG123(("  inserting on left of 2-node\n"));
 		n->kids[2] = n->kids[1];     n->counts[2] = n->counts[1];
 		n->elems[1] = n->elems[0];
 		n->kids[1] = right;          n->counts[1] = rcount;
 		n->elems[0] = e;
 		n->kids[0] = left;           n->counts[0] = lcount;
 	    } else { /* np == &n->kids[1] */
-		LOG(("  inserting on right of 2-node\n"));
+		LOG123(("  inserting on right of 2-node\n"));
 		n->kids[2] = right;          n->counts[2] = rcount;
 		n->elems[1] = e;
 		n->kids[1] = left;           n->counts[1] = lcount;
@@ -268,14 +268,14 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	    if (n->kids[0]) n->kids[0]->parent = n;
 	    if (n->kids[1]) n->kids[1]->parent = n;
 	    if (n->kids[2]) n->kids[2]->parent = n;
-	    LOG(("  done\n"));
+	    LOG123(("  done\n"));
 	    break;
 	} else if (n->elems[2] == NULL) {
 	    /*
 	     * Insert in a 3-node; simple.
 	     */
 	    if (np == &n->kids[0]) {
-		LOG(("  inserting on left of 3-node\n"));
+		LOG123(("  inserting on left of 3-node\n"));
 		n->kids[3] = n->kids[2];    n->counts[3] = n->counts[2];
 		n->elems[2] = n->elems[1];
 		n->kids[2] = n->kids[1];    n->counts[2] = n->counts[1];
@@ -284,14 +284,14 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 		n->elems[0] = e;
 		n->kids[0] = left;          n->counts[0] = lcount;
 	    } else if (np == &n->kids[1]) {
-		LOG(("  inserting in middle of 3-node\n"));
+		LOG123(("  inserting in middle of 3-node\n"));
 		n->kids[3] = n->kids[2];    n->counts[3] = n->counts[2];
 		n->elems[2] = n->elems[1];
 		n->kids[2] = right;         n->counts[2] = rcount;
 		n->elems[1] = e;
 		n->kids[1] = left;          n->counts[1] = lcount;
 	    } else { /* np == &n->kids[2] */
-		LOG(("  inserting on right of 3-node\n"));
+		LOG123(("  inserting on right of 3-node\n"));
 		n->kids[3] = right;         n->counts[3] = rcount;
 		n->elems[2] = e;
 		n->kids[2] = left;          n->counts[2] = lcount;
@@ -300,12 +300,12 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	    if (n->kids[1]) n->kids[1]->parent = n;
 	    if (n->kids[2]) n->kids[2]->parent = n;
 	    if (n->kids[3]) n->kids[3]->parent = n;
-	    LOG(("  done\n"));
+	    LOG123(("  done\n"));
 	    break;
 	} else {
 	    node234 *m = mknew(node234);
 	    m->parent = n->parent;
-	    LOG(("  splitting a 4-node; created new node %p\n", m));
+	    LOG123(("  splitting a 4-node; created new node %p\n", m));
 	    /*
 	     * Insert in a 4-node; split into a 2-node and a
 	     * 3-node, and move focus up a level.
@@ -363,11 +363,11 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	    if (m->kids[2]) m->kids[2]->parent = m;
 	    if (n->kids[0]) n->kids[0]->parent = n;
 	    if (n->kids[1]) n->kids[1]->parent = n;
-	    LOG(("  left (%p): %p/%d [%p] %p/%d [%p] %p/%d\n", m,
+	    LOG123(("  left (%p): %p/%d [%p] %p/%d [%p] %p/%d\n", m,
 		 m->kids[0], m->counts[0], m->elems[0],
 		 m->kids[1], m->counts[1], m->elems[1],
 		 m->kids[2], m->counts[2]));
-	    LOG(("  right (%p): %p/%d [%p] %p/%d\n", n,
+	    LOG123(("  right (%p): %p/%d [%p] %p/%d\n", n,
 		 n->kids[0], n->counts[0], n->elems[0],
 		 n->kids[1], n->counts[1]));
 	    left = m;  lcount = countnode234(left);
@@ -398,7 +398,7 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	    n = n->parent;
 	}
     } else {
-	LOG(("  root is overloaded, split into two\n"));
+	LOG123(("  root is overloaded, split into two\n"));
 	t->root = mknew(node234);
 	t->root->kids[0] = left;     t->root->counts[0] = lcount;
 	t->root->elems[0] = e;
@@ -410,7 +410,7 @@ static void *add234_internal(tree234 *t, void *e, int index) {
 	t->root->parent = NULL;
 	if (t->root->kids[0]) t->root->kids[0]->parent = t->root;
 	if (t->root->kids[1]) t->root->kids[1]->parent = t->root;
-	LOG(("  new root is %p/%d [%p] %p/%d\n",
+	LOG123(("  new root is %p/%d [%p] %p/%d\n",
 	     t->root->kids[0], t->root->counts[0],
 	     t->root->elems[0],
 	     t->root->kids[1], t->root->counts[1]));
@@ -602,13 +602,13 @@ static void *delpos234_internal(tree234 *t, int index) {
     retval = 0;
 
     n = t->root;
-    LOG(("deleting item %d from tree %p\n", index, t));
+    LOG123(("deleting item %d from tree %p\n", index, t));
     while (1) {
 	while (n) {
 	    int ki;
 	    node234 *sub;
 
-	    LOG(("  node %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d index=%d\n",
+	    LOG123(("  node %p: %p/%d [%p] %p/%d [%p] %p/%d [%p] %p/%d index=%d\n",
 		 n,
 		 n->kids[0], n->counts[0], n->elems[0],
 		 n->kids[1], n->counts[1], n->elems[1],
@@ -634,10 +634,10 @@ static void *delpos234_internal(tree234 *t, int index) {
 	     * Recurse down to subtree ki. If it has only one element,
 	     * we have to do some transformation to start with.
 	     */
-	    LOG(("  moving to subtree %d\n", ki));
+	    LOG123(("  moving to subtree %d\n", ki));
 	    sub = n->kids[ki];
 	    if (!sub->elems[1]) {
-		LOG(("  subtree has only one element!\n", ki));
+		LOG123(("  subtree has only one element!\n", ki));
 		if (ki > 0 && n->kids[ki-1]->elems[1]) {
 		    /*
 		     * Case 3a, left-handed variant. Child ki has
@@ -666,13 +666,13 @@ static void *delpos234_internal(tree234 *t, int index) {
 		    sib->counts[lastelem+1] = 0;
 		    sib->elems[lastelem] = NULL;
 		    n->counts[ki] = countnode234(sub);
-		    LOG(("  case 3a left\n"));
-		    LOG(("  index and left subtree count before adjustment: %d, %d\n",
+		    LOG123(("  case 3a left\n"));
+		    LOG123(("  index and left subtree count before adjustment: %d, %d\n",
 			 index, n->counts[ki-1]));
 		    index += n->counts[ki-1];
 		    n->counts[ki-1] = countnode234(sib);
 		    index -= n->counts[ki-1];
-		    LOG(("  index and left subtree count after adjustment: %d, %d\n",
+		    LOG123(("  index and left subtree count after adjustment: %d, %d\n",
 			 index, n->counts[ki-1]));
 		} else if (ki < 3 && n->kids[ki+1] &&
 			   n->kids[ki+1]->elems[1]) {
@@ -704,7 +704,7 @@ static void *delpos234_internal(tree234 *t, int index) {
 		    sib->elems[j] = NULL;
 		    n->counts[ki] = countnode234(sub);
 		    n->counts[ki+1] = countnode234(sib);
-		    LOG(("  case 3a right\n"));
+		    LOG123(("  case 3a right\n"));
 		} else {
 		    /*
 		     * Case 3b. ki has only one element, and has no
@@ -765,14 +765,14 @@ static void *delpos234_internal(tree234 *t, int index) {
 		    n->kids[j] = NULL;
 		    n->counts[j] = 0;
 		    if (j < 3) n->elems[j] = NULL;
-		    LOG(("  case 3b ki=%d\n", ki));
+		    LOG123(("  case 3b ki=%d\n", ki));
 
 		    if (!n->elems[0]) {
 			/*
 			 * The root is empty and needs to be
 			 * removed.
 			 */
-			LOG(("  shifting root!\n"));
+			LOG123(("  shifting root!\n"));
 			t->root = sub;
 			sub->parent = NULL;
 			sfree(n);
@@ -793,7 +793,7 @@ static void *delpos234_internal(tree234 *t, int index) {
 	 * element (no elems[1]), and has no kids (no kids[0]).
 	 */
 	if (!n->parent && !n->elems[1] && !n->kids[0]) {
-	    LOG(("  removed last element in tree\n"));
+	    LOG123(("  removed last element in tree\n"));
 	    sfree(n);
 	    t->root = NULL;
 	    return retval;
@@ -812,7 +812,7 @@ static void *delpos234_internal(tree234 *t, int index) {
 	     * we're done.
 	     */
 	    int i;
-	    LOG(("  case 1\n"));
+	    LOG123(("  case 1\n"));
 	    for (i = ei; i < 2 && n->elems[i+1]; i++)
 		n->elems[i] = n->elems[i+1];
 	    n->elems[i] = NULL;
@@ -840,7 +840,7 @@ static void *delpos234_internal(tree234 *t, int index) {
 	     */
 	    node234 *m = n->kids[ei];
 	    void *target;
-	    LOG(("  case 2a\n"));
+	    LOG123(("  case 2a\n"));
 	    while (m->kids[0]) {
 		m = (m->kids[3] ? m->kids[3] :
 		     m->kids[2] ? m->kids[2] :
@@ -858,7 +858,7 @@ static void *delpos234_internal(tree234 *t, int index) {
 	     */
 	    node234 *m = n->kids[ei+1];
 	    void *target;
-	    LOG(("  case 2b\n"));
+	    LOG123(("  case 2b\n"));
 	    while (m->kids[0]) {
 		m = m->kids[0];
 	    }
@@ -878,7 +878,7 @@ static void *delpos234_internal(tree234 *t, int index) {
 	    node234 *a = n->kids[ei], *b = n->kids[ei+1];
 	    int j;
 
-	    LOG(("  case 2c\n"));
+	    LOG123(("  case 2c\n"));
 	    a->elems[1] = n->elems[ei];
 	    a->kids[2] = b->kids[0];
 	    a->counts[2] = b->counts[0];
@@ -907,7 +907,7 @@ static void *delpos234_internal(tree234 *t, int index) {
              * shift the root.
              */
             if (n->elems[0] == NULL) {
-                LOG(("  shifting root!\n"));
+                LOG123(("  shifting root!\n"));
                 t->root = a;
                 a->parent = NULL;
                 sfree(n);

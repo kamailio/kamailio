@@ -190,7 +190,10 @@ int strprintsha(char *dest, int *hashval)
 		snprintf(hashstr, 9, "%08x", hashval[x]);
 		hashstr+=8;
 	}
-	snprintf(hashstr++, 1, "\0");
+	/*old way */
+	//snprintf(hashstr++, 1, "\0");
+	/*new way - by bogdan*/
+	*hashstr = 0;
 
 	return 0;
 }

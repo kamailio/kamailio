@@ -43,6 +43,7 @@
 #include "../../str.h"
 #include "../../db/db.h"
 #include "lock.h"
+#include "../tm/tm_load.h"
 
 /**********             ***/
 typedef struct _jab_worker
@@ -132,6 +133,10 @@ int jc_pool_del_jmsg(jc_pool);
 open_jc open_jc_create(str*, jbconnection, int, int);
 int open_jc_update(open_jc, int);
 void open_jc_free(open_jc);
+
+/**********             ***/
+
+extern struct tm_binds tmb;
 
 /**********             ***/
 

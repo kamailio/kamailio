@@ -39,6 +39,8 @@
 #include "../../timer.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../tm/t_funcs.h"
+#include "../tm/uac.h"
 
 #include "jc_pool.h"
 #include "sip2jabber.h"
@@ -46,6 +48,8 @@
 #include "xml_jab.h"
 #include "mdefines.h"
 
+/** TM bind */
+struct tm_binds tmb;
 
 /**
  * function used to compare two elements in B-Tree
@@ -358,8 +362,12 @@ void jab_wlist_del(jab_wlist jwl, str *sid, int _pid)
  */
 int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 {
+	str  msg_type = { "MESSAGE", 7};
 	char buf[512];
-	str tfrom;
+	str  tfrom;
+	str  str_hdr;
+	char buf1[1024];
+
 	// from correction
 	strcpy(buf, "<sip:");
 	strncat(buf, from->s, from->len);
@@ -369,13 +377,21 @@ int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 		tfrom.len += 5;
 		buf[tfrom.len++] = '>';
 		tfrom.s = buf;
-	}
-	else
+	} else
 		tfrom.s = buf+5;
-	if(contact != NULL && contact->len > 2)
-	    return im_send_message(to, to, &tfrom, contact, msg);
-	else
-	    return im_send_message(to, to, &tfrom, &tfrom, msg);
+	// building Contact and Content-Type
+	strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
+	str_hdr.len = 24 + CRLF_LEN + 9;
+	if(contact != NULL && contact->len > 2) {
+		strncat(buf1,contact->s,contact->len);
+		str_hdr.len += contact->len;
+	} else {
+		strncat(buf1,tfrom.s,tfrom.len);
+		str_hdr.len += tfrom.len;
+	}
+	str_hdr.s = buf1;
+
+	return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom, 0 );
 }
 
 /**

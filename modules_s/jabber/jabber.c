@@ -50,6 +50,9 @@
 #include "jc_pool.h"
 #include "../../db/db.h"
 
+/** TM bind */
+struct tm_binds tmb;
+
 /** workers list */
 jab_wlist jwl = NULL;
 
@@ -143,22 +146,33 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	load_tm_f load_tm;
 	int  i;
 
 	DBG("JABBER: initializing ...\n");
-	
+
+	/* import mysql functions */
 	if (bind_dbmod())
 	{
 		DBG("JABBER: ERROR: Database module not found\n");
 		return -1;
 	}
-	
 	db_con = (db_con_t**)shm_malloc(nrw*sizeof(db_con_t*));
 	if (db_con == NULL)
 	{
 		DBG("JABBER: Error while allocating db_con's\n");
 		return -3;
 	}
+
+	/* import the TM auto-loading function */
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+		LOG(L_ERR, "ERROR: acc: mod_init: can't import load_tm\n");
+		return -1;
+	}
+	/* let the auto-loading function load all TM stuff */
+	if (load_tm( &tmb )==-1)
+		return -1;
+
 	pipes = (int**)pkg_malloc(nrw*sizeof(int*));
 	if (pipes == NULL)
 	{
