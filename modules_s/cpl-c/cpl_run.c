@@ -47,7 +47,8 @@
 #define EO_SCRIPT            ((unsigned char*)0xffffffff)
 #define DEFAULT_ACTION       ((unsigned char*)0xfffffffe)
 #define CPL_SCRIPT_ERROR     ((unsigned char*)0xfffffffd)
-#define CPL_RUNTIME_ERROR    0//((unsigned char*)0xfffffffc)
+#define CPL_RUNTIME_ERROR    ((unsigned char*)0xfffffffc)
+#define CPL_TO_CONTINUE      ((unsigned char*)0xfffffffb)
 
 #define HDR_NOT_FOUND        ((char*)0xffffffff)
 #define UNDEF_CHAR           (0xff)
@@ -123,6 +124,22 @@ void free_cpl_interpreter(struct cpl_interpreter *intr)
 		if (intr->script.s)
 			shm_free( intr->script.s);
 		empty_location_set( &(intr->loc_set) );
+		if (intr->flags&CPL_RURI_DUPLICATED)
+			shm_free(intr->ruri);
+		if (intr->flags&CPL_TO_DUPLICATED)
+			shm_free(intr->to);
+		if (intr->flags&CPL_FROM_DUPLICATED)
+			shm_free(intr->from);
+		if (intr->flags&CPL_SUBJECT_DUPLICATED)
+			shm_free(intr->subject);
+		if (intr->flags&CPL_ORGANIZATION_DUPLICATED)
+			shm_free(intr->organization);
+		if (intr->flags&CPL_USERAGENT_DUPLICATED)
+			shm_free(intr->user_agent);
+		if (intr->flags&CPL_ACCEPTLANG_DUPLICATED)
+			shm_free(intr->accept_language);
+		if (intr->flags&CPL_PRIORITY_DUPLICATED)
+			shm_free(intr->priority);
 		shm_free(intr);
 	}
 }
@@ -157,6 +174,64 @@ inline unsigned char *run_cpl_node( struct cpl_interpreter *intr )
 	DBG("DEBUG:cpl_c:run_cpl_node: CPL node has no %d subnode -> default\n",
 		start);
 	return DEFAULT_ACTION;
+}
+
+
+
+inline unsigned char *run_lookup( struct cpl_interpreter *intr )
+{
+	unsigned char *kid;
+	unsigned char *failure_kid = 0;
+	unsigned char *p;
+	int len;
+	int i;
+
+	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+		switch (*p) {
+			case SOURCE_ATTR:
+			case USE_ATTR:
+			case IGNORE_ATTR:
+				check_overflow_by_ptr( p+2, intr, script_error);
+				len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+len, intr, script_error);
+				p += 3+len;
+				break;
+			case TIMEOUT_ATTR:
+			case CLEAR_ATTR:
+				check_overflow_by_ptr( p+1, intr, script_error);
+				p += 2;
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_lookup: unknown attribute (%d) in"
+					"LOCATION node\n",*p);
+				goto script_error;
+		}
+	}
+
+	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
+		switch ( NODE_TYPE(kid) ) {
+			case SUCCESS_NODE :
+			case NOTFOUND_NODE:
+				break;
+			case FAILURE_NODE:
+				failure_kid = kid;
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_lookup: unknown output node type"
+					" (%d) for LOOKUP node\n",NODE_TYPE(kid));
+				goto script_error;
+		}
+	}
+
+	LOG(L_NOTICE,"NOTICE:cpl_c:run_lookup: this node failes by default - "
+		"to unsecure and tiem consuming to be exectuted\n");
+	if (failure_kid)
+		return get_first_child(failure_kid);
+	return DEFAULT_ACTION;
+script_error:
+	return CPL_SCRIPT_ERROR;
 }
 
 
@@ -703,7 +778,6 @@ script_error:
 
 static inline int run_default( struct cpl_interpreter *intr )
 {
-	DBG("---> flag = %x\n",intr->flags);
 	if (!(intr->flags&CPL_PROXY_DONE)) {
 		/* no signalling operations */
 		if ( !(intr->flags&CPL_LOC_SET_MODIFIED) ) {
@@ -727,7 +801,9 @@ static inline int run_default( struct cpl_interpreter *intr )
 			/* case 3 : location modifications performed, no signalling 
 			 * operations ->
 			 * Proxy the call to the addresses in the location set */
-			return cpl_proxy_to_loc_set( intr );
+			if (cpl_proxy_to_loc_set( intr->msg, &(intr->loc_set), 0 )==0)
+				return SCRIPT_END;
+			return SCRIPT_RUN_ERROR;
 		}
 	} else {
 		/* case 4 and 5 -> still cloudy :-( */
@@ -768,6 +844,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 			case LANGUAGE_SWITCH_NODE:
 				DBG("DEBUG:run_cpl_script: processing language-switch node\n");
 				intr->ip = run_language_switch( intr );
+				break;
+			case LOOKUP_NODE:
+				DBG("DEBUG:run_cpl_script: processing lookup node\n");
+				intr->ip = run_lookup( intr );
 				break;
 			case LOCATION_NODE:
 				DBG("DEBUG:run_cpl_script: processing location node\n");
@@ -819,6 +899,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 		} else if (intr->ip==EO_SCRIPT) {
 			DBG("DEBUG:cpl_c:run_cpl_script: script interpretation done!\n");
 			return SCRIPT_END;
+		} else if (intr->ip==CPL_TO_CONTINUE) {
+			DBG("DEBUG:cpl_c:run_cpl_script: done for the moment; waiting "
+				"after signaling!\n");
+			return SCRIPT_TO_BE_CONTINUED;
 		}
 	}while(1);
 

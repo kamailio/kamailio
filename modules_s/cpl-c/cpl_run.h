@@ -37,10 +37,18 @@
 #define SCRIPT_RUN_ERROR         -1
 #define SCRIPT_FORMAT_ERROR      -2
 
-#define CPL_RUN_OUTGOING        (1<<0)
-#define CPL_RUN_INCOMING        (1<<1)
-#define CPL_LOC_SET_MODIFIED    (1<<2)
-#define CPL_PROXY_DONE          (1<<3)
+#define CPL_RUN_OUTGOING               (1<<0)
+#define CPL_RUN_INCOMING               (1<<1)
+#define CPL_LOC_SET_MODIFIED           (1<<2)
+#define CPL_PROXY_DONE                 (1<<3)
+#define CPL_RURI_DUPLICATED            (1<<4)
+#define CPL_TO_DUPLICATED              (1<<5)
+#define CPL_FROM_DUPLICATED            (1<<6)
+#define CPL_SUBJECT_DUPLICATED         (1<<7)
+#define CPL_ORGANIZATION_DUPLICATED    (1<<8)
+#define CPL_USERAGENT_DUPLICATED       (1<<9)
+#define CPL_ACCEPTLANG_DUPLICATED      (1<<10)
+#define CPL_PRIORITY_DUPLICATED        (1<<11)
 
 #define STR_NOT_FOUND           ((str*)0xffffffff)
 

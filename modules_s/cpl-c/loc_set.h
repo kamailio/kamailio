@@ -50,14 +50,23 @@ struct location {
 
 
 
+static inline void free_location( struct location *loc)
+{
+	shm_free( loc );
+}
+
+
+
+/* insert a new location into the set mantaining order by the prio val */
 static inline int add_location(struct location **loc_set, char *uri_s,
 											int uri_len, unsigned int prio)
 {
 	struct location *loc;
+	struct location *foo, *bar;
 
 	loc = (struct location*)shm_malloc( sizeof(struct location) );
 	if (!loc) {
-		LOG(L_ERR,"ERROR:add_location: no more free memory!\n");
+		LOG(L_ERR,"ERROR:add_location: no more free shm memory!\n");
 		return -1;
 	}
 
@@ -65,11 +74,22 @@ static inline int add_location(struct location **loc_set, char *uri_s,
 	loc->addr.uri.len = uri_len;
 	loc->addr.priority = prio;
 
-	if (*loc_set==0)
-		loc->next = 0;
-	else
+	/* find the proper place for the new location */
+	foo = *loc_set;
+	bar = 0;
+	while(foo && foo->addr.priority>prio) {
+		bar = foo;
+		foo = foo->next;
+	}
+	if (!bar) {
+		/* insert at the beginning */
 		loc->next = *loc_set;
-	*loc_set = loc;
+		*loc_set = loc;
+	} else {
+		/* insert after bar, before foo  */
+		loc->next = foo;
+		bar->next = loc;
+	 }
 
 	return 0;
 }
@@ -100,6 +120,20 @@ static inline void remove_location(struct location **loc_set, char *uri_s,
 		DBG("DEBUG:remove_location: no matching in loc_set for <%.*s>\n",
 			uri_len,uri_s);
 	}
+}
+
+
+
+static inline struct location *remove_first_location(struct location **loc_set)
+{
+	struct location *loc;
+
+	if (!*loc_set)
+		return 0;
+
+	loc = *loc_set;
+	*loc_set = (*loc_set)->next;
+	return loc;
 }
 
 

@@ -35,50 +35,67 @@
 extern struct tm_binds cpl_tmb;
 
 
-int cpl_proxy_to_loc_set( struct cpl_interpreter *inter )
+/* forwards the msg to the given location set; if flags has set the
+ * CPL_PROXY_DONE, all locations will be added as braches, otherwise, the first
+ * one will set as RURI (this is ha case when this is the first proxy of the
+ * message)
+ * The given list of location will be freed, returning 0 insted.
+ * Returns:  0 - OK
+ *          -1 - error */
+int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
+													unsigned char flag)
 {
-	struct location *loc;
+	struct location *foo;
 	struct action act;
 
-	loc = inter->loc_set;
-	if (!loc) {
+	if (!*locs) {
 		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: empty loc set!!\n");
-		goto runtime_error;
+		goto error;
 	}
 
-	/* use the first addr in loc_set to rewrite the RURI */
-	DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Request-URI with "
-		"<%s>\n",loc->addr.uri.s);
-	act.type = SET_URI_T;
-	act.p1_type = STRING_ST;
-	act.p1.string = loc->addr.uri.s;
-	act.next = 0;
-
-	if (do_action(&act, inter->msg) < 0) {
-		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action failed :-(\n");
-		goto runtime_error;
+	/* if it's the first time when this sip_msg is proxyed, use the first addr
+	 * in loc_set to rewrite the RURI */
+	if (!flag&CPL_PROXY_DONE) {
+		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Request-URI with "
+			"<%s>\n",(*locs)->addr.uri.s);
+		/* build a new action for setting the URI */
+		act.type = SET_URI_T;
+		act.p1_type = STRING_ST;
+		act.p1.string = (*locs)->addr.uri.s;
+		act.next = 0;
+		/* push the action */
+		if (do_action(&act, msg) < 0) {
+			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action failed\n");
+			goto error;
+		}
+		/* free the location and point to the next one */
+		foo = (*locs)->next;
+		free_location( *locs );
+		*locs = foo;
 	}
-	loc = loc->next;
 
 	/* add the rest of the locations as branches */
-	while(loc) {
-		if (append_branch(inter->msg,loc->addr.uri.s,loc->addr.uri.len-1)==-1){
+	while(*locs) {
+		if(append_branch(msg,(*locs)->addr.uri.s,(*locs)->addr.uri.len-1)==-1){
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: failed when "
-				"appending branch <%s>\n",loc->addr.uri.s);
-			goto runtime_error;
+				"appending branch <%s>\n",(*locs)->addr.uri.s);
+			goto error;
 		}
-		loc = loc->next;
+		/* free the location and point to the next one */
+		foo = (*locs)->next;
+		free_location( *locs );
+		*locs = foo;
 	}
 
 	/* do t_relay*/
-	if (cpl_tmb.t_relay( inter->msg, 0, 0)==-1) {
+	if (cpl_tmb.t_relay( msg, 0, 0)==-1) {
 		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_relay failed\n");
-		goto runtime_error;
+		goto error;
 	}
 
-	return SCRIPT_END;
-runtime_error:
-	return SCRIPT_RUN_ERROR;
+	return 1;
+error:
+	return -1;
 }
 
 

@@ -68,6 +68,7 @@ inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 	unsigned char *p;
 	int i;
 	str *s;
+	struct location *loc;
 	/* attributes (init.-ed with default values) */
 	unsigned char timeout_attr = 20;
 	unsigned char recurse_attr = YES_VAL;
@@ -147,11 +148,12 @@ inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 	}
 
 	/* if it's the first execution of a proxy node, force parsing of the needed
-	 * headers */
+	 * headers and duplicate them in shared memory */
 	if (!(intr->flags&CPL_PROXY_DONE)) {
 		/* requested URI - mandatory in SIP msg (cannot be STR_NOT_FOUND) */
 		s = GET_RURI( intr->msg );
 		duplicate_str( s , intr->ruri );
+		intr->flags |= CPL_RURI_DUPLICATED;
 		/* TO header - mandatory in SIP msg (cannot be STR_NOT_FOUND) */
 		if (!intr->to) {
 			if (!intr->msg->to &&
@@ -164,6 +166,7 @@ inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 			s = intr->to;
 		}
 		duplicate_str( s , intr->to );
+		intr->flags |= CPL_TO_DUPLICATED;
 		/* FROM header - mandatory in SIP msg (cannot be STR_NOT_FOUND) */
 		if (!intr->from) {
 			if (parse_from_header( intr->msg )==-1)
@@ -173,29 +176,52 @@ inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 			s = intr->from;
 		}
 		duplicate_str( s , intr->from );
+		intr->flags |= CPL_FROM_DUPLICATED;
 		/* SUBJECT header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if (intr->subject!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,subject,HDR_SUBJECT,s);
+			intr->flags |= CPL_SUBJECT_DUPLICATED;
 		}
 		/* ORGANIZATION header - optional in SIP msg (can be STR_NOT_FOUND) */
-		if (intr->organization!=STR_NOT_FOUND) {
+		if ( intr->organization!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,organization,HDR_ORGANIZATION,s);
+			intr->flags |= CPL_ORGANIZATION_DUPLICATED;
 		}
 		/* USER_AGENT header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if (intr->user_agent!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,user_agent,HDR_USERAGENT,s);
+			intr->flags |= CPL_USERAGENT_DUPLICATED;
 		}
 		/* ACCEPT_LANGUAG header - optional in SIP msg
 		 * (can be STR_NOT_FOUND) */
 		if (intr->accept_language!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,accept_language,
 				HDR_ACCEPTLANGUAGE,s);
+			intr->flags |= CPL_ACCEPTLANG_DUPLICATED;
 		}
 		/* PRIORITY header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if (intr->priority!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,priority,HDR_PRIORITY,s);
+			intr->flags |= CPL_PRIORITY_DUPLICATED;
 		}
 	}
+
+	switch (ordering_attr) {
+		case FIRSTONLY_VAL:
+			/* forward the request only to the first address from loc. set */
+			/* location set cannot be empty -> was checked before */
+			loc = remove_first_location( &(intr->loc_set) );
+			cpl_proxy_to_loc_set(intr->msg,&loc,intr->flags );
+			return CPL_TO_CONTINUE;
+		case PARALLEL_VAL:
+			/* forward to all location from location set */
+			cpl_proxy_to_loc_set(intr->msg,&(intr->loc_set),intr->flags );
+			return CPL_TO_CONTINUE;
+			break;
+		case SEQUENTIAL_VAL:
+			break;
+	}
+
 
 	return DEFAULT_ACTION;
 script_error:
