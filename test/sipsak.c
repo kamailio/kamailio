@@ -437,7 +437,7 @@ void shoot(char *buff)
 		add_via(buff);
 	}
 	else if (flood){
-		if (namebeg==-1) namebeg=65535;
+		if (namebeg==-1) namebeg=2147483647;
 		nretries=namebeg;
 		namebeg=1;
 		create_msg(buff, REQ_FLOOD);
