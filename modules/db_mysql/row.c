@@ -45,14 +45,14 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	int i;
 
 	if ((!_h) || (!_res) || (!_r)) {
-		LOG(L_ERR, "convert_row(): Invalid parameter value\n");
+		LOG(L_ERR, "convert_row: Invalid parameter value\n");
 		return -1;
 	}
 
 	ROW_VALUES(_r) = (db_val_t*)pkg_malloc(sizeof(db_val_t) * RES_COL_N(_res));
 	ROW_N(_r) = RES_COL_N(_res);
 	if (!ROW_VALUES(_r)) {
-		LOG(L_ERR, "convert_row(): No memory left\n");
+		LOG(L_ERR, "convert_row: No memory left\n");
 		return -1;
 	}
 
@@ -61,7 +61,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	for(i = 0; i < RES_COL_N(_res); i++) {
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
 			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
-			LOG(L_ERR, "convert_row(): Error while converting value\n");
+			LOG(L_ERR, "convert_row: Error while converting value\n");
 			free_row(_r);
 			return -3;
 		}
@@ -76,7 +76,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 int free_row(db_row_t* _r)
 {
 	if (!_r) {
-		LOG(L_ERR, "free_row(): Invalid parameter value\n");
+		LOG(L_ERR, "free_row: Invalid parameter value\n");
 		return -1;
 	}
 

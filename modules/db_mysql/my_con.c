@@ -31,6 +31,7 @@
 #include "my_con.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 #include "utils.h"
 
 
@@ -43,13 +44,13 @@ struct my_con* new_connection(struct my_id* id)
 	struct my_con* ptr;
 
 	if (!id) {
-		LOG(L_ERR, "new_connection(): Invalid parameter value\n");
+		LOG(L_ERR, "new_connection: Invalid parameter value\n");
 		return 0;
 	}
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr) {
-		LOG(L_ERR, "new_connection(): No memory left\n");
+		LOG(L_ERR, "new_connection: No memory left\n");
 		return 0;
 	}
 
@@ -58,21 +59,44 @@ struct my_con* new_connection(struct my_id* id)
 	
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
-		LOG(L_ERR, "new_connection(): No enough memory\n");
+		LOG(L_ERR, "new_connection: No enough memory\n");
 		goto err;
 	}
 
 	mysql_init(ptr->con);
 
+	if (id->port) {
+		DBG("new_connection: Opening MySQL connection: mysql://%.*s:%.*s@%.*s:%d/%.*s\n",
+		    id->username.len, ZSW(id->username.s),
+		    id->password.len, ZSW(id->password.s),
+		    id->host.len, ZSW(id->host.s),
+		    id->port,
+		    id->database.len, ZSW(id->database.s)
+		    );
+	} else {
+		DBG("new_connection: Opening MySQL connection: mysql://%.*s:%.*s@%.*s/%.*s\n",
+		    id->username.len, ZSW(id->username.s),
+		    id->password.len, ZSW(id->password.s),
+		    id->host.len, ZSW(id->host.s),
+		    id->database.len, ZSW(id->database.s)
+		    );
+	}
+
 	if (!mysql_real_connect(ptr->con, id->host.s, id->username.s, id->password.s, id->database.s, id->port, 0, 0)) {
-		LOG(L_ERR, "new_connection(): %s\n", mysql_error(ptr->con));
+		LOG(L_ERR, "new_connection: %s\n", mysql_error(ptr->con));
 		mysql_close(ptr->con);
 		goto err;
 	}
 
+	DBG("new_connection: Connection type is %s\n", mysql_get_host_info(ptr->con));
+	DBG("new_connection: Protocol version is %d\n", mysql_get_proto_info(ptr->con));
+	DBG("new_connection: Server version is %s\n", mysql_get_server_info(ptr->con));
+
+
 	ptr->timestamp = time(0);
 
 	ptr->id = id;
+	
 	return ptr;
 
  err:

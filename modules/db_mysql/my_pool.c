@@ -54,13 +54,13 @@ struct my_con* get_connection(const char* url)
 	int pid;
 
 	if (!url) {
-		LOG(L_ERR, "get_connection(): Invalid parameter value\n");
+		LOG(L_ERR, "get_connection: Invalid parameter value\n");
 		return 0;
 	}
 
 	pid = getpid();
 	if (pool && (pool_pid != pid)) {
-		LOG(L_ERR, "get_connection(): Inherited open database connections, this is not a good idea\n");
+		LOG(L_ERR, "get_connection: Inherited open database connections, this is not a good idea\n");
 		return 0;
 	}
 
@@ -72,7 +72,7 @@ struct my_con* get_connection(const char* url)
 	ptr = pool;
 	while (ptr) {
 		if (cmp_my_id(id, ptr->id)) {
-			DBG("get_connection(): Connection found in the pool\n");
+			DBG("get_connection: Connection found in the pool\n");
 			ptr->ref++;
 			free_my_id(id);
 			return ptr;
@@ -80,7 +80,7 @@ struct my_con* get_connection(const char* url)
 		ptr = ptr->next;
 	}
 
-	DBG("get_connection(): Connection not found in the pool\n");
+	DBG("get_connection: Connection not found in the pool\n");
 	ptr = new_connection(id);
 	if (!ptr) {
 		free_my_id(id);
@@ -108,12 +108,12 @@ void release_connection(struct my_con* con)
 		     /* There are still other users, just
 		      * decrease the reference count and return
 		      */
-		DBG("release_connection(): Connection still kept in the pool\n");
+		DBG("release_connection: Connection still kept in the pool\n");
 		con->ref--;
 		return;
 	}
 
-	DBG("release_connection(): Removing connection from the pool\n");
+	DBG("release_connection: Removing connection from the pool\n");
 
 	if (pool == con) {
 		pool = pool->next;
@@ -124,7 +124,7 @@ void release_connection(struct my_con* con)
 			ptr = ptr->next;
 		}
 		if (!ptr) {
-			LOG(L_ERR, "release_connection(): Weird, connection not found in the pool\n");
+			LOG(L_ERR, "release_connection: Weird, connection not found in the pool\n");
 		} else {
 			     /* Remove the connection from the pool */
 			ptr->next = con->next;
