@@ -417,7 +417,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	char  *tmp,*foo;
 
 	status=START_TO;
-	foo=0;
+	to_b->error=PARSE_OK;
+	foo=0;	
 
 	for( tmp=buffer; tmp<end; tmp++)
 	{
@@ -656,7 +657,7 @@ endofheader:
 			to_b->uri.len = foo - to_b->uri.s;
 		case END:
 			to_b->body.len = tmp - to_b->body.s;
-	case E_PARA_VALUE:
+		case E_PARA_VALUE:
 			*(tmp-1)=0;
 			break;
 		default:

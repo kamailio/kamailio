@@ -131,7 +131,7 @@ error:
 }
 
 
-int update_sock_struct_from_via( union sockaddr_union* to,  
+int update_sock_struct_from_via( union sockaddr_union* to,
 								 struct via_body* via )
 {
 	int err;
