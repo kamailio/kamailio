@@ -135,6 +135,8 @@ static int fix_actions(struct action* a)
 							t->p1.data=p;
 							t->p1_type=PROXY_ST;
 							break;
+						case URIHOST_ST:
+							break;
 						default:
 							LOG(L_CRIT, "BUG: fix_actions: invalid type"
 									"%d (should be string or number)\n",
@@ -178,11 +180,15 @@ static int fix_actions(struct action* a)
 							mod->exports->cmd_names[r]);
 					if (mod->exports->fixup_pointers[r]){
 						if (mod->exports->param_no[r]>0){
-							ret=mod->exports->fixup_pointers[r](&t->p2.data,1);
+							ret=mod->exports->fixup_pointers[r](&t->p2.data,
+																1);
+							t->p2_type=MODFIXUP_ST;
 							if (ret<0) return ret;
 						}
 						if (mod->exports->param_no[r]>1){
-							ret=mod->exports->fixup_pointers[r](&t->p3.data,2);
+							ret=mod->exports->fixup_pointers[r](&t->p3.data,
+																2);
+							t->p3_type=MODFIXUP_ST;
 							if (ret<0) return ret;
 						}
 					}

@@ -57,6 +57,8 @@ void* f_tmp;
 %token SET_URI
 %token IF
 %token ELSE
+%token URIHOST
+%token URIPORT
 
 %token METHOD
 %token URI
@@ -449,6 +451,29 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 																 (void*)$3,
 																(void*)$5);
 												  }
+		| FORWARD LPAREN URIHOST COMMA URIPORT RPAREN {
+													$$=mk_action(FORWARD_T,
+																 URIHOST_ST,
+																 URIPORT_ST,
+																0,
+																0);
+													}
+													
+									
+		| FORWARD LPAREN URIHOST COMMA NUMBER RPAREN {
+													$$=mk_action(FORWARD_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																(void*)$5);
+													}
+		| FORWARD LPAREN URIHOST RPAREN {
+													$$=mk_action(FORWARD_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																0);
+										}
 		| FORWARD error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| FORWARD LPAREN error RPAREN { $$=0; yyerror("bad forward"
 										"argument"); }

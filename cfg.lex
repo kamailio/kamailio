@@ -55,6 +55,10 @@ SET_URI			"rewriteuri"|"seturi"
 IF				"if"
 ELSE			"else"
 
+/*ACTION LVALUES*/
+URIHOST			"uri:host"
+URIPORT			"uri:port"
+
 
 /* condition keywords */
 METHOD	method
@@ -134,6 +138,9 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
+<INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
+<INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
+
 <INITIAL>{METHOD}	{ count(); yylval.strval=yytext; return METHOD; }
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }
 <INITIAL>{SRCIP}	{ count(); yylval.strval=yytext; return SRCIP; }
@@ -199,7 +206,7 @@ EAT_ABLE	[\ \t\b\r]
 						yyleng--; addstr(yytext, &str); }
 <STRING1>\\r		{ count(); yytext[yyleng-2]='\r';yytext[yyleng-1]=0; 
 						yyleng--; addstr(yytext, &str); }
-<STRING1>\\g		{ count(); yytext[yyleng-2]='\g';yytext[yyleng-1]=0; 
+<STRING1>\\a		{ count(); yytext[yyleng-2]='\a';yytext[yyleng-1]=0; 
 						yyleng--; addstr(yytext, &str); }
 <STRING1>\\t		{ count(); yytext[yyleng-2]='\t';yytext[yyleng-1]=0; 
 						yyleng--; addstr(yytext, &str); }

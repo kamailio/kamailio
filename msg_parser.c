@@ -382,16 +382,6 @@ error:
 }
 
 
-			
-
-			
-			
-	
-		
-	
-	
-
-
 
 /* parses a via body, returns next via (for compact vias) & fills vb,
  * the buffer should be null terminated! */
@@ -686,3 +676,16 @@ error:
 	return -1;
 }
 
+
+
+void free_uri(struct sip_uri* u)
+{
+	if (u){
+		if (u->user) free(u->user);
+		if (u->passwd) free(u->passwd);
+		if (u->host) free(u->host);
+		if (u->port) free(u->port);
+		if (u->params) free(u->params);
+		if (u->headers) free(u->headers);
+	}
+}

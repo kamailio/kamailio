@@ -112,32 +112,32 @@ error:
 
 
 
+void free_hostent(struct hostent *dst)
+{
+	int r;
+	if (dst->h_name) free(dst->h_name);
+	if (dst->h_aliases){
+		for(r=0; dst->h_aliases[r]; r++)	free(dst->h_aliases[r]);
+		free(dst->h_aliases[r]);
+		free(dst->h_aliases);
+	}
+	if (dst->h_addr_list){
+		for (r=0; dst->h_addr_list[r];r++) free(dst->h_addr_list[r]);
+		free(dst->h_addr_list[r]);
+		free(dst->h_addr_list);
+	}
+}
+
+
+
+
 struct proxy_l* add_proxy(char* name, unsigned short port)
 {
 	struct proxy_l* p;
 	struct hostent* he;
 	
 	if ((p=find_proxy(name, port))!=0) return p;
-	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
-	if (p==0){
-		LOG(L_CRIT, "ERROR: add_proxy: memory allocation failure\n");
-		goto error;
-	}
-	memset(p,0,sizeof(struct proxy_l));
-	p->name=name;
-	p->port=port;
-	he=gethostbyname(name);
-	if (he==0){
-		LOG(L_CRIT, "ERROR: add_proxy: could not resolve hostname:"
-					" \"%s\"\n", name);
-		free(p);
-		goto error;
-	}
-	if (hostent_cpy(&(p->host), he)!=0){
-		free(p);
-		goto error;
-	}
-	p->ok=1;
+	if ((p=mk_proxy(name, port))==0) goto error;
 	/* add p to the proxy list */
 	p->next=proxies;
 	proxies=p;
@@ -147,3 +147,42 @@ error:
 	return 0;
 }
 
+
+
+/* same as add_proxy, but it doesn't add the proxy to the list*/
+struct proxy_l* mk_proxy(char* name, unsigned short port)
+{
+	struct proxy_l* p;
+	struct hostent* he;
+	
+	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
+	if (p==0){
+		LOG(L_CRIT, "ERROR: mk_proxy: memory allocation failure\n");
+		goto error;
+	}
+	memset(p,0,sizeof(struct proxy_l));
+	p->name=name;
+	p->port=port;
+	he=gethostbyname(name);
+	if (he==0){
+		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
+					" \"%s\"\n", name);
+		free(p);
+		goto error;
+	}
+	if (hostent_cpy(&(p->host), he)!=0){
+		free(p);
+		goto error;
+	}
+	p->ok=1;
+	return p;
+error:
+	return 0;
+}
+
+
+
+void free_proxy(struct proxy_l* p)
+{
+	if (p) free_hostent(&p->host);
+}

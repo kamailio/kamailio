@@ -41,6 +41,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int len;
 	int user;
 	struct sip_uri uri;
+	unsigned short port;
 
 	ret=E_BUG;
 	switch (a->type){
@@ -48,14 +49,54 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=0;
 			break;
 		case FORWARD_T:
-			if ((a->p1_type!= PROXY_ST)|(a->p2_type!=NUMBER_ST)){
+			if (a->p1_type==URIHOST_ST){
+				/*parse uri*/
+				tmp=(msg->new_uri)?msg->new_uri:
+						msg->first_line.u.request.uri;
+				if (parse_uri(tmp, strlen(tmp), &uri)<0){
+					LOG(L_ERR, "ERROR: do_action: forward: bad_uri <%s>,"
+								" dropping packet\n",tmp);
+					ret=E_UNSPEC;
+					break;
+				}
+				switch (a->p2_type){
+					case URIPORT_ST:
+									if (uri.port){
+										port=strtol(uri.port,&end,10);
+										if ((end)&&(*end)){
+											LOG(L_ERR, "ERROR: do_action: "
+													"forward: bad port in "
+													"uri: <%s>\n", uri.port);
+											ret=E_UNSPEC;
+											free_uri(&uri);
+											goto skip;
+										}
+									}else port=SIP_PORT;
+									break;
+					case NUMBER_ST:
+									port=a->p2.number;
+									break;
+					default:
+							LOG(L_CRIT, "BUG: do_action bad forward 2nd"
+										" param type (%d)\n", a->p2_type);
+							free_uri(&uri);
+							goto skip;
+				}
+				/* create a temporary proxy*/
+				p=mk_proxy(uri.host, port);
+				ret=forward_request(msg, p);
+				free_uri(&uri);
+				free_proxy(p); /* frees only p content, not p itself */
+				free(p);
+				if (ret>=0) ret=1;
+			}else if ((a->p1_type==PROXY_ST) && (a->p2_type==NUMBER_ST)){
+				ret=forward_request(msg,(struct proxy_l*)a->p1.data);
+				if (ret>=0) ret=1;
+			}else{
 				LOG(L_CRIT, "BUG: do_action: bad forward() types %d, %d\n",
 						a->p1_type, a->p2_type);
 				ret=E_BUG;
-				break;
 			}
-			ret=forward_request(msg, (struct proxy_l*)a->p1.data);
-			if (ret>=0) ret=1;
 			break;
 		case SEND_T:
 			to=(struct sockaddr_in*) malloc(sizeof(struct sockaddr_in));
@@ -79,6 +120,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 			if (p->ok==0){
 				if (p->host.h_addr_list[p->addr_idx+1])
 					p->addr_idx++;
+				else 
+					p->addr_idx=0;
 				p->ok=1;
 			}
 			to->sin_addr.s_addr=*((long*)p->host.h_addr_list[p->addr_idx]);
@@ -186,6 +229,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					LOG(L_ERR, "ERROR: do_action: memory allocation "
 								" failure\n");
 					ret=E_OUT_OF_MEM;
+					free_uri(&uri);
 					break;
 				}
 				end=new_uri+MAX_URI_SIZE;
@@ -255,6 +299,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				/* copy it to the msg */
 				if (msg->new_uri) free(msg->new_uri);
 				msg->new_uri=new_uri;
+				free_uri(&uri);
 				ret=1;
 				break;
 		case IF_T:
@@ -287,10 +332,12 @@ int do_action(struct action* a, struct sip_msg* msg)
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
 	}
+skip:
 	return ret;
 	
 error_uri:
 	LOG(L_ERR, "ERROR: do_action: set*: uri too long\n");
+	free_uri(&uri);
 	if (new_uri) free(new_uri);
 	return E_UNSPEC;
 }
@@ -321,7 +368,8 @@ int run_actions(struct action* a, struct sip_msg* msg)
 	for (t=a; t!=0; t=t->next){
 		ret=do_action(t, msg);
 		if(ret==0) break;
-		else if (ret<0){ ret=-1; goto error; }
+		/* ignore errors */
+		/*else if (ret<0){ ret=-1; goto error; }*/
 	}
 	
 	rec_lev--;

@@ -24,6 +24,7 @@ Configuration files:
 		- fork
 		- children_no
 		- log_stderror
+		- loadmodule "path/modulename"
 		...
 
 	Logical expressions [missing]
@@ -51,6 +52,10 @@ Configuration files:
 		- log
 		- exec
 		- route/goto
-		- drop
+		- drop/break
+		- if {} else{}
+	Modules:
+		- loadmodule "..."
+		- commands registered by modules
 
 

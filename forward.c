@@ -142,8 +142,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	new_len=len;
 	s_offset=0;
 	for(t=msg->add_rm;t;t=t->next){
-		DBG("t=%x, op=%d, offset=%x, len=%d, s_offset=%x\n",
-				t, t->op, t->u.offset, t->len, s_offset);
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
 				case LUMP_ADD:
@@ -162,14 +160,11 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 			case LUMP_DEL:
 				/* fix overlapping deleted zones */
 				if (t->u.offset < s_offset){
-					DBG( "overlapping DEL offsets (%d,%d(%d)), fixing...\n",
-						 s_offset, t->u.offset, t->len);
 					/* change len */
 					if (t->len>s_offset-t->u.offset) 
 							t->len-=s_offset-t->u.offset;
 					else t->len=0;
 					t->u.offset=s_offset;
-					DBG("fixed to %d(%d)\n", t->u.offset, t->len);
 				}
 				s_offset=t->u.offset+t->len;
 				new_len-=t->len;
@@ -177,9 +172,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 			case LUMP_NOP:
 				/* fix offset if overlapping on a deleted zone */
 				if (t->u.offset < s_offset){
-					DBG("overlapping zones (%d,%d)\n", s_offset, t->u.offset);
 					t->u.offset=s_offset;
-					DBG("fixed to %d\n", t->u.offset);
 				}else
 					s_offset=t->u.offset;
 				/* do nothing */
@@ -226,8 +219,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 /* copy msg adding/removing lumps */
 	for (t=msg->add_rm;t;t=t->next){
-		DBG(" t=%x, op=%d, offset=%x, len=%d, s_offset=%x\n",
-				t, t->op, t->u.offset, t->len, s_offset);
 		switch(t->op){
 			case LUMP_ADD:
 				/* just add it here! */

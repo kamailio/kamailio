@@ -28,6 +28,8 @@ struct proxy_l{
 extern struct proxy_l* proxies;
 
 struct proxy_l* add_proxy(char* name, unsigned short port);
+struct proxy_l* mk_proxy(char* name, unsigned short port);
+void free_proxy(struct proxy_l* p);
 
 
 #endif
