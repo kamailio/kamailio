@@ -65,6 +65,9 @@ int is_user(struct sip_msg* _msg, char* _user, char* _str2)
  * on name-mapping on the radius servers. I have kept the code structure
  * similar to the previous example and have adjusted to DIGEST_ATTRIBUTES
  * prior to sending the msg for code simplicity.
+ *
+ * returns a pointer to the group name or NULL in case of error or 
+ * in case the authentication failed.
  */
 char* radius_get_group(dig_cred_t * cred, str* _method) 
 {
@@ -214,6 +217,10 @@ char* radius_get_group(dig_cred_t * cred, str* _method)
     return group;
 }
 
+/*
+ * Extracts user-group from RADIUS, compares with the group name 
+ * passed as the argument and propagates the result.
+ */
 int radius_is_in_group(struct sip_msg* msg, char* _group) {
 	char* 			group;
 	auth_body_t * 	cred;
