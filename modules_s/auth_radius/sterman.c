@@ -161,14 +161,14 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 
 	method = *_method;
 	user = *_user;
-
+	
 	/*
 	 * Add all the user digest parameters according to the qop defined.
 	 * Most devices tested only offer support for the simplest digest.
 	 */
 	if (_cred->username.domain.len) {
 		if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, _cred->username.whole.s, _cred->username.whole.len, 0)) {
-			LOG(L_ERR, "sterman(): Unable to add User-Name attribute\n");
+			LOG(L_ERR, "radius_authorize_sterman(): Unable to add User-Name attribute\n");
 			goto err;
 		}
 	} else {

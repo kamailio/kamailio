@@ -172,7 +172,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		domain = puri.host;
 	} else {
 		user = cred->username.user;
-		domain = cred->realm;
+		domain = *GET_REALM(cred);
 	}
 		
 

@@ -106,15 +106,6 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 		return -1;
 	}
 
-	if (puri.host.len != cred->digest.realm.len) {
-		DBG("authorize(): Credentials realm and URI host do not match\n");   
-		return -1;
-	}
-	if (strncasecmp(puri.host.s, cred->digest.realm.s, puri.host.len) != 0) {
-		DBG("authorize(): Credentials realm and URI host do not match\n");
-		return -1;
-	}
-
 	user.s = (char *)pkg_malloc(puri.user.len);
 	if (user.s == NULL) {
 		LOG(L_ERR, "authorize: No memory left\n");

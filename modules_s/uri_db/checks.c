@@ -99,19 +99,6 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	      * (which are different from digest username and it will still match)
 	      */
 	if (use_uri_table) {
-		     /* Make sure that From/To URI domain and digest realm are equal
-		      * FIXME: Should we move this outside this condition and make it general ?
-		      */
-		if (puri.host.len != c->digest.realm.len) {
-			LOG(L_ERR, "check_username(): Digest realm and URI domain do not match\n");
-			return -5;
-		}
-
-		if (strncasecmp(puri.host.s, c->digest.realm.s, puri.host.len) != 0) {
-			DBG("check_username(): Digest realm and URI domain do not match\n");
-			return -6;
-		}
-
 		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "ERROR: check_username(): "
 					"Error while trying to use uri table\n");
@@ -127,7 +114,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
     
 		VAL_STR(vals) = c->digest.username.user;
-    		VAL_STR(vals + 1) = c->digest.realm;
+    		VAL_STR(vals + 1) = *GET_REALM(&c->digest);
 		VAL_STR(vals + 2) = puri.user;
 
 		if (uridb_dbf.query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0)
