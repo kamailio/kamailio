@@ -237,28 +237,51 @@ Desc: 	sends a stateful reply after a transaction has been
 External Usage of TM
 ---------------------
 There are applications which would like to generate SIP
-transactions without too big onvolvement in SIP stack, transaction
+transactions without too big involvement in SIP stack, transaction
 management, etc. An example of such an application
 is sending instant messages from a website. To address needs
 of such apps, SER accepts requests for new transactions via
-fifo pipes too. If you want to enable this feature, statrt
-FIFO server by configuration option
-	fifo="/tmp/filename"
+fifo pipes too. If you want to enable this feature, start
+FIFO server with configuration option
+	fifo="/tmp/ser_fifo"
 Then, an application can easily launch a new transaction by
 writing a transaction request to this named pipe. The request
-must follow very simple format, whic is
- :t_uac:[<file_name>]\n<method>\n<dst uri>\n<CR_separated_headers>\n<body>\n\n\n
+must follow very simple format, which is
+
+ :t_uac_from:[<file_name>]\n
+ <method>\n
+ <sender's uri>\n
+ <dst uri>\n
+ <CR_separated_headers>\n
+ <body>\n
+ .\n
+ \n
+
 (Filename is to where a report will be dumped. ser assumes /tmp
 as file's directory.)
 
-A convenience library fifo_uac.c implements this simple functionality.
-Note the the request write must be atomic, otherwise the request
-might get intermixes with writes from other writers.
-You can easily use it via Unix command-line tools, see the following
+Note the the request write must be atomic, otherwise it
+might get intermixed with writes from other writers.
+You can easily use it via Unix command-line tools, see 
+the following
 example:
+---
+[jiri@bat jiri]$ cat > /tmp/ser_fifo
+:t_uac_from:xxx
+MESSAGE
+sip:sender@iptel.org
+sip:mrx@iptel.org
+header:value
+foo:bar
+bznk:hjhjk
+p_header: p_value
 
-cat test/transaction.fifo > /tmp/ser_fifo
---
+body body body
+yet body
+end of body
+.
+
+or cat test/transaction.fifo > /tmp/ser_fifo
 
 Defines
 -------
