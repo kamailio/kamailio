@@ -104,7 +104,7 @@ inline void put_int_h2n( int x, char *b, int l)
 
 
 
-#ifdef CONTACT_IN_REPLIES
+#if 0
 inline int extcmd_add_contact(struct sip_msg* msg , str* to_uri)
 {
 	struct lump_rpl *lump;
@@ -193,11 +193,13 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	}
 	from = (struct to_body*)msg->from->parsed;
 
-	/* adds contact header into reply 
+#if 0
+	/* adds contact header into reply */
 	if (extcmd_add_contact(msg,&(get_to(msg)->uri))==-1) {
 		LOG(L_ERR,"ERROR:extcmd:dump_msg: can't build contact for reply\n");
 		goto error;
-	}*/
+	}
+#endif
 
 	/*-------------BUILD AND FILL THE COMMAND --------------------*/
 	/* computes the amount of memory needed */
