@@ -1568,7 +1568,10 @@ static int
 create_rcv_uri(str* uri, struct sip_msg* m)
 {
 	static char buf[MAX_URI_SIZE];
+	char* p;
 	str ip, port;
+	int len;
+	str proto;
 
 	if (!uri || !m) {
 		LOG(L_ERR, "create_rcv_uri: Invalid parameter value\n");
@@ -1580,18 +1583,66 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 
 	port.s = int2str(m->rcv.src_port, &port.len);
 
-	if (4 + ip.len + 1 + port.len > MAX_URI_SIZE) {
+	switch(m->rcv.proto) {
+	case PROTO_NONE:
+	case PROTO_UDP:
+		proto.s = 0; /* Do not add transport parameter, UDP is default */
+		proto.len = 0;
+		break;
+
+	case PROTO_TCP:
+		proto.s = "TCP";
+		proto.len = 3;
+		break;
+
+	case PROTO_TLS:
+		proto.s = "TLS";
+		proto.len = 3;
+		break;
+
+	case PROTO_SCTP:
+		proto.s = "SCTP";
+		proto.len = 4;
+		break;
+
+	default:
+		LOG(L_ERR, "BUG: create_rcv_uri: Unknown transport protocol\n");
+		return -1;
+	}
+
+	len = 4 + ip.len + 1 + port.len;
+	if (proto.s) {
+		len += TRANSPORT_PARAM_LEN;
+		len += proto.len;
+	}
+
+	if (len > MAX_URI_SIZE) {
 		LOG(L_ERR, "create_rcv_uri: Buffer too small\n");
 		return -1;
 	}
 
-	memcpy(buf, "sip:", 4);
-	memcpy(buf + 4, ip.s, ip.len);
-	buf[4 + ip.len] = ':';
-	memcpy(buf + 4 + ip.len + 1, port.s, port.len);
+	p = buf;
+	memcpy(p, "sip:", 4);
+	p += 4;
+	
+	memcpy(p, ip.s, ip.len);
+	p += ip.len;
+
+	*p++ = ':';
+	
+	memcpy(p, port.s, port.len);
+	p += port.len;
+
+	if (proto.s) {
+		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
+		p += TRANSPORT_PARAM_LEN;
+
+		memcpy(p, proto.s, proto.len);
+		p += proto.len;
+	}
 
 	uri->s = buf;
-	uri->len = 4 + ip.len + 1 + port.len;
+	uri->len = len;
 
 	return 0;
 }
