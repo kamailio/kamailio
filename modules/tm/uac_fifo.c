@@ -533,7 +533,7 @@ static void fifo_callback(struct cell *t, struct sip_msg *reply,
 		text.s=reply->first_line.u.reply.reason.s;
 		text.len=reply->first_line.u.reply.reason.len;
 
-		f = fopen(filename, "wt");
+		f = open_reply_pipe(filename);
 		if (!f) return;
 		fprintf(f, "%d %.*s\n", reply->first_line.u.reply.statuscode, text.len, text.s);
 		print_uris(f, reply);
