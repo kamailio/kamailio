@@ -22,22 +22,20 @@
  */
 int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 {
-
-	void *b;
+	static char b[BUF_SIZE];
 	int len;
 
+	if (!T->outbound_response.bufflen)
+		return 0;
+
 	LOCK_REPLIES( T );
-	len=T->outbound_response.bufflen;
-	b=pkg_malloc( len );
-	if (!b) {
+	if ( (len=T->outbound_response.bufflen)==0 || len>BUF_SIZE ) {
 		UNLOCK_REPLIES( T );
 		return -1;
 	}
 	memcpy( b, T->outbound_response.retr_buffer, len );
 	UNLOCK_REPLIES( T );
-
 	SEND_PR_BUFFER( & T->outbound_response, b, len );
-	pkg_free( b );
 	return 1;
 }
 

@@ -52,12 +52,17 @@ extern struct s_table*  hash_table;
    for reducing time spend in REPLIES locks
 */
 
-#define SEND_PR_BUFFER(_rb,_bf,_le ) ({ if ((_rb)->retr_buffer) \
-	{ udp_send( (_bf), (_le), (struct sockaddr*)&((_rb)->to) , \
-	   sizeof(struct sockaddr_in) ); \
-	} else { \
-	DBG("ERROR: attempt to send an empty buffer from %s (%d)", \
-	__FUNCTION__, __LINE__ ); }})
+#define SEND_PR_BUFFER(_rb,_bf,_le ) \
+	{\
+		if ((_rb) && (_bf) && (_le) ) \
+		{\
+			udp_send( (_bf), (_le), (struct sockaddr*)&((_rb)->to) , \
+				sizeof(struct sockaddr_in) ); \
+		} else { \
+			LOG(L_CRIT,"ERROR:attempt to send an empty buffer from %s (%d)"\
+				"(%p,%p,%d)\n",__FUNCTION__, __LINE__,(_rb),(_bf),(_le));\
+		}\
+	}\
 
 #define SEND_BUFFER( _rb ) SEND_PR_BUFFER( \
 	_rb,(_rb)->retr_buffer, (_rb)->bufflen )

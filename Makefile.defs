@@ -72,7 +72,11 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 #		protection against race condiditions; turn off only for debugging;
 #       to become non-optional if stable
 # -DNEW_HNAME
-#		32-bit header name parsing; turn off for lower speed ;-) or debugging; to become non-optional if fast and stable
+#		32-bit header name parsing; turn off for lower speed ;-) or debugging;
+#		to become non-optional if fast and stable
+# -SILENT_FR
+#		if defined, when FR timer hits (in tm) cancel is sent only if forking
+#		if used; otherwise, just delete the transaction without doing anything
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
@@ -80,8 +84,9 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DF_MALLOC  -DUSE_SYNONIM\
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
+	 -DWAIT -DNEW_HNAME\ #-DNOISY_REPLIES -DBOGDAN_TRIFLE \
+	 -DSILENT_FR \
 	 -DNO_DEBUG \
-	 -DWAIT -DNEW_HNAME   # -DNOISY_REPLIES -DBOGDAN_TRIFLE \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
 	 #-DEXTRA_DEBUG 

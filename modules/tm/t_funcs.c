@@ -13,7 +13,6 @@
 
 
 
-
 #define  append_mem_block(_d,_s,_len) \
 		do{\
 			memcpy((_d),(_s),(_len));\
@@ -282,18 +281,17 @@ int t_put_on_wait(  struct cell  *Trans  )
 	  if so, exit now
 	*/
 
-	LOCK_WAIT(T);
+	LOCK_WAIT(Trans);
 	if (Trans->on_wait)
 	{
 		DBG("DEBUG: t_put_on_wait: already on wait\n");
-		UNLOCK_WAIT(T);
+		UNLOCK_WAIT(Trans);
 		return 1;
 	} else {
 		Trans->on_wait=1;
-		UNLOCK_WAIT(T);
-	};
+		UNLOCK_WAIT(Trans);
+	}
 #endif
-
 
 	/* remove from  retranssmision  and  final response   list */
 	DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");
@@ -829,7 +827,12 @@ inline void final_response_handler( void *attr)
 		return;
 	}
 	/* send a 408 */
-	if ( r_buf->my_T->status<200)
+	if ( r_buf->my_T->status<200
+#ifdef SILENT_FR
+	&& printf("shit ma' man!!!\n") && (0)
+	/*should be fork==yes, but we don't have forking yet - bogdan */
+#endif
+	)
 	{
 		DBG("DEBUG: FR_handler:stop retr. and send CANCEL (%p)\n",r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
@@ -845,7 +848,7 @@ inline void final_response_handler( void *attr)
 		t_send_reply( r_buf->my_T->inbound_request,408,"Request Timeout" );
 	}else{
 		/* put it on WT_LIST - transaction is over */
-		DBG("DEBUG: final_response_handler:cancel transaction->put on wait"
+		DBG("DEBUG: final_response_handler:-> put on wait"
 			" (t=%p)\n", r_buf->my_T);
 		t_put_on_wait(  r_buf->my_T );
 	}

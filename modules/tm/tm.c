@@ -330,7 +330,7 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 					DBG( "SER: new INVITE\n");
 					if (!t_send_reply( p_msg , 100 ,
 					"trying -- your call is important to us"))
-						DBG( "SER: ERROR: t_send_reply (100)\n");
+						LOG( L_CRIT,"SER: ERROR: t_send_reply (100)\n");
 				} else {
 					DBG( "SER: new transaction\n");
 				}
