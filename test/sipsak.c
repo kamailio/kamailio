@@ -425,19 +425,18 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 		create_msg(buff, REQ_REG, lport);
 		retryAfter = 5000;
 	}
-	if (trace & !fbool)
-		create_msg(buff, REQ_OPT, lport);
-	if(maxforw!=-1)
-		set_maxforw(buff, maxforw);
-	if(vbool)
-		add_via(buff, lport);
-	
-	if (trace) {
+	if (trace){
 		if (maxforw)
 			nretries=maxforw;
 		else
 			nretries=255;
+		namebeg=1;
+		create_msg(buff, REQ_OPT, lport);
 	}
+	if(maxforw!=-1)
+		set_maxforw(buff, maxforw);
+	if(vbool)
+		add_via(buff, lport);
 
 	/* if we got a redirect this loop ensures sending to the 
 	   redirected server*/
@@ -605,6 +604,8 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 #ifdef DEBUG
 						printf("%s\n", reply);
 #endif
+						namebeg++;
+						create_msg(buff, REQ_OPT, lport);
 						continue;
 					}
 					else {
@@ -902,17 +903,16 @@ int main(int argc, char *argv[])
 			exit(2);
 		}
 		if (fbool) {
-			if (strncmp(buff, "OPTIONS", 7)){
+/*			if (strncmp(buff, "OPTIONS", 7)){
 				printf("error: tracerouting only possible with an OPTIONS request.\n"
 					"       Give another request file or convert it to an OPTIONS request.\n");
 				exit(2);
-			}
+			} */
+			printf("warning: file will be ignored for tracing.");
 		}
-		else {
-			if (!username) {
-				printf("error: for trace modus without a file the sip:uir have to contain a username\n");
-				exit(2);
-			}
+		if (!username) {
+			printf("error: for trace modus without a file the sip:uir have to contain a username\n");
+			exit(2);
 		}
 		if (!vbool){
 			printf("warning: Via-Line is needed for tracing. Ignoring -i\n");
@@ -936,9 +936,10 @@ int main(int argc, char *argv[])
 		if (namebeg==-1)
 			namebeg=0;
 	}
-	else if (!fbool & !sbool)
+	else if (!fbool & !sbool) {
 		printf("error: you have to give the file to send and the sip:uri at least.\n");
 		print_help();
+	}
 	/* here we go...*/
 	shoot(buff, address, lport, rport, maxforw, tbool, vbool, fbool, ubool, dbool);
 
