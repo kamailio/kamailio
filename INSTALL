@@ -228,12 +228,17 @@ after you are finished with C).
 If you don't use an rpm or debian based distro, try our tar.gz'ed binaries
  (ser-$(version)_$(os)_$(arch).tar.gz, e.g: ser-0.8.8_linux_i386.tar.gz).
 If you use Solaris 8 you can try our solaris package.
+If you use Gentoo Linux you do not have to download a package.
 
 2) install the package
 RPM:
     rpm -i <package_name>
 debian:
     dpkg -i <package_name>
+gentoo:
+    emerge ser
+	(or if use only stable packets:
+	 ACCEPT_KEYWORDS="~x86" emerge ser)
 tar.gz:
     cd /; tar zxvf <package_name>_os_arch.tar.gz
     (it will install in /usr/local/, and the configuration file in
@@ -244,7 +249,7 @@ Solaris:
     pkg_add package_name
     
 3) start the server
-RPM:
+RPM + gentoo:
     /etc/init.d/ser start
 debian:
     ser is started automatically after the install
@@ -297,10 +302,16 @@ proceed, you need to make sure MySQL is installed on your box.
     (rpm and deb provided, most of the binary tar.gz distributions and the 
      solaris package include it; if it is not present you'll have to rebuild
      from the source).
+	For gentoo please include 'mysql' to your USE variable in /etc/make.conf
+	or give it as variable to the emerge command.
 2) install the package
     rpm -i <package_name>
     or
     dpkg -i <package_name>
+	or
+	emerge ser
+	(if do not want to put 'mysql' into your USE variable you can type:
+	 USE="mysql" emerge ser)
 3) create MySQL tables
 	- if you have a previously installed SER on your system, use
     	/usr/sbin/ser_mysql.sh create
@@ -314,6 +325,7 @@ proceed, you need to make sure MySQL is installed on your box.
     authentication:
     - loadmodule "/usr/lib/ser/modules/mysql.so"
     - loadmodule "/usr/lib/ser/modules/auth.so"
+    - loadmodule "/usr/lib/ser/modules/auth_db.so"
     - modparam("usrloc", "db_mode", 2)
     - modparam("auth", "calculate_ha1", yes)
     - if (!www_authorize("iptel.org", "subscriber")) {
