@@ -15,6 +15,7 @@ Desc: ser segfaults on receipt of some messages (occurs
 Ser version: 0.8.10 and before
 Reason: valid TM label value 0 is considered mistakenly 
         a special value
+Workaround: turn syn_branch config option off
 Patch: http://www.iptel.org/ser/issues/hash_fix.patch
 CVS Status: fixed
 ---------------------------------------------------------------
