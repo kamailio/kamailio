@@ -238,7 +238,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 	;
 
 net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); } 
-	| ipv4 SLASH NUMBER {	if (($3>32)|($3<1)){
+	| ipv4 SLASH NUMBER {	if (($3>32)|($3<0)){
 								yyerror("invalid bit number in netmask");
 								$$=0;
 							}else{
@@ -402,8 +402,10 @@ yyerror(char* s)
 			column, s);
 }
 
+/*
 int main(int argc, char ** argv)
 {
 	if (yyparse()!=0)
 		fprintf(stderr, "parsing error\n");
 }
+*/

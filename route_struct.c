@@ -217,6 +217,12 @@ void print_action(struct action* a)
 			case ERROR_T:
 					printf("error(");
 					break;
+			case ROUTE_T:
+					printf("route(");
+					break;
+			case EXEC_T:
+					printf("exec(");
+					break;
 			default:
 					printf("UNKNOWN(");
 		}
@@ -226,6 +232,9 @@ void print_action(struct action* a)
 					break;
 			case NUMBER_ST:
 					printf("%d",t->p1.number);
+					break;
+			case IP_ST:
+					print_ip(t->p1.data);
 					break;
 			default:
 					printf("type<%d>", t->p1_type);

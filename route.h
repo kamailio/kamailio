@@ -9,20 +9,21 @@
 #include <regex.h>
 #include <netdb.h>
 
-#include "cfg_parser.h"
+#include "config.h"
+#include "error.h"
+#include "route_struct.h"
+#include "msg_parser.h"
 
-#define E_OUT_OF_MEM  -2
-#define E_BAD_RE      -3
-#define E_BAD_ADDRESS -4
+/*#include "cfg_parser.h" */
+
+
 
 struct route_elem{
 	struct route_elem* next;
-	regex_t method;
-	regex_t uri;
-	struct hostent host;
-	int current_addr_idx;
-	short int port;
-	short int reserved; /* pad */
+
+	struct expr* condition;
+	struct action* actions;
+
 	int ok; /* set to 0 if an error was found sendig a pkt*/
 	/*counters*/
 	int errors;
@@ -31,15 +32,16 @@ struct route_elem{
 };
 
 /* main "routing table" */
-extern struct route_elem* rlist;
+extern struct route_elem* rlist[RT_NO];
 
 
 void free_re(struct route_elem* re);
 struct route_elem* init_re();
 void push(struct route_elem* re, struct route_elem** head);
 void clear_rlist(struct route_elem** rl);
-int add_rule(struct cfg_line* cl, struct route_elem** head);
-struct route_elem* route_match(char* method, char* uri, struct route_elem** rl);void print_rl();
+int add_rule(struct expr* e, struct action* a, struct route_elem** head);
+struct route_elem* route_match(struct sip_msg* msg,struct route_elem** rl);
+void print_rl();
 
 
 

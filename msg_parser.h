@@ -64,6 +64,8 @@ struct sip_msg{
 	struct msg_start first_line;
 	struct via_body via1;
 	struct via_body via2;
+	unsigned int src_ip;
+	unsigned int dst_ip;
 };
 
 

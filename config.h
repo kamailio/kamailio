@@ -21,4 +21,8 @@
 /* default number of child processes started */
 #define CHILD_NO    8
 
+#define RT_NO 10 /* routing tables number */
+
+#define MAX_REC_LEV 100 /* maximum number of recursive calls */
+
 #endif
