@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-04-05 DEFAULT_*_URL introduced (jiri)
  */
 
 
@@ -165,6 +169,9 @@
 
 /* maximum path length */
 #define PATH_MAX_GUESS	1024
+
+#define DEFAULT_DB_URL "sql://ser:heslo@localhost/ser"
+#define DEFAULT_RODB_URL "sql://serro:47serro11@localhost/ser"
 
 
 #endif
