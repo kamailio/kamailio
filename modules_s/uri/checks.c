@@ -248,24 +248,24 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		if (db_use_table(db_handle, uri_table.s) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
 		}
-		keys[0] = uri_domain_col.s;
-		keys[1] = uri_uriuser_col.s;
+		keys[0] = uri_uriuser_col.s;
+		keys[1] = uri_domain_col.s;
 		cols[0] = uri_uriuser_col.s;
 	} else {
 		if (db_use_table(db_handle, subscriber_table.s) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
 		}
-		keys[0] = subscriber_domain_col.s;
-		keys[1] = subscriber_user_col.s;
+		keys[0] = subscriber_user_col.s;
+		keys[1] = subscriber_domain_col.s;
 		cols[0] = subscriber_user_col.s;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
-	VAL_STR(vals) = _msg->parsed_uri.host;
-	VAL_STR(vals + 1) = _msg->parsed_uri.user;
+	VAL_STR(vals) = _msg->parsed_uri.user;
+	VAL_STR(vals + 1) = _msg->parsed_uri.host;
 
-	if (db_query(db_handle, keys, 0, vals, cols, 2, 1, 0, &res) < 0) {
+	if (db_query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1), 1, 0, &res) < 0) {
 		LOG(L_ERR, "does_uri_exist(): Error while querying database\n");
 		return -2;
 	}

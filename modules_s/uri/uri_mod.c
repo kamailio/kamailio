@@ -92,6 +92,7 @@ str subscriber_user_col   = {USER_COL, USER_COL_LEN};                 /* Name of
 str subscriber_domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of domain column in subscriber table */
 
 int use_uri_table = 0;     /* Should uri table be used */
+int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
 db_con_t* db_handle = 0;   /* Database connection handle */
 
 
@@ -120,6 +121,7 @@ static param_export_t params[] = {
 	{"subscriber_user_column",   STR_PARAM, &subscriber_user_col.s  },
 	{"subscriber_domain_column", STR_PARAM, &subscriber_domain_col.s},
 	{"use_uri_table",            INT_PARAM, &use_uri_table          },
+	{"use_domain",               INT_PARAM, &use_domain             },
 	{0, 0, 0}
 };
 
