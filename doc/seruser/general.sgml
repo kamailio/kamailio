@@ -1,0 +1,425 @@
+    <chapter id="general">
+	<title>General Information</title>
+	<section id="aboutser">
+	    <title>About <acronym>SIP</acronym> Express Router (<acronym>SER</acronym>)</title>
+	    <para>
+		SIP Express Router (<acronym>SER</acronym>) is an industrial-strength, free VoIP 
+		server based on the Session Initiation Protocol (<acronym>SIP</acronym>, RFC3261). 
+		It is engineered to power <acronym>IP</acronym> telephony infrastructures up to large 
+		scale. The server keeps track of users, sets up VoIP sessions, 
+		relays instant messages and creates space for new plug-in applications. 
+		Its proven interoperability guarantees seamless integration with 
+		components from other vendors, eliminating the risk of a single-vendor 
+		trap. It has successfully participated in various interoperability 
+		tests in which it worked with the products of other leading <acronym>SIP</acronym> vendors.
+	    </para>
+	    <para>
+		The <acronym>SIP</acronym> Express Router enables a flexible plug-in model for new 
+		applications: Third parties can easily link their plug-ins with 
+		the server code and provide thereby advanced and customized services. 
+		In this way, plug-ins such as <acronym>SNMP</acronym> support, RADIUS accounting,
+		or SMS gateway have already been developed and are provided as 
+		advanced features. Other modules are underway: Presence server,
+		firewall control, and more.
+	    </para>
+	    <para>
+		Its performance and robustness allows it to serve millions of users 
+		and accommodate needs of very large operators. With a $3000 dual-CPU PC, the 
+		<acronym>SIP</acronym> Express Router is able to power <acronym>IP</acronym> telephony services in an area 
+		as large as the Bay Area during peak hours. Even on an IPAQ <acronym>PDA</acronym>, the server 
+		withstands 150 calls per second (<acronym>CPS</acronym>)! The server has been powering our 
+		iptel.org free <acronym>SIP</acronym> site withstanding heavy daily load that is further 
+		increasing with the popularity of Microsoft's Windows Messenger.  
+	    </para>
+	    <para>
+		The <acronym>SIP</acronym> Express Router is extremely configurable to allow the creation of 
+		various routing and admission policies as well as setting up new and 
+		customized services. Its configurability allows it to serve many roles: 
+		network security barrier, application server, or <acronym>PSTN</acronym> gateway guard for 
+		example.
+	    </para>
+	    <para>
+		<application moreinfo="none">ser</application> can be also
+		used with contributed applications. Currently, 
+		<application moreinfo="none">serweb</application>, a
+		<application moreinfo="none">ser</application> web interface,
+		and <application moreinfo="none">SIPSak</application>
+		diagnostic tool are available. Visit our site, 
+		<ulink url="http://www.iptel.org/">http://www.iptel.org/</ulink>, 
+                for more information on contributed packages.
+	    </para>
+	</section> 
+
+	<section id="aboutiptel">
+	    <title>About iptel.org</title>
+	    <para>
+		iptel.org is a know-how company spun off from Germany's national 
+		research company FhG Fokus. One of the first <acronym>SIP</acronym> implementations ever, 
+		low-QoS enhancements, interoperability tests and VoIP-capable firewall 
+		control concepts are examples of well-known FhG's work.
+	    </para>
+	    <para>
+		iptel.org continues to keep this know-how leadership in <acronym>SIP</acronym>. 
+		The access rate of the company's site, a well-known source of 
+		technological information, is a best proof of interest. Thousands 
+		of hits come every day from the whole Internet.
+	    </para>
+	    <para>
+		The iptel.org site, powered by SER, offers SIP services on the public 
+		Internet. Feel free to apply for a free SIP account at
+		<ulink url="http://www.iptel.org/user/">http://www.iptel.org/user/
+		</ulink>
+	    </para>
+
+	    
+	</section> <!-- iptel -->
+	<section id="serfeatures">
+	    <title>Feature List</title>
+	    <para>
+		Based on the latest standards, the <acronym>SIP</acronym> Express Router (<acronym>SER</acronym>) includes 
+		support for registrar, proxy and redirect mode. Further it acts as 
+		an application server with support for instant messaging and 
+		presence including a <acronym>2G/SMS</acronym> and Jabber gateway, a call control policy 
+		language, call number translation, private dial plans and accounting, 
+		authorization and authentication (<acronym>AAA</acronym>) services. <application>SER</application> runs on Sun/Solaris, 
+		PC/Linux, PC/BSD, IPAQ/Linux platforms and supports  both <acronym>IPv4</acronym> and <acronym>IPv6</acronym>. 
+		Hosting multiple domains and database redundancy is supported.
+	    </para>
+	    <para>
+		Other extensions are underway: presence server, firewall control and more.
+	    </para>
+	    <para>
+		<application>ser</application> has been carefully engineered with the following 
+		design objectives in mind:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>Speed</emphasis> - With <application>ser</application>, 
+			    thousands of calls per seconds are achievable 
+			    even on low-cost platforms. This competitive capacity allows 
+			    setting up networks which are inexpensive and easy to manage 
+			    due to low number of devices required. The processing capacity 
+			    makes dealing with many stress factors easier. The stress
+			    factors may include but are not limited to broken configurations and implementations,
+			    boot avalanches on power-up, high-traffic applications such as presence, 
+			    redundancy replications and denial-of-service attacks.
+			</para>
+			<para> The speed has been achieved by extensive code optimization, use of customized code, 
+			    <acronym>ANSI C</acronym> combined with assembly instructions and leveraging latest 
+			    <acronym>SIP</acronym> improvements. When powered by a dual-CPU Linux PC, 
+			    <application>ser</application> is able to process thousands of calls per second,
+			    capacity needed to serve call signaling demands of Bay Area population.
+			   
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Flexibility</emphasis> - <application>SER</application> allows its users 
+			    to define its behavior. 
+			    Administrators may write textual scripts which determine <acronym>SIP</acronym> routing 
+			    decisions, the main job of a proxy server. They may use the script to 
+			    configure numerous parameters and introduce additional logic. For example, 
+			    the scripts can determine for which destinations record routing should be 
+			    performed, who will be authenticated, which transactions should be processed 
+			    statefully, which requests will be proxied or redirected, etc.
+			</para>
+
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Extensibility</emphasis> - <application>SER</application>'s extensibility allows linking of 
+			    new C code to ser to 
+			    redefine or extend its logic. The new code can be developed independently 
+			    on <application>SER</application> core and linked to it in run-time. The concept is similar to 
+			    the module concept known for example in Apache Web server. Even such essential parts such 
+			    as transaction management have been developed as modules to keep the <application>SER</application> core 
+			    compact and fast.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				Portability.
+			    </emphasis>
+			    <application>ser</application> has been written in ANSI C. It has been extensively tested 
+			    on PC/Linux and Sun/Solaris. Ports to BSD and IPAQ/Linux exist.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>			   
+				Interoperability. 
+			</emphasis>
+			<application>ser</application> is based on the open <acronym>SIP</acronym> standard. 
+			    It has undergone extensive tests with products of other vendors both in iptel.org
+			    labs and in the SIP Interoperability Tests (SIPIT). <application>ser</application> 
+			    powers the public iptel.org site 24 hours a day, 356 days a year 
+			    serving numerous SIP implementations using this site.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Small size.</emphasis>
+			    Footprint of the core is 300k, add-on modules take up to 630k.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section> <!-- serfeatures -->
+
+	<section id="usecases">
+	    <title>Use Cases</title>
+	    <para>
+		This section illustrates the most frequent uses of SIP. In all these scenarios, 
+		the SIP Express Router (SER) can be easily deployed as the glue connecting all 
+		SIP components together, be it soft-phones, hard-phones, PSTN gateways or any other 
+		SIP-compliant devices.
+	    </para>
+	    <section>
+		<title>Added-Value ISP Services</title>
+		<para>
+		    To attract customers, ISPs frequently offer applications bundled with IP access. 
+		    With SIP, the providers can conveniently offer a variety of services running on top 
+		    of a single infrastructure. Particularly, deploying VoIP and instant messaging and 
+		    presence services is as easy as setting up a SIP server and guiding customers to use 
+		    Windows Messenger. Additionally, the ISPs may offer advanced services such as PSTN 
+		    termination, user-driven call handling or unified messaging all using the same infrastructure.
+		</para>
+		<para>
+		    SIP Express Router has been engineered to power large scale networks: its capacity can deal 
+		    with large number of customers under high load caused by modern applications. Premium 
+		    performance allows deploying a low number of boxes while keeping investments and operational 
+		    expenses extremely low. ISPs can offer SIP-based instant messaging services and interface
+		    them to other instant messaging systems (Jabber, SMS). VoIP can be easily integrated along
+		    with added-value services, such as voicemail.
+		</para>
+	    </section> <!-- Added-value ISP -->
+	    <section>
+		<title>PC2Phone</title>
+		<para>
+		    Internet Telephony Service Providers (ITSPs) offer the service of interconnecting 
+		    Internet telephony users using PC softphone or appliances to PSTN. Particularly with 
+		    long-distance and international calls, competitive pricing can be achieved by 
+		    routing the calls over the Internet.
+		</para>
+		<para>
+		    SIP Express Router can be easily configured to serve pc2phone users, distribute
+		    calls to geographically appropriate PSTN gateway, act as a security barrier and keep 
+		    track of charging. 
+		</para>
+	    </section>
+	    <section>
+		<title>PBX Replacement</title>
+		<para>
+		    Replacing a traditional PBX in an enterprise can achieve reasonable 
+		    savings. Enterprises can deploy a single infrastructure for both voice 
+		    and data and bridge distant locations over the Internet. Additionally, they can 
+		    benefit of integration of voice and data.
+		</para>
+		<para>
+		    The SIP Express Router scales from SOHOs to large, international enterprises. 
+		    Even a single installation on a common PC is able to serve VoIP signaling of any 
+		    world's enterprise. Its policy-based routing language makes implementation of numbering 
+		    plans of companies spread across the world very easy. ACL features allow for protection of 
+		    PSTN gateway from unauthorized callers.
+		</para>
+		<para>
+		    SIP Express Router's support for programmable routing and accounting efficiently allows for 
+		    implementation of such a scenario.
+		</para>
+	    </section>
+	</section> <!-- Use Cases -->
+	<section id="aboutsip">
+	    <title>About SIP Technology</title>
+	    <para>
+		The SIP protocol family is the technology which integrates services. 
+		With SIP, Internet users can easily contact each other; figure out 
+		willingness to have a conversation and couple different applications such as VoIP, video 
+		and instant messaging. Integration with added-value services is seamless and easy. Examples 
+		include integration with web (click-to-dial), E-mail (voice2email, UMS), and PSTN-like 
+		services (conditional forwarding).
+	    </para>
+	    <para>
+		The core piece of the technology is the Session Initiation Protocol (SIP, RFC3261) standardized by IETF. 
+		Its main function is to establish communication sessions between users connected to the public 
+		Internet and identified by e-mail-like addresses. One of SIP's greatest features is its transparent 
+		support for multiple applications: the same infrastructure may be used for voice, video, gaming 
+		or instant messaging as well as any other communication application.
+	    </para>
+	    <para>
+		There are numerous scenarios in which SIP is already deployed: PBX replacement allows for 
+		deployment of single inexpensive infrastructure in enterprises; PC-2-phone long-distance 
+		services (e.g., Deltathree) cut callers long-distance expenses; instant messaging offered 
+		by public severs (e.g., iptel.org) combines voice and text services with presence information. 
+		New deployment scenarios are underway: SIP is a part of UMTS networks and research publications 
+		suggest the use of SIP for virtual home environments or distributed network games.
+	    </para>
+	</section> <!-- about sip -->
+	<section id="serlimitations">
+	    <title>Known SER Limitations</title>
+	    <para>
+		The following items are not part of current distribution and are planned for next releases:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    Script processing of multiple branches on forking
+			</para>
+
+			<warning>
+			    <para>
+				<application>ser</application>'s request processing language allows 
+				to make request decisions based on current URI. 
+				When a request if forked to multiple destinations, only the first branch's URI is used as 
+				input for script processing. This might lead to unexpected results. Whenever a URI resolves 
+				to multiple different next-hop URIs, only the first is processed which may result in handling 
+				not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP 
+				address and PSTN gateway SIP address. If the IP phone address is the first, then script 
+				execution ignores the second branch. If a script includes checking gateway address in
+				request URI, the checks never match. That might result in ignoring of 
+				gateway admission control rules or applying them unnecessarily to non-gateway 
+				destinations.
+			    </para>
+			</warning>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		List of known bugs is publicly available at the 
+		<application>ser</application> webpage at
+		<ulink url="http://www.iptel.org/ser/">
+		    http://www.iptel.org/ser/
+		</ulink>. See the "ISSUES" link.
+	    </para>
+	</section> <!-- limitations -->
+	<section id="licensing">
+	    <title>Licensing</title>
+	    <para>
+		<application>ser</application> is freely available under terms and
+		conditions of the GNU General Public License.
+	    </para>	
+	    <!-- COPYING -->
+	    <screen>
+	    	    &gpllicense;
+	    </screen>
+	    
+	</section>
+	<section id="support">
+	    <title>Obtaining Technical Assistance</title>
+	    <para>
+		We offer best-effort free support for <application>ser</application>.
+		"best-effort" means that we try to solve your problems via email
+		as soon as we can, subject to available manpower. If you need
+		commercial support, contact info@iptel.org.
+	    </para>
+	    <para>
+		To receive feedback to your inquiries, we recommend you to subscribe
+		to the <emphasis>serusers</emphasis> mailing list and post your
+		queries there. This mailing list is set up for mutual help by
+		the community of <application>ser</application> users and developers.
+	    </para>
+	    <itemizedlist>
+		<title>Mailing List Instructions</title>
+		<listitem>
+		    <para>
+			Public archives and subscription form:
+			<ulink url="http://mail.iptel.org/mailman/listinfo/serusers">
+			    http://mail.iptel.org/mailman/listinfo/serusers
+			</ulink>			
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			To post, send an email to serusers@iptel.org
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If you think you encountered an error, please submit the
+			following information to avoid unnecessary round-trip times:			
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    Name and version of your operating system --
+				    you can obtain it by calling
+				    <command>uname -a</command>
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <application>ser</application> distribution: 
+				    release number and package				    
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <application>ser</application> build -- 
+				    you can obtain it by calling 
+				    <command moreinfo="none">ser -V</command>
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Your <application>ser</application> configuration file
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <application>ser</application> logs -- with default settings
+				    few logs are printed to <command>syslog</command> facility which
+				    typically dumps them to 
+				    <filename moreinfo="none">/var/log/messages</filename>. To 
+				    enable detailed logs dumped to <filename>stderr</filename>,
+				    apply the following configuration options: <command moreinfo="none">
+				    debug=8, log_stderror=yes, fork=no</command>.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Captured SIP messages -- you can obtain them 
+				    using tools such as <application>ngrep</application>
+				    or <application moreinfo="none">ethereal</application>.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		</listitem>
+	    </itemizedlist>	    
+	
+	    <para>
+		If you are concerned about your privacy and do not wish your
+		queries to be posted and archived publicly, you may post to
+		serhelp@iptel.org. E-mails to this address are only forwarded
+		to iptel.org's <application>ser</application> development team.
+		However, as the team is quite busy you should not be surprised
+		to get replies with considerable delay.
+
+	    </para>
+	</section>
+        
+	<section id="moreinfo">
+	    <title>More Information</title>
+	    <para>
+		Most up-to-date information including latest and most complete version
+		of this documentation is always available at our website,
+		<ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser/</ulink>.
+		The site includes links to other important information about
+		<application moreinfo="none">ser</application>, such
+		as installation guidelines (INSTALL), download links,
+		development pages, programmer's manual, etc.
+	    </para>
+	    <para>
+		A SIP tutorial (slide set) is available at 
+		<ulink url="http://www.iptel.org/sip/">http://www.iptel.org/sip/</ulink> .
+	    </para>
+	</section> <!-- info -->
+
+	<section>
+	    <title>Release Notes</title>
+	    <literallayout format="linespecific" class="normal">
+&releasenotes;
+	    </literallayout>
+	</section> <!-- release notes -->
+
+
+    </chapter> <!-- general -->

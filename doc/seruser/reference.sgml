@@ -1,0 +1,1406 @@
+    <chapter>
+	<title>Reference</title>
+	<section id="coreoptions">
+	    <title>Core Options</title>
+	    <para>Core options are located in beginning of configuration file and
+	    affect behaviour of the server.</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<varname>debug</varname> - Set log level, this is number between 0 and 9. Default 
+			is 0.
+			
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>fork</varname> - If set to yes, the server will spawn children. If set to no, the main
+			process will be processing all messages. Default is yes.
+			<note>
+			    <para>
+				Disabling child spawning is useful mainly for
+				debugging. When <varname>fork</varname> is turned off,
+				some features are unavailable: 
+				there is no attendant process, no pid file is generated,
+				and server listens only at one address. Make sure you
+				are debugging the same interface at which 
+				<application moreinfo="none">ser</application> listens.
+				The easiest way to do so is to set the interface using
+				<varname>listen</varname> option explicitly.
+				</para>
+			</note>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>log_stderror</varname> - If set to yes, the server will print its debugging 
+			information to standard error output. If set to no, <command moreinfo="none">syslog</command> 
+			will be used. Default is no (printing to syslog).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>listen</varname> - list of all IP addresses or hostnames SER should listen on.
+			<note>
+				<para>
+					This parameter may repeat several times, then SER will
+					listen on all addresses. For example, the following
+					command-line options (equivalent to "listen" config
+					option) may be used: 
+					<command>
+						ser -l foo  -l bar -p 5061 -l x -l y 
+					</command>
+					will listen on foo:5060, bar:5061 & x:5061 & y:5061
+
+				</para>
+			</note>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>alias</varname> - Add IP addresses or hostnames to list of name aliases.
+			All requests with hostname matching an alias will satisfy the condition 
+			"uri==myself".
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>dns</varname> - Uses dns to check if it is necessary to add a "received=" field to a via.
+			Default is no.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>rev_dns</varname> - Same as dns but use reverse DNS. Default is no.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>port</varname> - Listens on the specified port (default 5060). It applies to the last 
+			address specified in listen and to all the following that do not have a corresponding "port" option.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>maxbuffer</varname> - Maximum receive buffer size which will not be exceeded by 
+			the auto-probing procedure even if the OS allows. Default value is MAX_RECV_BUFFER_SIZE,
+			which is 256k.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>children</varname> - Specifies how many processes should be started
+		        for each transport protocol. 
+		    Running multiple children allows a server to 
+			server multiple requests in parallel when request processing block (e.g., on DNS
+			lookup). Note that <application>ser</application> typically spawns additional
+			processes, such as timer process or FIFO server. If FIFO server is turned on,
+			you can watch running processes using the <application moreinfo="none">serctl</application>
+			utility.
+
+
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>check_via</varname> - Turn on or off Via host checking when forwarding replies.
+			Default is no.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>syn_branch</varname> - Shall the server use stateful synonym branches? It is faster but not 
+			reboot-safe. Default is yes.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>memlog</varname> - Debugging level for final memory statistics report. Default is L_DBG --
+			memory statistics are dumped only if <varname>debug</varname> is set high.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>sip_warning</varname> - Should replies include extensive warnings? By default yes,
+			it is good for trouble-shooting.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>fifo</varname> - FIFO special file pathname, for example "/tmp/ser_fifo". Default is
+			no filename -- no FIFO server is started then. We recommend to set it so that
+			accompanying applications such as <application moreinfo="none">serweb</application> or
+			<application moreinfo="none">serctl</application> can communicate with
+			<application moreinfo="none">ser</application>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>fifo_mode</varname> - Permissions of the FIFO special file.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>server_signature</varname> - Should locally-generated messages include server's signature?
+			By default yes, it is good for trouble-shooting.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>reply_to_via</varname> - A hint to reply modules
+			whether they should send reply
+			to IP advertised in Via.
+			Turned off by default, which means that replies are
+			sent to IP address from which requests came from. 
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>user | uid</varname> - uid to be used by the server. 
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>group | gid</varname> - gid to be used by the server.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>mhomed</varname> -- enable calculation of 
+			outbound interface; useful on multihomed servers,
+			ser <link linkend="mhomed"></link>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>loadmodule</varname> - Specifies a module to be loaded (for example "/usr/lib/ser/modules/tm.so")
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>modparam</varname> - Module parameter configuration. The commands takes three parameters:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <emphasis>module</emphasis> - Module in which the parameter resides.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>parameter</emphasis> - Name of the parameter to be configured.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>value</emphasis> - New value of the parameter.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section id="builtinref">
+	    <title>Core Commands</title>
+
+
+	    <itemizedlist id="routeblocks">
+		<title>Route Blocks and Process Control</title>
+		<!--<para>
+		    Route block and process control keywords determine
+		    the order in which SIP requests are processed.
+		</para>-->
+		<listitem>
+		    <para>
+			<command>route[number]{...}</command> - This marks a "route block" in configuration files.
+			route blocks are basic building blocks of <application>ser</application> scripts. 
+			Each route block contains a sequence of 
+			<application>SER</application> actions enclosed in braces. Multiple route blocks
+			can be included in a configuration file.
+			When script execution begins on request receipt, 
+			route block number 0 is entered. Other route blocks serve as a kind of sub-routines and 
+			may be entered by calling the action <command>route(n)</command>, 
+			where n is number of the block. The action <command>break</command>
+			exits currently executed route block. It stops script execution for
+			route block number 0 or returns to calling route block otherwise.
+		    </para>
+		    <example>
+			<title>route</title>
+			<programlisting format="linespecific">
+route[0] {
+        # call routing block number 2
+	route(2);
+}
+
+route[2] {
+    forward("host.foo.bar", 5060);
+}
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>reply_route</command> is used to restart request processing
+			when a negative reply for a previously relayed request is received. It is only
+			used along with tm module, which stores the original requests and
+			can return to their processing later. To activate processing
+			of a <command>reply_route</command> block, call the TM action
+			<command>t_on_negative(route_number)</command> before calling
+			<command moreinfo="none">t_relay</command>. When a negative reply
+			comes back, the desired <command moreinfo="none">reply_route</command>
+			will be entered and processing of the original request may
+			continue. 
+			</para>
+		    <para>
+			The set of actions applicable from within
+			<command moreinfo="none">reply_route</command> blocks is limited.
+			Permitted actions are URI-manipulation actions, logging and
+			sending stateful replies using <command moreinfo="none">t_reply</command>.
+			Use of other actions may lead to
+			unpredictable results. (We plan to add syntactical checks in the future
+			so that improper action use will be detected during server start-up.)
+		    </para>
+		    <example>
+			<title>reply_route</title>
+			<programlisting format="linespecific">
+reply_route[1] {
+    # for some reason, the original forwarding attempt
+    # failed, try at another URI
+    append_branch("sip:nonsense@iptel.org");
+    # if this new attempt fails too, try another reply_route
+    t_on_negative("2");
+}
+</programlisting>
+		    </example>
+		</listitem>
+
+		<listitem>
+		    <para>
+		    	The action <command>break</command> exits currently executed route block. 
+			It stops script execution for route block number 0 or returns to calling 
+			route block otherwise.
+			<note>
+			    <para>
+				We recommend to use <command moreinfo="none">break</command>
+				after any request forwarding or replying. This practice
+				helps to avoid erroneous scripts that 
+				continue execution and mistakenly send another reply or
+				forward a request to another place, resulting in
+				protocol confusion.
+			    </para>
+			</note>
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> break;
+		    </para>
+		</listitem>
+
+		<listitem>
+		    <para>
+			<command>route(n)</command> - call routing block route[n]{...};
+			when the routing block n finishes processing, control is passed
+			back to current block and processing continues.
+		    </para>
+		</listitem>
+
+		<listitem>
+		    <para>
+			<command>if (condition) statement</command> - Conditional statement.
+		    </para>
+		    <example>
+			<title>Use of <command>if</command></title>
+			<programlisting format="linespecific">
+if (method=="REGISTER) {
+    log("register received\n");
+};
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>if - else</command> - If-Else Conditional statement.
+		    </para>
+		    <example>
+			<title>Use of <command>if-else</command></title>
+			<programlisting format="linespecific">
+if (method=="REGISTER) {
+    log("register received\n");
+} else {
+    log("non-register received\n");
+};
+</programlisting>
+		    </example>
+		</listitem>
+
+	    </itemizedlist>
+	    <itemizedlist>
+		<title>Flag Manipulation</title>
+		<listitem>
+		    <para>
+			<command>setflag</command> - Set flag in the message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setflag(1);
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>resetflag</command> - Reset flag in the message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> resetflag(1);
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>isflagset</command> - Test whether a particular flag is set.
+		    </para>
+		    <example>
+			<title>isflagset</title>
+			<programlisting format="linespecific">
+if (isflagset(1)) {
+    ....
+};
+</programlisting>
+		    </example>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<title>Manipulation of URI and Destination Set</title>
+		<listitem>
+		    <para>
+			<command>rewritehost | sethost | seth</command> - Rewrite host part of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> sethost("foo.bar.com");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>rewritehostport | sethostport | sethp</command> - Rewrite host and port part of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> sethostport("foo.bar.com:5060");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>rewriteuser | setuser | setu</command> - Rewrite or set username part of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setuser("joe");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>rewriteuserpass | setuserpass | setup</command> - Rewrite or set username and password part
+			of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setuserpass("joe:mypass");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>rewriteport | setport | setp</command> - Rewrite or set port of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setport("5060");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>rewriteuri | seturi</command> - Rewrite or set the whole Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> seturi("sip:joe@foo.bar.com:5060");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>revert_uri</command> - Revert changes made to the Request URI and use original Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> revert_uri();
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>prefix</command> - Add prefix to username in Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> prefix("123");
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>strip</command> - Remove first n characters of username in Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> strip(3);
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>append_branch</command> - Append a new destination to destination set of the message.
+		    </para>
+		    <para>
+			<example>
+			    <title>Use of <command>append_branch</command></title>
+			    <programlisting format="linespecific">
+# redirect to these two destinations: a@foo.bar and b@foo.bar
+# 1) rewrite the current URI
+rewriteuri("sip:a@foo.bar");
+# 2) append another entry to the destination ser
+append_branch("sip:b@foo.bar");
+# redirect now
+sl_send_reply("300", "redirection");
+			    </programlisting>
+			</example>
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<title>Message Forwarding</title>
+		<listitem>
+		    <para>
+			<command>forward(uri, port)</command> - Forward the request to given 
+			destination statelessly.  The uri and port parameters may take special 
+			values 'uri:host'
+			and 'uri:port' respectively, in which case SER forwards to destination
+			set in current URI. All other elements in a destination set are
+			ignored by stateless forwarding.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> forward("foo.bar.com"); # port defaults to 5060
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>send</command> - Send the message as is to a third party 
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> send("foo.bar.com");
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<title>Logging</title>
+		
+
+		<listitem>
+		    
+		    <para>
+			<command>log([level], message)</command> - Log a message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> log(1, "This is a message with high log-level set to 1\n");
+		    </para>
+		    <para>
+			Logging is very useful for troubleshooting or attracting administrator's
+			attention to unusual situations. <application moreinfo="none">ser</application>
+			reports log messages to <application moreinfo="none">syslog</application>
+			facility unless it is configured to print them to <filename moreinfo="none">stderr</filename>
+			with the <varname>log_stderr</varname> configuration option. Log messages
+			are only issued if their log level exceeds threshold set with the
+			<varname>debug</varname> configuration option. If log level is omitted,
+			messages are issued at log level 4.
+		</para>
+		</listitem>
+
+	    </itemizedlist>
+
+
+
+
+	    <itemizedlist>
+		<title>Miscellaneous</title>
+		<listitem>
+		    <para>
+			<command>len_gt</command> - If length of the message is greater than value given as parameter, the
+			command will return 1 (indicating true). Otherwise -1 (indicating false) will be returned. It may 
+			take 'max_len' as parameter, in which case message size is limited
+			to internal buffer size BUF_SIZE (3040 by default).
+		    </para>
+		    <example>
+			<title>Use of <command>len_gt</command></title>
+			<programlisting format="linespecific">
+# deny all requests larger in size than 1 kilobyte
+if (len_gt(1024)) {
+    sl_send_reply("513", "Too big");
+    break;
+};
+			</programlisting>
+		    </example>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>Command Line Parameters</title>
+	    <note>
+		<para>
+		    Command-Line parameters may be overridden by configuration
+		    file options which take precedence over them.
+		</para>
+	    </note>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>-h</emphasis> - Displays a short usage description, including all available options.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-c</emphasis> - Performs loop checks and computes branches.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-r</emphasis> - Uses dns to check if it is necessary to add a "received=" field to a via.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-R</emphasis> - Same as -r but uses reverse dns.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-v</emphasis> - Turns on via host checking when forwarding replies.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-d</emphasis> - Turns on debugging, multiple -d increase debugging level.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-D</emphasis> - Runs ser in the foreground (it doesn't fork into daemon mode).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-E</emphasis> - Sends all the log messages to stderr.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-V</emphasis> - Displays the version number.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-f config-file</emphasis> - Reads the configuration from "config-file" (default ./ser.cfg).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-l address</emphasis> - Listens on the specified address. Multiple -l mean listening 
+			on multiple addresses. The default behaviour is to listen on all the ipv4 interfaces.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-p port</emphasis> - Listens on the specified port (default 5060). It applies to the last 
+			address specified with -l and to all the following that do not have a corresponding -p.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-n processes-no</emphasis> - Specifies the number of children processes forked per 
+			interface (default 8).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-b max_rcv_buf_size</emphasis> - Maximum receive buffer size which will not be exceeded by 
+			the auto-probing procedure even if the OS allows.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-m shared_mem_size</emphasis> - Size of the shared memory which will be allocated (in Megabytes).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-w working-dir</emphasis> - Specifies the working directory. In the very improbable event 
+			that will crash, the core file will be generated here.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-t chroot-dir</emphasis> - Forces ser to chroot after reading the config file.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-u uid</emphasis> - Changes the user id under which ser runs.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-g gid</emphasis> - Changes the group id under which ser runs.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-P pid-file</emphasis> - Creates a file containing the pid of the main ser process.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-i fifo-path</emphasis> - Creates a fifo, useful for monitoring ser status.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
+
+
+
+
+	<section id="modulereference">
+	    <title>Modules</title>
+	    <para>
+		Module description is currently located in READMEs of
+		respective module directories. <filename moreinfo="none">README-MODULES</filename>
+		lists all available modules, including their maturity status.
+		In the current <application moreinfo="none">ser</application>
+		distribution, there are the following modules:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>
+				acc
+			    </emphasis>
+			    -- call accounting using <application moreinfo="none">syslog</application> facility.
+			    Depends on tm.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				auth
+			    </emphasis>
+			    -- digest authentication. Depends on sl and mysql.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				exec
+			    </emphasis>
+			    -- execution of shell programs.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				jabber
+			    </emphasis> -- gateway between SIMPLE and Jabber instant messaging. Depends
+			    on tm and mysql.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				maxfwd
+			    </emphasis>
+			    -- checking max-forwards header field.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>msilo</emphasis>
+
+			-- message silo. Store for undelivered instant messages. Depends on tm and mysql.
+			    </para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				mysql
+			    </emphasis>
+			    -- mysql database back-end.
+			    </para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				registrar, usrloc
+			    </emphasis>
+			    -- User Location database. Works in in-memory mode or with mysql persistence
+			    support. Depends on sl, and on mysql if configured for use with mysql.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				rr
+			    </emphasis>
+			    -- Record Routing (strict and loose)
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				sl
+			    </emphasis>
+			    -- stateless User Agent server.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				sms
+			    </emphasis>
+			    -- SIMPLE/SMS gateway. Depends on tm. Takes special hardware.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				textops
+			    </emphasis>
+			    -- textual request operations.
+			</para>
+		    </listitem>
+		    <listitem>			
+			<para>
+			    <emphasis>
+				tm
+			    </emphasis>
+			    -- transaction manager (stateful processing).
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The most frequently used actions exported by modules are summarized
+		in <xref linkend="moduleactions">. For a full explanation of 
+		module actions, see documentation in respective module directories
+		in source distribution of <application moreinfo="none">ser</application>.
+	    </para>
+	    <table id="moduleactions">
+		<title>Frequently Used Module Actions</title>
+		<tgroup cols="4">
+		    <thead>
+			<row>			    
+			    <entry>
+				Command
+			    </entry>
+			    <entry>
+				Modules
+			    </entry>
+			    <entry>
+				Parameters
+			    </entry>
+			    <entry>
+				Comments
+			    </entry>
+			</row>
+		    </thead>
+
+		    <tbody>
+
+			<row>
+			    <entry>
+				append_hf
+			    </entry>
+			    <entry>
+				textops
+				</entry>
+			    <entry>
+				header field
+				</entry>
+			    <entry>
+				append a header field to the end of request's header
+				</entry>
+			    </row>
+			<row>
+			    <entry>
+				check_from
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				check if username in from header field matches authentication id
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				check_to
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				check if username in To header field matched authentication id
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				exec_dset
+			    </entry>
+			    <entry>
+				exec
+			    </entry>
+			    <entry>
+				command name
+			    </entry>
+			    <entry>
+				execute an external command and replace destination set with
+				its output
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				exec_msg
+			    </entry>
+			    <entry>
+				exec
+			    </entry>
+			    <entry>
+				command name
+			    </entry>
+			    <entry>
+				execute an external command and pass received SIP request
+				to its input
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				is_in_group
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				group name
+			    </entry>
+			    <entry>
+				check if a user, as identified by digest credentials, 
+				is a member of a group`
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				is_user
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				user id
+			    </entry>
+			    <entry>
+				returns true if request credentials belong to a user
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				is_user_in
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				user, group
+			    </entry>
+			    <entry>
+				check if user is member of a group; user can be gained
+				from request URI ("Request-URI"), To header field ("To"),
+				From header field ("From") or digest credentials
+				("Credentials")
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				lookup
+			    </entry>
+			    <entry>
+				usrloc
+			    </entry>
+			    <entry>
+				table name
+			    </entry>
+			    <entry>
+				attempt to translate request URI using user location database;
+				returns false if no contact for user found;
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				loose_route
+			    </entry>
+			    <entry>
+				rr
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				process loose routes in requests
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				mf_process_maxfwd_header
+			    </entry>
+			    <entry>
+				maxfwd
+			    </entry>
+			    <entry>
+				default max_forwards value
+			    </entry>
+			    <entry>
+				return true, if request's max_forwards value has not
+				reached zero yet; if none is included in the request,
+				set it to value in parameter
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				proxy_authorize
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				realm, subscriber table
+			    </entry>
+			    <entry>
+				returns true if requests contains proper credentials, false
+				otherwise
+			    </entry>
+			</row>
+
+
+
+
+
+
+			<row>
+			    <entry>
+				proxy_challenge
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				realm, qop
+			    </entry>
+			    <entry>
+				challenge user to submit digest credentials; qop may be turned
+				off for backwards compatibility with elderly implementations
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				record_route
+			    </entry>
+			    <entry>
+				rr
+			    </entry>
+			    <entry>
+				loose routing (1=on, 0=off)
+			    </entry>
+			    <entry>
+				record-route a request
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				replace
+			    </entry>
+			    <entry>
+				textops
+			    </entry>
+			    <entry>
+				RegExp, Substitute
+			    </entry>
+			    <entry>
+				find the first occurence of a string matching the regular 
+				expression in header or body and replace it with a substitute
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				replace_all
+			    </entry>
+			    <entry>
+				textops
+			    </entry>
+			    <entry>
+				RegExp, Substitute
+			    </entry>
+			    <entry>
+				find all occurences of a string matching the regular 
+				expression in header or body and replace it with a substitute
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				save
+			    </entry>
+			    <entry>
+				usrloc
+			    </entry>
+			    <entry>
+				table name
+			    </entry>
+			    <entry>
+				for use in registrar: save content of Contact header fields
+				in user location database and reply with 200
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				search
+			    </entry>
+			    <entry>
+				textops
+			    </entry>
+			    <entry>
+				regular expression
+			    </entry>
+			    <entry>
+				search for a regular expression match in request header of body
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				sl_send_reply
+			    </entry>
+			    <entry>
+				sl
+			    </entry>
+			    <entry>
+				status code, reason phrase
+			    </entry>
+			    <entry>
+				reply a request statelessly
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				t_relay
+			    </entry>
+			    <entry>
+				tm
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				stateful forwarding to locations in current destination set
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				t_on_negative
+			    </entry>
+			    <entry>
+				tm
+			    </entry>
+			    <entry>
+				reply_route number
+			    </entry>
+			    <entry>
+				set reply_route block which shall be entered if stateful
+				forwarding fails
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				t_replicate
+			    </entry>
+			    <entry>
+				tm
+			    </entry>
+			    <entry>
+				host, port number
+			    </entry>
+			    <entry>
+				replicate a request to a destination
+			    </entry>
+			</row>
+
+
+		    </tbody>
+		</tgroup>
+	    </table>
+	</section> <!-- modules -->
+	<section id="fiforeference">
+	    <title>FIFO Commands Reference</title>
+	    <para>
+		This section lists currently supported FIFO commands. Some of them are
+		built-in in <application moreinfo="none">ser</application> core, whereas
+		others are exported by modules. The most important exporters are now
+		tm and usrloc module. tm FIFO commands allow users to initiate transactions
+		without knowledge of underlying SIP stack. usrloc FIFO commands allow
+		users to access in-memory user-location database. Note that that is the
+		only way how to affect content of the data-base in real-time. Changes
+		to MySql database do not affect in-memory table unless <application moreinfo="none">ser</application>
+		is restarted.
+	    </para>
+	    <table>
+		
+		<title>FIFO Commands</title>
+		<tgroup cols="4">
+		    <thead>
+			<row>
+			    <entry>
+				Command
+			    </entry>
+			    <entry>
+				Module
+			    </entry>
+			    <entry>
+				Parameters
+			    </entry>			    
+			    <entry>
+				Comments
+			    </entry>
+			</row>
+		    </thead>
+		    <tbody>
+			<row>
+			    <entry>
+				ps
+			    </entry>
+			    <entry>
+				core
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				prints running <application moreinfo="none">ser</application> processes
+			    </entry>
+			</row>
+			<row>
+			    <entry>which</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints list of available FIFO commands</entry>
+			</row>
+			<row>
+			    <entry>arg</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints list of command-line arguments with which 
+				<application moreinfo="none">ser</application> was started</entry>
+			</row>
+			<row>
+			    <entry>pwd</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints <application moreinfo="none">ser</application>'s working
+			    directory</entry>
+			</row>
+			<row>
+			    <entry>version</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints version of <application moreinfo="none">ser</application></entry>
+			</row>
+			<row>
+			    <entry>uptime</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints <application moreinfo="none">ser</application>'s running time</entry>
+			</row>
+			<row>
+			    <entry>sl_stats</entry>
+			    <entry>sl</entry>
+			    <entry>none</entry>
+			    <entry>prints statistics for sl module</entry>
+			</row>
+			<row>
+			    <entry>t_stats</entry>
+			    <entry>tm</entry>
+			    <entry>none</entry>
+			    <entry>print statistics for tm module</entry>
+			</row>
+			<row>
+			    <entry>t_hash</entry>
+			    <entry>tm</entry>
+			    <entry>none</entry>
+			    <entry>print occupation of transaction table (mainly for debugging)</entry>
+			</row>
+			<row>
+			    <entry>t_uac_dlg</entry>
+			    <entry>tm</entry>
+			    <entry>method, request URI, outbound URI (if none, empty line with a single dot),
+					dot-line-terminated header fields, optionaly dot-line terminated message
+					body. 
+				</entry>
+					
+			    <entry>initiate a transaction.
+					From and To header fields must be present in header field list,
+					so does Content-Type if body is present. If CSeq, CallId and From-tag
+					are not present, ephemeral values are generated. Content_length is
+					calculated automatically if body present.
+				</entry>
+			</row>
+			<row>
+			    <entry>ul_stats</entry>
+			    <entry>usrloc</entry>
+			    <entry>none</entry>
+			    <entry>print usrloc statistics</entry>
+			</row>
+			<row>
+			    <entry>ul_rm</entry>
+			    <entry>usrloc</entry>
+			    <entry>table name, user name</entry>
+			    <entry>remove all user's contacts from user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_rm_contact</entry>
+			    <entry>usrloc</entry>
+			    <entry>table name, user name, contact</entry>
+			    <entry>remove a user's contact from user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_dump</entry>
+			    <entry>usrloc</entry>
+			    <entry>none</entry>
+			    <entry>print content of in-memory user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_flush</entry>
+			    <entry>usrloc</entry>
+			    <entry>none</entry>
+			    <entry>flush content of in-memory user-location cache in
+			    persistent database (MySQL)</entry>
+			</row>
+			<row>
+			    <entry>ul_add</entry>
+			    <entry>usrloc</entry>
+			    <entry>table name, user name, contact, expiration, priority (q)</entry>
+			    <entry>insert a contact address in user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_show_contact</entry>
+			    <entry>usrloc</entry>
+			    <entry>table, user name</entry>
+			    <entry>show user's contact addresses in user-location database</entry>
+			</row>
+		    </tbody>
+		</tgroup>
+	    </table>
+	</section>
+	<section>
+	    <title>Used Database Tables</title>
+	    <para>
+		<application moreinfo="none">ser</application> includes MySQL support
+		to guarantee data persistence across server reboots and storage
+		of users' web environment. The data stored in
+		the database include user profiles, access control lists, user location,
+		etc. Note that users are not supposed to alter the data directly, as it
+		could introduce inconsistency between data on persistence storage and
+		in server's memory.
+		The following list enumerates used tables and explains their purpose.
+
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    subscriber -- table of users. It includes user names and
+			    security credentials, as well as additional user information.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    reserved -- reserved user names. <application moreinfo="none">serweb</application>
+			    does not permit creation of accounts with name on this list.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    phonebook -- user's personal phonebooks. Accessible via
+			    <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    pending -- table of unconfirmed subscription requests. Used by
+			    <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    missed_calls -- table of missed calls. Can be fed by acc modules
+			    if mysql support is turned on. Displayed by <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    location -- user contacts. Typically updated through
+			    <application moreinfo="none">ser</application>'r registrar
+			    functionality.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    grp -- group membership. Used by auth module to determine
+			    whether a user belongs to a group.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    event -- allows users to subscribe to additional services.
+			    Currently unused.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    aliases -- keeps track of alternative user names.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    active_sessions -- keeps track of currently active web sessions.
+			    For use by <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    acc -- keeps track of accounted calls.  Can be fed by acc module
+			    if mysql support is turned on. Displayed by <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    config -- maintains attribute-value pairs for keeping various information.
+			    Currently not used.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    silo -- message store for instant messages which could not have been
+			    delivered.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    version -- keeps version number of each table definition.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		
+	    </para>
+	</section>
+    </chapter> <!-- reference -->

@@ -73,19 +73,6 @@ Maturity:   alpha
 Depends on: -
 Purpose:    Database emulation in plaintext files
 
-Name:       domain
-Owner:      jih
-Use:        experimental
-Maturity:   beta
-Depends on: mysql
-Purpose:    Local domain lists and related functions
-
-Name:       enum
-Owner:      jih
-Use:        experimental
-Maturity:   beta
-Depends on: -
-Purpose:    Enum support
 
 Name:       exec
 Owner:      jiri
@@ -102,7 +89,7 @@ Depends on: -
 Purpose:    Execution of external URI processing logic
 
 Name:       extcmd
-Owner:      jiri
+Owner:      bogdan
 Use:        experimental
 Maturity:   alpha
 Depends on: -
@@ -170,13 +157,6 @@ Use:        example
 Maturity:   stable
 Depends on: -
 Purpose:    Printing messages to stdout
-
-Name:       radius_acc
-Owner:      ssi
-Use:        experimental
-Maturity:   beta
-Depends on: tm
-Purpose:    radius accounting
 
 Name:       registrar
 Owner:      janakj
@@ -254,3 +234,34 @@ Use:        experimental
 Maturity:   alpha
 Depends on: tm
 Purpose:    Voicemail interface
+
+Contributions
+-------------
+Name:       domain
+Owner:      jih
+Use:        experimental
+Maturity:   beta
+Depends on: mysql
+Purpose:    Local domain lists and related functions
+
+Name:       enum
+Owner:      jih
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Enum support
+
+Name:       domain
+Owner:      jih
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    support for maintenance of multiple domains
+
+Name:		permissions
+Owner:		tirpi
+Use:		experimental
+Maturity:	beta
+Depends on:	-
+Purpose:	hosts.allow-like ACLs
+

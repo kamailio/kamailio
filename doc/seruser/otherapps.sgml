@@ -1,0 +1,133 @@
+    <chapter id="complementaryapps">
+	<title>Complementary Applications</title>
+	<section id="serctl">
+	    <title><application>serctl</application> command-line tool</title>
+	    <para>
+		<application>serctl</application> is a command-line utility which allows to
+		perform most of management tasks needed to operate
+		<application moreinfo="none">ser</application>: adding users, changing their passwords,
+		watching server status, etc. Usage of utility is
+		as follows:
+
+		<example>
+		    <title><application>serctl</application> usage</title>
+		    <programlisting format="linespecific">
+
+usage: 
+           * subscribers *
+ serctl add &lt;username&gt; &lt;password&gt; &lt;email&gt; .. add a new subscriber (*)
+ serctl passwd &lt;username&gt; &lt;passwd&gt; ......... change user's password (*)
+ serctl rm &lt;username&gt; ...................... delete a user (*)
+ serctl mail &lt;username&gt; .................... send an email to a user
+ serctl alias show [&lt;alias&gt;] ............... show aliases
+ serctl alias rm &lt;alias&gt; ................... remove an alias
+ serctl alias add &lt;alias&gt; &lt;uri&gt; ............ add an aliases 
+
+           * access control lists *
+ serctl acl show [&lt;username&gt;] .............. show user membership
+ serctl acl grant &lt;username&gt; &lt;group&gt; ....... grant user membership (*)
+ serctl acl revoke &lt;username&gt; [&lt;group&gt;] .... grant user membership(s) (*)
+
+           * usrloc *
+ serctl ul show [&lt;username&gt;]................ show in-RAM online users
+ serctl ul rm &lt;username&gt; ................... delete user's UsrLoc entries
+ serctl ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UrLoc entry
+ serctl showdb [&lt;username&gt;] ................ show online users flushed in DB
+
+           * server health *
+ serctl monitor ............................ show internal status
+ serctl ps ................................. show runnig processes 
+ serctl fifo ............................... send raw commands to FIFO
+
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
+
+ </programlisting>
+		</example>
+	    </para>
+	    <note>
+		<para>
+
+		Prior to using the utility, you have to first 
+		set the environment variable <constant>SIP_DOMAIN</constant>
+		to locally appropriate value (e.g., "foo.com"). It is
+		needed for calculation of user credentials, which depend
+		    on SIP digest realm. 
+		    (see also <link linkend="msmbug">MSM Authentication Issue</link>)
+	        </para>
+	    </note>
+
+	    <example>
+		<title>Example Output of Server Watching Command 
+		    <command moreinfo="none">sc monitor</command>
+		</title>
+		<programlisting format="linespecific">
+
+[cycle #: 2; if constant make sure server lives and fifo is on]
+Server: Sip EXpress router(0.8.8 (i386/linux))
+Now: Thu Sep 26 23:16:48 2002
+Up Since: Thu Sep 26 12:35:27 2002
+Up time: 38481 [sec]
+
+Transaction Statistics
+Current: 0 (0 waiting) Total: 606 (0 local)       
+Replied localy: 34      
+Completion status 6xx: 0, 5xx: 1, 4xx: 86, 3xx: 0,2xx: 519      
+
+Stateless Server Statistics
+200: 6218 202: 0 2xx: 0      
+300: 0 301: 0 302: 0 3xx: 0      
+400: 0 401: 7412 403: 2 404: 1258 407: 116 408: 0 483: 0 4xx: 25      500: 0 5xx: 0      
+6xx: 0      
+xxx: 0      
+failures: 0      
+
+UsrLoc Stats
+Domain Registered Expired
+'aliases' 9 0
+'location' 29 17
+
+		</programlisting>
+
+	    </example>
+	</section>
+
+	<section id="serweb">
+	    <title>Web User Provisioning -- <application>serweb</application></title>
+	    <para>
+		To make provisioning of user accounts convenient, 
+		a web front-end to <application moreinfo="none">ser</application>,
+		<application moreinfo="none">serweb</application> has been
+		developed. <application moreinfo="none">serweb</application>,
+		a PHP-written web application,
+		allows users to apply for new <application moreinfo="none">ser</application>
+		accounts, and maintain these.
+		Users can manipulate their contacts, keep a phone-book
+		with SIP addresses, change password, send instant SIP messages,
+		and more. Administrators can manipulate any accounts and
+		grant or revoke user privileges.
+	    </para>
+	    <para>
+		<application moreinfo="none">serweb</application> is freely
+		available from berlios site at
+		<ulink url="http://developer.berlios.de/cvs/?group_id=500">
+		http://developer.berlios.de/cvs/?group_id=500</ulink>. Installation
+		takes unpacking tarball to a safe destination at web server
+		(better not in the HTML tree) and configuring 
+		<filename moreinfo="none">config.php</filename> accordingly
+		to local conditions.
+	    </para>
+	    <para>
+		Running <application moreinfo="none">serweb</application> can
+		be seen at iptel.org's SIP site. Just create and use a SIP
+		account at <ulink url="http://www.iptel.org/user/">http://www.iptel.org/user/</ulink>
+	    </para>
+	</section> <!-- serweb -->
+
+
+    <section>
+	<title>Voicemail</title>
+&voicemail;
+    </section> <!-- voicemail -->
+
+    </chapter> <!-- other apps -->
