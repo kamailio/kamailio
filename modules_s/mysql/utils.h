@@ -34,9 +34,6 @@
 #include <time.h>
 
 
-char* trim(char* _s);
-
-
 /*
  * Convert time_t structure to format accepted by MySQL database
  */
@@ -50,10 +47,13 @@ time_t mysql2time(const char* _str);
 
 
 /*
- * SQL URL parser
+ * Parse a mysql database URL of form 
+ * mysql://[username[:password]@]hostname[:port]/database
+ *
+ * Returns 0 if parsing was sucessful and -1 otherwise
  */
-int parse_sql_url(char* _url, char** _user, char** _pass, 
-		  char** _host, char** _port, char** _db);
+int parse_mysql_url(char* _url, char** _user, char** _pass,
+		    char** _host, char** _port, char** _db);
 
 
 #endif /* UTILS_H */
