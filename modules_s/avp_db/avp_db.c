@@ -101,7 +101,7 @@ static param_export_t params[] = {
 	{"username_column", STR_PARAM, &username_column},
 	{"domain_column",   STR_PARAM, &domain_column  },
 	{"attr_column",     STR_PARAM, &attr_column    },
-	{"val_column",      INT_PARAM, &val_column     },
+	{"val_column",      STR_PARAM, &val_column     },
 	{"use_domain",      INT_PARAM, &use_domain     },
 	{0, 0, 0}
 };
