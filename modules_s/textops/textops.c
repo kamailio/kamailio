@@ -16,6 +16,7 @@
 #include "../../data_lump.h"
 #include "../../error.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h> /* for regex */
 #include <regex.h>
