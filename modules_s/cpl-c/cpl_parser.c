@@ -104,10 +104,16 @@ unsigned char encode_node_name(char *node_name)
 			return MAIL_NODE;
 		case 'n':
 		case 'N':
-			if (node_name[2]=='T' || node_name[2]=='t')
-				return NOTFOUND_NODE;
-			else
-				return NOANSWER_NODE;
+			switch (node_name[3]) {
+				case 'F':
+				case 'f':
+					return NOTFOUND_NODE;
+				case 'N':
+				case 'n':
+					return NOANSWER_NODE;
+				default:
+					return NOT_PRESENT_NODE;
+			}
 		case 'o':
 		case 'O':
 			if (node_name[1]=='t' || node_name[1]=='T')

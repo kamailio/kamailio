@@ -78,7 +78,16 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
+			case NOT_PRESENT_NODE:
+				DBG("DEBUG:run_address_switch: NOT_PRESENT node found ->"
+					"skipping (useless in this case)\n");
+				break;
 			case OTHERWISE_NODE :
+				if (i!=NR_OF_KIDS(intr->ip)-1) {
+					LOG(L_ERR,"ERROR:run_address_switch: OTHERWISE node "
+						"not found as the last sub-node!\n");
+					goto script_error;
+				}
 				DBG("DEBUG:run_address_switch: matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case ADDRESS_NODE :
@@ -244,11 +253,13 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 	unsigned char field;
 	unsigned char *p;
 	unsigned char *kid;
+	unsigned char *not_present_node;
 	unsigned char attr_name;
 	int i;
 	str cpl_val;
 	str msg_val;
 
+	not_present_node = 0;
 	field = UNDEF_CHAR;
 	msg_val.s = 0;
 	msg_val.len = 0;
@@ -278,7 +289,20 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
+			case NOT_PRESENT_NODE:
+				if (not_present_node) {
+					LOG(L_ERR,"ERROR:run_string_switch: NOT_PRESENT node "
+						"found twice!\n");
+					goto script_error;
+				}
+				not_present_node = kid;
+				break;
 			case OTHERWISE_NODE :
+				if (i!=NR_OF_KIDS(intr->ip)-1) {
+					LOG(L_ERR,"ERROR:run_string_switch: OTHERWISE node "
+						"not found as the last sub-node!\n");
+					goto script_error;
+				}
 				DBG("DEBUG:run_string_switch: matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case STRING_NODE :
@@ -307,14 +331,21 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 				if (!msg_val.s) {
 					switch (field) {
 						case SUBJECT_VAL: /* SUBJECT */
+							if (intr->subject==STR_NOT_FOUND)
+								goto not_present;
 							if (!intr->subject) {
 								/* get the subject header */
-								if (!intr->msg->subject &&
-								(parse_headers(intr->msg,HDR_SUBJECT,0)==-1 ||
-								!intr->msg->subject)) {
-									LOG(L_ERR,"ERROR:run_string_switch: bad "
-										"msg or missing SUBJECT header\n");
-									goto runtime_error;
+								if (!intr->msg->subject) {
+									if (parse_headers(intr->msg,
+									HDR_SUBJECT,0)==-1) {
+										LOG(L_ERR,"ERROR:run_string_switch: "
+										"bad SUBJECT header\n");
+										goto runtime_error;
+									} else if (!intr->msg->subject) {
+										/* hdr not present */
+										intr->subject = STR_NOT_FOUND;
+										goto not_present;
+									}
 								}
 								intr->subject =
 									&(intr->msg->subject->body);
@@ -323,14 +354,21 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 								*(intr->subject));
 							break;
 						case ORGANIZATION_VAL: /* ORGANIZATION */
+							if (intr->organization==STR_NOT_FOUND)
+								goto not_present;
 							if (!intr->organization) {
 								/* get the organization header */
-								if (!intr->msg->organization &&
-								(parse_headers(intr->msg,HDR_ORGANIZATION,0)
-								==-1 || !intr->msg->organization)) {
-									LOG(L_ERR,"ERROR:run_string_switch: bad "
-										"msg or missing ORGANIZATION hdr\n");
-									goto runtime_error;
+								if (!intr->msg->organization) {
+									if (parse_headers(intr->msg,
+									HDR_ORGANIZATION,0)==-1) {
+										LOG(L_ERR,"ERROR:run_string_switch: "
+										"bad ORGANIZATION hdr\n");
+										goto runtime_error;
+									} else if (!intr->msg->organization) {
+										/* hdr not present */
+										intr->organization = STR_NOT_FOUND;
+										goto not_present;
+									}
 								}
 								intr->organization =
 									&(intr->msg->organization->body);
@@ -339,14 +377,21 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 								*(intr->organization));
 							break;
 						case USER_AGENT_VAL: /* User Agent */
+							if (intr->user_agent==STR_NOT_FOUND)
+								goto not_present;
 							if (!intr->user_agent) {
 								/* get the  header */
-								if (!intr->msg->user_agent &&
-								(parse_headers(intr->msg,HDR_USERAGENT,0)
-								==-1 || !intr->msg->user_agent)) {
-									LOG(L_ERR,"ERROR:run_string_switch: bad "
-										"msg or missing USERAGENT hdr\n");
-									goto runtime_error;
+								if (!intr->msg->user_agent) {
+									if (parse_headers(intr->msg,
+									HDR_USERAGENT,0)==-1) {
+										LOG(L_ERR,"ERROR:run_string_switch: "
+										"bad USERAGENT hdr\n");
+										goto runtime_error;
+									} else if (!intr->msg->user_agent) {
+										/* hdr not present */
+										intr->user_agent = STR_NOT_FOUND;
+										goto not_present;
+									}
 								}
 								intr->user_agent =
 									&(intr->msg->user_agent->body);
@@ -392,6 +437,19 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 
 	/* none of the branches of STRING_SWITCH mached -> go for default */
 	return DEFAULT_ACTION;
+not_present:
+	DBG("DEBUG:run_string_switch: required hdr not present in sip msg\n");
+	if (not_present_node)
+		return get_first_child(not_present_node);
+	/* look for the NOT_PRESENT node */
+	DBG("DEBUG:run_string_switch: searching for NOT_PRESENT sub-node..\n");
+	for(; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
+		if (NODE_TYPE(kid)==NOT_PRESENT_NODE)
+			return get_first_child(kid);
+	}
+	return DEFAULT_ACTION;
 runtime_error:
 	return CPL_RUNTIME_ERROR;
 script_error:
@@ -406,6 +464,7 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 	static str default_val={"normal",6};
 	unsigned char *p;
 	unsigned char *kid;
+	unsigned char *not_present_node;
 	unsigned char attr_name;
 	unsigned char attr_val;
 	unsigned char msg_attr_val;
@@ -414,6 +473,7 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 	str cpl_val;
 	str msg_val;
 
+	not_present_node = 0;
 	msg_val.s = 0;
 	msg_val.len = 0;
 	msg_attr_val = NORMAL_VAL;
@@ -422,7 +482,20 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
+			case NOT_PRESENT_NODE:
+				if (not_present_node) {
+					LOG(L_ERR,"ERROR:run_priority_switch: NOT_PRESENT node "
+						"found twice!\n");
+					goto script_error;
+				}
+				not_present_node = kid;
+				break;
 			case OTHERWISE_NODE :
+				if (i!=NR_OF_KIDS(intr->ip)-1) {
+					LOG(L_ERR,"ERROR:run_priority_switch: OTHERWISE node "
+						"not found as the last sub-node!\n");
+					goto script_error;
+				}
 				DBG("DEBUG:run_priority_switch: matching on OTHERWISE node\n");
 				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
 			case PRIORITY_NODE :
@@ -466,13 +539,20 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 				if (!msg_val.s) {
 					if (!intr->priority) {
 						/* get the PRIORITY header from message */
-						if (!intr->msg->priority &&
-						(parse_headers(intr->msg,HDR_PRIORITY,0)==-1 ||
-						!intr->msg->priority)) {
-							LOG(L_WARN,"WARNING:run_priority_switch: bad "
-								"msg or missing PRIORITY header -> using "
-								"default value \"normal\"!\n");
-							intr->priority = &default_val;
+						if (!intr->msg->priority) {
+							if (parse_headers(intr->msg,HDR_PRIORITY,0)==-1) {
+								LOG(L_ERR,"ERROR:run_priority_switch: bad "
+									"sip msg or PRIORITY header !\n");
+								goto runtime_error;
+							} else if (!intr->msg->priority) {
+								LOG(L_NOTICE,"NOTICE:run_priority_switch: "
+									"missing PRIORITY header -> using "
+									"default value \"normal\"!\n");
+								intr->priority = &default_val;
+							} else {
+								intr->priority =
+									&(intr->msg->priority->body);
+							}
 						} else {
 							intr->priority =
 								&(intr->msg->priority->body);
@@ -572,6 +652,8 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 
 	/* none of the branches of PRIORITY_SWITCH mached -> go for default */
 	return DEFAULT_ACTION;
+runtime_error:
+	return CPL_RUNTIME_ERROR;
 script_error:
 	return CPL_SCRIPT_ERROR;
 }
@@ -593,14 +675,23 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 
 	/* I'm totally ignoring any attributes in the time-switch node
 	 * let me make it work and I'll about this time zone, etc */
-	DBG("DEBUG:run_priority_switch: checking recv. time stamp <%d>\n",
+	DBG("DEBUG:run_time_switch: checking recv. time stamp <%d>\n",
 		intr->recv_time);
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
+			case NOT_PRESENT_NODE:
+				DBG("DEBUG:run_time_switch: NOT_PRESENT node found ->"
+					"skipping (useless in this case)\n");
+				break;
 			case OTHERWISE_NODE :
+				if (i!=NR_OF_KIDS(intr->ip)-1) {
+					LOG(L_ERR,"ERROR:run_time_switch: OTHERWISE node "
+						"not found as the last sub-node!\n");
+					goto script_error;
+				}
 				DBG("DEBUG:run_time_switch: matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case TIME_NODE :
@@ -742,16 +833,32 @@ script_error:
 inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
 {
 	unsigned char  *kid;
+	unsigned char  *not_present_node;
 	int i;
+
+	not_present_node = 0;
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
+			case NOT_PRESENT_NODE:
+				if (not_present_node) {
+					LOG(L_ERR,"ERROR:run_language_switch: NOT_PRESENT node "
+						"found twice!\n");
+					goto script_error;
+				}
+				not_present_node = kid;
+				break;
 			case OTHERWISE_NODE :
+				if (i!=NR_OF_KIDS(intr->ip)-1) {
+					LOG(L_ERR,"ERROR:run_language_switch: OTHERWISE node "
+						"not found as the last sub-node!\n");
+					goto script_error;
+				}
 				DBG("DEBUG:run_language_switch: matching on OTHERWISE node\n");
 				return get_first_child(kid);
-			case TIME_NODE :
+			case LANGUAGE_NODE :
 				LOG(L_ERR,"ERROR:cpl_c:run_language_switch: branch doesn't "
 					"matche\n");
 				break;

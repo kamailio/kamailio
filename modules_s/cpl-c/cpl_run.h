@@ -42,6 +42,8 @@
 #define CPL_LOC_SET_MODIFIED    (1<<2)
 #define CPL_PROXY_DONE          (1<<3)
 
+#define STR_NOT_FOUND           ((str*)0xffffffff)
+
 
 struct cpl_interpreter {
 	unsigned int flags;
@@ -57,7 +59,7 @@ struct cpl_interpreter {
 	str *subject;
 	str *organization;
 	str *user_agent;
-	str *accepted_langs;
+	str *accept_language;
 	str *priority;
 };
 

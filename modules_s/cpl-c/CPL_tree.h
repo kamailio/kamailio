@@ -62,6 +62,7 @@
 #define             TIME_NODE  30
 #define      TIME_SWITCH_NODE  31
 #define        OTHERWISE_NODE  32
+#define      NOT_PRESENT_NODE  33
 
 
 
@@ -142,9 +143,9 @@
 
 /* attributs and values for LOOKUP node */
 #define  SOURCE_ATTR                 0
-#define  TIMEOUT_ATTR                1
-#define  USE_ATTR                    2
-#define  IGNORE_ATTR                 3
+#define  TIMEOUT_ATTR                1    /*shared with PROXY node*/
+#define  USE_ATTR                    3
+#define  IGNORE_ATTR                 4
 
 /* attributs and values for REMOVE_LOCATION node */
 #define  LOCATION_ATTR               0
@@ -152,8 +153,8 @@
 #define  VALUE_ATTR                  2
 
 /* attributs and values for PROXY node */
-#define  RECURSE_ATTR                0
-#define  ORDERING_ATTR               1
+#define  RECURSE_ATTR                2
+#define  ORDERING_ATTR               3
 #define  PARALLEL_VAL                0
 #define  SEQUENTIAL_VAL              1
 #define  FIRSTONLY_VAL               2
