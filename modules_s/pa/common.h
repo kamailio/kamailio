@@ -34,15 +34,6 @@
 #include "../../str.h"
 
 
-char* find_not_quoted(str* _s, char _c);
-
-
-/*
- * Extract username part from a URI
- */
-int extract_username(str* _s);
-
-
 /*
  * This function skips name part
  * uri parsed by parse_contact must be used
