@@ -8,7 +8,12 @@ ordered by numbers of ser versions to which they relate,
 beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
 --------------------------------------------------------------
-Desc: texops subst REs match newline in constructs such [^@]
+Desc: textops search REs like "^From" fails to match on RH8
+Ser version: all
+Reason: there is a bug in RH8 libc
+Workarround: ?upgrade?
+--------------------------------------------------------------
+Desc: textops subst REs match newline in constructs such [^@]
 Ser version: 0.8.13?-unstable
 Reason: there is a bug in newer libc versions (at least in debian
         libc6 2.3.x)
