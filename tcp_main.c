@@ -50,6 +50,9 @@
  *              to/from readers/writers (andrei)
  *  2003-11-17  handle_new_connect & tcp_connect will close the 
  *              new socket if tcpconn_new return 0 (e.g. out of mem) (andrei)
+ *  2003-11-28  tcp_blocking_write & tcp_blocking_connect added (andrei)
+ *   TODO: switch to non-blocking tcp sockets, replace send & connect
+ *         with tcp_blocking_*
  */
 
 
@@ -477,6 +480,139 @@ void tcpconn_put(struct tcp_connection* c)
 	TCPCONN_LOCK;
 	c->refcnt--; /* FIXME: atomic_dec */
 	TCPCONN_UNLOCK;
+}
+
+
+static int tcp_blocking_connect(int fd, const struct sockaddr *servaddr,
+								socklen_t addrlen)
+{
+	int n;
+	fd_set sel_set;
+	struct timeval timeout;
+	int ticks;
+	int err;
+	int err_len;
+	
+again:
+	n=connect(fd, servaddr, addrlen);
+	if (n==-1){
+		if (errno==EINTR) goto again;
+		if (errno!=EINPROGRESS && errno!=EALREADY){
+			LOG(L_ERR, "ERROR: tcp_blocking_connect: (%d) %s\n",
+					errno, strerror(errno));
+			goto error;
+		}
+	}else goto end;
+	
+	while(1){
+		FD_ZERO(&sel_set);
+		FD_SET(fd, &sel_set);
+		timeout.tv_sec=TCP_CONNECT_TIMEOUT;
+		timeout.tv_usec=0;
+		ticks=get_ticks();
+		n=select(fd+1, 0, &sel_set, 0, &timeout);
+		if (n<0){
+			if (errno==EINTR) continue;
+			LOG(L_ERR, "ERROR: tcp_blocking_connect: select failed: (%d) %s\n",
+					errno, strerror(errno));
+			goto error;
+		}else if (n==0){
+			/* timeout */
+			if (get_ticks()-ticks>=TCP_CONNECT_TIMEOUT){
+				LOG(L_ERR, "ERROR: tcp_blocking_connect: send timeout\n");
+				goto error;
+			}
+			continue;
+		}
+		if (FD_ISSET(fd, &sel_set)){
+			err_len=sizeof(err);
+			getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &err_len);
+			if (err==0) goto end;
+			if (err!=EINPROGRESS && err!=EALREADY){
+				LOG(L_ERR, "ERROR: tcp_blocking_connect: SO_ERROR (%d) %s\n",
+						err, strerror(err));
+				goto error;
+			}
+		}
+	}
+error:
+	return -1;
+end:
+	return 0;
+}
+
+
+
+/* blocking write even on non-blocking sockets 
+ * if TCP_TIMEOUT will return with error */
+static int tcp_blocking_write(struct tcp_connection* c, int fd, char* buf,
+								unsigned int len)
+{
+	int n;
+	fd_set sel_set;
+	struct timeval timeout;
+	int ticks;
+	int initial_len;
+	
+	initial_len=len;
+again:
+	/* try first without select */
+	if (c->state==S_CONN_CONNECT){
+		/* connect not finished,  try again ? */
+		LOG(L_CRIT, "BUG: tcp_blocking_write: connect not implemented yet\n");
+		goto error;
+	}
+	n=send(fd, buf, len,
+#ifdef HAVE_MSG_NOSIGNAL
+			MSG_NOSIGNAL
+#else
+			0
+#endif
+		);
+	if (n<0){
+		if (errno==EINTR)	goto again;
+		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
+			LOG(L_ERR, "tcp_blocking_write: failed to send: (%d) %s\n",
+					errno, strerror(errno));
+			goto error;
+		}
+	}else if (n<len){
+		/* partial write */
+		buf+=n;
+		len-=n;
+	}else{
+		/* success: full write */
+		goto end;
+	}
+	while(1){
+		FD_ZERO(&sel_set);
+		FD_SET(fd, &sel_set);
+		timeout.tv_sec=TCP_SEND_TIMEOUT;
+		timeout.tv_usec=0;
+		ticks=get_ticks();
+		n=select(fd+1, 0, &sel_set, 0, &timeout);
+		if (n<0){
+			if (errno==EINTR) continue; /* signal, ignore */
+			LOG(L_ERR, "ERROR: tcp_blocking_write: select failed: "
+					" (%d) %s\n", errno, strerror(errno));
+			goto error;
+		}else if (n==0){
+			/* timeout */
+			if (get_ticks()-ticks>=TCP_SEND_TIMEOUT){
+				LOG(L_ERR, "ERROR: tcp_blocking_write: send timeout\n");
+				goto error;
+			}
+			continue;
+		}
+		if (FD_ISSET(fd, &sel_set)){
+			/* we can write again */
+			goto again;
+		}
+	}
+error:
+		return -1;
+end:
+		return initial_len;
 }
 
 

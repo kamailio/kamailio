@@ -46,6 +46,9 @@
 #define TCP_BUF_SIZE 65535
 #define TCP_CON_TIMEOUT 120 /* in  seconds */
 #define TCP_CON_SEND_TIMEOUT 120 /* timeout after a send */
+#define TCP_SEND_TIMEOUT 10 /* if a send doesn't complete in 10s, timeout */
+#define TCP_CONNECT_TIMEOUT 10 /* if a connect doesn't complete in this time,
+                                  timeout */
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
