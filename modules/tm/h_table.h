@@ -93,20 +93,19 @@ typedef struct cell
    struct cell *T_canceled;
    struct cell *T_canceler;
 
-   /*if the request received an ACK - used only by INVITE*/
-   unsigned int isACKed;
-
    /* usefull data */
    /* UA Server */
    struct sip_msg         *inbound_request;
    struct retrans_buff   *outbound_response;
    unsigned int             status;
    str*                             tag;
-   /* array of outgoing requests and its responses */
+   unsigned int             inbound_request_isACKed;
+   int                              relaied_reply_branch;
    int                               nr_of_outgoings;
    /* UA Clients */
    struct retrans_buff   *outbound_request[ MAX_FORK ];
    struct sip_msg          *inbound_response[ MAX_FORK ];
+   unsigned int             outbound_request_isACKed[MAX_FORK];
 }cell_type;
 
 

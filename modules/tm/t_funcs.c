@@ -6,28 +6,30 @@
 #include "../../timer.h"
 
 #define stop_RETR_and_FR_timers(h_table,p_cell)    \
-	do{ int ijk; \
+	{ int ijk; \
+		DBG("DEBUG:stop_RETR_and_FR_timers : start \n");\
 		if ( (p_cell)->outbound_response )  {  \
-			remove_from_timer_list( \
-				(h_table) , \
+			remove_from_timer_list( (h_table) , \
 				(&((p_cell)->outbound_response->tl[RETRASMISSIONS_LIST])), \
-				RETRASMISSIONS_LIST\
-			); \
+				RETRASMISSIONS_LIST ); \
 			remove_from_timer_list( (h_table), \
-					(&((p_cell)->outbound_response->tl[FR_TIMER_LIST])), \
-					FR_TIMER_LIST );\
+				(&((p_cell)->outbound_response->tl[FR_TIMER_LIST])), \
+				FR_TIMER_LIST );\
 		} \
+		DBG("DEBUG:stop_RETR_and_FR_timers : %d \n",(p_cell)->nr_of_outgoings);\
 		for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  { \
-			remove_from_timer_list( \
-				(h_table) , \
+			DBG("DEBUG:stop_RETR_and_FR_timers : branch[%d] RETR\n",ijk);\
+			remove_from_timer_list( (h_table) , \
 				(&((p_cell)->outbound_request[ijk]->tl[RETRASMISSIONS_LIST])),\
-				RETRASMISSIONS_LIST \
-			); \
+				RETRASMISSIONS_LIST ); \
+			DBG("DEBUG:stop_RETR_and_FR_timers : branch[%d] FR\n",ijk);\
 			remove_from_timer_list( (h_table) , \
 				(&((p_cell)->outbound_request[ijk]->tl[FR_TIMER_LIST])), \
 				FR_TIMER_LIST ); \
+			DBG("DEBUG:stop_RETR_and_FR_timers : branch]%d] done\n",ijk);\
 		} \
-	}while(0)
+		DBG("DEBUG:stop_RETR_and_FR_timers : stop\n");\
+	}
 
 
 #define insert_into_timer(hash_table,new_tl,list_id,time_out) \
@@ -79,9 +81,11 @@ void tm_shutdown()
     struct timer_link  *tl, *tmp;
     int i;
 
+    DBG("DEBUG: tm_shutdown : start\n");
     /*remember the DELETE LIST */
     tl = hash_table->timers[DELETE_LIST].first_tl;
 
+    DBG("DEBUG: tm_shutdown : empting DELETE list\n");
     /*unlink the lists*/
     for( i=NR_OF_TIMER_LISTS ; i>=0 ; i-- )
     {
@@ -94,7 +98,10 @@ void tm_shutdown()
     for(   ;  tl  ;  tmp=tl->next_tl , free_cell((struct cell*)tl->payload) , tl=tmp );
 
     /* destroy the hash table */
+    DBG("DEBUG: tm_shutdown : empting hash table\n");
     free_hash_table( hash_table );
+
+    DBG("DEBUG: tm_shutdown : done\n");
 }
 
 
@@ -292,7 +299,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       return 1;
    }
 
-   /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
+   /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer
+     * when forwarding an ACK, this condition will br all the time false because
+     * the forwarded INVITE is in the retransmission buffer */
    if ( T->outbound_request[branch]==NULL )
    {
       DBG("DEBUG: t_forward: first time forwarding\n");
@@ -332,7 +341,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       /* allocates a new retrans_buff for the outbound request */
       DBG("DEBUG: t_forward: building outbound request\n");
       T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-      if (!T->outbound_request[branch]) {
+      if (!T->outbound_request[branch])
+      {
         LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
 	goto error;
       }
@@ -364,9 +374,18 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       insert_into_timer( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
-    /* if we are forwarding a CANCEL*/
+   /* if we are forwarding an ACK*/
+   if (  p_msg->first_line.u.request.method_value==METHOD_ACK &&
+   T->relaied_reply_branch>=0 && T->relaied_reply_branch<=T->nr_of_outgoings)
+   {
+      DBG("DEBUG: t_forward: forwarding ACK [%d]\n",T->relaied_reply_branch);
+      t_build_and_send_ACK( T, branch , T->inbound_response[T->relaied_reply_branch] );
+      T->inbound_request_isACKed = 1;
+     return 1;
+   } else /* if we are forwarding a CANCEL*/
    if (  p_msg->first_line.u.request.method_value==METHOD_CANCEL )
    {
+      DBG("DEBUG: t_forward: forwarding CANCEL\n");
        /* if no transaction to CANCEL */
       /* or if the canceled transaction has a final status -> drop the CANCEL*/
       if ( T->T_canceled==T_NULL || T->T_canceled->status>=200)
@@ -521,11 +540,23 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    if ( !T->inbound_response[branch] && p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
       insert_into_timer( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST , INV_FR_TIME_OUT);
 
-   /* on a non-200 reply to INVITE, generate local ACK */
-   if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
+   /* get response for INVITE */
+   if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
    {
-      DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-      t_build_and_send_ACK( T , branch , p_msg );
+       if ( T->outbound_request_isACKed[branch] )
+       {   /*retransmit*/
+           udp_send( T->outbound_request[branch]->retr_buffer, T->outbound_request[branch]->bufflen,
+             (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+       }
+       else if (p_msg->first_line.u.reply.statusclass>2 )
+       {   /*on a non-200 reply to INVITE*/
+           DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
+           if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
+           {
+               LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
+               return 0;
+           }
+       }
    }
 
    #ifdef FORKING
@@ -543,21 +574,20 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       insert_into_timer( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST , RETR_T2 );
    }
 
-   /*store the inbound reply*/
-   /* t_store_incoming_reply( T , branch , p_msg ); */
-   /* if there is a previous reply, replace it */
+   /*store the inbound reply - if there is a previous reply, replace it */
    if ( T->inbound_response[branch] ) {
       sip_msg_free( T->inbound_response[branch] ) ;
-      DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
+      DBG("DEBUG: t_store_incoming_reply: previous inbound reply freed....\n");
    }
    T->inbound_response[branch] = clone;
-   T->status = p_msg->first_line.u.reply.statuscode;
 
    if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
    {
-      if ( t_all_final(T) && relay_lowest_reply_upstream( T , p_msg ) == -1 && clone ) {
-	T->inbound_response[branch]=NULL;
+      if ( t_all_final(T) && relay_lowest_reply_upstream( T , p_msg )==-1 && clone )
+      {
+        T->inbound_response[branch]=NULL;
         sip_msg_free( clone );
+       DBG("DEBUG: t_store_incoming_reply: DONE WITH ERROR!! :((((((((((((((((((((((((((((\n");
         return -1;
       }
    }
@@ -571,7 +601,9 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    }
 
    /* nothing to do for the ser core */
-    return 0;
+
+   DBG("DEBUG: t_store_incoming_reply: DONE WITH SUCCESS!! :)))))))))))))))))))))))\n");
+   return 0;
 }
 
 
@@ -1018,7 +1050,7 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
 
    DBG("DEBUG: relay_lowest_reply_upstream: lowest reply [%d]=%d\n",lowest_i,lowest_v);
 
-   if ( lowest_i != -1 && push_reply_from_uac_to_uas( T ,lowest_i ) != -1 )
+   if ( lowest_i != -1 && push_reply_from_uac_to_uas( T ,lowest_i ) == -1 )
 	return -1;
 
    return lowest_i;
@@ -1070,7 +1102,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
       }
    }
 
-   /*  */
+   /*  generate the retrans buffer */
    buf = build_res_buf_from_sip_res ( trans->inbound_response[branch], &len);
    if (!buf) {
 	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: no shmem for outbound reply buffer\n");
@@ -1086,12 +1118,17 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    memcpy( trans->outbound_response->retr_buffer , buf , len );
    free( buf ) ;
 
-   /* start/stops the proper timers*/
+   /* update the status*/
+   trans->status = trans->inbound_response[branch]->first_line.u.reply.statuscode;
+   if ( trans->inbound_response[branch]->first_line.u.reply.statuscode>=200 &&
+         trans->relaied_reply_branch==-1 )
+       trans->relaied_reply_branch = branch;
+
+    /* start/stops the proper timers*/
    t_update_timers_after_sending_reply( T->outbound_response );
 
    /*send the reply*/
    t_retransmit_reply( trans->inbound_response[branch], 0 , 0 );
-
    return 1;
 }
 
@@ -1355,6 +1392,7 @@ void retransmission_handler( void *attr)
 
    /* re-insert into RETRASMISSIONS_LIST */
    insert_into_timer( hash_table , (&(r_buf->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST , r_buf->timeout_value );
+   DBG("DEBUG: retransmission_handler : done\n");
 }
 
 
@@ -1378,6 +1416,7 @@ void final_response_handler( void *attr)
       DBG("DEBUG: final_response_handler : cansel transaction->put on wait\n");
       t_put_on_wait(  r_buf->my_T );
    }
+   DBG("DEBUG: final_response_handler : done\n");
 }
 
 
@@ -1395,6 +1434,7 @@ void wait_handler( void *attr)
    stop_RETR_and_FR_timers(hash_table,p_cell) ;
    /* put it on DEL_LIST - sch for del */
     add_to_tail_of_timer( hash_table, (&(p_cell->dele_tl)), DELETE_LIST, DEL_TIME_OUT );
+   DBG("DEBUG: wait_handler : done\n");
 }
 
 
@@ -1417,6 +1457,7 @@ void delete_handler( void *attr)
        /* else it's readded to del list for future del */
        add_to_tail_of_timer( hash_table, (&(p_cell->dele_tl)), DELETE_LIST, DEL_TIME_OUT );
     }
+    DBG("DEBUG: delete_handler : done\n");
 }
 
 

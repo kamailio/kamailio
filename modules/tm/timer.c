@@ -7,6 +7,20 @@
 #include "../../dprint.h"
 
 
+void print_timer_list(struct s_table* hash_table, int list_id)
+{
+   struct timer* timer_list=&(hash_table->timers[ list_id ]);
+   struct timer_link *tl ;
+
+   tl = timer_list->first_tl;
+   while (tl)
+   {
+      DBG("DEBUG: print_timer_list[%d]: %p, next=%p \n",list_id, tl, tl->next_tl);
+      tl = tl->next_tl;
+   }
+}
+
+
 void remove_from_timer_list_dummy( struct s_table* hash_table , struct timer_link* tl , int list_id)
 {
    struct timer* timer_list=&(hash_table->timers[ list_id ]);
@@ -62,6 +76,8 @@ void add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link* 
        timer_list->first_tl = tl;
        timer_list->last_tl = tl;
    }
+
+   //print_timer_list(hash_table, list_id);
    /* give the list lock away */
    unlock( timer_list->mutex );
 }
@@ -105,6 +121,7 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
        timer_list->first_tl = new_tl;
     new_tl->next_tl = tl;
 
+   //print_timer_list(hash_table, list_id);
    /* give the list lock away */
     unlock( timer_list->mutex );
 }
@@ -127,6 +144,7 @@ void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl 
       remove_from_timer_list_dummy( hash_table , tl , list_id);
    }
 
+   //print_timer_list(hash_table, list_id);
    /* give the list lock away */
    unlock( timer_list->mutex );
 }
@@ -139,8 +157,9 @@ void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl 
 struct timer_link  *check_and_split_time_list( struct s_table* hash_table, int list_id ,int time)
 {
    struct timer* timer_list=&(hash_table->timers[ list_id ]);
-   struct timer_link *tl ;
+   struct timer_link *tl , *tmp;
 
+   //DBG("DEBUG : check_and_split_time_list: start\n");
    /* the entire timer list is locked now -- noone else can manipulate it */
    lock( timer_list->mutex );
 
@@ -162,19 +181,24 @@ struct timer_link  *check_and_split_time_list( struct s_table* hash_table, int l
     {
       tl = timer_list->first_tl;
       timer_list->first_tl = timer_list->last_tl = 0;
-     goto exit;
+      //DBG("DEBUG : check_and_split_time_list: done, EVERY returns %p , list=%p\n",tl,timer_list->first_tl);
+      goto exit;
     }
 
     /*I have to split it somewhere in the middle */
     tl->prev_tl->next_tl=0;
     tl->prev_tl = 0;
+    tmp = timer_list->first_tl;
     timer_list->first_tl = tl;
-    tl = timer_list->first_tl;
+    tl = tmp;
+   //DBG("DEBUG : check_and_split_time_list: done, SPLIT returns %p , list=%p\n",tl,timer_list->first_tl);
 
 exit:
    /* give the list lock away */
    unlock( timer_list->mutex );
 
+   //DBG("DEBUG : check_and_split_time_list: done, returns %p\n",tl);
+   //print_timer_list(hash_table, list_id);
    return tl;
 }
 
@@ -198,6 +222,7 @@ void timer_routine(unsigned int ticks , void * attr)
       {
          tmp_tl = tl->next_tl;
          tl->next_tl = tl->prev_tl =0 ;
+         DBG("DEBUG: timer routine: timer[%d] , tl=%p next=%p\n",id,tl,tmp_tl);
          timers[id].timeout_handler( tl->payload );
          tl = tmp_tl;
       }

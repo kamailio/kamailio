@@ -16,26 +16,29 @@ void free_cell( struct cell* dead_cell )
    struct retrans_buff* rb;
    char *b;
 
-
-   /* UA Server */ 
+   DBG("DEBUG: free_cell: start\n");
+   /* UA Server */
+   DBG("DEBUG: free_cell: inbound request %p\n",dead_cell->inbound_request);
    if ( dead_cell->inbound_request )
       sip_msg_free( dead_cell->inbound_request );
+   DBG("DEBUG: free_cell: outbound response %p\n",dead_cell->outbound_response);
    if ( dead_cell->outbound_response )
    {
       b = dead_cell->outbound_response->retr_buffer ;
       dead_cell->outbound_response->retr_buffer = NULL;
       sh_free( b );
 
-      rb = dead_cell->outbound_response; 
+      rb = dead_cell->outbound_response;
       dead_cell->outbound_response = NULL;
       sh_free( rb );
-      
+
    }
 
   /* UA Clients */
    for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
    {
       /* outbound requests*/
+      DBG("DEBUG: free_cell: outbound_request[%d] %p\n",i,dead_cell->outbound_request[i]);
       if ( dead_cell->outbound_request[i] )
       {
 	 b = dead_cell->outbound_request[i]->retr_buffer;
@@ -47,6 +50,7 @@ void free_cell( struct cell* dead_cell )
          sh_free( rb );
       }
       /* outbound requests*/
+      DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
       if ( dead_cell -> inbound_response[i] )
          sip_msg_free( dead_cell->inbound_response[i] );
    }
@@ -54,6 +58,7 @@ void free_cell( struct cell* dead_cell )
    release_cell_lock( dead_cell );
    /* the cell's body */
    sh_free( dead_cell );
+   DBG("DEBUG: free_cell: start\n");
 }
 
 
@@ -170,6 +175,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    /* all pointers from outbound_request array are NULL */
    /* all pointers from outbound_response array are NULL */
    /*init the links with the canceled / canceler transaction */
+   new_cell->relaied_reply_branch   = -1;
    new_cell->T_canceled  = T_UNDEFINED;
    new_cell->T_canceler  = T_UNDEFINED;
 
