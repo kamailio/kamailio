@@ -91,6 +91,8 @@ BEGIN {
 	ua_vovida=0;
 	ua_jsip=0;
 	ua_nortel=0;
+	ua_polycom=0;
+	ua_csco=0;
 	ua_leader=0;
 	ua_xx=0;
 
@@ -100,6 +102,7 @@ BEGIN {
 	server_hotsip=0
 	server_3com=0
 	server_epygi=0;
+	server_leader=0;
 	server_ims=0;
 	server_xx=0
 
@@ -199,6 +202,14 @@ ua==0 && /User-Agent:.*Nortel/ {
 	ua_nortel++
 	ua=1
 }
+ua==0 && /User-Agent:.*Polycom/ {
+	ua_polycom++
+	ua=1
+}
+ua==0 && /User-Agent:.*CSCO/ {
+	ua_csco++
+	ua=1
+}
 ua==0 && /User-Agent:.*LeaderSIP/ {
 	ua_leader++
 	ua=1
@@ -243,6 +254,10 @@ server==0 && /Server:.*3Com/ {
 }
 server==0 && /Server:.*EPYGI/ {
 	server_epygi++
+	server=1
+}
+server==0 && /Server:.*LeaderSIP_UA/ {
+	server_leader++
 	server=1
 }
 server==0 && /Server:.*IMS/ {
@@ -535,15 +550,18 @@ END {
 	print "5xx: " rpl5xx
     print "603 (Decline): " rpl603 
 	print "6xx: " rpl6xx
+
 	print "## Request Methods"
     print "INVITE: " invite " CANCEL: " cancel " ACK: " ack
     print "REGISTER: " register " BYE: " bye " OPTIONS: " options " INFO: " info
     print "MESSAGE: " message " SUBSCRIBE: " subscribe " NOTIFY: " notify
+
 	print "## Outbound Routes"
 	print "To imgw: " hint_imgw " To voicemail: " hint_voicemail
 	print "To bat: " hint_battest " To UsrLoc: " hint_usrloc
 	print "Outbound: " hint_outbound " To SMS: " hint_sms
 	print "To PSTN: " hint_gw " To: VM on off-line" hint_off_voicemail
+
 	print "## User Agents"
 	print "Snom: " ua_snom " MSN: " ua_msn " Mitel: " ua_mitel
 	print "Pingtel: " ua_pingtel " SER: " ua_ser " osip: " ua_osip
@@ -553,14 +571,15 @@ END {
 	print "Hotsip: " ua_hotsip " mxsf: " ua_mxsf " GrandStream: " ua_grandstream
 	print "Tellme: " ua_tellme " PocketSipM: " ua_pocketsipm 
 	print "eStara: " ua_estara " Vovida: " ua_vovida 
-	print "jSIP: " ua_jsip " Nortel: " ua_nortel 
-	print "Leader: " ua_leader
+	print "jSIP: " ua_jsip " Nortel: " ua_nortel " Polycom: " ua_polycom
+	print "Leader: " ua_leader " csco: " ua_csco
 	print "UFO: " ua_xx
+
 	print "## Servers"
 	print "Cisco: " server_cisco " ser: " server_ser 
 	print "Intertex: " server_intertex " Hotsip: " server_hotsip
-	print "3com: " server_3com " EPYGI: " server_epygi 
-	print "IMS(Nortel): " server_ims
+	print "3com: " server_3com " EPYGI: " server_epygi " Leader: " server_leader
+	print "IMS (Nortel): " server_ims
 	print "UFO: " server_xx
 }
 '
