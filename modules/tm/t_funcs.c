@@ -90,6 +90,10 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    new_cell = build_cell( p_msg ) ;
    if  ( !new_cell )
       return -1;
+   /*init the links with the canceled / canceler transaction */
+   new_cell->T_canceled  = T_UNDEFINED;
+   new_cell->T_canceler  = T_UNDEFINED;
+   /*insert the transaction into hash table*/
    insert_into_hash_table( hash_table , new_cell );
    DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
 
