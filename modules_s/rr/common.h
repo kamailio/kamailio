@@ -35,14 +35,9 @@
 #define COMMON_H
 
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_rr.h"
 #include "../../parser/hf.h"
 #include "../../str.h"
-
-
-/*
- * Generate hash string that will be inserted in RR
- */
-void generate_hash(void);
 
 
 /*
@@ -57,33 +52,18 @@ int find_first_route(struct sip_msg* _m);
 /*
  * Rewrites Request-URI with string given in _s parameter
  *
- * Reuturn 0 on success, negative number on error
+ * Return 0 on success, negative number on error
  */
 int rewrite_RURI(struct sip_msg* _m, str* _s);
 
 
 /*
- * Remove Top Most Route URI
+ * Remove route field given by _hdr and _r, if the route
+ * field is not first in it's header field, previous route
+ * URI in the same header must be given in _p
  * Returns 0 on success, negative number on failure
  */
-int remove_first_route(struct sip_msg* _m, struct hdr_field* _route);
+int remove_route(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r, rr_t* _p);
 
-
-/*
- * Insert a new Record-Route header field with lr parameter
- */
-int record_route(struct sip_msg* _m, char* _s1, char* _s2);
-
-
-/*
- * Insert a new Record_route header field with given IP address
- */
-int record_route_ip(struct sip_msg* _m, char* _ip, char* _s2);
-
-
-/*
- * Insert a new Record-Route header field without lr parameter
- */
-int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2);
 
 #endif /* COMMON_H */

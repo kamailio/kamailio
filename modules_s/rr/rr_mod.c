@@ -43,7 +43,7 @@
 #include "../../mem/mem.h"
 #include "strict.h"
 #include "loose.h"
-#include "common.h"
+#include "record.h"
 
 int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
@@ -64,11 +64,11 @@ static int str_fixup(void** param, int param_no);
  * Oh, BTW, have I mentioned already that you shouldn't use strict routing ?
  */
 static cmd_export_t cmds[]={
-	{"loose_route",         loose_route,         0, 0,         REQUEST_ROUTE},
-	{"strict_route",        strict_route,        0, 0,         0            },
-	{"record_route",        record_route,        0, 0,         REQUEST_ROUTE},
-	{"record_route",        record_route_ip,     1, str_fixup, REQUEST_ROUTE},
-	{"record_route_strict", record_route_strict, 0, 0,         0            },
+	{"loose_route",           loose_route,         0, 0,         REQUEST_ROUTE},
+	{"strict_route",          strict_route,        0, 0,         0            },
+	{"record_route",          record_route,        0, 0,         REQUEST_ROUTE},
+	{"record_route_strict" ,  record_route_strict, 0, 0,         0            },
+	{"record_route_preset",   record_route_preset, 1, str_fixup, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 

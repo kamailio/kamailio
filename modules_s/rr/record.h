@@ -1,7 +1,7 @@
 /*
- * Route & Record-Route module, strict routing support
- *
  * $Id$
+ *
+ * Route & Record-Route module
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -25,42 +25,35 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-04-04 Extracted from common.[ch] (janakj)
  */
 
+#ifndef RECORD_H
+#define RECORD_H
 
-#include "strict.h"
-#include "common.h"
-#include "../../dprint.h"
-#include "../../parser/parse_rr.h"
+#include "../../parser/msg_parser.h"
 
 
 /*
- * Do strict routing as defined in RFC2584
+ * Insert a new Record-Route header field with lr parameter
  */
-int strict_route(struct sip_msg* _m, char* _s1, char* _s2)
-{
-	str* uri;
-	int ret;
-	
-	ret = find_first_route(_m);
-	if (ret < 0) {
-		LOG(L_ERR, "strict_route(): Error in find_first_route\n");
-		return -1;
-	}
+int record_route(struct sip_msg* _m, char* _s1, char* _s2);
 
-	if (!ret) {
-		uri = &((rr_t*)_m->route->parsed)->nameaddr.uri;
-		if (rewrite_RURI(_m, uri) < 0) {
-			LOG(L_ERR, "strict_route(): Error while rewriting request URI\n");
-			return -2;
-		}
-		if (remove_route(_m, _m->route, _m->route->parsed, 0) < 0) {
-			LOG(L_ERR, "strict_route(): Error while removing the topmost Route URI\n");
-			return -3;
-		}
-		return 1;
-	}
-	
-	DBG("strict_route(): There is no Route HF\n");
-	return -1;
-}
+
+/*
+ * Insert manualy created Record-Route header, no checks, no restrictions,
+ * always adds lr parameter, only fromtag is added automatically when requested
+ */
+int record_route_preset(struct sip_msg* _m, char* _ip, char* _s2);
+
+
+/*
+ * Insert a new Record-Route header field without lr parameter
+ */
+int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+#endif /* RECORD_H */
