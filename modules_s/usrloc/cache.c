@@ -347,21 +347,21 @@ int cache_remove(cache_t* _c, db_con_t* _con, str* _aor)
 
 
 
-int cache_update(cache_t* _c, db_con_t* _con, c_elem_t* _el, location_t* _loc)
+int cache_update(cache_t* _c, db_con_t* _con, c_elem_t** _el, location_t* _loc)
 {
         fl_lock_t* lock;
-	if (update_location(_con, _el->loc, _loc) == FALSE) {
+	if (update_location(_con, (*_el)->loc, _loc) == FALSE) {
 		LOG(L_ERR, "cache_update(): Error while updating location\n");
 		return FALSE;
 	}
 
-	if (!(_el->loc->contacts)) {
-	        lock = &(_el->ht_slot->lock);
-		rem_slot_elem(_el->ht_slot, _el);
-		rem_cache_elem(_c, _el);
+	if (!((*_el)->loc->contacts)) {
+	        lock = &((*_el)->ht_slot->lock);
+		rem_slot_elem((*_el)->ht_slot, (*_el));
+		rem_cache_elem(_c, (*_el));
 		release_lock(lock);
-		free_element(_el);
-		_el = NULL;
+		free_element((*_el));
+		*_el = NULL;
 	}
 
 	free_location(_loc);

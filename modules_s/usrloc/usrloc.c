@@ -246,25 +246,25 @@ static inline int process_no_contacts(struct sip_msg* _msg, cache_t* _c, locatio
 
 static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t* _loc)
 {
-	c_elem_t* el;
+	c_elem_t** el;
 
-	el = cache_get(_c, &(_loc->user));
-	if (el) {
+	*el = cache_get(_c, &(_loc->user));
+	if (*el) {
 		DBG("process_contacts(): Location found in cache, updating\n");
 		if (cache_update(_c, db_con, el, _loc) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while updating bindings in cache\n");
-			cache_release_elem(el);
+			cache_release_elem(*el);
 			return FALSE;
 		}
 		
 		DBG("process_contacts(): Sending 200 OK\n");
-		if (send_200(_msg, (el) ? (el->loc) : (NULL)) == FALSE) {
+		if (send_200(_msg, (*el) ? ((*el)->loc) : (NULL)) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while sending 200 response\n");
-			if (el) cache_release_elem(el);
+			if (*el) cache_release_elem(*el);
 			return FALSE;
 		}
 		
-		if (el) cache_release_elem(el);
+		if (*el) cache_release_elem(*el);
 		return TRUE;
 	} else {
 		DBG("process_contacts(): Location not found in cache, inserting\n");
