@@ -197,7 +197,7 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	LOG(L_ERR, "auth module - initializing\n");
+	printf("auth module - initializing\n");
 	
 	     /* Find a database module */
 	if (bind_dbmod()) {

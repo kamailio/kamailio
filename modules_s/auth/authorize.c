@@ -212,7 +212,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	      * variables for that
 	      */
 	if (check_dig_cred(&(cred->digest)) != E_DIG_OK) {
-		DBG("authorize(): Credentials received are not filled properly\n");
+		LOG(L_ERR, "authorize(): Credentials received are not filled properly\n");
 
 		if (send_resp(_msg, 400, MESSAGE_400, NULL, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
