@@ -11,10 +11,20 @@
 #include "../../ut.h"
 #include "../../timer.h"
 
+
+#define  append_mem_block(_d,_s,_len) \
+		do{\
+			memcpy((_d),(_s),(_len));\
+			(_d) += (_len);\
+		}while(0);
+#define  req_line(_msg) \
+		((_msg)->first_line.u.request)
+
+
+
 struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
-
 
 
 
@@ -981,139 +991,248 @@ int t_cancel_branch(unsigned int branch)
 
 
 /* Builds an ACK request based on an INVITE request. ACK is send
-  * to same address
-  */
-int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_msg* rpl)
+  * to same address */
+int t_build_and_send_ACK(struct cell *Trans,unsigned int branch,
+														struct sip_msg* rpl)
 {
-   struct sip_msg* p_msg , *r_msg;
-   struct hdr_field *hdr;
-   char *ack_buf, *p, *via;
-   unsigned int len, via_len;
-   int n;
+	struct sip_msg      *p_msg , *r_msg;
+	struct hdr_field    *hdr;
+	char                *ack_buf, *p, *via;
+	unsigned int         len, via_len;
+	int                  n;
 	struct retrans_buff *srb;
 
-   ack_buf = 0;
-   via =0;
+	ack_buf = 0;
+	via =0;
+	p_msg = Trans->inbound_request;
+	r_msg = rpl;
 
-   p_msg = Trans->inbound_request;
-   r_msg = rpl;
-
-   if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
-   {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
-		"cannot generate a HBH ACK if key HFs in reply missing\n");
-	goto error;
-   }
-
-    len = 0;
-    /*first line's len */
-    len += 4/*reply code and one space*/+
-       p_msg->first_line.u.request.version.len+CRLF_LEN;
-    /*uri's len*/
-    if (p_msg->new_uri.s)
-       len += p_msg->new_uri.len +1;
-    else
-       len += p_msg->first_line.u.request.uri.len +1;
-    /*via*/
-    via = via_builder( p_msg , &via_len );
-    if (!via)
-    {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no via header got from builder\n");
-	goto error;
-    }
-    len+= via_len;
-    /*headers*/
-   for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-      if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_CSEQ )
-                 len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
-      else if ( hdr->type==HDR_TO )
-                 len += ((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s ) + CRLF_LEN ;
-      /*else if ( hdr->type==HDR_)*/
-
-   /* CSEQ method : from INVITE-> ACK */
-   len -= 3  ;
-   /* end of message */
-   len += CRLF_LEN; /*new line*/
-
-   /* ack_buf = (char *)pkg_malloc( len +1); */
-   srb = (struct retrans_buff *) sh_malloc(
-          sizeof(struct retrans_buff) + len +1 );
-   if (!srb) {
-      LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
-     goto error1;
-    }
-    ack_buf = (char *) srb + sizeof(struct retrans_buff);
-
-   p = ack_buf;
-   DBG("DEBUG: t_build_and_send_ACK: len = %d \n",len);
-
-   /* first line */
-   memcpy( p , "ACK " , 4);
-   p += 4;
-
-   if ( p_msg->new_uri.s )
-   {
-      memcpy(p,p_msg->orig+(p_msg->new_uri.s-p_msg->buf),
-         p_msg->new_uri.len );
-      p +=p_msg->new_uri.len;
-   }else{
-      memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
-         p_msg->first_line.u.request.uri.len );
-      p += p_msg->first_line.u.request.uri.len;
-   }
-
-   *(p++) = ' ';
-   memcpy( p , p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf) , p_msg->first_line.u.request.version.len );
-   p += p_msg->first_line.u.request.version.len;
-   memcpy( p, CRLF, CRLF_LEN );
-   p+=CRLF_LEN;
-
-   /* insert our via */
-   memcpy( p , via , via_len );
-   p += via_len;
-
-   /*other headers*/
-   for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-   {
-      if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
+	if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
 	{
-		memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
-			((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
-		p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
-		memcpy( p, CRLF, CRLF_LEN );
-		p+=CRLF_LEN;
+		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
+			"cannot generate a HBH ACK if key HFs in reply missing\n");
+		goto error;
 	}
-      else if ( hdr->type==HDR_TO )
-	{
-		memcpy( p , r_msg->orig+(r_msg->to->name.s-r_msg->buf) ,
-			((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s ) );
-		p += ((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s );
-		memcpy( p, CRLF, CRLF_LEN );
-		p+=CRLF_LEN;
-	}
-       else if ( hdr->type==HDR_CSEQ )
-	{
-		memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
-			(( ((struct cseq_body*)hdr->parsed)->method.s ) - hdr->name.s ) );
-		p += (( ((struct cseq_body*)hdr->parsed)->method.s ) - hdr->name.s );
-		memcpy( p , "ACK" CRLF, 3+CRLF_LEN );
-		p += 3+CRLF_LEN;
-	}
-    }
 
-    memcpy( p , CRLF , CRLF_LEN );
-    p += CRLF_LEN;
+	len = 0;
+	/*first line's len */
+	len += 4/*reply code and one space*/+
+		p_msg->first_line.u.request.version.len+CRLF_LEN;
+	/*uri's len*/
+	if (p_msg->new_uri.s)
+		len += p_msg->new_uri.len +1;
+	else
+		len += p_msg->first_line.u.request.uri.len +1;
+	/*via*/
+	via = via_builder( p_msg , &via_len );
+	if (!via)
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
+			"no via header got from builder\n");
+		goto error;
+	}
+	len+= via_len;
+	/*headers*/
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+		if (hdr->type==HDR_FROM||hdr->type==HDR_CALLID||hdr->type==HDR_CSEQ)
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
+		else if ( hdr->type==HDR_TO )
+			len += ((r_msg->to->body.s+r_msg->to->body.len ) -
+				r_msg->to->name.s ) + CRLF_LEN ;
+	/* CSEQ method : from INVITE-> ACK */
+	len -= 3  ;
+	/* end of message */
+	len += CRLF_LEN; /*new line*/
+
+	srb=(struct retrans_buff*)sh_malloc(sizeof(struct retrans_buff)+len+1);
+	if (!srb)
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
+		goto error1;
+	}
+	ack_buf = (char *) srb + sizeof(struct retrans_buff);
+	p = ack_buf;
+
+	/* first line */
+	memcpy( p , "ACK " , 4);
+	p += 4;
+	/* uri */
+	if ( p_msg->new_uri.s )
+	{
+		memcpy(p,p_msg->orig+(p_msg->new_uri.s-p_msg->buf),p_msg->new_uri.len);
+		p +=p_msg->new_uri.len;
+	}else{
+		memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
+			p_msg->first_line.u.request.uri.len );
+		p += p_msg->first_line.u.request.uri.len;
+	}
+	/* SIP version */
+	*(p++) = ' ';
+	memcpy(p,p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf),
+		p_msg->first_line.u.request.version.len );
+	p += p_msg->first_line.u.request.version.len;
+	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
+
+	/* insert our via */
+	memcpy( p , via , via_len );
+	p += via_len;
+
+	/*other headers*/
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+	{
+		if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
+		{
+			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
+				((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
+			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
+			memcpy( p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
+		}
+		else if ( hdr->type==HDR_TO )
+		{
+			memcpy( p , r_msg->orig+(r_msg->to->name.s-r_msg->buf) ,
+				((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s));
+			p+=((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s);
+			memcpy( p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
+		}
+		else if ( hdr->type==HDR_CSEQ )
+		{
+			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
+				((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s));
+			p+=((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s);
+			memcpy( p , "ACK" CRLF, 3+CRLF_LEN );
+			p += 3+CRLF_LEN;
+		}
+	}
+
+	/* end of message */
+	memcpy( p , CRLF , CRLF_LEN );
+	p += CRLF_LEN;
 
 	send_ack( T, branch, srb, p-ack_buf );
 	pkg_free( via );
 	DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
 	return 0;
-		
+
 error1:
-   pkg_free(via );
+	pkg_free(via );
 error:
-   return -1;
+	return -1;
 }
+
+
+
+
+
+/* Builds a CANCEL request based on an INVITE request. CANCEL is send
+ * to same address */
+int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
+{
+	struct sip_msg      *p_msg;
+	struct hdr_field    *hdr;
+	char                *cancel_buf, *p, *via;
+	unsigned int         len, via_len;
+	int                  n;
+	struct retrans_buff *srb;
+
+	cancel_buf = 0;
+	via = 0;
+	p_msg = Trans->inbound_request;
+
+	len = 0;
+	/*first line's len - CANCEL and INVITE has the same lenght */
+	len += ( req_line(p_msg).version.s+req_line(p_msg).version.len)-
+		req_line(p_msg).method.s+CRLF_LEN;
+	/*check if the REQ URI was override */
+	if (p_msg->new_uri.s)
+		len += p_msg->new_uri.len - req_line(p_msg).uri.len;
+	/*via*/
+	via = via_builder( p_msg , &via_len );
+	if (!via)
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
+			"no via header got from builder\n");
+		goto error;
+	}
+	len+= via_len;
+	/*headers*/
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+		if (hdr->type==HDR_FROM || hdr->type==HDR_CALLID || 
+			hdr->type==HDR_CSEQ || hdr->type==HDR_TO )
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
+	/* User Agent header*/
+	len += USER_AGENT_LEN + CRLF_LEN;
+	/* Content Lenght heder*/
+	len += CONTENT_LEN_LEN + CRLF_LEN;
+	/* end of message */
+	len += CRLF_LEN;
+
+	srb=(struct retrans_buff*)sh_malloc(sizeof(struct retrans_buff)+len+1);
+	if (!srb)
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: cannot allocate memory\n");
+		goto error;
+	}
+	cancel_buf = (char*) srb + sizeof(struct retrans_buff);
+	p = cancel_buf;
+
+	/* first line -> do we have a new URI? */
+	if (p_msg->new_uri.s)
+	{
+		append_mem_block(p,req_line(p_msg).method.s,
+			req_line(p_msg).uri.s-req_line(p_msg).method.s);
+		append_mem_block(p,p_msg->new_uri.s,p_msg->new_uri.len);
+		append_mem_block(p,req_line(p_msg).uri.s+req_line(p_msg).uri.len,
+			req_line(p_msg).version.s+req_line(p_msg).version.len-
+			(req_line(p_msg).uri.s+req_line(p_msg).uri.len))
+	}else{
+	append_mem_block(p,req_line(p_msg).method.s,
+		req_line(p_msg).version.s+req_line(p_msg).version.len-
+		req_line(p_msg).method.s);
+	}
+	/* changhing method name*/
+	memcpy(cancel_buf,"CANCEL",6);
+	append_mem_block(p,CRLF,CRLF_LEN);
+	
+
+	/* insert our via */
+	memcpy( p , via , via_len );
+	p += via_len;
+
+	/*other headers*/
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+	{
+		if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID ||
+			hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		{
+			append_mem_block(p,hdr->name.s,
+				((hdr->body.s+hdr->body.len)-hdr->name.s) );
+			append_mem_block(p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
+		}
+	}
+
+	/* User Agent header */
+	append_mem_block(p,USER_AGENT,USER_AGENT_LEN);
+	append_mem_block(p,CRLF,CRLF_LEN);
+	/* Content Lenght header*/
+	append_mem_block(p,CONTENT_LEN,CONTENT_LEN_LEN);
+	append_mem_block(p,CRLF,CRLF_LEN);
+	/* end of message */
+	append_mem_block(p,CRLF,CRLF_LEN);
+
+	pkg_free(via);
+	return 1;
+error:
+	if (via) pkg_free(via);
+	return -1;
+}
+
+
+
+
 
 
 void delete_cell( struct cell *p_cell )
@@ -1122,30 +1241,31 @@ void delete_cell( struct cell *p_cell )
 	int i;
 
 	if (is_in_timer_list2(& p_cell->wait_tl )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on WAIT\n",
-			p_cell);
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			" still on WAIT\n", p_cell);
 		abort();
 	}
 	/*
 	if (is_in_timer_list2(& p_cell->outbound_response.retr_timer )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on RETR (rep)\n",
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			" still on RETR (rep)\n",
 			p_cell);
 		abort();
 	}
 	if (is_in_timer_list2(& p_cell->outbound_response.fr_timer )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on FR (rep)\n",
-			p_cell);
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			" still on FR (rep)\n", p_cell);
 		abort();
 	}
 	for (i=0; i<p_cell->nr_of_outgoings; i++) {
 		if (is_in_timer_list2(& p_cell->outbound_request[i]->retr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on RETR (req %d)\n",
-			p_cell, i);
+			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+				" still on RETR (req %d)\n", p_cell, i);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->outbound_request[i]->fr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and still on FR (req %d)\n",
-			p_cell, i);
+			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+				" still on FR (req %d)\n", p_cell, i);
 			abort();
 		}
 	}
@@ -1156,13 +1276,13 @@ void delete_cell( struct cell *p_cell )
 	if ( T_IS_REFED(p_cell) ) {
 #ifdef	EXTRA_DEBUG
 		if (T_REFCOUNTER(p_cell)>1) {
-			DBG("DEBUG: while debugging with a single process, ref_count > 1\n");
+			DBG("DEBUG: while debugging with a single process, ref_count>1\n");
 			DBG("DEBUG: transaction =%p\n", p_cell );
 			abort();
 		}
 #endif
-		DBG("DEBUG: delete_cell: t=%p post for delete (refbitmap %x, refcount %d)\n",
-			p_cell,p_cell->ref_bitmap, T_REFCOUNTER(p_cell));
+		DBG("DEBUG: delete_cell: t=%p post for delete (refbitmap %x,"
+			" refcount %d)\n",p_cell,p_cell->ref_bitmap,T_REFCOUNTER(p_cell));
 		/* it's added to del list for future del */
 		set_timer( hash_table, &(p_cell->dele_tl), DELETE_LIST );
 	} else {
@@ -1170,6 +1290,8 @@ void delete_cell( struct cell *p_cell )
 		free_cell( p_cell );
 	}
 }
+
+
 
 
 /* Returns  -1 = error
@@ -1206,8 +1328,8 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	else{
 		port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
 		if ( err<0 ){
-			LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
-			  "converting port from str to int failed; using default SIP port\n");
+			LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: converting port "
+				"from str to int failed; using default SIP port\n");
 			port = SIP_PORT;
 		}
 	}
@@ -1260,8 +1382,8 @@ void retransmission_handler( void *attr)
 	r_buf = (struct retrans_buff*)attr;
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and called from RETR timer\n",
-			r_buf->my_T);
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			" called from RETR timer\n",r_buf->my_T);
 		abort();
 	}	
 #endif
@@ -1275,14 +1397,14 @@ void retransmission_handler( void *attr)
 		LOCK_REPLIES( r_buf->my_T );
 		SEND_BUFFER( r_buf );
 		UNLOCK_REPLIES( r_buf->my_T );
-	} else {
+	}else{
 		SEND_BUFFER( r_buf );
 	}
 
 	id = r_buf->retr_list;
 	r_buf->retr_list = id < RT_T2 ? id + 1 : RT_T2;
 
-	set_timer( hash_table, &(r_buf->retr_timer), id < RT_T2 ? id + 1 : RT_T2 );
+	set_timer(hash_table,&(r_buf->retr_timer),id < RT_T2 ? id + 1 : RT_T2 );
 
 	DBG("DEBUG: retransmission_handler : done\n");
 }
@@ -1310,7 +1432,7 @@ void final_response_handler( void *attr)
 		DBG("DEBUG: final_response_handler:stop retransmission and"
 			" send 408 (t=%p)\n", r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
-		/* dirty hack: t_send_reply would increase ref_count which would indeed
+		/* dirty hack:t_send_reply would increase ref_count which would indeed
 		result in refcount++ which would not -- until timer processe's
 		T changes again; currently only on next call to t_send_reply from
 		FR timer; thus I fake the values now to avoid recalculating T
@@ -1338,8 +1460,8 @@ void wait_handler( void *attr)
 
 #ifdef EXTRA_DEBUG
 	if (p_cell->damocles) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and called from WAIT timer\n",
-			p_cell);
+		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			" called from WAIT timer\n",p_cell);
 		abort();
 	}	
 #endif
@@ -1367,8 +1489,8 @@ void delete_handler( void *attr)
 	DBG("DEBUG: delete_handler : removing %p \n", p_cell );
 #ifdef EXTRA_DEBUG
 	if (p_cell->damocles==0) {
-		LOG( L_ERR, "ERROR: transaction %p not scheduled for deletion and called from DELETE timer\n",
-			p_cell);
+		LOG( L_ERR, "ERROR: transaction %p not scheduled for deletion"
+			" and called from DELETE timer\n",p_cell);
 		abort();
 	}	
 #endif

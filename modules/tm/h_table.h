@@ -27,15 +27,18 @@ struct timer;
 #include "sip_msg.h"
 
 
-#define T_UNDEFINED 	( (struct cell*) -1 )
-#define T_NULL		( (struct cell*) 0 )
+#define T_UNDEFINED  ( (struct cell*) -1 )
+#define T_NULL       ( (struct cell*) 0 )
 
+
+#define NO_CANCEL       ( (struct retrans_buff*) 0 )
+#define EXTERNAL_CANCEL ( (struct retarbs_buff*) -1)
 
 
 typedef struct retrans_buff
 {
-	char               *retr_buffer;
-	int                  bufflen;
+	char *retr_buffer;
+	int   bufflen;
 
 	struct sockaddr_in to;
 	size_t tolen;
@@ -63,7 +66,7 @@ typedef struct cell
 	struct cell*     prev_cell;
 
 	/* indicates which process is currently processing this transaction */
-	process_bm_t	ref_bitmap;
+	process_bm_t  ref_bitmap;
 	/* tells in which hash table entry the cell lives */
 	unsigned int  hash_index;
 	/* sequence number within hash collision slot */
@@ -78,26 +81,26 @@ typedef struct cell
 
 	/* useful data */
 	/* UA Server */
-	struct sip_msg             *inbound_request;
-	struct retrans_buff	outbound_response;
-	unsigned int                status;
-	str                                 *tag;
-	unsigned int                inbound_request_isACKed;
-	int                                 relaied_reply_branch;
-	int                                 nr_of_outgoings;
+	struct sip_msg       *inbound_request;
+	struct retrans_buff   outbound_response;
+	unsigned int          status;
+	str                  *tag;
+	unsigned int          inbound_request_isACKed;
+	int                   relaied_reply_branch;
+	int                   nr_of_outgoings;
 	/* UA Clients */
-	struct retrans_buff      *outbound_request[ MAX_FORK ];
-	struct sip_msg             *inbound_response[ MAX_FORK ];
-	struct retrans_buff      *outbound_ack[ MAX_FORK ];
+	struct retrans_buff   *outbound_request[ MAX_FORK ];
+	struct sip_msg        *inbound_response[ MAX_FORK ];
+	struct retrans_buff   *outbound_ack[ MAX_FORK ];
+	struct retrans_buff   *outbound_cancel[ MAX_FORK ];
 
 	/* protection against concurrent reply processing */
-	ser_lock_t	reply_mutex;
+	ser_lock_t   reply_mutex;
 	/* protection against concurrent ACK processing */
-	ser_lock_t	ack_mutex;
+	ser_lock_t   ack_mutex;
 
 	/* this is where destination is stored for picked branch;
-	   good if a need to forward ACK later on
-	*/
+	good if a need to forward ACK later on */
 	struct sockaddr_in ack_to;
 #ifndef	USE_SYNONIM
 	/* MD5checksum */
