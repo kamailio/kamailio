@@ -39,6 +39,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 
+#define TABLE_VERSION 1
 
 struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
 struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
@@ -50,6 +51,8 @@ struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
  */
 int init_trusted(void)
 {
+	int ver;
+	str name;
 	     /* Check if hash table needs to be loaded from trusted table */
 
 	if (!db_url) {
@@ -66,6 +69,20 @@ int init_trusted(void)
 			LOG(L_ERR, "init_trusted(): Unable to connect database\n");
 			return -1;
 		}
+
+		name.s = trusted_table;
+		name.len = strlen(trusted_table);
+		ver = table_version(db_handle, &name);
+
+		if (ver < 0) {
+			LOG(L_ERR, "permissions:init_trusted(): Error while querying table version\n");
+			db_close(db_handle);
+			return -1;
+		} else if (ver < TABLE_VERSION) {
+			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			db_close(db_handle);
+			return -1;
+		}		
 		
 		/* Initialize fifo interface */
 		(void)init_trusted_fifo();
