@@ -43,6 +43,9 @@
 
 #define MAX_CONTACT_BUFFER 1024
 
+#define E_INFO "Warning: "
+#define E_INFO_LEN (sizeof(E_INFO) - 1)
+
 static char b[MAX_CONTACT_BUFFER];
 static int l;
 
@@ -208,6 +211,7 @@ int send_reply(struct sip_msg* _m)
 {
 	long code;
 	char* msg = MSG_200; /* makes gcc shut up */
+	char* buf;
 
 	struct lump_rpl* p, *ei;
 
@@ -225,8 +229,17 @@ int send_reply(struct sip_msg* _m)
 	}
 	
 	if (code != 200) {
-		ei = build_lump_rpl(error_info[rerrno].s, error_info[rerrno].len);
+		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
+		if (!buf) {
+			LOG(L_ERR, "send_reply(): No memory left\n");
+			return -1;
+		}
+		memcpy(buf, E_INFO, E_INFO_LEN);
+		memcpy(buf + E_INFO_LEN, error_info[rerrno].s, error_info[rerrno].len);
+		memcpy(buf + E_INFO_LEN + error_info[rerrno].len, CRLF, CRLF_LEN);
+		ei = build_lump_rpl(buf, E_INFO_LEN + error_info[rerrno].len + CRLF_LEN);
 		add_lump_rpl(_m, ei);
+		pkg_free(buf);
 	}
 
 	if (sl_reply(_m, (char*)code, msg) == -1) {
