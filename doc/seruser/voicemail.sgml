@@ -2,9 +2,9 @@
 	The voicemail system provides <application>ser</application>
 	with voice announcement and recording capabilities. Voice
 	messages may then be mailed to the called user. The system
-	relies on <application>ser</application> for implementating
+	relies on <application>ser</application> for implementing
 	the <acronym>SIP</acronym> stack and communicate with it
-	throught <acronym>FIFO</acronym>. It implements the dialog and media
+	through <acronym>FIFO</acronym>. It implements the dialog and media
 	handling as described in RFC 3264 (An Offer/Answer Model with
 	the Session Description Protocol) and RFC 1889 (Real time
 	transport protocol) to realize its goal.
@@ -41,7 +41,7 @@
 	<para>
 	    The sound conversion engine doesn't
 	    support yet resampling. It means that
-	    input and ouput files have to be
+	    input and output files have to be
 	    compatible with the sampling rate of the
 	    codec. All codecs included with the
 	    distribution work at 8kHz, which means
@@ -60,7 +60,7 @@
 <title>Compilation and installation</title>
 	<para>
 	    First, you need to compile Ser with voicemail
-	    support. Thatfor, you must edit Ser's
+	    support. Therefore, you must edit Ser's
 	    Makefile.defs file and uncomment the line with
 	    '-DVOICE_MAIL' and '-D_TOTAG'.
 	</para>
@@ -116,7 +116,7 @@
 	</example>
 </section>
 <section>
-<title>Availabilty, report bugs, contact the author</title>
+<title>Availability, report bugs, contact the author</title>
 <para>
         Ser's Voicemail is hosted at
 	<ulink
