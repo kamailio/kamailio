@@ -25,36 +25,39 @@ unsigned int msg_no=0;
 
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
-	struct sip_msg msg;
+	struct sip_msg* msg;
 
+	msg=pkt_malloc(sizeof(struct sip_msg));
+	if (msg==0) goto error1;
 	msg_no++;
 #ifdef STATS
 	skipped = 1;
 #endif
 
-	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
+	memset(msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
-	msg.buf=buf;
-	msg.len=len;
-	msg.src_ip=src_ip;
-	msg.id=msg_no;
+	msg->buf=buf;
+	msg->len=len;
+	msg->src_ip=src_ip;
+	msg->id=msg_no;
 	/* make a copy of the message */
-	msg.orig=(char*) malloc(len+1);
-	if (msg.orig==0){
+	msg->orig=(char*) pkt_malloc(len+1);
+	if (msg->orig==0){
 		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
 		goto error1;
 	}
-	memcpy(msg.orig, buf, len);
-	msg.orig[len]=0; /* null terminate it,good for using str* functions on it*/
+	memcpy(msg->orig, buf, len);
+	msg->orig[len]=0; /* null terminate it,good for using str* functions
+						 on it*/
 	
-	if (parse_msg(buf,len, &msg)!=0){
+	if (parse_msg(buf,len, msg)!=0){
 		goto error;
 	}
 	DBG("After parse_msg...\n");
-	if (msg.first_line.type==SIP_REQUEST){
+	if (msg->first_line.type==SIP_REQUEST){
 		DBG("msg= request\n");
 		/* sanity checks */
-		if ((msg.via1==0) || (msg.via1->error!=VIA_PARSE_OK)){
+		if ((msg->via1==0) || (msg->via1->error!=VIA_PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
 			goto error;
@@ -63,24 +66,24 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		
 		/* exec routing script */
 		DBG("preparing to run routing scripts...\n");
-		if (run_actions(rlist[0], &msg)<0){
+		if (run_actions(rlist[0], msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error;
 		}
 #ifdef STATS
 		/* jku -- update request statistics  */
-		else update_received_request(  msg.first_line.u.request.method_value );
+		else update_received_request(msg->first_line.u.request.method_value );
 #endif
-	}else if (msg.first_line.type==SIP_REPLY){
+	}else if (msg->first_line.type==SIP_REPLY){
 		DBG("msg= reply\n");
 		/* sanity checks */
-		if ((msg.via1==0) || (msg.via1->error!=VIA_PARSE_OK)){
+		if ((msg->via1==0) || (msg->via1->error!=VIA_PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
 			goto error;
 		}
-		if ((msg.via2==0) || (msg.via2->error!=VIA_PARSE_OK)){
+		if ((msg->via2==0) || (msg->via2->error!=VIA_PARSE_OK)){
 			/* no second via => error? */
 			LOG(L_ERR, "ERROR: receive_msg: no 2nd via found in reply\n");
 			goto error;
@@ -89,14 +92,14 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 
 #ifdef STATS
 		/* jku -- update statistics  */
-		update_received_response(  msg.first_line.u.reply.statusclass );
+		update_received_response( msg->first_line.u.reply.statusclass );
 #endif
 		
 		/* send the msg */
-		if (forward_reply(&msg)==0){
+		if (forward_reply(msg)==0){
 			DBG(" reply forwarded to %s:%d\n", 
-						msg.via2->host.s,
-						(unsigned short) msg.via2->port);
+						msg->via2->host.s,
+						(unsigned short) msg->via2->port);
 		}
 	}
 #ifdef STATS
@@ -104,23 +107,23 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 #endif
 skip:
 	DBG("skip:...\n");
-	if (msg.new_uri.s) { free(msg.new_uri.s); msg.new_uri.len=0; }
-	if (msg.headers) free_hdr_field_lst(msg.headers);
-	if (msg.add_rm) free_lump_list(msg.add_rm);
-	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
-	free(msg.orig);
+	free_sip_msg(msg);
+	pkt_free(msg);
 #ifdef STATS
 	if (skipped) update_received_drops;
 #endif
 	return 0;
 error:
 	DBG("error:...\n");
-	if (msg.new_uri.s) free(msg.new_uri.s);
-	if (msg.headers) free_hdr_field_lst(msg.headers);
-	if (msg.add_rm) free_lump_list(msg.add_rm);
-	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
-	free(msg.orig);
+	free_sip_msg(msg);
+	pkt_free(msg);
+#ifdef STATS
+	update_received_drops;
+#endif
+	return -1;
 error1:
+	if (msg) pkt_free(msg);
+	pkt_free(buf);
 #ifdef STATS
 	update_received_drops;
 #endif

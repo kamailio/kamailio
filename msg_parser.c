@@ -184,23 +184,7 @@ error1:
 }
 
 
-#ifdef OLD_PARSER
-/* returns integer field name type */
-int field_name(char *s, int l)
-{
-	if (l<1) return HDR_OTHER;
-	else if ((l==1) && ((*s=='v')||(*s=='V')))
-		return HDR_VIA;
-	else if (strcasecmp(s, "Via")==0)
-		return  HDR_VIA;
-/*	if ((strcmp(s, "To")==0)||(strcmp(s,"t")==0))
-		return HDR_TO;*/
-	return HDR_OTHER;
-}
-#endif
 
-
-#ifndef OLD_PARSER
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
 char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
@@ -225,7 +209,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	}
 	switch(hdr->type){
 		case HDR_VIA:
-			vb=malloc(sizeof(struct via_body));
+			vb=pkg_malloc(sizeof(struct via_body));
 			if (vb==0){
 				LOG(L_ERR, "get_hdr_field: out of memory\n");
 				goto error;
@@ -236,7 +220,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			tmp=parse_via(tmp, end, vb);
 			if (vb->error==VIA_PARSE_ERROR){
 				LOG(L_ERR, "ERROR: get_hdr_field: bad via\n");
-				free(vb);
+				pkg_free(vb);
 				goto error;
 			}
 			hdr->parsed=vb;
@@ -245,7 +229,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			hdr->body.len=tmp-hdr->body.s;
 			break;
 		case HDR_CSEQ:
-			cseq_b=malloc(sizeof(struct cseq_body));
+			cseq_b=pkg_malloc(sizeof(struct cseq_body));
 			if (cseq_b==0){
 				LOG(L_ERR, "get_hdr_field: out of memory\n");
 				goto error;
@@ -255,7 +239,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			tmp=parse_cseq(tmp, end, cseq_b);
 			if (cseq_b->error==PARSE_ERROR){
 				LOG(L_ERR, "ERROR: get_hdr_field: bad cseq\n");
-				free(cseq_b);
+				pkg_free(cseq_b);
 				goto error;
 			}
 			hdr->parsed=cseq_b;
@@ -277,13 +261,6 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				match=q_memchr(tmp, '\n', end-tmp);
 				if (match){
 					match++;
-				#if 0
-					/* null terminate*/
-					*match=0;
-					hdr->body.len=match-tmp;
-					match++; /*skip*/
-					tmp=match;
-				#endif
 				}else {
 					tmp=end;
 					LOG(L_ERR,
@@ -309,91 +286,6 @@ error:
 	return tmp;
 }
 
-#else
-/* returns pointer to next header line, and fill hdr_f */
-char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
-{
-	/* grammar (rfc822):
-		field = field-name ":" field-body CRLF
-		field-body = text [ CRLF SP field-body ]
-	   (CRLF in the field body must be removed)
-	*/
-
-	char* tmp, *tmp2;
-	char* nl;
-	char* body;
-	int offset;
-	int l;
-
-	
-	/* init content to the empty string */
-	hdr_f->name.s="";
-	hdr_f->name.len=0;
-	hdr_f->body.s="";
-	hdr_f->body.len=0;
-	
-	if ((*buffer=='\n')||(*buffer=='\r')){
-		/* double crlf */
-		tmp=eat_line(buffer,len);
-		hdr_f->type=HDR_EOH;
-		return tmp;
-	}
-#if 0	
-	tmp=eat_token2_end(buffer, buffer+len, ':');
-	if ((tmp==buffer) || (tmp-buffer==len) ||
-		(is_empty_end(buffer, tmp))|| (*tmp!=':')){
-		hdr_f->type=HDR_ERROR;
-		goto error;
-	}
-	*tmp=0;
-	/* take care of possible spaces (e.g: "Via  :") */
-	tmp2=eat_token_end(buffer, tmp);
-	/* in the worst case tmp2=buffer+tmp-buffer=tmp */
-	*tmp2=0;
-	l=tmp2-buffer;
-	if (tmp2<tmp){
-		tmp2++;
-		/* catch things like: "Via foo bar:" */
-		tmp2=eat_space_end(tmp2, tmp);
-		if (tmp2!=tmp){
-			hdr_f->type=HDR_ERROR;
-			goto error;
-		}
-	}
-#endif
-
-	tmp=parse_hname(buffer, buffer+len, hdr_f);
-	if (hdr_f->type==HDR_ERROR){
-		LOG(L_ERR, "ERROR: get_hdr_field: bad header\n");
-		goto error;
-	}
-	
-#if 0
-	hdr_f->type=field_name(buffer, l);
-	body= ++tmp;
-	hdr_f->name.s=buffer;
-	hdr_f->name.len=l;
-#endif
-	offset=tmp-buffer;
-	/* get all the lines in this field  body */
-	do{
-		nl=eat_line(tmp, len-offset);
-		offset+=nl-tmp;
-		tmp=nl;
-	
-	}while( (*tmp==' ' ||  *tmp=='\t') && (offset<len) );
-	if (offset==len){
-		hdr_f->type=HDR_ERROR;
-		LOG(L_INFO, "ERROR: get_hdr_field: field body too  long\n");
-		goto error;
-	}
-	*(tmp-1)=0; /* should be an LF */
-	hdr_f->body.s=body;
-	hdr_f->body.len=tmp-1-body;
-error:
-	return tmp;
-}
-#endif
 
 
 char* parse_hostport(char* buf, str* host, short int* port)
@@ -511,7 +403,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		if (passwd==0){
 			/* no ':' found => no password */
 			uri->passwd.s=0;
-			uri->user.s=(char*)malloc(next-user+1);
+			uri->user.s=(char*)pkg_malloc(next-user+1);
 			if (uri->user.s==0){
 				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
 				ret=E_OUT_OF_MEM;
@@ -522,7 +414,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			uri->user.s[next-user]=0; /* null terminate it, 
 									   usefull for easy printing*/
 		}else{
-			uri->user.s=(char*)malloc(passwd-user+1);
+			uri->user.s=(char*)pkg_malloc(passwd-user+1);
 			if (uri->user.s==0){
 				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
 				ret=E_OUT_OF_MEM;
@@ -532,7 +424,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			uri->user.len=passwd-user;
 			uri->user.s[passwd-user]=0;
 			passwd++; /*skip ':' */
-			uri->passwd.s=(char*)malloc(next-passwd+1);
+			uri->passwd.s=(char*)pkg_malloc(next-passwd+1);
 			if (uri->passwd.s==0){
 				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
 				ret=E_OUT_OF_MEM;
@@ -555,7 +447,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	port=q_memchr(host,':',end-host);
 	host_len=(port)?port-host:(params)?params-host:(headers)?headers-host:end-host;
 	/* get host */
-	uri->host.s=malloc(host_len+1);
+	uri->host.s=pkg_malloc(host_len+1);
 	if (uri->host.s==0){
 		LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
 		ret=E_OUT_OF_MEM;
@@ -574,7 +466,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			goto error;
 		}
 		port_len=(params)?params-port:(headers)?headers-port:end-port;
-		uri->port.s=malloc(port_len+1);
+		uri->port.s=pkg_malloc(port_len+1);
 		if (uri->port.s==0){
 			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
 			ret=E_OUT_OF_MEM;
@@ -594,7 +486,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			goto error;
 		}
 		params_len=(headers)?headers-params:end-params;
-		uri->params.s=malloc(params_len+1);
+		uri->params.s=pkg_malloc(params_len+1);
 		if (uri->params.s==0){
 			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
 			ret=E_OUT_OF_MEM;
@@ -608,7 +500,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	if ((headers)&&(headers+1<end)){
 		headers++;
 		headers_len=end-headers;
-		uri->headers.s=malloc(headers_len+1);
+		uri->headers.s=pkg_malloc(headers_len+1);
 		if(uri->headers.s==0){
 			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
 			ret=E_OUT_OF_MEM;
@@ -791,7 +683,7 @@ int parse_headers(struct sip_msg* msg, int flags)
 	
 	DBG("parse_headers: flags=%d\n", flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
-		hf=malloc(sizeof(struct hdr_field));
+		hf=pkg_malloc(sizeof(struct hdr_field));
 		memset(hf,0, sizeof(struct hdr_field));
 		if (hf==0){
 			LOG(L_ERR, "ERROR:parse_headers: memory allocation error\n");
@@ -870,7 +762,7 @@ skip:
 	return 0;
 	
 error:
-	if (hf) free(hf);
+	if (hf) pkg_free(hf);
 	return -1;
 }
 
@@ -887,23 +779,9 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	char* first_via;
 	char* second_via;
 	struct msg_start *fl;
-	struct hdr_field* hf;
-	struct via_body *vb1, *vb2;
 	int offset;
 	int flags;
 
-#ifdef OLD_PARSER
-	/* init vb1 & vb2 to the null string */
-	/*memset(&vb1,0, sizeof(struct via_body));
-	memset(&vb2,0, sizeof(struct via_body));*/
-	vb1=&(msg->via1);
-	vb2=&(msg->via2);
-	vb1->error=VIA_PARSE_ERROR;
-	vb2->error=VIA_PARSE_ERROR;
-#else
-	vb1=vb2=0;
-	hf=0;
-#endif
 	/* eat crlf from the beginning */
 	for (tmp=buf; (*tmp=='\n' || *tmp=='\r')&&
 			tmp-buf < len ; tmp++);
@@ -951,27 +829,17 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 		if (msg->via1->comment.s) DBG(" <%s>", msg->via1->comment.s);
 		DBG ("\n");
 	}
-#ifdef OLD_PARSER
 	if (msg->via2){
-		DBG(" second via: <%s/%s/%s> <%s:%d>",
-				vb2->name.s, vb2->version.s, vb2->transport.s, vb2->host.s,
-				vb2->port);
-		if (vb2->params.s)  DBG(";<%s>", vb2->params.s);
-		if (vb2->comment.s) DBG(" <%s>", vb2->comment.s);
-		DBG("\n");
+		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
+			msg->via2->name.s, msg->via2->version.s,
+			msg->via2->transport.s, msg->via2->host.s,
+			msg->via2->port_str, msg->via2->port);
+		if (msg->via2->params.s)  DBG(";<%s>", msg->via2->params.s);
+		if (msg->via2->comment.s) DBG(" <%s>", msg->via2->comment.s);
+		DBG ("\n");
 	}
 #endif
-#endif
 	
-	/* copy data into msg */
-#if 0
-#ifndef OLD_PARSER
-	memcpy(&(msg->via1), vb1, sizeof(struct via_body));
-	if (second_via) memcpy(&(msg->via2), vb2, sizeof(struct via_body));
-	if (vb1) free(vb1);
-	if (vb2) free(vb1);
-#endif
-#endif
 
 #ifdef DEBUG
 	DBG("exiting parse_msg\n");
@@ -980,11 +848,6 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	return 0;
 	
 error:
-	if (hf) free(hf);
-#ifndef OLD_PARSER
-	if (vb1) free(vb1);
-	if (vb2) free(vb1);
-#endif
 	return -1;
 }
 
@@ -993,12 +856,12 @@ error:
 void free_uri(struct sip_uri* u)
 {
 	if (u){
-		if (u->user.s) free(u->user.s);
-		if (u->passwd.s) free(u->passwd.s);
-		if (u->host.s) free(u->host.s);
-		if (u->port.s) free(u->port.s);
-		if (u->params.s) free(u->params.s);
-		if (u->headers.s) free(u->headers.s);
+		if (u->user.s)    pkg_free(u->user.s);
+		if (u->passwd.s)  pkg_free(u->passwd.s);
+		if (u->host.s)    pkg_free(u->host.s);
+		if (u->port.s)    pkg_free(u->port.s);
+		if (u->params.s)  pkg_free(u->params.s);
+		if (u->headers.s) pkg_free(u->headers.s);
 	}
 }
 
@@ -1010,7 +873,7 @@ void free_via_list(struct via_body* vb)
 	while(vb){
 		foo=vb;
 		vb=vb->next;
-		free(foo);
+		pkg_free(foo);
 	}
 }
 
@@ -1025,7 +888,7 @@ void clean_hdr_field(struct hdr_field* hf)
 				free_via_list(hf->parsed);
 				break;
 			case HDR_CSEQ:
-				free(hf->parsed);
+				pkg_free(hf->parsed);
 				break;
 			default:
 				LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",
@@ -1046,6 +909,23 @@ void free_hdr_field_lst(struct hdr_field* hf)
 		foo=hf;
 		hf=hf->next;
 		clean_hdr_field(foo);
-		free(foo);
+		pkg_free(foo);
 	}
+}
+
+
+
+/*only the content*/
+void free_sip_msg(struct sip_msg* msg)
+{
+	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
+	if (msg->headers) 	  free_hdr_field_lst(msg->headers);
+	if (msg->add_rm)      free_lump_list(msg->add_rm);
+	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
+	free(msg->orig);
+	free(msg->buf);
+}
+
+
+
 }

@@ -41,5 +41,8 @@
 #define RECEIVED ";received="
 #define RECEIVED_LEN 10
 
+/*used only if PKG_MALLOC is defined*/
+#define PKG_MEM_POOL_SIZE 1024*1024
+
 
 #endif

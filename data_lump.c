@@ -23,7 +23,7 @@ struct lump* append_new_lump(struct lump** list, char* new_hdr,
 	
 	for (t=list;*t;t=&((*t)->next));
 
-	tmp=malloc(sizeof(struct lump));
+	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR, "ERROR: append_new_lump: out of memory\n");
 		return 0;
@@ -47,7 +47,7 @@ struct lump* insert_new_lump(struct lump** list, char* new_hdr,
 {
 	struct lump* tmp;
 
-	tmp=malloc(sizeof(struct lump));
+	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR, "ERROR: insert_new_lump: out of memory\n");
 		return 0;
@@ -71,7 +71,7 @@ struct lump* insert_new_lump_after( struct lump* after, char* new_hdr,
 {
 	struct lump* tmp;
 
-	tmp=malloc(sizeof(struct lump));
+	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR, "ERROR: insert_new_lump_after: out of memory\n");
 		return 0;
@@ -95,7 +95,7 @@ struct lump* insert_new_lump_before( struct lump* before, char* new_hdr,
 {
 	struct lump* tmp;
 
-	tmp=malloc(sizeof(struct lump));
+	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR,"ERROR: insert_new_lump_before: out of memory\n");
 		return 0;
@@ -118,7 +118,7 @@ struct lump* del_lump(struct lump** list, int offset, int len, int type)
 	struct lump* tmp;
 	struct lump* prev, *t;
 
-	tmp=malloc(sizeof(struct lump));
+	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR, "ERROR: insert_new_lump_before: out of memory\n");
 		return 0;
@@ -148,7 +148,7 @@ struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
 	struct lump* tmp;
 	struct lump* prev, *t;
 
-	tmp=malloc(sizeof(struct lump));
+	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		LOG(L_ERR, "ERROR: insert_new_lump_before: out of memory\n");
 		return 0;
@@ -176,7 +176,7 @@ struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
 void free_lump(struct lump* lmp)
 {
 	if (lmp && (lmp->op==LUMP_ADD)){
-		if (lmp->u.value) free(lmp->u.value);
+		if (lmp->u.value) pkg_free(lmp->u.value);
 		lmp->u.value=0;
 		lmp->len=0;
 	}
@@ -200,18 +200,18 @@ void free_lump_list(struct lump* l)
 		r=crt->before;
 		while(r){
 			foo=r; r=r->before;
-			free_lump(foo);
-			free(foo);
+			pkg_free_lump(foo);
+			pkg_free(foo);
 		}
 		r=crt->after;
 		while(r){
 			foo=r; r=r->after;
-			free_lump(foo);
-			free(foo);
+			pkg_free_lump(foo);
+			pkg_free(foo);
 		}
 		
 		/*clean current elem*/
-		free_lump(crt);
-		free(crt);
+		pkg_free_lump(crt);
+		pkg_free(crt);
 	}
 }

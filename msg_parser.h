@@ -181,6 +181,7 @@ char* parse_cseq(char* buffer, char* end, struct cseq_body *cb);
 void free_via_list(struct via_body *vb);
 void clean_hdr_field(struct hdr_field* hf);
 void free_hdr_field_lst(struct hdr_field* hf);
+void free_sip_msg(struct sip_msg* msg);
 
 
 #endif
