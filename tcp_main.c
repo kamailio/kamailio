@@ -440,6 +440,8 @@ send_it:
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
 	if (n<0){
+		if (errno==EINTR) goto send_it; /* interrupted write, try again*/
+										/* keep the lock or lock/unlock again?*/
 		LOG(L_ERR, "ERROR: tcpsend: failed to send, n=%d: %s (%d)\n",
 				n, strerror(errno), errno);
 		/* error on the connection , mark it as bad and set 0 timeout */

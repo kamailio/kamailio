@@ -100,7 +100,7 @@ optimizations:
 
 tcp stuff:
 x tcp disable nagle 
-- set TOS to minimize delay
+x set TOS to minimize delay
 - tcp locking/atomic ops review
 - tcp fix simultaneous connects (ser process is blocked until connect timeouts
  => possible DOS)
