@@ -91,6 +91,12 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		break;
 	    case HDR_CSEQ :
 		new_hdr = header_cloner( new_msg , org_msg , header );
+		if (header->parsed)
+		{
+		  new_hdr->parsed = (void*)sh_malloc( sizeof(struct cseq_body) );
+		  memcpy( new_hdr->parsed , header->parsed , sizeof(struct cseq_body) );
+		  ((struct cseq_body*)new_hdr->parsed)->number.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->number.s );
+		}
 		new_msg->cseq = new_hdr;
 		break;
 	    case HDR_CONTACT :
