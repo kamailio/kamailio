@@ -90,14 +90,14 @@ static unsigned int hash(str* src_ip)
  * Add <src_ip, proto, pattern> into hash table, where proto is integrer
  * representation of tring argument proto.
  */
-int hash_table_install(struct trusted_list** hash_table, char* src_ip, char* proto, char* pattern)
+int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* proto, char* pattern)
 {
 	struct trusted_list *np;
 	unsigned int hash_val;
 
 	np = (struct trusted_list *) shm_malloc(sizeof(*np));
 	if (np == NULL) {
-		LOG(L_CRIT, "hash_table_install(): Cannot allocate memory for table entry\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for table entry\n");
 		return -1;
 	}
 
@@ -105,7 +105,7 @@ int hash_table_install(struct trusted_list** hash_table, char* src_ip, char* pro
 	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
 
 	if (np->src_ip.s == NULL) {
-		LOG(L_CRIT, "hash_table_install(): Cannot allocate memory for src_ip string\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for src_ip string\n");
 		return -1;
 	}
 
@@ -122,13 +122,13 @@ int hash_table_install(struct trusted_list** hash_table, char* src_ip, char* pro
 	} else if (strcmp(proto, "sctp") == 0) {
 		np->proto = PROTO_SCTP;
 	} else {
-		LOG(L_CRIT, "hash_table_install(): Unknown protocol\n");
+		LOG(L_CRIT, "hash_table_insert(): Unknown protocol\n");
 		return -1;
 	}
 		
 	np->pattern = (char *) shm_malloc(strlen(pattern));
 	if (np->pattern == NULL) {
-		LOG(L_CRIT, "hash_table_install(): Cannot allocate memory for pattern string\n");
+		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern string\n");
 		return -1;
 	}
 	(void) strcpy(np->pattern, pattern);

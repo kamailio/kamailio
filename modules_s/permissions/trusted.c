@@ -58,6 +58,11 @@ int init_trusted(void)
 	if (!db_url) {
 		LOG(L_INFO, "db_url parameter of permissions module not set, disabling allow_trusted\n");
 		return 0;
+	} else {
+		if (!bind_dbmod(db_url)) {
+			LOG(L_ERR, "Load a database support module\n");
+			return -1;
+		}
 	}
 
 	hash_table_1 = hash_table_2 = 0;
@@ -124,8 +129,14 @@ int init_child_trusted(int rank)
 	str name;
 	int ver;
 
+	if (!db_url) {
+		return 0;
+	}
+	
 	/* Check if database is needed by child */
-	if (((db_mode == DISABLE_CACHE) && (rank > 0)) || ((db_mode == ENABLE_CACHE) && (rank == PROC_FIFO))) {
+	if (((db_mode == DISABLE_CACHE) && (rank > 0)) || 
+	    ((db_mode == ENABLE_CACHE) && (rank == PROC_FIFO))
+	   ) {
 		db_handle = db_init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "init_child_trusted(): Unable to connect database\n");
