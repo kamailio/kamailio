@@ -112,7 +112,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
 	{
-		DBG("DEBUG: sl_send_reply: I won't send a reply for ACK!!\n");
+		LOG(L_WARN, "Warning: sl_send_reply: I won't send a reply for ACK!!\n");
 		goto error;
 	}
 
