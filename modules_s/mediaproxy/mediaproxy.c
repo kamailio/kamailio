@@ -1025,7 +1025,7 @@ rfc1918address(str *address)
 {
     struct in_addr inaddr;
     uint32_t netaddr;
-    int i, result, n2ok, n2;
+    int i, result;
     char c;
 
     c = address->s[address->len];
@@ -1041,14 +1041,7 @@ rfc1918address(str *address)
     netaddr = ntohl(inaddr.s_addr);
 
     for (i=0; rfc1918nets[i].name!=NULL; i++) {
-        if (rfc1918nets[i].address == 0xac100000UL) {
-            /* for '172.16.0.0',  2nd number should between 16 and 31 only */
-            n2 = (rfc1918nets[i].address >> 16) & 0xff;
-            n2ok = (n2>=16 && n2<=31 ? 1 : 0);
-        } else {
-            n2ok = 1;
-        }
-        if (n2ok && (netaddr & rfc1918nets[i].mask)==rfc1918nets[i].address) {
+        if ((netaddr & rfc1918nets[i].mask)==rfc1918nets[i].address) {
             return 1;
         }
     }
@@ -1057,7 +1050,9 @@ rfc1918address(str *address)
 }
 
 #define isPrivateAddress(x) (rfc1918address(x)==1 ? 1 : 0)
-#define isPublicAddress(x)  (rfc1918address(x)==0 ? 1 : 0)
+// test for a public address is more complex (also need to test for
+// address not in 0.0.0.0/8, 127.0.0.0/8, 224.0.0.0/4).
+// #define isPublicAddress(x)  (rfc1918address(x)==0 ? 1 : 0)
 
 
 // Check if the requested asymmetrics file has changed and reload it if needed
