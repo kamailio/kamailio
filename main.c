@@ -35,6 +35,7 @@
  *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and 
  *               init_shm_mallocs called after cmd. line parsing (andrei)
  *  2003-04-15  added tcp_disable support (andrei)
+ *  2003-05-09  closelog() before openlog to force opening a new fd (needed on solaris) (andrei)
  *
  */
 
@@ -488,6 +489,7 @@ int daemonize(char*  name)
 	};
 	
 	/* close any open file descriptors */
+	closelog();
 	for (r=3;r<MAX_FD; r++){
 			close(r);
 	}
