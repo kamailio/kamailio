@@ -201,7 +201,7 @@ static inline int nodb_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for REPLication\n", 
+				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for replication\n", 
 				    ptr->aor->len, ptr->aor->s, ptr->c.len, ptr->c.s);
 
 					/* keep it for replication, but it expired normaly
@@ -233,7 +233,7 @@ static inline int nodb_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * done during unregister */
 			if (ptr->state == CS_ZOMBIE_N && ptr->replicate == 0) {
-				LOG(L_NOTICE, "Zombie \'%.*s\',\'%.*s\' removed\n",
+				LOG(L_NOTICE, "removing spare zombie \'%.*s\',\'%.*s\'\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 				t = ptr;
@@ -299,7 +299,7 @@ static inline int wt_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * allready done during unregister */
 			if (ptr->state == CS_ZOMBIE_S && ptr->replicate == 0) {
-				LOG(L_NOTICE, "Zombie \'%.*s\',\'%.*s\' removed\n",
+				LOG(L_NOTICE, "removing spare zombie \'%.*s\',\'%.*s\'\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 				t = ptr;
