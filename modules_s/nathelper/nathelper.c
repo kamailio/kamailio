@@ -40,19 +40,48 @@
  * History:
  * ---------
  * 2003-10-09	nat_uac_test introduced (jiri)
+ *
  * 2003-11-06   nat_uac_test permitted from onreply_route (jiri)
+ *
  * 2003-12-01   unforce_rtp_proxy introduced (sobomax)
- * 2004-01-07	o RTP proxy support updated to support new version of the
- *		  RTP proxy (20040107).
- *		o force_rtp_proxy() now inserts a special flag
- *		  into the SDP body to indicate that this session already
- *		  proxied and ignores sessions with such flag.
- *		o Added run-time check for version of command protocol
- *		  supported by the RTP proxy.
+ *
+ * 2004-01-07	RTP proxy support updated to support new version of the
+ *		RTP proxy (20040107).
+ *
+ *		force_rtp_proxy() now inserts a special flag
+ *		into the SDP body to indicate that this session already
+ *		proxied and ignores sessions with such flag.
+ *
+ *		Added run-time check for version of command protocol
+ *		supported by the RTP proxy.
+ *
  * 2004-01-16   Integrated slightly modified patch from Tristan Colgate,
  *		force_rtp_proxy function with IP as a parameter (janakj)
- * 2004-01-28	o nat_uac_test extended to allow testing SDP body (sobomax)
- *		o nat_uac_test extended to allow testing top Via (sobomax)
+ *
+ * 2004-01-28	nat_uac_test extended to allow testing SDP body (sobomax)
+ *
+ *		nat_uac_test extended to allow testing top Via (sobomax)
+ *
+ * 2004-02-210	force_rtp_proxy now accepts option argument, which
+ *		consists of string of chars, each of them turns "on"
+ *		some feature, currently supported ones are:
+ *
+ *		 `a' - flags that UA from which message is received
+ *		       doesn't support symmetric RTP;
+ *		 `l' - force "lookup", that is, only rewrite SDP when
+ *		       corresponding session is already exists in the
+ *		       RTP proxy. Only makes sense for SIP requests,
+ *		       replies are always processed in "lookup" mode;
+ *		 'i' - flags that message is received from UA in the
+ *		       LAN. Only makes sense when RTP proxy is rinning
+ *		       in the bridge mode.
+ *
+ *		force_rtp_proxy can now be invoked without any argumens,
+ *		as previously, with one argument - in this case argument
+ *		is treated as option string and with two arguments, in
+ *		which case 1st argument is option string and the 2nd
+ *		one is IP address which have to be inserted into
+ *		SDP (IP address on which RTP proxy listens).
  *
  */
 
@@ -119,8 +148,9 @@ static int alter_mediaip(struct sip_msg *, str *, str *, str *, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *send_rtpp_command(const struct iovec *, int, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
-static int force_rtp_proxy_from_f(struct sip_msg *, char *, char *);
+static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
+static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
+static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
@@ -155,8 +185,9 @@ static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy_f,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy_from_f, 1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",   force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",   force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",   force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"nat_uac_test",      nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0}
 };
@@ -892,19 +923,44 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 }
 
 static int
-do_force_rtp_proxy(struct sip_msg* msg, str* newip)
+force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body, body1, oldport, oldip, oldip1, newport, tmpip;
-	str callid, from_tag, to_tag;
-	int create, port, len;
+	str body, body1, oldport, oldip, oldip1, newport, newip;
+	str callid, from_tag, to_tag, tmp;
+	int create, port, len, asymmetric, flookup, internal, argc;
 	char buf[16];
 	char *cp, *cp1;
+	char **ap, *argv[10];
 	struct lump* anchor;
-	struct iovec v[6 + 5] = {{"U", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
-				 /* 0 */   /* 1 */   /* 2 */    /* 3 */   /* 4 */    /* 5 */   /* 6 */    /* 7 */   /* 8 */    /* 9 */   /* 10 */
+	struct iovec v[6 + 5] = {{NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+				 /* 0 */    /* 1 */   /* 2 */    /* 3 */   /* 4 */    /* 5 */   /* 6 */    /* 7 */   /* 8 */    /* 9 */   /* 10 */
+
+	asymmetric = flookup = internal = 0;
+	for (cp = str1; *cp != '\0'; cp++) {
+		switch (*cp) {
+		case 'a':
+		case 'A':
+			asymmetric = 1;
+			break;
+
+		case 'i':
+		case 'I':
+			internal = 1;
+			break;
+
+		case 'l':
+		case 'L':
+			flookup = 1;
+			break;
+
+		default:
+			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", *cp);
+			return -1;
+		}
+	}
 
 	if (rtpproxy_disable != 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: support for RTP proxy "
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: support for RTP proxy "
 		    "is disabled\n");
 		return -1;
 	}
@@ -918,21 +974,29 @@ do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 		return -1;
 	}
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't get Call-Id field\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get Call-Id field\n");
 		return -1;
 	}
 	if (get_to_tag(msg, &to_tag) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't get To tag\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get To tag\n");
 		return -1;
 	}
 	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't get From tag\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get From tag\n");
 		return -1;
 	}
 	if (extract_body(msg, &body) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract body "
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract body "
 		    "from the message\n");
 		return -1;
+	}
+	if (flookup != 0) {
+		if (create == 0 || to_tag.len == 0)
+			return -1;
+		create = 0;
+		tmp = from_tag;
+		from_tag = to_tag;
+		to_tag = tmp;
 	}
 	for (cp = body.s; (len = body.s + body.len - cp) >= ANORTPPROXY_LEN;) {
 		cp1 = ser_memmem(cp, ANORTPPROXY, len, ANORTPPROXY_LEN);
@@ -943,9 +1007,15 @@ do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 		cp = cp1 + ANORTPPROXY_LEN;
 	}
 	if (extract_mediaip(&body, &oldip) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media IP "
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract media IP "
 		    "from the message\n");
 		return -1;
+	}
+	if (asymmetric != 0) {
+		newip = oldip;
+	} else {
+		newip.s = ip_addr2a(&msg->rcv.src_ip);
+		newip.len = strlen(newip.s);
 	}
 	body1.s = oldip.s + oldip.len;
 	body1.len = body.s + body.len - body1.s;
@@ -953,51 +1023,64 @@ do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 		oldip1.len = 0;
 	}
 	if (extract_mediaport(&body, &oldport) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media port "
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract media port "
 		    "from the message\n");
 		return -1;
 	}
-	tmpip.s = ip_addr2a(&msg->rcv.src_ip);
-	tmpip.len = strlen(tmpip.s);
 	if (create == 0)
-		v[0].iov_base = "L";
+		v[0].iov_base = (internal == 0) ? "LA" : "LI";
+	else
+		v[0].iov_base = (internal == 0) ? "UA" : "UI";
+	v[0].iov_len = (internal == 0 && asymmetric == 0) ? 1 : 2;
 	STR2IOVEC(callid, v[2]);
-	STR2IOVEC(tmpip, v[4]);
+	STR2IOVEC(newip, v[4]);
 	STR2IOVEC(oldport, v[6]);
 	STR2IOVEC(from_tag, v[8]);
 	STR2IOVEC(to_tag, v[10]);
 	cp = send_rtpp_command(v, (to_tag.len > 0) ? 11 : 9, 1);
 	if (cp == NULL)
 		return -1;
-	port = atoi(cp);
+	argc = 0;
+	memset(argv, 0, sizeof(argv));
+	for (ap = argv; (*ap = strsep(&cp, "\r\n\t ")) != NULL;)
+		if (**ap != '\0') {
+			argc++;
+			if (++ap >= &argv[10])
+				break;
+		}
+	if (argc < 1)
+		return -1;
+	port = atoi(argv[0]);
 	if (port <= 0 || port > 65535)
 		return -1;
 
 	newport.s = buf;
 	newport.len = sprintf(buf, "%d", port);
+	newip.s = (argc < 2) ? str2 : argv[1];
+	newip.len = strlen(newip.s);
 
-	if (alter_mediaip(msg, &body, &oldip, newip, 0) == -1)
+	if (alter_mediaip(msg, &body, &oldip, &newip, 0) == -1)
 		return -1;
 	if (oldip1.len > 0 &&
-	    alter_mediaip(msg, &body1, &oldip1, newip, 0) == -1)
+	    alter_mediaip(msg, &body1, &oldip1, &newip, 0) == -1)
 		return -1;
 	if (alter_mediaport(msg, &body, &oldport, &newport, 0) == -1)
 		return -1;
 
 	cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
 	if (cp == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: out of memory\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: out of memory\n");
 		return -1;
 	}
 	anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 	if (anchor == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: anchor_lump failed\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: anchor_lump failed\n");
 		pkg_free(cp);
 		return -1;
 	}
 	memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
 	if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN, 0) == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: insert_new_lump_after failed\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: insert_new_lump_after failed\n");
 		pkg_free(cp);
 		return -1;
 	}
@@ -1006,28 +1089,25 @@ do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 }
 
 static int
-force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+force_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str newip;
-	char *cp;
+	char *cp, *newip;
+	int len;
 
 	cp = ip_addr2a(&msg->rcv.dst_ip);
-	newip.len = strlen(cp);
-	newip.s = alloca(newip.len + 1);
-	memcpy(newip.s, cp, newip.len + 1);
-	return do_force_rtp_proxy(msg, &newip);
+	len = strlen(cp);
+	newip = alloca(len + 1);
+	memcpy(newip, cp, len + 1);
+	return force_rtp_proxy2_f(msg, str1, newip);
 }
 
 static int
-force_rtp_proxy_from_f(struct sip_msg* msg, char* ip, char* str2)
+force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str newip;
+	char arg[1] = {'\0'};
 
-	newip.s = ip;
-	newip.len = strlen(newip.s);
-	return do_force_rtp_proxy(msg, &newip);
+        return force_rtp_proxy1_f(msg, arg, NULL);
 }
-
 
 static void
 timer(unsigned int ticks, void *param)
