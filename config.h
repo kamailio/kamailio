@@ -79,8 +79,11 @@
 #define CRLF "\r\n"
 #define CRLF_LEN 2
 
-#define RECEIVED   ";received="
+#define RECEIVED        ";received="
 #define RECEIVED_LEN 10
+
+#define TRANSPORT_PARAM ";transport="
+#define TRANSPORT_PARAM_LEN 11
 
 #define TOTAG_TOKEN ";tag="
 #define TOTAG_TOKEN_LEN (sizeof(TOTAG_TOKEN)-1)

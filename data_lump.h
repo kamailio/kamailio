@@ -31,6 +31,9 @@
  *  2003-01-29  s/int/enum ... more convenient for gdb (jiri)
  *  2003-03-31  added subst lumps -- they expand in ip addr, port a.s.o (andrei)
  *  2003-04-01  added opt (condition) lumps (andrei)
+ *  2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
+ *              => ip:port;transport=proto (andrei)
+ *
  */
 
 
@@ -42,12 +45,15 @@ enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD, LUMP_ADD_SUBST, LUMP_ADD_OPT };
 enum lump_subst{ SUBST_NOP=0,                     /* do nothing */
 				 SUBST_RCV_IP,    SUBST_SND_IP,   /* add ip address */
 				 SUBST_RCV_PORT,  SUBST_SND_PORT, /* add port no */
-				 SUBST_RCV_PROTO, SUBST_SND_PROTO /* add protocol */
+				 SUBST_RCV_PROTO, SUBST_SND_PROTO,/* add protocol(udp,tcp,tls)*/
+				 SUBST_RCV_ALL,   SUBST_SND_ALL   /*  ip:port;transport=proto */
 				};
 				/* Where:
 				   SND = sending, e.g the src ip of the outgoing message
 				   RCV = received e.g the dst ip of the original incoming msg,
 				    or the ip of the ser socket on which the msg was received
+				   For SUBST_{RCV,SND}_ALL, :port is added only if port!=5060
+				    and transport=proto only if proto!=udp
 					*/
 
 enum lump_conditions {	COND_FALSE,         /* always false */

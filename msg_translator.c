@@ -44,6 +44,8 @@
  * 2003-03-18  killed the build_warning snprintf (andrei)
  * 2003-03-31  added subst lump support (andrei)
  * 2003-04-01  added opt (conditional) lump support (andrei)
+ * 2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
+ *              => ip:port;transport=proto (andrei)
  *
  */
 
@@ -453,7 +455,25 @@ static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 				break; \
 			case SUBST_RCV_PROTO: \
 				if (msg->rcv.bind_address){ \
-					new_len+=send_sock->port_no_str.len; \
+					new_len+=3; \
+				}else{ \
+					/* FIXME */ \
+					LOG(L_CRIT, "FIXME: null bind_address\n"); \
+				}; \
+				break; \
+			case SUBST_RCV_ALL: \
+				if (msg->rcv.bind_address){ \
+					new_len+=msg->rcv.bind_address->address_str.len; \
+					if (msg->rcv.bind_address->address.af!=AF_INET) \
+						new_len+=2; \
+					if (msg->rcv.bind_address->port_no!=SIP_PORT){ \
+						/* add :port_no */ \
+						new_len+=1+msg->rcv.bind_address->port_no_str.len; \
+					}\
+					if(msg->rcv.bind_address->proto!=PROTO_UDP) {\
+						/*add;transport=xxx*/ \
+							new_len+=TRANSPORT_PARAM_LEN+3; \
+					}\
 				}else{ \
 					/* FIXME */ \
 					LOG(L_CRIT, "FIXME: null bind_address\n"); \
@@ -481,6 +501,25 @@ static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 				if (send_sock){ \
 					new_len+=3; /* tcp, udp or tls*/ \
 				}else{ \
+					LOG(L_CRIT, "FIXME: lumps_len called with" \
+							" null send_sock\n"); \
+				}; \
+				break; \
+			case SUBST_SND_ALL: \
+				if (send_sock){ \
+					new_len+=send_sock->address_str.len; \
+					if (send_sock->address.af!=AF_INET) \
+						new_len+=2; \
+					if (send_sock->port_no!=SIP_PORT){ \
+						/* add :port_no */ \
+						new_len+=1+send_sock->port_no_str.len; \
+					}\
+					if(send_sock->proto!=PROTO_UDP) {\
+						/*add;transport=xxx*/ \
+							new_len+=TRANSPORT_PARAM_LEN+3; \
+					}\
+				}else{ \
+					/* FIXME */ \
 					LOG(L_CRIT, "FIXME: lumps_len called with" \
 							" null send_sock\n"); \
 				}; \
@@ -626,6 +665,53 @@ static inline void process_lumps(	struct sip_msg* msg,
 				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
 			}; \
 			break; \
+		case SUBST_RCV_ALL: \
+			if (msg->rcv.bind_address){  \
+				/* address */ \
+				if (msg->rcv.bind_address->address.af!=AF_INET){\
+					new_buf[offset]='['; offset++; \
+				}\
+				memcpy(new_buf+offset, msg->rcv.bind_address->address_str.s, \
+						msg->rcv.bind_address->address_str.len); \
+				offset+=msg->rcv.bind_address->address_str.len; \
+				if (msg->rcv.bind_address->address.af!=AF_INET){\
+					new_buf[offset]=']'; offset++; \
+				}\
+				/* :port */ \
+				if (msg->rcv.bind_address->port_no!=SIP_PORT){ \
+					new_buf[offset]=':'; offset++; \
+					memcpy(new_buf+offset, \
+							msg->rcv.bind_address->port_no_str.s, \
+							msg->rcv.bind_address->port_no_str.len); \
+					offset+=msg->rcv.bind_address->port_no_str.len; \
+				}\
+				switch(msg->rcv.bind_address->proto){ \
+					case PROTO_NONE: \
+					case PROTO_UDP: \
+						break; /* nothing to do, udp is default*/ \
+					case PROTO_TCP: \
+						memcpy(new_buf+offset, TRANSPORT_PARAM, \
+								TRANSPORT_PARAM_LEN); \
+						offset+=TRANSPORT_PARAM_LEN; \
+						memcpy(new_buf+offset, "tcp", 3); \
+						offset+=3; \
+						break; \
+					case PROTO_TLS: \
+						memcpy(new_buf+offset, TRANSPORT_PARAM, \
+								TRANSPORT_PARAM_LEN); \
+						offset+=TRANSPORT_PARAM_LEN; \
+						memcpy(new_buf+offset, "tls", 3); \
+						offset+=3; \
+						break; \
+					default: \
+						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
+								msg->rcv.bind_address->proto); \
+				} \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
+			}; \
+			break; \
 		case SUBST_SND_IP: \
 			if (send_sock){  \
 				if (send_sock->address.af!=AF_INET){\
@@ -654,6 +740,52 @@ static inline void process_lumps(	struct sip_msg* msg,
 						" null send_sock\n"); \
 			}; \
 			break; \
+		case SUBST_SND_ALL: \
+			if (send_sock){  \
+				/* address */ \
+				if (send_sock->address.af!=AF_INET){\
+					new_buf[offset]='['; offset++; \
+				}\
+				memcpy(new_buf+offset, send_sock->address_str.s, \
+						send_sock->address_str.len); \
+				offset+=send_sock->address_str.len; \
+				if (send_sock->address.af!=AF_INET){\
+					new_buf[offset]=']'; offset++; \
+				}\
+				/* :port */ \
+				if (send_sock->port_no!=SIP_PORT){ \
+					new_buf[offset]=':'; offset++; \
+					memcpy(new_buf+offset, send_sock->port_no_str.s, \
+							send_sock->port_no_str.len); \
+					offset+=send_sock->port_no_str.len; \
+				}\
+				switch(send_sock->proto){ \
+					case PROTO_NONE: \
+					case PROTO_UDP: \
+						break; /* nothing to do, udp is default*/ \
+					case PROTO_TCP: \
+						memcpy(new_buf+offset, TRANSPORT_PARAM, \
+								TRANSPORT_PARAM_LEN); \
+						offset+=TRANSPORT_PARAM_LEN; \
+						memcpy(new_buf+offset, "tcp", 3); \
+						offset+=3; \
+						break; \
+					case PROTO_TLS: \
+						memcpy(new_buf+offset, TRANSPORT_PARAM, \
+								TRANSPORT_PARAM_LEN); \
+						offset+=TRANSPORT_PARAM_LEN; \
+						memcpy(new_buf+offset, "tls", 3); \
+						offset+=3; \
+						break; \
+					default: \
+						LOG(L_CRIT, "BUG: process_lumps: unknown proto %d\n", \
+								send_sock->proto); \
+				} \
+			}else{  \
+				/*FIXME*/ \
+				LOG(L_CRIT, "FIXME: process_lumps: null bind_address\n"); \
+			}; \
+			break; \
 		case SUBST_RCV_PROTO: \
 			if (msg->rcv.bind_address){ \
 				switch(msg->rcv.bind_address->proto){ \
@@ -676,7 +808,8 @@ static inline void process_lumps(	struct sip_msg* msg,
 				} \
 			}else{  \
 				/*FIXME*/ \
-				LOG(L_CRIT, "FIXME: process lumps: null bind_address\n"); \
+				LOG(L_CRIT, "FIXME: process_lumps: called with null" \
+							" send_sock \n"); \
 			}; \
 			break; \
 		case  SUBST_SND_PROTO: \
@@ -1589,12 +1722,12 @@ char* via_builder( unsigned int *len,
 
 	via_len=MY_VIA_LEN+send_sock->address_str.len; /*space included in MY_VIA*/
 
-	memcpy(line_buf, MY_VIA, MY_VIA_LEN-4); /* without "UPD " */
-	if (proto==PROTO_UDP)
-		memcpy(line_buf+MY_VIA_LEN-4, "UDP ", 4);
-	else if (proto==PROTO_TCP)
+	memcpy(line_buf, MY_VIA, MY_VIA_LEN); 
+	if (proto==PROTO_UDP){
+		/* dop nothing */
+	}else if (proto==PROTO_TCP){
 		memcpy(line_buf+MY_VIA_LEN-4, "TCP ", 4);
-	else{
+	}else{
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", proto);
 		return 0;
 	}
