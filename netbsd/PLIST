@@ -11,6 +11,7 @@ lib/ser/modules/dbtext.so
 lib/ser/modules/domain.so
 lib/ser/modules/enum.so
 lib/ser/modules/exec.so
+lib/ser/modules/ext.so
 lib/ser/modules/group.so
 lib/ser/modules/jabber.so
 lib/ser/modules/mangler.so
@@ -46,6 +47,7 @@ share/doc/ser/README.domain
 share/doc/ser/README.dbtext
 share/doc/ser/README.enum
 share/doc/ser/README.exec
+share/doc/ser/README.ext
 share/doc/ser/README.group
 share/doc/ser/README.jabber
 share/doc/ser/README.mangler

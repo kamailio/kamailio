@@ -12,6 +12,9 @@
 #              & small fixes (andrei)
 #  2003-08-29  replaced modules-install with modules-install-all, to 
 #               install also the modules doc (andrei)
+#  2004-07-23  added ext and commented out the radius modules
+#              (the current radius modules depend on radiusclient-ng which
+#               is not yet part of debian)  (andrei)
 
 
 # Uncomment this to turn on verbose mode.
@@ -25,7 +28,7 @@ export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" package or unstable 
 EXCLUDED_MODULES=	mysql jabber auth_radius group_radius uri_radius \
-					postgress snmp cpl cpl-c ext extcmd 
+					postgress snmp cpl cpl-c extcmd 
 
 # modules depending on mysql
 MYSQL_MODULES=mysql
@@ -111,12 +114,12 @@ install: build
 		cfg-target=/etc/ser/ \
 		doc-dir=share/doc/ser-jabber-module
 	#install only the radius modules
-	$(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/ser-radius-modules \
-		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
-		cfg-target=/etc/ser/ \
-		doc-dir=share/doc/ser-radius-modules
+#	$(MAKE) install-modules-all modules="$(RADIUS_MOD_PATH)"  \
+#		basedir=$(CURDIR)/debian/ser-radius-modules \
+#		prefix=/usr \
+#		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
+#		cfg-target=/etc/ser/ \
+#		doc-dir=share/doc/ser-radius-modules
 	#dh_movefiles
 
 
