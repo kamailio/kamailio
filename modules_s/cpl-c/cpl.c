@@ -44,7 +44,7 @@
 #include "../../sr_module.h"
 #include "../../str.h"
 #include "../../dprint.h"
-#include "../../error.h"
+#include "../../data_lump_rpl.h"
 #include "../../fifo_server.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
@@ -463,7 +463,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	/* get the script for this user */
-	if (get_user_script( db_hdl, &user, &script)==-1)
+	if (get_user_script( db_hdl, &user, &script, "cpl_bin")==-1)
 		goto error;
 
 	/* has the user a non-empty script? if not, return normaly, allowing ser to
@@ -522,6 +522,25 @@ error:
 #define REMOVE_SCRIPT       0xcaca
 #define STORE_SCRIPT        0xbebe
 
+#define CONTENT_TYPE_HDR      ("Content-Type: application/cpl-xml"CRLF)
+#define CONTENT_TYPE_HDR_LEN  (sizeof(CONTENT_TYPE_HDR)-1)
+
+struct cpl_error {
+	int   err_code;
+	char *err_msg;
+};
+
+
+//static int   err_code = 400;
+//static char *err_msg = "Bad request";
+
+static struct cpl_error bad_req = {400,"Bad request"};
+static struct cpl_error intern_err = {500,"Internal server error"};
+static struct cpl_error bad_cpl = {400,"Bad CPL script"};
+
+static struct cpl_error *cpl_err = &bad_req;
+
+
 static inline int do_script_action(struct sip_msg *msg, int action)
 {
 	str  body;
@@ -566,12 +585,16 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 			}
 			/* now compile the script and place it into database */
 			/* get the binary coding for the XML file */
-			if ( encodeCPL( &body, &bin)!=1)
+			if ( encodeCPL( &body, &bin)!=1) {
+				cpl_err = &bad_cpl;
 				goto error_1;
+			}
 
 			/* write both the XML and binary formats into database */
-			if (write_to_db( db_hdl, user.s, &body, &bin)!=1)
+			if (write_to_db( db_hdl, user.s, &body, &bin)!=1) {
+				cpl_err = &intern_err;
 				goto error_1;
+			}
 			break;
 		case REMOVE_SCRIPT:
 			/* check the len -> it must be 0 */
@@ -581,9 +604,10 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 				goto error_1;
 			}
 			/* remove the script for the user */
-			if (rmv_from_db( db_hdl, user.s)!=1)
+			if (rmv_from_db( db_hdl, user.s)!=1) {
+				cpl_err = &intern_err;
 				goto error_1;
-
+			}
 			break;
 	}
 
@@ -597,14 +621,62 @@ error:
 
 
 
-static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
+static inline int do_script_download(struct sip_msg *msg)
+{
+	struct lump_rpl *ct_type;
+	struct lump_rpl *body;
+	str  user;
+	str script;
+
+	/* get the destination user name */
+	if (get_dest_user( msg, &user)==-1)
+		goto error;
+
+	/* get the user's xml script from the database */
+	if (get_user_script( db_hdl, &user, &script, "cpl_xml")==-1)
+		goto error;
+
+	/* add a lump with content-type hdr */
+	ct_type = build_lump_rpl( CONTENT_TYPE_HDR, CONTENT_TYPE_HDR_LEN,
+		LUMP_RPL_HDR);
+	if (ct_type==0) {
+		LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build hdr lump\n");
+		cpl_err = &intern_err;
+		goto error;
+	}
+	add_lump_rpl(  msg, ct_type);
+
+	if (script.len!=0 && script.s!=0) {
+		/* user has a script -> add a body lump */
+		body = build_lump_rpl( script.s, script.len, LUMP_RPL_BODY);
+		if (body==0) {
+			LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build "
+				"body lump\n");
+			cpl_err = &intern_err;
+			goto error;
+		}
+		if (add_lump_rpl( msg, body)==-1) {
+			LOG(L_CRIT,"BUG:cpl-c:do_script_download: body lump "
+				"already added\n");
+			cpl_err = &intern_err;
+			goto error;
+		}
+	}
+
+	return 0;
+error:
+	return -1;
+}
+
+
+
+static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct disposition *disp;
 	struct disposition_param *param;
 	int  ret;
 	int  mime;
 	int  *mimes;
-	str  user;
 
 	/* make sure that is a REGISTER ??? */
 
@@ -674,8 +746,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 	}
 
 	/* is there an ACCEPT hdr ? */
-	ret = parse_accept_hdr( msg );
-	if (ret==-1)
+	if ( (ret=parse_accept_hdr(msg))==-1)
 		goto error;
 	if (ret==0 || (mimes=get_accept(msg))==0 )
 		/* accept header not present or no mimes found */
@@ -694,11 +765,10 @@ static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 		/* no accept mime that mached cpl */
 		goto resume_script;
 
-	/* get the destination user name */
-	if (get_dest_user( msg, &user)==-1)
+	/* get the user name from msg, retrive the script from db
+	 * and appended to reply */
+	if (do_script_download( msg )==-1)
 		goto error;
-
-	/* get the user's script from the database */
 
 	/* send a 200 OK reply back */
 	sl_reply( msg, (char*)200, "OK");
@@ -708,6 +778,9 @@ stop_script:
 resume_script:
 	return 1;
 error:
-	return -1;
+	/* send a error reply back */
+	sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
+	/* I don't want to resturn to script execution, so I return 0 to do break */
+	return 0;
 }
 

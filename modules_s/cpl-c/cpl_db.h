@@ -43,7 +43,7 @@ int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin);
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script( db_con_t *db_hdl, str *user, str *script);
+int get_user_script( db_con_t *db_hdl, str *user, str *script, char *key);
 
 
 /* delete from database the entiry record for a given user - if a user has no
