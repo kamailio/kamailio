@@ -26,6 +26,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  converted to the new locking scheme: locking.h (andrei)
+ */
+
 
 #include "pdomain.h"
 #include "paerrno.h"
@@ -83,7 +89,7 @@ int new_pdomain(str* _n, int _s, pdomain_t** _d, register_watcher_t _r, unregist
 	}
 
 	(*_d)->size = _s;
-	init_lock((*_d)->lock);
+	lock_init(&(*_d)->lock);
 	(*_d)->users = 0;
 	(*_d)->expired = 0;
 	
@@ -127,7 +133,7 @@ void print_pdomain(FILE* _f, pdomain_t* _d)
 	fprintf(_f, "table: %p\n", _d->table);
 	fprintf(_f, "first: %p\n", _d->first);
 	fprintf(_f, "last : %p\n", _d->last);
-	fprintf(_f, "lock : %d\n", _d->lock);
+	/* fprintf(_f, "lock : %d\n", _d->lock);*/ /*it can be a struct --andrei*/
 	if (_d->first) {
 		fprintf(_f, "\n");
 		p = _d->first;
@@ -177,7 +183,7 @@ int timer_pdomain(pdomain_t* _d)
  */
 void lock_pdomain(pdomain_t* _d)
 {
-	get_lock(&_d->lock);
+	lock_get(&_d->lock);
 }
 
 
@@ -186,7 +192,7 @@ void lock_pdomain(pdomain_t* _d)
  */
 void unlock_pdomain(pdomain_t* _d)
 {
-	release_lock(&_d->lock);
+	lock_release(&_d->lock);
 }
 
 

@@ -231,7 +231,7 @@ static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str*
 
 	add_presentity(_d, *_p);
 
-	_d->reg(&(get_from(_m)->uri), _to, callback, *_p);
+	_d->reg(&(get_from(_m)->uri), _to, (void*)callback, *_p);
 
 	return 0;
 }

@@ -26,6 +26,9 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * 2003-03-11  updated to the new module exports interface (andrei)
+ */
 
 
 #include "pa_mod.h"
@@ -40,38 +43,26 @@ static int mod_init(void);
 static void destroy(void);
 static int subscribe_fixup(void** param, int param_no);
 
-int default_expires = 3600;
+static int default_expires = 3600;
 
 /** TM bind */
-struct tm_binds tmb;
+static struct tm_binds tmb;
+
+static cmd_export_t cmds[]={
+	{"subscribe",  subscribe,  1, subscribe_fixup},
+	{0,0,0,0}
+};
+
+static param_export_t params[]={
+	{"default_expires", INT_PARAM, &default_expires},
+	{0,0,0}
+};
 
 
 struct module_exports exports = {
 	"pa", 
-	(char*[]) {
-		"subscribe"
-	},
-	(cmd_function[]) {
-		subscribe
-	},
-	(int[]) {
-		1
-	},
-	(fixup_function[]) {
-		subscribe_fixup
-	},
-	1, /* number of functions*/
-
-	(char*[]) {
-		"default_expires"
-	},
-	(modparam_t[]) {
-		INT_PARAM
-	},
-	(void*[]) {
-		&default_expires
-	},
-	1,
+	cmds,
+	params,
 	
 	mod_init, /* module initialization function */
 	0,        /* response function*/
