@@ -102,9 +102,6 @@ ser_backup() # par: <database name>
 		echo "ser backup dump failed"
 		exit 1
 	fi
-#XX
-	ser_drop $1_bak 
-#XX
 	sql_query <<EOF
 	create database $1_bak;
 EOF
