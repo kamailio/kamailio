@@ -96,7 +96,11 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 	DBG("After parse_msg...\n");
 
 	/* execute pre-script callbacks, if any; -jiri */
-	exec_pre_cb(msg);
+	/* if some of the callbacks said not to continue with
+	   script processing, don't do so
+	*/
+	if (exec_pre_cb(msg)==0) goto error;
+
 	/* ... and clear branches from previous message */
 	clear_branches();
 

@@ -67,10 +67,15 @@ int register_script_cb( cb_function f, callback_t t, void *param )
 	return 1;
 }
 
-void exec_pre_cb( struct sip_msg *msg)
+int exec_pre_cb( struct sip_msg *msg)
 {
 	struct script_cb *i;
-	for (i=pre_cb; i; i=i->next) i->cbf(msg, i->param);
+	for (i=pre_cb; i; i=i->next) {
+		/* stop on error */
+		if (i->cbf(msg, i->param)==0)
+			return 0;
+	}
+	return 1;
 }
 
 void exec_post_cb( struct sip_msg *msg)
