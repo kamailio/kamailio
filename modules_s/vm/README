@@ -1,7 +1,8 @@
+#	$Id$	
 #
 # VM Module README
 #
-# Module depends on: tm, mysql, usrloc
+# Module depends on: tm, mysql
 #
 
 VM module enables the communication between Ser and its voicemail
@@ -14,7 +15,8 @@ Exported parameters:
 Name:		db_url
 Type:		char*
 Default:	sql://ser:heslo@localhost/ser
-Desc:		URL of the mysql database used by the location module
+Desc:		URL of the mysql database used to users' 
+email.
 
 
 Exported Functions:
@@ -38,11 +40,11 @@ Both functions are obsoleted by the new 't_uac_dlg' FIFO function.
 Voicemail still uses them till t_uac_dlg supports additional headers.
 
 Name:   vm_reply
-Params: see syntax in fifo_t_reply.c
+Params: see syntax in vm_fifo.c
 Desc:   enables voicemail to reply to the other UAC
 
 Name:   vm_uac_dlg
-Params: see syntax in fifo_t_reply.c
+Params: see syntax in vm_fifo.c
 Desc:   enables voicemail to initiate in-dialog transaction
 
 
