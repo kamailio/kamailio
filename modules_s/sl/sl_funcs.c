@@ -6,6 +6,7 @@
 #include "../../msg_translator.h"
 #include "../../udp_server.h"
 #include "../../timer.h"
+#include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "sl_funcs.h"
 
