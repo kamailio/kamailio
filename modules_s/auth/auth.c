@@ -23,6 +23,7 @@
 #include "group.h"
 #include "nonce.h"
 #include "../../ut.h"
+#include "../../parser/hf.h" /* HDR_WWWAUTH & HDR_PROXYAUTH */
 
 
 /*
@@ -90,9 +91,9 @@ static int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, i
 }
 
 
-static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c, char* _hf_name)
+static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c, int _hf_name)
 {
-	struct hdr_field* ptr;
+	struct hdr_field* ptr = 0;
 	int res;
 #ifdef PARANOID
 	if ((!_msg) || (!_realm) || (!_c)) {
@@ -100,10 +101,14 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c, char* _h
 		return -1;
 	}
 #endif
-
-	ptr = _msg->headers;
+	switch(_hf_name) {
+	case HDR_WWWAUTH:   ptr = _msg->www_auth;   break;
+	case HDR_PROXYAUTH: ptr = _msg->proxy_auth; break;
+	}
+	
 	while(ptr) {
-		if (!strcasecmp(_hf_name, ptr->name.s)) {
+		     /* Skip other header field types */
+		if (ptr->type == _hf_name) {
 			res = hf2cred(ptr, _c); 
 			if (res == -1) {
 				LOG(L_ERR, "find_auth_hf(): Error while parsing credentials\n");
@@ -124,8 +129,10 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c, char* _h
 				}
 			}
 		}
+		
 		ptr = ptr->next;
 	}
+	
 	return -1;
 }
 
@@ -242,7 +249,7 @@ int check_response(cred_t* _cred, str* _method, char* _ha1)
 }
 
 
-static inline int authorize(struct sip_msg* _msg, char* _realm, char* _table, char* _hf_name)
+static inline int authorize(struct sip_msg* _msg, char* _realm, char* _table, int _hf_name)
 {
 	char ha1[256];
 	int res;
@@ -381,11 +388,11 @@ int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 
 int proxy_authorize(struct sip_msg* _msg, char* _realm, char* _table)
 {
-	return authorize(_msg, _realm, _table, PROXY_AUTH_RESPONSE);
+	return authorize(_msg, _realm, _table, HDR_PROXYAUTH);
 }
 
 
 int www_authorize(struct sip_msg* _msg, char* _realm, char* _table)
 {
-	return authorize(_msg, _realm, _table, WWW_AUTH_RESPONSE);
+	return authorize(_msg, _realm, _table, HDR_WWWAUTH);
 }
