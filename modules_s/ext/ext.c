@@ -29,6 +29,9 @@
  * -------
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
+ * 2004-06-02: applied patch from Maxim, rewriteuri and rewriteuser merged,
+ *             braching support added, "check_new_uri","max_branches" params
+ *             added (bogdan)
  */
 
 #include <stdio.h>
@@ -37,10 +40,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "../../action.h"
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../dset.h"
 #include "../../globals.h"
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_uri.h"
@@ -51,15 +56,18 @@
 
 MODULE_VERSION
 
-#define MAX_BUFFER_LEN 1024
-
+#define MAX_BUFFER_LEN  1024
+#define EXT_REWRITE_URI    1
+#define EXT_REWRITE_USER   2
 
 static int ext_child_init(int);
 static int ext_rewriteuser(struct sip_msg*, char*, char* );
 static int ext_rewriteuri(struct sip_msg*, char*, char* );
 static int fixup_ext_rewrite(void** param, int param_no);
 
-
+static int check_new_uri = 1;
+static int max_branches = 0;
+static qvalue_t def_qv  = 1000;
 
 /*
  * Exported functions
@@ -75,6 +83,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
+	{"check_new_uri", INT_PARAM, &check_new_uri},
+	{"max_branches",  INT_PARAM, &max_branches},
 	{0, 0, 0}
 };
 
@@ -100,7 +110,6 @@ static int ext_child_init(int child)
 
 
 
-
 static int fixup_ext_rewrite(void** param, int param_no)
 {
 	if (param_no==1) {
@@ -120,7 +129,6 @@ static int fixup_ext_rewrite(void** param, int param_no)
 
 
 
-
 static  char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
 {
 	static char buf[MAX_PIPE_BUFFER_LEN];
@@ -134,6 +142,7 @@ static  char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
 		return 0;
 	}
 
+	DBG("DEBUG:run_ext_prog: sending <%.*s>\n",in_len,in);
 	/* feeding the program with the uri */
 	if ( sendto_prog(in,in_len,1)!=in_len ) {
 		LOG(L_ERR,"ERROR:run_ext_prog: cannot send input to the external "
@@ -178,136 +187,60 @@ kill_it:
 
 
 
-
-static int ext_rewriteuser(struct sip_msg *msg, char *cmd, char *foo_str )
+static int complete_uri( str *user ,str *uri, struct sip_uri* puri )
 {
-	struct sip_uri parsed_uri;
-	str *uri;
-	str buf;
-	str user;
-	str new_uri;
+	static char uri_s[MAX_URI_SIZE];
+	int uri_len;
 	char *p;
-	int  i;
 
-	/* take the uri out -> from new_uri or RURI */
-	if (msg->new_uri.s && msg->new_uri.len)
-		uri = &(msg->new_uri);
-	else if (msg->first_line.u.request.uri.s &&
-	msg->first_line.u.request.uri.len )
-		uri = &(msg->first_line.u.request.uri);
-	else {
-		LOG(L_ERR,"ERROR:ext_rewriteuser: cannot find Ruri in msg!\n");
+	/* compute the len and check for overflow */
+	uri_len = uri->len + user->len - puri->user.len;
+	if (uri_len>=MAX_URI_SIZE-1) {
+		LOG(L_ERR,"ERROR:ext:complete_uri: new URI will be to long %d\n ",
+			uri_len);
 		return -1;
 	}
-	/* parse it to identify username */
-	if (parse_uri(uri->s,uri->len,&parsed_uri)<0 ) {
-		LOG(L_ERR,"ERROR:ext_rewriteuser : cannot parse Ruri!\n");
+
+	p = uri_s;
+	/* copy the part before username */
+	memcpy( p, uri->s, puri->user.s-uri->s);
+	p += puri->user.s-uri->s;
+	/* copy the username */
+	memcpy( p, user->s, user->len);
+	p += user->len;
+	/* copy the part after username */
+	memcpy( p, puri->user.s+puri->user.len,
+		(uri->s+uri->len)-(puri->user.s+puri->user.len));
+	p += (uri->s+uri->len)-(puri->user.s+puri->user.len);
+	*p = 0;
+
+	if (p-uri_s!=uri_len) {
+		LOG(L_ERR,"ERROR:ext:complete_uri: len missedmatched computed[%d] "
+			"written[%d]\n",uri_len,p-uri_s);
 		return -1;
 	}
-	/* drop it if no username found */
-	if (!parsed_uri.user.s && !parsed_uri.user.len) {
-		LOG(L_INFO,"INFO:ext_rewriteuser: username not present in RURI->"
-			" exitting without error\n");
-		goto done;
-	}
 
-	/*  run the external program */
-	buf.s = run_ext_prog(cmd, parsed_uri.user.s, parsed_uri.user.len,
-		&buf.len );
-	if ( !buf.s || !buf.len) {
-
-		LOG(L_ERR,"ERROR:ext_rewriteuser: run_ext_prog returned null, "
-			"ser_error=%d\n", ser_error );
-		goto error;
-	}
-
-	i = 0;
-	user.s = buf.s;
-	while (user.s!=buf.s+buf.len) {
-		/* jump over space, tab, \n and \r */
-		while ( user.s<buf.s+buf.len && ( *(user.s)==' '
-		|| *(user.s)=='\t' || *(user.s)=='\n' || *(user.s)=='\r') )
-			user.s++;
-		/* go to the end of user */
-		user.len = 0;
-		while ( (p=user.s+user.len)<buf.s+buf.len && *p!=' '
-		&& *p!='\t' && *p!='\n' && *p!='\r')
-			user.len++;
-		if (!user.len) {
-			LOG(L_ERR,"ERROR:ext_rewriteuser:error parsing external prog "
-			"output: <%.*s> at char[%c]\n",buf.len,buf.s,user.s[0]);
-			goto error;
-		}
-
-		/* compose the new uri */
-		DBG("DEBUG:ext_rewriteuser: processing user <%.*s> [%d]\n",user.len,
-			user.s,user.len);
-		new_uri.len = 4/*sip:*/+user.len+1/*@*/+parsed_uri.host.len+
-			+(parsed_uri.port.len!=0)+parsed_uri.port.len
-			+(parsed_uri.params.len!=0)+parsed_uri.params.len
-			+(parsed_uri.headers.len!=0)+parsed_uri.headers.len;
-		new_uri.s = (char*)pkg_malloc(new_uri.len);
-		if (!new_uri.s) {
-			LOG(L_ERR,"ERROR:ext_rewriteuri: no more free pkg memory\n");
-			goto error;
-		}
-		p = new_uri.s;
-		memcpy(p,"sip:",4);
-		p += 4;
-		memcpy(p,user.s,user.len);
-		p += user.len;
-		*(p++) = '@';
-		memcpy(p,parsed_uri.host.s,parsed_uri.host.len);
-		p += parsed_uri.host.len;
-		if (parsed_uri.port.len) {
-			*(p++) = ':';
-			memcpy(p,parsed_uri.port.s,parsed_uri.port.len);
-			p += parsed_uri.port.len;
-		}
-		if (parsed_uri.params.len) {
-			*(p++) = ';';
-			memcpy(p,parsed_uri.params.s,parsed_uri.params.len);
-			p += parsed_uri.params.len;
-		}
-		if (parsed_uri.headers.len) {
-			*(p++) = '?';
-			memcpy(p,parsed_uri.headers.s,parsed_uri.headers.len);
-			p += parsed_uri.headers.len;
-		}
-
-		/* now, use it! */
-		DBG("DEBUG:ext_rewriteuser: setting uri <%.*s> [%d]\n",new_uri.len,
-			new_uri.s,new_uri.len);
-		if (i==0) {
-			/* set in sip_msg the new uri */
-			if (msg->new_uri.s && msg->new_uri.len)
-				pkg_free(msg->new_uri.s);
-			msg->new_uri.s = new_uri.s;
-			msg->new_uri.len = new_uri.len;
-		} else {
-			LOG(L_WARN,"WARNING:ext_rewriteuser: fork not supported -> dumping"
-				" uri %d <%.*s>\n",i,new_uri.len,new_uri.s);
-			pkg_free(new_uri.s);
-		}
-
-		i++;
-		user.s += user.len;
-	}
-
-done:
-	return 1;
-error:
-	return -1;
+	user->s = uri_s;
+	user->len = uri_len;
+	return 0;
 }
 
 
 
-
-static int ext_rewriteuri(struct sip_msg *msg, char *cmd, char *foo_str )
+static inline int is_space(char c)
 {
-	str  *uri;
+	return ( c==' ' || c=='\t' || c=='\n' || c=='\r');
+}
+
+
+static int ext_rewrite(struct sip_msg *msg, char *cmd, int type )
+{
+	struct sip_uri parsed_uri;
+	struct action act;
 	str  buf;
-	str  new_uri;
+	str  new_val;
+	str  *uri;
+	char *buf_end;
 	char *c;
 	int  i;
 
@@ -318,59 +251,125 @@ static int ext_rewriteuri(struct sip_msg *msg, char *cmd, char *foo_str )
 	msg->first_line.u.request.uri.len )
 		uri = &(msg->first_line.u.request.uri);
 	else {
-		LOG(L_ERR,"ERROR:ext_rewriteuri: cannot find Ruri in msg!\n");
-		return -1;
+		LOG(L_ERR,"ERROR:ext_rewrite: cannot find Ruri in msg!\n");
+		goto error;
 	}
 
 	/*  run the external program */
-	buf.s = run_ext_prog(cmd, uri->s, uri->len, &buf.len );
-	if ( !buf.s || !buf.len) {
-		LOG(L_ERR,"ERROR:ext_rewriteuser: run_ext_prog returned null, "
-			"ser_error=%d\n", ser_error );
-		return -1;
+	if (type==EXT_REWRITE_URI) {
+		buf.s = run_ext_prog(cmd, uri->s, uri->len, &buf.len );
+	} else {
+		/* parse it to identify username */
+		if (parse_uri(uri->s,uri->len,&parsed_uri)<0 ) {
+			LOG(L_ERR,"ERROR:ext_rewrite : cannot parse Ruri!\n");
+			return -1;
+		}
+		/* drop it if no username found */
+		if (!parsed_uri.user.s && !parsed_uri.user.len) {
+			LOG(L_INFO,"INFO:ext_rewrite: username not present in RURI->"
+				" exitting without error\n");
+			goto done;
+		}
+		/*  run the external program */
+		buf.s = run_ext_prog(cmd, parsed_uri.user.s, parsed_uri.user.len,
+			&buf.len );
 	}
 
+	/* strip initial space chars and see if it's empty */
+	while ( buf.s && is_space(*(buf.s)) ) {
+		buf.s++;
+		buf.len--;
+	}
+	if ( !buf.s || !buf.len) {
+		LOG(L_ERR,"ERROR:ext_rewrite: run_ext_prog returned null, "
+			"ser_error=%d\n", ser_error );
+		goto error;
+	}
+
+	/* process the ext prog output */
 	i = 0;
-	new_uri.s = buf.s;
-	while (new_uri.s!=buf.s+buf.len) {
+	c = buf.s;
+	buf_end = buf.s + buf.len;
+
+	do {
+		new_val.s   = c;
+		/* go to the end of value */
+		while ( c<buf_end && !is_space(*c) )
+			c++;
+		new_val.len = c - new_val.s;
+		/* is the uri empty? */
+		if (!new_val.len) {
+			LOG(L_ERR,"ERROR:ext_rewrite:error parsing external prog output"
+			": <%.*s> at char[%c]\n",buf.len,buf.s,*c);
+			goto error;
+		}
+		new_val.s[new_val.len] = '\0';
 		/* jump over space, tab, \n and \r */
-		while ( new_uri.s<buf.s+buf.len && ( *(new_uri.s)==' '
-		|| *(new_uri.s)=='\t' || *(new_uri.s)=='\n' || *(new_uri.s)=='\r') )
-			new_uri.s++;
-		/* go to the end of uri */
-		new_uri.len = 0;
-		while ( (c=new_uri.s+new_uri.len)<buf.s+buf.len && *c!=' '
-		&& *c!='\t' && *c!='\n' && *c!='\r')
-			new_uri.len++;
-		if (!new_uri.len) {
-			LOG(L_ERR,"ERROR:ext_rewriteuri:error parsing external prog output"
-			": <%.*s> at char[%c]\n",buf.len,buf.s,new_uri.s[0]);
-			return -1;
+		c++;
+		while ( c<buf_end && is_space(*c) )
+			c++;
+
+		/* check the uri if it's correct */
+		if (type==EXT_REWRITE_URI && check_new_uri &&
+		parse_uri(new_val.s,new_val.len,&parsed_uri)<0) {
+			LOG(L_ERR,"ERROR:ext_rewrite: ext prog returned invalid uri "
+				"<%.*s>!\n", new_val.len, new_val.s);
+			goto error;
 		}
 
 		/* now, use it! */
-		DBG("DEBUG:ext_rewriteuri: setting <%.*s> [%d]\n",new_uri.len,
-			new_uri.s,new_uri.len);
+		DBG("DEBUG:ext_rewrite: setting <%.*s> [%d] on branch %d\n",
+			new_val.len, new_val.s,new_val.len, i);
+
 		if (i==0) {
-			if (msg->new_uri.s && msg->new_uri.len)
-				pkg_free(msg->new_uri.s);
-			msg->new_uri.s = (char*)pkg_malloc(new_uri.len);
-			if (!msg->new_uri.s) {
-				LOG(L_ERR,"ERROR:ext_rewriteuri: no more free pkg memory\n");
-				return -1;
+			/* first returned uri */
+			memset(&act, 0, sizeof(act));
+			act.type = (type==EXT_REWRITE_URI)?SET_URI_T:SET_USER_T;
+			act.p1_type = STRING_ST;
+			act.p1.string = new_val.s;
+			if (do_action(&act, msg)<0) {
+				LOG(L_ERR,"ERROR:ext_rewrite : SET_XXXX_T action failed\n");
+				goto error;
 			}
-			msg->new_uri.len = new_uri.len;
-			memcpy(msg->new_uri.s,new_uri.s,new_uri.len);
 		} else {
-			LOG(L_WARN,"WARNING:ext_rewriteuri: fork not supported -> dumping"
-				" uri %d <%.*s>\n",i,new_uri.len,new_uri.s);
+			/* append branches */
+			if (type==EXT_REWRITE_USER) {
+				if (complete_uri( &new_val , uri, &parsed_uri )!=0 )
+					goto error;
+			}
+			if (append_branch( msg, new_val.s, new_val.len, def_qv)==-1) {
+				LOG(L_ERR,"ERROR:ext_rewrite : append_branch failed\n");
+				goto error;
+			}
 		}
 
+		/* are we still allow to add new uris ? */
+		if (c<buf_end && i>=max_branches) {
+			LOG(L_NOTICE,"LOG:ext_rewrite: discarding remaining output "
+				"<%.*s>\n", buf.len-(c-buf.s),c);
+			break;
+		}
+		/* goto next uri */
 		i++;
-		new_uri.s += new_uri.len;
-	}
+	}while(c<buf_end);
 
+done:
 	return 1;
+error:
+	return -1;
 }
 
+
+
+static int ext_rewriteuri(struct sip_msg *msg, char *cmd, char *foo_str )
+{
+	return  ext_rewrite( msg, cmd, EXT_REWRITE_URI);
+}
+
+
+
+static int ext_rewriteuser(struct sip_msg *msg, char *cmd, char *foo_str )
+{
+	return  ext_rewrite( msg, cmd, EXT_REWRITE_USER);
+}
 
