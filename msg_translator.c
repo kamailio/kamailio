@@ -540,6 +540,9 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	unsigned int       len,foo;
 	struct hdr_field  *hdr;
 	int                       i;
+#ifdef BRUT_HACK
+	struct hdr_field  *to, *from, *callid, *cseq, *via;
+#endif
 
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
@@ -553,10 +556,22 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ + strlen(text) + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
+#ifdef BRUT_HACK
+	{
+		len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
+		if ( hdr->type==HDR_VIA ) via = hdr;
+		else if ( hdr->type==HDR_FROM) from = hdr;
+		else if (hdr->type==HDR_CALLID) callid = hdr;
+		else if ( hdr->type==HDR_TO) to = hdr;
+		else if ( hdr->type==HDR_CSEQ) cseq = hdr;
+		else len-=((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
+	}
+#else
 		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
 				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
 				hdr->type==HDR_CSEQ )
 			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
+#endif
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
 
@@ -585,6 +600,20 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	/* headers*/
+#ifdef BRUT_HACK
+#define	COPY_HF(_hf) memcpy(p, msg->orig+(_hf->name.s-msg->buf), \
+			((_hf->body.s+_hf->body.len ) - \
+			_hf->name.s )); \
+			p+=((_hf->body.s+_hf->body.len)-_hf->name.s ) ; \
+			memcpy( p, CRLF, CRLF_LEN ); \
+			p+=CRLF_LEN;
+
+	COPY_HF(via);
+	COPY_HF(from);
+	COPY_HF(to);
+	COPY_HF(callid);
+	COPY_HF(cseq);
+#else
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
 		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
 		hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
@@ -596,6 +625,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 			memcpy( p, CRLF, CRLF_LEN );
 			p+=CRLF_LEN;
 		}
+#endif
 
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;

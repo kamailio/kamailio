@@ -53,8 +53,9 @@ ARCH = $(shell uname -s)
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
-	-DEXTRA_DEBUG \
-	-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
+	-DVQ_MALLOC -DBRUT_HACK
+	#-DEXTRA_DEBUG -DBRUT_HACK \
+	#-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	  #-DDBG_QM_MALLOC #-DVQ_MALLOC #-DNO_DEBUG
 	  #-DNO_DEBUG #-DDBG_QM_MALLOC
 #-DEXTRA_DEBUG
@@ -64,9 +65,9 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
 #-DNO_LOG
 
-PROFILE=  -pg #set this if you want profiling
-mode = debug
-#mode = release
+#PROFILE=  -pg #set this if you want profiling
+#mode = debug
+mode = release
 
 # platform dependent settings
 

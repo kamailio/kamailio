@@ -39,4 +39,11 @@
 */
 #define REPLY_OVERBUFFER_LEN 160
 
+/* character which separates individual parts of MPLS-ized branch */
+#ifdef BRUT_HACK
+#	define BRANCH_SEPARATOR 'X'
+#else
+#	define BRANCH_SEPARATOR '.'
+#endif
+
 #endif

@@ -3,13 +3,14 @@
  *
  */
 
-#include "hash_func.h"
-#include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
+#include "hash_func.h"
+#include "t_funcs.h"
+#include "config.h"
 
 static int reverse_hex2int( char *c, int len )
 {
@@ -221,25 +222,25 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
    scan_space=p_msg->via1->branch->value.len;
 
    /* loop detection ... ignore */
-   n=eat_token2_end( p, p+scan_space, '.');
+   n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
    scan_space-=n-p;
-   if (n==p || scan_space<2 || *n!='.') goto nomatch2;
+   if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
    p=n+1; scan_space--;
 
    /* hash_id */
-   n=eat_token2_end( p, p+scan_space, '.');
+   n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
    hashl=n-p;
    scan_space-=hashl;
-   if (!hashl || scan_space<2 || *n!='.') goto nomatch2;
+   if (!hashl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
    hashi=p;
    p=n+1;scan_space--;
 
 
    /* sequence id */
-   n=eat_token2_end( p, p+scan_space, '.');
+   n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
    synl=n-p;
    scan_space-=synl;
-   if (!synl || scan_space<2 || *n!='.') goto nomatch2;
+   if (!synl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
    syni=p;
    p=n+1;scan_space--;
 
@@ -377,11 +378,11 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	begin=p_msg->add_to_branch_s+p_msg->add_to_branch_len;
 	orig_size = size=MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len;
 
-	if (size) { *begin='.'; begin++; size--; } else return -1;
+	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 	if (int2reverse_hex( &begin, &size, trans->hash_index)==-1) return -1;
-	if (size) { *begin='.'; begin++; size--; } else return -1;
+	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 	if (int2reverse_hex( &begin, &size, trans->label)==-1) return -1;
-	if (size) { *begin='.'; begin++; size--; } else return -1;
+	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 	if (int2reverse_hex( &begin, &size, branch)==-1) return -1;
 
 	p_msg->add_to_branch_len+=(orig_size-size);
