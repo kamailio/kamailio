@@ -9,6 +9,25 @@
 
 #include "dprint.h"
 
+/* returns string beginning and length without insignificant chars */
+#define trim_len( _len, _begin, _mystr ) \
+	({ 	static char _c; \
+		(_len)=(_mystr).len; \
+		while ((_len) && ((_c=(_mystr).s[(_len)-1])==0 || _c=='\r' || _c=='\n' || _c==' ' || _c=='\t' )) \
+			(_len)--; \
+		(_begin)=(_mystr).s; \
+		while ((_len) && ((_c=*(_begin))==' ' || _c=='\t')) { \
+			(_len)--;\
+			(_begin)++; \
+		} \
+	})
+
+#define trim_r( _mystr ) \
+	({	static _c; \
+		while( ((_mystr).len) && ((_c=(_mystr).s[(_mystr).len-1]))==0 || _c=='\r' || _c=='\n') \
+			(_mystr).len--; \
+	})
+
 /* converts a str to an u. short, returns the u. short and sets *err on 
  * error and if err!=null
  * */

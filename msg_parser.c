@@ -13,10 +13,10 @@
 #include "ut.h"
 #include "error.h"
 #include "dprint.h"
-#include "mem.h"
+#include "mem/mem.h"
 
 #ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
+#include <mem/dmalloc.h>
 #endif
 
 
@@ -54,7 +54,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	   token 
         */
 	if (len <=16 ) {
-		LOG(L_INFO, "ERROR: parse_first_line: message too short\n");
+		LOG(L_INFO, "ERROR: parse_first_line: message too short: %d\n", len);
 		goto error1;
 	}
 
@@ -131,8 +131,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 		if (s1>='0' && s1<='9' && 
 		    s2>='0' && s2<='9' &&
 		    s3>='0' && s3<='9' ) {
-			fl->u.reply.statusclass=s1-'0';
-			fl->u.reply.statuscode=fl->u.reply.statusclass*100+10*(s2-'0')+(s3-'0');
+			fl->u.reply.statuscode=(s1-'0')*100+10*(s2-'0')+(s3-'0');
 		} else {
 			LOG(L_INFO, "ERROR:parse_first_line: status_code non-numerical: %s\n",
 				second );
@@ -278,6 +277,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			goto error;
 	}
 
+	/* jku: if \r covered by current length, shrink it */
+	trim_r( hdr->body );
 	return tmp;
 error:
 	DBG("get_hdr_field: error exit\n");
@@ -806,7 +807,10 @@ void free_sip_msg(struct sip_msg* msg)
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
 	pkg_free(msg->orig);
-	pkg_free(msg->buf);
+	/* don't free anymore -- now a pointer to a static buffer */
+#	ifdef DYN_BUF
+	pkg_free(msg->buf); */
+#	endif
 }
 
 

@@ -13,12 +13,17 @@
 #include "../../globals.h"
 #include "../../udp_server.h"
 #include "../../msg_translator.h"
-#include "../../mem.h"
+#include "../../mem/mem.h"
 
 struct s_table;
 struct timer;
 struct entry;
 struct cell;
+
+extern struct cell         *T;
+extern unsigned int     global_msg_id;
+extern struct s_table*  hash_table;
+
 
 #include "sh_malloc.h"
 
@@ -27,12 +32,41 @@ struct cell;
 #include "sip_msg.h"
 
 
-/* already defined in msg_parser.h
-#define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
+
+/* convenience short-cut macros */
+#define REQ_METHOD first_line.u.request.method_value
+#define REPLY_STATUS first_line.u.reply.statuscode
+#define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
+#define SEND_BUFFER( _rb ) ({ if ((_rb)->retr_buffer) \
+	{ udp_send( (_rb)->retr_buffer, \
+	  (_rb)->bufflen, (struct sockaddr*)&((_rb)->to) , \
+	  sizeof(struct sockaddr_in) ); \
+	} else \
+	DBG("ERROR: attempt to send an empty buffer from %s (%d)", \
+	__FUNCTION__, __LINE__ ); })
+
+
+/* to avoid too many locks/unlocks, we gave up using separate locks
+   for cells and use those of transaction table entries
 */
 
-/* maximumum length of localy generated acknowledgement */
-#define MAX_ACK_LEN 1024
+#define DBG_REF(_action, _t) DBG("DEBUG: XXXXX %s (%s:%d): T=%p , ref=%d\n",\
+			(_action), __FUNCTION__, __LINE__, (_t),(_t)->ref_counter);
+
+#define unref_T(_T_cell) \
+	( {\
+		lock( hash_table->entrys[(_T_cell)->hash_index].mutex );\
+		(_T_cell)->ref_counter--;\
+		DBG_REF("unref", (_T_cell)); \
+		unlock( hash_table->entrys[(_T_cell)->hash_index].mutex );\
+	} );
+
+/* we assume that ref_T is only called from places where
+   the associated locks are set up and we don't need to
+   lock/unlock
+*/
+#define ref_T(_T_cell) ({ ((_T_cell)->ref_counter++); \
+		DBG_REF("ref", (_T_cell));	})
 
 
 int   tm_startup();
@@ -107,7 +141,8 @@ int t_retransmit_reply( struct sip_msg *, char* , char* );
 int t_send_reply( struct sip_msg * , unsigned int , char *  );
 
 
-
+/* releases T-context */
+int t_unref( struct sip_msg* p_msg, char* foo, char* bar );
 
 
 

@@ -23,9 +23,9 @@
 #include "route.h"
 #include "udp_server.h"
 #include "globals.h"
-#include "mem.h"
+#include "mem/mem.h"
 #ifdef SHM_MEM
-#include "shm_mem.h"
+#include "mem/shm_mem.h"
 #endif
 #include "sr_module.h"
 #include "timer.h"
@@ -33,9 +33,7 @@
 
 #include <signal.h>
 
-#ifdef STATS
 #include "stats.h"
-#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -71,6 +69,9 @@ static char flags[]=
 #endif
 #ifdef PKG_MALLOC
 ", PKG_MALLOC"
+#endif
+#ifdef VQ_MALLOC
+", VQ_MALLOC"
 #endif
 #ifdef USE_SHM_MEM
 ", USE_SHM_MEM"
@@ -170,12 +171,6 @@ int process_no = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
-
-#ifdef PKG_MALLOC
-char mem_pool[PKG_MEM_POOL_SIZE];
-struct qm_block* mem_block;
-#endif
-
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
@@ -332,7 +327,7 @@ int main_loop()
 static void sig_usr(int signo)
 {
 	DPrint("INT received, program terminates\n");
-	if (signo==SIGINT) {	/* exit gracefuly */
+	if (signo==SIGINT || signo==SIGPIPE) {	/* exit gracefuly */
 #ifdef STATS
 		/* print statistics on exit only for the first process */
 
@@ -380,6 +375,7 @@ static void sig_usr(int signo)
 }
 
 
+void test();
 
 int main(int argc, char** argv)
 {
@@ -396,11 +392,19 @@ int main(int argc, char** argv)
 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
 		goto error;
 	}
+	/* if we debug and write to a pipe, we want to exit nicely too */
+	if (signal(SIGPIPE, sig_usr) == SIG_ERR ) {
+		DPrint("ERROR: no SIGINT signal handler can be installed\n");
+		goto error;
+	}
 
 	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
 		goto error;
 	}
+
+	//memtest();
+	//hashtest();
 
 
 	/* process command line (get port no, cfg. file path etc) */
@@ -522,21 +526,9 @@ int main(int argc, char** argv)
 	}
 
 	/*init mallocs (before parsing cfg !)*/
-#ifdef PKG_MALLOC
-	/*init mem*/
-	mem_block=qm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
-	if (mem_block==0){
-		LOG(L_CRIT, "could not initialize memory pool\n");
+	if (init_mallocs()==-1)
 		goto error;
-	}
-#endif
 
-#ifdef SHM_MEM
-	if (shm_mem_init()<0) {
-		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
-		goto error;
-	}
-#endif
 	/*init timer, before parsing the cfg!*/
 	if (init_timer()<0){
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
@@ -641,3 +633,4 @@ error:
 	return -1;
 
 }
+

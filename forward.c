@@ -21,19 +21,13 @@
 #include "globals.h"
 #include "data_lump.h"
 #include "ut.h"
-#include "mem.h"
+#include "mem/mem.h"
 #include "msg_translator.h"
 #include "sr_module.h"
+#include "stats.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
-#endif
-
-#define MAX_VIA_LINE_SIZE      240
-#define MAX_RECEIVED_SIZE  57
-
-#ifdef STATS
-#include "stats.h"
 #endif
 
 
@@ -79,15 +73,11 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 				sizeof(struct sockaddr_in))==-1){
 			p->errors++;
 			p->ok=0;
-#ifdef STATS
-			update_fail_on_send;
-#endif
+			STATS_TX_DROPS;
 			goto error;
 	}
-#ifdef STATS
 	/* sent requests stats */
-	else update_sent_request( msg->first_line.u.request.method_value );
-#endif
+	else STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
 	free(buf);
 	free(to);
 	/* received_buf & line_buf will be freed in receiv_msg by free_lump_list*/
@@ -189,15 +179,10 @@ int forward_reply(struct sip_msg* msg)
 	if (udp_send(new_buf,new_len, (struct sockaddr*) to,
 					sizeof(struct sockaddr_in))==-1)
 	{
-#ifdef STATS
-		update_fail_on_send;
-#endif
+		STATS_TX_DROPS;
 		goto error;
 	}
-#ifdef STATS
-	else update_sent_response(  msg->first_line.u.reply.statusclass );
-#endif
-
+	else STATS_TX_RESPONSE(  msg->first_line.u.reply.statusclass );
 	free(new_buf);
 	free(to);
 skip:

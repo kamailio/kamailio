@@ -1,5 +1,5 @@
 /*
- *  $Id
+ *  $Id $
  */
 
 
@@ -12,8 +12,6 @@
 
 #define CFG_FILE "./ser.cfg"
 
-/* receive buffer size */
-#define BUF_SIZE 65507
 
 /* maximum number of addresses on which we will listen */
 #define MAX_LISTEN 16
@@ -47,11 +45,29 @@
 /*used only if PKG_MALLOC is defined*/
 #define PKG_MEM_POOL_SIZE 1024*1024
 
-/*used is SH_MEM is defined*/
+/*used if SH_MEM is defined*/
 #define SHM_MEM_SIZE 128*1024*1024
 
 #define TIMER_TICK 1
 #define LONG_SLEEP	3600
 
+/* dimensioning buckets in q_malloc */
+/* size of the size2bucket table; everything beyond that asks for
+   a variable-size kilo-bucket
+ */
+#define MAX_FIXED_BLOCK         3072
+/* distance of kilo-buckets */
+#define BLOCK_STEP                      512
+/* maximum number of possible buckets */
+#define MAX_BUCKET		15
+
+/* receive buffer size -- preferably set low to
+   avoid terror of excessively huge messages
+*/
+#define BUF_SIZE (MAX_FIXED_BLOCK-32)
+
+/* forwarding */
+#define MAX_VIA_LINE_SIZE	240
+#define MAX_RECEIVED_SIZE	57
 
 #endif

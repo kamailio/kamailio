@@ -3,7 +3,7 @@
  * simple & fast malloc library
  */
 
-#ifndef q_malloc_h
+#if !defined(q_malloc_h) && !defined(VQ_MALLOC)
 #define q_malloc_h
 
 

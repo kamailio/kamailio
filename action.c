@@ -15,7 +15,7 @@
 #include "msg_parser.h"
 #include "ut.h"
 #include "sr_module.h"
-#include "mem.h"
+#include "mem/mem.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

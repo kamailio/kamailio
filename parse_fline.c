@@ -1123,7 +1123,7 @@ char* parse_fline(char* buffer, char* end, struct msg_start* fl)
 skip:
 	if (fl->type==SIP_REPLY){
 		fl->u.reply.statuscode=stat;
-		fl->u.reply.statusclass=stat/100;
+		/* fl->u.reply.statusclass=stat/100; */
 	}
 	return tmp;
 	

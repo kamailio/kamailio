@@ -5,17 +5,16 @@
  *
  */
 
-
+#include <stdio.h>
+#include <string.h>
+#include <netdb.h>
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
-#include "sip_msg.h"
-#include <stdio.h>
-#include <string.h>
-#include <netdb.h>
 
+#include "sip_msg.h"
 #include "h_table.h"
 #include "t_funcs.h"
 
@@ -40,7 +39,8 @@ static struct module_exports nm_exports= {
 				"t_forward_uri",
 				"t_send_reply",
 				"t_retransmit_reply",
-				"t_release"
+				"t_release",
+				"t_unref"
 			},
 	(cmd_function[]){
 					t_add_transaction,
@@ -50,7 +50,8 @@ static struct module_exports nm_exports= {
 					t_forward_uri,
 					w_t_send_reply,
 					t_retransmit_reply,
-					w_t_release
+					w_t_release,
+					t_unref
 					},
 	(int[]){
 				0,
@@ -59,6 +60,7 @@ static struct module_exports nm_exports= {
 				1,
 				0,
 				2,
+				0,
 				0,
 				0
 			},
@@ -70,9 +72,10 @@ static struct module_exports nm_exports= {
 				0,
 				fixup_t_send_reply,
 				0,
-				0
+				0,
+				0,
 		},
-	8,
+	9,
 	(response_function) t_on_reply_received,
 	(destroy_function) tm_shutdown
 };

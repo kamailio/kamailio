@@ -6,7 +6,6 @@
 #include <errno.h>
 
 #include "lock.h"
-#include "globals.h"
 #include "timer.h"
 #include "../../dprint.h"
 
@@ -209,19 +208,22 @@ tryagain:
     }
    return r;
 }
-
+/*
 int init_cell_lock( struct cell *cell )
 {
+*/
 	/* just advice which of the available semaphores to use;
 		shared with the lock belonging to the next hash entry lock
             (so that there are no collisions if one wants to try to
              lock on a cell as well as its list)
 
         */
+/*
 	cell->mutex.semaphore_set=entry_semaphore,
 	cell->mutex.semaphore_index=(cell->hash_index % sem_nr + 1)%sem_nr;
 
 }
+*/
 
 int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 {
@@ -249,13 +251,18 @@ int init_retr_timer_lock( struct s_table* hash_table, enum retransmission_lists 
 }
 */
 
+/*
 int release_cell_lock( struct cell *cell )
 {
+*/
 	/* don't do anything here -- the init_*_lock procedures
 	   just advised on usage of shared semaphores but did not
 	   generate them
 	*/
+/*
 }
+*/
+
 int release_entry_lock( struct entry *entry )
 {
 	/* the same as above */

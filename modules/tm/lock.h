@@ -10,7 +10,6 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-#include "globals.h"
 
 /* typedef to structure we use for mutexing;
    currently, index to a semaphore set identifier now */
@@ -21,6 +20,7 @@ typedef struct {
 
 
 #include "h_table.h"
+#include "timer.h"
 
 /* Uni*x permissions for IPC */
 #define IPC_PERMISSIONS 0666
@@ -36,7 +36,7 @@ int change_semaphore( ser_lock_t s  , int val );
 
 int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* hash_table, struct entry *entry );
-int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id);
+// int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id);
 //int init_retr_timer_lock( struct s_table* hash_table, enum retransmission_lists list_id );
 
 int release_cell_lock( struct cell *cell );

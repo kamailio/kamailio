@@ -84,7 +84,7 @@ struct msg_start{
 			str version;
 			str status;
 			str reason;
-			unsigned short statusclass, statuscode;
+			unsigned short /* statusclass,*/ statuscode;
 		}reply;
 	}u;
 };

@@ -5,7 +5,7 @@
 
 #include "sip_msg.h"
 #include "../../dprint.h"
-#include "../../mem.h"
+#include "../../mem/mem.h"
 
 char*   translate_pointer( char* new_buf , char *org_buf , char* p);
 struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_body *org_via);
@@ -445,7 +445,6 @@ void sh_free_hdr_field_lst(struct hdr_field* hf)
 
 
 
-/*only the content*/
 void sip_msg_free_1(struct sip_msg* msg)
 {
    if (!msg) return;
@@ -694,23 +693,7 @@ struct via_body* via_body_cloner_2( char* new_buf , char *org_buf , struct via_b
    return new_via;
 }
 
-
-
-
-
-
-
 void sip_msg_free_2(struct sip_msg* msg)
 {
    sh_free( (char*)msg );
 }
-
-
-
-
-
-
-
-
-
-

@@ -2,7 +2,7 @@
  * $Id$
  */
 
-
+#include "hash_func.h"
 #include "h_table.h"
 #include "../../dprint.h"
 #include "sh_malloc.h"
@@ -12,53 +12,39 @@
   */
 void free_cell( struct cell* dead_cell )
 {
-   int i;
-   struct retrans_buff* rb;
-   char *b;
+	int i;
+	struct retrans_buff* rb;
+	char *b;
 
-   DBG("DEBUG: free_cell: start\n");
-   /* UA Server */
-   DBG("DEBUG: free_cell: inbound request %p\n",dead_cell->inbound_request);
-   if ( dead_cell->inbound_request )
-      sip_msg_free( dead_cell->inbound_request );
-   DBG("DEBUG: free_cell: outbound response %p\n",dead_cell->outbound_response);
-   if ( dead_cell->outbound_response )
-   {
-      b = dead_cell->outbound_response->retr_buffer ;
-      dead_cell->outbound_response->retr_buffer = NULL;
-      sh_free( b );
+	DBG("DEBUG: free_cell: start\n");
+	/* UA Server */
+	DBG("DEBUG: free_cell: inbound request %p\n",dead_cell->inbound_request);
+	if ( dead_cell->inbound_request )
+		sip_msg_free( dead_cell->inbound_request );
+	DBG("DEBUG: free_cell: outbound response %p\n",dead_cell->outbound_response);
+	if (b=dead_cell->outbound_response.retr_buffer) sh_free( b );
 
-      rb = dead_cell->outbound_response;
-      dead_cell->outbound_response = NULL;
-      sh_free( rb );
-
-   }
-
-  /* UA Clients */
-   for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
-   {
-      /* outbound requests*/
-      DBG("DEBUG: free_cell: outbound_request[%d] %p\n",i,dead_cell->outbound_request[i]);
-      if ( dead_cell->outbound_request[i] )
-      {
-	 b = dead_cell->outbound_request[i]->retr_buffer;
-         dead_cell->outbound_request[i]->retr_buffer = NULL;
-         sh_free( b );
-
-	 rb = dead_cell->outbound_request[i];
-	 dead_cell->outbound_request[i] = NULL;
-         sh_free( rb );
-      }
-      /* outbound requests*/
-      DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
-      if ( dead_cell -> inbound_response[i] )
-         sip_msg_free( dead_cell->inbound_response[i] );
-   }
-   /* mutex */
-   release_cell_lock( dead_cell );
-   /* the cell's body */
-   sh_free( dead_cell );
-   DBG("DEBUG: free_cell: done\n");
+	/* UA Clients */
+	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
+	{
+		/* outbound requests*/
+		DBG("DEBUG: free_cell: outbound_request[%d] %p\n",i,dead_cell->outbound_request[i]);
+		if ( rb=dead_cell->outbound_request[i] )
+      		{
+			if (rb->retr_buffer) sh_free( rb->retr_buffer );
+	 		dead_cell->outbound_request[i] = NULL;
+         		sh_free( rb );
+      		}
+      		/* outbound requests*/
+      		DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
+      		if ( dead_cell -> inbound_response[i] )
+         		sip_msg_free( dead_cell->inbound_response[i] );
+   	}
+   	/* mutex */
+   	/* release_cell_lock( dead_cell ); */
+   	/* the cell's body */
+   	sh_free( dead_cell );
+   	DBG("DEBUG: free_cell: done\n");
 }
 
 
@@ -123,7 +109,7 @@ struct s_table* init_hash_table()
 
    /* inits the timers*/
    for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
-      init_timerlist_lock( hash_table, i );
+      init_timer_list( hash_table, i );
 
    return  hash_table;
 
@@ -182,7 +168,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    new_cell->T_canceled  = T_UNDEFINED;
    new_cell->T_canceler  = T_UNDEFINED;
 
-   init_cell_lock(  new_cell );
+   /* init_cell_lock(  new_cell ); */
 
    DBG("DEBUG: build_cell : done\n");
    return new_cell;

@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 
 #include "msg_translator.h"
-#include "mem.h"
+#include "mem/mem.h"
 #include "dprint.h"
 #include "config.h"
 #include "md5utils.h"
@@ -556,7 +556,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
 				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
 				hdr->type==HDR_CSEQ )
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) ;
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
 
@@ -592,7 +592,9 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 			memcpy( p , msg->orig+(hdr->name.s-msg->buf) ,
 					((hdr->body.s+hdr->body.len ) -
 					hdr->name.s ) );
-			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
+			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) ;
+			memcpy( p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
 		}
 
 	memcpy( p, CRLF, CRLF_LEN );

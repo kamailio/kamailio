@@ -15,10 +15,10 @@
 #include "config.h"
 #include "dprint.h"
 #include "receive.h"
-#include "mem.h"
+#include "mem/mem.h"
 
 #ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
+#include <mem/dmalloc.h>
 #endif
 
 int udp_sock;
@@ -151,9 +151,15 @@ error:
 int udp_rcv_loop()
 {
 	unsigned len;
+#ifdef DYN_BUF
 	char* buf;
+#else
+	char buf [BUF_SIZE+1];
+#endif
+
 	struct sockaddr* from;
 	int fromlen;
+
 
 	from=(struct sockaddr*) malloc(sizeof(struct sockaddr));
 	if (from==0){
@@ -162,12 +168,14 @@ int udp_rcv_loop()
 	}
 
 	for(;;){
+#ifdef DYN_BUF
 		buf=pkg_malloc(BUF_SIZE+1);
 		if (buf==0){
 			LOG(L_ERR, "ERROR: udp_rcv_loop: could not allocate receive"
 					 " buffer\n");
 			goto error;
 		}
+#endif
 		fromlen=sizeof(struct sockaddr);
 		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, from, &fromlen);
 		if (len==-1){
@@ -203,7 +211,6 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 	int n;
 
 /*	struct sockaddr_in a2;*/
-/*
 #ifndef NO_DEBUG
 #define MAX_IP_LENGTH 18
 	char ip_txt[MAX_IP_LENGTH];
@@ -227,8 +234,9 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 
 	DBG(" destination: IP=%s, port=%u; packet:\n", ip_txt, p);
 	DBG(" destination (hex): IP=%x, port=%x;\n", a->sin_addr.s_addr, a->sin_port );
-	DBG("%*s\n", len, buf );
-#endif*/
+	DBG(" packet: {%*s...}\n", 24, buf );
+	/* DBG("%*s\n", len, buf ); */
+#endif
 /*
 	memset(&a2, 0, sizeof(struct sockaddr_in));
 	a2.sin_family = a->sin_family;

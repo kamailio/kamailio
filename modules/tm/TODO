@@ -7,22 +7,9 @@ Things we have omitted for now:
 - no SIP-wise HF comparison within T-matching
   (just memcmp)
 - 6xx should be delayed indeed
+- relaying CANCEL should be delayed until a reply to
+  INVITE received if not yet
 - ACK of 2xx INV caching (avoid e2e retransmission
   of an ACK hit the proxy too)
-- timers (408)
 
-- Via:
-	- branch
-		- loop check
-		- hash table & index
-		- branch
-	- mid & response routing
-
-- T-language
-
-To improve:
-- too many memcpies
-- faster syncing
-
-Double-check: revire the T-state-machine
 To-do: semaphore clean-up on exit (even better: w/sibling check)

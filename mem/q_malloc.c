@@ -2,29 +2,29 @@
  *
  */
 
+#if !defined(q_malloc) && !(defined VQ_MALLOC)
 #define q_malloc
-#ifdef q_malloc
 
 #include "q_malloc.h"
-#include "dprint.h"
+#include "../dprint.h"
 
 
-/*usefull macros*/
+/*useful macros*/
 #define FRAG_END(f)  \
-			((struct qm_frag_end*)((char*)(f)+sizeof(struct qm_frag)+ \
-								   (f)->size))
+	((struct qm_frag_end*)((char*)(f)+sizeof(struct qm_frag)+ \
+	   (f)->size))
 
 #define FRAG_NEXT(f) \
-			((struct qm_frag*)((char*)(f)+sizeof(struct qm_frag)+(f)->size+ \
-							   sizeof(struct qm_frag_end)))
+	((struct qm_frag*)((char*)(f)+sizeof(struct qm_frag)+(f)->size+ \
+	   sizeof(struct qm_frag_end)))
 			
 #define FRAG_PREV(f) \
-		( (struct qm_frag*) ( ((char*)(f)-sizeof(struct qm_frag_end))- \
-		((struct qm_frag_end*)((char*)(f)-sizeof(struct qm_frag_end)))->size- \
-			sizeof(struct qm_frag) ) )
+	( (struct qm_frag*) ( ((char*)(f)-sizeof(struct qm_frag_end))- \
+	((struct qm_frag_end*)((char*)(f)-sizeof(struct qm_frag_end)))->size- \
+	   sizeof(struct qm_frag) ) )
 
 #define PREV_FRAG_END(f) \
-		((struct qm_frag_end*)((char*)(f)-sizeof(struct qm_frag_end)))
+	((struct qm_frag_end*)((char*)(f)-sizeof(struct qm_frag_end)))
 
 #ifdef DBG_QM_MALLOC
 #define ST_CHECK_PATTERN   0xf0f0f0f0
@@ -162,6 +162,9 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 	unsigned int overhead;
 	
 #ifdef DBG_QM_MALLOC
+	unsigned int list_cntr;
+
+	list_cntr = 0;
 	DBG("qm_malloc(%x, %d) called from %s: %s(%d)\n", qm, size, file, func,
 			line);
 #endif
@@ -171,6 +174,10 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 	if (qm->free_lst.u.nxt_free==&(qm->free_lst)) return 0;
 	/*search for a suitable free frag*/
 	for (f=qm->free_lst.u.nxt_free; f!=&(qm->free_lst); f=f->u.nxt_free){
+#ifdef DBG_QM_MALLOC
+		list_cntr++;
+#endif
+		
 		if (f->size>=size){
 			/* we found it!*/
 			/*detach it from the free list*/
@@ -220,8 +227,8 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 			f->check=ST_CHECK_PATTERN;
 		/*  FRAG_END(f)->check1=END_CHECK_PATTERN1;
 			FRAG_END(f)->check2=END_CHECK_PATTERN2;*/
-	DBG("qm_malloc(%x, %d) returns address %x\n", qm, size,
-			(char*)f+sizeof(struct qm_frag) );
+	DBG("qm_malloc(%x, %d) returns address %x on %d -th hit\n", qm, size,
+			(char*)f+sizeof(struct qm_frag), list_cntr );
 #endif
 			return (char*)f+sizeof(struct qm_frag);
 		}
@@ -318,6 +325,8 @@ void qm_status(struct qm_block* qm)
 	int i;
 
 	LOG(L_INFO, "qm_status (%x):\n", qm);
+	if (!qm) return;
+
 	LOG(L_INFO, " heap size= %d\n", qm->size);
 	LOG(L_INFO, " used= %d, used+overhead=%d, free=%d\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);

@@ -11,15 +11,12 @@
 #include "msg_parser.h"
 #include "forward.h"
 #include "action.h"
-#include "mem.h"
+#include "mem/mem.h"
+#include "stats.h"
 
 
 #ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
-#endif
-
-#ifdef STATS
-#include "stats.h"
+#include <mem/dmalloc.h>
 #endif
 
 unsigned int msg_no=0;
@@ -78,10 +75,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 			goto error;
 		}
 		DBG("succesfully ran routing scripts...\n");
-#ifdef STATS
-		/* jku -- update request statistics  */
-		else update_received_request(msg->first_line.u.request.method_value );
-#endif
+		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
 	}else if (msg->first_line.type==SIP_REPLY){
 		DBG("msg= reply\n");
 		/* sanity checks */
@@ -97,10 +91,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 		/* check if via1 == us */
 
-#ifdef STATS
-		/* jku -- update statistics  */
-		update_received_response( msg->first_line.u.reply.statusclass );
-#endif
+		STATS_RX_RESPONSE ( msg->first_line.u.reply.statusclass );
 		
 		/* send the msg */
 		if (forward_reply(msg)==0){
@@ -120,23 +111,19 @@ skip:
 	free_sip_msg(msg);
 	pkg_free(msg);
 #ifdef STATS
-	if (skipped) update_received_drops;
+	if (skipped) STATS_RX_DROPS;
 #endif
 	return 0;
 error:
 	DBG("error:...\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
-#ifdef STATS
-	update_received_drops;
-#endif
+	STATS_RX_DROPS;
 	return -1;
 error1:
 	if (msg) pkg_free(msg);
 	pkg_free(buf);
-#ifdef STATS
-	update_received_drops;
-#endif
+	STATS_RX_DROPS;
 	return -1;
 }
 

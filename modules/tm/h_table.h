@@ -12,6 +12,7 @@
 #include <arpa/inet.h>
 
 #include "../../msg_parser.h"
+#include "config.h"
 
 struct s_table;
 struct entry;
@@ -25,25 +26,8 @@ struct timer;
 #include "sip_msg.h"
 
 
-
-/* always use a power of 2 for hash table size */
-#define TABLE_ENTRIES  256
-#define MAX_FORK           20
-
-
 #define T_UNDEFINED 	( (struct cell*) -1 )
 #define T_NULL		( (struct cell*) 0 )
-
-
-/* timer list: includes head, tail and protection semaphore */
-typedef struct  timer
-{
-   struct timer_link *first_tl;
-   struct timer_link *last_tl;
-   ser_lock_t             mutex;
-   void                      (*timeout_handler)(void*);
-} timer_type;
-
 
 
 
@@ -59,15 +43,22 @@ typedef struct retrans_buff
    size_t tolen;
 
    /* a message can be linked just to retransmission and FR list */
-   struct timer_link tl[2];
+   struct timer_link retr_timer;
+   struct timer_link fr_timer;
+/*
    unsigned int timeout_ceiling;
    unsigned int timeout_value;
+*/
 
    /*the cell that containes this retrans_buff*/
    struct cell* my_T;
+
+	enum lists retr_list;
+
 }retrans_buff_type;
 
 
+/* transaction context */
 
 typedef struct cell
 {
@@ -76,7 +67,9 @@ typedef struct cell
    struct cell*     prev_cell;
 
    /*sync data */
-   ser_lock_t   mutex;
+   /*
+	/* we use hash table mutexes now */
+   /* ser_lock_t   mutex; */
    int       ref_counter;
 
    /* cell payload data */
@@ -96,7 +89,7 @@ typedef struct cell
    /* usefull data */
    /* UA Server */
    struct sip_msg         *inbound_request;
-   struct retrans_buff   *outbound_response;
+   struct retrans_buff   outbound_response;
    unsigned int             status;
    str*                             tag;
    unsigned int             inbound_request_isACKed;
@@ -106,6 +99,11 @@ typedef struct cell
    struct retrans_buff   *outbound_request[ MAX_FORK ];
    struct sip_msg          *inbound_response[ MAX_FORK ];
    unsigned int             outbound_request_isACKed[MAX_FORK];
+
+#ifdef	EXTRA_DEBUG
+	/* scheduled for deletion ? */
+	short damocles;
+#endif
 }cell_type;
 
 
@@ -123,7 +121,7 @@ typedef struct entry
 
 
 
-/* hash table */
+/* transaction table */
 struct s_table
 {
    /* table of hash entries; each of them is a list of synonyms  */
@@ -133,16 +131,11 @@ struct s_table
 };
 
 
-
-
-
 struct s_table* init_hash_table();
-void                  free_hash_table( struct s_table* hash_table );
-
-void             free_cell( struct cell* dead_cell );
+void free_hash_table( struct s_table* hash_table );
+void free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
-
-void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell );
-void    insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cell );
+void remove_from_hash_table( struct s_table *hash_table, struct cell * p_cell );
+void insert_into_hash_table( struct s_table *hash_table, struct cell * p_cell );
 
 #endif

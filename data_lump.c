@@ -4,7 +4,7 @@
 
 #include "data_lump.h"
 #include "dprint.h"
-#include "mem.h"
+#include "mem/mem.h"
 
 #include <stdlib.h>
 

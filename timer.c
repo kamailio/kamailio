@@ -6,8 +6,9 @@
 #include "dprint.h"
 #include "error.h"
 #include "config.h"
+#include "mem/mem.h"
 #ifdef SHM_MEM
-#include "shm_mem.h"
+#include "mem/shm_mem.h"
 #endif
 
 #include <stdlib.h>

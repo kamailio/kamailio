@@ -6,7 +6,7 @@
 #ifdef SHM_MEM
 
 #include "shm_mem.h"
-#include "config.h"
+#include "../config.h"
 
 #ifdef  SHM_MMAP
 
@@ -37,9 +37,15 @@
 #ifndef SHM_MMAP
 static int shm_shmid=-1; /*shared memory id*/
 #endif
+
+
 int shm_semid=-1; /*semaphore id*/
 static void* shm_mempool=(void*)-1;
-struct qm_block* shm_block;
+#ifdef VQ_MALLOC
+	struct vqm_block* shm_block;
+#else
+	struct qm_block* shm_block;
+#endif
 
 
 
@@ -110,7 +116,11 @@ int shm_mem_init()
 		return -1;
 	}
 	/* init it for malloc*/
-	shm_block=qm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+#	ifdef VQ_MALLOC
+		shm_block=vqm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+#	else
+		shm_block=qm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+#	endif
 	if (shm_block==0){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not initialize shared"
 				" malloc\n");

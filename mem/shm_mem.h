@@ -25,10 +25,21 @@
 
 
 
-#include "q_malloc.h"
-#include "dprint.h"
+#include "../dprint.h"
 
-extern struct qm_block* shm_block;
+#ifdef VQ_MALLOC
+#	include "vq_malloc.h"
+	extern struct vqm_block* shm_block;
+#	define MY_MALLOC vqm_malloc
+#	define MY_FREE vqm_free
+#	define MY_STATUS vqm_status
+#else
+#	include "q_malloc.h"
+	extern struct qm_block* shm_block;
+#	define MY_MALLOC qm_malloc
+#	define MY_FREE qm_free
+#	define MY_STATUS qm_status
+#endif
 extern int shm_semid;
 
 int shm_mem_init();
@@ -94,7 +105,7 @@ again:
 	\
 	/*if (shm_lock()==0){*/\
 		shm_lock();\
-		p=qm_malloc(shm_block, (size), __FILE__, __FUNCTION__, __LINE__);\
+		p=MY_MALLOC(shm_block, (size), __FILE__, __FUNCTION__, __LINE__);\
 		shm_unlock();\
 	/* \
 	}else{ \
@@ -108,7 +119,7 @@ again:
 #define shm_free(p) \
 do { \
 		shm_lock(); \
-		qm_free(shm_block, (p), __FILE__, __FUNCTION__, __LINE__); \
+		MY_FREE(shm_block, (p), __FILE__, __FUNCTION__, __LINE__); \
 		shm_unlock(); \
 }while(0)
 
@@ -122,7 +133,7 @@ do { \
 	\
 	/*if (shm_lock()==0){*/\
 		shm_lock();\
-		p=qm_malloc(shm_block, (size));\
+		p=MY_MALLOC(shm_block, (size));\
 		shm_unlock();\
 	/* \
 	}else{ \
@@ -136,7 +147,7 @@ do { \
 #define shm_free(p) \
 do { \
 		shm_lock(); \
-		qm_free(shm_block, (p)); \
+		MY_FREE(shm_block, (p)); \
 		shm_unlock(); \
 }while(0)
 
@@ -147,7 +158,7 @@ do { \
 #define shm_status() \
 do { \
 		shm_lock(); \
-		qm_status(shm_block); \
+		MY_STATUS(shm_block); \
 		shm_unlock(); \
 }while(0)
 

@@ -28,8 +28,8 @@ jku: added support to deal with vectors
 #include "md5global.h"
 #include "md5.h"
 #include "md5utils.h"
-
 #include "dprint.h"
+#include "ut.h"
 
 
 static void MDString PROTO_LIST ((char *));
@@ -45,13 +45,38 @@ static void MDString PROTO_LIST ((char *));
  */
 void MDStringArray (char *dst, str src[], int size)
 {
-  MD_CTX context;
-  unsigned char digest[16];
-  int i;
+	MD_CTX context;
+	unsigned char digest[16];
+ 	int i;
+	int len;
+	char *s;
 
-  MDInit (&context);
-  for (i=0; i<size; i++) {
-  	MDUpdate (&context, src[i].s, src[i].len);
+/*
+#	ifdef EXTRA_DEBUG
+	int j;
+	int sum;
+#endif
+*/
+
+	MDInit (&context);
+	for (i=0; i<size; i++) {
+		trim_len( len, s, src[i] );
+/*
+#		ifdef EXTRA_DEBUG
+		fprintf(stderr, "EXTRA_DEBUG: %d. (%d) {", i+1, len);
+		sum=0;
+		for (j=0; j<len; j++) {
+			fprintf( stderr, "%c ", *(s+j));
+			sum+=*(s+j);
+		}
+		for (j=0; j<len; j++) {
+			fprintf( stderr, "%d ", *(s+j));
+			sum+=*(s+j);
+		}
+		fprintf(stderr, " [%d]\n", sum );	
+#		endif
+*/
+  		MDUpdate (&context, s, len);
   }
   MDFinal (digest, &context);
 

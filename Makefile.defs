@@ -44,8 +44,16 @@ ARCH = $(shell uname -s)
 #		extra error checking (trying to free the same pointer
 #		twice, trying to free a pointer alloc'ed with a different
 #		malloc etc.)
+# -DVQ_MALLOC
+#		additional option to PKG_MALLOC which utilizes a fater then
+#		qm version
+#
+
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
+	-DEXTRA_DEBUG \
+	-DVQ_MALLOC 
+	  #-DDBG_QM_MALLOC #-DVQ_MALLOC #-DNO_DEBUG
 	  #-DNO_DEBUG #-DDBG_QM_MALLOC
 #-DEXTRA_DEBUG
 # -DUSE_SHM_MEM
@@ -54,9 +62,9 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
 #-DNO_LOG
 
-PROFILE=  #-pg #set this if you want profiling
-#mode = debug
-mode = release
+PROFILE=  -pg #set this if you want profiling
+mode = debug
+#mode = release
 
 # platform dependent settings
 
