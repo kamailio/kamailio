@@ -170,7 +170,7 @@ int timer_pdomain(pdomain_t* _d)
 		     /* Remove the entire record
 		      * if it is empty
 		      */
-		if (ptr->watchers == 0) {
+		if (ptr->watchers == 0 && ptr->winfo_watchers==0) {
 			t = ptr;
 			ptr = ptr->next;
 			remove_presentity(_d, t);
@@ -234,7 +234,7 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	int sl;
 
-	LOG(L_WARN, "add_presentity p_uri=%.*s\n", _p->uri.len, _p->uri.s);
+	LOG(L_WARN, "add_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 
 	sl = hash_func(_d, _p->uri.s, _p->uri.len);
 
@@ -244,5 +244,7 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 
 void remove_presentity(pdomain_t* _d, struct presentity* _p)
 {
+	return;
+	LOG(L_WARN, "remove_presentity _p=%p p_uri=%.*s\n", _p, _p->uri.len, _p->uri.s);
 	slot_rem(_p->slot, _p, &_d->first, &_d->last);
 }

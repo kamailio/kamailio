@@ -34,6 +34,7 @@
 #include "../../str.h"
 #include "../../dprint.h"
 #include "../../trim.h"
+#include "../../parser/parse_event.h"
 #include "pa_mod.h"
 #include "lpidf.h"
 #include "xpidf.h"
@@ -41,6 +42,8 @@
 #include "common.h"
 #include "paerrno.h"
 #include "notify.h"
+#include "watcher.h"
+#include "location.h"
 
 
 #define CONTENT_TYPE "Content-Type: "
@@ -55,17 +58,23 @@
 #define WINFO_TEXT "presence.winfo"
 #define WINFO_TEXT_L (sizeof(WINFO_TEXT) - 1)
 
+#define XCAP_CHANGE_TEXT "xcap-change"
+#define XCAP_CHANGE_TEXT_L (sizeof(XCAP_CHANGE_TEXT) - 1)
+
 #define CONT_TYPE_XPIDF "application/xpidf+xml"
 #define CONT_TYPE_XPIDF_L  (sizeof(CONT_TYPE_XPIDF) - 1)
 
 #define CONT_TYPE_LPIDF "text/lpidf"
 #define CONT_TYPE_LPIDF_L (sizeof(CONT_TYPE_LPIDF) - 1)
 
-#define CONT_TYPE_PIDF "application/pidf+xml"
+#define CONT_TYPE_PIDF "application/cpim-pidf+xml"
 #define CONT_TYPE_PIDF_L (sizeof(CONT_TYPE_PIDF) - 1)
 
 #define CONT_TYPE_WINFO "application/watcherinfo+xml"
 #define CONT_TYPE_WINFO_L (sizeof(CONT_TYPE_WINFO) - 1)
+
+#define CONT_TYPE_XCAP_CHANGE "application/xcap-change+xml"
+#define CONT_TYPE_XCAP_CHANGE_L (sizeof(CONT_TYPE_XCAP_CHANGE) - 1)
 
 #define SUBSCRIPTION_STATE "Subscription-State: "
 #define SUBSCRIPTION_STATE_L (sizeof(SUBSCRIPTION_STATE) - 1)
@@ -152,6 +161,9 @@ static inline int add_event_hf(str* _h, int _l, int accept)
 	if (accept == DOC_WINFO) {
 		event = WINFO_TEXT;
 		event_l = WINFO_TEXT_L;
+	} else if (accept == DOC_XCAP_CHANGE) {
+		event = XCAP_CHANGE_TEXT;
+		event_l = XCAP_CHANGE_TEXT_L;
 	} else {
 		event = PRESENCE_TEXT;
 		event_l = PRESENCE_TEXT_L;
@@ -212,6 +224,16 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 		}
 		str_append(_h, CONTENT_TYPE CONT_TYPE_WINFO CRLF,
 			   CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L);
+		return 0;
+
+	case DOC_XCAP_CHANGE:
+		if (_l < CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L) {
+			paerrno = PA_SMALL_BUFFER;
+			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
+			return -2;
+		}
+		str_append(_h, CONTENT_TYPE CONT_TYPE_XCAP_CHANGE CRLF,
+			   CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L);
 		return 0;
 
 	default:
@@ -446,7 +468,7 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 {
 	watcher_t *watcher = _p->watchers;
 
-	LOG(L_ERR, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
+	LOG(L_INFO, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
 	if (start_winfo_doc(&body, BUF_LEN) < 0) {
 		LOG(L_ERR, "send_winfo_notify(): start_winfo_doc failed\n");
 		return -1;
@@ -485,6 +507,85 @@ static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
+static int send_xcap_change_notify(struct presentity* _p, struct watcher* _w)
+{
+	int len = 0;
+	int presence_list_changed = _p->flags & PFLAG_PRESENCE_LISTS_CHANGED;
+	int watcherinfo_changed = _p->flags & PFLAG_WATCHERINFO_CHANGED;
+	/* clear the flag */
+	_p->flags &= ~(PFLAG_PRESENCE_LISTS_CHANGED | PFLAG_WATCHERINFO_CHANGED);
+
+	len += sprintf(body.s + len, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n");
+	len += sprintf(body.s + len, "<documents xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n");
+	if (presence_list_changed) { 
+		len += sprintf(body.s + len, "  <document uri=\"http://%.*s/presence-lists/users/%.*s/presence.xml\">\r\n",
+			       pa_domain.len, pa_domain.s, _p->uri.len, _p->uri.s);
+		len += sprintf(body.s + len, "    <change method=\"PUT\">someone@example.com</change>\r\n");
+		len += sprintf(body.s + len, "  </document>\r\n");
+	}
+	if (watcherinfo_changed) {
+		len += sprintf(body.s + len, "  <document uri=\"http://%.*s/watcherinfo/users/%.*s/watcherinfo.xml\">\r\n",
+			       pa_domain.len, pa_domain.s, _p->uri.len, _p->uri.s);
+		len += sprintf(body.s + len, "    <change method=\"PUT\">someone@example.com</change>\r\n");
+		len += sprintf(body.s + len, "  </document>\r\n");
+	}
+	len += sprintf(body.s + len, "</documents>\r\n");
+	body.len = len;
+
+	if (create_headers(_w) < 0) {
+		LOG(L_ERR, "send_location_notify(): Error while adding headers\n");
+		return -7;
+	}
+
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	return 0;
+}
+
+int send_location_notify(struct presentity* _p, struct watcher* _w)
+{
+	resource_list_t *user = _p->location_package.users;
+
+	LOG(L_ERR, "xcap_change_notify should be sent to watcher %.*s\n", 
+	    _w->uri.len, _w->uri.s);
+
+	if (location_doc_start(&body, BUF_LEN) < 0) {
+		LOG(L_ERR, "send_location_notify(): start_location_doc failed\n");
+		return -1;
+	}
+
+	if (location_doc_start_userlist(&body, BUF_LEN - body.len, &_p->uri) < 0) {
+		LOG(L_ERR, "send_location_notify(): location_add_uri failed\n");
+		return -3;
+	}
+
+	while (user) {
+		if (location_doc_add_user(&body, BUF_LEN - body.len, &user->uri) < 0) {
+			LOG(L_ERR, "send_location_notify(): location_add_watcher failed\n");
+			return -3;
+		}
+
+		user = user->next;
+	}
+
+	if (location_doc_end_resource(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_location_notify(): location_add_resource failed\n");
+		return -5;
+	}
+
+	if (location_doc_end(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_location_notify(): end_xlocation_doc failed\n");
+		return -6;
+	}
+
+	if (create_headers(_w) < 0) {
+		LOG(L_ERR, "send_location_notify(): Error while adding headers\n");
+		return -7;
+	}
+
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	return 0;
+}
+
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
 	int rc;
@@ -499,26 +600,64 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %.*s accept=%d\n", 
-	    _w->uri.len, _w->uri.s, _w->accept);
-	switch(_w->accept) {
-	case DOC_XPIDF:
-		return send_xpidf_notify(_p, _w);
-		return 0;
+	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_type=%d _w->accept=%d\n", 
+	    _w->uri.len, _w->uri.s, _p->flags, _w->event_type, _w->accept);
+	if ((_p->flags & (PFLAG_PRESENCE_CHANGED|PFLAG_WATCHERINFO_CHANGED)) 
+	    && (_w->event_type == EVENT_PRESENCE)) {
+		switch(_w->accept) {
+		case DOC_XPIDF:
+			return send_xpidf_notify(_p, _w);
+			return 0;
 
-	case DOC_LPIDF:
-		return send_lpidf_notify(_p, _w);
-		return 0;
+		case DOC_LPIDF:
+			return send_lpidf_notify(_p, _w);
+			return 0;
 
-	case DOC_PIDF:
-		return send_pidf_notify(_p, _w);
-		return 0;
+		case DOC_PIDF:
+			return send_pidf_notify(_p, _w);
+			return 0;
+		default:
+			/* inapplicable */
+		  ;
+		}
 
-	case DOC_WINFO:
-		rc = send_winfo_notify(_p, _w);
-		LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
-		return rc;
 	}
+	if ((_p->flags & PFLAG_WATCHERINFO_CHANGED) 
+	    && (_w->event_type == EVENT_PRESENCE_WINFO)) {
+		switch(_w->accept) {
+		case DOC_WINFO:
+			rc = send_winfo_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
+			return rc;
+		default:
+			/* inapplicable */
+		  ;
+		}
+	}
+	if ((_p->flags & PFLAG_XCAP_CHANGED) 
+	    && (_w->event_type == EVENT_XCAP_CHANGE)) {
+		switch(_w->accept) {
+		case DOC_XCAP_CHANGE:
+		default:
+			rc = send_xcap_change_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_xcap_change_notify returned %d\n", rc);
+			return rc;
+			/* inapplicable */
+		}
+	}
+	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
+	    && (_w->event_type == EVENT_LOCATION)) {
+		switch(_w->accept) {
+		case DOC_LOCATION:
+			rc = send_location_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_location_notify returned %d\n", rc);
+			return rc;
+		default:
+			/* inapplicable */
+		  ;
+		}
+	}
+
 
 	return -1;
 }

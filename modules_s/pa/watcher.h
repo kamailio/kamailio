@@ -38,9 +38,11 @@
 
 typedef enum doctype {
 	DOC_XPIDF = 0,
-	DOC_LPIDF,
-	DOC_PIDF,
-	DOC_WINFO
+	DOC_LPIDF = 1,
+	DOC_PIDF = 2,
+	DOC_WINFO = 3,
+	DOC_XCAP_CHANGE = 4,
+	DOC_LOCATION =5
 } doctype_t;
 
 
@@ -49,15 +51,22 @@ typedef enum watcher_status {
 	WS_ACTIVE
 } watcher_status_t;
 
+typedef enum wflags {
+	WFLAG_SUBSCRIPTION_CHANGED
+} wflags_t;
+
 /*
  * Structure representing a watcher
  */
 typedef struct watcher {
+	str display_name;       /* Display Name of watcher */
 	str uri;                /* Uri of the watcher */
 	time_t expires;         /* Absolute of the expiration */
+	int event_type;         /* event package being watched */
 	doctype_t accept;       /* Type of document accepted by the watcher */
 	dlg_t* dialog;          /* Dialog handle */
 	str s_id;               /* id of this watcherinfo statement */
+	wflags_t flags;
 	watcher_status_t status; /* status of subscription */
 	struct watcher* next;   /* Next watcher in the list */
 } watcher_t;
@@ -67,7 +76,8 @@ typedef struct watcher {
  * Create a new watcher structure
  */
 struct presentity;
-int new_watcher(struct presentity *_p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w);
+int new_watcher(struct presentity *_p, str* _uri, time_t _e, int event_type, doctype_t _a, dlg_t* _dlg, str *display_name, 
+		watcher_t** _w);
 
 
 /*

@@ -42,7 +42,7 @@
 #define PUBLIC_ID "//IETF//DTD RFCxxxx PIDF 1.0//EN"
 #define PUBLIC_ID_L (sizeof(PUBLIC_ID) - 1)
 
-#define MIME_TYPE "application/pidf+xml"
+#define MIME_TYPE "application/cpim-pidf+xml"
 #define MIME_TYPE_L (sizeof(MIME_TYPE) - 1)
 
 #define XML_VERSION "<?xml version=\"1.0\"?>"
@@ -72,61 +72,67 @@
 #define TUPLE_STAG "<tuple id=\"9r28r49\">"
 #define TUPLE_STAG_L (sizeof(TUPLE_STAG) - 1)
 
-#define ADDRESS_STAG "<contact priority=\"0.8\">"
+#define ADDRESS_STAG "  <contact>"
 #define ADDRESS_STAG_L (sizeof(ADDRESS_STAG) - 1)
 
-#define STATUS_OPEN "<status><basic>open</basic></status>"
-#define STATUS_OPEN_L (sizeof(STATUS_OPEN) - 1)
+#define STATUS_STAG "  <status>"
+#define STATUS_STAG_L (sizeof(STATUS_STAG) - 1)
 
-#define STATUS_CLOSED "<status><basic>closed</basic></status>"
-#define STATUS_CLOSED_L (sizeof(STATUS_CLOSED) - 1)
+#define STATUS_ETAG "  </status>"
+#define STATUS_ETAG_L (sizeof(STATUS_ETAG) - 1)
 
-#define STATUS_INUSE "<status><basic>inuse</basic></status>"
-#define STATUS_INUSE_L (sizeof(STATUS_INUSE) - 1)
+#define BASIC_OPEN "    <basic>open</basic>\r\n"
+#define BASIC_OPEN_L (sizeof(BASIC_OPEN) - 1)
 
-#define LOCATION_STAG "<location>"
+#define BASIC_CLOSED "    <basic>closed</basic>\r\n"
+#define BASIC_CLOSED_L (sizeof(BASIC_CLOSED) - 1)
+
+#define BASIC_INUSE "    <basic>inuse</basic>\r\n"
+#define BASIC_INUSE_L (sizeof(BASIC_INUSE) - 1)
+
+#define LOCATION_STAG "    <geopriv><location-info><civilAddress>"
 #define LOCATION_STAG_L (sizeof(LOCATION_STAG) - 1)
 
-#define LOCATION_ETAG "</location>"
+#define LOCATION_ETAG "    </civilAddress></location-info></geopriv>"
 #define LOCATION_ETAG_L (sizeof(LOCATION_ETAG) - 1)
 
-#define LOC_STAG "<loc>"
+#define LOC_STAG "      <loc>"
 #define LOC_STAG_L (sizeof(LOC_STAG) - 1)
 
 #define LOC_ETAG "</loc>"
 #define LOC_ETAG_L (sizeof(LOC_ETAG) - 1)
 
-#define SITE_STAG "<site>"
+#define SITE_STAG "      <site>"
 #define SITE_STAG_L (sizeof(SITE_STAG) - 1)
 
 #define SITE_ETAG "</site>"
 #define SITE_ETAG_L (sizeof(SITE_ETAG) - 1)
 
-#define FLOOR_STAG "<floor>"
+#define FLOOR_STAG "      <floor>"
 #define FLOOR_STAG_L (sizeof(FLOOR_STAG) - 1)
 
 #define FLOOR_ETAG "</floor>"
 #define FLOOR_ETAG_L (sizeof(FLOOR_ETAG) - 1)
 
-#define ROOM_STAG "<room>"
+#define ROOM_STAG "      <room>"
 #define ROOM_STAG_L (sizeof(ROOM_STAG) - 1)
 
 #define ROOM_ETAG "</room>"
 #define ROOM_ETAG_L (sizeof(ROOM_ETAG) - 1)
 
-#define X_STAG "<x>"
+#define X_STAG "      <x>"
 #define X_STAG_L (sizeof(X_STAG) - 1)
 
 #define X_ETAG "</x>"
 #define X_ETAG_L (sizeof(X_ETAG) - 1)
 
-#define Y_STAG "<y>"
+#define Y_STAG "      <y>"
 #define Y_STAG_L (sizeof(Y_STAG) - 1)
 
 #define Y_ETAG "</y>"
 #define Y_ETAG_L (sizeof(Y_ETAG) - 1)
 
-#define RADIUS_STAG "<radius>"
+#define RADIUS_STAG "      <radius>"
 #define RADIUS_STAG_L (sizeof(RADIUS_STAG) - 1)
 
 #define RADIUS_ETAG "</radius>"
@@ -198,33 +204,21 @@ int start_pidf_tuple(str* _b, int _l)
 int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st)
 {
 	int len = 0;
-	char* p;
+	char* basic;
 
 	switch(_st) {
-	case PIDF_ST_OPEN:   p = STATUS_OPEN;   len = STATUS_OPEN_L;   break;
-	case PIDF_ST_CLOSED: p = STATUS_CLOSED; len = STATUS_CLOSED_L; break;
-	case PIDF_ST_INUSE:  p = STATUS_INUSE;  len = STATUS_INUSE_L;  break;
-	default:              p = STATUS_CLOSED; len = STATUS_CLOSED_L; break; /* Makes gcc happy */
-	}
-
-	if (_l < (ADDRESS_STAG_L + 
-		  _addr->len + 
-		  ADDRESS_ETAG_L + 
-		  CRLF_L +
-		  len + 
-		  CRLF_L
-		 )
-	   ) {
-		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "pidf_add_address(): Buffer too small\n");
-		return -1;
+	case PIDF_ST_OPEN:   basic = BASIC_OPEN;   len = BASIC_OPEN_L;   break;
+	case PIDF_ST_CLOSED: basic = BASIC_CLOSED; len = BASIC_CLOSED_L; break;
+	case PIDF_ST_INUSE:  basic = BASIC_INUSE;  len = BASIC_INUSE_L;  break;
+	default:              basic = BASIC_CLOSED; len = BASIC_CLOSED_L; break; /* Makes gcc happy */
 	}
 
 	str_append(_b, ADDRESS_STAG, ADDRESS_STAG_L);
 	str_append(_b, _addr->s, _addr->len);
 	str_append(_b, ADDRESS_ETAG CRLF , 
 		   ADDRESS_ETAG_L + CRLF_L);
-	str_append(_b, p, len);
+	str_append(_b, STATUS_STAG CRLF, STATUS_STAG_L + CRLF_L);
+	str_append(_b, basic, len);
 	return 0;
 }
 
@@ -233,52 +227,53 @@ int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st)
  */
 int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double _x, double _y, double _radius)
 {
-	str_append(_b, CRLF LOCATION_STAG, CRLF_L + LOCATION_STAG_L);
+	str_append(_b, LOCATION_STAG, LOCATION_STAG_L);
 
 	if (_loc->len) {
-		str_append(_b, CRLF LOC_STAG, CRLF_L + LOC_STAG_L);
+		str_append(_b, LOC_STAG, LOC_STAG_L);
 		str_append(_b, _loc->s, _loc->len);
-		str_append(_b, CRLF LOC_ETAG, CRLF_L + LOC_ETAG_L);
+		str_append(_b, LOC_ETAG CRLF, LOC_ETAG_L + CRLF_L);
 	}
 	if (_site->len) {
-		str_append(_b, CRLF SITE_STAG, CRLF_L + SITE_STAG_L);
+		str_append(_b, SITE_STAG, SITE_STAG_L);
 		str_append(_b, _site->s, _site->len);
-		str_append(_b, CRLF SITE_ETAG, CRLF_L + SITE_ETAG_L);
+		str_append(_b, SITE_ETAG CRLF, SITE_ETAG_L + CRLF_L);
 	}
 	if (_floor->len) {
-		str_append(_b, CRLF FLOOR_STAG, CRLF_L + FLOOR_STAG_L);
+		str_append(_b, FLOOR_STAG, FLOOR_STAG_L);
 		str_append(_b, _floor->s, _floor->len);
-		str_append(_b, CRLF FLOOR_ETAG, CRLF_L + FLOOR_ETAG_L);
+		str_append(_b, FLOOR_ETAG CRLF, FLOOR_ETAG_L + CRLF_L);
 	}
 	if (_room->len) {
-		str_append(_b, CRLF ROOM_STAG, CRLF_L + ROOM_STAG_L);
+		str_append(_b, ROOM_STAG, ROOM_STAG_L);
 		str_append(_b, _room->s, _room->len);
-		str_append(_b, CRLF ROOM_ETAG, CRLF_L + ROOM_ETAG_L);
+		str_append(_b, ROOM_ETAG CRLF, ROOM_ETAG_L + CRLF_L);
 	}
 
 	if (_x) {
 		char buf[128];
 		int len = sprintf(buf, "%g", _x);
-		str_append(_b, CRLF X_STAG, CRLF_L + X_STAG_L);
+		str_append(_b, X_STAG, X_STAG_L);
 		str_append(_b, buf, len);
-		str_append(_b, CRLF X_ETAG, CRLF_L + X_ETAG_L);
+		str_append(_b, X_ETAG CRLF, X_ETAG_L + CRLF_L);
 	}
 	if (_y) {
 		char buf[128];
 		int len = sprintf(buf, "%g", _y);
-		str_append(_b, CRLF Y_STAG, CRLF_L + Y_STAG_L);
+		str_append(_b, Y_STAG, Y_STAG_L);
 		str_append(_b, buf, len);
-		str_append(_b, CRLF Y_ETAG, CRLF_L + Y_ETAG_L);
+		str_append(_b, Y_ETAG CRLF, Y_ETAG_L + CRLF_L);
 	}
 	if (_radius) {
 		char buf[128];
 		int len = sprintf(buf, "%g", _radius);
-		str_append(_b, CRLF RADIUS_STAG, CRLF_L + RADIUS_STAG_L);
+		str_append(_b, RADIUS_STAG, RADIUS_STAG_L);
 		str_append(_b, buf, len);
-		str_append(_b, CRLF RADIUS_ETAG, CRLF_L + RADIUS_ETAG_L);
+		str_append(_b, RADIUS_ETAG CRLF, RADIUS_ETAG_L + CRLF_L);
 	}
 
 	str_append(_b, LOCATION_ETAG CRLF, CRLF_L + LOCATION_ETAG_L);
+	str_append(_b, STATUS_ETAG CRLF, STATUS_ETAG_L + CRLF_L);
 	return 0;
 }
 
@@ -377,6 +372,15 @@ xmlAttrPtr xmlNodeGetAttrByName(xmlNodePtr node, const char *name)
 	return NULL;
 }
 
+char *xmlNodeGetAttrContentByName(xmlNodePtr node, const char *name)
+{
+     xmlAttrPtr attr = xmlNodeGetAttrByName(node, name);
+     if (attr)
+	  return xmlNodeGetContent(attr->children);
+     else
+	  return NULL;
+}
+
 xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
 {
 	xmlNodePtr cur = node->children;
@@ -411,6 +415,16 @@ xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns)
 	return xmlNodeGetNodeByName(cur, name, ns);
 }
 
+char *xmlDocGetNodeContentByName(xmlDocPtr doc, const char *name, const char *ns)
+{
+	xmlNodePtr node = xmlDocGetNodeByName(doc, name, ns);
+	if (node)
+		return xmlNodeGetContent(node->children);
+	else
+		return NULL;
+}
+
+
 void xmlNodeMapByName(xmlNodePtr node, const char *name, const char *ns, 
 		      void (f)(xmlNodePtr, void*), void *data)
 {
@@ -438,106 +452,86 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 
 void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location_str,
 		str *site_str, str *floor_str, str *room_str,
-		double *xp, double *yp, double *radiusp)
+		double *xp, double *yp, double *radiusp,
+		str *packet_loss_str)
 {
-	xmlDocPtr doc = NULL;
-	xmlNodePtr presence = NULL;
-	xmlAttrPtr sipuri = NULL;
-	xmlNodePtr contact = NULL;
-	xmlNodePtr basic = NULL;
-	xmlNodePtr location = NULL;
-	xmlNodePtr site = NULL;
-	xmlNodePtr floor = NULL;
-	xmlNodePtr room = NULL;
-	xmlNodePtr x = NULL;
-	xmlNodePtr y = NULL;
-	xmlNodePtr radius = NULL;
-	char *sipuri_text = NULL;
-	char *contact_text = NULL;
-	char *basic_text = NULL;
-	char *location_text = NULL;
-	char *site_text = NULL;
-	char *floor_text = NULL;
-	char *room_text = NULL;
-	char *x_text = NULL;
-	char *y_text = NULL;
-	char *radius_text = NULL;
+     xmlDocPtr doc = NULL;
+     xmlNodePtr presenceNode = NULL;
+     char *presence = NULL;
+     char *sipuri = NULL;
+     char *contact = NULL;
+     char *basic = NULL;
+     char *location = NULL;
+     char *site = NULL;
+     char *floor = NULL;
+     char *room = NULL;
+     char *x = NULL;
+     char *y = NULL;
+     char *radius = NULL;
+     char *packet_loss = NULL;
 
-	doc = event_body_parse(pidf_body);
+     doc = event_body_parse(pidf_body);
 
-	presence = xmlDocGetNodeByName(doc, "presence", NULL);
-	contact = xmlDocGetNodeByName(doc, "contact", NULL);
-	basic = xmlDocGetNodeByName(doc, "basic", NULL);
-	location = xmlDocGetNodeByName(doc, "loc", NULL);
-	site = xmlDocGetNodeByName(doc, "site", NULL);
-	floor = xmlDocGetNodeByName(doc, "floor", NULL);
-	room = xmlDocGetNodeByName(doc, "room", NULL);
-	x = xmlDocGetNodeByName(doc, "x", NULL);
-	y = xmlDocGetNodeByName(doc, "y", NULL);
-	radius = xmlDocGetNodeByName(doc, "radius", NULL);
-	LOG(L_INFO, "presence=%p contact=%p basic=%p location=%p site=%p floor=%p room=%p\n", 
-	    presence, contact, basic, location, site, floor, room);
+     presenceNode = xmlDocGetNodeByName(doc, "presence", NULL);
+     presence = xmlDocGetNodeContentByName(doc, "presence", NULL);
+     contact = xmlDocGetNodeContentByName(doc, "contact", NULL);
+     basic = xmlDocGetNodeContentByName(doc, "basic", NULL);
+     location = xmlDocGetNodeContentByName(doc, "loc", NULL);
+     site = xmlDocGetNodeContentByName(doc, "site", NULL);
+     floor = xmlDocGetNodeContentByName(doc, "floor", NULL);
+     room = xmlDocGetNodeContentByName(doc, "room", NULL);
+     x = xmlDocGetNodeContentByName(doc, "x", NULL);
+     y = xmlDocGetNodeContentByName(doc, "y", NULL);
+     radius = xmlDocGetNodeContentByName(doc, "radius", NULL);
+     packet_loss = xmlDocGetNodeContentByName(doc, "packet-loss", NULL);
+		
+     if (presenceNode)
+	  sipuri = xmlNodeGetAttrContentByName(presenceNode, "entity");
 
-	sipuri = xmlNodeGetAttrByName(presence, "entity");
-	if (sipuri)
-		sipuri_text = xmlNodeGetContent(sipuri->children);
-	if (contact)
-		contact_text = xmlNodeGetContent(contact->children);
-	if (basic)
-		basic_text = xmlNodeGetContent(basic->children);
-	if (location)
-		location_text = xmlNodeGetContent(location->children);
-	if (site)
-		site_text = xmlNodeGetContent(site->children);
-	if (floor)
-		floor_text = xmlNodeGetContent(floor->children);
-	if (room)
-		room_text = xmlNodeGetContent(room->children);
-	if (x)
-		x_text = xmlNodeGetContent(x->children);
-	if (y)
-		y_text = xmlNodeGetContent(y->children);
-	if (radius)
-		radius_text = xmlNodeGetContent(radius->children);
+     LOG(L_INFO, "parse_pidf: sipuri=%p:%s contact=%p:%s basic=%p:%s location=%p:%s\n",
+	 sipuri, sipuri, contact, contact, basic, basic, location, location);
+     LOG(L_INFO, "parse_pidf: site=%p:%s floor=%p:%s room=%p:%s\n",
+	 site, site, floor, floor, room, room);
+     LOG(L_INFO, "parse_pidf: x=%p:%s y=%p:%s radius=%p:%s\n",
+	 x, x, y, y, radius, radius);
+     if (packet_loss)
+	  LOG(L_INFO, "packet_loss=%p:%s\n", packet_loss, packet_loss);
 
-	LOG(L_INFO, "parse_pidf: sipuri=%p:%s contact=%p:%s basic=%p:%s location=%p:%s\n",
-	    sipuri, sipuri_text, contact, contact_text, basic, basic_text, location, location_text);
-	LOG(L_INFO, "parse_pidf: site=%p:%s floor=%p:%s room=%p:%s\n",
-	    site, site_text, floor, floor_text, room, room_text);
-	LOG(L_INFO, "parse_pidf: x=%p:%s y=%p:%s radius=%p:%s\n",
-	    x, x_text, y, y_text, radius, radius_text);
-
-	if (contact_str && contact) {
-		contact_str->len = strlen(contact_text);
-		contact_str->s = strdup(contact_text);
-	}
-	if (basic_str && basic) {
-		basic_str->len = strlen(basic_text);
-		basic_str->s = strdup(basic_text);
-	}
-	if (location_str && location) {
-		location_str->len = strlen(location_text);
-		location_str->s = strdup(location_text);
-	}
-	if (site_str && site) {
-		site_str->len = strlen(site_text);
-		site_str->s = strdup(site_text);
-	}
-	if (floor_str && floor) {
-		floor_str->len = strlen(floor_text);
-		floor_str->s = strdup(floor_text);
-	}
-	if (room_str && room) {
-		room_str->len = strlen(room_text);
-		room_str->s = strdup(room_text);
-	}
-	if (xp && x) {
-		*xp = strtod(x_text, NULL);
-	}
-	if (yp && y) {
-		*yp = strtod(y_text, NULL);
-	}
-	if (radiusp && radius) {
-		*radiusp = strtod(radius_text, NULL);
-	}
+     if (contact_str && contact) {
+	  contact_str->len = strlen(contact);
+	  contact_str->s = strdup(contact);
+     }
+     if (basic_str && basic) {
+	  basic_str->len = strlen(basic);
+	  basic_str->s = strdup(basic);
+     }
+     if (location_str && location) {
+	  location_str->len = strlen(location);
+	  location_str->s = strdup(location);
+     }
+     if (site_str && site) {
+	  site_str->len = strlen(site);
+	  site_str->s = strdup(site);
+     }
+     if (floor_str && floor) {
+	  floor_str->len = strlen(floor);
+	  floor_str->s = strdup(floor);
+     }
+     if (room_str && room) {
+	  room_str->len = strlen(room);
+	  room_str->s = strdup(room);
+     }
+     if (xp && x) {
+	  *xp = strtod(x, NULL);
+     }
+     if (yp && y) {
+	  *yp = strtod(y, NULL);
+     }
+     if (radiusp && radius) {
+	  *radiusp = strtod(radius, NULL);
+     }
+     if (packet_loss_str && packet_loss) {
+	  packet_loss_str->len = strlen(packet_loss);
+	  packet_loss_str->s = strdup(packet_loss);
+     }
 }

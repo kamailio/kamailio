@@ -63,9 +63,14 @@ struct tm_binds tmb;
 db_con_t* pa_db; /* Database connection handle */
 int use_db = 0;
 str db_url;
+int use_place_table = 0;
+str pa_domain;
 char *presentity_table = "presentity";
 char *watcherinfo_table = "watcherinfo";
-
+char *place_table = "place";
+int use_bsearch = 0;
+int use_location_package = 0;
+int new_watcher_pending = 0;
 
 /*
  * Exported functions
@@ -83,12 +88,18 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[]={
-	{"default_expires", INT_PARAM, &default_expires  },
-	{"timer_interval",  INT_PARAM, &timer_interval   },
+	{"default_expires", INT_PARAM, &default_expires   },
+	{"timer_interval",  INT_PARAM, &timer_interval    },
 	{"use_db",          INT_PARAM, &use_db            },
+	{"use_place_table", INT_PARAM, &use_place_table   },
+	{"use_bsearch",     INT_PARAM, &use_bsearch       },
+	{"use_location_package", INT_PARAM, &use_location_package },
 	{"db_url",          STR_PARAM, &db_url.s          },
+	{"pa_domain",       STR_PARAM, &pa_domain.s       },
 	{"presentity_table", STR_PARAM, &presentity_table },
 	{"watcherinfo_table", STR_PARAM, &watcherinfo_table },
+	{"place_table",     STR_PARAM, &place_table },
+	{"new_watcher_pending", INT_PARAM, &new_watcher_pending },
 	{0, 0, 0}
 };
 
@@ -145,10 +156,22 @@ static int pa_mod_init(void)
 	     /* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
+	LOG(L_CRIT, "db_url=%p\n", db_url.s);
+	LOG(L_CRIT, "db_url=%s\n", db_url.s);
 	db_url.len = strlen(db_url.s);
-	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s len=%d db_url=%*.s\n", use_db, db_url.s, db_url.len, 
-	    db_url.len, db_url.s);
+	LOG(L_CRIT, "db_url.len=%d\n", db_url.len);
+	if (pa_domain.s == NULL)
+	  pa_domain.s = "sip.handhelds.org";
+	LOG(L_CRIT, "pa_domain=%s\n", pa_domain.s);
+	pa_domain.len = strlen(pa_domain.s);
+	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s len=%d db_url=%*.s pa_domain=%*.s\n", use_db, db_url.s, db_url.len, 
+	    db_url.len, db_url.s, 
+	    pa_domain.len, pa_domain.s);
 	if (use_db) {
+		if (!db_url.len) {
+			LOG(L_ERR, "pa_mod_init(): no db_url specified but use_db=1\n");
+			return -1;
+		}
 		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
 			LOG(L_ERR, "pa_mod_init(): Can't bind database module via url %s\n", db_url.s);
 			return -1;
@@ -163,6 +186,7 @@ static int pa_mod_init(void)
 			LOG(L_ERR, "pa_mod_init(): Database connection opened successfuly\n");
 		}
 	}
+	pa_location_init();
 
 	LOG(L_CRIT, "pa_mod_init done\n");
 	return 0;

@@ -67,41 +67,47 @@ static doctype_t acc;
  * contact will be NULL if user is offline
  * fixme:locking
  */
-void callback(str* _user, str *_contact, int state, void* data)
+void callback(str* _user, int state, void* data)
 {
-	presentity_t *presentity;
-	presence_tuple_t *tuple = NULL;
-	int orig;
+     presentity_t *presentity;
 
-	presentity = (struct presentity*)data;
-	LOG(L_ERR, "callback: presentity=%p %.*s contact=%p:%.*s\n",
-	    presentity, presentity->uri.len, presentity->uri.s, _contact,
-	    (_contact ? _contact->len : 0), (_contact ? _contact->s : ""));
-	if (_contact) {
-		// lock_pdomain(presentity->pdomain);
+     presentity = (struct presentity*)data;
+     LOG(L_ERR, "callback: presentity=%p uri=%.*s\n",
+	 presentity, presentity->uri.len, presentity->uri.s);
 
-		find_presence_tuple(_contact, presentity, &tuple);
-		if (!tuple) {
-			new_presence_tuple(_contact, presentity, &tuple);
-			add_presence_tuple(presentity, tuple);
-		};
+#if 0 /* if we have usrloc call us with _contact, execute this code */
+     {
+	  presence_tuple_t *tuple = NULL;
+	  int orig;
+	  LOG(L_ERR, "callback: contact=%p:%.*s\n",
+	      _contact, (_contact ? _contact->len : 0), (_contact ? _contact->s : ""));
+	  if (0 && _contact) {
+	       // lock_pdomain(presentity->pdomain);
 
-		orig = tuple->state;
+	       find_presence_tuple(_contact, presentity, &tuple);
+	       if (!tuple) {
+		    new_presence_tuple(_contact, presentity, &tuple);
+		    add_presence_tuple(presentity, tuple);
+	       };
 
-		if (state == 0) {
-			tuple->state = PS_OFFLINE;
-		} else {
-			tuple->state = PS_ONLINE;
-		}
+	       orig = tuple->state;
 
-		db_update_presentity(presentity);
+	       if (state == 0) {
+		    tuple->state = PS_OFFLINE;
+	       } else {
+		    tuple->state = PS_ONLINE;
+	       }
 
-		if (orig != state) {
-			notify_watchers(presentity);
-		}
+	       db_update_presentity(presentity);
 
-		// unlock_pdomain(presentity->pdomain);
-	}
+	       if (orig != state) {
+		    presentity->flags |= PFLAG_PRESENCE_CHANGED;
+	       }
+
+	       // unlock_pdomain(presentity->pdomain);
+	  }
+     }
+#endif
 }
 
 /*
@@ -137,6 +143,7 @@ int get_pres_uri(struct sip_msg* _m, str* _puri)
 		_puri->s = _m->first_line.u.request.uri.s;
 		_puri->len = _m->first_line.u.request.uri.len;
 	}
+	LOG(L_ERR, "get_pres_uri: _puri=%.*s\n", _puri->len, _puri->s);
 	
 	if (extract_plain_uri(_puri) < 0) {
 		LOG(L_ERR, "get_pres_uri(): Error while extracting plain URI\n");
@@ -147,10 +154,12 @@ int get_pres_uri(struct sip_msg* _m, str* _puri)
 }
 
 
-static int get_watch_uri(struct sip_msg* _m, str* _wuri)
+static int get_watch_uri(struct sip_msg* _m, str* _wuri, str *_dn)
 {
 	_wuri->s = get_from(_m)->uri.s;
 	_wuri->len = get_from(_m)->uri.len;
+	_dn->s = get_from(_m)->body.s;
+	_dn->len = get_from(_m)->body.len;
 
 	if (extract_plain_uri(_wuri) < 0) {
 		LOG(L_ERR, "get_watch_uri(): Error while extracting plain URI\n");
@@ -186,7 +195,8 @@ int parse_accept(struct hdr_field* _h, doctype_t* _a)
 		memcpy(buffer, _h->body.s, _h->body.len);
 		buffer[_h->body.len] = '\0';
 	
-		if (strstr(buffer, "application/pidf+xml")) {
+		if (strstr(buffer, "application/cpim-pidf+xml")
+		    || strstr(buffer, "application/pidf+xml")) {
 			*_a = DOC_PIDF;
 		} else if (strstr(buffer, "application/xpidf+xml")) {
 			*_a = DOC_XPIDF;
@@ -194,6 +204,10 @@ int parse_accept(struct hdr_field* _h, doctype_t* _a)
 			*_a = DOC_LPIDF;
 		} else if (strstr(buffer, "application/watcherinfo+xml")) {
 			*_a = DOC_WINFO;
+		} else if (strstr(buffer, "application/xcap-change+xml")) {
+			*_a = DOC_XCAP_CHANGE;
+		} else if (strstr(buffer, "application/location+xml")) {
+			*_a = DOC_LOCATION;
 		} else {
 			*_a = DOC_XPIDF;
 		}
@@ -270,7 +284,8 @@ int check_message(struct sip_msg* _m)
 		event = (event_t*)(_m->event->parsed);
 
 		if ((event->parsed != EVENT_PRESENCE)
-		    && (event->parsed != EVENT_PRESENCE_WINFO)) {
+		    && (event->parsed != EVENT_PRESENCE_WINFO)
+		    && (event->parsed != EVENT_XCAP_CHANGE)) {
 			paerrno = PA_EVENT_UNSUPP;
 			LOG(L_ERR, "check_message(): Unsupported event package event=%p et=%d len=%d\n",
 			    event, event->parsed, event->text.len);
@@ -291,6 +306,7 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	time_t e;
 	dlg_t* dialog;
 	str watch_uri;
+	str watch_dn;
 	event_t *event = NULL;
 	int et = 0;
 	if (_m->event) {
@@ -316,12 +332,12 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	/* Convert to absolute time */
 	e += act_time;
 
-	if (get_watch_uri(_m, &watch_uri) < 0) {
+	if (get_watch_uri(_m, &watch_uri, &watch_dn) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while extracting watcher URI\n");
 		return -1;
 	}
 
-	if (new_presentity(_d, _puri, _p) < 0) {
+	if (new_presentity(_d, _puri, et, _p) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}
@@ -333,15 +349,15 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return -3;
 	}
 
-	if (et == EVENT_PRESENCE) {
-		if (add_watcher(*_p, &watch_uri, e, acc, dialog, _w) < 0) {
+	if (et != EVENT_PRESENCE_WINFO) {
+		if (add_watcher(*_p, &watch_uri, e, et, acc, dialog, &watch_dn, _w) < 0) {
 			LOG(L_ERR, "create_presentity(): Error while adding a watcher\n");
 			tmb.free_dlg(dialog);
 			free_presentity(*_p);
 			return -4;
 		}
 	} else if (et == EVENT_PRESENCE_WINFO) {
-		if (add_winfo_watcher(*_p, &watch_uri, e, acc, dialog, _w) < 0) {
+		if (add_winfo_watcher(*_p, &watch_uri, e, et, acc, dialog, &watch_dn, _w) < 0) {
 			LOG(L_ERR, "create_presentity(): Error while adding a winfo watcher\n");
 			tmb.free_dlg(dialog);
 			free_presentity(*_p);
@@ -364,6 +380,7 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	time_t e;
 	dlg_t* dialog;
 	str watch_uri;
+	str watch_dn;
 	event_t *event = NULL;
 	int et = 0;
 	if (_m->event) {
@@ -379,12 +396,12 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		e = default_expires;
 	}
 
-	if (get_watch_uri(_m, &watch_uri) < 0) {
+	if (get_watch_uri(_m, &watch_uri, &watch_dn) < 0) {
 		LOG(L_ERR, "update_presentity(): Error while extracting watcher URI\n");
 		return -1;
 	}
 
-	if (find_watcher(_p, &watch_uri, _w) == 0) {
+	if (find_watcher(_p, &watch_uri, et, _w) == 0) {
 		if (e == 0) {
 			if (et == EVENT_PRESENCE) {
 				if (remove_watcher(_p, *_w) < 0) {
@@ -419,14 +436,14 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 				return -4;
 			}
 
-			if (et == EVENT_PRESENCE) {
-				if (add_watcher(_p, &watch_uri, e, acc, dialog, _w) < 0) {
+			if (et != EVENT_PRESENCE_WINFO) {
+				if (add_watcher(_p, &watch_uri, e, et, acc, dialog, &watch_dn, _w) < 0) {
 					LOG(L_ERR, "update_presentity(): Error while creating presentity\n");
 					tmb.free_dlg(dialog);
 					return -5;
 				}
 			} else {
-				if (add_winfo_watcher(_p, &watch_uri, e, acc, dialog, _w) < 0) {
+				if (add_winfo_watcher(_p, &watch_uri, e, et, acc, dialog, &watch_dn, _w) < 0) {
 					LOG(L_ERR, "update_presentity(): Error while creating winfo watcher\n");
 					tmb.free_dlg(dialog);
 					return -5;
@@ -493,19 +510,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 
 	if (p && w) {
-		if (send_notify(p, w) < 0) {
-			LOG(L_ERR, "handle_subscription(): Error while sending notify\n");
-			     /* FIXME: watcher and presentity should be test for removal here
-			      * (and possibly in other error cases too
-			      */
-			goto error2;
-		}
-
-		notify_winfo_watchers(p);
-
-		     /* We remove it here because a notify needs to be send first */
-		if (w->expires == 0) free_watcher(w);
-		if (p->slot == 0) free_presentity(p);
+		p->flags |= (PFLAG_WATCHERINFO_CHANGED);
+		w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
 	} else {
 		     /* FIXME: We should send a NOTIFY here too. We will end here when the
 		      * subscribe contained expires = 0; Either there is no watcher for the
@@ -518,7 +524,8 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		DBG("handle_subscription(): expires==0 but we sent no NOTIFY - not implemented yet\n");
 	}
 
-	LOG(L_ERR, "handle_subscription about to return 1\n");
+	LOG(L_ERR, "handle_subscription about to return 1: event_type=%d accept=%d\n",
+	    (w ? w->event_type : -1), (w ? w->accept : -1));
 	unlock_pdomain(d);
 	return 1;
 	
@@ -542,6 +549,14 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	struct presentity* p;
 	struct watcher* w;
 	str p_uri, w_uri;
+	str w_dn;
+	int et = 0;
+	if (_m->event) {
+		event_t *event = (event_t*)(_m->event->parsed);
+		et = event->parsed;
+	} else {
+		et = EVENT_PRESENCE;
+	}
 
 	paerrno = PA_OK;
 
@@ -558,7 +573,7 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		goto error;
 	}
 
-	if (get_watch_uri(_m, &w_uri) < 0) {
+	if (get_watch_uri(_m, &w_uri, &w_dn) < 0) {
 		LOG(L_ERR, "existing_subscription(): Error while extracting watcher URI\n");
 		goto error;
 	}
@@ -566,7 +581,7 @@ int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	lock_pdomain(d);
 	
 	if (find_presentity(d, &p_uri, &p) == 0) {
-		if (find_watcher(p, &w_uri, &w) == 0) {
+		if (find_watcher(p, &w_uri, et, &w) == 0) {
 			unlock_pdomain(d);
 			return 1;
 		}

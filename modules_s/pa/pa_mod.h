@@ -41,9 +41,14 @@ extern struct tm_binds tmb;
 
 /* PA database */
 extern int use_db;
+extern int use_place_table;
 extern str db_url;
+extern str pa_domain;
 extern char *presentity_table;
 extern char *watcherinfo_table;
-
+extern char *place_table;
+extern int use_bsearch;
+extern int use_location_package;
+extern int new_watcher_pending;
 
 #endif /* PA_MOD_H */

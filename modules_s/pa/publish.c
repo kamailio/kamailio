@@ -4,6 +4,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2003-2004 Hewlett-Packard Company
  *
  * This file is part of ser, a free SIP server.
  *
@@ -50,6 +51,7 @@
 #include "subscribe.h"
 #include "publish.h"
 #include "pidf.h"
+#include "common.h"
 
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -101,8 +103,10 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 			   struct presentity** _p)
 {
 	time_t e;
+	event_t *parsed_event;
+	int et = EVENT_OTHER;
 
-	if (_m->expires) {
+	if (_m && _m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
 	} else {
 		e = default_expires;
@@ -117,7 +121,12 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	     /* Convert to absolute time */
 	e += act_time;
 
-	if (new_presentity(_d, _puri, _p) < 0) {
+	if (_m && _m->event) {
+		parsed_event = (event_t *)_m->event->parsed;
+		et = parsed_event->parsed;
+	}
+
+	if (new_presentity(_d, _puri, et, _p) < 0) {
 		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
 		return -2;
 	}
@@ -127,10 +136,73 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	return 0;
 }
 
+int location_package_location_add_user(pdomain_t *pdomain, str *site, str *floor, str *room, presentity_t *presentity)
+{
+	str l_uri;
+	presentity_t *l_presentity = NULL;
+	resource_list_t *users = NULL;
+	int changed = 0;
+	struct sip_msg *msg = NULL;
+	l_uri.len = pa_domain.len + site->len + floor->len + room->len + 4;
+	l_uri.s = shm_malloc(l_uri.len);
+	if (!l_uri.s)
+		return -2;
+	sprintf(l_uri.s, "%s.%s.%s@%s", room->s, floor->s, site->s, pa_domain.s);
+	if (find_presentity(pdomain, &l_uri, &l_presentity) > 0) {
+		changed = 1;
+		if (create_presentity_only(msg, pdomain, &l_uri, &l_presentity) < 0) {
+			goto error;
+		}
+	}
+
+	if (!l_presentity) {
+		LOG(L_ERR, "location_package_location_add_user: failed to find or create presentity for %s\n", l_uri.s);
+		return -2;
+	}
+	if (!presentity) {
+		LOG(L_ERR, "location_package_location_add_user: was passed null presentity\n");
+		return -3;
+	}
+
+	users = l_presentity->location_package.users;
+	l_presentity->location_package.users = 
+		resource_list_append_unique(users, &presentity->uri);
+
+ error:
+	return -1;
+}
+
+int location_package_location_del_user(pdomain_t *pdomain, str *site, str *floor, str *room, presentity_t *presentity)
+{
+	str l_uri;
+	presentity_t *l_presentity = NULL;
+	resource_list_t *users;
+	struct sip_msg *msg = NULL;
+	int changed = 0;
+	l_uri.len = pa_domain.len + site->len + floor->len + room->len + 4;
+	l_uri.s = shm_malloc(l_uri.len);
+	if (!l_uri.s)
+		return -2;
+	sprintf(l_uri.s, "%s.%s.%s@%s", room->s, floor->s, site->s, pa_domain.s);
+	if (find_presentity(pdomain, &l_uri, &l_presentity) > 0) {
+		changed = 1;
+		if (create_presentity_only(msg, pdomain, &l_uri, &l_presentity) < 0) {
+			goto error;
+		}
+	}
+
+	users = l_presentity->location_package.users;
+	l_presentity->location_package.users = 
+		resource_list_remove(users, &presentity->uri);
+
+ error:
+	return -1;
+}
+
 /*
  * Update existing presentity and watcher list
  */
-static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
+static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
 {
 	char *body = get_body(_m);
 	presence_tuple_t *tuple = NULL;
@@ -140,11 +212,12 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 	str site = { NULL, 0 };
 	str floor = { NULL, 0 };
 	str room = { NULL, 0 };
+	str packet_loss = { NULL, 0 };
 	double x=0, y=0, radius=0;
 	int changed = 0;
 	int ret = 0;
 
-	parse_pidf(body, &contact, &basic, &location, &site, &floor, &room, &x, &y, &radius);
+	parse_pidf(body, &contact, &basic, &location, &site, &floor, &room, &x, &y, &radius, &packet_loss);
 	if (contact.len) {
 		find_presence_tuple(&contact, presentity, &tuple);
 		if (!tuple) {
@@ -197,6 +270,13 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 		strncpy(tuple->location.room.s, room.s, room.len);
 		tuple->location.room.s[room.len] = 0;
 	}
+	if (packet_loss.len && packet_loss.s) {
+		if (tuple->location.packet_loss.len && strcmp(tuple->location.packet_loss.s, packet_loss.s) != 0)
+			changed = 1;
+		tuple->location.packet_loss.len = packet_loss.len;
+		strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
+		tuple->location.packet_loss.s[packet_loss.len] = 0;
+	}
 	if (x) {
 		if (tuple->location.x != x)
 			changed = 1;
@@ -213,6 +293,14 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 		tuple->location.radius = radius;
 	}
 
+	if (use_location_package)
+		if (site.len && floor.len && room.len && changed) {
+			location_package_location_add_user(_d, &site, &floor, &room, presentity);
+		}
+
+	if (changed)
+		presentity->flags |= PFLAG_PRESENCE_CHANGED;
+
 	LOG(L_INFO, "publish_presentity: -3-\n");
 	if (pchanged && changed) {
 		*pchanged = 1;
@@ -227,13 +315,51 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct pre
 }
 
 /*
+ * If this xcap change is on a watcher list, then reread authorizations
+ */
+static int publish_presentity_xcap_change(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
+{
+	char *body = get_body(_m);
+	LOG(L_ERR, "publish_presentity_xcap_change: body=%p\n", body);
+	if (body) {
+		/* cheesy hack to see if it is presence-lists or watcherinfo that was changed */
+		if (strstr(body, "presence-lists"))
+			presentity->flags |= PFLAG_PRESENCE_LISTS_CHANGED;
+		if (strstr(body, "watcherinfo"))
+			presentity->flags |= PFLAG_WATCHERINFO_CHANGED;
+		presentity->flags |= PFLAG_XCAP_CHANGED;
+
+		LOG(L_ERR, "publish_presentity_xcap_change: got body, setting flags=%x", 
+		    presentity->flags);
+
+		if (pchanged)
+			*pchanged = 1;
+	}
+	return 0;
+}
+
+static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
+{
+	event_t *parsed_event = (event_t *)_m->event->parsed;
+	int event_type = parsed_event->parsed;
+	if (event_type == EVENT_PRESENCE) {
+		publish_presentity_pidf(_m, _d, presentity, pchanged);
+	} else if (event_type == EVENT_XCAP_CHANGE) {
+		publish_presentity_xcap_change(_m, _d, presentity, pchanged);
+	}
+
+	LOG(L_INFO, "publish_presentity: event_type=%d -1-\n", event_type);
+	return 0;
+}
+
+/*
  * Handle a publish Request
  */
 int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 {
 	struct pdomain* d;
 	struct presentity *p;
-	str p_uri;
+	str p_uri = { 0, NULL };
 	int changed;
 
 	get_act_time();
@@ -251,14 +377,14 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	d = (struct pdomain*)_domain;
 
-	if (get_pres_uri(_m, &p_uri) < 0 || p_uri.s == NULL) {
+	if (get_pres_uri(_m, &p_uri) < 0 || p_uri.s == NULL || p_uri.len == 0) {
 		LOG(L_ERR, "handle_publish(): Error while extracting presentity URI\n");
 		goto error;
 	}
 
 	lock_pdomain(d);
 	
-	LOG(L_ERR, "handle_publish -4- p_uri=%*.s\n", p_uri.len, p_uri.s);
+	LOG(L_ERR, "handle_publish -4- p_uri=%*.s p_uri.len=%d\n", p_uri.len, p_uri.s, p_uri.len);
 	if (find_presentity(d, &p_uri, &p) > 0) {
 		changed = 1;
 		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
@@ -270,11 +396,6 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	LOG(L_ERR, "handle_publish -5- presentity=%p\n", p);
 	if (p)
 		publish_presentity(_m, d, p, &changed);
-
-	LOG(L_ERR, "handle_publish -7- changed=%d\n", changed);
-	if (p && changed) {
-		notify_watchers(p);
-	}
 
 	unlock_pdomain(d);
 
@@ -373,7 +494,7 @@ int fifo_pa_presence(FILE *fifo, char *response_file)
 		(strcmp(presence_s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
 
 	if (origstate != newstate || allocated_presentity) {
-		notify_watchers(presentity);
+		presentity->flags |= PFLAG_PRESENCE_CHANGED;
 	}
 
 	db_update_presentity(presentity);
@@ -462,7 +583,7 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 	presentity->location.loc.len = location.len;
 
 	if (changed) {
-		notify_watchers(presentity);
+		presentity->flags |= PFLAG_PRESENCE_CHANGED;
 	}
 
 	db_update_presentity(presentity);
