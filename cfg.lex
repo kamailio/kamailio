@@ -508,7 +508,10 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{COM_LINE}.*{CR}	{ count(); } 
 
-<INITIAL>{ID}			{ count(); yylval.strval=yytext; return ID; }
+<INITIAL>{ID}			{ count(); addstr(&s_buf, yytext, yyleng); 
+									yylval.strval=s_buf.s;
+									memset(&s_buf, 0, sizeof(s_buf));
+									return ID; }
 
 
 <<EOF>>							{
