@@ -255,7 +255,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
-      buf = build_buf_from_sip_request  ( p_msg, &len);
+      buf = build_req_buf_from_sip_req( p_msg, &len);
       if (!buf)
          return -1;
       T->outbound_request[branch]->bufflen = len ;
@@ -263,7 +263,6 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       memcpy( T->outbound_request[branch]->buffer , buf , len );
       free( buf ) ;
    }/* end for the first time */
-
 
    /* sets and starts the RETRANS timer */
    T->outbound_request[branch]->nr_retrans    = 0;

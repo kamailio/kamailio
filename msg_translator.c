@@ -138,7 +138,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 
 	line_buf=pkg_malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
 	if (line_buf==0){
-		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
+		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
 		goto error1;
 	}
 /*
@@ -179,14 +179,14 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 				src[4]= ((struct cseq_body *)(msg->cseq->parsed))->number;
 
 				MDStringArray ( line_buf+via_len-1, src, 5 );
-				DBG("DEBUG: build_buf_from_sip_request: branch loop detection: %s, %s, %s, %s, %s -> %s32\n",
+				DBG("DEBUG: build_req_buf_from_sip_req: branch loop detection: %s, %s, %s, %s, %s -> %s32\n",
 					msg->from->body.s, msg->to->body.s, msg->callid->body.s, 
 					msg->first_line.u.request.uri.s,
 					((struct cseq_body *)(msg->cseq->parsed))->number.s,
 					line_buf+via_len-1 );
 				via_len+=MD5_LEN - 1;
 				
-			} else DBG("DEBUG: build_buf_from_sip_request: required HFs for loop checking missing\n");
+			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for loop checking missing\n");
 		}
 		/* someone wants me to add something to branch here ? */
 		memcpy(line_buf+via_len, msg->add_to_branch.s, msg->add_to_branch.len );
@@ -196,7 +196,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 		via_len+=CRLF_LEN;
 		line_buf[via_len]=0; /* null terminate the string*/
 	}else{
-		LOG(L_ERR, "forward_request: ERROR: via too long (%d)\n",
+		LOG(L_ERR, "build_req_buf_from_sip_req: ERROR: via too long (%d)\n",
 				via_len);
 		goto error1;
 	}
@@ -207,7 +207,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
 		received_buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 		if (received_buf==0){
-			LOG(L_ERR, "ERROR: forward_request: out of memory\n");
+			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
 			goto error1;
 		}
 		/*
@@ -260,7 +260,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 					break;
 				default:
 					/* only ADD allowed for before/after */
-					LOG(L_CRIT, "BUG:forward_request: invalid op for"
+					LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
 								" data lump (%x)\n", r->op);
 			}
 		}
@@ -289,7 +289,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 				/* do nothing */
 				break;
 			debug:
-				LOG(L_CRIT,"BUG:forward_request: invalid"
+				LOG(L_CRIT,"BUG:build_req_buf_from_sip_req: invalid"
 							" op for data lump (%x)\n", r->op);
 		}
 		for (r=t->after;r;r=r->after){
@@ -299,7 +299,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 					break;
 				default:
 					/* only ADD allowed for before/after */
-					LOG(L_CRIT, "BUG:forward_request: invalid"
+					LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid"
 								" op for data lump (%x)\n", r->op);
 			}
 		}
@@ -312,7 +312,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 	}
 	new_buf=(char*)malloc(new_len+1);
 	if (new_buf==0){
-		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
+		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
 		goto error;
 	}
 
@@ -343,7 +343,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
 									" data lump (%x)\n", r->op);
 
 					}
@@ -361,7 +361,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
 									" data lump (%x)\n", r->op);
 					}
 				}
@@ -392,7 +392,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
 									" data lump (%x)\n", r->op);
 
 					}
@@ -412,13 +412,13 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
 									" data lump (%x)\n", r->op);
 					}
 				}
 				break;
 			default:
-					LOG(L_CRIT, "BUG: forward_request: unknown op (%x)\n",
+					LOG(L_CRIT, "BUG: build_req_buf_from_sip_req: unknown op (%x)\n",
 							t->op);
 		}
 	}
@@ -478,7 +478,7 @@ char * build_res_buf_from_sip_res(struct sip_msg* msg, unsigned int *returned_le
 	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging
 											(\0 to print it )*/
 	if (new_buf==0){
-		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
+		LOG(L_ERR, "ERROR: build_res_buf_from_sip_res: out of memory\n");
 		goto error;
 	}
 	new_buf[new_len]=0; /* debug: print the message */
