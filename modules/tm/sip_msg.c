@@ -7,6 +7,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
 #include "../../ut.h"
 
 
@@ -36,7 +37,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    struct to_param   *to_prm,*new_to_prm;
    struct sip_msg     *new_msg;
    struct lump          *lump_chain, *lump_tmp, **lump_anchor, **lump_anchor2;
-   struct lump_rpl    *rpl_lump, *new_rpl_lump, **rpl_lump_anchor;
+   struct lump_rpl    *rpl_lump, **rpl_lump_anchor;
    char                       *p,*foo;
 
 
@@ -304,7 +305,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
        p+=rpl_lump->text.len;
        memcpy((*rpl_lump_anchor)->text.s,rpl_lump->text.s,rpl_lump->text.len);
        (*rpl_lump_anchor)->next=0;
-       rpl_lump_anchor = &((*rpl_lump_anchor)->next)
+       rpl_lump_anchor = &((*rpl_lump_anchor)->next);
    }
 
    return new_msg;
