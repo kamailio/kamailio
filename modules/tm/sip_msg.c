@@ -49,41 +49,37 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 	new_msg->first_line.u.reply.reason.s =  translate_pointer( new_msg->buf , org_msg->buf , org_msg->first_line.u.reply.reason.s );
     }
 
-    /* via1 (via_body* type) */
-    if (org_msg->via1)
-         new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via1 );
-
-    /* via2 (via_body* type) */
-    if (org_msg->via2)
-    {
-        if (org_msg->via1 && org_msg->via1->next )
-            new_msg->via2 = new_msg->via1->next;
-        else
-            new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via2 );
-    }
-
     /* all the headers */
-    new_msg->h_via1=0;
-    new_msg->h_via2=0;
-    for( header = org_msg->headers , last_hdr=0  ;  header;header=header->next)
+    new_msg->via1=0;
+    new_msg->via2=0;
+    for( header = org_msg->headers , last_hdr=0  ;  header ; header=header->next)
     {
 	switch ( header->type )
 	{
-	    case HDR_VIA1 :
+	    case HDR_VIA :
 		new_hdr = header_cloner( new_msg , org_msg , header );
-		new_hdr->parsed  = (void*)new_msg->via1;
-		if (new_msg->h_via1==0)
+		if ( !new_msg->via1 )
+		{
 		    new_msg->h_via1 = new_hdr;
-		else if(new_msg->h_via2==0)
-		    new_msg->h_via2 = new_hdr;
-		break;
-	    case HDR_CALLID :
-		new_hdr = header_cloner( new_msg , org_msg , header );
-		new_msg->callid = new_hdr;
-		break;
-	    case HDR_TO :
-		new_hdr = header_cloner( new_msg , org_msg , header );
-		new_msg->to = new_hdr;
+		    new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
+		    new_hdr->parsed  = (void*)new_msg->via1;
+		     if ( new_msg->via1->next )
+		        new_msg->via2 = new_msg->via1->next;
+		}
+		else if ( !new_msg->via2 && new_msg->via1 )
+		{
+		     new_msg->h_via2 = new_hdr;
+		     if ( new_msg->via1->next )
+		        new_hdr->parsed = (void*)new_msg->via1->next;
+		     else{
+		        new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
+		        new_hdr->parsed  = (void*)new_msg->via2;
+		     }
+		}
+		else if ( new_msg->via2 && new_msg->via1 )
+		{
+		    new_hdr->parsed  = new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
+		}
 		break;
 	    case HDR_FROM :
 		new_hdr = header_cloner( new_msg , org_msg , header );
@@ -99,6 +95,10 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		  ((struct cseq_body*)new_hdr->parsed)->method.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->method.s );
 		}
 		new_msg->cseq = new_hdr;
+		break;
+	    case HDR_CALLID :
+		new_hdr = header_cloner( new_msg , org_msg , header );
+		new_msg->callid = new_hdr;
 		break;
 	    case HDR_CONTACT :
 		new_hdr = header_cloner( new_msg , org_msg , header );
@@ -173,7 +173,7 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
     if ( new_via->param_lst )
     {
        struct via_param *vp, *new_vp, *last_new_vp;
-       for( vp=new_via->param_lst, last_new_vp=0 ; vp ; vp=vp->next )
+       for( vp=org_via->param_lst, last_new_vp=0 ; vp ; vp=vp->next )
        {
           new_vp = (struct via_param*)sh_malloc(sizeof(struct via_param));
           memcpy( new_vp , vp , sizeof(struct via_param));
@@ -183,7 +183,7 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
           if (new_vp->type==PARAM_BRANCH)
              new_via->branch = new_vp;
 
-        if (last_new_vp)
+          if (last_new_vp)
              last_new_vp->next = new_vp;
           else
              new_via->param_lst = new_vp;
@@ -193,7 +193,8 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
        new_via->last_param = new_vp;
     }
 
-    if ( new_via->next )
+
+    if ( org_via->next )
         new_via->next = via_body_cloner( new_buf , org_buf , org_via->next );
 
    return new_via;
@@ -334,15 +335,12 @@ void sh_clean_hdr_field(struct hdr_field* hf)
       switch(hf->type)
       {
          case HDR_VIA:
-   DBG("DEBUG: sh_clean_hdr_field: sip_msg_free : via headers\n");
                sh_free_via_list(hf->parsed);
              break;
          case HDR_CSEQ:
-   DBG("DEBUG: sh_clean_hdr_field : cseq headers\n");
                 sh_free(hf->parsed);
              break;
          default:
-   DBG("DEBUG: sh_clean_hdr_field : unknown headers\n");
       }
    }
 }
@@ -357,7 +355,6 @@ void sh_free_hdr_field_lst(struct hdr_field* hf)
 
    while(hf)
     {
-      DBG("DEBUG: free_hdr_field_lst : %s [%d] (adr=%x)\n",hf->name.s, hf->type,hf);
        foo=hf;
        hf=hf->next;
        sh_clean_hdr_field(foo);
@@ -373,7 +370,6 @@ void sip_msg_free(struct sip_msg* msg)
    if (!msg) return;
 
    DBG("DEBUG: sip_msg_free : start\n");
-   //return;
 
    if (msg->new_uri.s)
    {
@@ -389,4 +385,5 @@ void sip_msg_free(struct sip_msg* msg)
    if (msg->orig) sh_free( msg->orig );
    if (msg->buf) sh_free( msg->buf );
 
+   DBG("DEBUG: sip_msg_free : done\n");
 }

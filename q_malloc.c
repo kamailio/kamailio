@@ -170,6 +170,7 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 			f->file=file;
 			f->func=func;
 			f->line=line;
+	DBG("qm_malloc(%x, %d) returns address %x\n", qm, size,(char*)f+sizeof(struct qm_frag) );
 #endif
 			return (char*)f+sizeof(struct qm_frag);
 		}

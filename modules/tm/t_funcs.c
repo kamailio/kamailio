@@ -133,10 +133,9 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
    }
    /* start searching into the table */
    hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
-   DBG("hash_index=%d\n", hash_index);
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  )
       isACK = 1;
-   DBG("t_lookup_request: 1.continue searching\n");
+   DBG("t_lookup_request: continue searching;  hash=%d, isACK=5d\n",hash_index,isACK);
 
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -908,6 +907,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    char *buf;
    unsigned int len;
 
+   DBG("DEBUG: push_reply_from_uac_to_uas: start\n");
    /* if there is a reply, release the buffer (everything else stays same) */
    if ( trans->outbound_response )
    {
@@ -957,7 +957,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    t_update_timers_after_sending_reply( T->outbound_response );
 
    /*send the reply*/
-   t_retransmit_reply( trans->inbound_request, 0 , 0 );
+   t_retransmit_reply( trans->inbound_response[branch], 0 , 0 );
 
    return 1;
 }
