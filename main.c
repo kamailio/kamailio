@@ -148,6 +148,8 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do not 
 				      		durig the auto-probing procedure; may be
 				      		re-configured */
 int children_no = 0;           /* number of children processing requests */
+int *pids;		       /*array with childrens pids, 0= main proc,
+				alloc'ed in shared mem if possible*/
 int debug = 0;
 int dont_fork = 0;
 int log_stderr = 0;
@@ -192,7 +194,8 @@ int daemonize(char*  name)
 	int r;
 	
 	if (log_stderr==0)
-		openlog(name, LOG_PID, LOG_DAEMON); /* LOG_CONS, LOG_PERRROR ? */
+		openlog(name, LOG_PID|LOG_CONS, LOG_LOCAL1 /*LOG_DAEMON*/);
+		/* LOG_CONS, LOG_PERRROR ? */
 
 	if (chdir("/")<0){
 		LOG(L_CRIT,"cannot chroot:%s\n", strerror(errno));
@@ -254,10 +257,12 @@ int main_loop()
 
 		/* we need another process to act as the timer*/
 		if (timer_list){
+				process_no++;
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "ERRROR: main_loop: Cannot fork\n");
 					goto error;
 				}
+				
 				if (pid==0){
 					/* child */
 					/* timer!*/
@@ -265,10 +270,14 @@ int main_loop()
 						sleep(TIMER_TICK);
 						timer_ticker();
 					}
+				}else{
+						pids[process_no]=pid; /*should be shared mem anway*/
 				}
 		}
 		/* main process, receive loop */
 		is_main=1;
+		pids[0]=getpid();
+		process_no=0; /*main process number*/
 		udp_rcv_loop();
 	}else{
 		for(r=0;r<addresses_no;r++){
@@ -281,16 +290,20 @@ int main_loop()
 				}
 				if (pid==0){
 					/* child */
+					process_no=i+1; /*0=main*/
 #ifdef STATS
 					setstats( i );
 #endif
 					return udp_rcv_loop();
+				}else{
+						pids[i+1]=pid; /*should be in shared mem.*/
 				}
 			}
 			/*close(udp_sock);*/ /*parent*/
 		}
 	}
 	/*this is the main process*/
+	pids[process_no]=getpid();
 	is_main=1;
 	if (timer_list){
 		for(;;){
@@ -557,6 +570,18 @@ int main(int argc, char** argv)
 
 	
 	if (children_no<=0) children_no=CHILD_NO;
+	/*alloc pids*/
+#ifdef SHM_MEM
+	pids=shm_malloc(sizeof(int)*children_no);
+#else
+	pids=malloc(sizeof(int)*children_no);
+#endif
+	if (pids==0){
+		fprintf(stderr, "ERROR: out  of memory\n");
+		goto error;
+	}
+	memset(pids, 0, sizeof(int)*children_no);
+
 	if (addresses_no==0) {
 		/* get our address, only the first one */
 		if (uname (&myname) <0){

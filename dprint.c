@@ -14,6 +14,7 @@ void dprint(char * format, ...)
 {
 	va_list ap;
 
+	fprintf(stderr, "%2d(%d) ", process_no, pids[process_no]);
 	va_start(ap, format);
 	vfprintf(stderr,format,ap);
 	fflush(stderr);
