@@ -45,6 +45,7 @@
 #include "../../mem/mem.h"
 #include "authorize.h"
 #include "../auth/api.h"
+#include "aaa_avps.h"
 
 MODULE_VERSION
 
@@ -86,14 +87,17 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 #define DOMAIN_COL "domain"
 #define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
 
-#define RPID_COL "rpid"
-#define RPID_COL_LEN (sizeof(RPID_COL) - 1)
-
 #define PASS_COL "ha1"
 #define PASS_COL_LEN (sizeof(PASS_COL) - 1)
 
 #define PASS_COL_2 "ha1b"
 #define PASS_COL_2_LEN (sizeof(PASS_COL_2) - 1)
+
+#define AVPS_COL_INT "domn"
+#define AVPS_COL_INT_LEN (sizeof(AVPS_COL_INT) - 1)
+
+#define AVPS_COL_STR "uuid|rpid"
+#define AVPS_COL_STR_LEN (sizeof(AVPS_COL_STR) - 1)
 
 
 /*
@@ -102,12 +106,16 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 static str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str user_column      = {USER_COL, USER_COL_LEN};
 str domain_column    = {DOMAIN_COL, DOMAIN_COL_LEN};
-str rpid_column      = {RPID_COL, RPID_COL_LEN};
 str pass_column      = {PASS_COL, PASS_COL_LEN};
 str pass_column_2    = {PASS_COL_2, PASS_COL_2_LEN};
+static str avps_column_int  = {AVPS_COL_INT, AVPS_COL_INT_LEN};
+static str avps_column_str  = {AVPS_COL_STR, AVPS_COL_STR_LEN};
+str *avps_int        = NULL;
+str *avps_str        = NULL;
+int avps_int_n       = 0;
+int avps_str_n       = 0;
 int calc_ha1         = 0;
 int use_domain       = 1;    /* Use also domain when looking up a table row */
-int use_rpid         = 0;    /* Fetch Remote-Party-ID */
 
 
 
@@ -125,15 +133,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url.s       },
-	{"user_column",       STR_PARAM, &user_column.s  },
-	{"domain_column",     STR_PARAM, &domain_column.s},
-	{"rpid_column",       STR_PARAM, &rpid_column.s  },
-	{"password_column",   STR_PARAM, &pass_column.s  },
-	{"password_column_2", STR_PARAM, &pass_column_2.s},
-	{"calculate_ha1",     INT_PARAM, &calc_ha1       },
-	{"use_domain",        INT_PARAM, &use_domain     },
-	{"use_rpid",          INT_PARAM, &use_rpid       },
+	{"db_url",            STR_PARAM, &db_url.s         },
+	{"user_column",       STR_PARAM, &user_column.s    },
+	{"domain_column",     STR_PARAM, &domain_column.s  },
+	{"password_column",   STR_PARAM, &pass_column.s    },
+	{"password_column_2", STR_PARAM, &pass_column_2.s  },
+	{"avps_column_int",   STR_PARAM, &avps_column_int.s},
+	{"avps_column_str",   STR_PARAM, &avps_column_str.s},
+	{"calculate_ha1",     INT_PARAM, &calc_ha1         },
+	{"use_domain",        INT_PARAM, &use_domain       },
 	{0, 0, 0}
 };
 
@@ -162,30 +170,35 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
+
 	DBG("auth_db module - initializing\n");
-	
+
 	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
-	rpid_column.len = strlen(rpid_column.s);
 	pass_column.len = strlen(pass_column.s);
 	pass_column_2.len = strlen(pass_column.s);
 
+	if (aaa_avps_init(&avps_column_int, &avps_column_str, &avps_int,
+	    &avps_str, &avps_int_n, &avps_str_n) == -1)
+		return -1;
+
 	     /* Find a database module */
-	if (auth_db_bind(db_url.s)<0) return -1;
+	if (auth_db_bind(db_url.s)<0)
+		return -2;
 
 	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
 	post_auth_func = (post_auth_f)find_export("post_auth", 0, 0);
 
 	if (!(pre_auth_func && post_auth_func)) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires auth module\n");
-		return -2;
+		return -3;
 	}
 
 	sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires sl module\n");
-		return -2;
+		return -4;
 	}
 
 	return 0;
