@@ -194,11 +194,11 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 		proto=get_proto(proto, proxy->proto);
 	}else {
 		proxy=uri2proxy( next_hop ? next_hop : uri, proto );
-		proto=proxy->proto; /* uri2proxy will fix it for us */
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
 			goto error;
 		}
+		proto=proxy->proto; /* uri2proxy will fix it for us */
 		temp_proxy=1;
 	}
 
