@@ -37,108 +37,36 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  changed to the new locking scheme: locking.h (andrei)
+ */
 
 
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/ipc.h>
 #include <signal.h>
-#include <sys/sem.h>
 
 #include "../../mem/shm_mem.h" 
 #include "../../dprint.h"
 #include "../../timer.h"
-#ifdef FAST_LOCK
-#include "../../fastlock.h"
-#endif
+#include "../../locking.h"
 
 #include "kill.h"
 
 
-#ifndef FAST_LOCK
-static int semaphore;
-#else
-static fl_lock_t *kill_lock;
-#endif
+static gen_lock_t *kill_lock;
 
 
 static struct timer_list kill_list;
 
 
-#ifndef FAST_LOCK
-int change_semaphore( int val )
-{
-	struct sembuf pbuf;
-	int r;
-	
-	pbuf.sem_num = 0;
-	pbuf.sem_op=val;
-	pbuf.sem_flag=0;
 
-again:
-	r=semop(semaphore, &pbuf, 1 /* 1 operation */ );
-	if (r==-1) {
-		if (errno==EINTR) {
-			DBG("DEBUG: EINTR signal received in change_semaphore\n");
-			goto again;
-		} else {
-			LOG(L_ERR, "ERROR: change_semaphore: %s\n", strerror(errno));
-		}
-	return r;
-}
-#endif
-	
+#define lock() lock_get(kill_lock)
 
-#ifdef FAST_LOCK
-inline static int lock()
-{
-	get_lock(kill_lock);
-	return 0;
-}
-inline static int unlock() 
-{
-	release_lock(kill_lock);
-	return 0;
-}
-#else
-inline static int lock( ser_lock_t l )
-{
-	return change_semaphore(semaphore, -1);
-}
-inline static int unlock( ser_lock_t l )
-{
-	return change_semaphore(semaphore, +1);
-}
+#define unlock() lock_release(kill_lock)
 
-static void release_semaphore()
-{
-	semctl(semaphore, 0, IPC_RMID, 0);
-}
-
-static int init_semaphore()
-{
-
-	union semun {
-		int val;
-		struct semid_ds *buf;
-		ushort *array;
-	} argument;
-
-	semaphore=semget( IPC_PRIVATE, 1, IPC_CREATE | IPC_PERMISSION );
-	if (semaphore==-1) {
-		LOG(L_ERR, "ERROR: init_lock: semaphore allocation failed\n");
-		return -1;
-	}
-	
-	/* binary lock */
-	argument.val=+1;
-	if (semctl( semaphore, 0 , SETVAL , argument )==-1) {
-		LOG(L_ERR, "ERROR: init_lock: semaphore init failed\n");
-		relase_semaphore();
-		return -1;
-	}
-}
-#endif
 
 
 /* copy and paste from TM -- might consider putting in better
@@ -221,20 +149,16 @@ int initialize_kill()
 	kill_list.first_tl.next_tl=&kill_list.last_tl;
 	kill_list.last_tl.prev_tl=&kill_list.first_tl;
 	kill_list.first_tl.prev_tl=
-		kill_list.last_tl.next_tl = 0;
+	kill_list.last_tl.next_tl = 0;
 	kill_list.last_tl.time_out=-1;
-#ifdef FAST_LOCK
-	kill_lock=shm_malloc(sizeof(fl_lock_t));
+	kill_lock=lock_alloc();
 	if (kill_lock==0) {
 		LOG(L_ERR, "ERROR: initialize_kill: no mem for mutex\n");
 		return -1;
 	}
-	init_lock(*kill_lock);
-	DBG("DEBuG: kill initialized\n");
+	lock_init(kill_lock);
+	DBG("DEBUG: kill initialized\n");
 	return 1;
-#else
-	return init_semaphore();
-#endif
 }
 
 void destroy_kill()
@@ -242,13 +166,7 @@ void destroy_kill()
 	/* if disabled ... */
 	if (time_to_kill==0) 
 		return; 
-#ifdef FAST_LOCK
-	/* HACK -- if I don't have casting here, Wall complaints --
-	   I have no clue why 
-	*/
-	shm_free((void *)kill_lock);
-#else
-	release_semaphore();
-#endif
+	lock_destroy(kill_lock);
+	lock_dealloc(kill_lock);
 	return;
 }
