@@ -113,7 +113,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
 	if (!via)
 	{
-		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
+		LOG(L_ERR, "ERROR: build_local: "
 			"no via header got from builder\n");
 		goto error;
 	}
@@ -140,7 +140,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
 	{
-		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: cannot allocate memory\n");
+		LOG(L_ERR, "ERROR: build_local: cannot allocate memory\n");
 		goto error01;
 	}
 	p = cancel_buf;
@@ -548,7 +548,7 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 	struct hostport hp;
 
 	if (!t_calc_branch(t, branch, branch_buf, &len)) {
-		LOG(L_ERR, "ERROR: build_via: branch calculation failed\n");
+		LOG(L_ERR, "ERROR: assemble_via: branch calculation failed\n");
 		return -1;
 	}
 	
@@ -562,7 +562,7 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 	set_hostport(&hp, 0);
 	via = via_builder(&via_len, sock, &branch_str, 0, sock->proto, &hp);
 	if (!via) {
-		LOG(L_ERR, "build_via: via building failed\n");
+		LOG(L_ERR, "assemble_via: via building failed\n");
 		return -2;
 	}
 	

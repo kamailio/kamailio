@@ -153,10 +153,10 @@ static int inline write_to_fifo(char *fifo, int cnt )
 	if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
 		switch(errno){
 			case ENXIO:
-				LOG(L_ERR,"ERROR:tm:t_write_req: nobody listening on "
+				LOG(L_ERR,"ERROR:tm:write_to_fifo: nobody listening on "
 					" [%s] fifo for reading!\n",fifo);
 			default:
-				LOG(L_ERR,"ERROR:tm:t_write_req: failed to open [%s] "
+				LOG(L_ERR,"ERROR:tm:write_to_fifo: failed to open [%s] "
 					"fifo : %s\n", fifo, strerror(errno));
 		}
 		goto error;
@@ -166,7 +166,7 @@ static int inline write_to_fifo(char *fifo, int cnt )
 repeat:
 	if (writev(fd_fifo, (struct iovec*)lines_eol, 2*cnt)<0) {
 		if (errno!=EINTR) {
-			LOG(L_ERR, "ERROR:tm:t_write_req: writev failed: %s\n",
+			LOG(L_ERR, "ERROR:tm:write_to_fifo: writev failed: %s\n",
 				strerror(errno));
 			close(fd_fifo);
 			goto error;
@@ -176,7 +176,7 @@ repeat:
 	}
 	close(fd_fifo);
 
-	DBG("DEBUG:tm:t_write_req: write completed\n");
+	DBG("DEBUG:tm:write_to_fifo: write completed\n");
 	return 1; /* OK */
 
 error:

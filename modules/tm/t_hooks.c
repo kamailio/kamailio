@@ -88,7 +88,7 @@ inline int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 
 	/* build a new callback structure */
 	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
-		LOG(L_ERR, "ERROR:tm:register_tmcb: out of shm. mem\n");
+		LOG(L_ERR, "ERROR:tm:insert_tmcb: out of shm. mem\n");
 		return E_OUT_OF_MEM;
 	}
 

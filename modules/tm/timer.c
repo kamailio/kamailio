@@ -350,7 +350,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 	/* FR for local cancels.... */
 	if (r_buf->activ_type==TYPE_LOCAL_CANCEL)
 	{
-		DBG("DEBUG: FR_handler: stop retr for Local Cancel\n");
+		DBG("DEBUG: final_response_handler: stop retr for Local Cancel\n");
 		return;
 	}
 
@@ -359,7 +359,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 #		ifdef EXTRA_DEBUG
 		if (t->uas.request->REQ_METHOD!=METHOD_INVITE
 			|| t->uas.status < 200 ) {
-			LOG(L_ERR, "ERROR: FR timer: uknown type reply buffer\n");
+			LOG(L_ERR, "ERROR: final_response_handler: uknown type reply buffer\n");
 			abort();
 		}
 #		endif
@@ -393,12 +393,12 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 		&& has_noisy_ctimer(t);
 	if (silent) {
 		UNLOCK_REPLIES(t);
-		DBG("DEBUG: FR_handler: transaction silently dropped (%p)\n",t);
+		DBG("DEBUG: final_response_handler: transaction silently dropped (%p)\n",t);
 		put_on_wait( t );
 		return;
 	}
 
-	DBG("DEBUG: FR_handler:stop retr. and send CANCEL (%p)\n", t);
+	DBG("DEBUG: final_response_handler:stop retr. and send CANCEL (%p)\n", t);
 	fake_reply(t, r_buf->branch, 408 );
 
 	DBG("DEBUG: final_response_handler : done\n");
@@ -497,7 +497,7 @@ void unlink_timer_lists()
 	/* unlink the timer lists */
 	for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
 		reset_timer_list( i );
-	DBG("DEBUG: tm_shutdown : empting DELETE list\n");
+	DBG("DEBUG: unlink_timer_lists : empting DELETE list\n");
 	/* deletes all cells from DELETE_LIST list 
 	   (they are no more accessible from enrys) */
 	while (tl!=end) {
@@ -642,7 +642,7 @@ static void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 		abort();
 	}
 #endif
-	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
+	DBG("DEBUG: add_timer_unsafe[%d]: %p\n",timer_list->id,tl);
 }
 
 

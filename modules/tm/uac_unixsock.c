@@ -155,7 +155,7 @@ static int get_body_lines(str* body, str* msg)
 		unixsock_reply_send();
 		return -1;
 	}
-	DBG("get_body: %.*s\n", body->len,  ZSW(body->s));
+	DBG("get_body_lines: %.*s\n", body->len,  ZSW(body->s));
 	return 0;
 }
 
@@ -296,7 +296,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 					if (!sock_name) {
 						send_sock = uri2sock(uri, &to_su, proto);
 						if (!send_sock) {
-							LOG(L_ERR, "ERROR: get_hf_block: send_sock failed\n");
+							LOG(L_ERR, "ERROR: get_hfblock: send_sock failed\n");
 							goto error;
 						}
 						sock_name = &send_sock->address_str;
@@ -317,13 +317,13 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 				}
 			} /* possible substitute */
 		} /* substitution loop */
-		DBG("get_hf_block: one more hf processed\n");
+		DBG("get_hfblock: one more hf processed\n");
 	} /* header loop */
 	
 	     /* construct a single header block now */
 	ret = pkg_malloc(total_len);
 	if (!ret) {
-		LOG(L_ERR, "get_hf_block: no pkg mem for hf block\n");
+		LOG(L_ERR, "get_hfblock: no pkg mem for hf block\n");
 		goto error;
 	}
 	i = sl.next;

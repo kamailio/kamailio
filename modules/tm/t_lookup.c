@@ -163,11 +163,11 @@ void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
 static inline int parse_dlg( struct sip_msg *msg )
 {
 	if (parse_headers(msg, HDR_FROM | HDR_CSEQ | HDR_TO, 0)==-1) {
-		LOG(L_ERR, "ERROR: tid_matching: From or Cseq or To invalid\n");
+		LOG(L_ERR, "ERROR: parse_dlg: From or Cseq or To invalid\n");
 		return 0;
 	}
 	if (parse_from_header(msg)==-1) {
-		LOG(L_ERR, "ERROR: tid_matching: From broken\n");
+		LOG(L_ERR, "ERROR: parse_dlg: From broken\n");
 		return 0;
 	}
 	/* To is automatically parsed through HDR_TO in parse bitmap,
@@ -308,7 +308,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			if (!dlg_parsed) {
 				dlg_parsed=1;
 				if (!parse_dlg(p_msg)) {
-					LOG(L_ERR, "ERROR: tid_matching: dlg parsing failed\n");
+					LOG(L_ERR, "ERROR: matching_3261: dlg parsing failed\n");
 					return 0;
 				}
 			}
@@ -536,7 +536,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	 * comparison of many header fields
 	 */
 	if (!p_msg->via1) {
-		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
+		LOG(L_ERR, "ERROR: t_lookupOriginalT: no via\n");
 		set_t(0);
 		return 0;
 	}
@@ -1007,7 +1007,7 @@ int t_newtran( struct sip_msg* p_msg )
 
 
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_addifnew: msg id=%d , global msg id=%d ,"
+	DBG("DEBUG: t_newtran: msg id=%d , global msg id=%d ,"
 		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
 
 	if ( T && T!=T_UNDEFINED  ) {

@@ -162,7 +162,7 @@ int init_tm_stats(void)
 
 	tm_stats=shm_malloc(sizeof(struct t_stats));
 	if (tm_stats==0) {
-		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
 		goto error0;
 	}
 	memset(tm_stats, 0, sizeof(struct t_stats) );
@@ -170,21 +170,21 @@ int init_tm_stats(void)
 	size=sizeof(stat_counter)*process_count();
 	tm_stats->s_waiting=shm_malloc(size);
 	if (tm_stats->s_waiting==0) {
-		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
 		goto error1;
 	}
 	memset(tm_stats->s_waiting, 0, size );
 
 	tm_stats->s_transactions=shm_malloc(size);
 	if (tm_stats->s_transactions==0) {
-		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
 		goto error2;
 	}
 	memset(tm_stats->s_transactions, 0, size );
 
 	tm_stats->s_client_transactions=shm_malloc(size);
 	if (tm_stats->s_client_transactions==0) {
-		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		LOG(L_ERR, "ERROR: init_tm_stats: no mem for stats\n");
 		goto error3;
 	}
 	memset(tm_stats->s_client_transactions, 0, size );

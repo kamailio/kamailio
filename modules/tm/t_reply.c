@@ -175,7 +175,7 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 
 	if (parse_headers(ack, HDR_TO,0)==-1 || 
 				!ack->to ) {
-		LOG(L_ERR, "ERROR: ack_totag_set: To invalid\n");
+		LOG(L_ERR, "ERROR: unmatched_totag: To invalid\n");
 		return 1;
 	}
 	tag=&get_to(ack)->tag_value;
@@ -268,7 +268,7 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	str to;
 
     if (parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to ) {
-        LOG(L_ERR, "ERROR: t_build_ACK: "
+        LOG(L_ERR, "ERROR: build_ack: "
             "cannot generate a HBH ACK if key HFs in reply missing\n");
         return NULL;
     }
@@ -334,7 +334,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 	if (!buf)
 	{
-		DBG("DEBUG: t_reply: response building failed\n");
+		DBG("DEBUG: _reply_light: response building failed\n");
 		/* determine if there are some branches to be cancelled */
 		if ( is_invite(trans) ) {
 			if (lock) LOCK_REPLIES( trans );
@@ -349,7 +349,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (lock) LOCK_REPLIES( trans );
 	if ( is_invite(trans) ) which_cancel(trans, &cancel_bitmap );
 	if (trans->uas.status>=200) {
-		LOG( L_ERR, "ERROR: t_reply: can't generate %d reply"
+		LOG( L_ERR, "ERROR: _reply_light: can't generate %d reply"
 			" when a final %d was sent out\n", code, trans->uas.status);
 		goto error2;
 	}
@@ -363,7 +363,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	rb->buffer = (char*)shm_resize( rb->buffer, buf_len );
 	/* puts the reply's buffer to uas.response */
 	if (! rb->buffer ) {
-			LOG(L_ERR, "ERROR: t_reply: cannot allocate shmem buffer\n");
+			LOG(L_ERR, "ERROR: _reply_light: cannot allocate shmem buffer\n");
 			goto error3;
 	}
 	update_local_tags(trans, bm, rb->buffer, buf);
@@ -402,14 +402,14 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	   not yet, don't try to retransmit
 	*/
 	if (!trans->uas.response.dst.send_sock) {
-		LOG(L_ERR, "ERROR: _reply: no resolved dst to send reply to\n");
+		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
 	} else {
 		SEND_PR_BUFFER( rb, buf, len );
 		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n", 
 			buf, buf, rb->buffer, rb->buffer );
 	}
 	pkg_free( buf ) ;
-	DBG("DEBUG: t_reply: finished\n");
+	DBG("DEBUG: _reply_light: finished\n");
 	return 1;
 
 error3:
@@ -536,7 +536,7 @@ static inline int fake_req(struct sip_msg *faked_req,
 	if (shmem_msg->body_lumps) {
 		faked_req->body_lumps=dup_lump_list(shmem_msg->body_lumps);
 		if (!faked_req->body_lumps) { /* non_empty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_handlers: lump dup failed\n");
+			LOG(L_ERR, "ERROR: fake_req: lump dup failed\n");
 			goto error02;
 		}
 	}
@@ -707,7 +707,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	/* if final response sent out, allow only INVITE 2xx  */
 	if ( Trans->uas.status >= 200 ) {
 		if (inv_through) {
-			DBG("DBG: t_should_relay: 200 INV after final sent\n");
+			DBG("DBG: t_should_relay_response: 200 INV after final sent\n");
 			*should_store=0;
 			Trans->uac[branch].last_received=new_code;
 			*should_relay=branch;
@@ -734,7 +734,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		}
 		/* this looks however how a very strange status rewrite attempt;
 		 * report on it */
-		LOG(L_ERR, "ERROR: t_should_relay: status rewrite by UAS: "
+		LOG(L_ERR, "ERROR: t_should_relay_response: status rewrite by UAS: "
 			"stored: %d, received: %d\n",
 			Trans->uac[branch].last_received, new_code );
 		goto discard;
@@ -923,7 +923,7 @@ void cleanup_uac_timers( struct cell *t )
 		reset_timer( &t->uac[i].request.retr_timer );
 		reset_timer( &t->uac[i].request.fr_timer );
 	}
-	DBG("DEBUG: cleanup_uacs: RETR/FR timers reset\n");
+	DBG("DEBUG: cleanup_uac_timers: RETR/FR timers reset\n");
 }
 
 static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
@@ -1220,7 +1220,7 @@ int reply_received( struct sip_msg  *p_msg )
 	msg_status=p_msg->REPLY_STATUS;
 
 	uac=&t->uac[branch];
-	DBG("DEBUG: t_on_reply: org. status uas=%d, "
+	DBG("DEBUG: reply_received: org. status uas=%d, "
 		"uac[%d]=%d local=%d is_invite=%d)\n",
 		t->uas.status, branch, uac->last_received, 
 		is_local(t), is_invite(t));

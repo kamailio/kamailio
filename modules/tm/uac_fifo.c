@@ -77,8 +77,8 @@ struct str_list {
  */
 static inline void fifo_uac_error(char *reply_fifo, int code, char *msg)
 {
-	LOG(L_ERR, "ERROR: fifo_uac: %s\n", msg ); 
-	fifo_reply(reply_fifo, "%d fifo_uac: %s", code, msg);
+	LOG(L_ERR, "ERROR: fifo_uac_error: %s\n", msg ); 
+	fifo_reply(reply_fifo, "%d fifo_uac_error: %s", code, msg);
 }
 
 
@@ -214,7 +214,7 @@ static inline struct str_list *new_str(char *s, int len, struct str_list **last,
 	struct str_list *new;
 	new=pkg_malloc(sizeof(struct str_list));
 	if (!new) {
-		LOG(L_ERR, "ERROR: get_hfblock: not enough mem\n");
+		LOG(L_ERR, "ERROR: new_str: not enough mem\n");
 		return 0;
 	}
 	new->s.s=s;
@@ -269,7 +269,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 						if (!sock_name) {
 							send_sock=uri2sock( uri, &to_su, proto );
 							if (!send_sock) {
-								LOG(L_ERR, "ERROR: get_hf_block: send_sock failed\n");
+								LOG(L_ERR, "ERROR: get_hfblock: send_sock failed\n");
 								goto error;
 							}
 							sock_name=&send_sock->address_str;
@@ -297,14 +297,14 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 		/* proceed to next header */
 		/* new=new_str(CRLF, CRLF_LEN, &last, &total_len );
 		if (!new) goto error; */
-		DBG("DEBUG: get_hf_block: one more hf processed\n");
+		DBG("DEBUG: get_hfblock: one more hf processed\n");
 	} /* header loop */
 
 
 	/* construct a single header block now */
 	ret=pkg_malloc(total_len);
 	if (!ret) {
-		LOG(L_ERR, "ERROR: get_hf_block no pkg mem for hf block\n");
+		LOG(L_ERR, "ERROR: get_hfblock no pkg mem for hf block\n");
 		goto error;
 	}
 	i=sl.next;
@@ -498,13 +498,13 @@ static inline int print_uris(FILE* out, struct sip_msg* reply)
 	
 	dlg = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (!dlg) {
-		LOG(L_ERR, "print_routes(): No memory left\n");
+		LOG(L_ERR, "print_uris(): No memory left\n");
 		return -1;
 	}
 
 	memset(dlg, 0, sizeof(dlg_t));
 	if (dlg_response_uac(dlg, reply) < 0) {
-		LOG(L_ERR, "print_routes(): Error while creating dialog structure\n");
+		LOG(L_ERR, "print_uris(): Error while creating dialog structure\n");
 		free_dlg(dlg);
 		return -2;
 	}
