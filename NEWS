@@ -3,6 +3,8 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
+- group startup crash fixed 
+
 ***********************************************
 * Changes/bugfixes in 0.8.11-r1
 ***********************************************
