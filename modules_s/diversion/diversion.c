@@ -42,7 +42,7 @@ MODULE_VERSION
 #define DIVERSION_HF "Diversion"
 #define DIVERSION_HF_LEN (sizeof(DIVERSION_HF) - 1)
 
-#define DIVERSION_PREFIX     DIVERSION_HF ": >"
+#define DIVERSION_PREFIX     DIVERSION_HF ": <"
 #define DIVERSION_PREFIX_LEN (sizeof(DIVERSION_PREFIX) - 1)
 
 #define DIVERSION_SUFFIX     ">;reason="
