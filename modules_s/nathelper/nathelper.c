@@ -1147,7 +1147,7 @@ rtpp_test(int isdisabled, int force)
 		    "version of RTP proxy found: %d supported, "
 		    "%d present\n", SUP_CPROTOVER, rtpp_ver);
 	}
-	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy"
+	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy "
 	    "has been disabled%s\n",
 	    rtpproxy_disable_tout < 0 ? "" : " temporarily");
 	if (rtpproxy_disable_tout >= 0)
@@ -1483,8 +1483,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		newip.s = (argc < 2) ? str2 : argv[1];
 		newip.len = strlen(newip.s);
 	}
-	newport.s=int2str(port, &newport.len); /* beware static buffer */
-	
+	newport.s = int2str(port, &newport.len); /* beware static buffer */
+
 	if (alter_mediaip(msg, &body, &oldip, pf, &newip, pf1, 0) == -1)
 		return -1;
 	if (oldip1.len > 0 &&
