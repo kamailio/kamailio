@@ -133,6 +133,7 @@ int static ul_dump(FILE* pipe, char* response_file)
 int static ul_flush(FILE* pipe, char* response_file)
 {
 	timer_handler();
+	fifo_reply(response_file, "ul_flush completed" );
 	return 1;
 }
 
@@ -214,7 +215,7 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float 
 
 static int ul_add(FILE* pipe, char* response_file)
 {
-	FILE* reply_file;
+	/* FILE* reply_file; */
 	char table_s[MAX_TABLE];
 	char user_s[MAX_USER];
 	char contact_s[MAX_CONTACT];
@@ -279,45 +280,53 @@ static int ul_add(FILE* pipe, char* response_file)
 	
 	find_domain(&table, &d);
 
-	reply_file=open_reply_pipe(response_file);
+	/*
 	if (reply_file==0) {
 		LOG(L_ERR, "ERROR: ul_add: file not opened\n");
 		return -1;
 	}
+	*/
 
 	if (d) {
 		if (atoi(&expires, &exp_i) < 0) {
-			fprintf(reply_file, "Invalid expires format\n");
-			fclose(reply_file);
+			fifo_reply(response_file, "Invalid expires format\n");
+			/* fprintf(reply_file, "Invalid expires format\n");
+			fclose(reply_file); */
 			return -1;
 		}
 
 		if (atof(&q, &q_f) < 0) {
-			fprintf(reply_file, "Invalid q format\n");
-			fclose(reply_file);
+			fifo_reply(response_file, "Invalid q format\n");
+			/* fprintf(reply_file, "Invalid q format\n");
+			fclose(reply_file); */
 			return -1;
 		}
 
 		lock_udomain(d);
 
 		if (add_contact(d, &user, &contact, exp_i, q_f) < 0) {
+			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
 			    user.len, user.s, contact.len, contact.s, table.len, table.s);
-			fprintf(reply_file, "Error while adding contact (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
+			/* fprintf(reply_file, "Error while adding contact (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
 				user.len, user.s, contact.len, contact.s, table.len, table.s);
-			fclose(reply_file);
-			unlock_udomain(d);
+			fclose(reply_file); */
+			fifo_reply(response_file, "Error while adding contact (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
+				user.len, user.s, contact.len, contact.s, table.len, table.s);
 			return -1;
 		}
 		unlock_udomain(d);
 		
-		fprintf(reply_file, "(\'%.*s\',\'%.*s\') Added to table \'%.*s\'\n",
+		/* fprintf(reply_file, "(\'%.*s\',\'%.*s\') Added to table \'%.*s\'\n",
 			user.len, user.s, contact.len, contact.s, table.len, table.s);
-		fclose(reply_file);
+		fclose(reply_file); */
+		fifo_reply(response_file, "Added to table \'%.*s\'\n",
+			user.len, user.s, contact.len, contact.s, table.len, table.s);
 		return 1;
 	} else {
-		fprintf(reply_file, "Table \'%.*s\' not found\n", table.len, table.s);
-		fclose(reply_file);
+		/* fprintf(reply_file, "Table \'%.*s\' not found\n", table.len, table.s);
+		fclose(reply_file); */
+		fifo_reply(response_file, "Table \'%.*s\' Not Found\n", table.len, table.s);
 		return -1;
 	}
 }
@@ -328,7 +337,7 @@ int static ul_rm( FILE *pipe, char *response_file )
 	char table[MAX_TABLE];
 	char user[MAX_USER];
 	int tlen, ulen;
-	FILE *reply_file;
+	/* FILE *reply_file; */
 	udomain_t* d;
 	str aor, t;
 
@@ -355,28 +364,26 @@ int static ul_rm( FILE *pipe, char *response_file )
 
 	LOG(L_INFO, "INFO: deleting user-loc (%s,%s)\n",
 	    table, user );
-	reply_file=open_reply_pipe(response_file);
-	if (reply_file==0) {
-		LOG(L_ERR, "ERROR: ul_rm: file not opened\n");
-		return -1;
-	}
 
 	if (d) {
 		lock_udomain(d);
 		if (delete_urecord(d, &aor) < 0) {
 			LOG(L_ERR, "ul_rm(): Error while deleting user %s\n", user);
-			fprintf(reply_file, "Error while deleting user (%s, %s)\n", table, user);
 			unlock_udomain(d);
-			fclose(reply_file);
+			fifo_reply(response_file, "Error while deleting user %s\n", user);
+			/* fprintf(reply_file, "Error while deleting user (%s, %s)\n", table, user); 
+			fclose(reply_file); */
 			return -1;
 		}
 		unlock_udomain(d);
-		fprintf(reply_file, "User (%s, %s) deleted\n", table, user);
-		fclose(reply_file);
+		fifo_reply(response_file, "user (%s, %s) deleted\n", table, user);
+		/* fprintf(reply_file, "User (%s, %s) deleted\n", table, user);
+		fclose(reply_file); */
 		return 1;
 	} else {
-		fprintf(reply_file, "Table (%s) not found\n", table);
-		fclose(reply_file);
+		fifo_reply(response_file, "table (%s) not found\n", table);
+		/* fprintf(reply_file, "Table (%s) not found\n", table);
+		fclose(reply_file); */
 		return -1;
 	}
 }
