@@ -53,7 +53,7 @@ int pidf_add_presentity(str* _b, int _l, str* _uri);
 /*
  * Create start of pidf tuple
  */
-int start_pidf_tuple(str* _b, int _l);
+int start_pidf_tuple(str* _b, str *_id, int _l);
 
 /*
  * Add a contact address with given status and priority

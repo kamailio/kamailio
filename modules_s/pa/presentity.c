@@ -4,6 +4,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2004 Jamey Hicks
  *
  * This file is part of ser, a free SIP server.
  *
@@ -29,6 +30,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "../../db/db.h"
 #include "../../dprint.h"
@@ -306,6 +308,13 @@ int db_update_presentity(presentity_t* _p)
 	       query_vals[n_updates].val.str_val.len = strlen(pstate_name[tuple->state].s);
 	       n_updates++;
 
+	       query_cols[n_updates] = "tupleid";
+	       query_vals[n_updates].type = DB_STR;
+	       query_vals[n_updates].nul = 0;
+	       query_vals[n_updates].val.str_val.s = tuple->id.s;
+	       query_vals[n_updates].val.str_val.len = tuple->id.len;
+	       n_updates++;
+
 	       if (use_place_table) {
 		    int placeid = 0;
 		    LOG(L_ERR, "db_update_presentity: room=%.*s loc=%.*s\n", 
@@ -419,6 +428,7 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
 {
      presence_tuple_t* tuple;
      int size = 0;
+     int r;
 
      if (!_contact || !_t) {
 	  paerrno = PA_INTERNAL_ERROR;
@@ -426,7 +436,7 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
 	  return -1;
      }
 
-     size = sizeof(presence_tuple_t) + TUPLE_STATUS_STR_LEN + TUPLE_LOCATION_STR_LEN + _contact->len + 1;
+     size = sizeof(presence_tuple_t) + _contact->len + 1;
      tuple = (presence_tuple_t*)shm_malloc(size);
      if (!tuple) {
 	  paerrno = PA_NO_MEMORY;
@@ -437,18 +447,22 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
 
 
      tuple->state = PS_UNKNOWN;
-     tuple->contact.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_STR_LEN + TUPLE_STATUS_STR_LEN;
-     tuple->status.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_STR_LEN;
+     tuple->contact.s = ((char*)tuple) + sizeof(presence_tuple_t);
+     tuple->status.s = &tuple->status_buf;
      strncpy(tuple->contact.s, _contact->s, _contact->len);
      _contact->s[_contact->len] = 0;
      tuple->contact.len = _contact->len;
-     tuple->location.loc.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_LOC_OFFSET;
-     tuple->location.site.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_SITE_OFFSET;
-     tuple->location.floor.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_FLOOR_OFFSET;
-     tuple->location.room.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_ROOM_OFFSET;
-     tuple->location.packet_loss.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_PACKET_LOSS_OFFSET;
+     tuple->location.loc.s = &tuple->location.loc_buf;
+     tuple->location.site.s = &tuple->location.site_buf;
+     tuple->location.floor.s = &tuple->location.floor_buf;
+     tuple->location.room.s = &tuple->location.room_buf;
+     tuple->location.packet_loss.s = &tuple->location.packet_loss_buf;
+     tuple->id.s = &tuple->id_buf;
      tuple->expires = expires;
      tuple->priority = default_priority;
+
+     r = rand();
+     tuple->id.len = sprintf(tuple->id.s, "tid%x", r);
 
      *_t = tuple;
 

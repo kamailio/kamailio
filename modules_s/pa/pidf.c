@@ -69,8 +69,11 @@
 #define PRESENCE_ETAG "</presence>"
 #define PRESENCE_ETAG_L (sizeof(PRESENCE_ETAG) - 1)
 
-#define TUPLE_STAG "<tuple id=\"9r28r49\">"
-#define TUPLE_STAG_L (sizeof(TUPLE_STAG) - 1)
+#define TUPLE_START "<tuple id=\"9r28r49\">"
+#define TUPLE_START_L (sizeof(TUPLE_START) - 1)
+
+#define TUPLE_END "\">"
+#define TUPLE_END_L (sizeof(TUPLE_END) - 1)
 
 #define CONTACT_START "  <contact"
 #define CONTACT_START_L (sizeof(CONTACT_START) - 1)
@@ -192,9 +195,11 @@ int pidf_add_presentity(str* _b, int _l, str* _uri)
 /*
  * Create start of pidf tuple
  */
-int start_pidf_tuple(str* _b, int _l)
+int start_pidf_tuple(str* _b, str *id, int _l)
 {
-	if ((TUPLE_STAG_L + 
+	if ((TUPLE_START_L + 
+	     id->len +
+	     TUPLE_END_L +
 	     CRLF_L
 	    ) > _l) {
 		paerrno = PA_SMALL_BUFFER;
@@ -202,8 +207,9 @@ int start_pidf_tuple(str* _b, int _l)
 		return -1;
 	}
 
-	str_append(_b, TUPLE_STAG CRLF,
-		   TUPLE_STAG_L + CRLF_L);
+	str_append(_b, TUPLE_START, TUPLE_START_L);
+	str_append(_b, id->s, id->len);
+	str_append(_b, TUPLE_END CRLF, TUPLE_END_L + CRLF_L);
 	return 0;
 }
 

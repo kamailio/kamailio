@@ -4,6 +4,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2004 Jamey Hicks
  *
  * This file is part of ser, a free SIP server.
  *
@@ -37,13 +38,13 @@
 #include "pstate.h"
 
 
-#define TUPLE_STATUS_STR_LEN (128)
-#define TUPLE_LOCATION_STR_LEN (128 + 32 + 32 + 64 + 32)
-#define TUPLE_LOCATION_LOC_OFFSET 0
-#define TUPLE_LOCATION_SITE_OFFSET 128
-#define TUPLE_LOCATION_FLOOR_OFFSET (128+32)
-#define TUPLE_LOCATION_ROOM_OFFSET (128+32+32)
-#define TUPLE_LOCATION_PACKET_LOSS_OFFSET (128+32+32+64)
+#define TUPLE_STATUS_STR_LEN 128
+#define TUPLE_LOCATION_LOC_LEN 128
+#define TUPLE_LOCATION_SITE_LEN 32
+#define TUPLE_LOCATION_FLOOR_LEN 32
+#define TUPLE_LOCATION_ROOM_LEN 64
+#define TUPLE_LOCATION_PACKET_LOSS_LEN 32
+#define TUPLE_ID_STR_LEN (32)
 
 typedef struct location {
 	str   loc; /* human readable description of location */
@@ -54,6 +55,11 @@ typedef struct location {
 	double x;
 	double y;
 	double radius;
+	char loc_buf[TUPLE_LOCATION_LOC_LEN];
+	char site_buf[TUPLE_LOCATION_SITE_LEN];
+	char floor_buf[TUPLE_LOCATION_FLOOR_LEN];
+	char room_buf[TUPLE_LOCATION_ROOM_LEN];
+	char packet_loss_buf[TUPLE_LOCATION_PACKET_LOSS_LEN];
 } location_t;
 
 typedef struct resource_list {
@@ -68,6 +74,7 @@ typedef struct location_package {
 } location_package_t;
 
 typedef struct presence_tuple {
+	str id;
 	str contact;
 	str status;
 	double priority;
@@ -76,6 +83,8 @@ typedef struct presence_tuple {
 	location_t location;
 	struct presence_tuple *next;
 	struct presence_tuple *prev;
+	char status_buf[TUPLE_STATUS_STR_LEN];
+	char id_buf[TUPLE_ID_STR_LEN];
 } presence_tuple_t;
 
 struct pdomain;

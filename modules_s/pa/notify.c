@@ -422,7 +422,7 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 	}
 
 	while (tuple) {
-		if (start_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
+		if (start_pidf_tuple(&body, &tuple->id, BUF_LEN - body.len) < 0) {
 			LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
 			return -4;
 		}
