@@ -32,7 +32,6 @@ void dprint (char* format, ...);
 #ifdef NO_DEBUG
 	#define DPrint(fmt, args...)
 #else
-	//#define DPrint(fmt,args...) dprint(fmt, ## args)
 	#define DPrint(fmt,args...) \
 		do{ \
 			if (debug>=DPRINT_LEV){ \
