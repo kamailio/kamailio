@@ -767,6 +767,10 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	return 0;
 	
 error:
+	/* more debugging, msg->orig is/should be null terminated*/
+	LOG(L_ERR, "ERROR: parse_msg: ip source=%x dest=%x; message=<%s>\n",
+			msg->src_ip, msg->dst_ip,
+			msg->orig);
 	return -1;
 }
 
