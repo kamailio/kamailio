@@ -613,7 +613,9 @@ int fifo_uac(FILE *stream, char *response_file)
 	dlg.hooks.request_uri = &ruri;
 	dlg.hooks.next_hop = (nexthop.len ? &nexthop : &ruri);
 
+#ifdef XL_DEBUG
 	print_dlg(stderr, &dlg);
+#endif
 
 	/* we got it all, initiate transaction now! */
 	if (fifo_cbp(&shm_file, response_file) < 0) goto error01;
