@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <mysql/mysql.h>
+#include <mysql/errmsg.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "utils.h"
@@ -54,6 +55,7 @@ static char sql_buf[SQL_BUF_LEN];
 static int submit_query(db_con_t* _h, const char* _s)
 {	
 	time_t t;
+	int i, code;
 
 	if ((!_h) || (!_s)) {
 		LOG(L_ERR, "submit_query(): Invalid parameter value\n");
@@ -73,12 +75,27 @@ static int submit_query(db_con_t* _h, const char* _s)
 	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)
 	 * DBG("submit_query(): %s\n", _s);
 	 */
-	if (mysql_query(CON_CONNECTION(_h), _s)) {
-		LOG(L_ERR, "submit_query(): %s\n", mysql_error(CON_CONNECTION(_h)));
-		return -2;
-	} else {
-		return 0;
+
+	/* When a server connection is lost and a query is attempted, most of
+	 * the time the query will return a CR_SERVER_LOST, then at the second
+	 * attempt to execute it, the mysql lib will reconnect and succeed.
+	 * However is a few cases, the first attempt returns CR_SERVER_GONE_ERROR
+	 * the second CR_SERVER_LOST and only the third succeeds.
+	 * Thus the 3 in the loop count. Increasing the loop count over this
+	 * value shouldn't be needed, but it doesn't hurt either, since the loop
+	 * will most of the time stop at the second or sometimes at the third
+	 * iteration.
+     */
+	for (i=0; i<(auto_reconnect ? 3 : 1); i++) {
+		if (mysql_query(CON_CONNECTION(_h), _s)==0)
+			return 0;
+		code = mysql_errno(CON_CONNECTION(_h));
+		if (code != CR_SERVER_GONE_ERROR && code != CR_SERVER_LOST) {
+			break;
+		}
 	}
+	LOG(L_ERR, "submit_query(): %s\n", mysql_error(CON_CONNECTION(_h)));
+	return -2;
 }
 
 
