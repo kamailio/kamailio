@@ -80,8 +80,8 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
  * Module parameter variables
  */
 char* db_url       = "sql://serro:47serro11@localhost/ser";
-char* user_column  = "user_id";
-char* realm_column = "realm";
+char* user_column  = "user";
+char* domain_column = "domain";
 char* pass_column  = "ha1";
 
 #ifdef USER_DOMAIN_HACK
@@ -162,7 +162,7 @@ struct module_exports exports = {
 	(char*[]) {
 		"db_url",              /* Database URL */
 		"user_column",         /* User column name */
-		"realm_column",        /* Realm column name */
+		"domain_column",       /* Domain column name */
 		"password_column",     /* HA1/password column name */
 #ifdef USER_DOMAIN_HACK
 		"password_column_2",
@@ -212,7 +212,7 @@ struct module_exports exports = {
 	(void*[]) {
 		&db_url,
 		&user_column,
-		&realm_column,
+		&domain_column,
 		&pass_column,
 #ifdef USER_DOMAIN_HACK
 		&pass_column_2,

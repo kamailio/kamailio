@@ -44,7 +44,7 @@
 
 extern char* db_url;          /* Database URL */
 extern char* user_column;     /* 'user' column name */
-extern char* realm_column;    /* 'realm' column name */
+extern char* domain_column;   /* 'domain' column name */
 extern char* pass_column;     /* 'password' column name */
 
 #ifdef USER_DOMAIN_HACK
