@@ -695,7 +695,7 @@ static int send2child(struct tcp_connection* tcpconn)
 		return -1;
 	}
 	
-	return 0; /* just to fix a warning*/
+	return 0;
 }
 
 
