@@ -15,4 +15,4 @@
         return (p + 4);
 
 
-#endif
+#endif /* CASE_TO_H */

@@ -18,4 +18,4 @@
     goto other;
 
 
-#endif
+#endif /* CASE_ALLO_H */

@@ -47,4 +47,4 @@
      goto other;
 
 
-#endif
+#endif /* CASE_AUTH_H */

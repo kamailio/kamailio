@@ -14,4 +14,4 @@
      goto dc_end
 
 
-#endif
+#endif /* CASE_CSEQ_H */

@@ -96,4 +96,4 @@
         goto other;
 
 
-#endif
+#endif /* CASE_PROX_H */

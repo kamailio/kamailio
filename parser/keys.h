@@ -650,5 +650,23 @@
 #define _CATe_ 0x65544143   /* "CATe" */
 #define _CATE_ 0x45544143   /* "CATE" */
 
-#endif
+#define _even_ 0x6e657665   /* "even" */
+#define _eveN_ 0x4e657665   /* "eveN" */
+#define _evEn_ 0x6e457665   /* "evEn" */
+#define _evEN_ 0x4e457665   /* "evEN" */
+#define _eVen_ 0x6e655665   /* "eVen" */
+#define _eVeN_ 0x4e655665   /* "eVeN" */
+#define _eVEn_ 0x6e455665   /* "eVEn" */
+#define _eVEN_ 0x4e455665   /* "eVEN" */
+#define _Even_ 0x6e657645   /* "Even" */
+#define _EveN_ 0x4e657645   /* "EveN" */
+#define _EvEn_ 0x6e457645   /* "EvEn" */
+#define _EvEN_ 0x4e457645   /* "EvEN" */
+#define _EVen_ 0x6e655645   /* "EVen" */
+#define _EVeN_ 0x4e655645   /* "EVeN" */
+#define _EVEn_ 0x6e455645   /* "EVEn" */
+#define _EVEN_ 0x4e455645   /* "EVEN" */
+
+
+#endif /* KEYS_H */
 

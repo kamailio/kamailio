@@ -39,4 +39,4 @@
      goto other;       \
 
 
-#endif
+#endif /* CASE_MAX_H */

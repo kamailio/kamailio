@@ -31,4 +31,4 @@
         goto other;
 
 
-#endif
+#endif /* CASE_SUPP_H */

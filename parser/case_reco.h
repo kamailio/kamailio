@@ -4,8 +4,8 @@
  * Record-Route header field parser macros
  */
 
-#ifndef RECO_CASE_H
-#define RECO_CASE_H
+#ifndef CASE_RECO_H
+#define CASE_RECO_H
 
 
 #define OUTE_CASE                            \
@@ -39,5 +39,5 @@
         goto other;
 
 
-#endif
+#endif /* CASE_RECO_H */
 

@@ -121,6 +121,7 @@ static inline int unify(int key)
 #include "case_requ.h"     /* Require */
 #include "case_supp.h"     /* Supported */
 #include "case_www.h"      /* WWW-Authenticate */
+#include "case_even.h"     /* Event */
 
 
 #define READ(val) \
@@ -145,7 +146,8 @@ static inline int unify(int key)
 	case _Unsu_: Unsu_CASE; \
 	case _Requ_: Requ_CASE; \
 	case _Supp_: Supp_CASE; \
-        case _WWW__: WWW_CASE;
+        case _WWW__: WWW_CASE;  \
+        case _Even_: Even_CASE;
 
 
 #define PARSE_COMPACT(id)          \
@@ -234,6 +236,11 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 		case 'k':
 			PARSE_COMPACT(HDR_SUPPORTED);
                         break;
+
+		case 'O':
+		case 'o':
+			PARSE_COMPACT(HDR_EVENT);
+			break;
 		}
 		
 		val = unify(val);
@@ -272,10 +279,10 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 
 
 /* Number of distinct keys */
-#define NUM_KEYS  592
+#define NUM_KEYS  608
 
 /* Number of distinct values */
-#define NUM_VALS 49
+#define NUM_VALS 50
 
 
 /*
@@ -293,7 +300,7 @@ void init_hfname_parser(void)
 		_thor_, _izat_, _ion2_, _ion1_, _y_Re_, _quir_, _Reco_, _rd_R_,
 		_oute_, _Requ_, _ire2_, _ire1_, _Rout_, _Supp_, _orte_, _To12_,
 		_Unsu_, _ppor_, _ted2_, _ted1_, _Via2_, _Via1_, _WWW__, _enti_,
-		_cate_
+		_cate_, _Even_
 	};
 
 	     /* Number of keys associated to each value */
@@ -304,7 +311,7 @@ void init_hfname_parser(void)
 		16, 16,  8,  8,  8, 16, 16,  8, 
 		16, 16,  8,  8, 16, 16, 16,  4, 
 		16, 16,  8,  8,  8,  8,  8, 16,
-                16
+                16, 16
 	};
 
 	     /* Hash table keys */
@@ -382,7 +389,9 @@ void init_hfname_parser(void)
 		_enti_, _entI_, _enTi_, _enTI_, _eNti_, _eNtI_, _eNTi_, _eNTI_, 
 		_Enti_, _EntI_, _EnTi_, _EnTI_, _ENti_, _ENtI_, _ENTi_, _ENTI_, 
 		_cate_, _catE_, _caTe_, _caTE_, _cAte_, _cAtE_, _cATe_, _cATE_, 
-		_Cate_, _CatE_, _CaTe_, _CaTE_, _CAte_, _CAtE_, _CATe_, _CATE_
+		_Cate_, _CatE_, _CaTe_, _CaTE_, _CAte_, _CAtE_, _CATe_, _CATE_,
+		_even_, _eveN_, _evEn_, _evEN_, _eVen_, _eVeN_, _eVEn_, _eVEN_, 
+		_Even_, _EveN_, _EvEn_, _EvEN_, _EVen_, _EVeN_, _EVEn_, _EVEN_, 
 	}; 
 
 	     /* Mark all elements as empty */
