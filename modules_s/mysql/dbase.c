@@ -325,10 +325,16 @@ int get_result(db_con_t* _h, db_res_t** _r)
 
 	CON_RESULT(_h) = mysql_store_result(CON_CONNECTION(_h));
 	if (!CON_RESULT(_h)) {
-		LOG(L_ERR, "get_result(): %s\n", mysql_error(CON_CONNECTION(_h)));
-		free_result(*_r);
-		*_r = 0;
-		return -3;
+		if (mysql_field_count(CON_CONNECTION(_h)) == 0) {
+			(*_r)->col.n = 0;
+			(*_r)->n = 0;
+			return 0;
+		} else {
+			LOG(L_ERR, "get_result(): %s\n", mysql_error(CON_CONNECTION(_h)));
+			free_result(*_r);
+			*_r = 0;
+			return -3;
+		}
 	}
 
         if (convert_result(_h, *_r) < 0) {
