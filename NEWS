@@ -21,37 +21,54 @@ $Id$
 
 New features
 =============
-- presence agent [pa module]
-- TCP support [core]
-- loose routing support [rr module]
-- ENUM support [enum module]
-- dynamic domain management -- allows to manipulate 
-  hosting of multiple domains in run-time 
-  [domain module]
-- web accounting -- acc module can report to serweb
-  on placed calls [acc module]
-- improved exec module (header fields passed now
-  as environment variables to scripts) [exec module]
-- improved tm/FIFO (external applications, such as
-  click-to-dial can now better initiate transactions)
-  [tm module]
-- nathelper utility for Cisco/ATA NAT traversal
-- powerpc fast locking support
-- netbsd support
-- 64 bits arch. support (e.g. netbsd/sparc64).
-- tcp2udp and udp2tcp stateless forwarding (see forward_udp & forward_tcp)
-- rich access control lists [module permissions]
-
+- RFC3261 support
+	- TCP support and cross-transport forwarding [core]
+	- loose routing support [rr module]
+- New modules
+	- vm -- voicemail interface [vm]
+	- ENUM support [enum]
+	- presence agent [pa]
+	- dynamic domain management -- allows to manipulate 
+  	  hosting of multiple domains in run-time [module]
+	- flat-text-file database support [dbtext]
+	- rich access control lists [permissions]
+- Feature Improvements
+	- click-to-dial, which is based on improved tm/FIFO 
+	  that better supports external applications [tm module]
+	- web accounting -- acc module can report to serweb
+  	  on placed calls [acc module]
+	- improved exec module (header fields passed now
+      as environment variables to scripts) [exec module]
+- Architectural Improvements
+	- powerpc fast locking support
+	- netbsd support
+	- 64 bits arch. support (e.g. netbsd/sparc64).
+- New Experimental Features (not tested at all yet)
+	- nathelper utility for Cisco/ATA NAT traversal [nathelper]
+	- another NAT traversal utility [mangler]
+	- postgress support [postgress]
+	- fcp module [fcp]
+	- pdt module (prefix2domain) [pdt]
 
 Changes to use of ser scripts
 =============================
 
+About Multiple Transport Support
+--------------------------------
+SER now suports multiple transport protocols: UDP and TCP. As there
+may be UAs which support only either protocol and cannot speak to
+each other directly, we recommend to alway record-route SIP requests,
+to keep the transport-translating SER in path. Also, if a destination
+transport is not known, stateful forwarding is recommended -- use of
+stateless forwarding for TCP2UDP would result in loss of reliability.
+
 
 core
 ----
-XXX TCP
 - reply_route has been renamed to failure_route -- the old name caused
   too much confusion
+- forward_tcp and forward_udp can force SER to forward via specific
+  transport protocol
 
 acc module:
 -----------
@@ -64,15 +81,13 @@ acc module:
 
 auth module:
 ------------
-XXX is_in_group has been obsoleted by ...
+- auth module has been split in auth, auth_db, auth_radius, group
+  group_radius, uri and uri_radius
+XXX 
 
-domain module:
---------------
-XXX
-
-enum module:
-------------
-XXX
+im module:
+----------
+- im is no longer used and has been obsoleted by TM
 
 exec module:
 ------------
@@ -86,14 +101,27 @@ exec module:
   script does not euqal zero
 - exec_dset takes an additional parameter, which enables 
   validation of SIP URIs returned by external application
-  
-pa module:
-----------
+
+msilo module:
+-------------
 XXX
 
+
+radius_acc module:
+------------------
+- radius_acc module has been removed and radius accounting 
+  is now part of acc module
+
+registrar/usrloc modules:
+-------------------------
+XXX
+  
 rr module:
 ----------
-XXX
+- addRecordRoute has been replaced with record_route
+- rewriteFromRoute has been replaced with strict_route()
+- a new option, "enable_full_lr" can be set to make life
+  with misimplemented UAs easier and put LR in from "lr=on"
 
 tm module:
 ----------
@@ -109,17 +137,3 @@ tm module:
   or t_relay_to explicitely now
 - t_relay_to has been replaced with t_relay_to_udp and t_relay_to_tcp
 
-List of new modules:
---------------------
-- dbtext -- flat-file database
-- domain -- automated domain management
-- enum -- ENUM support
-- nathelper -- utility for NAT traversal for Cisco ATAs
-- pa -- presence agent
-- permissions -- ACLs
-- vm -- voicemail interface
-
-List of deprecated modules:
----------------------------
-- im (t_uac_dlg is used for sending messages)
-- radius_acc (radius accounting now part of acc module)
