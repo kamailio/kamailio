@@ -138,6 +138,29 @@ EOF
 	rm $path
 }
 
+ul_show_contact() # params: <table> <username>
+{
+	name=ser_receiver_$$
+	path=/tmp/$name
+	if [ ! -w $SER_FIFO ]; then
+		echo "Error opening ser's FIFO $SER_FIFO"
+		exit 1
+	fi
+	mkfifo $path
+	if [ $? -ne 0 ] ; then
+		echo "error opening read fifo $path"
+		exit 1
+	fi
+	cat > $SER_FIFO <<EOF
+:ul_show_contact:$name
+$1
+$2
+
+EOF
+	cat < $path
+	rm $path
+}
+
 ul_rm() # params: <table> <username>
 {
 	name=ser_receiver_$$
@@ -537,7 +560,13 @@ case $1 in
 		;;
 
 	show)
-		ul_dump
+		shift
+	
+		if [ $# -eq 1 ] ; then
+			ul_show_contact $USRLOC $1
+		else
+			ul_dump
+		fi
 		exit $?
 		;;
 
