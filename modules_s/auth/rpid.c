@@ -36,7 +36,7 @@
 #include "../../data_lump.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "../../parser/parse_to.h"
+#include "../../parser/parse_nameaddr.h"
 #include "../../parser/parse_uri.h"
 #include "../../ut.h"
 #include "auth_mod.h"
@@ -198,42 +198,32 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
  */
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	struct to_body* parsed;
+	name_addr_t parsed;
 	struct sip_uri uri;
 
 	if (rpid_is_e164) return rpid_is_e164;
 
 	if (!rpid.len) {
 		DBG("is_rpid_user_e164(): Empty rpid\n");
-		rpid_is_e164 = -1;
-		return -1;
+		goto err;
 	}
 
-	parsed = (struct to_body*)pkg_malloc(sizeof(struct to_body));
-	if (parsed == 0) {
-		LOG(L_ERR, "is_rpid_user_e164(): No memory left\n");
-		return -1;
-	}
-
-	memset(parsed, 0, sizeof(struct to_body));
-	parse_to(rpid.s, rpid.s + rpid.len, parsed);
-	
-	if (parsed->error == PARSE_ERROR) {
-		LOG(L_ERR, "is_rpid_user_e164(): Bad RPID header\n");
-		rpid_is_e164 = -1;
-		goto error;
+	if (parse_nameaddr(&rpid, &parsed) < 0) {
+		LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID\n");
+		goto err;
 	}
 	
-	if (parse_uri(parsed->uri.s, parsed->uri.len, &uri) < 0) {
+	if (parse_uri(parsed.uri.s, parsed.uri.len, &uri) < 0) {
 		LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID URI\n");
-		rpid_is_e164 = -1;
-		goto error;
+		goto err;
 	}
 
 	rpid_is_e164 = (is_e164(&uri.user) ? 1 : -1);
- error:
-	free_to(parsed);
 	return rpid_is_e164;
+
+ err:
+	rpid_is_e164 = -1;
+	return -1;
 }
 
 	
