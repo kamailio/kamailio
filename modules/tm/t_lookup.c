@@ -77,6 +77,8 @@
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  * 2004-10-10: use of mhomed disabled for replies (jiri)
+ * 2005-02-01: use the incoming request interface for sending the replies
+ *             - changes in init_rb() (bogdan)
  */
 
 #include "defs.h"
@@ -907,7 +909,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 
 int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 {
-	struct socket_info* send_sock;
+	/*struct socket_info* send_sock;*/
 	struct via_body* via;
 	int proto;
 	int backup_mhomed;
@@ -933,17 +935,17 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	*/
 	backup_mhomed=mhomed;
 	mhomed=0;
-	send_sock=get_send_socket(msg, &rb->dst.to, proto);
 	mhomed=backup_mhomed;
+	/* use for sending replies the incoming interface of the request -bogdan */
+	/*send_sock=get_send_socket(msg, &rb->dst.to, proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d, proto %d "
 			"no socket\n", rb->dst.to.s.sa_family, proto);
 		ser_error=E_BAD_VIA;
 		return 0;
-	}
-	rb->dst.send_sock=send_sock;
-	
-    return 1;
+	}*/
+	rb->dst.send_sock=msg->rcv.bind_address;
+	return 1;
 }
 
 

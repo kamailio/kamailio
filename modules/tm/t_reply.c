@@ -62,6 +62,8 @@
  *  2004-02-18  fifo_t_reply imported from vm module (bogdan)
  *  2004-08-23  avp list is available from failure/on_reply routes (bogdan)
  *  2004-10-01  added a new param.: restart_fr_on_each_reply (andrei)
+ *  2005-03-01  force for statefull replies the incoming interface of 
+ *              the request (bogdan)
  */
 
 
@@ -408,13 +410,17 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* first check if we managed to resolve topmost Via -- if
 	   not yet, don't try to retransmit
 	*/
+	/*
+	   response.dst.send_sock is valid all the time now, as it's taken
+	   from original request -bogdan
 	if (!trans->uas.response.dst.send_sock) {
 		LOG(L_ERR, "ERROR: _reply_light: no resolved dst to send reply to\n");
 	} else {
-		SEND_PR_BUFFER( rb, buf, len );
-		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n", 
-			buf, buf, rb->buffer, rb->buffer );
-	}
+	*/
+	assert(trans->uas.response.dst.send_sock);
+	SEND_PR_BUFFER( rb, buf, len );
+	DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n", 
+		buf, buf, rb->buffer, rb->buffer );
 	pkg_free( buf ) ;
 	DBG("DEBUG: _reply_light: finished\n");
 	return 1;
@@ -847,11 +853,15 @@ int t_retransmit_reply( struct cell *t )
 	/* first check if we managed to resolve topmost Via -- if
 	   not yet, don't try to retransmit
 	*/
+	/* response.dst.send_sock is valid all the time now, as it's taken
+	   from original request -bogdan
 	if (!t->uas.response.dst.send_sock) {
 		LOG(L_WARN, "WARNING: t_retransmit_reply: "
 			"no resolved dst to retransmit\n");
 		return -1;
 	}
+	*/
+	assert(t->uas.response.dst.send_sock);
 
 	/* we need to lock the transaction as messages from
 	   upstream may change it continuously
