@@ -256,16 +256,42 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		row = RES_ROWS(res) + i;
 		
 		user.s      = (char*)VAL_STRING(ROW_VALUES(row));
-		user.len    = strlen(user.s);
+		if (user.s==0){
+			LOG(L_CRIT, "preload_udomain: ERRROR: bad username "
+							"record in table %s\n", b);
+			LOG(L_CRIT, "preload_udomain: ERRROR: skipping...\n");
+			continue;
+		}else{
+			user.len    = strlen(user.s);
+		}
 		contact.s   = (char*)VAL_STRING(ROW_VALUES(row) + 1);
-		contact.len = strlen(contact.s);
+		if (contact.s==0){
+			LOG(L_CRIT, "preload_udomain: ERRROR: bad contact "
+							"record in table %s\n", b);
+			LOG(L_CRIT, "preload_udomain: ERRROR: for username %.*s\n",
+							user.len, user.s);
+			LOG(L_CRIT, "preload_udomain: ERRROR: skipping...\n");
+			continue;
+		}else{
+			contact.len = strlen(contact.s);
+		}
 		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
 		q           = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
 		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
 		rep         = VAL_INT   (ROW_VALUES(row) + 6);
 		state       = VAL_INT   (ROW_VALUES(row) + 7);
 		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
-		callid.len  = strlen(callid.s);
+		if (callid.s==0){
+			LOG(L_CRIT, "preload_udomain: ERRROR: bad callid record in"
+							" table %s\n", b);
+			LOG(L_CRIT, "preload_udomain: ERRROR: for username %.*s,"
+							" contact %.*s\n",
+							user.len, user.s, contact.len, contact.s);
+			LOG(L_CRIT, "preload_udomain: ERRROR: skipping...\n");
+			continue;
+		}else{
+			callid.len  = strlen(callid.s);
+		}
 		flags       = VAL_BITMAP(ROW_VALUES(row) + 8);
 
 		if (use_domain) {
