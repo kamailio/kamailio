@@ -10,6 +10,10 @@
 
 #define CMD_SEPARATOR ':'
 
+/* core FIFO command set */
+#define FIFO_PRINT "print"
+#define FIFO_UPTIME "uptime"
+
 typedef int (fifo_cmd)( FILE *fifo_stream, char *response_file );
 
 struct fifo_command{
@@ -30,5 +34,9 @@ int read_line_set(char *buf, int max_len, FILE *fifo, int *len);
 
 int open_fifo_server();
 
-int print_fifo_cmd( FILE *stream, char *response_file );
+/* regsiter core FIFO command set */
+int register_core_fifo();
+
+FILE *open_reply_pipe( char *pipe_name );
+
 #endif

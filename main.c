@@ -874,8 +874,8 @@ int main(int argc, char** argv)
 	}
 
 	/* register a diagnostic FIFO command */
-	if (register_fifo_cmd(print_fifo_cmd, "print", 0)<0) {
-		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+	if (register_core_fifo()<0) {
+		LOG(L_CRIT, "unable to register core FIFO commands\n");
 		goto error;
 	}
 

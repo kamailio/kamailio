@@ -7,7 +7,6 @@
 #ifndef _T_STATS_H
 #define _T_STATS_H
 
-#include <time.h>
 
 extern struct t_stats *cur_stats, *acc_stats;
 
@@ -22,9 +21,8 @@ struct t_stats {
 	unsigned int completed_3xx, completed_4xx, completed_5xx, 
 		completed_6xx, completed_2xx;
 	unsigned int replied_localy;
-	time_t up_since;
 };
 
-int init_stats(void);
+int init_tm_stats(void);
 
 #endif

@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <string.h>
+#include <time.h>
 #include "dprint.h"
 #include "ut.h"
 #include "error.h"
@@ -37,6 +38,9 @@ static FILE *fifo_stream;
 
 /* list of fifo command */
 static struct fifo_command *cmd_list=0;
+
+/* up time */
+static time_t up_since;
 
 static struct fifo_command *lookup_fifo_cmd( char *name )
 {
@@ -188,12 +192,30 @@ static char *trim_filename( char * file )
 	return new_fn;
 }
 
+FILE *open_reply_pipe( char *pipe_name )
+{
+	FILE *file_handle;
+
+	if (!pipe_name) {
+		DBG("DEBUG: open_reply_pipe: no file to write to about missing cmd\n");
+		return 0;
+	}
+	file_handle=fopen( pipe_name, "w");
+	if (file_handle==NULL) {
+		LOG(L_ERR, "ERROR: open_reply_pipe: open error (%s): %s\n",
+			pipe_name, strerror(errno));
+		return 0;
+	}
+	return file_handle;
+}
+
 static void fifo_server(FILE *fifo_stream)
 {
 	char buf[MAX_FIFO_COMMAND];
 	int line_len;
 	char *file_sep, *command, *file;
 	struct fifo_command *f;
+	FILE *file_handle;
 
 	file_sep=command=file=0;
 
@@ -208,7 +230,7 @@ static void fifo_server(FILE *fifo_stream)
 			goto consume;
 		}
 		if (line_len==0) {
-			LOG(L_ERR, "ERROR: fifo_server: command empty\n");
+			LOG(L_INFO, "INFO: fifo_server: command empty\n");
 			continue;
 		}
 		if (line_len<3) {
@@ -246,11 +268,31 @@ static void fifo_server(FILE *fifo_stream)
 		if (f==0) {
 			LOG(L_ERR, "ERROR: fifo_server: command %s is not available\n",
 				command);
+			file_handle=open_reply_pipe(file);
+			if (file_handle==0) {
+				LOG(L_ERR, "ERROR: fifo_server: no reply pipe\n");
+				goto consume;
+			}
+			if (fprintf(file_handle, "[%s not available]\n", command)<=0) {
+				LOG(L_ERR, "ERROR: fifo_server: write error: %s\n",
+				 	strerror(errno));
+			}
+			fclose(file_handle);
 			goto consume;
 		}
 		if (f->f(fifo_stream, file)<0) {
 			LOG(L_ERR, "ERROR: fifo_server: command (%s) "
 				"processing failed\n", command );
+			file_handle=open_reply_pipe(file);
+			if (file_handle==0) {
+				LOG(L_ERR, "ERROR: fifo_server: no reply pipe\n");
+				goto consume;
+			}
+			if (fprintf(file_handle, "[%s failed]\n", command)<=0) {
+				LOG(L_ERR, "ERROR: fifo_server: write error: %s\n",
+				strerror(errno));
+			}
+			fclose(file_handle);
 			goto consume;
 		}
 
@@ -273,6 +315,7 @@ int open_fifo_server()
 			strerror(errno));
 		return -1;
 	}
+	time(&up_since);
 	process_no++;
 	fifo_pid=fork();
 	if (fifo_pid<0) {
@@ -311,7 +354,7 @@ int open_fifo_server()
 }
 
 /* diagnostic and hello-world FIFO command */
-int print_fifo_cmd( FILE *stream, char *response_file )
+static int print_fifo_cmd( FILE *stream, char *response_file )
 {
 	char text[MAX_PRINT_TEXT];
 	int text_len;
@@ -340,6 +383,45 @@ int print_fifo_cmd( FILE *stream, char *response_file )
 	} else {
 		LOG(L_INFO, "INFO: print_fifo_cmd: %.*s\n", 
 			text_len, text );
+	}
+	return 1;
+}
+
+static int uptime_fifo_cmd( FILE *stream, char *response_file )
+{
+	FILE *file;
+	time_t now;
+
+	if (response_file==0 || *response_file==0 ) { 
+		LOG(L_ERR, "ERROR: uptime_fifo_cmd: null file\n");
+		return -1;
+	}
+	file=fopen(response_file, "w" );
+	if (file==NULL) {
+		LOG(L_ERR, "ERROR: uptime_fifo_cmd: file %s bad: %s\n",
+			response_file, strerror(errno) );
+		return -1;
+	}
+
+	time(&now);
+	fprintf(file, "Now: %s", ctime(&now) );
+	fprintf(file, "Up since: %s", ctime(&up_since) );
+	fprintf(file, "Up time: %.0f [sec]\n", difftime(now, up_since));
+
+	fclose(file);
+	return 1;
+}
+
+
+int register_core_fifo()
+{
+	if (register_fifo_cmd(print_fifo_cmd, FIFO_PRINT, 0)<0) {
+		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+		return -1;
+	}
+	if (register_fifo_cmd(uptime_fifo_cmd, FIFO_UPTIME, 0)<0) {
+		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+		return -1;
 	}
 	return 1;
 }

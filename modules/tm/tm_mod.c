@@ -238,7 +238,7 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if (init_stats()<0) {
+	if (init_tm_stats()<0) {
 		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
 		return -1;
 	}

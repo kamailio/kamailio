@@ -105,12 +105,42 @@ prompt_pw() {
 
 # $1 = name $2=path $3=attempt
 print_stats() {
-echo "[cycle: $3; if screen empty, make sure server is alive]"
+
+echo "[cycle: $3; if screen empty, make sure server is alive and option fifo is set]"
+
+echo Up Time
+cat > $SER_FIFO <<EOF
+
+:uptime:$1
+EOF
+cat < $2
+echo
+
+echo Transaction Statistics
 cat > $SER_FIFO <<EOF
 
 :t_stats:$1
 EOF
 cat < $2
+echo
+
+echo Stateless Server Statistics
+cat > $SER_FIFO <<EOF
+
+:sl_stats:$1
+EOF
+cat < $2
+echo
+
+echo UsrLoc Stats
+cat > $SER_FIFO <<EOF
+
+:ul_stats:$1
+EOF
+cat < $2
+echo
+
+
 }
 
 
@@ -385,7 +415,7 @@ case $1 in
 		fi
 		;;
 
-	stats)
+	monitor|console|moni|con)
 		name=ser_receiver_$$
 		path=/tmp/$name
 		if [ ! -w $SER_FIFO ]; then
@@ -399,9 +429,11 @@ case $1 in
 			exit 1
 		fi
 		attempt=0
+		clear
 		while [ 1 -eq 1 ]; do
 			attempt=`expr $attempt + 1`
-			clear
+			#clear
+			tput cup 0 0
 			print_stats $name $path $attempt
 			sleep $WATCH_PERIOD
 		done

@@ -1,6 +1,6 @@
 :t_uac:hh
 MESSAGE
-sip:jiri@iptel.org
+sip:jirim@iptel.org
 foo: bar
 x: y
 p_header: p_value

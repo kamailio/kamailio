@@ -1,5 +1,5 @@
 REGISTER sip:iptel.org:5060 SIP/2.0
-To:poo bear@iptel.org
+To:poo <bear@iptel.org>
 From: <sip:jiri@iptel.org>
 Call-ID: 7138115741688223740@195.37.78.226
 CSeq: 4 REGISTER

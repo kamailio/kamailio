@@ -1,5 +1,5 @@
-MESSAGE sip:jiri@iptel.org SIP/2.0
-Via: SIP/2.0/UDP fox.iptel.org:5060
+MESSAGE sip:x@bat.iptel.org SIP/2.0
+Via: SIP/2.0/UDP bat.iptel.org:9
 From: sip:msilo@iptel.org;tag=16df4fe56e8782ecaa5d53ae36fb9240
 To: sip:dcm@iptel.org
 Call-ID: 02b1191c-447e-4bd0-b771-c039fc0d9d84@195.37.78.169
