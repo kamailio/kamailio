@@ -55,7 +55,6 @@ post_auth_f post_auth_func = 0; /* Post authorization function from auth module 
 struct attr attrs[A_MAX];
 struct val vals[V_MAX];
 void *rh;
-int ciscopec;
 
 static int mod_init(void);                        /* Module initialization function */
 static int str_fixup(void** param, int param_no); /* char* -> str* */
@@ -146,10 +145,7 @@ static int mod_init(void)
 	if (vend == NULL) {
 		DBG("auth_radius: No `Cisco' vendor in Radius "
 			   "dictionary\n");
-		ciscopec = -1;
 		attrs[A_CISCO_AVPAIR].n = NULL;
-	} else {
-		ciscopec = vend->vendorpec;
 	}
 
 	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);

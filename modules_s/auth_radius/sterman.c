@@ -193,7 +193,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	 	return -19;  	
 	}
 
-	if (ciscopec != -1) {
+	if (attrs[A_CISCO_AVPAIR].n != NULL) {
 		/* Add SIP Call-ID as a Cisco VSA, like IOS does */
 		if (_msg->callid == NULL || _msg->callid->body.s == NULL) {
 			LOG(L_ERR, "sterman(): Call-ID is missed\n");
@@ -210,7 +210,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		memcpy(callid.s, "call-id=", 8);
 		memcpy(callid.s + 8, _msg->callid->body.s, _msg->callid->body.len);
 		if (rc_avpair_add(rh, &send, attrs[A_CISCO_AVPAIR].v, callid.s,
-		    callid.len, ciscopec) == 0) {
+		    callid.len, VENDOR(attrs[A_CISCO_AVPAIR].v)) == 0) {
 			LOG(L_ERR, "sterman(): Unable to add Cisco-AVPair attribute\n");
 			rc_avpair_free(send);
 			return -22;
