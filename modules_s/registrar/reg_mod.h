@@ -42,6 +42,9 @@ extern int case_sensitive;
 extern int desc_time_order;
 extern int nat_flag;
 extern int min_expires;
+extern str realm_prefix;
+
+extern float def_q;
 
 usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 

@@ -40,6 +40,7 @@
 #include "common.h"
 #include "challenge.h"
 #include "nonce.h"
+#include "api.h"
 
 
 /*
@@ -124,7 +125,6 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	return hf;
 }
 
-
 /*
  * Create and send a challenge
  */
@@ -162,6 +162,7 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 		}
 
 		_realm = &uri.host;
+		strip_realm(_realm);
 	}
 
 	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), _realm, &auth_hf_len, _qop, _challenge_msg);

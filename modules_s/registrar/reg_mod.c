@@ -62,7 +62,8 @@ int desc_time_order = 0;              /* By default do not order according to th
 int nat_flag        = 4;              /* SER flag marking contacts behind NAT */
 int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
-
+char* realm_pref    = "";   /* Realm prefix to be removed */
+str realm_prefix;
 
 /*
  * sl_send_reply function pointer
@@ -92,8 +93,9 @@ static param_export_t params[] = {
 	{"case_sensitive",  INT_PARAM, &case_sensitive },
 	{"desc_time_order", INT_PARAM, &desc_time_order},
 	{"nat_flag",        INT_PARAM, &nat_flag       },
+	{"realm_prefix",    STR_PARAM, &realm_pref     },
 	{"min_expires",     INT_PARAM, &min_expires    },
-	{0, 0, 0}
+	{0,0,0}
 };
 
 
@@ -130,6 +132,9 @@ static int mod_init(void)
 		LOG(L_ERR, "registrar: This module requires sl module\n");
 		return -1;
 	}
+
+	realm_prefix.s = realm_pref;
+	realm_prefix.len = strlen(realm_pref);
 	
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {

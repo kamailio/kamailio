@@ -38,6 +38,27 @@
 
 
 /*
+ * if realm determined from request, look if there are some
+ * modification rules
+ */
+void strip_realm(str *_realm)
+{
+	/* no param defined -- return */
+	if (!realm_prefix.len) return;
+
+	/* prefix longer than realm -- return */
+	if (realm_prefix.len>_realm->len) return;
+
+	/* match ? -- if so, shorten realm -*/
+	if (memcmp(realm_prefix.s,_realm->s,realm_prefix.len)==0) {
+		_realm->s+=realm_prefix.len;
+		_realm->len-=realm_prefix.len;
+	}
+	return;
+}
+
+
+/*
  * Find credentials with given realm in a SIP message header
  */
 static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
@@ -139,6 +160,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 		}
 		
 		*_realm = uri.host;
+		strip_realm(_realm);
 	}
 
 	     /* Try to find credentials with corresponding realm

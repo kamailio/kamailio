@@ -64,4 +64,6 @@ typedef auth_result_t (*post_auth_f)(struct sip_msg* _m, struct hdr_field* _h, s
 
 auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid);
 
+void strip_realm(str *_realm);
+
 #endif /* API_H */
