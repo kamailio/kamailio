@@ -7,6 +7,8 @@
 # History:
 # --------
 # 2003-02-23 Thomas's start|stop commands checked in
+# 2003-10-30 more debugging output, less copy and paste in
+             the previous item
 #
 # To-DO:
 # -----
@@ -19,6 +21,8 @@
 PID_FILE=/var/run/ser.pid
 SYSLOG=1 # 0=output to console, 1=output to syslog
 STARTOPTIONS= # for example -dddd
+DIR=`dirname $0`
+SERBIN=$DIR/ser
 
 # ser's FIFO server
 if [ -z "$SER_FIFO" ]; then
@@ -520,19 +524,26 @@ export PW
 case $1 in
 
 	start)
-		DIR=`dirname $0`
 		echo
 		printf "Starting SER : "
 		if [ -r $PID_FILE ] ; then
 			echo "PID file exists! ($PID_FILE) already running?"
 			exit 1
 		else
+			if [ ! -x "$SERBIN" ] ; then
+				echo "SER binaries not found at $SERBIN; reconfigure SERBIN in $0"
+				exit 1
+			fi
 			if [ $SYSLOG = 1 ] ; then
-				$DIR/ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+				$SERBIN -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
 			else
-			 	$DIR/ser -P $PID_FILE -E $STARTOPTIONS
+			 	$SERBIN -P $PID_FILE -E $STARTOPTIONS
 			fi
 			sleep 1
+			if [ ! -s $PID_FILE ] ; then
+				echo "PID file $PID_FILE does not exist -- SER start failed"
+				exit 1
+			fi
 			echo "started pid(`cat $PID_FILE`)"
 		fi
 		exit 0
@@ -544,36 +555,19 @@ case $1 in
 			kill `cat $PID_FILE`
 			echo "stopped"
 		else
-			echo No PID file found!
+			echo No PID file found! SER probably not running
 			exit 1
 		fi
 		exit 0
 	;;
 
 	restart)
-	        DIR=`dirname $0`
-		printf "Stopping SER : "
-		if [ -r $PID_FILE ] ; then
-			kill `cat $PID_FILE`
-			echo "stopped"
-		else
-			echo No PID file found! SER problably not running
+		$0 stop
+		if [ "$?" -ne 0 ] ; then
 			exit 1
 		fi
 		sleep 2
-		printf "Starting SER : "
-		if [ -r $PID_FILE ] ; then
-			echo "PID file exists! ($PID_FILE) already running?"
-			exit 1
-		else
-			if [ $SYSLOG = 1 ] ; then
-			        $DIR/ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
-			else
-			        $DIR/ser -P $PID_FILE -E $STARTOPTIONS
-			fi
-			sleep 1
-			echo "started pid(`cat $PID_FILE`)"
-		fi
+		$0 start
 		exit 0
 	;;
 
