@@ -1,0 +1,500 @@
+<!-- Acc Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    acc module is used to report on transactions to syslog, <abbrev>SQL</abbrev> and
+	    <acronym>RADIUS</acronym>.
+	</para>
+	<para>
+	    To report on a transaction using syslog, use <quote>setflag</quote> to mark a
+	    transaction you are interested in with a flag, load accounting module and set its
+	    <quote>log_flag</quote> to the same flag number. The acc module will then report on
+	    completed transaction to syslog. A typical usage of the module takes no acc-specific
+	    script command -- the functionality binds invisibly through transaction processing.
+	    Script writers just need to mark the transaction for accounting with proper setflag.
+	</para>
+	<para>
+	    What is printed depends on module's <quote>log_fmt</quote> parameter. It's a string with
+	    characters specifying which parts of request should be printed: 
+	    <itemizedlist>
+		<listitem>
+		    <para>c = Call-Id</para>
+		</listitem>
+		<listitem>
+		    <para>d = To tag (Dst)</para>
+		</listitem>
+		<listitem>
+		    <para>f = From</para>
+		</listitem>
+		<listitem>
+		    <para>i = Inbound Request-URI</para>
+		</listitem>
+		<listitem>
+		    <para>m = Method</para>
+		</listitem>
+		<listitem>
+		    <para>o = Outbound Request-URI</para>
+		</listitem>
+		<listitem>
+		    <para>r = fRom</para>
+		</listitem>
+		<listitem>
+		    <para>s = Status</para>
+		</listitem>
+		<listitem>
+		    <para>t = To</para>
+		</listitem>
+		<listitem>
+		    <para>u = digest Username</para>
+		</listitem>
+		<listitem>
+		    <para>p = username Part of inbound Request-URI</para>
+		</listitem>
+	    </itemizedlist>
+	    If a value is not present in request, "n/a" is accounted instead.
+	</para>
+	<para>
+	    Note that:
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			A single INVITE may produce multiple accounting reports -- that's
+			due to SIP's forking feature
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Subsequent ACKs and other requests do not hit the server and can't be
+			accounted unless record-routing is enforced. The ACKs assert very little
+			useful information anyway and reporting on INVITE's 200 makes most
+			accounting scenarios happy.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			There is no session accounting -- ser maintains no sessions. If one needs to
+			correlate INVITEs with BYEs for example for purpose of billing, then it is
+			better done in the entity which collects accounting infromation. Otherwise,
+			SIP server would have to become sessions-stateful, which would very badly
+			impact its scalability.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If a UA fails in middle of conversation, a proxy will never learn it.
+			In general, a better practice is to account from an end-device
+			(such as PSTN gateway), which best knows about call status
+			(including media status and PSTN status in case of the gateway).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+	<para>
+	    Support for SQL and RADIUS works analogously. You need to enable it by recompiling the
+	    module with properly set defines. Uncomment the SQL_ACC and RAD_ACC lines in
+	    modules/acc/Makefile. To compile SQL support, you need to have mysqlclient package on
+	    your system. To compile RADIUS support, you need to have radiusclient installed on your
+	    system (http://www.mcs-cityline.net/~lf/radius/). The radius client needs to be
+	    configured properly. To do so, use the template at etc/radiusclient.conf and make sure
+	    that module's radius_config parameter points to its location.  In particular, accounting
+	    secret must match that one configured in server. Uses along with FreeRadius
+	    (http://www.freeradius.org/) and Radiator (http://www.open.com.au/radiator/) servers
+	    have been reported to us.
+	</para>
+	<para>
+	    Both mysql and radius libraries must be dynamically linkable. You need to configure your
+	    OS so that SER, when started, will find them. Typically, you do so by manipulating
+	    LD_LIBRARY_PATH environment variable or condiguring ld.so.
+	</para>
+	<section>
+	    <title>General Example</title>
+	    <programlisting format="linespecific">
+loadmodule "modules/acc/acc.so"
+modparam("acc", "log_level", 1)
+modparam("acc", "log_flag", 1)
+
+if (uri=~"sip:+49") /* calls to Germany */ {
+    if (!proxy_authorize("iptel.org" /* realm */,
+                         "subscriber" /* table name */))  {
+        proxy_challenge("iptel.org" /* realm */, "0" /* no qop */ );
+        break;
+    }
+
+    if (method=="INVITE" & !check_from()) {
+        log("from!=digest\n");
+        sl_send_reply("403","Forbidden");
+        break;
+    }
+
+    setflag(1); /* set for accounting (the same value as in log_flag!)
+    t_relay(); 	/* enter stateful mode now */
+};
+</programlisting>
+	</section>
+
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the listed modules
+	    must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>tm</emphasis> -- Transaction Manager</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>a database module</emphasis> -- If compiled with database support.</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>secret</varname> (string)</title>
+	    <para>
+	    </para>
+	    <para>
+		Default value is randomly generated string.
+	    </para>
+	    <example>
+		<title>Setting secret module parameter</title>
+		<programlisting format="linespecific">
+modparam("auth", "secret", "johndoessecretphrase")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>log_level</varname> (integer)</title>
+	    <para>
+		Log level at which accounting messages are issued to syslog.
+	    </para>
+	    <para>
+		Default value is L_NOTICE.
+	    </para>
+	    <example>
+		<title>log_level example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_level", 2)   # Set log_level to 2
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>log_fmt</varname> (string)</title>
+	    <para>
+		Defines what parts of header fields will be printed to
+		syslog, see <quote>overview</quote> for list of accepted values.
+	    </para>
+	    <para>
+		Default value is <quote>miocfs</quote>.
+	    </para>
+	    <example>
+		<title>log_fmt example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_fmt", "mfs")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>early_media</varname> (integer)</title>
+	    <para>
+		Should be early media (183) accounted too ?
+	    </para>
+	    <para>
+		Default value is 0 (no).
+	    </para>
+	    <example>
+		<title>early_media example</title>
+		<programlisting format="linespecific">
+modparam("acc", "early_media", 1)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>failed_transactions</varname> (integer)</title>
+	    <para>
+		Should be failed transactions (status>=300) accounted too ?
+	    </para>
+	    <para>
+		Default value is 0 (no).
+	    </para>
+	    <example>
+		<title>failed_transactions example</title>
+		<programlisting format="linespecific">
+modparam("acc", "failed_transactions", 1)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>log_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account a transaction.
+	    </para>
+	    <para>
+		Default value is 1.
+	    </para>
+	    <example>
+		<title>log_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_flag", 2)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>log_missed_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account missed calls.
+	    </para>
+	    <para>
+		Default value is 2.
+	    </para>
+	    <example>
+		<title>log_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_missed_flag", 3)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>report_ack</varname> (integer)</title>
+	    <para>
+		Shall acc attempt to account e2e ACKs too ? Note that this is really only an
+		 attempt, as e2e ACKs may take a different path (unless RR enabled) and mismatch
+		 original INVITE (e2e ACKs are a separate transaction).
+	    </para>
+	    <para>
+		Default value is 1 (yes).
+	    </para>
+	    <example>
+		<title>report_ack example</title>
+		<programlisting format="linespecific">
+modparam("acc", "report_ack", 0)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>report_cancels</varname> (integer)</title>
+	    <para>
+		By default, CANCEL reporting is disabled -- most accounting
+		applications are happy to see INVITE's cancellation status.
+		Turn on if you explicitely want to account CANCEL transactions.
+	    </para>
+	    <para>
+		Default value is 0 (no).
+	    </para>
+	    <example>
+		<title>report_cancels example</title>
+		<programlisting format="linespecific">
+modparam("acc", "report_cancels", 1)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>radius_config</varname> (string)</title>
+	    <para>
+		<emphasis>This parameter is radius specific.</emphasis> Path to radius client
+		configuration file, set the referred config file correctly and specify there address
+		of server, shared secret (should equal that in /usr/local/etc/raddb/clients for
+		freeRadius servers) and dictionary, see etc for an example of config file and
+		dictionary.
+	    </para>
+	    <para>
+		Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+	    </para>
+	    <example>
+		<title>radius_config example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>service_type</varname> (integer)</title>
+	    <para>
+		Radius service type used for accounting.
+	    </para>
+	    <para>
+		Default value is 15 (SIP).
+	    </para>
+	    <example>
+		<title>service_type example</title>
+		<programlisting format="linespecific">
+modparam("acc", "service_type", 16)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>radius_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account a transaction -- RADIUS specific.
+	    </para>
+	    <para>
+		Default value is 1.
+	    </para>
+	    <example>
+		<title>radius_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_flag", 2)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>radius_missed_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account missed calls -- RADIUS specific.
+	    </para>
+	    <para>
+		Default value is 2.
+	    </para>
+	    <example>
+		<title>radius_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "radius_missed_flag", 3)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		SQL address -- database specific.
+	    </para>
+	    <para>
+		Default value is <quote>sql://ser:heslo@localhost/ser</quote>
+	    </para>
+	    <example>
+		<title>db_url example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_url", "sql://user:password@localhost/ser")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>db_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account a transaction -- database specific.
+	    </para>
+	    <para>
+		Default value is 1.
+	    </para>
+	    <example>
+		<title>db_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_flag", 2)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>db_missed_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account missed calls -- database specific.
+	    </para>
+	    <para>
+		Default value is 2.
+	    </para>
+	    <example>
+		<title>db_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "db_missed_flag", 3)
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title><function moreinfo="none">acc_log_request(comment)</function></title>
+	    <para>
+		<function moreinfo="none">acc_request</function> reports on a request, for example,
+		it can be used to report on missed calls to off-line users who are replied 404. To
+		avoid multiple reports on UDP request retranmission, you would need to embed the
+		action in stateful processing.
+	    </para> 
+	    <para>
+		Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>comment</emphasis> - Comment to be appended.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>acc_log_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_log_request("Some comment");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><function moreinfo="none">acc_db_request(comment, table)</function></title>
+	    <para>
+		Like <function moreinfo="none">acc_log_request</function>, <function
+		moreinfo="none">acc_db_request</function> reports on a request. The report is sent
+		to database at <quote>db_url</quote>, in the table referred to in the second action
+		parameter
+		</para>
+	    <para>
+		Meaning of the parameters is as follows:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>comment</emphasis> - Comment to be appended.</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>table</emphasis> - Database table to be used.</para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>acc_db_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_log_request("Some comment", "Some table");
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><function moreinfo="none">acc_rad_request(comment)</function></title>
+	    <para>
+		Like <function moreinfo="none">acc_log_request</function>, 
+		<function moreinfo="none">acc_rad_requst</function> reports on a request. It
+		reports to radius server as configured in <quote>radius_config</quote>.
+	    </para> 
+	    <para>
+		Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>comment</emphasis> - Comment to be appended.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>acc_rad_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_rad_request("Some comment");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("acc.sgml" "Book" "chapter")
+End:
+-->
