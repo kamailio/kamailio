@@ -3,6 +3,12 @@
 
 enum lists { FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_OF_TIMER_LISTS };
 
+/* we maintain separate retransmission lists for each of retransmission
+   periods; that allows us to keep the lists ordered while just adding
+   new items to list's tail (FIFO)
+*/
+enum retransmission_lists { RT_T1_TO1, RT_T1_TO_2, RT_T1_TO_3, RT_T2, NR_OF_RT_LISTS };
+
 #include "h_table.h"
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine

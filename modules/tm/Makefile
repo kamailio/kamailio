@@ -14,6 +14,8 @@ MKDEP=gcc -M
 
 ALLDEP=Makefile
 
+DEFS=-DFAKED_PARSER
+
 auto_gen=
 sources= $(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen)
 objs= $(sources:.c=.o)

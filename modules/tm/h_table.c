@@ -1,6 +1,11 @@
 #include "h_table.h"
 
+
 int table_entries;
+
+struct cell      *T;
+unsigned int  global_msg_id;
+
 
 
 void free_cell( struct cell* dead_cell )
@@ -87,30 +92,31 @@ struct s_table* init_hash_table()
    /*allocs the table*/
    hash_table = sh_malloc(  sizeof( struct s_table ) );
    if ( !hash_table )
-   {
-       free_hash_table( hash_table );
-      return 0;
-   }
+	goto error;
 
    /*inits the time*/
    hash_table->time = 0;
 
-   /* allocs the entry's table */
     table_entries = TABLE_ENTRIES;
+
+   /* try first allocating all the structures needed for syncing */
+   if (lock_initialize()==-1)
+	goto error;
+
+   /* allocs the entry's table */
     hash_table->entrys  = sh_malloc( table_entries * sizeof( struct entry )  );
     if ( !hash_table->entrys )
-    {
-        free_hash_table( hash_table );
-       return 0;
-    }
+	goto error;
 
-   /* allocs the timer's table */
+   /* allocs the transaction timer's table */
     hash_table->timers  = sh_malloc( NR_OF_TIMER_LISTS * sizeof( struct timer )  );
     if ( !hash_table->timers )
-    {
-        free_hash_table( hash_table );
-       return 0;
-    }
+	goto error;
+
+    /* allocs the retransmission timer's table */
+    hash_table->retr_timers = sh_malloc( NR_OF_RT_LISTS * sizeof (struct timer ) );
+    if ( !hash_table->retr_timers )
+	goto error;
 
     /* inits the entrys */
     for(  i=0 ; i<table_entries; i++ )
@@ -129,12 +135,25 @@ struct s_table* init_hash_table()
        //init_timerlist_lock( hash_table, (hash_table->timers)+i );
     }
 
+   /* init the retransmission timers */
+   for ( i=0; i<NR_OF_RT_LISTS; i++)
+   {
+       hash_table->timers[i].first_cell = 0;
+       hash_table->timers[i].last_cell = 0;
+       //init_retr_timer_lock( hash_table, (hash_table->timers)+i );
+   }
+
 #ifdef THREAD
    /* starts the timer thread/ process */
    pthread_create( &(hash_table->timer_thread_id), NULL, timer_routine, hash_table );
 #endif
 
    return  hash_table;
+
+error:
+   free_hash_table( hash_table );
+   lock_cleanup();
+   return 0;
 }
 
 

@@ -7,7 +7,10 @@
 
 /* typedef to structure we use for mutexing;
    currently, index to a semaphore set identifier now */
-typedef int lock_t;
+typedef struct {
+	int semaphore_set;
+	int semaphore_index;
+} lock_t;
 
 #include "h_table.h"
 
@@ -15,22 +18,18 @@ typedef int lock_t;
 #define IPC_PERMISSIONS 0666
 
 
-/* try to allocate as long set as possible;
-   return set size or -1 on error
-*/
-
 int lock_initialize();
-
-int lock_cleanup();
+int init_semaphore_set( int size );
+void lock_cleanup();
 
 int lock( lock_t s );
 int unlock( lock_t s );
-
-int change_semaphore( int semaphore_id , int val );
+int change_semaphore( lock_t s  , int val );
 
 int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* hash_table, struct entry *entry );
 int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id);
+int init_retr_timer_lock( struct s_table* hash_table, enum retransmission_lists list_id );
 
 int release_cell_lock( struct cell *cell );
 int release_entry_lock( struct entry *entry );

@@ -8,8 +8,6 @@
 #endif
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>
-
 #include "../../msg_parser.h"
 
 struct s_table;
@@ -28,9 +26,6 @@ struct cell;
 #define MAX_FORK           20
 
 
-extern  struct cell      *T;
-extern  unsigned int  global_msg_id;
-
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value         */
 typedef struct timer_link
@@ -41,11 +36,16 @@ typedef struct timer_link
 
 
 /* timer list: includes head, tail and protection semaphore */
+
+/* RETRANSMISSION: CONSIDER rewriting for more generality; particularly,
+   rertransmission timers will not point to cells but to
+   outbound messages
+*/
 typedef struct  timer
 {
    struct cell*    first_cell;
    struct cell*    last_cell;
-   int                  sem;
+   /* int                  sem; */
    lock_t   mutex;
 } timer_type;
 
@@ -109,6 +109,8 @@ struct s_table
    struct entry*   entrys;
    /* table of timer lists */
    struct timer*   timers;
+   /* retransmission lists */
+   struct timer*   retr_timers;
 #ifdef THREADS
    pthread_t         timer_thread_id;
 #endif
