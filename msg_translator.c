@@ -165,7 +165,7 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 
 
 
-char* received_builder(struct sip_msg *msg, int *received_len)
+char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 {
 	char *buf;
 	int  len;
@@ -281,9 +281,9 @@ static inline int lumps_len(struct lump* l)
 /* another helper functions, adds/Removes the lump,
 	code moved form build_req_from_req  */
 
-static /*inline*/ void process_lumps(	struct lump* l,	char* new_buf, 
-									int* new_buf_offs, char* orig,
-									int* orig_offs)
+static inline void process_lumps(	struct lump* l,	char* new_buf, 
+									unsigned int* new_buf_offs, char* orig,
+									unsigned int* orig_offs)
 {
 	struct lump *t;
 	struct lump *r;
@@ -586,7 +586,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	int               i;
 	char              backup;
 	char              *received_buf;
-	int               received_len;
+	unsigned int               received_len;
 	char              *warning;
 	unsigned int      warning_len;
 	int r;

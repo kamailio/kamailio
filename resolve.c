@@ -399,9 +399,9 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port)
 						" unable to perform SRV lookup\n", len);
 		}else{
 			/* check if it's an ip address */
-			if ( ((ip=str2ip(name, len))!=0)
+			if ( ((ip=str2ip((unsigned char*)name, len))!=0)
 #ifdef	USE_IPV6
-				  || ((ip=str2ip6(name, len))!=0)
+				  || ((ip=str2ip6((unsigned char*)name, len))!=0)
 #endif
 				){
 				/* we are lucky, this is an ip address */
