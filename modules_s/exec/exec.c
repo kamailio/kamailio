@@ -30,6 +30,7 @@
  * --------
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28 scratchpad removed
+ * 2004-07-21 rewrite uri done via action() (bogdan)
  */
 
 
@@ -50,6 +51,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../dprint.h"
 #include "../../dset.h"
+#include "../../action.h"
 #include "config.h"
 
 int exec_msg(struct sip_msg *msg, char *cmd )
@@ -97,6 +99,7 @@ error01:
 
 int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 
+	struct action act;
 	int cmd_len;
 	FILE *pipe;	
 	char *cmd_line;
@@ -105,7 +108,6 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	char uri_line[MAX_URI_SIZE+1];
 	int uri_cnt;
 	int uri_len;
-	char *new_uri;
 	int exit_status;
 
 	/* pesimist: assume error by default */
@@ -148,19 +150,15 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 		/* ZT */
 		uri_line[uri_len]=0;
 		if (uri_cnt==0) {
-			new_uri=pkg_malloc(uri_len);
-			if (new_uri==0) {
-				LOG(L_ERR, "ERROR: exec_str no uri mem\n");
+			memset(&act, 0, sizeof(act));
+			act.type = SET_URI_T;
+			act.p1_type = STRING_ST;
+			act.p1.string = uri_line;
+			if (do_action(&act, msg)<0) {
+				LOG(L_ERR,"ERROR:exec_str : SET_URI_T action failed\n");
 				ser_error=E_OUT_OF_MEM;
 				goto error02;
 			}
-			memcpy(new_uri, uri_line, uri_len );
-			if (msg->new_uri.s) {
-				pkg_free(msg->new_uri.s);
-			}
-			msg->new_uri.s=new_uri;
-			msg->new_uri.len=uri_len;
-			msg->parsed_uri_ok=0; /* invalidate current parsed uri */
 		} else {
 			if (append_branch(msg, uri_line, uri_len, Q_UNSPECIFIED)==-1) {
 				LOG(L_ERR, "ERROR: exec_str: append_branch failed;"
