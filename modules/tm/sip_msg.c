@@ -619,6 +619,12 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
          case HDR_CONTACT:
                    new_msg->contact = new_hdr;
                    break;
+         case HDR_MAXFORWARDS :
+                  new_msg->maxforwards = new_hdr;
+               break;
+        case HDR_ROUTE :
+                  new_msg->route = new_hdr;
+               break;
       }
 
      if ( last_hdr )
