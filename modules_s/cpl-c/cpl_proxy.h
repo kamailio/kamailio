@@ -276,7 +276,8 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			rez = cpl_run_script(intr);
 		switch ( rez ) {
 			case SCRIPT_END:
-				goto exit;
+				/* we don't need to free the interpreter here since it will 
+				 * be freed in the final_reply callback */
 			case SCRIPT_TO_BE_CONTINUED:
 				return;
 			case SCRIPT_RUN_ERROR:
