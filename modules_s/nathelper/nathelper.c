@@ -109,6 +109,7 @@ static int natping_interval = 0;
  */
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
+static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
 
 static regex_t* key_m1918;
 
@@ -123,6 +124,7 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"natping_interval", INT_PARAM, &natping_interval},
 	{"ping_nated_only",  INT_PARAM, &ping_nated_only },
+	{"rtpproxy_sock",    STR_PARAM, &rtpproxy_sock},
 	{0, 0, 0}
 };
 
@@ -615,7 +617,7 @@ send_rtpp_command(str *callid, char command, int getreply)
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_LOCAL;
-	strncpy(addr.sun_path, "/var/run/rtpproxy.sock",
+	strncpy(addr.sun_path, rtpproxy_sock,
 	    sizeof(addr.sun_path) - 1);
 #if !defined(__linux__) && !defined(__solaris__)
 	addr.sun_len = strlen(addr.sun_path);
