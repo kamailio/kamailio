@@ -142,14 +142,21 @@ int daemonize(char*  name)
 				goto error;
 			}
 		}
-		pid=getpgid(0);
-		if ((pid_stream=fopen(pgid_file, "w"))==NULL){
-			LOG(L_WARN, "unable to create pgid file %s: %s\n",
-			    pgid_file, strerror(errno));
-			goto error;
+		if (own_pgid){
+			pid=getpgid(0);
+			if ((pid_stream=fopen(pgid_file, "w"))==NULL){
+				LOG(L_WARN, "unable to create pgid file %s: %s\n",
+					pgid_file, strerror(errno));
+				goto error;
+			}else{
+				fprintf(pid_stream, "%i\n", (int)pid);
+				fclose(pid_stream);
+			}
 		}else{
-			fprintf(pid_stream, "%i\n", (int)pid);
-			fclose(pid_stream);
+			LOG(L_WARN, "we don't have our own process so we won't save"
+					" our pgid\n");
+			unlink(pgid_file); /* just to be sure nobody will miss-use the old
+								  value*/
 		}
 	}
 	
