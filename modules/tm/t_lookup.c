@@ -162,6 +162,10 @@ static inline int parse_dlg( struct sip_msg *msg )
 		LOG(L_ERR, "ERROR: tid_matching: From or Cseq or To invalid\n");
 		return 0;
 	}
+	if ((msg->from==0)||(msg->cseq==0)||(msg->to==0)) {
+		LOG(L_ERR, "ERROR: tid_matching: missing From or Cseq or To\n");
+		return 0;
+	}
 	if (parse_from_header(msg)==-1) {
 		LOG(L_ERR, "ERROR: tid_matching: From broken\n");
 		return 0;
