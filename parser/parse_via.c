@@ -40,6 +40,7 @@
  *  2003-01-27  modified parse_via to set new via_param->start member and
  *               via->params.s (andrei)
  *  2003-01-28  zero-terminations replaced with VIA_ZT (jiri)
+ *  2003-02-28 scratchpad compatibility abandoned (jiri)
  */
 
 
@@ -129,7 +130,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\t':
 				switch(state){
 					case FIN_HIDDEN:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						state=L_PARAM;
@@ -140,7 +140,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_RECEIVED:
 					case FIN_RPORT:
 					case FIN_I:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						state=L_VALUE;
@@ -154,7 +153,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						break;
 					case GEN_PARAM:
 					default:
-						VIA_ZT(*tmp);
 						param->type=GEN_PARAM;
 						param->name.len=tmp-param->name.s;
 						state=L_VALUE;
@@ -165,7 +163,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\n':
 				switch(state){
 					case FIN_HIDDEN:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						param->size=tmp-param->start; 
@@ -178,7 +175,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_RECEIVED:
 					case FIN_I:
 					case FIN_RPORT:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						param->size=tmp-param->start; 
@@ -198,7 +194,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						break;
 					case GEN_PARAM:
 					default:
-						VIA_ZT(*tmp);
 						param->type=GEN_PARAM;
 						saved_state=L_VALUE;
 						param->name.len=tmp-param->name.s;
@@ -210,7 +205,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\r':
 				switch(state){
 					case FIN_HIDDEN:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						param->size=tmp-param->start; 
@@ -223,7 +217,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_RECEIVED:
 					case FIN_I:
 					case FIN_RPORT:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						param->size=tmp-param->start; 
@@ -240,7 +233,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						goto end_via;
 					case GEN_PARAM:
 					default:
-						VIA_ZT(*tmp);
 						param->type=GEN_PARAM;
 						param->name.len=tmp-param->name.s;
 						param->size=tmp-param->start; 
@@ -258,7 +250,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_RECEIVED:
 					case FIN_RPORT:
 					case FIN_I:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						state=F_VALUE;
@@ -275,7 +266,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						goto end_via;
 					case GEN_PARAM:
 					default:
-						VIA_ZT(*tmp);
 						param->type=GEN_PARAM;
 						param->name.len=tmp-param->name.s;
 						state=F_VALUE;
@@ -286,7 +276,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 				switch(state){
 					case FIN_HIDDEN:
 					case FIN_RPORT: /* rport can appear w/o a value */
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						state=F_PARAM;
@@ -306,7 +295,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						goto end_via;
 					case GEN_PARAM:
 					default:
-						VIA_ZT(*tmp);
 						param->type=GEN_PARAM;
 						param->name.len=tmp-param->name.s;
 						state=F_PARAM;
@@ -317,7 +305,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 				switch(state){
 					case FIN_HIDDEN:
 					case FIN_RPORT:
-						VIA_ZT(*tmp);
 						param->type=state;
 						param->name.len=tmp-param->name.s;
 						state=F_VIA;
@@ -338,7 +325,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						goto end_via;
 					case GEN_PARAM:
 					default:
-						VIA_ZT(*tmp);
 						param->type=GEN_PARAM;
 						param->name.len=tmp-param->name.s;
 						state=F_VIA;
@@ -721,7 +707,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case F_VALUE: /*eat space*/
 						break; 
 					case P_VALUE:
-						VIA_ZT(*tmp);
 						state=L_PARAM;
 						param->value.len=tmp-param->value.s;
 						goto endofvalue;
@@ -748,7 +733,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=F_LF;
 						break;
 					case P_VALUE:
-						VIA_ZT(*tmp);
 						saved_state=L_PARAM;
 						state=F_LF;
 						param->value.len=tmp-param->value.s;
@@ -776,7 +760,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=F_CR;
 						break;
 					case P_VALUE:
-						VIA_ZT(*tmp);
 						param->value.len=tmp-param->value.s;
 						saved_state=L_PARAM;
 						state=F_CR;
@@ -814,12 +797,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case ';':
 				switch(state){
 					case P_VALUE:
-						VIA_ZT(*tmp);
 						param->value.len=tmp-param->value.s;
 						state=F_PARAM;
 						goto endofvalue;
 					case F_VALUE:
-						VIA_ZT(*tmp);
 						param->value.len=0;
 						state=F_PARAM;
 						goto endofvalue;
@@ -847,7 +828,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case ',':
 				switch(state){
 					case P_VALUE:
-						VIA_ZT(*tmp);
 						param->value.len=tmp-param->value.s;
 						state=F_VIA;
 						goto endofvalue;
@@ -878,7 +858,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						param->value.s=tmp+1;
 						break;
 					case P_STRING:
-						VIA_ZT(*tmp);
 						state=L_PARAM;
 						param->value.len=tmp-param->value.s;
 						goto endofvalue;
@@ -984,24 +963,21 @@ parse_again:
 					case F_PROTO:
 						break;
 					case FIN_UDP:
-						VIA_ZT(*tmp); /* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_UDP;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_TCP:
-						VIA_ZT(*tmp); /* finished proto parsing */
+						/* finished proto parsing */
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_TCP;
 						state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_SIP:
-						VIA_ZT(*tmp);
 						vb->name.len=tmp-vb->name.s;
 						state=L_VER;
 						break;
 					case FIN_VER:
-						VIA_ZT(*tmp);
 						vb->version.len=tmp-vb->version.s;
 						state=L_PROTO;
 						break;
@@ -1027,27 +1003,23 @@ parse_again:
 						state=F_LF;
 						break;
 					case FIN_UDP:
-						VIA_ZT(*tmp);
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_UDP;
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_TCP:
-						VIA_ZT(*tmp);
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_TCP;
 						state=F_LF;
 						saved_state=F_HOST; /* start looking for host*/
 						goto main_via;
 					case FIN_SIP:
-						VIA_ZT(*tmp);
 						vb->name.len=tmp-vb->name.s;
 						state=F_LF;
 						saved_state=L_VER;
 						break;
 					case FIN_VER:
-						VIA_ZT(*tmp);
 						vb->version.len=tmp-vb->version.s;
 						state=F_LF;
 						saved_state=L_PROTO;
@@ -1076,27 +1048,23 @@ parse_again:
 						state=F_CR;
 						break;
 					case FIN_UDP:
-						VIA_ZT(*tmp);
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_UDP;
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;
 					case FIN_TCP:
-						VIA_ZT(*tmp);
 						vb->transport.len=tmp-vb->transport.s;
 						vb->proto=PROTO_TCP;
 						state=F_CR;
 						saved_state=F_HOST;
 						goto main_via;
 					case FIN_SIP:
-						VIA_ZT(*tmp);
 						vb->name.len=tmp-vb->name.s;
 						state=F_CR;
 						saved_state=L_VER;
 						break;
 					case FIN_VER:
-						VIA_ZT(*tmp);
 						vb->version.len=tmp-vb->version.s;
 						state=F_CR;
 						saved_state=L_PROTO;
@@ -1116,12 +1084,10 @@ parse_again:
 			case '/':
 				switch(state){
 					case FIN_SIP:
-						VIA_ZT(*tmp);
 						vb->name.len=tmp-vb->name.s;
 						state=F_VER;
 						break;
 					case FIN_VER:
-						VIA_ZT(*tmp);
 						vb->version.len=tmp-vb->version.s;
 						state=F_PROTO;
 						break;
@@ -1294,7 +1260,7 @@ parse_again:
 					case F_HOST:/*eat the spaces*/
 						break;
 					case P_HOST:
-						 VIA_ZT(*tmp);/*mark end of host*/
+						 /*mark end of host*/
 						 vb->host.len=tmp-vb->host.s;
 						 state=L_PORT;
 						 break;
@@ -1302,7 +1268,7 @@ parse_again:
 					case F_PORT:
 						break;
 					case P_PORT:
-						VIA_ZT(*tmp); /*end of port */
+						/*end of port */
 						vb->port_str.len=tmp-vb->port_str.s;
 						state=L_PARAM;
 						break;
@@ -1322,7 +1288,7 @@ parse_again:
 					case F_IP6HOST: /*eat the spaces*/
 						break;
 					case P_IP6HOST:
-						VIA_ZT(*tmp); /*mark end of host*/
+						/*mark end of host*/
 						vb->host.len=tmp-vb->host.s;
 						state=L_PORT; 
 						break;
@@ -1355,13 +1321,13 @@ parse_again:
 						state=F_LF;
 						break;
 					case P_HOST:
-						 VIA_ZT(*tmp);/*mark end of host*/
+						 /*mark end of host*/
 						 vb->host.len=tmp-vb->host.s;
 						 saved_state=L_PORT;
 						 state=F_LF;
 						 break;
 					case P_PORT:
-						VIA_ZT(*tmp); /*end of port */
+						/*end of port */
 						vb->port_str.len=tmp-vb->port_str.s;
 						saved_state=L_PARAM;
 						state=F_LF;
@@ -1401,13 +1367,13 @@ parse_again:
 						state=F_CR;
 						break;
 					case P_HOST:
-						 VIA_ZT(*tmp);/*mark end of host*/
+						 /*mark end of host*/
 						 vb->host.len=tmp-vb->host.s;
 						 saved_state=L_PORT;
 						 state=F_CR;
 						 break;
 					case P_PORT:
-						VIA_ZT(*tmp); /*end of port */
+						/*end of port */
 						vb->port_str.len=tmp-vb->port_str.s;
 						saved_state=L_PARAM;
 						state=F_CR;
@@ -1439,7 +1405,7 @@ parse_again:
 					case P_IP6HOST:
 						break;
 					case P_HOST:
-						VIA_ZT(*tmp); /*mark  end of host*/
+						/*mark  end of host*/
 						vb->host.len=tmp-vb->host.s;
 						state=F_PORT;
 						break;
@@ -1491,13 +1457,12 @@ parse_again:
 						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
-						VIA_ZT(*tmp);
 						vb->host.len=tmp-vb->host.s;
 						state=F_PARAM;
 						param_start=tmp+1;
 						break;
 					case P_PORT:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->port_str.len=tmp-vb->port_str.s;
 					case L_PORT:
 					case L_PARAM:
@@ -1554,12 +1519,12 @@ parse_again:
 						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->host.len=tmp-vb->host.s;
 						state=F_VIA;
 						break;
 					case P_PORT:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->port_str.len=tmp-vb->port_str.s;
 						state=F_VIA;
 						break;
@@ -1609,19 +1574,19 @@ parse_again:
 							*tmp, state);
 						goto  error;
 					case P_HOST:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->host.len=tmp-vb->host.s;
 						state=F_COMMENT;
 						c_nest++;
 						break;
 					case P_PORT:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->port_str.len=tmp-vb->port_str.s;
 						state=F_COMMENT;
 						c_nest++;
 						break;
 					case P_PARAM:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->params.len=tmp-vb->params.s;
 						state=F_COMMENT;
 						c_nest++;
@@ -1632,7 +1597,6 @@ parse_again:
 						state=F_COMMENT;
 						vb->params.len=tmp-vb->params.s;
 						c_nest++;
-						VIA_ZT(*tmp);
 						break;
 					case P_COMMENT:
 					case F_COMMENT:
@@ -1658,7 +1622,6 @@ parse_again:
 							c_nest--;
 							if(c_nest==0){
 								state=L_VIA;
-								VIA_ZT(*tmp);
 								vb->comment.len=tmp-vb->comment.s;
 								break;
 							}
@@ -1725,7 +1688,7 @@ parse_again:
 			case ']':
 				switch(state){
 					case P_IP6HOST:
-						VIA_ZT(*tmp); /*mark the end*/
+						/*mark the end*/
 						vb->host.len=tmp-vb->host.s;
 						state=L_PORT;
 						break;
@@ -1787,7 +1750,6 @@ parse_again:
 							case F_VIA:
 								vb->params.len=param->start+param->size
 												-vb->params.s;
-								VIA_ZT(*tmp);
 								break;
 							case END_OF_HEADER:
 								vb->params.len=param->start+param->size

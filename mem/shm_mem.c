@@ -112,56 +112,6 @@ void* _shm_resize( void* p , unsigned int s)
 	return sh_realloc( p, s ); 
 }
 
-#ifdef _OBSOLETED
-#ifdef DBG_QM_MALLOC
-void* _shm_resize( void* p, unsigned int s, char* file, char* func,
-					unsigned int line)
-#else
-void* _shm_resize( void* p , unsigned int s)
-#endif
-{
-	
-#ifdef VQ_MALLOC
-	struct vqm_frag *f;
-#else
-	#ifdef __SUNPRO_C
-		/*no warning support on Sun cc */
-	#else
-		#ifdef _NO_NO_NO
-			#warning shm_resize performs suboptimally without VQ_MALLOC!
-		#endif
-	#endif
-#endif
-
-	if (p==0) {
-		DBG("WARNING:vqm_resize: resize(0) called\n");
-		return shm_malloc( s );
-	}
-
-#	ifdef VQ_MALLOC
-	f=(struct  vqm_frag*) ((char*)p-sizeof(struct vqm_frag));
-#	ifdef DBG_QM_MALLOC
-	DBG("_shm_resize(%p, %d), called from %s: %s(%d)\n",  
-		p, s, file, func, line);
-	VQM_DEBUG_FRAG(shm_block, f);
-	if (p>(void *)shm_block->core_end || p<(void*)shm_block->init_core){
-		LOG(L_CRIT, "BUG: vqm_free: bad pointer %p (out of memory block!) - "
-				"aborting\n", p);
-		abort();
-	}
-#	endif
-	if (s <= f->size-VQM_OVERHEAD) {
-#		ifdef DBG_QM_MALLOC
-		DBG("DEBUG: happy guy -- you reused a memory fragment!\n");
-#		endif
-		return p;
-	};
-#endif
-	/* we can't make the request happy with current size */
-	return sh_realloc( p, s ); 
-}
-#endif
-
 
 
 int shm_mem_init()

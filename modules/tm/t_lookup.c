@@ -51,6 +51,7 @@
  *
  * History:
  * ----------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-27  3261 ACK/200 consumption bug removed (jiri)
  * 2003-01-28  scratchpad removed (jiri)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
@@ -90,20 +91,6 @@
 #define EQ_REQ_URI_LEN\
 	(p_msg->first_line.u.request.uri.len==t_msg->first_line.u.request.uri.len)
 
-#ifdef SCRATCH
-#define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s,\
-	translate_pointer(p_msg->orig,p_msg->buf,p_msg->_hf->body.s), \
-	p_msg->_hf->body.len)==0)
-#define EQ_REQ_URI_STR\
-	( memcmp( t_msg->first_line.u.request.uri.s,\
-	translate_pointer(p_msg->orig,p_msg->buf,p_msg->first_line.u.request.uri.s),\
-	p_msg->first_line.u.request.uri.len)==0)
-#define EQ_VIA_STR(_via)\
-	( memcmp( t_msg->_via->name.s,\
-	 translate_pointer(p_msg->orig,p_msg->buf,p_msg->_via->name.s),\
-	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
-	)==0 )
-#else /* SCRATCH */
 #define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s,\
 	p_msg->_hf->body.s, \
 	p_msg->_hf->body.len)==0)
@@ -116,15 +103,10 @@
 	 p_msg->_via->name.s,\
 	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
 	)==0 )
-#endif /* SCRATCH */
 
 
 
-#ifdef PRESERVE_ZT
-#define HF_LEN(_hf) ((_hf)->body.s+(_hf)->body.len-(_hf)->name.s)
-#else
 #define HF_LEN(_hf) ((_hf)->len)
-#endif
 
 /* should be request-uri matching used as a part of pre-3261 
  * transaction matching, as the standard wants us to do so
@@ -144,10 +126,6 @@ static struct cell *t_ack;
    dare to change it anywhere else as it would
    break ref_counting
 */
-
-#ifdef _OBSOLETED
-struct cell      *T;
-#endif
 
 static struct cell *T;
 
@@ -576,11 +554,6 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 
 	p=p_msg->via1->branch->value.s+MCOOKIE_LEN;
 	scan_space=p_msg->via1->branch->value.len-MCOOKIE_LEN;
-
-#ifdef OBSOLETED
-	p=p_msg->via1->branch->value.s;
-	scan_space=p_msg->via1->branch->value.len;
-#endif
 
 
 	/* hash_id */

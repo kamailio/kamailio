@@ -37,6 +37,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-25 - auth_body cloner added (janakj)
  * 2003-01-29 - scratchpad removed (jiri)
  * 2003-01-23 - msg_cloner clones msg->from->parsed too (janakj)
@@ -344,17 +345,10 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 		p += ROUND4(org_msg->new_uri.len);
 	}
 	/* message buffers(org and scratch pad) */
-#ifdef SCRATCH
-	memcpy( p , org_msg->orig , org_msg->len);
-	/* ZT to be safer */
-	*(p+org_msg->len)=0;
-	new_msg->orig = new_msg->buf = p;
-#else
 	memcpy( p , org_msg->buf, org_msg->len);
 	/* ZT to be safer */
 	*(p+org_msg->len)=0;
 	new_msg->buf = p;
-#endif
 	p += ROUND4(new_msg->len+1);
 	/* unparsed and eoh pointer */
 	new_msg->unparsed = translate_pointer(new_msg->buf ,org_msg->buf,

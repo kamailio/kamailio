@@ -29,6 +29,7 @@
  *
  * History:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-29 scrathcpad removed (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
@@ -86,16 +87,12 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		goto error;
 	}
 
-#ifndef PRESERVE_ZT
 	/* eliminate leading whitespace */
 	tmp=eat_lws_end(tmp, end);
 	if (tmp>=end) {
 		LOG(L_ERR, "ERROR: get_hdr_field: HF empty\n");
 		goto error;
 	}
-#else
-	;
-#endif
 
 	/* if header-field well-known, parse it, find its end otherwise ;
 	 * after leaving the hdr->type switch, tmp should be set to the
@@ -214,11 +211,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				}
 				tmp=match;
 			}while( match<end &&( (*match==' ')||(*match=='\t') ) );
-#ifdef PRESERVE_ZT
-			*(match-1)=0; /*null terminate*/
-#else
 			tmp=match;
-#endif
 			hdr->body.len=match-hdr->body.s;
 			break;
 		default:
@@ -228,16 +221,12 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	}
 	/* jku: if \r covered by current length, shrink it */
 	trim_r( hdr->body );
-#ifndef PRESERVE_ZT
 	hdr->len=tmp-hdr->name.s;
-#endif
 	return tmp;
 error:
 	DBG("get_hdr_field: error exit\n");
 	hdr->type=HDR_ERROR;
-#ifndef PRESERVE_ZT
 	hdr->len=tmp-hdr->name.s;
-#endif
 	return tmp;
 }
 
@@ -540,11 +529,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	
 error:
 	/* more debugging, msg->orig is/should be null terminated*/
-#ifdef SCRATCH
-	LOG(L_ERR, "ERROR: parse_msg: message=<%.*s>\n", (int)msg->len, msg->orig);
-#else
 	LOG(L_ERR, "ERROR: parse_msg: message=<%.*s>\n", (int)msg->len, msg->buf);
-#endif
 	return -1;
 }
 
@@ -570,9 +555,6 @@ void free_sip_msg(struct sip_msg* msg)
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
 	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
-#ifdef SCRATCH
-	pkg_free(msg->orig);
-#endif
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF
 	pkg_free(msg->buf); 

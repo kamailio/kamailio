@@ -45,10 +45,6 @@
 #define T_UNDEFINED  ( (struct cell*) -1 )
 #define T_NULL_CELL       ( (struct cell*) 0 )
 
-#ifdef _OBSOLETED
-extern struct cell      *T;
-#endif
-
 extern unsigned int     global_msg_id;
 extern int ruri_matching;
 

@@ -49,12 +49,6 @@ int load_tm( struct tm_binds *tmb)
 		LOG(L_ERR, LOAD_ERROR "'t_relay' not found\n");
 		return -1;
 	}
-#ifndef DEPRECATE_OLD_STUFF
-	if (!(tmb->t_uac=(tuac_f)find_export(T_UAC, NO_SCRIPT)) ) {
-		LOG( L_ERR, LOAD_ERROR "'t_uac' not found\n");
-		return -1;
-	}
-#endif
 	if (!(tmb->t_uac_dlg=(tuacdlg_f)find_export(T_UAC_DLG, NO_SCRIPT)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_uac_dlg' not found\n");
 		return -1;
@@ -78,12 +72,6 @@ int load_tm( struct tm_binds *tmb)
 	}
 	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export(T_LOOKUP_IDENT, NO_SCRIPT)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
-		return -1;
-	}
-#endif
-#ifdef _OBSO
-	if (!(tmb->t_reply_unsafe=(treply_f)find_export(T_REPLY_UNSAFE, 2)) ) {
-		LOG( L_ERR, LOAD_ERROR "'t_reply_unsafe' not found\n");
 		return -1;
 	}
 #endif

@@ -76,12 +76,6 @@ static int
 	entry_semaphore=0, 
 	timer_semaphore=0, 
 	reply_semaphore=0;
-#ifdef _OBSOLETED
-	ack_semaphore=0;
-#endif
-#ifdef _XWAIT
-static int  wait_semaphore=0;
-#endif
 /* and the maximum number of semaphores in the entry_semaphore set */
 static int sem_nr;
 /* timer group locks */
@@ -199,14 +193,6 @@ again:
 			semctl( entry_semaphore, 0 , IPC_RMID , 0 );
 		if (reply_semaphore>0)
 			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
-#ifdef _OBSOLETED
-		if (ack_semaphore>0)
-			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
-#endif
-#ifdef _XWAIT
-		if (wait_semaphore>0)
-			semctl(wait_semaphore, 0 , IPC_RMID , 0 );
-#endif
 
 
 		if (i==0){
@@ -263,40 +249,6 @@ again:
 			goto error;
 		}
 	}
-#ifdef _OBSOLETED	
-	if ((ack_semaphore=init_semaphore_set(sem_nr))<0){
-		if (errno==EINVAL || errno==ENOSPC ) {
-			DBG( "DEBUG:lock_initialize: ack semaphore initialization"
-				" failure: %s\n", strerror(errno));
-			probe_run==1;
-			i--;
-			goto again;
-		}else{
-			LOG(L_CRIT, "ERROR:lock_initialize: ack semaphore initialization"
-				" failure: %s\n", strerror(errno));
-			goto error;
-		}
-	}
-#endif
-
-#ifdef _XWAIT
-	if ((wait_semaphore=init_semaphore_set(sem_nr))<0){
-		if (errno==EINVAL || errno==ENOSPC ) {
-			DBG( "DEBUG:lock_initialize: wait semaphore initialization"
-				" failure: %s\n", strerror(errno));
-			probe_run==1;
-			i--;
-			goto again;
-		}else{
-			LOG(L_CRIT, "ERROR:lock_initialize: wait semaphore initialization"
-				" failure: %s\n", strerror(errno));
-			goto error;
-		}
-	}
-#endif
-
-
-
 
 	/* return success */
 	LOG(L_INFO, "INFO: semaphore arrays of size %d allocated\n", sem_nr );
@@ -336,26 +288,8 @@ void lock_cleanup()
 	if (reply_semaphore > 0 &&
 	    semctl( reply_semaphore, 0 , IPC_RMID , 0 )==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, reply_semaphore cleanup failed\n");
-#ifdef _OBSOLETED
-	if (ack_semaphore > 0 &&
-	    semctl( ack_semaphore, 0 , IPC_RMID , 0 )==-1)
-		LOG(L_ERR, "ERROR: lock_cleanup, ack_semaphore cleanup failed\n");
-#endif
-#ifdef _XWAIT
-	if (wait_semaphore > 0 &&
-		semctl( wait_semaphore, 0 , IPC_RMID , 0 )==-1)
-		LOG(L_ERR, "ERROR: lock_cleanup, wait_semaphore cleanup failed\n");
-#endif
 
-
-	entry_semaphore = timer_semaphore = reply_semaphore 
-#ifdef _OBSOLETED
-		= ack_semaphore 
-#endif
-		= 0;
-#ifdef _XWAIT
-	wait_semaphore = 0;
-#endif
+	entry_semaphore = timer_semaphore = reply_semaphore = 0;
 
 	if (timer_group_lock) shm_free(timer_group_lock);
 
@@ -370,24 +304,10 @@ int init_cell_lock( struct cell *cell )
 {
 #ifdef FAST_LOCK
 	init_lock(cell->reply_mutex);
-#ifdef _OBSOLETED
-	init_lock(cell->ack_mutex);
-#endif
-#ifdef _XWAIT
-	init_lock(cell->wait_mutex);
-#endif
 	return 0;
 #else
 	cell->reply_mutex.semaphore_set=reply_semaphore;
 	cell->reply_mutex.semaphore_index = cell->hash_index % sem_nr;
-#ifdef _OBSOLETED
-	cell->ack_mutex.semaphore_set=ack_semaphore;
-	cell->ack_mutex.semaphore_index = cell->hash_index % sem_nr;
-#endif
-#ifdef _XWAIT
-	cell->wait_mutex.semaphore_set=wait_semaphore;
-	cell->wait_mutex.semaphore_index = cell->hash_index % sem_nr;
-#endif /* WAIT */
 #endif /* FAST_LOCK */
 	return 0;
 }

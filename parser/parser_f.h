@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History
+ * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  */
 
 
@@ -40,7 +44,6 @@ inline static char* eat_space_end(char* p, char* pend)
 	for(;(p<pend)&&(*p==' ' || *p=='\t') ;p++);
 	return p;
 }
-#ifndef PRESERVE_ZT
 #define SP(_c) ((_c)=='\t' || (_c)==' ')
 inline static char* eat_lws_end(char* p, char* pend)
 {
@@ -54,7 +57,6 @@ inline static char* eat_lws_end(char* p, char* pend)
 	}
 	return p;
 }
-#endif
 
 
 

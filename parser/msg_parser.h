@@ -24,6 +24,9 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * History
+ * -------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28 removed scratchpad (jiri)
  */
 
@@ -123,9 +126,6 @@ struct sip_msg {
 	
 	struct receive_info rcv; /* source & dest ip, ports, proto a.s.o*/
 
-#ifdef SCRATCH	
-	char* orig;       /* original message copy */
-#endif
 	char* buf;        /* scratch pad, holds a modfied message,
 					   *  via, etc. point into it */
 	unsigned int len; /* message len (orig) */

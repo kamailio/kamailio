@@ -107,12 +107,6 @@ void free_cell( struct cell* dead_cell )
 		/* retransmission buffer */
 		if ( (b=dead_cell->uac[i].request.buffer) )
 			shm_free_unsafe( b );
-#ifdef OLD_CANCEL
-		if ( (b=dead_cell->uac[i].request.ack) )
-			shm_free_unsafe( b );
-		if ( (b=dead_cell->uac[i].request.cancel) )
-			shm_free_unsafe( b );
-#endif
 		b=dead_cell->uac[i].local_cancel.buffer;
 		if (b!=0 && b!=BUSY_BUFFER)
 			shm_free_unsafe( b );
@@ -120,10 +114,6 @@ void free_cell( struct cell* dead_cell )
 		if (rpl && rpl!=FAKED_REPLY) {
 			sip_msg_free_unsafe( rpl );
 		}
-#ifdef _OBSOLETED
-		if ( (b=dead_cell->uac[i].rpl_buffer.s) )
-			shm_free_unsafe( b );
-#endif
 	}
 
 	/* the cell's body */
@@ -296,10 +286,6 @@ struct s_table* init_hash_table()
 
 	return  tm_table;
 
-#ifdef _OBSO
-error2:
-	lock_cleanup();
-#endif
 error1:
 	free_hash_table( );
 error0:

@@ -39,17 +39,6 @@
 
 /* substitution character for FIFO UAC */
 #define SUBST_CHAR '!'
-#ifdef _DEPRECATED
-/* number of random digits in beginning of a string --
-   please multiples of 2 */
-#define RAND_DIGITS	6
-/* maximum seq size in hex chars */
-#define MAX_SEQ_LEN (T_TABLE_POWER*2)
-/* maximum size of pid in hex characters */
-#define MAX_PID_LEN	4
-extern char call_id[RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN+1];
-void generate_callid();
-#endif
 
 #define DEFAULT_CSEQ	10
 
@@ -119,11 +108,6 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	      transaction_cb completion_cb, /* Callback parameter */
 	      void* cbp                     /* Callback pointer */
 	      );
-
-#ifndef DEPRECATE_OLD_STUFF
-int fifo_uac( FILE *stream, char *response_file );
-int fifo_uac_from( FILE *stream, char *response_file );
-#endif
 
 
 int fifo_uac_dlg( FILE *stream, char *response_file );

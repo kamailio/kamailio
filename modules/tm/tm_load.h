@@ -50,9 +50,6 @@
 #define T_RELAY "t_relay"
 #define T_RELAY_UDP "t_relay_udp"
 #define T_RELAY_TCP "t_relay_tcp"
-#ifndef DEPRECATE_OLD_STUFF
-#	define T_UAC "t_uac"
-#endif
 #define T_UAC_DLG "t_uac_dlg"
 #define T_REPLY "t_reply"
 #ifdef VOICE_MAIL
@@ -69,9 +66,6 @@ struct tm_binds {
 	register_tmcb_f	register_tmcb;
 	cmd_function	t_relay_to;
 	cmd_function 	t_relay;
-#ifndef DEPRECATE_OLD_STUFF
-	tuac_f			t_uac;
-#endif
 	tuacdlg_f               t_uac_dlg;
 	treply_f		t_reply;
 #ifdef VOICE_MAIL

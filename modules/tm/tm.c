@@ -90,9 +90,7 @@
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
-#ifdef _OBSOLETED
-inline static int w_t_reply_unsafe(struct sip_msg* msg, char* str, char* str2);
-#endif
+
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 inline static int fixup_t_send_reply(void** param, int param_no);
 inline static int fixup_str2int( void** param, int param_no);
@@ -139,9 +137,6 @@ struct module_exports exports= {
 				"t_newtran",
 				"t_lookup_request",
 				T_REPLY,
-#ifdef _OBSO
-				T_REPLY_UNSAFE,
-#endif
 				"t_retransmit_reply",
 				"t_release",
 				T_RELAY_TO,
@@ -161,9 +156,6 @@ struct module_exports exports= {
 				/* not applicable from script ... */
 
 				"register_tmcb",
-#ifndef DEPRECATE_OLD_STUFF
-				T_UAC,
-#endif
 				T_UAC_DLG,
 				"load_tm",
 #ifdef VOICE_MAIL
@@ -178,9 +170,6 @@ struct module_exports exports= {
 					w_t_newtran,
 					w_t_check,
 					w_t_reply,
-#ifdef _OBSO
-					w_t_reply_unsafe,
-#endif
 					w_t_retransmit_reply,
 					w_t_release,
 					w_t_relay_to,
@@ -198,9 +187,6 @@ struct module_exports exports= {
 					w_t_on_negative,
 
 					(cmd_function) register_tmcb,
-#ifndef DEPRECATE_OLD_STUFF
-					(cmd_function) t_uac,
-#endif
 					(cmd_function) t_uac_dlg,
 					(cmd_function) load_tm,
 #ifdef VOICE_MAIL
@@ -215,9 +201,6 @@ struct module_exports exports= {
 				0, /* t_newtran */
 				0, /* t_lookup_request */
 				2, /* t_reply */
-#ifdef _OBSO
-				2, /* t_reply_unsafe */
-#endif
 				0, /* t_retransmit_reply */
 				0, /* t_release */
 				2, /* t_relay_to */
@@ -234,9 +217,6 @@ struct module_exports exports= {
 				2, /* t_forward_nonack_tcp */
 				1, /* t_on_negative */
 				NO_SCRIPT /* register_tmcb */,
-#ifndef DEPRECATE_OLD_STUFF
-				NO_SCRIPT /* t_uac */,
-#endif
 				NO_SCRIPT /* t_uac_dlg */,
 				NO_SCRIPT /* load_tm */,
 #ifdef VOICE_MAIL
@@ -251,9 +231,6 @@ struct module_exports exports= {
 				0,						/* t_newtran */
 				0,						/* t_lookup_request */
 				fixup_t_send_reply,		/* t_reply */
-#ifdef _OBSO
-				fixup_t_send_reply,		/* t_reply_unsafe */
-#endif
 				0,						/* t_retransmit_reply */
 				0,						/* t_release */
 				fixup_hostport2proxy,	/* t_relay_to */
@@ -270,9 +247,6 @@ struct module_exports exports= {
 				fixup_hostport2proxy,	/* t_forward_nonack_tcp */
 				fixup_str2int,			/* t_on_negative */
 				0,						/* register_tmcb */
-#ifndef DEPRECATE_OLD_STUFF
-				0,						/* t_uac */
-#endif
 				0,                                              /* t_uac_dlg */
 				0,						/* load_tm */
 #ifdef VOICE_MAIL
@@ -284,12 +258,6 @@ struct module_exports exports= {
 				0						/* t_newdlg */
 	
 		},
-#ifndef DEPRECATE_OLD_STUFF
-	1+
-#endif
-#ifdef _OBSO
-	1+
-#endif
 #ifdef VOICE_MAIL
 	4+
 #endif
@@ -307,9 +275,6 @@ struct module_exports exports= {
 		"retr_timer1p3",
 		"retr_timer2",
 		"noisy_ctimer"
-#ifndef DEPRECATE_OLD_STUFF
-		,"uac_from"
-#endif
 	},
 	(modparam_t[]) { /* variable types */
 		INT_PARAM, /* ruri_matching */
@@ -322,9 +287,6 @@ struct module_exports exports= {
 		INT_PARAM, /* retr_timer1p3 */
 		INT_PARAM, /* retr_timer2 */
 		INT_PARAM /* noisy_ctimer */
-#ifndef DEPRECATE_OLD_STUFF
-		,STR_PARAM /* uac_from */
-#endif
 	},
 	(void *[]) { /* variable pointers */
 		&ruri_matching,
@@ -337,13 +299,7 @@ struct module_exports exports= {
 		&(timer_id2timeout[RT_T1_TO_3]),
 		&(timer_id2timeout[RT_T2]),
 		&noisy_ctimer
-#ifndef DEPRECATE_OLD_STUFF
-		,&uac_from
-#endif
 	},
-#ifndef DEPRECATE_OLD_STUFF
-	1+
-#endif
 	10,      /* Number of module paramers */
 
 	mod_init, /* module initialization function */
@@ -406,16 +362,6 @@ static int mod_init(void)
 	}
 
 
-#ifndef DEPRECATE_OLD_STUFF
-	if (register_fifo_cmd(fifo_uac, "t_uac", 0)<0) {
-		LOG(L_CRIT, "cannot register fifo uac\n");
-		return -1;
-	}
-	if (register_fifo_cmd(fifo_uac_from, "t_uac_from", 0)<0) {
-		LOG(L_CRIT, "cannot register fifo uac\n");
-		return -1;
-	}
-#endif
 	if (register_fifo_cmd(fifo_uac_dlg, "t_uac_dlg", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo uac\n");
 		return -1;
@@ -459,10 +405,6 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");
 		return -1;
 	}
-#ifdef _OBSO
-	register_tmcb( TMCB_ON_NEGATIVE, on_negative_reply, 
-			0 /* empty param */);
-#endif
 	/* register post-script clean-up function */
 	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
 			0 /* empty param */ );
@@ -624,26 +566,6 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 		return t_reply( t, msg, (unsigned int)(long) str, str2);
 	}
 }
-
-#ifdef _OBSOLETED
-inline static int w_t_reply_unsafe(struct sip_msg* msg, char* str, char* str2)
-{
-	struct cell *t;
-
-	if (msg->REQ_METHOD==METHOD_ACK) {
-		LOG(L_WARN, "WARNING: t_reply: ACKs are not replied\n");
-		return -1;
-	}
-	if (t_check( msg , 0 )==-1) return -1;
-	t=get_t();
-	if (!t) {
-		LOG(L_ERR, "ERROR: t_reply: cannot send a t_reply to a message "
-			"for which no T-state has been established\n");
-		return -1;
-	}
-	return t_reply_unsafe(t, msg, (unsigned int) str, str2);
-}
-#endif
 
 
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)

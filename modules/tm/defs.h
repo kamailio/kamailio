@@ -34,6 +34,5 @@
 #ifndef _TM_DEFS_H
 #define _TM_DEFS_H
 
-#define DEPRECATE_OLD_STUFF
 
 #endif

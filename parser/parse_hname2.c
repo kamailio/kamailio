@@ -28,6 +28,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -114,7 +115,6 @@ static inline char* skip_ws(char* p, unsigned int size)
         case ':':                  \
 	        hdr->type = id;    \
 	        hdr->name.len = 1; \
-	        SET_ZT(*(p + 1));   \
 	        return (p + 2);    \
         }                            
 
@@ -150,7 +150,6 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 			case ':':                   
 				hdr->type = HDR_TO; 
 				hdr->name.len = 1;  
-				SET_ZT(*(p+1));
 				return (p + 2);     
 			}                           
 			break;
@@ -174,7 +173,6 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	        goto other;
 	} else {
 		hdr->name.len = p - hdr->name.s;
-		SET_ZT(*p);
 		return (p + 1);
 	}
 
@@ -188,7 +186,6 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 		return 0;
 	} else {
 		hdr->type = HDR_OTHER;
-		SET_ZT(*p);
 		hdr->name.len = p - hdr->name.s;
 		return (p + 1);
 	}

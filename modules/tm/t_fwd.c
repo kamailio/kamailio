@@ -55,17 +55,6 @@
 #include "config.h"
 
 
-#ifdef _OBSOLETED
-#define shm_free_lump( _lmp) \
-	do{\
-		if ((_lmp)) {\
-			if ((_lmp)->op==LUMP_ADD && (_lmp)->u.value )\
-				shm_free((_lmp)->u.value);\
-			shm_free((_lmp));\
-		}\
-	}while(0);
-#endif
-
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	int branch, str *uri, unsigned int *len, struct socket_info *send_sock )
 {
@@ -104,18 +93,6 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		other branches  and for  shmem i_req they would mix up
 	 	shmem with pkg_mem
 	*/
-#ifdef OBSOLETED
-	if (branch) for(b=i_req->add_rm,b1=0;b;b1=b,b=b->next)
-		if (b->type==HDR_VIA) {
-			for(a=b->before;a;)
-				{c=a->before;free_lump(a);pkg_free(a);a=c;}
-			for(a=b->after;a;)
-				{c=a->after;free_lump(a);pkg_free(a);a=c;}
-			if (b1) b1->next = b->next;
-			else i_req->add_rm = b->next;
-			free_lump(b);pkg_free(b);
-		}
-#endif
 	free_via_lump(&i_req->add_rm);
 
 	shbuf=(char *)shm_malloc(*len);

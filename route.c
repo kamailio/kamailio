@@ -29,6 +29,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28 scratchpad removed, src_port introduced (jiri)
  */
 
@@ -399,13 +400,8 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	}
 	switch(e->l.operand){
 		case METHOD_O:
-#ifdef DONT_REMOVE_ZT
-				ret=comp_str(msg->first_line.u.request.method.s, e->r.param,
-								e->op, e->subtype);
-#else
 				ret=comp_strstr(&msg->first_line.u.request.method, e->r.param,
 								e->op, e->subtype);
-#endif
 				break;
 		case URI_O:
 				if(msg->new_uri.s){
@@ -415,13 +411,8 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 									msg->parsed_uri.port_no?
 									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
-#ifdef DONT_REMOVE_ZT
-						ret=comp_str(msg->new_uri.s, e->r.param,
-										e->op, e->subtype);
-#else
 						ret=comp_strstr(&msg->new_uri, e->r.param,
 										e->op, e->subtype);
-#endif
 					}
 				}else{
 					if (e->subtype==MYSELF_ST){
@@ -430,13 +421,8 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 									msg->parsed_uri.port_no?
 									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
-#ifdef DONT_REMOVE_ZT
-						ret=comp_str(msg->first_line.u.request.uri.s,
-										 e->r.param, e->op, e->subtype);
-#else
 						ret=comp_strstr(&msg->first_line.u.request.uri,
 										 e->r.param, e->op, e->subtype);
-#endif
 					}
 				}
 				break;

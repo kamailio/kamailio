@@ -28,6 +28,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-20 bug_fix: use of return value of snprintf aligned to C99 (jiri)
  * 2003-01-23 added rport patches, contributed by 
  *             Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
@@ -70,74 +71,13 @@
 		(_dest) += (_len) ;\
 	}while(0);
 
-#ifdef SCRATCH
-#define append_str_trans(_dest,_src,_len,_msg) \
-	append_str( (_dest), (_msg)->orig+((_src)-(_msg)->buf) , (_len) );
-#else
 #define append_str_trans(_dest,_src,_len,_msg) \
 	append_str( (_dest), (_src), (_len) );
-#endif
 
 extern char version[];
 extern int version_len;
 
 
-
-#ifndef REMOVE_ALL_ZT
-/* checks if ip is in host(name) and ?host(ip)=name?
- * ip must be in network byte order!
- *  resolver = DO_DNS | DO_REV_DNS; if 0 no dns check is made
- * return 0 if equal */
-static int check_address(struct ip_addr* ip, char *name, int resolver)
-{
-	struct hostent* he;
-	int i;
-	char* s;
-
-	/* maybe we are lucky and name it's an ip */
-	s=ip_addr2a(ip);
-	if (s){
-		DBG("check_address(%s, %.*s, %d)\n", 
-			s, name->len, name->s, resolver);
-
-	#ifdef USE_IPV6
-		if ((ip->af==AF_INET6) && (strcasecmp(name, s)==0))
-				return 0;
-		else
-	#endif
-
-			if (strcmp(name, s)==0) 
-				return 0;
-	}else{
-		LOG(L_CRIT, "check_address: BUG: could not convert ip address\n");
-		return -1;
-	}
-
-	if (resolver&DO_DNS){
-		DBG("check_address: doing dns lookup\n");
-		/* try all names ips */
-		he=resolvehost(name);
-		if (he && ip->af==he->h_addrtype){
-			for(i=0;he && he->h_addr_list[i];i++){
-				if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)
-					return 0;
-			}
-		}
-	}
-	if (resolver&DO_REV_DNS){
-		DBG("check_address: doing rev. dns lookup\n");
-		/* try reverse dns */
-		he=rev_resolvehost(ip);
-		if (he && (strcmp(he->h_name, name)==0))
-			return 0;
-		for (i=0; he && he->h_aliases[i];i++){
-			if (strcmp(he->h_aliases[i],name)==0)
-				return 0;
-		}
-	}
-	return -1;
-}
-#endif
 
 
 
@@ -572,13 +512,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char* received_buf;
 	char* rport_buf;
 	char* new_buf;
-#ifdef SCRATCH
-	char* orig;
-#endif
 	char* buf;
-#ifndef REMOVE_ALL_ZT
-	char  backup;
-#endif
 	unsigned int offset, s_offset, size;
 	struct lump* anchor;
 	int r;
@@ -600,9 +534,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	extra_params.len=0;
 	extra_params.s=0;
 	uri_len=0;
-#ifdef SCRATCH
-	orig=msg->orig;
-#endif
 	buf=msg->buf;
 	len=msg->len;
 	received_len=0;
@@ -652,15 +583,8 @@ skip_clen:
 		goto error00;
 	}
 	/* check if received needs to be added */
-#ifdef REMOVE_ALL_ZT
 	r=check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
 		msg->via1->port, received_dns);
-#else
-	backup = msg->via1->host.s[msg->via1->host.len];
-	msg->via1->host.s[msg->via1->host.len] = 0;
-	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
-	msg->via1->host.s[msg->via1->host.len] = backup;
-#endif
 	if (r!=0){
 		if ((received_buf=received_builder(msg,&received_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
@@ -746,11 +670,7 @@ skip_clen:
 	if (msg->new_uri.s){
 		/* copy message up to uri */
 		size=msg->first_line.u.request.uri.s-buf;
-#ifdef SCRATCH
-		memcpy(new_buf, orig, size);
-#else
 		memcpy(new_buf, buf, size);
-#endif
 		offset+=size;
 		s_offset+=size;
 		/* add our uri */
@@ -759,17 +679,10 @@ skip_clen:
 		s_offset+=msg->first_line.u.request.uri.len; /* skip original uri */
 	}
 	new_buf[new_len]=0;
-#ifdef SCRATCH
-	/* copy msg adding/removing lumps */
-	process_lumps(msg->add_rm, new_buf, &offset, orig, &s_offset);
-	/* copy the rest of the message */
-	memcpy(new_buf+offset, orig+s_offset, len-s_offset);
-#else
 	/* copy msg adding/removing lumps */
 	process_lumps(msg->add_rm, new_buf, &offset, buf, &s_offset);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
-#endif
 	new_buf[new_len]=0;
 
 #ifdef DBG_MSG_QA
@@ -808,9 +721,6 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	unsigned int new_len, via_len;
 	char* new_buf;
 	unsigned offset, s_offset, via_offset;
-#ifdef SCRATCH
-	char* orig;
-#endif
 	char* buf;
 	unsigned int len;
 #ifdef USE_TCP
@@ -821,27 +731,10 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	clen_buf=0;
 	clen_len=0;
 #endif
-#ifdef SCRATCH
-	orig=msg->orig;
-#endif
 	buf=msg->buf;
 	len=msg->len;
 	new_buf=0;
 	/* we must remove the first via */
-#ifdef PRESERVE_ZT
-	via_len=msg->via1->bsize;
-	via_offset=msg->via1->hdr.s-buf;
-	DBG("via len: %d, initial via offset: %d\n", via_len, via_offset);
-	if (msg->via1->next){
-		/* add hdr size*/
-		via_offset+=msg->via1->hdr.len+1;
-	    DBG(" adjusted via len: %d, initial offset: %d\n",
-				via_len, via_offset);
-	}else{
-		/* add hdr size ("Via:")*/
-		via_len+=msg->via1->hdr.len+1;
-	}
-#else
 	if (msg->via1->next) {
 		via_len=msg->via1->bsize;
 		via_offset=msg->h_via1->body.s-buf;
@@ -849,7 +742,6 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 		via_len=msg->h_via1->len;
 		via_offset=msg->h_via1->name.s-buf;
 	}
-#endif
 
 #ifdef USE_TCP
 
@@ -909,19 +801,11 @@ skip_clen:
 	new_buf[new_len]=0; /* debug: print the message */
 	offset=s_offset=0;
 	process_lumps(msg->repl_add_rm, new_buf, &offset, 
-#ifdef SCRATCH
-		orig, 
-#else
 		buf,
-#endif
 		&s_offset);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset,
-#ifdef SCRATCH
-		orig+s_offset, 
-#else
 		buf+s_offset, 
-#endif
 		len-s_offset);
 	 /* send it! */
 	DBG("build_res_from_sip_res: copied size: orig:%d, new: %d, rest: %d"
@@ -979,9 +863,7 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	char content_len[27];
 	int content_len_len;
 #endif
-#ifndef PRESERVE_ZT
 	char *after_body;
-#endif
 	str to_tag;
 
 	received_buf=0;
@@ -1008,12 +890,8 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-#ifdef REMOVE_ALL_ZT
 	r=check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
 		msg->via1->port, received_dns);
-#else
-	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
-#endif
 	msg->via1->host.s[msg->via1->host.len] = backup;
 	if (r!=0) {
 		if ((received_buf=received_builder(msg,&received_len))==0) {
@@ -1048,12 +926,10 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 				else
 					len+=new_tag_len+TOTAG_TOKEN_LEN/*";tag="*/;
 			}
-#ifndef PRESERVE_ZT
 			else {
 				len+=hdr->len;
 				continue;
 			}
-#endif
 		} else if (hdr->type==HDR_VIA) {
 				if (hdr==msg->h_via1) len += received_len+rport_len;
 		} else if (hdr->type==HDR_RECORDROUTE) {
@@ -1064,11 +940,7 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 					|| hdr->type==HDR_CSEQ)) {
 			continue;
 		}
-#ifdef PRESERVE_ZT
-		len += ((hdr->body.s+hdr->body.len )-hdr->name.s )+CRLF_LEN;
-#else
 		len += hdr->len;
-#endif
 	}
 	len-=delete_len;
 	/*lumps length*/
@@ -1162,18 +1034,6 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 			case HDR_TO:
 				if (new_tag){
 					if (to_tag.s ) { /* replacement */
-#ifdef PRESERVE_ZT
-						/* before to-tag */
-						append_str_trans( p, hdr->name.s ,
-							to_tag.s-hdr->name.s,msg);
-						/* to tag replacement */
-						append_str( p, new_tag,new_tag_len);
-						/* the rest after to-tag */
-						append_str_trans( p,to_tag.s+to_tag.len,
-							((hdr->body.s+hdr->body.len )-
-							(to_tag.s+to_tag.len)),msg);
-						append_str( p, CRLF,CRLF_LEN);
-#else
 						/* before to-tag */
 						append_str( p, hdr->name.s, to_tag.s-hdr->name.s);
 						/* to tag replacement */
@@ -1181,36 +1041,20 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 						/* the rest after to-tag */
 						append_str( p, to_tag.s+to_tag.len,
 							hdr->name.s+hdr->len-(to_tag.s+to_tag.len));
-#endif
 					}else{ /* adding a new to-tag */
-#ifdef PRESERVE_ZT
-						append_str_trans( p, hdr->name.s ,
-							((hdr->body.s+hdr->body.len )-hdr->name.s ),
-							msg);
-						append_str( p, TOTAG_TOKEN,TOTAG_TOKEN_LEN);
-						append_str( p, new_tag,new_tag_len);
-						append_str( p, CRLF,CRLF_LEN);
-#else
 						after_body=hdr->body.s+hdr->body.len;
 						append_str( p, hdr->name.s, after_body-hdr->name.s);
 						append_str(p, TOTAG_TOKEN, TOTAG_TOKEN_LEN);
 						append_str( p, new_tag,new_tag_len);
 						append_str( p, after_body, 
 										hdr->name.s+hdr->len-after_body);
-#endif
 					}
 					break;
 				} /* no new to-tag -- proceed to 1:1 copying  */
 			case HDR_FROM:
 			case HDR_CALLID:
 			case HDR_CSEQ:
-#ifdef PRESERVE_ZT
-					append_str_trans( p, hdr->name.s ,
-						((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
-					append_str( p, CRLF,CRLF_LEN);
-#else
 					append_str(p, hdr->name.s, hdr->len);
-#endif
 		} /* for switch */
 	/*lumps*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
@@ -1290,17 +1134,6 @@ int branch_builder( unsigned int hash_index,
 
 	char *begin;
 	int size;
-
-#ifdef _OBSOLETED
-	/* no hash_id --- whoever called me wants to have
-	   very simple branch_id
-	*/
-	if (hash_index==0) {
-		*branch_str='0';
-		*len=1;
-		return *len;
-	}
-#endif
 
 	/* hash id provided ... start with it */
 	size=MAX_BRANCH_PARAM_LEN;

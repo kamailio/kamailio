@@ -26,6 +26,7 @@
  * 
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-22 zero-termination in CSeq eliminated (jiri)
  */
 
@@ -45,17 +46,9 @@
 char* parse_cseq(char *buf, char* end, struct cseq_body* cb)
 {
 	char *t, *m, *m_end;
-#ifdef PRESERVE_ZT
-	char c;
-#endif
 	
 	cb->error=PARSE_ERROR;
-#ifdef PRESERVE_ZT /* already called in calling function */
-	t=eat_space_end(buf, end);
-	if (t>=end) goto error;
-#else
 	t=buf;
-#endif
 	
 	cb->number.s=t;
 	t=eat_token_end(t, end);
@@ -64,7 +57,6 @@ char* parse_cseq(char *buf, char* end, struct cseq_body* cb)
 
 	m=eat_space_end(t, end);
 	m_end=eat_token_end(m, end);
-	SET_ZT(*t);
 
 	if (m_end>=end) {
 			LOG(L_ERR, "ERROR: parse_cseq: "
@@ -80,27 +72,6 @@ char* parse_cseq(char *buf, char* end, struct cseq_body* cb)
 	t=m_end;
 	cb->method.len=t-cb->method.s;
 
-#ifdef PRESERVE_ZT
-	c=*t;
-	*t=0; /*null terminate it*/
-	t++;
-	/*check if the header ends here*/
-	if (c=='\n') goto check_continue;
-	do{
-		for (;(t<end)&&((*t==' ')||(*t=='\t')||(*t=='\r'));t++);
-		if (t>=end) goto error;
-		if (*t!='\n'){
-			LOG(L_ERR, "ERROR:parse_cseq: unexpected char <%c> at end of"
-					" cseq\n", *t);
-			goto error;
-		}
-		t++;
-check_continue:
-		;
-	}while( (t<end) && ((*t==' ')||(*t=='\t')) );
-	cb->error=PARSE_OK;
-	return t;
-#else
 	/* there may be trailing LWS 
 	 * (it was not my idea to put it in SIP; -jiri )
 	 */
@@ -119,7 +90,7 @@ check_continue:
 			return t+1;
 	}
 	LOG(L_ERR, "ERROR: CSeq EoL expected\n");
-#endif
+
 error:
 	LOG(L_ERR, "ERROR: parse_cseq: bad cseq\n");
 	return t;

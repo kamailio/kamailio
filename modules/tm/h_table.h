@@ -249,10 +249,6 @@ struct s_table
 {
 	/* table of hash entries; each of them is a list of synonyms  */
 	struct entry   entrys[ TABLE_ENTRIES ];
-#ifdef _OBSOLETED
-	/* table of timer lists */
-	struct timer   timers[ NR_OF_TIMER_LISTS ];
-#endif
 };
 
 

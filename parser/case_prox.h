@@ -28,6 +28,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -42,7 +43,6 @@
         case _ion1_:                       \
 	        hdr->type = HDR_PROXYAUTH; \
 	        hdr->name.len = 19;        \
-            SET_ZT(*(p + 3));          \
 	        return (p + 4);            \
                                            \
         case _ion2_:                       \

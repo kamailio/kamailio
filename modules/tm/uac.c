@@ -44,6 +44,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-27 FIFO/UAC now dumps reply -- good for CTD (jiri)
  * 2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
  *              proto & rb->dst (andrei)
@@ -120,11 +121,6 @@ static int callid_suffix_len;
 static int rand_len;	/* number of chars to display max rand */
 static char callid[CALLID_NR_LEN+CALLID_SUFFIX_LEN];
 
-#ifndef DEPRECATE_OLD_STUFF
-char *uac_from="\"UAC Account\" <sip:uac@dev.null:9>";
-str uac_from_str;
-#endif
-
 static char from_tag[ FROM_TAG_LEN+1 ];
 
 
@@ -186,11 +182,6 @@ int uac_init() {
 	MDStringArray( from_tag, src, 3 );
 	from_tag[MD5_LEN]=CID_SEP;
 
-#ifndef DEPRECATE_OLD_STUFF
-	uac_from_str.s = uac_from;
-	uac_from_str.len = strlen(uac_from);
-#endif
-
 	return 1;
 }
 
@@ -208,146 +199,6 @@ int uac_child_init( int rank )
 	DBG("DEBUG: callid_suffix: %s\n", callid_suffix );
 	return 1;
 }
-
-#ifndef DEPRECATE_OLD_STUFF
-int t_uac( str *msg_type, str *dst, int proto, 
-	str *headers, str *body, str *from, 
-	transaction_cb completion_cb, void *cbp, 
-	dlg_t dlg)
-{
-
-	int r;
-	struct cell *new_cell;
-	struct proxy_l *proxy;
-	int branch;
-	int ret;
-	unsigned int req_len;
-	char *buf;
-	union sockaddr_union to;
-	struct socket_info* send_sock;
-	struct retr_buf *request;
-	str dummy_from;
-	str callid_s;
-	str fromtag;
-
-	/* make -Wall shut up */
-	ret=0;
-
-	proxy=uri2proxy( dst, proto );
-	if (proxy==0) {
-		ser_error=ret=E_BAD_ADDRESS;
-		LOG(L_ERR, "ERROR: t_uac: can't create a dst proxy\n");
-		goto done;
-	}
-	branch=0;
-	/* might go away -- we ignore it in send_pr_buffer anyway */
-	/* T->uac[branch].request.to_len=sizeof(union sockaddr_union); */
-	hostent2su(&to, &proxy->host, proxy->addr_idx, 
-		(proxy->port)?htons(proxy->port):htons(SIP_PORT));
-	/* send_sock=get_send_socket( &to, PROTO_UDP ); */
-	send_sock=get_out_socket( &to, proto );
-	if (send_sock==0) {
-		LOG(L_ERR, "ERROR: t_uac: no corresponding listening socket "
-			"for af %d\n", to.s.sa_family );
-		ret=E_NO_SOCKET;
-		goto error00;
-	}
-
-	/* update callid */
-	/* generate_callid(); */
-	callid_nr++;
-	r=snprintf(callid, rand_len+1, "%0*lx", rand_len, callid_nr );
-	if (r==-1 || r>=rand_len+1) {
-		LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
-		goto error00;
-	}
-	/* fix the ZT 0 */
-	callid[rand_len]=CID_SEP;
-	callid_s.s=callid;
-	callid_s.len=rand_len+callid_suffix_len;
-	DBG("DEBUG: sufix_len = %d\n",callid_suffix_len);
-	DBG("DEBUG: NEW CALLID:%.*s[%d]:\n", callid_s.len, callid_s.s 
-		, callid_s.len);
-	new_cell = build_cell( NULL ) ; 
-	if (!new_cell) {
-		ret=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: t_uac: short of cell shmem\n");
-		goto error00;
-	}
-	new_cell->completion_cb=completion_cb;
-	new_cell->cbp=cbp;
-	/* cbp is installed -- tell error handling bellow not to free it */
-	cbp=0;
-	new_cell->is_invite=msg_type->len==INVITE_LEN 
-		&& memcmp(msg_type->s, INVITE, INVITE_LEN)==0;
-	new_cell->local=1;
-	new_cell->kr=REQ_FWDED;
-
-
-	request=&new_cell->uac[branch].request;
-	request->dst.to=to;
-	request->dst.send_sock=send_sock;
-	request->dst.proto=proto;
-	request->dst.proto_reserved1=0; /* no special connection required */
-
-	/* need to put in table to calculate label which is needed for printing */
-	LOCK_HASH(new_cell->hash_index);
-	insert_into_hash_table_unsafe(  new_cell );
-	UNLOCK_HASH(new_cell->hash_index);
-
-	if (from) dummy_from=*from; else { dummy_from.s=0; dummy_from.len=0; }
-	/* calculate from tag from callid */
-	crcitt_string_array(&from_tag[MD5_LEN+1], &callid_s, 1 );
-	fromtag.s=from_tag; fromtag.len=FROM_TAG_LEN;
-	buf=build_uac_request(  *msg_type, *dst, 
-			dummy_from, fromtag,
-			DEFAULT_CSEQ, callid_s, 
-			*headers, *body, branch,
-			new_cell, /* t carries hash_index, label, md5,
-				uac[].send_sock and other pieces of
-				information needed to print a message*/
-		&req_len );
-	if (!buf) {
-		ret=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: t_uac: short of req shmem\n");
-		goto error01;
-	}      
-	new_cell->method.s=buf;new_cell->method.len=msg_type->len;
-
-
-	request->buffer = buf;
-	request->buffer_len = req_len;
-	new_cell->nr_of_outgoings++;
-
-
-	proxy->tx++;
-	proxy->tx_bytes+=req_len;
-
-	if (SEND_BUFFER( request)==-1) {
-		LOG(L_ERR, "ERROR: t_uac: UAC sending to %.*s failed\n",
-			dst->len, dst->s );
-		proxy->errors++;
-		proxy->ok=0;
-	}
-	start_retr( request );
-
-	/* success */
-	return 1;
-
-error01:
-	LOCK_HASH(new_cell->hash_index);
-	remove_from_hash_table_unsafe( new_cell );
-	UNLOCK_HASH(new_cell->hash_index);
-	free_cell(new_cell);
-error00:
-	free_proxy( proxy );
-	free( proxy );
-done: 
-	/* if we did not install cbp, release it now */
-	if (cbp) shm_free(cbp);
-	return ser_error=ret;
-}
-#endif
 
 static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su,
 									 int proto )
@@ -627,195 +478,6 @@ static void fifo_callback( struct cell *t, struct sip_msg *reply,
 	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
 }	
 
-#ifndef DEPRECATE_OLD_STUFF
-
-/* to be obsoleted in favor of fifo_uac_from */
-int fifo_uac( FILE *stream, char *response_file ) 
-{
-	str sm, sh, sb, sd; /* method, header, body, dst(outbound) */
-	char method[MAX_METHOD]; /* read buffers for these ... */
-	char header[MAX_HEADER];
-	char body[MAX_BODY];
-	char dst[MAX_DST];
-	char *shmem_file;
-	int fn_len;
-	int ret;
-	int sip_error;
-	char err_buf[MAX_REASON_LEN];
-
-	sm.s=method; sh.s=header; sb.s=body; sd.s=dst;
-	if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
-		/* line breaking must have failed -- consume the rest
-		   and proceed to a new request
-		*/
-		LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
-		fifo_reply(response_file, 
-			"400 fifo_uac: method expected");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
-	if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: destination expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
-	/* now read header fields line by line */
-	if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: HFs expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
-	/* and eventually body */
-	if (!read_body(body, MAX_BODY, stream, &sb.len)) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: body expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
-	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
-	/* we got it all, initiate transaction now! */
-	if (response_file) {
-		fn_len=strlen(response_file)+1;
-		shmem_file=shm_malloc(fn_len);
-		if (shmem_file==0) {
-			LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
-			fifo_reply(response_file, 
-				"500 fifo_uac: no shmem for shmem_file\n");
-			return 1;
-		}
-		memcpy(shmem_file, response_file, fn_len );
-	} else {
-		shmem_file=0;
-	}
-	ret=t_uac(&sm,&sd, PROTO_UDP,&sh,&sb, 0 /* default from */,
-		fifo_callback,shmem_file,0 /* no dialog */);
-	if (ret>0) {
-		if (err2reason_phrase(ret, &sip_error, err_buf,
-				sizeof(err_buf), "FIFO/UAC" ) > 0 ) 
-		{
-			fifo_reply(response_file, "500 FIFO/UAC error: %d\n",
-				ret );
-		} else {
-			fifo_reply(response_file, err_buf );
-		}
-	}
-	return 1;
-}
-
-
-/* syntax:
-
-	:t_uac_from:[file] EOL
-	method EOL
-	[from] EOL (if none, server's default from is taken)
-	dst EOL (put in r-uri and To)
-	[CR-LF separated HFs]* EOL
-	EOL
-	[body] EOL
-	EOL
-
-*/
-
-int fifo_uac_from( FILE *stream, char *response_file ) 
-{
-	char method[MAX_METHOD];
-	char header[MAX_HEADER];
-	char body[MAX_BODY];
-	char dst[MAX_DST];
-	char from[MAX_FROM];
-	str sm, sh, sb, sd, sf;
-	char *shmem_file;
-	int fn_len;
-	int ret;
-	int sip_error;
-	char err_buf[MAX_REASON_LEN];
-	int err_ret;
-
-	sm.s=method; sh.s=header; sb.s=body; sd.s=dst;sf.s=from;
-
-	if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
-		/* line breaking must have failed -- consume the rest
-		   and proceed to a new request
-		*/
-		LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
-		fifo_reply(response_file, 
-			"400 fifo_uac: method expected");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
-	if (!read_line(from, MAX_FROM, stream, &sf.len)) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: from expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: from expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac:  from: %.*s\n", sf.len, from);
-	if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: destination expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
-	/* now read header fields line by line */
-	if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: HFs expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
-	/* and eventually body */
-	if (!read_body(body, MAX_BODY, stream, &sb.len)) {
-		fifo_reply(response_file, 
-			"400 fifo_uac: body expected\n");
-		LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
-		return 1;
-	}
-	DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
-	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
-	/* we got it all, initiate transaction now! */
-	if (response_file) {
-		fn_len=strlen(response_file)+1;
-		shmem_file=shm_malloc(fn_len);
-		if (shmem_file==0) {
-			LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
-			fifo_reply(response_file, 
-				"500 fifo_uac: no memory for shmem_file\n");
-			return 1;
-		}
-		memcpy(shmem_file, response_file, fn_len );
-	} else {
-		shmem_file=0;
-	}
-	/* HACK: there is yet a shortcoming -- if t_uac fails, callback
-	   will not be triggered and no feedback will be printed
-	   to shmem_file
-	*/
-	ret=t_uac(&sm,&sd, PROTO_UDP, &sh,&sb, sf.len==0 ? 0: &sf/*default from*/,
-		fifo_callback,shmem_file,0 /* no dialog */);
-	if (ret<=0) {
-		err_ret=err2reason_phrase(ret, &sip_error, err_buf,
-				sizeof(err_buf), "FIFO/UAC" ) ;
-		if (err_ret > 0 )
-		{
-			fifo_reply(response_file, "%d %s", sip_error, err_buf );
-		} else {
-			fifo_reply(response_file, "500 FIFO/UAC error: %d\n",
-				ret );
-		}
-	}
-	return 1;
-
-}
-
-#endif
-
 static struct str_list *new_str(char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *new;
@@ -1069,9 +731,6 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
 	faked_msg.len=header.len; 
 	faked_msg.buf=faked_msg.unparsed=header_buf;
-#ifdef SCRATCH
-	faked_msg.orig=faked_msg.buf;
-#endif
 	if (parse_headers(&faked_msg, HDR_EOH, 0)==-1 ) {
 			DBG("DEBUG: fifo_uac: parse_headers failed\n");
 			fifo_uac_error(response_file, 400, "HFs unparseable");
@@ -1185,10 +844,6 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 			fifo_uac_error(response_file, sip_error, err_buf);
 		} else {
 			fifo_uac_error(response_file, 500, "FIFO/UAC error" );
-#ifdef _OBSO
-			fifo_reply(response_file, "500 FIFO/UAC error: %d\n",
-				ret );
-#endif
 		}
 	}
 

@@ -29,6 +29,7 @@
  *
  * History:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28: removed 0-terminators from first line (jiri)
  */
 
@@ -1218,9 +1219,6 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	   tmp points at space after; go ahead */
 
 	fl->u.request.method.s=buffer;  /* store ptr to first token */
-#ifdef DONT_REMOVE_ZT
-	(*tmp)=0;			/* mark the 1st token end */
-#endif
 	second=tmp+1;			/* jump to second token */
 	offset=second-buffer;
 
@@ -1237,9 +1235,6 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	if ((third==tmp)||(tmp>=end)){
 		goto error;
 	}
-#ifdef DONT_REMOVE_ZT
-	*tmp=0; /* mark the end of the token */
-#endif
 	fl->u.request.uri.s=second;
 	fl->u.request.uri.len=tmp-second;
 
@@ -1287,9 +1282,6 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	if (nl>=end){ /* no crlf in packet or only 1 line > invalid */
 		goto error;
 	}
-#ifdef DONT_REMOVE_ZT
-	*tmp=0;
-#endif
 	fl->u.request.version.s=third;
 	fl->u.request.version.len=tmp-third;
 	fl->len=nl-buffer;

@@ -96,11 +96,6 @@ void cancel_branch( struct cell *t, int branch )
 	crb->buffer_len=len;
 	crb->dst=irb->dst;
 	crb->branch=branch;
-#ifdef _OBSOLETED
-	crb->fr_timer.tg=TG_FR;
-	crb->retr_timer.tg=TG_RT;
-	crb->my_T=t;
-#endif
 	crb->retr_timer.payload=crb->fr_timer.payload=crb;
 	/* label it as cancel so that FR timer can better now how to
 	   deal with it */

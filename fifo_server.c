@@ -185,18 +185,6 @@ static void consume_request( FILE *stream )
 
 	while(!read_line(buffer, MAX_CONSUME_BUFFER, stream, &len));
 
-#ifdef _OBSOLETED
-	int eol_count;
-
-	eol_count=0;
-
-	/* each request must be terminated by two EoLs */
-	while(eol_count!=2) {
-		/* read until EoL is encountered */
-		while(!read_line(buffer, MAX_CONSUME_BUFFER, stream, &len));
-		eol_count=len==0?eol_count+1:1;
-	}
-#endif
 }
 
 int read_eol( FILE *stream )

@@ -27,6 +27,7 @@
  *
  * History:
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-19  faked lump list created in on_reply handlers
  * 2003-02-13  updated to use rb->dst (andrei)
@@ -111,13 +112,8 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
             "cannot generate a HBH ACK if key HFs in reply missing\n");
         return NULL;
     }
-#ifdef PRESERVE_ZT
-	to.len=rpl->to->body.s+rpl->to->body.len-rpl->to->name.s;
-	to.s=rpl->orig+(rpl->to->name.s-rpl->buf);
-#else
 	to.s=rpl->to->name.s;
 	to.len=rpl->to->len;
-#endif
     return build_local( trans, branch, ret_len,
         ACK, ACK_LEN, &to );
 }
@@ -217,40 +213,6 @@ restore:
 	rmode=backup_mode;
 	return 0;
 }
-
-#ifdef _OBSOLETED
-void on_negative_reply( struct cell* t, struct sip_msg* msg, 
-	int code, void *param )
-{
-	int act_ret;
-	struct sip_msg faked_msg;
-
-	/* nobody cares about a negative transaction -- ok, return */
-	if (!t->on_negative) {
-		DBG("DBG: on_negative_reply: no on_negative\n");
-		return;
-	}
-
-	DBG("DBG: on_negative_reply processed for transaction %p\n", t);
-	if (!faked_env(&faked_msg, t, t->uas.request, 0 /* create fake */ )) {
-		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
-		goto restore;
-	}
-
-	/* run */
-	act_ret=run_actions(reply_rlist[t->on_negative], &faked_msg );
-	if (act_ret<0) {
-		LOG(L_ERR, "ERROR: on_negative_reply: Error in do_action\n");
-	}
-
-
-restore:
-	faked_env(&faked_msg, 0, 0 /* don't need t and shmem_rq */ , 
-					1 /* restore fake */ );
-
-}
-#endif
-
 
 
 
@@ -1074,11 +1036,6 @@ int t_on_reply( struct sip_msg  *p_msg )
 	} /* provisional replies */
 
 done:
-#ifdef _OBSOLETED
-	/* moved to  script callback */
-	UNREF( t );
-	T=T_UNDEFINED;
-#endif
 	/* don't try to relay statelessly neither on success
        (we forwarded statefuly) nor on error; on troubles, 
 	   simply do nothing; that will make the other party to 

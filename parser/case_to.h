@@ -28,6 +28,7 @@
  *
  * History:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -40,7 +41,6 @@
 #define to12_CASE           \
         hdr->type = HDR_TO; \
         hdr->name.len = 2;  \
-        SET_ZT(*(p + 2));    \
         return (p + 4);
 
 

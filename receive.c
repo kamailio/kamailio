@@ -26,6 +26,7 @@
  *
  * History:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-29 transport-independent message zero-termination in
  *            receive_msg (jiri)
  * 2003-02-07 undoed jiri's zero term. changes (they break tcp) (andrei)
@@ -90,15 +91,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg->rcv=*rcv_info;
 	msg->id=msg_no;
-#ifdef SCRATCH
-	/* make a copy of the message */
-	msg->orig=(char*) pkg_malloc(len+1);
-	if (msg->orig==0){
-		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
-		goto error01;
-	}
-	memcpy(msg->orig, buf, len);
-#endif
 	
 	if (parse_msg(buf,len, msg)!=0){
 		LOG(L_ERR, "ERROR: receive_msg: parse_msg failed\n");
@@ -196,9 +188,6 @@ error:
 	exec_post_cb(msg);
 error02:
 	free_sip_msg(msg);
-#ifdef SCRATCH
-error01:
-#endif
 	pkg_free(msg);
 error00:
 	STATS_RX_DROPS;

@@ -684,14 +684,6 @@ void reset_timer( struct timer_link* tl )
 #ifdef EXTRA_DEBUG
 	DBG("DEBUG: reset_timer (group %d, tl=%p)\n", tl->tg, tl );
 #endif
-#ifdef _OBSOLETED
-	/* lock(timer_group_lock[ tl->tg ]); */
-	/* hack to work arround this timer group thing*/
-	lock(hash__XX_table->timers[timer_group[tl->tg]].mutex);
-	remove_timer_unsafe( tl );
-	unlock(hash_XX_table->timers[timer_group[tl->tg]].mutex);
-	/*unlock(timer_group_lock[ tl->tg ]);*/
-#endif
 }
 
 

@@ -26,6 +26,7 @@
  *
  * History:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-29 removed scratchpad (jiri)
  */
 
@@ -184,11 +185,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					/*udp*/
 					send_sock=get_send_socket(to, PROTO_UDP);
 					if (send_sock!=0){
-#ifdef SCRATCH
-						ret=udp_send(send_sock, msg->orig, msg->len, to);
-#else
 						ret=udp_send(send_sock, msg->buf, msg->len, to);
-#endif
 					}else{
 						ret=-1;
 					}
@@ -196,11 +193,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 					else{
 					/*tcp*/
-#ifdef SCRATCH
-					ret=tcp_send(msg->orig, msg->len, to, 0);
-#else
 					ret=tcp_send(msg->buf, msg->len, to, 0);
-#endif
 				}
 #endif
 			}

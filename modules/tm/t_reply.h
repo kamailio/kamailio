@@ -109,10 +109,6 @@ int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
 */
 int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
 
-#ifdef _OBSOLETED
-void cleanup_after_final( struct s_table *h_table, struct cell *t,
-	unsigned int status );
-#endif
 
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
 	unsigned int msg_status, branch_bm_t *cancel_bitmap );
