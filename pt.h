@@ -31,6 +31,7 @@
 
 
 #ifndef _PT_H
+#define _PT_H
 
 #include <sys/types.h>
 #include <unistd.h>
