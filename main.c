@@ -49,7 +49,11 @@
  *              added support for increasing the open files limit    (andrei)
  *  2004-04-28  sock_{user,group,uid,gid,mode} added
  *              user2uid() & user2gid() added  (andrei)
- *
+ *  2004-09-11  added timeout on children shutdown and final cleanup
+ *               (if it takes more than 60s => something is definitely wrong
+ *                => kill all or abort)  (andrei)
+ *              force a shm_unlock before cleaning-up, in case we have a
+ *               crashed childvwhich still holds the lock  (andrei)
  */
 
 
@@ -419,6 +423,9 @@ char* pgid_file = 0;
 void cleanup(show_status)
 {
 	/*clean-up*/
+	shm_unlock(); /* hack: force-unlock the shared memory lock in case
+					 some process crashed and let it locked; this will 
+					 allow an almost gracious shutdown */
 	destroy_modules();
 #ifdef USE_TCP
 	destroy_tcp();
@@ -451,7 +458,6 @@ void cleanup(show_status)
 }
 
 
-
 /* tries to send a signal to all our processes
  * if daemonized  is ok to send the signal to all the process group,
  * however if not daemonized we might end up sending the signal also
@@ -471,6 +477,29 @@ static void kill_all_children(int signum)
 	else if (pt)
 		for (r=1; r<process_count(); r++)
 			if (pt[r].pid) kill(pt[r].pid, signum);
+}
+
+
+
+/* if this handler is called, a critical timeout has occured while
+ * waiting for the children to finish => we should kill everything and exit */
+static void sig_alarm_kill(int signo)
+{
+	kill_all_children(SIGKILL); /* this will kill the whole group
+								  including "this" process;
+								  for debugging replace with SIGABRT
+								  (but warning: it might generate lots
+								   of cores) */
+}
+
+
+/* like sig_alarm_kill, but the timeout has occured when cleaning up
+ * => try to leave a core for future diagnostics */
+static void sig_alarm_abort(int signo)
+{
+	/* LOG is not signal safe, but who cares, we are abort-ing anyway :-) */
+	LOG(L_CRIT, "BUG: shutdown timeout triggered, dying...");
+	abort();
 }
 
 
@@ -548,8 +577,17 @@ void handle_sigs()
 #endif
 			/* exit */
 			kill_all_children(SIGTERM);
+			if (signal(SIGALRM, sig_alarm_kill) == SIG_ERR ) {
+				LOG(L_ERR, "ERROR: could not install SIGALARM handler\n");
+				/* continue, the process will die anyway if no
+				 * alarm is installed which is exactly what we want */
+			}
+			alarm(60); /* 1 minute close timeout */
 			while(wait(0) > 0); /* wait for all the children to terminate*/
+			signal(SIGALRM, sig_alarm_abort);
 			cleanup(1); /* cleanup & show status*/
+			alarm(0);
+			signal(SIGALRM, SIG_IGN);
 			DBG("terminating due to SIGCHLD\n");
 			exit(0);
 			break;
