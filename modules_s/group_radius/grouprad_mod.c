@@ -35,7 +35,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../sr_module.h"

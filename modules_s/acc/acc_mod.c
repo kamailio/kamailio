@@ -60,7 +60,7 @@
 #include "../tm/tm_load.h"
 
 #ifdef RAD_ACC
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 #include "dict.h"
 #endif
 

@@ -43,7 +43,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 
 
 static void attr_name_value(VALUE_PAIR* vp, str* name, str* value)

@@ -38,7 +38,7 @@
 #include "../../modules/acc/dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
-#include <radiusclient.h>
+#include <radiusclient-ng.h>
 
 
 /*

@@ -15,7 +15,7 @@ LIBS=
 
 # uncomment the next two lines if you wish to enable RADIUS accounting
 #DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
-#LIBS=-L$(LOCALBASE)/lib -lradiusclient
+#LIBS=-L$(LOCALBASE)/lib -lradiusclient-ng
 
 # uncomment the next two lines if you wish to enable DIAMETER accounting
 #DEFS+=-DDIAM_ACC

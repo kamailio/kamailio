@@ -9,6 +9,6 @@ include ../../Makefile.defs
 auto_gen=
 NAME=auth_radius.so
 DEFS+=-I$(LOCALBASE)/include
-LIBS=-L$(LOCALBASE)/lib -L/usr/pkg/lib -lradiusclient
+LIBS=-L$(LOCALBASE)/lib -L/usr/pkg/lib -lradiusclient-ng
 
 include ../../Makefile.modules
