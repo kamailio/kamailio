@@ -640,7 +640,7 @@ static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 		}
 		
 		if (ptr->next) {
-			tag_len = ptr->next->name.s - tag;
+			tag_len = ptr->value.s + ptr->value.len - tag;
 		} else {
 			tag_len = _h->body.s + _h->body.len - tag;
 		}
