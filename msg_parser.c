@@ -267,10 +267,10 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 							hdr->name.s, hdr->type);
 					goto error;
 				}
+				tmp=match;
 			}while( match<end &&( (*match==' ')||(*match=='\t') ) );
 			*(match-1)=0; /*null terminate*/
 			hdr->body.len=match-hdr->body.s;
-			tmp=match;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: get_hdr_field: unknown header type %d\n",
@@ -618,7 +618,7 @@ int parse_headers(struct sip_msg* msg, int flags)
 			msg->last_header->next=hf;
 			msg->last_header=hf;
 		}
-	#ifdef DEBUG
+	#ifdef EXTRA_DEBUG
 		DBG("header field type %d, name=<%s>, body=<%s>\n",
 			hf->type, hf->name.s, hf->body.s);
 	#endif
@@ -688,7 +688,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	second_via=0;
 	if (parse_headers(msg, flags)==-1) goto error;
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	/* dump parsed data */
 	if (msg->via1){
 		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
@@ -711,7 +711,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 #endif
 	
 
-#ifdef DEBUG
+#ifdef EXTRA_DEBUG
 	DBG("exiting parse_msg\n");
 #endif
 

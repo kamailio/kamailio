@@ -57,11 +57,26 @@ static char flags[]=
 #ifdef NO_LOG
 ", NO_LOG"
 #endif
-#ifdef DEBUG
-", DEBUG"
+#ifdef EXTRA_DEBUG
+", EXTRA_DEBUG"
 #endif
 #ifdef DNS_IP_HACK
 ", DNS_IP_HACK"
+#endif
+#ifdef SHM_MEM
+", SHM_MEM"
+#endif
+#ifdef PKG_MALLOC
+", PKG_MALLOC"
+#endif
+#ifdef USE_SHM_MEM
+", USE_SHM_MEM"
+#endif
+#ifdef DBG_QM_MALLOC
+", DBG_QM_MALLOC"
+#endif
+#ifdef DEBUG_DMALLOC
+", DEBUG_DMALLOC"
 #endif
 ;
 

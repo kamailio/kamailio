@@ -13,7 +13,7 @@ depends= $(sources:.c=.d)
 NAME=tm.so
 
 SHLIB_LD_FLAGS= -shared
-LIBS= -lpthread
+LIBS= #-lpthread
 CFLAGS+= -fPIC -DPIC
 
 ALLDEP=Makefile ../../Makefile
