@@ -1,0 +1,136 @@
+
+cpl Module
+
+Bogdan Iancu
+
+   FhG FOKUS
+
+Edited by
+
+Bogdan Iancu
+
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. param_name (param_type)
+
+        1.4. Exported Functions
+
+              1.4.1. function_name(param1, param2)
+
+        1.5. Installation & Running
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set param_name parameter
+   1-2. function_name usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Module description
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other SER modules.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. param_name (param_type)
+
+   Param description.
+
+   Default value is "value". 
+
+   Example 1-1. Set param_name parameter
+...
+modparam("module", "param_name", "param_value")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. function_name(param1, param2)
+
+   Description
+
+   Meaning of the parameters is as follows:
+
+     * param1 - description.
+     * param2 - description.
+
+   Example 1-2. function_name usage
+...
+function_name("sample_param1", "sample_param2");
+...
+     _________________________________________________________
+
+1.5. Installation & Running
+
+   Notes about installation and running.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs
