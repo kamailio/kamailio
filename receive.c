@@ -20,7 +20,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	/* make a copy of the message */
 	orig=(char*) malloc(len);
 	if (orig==0){
-		DPrint("ERROR: memory allocation failure\n");
+		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
 		goto error1;
 	}
 	memcpy(orig, buf, len);
@@ -44,12 +44,12 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 					  );
 		if (re==0){
 			/* no route found, send back error msg? */
-			DPrint("WARNING: no route found!\n");
+			LOG(L_WARN, "WARNING: receive_msg: no route found!\n");
 			goto skip;
 		}
 		re->tx++;
 		/* send msg */
-		DPrint(" found route to: %s\n", re->host.h_name);
+		DBG(" found route to: %s\n", re->host.h_name);
 		forward_request(orig, buf, len, &msg, re, src_ip);
 	}else if (msg.first_line.type==SIP_REPLY){
 		/* sanity checks */
@@ -65,7 +65,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		
 		/* send the msg */
 		if (forward_reply(orig, buf, len, &msg)==0){
-			DPrint(" reply forwarded to %s:%d\n", 
+			DBG(" reply forwarded to %s:%d\n", 
 						msg.via2.host,
 						(unsigned short) msg.via2.port);
 		}

@@ -76,7 +76,7 @@ int forward_request(char * orig, char* buf,
 	to=0;
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
 	if (to==0){
-		DPrint("ERROR: forward_reply: out of memory\n");
+		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;
 	}
 
@@ -92,7 +92,7 @@ int forward_request(char * orig, char* buf,
 	new_len=len+via_len+received_len;
 	new_buf=(char*)malloc(new_len+1);
 	if (new_buf==0){
-		DPrint("ERROR: forward_request: out of memory\n");
+		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
 	}
 /* copy msg till first via */
@@ -126,8 +126,8 @@ int forward_request(char * orig, char* buf,
 	new_buf[new_len]=0;
 
 	 /* send it! */
-	printf("Sending:\n%s.\n", new_buf);
-	printf("orig. len=%d, new_len=%d, via_len=%d, received_len=%d\n",
+	DBG("Sending:\n%s.\n", new_buf);
+	DBG("orig. len=%d, new_len=%d, via_len=%d, received_len=%d\n",
 			len, new_len, via_len, received_len);
 
 	to->sin_family = AF_INET;
@@ -178,7 +178,7 @@ int forward_reply(char * orig, char* buf,
 	to=0;
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
 	if (to==0){
-		DPrint("ERROR: forward_reply: out of memory\n");
+		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;
 	}
 
@@ -187,7 +187,7 @@ int forward_reply(char * orig, char* buf,
 		for (r=0; r<addresses_no; r++)
 			if(strcmp(msg->via1.host, names[r])==0) break;
 		if (r==addresses_no){
-			DPrint("ERROR: forward_reply: host in first via != me : %s\n",
+			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me : %s\n",
 					msg->via1.host);
 			/* send error msg back? */
 			goto error;
@@ -196,21 +196,21 @@ int forward_reply(char * orig, char* buf,
 	/* we must remove the first via */
 	via_len=msg->via1.size;
 	size=msg->via1.hdr-buf;
-	printf("via len: %d, initial size: %d\n", via_len, size);
+	DBG("via len: %d, initial size: %d\n", via_len, size);
 	if (msg->via1.next){
 		/* keep hdr =substract hdr size +1 (hdr':') and add
 		 */
 		via_len-=strlen(msg->via1.hdr)+1;
 		size+=strlen(msg->via1.hdr)+1;
-	    printf(" adjusted via len: %d, initial size: %d\n",
+	    DBG(" adjusted via len: %d, initial size: %d\n",
 				via_len, size);
 	}
 	new_len=len-via_len;
 	
-	printf(" old size: %d, new size: %d\n", len, new_len);
+	DBG(" old size: %d, new size: %d\n", len, new_len);
 	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging (\0 to print it )*/
 	if (new_buf==0){
-		DPrint("ERROR: forward_reply: out of memory\n");
+		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;
 	}
 	new_buf[new_len]=0; /* debug: print the message */
@@ -219,17 +219,18 @@ int forward_reply(char * orig, char* buf,
 	s_offset=size+via_len;
 	memcpy(new_buf+offset,orig+s_offset, len-s_offset);
 	 /* send it! */
-	printf(" copied size: orig:%d, new: %d, rest: %d\n",
+	DBG(" copied size: orig:%d, new: %d, rest: %d\n",
 			s_offset, offset, 
 			len-s_offset );
-	printf("Sending: to %s:%d, \n%s.\n",
+	DBG("Sending: to %s:%d, \n%s.\n",
 			msg->via2.host, 
 			(unsigned short)msg->via2.port,
 			new_buf);
 	/* fork? gethostbyname will probably block... */
 	he=gethostbyname(msg->via2.host);
 	if (he==0){
-		DPrint("ERROR:forward_reply:gethostbyname failure\n");
+		LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
+				msg->via2.host);
 		goto error;
 	}
 	to->sin_family = AF_INET;

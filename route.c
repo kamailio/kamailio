@@ -95,12 +95,12 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 	if (re==0) return E_OUT_OF_MEM;
 
 	if (regcomp(&(re->method), cl->method, REG_EXTENDED|REG_NOSUB|REG_ICASE)){
-		DPrint("ERROR: bad re \"%s\"\n", cl->method);
+		LOG(L_CRIT, "ERROR: add_rule: bad re \"%s\"\n", cl->method);
 		ret=E_BAD_RE;
 		goto error;
 	}
 	if (regcomp(&(re->uri), cl->uri, REG_EXTENDED|REG_NOSUB|REG_ICASE) ){
-		DPrint("ERROR: bad re \"%s\"\n", cl->uri);
+		LOG(L_CRIT, "ERROR: add_rule: bad re \"%s\"\n", cl->uri);
 		ret=E_BAD_RE;
 		goto error;
 	}
@@ -108,7 +108,7 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 	
 	he=gethostbyname(cl->address);
 	if (he==0){
-		DPrint("ERROR: cannot resolve \"%s\"\n", cl->address);
+		LOG(L_CRIT, "ERROR: add_rule: cannot resolve \"%s\"\n", cl->address);
 		ret=E_BAD_ADDRESS;
 		goto error;
 	}
@@ -181,7 +181,7 @@ struct route_elem* route_match(char* method, char* uri, struct route_elem** rl)
 {
 	struct route_elem* t;
 	if (*rl==0){
-		DPrint("WARNING: empty routing table\n");
+		LOG(L_ERR, "WARNING: route_match: empty routing table\n");
 		return 0;
 	}
 	for (t=*rl; t; t=t->next){
@@ -206,25 +206,25 @@ void print_rl()
 	int i,j;
 
 	if (rlist==0){
-		DPrint("the routing table is empty\n");
+		LOG(L_INFO, "the routing table is empty\n");
 		return;
 	}
 	
 	for (t=rlist,i=0; t; i++, t=t->next){
-		DPrint("%2d.to=%s ; route ok=%d\n", i,
+		LOG(L_INFO, "%2d.to=%s ; route ok=%d\n", i,
 				t->host.h_name, t->ok);
-		DPrint("   ips: ");
+		LOG(L_INFO, "   ips: ");
 		for (j=0; t->host.h_addr_list[j]; j++){
-			DPrint("%d.%d.%d.%d ", 
+			LOG(L_INFO, "%d.%d.%d.%d ", 
 				(unsigned char) t->host.h_addr_list[j][0],
 				(unsigned char) t->host.h_addr_list[j][1],
 			    (unsigned char) t->host.h_addr_list[j][2],
 				(unsigned char) t->host.h_addr_list[j][3]
 				  );
 		}
-		DPrint("\n");
-		DPrint("   port:%d\n", (unsigned short)t->port);
-		DPrint("   Statistics: tx=%d, errors=%d, tx_bytes=%d, idx=%d\n",
+		LOG(L_INFO, "\n");
+		LOG(L_INFO, "   port:%d\n", (unsigned short)t->port);
+		LOG(L_INFO, "   Statistics: tx=%d, errors=%d, tx_bytes=%d, idx=%d\n",
 				t->tx, t->errors, t->tx_bytes, t->current_addr_idx);
 	}
 

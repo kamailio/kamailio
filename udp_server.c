@@ -24,7 +24,7 @@ int udp_init(unsigned long ip, unsigned short port)
 
 	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
 	if (addr==0){
-		DPrint("ERROR: udp_init: out of memory\n");
+		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
 		goto error;
 	}
 	addr->sin_family=AF_INET;
@@ -33,7 +33,7 @@ int udp_init(unsigned long ip, unsigned short port)
 
 	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (udp_sock==-1){
-		DPrint("ERROR: udp_init: socket: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror());
 		goto error;
 	}
 	/* set sock opts? */
@@ -41,12 +41,12 @@ int udp_init(unsigned long ip, unsigned short port)
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 					(void*)&optval, sizeof(optval)) ==-1)
 	{
-		DPrint("ERROR: udp_init: setsockopt: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror());
 		goto error;
 	}
 
 	if (bind(udp_sock, (struct sockaddr*) addr, sizeof(struct sockaddr))==-1){
-		DPrint("ERROR: udp_init: bind: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror());
 		goto error;
 	}
 
@@ -69,7 +69,7 @@ int udp_rcv_loop()
 
 	from=(struct sockaddr*) malloc(sizeof(struct sockaddr));
 	if (from==0){
-		DPrint("ERROR: udp_rcv_loop: out of memory\n");
+		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
 		goto error;
 	}
 
@@ -77,7 +77,7 @@ int udp_rcv_loop()
 		fromlen=sizeof(struct sockaddr);
 		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, from, &fromlen);
 		if (len==-1){
-			DPrint("ERROR: udp_rcv_loop:recvfrom: %s\n", strerror());
+			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom: %s\n", strerror());
 			if (errno==EINTR)	goto skip;
 			else goto error;
 		}
@@ -108,7 +108,7 @@ int udp_send(char *buf, int len, struct sockaddr*  to, int tolen)
 again:
 	n=sendto(udp_sock, buf, len, 0, to, tolen);
 	if (n==-1){
-		DPrint("ERROR: udp_send: sendto: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_send: sendto: %s\n", strerror());
 		if (errno==EINTR) goto again;
 	}
 	return n;

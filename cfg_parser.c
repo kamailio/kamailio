@@ -95,9 +95,10 @@ int cfg_parse_stream(FILE* stream)
 			switch (cl.type){
 				case CFG_RULE:
 					if ((ret=add_rule(&cl, &rlist))!=0){
-						DPrint("ERROR: could not compile rule at line %d\n",
-							line);
-						DPrint(" ----: add_rule returned %d\n", ret);
+						LOG(L_CRIT, 
+								"ERROR: could not compile rule at line %d\n",
+								line);
+						LOG(L_CRIT, " ----: add_rule returned %d\n", ret);
 						goto error;
 					}
 					break;
@@ -105,14 +106,16 @@ int cfg_parse_stream(FILE* stream)
 				case CFG_SKIP:
 					break;
 				case CFG_ERROR:
-					DPrint("ERROR: bad config line (%d):%s\n", line, buf);
+					LOG(L_CRIT, "ERROR: bad config line (%d):%s\n", line, buf);
 					goto error;
 					break;
 			}
 			line++;
 		}else{
 			if (ferror(stream)){
-				DPrint("ERROR: reading configuration: %s\n", strerror(errno));
+				LOG(L_CRIT,
+						"ERROR: reading configuration: %s\n",
+						strerror(errno));
 				goto error;
 			}
 			break;

@@ -40,7 +40,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	/* see if it's a reply (status) */
 	tmp=eat_token(buffer, len);
 	if ((tmp==buffer)||(tmp>=end)){
-		DPrint("ERROR: empty  or bad first line\n");
+		LOG(L_INFO, "ERROR:parse_first_line: empty  or bad first line\n");
 		goto error1;
 	}
 	if ((strlen(SIP_VERSION)==(tmp-buffer)) &&
@@ -103,11 +103,11 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	return nl;
 
 error:
-	DPrint("ERROR: bad %s first line\n", 
+	LOG(L_INFO, "ERROR:parse_first_line: bad %s first line\n", 
 		(fl->type==SIP_REPLY)?"reply(status)":"request");
 error1:
 	fl->type=SIP_INVALID;
-	DPrint("ERROR: at line 0 char %d\n", offset);
+	LOG(L_INFO, "ERROR: at line 0 char %d\n", offset);
 	/* skip  line */
 	nl=eat_line(buffer,len);
 	return nl;
@@ -168,7 +168,7 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 	}while( (*tmp==' ' ||  *tmp=='\t') && (offset<len) );
 	if (offset==len){
 		hdr_f->type=HDR_ERROR;
-		DPrint("ERROR: field body too  long\n");
+		LOG(L_INFO, "ERROR: het_hdr_field: field body too  long\n");
 		goto error;
 	}
 	*(tmp-1)=0; /* should be an LF */
@@ -193,7 +193,8 @@ char* parse_hostport(char* buf, char** host, short int* port)
 		invalid=0;
 		*port=strtol(tmp+1, &invalid, 10);
 		if ((invalid!=0)&&(*invalid)){
-			DPrint("ERROR: hostport: trailing chars in port number: %s(%x)\n",
+			LOG(L_INFO, 
+					"ERROR: hostport: trailing chars in port number: %s(%x)\n",
 					invalid, invalid);
 			/* report error? */
 		}
@@ -362,23 +363,23 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	tmp=rest;
 	switch(fl.type){
 		case SIP_INVALID:
-			DPrint("invalid message\n");
+			DBG("parse_msg: invalid message\n");
 			goto error;
 			break;
 		case SIP_REQUEST:
-			DPrint("SIP Request:\n");
-			DPrint(" method:  <%s>\n",fl.u.request.method);
-			DPrint(" uri:     <%s>\n",fl.u.request.uri);
-			DPrint(" version: <%s>\n",fl.u.request.version);
+			DBG("SIP Request:\n");
+			DBG(" method:  <%s>\n",fl.u.request.method);
+			DBG(" uri:     <%s>\n",fl.u.request.uri);
+			DBG(" version: <%s>\n",fl.u.request.version);
 			break;
 		case SIP_REPLY:
-			DPrint("SIP Reply  (status):\n");
-			DPrint(" version: <%s>\n",fl.u.reply.version);
-			DPrint(" status:  <%s>\n",fl.u.reply.status);
-			DPrint(" reason:  <%s>\n",fl.u.reply.reason);
+			DBG("SIP Reply  (status):\n");
+			DBG(" version: <%s>\n",fl.u.reply.version);
+			DBG(" status:  <%s>\n",fl.u.reply.status);
+			DBG(" reason:  <%s>\n",fl.u.reply.reason);
 			break;
 		default:
-			DPrint("unknown type %d\n",fl.type);
+			DBG("unknown type %d\n",fl.type);
 	}
 	
 	/*find first Via: */
@@ -390,7 +391,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 		offset+=rest-tmp;
 		switch (hf.type){
 			case HDR_ERROR:
-				DPrint("ERROR: bad header  field\n");
+				LOG(L_INFO,"ERROR: bad header  field\n");
 				goto  error;
 			case HDR_EOH: 
 				goto skip;
@@ -402,11 +403,12 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 						for (bar=first_via;(first_via) && (*bar);bar++)
 							if ((*bar=='\r')||(*bar=='\n'))	*bar=' ';
 				#ifdef DEBUG
-						printf("first via: <%s>\n", first_via);
+						DBG("first via: <%s>\n", first_via);
 				#endif
 						bar=parse_via_body(first_via, strlen(first_via), &vb1);
 						if (vb1.error!=VIA_PARSE_OK){
-							DPrint("ERROR: parsing via body: %s\n", first_via);
+							LOG(L_INFO, "ERROR: parsing via body: %s\n",
+									first_via);
 							goto error;
 						}
 						
@@ -430,7 +432,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 				break;
 		}
 	#ifdef DEBUG
-		printf("header field type %d, name=<%s>, body=<%s>\n",
+		DBG("header field type %d, name=<%s>, body=<%s>\n",
 			hf.type, hf.name, hf.body);
 	#endif
 		tmp=rest;
@@ -444,7 +446,7 @@ skip:
 	if (second_via) {
 		tmp=parse_via_body(second_via, strlen(second_via), &vb2);
 		if (vb2.error!=VIA_PARSE_OK){
-			DPrint("ERROR: parsing via2 body: %s\n", second_via);
+			LOG(L_INFO, "ERROR: parsing via2 body: %s\n", second_via);
 			goto error;
 		}
 		vb2.size=tmp-second_via; 
@@ -455,17 +457,17 @@ skip:
 
 #ifdef DEBUG
 	/* dump parsed data */
-	printf(" first  via: <%s/%s/%s> <%s:%d>",
+	DBG(" first  via: <%s/%s/%s> <%s:%d>",
 			vb1.name, vb1.version, vb1.transport, vb1.host, vb1.port);
-	if (vb1.params) printf(";<%s>", vb1.params);
-	if (vb1.comment) printf(" <%s>", vb1.comment);
-	printf ("\n");
+	if (vb1.params)  DBG(";<%s>", vb1.params);
+	if (vb1.comment) DBG(" <%s>", vb1.comment);
+	DBG ("\n");
 	if (second_via){
-		printf(" second via: <%s/%s/%s> <%s:%d>",
+		DBG(" second via: <%s/%s/%s> <%s:%d>",
 				vb2.name, vb2.version, vb2.transport, vb2.host, vb2.port);
-		if (vb2.params) printf(";<%s>", vb2.params);
-		if (vb2.comment) printf(" <%s>", vb2.comment);
-		printf ("\n");
+		if (vb2.params)  DBG(";<%s>", vb2.params);
+		if (vb2.comment) DBG(" <%s>", vb2.comment);
+		DBG("\n");
 	}
 #endif
 	
@@ -475,7 +477,7 @@ skip:
 	memcpy(&(msg->via2), &vb2, sizeof(struct via_body));
 
 #ifdef DEBUG
-	printf ("exiting parse_msg\n");
+	DBG("exiting parse_msg\n");
 #endif
 
 	return 0;

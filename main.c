@@ -212,13 +212,13 @@ int main(int argc, char** argv)
 	/* load config file or die */
 	cfg_stream=fopen (cfg_file, "r");
 	if (cfg_stream==0){
-		DPrint("ERROR: loading config file(%s): %s\n", cfg_file,
+		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
 				strerror(errno));
 		goto error;
 	}
 
 	if (cfg_parse_stream(cfg_stream)!=0){
-		DPrint("ERROR: config parser failure\n");
+		fprintf(stderr, "ERROR: config parser failure\n");
 		goto error;
 	}
 	
