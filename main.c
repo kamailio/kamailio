@@ -795,6 +795,11 @@ int main_loop()
 			close(sockfd[0]);
 			unix_tcp_sock=sockfd[1];
 #endif
+			if (init_child(PROC_TIMER) < 0) {
+				LOG(L_ERR, "timer: init_child failed\n");
+				goto error;
+			}
+			
 			for(;;){
 				/* debug:  instead of doing something usefull */
 				/* (placeholder for timers, etc.) */
