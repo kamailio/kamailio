@@ -29,6 +29,7 @@
 /* History:
  *              created by janakj
  *  2004-03-03  added tcp init code (andrei)
+ *  2004-04-29  added chmod(sock_perm) & chown(sock_user,sock_group)  (andrei)
  */
 
 #include <unistd.h>
@@ -311,7 +312,7 @@ int init_unixsock_socket(void)
 		DBG("init_unixsock_socket: Unix domain socket server disabled\n");
 		return 1;
 	} else if (len > 107) {
-		LOG(L_ERR, "init_unixsock_socket: Socket name too long\n");
+		LOG(L_ERR, "ERROR: init_unixsock_socket: Socket name too long\n");
 		return -1;
 	}
 
@@ -320,7 +321,7 @@ int init_unixsock_socket(void)
 
 	if (unlink(unixsock_name) == -1) {
 		if (errno != ENOENT) {
-			LOG(L_ERR, "init_unixsock_socket: Error while unlinking "
+			LOG(L_ERR, "ERROR: init_unixsock_socket: Error while unlinking "
 			    "old socket (%s): %s\n", unixsock_name, strerror(errno));
 			return -1;
 		}
@@ -328,8 +329,8 @@ int init_unixsock_socket(void)
 
 	rx_sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
 	if (rx_sock == -1) {
-		LOG(L_ERR, "init_unixsock_socket: Cannot create RX socket: %s\n", 
-		    strerror(errno));
+		LOG(L_ERR, "ERROR: init_unixsock_socket: Cannot create RX "
+				"socket: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -338,28 +339,46 @@ int init_unixsock_socket(void)
 	memcpy(addr.sun_path, unixsock_name, len);
 
 	if (bind(rx_sock, (struct sockaddr*)&addr, SUN_LEN(&addr)) == -1) {
-		LOG(L_ERR, "init_unixsock_socket: bind: %s\n", strerror(errno));
+		LOG(L_ERR, "ERROR: init_unixsock_socket: bind: %s\n", strerror(errno));
 		goto err_rx;
+	}
+	/* try to change the permissions */
+	if (sock_mode){ /* sock_mode==0 doesn't make sense, nobody can read/write*/
+		if (chmod(unixsock_name, sock_mode)<0){
+			LOG(L_ERR, "ERROR: init_unixsock_socket: failed to change the"
+					" permissions for %s to %04o: %s[%d]\n",
+					unixsock_name, sock_mode, strerror(errno), errno);
+			goto err_rx;
+		}
+	}
+	/* try to change the ownership */
+	if ((sock_uid!=-1) || (sock_gid!=-1)){
+		if (chown(unixsock_name, sock_uid, sock_gid)<0){
+			LOG(L_ERR, "ERROR: init_unixsock_socket: failed to change the"
+					" owner/group for %s  to %d.%d; %s[%d]\n",
+					unixsock_name, sock_uid, sock_gid, strerror(errno), errno);
+			goto err_rx;
+		}
 	}
 
 	tx_sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
 	if (tx_sock == -1) {
-		LOG(L_ERR, "init_unixsock_socket: Cannot create TX socket: %s\n",
-		    strerror(errno));
+		LOG(L_ERR, "ERROR: init_unixsock_socket: Cannot create TX socket:"
+				" %s\n", strerror(errno));
 		goto err_rx;
 	}
 
 	     /* Turn non-blocking mode on */
 	flags = fcntl(tx_sock, F_GETFL);
 	if (flags == -1){
-		LOG(L_ERR, "init_unixsock_socket: fcntl failed: %s\n",
+		LOG(L_ERR, "ERROR: init_unixsock_socket: fcntl failed: %s\n",
 		    strerror(errno));
 		goto err_both;
 	}
 		
 	if (fcntl(tx_sock, F_SETFL, flags | O_NONBLOCK) == -1) {
-		LOG(L_ERR, "init_unixsock_socket: fcntl: set non-blocking failed:"
-		    " %s\n", strerror(errno));
+		LOG(L_ERR, "ERROR: init_unixsock_socket: fcntl: "
+				"set non-blocking failed: %s\n", strerror(errno));
 		goto err_both;
 	}
 	

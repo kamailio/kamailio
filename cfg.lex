@@ -45,7 +45,9 @@
  *  2003-10-28  added tcp_accept_aliases (andrei)
  *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
  *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
- * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
+ *  2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
+ *  2004-04-28  added sock_mode (replaces fifo_mode), sock_user &
+ *               sock_group  (andrei)
  */
 
 
@@ -173,7 +175,9 @@ MEMLOG		"memlog"|"mem_log"
 SIP_WARNING sip_warning
 FIFO fifo
 FIFO_DIR  fifo_dir
-FIFO_MODE fifo_mode
+SOCK_MODE "fifo_mode"|"sock_mode"|"file_mode"
+SOCK_USER "fifo_user"|"sock_user"
+SOCK_GROUP "fifo_group"|"sock_group"
 FIFO_DB_URL fifo_db_url
 UNIX_SOCK unix_sock
 UNIX_SOCK_CHILDREN unix_sock_children
@@ -371,7 +375,9 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
 <INITIAL>{FIFO_DIR}	{ count(); yylval.strval=yytext; return FIFO_DIR; }
 <INITIAL>{FIFO_DB_URL}	{ count(); yylval.strval=yytext; return FIFO_DB_URL; }
-<INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
+<INITIAL>{SOCK_MODE}	{ count(); yylval.strval=yytext; return SOCK_MODE; }
+<INITIAL>{SOCK_USER}	{ count(); yylval.strval=yytext; return SOCK_USER; }
+<INITIAL>{SOCK_GROUP}	{ count(); yylval.strval=yytext; return SOCK_GROUP; }
 <INITIAL>{UNIX_SOCK} { count(); yylval.strval=yytext; return UNIX_SOCK; }
 <INITIAL>{UNIX_SOCK_CHILDREN} { count(); yylval.strval=yytext; return UNIX_SOCK_CHILDREN; }
 <INITIAL>{UNIX_TX_TIMEOUT} { count(); yylval.strval=yytext; return UNIX_TX_TIMEOUT; }

@@ -61,6 +61,7 @@
  *  2003-10-13  addef fifo_dir for reply fifos (andrei)
  *  2003-10-30  DB interface exported via FIFO (bogdan)
  *  2004-03-09  open_fifo_server split into init_ and start_ (andrei)
+ *  2004-04-29  added chown(sock_user, sock_group)  (andrei)
  */
 
 
@@ -94,7 +95,6 @@
 /* FIFO server vars */
 char *fifo=0; /* FIFO name */
 char* fifo_dir=DEFAULT_FIFO_DIR; /* dir where reply fifos are allowed */
-int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP ;
 char *fifo_db_url = 0;
 pid_t fifo_pid;
 /* file descriptors */
@@ -565,20 +565,30 @@ int init_fifo_server()
 			strerror(errno));
 	}
 		/* create FIFO ... */
-		if ((mkfifo(fifo, fifo_mode)<0)) {
+		if ((mkfifo(fifo, sock_mode)<0)) {
 			LOG(L_ERR, "ERROR: open_fifo_server; can't create FIFO: "
 					"%s (mode=%d)\n",
-					strerror(errno), fifo_mode);
+					strerror(errno), sock_mode);
 			return -1;
 		} 
 		DBG("DEBUG: FIFO created @ %s\n", fifo );
-		if ((chmod(fifo, fifo_mode)<0)) {
+		if ((chmod(fifo, sock_mode)<0)) {
 			LOG(L_ERR, "ERROR: open_fifo_server; can't chmod FIFO: "
 					"%s (mode=%d)\n",
-					strerror(errno), fifo_mode);
+					strerror(errno), sock_mode);
 			return -1;
 		}
-	DBG("DEBUG: fifo %s opened, mode=%d\n", fifo, fifo_mode );
+		if ((sock_uid!=-1) || (sock_gid!=-1)){
+			if (chown(fifo, sock_uid, sock_gid)<0){
+			LOG(L_ERR, "ERROR: open_fifo_server: failed to change the"
+					" owner/group for %s  to %d.%d; %s[%d]\n",
+					fifo, sock_uid, sock_gid, strerror(errno), errno);
+			return -1;
+		}
+	}
+
+		
+	DBG("DEBUG: fifo %s opened, mode=%d\n", fifo, sock_mode );
 	time(&up_since);
 	t=ctime(&up_since);
 	if (strlen(t)+1>=MAX_CTIME_LEN) {

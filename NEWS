@@ -31,6 +31,17 @@ core:
                               ==, !=, ~= for strings
                               ==, !=, >, <, >=, <= for integers
  - new config variables:
+   sock_mode = <permissions> (e.g. sock_mode=0600:  default value = 0660)
+       ser unix sockets and fifo will be created with this permissions
+       (old name fifo_mode is still supported, but deprecated)
+   sock_user = username|"uid"
+   sock_group = groupname|"gid"
+      change the owner and/or group of the ser unix sockets or fifo
+      Short example config snippet:
+           sock_mode=0600        # ser socket/fifo mode
+           sock_user="www-data"  # ser socket/fifo owner
+           sock_group=nogroup  
+           user=nobody       # ser user (ser will suid to it)
    disable_core_dump= yes|no 
        by default core dump limits are set to unlimited or a high enough
        value, set this config variable o yes to disable core dump-ing

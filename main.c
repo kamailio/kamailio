@@ -48,6 +48,8 @@
  *  2004-02-06  added support for user pref. - init_avp_child() (bogdan)
  *  2004-03-30  core dump is enabled by default
  *              added support for increasing the open files limit    (andrei)
+ *  2004-04-28  sock_{user,group,uid,gid,mode} added
+ *              user2uid() & user2gid() added  (andrei)
  *
  */
 
@@ -329,6 +331,12 @@ char* user=0;
 char* group=0;
 int uid = 0;
 int gid = 0;
+char* sock_user=0;
+char* sock_group=0;
+int sock_uid= -1;
+int sock_gid= -1;
+int sock_mode= S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
+
 /* more config stuff */
 int disable_core_dump=0; /* by default enabled */
 int open_files_limit=-1; /* don't touch it by default */
@@ -638,6 +646,57 @@ int install_sigs()
 		goto error;
 	}
 	return 0;
+error:
+	return -1;
+}
+
+
+
+/* converts a username into uid:gid,
+ * returns -1 on error & 0 on success */
+static int user2uid(int* uid, int* gid, char* user)
+{
+	char* tmp;
+	struct passwd *pw_entry;
+	
+	if (user){
+		*uid=strtol(user, &tmp, 10);
+		if ((tmp==0) ||(*tmp)){
+			/* maybe it's a string */
+			pw_entry=getpwnam(user);
+			if (pw_entry==0){
+				goto error;
+			}
+			*uid=pw_entry->pw_uid;
+			if (gid) *gid=pw_entry->pw_gid;
+		}
+		return 0;
+	}
+error:
+	return -1;
+}
+
+
+
+/* converts a group name into a gid
+ * returns -1 on error, 0 on success */
+static int group2gid(int* gid, char* group)
+{
+	char* tmp;
+	struct group  *gr_entry;
+	
+	if (group){
+		*gid=strtol(group, &tmp, 10);
+		if ((tmp==0) ||(*tmp)){
+			/* maybe it's a string */
+			gr_entry=getgrnam(group);
+			if (gr_entry==0){
+				goto error;
+			}
+			*gid=gr_entry->gr_gid;
+		}
+		return 0;
+	}
 error:
 	return -1;
 }
@@ -1042,8 +1101,6 @@ int main(int argc, char** argv)
 	char *tmp;
 	char *options;
 	int ret;
-	struct passwd *pw_entry;
-	struct group  *gr_entry;
 	unsigned int seed;
 	int rfd;
 
@@ -1299,31 +1356,30 @@ try_again:
 	
 	/* get uid/gid */
 	if (user){
-		uid=strtol(user, &tmp, 10);
-		if ((tmp==0) ||(*tmp)){
-			/* maybe it's a string */
-			pw_entry=getpwnam(user);
-			if (pw_entry==0){
-				fprintf(stderr, "bad user name/uid number: -u %s\n", user);
-				goto error;
-			}
-			uid=pw_entry->pw_uid;
-			gid=pw_entry->pw_gid;
+		if (user2uid(&uid, &gid, user)<0){
+			fprintf(stderr, "bad user name/uid number: -u %s\n", user);
+			goto error;
 		}
 	}
 	if (group){
-		gid=strtol(group, &tmp, 10);
-		if ((tmp==0) ||(*tmp)){
-			/* maybe it's a string */
-			gr_entry=getgrnam(group);
-			if (gr_entry==0){
+		if (group2gid(&gid, group)<0){
 				fprintf(stderr, "bad group name/gid number: -u %s\n", group);
-				goto error;
-			}
-			gid=gr_entry->gr_gid;
+			goto error;
 		}
 	}
-	
+	/* fix sock/fifo uid/gid */
+	if (sock_user){
+		if (user2uid(&sock_uid, 0, sock_user)<0){
+			fprintf(stderr, "bad socket user name/uid number %s\n", user);
+			goto error;
+		}
+	}
+	if (sock_group){
+		if (group2gid(&sock_gid, sock_group)<0){
+			fprintf(stderr, "bad group name/gid number: -u %s\n", group);
+			goto error;
+		}
+	}
 	if (fix_all_socket_lists()!=0){
 		fprintf(stderr,  "failed to initialize liste addresses\n");
 		goto error;

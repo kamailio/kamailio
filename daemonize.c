@@ -166,14 +166,18 @@ error:
 
 int do_suid()
 {
-	if (gid&&(setgid(gid)<0)){
-		LOG(L_CRIT, "cannot change gid to %d: %s\n", gid, strerror(errno));
-		goto error;
+	if (gid){
+		if(setgid(gid)<0){
+			LOG(L_CRIT, "cannot change gid to %d: %s\n", gid, strerror(errno));
+			goto error;
+		}
 	}
 	
-	if(uid&&(setuid(uid)<0)){
-		LOG(L_CRIT, "cannot change uid to %d: %s\n", uid, strerror(errno));
-		goto error;
+	if(uid){
+		if(setuid(uid)<0){
+			LOG(L_CRIT, "cannot change uid to %d: %s\n", uid, strerror(errno));
+			goto error;
+		}
 	}
 	return 0;
 error:

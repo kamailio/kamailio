@@ -52,6 +52,7 @@
  * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
  * 2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
+ * 2004-04-29  added SOCK_MODE, SOCK_USER & SOCK_GROUP (andrei)
  */
 
 
@@ -199,7 +200,9 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token SIP_WARNING
 %token FIFO
 %token FIFO_DIR
-%token FIFO_MODE
+%token SOCK_MODE
+%token SOCK_USER
+%token SOCK_GROUP
 %token FIFO_DB_URL
 %token UNIX_SOCK
 %token UNIX_SOCK_CHILDREN
@@ -411,14 +414,20 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| FIFO EQUAL error { yyerror("string value expected"); }
 		| FIFO_DIR EQUAL STRING { fifo_dir=$3; }
 		| FIFO_DIR EQUAL error { yyerror("string value expected"); }
-		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
-		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
+		| SOCK_MODE EQUAL NUMBER { sock_mode=$3; }
+		| SOCK_MODE EQUAL error { yyerror("int value expected"); }
+		| SOCK_USER EQUAL STRING { sock_user=$3; }
+		| SOCK_USER EQUAL ID     { sock_user=$3; }
+		| SOCK_USER EQUAL error { yyerror("string value expected"); }
+		| SOCK_GROUP EQUAL STRING { sock_group=$3; }
+		| SOCK_GROUP EQUAL ID     { sock_group=$3; }
+		| SOCK_GROUP EQUAL error { yyerror("string value expected"); }
 		| FIFO_DB_URL EQUAL STRING { fifo_db_url=$3; }
 		| FIFO_DB_URL EQUAL error  { yyerror("string value expected"); }
-                | UNIX_SOCK EQUAL STRING { unixsock_name=$3; }
-                | UNIX_SOCK EQUAL error { yyerror("string value expected"); }
-                | UNIX_SOCK_CHILDREN EQUAL NUMBER { unixsock_children=$3; }
-                | UNIX_SOCK_CHILDREN EQUAL error { yyerror("int value expected\n"); }
+		| UNIX_SOCK EQUAL STRING { unixsock_name=$3; }
+		| UNIX_SOCK EQUAL error { yyerror("string value expected"); }
+		| UNIX_SOCK_CHILDREN EQUAL NUMBER { unixsock_children=$3; }
+		| UNIX_SOCK_CHILDREN EQUAL error { yyerror("int value expected\n"); }
 		| UNIX_TX_TIMEOUT EQUAL NUMBER { unixsock_tx_timeout=$3; }
 		| UNIX_TX_TIMEOUT EQUAL error { yyerror("int value expected\n"); }
 		| AVP_DB_URL EQUAL STRING { avp_db_url=$3; }

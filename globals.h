@@ -93,6 +93,11 @@ extern int sip_warning;
 extern int server_signature;
 extern char* user;
 extern char* group;
+extern char* sock_user;
+extern char* sock_group;
+extern int sock_uid;
+extern int sock_gid;
+extern int sock_mode;
 extern char* chroot_dir;
 extern char* working_dir;
 

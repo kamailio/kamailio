@@ -1,15 +1,25 @@
 $Id$
 
 ( - todo, x - done)
-
+- [core] parse_uri support for new uri params
+- [core] on sig_child, kill the processes if they don't exit in a 
+  reasonable time
 - [doc] document force_rport()
 - [fifo] fix fgets error handling (it does not set errno always,
    , right now kills all ser if interrupted by a signal on ?solaris?)
 - [mem] make shm_realloc be fragmentation friendly: call shm_compact_frags
    for the small frags?, don't produce smaller frags -- be wastefull?
-- [mem] qm_compact_frags (compacts frags if possible)
+- [mem] qm_compact_frags (compacts frags if possible), keep a 
+        fragment count/bucket and if too much mem. is blocked in one bucket
+        de-frag.
+- [mem] investigate: don't produce frag if frag size < request
+      (should reduce the unrequested fragments number)
+- [mem] investigate: keep an used/unused flag per fragment, on free
+      check if neighboring frags were not used and if so defragment
 - [timer] multiple timers? at least ticks should no be affected by the amount
    of work done in the timer handlers
+- [tcp] ser intiated tcp connections use INADDR_ANY (they should be bound first
+  to some ip/port ?function of the dest?)
 - [tcp] need to confirm fd receipt after send_fd, before closing it (this might
  happen in tcp_send new conn.) (see FreeBSD send BUGS for more info)
 x [tcp] make send_all, send  non-blocking ready ?
@@ -36,7 +46,7 @@ x update all package specs from stable
    should have it, but it would be slower on systems emulating it, like
    older linuxes)
 - [tcp] switch to epoll if HAVE_EPOLL defined (linux 2.6.*)
-- [tcp] switch to SIGIO if no epoll (linux only, better than poll?)
+- [tcp] switch to SIGIO if no epoll (linux only, better than poll)
 x tcp_main_loop: BUG cases should "conitnue;"
 x change len_gt into and expr (e.g msg:len).
 x sipit: uri == myself doesn't match tls port = 5061 
