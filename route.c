@@ -441,13 +441,13 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				else ret=1;
 				break;
 		case SRCPORT_O:
-				ret=comp_no(ntohs(msg->rcv.src_port), 
+				ret=comp_no(msg->rcv.src_port, 
 					e->r.param, /* e.g., 5060 */
 					e->op, /* e.g. == */
 					e->subtype /* 5060 is number */);
 				break;
 		case DSTPORT_O:
-				ret=comp_no(ntohs(msg->rcv.dst_port), e->r.param, e->op, 
+				ret=comp_no(msg->rcv.dst_port, e->r.param, e->op, 
 							e->subtype);
 				break;
 		case PROTO_O:

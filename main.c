@@ -755,8 +755,9 @@ int main_loop()
 	}
 
 	/*this is the main process*/
-	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
-	bind_idx=0;					/* if it does it will use the first address */
+	bind_address=0;				/* main proc -> it shouldn't send anything, */
+	bind_idx=0;					/* if it does get_send_sock should return
+	                               a good socket */
 	
 	/* if configured to do so, start a server for accepting FIFO commands */
 	if (open_fifo_server()<0) {

@@ -93,8 +93,8 @@ struct socket_info{
 struct receive_info{
 	struct ip_addr src_ip;
 	struct ip_addr dst_ip;
-	unsigned short src_port;
-	unsigned short dst_port;
+	unsigned short src_port; /* host byte order */
+	unsigned short dst_port; /* host byte order */
 	int proto;
 	int proto_reserved1; /* tcp stores the connection id here */
 	int proto_reserved2;
@@ -240,15 +240,15 @@ static inline int su_cmp(union sockaddr_union* s1, union sockaddr_union* s2)
 
 
 
-/* gets the port number */
+/* gets the port number (host byte order) */
 static inline short su_getport(union sockaddr_union* su)
 {
 	switch(su->s.sa_family){
 		case AF_INET:
-			return su->sin.sin_port;
+			return ntohs(su->sin.sin_port);
 #ifdef USE_IPV6
 		case AF_INET6:
-			return su->sin6.sin6_port;
+			return ntohs(su->sin6.sin6_port);
 #endif
 		default:
 			LOG(L_CRIT,"su_get_port: BUG: unknown address family %d\n",
@@ -259,16 +259,16 @@ static inline short su_getport(union sockaddr_union* su)
 
 
 
-/* sets the port number */
+/* sets the port number (host byte order) */
 static inline void su_setport(union sockaddr_union* su, unsigned short port)
 {
 	switch(su->s.sa_family){
 		case AF_INET:
-			su->sin.sin_port=port;
+			su->sin.sin_port=htons(port);
 			break;
 #ifdef USE_IPV6
 		case AF_INET6:
-			 su->sin6.sin6_port=port;
+			 su->sin6.sin6_port=htons(port);
 			 break;
 #endif
 		default:
@@ -306,7 +306,8 @@ static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 #define ip_addr2su init_su
 
 /* inits a struct sockaddr_union from a struct ip_addr and a port no 
- * returns 0 if ok, -1 on error (unknown address family) */
+ * returns 0 if ok, -1 on error (unknown address family)
+ * the port number is in host byte order */
 static inline int init_su( union sockaddr_union* su,
 							struct ip_addr* ip,
 							unsigned short   port ) 
@@ -320,7 +321,7 @@ static inline int init_su( union sockaddr_union* su,
 		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
 		#endif
-		su->sin6.sin6_port=port;
+		su->sin6.sin6_port=htons(port);
 		break;
 #endif
 	case AF_INET:
@@ -328,7 +329,7 @@ static inline int init_su( union sockaddr_union* su,
 		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin.sin_len=sizeof(struct sockaddr_in);
 		#endif
-		su->sin.sin_port=port;
+		su->sin.sin_port=htons(port);
 		break;
 	default:
 		LOG(L_CRIT, "init_ss: BUG: unknown address family %d\n", ip->af);
@@ -340,7 +341,7 @@ static inline int init_su( union sockaddr_union* su,
 
 
 /* inits a struct sockaddr_union from a struct hostent, an address index in
- * the hostent structure and a port no.
+ * the hostent structure and a port no. (host byte order)
  * WARNING: no index overflow  checks!
  * returns 0 if ok, -1 on error (unknown address family) */
 static inline int hostent2su( union sockaddr_union* su,
@@ -357,7 +358,7 @@ static inline int hostent2su( union sockaddr_union* su,
 		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
 		#endif
-		su->sin6.sin6_port=port;
+		su->sin6.sin6_port=htons(port);
 		break;
 #endif
 	case AF_INET:
@@ -365,7 +366,7 @@ static inline int hostent2su( union sockaddr_union* su,
 		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin.sin_len=sizeof(struct sockaddr_in);
 		#endif
-		su->sin.sin_port=port;
+		su->sin.sin_port=htons(port);
 		break;
 	default:
 		LOG(L_CRIT, "hostent2su: BUG: unknown address family %d\n", 
