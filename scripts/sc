@@ -159,6 +159,18 @@ parameter usage:
 EOF
 }
 
+
+# determine host name, typically for use in printing UAC
+# messages; we use today a simplistic but portable uname -n way --
+# no domain name is displayed ; fifo_uac expands !! to host
+# address only for optional header fields; uname output without
+# domain is sufficient for informational header fields such as
+# From
+#
+get_my_host() {
+	uname -n
+}
+
 # calculate name and domain of current user
 set_user() {
 
@@ -844,8 +856,9 @@ case $1 in
 			usage
 			exit 1
 		fi
+		myhost=`get_my_host`
 		RET=`fifo_cmd t_uac_dlg OPTIONS "$2" "." \
-			"From: sip:daemon@!!" \
+			"From: sip:daemon@$myhost" \
 			"To: <$2>" "Contact: <sip:daemon@!!>" "." "." \
 			| head -1 ` 
 		print_status $RET
@@ -856,8 +869,9 @@ case $1 in
 			usage
 			exit 1
 		fi
+		myhost=`get_my_host`
 		RET=`fifo_cmd t_uac_dlg NOTIFY "$2" "." \
-			"From: sip:daemon@!!" \
+			"From: sip:daemon@$myhost" \
 			"To: <$2>" "Event: check-sync" \
 			"Contact: <sip:daemon@!!>" "." "." |
 			head -1 `
