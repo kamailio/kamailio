@@ -596,6 +596,7 @@ void free_reply_lump( struct lump_rpl *lump)
 void free_sip_msg(struct sip_msg* msg)
 {
 	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
+	if (msg->dst_uri.s) { pkg_free(msg->dst_uri.s); msg->dst_uri.len=0; }
 	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->body_lumps)  free_lump_list(msg->body_lumps);
@@ -620,4 +621,35 @@ int check_transaction_quadruple( struct sip_msg* msg )
 		ser_error=E_BAD_TUPEL;
 		return 0;
 	}
+}
+
+
+/*
+ * Make a private copy of the string and assign it to dst_uri
+ */
+int set_dst_uri(struct sip_msg* msg, str* uri)
+{
+	char* ptr;
+
+	if (!msg || !uri) {
+		LOG(L_ERR, "set_dst_uri: Invalid parameter value\n");
+		return -1;
+	}
+
+	if (msg->dst_uri.s && (msg->dst_uri.len >= uri->len)) {
+		memcpy(msg->dst_uri.s, uri->s, uri->len);
+		msg->dst_uri.len = uri->len;
+	} else {
+		ptr = (char*)pkg_malloc(uri->len);
+		if (!ptr) {
+			LOG(L_ERR, "set_dst_uri: Not enough memory\n");
+			return -1;
+		}
+
+		memcpy(ptr, uri->s, uri->len);
+		if (msg->dst_uri.s) pkg_free(msg->dst_uri.s);
+		msg->dst_uri.s = ptr;
+		msg->dst_uri.len = uri->len;
+	}
+	return 0;
 }

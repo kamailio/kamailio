@@ -317,4 +317,11 @@ inline static char* get_body(struct sip_msg *msg)
 	return msg->unparsed + offset;
 }
 
+
+/*
+ * Make a private copy of the string and assign it to dst_uri
+ */
+int set_dst_uri(struct sip_msg* msg, str* uri);
+
+
 #endif
