@@ -38,6 +38,8 @@ TABLE_TYPE="TYPE=MyISAM"
 # user name column
 USERCOL="username"
 
+GENHA1='gen_ha1'
+
 #################################################################
 
 
@@ -135,9 +137,37 @@ drop database $1;
 EOF
 } #ser_drop
 
+# read realm
+prompt_realm() 
+{
+	printf "Doamin (realm) for the default user 'admin': "
+	read SIP_DOMAIN
+	echo
+}
+
+# calculate credentials for admin
+credentials()
+{
+	HA1=`$GENHA1 admin $SIP_DOMAIN heslo`
+	if [ $? -ne 0 ] ; then
+		echo "HA1 calculation failed"
+		exit 1
+	fi
+	HA1B=`$GENHA1 "admin@$SIP_DOMAIN" $SIP_DOMAIN heslo`
+	if [ $? -ne 0 ] ; then
+		echo "HA1B calculation failed"
+		exit 1
+	fi
+
+}
+
 ser_create () # pars: <database name> [<no_init_user>]
 {
 if [ $# -eq 1 ] ; then
+	if [ -z "$SIP_DOMAIN" ] ; then
+		prompt_realm
+	fi
+	credentials
 	# by default we create initial user
 	INITIAL_USER="INSERT INTO subscriber 
 		($USERCOL, password, first_name, last_name, phone, 
@@ -146,8 +176,7 @@ if [ $# -eq 1 ] ; then
 		VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
 		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00', 
 		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '', 
-		'0239482f19d262f3953186a725a6f53b', 'iptel.org', 
-		'a84e8abaa7e83d1b45c75ab15b90c320', 
+		'$HA1', '$SIP_DOMAIN', '$HA1B',
 		'65e397cda0aa8e3202ea22cbd350e4e9', 'admin' );"
 elif [ $# -eq 2 ] ; then
 	# if 3rd param set, don't create any initial user
