@@ -143,7 +143,8 @@ extern struct s_table*  hash_table;
 		DBG_REF("ref", (_T_cell));	})
 #endif
 
-enum addifnew_status { AIN_ERROR, AIN_RETR, AIN_NEW, AIN_NEWACK, AIN_OLDACK } ;
+enum addifnew_status { AIN_ERROR, AIN_RETR, AIN_NEW, AIN_NEWACK,
+	AIN_OLDACK, AIN_RTRACK } ;
 
 
 int   tm_startup();

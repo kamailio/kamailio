@@ -359,6 +359,10 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 				DBG( "SER: WARNING: bad ACK forward\n");
 			ret = 1;
 			break;
+		case AIN_RTRACK:
+			DBG("SER: ACK retransmission detected: drop ACK!\n");
+			ret = 1;
+			break;
 		default:
 			LOG(L_CRIT, "ERROR: unexpected addifnew return value: %d\n", ret);
 			abort();
