@@ -25,9 +25,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- * history:
+ * History:
  * --------
- * 2003-01-29 tcp buffer size ++-ed to allow for 0-terminator
+ *  2003-01-29  tcp buffer size ++-ed to allow for 0-terminator
+ *  2003-06-30  added tcp_connection flags & state (andrei) 
  */
 
 
@@ -48,6 +49,10 @@
 #define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
 
 
+/* tcp connection flags */
+#define F_CONN_NON_BLOCKING 1
+
+
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
 						TCP_REQ_OVERRUN, TCP_REQ_BAD_LEN };
 enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
@@ -56,6 +61,10 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
 		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE 
 	};
+
+enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0, 
+						S_CONN_INIT, S_CONN_ACCEPT, S_CONN_CONNECT };
+
 
 /* fd communication commands */
 enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
@@ -90,7 +99,10 @@ struct tcp_connection{
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
 	struct tcp_req req; /* request data */
 	volatile int refcnt;
-	int bad; /* if set this is a "bad" connection */
+	int type; /* PROTO_TCP or a protocol over it, e.g. TLS */
+	int flags; /* connection related flags */
+	int state; /* connection state, not used by raw tcp */
+	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	int timeout; /* connection timeout, after this it will be removed*/
 	unsigned addr_hash; /* hash indexes in the 2 tables */
 	unsigned id_hash;

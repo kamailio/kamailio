@@ -566,13 +566,13 @@ void tcp_receive_loop(int unix_sock)
 					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
 									"no fd read\n");
 					resp=CONN_ERROR;
-					con->bad=1;
+					con->state=S_CONN_BAD;
 					release_tcpconn(con, resp, unix_sock);
 				}
 				if (con==0){
 					LOG(L_ERR, "ERROR: tcp_receive_loop: null pointer\n");
 					resp=CONN_ERROR;
-					con->bad=1;
+					con->state=S_CONN_BAD;
 					release_tcpconn(con, resp, unix_sock);
 				}
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
@@ -596,7 +596,7 @@ void tcp_receive_loop(int unix_sock)
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);
-						con->bad=1;
+						con->state=S_CONN_BAD;
 						release_tcpconn(con, resp, unix_sock);
 					}else{
 						/* update timeout */

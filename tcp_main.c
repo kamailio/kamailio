@@ -39,6 +39,8 @@
  *               a temp. socket and store in in *->bind_address: added
  *               find_tcp_si, modified tcpconn_connect (andrei)
  *  2003-04-14  set sockopts to TOS low delay (andrei)
+ *  2003-06-30  moved tcp new connect checking & handling to
+ *               handle_new_connect (andrei)
  */
 
 
@@ -114,26 +116,29 @@ int tcp_proto_no=-1; /* tcp protocol number as returned by getprotobyname */
 
 
 struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
-									struct socket_info* ba)
+									struct socket_info* ba, int type, 
+									int state)
 {
 	struct tcp_connection *c;
+#ifdef USE_TLS
+	int flags;
+#endif
 	
 	c=(struct tcp_connection*)shm_malloc(sizeof(struct tcp_connection));
 	if (c==0){
-		LOG(L_ERR, "ERROR: tcpconn_add: mem. allocation failure\n");
+		LOG(L_ERR, "ERROR: tcpconn_new: mem. allocation failure\n");
 		goto error;
 	}
 	c->s=sock;
 	c->fd=-1; /* not initialized */
 	if (lock_init(&c->write_lock)==0){
-		LOG(L_ERR, "ERROR: tcpconn_add: init lock failed\n");
+		LOG(L_ERR, "ERROR: tcpconn_new: init lock failed\n");
 		goto error;
 	}
 	
 	c->rcv.src_su=*su;
 	
 	c->refcnt=0;
-	c->bad=0;
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
 	c->rcv.proto=PROTO_TCP;
@@ -143,13 +148,42 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		c->rcv.dst_port=ba->port_no;
 	}
 	init_tcp_req(&c->req);
-	c->timeout=get_ticks()+TCP_CON_TIMEOUT;
 	c->id=connection_id++;
 	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
 	c->rcv.proto_reserved2=0;
+	c->state=state;
+	c->extra_data=0;
+#ifdef USE_TLS
+	if (type==PROTO_TLS){
+		c->type=PROTO_TLS;
+		c->rcv.proto=PROTO_TLS;
+		c->flags=F_CONN_NON_BLOCKING;
+		flags=fcntl(sock, F_GETFL);
+		if (flags==-1){
+			LOG(L_ERR, "ERROR: tcpconn_new: fcntl failed :%s\n",
+					strerror(errno));
+			goto error;
+		}
+		if (fcntl(sock, F_SETFL, flags|O_NONBLOCK)==-1){
+			LOG(L_ERR, "ERROR: tcpconn_new: fcntl: set non blocking failed :"
+					" %s\n", strerror(errno));
+			goto error;
+		}
+		c->timeout=get_ticks()+TLS_CON_TIMEOUT;
+	}else
+#endif /* USE_TLS*/
+	{
+		c->type=PROTO_TCP;
+		c->rcv.proto=PROTO_TCP;
+		c->flags=0;
+		c->timeout=get_ticks()+TCP_CON_TIMEOUT;
+	}
+			
+		
 	return c;
 	
 error:
+	if (c) shm_free(c);
 	return 0;
 }
 
@@ -171,7 +205,7 @@ struct socket_info* find_tcp_si(union sockaddr_union* s)
 }
 
 
-struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
+struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 {
 	int s;
 	struct socket_info* si;
@@ -224,7 +258,8 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 		else si=sendipv6_tcp;
 #endif
 	}
-	return tcpconn_new(s, server, si); /*FIXME: set sock idx! */
+	return tcpconn_new(s, server, si, type, S_CONN_CONNECT);
+	/*FIXME: set sock idx! */
 error:
 	return 0;
 }
@@ -260,6 +295,9 @@ void _tcpconn_rm(struct tcp_connection* c)
 	tcpconn_listrm(tcpconn_addr_hash[c->addr_hash], c, next, prev);
 	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
 	lock_destroy(&c->write_lock);
+#ifdef USE_TLS
+	if ((c->type==PROTO_TLS)&&(c->extra_data)) tls_tcpconn_clean(c);
+#endif
 	shm_free(c);
 }
 
@@ -272,6 +310,9 @@ void tcpconn_rm(struct tcp_connection* c)
 	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
 	TCPCONN_UNLOCK;
 	lock_destroy(&c->write_lock);
+#ifdef USE_TLS
+	if ((c->type==PROTO_TLS)&&(c->extra_data)) tls_tcpconn_clean(c);
+#endif
 	shm_free(c);
 }
 
@@ -296,7 +337,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 			print_ip(&c->rcv.src_ip);
 			DBG(" port=%d\n", c->rcv.src_port);
 #endif
-			if ((id==c->id)&&(!c->bad)) return c;
+			if ((id==c->id)&&(c->state!=S_CONN_BAD)) return c;
 		}
 	}else if (ip){
 		hash=tcp_addr_hash(ip, port);
@@ -306,7 +347,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 			print_ip(&c->rcv.src_ip);
 			DBG(" port=%d\n", c->rcv.src_port);
 #endif
-			if ( (!c->bad) && (port==c->rcv.src_port) &&
+			if ( (c->state!=S_CONN_BAD) && (port==c->rcv.src_port) &&
 					(ip_addr_cmp(ip, &c->rcv.src_ip)) )
 				return c;
 		}
@@ -379,7 +420,7 @@ no_id:
 		if (c==0){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
-			if ((c=tcpconn_connect(to))==0){
+			if ((c=tcpconn_connect(to, PROTO_TCP))==0){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}
@@ -446,7 +487,7 @@ send_it:
 		LOG(L_ERR, "ERROR: tcpsend: failed to send, n=%d: %s (%d)\n",
 				n, strerror(errno), errno);
 		/* error on the connection , mark it as bad and set 0 timeout */
-		c->bad=1;
+		c->state=S_CONN_BAD;
 		c->timeout=0;
 		/* tell "main" it should drop this (optional it will t/o anyway?)*/
 		response[0]=(long)c;
@@ -627,6 +668,48 @@ static int send2child(struct tcp_connection* tcpconn)
 }
 
 
+/* handle a new connection, called internally by tcp_main_loop */
+static inline void handle_new_connect(struct socket_info* si,
+										fd_set* sel_set, int* n)
+{
+	union sockaddr_union su;
+	struct tcp_connection* tcpconn;
+	socklen_t su_len;
+	int new_sock;
+	
+	if ((FD_ISSET(si->socket, sel_set))){
+		/* got a connection on r */
+		su_len=sizeof(su);
+		new_sock=accept(si->socket, &(su.s), &su_len);
+		*n--;
+		if (new_sock<0){
+			LOG(L_ERR,  "WARNING: tcp_main_loop: error while accepting"
+					" connection(%d): %s\n", errno, strerror(errno));
+			return;
+		}
+		
+		/* add socket to list */
+		tcpconn=tcpconn_new(new_sock, &su, si, si->proto, S_CONN_ACCEPT);
+		if (tcpconn){
+			tcpconn_add(tcpconn);
+			DBG("tcp_main_loop: new connection: %p %d\n",
+				tcpconn, tcpconn->s);
+			/* pass it to a child */
+			if(send2child(tcpconn)<0){
+				LOG(L_ERR,"ERROR: tcp_main_loop: no children "
+						"available\n");
+				TCPCONN_LOCK;
+				if (tcpconn->refcnt==0){
+					close(tcpconn->s);
+					_tcpconn_rm(tcpconn);
+				}else tcpconn->timeout=0; /* force expire */
+				TCPCONN_UNLOCK;
+			}
+		}
+	}
+}
+
+
 void tcp_main_loop()
 {
 	int r;
@@ -634,14 +717,11 @@ void tcp_main_loop()
 	fd_set master_set;
 	fd_set sel_set;
 	int maxfd;
-	int new_sock;
-	union sockaddr_union su;
 	struct tcp_connection* tcpconn;
 	unsigned h;
 	long response[2];
 	int cmd;
 	int bytes;
-	socklen_t su_len;
 	struct timeval timeout;
 
 	/*init */
@@ -653,6 +733,13 @@ void tcp_main_loop()
 			FD_SET(tcp_info[r].socket, &master_set);
 			if (tcp_info[r].socket>maxfd) maxfd=tcp_info[r].socket;
 		}
+#ifdef USE_TLS
+		if ((!tls_disable)&&(tls_info[r].proto==PROTO_TLS) &&
+				(tls_info[r].socket!=-1)){
+			FD_SET(tls_info[r].socket, &master_set);
+			if (tls_info[r].socket>maxfd) maxfd=tls_info[r].socket;
+		}
+#endif
 	}
 	/* set all the unix sockets used for child comm */
 	for (r=1; r<process_no; r++){
@@ -679,36 +766,11 @@ void tcp_main_loop()
 		}
 		
 		for (r=0; r<sock_no && n; r++){
-			if ((FD_ISSET(tcp_info[r].socket, &sel_set))){
-				/* got a connection on r */
-				su_len=sizeof(su);
-				new_sock=accept(tcp_info[r].socket, &(su.s), &su_len);
-				n--;
-				if (new_sock<0){
-					LOG(L_ERR,  "WARNING: tcp_main_loop: error while accepting"
-							" connection(%d): %s\n", errno, strerror(errno));
-					continue;
-				}
-				
-				/* add socket to list */
-				tcpconn=tcpconn_new(new_sock, &su, &tcp_info[r]);
-				if (tcpconn){
-					tcpconn_add(tcpconn);
-					DBG("tcp_main_loop: new connection: %p %d\n",
-						tcpconn, tcpconn->s);
-					/* pass it to a child */
-					if(send2child(tcpconn)<0){
-						LOG(L_ERR,"ERROR: tcp_main_loop: no children "
-								"available\n");
-						TCPCONN_LOCK;
-						if (tcpconn->refcnt==0){
-							close(tcpconn->s);
-							_tcpconn_rm(tcpconn);
-						}else tcpconn->timeout=0; /* force expire */
-						TCPCONN_UNLOCK;
-					}
-				}
-			}
+			handle_new_connect(&tcp_info[r], &sel_set, &n);
+#ifdef USE_TLS
+			if (!tls_disable)
+				handle_new_connect(&tls_info[r], &sel_set, &n);
+#endif
 		}
 		
 		/* check all the read fds (from the tcpconn_addr_hash ) */
@@ -771,7 +833,8 @@ read_again:
 						}
 						tcpconn=(struct tcp_connection*)response[0];
 						if (tcpconn){
-								if (tcpconn->bad) goto tcpconn_destroy;
+								if (tcpconn->state==S_CONN_BAD) 
+									goto tcpconn_destroy;
 								FD_SET(tcpconn->s, &master_set);
 								if (maxfd<tcpconn->s) maxfd=tcpconn->s;
 								/* update the timeout*/
@@ -803,7 +866,7 @@ read_again:
 							}else{
 								/* force timeout */
 								tcpconn->timeout=0;
-								tcpconn->bad=1;
+								tcpconn->state=S_CONN_BAD;
 								DBG("tcp_main_loop: delaying ...\n");
 								
 							}
