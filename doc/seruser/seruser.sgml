@@ -1066,8 +1066,16 @@ HOWTO
 - serving multiple domains
 - ACLs
 - and other operational guidelines
+- outbound hints
 
 PROGRAMMING TM
+
+ACCOMPANYING utils:
+- ngrep
+- harvest
+- nscd
+- sipsak
+- serweb
 
 follow the mysql pattern, tehy have a very nice documentation
 -->
