@@ -854,20 +854,17 @@ case $1 in
 
 
 	showdb|userdb)
-		if [ $# -eq 2 ] ; then
-			is_user $2
-			if [ $? -ne 0 ] ; then
-				echo non-existent user
-				exit 1;
-			fi
-		elif [ $# -ne 1  ] ; then
+		if [ $# -ne 2 ] ; then
 			usage
 			exit 1
 		fi
-
 		shift
-
 		set_user $1
+		is_user
+		if [ $? -ne 0 ] ; then
+			echo non-existent user
+			exit 1;
+		fi
 
 		QUERY1="select $SUB_TABLE.$EMAIL_COLUMN from $SUB_TABLE where  \
 			$TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $TABLE.$REALM_COLUMN='$SERDOMAIN' "
