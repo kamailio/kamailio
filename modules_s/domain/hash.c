@@ -88,14 +88,13 @@ int hash_table_lookup (str *domain)
 {
 	struct domain_list *np;
 
-	LOG(L_ERR, "looking hash entry %d for domain \'%.*s\'\n", hash(domain), domain->len, domain->s);
-
 	for (np = (*hash_table)[hash(domain)]; np != NULL; np = np->next) {
 		if ((np->domain.len == domain->len) && 
 		    (strncasecmp(np->domain.s, domain->s, domain->len) == 0)) {
 			return 1;
 		}
 	}
+
 	return -1;
 }
 
