@@ -59,7 +59,7 @@ int reload_domain_table ( void )
 	VAL_TYPE(vals) = DB_STR;
 	VAL_NULL(vals) = 0;
     
-	if (db_query(db_handle, NULL, NULL, cols, 0, 1, 0, &res) < 0) {
+	if (db_query(db_handle, NULL, 0, NULL, cols, 0, 1, 0, &res) < 0) {
 		LOG(L_ERR, "reload_domain_table(): Error while querying database\n");
 		return -1;
 	}

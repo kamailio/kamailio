@@ -73,7 +73,7 @@ int is_domain_local(str* _host)
 		VAL_STR(vals).s = _host->s;
 		VAL_STR(vals).len = _host->len;
 
-		if (db_query(db_handle, keys, vals, cols, 1, 1, 0, &res) < 0) {
+		if (db_query(db_handle, keys, 0, vals, cols, 1, 1, 0, &res) < 0) {
 			LOG(L_ERR, "is_local(): Error while querying database\n");
 			return -1;
 		}
