@@ -556,7 +556,9 @@ EOF
 
 
 export PW
-prompt_pw
+if [ "$#" -ne 0 ]; then 
+  prompt_pw
+fi
 
 case $1 in
 	reinstall)
