@@ -87,11 +87,13 @@
 #include "mem/mem.h"
 #include "sr_module.h"
 #include "pt.h"
+#include "db/db_fifo.h"
 
 /* FIFO server vars */
 char *fifo=0; /* FIFO name */
 char* fifo_dir=DEFAULT_FIFO_DIR; /* dir where reply fifos are allowed */
 int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP ;
+char *fifo_db_url = 0;
 pid_t fifo_pid;
 /* file descriptors */
 static int fifo_read=0;
@@ -463,6 +465,9 @@ static void fifo_server(FILE *fifo_stream)
 
 	file_sep=command=file=0;
 
+	/* register a diagnostic FIFO command */
+	register_core_fifo();
+
 	while(1) {
 
 		/* commands must look this way ':<command>:[filename]' */
@@ -524,6 +529,7 @@ static void fifo_server(FILE *fifo_stream)
 consume:
 		if (file) { pkg_free(file); file=0;}
 		consume_request(fifo_stream);
+		DBG("**** done consume\n");
 	}
 }
 
@@ -551,9 +557,9 @@ int open_fifo_server()
 			LOG(L_ERR, "ERROR: open_fifo_server: cannot delete old fifo (%s):"
 					" %s\n", fifo, strerror(errno));
 			return -1;
+			}
 		}
-	}
-	 /* create FIFO ... */
+		/* create FIFO ... */
 		LOG(L_DBG, "DEBUG: open_fifo_server: FIFO stat failed: %s\n",
 			strerror(errno));
 		if ((mkfifo(fifo, fifo_mode)<0)) {
@@ -813,36 +819,50 @@ static int ps_fifo_cmd(FILE *stream, char *response_file )
 int register_core_fifo()
 {
 	if (register_fifo_cmd(print_fifo_cmd, FIFO_PRINT, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PRINT);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_PRINT);
 		return -1;
 	}
 	if (register_fifo_cmd(uptime_fifo_cmd, FIFO_UPTIME, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_UPTIME);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_UPTIME);
 		return -1;
 	}
 	if (register_fifo_cmd(print_version_cmd, FIFO_VERSION, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_VERSION);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n",FIFO_VERSION);
 		return -1;
 	}
 	if (register_fifo_cmd(pwd_cmd, FIFO_PWD, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PWD);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_PWD);
 		return -1;
 	}
 	if (register_fifo_cmd(arg_cmd, FIFO_ARG, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_ARG);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_ARG);
 		return -1;
 	}
 	if (register_fifo_cmd(which_fifo_cmd, FIFO_WHICH, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_WHICH);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_WHICH);
 		return -1;
 	}
 	if (register_fifo_cmd(ps_fifo_cmd, FIFO_PS, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PS);
+		LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_PS);
 		return -1;
 	}
 	if (register_fifo_cmd(kill_fifo_cmd, FIFO_KILL, 0)<0) {
-		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_KILL);
+		LOG(L_CRIT, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_KILL);
 		return -1;
+	}
+	if (fifo_db_url==0) {
+		LOG(L_WARN,"WARNING: no fifo_db_url given - "
+			"fifo DB commands disabled!\n");
+	} else if ( bind_dbmod(fifo_db_url)==0 ) {
+		if (register_fifo_cmd(db_fifo_cmd, FIFO_DB, 0)<0) {
+			LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_DB);
+			return -1;
+		} else {
+			/* call db_init() */
+		}
+	} else {
+		LOG(L_WARN,"WARNING: unable to find any db module - "
+			"fifo DB commands disabled!\n");
 	}
 	return 1;
 }
