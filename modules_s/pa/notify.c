@@ -432,8 +432,8 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		default: st = XPIDF_ST_CLOSED; break;
 		}
 
-		if (pidf_add_address(&body, BUF_LEN - body.len, &tuple->contact, st) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): pidf_add_address failed\n");
+		if (pidf_add_contact(&body, BUF_LEN - body.len, &tuple->contact, st, tuple->priority) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): pidf_add_contact failed\n");
 			return -3;
 		}
 
@@ -590,7 +590,7 @@ int send_location_notify(struct presentity* _p, struct watcher* _w)
 
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
-	int rc;
+	int rc = 0;
 	body.len = 0;
 
 	if (_w->uri.s == NULL) {
@@ -602,27 +602,27 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->accept=%d\n", 
-	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->accept);
+	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->accept=%d _w->status=%d\n", 
+	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->accept, _w->status);
 	if ((_p->flags & (PFLAG_PRESENCE_CHANGED|PFLAG_WATCHERINFO_CHANGED)) 
-	    && (_w->event_package == EVENT_PRESENCE)) {
+	    && (_w->event_package == EVENT_PRESENCE)
+	    && (_w->status = WS_ACTIVE)) {
 		switch(_w->accept) {
 		case DOC_XPIDF:
-			return send_xpidf_notify(_p, _w);
-			return 0;
+			rc = send_xpidf_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_xpidf_notify returned %d\n", rc);
+			break;
 
 		case DOC_LPIDF:
-			return send_lpidf_notify(_p, _w);
-			return 0;
+			rc = send_lpidf_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_lpidf_notify returned %d\n", rc);
+			break;
 
 		case DOC_PIDF:
 		default:
-			return send_pidf_notify(_p, _w);
-			return 0;
-			/* inapplicable */
-		  ;
+			rc = send_pidf_notify(_p, _w);
+			if (rc) LOG(L_ERR, "send_pidf_notify returned %d\n", rc);
 		}
-
 	}
 	if ((_p->flags & PFLAG_WATCHERINFO_CHANGED) 
 	    && (_w->event_package == EVENT_PRESENCE_WINFO)) {
@@ -643,8 +643,6 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		default:
 			rc = send_xcap_change_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_xcap_change_notify returned %d\n", rc);
-			return rc;
-			/* inapplicable */
 		}
 	}
 	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
@@ -655,11 +653,10 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			if (rc) LOG(L_ERR, "send_location_notify returned %d\n", rc);
 			return rc;
 		default:
-			/* inapplicable */
+		  rc = -1;
 		  ;
 		}
 	}
 
-
-	return -1;
+	return rc;
 }
