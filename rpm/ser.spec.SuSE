@@ -2,7 +2,7 @@
 %define ver     0.8.12
 %define rel     0
 
-%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler 
 %define MYSQL_MODULES		mysql
 %define JABBER_MODULES		jabber
 %define RADIUS_MODULES		auth_radius group_radius uri_radius
@@ -151,6 +151,7 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.msilo
 %doc %{_docdir}/ser/README.nathelper
 %doc %{_docdir}/ser/README.pa
+%doc %{_docdir}/ser/README.pdt
 %doc %{_docdir}/ser/README.permissions
 %doc %{_docdir}/ser/README.pike
 %doc %{_docdir}/ser/README.print
@@ -184,6 +185,7 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/msilo.so
 %{_libdir}/ser/modules/nathelper.so
 %{_libdir}/ser/modules/pa.so
+%{_libdir}/ser/modules/pdt.so
 %{_libdir}/ser/modules/permissions.so
 %{_libdir}/ser/modules/pike.so
 %{_libdir}/ser/modules/print.so
@@ -231,7 +233,7 @@ sbin/insserv etc/init.d/
 
 * Fri Nov 14 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - changed vesion to 0.8.12 (new upstream release)
-- added auth_diameter to the modules list
+- added auth_diameter & pdt to the modules list
 
 * Wed Aug 28 2003 Nils Ohlmeier <nils@iptel.org>
 - replaced modules Conflicts with required Ser version

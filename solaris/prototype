@@ -26,6 +26,7 @@ f none lib/ser/modules/msilo.so 0755 bin bin
 f none lib/ser/modules/mysql.so 0755 bin bin
 f none lib/ser/modules/nathelper.so 0755 bin bin
 f none lib/ser/modules/pa.so 0755 bin bin
+f none lib/ser/modules/pdt.so 0755 bin bin
 f none lib/ser/modules/permissions.so 0755 bin bin
 f none lib/ser/modules/pike.so 0755 bin bin
 f none lib/ser/modules/print.so 0755 bin bin
@@ -59,6 +60,7 @@ f none doc/ser/README.maxfwd 0644 bin bin
 f none doc/ser/README.msilo 0644 bin bin
 f none doc/ser/README.nathelper 0644 bin bin
 f none doc/ser/README.pa 0644 bin bin
+f none doc/ser/README.pdt 0644 bin bin
 f none doc/ser/README.permissions 0644 bin bin
 f none doc/ser/README.pike 0644 bin bin
 f none doc/ser/README.print 0644 bin bin
