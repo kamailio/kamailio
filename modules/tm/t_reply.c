@@ -21,6 +21,7 @@
 int t_on_reply_received( struct sip_msg  *p_msg )
 {
 	unsigned int  branch,len, msg_status, msg_class, save_clone;
+	unsigned int local_cancel;
 	struct sip_msg *clone, *backup;
 	int relay;
 	int start_fr;
@@ -29,11 +30,23 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 
 	/* make sure we know the assosociated tranaction ... */
-	if (t_check( p_msg  , &branch )==-1) return 1;
+	if (t_check( p_msg  , &branch , &local_cancel)==-1) return 1;
 	/* ... if there is no such, tell the core router to forward statelessly */
 	if ( T<=0 ) return 1;
 
-	DBG("DEBUG: t_on_reply_received: Original status =%d\n",T->status);
+	DBG("DEBUG: t_on_reply_received: Original status=%d (%d,%d)\n",
+		T->status,branch,local_cancel);
+
+	/* special cases (local cancel reply and another 100 reply!)*/
+	if (p_msg->REPLY_STATUS==100 && T->status==100)
+		return 0;
+	if (local_cancel==1)
+	{
+		reset_timer( hash_table, &(T_>outbound_cancel[branch]->retr_timer));
+		if ( p_msg->REPLY_STATUS>=200 )
+			reset_timer( hash_table, &(T_>outbound_cancel[branch]->fr_timer));
+		return 0;
+	}
 
 	/* it can take quite long -- better do it now than later 
 	   inside a reply_lock */
@@ -86,16 +99,19 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 		if ( T->outbound_ack[branch] )
 		{   /*retransmit*/
 			SEND_BUFFER( T->outbound_ack[branch] );
-		} else if (msg_class>2 ) {   /*on a non-200 reply to INVITE*/
-           		DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-           		if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
-           		{
-               		LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
-					/* restart FR */
-					start_fr=1;
-           		}
-       		}
-   	}
+		}else if (msg_class>2 ) {   
+			/*on a non-200 reply to INVITE*/
+			DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE:"
+				" send ACK\n");
+			if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
+			{
+				LOG( L_ERR , "ERROR: t_on_reply_received:"
+					" unable to send ACK\n" );
+				/* restart FR */
+				start_fr=1;
+			}
+		}
+	}
 cleanup:
 	UNLOCK_REPLIES( T );
 	if (backup) sip_msg_free(backup);
@@ -119,12 +135,10 @@ error:
 
 
 /* Retransmits the last sent inbound reply.
-
-  * input: p_msg==request for which I want to retransmit an associated
-    reply
-  * Returns  -1 -error
-  *                1 - OK
-  */
+ * input: p_msg==request for which I want to retransmit an associated reply
+ * Returns  -1 - error
+ *           1 - OK
+ */
 int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 {
 
@@ -152,6 +166,10 @@ int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 	return 1;
 }
 
+
+
+
+
 /* Force a new response into inbound response buffer.
   * returns 1 if everything was OK or -1 for erro
   */
@@ -160,8 +178,6 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 	unsigned int len, buf_len;
 	char * buf, *shbuf;
 	struct retrans_buff *rb;
-
-	DBG("DEBUG: t_send_reply: entered\n");
 
 	buf = build_res_buf_from_sip_req(code,text,0,0,T->inbound_request,&len);
 	DBG("DEBUG: t_send_reply: buffer computed\n");
@@ -191,9 +207,8 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 		rb->fr_timer.payload = rb;
 		rb->to.sin_family = AF_INET;
 		rb->my_T = T;
-		rb->reply = code;
+		rb->status = code;
 	}
-
 
 	/* if this is a first reply (?100), longer replies will probably follow;
 	   try avoiding shm_resize by higher buffer size */
@@ -272,7 +287,7 @@ static int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch
 		rb->fr_timer.payload =  rb;
 		rb->to.sin_family = AF_INET;
 		rb->my_T = trans;
-		rb->reply = trans->inbound_response[branch]->REPLY_STATUS;
+		rb->status = trans->inbound_response[branch]->REPLY_STATUS;
 
 	} else {
 #ifndef SRL
@@ -360,7 +375,7 @@ static int push_reply( struct cell* trans , unsigned int branch ,
 		rb->fr_timer.payload =  rb;
 		rb->to.sin_family = AF_INET;
 		rb->my_T = trans;
-		rb->reply = trans->inbound_response[branch]->REPLY_STATUS;
+		rb->status = trans->inbound_response[branch]->REPLY_STATUS;
 	};
 
 	/* if this is a first reply (?100), longer replies will probably follow;
@@ -401,7 +416,8 @@ error:
   */
 int t_on_reply( struct sip_msg  *p_msg )
 {
-	unsigned int  branch,len, msg_status, msg_class, save_clone;
+	unsigned int branch,len, msg_status, msg_class, save_clone;
+	unsigned int local_cancel;
 	struct sip_msg *clone, *backup;
 	int relay;
 	int start_fr;
@@ -412,11 +428,23 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 
 	/* make sure we know the assosociated tranaction ... */
-	if (t_check( p_msg  , &branch )==-1) return 1;
+	if (t_check( p_msg  , &branch , &local_cancel)==-1) return 1;
 	/* ... if there is no such, tell the core router to forward statelessly */
 	if ( T<=0 ) return 1;
 
-	DBG("DEBUG: t_on_reply_received: Original status =%d\n",T->status);
+	DBG("DEBUG: t_on_reply_received: Original status=%d (%d,%d)\n",
+		T->status,branch,local_cancel);
+
+	/* special cases (local cancel reply and another 100 reply!)*/
+	if (p_msg->REPLY_STATUS==100 && T->status==100)
+		return 0;
+	if (local_cancel==1)
+	{
+		reset_timer( hash_table, &(T->outbound_cancel[branch]->retr_timer));
+		if ( p_msg->REPLY_STATUS>=200 )
+			reset_timer( hash_table, &(T->outbound_cancel[branch]->fr_timer));
+		return 0;
+	}
 
 	/* it can take quite long -- better do it now than later 
 	   inside a reply_lock */
@@ -427,12 +455,11 @@ int t_on_reply( struct sip_msg  *p_msg )
 	msg_class=REPLY_CLASS(p_msg);
 	is_invite= T->inbound_request->REQ_METHOD==METHOD_INVITE;
 
-    /*  generate the retrans buffer, make a simplified
-	    assumption everything but 100 will be fwd-ed;
-		sometimes it will result in useless CPU cycles
-		but mostly the assumption holds and allows the
-		work to be done out of criticial lock region
-	 */
+	/*  generate the retrans buffer, make a simplified
+	assumption everything but 100 will be fwd-ed;
+	sometimes it will result in useless CPU cycles
+	but mostly the assumption holds and allows the
+	work to be done out of criticial lock region */
 	if (msg_status==100) buf=0;
 	else {
 		buf = build_res_buf_from_sip_res ( p_msg, &buf_len);
@@ -486,16 +513,19 @@ int t_on_reply( struct sip_msg  *p_msg )
 		if ( T->outbound_ack[branch] )
 		{   /*retransmit*/
 			SEND_BUFFER( T->outbound_ack[branch] );
-		} else if (msg_class>2 ) {   /*on a non-200 reply to INVITE*/
-           		DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-           		if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
-           		{
-               		LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
-					/* restart FR */
-					start_fr=1;
-           		}
-       		}
-   	}
+		} else if (msg_class>2 ) {   
+			/*on a non-200 reply to INVITE*/
+			DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE:"
+				" send ACK\n");
+			if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
+			{
+				LOG( L_ERR , "ERROR: t_on_reply_received:"
+					" unable to send ACK\n" );
+				/* restart FR */
+				start_fr=1;
+			}
+		}
+	}
 cleanup:
 	UNLOCK_REPLIES( T );
 	if (backup) sip_msg_free(backup);

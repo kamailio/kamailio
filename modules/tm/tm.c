@@ -267,13 +267,13 @@ static int fixup_t_send_reply(void** param, int param_no)
 
 static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
-	return t_check( msg , 0 ) ? 1 : -1;
+	return t_check( msg , 0 , 0 ) ? 1 : -1;
 }
 
 #ifdef _OBSOLETED_TM
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2)
 {
-	if (t_check( msg , 0 )==-1) return -1;
+	if (t_check( msg , 0 , 0 )==-1) return -1;
 	if (!T) {
 		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
 		return -1;
@@ -282,7 +282,7 @@ static int w_t_forward(struct sip_msg* msg, char* str, char* str2)
 }
 static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2)
 {
-	if (t_check( msg , 0 )==-1) return -1;
+	if (t_check( msg , 0 , 0 )==-1) return -1;
 	if (!T) {
 		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
 		return -1;
@@ -291,7 +291,7 @@ static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2)
 }
 
 int w_t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  ) {
-	if (t_check( p_msg , 0 )==-1) return -1;
+	if (t_check( p_msg , 0 , 0)==-1) return -1;
 	if (!T) {
 		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
 		return -1;
@@ -313,7 +313,7 @@ static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str
 
 static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2)
 {
-	if (t_check( msg , 0 )==-1) return -1;
+	if (t_check( msg , 0 , 0 )==-1) return -1;
 	if (!T) {
 		DBG("DEBUG: t_forward_ack: no transaction found for request forwarding\n");
 		return -1;
@@ -322,7 +322,7 @@ static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2)
 }
 static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2)
 {
-	if (t_check( msg , 0 )==-1) return -1;
+	if (t_check( msg , 0 , 0)==-1) return -1;
 	if (!T) {
 		DBG("DEBUG: t_forward_nonack: no transaction found for request forwarding\n");
 		return -1;
@@ -334,7 +334,7 @@ static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2)
 
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
 {
-	if (t_check( msg , 0 )==-1) return -1;
+	if (t_check( msg , 0 , 0)==-1) return -1;
 	if (!T) {
 		LOG(L_ERR, "ERROR: t_send_reply: cannot send a t_reply to a message "
 			"for which no T-state has been established\n");
@@ -345,7 +345,7 @@ static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
 
 static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 {
-	if (t_check( msg  , 0 )==-1) return 1;
+	if (t_check( msg  , 0 , 0 )==-1) return 1;
 	if ( T && T!=T_UNDEFINED ) 
 		return t_put_on_wait( T );
 	return 1;
@@ -361,13 +361,13 @@ static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar )
 
 static w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
 {
-	if (t_check( p_msg  , 0 )==-1) return 1;
-	if (T) return t_retransmit_reply( /* p_msg */ );
+	if (t_check( p_msg  , 0 , 0 )==-1) return 1;
+	if (T) return t_retransmit_reply( p_msg );
 	else return -1;
 }
 
 static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
-	if (t_check( p_msg , 0 )==-1) return -1;
+	if (t_check( p_msg , 0 , 0 )==-1) return -1;
 	if (T) {
 		LOG(L_ERR,"ERROR: t_add_transaction: won't add a retransmission\n");
 		return -1;

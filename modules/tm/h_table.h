@@ -32,7 +32,10 @@ struct timer;
 
 
 #define NO_CANCEL       ( (struct retrans_buff*) 0 )
-#define EXTERNAL_CANCEL ( (struct retarbs_buff*) -1)
+#define EXTERNAL_CANCEL ( (struct retrans_buff*) -1)
+
+#define STATUS_LOCAL_CANCEL -1
+#define STATUS_REQUEST       0
 
 
 typedef struct retrans_buff
@@ -49,10 +52,13 @@ typedef struct retrans_buff
 
 	/*the cell that containes this retrans_buff*/
 	struct cell* my_T;
+	unsigned int branch;
 
 	enum lists retr_list;
-	/* set to status code if the buffer is a reply, 0 if request */
-	int reply;
+
+	/* set to status code if the buffer is a reply, 
+	0 if request or -1 if local CANCEL */
+	int status;
 
 }retrans_buff_type;
 

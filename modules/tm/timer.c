@@ -174,7 +174,7 @@ void timer_routine(unsigned int ticks , void * attr)
 			/* reset the timer list linkage */
 			tmp_tl = tl->next_tl;
 			tl->next_tl = tl->prev_tl =0 ; 
-			DBG("DEBUG: timer routine: timer[%d] , tl=%p next=%p\n",id,tl,tmp_tl);
+			DBG("DEBUG: timer routine:timer[%d],tl=%p next=%p\n",id,tl,tmp_tl);
 			timers[id].timeout_handler( tl->payload );
 			tl = tmp_tl;
 		}

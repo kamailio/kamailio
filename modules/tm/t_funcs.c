@@ -134,35 +134,32 @@ int tm_startup()
 
 void tm_shutdown()
 {
-    struct timer_link  *tl, *end, *tmp;
-    int i;
+	struct timer_link  *tl, *end, *tmp;
+	int i;
 
-    DBG("DEBUG: tm_shutdown : start\n");
-    /*remember the DELETE LIST */
-    tl = hash_table->timers[DELETE_LIST].first_tl.next_tl;
+	DBG("DEBUG: tm_shutdown : start\n");
+	/* remember the DELETE LIST */
+	tl = hash_table->timers[DELETE_LIST].first_tl.next_tl;
 	end = & hash_table->timers[DELETE_LIST].last_tl;
-    /*unlink the lists*/
-    for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
-    {
-       //lock( hash_table->timers[i].mutex );
+	/* unlink the timer lists */
+	for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
 		reset_timer_list( hash_table, i );
-       //unlock( hash_table->timers[i].mutex );
-    }
 
-    DBG("DEBUG: tm_shutdown : empting DELETE list\n");
-    /* deletes all cells from DELETE_LIST list (they are no more accessible from enrys) */
+	DBG("DEBUG: tm_shutdown : empting DELETE list\n");
+	/* deletes all cells from DELETE_LIST list
+	(they are no more accessible from enrys) */
 	while (tl!=end) {
 		tmp=tl->next_tl;
 		free_cell((struct cell*)tl->payload);
 		 tl=tmp;
 	}
 
-    /* destroy the hash table */
-    DBG("DEBUG: tm_shutdown : empting hash table\n");
-    free_hash_table( hash_table );
-    DBG("DEBUG: tm_shutdown : removing semaphores\n");
+	/* destroy the hash table */
+	DBG("DEBUG: tm_shutdown : empting hash table\n");
+	free_hash_table( hash_table );
+	DBG("DEBUG: tm_shutdown : removing semaphores\n");
 	lock_cleanup();
-    DBG("DEBUG: tm_shutdown : done\n");
+	DBG("DEBUG: tm_shutdown : done\n");
 }
 
 
@@ -174,42 +171,34 @@ void tm_shutdown()
  */
 int t_add_transaction( struct sip_msg* p_msg )
 {
-   struct cell*    new_cell;
+	struct cell*    new_cell;
 
-   DBG("DEBUG: t_add_transaction: adding......\n");
+	DBG("DEBUG: t_add_transaction: adding......\n");
 
-   /* sanity check: ACKs can never establish a transaction */
-   if ( p_msg->REQ_METHOD==METHOD_ACK )
-   {
-       LOG(L_ERR, "ERROR: add_transaction: ACK can't be used to add transaction\n");
-      return -1;
-   }
-
-   /* it's about the same transaction or not?*/
-	/* if (t_check( p_msg , 0 )==-1) return -1; */
-
-   /* if the lookup's result is not 0 means that it's a retransmission */
-   /* if ( T )
-   {
-      LOG(L_ERR,"ERROR: t_add_transaction: won't add a retransmission\n");
-      return -1;
-   } */
-
-   /* creates a new transaction */
-   new_cell = build_cell( p_msg ) ;
-   DBG("DEBUG: t_add_transaction: new transaction created %p\n", new_cell);
-   if  ( !new_cell ){
-	   LOG(L_ERR, "ERROR: add_transaction: out of mem:\n");
-	   sh_status();
-      return -1;
+	/* sanity check: ACKs can never establish a transaction */
+	if ( p_msg->REQ_METHOD==METHOD_ACK )
+	{
+		LOG(L_ERR, "ERROR: add_transaction: ACK can't be used to add"
+			" transaction\n");
+		return -1;
 	}
-   /*insert the transaction into hash table*/
-   insert_into_hash_table( hash_table , new_cell );
-   DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
 
-   T = new_cell;
+	/* creates a new transaction */
+	new_cell = build_cell( p_msg ) ;
+	DBG("DEBUG: t_add_transaction: new transaction created %p\n", new_cell);
+	if  ( !new_cell ){
+		LOG(L_ERR, "ERROR: add_transaction: out of mem:\n");
+		sh_status();
+		return -1;
+	}
+	/*insert the transaction into hash table*/
+	insert_into_hash_table( hash_table , new_cell );
+	DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n",
+		new_cell->hash_index );
+
+	T = new_cell;
 	T_REF(T);
-   return 1;
+	return 1;
 }
 
 
@@ -223,27 +212,15 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 {
 	unsigned int  dest_ip     = dest_ip_param;
 	unsigned int  dest_port  = dest_port_param;
-	int                  branch;
+	int           branch;
 	unsigned int  len;
-	char               *buf, *shbuf;
+	char         *buf, *shbuf;
 	struct retrans_buff  *rb;
-	struct cell      *T_source = T;
+	struct cell  *T_source = T;
 
 	buf=NULL;
 	shbuf = NULL;
 	branch = 0;	/* we don't do any forking right now */
-
-	/* it's about the same transaction or not? */
-	/* if (t_check( p_msg , 0 )==-1) return -1; */
-
-	/*if T hasn't been found after all -> return not found (error) */
-	/*
-	if ( !T )
-	{
-		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
-		return -1;
-	}
-	*/
 
 	/*if it's an ACK and the status is not final or is final, but error the
 	ACK is not forwarded*/
@@ -252,10 +229,10 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		return 1;
 	}
 
-	/* if it's forwarded for the first time ; else the request is retransmited
-	 * from the transaction buffer
-	 * when forwarding an ACK, this condition will be all the time false because
-	 * the forwarded INVITE is in the retransmission buffer */
+	/* if it's forwarded for the first time, else the request is retransmited
+	from the transaction buffer when forwarding an ACK, this condition will
+	be all the time false because the forwarded INVITE is in the
+	retransmission buffer */
 	if ( T->outbound_request[branch]==NULL )
 	{
 		DBG("DEBUG: t_forward: first time forwarding\n");
@@ -263,6 +240,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
 		{
 			DBG("DEBUG: t_forward: it's CANCEL\n");
+			if (T->outgoing_cancel[branch]!=NO_CANCEL)
+			{
+				DBG("DEBUG: t_forward: CANCEL already send on this branch ->"
+					" dropping current CANCEL!!\n");
+				return 1;
+			}
 			/* find original cancelled transaction; if found, use its
 			   next-hops; otherwise use those passed by script */
 			if (T->T_canceled==T_UNDEFINED)
@@ -304,8 +287,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		/* allocates a new retrans_buff for the outbound request */
 		DBG("DEBUG: t_forward: building outbound request\n");
 		shm_lock();
-		T->outbound_request[branch] = rb =
-			(struct retrans_buff*)shm_malloc_unsafe( sizeof(struct retrans_buff)  );
+		T->outbound_request[branch] = rb = (struct retrans_buff*)
+			shm_malloc_unsafe(sizeof(struct retrans_buff));
 		if (!rb)
 		{
 			LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
@@ -328,12 +311,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		rb->fr_timer.payload =  rb;
 		rb->to.sin_family = AF_INET;
 		rb->my_T =  T;
+		rb->branch = branch;
 		T->nr_of_outgoings = 1;
 		rb->bufflen = len ;
 		memcpy( rb->retr_buffer , buf , len );
 		free( buf ) ; buf=NULL;
 
-		DBG("DEBUG: t_forward: starting timers (retrans and FR) %d\n",get_ticks() );
+		DBG("DEBUG: t_forward: starting timers (retrans and FR) %d\n",
+			get_ticks() );
 		/*sets and starts the FINAL RESPONSE timer */
 		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
 
@@ -357,13 +342,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	{
 		DBG("DEBUG: t_forward: forwarding CANCEL \n");
 		/* if no transaction to CANCEL
-		    or if the canceled transaction has a final status -> drop the CANCEL*/
+		or if the canceled transaction has a final status -> drop the CANCEL*/
 		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
 		{
 			reset_timer( hash_table, &(rb->fr_timer ));
 			reset_timer( hash_table, &(rb->retr_timer ));
 			return 1;
 		}
+		T->outgoing_cancel = EXTERNAL_CANCEL;
 	}
 
 	/* send the request */
@@ -412,7 +398,7 @@ int t_forward_uri( struct sip_msg* p_msg  )
 int t_on_request_received( struct sip_msg  *p_msg , 
 	unsigned int ip , unsigned int port)
 {
-	if ( t_check( p_msg , 0 ) )
+	if ( t_check( p_msg , 0 , 0 ) )
 	{
 		if ( p_msg->first_line.u.request.method_value==METHOD_ACK )
 		{
@@ -495,22 +481,11 @@ int t_on_request_received_uri( struct sip_msg  *p_msg )
 
 
 /*   returns 1 if everything was OK or -1 for error
-  */
+*/
 int t_release_transaction( struct sip_msg* p_msg)
 {
-/*
-	if (t_check( p_msg  , 0 )==-1) return 1;
-
-   if ( T && T!=T_UNDEFINED )
-*/
       return t_put_on_wait( T );
-
-/*   return 1; */
 }
-
-
-
-
 
 
 
@@ -527,23 +502,16 @@ int t_unref( /* struct sip_msg* p_msg */ )
 
 
 
-
-
 /* ----------------------------HELPER FUNCTIONS-------------------------------- */
 
 
-
-
-
-/*
-  */
 int t_update_timers_after_sending_reply( struct retrans_buff *rb )
 {
 	struct cell *Trans = rb->my_T;
 
 	/* make sure that if we send something final upstream, everything else
 	   will be cancelled */
-	if (Trans->status>=300 && Trans->inbound_request->REQ_METHOD==METHOD_INVITE )
+	if (Trans->status>=300&&Trans->inbound_request->REQ_METHOD==METHOD_INVITE)
 	{
 		rb->retr_list = RT_T1_TO_1;
 		set_timer( hash_table, &(rb->retr_timer), RT_T1_TO_1 );
@@ -568,10 +536,10 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
 
 /* Checks if the new reply (with new_code status) should be sent or not
  *  based on the current
-  * transactin status.
-  * Returns 	- branch number (0,1,...) which should be relayed
-		- -1 if nothing to be relayed
-  */
+ * transactin status.
+ * Returns 	- branch number (0,1,...) which should be relayed
+ *         -1 if nothing to be relayed
+ */
 int t_should_relay_response( struct cell *Trans , int new_code, 
 	int branch , int *should_store )
 {
@@ -619,13 +587,12 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 					Trans->inbound_response[b]->REPLY_STATUS<200 )
 					return -1;
 				if ( Trans->inbound_response[b]->REPLY_STATUS<lowest_s )
-      				{
-         				lowest_b =b;
-         				lowest_s = T->inbound_response[b]->REPLY_STATUS;
-      				}
+				{
+					lowest_b =b;
+					lowest_s = T->inbound_response[b]->REPLY_STATUS;
+				}
 			}
 			return lowest_b;
-
 		/* 1xx except 100 and 2xx will be relayed */
 		} else if (new_code>100) {
 			*should_store=1;
@@ -633,7 +600,7 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 		}
 		/* 100 won't be relayed */
 		else {
-			if (!T->inbound_response[branch]) *should_store=1; 
+			if (!T->inbound_response[branch]) *should_store=1;
 			else *should_store=0;
 			return -1;
 		}
@@ -860,7 +827,7 @@ error:
 
 
 /* Builds a CANCEL request based on an INVITE request. CANCEL is send
- * to same address */
+ * to same address as the INVITE */
 int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 {
 	struct sip_msg      *p_msg;
@@ -870,6 +837,13 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	int                  n;
 	struct retrans_buff *srb;
 
+	if (Trans->outbound_cancel[branch]!=NO_CANCEL)
+	{
+		DBG("DEBUG: t_build_and_send_CANCEL: this branch was already canceled"
+			" : dropping local cancel! \n");
+		return 1;
+	}
+	
 	cancel_buf = 0;
 	via = 0;
 	p_msg = Trans->inbound_request;
@@ -956,9 +930,30 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	/* end of message */
 	append_mem_block(p,CRLF,CRLF_LEN);
 	*p=0;
-	
 
-	DBG("LOCAL CANCEL = \n%s\n",cancel_buf);
+	memset( srb, 0, sizeof( struct retrans_buff ) );
+	memcpy( & srb->to, & Trans->outbound_request[branch]->to,
+		sizeof (struct sockaddr_in));
+	srb->tolen = sizeof (struct sockaddr_in);
+	srb->my_T = Trans;
+	srb->branch = branch;
+	srb->status = STATUS_LOCAL_CANCEL;
+	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
+	srb->bufflen = len;
+	if (Trans->outbound_cancel[branch]) {
+		shm_free( srb );	
+		LOG(L_WARN, "send_cancel: Warning: CANCEL already sent out\n");
+		goto error;
+	}
+	Trans->outbound_cancel[branch] = srb;
+	/*sets and starts the FINAL RESPONSE timer */
+	set_timer( hash_table, &(srb->fr_timer), FR_TIMER_LIST );
+
+	/* sets and starts the RETRANS timer */
+	srb->retr_list = RT_T1_TO_1;
+	set_timer( hash_table, &(srb->retr_timer), RT_T1_TO_1 );
+	DBG("DEBUG: T_build_and_send_CANCEL : sending cancel...\n");
+	SEND_BUFFER( srb );
 
 	pkg_free(via);
 	return 1;
@@ -1131,13 +1126,8 @@ void retransmission_handler( void *attr)
 
 	/* retransmision */
 	DBG("DEBUG: retransmission_handler : resending (t=%p)\n", r_buf->my_T);
-	if (r_buf->reply) {
+	if (r_buf->status!=STATUS_LOCAL_CANCEL && r_buf->status!=STATUS_REQUEST){
 		T=r_buf->my_T;
-/*
-		LOCK_REPLIES( r_buf->my_T );
-		SEND_BUFFER( r_buf );
-		UNLOCK_REPLIES( r_buf->my_T );
-*/
 		t_retransmit_reply();
 	}else{
 		SEND_BUFFER( r_buf );
@@ -1168,13 +1158,20 @@ void final_response_handler( void *attr)
 #endif
 
 	/* the transaction is already removed from FR_LIST by the timer */
+	if (r_buf->status==STATUS_LOCAL_CANCEL)
+	{
+		DBG("DEBUG: final_response_handler: stop retransmission for"
+			"Local Cancel\n");
+		reset_timer( hash_table , &(r_buf->retr_timer) );
+		return;
+	}
 	/* send a 408 */
 	if ( r_buf->my_T->status<200)
 	{
 		DBG("DEBUG: final_response_handler:stop retransmission and"
 			" send 408 (t=%p)\n", r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
-		t_build_and_send_CANCEL( r_buf->my_T ,0);
+		//t_build_and_send_CANCEL( r_buf->my_T ,r_buf->branch);
 		/* dirty hack:t_send_reply would increase ref_count which would indeed
 		result in refcount++ which would not -- until timer processe's
 		T changes again; currently only on next call to t_send_reply from

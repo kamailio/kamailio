@@ -21,7 +21,8 @@ void free_cell( struct cell* dead_cell )
 	shm_lock();
 	if ( dead_cell->inbound_request )
 		sip_msg_free_unsafe( dead_cell->inbound_request );
-	if (b=dead_cell->outbound_response.retr_buffer) shm_free_unsafe( b );
+	if (b=dead_cell->outbound_response.retr_buffer)
+		shm_free_unsafe( b );
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
@@ -36,12 +37,15 @@ void free_cell( struct cell* dead_cell )
 		/* outbound ACKs, if any */
 		if (rb=dead_cell->outbound_ack[i] )
 			shm_free_unsafe( rb );
-		/* outbound requests*/
+		/* local cancel , if any */
+		if (rb=dead_cell->outbound_cancel[i] )
+			shm_free_unsafe( rb );
+		/* inbound response */
 		if ( dead_cell -> inbound_response[i] )
-		sip_msg_free_unsafe( dead_cell->inbound_response[i] );
+			sip_msg_free_unsafe( dead_cell->inbound_response[i] );
 	}
 	/* mutex */
-	/* release_cell_lock( dead_cell ); */
+	/* release_cell_lock( dead_celle ); */
 	/* the cell's body */
 	shm_free_unsafe( dead_cell );
 	shm_unlock();
