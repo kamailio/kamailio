@@ -200,7 +200,7 @@ INSERT INTO version VALUES ( 'realm', '1');
 INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
-INSERT INTO version VALUES ( 'server_monitoring_ul', '1');
+INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 
 
 #
@@ -491,57 +491,39 @@ CREATE TABLE uri (
 #
 
 
+DROP TABLE IF EXISTS server_monitoring;
 CREATE TABLE server_monitoring (
   time datetime NOT NULL default '0000-00-00 00:00:00',
-  ts_current int(10) unsigned default NULL,
-  ts_waiting int(10) unsigned default NULL,
-  ts_total int(10) unsigned default NULL,
-  ts_total_local int(10) unsigned default NULL,
-  ts_replied int(10) unsigned default NULL,
-  ts_6xx int(10) unsigned default NULL,
-  ts_5xx int(10) unsigned default NULL,
-  ts_4xx int(10) unsigned default NULL,
-  ts_3xx int(10) unsigned default NULL,
-  ts_2xx int(10) unsigned default NULL,
-  sl_200 int(10) unsigned default NULL,
-  sl_202 int(10) unsigned default NULL,
-  sl_2xx int(10) unsigned default NULL,
-  sl_300 int(10) unsigned default NULL,
-  sl_301 int(10) unsigned default NULL,
-  sl_302 int(10) unsigned default NULL,
-  sl_3xx int(10) unsigned default NULL,
-  sl_400 int(10) unsigned default NULL,
-  sl_401 int(10) unsigned default NULL,
-  sl_403 int(10) unsigned default NULL,
-  sl_404 int(10) unsigned default NULL,
-  sl_407 int(10) unsigned default NULL,
-  sl_408 int(10) unsigned default NULL,
-  sl_483 int(10) unsigned default NULL,
-  sl_4xx int(10) unsigned default NULL,
-  sl_500 int(10) unsigned default NULL,
-  sl_5xx int(10) unsigned default NULL,
-  sl_6xx int(10) unsigned default NULL,
-  sl_xxx int(10) unsigned default NULL,
-  sl_failures int(10) unsigned default NULL,
-  PRIMARY KEY  (time)
+  id int(10) unsigned NOT NULL default '0',
+  param varchar(32) NOT NULL default '',
+  value int(10) NOT NULL default '0',
+  increment int(10) NOT NULL default '0',
+  PRIMARY KEY  (id,param)
 ) $TABLE_TYPE;
 
 
-
-
 #
-# Table structure for table 'server_monitoring_ul'
+# Table structure for table 'server_monitoring_agg'
 #
 
 
-CREATE TABLE server_monitoring_ul (
-  time datetime NOT NULL default '0000-00-00 00:00:00',
-  domain varchar(64) NOT NULL default '',
-  registered int(10) unsigned default NULL,
-  expired int(10) unsigned default NULL,
-  PRIMARY KEY  (domain,time)
+DROP TABLE IF EXISTS server_monitoring_agg;
+CREATE TABLE server_monitoring_agg (
+  param varchar(32) NOT NULL default '',
+  s_value int(10) NOT NULL default '0',
+  s_increment int(10) NOT NULL default '0',
+  last_aggregated_increment int(10) NOT NULL default '0',
+  av float NOT NULL default '0',
+  mv int(10) NOT NULL default '0',
+  ad float NOT NULL default '0',
+  lv int(10) NOT NULL default '0',
+  min_val int(10) NOT NULL default '0',
+  max_val int(10) NOT NULL default '0',
+  min_inc int(10) NOT NULL default '0',
+  max_inc int(10) NOT NULL default '0',
+  lastupdate datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY  (param)
 ) $TABLE_TYPE;
-
 
 # add an admin user "admin" with password==heslo, 
 # so that one can try it out on quick start
