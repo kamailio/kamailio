@@ -46,7 +46,7 @@
 #define MESSAGE_500 "Server Internal Error"
 
 
-static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, char* _ha1)
+static inline int get_ha1(str* _user, str* _domain, str _realm, char* _table, char* _ha1)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -63,9 +63,11 @@ static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, c
 	
 	VAL_STR(vals).s = _user->s;
 	VAL_STR(vals).len = _user->len;
-	
-	VAL_STR(vals + 1).s = _realm->s;
-	VAL_STR(vals + 1).len = _realm->len;
+
+	printf("bhoj: %.*s\n", _realm.len, _realm.s);	
+	VAL_STR(vals + 1).s = _realm.s;
+	VAL_STR(vals + 1).len = _realm.len;
+
 
 	     /* If there is domain in username, we must use
 	      * another column holding HA1 calculated with the
@@ -83,7 +85,7 @@ static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, c
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
-		    _user->len, _user->s, _realm->len, _realm->s);
+		    _user->len, _user->s, _realm.len, _realm.s);
 		db_free_query(db_handle, res);
 		return -1;
 	}
@@ -94,7 +96,7 @@ static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, c
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
-		calc_HA1(HA_MD5, _user, _realm, &result, 0, 0, _ha1);
+		calc_HA1(HA_MD5, _user, &_realm, &result, 0, 0, _ha1);
 		DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
@@ -170,7 +172,9 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username.user, &cred->digest.username.domain, _realm, _table, ha1);
+	printf("ahoj: %.*s\n", _realm->len, _realm->s);
+
+	res = get_ha1(&cred->digest.username.user, &cred->digest.username.domain, *_realm, _table, ha1);
         if (res < 0) {
 		     /* Error while accessing the database */
 		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
