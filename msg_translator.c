@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -63,7 +63,7 @@
  * - if the address in via is different from the src_ip or an existing
  *   received=something is found, received=src_ip is added (and any preexisting
  *   received is deleted). received is added as the first via parameter if no
- *   receive is previoulsy present or over the old receive.
+ *   receive is previously present or over the old receive.
  * - if the original via contains rport / rport=something or msg->msg_flags
  *   FL_FORCE_RPORT is set (e.g. script force_rport() cmd) rport=src_port
  *   is added (over previous rport / as first via param or after received
@@ -1185,7 +1185,7 @@ skip_nop_after:
 
 
 /*
- * Adjust/insert Content-Length if necesarry
+ * Adjust/insert Content-Length if necessary
  */
 static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 {
@@ -1238,7 +1238,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 		 * existing Content-Length
 		 */
 		/* no need for Content-Length if it's and UDP packet and
-		 * it hasn't Content-Lentgh already */
+		 * it hasn't Content-Length already */
 		if ((msg->content_length==0)){
 		    /* content-length doesn't exist, append it */
 			/* msg->unparsed should point just before the final crlf
@@ -1616,7 +1616,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		goto error00;
 	}
 
-	/*computes the lenght of the new response buffer*/
+	/*computes the length of the new response buffer*/
 	len = 0;
 
 	/* check if received needs to be added */
@@ -1861,7 +1861,7 @@ error00:
 
 
 /* return number of chars printed or 0 if space exceeded;
-   assumes buffer sace of at least MAX_BRANCH_PARAM_LEN
+   assumes buffer size of at least MAX_BRANCH_PARAM_LEN
  */
 int branch_builder( unsigned int hash_index,
 	/* only either parameter useful */
@@ -1952,7 +1952,7 @@ char* via_builder( unsigned int *len,
 
 	memcpy(line_buf, MY_VIA, MY_VIA_LEN); 
 	if (proto==PROTO_UDP){
-		/* dop nothing */
+		/* do nothing */
 	}else if (proto==PROTO_TCP){
 		memcpy(line_buf+MY_VIA_LEN-4, "TCP ", 4);
 	}else if (proto==PROTO_TLS){

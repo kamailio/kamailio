@@ -1,8 +1,8 @@
 /* $Id$
  *
- * ip address family realted structures
+ * ip address family related structures
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -52,7 +52,7 @@ struct ip_addr{
 	unsigned int af; /* address family: AF_INET6 or AF_INET */
 	unsigned int len;    /* address len, 16 or 4 */
 	
-	/* 64 bits alligned address */
+	/* 64 bits aligned address */
 	union {
 		unsigned long  addrl[16/sizeof(long)]; /* long format*/
 		unsigned int   addr32[4];
@@ -103,7 +103,7 @@ struct receive_info{
 	int proto;
 	int proto_reserved1; /* tcp stores the connection id here */
 	int proto_reserved2;
-	union sockaddr_union src_su; /* usefull for replies*/
+	union sockaddr_union src_su; /* useful for replies*/
 	struct socket_info* bind_address; /* sock_info structure on which 
 									  the msg was received*/
 	/* no need for dst_su yet */
@@ -171,7 +171,7 @@ int is_mcast(struct ip_addr* ip);
 #endif /* USE_MCAST */
 
 /* returns 1 if ip & net.mask == net.ip ; 0 otherwise & -1 on error 
-	[ diff. adress fams ]) */
+	[ diff. address families ]) */
 inline static int matchnet(struct ip_addr* ip, struct net* net)
 {
 	unsigned int r;
@@ -385,7 +385,7 @@ static inline int hostent2su( union sockaddr_union* su,
 
 /* maximum size of a str returned by ip_addr2a (including \0) */
 #define IP_ADDR_MAX_STR_SIZE 40 /* 1234:5678:9012:3456:7890:1234:5678:9012\0 */
-/* fast ip_addr -> string convertor;
+/* fast ip_addr -> string converter;
  * it uses an internal buffer
  */
 static inline char* ip_addr2a(struct ip_addr* ip)

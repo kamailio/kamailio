@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -36,13 +36,13 @@
 #define E_BUG         -5
 #define E_CFG         -6
 #define E_NO_SOCKET		-7
-/* unresolveable topmost Via */
+/* unresolvable topmost Via */
 #define E_BAD_VIA		-8
-/* incomplete transaction tupel */
+/* incomplete transaction tuple */
 #define E_BAD_TUPEL		-9
 /* script programming error */
 #define E_SCRIPT		-10
-/* error in excecution of external tools */
+/* error in execution of external tools */
 #define E_EXEC			-11
 /* too many branches demanded */
 #define E_TOO_MANY_BRANCHES -12
@@ -57,13 +57,13 @@
 
 
 #define E_SEND		  -477
-/* unresolveable next-hop address */
+/* unresolvable next-hop address */
 #define E_BAD_ADDRESS -478
 /* unparseable URI */
 #define E_BAD_URI 	  -479
 /* bad protocol, like */
 #define E_BAD_PROTO	  -480
-/* misformated request */
+/* malformed request */
 #define E_BAD_REQ	  -400
 
 /* error in server */

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -28,7 +28,7 @@
  * History:
  * --------
  * 2002-12-??  created by andrei.
- * 2003-02-10  zero term before calling receive_msg & undo afterwards (andrei)
+ * 2003-02-10  zero term before calling receive_msg & undo afterward (andrei)
  * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
  * 2003-07-01  tcp_read & friends take no a single tcp_connection 
  *              parameter & they set c->state to S_CONN_EOF on eof (andrei)
@@ -110,9 +110,9 @@ again:
 
 
 /* reads all headers (until double crlf), & parses the content-length header
- * (WARNING: ineficient, tries to reuse receive_msg but will go through
+ * (WARNING: inefficient, tries to reuse receive_msg but will go through
  * the headers twice [once here looking for Content-Length and for the end
- * of the headers and once in receive_msg]; a more speed eficient version will
+ * of the headers and once in receive_msg]; a more speed efficient version will
  * result in either major code duplication or major changes to the receive code)
  * returns number of bytes read & sets r->state & r->body
  * when either r->body!=0 or r->state==H_BODY =>
@@ -332,7 +332,7 @@ int tcp_read_headers(struct tcp_connection *c)
 						r->state=H_CONT_LEN_BODY_PARSE;
 						r->content_len=(*p-'0');
 						break;
-					/*FIXME: content lenght on different lines ! */
+					/*FIXME: content length on different lines ! */
 					crlf_default_skip_case;
 				}
 				p++;
@@ -359,7 +359,7 @@ int tcp_read_headers(struct tcp_connection *c)
 						r->has_content_len=1;
 						break;
 					case '\n':
-						/* end of line, parse succesfull */
+						/* end of line, parse successful */
 						r->state=H_LF;
 						r->has_content_len=1;
 						break;
@@ -622,7 +622,7 @@ void tcp_receive_loop(int unix_sock)
 				if (maxfd<s) maxfd=s;
 				if (con==list){
 					LOG(L_CRIT, "BUG: tcp_receive_loop: duplicate"
-							" connection recevied: %p, id %d, fd %d, refcnt %d"
+							" connection received: %p, id %d, fd %d, refcnt %d"
 							" state %d (n=%d)\n", con, con->id, con->fd,
 							con->refcnt, con->state, n);
 					resp=CONN_ERROR;

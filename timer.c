@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -153,7 +153,7 @@ void timer_ticker()
 unsigned int get_ticks()
 {
 	if (jiffies==0){
-		LOG(L_CRIT, "BUG: get_ticks: jiffies not intialized\n");
+		LOG(L_CRIT, "BUG: get_ticks: jiffies not initialized\n");
 		return 0;
 	}
 #ifndef SHM_MEM

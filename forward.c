@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -214,7 +214,7 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 			}else send_sock=bind_address;
 			break;
 		default:
-			LOG(L_CRIT, "BUG: get_send_socket: unkown proto %d\n", proto);
+			LOG(L_CRIT, "BUG: get_send_socket: unknown proto %d\n", proto);
 	}
 	return send_sock;
 }
@@ -364,7 +364,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	send_sock=get_send_socket(to, proto);
 	if (send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
-				"no coresponding listening socket\n", to->s.sa_family, proto);
+				"no corresponding listening socket\n", to->s.sa_family, proto);
 		ser_error=E_NO_SOCKET;
 		goto error1;
 	}
@@ -522,7 +522,7 @@ int forward_reply(struct sip_msg* msg)
 			goto error;
 		}
 	}
-	/* quick hack, slower for mutliple modules*/
+	/* quick hack, slower for multiple modules*/
 	for (mod=modules;mod;mod=mod->next){
 		if ((mod->exports) && (mod->exports->response_f)){
 			DBG("forward_reply: found module %s, passing reply to it\n",

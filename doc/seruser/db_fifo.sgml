@@ -47,7 +47,7 @@
 	</para>
 	<para>
 	Also the size (can fit on only one line) and the the content (\n or \r
-	charecters must be escaped) of a BLOB value is restricted.
+	characters must be escaped) of a BLOB value is restricted.
 	</para>
 </section>
 

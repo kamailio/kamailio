@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -219,7 +219,7 @@ static inline int parse_db_value( str *s, db_val_t *val, str **ret_s)
 		s->len -= n+2;
 	}
 
-	/* string has at least one caracter */
+	/* string has at least one character */
 	DBG("DEBUG:parse_db_value: value id <%.*s>\n",s->len,s->s);
 	if ( s->s[0]=='\"' && s->s[s->len-1]=='\"' && s->len!=1) {
 		/* can be DB_STR, DB_STRING, DB_BLOB */
@@ -265,11 +265,11 @@ static inline int parse_db_value( str *s, db_val_t *val, str **ret_s)
 		td.tm_yday = 0;
 		/* get year */
 		get_int( p, end, td.tm_year, n, "Missing year in date format",error);
-		td.tm_year -= 1900; /* corection */
+		td.tm_year -= 1900; /* correction */
 		if (*(p++)!='-') goto date_error;
 		/* get month */
 		get_int( p, end, td.tm_mon, n, "Missing month in date format",error);
-		td.tm_mon --; /* corection */
+		td.tm_mon --; /* correction */
 		if (*(p++)!='-') goto date_error;
 		/* get day */
 		get_int( p, end, td.tm_mday, n, "Missing day in date format",error);
@@ -369,7 +369,7 @@ static inline int get_avps( FILE *fifo , db_key_t *keys, db_op_t *ops,
 		/* read a new line */
 		line.s = buf;
 		if (read_line( line.s, MAX_SIZE_LINE, fifo, &line.len)!=1) {
-			double_log("Comamnd end when reading AVPs - missing . at after "
+			double_log("Command end when reading AVPs - missing . at after "
 				"AVP list?");
 			goto error;
 		}
@@ -650,7 +650,7 @@ int db_fifo( FILE *fifo, char *response_file )
 	nr2 = 0;
 
 	if (db_cmd==SELECT_CMD) {
-		/* read the colums to be fetched */
+		/* read the columns to be fetched */
 		if ( get_keys( fifo, keys1, &nr1, MAX_ARRAY)!=0 )
 			goto error;
 	} else if (db_cmd==UPDATE_CMD) {
@@ -666,7 +666,7 @@ int db_fifo( FILE *fifo, char *response_file )
 		/* all the operators must be '=' */
 		for(n=0;n<nr1;n++) {
 			if (ops1[n][0]!='=' || ops1[n][1]!='\0') {
-				double_log("Invalid operator in updated fileds (expected = )");
+				double_log("Invalid operator in updated fields (expected = )");
 				goto error1;
 			}
 		}/*end for*/
@@ -740,7 +740,7 @@ int db_fifo( FILE *fifo, char *response_file )
 			/* all the operators must be '=' in the first avp list */
 			for(n=0;n<nr1;n++) {
 				if (ops1[n][0]!='=' || ops1[n][1]!='\0') {
-					double_log("Invalid operator in updated fileds "
+					double_log("Invalid operator in updated fields "
 						"(expected = )");
 					goto error;
 				}
@@ -770,7 +770,7 @@ int db_fifo( FILE *fifo, char *response_file )
 			/* all the operators must be '=' */
 			for(n=0;n<nr2;n++) {
 				if (ops2[n][0]!='=' || ops2[n][1]!='\0') {
-					double_log("Invalid operator in inserted fileds "
+					double_log("Invalid operator in inserted fields "
 						"(expected = )");
 					goto error;
 				}

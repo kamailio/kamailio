@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -420,7 +420,7 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 		si=find_tcp_si(&my_name);
 
 	if (si==0){
-		LOG(L_ERR, "ERROR: tcp_connect: could not find coresponding"
+		LOG(L_ERR, "ERROR: tcp_connect: could not find corresponding"
 				" listening socket, using default...\n");
 		if (server->s.sa_family==AF_INET) si=sendipv4_tcp;
 #ifdef USE_IPV6
@@ -617,7 +617,7 @@ error_not_found:
 	return -1;
 error_sec:
 	TCPCONN_UNLOCK;
-	LOG(L_ERR, "ERROR: tcpconn_add_alias: possible port hijack attemp\n");
+	LOG(L_ERR, "ERROR: tcpconn_add_alias: possible port hijack attempt\n");
 	LOG(L_ERR, "ERROR: tcpconn_add_alias: alias already present and points"
 			" to another connection (%d : %d and %d : %d)\n",
 			a->parent->id,  port, c->id, port);
@@ -789,7 +789,7 @@ release_c:
 
 
 
-/* very ineficient for now - FIXME*/
+/* very inefficient for now - FIXME*/
 void tcpconn_timeout(fd_set* set)
 {
 	struct tcp_connection *c, *next;

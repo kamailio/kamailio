@@ -3,7 +3,7 @@
  *
  *  cfg grammar
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -325,7 +325,7 @@ statement:	assign_stm
 listen_id:	ip			{	tmp=ip_addr2a($1);
 		 					if(tmp==0){
 								LOG(L_CRIT, "ERROR: cfg. parser: bad ip "
-										"addresss.\n");
+										"address.\n");
 								$$=0;
 							}else{
 								$$=pkg_malloc(strlen(tmp)+1);
@@ -1483,7 +1483,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
                 | APPEND_BRANCH LPAREN STRING COMMA STRING RPAREN { 
 		    {   qvalue_t q;
 			if (str2q(&q, $5, strlen($5)) < 0) {
-				yyerror("bad arqument, q value expected");
+				yyerror("bad argument, q value expected");
 			}
 			$$=mk_action(APPEND_BRANCH_T, STRING_ST, NUMBER_ST, $3, (void *)q); } 
 		}

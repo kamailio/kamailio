@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -77,12 +77,12 @@ int read_body(char *buf, int max_len, FILE *fifo, int *len);
 int init_fifo_server();
 int start_fifo_server();
 
-/* regsiter core FIFO command set */
+/* register core FIFO command set */
 int register_core_fifo();
 
 FILE *open_reply_pipe( char *pipe_name );
 
-/* tell FIFO client an error occured via reply pipe */
+/* tell FIFO client an error occurred via reply pipe */
 void fifo_reply( char *reply_fifo, char *reply_fmt, ... );
 
 /* memory deallocation */

@@ -3,7 +3,7 @@
  *
  * UNIX Domain Socket Server
  *
- * Copyright (C) 2001-2004 Fhg Fokus
+ * Copyright (C) 2001-2004 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *

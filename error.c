@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -43,7 +43,7 @@ int ser_error=-1;
 int prev_ser_error=-1;
 
 int err2reason_phrase( 
-	int ser_error,  /* current itnernal ser error */
+	int ser_error,  /* current internal ser error */
 	int *sip_error,  /* the sip error code to which ser 	
 					    ser error will be turned */
 	char *phrase,    /* resulting error text */
@@ -55,11 +55,11 @@ int err2reason_phrase(
 
 	switch( ser_error ) {
 		case E_SEND:
-			error_txt="Unfortunately error on sending to next hop occured";
+			error_txt="Unfortunately error on sending to next hop occurred";
 			*sip_error=-ser_error;
 			break;
 		case E_BAD_ADDRESS:
-			error_txt="Unresolveable destination";
+			error_txt="Unresolvable destination";
 			*sip_error=-ser_error;
 			break;
 		case E_BAD_REQ:
@@ -67,11 +67,11 @@ int err2reason_phrase(
 			*sip_error=-ser_error;
 			break;
 		case E_BAD_URI:
-			error_txt="Regretfuly, we were not able to process the URI";
+			error_txt="Regretfully, we were not able to process the URI";
 			*sip_error=-ser_error;
 			break;
 		case E_BAD_TUPEL:
-			error_txt="Transaction tupel incomplete";
+			error_txt="Transaction tuple incomplete";
 			*sip_error=-E_BAD_REQ;
 			break;
 		case E_BAD_TO:
@@ -115,7 +115,7 @@ int err2reason_phrase(
 			break;
 #endif
 		default:
-			error_txt="I'm terribly sorry, server error occured";
+			error_txt="I'm terribly sorry, server error occurred";
 			*sip_error=500;
 			break;
 	}
@@ -143,7 +143,7 @@ char *error_text( int code )
 
 		case 400: return "Bad Request";
 		case 401: return "Unauthorized";
-		case 402: return "Payement Required";
+		case 402: return "Payment Required";
 		case 403: return "Forbidden";
 		case 404: return "Not Found";
 		case 405: return "Method not Allowed";
@@ -163,7 +163,7 @@ char *error_text( int code )
 		case 482: return "Loop Detected";
 		case 483: return "Too Many Hops";
 		case 484: return "Address Incomplete";
-		case 485: return "Ambigous";
+		case 485: return "Ambiguous";
 		case 486: return "Busy Here";
 		case 487: return "Request Terminated";
 		case 488: return "Not Acceptable Here";

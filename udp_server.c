@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -78,7 +78,7 @@ static int dbg_msg_qa(char *buf, int len)
 	enum { QA_ANY, QA_SPACE, QA_EOL1 } state;
 
 
-	/* is there a zero character inthere ? */	
+	/* is there a zero character in there ? */	
 	if (memchr(buf, 0, len)) {
 		LOG(L_CRIT, "BUG: message with 0 in it\n");
 		return 0;
@@ -94,7 +94,7 @@ static int dbg_msg_qa(char *buf, int len)
 			case ' ':	if (state==QA_SPACE) {
 							space_cnt++;
 							if (space_cnt==4) {
-								LOG(L_CRIT, "BUG(propably): DBG_MSG_QA: "
+								LOG(L_CRIT, "BUG(probably): DBG_MSG_QA: "
 									"too many spaces\n");
 								return 0;
 							}
@@ -149,7 +149,7 @@ int probe_max_receive_buffer( int udp_sock )
 	}
 	if ( ioptval==0 ) 
 	{
-		LOG(L_DBG, "DEBUG: udp_init: SO_RCVBUF initialy set to 0; resetting to %d\n",
+		LOG(L_DBG, "DEBUG: udp_init: SO_RCVBUF initially set to 0; resetting to %d\n",
 			BUFFER_INCREMENT );
 		ioptval=BUFFER_INCREMENT;
 	} else LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is initially %d\n", ioptval );
@@ -167,7 +167,7 @@ int probe_max_receive_buffer( int udp_sock )
 			LOG(L_DBG, "DEBUG: udp_init: SOL_SOCKET failed"
 					" for %d, phase %d: %s\n", optval, phase, strerror(errno));
 			/* if setting buffer size failed and still in the aggressive
-			   phase, try less agressively; otherwise give up 
+			   phase, try less aggressively; otherwise give up 
 			*/
 			if (phase==0) { phase=1; optval >>=1 ; continue; } 
 			else break;
@@ -188,7 +188,7 @@ int probe_max_receive_buffer( int udp_sock )
 			if (voptval<optval) {
 				LOG(L_DBG, "DEBUG: setting SO_RCVBUF has no effect\n");
 				/* if setting buffer size failed and still in the aggressive
-				phase, try less agressively; otherwise give up 
+				phase, try less aggressively; otherwise give up 
 				*/
 				if (phase==0) { phase=1; optval >>=1 ; continue; } 
 				else break;

@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -58,7 +58,7 @@
  *  2003-01-29  new built-in fifo commands: arg and pwd (jiri)
  *  2003-10-07  fifo security fixes: permissions, always delete old fifo,
  *               reply fifo checks -- added fifo_check (andrei)
- *  2003-10-13  addef fifo_dir for reply fifos (andrei)
+ *  2003-10-13  added fifo_dir for reply fifos (andrei)
  *  2003-10-30  DB interface exported via FIFO (bogdan)
  *  2004-03-09  open_fifo_server split into init_ and start_ (andrei)
  *  2004-04-29  added chown(sock_user, sock_group)  (andrei)
@@ -601,7 +601,7 @@ int init_fifo_server()
 	}
 	memcpy(up_since_ctime,t,strlen(t)+1);
 	/* open it non-blocking or else wait here until someone
-	 * opens it for writting */
+	 * opens it for writing */
 	fifo_read=open(fifo, O_RDONLY|O_NONBLOCK, 0);
 	if (fifo_read<0) {
 		LOG(L_ERR, "ERROR: init_fifo_server: fifo_read did not open: %s\n",
@@ -674,7 +674,7 @@ int start_fifo_server()
 		signal(SIGPIPE, SIG_IGN);
 		LOG(L_INFO, "SER: open_uac_fifo: fifo server up at %s...\n",
 			fifo);
-		fifo_server( fifo_stream ); /* never retruns */
+		fifo_server( fifo_stream ); /* never returns */
 	}
 	/* dad process */
 	pt[process_no].pid=fifo_pid;

@@ -3,7 +3,7 @@
  *
  * adding/removing headers or any other data chunk from a message
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -33,7 +33,7 @@
  *  2003-04-01  added opt (condition) lumps (andrei)
  *  2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
  *              => ip:port;transport=proto (andrei)
- *  2003-10-20  splitted from data_lump.h (andrei)
+ *  2003-10-20  split from data_lump.h (andrei)
  *
  */
 
@@ -113,7 +113,7 @@ struct lump{
  *  op=ADD.
  * before and after must contain only ADD ops!
  * 
- * Difference between "after" & "next" when ADDing:
+ * Difference between "after" & "next" when Adding:
  * "after" forces the new header immediately after the current one while
  * "next" means another header can be inserted between them.
  * 

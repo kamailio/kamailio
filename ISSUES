@@ -23,7 +23,7 @@ Test:  compile test/re_test.c (gcc re_test.c -o re_test) and try
         echo -e "From:\nTo:" |./re_test -v '^From'
        if your system is ok you should see 1 match, if not (and 
        your libc has this bug), 0 matches.
-Workarround: ?upgrade?
+Workaround: ?upgrade?
 --------------------------------------------------------------
 Desc: textops REs match newline in constructs such [^@]
 Ser version: all 
@@ -33,7 +33,7 @@ Test:  compile test/re_test.c (gcc re_test.c -o re_test) and try
         echo -e "From:\nTo:" |./re_test -v '[^.]+'
        if your system is ok you should see 2 matches, if not (and 
        your libc has this bug), only 1 match.
-Workarround: - use an older or fixed libc6 or avoid [^something]
+Workaround: - use an older or fixed libc6 or avoid [^something]
              - rewrite [^something] as [^something[:cntrl:]]
 ---------------------------------------------------------------
 Desc: memory leaks occurs if SIP requests are processed in which
@@ -183,7 +183,7 @@ CVS status: fixed
 ---------------------------------------------------------------
 Desc: serctl add ... returns "user exists"
 BugId: 374
-Workaround: either use serweb for addding new users or update
+Workaround: either use serweb for adding new users or update
       the serctl utility from CVS; the fixed version is at
       http://www.iptel.org/ser/issues/374/
 Bug reason: phplib_id ignored in sc
@@ -218,7 +218,7 @@ Cvs status: not fixed
 
 ----------------------------------------------------------------
 Desc:  ser won't run on linux kernels <2.4  (fails with EINVAL when
-      intializing the shared memory)
+      initializing the shared memory)
 BugId:  n/a
 Ser version: 0.8.8, 0.8.9, 0.8.10 
 Workaround: Upgrade to a 2.4.* kernel (older kernels don't support shared 

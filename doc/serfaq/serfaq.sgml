@@ -49,7 +49,7 @@
 		    <simpara>
 			Not easily. &ser; has built-in some functions that allow to use it as user
 			agent, but our primary goal is to develop a server so this is without
-			guarantee and can even dissapear in future versions.
+			guarantee and can even disappear in future versions.
 		    </simpara>
 		</answer>
 	    </qandaentry>
@@ -62,7 +62,7 @@
 		<answer>
 		    <simpara>
 			&ser;'s built-in location server uses in-<acronym>RAM</acronym> database for
-			high performance and optionally MySQL for persistency. More database
+			high performance and optionally MySQL for persistence. More database
 			protocols may be supplied on contractual basis. As far as I know,
 			<acronym>DNS</acronym> is not used in the industry for user location.
 		    </simpara>
@@ -94,7 +94,7 @@
 		    </simpara>
 		    <simpara>
 			A B2BUA acts merely as connection of two or more user agents which are
-			connected through some means. B2BUAs keep some state (usualy some structures
+			connected through some means. B2BUAs keep some state (usually some structures
 			in the memory) during the whole call.
 		    </simpara>
 		    <para>
@@ -313,13 +313,13 @@
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Is it necesarry to have a <acronym>DNS SVR</acronym> Resource Record, as
+			Is it necessary to have a <acronym>DNS SVR</acronym> Resource Record, as
 			mentioned in the ser-Howto guide for connecting to &ser; ?
 		    </simpara>
 		</question>
 		<answer>
 		    <simpara>
-			No. It's nice to have it, but you can work arround it setting a normal A
+			No. It's nice to have it, but you can work around it setting a normal A
 			record for your domain. The <acronym>SRV</acronym> lookup will fall back to
 			normal A lookup.
 		    </simpara>
@@ -340,7 +340,7 @@
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Are you going to provide intergration support from &sip; to H.323 and vice
+			Are you going to provide integration support from &sip; to H.323 and vice
 			versa ?
 		    </simpara>
 		</question>
@@ -456,7 +456,7 @@
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Can you send me detail for me to sign up for the comercial program. I would
+			Can you send me detail for me to sign up for the commercial program. I would
 			also like detail on your levels of support you offer (ie...paid support)?
 		    </simpara>
 		</question>
@@ -548,7 +548,7 @@
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Is there any way to change the defaul log file to a special SER.log file ?
+			Is there any way to change the default log file to a special SER.log file ?
 		    </simpara>
 		</question>
 		<answer>
@@ -616,7 +616,7 @@ ser -E     2>/tmp/ser.log
 	    <qandaentry>
 		<question>
 		    <simpara>
-			I would like know if &ser; support also the trasmission protocol
+			I would like know if &ser; support also the transmission protocol
 			<acronym>TCP</acronym>, or <acronym>TLS</acronym>.
 		    </simpara>
 		</question>
@@ -654,7 +654,7 @@ ser -E     2>/tmp/ser.log
 			error occurs:
 		    </simpara>
 		    <simpara>
-			<quote>ERROR: Your message was not sent. You do not have permision to use the
+			<quote>ERROR: Your message was not sent. You do not have permissions to use the
 			    gateway.</quote>
 		    </simpara>
 		    <simpara>
@@ -1206,7 +1206,7 @@ out_uri=sip:addaline.com via_cnt==1".
 	    <qandaentry>
 		<question>
 		    <simpara>
-			It is posible to process the voicemail request on the same instance I use to
+			It is possible to process the voicemail request on the same instance I use to
 			forward/register users ?
 		    </simpara>
 		</question>
@@ -1243,7 +1243,7 @@ out_uri=sip:addaline.com via_cnt==1".
 	    <qandaentry>
 		<question>
 		    <simpara>
-			What is symetric signalling ?
+			What is symmetric signaling ?
 		    </simpara>
 		</question>
 		<answer>

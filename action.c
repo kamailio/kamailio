@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -93,7 +93,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int proto;
 
 	/* reset the value of error to E_UNSPEC so avoid unknowledgable
-	   functions to return with errror (status<0) and not setting it
+	   functions to return with error (status<0) and not setting it
 	   leaving there previous error; cache the previous value though
 	   for functions which want to process it */
 	prev_ser_error=ser_error;

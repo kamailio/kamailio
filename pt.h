@@ -5,7 +5,7 @@
  *
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -88,7 +88,7 @@ inline static int process_count()
 }
 
 
-/* retun processes's pid */
+/* return processes pid */
 inline static int my_pid()
 {
 	return pt ? pt[process_no].pid : getpid();

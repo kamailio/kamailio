@@ -539,7 +539,7 @@ if (uri=~"^sip:(.+@)?(192\.168\.0\.10|(sip\.)?foo\.bar)([:;\?].*)?$")
 			callers who can only
 			use numeric keypads. Next-hop destination of IP users is looked up dynamically
 			using user location database. On the other hand, PSTN destinations are 
-			always indicated by nummerical usernames. Requests to PSTN are statically 
+			always indicated by numerical usernames. Requests to PSTN are statically 
 			forwarded to well-known PSTN gateways.
 		    </para>
 		    <example>
@@ -547,11 +547,11 @@ if (uri=~"^sip:(.+@)?(192\.168\.0\.10|(sip\.)?foo\.bar)([:;\?].*)?$")
 			<para>
 			    This example shows a simple dialing plan which reserves
 			    dialing prefix "8" for IP users, other numbers
-			    are used for PSTN destinations and all other non-nummerical
+			    are used for PSTN destinations and all other non-numerical
 			    usernames are used for IP users.
 			</para>
 			<programlisting format="linespecific">
-# is it a PSTN destination? (is username nummerical and does not begin with 8?)
+# is it a PSTN destination? (is username numerical and does not begin with 8?)
 if (uri=~"^sip:[0-79][0-9]*@") { # ... forward to gateways then;
       # check first to which PSTN destination the requests goes;
       # if it is US (prefix "1"), use the gateway 192.168.0.1...
@@ -818,7 +818,7 @@ forward(uri:host, uri:port);
 		allows translation of a single request URI into multiple
 		outgoing URIs. The ability to forward a request to multiple
 		destinations is known as <emphasis>forking</emphasis>
-		in SIP language. All outogoing URIs (in trivial case one of them)
+		in SIP language. All outgoing URIs (in trivial case one of them)
 		are called <emphasis>destination set</emphasis>. The destination
 		set always includes one default URI, to which additional URIs
 		can be appended. Maximum size of a destination set is limited by 
@@ -927,7 +927,7 @@ Expires: 600
 		(usrloc module's parameter <varname>timer_interval</varname> determines
 		their length), all changes to the in-memory table are backed up in
 		<application moreinfo="none">mysql</application> database to achieve
-		peristence accross server reboots. Administrators or application writers
+		persistence across server reboots. Administrators or application writers
 		can lookup list of current user's contacts stored in memory using the
 		<application moreinfo="none">serctl</application> tool (see <xref linkend="serctl">).
 		<example>
@@ -1070,7 +1070,7 @@ t_relay_to_udp("192.168.99.100", "5060");
 		for accessing mysql databases and sl module for generating
 		authentication challenges. We recommend that modules are
 		loaded in dependency order to avoid ambiguous server
-		behaviour.
+		behavior.
 	    </para>	    
 	    <para>
 		<example id="moduleparameters">
@@ -1114,7 +1114,7 @@ route{
 	    <title>Writing Scripts</title>
 	    <para>
 		This section demonstrates simple examples
-		how to configure server's behaviour using the
+		how to configure server's behavior using the
 		<application moreinfo="none">ser</application>
 		request routing language. All configuration scripts follow the 
 		<application moreinfo="none">ser</application> language 
@@ -1123,7 +1123,7 @@ route{
 		    <listitem>
 			<para>
 			    <emphasis>global configuration parameters</emphasis> --
-			    these value affect behaviour of the server such as port
+			    these value affect behavior of the server such as port
 			    number at which it listens, number of spawned children
 			    processes, and log-level. See <xref linkend="coreoptions">
 			    for a list of available options.
@@ -1184,7 +1184,7 @@ route{
 		<para>
 		    The configuration script, <filename moreinfo="none">ser.cfg</filename>,
 		    is a part of every <application moreinfo="none">ser</application>
-		    distribution and defines default behaviour. It allows users
+		    distribution and defines default behavior. It allows users
 		    to register with the server and have requests proxied to each
 		    other.
 		</para>
@@ -1424,7 +1424,7 @@ route{
 		    The primitives used are <command moreinfo="none">t_on_failure(r)</command>
 		    and <command moreinfo="none">failure_route[r]{}.</command> If
 		    <command>t_on_failure</command> is called before
-		    a request is statefuly forwarded and a forwarding failure occurs, 
+		    a request is statefully forwarded and a forwarding failure occurs, 
 		    <application moreinfo="none">ser</application>
 		    will return to request processing in a <command moreinfo="none">failure_route</command>
 		    block. Failures include receipt of a SIP error

@@ -40,16 +40,16 @@
 	<simpara>
 	    &ser can be configured to use &rad; server for authentication, accounting, and group
 	    membership checking. Since configuration of &rad; seems to be a common source of
-	    problems, we decided to put together this howto.
+	    problems, we decided to put together this HOWTO.
 	</simpara>
 	<simpara>
-	    The howto covers installation and configuration of FreeRADIUS server only. There are
+	    The HOWTO covers installation and configuration of FreeRADIUS server only. There are
 	    also other &rad; servers available and as long as they support digest authentication,
 	    they should work too. Any volunteers willing to describe setup of other &rad; servers
 	    are encouraged to contact the author.
 	</simpara>
 	<section>
-	    <title>Prerequisities</title>
+	    <title>Prerequisites</title>
 	    <simpara>
 		To setup &rad; support in &ser; you will need the following:
 	    </simpara>
@@ -57,7 +57,7 @@
 		<listitem>
 		    <simpara>
 			FreeRADIUS server, you can get it from <ulink
-			    url="http://www.freeradius.org">FreeRADIUS website</ulink>. The howto
+			    url="http://www.freeradius.org">FreeRADIUS website</ulink>. The HOWTO
 			    describes installation and setup of release 0.9.1.
 		    </simpara>
 		</listitem>
@@ -134,7 +134,7 @@ root@localhost:/usr/local/src/radiusclient-0.3.2# make install
 	    <simpara>
 		The main configuration file of the library is <filename
 		    moreinfo="none">/usr/local/etc/radiusclient/radiusclient.conf</filename>, open
-		    the file in your favourite text editor and find lines containing the following:
+		    the file in your favorite text editor and find lines containing the following:
 	    </simpara>
 	    <programlisting format="linespecific">
 authserver      localhost
@@ -324,7 +324,7 @@ test Auth-Type := Digest, User-Password == "test"
 	    <simpara>
 		The basic configuration of FreeRADIUS server is done it now we are going to test if
 		it really works. Start the server with parameter -X. That will cause the server to
-		stay in the foreground (it will not turn into daemon) and produce a lot of debuging
+		stay in the foreground (it will not turn into daemon) and produce a lot of debugging
 		information on the standard output:
 	    </simpara>
 	    <screen format="linespecific">
@@ -459,7 +459,7 @@ joe@iptel.org Sip-Group == "pstn", Auth-Type := Accept
 	<title>&ser; Configuration</title>
 	<simpara>
 	    We will describe installation from sources here. If you use binary packages then there
-	    is an additional package containg &rad; related modules. You will need to install the
+	    is an additional package containing &rad; related modules. You will need to install the
 	    package.
 	</simpara>
 	<warning>
@@ -471,7 +471,7 @@ joe@iptel.org Sip-Group == "pstn", Auth-Type := Accept
 	    <simpara>
 		If you need accounting over &rad; then you will have to compile &rad;-enabled
 		version of acc module from the sources. This will be fixed in one of future
-		releases, we apologize for any incovenience.
+		releases, we apologize for any inconvenience.
 	    </simpara>
 	</warning>
 	<simpara>
@@ -561,7 +561,7 @@ libradiusclient.so.0: cannot open shared object file: No such file or directory
 		<question>
 		    <simpara>
 			I configured everything as described in this HOWTO, but I get the following
-			message from radiusclient librarary <quote> check_radius_reply: received
+			message from radiusclient library <quote> check_radius_reply: received
 			invalid reply digest from RADIUS server</quote>. What does that mean ?
 		    </simpara>
 		</question>

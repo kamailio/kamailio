@@ -2,7 +2,7 @@
  *
  * find & manage listen addresses 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -60,7 +60,7 @@ void print_aliases();
 
 /* helper function:
  * returns next protocol, if the last one is reached return 0
- * usefull for cycling on the supported protocols */
+ * useful for cycling on the supported protocols */
 static inline int next_proto(unsigned short proto)
 {
 	switch(proto){
@@ -93,7 +93,7 @@ static inline int next_proto(unsigned short proto)
 
 
 /* gets first non-null socket_info structure
- * (usefull if for. e.g we are not listening on any udp sockets )
+ * (useful if for. e.g we are not listening on any udp sockets )
  */
 inline static struct socket_info* get_first_socket()
 {

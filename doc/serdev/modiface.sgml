@@ -15,7 +15,7 @@
 		footprint. Modules can be also provided by 3rd party developers and distributed
 		separately from the main server. Most of the functionality that &ser; provides is
 		available through modules, the core itself contains only minimum set of functions
-		that is essential for proper server's behaviour or that is needed by all modules.
+		that is essential for proper server's behavior or that is needed by all modules.
 	    </para>
 	    <para>
 		This chapter provides detailed information on module interface of &ser;, which is
@@ -139,7 +139,7 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 		    </simpara>
 		    <simpara>
 			If you provide pointer to a fixup function in this field, the fixup function
-			will be called for each occurence of the exported function in the
+			will be called for each occurrence of the exported function in the
 			configuration script.
 		    </simpara>
 		    <simpara>
@@ -198,7 +198,7 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 	    <abstract>
 		<simpara>
 		    Each module can provide zero or more parameters, which can affect the module's
-		    behaviour. This section gives a detailed description of structures describing
+		    behavior. This section gives a detailed description of structures describing
 		    exported parameters and passing this information to the core through the module
 		    interface.
 		</simpara>
@@ -230,7 +230,7 @@ typedef struct param_export_ param_export_t;
 		<listitem>
 		    <simpara><varname>char* name</varname></simpara>
 		    <simpara>
-			This is null-terminated name of the parametes as it will be used in the
+			This is null-terminated name of the parameters as it will be used in the
 			scripts. Usually this is the same as the name of the variable holding the
 			value.
 		    </simpara>
@@ -314,7 +314,7 @@ struct module_exports{
     char* name;                     /* null terminated module name */
     cmd_export_t* cmds;             /* null terminated array of the exported commands */
     param_export_t* params;         /* null terminated array of the exported module parameters */
-    init_function init_f;           /* Initilization function */
+    init_function init_f;           /* Initialization function */
     response_function response_f;   /* function used for responses, returns yes or no; can be null */
     destroy_function destroy_f;     /* function called when the module should be "destroyed", e.g: on ser exit; can be null */
     onbreak_function onbreak_f;

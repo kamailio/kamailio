@@ -1,11 +1,11 @@
 /*
- * fast arhitecture specific locking
+ * fast architecture specific locking
  *
  * $Id$
  *
  * 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -107,7 +107,7 @@ inline static int tsl(fl_lock_t* lock)
 			"memory", "cc"
         );
 #else
-#error "unknown arhitecture"
+#error "unknown architecture"
 #endif
 	return val;
 }
@@ -169,7 +169,7 @@ inline static void release_lock(fl_lock_t* lock)
         );
 	*lock = 0;
 #else
-#error "unknown arhitecture"
+#error "unknown architecture"
 #endif
 }
 

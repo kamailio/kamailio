@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -72,7 +72,7 @@ poll_loop: \
 					pf.revents); \
 			goto error; \
 		} \
-		/* if POLLIN or POLLPRI or other non-harmfull events happened,    \
+		/* if POLLIN or POLLPRI or other non-harmful events happened,    \
 		 * continue ( although poll should never signal them since we're  \
 		 * not interested in them => we should never reach this point) */ \
 	} 
@@ -91,7 +91,7 @@ poll_loop: \
 
 
 /* sends on fd (which must be O_NONBLOCK); if it cannot send any data
- * in timeout miliseconds it will return ERROR
+ * in timeout milliseconds it will return ERROR
  * returns: -1 on error, or number of bytes written
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer
@@ -117,7 +117,7 @@ again:
 		buf+=n; 
 		len-=n; 
 	}else{ 
-		/* succesfull full write */ 
+		/* successful full write */ 
 		return written;
 	}
 	TSEND_POLL("tsend_stream");
@@ -128,7 +128,7 @@ error:
 
 
 /* sends on dgram fd (which must be O_NONBLOCK); if it cannot send any data
- * in timeout miliseconds it will return ERROR
+ * in timeout milliseconds it will return ERROR
  * returns: -1 on error, or number of bytes written
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer
@@ -140,7 +140,7 @@ int tsend_dgram(int fd, char* buf, unsigned int len,
 again:
 	n=sendto(fd, buf, len, 0, to, tolen);
 	TSEND_ERR_CHECK("tsend_dgram");
-	/* we don't care about partial writes: they shouln't happen on 
+	/* we don't care about partial writes: they shouldn't happen on 
 	 * a datagram socket */
 	return n;
 	TSEND_POLL("tsend_datagram");
@@ -150,7 +150,7 @@ error:
 
 	
 /* sends on connected datagram fd (which must be O_NONBLOCK); 
- * if it cannot send any data in timeout miliseconds it will return ERROR
+ * if it cannot send any data in timeout milliseconds it will return ERROR
  * returns: -1 on error, or number of bytes written
  *  (if less than len => couldn't send all)
  *  bugs: signals will reset the timer

@@ -112,7 +112,7 @@
 	<section id="parser-init">
 	    <title>Parser Initialization</title>
 	    <para>
-		<acronym>SER</acronym> contains a fast 32-bit parser. The parser uses precalculated hash table that needs to be
+		<acronym>SER</acronym> contains a fast 32-bit parser. The parser uses pre-calculated hash table that needs to be
 		filled in upon startup. The initialization is done here, there are two functions that do the
 		job. Function <function moreinfo="none">init_hfname_parser</function> initializes hash table
 		in header field name parser and function <function moreinfo="none">init_digest_parser</function>
@@ -595,7 +595,7 @@ module_stm = "loadmodule" STRING
 		be called every time a message is processed and that is not necessary.
 	    </para>
 	    <para>
-		Instead of that the length of the string parameter could be precalculated upon server startup, saved
+		Instead of that the length of the string parameter could be pre-calculated upon server startup, saved
 		and reused later. The processing of the request will be faster because 
 		<function moreinfo="none">append_hf</function> doesn't need
 		to call <function moreinfo="none">strlen</function> every time, I can just reuse the saved value.
@@ -2342,7 +2342,7 @@ struct sip_msg {
 		    to lower case first and then compare. Since converting byte by byte would slow down the parser a lot, we
 		    have implemented a hash table, that can again convert 4 bytes at once. Since set of keys that need to be
 		    converted to lowercase is known (the set consists of all possible 4-byte parts of all recognized header
-		    field names) we can precalculate size of the hash table to be synonym-less. That will simplify (and speed
+		    field names) we can pre-calculate size of the hash table to be synonym-less. That will simplify (and speed
 		    up) the lookup a lot. The hash table must be initialized upon the server startup (function
 		    <function moreinfo="none">init_hfname_parser</function>).
 		</para>
@@ -4188,7 +4188,7 @@ typedef struct db_con {
 		<para>
 		    Each cell in a database table can be of a different type. To distinguish
 		    among these types, the <type>db_type_t</type> enumeration is used. Every 
-		    value of the enumeration represents one datatype that is recognized by the 
+		    value of the enumeration represents one data-type that is recognized by the 
 		    database <acronym>API</acronym>. This enumeration is used in conjunction 
 		    with <type>db_type_t</type>. For more information, see the next section.
 		</para>
@@ -4210,7 +4210,7 @@ typedef enum {
 	    <section id="type-db-val">
 		<title>Type <type>db_val_t</type></title>
 		<para>
-		    This structure represents a value in the database. Several datatypes are
+		    This structure represents a value in the database. Several data-types are
 		    recognized and converted by the database <acronym>API</acronym>:
 		    <itemizedlist>
 			<listitem>
@@ -4244,7 +4244,7 @@ typedef enum {
 			    </para>
 			</listitem>
 		    </itemizedlist>
-		    These datatypes are automatically recognized, converted from internal database
+		    These data-types are automatically recognized, converted from internal database
 		    representation and stored in a variable of corresponding type.
 		</para>
 		<programlisting format="linespecific">
@@ -5165,7 +5165,7 @@ int n = RES_ROW_N(res);
 			<para>
 			    <varname>calculate_ha1</varname> - If set to true, auth module assumes that 
 			    <quote>password_column</quote> contains plaintext passwords and ha1 string will be calculated
-			    at runtime. If set to false, "password_column" must contain precalculated ha1 strings.
+			    at runtime. If set to false, "password_column" must contain pre-calculated ha1 strings.
 			</para>
 			<para>
 			    Type: <type>integer</type>
@@ -5983,7 +5983,7 @@ end of body
 			    <varname>wt_timer</varname> - Time for which a transaction stays in memory to absorb
 			    delayed messages after it completed; also, when this
 			    timer hits, retransmission of local cancels is stopped
-			    (a puristic but complex behaviour would be not to enter
+			    (a puristic but complex behavior would be not to enter
 			    wait state until local branches are finished by a final
 			    reply or FR timer -- we simplified)
 			</para>
@@ -6035,9 +6035,9 @@ end of body
 		    <listitem>
 			<para>
 			    <varname>noisy_ctimer</varname> - If set, on FR timer INVITE transactions will be 
-			    explicitly cancelled if possible, silently dropped
+			    explicitly canceled if possible, silently dropped
 			    otherwise; preferably, it is turned off to allow
-			    very long ringing; this behaviour is overridden if
+			    very long ringing; this behavior is overridden if
 			    a request is forked, or some functionality explicitly
 			    turned it off for a transaction (like acc does to avoid
 			    unaccounted transactions due to expired timer).
@@ -6147,7 +6147,7 @@ if (!t_relay()) {
 			    set of command which are usable within reply_routes is
 			    strictly limited to rewriting URI, initiating new branches,
 			    logging, and sending 'unsafe' replies (t_reply_unsafe). Any 
-			    other commands may result in unpredictable behaviour and 
+			    other commands may result in unpredictable behavior and 
 			    possible server failure.
 			    Note that whenever reply_route is entered, uri is reset to
 			    value which it had on relaying. If it temporarily changed
@@ -6584,7 +6584,7 @@ if (t_newtran()) {
 			<para>
 			    <varname>db_mode</varname> - The usrloc module can utilize database for persistent
 			    contact storage. If you use database, your contacts
-			    will survive machine restarts or sw crashes. The
+			    will survive machine restarts or SW crashes. The
 			    disadvantage is that accessing database can be very
 			    time consuming. Therefore, usrloc module implements
 			    three database accessing modes:

@@ -76,7 +76,7 @@ if [ -z "$NAME" ]
 then
 	NAME="unknown"
 	VER="unknown"
-	MAJOR_VER="unkown"
+	MAJOR_VER="unknown"
 fi
 
 

@@ -43,7 +43,7 @@
 			<para>
 			    If you want your voicemail system to support
 			    other codecs, a simple plugin system with
-			    SDK alows you to integrate them fast and
+			    SDK allows you to integrate them fast and
 			    simply (see the basis plugins for examples). 
 			</para>
 	        </listitem>
@@ -58,8 +58,8 @@
 		<listitem>
 		    <para>
 		            The sound conversion engine doesn't
-			    support yet resampling. It means that
-			    input and ouput files have to be
+			    support yet re-sampling. It means that
+			    input and output files have to be
 			    compatible with the sampling rate of the
 			    codec. All codecs included with the
 			    distribution work at 8kHz, which means
@@ -85,7 +85,7 @@
 		<listitem>
 			<para>
 			First, you need to compile Ser with voicemail
-			support. Thatfor, you must edit Ser's
+			support. Therefore, you must edit Ser's
 			Makefile.defs file and uncomment the line with
 			'-DVOICE_MAIL' and '-D_TOTAG'.
 			</para>
@@ -156,7 +156,7 @@
 </section>
 <section>
 
-<title>Availabilty, report bugs, contact the author</title>
+<title>Availability, report bugs, contact the author</title>
 <para>
         Ser's Voicemail's home page is hosted at
 	http://sems.berlios.de. A snapshot may be downloaded directly

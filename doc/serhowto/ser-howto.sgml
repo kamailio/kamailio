@@ -8,7 +8,7 @@
 
 <book>
     <bookinfo>
-	<title>&ser; HowTo</title>
+	<title>&ser; HOWTO</title>
 	<authorgroup>
 	    <author>
 		<firstname>Dan</firstname>
@@ -519,7 +519,7 @@ modparam ("usrloc", "db_mode", 2)
 		</itemizedlist>
 	    </para>
 	    <para>
-		To enable digest authentication we additionaly need to uncomment the following two lines:
+		To enable digest authentication we additionally need to uncomment the following two lines:
 	    </para>
 	    <screen format="linespecific">
 loadmodule "/usr/lib/ser/modules/auth.so"
@@ -580,7 +580,7 @@ if (!www_authorize("mydomain.com", "subscriber")) {
 		<quote>heslo</quote>
 	    </para>
 	    <para>
-		To make JoeUser an administrator, we need to logon to MySQL and modify the database.
+		To make JoeUser an administrator, we need to login to MySQL and modify the database.
 	    </para>
 	    <para>
 		<screen format="linespecific">
@@ -598,7 +598,7 @@ mysql&gt; select * from subscriber;
 		The third from last field shows that Joe has been assigned admin privileges.
 	    </para>
 	    <para>
-		At this point Joe can logon to our server, but since he is the only user, there is
+		At this point Joe can login to our server, but since he is the only user, there is
 		not much he can do. We can now add additional users using the serctl script, or now
 		is a good time to look at installing serweb, which will allow users to subscribe to
 		our service.
@@ -631,12 +631,12 @@ usage:
            * usrloc *
  ul show [&lt;username&gt;]................ show in-RAM online users
  ul rm &lt;username&gt; ................... delete user's UsrLoc entries
- ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UrLoc entry
+ ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UsrLoc entry
  showdb [&lt;username&gt;] ................ show online users flushed in DB
 
 		   * control and diagnostic *
  moni ... show internal status     start .... start ser
- ps ..... show runnig processes    stop ..... stop ser
+ ps ..... show running processes    stop ..... stop ser
  fifo ... send raw FIFO commands   restart .. restart ser
  ping &lt;uri&gt; .. ping a URI (OPTIONS)
  cisco_restart &lt;uri&gt; .. restart a Cisco phone (NOTIFY)
@@ -952,7 +952,7 @@ $this->mail_header_from=<quote>Registration@ mydomain.com</quote>;
 		Some &sip; client providers are building in options into their products that allow the
 		user to identify the &ip; address that their phone will appear as to the public.  This
 		is a nice simple approach, but presumes that the person installing the client knows
-		what that IP address is, and that it doesn?t change.  Cisco has built this feature
+		what that IP address is, and that it doesn't change.  Cisco has built this feature
 		into their 79XX series &sip; phones.
 	    </para>
 	    <para>
@@ -1091,7 +1091,7 @@ ngrep  -n 5060 -d eth0 joe
 			</listitem>
 			<listitem>
 			    <para>
-				SIPmacaddress.cnf - Phone specific settings, including logon name
+				SIPmacaddress.cnf - Phone specific settings, including login name
 				and password.  Example: SIP000A8A93D466.cnf
 			    </para>
 			</listitem>
@@ -1105,7 +1105,7 @@ ngrep  -n 5060 -d eth0 joe
 		<para>
 		    Each time the phone is powered on it will tftp download OS79XX and determine if
 		    it needs a firmware update.  If no update is needed the next step is to download
-		    SIPDefault.cnf, SIPmacaddress.cnf, and optionally a dialplan, ringlist and ring
+		    SIPDefault.cnf, SIPmacaddress.cnf, and optionally a dial plan, ringlist and ring
 		    tones.
 		</para>
 		<para>

@@ -1,7 +1,7 @@
 /*
  *  $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -78,7 +78,7 @@ int forward_reply( struct sip_msg* msg);
  *  to = destination,
  *  id - only used on tcp, it will force sending on connection "id" if id!=0 
  *       and the connection exists, else it will send to "to" 
- *       (usefull for sending replies on  the same connection as the request
+ *       (useful for sending replies on  the same connection as the request
  *       that generated them; use 0 if you don't want this)
  * returns: 0 if ok, -1 on error*/
 static inline int msg_send(	struct socket_info* send_sock, int proto,

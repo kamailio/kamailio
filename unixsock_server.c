@@ -3,7 +3,7 @@
  *
  * UNIX Domain Socket Server
  *
- * Copyright (C) 2001-2004 Fhg Fokus
+ * Copyright (C) 2001-2004 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -57,7 +57,7 @@
 
 char* unixsock_name = 0;
 int unixsock_children = 1;
-int unixsock_tx_timeout = 2000; /* Timeout for sending replies in miliseconds */
+int unixsock_tx_timeout = 2000; /* Timeout for sending replies in milliseconds */
 
 
 static int rx_sock, tx_sock;
@@ -614,7 +614,7 @@ int init_unixsock_children(void)
 
 	}
 
-	DBG("init_unixsock_server: Unix domain socket server sucessfully initialized @ %s\n",
+	DBG("init_unixsock_server: Unix domain socket server successfully initialized @ %s\n",
 	    unixsock_name);
 	return 1;
 }

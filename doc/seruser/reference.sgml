@@ -3,7 +3,7 @@
 	<section id="coreoptions">
 	    <title>Core Options</title>
 	    <para>Core options are located in beginning of configuration file and
-	    affect behaviour of the server.</para>
+	    affect behavior of the server.</para>
 	    <itemizedlist>
 		<listitem>
 		    <para>
@@ -595,7 +595,7 @@ if (len_gt(1024)) {
 		<listitem>
 		    <para>
 			<emphasis>-l address</emphasis> - Listens on the specified address. Multiple -l mean listening 
-			on multiple addresses. The default behaviour is to listen on all the ipv4 interfaces.
+			on multiple addresses. The default behavior is to listen on all the ipv4 interfaces.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1067,7 +1067,7 @@ if (len_gt(1024)) {
 				RegExp, Substitute
 			    </entry>
 			    <entry>
-				find the first occurence of a string matching the regular 
+				find the first occurrence of a string matching the regular 
 				expression in header or body and replace it with a substitute
 			    </entry>
 			</row>
@@ -1082,7 +1082,7 @@ if (len_gt(1024)) {
 				RegExp, Substitute
 			    </entry>
 			    <entry>
-				find all occurences of a string matching the regular 
+				find all occurrences of a string matching the regular 
 				expression in header or body and replace it with a substitute
 			    </entry>
 			</row>
@@ -1284,7 +1284,7 @@ if (len_gt(1024)) {
 			    <entry>t_uac_dlg</entry>
 			    <entry>tm</entry>
 			    <entry>method, request URI, outbound URI (if none, empty line with a single dot),
-					dot-line-terminated header fields, optionaly dot-line terminated message
+					dot-line-terminated header fields, optionally dot-line terminated message
 					body. 
 				</entry>
 					

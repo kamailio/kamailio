@@ -10,7 +10,7 @@
  *   the variable part varies because it depends on 
  *   via
  *   
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -54,7 +54,7 @@
 
 /* generate variable part of to-tag for a request;
  * it will have length of CRC16_LEN, sufficiently
- * long buffer must be passed to the fucntion */
+ * long buffer must be passed to the function */
 static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 {
 	int ss_nr;

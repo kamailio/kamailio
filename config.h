@@ -1,7 +1,7 @@
 /*
  *  $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -155,7 +155,7 @@
 /* max length of the text of fifo 'print' command */
 #define MAX_PRINT_TEXT 256
 
-/* maximum length of Contact heder field in redirection replies */
+/* maximum length of Contact header field in redirection replies */
 #define MAX_REDIRECTION_LEN 512
 
 /* used by FIFO statistics in module to terminate line;

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -135,7 +135,7 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
 
 typedef struct db_func {
 	db_use_table_f   use_table;    /* Specify table name */
-	db_init_f        init;         /* Initialize dabase connection */
+	db_init_f        init;         /* Initialize database connection */
 	db_close_f       close;        /* Close database connection */
 	db_query_f       query;        /* query a table */
 	db_raw_query_f   raw_query;    /* Raw query - SQL */

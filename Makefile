@@ -47,7 +47,7 @@ exclude_modules?= 			cpl ext extcmd \
 							postgres snmp \
 							im \
 							jabber \
-							cpl-c pa \
+							cpl-c \
 							auth_radius group_radius uri_radius 
 # always exclude the CVS dir
 override exclude_modules+= CVS $(skip_modules)

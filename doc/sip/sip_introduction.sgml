@@ -65,7 +65,7 @@
 	    </simpara>
 	    <simpara>
 		&sip; has been designed in conformance with the Internet model. It is an end-to-end
-		oriented signalling protocol which means, that all the logic is stored in end
+		oriented signaling protocol which means, that all the logic is stored in end
 		devices (except routing of &sip; messages). State is also stored in end-devices
 		only, there is no single point of failure and networks designed this way scale
 		well. The price that we have to pay for the distributiveness and scalability is
@@ -84,7 +84,7 @@
 		&sip; is based on &http; protocol. The &http; protocol inherited format of message
 		headers from &rfc822;. &http; is probably the most successful and widely used
 		protocol in the Internet. It tries to combine the best of the both. In fact, &http;
-		can be classified as a signalling protocol too, because user agents use the protocol
+		can be classified as a signaling protocol too, because user agents use the protocol
 		to tell a &http; server in which documents they are interested in. &sip; is used to
 		carry the description of session parameters, the description is encoded into a
 		document using &sdp;. Both protocols (&http; and &sip;) have inherited encoding of
@@ -129,7 +129,7 @@
 		    <acronym>IVR</acronym> systems and so on.
 		</simpara>
 		<simpara>
-		    User agents are often reffered to as <emphasis>User Agent Server</emphasis>
+		    User agents are often referred to as <emphasis>User Agent Server</emphasis>
 		    (&uas;) and <emphasis>User Agent Client</emphasis> (&uac;). &uas; and &uac; are
 		    logical entities only, each user agent contains a &uac; and &uas;. &uac; is the
 		    part of the user agent that sends requests and receives responses. &uas; is the
@@ -275,7 +275,7 @@
 			outbound traffic to the company &sip; proxy server proxy.a.com. The proxy
 			server figures out that user sip:bob@b.com is in a different company so it
 			will look up B's &sip; proxy server and send the invitation there. B's proxy
-			server can be either preconfigured at proxy.a.com or the proxy will use
+			server can be either pre-configured at proxy.a.com or the proxy will use
 			<acronym>DNS SRV</acronym> records to find B's proxy server. The invitation
 			reaches proxy.bo.com. The proxy knows that Bob is currently sitting in his
 			office and is reachable through phone on his desk, which has &ip; address
@@ -363,7 +363,7 @@
 	<section id="sec-sip-messages">
 	    <title>&sip; Messages</title>
 	    <simpara>
-		Communication using &sip; (often called signalling) comprises of series of
+		Communication using &sip; (often called signaling) comprises of series of
 		<emphasis>messages</emphasis>. Messages can be transported independently by the
 		network. Usually they are transported in a separate &udp; datagram each. Each
 		message consist of <quote>first line</quote>, message header, and message body. The
@@ -440,7 +440,7 @@ a=fmtp:101 0-16
 		messages so that recipient can identify retransmissions and out of order requests.
 	    </simpara>
 	    <simpara>
-		Contact header field contains &ip; aaddress and port on which the sender is awaiting
+		Contact header field contains &ip; address and port on which the sender is awaiting
 		further requests sent by callee. Other header fields are not important and will be
 		not described here.
 	    </simpara>
@@ -961,7 +961,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 			&rfc2643; rewrote the Request-URI. That means the Request-URI always
 			contained &uri; of the next hop (which can be either next proxy server which
 			inserted Record-Route header field or destination user agent). Because of
-			that it was necesarry to save the original Request-URI as the last Route
+			that it was necessary to save the original Request-URI as the last Route
 			header field. This approach is called <emphasis>strict routing</emphasis>.
 		    </simpara>
 		    <simpara>
@@ -975,7 +975,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 		    </simpara>
 		    <simpara>
 			Because transit from strict routing to loose routing would break backwards
-			compatibility and older user agents wouldn't work, it is necesarry to make
+			compatibility and older user agents wouldn't work, it is necessary to make
 			loose routing backwards compatible. The backwards compatibility
 			unfortunately adds a lot of overhead and is often source of major problems.
 		    </simpara>

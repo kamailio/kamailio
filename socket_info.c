@@ -2,7 +2,7 @@
  *
  * find & manage listen addresses 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -421,7 +421,7 @@ static int fix_socket_list(struct socket_info **list)
 							si->port_no, si->proto)<0){
 				LOG(L_ERR, "ERROR: fix_socket_list: add_alias failed\n");
 			}
-			/* change the oficial name */
+			/* change the official name */
 			pkg_free(si->name.s);
 			si->name.s=(char*)pkg_malloc(strlen(he->h_name)+1);
 			if (si->name.s==0){
@@ -452,7 +452,7 @@ static int fix_socket_list(struct socket_info **list)
 								si->address_str.len)==0)
 			){
 				si->flags|=SI_IS_IP;
-				/* do rev. dns on it (for aliases)*/
+				/* do rev. DNS on it (for aliases)*/
 				he=rev_resolvehost(&si->address);
 				if (he==0){
 					LOG(L_WARN, "WARNING: fix_socket_list:"

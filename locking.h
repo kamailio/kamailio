@@ -1,7 +1,7 @@
 /* $Id$ */
 /*
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -32,7 +32,7 @@
  *  2003-02-20  s/gen_lock_t/gen_lock_t/ to avoid a type conflict 
  *               on solaris  (andrei)
  *  2003-03-05  lock set support added for FAST_LOCK & SYSV (andrei)
- *  2003-03-06  splited in two: lock_ops.h & lock_alloc.h, to avoid
+ *  2003-03-06  split in two: lock_ops.h & lock_alloc.h, to avoid
  *               shm_mem.h<->locking.h interdependency (andrei)
  *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
  *              on darwin (andrei)

@@ -4,7 +4,7 @@
  *
  * ip address & address family related functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -119,7 +119,7 @@ void print_ip(char* p, struct ip_addr* ip, char *s)
 				);
 			break;
 		default:
-			DBG("print_ip: warning unknown adress family %d\n", ip->af);
+			DBG("print_ip: warning unknown address family %d\n", ip->af);
 	}
 }
 
@@ -146,7 +146,7 @@ void stdout_print_ip(struct ip_addr* ip)
 				);
 			break;
 		default:
-			DBG("print_ip: warning unknown adress family %d\n", ip->af);
+			DBG("print_ip: warning unknown address family %d\n", ip->af);
 	}
 }
 

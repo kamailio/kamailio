@@ -1,7 +1,7 @@
 /* $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -28,7 +28,7 @@
  * --------
  *  2003-01-19  support for duplication lump lists added (jiri)
  *  2003-03-31  added subst lumps --they expand in ip addr, port a.s.o (andrei)
- *  2003-04-01  added conditional lump suport functions (andrei)
+ *  2003-04-01  added conditional lump support functions (andrei)
  *  2003-10-20  anchor_lump & del_lump will automatically choose the lump list
  *              based on  msg->eoh comparisons (andrei)
  *  2003-10-28  added extra checks (paranoia) for {anchor,del}_lump (andrei)
@@ -257,7 +257,7 @@ struct lump* insert_cond_lump_before(	struct lump* before,
 
 
 /* removes an already existing header/data lump */
-/* WARNING: thist function adds the lump either to the msg->add_rm or
+/* WARNING: this function adds the lump either to the msg->add_rm or
  * msg->body_lumps list, depending on the offset being greater than msg->eoh,
  * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
  *  might affect the body!! */
@@ -313,7 +313,7 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type)
 
 
 /* add an anchor
- * WARNING: thist function adds the lump either to the msg->add_rm or
+ * WARNING: this function adds the lump either to the msg->add_rm or
  * msg->body_lumps list, depending on the offset being greater than msg->eoh,
  * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
  *  might affect the body!! */
@@ -513,7 +513,7 @@ void free_duped_lump_list(struct lump* l)
 			foo=r; r=r->before;
 			/* (+): if a new item was introduced to the shallow-ly
 			 * duped list, remove it completely, preserve it
-			 * othewise (it is still refered by original list)
+			 * otherwise (it is still referred by original list)
 			 */
 			if (foo->flags!=LUMPFLAG_DUPED) 
 					free_lump(foo);

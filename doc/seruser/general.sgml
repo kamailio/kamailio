@@ -20,7 +20,7 @@
 		In this way, plug-ins such as RADIUS accounting,
 		SMS gateway, ENUM queries, or presence agent have already been developed and are provided as 
 		advanced features. Other modules are underway: 
-		firewall control, postgress and LDAP database drivers and more.
+		firewall control, postgres and LDAP database drivers and more.
 	    </para>
 	    <para>
 		Its performance and robustness allows it to serve millions of users 
@@ -317,7 +317,7 @@
 		</para>
 
 	    <para>
-		Additionaly, help may be obtained from our user forum. The community
+		Additionally, help may be obtained from our user forum. The community
 		of <application>SER</application> users is subscribed to the
 		serusers@iptel.org mailing list and discusses issues related to
 		<application>SER</application> operation.

@@ -31,12 +31,12 @@ usage:
            * usrloc *
  serctl ul show [&lt;username&gt;]................ show in-RAM online users
  serctl ul rm &lt;username&gt; ................... delete user's UsrLoc entries
- serctl ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UrLoc entry
+ serctl ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UsrLoc entry
  serctl showdb [&lt;username&gt;] ................ show online users flushed in DB
 
            * server health *
  serctl monitor ............................ show internal status
- serctl ps ................................. show runnig processes 
+ serctl ps ................................. show running processes 
  serctl fifo ............................... send raw commands to FIFO
 
    Commands labeled with (*) will prompt for a MySQL password.

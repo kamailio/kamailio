@@ -20,10 +20,10 @@
 		    <simpara>
 			Fast inline assembly locks, defined in <filename
 			moreinfo="none">fast_lock.h</filename>. They are currently available for
-			x86, sparc64, strongarm (amv4l) and ppc (external untested contributed
+			x86, sparc64, strong-arm (amv4l) and ppc (external untested contributed
 			code). In general if the assembly code exists for a given architecture and
 			the compiler knows inline assembly (for example sun cc does not) FAST_LOCK
-			is prefered. The main advantage of using FAST_LOCK is very low memory
+			is preferred. The main advantage of using FAST_LOCK is very low memory
 			overhead and extremely fast lock/unlock operations (like 20 times faster
 			then SYSV semaphores on linux & 40 times on solaris). The only thing that
 			comes close to them are pthread mutexes (which are about 3-4 times slower).
@@ -42,7 +42,7 @@
 			Uses posix semaphores (<function
 			moreinfo="none">sem_wait</function>/<function
 			moreinfo="none">sem_post</function>). They are slower then the previous
-			methods but still way faster then SYSV sempahores. Unfortunately they also
+			methods but still way faster then SYSV semaphores. Unfortunately they also
 			do not work on all the systems (e.g. linux).
 		    </simpara>
 		</listitem>
@@ -50,7 +50,7 @@
 		    <simpara><emphasis>SYSV_SEM</emphasis></simpara>
 		    <simpara>
 			This is the most portable but also the slowest locking method. Another
-			problem is that the number of semaphores that can be alocated by a process
+			problem is that the number of semaphores that can be allocated by a process
 			is limited. One also has to free them before exiting.
 		    </simpara>
 		</listitem>
@@ -140,7 +140,7 @@ if (lock_init(&amp;bar->lock)==0){
 		    free the lock shared memory part. Think of sysv <command
 		    moreinfo="none">rmid</command>.  Please don't forget to call this function, or
 		    you can leave allocated resources in some cases (e.g sysv semaphores). Be
-		    carefull to call it in your module destroy function if you use any global module
+		    careful to call it in your module destroy function if you use any global module
 		    locks.
 		</simpara>
 		<simpara>

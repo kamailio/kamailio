@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -210,9 +210,9 @@ Options:\n\
     -c           Check configuration file for errors\n\
     -p port      Listen on the specified port (default: 5060)\n\
                   applies to the last address in -l and to all \n\
-                  following that do not have a corespponding -p\n\
+                  following that do not have a corresponding -p\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
-                  mean listening on more addresses). The default behaviour\n\
+                  mean listening on more addresses). The default behavior\n\
                   is to listen on all the interfaces\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n\
@@ -239,7 +239,7 @@ Options:\n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
     -G file      Create a pgid file\n\
-    -i fifo_path Create a fifo (usefull for monitoring " NAME ") \n\
+    -i fifo_path Create a fifo (useful for monitoring " NAME ") \n\
     -x socket    Create a unix domain socket \n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
@@ -263,7 +263,7 @@ void print_ct_constants()
 		BUF_SIZE );
 }
 
-/* debuging function */
+/* debugging function */
 /*
 void receive_stdin_loop()
 {
@@ -286,7 +286,7 @@ int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
 					 to use kill(0, sig) */
 char* cfg_file = 0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
-												  not want to exceed durig the
+												  not want to exceed during the
 												  auto-probing procedure; may 
 												  be re-configured */
 int children_no = 0;			/* number of children processing requests */
@@ -297,7 +297,7 @@ int tcp_disable = 0; /* 1 if tcp is disabled */
 #ifdef USE_TLS
 int tls_disable = 0; /* 1 if tls is disabled */
 #endif
-struct process_table *pt=0;		/*array with childrens pids, 0= main proc,
+struct process_table *pt=0;		/*array with children pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
 int sig_flag = 0;              /* last signal received */
 int debug = L_NOTICE;
@@ -415,7 +415,7 @@ char* pid_file = 0; /* filename as asked by use */
 char* pgid_file = 0;
 
 
-/* callit before exiting; if show_status==1, mem status is displayed */
+/* call it before exiting; if show_status==1, mem status is displayed */
 void cleanup(show_status)
 {
 	/*clean-up*/
@@ -742,7 +742,7 @@ int main_loop()
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
 		}
-		/* intialize fifo server -- we need to open the fifo before
+		/* initialize fifo server -- we need to open the fifo before
 		 * do_suid() and start the fifo server after all the socket 
 		 * are initialized, to inherit them*/
 		if (init_fifo_server()<0) {
@@ -754,7 +754,7 @@ int main_loop()
 			LOG(L_ERR, "Error while creating unix domain sockets\n");
 			goto error;
 		}
-		if (do_suid()==-1) goto error; /* try to drop priviledges */
+		if (do_suid()==-1) goto error; /* try to drop privileges */
 		/* process_no now initialized to zero -- increase from now on
 		   as new processes are forked (while skipping 0 reserved for main 
 		*/
@@ -789,13 +789,13 @@ int main_loop()
 						timer_ticker();
 					}
 				}else{
-						pt[process_no].pid=pid; /*should be shared mem anway*/
+						pt[process_no].pid=pid; /*should be shared mem anyway*/
 						strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 				}
 		}
 
 		/* if configured, start a server for accepting FIFO commands,
-		 * we need to do it after all the sockets are intialized, to 
+		 * we need to do it after all the sockets are initialized, to 
 		 * inherit them*/
 		if (start_fifo_server()<0) {
 			LOG(L_ERR, "starting fifo server failed\n");
@@ -880,7 +880,7 @@ int main_loop()
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
-		/* intialize fifo server -- we need to open the fifo before
+		/* initialize fifo server -- we need to open the fifo before
 		 * do_suid() and start the fifo server after all the socket 
 		 * are initialized, to inherit them*/
 		if (init_fifo_server()<0) {
@@ -894,12 +894,12 @@ int main_loop()
 			goto error;
 		}
 
-			/* all procs should have access to all the sockets (for sending)
+			/* all processes should have access to all the sockets (for sending)
 			 * so we open all first*/
-		if (do_suid()==-1) goto error; /* try to drop priviledges */
+		if (do_suid()==-1) goto error; /* try to drop privileges */
 
 		/* if configured, start a server for accepting FIFO commands,
-		 * we need to do it after all the sockets are intialized, to 
+		 * we need to do it after all the sockets are initialized, to 
 		 * inherit them*/
 		if (start_fifo_server()<0) {
 			LOG(L_ERR, "starting fifo server failed\n");
@@ -1006,7 +1006,7 @@ int main_loop()
 			}
 			
 			for(;;){
-				/* debug:  instead of doing something usefull */
+				/* debug:  instead of doing something useful */
 				/* (placeholder for timers, etc.) */
 				sleep(TIMER_TICK);
 				/* if we received a signal => TIMER_TICK may have not elapsed*/
@@ -1384,7 +1384,7 @@ try_again:
 		}
 	}
 	if (fix_all_socket_lists()!=0){
-		fprintf(stderr,  "failed to initialize liste addresses\n");
+		fprintf(stderr,  "failed to initialize list addresses\n");
 		goto error;
 	}
 	/* print all the listen addresses */

@@ -3,7 +3,7 @@
  *
  * - various general purpose functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -303,9 +303,9 @@ inline static int hex2int(char hex_digit)
    shorter (if escaped characters occur) or same-long
    as the original one).
 
-   only printeable characters are permitted
+   only printable characters are permitted
 
-	<0 is returned on an uneascaping error, length of the
+	<0 is returned on an unescaping error, length of the
 	unescaped string otherwise
 */
 inline static int un_escape(str *user, str *new_user ) 

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -56,7 +56,7 @@ struct usr_avp {
 int add_avp( unsigned short flags, int_str name, int_str val);
 
 
-/* seach functions */
+/* search functions */
 struct usr_avp *search_first_avp( unsigned short name_type, int_str name,
 															int_str *val );
 struct usr_avp *search_next_avp( struct usr_avp *avp, int_str *val  );

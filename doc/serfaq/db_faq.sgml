@@ -61,7 +61,7 @@
 	    <answer>
 		<simpara>
 		    Many modules need the database. Authentication modules retrieve users'
-		    crecentials from the database, user location module can be configured to store
+		    credentials from the database, user location module can be configured to store
 		    registered bindings into the database, accounting module can use database to
 		    store CDR and so on.
 		</simpara>
@@ -93,7 +93,7 @@
 		    well with this database.
 		</simpara>
 		<simpara>
-		    Another option is postgres support which was donated by Greg Faustak. The module
+		    Another option is postgres support which was donated by Greg Fausak. The module
 		    still new and not that mature (read proven) yet. People using the module
 		    reported that it worked well.
 		</simpara>
@@ -101,7 +101,7 @@
 		    Last option is dbtext module which uses plaintext files to store the data. This
 		    module is somewhat experimental and shouldn't be used for any serious
 		    deployment. The module is quite slow, but it can fit well into small
-		    instalations containing only a couple of users or demos where you need to change
+		    installations containing only a couple of users or demos where you need to change
 		    the content of the database often by hand.
 		</simpara>
 	    </answer>

@@ -1,7 +1,7 @@
 /* 
  *$Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -103,7 +103,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	msg->buf=buf;
 	msg->len=len;
 	/* zero termination (termination of orig message bellow not that
-	   useful as most of the work is done with scrath-pad; -jiri  */
+	   useful as most of the work is done with scratch-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg->rcv=*rcv_info;
 	msg->id=msg_no;
@@ -127,7 +127,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
 			goto error;
 		}
-		/* check if neccesarry to add receive?->moved to forward_req */
+		/* check if necessary to add receive?->moved to forward_req */
 		/* check for the alias stuff */
 #ifdef USE_TCP
 		if (msg->via1->alias && tcp_accept_aliases && 
@@ -173,7 +173,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
 		stats->processed_requests++;
 		stats->acc_req_time += diff;
-		DBG("succesfully ran routing scripts...(%d usec)\n", diff);
+		DBG("successfully ran routing scripts...(%d usec)\n", diff);
 		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
 #endif
 	}else if (msg->first_line.type==SIP_REPLY){
@@ -218,7 +218,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
 		stats->processed_responses++;
 		stats->acc_res_time+=diff;
-		DBG("succesfully ran reply processing...(%d usec)\n", diff);
+		DBG("successfully ran reply processing...(%d usec)\n", diff);
 #endif
 	}
 end:

@@ -126,7 +126,7 @@ if (uri=~"^sip:jiri@") {
 		<para>
 		    This example shows how to display caller's address
 		    in email notification. The trick is easy: process
-		    request received on shell programm's input
+		    request received on shell program's input
 		    and grep From header field.
 		</para>
 		<programlisting format="linespecific">
@@ -246,7 +246,7 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		<title>Adding Stateful Processing</title>
 		<para>
 		    The previously improved example still features a shortcoming.
-		    When a message retransmission arrives due to a nework
+		    When a message retransmission arrives due to a network
 		    mistake such as lost reply, the email notification is
 		    executed again and again. That happens because the script
 		    is stateless, i.e., no track of current transactions is
@@ -261,7 +261,7 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    a reply is sent statefully.
 		    <note>
 			<para>
-			    Note carefuly: it is important that the stateful
+			    Note carefully: it is important that the stateful
 			    reply processing (<command moreinfo="none">t_reply</command>)
 			    is used as opposed to using stateless replies
 			    (<command moreinfo="none">sl_send_reply</command>).
@@ -307,7 +307,7 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    is used for. It does not matter what caused the transaction
 		    to fail -- it may be unresponsive downstream server,
 		    server responding with 6xx, or server sending a 487
-		    reply, because an INVITE was cancelled. When any such
+		    reply, because an INVITE was canceled. When any such
 		    circumstances occur (i.e., transaction does not complete
 		    with a 2xx status code), <command moreinfo="none">failure_route</command>
 		    is entered.
@@ -481,7 +481,7 @@ print
 # call this script to send an instant message; script parameters
 # will be displayed in message body
 #
-# paremeters mean: message type, request-URI, outbound server is
+# parameters mean: message type, request-URI, outbound server is
 # left blank ("."), required header fields From and To follow,
 # then optional header fields terminated by dot and optional
 # dot-terminated body
@@ -517,7 +517,7 @@ EOF
 		    The web interface needs to have the ability to upload new user's
 		    contacts to <application moreinfo="none">ser</application>.
 		    This is what the <command moreinfo="none">ul_add</command> FIFO
-		    command is good for. Paremeterized by user's name, table name,
+		    command is good for. Parameterized by user's name, table name,
 		    expiration time and weight, it allows external applications to
 		    introduce new contacts to server's in-memory user location table.
 		</para>
@@ -618,11 +618,11 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 		<para>
 		    There are basically two ways how to build such a feature:
 		    distributed and centralized. We prefer the distributed
-		    approach since it is very robust and leight-weighted.
+		    approach since it is very robust and light-weighted.
 		    The "click-to-dial" application just needs to instruct
 		    the calling user to call a destination and that's it.
 		    (That's done using "REFER" method.)
-		    Then, the calling user takes over whereas the initating
+		    Then, the calling user takes over whereas the initiating
 		    application disappears from signaling and
 		    is no longer involved in subsequent communication. Which
 		    is good because such a simple design scales well. 
@@ -668,9 +668,9 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 				<note>
 					<para>
 						The wrapper INVITE may or may not be used
-						in future. The internet draft
+						in future. The Internet draft
 						draft-ietf-sipping-service-examples
-						mentiones the click-to-dial application
+						mentions the click-to-dial application
 						without use of the dummy INVITE. As of
 						today, most telephones do need it.
 					</para>

@@ -159,7 +159,7 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells: pid=31604 req_src_ip=153.96.1
 				    <para>
 					Server's process id. That is useful for
 					debugging to discover situations when
-					mutliple servers listen at the same
+					multiple servers listen at the same
 					address.
 				    </para>
 				</listitem>
@@ -347,7 +347,7 @@ warning: IP extract from warning activated to be more informational
 			    <application>ser</application> by default logs
 			    to <application>syslog</application> facility.
 			    It is very useful to watch log messages for
-			    abnormal behaviour. Log messages, subject to
+			    abnormal behavior. Log messages, subject to
 			    <application>syslog</application> configuration
 			    may be stored at different files, or even at remote
 			    systems. A typical location of the log file is
@@ -377,7 +377,7 @@ warning: IP extract from warning activated to be more informational
 				</listitem>
 				<listitem>
 				    <para>
-					Set explicitely at which address 
+					Set explicitly at which address 
 					<application moreinfo="none">ser</application>
 					should be listening, e.g., <varname>listen=192.168.2.16</varname>.
 				    </para>
@@ -607,7 +607,7 @@ sip:666@gateway.foo.bar
 			<para>
 			    Frequently, it is desirable for a user to have multiple
 			    addresses in a domain. For example, a user with username "john.doe" wants to be
-			    reachable at a shorter address "john" or at a nummerical address
+			    reachable at a shorter address "john" or at a numerical address
 			    "12335", so that PSTN callers with digits-only key-pad can reach
 			    him too.
 			</para>
@@ -668,7 +668,7 @@ sip:john.doe@foo.bar
 			    </screen>
 			</para>
 			<para>
-			    Note that persitence needs to be turned on in usrloc
+			    Note that persistence needs to be turned on in usrloc
 			    module. All changes to aliases will be otherwise lost
 			    on server reboot. To enable persistence, set the
 			    db_mode usrloc parameter to a non-zero value.
@@ -778,7 +778,7 @@ MySql Password:
 			</para>
 			<para>
 			    To enable call accounting, tm and acc modules need to be loaded,
-			    requests need to be processed statefuly and labeled for
+			    requests need to be processed statefully and labeled for
 			    accounting. That means, if you want a transaction to be reported,
 				the initial request must have taken the path 
 				"<command>setflag(X)</command>, <command>t_relay</command>"
@@ -789,7 +789,7 @@ MySql Password:
 			<para>
 				Also note, that by default only transactions that initiate
 				a SIP dialog (typically INVITE) visit a proxy server.
-				Subsequent transactions are exhanged directly between
+				Subsequent transactions are exchanged directly between
 				end-devices, do not visit proxy server and cannot be
 				reported. To be able to report on subsequent transactions,
 				you need to force them visit proxy server by turning 
@@ -935,7 +935,7 @@ MySql Password:
 					<emphasis>Forwarding Services</emphasis>. All sort of services 
 					with the "forward_on_event" logic, which rely on 
 					<command moreinfo="none">t_on_failure</command> tm
-					action must be processed statefuly.
+					action must be processed statefully.
 				    </para>
 				</listitem>
 			<listitem>
@@ -953,8 +953,8 @@ MySql Password:
 				    <para>
 					Positive return value of stateless
 					<command moreinfo="none">forward</command> action only indicates that
-					a request was successfuly sent out, and does not gain any knowledge
-					about whether it was successfuly received or replied. Neither does
+					a request was successfully sent out, and does not gain any knowledge
+					about whether it was successfully received or replied. Neither does
 					the return value of
 					the stateful <command moreinfo="none">t_relay</command> action family
 					gain you this knowledge. However, these actions store transactional
@@ -1055,7 +1055,7 @@ modparam("acc", "log_missed_flag", 3 );
 if (!lookup("location")) {
      # call invitations to off-line users are reported using the
      # acc_request action; to avoid duplicate reports on request
-     # retransmissions, request is processed statefuly (t_newtran,
+     # retransmissions, request is processed statefully (t_newtran,
      # t_reply)
      if ((method=="INVITE" || method=="ACK") && t_newtran() ) {
           t_reply("404", "Not Found");
@@ -1088,14 +1088,14 @@ if (!lookup("location")) {
 		    and save money charged for IP addresses. Unfortunately, they
 		    translate addresses in a way which is not compatible with SIP.
 		    SIP advertises receiver addresses in its payload. The advertised
-		    addresses are invalid out of NATted networks. As a result,
-		    SIP communication does not work accross NATs without extra
+		    addresses are invalid out of NATed networks. As a result,
+		    SIP communication does not work across NATs without extra
 		    effort.
 		</para>
 		<para>
 		    There are few methods that may be deployed to traverse NATs.
 		    How proper their use is depends on the deployment scenario.
-		    Unfortunatelly, all the methods have some limitations and
+		    Unfortunately, all the methods have some limitations and
 		    there is no straight-forward solution addressing all
 		    scenarios. Note that none of these methods takes explicit
 		    support in <application moreinfo="none">ser</application>.
@@ -1171,9 +1171,9 @@ if (!lookup("location")) {
 		<title>Authentication Policy: Prevention of Unauthorized Domain 
 		    Name Use in From and More</title>
 		<para>
-		    Malicous users can claim a name of domain, to which they do 
+		    Malicious users can claim a name of domain, to which they do 
 		    not administratively belong, in From header field. This
-		    behaviour cannot be generally prevented. The reason is
+		    behavior cannot be generally prevented. The reason is
 		    that requests with such a faked header field do not need
 		    to visit servers of the domain in question. However, if they
 		    do so, it is desirable to assure that users claiming
@@ -1184,7 +1184,7 @@ if (!lookup("location")) {
 		    the proxy server.
 		</para>
 		<para>
-		    Preventing unathorized domain name use in relayed requests 
+		    Preventing unauthorized domain name use in relayed requests 
 		    is not difficult.
 		    One needs to authenticate each request with name of the
 		    served domain in From header field. To do so, one can
@@ -1271,7 +1271,7 @@ if (to me):
 		    is guarding PSTN gateways (see <xref linkend="acl">). There
 		    may be destinations that are given away for free whereas
 		    other destinations may require access control using
-		    group membership, to which  authentication is a prerequisity.
+		    group membership, to which  authentication is a prerequisite.
 		</para>
 
 	    </section> <!-- authentication policy, faked froms -->
@@ -1332,7 +1332,7 @@ if (to me):
 	    <para>
 		This section gathers practices how to deal with errors
 		known to occur frequently. To understand how to watch
-		SIP messages, server logs, and in genereal how to
+		SIP messages, server logs, and in general how to
 		troubleshoot, read also <xref linkend="operationalpractices">. 
 	    </para>
 	    <qandaset>
