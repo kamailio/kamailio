@@ -44,6 +44,7 @@ f none doc/ser/README.cfg 0644 bin bin
 f none doc/ser/INSTALL 0644 bin bin
 f none doc/ser/README-MODULES 0644 bin bin
 f none doc/ser/AUTHORS 0644 bin bin
+f none doc/ser/NEWS    0644 bin bin
 f none doc/ser/README.acc 0644 bin bin
 f none doc/ser/README.auth 0644 bin bin
 f none doc/ser/README.auth_db 0644 bin bin

@@ -133,6 +133,7 @@ fi
 %defattr(-,root,root)
 %dir %{_docdir}/ser
 %doc %{_docdir}/ser/AUTHORS
+%doc %{_docdir}/ser/NEWS
 %doc %{_docdir}/ser/INSTALL
 %doc %{_docdir}/ser/README
 %doc %{_docdir}/ser/README-MODULES
@@ -192,6 +193,7 @@ fi
 %{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
 %{_libdir}/ser/modules/vm.so
+%{_libdir}/ser/modules/xlog.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
@@ -231,6 +233,7 @@ fi
 - changed vesion to 0.8.11
 - gen_ha1 isn now left in _sbindir
 - removed harv_ser.sh
+- added xlog to the modules list
 
 * Fri Jun 6 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - added Conflicts:, changed vesion to 0.8.11pre30

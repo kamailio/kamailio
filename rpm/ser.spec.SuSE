@@ -121,7 +121,37 @@ sbin/insserv etc/init.d/
 
 %files
 %defattr(-,root,root)
-%doc README
+%dir %{_docdir}/ser
+%doc %{_docdir}/ser/AUTHORS
+%doc %{_docdir}/ser/NEWS
+%doc %{_docdir}/ser/INSTALL
+%doc %{_docdir}/ser/README
+%doc %{_docdir}/ser/README-MODULES
+%doc %{_docdir}/ser/README.acc
+%doc %{_docdir}/ser/README.auth
+%doc %{_docdir}/ser/README.auth_db
+%doc %{_docdir}/ser/README.cfg
+%doc %{_docdir}/ser/README.dbtext
+%doc %{_docdir}/ser/README.domain
+%doc %{_docdir}/ser/README.enum
+%doc %{_docdir}/ser/README.exec
+%doc %{_docdir}/ser/README.group
+%doc %{_docdir}/ser/README.maxfwd
+%doc %{_docdir}/ser/README.msilo
+%doc %{_docdir}/ser/README.nathelper
+%doc %{_docdir}/ser/README.pa
+%doc %{_docdir}/ser/README.permissions
+%doc %{_docdir}/ser/README.pike
+%doc %{_docdir}/ser/README.print
+%doc %{_docdir}/ser/README.registrar
+%doc %{_docdir}/ser/README.rr
+%doc %{_docdir}/ser/README.sl
+%doc %{_docdir}/ser/README.sms
+%doc %{_docdir}/ser/README.textops
+%doc %{_docdir}/ser/README.tm
+%doc %{_docdir}/ser/README.uri
+%doc %{_docdir}/ser/README.usrloc
+%doc %{_docdir}/ser/README.vm
 
 %dir %{_sysconfdir}/ser
 %config(noreplace) %{_sysconfdir}/ser/*
@@ -153,6 +183,7 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
 %{_libdir}/ser/modules/vm.so
+%{_libdir}/ser/modules/xlog.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
@@ -180,6 +211,10 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+
+* Wed Aug 28 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- added doc (READMEs, NEWS, AUTHORS a.s.o)
+- added xlog to the modules list
 
 * Wed Aug 27 2003 Nils Ohlmeier <nils@iptel.org>
 - fixed module dependencys
