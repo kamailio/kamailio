@@ -21,6 +21,8 @@ struct route_elem{
 	regex_t uri;
 	struct hostent host;
 	int current_addr_idx;
+	short int port;
+	short int reserved; /* pad */
 	int ok; /* set to 0 if an error was found sendig a pkt*/
 	/*counters*/
 	int errors;

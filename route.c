@@ -162,7 +162,7 @@ int add_rule(struct cfg_line* cl, struct route_elem** head)
 	/*finished hostent copy */
 
 	
-	
+	re->port=cl->port;
 	re->current_addr_idx=0;
 	re->ok=1;
 
@@ -205,7 +205,7 @@ void print_rl()
 	int i,j;
 
 	if (rlist==0){
-		DPrint("the routing table is emty\n");
+		DPrint("the routing table is empty\n");
 		return;
 	}
 	
@@ -221,7 +221,8 @@ void print_rl()
 				(unsigned char) t->host.h_addr_list[j][3]
 				  );
 				
-		DPrint("\n   Statistics: tx=%d, errors=%d, tx_bytes=%d, idx=%d\n",
+		DPrint("\n   port:%d\n", (unsigned short)t->port);
+		DPrint("   Statistics: tx=%d, errors=%d, tx_bytes=%d, idx=%d\n",
 				t->tx, t->errors, t->tx_bytes, t->current_addr_idx);
 	}
 

@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "cfg_parser.h"
+#include "msg_parser.h" /* parse_hostport */
 #include "dprint.h"
 #include "parser_f.h"
 #include "route.h"
@@ -40,28 +41,23 @@ int cfg_parse_line(char* line, struct cfg_line* cl)
 	cl->method=tmp;
 	tmp=eat_token(cl->method,end-cl->method);
 	if (tmp==end) goto error;
-	printf("%d\n", tmp-line);
 	*tmp=0;
 	tmp++;
 	cl->uri=eat_space(tmp,end-tmp);
 	if (tmp==end) goto error;
 	tmp=eat_token(cl->uri,end-cl->uri);
 	if (tmp==end) goto error;
-	printf("%d\n", tmp-line);
 	*tmp=0;
 	tmp++;
 	cl->address=eat_space(tmp,end-tmp);
 	if (tmp==end) goto error;
 	tmp=eat_token(cl->address, end-cl->address);
-	printf("%d(%02x)\n", tmp-line, *tmp);
 	if (tmp<end) {
 		*tmp=0;
 		if (tmp+1<end){
 			if (!is_empty(tmp+1,end-tmp-1)){
-				printf("%d(%02x) e: %d\n", tmp-line, *tmp, end-line);
 				/* check if comment */
 				tmp=eat_space(tmp+1, end-tmp-1);
-				printf("%d(%02x) e: %d\n", tmp-line, *tmp, end-line);
 				if (*tmp!='#'){
 					/* extra chars at the end of line */
 					goto error;
@@ -69,7 +65,11 @@ int cfg_parse_line(char* line, struct cfg_line* cl)
 			}
 		}
 	}
-		
+	/* find port */
+	if (parse_hostport(cl->address, &tmp, &cl->port)==0){
+			goto error;
+	}
+	
 	cl->type=CFG_RULE;
 skip:
 	return 0;

@@ -390,13 +390,18 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 							DPrint("ERROR: parsing via body: %s\n", first_via);
 							goto error;
 						}
-						vb1.size=bar-first_via+first_via-vb1.hdr;
+						
+						vb1.size=bar-first_via+first_via-vb1.hdr; 
 						
 						/* compact via */
 						if (vb1.next) {
 							second_via=vb1.next;
 							/* not interested in the rest of the header */
 							goto skip;
+						}else{
+						/*  add 1 (we don't see the trailing lf which
+						 *  was zeroed by get_hfr_field */
+							vb1.size+=1;
 						}
 				}else if (second_via==0){
 							second_via=hf.body;
@@ -423,7 +428,8 @@ skip:
 			DPrint("ERROR: parsing via body: %s\n", second_via);
 			goto error;
 		}
-		vb2.size=tmp-second_via;
+		vb2.size=tmp-second_via; 
+		if (vb2.next==0) vb2.size+=1; /* +1 from trailing lf */
 		if (vb2.hdr) vb2.size+=second_via-vb2.hdr;
 	}
 	

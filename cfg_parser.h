@@ -20,6 +20,7 @@ struct cfg_line{
 	char* method;
 	char* uri;
 	char* address;
+	short int port;
 };
 
 
