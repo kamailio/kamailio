@@ -19,7 +19,8 @@
 # 2003-01-24: Changed realm column of subscriber and pending
 #             tables to domain (janakj)
 # 2003-04-14  reinstall introduced (jiri)
-#
+# 2004-07-05  new definition of table silo (dcm)
+
 
 #################################################################
 # config vars
@@ -518,16 +519,17 @@ CREATE TABLE config (
 # "instant" message silo
 
 CREATE TABLE silo(
-	mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	src_addr VARCHAR(255) NOT NULL DEFAULT "",
-	dst_addr VARCHAR(255) NOT NULL DEFAULT "",
-	r_uri VARCHAR(255) NOT NULL DEFAULT "",
-	inc_time INTEGER NOT NULL DEFAULT 0,
-	exp_time INTEGER NOT NULL DEFAULT 0,
-	ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
-	body BLOB NOT NULL DEFAULT ""
-) $TABLE_TYPE ;
-
+    mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    src_addr VARCHAR(255) NOT NULL DEFAULT "",
+    dst_addr VARCHAR(255) NOT NULL DEFAULT "",
+    r_uri VARCHAR(255) NOT NULL DEFAULT "",
+    username VARCHAR(64) NOT NULL DEFAULT "",
+    domain VARCHAR(128) NOT NULL DEFAULT "",
+    inc_time INTEGER NOT NULL DEFAULT 0,
+    exp_time INTEGER NOT NULL DEFAULT 0,
+    ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
+    body BLOB NOT NULL DEFAULT ""
+) $TABLE_TYPE;
 
 #
 # Table structure for table 'domain' -- domains proxy is responsible for
