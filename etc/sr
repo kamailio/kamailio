@@ -15,49 +15,85 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-#BIN=sip_router
-#ETC=sip_router.cfg
-
 # we use a ser symlink -- that allows us to have a different name
 # in process table so that killalls does not start other sers
 # run from somewhere else
 
-BIN=sr
+BINNAME=sr
 HM=/home/srouter
-ETC=$HM/sip_router/etc/iptel.cfg
+SERDIR=$HM/sip_router
+ETC=$SERDIR/etc/iptel.cfg
+PIDFILE=/var/run/sr.pid
+NOTIFY=sr@iptel.org
 USR=510
 GRP=510
 
+MONIT=/usr/local/bin/monit
+MONITRC=/usr/local/etc/monitrc
+MONITPID=/var/run/monit.pid
+
 RETVAL=0
 
+BIN=$HM/bin/$BINNAME
 MYDIR=$HM/core
 CORE=$MYDIR/core
+TMP=/tmp/srcore.$$
+
+ser_start() {
+	if [ -r $BIN -a -r $CORE ] ; then
+		echo "before startup ser core found on `date` at $HOSTNAME" > $TMP
+		echo "----------------------------------" >> $TMP
+		DATE=`date "+%Y-%m-%d--%H-%M"`
+		NEWCORE=$MYDIR/core.$DATE
+		mv $CORE $NEWCORE
+		echo core stored in $NEWCORE >> $TMP
+		gdb $BIN $NEWCORE -x test/bt.gdb -batch >> $TMP
+		chmod a+r $NEWCORE
+		cd $SERDIR; tar czf $MYDIR/ser.$DATE.tgz .
+		mail -s "ser core found" $NOTIFY < $TMP
+		rm -f $TMP
+	fi
+	cd $MYDIR
+	#ulimit -c 1000000
+	$BIN -f $ETC -w $MYDIR -P $PIDFILE
+	RETVAL=$?
+}
 
 # See how we were called.
 case "$1" in
-  start)
-	echo -n "Starting SIP router: "
-	cd $MYDIR
-#  core timestamping moved to sercheck; -jiri
-#	if [ -f $CORE ] ; then
-#		chmod a+r $CORE
-#		DATE=`date "+%Y-%m-%d--%H-%M"`
-#		mv $CORE $CORE.$DATE
-#		( cd ../sip_router; tar cf - . ) | gzip > ser.$DATE.tgz
-#	fi
-	$HM/bin/$BIN -f $ETC -w $MYDIR
-	# man setuid: If uid is different from the old effective uid, 
-    # the process will be forbidden from eaving core dumps.
-	# -> don't set uid, we want to collect core dumps
-	# -u $USR -g $GRP 
+  serstart)
+	echo "Starting SIP router only: "
+	ser_start
 	RETVAL=$?
 	echo
 	;;
-  stop)
-	echo "Stopping SIP router: "
-	killproc $BIN
+  serstop)
+	echo "Stopping SIP router only: "
+	killproc $BINNAME
 	RETVAL=$?
-        echo
+	echo
+	;;
+  serrestart)
+	$0 serstop
+	$0 serstart
+	RETVAL=$?
+	;;
+  start)
+	echo -n "Starting SIP router and monit: "
+	ser_start
+	RETVAL=$?
+	# ser needs some time to listen
+	# but monit test on startup so give ser a little time
+	sleep 2
+	$MONIT -v -c $MONITRC
+	echo
+	;;
+  stop)
+	echo "Stopping SIP router and monit: "
+	killall monit
+	killproc $BINNAME
+	RETVAL=$?
+	echo
 	;;
   restart)
 	$0 stop
@@ -65,7 +101,9 @@ case "$1" in
 	RETVAL=$?
 	;;
   *)
-	echo "Usage: $0 {start|stop|restart}"
+	echo "Usage: $0 {start|stop|restart|serstart|serstop|serrestart}"
+	echo "  serstart, serstop and serrestart influence only ser."
+	echo "  start, stop and restart influence monit and ser."
 	exit 1
 esac
 
