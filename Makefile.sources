@@ -13,5 +13,6 @@
 
 sources=$(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen)
 objs=$(sources:.c=.o)
+extra_objs=
 depends=$(sources:.c=.d)
 modules=

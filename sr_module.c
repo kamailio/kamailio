@@ -3,6 +3,7 @@
 
 #include "sr_module.h"
 #include "dprint.h"
+#include "error.h"
 
 #include <dlfcn.h>
 #include <strings.h>
@@ -11,6 +12,52 @@
 
 struct sr_module* modules=0;
 
+#ifdef STATIC_TM
+	extern struct module_exports* tm_mod_register();
+#endif
+
+
+/* initializes statically built (compiled in) modules*/
+int init_builtin_modules()
+{
+	#ifdef STATIC_TM
+		register_module(tm_mod_register,"built-in", 0);
+	#endif
+}
+
+
+
+/* registers a module,  register_f= module register  functions
+ * returns <0 on error, 0 on success */
+int register_module(module_register register_f, char* path, void* handle)
+{
+	int ret;
+	struct module_exports* e;
+	struct sr_module* t, *mod;
+	
+	ret=-1;
+	e=(*register_f)();
+	if (e==0){
+		LOG(L_ERR, "ERROR: mod_register returned null\n");
+		goto error;
+	}
+	/* add module to the list */
+	if ((mod=malloc(sizeof(struct sr_module)))==0){
+		LOG(L_ERR, "load_module: memory allocation failure\n");
+		ret=E_OUT_OF_MEM;
+		goto error;
+	}
+	memset(mod,0, sizeof(struct sr_module));
+	mod->path=path;
+	mod->handle=handle;
+	mod->exports=e;
+	mod->next=modules;
+	modules=mod;
+	return 0;
+error:
+	return ret;
+}
+
 
 
 /* returns 0 on success , <0 on error */
@@ -18,9 +65,8 @@ int load_module(char* path)
 {
 	void* handle;
 	char* error;
-	struct sr_module* t, *mod;
-	struct module_exports* e;
-	struct module_exports* (*mod_register)();
+	module_register	mod_register;
+	struct sr_module* t;
 	
 	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
 	if (handle==0){
@@ -42,23 +88,7 @@ int load_module(char* path)
 		LOG(L_ERR, "ERROR: load_module: %s\n", error);
 		goto error1;
 	}
-	
-	e=(*mod_register)();
-	if (e==0){
-		LOG(L_ERR, "ERROR: mod_register returned null\n");
-		goto error1;
-	}
-	/* add module to the list */
-	if ((mod=malloc(sizeof(struct sr_module)))==0){
-		LOG(L_ERR, "load_module: memory allocation failure\n");
-		goto error1;
-	}
-	memset(mod,0, sizeof(struct sr_module));
-	mod->path=path;
-	mod->handle=handle;
-	mod->exports=e;
-	mod->next=modules;
-	modules=mod;
+	if (register_module(mod_register, path, handle)<0) goto error1;
 	return 0;
 
 error1:

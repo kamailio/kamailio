@@ -8,6 +8,7 @@
 
 #include "msg_parser.h" /* for sip_msg */
 
+typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
 typedef  int (*fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
@@ -39,6 +40,8 @@ struct sr_module{
  
 struct sr_module* modules; /* global module list*/
 
+int init_builtin_modules();
+int register_module(module_register, char*,  void*);
 int load_module(char* path);
 cmd_function find_export(char* name, int param_no);
 struct sr_module* find_module(void *f, int* r);
@@ -46,7 +49,7 @@ void destroy_modules();
 
 
 /* modules function prototypes:
- * struct module_exports* mod_register();
+ * struct module_exports* mod_register(); (type module_register)
  * int   foo_cmd(struct sip_msg* msg, char* param);
  *  - returns >0 if ok , <0 on error, 0 to stop processing (==DROP)
  * int   response_f(struct sip_msg* msg)

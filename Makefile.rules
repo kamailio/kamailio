@@ -24,7 +24,7 @@
 
 # normal rules
 $(NAME): $(objs) $(ALLDEP)
-	$(LD) $(LDFLAGS) $(objs) $(LIBS) -o $(NAME) 
+	$(LD) $(LDFLAGS) $(objs) $(extra_objs) $(LIBS) -o $(NAME) 
 
 
 .PHONY: all
@@ -32,6 +32,9 @@ all: $(NAME) modules
 
 .PHONY: dep
 dep: $(depends)
+
+.PHONY: static
+static: $(objs)
 
 .PHONY: clean
 clean:

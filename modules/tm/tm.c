@@ -78,7 +78,11 @@ static struct module_exports nm_exports= {
 
 
 
+#ifdef STATIC_TM
+struct module_exports* tm_mod_register()
+#else
 struct module_exports* mod_register()
+#endif
 {
 
 	DBG( "TM - registering...\n");

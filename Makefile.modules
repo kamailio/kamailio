@@ -4,7 +4,7 @@
 # module Makefile
 #(to be included from each module)
 #
-
+MOD_NAME=$(NAME:.so=)
 
 ALLDEP=Makefile ../../Makefile.sources ../../Makefile.rules \
  ../../Makefile.modules
@@ -25,7 +25,9 @@ endif
 
 include ../../Makefile.sources
 
+ifeq (,$(filter $(MOD_NAME), $(static_modules)))
 CFLAGS:=$(MOD_CFLAGS)
 LDFLAGS:=$(MOD_LDFLAGS)
+endif
 
 include ../../Makefile.rules

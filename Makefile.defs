@@ -44,7 +44,7 @@ ARCH = $(shell uname -s)
 #		extra error checking (trying to free the same pointer
 #		twice, trying to free a pointer alloc'ed with a different
 #		malloc etc.)
-DEFS= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
+DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
 	 -DDBG_QM_MALLOC -DNO_DEBUG #
 #-DEXTRA_DEBUG

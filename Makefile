@@ -11,8 +11,17 @@ auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 include Makefile.sources
 
 exclude_modules=CVS usrloc
-modules=$(filter-out $(addprefix modules/, $(exclude_modules)), \
-						$(wildcard modules/*))
+static_modules=
+static_modules_path=$(addprefix modules/, $(static_modules))
+extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))
+extra_objs=$(extra_sources:.c=.o)
+
+static_defs= $(foreach  mod, $(static_modules), \
+		-DSTATIC_$(shell echo $(mod) | tr a-z A-Z) )
+DEFS+=$(static_defs)
+modules=$(filter-out $(addprefix modules/, \
+			$(exclude_modules) $(static_modules)), \
+			$(wildcard modules/*))
 
 NAME=ser
 
@@ -39,6 +48,8 @@ cfg.tab.c: cfg.y $(ALLDEP)
 .PHONY: all
 all: $(NAME) modules
 
+$(NAME): static_modules
+
 
 .PHONY: modules
 modules:
@@ -47,6 +58,17 @@ modules:
 		echo  "" ; \
 		$(MAKE) -C $$r ; \
 	done
+
+.PHONY: static_modules
+static_modules:
+	-@echo "Extra objs: $(extra_objs)"
+	-@for r in $(static_modules_path); do \
+		echo  "" ; \
+		echo  "Making static module $r" ; \
+		$(MAKE) -C $$r static ; \
+	done
+
+
 	
 dbg: ser
 	gdb -command debug.gdb
