@@ -40,7 +40,12 @@ static inline void get_username(str* _s)
 
 int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
 {
+#ifdef USER_DOMAIN_HACK
+	char* ptr;
+#endif
+
 	str user;
+	int len;
 
 	if (!_msg->to) {
 		LOG(L_ERR, "check_to(): To HF not found\n");
@@ -54,8 +59,17 @@ int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
 
 	if (!user.len) return -1;
 
+	len = state.cred.username.len;
+
+#ifdef USER_DOMAIN_HACK
+	ptr = memchr(state.cred.username.s, '@', len);
+	if (ptr) {
+		len = ptr - state.cred.username.s;
+	}
+#endif
+
 	/* FIXME !! */
-	if (user.len == state.cred.username.len) {
+	if (user.len == len) {
 		if (!strncasecmp(user.s, state.cred.username.s, user.len)) {
 			DBG("check_to(): auth id and To username are equal\n");
 			return 1;
@@ -69,6 +83,11 @@ int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
 
 int check_from(struct sip_msg* _msg, char* _str1, char* _str2)
 {
+#ifdef USER_DOMAIN_HACK
+	char* ptr;
+#endif
+
+	int len;
 	str user;
 
 	if (!_msg->from) {
@@ -83,8 +102,17 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2)
 
 	if (!user.len) return -1;
 
+	len = state.cred.username.len;
+
+#ifdef USER_DOMAIN_HACK
+	ptr = memchr(state.cred.username.s, '@', len);
+	if (ptr) {
+		len = ptr - state.cred.username.s;
+	}
+#endif
+
 	/* FIXME !! */
-	if (user.len == state.cred.username.len) {
+	if (user.len == len) {
 		if (!strncasecmp(user.s, state.cred.username.s, user.len)) {
 			DBG("check_from(): auth id and From username are equal\n");
 			return 1;
