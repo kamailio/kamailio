@@ -55,7 +55,7 @@ The only authorization field that was currently required by SER could be served 
 
 Configuration:
  
-Radiusclient 0.3.2: 
+Radiusclient 0.3.2 (http://www.mcs-cityline.net/~lf/radius/): 
 Compile and install the radiusclient library. 
 	./configure
 	make
@@ -88,37 +88,6 @@ steltest        Auth-Type := Digest,
 	 Reply-Message = "local"
 
 Auth-Type is used to indicate that authentication is going to be performed by the Digest module. The User-Password parameter is optional and is only used to compute the Digest if the Digest-Hash-A1 parameter is missing. The Digest-Hash-A1 parameter should be used whenever possible since to 'hides' the plain text password entry for the user thus increasing system security. The  Digest-Hash-A1 is a computation of the user-name, realm and password which tends to remain static within a system. A helper utility which can be found in sip_router/utils/gen_ha1, can be used to generate this parameter. The Reply-Message is a current work-around for displaying the user's group designation. Further enhancements can be implemented by attaching directly to SER's  mySQL database.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 References:
