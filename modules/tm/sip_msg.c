@@ -34,6 +34,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-01-23 - msg_cloner clones msg->from->parsed too (janakj)
  */
 
 #include "defs.h"
@@ -181,13 +185,17 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 			case HDR_CSEQ:
 				len+=ROUND4(sizeof(struct cseq_body));
 				break;
-			case HDR_TO:
-				len+=ROUND4(sizeof(struct to_body));
-				/*to param*/
-				to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
-				for(;to_prm;to_prm=to_prm->next)
-					len+=ROUND4(sizeof(struct to_param ));
-				break;
+		        case HDR_TO:
+		        case HDR_FROM:
+				     /* From header might be unparsed */
+				if (hdr->parsed) {
+					len+=ROUND4(sizeof(struct to_body));
+					     /*to param*/
+					to_prm = ((struct to_body*)(hdr->parsed))->param_lst;
+					for(;to_prm;to_prm=to_prm->next)
+						len+=ROUND4(sizeof(struct to_param ));
+				}
+				break;				
 			case HDR_VIA:
 				for (via=(struct via_body*)hdr->parsed;via;via=via->next)
 				{
@@ -199,8 +207,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				break;
 			
 			case HDR_CALLID:
-			case HDR_FROM:
-			case HDR_CONTACT:
+		        case HDR_CONTACT:
 			case HDR_MAXFORWARDS:
 			case HDR_ROUTE:
 			case HDR_RECORDROUTE:
@@ -375,6 +382,15 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				new_msg->cseq = new_hdr;
 				break;
 			case HDR_TO:
+		        case HDR_FROM:
+				if (hdr->type == HDR_TO) {
+					new_msg->to = new_hdr;
+				} else {
+					new_msg->from = new_hdr;
+				}
+
+				     /* From header might be unparsed */
+				if (!hdr->parsed) break;
 				new_hdr->parsed = p;
 				p +=ROUND4(sizeof(struct to_body));
 				memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct to_body));
@@ -412,13 +428,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 					((struct to_body*)new_hdr->parsed)->last_param
 						= new_to_prm;
 				}
-				new_msg->to = new_hdr;
 				break;
 			case HDR_CALLID:
 				new_msg->callid = new_hdr;
-				break;
-			case HDR_FROM:
-				new_msg->from = new_hdr;
 				break;
 			case HDR_CONTACT:
 				new_msg->contact = new_hdr;
