@@ -87,6 +87,8 @@
 
 #define ROUTE_BUFFER_MAX 512
 
+MODULE_VERSION
+
 static str empty_param={".",1};
 
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt );
