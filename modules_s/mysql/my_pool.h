@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2004 iptel.org
  *
  * This file is part of ser, a free SIP server.
  *
@@ -26,25 +26,24 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef MY_POOL_H
+#define MY_POOL_H
 
-#ifndef CON_MYSQL_H
-#define CON_MYSQL_H
-
-#include <mysql/mysql.h>
+#include "my_con.h"
 
 /*
- * MySQL specific connection data
+ * Get a connection from the pool, reuse existing
+ * if possible, otherwise create a new one
  */
-struct con_mysql {
-	MYSQL_RES* res; /* Actual result */
-	MYSQL* con;     /* Connection representation */
-	MYSQL_ROW row;  /* Actual row in the result */
-};
+struct my_con* get_connection(const char* url);
 
 
-#define CON_RESULT(db_con)     (((struct con_mysql*)((db_con)->tail))->res)
-#define CON_CONNECTION(db_con) (((struct con_mysql*)((db_con)->tail))->con)
-#define CON_ROW(db_con)        (((struct con_mysql*)((db_con)->tail))->row)
+/*
+ * Release a connection, the connection will be left
+ * in the pool if ref count != 0, otherwise it
+ * will be delete completely
+ */
+void release_connection(struct my_con* con);
 
 
-#endif /* CON_MYSQL_H */
+#endif /* MY_POOL_H */
