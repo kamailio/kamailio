@@ -10,7 +10,7 @@ NAME=acc.so
 LIBS=
 
 # uncomment the next line if you wish to enable SQL accounting
-DEFS+=-DSQL_ACC
+#DEFS+=-DSQL_ACC
 
 # uncomment the next two lines if you wish to enable RADIUS accounting
 #DEFS+=-DRAD_ACC
