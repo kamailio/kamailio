@@ -31,6 +31,8 @@
  *  2003-12-04  global callbacks moved into transaction callbacks;
  *              multiple events per callback added; single list per
  *              transaction for all its callbacks (bogdan)
+ *  2004-08-23  user avp(attribute value pair) added -> making avp list
+ *              available in callbacks (bogdan)
  */
 
 #include "defs.h"
@@ -40,6 +42,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../usr_avp.h"
 #include "t_hooks.h"
 #include "t_lookup.h"
 #include "t_funcs.h"
@@ -169,11 +172,16 @@ void run_trans_callbacks( int type , struct cell *trans,
 {
 	static struct tmcb_params params = {0,0,0,0};
 	struct tm_callback    *cbp;
+	struct usr_avp **backup;
 
 	params.req = req;
 	params.rpl = rpl;
 	params.code = code;
 
+	if (trans->tmcb_hl.first==0 || ((trans->tmcb_hl.reg_types)&type)==0 )
+		return;
+
+	backup = set_avp_list( &trans->user_avps );
 	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
@@ -181,6 +189,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 			params.param = &(cbp->param);
 			cbp->callback( trans, type, &params );
 		}
+	set_avp_list( backup );
 	}
 }
 
@@ -190,15 +199,21 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 {
 	static struct tmcb_params params = {0,0,0,0};
 	struct tm_callback    *cbp;
+	struct usr_avp **backup;
 
 	params.req = req;
 	params.code = code;
 
+	if (req_in_tmcb_hl->first==0)
+		return;
+
+	backup = set_avp_list( &trans->user_avps );
 	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
 		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
 		params.param = &(cbp->param);
 		cbp->callback( trans, cbp->types, &params );
 	}
+	set_avp_list( backup );
 }
 

@@ -44,7 +44,6 @@
  *  2003-10-13  added fifo_dir (andrei)
  *  2003-10-28  added tcp_accept_aliases (andrei)
  *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
- *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  *  2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
  *  2004-04-28  added sock_mode (replaces fifo_mode), sock_user &
  *               sock_group  (andrei)
@@ -120,8 +119,6 @@ IF				"if"
 ELSE			"else"
 SET_ADV_ADDRESS	"set_advertised_address"
 SET_ADV_PORT	"set_advertised_port"
-LOAD_AVP		"load_avp"
-AVP_TO_URI		"avp_to_uri"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -184,7 +181,6 @@ FIFO_DB_URL fifo_db_url
 UNIX_SOCK unix_sock
 UNIX_SOCK_CHILDREN unix_sock_children
 UNIX_TX_TIMEOUT unix_tx_timeout
-AVP_DB_URL  avp_db_url
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
 USER		"user"|"uid"
@@ -304,9 +300,6 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
 <INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
 								return FORCE_TCP_ALIAS; }
-<INITIAL>{LOAD_AVP}	{ count(); yylval.strval=yytext; return LOAD_AVP; }
-<INITIAL>{AVP_TO_URI}	{ count(); yylval.strval=yytext; return AVP_TO_URI; }
-	
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
@@ -385,7 +378,6 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{UNIX_SOCK} { count(); yylval.strval=yytext; return UNIX_SOCK; }
 <INITIAL>{UNIX_SOCK_CHILDREN} { count(); yylval.strval=yytext; return UNIX_SOCK_CHILDREN; }
 <INITIAL>{UNIX_TX_TIMEOUT} { count(); yylval.strval=yytext; return UNIX_TX_TIMEOUT; }
-<INITIAL>{AVP_DB_URL}	{ count(); yylval.strval=yytext; return AVP_DB_URL; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;

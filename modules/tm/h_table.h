@@ -32,8 +32,9 @@
  * 2003-12-04  callbacks per transaction added; completion callback
  *             merge into them as LOCAL_COMPETED (bogdan)
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
- * 2004-02-13: t->is_invite, t->local, t->noisy_ctimer replaced
+ * 2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced
  *             with flags (bogdan)
+ * 2004-08-23  avp support added - avp list linked in transaction (bogdan)
  */
 
 #include "defs.h"
@@ -48,6 +49,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../types.h"
 #include "../../md5utils.h"
+#include "../../usr_avp.h"
 #include "config.h"
 
 struct s_table;
@@ -249,6 +251,9 @@ typedef struct cell
 	 * forwarded or passed to UAC; note that there can be arbitrarily 
 	 * many due to downstream forking; */
 	struct totag_elem *fwded_totags;
+
+	/* list with user avp */
+	struct usr_avp *user_avps;
 }cell_type;
 
 

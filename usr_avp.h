@@ -26,50 +26,52 @@
  *
  * History:
  * ---------
- *  2004-02-06  created (bogdan)
+ *  2004-07-21  created (bogdan)
  */
 
 #ifndef _SER_URS_AVP_H_
 #define _SER_URS_AVP_H_
 
 
-#include "parser/msg_parser.h"
+#include "str.h"
+
+typedef union {
+	int  n;
+	str *s;
+} int_str;
+
 
 
 struct usr_avp {
-	unsigned int id;
-	str attr;
-	unsigned int val_type;
-	union {
-		str  str_val;
-		unsigned int uint_val;
-	}val;
+	unsigned short id;
+	unsigned short flags;
 	struct usr_avp *next;
+	void *data;
 };
 
-extern struct usr_avp   *users_avps;
+#define AVP_NAME_STR     (1<<0)
+#define AVP_VAL_STR      (1<<1)
+
+/* add functions */
+int add_avp( unsigned short flags, int_str name, int_str val);
 
 
-#define AVP_TYPE_INT     1
-#define AVP_TYPE_STR     2
+/* seach functions */
+struct usr_avp *search_first_avp( unsigned short name_type, int_str name,
+															int_str *val );
+struct usr_avp *search_next_avp( struct usr_avp *avp, int_str *val  );
 
-#define AVP_DB_TABLE     "usr_preferences"
 
-#define AVP_USER_RURI    1
-#define AVP_USER_FROM    2
-#define AVP_USER_TO      3
+/* free functions */
+void reset_avps( );
+void destroy_avp( struct usr_avp *avp);
+void destroy_avp_list( struct usr_avp **list );
+void destroy_avp_list_unsafe( struct usr_avp **list );
 
-#define AVP_ALL_ATTR     ((char*)0xffffffff)
+/* get val func */
+void get_avp_val(struct usr_avp *avp, int_str *val );
+struct usr_avp** set_avp_list( struct usr_avp **list );
 
-/* init function */
-int init_avp_child( int rank );
-int get_user_type( char *id );
-
-/* load/free/seach functions */
-void destroy_avps( );
-int load_avp( struct sip_msg *msg, int type, char *attr, int use_dom);
-struct usr_avp *search_avp( str *attr);
-struct usr_avp *search_next_avp( struct usr_avp *avp );
 
 #endif
 

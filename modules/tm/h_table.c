@@ -39,6 +39,8 @@
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  * 2004-02-13  t->is_invite and t->local replaced with flags;
  *             timer_link.payload removed (bogdan)
+ * 2004-08-23  avp support added - move and remove avp list to/from
+ *             transactions (bogdan)
  */
 
 #include <stdlib.h>
@@ -157,6 +159,10 @@ void free_cell( struct cell* dead_cell )
 		tt=foo;
 	}
 
+	/* free the avp list */
+	if (dead_cell->user_avps)
+		destroy_avp_list_unsafe( &dead_cell->user_avps );
+
 	/* the cell's body */
 	shm_free_unsafe( dead_cell );
 
@@ -219,6 +225,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
 	int          sip_msg_len;
+	struct usr_avp **old;
 
 	/* allocs a new cell */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
@@ -236,6 +243,11 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.fr_timer.tg=TG_FR;
 #endif
 	new_cell->uas.response.my_T=new_cell;
+
+	/* move the current avp list to transaction -bogdan */
+	old = set_avp_list( &new_cell->user_avps );
+	new_cell->user_avps = *old;
+	*old = 0;
 
 	/* enter callback, which may potentially want to parse some stuff,
 	 * before the request is shmem-ized */
@@ -265,6 +277,8 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 error:
 	shm_free(new_cell);
+	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
+	reset_avps();
 	return NULL;
 }
 

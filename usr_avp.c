@@ -26,333 +26,198 @@
  *
  * History:
  * ---------
- *  2004-02-06  created (bogdan)
- *  2004-06-06  updated to the current DB api (andrei)
+ *  2004-07-21  created (bogdan)
  */
 
+
+#include <assert.h>
 
 #include "sr_module.h"
 #include "dprint.h"
 #include "str.h"
 #include "ut.h"
-#include "mem/mem.h"
-#include "db/db.h"
-#include "parser/parse_from.h"
-#include "parser/parse_uri.h"
+#include "mem/shm_mem.h"
 #include "usr_avp.h"
 
 
 
-static db_con_t  *avp_db_con = 0;
-static db_func_t avp_dbf; /* database call backs */
-struct usr_avp   *users_avps = 0;
-char             *avp_db_url = 0;
+struct str_int_data {
+	str  name;
+	int  val;
+};
+
+struct str_str_data {
+	str  name;
+	str  val;
+};
 
 
-static char* usr_type[] = {"ruri","from","to",0};
-
-
-int init_avp_child( int rank )
-{
-	if ( rank>PROC_MAIN ) {
-		if (avp_db_url==0) {
-			LOG(L_NOTICE,"NOTICE:init_avp_child: no avp_db_url specified "
-				"-> feature disabled\n");
-			return 0;
-		}
-		/* init db connection */
-		if ( bind_dbmod(avp_db_url, &avp_dbf) < 0 ) {
-			LOG(L_ERR,"ERROR:init_avp_child: unable to find any db module\n");
-			return -1;
-		}
-		if ( (avp_db_con=avp_dbf.init( avp_db_url ))==0) {
-			/* connection failed */
-			LOG(L_ERR,"ERROR:init_avp_child: unable to connect to database\n");
-			return -1;
-		}
-		if (avp_dbf.use_table( avp_db_con, AVP_DB_TABLE ) < 0) {
-			/* table selection failed */
-			LOG(L_ERR,"ERROR:init_avp_child: unable to select db table\n");
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-
-void print_avps(struct usr_avp *avp)
-{
-	if (!avp)
-		return;
-	if (avp->val_type==AVP_TYPE_STR)
-		DBG("DEBUG:print_avp: %.*s=%.*s\n",
-			avp->attr.len,avp->attr.s,
-			avp->val.str_val.len,avp->val.str_val.s);
-	else
-		DBG("DEBUG:print_avp: %.*s=%u\n",
-			avp->attr.len,avp->attr.s,
-			avp->val.uint_val);
-	print_avps(avp->next);
-}
-
-
-void destroy_avps( )
-{
-	struct usr_avp *avp;
-
-	/*print_avps(users_avps);*/
-	while (users_avps) {
-		avp = users_avps;
-		users_avps = users_avps->next;
-		pkg_free( avp );
-	}
-}
+static struct usr_avp *global_avps = 0;
+static struct usr_avp **crt_avps  = &global_avps;
 
 
 
-int get_user_type( char *id )
-{
-	int i;
-
-	for(i=0;usr_type[i];i++) {
-		if (!strcasecmp( id, usr_type[i]) )
-			return i;
-	}
-
-	LOG(L_ERR,"ERROR:avp:get_user_type: unknown user type <%s>\n",id);
-	return -1;
-}
-
-
-
-inline static unsigned int compute_ID( str *attr )
+inline static unsigned short compute_ID( str *name )
 {
 	char *p;
-	unsigned int id;
+	unsigned short id;
 
 	id=0;
-	for( p=attr->s+attr->len-1 ; p>=attr->s ; p-- )
+	for( p=name->s+name->len-1 ; p>=name->s ; p-- )
 		id ^= *p;
 	return id;
 }
 
 
-inline static db_res_t *do_db_query(struct sip_uri *uri,char *attr,int use_dom)
+int add_avp(unsigned short flags, int_str name, int_str val)
 {
-	static db_key_t   keys_cmp[3] = {"username","domain","attribute"};
-	static db_key_t   keys_ret[] = {"attribute","value","type"};
-	static db_val_t   vals_cmp[3];
-	unsigned int      nr_keys_cmp;
-	db_res_t          *res;
+	struct usr_avp *avp;
+	str *s;
+	struct str_int_data *sid;
+	struct str_str_data *ssd;
+	int len;
 
-	/* prepare DB query */
-	nr_keys_cmp = 0;
-	keys_cmp[ nr_keys_cmp ] = "username";
-	vals_cmp[ nr_keys_cmp ].type = DB_STR;
-	vals_cmp[ nr_keys_cmp ].nul  = 0;
-	vals_cmp[ nr_keys_cmp ].val.str_val = uri->user;
-	nr_keys_cmp++;
-	if (use_dom) {
-		keys_cmp[ nr_keys_cmp ] = "domain";
-		vals_cmp[ nr_keys_cmp ].type = DB_STR;
-		vals_cmp[ nr_keys_cmp ].nul  = 0;
-		vals_cmp[ nr_keys_cmp ].val.str_val = uri->host;
-		nr_keys_cmp++;
-	}
-	if (attr) {
-		keys_cmp[ nr_keys_cmp ] = "attribute";
-		vals_cmp[ nr_keys_cmp ].type = DB_STRING;
-		vals_cmp[ nr_keys_cmp ].nul  = 0;
-		vals_cmp[ nr_keys_cmp ].val.string_val = attr;
-		nr_keys_cmp++;
-	}
+	assert( crt_avps!=0 );
 
-	/* do the DB query */
-	if ( avp_dbf.query( avp_db_con, keys_cmp, 0/*op*/, vals_cmp, keys_ret,
-	nr_keys_cmp, 3, 0/*order*/, &res) < 0)
-		return 0;
+	/* compute the required mem size */
+	len = sizeof(struct usr_avp);
+	if (flags&AVP_NAME_STR) {
+		if (flags&AVP_VAL_STR)
+			len += sizeof(struct str_str_data)-sizeof(void*) + name.s->len
+				+ val.s->len;
+		else
+			len += sizeof(struct str_int_data)-sizeof(void*) + name.s->len;
+	} else if (flags&AVP_VAL_STR)
+			len += sizeof(str)-sizeof(void*) + val.s->len;
 
-	return res;
-}
-
-
-
-inline static int validate_db_row(struct db_row *row, unsigned int *val_type,
-													unsigned int *uint_val)
-{
-	/* we don't accept null values */
-	if (row->values[0].nul || row->values[1].nul || row->values[2].nul ) {
-		LOG(L_ERR,"ERROR:avp:validat_db_row: DBreply contains NULL entryes\n");
-		return -1;
-	}
-	/* check the value types */
-	if ( (row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR)
-	||  (row->values[1].type!=DB_STRING && row->values[1].type!=DB_STR)
-	|| row->values[2].type!=DB_INT ) {
-		LOG(L_ERR,"ERROR:avp:validat_db_row: bad DB types in response\n");
-		return -1;
-	}
-	/* check the content of TYPE filed */
-	*val_type = (unsigned int)row->values[2].val.int_val;
-	if (*val_type!=AVP_TYPE_INT && *val_type!=AVP_TYPE_STR) {
-		LOG(L_ERR,"ERROR:avp:validat_db_row: bad val %d in type field\n",
-			*val_type);
-		return -1;
-	}
-	/* convert from DB_STRING to DB_STR if necesary */
-	if (row->values[0].type==DB_STRING) {
-		row->values[0].val.str_val.s =  (char*)row->values[0].val.string_val;
-		row->values[0].val.str_val.len = strlen(row->values[0].val.str_val.s);
-	}
-	if (row->values[1].type==DB_STRING) {
-		row->values[1].val.str_val.s =  (char*)row->values[1].val.string_val;
-		row->values[1].val.str_val.len = strlen(row->values[1].val.str_val.s);
-	}
-	/* if type is INT decode the value */
-	if ( *val_type==AVP_TYPE_INT &&
-	str2int( &row->values[1].val.str_val, uint_val)==-1 ) {
-		LOG(L_ERR,"ERROR:avp:validat_db_row: type is INT, but value not "
-			"<%s>\n",row->values[1].val.str_val.s);
-		return -1;
-	}
-	return 0;
-}
-
-
-
-#define copy_str(_p_,_sd_,_ss_) \
-	do {\
-		(_sd_).s = (_p_);\
-		(_sd_).len = (_ss_).len;\
-		memcpy( _p_, (_ss_).s, (_ss_).len);\
-		(_p_) += (_ss_).len;\
-	}while(0)
-/*
- * Returns:   -1 : error
- *             0 : sucess and avp(s) loaded
- *             1 : sucess but no avp loaded
- */
-int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
-{
-	db_res_t          *res;
-	struct sip_uri    uri;
-	struct usr_avp    *avp;
-	str               *uri_s;
-	int               n;
-	unsigned int      val_type;
-	unsigned int      uint_val;
-	int               len;
-	char              *p;
-
-	/* featch the user name [and domain] */
-	switch (uri_type) {
-		case 0: /* RURI */
-			uri_s = &(msg->first_line.u.request.uri);
-			break;
-		case 1: /* from */
-			if (parse_from_header( msg )<0 ) {
-				LOG(L_ERR,"ERROR:load_avp: failed to parse from\n");
-				goto error;
-			}
-			uri_s = &(get_from(msg)->uri);
-			break;
-		case 2: /* to */
-			if (parse_headers( msg, HDR_TO, 0)<0) {
-				LOG(L_ERR,"ERROR:load_avp: failed to parse to\n");
-				goto error;
-			}
-			uri_s = &(get_to(msg)->uri);
-			break;
-		default:
-			LOG(L_CRIT,"BUG:load_avp: unknow username type <%d>\n",uri_type);
-			goto error;
-	}
-
-	/* parse uri */
-	if (parse_uri( uri_s->s, uri_s->len , &uri )<0) {
-		LOG(L_ERR,"ERROR:load_avp: failed to parse uri\n");
+	avp = (struct usr_avp*)shm_malloc( len );
+	if (avp==0) {
+		LOG(L_ERR,"ERROR:avp:add_avp: no more shm mem\n");
 		goto error;
 	}
 
-	/* check uri */
-	if (!uri.user.s||!uri.user.len||(use_dom&&(!uri.host.len||!uri.host.s))) {
-		LOG(L_ERR,"ERROR:load_avp: uri has no user/host part <%.*s>\n",
-			uri_s->len,uri_s->s);
-		goto error;
+	avp->flags = flags;
+	avp->id = (flags&AVP_NAME_STR)? compute_ID(name.s) : name.n ;
+
+	avp->next = *crt_avps;
+	*crt_avps = avp;
+
+	switch ( flags&(AVP_NAME_STR|AVP_VAL_STR) )
+	{
+		case 0:
+			/* avp type ID, int value */
+			avp->data = (void*)(long)val.n;
+			break;
+		case AVP_NAME_STR:
+			/* avp type str, int value */
+			sid = (struct str_int_data*)&(avp->data);
+			sid->val = val.n;
+			sid->name.len =name.s->len;
+			sid->name.s = (char*)sid + sizeof(struct str_int_data);
+			memcpy( sid->name.s , name.s->s, name.s->len);
+			break;
+		case AVP_VAL_STR:
+			/* avp type ID, str value */
+			s = (str*)&(avp->data);
+			s->len = val.s->len;
+			s->s = (char*)s + sizeof(str);
+			memcpy( s->s, val.s->s , s->len);
+			break;
+		case AVP_NAME_STR|AVP_VAL_STR:
+			/* avp type str, str value */
+			ssd = (struct str_str_data*)&(avp->data);
+			ssd->name.len = name.s->len;
+			ssd->name.s = (char*)ssd + sizeof(struct str_str_data);
+			memcpy( ssd->name.s , name.s->s, name.s->len);
+			ssd->val.len = val.s->len;
+			ssd->val.s = ssd->name.s + ssd->name.len;
+			memcpy( ssd->val.s , val.s->s, val.s->len);
+			break;
 	}
 
-	/* do DB query */
-	if ( (res=do_db_query( &uri, attr,use_dom))==0 ) {
-		LOG(L_ERR,"ERROR:load_avp: db_query failed\n");
-		goto error;
-	}
-
-	/* process DB response */
-	if (res->n==0) {
-		DBG("DEBUG:load_avp: no avp found for %.*s@%.*s <%s>\n",
-			uri.user.len,uri.user.s,(use_dom!=0)*uri.host.len,uri.host.s,
-			attr?attr:"NULL");
-		avp_dbf.free_result( avp_db_con, res);
-		/*no avp found*/
-		return 1;
-	}
-
-	for( n=0 ; n<res->n ; n++) {
-		/* validate row */
-		if (validate_db_row( &res->rows[n] ,&val_type, &uint_val) < 0 )
-			continue;
-		/* what do we have here?! */
-		DBG("DEBUG:load_avp: found avp: <%s,%s,%d>\n",
-			res->rows[n].values[0].val.string_val,
-			res->rows[n].values[1].val.string_val,
-		res->rows[n].values[2].val.int_val);
-		/* build a new avp struct */
-		len = sizeof(struct usr_avp);
-		len += res->rows[n].values[0].val.str_val.len ;
-		if (val_type==AVP_TYPE_STR)
-			len += res->rows[n].values[1].val.str_val.len ;
-		avp = (struct usr_avp*)pkg_malloc( len );
-		if (avp==0) {
-			LOG(L_ERR,"ERROR:load_avp: no more pkg mem\n");
-			continue;
-		}
-		/* fill the structure in */
-		p = ((char*)avp) + sizeof(struct usr_avp);
-		avp->id = compute_ID( &res->rows[n].values[0].val.str_val );
-		avp->val_type = val_type;
-		/* attribute name */
-		copy_str( p, avp->attr, res->rows[n].values[0].val.str_val);
-		if (val_type==AVP_TYPE_INT) {
-			/* INT */
-			avp->val.uint_val = uint_val;
-		} else {
-			/* STRING */
-			copy_str( p, avp->val.str_val,
-				res->rows[n].values[1].val.str_val);
-		}
-		/* add avp to internal list */
-		avp->next = users_avps;
-		users_avps = avp;
-	}
-
-	avp_dbf.free_result( avp_db_con, res);
 	return 0;
 error:
 	return -1;
 }
 
 
-
-inline static struct usr_avp *internal_search_avp( unsigned int id, str *attr)
+inline static str* get_avp_name(struct usr_avp *avp)
 {
-	struct usr_avp *avp;
+	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) )
+	{
+		case 0:
+			/* avp type ID, int value */
+		case AVP_VAL_STR:
+			/* avp type ID, str value */
+			return 0;
+		case AVP_NAME_STR:
+			/* avp type str, int value */
+			return &((struct str_int_data*)&avp->data)->name;
+		case AVP_NAME_STR|AVP_VAL_STR:
+			/* avp type str, str value */
+			return &((struct str_str_data*)&avp->data)->name;
+	}
 
-	for( avp=users_avps ; avp ; avp=avp->next )
-		if ( id==avp->id 
-		&& attr->len==avp->attr.len
-		&& !strncasecmp( attr->s, avp->attr.s, attr->len)
-		) {
+	LOG(L_ERR,"BUG:avp:get_avp_name: unknown avp type (name&val) %d\n",
+		avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
+	return 0;
+}
+
+
+/* get value functions */
+
+inline void get_avp_val(struct usr_avp *avp, int_str *val)
+{
+	if (avp==0 || val==0)
+		return;
+
+	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) ) {
+		case 0:
+			/* avp type ID, int value */
+			val->n = (long)(avp->data);
+			break;
+		case AVP_NAME_STR:
+			/* avp type str, int value */
+			val->n = ((struct str_int_data*)(&avp->data))->val;
+			break;
+		case AVP_VAL_STR:
+			/* avp type ID, str value */
+			val->s = (str*)(&avp->data);
+			break;
+		case AVP_NAME_STR|AVP_VAL_STR:
+			/* avp type str, str value */
+			val->s = &(((struct str_str_data*)(&avp->data))->val);
+			break;
+	}
+}
+
+
+
+
+/* seach functions */
+
+inline static struct usr_avp *internal_search_ID_avp( struct usr_avp *avp,
+												unsigned short id)
+{
+	for( ; avp ; avp=avp->next ) {
+		if ( id==avp->id && (avp->flags&AVP_NAME_STR)==0  ) {
+			return avp;
+		}
+	}
+	return 0;
+}
+
+
+
+inline static struct usr_avp *internal_search_name_avp( struct usr_avp *avp,
+												unsigned short id, str *name)
+{
+	str * avp_name;
+
+	for( ; avp ; avp=avp->next )
+		if ( id==avp->id && avp->flags&AVP_NAME_STR &&
+		(avp_name=get_avp_name(avp))!=0 && avp_name->len==name->len
+		 && !strncasecmp( avp_name->s, name->s, name->len) ) {
 			return avp;
 		}
 	return 0;
@@ -360,15 +225,119 @@ inline static struct usr_avp *internal_search_avp( unsigned int id, str *attr)
 
 
 
-struct usr_avp *search_avp( str *attr)
+struct usr_avp *search_first_avp( unsigned short name_type,
+										int_str name, int_str *val)
 {
-	return internal_search_avp( compute_ID( attr ), attr);
+	struct usr_avp *avp;
+
+	assert( crt_avps!=0 );
+	
+	if (*crt_avps==0)
+		return 0;
+
+	/* search for the AVP by ID (&name) */
+	if (name_type&AVP_NAME_STR)
+		avp = internal_search_name_avp(*crt_avps,compute_ID(name.s),name.s);
+	else
+		avp = internal_search_ID_avp( *crt_avps, name.n );
+
+	/* get the value - if required */
+	if (avp && val)
+		get_avp_val(avp, val);
+
+	return avp;
 }
 
 
 
-struct usr_avp *search_next_avp( struct usr_avp *avp )
+struct usr_avp *search_next_avp( struct usr_avp *avp,  int_str *val )
 {
-	return internal_search_avp( avp->id, &avp->attr);
+	if (avp==0 || (avp=avp->next)==0)
+		return 0;
+
+	if (avp->flags&AVP_NAME_STR)
+		avp = internal_search_name_avp( avp, avp->id, get_avp_name(avp));
+	else
+		avp = internal_search_ID_avp( avp, avp->id );
+
+	if (avp && val)
+		get_avp_val(avp, val);
+
+	return avp;
+}
+
+
+
+
+/********* free functions ********/
+
+void destroy_avp( struct usr_avp *avp_del)
+{
+	struct usr_avp *avp;
+	struct usr_avp *avp_prev;
+
+	for( avp_prev=0,avp=*crt_avps ; avp ; avp_prev=avp,avp=avp->next ) {
+		if (avp==avp_del) {
+			if (avp_prev)
+				avp_prev->next=avp->next;
+			else
+				*crt_avps = avp->next;
+			shm_free(avp);
+			return;
+		}
+	}
+}
+
+
+void destroy_avp_list_unsafe( struct usr_avp **list )
+{
+	struct usr_avp *avp, *foo;
+
+	avp = *list;
+	while( avp ) {
+		foo = avp;
+		avp = avp->next;
+		shm_free_unsafe( foo );
+	}
+	*list = 0;
+}
+
+
+inline void destroy_avp_list( struct usr_avp **list )
+{
+	struct usr_avp *avp, *foo;
+
+	DBG("DEBUG:destroy_avp_list: destroing list %p\n",*list);
+	avp = *list;
+	while( avp ) {
+		foo = avp;
+		avp = avp->next;
+		shm_free( foo );
+	}
+	*list = 0;
+}
+
+
+void reset_avps( )
+{
+	assert( crt_avps!=0 );
+	
+	if ( crt_avps!=&global_avps) {
+		crt_avps = &global_avps;
+	}
+	destroy_avp_list( crt_avps );
+}
+
+
+
+struct usr_avp** set_avp_list( struct usr_avp **list )
+{
+	struct usr_avp **foo;
+	
+	assert( crt_avps!=0 );
+
+	foo = crt_avps;
+	crt_avps = list;
+	return foo;
 }
 

@@ -36,6 +36,7 @@
  * 2004-02-06 added user preferences support - destroy_avps() (bogdan)
  * 2004-04-30 exec_pre_cb is called after basic sanity checks (at least one
  *            via present & parsed ok)  (andrei)
+ * 2004-08-23 avp core changed - destroy_avp-> reset_avps (bogdan)
  */
 
 
@@ -56,6 +57,7 @@
 #include "script_cb.h"
 #include "dset.h"
 #include "usr_avp.h"
+
 
 #include "tcp_server.h" /* for tcpconn_add_alias */
 
@@ -166,10 +168,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 			goto error;
 		}
 
-		/* ... free posible loaded avps */
-		if (users_avps)
-			destroy_avps();
-
 #ifdef STATS
 		gettimeofday( & tve, &tz );
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
@@ -229,6 +227,8 @@ end:
 #endif
 	/* execute post-script callbacks, if any; -jiri */
 	exec_post_cb(msg);
+	/* free possible loaded avps -bogdan */
+	reset_avps();
 	DBG("receive_msg: cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
@@ -240,6 +240,8 @@ error:
 	DBG("error:...\n");
 	/* execute post-script callbacks, if any; -jiri */
 	exec_post_cb(msg);
+	/* free possible loaded avps -bogdan */
+	reset_avps();
 error02:
 	free_sip_msg(msg);
 	pkg_free(msg);

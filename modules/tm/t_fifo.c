@@ -184,6 +184,7 @@ error:
 }
 
 
+#define EMAIL_AVP_ID  0xcaca
 static int assemble_msg(struct sip_msg* msg, char* action)
 {
 	static char     id_buf[IDBUF_LEN];
@@ -191,7 +192,7 @@ static int assemble_msg(struct sip_msg* msg, char* action)
 	static char     hdrs_buf[HDRS_BUFFER_MAX];
 	static char     cmd_buf[CMD_BUFFER_MAX];
 	static str      empty_param = {".",1};
-	static str      email_attr = {"email",5};
+	int_str           email_val;
 	unsigned int      hash_index, label;
 	contact_body_t*   cb=0;
 	contact_t*        c=0;
@@ -199,7 +200,6 @@ static int assemble_msg(struct sip_msg* msg, char* action)
 	rr_t*             record_route;
 	struct hdr_field* p_hdr;
 	param_hooks_t     hooks;
-	struct usr_avp    *email_avp;
 	int               l;
 	char*             s, fproxy_lr;
 	str               route, next_hop, hdrs, tmp_s, body, str_uri;
@@ -210,7 +210,7 @@ static int assemble_msg(struct sip_msg* msg, char* action)
 		goto error;
 	}
 
-	email_avp = 0;
+	email_val.s = 0;
 	body = empty_param;
 
 	/* parse all -- we will need every header field for a UAS */
@@ -344,12 +344,7 @@ static int assemble_msg(struct sip_msg* msg, char* action)
 		body.len = msg->len - (body.s - msg->buf);
 
 		/* get email (if any) */
-		if ( (email_avp=search_avp( &email_attr ))!=0 &&
-		email_avp->val_type!=AVP_TYPE_STR ) {
-			LOG(L_WARN, "assemble_msg: 'email' avp found but "
-			    "not string -> ignoring it\n");
-			email_avp = 0;
-		}
+		search_first_avp( 0, (int_str)EMAIL_AVP_ID, &email_val);
 	}
 
 	/* additional headers */
@@ -400,7 +395,7 @@ static int assemble_msg(struct sip_msg* msg, char* action)
 
 	eol_line(2)=REQ_LINE(msg).method;     /* method type */
 	eol_line(3)=msg->parsed_uri.user;     /* user from r-uri */
-	eol_line(4)=email_avp?(email_avp->val.str_val):empty_param;  /* email */
+	eol_line(4)=(email_val.s)?(*email_val.s):(empty_param);  /* email */
 	eol_line(5)=msg->parsed_uri.host;     /* domain */
 
 	eol_line(6)=msg->rcv.bind_address->address_str; /* dst ip */

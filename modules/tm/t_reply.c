@@ -60,6 +60,7 @@
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  *  2004-02-18  fifo_t_reply imported from vm module (bogdan)
+ *  2004-08-23  avp list is available from failure/on_reply routes (bogdan)
  */
 
 
@@ -473,31 +474,36 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	static enum route_mode backup_mode;
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
+	static struct usr_avp **backup_list;
 
 	if (msg) {
-	/* remember we are back in request processing, but process
-	 * a shmem-ed replica of the request; advertise it in rmode;
-	 * for example t_reply needs to know that
-	 */
-	backup_mode=rmode;
-	rmode=MODE_ONFAILURE;
-	/* also, tm actions look in beginning whether tranaction is
-	 * set -- whether we are called from a reply-processing 
-	 * or a timer process, we need to set current transaction;
-	 * otherwise the actions would attempt to look the transaction
-	 * up (unnecessary overhead, refcounting)
-	 */
-	/* backup */
-	backup_t=get_t();
-	backup_msgid=global_msg_id;
-	/* fake transaction and message id */
+		/* remember we are back in request processing, but process
+		 * a shmem-ed replica of the request; advertise it in rmode;
+		 * for example t_reply needs to know that
+		 */
+		backup_mode=rmode;
+		rmode=MODE_ONFAILURE;
+		/* also, tm actions look in beginning whether tranaction is
+		 * set -- whether we are called from a reply-processing 
+		 * or a timer process, we need to set current transaction;
+		 * otherwise the actions would attempt to look the transaction
+		 * up (unnecessary overhead, refcounting)
+		 */
+		/* backup */
+		backup_t=get_t();
+		backup_msgid=global_msg_id;
+		/* fake transaction and message id */
 		global_msg_id=msg->id;
 		set_t(t);
+		/* make available the avp list from transaction */
+		backup_list = set_avp_list( &t->user_avps );
 	} else {
 		/* restore original environment */
 		set_t(backup_t);
 		global_msg_id=backup_msgid;
 		rmode=backup_mode;
+		/* restore original avp list */
+		set_avp_list( backup_list );
 	}
 }
 
@@ -532,33 +538,7 @@ static inline int fake_req(struct sip_msg *faked_req,
 		faked_req->new_uri.s[faked_req->new_uri.len]=0;
 	}
 
-#if 0
-	/* create a duplicated lump list to which actions can add
-	 * new pkg items  */
-	if (shmem_msg->add_rm) {
-		faked_req->add_rm=dup_lump_list(shmem_msg->add_rm);
-		if (!faked_req->add_rm) { /* non_emty->empty ... failure */
-			LOG(L_ERR, "ERROR: fake_req: lump dup failed\n");
-			goto error01;
-		}
-	}
-	/* same for the body lumps */
-	if (shmem_msg->body_lumps) {
-		faked_req->body_lumps=dup_lump_list(shmem_msg->body_lumps);
-		if (!faked_req->body_lumps) { /* non_empty->empty ... failure */
-			LOG(L_ERR, "ERROR: fake_req: lump dup failed\n");
-			goto error02;
-		}
-	}
-#endif
 	return 1;
-
-#if 0
-error02:
-	free_duped_lump_list(faked_req->add_rm);
-error01:
-	if (faked_req->new_uri.s) pkg_free(faked_req->new_uri.s);
-#endif
 error00:
 	return 0;
 }
@@ -567,11 +547,6 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 {
 	struct hdr_field *hdr;
 
-#if 0
-	free_duped_lump_list(faked_req->add_rm);
-	free_duped_lump_list(faked_req->body_lumps);
-	faked_req->add_rm = faked_req->body_lumps = 0;
-#endif
 	if (faked_req->new_uri.s) {
 		pkg_free(faked_req->new_uri.s);
 		faked_req->new_uri.s = 0;
@@ -608,12 +583,10 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
-		LOG(L_WARN, 
-			"Warning: run_failure_handlers: no UAC support (%d, %d) \n",
-			t->on_negative, 
-			t->tmcb_hl.reg_types);
-                return 0;
-        }
+		LOG(L_WARN,"Warning: run_failure_handlers: no UAC support (%d, %d) \n",
+			t->on_negative, t->tmcb_hl.reg_types);
+		return 0;
+	}
 
 	/* don't start faking anything if we don't have to */
 	if ( !has_tran_tmcbs( t, TMCB_ON_FAILURE) && !t->on_negative ) {
@@ -644,9 +617,6 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		/* run a reply_route action if some was marked */
 		if (run_actions(failure_rlist[on_failure], &faked_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
-		/* destroy any eventual avps */
-		if (users_avps)
-			destroy_avps();
 	}
 
 	/* restore original environment and free the fake msg */
@@ -1225,6 +1195,7 @@ int reply_received( struct sip_msg  *p_msg )
 	struct ua_client *uac;
 	struct cell *t;
 	str next_hop;
+	struct usr_avp **backup_list;
 
 	/* make sure we know the assosociated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
@@ -1265,9 +1236,9 @@ int reply_received( struct sip_msg  *p_msg )
 		/* acknowledge negative INVITE replies (do it before detailed
 		 * on_reply processing, which may take very long, like if it
 		 * is attempted to establish a TCP connection to a fail-over dst */
-
-        if (t->flags & T_IS_INVITE_FLAG) {
-                if (msg_status >= 300) {
+		
+	if (t->flags & T_IS_INVITE_FLAG) {
+		if (msg_status >= 300) {
 			ack = build_ack(p_msg, t, branch, &ack_len);
 			if (ack) {
 				SEND_PR_BUFFER(&uac->request, ack, ack_len);
@@ -1283,18 +1254,19 @@ int reply_received( struct sip_msg  *p_msg )
 			}
 		}
 	}
-	     /* processing of on_reply block */
+	/* processing of on_reply block */
 	if (t->on_reply) {
 		rmode=MODE_ONREPLY;
-		     /* transfer transaction flag to message context */
+		/* transfer transaction flag to message context */
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
-	 	if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
+		/* set the as avp_list the one from transaction */
+		backup_list = set_avp_list( &t->user_avps );
+		if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
-		     /* destroy any eventual avps */
-		if (users_avps)
-			destroy_avps();
-		     /* transfer current message context back to t */
+		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
+		/* restore original avp list */
+		set_avp_list( backup_list );
 	}
 	LOCK_REPLIES( t );
 	if ( is_local(t) ) {

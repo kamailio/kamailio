@@ -50,7 +50,6 @@
  * 2003-10-24  converted to the new socket_info lists (andrei)
  * 2003-10-28  added tcp_accept_aliases (andrei)
  * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
- * 2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
  * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
  * 2004-04-29  added SOCK_MODE, SOCK_USER & SOCK_GROUP (andrei)
  * 2004-05-03  applied multicast support patch (MCAST_LOOPBACK) from janakj
@@ -80,7 +79,6 @@
 #include "resolve.h"
 #include "socket_info.h"
 #include "name_alias.h"
-#include "usr_avp.h"
 #include "ut.h"
 #include "dset.h"
 
@@ -186,8 +184,6 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token UDP
 %token TCP
 %token TLS
-%token LOAD_AVP
-%token AVP_TO_URI
 
 /* config vars. */
 %token DEBUG
@@ -214,7 +210,6 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token UNIX_SOCK
 %token UNIX_SOCK_CHILDREN
 %token UNIX_TX_TIMEOUT
-%token AVP_DB_URL
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
 %token LOADMODULE
@@ -438,8 +433,6 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| UNIX_SOCK_CHILDREN EQUAL error { yyerror("int value expected\n"); }
 		| UNIX_TX_TIMEOUT EQUAL NUMBER { unixsock_tx_timeout=$3; }
 		| UNIX_TX_TIMEOUT EQUAL error { yyerror("int value expected\n"); }
-		| AVP_DB_URL EQUAL STRING { avp_db_url=$3; }
-		| AVP_DB_URL EQUAL error  { yyerror("string value expected"); }
 		| USER EQUAL STRING     { user=$3; }
 		| USER EQUAL ID         { user=$3; }
 		| USER EQUAL error      { yyerror("string value expected"); }
@@ -1561,40 +1554,6 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| FORCE_TCP_ALIAS LPAREN error RPAREN	{$$=0; 
 					yyerror("bad argument, number expected");
 					}
-		| LOAD_AVP LPAREN STRING COMMA NUMBER RPAREN {
-					$$=(void*)get_user_type( $3 );
-					if ($$==(void*)-1) {
-						yyerror("unknown user type in arg 1 for "
-							"load_avp(x,x)");
-					} else {
-						$$=mk_action3( LOAD_AVP_T, NUMBER_ST, STRING_ST,
-							NUMBER_ST, $$, 0,(void*)$5);
-					}
-					}
-		| LOAD_AVP LPAREN STRING COMMA STRING COMMA NUMBER RPAREN {
-					$$=(void*)get_user_type( $3 );
-					if ($$==(void*)-1) {
-						yyerror("unknown user type in arg 1 for "
-							"load_avp(x,x,x)");
-					} else {
-						$$=mk_action3( LOAD_AVP_T, NUMBER_ST, STRING_ST,
-							NUMBER_ST, $$, $5, (void*)$7);
-					}
-					}
-		| LOAD_AVP error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| AVP_TO_URI LPAREN STRING RPAREN {
-								$$=0;
-								if ((str_tmp=pkg_malloc(sizeof(str)))==0){
-										LOG(L_CRIT, "ERROR: cfg. parser:"
-													" out of memory.\n");
-								}else{
-										str_tmp->s=$3;
-										str_tmp->len=strlen($3);
-										$$=mk_action(AVP_TO_URI_T, STR_ST,
-											0, str_tmp, 0);
-								}
-										}
-		| AVP_TO_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 								$$=0;
 								if ((str_tmp=pkg_malloc(sizeof(str)))==0){

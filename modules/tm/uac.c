@@ -49,6 +49,7 @@
  *              merged in transaction callbacks as LOCAL_COMPLETED (bogdan)
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced (bogdan)
+ *  2004-08-23  avp support in t_uac (bogdan)
  */
 
 #include <string.h>
@@ -197,6 +198,10 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		LOG(L_ERR, "t_uac: short of cell shmem\n");
 		goto error2;
 	}
+
+	/* better reset avp list now - anyhow, it's useless from
+	 * this point (bogdan) */
+	reset_avps();
 
 	/* add the callback the the transaction for LOCAL_COMPLETED event */
 	if(cb && insert_tmcb(&(new_cell->tmcb_hl),TMCB_LOCAL_COMPLETED,cb,cbp)!=1){
