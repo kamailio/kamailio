@@ -85,10 +85,6 @@ int new_watcher(str* _from, str* _c, time_t _e, doctype_t _a, watcher_t** _w, st
 
 	(*_w)->dialog.cseq = 1;
 
-	trim(&(*_w)->dialog.callid);
-	trim(&(*_w)->dialog.from_tag);
-	trim(&(*_w)->dialog.to);
-
 	return 0;
 }
 

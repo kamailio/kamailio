@@ -43,6 +43,7 @@
 #include "../../parser/parse_uri.h"
 #include "reply.h"
 #include "notify.h"
+#include "../../trim.h"
 
 static doctype_t acc;
 
@@ -186,7 +187,7 @@ static inline int check_message(struct sip_msg* _m)
  */
 static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _to, struct presentity** _p, struct watcher** _w)
 {
-	str* c;
+	str* c, cid, to;
 	time_t e;
 
 	if (_m->expires) {
@@ -212,7 +213,12 @@ static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str*
 	c = &((contact_body_t*)_m->contact->parsed)->contacts->uri;
 	get_raw_uri(c);
 
-	if (add_watcher(*_p, &(get_from(_m)->uri), c, e, acc, &(_m->callid->body), &(get_from(_m)->tag_value), &_m->to->body, _w) < 0) {
+	cid = _m->callid->body;
+	to = _m->to->body;
+	trim(&to);
+	trim(&cid);
+	
+	if (add_watcher(*_p, &(get_from(_m)->uri), c, e, acc, &cid, &(get_from(_m)->tag_value), &to, _w) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}
