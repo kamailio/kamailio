@@ -44,7 +44,7 @@
 #include "../../parser/hf.h"
 #include "../../parser/digest/digest.h"
 #include "group.h"
-#include "ser_radius.h"
+#include "dict.h"
 #include "grouprad_mod.h"
 
 

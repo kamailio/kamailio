@@ -36,7 +36,7 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../auth/api.h"
-#include "ser_radius.h"
+#include "dict.h"
 #include "sterman.h"
 #include "authrad_mod.h"
 #include <radiusclient.h>
@@ -55,7 +55,8 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	VALUE_PAIR *send, *received, *vp;
 	UINT4 service;
 	str method, user, user_name;
-
+	int i;
+	
 	send = received = 0;
 
 	if (!(_cred && _method && _user && _rpid)) {
@@ -227,7 +228,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	}
        
 	/* Send request */
-	if (rc_auth(SIP_PORT, send, &received, msg) == OK_RC) {
+	if ((i = rc_auth(SIP_PORT, send, &received, msg)) == OK_RC) {
 		DBG("radius_authorize_sterman(): Success\n");
 		rc_avpair_free(send);
 
@@ -244,6 +245,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 		rc_avpair_free(received);
 		return 1;
 	} else {
+		DBG("res: %d\n", i);
 		DBG("radius_authorize_sterman(): Failure\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
