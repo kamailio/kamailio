@@ -1,9 +1,9 @@
-#!/bin/sh 
+#!/bin/sh
 #
 # $Id$
 #
 # Script for adding and dropping ser MySql tables
-# 
+#
 # TO-DO: update_structures command for migriting to new
 #        table definitons
 # USAGE: call the command without any parameters for info
@@ -71,8 +71,8 @@ EOF
 } #usage
 
 
-# read password 
-prompt_pw() 
+# read password
+prompt_pw()
 {
 	savetty=`stty -g`
 	printf "MySql password for $SQL_USER: "
@@ -89,7 +89,7 @@ sql_query()
 }
 
 # dump all rows
-ser_dump()  # pars: <database name> 
+ser_dump()  # pars: <database name>
 {
 	if [ $# -ne 1 ] ; then
 		echo "ser_dump function takes one param"
@@ -100,7 +100,7 @@ ser_dump()  # pars: <database name>
 
 
 # copy a database to database_bak
-ser_backup() # par: <database name> 
+ser_backup() # par: <database name>
 {
 	if [ $# -ne 1 ] ; then
 		echo  "ser_backup function takes one param"
@@ -133,7 +133,7 @@ fi
 sql_query $1 < $2
 }
 
-ser_drop()  # pars: <database name> 
+ser_drop()  # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
 	echo "ser_drop function takes two params"
@@ -146,7 +146,7 @@ EOF
 } #ser_drop
 
 # read realm
-prompt_realm() 
+prompt_realm()
 {
 	printf "Domain (realm) for the default user 'admin': "
 	read SIP_DOMAIN
@@ -176,13 +176,13 @@ if [ $# -eq 1 ] ; then
 	fi
 	credentials
 	# by default we create initial user
-	INITIAL_USER="INSERT INTO subscriber 
-		($USERCOL, password, first_name, last_name, phone, 
-		email_address, datetime_created, datetime_modified, confirmation, 
-		flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms ) 
-		VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
-		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00', 
-		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '', 
+	INITIAL_USER="INSERT INTO subscriber
+		($USERCOL, password, first_name, last_name, phone,
+		email_address, datetime_created, datetime_modified, confirmation,
+		flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms )
+		VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123',
+		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
+		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 		'$HA1', '$SIP_DOMAIN', '$HA1B',
 		'65e397cda0aa8e3202ea22cbd350e4e9', 'admin' );"
 elif [ $# -eq 2 ] ; then
@@ -238,6 +238,11 @@ INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'trusted', '1');
+INSERT INTO version VALUES ( 'preferences', '1');
+INSERT INTO version VALUES ( 'preferences_types', '1');
+INSERT INTO version VALUES ( 'admin_privileges', '1');
+INSERT INTO version VALUES ( 'calls_forwarding', '1');
+INSERT INTO version VALUES ( 'speed_dial', '1');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -556,7 +561,19 @@ CREATE TABLE preferences (
   value varchar(100) NOT NULL default '',
   PRIMARY KEY ($USERCOL, domain, attribute)
 ) $TABLE_TYPE;
-	  
+
+#
+# Table structure for table 'preferences_types' -- types of atributes in preferences
+#
+
+CREATE TABLE preferences_types (
+  att_name varchar(50) NOT NULL default '',
+  att_rich_type varchar(32) NOT NULL default 'string',
+  att_raw_type int(11) unsigned NOT NULL default '2',
+  att_type_spec text,
+  default_value varchar(100) NOT NULL default '',
+  PRIMARY KEY  (att_name)
+) $TABLE_TYPE;
 
 #
 # Table structure for table trusted
@@ -589,7 +606,49 @@ CREATE TABLE server_monitoring_agg (
   PRIMARY KEY  (param)
 ) $TABLE_TYPE;
 
-# add an admin user "admin" with password==heslo, 
+#
+# Table structure for table 'admin_privileges' -- multidomain serweb ACL control
+#
+
+CREATE TABLE admin_privileges (
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  priv_name varchar(64) NOT NULL default '',
+  priv_value varchar(64) NOT NULL default '',
+  PRIMARY KEY  ($USERCOL,priv_name,priv_value,domain)
+) $TABLE_TYPE;
+
+#
+# Table structure for table 'calls_forwarding'  -- curently used only for caller screening
+#
+
+CREATE TABLE calls_forwarding (
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  uri_re varchar(128) NOT NULL default '',
+  purpose varchar(32) NOT NULL default '',
+  action varchar(32) NOT NULL default '',
+  param1 varchar(128) default NULL,
+  param2 varchar(128) default NULL,
+  PRIMARY KEY  ($USERCOL,domain,uri_re,purpose)
+) $TABLE_TYPE;
+
+#
+# Table structure for table 'speed_dial'
+#
+
+CREATE TABLE speed_dial (
+  $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
+  username_from_req_uri varchar(128) NOT NULL default '',
+  domain_from_req_uri varchar(128) NOT NULL default '',
+  new_request_uri varchar(128) NOT NULL default '',
+  PRIMARY KEY  ($USERCOL,domain,domain_from_req_uri,username_from_req_uri)
+) $TABLE_TYPE;
+
+
+
+# add an admin user "admin" with password==heslo,
 # so that one can try it out on quick start
 
 $INITIAL_USER
@@ -602,7 +661,7 @@ EOF
 
 
 export PW
-if [ "$#" -ne 0 ]; then 
+if [ "$#" -ne 0 ]; then
   prompt_pw
 fi
 
@@ -611,7 +670,7 @@ case $1 in
 
 		#1 create a backup database (named *_bak)
 		echo "creating backup database"
-		ser_backup $DBNAME 
+		ser_backup $DBNAME
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: ser_backup failed"
 			exit 1
@@ -629,7 +688,7 @@ case $1 in
 			sed "s/[rR][eE][aA][lL][mM]/domain/g"> ${tmp_file}.2
 		#3 drop original database
 		echo "dropping table ($DBNAME)"
-		ser_drop $DBNAME 
+		ser_drop $DBNAME
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: dropping table failed"
 			rm $tmp_file*
@@ -644,7 +703,7 @@ case $1 in
 			exit 1
 		fi
 		#5 restoring table content
-		echo "restoring table content" 
+		echo "restoring table content"
 		ser_restore $DBNAME ${tmp_file}.2
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: restoring table failed"
@@ -682,7 +741,7 @@ case $1 in
 		;;
 	backup)
 		# backup current database
-		ser_dump $DBNAME 
+		ser_dump $DBNAME
 		exit $?
 		;;
 	restore)
@@ -701,22 +760,22 @@ case $1 in
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
 		fi
-		ser_create $DBNAME 
+		ser_create $DBNAME
 		exit $?
 		;;
 	drop)
 		# delete ser database
-		ser_drop $DBNAME 
+		ser_drop $DBNAME
 		exit $?
 		;;
 	reinit)
 		# delete database and create a new one
-		ser_drop $DBNAME 
+		ser_drop $DBNAME
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		ser_create $DBNAME 
+		ser_create $DBNAME
 		exit $?
 		;;
 	*)
