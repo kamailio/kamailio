@@ -30,6 +30,45 @@ to account dialogs (calls) that are initiated by my own users, how do i
 know when i see a bye, if it terminates such a call or a call initiated
 by non-local party?
 
+Jiri: There are actually two issues: decide whether the subsequent BYE needs to
+be authenticated, and if so, with what realm. There is no way around it
+except keeping dialog state, better in record-routes rather than in
+server's memory. If in record-routes, integrity needs to be preserved.
+See my sipping posting (2003-03-04):
+First of all, as said previously, live with realms from UAC. They
+are as trustworthy as user's id -- all is supplied by user and what
+really matters is whether the credentials are ok. (And again, forget
+interfaces, please.)
+
+The real questions is whether to authenticate at all, and if so
+which realm the server should use to challenge.
+
+Let me give an example. A proxy maintains a policy which is 
+a no relaying: drop requests which neither have my domain 
+  in r-uri nor have my domain in From
+b verify from: if request originator claims to be a part of
+  my domain in From of a request, authenticate
+c watch all: sessions are record-routed
+
+Scenario:
+1) a@other calls b@other which gets forwarded to b@mine
+2) b@mine sends a BYE, it looks like:
+
+BYE sip:originator@1.2.3.4
+From: b@other
+To: a@other
+Route: <proxy@mine;lr>
+
+What will you do now? Well with the policy above you would drop
+it (point a). If you are smarter, you will see your Route and
+infer "that's my Route, I must have accepted the previous INVITE"
+and will not drop it. The questions are now:
+- should you authenticate? (remember, you can't authenticate
+  request originators from other domains)
+- if so, with what realm
+- how far can you trust the information in Route (actually, not at all)
+
+
 
 Mike Graff, serusers
 --------------------
