@@ -100,6 +100,9 @@ inline struct via_body* via_body_cloner( char* new_buf,
 			translate_pointer(new_buf,org_buf,org_via->port_str.s);
 		/* params (str type) */
 		new_via->params.s=translate_pointer(new_buf,org_buf,org_via->params.s);
+		/* transaction id */
+		new_via->tid.s=
+			translate_pointer(new_buf, org_buf, org_via->tid.s);
 		/* comment (str type) */
 		new_via->comment.s=
 			translate_pointer(new_buf,org_buf,org_via->comment.s);

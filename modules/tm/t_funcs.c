@@ -121,7 +121,7 @@ void put_on_wait(  struct cell  *Trans  )
 	}
 #endif
 #ifdef EXTRA_DEBUG
-	DBG("DEBUG: --- out on WAIT --- \n");
+	DBG("DEBUG: put on WAIT \n");
 #endif
 
 

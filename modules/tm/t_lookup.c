@@ -116,6 +116,60 @@ struct cell *get_t() { return T; }
 void init_t() {global_msg_id=0; T=T_UNDEFINED;}
 
 
+/* transaction matching a-la RFC-3261 using transaction ID in branch
+ * (the function assumes there is magic cookie in branch) */
+
+static struct cell *tid_matching( int hash_index, 
+		struct via_body *via1, 
+		enum request_method skip_method)
+{
+	struct cell *p_cell;
+	struct sip_msg  *t_msg;
+
+
+	/* update parsed tid */
+	via1->tid.s=via1->branch->value.s+MCOOKIE_LEN;
+	via1->tid.len=via1->branch->value.len-MCOOKIE_LEN;
+
+	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
+		p_cell; p_cell = p_cell->next_cell ) 
+	{
+		t_msg=p_cell->uas.request;
+		if (skip_method & t_msg->REQ_METHOD)
+			continue;
+		if (t_msg->via1->tid.len!=via1->tid.len)
+			continue;
+		if (memcmp(t_msg->via1->tid.s, via1->tid.s,
+				via1->tid.len)!=0)
+			continue;
+		/* ok, tid matches -- now make sure that the
+		 * originater matches too to avoid confusion with
+		 * different senders generating the same tid
+		 */
+		if (via1->host.len!=t_msg->via1->host.len)
+			continue;
+		if (memcmp(via1->host.s, t_msg->via1->host.s,
+					via1->host.len)!=0)
+			continue;
+		if (via1->port!=t_msg->via1->port)
+			continue;
+		if (via1->transport.len!=t_msg->via1->transport.len)
+			continue;
+		if (memcmp(via1->transport.s, t_msg->via1->transport.s,
+					via1->transport.len)!=0)
+			continue;
+		/* all matched -- we found the transaction ! */
+		DBG("DEBUG: RFC3261 transaction matched, tid=%.*s\n",
+			via1->tid.len, via1->tid.s);
+
+		return p_cell;
+	}
+	/* :-( ... we didn't find any */
+	DBG("DEBUG: RFC3261 transaction matching failed\n");
+	return 0;
+}
+
+
 /* function returns:
  *      negative - transaction wasn't found
  *			(-2 = possibly e2e ACK matched )
@@ -128,6 +182,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	unsigned int       isACK;
 	struct sip_msg  *t_msg;
 	int ret;
+	struct via_param *branch;
 
 	/* parse all*/
 	if (check_transaction_quadruple(p_msg)==0)
@@ -146,10 +201,37 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	DBG("t_lookup_request: start searching: hash=%d, isACK=%d\n",
 		p_msg->hash_index,isACK);
 
+
 	/* asume not found */
 	ret=-1;
 
-	/* lock the hole entry*/
+	/* first of all, look if there is RFC3261 magic cookie in branch; if
+	 * so, we can do very quick matching and skip the old-RFC bizzar
+	 * comparison of many header fields
+	 */
+	if (!p_msg->via1) {
+		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
+		T=0;
+		return 0;
+	}
+	branch=p_msg->via1->branch;
+	if (branch && branch->value.s && branch->value.len>MCOOKIE_LEN
+			&& memcmp(branch->value.s,MCOOKIE,MCOOKIE_LEN)==0) {
+		/* huhuhu! the cookie is there -- let's proceed fast */
+		LOCK_HASH(p_msg->hash_index);
+		p_cell=tid_matching(p_msg->hash_index, p_msg->via1, 
+				/* skip transactions with different
+				 * method; otherwise CANCEL would 
+				 * match the previous INVITE trans.
+				 */
+				isACK ? ~METHOD_INVITE: ~p_msg->REQ_METHOD);
+		if (p_cell) goto found; else goto notfound;
+	}
+
+	/* ok -- it's ugly old-fashioned transaction matching */
+	DBG("DEBUG: proceeding to pre-RFC3261 transaction matching\n");
+
+	/* lock the whole entry*/
 	LOCK_HASH(p_msg->hash_index);
 
 	/* all the transactions from the entry are compared */
@@ -250,6 +332,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		} /* ACK */
 	} /* synonym loop */
 
+notfound:
 	/* no transaction found */
 	T = 0;
 	if (!leave_new_locked) {
@@ -269,7 +352,8 @@ found:
 
 
 
-/* function returns:
+/* function lookups transaction being cancelled by CANCEL in p_msg;
+ * it returns:
  *       0 - transaction wasn't found
  *       T - transaction found
  */
@@ -278,12 +362,39 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	struct cell     *p_cell;
 	unsigned int     hash_index;
 	struct sip_msg  *t_msg;
+	struct via_param *branch;
 
 
 	/* start searching in the table */
 	hash_index = p_msg->hash_index;
-	LOCK_HASH(hash_index);
 	DBG("DEBUG: t_lookupOriginalT: searching on hash entry %d\n",hash_index );
+
+
+	/* first of all, look if there is RFC3261 magic cookie in branch; if
+	 * so, we can do very quick matching and skip the old-RFC bizzar
+	 * comparison of many header fields
+	 */
+	if (!p_msg->via1) {
+		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
+		T=0;
+		return 0;
+	}
+	branch=p_msg->via1->branch;
+	if (branch && branch->value.s && branch->value.len>MCOOKIE_LEN
+			&& memcmp(branch->value.s,MCOOKIE,MCOOKIE_LEN)==0) {
+		/* huhuhu! the cookie is there -- let's proceed fast */
+		LOCK_HASH(hash_index);
+		p_cell=tid_matching(hash_index, p_msg->via1, 
+				/* we are seeking the original transaction --
+				 * skip CANCEL transactions during search
+				 */
+				METHOD_CANCEL);
+		if (p_cell) goto found; else goto notfound;
+	}
+
+	/* no cookies --proceed to old-fashioned pre-3261 t-matching */
+
+	LOCK_HASH(hash_index);
 
 	/* all the transactions from the entry are compared */
 	for (p_cell=get_tm_table()->entrys[hash_index].first_cell;
@@ -340,19 +451,23 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 			continue;
 
 		/* found */
-		DBG("DEBUG: t_lookupOriginalT: canceled transaction"
-			" found (%p)! \n",p_cell );
-		REF_UNSAFE( p_cell );
-		UNLOCK_HASH(hash_index);
-		DBG("DEBUG: t_lookupOriginalT completed\n");
-		return p_cell;
+		goto found;
 	}
 
+notfound:
 	/* no transaction found */
 	DBG("DEBUG: t_lookupOriginalT: no CANCEL maching found! \n" );
 	UNLOCK_HASH(hash_index);
 	DBG("DEBUG: t_lookupOriginalT completed\n");
 	return 0;
+
+found:
+	DBG("DEBUG: t_lookupOriginalT: canceled transaction"
+		" found (%p)! \n",p_cell );
+	REF_UNSAFE( p_cell );
+	UNLOCK_HASH(hash_index);
+	DBG("DEBUG: t_lookupOriginalT completed\n");
+	return p_cell;
 }
 
 

@@ -68,6 +68,7 @@ struct via_body {
 
 	     /* shortcuts to "important" params*/
 	struct via_param* branch;
+	str tid; /* transaction id, part of branch */
 	struct via_param* received;
 	
 	struct via_body* next; /* pointer to next via body string if

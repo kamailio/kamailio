@@ -397,7 +397,7 @@ inline static void wait_handler( void *attr)
 			" called from WAIT timer\n",p_cell);
 		abort();
 	}	
-	DBG("DEBUG: ---------- WAIT timer hit ------- \n");
+	DBG("DEBUG: WAIT timer hit\n");
 #endif
 
 	/* stop cancel timers if any running */
