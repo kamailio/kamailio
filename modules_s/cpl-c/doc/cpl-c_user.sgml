@@ -1,106 +1,266 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
+	<chapterinfo>
 	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
+		<revision>
+			<revnumber>$Revision$</revnumber>
+			<date>$Date$</date>
+		</revision>
 	</revhistory>
-    </chapterinfo>
-    <title>User's Guide</title>
-    
-    <section>
-	<title>Overview</title>
-	<para>Module description</para>
-    </section>
-    <section>
-	<title>Dependencies</title>
+	</chapterinfo>
+	<title>User's Guide</title>
+
+
 	<section>
-	    <title>&ser; Modules</title>
-	    <para>
-		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
+		<title>Overview</title>
+		<para>cpl-c modules implements a CPL (Call Processing Language) 
+		interpreter. Support for uploading/downloading/removing scripts via 
+		SIP REGISTER method is present.
+		</para>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&ser; Modules</title>
 			<para>
-			    <emphasis>No dependencies on other &ser; modules</emphasis>.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
-	</section>
-	<section>
-	    <title>External Libraries or Applications</title>
-	    <para>
-		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
-	    	<itemizedlist>
-		    <listitem>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+				<emphasis>TM (Transaction) module- used for proxying/forking 
+				requests
+				</emphasis>
 			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>SL (StateLess) module - used for sending stateless 
+				reply when responding to REGISTER request or for sending back 
+				error responses
+				</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed 
+				before running &ser; with this module loaded:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>libxml2 and libxml2-devel - on some SO, these to 
+					packages are merged into libxml2. This library contains an 
+					engine for XML parsing, DTD validation and DOM manipulation.
+					</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
 	</section>
-    </section>
-    <section>
-	<title>Exported Parameters</title>
+
+
 	<section>
-	    <title><varname>param_name</varname> (param_type)</title>
-	    <para>
-		Param description.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>value</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>param_name</varname> parameter</title>
-		<programlisting format="linespecific">
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>cpl_db</varname> (string)</title>
+			<para>
+				A SQL URL have to be given to the module for knowing where the 
+				database containing the table with CPL scripts is locates. If 
+				required a user name and password can be specified for allowing 
+				the module to connect to the database server.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is MANDATORY!
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_db</varname> parameter</title>
+				<programlisting format="linespecific">
 ...
-modparam("module", "param_name", "param_value")
+modparam("cpl_c","cpl_db","sql://user:passwd@host/database")
 ...
-</programlisting>
-	    </example>
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>cpl_table</varname> (string)</title>
+			<para>
+				Indicates the name of the table that store the CPL scripts. 
+				This table must be locate into the database specified by 
+				"cpl_db" parameter. For more about the format of the CPL table 
+				please see modules/cpl-c/init.mysql.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is MANDATORY!
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_table</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","cpl_table","cpltable")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>cpl_dtd_file</varname> (string)</title>
+			<para>
+				Points to the DTD file describing the CPL grammar. The file 
+				name may include also the path to the file. This path can be 
+				absolute or relative (be careful the the path will be relative 
+				to the starting directory of SER).
+			</para>
+			<para>
+				<emphasis>
+					This parameter is MANDATORY!
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>cpl_dtd_file</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","cpl_dtd_file","/etc/ser/cpl-06.dtd")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>log_dir</varname> (string)</title>
+			<para>
+				Points to a directory where should be created all the log file 
+				generated by the LOG CPL node. A log file per user will be 
+				created (on demand) having the name username.log.
+			</para>
+			<para>
+				<emphasis>
+					If this parameter is absent, the logging will be disabled 
+					without generating error on execution.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>log_dir</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","log_dir","/var/log/ser/cpl")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>proxy_recurse</varname> (int)</title>
+			<para>
+				Tells for how many time is allow to have recurse for PROXY CPL 
+				node If it has value 2, when doing proxy, only twice the proxy 
+				action will be re-triggered by  a redirect response; the third 
+				time, the proxy execution will end by going on REDIRECTION 
+				branch. The recurse feature can be disable by setting this 
+				parameter to 0 
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","proxy_recurse",2)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
-    </section>
-    <section>
-	<title>Exported Functions</title>
+
+
 	<section>
-	    <title>
-		<function moreinfo="none">function_name(param1, param2)</function>
-	    </title>
-	    <para>
-		Description
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>param1</emphasis> - description.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>param2</emphasis> - description.
-		    </para>
-		</listitem>
-	    </itemizedlist>
-	    <example>
-		<title><function>function_name</function> usage</title>
-		<programlisting format="linespecific">
+		<title>Exported Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">cpl_run_script(type)</function>
+			</title>
+			<para>
+				Starts the execution of the CPL script. The user name is 
+				fetched from new_uri or requested uri or from To header -in 
+				this order- (for incoming execution) or from FROM header (for 
+				outgoing execution). 
+				As the function use TM module for several internal operation, 
+				it's a MUST to call prior it the t_newtran() to create a 
+				transaction for the current INVITE - also it's recommended for 
+				retransmission detection. 
+				Normally this function will end script execution.  There is no 
+				guaranty that the CPL script interpretation ended when ser 
+				script ended also (for the same INVITE ;-)) - this can happen 
+				when the CPL script does a PROXY and the script interpretation 
+				pause after proxying and it will be resume when some reply is
+				received (this can happen in a different process of SER). 
+				If the function returns to script, the SIP server should 
+				continue with the normal behavior as if no script existed.
+				If error is returned (internally the function haven't sent any 
+				SIP error reply), the script should use a TM replying function 
+				for sending back to UAC the error reply.
+			</para>
+			<para>Meaning of the parameters is as follows:</para>
+			<itemizedlist>
+			<listitem>
+				<para><emphasis>type</emphasis> - which part of the script 
+				should be run; set it to "incoming" for having the incoming 
+				part of script executed (when an INVITE is received) or to 
+				"outgoing" for running the outgoing part of script (when a 
+				user is generating an INVITE - call).
+				</para>
+			</listitem>
+			</itemizedlist>
+			<example>
+				<title><function>cpl_run_script</function> usage</title>
+				<programlisting format="linespecific">
 ...
-function_name("sample_param1", "sample_param2");
+cpl_run_script("incoming");
 ...
-</programlisting>
-	    </example>
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">cpl_process_register()</function>
+			</title>
+			<para>
+				This function MUST be called only for REGISTER requests. It 
+				checks if the current REGISTER request is related or not with 
+				CPL script upload/download/ remove. If it is, all the needed 
+				operation will be done. For checking if the REGISTER is CPL 
+				related, the function looks fist to "Content-Type" header. If 
+				it exists and has a the mime type set to "application/cpl+xml" 
+				means this is a CPL script upload/remove operation. The 
+				distinction between to case is made by looking at 
+				"Content-Disposition" header; id its value is 
+				"script;action=store", means it's an upload; if it's 
+				"script;action=remove", means it's a remove operation; other 
+				values are considered to be errors. If no "Content-Type" 
+				header is present, the function looks to "Accept" header and 
+				if it contains the "*" or "application/cpl-xml" the request 
+				it will be consider one for downloading CPL scripts.
+				The functions returns to script only if the the REGISTER is 
+				not related to CPL. In other case, the function will send by 
+				itself the necessary replies (stateless - using sl), including 
+				for errors.
+			</para>
+		</section>
 	</section>
-    </section>
-    <section>
-	<title>Installation & Running</title>
-	<para>Notes about installation and running.</para>
-    </section>
+
+
+	<section>
+		<title>Installation & Running</title>
+		<para>Notes about installation and running.</para>
+	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

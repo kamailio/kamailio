@@ -12,41 +12,41 @@
 ]>
 
 <book>
-    <bookinfo>
+	<bookinfo>
 	<title>cpl-c Module</title>
 	<productname class="trade">&sername;</productname>
 	<authorgroup>
-	    <author>
-		<firstname>Bogdan</firstname>
-		<surname>Iancu</surname>
-		<affiliation><orgname>&fhg;</orgname></affiliation>
-		<address>
-		    <email>iancu@fokus.fraunhofer.de</email>
-		</address>
-	    </author>
-	    <editor>
-		<firstname>Bogdan</firstname>
-		<surname>Iancu</surname>
-		<address>
-		    <email>iancu@fokus.fraunhofer.de</email>
-		</address>
-	    </editor>
+		<author>
+			<firstname>Bogdan-Andrei</firstname>
+			<surname>Iancu</surname>
+			<affiliation><orgname>&fhg;</orgname></affiliation>
+			<address>
+				<email>iancu@fokus.fraunhofer.de</email>
+			</address>
+		</author>
+		<editor>
+			<firstname>Bogdan-Andrei</firstname>
+			<surname>Iancu</surname>
+			<address>
+				<email>iancu@fokus.fraunhofer.de</email>
+			</address>
+		</editor>
 	</authorgroup>
 	<copyright>
-	    <year>2003</year>
-	    <holder>Fill in here</holder>
+		<year>2003</year>
+		<holder>&fhg;</holder>
 	</copyright>
 	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
+		<revision>
+			<revnumber>$Revision$</revnumber>
+			<date>$Date$</date>
+		</revision>
 	</revhistory>
-    </bookinfo>
-    <toc></toc>
-    
-    &user;
-    &devel;
-    &faq;
-    
+	</bookinfo>
+	<toc></toc>
+
+	&user;
+	&devel;
+	&faq;
+
 </book>

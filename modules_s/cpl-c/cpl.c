@@ -647,6 +647,8 @@ static inline int do_script_download(struct sip_msg *msg)
 	add_lump_rpl(  msg, ct_type);
 
 	if (script.len!=0 && script.s!=0) {
+		/*DBG("script len=%d\n--------\n%.*s\n--------\n",
+			script.len, script.len, script.s);*/
 		/* user has a script -> add a body lump */
 		body = build_lump_rpl( script.s, script.len, LUMP_RPL_BODY);
 		if (body==0) {
