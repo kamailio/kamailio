@@ -23,7 +23,7 @@ int time2mysql(time_t _time, char* _result, int _res_len)
 	       }
 	     */
 
-	t = gmtime(&_time);
+	t = localtime(&_time);
 	return strftime(_result, _res_len, "%Y-%m-%d %H:%M:%S", t);
 }
 
