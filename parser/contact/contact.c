@@ -252,6 +252,7 @@ int parse_contacts(str* _s, contact_t** _c)
 		}
 
 		     /* Next character is comma */
+		c->len = _s->s - c->name.s;
 		_s->s++;
 		_s->len--;
 		trim_leading(_s);
@@ -271,6 +272,7 @@ int parse_contacts(str* _s, contact_t** _c)
 	return -1;
 
  ok:
+	c->len = _s->s - c->name.s;
 	c->next = *_c;
 	*_c = c;
 	return 0;
@@ -313,6 +315,7 @@ void print_contacts(FILE* _o, contact_t* _c)
 		fprintf(_o, "expires : %p\n", ptr->expires);
 		fprintf(_o, "received: %p\n", ptr->received);
 		fprintf(_o, "method  : %p\n", ptr->method);
+		fprintf(_o, "len     : %d\n", ptr->len);
 		if (ptr->params) {
 			print_params(_o, ptr->params);
 		}
