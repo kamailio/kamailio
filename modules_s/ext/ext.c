@@ -98,9 +98,16 @@ inline char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
 	}while(ret);
 
 	close_prog_output();
-	*out_len = len;
+	ret = is_finished();
 	DBG("DEBUG:run_ext_prog: recv <%.*s> [%d] ; status=%d\n",
 		len, buf,len,is_finished());
+
+	if (ret!=0) {
+		*out_len = 0;
+		return 0;
+	}
+
+	*out_len = len;
 	return buf;
 kill_it:
 	kill_prog();
