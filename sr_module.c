@@ -76,7 +76,7 @@ int register_builtin_modules()
 	if (ret<0) return ret;
 #endif
 
-#ifdef EXEC_TM
+#ifdef STATIC_EXEC
 	ret=register_module(exec_exports,"built-in", 0); 
 	if (ret<0) return ret;
 #endif
