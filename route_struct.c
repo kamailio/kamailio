@@ -8,6 +8,7 @@
 #include  "route_struct.h"
 
 #include <stdio.h>
+#include <netinet/in.h>
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 {
@@ -74,8 +75,46 @@ struct action* append_action(struct action* a, struct action* b)
 	return a;
 }
 
+
+
+struct net* mk_net(unsigned long ip, unsigned long mask)
+{
+	struct net* n;
+
+	n=(struct net*)malloc(sizeof(struct net));
+	if (n==0) goto error;
+	n->ip=ip;
+	n->mask=mask;
+	return n;
+error:
+	fprintf(stderr, "ERROR: mk_net_mask: memory allocation failure\n");
+	return 0;
+}
+
 	
 	
+
+void print_ip(unsigned ip)
+{
+	ip=htonl(ip);
+	printf("%d.%d.%d.%d", ((unsigned char*)&ip)[0],
+						  ((unsigned char*)&ip)[1],
+						  ((unsigned char*)&ip)[2],
+						  ((unsigned char*)&ip)[3]);
+}
+
+
+void print_net(struct net* net)
+{
+	if (net==0){
+		fprintf(stderr, "ERROR: print net: null pointer\n");
+		return;
+	}
+	print_ip(net->ip); printf("/"); print_ip(net->mask);
+}
+
+
+
 void print_expr(struct expr* exp)
 {
 	if (exp==0){
@@ -105,8 +144,9 @@ void print_expr(struct expr* exp)
 				break;
 			case MATCH_OP:
 				printf("~=");
+				break;
 			default:
-				priint("<UNKNOWN>");
+				printf("<UNKNOWN>");
 		}
 		switch(exp->subtype){
 			case NOSUBTYPE: 
@@ -116,10 +156,13 @@ void print_expr(struct expr* exp)
 					printf("\"%s\"", (char*)exp->r.param);
 					break;
 			case NET_ST:
-					printf("");
+					print_net((struct net*)exp->r.param);
+					break;
+			case IP_ST:
+					print_ip(exp->r.intval);
 					break;
 			default:
-					prinf("UNKNOWN");
+					printf("UNKNOWN");
 		}
 	}else if (exp->type==EXP_T){
 		switch(exp->op){

@@ -19,8 +19,9 @@
 	static int comment_nest=0;
 	static int state=0;
 	static char* str=0;
-	int line=0;
-	int column=0;
+	int line=1;
+	int column=1;
+	int startcolumn=1;
 
 	static char* addstr(char*, char**);
 	static void count();
@@ -38,6 +39,7 @@ SEND	send
 LOG		log
 ERROR	error
 ROUTE	route
+EXEC	exec
 /* condition keywords */
 METHOD	method
 URI		uri
@@ -47,7 +49,7 @@ DSTIP	dst_ip
 EQUAL	=
 EQUAL_T	==
 MATCH	~=
-NOT		!
+NOT		!|"not"
 AND		"and"|"&&"|"&"
 OR		"or"|"||"|"|"
 
@@ -101,6 +103,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{LOG}	{ count(); yylval.strval=yytext; return LOG; }
 <INITIAL>{ERROR}	{ count(); yylval.strval=yytext; return ERROR; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
+<INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 
 <INITIAL>{METHOD}	{ count(); yylval.strval=yytext; return METHOD; }
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }
@@ -186,7 +189,8 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{COM_LINE}.*{CR}	{ count(); } 
 
-<INITIAL>{ID}			{ count(); yylval.strval=yytext; return ID; }
+<INITIAL>{ID}			{ count(); addstr(yytext, &str);
+						  yylval.strval=str; str=0; return ID; }
 
 
 <<EOF>>							{
@@ -237,12 +241,14 @@ static void count()
 {
 	int i;
 	
+	startcolumn=column;
 	for (i=0; i<yyleng;i++){
 		if (yytext[i]=='\n'){
 			line++;
-			column=0;
+			column=startcolumn=1;
 		}else if (yytext[i]=='\t'){
-			column+=8 -(column%8);
+			column++;
+			/*column+=8 -(column%8);*/
 		}else{
 			column++;
 		}

@@ -12,9 +12,11 @@
 
 %union {
 	int intval;
+	unsigned uval;
 	char* strval;
 	struct expr* expr;
 	struct action* action;
+	struct net* net;
 }
 
 /* terminals */
@@ -27,6 +29,8 @@
 %token LOG
 %token ERROR
 %token ROUTE
+%token EXEC
+
 %token METHOD
 %token URI
 %token SRCIP
@@ -45,9 +49,9 @@
 %nonassoc EQUAL
 %nonassoc EQUAL_T
 %nonassoc MATCH
-%left NOT
-%left AND
 %left OR
+%left AND
+%left NOT
 
 /* values */
 %token <intval> NUMBER
@@ -71,6 +75,9 @@
 /*non-terminals */
 %type <expr> exp, condition,  exp_elem
 %type <action> action, actions, cmd
+%type <uval> ipv4
+%type <net> net4
+%type <strval> host
 
 
 
@@ -109,7 +116,19 @@ assign_stm:	DEBUG EQUAL NUMBER
 	;
 
 
-ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER
+ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER { 
+											if (($1>255) || ($1<0) ||
+												($3>255) || ($3<0) ||
+												($5>255) || ($5<0) ||
+												($7>255) || ($7<0)){
+												yyerror("invalid ipv4"
+														"address");
+												$$=0;
+											}else{
+												$$=($1<<24)|($3<<16)|
+													($5<<8)|$7;
+											}
+												}
 	;
 
 route_stm:	ROUTE LBRACE rules RBRACE 
@@ -122,140 +141,253 @@ rules:	rules rule
 	| rules error { yyerror("invalid rule"); }
 	 ;
 
-rule:	condition	actions CR
+rule:	condition	actions CR {
+								printf("Got a new rule!\n");
+								printf("expr: "); print_expr($1);
+								printf("\n  -> actions: ");
+								print_action($2); printf("\n");
+							   }
 	| CR  /* null rule */
 	| condition error { yyerror("bad actions in rule"); }
 	;
 
-condition:	exp
+condition:	exp {$$=$1;}
 	;
 
-exp:	exp AND exp 
-	| exp OR  exp 
-	| NOT exp 
-	| LPAREN exp RPAREN
-	| exp_elem
+exp:	exp AND exp 	{ $$=mk_exp(AND_OP, $1, $3); }
+	| exp OR  exp		{ $$=mk_exp(OR_OP, $1, $3);  }
+	| NOT exp 			{ $$=mk_exp(NOT_OP, $2, 0);  }
+	| LPAREN exp RPAREN	{ $$=$2; }
+	| exp_elem			{ $$=$1; }
 	;
 
-exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP,
-							STRING_ST, 
-							METHOD_O,
-							$3);
-					}
-		| METHOD EQUAL_T ID	{$$ = mk_elem(	EQUAL_OP,
-							STRING_ST,
-							METHOD_O,
-							$3); 
-				 	}
+exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST, 
+													METHOD_O, $3);
+									}
+		| METHOD EQUAL_T ID	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
+											METHOD_O, $3); 
+				 			}
 		| METHOD EQUAL_T error { $$=0; yyerror("string expected"); }
-		| METHOD MATCH STRING 	{$$ = mk_elem(	MATCH_OP,
-							STRING_ST,
-							METHOD_O,
-							$3); 
-				 	}
-		| METHOD MATCH ID	{$$ = mk_elem(	MATCH_OP,
-							STRING_ST,
-							METHOD_O,
-							$3); 
-				 	}
+		| METHOD MATCH STRING	{$$ = mk_elem(	MATCH_OP, STRING_ST,
+												METHOD_O, $3); 
+				 				}
+		| METHOD MATCH ID	{$$ = mk_elem(	MATCH_OP, STRING_ST,
+											METHOD_O, $3); 
+				 			}
 		| METHOD MATCH error { $$=0; yyerror("string expected"); }
-		| METHOD error	{ $$=0; 
-				  yyerror("invalid operator,"
-				  		"== or ~= expected");
-				}
-		| URI EQUAL_T STRING 	{$$ = mk_elem(	EQUAL_OP,
-							STRING_ST,
-							URI_O,
-							$3); 
-				 	}
-		| URI EQUAL_T ID 	{$$ = mk_elem(	EQUAL_OP,
-							STRING_ST,
-							URI_O,
-							$3); 
-				 	}
+		| METHOD error	{ $$=0; yyerror("invalid operator,"
+										"== or ~= expected");
+						}
+		| URI EQUAL_T STRING 	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
+												URI_O, $3); 
+				 				}
+		| URI EQUAL_T ID 	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
+											URI_O, $3); 
+				 			}
 		| URI EQUAL_T error { $$=0; yyerror("string expected"); }
-		| URI MATCH STRING 
-		| URI MATCH ID
+		| URI MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
+											URI_O, $3);
+							}
+		| URI MATCH ID		{ $$=mk_elem(	MATCH_OP, STRING_ST,
+											URI_O, $3);
+							}
 		| URI MATCH error {  $$=0; yyerror("string expected"); }
-		| URI error	{ $$=0; 
-				  yyerror("invalid operator,"
-				  		" == or ~= expected");
-				}
-		| SRCIP EQUAL_T net4 
-		| SRCIP EQUAL_T STRING 
-		| SRCIP EQUAL_T host
-		| SRCIP EQUAL_T error { yyerror( "ip address or hostname"
+		| URI error	{ $$=0; yyerror("invalid operator,"
+				  					" == or ~= expected");
+					}
+		| SRCIP EQUAL_T net4	{ $$=mk_elem(	EQUAL_OP, NET_ST,
+												SRCIP_O, $3);
+								}
+		| SRCIP EQUAL_T STRING	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+												SRCIP_O, $3);
+								}
+		| SRCIP EQUAL_T host	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+												SRCIP_O, $3);
+								}
+		| SRCIP EQUAL_T error { $$=0; yyerror( "ip address or hostname"
 						 "expected" ); }
-		| SRCIP MATCH STRING
-		| SRCIP MATCH ID
-		| SRCIP MATCH error  { yyerror( "hostname expected"); }
-		| SRCIP error  {yyerror("invalid operator, == or ~= expected");}
-		| DSTIP EQUAL_T net4 
-		| DSTIP EQUAL_T STRING
-		| DSTIP EQUAL_T host
-		| DSTIP EQUAL_T error { yyerror( "ip address or hostname"
-						 "expected" ); }
-		| DSTIP MATCH STRING
-		| DSTIP MATCH ID
-		| DSTIP MATCH error  { yyerror ( "hostname  expected" ); }
-		| DSTIP error {yyerror("invalid operator, == or ~= expected");}
+		| SRCIP MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
+												SRCIP_O, $3);
+								}
+		| SRCIP MATCH ID		{ $$=mk_elem(	MATCH_OP, STRING_ST,
+												SRCIP_O, $3);
+								}
+		| SRCIP MATCH error  { $$=0; yyerror( "hostname expected"); }
+		| SRCIP error  { $$=0; 
+						 yyerror("invalid operator, == or ~= expected");}
+		| DSTIP EQUAL_T net4	{ $$=mk_elem(	EQUAL_OP, NET_ST,
+												DSTIP_O, $3);
+								}
+		| DSTIP EQUAL_T STRING	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+												DSTIP_O, $3);
+								}
+		| DSTIP EQUAL_T host	{ $$=mk_elem(	EQUAL_OP, STRING_ST,
+												DSTIP_O, $3);
+								}
+		| DSTIP EQUAL_T error { $$=0; yyerror( "ip address or hostname"
+						 			"expected" ); }
+		| DSTIP MATCH STRING	{ $$=mk_elem(	MATCH_OP, STRING_ST,
+												DSTIP_O, $3);
+								}
+		| DSTIP MATCH ID	{ $$=mk_elem(	MATCH_OP, STRING_ST,
+											DSTIP_O, $3);
+							}
+		| DSTIP MATCH error  { $$=0; yyerror ( "hostname  expected" ); }
+		| DSTIP error { $$=0; 
+						yyerror("invalid operator, == or ~= expected");}
 	;
 
-net4:	ipv4 SLASH ipv4 
-	| ipv4 SLASH NUMBER 
-	| ipv4
-	| ipv4 SLASH error {yyerror("netmask (eg:255.0.0.0 or 8) expected");}
+net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); } 
+	| ipv4 SLASH NUMBER {	if (($3>32)|($3<1)){
+								yyerror("invalid bit number in netmask");
+								$$=0;
+							}else{
+								$$=mk_net($1, (1<<$3)-1);
+							}
+						}
+	| ipv4				{ $$=mk_net($1, 0xffffffff); }
+	| ipv4 SLASH error { $$=0;
+						 yyerror("netmask (eg:255.0.0.0 or 8) expected");}
 	;
 
-host:	ID
-	| host DOT ID
-	| host DOT error { yyerror("invalid hostname"); }
+host:	ID				{ $$=$1; }
+	| host DOT ID		{ $$=(char*)malloc(strlen($1)+1+strlen($3)+1);
+						  if ($$==0){
+						  	fprintf(stderr, "memory allocation failure"
+						 				" while parsing host\n");
+						  }else{
+						  	memcpy($$, $1, strlen($1));
+						  	$$[strlen($1)]='.';
+						  	memcpy($$+strlen($1)+1, $3, strlen($3));
+						  	$$[strlen($1)+1+strlen($3)]=0;
+						  }
+						  free($1); free($3);
+						};
+	| host DOT error { $$=0; free($1); yyerror("invalid hostname"); }
 	;
 
 
-actions:	actions action 
-		| action
-		| actions error { yyerror("bad command"); }
+actions:	actions action	{$$=append_action($1, $2); }
+		| action			{$$=$1;}
+		| actions error { $$=0; yyerror("bad command"); }
 	;
 
-action:		cmd SEMICOLON
-		| SEMICOLON /* null action */
-		| cmd error { yyerror("bad command: missing ';'?"); }
+action:		cmd SEMICOLON {$$=$1;}
+		| SEMICOLON /* null action */ {$$=0;}
+		| cmd error { $$=0; yyerror("bad command: missing ';'?"); }
 	;
 
-cmd:		FORWARD LPAREN host RPAREN 
-		| FORWARD LPAREN STRING RPAREN 
-		| FORWARD LPAREN ipv4 RPAREN 
-		| FORWARD LPAREN host COMMA NUMBER RPAREN
-		| FORWARD LPAREN STRING COMMA NUMBER RPAREN
-		| FORWARD LPAREN ipv4 COMMA NUMBER RPAREN
-		| FORWARD error { yyerror("missing '(' or ')' ?"); }
-		| FORWARD LPAREN error RPAREN { yyerror("bad forward"
+cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD LPAREN ipv4 RPAREN	{ $$=mk_action(	FORWARD_T,
+														IP_ST,
+														NUMBER_ST,
+														(void*)$3,
+														0);
+										}
+		| FORWARD LPAREN host COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+												 }
+		| FORWARD LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(FORWARD_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+													}
+		| FORWARD LPAREN ipv4 COMMA NUMBER RPAREN { $$=mk_action(FORWARD_T,
+																 IP_ST,
+																 NUMBER_ST,
+																 (void*)$3,
+																(void*)$5);
+												  }
+		| FORWARD error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| FORWARD LPAREN error RPAREN { $$=0; yyerror("bad forward"
+										"argument"); }
+		| SEND LPAREN host RPAREN	{ $$=mk_action(	SEND_T,
+													STRING_ST,
+													NUMBER_ST,
+													$3,
+													0);
+									}
+		| SEND LPAREN STRING RPAREN { $$=mk_action(	SEND_T,
+													STRING_ST,
+													NUMBER_ST,
+													$3,
+													0);
+									}
+		| SEND LPAREN ipv4 RPAREN	{ $$=mk_action(	SEND_T,
+													IP_ST,
+													NUMBER_ST,
+													(void*)$3,
+													0);
+									}
+		| SEND LPAREN host COMMA NUMBER RPAREN	{ $$=mk_action(	SEND_T,
+																STRING_ST,
+																NUMBER_ST,
+																$3,
+																(void*)$5);
+												}
+		| SEND LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(	SEND_T,
+																STRING_ST,
+																NUMBER_ST,
+																$3,
+																(void*)$5);
+												}
+		| SEND LPAREN ipv4 COMMA NUMBER RPAREN { $$=mk_action(	SEND_T,
+																IP_ST,
+																NUMBER_ST,
+																(void*)$3,
+																(void*)$5);
+											   }
+		| SEND error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SEND LPAREN error RPAREN { $$=0; yyerror("bad send"
+													"argument"); }
+		| DROP LPAREN RPAREN	{$$=mk_action(DROP_T,0, 0, 0, 0); }
+		| DROP					{$$=mk_action(DROP_T,0, 0, 0, 0); }
+		| LOG LPAREN STRING RPAREN	{$$=mk_action(	LOG_T, NUMBER_ST, 
+													STRING_ST,(void*)4,$3);
+									}
+		| LOG LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(	LOG_T,
+																NUMBER_ST, 
+																STRING_ST,
+																(void*)$3,
+																$5);
+												}
+		| LOG error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| LOG LPAREN error RPAREN { $$=0; yyerror("bad log"
+									"argument"); }
+		| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T,
+																STRING_ST, 
+																STRING_ST,
+																$3,
+																$5);
+												  }
+												
+		| ERROR error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| ERROR LPAREN error RPAREN { $$=0; yyerror("bad error"
+														"argument"); }
+		| ROUTE LPAREN NUMBER RPAREN	{ $$=mk_action(ROUTE_T, NUMBER_ST,
+														0, (void*)$3, 0);
+										}
+		| ROUTE error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| ROUTE LPAREN error RPAREN { $$=0; yyerror("bad route"
 						"argument"); }
-		| SEND LPAREN host RPAREN 
-		| SEND LPAREN STRING RPAREN 
-		| SEND LPAREN ipv4 RPAREN
-		| SEND LPAREN host COMMA NUMBER RPAREN
-		| SEND LPAREN STRING COMMA NUMBER RPAREN
-		| SEND LPAREN ipv4 COMMA NUMBER RPAREN
-		| SEND error { yyerror("missing '(' or ')' ?"); }
-		| SEND LPAREN error RPAREN { yyerror("bad send"
-						"argument"); }
-		| DROP LPAREN RPAREN 
-		| DROP 
-		| LOG LPAREN STRING RPAREN
-		| LOG LPAREN NUMBER COMMA STRING RPAREN
-		| LOG error { yyerror("missing '(' or ')' ?"); }
-		| LOG LPAREN error RPAREN { yyerror("bad log"
-						"argument"); }
-		| ERROR LPAREN STRING COMMA STRING RPAREN 
-		| ERROR error { yyerror("missing '(' or ')' ?"); }
-		| ERROR LPAREN error RPAREN { yyerror("bad error"
-						"argument"); }
-		| ROUTE LPAREN NUMBER RPAREN
-		| ROUTE error { yyerror("missing '(' or ')' ?"); }
-		| ROUTE LPAREN error RPAREN { yyerror("bad route"
-						"argument"); }
+		| EXEC LPAREN STRING RPAREN	{ $$=mk_action(	EXEC_T, STRING_ST, 0,
+													$3, 0);
+									}
 	;
 
 
@@ -263,9 +395,11 @@ cmd:		FORWARD LPAREN host RPAREN
 
 extern int line;
 extern int column;
+extern int startcolumn;
 yyerror(char* s)
 {
-	fprintf(stderr, "parse error (%d,%d): %s\n", line, column, s);
+	fprintf(stderr, "parse error (%d,%d-%d): %s\n", line, startcolumn, 
+			column, s);
 }
 
 int main(int argc, char ** argv)

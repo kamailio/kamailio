@@ -11,7 +11,7 @@ enum { AND_OP=1, OR_OP, NOT_OP };
 enum { EQUAL_OP=10, MATCH_OP };
 enum { METHOD_O=1, URI_O, SRCIP_O, DSTIP_O };
 
-enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T};
+enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T};
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST };
 
 	
@@ -26,6 +26,7 @@ struct expr{
 	union {
 		struct expr* expr;
 		void* param;
+		int   intval;
 	}r;
 };
 
@@ -42,9 +43,19 @@ struct action{
 	struct action* next;
 };
 
+
+struct net{
+	unsigned long ip;
+	unsigned long mask;
+};
+
 struct expr* mk_exp(int op, struct expr* left, struct expr* right);
 struct expr* mk_elem(int op, int subtype, int operand, void* param);
 struct action* mk_action(int type, int p1_type, int p2_type, void* p1, void* p2);
+struct action* append_action(struct action* a, struct action* b);
+
+
+struct net* mk_net(unsigned long ip, unsigned long mask);
 
 void print_action(struct action* a);
 void print_expr(struct expr* exp);
