@@ -9,7 +9,10 @@ include ../../Makefile.defs
 auto_gen=
 NAME=vm.so
 LIBS=
+DEFS+= -DWITH_DB_SUPPORT
 #DEFS+= -DWITH_LDAP_SUPPORT
+#DEFS+= -DWITH_RADIUS_SUPPORT
+#LIBS=-L$(LOCALBASE)/lib -lradiusclient
 
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!

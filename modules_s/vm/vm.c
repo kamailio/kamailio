@@ -37,6 +37,7 @@
  *            made by parser are freed on exit (bogdan)
  * 2003-12-14 in write_to_vm_fifo() "for"+"malloc"+"write" replaced by a single
  *            "writev" (bogdan)
+ * 2004-04-07 Added Radius support (jih)
  *
  */
 
@@ -50,9 +51,16 @@
 #include "../../parser/parse_nameaddr.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/contact/parse_contact.h"
-#ifndef WITH_LDAP_SUPPORT
+
+#ifdef WITH_DB_SUPPORT
 #include "../../db/db.h"
 #endif
+
+#ifdef WITH_RADIUS_SUPPORT
+#include <radiusclient.h>
+#include "../acc/dict.h"
+#endif
+
 #include "../tm/tm_load.h"
 //#include "../tm/t_reply.h"
 
@@ -96,15 +104,27 @@ static int vm_init_child(int rank);
 
 struct tm_binds _tmb;
 
-#ifdef WITH_LDAP_SUPPORT
+#ifndef WITH_DB_SUPPORT
 #define MAX_EMAIL_SIZE  64
 char email_buf[MAX_EMAIL_SIZE];
+#endif
 
+char language[2];
+
+#ifdef WITH_LDAP_SUPPORT
 typedef int (*ldap_get_ui_t)(str*, str*);
 ldap_get_ui_t ldap_get_ui = NULL;
+#endif
 
-#else
+#ifdef WITH_RADIUS_SUPPORT
+static char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static int service_type = -1;
+void *rh;
+struct attr attrs[A_MAX];
+struct val vals[V_MAX];
+#endif
 
+#ifdef WITH_DB_SUPPORT
 char* vm_db_url = 0;                     /* Database URL */
 char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
@@ -140,12 +160,16 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-#ifndef WITH_LDAP_SUPPORT
+#ifdef WITH_DB_SUPPORT
 	{"db_url",           STR_PARAM, &vm_db_url       },
 	{"email_column",     STR_PARAM, &email_column    },
 	{"subscriber_table", STR_PARAM, &subscriber_table},
 	{"user_column",      STR_PARAM, &user_column     },
 	{"domain_column",    STR_PARAM, &domain_column   },
+#endif
+#ifdef WITH_RADIUS_SUPPORT
+	{"radius_config",    STR_PARAM, &radius_config   },
+	{"service_type",     INT_PARAM, &service_type    },
 #endif
 	{"use_domain",       INT_PARAM, &use_domain      },
 	{0, 0, 0}
@@ -188,12 +212,43 @@ static int vm_mod_init(void)
                 LOG(L_ERR, "ERROR: vm_mod_init: This module requires auth_ldap module\n");
                 return -1;
         }
-#else
+#endif
+
+#ifdef WITH_DB_SUPPORT
 	/* init database support only if needed */
 	if (vm_db_url && bind_dbmod(vm_db_url)) {
 		LOG(L_ERR, "ERROR: vm_mod_init: unable to bind db\n");
 		return -1;
 	}
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT
+	memset(attrs, 0, sizeof(attrs));
+	memset(attrs, 0, sizeof(vals));
+	attrs[A_SERVICE_TYPE].n			= "Service-Type";
+	attrs[A_USER_NAME].n	                = "User-Name";
+	attrs[A_VM_EMAIL].n			= "VM-Email";
+	attrs[A_VM_LANGUAGE].n			= "VM-Language";
+	vals[V_VM_INFO].n			= "VM-Info";
+
+	/* open log */
+	rc_openlog("ser");
+	/* read config */
+	if ((rh = rc_read_config(radius_config)) == NULL) {
+		LOG(L_ERR, "ERROR: acc: error opening radius config file: %s\n", 
+			radius_config );
+		return -1;
+	}
+	/* read dictionary */
+	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary"))!=0) {
+		LOG(L_ERR, "ERROR: acc: error reading radius dictionary\n");
+		return -1;
+	}
+
+	INIT_AV(rh, attrs, vals, "vm", -1, -1);
+
+	if (service_type != -1)
+		vals[V_VM_INFO].v = service_type;
 #endif
 
 	/* init the line_eol table */
@@ -210,7 +265,7 @@ static int vm_init_child(int rank)
 {
 	LOG(L_INFO,"voicemail - initializing child %i\n",rank);
 
-#ifndef WITH_LDAP_SUPPORT
+#ifdef WITH_DB_SUPPORT
 	if (vm_db_url) {
 		assert(db_init);
 		db_handle=db_init(vm_db_url);
@@ -230,14 +285,17 @@ static int vm_extract_body(struct sip_msg *msg, str *body );
 #endif
 
 static int vm_get_user_info( str* user,   /*[in]*/
-							str* host,   /*[in]*/
-							str* email   /*[out]*/)
+			     str* host,   /*[in]*/
+			     str* email,   /*[out]*/
+			     char* language   /*[out]*/)
 {
 #ifdef  WITH_LDAP_SUPPORT
         email->s = email_buf;
         email->len = MAX_EMAIL_SIZE;
         return ldap_get_ui(user, email);
-#else
+#endif
+
+#ifdef WITH_DB_SUPPORT
 	db_res_t* email_res=0;
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -272,6 +330,81 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	return 0;
 error:
 	return -1;
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT
+	static char msg[4096];
+	VALUE_PAIR *send, *received, *vp;
+	UINT4 service;
+	char *user_name, *at;
+
+	send = received = 0;
+
+        email->s = email_buf;
+        email->len = MAX_EMAIL_SIZE;
+
+	user_name = (char*)pkg_malloc(user->len + host->len + 2);
+	if (!user_name) {
+		LOG(L_ERR, "vm(): No memory left\n");
+		return -1;
+	}
+
+	at = user_name;
+	memcpy(at, user->s, user->len);
+	at += user->len;
+	*at = '@';
+	at++;
+	memcpy(at, host->s, host->len);
+	at += host->len;
+	*at = '\0';
+
+	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name, -1, 0)) {
+		LOG(L_ERR, "vm(): Error adding User-Name\n");
+		rc_avpair_free(send);
+		pkg_free(user_name);
+	 	return -1;
+	}
+
+	service = vals[V_VM_INFO].v;
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
+		LOG(L_ERR, "vm(): Error adding service type\n");
+		rc_avpair_free(send);
+		pkg_free(user_name);
+	 	return -1;
+	}
+	
+	if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
+		rc_avpair_free(send);
+		pkg_free(user_name);
+		if ((vp = rc_avpair_get(received, attrs[A_VM_EMAIL].v, 0))) {
+			if (vp->lvalue > MAX_EMAIL_SIZE) {
+				LOG(L_ERR, "vm(): email address too large\n");
+				rc_avpair_free(received);
+				return -1;
+			}
+			strncpy(email->s, vp->strvalue, vp->lvalue);
+			email->len = vp->lvalue;
+		} else {
+			LOG(L_ERR, "vm(): email address missing\n");
+			rc_avpair_free(received);
+			return -1;
+		}
+		if ((vp = rc_avpair_get(received, attrs[A_VM_LANGUAGE].v, 0))) {
+			if (vp->lvalue != 2) {
+				LOG(L_ERR, "vm(): invalid language code\n");
+				rc_avpair_free(received);
+				return -1;
+			}
+			strncpy(language, vp->strvalue, 2);
+		}
+		rc_avpair_free(received);
+		return 0;
+	} else {
+		rc_avpair_free(send);
+		pkg_free(user_name);
+		rc_avpair_free(received);
+		return -1;
+	}
 #endif
 }
 
@@ -535,6 +668,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 	body = empty_param;
 	email = empty_param;
 	domain = empty_param;
+	language[0] = language[1] = '\0';
 
 	if( REQ_LINE(msg).method_value==METHOD_INVITE ) {
 
@@ -545,12 +679,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 
 		/*body.len = strlen(body.s); (by bogdan) */
 		body.len = msg->len - (body.s - msg->buf);
-#ifndef WITH_LDAP_SUPPORT
+#ifdef WITH_DB_SUPPORT
 		if(vm_db_url && vm_get_user_info(&msg->parsed_uri.user,
 #else
 		if(vm_get_user_info(&msg->parsed_uri.user,
 #endif
-		   &msg->parsed_uri.host, &email) < 0) {
+		   &msg->parsed_uri.host, &email, &(language[0])) < 0) {
 			LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
 			goto error3;
 		}
