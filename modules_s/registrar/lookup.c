@@ -33,12 +33,12 @@
 
 
 #include <string.h>
-#include <ut.h>
-#include <dset.h>
-#include <str.h>
-#include <config.h>
-#include <action.h>
-#include <usrloc.h>
+#include "../../ut.h"
+#include "../../dset.h"
+#include "../../str.h"
+#include "../../config.h"
+#include "../../action.h"
+#include "../usrloc/usrloc.h"
 #include "common.h"
 #include "regtime.h"
 #include "reg_mod.h"

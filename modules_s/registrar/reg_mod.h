@@ -31,8 +31,8 @@
 #ifndef REG_MOD_H
 #define REG_MOD_H
 
-#include <parser/msg_parser.h>
-#include <usrloc.h>
+#include "../../parser/msg_parser.h"
+#include "../usrloc/usrloc.h"
 
 extern int default_expires;
 extern int default_q;

@@ -34,10 +34,10 @@
  */
 
 #include <stdio.h>
-#include <ut.h>
-#include <parser/msg_parser.h>
-#include <data_lump_rpl.h>
-#include <usrloc.h>
+#include "../../ut.h"
+#include "../../parser/msg_parser.h"
+#include "../../data_lump_rpl.h"
+#include "../usrloc/usrloc.h"
 #include "rerrno.h"
 #include "reg_mod.h"
 #include "regtime.h"

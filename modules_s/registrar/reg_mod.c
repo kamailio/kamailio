@@ -35,10 +35,10 @@
  */
 
 #include <stdio.h>
-#include <sr_module.h>
-#include <timer.h>
-#include <dprint.h>
-#include <error.h>
+#include "../../sr_module.h"
+#include "../../timer.h"
+#include "../../dprint.h"
+#include "../../error.h"
 #include "save.h"
 #include "lookup.h"
 #include "reg_mod.h"

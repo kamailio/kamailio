@@ -29,10 +29,10 @@
 
 
 
-#include <parser/hf.h>
+#include "../../parser/hf.h"
 #include <dprint.h>
-#include <parser/parse_expires.h>  
-#include <ut.h>
+#include "../../parser/parse_expires.h"  
+#include "../../ut.h"
 #include "reg_mod.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"

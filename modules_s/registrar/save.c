@@ -34,13 +34,13 @@
  */
 
 
-#include <comp_defs.h>
-#include <str.h>
-#include <parser/parse_to.h>
-#include <dprint.h>
-#include <trim.h>
-#include <ut.h>
-#include <usrloc.h>
+#include "../../comp_defs.h"
+#include "../../str.h"
+#include "../../parser/parse_to.h"
+#include "../../dprint.h"
+#include "../../trim.h"
+#include "../../ut.h"
+#include "../usrloc/usrloc.h"
 #include "common.h"
 #include "sip_msg.h"
 #include "rerrno.h"
