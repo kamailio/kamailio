@@ -378,7 +378,7 @@ void cleanup(show_status)
 	}
 #endif
 #ifdef SHM_MEM
-	shm_free(pt);
+	if (pt) shm_free(pt);
 	pt=0;
 	if (show_status){
 			LOG(memlog, "Memory status (shm):\n");
