@@ -204,7 +204,7 @@ static inline int check_userhost( char *p, char *end)
 
 	/* parse user name */
 	p1 = p;
-	while (p<end && (isalnum(*p) || *p=='-' || *p=='_' || *p=='.' ))
+	while (p<end && (isalnum((int)*p) || *p=='-' || *p=='_' || *p=='.' ))
 		p++;
 	if (p==p1 || p==end || *p!='@')
 		return -1;
@@ -216,7 +216,7 @@ static inline int check_userhost( char *p, char *end)
 		if (*p=='.') {
 			if (dot) return -1; /* dot after dot */
 			dot = 1;
-		} else if (isalnum(*p) || *p=='-' || *p=='_' ) {
+		} else if (isalnum((int)*p) || *p=='-' || *p=='_' ) {
 			dot = 0;
 		} else {
 			return -1;

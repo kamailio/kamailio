@@ -31,10 +31,7 @@
 #include "../tm/tm_load.h"
 #include "loc_set.h"
 #include "cpl_sig.h"
-
-extern struct tm_binds cpl_tmb;
-extern int    proxy_route;
-extern int    cpl_nat_flag;
+#include "cpl_env.h"
 
 
 /* forwards the msg to the given location set; if flags has set the
@@ -71,7 +68,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			goto error;
 		}
 		/* is the location NATED? */
-		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_nat_flag);
+		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_env.nat_flag);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
@@ -88,7 +85,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			goto error;
 		}
 		/* is the location NATED? */
-		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_nat_flag);
+		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_env.nat_flag);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
@@ -96,21 +93,30 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 	}
 
 	/* run what proxy route is set */
-	if (proxy_route) {
-		if (run_actions( rlist[proxy_route], msg)<0) {
+	if (cpl_env.proxy_route) {
+		if (run_actions( rlist[cpl_env.proxy_route], msg)<0) {
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: "
 				"Error in do_action for proxy_route\n");
 		}
 	}
 
 	/* do t_forward */
-	if (cpl_tmb.t_forward_nonack(msg, 0/*no proxy*/)==-1) {
-		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_forward_nonack "
-			"failed !\n");
-		goto error;
+	if ( flag&CPL_IS_STATEFUL ) {
+		/* transaction exists */
+		if (cpl_fct.tmb.t_forward_nonack(msg, 0/*no proxy*/)==-1) {
+			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_forward_nonack "
+				"failed !\n");
+			goto error;
+		}
+	} else {
+		/* no transaction -> build & fwd */
+		if (cpl_fct.tmb.t_relay(msg, 0, 0)==-1) {
+			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_relay failed !\n");
+			goto error;
+		}
 	}
 
-	return 1;
+	return 0;
 error:
 	return -1;
 }

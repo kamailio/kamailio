@@ -91,7 +91,7 @@ void cpl_db_close()
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *user, str *script, char* key)
+int get_user_script(str *user, str *script, const char* key)
 {
 	db_key_t   keys_cmp[] = {"user"};
 	db_key_t   keys_ret[] = { key };

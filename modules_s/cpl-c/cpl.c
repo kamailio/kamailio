@@ -30,6 +30,9 @@
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  * 2004-06-06  updated to the new DB api (andrei)
+ * 2004-06-14: all global variables merged into cpl_env and cpl_fct;
+ *             case_sensitive and realm_prefix added for building AORs - see
+ *             build_userhost (bogdan)
  */
 
 
@@ -45,6 +48,7 @@
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../str.h"
+#include "../../ut.h"
 #include "../../dprint.h"
 #include "../../data_lump_rpl.h"
 #include "../../fifo_server.h"
@@ -53,9 +57,8 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_disposition.h"
 #include "../../db/db.h"
-#include "../tm/tm_load.h"
-#include "../usrloc/usrloc.h"
 #include "cpl_run.h"
+#include "cpl_env.h"
 #include "cpl_db.h"
 #include "cpl_loader.h"
 #include "cpl_parser.h"
@@ -72,22 +75,23 @@ static char *DB_URL        = 0;  /* database url */
 static char *DB_TABLE      = 0;  /* */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
-int    proxy_recurse       = 0;
-char   *log_dir            = 0;  /* dir where the user log should be dumped */
-int    proxy_route         = 0;  /* script route to be run before proxy */
-int    cpl_nat_flag        = 6;  /* flag for marking lookuped contact as NAT */
-
-static pid_t aux_process = 0;  /* pid of the private aux. process */
-int    cpl_cmd_pipe[2];
-struct tm_binds cpl_tmb;       /* Structure with pointers to tm funcs */
-usrloc_api_t cpl_ulb;          /* Structure with pointers to usrloc funcs */
-udomain_t*   cpl_domain  = 0;
-str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
-                             * terminated string in "TZ=value" format;
-                             * used only by run_time_switch */
+static pid_t aux_process   = 0;  /* pid of the private aux. process */
 
 
-int (*cpl_sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+struct cpl_enviroment    cpl_env = {
+		0, /* no cpl logging */
+		0, /* recurse proxy level is 0 */
+		0, /* no script route to be run before proxy */
+		6, /* nat flag */
+		0, /* user part is not case sensitive */
+		{0,0},   /* no domain prefix to be ignored */
+		{-1,-1}, /* comunication pipe to aux_process */
+		{0,0},   /* original TZ \0 terminated "TZ=value" format */
+		0, /* udomain */
+		0, /* no branches on lookup */
+};
+
+struct cpl_functions  cpl_fct;
 
 
 MODULE_VERSION
@@ -115,14 +119,17 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"cpl_db",        STR_PARAM, &DB_URL        },
-	{"cpl_table",     STR_PARAM, &DB_TABLE      },
-	{"cpl_dtd_file",  STR_PARAM, &dtd_file      },
-	{"proxy_recurse", INT_PARAM, &proxy_recurse },
-	{"proxy_route",   INT_PARAM, &proxy_route   },
-	{"nat_flag",      INT_PARAM, &cpl_nat_flag  },
-	{"lookup_domain", STR_PARAM, &lookup_domain },
-	{"log_dir",       STR_PARAM, &log_dir       },
+	{"cpl_db",         STR_PARAM, &DB_URL      },
+	{"cpl_table",      STR_PARAM, &DB_TABLE    },
+	{"cpl_dtd_file",   STR_PARAM, &dtd_file    },
+	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse  },
+	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route    },
+	{"nat_flag",       INT_PARAM, &cpl_env.nat_flag       },
+	{"log_dir",        STR_PARAM, &cpl_env.log_dir        },
+	{"case_sensitive", INT_PARAM, &cpl_env.case_sensitive },
+	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s },
+	{"lookup_domain",  STR_PARAM, &lookup_domain          },
+	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
 	{0, 0, 0}
 };
 
@@ -200,9 +207,10 @@ static int cpl_init(void)
 		goto error;
 	}
 
-	if (proxy_recurse>MAX_PROXY_RECURSE) {
+	if (cpl_env.proxy_recurse>MAX_PROXY_RECURSE) {
 		LOG(L_CRIT,"ERROR:cpl_init: value of proxy_recurse param (%d) exceeds "
-			"the maximum safty value (%d)\n",proxy_recurse,MAX_PROXY_RECURSE);
+			"the maximum safty value (%d)\n",
+			cpl_env.proxy_recurse,MAX_PROXY_RECURSE);
 		goto error;
 	}
 
@@ -229,29 +237,30 @@ static int cpl_init(void)
 		}
 	}
 
-	if (log_dir==0) {
-		LOG(L_WARN,"WARNING:cpl_init: log_dir param found void -> logging "
+	if (cpl_env.log_dir==0) {
+		LOG(L_INFO,"INFO:cpl_init: log_dir param found void -> logging "
 			" disabled!\n");
 	} else {
-		if ( strlen(log_dir)>MAX_LOG_DIR_SIZE ) {
+		if ( strlen(cpl_env.log_dir)>MAX_LOG_DIR_SIZE ) {
 			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" has a too long name :-(!\n",
-				log_dir);
+				cpl_env.log_dir);
 			goto error;
 		}
 		/* check if the dir exists */
-		if (stat( log_dir, &stat_t)==-1) {
+		if (stat( cpl_env.log_dir, &stat_t)==-1) {
 			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" status failed;"
-				" stat returned %s\n",log_dir,strerror(errno));
+				" stat returned %s\n",cpl_env.log_dir,strerror(errno));
 			goto error;
 		}
 		if ( !S_ISDIR( stat_t.st_mode ) ) {
 			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" is not a directory!\n",
-				log_dir);
+				cpl_env.log_dir);
 			goto error;
 		}
-		if (access( log_dir, R_OK|W_OK )==-1) {
+		if (access( cpl_env.log_dir, R_OK|W_OK )==-1) {
 			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" for permissions "
-				"failed; access returned %s\n",log_dir,strerror(errno));
+				"failed; access returned %s\n",
+				cpl_env.log_dir, strerror(errno));
 			goto error;
 		}
 	}
@@ -265,11 +274,11 @@ static int cpl_init(void)
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &cpl_tmb )==-1)
+	if (load_tm( &(cpl_fct.tmb) )==-1)
 		goto error;
 
 	/* load the send_reply function from sl module */
-	if ((cpl_sl_reply=find_export("sl_send_reply", 2, 0))==0) {
+	if ((cpl_fct.sl_reply=find_export("sl_send_reply", 2, 0))==0) {
 		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import sl_send_reply; maybe "
 			"you forgot to load the sl module\n");
 		goto error;
@@ -283,12 +292,13 @@ static int cpl_init(void)
 			LOG(L_ERR, "ERROR:cpl_c:cpl_init: Can't bind usrloc\n");
 			goto error;
 		}
-		if (bind_usrloc(&cpl_ulb) < 0) {
+		if (bind_usrloc( &(cpl_fct.ulb) ) < 0) {
 			LOG(L_ERR, "ERROR:cpl_c:cpl_init: importing usrloc failed\n");
 			goto error;
 		}
 		/* convert lookup_domain from char* to udomain_t* pointer */
-		if (cpl_ulb.register_udomain(lookup_domain, &cpl_domain) < 0) {
+		if (cpl_fct.ulb.register_udomain( lookup_domain, &cpl_env.lu_domain)
+		< 0) {
 			LOG(L_ERR, "ERROR:cpl_c:cpl_init: Error while registering domain "
 				"<%s>\n",lookup_domain);
 			goto error;
@@ -314,18 +324,18 @@ static int cpl_init(void)
 	}
 
 	/* build a pipe for sending commands to aux proccess */
-	if ( pipe(cpl_cmd_pipe)==-1 ) {
+	if ( pipe( cpl_env.cmd_pipe )==-1 ) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot create command pipe: %s!\n",
 			strerror(errno) );
 		goto error;
 	}
 	/* set the writing non blocking */
-	if ( (val=fcntl(cpl_cmd_pipe[1], F_GETFL, 0))<0 ) {
+	if ( (val=fcntl(cpl_env.cmd_pipe[1], F_GETFL, 0))<0 ) {
 		LOG(L_ERR,"ERROR:cpl_init: getting flags from pipe[1] failed: fcntl "
 			"said %s!\n",strerror(errno));
 		goto error;
 	}
-	if ( fcntl(cpl_cmd_pipe[1], F_SETFL, val|O_NONBLOCK) ) {
+	if ( fcntl(cpl_env.cmd_pipe[1], F_SETFL, val|O_NONBLOCK) ) {
 		LOG(L_ERR,"ERROR:cpl_init: setting flags to pipe[1] failed: fcntl "
 			"said %s!\n",strerror(errno));
 		goto error;
@@ -339,14 +349,21 @@ static int cpl_init(void)
 
 	/* make a copy of the original TZ env. variable */
 	ptr = getenv("TZ");
-	cpl_orig_tz.len = 3/*"TZ="*/ + (ptr?(strlen(ptr)+1):0);
-	if ( (cpl_orig_tz.s=shm_malloc(cpl_orig_tz.len))==0 ) {
+	cpl_env.orig_tz.len = 3/*"TZ="*/ + (ptr?(strlen(ptr)+1):0);
+	if ( (cpl_env.orig_tz.s=shm_malloc( cpl_env.orig_tz.len ))==0 ) {
 		LOG(L_ERR,"ERROR:cpl_init: no more shm mem. for saving TZ!\n");
 		goto error;
 	}
-	memcpy(cpl_orig_tz.s,"TZ=",3);
+	memcpy(cpl_env.orig_tz.s,"TZ=",3);
 	if (ptr)
-		strcpy(cpl_orig_tz.s+3,ptr);
+		strcpy(cpl_env.orig_tz.s+3,ptr);
+
+	/* convert realm_prefix from string null terminated to str */
+	if (cpl_env.realm_prefix.s) {
+		cpl_env.realm_prefix.len = strlen(cpl_env.realm_prefix.s);
+		/* convert the realm_prefix to lower cases */
+		strlower( &cpl_env.realm_prefix );
+	}
 
 	return 0;
 error:
@@ -372,7 +389,7 @@ static int cpl_child_init(int rank)
 			goto error;
 		} else if (pid==0) {
 			/* I'm the child */
-			cpl_aux_process( cpl_cmd_pipe[0], log_dir);
+			cpl_aux_process( cpl_env.cmd_pipe[0], cpl_env.log_dir);
 		} else {
 			LOG(L_INFO,"INFO:cpl_child_init(%d): I just gave birth to a child!"
 				" I'm a PARENT!!\n",rank);
@@ -391,8 +408,8 @@ error:
 static int cpl_exit(void)
 {
 	/* free the TZ orig */
-	if (cpl_orig_tz.s)
-		shm_free(cpl_orig_tz.s);
+	if (cpl_env.orig_tz.s)
+		shm_free(cpl_env.orig_tz.s);
 
 	/* if still runnigng, stop the aux process */
 	if (!aux_process) {
@@ -425,35 +442,64 @@ static int cpl_exit(void)
 static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 {
 	static char buf[MAX_USERHOST_LEN];
-	int len;
+	unsigned char do_strip;
+	char *p;
+	int i;
 
-	len = uri->user.len+1+uri->host.len+1+4*((flg&BUILD_UH_ADDSIP)!=0);
+	/* do we need to strip realm prefix? */
+	do_strip = 0;
+	if (cpl_env.realm_prefix.len && cpl_env.realm_prefix.len<uri->host.len) {
+		for( i=cpl_env.realm_prefix.len-1 ; i>=0 ; i-- )
+			if ( cpl_env.realm_prefix.s[i]!=((uri->host.s[i])|(0x20)) )
+				break;
+		if (i==-1)
+			do_strip = 1;
+	}
+
+	/* calculate the len */
+	uh->len = 4*((flg&BUILD_UH_ADDSIP)!=0) + uri->user.len + 1 +
+		uri->host.len - do_strip*cpl_env.realm_prefix.len + 1;
 	if (flg&BUILD_UH_SHM) {
-		uh->s = (char*)shm_malloc( len );
+		uh->s = (char*)shm_malloc( uh->len );
 		if (!uh->s) {
 			LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
 			return -1;
 		}
 	} else {
 		uh->s = buf;
-		if ( len > MAX_USERHOST_LEN ) {
+		if ( uh->len > MAX_USERHOST_LEN ) {
 			LOG(L_ERR,"ERROR:cpl-c:build_userhost: user+host longer than %d\n",
 				MAX_USERHOST_LEN);
 			return -1;
 		}
 	}
+
+	/* build user@host */
+	p = uh->s;
 	if (flg&BUILD_UH_ADDSIP) {
 		memcpy( uh->s, "sip:", 4);
-		uh->len = 4;
-	} else {
-		uh->len = 0;
+		p += 4;
 	}
-	memcpy( uh->s+uh->len, uri->user.s, uri->user.len);
-	uh->len += uri->user.len;
-	uh->s[uh->len++] = '@';
-	memcpy( uh->s+uh->len, uri->host.s, uri->host.len);
-	uh->len += uri->host.len;
-	uh->s[uh->len] = 0;
+	/* user part */
+	if (cpl_env.case_sensitive) {
+		memcpy( p, uri->user.s, uri->user.len);
+		p += uri->user.len;
+	} else {
+		for(i=0;i<uri->user.len;i++)
+			*(p++) = (0x20)|(uri->user.s[i]);
+	}
+	*(p++) = '@';
+	/* host part in lower cases */
+	for( i=do_strip*cpl_env.realm_prefix.len ; i< uri->host.len ; i++ )
+		*(p++) = (0x20)|(uri->host.s[i]);
+	*(p++) = 0;
+
+	/* sanity check */
+	if (p-uh->s!=uh->len) {
+		LOG(L_CRIT,"BUG:cpl-c:build_userhost: buffer overflow l=%d,w=%d\n",
+			uh->len,p-uh->s);
+		return -1;
+	}
 	return 0;
 }
 
@@ -812,7 +858,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 			goto error;
 		}
 		/* send a 200 OK reply back */
-		cpl_sl_reply( msg, (char*)200, "OK");
+		cpl_fct.sl_reply( msg, (char*)200, "OK");
 		/* I send the reply and I don't want to resturn to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
@@ -844,7 +890,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 
 	/* send a 200 OK reply back */
-	cpl_sl_reply( msg, (char*)200, "OK");
+	cpl_fct.sl_reply( msg, (char*)200, "OK");
 
 stop_script:
 	return 0;
@@ -852,7 +898,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
+	cpl_fct.sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
 	/* I don't want to resturn to script execution, so I return 0 to do break */
 	return 0;
 }

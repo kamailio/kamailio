@@ -804,15 +804,15 @@ static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
 	FOR_ALL_ATTR(node,attr) {
 		/* get attribute's value */
 		get_attr_val( attr->name , val, error);
-		if ( !strcasecmp(attr->name,"source") ) {
+		if ( !strcasecmp((const char*)attr->name,"source") ) {
 			/* this param will not be copied, since it has only one value ;-)*/
 			if ( val.len!=SOURCE_REG_STR_LEN ||
 			strncasecmp( val.s, SOURCE_REG_STR, val.len) ) {
-				LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unsupported value"
+				LOG(L_ERR,"ERROR:cpl_c:encode_lookup_attr: unsupported value"
 					" <%.*s> in SOURCE param\n",val.len,val.s);
 				goto error;
 			}
-		} else if ( !strcasecmp(attr->name,"clear") ) {
+		} else if ( !strcasecmp((const char*)attr->name,"clear") ) {
 			(*nr_attr)++;
 			set_attr_type(p, CLEAR_ATTR, buf_end, error);
 			if ( val.len==3 && !strncasecmp(val.s,"yes",3) )
@@ -820,15 +820,15 @@ static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
 			else if ( val.len==2 && !strncasecmp(val.s,"no",2) )
 				append_short_attr(p, NO_VAL, buf_end, error);
 			else {
-				LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unknown value "
+				LOG(L_ERR,"ERROR:cpl_c:encode_lookup_attr: unknown value "
 					"<%.*s> for attribute CLEAR\n",val.len,val.s);
 				goto error;
 			}
-		} else if ( !strcasecmp(attr->name,"timeout") ) {
+		} else if ( !strcasecmp((const char*)attr->name,"timeout") ) {
 			LOG(L_WARN,"WARNING:cpl_c:encode_lookup_attr: unsupported param "
 				"TIMEOUT; skipping\n");
 		} else {
-			LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unknown attribute "
+			LOG(L_ERR,"ERROR:cpl_c:encode_lookup_attr: unknown attribute "
 				"<%s>\n",attr->name);
 			goto error;
 		}

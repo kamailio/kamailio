@@ -28,6 +28,10 @@
  * -------
  * 2003-01-23 : created (bogdan)
  * 2003-09-11 : build_lump_rpl() merged into add_lump_rpl() (bogdan)
+ * 2004-06-14 : all global variables merged into cpl_env and cpl_fct;
+ *              append_branches param added to lookup node (bogdan)
+ * 2004-06-14 : flag CPL_IS_STATEFUL is set now imediatly after the 
+ *              transaction is created (bogdan)
 */
 
 #include <stdio.h>
@@ -48,6 +52,7 @@
 #include "cpl_utils.h"
 #include "cpl_nonsig.h"
 #include "cpl_sig.h"
+#include "cpl_env.h"
 #include "cpl_run.h"
 
 
@@ -106,12 +111,6 @@
 		}\
 	}while(0)
 
-
-extern char            *log_dir;
-extern struct tm_binds cpl_tmb;
-extern udomain_t*      cpl_domain;
-extern usrloc_api_t    cpl_ulb;
-extern int (*cpl_sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
@@ -270,20 +269,20 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 
 	kid = failure_kid;
 
-	if (cpl_domain) {
+	if (cpl_env.lu_domain) {
 		/* fetch user's contacts via usrloc */
 		tc = time(0);
-		cpl_ulb.lock_udomain( cpl_domain );
-		i = cpl_ulb.get_urecord( cpl_domain, &intr->user, &r);
+		cpl_fct.ulb.lock_udomain( cpl_env.lu_domain );
+		i = cpl_fct.ulb.get_urecord( cpl_env.lu_domain, &intr->user, &r);
 		if (i < 0) {
 			/* failure */
 			LOG(L_ERR, "ERROR:run_lookup: Error while querying usrloc\n");
-			cpl_ulb.unlock_udomain( cpl_domain );
+			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
 		} else if (i > 0) {
 			/* not found */
 			DBG("DBG:cpl-c:run_lookup: '%.*s' Not found in usrloc\n",
 				intr->user.len, intr->user.s);
-			cpl_ulb.unlock_udomain( cpl_domain );
+			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
 			kid = notfound_kid;
 		} else {
 			contact = r->contacts;
@@ -296,17 +295,21 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				/* clear loc set if requested */
 				if (clear)
 					empty_location_set( &(intr->loc_set) );
-				/* add first location to set */
-				DBG("DBG:cpl-c:run_lookup: adding <%.*s>q=%d\n",
-					contact->c.len,contact->c.s,(int)(10*contact->q));
-				if (add_location( &(intr->loc_set), &contact->c,
-				(int)(10*contact->q),
-				CPL_LOC_DUPL|((contact->flags & FL_NAT)*CPL_LOC_NATED) )==-1) {
-					LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
-						"location to set :-(\n");
-					cpl_ulb.unlock_udomain( cpl_domain );
-					goto runtime_error;
-				}
+				/* start adding locations to set */
+				do {
+					DBG("DBG:cpl-c:run_lookup: adding <%.*s>q=%d\n",
+						contact->c.len,contact->c.s,(int)(10*contact->q));
+					if (add_location( &(intr->loc_set), &contact->c,
+					(int)(10*contact->q),
+					CPL_LOC_DUPL|((contact->flags & FL_NAT)*CPL_LOC_NATED)
+					)==-1) {
+						LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
+							"location to set :-(\n");
+						cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
+						goto runtime_error;
+					}
+					contact = contact->next;
+				}while( contact && cpl_env.lu_append_branches);
 				/* set the flag for modifing the location set */
 				intr->flags |= CPL_LOC_SET_MODIFIED;
 				/* we found a valid contact */
@@ -315,7 +318,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				/* no valid contact found */
 				kid = notfound_kid;
 			}
-			cpl_ulb.unlock_udomain( cpl_domain );
+			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain );
 		}
 
 	}
@@ -588,8 +591,8 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 	}
 
 	/* if still stateless and FORCE_STATEFUL set -> build the transaction */
-	if ( !(intr->flags&CPL_PROXY_DONE) && intr->flags&CPL_FORCE_STATEFUL) {
-		i = cpl_tmb.t_newtran( intr->msg );
+	if ( !(intr->flags&CPL_IS_STATEFUL) && intr->flags&CPL_FORCE_STATEFUL) {
+		i = cpl_fct.tmb.t_newtran( intr->msg );
 		if (i<0) {
 			LOG(L_ERR,"ERROR:cpl-c:run_reject: failed to build new "
 				"transaction!\n");
@@ -601,15 +604,16 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 			 * script by returning EO_SCRIPT */
 			return EO_SCRIPT;
 		}
+		intr->flags |= CPL_IS_STATEFUL;
 	}
 
 	/* send the reply */
-	if ( intr->flags&(CPL_PROXY_DONE|CPL_IS_STATEFUL|CPL_FORCE_STATEFUL) ) {
+	if ( intr->flags&CPL_IS_STATEFUL ) {
 		/* reply statefully */
-		i = cpl_tmb.t_reply(intr->msg, (int)status, reason_s );
+		i = cpl_fct.tmb.t_reply(intr->msg, (int)status, reason_s );
 	} else {
 		/* reply statelessly */
-		i = cpl_sl_reply(intr->msg, (char*)(int)status, reason_s );
+		i = cpl_fct.sl_reply(intr->msg, (char*)(int)status, reason_s );
 	}
 
 	if ( i!=1 ) {
@@ -700,8 +704,8 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	memcpy(cp,CRLF,CRLF_LEN);
 
 	/* if still stateless and FORCE_STATEFUL set -> build the transaction */
-	if ( !(intr->flags&CPL_PROXY_DONE) && intr->flags&CPL_FORCE_STATEFUL) {
-		i = cpl_tmb.t_newtran( intr->msg );
+	if ( !(intr->flags&CPL_IS_STATEFUL) && intr->flags&CPL_FORCE_STATEFUL) {
+		i = cpl_fct.tmb.t_newtran( intr->msg );
 		if (i<0) {
 			LOG(L_ERR,"ERROR:cpl-c:run_redirect: failed to build new "
 				"transaction!\n");
@@ -715,6 +719,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 			pkg_free( lump_str.s );
 			return EO_SCRIPT;
 		}
+		intr->flags |= CPL_IS_STATEFUL;
 	}
 
 	/* add the lump to the reply */
@@ -726,18 +731,18 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	}
 
 	/* send the reply */
-	if ( intr->flags&(CPL_PROXY_DONE|CPL_IS_STATEFUL|CPL_FORCE_STATEFUL) ) {
+	if ( intr->flags&CPL_IS_STATEFUL ) {
 		/* reply statefully */
 		if (permanent)
-			i = cpl_tmb.t_reply( intr->msg, (int)301, "Moved permanently" );
+			i = cpl_fct.tmb.t_reply( intr->msg, (int)301, "Moved permanently");
 		else
-			i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
+			i = cpl_fct.tmb.t_reply( intr->msg, (int)302, "Moved temporarily");
 	} else {
 		/* reply statelessly */
 		if (permanent)
-			i = cpl_sl_reply( intr->msg, (char*)301, "Moved permanently" );
+			i = cpl_fct.sl_reply( intr->msg, (char*)301, "Moved permanently");
 		else
-			i = cpl_sl_reply( intr->msg, (char*)302, "Moved temporarily" );
+			i = cpl_fct.sl_reply( intr->msg, (char*)302, "Moved temporarily");
 	}
 
 	/* msg which I'm working on can be in private memory or is a clone into
@@ -781,7 +786,7 @@ static inline char *run_log( struct cpl_interpreter *intr )
 	}
 
 	/* is loging enabled? */
-	if ( log_dir==0 )
+	if ( cpl_env.log_dir==0 )
 		goto done;
 
 	/* read the attributes of the LOG node*/
@@ -957,7 +962,7 @@ static inline int run_default( struct cpl_interpreter *intr )
 			/* case 3 : location modifications performed, no signalling 
 			 * operations ->
 			 * Proxy the call to the addresses in the location set */
-			if (cpl_proxy_to_loc_set( intr->msg, &(intr->loc_set), 0 )==0)
+			if (!cpl_proxy_to_loc_set(intr->msg,&(intr->loc_set),intr->flags))
 				return SCRIPT_END;
 			return SCRIPT_RUN_ERROR;
 		}

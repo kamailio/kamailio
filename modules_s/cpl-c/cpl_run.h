@@ -30,7 +30,6 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
-#include "../tm/t_hooks.h"
 
 #define SCRIPT_END               0
 #define SCRIPT_DEFAULT           1

@@ -27,6 +27,8 @@
  * History:
  * -------
  * 2003-07-29: file created (bogdan)
+ * 2004-06-14: flag CPL_IS_STATEFUL is set now imediatly after the 
+ *             transaction is created (bogdan)
  */
 
 #include "../tm/h_table.h"
@@ -65,8 +67,6 @@
 		}\
 	}while(0)
 
-
-extern int proxy_recurse;
 
 
 static inline int parse_q(str *q, unsigned int *prio)
@@ -290,7 +290,6 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		}
 	}
 
-	LOG(L_CRIT,"BUG:cpl-c:failed_reply: we shouldn't be here!!!!!\n");
 exit:
 	/* in case of error the default response choosed by ser at the last
 	 * proxying will be forwarded to the UAC */
@@ -313,7 +312,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 	struct location *loc;
 
 	intr->proxy.ordering = PARALLEL_VAL;
-	intr->proxy.recurse = (unsigned short)proxy_recurse;
+	intr->proxy.recurse = (unsigned short)cpl_env.proxy_recurse;
 
 	/* indentify the attributes */
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
@@ -458,12 +457,10 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		}
 
 		/* now is the first time doing proxy, so I can still be stateless;
-		 * as proxy is done all the time stateful, I have to be switch from
-		 * stateless to stateful if necessary.
-		 * I'm still stateless if flag CPL_IS_STATELESS or CPL_FORCE_STATEFUL
-		 * are set (CPL_IS_STATEFUL means I'm already statefull) */
-		if (!(intr->flags&CPL_IS_STATEFUL)||(intr->flags&CPL_FORCE_STATEFUL)) {
-			i = cpl_tmb.t_newtran( intr->msg );
+		 * as proxy is done all the time stateful, I have to switch from
+		 * stateless to stateful if necessary.  */
+		if ( !(intr->flags&CPL_IS_STATEFUL) ) {
+			i = cpl_fct.tmb.t_newtran( intr->msg );
 			if (i<0) {
 				LOG(L_ERR,"ERROR:cpl-c:run_proxy: failed to build new "
 					"transaction!\n");
@@ -475,11 +472,12 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 				 * script by returning EO_SCRIPT */
 				return EO_SCRIPT;
 			}
+			intr->flags |= CPL_IS_STATEFUL;
 		}
 
 		/* as I am interested in getting the responses back - I need to install
 		 * some callback functions for replies  */
-		if (cpl_tmb.register_tmcb(intr->msg,0,
+		if (cpl_fct.tmb.register_tmcb(intr->msg,0,
 		TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,reply_callback,(void*)intr) <= 0 ) {
 			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
 				"TMCB_RESPONSE_OUT callback\n");
