@@ -25,6 +25,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-04-14 tm_isdst in struct tm set to -1 to let mktime 
+ *            guess daylight saving (janakj)
  */
 
 
@@ -37,41 +42,23 @@
 #include "defs.h"
 
 
-
 /*
  * Convert time_t structure to format accepted by MySQL database
  */
 int time2mysql(time_t _time, char* _result, int _res_len)
 {
 	struct tm* t;
-
+	
 	     /*
 	       if (_time == MAX_TIME_T) {
 	       snprintf(_result, _res_len, "0000-00-00 00:00:00");
 	       }
 	     */
 
-	t = gmtime(&_time);
+	t = localtime(&_time);
 	return strftime(_result, _res_len, "%Y-%m-%d %H:%M:%S", t);
 }
 
-#ifndef __USE_GNU
-time_t my_timegm (struct tm *tm) {
-	time_t ret;
-	char *tz;
-
-	*tz = getenv("TZ");
-	setenv("TZ", "", 1);
-	tzset();
-	ret = mktime(tm);
-	if (tz)
-		setenv("TZ", tz, 1);
-	else
-		unsetenv("TZ");
-	tzset();
-	return ret;
-}
-#endif
 
 /*
  * Convert MySQL time representation to time_t structure
@@ -79,15 +66,18 @@ time_t my_timegm (struct tm *tm) {
 time_t mysql2time(const char* _str)
 {
 	struct tm time;
-
+	
 	     /* It is neccessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	strptime(_str, "%Y-%m-%d %H:%M:%S", &time);
-#ifdef __USE_GNU
-	return timegm(&time);
-#else
-	return my_timegm(&time);
-#endif
+
+	     /* Daylight saving information got lost in the database
+	      * so let mktime to guess it. This eliminates the bug when
+	      * contacts reloaded from the database have different time
+	      * of expiration by one hour when daylight saving is used
+	      */ 
+	time.tm_isdst = -1;   
+	return mktime(&time);
 }
 
 
