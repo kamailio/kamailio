@@ -33,6 +33,10 @@
  *            function; new module parameters introduced;
  *            db now initialized only on start-up; MULTI_DOMAIN
  *            support introduced; snprintf removed; (rco)
+ * 2003-12-14 vm_action adapted be called also from failure route; all allocs
+ *            made by parser are freed on exit (bogdan)
+ * 2003-12-14 in write_to_vm_fifo() "for"+"malloc"+"write" replaced by a single
+ *            "writev" (bogdan)
  *
  */
 
@@ -59,6 +63,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <sys/uio.h>
 
 #define append_str(_dest,_src,_len) \
 	do{\
@@ -244,6 +249,28 @@ static int vmt_action(struct sip_msg* msg, char* fifo, char* action)
 	return 1;
 }
 
+
+#define copy_route(s,len,rs,rlen) \
+   do {\
+     if(rlen+len+3 >= ROUTE_BUFFER_MAX){\
+       LOG(L_ERR,"vm: buffer overflow while copying new route\n");\
+       goto error;\
+     }\
+     if(len){\
+       append_str(s,",",1);len++;\
+     }\
+     append_str(s,"<",1);len++;\
+     append_str(s,rs,rlen);\
+     len += rlen; \
+     append_str(s,">",1);len++;\
+   } while(0);
+
+
+#define VM_FROM_PARSED     (1<<1)
+#define VM_CONTACT_PARSED  (1<<2)
+#define VM_RR_PARSED       (1<<3)
+#define VM_RRTMP_PARSED    (1<<4)
+
 static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 {
     str             body;
@@ -269,290 +296,319 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     str             hdrs;
     int             msg_flags_size;
     char            cmd_buf[CMD_BUFFER_MAX];
-    str             cmd;
     struct hdr_field* p_hdr;
     param_hooks_t     hooks;
-    str               tmp_str;
+	int             parse_flags;
+	int             ret;
 
-    if(msg->first_line.type != SIP_REQUEST){
-	LOG(L_ERR, "ERROR: vm() has been passed something else as a SIP request\n");
-	goto error;
-    }
+	ret = -1;
 
-    /* parse all -- we will need every header field for a UAS */
-    if (parse_headers(msg, HDR_EOH, 0)==-1) {
-	LOG(L_ERR, "ERROR: vm: parse_headers failed\n");
-	goto error;
-    }
-
-    /* find index and hash; (the transaction can be safely used due 
-     * to refcounting till script completes)
-     */
-    if( (*_tmb.t_get_trans_ident)(msg,&hash_index,&label) == -1 ) {
-	LOG(L_ERR,"ERROR: vm: t_get_trans_ident failed\n");
-	goto error;
-    }
-
-    if(parse_from_header(msg) == -1){
-	LOG(L_ERR,"ERROR: %s : vm: "
-	    "while parsing <From:> header\n",exports.name);
-	goto error;
-    }
-
-    if (parse_sip_msg_uri(msg)<0) {
-	LOG(L_ERR,"ERROR: %s : vm: uri has not been parsed\n",
-	    exports.name);
-	goto error;
-    }
-
-    str_uri.s = 0; str_uri.len = 0;
-    if(msg->contact){
-
-	if(parse_contact(msg->contact) == -1){
-	    LOG(L_ERR,"ERROR: %s : vm: "
-		"while parsing <Contact:> header\n",exports.name);
-	    goto error;
-	}
-	
-#ifdef EXTRA_DEBUG
-	DBG("DEBUG: vm: ******* contacts: *******\n");
-#endif
-	cb = msg->contact->parsed;
-
-	if(cb && (c=cb->contacts)) {
-	    str_uri = c->uri;
-	    if (find_not_quoted(&str_uri,'<')) {
-		parse_nameaddr(&str_uri,&na);
-	        str_uri = na.uri;
-	    }
-#ifdef EXTRA_DEBUG
-	    /*print_contacts(c);*/
-	    for(; c; c=c->next)
-		DBG("DEBUG:           %.*s\n",c->uri.len,c->uri.s);
-#endif
-	}
-#ifdef EXTRA_DEBUG
-	DBG("DEBUG: vm: **** end of contacts ****\n");
-#endif
-    }
-
-    /* str_uri is taken from caller's contact or from header
-     * for backwards compatibility with pre-3261 */
-    if(!str_uri.len || !str_uri.s)
-	str_uri = get_from(msg)->uri;
-
-    route.s = route_buffer; route.len = 0;
-    s = route_buffer;
-
-    p_hdr = msg->record_route;
-    if(p_hdr && (!p_hdr->parsed && parse_rr(p_hdr))){
-	LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
-	goto error;
-    }
-	    
-    record_route = p_hdr ? p_hdr->parsed : 0;
-    fproxy_lr = 0;
-    next_hop = empty_param;
-
-    if(p_hdr && record_route){
-
-#define copy_route(s,len,rs,rlen) \
-   do {\
-     if(rlen+len+3 >= ROUTE_BUFFER_MAX){\
-       LOG(L_ERR,"vm: buffer overflow while copying new route\n");\
-       goto error;\
-     }\
-     if(len){\
-       append_str(s,",",1);len++;\
-     }\
-     append_str(s,"<",1);len++;\
-     append_str(s,rs,rlen);\
-     len += rlen; \
-     append_str(s,">",1);len++;\
-   } while(0);
-
-	if(p_hdr->body.len){
-	      
-	    /* Parse all parameters */
-	    tmp_str = record_route->nameaddr.uri;
-	    if (parse_params(&tmp_str, CLASS_URI, &hooks, &record_route->params) < 0) {
-		LOG(L_ERR, "vm: Error while parsing record route uri params\n");
+	if(msg->first_line.type != SIP_REQUEST){
+		LOG(L_ERR, "ERROR: vm() has been passed something "
+			"else as a SIP request\n");
 		goto error;
-	    }
-	    
-	    fproxy_lr = (hooks.uri.lr != 0);
-	    
-	    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
-	    if(fproxy_lr){
-		DBG("vm: first proxy has loose routing.\n");
-		copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
-	    }
-	}
-	p_hdr = p_hdr->next;
-
-	for(;;p_hdr = p_hdr->next){
-
-	    if(p_hdr && (p_hdr->type == HDR_RECORDROUTE) && p_hdr->body.len){
-	      
-		if(!p_hdr->parsed && parse_rr(p_hdr)){
-		    LOG(L_ERR,"ERROR: %s : vm: "
-			"while parsing <Record-route:> header\n",exports.name);
-		    goto error;
-		}
-	      
-		for(record_route = p_hdr->parsed; record_route; record_route = record_route->next){
-		    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
-		    copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
-		}
-	    } 
-
-	    if(p_hdr == msg->last_header)
-		break;
 	}
 
-	if(!fproxy_lr){
-	    copy_route(s,route.len,str_uri.s,str_uri.len);
-	    str_uri = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
-	}
-	else {
-	    next_hop = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
-	}
-    }
+	parse_flags = 0;
 
-    DBG("vm: calculated route: %.*s\n",route.len,route.len ? route.s : "");
-    DBG("vm: next r-uri: %.*s\n",str_uri.len,str_uri.len ? str_uri.s : "");
-	
-    body = empty_param;
-    email = empty_param;
-    domain = empty_param;
-
-    if( !strncmp(REQ_LINE(msg).method.s,"INVITE",REQ_LINE(msg).method.len) ){
-
-	if( (body.s = get_body(msg)) == 0 ){
-	    LOG(L_ERR, "ERROR: vm: get_body failed\n");
-	    goto error;
-	}
-
-	body.len = strlen(body.s);
-	    
-	if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,&email) < 0){
-	    LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
-	    goto error;
-	}
-	domain = msg->parsed_uri.host;
-    }
-
-    hdrs.s=hdrs_buf; hdrs.len=0;
-    s = hdrs_buf;
-
-    if(hdrs.len+12+sizeof(flag_t)+1 >= HDRS_BUFFER_MAX){
-        LOG(L_ERR,"vm: buffer overflow while copying optional header\n");
-	goto error;
-    }
-    append_str(s,"P-MsgFlags: ",12); hdrs.len += 12;
-    msg_flags_size = sizeof(flag_t);
-    int2reverse_hex(&s, &msg_flags_size, (int)msg->msg_flags);
-    hdrs.len += sizeof(flag_t) - msg_flags_size;
-    append_str(s,"\n",1); hdrs.len++;
-
-    for(p_hdr = msg->headers;;p_hdr = p_hdr->next){
-
-        if( p_hdr->type & HDR_OTHER ){
-
-	    if(hdrs.len+p_hdr->name.len+p_hdr->body.len+4 >= HDRS_BUFFER_MAX){
-	        LOG(L_ERR,"vm: buffer overflow while copying optional header\n");
+	/* parse all -- we will need every header field for a UAS
+	 * avoid parsing if in FAILURE_ROUTE - all hdr have already been parsed */
+	if ( rmode==MODE_REQUEST && parse_headers(msg, HDR_EOH, 0)==-1) {
+		LOG(L_ERR, "ERROR: vm: parse_headers failed\n");
 		goto error;
-	    }
-	    append_str(s,p_hdr->name.s,p_hdr->name.len);
-	    hdrs.len += p_hdr->name.len;
-	    append_str(s,": ",2); hdrs.len+=2;
-	    append_str(s,p_hdr->body.s,p_hdr->body.len);
-	    hdrs.len += p_hdr->body.len;
-	    if(*(s-1) != '\n'){
-	        append_str(s,"\n",1);
-		hdrs.len++;
-	    }
 	}
 
-	if(p_hdr==msg->last_header)
-	    break;
-    }
+	/* find index and hash; (the transaction can be safely used due 
+	 * to refcounting till script completes)
+	 */
+	if( (*_tmb.t_get_trans_ident)(msg,&hash_index,&label) == -1 ) {
+		LOG(L_ERR,"ERROR: vm: t_get_trans_ident failed\n");
+		goto error;
+	}
 
-    append_str(s,".",1);
-    hdrs.len++;
+	/* if in FAILURE_MODE, we have to remember if the from will be parsed by us
+	 * or was already parsed - if it's parsed by us, free it at the end */
+	if (msg->from->parsed==0) {
+		if (rmode==MODE_ONFAILURE )
+			parse_flags |= VM_FROM_PARSED;
+		if(parse_from_header(msg) == -1){
+			LOG(L_ERR,"ERROR: %s : vm: "
+				"while parsing <From:> header\n",exports.name);
+			goto error;
+		}
+	}
 
-    lines[0].s=VM_FIFO_VERSION; lines[0].len=strlen(VM_FIFO_VERSION);
+	/* parse the RURI (doesn't make any malloc) */
+	if (parse_sip_msg_uri(msg)<0) {
+		LOG(L_ERR,"ERROR: %s : vm: uri has not been parsed\n",
+			exports.name);
+		goto error1;
+	}
 
-    s=cmd_buf; cmd.s=s;
-    if(strlen(action)+12 >= CMD_BUFFER_MAX){
-        LOG(L_ERR,"vm: buffer overflow while copying command name\n");
-	goto error;
-    }
-    append_str(s,"sip_request.",12);
-    append_str(s,action,strlen(action));
-    cmd.len = s-cmd.s;
-    lines[1]=cmd;
+	/* parse contact header */
+	str_uri.s = 0;
+	str_uri.len = 0;
+	if(msg->contact) {
+		if (msg->contact->parsed==0) {
+			if (rmode==MODE_ONFAILURE)
+				parse_flags |= VM_CONTACT_PARSED;
+			if( parse_contact(msg->contact) == -1) {
+				LOG(L_ERR,"ERROR: %s : vm: "
+					"while parsing <Contact:> header\n",exports.name);
+				goto error1;
+			}
+		}
+#ifdef EXTRA_DEBUG
+		DBG("DEBUG: vm:msg->contact->parsed ******* contacts: *******\n");
+#endif
+		cb = (contact_body_t*)msg->contact->parsed;
+		if(cb && (c=cb->contacts)) {
+			str_uri = c->uri;
+			if (find_not_quoted(&str_uri,'<')) {
+				parse_nameaddr(&str_uri,&na);
+				str_uri = na.uri;
+			}
+#ifdef EXTRA_DEBUG
+			/*print_contacts(c);*/
+			for(; c; c=c->next)
+				DBG("DEBUG:           %.*s\n",c->uri.len,c->uri.s);
+#endif
+		}
+#ifdef EXTRA_DEBUG
+		DBG("DEBUG: vm: **** end of contacts ****\n");
+#endif
+	}
 
-    lines[2]=REQ_LINE(msg).method;
-    lines[3]=msg->parsed_uri.user;		/* user from r-uri */
-    lines[4]=email;			        /* email address from db */
-    lines[5]=domain;                        /* domain */
+	/* str_uri is taken from caller's contact or from header
+	 * for backwards compatibility with pre-3261 (from is already parsed)*/
+	if(!str_uri.len || !str_uri.s)
+		str_uri = get_from(msg)->uri;
 
-    lines[6]=msg->rcv.bind_address->address_str; /* dst ip */
+	/* parse Record-Route headers */
+	route.s = s = route_buffer; route.len = 0;
+	fproxy_lr = 0;
+	next_hop = empty_param;
 
-    lines[7]=msg->rcv.dst_port==SIP_PORT ?
+	p_hdr = msg->record_route;
+	if(p_hdr) {
+		if (p_hdr->parsed==0) {
+			if (rmode==MODE_ONFAILURE)
+				parse_flags |= VM_RR_PARSED;
+			if ( parse_rr(p_hdr) ) {
+				LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
+				goto error2;
+			}
+		}
+		record_route = (rr_t*)p_hdr->parsed;
+	} else {
+		record_route = 0;
+	}
+
+	if( record_route ) {
+		if(p_hdr->body.len){
+			/* Parse all parameters */
+			if (parse_params(&(record_route->nameaddr.uri), CLASS_URI, &hooks,
+			&record_route->params) < 0) {
+				LOG(L_ERR,"vm: Error while parsing record route uri params\n");
+				goto error3;
+			}
+			fproxy_lr = (hooks.uri.lr != 0);
+			DBG("record_route->nameaddr.uri: %.*s\n",
+				record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
+			if(fproxy_lr){
+				DBG("vm: first proxy has loose routing.\n");
+				copy_route(s,route.len,record_route->nameaddr.uri.s,
+					record_route->nameaddr.uri.len);
+			}
+		}
+		for(p_hdr = p_hdr->next;p_hdr;p_hdr = p_hdr->next) {
+			/* filter out non-RR hdr and empty hdrs */
+			if( (p_hdr->type!=HDR_RECORDROUTE) || p_hdr->body.len==0)
+				continue;
+
+			if(p_hdr->parsed==0) {
+				/* if we are in failure route and we have to parse,
+				 * remember to free before exiting */
+				if (rmode==MODE_ONFAILURE)
+					parse_flags |= VM_RRTMP_PARSED;
+				if ( parse_rr(p_hdr) ){
+					LOG(L_ERR,"ERROR: %s : vm: "
+						"while parsing <Record-route:> header\n",exports.name);
+					goto error3;
+				}
+			}
+			for(record_route=p_hdr->parsed; record_route;
+			record_route=record_route->next){
+				DBG("record_route->nameaddr.uri: %.*s\n",
+					record_route->nameaddr.uri.len,
+					record_route->nameaddr.uri.s);
+				copy_route(s,route.len,record_route->nameaddr.uri.s,
+					record_route->nameaddr.uri.len);
+			}
+			if (parse_flags&VM_RRTMP_PARSED)
+				free_rr( ((rr_t**)&p_hdr->parsed) );
+		}
+
+		if(!fproxy_lr){
+			copy_route(s,route.len,str_uri.s,str_uri.len);
+			str_uri = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
+		} else {
+			next_hop = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
+		}
+	}
+
+	DBG("vm: calculated route: %.*s\n",route.len,route.len ? route.s : "");
+	DBG("vm: next r-uri: %.*s\n",str_uri.len,str_uri.len ? str_uri.s : "");
+
+
+	/* parse body */
+	body = empty_param;
+	email = empty_param;
+	domain = empty_param;
+
+	if( REQ_LINE(msg).method_value==METHOD_INVITE ) {
+
+		if( (body.s = get_body(msg)) == 0 ){
+			LOG(L_ERR, "ERROR: vm: get_body failed\n");
+			goto error3;
+		}
+
+		//body.len = strlen(body.s);
+		body.len = msg->len - (body.s - msg->buf);
+
+		if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,
+		&email) < 0) {
+			LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
+			goto error3;
+		}
+		domain = msg->parsed_uri.host;
+	}
+
+	/* additional headers */
+	hdrs.s=hdrs_buf; hdrs.len=0;
+	s = hdrs_buf;
+
+	if(hdrs.len+12+sizeof(flag_t)+1 >= HDRS_BUFFER_MAX){
+		LOG(L_ERR,"vm: buffer overflow while copying optional header\n");
+		goto error3;
+	}
+	append_str(s,"P-MsgFlags: ",12); hdrs.len += 12;
+	msg_flags_size = sizeof(flag_t);
+	int2reverse_hex(&s, &msg_flags_size, (int)msg->msg_flags);
+	hdrs.len += sizeof(flag_t) - msg_flags_size;
+	append_str(s,"\n",1); hdrs.len++;
+
+	for(p_hdr = msg->headers;p_hdr;p_hdr = p_hdr->next) {
+		if( !(p_hdr->type&HDR_OTHER) )
+			continue;
+
+		if(hdrs.len+p_hdr->name.len+p_hdr->body.len+4 >= HDRS_BUFFER_MAX){
+			LOG(L_ERR,"vm: buffer overflow while copying optional header\n");
+			goto error3;
+		}
+		append_str(s,p_hdr->name.s,p_hdr->name.len);
+		hdrs.len += p_hdr->name.len;
+		append_str(s,": ",2); hdrs.len+=2;
+		append_str(s,p_hdr->body.s,p_hdr->body.len);
+		hdrs.len += p_hdr->body.len;
+		if(*(s-1) != '\n'){
+			append_str(s,"\n",1);
+			hdrs.len++;
+		}
+	}
+
+	append_str(s,".",1);
+	hdrs.len++;
+
+	lines[0].s=VM_FIFO_VERSION;
+	lines[0].len=strlen(VM_FIFO_VERSION);
+
+	lines[1].s = s = cmd_buf;
+	if(strlen(action)+12 >= CMD_BUFFER_MAX){
+		LOG(L_ERR,"vm: buffer overflow while copying command name\n");
+		goto error3;
+	}
+	append_str(s,"sip_request.",12);
+	append_str(s,action,strlen(action));
+	lines[1].len = s-lines[1].s;
+
+	lines[2]=REQ_LINE(msg).method;     /* method type */
+	lines[3]=msg->parsed_uri.user;     /* user from r-uri */
+	lines[4]=email;                    /* email address from db */
+	lines[5]=domain;                   /* domain */
+
+	lines[6]=msg->rcv.bind_address->address_str; /* dst ip */
+
+	lines[7]=msg->rcv.dst_port==SIP_PORT ?
 			empty_param : msg->rcv.bind_address->port_no_str; /* port */
 
-    lines[8]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
+	/* r_uri ('Contact:' for next requests) */
+	lines[8]=msg->first_line.u.request.uri;
 
-    lines[9]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
+	/* r_uri for subsequent requests */
+	lines[9]=str_uri.len?str_uri:empty_param;
 
-    lines[10]=get_from(msg)->body;		/* from */
-    lines[11]=msg->to->body;			/* to */
-    lines[12]=msg->callid->body;		/* callid */
-    lines[13]=get_from(msg)->tag_value;	/* from tag */
-    lines[14]=get_to(msg)->tag_value;	/* to tag */
-    lines[15]=get_cseq(msg)->number;	/* cseq number */
+	lines[10]=get_from(msg)->body;		/* from */
+	lines[11]=msg->to->body;			/* to */
+	lines[12]=msg->callid->body;		/* callid */
+	lines[13]=get_from(msg)->tag_value;	/* from tag */
+	lines[14]=get_to(msg)->tag_value;	/* to tag */
+	lines[15]=get_cseq(msg)->number;	/* cseq number */
 
-    i2s=int2str(hash_index, &l);		/* hash:label */
-    if (l+1>=IDBUF_LEN) {
-	LOG(L_ERR, "ERROR: vm_start: too big hash\n");
-	goto error;
-    }
-    memcpy(id_buf, i2s, l);id_buf[l]=':';int_buflen=l+1;
-    i2s=int2str(label, &l);
-    if (l+1+int_buflen>=IDBUF_LEN) {
-	LOG(L_ERR, "ERROR: vm_start: too big label\n");
-	goto error;
-    }
-    memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-    lines[16].s=id_buf;lines[16].len=int_buflen;
+	i2s=int2str(hash_index, &l);		/* hash:label */
+	if (l+1>=IDBUF_LEN) {
+		LOG(L_ERR, "ERROR: vm_start: too big hash\n");
+		goto error3;
+	}
+	memcpy(id_buf, i2s, l);
+	id_buf[l]=':';int_buflen=l+1;
+	i2s=int2str(label, &l);
+	if (l+1+int_buflen>=IDBUF_LEN) {
+		LOG(L_ERR, "ERROR: vm_start: too big label\n");
+		goto error3;
+	}
+	memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
+	lines[16].s=id_buf;lines[16].len=int_buflen;
 
-    lines[17] = route.len ? route : empty_param;
-    lines[18] = next_hop;
-    lines[19] = hdrs;
-    lines[20] = body;
+	lines[17] = route.len ? route : empty_param;
+	lines[18] = next_hop;
+	lines[19] = hdrs;
+	lines[20] = body;
 
-    if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
-	 ==-1 ) {
+	if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)==-1 ) {
+		LOG(L_ERR, "ERROR: vm_start: write_to_fifo failed\n");
+		goto error3;
+	}
 
-	LOG(L_ERR, "ERROR: vm_start: write_to_fifo failed\n");
-	goto error;
-    }
+	/* make sure that if voicemail does not initiate a reply
+	 * timely, a SIP timeout will be sent out */
+	if( (*_tmb.t_addblind)() == -1 ) {
+		LOG(L_ERR, "ERROR: vm_start: add_blind failed\n");
+		goto error3;
+	}
 
-    /* make sure that if voicemail does not initiate a reply
-     * timely, a SIP timeout will be sent out */
-    if( (*_tmb.t_addblind)() == -1 ) {
-	LOG(L_ERR, "ERROR: vm_start: add_blind failed\n");
-	goto error;
-    }
-    return 1;
+	/* success */
+	ret = 1;
 
- error:
-    /* 0 would lead to immediate script exit -- -1 returns
-       with 'false' to script processing */
-    return -1;
+error3:
+	if (parse_flags&VM_RR_PARSED)
+		free_rr( ((rr_t**)&msg->record_route->parsed) );
+error2:
+	if (parse_flags&VM_CONTACT_PARSED)
+		free_contact( ((contact_body_t**)&msg->from->parsed) );
+error1:
+	if (parse_flags&VM_FROM_PARSED) {
+		free_from( msg->from->parsed );
+		msg->from->parsed = 0;
+	}
+error:
+	/* 0 would lead to immediate script exit -- -1 returns
+	 * with 'false' to script processing */
+	return ret;
 }
+
+
+
 
 static int init_tmb()
 {
@@ -569,14 +625,18 @@ static int init_tmb()
     return 0;
 }
 
+
+
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 {
-    int   fd_fifo;
+	int   fd_fifo;
+#if 0
 	char *buf, *p;
 	int len;
 	int i;
+#endif
 
-
+#if 0
 	/* contruct buffer first */
 	len=0;
 	for (i=0; i<cnt; i++) {
@@ -597,34 +657,51 @@ static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 		*p='\n';
 		p++;
 	}
-		
+#endif
 
 	/* open FIFO file stream */
-    if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
+	if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
 		switch(errno){
-	    	case ENXIO:
+			case ENXIO:
 				LOG(L_ERR,"ERROR: %s: ans_machine deamon is not running !\n",
 								exports.name);
-	    	default:
+			default:
 				LOG(L_ERR,"ERROR: %s: %s\n",exports.name,strerror(errno));
 		}
 		goto error;
-    }
+	}
 
 	/* write now (unbuffered straight-down write) */
-    DBG("vm: write_to_vm_fifo: <%.*s>\n",len,buf);
-    if (write(fd_fifo, buf,len)==-1) {
+#if 0
+	DBG("vm: write_to_vm_fifo: <%.*s>\n",len,buf);
+	if (write(fd_fifo, buf,len)==-1) {
 		LOG(L_ERR, "ERROR: write_to_vm_fifo: write failed: %s\n",
 					strerror(errno));
 	}
-    close(fd_fifo);
+#else
+repeat:
+	if (writev(fd_fifo, (struct iovec*)lines, cnt)<0) {
+		if (errno!=EINTR) {
+			LOG(L_ERR, "ERROR: write_to_vm_fifo: writev failed: %s\n",
+				strerror(errno));
+			close(fd_fifo);
+			goto error;
+		} else {
+			goto repeat;
+		}
+	}
+#endif
+	close(fd_fifo);
 
-    DBG("DEBUG: write_to_vm_fifo: write completed\n");
-
+	DBG("DEBUG: write_to_vm_fifo: write completed\n");
+#if 0
 	pkg_free(buf);
-    return 1; /* OK */
+#endif
+	return 1; /* OK */
 
 error:
+#if 0
 	pkg_free(buf);
+#endif
 	return -1;
 }
