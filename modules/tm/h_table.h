@@ -49,7 +49,10 @@ typedef struct retrans_buff
    unsigned int dest_port;
 
    struct sockaddr_in to;
+   /* changed in favour of Solaris to size_t
    socklen_t tolen;
+   */
+   size_t tolen;
    /* a message can be linked just to one retransmission list */
    struct timer_link tl[1];
    unsigned int nr_retrans;
