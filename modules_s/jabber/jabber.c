@@ -200,7 +200,7 @@ static int mod_init(void)
 	}
 
 	/* import mysql functions */
-	if (bind_dbmod())
+	if (bind_dbmod(db_url))
 	{
 		LOG(L_ERR, "XJAB:mod_init: error - database module not found\n");
 		return -1;

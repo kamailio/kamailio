@@ -1163,7 +1163,6 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 	char buf[512];
 	str  tfrom;
 	str  str_hdr;
-	int **pcbp = NULL;//, beg, end, crt;
 	char buf1[1024];
 
 	if( !to || !to->s || to->len <= 0 
@@ -1198,11 +1197,8 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 		DBG("XJAB:xj_send_sip_msg: uac callback parameter [%p==%d]\n", 
 				cbp, *cbp);
 #endif
-		if((pcbp = (int**)shm_malloc(sizeof(int*))) == NULL)
-			return -1;
-		*pcbp = cbp;
 		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 
-					     xj_tuac_callback, (void*)pcbp);
+					     xj_tuac_callback, (void*)cbp);
 	}
 	else
 		return tmb.t_request(&msg_type, 0, to, &tfrom, &str_hdr, msg, 0, 0);
@@ -1269,28 +1265,27 @@ int xj_wlist_clean_jobs(xj_wlist jwl, int idx, int fl)
 /**
  * callback function for TM
  */
-void xj_tuac_callback( struct cell *t, struct sip_msg *msg,
-			int code, void *param)
+void xj_tuac_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_tuac_callback: completed with status %d\n", code);
+	DBG("XJAB: xj_tuac_callback: completed with status %d\n", ps->code);
 #endif
-	if(!t->cbp)
+	if(!ps->param)
 	{
 		DBG("XJAB: m_tuac_callback: parameter not received\n");
 		return;
 	}
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_tuac_callback: parameter [%p : ex-value=%d]\n", t->cbp,
-					*(*((int**)t->cbp)) );
+	DBG("XJAB: xj_tuac_callback: parameter [%p : ex-value=%d]\n", ps->param,
+					*((int*)ps->param) );
 #endif
-	if(code < 200 || code >= 300)
+	if(ps->code < 200 || ps->code >= 300)
 	{
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB: xj_tuac_callback: no 2XX return code - connection set"
 			" as expired \n");
 #endif
-		*(*((int**)t->cbp)) = XJ_FLAG_CLOSE;	
+		*((int*)ps->param) = XJ_FLAG_CLOSE;
 	}
 }
 

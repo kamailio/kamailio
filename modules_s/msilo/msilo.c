@@ -158,8 +158,7 @@ void destroy(void);
 void m_clean_silo(unsigned int ticks, void *);
 
 /** TM callback function */
-static void m_tm_callback( struct cell *t, struct sip_msg *msg,
-	int code, void *param);
+static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
 	{"m_store",  m_store, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
@@ -591,7 +590,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 							DB_KEY_CTYPE, DB_KEY_INC_TIME 
 					};
 	db_res_t* db_res = NULL;
-	int i, db_no_cols = IDX_NO, db_no_keys = 1, *msg_id, mid, n;
+	int i, db_no_cols = IDX_NO, db_no_keys = 1, mid, n;
 	char hdr_buf[1024], body_buf[1024];
 
 	str str_vals[IDX_NO], hdr_str , body_str;
@@ -683,7 +682,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			SET_STR_VAL(str_vals[STR_IDX_BODY], db_res, i, DUMP_IDX_BODY);
 			SET_STR_VAL(str_vals[STR_IDX_CTYPE], db_res, i, DUMP_IDX_CTYPE);
 			
-			hdr_str.len = 1024;		
+			hdr_str.len = 1024;
 			if(m_build_headers(&hdr_str, str_vals[STR_IDX_CTYPE],
 					str_vals[STR_IDX_FROM]) < 0)
 			{
@@ -695,19 +694,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 				goto error;
 			}
 			
-			if((msg_id = shm_malloc(sizeof(int))) == 0)
-			{
-				DBG("MSILO:m_dump: no more share memory!");
-				if (db_free_query(db_con, db_res) < 0)
-					DBG("MSILO:m_dump: Error while freeing result of"
-						" query\n");
-				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
-				goto error;
-			}
-						
-			*msg_id = mid;
-			
-			DBG("MSILO:m_dump: msg [%d-%d] for: %.*s\n", i+1, *msg_id,
+			DBG("MSILO:m_dump: msg [%d-%d] for: %.*s\n", i+1, mid,
 					pto->uri.len, pto->uri.s);
 			
 			/** sending using TM function: t_uac */
@@ -733,7 +720,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[STR_IDX_BODY]:&body_str, /* Message body */
 					m_tm_callback,    /* Callback function */
-					(void*)msg_id     /* Callback parameter */
+					(void*)mid        /* Callback parameter */
 				);
 		}
 	}
@@ -826,11 +813,10 @@ void destroy(void)
 /** 
  * TM callback function - delete message from database if was sent OK
  */
-void m_tm_callback( struct cell *t, struct sip_msg *msg,
-	int code, void *param)
+void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
-	DBG("MSILO:m_tm_callback: completed with status %d\n", code);
-	if(!t->cbp)
+	DBG("MSILO:m_tm_callback: completed with status %d\n", ps->code);
+	if(!ps->param)
 	{
 		DBG("MSILO m_tm_callback: message id not received\n");
 		goto done;
@@ -840,15 +826,15 @@ void m_tm_callback( struct cell *t, struct sip_msg *msg,
 		DBG("MSILO:m_tm_callback: db_con is NULL\n");
 		goto done;
 	}
-	if(code < 200 || code >= 300)
+	if(ps->code < 200 || ps->code >= 300)
 	{
 		DBG("MSILO:m_tm_callback: message <%d> was not sent successfully\n",
-				*((int*)t->cbp));
-		msg_list_set_flag(ml, *((int*)t->cbp), MS_MSG_ERRO);
+				(int)ps->param);
+		msg_list_set_flag(ml, (int)ps->param, MS_MSG_ERRO);
 		goto done;
 	}
 
-	msg_list_set_flag(ml, *((int*)t->cbp), MS_MSG_DONE);
+	msg_list_set_flag(ml, (int)ps->param, MS_MSG_DONE);
 	
 done:
 	return;
