@@ -7,8 +7,8 @@
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL = 7
-EXTRAVERSION = -99
+SUBLEVEL = 8
+EXTRAVERSION = 
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
