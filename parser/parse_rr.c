@@ -55,7 +55,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	{
 		DBG("parse_rr_body(): No body for record-route\n");
 		*head = 0;
-		return 0;
+		return -2;
 	}
 	s.s = buf;
 	s.len = len;
