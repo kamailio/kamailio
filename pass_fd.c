@@ -70,7 +70,7 @@ int recv_all(int socket, void* data, int data_len)
 }
 
 
-/* sends all data (takes care of signals)
+/* sends all data (takes care of signals) (assumes blocking fd)
  * returns number of bytes sent or < 0 for an error */
 int send_all(int socket, void* data, int data_len)
 {

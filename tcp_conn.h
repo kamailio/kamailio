@@ -70,6 +70,8 @@ enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0,
 /* fd communication commands */
 enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
 					CONN_GET_FD, CONN_NEW };
+/* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
+ * CONN_GET_FD, NEW, ERROR only by writers */
 
 struct tcp_req{
 	struct tcp_req* next;
