@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh  
 #
 # $Id$
 #
@@ -67,7 +67,7 @@ ACL_GROUPS="local ld int voicemail free-pstn prepaid"
 
 # expiration time for alias table
 FOREVER='2020-05-28 21:32:15'
-FOREVER_REL=1073741823
+FOREVER_REL=1003741823
 
 VERSION='$Revision$'
 #### SQL names
