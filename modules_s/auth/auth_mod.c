@@ -50,7 +50,6 @@
 
 MODULE_VERSION
 
-
 #define RAND_SECRET_LEN 32
 
 /*
