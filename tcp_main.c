@@ -32,6 +32,9 @@
  *  2003-01-20  locking fixes, hashtables (andrei)
  *  2003-02-20  s/lock_t/gen_lock_t/ to avoid a conflict on solaris (andrei)
  *  2003-02-25  Nagle is disabled if -DDISABLE_NAGLE (andrei)
+ *  2003-03-29  SO_REUSEADDR before calling bind to allow
+ *              server restart, Nagle set on the (hopefuly) 
+ *              correct socket
  */
 
 
@@ -161,7 +164,10 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 #ifdef DISABLE_NAGLE
 	flag=1;
 	if ( (tcp_proto_no!=-1) && 
-		  (setsockopt(sock_info->socket, tcp_proto_no , TCP_NODELAY,
+/* fix:	I used to get here 
+ * ERROR: tcp_connect: could not disable Nagle: Protocol not available	  
+ * 			(setsockopt(sock_info->socket, tcp_proto_no , TCP_NODELAY, */
+			  (setsockopt(s, tcp_proto_no , TCP_NODELAY,
 					&flag, sizeof(flag))<0) ){
 		LOG(L_ERR, "ERROR: tcp_connect: could not disable Nagle: %s\n",
 				strerror(errno));
@@ -441,6 +447,9 @@ void tcpconn_timeout(fd_set* set)
 int tcp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
+#if defined(SO_REUSEADDR) && !defined(TCP_DONT_REUSEADDR) 
+	int optval;
+#endif
 #ifdef DISABLE_NAGLE
 	int flag;
 	struct protoent* pe;
@@ -474,6 +483,27 @@ int tcp_init(struct socket_info* sock_info)
 				strerror(errno));
 	}
 #endif
+
+
+#if defined(SO_REUSEADDR) && !defined(TCP_DONT_REUSEADDR) 
+	/* Stevens, "Network Programming", Section 7.5, "Generic Socket
+     * Options": "...server started,..a child continues..on existing
+	 * connection..listening server is restarted...call to bind fails
+	 * ... ALL TCP servers should specify the SO_REUSEADDRE option 
+	 * to allow the server to be restarted in this situation
+	 *
+	 * Indeed, without this option, the server can't restart.
+	 *   -jiri
+	 */
+	optval=1;
+	if (setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEADDR,
+				(void*)&optval, sizeof(optval))==-1) {
+		LOG(L_ERR, "ERROR: tcp_init: setsockopt %s\n",
+			strerror(errno));
+		goto error;
+	}
+#endif
+
 	if (bind(sock_info->socket, &addr->s, sockaddru_len(*addr))==-1){
 		LOG(L_ERR, "ERROR: tcp_init: bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
