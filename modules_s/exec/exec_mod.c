@@ -45,6 +45,8 @@
 #include "kill.h"
 #include "exec_hf.h"
 
+MODULE_VERSION
+
 unsigned int time_to_kill=0;
 
 static int mod_init( void );

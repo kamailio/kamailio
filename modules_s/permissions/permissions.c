@@ -34,12 +34,14 @@
 #include "parse_config.h"
 #include "../../parser/parse_from.h"
 
+MODULE_VERSION
+
 rule	*allow_rules = NULL, *deny_rules = NULL;
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-        {"allow_routing", allow_routing, 0, 0},
-        {0, 0, 0, 0}
+        {"allow_routing", allow_routing, 0, 0, REQUEST_ROUTE},
+        {0, 0, 0, 0, 0}
 };
 
 /* Module interface */

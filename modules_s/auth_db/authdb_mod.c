@@ -45,6 +45,8 @@
 #include "authorize.h"
 #include "../auth/api.h"
 
+MODULE_VERSION
+
 
 /*
  * Module destroy function prototype

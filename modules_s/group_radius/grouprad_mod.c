@@ -43,6 +43,7 @@
 #include "grouprad_mod.h"
 #include "group.h"
 
+MODULE_VERSION
 
 static int mod_init(void); /* Module initialization function */
 static int hf_fixup(void** param, int param_no); /* Header field fixup */

@@ -46,6 +46,8 @@
 #include "authorize.h"
 #include <radiusclient.h>
 
+MODULE_VERSION
+
 pre_auth_f pre_auth_func = 0;   /* Pre authorization function from auth module */
 post_auth_f post_auth_func = 0; /* Post authorization function from auth module */
 

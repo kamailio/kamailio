@@ -46,6 +46,8 @@
 #include "uri_mod.h"
 #include "checks.h"
 
+MODULE_VERSION
+
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */

@@ -39,6 +39,8 @@
 #include "dlist.h"
 #include "../../error.h"
 
+MODULE_VERSION
+
 
 static int mod_init(void);
 static void destroy(void);

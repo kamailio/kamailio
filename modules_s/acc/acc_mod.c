@@ -58,6 +58,8 @@
 #include <radiusclient.h>
 #endif
 
+MODULE_VERSION
+
 struct tm_binds tmb;
 
 static int mod_init( void );

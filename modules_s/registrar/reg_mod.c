@@ -46,6 +46,8 @@
 #include "save.h"
 #include "lookup.h"
 
+MODULE_VERSION
+
 
 static int mod_init(void);                           /* Module init function */
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */

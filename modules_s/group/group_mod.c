@@ -47,6 +47,8 @@
 #include "group_mod.h"
 #include "group.h"
 
+MODULE_VERSION
+
 
 /*
  * Module destroy function prototype

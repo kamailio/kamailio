@@ -38,6 +38,8 @@
 #include "urirad_mod.h"
 #include "checks.h"
 
+MODULE_VERSION
+
 
 static int mod_init(void); /* Module initialization function */
 

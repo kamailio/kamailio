@@ -51,6 +51,8 @@
 #include "ul_fifo.h"
 #include "notify.h"
 
+MODULE_VERSION
+
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */

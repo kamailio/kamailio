@@ -69,6 +69,8 @@
 #include "sl_stats.h"
 #include "sl_funcs.h"
 
+MODULE_VERSION
+
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);

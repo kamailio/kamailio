@@ -66,6 +66,8 @@
 #include <sys/types.h> /* for regex */
 #include <regex.h>
 
+MODULE_VERSION
+
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);

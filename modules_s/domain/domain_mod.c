@@ -49,6 +49,7 @@ static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
 
+MODULE_VERSION
 
 /*
  * Module parameter variables

@@ -51,6 +51,8 @@
 #include "ip_tree.h"
 #include "pike_funcs.h"
 
+MODULE_VERSION
+
 
 
 static int pike_init(void);

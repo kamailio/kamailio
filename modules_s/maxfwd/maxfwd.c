@@ -47,6 +47,8 @@
 #include "../../mem/mem.h"
 #include "mf_funcs.h"
 
+MODULE_VERSION
+
 
 static int fixup_maxfwd_header(void** param, int param_no);
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);

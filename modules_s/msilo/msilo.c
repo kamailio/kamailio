@@ -117,6 +117,8 @@
 		} \
 	}
 
+MODULE_VERSION
+
 /** database connection */
 db_con_t *db_con = NULL;
 

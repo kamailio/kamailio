@@ -49,6 +49,8 @@ int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
 int enable_full_lr = 0;   /* Disabled by default */
 
+MODULE_VERSION;
+
 static int mod_init(void);
 static int str_fixup(void** param, int param_no);
 

@@ -42,6 +42,8 @@
 #include "dbtext.h"
 #include "dbt_lib.h"
 
+MODULE_VERSION
+
 static int mod_init(void);
 void destroy(void);
 

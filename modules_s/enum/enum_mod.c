@@ -38,6 +38,9 @@
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "enum.h"
+
+MODULE_VERSION
+
 /*
  * Module initialization function prototype
  */
