@@ -80,6 +80,7 @@ str str_strdup(str string)
 int new_presentity(str* _uri, presentity_t** _p)
 {
 	presentity_t* presentity;
+	int size = 0;
 
 	if (!_uri || !_p) {
 		paerrno = PA_INTERNAL_ERROR;
@@ -87,7 +88,8 @@ int new_presentity(str* _uri, presentity_t** _p)
 		return -1;
 	}
 
-	presentity = (presentity_t*)shm_malloc(sizeof(presentity_t) + _uri->len);
+	size = sizeof(presentity_t) + PRESENTITY_LOCATION_STR_LEN + _uri->len + 1;
+	presentity = (presentity_t*)shm_malloc(size);
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_presentity(): No memory left\n");
@@ -95,10 +97,19 @@ int new_presentity(str* _uri, presentity_t** _p)
 	}
 	memset(presentity, 0, sizeof(presentity_t));
 
-	presentity->uri.s = (char*)presentity + sizeof(presentity_t);
-	memcpy(presentity->uri.s, _uri->s, _uri->len);
+
+	presentity->uri.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_STR_LEN;
+	strncpy(presentity->uri.s, _uri->s, _uri->len);
+	_uri->s[_uri->len] = 0;
 	presentity->uri.len = _uri->len;
+	presentity->location.loc.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_LOC_OFFSET;
+	presentity->location.site.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_SITE_OFFSET;
+	presentity->location.floor.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_FLOOR_OFFSET;
+	presentity->location.room.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_ROOM_OFFSET;
+
 	*_p = presentity;
+
+	LOG(L_ERR, "new_presentity=%p for uri=%s\n", presentity, presentity->uri.s);
 	
 	if (use_db) {
 		db_key_t query_cols[1];
@@ -138,11 +149,14 @@ int new_presentity(str* _uri, presentity_t** _p)
 			str basic = row_vals[basic_col].val.str_val;
 			// str status = row_vals[status_col].val.str_val;
 			str location = row_vals[location_col].val.str_val;
-			
+			if (location.s)
+			  location.len = strlen(location.s);
+
 			LOG(L_INFO, "  basic=%s location=%s\n", basic.s, location.s);
 
 			presentity->state = basic2status(basic);
-			presentity->location = str_strdup(location);
+			if (location.len)
+				strncpy(presentity->location.loc.s, location.s, location.len);
 
 		} else {
 			/* insert new record into database */
@@ -165,36 +179,96 @@ int new_presentity(str* _uri, presentity_t** _p)
 int db_update_presentity(presentity_t* _p)
 {
 	if (use_db) {
+		char uri_s[128];
 		db_key_t query_cols[1];
 		db_op_t query_ops[1];
 		db_val_t query_vals[1];
 		int n_selectors = sizeof(query_cols)/sizeof(db_key_t);
 
-		db_key_t update_cols[3];
-		db_val_t update_vals[3];
+		db_key_t update_cols[10];
+		db_val_t update_vals[10];
 		int n_updates = 1;
 
-		LOG(L_INFO, "update_presentity starting\n");
+		strncpy(uri_s, _p->uri.s, _p->uri.len);
+		uri_s[_p->uri.len] = 0;
+
+		LOG(L_ERR, "db_update_presentity starting\n");
 		query_cols[0] = "uri";
 		query_ops[0] = OP_EQ;
 		query_vals[0].type = DB_STR;
 		query_vals[0].nul = 0;
-		query_vals[0].val.str_val = _p->uri;
+		query_vals[0].val.str_val.s = _p->uri.s;
+		query_vals[0].val.str_val.len = _p->uri.len;
+		LOG(L_ERR, "db_update_presentity:  _p->uri=%.*s uri_s=%s len=%d\n", _p->uri.len, _p->uri.s, uri_s, _p->uri.len);
 
 		update_cols[0] = "basic";
 		update_vals[0].type = DB_STR;
 		update_vals[0].nul = 0;
-		update_vals[0].val.str_val = pstate_name[_p->state];
+		update_vals[0].val.str_val.s = pstate_name[_p->state].s;
+		update_vals[0].val.str_val.len = strlen(pstate_name[_p->state].s);
 
-		if (_p->location.len && _p->location.s) {
+		LOG(L_ERR, "db_update_presentity:  _p->location=%s len=%d\n", _p->location.loc.s, _p->location.loc.len);
+		if (_p->location.loc.len && _p->location.loc.s) {
 			update_cols[n_updates] = "location";
 			update_vals[n_updates].type = DB_STR;
 			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.str_val = _p->location;
-			LOG(L_INFO, "  location=%s len=%d\n", _p->location.s, _p->location.len);
-			
+			update_vals[n_updates].val.str_val = _p->location.loc;
+			LOG(L_ERR, "db_update_presentity:  _p->location.loc=%s len=%d\n", 
+			    _p->location.loc.s, _p->location.loc.len);
 			n_updates++;
 		}
+		if (_p->location.site.len && _p->location.site.s) {
+			update_cols[n_updates] = "site";
+			update_vals[n_updates].type = DB_STR;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.str_val = _p->location.site;
+			LOG(L_ERR, "db_update_presentity:  _p->location.site=%s len=%d\n",
+			    _p->location.site.s, _p->location.site.len);
+			n_updates++;
+		}
+		if (_p->location.floor.len && _p->location.floor.s) {
+			update_cols[n_updates] = "floor";
+			update_vals[n_updates].type = DB_STR;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.str_val = _p->location.floor;
+			LOG(L_ERR, "db_update_presentity:  _p->location.floor=%s len=%d\n", 
+			    _p->location.floor.s, _p->location.floor.len);
+			n_updates++;
+		}
+		if (_p->location.room.len && _p->location.room.s) {
+			update_cols[n_updates] = "room";
+			update_vals[n_updates].type = DB_STR;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.str_val = _p->location.room;
+			LOG(L_ERR, "db_update_presentity:  _p->location.room=%s len=%d\n", 
+			    _p->location.room.s, _p->location.room.len);
+			n_updates++;
+		}
+		if (_p->location.x != 0) {
+			update_cols[n_updates] = "x";
+			update_vals[n_updates].type = DB_DOUBLE;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.double_val = _p->location.x;
+			LOG(L_ERR, "db_update_presentity:  _p->location.x=%f\n", _p->location.x);
+			n_updates++;
+		}
+		if (_p->location.y != 0) {
+			update_cols[n_updates] = "y";
+			update_vals[n_updates].type = DB_DOUBLE;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.double_val = _p->location.y;
+			LOG(L_ERR, "db_update_presentity:  _p->location.y=%f\n", _p->location.y);
+			n_updates++;
+		}
+		if (_p->location.radius != 0) {
+			update_cols[n_updates] = "radius";
+			update_vals[n_updates].type = DB_DOUBLE;
+			update_vals[n_updates].nul = 0;
+			update_vals[n_updates].val.double_val = _p->location.radius;
+			LOG(L_ERR, "db_update_presentity:  _p->location.radius=%f\n", _p->location.radius);
+			n_updates++;
+		}
+
 
 		db_use_table(pa_db, presentity_table);
 

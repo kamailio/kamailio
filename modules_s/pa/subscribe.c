@@ -150,37 +150,42 @@ static int get_watch_uri(struct sip_msg* _m, str* _wuri)
  */
 int parse_accept(struct hdr_field* _h, doctype_t* _a)
 {
-	char* buffer;
+	if (_h) {
+		char* buffer;
 
-	     /*
-	      * All implementation must support xpidf so make
-	      * it the default
-	      */
-	*_a = DOC_LPIDF;
-
-	buffer = pkg_malloc(_h->body.len + 1);
-	if (!buffer) {
-		paerrno = PA_NO_MEMORY;
-		LOG(L_ERR, "parse_accept(): No memory left\n");
-		return -1;
-	}
-
-	memcpy(buffer, _h->body.s, _h->body.len);
-	buffer[_h->body.len] = '\0';
-	
-	if (strstr(buffer, "application/pidf+xml")) {
-		*_a = DOC_PIDF;
-	} else if (strstr(buffer, "application/xpidf+xml")) {
+		/*
+		 * All implementation must support xpidf so make
+		 * it the default
+		 */
 		*_a = DOC_XPIDF;
-	} else if (strstr(buffer, "text/lpidf")) {
-		*_a = DOC_LPIDF;
-	} else {
-		*_a = DOC_LPIDF;
-	}
-	
-	pkg_free(buffer);
-	return 0;
 
+		buffer = pkg_malloc(_h->body.len + 1);
+		if (!buffer) {
+			paerrno = PA_NO_MEMORY;
+			LOG(L_ERR, "parse_accept(): No memory left\n");
+			return -1;
+		}
+
+		memcpy(buffer, _h->body.s, _h->body.len);
+		buffer[_h->body.len] = '\0';
+	
+		if (strstr(buffer, "application/pidf+xml")) {
+			*_a = DOC_PIDF;
+		} else if (strstr(buffer, "application/xpidf+xml")) {
+			*_a = DOC_XPIDF;
+		} else if (strstr(buffer, "text/lpidf")) {
+			*_a = DOC_LPIDF;
+		} else {
+			*_a = DOC_XPIDF;
+		}
+	
+		pkg_free(buffer);
+		return 0;
+	} else {
+		/* XP messenger is not giving an accept field, so default to lpidf */
+		*_a = DOC_XPIDF;
+		return 0;
+	}
 }
 
 
@@ -224,6 +229,9 @@ static int parse_hfs(struct sip_msg* _m)
 			LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
 			return -10;
 		}
+	} else {
+		LOG(L_ERR, "no accept header\n");
+		acc = DOC_XPIDF;
 	}
 
 	return 0;
@@ -264,10 +272,13 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	time_t e;
 	dlg_t* dialog;
 	str watch_uri;
-	event_t *event = (event_t*)(_m->event->parsed);
+	event_t *event = NULL;
 	int et = 0;
 	if (_m->event) {
+		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
+	} else {
+		et = EVENT_PRESENCE;
 	}
 
 	if (_m->expires) {
@@ -334,10 +345,13 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	time_t e;
 	dlg_t* dialog;
 	str watch_uri;
-	event_t *event = (event_t*)(_m->event->parsed);
+	event_t *event = NULL;
 	int et = 0;
 	if (_m->event) {
+		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
+	} else {
+		et = EVENT_PRESENCE;
 	}
 
 	if (_m->expires) {
@@ -419,6 +433,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	struct watcher* w;
 	str p_uri;
 
+	LOG(L_ERR, "handle_subscription() entered\n");
 	get_act_time();
 	paerrno = PA_OK;
 
@@ -484,13 +499,16 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 		DBG("handle_subscription(): expires==0 but we sent no NOTIFY - not implemented yet\n");
 	}
 
+	LOG(L_ERR, "handle_subscription about to return 1\n");
 	unlock_pdomain(d);
 	return 1;
 	
  error2:
+	LOG(L_ERR, "handle_subscription about to return -1\n");
 	unlock_pdomain(d);
 	return -1;
  error:
+	LOG(L_ERR, "handle_subscription about to send_reply and return -2\n");
 	send_reply(_m);
 	return -1;
 }

@@ -265,7 +265,7 @@ static inline int create_headers(struct watcher* _w)
 }
 
 
-static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
+static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	xpidf_status_t st;
 
@@ -311,7 +311,7 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 }
 
 
-static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
+static int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	lpidf_status_t st;
 
@@ -339,7 +339,7 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
-static inline int send_pidf_notify(struct presentity* _p, struct watcher* _w)
+static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	xpidf_status_t st;
 
@@ -369,24 +369,32 @@ static inline int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 	default: st = XPIDF_ST_CLOSED; break;
 	}
 
-	if (pidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st, &_p->location) < 0) {
+	if (pidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): pidf_add_address failed\n");
 		return -3;
 	}
 
+	if (pidf_add_location(&body, BUF_LEN - body.len,
+			      &_p->location.loc,
+			      &_p->location.site, &_p->location.floor, &_p->location.room,
+			      _p->location.x, _p->location.y, _p->location.radius) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
+		return -4;
+	}
+
 	if (end_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
-		return -4;
+		return -5;
 	}
 
 	if (end_pidf_doc(&body, BUF_LEN - body.len) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): end_xpidf_doc failed\n");
-		return -5;
+		return -6;
 	}
 
 	if (create_headers(_w) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): Error while adding headers\n");
-		return -6;
+		return -7;
 	}
 
 	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
@@ -398,18 +406,29 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 {
 	body.len = 0;
 
+	if (_w->uri.s == NULL) {
+		LOG(L_ERR, "watcher uri.s is NULL\n");
+		return -1;
+	}
+	if (strlen(_w->uri.s) == 0) {
+		LOG(L_ERR, "watcher uri.s is zero length\n");
+		return -2;
+	}
+
+	LOG(L_ERR, "notifying %s accept=%d _p->state=%d\n", 
+	    _w->uri.s, _w->accept, _p->state);
 	switch(_w->accept) {
 	case DOC_XPIDF:
 		return send_xpidf_notify(_p, _w);
-		break;
+		return 0;
 
 	case DOC_LPIDF:
 		return send_lpidf_notify(_p, _w);
-		break;
+		return 0;
 
 	case DOC_PIDF:
 		return send_pidf_notify(_p, _w);
-		break;
+		return 0;
 	}
 
 	return -1;

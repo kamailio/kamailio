@@ -41,7 +41,7 @@
  */
 int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w)
 {
-	watcher_t* ptr;
+	watcher_t* watcher;
 
 	     /* Check parameters */
 	if (!_uri && !_dlg && !_w) {
@@ -50,23 +50,23 @@ int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w)
 	}
 
 	     /* Allocate memory buffer for watcher_t structure and uri string */
-	ptr = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len);
-	if (!ptr) {
+	watcher = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len);
+	if (!watcher) {
 		paerrno = PA_NO_MEMORY;
 	        LOG(L_ERR, "new_watcher(): No memory left\n");
 		return -1;
 	}
-	memset(ptr, 0, sizeof(watcher_t));
+	memset(watcher, 0, sizeof(watcher_t));
 
 	     /* Copy uri string */
-	ptr->uri.s = (char*)ptr + sizeof(watcher_t);
-	ptr->uri.len = _uri->len;
-	memcpy(ptr->uri.s, _uri->s, _uri->len);
+	watcher->uri.s = (char*)watcher + sizeof(watcher_t);
+	watcher->uri.len = _uri->len;
+	memcpy(watcher->uri.s, _uri->s, _uri->len);
 	
-	ptr->expires = _e; /* Expires value */
-	ptr->accept = _a;  /* Accepted document type */
-	ptr->dialog = _dlg; /* Dialog handle */
-	*_w = ptr;
+	watcher->expires = _e; /* Expires value */
+	watcher->accept = _a;  /* Accepted document type */
+	watcher->dialog = _dlg; /* Dialog handle */
+	*_w = watcher;
 	return 0;
 }
 

@@ -37,11 +37,28 @@
 #include "pstate.h"
 
 
+#define PRESENTITY_LOCATION_STR_LEN (128 + 32 + 32 + 64)
+#define PRESENTITY_LOCATION_LOC_OFFSET 0
+#define PRESENTITY_LOCATION_SITE_OFFSET 128
+#define PRESENTITY_LOCATION_FLOOR_OFFSET (128+32)
+#define PRESENTITY_LOCATION_ROOM_OFFSET (128+32+32)
+
+typedef struct location {
+	str   loc; /* human readable description of location */
+	str   site;
+	str   floor;
+	str   room;
+	double x;
+	double y;
+	double radius;
+} location_t;
+
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
 	int event_package;       /* parsed event package */
 	pstate_t state;          /* State of presentity */
-	str      location;       /* Physical location of presentity */
+	location_t location;       /* Physical location of presentity */
+	
 	watcher_t* watchers;     /* List of watchers */
 	watcher_t* winfo_watchers;  /* Watchers subscribed to winfo */
 	struct presentity* next; /* Next presentity */

@@ -190,6 +190,7 @@ int timer_pdomain(pdomain_t* _d)
  */
 void lock_pdomain(pdomain_t* _d)
 {
+	LOG(L_INFO, "lock_pdomain\n");
 	lock_get(&_d->lock);
 }
 
@@ -199,6 +200,7 @@ void lock_pdomain(pdomain_t* _d)
  */
 void unlock_pdomain(pdomain_t* _d)
 {
+	LOG(L_INFO, "unlock_pdomain\n");
 	lock_release(&_d->lock);
 }
 

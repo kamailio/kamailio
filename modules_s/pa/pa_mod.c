@@ -32,6 +32,8 @@
  */
 
 
+#include <signal.h>
+
 #include "../../fifo_server.h"
 #include "../../db/db.h"
 #include "../../sr_module.h"
@@ -100,6 +102,12 @@ struct module_exports exports = {
 	pa_child_init/* per-child init function */
 };
 
+
+void pa_sig_handler(int s) 
+{
+	signal(SIGSEGV, pa_sig_handler);
+	DBG("PA:pa_worker:%d: SIGNAL received=%d\n **************", getpid(), s);
+}
 
 static int pa_mod_init(void)
 {
@@ -170,6 +178,8 @@ static int pa_child_init(int _rank)
 			return -1;
 		}
 	}
+
+	signal(SIGSEGV, pa_sig_handler);
 
 	return 0;
 }

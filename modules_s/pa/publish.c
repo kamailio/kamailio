@@ -130,16 +130,17 @@ int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 /*
  * Update existing presentity and watcher list
  */
-static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, 
-			     struct presentity* presentity, int *pchanged)
+static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
 {
 	char *body = get_body(_m);
 	str basic;
 	str location;
+	str site, floor, room;
+	double x, y, radius;
 	int changed = 0;
 	int ret = 0;
 
-	parse_pidf(body, &basic, &location);
+	parse_pidf(body, &basic, &location, &site, &floor, &room, &x, &y, &radius);
 
 	LOG(L_INFO, "publish_presentity: -1-\n");
 	if (basic.len && basic.s) {
@@ -151,10 +152,47 @@ static int publish_presentity(struct sip_msg* _m, struct pdomain* _d,
 	}
 	LOG(L_INFO, "publish_presentity: -2-\n");
 	if (location.len && location.s) {
-		if (presentity->location.len && strcmp(presentity->location.s, location.s) != 0)
+		if (presentity->location.loc.len && strcmp(presentity->location.loc.s, location.s) != 0)
 			changed = 1;
-		presentity->location.len = location.len;
-		presentity->location.s = location.s;
+		presentity->location.loc.len = location.len;
+		strncpy(presentity->location.loc.s, location.s, location.len);
+		presentity->location.loc.s[location.len] = 0;
+	}
+	if (site.len && site.s) {
+		if (presentity->location.site.len && strcmp(presentity->location.site.s, site.s) != 0)
+			changed = 1;
+		presentity->location.site.len = site.len;
+		strncpy(presentity->location.site.s, site.s, site.len);
+		presentity->location.site.s[site.len] = 0;
+	}
+	if (floor.len && floor.s) {
+		if (presentity->location.floor.len && strcmp(presentity->location.floor.s, floor.s) != 0)
+			changed = 1;
+		presentity->location.floor.len = floor.len;
+		strncpy(presentity->location.floor.s, floor.s, floor.len);
+		presentity->location.floor.s[floor.len] = 0;
+	}
+	if (room.len && room.s) {
+		if (presentity->location.room.len && strcmp(presentity->location.room.s, room.s) != 0)
+			changed = 1;
+		presentity->location.room.len = room.len;
+		strncpy(presentity->location.room.s, room.s, room.len);
+		presentity->location.room.s[room.len] = 0;
+	}
+	if (x) {
+		if (presentity->location.x != x)
+			changed = 1;
+		presentity->location.x = x;
+	}
+	if (y) {
+		if (presentity->location.y != y)
+			changed = 1;
+		presentity->location.y = y;
+	}
+	if (radius) {
+		if (presentity->location.radius != radius)
+			changed = 1;
+		presentity->location.radius = radius;
 	}
 
 	LOG(L_INFO, "publish_presentity: -3-\n");
@@ -202,7 +240,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	lock_pdomain(d);
 	
-	LOG(L_INFO, "handle_publish -4- p_uri=%*.s\n", p_uri.len, p_uri.s);
+	LOG(L_ERR, "handle_publish -4- p_uri=%*.s\n", p_uri.len, p_uri.s);
 	if (find_presentity(d, &p_uri, &p) > 0) {
 		changed = 1;
 		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
@@ -211,11 +249,11 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 	}
 
 	/* update presentity event state */
-	LOG(L_INFO, "handle_publish -5- presentity=%p\n", p);
+	LOG(L_ERR, "handle_publish -5- presentity=%p\n", p);
 	if (p)
 		publish_presentity(_m, d, p, &changed);
 
-	LOG(L_INFO, "handle_publish -7- changed=%d\n", changed);
+	LOG(L_ERR, "handle_publish -7- changed=%d\n", changed);
 	if (p && changed) {
 		notify_watchers(p);
 	}
@@ -224,7 +262,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	if (send_reply(_m) < 0) return -1;
 
-	LOG(L_INFO, "handle_publish -8- done\n");
+	LOG(L_ERR, "handle_publish -8- done\n");
 	return 1;
 	
  error2:
@@ -395,13 +433,11 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 		return 1;
 	}
 
-	if (presentity->location.len && strcmp(presentity->location.s, location.s) != 0)
+	if (presentity->location.loc.len && strcmp(presentity->location.loc.s, location.s) != 0)
 		changed = 1;
 
-	if (presentity->location.s)
-		free(presentity->location.s);
-
-	presentity->location = str_strdup(location);
+	strncpy(presentity->location.loc.s, location.s, location.len);
+	presentity->location.loc.len = location.len;
 
 	if (changed) {
 		notify_watchers(presentity);

@@ -72,11 +72,8 @@
 #define TUPLE_STAG "<tuple id=\"9r28r49\">"
 #define TUPLE_STAG_L (sizeof(TUPLE_STAG) - 1)
 
-#define ADDRESS_START "<contact priority=\"0.8\">"
-#define ADDRESS_START_L (sizeof(ADDRESS_START) - 1)
-
-#define ADDRESS_END ""
-#define ADDRESS_END_L (sizeof(ADDRESS_END) - 1)
+#define ADDRESS_STAG "<contact priority=\"0.8\">"
+#define ADDRESS_STAG_L (sizeof(ADDRESS_STAG) - 1)
 
 #define STATUS_OPEN "<status><basic>open</basic></status>"
 #define STATUS_OPEN_L (sizeof(STATUS_OPEN) - 1)
@@ -87,11 +84,54 @@
 #define STATUS_INUSE "<status><basic>inuse</basic></status>"
 #define STATUS_INUSE_L (sizeof(STATUS_INUSE) - 1)
 
-#define LOC_STAG "<location><loc>"
+#define LOCATION_STAG "<location>"
+#define LOCATION_STAG_L (sizeof(LOCATION_STAG) - 1)
+
+#define LOCATION_ETAG "</location>"
+#define LOCATION_ETAG_L (sizeof(LOCATION_ETAG) - 1)
+
+#define LOC_STAG "<loc>"
 #define LOC_STAG_L (sizeof(LOC_STAG) - 1)
 
-#define LOC_ETAG "</loc></location>"
+#define LOC_ETAG "</loc>"
 #define LOC_ETAG_L (sizeof(LOC_ETAG) - 1)
+
+#define SITE_STAG "<site>"
+#define SITE_STAG_L (sizeof(SITE_STAG) - 1)
+
+#define SITE_ETAG "</site>"
+#define SITE_ETAG_L (sizeof(SITE_ETAG) - 1)
+
+#define FLOOR_STAG "<floor>"
+#define FLOOR_STAG_L (sizeof(FLOOR_STAG) - 1)
+
+#define FLOOR_ETAG "</floor>"
+#define FLOOR_ETAG_L (sizeof(FLOOR_ETAG) - 1)
+
+#define ROOM_STAG "<room>"
+#define ROOM_STAG_L (sizeof(ROOM_STAG) - 1)
+
+#define ROOM_ETAG "</room>"
+#define ROOM_ETAG_L (sizeof(ROOM_ETAG) - 1)
+
+#define X_STAG "<x>"
+#define X_STAG_L (sizeof(X_STAG) - 1)
+
+#define X_ETAG "</x>"
+#define X_ETAG_L (sizeof(X_ETAG) - 1)
+
+#define Y_STAG "<y>"
+#define Y_STAG_L (sizeof(Y_STAG) - 1)
+
+#define Y_ETAG "</y>"
+#define Y_ETAG_L (sizeof(Y_ETAG) - 1)
+
+#define RADIUS_STAG "<radius>"
+#define RADIUS_STAG_L (sizeof(RADIUS_STAG) - 1)
+
+#define RADIUS_ETAG "</radius>"
+#define RADIUS_ETAG_L (sizeof(RADIUS_ETAG) - 1)
+
 
 
 /*
@@ -155,7 +195,7 @@ int start_pidf_tuple(str* _b, int _l)
 /*
  * Add a contact address with given status
  */
-int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st, str *_loc)
+int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st)
 {
 	int len = 0;
 	char* p;
@@ -167,13 +207,11 @@ int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st, str *_loc)
 	default:              p = STATUS_CLOSED; len = STATUS_CLOSED_L; break; /* Makes gcc happy */
 	}
 
-	if (_l < (ADDRESS_START_L + 
+	if (_l < (ADDRESS_STAG_L + 
 		  _addr->len + 
-		  ADDRESS_END_L + 
+		  ADDRESS_ETAG_L + 
 		  CRLF_L +
 		  len + 
-		  CRLF_L +
-		  ADDRESS_ETAG_L + 
 		  CRLF_L
 		 )
 	   ) {
@@ -182,18 +220,65 @@ int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st, str *_loc)
 		return -1;
 	}
 
-	str_append(_b, ADDRESS_START, ADDRESS_START_L);
+	str_append(_b, ADDRESS_STAG, ADDRESS_STAG_L);
 	str_append(_b, _addr->s, _addr->len);
-	str_append(_b, ADDRESS_END CRLF, ADDRESS_END_L + CRLF_L);
-	str_append(_b, CRLF ADDRESS_ETAG CRLF , 
-		   CRLF_L + ADDRESS_ETAG_L + CRLF_L);
+	str_append(_b, ADDRESS_ETAG CRLF , 
+		   ADDRESS_ETAG_L + CRLF_L);
 	str_append(_b, p, len);
+	return 0;
+}
+
+/*
+ * Add location information
+ */
+int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double _x, double _y, double _radius)
+{
+	str_append(_b, CRLF LOCATION_STAG, CRLF_L + LOCATION_STAG_L);
+
 	if (_loc->len) {
 		str_append(_b, CRLF LOC_STAG, CRLF_L + LOC_STAG_L);
 		str_append(_b, _loc->s, _loc->len);
 		str_append(_b, CRLF LOC_ETAG, CRLF_L + LOC_ETAG_L);
 	}
+	if (_site->len) {
+		str_append(_b, CRLF SITE_STAG, CRLF_L + SITE_STAG_L);
+		str_append(_b, _site->s, _site->len);
+		str_append(_b, CRLF SITE_ETAG, CRLF_L + SITE_ETAG_L);
+	}
+	if (_floor->len) {
+		str_append(_b, CRLF FLOOR_STAG, CRLF_L + FLOOR_STAG_L);
+		str_append(_b, _floor->s, _floor->len);
+		str_append(_b, CRLF FLOOR_ETAG, CRLF_L + FLOOR_ETAG_L);
+	}
+	if (_room->len) {
+		str_append(_b, CRLF ROOM_STAG, CRLF_L + ROOM_STAG_L);
+		str_append(_b, _room->s, _room->len);
+		str_append(_b, CRLF ROOM_ETAG, CRLF_L + ROOM_ETAG_L);
+	}
 
+	if (_x) {
+		char buf[128];
+		int len = sprintf(buf, "%g", _x);
+		str_append(_b, CRLF X_STAG, CRLF_L + X_STAG_L);
+		str_append(_b, buf, len);
+		str_append(_b, CRLF X_ETAG, CRLF_L + X_ETAG_L);
+	}
+	if (_y) {
+		char buf[128];
+		int len = sprintf(buf, "%g", _y);
+		str_append(_b, CRLF Y_STAG, CRLF_L + Y_STAG_L);
+		str_append(_b, buf, len);
+		str_append(_b, CRLF Y_ETAG, CRLF_L + Y_ETAG_L);
+	}
+	if (_radius) {
+		char buf[128];
+		int len = sprintf(buf, "%g", _radius);
+		str_append(_b, CRLF RADIUS_STAG, CRLF_L + RADIUS_STAG_L);
+		str_append(_b, buf, len);
+		str_append(_b, CRLF RADIUS_ETAG, CRLF_L + RADIUS_ETAG_L);
+	}
+
+	str_append(_b, LOCATION_ETAG CRLF, CRLF_L + LOCATION_ETAG_L);
 	return 0;
 }
 
@@ -351,23 +436,44 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 	xmlNodeMapByName(cur, name, ns, f, data);
 }
 
-void parse_pidf(char *pidf_body, str *basic_str, str *location_str)
+void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
+		str *site_str, str *floor_str, str *room_str,
+		double *xp, double *yp, double *radiusp)
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr presence = NULL;
 	xmlAttrPtr sipuri = NULL;
 	xmlNodePtr basic = NULL;
 	xmlNodePtr location = NULL;
+	xmlNodePtr site = NULL;
+	xmlNodePtr floor = NULL;
+	xmlNodePtr room = NULL;
+	xmlNodePtr x = NULL;
+	xmlNodePtr y = NULL;
+	xmlNodePtr radius = NULL;
 	char *sipuri_text = NULL;
 	char *basic_text = NULL;
 	char *location_text = NULL;
+	char *site_text = NULL;
+	char *floor_text = NULL;
+	char *room_text = NULL;
+	char *x_text = NULL;
+	char *y_text = NULL;
+	char *radius_text = NULL;
 
 	doc = event_body_parse(pidf_body);
 
 	presence = xmlDocGetNodeByName(doc, "presence", NULL);
 	basic = xmlDocGetNodeByName(doc, "basic", NULL);
 	location = xmlDocGetNodeByName(doc, "loc", NULL);
-	LOG(L_INFO, "presence=%p basic=%p location=%p\n", presence, basic, location);
+	site = xmlDocGetNodeByName(doc, "site", NULL);
+	floor = xmlDocGetNodeByName(doc, "floor", NULL);
+	room = xmlDocGetNodeByName(doc, "room", NULL);
+	x = xmlDocGetNodeByName(doc, "x", NULL);
+	y = xmlDocGetNodeByName(doc, "y", NULL);
+	radius = xmlDocGetNodeByName(doc, "radius", NULL);
+	LOG(L_INFO, "presence=%p basic=%p location=%p site=%p floor=%p room=%p\n", 
+	    presence, basic, location, site, floor, room);
 
 	sipuri = xmlNodeGetAttrByName(presence, "entity");
 	if (sipuri)
@@ -376,9 +482,25 @@ void parse_pidf(char *pidf_body, str *basic_str, str *location_str)
 		basic_text = xmlNodeGetContent(basic->children);
 	if (location)
 		location_text = xmlNodeGetContent(location->children);
+	if (site)
+		site_text = xmlNodeGetContent(site->children);
+	if (floor)
+		floor_text = xmlNodeGetContent(floor->children);
+	if (room)
+		room_text = xmlNodeGetContent(room->children);
+	if (x)
+		x_text = xmlNodeGetContent(x->children);
+	if (y)
+		y_text = xmlNodeGetContent(y->children);
+	if (radius)
+		radius_text = xmlNodeGetContent(radius->children);
 
 	LOG(L_INFO, "parse_pidf: sipuri=%p:%s basic=%p:%s location=%p:%s\n",
 	    sipuri, sipuri_text, basic, basic_text, location, location_text);
+	LOG(L_INFO, "parse_pidf: site=%p:%s floor=%p:%s room=%p:%s\n",
+	    site, site_text, floor, floor_text, room, room_text);
+	LOG(L_INFO, "parse_pidf: x=%p:%s y=%p:%s radius=%p:%s\n",
+	    x, x_text, y, y_text, radius, radius_text);
 
 	if (basic_str && basic) {
 		basic_str->len = strlen(basic_text);
@@ -387,5 +509,26 @@ void parse_pidf(char *pidf_body, str *basic_str, str *location_str)
 	if (location_str && location) {
 		location_str->len = strlen(location_text);
 		location_str->s = strdup(location_text);
+	}
+	if (site_str && site) {
+		site_str->len = strlen(site_text);
+		site_str->s = strdup(site_text);
+	}
+	if (floor_str && floor) {
+		floor_str->len = strlen(floor_text);
+		floor_str->s = strdup(floor_text);
+	}
+	if (room_str && room) {
+		room_str->len = strlen(room_text);
+		room_str->s = strdup(room_text);
+	}
+	if (xp && x) {
+		*xp = strtod(x_text, NULL);
+	}
+	if (yp && y) {
+		*yp = strtod(y_text, NULL);
+	}
+	if (radiusp && radius) {
+		*radiusp = strtod(radius_text, NULL);
 	}
 }

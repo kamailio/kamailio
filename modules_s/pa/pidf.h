@@ -59,8 +59,12 @@ int start_pidf_tuple(str* _b, int _l);
 /*
  * Add a contact address with given status
  */
-int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st, str *_loc);
+int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st);
 
+/*
+ * Add location information
+ */
+int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double x, double y, double radius);
 
 /*
  * End of pidf tuple
@@ -72,6 +76,8 @@ int end_pidf_tuple(str* _b, int _l);
  */
 int end_pidf_doc(str* _b, int _l);
 
-void parse_pidf(char *pidf_body, str *basic_str, str *location_str);
+void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
+		str *site_str, str *floor_str, str *room_str,
+		double *xp, double *yp, double *radiusp);
 
 #endif /* PIDF_H */
