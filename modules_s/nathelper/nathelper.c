@@ -561,6 +561,9 @@ get_rtpp_port(str *callid, int create)
 	addr.sun_family = AF_LOCAL;
 	strncpy(addr.sun_path, "/var/run/rtpproxy.sock",
 	    sizeof(addr.sun_path) - 1);
+#if !defined(__linux__)
+	addr.sun_len = strlen(addr.sun_path);
+#endif
 
 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (fd < 0) {
