@@ -285,8 +285,8 @@ or cat test/transaction.fifo > /tmp/ser_fifo
 
 Defines
 -------
-- TOTAG enables matching of acknowledgemnts including to-tags;
-  it is disabled by default for two reasons:
+- ACK_TAG enables stricter matching of acknowledgemnts including to-tags;
+  without it, to-tags are ignored; it is disabled by default for two reasons:
   a) it eliminates an unlikely race condition in which
      transaction's to-tag is being rewritten by a 200 OK
      whereas an ACK is being looked up by to-tag
@@ -296,7 +296,13 @@ Defines
   negative reply sent upstream and 200/ACKs are not matched
   as they consititute another transaction. It will make no
   difference at all when the new magic cookie matching is
-  enabled.
+  enabled anyway.
+- CANCEL_TAG similarly enables strict matching of CANCELs 
+  including to-tags -- act of mercy to UACs, who screw up
+  the to-tags (however, it still depends on how forgiving
+  the downstream UAS is); like with ACK_TAG, all this
+  complex transactions matching goes with RFC3261's
+  magic cookie away anyway
 
 
 
