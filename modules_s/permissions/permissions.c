@@ -47,8 +47,11 @@ static int rules_num;  /* Number of parsed allow/deny files */
 
 
 /* Module parameter variables */
-static char *default_allow_file = DEFAULT_ALLOW_FILE;
-static char *default_deny_file = DEFAULT_DENY_FILE;
+static char* default_allow_file = DEFAULT_ALLOW_FILE;
+static char* default_deny_file = DEFAULT_DENY_FILE;
+static char* allow_suffix = ".allow";
+static char* deny_suffix = ".deny";
+
 
 /*
  * By default we check all branches
@@ -61,16 +64,27 @@ static int check_all_branches = 1;
  */
 static int load_fixup(void** param, int param_no);
 
-int allow_routing_def(struct sip_msg* msg, char* str1, char* str2);
-int allow_routing(struct sip_msg* msg, char* allow_file, char* deny_file);
-int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file);
+/*
+ * Convert the name of the file into table index, this
+ * function takes just one name, appends .allow and .deny
+ * to and and the rest is same as in load_fixup
+ */
+static int single_fixup(void** param, int param_no);
 
+
+int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
+int allow_routing_1(struct sip_msg* msg, char* file, char* str2);
+int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file);
+int allow_register_1(struct sip_msg* msg, char* file, char* s);
+int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file);
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-        {"allow_routing",  allow_routing_def, 0, 0,          REQUEST_ROUTE},
-	{"allow_routing",  allow_routing,     2, load_fixup, REQUEST_ROUTE},
-	{"allow_register", allow_register,    2, load_fixup, REQUEST_ROUTE},
+        {"allow_routing",  allow_routing_0,  0, 0,            REQUEST_ROUTE},
+	{"allow_routing",  allow_routing_1,  1, single_fixup, REQUEST_ROUTE},
+	{"allow_routing",  allow_routing_2,  2, load_fixup,   REQUEST_ROUTE},
+	{"allow_register", allow_register_1, 1, single_fixup, REQUEST_ROUTE},
+	{"allow_register", allow_register_2, 2, load_fixup,   REQUEST_ROUTE},
         {0, 0, 0, 0, 0}
 };
 
@@ -79,6 +93,8 @@ static param_export_t params[] = {
         {"default_allow_file", STR_PARAM, &default_allow_file},
         {"default_deny_file",  STR_PARAM, &default_deny_file },
 	{"check_all_branches", INT_PARAM, &check_all_branches},
+	{"allow_suffix",       STR_PARAM, &allow_suffix      },
+	{"deny_suffix",        STR_PARAM, &deny_suffix       },
         {0, 0, 0}
 };
 
@@ -89,9 +105,9 @@ struct module_exports exports = {
         params,    /* Exported parameters */
         mod_init,  /* module initialization function */
         0,         /* response function */
-        mod_exit,   /* destroy function */
+        mod_exit,  /* destroy function */
         0,         /* oncancel function */
-        0	/* child initialization function */
+        0	   /* child initialization function */
 };
 
 
@@ -319,7 +335,6 @@ static int check_routing(struct sip_msg* msg, int idx)
  */
 static int load_fixup(void** param, int param_no)
 {
-	void* ptr;
 	char* pathname;
 	int idx;
 	rule_file_t* table;
@@ -330,7 +345,6 @@ static int load_fixup(void** param, int param_no)
 		table = deny;
 	}
 
-	ptr = *param;
 	pathname = get_pathname(*param);
 	idx = find_index(table, pathname);
 
@@ -352,8 +366,45 @@ static int load_fixup(void** param, int param_no)
 		*param = (void*)idx;
 	}
 
-	pkg_free(ptr);
 	return 0;
+}
+
+
+/*
+ * Convert the name of the file into table index
+ */
+static int single_fixup(void** param, int param_no)
+{
+	char* buffer;
+	void* tmp;
+	int param_len, ret, suffix_len;
+
+	if (param_no != 1) return 0;
+
+	param_len = strlen((char*)*param);
+	if (strlen(allow_suffix) > strlen(deny_suffix)) {
+		suffix_len = strlen(allow_suffix);
+	} else {
+		suffix_len = strlen(deny_suffix);
+	}
+
+	buffer = pkg_malloc(param_len + suffix_len + 1);
+	if (!buffer) {
+		LOG(L_ERR, "single_fixup(): No memory left\n");
+		return -1;
+	}
+
+	strcpy(buffer, (char*)*param);
+	strcat(buffer, allow_suffix);
+	tmp = buffer; 
+	ret = load_fixup(&tmp, 1);
+
+	strcpy(buffer + param_len, deny_suffix);
+	tmp = buffer;
+	ret |= load_fixup(&tmp, 2);
+
+	pkg_free(buffer);
+	return ret;
 }
 
 
@@ -480,16 +531,22 @@ void mod_exit(void)
 /*
  * Uses default rule files from the module parameters
  */
-int allow_routing_def(struct sip_msg* msg, char* str1, char* str2)
+int allow_routing_0(struct sip_msg* msg, char* str1, char* str2)
 {
 	return check_routing(msg, 0);
+}
+
+
+int allow_routing_1(struct sip_msg* msg, char* file, char* s)
+{
+	return check_routing(msg, (int)file);
 }
 
 
 /*
  * Accepts allow and deny files as parameters
  */
-int allow_routing(struct sip_msg* msg, char* allow_file, char* deny_file)
+int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 {
 	     /* Index converted by load_lookup */
 	return check_routing(msg, (int)allow_file);
@@ -503,19 +560,16 @@ int allow_routing(struct sip_msg* msg, char* allow_file, char* deny_file)
  * found. That allows to restrict what IPs may be used in registrations, for
  * example
  */
-int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file)
+static int check_register(struct sip_msg* msg, int idx)
 {
-	int idx, len;
+	int len;
 	static char to_str[EXPRESSION_LENGTH + 1];
 	char* contact_str;
 	contact_t* c;
 
-	     /* Converted by load_fixup */
-	idx = (int)allow_file;
-
 	     /* turn off control, allow any routing */
 	if ((!allow[idx].rules) && (!deny[idx].rules)) {
-		DBG("allow_register(): No rules => allow any registration\n");
+		DBG("check_register(): No rules => allow any registration\n");
 		return 1;
 	}
 
@@ -526,12 +580,12 @@ int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file)
 	      * a little bit in some situations
 	      */
 	if (parse_headers(msg, HDR_TO | HDR_CONTACT, 0) == -1) {
-		LOG(L_ERR, "allow_register(): Error while parsing headers\n");
+		LOG(L_ERR, "check_register(): Error while parsing headers\n");
 		return -1;
 	}
 
 	if (!msg->to || !msg->contact) {
-		LOG(L_ERR, "allow_register(): To or Contact not found\n");
+		LOG(L_ERR, "check_register(): To or Contact not found\n");
 		return -1;
 	}
 	
@@ -539,18 +593,18 @@ int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file)
 	      * so then allow it
 	      */
 	if (parse_contact(msg->contact) < 0) {
-		LOG(L_ERR, "allow_register(): Error while parsing Contact HF\n");
+		LOG(L_ERR, "check_register(): Error while parsing Contact HF\n");
 		return -1;
 	}
 
 	if (((contact_body_t*)msg->contact->parsed)->star) {
-		DBG("allow_register(): * Contact found, allowing\n");
+		DBG("check_register(): * Contact found, allowing\n");
 		return 1;
 	}
 
 	len = ((struct to_body*)msg->to->parsed)->uri.len;
 	if (len > EXPRESSION_LENGTH) {
-                LOG(L_ERR, "allow_register(): To header field is too long: %d chars\n", len);
+                LOG(L_ERR, "check_register(): To header field is too long: %d chars\n", len);
                 return -1;
 	}
 	strncpy(to_str, ((struct to_body*)msg->to->parsed)->uri.s, len);
@@ -561,11 +615,11 @@ int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file)
 	while(c) {
 		contact_str = get_plain_uri(&c->uri);		
 		if (!contact_str) {
-			LOG(L_ERR, "allow_register(): Can't extract plain Contact URI\n");
+			LOG(L_ERR, "check_register(): Can't extract plain Contact URI\n");
 			return -1;
 		}
 
-		DBG("allow_register(): Looking for To: %s Contact: %s\n", to_str, contact_str);
+		DBG("check_register(): Looking for To: %s Contact: %s\n", to_str, contact_str);
 
 		     /* rule exists in allow file */
 		if (search_rule(allow[idx].rules, to_str, contact_str)) {
@@ -574,7 +628,7 @@ int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file)
 	
 		     /* rule exists in deny file */
 		if (search_rule(deny[idx].rules, to_str, contact_str)) {
-			DBG("allow_register(): Deny roule found => Register denied\n");
+			DBG("check_register(): Deny roule found => Register denied\n");
 			return -1;
 		}
 
@@ -582,6 +636,18 @@ int allow_register(struct sip_msg* msg, char* allow_file, char* deny_file)
 		c = contact_iterator(msg, c);
 	}
 
-	DBG("allow_register(): No contact denied => Allowed\n");
+	DBG("check_register(): No contact denied => Allowed\n");
 	return 1;
+}
+
+
+int allow_register_1(struct sip_msg* msg, char* file, char* s)
+{
+	return check_register(msg, (int)file);
+}
+
+
+int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
+{
+	return check_register(msg, (int)allow_file);
 }
