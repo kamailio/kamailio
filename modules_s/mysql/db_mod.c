@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ */
 
 #include <stdio.h>
 #include "../../sr_module.h"
@@ -39,42 +44,26 @@ static int mod_init(void);
  * MySQL database module interface
  */
 
+
+static cmd_export_t cmds[]={
+	{"~db_use_table",  (cmd_function)use_table,     2, 0},
+	{"~db_init",       (cmd_function)db_init,       1, 0},
+	{"~db_close",      (cmd_function)db_close,      2, 0},
+	{"~db_query",      (cmd_function)db_query,      2, 0},
+	{"~db_raw_query",  (cmd_function)db_raw_query,  2, 0},
+	{"~db_free_query", (cmd_function)db_free_query, 2, 0},
+	{"~db_insert",     (cmd_function)db_insert,     2, 0},
+	{"~db_delete",     (cmd_function)db_delete,     2, 0},
+	{"~db_update",     (cmd_function)db_update,     2, 0},
+	{0,0,0,0}
+};
+
+
+
 struct module_exports exports = {	
 	"mysql",
-	(char*[]) {
-		"~db_use_table",
-		"~db_init",
-		"~db_close",
-		"~db_query",
-		"~db_raw_query",
-		"~db_free_query",
-		"~db_insert",
-		"~db_delete",
-		"~db_update"
-	},
-	(cmd_function[]) {
-		(cmd_function)use_table,
-		(cmd_function)db_init,
-		(cmd_function)db_close,
-		(cmd_function)db_query,
-		(cmd_function)db_raw_query,
-		(cmd_function)db_free_query,
-		(cmd_function)db_insert,
-		(cmd_function)db_delete,
-		(cmd_function)db_update
-	},
-	(int[]) {
-                2, 1, 2, 2, 2, 2, 2, 2, 2
-	},
-	(fixup_function[]) {
-		0, 0, 0, 0, 0, 0, 0, 0, 0
-	},
-	9, /* number of functions*/
-
-	0,   /* Module parameter names */
-	0,   /* Module parameter types */
-	0,   /* Module parameter variable pointers */
-	0,   /* Number of module paramers */
+	cmds,
+	0,   /*  module paramers */
 
 	mod_init, /* module initialization function */
 	0,        /* response function*/
