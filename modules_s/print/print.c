@@ -10,11 +10,13 @@
 #include "../../dprint.h"
 #include <stdio.h>
 
-int print_f(struct sip_msg*, char*);
+static int print_f(struct sip_msg*, char*,char*);
 
 static struct module_exports print_exports= {	"print_stdout", 
 												(char*[]){"print"},
 												(cmd_function[]){print_f},
+												(int[]){1},
+												(fixup_function[]){0},
 												1,
 												0
 											};
@@ -27,8 +29,9 @@ struct module_exports* mod_register()
 }
 
 
-int print_f(struct sip_msg* msg, char* str)
+static int print_f(struct sip_msg* msg, char* str, char* str2)
 {
+	/*we registered only 1 param, so we ignore str2*/
 	printf("%s\n",str);
 	DBG("just printed %s\n",str);
 	return 1;
