@@ -354,7 +354,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
  */
 int reload_trusted_table(void)
 {
-	db_key_t cols[2];
+	db_key_t cols[3];
 	db_res_t* res;
 	db_row_t* row;
 	db_val_t* val;

@@ -403,7 +403,7 @@ unsigned int ds_get_hash(str *x, str *y)
 	}
 	h=((h)+(h>>11))+((h>>13)+(h>>23));
 
-	return (h)?(h<0)?-h:h:1;
+	return (h)?h:1;
 }
 
 /**

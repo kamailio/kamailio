@@ -234,7 +234,7 @@ static int umode = 0;
 static int controlfd;
 static pid_t mypid;
 static unsigned int myseqn = 0;
-static int_str rcv_avp = {.n = 42};
+static int rcv_avp_no=42;
 
 static cmd_export_t cmds[] = {
 	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -257,7 +257,7 @@ static param_export_t params[] = {
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
-	{"received_avp",          INT_PARAM, &rcv_avp               },
+	{"received_avp",          INT_PARAM, &rcv_avp_no            },
 	{"force_socket",          STR_PARAM, &force_socket_str		},
 	{0, 0, 0}
 };
@@ -1745,6 +1745,7 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str uri;
 	int_str val;
+	int_str rcv_avp;
 
 	if (create_rcv_uri(&uri, msg) < 0) {
 		return -1;
@@ -1752,6 +1753,7 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 
 	val.s = &uri;
 
+	rcv_avp.n=rcv_avp_no;
 	if (add_avp(AVP_VAL_STR, rcv_avp, val) < 0) {
 		LOG(L_ERR, "fix_nated_register: Error while creating AVP\n");
 		return -1;

@@ -62,7 +62,7 @@ static char *db_columns[6] = {"uuid","attribute","value",
 static int avpops_init(void);
 static int avpops_child_init(int rank);
 
-static int register_galiases( modparam_t type, param_func_param_t param_val);
+static int register_galiases( modparam_t type, void* val);
 static int fixup_db_load_avp(void** param, int param_no);
 static int fixup_db_delete_avp(void** param, int param_no);
 static int fixup_db_store_avp(void** param, int param_no);
@@ -112,7 +112,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"avp_url",           STR_PARAM, &DB_URL         },
 	{"avp_table",         STR_PARAM, &DB_TABLE       },
-	{"avp_aliases",       STR_PARAM|USE_FUNC_PARAM, register_galiases },
+	{"avp_aliases",       STR_PARAM|USE_FUNC_PARAM, (void*)register_galiases },
 	{"use_domain",        INT_PARAM, &use_domain     },
 	{"uuid_column",       STR_PARAM, &db_columns[0]  },
 	{"attribute_column",  STR_PARAM, &db_columns[1]  },
@@ -120,7 +120,7 @@ static param_export_t params[] = {
 	{"type_column",       STR_PARAM, &db_columns[3]  },
 	{"username_column",   STR_PARAM, &db_columns[4]  },
 	{"domain_column",     STR_PARAM, &db_columns[5]  },
-	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, avp_add_db_scheme },
+	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
 	{0, 0, 0}
 };
 
@@ -138,11 +138,12 @@ struct module_exports exports = {
 
 
 
-static int register_galiases( modparam_t type, param_func_param_t param_val)
+static int register_galiases( modparam_t type, void* val)
 {
-	if (param_val.string!=0 && param_val.string[0]!=0)
+	
+	if (val!=0 && ((char*)val)[0]!=0)
 	{
-		if ( add_avp_galias_str( param_val.string )!=0 )
+		if ( add_avp_galias_str((char*)val)!=0 )
 			return -1;
 	}
 
@@ -243,6 +244,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	char *s;
 	char *p;
 
+	flags=0;
 	if (DB_URL==0)
 	{
 		LOG(L_ERR,"ERROR:avpops:fixup_db_avp: you have to config a db url "
@@ -278,9 +280,9 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			s++;
 			if ( (p=strchr(s,'/'))!=0)
 				*(p++) = 0;
-			if ( (!strcasecmp( "from", s) && (flags=AVPOPS_USE_FROM)) 
-			|| (!strcasecmp( "to", s) && (flags=AVPOPS_USE_TO)) 
-			|| (!strcasecmp( "ruri", s) && (flags=AVPOPS_USE_RURI)) )
+			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM)) 
+			|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO)) 
+			|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI)) )
 			{
 				/* check for extra flags/params */
 				if (p&&(!strcasecmp("domain",p)&&!(flags|=AVPOPS_FLAG_DOMAIN)))
@@ -354,6 +356,7 @@ static int fixup_write_avp(void** param, int param_no)
 	char *s;
 	char *p;
 
+	flags=0;
 	s = (char*)*param;
 	ap = 0 ;
 	
@@ -370,10 +373,10 @@ static int fixup_write_avp(void** param, int param_no)
 			}
 			if ( (p=strchr(s,'/'))!=0)
 				*(p++) = 0;
-			if ( (!strcasecmp( "from", s) && (flags=AVPOPS_USE_FROM))
-				|| (!strcasecmp( "to", s) && (flags=AVPOPS_USE_TO))
-				|| (!strcasecmp( "ruri", s) && (flags=AVPOPS_USE_RURI))
-				|| (!strcasecmp( "src_ip", s) && (flags=AVPOPS_USE_SRC_IP)) )
+			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM))
+				|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
+				|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI))
+				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP)) )
 			{
 				ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 				if (ap==0)

@@ -647,13 +647,9 @@ error:
 static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct to_body to, *pto = NULL;
-	db_key_t db_keys[2] = { sc_uri_user, sc_uri_host };
+	db_key_t db_keys[2];
 	db_val_t db_vals[2];
-	db_key_t db_cols[] = {
-					sc_mid      /* 0 */, sc_from      /* 1 */,
-					sc_to       /* 2 */, sc_body      /* 3 */,
-					sc_ctype    /* 4 */, sc_inc_time  /* 5 */
-				};
+	db_key_t db_cols[6];
 	db_res_t* db_res = NULL;
 	int i, db_no_cols = 6, db_no_keys = 2, mid, n;
 	char hdr_buf[1024], body_buf[1024];
@@ -661,7 +657,19 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 	str str_vals[4], hdr_str , body_str;
 	time_t rtime;
+	
+	/* init */
+	db_keys[0]=sc_uri_user;
+	db_keys[1]=sc_uri_host;
+	db_cols[0]=sc_mid;
+	
+	db_cols[1]=sc_from;
+	db_cols[2]=sc_to;
+	db_cols[3]=sc_body;
+	db_cols[4]=sc_ctype;
+	db_cols[5]=sc_inc_time;
 
+	
 	DBG("MSILO:m_dump: ------------ start ------------\n");
 	hdr_str.s=hdr_buf;
 	hdr_str.len=1024;

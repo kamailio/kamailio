@@ -70,7 +70,7 @@ static int fixup_str2int( void** param, int param_no);
 static int mod_init(void);
 
 static int initial=0;
-static int *gflags; 
+static unsigned int *gflags; 
 
 static cmd_export_t cmds[]={
 	{"set_gflag", /* action name as in scripts */
@@ -119,7 +119,7 @@ static int fixup_str2int( void** param, int param_no)
 	}
 
 
-	param_str.s=(unsigned char*) *param;
+	param_str.s=(char*) *param;
 	param_str.len=strlen(param_str.s);
 
 	if (str2int(&param_str, myint )<0) {

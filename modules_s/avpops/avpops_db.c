@@ -104,7 +104,7 @@ error:
 }
 
 
-int avp_add_db_scheme( modparam_t type, param_func_param_t param_val)
+int avp_add_db_scheme( modparam_t type, void* val)
 {
 	struct db_scheme *scheme;
 
@@ -117,7 +117,7 @@ int avp_add_db_scheme( modparam_t type, param_func_param_t param_val)
 	memset( scheme, 0, sizeof(struct db_scheme));
 
 	/* parse the scheme */
-	if ( parse_avp_db_scheme( param_val.string, scheme)!=0 )
+	if ( parse_avp_db_scheme( (char*)val, scheme)!=0 )
 	{
 		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: falied to parse scheme\n");
 		goto error;

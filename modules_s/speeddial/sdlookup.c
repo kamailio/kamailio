@@ -74,12 +74,18 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 {
 	str user_s;
 	struct sip_uri puri;
-	db_key_t db_keys[4] = { user_column, domain_column, 
-			sd_user_column, sd_domain_column };
+	db_key_t db_keys[4];
 	db_val_t db_vals[4];
-	db_key_t db_cols[] = { new_uri_column };
+	db_key_t db_cols[1];
 	db_res_t* db_res = NULL;
 
+	/* init */
+	db_keys[0]=user_column;
+	db_keys[1]=domain_column;
+	db_keys[2]=sd_user_column;
+	db_keys[3]=sd_domain_column;
+	
+	db_cols[0]=new_uri_column;
 
 	/* take username@domain from From header */
 

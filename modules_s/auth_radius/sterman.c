@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../auth/api.h"

@@ -373,7 +373,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 		return -1;
 	}
 
-	sl = hash_func(_d, _aor->s, _aor->len);
+	sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
 	slot_add(&_d->table[sl], *_r);
 	udomain_add(_d, *_r);
 	_d->users++;
@@ -469,7 +469,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	int sl, i;
 	urecord_t* r;
 
-	sl = hash_func(_d, _aor->s, _aor->len);
+	sl = hash_func(_d, (unsigned char*)_aor->s, _aor->len);
 
 	r = _d->table[sl].first;
 

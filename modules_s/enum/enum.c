@@ -44,7 +44,7 @@
 /* Checks if NAPTR record has flag u and its services field
  * e2u+[service:]sip
  */
-inline int sip_match( struct naptr_rdata* naptr, str* service)
+static inline int sip_match( struct naptr_rdata* naptr, str* service)
 {
   if (service->len == 0) {
     return (naptr->flags_len == 1) &&
@@ -67,7 +67,7 @@ inline int sip_match( struct naptr_rdata* naptr, str* service)
  * Check that From header is properly parsed and if so,
  * return pointer to parsed From header.  Otherwise return NULL.
  */
-inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
+static inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
 {
 	if (!(_msg->from)) {
 		LOG(L_ERR, "get_parsed_from(): Request does not have a From header\n");
@@ -85,7 +85,7 @@ inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
 /*
  * Checks if argument is an e164 number starting with +
  */
-inline int is_e164(str* _user)
+static inline int is_e164(str* _user)
 {
 	int i;
 	char c;
@@ -127,7 +127,8 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
  * components in pattern and replacement parameters.  Regexp field starts at
  * address first and is len characters long.
  */
-inline int parse_naptr_regexp(char* first, int len, str* pattern, str* replacement)
+static inline int parse_naptr_regexp(char* first, int len, str* pattern,
+										str* replacement)
 {
 	char *second, *third;
 
@@ -233,7 +234,7 @@ int add_uri_param(str *uri, str *param, str *new_uri)
  * valid one.  Valid NAPTR records are compared based on their
  * (order,preference).
  */
-inline int naptr_greater(struct rdata* a, struct rdata* b)
+static inline int naptr_greater(struct rdata* a, struct rdata* b)
 {
 	struct naptr_rdata *na, *nb;
 
@@ -254,7 +255,7 @@ inline int naptr_greater(struct rdata* a, struct rdata* b)
 /*
  * Bubble sorts result record list according to naptr (order,preference).
  */
-inline void naptr_sort(struct rdata** head)
+static inline void naptr_sort(struct rdata** head)
 {
 	struct rdata *p, *q, *r, *s, *temp, *start;
 

@@ -68,7 +68,7 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table);
 int db_delete_avp( str *uuid, str *username, str *domain,
 		char *attr, char *table);
 
-int avp_add_db_scheme( modparam_t type, param_func_param_t param_val);
+int avp_add_db_scheme( modparam_t type, void* val);
 
 struct db_scheme *avp_get_db_scheme( char *name );
 
