@@ -50,6 +50,10 @@ int err2reason_phrase(
 			error_txt="Transaction tupel incomplete";
 			*sip_error=-E_BAD_REQ;
 			break;
+		case E_BAD_TO:
+			error_txt="Bad To";
+			*sip_error=-E_BAD_REQ;
+			break;
 		case E_EXEC:
 			error_txt="Error in external logic";
 			*sip_error=-E_BAD_SERVER;

@@ -22,6 +22,7 @@
 #define E_EXEC			-11
 /* too many branches demanded */
 #define E_TOO_MANY_BRANCHES -12
+#define E_BAD_TO	-13
 
 #define E_SEND		  -477
 /* unresolveable next-hop address */
