@@ -278,7 +278,7 @@ client proxy.foo.bar {
 		    moreinfo="none">/usr/local/etc/raddb/dictionary</filename>:
 		</simpara>
 		<programlisting format="linespecific">
-$INCLUDE ../radiusclient/dictionary.ser
+$INCLUDE /usr/local/etc/radiusclient/dictionary.ser
 </programlisting>
 		<simpara>
 		    That will include the same attribute definitions that are used in radiusclient
