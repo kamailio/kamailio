@@ -47,6 +47,9 @@
 #include "location.h"
 
 
+#define CONTACT "Contact: "
+#define CONTACT_L  (sizeof(CONTACT) - 1)
+
 #define CONTENT_TYPE "Content-Type: "
 #define CONTENT_TYPE_L  (sizeof(CONTENT_TYPE) - 1)
 
@@ -155,16 +158,18 @@ static str headers = {headers_buf, 0};
 static str body = {buffer, 0};
 
 
-static inline int add_event_hf(str* _h, int _l, int accept)
+static inline int add_event_hf(str* _h, int _l, int preferred_mimetype)
 {
 	int event_l;
 	char *event;
-	if (accept == DOC_WINFO) {
+	if (preferred_mimetype == DOC_WINFO) {
 		event = WINFO_TEXT;
 		event_l = WINFO_TEXT_L;
-	} else if (accept == DOC_XCAP_CHANGE) {
+#ifdef DOC_XCAP_CHANGE
+	} else if (preferred_mimetype == DOC_XCAP_CHANGE) {
 		event = XCAP_CHANGE_TEXT;
 		event_l = XCAP_CHANGE_TEXT_L;
+#endif
 	} else {
 		event = PRESENCE_TEXT;
 		event_l = PRESENCE_TEXT_L;
@@ -227,6 +232,7 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 			   CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L);
 		return 0;
 
+#ifdef DOC_XCAP_CHANGE
 	case DOC_XCAP_CHANGE:
 		if (_l < CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
@@ -236,6 +242,7 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 		str_append(_h, CONTENT_TYPE CONT_TYPE_XCAP_CHANGE CRLF,
 			   CONTENT_TYPE_L + CONT_TYPE_XCAP_CHANGE_L + CRLF_L);
 		return 0;
+#endif
 
 	default:
 		paerrno = PA_UNSUPP_DOC;
@@ -280,6 +287,19 @@ static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_
 	return 0;
 }
 
+static int add_contact_hf(str* _h, int _l, str *_c)
+{
+	if (_l < CONTACT_L + _c->len + CRLF_L) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "add_contact_hf(): Buffer too small\n");
+		return -1;
+	}
+		
+	str_append(_h, CONTENT_TYPE, CONTENT_TYPE_L);
+	str_append(_h, _c->s, _c->len);
+	str_append(_h, CRLF, CRLF_L);
+	return 0;
+}
 
 static inline int create_headers(struct watcher* _w)
 {
@@ -288,14 +308,19 @@ static inline int create_headers(struct watcher* _w)
 
 	headers.len = 0;
 	
-	if (add_event_hf(&headers, BUF_LEN, _w->accept) < 0) {
+	if (add_event_hf(&headers, BUF_LEN, _w->preferred_mimetype) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Event header field\n");
 		return -1;
 	}
 
-	if (add_cont_type_hf(&headers, BUF_LEN - headers.len, _w->accept)  < 0) {
+	if (add_cont_type_hf(&headers, BUF_LEN - headers.len, _w->preferred_mimetype)  < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Content-Type header field\n");
 		return -2;
+	}
+
+	if (add_contact_hf(&headers, BUF_LEN - headers.len, &_w->uri) < 0) {
+		LOG(L_ERR, "create_headers(): Error while adding Contact header field\n");
+		return -3;
 	}
 
 	if (_w && _w->expires) t = _w->expires - time(0);
@@ -645,12 +670,12 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->accept=%d _w->status=%d\n", 
-	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->accept, _w->status);
+	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->preferred_mimetype=%d _w->status=%d\n", 
+	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->preferred_mimetype, _w->status);
 	if ((_p->flags & (PFLAG_PRESENCE_CHANGED|PFLAG_WATCHERINFO_CHANGED)) 
 	    && (_w->event_package == EVENT_PRESENCE)
 	    && (_w->status = WS_ACTIVE)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
 		case DOC_XPIDF:
 			rc = send_xpidf_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_xpidf_notify returned %d\n", rc);
@@ -669,7 +694,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 	}
 	if ((_p->flags & PFLAG_WATCHERINFO_CHANGED) 
 	    && (_w->event_package == EVENT_PRESENCE_WINFO)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
 		case DOC_WINFO:
 			rc = send_winfo_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
@@ -681,16 +706,19 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 	}
 	if ((_p->flags & PFLAG_XCAP_CHANGED) 
 	    && (_w->event_package == EVENT_XCAP_CHANGE)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
+#ifdef DOC_XCAP_CHANGE
 		case DOC_XCAP_CHANGE:
+#endif
 		default:
 			rc = send_xcap_change_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_xcap_change_notify returned %d\n", rc);
 		}
 	}
+#ifdef PFLAG_LOCATION_CHANGED
 	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
 	    && (_w->event_package == EVENT_LOCATION)) {
-		switch(_w->accept) {
+		switch(_w->preferred_mimetype) {
 		case DOC_LOCATION:
 			rc = send_location_notify(_p, _w);
 			if (rc) LOG(L_ERR, "send_location_notify returned %d\n", rc);
@@ -700,6 +728,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		  ;
 		}
 	}
+#endif
 
 	return rc;
 }
