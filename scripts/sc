@@ -22,6 +22,10 @@ GENHA1='gen_ha1'
 MYSQL='mysql'
 SER='sr'
 
+# ACL name verification
+VERIFY_ACL=1
+ACL_GROUPS="local ld int"
+
 #### SQL names
 
 # Usr Loc Table
@@ -83,8 +87,10 @@ usage() {
 #params: none
 # output: PW
 prompt_pw() {
-    read -s -p "MySql Password: " PW
-    echo
+	if [ -z "$PW" ] ; then
+    	read -s -p "MySql Password: " PW
+    	echo
+	fi
 }
 
 
@@ -169,9 +175,30 @@ acl() {
 				usage
 				exit 1
 			fi
+			prompt_pw
+			is_user $2
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1
+			fi
 			SIP_USER="$2"
 			shift 2
 			while [ $# -gt 0 ] ; do
+
+				if [ $VERIFY_ACL -eq 1 ] ; then
+					found=0
+					for i in $ACL_GROUPS ; do
+						if [ "$1" = "$i" ] ; then
+							found=1
+							break
+						fi
+					done	
+					if [ $found -eq 0 ] ; then
+						echo "Invalid privilege: $1 (ignored)"
+						shift
+						continue
+					fi
+				fi
 
         		QUERY="insert into $ACL_TABLE \
                 	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN) \
@@ -242,7 +269,10 @@ credentials()
 	fi
 }
 
+#================================================================
 
+# if the script calls itself ...
+export PW
 
 case $1 in
 
@@ -392,6 +422,9 @@ case $1 in
 
         QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
 		sql_query "$QUERY"
+
+		$0 acl revoke $1 > /dev/null 2>&1
+		$0 dul $1   > /dev/null 2>&1
         ;;
 			
 	stat)
