@@ -671,6 +671,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	*(p) = 0;
+	*returned_len = len;
 	return buf;
 error:
 	if (buf) free(buf);

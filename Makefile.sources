@@ -16,5 +16,5 @@ objs=$(sources:.c=.o)
 extra_objs=
 depends=$(sources:.c=.d)
 modules=
-static_modules=
+static_modules=tm
 static_modules_path=
