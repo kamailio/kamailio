@@ -36,6 +36,7 @@
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-03-30 str2int and str2float added (janakj)
  * 2003-04-26 ZSW (jiri)
+ * 2004-03-08 updated int2str (64 bits, INT2STR_MAX_LEN used) (andrei)
  */
 
 
@@ -153,16 +154,16 @@ static inline int btostr( char *p,  unsigned char val)
 }
 
 
-#define INT2STR_MAX_LEN 11 /* 10 digits + 0 */
+#define INT2STR_MAX_LEN  (19+1+1) /* 2^64~= 16*10^18 => 19+1 digits + \0 */
 
 /* returns a pointer to a static buffer containing l in asciiz & sets len */
-static inline char* int2str(unsigned int l, int* len)
+static inline char* int2str(unsigned long l, int* len)
 {
 	static char r[INT2STR_MAX_LEN];
 	int i;
 	
-	i=9;
-	r[10]=0; /* null terminate */
+	i=INT2STR_MAX_LEN-2;
+	r[INT2STR_MAX_LEN-1]=0; /* null terminate */
 	do{
 		r[i]=l%10+'0';
 		i--;
@@ -171,7 +172,7 @@ static inline char* int2str(unsigned int l, int* len)
 	if (l && (i<0)){
 		LOG(L_CRIT, "BUG: int2str: overflow\n");
 	}
-	if (len) *len=9-i;
+	if (len) *len=(INT2STR_MAX_LEN-2)-i;
 	return &r[i+1];
 }
 
