@@ -152,6 +152,13 @@ needed for storing user credentials.)
 A) Quick Start
 ----------------------------------------------
 
+The following step-by step guide gives you
+instructions how to install the sql-free
+distribution of ser. If you need persistancy
+and authentication, then you have to install
+additional MySql support -- proceed to section B)
+after you are finished with A).
+
 1) Download an RPM or debian package from our site
     http://www.iptel.org/ser
 If you don't use an rpm or debian based distro, try our tar.gz'ed binaries
