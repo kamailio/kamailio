@@ -725,7 +725,7 @@ if (search("(f|From): .*@mydomain.com)) {
 			</listitem>
 			<listitem>
 			    <para>
-				<emphasis>scr_ip</emphasis>, which refers to IP address from 
+				<emphasis>src_ip</emphasis>, which refers to IP address from 
 				which a request came.
 			    </para>
 			</listitem>
@@ -2973,7 +2973,10 @@ if (search("^(f|From):.*foo.bar")) {
 			    If you want to authenticate WM, you need to
 			    set up your realm value to equal server name.
 			    If your server has no name, IP address can be used
-			    as realm too.
+			    as realm too. The realm value is configured in
+				scripts as the first parameter of all
+				<command>{www|proxy}_{authorize|challenge}</command>
+				actions.
 			</para>
 		    </answer>
 		</qandaentry>
@@ -3841,7 +3844,7 @@ Domain Registered Expired
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>mem_log</varname> - Debugging level for memory statistics. Default is L_DBG --
+			<varname>memlog</varname> - Debugging level for final memory statistics report. Default is L_DBG --
 			memory statistics are dumped only if <varname>debug</varname> is set high.
 		    </para>
 		</listitem>
