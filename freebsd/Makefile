@@ -15,6 +15,14 @@ MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.12/src/
 
 MAINTAINER= pelinescu-onciul@fokus.fraunhofer.de
 
+.include <bsd.port.pre.mk>
+
+.if ${OSVERSION} >= 501000
+# FreeBSD 5.1 wants COMMENT and it doesn't like pkg-comment
+COMMENT= Sip Express Router, very fast and configurable SIP proxy
+COMMENTFILE= 
+.endif
+
 MAN8=ser.8
 MAN5=ser.cfg.5
 MANCOMPRESSED= no
@@ -40,6 +48,6 @@ LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat* \
 pre-fetch:
 
 
-.include <bsd.port.mk>
+.include <bsd.port.post.mk>
 
 
