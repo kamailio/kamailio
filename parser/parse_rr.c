@@ -138,8 +138,6 @@ int parse_rr(struct hdr_field* _h)
  ok:
 	if (!_h->parsed) _h->parsed = (void*)r;
 	if (last) last->next = r;
-
-	print_rr(stdout, _h->parsed);
 	return 0;
 }
 
