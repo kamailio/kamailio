@@ -31,77 +31,82 @@
  * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  */
 
-
-#include "notify.h"
 #include "../../str.h"
+#include "../../dprint.h"
+#include "../../trim.h"
+#include "pa_mod.h"
+#include "lpidf.h"
 #include "xpidf.h"
 #include "common.h"
-#include "../../dprint.h"
-#include "pa_mod.h"
-#include "../../trim.h"
-#include "lpidf.h"
 #include "paerrno.h"
+#include "notify.h"
 
 
 #define CONTENT_TYPE "Content-Type: "
-#define CONTENT_TYPE_LEN  (sizeof(CONTENT_TYPE) - 1)
+#define CONTENT_TYPE_L  (sizeof(CONTENT_TYPE) - 1)
+
+#define EVENT "Event: "
+#define EVENT_L (sizeof(EVENT) - 1)
+
+#define PRESENCE_TEXT "presence"
+#define PRESENCE_TEXT_L (sizeof(PRESENCE_TEXT) - 1)
 
 #define CONT_TYPE_XPIDF "application/xpidf+xml"
-#define CONT_TYPE_XPIDF_LEN  (sizeof(CONT_TYPE_XPIDF) - 1)
+#define CONT_TYPE_XPIDF_L  (sizeof(CONT_TYPE_XPIDF) - 1)
 
 #define CONT_TYPE_LPIDF "text/lpidf"
-#define CONT_TYPE_LPIDF_LEN (sizeof(CONT_TYPE_LPIDF) - 1)
+#define CONT_TYPE_LPIDF_L (sizeof(CONT_TYPE_LPIDF) - 1)
 
 #define SUBSCRIPTION_STATE "Subscription-State: "
-#define SUBSCRIPTION_STATE_LEN (sizeof(SUBSCRIPTION_STATE) - 1)
+#define SUBSCRIPTION_STATE_L (sizeof(SUBSCRIPTION_STATE) - 1)
 
 #define SS_EXPIRES ";expires="
-#define SS_EXPIRES_LEN (sizeof(SS_EXPIRES) - 1)
+#define SS_EXPIRES_L (sizeof(SS_EXPIRES) - 1)
 
 #define SS_REASON ";reason="
-#define SS_REASON_LEN (sizeof(SS_REASON) - 1)
+#define SS_REASON_L (sizeof(SS_REASON) - 1)
 
 #define CRLF "\r\n"
-#define CRLF_LEN (sizeof(CRLF) - 1)
+#define CRLF_L (sizeof(CRLF) - 1)
 
 #define ST_ACTIVE "active"
-#define ST_ACTIVE_LEN (sizeof(ST_ACTIVE) - 1)
+#define ST_ACTIVE_L (sizeof(ST_ACTIVE) - 1)
 
 #define ST_TERMINATED "terminated"
-#define ST_TERMINATED_LEN (sizeof(ST_TERMINATED) - 1)
+#define ST_TERMINATED_L (sizeof(ST_TERMINATED) - 1)
 
 #define ST_PENDING "pending"
-#define ST_PENDING_LEN (sizeof(ST_PENDING) - 1)
+#define ST_PENDING_L (sizeof(ST_PENDING) - 1)
 
 #define REASON_DEACTIVATED "deactivated"
-#define REASON_DEACTIVATED_LEN (sizeof(REASON_DEACTIVATED) - 1)
+#define REASON_DEACTIVATED_L (sizeof(REASON_DEACTIVATED) - 1)
 
 #define REASON_NORESOURCE "noresource"
-#define REASON_NORESOURCE_LEN (sizeof(REASON_NORESOURCE) - 1)
+#define REASON_NORESOURCE_L (sizeof(REASON_NORESOURCE) - 1)
 
 #define REASON_PROBATION "probation"
-#define REASON_PROBATION_LEN (sizeof(REASON_PROBATION) - 1)
+#define REASON_PROBATION_L (sizeof(REASON_PROBATION) - 1)
 
 #define REASON_REJECTED "rejected"
-#define REASON_REJECTED_LEN (sizeof(REASON_REJECTED) - 1)
+#define REASON_REJECTED_L (sizeof(REASON_REJECTED) - 1)
 
 #define REASON_TIMEOUT "timeout"
-#define REASON_TIMEOUT_LEN (sizeof(REASON_TIMEOUT) - 1)
+#define REASON_TIMEOUT_L (sizeof(REASON_TIMEOUT) - 1)
 
 #define REASON_GIVEUP "giveup"
-#define REASON_GIVEUP_LEN (sizeof(REASON_GIVEUP) - 1)
+#define REASON_GIVEUP_L (sizeof(REASON_GIVEUP) - 1)
 
 #define METHOD_NOTIFY "NOTIFY"
-#define METHOD_NOTIFY_LEN (sizeof(METHOD_NOTIFY) - 1)
+#define METHOD_NOTIFY_L (sizeof(METHOD_NOTIFY) - 1)
 
 
 /*
  * Subscription-State values
  */
 static str subs_states[] = {
-	{ST_ACTIVE, S   T_ACTIVE_LEN     },
-	{ST_TERMINATED, ST_TERMINATED_LEN},
-	{ST_PENDING,    ST_PENDING_LEN   }
+	{ST_ACTIVE,     ST_ACTIVE_L    },
+	{ST_TERMINATED, ST_TERMINATED_L},
+	{ST_PENDING,    ST_PENDING_L   }
 };
 
 
@@ -109,37 +114,36 @@ static str subs_states[] = {
  * Subscription-State reason parameter values
  */
 static str reason[] = {
-	{REASON_DEACTIVATED, REASON_DEACTIVATED_LEN},
-	{REASON_NORESOURCE,  REASON_NORESOURCE_LEN },
-	{REASON_PROBATION,   REASON_PROBATION_LEN  },
-	{REASON_REJECTED,    REASON_REJECTED_LEN   },
-	{REASON_TIMEOUT,     REASON_TIMEOUT_LEN    },
-	{REASON_GIVEUP,      REASON_GIVEUP_LEN     }
+	{REASON_DEACTIVATED, REASON_DEACTIVATED_L},
+	{REASON_NORESOURCE,  REASON_NORESOURCE_L },
+	{REASON_PROBATION,   REASON_PROBATION_L  },
+	{REASON_REJECTED,    REASON_REJECTED_L   },
+	{REASON_TIMEOUT,     REASON_TIMEOUT_L    },
+	{REASON_GIVEUP,      REASON_GIVEUP_L     }
 };
 
 
-static str method = {METHOD_NOTIFY, METHOD_NOTIFY_LEN};
+static str method = {METHOD_NOTIFY, METHOD_NOTIFY_L};
 
 
-#define BUF_LEN 1024
+#define BUF_LEN 4096
 
 static char headers_buf[BUF_LEN];
 static char buffer[BUF_LEN];
 
-static str headers = { headers_buf, 0 };
-static str body = { buffer, 0 };
+static str headers = {headers_buf, 0};
+static str body = {buffer, 0};
 
 
 static inline int add_event_hf(str* _h, int _l)
 {
-	if (_l < 17) {
+	if (_l < EVENT_L + PRESENCE_TEXT_L + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "add_event_hf(): Buffer too small\n");
 		return -1;
 	}
 
-	memcpy(_h->s + _h->len, "Event: presence\r\n", 17);
-	_h->len += 17;
+	str_append(_h, EVENT PRESENCE_TEXT CRLF, EVENT_L + PRESENCE_TEXT_L + CRLF_L);
 	return 0;
 }
 
@@ -148,25 +152,24 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 {
 	switch(_d) {
 	case DOC_XPIDF:
-		if (_l < CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + CRLF_LEN) {
+		if (_l < CONTENT_TYPE_L + CONT_TYPE_XPIDF_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
 			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
 			return -1;
 		}
-		memcpy(_h->s + _h->len, CONTENT_TYPE CONT_TYPE_XPIDF CRLF,
-		       CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + CRLF_LEN);
-		_h->len += CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + CRLF_LEN;
+		
+		str_append(_h, CONTENT_TYPE CONT_TYPE_XPIDF CRLF,
+			   CONTENT_TYPE_L + CONT_TYPE_XPIDF_L + CRLF_L);
 		return 0;
 		
 	case DOC_LPIDF:
-		if (_l < CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + CRLF_LEN) {
+		if (_l < CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
 			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
 			return -2;
 		}
-		memcpy(_h->s + _h->len, CONTENT_TYPE CONT_TYPE_LPIDF CRLF,
-		       CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + CRLF_LEN);
-		_h->len += CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + CRLF_LEN;
+		str_append(_h, CONTENT_TYPE CONT_TYPE_LPIDF CRLF,
+			   CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L);
 		return 0;
 
 	default:
@@ -177,62 +180,38 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 }
 
 
-/*
- * Convert unsigned int to str representation
- */
-static inline void itos(str* _s, unsigned int _i)
-{
-	unsigned int r = 1000000000, j, f = 0;
-
-	while (r) {
-		j = _i / r;
-		_i %= r;
-		r /= 10;
-		if (j) f = 1;
-		if (f) _s->s[_s->len++] = j + '0';
-	}
-	
-	if (!f) _s->s[_s->len++] = '0';
-}
-
-
-
 static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_t _r, time_t _e)
 {
-	if (_l < SUBSCRIPTION_STATE_LEN + subs_states[_s].len + SS_EXPIRES_LEN + 10 + 
-	    SS_REASON_LEN + reason[_r].len + CRLF_LEN) {
+	char* num;
+	int len;
+
+	if (_l < SUBSCRIPTION_STATE_L + subs_states[_s].len + SS_EXPIRES_L + 
+	    SS_REASON_L + reason[_r].len + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "add_subs_state_hf(): Buffer too small\n");
 		return -1;
 	}
 
-	memcpy(_h->s + _h->len, SUBSCRIPTION_STATE, SUBSCRIPTION_STATE_LEN);
-        _h->len += SUBSCRIPTION_STATE_LEN;
-	
-	memcpy(_h->s + _h->len, subs_states[_s].s, subs_states[_s].len);
-	_h->len += subs_states[_s].len;
+	str_append(_h, SUBSCRIPTION_STATE, SUBSCRIPTION_STATE_L);
+	str_append(_h, subs_states[_s].s, subs_states[_s].len);
 	
 	switch(_s) {
 	case SS_ACTIVE:
-		memcpy(_h->s + _h->len, SS_EXPIRES, SS_EXPIRES_LEN);
-		_h->len += SS_EXPIRES_LEN;
-		itos(_h, (unsigned int)_e);
+		str_append(_h, SS_EXPIRES, SS_EXPIRES_L);
+		num = int2str((unsigned int)_e, &len);
+		str_append(_h, num, len);
 		break;
 
 	case SS_TERMINATED:
-		memcpy(_h->s + _h->len, SS_REASON, SS_REASON_LEN);
-		_h->len += SS_REASON_LEN;
-		memcpy(_h->s + _h->len, reason[_r].s, reason[_r].len);
-		_h->len += reason[_r].len;
+		str_append(_h, SS_REASON, SS_REASON_L);
+		str_append(_h, reason[_r].s, reason[_r].len);
 		break;
 
 	case SS_PENDING:
 		break;
 	}
 
-	memcpy(_h->s + _h->len, CRLF, CRLF_LEN);
-	_h->len += CRLF_LEN;
-	
+	str_append(_h, CRLF, CRLF_L);
 	return 0;
 }
 
@@ -274,9 +253,8 @@ static inline int create_headers(struct watcher* _w)
 
 static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 {
-	
-	str to;
 	xpidf_status_t st;
+	struct to_body parsed;
 
 	     /* Send a notify, saved Contact will be put in
 	      * Request-URI, To will be put in from and new tag
@@ -288,16 +266,17 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		LOG(L_ERR, "send_xpidf_notify(): start_xpidf_doc failed\n");
 		return -1;
 	}
-	
-	to.s = _w->dialog.to.s;
-	to.len = _w->dialog.to.len;
 
-	trim(&to);
-	get_raw_uri(&to);
-
-	if (xpidf_add_presentity(&body, BUF_LEN - body.len, &to) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
+	printf("%.*s\n", _p->uri.len, _p->uri.s);
+	parse_to(_p->uri.s, _p->uri.s + _p->uri.len + 1, &parsed);
+	if (parsed.error == PARSE_ERROR) {
+		LOG(L_ERR, "send_xpidf_notify(): Error while parsing\n");
 		return -2;
+	}
+
+	if (xpidf_add_presentity(&body, BUF_LEN - body.len, &parsed.uri) < 0) {
+		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
+		return -3;
 	}
 
 	switch(_p->state) {
@@ -305,7 +284,7 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	default: st = XPIDF_ST_OPEN; break;
 	}
 
-	if (xpidf_add_address(&body, BUF_LEN - body.len, &to, st) < 0) {
+	if (xpidf_add_address(&body, BUF_LEN - body.len, &parsed.uri, st) < 0) {
 		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
 		return -3;
 	}
@@ -320,22 +299,7 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		return -6;
 	}
 
-	tmb.t_uac_dlg(&method,              /* NOTIFY */ 
-		      0,                    /* dst */
-			PROTO_UDP,
-		      &_w->contact,         /* R-URI */
-		      &_w->from,            /* From -> To */
-		      &_w->dialog.to,       /* To -> From */
-		      &_w->dialog.from_tag, /* From tag -> To tag */
-		      0,                    /* From tag automatically generated */
-		      &_w->dialog.cseq,     /* CSeq */
-		      &_w->dialog.callid,   /* Call-ID */
-		      &headers,             /* Headers */
-		      &body,                /* Body */
-                      0,                    /* completition_cb */
-		      0                     /* cbp */
-		      );
-	_w->dialog.cseq++;
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	return 0;
 
 }
@@ -343,18 +307,18 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 
 static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 {
-	str to;
 	lpidf_status_t st;
+	struct to_body parsed;
 
-	to.s = _w->dialog.to.s;
-	to.len = _w->dialog.to.len;
-
-	trim(&to);
-	get_raw_uri(&to);
-
-	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &to) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
+	parse_to(_p->uri.s, _p->uri.s + _p->uri.len, &parsed);
+	if (parsed.error == PARSE_ERROR) {
+		LOG(L_ERR, "send_lpidf_notify(): Error while parsing\n");
 		return -1;
+	}
+
+	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &parsed.uri) < 0) {
+		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
+		return -2;
 	}
 
 	switch(_p->state) {
@@ -362,33 +326,17 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 	default: st = LPIDF_ST_OPEN; break;
 	}
 
-	if (lpidf_add_address(&body, BUF_LEN - body.len, &to, st) < 0) {
+	if (lpidf_add_address(&body, BUF_LEN - body.len, &parsed.uri, st) < 0) {
 		LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
-		return -2;
+		return -3;
 	}
 
 	if (create_headers(_w) < 0) {
 		LOG(L_ERR, "send_lpidf_notify(): Error while adding headers\n");
-		return -6;
+		return -4;
 	}
 
-	tmb.t_uac_dlg(&method,              /* NOTIFY */ 
-		      0,                    /* dst */
-			PROTO_UDP,
-		      &_w->contact,         /* R-URI */
-		      &_w->from,            /* From -> To */
-		      &_w->dialog.to,       /* To -> From */
-		      &_w->dialog.from_tag, /* From tag -> To tag */
-		      0,                    /* From tag automatically generated */
-		      &_w->dialog.cseq,    /* CSeq */
-		      &_w->dialog.callid,   /* Call-ID */
-		      &headers,             /* Headers */
-		      &body,                /* Body */
-                      0,                    /* completition_cb */
-		      0                     /* cbp */
-		      );
-
-	_w->dialog.cseq++;
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
 	return 0;
 }
 

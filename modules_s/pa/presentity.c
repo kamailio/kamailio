@@ -27,39 +27,44 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "presentity.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
+
+#include <stdio.h>
+#include <string.h>
+#include "../../dprint.h"
 #include "../../mem/shm_mem.h"
+#include "../../ut.h"
 #include "paerrno.h"
 #include "notify.h"
+#include "presentity.h"
 
 
 /*
  * Create a new presentity
  */
-int new_presentity(str* _to, presentity_t** _p)
+int new_presentity(str* _uri, presentity_t** _p)
 {
-	*_p = (presentity_t*)shm_malloc(sizeof(presentity_t));
-	if (*_p == 0) {
+	presentity_t* ptr;
+
+	if (!_uri || !_p) {
+		paerrno = PA_INTERNAL_ERROR;
+		LOG(L_ERR, "new_presentity(): Invalid parameter value\n");
+		return -1;
+	}
+
+	ptr = (presentity_t*)shm_malloc(sizeof(presentity_t) + _uri->len);
+	if (!ptr) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_presentity(): No memory left\n");
 		return -1;
 	}
-	memset(*_p, 0, sizeof(presentity_t));
+	memset(ptr, 0, sizeof(presentity_t));
 
-	(*_p)->to.s = (char*)shm_malloc(_to->len);
-	if ((*_p)->to.s == 0) {
-		paerrno = PA_NO_MEMORY;
-		LOG(L_ERR, "new_presentity(): No memory left 2\n");
-		shm_free(*_p);
-		return -2;
-	}
-	memcpy((*_p)->to.s, _to->s, _to->len);
-	(*_p)->to.len = _to->len;
+	ptr->uri.s = (char*)ptr + sizeof(presentity_t);
+	memcpy(ptr->uri.s, _uri->s, _uri->len);
+	ptr->uri.len = _uri->len;
+	*_p = ptr;
 	return 0;
 }
-
 
 
 /*
@@ -75,7 +80,6 @@ void free_presentity(presentity_t* _p)
 		free_watcher(ptr);
 	}
 	
-	if (_p->to.s) shm_free(_p->to.s);
 	shm_free(_p);
 }
 
@@ -87,8 +91,8 @@ void print_presentity(FILE* _f, presentity_t* _p)
 {
 	watcher_t* ptr;
 
-	fprintf(_f, "...Presentity...\n");
-	fprintf(_f, "to: '%.*s'\n", _p->to.len, ZSW(_p->to.s));
+	fprintf(_f, "--presentity_t---\n");
+	fprintf(_f, "uri: '%.*s'\n", _p->uri.len, ZSW(_p->uri.s));
 	
 	if (_p->watchers) {
 		ptr = _p->watchers;
@@ -98,22 +102,22 @@ void print_presentity(FILE* _f, presentity_t* _p)
 		}
 	}
 
-	fprintf(_f, ".../Presentity...\n");
+	fprintf(_f, "---/presentity_t---\n");
 }
 
 
 int timer_presentity(presentity_t* _p)
 {
-
-	
 	return 0;
 }
 
 
-
-int add_watcher(presentity_t* _p, str* _from, str* _c, time_t _e, doctype_t _a, str* callid, str* from_tag, str* to, struct watcher** _w)
+/*
+ * Add a new watcher to the list
+ */
+int add_watcher(presentity_t* _p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, struct watcher** _w)
 {
-	if (new_watcher(_from, _c, _e, _a, _w, callid, from_tag, to) < 0) {
+	if (new_watcher(_uri, _e, _a, _dlg, _w) < 0) {
 		LOG(L_ERR, "add_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}
@@ -124,6 +128,9 @@ int add_watcher(presentity_t* _p, str* _from, str* _c, time_t _e, doctype_t _a, 
 }
 
 
+/*
+ * Remove a watcher from the list
+ */
 int remove_watcher(presentity_t* _p, watcher_t* _w)
 {
 	watcher_t* ptr, *prev;
@@ -145,10 +152,15 @@ int remove_watcher(presentity_t* _p, watcher_t* _w)
 		ptr = ptr->next;
 	}
 	
+	     /* Not found */
+	DBG("remove_watcher(): Watcher not found in the list\n");
 	return 1;
 }
 
 
+/*
+ * Notify all watchers in the list
+ */
 int notify_watchers(presentity_t* _p)
 {
 	struct watcher* ptr;

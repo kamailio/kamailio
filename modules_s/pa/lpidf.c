@@ -27,33 +27,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #include <string.h>
 #include "lpidf.h"
+#include "common.h"
 #include "paerrno.h"
 #include "../../dprint.h"
 
 
 #define TO_START "To: <"
-#define TO_START_LEN (sizeof(TO_START) - 1)
+#define TO_START_L (sizeof(TO_START) - 1)
 
 #define TO_END ">"
-#define TO_END_LEN (sizeof(TO_END_LEN) - 1)
+#define TO_END_L (sizeof(TO_END) - 1)
 
 #define CONTACT_START "Contact: <"
-#define CONTACT_START_LEN (sizeof(CONTACT_START) - 1) 
+#define CONTACT_START_L (sizeof(CONTACT_START) - 1) 
 
 #define CONTACT_MIDDLE ">;q="
-#define CONTACT_MIDDLE_LEN (sizeof(CONTACT_MIDDLE) - 1)
+#define CONTACT_MIDDLE_L (sizeof(CONTACT_MIDDLE) - 1)
 
 #define Q_OPEN "1"
-#define Q_OPEN_LEN (sizeof(Q_OPEN) - 1)
+#define Q_OPEN_L (sizeof(Q_OPEN) - 1)
 
 #define Q_CLOSED "0"
-#define Q_CLOSED_LEN (sizeof(Q_CLOSED) - 1)
+#define Q_CLOSED_L (sizeof(Q_CLOSED) - 1)
 
 #define CRLF "\r\n"
-#define CRLF_LEN (sizeof(CRLF) - 1)
+#define CRLF_L (sizeof(CRLF) - 1)
 
 
 /*
@@ -61,21 +61,15 @@
  */
 int lpidf_add_presentity(str* _b, int _l, str* _uri)
 {
-	if (_l < (TO_START_LEN + _uri->len + TO_END_LEN + 2)) {
+	if (_l < (TO_START_L + _uri->len + TO_END_L + CRLF_L)) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "lpidf_add_presentity(): Buffer too small\n");
 		return -1;
 	}
 
-	memcpy(_b->s + _b->len, TO_START, TO_START_LEN);
-	_b->len += TO_START_LEN;
-
-	memcpy(_b->s + _b->len, _uri->s, _uri->len);
-	_b->len += _uri->len;
-
-	memcpy(_b->s + _b->len, TO_END CRLF, TO_END_LEN + CRLF_LEN);
-	_b->len += TO_END_LEN + CRLF_LEN;
-
+	str_append(_b, TO_START, TO_START_L);
+	str_append(_b, _uri->s, _uri->len);
+	str_append(_b, TO_END CRLF, TO_END_L + CRLF_L);
 	return 0;
 }
 
@@ -88,31 +82,20 @@ int lpidf_add_address(str* _b, int _l, str* _addr, lpidf_status_t _st)
 	str s;
 
 	switch(_st) {
-	case LPIDF_ST_OPEN:   s.s = Q_OPEN; s.len = Q_OPEN_LEN;     break;
-	case LPIDF_ST_CLOSED: s.s = Q_CLOSED; s.len = Q_CLOSED_LEN; break;
+	case LPIDF_ST_OPEN:   s.s = Q_OPEN; s.len = Q_OPEN_L;     break;
+	case LPIDF_ST_CLOSED: s.s = Q_CLOSED; s.len = Q_CLOSED_L; break;
 	}
 
-	if (_l < (
-		  CONTACT_START_LEN + _addr->len + CONTACT_MIDDLE_LEN + s.len + 2)) {
+	if (_l < (CONTACT_START_L + _addr->len + CONTACT_MIDDLE_L + s.len + 2)) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "lpidf_add_address(): Buffer too small\n");
 		return -1;
 	}
-
-	memcpy(_b->s + _b->len, CONTACT_START, CONTACT_START_LEN);
-	_b->len += CONTACT_START_LEN;
-
-	memcpy(_b->s + _b->len, _addr->s, _addr->len);
-	_b->len += _addr->len;
-
-	memcpy(_b->s + _b->len, CONTACT_MIDDLE, CONTACT_MIDDLE_LEN);
-	_b->len += CONTACT_MIDDLE_LEN;
-
-	memcpy(_b->s + _b->len, s.s, s.len);
-	_b->len += s.len;
-
-	memcpy(_b->s + _b->len, CRLF, CRLF_LEN);
-	_b->len += CRLF_LEN;
-
+	
+	str_append(_b, CONTACT_START, CONTACT_START_L);
+	str_append(_b, _addr->s, _addr->len);
+	str_append(_b, CONTACT_MIDDLE, CONTACT_MIDDLE_L);
+	str_append(_b, s.s, s.len);
+	str_append(_b, CRLF, CRLF_L);
 	return 0;
 }

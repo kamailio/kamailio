@@ -27,25 +27,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #ifndef COMMON_H
 #define COMMON_H
 
 #include "../../str.h"
 
-
 /*
- * This function skips name part
- * uri parsed by parse_contact must be used
- * (the uri must not contain any leading or
- *  trailing part and if angle bracket were
- *  used, right angle bracket must be the
- *  last character in the string)
- *
- * _s will be modified so it should be a tmp
- * copy
+ * Append a string app with length app_len
+ * to the end of string str which is a str* pointer
+ * the buffer must be large enough
  */
-void get_raw_uri(str* _s);
+#define str_append(str, app, app_len)                    \
+    do {                                                 \
+        memcpy((str)->s + (str)->len, (app), (app_len)); \
+        (str)->len += (app_len);                         \
+    } while(0)
 
 
 #endif /* COMMON_H */

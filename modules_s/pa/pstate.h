@@ -31,12 +31,13 @@
 #define PSTATE_H
 
 typedef enum pstate {
-	PS_ONLINE,    /* Presentity is online */
-	PS_OFFLINE,   /* Presentity is offline */
-	PS_AWAY,      /* Presentity is away */
-	PS_XAWAY,     /* Presentity is extended-away */
-	PS_DND,       /* Do Not Disturb */
-	PS_TYPING     /* Presentity is typing a message */
+	PS_UNKNOWN = 0, /* State of presentity is unknown */
+	PS_ONLINE,      /* Presentity is online */
+	PS_OFFLINE,     /* Presentity is offline */
+	PS_AWAY,        /* Presentity is away */
+	PS_XAWAY,       /* Presentity is extended-away */
+	PS_DND,         /* Do Not Disturb */
+	PS_TYPING       /* Presentity is typing a message */
 } pstate_t;
 
 #endif /* PSTATE_H */

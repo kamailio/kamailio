@@ -30,11 +30,11 @@
 
 #include "dlist.h"
 #include "../../dprint.h"
-#include "paerrno.h"
-#include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../sr_module.h"
 #include "../../ut.h"
+#include "paerrno.h"
+#include <string.h>
 #include "ptime.h"
 
 /*

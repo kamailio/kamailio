@@ -32,12 +32,9 @@
 
 #include "../../parser/msg_parser.h"
 
-
 /*
  * Send a reply
  */
 int send_reply(struct sip_msg* _m);
-
-
 
 #endif /* REPLY_H */

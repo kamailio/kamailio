@@ -38,4 +38,3 @@ void get_act_time(void)
 
 	act_time = time(0);
 }
-

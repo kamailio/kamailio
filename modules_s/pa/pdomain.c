@@ -66,37 +66,38 @@ static inline int hash_func(pdomain_t* _d, char* _s, int _l)
 int new_pdomain(str* _n, int _s, pdomain_t** _d, register_watcher_t _r, unregister_watcher_t _u)
 {
 	int i;
+	pdomain_t* ptr;
 	
-	*_d = (pdomain_t*)shm_malloc(sizeof(pdomain_t));
-	if (!(*_d)) {
+	ptr = (pdomain_t*)shm_malloc(sizeof(pdomain_t));
+	if (!ptr) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_pdomain(): No memory left\n");
 		return -1;
 	}
-	memset(*_d, 0, sizeof(pdomain_t));
+	memset(ptr, 0, sizeof(pdomain_t));
 	
-	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
-	if (!(*_d)->table) {
+	ptr->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
+	if (!ptr->table) {
 		paerrno = PA_NO_MEMORY;
 		LOG(L_ERR, "new_pdomain(): No memory left 2\n");
-		shm_free(*_d);
+		shm_free(ptr);
 		return -2;
 	}
 
-	(*_d)->name = _n;
+	ptr->name = _n;
 	
 	for(i = 0; i < _s; i++) {
-		init_slot(*_d, &((*_d)->table[i]));
+		init_slot(ptr, &ptr->table[i]);
 	}
 
-	(*_d)->size = _s;
-	lock_init(&(*_d)->lock);
-	(*_d)->users = 0;
-	(*_d)->expired = 0;
+	ptr->size = _s;
+	lock_init(&ptr->lock);
+	ptr->users = 0;
+	ptr->expired = 0;
 	
-	(*_d)->reg = _r;
-	(*_d)->unreg = _u;
-
+	ptr->reg = _r;
+	ptr->unreg = _u;
+	*_d = ptr;
 	return 0;
 }
 
@@ -128,6 +129,7 @@ void free_pdomain(pdomain_t* _d)
 void print_pdomain(FILE* _f, pdomain_t* _d)
 {
 	struct presentity* p;
+
 	fprintf(_f, "---pdomain---\n");
 	fprintf(_f, "name : '%.*s'\n", _d->name->len, ZSW(_d->name->s));
 	fprintf(_f, "size : %d\n", _d->size);
@@ -135,6 +137,7 @@ void print_pdomain(FILE* _f, pdomain_t* _d)
 	fprintf(_f, "first: %p\n", _d->first);
 	fprintf(_f, "last : %p\n", _d->last);
 	/* fprintf(_f, "lock : %d\n", _d->lock);*/ /*it can be a struct --andrei*/
+
 	if (_d->first) {
 		fprintf(_f, "\n");
 		p = _d->first;
@@ -144,6 +147,7 @@ void print_pdomain(FILE* _f, pdomain_t* _d)
 		}
 		fprintf(_f, "\n");
 	}
+
 	fprintf(_f, "---pdomain---\n");
 }
 
@@ -200,17 +204,17 @@ void unlock_pdomain(pdomain_t* _d)
 /*
  * Find a presentity in domain
  */
-int find_presentity(pdomain_t* _d, str* _to, struct presentity** _p)
+int find_presentity(pdomain_t* _d, str* _uri, struct presentity** _p)
 {
 	int sl, i;
 	struct presentity* p;
 	
-	sl = hash_func(_d, _to->s, _to->len);
+	sl = hash_func(_d, _uri->s, _uri->len);
 	
 	p = _d->table[sl].first;
 	
 	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((p->to.len == _to->len) && !memcmp(p->to.s, _to->s, _to->len)) {
+		if ((p->uri.len == _uri->len) && !memcmp(p->uri.s, _uri->s, _uri->len)) {
 			*_p = p;
 			return 0;
 		}
@@ -226,7 +230,7 @@ void add_presentity(pdomain_t* _d, struct presentity* _p)
 {
 	int sl;
 
-	sl = hash_func(_d, _p->to.s, _p->to.len);
+	sl = hash_func(_d, _p->uri.s, _p->uri.len);
 
 	slot_add(&_d->table[sl], _p, &_d->first, &_d->last);
 }

@@ -30,14 +30,16 @@
 #ifndef PRESENTITY_H
 #define PRESENTITY_H
 
+
 #include "../../str.h"
+#include "../tm/dlg.h"
 #include "watcher.h"
 #include "hslot.h"
 #include "pstate.h"
 
 
 typedef struct presentity {
-	str to;                  /* ID of presentity */
+	str uri;                 /* URI of presentity */
 	pstate_t state;          /* State of presentity */
 	watcher_t* watchers;     /* List of watchers */
 	struct presentity* next; /* Next presentity */
@@ -49,7 +51,8 @@ typedef struct presentity {
 /*
  * Create a new presentity
  */
-int new_presentity(str* _to, presentity_t** _p);
+int new_presentity(str* _uri, presentity_t** _p);
+
 
 /*
  * Free all memory associated with a presentity
@@ -57,20 +60,35 @@ int new_presentity(str* _to, presentity_t** _p);
 void free_presentity(presentity_t* _p);
 
 
+/*
+ * Run a timer handler on the presentity
+ */
 int timer_presentity(presentity_t* _p);
 
 
-int add_watcher(presentity_t* _p, str* _from, str* _c, time_t _e, doctype_t _a, str* callid, str* from_tag, str* to, struct watcher** _w);
+/*
+ * Add a watcher to the watcher list
+ */
+int add_watcher(presentity_t* _p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, struct watcher** _w);
 
-
-int remove_watcher(presentity_t* _p, watcher_t* _w);
-
-int notify_watchers(presentity_t* _p);
 
 /*
- * Print a presentity
+ * Remove a watcher from the watcher list
+ */
+int remove_watcher(presentity_t* _p, watcher_t* _w);
+
+
+/*
+ * Notify all watchers on the list
+ */
+int notify_watchers(presentity_t* _p);
+
+
+/*
+ * Print a presentity, just for debugging
  */
 void print_presentity(FILE* _f, presentity_t* _p);
+
 
 #endif /* PRESENTITY_H */
 

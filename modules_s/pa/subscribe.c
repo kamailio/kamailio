@@ -32,26 +32,32 @@
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
-#include "../../comp_defs.h"
-#include "subscribe.h"
-#include "../../dprint.h"
-#include "paerrno.h"
-#include "../../parser/parse_event.h"
-#include "../../parser/parse_expires.h"
-#include "common.h"
-#include "pdomain.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
-#include "pa_mod.h"
-#include "watcher.h"
 #include "../../trim.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_event.h"
+#include "../../parser/parse_expires.h"
+#include "../../trim.h"
+#include "../../dprint.h"
+#include "../../comp_defs.h"
+#include "pa_mod.h"
+#include "watcher.h"
 #include "reply.h"
 #include "notify.h"
-#include "../../trim.h"
+#include "paerrno.h"
+#include "common.h"
+#include "pdomain.h"
+#include "subscribe.h"
+
+
+#define DOCUMENT_TYPE "application/cpim-pidf+xml"
+#define DOCUMENT_TYPE_L (sizeof(DOCUMENT_TYPE) - 1)
+
 
 static doctype_t acc;
+
 
 /*
  * FIXME: locking
@@ -191,9 +197,9 @@ static inline int check_message(struct sip_msg* _m)
 /*
  * Create a new presentity and corresponding watcher list
  */
-static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _to, struct presentity** _p, struct watcher** _w)
+static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _uri, dlg_t* _dlg,
+				    struct presentity** _p, struct watcher** _w)
 {
-	str* c, cid, to;
 	time_t e;
 
 	if (_m->expires) {
@@ -211,42 +217,34 @@ static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str*
 
 	e += time(0);
 
-	if (new_presentity(_to, _p) < 0) {
+	if (new_presentity(_uri, _p) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -1;
 	}
 
-	c = &((contact_body_t*)_m->contact->parsed)->contacts->uri;
-	get_raw_uri(c);
-
-	cid = _m->callid->body;
-	to = _m->to->body;
-	trim_trailing(&to);
-	trim_trailing(&cid);
-	
-	if (add_watcher(*_p, &(get_from(_m)->uri), c, e, acc, &cid, &(get_from(_m)->tag_value), &to, _w) < 0) {
+	if (add_watcher(*_p, &(get_from(_m)->uri), e, acc, _dlg, _w) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}
 
 	add_presentity(_d, *_p);
 
-	_d->reg(&(get_from(_m)->uri), _to, (void*)callback, *_p);
+	_d->reg(&(get_from(_m)->uri), _uri, (void*)callback, *_p);
 
 	return 0;
 }
 
 
 
-static inline int find_watcher(struct presentity* _p, str* _c, watcher_t** _w)
+static inline int find_watcher(struct presentity* _p, str* _uri, watcher_t** _w)
 {
 	watcher_t* ptr;
 
 	ptr = _p->watchers;
 
 	while(ptr) {
-		if ((_c->len == ptr->contact.len) &&
-		    (!memcmp(_c->s, ptr->contact.s, _c->len))) {
+		if ((_uri->len == ptr->uri.len) &&
+		    (!memcmp(_uri->s, ptr->uri.s, _uri->len))) {
 			*_w = ptr;
 			return 0;
 		}
@@ -262,10 +260,10 @@ static inline int find_watcher(struct presentity* _p, str* _c, watcher_t** _w)
 /*
  * Update existing presentity and watcher list
  */
-static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* _p, struct watcher** _w)
+static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
+				    struct presentity* _p, dlg_t* _dlg, struct watcher** _w)
 {
 	time_t e;
-	str* c;
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -273,10 +271,12 @@ static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, stru
 		e = default_expires;
 	}
 
-	c = &((contact_body_t*)_m->contact->parsed)->contacts->uri;
-	get_raw_uri(c);
+	if (parse_from_header(_m) < 0) {
+		LOG(L_ERR, "update_presentity(): Error while parsing From\n");
+		return -1;
+	}
 
-	if (find_watcher(_p, c, _w) == 0) {
+	if (find_watcher(_p, &get_from(_m)->uri, _w) == 0) {
 		if (e == 0) {
 			if (remove_watcher(_p, *_w) < 0) {
 				LOG(L_ERR, "update_presentity(): Error while deleting presentity\n");
@@ -289,7 +289,7 @@ static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, stru
 			}
 		} else {
 			e += time(0);
-			if (update_watcher(*_w, c, e) < 0) {
+			if (update_watcher(*_w, e) < 0) {
 				LOG(L_ERR, "update_presentity(): Error while updating watcher\n");
 				return -2;
 			}
@@ -298,7 +298,7 @@ static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, stru
 		if (e) {
 			e += time(0);
 
-			if (add_watcher(_p, &(get_from(_m)->uri), c, e, acc, &_m->callid->body, &_m->from->body, &_m->to->body, _w) < 0) {
+			if (add_watcher(_p, &(get_from(_m)->uri), e, acc, _dlg, _w) < 0) {
 				LOG(L_ERR, "update_presentity(): Error while creating presentity\n");
 				return -2;
 			}			
@@ -333,6 +333,7 @@ int subscribe(struct sip_msg* _m, char* _s1, char* _s2)
 	struct pdomain* d;
 	struct presentity *p;
 	struct watcher* w;
+	dlg_t* dlg;
 	str ud;
 
 	paerrno = PA_OK;
@@ -362,24 +363,32 @@ int subscribe(struct sip_msg* _m, char* _s1, char* _s2)
 		goto error;
 	}
 
+	     /*	print_all_pdomains(stdout); */
+
+	     /* Create a new dialog with the watcher */
+	if (tmb.new_dlg_uas(_m, 200, &dlg) < 0) {
+		LOG(L_ERR, "subscribe(): Error while creating dialog\n");
+		unlock_pdomain(d);
+		goto error;
+	}
+
+	tmb.print_dlg(stderr,dlg);
+
 	if (find_presentity(d, &ud, &p) > 0) {
-		if (create_presentity(_m, d, &ud, &p, &w) < 0) {
+		if (create_presentity(_m, d, &ud, dlg, &p, &w) < 0) {
 			LOG(L_ERR, "subscribe(): Error while creating new presentity\n");
 			unlock_pdomain(d);
 			goto error;
 		}
 	} else {
-		if (update_presentity(_m, d, p, &w) < 0) {
+		if (update_presentity(_m, d, p, dlg, &w) < 0) {
 			LOG(L_ERR, "subscribe(): Error while updating presentity\n");
 			unlock_pdomain(d);
 			goto error;
 		}
 	}
 
-	     /*	print_all_pdomains(stdout); */
-
 	if (send_reply(_m) < 0) return -1;
-
 
 	if (p && w) {
 		if (send_notify(p, w) < 0) {

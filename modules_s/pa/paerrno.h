@@ -48,6 +48,7 @@ typedef enum paerr {
 	PA_FROM_ERROR,    /* Error while parsing From header */
 	PA_SMALL_BUFFER,  /* Buffer too small */
 	PA_UNSUPP_DOC,    /* Unsupported presence document format */
+	PA_INTERNAL_ERROR /* Internal server error */
 } paerr_t;
 
 

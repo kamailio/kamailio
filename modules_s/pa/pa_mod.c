@@ -32,21 +32,36 @@
  */
 
 
-#include "pa_mod.h"
 #include "../../sr_module.h"
-#include <stdio.h>
+#include "../../error.h"
 #include "subscribe.h"
 #include "dlist.h"
-#include "../../error.h"
+#include "pa_mod.h"
+
 
 MODULE_VERSION
 
-
+/*
+ * Module initialization function
+ */
 static int mod_init(void);
+
+
+/*
+ * Module destroy function
+ */
 static void destroy(void);
+
+
+/*
+ * Fixup functions, converts domain name to domain
+ * pointer
+ */
 static int subscribe_fixup(void** param, int param_no);
 
+
 int default_expires = 3600;
+
 
 /** TM bind */
 struct tm_binds tmb;
@@ -103,7 +118,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	//	free_all_pdomains();
+	free_all_pdomains();
 }
 
 

@@ -27,41 +27,76 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "../../dprint.h"
+#include "../../data_lump_rpl.h"
 #include "reply.h"
 #include "paerrno.h"
-#include "../../dprint.h"
 #include "pa_mod.h"
 
 
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
-#define MSG_500 "Internal Server Error"
+#define MSG_500 "Server Internal Error"
+
+#define	EI_PA_OK             "No problem"
+#define	EI_PA_PARSE_ERR      "Error while parsing headers"
+#define	EI_PA_CONTACT_MISS   "Contact header field missing"
+#define	EI_PA_FROM_MISS      "From header field missing"
+#define	EI_PA_EVENT_MISS     "Event header field missing"
+#define	EI_PA_EVENT_PARSE    "Error while parsing Event header field"
+#define	EI_PA_EXPIRES_PARSE  "Error while parsing Expires header field"
+#define	EI_PA_EVENT_UNSUPP   "Unsupported event package"
+#define	EI_PA_NO_MEMORY      "No memory left on the server"
+#define	EI_PA_TIMER_ERROR    "Error while running timer"
+#define	EI_PA_EXTRACT_USER   "Cannot extract username from URI"
+#define	EI_PA_CONT_PARSE     "Error while parsing Contact"
+#define	EI_PA_CONT_STAR      "Start not allowed in Contact"
+#define	EI_PA_FROM_ERROR     "Error while parsing From"
+#define	EI_PA_SMALL_BUFFER   "Buffer too small on the server"
+#define	EI_PA_UNSUPP_DOC     "Unsupported document format"
+#define EI_PA_INTERNAL_ERROR "Internal Server Error"
 
 
-/*
- * Convert paerrno to code and message
- */
-static inline void paerrno2msg(int* _c, char** _m)
-{
-	switch(paerrno) {
-	case PA_OK:            *_c = 200; *_m = MSG_200;                                               break;
-	case PA_PARSE_ERR:     *_c = 400; *_m = MSG_400 " - Error while parsing headers";              break;
-	case PA_CONTACT_MISS:  *_c = 400; *_m = MSG_400 " - Contact header field missing";             break;
-	case PA_FROM_MISS:     *_c = 400; *_m = MSG_400 " - From header field missing";                break;
-	case PA_EVENT_MISS:    *_c = 400; *_m = MSG_400 " - Event header field missing";               break;
-	case PA_EVENT_PARSE:   *_c = 400; *_m = MSG_400 " - Error while parsing Event header field";   break;
-	case PA_EXPIRES_PARSE: *_c = 400; *_m = MSG_400 " - Error while parsing Expires header field"; break;
-	case PA_EVENT_UNSUPP:  *_c = 500; *_m = MSG_500 " - Unsupported event package";                break;
-	case PA_NO_MEMORY:     *_c = 500; *_m = MSG_500 " - No memory left on the server";             break;
-	case PA_TIMER_ERROR:   *_c = 500; *_m = MSG_500 " - Error while running timer";                break;
-	case PA_EXTRACT_USER:  *_c = 400; *_m = MSG_400 " - Cannot extract username from URI";         break;
-	case PA_CONT_PARSE:    *_c = 400; *_m = MSG_400 " - Error while parsing Contact";              break;
-	case PA_CONT_STAR:     *_c = 400; *_m = MSG_400 " - Star not allowed in Contact";              break;
-	case PA_FROM_ERROR:    *_c = 400; *_m = MSG_400 " - Error while parsing From";                 break;
-	case PA_SMALL_BUFFER:  *_c = 500; *_m = MSG_500 " - Buffer too small on server";               break;
-	case PA_UNSUPP_DOC:    *_c = 500; *_m = MSG_500 " - Unsupported presence document format";     break;
-	}
-}
+str error_info[] = {
+	{EI_PA_OK,             sizeof(EI_PA_OK) - 1            },
+	{EI_PA_PARSE_ERR,      sizeof(EI_PA_PARSE_ERR) - 1     },
+	{EI_PA_CONTACT_MISS,   sizeof(EI_PA_CONTACT_MISS) - 1  },
+	{EI_PA_FROM_MISS,      sizeof(EI_PA_FROM_MISS) - 1     },
+	{EI_PA_EVENT_MISS,     sizeof(EI_PA_EVENT_MISS) - 1    },
+	{EI_PA_EVENT_PARSE,    sizeof(EI_PA_EVENT_PARSE) - 1   },
+	{EI_PA_EXPIRES_PARSE,  sizeof(EI_PA_EXPIRES_PARSE) - 1 },
+	{EI_PA_EVENT_UNSUPP,   sizeof(EI_PA_EVENT_UNSUPP) - 1  },
+	{EI_PA_NO_MEMORY,      sizeof(EI_PA_NO_MEMORY) - 1     },
+	{EI_PA_TIMER_ERROR,    sizeof(EI_PA_TIMER_ERROR) - 1   },
+	{EI_PA_EXTRACT_USER,   sizeof(EI_PA_EXTRACT_USER) - 1  },
+	{EI_PA_CONT_PARSE,     sizeof(EI_PA_CONT_PARSE) - 1    },
+	{EI_PA_CONT_STAR,      sizeof(EI_PA_CONT_STAR) - 1     },
+	{EI_PA_FROM_ERROR,     sizeof(EI_PA_FROM_ERROR) - 1    },
+	{EI_PA_SMALL_BUFFER,   sizeof(EI_PA_SMALL_BUFFER) - 1  },
+	{EI_PA_UNSUPP_DOC,     sizeof(EI_PA_UNSUPP_DOC) - 1    },
+	{EI_PA_INTERNAL_ERROR, sizeof(EI_PA_INTERNAL_ERROR) - 1}
+};
+
+
+int codes[] = {
+	200, /* EI_PA_OK */
+	400, /* EI_PA_PARSE_ERR */
+	400, /* EI_PA_CONTACT_MISS */
+	400, /* EI_PA_FROM_MISS */
+	400, /* EI_PA_EVENT_MISS */
+	400, /* EI_PA_EVENT_PARSE */
+	400, /* EI_PA_EXPIRES_PARSE */
+	500, /* EI_PA_EVENT_UNSUPP */
+	500, /* EI_PA_NO_MEMORY */
+	500, /* EI_PA_TIMER_ERROR */
+	400, /* EI_PA_EXTRACT_USER */
+	400, /* EI_PA_CONT_PARSE */
+	400, /* EI_PA_CONT_STAR */
+	400, /* EI_PA_FROM_ERROR */
+	500, /* EI_PA_SMALL_BUFFER */
+	500, /* EI_PA_UNSUPP_DOC */
+	500  /* EI_PA_INTERNAL_ERROR */
+};
 
 
 /*
@@ -70,11 +105,23 @@ static inline void paerrno2msg(int* _c, char** _m)
 int send_reply(struct sip_msg* _m)
 {
 	int code;
-	char* msg;
+	char* msg = MSG_200; /* makes gcc shut up */
 
-	paerrno2msg(&code, &msg);
+	struct lump_rpl* p, *ei;
+
+	code = codes[paerrno];
+	switch(code) {
+	case 200: msg = MSG_200; break;
+	case 400: msg = MSG_400; break;
+	case 500: msg = MSG_500; break;
+	}
 	
-	if (tmb.t_reply(_m, code, msg) == -1) {
+	if (code != 200) {
+		ei = build_lump_rpl(error_info[paerrno].s, error_info[paerrno].len);
+		add_lump_rpl(_m, ei);
+	}
+
+	if (tmb.t_reply(_m, (char*)code, msg) == -1) {
 		LOG(L_ERR, "send_reply(): Error while sending %d %s\n", code, msg);
 		return -1;
 	} else return 0;	

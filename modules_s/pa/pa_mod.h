@@ -33,16 +33,10 @@
 #include "../../parser/msg_parser.h"
 #include "../tm/tm_load.h"
 
-
 extern int default_expires;
-
-extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 /** TM bind */
 extern struct tm_binds tmb;
 
-
-extern int (*ul_register_watcher)(str* _d, str* _a, void* cb, void* data);
-extern int (*ul_unregister_watcher)(str* _d, str* _a, void* cb, void* data);
 
 #endif /* PA_MOD_H */

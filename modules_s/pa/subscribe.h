@@ -32,11 +32,6 @@
 
 #include "../../parser/msg_parser.h"
 
-
-#define DOCUMENT_TYPE "application/cpim-pidf+xml"
-#define DOCUMENT_TYPE_LEN (sizeof(DOCUMENT_TYPE) - 1)
-
-
 /*
  * Handle a subscribe Request
  */

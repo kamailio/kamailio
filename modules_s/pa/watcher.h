@@ -31,22 +31,25 @@
 #define WATCHER_H
 
 #include "../../str.h"
+#include "../tm/dlg.h"
 #include <stdio.h>
 #include <time.h>
 
 
 typedef enum doctype {
 	DOC_XPIDF = 0,
-	DOC_LPIDFf
+	DOC_LPIDF
 } doctype_t;
-		
 
 
+/*
+ * Structure representing a watcher
+ */
 typedef struct watcher {
 	str uri;                /* Uri of the watcher */
-	
 	time_t expires;         /* Absolute expiry time */
 	doctype_t accept;       /* Type of document accepted by the watcher */
+	dlg_t* dialog;          /* Dialog handle */
 	struct watcher* next;   /* Next watcher in the list */
 } watcher_t;
  
@@ -54,7 +57,7 @@ typedef struct watcher {
 /*
  * Create a new watcher structure
  */
-int new_watcher(str* _from, str* _c, time_t _e, doctype_t _a, watcher_t** _w, str* callid, str* from_tag, str* to);
+int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w);
 
 
 /*
@@ -69,7 +72,10 @@ void free_watcher(watcher_t* _w);
 void print_watcher(FILE* _f, watcher_t* _w);
 
 
-int update_watcher(watcher_t* _w, str* _c, time_t _e);
+/*
+ * Update expires value of a watcher
+ */
+int update_watcher(watcher_t* _w, time_t _e);
 
 
 #endif /* WATCHER_H */
