@@ -487,9 +487,16 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
+	uri = &rt->nameaddr.uri;
 
-	if (enable_double_rr && is_2rr(&_ruri->params)) {
-		DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s));
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		LOG(L_ERR, "ral(): Error while parsing the first route URI\n");
+		return -1;
+	}
+
+	if (is_myself(&puri.host, puri.port_no)) {
+		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */ 
+	      /* DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s)); */
  		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
@@ -572,7 +579,6 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			LOG(L_ERR, "ras(): Error while looking for last Route URI\n");
 			return -7;
 		} else if (res > 0) {
-			LOG(L_ERR, "ras(): UAC screwed up the route set !\n");
 			return 0;
 		}
 
