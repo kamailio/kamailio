@@ -4,6 +4,30 @@ Release notes for SIP Express Router (ser)
 $Id$
 
 ***********************************************
+* Changes/bugfixes in 0.8.11-r1
+***********************************************
+
+Bug fixes
+=========
+- authenticathion ha1 didn't include domain if username was of the form
+  user@domain and calculate_ha1 was set to yes (modules/auth_db)
+- tm reply processing race condition (modules/tm), special thanks go to
+ Dong Liu
+
+Security updates
+================
+
+todo:- fifo processing code will write responses only to other
+ fifos and only if they are not hard-linked, also default
+ ser fifo persmissions were changed to 0600.
+
+Performance improvements
+========================
+- tuned internal malloc implementation parameters to better reflect the
+actual workload (malloc is a little bit faster now)
+
+
+***********************************************
 * Changes introduced in 0.8.11
 ***********************************************
 

@@ -59,7 +59,7 @@
 
 
 
-#define QM_MALLOC_OPTIMIZE_FACTOR 11 /*used below */
+#define QM_MALLOC_OPTIMIZE_FACTOR 12 /*used below */
 #define QM_MALLOC_OPTIMIZE  ((unsigned long)(1<<QM_MALLOC_OPTIMIZE_FACTOR))
 								/* size to optimize for,
 									(most allocs < this size),
