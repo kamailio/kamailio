@@ -207,9 +207,11 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	from = 0; /* Makes gcc happy */
 	user.len = 0;
 	
-	if (get_username(_m, &user) < 0) {
-		LOG(L_ERR, "insert_RR(): Error while extracting username\n");
-		return -1;
+	if (add_username) {
+		if (get_username(_m, &user) < 0) {
+			LOG(L_ERR, "insert_RR(): Error while extracting username\n");
+			return -1;
+		}
 	}
 
 	if (append_fromtag) {
