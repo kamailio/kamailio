@@ -37,6 +37,7 @@
 
 
 #include "../../db/db.h"
+#include "../../str.h"
 
 
 /*
@@ -48,23 +49,24 @@
 #define WRITE_THROUGH 1
 #define WRITE_BACK    2
 
+#define TABLE_VERSION 4 
 
-extern char* user_col;
-extern char* domain_col;
-extern char* contact_col;
-extern char* expires_col;
-extern char* q_col;
-extern char* callid_col;
-extern char* cseq_col;
-extern char* method_col;
-extern char* replicate_col;
-extern char* flags_col;
-extern char* state_col;
-extern char* db_url;
-extern int   timer_interval;
-extern int   db_mode;
-extern int   use_domain;
-extern int   desc_time_order;
+extern str user_col;
+extern str domain_col;
+extern str contact_col;
+extern str expires_col;
+extern str q_col;
+extern str callid_col;
+extern str cseq_col;
+extern str method_col;
+extern str replicate_col;
+extern str flags_col;
+extern str state_col;
+extern str db_url;
+extern int timer_interval;
+extern int db_mode;
+extern int use_domain;
+extern int desc_time_order;
 
 extern db_con_t* db;   /* Dabase connection handle */
 

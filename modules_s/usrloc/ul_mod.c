@@ -37,9 +37,8 @@
  * 2003-04-21 failed fifo init stops init process (jiri)
  */
 
-
-#include "ul_mod.h"
 #include <stdio.h>
+#include "ul_mod.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../timer.h"     /* register_timer */
@@ -54,6 +53,39 @@
 
 MODULE_VERSION
 
+#define USER_COL "username"
+#define USER_COL_LEN (sizeof(USER_COL) - 1)
+
+#define DOMAIN_COL "domain"
+#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
+
+#define CONTACT_COL "contact"
+#define CONTACT_COL_LEN (sizeof(CONTACT_COL) - 1)
+
+#define EXPIRES_COL "expires"
+#define EXPIRES_COL_LEN (sizeof(EXPIRES_COL) - 1)
+
+#define Q_COL "q"
+#define Q_COL_LEN (sizeof(Q_COL) - 1)
+
+#define CALLID_COL "callid"
+#define CALLID_COL_LEN (sizeof(CALLID_COL) - 1)
+
+#define CSEQ_COL "cseq"
+#define CSEQ_COL_LEN (sizeof(CSEQ_COL) - 1)
+
+#define METHOD_COL "method"
+#define METHOD_COL_LEN (sizeof(METHOD_COL) - 1)
+
+#define REPLICATE_COL "replicate"
+#define REPLICATE_COL_LEN (sizeof(REPLICATE_COL) - 1)
+
+#define STATE_COL "state"
+#define STATE_COL_LEN (sizeof(STATE_COL) - 1)
+
+#define FLAGS_COL "flags"
+#define FLAGS_COL_LEN (sizeof(FLAGS_COL) - 1)
+
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -65,25 +97,26 @@ extern int bind_usrloc(usrloc_api_t* api);
 /*
  * Module parameters and their default values
  */
-char* user_col        = "username";       /* Name of column containing usernames */
-char* domain_col      = "domain";         /* Name of column containing domains */
-char* contact_col     = "contact";        /* Name of column containing contact addresses */
-char* expires_col     = "expires";        /* Name of column containing expires values */
-char* q_col           = "q";              /* Name of column containing q values */
-char* callid_col      = "callid";         /* Name of column containing callid string */
-char* cseq_col        = "cseq";           /* Name of column containing cseq values */
-char* method_col      = "method";         /* Name of column containing supported method */
-char* replicate_col   = "replicate";      /* Name of column containing replication mark */
-char* state_col       = "state";          /* Name of column containing contact state */
-char* flags_col       = "flags";          /* Name of column containing flags */
-char* db_url          = DEFAULT_DB_URL;   /* Database URL */
-int   timer_interval  = 60;               /* Timer interval in seconds */
-int   db_mode         = 0;                /* Database sync scheme: 0-no db, 1-write through, 2-write back */
-int   use_domain      = 0;                /* Whether usrloc should use domain part of aor */
-int   desc_time_order = 0;                /* By default do not enable timestamp ordering */                  
+str user_col        = {USER_COL, USER_COL_LEN};             /* Name of column containing usernames */
+str domain_col      = {DOMAIN_COL, DOMAIN_COL_LEN};         /* Name of column containing domains */
+str contact_col     = {CONTACT_COL, CONTACT_COL_LEN};       /* Name of column containing contact addresses */
+str expires_col     = {EXPIRES_COL, EXPIRES_COL_LEN};       /* Name of column containing expires values */
+str q_col           = {Q_COL, Q_COL_LEN};                   /* Name of column containing q values */
+str callid_col      = {CALLID_COL, CALLID_COL_LEN};         /* Name of column containing callid string */
+str cseq_col        = {CSEQ_COL, CSEQ_COL_LEN};             /* Name of column containing cseq values */
+str method_col      = {METHOD_COL, METHOD_COL_LEN};         /* Name of column containing supported method */
+str replicate_col   = {REPLICATE_COL, REPLICATE_COL_LEN};   /* Name of column containing replication mark */
+str state_col       = {STATE_COL, STATE_COL_LEN};           /* Name of column containing contact state */
+str flags_col       = {FLAGS_COL, FLAGS_COL_LEN};           /* Name of column containing flags */
+str db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN}; /* Database URL */
+int timer_interval  = 60;             /* Timer interval in seconds */
+int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
+int use_domain      = 0;              /* Whether usrloc should use domain part of aor */
+int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
 
 
 db_con_t* db; /* Database connection handle */
+
 
 /*
  * Exported functions
@@ -112,18 +145,18 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"user_column",       STR_PARAM, &user_col       },
-	{"domain_column",     STR_PARAM, &domain_col     },
-	{"contact_column",    STR_PARAM, &contact_col    },
-	{"expires_column",    STR_PARAM, &expires_col    },
-	{"q_column",          STR_PARAM, &q_col          },
-	{"callid_column",     STR_PARAM, &callid_col     },
-	{"cseq_column",       STR_PARAM, &cseq_col       },
-	{"method_column",     STR_PARAM, &method_col     },
-	{"replicate_column",  STR_PARAM, &replicate_col  },
-	{"state_column",      STR_PARAM, &state_col      },
-	{"flags_column",      STR_PARAM, &flags_col      },
-	{"db_url",            STR_PARAM, &db_url         },
+	{"user_column",       STR_PARAM, &user_col.s     },
+	{"domain_column",     STR_PARAM, &domain_col.s   },
+	{"contact_column",    STR_PARAM, &contact_col.s  },
+	{"expires_column",    STR_PARAM, &expires_col.s  },
+	{"q_column",          STR_PARAM, &q_col.s        },
+	{"callid_column",     STR_PARAM, &callid_col.s   },
+	{"cseq_column",       STR_PARAM, &cseq_col.s     },
+	{"method_column",     STR_PARAM, &method_col.s   },
+	{"replicate_column",  STR_PARAM, &replicate_col.s},
+	{"state_column",      STR_PARAM, &state_col.s    },
+	{"flags_column",      STR_PARAM, &flags_col.s    },
+	{"db_url",            STR_PARAM, &db_url.s       },
 	{"timer_interval",    INT_PARAM, &timer_interval },
 	{"db_mode",           INT_PARAM, &db_mode        },
 	{"use_domain",        INT_PARAM, &use_domain     },
@@ -132,11 +165,7 @@ static param_export_t params[] = {
 };
 
 
-#ifdef STATIC_USRLOC
-struct module_exports usrloc_exports = {
-#else
 struct module_exports exports = {
-#endif
 	"usrloc",
 	cmds,       /* Exported functions */
 	params,     /* Export parameters */
@@ -155,6 +184,20 @@ static int mod_init(void)
 {
 	DBG("usrloc - initializing\n");
 
+	     /* Compute the lengths of string parameters */
+	user_col.len = strlen(user_col.s);
+	domain_col.len = strlen(domain_col.s);
+	contact_col.len = strlen(contact_col.s);
+	expires_col.len = strlen(expires_col.s);
+	q_col.len = strlen(q_col.s);
+	callid_col.len = strlen(callid_col.s);
+	cseq_col.len = strlen(cseq_col.s);
+	method_col.len = strlen(method_col.s);
+	replicate_col.len = strlen(replicate_col.s);
+	state_col.len = strlen(state_col.s);
+	flags_col.len = strlen(flags_col.s);
+	db_url.len = strlen(db_url.s);
+
 	     /* Register cache timer */
 	register_timer(timer, 0, timer_interval);
 
@@ -166,13 +209,13 @@ static int mod_init(void)
 
 	     /* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		if (bind_dbmod(db_url) < 0) { /* Find database module */
+		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");
 			return -1;
 		}
 		
 		     /* Open database connection in parent */
-		db = db_init(db_url);
+		db = db_init(db_url.s);
 		if (!db) {
 			LOG(L_ERR, "mod_init(): Error while connecting database\n");
 			return -1;
@@ -190,7 +233,7 @@ static int child_init(int _rank)
  	     /* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
 		db_close(db); /* Close connection previously opened by parent */
-		db = db_init(db_url); /* Initialize a new separate connection */
+		db = db_init(db_url.s); /* Initialize a new separate connection */
 		if (!db) {
 			LOG(L_ERR, "child_init(%d): Error while connecting database\n", _rank);
 			return -1;
@@ -236,4 +279,3 @@ static void timer(unsigned int ticks, void* param)
 	DBG("Timer done\n");
 #endif
 }
-

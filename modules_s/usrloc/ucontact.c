@@ -431,16 +431,16 @@ int db_insert_ucontact(ucontact_t* _c)
 	db_key_t keys[10];
 	db_val_t vals[10];
 
-	keys[0] = user_col;
-	keys[1] = contact_col;
-	keys[2] = expires_col;
-	keys[3] = q_col;
-	keys[4] = callid_col;
-	keys[5] = cseq_col;
-	keys[6] = replicate_col;
-	keys[7] = flags_col;
-	keys[8] = state_col;
-	keys[9] = domain_col;
+	keys[0] = user_col.s;
+	keys[1] = contact_col.s;
+	keys[2] = expires_col.s;
+	keys[3] = q_col.s;
+	keys[4] = callid_col.s;
+	keys[5] = cseq_col.s;
+	keys[6] = replicate_col.s;
+	keys[7] = flags_col.s;
+	keys[8] = state_col.s;
+	keys[9] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -522,16 +522,16 @@ int db_update_ucontact(ucontact_t* _c)
 	db_val_t vals2[7];
 
 
-	keys1[0] = user_col;
-	keys1[1] = contact_col;
-	keys1[2] = domain_col;
-	keys2[0] = expires_col;
-	keys2[1] = q_col;
-	keys2[2] = callid_col;
-	keys2[3] = cseq_col;
-	keys2[4] = replicate_col;
-	keys2[5] = state_col;
-	keys2[6] = flags_col;
+	keys1[0] = user_col.s;
+	keys1[1] = contact_col.s;
+	keys1[2] = domain_col.s;
+	keys2[0] = expires_col.s;
+	keys2[1] = q_col.s;
+	keys2[2] = callid_col.s;
+	keys2[3] = cseq_col.s;
+	keys2[4] = replicate_col.s;
+	keys2[5] = state_col.s;
+	keys2[6] = flags_col.s;
 	
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -607,9 +607,9 @@ int db_delete_ucontact(ucontact_t* _c)
 	db_key_t keys[3];
 	db_val_t vals[3];
 
-	keys[0] = user_col;
-	keys[1] = contact_col;
-	keys[2] = domain_col;
+	keys[0] = user_col.s;
+	keys[1] = contact_col.s;
+	keys[2] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;

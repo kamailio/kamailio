@@ -67,8 +67,8 @@ int process_del_list(str* _d)
 	db_key_t keys[2];
 	db_val_t vals[2];
 
-	keys[0] = user_col;
-	keys[1] = contact_col;
+	keys[0] = user_col.s;
+	keys[1] = contact_col.s;
 	
 	if (del_root) {
 	     /* FIXME */

@@ -78,14 +78,14 @@ int process_ins_list(str* _d)
 	db_key_t keys[8];
 	db_val_t vals[8];
 
-	keys[0] = user_col;
-	keys[1] = contact_col;
-	keys[2] = expires_col;
-	keys[3] = q_col;
-	keys[4] = callid_col;
-	keys[5] = cseq_col;
-	keys[6] = replicate_col;
-	keys[7] = state_col;
+	keys[0] = user_col.s;
+	keys[1] = contact_col.s;
+	keys[2] = expires_col.s;
+	keys[3] = q_col.s;
+	keys[4] = callid_col.s;
+	keys[5] = cseq_col.s;
+	keys[6] = replicate_col.s;
+	keys[7] = state_col.s;
 	
 	if (ins_root) {
 	     /* FIXME */

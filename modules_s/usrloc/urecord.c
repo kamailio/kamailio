@@ -428,8 +428,8 @@ int db_delete_urecord(urecord_t* _r)
 	db_val_t vals[2];
 	char* dom;
 
-	keys[0] = user_col;
-	keys[1] = domain_col;
+	keys[0] = user_col.s;
+	keys[1] = domain_col.s;
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _r->aor.s;

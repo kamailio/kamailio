@@ -198,6 +198,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 {
 	dlist_t* d;
 	str s;
+	int ver;
 
 	s.s = (char*)_n;
 	s.len = strlen(_n);
@@ -216,14 +217,20 @@ int register_udomain(const char* _n, udomain_t** _d)
 	      * to use database
 	      */
 	if (db_mode != NO_DB) {
+		ver = table_version(db, &s);
+
+		if (ver < 0) {
+			LOG(L_ERR, "register_udomain(): Error while querying table version\n");
+			goto err;
+		} else if (ver < TABLE_VERSION) {
+			LOG(L_ERR, "register_udomain(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			goto err;
+		}
+		
 		if (preload_udomain(d->d) < 0) {
 			LOG(L_ERR, "register_udomain(): Error while preloading domain '%.*s'\n",
 			    s.len, ZSW(s.s));
-			
-			free_udomain(d->d);
-			shm_free(d->name.s);
-			shm_free(d);
-			return -2;
+			goto err;
 		}
 	}
 
@@ -232,6 +239,12 @@ int register_udomain(const char* _n, udomain_t** _d)
 	
 	*_d = d->d;
 	return 0;
+
+ err:
+	free_udomain(d->d);
+	shm_free(d->name.s);
+	shm_free(d);
+	return -1;
 }
 
 
