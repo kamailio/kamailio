@@ -45,7 +45,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   14
-EXTRAVERSION = -pre0
+EXTRAVERSION = -pre1
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")

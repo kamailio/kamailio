@@ -29,6 +29,7 @@
  * --------
  *              created by andrei
  *  2003-07-06  added fm_realloc (andrei)
+ *  2004-07-19  bug fix: s/>/>=/ in fm_insert_free (andrei)
  */
 
 
@@ -101,7 +102,7 @@ static inline void fm_insert_free(struct fm_block* qm, struct fm_frag* frag)
 	
 	hash=GET_HASH(frag->size);
 	f=&(qm->free_hash[hash]);
-	if (frag->size > F_MALLOC_OPTIMIZE){
+	if (frag->size >= F_MALLOC_OPTIMIZE){ /* '<' in GET_HASH */
 		for(; *f; f=&((*f)->u.nxt_free)){
 			if (frag->size <= (*f)->size) break;
 		}
