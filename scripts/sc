@@ -159,6 +159,10 @@ parameter usage:
  ul add <username> <uri> ............ introduce a permanent UrLoc entry
  showdb [<username>] ................ show online users flushed in DB
 
+           * pa *
+ pa pres <p_uri> <pstate>............ set pstate for a presentity
+ pa loc <p_uri> <loc>................ set location for a presentity
+
            * domains *
  domain show ........................ show list of served domains
  domain add <domainname> ............ add a new served domain
@@ -456,6 +460,44 @@ usrloc() {
 
             ;;
 
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+presence_agent() {
+	if [ "$#" -lt 4 ] ; then
+		echo "pa: too few parameters"
+		# usage
+		# exit 1
+	fi
+
+	shift
+	case $1 in 
+		loc)
+			shift
+			# check_uri "$1"
+			if [ "$?" -ne "0" ] ; then
+				echo "$1 is not a valid URI"
+				exit 1
+			fi
+
+			fifo_cmd pa_location "registrar" "$1" "$2"
+			exit $?
+			;;
+		pres)
+			shift
+			# check_uri "$1"
+			if [ "$?" -ne "0" ] ; then
+				echo "$1 is not a valid URI"
+				exit 1
+			fi
+
+			fifo_cmd pa_presence "registrar" "$1" "$2"
+			exit $?
+			;;
 		*)
 			usage
 			exit 1
@@ -889,6 +931,10 @@ case $1 in
 
 	alias|ul)
 		usrloc "$@"
+		;;
+
+	pa)
+		presence_agent "$@"
 		;;
 
         rpid)
