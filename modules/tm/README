@@ -309,7 +309,6 @@ Defines
 Known Issues
 -----------
 - we don't have authentication merging on forking
-- branch tid is not used yet
 - local ACK/CANCELs copy'n'pastes Route and ignores deleted
   Routes
 - 6xx should be delayed 
@@ -319,6 +318,9 @@ Known Issues
   whether we don't need parsed headers later for something else.
   Remember, when we now conserver a request in sh_mem, we can't apply
   any pkg_mem operations to it any more. (that might be redesigned too)
+- another performance improvement may be achieved by not parsing
+  CSeq in replies until reply branch matches branch of an INVITE/CANCEL
+  in transaction table
 - t_replicate should be done more cleanly -- Vias, Routes, etc. should
   be removed from a message prior to replicating it
 - SNMP support
