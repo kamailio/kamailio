@@ -1,0 +1,43 @@
+.\" $Id$
+.TH ser.cfg 5 15.07.2002 ser "Sip Express Router" 
+.\" Process with
+.\" groff -man -Tascii ser.cfg.5 
+.\"
+.SH NAME
+ser.cfg \- ser configuration file
+.SH SYNOPSIS
+.I /etc/ser/ser.cfg
+.SH DESCRIPTION
+.B ser
+reads the configuration data from
+.I /etc/ser/ser.cfg
+(or the file specified with
+.B \-f
+on the command line).
+The file contains global configuration parameters, module loading commands and the script that will be executed for each received request. Lines starting with
+.B #
+or enclosed in
+.B /* ... */
+are interpreted as comments.
+.PP
+This manual page is incomplete. For further information please read
+.I /usr/share/doc/README.
+
+.SH FILES
+.bL
+.I /etc/ser/ser.cfg
+.br
+.SH AUTHORS
+This manual page was written by Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>, ...
+.br
+.B ser
+was written by:
+
+.SH SEE ALSO
+.BR ser(8)
+.PP
+Full documentation on ser, including configuration and FAQs is available at
+http://www.iptel.org/<fill-this-in>.
+.PP 
+Report bugs at http://www.iptel.org/<fill-this-in>
+For help/support, try the <ser> mailing list at <fill-this-in>.

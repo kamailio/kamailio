@@ -42,8 +42,8 @@ Configuration files:
 		Rvalues:
 			- string
 			- integer
-			- ipv4 address
-			- netv4 address
+			- ipv4 or ipv6 address
+			- netv4 or netv6 address
 			
 	Commands:
 		- forward
