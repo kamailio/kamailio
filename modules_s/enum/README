@@ -14,10 +14,13 @@ Juha Heinanen
         1.3. Exported Parameters
 
               1.3.1. domain_suffix (string)
+              1.3.2. tel_uri_params (string)
 
         1.4. Exported Functions
 
-              1.4.1. enum_query(service)
+              1.4.1. enum_query(),enum_query("suffix"),
+                      enum_query("suffix", "service")
+
               1.4.2. is_from_user_e164()
 
    2. Developer's Guide
@@ -25,8 +28,9 @@ Juha Heinanen
 
    List of Examples
    1-1. Setting domain_suffix module parameter
-   1-2. enum_query usage
-   1-3. is_from_user_e164 usage
+   1-2. Setting tel_uri_params module parameter
+   1-3. enum_query usage
+   1-4. is_from_user_e164 usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -34,7 +38,7 @@ Chapter 1. User's Guide
 1.1. Overview
 
    Enum module implements enum_query function that makes an enum
-   query based on the user part of the current request URI. The
+   query based on the user part of the current Request-URI. The
    function assumes that the user part consists of an
    international phone number of the form +decimal-digits, where
    the number of digits is at least 2 and at most 15. Out of this
@@ -44,32 +48,29 @@ Chapter 1. User's Guide
    is +35831234567, the domain name will be
    "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.".
 
-   After forming the name, enum_queryenum_query queries from DNS
-   its NAPTR records. From the possible response the current
-   version of enum_query chooses the FIRST record, whose flags
-   field has string value "u" and whose services field has string
-   value "e2u+[service:]sip" (case is ignored in both cases).
-   "service" is given to enum_query as a parameter. If its value
-   is "", then "e2u+sip" is looked for. If no such record is
-   found, enum_query returns -1.
+   After forming the domain name, enum_query queries DNS for its
+   NAPTR records. From the possible response enum_query chooses
+   those records, whose flags field has string value "u", and
+   whose services field has string value "e2u+[service:]sip"
+   (case is ignored in both cases), and whose regexp field is of
+   the form !pattern!replacement!.
 
-   If such a record is found, enum_query checks if its regexp
-   field is of the form !pattern!replacement!. If yes, enum_query
-   replaces the current Request-URI with replacement, which it
-   assumes to contain a SIP or SIPS type URI, and returns value
-   1.
+   Then enum_query sorts the chosen NAPTR records based on their
+   <order, preference>. After sorting, enum_query replaces the
+   current Request URI by applying regexp of the most preferred
+   NAPTR record its user part and appends to the request new
+   branches by applying regexp of each remaining NAPTR record to
+   the user part of the current Request URI. If a new URI is a
+   tel URI, enum_query appends to it as tel URI parameters the
+   value of tel_uri_params module parameter. Finally, enum_query
+   associates a q value with each new URI based on the <order,
+   preference> of the corresponding NAPTR record.
 
-   If the regexp field is not of the form !pattern!replacement!,
-   enum_query returns -1.
+   Enum query returns 1 if the current Request URI was replaced
+   and -1 if not.
 
-   In addition to enum_query, enum module implements
-   is_from_user_e164 function that checks if the user part of
-   from URI is an E164 number.
-
-   TODO: In enum_query, proper implementation of the NAPTR record
-   selection algorithm could be implemented by taking into
-   account the order and preference fields (see
-   draft-ietf-sipping-e164-02).
+   Enum module also implements is_from_user_e164 function that
+   checks if the user part of from URI is an E164 number.
      _________________________________________________________
 
 1.2. Dependencies
@@ -85,7 +86,8 @@ Chapter 1. User's Guide
 1.3.1. domain_suffix (string)
 
    The domain suffix to be added to the domain name obtained from
-   the digits of an E164 number.
+   the digits of an E164 number. Can be overridden by a parameter
+   to enum_query.
 
    Default value is "e164.arpa."
 
@@ -93,25 +95,40 @@ Chapter 1. User's Guide
 modparam("enum", "domain_suffix", "e1234.arpa.")
      _________________________________________________________
 
+1.3.2. tel_uri_params (string)
+
+   A string whose contents is appended to each new tel URI in the
+   request as tel URI parameters.
+
+   Note
+
+   Currently SER does not support tel URIs. This means that at
+   present tel_uri_params is appended as URI parameters to every
+   URI.
+
+   Default value is ""
+
+   Example 1-2. Setting tel_uri_params module parameter
+modparam("enum", "tel_uri_params", ";npdi")
+     _________________________________________________________
+
 1.4. Exported Functions
 
-1.4.1. enum_query(service)
+1.4.1. enum_query(),enum_query("suffix"), enum_query("suffix",
+"service")
 
-   Replaces the current Request-URI with the result of a
-   successful enum query on the user part of the current
-   Request-URI, which is assumed to be of the form
-   +up-to-15-decimal-digits. An NAPTR record whose flags field
-   has string value "u" and whose services field has string value
-   "e2u+service:sip" or "e2u+sip" (if service string == "") is
-   looked for. Returns -1 if enum_query fails and 1 otherwise.
+   The function performs an enum query and rewrites the
+   Request-URI with the result of the query. See Section 1.1> for
+   more information.
 
    Meaning of the parameters is as follows:
 
-     * service - service string to be used in the service field.
+     * suffix - Suffix to be appended to the domain name.
+     * service - Service string to be used in the service field.
 
-   Example 1-2. enum_query usage
+   Example 1-3. enum_query usage
 ...
-enum_query("");
+enum_query("freenum.org.");
 ...
      _________________________________________________________
 
@@ -120,7 +137,7 @@ enum_query("");
    Checks if the user part of from URI an E164 number of the form
    +[0-9]{2,15}. Returns 1 if yes and -1 if not.
 
-   Example 1-3. is_from_user_e164 usage
+   Example 1-4. is_from_user_e164 usage
 ...
 if (is_from_user_e164()) {
     ....
