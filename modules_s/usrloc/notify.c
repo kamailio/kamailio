@@ -88,6 +88,8 @@ int register_watcher(str* _d, str* _a, notcb_t _c, void* _data)
 	}
 
 	unlock_udomain(d);
+
+	return 0;
 }
 
 
@@ -125,4 +127,6 @@ int post_script(struct sip_msg* _m, void* param)
 		notify_watchers(notify_record);
 		notify_record = 0;
 	}
+
+	return 0;
 }
