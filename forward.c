@@ -42,6 +42,7 @@
  *  2003-04-12  update_sock_struct_form via uses also FL_FORCE_RPORT for
  *               local replies (andrei)
  *  2003-08-21  check_self properly handles ipv6 addresses & refs   (andrei)
+ *  2003-10-21  check_self updated to handle proto (andrei)
  */
 
 
@@ -218,17 +219,19 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 
 
 
-/* checks if the host:port is one of the address we listen on;
+/* checks if the proto: host:port is one of the address we listen on;
  * if port==0, the  port number is ignored
+ * if proto==0 (PROTO_NONE) the protocol is ignored
  * returns 1 if true, 0 if false, -1 on error
  * WARNING: uses str2ip6 so it will overwrite any previous
  *  unsaved result of this function (static buffer)
  */
-int check_self(str* host, unsigned short port)
+int check_self(str* host, unsigned short port, unsigned short proto)
 {
 	int r;
 	char* hname;
 	int h_len;
+	struct socket_info* si;
 #ifdef USE_IPV6
 	struct ip_addr* ip6;
 #endif
@@ -242,22 +245,39 @@ int check_self(str* host, unsigned short port)
 		h_len-=2;
 	}
 #endif
+	/* get teh proper sock list */
+	switch(proto){
+		case PROTO_NONE: /* we'll use udp and not all the lists FIXME: */
+		case PROTO_UDP:
+			si=sock_info;
+			break;
+#ifdef USE_TCP
+		case PROTO_TCP:
+			si=tcp_info;
+			break;
+#endif
+#ifdef USE_TLS
+		case PROTO_TLS:
+			si=tls_info;
+			break;
+#endif
+		default:
+			/* unknown proto */
+			LOG(L_WARN, "WARNING: check_self: unknown proto %d\n", proto);
+			return 0; /* false */
+	}
 	for (r=0; r<sock_no; r++){
 		DBG("check_self - checking if host==us: %d==%d && "
 				" [%.*s] == [%.*s]\n", 
 					h_len,
-					sock_info[r].name.len,
+					si[r].name.len,
 					h_len, hname,
-					sock_info[r].name.len, sock_info[r].name.s
+					si[r].name.len, si[r].name.s
 			);
 		if (port) {
 			DBG("check_self - checking if port %d matches port %d\n", 
-					sock_info[r].port_no, port);
-#ifdef USE_TLS
-			if  ((sock_info[r].port_no!=port) && (tls_info[r].port_no!=port)) {
-#else
-			if (sock_info[r].port_no!=port) {
-#endif
+					si[r].port_no, port);
+			if (si[r].port_no!=port) {
 				continue;
 			}
 		}
@@ -290,7 +310,7 @@ int check_self(str* host, unsigned short port)
 	}
 	if (r==sock_no){
 		/* try to look into the aliases*/
-		if (grep_aliases(hname, h_len, port)==0){
+		if (grep_aliases(hname, h_len, port, proto)==0){
 			DBG("check_self: host != me\n");
 			return 0;
 		}
@@ -487,7 +507,8 @@ int forward_reply(struct sip_msg* msg)
 	/*check if first via host = us */
 	if (check_via){
 		if (check_self(&msg->via1->host,
-					msg->via1->port?msg->via1->port:SIP_PORT)!=1){
+					msg->via1->port?msg->via1->port:SIP_PORT,
+					msg->via1->proto)!=1){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
 					" %.*s:%d\n", msg->via1->host.len, msg->via1->host.s,
 									msg->via1->port);

@@ -1601,7 +1601,7 @@ try_again:
 		/* check if we got the official name */
 		if (strcasecmp(he->h_name, sock_info[r].name.s)!=0){
 			if (add_alias(sock_info[r].name.s, sock_info[r].name.len,
-							sock_info[r].port_no)<0){
+							sock_info[r].port_no, 0)<0){
 				LOG(L_ERR, "ERROR: main: add_alias failed\n");
 			}
 			/* change the oficial name */
@@ -1616,7 +1616,7 @@ try_again:
 		}
 		/* add the aliases*/
 		for(h=he->h_aliases; h && *h; h++)
-			if (add_alias(*h, strlen(*h), sock_info[r].port_no)<0){
+			if (add_alias(*h, strlen(*h), sock_info[r].port_no, 0)<0){
 				LOG(L_ERR, "ERROR: main: add_alias failed\n");
 			}
 		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
@@ -1643,11 +1643,11 @@ try_again:
 				}else{
 					/* add the aliases*/
 					if (add_alias(he->h_name, strlen(he->h_name),
-									sock_info[r].port_no)<0){
+									sock_info[r].port_no, 0)<0){
 						LOG(L_ERR, "ERROR: main: add_alias failed\n");
 					}
 					for(h=he->h_aliases; h && *h; h++)
-						if (add_alias(*h,strlen(*h),sock_info[r].port_no)<0){
+						if (add_alias(*h,strlen(*h),sock_info[r].port_no,0)<0){
 							LOG(L_ERR, "ERROR: main: add_alias failed\n");
 						}
 				}
@@ -1680,7 +1680,7 @@ try_again:
 								 sock_info[r].name.len)!=0))
 					)
 					add_alias(sock_info[t].name.s, sock_info[t].name.len,
-								sock_info[t].port_no);
+								sock_info[t].port_no, 0);
 						
 				/* free space*/
 				pkg_free(sock_info[t].name.s);

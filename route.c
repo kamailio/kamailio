@@ -376,7 +376,7 @@ inline static int check_self_op(int op, str* s, unsigned short p)
 {
 	int ret;
 	
-	ret=check_self(s, p);
+	ret=check_self(s, p, 0);
 	switch(op){
 		case EQUAL_OP:
 			break;

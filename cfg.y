@@ -551,7 +551,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| ALIAS EQUAL  id_lst { 
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
 								add_alias(lst_tmp->s, strlen(lst_tmp->s), 
-											lst_tmp->port);
+											lst_tmp->port, lst_tmp->proto);
 							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 		| ADVERTISED_ADDRESS EQUAL listen_id {

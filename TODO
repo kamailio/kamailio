@@ -2,6 +2,9 @@ $Id$
 
 ( - todo, x - done)
 
+- fix aliases for tls_port (add_them?)
+- fix check_sel_op -- add proto for uri proto checks
+
 - alias support fot tcp/tls port numbers
 - warning builder set_advertised address support
 - grep parse_uri & replace with parse_sip_msg_uri (e.g do_action!)
