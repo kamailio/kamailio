@@ -97,6 +97,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_AUTHORIZATION:
+			free_credentials((auth_body_t**)(&(hf->parsed)));
 			break;
 
 		case HDR_EXPIRES:
