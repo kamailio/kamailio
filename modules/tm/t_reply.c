@@ -1171,18 +1171,18 @@ int reply_received( struct sip_msg  *p_msg )
            is attempted to establish a TCP connection to a fail-over dst
         */
 	if (t->is_invite) {
-		if (t->local && msg_status >= 200) {
+		if (msg_status >= 300) {
+			ack = build_ack(p_msg, t, branch, &ack_len);
+			if (ack) {
+				SEND_PR_BUFFER(&uac->request, ack, ack_len);
+				shm_free(ack);
+			} 
+		} else if (t->local && msg_status >= 200) {
 			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
 			if (ack) {
 				if (send_local_ack(&next_hop, ack, ack_len) < 0) {
 					LOG(L_ERR, "Error while seding local ACK\n");
 				}
-				shm_free(ack);
-			}
-		} else if (msg_status >= 300) {
-			ack = build_ack(p_msg, t, branch, &ack_len);
-			if (ack) {
-				SEND_PR_BUFFER(&uac->request, ack, ack_len);
 				shm_free(ack);
 			}
 		}
