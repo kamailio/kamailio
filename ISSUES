@@ -9,6 +9,15 @@ beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
 
 ---------------------------------------------------------------
+Desc: memory leaks occurs if SIP requests are processed in which
+      a Via header field occurs in end of header and includes
+      a parameter
+Ser version: 0.8.10
+Reason: parameter fragment is not linked to a list when EoH is
+        encountered
+Patch: http://www.iptel.org/ser/issues/via_ml_0810.patch
+CVS Status: fixed
+---------------------------------------------------------------
 Desc: ser segfaults on receipt of some messages (occurs
       rather rarely with a very high number of messages, 
       typically during stress tests)
