@@ -108,6 +108,10 @@
  * 2004-03-22	Fix assignment of rtpproxy_retr and rtpproxy_tout module
  *		parameters.
  *
+ * 2004-03-22	Fix get_body position (should be called before get_callid)
+ * 				(andrei)
+ * 
+ *
  */
 
 #include "nhelpr_funcs.h"
@@ -409,6 +413,8 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 
 /*
  * Extract tag from To header field of a response
+ * assumes the to header is already parsed, so
+ * make sure it really is before calling this function
  */
 static inline int
 get_to_tag(struct sip_msg* _m, str* _tag)
@@ -454,6 +460,9 @@ get_from_tag(struct sip_msg* _m, str* _tag)
 
 /*
  * Extract Call-ID value
+ * assumes the callid header is already parsed
+ * (so make sure it is, before calling this function or
+ *  it might fail even if the message _has_ a callid)
  */
 static inline int
 get_callid(struct sip_msg* _m, str* _cid)
@@ -1261,6 +1270,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	} else {
 		return -1;
 	}
+	/* extract_body will also parse all the headers in the message as
+	 * a side effect => don't move get_callid/get_to_tag in front of it
+	 * -- andrei */
+	if (extract_body(msg, &body) == -1) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract body "
+		    "from the message\n");
+		return -1;
+	}
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get Call-Id field\n");
 		return -1;
@@ -1271,11 +1288,6 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get From tag\n");
-		return -1;
-	}
-	if (extract_body(msg, &body) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract body "
-		    "from the message\n");
 		return -1;
 	}
 	if (flookup != 0) {

@@ -181,7 +181,7 @@ int extract_body(struct sip_msg *msg, str *body )
 		goto error;
 	}
 	
-	DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);
+	/*DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);*/
 
 	return 1;
 error:
