@@ -165,6 +165,11 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 						len+=ROUND4(sizeof(struct via_param ));
 				}
 				break;
+			case HDR_PROXYAUTH:
+				/* we frequently parse this HF but don't use it in TM --
+				   just keep silent about it
+				*/
+				break;
 			default:
 				if (hdr->parsed) {
 					LOG(L_WARN, "WARNING: sip_msg_cloner: "
