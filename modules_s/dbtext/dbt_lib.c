@@ -259,8 +259,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	lock_get(&_dc->sem);
 	if(!_dc->dbp)
 	{
-		if(_dc->sem)
-			lock_release(&_dc->sem);
+		lock_release(&_dc->sem);
 		return NULL;
 	}
 	
@@ -326,8 +325,7 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 	lock_get(&_dc->sem);
 	if(!_dc->dbp)
 	{
-		if(_dc->sem)
-			lock_release(&_dc->sem);
+		lock_release(&_dc->sem);
 		return -1;
 	}
 
