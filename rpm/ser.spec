@@ -34,6 +34,9 @@ Module, Registrar and User Location.
 
 %build
 make all
+cd utils/gen_ha1
+make
+
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -49,9 +52,24 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
 	     man-dir=""
 
-mkdir -p $RPM_BUILD_ROOT/etc/rc.d/init.d
+mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init \
-              $RPM_BUILD_ROOT/etc/rc.d/init.d/ser
+              $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/ser
+
+mkdir -p $RPM_BUILD_ROOT/%{_bindir}
+
+install -m755 utils/gen_ha1/gen_ha1 \
+	      $RPM_BUILD_ROOT/%{_bindir}/gen_ha1
+
+install -m755 scripts/harv_ser.sh \
+	      $RPM_BUILD_ROOT/%{_sbindir}/harv_ser.sh
+
+install -m755 scripts/sc \
+	      $RPM_BUILD_ROOT/%{_sbindir}/serctl
+
+install -m755 scripts/ser_mysql.sh \
+	      $RPM_BUILD_ROOT/%{_sbindir}/ser_mysql.sh
+
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
@@ -79,12 +97,16 @@ fi
 %{_libdir}/ser/modules/*
 
 %{_sbindir}/*
+%{_bindir}/*
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 
 
 %changelog
+* Mon Sep 02 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- gen_ha1 utility added, scripts added.
+
 * Tue Aug 28 2002 Jan Janak <J.Janak@sh.cvut.cz>
 - Finished the first version of the spec file.
 
