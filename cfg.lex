@@ -43,6 +43,7 @@
  *  2003-10-10  replaced len_gt w/ msg:len (andrei)
  *  2003-10-13  added fifo_dir (andrei)
  *  2003-10-28  added tcp_accept_aliases (andrei)
+ *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
  */
 
 
@@ -179,6 +180,8 @@ MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
 TCP_ACCEPT_ALIASES	"tcp_accept_aliases"
+TCP_SEND_TIMEOUT	"tcp_send_timeout"
+TCP_CONNECT_TIMEOUT	"tcp_connect_timeout"
 DISABLE_TLS		"disable_tls"
 TLSLOG			"tlslog"|"tls_log"
 TLS_PORT_NO		"tls_port_no"
@@ -188,6 +191,8 @@ TLS_REQUIRE_CERTIFICATE "tls_require_certificate"
 TLS_CERTIFICATE	"tls_certificate"
 TLS_PRIVATE_KEY "tls_private_key"
 TLS_CA_LIST		"tls_ca_list"
+TLS_HANDSHAKE_TIMEOUT	"tls_handshake_timeout"
+TLS_SEND_TIMEOUT	"tls_send_timeout"
 ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 
@@ -328,6 +333,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
 <INITIAL>{TCP_ACCEPT_ALIASES}	{ count(); yylval.strval=yytext;
 									return TCP_ACCEPT_ALIASES; }
+<INITIAL>{TCP_SEND_TIMEOUT}		{ count(); yylval.strval=yytext;
+									return TCP_SEND_TIMEOUT; }
+<INITIAL>{TCP_CONNECT_TIMEOUT}		{ count(); yylval.strval=yytext;
+									return TCP_CONNECT_TIMEOUT; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
@@ -341,6 +350,10 @@ EAT_ABLE	[\ \t\b\r]
 										return TLS_PRIVATE_KEY; }
 <INITIAL>{TLS_CA_LIST}	{ count(); yylval.strval=yytext; 
 										return TLS_CA_LIST; }
+<INITIAL>{TLS_HANDSHAKE_TIMEOUT}	{ count(); yylval.strval=yytext;
+										return TLS_HANDSHAKE_TIMEOUT; }
+<INITIAL>{TLS_SEND_TIMEOUT}	{ count(); yylval.strval=yytext;
+										return TLS_SEND_TIMEOUT; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
 <INITIAL>{FIFO_DIR}	{ count(); yylval.strval=yytext; return FIFO_DIR; }
 <INITIAL>{FIFO_DB_URL}	{ count(); yylval.strval=yytext; return FIFO_DB_URL; }

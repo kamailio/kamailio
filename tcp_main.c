@@ -76,6 +76,7 @@
 #include <netdb.h>
 
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <errno.h>
 #include <string.h>
@@ -116,6 +117,8 @@ struct tcp_child{
 
 
 int tcp_accept_aliases=0; /* by default don't accept aliases */
+int tcp_connect_timeout=DEFAULT_TCP_CONNECT_TIMEOUT;
+int tcp_send_timeout=DEFAULT_TCP_SEND_TIMEOUT;
 
 /* connection hash table (after ip&port) , includes also aliases */
 struct tcp_conn_alias** tcpconn_aliases_hash=0;
@@ -130,6 +133,179 @@ static int* connection_id=0; /*  unique for each connection, used for
 int unix_tcp_sock;
 
 int tcp_proto_no=-1; /* tcp protocol number as returned by getprotobyname */
+
+
+
+/* set all socket/fd options:  disable nagle, tos lowdelay, non-blocking
+ * return -1 on error */
+static int init_sock_opt(int s)
+{
+	int flags;
+	int optval;
+	
+#ifdef DISABLE_NAGLE
+	flags=1;
+	if ( (tcp_proto_no!=-1) && (setsockopt(s, tcp_proto_no , TCP_NODELAY,
+					&flags, sizeof(flags))<0) ){
+		LOG(L_WARN, "WARNING: init_sock_opt: could not disable Nagle: %s\n",
+				strerror(errno));
+	}
+#endif
+	/* tos*/
+	optval=IPTOS_LOWDELAY;
+	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
+		LOG(L_WARN, "WARNING: init_sock_opt: setsockopt tos: %s\n",
+				strerror(errno));
+		/* continue since this is not critical */
+	}
+	/* non-blocking */
+	flags=fcntl(s, F_GETFL);
+	if (flags==-1){
+		LOG(L_ERR, "ERROR: init_sock_opt: fnctl failed: (%d) %s\n",
+				errno, strerror(errno));
+		goto error;
+	}
+	if (fcntl(s, F_SETFL, flags|O_NONBLOCK)==-1){
+		LOG(L_ERR, "ERROR: init_sock_opt: fcntl: set non-blocking failed:"
+				" (%d) %s\n", errno, strerror(errno));
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
+static int tcp_blocking_connect(int fd, const struct sockaddr *servaddr,
+								socklen_t addrlen)
+{
+	int n;
+	fd_set sel_set;
+	struct timeval timeout;
+	int ticks;
+	int err;
+	int err_len;
+	
+again:
+	n=connect(fd, servaddr, addrlen);
+	if (n==-1){
+		if (errno==EINTR) goto again;
+		if (errno!=EINPROGRESS && errno!=EALREADY){
+			LOG(L_ERR, "ERROR: tcp_blocking_connect: (%d) %s\n",
+					errno, strerror(errno));
+			goto error;
+		}
+	}else goto end;
+	
+	while(1){
+		FD_ZERO(&sel_set);
+		FD_SET(fd, &sel_set);
+		timeout.tv_sec=tcp_connect_timeout;
+		timeout.tv_usec=0;
+		ticks=get_ticks();
+		n=select(fd+1, 0, &sel_set, 0, &timeout);
+		if (n<0){
+			if (errno==EINTR) continue;
+			LOG(L_ERR, "ERROR: tcp_blocking_connect: select failed: (%d) %s\n",
+					errno, strerror(errno));
+			goto error;
+		}else if (n==0){
+			/* timeout */
+			if (get_ticks()-ticks>=tcp_connect_timeout){
+				LOG(L_ERR, "ERROR: tcp_blocking_connect: timeout (%d)\n",
+						tcp_connect_timeout);
+				goto error;
+			}
+			continue;
+		}
+		if (FD_ISSET(fd, &sel_set)){
+			err_len=sizeof(err);
+			getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &err_len);
+			if (err==0) goto end;
+			if (err!=EINPROGRESS && err!=EALREADY){
+				LOG(L_ERR, "ERROR: tcp_blocking_connect: SO_ERROR (%d) %s\n",
+						err, strerror(err));
+				goto error;
+			}
+		}
+	}
+error:
+	return -1;
+end:
+	return 0;
+}
+
+
+
+/* blocking write even on non-blocking sockets 
+ * if TCP_TIMEOUT will return with error */
+static int tcp_blocking_write(struct tcp_connection* c, int fd, char* buf,
+								unsigned int len)
+{
+	int n;
+	fd_set sel_set;
+	struct timeval timeout;
+	int ticks;
+	int initial_len;
+	
+	initial_len=len;
+again:
+	
+	n=send(fd, buf, len,
+#ifdef HAVE_MSG_NOSIGNAL
+			MSG_NOSIGNAL
+#else
+			0
+#endif
+		);
+	if (n<0){
+		if (errno==EINTR)	goto again;
+		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
+			LOG(L_ERR, "tcp_blocking_write: failed to send: (%d) %s\n",
+					errno, strerror(errno));
+			goto error;
+		}
+	}else if (n<len){
+		/* partial write */
+		buf+=n;
+		len-=n;
+	}else{
+		/* success: full write */
+		goto end;
+	}
+	while(1){
+		FD_ZERO(&sel_set);
+		FD_SET(fd, &sel_set);
+		timeout.tv_sec=tcp_send_timeout;
+		timeout.tv_usec=0;
+		ticks=get_ticks();
+		n=select(fd+1, 0, &sel_set, 0, &timeout);
+		if (n<0){
+			if (errno==EINTR) continue; /* signal, ignore */
+			LOG(L_ERR, "ERROR: tcp_blocking_write: select failed: "
+					" (%d) %s\n", errno, strerror(errno));
+			goto error;
+		}else if (n==0){
+			/* timeout */
+			if (get_ticks()-ticks>=tcp_send_timeout){
+				LOG(L_ERR, "ERROR: tcp_blocking_write: send timeout (%d)\n",
+						tcp_send_timeout);
+				goto error;
+			}
+			continue;
+		}
+		if (FD_ISSET(fd, &sel_set)){
+			/* we can write again */
+			goto again;
+		}
+	}
+error:
+		return -1;
+end:
+		return initial_len;
+}
+
 
 
 struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
@@ -213,11 +389,7 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 	struct socket_info* si;
 	union sockaddr_union my_name;
 	socklen_t my_name_len;
-	int optval;
 	struct tcp_connection* con;
-#ifdef DISABLE_NAGLE
-	int flag;
-#endif
 
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if (s==-1){
@@ -225,25 +397,12 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 				errno, strerror(errno));
 		goto error;
 	}
-#ifdef DISABLE_NAGLE
-	flag=1;
-	if ( (tcp_proto_no!=-1) && (setsockopt(s, tcp_proto_no , TCP_NODELAY,
-					&flag, sizeof(flag))<0) ){
-		LOG(L_ERR, "ERROR: tcp_connect: could not disable Nagle: %s\n",
-				strerror(errno));
+	if (init_sock_opt(s)<0){
+		LOG(L_ERR, "ERROR: tcpconn_connect: init_sock_opt failed\n");
+		goto error;
 	}
-#endif
-	/* tos*/
-	optval=IPTOS_LOWDELAY;
-	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_WARN, "WARNING: tcpconn_connect: setsockopt tos: %s\n",
-				strerror(errno));
-		/* continue since this is not critical */
-	}
-
-	if (connect(s, &server->s, sockaddru_len(*server))<0){
-		LOG(L_ERR, "ERROR: tcpconn_connect: connect: (%d) %s\n",
-				errno, strerror(errno));
+	if (tcp_blocking_connect(s, &server->s, sockaddru_len(*server))<0){
+		LOG(L_ERR, "ERROR: tcpconn_connect: tcp_blocking_connect failed\n");
 		goto error;
 	}
 	my_name_len=sizeof(my_name);
@@ -483,139 +642,6 @@ void tcpconn_put(struct tcp_connection* c)
 }
 
 
-static int tcp_blocking_connect(int fd, const struct sockaddr *servaddr,
-								socklen_t addrlen)
-{
-	int n;
-	fd_set sel_set;
-	struct timeval timeout;
-	int ticks;
-	int err;
-	int err_len;
-	
-again:
-	n=connect(fd, servaddr, addrlen);
-	if (n==-1){
-		if (errno==EINTR) goto again;
-		if (errno!=EINPROGRESS && errno!=EALREADY){
-			LOG(L_ERR, "ERROR: tcp_blocking_connect: (%d) %s\n",
-					errno, strerror(errno));
-			goto error;
-		}
-	}else goto end;
-	
-	while(1){
-		FD_ZERO(&sel_set);
-		FD_SET(fd, &sel_set);
-		timeout.tv_sec=TCP_CONNECT_TIMEOUT;
-		timeout.tv_usec=0;
-		ticks=get_ticks();
-		n=select(fd+1, 0, &sel_set, 0, &timeout);
-		if (n<0){
-			if (errno==EINTR) continue;
-			LOG(L_ERR, "ERROR: tcp_blocking_connect: select failed: (%d) %s\n",
-					errno, strerror(errno));
-			goto error;
-		}else if (n==0){
-			/* timeout */
-			if (get_ticks()-ticks>=TCP_CONNECT_TIMEOUT){
-				LOG(L_ERR, "ERROR: tcp_blocking_connect: send timeout\n");
-				goto error;
-			}
-			continue;
-		}
-		if (FD_ISSET(fd, &sel_set)){
-			err_len=sizeof(err);
-			getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &err_len);
-			if (err==0) goto end;
-			if (err!=EINPROGRESS && err!=EALREADY){
-				LOG(L_ERR, "ERROR: tcp_blocking_connect: SO_ERROR (%d) %s\n",
-						err, strerror(err));
-				goto error;
-			}
-		}
-	}
-error:
-	return -1;
-end:
-	return 0;
-}
-
-
-
-/* blocking write even on non-blocking sockets 
- * if TCP_TIMEOUT will return with error */
-static int tcp_blocking_write(struct tcp_connection* c, int fd, char* buf,
-								unsigned int len)
-{
-	int n;
-	fd_set sel_set;
-	struct timeval timeout;
-	int ticks;
-	int initial_len;
-	
-	initial_len=len;
-again:
-	/* try first without select */
-	if (c->state==S_CONN_CONNECT){
-		/* connect not finished,  try again ? */
-		LOG(L_CRIT, "BUG: tcp_blocking_write: connect not implemented yet\n");
-		goto error;
-	}
-	n=send(fd, buf, len,
-#ifdef HAVE_MSG_NOSIGNAL
-			MSG_NOSIGNAL
-#else
-			0
-#endif
-		);
-	if (n<0){
-		if (errno==EINTR)	goto again;
-		else if (errno!=EAGAIN && errno!=EWOULDBLOCK){
-			LOG(L_ERR, "tcp_blocking_write: failed to send: (%d) %s\n",
-					errno, strerror(errno));
-			goto error;
-		}
-	}else if (n<len){
-		/* partial write */
-		buf+=n;
-		len-=n;
-	}else{
-		/* success: full write */
-		goto end;
-	}
-	while(1){
-		FD_ZERO(&sel_set);
-		FD_SET(fd, &sel_set);
-		timeout.tv_sec=TCP_SEND_TIMEOUT;
-		timeout.tv_usec=0;
-		ticks=get_ticks();
-		n=select(fd+1, 0, &sel_set, 0, &timeout);
-		if (n<0){
-			if (errno==EINTR) continue; /* signal, ignore */
-			LOG(L_ERR, "ERROR: tcp_blocking_write: select failed: "
-					" (%d) %s\n", errno, strerror(errno));
-			goto error;
-		}else if (n==0){
-			/* timeout */
-			if (get_ticks()-ticks>=TCP_SEND_TIMEOUT){
-				LOG(L_ERR, "ERROR: tcp_blocking_write: send timeout\n");
-				goto error;
-			}
-			continue;
-		}
-		if (FD_ISSET(fd, &sel_set)){
-			/* we can write again */
-			goto again;
-		}
-	}
-error:
-		return -1;
-end:
-		return initial_len;
-}
-
-
 
 /* finds a tcpconn & sends on it */
 int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
@@ -730,21 +756,12 @@ send_it:
 		n=tls_blocking_write(c, fd, buf, len);
 	else
 #endif
-		n=send(fd, buf, len,
-#ifdef HAVE_MSG_NOSIGNAL
-			MSG_NOSIGNAL
-#else
-			0
-#endif
-			);
+		n=tcp_blocking_write(c, fd, buf, len);
 	lock_release(&c->write_lock);
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
 	if (n<0){
-		if (errno==EINTR) goto send_it; /* interrupted write, try again*/
-										/* keep the lock or lock/unlock again?*/
-		LOG(L_ERR, "ERROR: tcpsend: failed to send, n=%d: %s (%d)\n",
-				n, strerror(errno), errno);
+		LOG(L_ERR, "ERROR: tcp_send: failed to send\n");
 		/* error on the connection , mark it as bad and set 0 timeout */
 		c->state=S_CONN_BAD;
 		c->timeout=0;
@@ -957,6 +974,11 @@ static inline void handle_new_connect(struct socket_info* si,
 		if (new_sock==-1){
 			LOG(L_ERR,  "WARNING: tcp_main_loop: error while accepting"
 					" connection(%d): %s\n", errno, strerror(errno));
+			return;
+		}
+		if (init_sock_opt(new_sock)<0){
+			LOG(L_ERR, "ERROR: tcp_main_loop: init_sock_opt failed\n");
+			close(new_sock);
 			return;
 		}
 		

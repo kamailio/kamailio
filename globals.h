@@ -71,6 +71,8 @@ extern int children_no;
 extern int tcp_children_no;
 extern int tcp_disable;
 extern int tcp_accept_aliases;
+extern int tcp_connect_timeout;
+extern int tcp_send_timeout;
 #endif
 #ifdef USE_TLS
 extern int tls_disable;

@@ -49,6 +49,7 @@
  * 2003-10-13  added FIFO_DIR & proto:host:port listen/alias support (andrei)
  * 2003-10-24  converted to the new socket_info lists (andrei)
  * 2003-10-28  added tcp_accept_aliases (andrei)
+ * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
  */
 
 
@@ -206,10 +207,14 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token DISABLE_TCP
 %token TCP_ACCEPT_ALIASES
 %token TCP_CHILDREN
+%token TCP_CONNECT_TIMEOUT
+%token TCP_SEND_TIMEOUT
 %token DISABLE_TLS
 %token TLSLOG
 %token TLS_PORT_NO
 %token TLS_METHOD
+%token TLS_HANDSHAKE_TIMEOUT
+%token TLS_SEND_TIMEOUT
 %token SSLv23
 %token SSLv2
 %token SSLv3
@@ -428,6 +433,22 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#endif
 									}
 		| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
+		| TCP_CONNECT_TIMEOUT EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_connect_timeout=$3;
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_CONNECT_TIMEOUT EQUAL error { yyerror("number expected"); }
+		| TCP_SEND_TIMEOUT EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_send_timeout=$3;
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 		| DISABLE_TLS EQUAL NUMBER {
 									#ifdef USE_TLS
 										tls_disable=$3;
@@ -530,6 +551,22 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#endif
 									}
 		| TLS_CA_LIST EQUAL error { yyerror("string value expected"); }
+		| TLS_HANDSHAKE_TIMEOUT EQUAL NUMBER {
+									#ifdef USE_TLS
+										tls_handshake_timeout=$3;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_HANDSHAKE_TIMEOUT EQUAL error { yyerror("number expected"); }
+		| TLS_SEND_TIMEOUT EQUAL NUMBER {
+									#ifdef USE_TLS
+										tls_send_timeout=$3;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
 		| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 		| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 		| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

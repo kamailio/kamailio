@@ -3,16 +3,12 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
-0.8.12 changes
+0.8.13 changes
 
 new modules:
  - answer server options requests [options]
-texops:
- - subst('s/re/repl/flags') support
 core:
- - added switch to check the config file (-c)
  - changes: 
-       removed len_gt() and replaced with if (msg:len op number|max_len)
        protocol and port can be specified in the alias and listen lines, e.g.:
         alias= tcp:foo.bar:* udp:test.bar:5080 foo.com
         listen= eth0   tcp:eth0:5065 udp:127.0.0.1 [3ffe::1]
@@ -20,20 +16,11 @@ core:
                               ==, !=, ~= for strings
                               ==, !=, >, <, >=, <= for integers
  - new config variables:
-     advertised_address= ip | string
-       address advertised in via and in the DST_* lumps (e.g RR)
-       This is the default value, if empty (default) the socket
-       address will be used.
-       WARNING: - don't set it unless you know what you are doing
-                 (e.g. nat traversal)
-               - you can set anything here, no check is made
-                (e.g. foo.bar will be accepted even if 
-                 foo.bar doesn't exist)
-    advertised_port= no
-       port advertised in via and in the DST_*lumps (e.g. RR)
-       This is the default value, if empty (default) the socket
-       port will be used.
-       Same warnings as above.
+   tcp_connect_timeout= seconds
+       time before an ongoing connect will be aborted
+   tcp_send_timeout= seconds
+       time after a tcp connection will be closed if it is not available 
+       for writing in this interval (and ser wants to sen something on it)
    tcp_accept_aliases= yes|no
        if a message received over a tcp connection has "alias" in its via
        a new tcp alias port will be created for the connection the message
@@ -43,13 +30,6 @@ core:
         lookups and the need for them is questionable)
        See force_tcp_alias for more details.
  - new script commands:
-    set_advertised_address(ip|string)
-       same as advertised_address but it affects only the current message:
-       Message host/lump address= the set_advertised one if
-       present, else advertised_address else socket address.
-    set_advertised_port(no)
-       same as advertised_port but it affects only the current
-       message; see set_advertised_address & s/address/port/g
    force_tcp_alias()
    force_tcp_alias(port)
        adds a tcp port alias for the current connection (if tcp).
@@ -68,6 +48,80 @@ core:
        (set it to you desired value + 1; 1 is needed for the real port).
 
 
+
+***********************************************
+* Changes/fixes introduced in 0.8.12
+***********************************************
++--------------------------------------------------------+
+| WARNING: if you want to use a 0.8.11 config script     |
+| with 0.8.12, replace if ( len_gt(number) ) with:       |
+|                      if ( msg:len > bumber )           |
++--------------------------------------------------------+
+
+New Features
+============
+
+texops:
+ - subst('s/re/repl/flags') support
+core:
+ - added switch to check the config file (-c)
+ - changes: removed len_gt() and replaced with if (msg:len op number|max_len)
+ - multiple operator support: ==, != for special operations (e.g myself, ip)
+                              ==, !=, ~= for strings
+                              ==, !=, >, <, >=, <= for integers
+ - new config variables:
+     advertised_address= ip | string
+       address advertised in via and in the DST_* lumps (e.g RR)
+       This is the default value, if empty (default) the socket
+       address will be used.
+       WARNING: - don't set it unless you know what you are doing
+                 (e.g. nat traversal)
+               - you can set anything here, no check is made
+                (e.g. foo.bar will be accepted even if 
+                 foo.bar doesn't exist)
+    advertised_port= no
+       port advertised in via and in the DST_*lumps (e.g. RR)
+       This is the default value, if empty (default) the socket
+       port will be used.
+       Same warnings as above.
+ - new script commands:
+    set_advertised_address(ip|string)
+       same as advertised_address but it affects only the current message:
+       Message host/lump address= the set_advertised one if
+       present, else advertised_address else socket address.
+    set_advertised_port(no)
+       same as advertised_port but it affects only the current
+       message; see set_advertised_address & s/address/port/g
+
+usrloc:
+ - usernames are case insensitive
+ 
+registrar:
+ - lookup function succeeds when appending of a branch failed
+
+auth_db:
+ - support for rpid stored in database (thanks to Jakob Schlyter)
+
+Bug fixes
+=========
+- memory leak in digest credentials parser fixed
+- authenticathion ha1 didn't include domain if username was of the form
+  user@domain and calculate_ha1 was set to yes (modules/auth_db)
+- tm reply processing race condition (modules/tm), special thanks go to
+ Dong Liu
+- Many bugs in pa module fixed, works with registrar again.
+ 
+Security updates
+================
+ 
+- fifo processing code will write responses only to other
+ fifos and only if they are not hard-linked, also default
+ ser fifo persmissions were changed to 0600.
+                                                                                
+Performance improvements
+========================
+- tuned internal malloc implementation parameters to better reflect the
+actual workload (malloc is a little bit faster now)
 
 
 
@@ -92,7 +146,7 @@ New features
 	- ENUM support [enum]
 	- presence agent [pa]
 	- dynamic domain management -- allows to manipulate 
-  	  hosting of multiple domains in run-time [module]
+	  hosting of multiple domains in run-time [module]
 	- flat-text-file database support [dbtext]
 	- rich access control lists [permissions]
 - Feature Improvements
