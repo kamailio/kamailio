@@ -204,7 +204,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			}
 			break;
 		case 'r':  /* retry time */
-			foo=str2s(arg+2,arg_end-arg-2,&err);
+			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [r] arg to"
 					" integer!\n");
@@ -213,7 +213,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			mdm->retry = foo;
 			break;
 		case 'l':  /* looping interval */
-			foo=str2s(arg+2,arg_end-arg-2,&err);
+			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [l] arg to"
 					" integer!\n");
@@ -222,7 +222,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			mdm->looping_interval = foo;
 			break;
 		case 'b':  /* baudrate */
-			foo=str2s(arg+2,arg_end-arg-2,&err);
+			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [b] arg to"
 					" integer!\n");
@@ -269,7 +269,7 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 			net->smsc[arg_end-arg-2] = 0;
 			break;
 		case 'm':  /* maximum sms per one call */
-			foo=str2s(arg+2,arg_end-arg-2,&err);
+			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_network_arg: cannot convert [m] arg to"
 					" integer!\n");

@@ -203,7 +203,7 @@ int  relay_report_to_queue(int id, char *phone, int status)
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d confirmed with code %d\n",
 			id, status);
 		goto done;
-	} else if (status<40) {
+	} else if (status<38) {
 		/* provisional report */
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d received prov. report with"
 			" code %d\n",id, status);
@@ -297,6 +297,11 @@ str* get_error_str(int status)
 		case 37: strcat(sms->ascii,"Still trying,error in SME");
 			break;
 		*/
+		case 48:
+			err_str.s =
+			START_ERR_MSG"Delivery is not possible"END_ERR_MSG;
+			err_str.len = 24 + START_ERR_MSG_LEN + END_ERR_MSG_LEN;
+			break;
 		case 64: 
 			err_str.s =
 			START_ERR_MSG"Error, remote procedure error"END_ERR_MSG;

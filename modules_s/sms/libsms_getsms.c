@@ -154,7 +154,7 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 			end=position+7;
 			while (*end<'9' && *end>'0') end++;
 			if (end==position+7) {
-				foo = str2s(position+7,end-position-7,&err);
+				foo = str2s((unsigned char*)position+7,end-position-7,&err);
 				if (!err) {
 					DBG("DEBUG:fetchsms:Found a message at memory %i\n",foo);
 					sim=foo;
@@ -230,7 +230,7 @@ int check_memory(struct modem *mdm, int flag)
 				posi++;
 				if ( (laenge=strcspn(posi,",\r"))!=0 ) {
 					if (flag==USED_MEM ) {
-						foo = str2s(posi,laenge,&err);
+						foo = str2s((unsigned char*)posi,laenge,&err);
 						if (err) {
 							LOG(L_ERR,"ERROR:sms_check_memory: unable to "
 								"convert into integer used_memory from CPMS"
@@ -243,7 +243,7 @@ int check_memory(struct modem *mdm, int flag)
 					}
 					posi+=laenge+1;
 					if ( (laenge=strcspn(posi,",\r"))!=0 ) {
-						foo = str2s(posi,laenge,&err);
+						foo = str2s((unsigned char*)posi,laenge,&err);
 						if (err) {
 							LOG(L_ERR,"ERROR:sms_check_memory: unable to"
 								"convert into integer max_memory from CPMS"

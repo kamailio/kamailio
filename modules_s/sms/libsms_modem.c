@@ -240,9 +240,12 @@ int initmodem(struct modem *mdm)
 	}
 
 	/* added for probing */
+	/*
 	put_command(mdm->fd,"AT+CSMP=49,167,0,241\r",21,answer,
 		sizeof(answer),50,0);
-	put_command(mdm->fd,"AT+CNMI?\r",9,answer,sizeof(answer),50,0);
+	put_command(mdm->fd,"AT+CNMI=0,0,0,0,0\r",18,answer,
+		sizeof(answer),50,0);
+	*/
 
 	return 0;
 error:

@@ -38,6 +38,8 @@
 #include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
 #include "../im/im_funcs.h"
+#include "../tm/t_hooks.h"
+#include "../tm/uac.h"
 #include "sms_funcs.h"
 #include "sms_report.h"
 #include "libsms_modem.h"
@@ -72,8 +74,8 @@ int use_sms_report;
 	"the following message couldn't be sent : "
 #define ERR_MODEM_TEXT_LEN (sizeof(ERR_MODEM_TEXT)-1)
 
-#define SMS_FROM_TAG ";tag=qwer-4321-m9n8-r6y2"
-#define SMS_FROM_TAG_LEN (sizeof(SMS_FROM_TAG)-1)
+#define CONTENT_TYPE_HDR     "Content-Type: text/plain"
+#define CONTENT_TYPE_HDR_LEN (sizeof(CONTENT_TYPE_HDR)-1)
 
 #define append_str(_p,_s,_l) \
 	{memcpy((_p),(_s),(_l));\
@@ -273,17 +275,18 @@ error1:
 
 int send_sip_msg_request(str *to, str *from_user, str *body)
 {
+	str msg_type = { "MESSAGE", 7};
 	str from;
-	str contact;
+	str hdrs;
 	int foo;
 	char *p;
 
-	from.s = contact.s = 0;
-	from.len = contact.len = 0;
+	from.s = hdrs.s = 0;
+	from.len = hdrs.len = 0;
 
 	/* From header */
 	from.len = 6 /*"<sip:+"*/ +  from_user->len/*user*/ + 1/*"@"*/
-		+ domain.len /*host*/ + 1 /*">"*/ + SMS_FROM_TAG_LEN;
+		+ domain.len /*host*/ + 1 /*">"*/ ;
 	from.s = (char*)pkg_malloc(from.len);
 	if (!from.s)
 		goto error;
@@ -293,31 +296,38 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	*(p++)='@';
 	append_str(p,domain.s,domain.len);
 	*(p++)='>';
-	append_str(p,SMS_FROM_TAG,SMS_FROM_TAG_LEN);
 
-	/* Contact header */
+	/* hdrs = Contact header + Content-type */
+	/* length */
+	hdrs.len = CONTENT_TYPE_HDR_LEN + CRLF_LEN;
+	if (use_contact)
+		hdrs.len += 15 /*"Contact: <sip:+"*/ + from_user->len/*user*/ +
+			1/*"@"*/ + domain.len/*host*/ + 1 /*">"*/ + CRLF_LEN;
+	hdrs.s = (char*)pkg_malloc(hdrs.len);
+	if (!hdrs.s)
+		goto error;
+	p=hdrs.s;
+	append_str(p,CONTENT_TYPE_HDR,CONTENT_TYPE_HDR_LEN);
+	append_str(p,CRLF,CRLF_LEN);
 	if (use_contact) {
-		contact.len = 6 /*"<sip:+"*/ + from_user->len/*user*/ + 1/*"@"*/
-			+ domain.len/*host*/ + 1 /*">"*/;
-		contact.s = (char*)pkg_malloc(contact.len);
-		if (!contact.s)
-			goto error;
-		p=contact.s;
-		append_str(p,"<sip:+",6);
+		append_str(p,"Contact: <sip:+",15);
 		append_str(p,from_user->s,from_user->len);
 		*(p++)='@';
 		append_str(p,domain.s,domain.len);
-		*(p++)='>';
+		append_str(p,">"CRLF,1+CRLF_LEN);
 	}
 
-	foo = im_send_message(to, to, &from, &contact, body); /* TM */
+	/** sending SIP MSG using IM - deprecated **/
+	/*foo = im_send_message(to, to, &from, &contact, body); */
+	/** sending with TM **/
+	foo = t_uac( &msg_type, to, &hdrs, body, &from, 0, 0, 0);
 	if (from.s) pkg_free(from.s);
-	if (contact.s) pkg_free(contact.s);
+	if (hdrs.s) pkg_free(hdrs.s);
 	return foo;
 error:
 	LOG(L_ERR,"ERROR:sms_build_and_send_sip: no free pkg memory!\n");
 	if (from.s) pkg_free(from.s);
-	if (contact.s) pkg_free(contact.s);
+	if (hdrs.s) pkg_free(hdrs.s);
 	return -1;
 }
 
@@ -459,7 +469,7 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 			goto error;
 		if (use_sms_report)
 			add_sms_into_report_queue(ret_code,sms_messg,
-				p-use_nice*SMS_EDGE_PART_LEN,len_array[i]);
+				p-use_nice*(nr_chunks>1)*SMS_EDGE_PART_LEN,len_array[i]);
 	}
 
 	sms_messg->ref--;
