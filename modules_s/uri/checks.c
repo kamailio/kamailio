@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Various URI checks and Request URI param manipulation
+ * Various URI checks and Request URI manipulation
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -183,10 +183,10 @@ ok:
 
 
 /* Copy of set_uri from emum module */
-int set_uri(struct sip_msg* _msg, char* uri, int len)
+int rewrite_uri(struct sip_msg* _msg, char* uri, int len)
 {
 	if (len > MAX_URI_SIZE - 1) {
-		LOG(L_ERR, "ERROR: set_uri(): uri is too long\n");
+		LOG(L_ERR, "ERROR: rewrite_uri(): uri is too long\n");
 		return -1;
 	}
 
@@ -199,8 +199,7 @@ int set_uri(struct sip_msg* _msg, char* uri, int len)
 	}
 	_msg->new_uri.s = pkg_malloc(len + 1);
 	if (_msg->new_uri.s == 0) {
-		LOG(L_ERR, "set_uri(): memory allocation failure"
-		    " failure\n");
+		LOG(L_ERR, "rewrite_uri(): Memory allocation failure\n");
 		return -1;
 	}
 	memcpy(_msg->new_uri.s, uri, len);
@@ -249,7 +248,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		memcpy(new_uri.s, cur_uri->s, cur_uri->len);
 		*(new_uri.s + cur_uri->len) = ';';
 		memcpy(new_uri.s + cur_uri->len + 1, param->s, param->len);
-		if (set_uri(_msg, new_uri.s, new_uri.len) == 1) {
+		if (rewrite_uri(_msg, new_uri.s, new_uri.len) == 1) {
 			goto ok;
 		} else {
 			goto nok;
@@ -307,7 +306,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 	at = at + 1;
 	memcpy(at, parsed_uri->headers.s, parsed_uri->headers.len);
 
-	if (set_uri(_msg, new_uri.s, new_uri.len) == 1) {
+	if (rewrite_uri(_msg, new_uri.s, new_uri.len) == 1) {
 		goto ok;
 	}
 
@@ -318,4 +317,63 @@ nok:
 ok:
 	pkg_free(new_uri.s);
 	return 1;
+}
+
+
+/*
+ * Converts Request-URI, if it is tel URI, to SIP URI.  Returns 1, if
+ * conversion succeeded or if no conversion was needed, i.e., Request-URI
+ * was not tel URI.  Returns -1, if conversion failed.
+ */
+int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+	str *ruri, furi;
+	struct sip_uri pfuri;
+	str suri;
+	char* at;
+
+	ruri = GET_RURI(_msg);
+
+	if (ruri->len < 4) return 1;
+
+	if (strncmp(ruri->s, "tel:", 4) != 0) return 1;
+
+	if (parse_from_header(_msg) < 0) {
+		LOG(L_ERR, "tel2sip(): Error while parsing From header\n");
+		return -1;
+	}
+	furi = get_from(_msg)->uri;
+	if (parse_uri(furi.s, furi.len, &pfuri) < 0) {
+		LOG(L_ERR, "tel2sip(): Error while parsing From URI\n");
+		return -1;
+	}
+
+	suri.len = 4 + ruri->len - 4 + 1 + pfuri.host.len + 1 + 10;
+	suri.s = pkg_malloc(suri.len);
+	if (suri.s == 0) {
+		LOG(L_ERR, "tel2sip(): Memory allocation failure\n");
+		return -1;
+	}
+	at = suri.s;
+	memcpy(at, "sip:", 4);
+	at = at + 4;
+	memcpy(at, ruri->s + 4, ruri->len - 4);
+	at = at + ruri->len - 4;
+	*at = '@';
+	at = at + 1;
+	memcpy(at, pfuri.host.s, pfuri.host.len);
+	at = at + pfuri.host.len;
+	*at = ';';
+	at = at + 1;
+	memcpy(at, "user=phone", 10);
+
+	LOG(L_ERR, "tel2sip(): SIP URI is <%.*s>\n", suri.len, suri.s);
+
+	if (rewrite_uri(_msg, suri.s, suri.len) == 1) {
+		pkg_free(suri.s);
+		return 1;
+	} else {
+		pkg_free(suri.s);
+		return -1;
+	}
 }

@@ -28,6 +28,7 @@ Jan Janak
               1.4.2. has_totag()
               1.4.3. uri_param()
               1.4.4. add_uri_param()
+              1.4.5. tel2sip()
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -37,6 +38,7 @@ Jan Janak
    1-2. has_totag usage
    1-3. uri_param usage
    1-4. add_uri_param usage
+   1-5. tel2sip usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -118,6 +120,16 @@ if (uri_param("user", "phone") && uri_param("pstn")) {
 
 add_uri_param("user=phone");
 add_uri_param("npdi");
+
+1.4.5. tel2sip()
+
+    Converts Request-URI, if it is tel URI, to SIP URI.  Returns 1, if
+    conversion succeeded or if no conversion was needed, i.e., Request-URI
+    was not tel URI.  Returns -1, if conversion failed.
+
+    Example 1-5. tel2sip()
+
+tel2sip();
 
      _________________________________________________________
 
