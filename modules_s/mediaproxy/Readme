@@ -15,9 +15,7 @@ Section 2 describes the types of SIP phones that work with mediaproxy and a
           short description about how the NAT traversal is working.
 Section 3 is about mediaproxy features.
 Section 4 describes the exported module parameters and functions.
-Section 5 is a comparison with nathelper and a description of how to adjust
-          ser.cfg if you want to switch from nathelper module to mediaproxy
-          module
+Section 5 is a comparison with nathelper.
 
 1. Principle of operation
    ----------------------
@@ -230,118 +228,29 @@ necessary to develop this module.
 While at surface they seem to offer about the same functionality, there are
 a few core differences that make them quite different.
 
-  The main difference is that mediaproxy tries to move the complex logic of
-decision in the module or the proxy servers, unlike the nathelper module which
-has most of the decision logic in the many options you can pass to it's
-various functions. However we don't find this to be the best approach as it
-results in overly cryptic or overly complex ser configuration files. Just
-imagine for example if you want to control 20 SIP domains and use a different
-proxy server for each of them. If the only way to specify them would be as
-parameters to the function that calls for the use of the proxy server in a
-session, you will end up with 20 ifs in the ser.cfg file to specify all.
-If later you want to add 50 more domains you can imagine how unnecessary
-complex the configuration file will become. Same holds true for example if you
-specify that there are asymmetric clients involved in a call using flags to
-the force_rtp_proxy() call as nathelper does. If you have a list of 20 clients
-you end up with 20 tests in ser.cfg and multiple calls to force_rtp_proxy()
-with different flags Having even 3-4 flags that one can pass to a function
-makes things even worse as there will be many combinations and accordingly
-many ifs.
-Moreover some decisions are to complex to be taken by a couple of ifs in the
-ser configuration file. They need complex analysis of the SIP message which
-can't be properly done in the configuration file.
-By moving the complexity of these decisions into the module or the proxy
-server, we not only simplify the configuration file, but we also allow one to
-adjust this logic using external tools.
+  The main and most notable difference is that mediaproxy offers a
+distributed environment, where the mediaproxy module can control multiple
+mediaproxy servers. The mediaproxy servers can be local or remote and they
+can be specified per domain or as defaults for domains that don't have their
+own mediaproxy servers defined. These mediaproxy servers can be arranged in
+load balancing and fallback schemes allowing the platform to scale up easily
+and also offer redundancy to keep the service running even if some of the
+mediaproxies go offline. Mediaproxy is able to detect the dead proxies and
+redistribute the calls among the other mediaproxies that are available.
+(More details about this can be found in the SER MediaProxy documentation)
 
-As you have noticed, only one of our functions accepts parameters all the
-others do the job automatically as configured by external configuration files
-(in case of fix_contact()), or SRV records in DNS (the way the 
-use_media_proxy() function determines which proxy server to use).
-
-  Then the information that each module pass to the proxy server is quite
-different. This is because the proxy servers (called SER MediaProxy in the
-mediaproxy case and rtpproxy in the nathelper case) have different
-architectures and different philosophies. By design the nathelper's rtpproxy
-server is only one. It can run on the same host or a remote host but there is
-only one rtpproxy that the nathelper can control.
-On the contrary, the mediaproxy module is able to control multiple proxy
-servers and they can be local or remote or both. Moreover the selection about
-what mediaproxy is used is based on the domain of the caller/destination.
-There is also a default proxy server that can be used if a domain doesn't have
-defined it's own mediaproxy servers.
-Any of these proxy servers (the ones defined for a given domain or the default
-one) can be in fact composed by a cluster of mediaproxy servers that will load
-balance the rtp media traffic between them.
-
-Also to be able to move logic into the proxy servers as described above, the
-mediaproxy module needs to pass more information to the proxy server about a
-call.
-
-  Last but not least, the proxy servers that are the counterpart of the
-mediaproxy and nathelper modules make the most of the difference.
-While as said above the nathelper module only controls 1 rtpproxy (be it local
-or remote) the main focus of the mediaproxy module and it's mediaproxy server
-is to allow one to specify different (eventually multiple) proxy servers for a
-given SIP domain. These servers can be local, remote or both.
-Also if they are multiple for a given domain, they allow load balancing of
-traffic between them as well as fallbacks if some of they stop working.
-SER MediaProxy does this by using DNS SRV records (you can read more about the
-SER MediaProxy architecture and modus operandi in it's own documentation).
-
-If you use the nathelper module and you want to switch to mediaproxy module
-because it offers some features not present in nathelper, here is how you can
-migrate your configuration:
-
-- load the mediaproxy.so module instead of the nathelper.so module
-- the following nathelper module parameters have the following mediaproxy
-  equivalents:
-
-  - natping_interval - remains the same. same meaning too.
-  - ping_nated_only  - should be removed. mediaproxy only pings NATed
-                       clients as it doesn't make sense to ping clients
-                       that are not behind NAT (the only purpose of the
-                       ping's is to keep the NAT channel open).
-  - rtpproxy_sock    - becomes mediaproxy_socket
-  - rtpproxy_disable - should be removed as there is no mediaproxy equivalent
-                       we see no point in disabling it. it was loaded to be
-                       used after all :P
-  - rtpproxy_retr
-  - rtpproxy_tout    - should be removed as there is no mediaproxy equivalent
-                       these 2 relate to how the nathelper module talks with
-                       the remote rtpproxy. This is done by the dispatcher in
-                       our case.
+  Another important difference is that mediaproxy tries to move the complex
+logic of decision from the ser configuration file to the module and the
+proxy servers themselves. This is why there are very few functions in this
+module that take any parameters. Instead, control is achieved by modifying
+resources outside of ser.cfg. This includes for example specifying the
+mediaproxy servers using DNS SRV records, or declaring asymmetric clients
+in external files that are automatically re-read as soon as they change.
+This allows SER to run without interruption or restarts. If one wants to
+change SER's behavior, instead of changing ser.cfg and restarting SER, one
+will change these external resources and SER will adapt it's behavior on the
+fly without any need for restart.
+Another advantage of this is that ser.cfg becomes simpler and easier to
+maintain.
 
 
-- replace the functions using the following scheme:
-
-  - fix_nated_contact() - replace with fix_contact(). 
-                          The only difference is that our version can deal
-                          with asymmetric clients correctly, by preserving
-                          the port.
-  - nat_uac_test()      - replace with the client_nat_test() function.
-                          The only difference is that our function doesn't
-                          support checking if the SDP body has private IPs.
-                          We find this to be an ill designed feature as the
-                          SDP body may contain multiple contact IPs (one at
-                          the session level and possibly others specified by
-                          the media streams themselves).
-                          Moreover the session level one may be missing if
-                          each media stream specifies an IP. Even more these
-                          IPs can be different and some may be public while
-                          others private. Logic involved to make any useful
-                          decision is out of the grasp of a simple function
-                          parameter in ser.cfg.
-  - unforce_rtp_proxy() - replaced by end_media_session(). no changes needed
-  - force_rtp_proxy()   - replace with use_media_proxy(). However if you used
-                          options to force_rtp_proxy() you need to remove them
-                          Most of the options are automatically handled
-                          internally (except the internal/external flags)
-  - fix_nated_sdp()     - Not available, as we think this this has a different
-                          target (packet mangling trying to make the packet
-                          go directly between parties without a proxy in the
-                          middle).
-
-- install SER MediaProxy. mediaproxy works in conjunction with it. It doesn't
-  support nathelper's rtpproxy. Also SER MediaProxy is not compatible with
-  the nathelper module anymore.
