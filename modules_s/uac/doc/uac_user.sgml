@@ -1,0 +1,240 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+			<revnumber>$Revision$</revnumber>
+			<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>User's Guide</title>
+
+
+	<section>
+		<title>Overview</title>
+		<para>
+		UAC (User Agent Client) module provides some basic UAC
+		functionalities like FROM header manipulation (anonymization)
+		or client authentication.
+		</para>
+		<para>
+		Known limitations in this version:
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>
+				authentication does not support qop
+			</para>
+			</listitem>
+		</itemizedlist>
+	</section>
+	<section>
+		<title>Dependencies</title>
+		<section>
+			<title>&ser; Modules</title>
+			<para>
+			The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>TM - Transaction Module</emphasis>
+			</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed 
+				before running &ser; with this module loaded:
+				<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>None</emphasis>
+				</para>
+				</listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+
+	<section>
+		<title>Exported Parameters</title>
+		<section>
+			<title><varname>from_store_param</varname> (string)</title>
+			<para>
+			Name of FROM header parameter that will be used to store (encoded)
+			the original FROM URI.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being "vsf".
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>from_store_param</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","from_store_param","my_param")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>from_restore_mode</varname> (integer)</title>
+			<para>
+			There are 3 mode of restoring the original FROM URI:
+			<itemizedlist>
+			<listitem>
+				<para>
+				0 - NO RESTORE - no information about original URI is stored.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				1 - AUTO RESTORE - all sequential request will be 
+				automatically updated based on stored original URI.
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				2 - MANUAL RESTORE - all sequential requests/replies must 
+				be manually updated based on original URI.
+				</para>
+			</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default value being 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>from_restore_mode</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","from_restore_mode","1")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>credential</varname> (string)</title>
+			<para>
+			Contains a multiple definition of credentials used to perform
+			authentication.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is required if UAC authentication is used.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>credential</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac","credential","username:domain:password")
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Exported Functions</title>
+		<section>
+			<title>
+				<function moreinfo="none">uac_replace_from(display,uri)</function>
+			</title>
+			<para>
+			Replace in FROM header the <emphasis>display</emphasis> name and
+			the <emphasis>URI</emphasis> part.
+			</para>
+			<example>
+				<title><function>uac_replace_from</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_replace_from("batman","sip:batman@gotham.org");
+uac_replace_from("","sip:robin@gotham.org");
+uac_replace_from("batman","");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_replace_from(uri)</function>
+			</title>
+			<para>
+				Replace in FROM header the the <emphasis>URI</emphasis> part
+				without altering the display name.
+			</para>
+			<example>
+				<title><function>uac_replace_from</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_replace_from("sip:batman@gotham.org");
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_restore_from()</function>
+			</title>
+			<para>
+			This function will check if the FROM URI was modified and will
+			use the information stored in header parameter to restore
+			the original FROM URI value.
+			</para>
+			<example>
+				<title><function>uac_restore_from</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_restore_from();
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title>
+				<function moreinfo="none">uac_auth()</function>
+			</title>
+			<para>
+			This function can be called only from failure route and will 
+			build the authentication response header and insert it into the
+			request without sending anything.
+			</para>
+			<example>
+				<title><function>uac_auth</function> usage</title>
+				<programlisting format="linespecific">
+...
+uac_auth();
+...
+				</programlisting>
+			</example>
+		</section>
+	</section>
+
+
+	<section>
+		<title>Installation & Running</title>
+		<para>The UAC module requires additional functionality in TM module
+		for implementing full FROM restoring. If you use 
+		<emphasis>from_restore_mode</emphasis> 1 or 2, you will need to
+		apply the patch <emphasis>replace_from.patch</emphasis> located in 
+		the <quote>doc</quote> directory of UAC module.
+		</para>
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("uac.sgml" "Book" "chapter")
+End:
+-->

@@ -1,0 +1,214 @@
+
+UAC Module
+
+Ramona-Elena Modroiu
+
+   Voice System
+
+Edited by
+
+Ramona-Elena Modroiu
+
+   Copyright © 2005 Voice Sistem
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. from_store_param (string)
+              1.3.2. from_restore_mode (integer)
+              1.3.3. credential (string)
+
+        1.4. Exported Functions
+
+              1.4.1. uac_replace_from(display,uri)
+              1.4.2. uac_replace_from(uri)
+              1.4.3. uac_restore_from()
+              1.4.4. uac_auth()
+
+        1.5. Installation & Running
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set from_store_param parameter
+   1-2. Set from_restore_mode parameter
+   1-3. Set credential parameter
+   1-4. uac_replace_from usage
+   1-5. uac_replace_from usage
+   1-6. uac_restore_from usage
+   1-7. uac_auth usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   UAC (User Agent Client) module provides some basic UAC
+   functionalities like FROM header manipulation (anonymization)
+   or client authentication.
+
+   Known limitations in this version:
+
+     * authentication does not support qop
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * TM - Transaction Module
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. from_store_param (string)
+
+   Name of FROM header parameter that will be used to store
+   (encoded) the original FROM URI.
+
+   This parameter is optional, it's default value being "vsf". 
+
+   Example 1-1. Set from_store_param parameter
+...
+modparam("uac","from_store_param","my_param")
+...
+     _________________________________________________________
+
+1.3.2. from_restore_mode (integer)
+
+   There are 3 mode of restoring the original FROM URI:
+
+     * 0 - NO RESTORE - no information about original URI is
+       stored.
+     * 1 - AUTO RESTORE - all sequential request will be
+       automatically updated based on stored original URI.
+     * 2 - MANUAL RESTORE - all sequential requests/replies must
+       be manually updated based on original URI.
+
+   This parameter is optional, it's default value being 0. 
+
+   Example 1-2. Set from_restore_mode parameter 
+...
+modparam("uac","from_restore_mode","1")
+...
+     _________________________________________________________
+
+1.3.3. credential (string)
+
+   Contains a multiple definition of credentials used to perform
+   authentication.
+
+   This parameter is required if UAC authentication is used. 
+
+   Example 1-3. Set credential parameter
+...
+modparam("uac","credential","username:domain:password")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. uac_replace_from(display,uri)
+
+   Replace in FROM header the display name and the URI part.
+
+   Example 1-4. uac_replace_from usage
+...
+uac_replace_from("batman","sip:batman@gotham.org");
+uac_replace_from("","sip:robin@gotham.org");
+uac_replace_from("batman","");
+...
+     _________________________________________________________
+
+1.4.2. uac_replace_from(uri)
+
+   Replace in FROM header the the URI part without altering the
+   display name.
+
+   Example 1-5. uac_replace_from usage
+...
+uac_replace_from("sip:batman@gotham.org");
+...
+     _________________________________________________________
+
+1.4.3. uac_restore_from()
+
+   This function will check if the FROM URI was modified and will
+   use the information stored in header parameter to restore the
+   original FROM URI value.
+
+   Example 1-6. uac_restore_from usage
+...
+uac_restore_from();
+...
+     _________________________________________________________
+
+1.4.4. uac_auth()
+
+   This function can be called only from failure route and will
+   build the authentication response header and insert it into
+   the request without sending anything.
+
+   Example 1-7. uac_auth usage
+...
+uac_auth();
+...
+     _________________________________________________________
+
+1.5. Installation & Running
+
+   The UAC module requires additional functionality in TM module
+   for implementing full FROM restoring. If you use
+   from_restore_mode 1 or 2, you will need to apply the patch
+   replace_from.patch located in the "doc" directory of UAC
+   module.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I post a question about this module?
+   3.2. How can I report a bug?
+
+   3.1. Where can I post a question about this module?
+
+   Sent an email to <support@voice-system.ro> or, if you want to
+   keep the mail private, send it to <ramona@voice-system.ro>.
+
+   Remember: first at all, check if your question was already
+   answered on one of SER mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   3.2. How can I report a bug?
+
+   Accumulate as much as possible information (SER version, ser
+   -V output, your OS (uname -a), SER logs, network dumps, core
+   dump files, configuration file) and send a mail to
+   <support@voice-system.ro>
