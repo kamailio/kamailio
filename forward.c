@@ -39,6 +39,8 @@
  *  2003-04-03  added su_setport (andrei)
  *  2003-04-04  update_sock_struct_from_via now differentiates between
  *               local replies  & "normal" replies (andrei)
+ *  2003-04-12  update_sock_struct_form via uses also FL_FORCE_RPORT for
+ *               local replies (andrei)
  */
 
 
@@ -366,7 +368,8 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 		/* _local_ reply, we ignore any rport or received value
 		 * (but we will send back to the original port if rport is
 		 *  present) */
-		if (via->rport) port=msg->rcv.src_port;
+		if ((msg->msg_flags&FL_FORCE_RPORT)||(via->rport))
+			port=msg->rcv.src_port;
 		else port=via->port;
 		name=&(via->host); /* received=ip in 1st via is ignored (it's
 							  not added by us so it's bad) */

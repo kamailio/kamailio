@@ -27,10 +27,11 @@
 /*
  * History:
  * -------
- * 2001-??-?? created by andrei
- * ????-??-?? lots of changes by a lot of people
- * 2003-02-11 added inline msg_send (andrei)
- * 2003-04-07 changed all ports to host byte order (andrei)
+ *  2001-??-?? created by andrei
+ *  ????-??-?? lots of changes by a lot of people
+ *  2003-02-11 added inline msg_send (andrei)
+ *  2003-04-07 changed all ports to host byte order (andrei)
+ *  2003-04-12  FORCE_RPORT_T added (andrei)
  */
 
 
@@ -61,8 +62,9 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 /* use src_ip, port=src_port if rport, via port if via port, 5060 otherwise */
 #define update_sock_struct_from_ip(  to, msg ) \
 	init_su((to), &(msg)->rcv.src_ip, \
-			((msg)->via1->rport)?(msg)->rcv.src_port: \
-			((msg)->via1->port)?(msg)->via1->port: SIP_PORT )
+			(((msg)->via1->rport)||((msg)->msg_flags&&FL_FORCE_RPORT))? \
+							(msg)->rcv.src_port: \
+							((msg)->via1->port)?(msg)->via1->port: SIP_PORT )
 
 int forward_reply( struct sip_msg* msg);
 

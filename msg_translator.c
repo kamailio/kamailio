@@ -46,10 +46,58 @@
  * 2003-04-01  added opt (conditional) lump support (andrei)
  * 2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
  *              => ip:port;transport=proto (andrei)
+ * 2003-04-12  added FL_FORCE_RPORT support (andrei)
  *
  */
-
-
+/* Via special params:
+ * requests:
+ * - if the address in via is different from the src_ip or an existing
+ *   received=something is found, received=src_ip is added (and any preexisting
+ *   received is deleted). received is added as the first via parameter if no
+ *   receive is previoulsy present or over the old receive.
+ * - if the original via contains rport / rport=something or msg->msg_flags
+ *   FL_FORCE_RPORT is set (e.g. script force_rport() cmd) rport=src_port
+ *   is added (over previous rport / as first via param or after received
+ *   if no received was present and received is added too)
+ * local replies:
+ *    (see also sl_send_reply)
+ *  - rport and received are added in mostly the same way as for requests, but 
+ *    in the reverse order (first rport and then received). See also 
+ *    limitations.
+ *  - if reply_to_via is set (default off) the local reply will be sent to
+ *    the address in via (received is ignored since it was not set by us). The
+ *    destination port is either the message source port if via contains rport
+ *    or the FL_FORCE_RPORT flag is set or the port from the via. If either
+ *    port or rport are present a normal dns lookup (instead of a srv lookup)
+ *    is performed on the address. If no port is present and a srv lookup is 
+ *    performed the port is taken from the srv lookup. If the srv lookup failed
+ *    or it was not performed, the port is set to the default sip port (5060).
+ *  - if reply_to_via is off (default) the local reply is ent to the message
+ *    source ip address. The destination port is set to the source port if 
+ *    rport is present or FL_FORCE_RPORT flag is set, to the via port or to
+ *    the default sip port (5060) if neither rport or via port are present.
+ * "normal" replies:
+ *  - if received is present the message is sent to the received address else
+ *    if no port is present (neither a normal via port or rport) a dns srv 
+ *    lookup is performed on the host part and the reply is sent to the 
+ *    resulting ip. If a port is present or the host part is an ip address 
+ *    the dns lookup will be a "normal" one (A or AAAA).
+ *  - if rport is present, it's value will be used as the destination port
+ *   (and this will also disable srv lookups)
+ *  - if no port is present the destination port will be taken from the srv
+ *    lookup. If the srv lookup fails or is not performed (e.g. ip address
+ *    in host) the destination port will be set to the default sip port (5060).
+ *  
+ * Known limitations:
+ * - when locally replying to a message, rport and received will be appended to
+ *   the via header parameters (for forwarded requests they are inserted at the
+ *   beginning).
+ * - a locally generated reply might get two received via parameters if a
+ *   received is already present in the original message (this should not
+ *   happen though, but ...)
+ *
+ *--andrei
+*/
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -1093,7 +1141,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char* buf;
 	unsigned int offset, s_offset, size;
 	struct lump* anchor;
-	int r;
+	struct lump* via_insert_param;
 	str branch;
 	str extra_params;
 	
@@ -1109,6 +1157,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	clen_buf=0;
 	clen_len=0;
 #endif
+	via_insert_param=0;
 	extra_params.len=0;
 	extra_params.s=0;
 	uri_len=0;
@@ -1161,9 +1210,9 @@ skip_clen:
 		goto error00;
 	}
 	/* check if received needs to be added */
-	r=check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
-		msg->via1->port, received_dns);
-	if (r!=0){
+	if ( msg->via1->received || 
+			check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
+									msg->via1->port, received_dns) ){
 		if ((received_buf=received_builder(msg,&received_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
 							" received_builder failed\n");
@@ -1171,8 +1220,13 @@ skip_clen:
 		}
 	}
 	
-	/* check if rport needs to be updated */
-	if (msg->via1->rport && msg->via1->rport->value.s==0){
+	/* check if rport needs to be updated:
+	 *  - if FL_FORCE_RPORT is set add it (and del. any previous version)
+	 *  - if via already contains an rport add it and overwrite the previous
+	 *  rport value if present (if you don't want to overwrite the previous
+	 *  version remove the comments) */
+	if ((msg->msg_flags&FL_FORCE_RPORT)||
+			(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
 		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
 							" rport_builder failed\n");
@@ -1187,34 +1241,52 @@ skip_clen:
 	if (anchor==0) goto error01;
 	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
 		goto error01;
-	/* if received needs to be added, add anchor after host and add it */
-	if (received_len){
-		if (msg->via1->params.s){
-				size= msg->via1->params.s-msg->via1->hdr.s-1; /*compensate
-															  for ';' */
-		}else{
-				size= msg->via1->host.s-msg->via1->hdr.s+msg->via1->host.len;
-				if (msg->via1->port!=0){
-					/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
-					size += msg->via1->port_str.len + 1; /* +1 for ':'*/
-				}
-			#ifdef USE_IPV6
-				if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
-			#endif
-		}
-		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
-				HDR_VIA);
-		if (anchor==0) goto error02; /* free received_buf */
-		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
-				==0 ) goto error02; /* free received_buf */
+	/* find out where the offset of the first parameter that should be added
+	 * (after host:port), needed by add receive & maybe rport */
+	if (msg->via1->params.s){
+			size= msg->via1->params.s-msg->via1->hdr.s-1; /*compensate
+														  for ';' */
+	}else{
+			size= msg->via1->host.s-msg->via1->hdr.s+msg->via1->host.len;
+			if (msg->via1->port!=0){
+				/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
+				size += msg->via1->port_str.len + 1; /* +1 for ':'*/
+			}
+		#ifdef USE_IPV6
+			if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
+		#endif
 	}
-	/* if rport needs to be updated, delete it and add it's value */
+	/* if received needs to be added, add anchor after host and add it, or 
+	 * overwrite the previous one if already present */
+	if (received_len){
+		if (msg->via1->received){ /* received already present => overwrite it*/
+			via_insert_param=del_lump(&(msg->add_rm),
+								msg->via1->received->start-buf-1, /*;*/
+								msg->via1->received->size+1, /*;*/ HDR_VIA);
+		}else if (via_insert_param==0){ /* receive not present, ok */
+			via_insert_param=anchor_lump(&(msg->add_rm),
+										msg->via1->hdr.s-buf+size,0, HDR_VIA);
+		}
+		if (via_insert_param==0) goto error02; /* free received_buf */
+		if (insert_new_lump_after(via_insert_param, received_buf, received_len,
+					HDR_VIA) ==0 ) goto error02; /* free received_buf */
+	}
+	/* if rport needs to be updated, delete it if present and add it's value */
 	if (rport_len){
-		anchor=del_lump(&(msg->add_rm), msg->via1->rport->start-buf-1, /*';'*/
-							msg->via1->rport->size+1 /* ; */, HDR_VIA);
-		if (anchor==0) goto error03; /* free rport_buf*/
-		if (insert_new_lump_after(anchor, rport_buf, rport_len, HDR_VIA)==0)
-			goto error03; /* free rport_buf*/
+		if (msg->via1->rport){ /* rport already present */
+			via_insert_param=del_lump(&(msg->add_rm),
+								msg->via1->rport->start-buf-1, /*';'*/
+								msg->via1->rport->size+1 /* ; */, HDR_VIA);
+		}else if (via_insert_param==0){ /*force rport, no rport present */
+			/* no rport, add it */
+			via_insert_param=anchor_lump(&(msg->add_rm),
+										msg->via1->hdr.s-buf+size,0, HDR_VIA);
+		}
+		if (via_insert_param==0) goto error03; /* free rport_buf */
+		if (insert_new_lump_after(via_insert_param, rport_buf, rport_len,
+									HDR_VIA) ==0 )
+			goto error03; /* free rport_buf */
+			
 	}
 #ifdef USE_TCP
 	/* if clen needs to be added, add it */
@@ -1437,7 +1509,6 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	char              *warning;
 	unsigned int      warning_len;
 	unsigned int	  text_len;
-	int  r;
 	int  content_len_len;
 	char *content_len;
 	char content_len_buf[MAX_CONTENT_LEN_BUF];
@@ -1470,10 +1541,10 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	r=check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
-		msg->via1->port, received_dns);
+	if (msg->via1->received || 
+			check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
+								msg->via1->port, received_dns)) {
 	msg->via1->host.s[msg->via1->host.len] = backup;
-	if (r!=0) {
 		if ((received_buf=received_builder(msg,&received_len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
@@ -1481,13 +1552,15 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 		}
 	}
 	/* check if rport needs to be updated */
-	if (msg->via1->rport && msg->via1->rport->value.s==0){
+	if ( (msg->msg_flags&FL_FORCE_RPORT)||
+		(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
 		if ((rport_buf=rport_builder(msg, &rport_len))==0){
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req:"
 							" rport_builder failed\n");
 			goto error01; /* free everything */
 		}
-		delete_len=msg->via1->rport->size+1; /* include ';' */
+		if (msg->via1->rport) 
+			delete_len=msg->via1->rport->size+1; /* include ';' */
 	}
 
 	/*computes the lenght of the new response buffer*/
@@ -1587,17 +1660,24 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 			case HDR_VIA:
 				if (hdr==msg->h_via1){
 					if (rport_buf){
-						/* copy until rport */
-						append_str_trans( p, hdr->name.s ,
-							msg->via1->rport->start-hdr->name.s-1,msg);
-						/* copy new rport */
-						append_str(p, rport_buf, rport_len);
-						/* copy the rest of the via */
-						append_str_trans(p, msg->via1->rport->start+
-											msg->via1->rport->size, 
-											hdr->body.s+hdr->body.len-
-											msg->via1->rport->start-
-											msg->via1->rport->size, msg);
+						if (msg->via1->rport){ /* delete the old one */
+							/* copy until rport */
+							append_str_trans( p, hdr->name.s ,
+								msg->via1->rport->start-hdr->name.s-1,msg);
+							/* copy new rport */
+							append_str(p, rport_buf, rport_len);
+							/* copy the rest of the via */
+							append_str_trans(p, msg->via1->rport->start+
+												msg->via1->rport->size, 
+												hdr->body.s+hdr->body.len-
+												msg->via1->rport->start-
+												msg->via1->rport->size, msg);
+						}else{ /* just append the new one */
+							/* normal whole via copy */
+							append_str_trans( p, hdr->name.s , 
+								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
+							append_str(p, rport_buf, rport_len);
+						}
 					}else{
 						/* normal whole via copy */
 						append_str_trans( p, hdr->name.s , 

@@ -25,6 +25,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *
+ *  2003-04-12  FORCE_RPORT_T added (andrei)
+ */
 
 
 #ifndef route_struct_h
@@ -58,7 +63,9 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		REVERT_URI_T,
 		FORWARD_TCP_T,
 		FORWARD_UDP_T,
-		SEND_TCP_T};
+		SEND_TCP_T,
+		FORCE_RPORT_T
+};
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		EXPR_ST, ACTIONS_ST, CMDF_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,
 		MYSELF_ST };

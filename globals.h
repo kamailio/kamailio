@@ -77,6 +77,9 @@ extern int sip_warning;
 extern int server_signature;
 extern char* user;
 extern char* group;
+extern char* chroot_dir;
+extern char* working_dir;
+
 /*
  * debug & log_stderr moved to dprint.h*/
 

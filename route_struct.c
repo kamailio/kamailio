@@ -30,6 +30,7 @@
  * --------
  *  2003-01-29  src_port introduced (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-12  FORCE_RPORT_T added (andrei)
  */
 
 
@@ -312,6 +313,9 @@ void print_action(struct action* a)
 					break;
 			case MODULE_T:
 					DBG(" external_module_call(");
+					break;
+			case FORCE_RPORT_T:
+					DBG("force_rport(");
 					break;
 			default:
 					DBG("UNKNOWN(");

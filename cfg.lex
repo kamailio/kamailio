@@ -33,6 +33,7 @@
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-01  added dst_port, proto (tcp, udp, tls), af(inet, inet6) (andrei)
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
+ *  2003-04-12  added force_rport, chdir and wdir (andrei)
  */
 
 
@@ -82,6 +83,7 @@ ROUTE	route
 ROUTE_FAILURE failure_route
 ROUTE_ONREPLY onreply_route
 EXEC	exec
+FORCE_RPORT		"force_rport"|"add_rport"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
@@ -150,6 +152,8 @@ SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
 USER		"user"|"uid"
 GROUP		"group"|"gid"
+CHROOT		"chroot"
+WDIR		"workdir"|"wdir"
 MHOMED		mhomed
 
 LOADMODULE	loadmodule
@@ -226,7 +230,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{REVERT_URI}	{ count(); yylval.strval=yytext; return REVERT_URI; }
 <INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
 <INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
-<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; return APPEND_BRANCH; }
+<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; 
+								return APPEND_BRANCH; }
+<INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
+	
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
@@ -262,6 +269,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }
+<INITIAL>{CHROOT}	{ count(); yylval.strval=yytext; return CHROOT; }
+<INITIAL>{WDIR}	{ count(); yylval.strval=yytext; return WDIR; }
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }

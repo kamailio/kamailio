@@ -36,6 +36,7 @@
  * 2003-03-20  Regex support in modparam (janakj)
  * 2003-04-01  added dst_port, proto , af (andrei)
  * 2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
+ * 2003-04-12  added force_rport, chroot and wdir (andrei)
  */
 
 
@@ -120,6 +121,7 @@ int rt;  /* Type of route block for find_export */
 %token SET_PORT
 %token SET_URI
 %token REVERT_URI
+%token FORCE_RPORT
 %token IF
 %token ELSE
 %token URIHOST
@@ -163,6 +165,8 @@ int rt;  /* Type of route block for find_export */
 %token MAXBUFFER
 %token USER
 %token GROUP
+%token CHROOT
+%token WDIR
 %token MHOMED
 
 
@@ -332,6 +336,12 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| GROUP EQUAL STRING     { group=$3; }
 		| GROUP EQUAL ID         { group=$3; }
 		| GROUP EQUAL error      { yyerror("string value expected"); }
+		| CHROOT EQUAL STRING     { chroot_dir=$3; }
+		| CHROOT EQUAL ID         { chroot_dir=$3; }
+		| CHROOT EQUAL error      { yyerror("string value expected"); }
+		| WDIR EQUAL STRING     { working_dir=$3; }
+		| WDIR EQUAL ID         { working_dir=$3; }
+		| WDIR EQUAL error      { yyerror("string value expected"); }
 		| MHOMED EQUAL NUMBER { mhomed=$3; }
 		| MHOMED EQUAL error { yyerror("boolean value expected"); }
 		| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
@@ -1063,6 +1073,8 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										"string expected"); }
 		| REVERT_URI LPAREN RPAREN { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
+		| FORCE_RPORT LPAREN RPAREN	{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
+		| FORCE_RPORT				{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
 		| ID LPAREN RPAREN			{ f_tmp=(void*)find_export($1, 0, rt);
 									   if (f_tmp==0){
 										   if (find_export($1, 0, 0)) {

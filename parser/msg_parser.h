@@ -34,6 +34,7 @@
  *  2003-04-01  2 macros added: GET_NEXT_HOP and GET_RURI (janakj)
  *  2003-04-04  structure for parsed inbound uri added (jiri)
  *  2003-04-11  updated the  sip_uri structure (lots of fields added) (andrei)
+ *  2003-04-12  added msg_flags to sip_msg (andrei)
  */
 
 
@@ -64,6 +65,8 @@
 /* number methods as power of two to allow bitmap matching */
 enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4, 
 	METHOD_BYE=8, METHOD_OTHER=16 };
+
+#define FL_FORCE_RPORT 1 /* force rport */
 
 
 #define IFISMETHOD(methodname,firstchar)                                  \
@@ -207,7 +210,7 @@ struct sip_msg {
 	
 	     /* index to TM hash table; stored in core to avoid unnecessary calcs */
 	unsigned int  hash_index;
-	
+	unsigned int msg_flags; /* flags used by core */
 	     /* allows to set various flags on the message; may be used for 
 	      *	simple inter-module communication or remembering processing state
 	      * reached 

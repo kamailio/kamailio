@@ -26,12 +26,13 @@
  *
  * History:
  * ---------
- * 2003-02-28  scratchpad compatibility abandoned (jiri)
- * 2003-01-29  removed scratchpad (jiri)
- * 2003-03-19  fixed set* len calculation bug & simplified a little the code
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-01-29  removed scratchpad (jiri)
+ *  2003-03-19  fixed set* len calculation bug & simplified a little the code
  *              (should be a little faster now) (andrei)
- *             replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
- * 2003-04-01  Added support for loose routing in forward (janakj)
+ *              replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-01  Added support for loose routing in forward (janakj)
+ *  2003-04-12  FORCE_RPORT_T added (andrei)
  */
 
 
@@ -568,6 +569,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}else{
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}
+			break;
+		case FORCE_RPORT_T:
+			msg->msg_flags|=FL_FORCE_RPORT;
+			ret=1; /* continue processing */
 			break;
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);

@@ -2,6 +2,18 @@ $Id$
 
 ( - todo, x - done)
 
+release:
+- resolver should resolve [ipv6]
+- remove parse_uri debugging info
+- fix DBG("<%.*s>", len, _null_)
+- add -t, -w, -u -g equivalents to the config file
+x force add rport : force_rport()
+- kill all the fprintf
+see also tcp & tm
+
+
+
+not so critical:
 x replace  remaining mallocs/frees at least in msg_translator.c
 - add $(INCLUDES) to the Makefiles
 x make ser suncc ready
@@ -15,15 +27,12 @@ x (different way) add request header bitmap field for the modules
 - introduce variables & function in the script language (cfg. file)
 - ? variable number of params functions in script (no longer limited to 2)?
 - kill bind_idx
-- fix bind_address for tcp (in some  way)
+x fix bind_address for tcp (in some  way)
 - add conflict in debs/rpms/etc (conflict w/ older ser-mysql, ser-jabber)
 - new packages ser-radius etc
 - tcp_destroy (called on ser exit)
 - BUG:?? ipv6 only and try to send to ipv4 => getsendsocket=>0 (send_ipv6=0)
   the reverse is also true
-- resolver should resolve [ipv6]
-- remove parse_uri debugging info
-- fix DBG("<%.*s>", len, _null_)
 
 
 High priority:
@@ -47,7 +56,6 @@ x forward to received= if present
 - make it easier to register a statically linkable module.
 x add support for -u user and -g group (not only -u uid, -g uid)
 - change uid/gid after opening the sockets
-- add -t, -w, -u -g equivalents to the config file
 - exec improvments (add format strings to it)
 - command line switch for checking the config file syntax
 - config file version (a la sendmail)
@@ -79,8 +87,6 @@ x freopen stdin, stdout, stderr to /dev/null
 x add src_port, dst_port, proto to cfg.{y,lex}
 x generic locking lib
 x convert tm to use new locking lib
-- force add rport (setflag(rport)???)
-- kill all the fprintf
 
 optimizations:
 - better timer interface with hashes (a la openbsd)
