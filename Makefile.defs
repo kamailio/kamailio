@@ -24,6 +24,8 @@
 #              removed -DDIGEST_DOMAIN (andrei)
 #  2003-05-30  added extra_defs (andrei)
 #  2003-06-06  moved compiler detection before DEFS (andrei)
+#  2003-06-10  removed -m32 for gcc 3.x/sparc64  -- it will use 
+#              arch. default: -m32 on solaris, -m64 on *bsd (andrei)
 
 
 # check if already included/exported
@@ -372,6 +374,7 @@ ifeq ($(use_fast_lock), yes)
 endif
 
 CFLAGS=
+LDFLAGS=
 # setting CFLAGS
 ifeq ($(mode), release)
 	#if i386
@@ -432,7 +435,10 @@ ifeq		($(CC_NAME), gcc)
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)  -m32  \
+					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)   \
+					# use -m64 to force 64 bit (but add it also to LDFLAGS), 
+					# -m32 for 32 bit (default on solaris),
+					# nothing for arch. default
 					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
 					#-mno-epilogue #try to inline function exit code
 					#-mflat # omit save/restore
@@ -509,7 +515,6 @@ endif	#ARCH, i386
 CFLAGS+= $(CC_EXTRA_OPTS)
 
 
-LDFLAGS=
 # setting LDFLAGS
 ifeq	($(CC_NAME), gcc)
 ifeq		($(ARCH), sparc64)
