@@ -79,8 +79,18 @@ ifeq ($(OS), freebsd)
 	doc-dir = share/doc/ser/
 	man-dir = man/
 else
-	doc-dir=doc/ser/
-	man-dir=man/
+ifeq ($(OS), openbsd)
+	doc-dir = share/doc/ser/
+	man-dir = man/
+else
+ifeq ($(OS), netbsd)
+	doc-dir = share/doc/ser
+	man-dir = man/
+else
+	doc-dir = doc/ser/
+	man-dir = man/
+endif
+endif
 endif
 endif
 ut-prefix = bin/
