@@ -169,7 +169,7 @@ int m_send_message(int mid, str *uri, str *to, str *from, str *contact,
 	if (send_sock==0)
 		goto error;
 
-	udp_send(send_sock,buf,buf_len,&(to_addr),sizeof(union sockaddr_union));
+	udp_send(send_sock,buf,buf_len,&(to_addr));
 
 	return 1;
 error:

@@ -166,10 +166,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	send_sock=get_send_socket(&to);
 	if (send_sock!=0)
 	{
-		udp_send( send_sock,
-			buf, len,
-			/* v6; (union sockaddr_union*) */ &(to),
-			sizeof(union sockaddr_union));
+		udp_send( send_sock, buf, len,  &to);
 		*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 	}
 	pkg_free(buf);
