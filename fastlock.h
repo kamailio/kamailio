@@ -54,7 +54,7 @@ inline static int tsl(fl_lock_t* lock)
 {
 	int val;
 
-#ifdef __i386
+#ifdef __CPU_i386
 
 #ifdef NOSMP
 	val=0;
@@ -69,7 +69,7 @@ inline static int tsl(fl_lock_t* lock)
 		" xchg %b1, %0" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"
 	);
 #endif /*NOSMP*/
-#elif defined __sparc
+#elif defined __CPU_sparc
 	asm volatile(
 			"ldstub [%1], %0 \n\t"
 #ifndef NOSMP
@@ -78,7 +78,7 @@ inline static int tsl(fl_lock_t* lock)
 			: "=r"(val) : "r"(lock):"memory"
 	);
 	
-#elif defined __arm__
+#elif defined __CPU_arm
 	asm volatile(
 			"# here \n\t"
 			"swpb %0, %1, [%2] \n\t"
@@ -115,14 +115,14 @@ inline static void get_lock(fl_lock_t* lock)
 
 inline static void release_lock(fl_lock_t* lock)
 {
-#ifdef __i386
+#ifdef __CPU_i386
 	char val;
 	val=0;
 	asm volatile(
 		" movb $0, (%0)" : /*no output*/ : "r"(lock): "memory"
 		/*" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"*/
 	); 
-#elif defined __sparc
+#elif defined __CPU_sparc
 	asm volatile(
 #ifndef NOSMP
 			"membar #LoadStore | #StoreStore \n\t" /*is this really needed?*/
@@ -132,7 +132,7 @@ inline static void release_lock(fl_lock_t* lock)
 			: "r" (lock)
 			: "memory"
 	);
-#elif defined __arm__
+#elif defined __CPU_arm
 	asm volatile(
 		" str %0, [%1] \n\r" 
 		: /*no outputs*/ 

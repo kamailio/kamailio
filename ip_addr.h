@@ -84,7 +84,7 @@ struct socket_info{
 
 
 /* len of the sockaddr */
-#ifdef __FreeBSD__
+#ifdef HAVE_SOCKADDR_SA_LEN
 #define sockaddru_len(su)	((su).s.sa_len)
 #else
 #ifdef USE_IPV6
@@ -94,7 +94,7 @@ struct socket_info{
 #else
 #define sockaddru_len(su)	sizeof(struct sockaddr_in)
 #endif /*USE_IPV6*/
-#endif /*__FreeBSD__*/
+#endif /* HAVE_SOCKADDR_SA_LEN*/
 	
 /* inits an ip_addr with the addr. info from a hostent structure
  * ip = struct ip_addr*
@@ -217,7 +217,7 @@ static inline int init_su( union sockaddr_union* su,
 #ifdef USE_IPV6
 	case	AF_INET6:
 		memcpy(&su->sin6.sin6_addr, ip->u.addr, ip->len); 
-		#ifdef __FreeBSD__
+		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
 		#endif
 		su->sin6.sin6_port=port;
@@ -225,7 +225,7 @@ static inline int init_su( union sockaddr_union* su,
 #endif
 	case AF_INET:
 		memcpy(&su->sin.sin_addr, ip->u.addr, ip->len);
-		#ifdef __FreeBSD__
+		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin.sin_len=sizeof(struct sockaddr_in);
 		#endif
 		su->sin.sin_port=port;
@@ -254,7 +254,7 @@ static inline int hostent2su( union sockaddr_union* su,
 #ifdef USE_IPV6
 	case	AF_INET6:
 		memcpy(&su->sin6.sin6_addr, he->h_addr_list[idx], he->h_length);
-		#ifdef __FreeBSD__
+		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin6.sin6_len=sizeof(struct sockaddr_in6);
 		#endif
 		su->sin6.sin6_port=port;
@@ -262,7 +262,7 @@ static inline int hostent2su( union sockaddr_union* su,
 #endif
 	case AF_INET:
 		memcpy(&su->sin.sin_addr, he->h_addr_list[idx], he->h_length);
-		#ifdef __FreeBSD__
+		#ifdef HAVE_SOCKADDR_SA_LEN
 			su->sin.sin_len=sizeof(struct sockaddr_in);
 		#endif
 		su->sin.sin_port=port;

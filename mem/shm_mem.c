@@ -53,10 +53,9 @@
 
 
 /* define semun */
-#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+#if defined(HAVE_UNION_SEMUN) && !defined(_SEM_SEMUN_UNDEFINED)
 	/* union semun is defined by including <sys/sem.h> */
 #else
-#ifndef __FreeBSD__
 	/* according to X/OPEN we have to define it ourselves */
 	union semun {
 		int val;                    /* value for SETVAL */
@@ -64,7 +63,6 @@
 		unsigned short int *array;  /* array for GETALL, SETALL */
 		struct seminfo *__buf;      /* buffer for IPC_INFO */
 	};
-#endif
 #endif
 
 

@@ -166,6 +166,9 @@ int load_module(char* path)
 	struct module_exports* exp;
 	struct sr_module* t;
 	
+#ifndef RTLD_NOW
+#define RTLD_NOW DL_LAZY
+#endif
 	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
 	if (handle==0){
 		LOG(L_ERR, "ERROR: load_module: could not open module <%s>: %s\n",

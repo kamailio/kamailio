@@ -250,7 +250,7 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port);
 static inline struct hostent* resolvehost(const char* name)
 {
 	static struct hostent* he=0;
-#ifdef __sun
+#ifdef HAVE_GETIPNODEBYNAME 
 	int err;
 	static struct hostent* he2=0;
 #endif
@@ -275,14 +275,16 @@ static inline struct hostent* resolvehost(const char* name)
 #ifdef USE_IPV6
 	if(he==0){
 		/*try ipv6*/
-	#ifdef __sun
+	#ifdef HAVE_GETHOSTBYNAME2
+		he=gethostbyname2(name, AF_INET6);
+	#elif defined HAVE_GETIPNODEBYNAME
 		/* on solaris 8 getipnodebyname has a memory leak,
 		 * after some time calls to it will fail with err=3
 		 * solution: patch your solaris 8 installation */
 		if (he2) freehostent(he2);
 		he=he2=getipnodebyname(name, AF_INET6, 0, &err);
 	#else
-		he=gethostbyname2(name, AF_INET6);
+		#error neither gethostbyname2 or getipnodebyname present
 	#endif
 	}
 #endif

@@ -4,7 +4,7 @@ $Id$
 Installation Notes
 
 Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386,
-Solaris/sparc64, Win*/i386 (CYGWIN) - only the core
+Solaris/sparc64 
 (for other arhitectures the Makefile must be edited)
 
 There are various configuration options defined in the Makefile.

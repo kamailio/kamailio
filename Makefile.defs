@@ -12,7 +12,8 @@ EXTRAVERSION =
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
-ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
+ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc/  \
+			-e s/armv4l/arm/)
 
  # install location
 PREFIX = /usr/local
@@ -126,7 +127,7 @@ YACC := $(shell echo "$${YACC}")
 #  		forking (done at the top of main_loop). Needed if you want
 #  		to use the snmp module.
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
-	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' \
+	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH)\
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
@@ -214,7 +215,7 @@ $(warning	Unknown compiler $(CC)\; supported compilers: \
 endif
 
 # find ldname (gnu or solaris)
-ifeq ($(ARCH), sparc64)
+ifeq ($(ARCH), sparc)
 ifeq ($(CC_NAME), gcc)
 		LDGCC=$(shell $(CC) -v 2>&1 | grep with-ld| \
 				   sed -e 's/.*--with-ld=\([^ ][^ ]*\).*/\1/' )
@@ -245,13 +246,13 @@ ifeq ($(ARCH), i386)
 	DEFS+= -DFAST_LOCK
 endif
 
-ifeq ($(ARCH), sparc64)
+ifeq ($(ARCH), sparc)
 ifeq 	($(CC_NAME), gcc)
 		DEFS+= -DFAST_LOCK
 endif
 endif
 
-ifeq ($(ARCH), armv4l)
+ifeq ($(ARCH), arm)
 	DEFS+= -DFAST_LOCK
 endif
 
@@ -302,8 +303,8 @@ endif		#CC_NAME, gcc
 endif	#ARCH, i386
 
 
-	#if sparc64
-ifeq	($(ARCH), sparc64)
+	#if sparc
+ifeq	($(ARCH), sparc)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
 				#common stuff
@@ -344,10 +345,10 @@ else
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, suncc
 endif		#CC_NAME, gcc
-endif	#ARCH, sparc64
+endif	#ARCH, sparc
 
 	#if ipaq/netwinder
-ifeq	($(ARCH), armv4l)
+ifeq	($(ARCH), arm)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				#common stuff
@@ -383,7 +384,7 @@ endif	#ARCH, i386
 LDFLAGS=
 # setting LDFLAGS
 ifeq	($(CC_NAME), gcc)
-ifeq		($(ARCH), sparc64)
+ifeq		($(ARCH), sparc)
 ifeq			($(LDTYPE), solaris)
 					# solaris ld
 					LDFLAGS+=-O2 $(PROFILE)
@@ -414,7 +415,7 @@ endif
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align -Winline $(PROFILE)
-ifeq		($(ARCH), sparc64)
+ifeq		($(ARCH), sparc)
 			CFLAGS+= -mcpu=ultrasparc 
 endif
 ifeq		($(LDTYPE), solaris)
@@ -462,6 +463,10 @@ YACC_FLAGS=-d -b cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS= -lfl -ldl -lresolv
 
+ifneq ($(OS), solaris)
+	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN
+endif
+
 
 #os specific stuff
 ifeq ($(OS), Linux)
@@ -469,6 +474,7 @@ ifeq ($(OS), Linux)
 endif
 
 ifeq  ($(OS), solaris)
+	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
 		#LDFLAGS=-O2 $(PROFILE)
@@ -488,11 +494,17 @@ endif
 endif
 
 ifeq ($(OS), freebsd)
-
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN
 	YACC=yacc
 	LIBS= -lfl  #dlopen is in libc
-
 endif
+
+ifeq ($(OS), openbsd)
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN
+	YACC=yacc
+	LIBS= -lfl  -lc_r
+endif
+	
 
 ifneq (,$(findstring CYGWIN, $(OS)))
 	#cygwin is the same as common
