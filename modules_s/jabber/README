@@ -46,23 +46,20 @@ Type:		integer
 Default:	5222
 Desc:		port of Jabber server
 
+Name:		jdomain
+Type:		string
+Default:	none
+Desc:		Format: jabber.sipserver.com
+
 Name:		aliases
 Type:		string
 Default:	none
 Desc:		aliases for hostnames. 
-			Format: "N;alias1=name1;...;aliasN=nameN;"
-			Example of real usage: main SER is running on 'domain.com', for 
-			each IM	gateway exists a DNS alias 'im.domain.com'. When SIP users
-			want to send messages to IM network, destination is like 
-			'id@im.domain.com'. If Jabber server is on another machine 
-			'alpha.domain.com', only messages with destination 
-			'id@alpha.domain.com' are considered for itself. If 
-			aliases="1;jabber.domain.com=alpha.domain.com;" all messages for 
-			'id@jabber.domain.com' are sent to Jabber with destination 
-			'id@alpha.domain.com', and now Jabber recognize that the message
-			is for one of local Jabber users. If destination has a hostname,
-			other than machine's name or IM gateways alias, Jabber server tries
-			to connect to that host, considering that host another Jabber srv.
+			Format: "N;alias1;...;aliasN;"
+			Jabber module expects destination as userid%server@jdomain,
+			only destination like '*@aliasX' could have other form. If destination
+			does not contains an alias then it will be transformed to
+			userid@server before the message is sent to Jabber server
 
 Name:		workers
 Type:		integer
