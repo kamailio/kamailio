@@ -54,6 +54,8 @@
  *                => kill all or abort)  (andrei)
  *              force a shm_unlock before cleaning-up, in case we have a
  *               crashed childvwhich still holds the lock  (andrei)
+ *  2004-12-02  removed -p, extended -l to support [proto:]address[:port],
+ *               added parse_phostport, parse_proto (andrei)
  */
 
 
@@ -135,12 +137,12 @@ Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
 Options:\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -c           Check configuration file for errors\n\
-    -p port      Listen on the specified port (default: 5060)\n\
-                  applies to the last address in -l and to all \n\
-                  following that do not have a corresponding -p\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
-                  mean listening on more addresses). The default behavior\n\
-                  is to listen on all the interfaces\n\
+                  mean listening on more addresses).  The address format is\n\
+                  [proto:]addr[:port], where proto=udp|tcp and \n\
+                  addr= host|ip_address|interface_name. E.g: -l locahost, \n\
+                  -l udp:127.0.0.1:5080, -l eth0:5062 The default behavior\n\
+                  is to listen on all the interfaces.\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n\
     -r           Use dns to check if is necessary to add a \"received=\"\n\
@@ -673,6 +675,126 @@ error:
 
 
 
+/* returns -1 on error, 0 on success
+ * sets proto */
+static int parse_proto(unsigned char* s, long len, int* proto)
+{
+#define PROTO2UINT(a, b, c) ((	(((unsigned int)(a))<<16)+ \
+								(((unsigned int)(b))<<8)+  \
+								((unsigned int)(c)) ) | 0x20202020)
+	unsigned int i;
+	if (len!=3) return -1;
+	i=PROTO2UINT(s[0], s[1], s[2]);
+	switch(i){
+		case PROTO2UINT('u', 'd', 'p'):
+			*proto=PROTO_UDP;
+			break;
+#ifdef USE_TCP
+		case PROTO2UINT('t', 'c', 'p'):
+			*proto=PROTO_TCP;
+			break;
+#ifdef USE_TLS
+		case PROTO2UINT('t', 'l', 's'):
+			*proto=PROTO_TLS;
+			break;
+#endif
+#endif
+		default:
+			return -1;
+	}
+	return 0;
+}
+
+
+
+/*
+ * parses [proto:]host[:port]
+ * where proto= udp|tcp|tls
+ * returns 0 on success and -1 on failure
+ */
+static int parse_phostport(char* s, char** host, int* hlen, int* port,
+							int* proto)
+{
+	char* first; /* first ':' occurrence */
+	char* second; /* second ':' occurrence */
+	char* p;
+	int bracket;
+	char* tmp;
+	
+	first=second=0;
+	bracket=0;
+	
+	/* find the first 2 ':', ignoring possible ipv6 addresses
+	 * (substrings between [])
+	 */
+	for(p=s; *p; p++){
+		switch(*p){
+			case '[':
+				bracket++;
+				if (bracket>1) goto error_brackets;
+				break;
+			case ']':
+				bracket--;
+				if (bracket<0) goto error_brackets;
+				break;
+			case ':':
+				if (bracket==0){
+					if (first==0) first=p;
+					else if( second==0) second=p;
+					else goto error_colons;
+				}
+				break;
+		}
+	}
+	if (p==s) return -1;
+	if (*(p-1)==':') goto error_colons;
+	
+	if (first==0){ /* no ':' => only host */
+		*host=s;
+		*hlen=(int)(p-s);
+		*port=0;
+		*proto=0;
+		return 0;
+	}
+	if (second){ /* 2 ':' found => check if valid */
+		if (parse_proto(s, first-s, proto)<0) goto error_proto;
+		*port=strtol(second+1, &tmp, 10);
+		if ((tmp==0)||(*tmp)||(tmp==second+1)) goto error_port;
+		*host=first+1;
+		*hlen=(int)(second-*host);
+		return 0;
+	}
+	/* only 1 ':' found => it's either proto:host or host:port */
+	*port=strtol(first+1, &tmp, 10);
+	if ((tmp==0)||(*tmp)||(tmp==first+1)){
+		/* invalid port => it's proto:host */
+		if (parse_proto(s, first-s, proto)<0) goto error_proto;
+		*port=0;
+		*host=first+1;
+		*hlen=(int)(p-*host);
+	}else{
+		/* valid port => its host:port */
+		*proto=0;
+		*host=s;
+		*hlen=(int)(first-*host);
+	}
+	return 0;
+error_brackets:
+	LOG(L_ERR, "ERROR: parse_phostport: too many brackets in %s\n", s);
+	return -1;
+error_colons:
+	LOG(L_ERR, "ERROR: parse_phostport: too many colons in %s\n", s);
+	return -1;
+error_proto:
+	LOG(L_ERR, "ERROR: parse_phostport: bad protocol in %s\n", s);
+	return -1;
+error_port:
+	LOG(L_ERR, "ERROR: parse_phostport: bad port number in %s\n", s);
+	return -1;
+}
+
+
+
 /* main loop */
 int main_loop()
 {
@@ -1064,6 +1186,9 @@ int main(int argc, char** argv)
 	FILE* cfg_stream;
 	int c,r;
 	char *tmp;
+	int tmp_len;
+	int port;
+	int proto;
 	char *options;
 	int ret;
 	unsigned int seed;
@@ -1090,7 +1215,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:G:i:x:";
+	"f:cm:b:l:n:N:rRvdDETVhw:t:u:g:P:G:i:x:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1105,13 +1230,6 @@ int main(int argc, char** argv)
 				#ifdef STATS
 					stat_file=optarg;
 				#endif
-					break;
-			case 'p':
-					port_no=strtol(optarg, &tmp, 10);
-					if (tmp &&(*tmp)){
-						fprintf(stderr, "bad port number: -p %s\n", optarg);
-						goto error;
-					}
 					break;
 			case 'm':
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
@@ -1133,8 +1251,15 @@ int main(int argc, char** argv)
 					}
 					break;
 			case 'l':
+					if (parse_phostport(optarg, &tmp, &tmp_len,
+											&port, &proto)<0){
+						fprintf(stderr, "bad -l address specifier: %s\n",
+										optarg);
+						goto error;
+					}
+					tmp[tmp_len]=0; /* null terminate the host */
 					/* add a new addr. to our address list */
-					if (add_listen_iface(optarg, 0, 0, 0)!=0){
+					if (add_listen_iface(tmp, port, proto, 0)!=0){
 						fprintf(stderr, "failed to add new listen address\n");
 						goto error;
 					}
