@@ -56,6 +56,7 @@
  * --------
  *  2003-02-18  added t_forward_nonack_{udp, tcp}, t_relay_to_{udp,tcp},
  *               t_replicate_{udp, tcp} (andrei)
+ *  2003-02-19  added t_rely_{udp, tcp} (andrei)
  */
 
 
@@ -99,6 +100,8 @@ inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* b
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_newdlg( struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
+inline static int w_t_relay_udp( struct sip_msg  *p_msg,char *_foo,char *_bar);
+inline static int w_t_relay_tcp( struct sip_msg  *p_msg,char *_foo,char *_bar);
 inline static int w_t_relay_to( struct sip_msg  *p_msg , char *proxy, char *);
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, 
 									char *);
@@ -148,6 +151,8 @@ struct module_exports exports= {
 				"t_replicate_udp",
 				"t_replicate_tcp",
 				T_RELAY,
+				T_RELAY_UDP,
+				T_RELAY_TCP,
 				T_FORWARD_NONACK,
 				T_FORWARD_NONACK_UDP,
 				T_FORWARD_NONACK_TCP,
@@ -185,6 +190,8 @@ struct module_exports exports= {
 					w_t_replicate_udp,
 					w_t_replicate_tcp,
 					w_t_relay,
+					w_t_relay_udp,
+					w_t_relay_tcp,
 					w_t_forward_nonack,
 					w_t_forward_nonack_udp,
 					w_t_forward_nonack_tcp,
@@ -220,6 +227,8 @@ struct module_exports exports= {
 				2, /* t_replicate_udp */
 				2, /* t_replicate_tcp */
 				0, /* t_relay */
+				0, /* t_relay_udp */
+				0, /* t_relay_tcp */
 				2, /* t_forward_nonack */
 				2, /* t_forward_nonack_udp */
 				2, /* t_forward_nonack_tcp */
@@ -254,6 +263,8 @@ struct module_exports exports= {
 				fixup_hostport2proxy,	/* t_replicate_udp */
 				fixup_hostport2proxy,	/* t_replicate_tcp */
 				0,						/* t_relay */
+				0,						/* t_relay_udp */
+				0,						/* t_relay_tcp */
 				fixup_hostport2proxy,	/* t_forward_nonack */
 				fixup_hostport2proxy,	/* t_forward_nonack_udp */
 				fixup_hostport2proxy,	/* t_forward_nonack_tcp */
@@ -282,7 +293,7 @@ struct module_exports exports= {
 #ifdef VOICE_MAIL
 	4+
 #endif
-	14 + 6 /* *_(UDP|TCP) */,
+	14 + 8 /* *_(UDP|TCP) */,
 
 	/* ------------ exported variables ---------- */
 	(char *[]) { /* Module parameter names */
@@ -748,3 +759,19 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 }
 
 
+inline static int w_t_relay_udp( struct sip_msg  *p_msg , 
+						char *_foo, char *_bar)
+{
+	return t_relay_to( p_msg, 
+		(struct proxy_l *) 0 /* no proxy */, PROTO_UDP,
+		0 /* no replication */ );
+}
+
+
+inline static int w_t_relay_tcp( struct sip_msg  *p_msg , 
+						char *_foo, char *_bar)
+{
+	return t_relay_to( p_msg, 
+		(struct proxy_l *) 0 /* no proxy */, PROTO_TCP,
+		0 /* no replication */ );
+}

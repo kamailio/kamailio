@@ -48,6 +48,8 @@
 #define T_RELAY_TO_UDP "t_relay_to_udp"
 #define T_RELAY_TO_TCP "t_relay_to_tcp"
 #define T_RELAY "t_relay"
+#define T_RELAY_UDP "t_relay_udp"
+#define T_RELAY_TCP "t_relay_tcp"
 #ifndef DEPRECATE_OLD_STUFF
 #	define T_UAC "t_uac"
 #endif
