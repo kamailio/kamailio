@@ -34,6 +34,7 @@
 <!ENTITY url "<acronym>URL</acronym>">
 <!ENTITY uac "<acronym>UAC</acronym>">
 <!ENTITY uas "<acronym>UAS</acronym>">
+<!ENTITY ua "<acronym>UA</acronym>">
 <!ENTITY nat "<acronym>NAT</acronym>">
 <!ENTITY ip "<acronym>IP</acronym>">
 <!ENTITY udp "<acronym>UDP</acronym>">
