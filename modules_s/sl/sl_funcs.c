@@ -102,7 +102,7 @@ int sl_filter_ACK(struct sip_msg *msg )
 	/*force to parse to header -> we need it for tag param*/
 	if (parse_headers( msg, HDR_TO )==-1)
 	{
-		LOG(L_ERR,"ERROR:SL_FILTER_ACK: unable to parse To header\n");
+		LOG(L_ERR,"ERROR : SL_FILTER_ACK: unable to parse To header\n");
 		return -1;
 	}
 
