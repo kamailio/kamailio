@@ -5,7 +5,7 @@
 
 
 #ifdef FAST_LOCK
-#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #endif
 
 
@@ -84,7 +84,7 @@ pike_lock* create_semaphores(int nr)
 	int        sem_set;
 #endif
 
-	lock_set = (pike_lock*)pkg_malloc(nr*sizeof(pike_lock));
+	lock_set = (pike_lock*)shm_malloc(nr*sizeof(pike_lock));
 	if (lock_set==0){
 		LOG(L_CRIT, "ERROR: pike_create_semaphores: out of pkg mem\n");
 		goto error;
@@ -124,6 +124,8 @@ void destroy_semaphores(pike_lock *sem_set)
 
 	if (sem_set && semctl( sem_set[0].entry_semaphore,0,IPC_RMID,0)==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, entry_semaphore cleanup failed\n");
+	shm_free(pike_lock);
+	pike_lock = 0;
 #endif
 }
 

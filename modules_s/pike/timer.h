@@ -13,7 +13,7 @@ struct pike_timer {
 struct pike_timer_head {
 	struct pike_timer *first;
 	struct pike_timer *last;
-	pike_lock         sem;
+	pike_lock         *sem;
 };
 
 //void add()

@@ -59,15 +59,11 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		}
 		ip4->ip = msg->src_ip.u.addr32[0];
 		ip4->counter[0] = 1;
-		DBG("---->before lock\n");
-		lock(&bt_locks[IPv4]);
-		DBG("---->after lock\n");
+		lock(&locks[IPv4]);
 		if ((old_ip4=add234(btrees[IPv4],ip4))!=ip4) {
 			/* the src ip already in tree */
 			exceed=(++old_ip4->counter[0]>=(unsigned short)max_value);
-			sleep(60);
-			unlock(&bt_locks[IPv4]);
-			DBG("----> after unlock 1\n");
+			unlock(&locks[IPv4]);
 			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d] "
 				"exceed=%d\n",old_ip4->ip,old_ip4->counter[1],
 				old_ip4->counter[0],exceed);
@@ -78,9 +74,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			}
 		} else {
 			/* new record */
-			sleep(60);
-			unlock(&bt_locks[IPv4]);
-			DBG("----> after unlovk 2\n");
+			unlock(&locks[IPv4]);
 			DBG("DEBUG:pike_check_req: new IPv4 src [%X]\n",ip4->ip);
 		}
 	} else {
