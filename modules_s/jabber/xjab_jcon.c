@@ -275,7 +275,7 @@ int xj_jcon_user_auth(xj_jcon jbc, char *username, char *passwd,
 		//sprintf(msg_buff, "%s%s", jbc->stream_id, passwd);
 		strcpy(msg_buff, jbc->stream_id);
 		strcat(msg_buff, passwd);
-		DBG("XJAB:xj_jcon_user_auth: [%s:%s]\n", jbc->stream_id, passwd);
+		//DBG("XJAB:xj_jcon_user_auth: [%s:%s]\n", jbc->stream_id, passwd);
 		p1 = shahash(msg_buff);
 
 		z = xode_insert_tag(y, "digest");

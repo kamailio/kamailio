@@ -49,7 +49,7 @@ xj_pres_cell xj_pres_cell_new()
 	prc->key = 0;
 	prc->userid.s = NULL;
 	prc->userid.len = 0;
-	prc->state = XJ_PRES_STATE_OFFLINE;
+	prc->state = XJ_PS_OFFLINE;
 	prc->status = XJ_PRES_STATUS_NULL;
 	prc->cbf = NULL;
 	prc->cbp = NULL;
@@ -241,7 +241,6 @@ xj_pres_cell xj_pres_list_check(xj_pres_list prl, str* uid)
 
 	if(!prl || !uid || !uid->s || uid->len<=0 || prl->nr<=0 || prl->clist==NULL)
 		return NULL;
-	
 	lkey = xj_get_hash(uid, NULL);
 
 	p = prl->clist;
@@ -267,7 +266,7 @@ void xj_pres_list_notifyall(xj_pres_list prl, int s)
 	while(p)
 	{
 		if(p->cbf)
-			(*(p->cbf))(&(p->userid),(s==XJ_PRES_STATE_CHECK)?p->state:s,
+			(*(p->cbf))(&(p->userid),(s==XJ_PS_CHECK)?p->state:s,
 					p->cbp);
 		p = p->next;
 	}

@@ -592,41 +592,13 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		goto error;
 	}
 	
-	/** skip 'sip:' in destination address */
-	if(dst.s[0]=='s' && dst.s[1]=='i' && dst.s[2]=='p')
-	{
-		dst.s += 3;
-		dst.len -= 3;
-		fl = 1;
-		while(*dst.s == ' ' || *dst.s == '\t' || *dst.s == ':')
-		{
-			dst.s++;
-			dst.len--;
-			fl = 0;
-		}
-		if(fl)
-		{
-			dst.s -= 3;
-			dst.len += 3;
-		}
+	/** skip 'sip:' and parameters in destination address */
+	_XJ_ADJUST_SIPADDR(dst.s,dst.len,pc, fl);
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xjab_manage_sipmsg: DESTINATION corrected [%.*s].\n", 
+	DBG("XJAB:xjab_manage_sipmsg: DESTINATION after correction [%.*s].\n",
 				dst.len, dst.s);
 #endif
-	}
-	// check for parameters
-	pc = dst.s;
-	while(pc < dst.s + dst.len && *pc!=';')
-		pc++;
-	if(pc < dst.s+dst.len)
-	{
-		dst.len = pc - dst.s;
-#ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xjab_manage_sipmsg: DESTINATION corrected again [%.*s].\n", 
-				dst.len, dst.s);
-#endif
-	}
-
+	
 prepare_job:
 	//putting the SIP message parts in share memory to be accessible by workers
     jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
@@ -741,8 +713,8 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 {
 	xj_sipmsg jsmsg = NULL;
 	t_xj_jkey jkey, *jp;
-	int pipe, fl;
-
+	int pipe, fl, f;
+	char *p, *p0;
 	if(!to || !from || !cbf)
 		return;
 
@@ -768,7 +740,16 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	jsmsg->msg.len = 0;
 	jsmsg->msg.s = NULL;
 	
-	jsmsg->to.len = to->len;
+	p = to->s;
+	fl = to->len;
+	/** skip 'sip:' and parameters in destination address */
+	_XJ_ADJUST_SIPADDR(p, fl, p0, f);
+#ifdef XJ_EXTRA_DEBUG
+	DBG("XJAB:xj_register_watcher: DESTINATION after correction [%.*s].\n",
+				fl, p);
+#endif
+
+	jsmsg->to.len = fl;
 	if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1)) == NULL)
 	{
 		if(jsmsg->msg.s)
@@ -776,7 +757,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 		shm_free(jsmsg);
 		goto error;
 	}
-	strncpy(jsmsg->to.s, to->s, jsmsg->to.len);
+	strncpy(jsmsg->to.s, p, jsmsg->to.len);
 
 	jsmsg->jkey = jp;
 	jsmsg->type = XJ_REG_WATCHER;

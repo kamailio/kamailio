@@ -32,10 +32,11 @@
 #include "../../str.h"
 #include "xjab_base.h"
 
-#define XJ_PRES_STATE_CHECK		-1
-#define XJ_PRES_STATE_OFFLINE	0
-#define XJ_PRES_STATE_ONLINE	1
-#define XJ_PRES_STATE_REFUSED	2
+#define XJ_PS_CHECK			-1
+#define XJ_PS_OFFLINE		0
+#define XJ_PS_ONLINE		1
+#define XJ_PS_TERMINATED	2
+#define XJ_PS_REFUSED		3
 
 #define XJ_PRES_STATUS_NULL		0
 #define XJ_PRES_STATUS_SUBS		1

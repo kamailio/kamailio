@@ -31,11 +31,14 @@
  *
  * History
  * -------
- * 2003-02-28  send NOTIFYs even the connection is closed by user, (dcm)
  * 2003-01-20  xj_worker_precess function cleaning - some part of it moved to
- *              xj_worker_check_jcons function, (dcm)
- * 2003-03-11  major locking changes - uses locking.h (andrei)
- *
+ *             xj_worker_check_jcons function, (dcm)
+ * 2003-02-28  send NOTIFYs even the connection is closed by user, (dcm)
+ * 2003-03-11  major locking changes - uses locking.h, (andrei)
+ * 2003-05-07  added new presence status - 'terminated' - when connection
+ *             with Jabber server is lost or closed, (dcm)
+ * 2003-05-09  added new presence status - 'refused' - when the presence
+ *             subscription request is refused by target, (dcm)
  */
 
 #include <string.h>
@@ -563,6 +566,15 @@ step_z:
 		
 		if(jsmsg->type == XJ_REG_WATCHER)
 		{ // register a presence watcher
+			if(!jsmsg->cbf)
+			{
+#ifdef XJ_EXTRA_DEBUG
+				DBG("XJAB:xj_worker:%d: NULL PA callback"
+					" function\n", _xj_pid);
+#endif
+				goto step_w;
+			}
+
 			if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
 			{ // is for a conference - ignore?!?!
 #ifdef XJ_EXTRA_DEBUG
@@ -570,7 +582,7 @@ step_z:
 					_xj_pid);
 #endif
 				// set as offline
-				(*(jsmsg->cbf))(&jsmsg->to, 0, jsmsg->p);
+				(*(jsmsg->cbf))(&jsmsg->to, XJ_PS_OFFLINE, jsmsg->p);
 				goto step_w;
 			}
 			
@@ -583,6 +595,10 @@ step_z:
 				prc = xj_pres_list_check(jbc->plist, &sto);
 				if(!prc)
 				{
+#ifdef XJ_EXTRA_DEBUG
+					DBG("XJAB:xj_worker:%d: NEW presence"
+						" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+#endif
 					prc = xj_pres_cell_new();
 					if(!prc)
 					{
@@ -592,6 +608,8 @@ step_z:
 					}
 					if(xj_pres_cell_init(prc, &sto, jsmsg->cbf, jsmsg->p)<0)
 					{
+						DBG("XJAB:xj_worker:%d: cannot init the presence"
+							" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
 						xj_pres_cell_free(prc);
 						goto step_w;
 					}
@@ -606,9 +624,15 @@ step_z:
 						prc->status = XJ_PRES_STATUS_WAIT; 
 				}
 				else
+				{
 					xj_pres_cell_update(prc, jsmsg->cbf, jsmsg->p);
-				// send presence info to SIP subscriber
-				(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
+#ifdef XJ_EXTRA_DEBUG
+					DBG("XJAB:xj_worker:%d: calling CBF(%.*s,%d)\n", _xj_pid,
+						jsmsg->to.len, jsmsg->to.s, prc->state);
+#endif
+					// send presence info to SIP subscriber
+					(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
+				}
 			}
 			goto step_w;
 		}
@@ -848,7 +872,7 @@ step_xx:
  */
 int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 {
-	int i, err=0;
+	int j, err=0;
 	char *p, *to, *from, *msg, *type, *emsg, *ecode, lbuf[4096], fbuf[128];
 	xj_jconf jcf = NULL;
 	str ts, tf;
@@ -860,17 +884,18 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 		return -1;
 
 	sid = jbc->jkey->id;	
-	x = xode_from_strx(buf, len, &err, &i);
+	x = xode_from_strx(buf, len, &err, &j);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_parse_jab: XODE ret:%d pos:%d\n", err, i);
+	DBG("XJAB:xj_parse_jab: XODE ret:%d pos:%d\n", err, j);
 #endif	
 	if(err && pos != NULL)
-		*pos= i;
+		*pos= j;
 	if(x == NULL)
 		return -1;
-	
 	lbuf[0] = 0;
 	ecode = NULL;
+
+/******************** XMPP 'MESSAGE' HANDLING **********************/
 	
 	if(!strncasecmp(xode_get_name(x), "message", 7))
 	{
@@ -985,9 +1010,10 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 #endif
 		}
 		goto ready;
-	} // end MESSAGE
+	}
+/*------------------- END 'MESSAGE' HANDLING ----------------------*/
 	
-	/*** PRESENCE HANDLING ***/
+/******************** XMPP 'PRESENCE' HANDLING *********************/
 	if(!strncasecmp(xode_get_name(x), "presence", 8))
 	{
 #ifdef XJ_EXTRA_DEBUG
@@ -1005,58 +1031,7 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 			ts.len = p - from;
 		else
 			ts.len = strlen(from);
-		if(type!=NULL && !strncasecmp(type, "error", 5))
-		{
-			if((jcf=xj_jcon_check_jconf(jbc, from))!=NULL)
-			{
-				tf.s = from;
-				tf.len = strlen(from);
-				if((y = xode_get_tag(x, "error")) == NULL)
-					goto ready;
-				if ((p = xode_get_attrib(y, "code")) != NULL
-						&& atoi(p) == 409)
-				{
-					xj_send_sip_msgz(als->proxy, sid, &tf,
-							XJ_DMSG_ERR_JCONFNICK, &jbc->jkey->flag);
-					goto ready;
-				}
-				xj_send_sip_msgz(als->proxy,sid,&tf,XJ_DMSG_ERR_JCONFREFUSED,
-						&jbc->jkey->flag);
-			}
 
-			goto ready;
-		}
-		if(type!=NULL && !strncasecmp(type, "subscribe", 9))
-		{
-			xj_jcon_send_presence(jbc, from, "subscribed", NULL, NULL);
-			goto ready;
-		}
-		if(type!=NULL && !strncasecmp(type, "unavailable", 11))
-		{
-#ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_manage_jab: user <%s> is offline\n", from);
-#endif
-			prc = xj_pres_list_check(jbc->plist, &ts);
-			if(prc)
-			{
-				prc->state = XJ_PRES_STATE_OFFLINE;
-				// call callback function
-				if(prc->cbf)
-				{
-					tf.s = fbuf;
-					tf.len = 0;
-					if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_B2A)==0)
-					{
-#ifdef XJ_EXTRA_DEBUG
-						DBG("XJAB:xj_manage_jab: calling CBF(%.*s,0)\n",
-							tf.len, tf.s);
-#endif
-						(*(prc->cbf))(&tf, prc->state, prc->cbp);
-					}
-				}
-			}
-			goto ready;
-		}
 		if(type == NULL || !strncasecmp(type, "online", 6)
 			|| !strncasecmp(type, "available", 9))
 		{
@@ -1101,26 +1076,15 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 			else
 			{
 #ifdef XJ_EXTRA_DEBUG
-				DBG("XJAB:xj_manage_jab: user <%s> is online\n", from);
+				DBG("XJAB:xj_manage_jab: user <%.*s> is online\n",ts.len,ts.s);
 #endif
 				prc = xj_pres_list_check(jbc->plist, &ts);
 				if(prc)
 				{
-					prc->state = XJ_PRES_STATE_ONLINE;
-					// call callback function
-					if(prc->cbf)
+					if(prc->state != XJ_PS_ONLINE)
 					{
-						tf.s = fbuf;
-						tf.len = 0;
-						if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_B2A)
-							==0)
-						{
-#ifdef XJ_EXTRA_DEBUG
-							DBG("XJAB:xj_manage_jab: calling CBF(%.*s,1)\n",
-								tf.len, tf.s);
-#endif
-							(*(prc->cbf))(&tf, prc->state, prc->cbp);
-						}
+						prc->state = XJ_PS_ONLINE;
+						goto call_pa_cbf;
 					}
 				}
 				else
@@ -1145,15 +1109,81 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 					}
 					prc = xj_pres_list_add(jbc->plist, prc);
 					if(prc)
-						prc->state = XJ_PRES_STATE_ONLINE;
+					{
+						prc->state = XJ_PS_ONLINE;
+						goto call_pa_cbf;
+					}
 				}
 			}
-
+			goto ready;
 		}
 		
-		goto ready;
-	} // end PRESENCE
+		if(strchr(from, '@') == NULL)
+			goto ready;
 	
+		
+		if(!strncasecmp(type, "error", 5))
+		{
+			if((jcf=xj_jcon_check_jconf(jbc, from))!=NULL)
+			{
+				tf.s = from;
+				tf.len = strlen(from);
+				if((y = xode_get_tag(x, "error")) == NULL)
+					goto ready;
+				if ((p = xode_get_attrib(y, "code")) != NULL
+						&& atoi(p) == 409)
+				{
+					xj_send_sip_msgz(als->proxy, sid, &tf,
+							XJ_DMSG_ERR_JCONFNICK, &jbc->jkey->flag);
+					goto ready;
+				}
+				xj_send_sip_msgz(als->proxy,sid,&tf,XJ_DMSG_ERR_JCONFREFUSED,
+						&jbc->jkey->flag);
+			}
+			goto ready;
+		}
+		if(type!=NULL && !strncasecmp(type, "subscribe", 9))
+		{
+			xj_jcon_send_presence(jbc, from, "subscribed", NULL, NULL);
+			goto ready;
+		}
+
+		prc = xj_pres_list_check(jbc->plist, &ts);
+		if(!prc)
+			goto ready;
+
+		if(!strncasecmp(type, "unavailable", 11))
+		{
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_manage_jab: user <%s> is offline\n", from);
+#endif
+			if(prc->state != XJ_PS_OFFLINE)
+			{
+				prc->state = XJ_PS_OFFLINE;
+				goto call_pa_cbf;
+			}
+			goto ready;
+		}
+		
+		if(!strncasecmp(type, "unsubscribed", 12))
+		{
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_manage_jab: user <%s> does not allow to see his"
+				" presence status\n", from);
+#endif
+			if(prc->state != XJ_PS_REFUSED)
+			{
+				prc->state = XJ_PS_REFUSED;
+				goto call_pa_cbf;
+			}
+		}
+	
+		// ignoring unknown types
+		goto ready;
+	}
+/*------------------- END XMPP 'PRESENCE' HANDLING ----------------*/
+	
+/******************** XMPP 'IQ' HANDLING ***************************/
 	if(!strncasecmp(xode_get_name(x), "iq", 2))
 	{
 #ifdef XJ_EXTRA_DEBUG
@@ -1201,51 +1231,6 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 						}
 						goto next_sibling;
 					}
-					/*** else
-					{ // user item
-						ts.s = from;
-						ts.len = strlen(from);
-						DBG("XJAB:xj_manage_jab:%s is in roster\n", from);
-						if(xj_pres_list_check(jbc->plist, &ts))
-						{
-							DBG("XJAB:xj_manage_jab:%s already in presence"
-								" list\n", from);
-							goto next_sibling;
-						}
-
-						prc = xj_pres_cell_new();
-						if(prc == NULL)
-						{
-							DBG("XJAB:xj_manage_jab: cannot create presence"
-								" cell for %s\n", from);
-							goto next_sibling;
-						}
-						if(xj_pres_cell_init(prc, &ts, NULL, NULL)<0)
-						{
-							DBG("XJAB:xj_manage_jab: cannot init presence"
-								" cell for %s\n", from);
-							xj_pres_cell_free(prc);
-							goto next_sibling;
-						}
-						prc = xj_pres_list_add(jbc->plist, prc);
-						if(prc)
-						{
-							p = xode_get_attrib(z, "subscription");
-							if(p && !strncasecmp(p, "none", 4))
-							{
-								DBG("XJAB:xj_manage_jab: wait for permission"
-									" from %s\n", from);
-								prc->status = XJ_PRES_STATUS_WAIT; 
-							}
-							else
-							{
-								DBG("XJAB:xj_manage_jab: permission granted"
-									" from %s\n", from);
-								prc->status = XJ_PRES_STATUS_SUBS;
-							}
-						}
-					} 
-					***/
 				}
 next_sibling:
 				z = xode_get_nextsibling(z);
@@ -1253,8 +1238,24 @@ next_sibling:
 		}
 		
 		goto ready;
-	} // end IQ
+	}
+/*------------------- END XMPP 'IQ' HANDLING ----------------------*/
 
+call_pa_cbf:
+	if(prc && prc->cbf)
+	{
+		// call the PA callback function
+		tf.s = fbuf;
+		tf.len = 0;
+		if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_B2A)==0)
+		{
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_manage_jab: calling CBF(%.*s,%d)\n",
+				tf.len, tf.s, prc->state);
+#endif
+			(*(prc->cbf))(&tf, prc->state, prc->cbp);
+		}
+	}
 ready:
 	xode_free(x);
 	return err;
@@ -1299,30 +1300,7 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 		return -1;
 
 	// from correction
-	/****
-	beg = crt = 0;
-	end = -1;
-	while(crt < from->len && from->s[crt]!='@')
-	{
-		if(from->s[crt]==delim)
-		{
-			beg = end + 1;
-			end = crt;
-		}
-		crt++;
-	}
-	***/
 	tfrom.len = 0;
-	/***
-	if(end > 0)
-	{ // put display name
-		buf[0] = '"';
-		strncpy(buf+1,from->s+beg,end-beg);
-		tfrom.len = end-beg+1;
-		buf[tfrom.len++] = '"';
-		buf[tfrom.len++] = ' ';
-	}
-	***/
 	strncpy(buf+tfrom.len, "<sip:", 5);
 	tfrom.len += 5;
 	strncpy(buf+tfrom.len, from->s, from->len);
@@ -1337,8 +1315,6 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 	
 	strncat(buf1,tfrom.s,tfrom.len);
 	str_hdr.len += tfrom.len;
-	//strncat(buf1,"sip:193.175.135.68:5060",23);
-	//str_hdr.len += 23;
 	
 	strcat(buf1, CRLF);
 	str_hdr.len += CRLF_LEN;
@@ -1494,11 +1470,11 @@ void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *ps
 		if(jcp->ojc[i]->plist)
 		{
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_worker:%d: sending offline status to SIP"
+			DBG("XJAB:xj_worker:%d: sending 'terminated' status to SIP"
 					"subscriber\n", _xj_pid);
 #endif
 			xj_pres_list_notifyall(jcp->ojc[i]->plist,
-					XJ_PRES_STATE_OFFLINE);
+					XJ_PS_TERMINATED);
 		}
 		FD_CLR(jcp->ojc[i]->sock, pset);
 		xj_jcon_disconnect(jcp->ojc[i]);
