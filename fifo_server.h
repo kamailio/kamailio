@@ -15,6 +15,8 @@
 #define FIFO_UPTIME "uptime"
 #define FIFO_VERSION "version"
 
+#define MAX_CTIME_LEN 128
+
 typedef int (fifo_cmd)( FILE *fifo_stream, char *response_file );
 
 struct fifo_command{

@@ -64,6 +64,7 @@ static struct fifo_command *cmd_list=0;
 
 /* up time */
 static time_t up_since;
+static char up_since_ctime[MAX_CTIME_LEN];
 
 static struct fifo_command *lookup_fifo_cmd( char *name )
 {
@@ -405,6 +406,8 @@ consume:
 
 int open_fifo_server()
 {
+	char *t;
+
 	if (fifo==NULL) {
 		DBG("TM: open_uac_fifo: no fifo will be opened\n");
 		/* everything is ok, we just do not want to start */
@@ -423,6 +426,13 @@ int open_fifo_server()
 	} 
 	DBG("DEBUG: fifo %s opened, mode=%d\n", fifo, fifo_mode );
 	time(&up_since);
+	t=ctime(&up_since);
+	if (strlen(t)+1>=MAX_CTIME_LEN) {
+		LOG(L_ERR, "ERROR: open_fifo_server: "
+			"too long date %s\n", strlen(t));
+		return -1;
+	}
+	memcpy(up_since_ctime,t,strlen(t)+1);
 	process_no++;
 	fifo_pid=fork();
 	if (fifo_pid<0) {
@@ -517,43 +527,8 @@ static int uptime_fifo_cmd( FILE *stream, char *response_file )
 
 	time(&now);
 	fifo_reply( response_file, "Now: %sUp Since: %sUp time: %.0f [sec]\n",
-		ctime(&now), ctime(&up_since), difftime(now, up_since) );
+		ctime(&now), up_since_ctime, difftime(now, up_since) );
 
-#ifdef _OBSOLETED
-
-	file=open_reply_pipe(response_file);
-	if (file==NULL) {
-		LOG(L_ERR, "ERROR: uptime_fifo_cmd: file %s bad: %s\n",
-			response_file, strerror(errno) );
-		return -1;
-	}
-
-	time(&now);
-
-	r=fprintf(file, "Now: %s", ctime(&now) );
-	r=1;
-	if (r<=0) {
-		printf("XXX: r: %d : %s\n", r, strerror(errno));
-		goto done;
-	}
-
-	r=fprintf(file, "Up since: %s", ctime(&up_since) );
-	r=1;
-	if (r<=0) {
-		printf("XXX: r: %d : %s\n", r, strerror(errno));
-		goto done;
-	}
-	r=fprintf(file, "Up time: %.0f [sec]\n", difftime(now, up_since));
-	r=1;
-	if (r<=0) {
-		printf("XXX: r: %d : %s\n", r, strerror(errno));
-		goto done;
-	}
-
-done:
-
-	fclose(file);
-#endif
 	return 1;
 }
 
