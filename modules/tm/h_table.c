@@ -364,11 +364,17 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	/* update stats */
 #	ifdef EXTRA_DEBUG
 	if (p_entry->cur_entries==0) {
-		LOG(L_BUG, "BUG: bad things happened: cur_entries=0\n");
+		LOG(L_CRIT, "BUG: bad things happened: cur_entries=0\n");
 		abort();
 	}
 #	endif
 	p_entry->cur_entries--;
+#	ifdef EXTRA_DEBUG
+	if (cur_stats->transactions==0) {
+		LOG(L_CRIT, "BUG: bad things happened: cur->transactions=0\n");
+		abort();
+	}
+#	endif
 	cur_stats->transactions--;
 	if (p_cell->local) cur_stats->client_transactions--;
 	cur_stats->waiting--;
