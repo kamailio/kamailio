@@ -4,6 +4,7 @@
 
 #include <netinet/in.h>
 #include <netdb.h>
+#include "../../globals.h"
 #include "../../forward.h"
 #include "../../dprint.h"
 #include "../../md5utils.h"
@@ -68,7 +69,11 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 {
 	char               *buf;
 	unsigned int       len;
+
+/* changes after introduction of v6; -jiri
 	struct sockaddr_in to;
+*/
+	union sockaddr_union to;
 	str suffix_source[3];
 	int ss_nr;
 
@@ -77,7 +82,11 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		DBG("DEBUG: sl_send_reply: I won't send a reply for ACK!!\n");
 		goto error;
 	}
-	to.sin_family = AF_INET;
+
+	/* family will be updated in update_sock to whatever appropriate;
+	   -jiri
+	to.sin_family = AF_INET; */
+
 	if (update_sock_struct_from_via(  &(to),  msg->via1 )==-1)
 	{
 		LOG(L_ERR, "ERROR: sl_send_reply: cannot lookup reply dst: %s\n",
@@ -110,7 +119,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		goto error;
 	}
 
-	udp_send(buf,len,(struct sockaddr*)&(to),sizeof(struct sockaddr_in));
+	udp_send(buf,len,
+		/* v6; -jiri (struct sockaddr*) */ &(to),
+		sizeof(struct sockaddr_in));
 	pkg_free(buf);
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 
