@@ -9,57 +9,63 @@
 # Sterman indicates attributes according to
 # draft-sterman-aaa-sip-00
 #
-# Standard indicates a standard RADIUS attribute
-# which is missing in radiusclient dictionary
-#
-# Digest indicates attributes according to
-#
 # Proprietary indicates an attribute that hasn't
 # been standardized
 #
+# Check out http://www.iana.org/assignments/radius-types
+# for up-to-date list of standard RADIUS attributes
+# and values
+#
 
-### acc ###
-ATTRIBUTE Sip-Method                   101  integer    # Schulzrinne
-ATTRIBUTE Sip-Response-Code            102  integer    # Schulzrinne
-ATTRIBUTE Sip-Cseq                     103  string     # Schulzrinne
-ATTRIBUTE Sip-To-Tag                   104  string     # Schulzrinne
-ATTRIBUTE Sip-From-Tag                 105  string     # Schulzrinne
-ATTRIBUTE Sip-Branch-Id                106  string     # Schulzrinne
-ATTRIBUTE Sip-Translated-Req-ID        107  string     # Schulzrinne
-ATTRIBUTE Sip-Translated-Request-URI   107  string     # Proprietary
-ATTRIBUTE Sip-Source-Ip-Address        108  ipaddr     # Schulzrinne
-ATTRIBUTE Sip-Source-Port              109  integer    # Schulzrinne
-VALUE Service-Type Sip-Session          15             # Schulzrinne
-VALUE Acct-Status-Type Failed	        15             # Proprietary
-
-### auth_radius ###
-# Sip-Session service type is already defined in acc section
-VALUE Service-Type Call-Check           10             # Standard
-VALUE Service-Type Emergency-Call       13             # Proprietary
-
-ATTRIBUTE Digest-Response	       206     string  # Sterman
-ATTRIBUTE Digest-Attributes	       207     string  # Sterman
-
-ATTRIBUTE Sip-Uri-User                 208     string  # Proprietary
-ATTRIBUTE Sip-Rpid                     213     string  # Proprietary
-
-ATTRIBUTE Digest-Realm		      1063     string  # Sterman
-ATTRIBUTE Digest-Nonce		      1064     string  # Sterman
-ATTRIBUTE Digest-Method	              1065     string  # Sterman
-ATTRIBUTE Digest-Uri		      1066     string  # Sterman
-ATTRIBUTE Digest-Qop		      1067     string  # Sterman
-ATTRIBUTE Digest-Algorithm	      1068     string  # Sterman
-ATTRIBUTE Digest-Body-Digest	      1069     string  # Sterman
-ATTRIBUTE Digest-Cnonce	              1070     string  # Sterman
-ATTRIBUTE Digest-Nonce-Count	      1071     string  # Sterman
-ATTRIBUTE Digest-User-Name	      1072     string  # Sterman
-
-### group_radius ###
-VALUE Service-Type Group-Check          12             # Proprietary
-
-ATTRIBUTE Sip-Group                    211     string  # Proprietary
-
-### uri_radius ###
-# Call-Check service type is already define in auth_radius
+#
+# NOTE: All standard (IANA registered) attributes are 
+#       commented out except those that are missing in 
+#       the default dictionary of the radiusclient-ng 
+#       library.
+#
 
 
+#### Attributes ###
+#ATTRIBUTE User-Name		         1  string     # RFC2865, acc, auth_radius, avp_radius, group_radius, uri_radius
+#ATTRIBUTE Service-Type		         6  integer    # RFC2865, acc, auth_radius, avp_radius, group_radius, uri_radius
+#ATTRIBUTE Called-Station-Id             30  string     # RFC2865, acc
+#ATTRIBUTE Calling-Station-Id            31  string     # RFC2865, acc
+#ATTRIBUTE Acct-Status-Type              40  integer    # RFC2865, acc
+#ATTRIBUTE Acct-Session-Id               44  string     # RFC2865, acc
+ATTRIBUTE Sip-Method                   101  integer    # Schulzrinne, acc
+ATTRIBUTE Sip-Response-Code            102  integer    # Schulzrinne, acc
+ATTRIBUTE Sip-Cseq                     103  string     # Schulzrinne, acc
+ATTRIBUTE Sip-To-Tag                   104  string     # Schulzrinne, acc
+ATTRIBUTE Sip-From-Tag                 105  string     # Schulzrinne, acc
+ATTRIBUTE Sip-Translated-Request-URI   107  string     # Proprietary, acc
+ATTRIBUTE Digest-Response              206  string     # Sterman, auth_radius
+ATTRIBUTE Sip-Uri-User                 208  string     # Proprietary, auth_radius
+ATTRIBUTE Sip-Group                    211  string     # Proprietary, group_radius
+ATTRIBUTE Sip-Rpid                     213  string     # Proprietary, auth_radius
+ATTRIBUTE SIP-AVP                      225  string     # Proprietary, avp_radius
+ATTRIBUTE Digest-Realm                1063  string     # Sterman, auth_radius
+ATTRIBUTE Digest-Nonce                1064  string     # Sterman, auth_radius
+ATTRIBUTE Digest-Method               1065  string     # Sterman, auth_radius
+ATTRIBUTE Digest-URI                  1066  string     # Sterman, auth_radius
+ATTRIBUTE Digest-QOP                  1067  string     # Sterman, auth_radius
+ATTRIBUTE Digest-Algorithm            1068  string     # Sterman, auth_radius
+ATTRIBUTE Digest-Body-Digest          1069  string     # Sterman, auth_radius
+ATTRIBUTE Digest-CNonce               1070  string     # Sterman, auth_radius
+ATTRIBUTE Digest-Nonce-Count          1071  string     # Sterman, auth_radius
+ATTRIBUTE Digest-User-Name            1072  string     # Sterman, auth_radius
+
+### CISCO Vendor Specific Attributes ###
+#VENDOR Cisco              9
+#ATTRIBUTE Cisco-AVPair    1   string   Cisco           # VSA, auth_radius
+
+### Acct-Status-Type Values ###
+#VALUE Acct-Status-Type     Start             1         # RFC2866, acc
+#VALUE Acct-Status-Type     Stop              2         # RFC2866, acc
+VALUE Acct-Status-Type     Failed           15         # RFC2866, acc
+
+### Service-Type Values ###
+VALUE Service-Type         Call-Check       10         # RFC2865, uri_radius
+VALUE Service-Type         Group-Check      12         # Proprietary, group_radius
+VALUE Service-Type         Sip-Session      15         # Schulzrinne, acc, auth_radius
+VALUE Service-Type         SIP-Caller-AVPs  30         # Proprietary, avp_radius
+VALUE Service-Type         SIP-Callee-AVPs  31         # Proprietary, avp_radius
