@@ -6,26 +6,3 @@ use is as follows:
 The parameter is either called_uuid or callee_uuid. It identifies
 AVP which stores user's UUID. Then database is dipped with this
 UUID.
-
-If enabled in Makefile, avp module uses Radius as the source for
-attribute/value pairs.  The following Radius specific module variables
-are available:
-
-radius_config (defaults to "/usr/local/etc/radiusclient/radiusclient.conf")
-caller_service_type (defaults to "SIP-Caller-AVPs")
-callee_service_type (defaults to "SIP-Callee-AVPs")
-
-In Radius mode, avp_load function is called avp_load_radius and it takes
-one parameter as follows:
-
-avp_load_radius("caller") or
-avp_load_radius("callee")
-
-In the "caller" case, attributes of (digest) authenticated calling user
-are loaded and in the "callee" case, attributes of the called user to
-whom the Request-URI belongs to are loaded.
-
-The module assumes that Radius returns the AVPs as values of reply
-attribute SIP-AVP.  Its value is string of form "name:value" or of form
-"name#value".  In the first case, value is interpreted as string and in
-the second case as int (second case not implemented yet).
