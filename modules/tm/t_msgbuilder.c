@@ -22,11 +22,6 @@
 			memcpy((_d),(_s),(_len));\
 			(_d) += (_len);\
 		}while(0);
-#define append_str( _p, _str ) \
-		do { \
-			memcpy((_p), (_str).s, (_str).len); \
-			(_p)+=(_str).len; \
-		} while(0);
 
 
 /* Build a local request based on a previous request; main

@@ -27,7 +27,7 @@ int print_stats(  FILE *f )
 	fprintf(f, "Time:\n----------------\n");
 	fprintf(f, "Now: %s", ctime(&now));
 	fprintf(f, "Up since: %s", ctime(&acc_stats->up_since));
-	fprintf(f, "Up time: %.f [sec]\n", difftime(now, acc_stats->up_since));
+	fprintf(f, "Up time: %.0f [sec]\n", difftime(now, acc_stats->up_since));
 	fprintf(f, "\nCurrent values:\n----------------\n");
 	fprintf(f, "# of transactions: %d\n", 
 		cur_stats->transactions );
