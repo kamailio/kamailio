@@ -172,7 +172,6 @@ void free_hostent(struct hostent *dst)
 		for (r=0; dst->h_addr_list[r];r++) { 
 			pkg_free(dst->h_addr_list[r]);
 		}
-		pkg_free(dst->h_addr_list[r]);
 		pkg_free(dst->h_addr_list);
 	}
 }
