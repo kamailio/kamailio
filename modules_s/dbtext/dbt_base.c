@@ -84,7 +84,7 @@ db_con_t* dbt_init(const char* _sqlurl)
 	DBT_CON_CONNECTION(_res) = dbt_cache_get_db(&_s);
 	if (!DBT_CON_CONNECTION(_res))
 	{
-		LOG(L_ERR, "DBT:dbt_init: No enough memory\n");
+		LOG(L_ERR, "DBT:dbt_init: cannot get the link to database\n");
 		return NULL;
 	}
 

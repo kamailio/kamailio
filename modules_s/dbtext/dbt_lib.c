@@ -93,7 +93,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	dbt_cache_p _dcache=NULL;;
 	if(!_cachesem || !_cachedb)
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db: dbtext cache not initialized!\n");
+		LOG(L_ERR, "DBT:dbt_cache_get_db:dbtext cache is not initialized!\n");
 		return NULL;
 	}
 	if(!_s || !_s->s || _s->len<=0)
@@ -384,16 +384,17 @@ int dbt_cache_destroy()
 		return -1;
 	
 	lock_get(_cachesem);
-	
-	_dc = *_cachedb;
-	while(_dc)
+	if(	_cachedb!=NULL )
 	{
-		_dc0 = _dc;
-		_dc = _dc->next;
-		dbt_cache_free(_dc0);
+		_dc = *_cachedb;
+		while(_dc)
+		{
+			_dc0 = _dc;
+			_dc = _dc->next;
+			dbt_cache_free(_dc0);
+		}
+		shm_free(_cachedb);
 	}
-	shm_free(_cachedb);
-	
 	lock_destroy(_cachesem);
 	lock_dealloc(_cachesem);
 	

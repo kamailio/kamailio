@@ -491,7 +491,6 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 		case DB_BITMAP:
 			return (_vp->val.int_val<_v->val.bitmap_val)?-1:
 				(_vp->val.int_val>_v->val.bitmap_val)?1:0;
-			return 1;
 	}
 	return -2;
 }
