@@ -25,14 +25,14 @@ enum { INITIAL=0,
 		TO1,
 		C_START, CSEQ2, CSEQ3,
 		         CALLID2, CALLID3, CALLID4, CALLID5, CALLID6,
-		         CONTACT2, CONTACT3, CONTACT4, CONTACT5, CONTACT6,
-		M_START,      MAXFORWARDS2, MAXFORWARDS3, MAXFORWARDS4, MAXFORWARDS5,
+		         CONTACT2, CONTACT3, CONTACT4, CONTACT5, CONTACT6, 
+ 		M_FOUND,      MAXFORWARDS2, MAXFORWARDS3, MAXFORWARDS4, MAXFORWARDS5,
 		MAXFORWARDS6, MAXFORWARDS7, MAXFORWARDS8, MAXFORWARDS9, MAXFORWARDS10,
 		MAXFORWARDS11,
 		ROUTE1, ROUTE2, ROUTE3, ROUTE4,
                 RECROUTE1, RECROUTE2, RECROUTE3, RECROUTE4, RECROUTE5, 
                 RECROUTE6, RECROUTE7, RECROUTE8, RECROUTE9, RECROUTE10,
-       
+
 		/* final states*/
 		F_VIA=1000, F_FROM, F_TO, F_CSEQ, F_CALLID, F_CONTACT, F_MAXFORWARDS,
                 F_ROUTE, F_RECROUTE,
@@ -40,7 +40,7 @@ enum { INITIAL=0,
 
 		UNKNOWN_HEADER=200,
 		BODY=220,
-		LF=25000,
+		LF=25000
 	};
 
 
@@ -103,7 +103,7 @@ char* parse_hname1(char* p, char* end, struct hdr_field* hdr)
 						case CONTACT4:
 								state=CONTACT5;
 								break;
-						case M_START:
+						case M_FOUND:
 								state=MAXFORWARDS2;
 								break;
 						case MAXFORWARDS8:
@@ -192,7 +192,7 @@ char* parse_hname1(char* p, char* end, struct hdr_field* hdr)
 			case 'm':
 						switch(state){
 							case INITIAL:
-								state=M_START;
+								state=M_FOUND;
 								hdr->name.s=t;
 								break;
 							case FROM3:
@@ -454,7 +454,7 @@ char* parse_hname1(char* p, char* end, struct hdr_field* hdr)
 								/*compact form i: (Call-ID)*/
 								state=F_CALLID;
 								break;
-							case M_START:
+							case M_FOUND:
 								/*compact form m: (Contact)*/
 								state=F_CONTACT;
 								break;
@@ -495,7 +495,7 @@ char* parse_hname1(char* p, char* end, struct hdr_field* hdr)
 								hdr->type=HDR_CALLID;
 								goto skip;
 							case F_CONTACT:
-							case M_START: /*compact form*/
+							case M_FOUND: /*compact form*/
 								*t=0;
 								hdr->name.len=t-hdr->name.s;
 								hdr->type=HDR_CONTACT;

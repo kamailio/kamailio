@@ -7,16 +7,12 @@
 #define ip_addr_h
 
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include "str.h"
 
-#ifdef USE_IPV6
-	#ifdef FreeBSD			/* freebsd is brain damaged and needs a different
-							   include */
-#include <netinet6/in6.h>
-	#endif
-#endif
 
 #include "dprint.h"
 

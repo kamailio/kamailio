@@ -5,6 +5,7 @@
  * ip address & address family related functions
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "ip_addr.h"

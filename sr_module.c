@@ -141,7 +141,7 @@ int load_module(char* path)
 	}
 	/* launch register */
 	exp = (struct module_exports*)dlsym(handle, "exports");
-	if ( (error =dlerror())!=0 ){
+	if ( (error =(char*)dlerror())!=0 ){
 		LOG(L_ERR, "ERROR: load_module: %s\n", error);
 		goto error1;
 	}
