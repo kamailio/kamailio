@@ -3,7 +3,7 @@ eXtended JABber module
 ======================
 
 1. Description
-1.1 Dependences
+1.1 Dependencies
 2.1 New features
 2.2 Features
 3. Exported parameters
@@ -26,7 +26,7 @@ Expat is a common XML library and is the fastest available for Linux/Unix,
 the second over all, after msxml library. It is integrated in most of well known
 Linux distributions.
 
-1.1 Dependences
+1.1 Dependencies
 ---------------
 - modules
 	- MYSQL
@@ -100,7 +100,7 @@ Desc:		Format: jabber.sipserver.com=<delim>
 Name:		aliases
 Type:		string
 Default:	none
-Desc:		aliases for hostnames. 
+Desc:		aliases for IM networks. 
 			Format: "N;alias1=<delim1>;...;aliasN=<delimN>;"
 			Destinations like '*@aliasX' could have other format than those 
 			specified for Jabber network. 
@@ -155,15 +155,15 @@ Desc:	converts SIP MESSAGE message to a Jabber message and sends it to Jabber
 
 Name: 	jab_join_jconf
 Params:	none
-Desc:	join a Jabber conference - the nickanme, room name and conference server
-		address should be included in to header as:
+Desc:	join a Jabber conference - the nickname, room name and conference server
+		address should be included in To header as:
 		nickname%roomname%conference_server@jdomain . If the nickname is missing,
 		then the SIP username is used.
 
 Name: 	jab_exit_jconf
 Params:	none
-Desc:	leave a Jabber conference - the nickanme, room name and conference server
-		address should be included in to header as:
+Desc:	leave a Jabber conference - the nickname, room name and conference server
+		address should be included in To header as:
 		nickname%roomname%conference_server@jdomain .
 
 Name: 	jab_go_online
@@ -172,7 +172,7 @@ Desc:	register to the Jabber server with associated Jabber ID of the SIP user
 
 Name: 	jab_go_offline
 Params:	none
-Desc:	logoff from Jabber server the associated Jabber ID of the SIP user
+Desc:	log off from Jabber server the associated Jabber ID of the SIP user
 
 
 5. Admin's guide
@@ -187,14 +187,14 @@ Jabber accounts form web are located in 'doc' subdirectory of the module.
 Main steps of using the Jabber gateway:
 - create the mysql database
 - setup the local Jabber server
-- set the module parameter values in cfg file of SER, load the dependencing
+- set the module parameter values in cfg file of SER, load the dependent
 modules, set up the routing rules for Jabber gateway.
 - run SER
 
 The administrator of SER/Jabber gateway MUST inform the users what are the 
 aliases for Jabber/Other IM networks. Other IMs could be AIM, ICQ, MSN, Yahoo ...
 
-These aliases depends on the server hostname which runs SER and how local Jabber
+These aliases depend on the server hostname where runs SER and how local Jabber
 server is setup.
 
 Next is presented an usecase.
@@ -276,4 +276,4 @@ account - is something like sending messages to yourself.
 
 http://www.iptel.org/ser
 serhelp@iptel.org
-
+seruser@iptel.org
