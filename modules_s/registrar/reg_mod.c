@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ */
 
 
 #include "reg_mod.h"
@@ -57,50 +62,30 @@ float def_q;                /* default_q converted to float in mod_init */
  */
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
+static cmd_export_t cmds[]={
+	{"save",   save,   1,  domain_fixup},
+	{"lookup", lookup, 1,  domain_fixup},
+	{0,0,0,0}
+};
+
+static param_export_t params[]={
+	{"default_expires",  INT_PARAM, &default_expires},
+	{"default_q",        INT_PARAM, &default_q},
+	{"append_branches",  INT_PARAM, &append_branches},
+	{"use_domain",       INT_PARAM, &use_domain},
+	{"case_sensitive",   INT_PARAM, &case_sensitive},
+	{0,0,0}
+};
+
 
 /*
  * Module exports structure
  */
 struct module_exports exports = {
 	"registrar", 
-	(char*[]) {
-		"save",
-		"lookup"
-	},
-	(cmd_function[]) {
-		save, 
-		lookup
-	},
-	(int[]){1, 1},
-	(fixup_function[]) {
-		domain_fixup, 
-		domain_fixup
-	},
-	2,
+	cmds,
+	params,
 	
-	(char*[]) { /* Module parameter names */
-		"default_expires",
-		"default_q",
-		"append_branches",
-		"use_domain",
-		"case_sensitive"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&default_expires,
-		&default_q,
-		&append_branches,
-		&use_domain,
-		&case_sensitive
-	},
-	5,         /* Number of module paramers */
-
 	mod_init,   /* module initialization function */
 	0,
 	0,          /* destroy function */
