@@ -9,4 +9,11 @@
 
 #define DEFAULT_CACHE_SIZE 512
 
+/*
+ * Needed for some broken clients, if defined,
+ * registers with the same callid but lower cseq
+ * will be accepted
+ */
+#define OOO_HACK
+
 #endif

@@ -530,16 +530,25 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 }
 
 
+/*
+ * Returns TRUE if request is retransmission or a new one,
+ * FALSE otherwise
+ */
 static int check_request_order(contact_t* _old, contact_t* _new)
 {
+#ifdef OOO_HACK
+	return TRUE;
+#endif
+
 #ifdef PARANOID
 	if ((!_old) || (!_new)) {
 		ERR("Invalid parameter value");
 		return FALSE;
 	}
 #endif
+
 	if (!strcmp(_old->callid, _new->callid)) {
-		if (_old->cseq >= _new->cseq) {
+		if (_old->cseq > _new->cseq) {
 			return FALSE;
 		}
 	}
