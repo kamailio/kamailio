@@ -62,12 +62,13 @@ extern struct s_table*  hash_table;
 		
 
 #ifdef EXTRA_DEBUG
+#define T_IS_REFED_BYSELF(_T_cell) ((_T_cell)->ref_bitmap & process_bit)
 #	define DBG_REF(_action, _t) DBG("DEBUG: XXXXX %s (%s:%d): T=%p , ref (bm=%x, cnt=%d)\n",\
 			(_action), __FUNCTION__, __LINE__, (_t),(_t)->ref_bitmap, T_REFCOUNTER(_t));
 #	define T_UNREF(_T_cell) \
 	( { \
 		DBG_REF("unref", (_T_cell)); \
-		if (!T_IS_REFED(_T_cell)) { \
+		if (!T_IS_REFED_BYSELF(_T_cell)) { \
 			DBG("ERROR: unrefering unrefered transaction %p from %s , %s : %d\n", \
 				(_T_cell), __FUNCTION__, __FILE__, __LINE__ ); \
 			abort(); \
@@ -78,7 +79,7 @@ extern struct s_table*  hash_table;
 #	define T_REF(_T_cell) \
 	( { \
 		DBG_REF("ref", (_T_cell));	 \
-		if (T_IS_REFED(_T_cell)) { \
+		if (T_IS_REFED_BYSELF(_T_cell)) { \
 			DBG("ERROR: refering already refered transaction %p from %s , %s : %d\n", \
 				(_T_cell), __FUNCTION__, __FILE__, __LINE__ ); \
 			abort(); \

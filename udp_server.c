@@ -234,7 +234,7 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 
 	DBG(" destination: IP=%s, port=%u; packet:\n", ip_txt, p);
 	DBG(" destination (hex): IP=%x, port=%x;\n", a->sin_addr.s_addr, a->sin_port );
-	DBG(" packet: {%*s...}\n", 24, buf );
+	/* DBG(" packet: {%*s...}\n", 24, buf ); */
 	/* DBG("%*s\n", len, buf ); */
 #endif
 /*

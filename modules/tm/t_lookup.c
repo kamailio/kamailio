@@ -319,49 +319,47 @@ nomatch2:
   */
 int t_check( struct sip_msg* p_msg , int *param_branch)
 {
-   int local_branch;
+	int local_branch;
 
-   /* is T still up-to-date ? */
-   DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T=%p\n", p_msg->id,global_msg_id,T);
-   if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
-   {
-      global_msg_id = p_msg->id;
-	/*
-      if ( T && T!=T_UNDEFINED )
-         unref_T(T);
-	*/
-      T = T_UNDEFINED;
-      /* transaction lookup */
-     if ( p_msg->first_line.type==SIP_REQUEST ) {
+	/* is T still up-to-date ? */
+	DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T on entrance=%p\n", 
+		p_msg->id,global_msg_id,T);
+	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
+	{
+		global_msg_id = p_msg->id;
+		/* if ( T && T!=T_UNDEFINED ) unref_T(T); */
+      		T = T_UNDEFINED;
+		/* transaction lookup */
+		if ( p_msg->first_line.type==SIP_REQUEST ) {
 
-   		/* force parsing all the needed headers*/
-   		if (parse_headers(p_msg, HDR_EOH )==-1)
-    		return -1;
-         t_lookup_request( p_msg );
-	 } else {
-		 if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
-        		!p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
-    		return -1;
+   			/* force parsing all the needed headers*/
+   			if (parse_headers(p_msg, HDR_EOH )==-1)
+    				return -1;
+         		t_lookup_request( p_msg );
+	 	} else {
+		 	if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
+        			!p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
+    			return -1;
+         		t_reply_matching( p_msg , ((param_branch!=0)?(param_branch):(&local_branch)) );
+	 	}
+#		ifdef EXTRA_DEBUG
+		if ( T && T!=T_UNDEFINED && T->damocles) {
+			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion "
+				"and called from t_check\n", T);
+			abort();
+		}
+#		endif
+   		DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T on finish=%p\n", 
+			p_msg->id,global_msg_id,T);
 
-         t_reply_matching( p_msg , ((param_branch!=0)?(param_branch):(&local_branch)) );
-	 }
-#ifdef EXTRA_DEBUG
-	if ( T && T!=T_UNDEFINED && T->damocles) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and called from t_check\n", T);
-		abort();
+   	} else {
+		if (T)
+			DBG("DEBUG: t_check: T alredy found!\n");
+		else
+			DBG("DEBUG: t_check: T previously sought and not found\n");
 	}
-#endif
 
-   }
-   else
-   {
-      if (T)
-         DBG("DEBUG: t_check: T alredy found!\n");
-      else
-          DBG("DEBUG: t_check: T previously sought and not found\n");
-   }
-
-   return ((T)?1:0) ;
+	return ((T)?1:0) ;
 }
 
 
