@@ -431,9 +431,8 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 		}
 	}
 
-	len = h->name.len + h->body.len + 2;
-	if (h->body.s[h->body.len] != '\0') len++; 
-	/* FIXME: Is this necessary ?, Yes, it is */
+	if (h->next) len = h->next->name.s - h->name.s;
+	else len = _m->unparsed - h->name.s;
 
 	if (del_lump(&_m->add_rm, h->name.s - _m->buf, len, 0) == 0) {
 		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");
