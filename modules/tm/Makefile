@@ -15,6 +15,8 @@ NAME=tm.so
 SHLIB_LD_FLAGS= -shared
 LIBS= -lpthread
 
+ALLDEP=Makefile ../../Makefile
+
 ifeq ($(ARCH), SunOS)
 LDFLAGS=-O2 -G
 endif

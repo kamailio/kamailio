@@ -263,6 +263,9 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 						state=HIDDEN1;
 						param->name.s=tmp;
 						break;
+					case BRANCH5:
+						state=FIN_BRANCH;
+						break;
 					case GEN_PARAM:
 						break;
 					case F_CR:
@@ -808,7 +811,6 @@ char* parse_via(char* buffer, char* end, struct via_body *vb)
 
 	char* tmp_param;
 	struct via_param* param;
-
 
 parse_again:
 	vb->error=VIA_PARSE_ERROR;
@@ -1586,12 +1588,6 @@ main_via:
 						memset(param,0, sizeof(struct via_param));
 						tmp=parse_via_param(tmp, end, &state, &saved_state,
 											param);
-						/*add param to the list*/
-						if (vb->last_param)	vb->last_param->next=param;
-						else				vb->param_lst=param;
-						vb->last_param=param;
-						if (param->type==PARAM_BRANCH)
-							vb->branch=param;
 						
 						switch(state){
 							case L_PARAM:
@@ -1616,6 +1612,12 @@ main_via:
 										*tmp, state);
 								goto error;
 						}
+						/*add param to the list*/
+						if (vb->last_param)	vb->last_param->next=param;
+						else				vb->param_lst=param;
+						vb->last_param=param;
+						if (param->type==PARAM_BRANCH)
+							vb->branch=param;
 						break;
 					case P_PARAM:
 						break;
@@ -1706,6 +1708,7 @@ endofpacket:
 	}
 	return tmp;
 nextvia:
+	DBG("parse_via: next_via\n");
 	vb->error=VIA_PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
