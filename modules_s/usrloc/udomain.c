@@ -275,7 +275,7 @@ int preload_udomain(udomain_t* _d)
 			  * we also store zombies in database so we have to restore
 			  * the correct state
 		      */
-		if (state == 1)
+		if (state >= CS_ZOMBIE_N)
 			c->state = CS_ZOMBIE_S;
 		else
 			c->state = CS_SYNC;
