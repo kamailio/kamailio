@@ -156,10 +156,5 @@ void cleanup_localcancel_timers( struct cell *t );
 int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;
 
-int t_write_req(struct sip_msg* msg,
-	char* vm_fifo, char* action);
-
-int init_twrite_lines();
-
 #endif
 

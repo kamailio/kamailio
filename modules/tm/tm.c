@@ -92,7 +92,6 @@
 
 #include "sip_msg.h"
 #include "h_table.h"
-#include "t_funcs.h"
 #include "t_hooks.h"
 #include "tm_load.h"
 #include "ut.h"
@@ -104,6 +103,7 @@
 #include "t_stats.h"
 #include "callid.h"
 #include "t_cancel.h"
+#include "t_fifo.h"
 
 MODULE_VERSION
 
