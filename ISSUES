@@ -5,7 +5,19 @@
 This is a collection of issues which have shown up
 since the version 0.8.8 was released.
 
----------------------------------------------------------------
+----------------------------------------------------------------
+Desc:  ser 0.8.10 won't compile with bison 1.75
+BugId:  n/a
+Ser version: 0.8.8, 0.8.9, 0.8.10 
+Patch: 
+ 0.8.10 http://www.mobile-ip.de/~andrei/ser/0.8.10/ser-0.8.10-bison-1.75.patch
+ 0.8.9  http://www.mobile-ip.de/~andrei/ser/0.8.9/ser-0.8.9-bison-1.75.patch
+Workaround: update from cvs,  apply the corresponding patch or downgrade bison
+CVS status: fixed
+----------------------------------------------------------------
+ser 0.8.10 released, all the issues below this are fixed in ser 0.8.10, all the
+issues above are not :-)
+----------------------------------------------------------------
 Desc:  ser 0.8.9 won't log to stderr or syslog unless dontfork is set
         (introduced when trying to fix bug 376)
 BugId:  n/a
