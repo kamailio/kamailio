@@ -334,7 +334,7 @@ static int load_avp_radius(struct sip_msg* msg, char* attr, char* _dummy)
 
 static int load_avp_fixup(void** param, int param_no)
 {
-	int id = 0;
+	long id = 0;
 
 	if (param_no == 1) {
 		if (!strcasecmp(*param, "caller")) {

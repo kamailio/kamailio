@@ -34,7 +34,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif  /* else alloca() it's defined in stdlib.h */
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../auth/api.h"

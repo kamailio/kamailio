@@ -967,8 +967,8 @@ no_matche:
 	return 0;
 error:
 	LOG(L_ERR,"ERROR:cpl-c:is_lang_tag_matching: parse error in Accept-"
-		"Language body <%.*s> at char <%c>[%d] offset %d!\n",
-		range->len,range->s,*c,*c,c-range->s);
+		"Language body <%.*s> at char <%c>[%d] offset %ld!\n",
+		range->len,range->s,*c,*c,(long)(c-range->s));
 	return -1;
 }
 

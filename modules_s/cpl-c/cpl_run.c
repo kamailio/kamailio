@@ -613,7 +613,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 		i = cpl_fct.tmb.t_reply(intr->msg, (int)status, reason_s );
 	} else {
 		/* reply statelessly */
-		i = cpl_fct.sl_reply(intr->msg, (char*)(int)status, reason_s );
+		i = cpl_fct.sl_reply(intr->msg, (char*)(long)status, reason_s );
 	}
 
 	if ( i!=1 ) {

@@ -155,7 +155,7 @@ struct module_exports exports = {
 
 static int fixup_cpl_run_script(void** param, int param_no)
 {
-	int flag;
+	long flag;
 
 	if (param_no==1) {
 		if (!strcasecmp( "incoming", *param))
@@ -502,8 +502,8 @@ static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 
 	/* sanity check */
 	if (p-uh->s!=uh->len+1) {
-		LOG(L_CRIT,"BUG:cpl-c:build_userhost: buffer overflow l=%d,w=%d\n",
-			uh->len,p-uh->s);
+		LOG(L_CRIT,"BUG:cpl-c:build_userhost: buffer overflow l=%d,w=%ld\n",
+			uh->len,(long)(p-uh->s));
 		return -1;
 	}
 	return 0;
@@ -577,7 +577,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	str  script;
 
 	/* get the user_name */
-	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
+	if ( ((unsigned long)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the destination user name */
 		if (get_dest_user( msg, &user, BUILD_UH_SHM)==-1)
 			goto error0;
@@ -602,12 +602,12 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
 		goto error2;
 	/* set the flags */
-	cpl_intr->flags = ((unsigned int)str1)|((unsigned int)str2);
+	cpl_intr->flags =(unsigned int)((unsigned long)str1)|((unsigned long)str2);
 	/* attache the user */
 	cpl_intr->user = user;
 	/* for OUTGOING we need also the destination user for init. with him
 	 * the location set */
-	if ( ((unsigned int)str1)&CPL_RUN_OUTGOING ) {
+	if ( ((unsigned long)str1)&CPL_RUN_OUTGOING ) {
 		if (get_dest_user( msg, &loc,BUILD_UH_ADDSIP)==-1)
 			goto error3;
 		if (add_location( &(cpl_intr->loc_set), &loc,10,CPL_LOC_DUPL)==-1)
@@ -927,7 +927,7 @@ resume_script:
 	return 1;
 error:
 	/* send a error reply back */
-	cpl_fct.sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
+	cpl_fct.sl_reply( msg, (char*)(long)cpl_err->err_code, cpl_err->err_msg);
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }

@@ -126,7 +126,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	grp = (str*)_group; /* via fixup */
 	send = received = 0;
 
-	hf_type = (int)_hf;
+	hf_type = (int)(long)_hf;
 
 	switch(hf_type) {
 	case 1: /* Request-URI */
