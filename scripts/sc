@@ -79,30 +79,33 @@ fi
 cat <<EOF
 sc $Revision$
 usage: 
-           < subscribers >
+           * subscribers *
  $CMD add <name> <password> <email> ... add a new subscriber (*)
  $CMD mail <name> ..................... send an email to a user
  $CMD rm <name> ....................... delete a user (*)
  $CMD alias show [<alias>] ............ show aliases
  $CMD alias rm <alias> ................ remove an alias
  $CMD alias add <alias> <uri> ......... show aliases
-           < access control lists >
+
+           * access control lists *
  $CMD acl show [<user>] ............... show user membership
  $CMD acl grant <user> <group> ........ grant user membership (*)
  $CMD acl revoke <user> [<group>] ..... grant user membership(s) (*)
-           < usrloc >
+
+           * usrloc *
  $CMD dul <table> <name> .............. delete user's UsrLoc entries
  $CMD show ............................ show online users
  $CMD showdb [<name>] ................. show online users flushed in DB
  $CMD passwd <user> <passwd> .......... change user's password (*)
  $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
-           < server health >
+
+           * server health *
  $CMD monitor ......................... show internal status
  $CMD ps .............................. show runnig processes 
  $CMD fifo ............................ send raw commands to FIFO
 
    commands labeled with (*) will prompt for a MySQL password
-   if the variable PW is set, the password will not be prompted"
+   if the variable PW is set, the password will not be prompted
 
      $EXTRA_TEXT
 
