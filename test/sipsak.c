@@ -40,7 +40,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <arpa/inet.h>
 #include <sys/poll.h>
 
-#define SIPSAK_VERSION "v0.5"
+#define SIPSAK_VERSION "v0.6"
 #define RESIZE		1024
 #define BUFSIZE		4096
 #define FQDN_SIZE   200
@@ -414,7 +414,7 @@ void warning_extract(char *message)
 	}
 	else {
 		if (verbose) printf("'no Warning header found' ");
-		else printf("unknown ");
+		else printf("?? ");
 	}
 }
 
@@ -453,8 +453,9 @@ void shoot(char *buff)
 	char reply[BUFSIZE];
 	fd_set	fd;
 	socklen_t slen;
-	regex_t* regexp;
-	regex_t* redexp;
+	//regex_t* regexp;
+	//regex_t* redexp;
+	regex_t redexp, proexp, okexp, tmhexp, errexp;
 
 	redirected = 1;
 	nretries = 5;
@@ -492,18 +493,14 @@ void shoot(char *buff)
 	}
 
 	/* set a regular expression according to the modus */
-	regexp=(regex_t*)malloc(sizeof(regex_t));
-	if (trace)
-		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 483 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	else if (usrloc)
-		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 200 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	else if (randtrash)
-		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 4[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	else
-		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	//regexp=(regex_t*)malloc(sizeof(regex_t));
+	regcomp(&proexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	regcomp(&okexp, "^SIP/[0-9]\\.[0-9] 200 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	regcomp(&redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
+	regcomp(&errexp, "^SIP/[0-9]\\.[0-9] 4[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	regcomp(&tmhexp, "^SIP/[0-9]\\.[0-9] 483 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 	/* catching redirects */
-	redexp=(regex_t*)malloc(sizeof(regex_t));
-	regcomp(redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	//redexp=(regex_t*)malloc(sizeof(regex_t));
 
 	if (usrloc){
 		nretries=3*(nameend-namebeg)+3;
@@ -631,7 +628,6 @@ void shoot(char *buff)
 					}
 					if (trace) printf("%i: timeout after %i ms\n", i, retryAfter);
 					else if (verbose) printf("** timeout after %i ms**\n", retryAfter);
-					if (i==0) memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
 					if (randtrash) {
 						printf("did not get a response on this request:\n%s\n", buff);
 						if (i+1 < nameend) {
@@ -667,7 +663,8 @@ void shoot(char *buff)
 				if(ret > 0)
 				{
 					reply[ret] = 0;
-					if (redirects && regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
+					if (i==0) memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
+					if (redirects && regexec(&redexp, reply, 0, 0, 0)==0) {
 						printf("** received redirect ");
 						if (warning_ext) {
 							printf("from ");
@@ -676,8 +673,8 @@ void shoot(char *buff)
 						}
 						else printf("\n");
 						/* we'll try to handle 301 and 302 here, other 3xx are to complex */
-						regcomp(redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
-						if (regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
+						regcomp(&redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
+						if (regexec(&redexp, reply, 0, 0, 0)==0) {
 							/* try to find the contact in the redirect */
 							if ((foo=strstr(reply, "Contact"))==NULL) {
 								printf("error: cannot find Contact in this redirect:\n%s\n", reply);
@@ -738,15 +735,15 @@ void shoot(char *buff)
 						}
 					}
 					else if (trace) {
-						/* in trace we only look for 483, anything else is 
-						   treated as the final reply*/
-						printf("%i: ", i);
-						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-							printf("* (483) ");
-							warning_extract(reply);
-							printf(" %.3f ms\n", deltaT(&sendtime, &recvtime));
+						if (regexec(&tmhexp, reply, 0, 0, 0)==0) {
+							printf("%i: ", i);
 #ifdef DEBUG
-							printf("%s\n", reply);
+							printf("(%.3f ms)\n%s\n", deltaT(&sendtime, &recvtime), reply);
+#else
+							warning_extract(reply);
+							crlf=strchr(reply, '\n');
+							*crlf='\0';
+							printf("(%.3f ms) %s\n", deltaT(&sendtime, &recvtime), reply);
 #endif
 							namebeg++;
 							maxforw++;
@@ -754,21 +751,35 @@ void shoot(char *buff)
 							add_via(buff);
 							continue;
 						}
+						else if (regexec(&proexp, reply, 0, 0, 0)==0) {
+							printf("%i: ", i);
+#ifdef DEBUG
+							printf("(%.3f ms)\n%s\n", deltaT(&sendtime, &recvtime), reply);
+#else
+							warning_extract(reply);
+							crlf=strchr(reply, '\n');
+							*crlf='\0';
+							printf("(%.3f ms) %s\n", deltaT(&sendtime, &recvtime), reply);
+#endif
+							continue;
+						}
 						else {
+							if (maxforw==i) printf("%i: ", i);
+							else printf("\t");
+							warning_extract(crlf);
 							crlf=strchr(reply,'\n');
 							*crlf='\0';
 							crlf++;
 							contact=strstr(crlf, "Contact");
-							printf("received reply from ");
-							warning_extract(crlf);
-							printf("after %.3f ms", deltaT(&sendtime, &recvtime));
+							//printf("received reply from ");
+							printf("(%.3f ms) %s\n", deltaT(&sendtime, &recvtime), reply);
 							if (contact){
 								crlf=strchr(contact,'\n');
 								*crlf='\0';
-								printf(":\n     %s\n", contact);
+								printf("\t%s\n", contact);
 							}
 							else {
-								printf(" without contact:\n     %s\n", reply);
+								printf("\twithout Contact header\n");
 							}
 							exit(0);
 						}
@@ -778,7 +789,7 @@ void shoot(char *buff)
 							case 0:
 								/* at first we have sended a register a look at the 
 								   response now*/
-								if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+								if (regexec(&okexp, reply, 0, 0, 0)==0) {
 									if (verbose)
 										printf ("  OK\n");
 #ifdef DEBUG
@@ -824,7 +835,7 @@ void shoot(char *buff)
 									printf("warning: received 'MESSAGE' retransmission!\n");
 									ret = recv(ssock, reply, BUFSIZE, 0);
 								}
-								if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+								if (regexec(&okexp, reply, 0, 0, 0)==0) {
 									if (verbose)
 										printf("   reply received\n\n");
 									else
@@ -849,7 +860,7 @@ void shoot(char *buff)
 					else if (randtrash) {
 						/* in randomzing trash we are expexting 4?? error codes
 						 * everything should not be normal */
-						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+						if (regexec(&errexp, reply, 0, 0, 0)==0) {
 #ifdef DEBUG
 							printf("received:\n%s\n", reply);
 #endif
@@ -883,11 +894,16 @@ void shoot(char *buff)
 						if (i==0) printf("after %.3f ms **\n", deltaT(&sendtime, &recvtime));
 						else printf("%.3f ms after first send\n   and %.3f ms after last send **\n", deltaT(&firstsendt, &recvtime), deltaT(&sendtime, &recvtime));
 						if (verbose) printf("%s\n", reply);
-						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-							puts(" provisional received; still waiting for a final response\n ");
+						else {
+							crlf=strchr(reply, '\n');
+							*crlf='\0';
+							printf("   %s\n", reply);
+						}
+						if (regexec(&proexp, reply, 0, 0, 0)==0) {
+							printf("   provisional received; still waiting for a final response\n ");
 							continue;
 						} else {
-							puts(" final received; congratulations!\n ");
+							printf("   final received\n ");
 							exit(0);
 						}
 					}
@@ -921,26 +937,27 @@ void print_help() {
 #endif
 	printf("\n\n"
 		" shoot : sipsak [-f filename] -s sip:uri\n"
-		" trace : sipsak -t [-f filename] -s sip:uri\n"
-		" USRLOC: sipsak -u [-b number] -e number [-E number] -s sip:uri\n"
+		" trace : sipsak -T [-f filename] -s sip:uri\n"
+		" USRLOC: sipsak -U [-b number] -e number [-x number] -s sip:uri\n"
 		" flood : sipsak -F [-c number] -s sip:uri\n"
-		" random: sipsak -R [-T number] -s sip:uri\n\n"
+		" random: sipsak -R [-t number] -s sip:uri\n\n"
 		" additional parameter in every modus:\n"
 		"                [-d] [-i] [-l port] [-m number] [-n] [-r port] [-v] [-w]\n"
 		"   -h           displays this help message\n"
+		"   -V           prints version string only\n"
 		"   -f filename  the file which contains the SIP message to send\n"
 		"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
-		"   -t           activates the traceroute modus\n"
-		"   -u           activates the USRLOC modus\n"
+		"   -T           activates the traceroute modus\n"
+		"   -U           activates the USRLOC modus\n"
 		"   -b number    the starting number appendix to the user name in USRLOC modus\n"
 		"                (default: 0)\n"
 		"   -e number    the ending numer of the appendix to the user name in USRLOC\n"
 		"                modus\n"
-		"   -E number    the expires header field value (default: 15)\n"
+		"   -x number    the expires header field value (default: 15)\n"
 		"   -F           activates the flood modus\n"
 		"   -c number    the maximum CSeq number for flood modus (default: 2^31)\n"
 		"   -R           activates the random modues (dangerous)\n"
-		"   -T number    the maximum number of trashed character in random modus\n"
+		"   -t number    the maximum number of trashed character in random modus\n"
 		"                (default: request length)\n"
 		"   -l port      the local port to use (default: any)\n"
 		"   -r port      the remote port to use (default: 5060)\n"
@@ -980,7 +997,7 @@ int main(int argc, char *argv[])
 	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
-	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:nr:Rs:tT:uvw")) != EOF){
+	while ((c=getopt(argc,argv,"b:c:de:f:Fhil:m:nr:Rs:t:TUvVwx:")) != EOF){
 		switch(c){
 			case 'b':
 				//namebeg=atoi(optarg);
@@ -997,9 +1014,6 @@ int main(int argc, char *argv[])
 				break;
 			case 'd':
 				redirects=0;
-				break;
-			case 'E':
-				expires_t=atoi(optarg);
 				break;
 			case 'e':
 				//nameend=atoi(optarg);
@@ -1100,23 +1114,34 @@ int main(int argc, char *argv[])
 				uri_b=1;
 				break;			break;
 			case 't':
-				trace=1;
-				break;
-			case 'T':
 				trashchar=atoi(optarg);
 				if (!trashchar) {
 					printf("error: non-numerical number of trashed character\n");
 					exit(2);
 				}
 				break;
-			case 'u':
+			case 'T':
+				trace=1;
+				break;
+			case 'U':
 				usrloc=1;
 				break;
 			case 'v':
 				verbose=1;
 				break;
+			case 'V':
+				printf("sipsak %s ", SIPSAK_VERSION);
+#ifdef DEBUG
+				printf("(compiled with DEBUG)");
+#endif
+				printf("\n");
+				exit(0);
+				break;
 			case 'w':
 				warning_ext=1;
+				break;
+			case 'x':
+				expires_t=atoi(optarg);
 				break;
 			default:
 				printf("error: unknown parameter %c\n", c);
