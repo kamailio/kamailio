@@ -117,7 +117,7 @@ int send_reply(struct sip_msg* _m)
 	}
 	
 	if (code != 200) {
-		ei = build_lump_rpl(error_info[paerrno].s, error_info[paerrno].len, 0);
+		ei = build_lump_rpl(error_info[paerrno].s, error_info[paerrno].len, LUMP_RPL_HDR);
 		add_lump_rpl(_m, ei);
 	}
 
