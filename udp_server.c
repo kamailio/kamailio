@@ -23,7 +23,6 @@
 #include <mem/dmalloc.h>
 #endif
 
-int udp_sock;
 
 int probe_max_receive_buffer( int udp_sock )
 {
@@ -107,7 +106,7 @@ int probe_max_receive_buffer( int udp_sock )
 	/* EoJKU */
 }
 
-int udp_init(struct ip_addr* ip, unsigned short port)
+int udp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
 	int optval;
@@ -119,7 +118,7 @@ int udp_init(struct ip_addr* ip, unsigned short port)
 		goto error;
 	}
 	
-	if (init_su(addr, ip, htons(port))<0){
+	if (init_su(addr, &sock_info->address, htons(sock_info->port_no))<0){
 		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
 		goto error;
 	}
@@ -130,25 +129,33 @@ int udp_init(struct ip_addr* ip, unsigned short port)
 	*/
 
 	
-	udp_sock = socket(AF2PF(addr->s.sa_family), SOCK_DGRAM, 0);
-	if (udp_sock==-1){
+	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_DGRAM, 0);
+	if (sock_info->socket==-1){
 		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
 		goto error;
 	}
 	/* set sock opts? */
 	optval=1;
-	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR ,
+	if (setsockopt(sock_info->socket, SOL_SOCKET, SO_REUSEADDR ,
 					(void*)&optval, sizeof(optval)) ==-1)
 	{
 		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
 
-	if ( probe_max_receive_buffer(udp_sock)==-1) goto error;
-	bind_address=ip;
+	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
 
-	if (bind(udp_sock,  &addr->s, sizeof(union sockaddr_union))==-1){
-		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror(errno));
+	if (bind(sock_info->socket,  &addr->s, sizeof(union sockaddr_union))==-1){
+		LOG(L_ERR, "ERROR: udp_init: bind(%x, %p, %d) on %s: %s\n",
+				sock_info->socket, &addr->s, 
+				sizeof(union sockaddr_union),
+				sock_info->address_str.s,
+				strerror(errno));
+	#ifdef USE_IPV6
+		if (addr->s.sa_family==AF_INET6)
+			LOG(L_ERR, "ERROR: udp_init: might be caused by using a link "
+					" local address, try site local or global\n");
+	#endif
 		goto error;
 	}
 
@@ -191,8 +198,8 @@ int udp_rcv_loop()
 		}
 #endif
 		fromlen=sizeof(union sockaddr_union);
-		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, &from->s,
-						&fromlen);
+		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0, &from->s,
+											&fromlen);
 		if (len==-1){
 			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom:[%d] %s\n",
 						errno, strerror(errno));
@@ -222,15 +229,15 @@ error:
 
 
 /* which socket to use? main socket or new one? */
-int udp_send(char *buf, unsigned len, union sockaddr_union*  to,
-				unsigned tolen)
+int udp_send(struct socket_info *source, char *buf, unsigned len,
+				union sockaddr_union*  to, unsigned tolen)
 {
 
 	int n;
 
 
 again:
-	n=sendto(udp_sock, buf, len, 0, &to->s, tolen);
+	n=sendto(source->socket, buf, len, 0, &to->s, tolen);
 	if (n==-1){
 		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%d,0,%p,%d): %s(%d)\n",
 				buf,len,to,tolen,

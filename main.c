@@ -122,11 +122,13 @@ static char flags[]=
 ;
 
 static char help_msg[]= "\
-Usage: " NAME " -l address [-l address] [options]\n\
+Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
 Options:\n\
     -c           Perform loop checks and compute branches\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -p port      Listen on the specified port (default: 5060)\n\
+                 applies to the last address in -l and to all \n\
+                 following that do not have a corespponding -p\n\
     -l address   Listen on the specified address (multiple -l mean\n\
                  listening on more addresses). The default behaviour\n\
                  is to listen on the addresses returned by uname(2)\n\
@@ -195,9 +197,6 @@ void receive_stdin_loop()
 /* global vars */
 
 char* cfg_file = 0;
-unsigned short port_no = 0; /* port on which we listen */
-char port_no_str[MAX_PORT_LEN];
-int port_no_str_len=0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed durig the
 												  auto-probing procedure; may 
@@ -217,11 +216,20 @@ char* chroot_dir = 0;
 int uid = 0;
 int gid = 0;
 
+#if 0
 char* names[MAX_LISTEN];              /* our names */
 int names_len[MAX_LISTEN];            /* lengths of the names*/
 struct ip_addr addresses[MAX_LISTEN]; /* our ips */
 int addresses_no=0;                   /* number of names/ips */
-struct ip_addr* bind_address;        /* listen address of the crt. process */
+#endif
+struct socket_info sock_info[MAX_LISTEN]; /* all addresses we listen/send from*/
+int sock_no=0; /* number of addresses/open sockets*/
+struct socket_info* bind_address; /* pointer to the crt. proc. listening address */
+int bind_idx; /* same as above but index in the bound[] array */
+struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
+struct socket_info* sendipv6; /* same as above for ipv6 */
+
+unsigned short port_no=0; /* default port*/
 
 /* ipc related globals */
 int process_no = 0;
@@ -246,7 +254,6 @@ extern int yyparse();
 static int is_main=0; /* flag = is this the  "main" process? */
 
 char* pid_file = 0; /* filename as asked by use */
-char *pid_fn = 0; /* and with port number appended */
 
 /* daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
@@ -255,7 +262,6 @@ int daemonize(char*  name)
 	pid_t pid;
 	int r, p;
 
-	int pid_fn_len;
 
 	p=-1;
 
@@ -288,8 +294,7 @@ int daemonize(char*  name)
 	if ((pid=fork())<0){
 		LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
 		goto error;
-	}
-	if (pid!=0){
+	}else if (pid!=0){
 		/* parent process => exit*/
 		exit(0);
 	}
@@ -301,49 +306,34 @@ int daemonize(char*  name)
 	if ((pid=fork())<0){
 		LOG(L_CRIT, "Cannot  fork:%s\n", strerror(errno));
 		goto error;
-	}
-	if (pid!=0){
+	}else if (pid!=0){
 		/*parent process => exit */
 		exit(0);
 	}
 
 	/* added by noh: create a pid file for the main process */
 	if (pid_file!=0){
-
-		/* added port number; -jiri */
-		pid_fn_len = strlen(pid_file) + 5 /* long port number */ 
-			+ 1 /* dot */ + 1 /* ZT */ ;
-		pid_fn = malloc( pid_fn_len );
-		if (!pid_fn) {
-			LOG(L_ERR, "ERROR: There is really no memory for ser\n");
-			goto error;
-		}
-		if (snprintf(pid_fn, pid_fn_len, "%s.%d", pid_file, port_no )==-1) {
-			LOG(L_ERR, "ERROR: pidfile printig failed -- perhaps too high port?\n");
-			goto error;
-		}
 		
-			
-		if ((pid_stream=fopen(pid_fn, "r"))!=NULL){
+		if ((pid_stream=fopen(pid_file, "r"))!=NULL){
 			fscanf(pid_stream, "%d", &p);
 			fclose(pid_stream);
 			if (p==-1){
 				LOG(L_CRIT, "pid file %s exists, but doesn't contain a valid"
-					" pid number\n", pid_fn);
+					" pid number\n", pid_file);
 				goto error;
 			}
 			if (kill((pid_t)p, 0)==0 || errno==EPERM){
 				LOG(L_CRIT, "running process found in the pid file %s\n",
-					pid_fn);
+					pid_file);
 				goto error;
 			}else{
 				LOG(L_WARN, "pid file contains old pid, replacing pid\n");
 			}
 		}
 		pid=getpid();
-		if ((pid_stream=fopen(pid_fn, "w"))==NULL){
+		if ((pid_stream=fopen(pid_file, "w"))==NULL){
 			LOG(L_WARN, "unable to create pid file %s: %s\n", 
-				pid_fn, strerror(errno));
+				pid_file, strerror(errno));
 			goto error;
 		}else{
 			fprintf(pid_stream, "%i\n", (int)pid);
@@ -378,14 +368,19 @@ int main_loop()
 #ifdef STATS
 		setstats( 0 );
 #endif
-		/* only one address */
-		if (udp_init(&addresses[0],port_no)==-1) goto error;
+		/* only one address, we ignore all the others */
+		if (udp_init(&sock_info[0])==-1) goto error;
+		bind_address=&sock_info[0];
+		bind_idx=0;
+		if (sock_no>1){
+			LOG(L_WARN, "WARNING: using only the first listen address (no fork)\n");
+		}
 
 		/* we need another process to act as the timer*/
 		if (timer_list){
 				process_no++;
 				if ((pid=fork())<0){
-					LOG(L_CRIT,  "ERRROR: main_loop: Cannot fork\n");
+					LOG(L_CRIT,  "ERROR: main_loop: Cannot fork\n");
 					goto error;
 				}
 				
@@ -418,17 +413,28 @@ int main_loop()
 		
 		return udp_rcv_loop();
 	}else{
-		for(r=0;r<addresses_no;r++){
+		for(r=0;r<sock_no;r++){
 			/* create the listening socket (for each address)*/
-			if (udp_init(&addresses[r], port_no)==-1) goto error;
+			if (udp_init(&sock_info[r])==-1) goto error;
+			/* get first ipv4/ipv6 socket*/
+			if ((sendipv4==0)&&(sock_info[r].address.af==AF_INET))
+				sendipv4=&sock_info[r];
+	#ifdef USE_IPV6
+			if((sendipv6==0)&&(sock_info[r].address.af==AF_INET6))
+				sendipv6=&sock_info[r];
+	#endif
+			/* all procs should have access to all the sockets (for sending)
+			 * so we open all first*/
+		}
+		for(r=0; r<sock_no;r++){
 			for(i=0;i<children_no;i++){
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "main_loop: Cannot fork\n");
 					goto error;
-				}
-				if (pid==0){
+				}else if (pid==0){
 					     /* child */
-
+					bind_address=&sock_info[r]; /* shortcut */
+					bind_idx=r;
 					if (init_child(i) < 0) {
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
@@ -452,6 +458,9 @@ int main_loop()
 	pids[process_no]=getpid();
 	process_bit = 0;
 	is_main=1;
+	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, if it does */
+	bind_idx=0;					/*   it will use the first address */
+
 	if (timer_list){
 		for(;;){
 			/* debug:  instead of doing something usefull */
@@ -461,7 +470,7 @@ int main_loop()
 			timer_ticker();
 		}
 	}else{
-		for(;;) sleep(LONG_SLEEP);
+		for(;;) pause(); 
 	}
 	
 	/*return 0; */
@@ -474,8 +483,7 @@ int main_loop()
 /* added by jku; allows for regular exit on a specific signal;
    good for profiling which only works if exited regularly and
    not by default signal handlers
-*/	
-
+*/
 static void sig_usr(int signo)
 {
 	pid_t	chld;
@@ -508,6 +516,8 @@ static void sig_usr(int signo)
 		}
 #endif
 		dprint("Thank you for flying " NAME "\n");
+		/* kill children also*/
+		kill(0, SIGTERM);
 		exit(0);
 	} else if (signo==SIGTERM) { /* exit gracefully as daemon */
 		DPrint("TERM received, program terminates\n");
@@ -515,11 +525,11 @@ static void sig_usr(int signo)
 #ifdef STATS
 			dump_all_statistic();
 #endif
-			if (pid_fn) {
-				unlink(pid_fn);
-				free(pid_fn);
+			if (pid_file) {
+				unlink(pid_file);
 			}
 		}
+		kill(0, SIGTERM);
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
@@ -549,6 +559,9 @@ static void sig_usr(int signo)
 				LOG(L_INFO, "child process %d stopped by a signal %d\n",
 					chld, WSTOPSIG(chld_status));
 		}
+		/* exit */
+		kill(0, SIGTERM);
+		exit(0);
 	}
 }
 
@@ -564,6 +577,8 @@ int main(int argc, char** argv)
 	char *tmp;
 	struct utsname myname;
 	char *options;
+	char port_no_str[MAX_PORT_LEN];
+	int port_no_str_len=0;
 
 	/* added by jku: add exit handler */
 	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
@@ -589,9 +604,6 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
-	//memtest();
-	//hashtest();
-
 	/* process command line (get port no, cfg. file path etc) */
 	opterr=0;
 	options=
@@ -616,34 +628,43 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad port number: -p %s\n", optarg);
 						goto error;
 					}
+					if (sock_no>0) sock_info[sock_no-1].port_no=port_no;
 					break;
 
 			case 'm':
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
 					if (tmp &&(*tmp)){
-						fprintf(stderr, "bad shmem size number: -m %s\n", optarg);
+						fprintf(stderr, "bad shmem size number: -m %s\n",
+										optarg);
 						goto error;
 					};
-					LOG(L_INFO, "ser: shared memory allocated: %d MByte\n", shm_mem_size );
+					LOG(L_INFO, "ser: shared memory allocated: %d MByte\n",
+									shm_mem_size );
 					break;
 
 			case 'b':
 					maxbuffer=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
-                                                fprintf(stderr, "bad max buffer size number: -p %s\n", optarg);
-                                                goto error;
-                                        }
-                                        break;
+						fprintf(stderr, "bad max buffer size number: -p %s\n",
+											optarg);
+						goto error;
+					}
+					break;
 			case 'l':
 					/* add a new addr. to our address list */
-					if (addresses_no < MAX_LISTEN){
-						names[addresses_no]=(char*)malloc(strlen(optarg)+1);
-						if (names[addresses_no]==0){
+					if (sock_no < MAX_LISTEN){
+						sock_info[sock_no].name.s=
+										(char*)malloc(strlen(optarg)+1);
+						if (sock_info[sock_no].name.s==0){
 							fprintf(stderr, "Out of memory.\n");
 							goto error;
 						}
-						strncpy(names[addresses_no], optarg, strlen(optarg)+1);
-						addresses_no++;
+						strncpy(sock_info[sock_no].name.s, optarg,
+												strlen(optarg)+1);
+						sock_info[sock_no].name.len=strlen(optarg);
+						/* set default port */
+						sock_info[sock_no].port_no=port_no;
+						sock_no++;
 					}else{
 						fprintf(stderr, 
 									"Too many addresses (max. %d).\n",
@@ -654,7 +675,8 @@ int main(int argc, char** argv)
 			case 'n':
 					children_no=strtol(optarg, &tmp, 10);
 					if ((tmp==0) ||(*tmp)){
-						fprintf(stderr, "bad process number: -n %s\n", optarg);
+						fprintf(stderr, "bad process number: -n %s\n",
+									optarg);
 						goto error;
 					}
 					break;
@@ -784,16 +806,6 @@ int main(int argc, char** argv)
 
 	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;
-	port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
-				(unsigned short) port_no);
-	if (port_no_str_len<0){
-		fprintf(stderr, "ERROR: bad port number: %d\n", port_no);
-		goto error;
-	}
-	/* on some system snprintf return really strange things if it does not 
-	   have  enough space */
-	port_no_str_len=
-				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
 
 	
 	if (children_no<=0) children_no=CHILD_NO;
@@ -817,42 +829,63 @@ int main(int argc, char** argv)
 	}
 	memset(pids, 0, sizeof(int)*(children_no+1));
 
-	if (addresses_no==0) {
+	if (sock_no==0) {
 		/* get our address, only the first one */
 		if (uname (&myname) <0){
 			fprintf(stderr, "cannot determine hostname, try -l address\n");
 			goto error;
 		}
-		names[addresses_no]=(char*)malloc(strlen(myname.nodename)+1);
-		if (names[addresses_no]==0){
+		sock_info[sock_no].name.s=(char*)malloc(strlen(myname.nodename)+1);
+		if (sock_info[sock_no].name.s==0){
 			fprintf(stderr, "Out of memory.\n");
 			goto error;
 		}
-		strncpy(names[addresses_no], myname.nodename,
+		strncpy(sock_info[sock_no].name.s, myname.nodename,
 				strlen(myname.nodename)+1);
-		addresses_no++;
+		sock_info[sock_no].name.len=strlen(myname.nodename);
+		sock_no++;
 	}
 
-	/*get name lens*/
-	for(r=0; r<addresses_no; r++){
-		names_len[r]=strlen(names[r]);
-	}
-
-	
-	/* get ips */
+	/* get ips & fill the port numbers*/
 	printf("Listening on ");
-	for (r=0; r<addresses_no;r++){
-		he=resolvehost(names[r]);
+	for (r=0; r<sock_no;r++){
+		he=resolvehost(sock_info[r].name.s);
 		if (he==0){
-			DPrint("ERROR: could not resolve %s\n", names[r]);
+			DPrint("ERROR: could not resolve %s\n", sock_info[r].name.s);
 			goto error;
 		}
-		hostent2ip_addr(&addresses[r], he, 0); /*convert to ip_addr format*/
-		/*memcpy(&addresses[r], he->h_addr_list[0], sizeof(int));*/
-		/*addresses[r]=*((long*)he->h_addr_list[0]);*/
-		printf("%s [",names[r]);
-		stdout_print_ip(&addresses[r]);
-		printf("]:%d\n", (unsigned short)port_no);
+		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr format*/
+		tmp=ip_addr2a(&sock_info[r].address);
+		sock_info[r].address_str.s=(char*)malloc(strlen(tmp)+1);
+		if (sock_info[r].address_str.s==0){
+			fprintf(stderr, "Out of memory.\n");
+			goto error;
+		}
+		strncpy(sock_info[r].address_str.s, tmp, strlen(tmp)+1);
+		sock_info[r].address_str.len=strlen(tmp);
+		
+		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
+		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
+									(unsigned short) sock_info[r].port_no);
+		if (port_no_str_len<0){
+			fprintf(stderr, "ERROR: bad port number: %d\n", 
+						sock_info[r].port_no);
+			goto error;
+		}
+		/* on some system snprintf return really strange things if it does not 
+			have  enough space */
+		port_no_str_len=
+				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
+		sock_info[r].port_no_str.s=(char*)malloc(strlen(port_no_str)+1);
+		if (sock_info[r].port_no_str.s==0){
+			fprintf(stderr, "Out of memory.\n");
+			goto error;
+		}
+		strncpy(sock_info[r].port_no_str.s, port_no_str, strlen(port_no_str)+1);
+		sock_info[r].port_no_str.len=strlen(port_no_str);
+		
+		printf("%s [%s]:%s\n",sock_info[r].name.s, sock_info[r].address_str.s,
+				sock_info[r].port_no_str.s);
 	}
 
 #ifdef STATS

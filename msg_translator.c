@@ -89,30 +89,45 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 
 
 
-char* via_builder( struct sip_msg *msg , unsigned int *len )
+char* via_builder( struct sip_msg *msg , unsigned int *len, 
+					struct socket_info* send_sock )
 {
-	unsigned int  via_len, branch_len;
+	unsigned int  via_len, branch_len, extra_len;;
 	char               *line_buf;
 
 	line_buf=0;
+	extra_len=0;
 
 	line_buf=pkg_malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
 	if (line_buf==0){
 		LOG(L_ERR, "ERROR: via_builder: out of memory\n");
 		goto error;
 	}
-	via_len=MY_VIA_LEN+names_len[0]; /* space included in MY_VIA*/
+	via_len=MY_VIA_LEN+send_sock->address_str.len; /*space included in MY_VIA*/
+#ifdef USE_IPV6
+	if (send_sock->address.af==AF_INET6) via_len+=2; /* [ ]*/
+#endif
 
 	/* jku: if we compute branches using MD5 it will take 32 bytes */
 	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN)+
 					msg->add_to_branch_len;
 
-	if ((via_len+port_no_str_len+branch_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
+	if ((via_len+send_sock->port_no_str.len+branch_len
+								+CRLF_LEN)<MAX_VIA_LINE_SIZE){
 		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
-		memcpy(line_buf+MY_VIA_LEN, names[0], names_len[0]);
-		if (port_no!=SIP_PORT){
-			memcpy(line_buf+via_len, port_no_str, port_no_str_len);
-			via_len+=port_no_str_len;
+#ifdef USE_IPV6
+	if (send_sock->address.af==AF_INET6) {
+		line_buf[MY_VIA_LEN]='[';
+		line_buf[MY_VIA_LEN+1+send_sock->address_str.len]=']';
+		extra_len=1;
+	}
+#endif
+		memcpy(line_buf+MY_VIA_LEN+extra_len, send_sock->address_str.s,
+									send_sock->address_str.len);
+		if (send_sock->port_no!=SIP_PORT){
+			memcpy(line_buf+via_len, send_sock->port_no_str.s,
+									 send_sock->port_no_str.len);
+			via_len+=send_sock->port_no_str.len;
 		}
 
 		/* jku: branch parameter */
@@ -222,7 +237,8 @@ done:
 
 
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
-								unsigned int *returned_len)
+								unsigned int *returned_len,
+								struct socket_info* send_sock)
 {
 	unsigned int len, new_len, received_len, uri_len, via_len, extra_len;
 	char* line_buf;
@@ -249,7 +265,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	extra_len=0;
 
 
-	line_buf = via_builder( msg, &via_len );
+	line_buf = via_builder( msg, &via_len, send_sock);
 	if (!line_buf){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
 		goto error1;

@@ -34,29 +34,50 @@
 
 
 
+/* returns a socket_info pointer to the sending socket or 0 on error
+ * params: destination socke_union pointer
+ */
+struct socket_info* get_send_socket(union sockaddr_union* to)
+{
+	struct socket_info* send_sock;
+	
+	send_sock=0;
+	/* check if we need to change the socket (different address families -
+	 * eg: ipv4 -> ipv6 or ipv6 -> ipv4) */
+	if (to->s.sa_family!=bind_address->address.af){
+		switch(to->s.sa_family){
+			case AF_INET:	send_sock=sendipv4;
+							break;
+#ifdef USE_IPV6
+			case AF_INET6:	send_sock=sendipv6;
+							break;
+#endif
+			default:		LOG(L_ERR, "get_send_socket: BUG: don't know how"
+									" to forward to af %d\n", to->s.sa_family);
+		}
+	}else send_sock=bind_address;
+	return send_sock;
+}
+
+
+
 int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len;
 	char* buf;
 	union sockaddr_union* to;
-
+	struct socket_info* send_sock;
+	
 	to=0;
-	buf = build_req_buf_from_sip_req( msg, &len);
-	if (!buf){
-		LOG(L_ERR, "ERROR: forward_reply: building failed\n");
-		goto error;
-	}
-
+	buf=0;
+	
 	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
 	}
-
-	 /* send it! */
-	DBG("Sending:\n%s.\n", buf);
-	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
-
+	
+	
 	/* if error try next ip address if possible */
 	if (p->ok==0){
 		if (p->host.h_addr_list[p->addr_idx+1])
@@ -64,13 +85,31 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		else p->addr_idx=0;
 		p->ok=1;
 	}
-
+	
 	hostent2su(to, &p->host, p->addr_idx, 
 				(p->port)?htons(p->port):htons(SIP_PORT));
 	p->tx++;
 	p->tx_bytes+=len;
+	
 
-	if (udp_send( buf, len,  to, sizeof(union sockaddr_union))==-1){
+	send_sock=get_send_socket(to);
+	if (send_sock==0){
+		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d "
+				"no coresponding listening socket\n", to->s.sa_family);
+		goto error;
+	}
+	
+	buf = build_req_buf_from_sip_req( msg, &len, send_sock);
+	if (!buf){
+		LOG(L_ERR, "ERROR: forward_reply: building failed\n");
+		goto error;
+	}
+	 /* send it! */
+	DBG("Sending:\n%s.\n", buf);
+	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
+	
+	if (udp_send( send_sock, buf, len,  to, 
+							sizeof(union sockaddr_union))==-1){
 			p->errors++;
 			p->ok=0;
 			STATS_TX_DROPS;
@@ -145,6 +184,7 @@ int forward_reply(struct sip_msg* msg)
 	int  r;
 	char* new_buf;
 	union sockaddr_union* to;
+	struct socket_info* send_sock;
 	unsigned int new_len;
 	struct sr_module *mod;
 	
@@ -152,11 +192,14 @@ int forward_reply(struct sip_msg* msg)
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
-		for (r=0; r<addresses_no; r++)
-			if(strcmp(msg->via1->host.s, names[r])==0) break;
-		if (r==addresses_no){
+		for (r=0; r<sock_no; r++)
+			if ( (msg->via1->host.len==sock_info[r].name.len) && 
+					(memcmp(msg->via1->host.s, sock_info[r].name.s, 
+										sock_info[r].name.len)==0) )
+				break;
+		if (r==sock_no){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
-					" %s\n", msg->via1->host.s);
+					" %.*s\n", msg->via1->host.len, msg->via1->host.s);
 			/* send error msg back? */
 			goto error;
 		}
@@ -192,8 +235,13 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
+	send_sock=get_send_socket(to);
+	if (send_sock==0){
+		LOG(L_ERR, "forward_reply: ERROR: no sending socket found\n");
+		goto error;
+	}
 
-	if (udp_send(new_buf,new_len,  to,
+	if (udp_send(send_sock, new_buf,new_len,  to,
 				sizeof(union sockaddr_union))==-1)
 	{
 		STATS_TX_DROPS;

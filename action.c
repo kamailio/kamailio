@@ -38,6 +38,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int ret;
 	int v;
 	union sockaddr_union* to;
+	struct socket_info* send_sock;
 	struct proxy_l* p;
 	char* tmp;
 	char *new_uri, *end, *crt;
@@ -144,8 +145,13 @@ int do_action(struct action* a, struct sip_msg* msg)
 			if (ret==0){
 				p->tx++;
 				p->tx_bytes+=msg->len;
-				ret=udp_send(msg->orig, msg->len, to,
-								sizeof(union sockaddr_union));
+				send_sock=get_send_socket(to);
+				if (send_sock!=0){
+					ret=udp_send(send_sock, msg->orig, msg->len, to,
+									sizeof(union sockaddr_union));
+				}else{
+					ret=-1;
+				}
 			}
 			free(to);
 			if (ret<0){

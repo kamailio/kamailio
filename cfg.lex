@@ -25,7 +25,7 @@
 	
 	static int comment_nest=0;
 	static int state=0;
-	static char* str=0;
+	static char* tstr=0;
 	int line=1;
 	int column=1;
 	int startcolumn=1;
@@ -219,29 +219,29 @@ EAT_ABLE	[\ \t\b\r]
 
 <STRING1>{QUOTES} { count(); state=INITIAL_S; BEGIN(INITIAL); 
 						yytext[yyleng-1]=0; yyleng--;
-						addstr(yytext, &str);
-						yylval.strval=str; str=0;
+						addstr(yytext, &tstr);
+						yylval.strval=tstr; tstr=0;
 						return STRING;
 					}
 <STRING2>{TICK}  { count(); state=INITIAL_S; BEGIN(INITIAL); 
 						yytext[yyleng-1]=0; yyleng--;
-						addstr(yytext, &str);
-						yylval.strval=str;
-						str=0;
+						addstr(yytext, &tstr);
+						yylval.strval=tstr;
+						tstr=0;
 						return STRING;
 					}
 <STRING2>.|{EAT_ABLE}|{CR}	{ yymore(); }
 
 <STRING1>\\n		{ count(); yytext[yyleng-2]='\n';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &str); }
+						yyleng--; addstr(yytext, &tstr); }
 <STRING1>\\r		{ count(); yytext[yyleng-2]='\r';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &str); }
+						yyleng--; addstr(yytext, &tstr); }
 <STRING1>\\a		{ count(); yytext[yyleng-2]='\a';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &str); }
+						yyleng--; addstr(yytext, &tstr); }
 <STRING1>\\t		{ count(); yytext[yyleng-2]='\t';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &str); }
+						yyleng--; addstr(yytext, &tstr); }
 <STRING1>\\\\		{ count(); yytext[yyleng-2]='\\';yytext[yyleng-1]=0; 
-						yyleng--; addstr(yytext, &str); } 
+						yyleng--; addstr(yytext, &tstr); } 
 <STRING1>.|{EAT_ABLE}|{CR}	{ yymore(); }
 
 
@@ -257,8 +257,8 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{COM_LINE}.*{CR}	{ count(); } 
 
-<INITIAL>{ID}			{ count(); addstr(yytext, &str);
-						  yylval.strval=str; str=0; return ID; }
+<INITIAL>{ID}			{ count(); addstr(yytext, &tstr);
+						  yylval.strval=tstr; tstr=0; return ID; }
 
 
 <<EOF>>							{
@@ -266,7 +266,7 @@ EAT_ABLE	[\ \t\b\r]
 										case STRING_S: 
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
 														" unclosed string\n");
-											if (str) {free(str); str=0;}
+											if (tstr) {free(tstr); tstr=0;}
 											break;
 										case COMMENT_S:
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF:"

@@ -43,7 +43,7 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 	msg->buf=buf;
 	msg->len=len;
 	su2ip_addr(&msg->src_ip, src_su);
-	msg->dst_ip=*bind_address; /* won't work if listening on 0.0.0.0 */
+	msg->dst_ip=bind_address->address; /* won't work if listening on 0.0.0.0 */
 	msg->id=msg_no;
 	/* make a copy of the message */
 	msg->orig=(char*) pkg_malloc(len+1);

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "str.h"
 
 #ifdef USE_IPV6
 	#ifdef FreeBSD			/* freebsd is brain damaged and needs a different
@@ -48,6 +49,15 @@ union sockaddr_union{
 	#endif
 };
 
+
+struct socket_info{
+	int socket;
+	str name; /* name - eg.: foo.bar or 10.0.0.1 */
+	struct ip_addr address; /* ip address */
+	str address_str;        /* ip address converted to string -- optimization*/
+	unsigned short port_no;  /* port number */
+	str port_no_str; /* port number converted to string -- optimization*/
+};
 
 
 
@@ -215,6 +225,7 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 	register unsigned char a,b,c;
 #ifdef USE_IPV6
 	register unsigned char d;
+	register unsigned short hex4;
 #endif
 	int r;
 	#define HEXDIG(x) (((x)>=10)?(x)-10+'A':(x)+'0')
@@ -225,10 +236,11 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 	#ifdef USE_IPV6
 		case AF_INET6:
 			for(r=0;r<7;r++){
-				a=ip->u.addr16[r]>>12;
-				b=(ip->u.addr16[r]>>8)&0xf;
-				c=(ip->u.addr16[r]>>4)&0xf;
-				d=ip->u.addr16[r]&0xf;
+				hex4=ntohs(ip->u.addr16[r]);
+				a=hex4>>12;
+				b=(hex4>>8)&0xf;
+				c=(hex4>>4)&0xf;
+				d=hex4&0xf;
 				if (a){
 					buff[offset]=HEXDIG(a);
 					buff[offset+1]=HEXDIG(b);
@@ -254,10 +266,11 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 				}
 			}
 			/* last int16*/
-			a=ip->u.addr16[r]>>12;
-			b=(ip->u.addr16[r]>>8)&0xf;
-			c=(ip->u.addr16[r]>>4)&0xf;
-			d=ip->u.addr16[r]&0xf;
+			hex4=ntohs(ip->u.addr16[r]);
+			a=hex4>>12;
+			b=(hex4>>8)&0xf;
+			c=(hex4>>4)&0xf;
+			d=hex4&0xf;
 			if (a){
 				buff[offset]=HEXDIG(a);
 				buff[offset+1]=HEXDIG(b);

@@ -164,7 +164,10 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DNS EQUAL error { yyerror("boolean value expected"); }
 		| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 		| REV_DNS EQUAL error { yyerror("boolean value expected"); }
-		| PORT EQUAL NUMBER   { port_no=$3; }
+		| PORT EQUAL NUMBER   { port_no=$3; 
+								if (sock_no>0) 
+									sock_info[sock_no-1].port_no=port_no;
+							  }
 		| STAT EQUAL STRING {
 					#ifdef STATS
 							stat_file=$3;
@@ -180,7 +183,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| LOOP_CHECKS EQUAL NUMBER { loop_checks=$3; }
 		| LOOP_CHECKS EQUAL error { yyerror("boolean value expected"); }
 		| LISTEN EQUAL ip  {
-								if (addresses_no < MAX_LISTEN){
+								if (sock_no< MAX_LISTEN){
 									tmp=ip_addr2a($3);
 								/*	tmp=inet_ntoa(*(struct in_addr*)&$3);*/
 									if (tmp==0){
@@ -188,15 +191,19 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 											" bad ip address: %s\n",
 											strerror(errno));
 									}else{
-										names[addresses_no]=
+										sock_info[sock_no].name.s=
 												(char*)malloc(strlen(tmp)+1);
-										if (names[addresses_no]==0){
+										if (sock_info[sock_no].name.s==0){
 											LOG(L_CRIT, "ERROR: cfg. parser: "
 														"out of memory.\n");
 										}else{
-											strncpy(names[addresses_no], tmp,
-													strlen(tmp)+1);
-											addresses_no++;
+											strncpy(sock_info[sock_no].name.s,
+													tmp, strlen(tmp)+1);
+											sock_info[sock_no].name.len=
+													strlen(tmp);
+											sock_info[sock_no].port_no=
+													port_no;
+											sock_no++;
 										}
 									}
 								}else{
@@ -206,16 +213,18 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 								}
 							  }
 		| LISTEN EQUAL ID	 {
-								if (addresses_no < MAX_LISTEN){
-									names[addresses_no]=
+								if (sock_no < MAX_LISTEN){
+									sock_info[sock_no].name.s=
 												(char*)malloc(strlen($3)+1);
-									if (names[addresses_no]==0){
+									if (sock_info[sock_no].name.s==0){
 										LOG(L_CRIT, "ERROR: cfg. parser:"
 														" out of memory.\n");
 									}else{
-										strncpy(names[addresses_no], $3,
+										strncpy(sock_info[sock_no].name.s, $3,
 													strlen($3)+1);
-										addresses_no++;
+										sock_info[sock_no].name.len=strlen($3);
+										sock_info[sock_no].port_no= port_no;
+										sock_no++;
 									}
 								}else{
 									LOG(L_CRIT, "ERROR: cfg. parser: "
@@ -224,16 +233,18 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 								}
 							  }
 		| LISTEN EQUAL STRING {
-								if (addresses_no < MAX_LISTEN){
-									names[addresses_no]=
+								if (sock_no < MAX_LISTEN){
+									sock_info[sock_no].name.s=
 										(char*)malloc(strlen($3)+1);
-									if (names[addresses_no]==0){
+									if (sock_info[sock_no].name.s==0){
 										LOG(L_CRIT, "ERROR: cfg. parser:"
 													" out of memory.\n");
 									}else{
-										strncpy(names[addresses_no], $3,
+										strncpy(sock_info[sock_no].name.s, $3,
 												strlen($3)+1);
-										addresses_no++;
+										sock_info[sock_no].name.len=strlen($3);
+										sock_info[sock_no].port_no=port_no;
+										sock_no++;
 									}
 								}else{
 									LOG(L_CRIT, "ERROR: cfg. parser: "
