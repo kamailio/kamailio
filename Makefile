@@ -3,7 +3,7 @@
 # sip_router makefile
 #
 # WARNING: requires gmake (GNU Make)
-#
+#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 6)
 
 lex_f=lex.yy.c
 yacc_f=cfg.tab.c
@@ -14,19 +14,49 @@ depends= $(sources:.c=.d)
 
 NAME=sip_router
 
+# platform dependent settings
+
+ARCH = $(shell uname -s)
+
+ifeq ($(ARCH), Linux)
 
 CC=gcc
 CFLAGS=-O2 -Wcast-align #-Wmissing-prototypes  -Wall
-LEX=lex
-YACC=yacc
+LEX=flex
+YACC=bison
 YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl -L/usr/local/lib 
-ALLDEP=Makefile
+LIBS=-lfl
+
+endif 
+ifeq  ($(ARCH), SunOS)
+
+MAKE=gmake
+CC=gcc
+CFLAGS=-O2 -Wcase-align
+LEX=flex
+YACC=yacc
+YACC_FLAGS=-d -b cfg
+LIBS=-lfl -L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
+
+endif
+ifeq ($(ARCH), FreeBSD)
+
+MAKE=gmake
+CC=gcc
+CFLAGS=-O2 -Wcase-align
+LEX=flex
+YACC=yacc
+YACC_FLAGS=-d -b cfg
+LIBS=-lfl
+
+endif
+
 
 MKDEP=gcc -M
 
+ALLDEP=Makefile
 
 #implicit rules
 
@@ -44,7 +74,7 @@ $(NAME): $(objs)
 lex.yy.c: cfg.lex $(ALLDEP)
 	$(LEX) $<
 
-cfg.tab.c: cfg.y
+cfg.tab.c: cfg.y $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
 
