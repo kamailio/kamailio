@@ -33,7 +33,7 @@
 
 
 typedef enum rerr {
-	R_OK = 0,     /* Everything went OK */
+	R_FINE = 0,   /* Everything went OK */
 	R_UL_DEL_R,   /* Usrloc record delete failed */
 	R_UL_GET_R,   /* Usrloc record get failed */
 	R_UL_NEW_R,   /* Usrloc new record failed */

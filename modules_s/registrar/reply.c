@@ -89,7 +89,7 @@ void build_contact(ucontact_t* _c)
 static inline void rerrno2msg(int* _c, char** _m)
 {
 	switch(rerrno) {
-	case R_OK:         *_c = 200; *_m = MSG_200;                                       break;
+	case R_FINE:         *_c = 200; *_m = MSG_200;                                       break;
 	case R_UL_DEL_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_delete failed";      break;
 	case R_UL_GET_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_get failed";         break;
 	case R_UL_NEW_R:   *_c = 500; *_m = MSG_500 " - Usrloc_record_new failed";         break;

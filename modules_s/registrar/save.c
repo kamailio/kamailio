@@ -319,7 +319,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	int st;
 	str user;
 
-	rerrno = R_OK;
+	rerrno = R_FINE;
 
 	if (parse_message(_m) < 0) {
 		goto error;
