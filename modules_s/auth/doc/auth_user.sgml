@@ -241,8 +241,8 @@ if (is_rpid_user_e164()) {
 </programlisting>
 	    </example>
 	</section>
-	<section id="append_rpid">
-	    <title><function moreinfo="none">append_rpid_hf</function></title>
+	<section id="append_rpid_hf_no_params">
+	    <title><function moreinfo="none">append_rpid_hf()</function></title>
 	    <para>
 		Appends to the message a Remote-Party-ID header that contains header
 		'Remote-Party-ID: ' followed by the saved value of the SIP URI received from the
@@ -258,7 +258,7 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 </programlisting>
 	    </example>
 	</section>
-	<section>
+	<section id="append_rpid_hf_params">
 	    <title><function moreinfo="none">append_rpid_hf(prefix, suffix)</function></title>
 	    <para>
 		This function is the same as <xref linkend="append_rpid">. The only difference is
