@@ -350,10 +350,13 @@ static int mod_init(void)
 
 error:
 	free_double_hash(hash);
+	hash = 0;
 error2:
 	pdt_dbf.close(db_con);
+	db_con = 0;
 error1:	
 	shm_free(next_code);
+	next_code = 0;
 	lock_destroy(&l);
 	return -1;
 }	
