@@ -41,6 +41,8 @@
 #include "../../qvalue.h"
 #include "../../str.h"
 
+
+
 typedef enum cstate {
 	CS_NEW,        /* New contact - not flushed yet */
 	CS_SYNC,       /* Synchronized contact with the database */

@@ -57,7 +57,8 @@ typedef enum rerr {
 	R_STAR_CONT,  /* star and more contacts */
 	R_OOO,        /* Out-Of-Order request */
 	R_RETRANS,    /* Request is retransmission */
-	R_UNESCAPE    /* Error while unescaping username */
+	R_UNESCAPE,   /* Error while unescaping username */
+	R_TOO_MANY    /* Too many contacts */
 } rerr_t;
 
 

@@ -174,12 +174,14 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	unsigned int flags;
 	str* recv;
 	int_str val;
+	int num;
 
 	if (isflagset(_m, nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
 
 	flags |= mem_only;
 
+	num = 0;
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
 			LOG(L_ERR, "insert(): Error while calculating expires\n");
@@ -187,6 +189,13 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		}
 		     /* Skip contacts with zero expires */
 		if (e == 0) goto skip;
+
+		if (max_contacts && (num >= max_contacts)) {
+			rerrno = R_TOO_MANY;
+			ul.delete_urecord(_d, _a);
+			return -1;
+		}
+		num++;
 		
 	        if (r == 0) {
 			if (ul.insert_urecord(_d, _a, &r) < 0) {
@@ -246,6 +255,48 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 }
 
 
+static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
+{
+	int num;
+	int e;
+	ucontact_t* ptr, *cont;
+	
+	num = 0;
+	ptr = _r->contacts;
+	while(ptr) {
+		if (VALID_CONTACT(ptr, act_time)) {
+			num++;
+		}
+		ptr = ptr->next;
+	}
+	DBG("test_max_contacts: %d valid contacts\n", num);
+	
+	while(_c) {
+		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
+			LOG(L_ERR, "test_max_contacts: Error while calculating expires\n");
+			return -1;
+		}
+		
+		if (ul.get_ucontact(_r, &_c->uri, &cont) > 0) {
+			     /* Contact not found */
+			if (e != 0) num++;
+		} else {
+			if (e == 0) num--;
+		}
+		
+		_c = get_next_contact(_c);
+	}
+	
+	DBG("test_max_contacts: %d contacts after commit\n", num);
+	if (num > max_contacts) {
+		rerrno = R_TOO_MANY;
+		return 1;
+	}
+	
+	return 0;
+}
+
+
 /*
  * Message contained some contacts and appropriate
  * record was found, so we have to walk through
@@ -261,13 +312,23 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 {
 	ucontact_t* c, *c2;
 	str callid;
-	int cseq, e;
+	int cseq, e, ret;
 	qvalue_t q;
 	unsigned int fl;
 	str* recv;
 	int_str val;
 
 	fl = (isflagset(_m, nat_flag) == 1);
+
+	if (max_contacts) {
+		ret = test_max_contacts(_m, _r, _c);
+		if (ret != 0) {
+			build_contact(_r->contacts);
+			return -1;
+		}
+	}
+
+	_c = get_first_contact(_m);
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {

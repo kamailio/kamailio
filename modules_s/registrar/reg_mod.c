@@ -64,6 +64,9 @@ int min_expires     = 60;             /* Minimum expires the phones are allowed 
 			               * use 0 to switch expires checking off */
 int max_expires     = 0;              /* Minimum expires the phones are allowed to use in seconds,
 			               * use 0 to switch expires checking off */
+int max_contacts = 0;                 /* Maximum number of contacts per AOR */
+int retry_after = 0;                  /* The value of Retry-After HF in 5xx replies */
+
 int use_domain = 0;
 char* realm_pref    = "";   /* Realm prefix to be removed */
 str realm_prefix;
@@ -110,7 +113,9 @@ static param_export_t params[] = {
         {"received_param",  STR_PARAM, &rcv_param      },
 	{"received_avp",    INT_PARAM, &rcv_avp.n      },
 	{"use_domain",      INT_PARAM, &use_domain     },
-	{0,0,0}
+	{"max_contacts",    INT_PARAM, &max_contacts   },
+	{"retry_after",     INT_PARAM, &retry_after    },
+	{0, 0, 0}
 };
 
 

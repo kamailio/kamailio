@@ -51,6 +51,8 @@ extern float def_q;
 
 extern str rcv_param;
 extern int_str rcv_avp;
+extern int max_contacts;
+extern int retry_after;
 
 usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 

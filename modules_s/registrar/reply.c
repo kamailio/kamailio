@@ -194,6 +194,7 @@ int build_contact(ucontact_t* c)
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
 #define MSG_500 "Server Internal Error"
+#define MSG_503 "Service Unavailable"
 
 #define EI_R_FINE       "No problem"                                /* R_FINE */
 #define EI_R_UL_DEL_R   "usrloc_record_delete failed"               /* R_UL_DEL_R */
@@ -220,7 +221,7 @@ int build_contact(ucontact_t* c)
 #define	EI_R_OOO	"Out of order request"                      /* R_OOO */
 #define	EI_R_RETRANS	"Retransmission"                            /* R_RETRANS */
 #define EI_R_UNESCAPE   "Error while unescaping username"           /* R_UNESCAPE */
-
+#define EI_R_TOO_MANY   "Too many registered contacts"              /* R_TOO_MANY */
 
 str error_info[] = {
 	{EI_R_FINE,       sizeof(EI_R_FINE) - 1},
@@ -247,7 +248,8 @@ str error_info[] = {
 	{EI_R_STAR_CONT,  sizeof(EI_R_STAR_CONT) - 1},
 	{EI_R_OOO,        sizeof(EI_R_OOO) - 1},
 	{EI_R_RETRANS,    sizeof(EI_R_RETRANS) - 1},
-	{EI_R_UNESCAPE,   sizeof(EI_R_UNESCAPE) - 1}
+	{EI_R_UNESCAPE,   sizeof(EI_R_UNESCAPE) - 1},
+	{EI_R_TOO_MANY,   sizeof(EI_R_TOO_MANY) - 1}
 };
 
 int codes[] = {
@@ -275,8 +277,32 @@ int codes[] = {
 	400, /* R_STAR_CONT */
 	200, /* R_OOO */
 	200, /* R_RETRANS */
-	400  /* R_UNESCAPE */
+	400, /* R_UNESCAPE */
+	503  /* R_TOO_MANY */
 };
+
+
+#define RETRY_AFTER "Retry-After: "
+#define RETRY_AFTER_LEN (sizeof(RETRY_AFTER) - 1)
+
+static int add_retry_after(struct sip_msg* _m)
+{
+	char* buf, *ra_s;
+ 	int ra_len;
+ 	
+ 	ra_s = int2str(retry_after, &ra_len);
+ 	buf = (char*)pkg_malloc(RETRY_AFTER_LEN + ra_len + CRLF_LEN);
+ 	if (!buf) {
+ 		LOG(L_ERR, "add_retry_after: No memory left\n");
+ 		return -1;
+ 	}
+ 	memcpy(buf, RETRY_AFTER, RETRY_AFTER_LEN);
+ 	memcpy(buf + RETRY_AFTER_LEN, ra_s, ra_len);
+ 	memcpy(buf + RETRY_AFTER_LEN + ra_len, CRLF, CRLF_LEN);
+ 	add_lump_rpl(_m, buf, RETRY_AFTER_LEN + ra_len + CRLF_LEN,
+ 		     LUMP_RPL_HDR | LUMP_RPL_NODUP);
+ 	return 0;
+}
 
 
 /*
@@ -298,6 +324,7 @@ int send_reply(struct sip_msg* _m)
 	case 200: msg = MSG_200; break;
 	case 400: msg = MSG_400; break;
 	case 500: msg = MSG_500; break;
+	case 503: msg = MSG_503; break;
 	}
 	
 	if (code != 200) {
@@ -311,6 +338,12 @@ int send_reply(struct sip_msg* _m)
 		memcpy(buf + E_INFO_LEN + error_info[rerrno].len, CRLF, CRLF_LEN);
 		add_lump_rpl( _m, buf, E_INFO_LEN + error_info[rerrno].len + CRLF_LEN,
 			LUMP_RPL_HDR|LUMP_RPL_NODUP);
+
+		if (code >= 500 && code < 600 && retry_after) {
+			if (add_retry_after(_m) < 0) {
+				return -1;
+			}
+		}
 	}
 
 	if (sl_reply(_m, (char*)code, msg) == -1) {
