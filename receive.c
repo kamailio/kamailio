@@ -24,9 +24,8 @@
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg msg;
-
 #ifdef STATS
-	stats.total_rx++;	
+	int skipped = 1;
 #endif
 
 	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
@@ -65,8 +64,8 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 			goto error;
 		}
 #ifdef STATS
-		/* jku -- update statistics  */
-		else stats.ok_rx_rq++;	
+		/* jku -- update request statistics  */
+		else update_received_request(  msg.first_line.u.request.method_value );
 #endif
 	}else if (msg.first_line.type==SIP_REPLY){
 		DBG("msg= reply\n");
@@ -83,7 +82,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 
 #ifdef STATS
 		/* jku -- update statistics  */
-		stats.ok_rx_rs++;	
+		update_received_response(  msg.first_line.u.reply.statusclass );
 #endif
 		
 		/* send the msg */
@@ -93,11 +92,17 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 						(unsigned short) msg.via2.port);
 		}
 	}
+#ifdef STATS
+	skipped = 0;
+#endif
 skip:
 	if (msg.new_uri.s) { free(msg.new_uri.s); msg.new_uri.len=0; }
 	if (msg.add_rm) free_lump_list(msg.add_rm);
 	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
+#ifdef STATS
+	if (skipped) update_received_drops;
+#endif
 	return 0;
 error:
 	if (msg.new_uri.s) free(msg.new_uri.s);
@@ -105,6 +110,9 @@ error:
 	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
 error1:
+#ifdef STATS
+	update_received_drops;
+#endif
 	return -1;
 }
 

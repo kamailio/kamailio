@@ -19,6 +19,7 @@
 #include "dprint.h"
 #include "sr_module.h"
 
+
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
@@ -73,6 +74,7 @@ void* f_tmp;
 %token DNS
 %token REV_DNS
 %token PORT
+%token STAT
 %token CHILDREN
 %token CHECK_VIA
 %token LOADMODULE
@@ -147,6 +149,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 		| REV_DNS EQUAL error { yyerror("boolean value expected"); }
 		| PORT EQUAL NUMBER   { port_no=$3; }
+		| STAT EQUAL STRING { stat_file=$3; }
 		| MAXBUFFER EQUAL NUMBER { maxbuffer=$3; }
 		| MAXBUFFER EQUAL error { yyerror("number expected"); }
 		| PORT EQUAL error    { yyerror("number expected"); } 

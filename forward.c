@@ -431,20 +431,20 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 
 	p->tx++;
 	p->tx_bytes+=new_len;
-#ifdef STATS
-	stats.total_tx++;
-#endif
 
 	if (udp_send(new_buf, new_len, (struct sockaddr*) to,
 				sizeof(struct sockaddr_in))==-1){
 			p->errors++;
 			p->ok=0;
+#ifdef STATS
+			update_fail_on_send;
+#endif
 			goto error;
 	} 
 #ifdef STATS
-	else stats.ok_tx_rq++;
+	/* sent requests stats */
+	else update_sent_request( msg->first_line.u.request.method_value );
 #endif
-
 	free(new_buf);
 	free(to);
 	/* received_buf & line_buf will be freed in receiv_msg by free_lump_list*/
@@ -552,17 +552,19 @@ int forward_reply(struct sip_msg* msg)
 		to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
 		to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
 
-#ifdef STATS
-		stats.total_tx++;
-#endif
 #ifdef DNS_IP_HACK
 	}
 #endif
 	if (udp_send(new_buf,new_len, (struct sockaddr*) to, 
-					sizeof(struct sockaddr_in))==-1)
-		goto error;
+					sizeof(struct sockaddr_in))==-1) 
+	{
 #ifdef STATS
-	else stats.ok_tx_rs++;
+		update_fail_on_send;
+#endif
+		goto error;
+	}
+#ifdef STATS
+	else update_sent_response(  msg->first_line.u.reply.statusclass );
 #endif
 	
 	free(new_buf);

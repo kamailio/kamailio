@@ -15,6 +15,7 @@
 
 
 extern char * cfg_file;
+extern char *stat_file;
 extern unsigned short port_no;
 extern char port_no_str[];
 extern int port_no_str_len;

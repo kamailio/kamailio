@@ -32,6 +32,8 @@ DEFS=-DNOCR -DMACROEATER -DSTATS -DOLD_PARSER -DDNS_IP_HACK #-DNO_DEBUG
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
+#mode=release
+mode=debug
 
 # platform dependent settings
 
@@ -40,8 +42,15 @@ ARCH = $(shell uname -s)
 #common
 CC=gcc
 LD=gcc
-CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
-LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
+
+ifeq ( mode, release )
+	CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
+	LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
+else
+	CFLAGS=-g
+	LDFLAGS=-g
+endif
+
 LEX=flex
 YACC=bison
 YACC_FLAGS=-d -b cfg
@@ -127,3 +136,5 @@ proper: clean
 
 include $(depends)
 
+dbg: ser
+	gdb -command debug.gdb

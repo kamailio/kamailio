@@ -6,36 +6,47 @@
 #define parser_f_h
 
 char* eat_line(char* buffer, unsigned int len);
-int is_empty(char* buffer, unsigned int len);
 
-#ifdef MACROEATER
+/* macro now
+int is_empty(char* buffer, unsigned int len);
+*/
+
+/* MACROEATER no more optional */
+/* #ifdef MACROEATER */
 
 /* turn the most frequently called functions into macros */
 
 
-#define eat_space(buffer,len)                                          \
-  ( {   char *p;                                                     	\
-        for(p=(buffer);(p<(buffer)+(len))&& (*p==' ' || *p=='\t') ;p++);\
+#define eat_space_end(buffer,pend)                                       \
+  ( {   char *p;                                                 	\
+        for(p=(buffer);(p<pend)&& (*p==' ' || *p=='\t') ;p++);		\
         p;                                                              \
   } )
 
-#define eat_token(buffer,len)						\
-  ( { char *p;								\
-      for (p=(buffer);(p<(buffer)+(len))&&				\
+#define eat_token_end(buffer,pend)					\
+  ( { char *p       ;							\
+      for (p=(buffer);(p<pend)&&					\
                         (*p!=' ')&&(*p!='\t')&&(*p!='\n')&&(*p!='\r');	\
                 p++);							\
       p;								\
   } )
 
-#define eat_token2(buffer,len,delim)					\
-  ( { char *p;								\
-      for (p=(buffer);(p<(buffer)+(len))&&				\
+#define eat_token2_end(buffer,pend,delim)					\
+  ( { char *p       ;							\
+      for (p=(buffer);(p<pend)&&					\
                         (*p!=(delim))&&(*p!='\n')&&(*p!='\r');		\
                 p++);							\
       p;								\
   } )
 
+#define is_empty_end(buffer, pend )					\
+  ( { char *p;								\
+      p=eat_space_end( buffer, pend );					\
+      ((p<pend ) && (*p=='\r' || *p=='\n')) ? 1 : 0;			\
+  } )
 
+
+/*
 #else
 
 
@@ -43,7 +54,8 @@ char* eat_space(char* buffer, unsigned int len);
 char* eat_token(char* buffer, unsigned int len);
 char* eat_token2(char* buffer, unsigned int len, char delim);
 
-/* EoMACROEATER */
 #endif
+*/
+/* EoMACROEATER */
 
 #endif

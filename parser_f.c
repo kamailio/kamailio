@@ -41,6 +41,9 @@ char* eat_line(char* buffer, unsigned int len)
 
 /* returns pointer to first non  white char or after the end  of the buffer */
 
+/* MACROEATER no more optional */
+
+/*
 #ifndef MACROEATER
 
 char* eat_space(char* buffer, unsigned int len)
@@ -52,7 +55,7 @@ char* eat_space(char* buffer, unsigned int len)
 }
 
 
-/* returns pointer after the token (first whitespace char or CR/LF) */
+// returns pointer after the token (first whitespace char or CR/LF) 
 char* eat_token(char* buffer, unsigned int len)
 {
 	char *p;
@@ -65,7 +68,7 @@ char* eat_token(char* buffer, unsigned int len)
 
 
 
-/* returns pointer after the token (first delim char or CR/LF) */
+// returns pointer after the token (first delim char or CR/LF)
 char* eat_token2(char* buffer, unsigned int len, char delim)
 {
 	char *p;
@@ -75,18 +78,8 @@ char* eat_token2(char* buffer, unsigned int len, char delim)
 		p++);
 	return p;
 }
+#endif
+*/
 
 /* EoMACROEATER */
-#endif
 
-
-
-/* returns true if line started  at buffer contains only white space */
-int is_empty(char* buffer, unsigned int len)
-{
-	char *p;
-	
-	p=eat_space(buffer, len);
-	if ((p < buffer+len ) && (*p=='\r' || *p=='\n')) return 1;
-	return 0;
-}

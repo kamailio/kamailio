@@ -8,45 +8,23 @@ bouquets and brickbats to farhan@hotfoon.com
 /* changes by jiri@iptel.org; now messages can be really received;
    status code returned is 2 for some local errors , 0 for success
    and 1 for remote error -- ICMP/timeout; can be used to test if
-   a server is alive; 1xx messages are now ignored
+   a server is alive; 1xx messages are now ignored; windows support
+   dropped
 */
 
-/* currently, compiles only for Solaris; Linux returns
- /usr/include/regexp.h:131: cannot convert `char *' to `unsigned char *' 
-*/
-
-int 		regerr;
-
-#define INIT         register char *sp = instring;
-#define GETC()       (*sp++)
-#define PEEKC()      (*sp)
-#define UNGETC(c)    (--sp)
-/*#define RETURN(*c)    return; */
-#define RETURN(c)    return c;
-#define ERROR(c)     regerr
-#include <regexp.h>
-
-
+#include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include <sys/types.h>
-#include <stdlib.h>
-/* windows specific headers */
-#ifdef WIN32
-#include <windows.h>
-#include <winsock.h>
-#define close(a) closesocket(a)
-#else
-/* *nix specific networking headers */
-#include <sys/time.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#endif
+
+#include <regex.h>
+regex_t* regexp;
 
 #define RESIZE		1024
 
@@ -67,8 +45,8 @@ long getaddress(char *host)
 {
 	int i, dotcount=0;
 	char *p = host;
-	struct hostent		*pent;
-	/* struct sockaddr_in	addr; */ /* see the note on portabilit at the end of the routine */
+	struct hostent* pent;
+	long l, *lp;
 
 	/*try understanding if this is a valid ip address
 	we are skipping the values of the octets specified here.
@@ -106,11 +84,9 @@ long getaddress(char *host)
 		exit(2);
 	}
 
-	/* PORTABILITY-ISSUE: replacing a costly memcpy call with a hack, may not work on 
-	some systems.  
-	memcpy(&addr.sin_addr, (pent->h_addr), pent->h_length);
-	return addr.sin_addr.s_addr; */
-	return *((long *)(pent->h_addr));
+	lp = (long *) (pent->h_addr);
+	l = *lp;
+	return l;
 }
 
 
@@ -129,18 +105,20 @@ at 5 seconds (5000 milliseconds).
 we are detecting the final response without a '1' as the first
 letter.
 */
-void shoot(char *buff, long address, int port)
+void shoot(char *buff, long address, int lport, int rport )
 {
 	struct sockaddr_in	addr;
 	/* jku - b  server structures */
 	struct sockaddr_in	sockname;
 	int ssock;
+	/*
 	char compiledre[ RESIZE ];
+	*/
 	/* jku - e */
 	int retryAfter = 500, i, len, ret;
 	int	nretries = 10;
 	int	sock;
-	timeval	tv;
+	struct timeval	tv;
 	fd_set	fd;
 	char	reply[1600];
 
@@ -160,26 +138,28 @@ void shoot(char *buff, long address, int port)
 
 	sockname.sin_family=AF_INET;
 	sockname.sin_addr.s_addr = htonl( INADDR_ANY );
-	sockname.sin_port = htons((short)port);
-	if (bind( ssock, (sockaddr *) &sockname, sizeof(sockname) )==-1) {
+	sockname.sin_port = htons((short)lport);
+	if (bind( ssock, (struct sockaddr *) &sockname, sizeof(sockname) )==-1) {
 		perror("no bind");
 		exit(2);
 	}
 
 	/* should capture: SIP/2.0 100 Trying */
-	compile("^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", compiledre, &compiledre[RESIZE], '\0');
+	/* compile("^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", compiledre, &compiledre[RESIZE], '\0'); */
+	regexp=(regex_t*)malloc(sizeof(regex_t));
+	regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 	
 
 	/* jku - e */
 
 	addr.sin_addr.s_addr = address;
-	addr.sin_port = htons((short)port);
+	addr.sin_port = htons((short)rport);
 	addr.sin_family = AF_INET;
 	
 	/* we connect as per the RFC 2543 recommendations
 	modified from sendto/recvfrom */
 
-	ret = connect(sock, (sockaddr *)&addr, sizeof(addr));
+	ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
 	if (ret==-1) {
 		perror("no connect");
 		exit(2);
@@ -241,7 +221,8 @@ void shoot(char *buff, long address, int port)
 			puts("/* reply */");
 			puts(reply);
 			putchar('\n');
-			if (step( reply, compiledre )) {
+			/* if (step( reply, compiledre )) { */
+			if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
 				puts(" provisional received; still waiting for a final response\n ");
 				continue;
 			} else {
@@ -266,21 +247,12 @@ int main(int argc, char *argv[])
 	FILE	*pf;
 	char	buff[1600];
 	int		length;
-	int		port;
-#ifdef WIN32
-	WSADATA	wsadata;
-	int err = WSAStartup(0x0101, &wsadata);
-	if (err != 0)
-	{
-		printf("shoot cannot be used as TCP/IP is not available.\n");
-		exit(0);
-	}
-#endif
+	int	lport=0;
+	int	rport=5060;
 
-
-	if (argc != 3 && argc != 4)
+	if (! (argc >= 3 && argc <= 5))
 	{
-		puts("usage: shoot file host [port]");
+		puts("usage: shoot file host [rport] [lport]");
 		exit(2);
 	}
 
@@ -292,14 +264,21 @@ int main(int argc, char *argv[])
 	}
 
 	/* take the port as 5060 even if it is incorrectly specified */
-	if (argc == 4)
+	if (argc >= 4)
 	{
-		port = atoi(argv[3]);
-		if (!port)
-			port = 5060;
+		rport = atoi(argv[3]);
+		if (!rport) {
+			puts("error: non-numerical remote port number");
+			exit(1);
+		}
+		if (argc==5) {
+			lport=atoi(argv[4]);
+			if (!lport) {
+				puts("error: non-numerical local port number");
+				exit(1);
+			}
+		}
 	}
-	else
-		port = 5060;
 
 	/* file is opened in binary mode so that the cr-lf is preserved */
 	pf = fopen(argv[1], "rb");
@@ -317,7 +296,7 @@ int main(int argc, char *argv[])
 	fclose(pf);
 	buff[length] = 0;
 
-	shoot(buff, address, port);
+	shoot(buff, address, lport, rport );
 
 	/* visual studio closes the debug console as soon as the 
 	program terminates. this is to hold the window from collapsing

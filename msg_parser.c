@@ -34,8 +34,9 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	char* third;
 	char* nl;
 	int offset;
-	int l;
+	/* int l; */
 	char* end;
+	char s1,s2,s3;
 	
 	/* grammar:
 		request  =  method SP uri SP version CRLF
@@ -46,37 +47,72 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 
 	end=buffer+len;
 	/* see if it's a reply (status) */
-	tmp=eat_token(buffer, len);
-	if ((tmp==buffer)||(tmp>=end)){
-		LOG(L_INFO, "ERROR:parse_first_line: empty  or bad first line\n");
+
+	/* jku  -- parse well-known methods */
+
+	/* drop messages which are so short they are for sure useless;
+           utilize knowledge of minimum size in parsing the first
+	   token 
+        */
+	if (len <=16 ) {
+		LOG(L_INFO, "ERROR: parse_first_line: message too short\n");
 		goto error1;
 	}
-	l=tmp-buffer;
-	if ((SIP_VERSION_LEN==l) &&
-		(memcmp(buffer,SIP_VERSION,l)==0)){
-		
-		fl->type=SIP_REPLY;
-	}else{
+
+	tmp=buffer;
+  	/* is it perhaps a reply, ie does it start with "SIP...." ? */
+	if ( 	(*tmp=='S' || *tmp=='s') && 
+		strncasecmp( tmp+1, SIP_VERSION+1, SIP_VERSION_LEN-1)==0 &&
+		(*(tmp+SIP_VERSION_LEN)==' ')) {
+			fl->type=SIP_REPLY;
+			fl->u.reply.version.len=SIP_VERSION_LEN;
+			tmp=buffer+SIP_VERSION_LEN;
+	} else IFISMETHOD( INVITE, 'I' )
+	else IFISMETHOD( CANCEL, 'C')
+	else IFISMETHOD( ACK, 'A' )
+	else IFISMETHOD( BYE, 'B' )
+	/* if you want to add another method XXX, include METHOD_XXX in
+           H-file (this is the value which you will take later in
+           processing and define XXX_LEN as length of method name;
+	   then just call IFISMETHOD( XXX, 'X' ) ... 'X' is the first
+	   latter; everything must be capitals
+	*/
+	else {
+		/* neither reply, nor any of known method requests, 
+		   let's believe it is an unknown method request
+        	*/
+		tmp=eat_token_end(buffer,buffer+len);
+		if ((tmp==buffer)||(tmp>=end)){
+			LOG(L_INFO, "ERROR:parse_first_line: empty  or bad first line\n");
+			goto error1;
+		}
+		if (*tmp!=' ') {
+			LOG(L_INFO, "ERROR:parse_first_line: method not followed by SP\n");
+			goto error1;
+		}
 		fl->type=SIP_REQUEST;
+		fl->u.request.method_value=METHOD_OTHER;
+		fl->u.request.method.len=tmp-buffer;
 	}
-	
-	offset=l;
-	second=eat_space(tmp, len-offset);
-	offset+=second-tmp;
-	if ((second==tmp)||(tmp>=end)){
-		goto error;
-	}
-	*tmp=0; /* mark the end of the token */
-	fl->u.request.method.s=buffer;
-	fl->u.request.method.len=l;
+
+
+	/* identifying type of message over now; 
+	   tmp points at space after; go ahead */
+
+	fl->u.request.method.s=buffer;  /* store ptr to first token */
+	(*tmp)=0;			/* mark the 1st token end */
+	second=tmp+1;			/* jump to second token */
+	offset=second-buffer;
+
+/* EoJku */
 	
 	/* next element */
-	tmp=eat_token(second, len-offset);
+	tmp=eat_token_end(second, second+len-offset);
 	if (tmp>=end){
 		goto error;
 	}
 	offset+=tmp-second;
-	third=eat_space(tmp, len-offset);
+	third=eat_space_end(tmp, tmp+len-offset);
 	offset+=third-tmp;
 	if ((third==tmp)||(tmp>=end)){
 		goto error;
@@ -85,20 +121,41 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	fl->u.request.uri.s=second;
 	fl->u.request.uri.len=tmp-second;
 
+	/* jku: parse status code */
+	if (fl->type==SIP_REPLY) {
+		if (fl->u.request.uri.len!=3) {
+			LOG(L_INFO, "ERROR:parse_first_line: len(status code)!=3: %s\n",
+				second );
+			goto error;
+		}
+		s1=*second; s2=*(second+1);s3=*(second+2);
+		if (s1>='0' && s1<='9' && 
+		    s2>='0' && s2<='9' &&
+		    s3>='0' && s3<='9' ) {
+			fl->u.reply.statusclass=s1-'0';
+			fl->u.reply.statuscode=fl->u.reply.statusclass*100+10*(s2-'0')+(s3-'0');
+		} else {
+			LOG(L_INFO, "ERROR:parse_first_line: status_code non-numerical: %s\n",
+				second );
+			goto error;
+		}
+	}
+	/* EoJku */
+
 	/*  last part: for a request it must be the version, for a reply
 	 *  it can contain almost anything, including spaces, so we don't care
 	 *  about it*/
 	if (fl->type==SIP_REQUEST){
-		tmp=eat_token(third,len-offset);
+		tmp=eat_token_end(third,third+len-offset);
 		offset+=tmp-third;
 		if ((tmp==third)||(tmp>=end)){
 			goto error;
 		}
-		if (! is_empty(tmp, len-offset)){
+		if (! is_empty_end(tmp, tmp+len-offset)){
 			goto error;
 		}
 	}else{
-		tmp=eat_token2(third,len-offset,'\r'); /* find end of line 
+		tmp=eat_token2_end(third,third+len-offset,'\r'); /* find end of line 
 												  ('\n' or '\r') */
 		if (tmp>=end){ /* no crlf in packet => invalid */
 			goto error;
@@ -240,22 +297,22 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 		return tmp;
 	}
 	
-	tmp=eat_token2(buffer, len, ':');
+	tmp=eat_token2_end(buffer, buffer+len, ':');
 	if ((tmp==buffer) || (tmp-buffer==len) ||
-		(is_empty(buffer, tmp-buffer))|| (*tmp!=':')){
+		(is_empty_end(buffer, tmp))|| (*tmp!=':')){
 		hdr_f->type=HDR_ERROR;
 		goto error;
 	}
 	*tmp=0;
 	/* take care of possible spaces (e.g: "Via  :") */
-	tmp2=eat_token(buffer, tmp-buffer);
+	tmp2=eat_token_end(buffer, tmp);
 	/* in the worst case tmp2=buffer+tmp-buffer=tmp */
 	*tmp2=0;
 	l=tmp2-buffer;
 	if (tmp2<tmp){
 		tmp2++;
 		/* catch things like: "Via foo bar:" */
-		tmp2=eat_space(tmp2, tmp-tmp2);
+		tmp2=eat_space_end(tmp2, tmp);
 		if (tmp2!=tmp){
 			hdr_f->type=HDR_ERROR;
 			goto error;
@@ -492,33 +549,33 @@ char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb)
 
 	name=version=transport=comment=params=hostport=next_via=host.s=0;
 	name_len=version_len=transport_len=comment_len=params_len=host.len=0;
-	name=eat_space(buffer, len);
+	name=eat_space_end(buffer, buffer+len);
 	if (name-buffer==len) goto error;
 	offset=name-buffer;
 	tmp=name;
 
-	version=eat_token2(tmp,len-offset,'/');
+	version=eat_token2_end(tmp,tmp+len-offset,'/');
 	if (version+1-buffer>=len) goto error;
 	*version=0;
 	name_len=version-name;
 	version++;
 	offset+=version-tmp;
 	
-	transport=eat_token2(tmp,len-offset,'/');
+	transport=eat_token2_end(tmp,tmp+len-offset,'/');
 	if (transport+1-buffer>=len) goto error;
 	*transport=0;
 	version_len=transport-version;
 	transport++;
 	offset+=transport-tmp;
 	
-	tmp=eat_token(transport,len-offset);
+	tmp=eat_token_end(transport,transport+len-offset);
 	if (tmp+1-buffer>=len) goto error;
 	*tmp=0;
 	transport_len=tmp-transport;
 	tmp++;
 	offset+=tmp-transport;
 	
-	hostport=eat_space(tmp,len-offset);
+	hostport=eat_space_end(tmp,tmp+len-offset);
 	if (hostport+1-buffer>=len) goto error;
 	offset+=hostport-tmp;
 

@@ -18,7 +18,21 @@ enum {	HDR_EOH=-1, HDR_ERROR=0, HDR_OTHER,
 		HDR_MAXFORWARDS, HDR_ROUTE
 	};
 
+#define INVITE_LEN	6
+#define ACK_LEN		3
+#define CANCEL_LEN	6
+#define BYE_LEN		3
+enum { METHOD_OTHER, METHOD_INVITE, METHOD_CANCEL, METHOD_ACK, METHOD_BYE };
 
+#define IFISMETHOD(methodname,firstchar)                                  \
+if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
+        strncasecmp( tmp+1, #methodname +1, methodname##_LEN-1)==0 &&     \
+        *(tmp+methodname##_LEN)==' ') {                                   \
+                fl->type=SIP_REQUEST;                                     \
+                fl->u.request.method.len=methodname##_LEN;                \
+                fl->u.request.method_value=METHOD_##methodname;           \
+                tmp=buffer+methodname##_LEN;                              \
+}
 
 
 #define VIA_PARSE_OK	1
@@ -35,11 +49,13 @@ struct msg_start{
 			str method;
 			str uri;
 			str version;
+			short method_value;
 		}request;
 		struct {
 			str version;
 			str status;
 			str reason;
+			unsigned short statusclass, statuscode;
 		}reply;
 	}u;
 };

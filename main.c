@@ -13,6 +13,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/utsname.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/fcntl.h>
+#include <sys/time.h>
 
 #include "config.h"
 #include "dprint.h"
@@ -25,8 +29,6 @@
 #ifdef STATS
 #include "stats.h"
 #endif
-
-
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -94,8 +96,11 @@ Options:\n\
     -V           Version number\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                 auto-probing procedure even if  OS allows\n\
-";
+                 auto-probing procedure even if  OS allows\n"
+#ifdef STATS
+"    -s file	 File to which statistics is dumped (disabled otherwise)\n"
+#endif
+;
 
 /* print compile-time constants */
 void print_ct_constants()
@@ -127,9 +132,9 @@ char* cfg_file = 0;
 unsigned short port_no = 0; /* port on which we listen */
 char port_no_str[MAX_PORT_LEN];
 int port_no_str_len=0;
-unsigned int maxbuffer = 128*1024; /* maximum buffer size we do not want to exceed
-				      durig the auto-probing procedure; may be
-				      re-configured */
+unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do not want to exceed
+				      		durig the auto-probing procedure; may be
+				      		re-configured */
 int children_no = 0;           /* number of children processing requests */
 int debug = 0;
 int dont_fork = 0;
@@ -150,11 +155,6 @@ int process_no = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
-
-#ifdef STATS
-/* jku: RX/TX statistics -- remember, they are process specific */
-struct stats_s stats;
-#endif
 
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
@@ -226,6 +226,9 @@ int main_loop()
 
 
 	if (dont_fork){
+#ifdef STATS
+		setstats( 0 );
+#endif
 		/* only one address */
 		if (udp_init(addresses[0],port_no)==-1) goto error;
 		/* receive loop */
@@ -241,6 +244,9 @@ int main_loop()
 				}
 				if (pid==0){
 					/* child */
+#ifdef STATS
+					setstats( i );
+#endif
 					return udp_rcv_loop();
 				}
 			}
@@ -260,6 +266,7 @@ int main_loop()
 
 }
 
+
 /* added by jku; allows for regular exit on a specific signal;
    good for profiling which only works if exited regularly and
    not by default signal handlers
@@ -267,15 +274,23 @@ int main_loop()
 
 static void sig_usr(int signo)
 {
-	DPrint("INT received, program terminates\n");
+	if (signo==SIGINT) {	/* exit gracefuly */
 #ifdef STATS
-	DPrint("ok_rx_rq\t%d\nok_rx_rs\t%d\nok_tx_rq\t%d\nok_tx_rs\t%d\ntotal_rx\t%d\ntotal_tx\t%d\n\n",
-		stats.ok_rx_rq, stats.ok_rx_rs, stats.ok_tx_rq, stats.ok_tx_rs, stats.total_rx, stats.total_tx );
-	DPrint("Thank you for flying ser\n");
+		/* print statistics on exit only for the first process */
+
+		if (stats->process_index==0 && stat_file )
+			if (dump_all_statistic()==0)
+				printf("statistic dumped to %s\n", stat_file );
+			else
+				printf("statistics dump to %s failed\n", stat_file );
 #endif
-	exit(0);
+		DPrint("INT received, program terminates\n");
+		DPrint("Thank you for flying ser\n");
+		exit(0);
+	} else if (signo==SIGUSR1) { /* statistic */
+		dump_all_statistic();
+	}
 }
-	
 	
 	
 int main(int argc, char** argv)
@@ -286,19 +301,35 @@ int main(int argc, char** argv)
 	int c,r;
 	char *tmp;
 	struct utsname myname;
+	char *options;
 
 	/* added by jku: add exit handler */
         if (signal(SIGINT, sig_usr) == SIG_ERR ) {
- 		DPrint("ERROR: no signal handler can be installed\n");
+ 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
                 goto error;
         }
+#ifdef STATS
+	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
+                DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
+                goto error;
+        }
+#endif
 
 	/* process command line (get port no, cfg. file path etc) */
 	opterr=0;
-	while((c=getopt(argc,argv,"f:p:b:l:n:rRvdDEVh"))!=-1){
+	options=
+#ifdef STATS
+	"s:"
+#endif
+	"f:p:b:l:n:rRvdDEVh";
+	
+	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
 			case 'f':
 					cfg_file=optarg;
+					break;
+			case 's':
+					stat_file=optarg;
 					break;
 			case 'p':
 					port_no=strtol(optarg, &tmp, 10);
@@ -448,10 +479,6 @@ int main(int argc, char** argv)
 		names_len[r]=strlen(names[r]);
 	}
 
-#ifdef STATS
-	/* jku: initialize statistic */
- 	memset(&stats,0,sizeof(struct stats_s));
-#endif
 	
 	/* get ips */
 	printf("Listening on ");
@@ -466,6 +493,10 @@ int main(int argc, char** argv)
 				inet_ntoa(*(struct in_addr*)&addresses[r]),
 				(unsigned short)port_no);
 	}
+
+#ifdef STATS
+	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
+#endif
 
 	/* init_daemon? */
 	if (!dont_fork){
