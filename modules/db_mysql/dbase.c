@@ -246,16 +246,16 @@ void db_close(db_con_t* _h)
 /*
  * Retrieve result set
  */
-int get_result(db_con_t* _h, db_res_t** _r)
+static int store_result(db_con_t* _h, db_res_t** _r)
 {
 	if ((!_h) || (!_r)) {
-		LOG(L_ERR, "get_result(): Invalid parameter value\n");
+		LOG(L_ERR, "store_result(): Invalid parameter value\n");
 		return -1;
 	}
 
 	*_r = new_result();
 	if (*_r == 0) {
-		LOG(L_ERR, "get_result(): No memory left\n");
+		LOG(L_ERR, "store_result(): No memory left\n");
 		return -2;
 	}
 
@@ -266,7 +266,7 @@ int get_result(db_con_t* _h, db_res_t** _r)
 			(*_r)->n = 0;
 			return 0;
 		} else {
-			LOG(L_ERR, "get_result(): %s\n", mysql_error(CON_CONNECTION(_h)));
+			LOG(L_ERR, "store_result(): %s\n", mysql_error(CON_CONNECTION(_h)));
 			free_result(*_r);
 			*_r = 0;
 			return -3;
@@ -274,7 +274,7 @@ int get_result(db_con_t* _h, db_res_t** _r)
 	}
 
         if (convert_result(_h, *_r) < 0) {
-		LOG(L_ERR, "get_result(): Error while converting result\n");
+		LOG(L_ERR, "store_result(): Error while converting result\n");
 		pkg_free(*_r);
 
 		     /* This cannot be used because if convert_result fails,
@@ -292,15 +292,15 @@ int get_result(db_con_t* _h, db_res_t** _r)
 /*
  * Release a result set from memory
  */
-int db_free_query(db_con_t* _h, db_res_t* _r)
+int db_free_result(db_con_t* _h, db_res_t* _r)
 {
      if ((!_h) || (!_r)) {
-	     LOG(L_ERR, "db_free_query(): Invalid parameter value\n");
+	     LOG(L_ERR, "db_free_result(): Invalid parameter value\n");
 	     return -1;
      }
 
      if (free_result(_r) < 0) {
-	     LOG(L_ERR, "free_query(): Unable to free result structure\n");
+	     LOG(L_ERR, "db_free_result(): Unable to free result structure\n");
 	     return -1;
      }
      mysql_free_result(CON_RESULT(_h));
@@ -326,7 +326,7 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 {
 	int off;
 
-	if ((!_h) || (!_r)) {
+	if (!_h) {
 		LOG(L_ERR, "db_query(): Invalid parameter value\n");
 		return -1;
 	}
@@ -346,14 +346,16 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
 	}
 
-	/*DBG("query=\"%s\"\n",sql_buf);*/
-
 	if (submit_query(_h, sql_buf) < 0) {
 		LOG(L_ERR, "submit_query(): Error while submitting query\n");
 		return -2;
 	}
 
-	return get_result(_h, _r);
+	if (_r) {
+		return store_result(_h, _r);
+	} else {
+		return use_result(_h, _r);
+	}
 }
 
 
