@@ -31,9 +31,10 @@ Jan Janak
               1.3.6. cseq_column (string)
               1.3.7. method_column (string)
               1.3.8. user_agent_column (string)
-              1.3.9. db_url (string)
-              1.3.10. timer_interval (integer)
-              1.3.11. db_mode (integer)
+              1.3.9. received_column (string)
+              1.3.10. db_url (string)
+              1.3.11. timer_interval (integer)
+              1.3.12. db_mode (integer)
 
         1.4. Exported Functions
 
@@ -73,9 +74,10 @@ Jan Janak
    1-6. Set cseq_column parameter
    1-7. Set method_column parameter
    1-8. Set user_agent_column parameter
-   1-9. Set db_url parameter
-   1-10. Set timer_interval parameter
-   1-11. Set db_mode parameter
+   1-9. Set received_column parameter
+   1-10. Set db_url parameter
+   1-11. Set timer_interval parameter
+   1-12. Set db_mode parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -202,19 +204,32 @@ modparam("usrloc", "user_agent_column", "user_agent")
 ...
      _________________________________________________________
 
-1.3.9. db_url (string)
+1.3.9. received_column (string)
+
+   Name of column containing the source IP, port, and protocol
+   from the REGISTER message.
+
+   Default value is "received". 
+
+   Example 1-9. Set received_column parameter
+...
+modparam("usrloc", "received_column", "received")
+...
+     _________________________________________________________
+
+1.3.10. db_url (string)
 
    URL of the database that should be used.
 
    Default value is "mysql://ser:heslo@localhost/ser". 
 
-   Example 1-9. Set db_url parameter
+   Example 1-10. Set db_url parameter
 ...
 modparam("usrloc", "db_url", "mysql://username:password@localhost/ser")
 ...
      _________________________________________________________
 
-1.3.10. timer_interval (integer)
+1.3.11. timer_interval (integer)
 
    Number of seconds between two timer runs. The module uses
    timer to delete expired contacts, synchronize with database
@@ -222,13 +237,13 @@ modparam("usrloc", "db_url", "mysql://username:password@localhost/ser")
 
    Default value is 60. 
 
-   Example 1-10. Set timer_interval parameter
+   Example 1-11. Set timer_interval parameter
 ...
 modparam("usrloc", "timer_interval", 120)
 ...
      _________________________________________________________
 
-1.3.11. db_mode (integer)
+1.3.12. db_mode (integer)
 
    The usrloc module can utilize database for persistent contact
    storage. If you use database, your contacts will survive
@@ -264,7 +279,7 @@ modparam("usrloc", "timer_interval", 120)
 
    Default value is 0. 
 
-   Example 1-11. Set db_mode parameter
+   Example 1-12. Set db_mode parameter
 ...
 modparam("usrloc", "db_mode", 2)
 ...

@@ -212,6 +212,27 @@ modparam("usrloc", "user_agent_column", "user_agent")
 	</section>
 
 	<section>
+	    <title><varname>received_column</varname> (string)</title>
+	    <para>
+		Name of column containing the source IP, port, and protocol from the REGISTER
+		message.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>received</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>received_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "received_column", "received")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
 		&url; of the database that should be used.

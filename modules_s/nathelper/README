@@ -25,6 +25,7 @@ Maxim Sobolev
 
               1.3.1. natping_interval (integer)
               1.3.2. ping_nated_only (integer)
+              1.3.3. received_avp (integer)
 
         1.4. Exported Functions
 
@@ -34,8 +35,10 @@ Maxim Sobolev
 
               1.5.1. fix_nated_sdp(mode)
               1.5.2. force_rtp_proxy()
-              1.5.3. force_rtp_proxy(ip_address)
-              1.5.4. nat_uac_test(mode)
+              1.5.3. add_rcv_param()
+              1.5.4. fix_nated_register()
+              1.5.5. force_rtp_proxy(ip_address)
+              1.5.6. nat_uac_test(mode)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -43,10 +46,13 @@ Maxim Sobolev
    List of Examples
    1-1. Set natping_interval parameter
    1-2. Set ping_nated_only parameter
-   1-3. fix_nated_contact usage
-   1-4. fix_nated_sdp usage
-   1-5. force_rtp_proxy usage
+   1-3. Set received_avp parameter
+   1-4. fix_nated_contact usage
+   1-5. fix_nated_sdp usage
    1-6. force_rtp_proxy usage
+   1-7. add_rcv_paramer usage
+   1-8. fix_nated_register usage
+   1-9. force_rtp_proxy usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -115,13 +121,31 @@ modparam("nathelper", "ping_nated_only", 1)
 ...
      _________________________________________________________
 
+1.3.3. received_avp (integer)
+
+   The number of the Attribute-Value-Pair (AVP) used to store the
+   URI containing the received IP, port, and protocol. The URI is
+   created by fix_nated_register function of nathelper module and
+   the attribute is then used by the registrar to store the
+   received parameters. Do not forget to change the value of
+   corresponding parameter in registrar module if you change the
+   value of this parameter.
+
+   Default value is 42. 
+
+   Example 1-3. Set received_avp parameter
+...
+modparam("nathelper", "received_avp", 43)
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. fix_nated_contact()
 
    Rewrites Contact HF to contain request's source address:port.
 
-   Example 1-3. fix_nated_contact usage
+   Example 1-4. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
@@ -138,7 +162,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
      * mode - 0x01 (add direction=active), 0x02 (rewrite media IP
        address with source address of the message).
 
-   Example 1-4. fix_nated_sdp usage
+   Example 1-5. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
@@ -149,13 +173,42 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
    Rewrites SDP body to ensure that media is passed through an
    RTP proxy.
 
-   Example 1-5. force_rtp_proxy usage
+   Example 1-6. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 ...
      _________________________________________________________
 
-1.5.3. force_rtp_proxy(ip_address)
+1.5.3. add_rcv_param()
+
+   Add received parameter to Contact header fields. The parameter
+   will contain URI created from the source IP, port, and
+   protocol of the packet containing the SIP message. The
+   parameter can be then processed by another registrar, this is
+   useful, for example, when replicating register messages using
+   t_replicate function to another registrar.
+
+   Example 1-7. add_rcv_paramer usage
+...
+add_rcv_param();
+...
+     _________________________________________________________
+
+1.5.4. fix_nated_register()
+
+   The function creates a URI consisting of the source IP, port,
+   and protocol and stores the URI in an Attribute-Value-Pair.
+   The URI will be appended as "received" parameter to Contact in
+   200 OK and registrar will store it in the user location
+   database.
+
+   Example 1-8. fix_nated_register usage
+...
+fix_nated_register();
+...
+     _________________________________________________________
+
+1.5.5. force_rtp_proxy(ip_address)
 
    Rewrites SDP body with given IP address to ensure that media
    is passed through an RTP proxy.
@@ -164,13 +217,13 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 
      * ip_address - new SDP IP address.
 
-   Example 1-6. force_rtp_proxy usage
+   Example 1-9. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
 ...
      _________________________________________________________
 
-1.5.4. nat_uac_test(mode)
+1.5.6. nat_uac_test(mode)
 
    Tries to guess if client's request originated behind a nat.
    The parameter determines what heuristics is used. If flag 1 is
