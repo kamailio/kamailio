@@ -106,6 +106,7 @@ BEGIN {
 	ua_eyep=0;
 	ua_sipimp=0;
 	ua_sjphone=0;
+	ua_lgelite=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -271,6 +272,10 @@ ua==0 && /User-Agent:.*EdgEAccEss/ {
 }
 ua==0 && /User-Agent:.*SJLabs-SJPhone/ {
 	ua_sjphone++
+	ua=1
+}
+ua==0 && /User-Agent:.*LG-Elite/ {
+	ua_lgelite++
 	ua=1
 }
 ua==0 && /User-Agent:.*SIPimp\.org/ {
@@ -677,6 +682,7 @@ END {
 	print "EyeP: " ua_eyep
 	print "SIPimp: " ua_sipimp
 	print "SJPhone: " ua_sjphone
+	print "LG-Elite: " ua_lgelite
 	print "UFO: " ua_xx
 
 	print "## Servers"
