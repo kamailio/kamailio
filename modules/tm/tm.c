@@ -488,8 +488,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (unixsock_register_cmd("t_hash", unixsock_hash) < 0) {
-		LOG(L_CRIT, "cannot register t_hash with the unix server\n");
+	if (unixsock_register_cmd("t_uac_dlg", unixsock_uac) < 0) {
+		LOG(L_CRIT, "cannot register t_uac with the unix server\n");
 		return -1;
 	}
 
@@ -498,8 +498,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (unixsock_register_cmd("t_uac", unixsock_uac) < 0) {
-		LOG(L_CRIT, "cannot register t_uac with the unix server\n");
+	if (unixsock_register_cmd("t_hash", unixsock_hash) < 0) {
+		LOG(L_CRIT, "cannot register t_hash with the unix server\n");
 		return -1;
 	}
 
