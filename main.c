@@ -12,6 +12,24 @@
 #define CFG_FILE "./sip_router.cfg"
 
 
+/* debuging function */
+
+void receive_stdin_loop()
+{
+	#define BSIZE 1024
+	char buf[BSIZE+1];
+	int len;
+	
+	while(1){
+		len=fread(buf,1,BSIZE,stdin);
+		buf[len+1]=0;
+		receive_msg(buf, len);
+		printf("-------------------------\n");
+	}
+}
+
+
+
 int main(int argc, char** argv)
 {
 
@@ -40,9 +58,11 @@ int main(int argc, char** argv)
 
 
 
-	/* start other processes/threads ? */
+	/* start/init other processes/threads ? */
 
 	/* receive loop */
+
+	receive_stdin_loop();
 
 
 error:

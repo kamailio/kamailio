@@ -48,6 +48,7 @@ struct hdr_field{   /* format: name':' body */
 
 struct via_body{  /* format: name/version/transport host:port;params comment */
 	int error;
+	char *hdr;   /* contains "Via" or "v" */
 	char* name;
 	char* version;
 	char* transport;
@@ -55,7 +56,14 @@ struct via_body{  /* format: name/version/transport host:port;params comment */
 	int port;
 	char* params;
 	char* comment;
+	int size;    /* full size, including hdr */
 	char* next; /* pointer to next via body string if compact via or null */
+};
+
+struct sip_msg{
+	struct msg_start first_line;
+	struct via_body via1;
+	struct via_body via2;
 };
 
 
@@ -65,11 +73,8 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f);
 int field_name(char *s);
 char* parse_hostport(char* buf, char** host, short int* port);
 char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb);
-
-
+int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 
 
 
 #endif
- 
-

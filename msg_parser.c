@@ -5,11 +5,15 @@
  *
  */
 
-#include "msg_parser.h"
-#include "string.h"
+#include <string.h>
 
+#include "msg_parser.h"
 #include "parser_f.h"
 #include "dprint.h"
+
+
+
+#define DEBUG
 
 
 
@@ -311,5 +315,147 @@ char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb)
 error:
 	vb->error=VIA_PARSE_ERROR;
 	return tmp;
+}
+
+
+
+/* returns 0 if ok, -1 for errors */
+int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
+{
+
+	char *tmp, *bar;
+	char* rest;
+	char* first_via;
+	char* second_via;
+	struct msg_start fl;
+	struct hdr_field hf;
+	struct via_body vb1, vb2;
+	int offset;
+	int r;
+
+	
+	/* eat crlf from the beginning */
+	for (tmp=buf; (*tmp=='\n' || *tmp=='\r')&&
+			tmp-buf < len ; tmp++);
+	offset=tmp-buf;
+	rest=parse_first_line(tmp, len-offset, &fl);
+	offset+=rest-tmp;
+	tmp=rest;
+	switch(fl.type){
+		case SIP_INVALID:
+			DPrint("invalid message\n");
+			goto error;
+			break;
+		case SIP_REQUEST:
+			DPrint("SIP Request:\n");
+			DPrint(" method:  <%s>\n",fl.u.request.method);
+			DPrint(" uri:     <%s>\n",fl.u.request.uri);
+			DPrint(" version: <%s>\n",fl.u.request.version);
+			break;
+		case SIP_REPLY:
+			DPrint("SIP Reply  (status):\n");
+			DPrint(" version: <%s>\n",fl.u.reply.version);
+			DPrint(" status:  <%s>\n",fl.u.reply.status);
+			DPrint(" reason:  <%s>\n",fl.u.reply.reason);
+			break;
+		default:
+			DPrint("unknown type %d\n",fl.type);
+	}
+	
+	/*find first Via: */
+	hf.type=HDR_ERROR;
+	first_via=0;
+	second_via=0;
+	do{
+		rest=get_hdr_field(tmp, len-offset, &hf);
+		offset+=rest-tmp;
+		switch (hf.type){
+			case HDR_ERROR:
+				DPrint("ERROR: bad header  field\n");
+				goto  error;
+			case HDR_EOH: 
+				goto skip;
+			case HDR_VIA:
+				if (first_via==0){
+						first_via=hf.body;
+						vb1.hdr=hf.name;
+						/* replace cr/lf with space in first via */
+						for (bar=first_via;(first_via) && (*bar);bar++)
+							if ((*bar=='\r')||(*bar=='\n'))	*bar=' ';
+				#ifdef DEBUG
+						printf("first via: <%s>\n", first_via);
+				#endif
+						bar=parse_via_body(first_via, strlen(first_via), &vb1);
+						if (vb1.error!=VIA_PARSE_OK){
+							DPrint("ERROR: parsing via body: %s\n", first_via);
+							goto error;
+						}
+						vb1.size=bar-first_via+first_via-vb1.hdr;
+						
+						/* compact via */
+						if (vb1.next) {
+							second_via=vb1.next;
+							/* not interested in the rest of the header */
+							goto skip;
+						}
+				}else if (second_via==0){
+							second_via=hf.body;
+							vb2.hdr=hf.name;
+							goto skip;
+				}
+				break;
+		}
+	#ifdef DEBUG
+		printf("header field type %d, name=<%s>, body=<%s>\n",
+			hf.type, hf.name, hf.body);
+	#endif
+		tmp=rest;
+	}while(hf.type!=HDR_EOH && rest-buf < len);
+
+skip:
+	/* replace cr/lf with space in the second via */
+	for (tmp=second_via;(second_via) && (*tmp);tmp++)
+		if ((*tmp=='\r')||(*tmp=='\n'))	*tmp=' ';
+
+	if (second_via) {
+		tmp=parse_via_body(second_via, strlen(second_via), &vb2);
+		if (vb2.error!=VIA_PARSE_OK){
+			DPrint("ERROR: parsing via body: %s\n", second_via);
+			goto error;
+		}
+		vb2.size=tmp-second_via;
+		if (vb2.hdr) vb2.size+=second_via-vb2.hdr;
+	}
+	
+
+#ifdef DEBUG
+	/* dump parsed data */
+	printf(" first  via: <%s/%s/%s> <%s:%d>",
+			vb1.name, vb1.version, vb1.transport, vb1.host, vb1.port);
+	if (vb1.params) printf(";<%s>", vb1.params);
+	if (vb1.comment) printf(" <%s>", vb1.comment);
+	printf ("\n");
+	if (second_via){
+		printf(" second via: <%s/%s/%s> <%s:%d>",
+				vb2.name, vb2.version, vb2.transport, vb2.host, vb2.port);
+		if (vb2.params) printf(";<%s>", vb2.params);
+		if (vb2.comment) printf(" <%s>", vb2.comment);
+		printf ("\n");
+	}
+#endif
+	
+	/* copy data into msg */
+	memcpy(&(msg->first_line), &fl, sizeof(struct msg_start));
+	memcpy(&(msg->via1), &vb1, sizeof(struct via_body));
+	memcpy(&(msg->via2), &vb2, sizeof(struct via_body));
+
+#ifdef DEBUG
+	printf ("exiting parse_msg\n");
+#endif
+
+	return 0;
+	
+error:
+	return -1;
 }
 
