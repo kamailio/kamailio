@@ -160,7 +160,7 @@ int uac_child_init( int rank )
 			"%c%d@%.*s", CID_SEP, my_pid(), 
 			sock_info[bind_idx].address_str.len,
 			sock_info[bind_idx].address_str.s );
-	if (callid_suffix_len==-1) {
+	if (callid_suffix_len==-1 || callid_suffix_len>=CALLID_SUFFIX_LEN) {
 		LOG(L_ERR, "ERROR: uac_child_init: buffer too small\n");
 		return -1;
 	}
@@ -214,7 +214,7 @@ int t_uac( str *msg_type, str *dst,
 	/* generate_callid(); */
 	callid_nr++;
 	r=snprintf(callid, rand_len+1, "%0*lx", rand_len, callid_nr );
-	if (r==-1) {
+	if (r==-1 || r>=rand_len+1) {
 		LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
 		goto error00;
 	}
@@ -356,7 +356,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	if (cid == 0) {
 		callid_nr++;
 		r = snprintf(callid, rand_len + 1, "%0*lx", rand_len, callid_nr);
-		if (r == -1) {
+		if (r == -1 || r>=rand_len+1) {
 			LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
 			goto error00;
 		}

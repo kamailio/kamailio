@@ -196,7 +196,7 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	content_len_len=snprintf(
 		content_len, sizeof(content_len), 
 		"%d", body.len );
-	if (content_len_len==-1) {
+	if (content_len_len==-1 || content_len_len>=sizeof(content_len)) {
 		LOG(L_ERR, "ERROR: uac: content_len too big\n");
 		return 0;
 	}
@@ -204,7 +204,7 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	cseq_str_len=snprintf( 
 		cseq_str, sizeof(cseq_str),
 		"%d", cseq );
-	if (cseq_str_len==-1) {
+	if (cseq_str_len==-1 || cseq_str_len>=sizeof(cseq_str)) {
 		LOG(L_ERR, "ERROR: uac: cseq too big\n");
 		return 0;
 	}
@@ -343,7 +343,7 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 	      */
 	if (body) {
 		content_len_len = snprintf(content_len, sizeof(content_len), "%d", body->len);
-		if (content_len_len == -1) {
+		if (content_len_len == -1 || content_len_len>=sizeof(content_len)) {
 			LOG(L_ERR, "ERROR: build_uac_request_dlg: content_len too big\n");
 			return 0;
 		}
@@ -353,7 +353,7 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 	      * Print CSeq 
 	      */
 	cseq_str_len = snprintf(cseq_str, sizeof(cseq_str), "%d", cseq);
-	if (cseq_str_len == -1) {
+	if (cseq_str_len == -1 || cseq_str_len >= sizeof(cseq_str)) {
 		LOG(L_ERR, "ERROR: build_uac_request_dlg: cseq too big\n");
 		return 0;
 	}

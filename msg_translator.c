@@ -24,6 +24,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ *
+ * History:
+ * --------
+ * 2003-01-20 bug_fix: use of return value of snprintf aligned to C99 (jiri)
+ *
  */
 
 
@@ -118,7 +124,7 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 }
 
 
-char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
+static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 {
 	static char buf[MAX_WARNING_LEN];
 	static unsigned int fix_len=0;
@@ -127,16 +133,16 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 
 	if (!fix_len)
 	{
-		memcpy(buf+fix_len,"Warning: 392 ",13);
-		fix_len +=13;
+		memcpy(buf+fix_len,WARNING, WARNING_LEN);
+		fix_len +=WARNING_LEN;
 		memcpy(buf+fix_len, bind_address->name.s,bind_address->name.len);
 		fix_len += bind_address->name.len;
 		//*(buf+fix_len++) = ':';
 		memcpy(buf+fix_len,bind_address->port_no_str.s,
 			bind_address->port_no_str.len);
 		fix_len += bind_address->port_no_str.len;
-		memcpy(buf+fix_len, " \"Noisy feedback tells: ",24);
-		fix_len += 24;
+		memcpy(buf+fix_len, WARNING_PHRASE,WARNING_PHRASE_LEN);
+		fix_len += WARNING_PHRASE_LEN;
 	}
 
 	/*adding out_uri*/
@@ -153,7 +159,8 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 		msg->parsed_flag & HDR_EOH ? '=' : '>', /* should be = */
 		via_cnt );
 
-	if (print_len==-1) {
+	if (print_len==-1 || print_len>=MAX_WARNING_LEN-fix_len) {
+		LOG(L_ERR, "ERROR: warning_builder: buffer size exceeded\n");
 		*returned_len=0;
 		return 0;
 	} else {
@@ -661,11 +668,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	}
 	if (sip_warning) {
 		warning = warning_builder(msg,&warning_len);
-		if (warning==0) {
-			LOG(L_ERR, "ERROR: warning too big\n");
-			goto error01;
-		}
-		len += warning_len + CRLF_LEN;
+		if (warning) len += warning_len + CRLF_LEN;
+		else LOG(L_WARN, "WARNING: warning skipped -- too big\n");
 	}
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
@@ -752,7 +756,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 		memcpy( p, CRLF, CRLF_LEN );
 		p+=CRLF_LEN;
 	}
-	if (sip_warning) {
+	if (sip_warning && warning) {
 		memcpy( p, warning, warning_len);
 		p+=warning_len;
 		memcpy( p, CRLF, CRLF_LEN);

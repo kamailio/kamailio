@@ -1374,7 +1374,13 @@ try_again:
 		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
 		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
 									(unsigned short) sock_info[r].port_no);
-		if (port_no_str_len<0){
+		/* if buffer too small, snprintf may return per C99 estimated size
+		   of needed space; there is no guarantee how many characters 
+		   have been written to the buffer and we can be happy if
+		   the snprintf implementation zero-terminates whatever it wrote
+		   -jku
+		*/
+		if (port_no_str_len<0 || port_no_str_len>=MAX_PORT_LEN){
 			fprintf(stderr, "ERROR: bad port number: %d\n", 
 						sock_info[r].port_no);
 			goto error;
