@@ -7,7 +7,12 @@ since the version 0.8.8 was released. The issues are
 ordered by numbers of ser versions to which they relate,
 beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
-
+--------------------------------------------------------------
+Desc: texops subst REs match newline in constructs such [^@]
+Ser version: 0.8.13?-unstable
+Reason: there is a bug in newer libc versions (at least in debian
+        libc6 2.3.x)
+Workarround: use an older or fixed libc6 or avoid [^something]
 ---------------------------------------------------------------
 Desc: memory leaks occurs if SIP requests are processed in which
       a Via header field occurs in end of header and includes
