@@ -224,7 +224,7 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 	if (!_ep || !_ep->body.len) {
 		*_e = get_expires_hf(_m);
 	} else {
-		if (str2int(&_ep->body, _e) < 0) {
+		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
 			*_e = 3600;
 			     /*
 			       rerrno = R_INV_EXP;

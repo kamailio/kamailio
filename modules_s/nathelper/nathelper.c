@@ -494,8 +494,8 @@ timer(unsigned int ticks, void *param)
 		memcpy(&(c.len), cp, sizeof(c.len));
 		if (c.len == 0)
 			break;
-		c.s = cp + sizeof(c.len);
-		cp += sizeof(c.len) + c.len;
+		c.s = (char*)cp + sizeof(c.len);
+		cp =  (char*)cp + sizeof(c.len) + c.len;
 		if (parse_uri(c.s, c.len, &curi) < 0) {
 			LOG(L_ERR, "ERROR: nathelper::timer: can't parse contact uri\n");
 			continue;

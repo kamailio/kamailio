@@ -204,7 +204,8 @@ void print_udomain(FILE* _f, udomain_t* _d)
 int preload_udomain(udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[9] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, replicate_col, state_col, domain_col};
+	db_key_t columns[9] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, 
+							replicate_col, state_col, domain_col};
 	db_res_t* res;
 	db_row_t* row;
 	int i, cseq, rep, state;

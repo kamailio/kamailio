@@ -258,7 +258,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	fifo_find_domain(&table, &d);
 	
 	if (d) {
-		if (str2int(&expires, &exp_i) < 0) {
+		if (str2int(&expires, (unsigned int*)&exp_i) < 0) {
 			fifo_reply(response_file, "400 Invalid expires format\n");
 			return 1;
 		}
@@ -268,7 +268,7 @@ static int ul_add(FILE* pipe, char* response_file)
 			return 1;
 		}
 
-		if (str2int(&rep, &rep_i) < 0) {
+		if (str2int(&rep, (unsigned int*)&rep_i) < 0) {
 			fifo_reply(response_file, "400 Invalid replicate format\n");
 			return 1;
 		}

@@ -112,9 +112,9 @@ int get_all_ucontacts(void *buf, int len)
 					continue;
 				if (len >= (int)(sizeof(c->c.len) + c->c.len)) {
 					memcpy(cp, &c->c.len, sizeof(c->c.len));
-					cp += sizeof(c->c.len);
+					cp = (char*)cp + sizeof(c->c.len);
 					memcpy(cp, c->c.s, c->c.len);
-					cp += c->c.len;
+					cp = (char*)cp + c->c.len;
 					len -= sizeof(c->c.len) + c->c.len;
 				} else {
 					shortage += sizeof(c->c.len) + c->c.len;

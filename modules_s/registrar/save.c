@@ -189,7 +189,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		trim_trailing(&callid);
 		
 		     /* Get CSeq number of the message */
-		if (str2int(&get_cseq(_m)->number, &cseq) < 0) {
+		if (str2int(&get_cseq(_m)->number, (unsigned int*)&cseq) < 0) {
 			rerrno = R_INV_CSEQ;
 			LOG(L_ERR, "insert(): Error while converting cseq number\n");
 			ul_delete_urecord(_d, _a);
@@ -262,7 +262,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				trim_trailing(&callid);
 				
 				     /* Get CSeq number of the message */
-				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
+				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), 
+								(unsigned int*) &cseq) < 0) {
 					rerrno = R_INV_CSEQ;
 					LOG(L_ERR, "update(): Error while converting cseq number\n");
 					return -3;
@@ -293,7 +294,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				trim_trailing(&callid);
 				
 				     /* Get CSeq number of the message */
-				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
+				if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), (unsigned int*)&cseq)
+							< 0) {
 					rerrno = R_INV_CSEQ;
 					LOG(L_ERR, "update(): Error while converting cseq number\n");
 					return -7;
