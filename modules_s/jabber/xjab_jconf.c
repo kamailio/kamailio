@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 
 #include "xjab_jconf.h"
+#include "xjab_base.h"
 
 xj_jconf xj_jconf_new(str *u)
 {
@@ -136,7 +137,7 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid)
 		jcf->nick.len = p - jcf->nick.s;
 	}
 
-	jcf->jcid = xj_jconf_hash(&jcf->room, &jcf->server);
+	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
 	DBG("XJAB:xj_jconf_init_sip: conferece id=%d\n", jcf->jcid);
 	
 	return 0;
@@ -174,7 +175,7 @@ int xj_jconf_init_jab(xj_jconf jcf)
 		jcf->nick.s = p0+1;
 		jcf->nick.len = jcf->uri.s + jcf->uri.len - jcf->nick.s;
 	}
-	jcf->jcid = xj_jconf_hash(&jcf->room, &jcf->server);
+	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
 	DBG("XJAB:xj_jconf_init_jab: conferece id=%d\n", jcf->jcid);
 
 	return 0;
