@@ -37,23 +37,6 @@
 
 
 /*
- * Check that From header is properly parsed and if so,
- * return pointer to parsed From header.  Otherwise return NULL.
- */
-inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
-{
-	if (!(_msg->from)) {
-		LOG(L_ERR, "get_parsed_from(): Request does not have a From header\n");
-		return NULL;
-	}
-	if (!(_msg->from->parsed) || ((struct to_body *)_msg->from->parsed)->error != PARSE_OK) {
-		LOG(L_ERR, "get_parsed_from(): From header is not properly parsed\n");
-		return NULL;
-	}
-	return (struct to_body *)(_msg->from->parsed);
-}
-
-/*
  * Check if domain is local
  */
 int is_domain_local(str* _host)
@@ -105,20 +88,23 @@ int is_domain_local(str* _host)
  */
 int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2)
 {
-	struct to_body* body;
-	struct sip_uri uri;
-	int ret;
+	str uri;
+	struct sip_uri puri;
 
-	body = get_parsed_from_body(_msg);
-	if (!body) return -1;
-
-	if (parse_uri(body->uri.s, body->uri.len, &uri) < 0) {
-		LOG(L_ERR, "is_from_local(): Error while parsing From uri\n");
-		return -1;
+	if (parse_from_header(_msg) < 0) {
+		LOG(L_ERR, "is_from_local(): Error while parsing From header\n");
+		return -2;
 	}
 
-	ret = is_domain_local(&(uri.host));
-	return ret;
+	uri = get_from(_msg)->uri;
+
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+		LOG(L_ERR, "is_from_local(): Error while parsing URI\n");
+		return -3;
+	}
+
+	return is_domain_local(&(puri.host));
+
 }
 
 /*
