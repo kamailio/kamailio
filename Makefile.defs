@@ -91,6 +91,10 @@ INSTALL-MAN = $(INSTALL) -m 644
 #		if enabled, To-header-field will be less liberal and will not accept
 #		'tag=' (tag parameter with equal sign and without value); it is called
 #		this way because such message was sighted from a Pingtel phone
+# -DWITH_SNMP_MOD
+#  		if enabled, allows forking of the snmp agent just before child
+#  		forking (done at the top of main_loop). Needed if you want
+#  		to use the snmp module.
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
@@ -110,6 +114,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 #-DEXTRA_DEBUG 
 	 #-DUSE_SHM_MEM
 	 #-DSTATS 
+	 #-DWITH_SNMP_MOD \
 	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
@@ -401,4 +406,3 @@ endif
 ifneq (,$(findstring CYGWIN, $(OS)))
 	#cygwin is the same as common
 endif
-
