@@ -1,0 +1,239 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This is a module to help with &sdp; mangling.
+	    Still in testing.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+
+	<section>
+	    <title><varname>contact_flds_separator</varname> (string)</title>
+	    <para>
+		First char of this parameter is used as separator for encoding/decoding Contact
+		header.
+	    </para>
+	    <warning>
+		<para>
+		    First char of this field must be set to a value which is not used inside
+		    username,password or other fields of contact.Otherwise it is posible for the
+		    decoding step to fail/produce wrong results.
+		</para>
+	    </warning>
+	    <para>
+		<emphasis>
+		    Default value is <quote>*</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("module", "contact_flds_separator", "-")
+...
+</programlisting>
+	    </example>
+	    <para>
+		then an encoded uri might look sip:user-password-ip-port-protocol@PublicIP
+	    </para>
+	</section>
+
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_mangle_ip(pattern, newip)</function>
+	    </title>
+	    <para>
+		Changes &ip; addresses inside &sdp; package in lines describing connections like
+		c=IN IP4 Currently in only changes IP4 addresses since IP6 probably will not need to
+		traverse NAT :)
+	    </para>
+	    <para>
+		The function returns negative on error, or number of replacements + 1.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>pattern</emphasis> - A pair ip/mask used to match &ip;'s located
+			inside &sdp; package in lines c=IN IP4 ip. This lines will only be mangled
+			if located &ip; is in the network described by this pattern. Examples of
+			valid patterns are <quote>10.0.0.0/255.0.0.0</quote> or
+			<quote>10.0.0.0/8</quote> etc.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>newip</emphasis> - A string representing the new &ip; to be put
+			inside &sdp; package if old &ip; address matches pattern.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>sdp_mangle_ip</function> usage</title>
+		<programlisting format="linespecific">
+...
+sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">sdp_mangle_port(offset)</function>
+	    </title>
+	    <para>
+		Changes ports inside &sdp; package in lines describing media like m=audio 13451.
+	    </para>
+	    <para>
+		The function returns negative on error, or number of replacements + 1.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>offset</emphasis> - A string representing an integer which will
+			be added/substracted from the located port.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>sdp_mangle_port</function> usage</title>
+		<programlisting format="linespecific">
+...
+sdp_mangle_port("-12000");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">encode_contact(encoding_prefix)</function>
+	    </title>
+	    <para>
+		This function will encode uri-s inside Contact header in the following manner
+		sip:username:password@ip:port;transport=protocol goes
+		sip:enc_pref*username*ip*port*protocol@public_ip * is the default separator.
+	    </para>
+	    <para>
+		The function returns negative on error, 1 on succes.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>encoding_prefix</emphasis> - Something to allow us to determine
+			that a contact is encoded publicip--a routable &ip;,most probably you should
+			put your external &ip; of your &nat; box.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>encode_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38"); 
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">decode_contact()</function>
+	    </title>
+	    <para>
+		This function will decode the &uri; in first line in packets wich come with encoded
+		&uri; in the following manner sip:enc_pref*username*ip*port*protocol@public_ip goes to
+		sip:username:password@ip:port;transport=protocol It uses the default set parameter
+		for contact encoding separator.
+	    </para>
+	    <para>
+		The function returns negative on error, 1 on succes.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <example>
+		<title><function>decode_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri =~ "^enc*") { decode_contact(); }
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">decode_contact_header()</function>
+	    </title>
+	    <para>
+		This function will decode &uri;s inside Contact header in the following manner
+		sip:enc_pref*username*ip*port*protocol@public_ip goes to
+		sip:username:password@ip:port;transport=protocol. It uses the default set parameter
+		for contact encoding separator.
+	    </para>
+	    <para>
+		The function returns negative on error, 1 on succes.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <example>
+		<title><function>decode_contact_header</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri =~ "^enc*") { decode_contact_header(); }
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("mangler.sgml" "Book" "chapter")
+End:
+-->
