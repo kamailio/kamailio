@@ -27,14 +27,12 @@ mailto:s.frings@mail.isis.de
 
 
 
-void swapchars(char* string) /* Swaps every second character */
+void swapchars(char* string, int len) /* Swaps every second character */
 {
-	int Length;
 	int position;
 	char c;
 
-	Length=strlen(string);
-	for (position=0; position<Length-1; position+=2)
+	for (position=0; position<len-1; position+=2)
 	{
 		c=string[position];
 		string[position]=string[position+1];
@@ -110,18 +108,21 @@ void binary2pdu(char* binary, int length, char* pdu)
 /* make the PDU string. The destination variable pdu has to be big enough. */
 void make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 {
-	int coding;
-	int flags;
-	int msg_len;
+	int  coding;
+	int  flags;
+	int  msg_len;
 	char tmp[500];
+	int  foo;
 
 	msg_len = strlen(msg->text);
 	strcpy(tmp,msg->to);
 	// terminate the number with F if the length is odd
-	if (strlen(tmp)%2)
-		strcat(tmp,"F");
+	if ( (foo=strlen(tmp))%2 ) {
+		tmp[foo]='F';
+		tmp[++foo] = 0;
+	}
 	// Swap every second character
-	swapchars(tmp);
+	swapchars(tmp,foo);
 	flags=1; // SMS-Sumbit MS to SMSC
 	coding=240+1; // Dummy + Class 1
 	if (msg->is_binary)

@@ -36,21 +36,23 @@ char charset[128] = {'@' , 163 , '$' , 165 , 232 , 233 , 249 , 236 ,
 		      
 char ascii2sms(const char c)
 {
-  char found='*'; // replacement for nonexistent characters
-  int i;
-  for (i=0; i<128; i++)
-  {
-    if (c==charset[i])
-    {
-      found=i;
-      break;
-    }
-  }
-  return found;
+	char found='*'; // replacement for nonexistent characters
+	int i;
+
+	for (i=0; i<128 ; i++)
+		if (c==charset[i])
+		{
+			found=i;
+			break;
+		}
+
+	return found;
 }
+
+
+
 
 char sms2ascii(const char c)
 {
-  return charset[c];
-  
+	return charset[(int)c];
 }

@@ -92,12 +92,18 @@ error:
 void modem_process(struct modem *mdm)
 {
 	struct sms_msg sms_messg;
+	struct incame_sms sms;
 	struct network *net;
-	int i,len;
+	int i,k,len;
 	int counter;
 	int dont_wait;
 	int empty_pipe;
 	int last_smsc_index;
+	int cpms_unsuported;
+	int max_mem=0, used_mem=0;
+
+	cpms_unsuported = 0;
+	last_smsc_index = -1;
 
 	/* let's open/init the modem */
 	DBG("DEBUG:modem_process: openning modem\n");
@@ -106,9 +112,15 @@ void modem_process(struct modem *mdm)
 			" %s \n",mdm->name,strerror(errno));
 		return;
 	}
+	if ( (max_mem=check_memory(mdm,MAX_MEM))==-1 ) {
+		LOG(L_WARN,"WARNING:modem_process: CPMS command unsuported!"
+			" using default values (10,10)\n");
+		used_mem = max_mem = 10;
+		cpms_unsuported = 1;
+	}
+
 	setmodemparams(mdm);
 	initmodem(mdm);
-	last_smsc_index = -1;
 
 	sleep(1);
 
@@ -156,8 +168,30 @@ void modem_process(struct modem *mdm)
 				if (counter==net->max_sms_per_call)
 					dont_wait = 1;
 			}/*while*/
-			
 		}/*for*/
+
+		/* let's see if we have incomming sms */
+		if ( !cpms_unsuported ) {
+			used_mem = check_memory(mdm,USED_MEM);
+			if (used_mem==-1) {
+				LOG(L_ERR,"ERROR:modem_process: CPMS command failed!"
+					" cannot get used mem -> using 10\n");
+				used_mem = 10;
+			}
+		}
+		/* if any, let's het them */
+		if (used_mem)
+			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
+				if (getsms(&sms,mdm,i)!=-1) {
+					k++;
+					DBG("SMS Get from location %d\n",i);
+					/*for test ;-) ->  to be remove*/
+					DBG("SMS RECEIVED:\n\rFrom: %s %s\n\r%s %s"
+						"\n\r\"%s\"\n\r",sms.sender,sms.name,
+						sms.date,sms.time,sms.ascii);
+				}
+			}
+
 		if (!dont_wait)
 			sleep(mdm->looping_interval);
 	}/*while*/

@@ -44,6 +44,16 @@ struct sms_msg {
 	int cs_convert;
 };
 
+struct incame_sms {
+	char sender[31];
+	char name[64];
+	char date[9];
+	char time[9];
+	char ascii[500];
+	char smsc[31];
+	int  userdatalength;
+	int  is_statusreport;
+};
 
 
 extern struct modem modems[MAX_MODEMS];
