@@ -4,7 +4,8 @@
 
 auto_gen=
 NAME=mysql.so
-DEFS +=-I/usr/local/include -I/usr/local/mysql/include
+# mysql.h locations (freebsd,openbsd  solaris)
+DEFS +=-I/usr/local/include -I/usr/local/mysql/include \
 # libmysqlclient locations on RH/Suse and Solaris
 # (Debian does the right thing and puts it in /usr/lib)
 LIBS=-L/usr/lib/mysql -L /usr/local/lib -L/usr/local/mysql/lib/mysql/ \
