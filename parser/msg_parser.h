@@ -129,6 +129,9 @@ struct sip_msg {
 	     /* modifications */
 	
 	str new_uri; /* changed first line uri*/
+
+        str dst_uri; /* Destination URI, must be forwarded to this URI if len != 0 */
+
 	int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not */
 	struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
 	
