@@ -108,7 +108,7 @@ int missed_flag = 2;
 int report_ack = 1;
 
 /* log to syslog too*/
-int usesyslog = 0;
+int usesyslog = 1;
 
 /* ------------- Callback handlers --------------- */
 
