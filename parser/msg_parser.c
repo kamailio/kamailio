@@ -17,7 +17,6 @@
 #include "../mem/mem.h"
 #include "../error.h"
 #include "../globals.h"
-#include "parse_hname.h"
 #include "parse_hname2.h"
 
 
@@ -26,11 +25,7 @@
 #endif
 
 
-#ifdef NEW_HNAME
-#	define parse_hname(_b,_e,_h) parse_hname2((_b),(_e),(_h))
-#else
-#	define parse_hname(_b,_e,_h) parse_hname1((_b),(_e),(_h))
-#endif
+#define parse_hname(_b,_e,_h) parse_hname2((_b),(_e),(_h))
 
 
 /* returns pointer to next header line, and fill hdr_f ;
@@ -244,6 +239,42 @@ int parse_headers(struct sip_msg* msg, int flags)
 			case HDR_CONTENTLENGTH:
 				if (msg->content_length==0) msg->content_length = hf;
 				msg->parsed_flag|=HDR_CONTENTLENGTH;
+				break;
+		        case HDR_AUTHORIZATION:
+			        if (msg->authorization==0) msg->authorization = hf;
+				msg->parsed_flag|=HDR_AUTHORIZATION;
+				break;
+        		case HDR_EXPIRES:
+				if (msg->expires==0) msg->expires = hf;
+				msg->parsed_flag|=HDR_EXPIRES;
+				break;
+		        case HDR_PROXYAUTH:
+				if (msg->proxy_auth==0) msg->proxy_auth = hf;
+				msg->parsed_flag|=HDR_PROXYAUTH;
+				break;
+		        case HDR_WWWAUTH:
+				if (msg->www_auth==0) msg->www_auth = hf;
+				msg->parsed_flag|=HDR_WWWAUTH;
+				break;
+		        case HDR_SUPPORTED:
+				if (msg->supported==0) msg->supported = hf;
+				msg->parsed_flag|=HDR_SUPPORTED;
+				break;
+		        case HDR_REQUIRE:
+				if (msg->require==0) msg->require = hf;
+				msg->parsed_flag|=HDR_REQUIRE;
+				break;
+		        case HDR_PROXYREQUIRE:
+				if (msg->proxy_require==0) msg->proxy_require = hf;
+				msg->parsed_flag|=HDR_PROXYREQUIRE;
+				break;
+		        case HDR_UNSUPPORTED:
+				if (msg->unsupported==0) msg->unsupported=hf;
+				msg->parsed_flag|=HDR_UNSUPPORTED;
+				break;
+		        case HDR_ALLOW:
+				if (msg->allow==0) msg->allow = hf;
+				msg->parsed_flag|=HDR_ALLOW;
 				break;
 			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;

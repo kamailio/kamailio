@@ -69,6 +69,15 @@ struct sip_msg {
 	struct hdr_field* record_route;
 	struct hdr_field* content_type;
 	struct hdr_field* content_length;
+	struct hdr_field* authorization;
+	struct hdr_field* expires;
+	struct hdr_field* proxy_auth;
+	struct hdr_field* www_auth;
+	struct hdr_field* supported;
+	struct hdr_field* require;
+	struct hdr_field* proxy_require;
+	struct hdr_field* unsupported;
+	struct hdr_field* allow;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/

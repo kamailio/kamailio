@@ -9,7 +9,7 @@
 
 
 /*
- * Yet another parse_hname - Ultra Fast version :-)
+ * Fast 32-bit header field name parser
  */
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr);
 

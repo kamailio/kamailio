@@ -93,9 +93,7 @@ INSTALL-MAN = $(INSTALL) -m 644
 # -DWAIT
 #		protection against race condiditions; turn off only for debugging;
 #       to become non-optional if stable
-# -DNEW_HNAME
-#		32-bit header name parsing; turn off for lower speed ;-) or debugging;
-#		to become non-optional if fast and stable
+#
 # -SILENT_FR
 #		if defined, when FR timer hits (in tm) cancel is sent only if forking
 #		if used; otherwise, just delete the transaction without doing anything
@@ -105,7 +103,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
-	 -DWAIT -DNEW_HNAME \
+	 -DWAIT \
 	 -DSILENT_FR \
 	 -DNOISY_REPLIES -DVERY_NOISY_REPLIES\
 	 -DPINGTEL_TAG_HACK\

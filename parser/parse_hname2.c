@@ -2,18 +2,9 @@
  * $Id$
  */
 
-/* 
- * TODO: Optimize short variants of headers
- *       Test, Test, Test....
- *       Hardwire into ser core
- */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "msg_parser.h"
-#include "strs.h"
-#include "../dprint.h"
+#include "parse_hname2.h"
+#include "keys.h"
 #include "../ut.h"  /* q_memchr */
 
 /*
@@ -24,7 +15,8 @@
  * WARNING ! This value MUST be recalculated if you want
  * a new header to be recognized
  */
-#define HASH_TABLE_SIZE 1471
+#define HASH_TABLE_SIZE 9349
+
 
 /*
  * Hash function
@@ -46,7 +38,9 @@ struct ht_entry {
 	unsigned int value;
 };
 
-static struct ht_entry hash_table[ HASH_TABLE_SIZE ];
+
+static struct ht_entry hash_table[HASH_TABLE_SIZE];
+
 
 /*
  * Pointer to the hash table
@@ -107,278 +101,68 @@ static inline int unify(int key)
 }
 
 
-#define Via1_CASE         \
-     hdr->type = HDR_VIA; \
-     hdr->name.len = 3;   \
-     *(p + 3) = '\0';     \
-     return p + 4        
-
-
-#define From_CASE          \
-     hdr->type = HDR_FROM; \
-     p += 4;               \
-     goto dc_end
-
-
-#define To12_CASE        \
-     hdr->type = HDR_TO; \
-     hdr->name.len = 2;  \
-     *(p + 2) = '\0';    \
-     return (p + 3)
-
-
-#define CSeq_CASE          \
-     hdr->type = HDR_CSEQ; \
-     p += 4;               \
-     goto dc_end
-
-
-#define Call_CASE                      \
-     p += 4;                           \
-     val = READ(p);                    \
-     switch(val) {                     \
-     case _ID1:                        \
-	     hdr->type = HDR_CALLID;   \
-	     hdr->name.len = 7;        \
-	     *(p + 3) = '\0';          \
-	     return (p + 4);           \
-	                               \
-     case _ID2:                        \
-	     hdr->type = HDR_CALLID;   \
-	     p += 4;                   \
-	     goto dc_end;              \
-     }                                 \
-                                       \
-     val = unify(val);                 \
-     switch(val) {                     \
-     case _ID1:                        \
-	     hdr->type = HDR_CALLID;   \
-	     hdr->name.len = 7;        \
-	     *(p + 3) = '\0';          \
-	     return (p + 4);           \
-	                               \
-     case _ID2:                        \
-	     hdr->type = HDR_CALLID;   \
-	     p += 4;                   \
-	     goto dc_end;              \
-                                       \
-     default: goto other;              \
-     }                                 \
-     break
-
-
-/* added by Bogdan - for Content-Type and -Length headers */
-#define Ent__CASE \
-	p += 4;\
-	val = READ(p);\
-	switch(val) {\
-	case xType:\
-		hdr->type = HDR_CONTENTTYPE;\
-		p += 4;\
-		goto dc_end;\
-	case Leng:\
-		p += 4;\
-		val = READ(p);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}\
-		val = unify(val);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}else\
-			goto other;\
-	}\
-	val = unify(val);\
-	switch(val) {\
-	case xType:\
-		hdr->type = HDR_CONTENTTYPE;\
-		p += 4;\
-		goto dc_end;\
-	case Leng:\
-		p += 4;\
-		val = READ(p);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}\
-		val = unify(val);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}else\
-			goto other;\
-	default:\
-		goto other;\
-	}\
-	break
-
-
-#define Cont_CASE                     \
-     p += 4;                          \
-     val = READ(p);                   \
-     switch(val) {                    \
-     case act1:                       \
-	     hdr->type = HDR_CONTACT; \
-	     hdr->name.len = 7;       \
-	     *(p + 3) = '\0';         \
-	     return (p + 4);          \
-	                              \
-     case act2:                       \
-	     hdr->type = HDR_CONTACT; \
-	     p += 4;                  \
-	     goto dc_end;             \
-	                              \
-     case ent_:                   \
-	     Ent__CASE;               \
-     }                                \
-                                      \
-     val = unify(val);                \
-     switch(val) {                    \
-     case act1:                       \
-	     hdr->type = HDR_CONTACT; \
-	     hdr->name.len = 7;       \
-	     *(p + 3) = '\0';         \
-	     return (p + 4);          \
-	                              \
-     case act2:                       \
-	     hdr->type = HDR_CONTACT; \
-	     p += 4;                  \
-	     goto dc_end;             \
-                                      \
-     case ent_:                   \
-	     Ent__CASE;               \
-	                                  \
-     default: goto other;             \
-     }                                \
-     break
-
-
-#define Rout_CASE                   \
-     p += 4;                        \
-     switch(*p) {                   \
-     case 'e':                      \
-     case 'E':                      \
-	     hdr->type = HDR_ROUTE; \
-	     p++;                   \
-	     goto dc_end;           \
-                                    \
-     default:                       \
-	     goto other;            \
-     }                              \
-     break
-
-
-#define Max_CASE                                   \
-     p += 4;                                       \
-     val = READ(p);                                \
-     switch(val) {                                 \
-     case Forw:                                    \
-	     p += 4;                               \
-	     val = READ(p);                        \
-	     if (val == ards) {                    \
-		     hdr->type = HDR_MAXFORWARDS;  \
-		     p += 4;                       \
-		     goto dc_end;                  \
-	     }                                     \
-                                                   \
-	     val = unify(val);                     \
-	     if (val == ards) {                    \
-		     hdr->type = HDR_MAXFORWARDS;  \
-		     p += 4;                       \
-		     goto dc_end;                  \
-	     }                                     \
-	     goto other;                           \
-     }                                             \
-                                                   \
-     val = unify(val);                             \
-     switch(val) {                                 \
-     case Forw:                                    \
-	     p += 4;                               \
-	     val = READ(p);                        \
-	     if (val == ards) {                    \
-		     hdr->type = HDR_MAXFORWARDS;  \
-		     p += 4;                       \
-		     goto dc_end;                  \
-	     }                                     \
-                                                   \
-	     val = unify(val);                     \
-	     if (val == ards) {                    \
-		     hdr->type = HDR_MAXFORWARDS;  \
-		     p += 4;                       \
-		     goto dc_end;                  \
-	     }                                     \
-     default: goto other;                          \
-     }                                             \
-                                                   \
-     break
-
-
-#define Reco_CASE                                 \
-     p += 4;                                      \
-     val = READ(p);                               \
-     switch(val) {                                \
-     case rd_R:                                   \
-	     p += 4;                              \
-	     val = READ(p);                       \
-	     if (val == oute) {                   \
-		     hdr->type = HDR_RECORDROUTE; \
-		     p += 4;                      \
-		     goto dc_end;                 \
-	     }                                    \
-                                                  \
-	     val = unify(val);                    \
-	     if (val == oute) {                   \
-		     hdr->type = HDR_RECORDROUTE; \
-		     p += 4;                      \
-		     goto dc_end;                 \
-	     }                                    \
-	     goto other;                          \
-     }                                            \
-                                                  \
-     val = unify(val);                            \
-     switch(val) {                                \
-     case rd_R:                                   \
-	     p += 4;                              \
-	     val = READ(p);                       \
-	     if (val == oute) {                   \
-		     hdr->type = HDR_RECORDROUTE; \
-		     p += 4;                      \
-		     goto dc_end;                 \
-	     }                                    \
-                                                  \
-	     val = unify(val);                    \
-	     if (val == oute) {                   \
-		     hdr->type = HDR_RECORDROUTE; \
-		     p += 4;                      \
-		     goto dc_end;                 \
-	     }                                    \
-     default: goto other;                         \
-     }                                            \
-     break
-
-
-#define Via2_CASE         \
-     hdr->type = HDR_VIA; \
-     p += 4;              \
-     goto dc_end
+/*
+ * Parser macros
+ */
+#include "case_via.h"      /* Via */
+#include "case_from.h"     /* From */
+#include "case_to.h"       /* To */
+#include "case_cseq.h"     /* CSeq */
+#include "case_call.h"     /* Call-ID */
+#include "case_cont.h"     /* Contact, Content-Type, Content-Length */
+#include "case_rout.h"     /* Route */
+#include "case_max.h"      /* Max-Forwards */
+#include "case_reco.h"     /* Record-Route */
+#include "case_auth.h"     /* Authorization */
+#include "case_expi.h"     /* Expires */
+#include "case_prox.h"     /* Proxy-Authorization, Proxy-Require */
+#include "case_allo.h"     /* Allow */
+#include "case_unsu.h"     /* Unsupported */
+#include "case_requ.h"     /* Require */
+#include "case_supp.h"     /* Supported */
+#include "case_www.h"      /* WWW-Authenticate */
 
 
 #define READ(val) \
 (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
 
-/*
- * Yet another parse_hname - Ultra Fast version :-)
- */
+
+#define FIRST_QUATERNIONS       \
+        case _Via1_: Via1_CASE; \
+	case _From_: From_CASE; \
+	case _To12_: To12_CASE; \
+	case _CSeq_: CSeq_CASE; \
+	case _Call_: Call_CASE; \
+	case _Cont_: Cont_CASE; \
+	case _Rout_: Rout_CASE; \
+	case _Max__: Max_CASE;  \
+	case _Reco_: Reco_CASE; \
+	case _Via2_: Via2_CASE; \
+	case _Auth_: Auth_CASE; \
+	case _Expi_: Expi_CASE; \
+	case _Prox_: Prox_CASE; \
+	case _Allo_: Allo_CASE; \
+	case _Unsu_: Unsu_CASE; \
+	case _Requ_: Requ_CASE; \
+	case _Supp_: Supp_CASE; \
+        case _WWW__: WWW_CASE;
+
+
+#define PARSE_COMPACT(id)          \
+        switch(*(p + 1)) {         \
+        case ' ':                  \
+	        hdr->type = id;    \
+	        p += 2;            \
+	        goto dc_end;       \
+	                           \
+        case ':':                  \
+	        hdr->type = id;    \
+	        hdr->name.len = 1; \
+	        *(p + 1) = '\0';   \
+	        return (p + 2);    \
+        }                            
+
+
 char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 {
 	register char* p;
@@ -394,145 +178,67 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	}
 
 	switch(val) {
-	case Via1: Via1_CASE;
-	case From: From_CASE;
-	case To12: To12_CASE;
-	case CSeq: CSeq_CASE;
-	case Call: Call_CASE;
-	case Cont: Cont_CASE;
-	case Rout: Rout_CASE;
-	case Max_: Max_CASE;
-	case Reco: Reco_CASE;
-	case Via2: Via2_CASE;
+	FIRST_QUATERNIONS;
 
 	default:
 		switch(*p) {
-		case 'T':
-		case 't':
-			switch(*(p + 1)) {
-			case 'o':
-			case 'O':
-			case ' ':   /* Short form */
-				hdr->type = HDR_TO;
-				p += 2;
-				goto dc_end;
-
-			case ':':
-				hdr->type = HDR_TO;
-				hdr->name.len = 1;
-				*(p + 1) = '\0';
-				return (p + 2);
-			}
-
-		case 'V':
-		case 'v':
-			switch(*(p + 1)) {
-			case ' ':
-				hdr->type = HDR_VIA;
-				p += 2;
-				goto dc_end;
+		case 'T':                           
+		case 't':                           
+			switch(*(p + 1)) {          
+			case 'o':                   
+			case 'O':                   
+			case ' ':                   
+				hdr->type = HDR_TO; 
+				p += 2;             
+				goto dc_end;        
 				
-			case ':':
-				hdr->type = HDR_VIA;
-				hdr->name.len = 1;
-				*(p + 1) = '\0';
-				return (p + 2);
-			}
+			case ':':                   
+				hdr->type = HDR_TO; 
+				hdr->name.len = 1;  
+				*(p + 1) = '\0'; 
+				return (p + 2);     
+			}                           
 			break;
 
+		case 'V':                            
+		case 'v':                            
+			PARSE_COMPACT(HDR_VIA);
+			break;
+			
 		case 'F':
 		case 'f':
-			switch(*(p + 1)) {
-			case ' ':
-				hdr->type = HDR_FROM;
-				p += 2;
-				goto dc_end;
-				
-			case ':':
-				hdr->type = HDR_FROM;
-				hdr->name.len = 1;
-				*(p + 1)= '\0';
-				return (p + 2);
-			}
+			PARSE_COMPACT(HDR_FROM);
 			break;
-
+			
 		case 'I':
 		case 'i':
-			switch(*(p + 1)) {
-			case ' ':
-				hdr->type = HDR_CALLID;
-				p += 2;
-				goto dc_end;
-				
-			case ':':
-				hdr->type = HDR_CALLID;
-				hdr->name.len = 1;
-				*(p + 1) = '\0';
-				return (p + 2);
-			}
+			PARSE_COMPACT(HDR_CALLID);
 			break;
 
 		case 'M':
 		case 'm':
-			switch(*(p + 1)) {
-			case ' ':
-				hdr->type = HDR_CONTACT;
-				p += 2;
-				goto dc_end;
-				
-			case ':':
-				hdr->type = HDR_CONTACT;
-				hdr->name.len = 1;
-				*(p + 1) = '\0';
-				return (p + 2);
-			}
+			PARSE_COMPACT(HDR_CONTACT);
 			break;
 
-        case 'C':
-		case 'c':
-			switch(*(p + 1)) {
-			case ' ':
-				hdr->type = HDR_CONTENTTYPE;
-				p += 2;
-				goto dc_end;
-				
-			case ':':
-				hdr->type = HDR_CONTENTTYPE;
-				hdr->name.len = 1;
-				*(p + 1) = '\0';
-				return (p + 2);
-			}
-			break;
-
-        case 'L':
+		case 'L':
 		case 'l':
-			switch(*(p + 1)) {
-			case ' ':
-				hdr->type = HDR_CONTENTLENGTH;
-				p += 2;
-				goto dc_end;
-				
-			case ':':
-				hdr->type = HDR_CONTENTLENGTH;
-				hdr->name.len = 1;
-				*(p + 1) = '\0';
-				return (p + 2);
-			}
+			PARSE_COMPACT(HDR_CONTENTLENGTH);
 			break;
+
+		case 'C':
+		case 'c':
+			PARSE_COMPACT(HDR_CONTENTTYPE);
+			break;
+
+		case 'K':
+		case 'k':
+			PARSE_COMPACT(HDR_SUPPORTED);
+                        break;
 		}
 		
 		val = unify(val);
 		switch(val) {
-		case Via1: Via1_CASE;
-		case From: From_CASE;
-		case To12: To12_CASE;
-		case CSeq: CSeq_CASE;
-		case Call: Call_CASE;
-		case Cont: Cont_CASE;
-		case Rout: Rout_CASE;
-		case Max_: Max_CASE;
-		case Reco: Reco_CASE;
-		case Via2: Via2_CASE;
+		FIRST_QUATERNIONS;
 		default: goto other;
 		}
         }
@@ -553,9 +259,9 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	p = q_memchr(p, ':', end - p);
 	if (!p) {        /* No double colon found, error.. */
 		hdr->type = HDR_ERROR;
-		hdr->name.s = NULL;
+		hdr->name.s = 0;
 		hdr->name.len = 0;
-		return NULL;
+		return 0;
 	} else {
 		hdr->type = HDR_OTHER;
 		*p = '\0';
@@ -565,247 +271,130 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 }
 
 
+/* Number of distinct keys */
+#define NUM_KEYS  592
+
+/* Number of distinct values */
+#define NUM_VALS 49
+
+
+/*
+ * Create synonym-less (precalculated) hash table
+ */
 void init_htable(void)
 {
-	int i;
+	int i, j, k;
 
-	     /*
-	      * Create hash table array
-	      */
-	
-	     /*
-	      * Mark all elements as empty
-	      */
+	     /* Hash table values */
+	unsigned int init_val[NUM_VALS] = {
+		_Allo_, _Auth_, _oriz_, _atio_, _Call_, __ID2_, __ID1_, _Cont_,
+		_act2_, _act1_, _ent__, _Leng_, _th12_, _Type_, _CSeq_, _Expi_,
+		_res2_, _res1_, _From_, _Max__, _Forw_, _ards_, _Prox_, _y_Au_,
+		_thor_, _izat_, _ion2_, _ion1_, _y_Re_, _quir_, _Reco_, _rd_R_,
+		_oute_, _Requ_, _ire2_, _ire1_, _Rout_, _Supp_, _orte_, _To12_,
+		_Unsu_, _ppor_, _ted2_, _ted1_, _Via2_, _Via1_, _WWW__, _enti_,
+		_cate_
+	};
+
+	     /* Number of keys associated to each value */
+	unsigned int key_nums[NUM_VALS] = {
+		16, 16, 16, 16, 16,  4,  4, 16, 
+		 8,  8,  8, 16,  4, 16, 16, 16, 
+		 8,  8, 16,  8, 16, 16, 16,  8, 
+		16, 16,  8,  8,  8, 16, 16,  8, 
+		16, 16,  8,  8, 16, 16, 16,  4, 
+		16, 16,  8,  8,  8,  8,  8, 16,
+                16
+	};
+
+	     /* Hash table keys */
+	unsigned int init_key[NUM_KEYS] = {
+		_allo_, _allO_, _alLo_, _alLO_, _aLlo_, _aLlO_, _aLLo_, _aLLO_, 
+		_Allo_, _AllO_, _AlLo_, _AlLO_, _ALlo_, _ALlO_, _ALLo_, _ALLO_, 
+		_auth_, _autH_, _auTh_, _auTH_, _aUth_, _aUtH_, _aUTh_, _aUTH_, 
+		_Auth_, _AutH_, _AuTh_, _AuTH_, _AUth_, _AUtH_, _AUTh_, _AUTH_, 
+		_oriz_, _oriZ_, _orIz_, _orIZ_, _oRiz_, _oRiZ_, _oRIz_, _oRIZ_, 
+		_Oriz_, _OriZ_, _OrIz_, _OrIZ_, _ORiz_, _ORiZ_, _ORIz_, _ORIZ_, 
+		_atio_, _atiO_, _atIo_, _atIO_, _aTio_, _aTiO_, _aTIo_, _aTIO_, 
+		_Atio_, _AtiO_, _AtIo_, _AtIO_, _ATio_, _ATiO_, _ATIo_, _ATIO_, 
+		_call_, _calL_, _caLl_, _caLL_, _cAll_, _cAlL_, _cALl_, _cALL_, 
+		_Call_, _CalL_, _CaLl_, _CaLL_, _CAll_, _CAlL_, _CALl_, _CALL_, 
+		__id2_, __iD2_, __Id2_, __ID2_, __id1_, __iD1_, __Id1_, __ID1_, 
+		_cont_, _conT_, _coNt_, _coNT_, _cOnt_, _cOnT_, _cONt_, _cONT_, 
+		_Cont_, _ConT_, _CoNt_, _CoNT_, _COnt_, _COnT_, _CONt_, _CONT_, 
+		_act2_, _acT2_, _aCt2_, _aCT2_, _Act2_, _AcT2_, _ACt2_, _ACT2_, 
+		_act1_, _acT1_, _aCt1_, _aCT1_, _Act1_, _AcT1_, _ACt1_, _ACT1_, 
+		_ent__, _enT__, _eNt__, _eNT__, _Ent__, _EnT__, _ENt__, _ENT__, 
+		_leng_, _lenG_, _leNg_, _leNG_, _lEng_, _lEnG_, _lENg_, _lENG_, 
+		_Leng_, _LenG_, _LeNg_, _LeNG_, _LEng_, _LEnG_, _LENg_, _LENG_, 
+		_th12_, _tH12_, _Th12_, _TH12_, _type_, _typE_, _tyPe_, _tyPE_, 
+		_tYpe_, _tYpE_, _tYPe_, _tYPE_, _Type_, _TypE_, _TyPe_, _TyPE_, 
+		_TYpe_, _TYpE_, _TYPe_, _TYPE_, _cseq_, _cseQ_, _csEq_, _csEQ_, 
+		_cSeq_, _cSeQ_, _cSEq_, _cSEQ_, _Cseq_, _CseQ_, _CsEq_, _CsEQ_, 
+		_CSeq_, _CSeQ_, _CSEq_, _CSEQ_, _expi_, _expI_, _exPi_, _exPI_, 
+		_eXpi_, _eXpI_, _eXPi_, _eXPI_, _Expi_, _ExpI_, _ExPi_, _ExPI_, 
+		_EXpi_, _EXpI_, _EXPi_, _EXPI_, _res2_, _reS2_, _rEs2_, _rES2_, 
+		_Res2_, _ReS2_, _REs2_, _RES2_, _res1_, _reS1_, _rEs1_, _rES1_, 
+		_Res1_, _ReS1_, _REs1_, _RES1_, _from_, _froM_, _frOm_, _frOM_, 
+		_fRom_, _fRoM_, _fROm_, _fROM_, _From_, _FroM_, _FrOm_, _FrOM_, 
+		_FRom_, _FRoM_, _FROm_, _FROM_, _max__, _maX__, _mAx__, _mAX__, 
+		_Max__, _MaX__, _MAx__, _MAX__, _forw_, _forW_, _foRw_, _foRW_, 
+		_fOrw_, _fOrW_, _fORw_, _fORW_, _Forw_, _ForW_, _FoRw_, _FoRW_, 
+		_FOrw_, _FOrW_, _FORw_, _FORW_, _ards_, _ardS_, _arDs_, _arDS_, 
+		_aRds_, _aRdS_, _aRDs_, _aRDS_, _Ards_, _ArdS_, _ArDs_, _ArDS_, 
+		_ARds_, _ARdS_, _ARDs_, _ARDS_, _prox_, _proX_, _prOx_, _prOX_, 
+		_pRox_, _pRoX_, _pROx_, _pROX_, _Prox_, _ProX_, _PrOx_, _PrOX_, 
+		_PRox_, _PRoX_, _PROx_, _PROX_, _y_au_, _y_aU_, _y_Au_, _y_AU_, 
+		_Y_au_, _Y_aU_, _Y_Au_, _Y_AU_, _thor_, _thoR_, _thOr_, _thOR_, 
+		_tHor_, _tHoR_, _tHOr_, _tHOR_, _Thor_, _ThoR_, _ThOr_, _ThOR_, 
+		_THor_, _THoR_, _THOr_, _THOR_, _izat_, _izaT_, _izAt_, _izAT_, 
+		_iZat_, _iZaT_, _iZAt_, _iZAT_, _Izat_, _IzaT_, _IzAt_, _IzAT_, 
+		_IZat_, _IZaT_, _IZAt_, _IZAT_, _ion2_, _ioN2_, _iOn2_, _iON2_, 
+		_Ion2_, _IoN2_, _IOn2_, _ION2_, _ion1_, _ioN1_, _iOn1_, _iON1_, 
+		_Ion1_, _IoN1_, _IOn1_, _ION1_, _y_re_, _y_rE_, _y_Re_, _y_RE_, 
+		_Y_re_, _Y_rE_, _Y_Re_, _Y_RE_, _quir_, _quiR_, _quIr_, _quIR_, 
+		_qUir_, _qUiR_, _qUIr_, _qUIR_, _Quir_, _QuiR_, _QuIr_, _QuIR_, 
+		_QUir_, _QUiR_, _QUIr_, _QUIR_, _reco_, _recO_, _reCo_, _reCO_, 
+		_rEco_, _rEcO_, _rECo_, _rECO_, _Reco_, _RecO_, _ReCo_, _ReCO_, 
+		_REco_, _REcO_, _RECo_, _RECO_, _rd_r_, _rd_R_, _rD_r_, _rD_R_, 
+		_Rd_r_, _Rd_R_, _RD_r_, _RD_R_, _oute_, _outE_, _ouTe_, _ouTE_, 
+		_oUte_, _oUtE_, _oUTe_, _oUTE_, _Oute_, _OutE_, _OuTe_, _OuTE_, 
+		_OUte_, _OUtE_, _OUTe_, _OUTE_, _requ_, _reqU_, _reQu_, _reQU_, 
+		_rEqu_, _rEqU_, _rEQu_, _rEQU_, _Requ_, _ReqU_, _ReQu_, _ReQU_, 
+		_REqu_, _REqU_, _REQu_, _REQU_, _ire2_, _irE2_, _iRe2_, _iRE2_, 
+		_Ire2_, _IrE2_, _IRe2_, _IRE2_, _ire1_, _irE1_, _iRe1_, _iRE1_, 
+		_Ire1_, _IrE1_, _IRe1_, _IRE1_, _rout_, _rouT_, _roUt_, _roUT_, 
+		_rOut_, _rOuT_, _rOUt_, _rOUT_, _Rout_, _RouT_, _RoUt_, _RoUT_, 
+		_ROut_, _ROuT_, _ROUt_, _ROUT_, _supp_, _supP_, _suPp_, _suPP_, 
+		_sUpp_, _sUpP_, _sUPp_, _sUPP_, _Supp_, _SupP_, _SuPp_, _SuPP_, 
+		_SUpp_, _SUpP_, _SUPp_, _SUPP_, _orte_, _ortE_, _orTe_, _orTE_, 
+		_oRte_, _oRtE_, _oRTe_, _oRTE_, _Orte_, _OrtE_, _OrTe_, _OrTE_, 
+		_ORte_, _ORtE_, _ORTe_, _ORTE_, _to12_, _tO12_, _To12_, _TO12_, 
+		_unsu_, _unsU_, _unSu_, _unSU_, _uNsu_, _uNsU_, _uNSu_, _uNSU_, 
+		_Unsu_, _UnsU_, _UnSu_, _UnSU_, _UNsu_, _UNsU_, _UNSu_, _UNSU_, 
+		_ppor_, _ppoR_, _ppOr_, _ppOR_, _pPor_, _pPoR_, _pPOr_, _pPOR_, 
+		_Ppor_, _PpoR_, _PpOr_, _PpOR_, _PPor_, _PPoR_, _PPOr_, _PPOR_, 
+		_ted2_, _teD2_, _tEd2_, _tED2_, _Ted2_, _TeD2_, _TEd2_, _TED2_, 
+		_ted1_, _teD1_, _tEd1_, _tED1_, _Ted1_, _TeD1_, _TEd1_, _TED1_, 
+		_via2_, _viA2_, _vIa2_, _vIA2_, _Via2_, _ViA2_, _VIa2_, _VIA2_, 
+		_via1_, _viA1_, _vIa1_, _vIA1_, _Via1_, _ViA1_, _VIa1_, _VIA1_, 
+		_www__, _wwW__, _wWw__, _wWW__, _Www__, _WwW__, _WWw__, _WWW__, 
+		_enti_, _entI_, _enTi_, _enTI_, _eNti_, _eNtI_, _eNTi_, _eNTI_, 
+		_Enti_, _EntI_, _EnTi_, _EnTI_, _ENti_, _ENtI_, _ENTi_, _ENTI_, 
+		_cate_, _catE_, _caTe_, _caTE_, _cAte_, _cAtE_, _cATe_, _cATE_, 
+		_Cate_, _CatE_, _CaTe_, _CaTE_, _CAte_, _CAtE_, _CATe_, _CATE_
+	}; 
+
+	     /* Mark all elements as empty */
 	for(i = 0; i < HASH_TABLE_SIZE; i++) {
 		set_entry(HASH_EMPTY, HASH_EMPTY);
 	}
 
-	set_entry(via1, Via1);
-	set_entry(viA1, Via1);
-	set_entry(vIa1, Via1);
-	set_entry(vIA1, Via1);
-	set_entry(Via1, Via1);
-	set_entry(ViA1, Via1);
-	set_entry(VIa1, Via1);
-	set_entry(VIA1, Via1);
-	
-	set_entry(via2, Via2);
-	set_entry(viA2, Via2);
-	set_entry(vIa2, Via2);
-	set_entry(vIA2, Via2);
-	set_entry(Via2, Via2);
-	set_entry(ViA2, Via2);
-	set_entry(VIa2, Via2);
-	set_entry(VIA2, Via2);
-	
-	set_entry(from, From);
-	set_entry(froM, From);
-	set_entry(frOm, From);
-	set_entry(frOM, From);
-	set_entry(fRom, From);
-	set_entry(fRoM, From);
-	set_entry(fROm, From);
-	set_entry(fROM, From);
-	set_entry(From, From);
-	set_entry(FroM, From);
-	set_entry(FrOm, From);
-	set_entry(FrOM, From);
-	set_entry(FRom, From);
-	set_entry(FRoM, From);
-	set_entry(FROm, From);
-	set_entry(FROM, From);
-	
-	set_entry(to12, To12);
-	set_entry(tO12, To12);
-	set_entry(To12, To12);
-	set_entry(TO12, To12);
+	k = 0;
 
-	set_entry(to21, To21);
-	set_entry(tO21, To21);
-	set_entry(To21, To21);
-	set_entry(TO21, To21);
-
-	set_entry(cseq, CSeq);
-	set_entry(cseQ, CSeq);
-	set_entry(csEq, CSeq);
-	set_entry(csEQ, CSeq);
-	set_entry(cSeq, CSeq);
-	set_entry(cSeQ, CSeq);
-	set_entry(cSEq, CSeq);
-	set_entry(cSEQ, CSeq);
-	set_entry(Cseq, CSeq);
-	set_entry(CseQ, CSeq);
-	set_entry(CsEq, CSeq);
-	set_entry(CsEQ, CSeq);
-	set_entry(CSeq, CSeq);
-	set_entry(CSeQ, CSeq);
-	set_entry(CSEq, CSeq);
-	set_entry(CSEQ, CSeq);
-	
-	set_entry(call, Call);
-	set_entry(calL, Call);
-	set_entry(caLl, Call);
-	set_entry(caLL, Call);
-	set_entry(cAll, Call);
-	set_entry(cAlL, Call);
-	set_entry(cALl, Call);
-	set_entry(cALL, Call);
-	set_entry(Call, Call);
-	set_entry(CalL, Call);
-	set_entry(CaLl, Call);
-	set_entry(CaLL, Call);
-	set_entry(CAll, Call);
-	set_entry(CAlL, Call);
-	set_entry(CALl, Call);
-	set_entry(CALL, Call);
-
-	set_entry(_id1, _ID1);
-	set_entry(_iD1, _ID1);
-	set_entry(_Id1, _ID1);
-	set_entry(_ID1, _ID1);
-
-	set_entry(_id2, _ID2);
-	set_entry(_iD2, _ID2);
-	set_entry(_Id2, _ID2);
-	set_entry(_ID2, _ID2);
-
-	set_entry(cont, Cont);
-	set_entry(conT, Cont);
-	set_entry(coNt, Cont);
-	set_entry(coNT, Cont);
-	set_entry(cOnt, Cont);
-	set_entry(cOnT, Cont);
-	set_entry(cONt, Cont);
-	set_entry(cONT, Cont);
-	set_entry(Cont, Cont);
-	set_entry(ConT, Cont);
-	set_entry(CoNt, Cont);
-	set_entry(CoNT, Cont);
-	set_entry(COnt, Cont);
-	set_entry(COnT, Cont);
-	set_entry(CONt, Cont);
-	set_entry(CONT, Cont);
-
-	set_entry(act1, act1);
-	set_entry(acT1, act1);
-	set_entry(aCt1, act1);
-	set_entry(aCT1, act1);
-	set_entry(Act1, act1);
-	set_entry(AcT1, act1);
-	set_entry(ACt1, act1);
-	set_entry(ACT1, act1);
-
-	set_entry(act2, act2);
-	set_entry(acT2, act2);
-	set_entry(aCt2, act2);
-	set_entry(aCT2, act2);
-	set_entry(Act2, act2);
-	set_entry(AcT2, act2);
-	set_entry(ACt2, act2);
-	set_entry(ACT2, act2);
-
-	set_entry(max_, Max_);
-	set_entry(maX_, Max_);
-	set_entry(mAx_, Max_);
-	set_entry(mAX_, Max_);
-	set_entry(Max_, Max_);
-	set_entry(MaX_, Max_);
-	set_entry(MAx_, Max_);
-	set_entry(MAX_, Max_);
-
-	set_entry(forw, Forw);
-	set_entry(forW, Forw);
-	set_entry(foRw, Forw);
-	set_entry(foRW, Forw);
-	set_entry(fOrw, Forw);
-	set_entry(fOrW, Forw);
-	set_entry(fORw, Forw);
-	set_entry(fORW, Forw);
-	set_entry(Forw, Forw);
-	set_entry(ForW, Forw);
-	set_entry(FoRw, Forw);
-	set_entry(FoRW, Forw);
-	set_entry(FOrw, Forw);
-	set_entry(FOrW, Forw);
-	set_entry(FORw, Forw);
-	set_entry(FORW, Forw);
-
-	set_entry(ards, ards);
-	set_entry(ardS, ards);
-	set_entry(arDs, ards);
-	set_entry(arDS, ards);
-	set_entry(aRds, ards);
-	set_entry(aRdS, ards);
-	set_entry(aRDs, ards);
-	set_entry(aRDS, ards);
-	set_entry(Ards, ards);
-	set_entry(ArdS, ards);
-	set_entry(ArDs, ards);
-	set_entry(ArDS, ards);
-	set_entry(ARds, ards);
-	set_entry(ARdS, ards);
-	set_entry(ARDs, ards);
-	set_entry(ARDS, ards);
-
-	set_entry(rout, Rout);
-	set_entry(rouT, Rout);
-	set_entry(roUt, Rout);
-	set_entry(roUT, Rout);
-	set_entry(rOut, Rout);
-	set_entry(rOuT, Rout);
-	set_entry(rOUt, Rout);
-	set_entry(rOUT, Rout);
-	set_entry(Rout, Rout);
-	set_entry(RouT, Rout);
-	set_entry(RoUt, Rout);
-	set_entry(RoUT, Rout);
-	set_entry(ROut, Rout);
-	set_entry(ROuT, Rout);
-	set_entry(ROUt, Rout);
-	set_entry(ROUT, Rout);
-
-	set_entry(reco, Reco);
-	set_entry(recO, Reco);
-	set_entry(reCo, Reco);
-	set_entry(reCO, Reco);
-	set_entry(rEco, Reco);
-	set_entry(rEcO, Reco);
-	set_entry(rECo, Reco);
-	set_entry(rECO, Reco);
-	set_entry(Reco, Reco);
-	set_entry(RecO, Reco);
-	set_entry(ReCo, Reco);
-	set_entry(ReCO, Reco);
-	set_entry(REco, Reco);
-	set_entry(REcO, Reco);
-	set_entry(RECo, Reco);
-	set_entry(RECO, Reco);
-
-	set_entry(rd_r, rd_R);
-	set_entry(rd_R, rd_R);
-	set_entry(rD_r, rd_R);
-	set_entry(rD_R, rd_R);
-	set_entry(Rd_r, rd_R);
-	set_entry(Rd_R, rd_R);
-	set_entry(RD_r, rd_R);
-	set_entry(RD_R, rd_R);
-
-	set_entry(oute, oute);
-	set_entry(outE, oute);
-	set_entry(ouTe, oute);
-	set_entry(ouTE, oute);
-	set_entry(oUte, oute);
-	set_entry(oUtE, oute);
-	set_entry(oUTe, oute);
-	set_entry(oUTE, oute);
-	set_entry(Oute, oute);
-	set_entry(OutE, oute);
-	set_entry(OuTe, oute);
-	set_entry(OuTE, oute);
-	set_entry(OUte, oute);
-	set_entry(OUtE, oute);
-	set_entry(OUTe, oute);
-	set_entry(OUTE, oute);
+	for(i = 0; i < NUM_VALS; i++) {
+		for(j = 0; j < key_nums[i]; j++) {
+			set_entry(init_key[k++], init_val[i]);
+		}
+	}
 }
-
-
