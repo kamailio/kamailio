@@ -222,8 +222,12 @@ int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _
 			}
 			
 			memcpy(ptr, _recv->s, _recv->len);
-			shm_free(_c->received.s);
+			if (_c->received.s) shm_free(_c->received.s);
 			_c->received.s = ptr;
+			/* fixme: The buffer could be in fact bigger than the value
+			 * of len and we would then free it and allocate a new one.
+			 */
+			_c->received.len = _recv->len;
 		} else {
 			memcpy(_c->received.s, _recv->s, _recv->len);
 		}
