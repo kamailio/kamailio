@@ -75,11 +75,11 @@ static int hf_fixup(void** param, int param_no);
  */
 char* db_url       = DEFAULT_RODB_URL;
 
-char* table        = "grp";    /* Table name where group definitions are stored */
-char* user_col     = "username";
-char* domain_col   = "domain";
-char* grp_col      = "grp";
-int   use_domain   = 0;
+char* table         = "grp";    /* Table name where group definitions are stored */
+char* user_column   = "username";
+char* domain_column = "domain";
+char* grp_column    = "grp";
+int   use_domain    = 0;
 
 db_con_t* db_handle = 0;   /* Database connection handle */
 
@@ -102,7 +102,7 @@ static param_export_t params[] = {
 	{"user_column",   STR_PARAM, &user_column  },
 	{"domain_column", STR_PARAM, &domain_column},
 	{"group_column",  STR_PARAM, &group_column },
-	{"use_domain",    INT_PARAM, &use_domain   },
+	{"use_domain",    INT_PARAM, &use_domain},
 	{0, 0, 0}
 };
 
