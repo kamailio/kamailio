@@ -862,7 +862,7 @@ char* print_routeset(char* buf, dlg_t* _d)
 
 	ptr = _d->hooks.first_route;
 
-	if (ptr) {
+	if (ptr || _d->hooks.last_route) {
 		memcpy(buf, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
 		buf += ROUTE_PREFIX_LEN;
 	}
@@ -879,15 +879,19 @@ char* print_routeset(char* buf, dlg_t* _d)
 	} 
 
 	if (_d->hooks.last_route) {
-		memcpy(buf, ROUTE_SEPARATOR "<", ROUTE_SEPARATOR_LEN + 1);
-		buf += ROUTE_SEPARATOR_LEN + 1;
+		if (_d->hooks.first_route) {
+			memcpy(buf, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
+			buf += ROUTE_SEPARATOR_LEN;
+		}
+		memcpy(buf, "<", 1);
+		buf++;
 		memcpy(buf, _d->hooks.last_route->s, _d->hooks.last_route->len);
 		buf += _d->hooks.last_route->len;
 		*buf = '>';
 		buf++;
 	}
 
-	if (_d->hooks.first_route) {
+	if (_d->hooks.first_route || _d->hooks.last_route) {
 		memcpy(buf, CRLF, CRLF_LEN);
 		buf += CRLF_LEN;
 	}
