@@ -61,6 +61,7 @@
  *  2003-03-10  module export interface updated to the new format (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-30  set_kr for requests only (jiri)
  */
 
 
@@ -228,13 +229,15 @@ static int script_init( struct sip_msg *foo, void *bar)
 	   not be used again
     */
 
-	/* make sure the new message will not inherit previous
-	   message's t_on_negative value
-	*/
-	t_on_negative( 0 );
+	if (foo->first_line.type==SIP_REQUEST){
+		/* make sure the new message will not inherit previous
+	   		message's t_on_negative value
+		*/
+		t_on_negative( 0 );
 
-	/* reset the kr status */
-	set_kr(0);
+		/* reset the kr status */
+		set_kr(0);
+	}
 
 	return 1;
 }

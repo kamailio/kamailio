@@ -51,6 +51,7 @@
  *
  * History:
  * ----------
+ * 2003-03-30  set_kr for requests only (jiri)
  * 2003-03-29  optimization: e2e ACK matching only if callback installed
  *             (jiri)
  * 2003-03-06  dialog matching introduced for ACKs -- that's important for 
@@ -1086,11 +1087,13 @@ int t_unref( struct sip_msg* p_msg  )
 
 	if (T==T_UNDEFINED || T==T_NULL_CELL)
 		return -1;
-	kr=get_kr();
-	if (kr==0 
-		||(p_msg->REQ_METHOD==METHOD_ACK && !(kr & REQ_RLSD))) {
-		LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
-		t_release_transaction(T);
+	if (p_msg->first_line.type==SIP_REQUEST){
+		kr=get_kr();
+		if (kr==0 
+				||(p_msg->REQ_METHOD==METHOD_ACK && !(kr & REQ_RLSD))) {
+			LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
+			t_release_transaction(T);
+		}
 	}
 	UNREF( T );
 	set_t(T_UNDEFINED);
