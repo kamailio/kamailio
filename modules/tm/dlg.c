@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_to.h"
@@ -47,11 +47,11 @@
 
 
 /*
- * Make a copy of a str structure using pkg_malloc
+ * Make a copy of a str structure using shm_malloc
  */
 static inline int str_duplicate(str* _d, str* _s)
 {
-	_d->s = pkg_malloc(_s->len);
+	_d->s = shm_malloc(_s->len);
 	if (!_d->s) {
 		LOG(L_ERR, "str_duplicate(): No memory left\n");
 		return -1;
@@ -75,7 +75,7 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 		return -1;
 	}
 
-	res = (dlg_t*)pkg_malloc(sizeof(dlg_t));
+	res = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (res == 0) {
 		LOG(L_ERR, "new_dlg_uac(): No memory left\n");
 		return -2;
@@ -266,12 +266,12 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 
 	return 0;
  err2:
-	if (_d->id.rem_tag.s) pkg_free(_d->id.rem_tag.s);
+	if (_d->id.rem_tag.s) shm_free(_d->id.rem_tag.s);
 	_d->id.rem_tag.s = 0;
 	_d->id.rem_tag.len = 0;
 
  err1:
-	if (_d->rem_target.s) pkg_free(_d->rem_target.s);
+	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 	_d->rem_target.s = 0;
 	_d->rem_target.len = 0;
 	return -4;
@@ -419,7 +419,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		     /* If there is a contact URI */
 		if (contact.len) {
 			     /* Free old remote target if any */
-			if (_d->rem_target.s) pkg_free(_d->rem_target.s);
+			if (_d->rem_target.s) shm_free(_d->rem_target.s);
 			     /* Duplicate new remote target */
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -4;
 		}
@@ -522,7 +522,7 @@ static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 		}
 	}
 
-	_s->s = pkg_malloc(body->body.len - tag_len);
+	_s->s = shm_malloc(body->body.len - tag_len);
 	if (!_s->s) {
 		LOG(L_ERR, "get_dlg_uri(): No memory left\n");
 		return -1;
@@ -574,23 +574,23 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 
 	return 0;
  err5:
-	if (_d->loc_uri.s) pkg_free(_d->loc_uri.s);
+	if (_d->loc_uri.s) shm_free(_d->loc_uri.s);
 	_d->loc_uri.s = 0;
 	_d->loc_uri.len = 0;
  err4:
-	if (_d->rem_uri.s) pkg_free(_d->rem_uri.s);
+	if (_d->rem_uri.s) shm_free(_d->rem_uri.s);
 	_d->rem_uri.s = 0;
 	_d->rem_uri.len = 0;
  err3:
-	if (_d->id.call_id.s) pkg_free(_d->id.call_id.s);
+	if (_d->id.call_id.s) shm_free(_d->id.call_id.s);
 	_d->id.call_id.s = 0;
 	_d->id.call_id.len = 0;
  err2:
-	if (_d->id.rem_tag.s) pkg_free(_d->id.rem_tag.s);
+	if (_d->id.rem_tag.s) shm_free(_d->id.rem_tag.s);
 	_d->id.rem_tag.s = 0;
 	_d->id.rem_tag.len = 0;
  err1:
-	if (_d->rem_target.s) pkg_free(_d->rem_target.s);
+	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 	_d->rem_target.s = 0;
 	_d->rem_target.len = 0;
 	return -4;
@@ -614,7 +614,7 @@ int new_dlg_uas(struct sip_msg* _req, int _code, str* _tag, dlg_t** _d)
 		return -2;
 	}
 
-	res = (dlg_t*)pkg_malloc(sizeof(dlg_t));
+	res = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (res == 0) {
 		LOG(L_ERR, "new_dlg_uac(): No memory left\n");
 		return -3;
@@ -678,7 +678,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 		
 		if (get_contact_uri(_m, &contact) < 0) return -5;
 		if (contact.len) {
-			if (_d->rem_target.s) pkg_free(_d->rem_target.s);
+			if (_d->rem_target.s) shm_free(_d->rem_target.s);
 			if (str_duplicate(&_d->rem_target, &contact) < 0) return -6;
 		}
 	}
@@ -694,17 +694,17 @@ void free_dlg(dlg_t* _d)
 {
         if (!_d) return;
 
-	if (_d->id.call_id.s) pkg_free(_d->id.call_id.s);
-	if (_d->id.rem_tag.s) pkg_free(_d->id.rem_tag.s);
-	if (_d->id.loc_tag.s) pkg_free(_d->id.loc_tag.s);
+	if (_d->id.call_id.s) shm_free(_d->id.call_id.s);
+	if (_d->id.rem_tag.s) shm_free(_d->id.rem_tag.s);
+	if (_d->id.loc_tag.s) shm_free(_d->id.loc_tag.s);
 
-	if (_d->loc_uri.s) pkg_free(_d->loc_uri.s);
-	if (_d->rem_uri.s) pkg_free(_d->rem_uri.s);
-	if (_d->rem_target.s) pkg_free(_d->rem_target.s);
+	if (_d->loc_uri.s) shm_free(_d->loc_uri.s);
+	if (_d->rem_uri.s) shm_free(_d->rem_uri.s);
+	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 
 	     /* Free all routes in the route set */
 	free_rr(&_d->route_set);
-	pkg_free(_d);
+	shm_free(_d);
 }
 
 
