@@ -170,6 +170,15 @@ prompt_pw() {
 	fi
 }
 
+print_status() {
+	echo $1 | grep "^[1-6][0-9][0-9]" > /dev/null
+	if [ "$?" -eq 0 ] ; then 
+		echo $1
+	else
+		echo "200 OK"
+	fi
+}
+
 # process output from FIFO server; if everything is ok
 # skip the first "ok" line and proceed to returned 
 # parameters
@@ -750,13 +759,18 @@ case $1 in
 		;;
 
 	ping)
+		# error handling is hacked -- filter_fl should not
+		# consume positive status -- that should be done by
+		# calling app
 		if [ "$#" -ne 2 ] ; then	
 			usage
 			exit 1
 		fi
-		fifo_cmd t_uac_dlg OPTIONS "$2" "." "From: sip:daemon@$SIP_DOMAIN" \
-			"To: <$2>" "Contact: <sip:daemon@!!>" "." "." |
-			head -1
+		RET=`fifo_cmd t_uac_dlg OPTIONS "$2" "." \
+			"From: sip:daemon@$SIP_DOMAIN" \
+			"To: <$2>" "Contact: <sip:daemon@!!>" "." "." \
+			| head -1 ` 
+		print_status $RET
 		;;
 
 	cisco_restart)
@@ -764,9 +778,12 @@ case $1 in
 			usage
 			exit 1
 		fi
-		fifo_cmd t_uac_dlg NOTIFY "$2" "." "From: sip:daemon@$SIP_DOMAIN" \
-			"To: <$2>" "Event: check-sync" "Contact: <sip:daemon@!!>" "." "." |
-			head -1
+		RET=`fifo_cmd t_uac_dlg NOTIFY "$2" "." \
+			"From: sip:daemon@$SIP_DOMAIN" \
+			"To: <$2>" "Event: check-sync" \
+			"Contact: <sip:daemon@!!>" "." "." |
+			head -1 `
+		print_status $RET
 		;;
 
 	version)
