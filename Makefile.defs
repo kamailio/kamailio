@@ -19,13 +19,23 @@
 #               (too many symbols for pic13)  (andrei)
 #  2003-04-16  added CC_EXTRA_OPTS, s/march/mcpu, added CPU (cpu to optimize 
 #               for, used only with gcc-3.x) (andrei)
+#  2003-05-23  check if this makefile was already included (andrei)
+#              removed -DDIGEST_DOMAIN (andrei)
+
+
+# check if already included/exported
+
+ifeq ($(makefile_defs), 1)
+else
+makefile_defs=1
+export makefile_defs
 
 
 #version number
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre27
+EXTRAVERSION = pre28
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -173,15 +183,6 @@ YACC := $(shell echo "$${YACC}")
 #		not work, use it only if you really now what you are doing)
 # -DDISABLE_NAGLE
 #		disable the tcp Nagle algorithm (lower delay)
-# -DVOICE_MAIL
-#               enables voicemail support in ser core and in tm module
-#               voicemail needs also -D_TOTAG
-#
-# -DDIGEST_DOMAIN
-#               enables further parsing of digest username. Some clients put @domain
-#               in username digest parameter because realm parameter is not protected
-#               by the digest. This hasn't been standardized, but several user agents
-#               use this.
 
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
@@ -194,7 +195,6 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DUSE_IPV6 \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
-	 -DDIGEST_DOMAIN \
 	 -DDBG_QM_MALLOC \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
@@ -661,3 +661,9 @@ $(warning	No locking method found so far, trying SYS V sems)
 		DEFS+= -DUSE_SYSV_SEM  # try sys v sems
 		found_lock_method=yes
 endif
+
+
+
+
+
+endif  # ifeq ($(makefile_defs, 1)

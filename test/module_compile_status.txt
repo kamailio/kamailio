@@ -1,6 +1,6 @@
 
 
-1 linux-i386/gcc2.96
+1 linux-i386/gcc2.95
 2 linux-i386/gcc3.3
 3 linux-i386/icc
 4 freebsd-i386/gcc
@@ -26,43 +26,43 @@ checked:
 
 module_name       1  2  3  4  5  6  7  8
 core                 o  o           o  
-acc                  I  I           I  I
-auth                 o  o           o  o
-auth_db              o  o           o  o
-auth_radius          I  I           I  I
-cpl             P    o  o           o  o
-cpl-c           D    I  I           I  I
-dbtext               o  o           o  o
-domain               o  o           o  o
-enum                 o  o           o  o
-exec                 o  o           o  o
-ext                  o  o           o  o
-extcmd               o  o           o  o
-group                o  o           o  o
-group_radius         I  I           I  I
-jabber               o  o           Wm W
-mangler              o  o           W  o
-maxfwd               o  o           o  o
-msilo                o  o           o  o
-mysql                o  o           o  o
-nathelper            o  o           o  o
-pa                   o  o           o  o
-pdt                  o  o           o  o
-persmissions         o  o           o  o
-pike                 o  o           o  o
-postgress            I  I           I  I
-print                o  o           o  o
-registrar            o  o           o  o
-rr                   o  o           o  o
-sl                   o  o           o  o
-sms                  o  o           o  o
-snmp      D          I  I           I  I
-textops              o  o           o  o
-tm                   o  o           o  o
-uri                  o  o           o  o
-uri_radius           I  I           I  I
-usrloc               o  o           o  W
-vm                   o  o           o  o
+acc                o I  I           I  I
+auth               o o  o           o  o
+auth_db            o o  o           o  o
+auth_radius        o I  I           I  I
+cpl             P  o o  o           o  o
+cpl-c           D  I I  I           I  I
+dbtext             o o  o           o  o
+domain             o o  o           o  o
+enum               o o  o           o  o
+exec               o o  o           o  o
+ext                o o  o           o  o
+extcmd             W o  o           o  o
+group              o o  o           o  o
+group_radius       W I  I           I  I
+jabber             o o  o           Wm W
+mangler            o o  o           W  o
+maxfwd             o o  o           o  o
+msilo              o o  o           o  o
+mysql              o o  o           o  o
+nathelper          o o  o           o  o
+pa                 o o  o           o  o
+pdt                o o  o           o  o
+persmissions       o o  o           o  o
+pike               o o  o           o  o
+postgress          I I  I           I  I
+print              o o  o           o  o
+registrar          o o  o           o  o
+rr                 o o  o           o  o
+sl                 o o  o           o  o
+sms                o o  o           o  o
+snmp      D        I I  I           I  I
+textops            o o  o           o  o
+tm                 o o  o           o  o
+uri                o o  o           o  o
+uri_radius         o I  I           I  I
+usrloc             o o  o           o  W
+vm                 o o  o           o  o
 
 
 

@@ -19,8 +19,9 @@ ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!
 
 $(warning "you should run make from the main ser directory")
-include ../../Makefile.defs
-ALLDEP+=../../Makefile.defs
+ifneq ($(makefile_defs), 1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
 
 else
 # called by the main Makefile
