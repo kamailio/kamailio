@@ -470,7 +470,8 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 			send_error(sms_messg, ERR_TRUNCATE_TEXT, ERR_TRUNCATE_TEXT_LEN,
 				p, text.len-(p-text.s)-SMS_FOOTER_LEN);
 		}
-		DBG("---%d--<%d><%d>--\n|%.*s|\n",i,len_array[i],buf_len,buf_len,buf);
+		DBG("---%d--<%d><%d>--\n|%.*s|\n", i, len_array[i], buf_len,
+										(int)buf_len, buf);
 		sms_messg->text.s   = buf;
 		sms_messg->text.len = buf_len;
 		if ( (ret_code=putsms(sms_messg,mdm))<0)
