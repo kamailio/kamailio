@@ -114,8 +114,8 @@ static inline int get_cred_user(struct sip_msg* _m, str* _u)
 	
 	c = (auth_body_t*)(h->parsed);
 
-	_u->s = c->digest.username.s;
-	_u->len = c->digest.username.len;
+	_u->s = c->digest.username.whole.s;
+	_u->len = c->digest.username.whole.len;
 
 	return 0;
 }
