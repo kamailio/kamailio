@@ -61,6 +61,7 @@ static inline void calc_crc_suffix( struct sip_msg *msg, char *tag_suffix)
 	str suffix_source[3];
 
 	ss_nr=2;
+	if (msg->via1==0) return; /* no via, bad message */
 	suffix_source[0]=msg->via1->host;
 	suffix_source[1]=msg->via1->port_str;
 	if (msg->via1->branch)

@@ -34,6 +34,8 @@
  *            tcp_read_req)
  * 2003-08-13 fixed exec_pre_cb returning 0 (backported from stable) (andrei)
  * 2004-02-06 added user preferences support - destroy_avps() (bogdan)
+ * 2004-04-30 exec_pre_cb is called after basic sanity checks (at least one
+ *            via present & parsed ok)  (andrei)
  */
 
 
@@ -112,17 +114,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	}
 	DBG("After parse_msg...\n");
 
-	/* execute pre-script callbacks, if any; -jiri */
-	/* if some of the callbacks said not to continue with
-	   script processing, don't do so
-	*/
-	ret=exec_pre_cb(msg);
-	if (ret<=0){
-		if (ret<0) goto error;
-		else goto end; /* drop the message -- no error -- andrei */
-	}
 
-	/* ... and clear branches from previous message */
+	/* ... clear branches from previous message */
 	clear_branches();
 
 	if (msg->first_line.type==SIP_REQUEST){
@@ -150,11 +143,23 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		}
 #endif
 
-		/* exec routing script */
 		DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
 #endif
+		/* execute pre-script callbacks, if any; -jiri */
+		/* if some of the callbacks said not to continue with
+		   script processing, don't do so
+		   if we are here basic sanity checks are already done
+		   (like presence of at least one via), so you can count
+		   on via1 being parsed in a pre-script callback --andrei
+		*/
+		ret=exec_pre_cb(msg);
+		if (ret<=0){
+			if (ret<0) goto error;
+			else goto end; /* drop the message -- no error -- andrei */
+		}
+		/* exec the routing script */
 		if (run_actions(rlist[0], msg)<0) {
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
@@ -194,6 +199,19 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		STATS_RX_RESPONSE ( msg->first_line.u.reply.statuscode / 100 );
 #endif
 		
+		/* execute pre-script callbacks, if any; -jiri */
+		/* if some of the callbacks said not to continue with
+		   script processing, don't do so
+		   if we are here basic sanity checks are already done
+		   (like presence of at least one via), so you can count
+		   on via1 being parsed in a pre-script callback --andrei
+		*/
+		ret=exec_pre_cb(msg);
+		if (ret<=0){
+			if (ret<0) goto error;
+			else goto end; /* drop the message -- no error -- andrei */
+		}
+
 		/* send the msg */
 		forward_reply(msg);
 
