@@ -7,6 +7,14 @@
 <!ENTITY redirectexample SYSTEM "../../examples/redirect.cfg">
 <!ENTITY replyexample SYSTEM "../../examples/onr.cfg">
 <!ENTITY statefuluaexample SYSTEM "../../examples/uas.cfg">
+<!ENTITY gpllicense SYSTEM "../../COPYING">
+<!ENTITY sendim SYSTEM "../../examples/web_im/send_im.php">
+<!ENTITY gatewayacl SYSTEM "../../examples/pstn.cfg">
+<!ENTITY accountingexample SYSTEM "../../examples/acc.cfg">
+<!ENTITY replicateexample SYSTEM "../../examples/replicate.cfg">
+<!ENTITY defscr SYSTEM "../../etc/ser.cfg">
+
+
 
 ]>
 
@@ -15,8 +23,8 @@
 
 <?dbhtml filename="index.html">
 
-
-    <title>iptel.org SIP Express Router v0.8.8 -- User's Guide</title>
+   
+    <title>iptel.org SIP Express Router v0.8.10 -- Admin's Guide</title>
     <bookinfo>
 	<authorgroup>
 	    <author>
@@ -79,12 +87,13 @@
 	    </para>
 	</abstract>
 	<releaseinfo>
-	    This is a pre-release documentation of the SER SIP Server.
-	    For the latest and most complete documentation, visit our
-	    site at <ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser</ulink>
+	    This documentation is continuously updated. For the latest and most complete 
+	    version, visit our site at 
+	    <ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser</ulink>.
+	    Version of this document is $Id$.
 	</releaseinfo>
     </bookinfo>
-    
+
     <toc></toc>
     
     <chapter id="general">
@@ -93,7 +102,7 @@
 	    <title>About <acronym>SIP</acronym> Express Router (<acronym>SER</acronym>)</title>
 	    <para>
 		SIP Express Router (<acronym>SER</acronym>) is an industrial-strength, free VoIP 
-		server based on the session initiation protocol (<acronym>SIP</acronym> RFC3261). 
+		server based on the Session Initiation Protocol (<acronym>SIP</acronym>, RFC3261). 
 		It is engineered to power <acronym>IP</acronym> telephony infrastructures up to large 
 		scale. The server keeps track of users, sets up VoIP sessions, 
 		relays instant messages and creates space for new plug-in applications. 
@@ -113,12 +122,12 @@
 	    </para>
 	    <para>
 		Its performance and robustness allows it to serve millions of users 
-		and accommodate needs of very large operators. With a $3000 dual-CPU, the 
+		and accommodate needs of very large operators. With a $3000 dual-CPU PC, the 
 		<acronym>SIP</acronym> Express Router is able to power <acronym>IP</acronym> telephony services in an area 
 		as large as the Bay Area during peak hours. Even on an IPAQ <acronym>PDA</acronym>, the server 
 		withstands 150 calls per second (<acronym>CPS</acronym>)! The server has been powering our 
 		iptel.org free <acronym>SIP</acronym> site withstanding heavy daily load that is further 
-		increasing with the popularity of Microsoft's Messenger.  
+		increasing with the popularity of Microsoft's Windows Messenger.  
 	    </para>
 	    <para>
 		The <acronym>SIP</acronym> Express Router is extremely configurable to allow the creation of 
@@ -131,12 +140,11 @@
 		<application moreinfo="none">ser</application> can be also
 		used with contributed applications. Currently, 
 		<application moreinfo="none">serweb</application>, a
-		<application moreinfo="none">ser</application> web interface
+		<application moreinfo="none">ser</application> web interface,
 		and <application moreinfo="none">SIPSak</application>
-		diagnostic tools are available. Visit our site, 
-		<ulink url="http://www.iptel.org/">http://www.iptel.org/</ulink>
-		, for more information on
-		contributed packages.
+		diagnostic tool are available. Visit our site, 
+		<ulink url="http://www.iptel.org/">http://www.iptel.org/</ulink>, 
+                for more information on contributed packages.
 	    </para>
 	</section> 
 
@@ -154,6 +162,13 @@
 		technological information, is a best proof of interest. Thousands 
 		of hits come every day from the whole Internet.
 	    </para>
+	    <para>
+		The iptel.org site, powered by SER, offers SIP services on the public 
+		Internet. Feel free to apply for a free SIP account at
+		<ulink url="http://www.iptel.org/user/">http://www.iptel.org/user/
+		</ulink>
+	    </para>
+
 	    
 	</section> <!-- iptel -->
 	<section id="serfeatures">
@@ -161,34 +176,44 @@
 	    <para>
 		Based on the latest standards, the <acronym>SIP</acronym> Express Router (<acronym>SER</acronym>) includes 
 		support for registrar, proxy and redirect mode. Further it acts as 
-		an application server with support for <acronym>CPL</acronym>, instant messaging and 
-		presence including a <acronym>2G/SMS</acronym> gateway, a call control policy 
+		an application server with support for instant messaging and 
+		presence including a <acronym>2G/SMS</acronym> and Jabber gateway, a call control policy 
 		language, call number translation, private dial plans and accounting, 
-		authorization and authentication (<acronym>AAA</acronym>) services. <acronym>SER</acronym> runs on Sun/Solaris, 
-		PC/Linux, IPAQ/Linux platforms and supports  both <acronym>IPv4</acronym> and <acronym>IPv6</acronym>. 
+		authorization and authentication (<acronym>AAA</acronym>) services. <application>SER</application> runs on Sun/Solaris, 
+		PC/Linux, PC/BSD, IPAQ/Linux platforms and supports  both <acronym>IPv4</acronym> and <acronym>IPv6</acronym>. 
 		Hosting multiple domains and database redundancy is supported.
 	    </para>
 	    <para>
 		Other extensions are underway: presence server, firewall control and more.
 	    </para>
 	    <para>
-		ser has been carefully engineered with the following design objectives in mind:
+		<application>ser</application> has been carefully engineered with the following 
+		design objectives in mind:
 		<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>Speed</emphasis> - With SER, thousands of calls per seconds are achievable 
+			    <emphasis>Speed</emphasis> - With <application>ser</application>, 
+			    thousands of calls per seconds are achievable 
 			    even on low-cost platforms. This competitive capacity allows 
 			    setting up networks which are inexpensive and easy to manage 
-			    due to low number of devices required. The speed has been 
-			    achieved by extensive code optimization, usage of customized code, 
+			    due to low number of devices required. The processing capacity 
+			    makes dealing with many stress factors easier. The stress
+			    factors may include but are not limited to broken configurations and implementations,
+			    boot avalanches on power-up, high-traffic applications such as presence, 
+			    redundancy replications and denial-of-service attacks.
+			</para>
+			<para> The speed has been achieved by extensive code optimization, use of customized code, 
 			    <acronym>ANSI C</acronym> combined with assembly instructions and leveraging latest 
-			    <acronym>SIP</acronym> improvements. When powered by a dual-CPU Linux PC, <application>ser</application> is able
-to serve call signaling Bay Area population.
+			    <acronym>SIP</acronym> improvements. When powered by a dual-CPU Linux PC, 
+			    <application>ser</application> is able to process thousands of calls per second,
+			    capacity needed to serve call signaling demands of Bay Area population.
+			   
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			    <emphasis>Flexibility</emphasis> - <acronym>SER</acronym> allows its users to define its behavior. 
+			    <emphasis>Flexibility</emphasis> - <application>SER</application> allows its users 
+			    to define its behavior. 
 			    Administrators may write textual scripts which determine <acronym>SIP</acronym> routing 
 			    decisions, the main job of a proxy server. They may use the script to 
 			    configure numerous parameters and introduce additional logic. For example, 
@@ -200,12 +225,12 @@ to serve call signaling Bay Area population.
 		    </listitem>
 		    <listitem>
 			<para>
-			    <acronym>Extensibility</acronym> - <acronym>SER</acronym>'s extensibility allows linking of 
+			    <emphasis>Extensibility</emphasis> - <application>SER</application>'s extensibility allows linking of 
 			    new C code to ser to 
 			    redefine or extend its logic. The new code can be developed independently 
-			    on <acronym>SER</acronym> core and linked to it in run-time. The concept is similar to 
+			    on <application>SER</application> core and linked to it in run-time. The concept is similar to 
 			    the module concept known for example in Apache Web server. Even such essential parts such 
-			    as transaction management have been developed as modules to keep the <acronym>SER</acronym> core 
+			    as transaction management have been developed as modules to keep the <application>SER</application> core 
 			    compact and fast.
 			</para>
 		    </listitem>
@@ -214,8 +239,8 @@ to serve call signaling Bay Area population.
 			    <emphasis>
 				Portability.
 			    </emphasis>
-			    Ser has been written in ANSI C. It has been extensively tested on PC/Linux and 
-			    Sun/Solaris. 
+			    <application>ser</application> has been written in ANSI C. It has been extensively tested 
+			    on PC/Linux and Sun/Solaris. Ports to BSD and IPAQ/Linux exist.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -223,9 +248,17 @@ to serve call signaling Bay Area population.
 			    <emphasis>			   
 				Interoperability. 
 			</emphasis>
-			Ser is based on open SIP standard. It has undergone extensive testing with 
-			    products of other vendors. It powers the public iptel.org site 24 hours a day, 356 days a year 
+			<application>ser</application> is based on the open <acronym>SIP</acronym> standard. 
+			    It has undergone extensive tests with products of other vendors both in iptel.org
+			    labs and in the SIP Interoperability Tests (SIPIT). <application>ser</application> 
+			    powers the public iptel.org site 24 hours a day, 356 days a year 
 			    serving numerous SIP implementations using this site.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Small size.</emphasis>
+			    Footprint of the core is 300k, add-on modules take up to 630k.
 			</para>
 		    </listitem>
 		</itemizedlist>
@@ -254,9 +287,9 @@ to serve call signaling Bay Area population.
 		    SIP Express Router has been engineered to power large scale networks: its capacity can deal 
 		    with large number of customers under high load caused by modern applications. Premium 
 		    performance allows deploying a low number of boxes while keeping investments and operational 
-		    expenses extremely low. ISPs can start by providing instant messaging services on this 
-		    standardized platform. This can be combined with the SIP-to-SMS gateway service also supported 
-		    by SER. In a second step VoIP services can be added in addition to voicemail services and  UMS.
+		    expenses extremely low. ISPs can offer SIP-based instant messaging services and interface
+		    them to other instant messaging systems (Jabber, SMS). VoIP can be easily integrated along
+		    with added-value services, such as voicemail.
 		</para>
 	    </section> <!-- Added-value ISP -->
 	    <section>
@@ -264,12 +297,13 @@ to serve call signaling Bay Area population.
 		<para>
 		    Internet Telephony Service Providers (ITSPs) offer the service of interconnecting 
 		    Internet telephony users using PC softphone or appliances to PSTN. Particularly with 
-		    long-distance and international calls, substantial savings can be achieved by 
+		    long-distance and international calls, competitive pricing can be achieved by 
 		    routing the calls over the Internet.
 		</para>
 		<para>
 		    SIP Express Router can be easily configured to serve pc2phone users, distribute
-		    calls to geographically appropriate PSTN gateway, act as a security barrier and keep track of charging. 
+		    calls to geographically appropriate PSTN gateway, act as a security barrier and keep 
+		    track of charging. 
 		</para>
 	    </section>
 	    <section>
@@ -296,15 +330,15 @@ to serve call signaling Bay Area population.
 	<section id="aboutsip">
 	    <title>About SIP Technology</title>
 	    <para>
-		The SIP protocol family is the technology which has succeeded in realizing the vision of the 
-		integrated services. With SIP, Internet users can easily contact each other; figure out 
+		The SIP protocol family is the technology which integrates services. 
+		With SIP, Internet users can easily contact each other; figure out 
 		willingness to have a conversation and couple different applications such as VoIP, video 
 		and instant messaging. Integration with added-value services is seamless and easy. Examples 
 		include integration with web (click-to-dial), E-mail (voice2email, UMS), and PSTN-like 
 		services (conditional forwarding).
 	    </para>
 	    <para>
-		The core piece of the technology is the Session Initiation Protocol (SIP) standardized by IETF. 
+		The core piece of the technology is the Session Initiation Protocol (SIP, RFC3261) standardized by IETF. 
 		Its main function is to establish communication sessions between users connected to the public 
 		Internet and identified by e-mail-like addresses. One of SIP's greatest features is its transparent 
 		support for multiple applications: the same infrastructure may be used for voice, video, gaming 
@@ -331,24 +365,22 @@ to serve call signaling Bay Area population.
 		    </listitem>
 		    <listitem>
 			<para>
-			    Loose routing
-			</para>
-		    </listitem>
-		    <listitem>
-			<para>
 			    Script processing of multiple branches on forking
 			</para>
 
 			<warning>
 			    <para>
-				ser's request processing language allows to make request decisions based on current URI. 
+				<application>ser</application>'s request processing language allows 
+				to make request decisions based on current URI. 
 				When a request if forked to multiple destinations, only the first branch's URI is used as 
 				input for script processing. This might lead to unexpected results. Whenever a URI resolves 
 				to multiple different next-hop URIs, only the first is processed which may result in handling 
 				not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP 
 				address and PSTN gateway SIP address. If the IP phone address is the first, then script 
-				execution ignores the second branch and vice versa. That might result in ignoring of 
-				gateway admission control rules or applying them unnecessarily to non-gateway destinations.
+				execution ignores the second branch. If a script includes checking gateway address in
+				request URI, the checks never match. That might result in ignoring of 
+				gateway admission control rules or applying them unnecessarily to non-gateway 
+				destinations.
 			    </para>
 			</warning>
 		    </listitem>
@@ -361,16 +393,108 @@ to serve call signaling Bay Area population.
 		</ulink>.
 	    </para>
 	</section> <!-- limitations -->
-	<section id="contact">
-	    <title>Contact and Licencing</title>
+	<section id="licensing">
+	    <title>Licensing</title>
 	    <para>
-		For any additional information, send an inquiry to info@iptel.org. 
-		Licensing conditions other than GPL are available on request. If
-		you need a help with ser, send an email to serhelp@iptel.org.
-		Report bugs at 
-		<ulink url="http://developer.berlios.de/bugs/?group_id=480">
-		    http://developer.berlios.de/bugs/?group_id=480
-		</ulink>
+		<application>ser</application> is freely available under terms and
+		conditions of the GNU General Public License.
+	    </para>	
+	    <!-- COPYING -->
+	    <screen>
+	    	    &gpllicense;
+	    </screen>
+	    
+	</section>
+	<section id="support">
+	    <title>Obtaining Technical Assistance</title>
+	    <para>
+		We offer best-effort free support for <application>ser</application>.
+		"best-effort" means that we try to solve your problems via email
+		as soon as we can, subject to available manpower. If you need
+		commercial support, contact info@iptel.org.
+	    </para>
+	    <para>
+		To receive feedback to your inquiries, we recommend you to subscribe
+		to the <emphasis>serusers</emphasis> mailing list and post your
+		queries there. This mailing list is set up for mutual help by
+		the community of <application>ser</application> users and developers.
+	    </para>
+	    <itemizedlist>
+		<title>Mailing List Instructions</title>
+		<listitem>
+		    <para>
+			Public archives and subscription form:
+			<ulink url="http://mail.iptel.org/mailman/listinfo/serusers">
+			    http://mail.iptel.org/mailman/listinfo/serusers
+			</ulink>			
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			To post, send an email to serusers@iptel.org
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If you think you encountered an error, please submit the
+			following information to avoid unnecessary round-trip times:			
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    Name and version of your operating system --
+				    you can obtain it by calling
+				    <command>uname -a</command>
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <application>ser</application> distribution: 
+				    release number and package				    
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <application>ser</application> build -- 
+				    you can obtain it by calling 
+				    <command moreinfo="none">ser -V</command>
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Your <application>ser</application> configuration file
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <application>ser</application> logs -- with default settings
+				    few logs are printed to <command>syslog</command> facility which
+				    typically dumps them to 
+				    <filename moreinfo="none">/var/log/messages</filename>. To 
+				    enable detailed logs dumped to <filename>stderr</filename>,
+				    apply the following configuration options: <command moreinfo="none">
+				    debug=8, log_stderror=yes, fork=no</command>.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Captured SIP messages -- you can obtain them 
+				    using tools such as <application>ngrep</application>
+				    or <application moreinfo="none">ethereal</application>.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		</listitem>
+	    </itemizedlist>	    
+	
+	    <para>
+		If you are concerned about your privacy and do not wish your
+		queries to be posted and archived publicly, you may post to
+		serhelp@iptel.org. E-mails to this address are only forwarded
+		to iptel.org's <application>ser</application> development team.
+		However, as the team is quite busy you should not be surprised
+		to get replies with considerable delay.
 
 	    </para>
 	</section>
@@ -380,7 +504,7 @@ to serve call signaling Bay Area population.
 	    <para>
 		Most up-to-date information including latest and most complete version
 		of this documentation is always available at our website,
-		<ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser/</ulink>
+		<ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser/</ulink>.
 		For information on how to install ser, read INSTALL.
 		SGML documentation is available in the 'doc' directory.
 		A SIP tutorial (slide set) is available at 
@@ -401,130 +525,79 @@ to serve call signaling Bay Area population.
 		location service or enforce static routing to a gateway. Real-world
 		deployments actually ask for quite complex routing logic, which
 		needs to reflex static routes to PSTN gateways, dynamic routes
-		to registered users, authentication policy, etc.
+		to registered users, authentication policy, capabilities of
+		SIP devices, etc.
 	    </para>
 	    <para>
 		SER's answer to this need for routing flexibility is a routing
-		language, which allows administrators to define the SIP routing
-		logic in a detailed manner. They can for example easily
+		language, which allows administrators to define the SIP request
+		processing logic in a detailed manner. They can for example easily
 		split SIP traffic by method or destination, perform user location, 
 		trigger authentication, verify access permissions, and so on.
 	    </para>
 	    <para>
-		The primary building block of the routing language are actions. There are 
-		built-in actions (like forward for stateless forwarding) as 
-		well as external actions supplied in shared library modules. The actions can be combined in composed statements 
-		({a1(); a2();}). The language includes conditional statements and subroutines (recursive too). 
+		The primary building block of the routing language are <emphasis>actions</emphasis>. 
+		There are built-in actions (like <command>forward</command> for stateless forwarding
+		or <command>strip</command> for stripping URIs) as 
+		well as external actions imported from shared library modules. All actions can 
+		be combined in compound actions by enclosing them in braces, 
+		e.g. <command>{a1(); a2();}</command>. 
+		Actions are aggregated in one or more <emphasis>route blocks</emphasis>.
+		Initially, only the default routing block denoted by <command>route[0]</command>
+		is called. Other routing blocks can be called by the action
+		<command>route(blocknumber)</command>, recursion is permitted.
+		The language includes <emphasis>conditional statements</emphasis>. 
 	    </para>
 
 	    <para>
-		The routing script is executed for every received request in sequential order. Actions may return 
-		positive/negative/zero value. 
+		The routing script is executed for every received request in sequential order. 
+		Actions may return positive/negative/zero value. 
 
 		Positive values are considered success and evaluated as
 		TRUE in conditional expressions. Negative values are considered FALSE. 
-		Script processing may be explicitly exited 
-		by calling "break". 
 
-		Zero value means error and stops processing the script. 
-
-		One might jump to another route[x] block by calling route(x) (similar to function calling).
+		Zero value means error and leaves execution of currently processed
+		route block. The route block is left too, if <command>break</command> is explicitly
+		called from it.
 
 	    </para>
 	    <para>
-		The easiest way for ser users to affect routing logic is
-		to determine next hop statically. A useful scenario is
-		routing to a gateway whose static IP address is well known.
-		To configure static routing, simply use the commands
-		forward( IP_address, port_number>) for stateless
-		forwarding or t_relay_to( IP_address, port_number )
-		for stateful forwarding.
+		The easiest and still very useful way for <application>ser</application>
+		users to affect request routing logic is
+		to determine next hop statically. An example is
+		routing to a PSTN gateway whose static IP address is well known.
+		To configure static routing, simply use the action
+		<command>forward( IP_address, port_number)</command>.
+		This action forwards an incoming request "as is" to the
+		destination described in action's parameters.
 	    </para>
 
 	    <example>
-		<title>Stateless versus stateful forwarding</title>
+		<title>Static Forwarding</title>
 		<programlisting format="linespecific">
 # if requests URI is numerical and starts with
-# zero, forward statelessly, otherwise forward 
-# statefully
+# zero, forward statelessly to a static destination
 
 if (uri=~"^sip:0[0-9]*@iptel.org) {
-    # statelessly
     forward( 192.168.99.3, 5080 );
-} else {
-    # statefully
-    t_relay_to( "192.168.99.3", "5080" );
-}
+} 
 		</programlisting>
 	    </example>
+
+	    <para>
+		However, static forwarding is not sufficient in many cases.
+		Users desire mobility and change their location frequently.
+		Lowering costs for termination of calls in PSTN requires
+		locating a least-cost gateway. Which next-hop is taken may
+		depend on user's preferences. These and many other scenarios
+		need the routing logic to be more dynamic. We describe in
+		<xref linkend="conditions"> how to make request processing
+		subject to various conditions and in 
+		<xref linkend="urirewriting"> how to determine next SIP hop.
+	    </para>
 	</section>
-	
-	<section>
-	    <title>URI Rewriting</title>
 
-	    <para>
-		A powerful tool for affecting routing logic is changing
-		request URI. This can be done with any of built-in commands
-		<command>rewriteuri</command>, 
-		<command>rewritehost</command>, 
-		<command>rewritehostport</command>, 
-		<command>rewriteuser</command>, 
-		<command>rewriteuserpass</command> and 
-		<command>rewriteport</command>. All these commands
-		rewrite request URI or a part of it. When later in a ser script
-		a forwarding command is encountered, the command forwards
-		the request to address in the rewritten URI.
-	    </para>
-	    <para>Two URI-rewriting commands are of special importance
-		for implementation of dialing plans. <command>prefix(s)
-		</command>, inserts 
-		a string "s" in front of SIP address and 
-		<command>strip(n)</command> takes
-		away the first "n" characters of a SIP address.
-	    </para>
-	    
-	    <example>
-		<title>Rewriting URIs</title>
-		<programlisting format="linespecific">
-if (uri=~"dan@foo.bar") {
-    rewriteuri("sip:bla@somewherelse.com")
-    # forward statelessly
-    forward( dst:uri, dst:port);
-}
-		</programlisting>
-	    </example>
-
-	    <para>
-		Commands exported by external modules can change URI too.
-		The most important application is changing URI using the
-		user location database. The command 
-		<command>lookup(table)</command> rewrites
-		current URI with a value stored previously during SIP
-		registration. If there is no registration, the 
-		command returns negative value.
-	    </para>
-	    <example>
-		<title>Rewriting URIs Using User Location Database</title>
-		<programlisting format="linespecific">
-# store user location if a REGISTER appears
-if (method=="REGISTER") {
-   save("mydomain1");
-} else {
-# try to use the previously registered contacts to
-# determine next hop
-   if(lookup("mydomain1")) {
-     # if found, forward there...
-     t_relay();
-   } else {
-     sl_send_reply("404", "Not Found" );
-   };
-};
-		</programlisting>
-	    </example>
-
-	</section> <!-- URI rewriting -->
-
-	<section>
+	<section id="conditions">
 	    <title>Conditional Statements</title>
 	    <para>
 		A very useful feature is the ability to make routing
@@ -533,55 +606,92 @@ if (method=="REGISTER") {
 		served and foreign domains, IP and PSTN routes,
 		it may split traffic by method or username, it
 		may determine whether a request should be authenticated
-		or not, etc.
+		or not, etc. <application moreinfo="none">ser</application>
+		allows administrators to form conditions based on
+		properties of processed request, such as method or uri,
+		as well as on virtually any piece of data on the
+		Internet.
 	    </para>
 	    <example>
 		<title>Conditional Statement</title>
 		<para>
 		    This example shows how a conditional statement is
-		    used to selectively authenticate REGISTER requests.
+		    used to split incoming requests between a PSTN
+		    gateway and a user location server based on
+		    request URI.
 		</para>
 		<programlisting format="linespecific">
-# we want to authentication only registrations;
-# no other request, such as INVITE, will be authenticated
-# because we want to accept anonymous incoming calls
-if (method=="REGISTER") {
-
-    # are authentication credential valid ? ...
-    if (!www_authorize("iptel.org", "subscriber")) {
-        # .... they are not, challenge user and stop processing
-
-        www_challenge("iptel.org", "0");
-        break;
-    };
-
-# ... credentials valid -> save a new entry
-# in user location database
-
-    save("location");
+# if request URI is numerical, forward the request to PSTN gateway...
+if (uri=~"^sip:[0-9]+@foo.bar") { # match using a regular expression
+    forward( gateway.foo.bar, 5060 );
+} else { # ... forward the request to user location server otherwise
+    forward( userloc.foo.bar, 5060 );
 };
 		</programlisting>
 	    </example>
-	    
-	    <section>
+
+	    <para>
+		Conditional statements in <application>ser</application> scripts may depend
+		on a variety of  expressions. The simplest expressions are 
+		action calls. They return true if they completed successfully or false otherwise. 
+		An example of an action frequently used in conditional statements is
+		<command moreinfo="none">search</command> imported from textops module.
+		<command moreinfo="none">search</command> action leverages textual
+		nature of SIP and compares SIP requests against a regular expression.
+		The action returns true if the expression matched, false otherwise.
+		<example>
+		    <title>Use of <command>search</command> Action in Conditional Expression</title>
+		    <programlisting format="linespecific">
+# prevent strangers from claiming to belong to our domain;
+# if sender claims to be in our domain in From header field,
+# better authenticate him 
+if (search("(f|From): .*@mydomain.com)) {
+    if (!(proxy_authorize("mydomain.com" /* realm */,"subscriber" /* table name */ ))) {
+           proxy_challenge("mydomain.com /* ream */, "1" /* use qop */ );
+           break;
+    }
+}
+ 		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		As modules may be created, which export new functions, there is virtually
+		no limitation on what functionality <application moreinfo="none">ser</application>
+		conditions are based on. Implementers may introduce new actions whose
+		return status depends on request content or any external data as well. Such actions
+		can query SQL, web, local file systems or any other place which can provide
+		information wanted for request processing.
+	    </para>
+	    <para>
+		Furthermore, many request properties may be examined using existing built-in operands
+		and operators. Available left-hand-side operands and legal combination with
+		operators and right-hand-side operands are described in <xref linkend="logicalexpr">.
+		Expressions may be grouped together using logical operators:
+		negation (<command>!</command>), AND (<command>&&</command>), OR (<command moreinfo="none">
+		||</command> and precedence parentheses (<command>()</command>).
+	    </para>
+
+	    <section id="operators">
 		<title>Operators and Operands</title>
 		<para>
 		    There is a set of predefined operators and operands
-		    in ser, which in addition to actions, may be evaluated
+		    in ser, which in addition to actions may be evaluated
 		    in conditional expressions. 
 		</para>
 		<para>
-		    Operands, which ser understands are the following:
+		    Left hand-side operands, which <application>ser</application>
+		    understands are the following:
 		    <itemizedlist>
 			<listitem>
 			    <para>
-				method, which refers to requests method
+				<emphasis>method</emphasis>, which refers to 
+				request method
 				such as REGISTER or INVITE
 			    </para>
 			</listitem>
 			<listitem>
 			    <para>
-				uri, which refers to current request URI, i
+				<emphasis>uri</emphasis>, which refers to current request URI,
 				such as 
 				"sip:john.doe@foo.bar"
 				<note>
@@ -595,8 +705,14 @@ if (method=="REGISTER") {
 			</listitem>
 			<listitem>
 			    <para>
-				scr_ip, which referes to IP address from 
+				<emphasis>scr_ip</emphasis>, which refers to IP address from 
 				which a request came.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>dst_ip</emphasis> refers to server's IP address 
+				at which a request was received
 			    </para>
 			</listitem>
 		    </itemizedlist>
@@ -612,20 +728,133 @@ if (method=="REGISTER") {
 			</listitem>
 			<listitem>
 			    <para>
-				=~ stand for regular expression match
+				=~ stands for regular expression matching
 			    </para>
 			</listitem>
 			<listitem>
 			    <para>
-				logical operators: and, or, negation
+				logical operators: and, or, negation, parentheses
 				(C-notation for the operators may be used too)
 			    </para>
 			</listitem>
 		    </itemizedlist>
 		</para>
+
+	    <table id="logicalexpr">
+		<title>Valid Combinations of Operands and Operators in Expressions</title>
+		<tgroup cols="4">
+		    <thead>
+			<row>
+			    <entry>
+				left-hand-side operand
+			    </entry>			    
+			    <entry>
+				valid operators
+			    </entry>
+			    <entry>
+				valid right-hand side operators
+			    </entry>
+			    <entry>
+				examples/comments
+			    </entry>
+			</row>
+
+		    </thead>
+		    <tbody>
+
+			<row>
+			    <entry>
+				method
+			    </entry>			    
+			    <entry>
+				== (exact match), =~ (regular expression matching)
+			    </entry>
+			    <entry>
+				string
+			    </entry>
+			    <entry>
+				method=="INVITE" || method=="ACK" || method=="CANCEL"
+			    </entry>
+			</row>			
+
+			<row>
+			    <entry>
+				uri
+			    </entry>			    
+			    <entry>
+				== (exact match), =~ (regular expression matching)
+			    </entry>
+			    <entry>
+				string
+			    </entry>
+			    <entry>
+				uri=="sip:foo@bar.com" matches only if exactly this uri
+				is in request URI
+
+			    </entry>
+			</row>				
+
+			<row>
+			    <entry>
+				
+			    </entry>			    
+			    <entry>
+				== (exact match)
+			    </entry>
+			    <entry>
+				myself
+			    </entry>
+			    <entry>
+				
+				the expression uri==myself is true if the host part in 
+				request URI equals a server name or a server alias (set using
+				the alias option in configuration file)
+				
+			    </entry>
+			</row>				
+
+			<row>
+			    <entry>
+				src_ip
+			    </entry>			    
+			    <entry>
+				== (match)
+			    </entry>
+			    <entry>
+				IP, IP/mask_length, IP/mask, hostname, myself
+			    </entry>
+			    <entry>
+				src_ip==192.168.0.0/16 matches requests coming from
+				a private network
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				dst_ip
+				by <application moreinfo="none">ser</application>
+			    </entry>			    
+			    <entry>
+				== (match)
+			    </entry>
+			    <entry>
+				IP, IP/mask_length, IP/mask, hostname, myself
+			    </entry>
+			    <entry>
+				dst_ip==127.0.0.1 matches if a request was received
+				via loopback interface
+			    </entry>
+			</row>
+
+
+		    </tbody>
+		</tgroup>
+	    </table>
+	    
+
 		<example>
 		    <title>
-			Use of ser operators and operands in conditional
+			More examples of use of <application>ser</application> operators and operands in conditional
 			statements
 		    </title>
 		    <programlisting format="linespecific">
@@ -652,15 +881,516 @@ if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 # ...
 </programlisting>
 		</example>
+	    </section> <!-- operators and operands -->
+	    <section>
+		<title>URI Matching</title>
+		<para>URI matching expressions have a broad use in a SIP server
+		    and deserve more explanation. Typical uses of
+		    URI matching include implementation of numbering plans,
+		    domain matching,
+		    binding external applications to specific URIs,
+		    etc. This section shows examples of typical applications
+		    of URI-matching.
+		</para>
+		<section id="domainmatching">
+		    <title>Domain Matching</title>
+		    <para>
+			One of most important uses of URI matching is deciding
+			whether a request is targeted to a served or outside domain.
+			Typically, different request
+			processing applies. Requests for outside domains
+			are simply forwarded to them, whereas
+			more complex logic applies to requests for a served domain.
+			The logic may include saving user's contacts
+			when REGISTER requests are received, forwarding requests
+			to current user's location or a PSTN gateways, 
+			interaction with external applications, etc.
+		    </para>
+		    <para>
+			The easiest way to decide whether a request belongs
+			a served domain is using the <command moreinfo="none">myself</command>
+			operand. 
+			The expression "uri==myself" returns true if domain name
+			in request URI matches name of the host at which
+			<application moreinfo="none">ser</application> is
+			running. This may be insufficient in cases when
+			server name is not equal to domain name for which the server
+			is responsible. For example, the "uri==myself" condition
+			does not match if a server "sipserver.foo.bar" 
+			receives a request for "sip:john.doe@foo.bar". To
+			match other names in URI than server's own,
+			set up the <varname>alias</varname> configuration
+			option. The option may be used multiple times,
+			each its use adds a new item to a list of aliases.
+			The myself condition returns then  true 
+			also for any hostname on the list of aliases.
+			<example>
+			    <title>Use of uri==myself Expression</title>
+			    <programlisting format="linespecific">
+# ser powers a domain "foo.bar" and runs at host sipserver.foo.bar;
+# Names of served domains need to be stated in the aliases
+# option; myself would not match them otherwise and would only
+# match requests with "sipserver.foo.bar" in request-URI
+alias="foo.bar"
+alias="sales.foo.bar"
+route[0] {
+        if (uri==myself) {
+            # the request either has server name or some of the
+            # aliases in its URI
+            log(1,"request for served domain")
+            # some domain-specific logic follows here ....
+        } else {
+            # aha -- the server is not responsible for this
+            # requests; that happens for example with the following URIs
+            #  - sip:a@marketing.foo.bar
+            #  - sip:a@otherdomain.bar
+            log(1,"request for outbound domain");
+            # outbound forwarding			  
+            t_relay();
+        };
+}			</programlisting>
+		    </example>
+		</para>
+		<para>
+		    It is possible to recognize whether a request belongs to
+		    a domain using regular expressions too. Care needs to
+		    be paid to construction of regular expressions. URI
+		    syntax is rich and an incorrect expression would result
+		    in incorrect call processing. The following example shows
+		    how an expression for domain matching can be formed.
+		    <example id="redomainmatching">
+			<title>Domain Matching Using Regular Expressions</title>
+			<para>
+			    In this example, server named "sip.foo.bar" with
+			    IP address 192.168.0.10 is responsible for the
+			    "foo.bar" domain. That means, requests with the
+			    following hostnames in URI should be matched:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					foo.bar, which is the name of server domain
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					sip.foo.bar, since it is server's name and some
+					devices put server's name in request URI
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					192.168.0.10, since it is server's IP address and
+					some devices put server's IP address in request URI
+				    </para>
+				</listitem>
+			    </itemizedlist>			
+			    Note how this regular expression is constructed. In particular:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					User name is optional (it is for example never included
+					in REGISTER requests) and there are no restrictions on
+					what characters it contains. That is what 
+					<emphasis>(.+@)?</emphasis> mandates. 
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Hostname must be followed by port number, parameters
+					or headers -- that is what the delimiters 
+					<emphasis>[:;\?]</emphasis> are good for. If none
+					it these follows, the URI must be ended 
+					(<emphasis>$</emphasis>). Otherwise, longer hostnames
+					such as 192.168.0.101 or foo.bar.otherdomain.com would
+					mistakenly match.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Matches are case-insensitive. All hostnames "foo.bar", "FOO.BAR"
+					and "FoO.bAr" match.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+			<programlisting>
+if (uri=~"^sip:(.+@)?(192\.168\.0\.10|(sip\.)?foo\.bar)([:;\?].*)?$")
+      log(1, "yes, it is a request for our domain");
+      break;
+ };
+			</programlisting>
+		    </example>
+		</para>
+		</section> <!-- domain matching -->
+		<section id="numberingplans">
+		    <title>Numbering Plans</title>
+
+		    <para>
+			Other use of URI matching is implementation of dialing
+			plans. A typical task when designing a dialing plan for SIP networks
+			is to distinguish between "pure-IP" and PSTN destinations.
+			IP users typically have either alphanumerical or numerical
+			usernames. The numerical usernames are convenient for PSTN
+			callers who can only
+			use numeric keypads. Next-hop destination of IP users is looked up dynamically
+			using user location database. On the other hand, PSTN destinations are 
+			always indicated by nummerical usernames. Requests to PSTN are statically 
+			forwarded to well-known PSTN gateways.
+		    </para>
+		    <example>
+			<title>A simple Numbering Plan</title>
+			<para>
+			    This example shows a simple dialing plan which reserves
+			    dialing prefix "8" for IP users, other numbers
+			    are used for PSTN destinations and all other non-nummerical
+			    usernames are used for IP users.
+			</para>
+			<programlisting format="linespecific">
+# is it a PSTN destination? (is username nummerical and does not begin with 8?)
+if (uri=~"^sip:[0-79][0-9]*@") { # ... forward to gateways then;
+      # check first to which PSTN destination the requests goes;
+      # if it is US (prefix "1"), use the gateway 192.168.0.1...
+      if (uri=~"^sip:1") {
+           # strip the leading "1"
+           strip(1);
+           forward(192.168.0.1, 5060);
+      } else {
+           # ... use the gateway 10.0.0.1 for all other destinations
+           forward(10.0.0.1, 5060);
+      }
+      break;
+} else {
+      # it is an IP destination -- try to lookup it up in user location DB
+      if (!lookup("location")) {
+          # bad luck ... user off-line
+          sl_send_reply("404", "Not Found");
+          break;
+      }
+      # user on-line...forward to his current destination
+      forward(uri:host,uri:port);
+}
+			</programlisting>
+		    </example>
+		</section> <!-- numbering plans -->
 	    </section>
 	</section> <!-- conditional statements -->
+	
+	<section id="urirewriting">
+	    <title>Request URI Rewriting</title>
+
+	    <para>
+		The ability to give users and services a unique name using URI
+		is a powerful tool. It allows users to advertise how to reach
+		them, to state to whom they wish to communicate and what services 
+		they wish to use.
+		Thus, the ability to change URIs is very important and is
+		used for implementation of many services. 
+		"Unconditional forwarding" from user "boss" to user
+		"secretary" is a typical example of application relying
+		on change of URI address.
+	    </para>
+	    <para>
+		<application moreinfo="none">ser</application> has the ability
+		to change request URI in many ways.
+		A script can use any of the following
+		built-in actions to change request URI or a part of it:
+
+		<command>rewriteuri</command>, 
+		<command>rewritehost</command>, 
+		<command>rewritehostport</command>, 
+		<command>rewriteuser</command>, 
+		<command>rewriteuserpass</command> and 
+		<command>rewriteport</command>. 
+		When later in the script
+		a forwarding action is encountered, the action forwards
+		the request to address in the rewritten URI.
+		<example>
+		    <title>Rewriting URIs</title>
+		    <programlisting format="linespecific">
+if (uri=~"dan@foo.bar") {
+    rewriteuri("sip:bla@somewherelse.com")
+    # forward statelessly to the destination in current URI, i.e.,
+    # to sip:bla@somewherelese.com:5060
+    forward( uri:host, uri:port);
+}
+		    </programlisting>
+		</example>
+	    </para>	    
+	    <para>Two more built-in URI-rewriting commands are of special importance
+		for implementation of dialing plans and manipulation of dialing
+		prefixes. <command>prefix(s)
+		</command>, inserts 
+		a string "s" in front of SIP address and 
+		<command>strip(n)</command> takes
+		away the first "n" characters of a SIP address.
+		See <xref linkend="urirewritingexamples"> for examples of use of
+		built-in URI-rewriting actions.
+	    </para>
+
+	    <para>
+		Commands exported by external modules can change URI too
+		and many do so.
+		The most important application is changing URI using the
+		user location database. The command 
+		<command>lookup(table)</command> looks up current
+		user's location and rewrites user's address with it.
+		If there is no registered contact, the 	command returns a negative value.
+
+
+		<example id=rewriteuri>
+		    <title>Rewriting URIs Using User Location Database</title>
+		    <programlisting format="linespecific">
+# store user location if a REGISTER appears
+if (method=="REGISTER") {
+   save("mydomain1");
+} else {
+# try to use the previously registered contacts to
+# determine next hop
+   if(lookup("mydomain1")) {
+     # if found, forward there...
+     t_relay();
+   } else {
+     # ... if no contact on-line, tell it upstream
+     sl_send_reply("404", "Not Found" );
+   };
+};
+		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		External applications can be used to rewrite URI too.
+		The "exec" module provides script actions, which start external programs
+		and read new URI value from their output. <command moreinfo="none">exec_uri</command>
+		and <command moreinfo="none">exec_user</command> both call an external program,
+		pass current URI or its user part to it respectively, wait until it completes,
+		and eventually rewrite current URI with its output.
+	    </para>
+	    <para>
+		It is important to realize that <application moreinfo="none">ser</application>
+		operates over <emphasis>current URI</emphasis> all the time. If an original
+		URI is rewritten by a new one, the original will will be forgotten and the new one will 
+		be used in any further processing. In particular, the uri matching operand
+		and the user location action <command moreinfo="none">lookup</command>
+		always take current URI as input, regardless what the original URI was.
+	    </para>
+	    <para>
+		<xref linkend="urirewritingexamples"> shows how URI-rewriting actions affect 
+		an example URI, sip:12345@foo.bar:6060.
+		<table id="urirewritingexamples">
+		    <title>URI-rewriting Using Built-In Actions</title>
+		    <tgroup cols="2">
+			<thead>
+			    <row>
+				<entry>
+				    Example Action
+				</entry>				
+				<entry>
+				    Resulting URI
+				</entry>
+			    </row>
+			</thead>
+			<tbody>
+			    <row>
+				<entry>
+				    <command moreinfo="none">rewritehost("192.168.0.10")</command> rewrites
+				    the hostname in URI, other parts (including port number) remain unaffected.
+				</entry>
+				<entry>
+				    sip:12345@192.168.10:6060
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">rewriteuri("sip:alice@foo.bar");</command> rewrites
+				    the whole URI completely.
+				</entry>
+				<entry>
+				    sip:alice@foo.bar
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">rewritehostport("192.168.0.10:3040")</command>rewrites 
+				    both hostname and port number in URI.
+				</entry>
+				<entry>
+				    sip:12345@192.168.0.10:3040
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">rewriteuser("alice")</command> rewrites user part of URI.
+				</entry>
+				<entry>
+				    sip:alice@foo.bar:6060
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">rewriteuserpass("alice:pw")</command> replaces the pair
+				    user:password in URI with a new value.
+				</entry>
+				<entry>
+				    sip:alice:pw@foo.bar:6060
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">rewriteport("1234")</command> replaces port number in URI
+				</entry>
+				<entry>
+				    sip:12345@foo.bar:1234
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">prefix("9")</command> inserts a string ahead of user part of URI
+				</entry>
+				<entry>
+				    sip:912345@foo.bar:6060
+				</entry>
+			    </row>
+			    <row>
+				<entry>
+				    <command moreinfo="none">strip(2)</command> removes leading characters from user part of URI
+				</entry>
+				<entry>
+				    sip:345@foo.bar:6060
+				</entry>
+			    </row>
+
+
+			</tbody>
+		    </tgroup>
+		</table>
+	    </para>	    
+	    <para>
+		You can verify whether you understood URI processing by
+		looking at the following example. It rewrites URI
+		several times. The question is what is the final URI to which
+		the script fill forward any incoming request.
+		<example>
+		    <title>URI-rewriting Quiz</title>
+		    <programlisting format="linespecific">
+exec_uri("echo sip:2234@foo.bar; echo > /dev/null");
+strip(2);
+if (uri=~"^sip:2") {
+    prefix("0");
+} else {
+    prefix("1");
+};			
+forward(uri:host, uri:port);
+		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		The correct answer is the resulting URI will be
+		"sip:134@foo.bar". <command moreinfo="none">exec_uri</command>
+		rewrites original URI to "sip:2234@foo.bar", 
+		<command moreinfo="none">strip(2)</command> takes
+		two leading characters from username away resulting
+		in "34@iptel.org", the condition does not match
+		because URI does not begin with "2" any more,
+		so the prefix "1" is inserted.
+	    </para>
+
+
+	</section> <!-- URI rewriting -->
+
+	<section>
+	    <title>Destination Set</title>
+	    <para>
+		Whereas needs of many scenarios can by accommodated by maintaining
+		a single request URI, some scenarios are better served by
+		multiple URIs. Consider for example a user with address
+		john.doe@iptel.org. The user wishes to be reachable at his 
+		home phone, office phone, cell phone, softphone, etc. 
+		However, he still wishes to maintain a single public address
+		on his business card.
+	    </para>
+	    <para>
+		To enable such scenarios, <application>ser</application>
+		allows translation of a single request URI into multiple
+		outgoing URIs. The ability to forward a request to multiple
+		destinations is known as <emphasis>forking</emphasis>
+		in SIP language. All outogoing URIs (in trivial case one of them)
+		are called <emphasis>destination set</emphasis>. The destination
+		set always includes one default URI, to which additional URIs
+		can be appended. Maximum size of a destination set is limited by 
+		a compile-time constant, MAX_BRANCHES,
+		in <filename moreinfo="none">config.h</filename>.
+	    </para>
+	    <para>
+		Some actions are designed for use with a single URI whereas
+		other actions work with the whole destination set.
+	    </para>
+	    <para>
+		Actions which are currently available for creating the destination
+		set are <command>lookup</command> from usrloc module and 
+		<command>exec_uri/exec_user</command> from exec module.
+		<command moreinfo="none">lookup</command> fills in the destination
+		set with user contact's registered previously with REGISTER
+		requests. The <command moreinfo="none">exec</command> actions
+		fill in the destination set with output of an external program.
+		In both cases, current destination set is completely rewritten.		
+		New URIs can be appended to destination set by a call to the built-in
+		action <command>append_branch(uri)</command>.
+	    </para>
+	    <para>		
+		Currently supported features which utilize destination sets
+		are <emphasis>forking</emphasis> and <emphasis>redirection</emphasis>. 
+		Action <command>t_relay</command> (TM module) for stateful
+		forwarding supports forking. If called with a non-trivial destination
+		set, <command moreinfo="none">t_relay</command> forks
+		incoming request to all URIs in current destination set.
+		See <xref linkend="rewriteuri">. If a user
+		previously registered from three locations, the destination set is filled with 
+		all of them by <command>lookup</command> and the <command>t_relay</command>
+		command forwards the incoming request to all these destinations.
+		Eventually, all user's phone will be ringing in parallel.
+	    </para>
+	    <para>
+		SIP redirection is another feature which leverages destination sets.
+		It is a very light-weighted method to establish communication
+		between two parties with minimum burden put on the server. In
+		<application>ser</application>, the action <command>sl_send_reply</command>
+		(SL module) is used for this purpose. This action 
+		allows to generate replies to SIP requests without keeping 
+		any state. If the status code passed to the action is 3xx, 
+		the current destination set is printed in reply's Contact header
+		fields. Such a reply instructs the originating client to 
+		retry at these addresses. (See <xref linkend="redirectexample">).
+	    </para>
+	    <para>
+		Most other  <application>ser</application> actions ignore destination
+		sets: they either do not relate to URI processing (<command moreinfo="none">
+		log</command>, for example) or they work only with the default URI.
+		All URI-rewriting functions such as
+		<command moreinfo="none">rewriteuri</command> belong in this
+		category. URI-comparison operands only refers to the first URI
+		(see <xref linkend="operators">). Also, the built-in action
+		for stateless forwarding, <command>forward</command> works only
+		with the default URI and ignores rest of the destination set. The reason 
+		is a proxy server willing to fork must guarantee that the burden
+		of processing multiple replies is not put unexpectedly on upstream
+		client. This is only achievable with stateful processing.  
+		Forking cannot be used along with stateless <command>forward</command>,
+		which thus only processes one URI out of the whole destination set.
+		Also, the uri comparison operand (see <xref linkend="operators">)
+		refers only to current URI and ignores the rest of destination
+		set.
+	    </para> 
+
+	</section> <!-- Destination Set -->
+
+
 	
 	<section>
 	    <title>External Modules</title>
 	    <para>
-		SER provides the ability to link the server with external
+		<application moreinfo="none">ser</application> provides the ability to link the server with external
 		third-party shared libraries. Lot of functionality which is
-		included in the SER distribution is actually located in
+		included in the <application moreinfo="none">ser</application> distribution is actually located in
 		modules to keep the server "core" compact and clean.
 		Among others, there are modules for checking max_forwards
 		value in SIP requests (maxfwd), transactional processing (tm),
@@ -671,39 +1401,28 @@ if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 	    <para>
 		In order to utilize new actions exported by a module, 
 		ser must first load it. To load a module, the directive
-		loadmodule "filename" must be included in beginning of
-		a ser script file.
+		<command moreinfo="none">loadmodule "filename"</command>
+		must be included in beginning of
+		a <application>ser</application> script file.
 	    </para>
-	    <para>
-		Many modules also allow users to change the way how they
-		work using predefined parameters. For example, the
-		transaction management module tm allows administrators
-		to redefine values of retransmission parameters.
-	    </para>
+
 	    <example>
 		<title>Using Modules</title>
 		<para>
-		    This example shows how a script instructs ser to
+		    This example shows how a script instructs 
+		    <application moreinfo="none">ser</application> to
 		    load a module and use actions exported by it.
 		    Particularly, the sl module exports an action
-		    sl_send_reply which makes ser act as a stateless
-		    user agent and reply incoming requests.
+		    <command>sl_send_reply</command> which makes 
+		    <application>ser</application> act as a stateless
+		    user agent and reply all incoming requests with 404.
 		</para>
 		<programlisting format="linespecific">
 # first of all, load the module!
 loadmodule "/usr/lib/ser/modules/sl.so
 route{
-
-    # when ser acts as stateless server, it must
-    # consume acknowledgments; sl_filter_ack is
-    # an action which does so; it is exported from
-    # the sl module for generating stateless replies
-    sl_filter_ack();
-
-    # now reply all requests with 404 using the main
-    # sl module's action: sl_send_reply
-
-    sl_send_reply("404", "Not Found");
+    # reply all requests with 404
+    sl_send_reply("404", "I am so sorry -- user not found");
 }
 </programlisting>
 	    </example>
@@ -734,22 +1453,83 @@ t_relay_to("192.168.99.100", "5060");
 		    </example>
 		</para>
 	    </note>
+	    <para>
+		Many modules also allow users to change the way how they
+		work using predefined parameters. For example, the
+		authentication module needs to know location of MySQL
+		database which contains users' security credentials.
+		How module parameters
+		are set using the <command moreinfo="none">modparam</command>
+		directive is shown in <xref linkend="moduleparameters">. 
+		<command moreinfo="none">modparam</command>
+		always contains identification of module, parameter
+		name and parameter value. Description of parameters
+		available in modules is available in module documentation.
+	    </para>
+	    <para>
+		Yet another thing to notice in this example is module
+		dependency. Modules may depend on each other. For example,
+		the authentication modules leverages the mysql module
+		for accessing mysql databases and sl module for generating
+		authentication challenges. We recommend that modules are
+		loaded in dependency order to avoid ambiguous server
+		behaviour.
+	    </para>	    
+	    <para>
+		<example id="moduleparameters">
+		    <title>Module Parameters</title>
+		    <programlisting format="linespecific">
+# ------------------ module loading ----------------------------------
+
+# load first modules on which 'auth' module depends;
+# sl is used for sending challenges, mysql for storage
+# of user credentials
+loadmodule "modules/sl/sl.so"
+loadmodule "modules/mysql/mysql.so"
+loadmodule "modules/auth/auth.so"
+
+# ------------------ module parameters -------------------------------
+# tell the auth module the access data for SQL database:
+# username, password, hostname and database name
+modparam("auth", "db_url","sql://ser:secret@dbhost/ser")
+
+
+# -------------------------  request routing logic -------------------
+
+# authenticate all requests prior to forwarding them
+
+route{
+
+        if (!proxy_authorize("foo.bar" /* realm */,
+                        "subscriber" /* table name */ )) {
+                proxy_challenge("foo.bar", "0");
+                break;
+        };
+        forward(192.168.0.10,5060);
+}
+
+		    </programlisting>
+		</example>
+	    </para>
 	</section>
 
 	<section>
 	    <title>Writing Scripts</title>
 	    <para>
-		This section demonstrates in easy-to-understand examples
-		how to configure server's behaviour using the embedded
-		request routing language. All scripts follow the ser language 
+		This section demonstrates simple examples
+		how to configure server's behaviour using the
+		<application moreinfo="none">ser</application>
+		request routing language. All scripts follow the 
+		<application moreinfo="none">ser</application> language 
 		syntax, which dictates the following block ordering:
 		<itemizedlist>
 		    <listitem>
 			<para>
 			    <emphasis>global configuration parameters</emphasis> --
 			    these value affect behaviour of the server such as port
-			    number at which it listens, number of spawened children
-			    processes, and log-level
+			    number at which it listens, number of spawned children
+			    processes, and log-level. See <xref linkend="coreoptions">
+			    for a list of available options.
 			</para>
 		    </listitem>
 
@@ -757,7 +1537,10 @@ t_relay_to("192.168.99.100", "5060");
 			<para>
 			    <emphasis>module loading</emphasis> -- these statements
 			    link external modules, such as transaction management
-			    (tm) or stateless UA server (sl)  dynamically
+			    (tm) or stateless UA server (sl)  dynamically. See
+			    <xref linkend="modulereference"> for a list of modules
+			    included in <application moreinfo="none">ser</application>
+			    distribution.
 			</para>
 			<note>
 				<para>
@@ -773,14 +1556,16 @@ t_relay_to("192.168.99.100", "5060");
 		    <listitem>
 			<para>
 			    <emphasis>module-specific parameters</emphasis> -- determine
-			    how modules behave; for example, it is possible to set
-			    timers which the transaction modules uses.
+			    how modules behave; for example, it is possible to configure
+			    database to be used by authentication module.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    one or more <emphasis>route blocks</emphasis> containing the
-			    request processing logic
+			    request processing logic, which includes built-in actions
+			    as well as actions exported by modules. See <xref linkend="builtinref">
+			    for a list of built-in actions.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -788,7 +1573,10 @@ t_relay_to("192.168.99.100", "5060");
 			    optionally, if modules supporting reply
 			    processing (currently only TM) are loaded,
 			    one or more <emphasis>reply_route blocks</emphasis> containing
-			    logic triggered by received replies
+			    logic triggered by received replies. Restrictions on use of
+			    actions within <command moreinfo="none">reply_route</command>
+			    blocks apply -- see <xref linkend="builtinref"> for more
+			    information.
 			</para>
 		    </listitem>
 		</itemizedlist>
@@ -796,34 +1584,119 @@ t_relay_to("192.168.99.100", "5060");
 
 	    <para>
 		For more complex examples, see the etc directory in
-		ser distribution. In particular, it contains the default
-		script <filename moreinfo="none">ser.cfg</filename> and
-		<filename moreinfo="none">iptel.cfg</filename>. The first
-		script implements a "quick-start" registrar and proxy
-		server. The second, really complex script, is in production
-		use at iptel.org and exploits all ser features.
+		<application>ser</application> source distribution.
+		It contains the 
+		<filename moreinfo="none">iptel.cfg</filename> script which is
+		in production use at iptel.org's public SIP site and exploits most of 
+		<application>ser</application> features.
 	    </para>
+
+	    <section>
+		<title>Default Configuration Script</title>		
+		<para>
+		    The configuration script, <filename moreinfo="none">ser.cfg</filename>,
+		    is a part of every <application moreinfo="none">ser</application>
+		    distribution and defines default behaviour. It allows users
+		    to register with the server and have requests proxied to each
+		    other.
+		</para>
+		<para>
+		    After performing
+		    routine checks, the script looks whether incoming request is for
+		    served domain. If so and the request is "REGISTER", <application moreinfo="none">ser</application>
+		    acts as SIP registrar and updates database of user's contacts.
+		    Optionally, it verifies user's identity first to avoid
+		    unauthorized contact manipulation.
+		</para>
+		<para>
+		    Non-REGISTER request for served domains are then processed using
+		    user location database. If a contact is found for requested URI,
+		    script execution proceeds to stateful forwarding, a negative 404
+		    reply is generated otherwise. Requests outside served domain
+		    are always statefully forwarded.
+		</para>
+		<para>
+		    Note that this simple script features several limitations:
+		    <itemizedlist>
+			<listitem>			    
+			    <para>
+				By default, authentication is turned off to avoid
+				dependency on mysql. Unless it it turned on, anyone
+				can register using any name and "steal" someone else's
+				calls.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				Even it authentication is turned on, there is no relationship
+				between authentication username and address of record. That
+				means that for example a user authenticating himself correctly
+				with "john.doe" id may register contacts for "gw.bush".
+				Site policy may wish to mandate authentication id to be equal
+				to username claimed in To header field. <action moreinfo="none">check_to</action>
+				action from auth module can be used to enforce such a policy.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				There is no dialing plan implemented. All users are supposed to
+				be reachable via user location database. See <xref linkend="numberingplans">
+				for more information.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				The script assumes users will be using server's name as a part of
+				their address of record. If users wish to use another name (domain
+				name for example), this must be set using the <varname>alias</varname>
+				options. See <xref linkend="domainmatching"> for more information.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				If authentication is turned on by uncommenting related configuration
+				options, clear-text user passwords will by assumed in back-end database.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<example>
+		    <title>Default Configuration Script</title>
+		    <programlisting format="linespecific">
+&defscr;			
+		    </programlisting>
+		</example>
+	    </section>
 
 	    <section>
 		<title>Stateful User Agent</title>
 		<para>
 		    This examples shows how to make ser act as a stateful user
-		    agent. Such an agent can process arbitrary logic, such
-		    as accounting or SMS gateway. Benefit of running in
-		    stateful mode is that request retransmissions are absorbed.
-		    Otherwise, the logic (such as sending SMS messages to
-		    GSM network) would be executed for each retransmission.
+		    agent (UA). Ability to act as as a stateful UA is essential
+		    to many applications which terminate a SIP path. These
+		    applications wish to focus on their added value. They
+		    do not wish to be involved in all SIP gory details, such
+		    as request and reply retransmission, reply formatting, etc.
+		    For example, we use the UA functionality to shield 
+		    SMS gateway and instant message store from SIP transactional
+		    processing.
+		    The simple example bellow issues a log report on receipt
+		    of a new transaction. 
+		    If we did not use a stateful UA, every single request retransmission
+		    would cause the application to be re-executed which would result in
+		    duplicated SMS messages, instant message in message store or 
+		    log reports.
 		</para>
 		<para>
 		    The most important actions are <command moreinfo="none">
-		    t_newtran</command> and <command moreinfo="none">
+			t_newtran</command> and <command moreinfo="none">
 			t_reply</command>. <command moreinfo="none">
-		    t_newtran</command> returns success, when a transaction
-		    has been recognized as new. If <command moreinfo="none">
-		    t_newtran</command> matched an existing transaction, it
-		    retransmit reply and exit script. <command moreinfo="none">
-		    t_newtran</command> returns false on error, such as lack of
-		    memory.
+			
+		    t_newtran</command> shields subsequent code from retransmissions.
+		    It returns success and continues when a new request arrived.
+		    It exits current route block immediately on receipt of
+		    a retransmissions. It only returns a negative value when
+		    a serious error, such as lack of memory, occurs.
 		</para>
 		<para>
 		    <command moreinfo="none">t_reply</command> generates
@@ -842,28 +1715,31 @@ t_relay_to("192.168.99.100", "5060");
 	    <section>
 		<title>Redirect Server</title>
 		<para>
-		    The redirect example show how to redirect a request
-		    to multiple destination using 3xx reply. The key
-		    ser actions in this example are <command moreinfo="none">
-			append_branch</command> and <command moreinfo="none">
-		    sl_send_reply</command>.
+		    The redirect example shows how to redirect a request
+		    to multiple destination using 3xx reply. Redirecting
+		    requests as opposed to proxying them is essential to
+		    various scalability scenarios. Once a message is
+		    redirected, <application moreinfo="none">ser</application>
+		    discards all related state and is no more involved
+		    in subsequent SIP transactions (unless the redirection
+		    addresses point to the same server again).
+		</para>
+		<para>
+		    The key <application>ser</application> actions in this example 
+		    are <command moreinfo="none">append_branch</command> and 
+		    <command moreinfo="none">sl_send_reply</command> (sl module).
 		</para>
 		<para>
 		    <command moreinfo="none">append_branch</command> adds
-		    a new item to the so-called destination set, i.e., set
-		    of next-hop destinations. The destinations set always
+		    a new item to the destination set. The destinations set always
 		    includes the current URI and may be enhanced up to
-		    <constant>MAX_BRANCHES</constant> (precompiled values
-		    which defaults to 4). There are functions whose behaviour
-		    depends on the destination set. <command moreinfo="none">
-		    t_relay</command>, command for stateful forwarding,
-		    forks a request to multiple destination. <command moreinfo="none">
-		    sl_send_reply</command> command, if passed SIP reply code
-		    3xx, takes all values in current destination set and
-		    adds them to Contact header field in the reply being
-		    sent.
+		    <constant>MAX_BRANCHES</constant> items.
+		    <command moreinfo="none">sl_send_reply</command> command, 
+		    if passed SIP reply code 3xx, takes all values in current 
+		    destination set and adds them to Contact header field in 
+		    the reply being  sent.
 		</para>
-		<example>
+		<example id="redirectexample">
 		    <title>Redirect Server</title>
 		    <programlisting format="linespecific">
 			<!-- ../../examples/redirect.cfg -->
@@ -877,7 +1753,8 @@ t_relay_to("192.168.99.100", "5060");
 		<para>
 		    Like in the previous example, we show how to
 		    make ser act as a redirect server. The difference is 
-		    that we do not use hardwired redirection address but
+		    that we do not use redirection addresses hardwired in
+		    <application moreinfo="none">ser</application> script but
 		    get them from external shell commands. We also use
 		    ser's ability to execute shell commands to log
 		    source IP address of incoming SIP requests.
@@ -894,16 +1771,18 @@ t_relay_to("192.168.99.100", "5060");
 		</para>
 		<para>
 		    <command moreinfo="none">exec_uri</command> serves
-		    for rewriting URI by external applications. An interesting
-		    example of use is a Least-Cost-Router, software which
-		    calculates the cheapest termination end-point for
-		    a call to PSTN from the called phone number. The
+		    for URI rewriting by external applications.  The
 		    <command moreinfo="none">exec_uri</command> action
 		    passes current URI to the called external program as
-		    command-line parameter, and expects a new URI (or
-		    more of them) on command's standard output.
+		    command-line parameter, and rewrites current destination
+		    set with the program's output. An example use would
+		    be an implementation of a Least-Cost-Router, software which
+		    returns URI of the cheapest PSTN provider for a given
+		    destination based on some pricing tables. <xref linkend="execscript">
+		    is much easier: it prints fixed URIs on its output using
+		    shell script <command moreinfo="none">echo</command> command.
 		</para>
-		<example>
+		<example id="execscript">
 		    <title>Executing External Script</title>
 		    <programlisting format="linespecific">
 			<!-- ../../examples/exec.cfg -->
@@ -915,17 +1794,38 @@ t_relay_to("192.168.99.100", "5060");
 	    <section>
 		<title>Reply Processing (Forward on Unavailable)</title>
 		<para>
-		    Here we show how to trigger serial forking when
-		    a relayed request was replied with a negative
-		    status or was not replied at all. Incoming requests
-		    are rewritten to be forwarded to nobody@iptel.org
-		    in parallel with parallel@iptel.org:9. When transaction
-		    times out (the second branch will never deliver 
-		    a reply), reply_route number 1 (as specified in
-		    t_on_negative) will be processed and result in
-		    serial forking (i.e., "forward on unavailable").
+		    Many services depend on status of messages relayed
+		    downstream: <emphasis>forward on busy</emphasis> and 
+		    <emphasis>forward on no reply</emphasis> to name the
+		    most well-known ones. To support implementation of
+		    such services, <application moreinfo="none">ser</application>
+		    allows to return to request processing when request
+		    forwarding failed. When a request is reprocessed,
+		    new request branches may be initiated or the transaction
+		    can be completed at discretion of script writer.
 		</para>
-		<example>
+		<para>
+		    The primitives used are <command moreinfo="none">t_on_negative(r)</command>
+		    and <command moreinfo="none">reply_route[r]{}.</command> If
+		    <command>t_on_negative</command> is called before
+		    a request is statefuly forwarded and a forwarding failure occurs, 
+		    <application moreinfo="none">ser</application>
+		    will return to request processing in a <command moreinfo="none">reply_route</command>
+		    block. Failures include receipt of a SIP error
+		    (status code >= 300 ) from upstream or not receiving
+		    any final reply within final response period.
+		</para>
+		<para>
+		    In <xref linkend="replyprocessing">, <command moreinfo="none">reply_route[1]</command>
+		    is set to be entered on error using the <command moreinfo="none">t_on_negative(1)</command>
+		    action. Within this reply block, <application moreinfo="none">ser</application>
+		    is instructed to initiate a new branch and try to reach called party
+		    at another destination (sip:nonsense@iptel.org). To deal with the case when neither the alternate
+		    destination succeeds, <application moreinfo="none">t_on_negative</application>
+		    is set again. If the case really occurs, <command moreinfo="none">reply_route[2]</command>
+		    is entered and a last resort destination (sip:foo@iptel.org) is tried.
+		</para>
+		<example id="replyprocessing">
 		    <title>Reply Processing</title>
 		    <programlisting format="linespecific">
 			<!-- ../../examples/onr.cfg -->
@@ -937,65 +1837,27 @@ t_relay_to("192.168.99.100", "5060");
 	</section> <!-- examples -->
     </chapter>
 
-    <chapter>
-	<title>Application Server</title>
-	<para>
-	One of primary objectives of our SIP server is to enable
-	easy creation of new services. Though the modular architecture
-	with module plug-ins allows third parties to introduce new,
-	independent code to the server, we have been seeking 
-	an easier method. We eventually created an extremely
-	simple and powerful interface which perfectly integrates
-	    with textual <acronym>UN*X</acronym> tools: a FIFO server.	    
-	</para>
-	<para>
-	    The FIFO server is a  server's textual interface
-	    which allows external application to access server's
-	    internals. The textual input/output interface allows
-	    applications written in any programming language
-	    to communicate with the server.
-	</para>
-	<para>
-	    <application moreinfo="none">ser</application> modules can
-	    register new functionality, which they export via the
-	    FIFO server to the external world.
-	</para>
-	<para>
-	    Currently, the FIFO is mostly used for querying server's
-	    state by monitoring applications. Additionally, we
-	    frequently use TM module's ability to initiate new 
-	    transactions. This is best illustrated in a PHP
-	    example in 
-	    <filename moreinfo="none">examples/web_im/send_im.*</filename>
-	    This example allows users to send instant messages via
-	    a web interface. Other examples in 
-		<application>ser</application> distribution are
-	    shell scripts which poll weather stations and if
-	    a monitored value exceeds a thresholds, initiate
-	    a SIP alarm via the FIFO application server.
-	</para>
-	<para>
-	    Other application leveraging the FIFO application server
-	    is <application moreinfo="none">serweb</application>,
-	    <application moreinfo="none">ser</application>'s
-	    web interface. It speaks to the server via FIFO to
-	    query, delete and add user contacts.
-	</para>
-    </chapter>
-
 
     <chapter>
-	<title>Operation, Diagnostics and Troubleshooting</title>
-	<para>Diagnostics in distributed open networks is not an easy job.
-	    It is made difficult by amount of load put on a server,
-	    differences between implementations, lower-layer errors,
-	    device failures and other factors. We share some of our
-	    practices in this chapter, which turned to be useful during
-	    operation of our public SIP site. The operational guidelines
-	    are summarized in the form of questions and answers. Also,
-	    we refer to utilities which may make operation more
-	    convenient.
-	</para>
+	<title>Server Operation</title>
+	<section>
+	    <title>Recommended Operational Practices</title>
+
+	    <para>
+		Operation of a SIP server is not always easy task.
+		Server administrators are challenged by broken or
+		misconfigured user agents, network and host failures,
+		hostile attacks and other stress-makers. All such
+		situations may lead to an operational failure. It is sometimes
+		very difficult to figure out the root reason of
+		a failure, particularly in a distributed environment
+		with many SIP components involved.		
+		In this section,
+		we share some of our practices and refer to tools
+		which have proven to
+		make life of administrators easier
+	    </para>
+
 	<qandaset>
 	    <qandaentry>
 		<question>
@@ -1004,11 +1866,19 @@ t_relay_to("192.168.99.100", "5060");
 		    </para>
 		</question>
 		<answer>
-		    <para>
-			Frequently, operational errors are discovered
-			with a delay and it is difficult to learn what
-			triggered problems. We thus recommend that site
-			operators record all messages passing their site.
+			<para>
+			    Frequently, operational errors are discovered or reported
+			    with a delay.
+			    Users frustrated by an error
+			    frequently approach administrators
+			    and scream "even though my SIP requests were absolutely ok
+			    yesterday, they were mistakenly denied by your server".
+			    If administrators do not record all SIP traffic at
+			    their site, they will be no more able to identify
+			    the problem reason.
+			    We thus recommend that site
+			    operators record all messages passing their site and keep them
+			    stored for some period of time.
 			They may use utilities such as 
 			<application>ngrep 
 			</application> or 
@@ -1193,7 +2063,7 @@ warning: IP extract from warning activated to be more informational
 			    processes all server timeouts.
 			</para>
 			<programlisting format="linespecific">
-[jiri@fox jiri]$ sc ps
+[jiri@fox jiri]$ serctl ps
 0	31590	attendant
 1	31592	receiver child=0 sock=0 @ 127.0.0.1::5060
 2	31595	receiver child=1 sock=0 @ 127.0.0.1::5060
@@ -1232,6 +2102,23 @@ warning: IP extract from warning activated to be more informational
 		    </para>
 		</answer>
 	    </qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    Setting Proper Log Level
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    If something is going wrong and you are in doubts what causes the
+			    error, increase log level. Additional log messages may help you
+			    to trace the error reason. Be careful though: <application moreinfo="none">
+			    ser</application> is very talkative in higher debugging levels.
+			    Too noisy log files are difficult to read too and server's
+			    operation slows down noticeably.
+			</para>
+		    </answer>
+		</qandaentry>
 	    <qandaentry>
 		<question>
 		    <para>
@@ -1347,30 +2234,818 @@ P-hint: OUTBOUND.			    </programlisting>
 		</answer>
 	    </qandaentry>
 	</qandaset>
+	</section> <!-- operational practises -->
 
+	<section>
+	    <title>HOWTOs</title>
+	    <para>
+		This section is a "cookbook" for dealing with common tasks,
+		such as user management or controlling access
+		to PSTN gateways.
+	    </para>
+	    <qandaset>
+		<qandaentry>
+		    <question>
+			<para>User Management</para>
+		    </question>
+		    <answer>
+			<para>
+			    There are two tasks related to management of SIP users:
+			    maintaining user accounts and maintaining user contacts.
+			    Both these jobs can be done using the 
+			    <application moreinfo="none">serctl</application>
+			    command-line tool. Also, the complimentary web
+			    interface, <application moreinfo="none">serweb</application>,
+			    can be used for this purpose as well.
+			</para>
+			<para>
+			    If user authentication is turned on, which is a highly
+			    advisable practice, user account must be created before
+			    a user can log in. To create a new user account, call the
+			    <command moreinfo="none">serctl add</command> utility
+			    with username, password and email as parameters. It
+			    is important that the environment <varname>SIP_DOMAIN</varname>
+			    is set to your realm and matches realm values used in
+			    your script. The realm value is used for calculation
+			    of credentials stored in subscriber database, which are
+			    bound permanently to this value.
+			    <screen format="linespecific">
+[jiri@cat gen_ha1]$ export SIP_DOMAIN=foo.bar
+[jiri@cat gen_ha1]$ serctl add newuser secret newuser@foo.bar
+MySql Password: 
+new user added
+			    </screen>
+			</para>
+			<para><application moreinfo="none">serctl</application> can
+			    also change user's password or remove existing accounts
+			    from system permanently.
+			    <screen format="linespecific">
+[jiri@cat gen_ha1]$ serctl passwd newuser newpassword
+MySql Password: 
+password change succeeded
+[jiri@cat gen_ha1]$ serctl rm newuser                
+MySql Password: 
+user removed
+			    </screen>
+			</para>
+			<para>
+			    User contacts are typically automatically uploaded by SIP phones
+			    to server during registration process and administrators do not
+			    need to worry about them. However, users
+			    may wish to append permanent contacts to PSTN gateways
+			    or to locations in other administrative domains. 
+			    To manipulate the contacts in such cases, use
+			    <application moreinfo="none">serctl ul</application>
+			    tool. Note that this is the only correct way
+			    to update contacts -- direct changes to back-end
+			    MySql database do not affect server's memory. Also note,
+			    that if persistence is turned off (usrloc "db_mode"
+			    parameter set to "0"), all contacts are gone on server
+			    reboot. Make sure that persistence is enabled if you
+			    add permanent contacts.
+			</para>
+			<para>
+			    To add a new permanent contact for a user, call 
+			    <application moreinfo="none">serctl ul add &lt;username&gt
+			    &lt;contact&gt;</application>. To delete 
+			    all user's contacts, call 
+			    <application>serctl ul rm &lt;username&gt;</application>.
+			    <application moreinfo="none">serctl ul show &lt;username&gt;</application>
+			    prints all current user's contacts.
+			    <screen format="linespecific">
+[jiri@cat gen_ha1]$ serctl ul add newuser sip:666@gateway.foo.bar
+sip:666@gateway.foo.bar
+200 Added to table
+('newuser','sip:666@gateway.foo.bar') to 'location'
+[jiri@cat gen_ha1]$ serctl ul show newuser
+&lt;sip:666@gateway.foo.bar&gt;;q=1.00;expires=1073741812
+[jiri@cat gen_ha1]$ serctl ul rm newuser  
+200 user (location, newuser) deleted
+[jiri@cat gen_ha1]$ serctl ul show newuser
+404 Username newuser in table location not found
+			    </screen>
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    User Aliases
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    Frequently, it is desirable for a user to have multiple
+			    addresses in a domain. For example, a user with username "john.doe" wants to be
+			    reachable at a shorter address "john" or at a nummerical address
+			    "12335", so that PSTN callers with digits-only key-pad can reach
+			    him too.
+			</para>
+			<para>
+			    With <application moreinfo="none">ser</application>, you can maintain
+			    a special user-location table and translate existing aliases to canonical
+			    usernames using the <command moreinfo="none">lookup</command>
+			    action from usrloc module. The following script fragment demonstrates
+			    use of <command moreinfo="none">lookup</command> for this purpose.
+			    <example>
+				<title>Configuration of Use of Aliases</title>
+				<programlisting format="linespecific">
+if (!uri==myself) { # request not for our domain...
+  route(1); # go somewhere else, where outbound requests are processed
+  break;
+};
+# the request is for our domain -- process registrations first
+if (method=="REGISTER") { route(3); break; };
+
+# look now, if there is an alias in the "aliases" table; don't care
+# about return value: whether there is some or not, move ahead then
+lookup("aliases");
+
+# there may be aliases which translate to other domain and for which
+# local processing is not appropriate; check again, if after the
+# alias translation, the request is still for us
+if (!uri==myself) { route(1); break; };
+
+# continue with processing for our domain...
+...
+  
+				</programlisting>
+			    </example>
+			</para>
+			<para>
+			    The table with aliases is updated using the
+			    <application moreinfo="none">serctl</application>
+			    tool. <application moreinfo="none">
+			    serctl alias add &lt;alias&gt; &lt;uri&gt;</application>
+			    adds a new alias, 
+			    <application moreinfo="none">serctl alias show &lt;user&gt;</application>
+			    prints an existing alias, and
+			    <application moreinfo="none">serctl alias rm &lt;user&gt;</application>
+			    removes it.
+			    <screen format="linespecific">
+[jiri@cat sip_router]$ serctl alias add 1234 sip:john.doe@foo.bar
+sip:john.doe@foo.bar
+200 Added to table
+('1234','sip:john.doe@foo.bar') to 'aliases'
+[jiri@cat sip_router]$ serctl alias add john sip:john.doe@foo.bar
+sip:john.doe@foo.bar
+200 Added to table
+('john','sip:john.doe@foo.bar') to 'aliases'
+[jiri@cat sip_router]$ serctl alias show john                    
+&lt;sip:john.doe@foo.bar&gt;;q=1.00;expires=1073741811
+[jiri@cat sip_router]$ serctl alias rm john  
+200 user (aliases, john) deleted				
+			    </screen>
+			</para>
+			<para>
+			    Note that persitence needs to be turned on in usrloc
+			    module. All changes to aliases will be otherwise lost
+			    on server reboot. To enable persistence, set the
+			    db_mode usrloc parameter to a non-zero value.
+			    <programlisting format="linespecific">
+# ....load module ...
+loadmodule "modules/usrloc/usrloc.so"
+# ... turn on persistence -- all changes to user tables are immediately
+# flushed to mysql
+modparam("usrloc", "db_mode",   1)
+# the SQL address:
+modparam("usrloc", "db_url","sql://ser:secret@dbhost/ser")
+			    </programlisting>
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>Access Control (PSTN Gateway)</para>
+		    </question>
+		    <answer>
+			<para>
+			    It is sometimes important to exercise some sort of
+			    access control. A typical use case is when 
+			    <application moreinfo="none">ser</application> is used
+			    to guard a PSTN gateway. If a gateway was not well guarded,
+			    unauthorized users would be able to use it to terminate calls in PSTN,
+			    and cause high charges to its operator.
+			</para>
+			<para>
+			    There are few issues you need to understand when
+			    configuring <application moreinfo="none">ser</application>
+			    for this purpose. First, if a gateway is built or configured to
+			    accept calls from anywhere, callers may easily bypass your
+			    access control server and communicate with the gateway
+			    directly. You then need to enforce at transport layer
+			    that signaling is only accepted if coming via
+			    <application moreinfo="none">ser</application> and
+			    deny SIP packets coming from other hosts and port numbers.
+			    Your network must be configured not to allow forged
+			    IP addresses. Also, you need to turn on record-routing
+			    to assure that all session requests will travel via 
+			    <application moreinfo="none">ser</application>.			    
+			    Otherwise, caller's devices would send subsequent SIP requests 
+			    directly to your gateway, which would fail because of transport 
+			    filtering.
+			</para>
+			<para>
+			    Authorization (i.e., the process of determining who may call where)
+			    is facilitated in <application moreinfo="none">ser</application>
+			    using <emphasis>group membership</emphasis> concept. Scripts make 
+			    decisions on whether a caller is authorized to make a call to
+			    a specific destination based on user's membership in a group.
+			    For example a policy may be set up to allow calls to international
+			    destinations only to users, who are members of an "int" group.			    
+			    Before user's group membership is checked, his identity
+			    must be verified first. Without cryptographic verification of user's
+			    identity, it would be impossible to assert that a caller really
+			    is who he claims to be.
+			</para>
+			<para>
+			    The following script demonstrates, how to configure <application moreinfo="none">ser</application>
+			    as an access control server for a PSTN gateway. The script verifies user
+			    identity using digest authentication, checks user's privileges,
+			    and forces all requests to visit the server.
+			    <example>
+				<title>Script for Gateway Access Control</title>
+				<programlisting format="linespecific">
+&gatewayacl;
+				</programlisting>
+			    </example>
+			</para>
+			<para>
+			    Use the <application moreinfo="none">serctl</application> tool to
+			    maintain group membership. 
+			    <application moreinfo="none">serctl acl grant &lt;username&gt; &lt;group&gt;</application>
+			    makes a user member of a group, 
+			    <application>serctl acl show &lt;username&gt;</application> shows groups
+			    of which a user is member, and
+			    <application>serctl acl revoke &lt;username&gt; [&lt;group&gt;]</application>
+			    revokes user's membership in one or all groups.
+			    <screen format="linespecific">
+[jiri@cat sip_router]$ serctl acl grant john int
+MySql Password: 
++------+-----+---------------------+
+| user | grp | last_modified       |
++------+-----+---------------------+
+| john | int | 2002-12-08 02:09:20 |
++------+-----+---------------------+
+			    </screen>
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    Accounting
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    In some scenarios, like termination of calls in PSTN, SIP administrators
+			    may wish to keep track of placed calls. <application moreinfo="none">ser</application>
+			    can be configured to report on completed transactions. Reports are sent
+			    by default to <application moreinfo="none">syslog</application> facility.
+			    Experimental support for RADIUS and mysql accounting exists as well.
+			</para>
+			<para>
+			    Note that <application moreinfo="none">ser</application> is no way 
+			    call-stateful. It reports on completed transactions, i.e., after 
+			    a successful call set up is reported, it drops any call-related 
+			    state. When a call is terminated, transactional state for BYE request
+			    is created and forgotten again after the transaction completes.
+			    This is a feature and not a bug -- keeping only transactional
+			    state allows for significantly higher scalability. It is then
+			    up to the accounting application to correlate call initiation
+			    and termination events.
+			</para>
+			<para>
+			    To enable call accounting, tm and acc modules need to be loaded,
+			    requests need to be processed statefuly and labeled for
+			    accounting.
+			    <example>
+				<title>Configuration with Enabled Accounting</title>
+				<programlisting format="linespecific">
+&accountingexample;
+				</programlisting>
+			    </example>
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>Reliability</para>
+		    </question>
+		    <answer>
+			<para>
+			    It is essential to guarantee continuous
+			    service operation even under erroneous conditions, 
+			    such as host or network failure. The major issue in such
+			    situations is transfer of operation to a backup
+			    infrastructure and making clients use it.
+			</para>
+			<para>
+			    The SIP standard's use of DNS SRV records has been
+			    explicitly constructed to handle with server failures.
+			    There may be multiple servers responsible for a domain
+			    and referred to by DNS. If it is impossible to communicate
+			    with a primary server, a client can proceed to another one.
+			    Backup servers may be located in a different geographic
+			    area to minimize risk caused by areal operational
+			    disasters: lack of power, flooding, earthquake, etc.
+			    <note>
+				<sidebar>
+				    <para>Unless there are redundant DNS
+				    servers, fail-over capability cannot be guaranteed.
+				    </para>
+				</sidebar>
+			    </note>
+			    Unfortunately, at the moment of writing this documentation
+			    (end of December 2002) only very few SIP products
+			    actually implement the DNS fail-over mechanism. Unless
+			    networks with SIP devices supporting this mechanism are
+			    built, alternative mechanisms must be used to force 
+			    clients to use backup servers. Such a mechanism is
+			    disconnecting primary server and replacing him with
+			    a backup server locally.
+			    It unfortunately precludes geographic dispersion and
+			    requires network multihoming to avoid dependency on
+			    single IP access. Another method is to update DNS
+			    when failure of the primary server is detected.
+			    The primary drawback of this method is its latency:
+			    it may take long time until all clients learn to use
+			    the new server.
+			</para>
+			<para>
+			    The easier part of the redundancy story is replication of 
+			    <application moreinfo="none">ser</application>
+			    data. <application moreinfo="none">ser</application>
+			    relies on replication capabilities of its back-end database.
+			    This works with one exception: user location database.
+			    User location database is a frequently accessed table,
+			    which is thus cached in server's memory to improve
+			    performance. Back-end replication does not affect
+			    in-memory tables, unless server reboots. To facilitate
+			    replication of user location database, 
+			    server's SIP replication feature must be enabled
+			    in parallel with back-end replication.
+			</para>
+			<para>
+			    The design idea of replication of user location database
+			    is easy: Replicate any successful REGISTER requests to
+			    a peer server. To assure that digest credentials can
+			    be properly verified, both servers need to use the same
+			    digest generation secret and maintain synchronized time.
+			    A known limitation of this method is it does not replicate
+			    user contacts entered in another way, for example using
+			    web interface through FIFO server.
+			    The following script example shows configuration of
+			    a server that replicates all REGISTERs.
+			    <example>
+				<title>Script for Replication of User Contacts</title>
+				<programlisting format="linespecific">
+&replicateexample;				    
+				</programlisting>
+			    </example>
+			</para>
+		    </answer>
+		    
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    Stateful versus Stateless Forwarding
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    <application moreinfo="none">ser</application> allows both stateless
+			    and stateful request processing. This memo explains what are pros and cons of
+			    using each method. The rule of thumb is "stateless for scalability,
+			    stateful for services".
+			</para>
+			<para>
+			    Stateless forwarding with the
+			    <command moreinfo="none">forward(uri:host, uri:port)</command> action
+			    guarantees high scalability. It withstands high load and
+			    does not run out of memory. A perfect use of stateless forwarding
+			    is load distribution.
+			</para>
+			<para>
+			    Stateful forwarding using the <command moreinfo="none">t_relay()</command>
+			    action is known to scale worse. It can quickly run out of memory and
+			    consumes more CPU time. Nevertheless, there are scenarios which are
+			    not implementable without stateful processing. In particular:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					<emphasis>Accounting</emphasis> requires stateful processing
+					to be able to collect transaction status and issue a single
+					report when a transaction completes.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					<emphasis>Forking</emphasis> only works with stateful forwarding.
+					Stateless forwarding only forwards to the default URI out of the
+					whole destination set.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					<emphasis>DNS resolution</emphasis>. DNS resolution may be
+					better server with stateful processing. If a request is forwarded
+					to a destination whose address takes long time to resolve,
+					a server process is blocked and unresponsive. Subsequent 
+					request retransmissions from client will cause other processes
+					to block too if requests are processed statelessly. As a result,
+					<application moreinfo="none">ser</application> will quickly
+					run out of available processes. With stateful forwarding,
+					retransmissions are absorbed and do not cause blocking of
+					another process.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					<emphasis>Forwarding Services</emphasis>. All sort of services 
+					with the "forward_on_event" logic, which rely on 
+					<command moreinfo="none">t_on_negative</command> tm
+					action must be processed statefuly.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    Serving Multiple Domains
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    <application moreinfo="none">ser</application> can be configured to
+			    serve multiple domains. To do so, you need to take the following steps:
+			    <orderedlist>
+				<listitem id="createtable">
+				    <para>
+					Create separate subscriber and location database table
+					for each domain served and name them uniquely.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Configure your script to distinguish between multiple
+					served domains. Use regular expressions for domain
+					matching as described in <xref linkend="redomainmatching">.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Update table names in usrloc and auth actions to reflect
+					names you created in <xref linkend="createtable">.
+				    </para>
+				</listitem>
+				
+			    </orderedlist>
+			</para>
+		    </answer>
+		</qandaentry>
+	    </qandaset>
+	    
+
+	</section> <!-- howtos -->
+
+	<section>
+	    <title>Troubleshooting</title>
+	    <para>
+		This section gathers practices how to deal with errors
+		known to occur frequently.
+	    </para>
+	    <qandaset>
+		<qandaentry>
+		    <question>
+			<para>
+			SIP requests are replied by <application>ser</application> with
+			"483 Too Many Hops" or "513 Message Too Large"
+		        </para>
+		    </question>
+
+		    <answer>
+			<para>
+			    In both cases, the reason is probably an error in
+			    request routing script which caused an infinite loop.
+			    You can easily verify whether this happens by
+			    watching SIP traffic on loopback interface. A typical
+			    reason for misrouting is a failure to match local
+			    domain correctly. If a server fails to recognize
+			    a request for itself, it will try to forward it
+			    to current URI in believe it would forward them
+			    to a foreign domain. Alas, it forwards the request
+			    to itself again. This continues to happen until
+			    value of max_forwards header field reaches zero
+			    or the request grows too big. Solutions is easy:
+			    make sure that domain matching is correctly
+			    configured. See <xref linkend="domainmatching">
+			    for more information how to get it right.
+			</para>
+		    </answer>		    
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    Windows Messenger authentication fails.
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    The most likely reason for this problem is a bug
+			    in Windows Messenger. WM only authenticates if
+			    server name in request URI equals authentication
+			    realm. After a challenge is sent by SIP server,
+			    WM does not resubmit the challenged request at all
+			    and pops up authentication window again.
+			    If you want to authenticate WM, you need to
+			    set up your realm value to equal server name.
+			    If your server has no name, IP address can be used
+			    as realm too.
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    I receive "ERROR: t_newtran: transaction already in process" in my logs.
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    That looks like an erroneous use of tm module in script.
+			    tm can handle only one transaction per request. If you
+			    attempt to instantiate a transaction multiple times,
+			    <application moreinfo="none">ser</application> will complain.
+			    Anytime any of <command moreinfo="none">t_newtran</command>,
+			    <command moreinfo="none">t_relay</command> or 
+			    <command moreinfo="none">t_relay_to</command> actions is
+			    encountered, tm attempts to instantiate a transaction.
+			    Doing so twice fails. Make sure that any of this
+			    commands is called only once during script execution.
+			</para>
+		    </answer>
+		</qandaentry>
+	    </qandaset>
+	</section> <!-- troubleshooting -->
+    </chapter> <!-- operation -->
+
+
+    <chapter>
+	<title>Application Writing</title>
+	<para>
+	    <application moreinfo="none">ser</application> offers several
+	    methods to leverage and extend its abilities. They primarily
+	    differ in how easy-to-use and powerful they are. The easiest
+	    way is to couple <application moreinfo="none">ser</application>
+	    with external applications via the <emphasis>exec</emphasis>
+	    module. This module allows execution of logic and URI manipulation 
+	    by external applications on request receipt. While very
+	    simple, many useful services can be
+	    implemented this way. External applications can be written in
+	    any programming language and do not be aware of SIP at all.
+	    They only care of URIs. For example, an external shell script
+	    may send an email whenever a request for a user arrives.
+	    <example>
+		<title>Using External Scripts</title>
+		<programlisting format="linespecific">
+# send email if a request for johndoe arrives
+if (uri=~"^sip:johndoe@") {
+     exec_msg("echo 'body: call arrived'|mail -s 'call for you' johndoe");
+}
+		</programlisting>
+	    </example>
+	</para>
+	<para>
+	    The other extreme method for extending <application moreinfo="none">ser</application>
+	    capabilities is to write new modules in C. This method takes
+	    deeper understanding of <application moreinfo="none">ser</application>
+	    internals but gains the highest flexibility. Modules can implement
+	    arbitrary brand-new commands upon which <application moreinfo="none">ser</application>
+	    scripts can rely on. Guidelines on module programming can be
+	    found in <application moreinfo="none">ser</application>
+	    programmer's handbook available from iptel.org website.
+	</para>
+	<para>
+	    There is a middle way too, which allows easy service creation
+	    without in-depth knowledge of <application moreinfo="none">ser</application>
+	    internals. <application moreinfo="none">ser</application> allows
+	    external applications to link via its built-in
+	    <emphasis>application FIFO server</emphasis> described in the next section. 
+	</para>
+	<section>
+	    <title>Application FIFO Server</title>
+
+	<para>
+	    Application FIFO server is a very powerful method to program
+	    SIP services. The most valuable benefit
+	    is it works with SIP-unaware applications
+	    written in any programming language. Textual nature of the
+	    FIFO interface allows for easy integration with a lot of
+	    existing programs. Today, <application moreinfo="none">ser</application>'s
+	    complementary web-interface, <application moreinfo="none">serweb</application>,
+	    written in PHP, leverages the FIFO interface when displaying
+	    and changing user location records stored in server's memory.
+	    It uses this interface to send instant messages too, without
+	    any knowledge of underlying <acronym>SIP</acronym> stack.
+	    Another application relying on the FIFO interface is 
+	    <application moreinfo="none">serctl</application>, <application moreinfo="none">ser</application>
+	    management utility. The command-line utility can browse
+	    server's in-memory user-location database, display 
+	    running processes and operational statistics.
+	</para>
+	    <para>
+		The way the FIFO server works is similar to how 
+		<filename moreinfo="none">/proc</filename> filesystem works
+		on some operating systems. It provides a human-readable way
+		to access <application moreinfo="none">ser</application>'s
+		internals. Applications dump their requests into the FIFO
+		server and receive a status report when request processing
+		completes. <application moreinfo="none">ser</application>
+		exports a lot of its functionality located in both the
+		core and external modules through the FIFO server. 
+		</para>
+	    <para>
+		FIFO requests are formed easily. They begin with a command
+		enclosed in colons and followed by name of file or pipe (relative
+		to <filename moreinfo="none">/tmp/</filename> path), to which
+		a reply should be printed. The first request line may be
+		followed by additional lines with command-specific 
+		parameters. For example, the <command moreinfo="none">t_uac</command>
+		FIFO command for initiating a transaction allows 
+		to pass additional header fields and message body to
+		a newly created transaction. Each request is terminated by
+		an empty line. Whole requests must be sent by applications
+		atomically in a single batch to avoid mixing with
+		requests from other applications. Requests are sent to
+		pipe at which <application moreinfo="none">ser</application>
+		listens (filename configured by the <varname>fifo</varname> config
+		file option).
+	    </para>
+	    <para>
+		An easy way to use the FIFO interface is via the
+		<application moreinfo="none">serctl</application>
+		command-line tool. When called along with "fifo",
+		FIFO command name, and optional parameters, the tool
+		generates a FIFO request and prints request result.
+		The following example shows use of this tool with
+		the <command moreinfo="none">uptime</command> and
+		<command moreinfo="none">which</command> commands.
+		<command moreinfo="none">uptime</command> returns
+		server's running time, <command moreinfo="none">which</command>
+		returns list of available FIFO commands. Note that only
+		the built-in FIFO command set is displayed as no modules
+		were loaded in this example.
+		<example>
+		    <title>Use of <application moreinfo="none">serctl</application> 
+		    to Access FIFO Server</title>
+		    <programlisting format="linespecific">
+[jiri@cat test]$ serctl fifo uptime
+Now: Fri Dec  6 17:56:10 2002
+Up Since: Fri Dec  6 17:56:07 2002
+Up time: 3 [sec]
+
+[jiri@cat test]$ serctl fifo which
+ps
+which
+version
+uptime
+print
+		    </programlisting>
+		</example>
+		The request which the <application moreinfo="none">serctl</application>
+		command-line tool sent to FIFO server looked like this:
+		<example>
+		    <title><command moreinfo="none">uptime</command> FIFO Request</title>
+		    <programlisting format="linespecific">
+:uptime:ser_receiver_1114
+		    </programlisting>
+		</example>
+		This request contains no parameters and consists only of
+		command name enclosed in colons and name of file, to which
+		a reply should be printed. FIFO replies consist of a status
+		line followed by optional parameters. The status line consists,
+		similarly to <acronym>SIP</acronym> reply status, of 
+		a three-digit status code and a reason phrase. Status codes
+		with leading digit 2 (200..299) are considered positive,
+		any other values indicate an error. For example, FIFO server
+		returns "500" if execution of a non-existing FIFO command is 
+		requested.
+		<example>
+		    <title>FIFO Errors</title>
+		    <programlisting format="linespecific">
+[jiri@cat sip_router]$ sc fifo foobar
+500 command 'foobar' not available
+		    </programlisting>
+		</example>
+	    </para>
+	    <para>
+		A powerful feature of the FIFO server is the ability to
+		export new commands from modules
+		for use by external 
+		applications. Currently, usrloc module exports FIFO
+		commands for maintaining in-memory user location
+		database and tm module exports FIFO commands for
+		management of SIP transactions. See the 
+		example in 
+		<filename moreinfo="none">examples/web_im/send_im.php</filename>
+		for how to initiate a SIP transaction
+		(instant message)
+		from a PHP script via the FIFO server. This example
+		uses FIFO command 
+		<command moreinfo="none">t_uac</command>. The command
+		is followed by parameters: header fields and 
+		message body. The same FIFO command can be used from
+		other environments to send instant messages too. The
+		following example shows how to send instant messages
+		from a shell script.
+		<example>
+		    <title>Sending IM From Shell Script</title>
+		    <programlisting format="linespecific">
+#!/bin/sh
+#
+# call this script to send an instant message; script parameters
+# will be displayed in message body
+#
+
+cat &gt; /tmp/ser_fifo &lt;&lt;EOF
+:t_uac_from:hh
+NOTIFY
+sip:originator@foo.bar
+sip:receiver@127.0.0.1
+foo: bar_special_header
+x: y
+p_header: p_value
+Contact: &lt;sip:devnull@192.168.0.100:9&gt;
+Content-Type: text/plain; charset=UTF-8
+
+Hello world!!!! $@
+.
+EOF
+		    </programlisting>
+		</example>
+		</para>
+	    <para>
+		See
+		<xref linkend="fiforeference"> for a complete listing
+		of FIFO commands available with current 
+		<application moreinfo="none">ser</application>
+		distribution.
+	    </para>
+<!-- for some reason, this does not work :-(
+
+		<example>
+		    <title>Initiating a SIP Transaction from PHP via FIFO</title>
+
+
+		    <programlisting format="linespecific">
+			<textobject>
+			    <textdata fileref="../../examples/web_im/send_im.php" format="linespecific">
+			</textobject>
+			    
+		    </programlisting>
+
+		    
+		</example>
+-->
+
+	</section> <!-- FIFO server -->
     </chapter>
     
     <chapter>
 	<title>Reference</title>
-	<section>
+	<section id="coreoptions">
 	    <title>Core Options</title>
+	    <para>Core options are located in beginning of configuration file and
+	    affect behaviour of the server.</para>
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<varname>debug</varname> - Set log level, this is number between 0 and 9.
+			<varname>debug</varname> - Set log level, this is number between 0 and 9. Default 
+			is 0.
+			
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<varname>fork</varname> - If set to yes, the server will spawn children. If set to no, the main
-			process will be processing all messages.
+			process will be processing all messages. Default is yes.
 			<note>
-				<para>
-					 Disabling child spawning is useful mainly for
-					 debugging. When <varname>fork</varname> is turned off,
-					 some features are unavailable: Server is able to listen
-					 only at one address, there is no attendant process
-					 and no pid file is generated.
+			    <para>
+				Disabling child spawning is useful mainly for
+				debugging. When <varname>fork</varname> is turned off,
+				some features are unavailable: 
+				there is no attendant process, no pid file is generated,
+				and server listens only at one address. Make sure you
+				are debugging the same interface at which 
+				<application moreinfo="none">ser</application> listens.
+				The easiest way to do so is to set the interface using
+				<varname>listen</varname> option explicitly.
 				</para>
 			</note>
 		    </para>
@@ -1379,7 +3054,7 @@ P-hint: OUTBOUND.			    </programlisting>
 		    <para>
 			<varname>log_stderror</varname> - If set to yes, the server will print its debugging 
 			information to standard error output. If set to no, <command moreinfo="none">syslog</command> 
-			will be used.
+			will be used. Default is no (printing to syslog).
 		    </para>
 		</listitem>
 		<listitem>
@@ -1403,16 +3078,19 @@ P-hint: OUTBOUND.			    </programlisting>
 		<listitem>
 		    <para>
 			<varname>alias</varname> - Add IP addresses or hostnames to list of name aliases.
+			All requests with hostname matching an alias will satisfy the condition 
+			"uri==myself".
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<varname>dns</varname> - Uses dns to check if it is necessary to add a "received=" field to a via.
+			Default is no.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>rev_dns</varname> - Same as dns but use reverse DNS.
+			<varname>rev_dns</varname> - Same as dns but use reverse DNS. Default is no.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1423,34 +3101,38 @@ P-hint: OUTBOUND.			    </programlisting>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>statistics</varname> - File in which statistics should be written.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para>
 			<varname>maxbuffer</varname> - Maximum receive buffer size which will not be exceeded by 
-			the auto-probing procedure even if the OS allows.
+			the auto-probing procedure even if the OS allows. Default value is MAX_RECV_BUFFER_SIZE,
+			which is 256k.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<varname>children</varname> - Specifies how many children should be created when fork is set to yes.
+			Default value is CHILD_NO, which is 8. Running multiple children allows a server to 
+			server multiple requests in parallel when request processing block (e.g., on DNS
+			lookup). Note that <application>ser</application> typically spawns additional
+			processes, such as timer process or FIFO server. If FIFO server is turned on,
+			you can watch running processes using the <application moreinfo="none">serctl</application>
+			utility.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<varname>check_via</varname> - Turn on or off Via host checking when forwarding replies.
+			Default is no.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
 			<varname>syn_branch</varname> - Shall the server use stateful synonym branches? It is faster but not 
-			reboot-safe.
+			reboot-safe. Default is yes.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>mem_log</varname> - Debugging level for memory statistics.
+			<varname>mem_log</varname> - Debugging level for memory statistics. Default is L_DBG --
+			memory statistics are dumped only if <varname>debug</varname> is set high.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1461,7 +3143,11 @@ P-hint: OUTBOUND.			    </programlisting>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>fifo</varname> - FIFO special file pathname, for example "/tmp/ser_fifo".
+			<varname>fifo</varname> - FIFO special file pathname, for example "/tmp/ser_fifo". Default is
+			no filename -- no FIFO server is started then. We recommend to set it so that
+			accompanying applications such as <application moreinfo="none">serweb</application> or
+			<application moreinfo="none">serctl</application> can communicate with
+			<application moreinfo="none">ser</application>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1493,7 +3179,7 @@ P-hint: OUTBOUND.			    </programlisting>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>loadmodule</varname> - Specifies a module to be loaded (for example "/usr/lib/ser/modules/tm.so" 
+			<varname>loadmodule</varname> - Specifies a module to be loaded (for example "/usr/lib/ser/modules/tm.so")
 		    </para>
 		</listitem>
 		<listitem>
@@ -1520,25 +3206,35 @@ P-hint: OUTBOUND.			    </programlisting>
 		</listitem>
 	    </itemizedlist>
 	</section>
-	<section>
+	<section id="builtinref">
 	    <title>Core Commands</title>
 
 
-	    <itemizedlist>
-		<title>Command Blocks</title>
+	    <itemizedlist id="routeblocks">
+		<title>Route Blocks and Process Control</title>
+		<para>
+		    Route block and process control keywords determine
+		    the order in which SIP requests are processed.
+		</para>
 		<listitem>
 		    <para>
-			<command>route</command> - This marks a "route block" in the configuration file. route blocks are basic building blocks of ser scrits. The contain sequences of 
-<application>SER</application> commands enclosed in parenthesses. Configuration files
-can include multiple route blocks, basic  all of them serving as a kind
-of subroutines. By default, route block 0 is entered for received request. 
-Other route blocks may be entered by calling the command <command>route(n)</command>, 
-where n is number of the block.
+			<command>route[number]{...}</command> - This marks a "route block" in configuration files.
+			route blocks are basic building blocks of <application>ser</application> scripts. 
+			Each route block contains a sequence of 
+			<application>SER</application> actions enclosed in braces. Multiple route blocks
+			can be included in a configuration file.
+			When script execution begins on request receipt, 
+			route block number 0 is entered. Other route blocks serve as a kind of sub-routines and 
+			may be entered by calling the action <command>route(n)</command>, 
+			where n is number of the block. The action <command>break</command>
+			exits currently executed route block. It stops script execution for
+			route block number 0 or returns to calling route block otherwise.
 		    </para>
 		    <example>
 			<title>route</title>
 			<programlisting format="linespecific">
-route[1] {
+route[0] {
+        # call routing block number 2
 	route(2);
 }
 
@@ -1550,24 +3246,98 @@ route[2] {
 		</listitem>
 		<listitem>
 		    <para>
-			<command>reply_route</command> - This marks a reply_route block in the configuration statement. <command>reply_route</command> blocks, similarly to <command>route</command> blocks are basic building blocks
-containing multiple <application>SER</application>commands. Unlike the <command>route</command> blocks, <command>reply_route</command> blocks are processed
-on receipt of a reply, and continue in processing original requests. They can currently
-be used only along with TM module and <command>t_on_negative</command> command. Only
-selected actions may be called from <command>reply_route</command> blocks, such as
-URI-rewriting actions.
+			<command>reply_route</command> is used to restart request processing
+			when a negative reply for a previously relayed request is received. It is only
+			used along with tm module, which stores the original requests and
+			can return to their processing later. To activate processing
+			of a <command>reply_route</command> block, call the TM action
+			<command>t_on_negative(route_number)</command> before calling
+			<command moreinfo="none">t_relay</command>. When a negative reply
+			comes back, the desired <command moreinfo="none">reply_route</command>
+			will be entered and processing of the original request may
+			continue. 
+			</para>
+		    <para>
+			The set of actions applicable from within
+			<command moreinfo="none">reply_route</command> blocks is limited.
+			Permitted actions are URI-manipulation actions, logging and
+			sending stateful replies using <command moreinfo="none">t_reply_unsafe</command>.
+			Use of other actions may lead to
+			unpredictable results. (We plan to add syntactical checks in the future
+			so that improper action use will be detected during server start-up.)
 		    </para>
 		    <example>
 			<title>reply_route</title>
 			<programlisting format="linespecific">
 reply_route[1] {
-    rewriteuri("sip:nonsense@iptel.org");
-    append_branch();
+    # for some reason, the original forwarding attempt
+    # failed, try at another URI
+    append_branch("sip:nonsense@iptel.org");
+    # if this new attempt fails too, try another reply_route
     t_on_negative("2");
 }
 </programlisting>
 		    </example>
 		</listitem>
+
+		<listitem>
+		    <para>
+		    	The action <command>break</command> exits currently executed route block. 
+			It stops script execution for route block number 0 or returns to calling 
+			route block otherwise.
+			<note>
+			    <para>
+				We recommend to use <command moreinfo="none">break</command>
+				after any request forwarding or replying. This practice
+				helps to avoid erroneous scripts that 
+				continue execution and mistakenly send another reply or
+				forward a request to another place, resulting in
+				protocol confusion.
+			    </para>
+			</note>
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> break;
+		    </para>
+		</listitem>
+
+		<listitem>
+		    <para>
+			<command>route(n)</command> - call routing block route[n]{...};
+			when the routing block n finishes processing, control is passed
+			back to current block and processing continues.
+		    </para>
+		</listitem>
+
+		<listitem>
+		    <para>
+			<command>if (condition) statement</command> - Conditional statement.
+		    </para>
+		    <example>
+			<title>Use of <command>if</command></title>
+			<programlisting format="linespecific">
+if (method=="REGISTER) {
+    log("register received\n");
+};
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>if - else</command> - If-Else Conditional statement.
+		    </para>
+		    <example>
+			<title>Use of <command>if-else</command></title>
+			<programlisting format="linespecific">
+if (method=="REGISTER) {
+    log("register received\n");
+} else {
+    log("non-register received\n");
+};
+</programlisting>
+		    </example>
+		</listitem>
+
 	    </itemizedlist>
 	    <itemizedlist>
 		<title>Flag Manipulation</title>
@@ -1602,7 +3372,7 @@ if (isflagset(1)) {
 		</listitem>
 	    </itemizedlist>
 	    <itemizedlist>
-		<title>URI Manipulation</title>
+		<title>Manipulation of URI and Destination Set</title>
 		<listitem>
 		    <para>
 			<command>rewritehost | sethost | seth</command> - Rewrite host part of the Request URI.
@@ -1681,7 +3451,18 @@ if (isflagset(1)) {
 			<command>append_branch</command> - Append a new destination to destination set of the message.
 		    </para>
 		    <para>
-			<emphasis>Example:</emphasis> append_branch("sip:foo.bar.com");
+			<example>
+			    <title>Use of <command>append_branch</command></title>
+			    <programlisting format="linespecific">
+# redirect to these two destinations: a@foo.bar and b@foo.bar
+# 1) rewrite the current URI
+rewriteuri("sip:a@foo.bar");
+# 2) append another entry to the destination ser
+append_branch("sip:b@foo.bar");
+# redirect now
+sl_send_reply("300", "redirection");
+			    </programlisting>
+			</example>
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -1690,18 +3471,19 @@ if (isflagset(1)) {
 		<listitem>
 		    <para>
 			<command>forward(uri, port)</command> - Forward the request to given 
-			destination.  The uri and port parameters may take values 'uri:host'
+			destination statelessly.  The uri and port parameters may take special 
+			values 'uri:host'
 			and 'uri:port' respectively, in which case SER forwards to destination
-			set in current URI.
+			set in current URI. All other elements in a destination set are
+			ignored by stateless forwarding.
 		    </para>
 		    <para>
-			<emphasis>Example:</emphasis> forward("foo.bar.com");
+			<emphasis>Example:</emphasis> forward("foo.bar.com"); # port defaults to 5060
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<command>send</command> - Send the message as is to the third party (without Via processing, good for
-			spying).
+			<command>send</command> - Send the message as is to a third party 
 		    </para>
 		    <para>
 			<emphasis>Example:</emphasis> send("foo.bar.com");
@@ -1710,89 +3492,51 @@ if (isflagset(1)) {
 	    </itemizedlist>
 	    <itemizedlist>
 		<title>Logging</title>
-		<listitem>
-		    <para>
-			<command>log</command> - Log a message.
-		    </para>
-		    <para>
-			<emphasis>Example:</emphasis> log("This is a message\n");
-		    </para>
-		</listitem>
-		<listitem>
-		    <para>
-			<command>error</command> - Report and error (same as log but in different log level).
-		    </para>
-		    <para>
-			<emphasis>Example:</emphasis> error("This is an error message\n");
-		    </para>
-		</listitem>
+		
 
+		<listitem>
+		    
+		    <para>
+			<command>log([level], message)</command> - Log a message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> log(1, "This is a message with high log-level set to 1\n");
+		    </para>
+		    <para>
+			Logging is very useful for troubleshooting or attracting administrator's
+			attention to unusual situations. <application moreinfo="none">ser</application>
+			reports log messages to <application moreinfo="none">syslog</application>
+			facility unless it is configured to print them to <filename moreinfo="none">stderr</filename>
+			with the <varname>log_stderr</varname> configuration option. Log messages
+			are only issued if their log level exceeds threshold set with the
+			<varname>debug</varname> configuration option. If log level is omitted,
+			messages are issued at log level 4.
+		</para>
+		</listitem>
 
 	    </itemizedlist>
-	    <itemizedlist>
-		<title>Processing Control</title>
 
-		<listitem>
-		    <para>
-			<command>drop</command> - Drop the request and stop processing.
-		    </para>
-		    <para>
-			<emphasis>Example:</emphasis> drop();
-		    </para>
-		</listitem>
 
-		<listitem>
-		    <para>
-			<command>route(n)</command> - call routing block route[n]{...};
-			when the routing block n finishes processing, control is passed
-			back to current block and processing continues.
-		    </para>
-		</listitem>
 
-		<listitem>
-		    <para>
-			<command>if</command> - Conditional statement.
-		    </para>
-		    <example>
-			<title>if</title>
-			<programlisting format="linespecific">
-if (...) {
-    ...
-};
-</programlisting>
-		    </example>
-		</listitem>
-		<listitem>
-		    <para>
-			<command>else</command> - Else statement.
-		    </para>
-		    <example>
-			<title>else</title>
-			<programlisting format="linespecific">
-if (...) {
-    ...
-} else {
-    ...
-};
-</programlisting>
-		    </example>
-		</listitem>
-	    </itemizedlist>
+
 	    <itemizedlist>
 		<title>Miscellaneous</title>
 		<listitem>
 		    <para>
 			<command>len_gt</command> - If length of the message is greater than value given as parameter, the
-			command will return 1 (indicating true). Otherwise -1 (indicating false) will be returned. It may take 'max_len' as parameter, in which case message size is limited
-to internal buffer size BUF_SIZE (3040 by default).
+			command will return 1 (indicating true). Otherwise -1 (indicating false) will be returned. It may 
+			take 'max_len' as parameter, in which case message size is limited
+			to internal buffer size BUF_SIZE (3040 by default).
 		    </para>
 		    <example>
-			<title>len_gt</title>
+			<title>Use of <command>len_gt</command></title>
 			<programlisting format="linespecific">
-if (len_gt(1000)) {
-    ....
+# deny all requests larger in size than 1 kilobyte
+if (len_gt(1024)) {
+    sl_send_reply("513", "Too big");
+    break;
 };
-</programlisting>
+			</programlisting>
 		    </example>
 		</listitem>
 	    </itemizedlist>
@@ -1801,7 +3545,7 @@ if (len_gt(1000)) {
 	    <title>Command Line Parameters</title>
 	    <note>
 		<para>
-		    Command-Line parameters may be overriden by configuration
+		    Command-Line parameters may be overridden by configuration
 		    file options which take precedence over them.
 		</para>
 	    </note>
@@ -1920,47 +3664,47 @@ if (len_gt(1000)) {
 	</section>
 
 	<section>
-	    <title>serctl command</title>
+	    <title><application>serctl</application> command</title>
 	    <para>
-		serctl is a command-line utility which allows to
-		perform most of management tasks need to operate
+		<application>serctl</application> is a command-line utility which allows to
+		perform most of management tasks needed to operate
 		a server: adding users, changing their passwords,
 		watching server status, etc. Usage of utility is
 		as follows:
 
 		<example>
-		    <title>serctl usage</title>
+		    <title><application>serctl</application> usage</title>
 		    <programlisting format="linespecific">
+
 usage: 
-&lt; subscribers &gt;
-sc add &lt;name&gt; &lt;password&gt; &lt;email&gt; ... add a new subscriber (*)
-sc mail &lt;name&gt; ..................... send an email to a user
-sc rm &lt;name&gt; ....................... delete a user (*)
-sc alias show [&lt;alias&gt;] ............ show aliases
-sc alias rm &lt;alias&gt; ................ remove an alias
-sc alias add &lt;alias&gt; &lt;uri&gt; ......... show aliases
+           * subscribers *
+ serctl add &lt;username&gt; &lt;password&gt; &lt;email&gt; .. add a new subscriber (*)
+ serctl passwd &lt;username&gt; &lt;passwd&gt; ......... change user's password (*)
+ serctl rm &lt;username&gt; ...................... delete a user (*)
+ serctl mail &lt;username&gt; .................... send an email to a user
+ serctl alias show [&lt;alias&gt;] ............... show aliases
+ serctl alias rm &lt;alias&gt; ................... remove an alias
+ serctl alias add &lt;alias&gt; &lt;uri&gt; ............ add an aliases 
 
-&lt; access control lists &gt;
-sc acl show [&lt;user&gt;] ............... show user membership
-sc acl grant &lt;user&gt; &lt;group&gt; ........ grant user membership (*)
-sc acl revoke &lt;user&gt; [&lt;group&gt;] ..... grant user membership(s) (*)
+           * access control lists *
+ serctl acl show [&lt;username&gt;] .............. show user membership
+ serctl acl grant &lt;username&gt; &lt;group&gt; ....... grant user membership (*)
+ serctl acl revoke &lt;username&gt; [&lt;group&gt;] .... grant user membership(s) (*)
 
-&lt; usrloc &gt;
-sc dul &lt;table&gt; &lt;name&gt; .............. delete user's UsrLoc entries
-sc show ............................ show online users
-sc showdb [&lt;name&gt;] ................. show online users flushed in DB
-sc passwd &lt;user&gt; &lt;passwd&gt; .......... change user's password (*)
-sc perm &lt;user&gt; &lt;uri&gt; ............... introduce a permanent UrLoc entry
+           * usrloc *
+ serctl ul show [&lt;username&gt;]................ show in-RAM online users
+ serctl ul rm &lt;username&gt; ................... delete user's UsrLoc entries
+ serctl ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UrLoc entry
+ serctl showdb [&lt;username&gt;] ................ show online users flushed in DB
 
-&lt; server health &gt;
-sc monitor ......................... show internal status
-sc ps .............................. show running processes 
-sc fifo ............................ send raw commands to FIFO
+           * server health *
+ serctl monitor ............................ show internal status
+ serctl ps ................................. show runnig processes 
+ serctl fifo ............................... send raw commands to FIFO
 
-commands labeled with (*) will prompt for a MySQL password
-if the variable PW is set, the password will not be prompted"
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
 
-ACL privileges are: local ld int voicemail free-pstn
  </programlisting>
 		</example>
 	    </para>
@@ -2013,7 +3757,7 @@ Domain Registered Expired
 
 
 
-	<section>
+	<section id="modulereference">
 	    <title>Modules</title>
 	    <para>
 		Module description is currently located in READMEs of
@@ -2026,7 +3770,8 @@ Domain Registered Expired
 			    <emphasis>
 				acc
 			    </emphasis>
-			    -- call accounting using <application moreinfo="none">syslog</application> facility
+			    -- call accounting using <application moreinfo="none">syslog</application> facility.
+			    Depends on tm.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2034,7 +3779,7 @@ Domain Registered Expired
 			    <emphasis>
 				auth
 			    </emphasis>
-			    -- digest authentication
+			    -- digest authentication. Depends on sl and mysql.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2042,7 +3787,15 @@ Domain Registered Expired
 			    <emphasis>
 				exec
 			    </emphasis>
-			    -- execution of shell programs
+			    -- execution of shell programs.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>
+				jabber
+			    </emphasis> -- gateway between SIMPLE and Jabber instant messaging. Depends
+			    on tm and mysql.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2050,15 +3803,22 @@ Domain Registered Expired
 			    <emphasis>
 				maxfwd
 			    </emphasis>
-			    -- checking max-forwards header field
+			    -- checking max-forwards header field.
 			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>msilo</emphasis>
+
+			-- message silo. Store for undelivered instant messages. Depends on tm and mysql.
+			    </para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    <emphasis>
 				mysql
 			    </emphasis>
-			    -- mysql database back-end
+			    -- mysql database back-end.
 			    </para>
 		    </listitem>
 		    <listitem>
@@ -2066,7 +3826,8 @@ Domain Registered Expired
 			    <emphasis>
 				registrar, usrloc
 			    </emphasis>
-			    -- User Location (in-RAM or using mysql)
+			    -- User Location database. Works in in-memory mode or with mysql persistence
+			    support. Depends on sl, and on mysql if configured for use with mysql.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2074,7 +3835,7 @@ Domain Registered Expired
 			    <emphasis>
 				rr
 			    </emphasis>
-			    -- Record Routing (strict)
+			    -- Record Routing (strict and loose)
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2082,7 +3843,7 @@ Domain Registered Expired
 			    <emphasis>
 				sl
 			    </emphasis>
-			    -- stateless User Agent server
+			    -- stateless User Agent server.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2090,7 +3851,7 @@ Domain Registered Expired
 			    <emphasis>
 				sms
 			    </emphasis>
-			    -- SIMPLE/SMS gateway
+			    -- SIMPLE/SMS gateway. Depends on tm. Takes special hardware.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -2098,7 +3859,7 @@ Domain Registered Expired
 			    <emphasis>
 				textops
 			    </emphasis>
-			    -- textual request operations
+			    -- textual request operations.
 			</para>
 		    </listitem>
 		    <listitem>			
@@ -2106,31 +3867,587 @@ Domain Registered Expired
 			    <emphasis>
 				tm
 			    </emphasis>
-			    -- transaction manager (stateful processing)
+			    -- transaction manager (stateful processing).
 			</para>
 		    </listitem>
 		</itemizedlist>
 	    </para>
+	    <para>
+		The most frequently used actions exported by modules are summarized
+		in <xref linkend="moduleactions">. For a full explanation of 
+		module actions, see documentation in respective module directories
+		in source distribution of <application moreinfo="none">ser</application>.
+	    </para>
+	    <table id="moduleactions">
+		<title>Frequently Used Module Actions</title>
+		<tgroup cols="4">
+		    <thead>
+			<row>			    
+			    <entry>
+				Command
+			    </entry>
+			    <entry>
+				Modules
+			    </entry>
+			    <entry>
+				Parameters
+			    </entry>
+			    <entry>
+				Comments
+			    </entry>
+			</row>
+		    </thead>
+
+		    <tbody>
+			<row>
+			    <entry>
+				addRecordRoute
+			    </entry>
+			    <entry>
+				rr
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				record-route request
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				append_hf
+			    </entry>
+			    <entry>
+				textops
+				</entry>
+			    <entry>
+				header field
+				</entry>
+			    <entry>
+				append a header field to the end of request's header
+				</entry>
+			    </row>
+			<row>
+			    <entry>
+				check_from
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				check if username in from header field matches authentication id
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				check_to
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				check if username in To header field matched authentication id
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				exec_uri
+			    </entry>
+			    <entry>
+				exec
+			    </entry>
+			    <entry>
+				command name
+			    </entry>
+			    <entry>
+				execute an external command and replace destination set with
+				its output
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				is_in_group
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				group name
+			    </entry>
+			    <entry>
+				check if a user, as identified by digest credentials, 
+				is a member of a group`
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				is_user
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				user id
+			    </entry>
+			    <entry>
+				returns true if request credentials belong to a user
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				is_user_in
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				user, group
+			    </entry>
+			    <entry>
+				check if user is member of a group; user can be gained
+				from request URI ("Request-URI"), To header field ("To"),
+				From header field ("From") or digest credentials
+				("Credentials")
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				lookup
+			    </entry>
+			    <entry>
+				usrloc
+			    </entry>
+			    <entry>
+				table name
+			    </entry>
+			    <entry>
+				attempt to translate request URI using user location database;
+				returns false if no contact for user found;
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				mf_process_maxfwd_header
+			    </entry>
+			    <entry>
+				maxfwd
+			    </entry>
+			    <entry>
+				default max_forwards value
+			    </entry>
+			    <entry>
+				return true, if request's max_forwards value has not
+				reached zero yet; if none is included in the request,
+				set it to value in parameter
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				proxy_authorize
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				realm, subscriber table
+			    </entry>
+			    <entry>
+				returns true if requests contains proper credentials, false
+				otherwise
+			    </entry>
+			</row>
+
+
+
+
+
+
+			<row>
+			    <entry>
+				proxy_challenge
+			    </entry>
+			    <entry>
+				auth
+			    </entry>
+			    <entry>
+				realm, qop
+			    </entry>
+			    <entry>
+				challenge user to submit digest credentials; qop may be turned
+				off for backwards compatibility with elderly implementations
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				rewriteFromRoute
+			    </entry>
+			    <entry>
+				rr
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				strict routing: use Route header field if present in
+				request
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				save
+			    </entry>
+			    <entry>
+				usrloc
+			    </entry>
+			    <entry>
+				table name
+			    </entry>
+			    <entry>
+				for use in registrar: save content of Contact header fields
+				in user location database and reply with 200
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				search
+			    </entry>
+			    <entry>
+				textops
+			    </entry>
+			    <entry>
+				regular expression
+			    </entry>
+			    <entry>
+				search for a regular expression match in request
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				sl_send_reply
+			    </entry>
+			    <entry>
+				sl
+			    </entry>
+			    <entry>
+				status code, reason phrase
+			    </entry>
+			    <entry>
+				reply a request statelessly
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				t_relay
+			    </entry>
+			    <entry>
+				tm
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				stateful forwarding to locations in current destination set
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				t_on_negative
+			    </entry>
+			    <entry>
+				tm
+			    </entry>
+			    <entry>
+				reply_route number
+			    </entry>
+			    <entry>
+				set reply_route block which shall be entered if stateful
+				forwarding fails
+			    </entry>
+			</row>
+
+			<row>
+			    <entry>
+				t_replicate
+			    </entry>
+			    <entry>
+				tm
+			    </entry>
+			    <entry>
+				host, port number
+			    </entry>
+			    <entry>
+				replicate a request to a destination
+			    </entry>
+			</row>
+
+
+		    </tbody>
+		</tgroup>
+	    </table>
+	</section> <!-- modules -->
+	<section id="fiforeference">
+	    <title>FIFO Commands Reference</title>
+	    <para>
+		This section lists currently supported FIFO commands. Some of them are
+		built-in in <application moreinfo="none">ser</application> core, whereas
+		others are exported by modules. The most important exporters are now
+		tm and usrloc module. tm FIFO commands allow users to initiate transactions
+		without knowledge of underlying SIP stack. usrloc FIFO commands allow
+		users to access in-memory user-location database. Note that that is the
+		only way how to affect content of the data-base in real-time. Changes
+		to MySql database do not affect in-memory table unless <application moreinfo="none">ser</application>
+		is restarted.
+	    </para>
+	    <table>
+		
+		<title>FIFO Commands</title>
+		<tgroup cols="4">
+		    <thead>
+			<row>
+			    <entry>
+				Command
+			    </entry>
+			    <entry>
+				Module
+			    </entry>
+			    <entry>
+				Parameters
+			    </entry>			    
+			    <entry>
+				Comments
+			    </entry>
+			</row>
+		    </thead>
+		    <tbody>
+			<row>
+			    <entry>
+				ps
+			    </entry>
+			    <entry>
+				core
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				prints running <application moreinfo="none">ser</application> processes
+			    </entry>
+			</row>
+			<row>
+			    <entry>which</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints list of available FIFO commands</entry>
+			</row>
+			<row>
+			    <entry>version</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints version of <application moreinfo="none">ser</application></entry>
+			</row>
+			<row>
+			    <entry>uptime</entry>
+			    <entry>core</entry>
+			    <entry>none</entry>
+			    <entry>prints <application moreinfo="none">ser</application>'s running time</entry>
+			</row>
+			<row>
+			    <entry>sl_stats</entry>
+			    <entry>sl</entry>
+			    <entry>none</entry>
+			    <entry>prints statistics for sl module</entry>
+			</row>
+			<row>
+			    <entry>t_stats</entry>
+			    <entry>tm</entry>
+			    <entry>none</entry>
+			    <entry>print statistics for tm module</entry>
+			</row>
+			<row>
+			    <entry>t_hash</entry>
+			    <entry>tm</entry>
+			    <entry>none</entry>
+			    <entry>print occupation of transaction table (mainly for debugging)</entry>
+			</row>
+			<row>
+			    <entry>t_uac_from</entry>
+			    <entry>tm</entry>
+			    <entry>method, sender's URI, destination URI, optional header fields
+			    terminated by empty line, message body terminated by a line with
+			    a single dot</entry>
+			    <entry>initiate a transaction</entry>
+			</row>
+			<row>
+			    <entry>ul_stats</entry>
+			    <entry>usrloc</entry>
+			    <entry>none</entry>
+			    <entry>print usrloc statistics</entry>
+			</row>
+			<row>
+			    <entry>ul_rm</entry>
+			    <entry>usrloc</entry>
+			    <entry>table name, user name</entry>
+			    <entry>remove all user's contacts from user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_rm_contact</entry>
+			    <entry>usrloc</entry>
+			    <entry>table name, user name, contact</entry>
+			    <entry>remove a user's contact from user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_dump</entry>
+			    <entry>usrloc</entry>
+			    <entry>none</entry>
+			    <entry>print content of in-memory user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_flush</entry>
+			    <entry>usrloc</entry>
+			    <entry>none</entry>
+			    <entry>flush content of in-memory user-location cache in
+			    persistent database (MySQL)</entry>
+			</row>
+			<row>
+			    <entry>ul_add</entry>
+			    <entry>usrloc</entry>
+			    <entry>table name, user name, contact, expiration, priority (q)</entry>
+			    <entry>insert a contact address in user-location database</entry>
+			</row>
+			<row>
+			    <entry>ul_show_contact</entry>
+			    <entry>usrloc</entry>
+			    <entry>table, user name</entry>
+			    <entry>show user's contact addresses in user-location database</entry>
+			</row>
+		    </tbody>
+		</tgroup>
+	    </table>
 	</section>
-    </chapter>
+	<section>
+	    <title>Used Database Tables</title>
+	    <para>
+		<application moreinfo="none">ser</application> includes MySQL support
+		to guarantee data persistence across server reboots and storage
+		of users' web environment. The data stored in
+		the database include user profiles, access control lists, user location,
+		etc. Note that users are not supposed to alter the data directly, as it
+		could introduce inconsistency between data on persistence storage and
+		in server's memory.
+		The following list enumerates used tables and explains their purpose.
+
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    subscriber -- table of users. It includes user names and
+			    security credentials, as well as additional user information.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    reserved -- reserved user names. <application moreinfo="none">serweb</application>
+			    does not permit creation of accounts with name on this list.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    phonebook -- user's personal phonebooks. Accessible via
+			    <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    pending -- table of unconfirmed subscription requests. Used by
+			    <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    missed_calls -- table of missed calls. Can be fed by acc modules
+			    if mysql support is turned on. Displayed by <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    location -- user contacts. Typically updated through
+			    <application moreinfo="none">ser</application>'r registrar
+			    functionality.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    grp -- group membership. Used by auth module to determine
+			    whether a user belongs to a group.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    event -- allows users to subscribe to additional services.
+			    Currently unused.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    aliases -- keeps track of alternative user names.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    active_sessions -- keeps track of currently active web sessions.
+			    For use by <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    acc -- keeps track of accounted calls.  Can be fed by acc module
+			    if mysql support is turned on. Displayed by <application moreinfo="none">serweb</application>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    config -- maintains attribute-value pairs for keeping various information.
+			    Currently not used.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    silo -- message store for instant messages which could not have been
+			    delivered.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    version -- keeps version number of each table definition.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		
+	    </para>
+	</section>
+    </chapter> <!-- reference -->
     
     <!-- TODO
 
 
     MISSING
-    - route
     - modules
     - installation
-    - comparing URIs; myself
 
     FAQ: 
     - bandwidth, FW/NATs
 
     HOWTO
-    - implementing dialing plans
     - serving multiple domains
     - ACLs
-    - and other operational guidelines
     - when to use stateless versus stateful
 
     PROGRAMMING TM
