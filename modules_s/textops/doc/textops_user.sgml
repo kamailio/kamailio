@@ -189,7 +189,7 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 		<title><function>subst</function> usage</title>
 		<programlisting format="linespecific">
 ...
-# adds 3463 prefic to numeric uris, and save the original uri (\0 match)
+# adds 3463 prefix to numeric uris, and save the original uri (\0 match)
 # as a parameter: orig_uri (just an example)
 if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 
