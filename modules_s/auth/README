@@ -174,3 +174,13 @@ Desc:   Checks if the username given in credentials and username in
         From header field are equal
 	Call after *_authorize, otherwise the username is unverified.
 
+
+Name:   consume_credentials
+Params: -
+Desc:   Removes previously authorized credentials from the message.
+        The function must be called after {www,proxy}_authorize.
+
+
+Name:   is_user_in
+Params: -
+Desc:   Checks, if the user is in specified table
