@@ -118,8 +118,8 @@ Options:\n\
 /* print compile-time constants */
 void print_ct_constants()
 {
-	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d, MAX_URI_SIZE %d\n",
-		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE );
+	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d, MAX_URI_SIZE %d, MAX_PROCESSES %d\n",
+		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, MAX_PROCESSES );
 }
 
 /* debuging function */
@@ -166,6 +166,7 @@ int addresses_no=0;                    /* number of names/ips */
 
 /* ipc related globals */
 int process_no = 0;
+process_bm_t process_bit = 0;
 #ifdef ROUTE_SRV
 #endif
 
@@ -261,6 +262,7 @@ int main_loop()
 				if (pid==0){
 					/* child */
 					/* timer!*/
+					process_bit = 0;
 					for(;;){
 						sleep(TIMER_TICK);
 						timer_ticker();
@@ -272,6 +274,7 @@ int main_loop()
 		/* main process, receive loop */
 		is_main=1;
 		pids[0]=getpid();
+		process_bit = 1;
 		process_no=0; /*main process number*/
 		udp_rcv_loop();
 	}else{
@@ -286,6 +289,7 @@ int main_loop()
 				if (pid==0){
 					/* child */
 					process_no=i+1; /*0=main*/
+					process_bit = 1 << i;
 #ifdef STATS
 					setstats( i );
 #endif
@@ -299,6 +303,7 @@ int main_loop()
 	}
 	/*this is the main process*/
 	pids[process_no]=getpid();
+	process_bit = 0;
 	is_main=1;
 	if (timer_list){
 		for(;;){
@@ -569,6 +574,11 @@ int main(int argc, char** argv)
 
 	
 	if (children_no<=0) children_no=CHILD_NO;
+	else if (children_no >= MAX_PROCESSES ) {
+		fprintf(stderr, "ERROR: too many children processes configured; maximum is %d\n",
+			MAX_PROCESSES-1 );
+		goto error;
+	}
 	/*alloc pids*/
 #ifdef SHM_MEM
 	pids=shm_malloc(sizeof(int)*children_no);

@@ -31,17 +31,15 @@ void free_cell( struct cell* dead_cell )
 		/* outbound requests*/
 		DBG("DEBUG: free_cell: outbound_request[%d] %p\n",i,dead_cell->outbound_request[i]);
 		if ( rb=dead_cell->outbound_request[i] )
-      		{
-/*
-			if (rb->retr_buffer) shm_free( rb->retr_buffer );
+   		{
+			if (rb->retr_buffer) shm_free_unsafe( rb->retr_buffer );
 	 		dead_cell->outbound_request[i] = NULL;
-*/
          		shm_free_unsafe( rb );
-      		}
-      		/* outbound requests*/
-      		DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
-      		if ( dead_cell -> inbound_response[i] )
-         		sip_msg_free_unsafe( dead_cell->inbound_response[i] );
+   		}
+   		/* outbound requests*/
+   		DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
+   		if ( dead_cell -> inbound_response[i] )
+       		sip_msg_free_unsafe( dead_cell->inbound_response[i] );
    	}
    	/* mutex */
    	/* release_cell_lock( dead_cell ); */

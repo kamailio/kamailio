@@ -1,11 +1,13 @@
 /*
- *  $Id $
+ *  $Id$
  */
 
 
 
 #ifndef config_h
 #define config_h
+
+#include "types.h"
 
 /* default sip port if none specified */
 #define SIP_PORT 5060
@@ -62,12 +64,17 @@
 #define MAX_BUCKET		15
 
 /* receive buffer size -- preferably set low to
-   avoid terror of excessively huge messages
+   avoid terror of excessively huge messages; they are
+   useless anyway
 */
 #define BUF_SIZE (MAX_FIXED_BLOCK-32)
 
-/* forwarding */
+/* forwarding  -- Via buffer dimensioning */
 #define MAX_VIA_LINE_SIZE	240
 #define MAX_RECEIVED_SIZE	57
+
+/* maximum number of processes is constrained by capacity of
+   process bitmaps */
+#define MAX_PROCESSES (sizeof( process_bm_t) * 8 )
 
 #endif

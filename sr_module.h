@@ -12,6 +12,7 @@ typedef  struct module_exports* (*module_register)();
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
 typedef  int (*fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
+typedef  void (*onbreak_function)(struct sip_msg*);
 typedef void (*destroy_function)();
 
 struct module_exports{
@@ -29,6 +30,7 @@ struct module_exports{
 	destroy_function destroy_f; /*function called when the module should
 								  be "destroyed", e.g: on ser exit;
 								  can be null */
+	onbreak_function onbreak_f;
 };
 
 struct sr_module{

@@ -130,9 +130,10 @@ int t_lookup_request( struct sip_msg* p_msg )
 
 found:
 	T=p_cell;
-	ref_T( T );
+	/* ref_T( T ); */
+	T_REF( T );
 	DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: "
-			"transaction found ( T=%p , ref=%d)\n",T,T->ref_counter);
+			"transaction found ( T=%p , ref=%x)\n",T,T->ref_bitmap);
 	unlock( hash_table->entrys[hash_index].mutex );
 	return 1;
 }
@@ -285,9 +286,10 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
           T = p_cell;
           *p_branch = branch_id;
           /* T->ref_counter ++; */
-		  ref_T( T );
+		  /* ref_T( T ); */
+			T_REF( T );
           unlock( hash_table->entrys[hash_index].mutex );
-          DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching: reply matched (T=%p, ref=%d)!\n",T,T->ref_counter);
+          DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching: reply matched (T=%p, ref=%x)!\n",T,T->ref_bitmap);
         return 1;
       }
       /* next cell */
@@ -324,8 +326,10 @@ int t_check( struct sip_msg* p_msg , int *param_branch)
    if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
    {
       global_msg_id = p_msg->id;
+	/*
       if ( T && T!=T_UNDEFINED )
          unref_T(T);
+	*/
       T = T_UNDEFINED;
       /* transaction lookup */
      if ( p_msg->first_line.type==SIP_REQUEST ) {

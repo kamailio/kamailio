@@ -46,13 +46,54 @@ extern struct s_table*  hash_table;
 	__FUNCTION__, __LINE__ ); })
 
 
-/* to avoid too many locks/unlocks, we gave up using separate locks
-   for cells and use those of transaction table entries
+/* 
+  macros for reference bitmap (lock-less process non-exclusive ownership) 
 */
+#define T_IS_REFED(_T_cell) ((_T_cell)->ref_bitmap)
+#define T_REFCOUNTER(_T_cell) \
+	( { int _i=0; \
+		process_bm_t _b=(_T_cell)->ref_bitmap; \
+		while (_b) { \
+			if ( (_b) & 1 ) _i++; \
+			(_b) >>= 1; \
+		} ;\
+		(_i); \
+	 } )
+		
 
-#define DBG_REF(_action, _t) DBG("DEBUG: XXXXX %s (%s:%d): T=%p , ref=%d\n",\
-			(_action), __FUNCTION__, __LINE__, (_t),(_t)->ref_counter);
+#ifdef EXTRA_DEBUG
+#	define DBG_REF(_action, _t) DBG("DEBUG: XXXXX %s (%s:%d): T=%p , ref (bm=%x, cnt=%d)\n",\
+			(_action), __FUNCTION__, __LINE__, (_t),(_t)->ref_bitmap, T_REFCOUNTER(_t));
+#	define T_UNREF(_T_cell) \
+	( { \
+		DBG_REF("unref", (_T_cell)); \
+		if (!T_IS_REFED(_T_cell)) { \
+			DBG("ERROR: unrefering unrefered transaction %p from %s , %s : %d\n", \
+				(_T_cell), __FUNCTION__, __FILE__, __LINE__ ); \
+			abort(); \
+		} \
+		(_T_cell)->ref_bitmap &= ~process_bit; \
+	} )
 
+#	define T_REF(_T_cell) \
+	( { \
+		DBG_REF("ref", (_T_cell));	 \
+		if (T_IS_REFED(_T_cell)) { \
+			DBG("ERROR: refering already refered transaction %p from %s , %s : %d\n", \
+				(_T_cell), __FUNCTION__, __FILE__, __LINE__ ); \
+			abort(); \
+		} \
+		(_T_cell)->ref_bitmap |= process_bit; \
+	} )
+#else
+#	define T_UNREF(_T_cell) ({ (_T_cell)->ref_bitmap &= ~process_bit; })
+#	define T_REF(_T_cell) ({ (_T_cell)->ref_bitmap |= process_bit; })
+#endif
+
+
+	
+
+#ifdef _OLD_XX
 #define unref_T(_T_cell) \
 	( {\
 		lock( hash_table->entrys[(_T_cell)->hash_index].mutex );\
@@ -67,6 +108,7 @@ extern struct s_table*  hash_table;
 */
 #define ref_T(_T_cell) ({ ((_T_cell)->ref_counter++); \
 		DBG_REF("ref", (_T_cell));	})
+#endif
 
 
 int   tm_startup();

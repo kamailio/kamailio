@@ -1,5 +1,5 @@
 /*
- * $Id*
+ * $Id$
  *
  * global variables
  *
@@ -8,6 +8,8 @@
 
 #ifndef globals_h
 #define globals_h
+
+#include "types.h"
 
 #define NO_DNS     0
 #define DO_DNS     1
@@ -32,6 +34,8 @@ extern int check_via;
 extern int received_dns;
 extern int loop_checks;
 extern int process_no;
+
+extern process_bm_t process_bit;
 extern int *pids;
 
 extern int cfg_errors;

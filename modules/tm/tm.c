@@ -30,6 +30,8 @@ static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
 
+static void w_onbreak(struct sip_msg* msg) { t_unref(msg, NULL, NULL); }
+
 static struct module_exports nm_exports= {
 	"tm_module",
 	(char*[]){			"t_add_transaction",
@@ -77,7 +79,8 @@ static struct module_exports nm_exports= {
 		},
 	9,
 	(response_function) t_on_reply_received,
-	(destroy_function) tm_shutdown
+	(destroy_function) tm_shutdown,
+	w_onbreak
 };
 
 

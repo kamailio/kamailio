@@ -174,7 +174,7 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
 
    T = new_cell;
-   T->ref_counter =1;
+	T_REF(T);
    return 1;
 }
 
@@ -451,7 +451,8 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	msg_class=REPLY_CLASS(p_msg);
 	relay = t_should_relay_response( T , msg_status );
 	if (relay && !(clone=sip_msg_cloner( p_msg ))) {
-		t_unref( p_msg, NULL, NULL );
+		T_UNREF( T );
+		/* t_unref( p_msg, NULL, NULL ); */
 		return 0;
 	}
 
@@ -481,7 +482,8 @@ int t_on_reply_received( struct sip_msg  *p_msg )
            		{
                			LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
 						if (clone ) sip_msg_free( clone );
-						t_unref( p_msg, NULL, NULL );
+						/* t_unref( p_msg, NULL, NULL ); */
+						T_UNREF( T );
                			return 0;
            		}
        		}
@@ -493,7 +495,8 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 	/* if the incoming response code is not reliable->drop it*/
 	if (!relay) {
-		t_unref( p_msg, NULL, NULL );
+		/* t_unref( p_msg, NULL, NULL ); */
+		T_UNREF( T );
 		return 0;
 	}
 
@@ -522,11 +525,13 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    	}
 
 	/* nothing to do for the ser core */
-	t_unref( p_msg, NULL, NULL );
+	/* t_unref( p_msg, NULL, NULL ); */
+	T_UNREF( T );
 	return 0;
 
 error:
-	t_unref( p_msg, NULL, NULL );
+	/* t_unref( p_msg, NULL, NULL ); */
+	T_UNREF( T );
 	T->inbound_response[branch]=NULL;
 	sip_msg_free( clone );
 	/* don't try to relay statelessly on error */
@@ -577,7 +582,7 @@ int t_unref( struct sip_msg* p_msg, char* foo, char* bar )
 {
 	if (T==T_UNDEFINED || T==T_NULL)
 		return -1;
-	unref_T(T);
+	T_UNREF( T );
 	T=T_UNDEFINED;
 	return 1;
 }
@@ -1091,16 +1096,16 @@ void delete_cell( struct cell *p_cell )
 	}
 #endif
 	/* still in use ... don't delete */
-	if ( p_cell->ref_counter ) {
+	if ( T_IS_REFED(p_cell) ) {
 #ifdef	EXTRA_DEBUG
-		if (p_cell->ref_counter>1) {
+		if (T_REFCOUNTER(p_cell)>1) {
 			DBG("DEBUG: while debugging with a single process, ref_count > 1\n");
 			DBG("DEBUG: transaction =%p\n", p_cell );
 			abort();
 		}
 #endif
-		DBG("DEBUG: delete_cell: t=%p post for delete (%d)\n",
-			p_cell,p_cell->ref_counter);
+		DBG("DEBUG: delete_cell: t=%p post for delete (refbitmap %x, refcount %d)\n",
+			p_cell,p_cell->ref_bitmap, T_REFCOUNTER(p_cell));
 		/* it's added to del list for future del */
 		set_timer( hash_table, &(p_cell->dele_tl), DELETE_LIST );
 	} else {
