@@ -40,3 +40,11 @@ Desc:	append txt to the reply?
 Name:	append_hf(txt)
 Params:	txt - string (usually a new header)
 Desc:	appends txt after the last header field
+
+Known Limitations:
+------------------
+search ignores folded lines. For example, search("(From|f):.*@foo.bar")
+doesn't match the following From header field:
+
+From: medabeda 
+ <sip:medameda@foo.bar>;tag=1234
