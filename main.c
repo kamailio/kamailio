@@ -310,10 +310,6 @@ int daemonize(char*  name)
 
 	p=-1;
 
-	if (log_stderr==0)
-		openlog(name, LOG_PID|LOG_CONS, LOG_LOCAL1 /*LOG_DAEMON*/);
-		/* LOG_CONS, LOG_PERRROR ? */
-
 
 	if (chroot_dir&&(chroot(chroot_dir)<0)){
 		LOG(L_CRIT, "Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
@@ -388,9 +384,13 @@ int daemonize(char*  name)
 	
 	/* close any open file descriptors */
 	for (r=0;r<MAX_FD; r++){
-			if ((r==3) && log_stderr)  continue;
+			if ((r==2) && log_stderr)  continue;
 			close(r);
 	}
+	
+	if (log_stderr==0)
+		openlog(name, LOG_PID|LOG_CONS, LOG_LOCAL1 /*LOG_DAEMON*/);
+		/* LOG_CONS, LOG_PERRROR ? */
 	return  0;
 
 error:
