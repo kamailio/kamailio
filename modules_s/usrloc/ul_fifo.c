@@ -203,6 +203,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	udomain_t* d;
 	float q_f;
 	int exp_i, rep_i;
+	char* at;
 
 	str table, user, contact, expires, q, rep;
 
@@ -220,13 +221,21 @@ static int ul_add(FILE* pipe, char* response_file)
 		return 1;
 	}
 
-	if (use_domain && !memchr(user_s, '@', user.len)) {
-		fifo_reply(response_file,
-			   "400 ul_add: username@domain expected\n");
-		LOG(L_ERR, "ERROR: ul_add: username@domain expected\n");
-		return 1;
+	at = memchr(user_s, '@', user.len);
+
+	if (use_domain) {
+		if (!at) {
+			fifo_reply(response_file,
+				   "400 ul_add: username@domain expected\n");
+			LOG(L_ERR, "ERROR: ul_add: Domain missing\n");
+			return 1;
+		}
+	} else {
+		if (at) {
+			user.len = at - user_s;
+		}
 	}
-	
+
 	if (!read_line(contact_s, MAX_CONTACT, pipe, &contact.len) || contact.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_add: contact expected\n");
@@ -311,6 +320,7 @@ int static ul_rm( FILE *pipe, char *response_file )
 	char user[MAX_USER];
 	udomain_t* d;
 	str aor, t;
+	char* at;
 
 	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
 		fifo_reply(response_file, 
@@ -325,11 +335,19 @@ int static ul_rm( FILE *pipe, char *response_file )
 		return 1;
 	}
 
-	if (use_domain && !memchr(user, '@', aor.len)) {
-		fifo_reply(response_file,
-			   "400 ul_rm: username@domain expected\n");
-		LOG(L_ERR, "ERROR: ul_rm: username@domain expected\n");
-		return 1;
+	at = memchr(user, '@', aor.len);
+
+	if (use_domain) {
+		if (!at) {
+			fifo_reply(response_file,
+				   "400 ul_rm: username@domain expected\n");
+			LOG(L_ERR, "ERROR: ul_rm: Domain missing\n");
+			return 1;
+		}
+	} else {
+		if (at) {
+			aor.len = at - user;
+		}
 	}
 
 	aor.s = user;
@@ -369,6 +387,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 	ucontact_t* con;
 	str aor, t, c;
 	int res;
+	char* at;
 
 	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
 		fifo_reply(response_file, 
@@ -383,14 +402,22 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 		return 1;
 	}
 
-	if (use_domain && !memchr(user, '@', aor.len)) {
-		fifo_reply(response_file,
-			   "400 ul_rm_contact: user@domain expected\n");
-		LOG(L_ERR, "ERROR: ul_rm_contact: user@domain expected\n");
-		return 1;
-	};
-	
-	
+	at = memchr(user, '@', aor.len);
+
+	if (use_domain) {
+		if (!at) {
+			fifo_reply(response_file,
+				   "400 ul_rm_contact: user@domain expected\n");
+			LOG(L_ERR, "ERROR: ul_rm_contact: Domain missing\n");
+			return 1;
+		}
+	} else {
+		if (at) {
+			aor.len = at - user;
+		}
+	}
+
+
 	if (!read_line(contact, MAX_CONTACT, pipe, &c.len) || c.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_rm_contact: contact expected\n");
@@ -492,6 +519,7 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 	urecord_t* r;
 	int res;
 	str t, aor;
+	char* at;
 
 	if (!read_line(table, MAX_TABLE, pipe, &t.len) || t.len ==0) {
 		fifo_reply(response_file, 
@@ -506,13 +534,21 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 		return 1;
 	}
 	
-	if (use_domain && !memchr(user, '@', aor.len)) {
-		fifo_reply(response_file,
-			   "400 ul_show_contact: user@domain expected\n");
-		LOG(L_ERR, "ERROR: ul_show_contact: Domain missing\n");
-		return 1;
+	at = memchr(user, '@', aor.len);
+
+	if (use_domain) {
+		if (!at) {
+			fifo_reply(response_file,
+				   "400 ul_show_contact: user@domain expected\n");
+			LOG(L_ERR, "ERROR: ul_show_contact: Domain missing\n");
+			return 1;
+		}
+	} else {
+		if (at) {
+			aor.len = at - user;
+		}
 	}
-	
+
 	aor.s = user;
 	t.s = table;
 	
