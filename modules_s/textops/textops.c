@@ -53,12 +53,14 @@
  *  2003-09-11  updated to new build_lump_rpl() interface (bogdan)
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  *  2004-05-09: append_time introduced (jiri)
+ *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
  */
 
 
 
 
 #include "../../comp_defs.h"
+#include "../../action.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../data_lump.h"
@@ -66,6 +68,7 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "../../re.h"
+#include "../../parser/parse_uri.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,6 +94,7 @@ static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
 static int subst_f(struct sip_msg*, char*, char*);
 static int subst_uri_f(struct sip_msg*, char*, char*);
+static int subst_user_f(struct sip_msg*, char*, char*);
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int replace_all_f(struct sip_msg* msg, char* key, char* str);
@@ -130,6 +134,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"subst_uri",            subst_uri_f,     1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+	{"subst_user",           subst_user_f,    1, fixup_substre,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE},
 	{"append_time",		append_time_f,		0, 0,
 		REQUEST_ROUTE },
 	{0,0,0,0,0}
@@ -379,7 +385,55 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 	return -1; /* false, no subst. made */
 }
 	
-	
+
+
+/* sed-perl style re: s/regular expression/replacement/flags, like
+ *  subst but works on the user part of the uri */
+static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
+{
+	int rval;
+	str ruri;
+	struct sip_uri uri;
+	str* result;
+	struct subst_expr* se;
+	struct action act;
+
+	if (msg->new_uri.len <= 0 && msg->first_line.u.request.uri.len <= 0) {
+		LOG(L_ERR, "subst_user(): URI is missed\n");
+		return -1;
+	}
+	ruri.len = msg->new_uri.s ? msg->new_uri.len :
+	    msg->first_line.u.request.uri.len;
+	ruri.s = alloca(ruri.len);
+	if (ruri.s == NULL) {
+		LOG(L_ERR, "subst_user(): No memory left\n");
+		return -1;
+	}
+	memcpy(ruri.s, msg->new_uri.s ? msg->new_uri.s :
+	    msg->first_line.u.request.uri.s, ruri.len);
+	if (parse_uri(ruri.s, ruri.len, &uri) < 0) {
+		LOG(L_ERR, "subst_user(): can't parse request URI\n");
+		return -1;
+	}
+
+	se=(struct subst_expr*)subst;
+	uri.user.s[uri.user.len] = '\0';
+	result=subst_str(uri.user.s, msg, se); /* pkg malloc'ed result */
+	if (result == NULL) {
+		LOG(L_ERR, "subst_user(): subst_str() failed\n");
+		return -1;
+	}
+	result->s[result->len] = '\0';
+	memset(&act, 0, sizeof(act)); /* be on the safe side */
+	act.type = SET_USER_T;
+	act.p1_type = STRING_ST;
+	act.p1.string = result->s;
+	rval = do_action(&act, msg);
+	pkg_free(result);
+	return rval;
+}
+
+
 
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {

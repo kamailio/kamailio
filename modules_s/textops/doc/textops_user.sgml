@@ -202,6 +202,35 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 
 	<section>
 	    <title>
+		<function moreinfo="none">subst_user('/re/repl/flags')</function>
+	    </title>
+	    <para>
+		Runs the re substitution on the message uri (like subst_uri but works
+		 only on the user portion of the uri)
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>'/re/repl/flags'</emphasis> - sed like regular
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>subst</function> usage</title>
+		<programlisting format="linespecific">
+...
+# adds 3463 prefix to uris ending with 3642 (just an example)
+if (subst_user('/3642$/36423463/')){$
+
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
 		<function moreinfo="none">append_to_reply(txt)</function>
 	    </title>
 	    <para>
