@@ -187,7 +187,7 @@ static int vm_start(struct sip_msg* msg, char* str1, char* str2)
 	DBG("DEBUG: vm_start: route:%.*s\n",msg->route->body.len,msg->route->body.s);
 
     if( snprintf( query_buf,256,
-  		  "SELECT email_address FROM subscriber WHERE user_id = '%.*s'",
+  		  "SELECT email_address FROM subscriber WHERE user = '%.*s'",
   		  msg->parsed_uri.user.len,msg->parsed_uri.user.s ) < 0 )
     {
   	LOG(L_ERR,"ERROR: %s: snprintf failed\n",exports.name);
