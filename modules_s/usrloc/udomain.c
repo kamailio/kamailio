@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  changed to the new locking scheme: locking.h (andrei)
+ */
 
 
 #include "udomain.h"
@@ -135,7 +140,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	}
 
 	(*_d)->size = _s;
-	init_lock((*_d)->lock);
+	lock_init(&(*_d)->lock);
 	(*_d)->users = 0;
 	(*_d)->expired = 0;
 	
@@ -179,7 +184,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 	fprintf(_f, "    first: %p\n", _d->d_ll.first);
 	fprintf(_f, "    last : %p\n", _d->d_ll.last);
 	fprintf(_f, "}\n");
-	fprintf(_f, "lock : %d\n", _d->lock);
+	/*fprintf(_f, "lock : %d\n", _d->lock); -- can be a structure --andrei*/
 	if (_d->d_ll.n > 0) {
 		fprintf(_f, "\n");
 		r = _d->d_ll.first;
@@ -350,7 +355,7 @@ int timer_udomain(udomain_t* _d)
  */
 void lock_udomain(udomain_t* _d)
 {
-	get_lock(&_d->lock);
+	lock_get(&_d->lock);
 }
 
 
@@ -359,7 +364,7 @@ void lock_udomain(udomain_t* _d)
  */
 void unlock_udomain(udomain_t* _d)
 {
-	release_lock(&_d->lock);
+	lock_release(&_d->lock);
 }
 
 

@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  changed to new locking scheme: locking.h (andrei)
+ */
 
 
 #ifndef UDOMAIN_H
@@ -33,7 +38,7 @@
 
 
 #include <stdio.h>
-#include "../../fastlock.h"
+#include "../../locking.h"
 #include "../../str.h"
 #include "urecord.h"
 #include "hslot.h"
@@ -57,7 +62,7 @@ typedef struct udomain {
 		struct urecord* first; /* First element in the list */
 		struct urecord* last;  /* Last element in the list */
 	} d_ll;
-	fl_lock_t lock;                /* lock variable */
+	gen_lock_t lock;                /* lock variable */
 } udomain_t;
 
 
