@@ -52,9 +52,10 @@ drop table if exists presentity;
 create table presentity (
 	presid    int(10) unsigned NOT NULL auto_increment,
 	uri       varchar(128) NOT NULL,
+	contact   varchar(128),
 	basic     varchar(32) NOT NULL default 'offline',
 	status    varchar(32) NOT NULL default '',
-	location  varchar(128) NOT NULL default '',
+	location  varchar(128),
 	site      varchar(32),
 	floor     varchar(32),
 	room      varchar(64),
@@ -63,10 +64,9 @@ create table presentity (
 	radius    float(5,2),
 	primary key(presid),
 	index uri_index (uri),
-	index locaiton_index (location)
+	index location_index (location)
 );
 
-drop table if exists watcher;
 drop table if exists watcherinfo;
 create table watcherinfo (
 	r_uri        varchar(128) NOT NULL,
@@ -82,6 +82,54 @@ create table watcherinfo (
 	index w_uri_index (w_uri)
 );
 
-insert into watcherinfo (package, r_uri, w_uri, display_name, s_id, status, expires, event) values
-	('presence', 'bob@example.com', 'alice@example.com',null, 'foo22', 'pending', 0, 'subscribe'),
-	('presence', 'bob@example.com', 'joe@example.com', 'Joe F', 'foo23', 'active', 2600, 'approved');
+drop table if exists firstseen;
+
+create table firstseen (
+	username varchar(64) not null primary key,
+	timestamp timestamp
+);
+
+drop table if exists eventlist;
+create table eventlist (
+	elid         int(10) unsigned NOT NULL auto_increment,
+	o_uri        varchar(128) NOT NULL, -- owner uri
+	l_uri        varchar(128) NOT NULL, -- list uri
+	name         varchar(128) NOT NULL,
+	parent_elid  int(10) unsigned NOT NULL,
+	l_pos        int(10) unsigned,
+	version      varchar(32),
+	subscribeable varchar(32),
+	primary key(elid),
+	index o_uri_index (o_uri),
+	index l_uri_index (l_uri)
+);
+
+drop table if exists eventlistitem;
+create table eventlistitem (
+	itemid       int(10) unsigned NOT NULL auto_increment,
+	elid	     int(10) unsigned NOT NULL,
+	r_uri        varchar(128) NOT NULL,
+	r_name       varchar(128),
+	r_id         varchar(128),
+	display_name varchar(128),
+	cid          varchar(128),
+	state	     varchar(32),
+	primary key(itemid),
+	index elid_index (elid)
+);
+
+drop table if exists place;
+create table place(
+	placeid                 int(10) unsigned NOT NULL auto_increment,
+	room                    varchar(40) not null,
+	room_number             int(10),
+	floor                   int(10),
+	site                    varchar(40),
+	nestedid                int(10),
+	contains                varchar(255),
+	session_name            varchar(128),
+	session_end             datetime,
+	upstream_packet_loss    float,
+	downstream_packet_loss  float,
+	primary key(placeid)
+);
