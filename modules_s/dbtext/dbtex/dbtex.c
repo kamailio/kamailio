@@ -30,8 +30,14 @@
 #include <stdio.h>
 #include "../../db/db.h"
 
-
+/*
+ * dtabase URL - the path to the directory where the tables are located
+ */
 #define DB_URL   "/tmp/dbtext"
+
+/**
+ * table name - the file name - it must be located in database directory
+ */
 #define DB_TABLE "location"
 
 #define TRUE 1
@@ -186,7 +192,7 @@ int mod_init()
 	     /*
 	      * Create a database connection
 	      * DB_URL is database URL of form
-	      * sql://user:password@host:port/database
+	      * /path/to/dbtext/database
 	      * The function returns handle, that
 	      * represents a database connection
 	      */
