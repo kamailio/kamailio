@@ -107,6 +107,9 @@ extern int fifo_mode;
 char extern *fifo_dir; /* dir. where  reply fifos are allowed */
 extern char *fifo_db_url;  /* db url used by db_fifo interface */
 
+/* AVP configuration */
+extern char *avp_db_url;  /* db url used by user preferences (AVPs) */
+
 /* moved to pt.h
 extern int *pids;
 extern int process_no;

@@ -54,6 +54,7 @@
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  *  2003-12-04  global TM callbacks switched to per transaction callbacks
  *              (bogdan)
+ *  2004-02-06: support for user pref. added - destroy_avps (bogdan)
  */
 
 
@@ -76,6 +77,7 @@
 #include "../../tags.h"
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
+#include "../../usr_avp.h"
 
 #include "t_hooks.h"
 #include "t_funcs.h"
@@ -515,12 +517,14 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		/* avoid recursion -- if failure_route forwards, and does not 
 		 * set next failure route, failure_route will not be rentered
 		 * on failure */
-		//goto_on_negative = 0;
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
 		if (run_actions(failure_rlist[on_failure], &fake_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
+		/* destroy any eventual avps */
+		if (users_avps)
+			destroy_avps();
 	}
 
 	/* restore original environment and free the fake msg */
@@ -1150,6 +1154,9 @@ int reply_received( struct sip_msg  *p_msg )
 		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 	 	if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
+		/* destroy any eventual avps */
+		if (users_avps)
+			destroy_avps();
 		/* transfer current message context back to t */
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 	}

@@ -56,6 +56,7 @@
 #include "mem/mem.h"
 #include "globals.h"
 #include "dset.h"
+#include "usr_avp.h"
 #ifdef USE_TCP
 #include "tcp_server.h"
 #endif
@@ -656,6 +657,21 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}
 #endif
 			ret=1; /* continue processing */
+			break;
+		case LOAD_AVP_T:
+			if (a->p1_type!=NUMBER_ST || a->p2_type!=STRING_ST ||
+			a->p3_type!=NUMBER_ST) {
+				LOG(L_CRIT,"BUG: do_action: bad load_avp(%d,%d,%d) params "
+						"types\n",a->p1_type,a->p2_type,a->p3_type);
+				ret=E_BUG;
+				break;
+			}
+			/* load the attribute(s)*/
+			if ( load_avp( msg, (int)a->p1.number, a->p2.string,
+			(int)a->p3.number)!=0 ) {
+				LOG(L_ERR,"ERROR:do_action: load avp failed\n");
+				ret=E_UNSPEC;
+			}
 			break;
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);

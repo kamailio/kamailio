@@ -327,6 +327,9 @@ void print_action(struct action* a)
 			case FORCE_TCP_ALIAS_T:
 					DBG("force_tcp_alias(");
 					break;
+			case LOAD_AVP_T:
+					DBG("load_avp(");
+					break;
 			default:
 					DBG("UNKNOWN(");
 		}

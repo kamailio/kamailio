@@ -33,6 +33,7 @@
  * 2003-02-10 moved zero-term in the calling functions (udp_receive &
  *            tcp_read_req)
  * 2003-08-13 fixed exec_pre_cb returning 0 (backported from stable) (andrei)
+ * 2004-02-06 added user preferences support - destroy_avps() (bogdan)
  */
 
 
@@ -52,6 +53,7 @@
 #include "ip_addr.h"
 #include "script_cb.h"
 #include "dset.h"
+#include "usr_avp.h"
 
 #include "tcp_server.h" /* for tcpconn_add_alias */
 
@@ -153,13 +155,15 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
 #endif
-		if (run_actions(rlist[0], msg)<0){
-
+		if (run_actions(rlist[0], msg)<0) {
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error;
 		}
 
+		/* ... free posible loaded avps */
+		if (users_avps)
+			destroy_avps();
 
 #ifdef STATS
 		gettimeofday( & tve, &tz );

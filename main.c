@@ -45,6 +45,7 @@
  *  2003-06-29  replaced port_no_str snprintf w/ int2str (andrei)
  *  2003-10-10  added switch for config check (-c) (andrei)
  *  2003-10-24  converted to the new socket_info lists (andrei)
+ *  2004-02-06  added support for user pref. - init_avp_child() (bogdan)
  *
  */
 
@@ -93,6 +94,7 @@
 #include "parser/parse_hname2.h"
 #include "parser/digest/digest_parser.h"
 #include "fifo_server.h"
+#include "usr_avp.h"
 #include "name_alias.h"
 #include "hash_func.h"
 #include "pt.h"
@@ -843,6 +845,10 @@ int main_loop()
 			LOG(L_ERR, "main_dontfork: init_child failed\n");
 			goto error;
 		}
+		if (init_avp_child(1)<0) {
+			LOG(L_ERR, "init_avp_child failed\n");
+			goto error;
+		}
 
 		is_main=1; /* hack 42: call init_child with is_main=0 in case
 					 some modules wants to fork a child */
@@ -924,6 +930,10 @@ int main_loop()
 					}
 #endif
 					bind_address=si; /* shortcut */
+					if (init_avp_child(i + 1)<0) {
+						LOG(L_ERR, "init_avp_child failed\n");
+						goto error;
+					}
 					if (init_child(i + 1) < 0) {
 						LOG(L_ERR, "init_child failed\n");
 						goto error;

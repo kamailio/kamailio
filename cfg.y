@@ -72,6 +72,7 @@
 #include "ip_addr.h"
 #include "socket_info.h"
 #include "name_alias.h"
+#include "usr_avp.h"
 #include "ut.h"
 
 
@@ -174,6 +175,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token UDP
 %token TCP
 %token TLS
+%token LOAD_AVP
 
 /* config vars. */
 %token DEBUG
@@ -194,6 +196,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token FIFO_DIR
 %token FIFO_MODE
 %token FIFO_DB_URL
+%token AVP_DB_URL
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
 %token LOADMODULE
@@ -394,7 +397,9 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
 		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
 		| FIFO_DB_URL EQUAL STRING { fifo_db_url=$3; }
-		| FIFO_DB_URL EQUAL error { yyerror("string value expected"); }
+		| FIFO_DB_URL EQUAL error  { yyerror("string value expected"); }
+		| AVP_DB_URL EQUAL STRING { avp_db_url=$3; }
+		| AVP_DB_URL EQUAL error  { yyerror("string value expected"); }
 		| USER EQUAL STRING     { user=$3; }
 		| USER EQUAL ID         { user=$3; }
 		| USER EQUAL error      { yyerror("string value expected"); }
@@ -1461,9 +1466,29 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 					#endif
 										}
 		| FORCE_TCP_ALIAS LPAREN error RPAREN	{$$=0; 
-												yyerror("bad argument,"
-														" number expected");
-												}
+					yyerror("bad argument, number expected");
+					}
+		| LOAD_AVP LPAREN STRING COMMA NUMBER RPAREN {
+					$$=(void*)get_user_type( $3 );
+					if ($$==(void*)-1) {
+						yyerror("unknown user type in arg 1 for "
+							"load_avp(x,x)");
+					} else {
+						$$=mk_action3( LOAD_AVP_T, NUMBER_ST, STRING_ST,
+							NUMBER_ST, $$, 0,(void*)$5);
+					}
+					}
+		| LOAD_AVP LPAREN STRING COMMA STRING COMMA NUMBER RPAREN {
+					$$=(void*)get_user_type( $3 );
+					if ($$==(void*)-1) {
+						yyerror("unknown user type in arg 1 for "
+							"load_avp(x,x,x)");
+					} else {
+						$$=mk_action3( LOAD_AVP_T, NUMBER_ST, STRING_ST,
+							NUMBER_ST, $$, $5, (void*)$7);
+					}
+					}
+		| LOAD_AVP error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 								$$=0;
 								if ((str_tmp=pkg_malloc(sizeof(str)))==0){

@@ -280,8 +280,7 @@ DEFS+= $(extra_defs) \
 	 -DUSE_IPV6 \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
-	# -DDBG_QM_MALLOC \
-	# -DF_MALLOC \
+	 -DF_MALLOC \
 	# -DDBG_F_MALLOC \
 	# -DDBG_QM_MALLOC \
 	 #-DF_MALLOC \
