@@ -6,7 +6,7 @@
 <!ENTITY faq SYSTEM "options_faq.sgml">
 
 <!-- Include general SER documentation entities -->
-<!ENTITY % serentities SYSTEM "../../ser_entities.sgml">
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
 %serentities;
 
 ]>
