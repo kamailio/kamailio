@@ -95,14 +95,17 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	struct hdr_field* h;
 	auth_body_t* c;
 	struct sip_uri puri;
-
-	int len;
+	db_key_t keys[3];
+	db_val_t vals[3];
+	db_key_t cols[1];
+	db_res_t* res;
 
 	if (!_uri) {
 		LOG(L_ERR, "check_username(): Bad parameter\n");
 		return -1;
 	}
 
+	     /* Get authorized digest credentials */
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
@@ -115,24 +118,87 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 
 	c = (auth_body_t*)(h->parsed);
 
+	     /* Parse To/From URI */
 	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
 		LOG(L_ERR, "check_username(): Error while parsing URI\n");
 		return -3;
 	}
+	
+	     /* Make sure that the URI contains username */
+ 	if (!puri.user.len) {
+		LOG(L_ERR, "check_username(): Username not found in URI\n");
+		return -4;
+	}
 
-	if (!puri.user.len) return -4;
+	     /* If use_uri_table is set, use URI table to determine if Digest username
+	      * and To/From username match. URI table is a table enumerating all allowed
+	      * usernames for a single, thus a user can have several different usernames
+	      * (which are different from digest username and it will still match)
+	      */
+	if (use_uri_table) {
+		     /* Make sure that From/To URI domain and digest realm are equal
+		      * FIXME: Should we move this outside this condition and make it general ?
+		      */
+		if (puri.host.len != c->digest.realm.len) {
+			LOG(L_ERR, "check_username(): Digest realm and URI domain do not match\n");
+			return -5;
+		}
 
-	len = c->digest.username.whole.len;
+		if (strncasecmp(puri.host.s, c->digest.realm.s, puri.host.len) != 0) {
+			DBG("check_username(): Digest realm and URI domain do not match\n");
+			return -6;
+		}
 
-	if (puri.user.len == len) {
-		if (!strncasecmp(puri.user.s, c->digest.username.whole.s, len)) {
-			DBG("check_username(): Username is same\n");
+		if (db_use_table(db_handle, uri_table) < 0) {
+			LOG(L_ERR, "check_username(): Error while trying to use uri table\n");
+		}
+
+		keys[0] = uri_user_col;
+		keys[1] = uri_domain_col;
+		keys[2] = uri_uriuser_col;
+		cols[0] = uri_user_col;
+
+		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
+		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
+    
+		VAL_STR(vals) = c->digest.username.user;
+    		VAL_STR(vals + 1) = c->digest.realm;
+		VAL_STR(vals + 2) = puri.user;
+
+		if (db_query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0) {
+			LOG(L_ERR, "check_username(): Error while querying database\n");
+			return -7;
+		}
+
+		     /* If the previous function returns at least one row, it means
+		      * there is an entry for given digest username and URI username
+		      * and thus this combination is allowed and the function will match
+		      */
+		if (RES_ROW_N(res) == 0) {
+			DBG("check_username(): From/To user \'%.*s\' is spoofed\n", 
+			    puri.user.len, puri.user.s);
+			db_free_query(db_handle, res);
+			return -8;
+		} else {
+			DBG("check_username(): From/To user \'%.*s\' and auth user match\n", 
+			    puri.user.len, puri.user.s);
+			db_free_query(db_handle, res);
 			return 1;
 		}
-	}
+	} else {
+		     /* URI table not used, simply compare digest username and From/To
+		      * username, the comparison is case insensitive
+		      */
+		if (puri.user.len == c->digest.username.user.len) {
+			if (!strncasecmp(puri.user.s, c->digest.username.user.s, puri.user.len)) {
+				DBG("check_username(): Digest username and URI username match\n");
+				return 1;
+			}
+		}
 	
-	DBG("check_username(): Username is different\n");
-	return -5;
+		DBG("check_username(): Digest username and URI username do NOT match\n");
+		return -9;
+	}
 }
 
 
@@ -182,16 +248,16 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		if (db_use_table(db_handle, uri_table) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
 		}
-		keys[0] = uri_domain_column;
-		keys[1] = uri_uriuser_column;
-		cols[0] = uri_uriuser_column;
+		keys[0] = uri_domain_col;
+		keys[1] = uri_uriuser_col;
+		cols[0] = uri_uriuser_col;
 	} else {
 		if (db_use_table(db_handle, subscriber_table) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
 		}
-		keys[0] = subscriber_domain_column;
-		keys[1] = subscriber_user_column;
-		cols[0] = subscriber_user_column;
+		keys[0] = subscriber_domain_col;
+		keys[1] = subscriber_user_col;
+		cols[0] = subscriber_user_col;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
@@ -200,14 +266,14 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	VAL_STR(vals + 1) = _msg->parsed_uri.user;
 
 	if (db_query(db_handle, keys, 0, vals, cols, 2, 1, 0, &res) < 0) {
-		LOG(L_ERR, "does_uri_existl(): Error while querying database\n");
-		return -1;
+		LOG(L_ERR, "does_uri_exist(): Error while querying database\n");
+		return -2;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
 		DBG("does_uri_exit(): User in request uri does not exist\n");
 		db_free_query(db_handle, res);
-		return -1;
+		return -3;
 	} else {
 		DBG("does_uri_exit(): User in request uri does exist\n");
 		db_free_query(db_handle, res);

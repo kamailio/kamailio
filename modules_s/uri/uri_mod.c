@@ -54,15 +54,16 @@ static int str_fixup(void** param, int param_no);
 /*
  * Module parameter variables
  */
-char* db_url                   = "sql://serro:47serro11@localhost/ser";
-char* uri_table                = "uri";        /* Name of URI table */
-char* uri_domain_column        = "domain";     /* Name of domain column in URI table */
-char* uri_uriuser_column       = "uri_user";   /* Name of uri_user column in URI table */
-char* subscriber_table         = "subscriber"; /* Name of subscriber table */
-char* subscriber_user_column   = "user";       /* Name of user column in subscriber table */
-char* subscriber_domain_column = "domain";     /* Name of domain column in subscriber table */
-int use_uri_table = 0;                         /* Should uri table be used */
+char* db_url                = "sql://serro:47serro11@localhost/ser";
+char* uri_table             = "uri";        /* Name of URI table */
+char* uri_user_col          = "username";   /* Name of username column in URI table */
+char* uri_domain_col        = "domain";     /* Name of domain column in URI table */
+char* uri_uriuser_col       = "uri_user";   /* Name of uri_user column in URI table */
+char* subscriber_table      = "subscriber"; /* Name of subscriber table */
+char* subscriber_user_col   = "user";       /* Name of user column in subscriber table */
+char* subscriber_domain_col = "domain";     /* Name of domain column in subscriber table */
 
+int use_uri_table = 0;     /* Should uri table be used */
 db_con_t* db_handle = 0;   /* Database connection handle */
 
 
@@ -82,14 +83,15 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",                   STR_PARAM, &db_url                  },
-	{"uri_table",                STR_PARAM, &uri_table               },
-	{"uri_domain_column",        STR_PARAM, &uri_domain_column       },
-	{"uri_uriuser_column",       STR_PARAM, &uri_uriuser_column      },
-	{"subscriber_table",         STR_PARAM, &subscriber_table        },
-	{"subscriber_user_column",   STR_PARAM, &subscriber_user_column  },
-	{"subscriber_domain_column", STR_PARAM, &subscriber_domain_column},
-	{"use_uri_table",            INT_PARAM, &use_uri_table           },
+	{"db_url",                   STR_PARAM, &db_url               },
+	{"uri_table",                STR_PARAM, &uri_table            },
+	{"uri_user_column",          STR_PARAM, &uri_user_col         },
+	{"uri_domain_column",        STR_PARAM, &uri_domain_col       },
+	{"uri_uriuser_column",       STR_PARAM, &uri_uriuser_col      },
+	{"subscriber_table",         STR_PARAM, &subscriber_table     },
+	{"subscriber_user_column",   STR_PARAM, &subscriber_user_col  },
+	{"subscriber_domain_column", STR_PARAM, &subscriber_domain_col},
+	{"use_uri_table",            INT_PARAM, &use_uri_table        },
 	{0, 0, 0}
 };
 
@@ -130,10 +132,9 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	DBG("uri - initializing\n");
-	
-	     /* Find a database module */
+
 	if (bind_dbmod()) {
-		LOG(L_ERR, "uri:mod_init(): Unable to bind database module\n");
+		LOG(L_ERR, "uri:mod_init(): No database module found\n");
 		return -1;
 	}
 
