@@ -15,8 +15,10 @@
 #include "../../mem/shm_mem.h"
 #include "../../crc.h"
 #include "sl_funcs.h"
-
+#include "../../dset.h"
+#include "../../data_lump_rpl.h"
 #include "../../action.h"
+#include "../../config.h"
 
 
 /* to-tag including pre-calculated and fixed part */
@@ -77,7 +79,58 @@ int sl_shutdown()
 }
 
 
+static char *create_dset( struct sip_msg *msg, int *len ) 
+{
+	int cnt;
+	str uri;
+	char *p;
+	int i;
+	static char dset[MAX_REDIRECTION_LEN];
 
+	if (msg->new_uri.s) {
+		cnt=1;
+		*len=msg->new_uri.len;
+	} else {
+		cnt=0;
+		*len=0;
+	}
+
+	init_branch_iterator(msg);
+	while ((uri.s=next_branch(&uri.len))) {
+		cnt++;
+		*len+=uri.len;
+	}
+
+	if (cnt==0) return 0;	
+
+	*len+=CONTACT_LEN+CRLF_LEN+(cnt-1)*CONTACT_DELIM_LEN;
+
+	if (*len+1>MAX_REDIRECTION_LEN) {
+		LOG(L_ERR, "ERROR: redirection buffer length exceed\n");
+		return 0;
+	}
+
+	memcpy(dset, CONTACT, CONTACT_LEN );
+	p=dset+CONTACT_LEN;
+	if (msg->new_uri.s) {
+		memcpy(p, msg->new_uri.s, msg->new_uri.len);
+		p+=msg->new_uri.len;
+		i=1;
+	} else i=0;
+
+	init_branch_iterator(msg);
+	while ((uri.s=next_branch(&uri.len))) {
+		if (i) {
+			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN );
+			p+=2;
+		}
+		memcpy(p, uri.s, uri.len);
+		p+=uri.len;
+		i++;
+	}
+	memcpy(p, CRLF " ", CRLF_LEN+1);
+	return dset;
+}
 
 int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 {
@@ -87,6 +140,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	str suffix_source[3];
 	struct socket_info* send_sock;
 	int ss_nr;
+	char *dset;
+	struct lump_rpl *dset_lump;
+	int dset_len;
 
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
@@ -108,6 +164,15 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 			goto error;
 		}
 	} else update_sock_struct_from_ip( &to, msg );
+
+	/* if that is a redirection message, dump current message set to it */
+	if (code>=300 && code<400) {
+		dset=create_dset(msg, &dset_len);
+		if (dset) {
+			dset_lump=build_lump_rpl(dset, dset_len);
+			add_lump_rpl(msg, dset_lump);
+		}
+	}
 
 	/* add to tags only to invites with To without to-tag */
 	if ( msg->first_line.u.request.method_value==METHOD_INVITE 
