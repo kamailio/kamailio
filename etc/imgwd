@@ -1,0 +1,229 @@
+#!/bin/sh
+#
+# 3w-xxxx:      Starts the sip2jab process
+#
+# Version:      @(#) /etc/rc.d/init.d/3w-xxxx
+#
+# chkconfig: 2345 20 85
+# description: controls execution of SIP2Jabber gateway
+# processname: sip2jab
+# config: /etc/use_jabs.cfg
+
+# User "dcm" is used if is the script is run by root
+
+# JABBER
+JDIR="/home/sms/jabber-1.4.2"
+JABBERD="${JDIR}/jabberd/jabberd"
+JICQEXT="${JDIR}/icqv7ext.sh"
+CONF="${JDIR}/conf/single.xml"
+JUSR="sms"
+JPID="${JDIR}/spool/jabbers.pid"
+JOUT="${JDIR}/spool/jabberd.log"
+
+# SER
+BIN=imgw
+HM=/home/sms/srouter
+BINDIR=$HM/bin
+ETC=$HM/sip_router/etc/imgw.cfg
+USR="sms"
+GRP="sms"
+MYDIR=$HM/core
+CORE=$MYDIR/core
+
+RETVAL=0
+
+############ ==== #############
+
+# Test if Jabber exists
+test -f ${JABBERD} -a -f ${CONF} || exit 0
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get config.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && exit 0
+
+# Current user
+CRT_USER=`whoami`
+
+### Stop Jabber server
+stop_jab() {
+	echo "Stopping ICQ transport - external component ..."
+	killproc ${JICQEXT}
+	# echo
+	echo "Stopping Jabber server ..."
+	killproc ${JABBERD}
+	RETVAL=$? 
+	# echo
+	# kill `cat ${JPID}`
+	# echo " OK."
+}
+
+### Start Jabber server
+start_jab() {
+	if [ -f ${JPID} ]
+	then
+		echo "Cleaning Jabber from a previous dirty crash ..."
+		stop_jab
+		sleep 1
+		rm -f ${JPID}
+	fi
+
+	if [ `id -u` = 0 ]
+	then
+		#### Run by root
+		echo "Starting Jabber server ..."
+		su - ${JUSR} -c "cd ${JDIR}; ${JABBERD} -B -c ${CONF} > /dev/null 2>&1"  > /dev/null 2>&1
+		# echo
+		sleep 2
+		echo "Starting ICQ transport - external component ..."
+		su - ${JUSR} -c "cd ${JDIR}; ${JICQEXT} > /dev/null 2>&1 &" > /dev/null 2>&1
+		RETVAL=$? 
+		# echo
+	else
+		### Run by other users
+		echo "Starting Jabber server ..."
+		cd ${JDIR}
+		${JABBERD} -B -c ${CONF} > /dev/null 2>&1
+		# echo
+		sleep 2
+		echo "Starting ICQ transport - external component ..."
+		${JICQEXT} > /dev/null 2>&1 &
+		RETVAL=$?
+		# echo
+	fi
+	
+	sleep 1
+	### Checking if processes are started
+	if [ `ps auxw | grep ${JABBERD} | head --lines=1 | awk '{print $11}'` = ${JABBERD} ]
+	then
+		echo "Jabber server:           [[   STARTED   ]]"
+	else
+		echo "Jabber server:           [[ NOT STARTED ]]"
+	fi
+	if [ `ps auxw | grep ${JICQEXT} | head --lines=1 | awk '{print $11}'` != "grep" ]
+	then
+		echo "ICQ transport:           [[   STARTED   ]]"
+	else
+		echo "ICQ transport:           [[ NOT STARTED ]]"
+	fi
+}
+
+### Stop SER
+stop_ser() {
+	echo -n "Stopping SIP router ..."
+	killproc ${BIN}
+	RETVAL=$?
+	echo
+	# killall ser
+	# echo " [ OK ]"
+}
+
+### Start SER
+start_ser() {
+	echo "Starting SIP router ..."
+	if [ `id -u` = 0 ]
+	then
+		#### Run by root
+		echo "- ${USR} -c cd ${MYDIR}; ${BINDIR}/${BIN} -f ${ETC} -w ${MYDIR}  > /dev/null 2>&1"
+		su - ${USR} -c "cd ${MYDIR}; ${BINDIR}/${BIN} -f ${ETC} -w ${MYDIR}"  > /dev/null 2>&1
+		RETVAL=$?
+	else
+		#### Run by other users
+		#cd $MYDIR
+
+		# core timestamping moved to sercheck; -jiri
+		#	if [ -f $CORE ] ; then
+		#		chmod a+r $CORE
+		#		DATE=`date "+%Y-%m-%d--%H-%M"`
+		#		mv $CORE $CORE.$DATE
+		#		( cd ../sip_router; tar cf - . ) | gzip > ser.$DATE.tgz
+		#	fi
+
+		cd ${MYDIR}
+		${BINDIR}/${BIN} -f ${ETC} -w ${MYDIR}
+		RETVAL=$?
+
+		# man setuid: If uid is different from the old effective uid,
+		# the process will be forbidden from eaving core dumps.
+		# -> don't set uid, we want to collect core dumps
+		# -u $USR -g $GRP
+	fi
+
+	sleep 1
+	### Checking if processes are started
+	if [ `ps auxw | grep ${BINDIR}/${BIN} | head --lines=1 | awk '{print $11}'` = ${BINDIR}/${BIN} ]
+	then
+		echo "SIP router:              [[   STARTED   ]]"
+	else
+		echo "SIP router:              [[ NOT STARTED ]]"
+	fi
+}
+
+### Check
+check_run() {
+	### Checking if Jabber server is running
+	if [ `ps auxw | grep ${JABBERD} | head --lines=1 | awk '{print $11}'` = ${JABBERD} ]
+	then
+		echo "Jabber server:           [[   RUNNING   ]]"
+	else
+		echo "Jabber server:           [[ NOT RUNNING ]]"
+	fi
+	### Checking if ICQ transport is running
+	if [ `ps auxw | grep ${JICQEXT} | head --lines=1 | awk '{print $11}'` != "grep" ]
+	then
+		echo "ICQ transport:           [[   RUNNING   ]]"
+	else
+		echo "ICQ transport:           [[ NOT RUNNING ]]"
+	fi
+	### Checking if SIP router is running
+	if [ `ps auxw | grep ${BINDIR}/${BIN} | head --lines=1 | awk '{print $11}'` = ${BINDIR}/${BIN} ]
+	then
+		echo "SIP router:              [[   RUNNING   ]]"
+	else
+		echo "SIP router:              [[ NOT RUNNING ]]"
+	fi
+}
+
+### Cleaning
+make_clean() {
+    sleep 2
+    echo "Cleaning Jabber core if generated on killing ..."
+    rm -f ${JDIR}/core.*
+}
+	    
+case "$1" in
+	start)
+		start_jab
+		start_ser
+	;;
+	stop)
+		stop_ser
+		stop_jab
+		sleep 2
+		make_clean
+	;;
+	restart)
+		echo "Restarting SIP2Jabber ..."
+		stop_ser
+		stop_jab
+		sleep 2
+		echo
+		start_jab
+		start_ser
+		make_clean
+	;;
+	check)
+		check_run
+	;;
+	*)
+		N=$0
+		echo "Usage: $N {start|stop|restart|check}" >&2
+		exit 1
+	;;
+esac
+echo
+exit $RETVAL
