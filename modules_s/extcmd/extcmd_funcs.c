@@ -422,6 +422,7 @@ int send_sip_req(str* msg_type, str *msg, int client_fd)
 	/* send the message */
 	ret = tmb.t_uac_dlg(  msg_type,   /* request type */
 			0,                        /* Real destination */
+			PROTO_UDP,
 			&to,                      /* Request-URI */
 			&to,                      /* To */
 			&from,                    /* From */

@@ -1343,6 +1343,7 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 		//			xj_tuac_callback, (void*)pcbp, 0);
 		return tmb.t_uac_dlg(&msg_type, /* Type of the message */
 					proxy,              /* Real destination */
+					PROTO_UDP,
 					to,                 /* Request-URI */
 					to,                 /* To */
 					&tfrom,             /* From */
@@ -1360,6 +1361,7 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 		//return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom, 0 , 0, 0);
 		return tmb.t_uac_dlg(&msg_type, /* Type of the message */
 					proxy,              /* Real destination */
+					PROTO_UDP,
 					to,                 /* Request-URI */
 					to,                 /* To */
 					&tfrom,             /* From */

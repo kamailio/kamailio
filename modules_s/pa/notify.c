@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  */
 
 
@@ -288,6 +292,7 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 
 	tmb.t_uac_dlg(&method,              /* NOTIFY */ 
 		      0,                    /* dst */
+			PROTO_UDP,
 		      &_w->contact,         /* R-URI */
 		      &_w->from,            /* From -> To */
 		      &_w->dialog.to,       /* To -> From */
@@ -339,6 +344,7 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 
 	tmb.t_uac_dlg(&method,              /* NOTIFY */ 
 		      0,                    /* dst */
+			PROTO_UDP,
 		      &_w->contact,         /* R-URI */
 		      &_w->from,            /* From -> To */
 		      &_w->dialog.to,       /* To -> From */

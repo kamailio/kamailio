@@ -27,6 +27,7 @@
 
 /**
  *
+ * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  * 2003-01-23 switched from t_uac to t_uac_dlg, by dcm
  * 
  */
@@ -570,6 +571,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		// tmb.t_uac(&msg_type,&pfrom->uri,&str_hdr,&body,&reg_addr,0,0,0);
 		tmb.t_uac_dlg(&msg_type,  /* Type of the message */
 				(ctaddr.s)?&ctaddr:0,              /* Real destination */
+				PROTO_UDP,
 				(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
 				&pfrom->uri,      /* To */
 				&reg_addr,        /* From */
@@ -758,6 +760,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			
 			tmb.t_uac_dlg(&msg_type,  /* Type of the message */
 					(ctaddr.s)?&ctaddr:0,    /* Real destination */
+					PROTO_UDP,
 					&pto->uri,               /* Request-URI */
 					&str_vals[STR_IDX_TO],   /* To */
 					&str_vals[STR_IDX_FROM], /* From */

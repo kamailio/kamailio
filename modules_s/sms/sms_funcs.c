@@ -26,6 +26,9 @@
  */
 
 /*
+ * History:
+ * --------
+ * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  * 2003-01-23 switched from t_uac to t_uac_dlg, adapted to new way of
  * parsing for Content-Type; by bogdan
  */
@@ -339,6 +342,7 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	/* sending the request */
 	foo = tmb.t_uac_dlg( &msg_type,   /* request type */
 			0,                        /* Real destination */
+			PROTO_UDP,
 			to,                       /* Request-URI */
 			to,                       /* To */
 			&from,                    /* From */
