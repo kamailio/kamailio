@@ -532,7 +532,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
                    break;
       }
    }
-   /* length of the data lump structures
+   /* length of the data lump structures */
    if (org_msg->first_line.type==SIP_REQUEST)
       lump_chain = org_msg->add_rm;
    else
@@ -554,7 +554,6 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
       }
       lump_chain = lump_chain->next;
    }
-    */
 
    p=(char *)sh_malloc(len);
    if (!p)
@@ -679,7 +678,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
 
    }
 
-   /* clonning data lump
+   /* clonning data lump */
    if (org_msg->first_line.type==SIP_REQUEST) {
       lump_chain = org_msg->add_rm;
       lump_anchor = &(new_msg->add_rm);
@@ -690,7 +689,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
    while (lump_chain)
    {
       lump_clone( (*lump_anchor) , lump_chain , p );
-      /*before list/
+      /*before list*/
       lump_tmp = lump_chain->before;
       lump_anchor2 = &((*lump_anchor)->before);
       while ( lump_tmp )
@@ -699,7 +698,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
          lump_anchor2 = &((*lump_anchor2)->before);
          lump_tmp = lump_tmp->before;
       }
-      /*after list/
+      /*after list*/
       lump_tmp = lump_chain->after;
       lump_anchor2 = &((*lump_anchor)->after);
       while ( lump_tmp )
@@ -710,7 +709,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
       }
       lump_anchor = &((*lump_anchor)->next);
       lump_chain = lump_chain->next;
-   }      */
+   }     
 
    return new_msg;
 }

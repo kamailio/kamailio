@@ -302,10 +302,10 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 
    /* sanity check */
    if (hash_index<0 || hash_index >=TABLE_ENTRIES ||
-       entry_label<0 || branch_id<0 || branch_id>=MAX_FORK ) {
-			DBG("DBG: t_reply_matching: snaity check failed\n");
-          	goto nomatch2;
-	}
+    entry_label<0 || branch_id<0 || branch_id>=MAX_FORK ) {
+          DBG("DBG: t_reply_matching: snaity check failed\n");
+         goto nomatch2;
+   }
 
    /* lock the hole entry*/
    lock( hash_table->entrys[hash_index].mutex );
@@ -317,22 +317,22 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
    {
       /* is it the cell with the wanted entry_label? */
       if ( p_cell->label == entry_label )
-      /* has the transaction the wanted branch? */
-      if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
-      {/* WE FOUND THE GOLDEN EGG !!!! */
-          T = p_cell;
-          *p_branch = branch_id;
-          /* T->ref_counter ++; */
-		  /* ref_T( T ); */
-			T_REF( T );
-          unlock( hash_table->entrys[hash_index].mutex );
-          DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching: reply matched (T=%p, ref=%x)!\n",T,T->ref_bitmap);
-        return 1;
-      }
+         /* has the transaction the wanted branch? */
+         if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
+         {/* WE FOUND THE GOLDEN EGG !!!! */
+             T = p_cell;
+             if ( *(get_cseq(p_msg)->method.s)=='C' && p_cell->T_canceler &&
+                p_cell->inbound_request->first_line.u.request.method_value!=METHOD_CANCEL)
+                T = T->T_canceler ;
+             *p_branch = branch_id;
+             T_REF( T );
+             unlock( hash_table->entrys[hash_index].mutex );
+             DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching: reply matched (T=%p, ref=%x)!\n",T,T->ref_bitmap);
+            return 1;
+         }
       /* next cell */
       tmp_cell = p_cell;
       p_cell = p_cell->next_cell;
-
    } /* while p_cell */
 
    /* nothing found */

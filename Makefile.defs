@@ -66,8 +66,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
-#mode = debug
-mode = release
+mode = debug
+#mode = release
 
 # platform dependent settings
 

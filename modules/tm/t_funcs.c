@@ -50,7 +50,7 @@ static inline void reset_timer( struct s_table *hash_table,
 static inline void reset_retr_timers( struct s_table *h_table,
 	struct cell *p_cell )
 {
-	int ijk; 
+	int ijk;
 	struct retrans_buff *rb;
 
 	DBG("DEBUG:stop_RETR_and_FR_timers : start \n");
@@ -190,11 +190,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 {
 	unsigned int dest_ip     = dest_ip_param;
 	unsigned int dest_port  = dest_port_param;
-	int	branch;
+	int	      branch;
 	unsigned int len;
-   	char               *buf, *shbuf;
+	char              *buf, *shbuf;
 	struct retrans_buff *rb;
-
+               struct cell         *T_source;
 
 	buf=NULL;
 	shbuf = NULL;
@@ -217,6 +217,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		return 1;
 	}
 
+               T_source = T;
 	/* if it's forwarded for the first time ; else the request is retransmited
 	 * from the transaction buffer
 	 * when forwarding an ACK, this condition will be all the time false because
@@ -245,10 +246,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 						to.sin_addr.s_addr;
 					dest_port = T->T_canceled->outbound_request[branch]->
 						to.sin_port;
+					T_source = T->T_canceled;
 				} else { /* transaction exists, but nothing to cancel */
-               				DBG("DEBUG: t_forward: it's CANCEL but "
-					"I have nothing to cancel here\n");
-				/* continue forwarding CANCEL as a stand-alone transaction */
+					DBG("DEBUG: t_forward: it's CANCEL but "
+						"I have nothing to cancel here\n");
+					/* continue forwarding CANCEL as a stand-alone transaction */
 				}
 			} else { /* transaction does not exists  */
 				DBG("DEBUG: t_forward: canceled request not found! "
@@ -256,9 +258,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 			}
 		}/* end special case CANCEL*/
 
-		if ( add_branch_label( T, T->inbound_request , branch )==-1)
+		if ( add_branch_label( T_source, T->inbound_request , branch )==-1)
 			goto error;
-		if ( add_branch_label( T, p_msg , branch )==-1)
+		if ( add_branch_label( T_source, p_msg , branch )==-1)
 			goto error;
 		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 			goto error;
@@ -315,14 +317,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	} else /* if we are forwarding a CANCEL*/
 	if (  p_msg->REQ_METHOD==METHOD_CANCEL )
 	{
-		DBG("DEBUG: t_forward: forwarding CANCEL\n");
+		DBG("DEBUG: t_forward: forwarding CANCEL \n");
 		/* if no transaction to CANCEL
 		  or if the canceled transaction has a final status -> drop the CANCEL*/
-		if ( T->T_canceled==T_NULL || T->T_canceled->status>=200)
+		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
 		{
 			reset_timer( hash_table, &(rb->fr_timer ));
 			reset_timer( hash_table, &(rb->retr_timer ));
-		return 1;
+			return 1;
 		}
 	}
 
@@ -420,7 +422,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	if (!T->inbound_response[branch] && msg_class==1
 	 && T->inbound_request->REQ_METHOD==METHOD_INVITE )
 		set_timer( hash_table, &(rb->fr_timer), FR_INV_TIMER_LIST );
-
 	/* get response for INVITE */
 	if ( T->inbound_request->REQ_METHOD==METHOD_INVITE )
 	{
@@ -475,7 +476,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	}
 
 	/* nothing to do for the ser core */
-	/* t_unref( p_msg, NULL, NULL ); */
 	T_UNREF( T );
 	return 0;
 
