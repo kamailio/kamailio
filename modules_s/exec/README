@@ -45,7 +45,6 @@ Example of use: see etc/exec.cfg
 Known Issues
 ------------
 
-- kill.c is really ugly and not useable (it cannot work with popen); a redo
-  using some other technique would allow more generatily (commands would
-  be able to both process input and generate output), would allow for
-  killing processes,  but would also introduce additional complexity
+- there is currently no guarantee that scripts ever return and stop
+  blocking SIP server; (there is kill.c but it is not used along with
+  the current mechanisms based on popen; besides that kill.c is ugly)
