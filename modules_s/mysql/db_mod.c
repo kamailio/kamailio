@@ -47,6 +47,7 @@ struct module_exports exports = {
 		"~db_init",
 		"~db_close",
 		"~db_query",
+		"~db_raw_query",
 		"~db_free_query",
 		"~db_insert",
 		"~db_delete",
@@ -57,18 +58,19 @@ struct module_exports exports = {
 		(cmd_function)db_init,
 		(cmd_function)db_close,
 		(cmd_function)db_query,
+		(cmd_function)db_raw_query,
 		(cmd_function)db_free_query,
 		(cmd_function)db_insert,
 		(cmd_function)db_delete,
 		(cmd_function)db_update
 	},
 	(int[]) {
-                2, 1, 2, 2, 2, 2, 2, 2
+                2, 1, 2, 2, 2, 2, 2, 2, 2
 	},
 	(fixup_function[]) {
-		0, 0, 0, 0, 0, 0, 0, 0
+		0, 0, 0, 0, 0, 0, 0, 0, 0
 	},
-	8, /* number of functions*/
+	9, /* number of functions*/
 
 	0,   /* Module parameter names */
 	0,   /* Module parameter types */
