@@ -1,0 +1,43 @@
+#
+# $Id$
+#
+# Radius Group membership checking
+#
+
+Module depends on: -
+
+This module export functions necesarry for group membership
+checking over radius. There is a database table that contains list of 
+users and groups they belong to. The table is used by functions of 
+this module.
+
+Exported Parameters:
+-------------------
+
+Name:    radius_config
+Type:    str
+Default: "/usr/local/etc/radiusclient/radiusclient.conf"
+Desc:    Location of the configuration file of the radius client
+         library
+
+Name:    use_domain
+Type:    int
+Default: 0 (no)
+Desc:    If set to 1 then username@domain will be
+         used for lookup, if set to 0 then only
+	 username will be used
+
+
+Exported Functions:
+------------------
+
+Name:   radius_is_user_in
+Params: URI - URI whose username and optionally domain to be
+              used, this can be one of:
+	      Request-URI -- use Request-URI username and domain
+	      To -- Use To username and domain
+	      From -- Use From username and domain
+	      Credentials -- Use digest credentials username
+	group - Name of the group to check
+Desc:   The function returns true if username in the given URI is
+        member of the given group and false if not.
