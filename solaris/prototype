@@ -1,0 +1,35 @@
+# $Id$
+i pkginfo=pkginfo
+d none etc 0755 bin bin
+d none etc/ser 0755 bin bin
+e none etc/ser/ser.cfg 0644 bin bin
+d none sbin 0755 bin bin
+f none sbin/ser 0755 bin bin
+d none lib 0755 bin bin
+d none lib/ser 2755 bin bin
+d none lib/ser/modules 2755 bin bin
+f none lib/ser/modules/acc.so 0755 bin bin
+f none lib/ser/modules/auth.so 0755 bin bin
+f none lib/ser/modules/exec.so 0755 bin bin
+f none lib/ser/modules/im.so 0755 bin bin
+f none lib/ser/modules/jabber.so 0755 bin bin
+f none lib/ser/modules/maxfwd.so 0755 bin bin
+f none lib/ser/modules/msilo.so 0755 bin bin
+f none lib/ser/modules/pike.so 0755 bin bin
+f none lib/ser/modules/print.so 0755 bin bin
+f none lib/ser/modules/registrar.so 0755 bin bin
+f none lib/ser/modules/rr.so 0755 bin bin
+f none lib/ser/modules/sl.so 0755 bin bin
+f none lib/ser/modules/sms.so 0755 bin bin
+f none lib/ser/modules/textops.so 0755 bin bin
+f none lib/ser/modules/tm.so 0755 bin bin
+f none lib/ser/modules/usrloc.so 0755 bin bin
+d none share 0755 bin bin
+d none share/doc 0755 bin bin
+d none share/doc/ser 0755 bin bin
+f none share/doc/ser/README 0644 bin bin
+d none share/man 0755 bin bin
+d none share/man/man8 0755 bin bin
+f none share/man/man8/ser.8 0644 bin bin
+d none share/man/man5 0755 bin bin
+f none share/man/man5/ser.cfg.5 0644 bin bin

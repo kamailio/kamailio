@@ -115,7 +115,11 @@ Create a tar.gz with the binary distribution:
 
 make bin
 
-Install(not done yet):
+Create a solaris package:
+
+make sunpkg
+
+Install:
 
 make prefix=/usr/local  install
 
