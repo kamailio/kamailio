@@ -233,7 +233,9 @@ void check_timeout_in_report_queue()
 		if (report_queue[i].sms && report_queue[i].timeout<=current_time) {
 			LOG(L_INFO,"INFO:sms:check_timeout_in_report_queue: [%lu,%lu] "
 				"record %d is discarded (timeout), having status %d\n",
-				current_time,report_queue[i].timeout,i,report_queue[i].status);
+				(long unsigned int)current_time,
+				(long unsigned int)report_queue[i].timeout,
+				i,report_queue[i].status);
 			free_report_cell(&(report_queue[i]));
 		}
 }
