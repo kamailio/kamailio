@@ -75,6 +75,10 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 			" unable to parse the max forwards number !\n");
 		return -2;
 	}
+	if (x > 255){
+		LOG(L_NOTICE, "is_maxfwd_present: value %d decreased to 255\n", x);
+		x = 255;
+	}
 	DBG("DEBUG: is_maxfwd_present: value = %d \n",x);
 	return x;
 }
