@@ -79,7 +79,10 @@
 	extern gen_lock_t* mem_lock;
 
 
-int shm_mem_init();
+int shm_mem_init(); /* calls shm_getmem & shm_mem_init_mallocs */
+int shm_getmem();   /* allocates the memory (mmap or sysv shmap) */
+int shm_mem_init_mallocs(void* mempool, int size); /* initialized the mallocs
+													  & the lock */
 void shm_mem_destroy();
 
 

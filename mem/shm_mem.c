@@ -25,6 +25,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-12  splited shm_mem_init in shm_getmem & shm_mem_init_mallocs
+ *               (andrei)
+ */
 
 
 #ifdef SHM_MEM
@@ -114,7 +120,9 @@ void* _shm_resize( void* p , unsigned int s)
 
 
 
-int shm_mem_init()
+
+
+int shm_getmem()
 {
 
 #ifdef SHM_MMAP
@@ -159,9 +167,15 @@ int shm_mem_init()
 		shm_mem_destroy();
 		return -1;
 	}
+	return 0;
+}
 
+
+
+int shm_mem_init_mallocs(void* mempool, int pool_size)
+{
 	/* init it for malloc*/
-	shm_block=shm_malloc_init(shm_mempool, shm_mem_size);
+	shm_block=shm_malloc_init(mempool, pool_size);
 	if (shm_block==0){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not initialize shared"
 				" malloc\n");
@@ -186,6 +200,15 @@ int shm_mem_init()
 	return 0;
 }
 
+
+int shm_mem_init()
+{
+	int ret;
+	
+	ret=shm_getmem();
+	if (ret<0) return ret;
+	return shm_mem_init_mallocs(shm_mempool, shm_mem_size);
+}
 
 
 void shm_mem_destroy()
