@@ -49,7 +49,7 @@ struct replace_with{
 	union{
 		int nmatch;
 		char c;
-	};
+	}u;
 };
 
 struct subst_expr{

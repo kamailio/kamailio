@@ -132,25 +132,25 @@ found_re:
 					rw[rw_no].size=2;
 					rw[rw_no].offset=(p-1)-repl;
 					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].c='\\';
+					rw[rw_no].u.c='\\';
 					break;
 				case 'n':
 					rw[rw_no].size=2;
 					rw[rw_no].offset=(p-1)-repl;
 					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].c='\n';
+					rw[rw_no].u.c='\n';
 					break;
 				case 'r':
 					rw[rw_no].size=2;
 					rw[rw_no].offset=(p-1)-repl;
 					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].c='\r';
+					rw[rw_no].u.c='\r';
 					break;
 				case 't':
 					rw[rw_no].size=2;
 					rw[rw_no].offset=(p-1)-repl;
 					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].c='\t';
+					rw[rw_no].u.c='\t';
 					break;
 				/* special sip msg parts escapes */
 				case 'u':
@@ -172,9 +172,9 @@ found_re:
 					rw[rw_no].size=2;
 					rw[rw_no].offset=(p-1)-repl;
 					rw[rw_no].type=REPLACE_NMATCH;
-					rw[rw_no].nmatch=(*p)-'0'; /* 0 is the whole matched str*/
-					if (max_pmatch<rw[rw_no].nmatch) 
-						max_pmatch=rw[rw_no].nmatch;
+					rw[rw_no].u.nmatch=(*p)-'0';/* 0 is the whole matched str*/
+					if (max_pmatch<rw[rw_no].u.nmatch) 
+						max_pmatch=rw[rw_no].u.nmatch;
 					break;
 				default: /* just print current char */
 					if (*p!=c){
@@ -184,7 +184,7 @@ found_re:
 					rw[rw_no].size=2;
 					rw[rw_no].offset=(p-1)-repl;
 					rw[rw_no].type=REPLACE_CHAR;
-					rw[rw_no].c=*p;
+					rw[rw_no].u.c=*p;
 					break;
 			}
 			rw_no++;
@@ -280,11 +280,11 @@ static int replace_len(char* match, int nmatch, regmatch_t* pmatch,
 		switch(se->replace[r].type){
 			case REPLACE_NMATCH:
 				len-=se->replace[r].size;
-				if ((se->replace[r].nmatch<nmatch)&&(
-						pmatch[se->replace[r].nmatch].rm_so!=-1)){
+				if ((se->replace[r].u.nmatch<nmatch)&&(
+						pmatch[se->replace[r].u.nmatch].rm_so!=-1)){
 						/* do the replace */
-						len+=pmatch[se->replace[r].nmatch].rm_eo-
-								pmatch[se->replace[r].nmatch].rm_so;
+						len+=pmatch[se->replace[r].u.nmatch].rm_eo-
+								pmatch[se->replace[r].u.nmatch].rm_so;
 				};
 				break;
 			case REPLACE_CHAR:
@@ -345,18 +345,19 @@ static int replace_build(char* match, int nmatch, regmatch_t* pmatch,
 		dest+=size;
 		switch(se->replace[r].type){
 			case REPLACE_NMATCH:
-				if ((se->replace[r].nmatch<nmatch)&&(
-						pmatch[se->replace[r].nmatch].rm_so!=-1)){
+				if ((se->replace[r].u.nmatch<nmatch)&&(
+						pmatch[se->replace[r].u.nmatch].rm_so!=-1)){
 						/* do the replace */
-						size=pmatch[se->replace[r].nmatch].rm_eo-
-								pmatch[se->replace[r].nmatch].rm_so;
-						memcpy(dest, match+pmatch[se->replace[r].nmatch].rm_so,
+						size=pmatch[se->replace[r].u.nmatch].rm_eo-
+								pmatch[se->replace[r].u.nmatch].rm_so;
+						memcpy(dest, 
+								match+pmatch[se->replace[r].u.nmatch].rm_so,
 								size);
 						dest+=size;
 				};
 				break;
 			case REPLACE_CHAR:
-				*dest=se->replace[r].c;
+				*dest=se->replace[r].u.c;
 				dest++;
 				break;
 			case REPLACE_URI:
