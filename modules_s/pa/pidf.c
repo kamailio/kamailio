@@ -28,6 +28,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
@@ -35,6 +36,8 @@
 #include "paerrno.h"
 #include "common.h"
 #include "pidf.h"
+#include "ptime.h"
+#include "pa_mod.h"
 
 #define CRLF "\r\n"
 #define CRLF_L (sizeof(CRLF) - 1)
@@ -47,9 +50,6 @@
 
 #define XML_VERSION "<?xml version=\"1.0\"?>"
 #define XML_VERSION_L (sizeof(XML_VERSION) - 1)
-
-#define ADDRESS_ETAG "</contact>"
-#define ADDRESS_ETAG_L (sizeof(ADDRESS_ETAG) - 1)
 
 #define TUPLE_ETAG "</tuple>"
 #define TUPLE_ETAG_L (sizeof(TUPLE_ETAG) - 1)
@@ -72,8 +72,20 @@
 #define TUPLE_STAG "<tuple id=\"9r28r49\">"
 #define TUPLE_STAG_L (sizeof(TUPLE_STAG) - 1)
 
-#define ADDRESS_STAG "  <contact>"
-#define ADDRESS_STAG_L (sizeof(ADDRESS_STAG) - 1)
+#define CONTACT_START "  <contact"
+#define CONTACT_START_L (sizeof(CONTACT_START) - 1)
+
+#define PRIORITY_START "  priority=\""
+#define PRIORITY_START_L (sizeof(PRIORITY_START) - 1)
+
+#define PRIORITY_END "\""
+#define PRIORITY_END_L (sizeof(PRIORITY_END) - 1)
+
+#define CONTACT_END ">"
+#define CONTACT_END_L (sizeof(CONTACT_END) - 1)
+
+#define CONTACT_ETAG "</contact>"
+#define CONTACT_ETAG_L (sizeof(CONTACT_ETAG) - 1)
 
 #define STATUS_STAG "  <status>"
 #define STATUS_STAG_L (sizeof(STATUS_STAG) - 1)
@@ -86,9 +98,6 @@
 
 #define BASIC_CLOSED "    <basic>closed</basic>\r\n"
 #define BASIC_CLOSED_L (sizeof(BASIC_CLOSED) - 1)
-
-#define BASIC_INUSE "    <basic>inuse</basic>\r\n"
-#define BASIC_INUSE_L (sizeof(BASIC_INUSE) - 1)
 
 #define LOCATION_STAG "    <geopriv><location-info><civilAddress>"
 #define LOCATION_STAG_L (sizeof(LOCATION_STAG) - 1)
@@ -199,24 +208,32 @@ int start_pidf_tuple(str* _b, int _l)
 }
 
 /*
- * Add a contact address with given status
+ * Add a contact address with given status and priority
  */
-int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st)
+int pidf_add_contact(str* _b, int _l, str* _addr, pidf_status_t _st, double priority)
 {
 	int len = 0;
 	char* basic;
+	char priority_s[32];
+	int priority_len = 0;
 
 	switch(_st) {
 	case PIDF_ST_OPEN:   basic = BASIC_OPEN;   len = BASIC_OPEN_L;   break;
 	case PIDF_ST_CLOSED: basic = BASIC_CLOSED; len = BASIC_CLOSED_L; break;
-	case PIDF_ST_INUSE:  basic = BASIC_INUSE;  len = BASIC_INUSE_L;  break;
 	default:              basic = BASIC_CLOSED; len = BASIC_CLOSED_L; break; /* Makes gcc happy */
 	}
 
-	str_append(_b, ADDRESS_STAG, ADDRESS_STAG_L);
+	priority_len = sprintf(priority_s, "%f", priority);
+	str_append(_b, CONTACT_START, CONTACT_START_L);
+	if (pa_pidf_priority) {
+	  str_append(_b, PRIORITY_START, PRIORITY_START_L);
+	  str_append(_b, priority_s, priority_len);
+	  str_append(_b, PRIORITY_END, PRIORITY_END_L);
+	}
+	str_append(_b, CONTACT_END, CONTACT_END_L);
 	str_append(_b, _addr->s, _addr->len);
-	str_append(_b, ADDRESS_ETAG CRLF , 
-		   ADDRESS_ETAG_L + CRLF_L);
+	str_append(_b, CONTACT_ETAG CRLF , 
+		   CONTACT_ETAG_L + CRLF_L);
 	str_append(_b, STATUS_STAG CRLF, STATUS_STAG_L + CRLF_L);
 	str_append(_b, basic, len);
 	return 0;
@@ -453,7 +470,7 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str, 
 	       str *location_str, str *site_str, str *floor_str, str *room_str,
 	       double *xp, double *yp, double *radiusp,
-	       str *packet_loss_str)
+	       str *packet_loss_str, double *priorityp, time_t *expiresp)
 {
      int flags = 0;
      xmlDocPtr doc = NULL;
@@ -471,6 +488,8 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
      char *y = NULL;
      char *radius = NULL;
      char *packet_loss = NULL;
+     char *priority_str = NULL;
+     char *expires_str = NULL;
 
      doc = event_body_parse(pidf_body);
 
@@ -487,6 +506,8 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
      y = xmlDocGetNodeContentByName(doc, "y", NULL);
      radius = xmlDocGetNodeContentByName(doc, "radius", NULL);
      packet_loss = xmlDocGetNodeContentByName(doc, "packet-loss", NULL);
+     priority_str = xmlDocGetNodeContentByName(doc, "priority", NULL);
+     expires_str = xmlDocGetNodeContentByName(doc, "expires", NULL);
 		
      if (presenceNode)
 	  sipuri = xmlNodeGetAttrContentByName(presenceNode, "entity");
@@ -551,6 +572,14 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
 	  packet_loss_str->len = strlen(packet_loss);
 	  packet_loss_str->s = strdup(packet_loss);
 	  flags |= PARSE_PIDF_PACKET_LOSS;
+     }
+     if (expiresp && expires_str) {
+       *expiresp = act_time + strtod(expires_str, NULL);
+       flags |= PARSE_PIDF_EXPIRES;
+     }
+     if (priorityp && priority_str) {
+	  *priorityp = strtod(priority_str, NULL);
+	  flags |= PARSE_PIDF_PRIORITY;
      }
      return flags;
 }

@@ -35,8 +35,7 @@
 
 typedef enum xpidf_status {
 	XPIDF_ST_OPEN,
-	XPIDF_ST_CLOSED,
-	XPIDF_ST_INUSE
+	XPIDF_ST_CLOSED
 } xpidf_status_t;
 
 

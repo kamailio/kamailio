@@ -84,9 +84,6 @@
 #define STATUS_CLOSED "<status status=\"closed\"/>"
 #define STATUS_CLOSED_L (sizeof(STATUS_CLOSED) - 1)
 
-#define STATUS_INUSE "<status status=\"inuse\"/>"
-#define STATUS_INUSE_L (sizeof(STATUS_INUSE) - 1)
-
 
 /*
  * Create start of pidf document
@@ -140,7 +137,6 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	switch(_st) {
 	case XPIDF_ST_OPEN:   p = STATUS_OPEN;   len = STATUS_OPEN_L;   break;
 	case XPIDF_ST_CLOSED: p = STATUS_CLOSED; len = STATUS_CLOSED_L; break;
-	case XPIDF_ST_INUSE:  p = STATUS_INUSE;  len = STATUS_INUSE_L;  break;
 	default:              p = STATUS_CLOSED; len = STATUS_CLOSED_L; break; /* Makes gcc happy */
 	}
 

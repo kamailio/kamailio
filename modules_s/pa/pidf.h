@@ -35,8 +35,7 @@
 
 typedef enum pidf_status {
 	PIDF_ST_OPEN,
-	PIDF_ST_CLOSED,
-	PIDF_ST_INUSE
+	PIDF_ST_CLOSED
 } pidf_status_t;
 
 
@@ -57,9 +56,9 @@ int pidf_add_presentity(str* _b, int _l, str* _uri);
 int start_pidf_tuple(str* _b, int _l);
 
 /*
- * Add a contact address with given status
+ * Add a contact address with given status and priority
  */
-int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st);
+int pidf_add_contact(str* _b, int _l, str* _addr, pidf_status_t _st, double priority);
 
 /*
  * Add location information
@@ -80,7 +79,7 @@ int end_pidf_doc(str* _b, int _l);
 int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str,
 	       str *location_str,
 	       str *site_str, str *floor_str, str *room_str,
-	       double *xp, double *yp, double *radiusp, str *packet_loss);
+	       double *xp, double *yp, double *radiusp, str *packet_loss, double *priority, time_t *expires);
 #define PARSE_PIDF_CONTACT (1 << 0)
 #define PARSE_PIDF_BASIC (1 << 1)
 #define PARSE_PIDF_STATUS (1 << 2)
@@ -92,7 +91,9 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
 #define PARSE_PIDF_Y (1 << 8)
 #define PARSE_PIDF_RADIUS (1 << 9)
 #define PARSE_PIDF_PACKET_LOSS (1 << 10)
+#define PARSE_PIDF_PRIORITY (1 << 11)
+#define PARSE_PIDF_EXPIRES  (1 << 12)
 
-#define PARSE_PIDF_LOCATION_MASK 0x3FC
+#define PARSE_PIDF_LOCATION_MASK 0x3F8
 
 #endif /* PIDF_H */
