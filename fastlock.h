@@ -56,8 +56,10 @@ inline static int tsl(fl_lock_t* lock)
 	
 #elif defined __armv4l
 	asm volatile(
-			"swp [%1], %0 \n\t"
-			"=r" (val), "=m" (*lock): "0" (val) : "memory"
+			"# here \n\t"
+			"swpb %0, %1, [%2] \n\t"
+			: "=r" (val)
+			: "r"(1), "r" (lock) : "memory"
 	);
 	
 #else
@@ -108,7 +110,10 @@ inline static void release_lock(fl_lock_t* lock)
 	);
 #elif defined __armv4l
 	asm volatile(
-		"mov $0, [%0]" : /*no output*/: "r"(lock): "memory"
+		" str %0, [%1] \n\r" 
+		: /*no outputs*/ 
+		: "r"(0), "r"(lock)
+		: "memory"
 	);
 #else
 #error "unknown arhitecture"
