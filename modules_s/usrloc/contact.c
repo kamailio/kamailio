@@ -162,7 +162,7 @@ int db_remove_contact(db_con_t* _c, contact_t* _con)
 	vals[0].val.string_val = _con->aor->s;
 	vals[1].val.string_val = _con->c.s;
 
-	if (db_delete(_c, keys, vals, 2) == FALSE) {
+	if (db_delete(_c, keys, vals, 2) < 0) {
 		LOG(L_ERR, "db_remove_contact(): Error while deleting from database\n");
 		return FALSE;
 	}
@@ -200,7 +200,7 @@ int db_update_contact(db_con_t* _c, contact_t* _con)
 	vals2[2].val.string_val = _con->callid;
 	vals2[3].val.int_val = _con->cseq;
 
-	if (db_update(_c, keys1, vals1, keys2, vals2, 2, 4) == FALSE) {
+	if (db_update(_c, keys1, vals1, keys2, vals2, 2, 4) < 0) {
 		LOG(L_ERR, "db_update_contact(): Error while updating binding\n");
 		return FALSE;
 	}
@@ -236,7 +236,7 @@ int db_insert_contact(db_con_t* _c, contact_t* _con)
 	vals[4].val.string_val = _con->callid;
 	vals[5].val.int_val = _con->cseq;
 	
-	if (db_insert(_c, keys, vals, 6) == FALSE) {
+	if (db_insert(_c, keys, vals, 6) < 0) {
 		LOG(L_ERR, "db_insert_contact(): Error while inserting binding\n");
 		return FALSE;
 	}

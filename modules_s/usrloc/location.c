@@ -508,7 +508,7 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 #endif
 	
 	val[0].val.string_val = _loc->user.s;
-	if (db_delete(_c, key, val, 1) == FALSE) {
+	if (db_delete(_c, key, val, 1) < 0) {
 		ERR("Error while inserting binding");
 		return FALSE;
 	}

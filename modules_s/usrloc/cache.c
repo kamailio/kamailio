@@ -390,7 +390,7 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 	}
 #endif
 
-	if (db_query(_con, NULL, NULL, columns, 0, 6, user_col, &res) == FALSE) {
+	if (db_query(_con, NULL, NULL, columns, 0, 6, user_col, &res) < 0) {
 		ERR("Error while doing db_query");
 		return FALSE;
 	}

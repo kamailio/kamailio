@@ -44,7 +44,7 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
 	db_res_t* res;
 
 	db_use_table(db_handle, grp_table);
-	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) == FALSE) {
+	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) < 0) {
 		LOG(L_ERR, "is_in_group(): Error while querying database\n");
 		return -1;
 	}
