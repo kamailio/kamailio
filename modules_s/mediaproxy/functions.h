@@ -86,7 +86,7 @@ pingClients(unsigned int ticks, void *param)
             continue;
         }
         hostent2su(&to, hostent, 0, uri.port_no);
-        sock = get_send_socket(&to, PROTO_UDP);
+        sock = get_send_socket(0, &to, PROTO_UDP);
         if (sock == NULL) {
             LOG(L_ERR, "error: mediaproxy/pingClients(): can't get sending socket\n");
             continue;

@@ -1583,7 +1583,8 @@ timer(unsigned int ticks, void *param)
 			continue;
 		}
 		hostent2su(&to, he, 0, curi.port_no);
-		send_sock=force_socket ? force_socket : get_send_socket(&to, PROTO_UDP);
+		send_sock=force_socket ? force_socket : 
+					get_send_socket(0, &to, PROTO_UDP);
 		if (send_sock == NULL) {
 			LOG(L_ERR, "ERROR: nathelper::timer: can't get sending socket\n");
 			continue;
