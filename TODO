@@ -24,6 +24,7 @@ x plugin interface
 - add User-Agent (for the replies)
 
 Low priority:
+- forward to received= if present
 - make it easier to register a statically linkable module.
 - add support for -u user and -g group (not only -u uid, -g uid)
 - change uid/gid after opening the sockets
