@@ -47,6 +47,8 @@ extern str realm_prefix;
 
 extern float def_q;
 
+extern str rcv_param;
+
 usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
 extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);

@@ -67,6 +67,12 @@ int max_expires     = 0;              /* Minimum expires the phones are allowed 
 char* realm_pref    = "";   /* Realm prefix to be removed */
 str realm_prefix;
 
+#define RCV_NAME "received"
+#define RCV_NAME_LEN (sizeof(RCV_NAME) - 1)
+
+str rcv_param = {RCV_NAME, RCV_NAME_LEN};
+
+
 /*
  * sl_send_reply function pointer
  */
@@ -98,6 +104,7 @@ static param_export_t params[] = {
 	{"realm_prefix",    STR_PARAM, &realm_pref     },
 	{"min_expires",     INT_PARAM, &min_expires    },
 	{"max_expires",     INT_PARAM, &max_expires    },
+        {"received_param",  STR_PARAM, &rcv_param      },
 	{0,0,0}
 };
 
@@ -139,6 +146,8 @@ static int mod_init(void)
 	realm_prefix.s = realm_pref;
 	realm_prefix.len = strlen(realm_pref);
 	
+	rcv_param.len = sizeof(rcv_param.s);
+
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
 		LOG(L_ERR, "registrar: Can't bind usrloc\n");
