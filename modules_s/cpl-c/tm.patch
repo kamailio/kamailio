@@ -1,6 +1,6 @@
-diff -ruib sip_router_head/modules/tm/h_table.c sip_router_md/modules/tm/h_table.c
---- sip_router_head/modules/tm/h_table.c	2003-09-19 21:02:08.000000000 +0200
-+++ sip_router_md/modules/tm/h_table.c	2003-09-26 18:00:19.000000000 +0200
+diff -ruib modules/tm/h_table.c modules/tm.new/h_table.c
+--- modules/tm/h_table.c	2003-09-19 21:02:08.000000000 +0200
++++ modules/tm.new/h_table.c	2003-11-26 16:16:14.000000000 +0100
 @@ -106,6 +106,7 @@
  	int i;
  	struct sip_msg *rpl;
@@ -43,9 +43,9 @@ diff -ruib sip_router_head/modules/tm/h_table.c sip_router_md/modules/tm/h_table
  
  	if (p_msg) {
  		new_cell->uas.request = sip_msg_cloner(p_msg);
-diff -ruib sip_router_head/modules/tm/h_table.h sip_router_md/modules/tm/h_table.h
---- sip_router_head/modules/tm/h_table.h	2003-04-07 08:36:56.000000000 +0200
-+++ sip_router_md/modules/tm/h_table.h	2003-08-06 17:41:47.000000000 +0200
+diff -ruib modules/tm/h_table.h modules/tm.new/h_table.h
+--- modules/tm/h_table.h	2003-04-07 08:36:56.000000000 +0200
++++ modules/tm.new/h_table.h	2003-11-26 16:16:14.000000000 +0100
 @@ -189,6 +189,9 @@
  	   during freeing transaction too
  	*/
@@ -56,9 +56,9 @@ diff -ruib sip_router_head/modules/tm/h_table.h sip_router_md/modules/tm/h_table
  
  	/* how many processes are currently processing this transaction ;
  	   note that only processes working on a request/reply belonging
-diff -ruib sip_router_head/modules/tm/t_fwd.c sip_router_md/modules/tm/t_fwd.c
---- sip_router_head/modules/tm/t_fwd.c	2003-11-24 18:39:51.000000000 +0100
-+++ sip_router_md/modules/tm/t_fwd.c	2003-11-26 12:07:55.000000000 +0100
+diff -ruib modules/tm/t_fwd.c modules/tm.new/t_fwd.c
+--- modules/tm/t_fwd.c	2003-11-24 18:39:51.000000000 +0100
++++ modules/tm.new/t_fwd.c	2003-11-26 16:16:14.000000000 +0100
 @@ -83,8 +83,12 @@
  	/* ... update uri ... */
  	i_req->new_uri=*uri;
@@ -72,9 +72,9 @@ diff -ruib sip_router_head/modules/tm/t_fwd.c sip_router_md/modules/tm/t_fwd.c
  
  	/* ... and build it now */
  	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
-diff -ruib sip_router_head/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks.c
---- sip_router_head/modules/tm/t_hooks.c	2003-03-19 19:40:09.000000000 +0100
-+++ sip_router_md/modules/tm/t_hooks.c	2003-11-24 14:13:47.000000000 +0100
+diff -ruib modules/tm/t_hooks.c modules/tm.new/t_hooks.c
+--- modules/tm/t_hooks.c	2003-03-19 19:40:09.000000000 +0100
++++ modules/tm.new/t_hooks.c	2003-11-26 16:16:14.000000000 +0100
 @@ -38,6 +38,11 @@
  #include "../../error.h"
  #include "../../mem/mem.h"
@@ -166,9 +166,9 @@ diff -ruib sip_router_head/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks
 +}
 +
 +
-diff -ruib sip_router_head/modules/tm/t_hooks.h sip_router_md/modules/tm/t_hooks.h
---- sip_router_head/modules/tm/t_hooks.h	2003-07-08 17:24:27.000000000 +0200
-+++ sip_router_md/modules/tm/t_hooks.h	2003-11-24 14:24:44.000000000 +0100
+diff -ruib modules/tm/t_hooks.h modules/tm.new/t_hooks.h
+--- modules/tm/t_hooks.h	2003-07-08 17:24:27.000000000 +0200
++++ modules/tm.new/t_hooks.h	2003-11-26 16:16:14.000000000 +0100
 @@ -36,7 +36,6 @@
  
  #include "defs.h"
@@ -204,10 +204,10 @@ diff -ruib sip_router_head/modules/tm/t_hooks.h sip_router_md/modules/tm/t_hooks
 +												struct sip_msg *msg, int code );
  
  #endif
-diff -ruib sip_router_head/modules/tm/t_lookup.c sip_router_md/modules/tm/t_lookup.c
---- sip_router_head/modules/tm/t_lookup.c	2003-08-21 21:36:39.000000000 +0200
-+++ sip_router_md/modules/tm/t_lookup.c	2003-09-03 17:52:50.000000000 +0200
-@@ -785,15 +785,29 @@
+diff -ruib modules/tm/t_lookup.c modules/tm.new/t_lookup.c
+--- modules/tm/t_lookup.c	2003-11-26 17:04:27.000000000 +0100
++++ modules/tm.new/t_lookup.c	2003-11-28 12:33:02.000000000 +0100
+@@ -786,15 +786,29 @@
  		if (p_cell->is_invite && p_msg->REPLY_STATUS>=200 
  				&& p_msg->REPLY_STATUS<300 
  				&& ( (!p_cell->local && 
@@ -241,7 +241,7 @@ diff -ruib sip_router_head/modules/tm/t_lookup.c sip_router_md/modules/tm/t_look
  		return 1;
  	} /* for cycle */
  
-@@ -1050,7 +1064,11 @@
+@@ -1051,7 +1065,11 @@
  
  	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
  		/* no callbacks? complete quickly */
@@ -254,7 +254,7 @@ diff -ruib sip_router_head/modules/tm/t_lookup.c sip_router_md/modules/tm/t_look
  			UNLOCK_HASH(p_msg->hash_index);
  			return 1;
  		} 
-@@ -1063,8 +1081,13 @@
+@@ -1064,8 +1082,13 @@
  	   	    better waste time in locks
  		 */
  		if (unmatched_totag(t_ack, p_msg)) {
@@ -268,9 +268,9 @@ diff -ruib sip_router_head/modules/tm/t_lookup.c sip_router_md/modules/tm/t_look
  		}
  		UNREF(t_ack);
  		return 1;
-diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
---- sip_router_head/modules/tm/t_reply.c	2003-11-24 18:39:51.000000000 +0100
-+++ sip_router_md/modules/tm/t_reply.c	2003-11-26 14:33:03.000000000 +0100
+diff -ruib modules/tm/t_reply.c modules/tm.new/t_reply.c
+--- modules/tm/t_reply.c	2003-11-27 16:52:12.000000000 +0100
++++ modules/tm.new/t_reply.c	2003-11-28 12:33:02.000000000 +0100
 @@ -101,6 +101,10 @@
  /* where to go on receipt of reply */
  static int goto_on_reply=0;
@@ -634,9 +634,9 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  			if (t->completion_cb) t->completion_cb( t, winning_msg, 
  						winning_code, t->cbp);
  		}
-diff -ruib sip_router_head/modules/tm/t_reply.h sip_router_md/modules/tm/t_reply.h
---- sip_router_head/modules/tm/t_reply.h	2003-04-30 20:50:58.000000000 +0200
-+++ sip_router_md/modules/tm/t_reply.h	2003-11-26 13:59:32.000000000 +0100
+diff -ruib modules/tm/t_reply.h modules/tm.new/t_reply.h
+--- modules/tm/t_reply.h	2003-04-30 20:50:58.000000000 +0200
++++ modules/tm.new/t_reply.h	2003-11-26 16:16:14.000000000 +0100
 @@ -138,5 +138,11 @@
  
  void tm_init_tags();
@@ -649,34 +649,24 @@ diff -ruib sip_router_head/modules/tm/t_reply.h sip_router_md/modules/tm/t_reply
 +
  #endif
  
-diff -ruib sip_router_head/modules/tm/tm.c sip_router_md/modules/tm/tm.c
---- sip_router_head/modules/tm/tm.c	2003-10-30 12:56:44.000000000 +0100
-+++ sip_router_md/modules/tm/tm.c	2003-11-26 14:02:13.000000000 +0100
-@@ -195,7 +195,11 @@
- 	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
+diff -ruib modules/tm/tm.c modules/tm.new/tm.c
+--- modules/tm/tm.c	2003-11-27 16:52:15.000000000 +0100
++++ modules/tm.new/tm.c	2003-11-28 12:37:17.000000000 +0100
+@@ -225,6 +225,11 @@
  			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+ 
  	/* not applicable from the script */
 +#ifndef OLD_TMCB_OBSOLETE
- 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
++	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
 +#endif
 +	{"register_req_cb",    (cmd_function)register_req_cb,   NO_SCRIPT,   0, 0},
 +	{"t_get_fake_req",     (cmd_function)get_fake_req   ,   NO_SCRIPT,   0, 0},
- 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
- 	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0, 0},
- 	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0, 0},
-@@ -211,8 +215,7 @@
- 	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,     0, 0},
- 	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,     0, 0},
- 	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,     0, 0},
--
--	{T_GETT,				(cmd_function)get_t,			NO_SCRIPT,		0,0},
-+	{T_GETT,               (cmd_function)get_t,             NO_SCRIPT,   0, 0},
- 	{0,0,0,0,0}
- };
- 
-diff -ruib sip_router_head/modules/tm/tm_load.c sip_router_md/modules/tm/tm_load.c
---- sip_router_head/modules/tm/tm_load.c	2003-10-30 12:56:44.000000000 +0100
-+++ sip_router_md/modules/tm/tm_load.c	2003-11-26 14:01:33.000000000 +0100
+ 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
+ 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
+ 	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,   0, 0},
+diff -ruib modules/tm/tm_load.c modules/tm.new/tm_load.c
+--- modules/tm/tm_load.c	2003-10-30 12:56:44.000000000 +0100
++++ modules/tm.new/tm_load.c	2003-11-26 16:16:14.000000000 +0100
 @@ -40,12 +40,18 @@
  
  int load_tm( struct tm_binds *tmb)
@@ -708,17 +698,9 @@ diff -ruib sip_router_head/modules/tm/tm_load.c sip_router_md/modules/tm/tm_load
 +	}
  	return 1;
  }
-diff -ruib sip_router_head/modules/tm/tm_load.h sip_router_md/modules/tm/tm_load.h
---- sip_router_head/modules/tm/tm_load.h	2003-11-11 16:32:36.000000000 +0100
-+++ sip_router_md/modules/tm/tm_load.h	2003-11-26 13:59:59.000000000 +0100
-@@ -56,6 +56,7 @@
- #define T_RELAY              "t_relay"
- #define T_REPLY              "t_reply"
- #define T_REPLY_WB           "t_reply_with_body"
-+#define T_REPLY_UNSAFE       "t_reply_unsafe"
- #define T_ADDBLIND           "t_add_blind"
- #define T_REPLY_UNSAFE       "t_reply_unsafe"
- #define T_FORWARD_NONACK     "t_forward_nonack"
+diff -ruib modules/tm/tm_load.h modules/tm.new/tm_load.h
+--- modules/tm/tm_load.h	2003-11-11 16:32:36.000000000 +0100
++++ modules/tm.new/tm_load.h	2003-11-26 16:16:14.000000000 +0100
 @@ -73,7 +74,10 @@
  
  
