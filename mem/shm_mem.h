@@ -177,9 +177,9 @@ do { \
 
 #define shm_status() \
 do { \
-		shm_lock(); \
+		/*shm_lock();*/ \
 		MY_STATUS(shm_block); \
-		shm_unlock(); \
+		/*shm_unlock();*/ \
 }while(0)
 
 

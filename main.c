@@ -307,7 +307,7 @@ int main_loop()
 		pids[0]=getpid();
 		process_bit = 1;
 		process_no=0; /*main process number*/
-		udp_rcv_loop();
+		return udp_rcv_loop();
 	}else{
 		for(r=0;r<addresses_no;r++){
 			/* create the listening socket (for each address)*/
@@ -329,7 +329,7 @@ int main_loop()
 						pids[i+1]=pid; /*should be in shared mem.*/
 				}
 			}
-			/*close(udp_sock);*/ /*parent*/
+			close(udp_sock); /*parent*/
 		}
 	}
 	/*this is the main process*/
