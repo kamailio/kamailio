@@ -1,0 +1,99 @@
+
+avp_radius Module
+
+Juha Heinanen
+
+  Copyright @ 2004 Juha Heinanen
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
+
+              1.3.1. radius_config (string)
+              1.3.2. caller_service_type (string)
+              1.3.3. callee_service_type (string)
+
+        1.4. Exported Functions
+
+              1.4.1. avp_load_radius()
+
+   List of Examples
+   1-1. radius_config parameter usage
+   1-2. caller_service_type usage
+   1-3. callee_service_type usage
+   1-4. avp_load_radius usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+  avp_radius module allows loading of user's attributes into AVPs from
+  Radius.  User's name and domain can be based on From URI, Request
+  URI, or authenticated credentials.
+
+  The module assumes that Radius returns the AVPs as values of reply
+  attribute SIP-AVP.  Its value must be a string of form "name:value" or
+  of form "name#value".  In the first case, value is interpreted as
+  a string and in the second case as an int (second case has not been
+  implemented yet).
+
+1.2. Dependencies
+
+  None.
+
+1.3. Exported Parameters
+
+1.3.1. radius_config (string)
+
+   This is the location of the configuration file of radius
+   client libraries.
+
+   Default value is
+   "/usr/local/etc/radiusclient/radiusclient.conf".
+
+   Example 1-1. radius_config parameter usage
+modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
+     _________________________________________________________
+
+1.3.2. caller_service_type (integer)
+
+   This is the value of the Service-Type radius attribute to be
+   used, when caller's attributes are loaded.
+
+   Default value is dictionary value of "SIP-Caller-AVPs" Service-Type.
+
+   Example 1-2. caller_service_type usage
+modparam("avp_radius", "caller_service_type", 18)
+     _________________________________________________________
+
+1.3.2. callee_service_type (integer)
+
+   This is the value of the Service-Type radius attribute to be
+   used, when callee's attributes are loaded.
+
+   Default value is dictionary value of "SIP-Callee-AVPs" Service-Type.
+
+   Example 1-3. callee_service_type usage
+modparam("avp_radius", "callee_service_type", 19)
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. avp_load_radius(user)
+  
+   The functions loads user's attributes from radius and stores them
+   into AVPs.  Parameter "user" is used to indicate, whose attributes
+   are loaded.  Possible values are "caller", "callee", and "digest".
+
+   In "caller" case, attributes belong to the user of the From URI, in
+   "callee" case, to the user of the Request URI, and, in "digest" case,
+   to the authenticated user.
+
+   Example 1-4. avp_load_radius usage
+avp_load_radius("callee");
+     _________________________________________________________
