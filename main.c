@@ -46,7 +46,7 @@
 
 #include <sys/ioctl.h>
 #include <net/if.h>
-#ifdef __sun__
+#ifdef __sun
 #include <sys/sockio.h>
 #endif
 

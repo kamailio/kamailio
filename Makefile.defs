@@ -443,7 +443,7 @@ ifeq  ($(OS), SunOS)
 	YACC=yacc
 
 ifeq ($(CC_NAME), suncc)
-	LIBS=-lfast
+	LIBS=-lfast -lresolv
 endif
 	LIBS+=-ldl -L/usr/local/lib -L/usr/lib/mysql -lfl -lxnet -lrt -lnsl
 	# -lrt needed for sched_yield
