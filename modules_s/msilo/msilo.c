@@ -44,12 +44,11 @@
 #include "../../mem/mem.h"
 #include "../../globals.h"
 #include "../../db/db.h"
+#include "../../parser/parse_from.h"
+
 #include "../tm/t_funcs.h"
 #include "../tm/uac.h"
-
 #include "../tm/tm_load.h"
-#include "../im/im_funcs.h"
-#include "../im/im_load.h"
 
 #include "ms_msg_list.h"
 #include "msfuncs.h"
@@ -121,7 +120,7 @@ struct tm_binds tmb;
 char *db_url="sql://root@127.0.0.1/msilo";
 char *db_table="silo";
 char *registrar="sip:registrar@iptel.org";
-int  expire_time=72*3600;
+int  expire_time=259200;
 int  check_time=30;
 int  clean_period=5;
 
@@ -274,7 +273,7 @@ static int child_init(int rank)
 static int m_store(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, str_hdr;
-	struct to_body to, from, *pto, *pfrom;
+	struct to_body to, *pto, *pfrom;
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 	int nr_keys = 0, val, lexpire;
@@ -294,6 +293,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		}
 		else
 		{
+			DBG("MSILO: m_store: 'To' header NOT PARSED ->parsing ...\n");
 			memset( &to , 0, sizeof(to) );
 			parse_to(msg->to->body.s,
 					msg->to->body.s + msg->to->body.len + 1, &to);
@@ -337,27 +337,21 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(msg->from->parsed != NULL)
 		{
-			pfrom = (struct to_body*)msg->from->parsed;
-			DBG("MSILO: m_store: 'From' header ALREADY PARSED: <%.*s>\n",
-				pfrom->uri.len, pfrom->uri.s );	
+			DBG("MSILO:m_store: 'From' header ALREADY PARSED\n");	
 		}
 		else
 		{
-			memset( &from , 0, sizeof(from) );
-			parse_to(msg->from->body.s, 
-				msg->from->body.s + msg->from->body.len + 1, &from);
-			if(from.uri.len > 0) // && from.error == PARSE_OK)
+			DBG("MSILO:m_store: 'From' header NOT PARSED\n");
+			/* parsing from header */
+			if ( parse_from_header( msg )==-1 ) 
 			{
-				DBG("MSILO: m_store: 'from' parsed OK <%.*s>.\n",
-					from.uri.len, from.uri.s);
-				pfrom = &from;
-			}
-			else
-			{
-				DBG("MSILO: m_store: 'from' NOT parsed\n");
+				DBG("MSILO:m_store: cannot parse FROM header\n");
 				goto error;
 			}
 		}
+		pfrom = (struct to_body*)msg->from->parsed;
+		DBG("MSILO:m_store: 'From' header: <%.*s>\n",
+			pfrom->uri.len, pfrom->uri.s );	
 	}
 	else
 	{
