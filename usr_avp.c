@@ -266,7 +266,7 @@ struct usr_avp *search_next_avp( struct usr_avp *avp,  int_str *val )
 	if (avp->flags&AVP_NAME_STR)
 		avp = internal_search_name_avp( avp->next, avp->id, get_avp_name(avp));
 	else
-		avp = internal_search_ID_avp( avp, avp->id );
+		avp = internal_search_ID_avp( avp->next, avp->id );
 
 	if (avp && val)
 		get_avp_val(avp, val);
