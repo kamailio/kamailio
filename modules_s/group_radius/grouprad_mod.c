@@ -28,8 +28,9 @@
  *
  * History:
  * --------
- * 2003-02-25 - created by janakj
- * 2003-03-16 - flags export parameter added (janakj)
+ *  2003-02-25 - created by janakj
+ *  2003-03-16 - flags export parameter added (janakj)
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
  */
 
 #include <string.h>
@@ -38,6 +39,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../sr_module.h"
+#include "../../mem/mem.h"
 #include "grouprad_mod.h"
 #include "group.h"
 
@@ -132,9 +134,9 @@ static int hf_fixup(void** param, int param_no)
 			return E_UNSPEC;
 		}
 
-		free(ptr);
+		pkg_free(ptr);
 	} else if (param_no == 2) {
-		s = (str*)malloc(sizeof(str));
+		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
 			LOG(L_ERR, "hf_fixup(): No memory left\n");
 			return E_UNSPEC;

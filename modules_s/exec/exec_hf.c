@@ -28,9 +28,10 @@
  *
  * history
  * -------
- * 2003-02-28 scratchapd compatibility abandoned
- * 2003-01-29 scratchpad removed
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ *  2003-02-28 scratchapd compatibility abandoned
+ *  2003-01-29 scratchpad removed
+ *  2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  */
 
 /* functions for creating environment variables out of a request's
@@ -209,7 +210,7 @@ static int print_av_var(struct hf_wrapper *w)
 	char *c;
 
 	env_len=w->u.av.attr.len+1/*assignment*/+w->u.av.val.len+1/*ZT*/;
-	env=malloc(env_len);
+	env=pkg_malloc(env_len);
 	if (!env) {
 		LOG(L_ERR, "ERROR: print_av_var: no malloc mem\n");
 		return 0;
@@ -255,7 +256,7 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	for(wi=w->next_same; wi; wi=wi->next_same) { /* other values, separated */
 		envvar_len+=1 /* separator */ + wi->u.hf->body.len;
 	}
-	envvar=malloc(w->prefix_len+hlen+1/*assignment*/+envvar_len+1/*ZT*/);
+	envvar=pkg_malloc(w->prefix_len+hlen+1/*assignment*/+envvar_len+1/*ZT*/);
 	if (!envvar) {
 		LOG(L_ERR, "ERROR: print_var: no envvar mem\n");
 		goto error00;
@@ -300,7 +301,7 @@ static void release_vars(struct hf_wrapper *list)
 {
 	while(list) {
 		if (list->envvar) {
-			free(list->envvar);
+			pkg_free(list->envvar);
 			list->envvar=0;
 		}
 		list=list->next_other;
@@ -368,7 +369,7 @@ environment_t *replace_env(struct hf_wrapper *list)
 	backup_env->old_cnt=var_cnt;
 	/* count length of our extensions */
 	for(w=list;w;w=w->next_other) var_cnt++;
-	new_env=malloc((var_cnt+1)*sizeof(char *));
+	new_env=pkg_malloc((var_cnt+1)*sizeof(char *));
 	if (!new_env) {
 		LOG(L_ERR, "ERROR: replace_env: no mem\n");
 		return 0;
@@ -404,12 +405,12 @@ void unset_env(environment_t *backup_env)
 	while(*cur_env) {
 		/* leave previously existing vars alone */
 		if (i>=backup_env->old_cnt) {
-			free(*cur_env);
+			pkg_free(*cur_env);
 		}
 		cur_env++;
 		i++;
 	}
-	free(cur_env0);
+	pkg_free(cur_env0);
 	pkg_free(backup_env);
 }
 

@@ -30,6 +30,7 @@
  * --------
  *  2003-03-11  updated to the new module interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -38,6 +39,7 @@
 #include "../../sr_module.h"
 #include "../../ut.h"
 #include "../../error.h"
+#include "../../mem/mem.h"
 #include "strict.h"
 #include "loose.h"
 #include "common.h"
@@ -118,7 +120,7 @@ static int int_fixup(void** param, int param_no)
 		qop = str2s(*param, strlen(*param), &err);
 
 		if (err == 0) {
-			free(*param);
+			pkg_free(*param);
 			*param=(void*)qop;
 		} else {
 			LOG(L_ERR, "int_fixup(): Bad number <%s>\n",

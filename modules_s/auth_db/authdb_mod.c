@@ -31,6 +31,7 @@
  * 2003-02-26: checks and group moved to separate modules (janakj)
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
+ * 2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  */
 
 #include <stdio.h>
@@ -39,6 +40,7 @@
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../mem/mem.h"
 #include "authorize.h"
 #include "../auth/api.h"
 
@@ -183,7 +185,7 @@ static int str_fixup(void** param, int param_no)
 	str* s;
 
 	if (param_no == 1) {
-		s = (str*)malloc(sizeof(str));
+		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
 			LOG(L_ERR, "str_fixup(): No memory left\n");
 			return E_UNSPEC;

@@ -32,6 +32,7 @@
  * --------
  *  2003-03-11  updated to the new module interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -43,6 +44,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"
+#include "../../mem/mem.h"
 #include "mf_funcs.h"
 
 
@@ -97,7 +99,7 @@ static int fixup_maxfwd_header(void** param, int param_no)
 					"number to big <%d> (max=255)\n",code);
 				return E_UNSPEC;
 			}
-			free(*param);
+			pkg_free(*param);
 			*param=(void*)code;
 			return 0;
 		}else{

@@ -35,16 +35,17 @@
  *
  * History:
  * -------
- * 2003-02-28  scratchpad compatibility abandoned (jiri)
- * 2003-01-29: - rewriting actions (replace, search_append) now begin
- *               at the second line -- previously, they could affect
- *               first line too, which resulted in wrong calculation of
- *               forwarded requests and an error consequently
- *             - replace_all introduced
- * 2003-01-28  scratchpad removed (jiri)
- * 2003-01-18  append_urihf introduced (jiri)
- * 2003-03-10  module export interface updated to the new format (andrei)
- * 2003-03-16  flags export parameter added (janakj)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-01-29: - rewriting actions (replace, search_append) now begin
+ *                at the second line -- previously, they could affect
+ *                first line too, which resulted in wrong calculation of
+ *                forwarded requests and an error consequently
+ *              - replace_all introduced
+ *  2003-01-28  scratchpad removed (jiri)
+ *  2003-01-18  append_urihf introduced (jiri)
+ *  2003-03-10  module export interface updated to the new format (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -251,14 +252,14 @@ static int fixup_regex(void** param, int param_no)
 
 	DBG("module - fixing %s\n", (char*)(*param));
 	if (param_no!=1) return 0;
-	if ((re=malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
+	if ((re=pkg_malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
 	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
-		free(re);
+		pkg_free(re);
 		LOG(L_ERR, "ERROR: %s : bad re %s\n", exports.name, (char*)*param);
 		return E_BAD_RE;
 	}
 	/* free string */
-	free(*param);
+	pkg_free(*param);
 	/* replace it with the compiled re */
 	*param=re;
 	return 0;
@@ -342,7 +343,7 @@ static int str_fixup(void** param, int param_no)
 {
 	str* s;
 
-	s = (str*)malloc(sizeof(str));
+	s = (str*)pkg_malloc(sizeof(str));
 	if (!s) {
 		LOG(L_ERR, "str_fixup(): No memory left\n");
 		return E_UNSPEC;

@@ -28,8 +28,9 @@
 /*
  * History:
  * --------
- *  2003-03-11 updated to the new module exports interface (andrei)
- *  2003-03-16 flags export parameter added (janakj)
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -129,7 +130,7 @@ static int fixup_sms_send_msg_to_net(void** param, int param_no)
 				" not found in net list!\n",(char*)*param);
 			return E_UNSPEC;
 		} else {
-			free(*param);
+			pkg_free(*param);
 			*param=(void*)net_nr;
 			return 0;
 		}

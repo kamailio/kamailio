@@ -28,8 +28,9 @@
  *
  * History:
  * -------
- * 2003-03-11: New module interface (janakj)
- * 2003-03-16: flags export parameter added (janakj)
+ *  2003-03-11: New module interface (janakj)
+ *  2003-03-16: flags export parameter added (janakj)
+ *  2003-03-19  replaces all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -159,7 +160,7 @@ static int str_fixup(void** param, int param_no)
 	str* s;
 	
 	if (param_no == 1) {
-		s = (str*)malloc(sizeof(str));
+		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
 			LOG(L_ERR, "str_fixup(): No memory left\n");
 			return E_UNSPEC;

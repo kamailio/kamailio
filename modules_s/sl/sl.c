@@ -52,6 +52,7 @@
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
  */
 
 
@@ -64,6 +65,7 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../script_cb.h"
+#include "../../mem/mem.h"
 #include "sl_stats.h"
 #include "sl_funcs.h"
 
@@ -135,7 +137,7 @@ static int fixup_sl_send_reply(void** param, int param_no)
 	if (param_no==1){
 		code=str2s(*param, strlen(*param), &err);
 		if (err==0){
-			free(*param);
+			pkg_free(*param);
 			*param=(void*)code;
 			return 0;
 		}else{

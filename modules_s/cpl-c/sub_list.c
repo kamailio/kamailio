@@ -24,9 +24,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ */
 
 #include <stdlib.h>
 #include <string.h>
+#include "../../mem/mem.h"
 #include "sub_list.h"
 
 struct node*   append_to_list(struct node *head, unsigned char *offset,
@@ -35,7 +40,7 @@ struct node*   append_to_list(struct node *head, unsigned char *offset,
 	struct node *n;
 	struct node *new_node;
 
-	new_node = malloc(sizeof(struct node));
+	new_node = pkg_malloc(sizeof(struct node));
 	if (!new_node)
 		return 0;
 	new_node->offset = offset;
@@ -76,7 +81,7 @@ void delete_list(struct node* head)
 ;
 	while (head) {
 		n=head->next;
-		free(head);
+		pkg_free(head);
 		head = n;
 	}
 }
