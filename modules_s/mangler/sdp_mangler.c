@@ -44,13 +44,13 @@
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../parser/hf.h"
+#include "../../parser/parse_content.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
 
-
-
+//#define DEBUG 1
 
 int
 sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
@@ -74,7 +74,10 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		LOG(L_ERR,"ERROR: sdp_mangle_port: Received NULL for msg \n");
 		return -1;
 		}
-	oldContentLength = strtol (msg->content_length->body.s, NULL, 10);	/* de inlocuit ? */
+                
+        parse_headers(msg,HDR_CONTENTLENGTH,0);
+        oldContentLength = get_content_length(msg);
+        
 	if (oldContentLength <= 0)
 		{
 		LOG(L_ERR,"ERROR: sdp_mangle_port: Received <= 0 for Content-Length \n");
@@ -151,13 +154,19 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
                 pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
                 */
                 pos = begin+pmatch.rm_eo;
-                while (*pos != ' ') pos --; /* we should find ' ' because we matched m=audio port */
+#ifdef DEBUG
+                printf("begin=%c pos=%c rm_so=%d rm_eo=%d\n",*begin,*pos,pmatch.rm_so,pmatch.rm_eo);
+#endif
+                do pos--; while (*pos != ' '); /* we should find ' ' because we matched m=audio port */
                 
 		pos++;		/* jumping over space */
 		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* port length */
 
 		/* convert port to int */
 		oldPort = str2s (pos, oldlen, &err);
+#ifdef DEBUG
+                printf("port to convert [%.*s] to int\n",oldlen,pos);
+#endif
 		if (err)
 			{
 			LOG(L_ERR,"ERROR: sdp_mangle_port: Error converting [%.*s] to int\n",oldlen,pos);
@@ -169,18 +178,27 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 			}
 		if ((oldPort < MIN_ORIGINAL_PORT) || (oldPort > MAX_ORIGINAL_PORT))	/* we silently fail,we ignore this match or return -11 */
 		{
-			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching old port\n");
+#ifdef DEBUG
+                printf("WARNING: sdp_mangle_port: Silent fail for not matching old port %d\n",oldPort);
+#endif
+
+			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching old port %d\n",oldPort);
 #ifdef STRICT_CHECK
 			return -8;
 #else
 			goto continue1;
 #endif
 		}
-		newPort = oldPort + offsetValue;
+                if ((offset[0] != '+')&&(offset[0] != '-')) newPort = offsetValue;//fix value
+		else newPort = oldPort + offsetValue;
 		/* new port is between 1 and 65536, or so should be */
 		if ((newPort < MIN_MANGLED_PORT) || (newPort > MAX_MANGLED_PORT))	/* we silently fail,we ignore this match */
 		{
-			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching new port\n");
+#ifdef DEBUG
+                printf("WARNING: sdp_mangle_port: Silent fail for not matching new port %d\n",newPort);
+#endif
+                
+			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching new port %d\n",newPort);
 #ifdef STRICT_CHECK
 			return -9;
 #else
@@ -287,7 +305,9 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		LOG(L_ERR,"ERROR: sdp_mangle_ip: Received NULL for msg\n");
 		return -1;
 		}
-	oldContentLength = strtol (msg->content_length->body.s, NULL, 10);	/* de inlocuit ? */
+        parse_headers(msg,HDR_CONTENTLENGTH,0);
+        oldContentLength = get_content_length(msg);
+        
 	if (oldContentLength <= 0)
 		{
 		LOG(L_ERR,"ERROR: sdp_mangle_ip: Received <= for Content-Length\n");
@@ -379,7 +399,7 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
                 pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so); 
                 */
                 pos = begin+pmatch.rm_eo;
-                while (*pos != ' ') pos --; /* we should find ' ' because we matched c=IN IP4 ip */
+                do pos--; while (*pos != ' '); /* we should find ' ' because we matched c=IN IP4 ip */
 
 		pos++;		/* jumping over space */
 		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* ip length */

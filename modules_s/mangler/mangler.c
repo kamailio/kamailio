@@ -50,7 +50,7 @@
 #include "utils.h"
 #include "common.h"
 
-
+MODULE_VERSION
 
 
 #ifdef DEMO
@@ -102,11 +102,11 @@ static param_export_t params[] = {
  */
 static cmd_export_t cmds[] = 
 {
-	{"sdp_mangle_ip", sdp_mangle_ip, 2,0, REQUEST_ROUTE}, // fixup_char2str?
-	{"sdp_mangle_port",sdp_mangle_port, 1,0, REQUEST_ROUTE},// fixup_char2int if I use an int as offset
-	{"encode_contact",encode_contact,2,0,REQUEST_ROUTE},//fixup_char2str
+	{"sdp_mangle_ip", sdp_mangle_ip, 2,0, REQUEST_ROUTE|ONREPLY_ROUTE}, // fixup_char2str?
+	{"sdp_mangle_port",sdp_mangle_port, 1,0, REQUEST_ROUTE|ONREPLY_ROUTE},// fixup_char2int if I use an int as offset
+	{"encode_contact",encode_contact,2,0,REQUEST_ROUTE|ONREPLY_ROUTE},//fixup_char2str
 	{"decode_contact",decode_contact,0,0,REQUEST_ROUTE},
-	{"decode_contact_header",decode_contact_header,0,0,REQUEST_ROUTE},
+	{"decode_contact_header",decode_contact_header,0,0,REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 

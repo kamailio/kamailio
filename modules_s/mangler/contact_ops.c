@@ -46,7 +46,7 @@
 #include <string.h>
 
 
-
+//#define DEBUG
 int
 encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 {
@@ -70,9 +70,10 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	 */
 #ifdef DEBUG
 	fprintf (stdout,"---START--------ENCODE CONTACT-----------------\n");
+        fprintf (stdout,"%.*s\n",50,msg->buf);
 #endif
 	
-	if ((msg->contact == NULL)||((parse_headers(msg,HDR_CONTACT,0) == -1)))
+	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT,0) == -1)))
 		{
 		LOG(L_ERR,"ERROR: encode_contact: no Contact header present\n");
 		return -1;
@@ -152,6 +153,9 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	else /* after parsing still NULL */
 		{
 			LOG(L_ERR,"ERROR: encode_contact: Unable to parse Contact header\n");
+#ifdef DEBUG
+    			printf("ERROR: encode_contact: Unable to parse Contact header\n");
+#endif                        
 			return -4;
 		}
 #ifdef DEBUG
@@ -172,6 +176,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	
 #ifdef DEBUG
 	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
+        fprintf (stdout,"%.*s\n",50,msg->buf);
 	fprintf (stdout, "INITIAL.s=[%.*s]\n", uri.len, uri.s);
 #endif
 
@@ -234,9 +239,9 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 	fprintf (stdout,"---START--------DECODE CONTACT HEADER-----------------\n");
 #endif
 
-	if ((msg->contact == NULL)||((parse_headers(msg,HDR_CONTACT,0) == -1)))
+	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT,0) == -1)))
 		{
-		LOG(L_ERR,"ERROR: encode_contact: no Contact header present\n");
+		LOG(L_ERR,"ERROR: decode_contact_header: no Contact header present\n");
 		return -1;
 		}
 
@@ -270,7 +275,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 #endif
 		if (res != 0)
 		{
-			LOG (L_ERR,"ERROR: decode_contact:Failed decoding contact.Code %d\n", res);
+			LOG (L_ERR,"ERROR: decode_contact_header:Failed decoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
