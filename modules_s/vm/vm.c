@@ -148,9 +148,6 @@ static int vm_start(struct sip_msg* msg, char* str1, char* str2)
     if(vm_extract_body(msg,&body)==-1)
 	goto error;
 
-    //strcpy(srcip,ip_addr2a(&msg->rcv.src_ip));
-    //strcpy(dstip,ip_addr2a(&msg->rcv.dst_ip));
-
     if(parse_from_header(msg) == -1){
 	LOG(L_ERR,"ERROR: %s : vm_start: while parsing <From:> header\n",exports.name);
 	goto error;
@@ -172,6 +169,7 @@ static int vm_start(struct sip_msg* msg, char* str1, char* str2)
 	cb = msg->contact->parsed;
 
 	if(cb) {
+	    print_contacts(cb->contacts);
 	    contact_t* c=cb->contacts;
 	    str_uri = &c->uri;
 	    
