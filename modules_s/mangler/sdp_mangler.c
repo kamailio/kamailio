@@ -250,7 +250,7 @@ continue1:
 	fprintf (stdout,"---END--------MANGLE PORT-----------------\n");
 #endif
 
-	return ret+1;
+	return ret+2;
 }
 
 
@@ -456,7 +456,7 @@ continue2:
 	fprintf (stdout,"---END--------MANGLE IP-----------------\n");
 #endif
 
-	return ret+1;
+	return ret+2;
 
 }
 

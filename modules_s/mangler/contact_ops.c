@@ -57,6 +57,9 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	str newUri;
 	int res;
 	char separator;
+
+
+
 	/*
 	 * I have a list of contacts in contact->parsed which is of type contact_body_t 
 	 * inside i have a contact->parsed->contact which is the head of the list of contacts
@@ -74,7 +77,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 		LOG(L_ERR,"ERROR: encode_contact: no Contact header present\n");
 		return -1;
 		}
-	
+
 
 	separator = DEFAULT_SEPARATOR[0];
 	if (contact_flds_separator != NULL)
@@ -116,6 +119,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 					LOG (L_ERR,"ERROR: encode_contact: lumping failed in mangling port \n");
 					return -2;
 				}
+			
 	#ifdef DEBUG
 			if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\nnewlen=%d\n", newUri.len, newUri.s,newUri.len);
 	#endif
@@ -153,7 +157,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 #ifdef DEBUG
 	fprintf (stdout,"---END--------ENCODE CONTACT-----------------\n");
 #endif
-	return 0;
+	return 1;
 }
 
 
@@ -256,7 +260,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 #ifdef DEBUG
 	fprintf (stdout,"---END--------DECODE CONTACT-----------------\n");
 #endif
-	return 0;
+	return 1;
 }
 
 
@@ -309,57 +313,17 @@ encode2format (str uri, struct uri_format *format)
 		return foo-10;
 	}
 
-	/* fields are directly pointing to parts of the message.They must not be deallocated */
+	
 	format->username = sipUri.user;
 	format->password = sipUri.passwd;
 	format->ip = sipUri.host;
 	format->port = sipUri.port;
+	format->protocol = sipUri.transport_val;
 	
-	/* locating protocol from transport=udp|tcp */
-	string = sipUri.params.s;
-	foo = sipUri.params.len;
-	start = string;
-	
-
-	while ((pos = q_memchr (start, '=', foo)) != NULL)
-	{
-		if ((pos - start) >= 9)	/* perhaps an transport= */
-		{
-			if (strncasecmp (pos - 9, "transport=", 10) == 0)
-			{
-				/* we should check there an UDP or TCP after */
-				if (foo - (pos - start) >= 3)
-					if ((strncasecmp(pos+1,"udp",3) == 0)||(strncasecmp(pos+1,"tcp",3)==0))					
-						{	
-						format->protocol.s = pos + 1;
-						format->protocol.len = 3;
-						break;
-						}
-					else
-						{
-						LOG(L_WARN,"WARNING: encode2format: Invalid value for protocol [%.*s]\n",3,pos+1);
-						}						
-				else
-					{
-					LOG(L_WARN,"WARNING: encode2format: Invalid length for protocol \n");
-					}
-			}
-#ifdef DEBUG
-			/*fprintf(stdout,"TESTING protocol=%.*s\n",10,pos-9);*/
-#endif
-		}
-
-		foo = foo - (pos - start);
-		if (foo > 1)
-			start = pos + 1;
-		else
-			break;
-	}
-
 #ifdef DEBUG	
-	fprintf (stdout, "protocol=%.*s\n", format->protocol.len,format->protocol.s);
-	fprintf (stdout, "first=%d second=%d\n", format->first,format->second);
-#endif
+	fprintf (stdout, "transport=[%.*s] transportval=[%.*s]\n", sipUri.transport.len,sipUri.transport.s,sipUri.transport_val.len,sipUri.transport_val.s);
+	fprintf(stdout,"First %d,second %d\n",format->first,format->second);
+	#endif
 	
 	return 0;
 

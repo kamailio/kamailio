@@ -36,7 +36,7 @@ Desc:	Changes ip addresses inside SDP package in lines describing
 		Currently in only changes IP4 addresses since IP6 probably 
 		will not need to traverse NAT :)
 Example:	sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
-Returns: negative on error, or number of replacements 
+Returns: negative on error, or number of replacements + 1
 
 
 Name:	sdp_mangle_port
@@ -46,7 +46,7 @@ Params:	offset - an strint reprezenting
 Desc:	Changes ports inside SDP package in lines describing
 		media like m=audio 13451
 Example: sdp_mangle_port("-12000")
-Returns: negative on error, or number of replacements 
+Returns: negative on error, or number of replacements + 1
 
 
 
@@ -58,7 +58,7 @@ Desc:	This function will encode uri-s inside Contact header in the following man
 		sip:username:password@ip:port;transport=protocol goes  sip:enc_pref*username*ip*port*protocol@public_ip
 		* is  the default separator
 Example: if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38"); 
-Returns: negative on error, 0 on succes
+Returns: negative on error, 1 on succes
 
 
 
@@ -69,4 +69,4 @@ Desc:	This function will decode uri-s inside Contact header in the following man
 		sip:enc_pref*username*ip*port*protocol@public_ip goes to sip:username:password@ip:port;transport=protocol
 		
 Example:	if (uri =~ "^enc*") {decode_contact('*');}
-Returns: negative on error, 0 on succes
+Returns: negative on error, 1 on succes
