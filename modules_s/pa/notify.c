@@ -212,6 +212,9 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 			   CONTENT_TYPE_L + CONT_TYPE_LPIDF_L + CRLF_L);
 		return 0;
 
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+	case DOC_MSRTC_PIDF:
+#endif
 	case DOC_PIDF:
 		if (_l < CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L) {
 			paerrno = PA_SMALL_BUFFER;
@@ -688,6 +691,9 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 			if (rc) LOG(L_ERR, "send_lpidf_notify returned %d\n", rc);
 			break;
 
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+		case DOC_MSRTC_PIDF:
+#endif
 		case DOC_PIDF:
 		default:
 			rc = send_pidf_notify(_p, _w);
@@ -698,9 +704,13 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 	    && (_w->event_package == EVENT_PRESENCE_WINFO)) {
 		switch(_w->preferred_mimetype) {
 		case DOC_WINFO:
-			rc = send_winfo_notify(_p, _w);
-			if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
-			return rc;
+			if (watcherinfo_notify) {
+				rc = send_winfo_notify(_p, _w);
+				if (rc) LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
+				return rc;
+			} else {
+				return 0;
+			}
 		default:
 			/* inapplicable */
 		  ;
