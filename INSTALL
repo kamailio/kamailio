@@ -2,6 +2,23 @@ $Id$
 
 
 Installation Notes
+===================
+
+TOC
+
+1. Supported Architectures and Requirements
+2. Howto Build ser From Source Distribution
+3. Quick-Start Installation Guide
+   A) Getting Help
+   B) Disclaimers
+   C) Quick Start
+   D) ser with Persistent Data Storage
+   E) Troubleshooting
+
+
+
+1. Supported Architectures and Requirements
+-------------------------------------------
 
 Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
 Solaris/sparc64 
@@ -36,9 +53,9 @@ OS Notes:
   install a newer regex library version (>=0.12). 
     
 
+2. Howto Build ser From Source Distribution
+-------------------------------------------
 
-
-Howto:
 (NOTE: if make doesn't work try gmake  instead)
 
 - compile with default options:
@@ -130,36 +147,40 @@ make prefix=/usr/local  install
 
 
 
-Quick-Start Installation Guide
+3. Quick-Start Installation Guide
 ----------------------------------------------
 
-This guide give you instructions on how to
-set up the SIP Express Router (ser) on your
-box quickly. In case the default configuration
+A) Getting Help
+
+This guide gives you instructions on how to set up the SIP Express 
+Router (ser) on your box quickly. In case the default configuration
 does not fly, check documentation at ser site
-  http://www.iptel.org/ser
-If the documentation does not resolve your 
-problem you may try contacting us by E-mail at
-  serhelp@iptel.org
+  http://www.iptel.org/ser/
+
+If the documentation does not resolve your problem you may try contacting 
+us by E-mail at serusers@iptel.org -- that is the mailing list of ser
+community from which you can get most rapid help. To participate in the
+mailing list, subscribe at the following web address:
+  http://mail.iptel.org/mailman/listinfo/serusers
+
+If you are concerned about your privacy, you may post your questions to 
+iptel.org's helpline at serhelp@iptel.org.
+
+B) Disclaimers
  
-Note well the default configuration is very simple
-in order to be easily installable and provides
-minimum features. Particularly, authentication
-is disabled, which means anyone can register using
-any name with the server. (This is on purpose to
-avoid installation dependencies on MySQL which is
-needed for storing user credentials.)
+Note well the default "quick-start" configuration is very simple in order 
+to be easily installable. It provides minimum features. Particularly, 
+authentication is by default disabled, which means anyone can register using
+any name with the server. (This is on purpose to avoid installation 
+dependencies on MySQL which is needed for storing user credentials.)
 
 
-A) Quick Start
-----------------------------------------------
+C) Quick Start
 
-The following step-by step guide gives you
-instructions how to install the sql-free
-distribution of ser. If you need persistancy
-and authentication, then you have to install
-additional MySql support -- proceed to section B)
-after you are finished with A).
+The following step-by step guide gives you instructions how to install the 
+sql-free distribution of ser. If you need persistancy and authentication, 
+then you have to install additional MySql support -- proceed to section D)
+after you are finished with C).
 
 1) Download an RPM or debian package from our site
     http://www.iptel.org/ser
@@ -197,7 +218,7 @@ Solaris:
    serctl utility
     - to do so, first set the environment variable SIP_DOMAIN to your domain 
       name, e.g., in Bourne shell, call
-        export SIP_DOMAIN="foo.bar"
+        export SIP_DOMAIN="myserver.foobar.com"
 	- if you are using other than 'localhost' mysql server for maintaining
 	  subscriber database, change the variable 'SQL_HOST' to the proper
 	  host name in the serctl script
@@ -219,20 +240,16 @@ Solaris:
 
 
 
-B) ser with Persistent Data Storage
+D) ser with Persistent Data Storage
 ----------------------------------------------
-The default configuration is very simple and
-features many simplifications. In particular,
-it does not authenticate users and loses 
-User Location database on reboot. To provide
-persistency, keep user credentials and remember
-users' locations across reboots, ser can be
-configured to use MySQL. Before you proceed,
-you need to make sure MySQL is installed on
-your box.
+The default configuration is very simple and features many simplifications. 
+In particular, it does not authenticate users and loses User Location 
+database on reboot. To provide persistency, keep user credentials and remember 
+users' locations across reboots, ser can be configured to use MySQL. Before you 
+proceed, you need to make sure MySQL is installed on your box.
 
 
-1) Download the package containing the ser mysql module from: 
+1) Download the package containing mysql support for ser from: 
     http://www.iptel.org/ser/
     (rpm and deb provided, most of the binary tar.gz distributions and the 
      solaris package include it; if it is not present you'll have to rebuild
@@ -244,7 +261,7 @@ your box.
 3) create MySQL tables
     /usr/sbin/ser_mysql.sh create
 4) configure ser to use SQL
-    uncomment all lines which are related to 
+    uncomment all lines in configuration file ser.cfg which are related to 
     authentication:
     - loadmodule "/usr/lib/ser/modules/mysql.so"
     - loadmodule "/usr/lib/ser/modules/auth.so"
@@ -253,33 +270,23 @@ your box.
     - if (!www_authorize("iptel.org", "subscriber")) {
         www_challenge("iptel.org", "0"); 
         break;
-      }; /* be sure to replace realm, the first parameter
-            in www_* actions, with name of your server;
-            some broken UAC implementations don't authenticate
-            otherwise
-          */
-5) restart the server
+      }; 
+5) be sure to replace realm, the first parameter in www_* actions, 
+   with name of your server; some broken UAC implementations don't 
+   authenticate otherwise; the authentication command in your
+   configuration script should look then like this:
+      if (!www_authorize("myserver.foobar.com", "subscriber")) {
+        www_challenge("myserver.foobar.com", "0"); 
+        break;
+      }
+6) restart the server
     /etc/init.d/ser restart
-6) you can now start  managing the server using
-   the serctl utility; you need to first set the
-   environment variable SIP_DOMAIN to your local
-   SIP realm, e.g.,
-       export SIP_DOMAIN="foo.bar"
-   The realm name should be the value you set in
-   step #4.
+7) you can now start  managing the server using the serctl utility; 
+   you need to first set the environment variable SIP_DOMAIN to your 
+   local SIP realm, e.g.,
+       export SIP_DOMAIN="myserver.foobar.com"
 
    a) watch the server status using 'serctl moni'
-   b) try to login as user 'admin' with password 'heslo'
+   b) try to login with your SIP client as user 'admin' with password 'heslo'
    c) try adding new users using 
        'serctl add <name> <password> <email>'
-
-
-
-C) Troubleshooting
-----------------------------------------------
-
-/etc/ser/ser.cfg
-/etc/init.d/ser restart
-listen
-aliases
-
