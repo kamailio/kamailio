@@ -30,6 +30,7 @@
  *               find_export_param, find_module (andrei)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-19  Support for flags in find_export (janakj)
+ *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
  */
 
 
@@ -266,10 +267,15 @@ struct sr_module* find_module(void* f, cmd_export_t  **c)
 
 void destroy_modules()
 {
-	struct sr_module* t;
+	struct sr_module* t, *foo;
 
-	for(t=modules;t;t=t->next)
-		if  ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
+	t=modules;
+	while(t) {
+		foo=t->next;
+		if ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
+		pkg_free(t);
+		t=foo;
+	}
 	modules=0;
 }
 

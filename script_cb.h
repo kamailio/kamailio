@@ -46,5 +46,6 @@ struct script_cb{
 int register_script_cb( cb_function f, callback_t t, void *param );
 int exec_pre_cb( struct sip_msg *msg);
 void exec_post_cb( struct sip_msg *msg);
+void destroy_script_cb();
 
 

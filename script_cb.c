@@ -31,6 +31,7 @@
  */
 /* History:
  * --------
+ *  2003-03-29  cleaning pkg allocation introduced (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
@@ -70,6 +71,16 @@ int register_script_cb( cb_function f, callback_t t, void *param )
 	}
 	/* ok, callback installed */
 	return 1;
+}
+
+void destroy_script_cb()
+{
+	struct script_cb *cb, *foo;
+
+	cb=pre_cb;
+	while(cb) { foo=cb->next;pkg_free(cb);cb=foo; }
+	cb=post_cb;
+	while(cb) { foo=cb->next;pkg_free(cb);cb=foo; }
 }
 
 int exec_pre_cb( struct sip_msg *msg)
