@@ -55,7 +55,7 @@ Requirements:
 - bison or yacc (Berkley yacc)
 - flex
 - GNU make (on Linux this is the standard "make", on FreeBSD and Solaris is
- called "gmake")
+ called "gmake") version >= 3.79.
 - sed and tr (used in the makefiles)
 - GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
 - GNU install or BSD install (on Solaris "ginstall") if you want "make

@@ -2,6 +2,9 @@
 #
 # makefile defs (CC, LD,a.s.o)
 #
+# Environment variables:
+#   PREFIX, LOCALBASE, BASEDIR
+#   INSTALL, TAR , CC, LEX, YACC
 #
 # History:
 # --------
@@ -34,7 +37,9 @@ prefix = $(PREFIX)
 #  creating a bin. archive in /tmp, which unpacks in /usr/local
 #  basedir=/tmp
 #  prefix=/usr/local
-basedir = 
+
+BASEDIR ?=
+basedir = $(BASEDIR)
 # install prefixes for various stuff
 cfg-prefix = $(basedir)$(prefix)
 bin-prefix = $(basedir)$(prefix)
@@ -67,11 +72,11 @@ modules-target = $(prefix)/$(modules-dir)
 
 ifeq ($(OS), solaris)
 #use GNU versions
-INSTALL = ginstall
-TAR = gtar
+INSTALL ?= ginstall
+TAR ?= gtar
 else
-INSTALL = install 
-TAR= tar
+INSTALL ?= install 
+TAR ?= tar
 endif
 
 # INSTALL-CFG = $(INSTALL) -m 644

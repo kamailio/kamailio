@@ -170,7 +170,7 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		sed -e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
 			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.default
 		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.default
-		if [ ! -e $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
+		if [ ! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
 			cp -p $(cfg-prefix)/$(cfg-dir)ser.cfg.default \
 				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
 		fi
