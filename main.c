@@ -1079,9 +1079,6 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
-
-	init_digest_parser();
-
 	/* init hash fucntion */
 	if (init_hash()<0) {
 		LOG(L_ERR, "ERROR: init_hash failed\n");
