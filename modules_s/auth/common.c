@@ -30,6 +30,7 @@
  * -------
  * 2003-03-15: In case of HDR_PROXYAUTH we always extract realm from From,
  *             even for REGISTERS
+ * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
  */
 
 
@@ -89,7 +90,7 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason,
 	
 	     /* Add new headers if there are any */
 	if ((_hdr) && (_hdr_len)) {
-		ptr = build_lump_rpl(_hdr, _hdr_len);
+		ptr = build_lump_rpl(_hdr, _hdr_len, LUMP_RPL_HDR);
 		add_lump_rpl(_m, ptr);
 	}
 	

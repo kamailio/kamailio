@@ -30,6 +30,7 @@
  * 2003-01-23 switched from t_uac to t_uac_dlg, adapted to new way of
  * parsing for Content-Type; by bogdan
  * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
+ * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
  */
 
 
@@ -127,7 +128,7 @@ inline int extcmd_add_contact(struct sip_msg* msg , str* to_uri)
 	*(p++) = '>';
 	append_str( p, CRLF, CRLF_LEN);
 
-	lump = build_lump_rpl( buf , len );
+	lump = build_lump_rpl( buf , len , LUMP_RPL_HDR);
 	if(!lump) {
 		LOG(L_ERR,"ERROR:extcmd_add_contact: unable to build lump_rpl! \n");
 		pkg_free( buf );

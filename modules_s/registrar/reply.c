@@ -30,6 +30,7 @@
  * --------
  * 2003-01-18: buffer overflow patch committed (Jan on behalf of Maxim)
  * 2003-01-21: Errors reported via Error-Info header field - janakj
+ * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
  */
 
 #include <stdio.h>
@@ -216,7 +217,7 @@ int send_reply(struct sip_msg* _m)
 	struct lump_rpl* p, *ei;
 
 	if (l > 0) {
-		p = build_lump_rpl(b, l);
+		p = build_lump_rpl(b, l, LUMP_RPL_HDR);
 		add_lump_rpl(_m, p);
 		l = 0;
 	}
@@ -237,7 +238,8 @@ int send_reply(struct sip_msg* _m)
 		memcpy(buf, E_INFO, E_INFO_LEN);
 		memcpy(buf + E_INFO_LEN, error_info[rerrno].s, error_info[rerrno].len);
 		memcpy(buf + E_INFO_LEN + error_info[rerrno].len, CRLF, CRLF_LEN);
-		ei = build_lump_rpl(buf, E_INFO_LEN + error_info[rerrno].len + CRLF_LEN);
+		ei = build_lump_rpl(buf, E_INFO_LEN + error_info[rerrno].len + CRLF_LEN,
+			LUMP_RPL_HDR);
 		add_lump_rpl(_m, ei);
 		pkg_free(buf);
 	}

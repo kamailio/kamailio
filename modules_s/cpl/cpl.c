@@ -28,6 +28,7 @@
  * -------
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
+ * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
  */
 
 
@@ -200,7 +201,7 @@ static int cpl_update_contact(struct sip_msg* msg, char* str1, char* str2)
 	}
 	memcpy(p,CRLF,CRLF_LEN);
 
-	lump = build_lump_rpl( buf , len );
+	lump = build_lump_rpl( buf , len , LUMP_RPL_HDR);
 	if(!buf)
 	{
 		LOG(L_ERR,"ERROR:cpl_update_contact: unable to build lump_rpl! \n");

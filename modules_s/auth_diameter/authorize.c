@@ -28,8 +28,8 @@
  *
  * History:
  * -------
- *  
- *  
+ * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
+ *
  */
 
 #include <stdio.h>
@@ -733,7 +733,7 @@ int send_resp(struct sip_msg* m, int code, char* reason,
 	/* Add new headers if there are any */
 	if ((hdr) && (hdr_len)) 
 	{
-		ptr = build_lump_rpl(hdr, hdr_len);
+		ptr = build_lump_rpl(hdr, hdr_len, LUMP_RPL_HDR);
 		add_lump_rpl(m, ptr);
 	}
 	
