@@ -113,7 +113,10 @@ static int mod_init(void)
 		return -1;
 	}
 	/* if SL loaded, filter ACKs on beginning */
-	register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB, 0 );
+	if (register_script_cb( sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )<0) {
+		LOG(L_ERR,"ERROR:sl:mod_init: failed to install SCRIPT callback\n");
+		return -1;
+	}
 	sl_startup();
 
 	return 0;
