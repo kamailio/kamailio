@@ -700,7 +700,7 @@ static void sig_usr(int signo)
 					break;
 			case SIGCHLD:
 #ifndef 			STOP_JIRIS_CHANGES
-					LOG(L_INFO, "INFO: SIGCHLD received: "
+					DBG("SIGCHLD received: "
 						"we do not worry about grand-children\n");
 #else
 					exit(0); /* terminate if one child died */
