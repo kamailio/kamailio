@@ -31,29 +31,13 @@
 
 
 #define insert_into_timer(hash_table,new_tl,list_id,time_out) \
-	do{\
-		if ( is_in_timer_list((new_tl),(list_id))  )\
-			remove_from_timer_list( (hash_table) , (new_tl) ,\
-								(list_id));\
-			insert_into_timer_list((hash_table), (new_tl), (list_id),\
-								get_ticks()+(time_out));\
-	}while(0)
-
+	insert_into_timer_list(hash_table,new_tl,list_id,(get_ticks()+time_out))
 
 #define add_to_tail_of_timer(hash_table,new_tl,list_id,time_out) \
-	 do{\
-		if ( is_in_timer_list((new_tl), (list_id))  )\
-			remove_from_timer_list((hash_table), (new_tl), (list_id));\
-			add_to_tail_of_timer_list((hash_table), (new_tl), \
-								(list_id), get_ticks()+(time_out));\
-	}while(0)
-
+	add_to_tail_of_timer_list(hash_table,new_tl,list_id,(get_ticks()+time_out))
 
 #define remove_from_timer(hash_table,tl,list_id) \
-	 do{\
-		if ( !is_in_timer_list((tl), (list_id))  )\
-			remove_from_timer_list( (hash_table), (tl), (list_id));\
-	}while(0)
+	remove_from_timer_list( hash_table , tl , list_id)\
 
 
 
@@ -92,11 +76,22 @@ int tm_startup()
 
 void tm_shutdown()
 {
+    struct timer_link  *tl, *tmp;
     int i;
+
+    /*remember the DELETE LIST */
+    tl = hash_table->timers[DELETE_LIST].first_tl;
 
     /*unlink the lists*/
     for( i=NR_OF_TIMER_LISTS ; i>=0 ; i-- )
+    {
+       //lock( hash_table->timers[i].mutex );
        hash_table->timers[ i ].first_tl = hash_table->timers[ i ].last_tl = 0;
+       //unlock( hash_table->timers[i].mutex );
+    }
+
+    /* deletes all cells from DELETE_LIST list (they are no more accessible from enrys) */
+    for(   ;  tl  ;  tmp=tl->next_tl , free_cell((struct cell*)tl->payload) , tl=tmp );
 
     /* destroy the hash table */
     free_hash_table( hash_table );
@@ -192,7 +187,7 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
    hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  )
       isACK = 1;
-   DBG("t_lookup_request: continue searching;  hash=%d, isACK=5d\n",hash_index,isACK);
+   DBG("t_lookup_request: continue searching;  hash=%d, isACK=%d\n",hash_index,isACK);
 
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -359,7 +354,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       memcpy( T->outbound_request[branch]->retr_buffer , buf , len );
       free( buf ) ; buf=NULL;
 
-      DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
+      DBG("DEBUG: t_forward: starting timers (retrans and FR) %d\n",get_ticks() );
       /*sets and starts the FINAL RESPONSE timer */
       insert_into_timer( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST, FR_TIME_OUT );
 
@@ -491,13 +486,13 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    /* parse_headers( p_msg , HDR_EOH ); */ /*????*/
    /* this might be good enough -- is not like with
-      generating own responses where I have to 
+      generating own responses where I have to
       parse all vias to copy them
 
    /* if a reply received which has not all fields we might want to
       have for stateul forwarding, give the stateless router
       a chance for minimum routing
-   */ 
+   */
    if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
         !p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
 	return 1;
@@ -512,13 +507,10 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    /* we were not able to process the response due to memory
       shortage; simply drop it; hopefuly, we will have more
-      memory on the next try
-   */
+      memory on the next try */
    relay = t_should_relay_response( T , p_msg->first_line.u.reply.statuscode );
    if (relay && !(clone=sip_msg_cloner( p_msg )))
-	return 0;
-
-
+     return 0;
 
    /* stop retransmission */
    remove_from_timer( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST );
@@ -541,7 +533,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    #endif
 
    /* if the incoming response code is not reliable->drop it*/
-   if (!relay) 
+   if (!relay)
 	return 0;
 
    /* restart retransmission if provisional response came for a non_INVITE -> retrasmit at RT_T2*/
@@ -573,7 +565,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    {
       if (push_reply_from_uac_to_uas( T , branch )==-1 && clone ) {
 	T->inbound_response[branch]=NULL;
- 	sip_msg_free( clone );	
+	sip_msg_free( clone );
 	return -1;
       }
    }
@@ -1397,8 +1389,9 @@ void wait_handler( void *attr)
 
    /* the transaction is already removed from WT_LIST by the timer */
    /* the cell is removed from the hash table */
-   DBG("DEBUG: wait_handler : removing from table ans stopping all timers\n");
+   DBG("DEBUG: wait_handler : removing from table \n");
    remove_from_hash_table( hash_table, p_cell );
+   DBG("DEBUG: wait_handler : stopping all timers\n");
    stop_RETR_and_FR_timers(hash_table,p_cell) ;
    /* put it on DEL_LIST - sch for del */
     add_to_tail_of_timer( hash_table, (&(p_cell->dele_tl)), DELETE_LIST, DEL_TIME_OUT );
