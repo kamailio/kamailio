@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ *
+ */
+
 #ifndef modparam_h
 #define modparam_h
 

@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #ifndef _MD5UTILS_H
 #define _MD5UTILS_H
 

@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ *
+ */
 
 #include <string.h>
 #include "dprint.h"
