@@ -57,7 +57,8 @@ Implements:
 	void lock_set_get(lock_set_t* s, int i);     - locks sem i from the set
 	void lock_set_release(lock_set_t* s, int i)  - unlocks sem i from the set
 
-WARNING: signals are not treated! (some locks are "awakened" by the signals)
+WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
+         - signals are not treated! (some locks are "awakened" by the signals)
 */
 
 #ifndef _lock_ops_h
@@ -206,6 +207,7 @@ tryagain:
 /* lock sets */
 
 #if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
+#define GEN_LOCK_T_PREFERED
 
 struct lock_set_t_ {
 	long size;
@@ -228,6 +230,7 @@ inline static lock_set_t* lock_set_init(lock_set_t* s)
 #define lock_set_release(set, i) lock_release(&set->locks[i])
 
 #elif defined(USE_SYSV_SEM)
+#undef GEN_LOCK_T_PREFERED
 
 struct lock_set_t_ {
 	int size;

@@ -57,7 +57,8 @@ Implements (in lock_ops.h & lock_alloc.h):
 	void lock_set_get(lock_set_t* s, int i);     - locks sem i from the set
 	void lock_set_release(lock_set_t* s, int i)  - unlocks sem i from the set
 
-WARNING: signals are not treated! (some locks are "awakened" by the signals)
+WARNING: - lock_set_init may fail for large number of sems (e.g. sysv). 
+         - signals are not treated! (some locks are "awakened" by the signals)
 */
 
 #ifndef _locking_h
