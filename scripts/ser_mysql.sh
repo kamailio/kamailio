@@ -253,7 +253,7 @@ INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'trusted', '1');
-INSERT INTO version VALUES ( 'preferences', '1');
+INSERT INTO version VALUES ( 'usr_preferences', '1');
 INSERT INTO version VALUES ( 'preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
@@ -572,14 +572,22 @@ CREATE TABLE server_monitoring (
   PRIMARY KEY  (id,param)
 ) $TABLE_TYPE;
 
+#
+# Table structure for table 'usr_preferences'
+#
 
-CREATE TABLE preferences (
-  $USERCOL varchar(64) NOT NULL default '',
+DROP TABLE IF EXISTS usr_preferences;
+CREATE TABLE usr_preferences (
+  uuid varchar(64) NOT NULL default '',
+  $USERCOL varchar(100) NOT NULL default '0',
   domain varchar(128) NOT NULL default '',
-  attribute varchar(50) NOT NULL default '',
-  value varchar(100) NOT NULL default '',
-  PRIMARY KEY ($USERCOL, domain, attribute)
+  attribute varchar(32) NOT NULL default '',
+  value varchar(128) NOT NULL default '',
+  modified timestamp(14) NOT NULL,
+  PRIMARY KEY  (attribute,uuid)
 ) $TABLE_TYPE;
+
+
 
 #
 # Table structure for table 'preferences_types' -- types of atributes in preferences
