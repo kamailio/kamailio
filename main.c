@@ -787,9 +787,6 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
-#ifdef STATS
-	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
-#endif
 
 	/*register builtin  modules*/
 	register_builtin_modules();
@@ -799,6 +796,10 @@ int main(int argc, char** argv)
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
 	}
+
+#ifdef STATS
+	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
+#endif
 	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
