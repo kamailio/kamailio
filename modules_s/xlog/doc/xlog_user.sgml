@@ -1,0 +1,255 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module provides the possibility to print user formatted log or debug messages from
+	    &ser; scripts, similar to printf function but now a specifier is replaced with a part of
+	    the &sip; request. <xref linkend="sec-implemented-specifiers"> shows what can be printed
+	    out.
+	</para>
+    </section>
+    <section id="sec-implemented-specifiers">
+	<title>Implemented Specifiers</title>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    %% : '%'
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Ts : unix time stamp
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Tf : string formatted time
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ci : call-id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %cs : cseq
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ct : contact header
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %fu : 'From' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ft : 'From' tag
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rm : request's method
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %ru : request's r-uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %tu : 'To' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %tt : 'To' tag
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %mi : SIP message id
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %pp : process id (pid)
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %is : IP source address 
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>buf_size</varname> (integer)</title>
+	    <para>
+		Maximum size of the log message.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 4096.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>buf_size</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("xlog", "buf_size", 8192)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">xlog(level, format)</function>
+	    </title>
+	    <para>
+		Print a formated message using LOG function.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
+		    </para>
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				L_ALERT
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_CRIT
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_ERR
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_WARN
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_NOTICE
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_INFO
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				L_DBG
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		    <para>
+			What really matters is the third letter of the value.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>format</emphasis> - The formatted string to be printed. 
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>xlog</function> usage</title>
+		<programlisting format="linespecific">
+...
+xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru>\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">xdbg(format)</function>
+	    </title>
+	    <para>
+		Print a formatted message using DBG function.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>format</emphasis> - The formatted string to be printed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>xdbg</function> usage</title>
+		<programlisting format="linespecific">
+...
+xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("xlog.sgml" "Book" "chapter")
+End:
+-->

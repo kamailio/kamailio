@@ -1,0 +1,128 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    The <acronym>SL</acronym> module allows ser to act as a stateless &ua; server and
+	    generate replies to &sip; requests without keeping state. That is beneficial in many
+	    scenarios, in which you wish not to burden server's memory and scale well.
+	</para>
+	<para>
+	    The <acronym>SL</acronym> module needs to filter ACKs sent after a local stateless reply
+	    to an INVITE was generated. To recognize such ACKs, ser adds a special "signature" in
+	    to-tags. This signature is sought for in incoming ACKs, and if included, the ACKs are
+	    absorbed.
+	</para>
+	<para>
+	    To speed up the filtering process, the module uses a timeout mechanism. When a reply is
+	    sent, a timer us set. As time as the timer is valid, The incoming ACK requests will be
+	    checked using TO tag value Once the timer expires, all the ACK are let through - a long
+	    time passed till it sent a reply, so it does not expect any ACK that have to be blocked.
+	</para>
+	<para>
+	    The ACK filtering may fail in some rare cases. If you think these matter to you, better
+	    use stateful processing (tm module) for INVITE processing. Particularly, the problem
+	    happens when a UA sends an INVITE which already has a to-tag in it (e.g., a re-INVITE)
+	    and &ser; want to reply to it. Than, it will keep the current to-tag, which will be
+	    mirrored in ACK. &ser; will not see its signature and forward the ACK downstream. Caused
+	    harm is not bad--just a useless ACK is forwarded.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">sl_send_reply(code, reason)</function>
+	    </title>
+	    <para>
+		For the current request, a reply is sent back having the given code and text
+		reason. The reply is sent stateless, totally independent of the Transaction module
+		and with no retransmission for the INVITE's replies.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>code</emphasis> - Return code.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>reason</emphasis> - Reason phrase.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>sl_send_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+sl_send_reply("404", "Not found");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">sl_reply_error()</function>
+	    </title>
+	    <para>
+		Sends back an error reply describing the nature of the last internal error.  Usually
+		this function should be used after a script function that returned an error code.
+	    </para>
+	    <example>
+		<title><function>sl_reply_error</function> usage</title>
+		<programlisting format="linespecific">
+...
+sl_reply_error();
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("sl.sgml" "Book" "chapter")
+End:
+-->

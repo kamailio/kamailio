@@ -1,0 +1,281 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>The module contains REGISTER processing logic.</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>usrloc - User Location Module</emphasis>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>sl - Stateless Replies</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>default_expires</varname> (integer)</title>
+	    <para>
+		If the processed message contains neither Expires <acronym>HFs</acronym> nor expires
+		contact parameters, this value will be used for newly created usrloc records. The
+		parameter contains number of second to expire (for example use 3600 for one hour).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 3600.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_expires</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "default_expires", 1800)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>default_q</varname> (integer)</title>
+	    <para>
+		The parameter represents default q value for new contacts. Because ser doesn't
+		support float parameter types, the value in the parameter is divided by 100 and
+		stored as float. For example, if you want default_q to be 0.38, use value 38 here.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>default_q</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "default_q", 100)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>append_branches</varname> (integer)</title>
+	    <para>
+		The parameter controls how lookup function processes multiple contacts.  If there
+		are multiple contacts for the given username in usrloc and this parametr is set to
+		1, Request-URI will be overwritten with the highest-q rated contact and the rest
+		will be appended to sip_msg structure and can be later used by tm for forking. If
+		the parameter is set to 0, only Request-URI will be overwritten with the highest-q
+		rated contact and the rest will be left unprocessed.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>append_branches</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "append_branches", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>use_domain</varname> (integer)</title>
+	    <para>
+		If set to 1 then the registrar will use username@domain as address of record. If
+		the variable is set to 0 then only username will be used as the address of record.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>use_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "use_domain", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>case_sensitive</varname> (integer)</title>
+	    <para>
+		If set to 1 then <acronym>AOR</acronym> comparison will be case sensitive, if set to
+		0 then <acronym>AOR</acronym> comparison will be case insensitive--This is recommended.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>case_sensitive</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "case_sensitive", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>desc_time_order</varname> (integer)</title>
+	    <para>
+		If set to 1 then all contacts will be ordered in descending modification time
+		order. In this case the most recently updated/created contact will be used.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>desc_time_order</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "desc_time_order", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">save(domain)</function>
+	    </title>
+	    <para>
+		The function processes a REGISTER message. It can add, remove or modify usrloc
+		records depending on Contact and Expires HFs in the REGISTER message. On success,
+		200 OK will be returned listing all contacts that are currently in usrloc. On an
+		error, error message will be send with a short description in reason phrase.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>domain</emphasis> - Logical domain within registrar. If dababase
+			is used then this must be name of the table which stores the contacts.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>save</function> usage</title>
+		<programlisting format="linespecific">
+...
+save("location");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">save_noreply(domain)</function>
+	    </title>
+	    <para>
+		Same as <function>save()</function> but it doesn't send a reply.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>domain</emphasis> - Logical domain within registar. If database is
+			used then this must be na e of the table which stores the contacts.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>save_noreply</function> usage</title>
+		<programlisting format="linespecific">
+...
+save_noreply("location");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">lookup(domain)</function>
+	    </title>
+	    <para>
+		The functions extracts username from Request-URI and tries to find all contacts for
+		the username in usrloc. If there are no such contacts, -1 will be returned.  If
+		there are such contacts, Request-URI will be overwritten with the contact that has
+		the highest q value and optionally the rest will be appended to the message
+		(depending on append_branches parameter value).
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>domain</emphasis> - Name of table that should be used for the
+			lookup.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>lookup</function> usage</title>
+		<programlisting format="linespecific">
+...
+lookup("location");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("registrar.sgml" "Book" "chapter")
+End:
+-->

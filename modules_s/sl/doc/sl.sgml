@@ -1,0 +1,52 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "sl_user.sgml">
+<!ENTITY devel SYSTEM "sl_devel.sgml">
+<!ENTITY faq SYSTEM "sl_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>sl Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Bogdan</firstname>
+		<surname>Iancu</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+		    <email>iancu@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Bogdan</firstname>
+		<surname>Iancu</surname>
+		<address>
+		    <email>iancu@fokus.fraunhofer.de</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
