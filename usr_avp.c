@@ -185,8 +185,9 @@ inline static int validate_db_row(struct db_row *row, unsigned int *val_type,
 		return -1;
 	}
 	/* check the value types */
-	if (row->values[0].type!=DB_STRING || row->values[1].type!=DB_STRING ||
-	row->values[2].type!=DB_INT ) {
+	if ( (row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR)
+	||  (row->values[1].type!=DB_STRING && row->values[1].type!=DB_STR)
+	|| row->values[2].type!=DB_INT ) {
 		LOG(L_ERR,"ERROR:avp:validat_db_row: bad DB types in response\n");
 		return -1;
 	}
@@ -197,11 +198,15 @@ inline static int validate_db_row(struct db_row *row, unsigned int *val_type,
 			*val_type);
 		return -1;
 	}
-	/* convert from DB_STRING to DB_STR */
-	row->values[0].val.str_val.s =  (char*)row->values[0].val.string_val;
-	row->values[0].val.str_val.len = strlen(row->values[0].val.str_val.s);
-	row->values[1].val.str_val.s =  (char*)row->values[1].val.string_val;
-	row->values[1].val.str_val.len = strlen(row->values[1].val.str_val.s);
+	/* convert from DB_STRING to DB_STR if necesary */
+	if (row->values[0].type==DB_STRING) {
+		row->values[0].val.str_val.s =  (char*)row->values[0].val.string_val;
+		row->values[0].val.str_val.len = strlen(row->values[0].val.str_val.s);
+	}
+	if (row->values[1].type==DB_STRING) {
+		row->values[1].val.str_val.s =  (char*)row->values[1].val.string_val;
+		row->values[1].val.str_val.len = strlen(row->values[1].val.str_val.s);
+	}
 	/* if type is INT decode the value */
 	if ( *val_type==AVP_TYPE_INT &&
 	str2int( &row->values[1].val.str_val, uint_val)==-1 ) {
