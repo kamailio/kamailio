@@ -32,6 +32,7 @@
  *              works in one pass) (andrei)
  * 2003-04-11  ser_error is now set in parse_uri (andrei)
  * 2003-04-26  ZSW (jiri)
+ * 2003-07-03  sips:, r2, lr=on support added (andrei)
  */
 
 
@@ -67,7 +68,10 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					/* maddr */
 					      PMA_A, PMA_D, PMA_D2, PMA_R, PMA_eq,
 					/* lr */
-					PLR_L, PLR_R_FIN,
+					PLR_L, PLR_R_FIN, PLR_eq,
+					/* r2 */
+					PR2_R, PR2_2_FIN, PR2_eq,
+					
 					/* transport values */
 					/* udp */
 					VU_U, VU_D, VU_P_FIN,
@@ -312,9 +316,14 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	state=URI_INIT;
 	memset(uri, 0, sizeof(struct sip_uri)); /* zero it all, just to be sure*/
 	/*look for sip:*/
-	if (len<4) goto error_too_short;
-	if (! ( ((buf[0]|0x20)=='s')&&((buf[1]|0x20)=='i')&&((buf[2]|0x20)=='p')&&
-		     (buf[3]==':') ) ) goto error_bad_uri;
+	if (len<5) goto error_too_short;
+	if (! ( ((buf[0]|0x20)=='s')&&((buf[1]|0x20)=='i')&&((buf[2]|0x20)=='p')))
+		goto error_bad_uri;
+	if (buf[3]!=':'){
+		/* parse also sips: */
+		if  (((buf[3]|0x20)=='s')&&(buf[4]==':')) {p++; uri->secure=1;}
+		else goto error_bad_uri;
+	}
 	
 	s=p;
 	for(;p<end; p++){
@@ -549,13 +558,17 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						b=p;
 						state=PLR_L;
 						break;
+					case 'r':
+					case 'R':
+						b=p;
+						state=PR2_R;
 					default:
 						state=URI_PARAM_P;
 				}
 				break;
 			case URI_PARAM_P: /* ignore current param */
 				/* supported params:
-				 *  maddr, transport, ttl, lr, user, method  */
+				 *  maddr, transport, ttl, lr, user, method, r2  */
 				switch(*p){
 					param_common_cases;
 				};
@@ -691,6 +704,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 					case '@':
 						still_at_user; 
 						break;
+					case '=':
+						state=PLR_eq;
+						break;
 					semicolon_case; 
 						uri->lr.s=b;
 						uri->lr.len=(p-b);
@@ -705,7 +721,52 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						state=URI_PARAM_P;
 				}
 				break;
-						
+				/* handle lr=something case */
+			case PLR_eq:
+				param=&uri->lr;
+				param_val=&uri->lr_val;
+				switch(*p){
+					param_common_cases;
+					default:
+						v=p;
+						state=URI_VAL_P;
+				}
+				break;
+			/* r2 */
+			param_switch1(PR2_R,  '2', PR2_2_FIN);
+			case PR2_2_FIN:
+				switch(*p){
+					case '@':
+						still_at_user; 
+						break;
+					case '=':
+						state=PR2_eq;
+						break;
+					semicolon_case; 
+						uri->r2.s=b;
+						uri->r2.len=(p-b);
+						break;
+					question_case; 
+						uri->r2.s=b;
+						uri->r2.len=(p-b);
+						break;
+					colon_case;
+						break;
+					default:
+						state=URI_PARAM_P;
+				}
+				break;
+				/* handle lr=something case */
+			case PR2_eq:
+				param=&uri->r2;
+				param_val=&uri->r2_val;
+				switch(*p){
+					param_common_cases;
+					default:
+						v=p;
+						state=URI_VAL_P;
+				}
+				break;
 				
 				
 			case URI_HEADERS:
@@ -814,15 +875,24 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		case PM_D:
 		case PM_eq:
 		case PLR_L: /* lr */
+		case PR2_R:  /* r2 */
 			uri->params.s=s;
 			uri->params.len=p-s;
 			break;
 		/* fin param states */
 		case PLR_R_FIN:
+		case PLR_eq:
 			uri->params.s=s;
 			uri->params.len=p-s;
 			uri->lr.s=b;
 			uri->lr.len=p-b;
+			break;
+		case PR2_2_FIN:
+		case PR2_eq:
+			uri->params.s=s;
+			uri->params.len=p-s;
+			uri->r2.s=b;
+			uri->r2.len=p-b;
 			break;
 		case URI_VAL_P:
 		/* intermediate value states */

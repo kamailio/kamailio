@@ -28,6 +28,7 @@
  * History:
  * -------
  *  2003-02-13  added proto to sip_resolvehost, for SRV lookups (andrei)
+ *  2003-07-03  default port value set according to proto (andrei)
  */ 
 
 
@@ -469,7 +470,8 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 
 	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
 	if ((port)&&(*port==0)){
-		*port=SIP_PORT; /* just in case we don't find another */
+		*port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we don't
+														find another */
 		if ((name->len+SRV_PREFIX_LEN+1)>MAX_DNS_NAME){
 			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
 						" unable to perform SRV lookup\n", name->len);

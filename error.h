@@ -42,7 +42,7 @@
 #define E_BAD_TUPEL		-9
 /* script programming error */
 #define E_SCRIPT		-10
-/* error in exceution of external tools */
+/* error in excecution of external tools */
 #define E_EXEC			-11
 /* too many branches demanded */
 #define E_TOO_MANY_BRANCHES -12

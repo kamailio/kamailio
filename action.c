@@ -163,11 +163,22 @@ int do_action(struct action* a, struct sip_msg* msg)
 						proto=u->proto;
 						break;
 					default:
-						LOG(L_ERR,"ERROR: do action: forward: bad uri protocol"
-								" %d\n", u->proto);
+						LOG(L_ERR,"ERROR: do action: forward: bad uri"
+								" transport %d\n", u->proto);
 						ret=E_BAD_PROTO;
 						goto error_fwd_uri;
 				}
+#ifdef USE_TLS
+				if (u->secure){
+					if (u->proto==PROTO_UDP){
+						LOG(L_ERR, "ERROR: do_action: forward: secure uri"
+								" incompatible with transport %d\n", u->proto);
+						ret=E_BAD_PROTO;
+						goto error_fwd_uri;
+					}
+					proto=PROTO_TLS;
+				}
+#endif
 				/* create a temporary proxy*/
 				p=mk_proxy(&u->host, port, proto);
 				if (p==0){
