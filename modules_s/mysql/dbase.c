@@ -118,10 +118,6 @@ static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
-
-			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
-			if (ret < 0 || ret >= (_l - len)) goto error;
-			len += ret;
 		} else {
 			ret = snprintf(_b + len, _l - len, "%s,", _c[i]);
 			if (ret < 0 || ret >= (_l - len)) goto error;
