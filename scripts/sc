@@ -216,7 +216,7 @@ fifo_cmd()
 	done
 	CMD="${CMD}\n"
 
-	trap "rm -f $path; exit 1" 2
+	trap "rm -f $path; kill 0" 2
 
 	# start reader now so that it is ready for replies
 	# immediately after a request was sent out
