@@ -9,6 +9,15 @@ beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
 
 ---------------------------------------------------------------
+Desc: ser segfaults on receipt of some messages (occurs
+      rather rarely with a very high number of messages, 
+      typically during stress tests)
+Ser version: 0.8.10 and before
+Reason: valid TM label value 0 is considered mistakenly 
+        a special value
+Patch: http://www.iptel.org/ser/issues/hash_fix.patch
+CVS Status: fixed
+---------------------------------------------------------------
 Desc: serctl returns "read: Illegal option -s" for "add user"
 Ser version: 0.8.10 and before
 Reason: serctl's use of some shell script commands not portable
