@@ -43,17 +43,17 @@ ACL_GROUP_COLUMN=grp
 
 usage() {
 	echo "usage: "
-	echo -n "   $0 add <name> <password> <email> "
-	echo "... introduce a new subscriber (*)"
-	echo "   $0 dul <name> ... delete user's UsrLoc entries (*)"
-	echo "   $0 show [<name>] ... show online users"
-	echo "   $0 mail <name> ... send an email to a user"
-	echo "   $0 rm <name> ... delete a user (*)"
-	echo "   $0 passwd <user> <passwd> ... change user's password (*)"
-	echo "   $0 stat ... show runnig processes + $0 show"
-	echo "   $0 acl show [<user>] ... show user membership"
-	echo "   $0 acl grant <user> <group> ... grant user memberhsip (*)"
-	echo "   $0 acl revoke <user> [<group>] ... grant user memberhsip(s) (*)"
+	echo -n " `basename $0` add <name> <password> <email> "
+	echo "... add a new subscriber (*)"
+	echo " `basename $0` dul <name> ... delete user's UsrLoc entries (*)"
+	echo " `basename $0` show [<name>] ... show online users"
+	echo " `basename $0` mail <name> ... send an email to a user"
+	echo " `basename $0` rm <name> ... delete a user (*)"
+	echo " `basename $0` passwd <user> <passwd> ... change user's password (*)"
+	echo " `basename $0` stat ... show runnig processes + $0 show"
+	echo " `basename $0` acl show [<user>] ... show user membership"
+	echo " `basename $0` acl grant <user> <group> ... grant user memberhsip (*)"
+	echo " `basename $0` acl revoke <user> [<group>] ... grant user memberhsip(s) (*)"
 	echo 
 	echo "   commands labeled with (*) will prompt for a MySQL password"
 	echo
@@ -71,6 +71,7 @@ acl() {
 			QUERY="select * FROM $ACL_TABLE $CLAUSE ; "
 			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
 				-e "$QUERY ;" $SQL_DB
+
 			;;
 
 		grant)
@@ -274,6 +275,8 @@ case $1 in
 		else
 			$MYSQL -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY3 ;" $SQL_DB
 		fi
+		echo -n "Note: Due to usage of cache, server's list "
+		echo "may differ from DB list."
 
 		;;
 
