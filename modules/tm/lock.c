@@ -172,6 +172,7 @@ void lock_cleanup()
 
 }
 
+
 /* lock sempahore s */
 int lock( ser_lock_t s )
 {

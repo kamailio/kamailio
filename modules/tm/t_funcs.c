@@ -33,13 +33,15 @@
 
 
 #define insert_into_timer(hash_table,new_tl,list_id,time_out) \
-	insert_into_timer_list(hash_table,new_tl,list_id,(get_ticks()+time_out))
+	insert_into_timer_list((hash_table), (new_tl), (list_id), \
+			(get_ticks()+(time_out)))
 
 #define add_to_tail_of_timer(hash_table,new_tl,list_id,time_out) \
-	add_to_tail_of_timer_list(hash_table,new_tl,list_id,(get_ticks()+time_out))
+	add_to_tail_of_timer_list((hash_table), (new_tl), (list_id), \
+			(get_ticks()+(time_out)))
 
 #define remove_from_timer(hash_table,tl,list_id) \
-	remove_from_timer_list( hash_table , tl , list_id)\
+	remove_from_timer_list( (hash_table), (tl) , (list_id))
 
 
 
@@ -59,9 +61,9 @@ int tm_startup()
 
    /* installing handlers for timers */
    hash_table->timers[RETRASMISSIONS_LIST].timeout_handler = retransmission_handler;
-   hash_table->timers[FR_TIMER_LIST].timeout_handler              = final_response_handler;
-   hash_table->timers[WT_TIMER_LIST].timeout_handler             = wait_handler;
-   hash_table->timers[DELETE_LIST].timeout_handler                 = delete_handler;
+   hash_table->timers[FR_TIMER_LIST].timeout_handler = final_response_handler;
+   hash_table->timers[WT_TIMER_LIST].timeout_handler = wait_handler;
+   hash_table->timers[DELETE_LIST].timeout_handler = delete_handler;
 
    /* register the timer function */
    register_timer( timer_routine , hash_table , 1 );
@@ -100,7 +102,8 @@ void tm_shutdown()
     /* destroy the hash table */
     DBG("DEBUG: tm_shutdown : empting hash table\n");
     free_hash_table( hash_table );
-
+    DBG("DEBUG: tm_shutdown : removing semaphores\n");
+	lock_cleanup();
     DBG("DEBUG: tm_shutdown : done\n");
 }
 

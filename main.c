@@ -223,10 +223,11 @@ int daemonize(char*  name)
 	}
 	
 	/* close any open file descriptors */
-	for (r=0;r<MAX_FD; r++){
-		if ((r==3) && log_stderr)  continue;
-		close(r);
-	}
+	if (log_stderr==0)
+		for (r=0;r<MAX_FD; r++){
+			if ((r==3) && log_stderr)  continue;
+			close(r);
+		}
 	return  0;
 
 error:
@@ -286,7 +287,7 @@ int main_loop()
 					return udp_rcv_loop();
 				}
 			}
-			close(udp_sock); /*parent*/
+			/*close(udp_sock);*/ /*parent*/
 		}
 	}
 	/*this is the main process*/

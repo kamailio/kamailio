@@ -257,7 +257,7 @@ void ref_cell( struct cell* p_cell)
 {
    lock( p_cell->mutex );
    p_cell->ref_counter++;
-   unlock( p_cell->mutex );
+  unlock( p_cell->mutex );
 }
 
 
