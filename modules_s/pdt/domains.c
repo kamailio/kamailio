@@ -1,4 +1,6 @@
 /**
+ * $Id$
+ *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -27,6 +29,9 @@
   * History
   * -------
   * 2003-04-07: a structure for both hashes introduced (ramona)
+  * 2005-01-26: double hash removed (ramona)
+  *             FIFO operations are kept as a diff list (ramona)
+  *             domain hash kept in share memory along with FIFO ops (ramona)
   * 
   */
 
@@ -42,99 +47,128 @@
 
 #include "domains.h"
 
-#define get_hash_entry(c,s) (c)&((s)-1)
-
-/* return a new cell stored in share memory for this domain */
-dc_t* new_cell(char* domain, code_t code)
+pd_op_t* new_pd_op(pd_t *cell, int id, int op)
 {
-	dc_t* cell = NULL; 
+	pd_op_t *pdo;
 	
-	if(!domain)
+	if(cell==NULL)
+	{
+		LOG(L_ERR, "PDT:new_pd_op: bad parameters\n");
 		return NULL;
+	}
+	
+	pdo = (pd_op_t*)shm_malloc(sizeof(pd_op_t));
+	if(pdo==NULL)
+	{
+		LOG(L_ERR, "PDT:new_pd_op: no more shm\n");
+		return NULL;
+	}
+	memset(pdo, 0, sizeof(pd_op_t));
+	pdo->cell = cell;
+	pdo->id = id;
+	pdo->op = op;
+
+	return pdo;
+}
+
+void free_pd_op(pd_op_t *pdo)
+{
+	if(pdo==NULL)
+		return;
+	free_cell(pdo->cell);
+	shm_free(pdo);
+	pdo = NULL;
+
+	return;
+}
+
+pd_t* new_cell(str* p, str *d)
+{
+	pd_t* cell = NULL; 
+	
+	if(p==NULL || p->s==NULL || d==NULL || d->s==NULL)
+	{
+		LOG(L_ERR, "PDT:new_cell: bad parameters\n");
+		return NULL;
+	}
 	
 	/* the cell is in share memory */
-	cell = (dc_t*)shm_malloc(sizeof(dc_t));
+	cell = (pd_t*)shm_malloc(sizeof(pd_t));
     
 	/* if there is no space return just NULL */
-	if(!cell)
+	if(cell==NULL)
+	{
+		LOG(L_ERR, "PDT:new_cell: no more shm memory.\n");
 		return NULL;
+	}
+	memset(cell, 0, sizeof(pd_t));
 	
-	/* otherwise, fill in the structure fields */
-	/* domain name */
-	cell->domain = (char*)shm_malloc((1+strlen(domain))*sizeof(char));
-	strcpy(cell->domain, domain);
+	cell->prefix.s = (char*)shm_malloc((1+p->len)*sizeof(char));
+	if(cell->prefix.s==NULL)
+	{
+		shm_free(cell);
+		LOG(L_ERR, "PDT:new_cell: no more shm memory\n");
+		return NULL;
+	}
+	strncpy(cell->prefix.s, p->s, p->len);
+	cell->prefix.len = p->len;
+	cell->prefix.s[p->len] = '\0';
 
-	/* domain code */
-	cell->code = code; 
+	cell->domain.s = (char*)shm_malloc((1+d->len)*sizeof(char));
+	if(cell->domain.s==NULL)
+	{
+		shm_free(cell->prefix.s);
+		shm_free(cell);
+		LOG(L_ERR, "PDT:new_cell: no more shm memory!\n");
+		return NULL;
+	}
+	strncpy(cell->domain.s, d->s, d->len);
+	cell->domain.len = d->len;
+	cell->domain.s[d->len] = '\0';
 
-	cell->dhash = compute_hash(domain);
+	cell->dhash = pdt_compute_hash(cell->domain.s);
     
 	/* return the newly allocated in share memory cell */
 	return cell;
 }
 
-void free_cell(dc_t* cell)
+void free_cell(pd_t* cell)
 {
-	/* if it is not already NULL */
-	if(!cell)
+	if(cell==NULL)
 		return;	
 	
-	if(cell->domain)
-		shm_free(cell->domain);
+	if(cell->prefix.s)
+		shm_free(cell->prefix.s);
+
+	if(cell->domain.s)
+		shm_free(cell->domain.s);
 		
-	/* free the memory */
 	shm_free(cell);
 }
 
-entry_t* new_entry(dc_t* cell)
-{
-    entry_t* e = NULL;
-
-    if(!cell)
-	return NULL;
-    
-    e = (entry_t*)shm_malloc(sizeof(entry_t));
-    if(!e)
-	return NULL;        
-
-    e->dc = cell;
-    e->p = NULL;
-    e->n = NULL;
-
-    /* return the newly allocated in share memory entry */
-    return e;
-}
-
-/* free allocated space for an entry */
-void free_entry(entry_t *e, int erase_cell)
-{
-	if(!e)
-		return;
-	
-	if(erase_cell && e->dc)
-		free_cell(e->dc);
-	
-	shm_free(e);
-}
-
 /* returns a pointer to a hashtable */
-h_entry_t* init_hash(unsigned int hash_size)
+pd_entry_t* init_hash(unsigned int hash_size)
 {
 	int i, j;
-	
-	/* initialized to NULL */
-	h_entry_t *hash = NULL; 
+	pd_entry_t *hash = NULL; 
 
 	/* space for the hash is allocated in share memory */
-	hash = (h_entry_t*)shm_malloc(hash_size*sizeof(h_entry_t));
+	hash = (pd_entry_t*)shm_malloc(hash_size*sizeof(pd_entry_t));
 	if(hash == NULL)
+	{
+		LOG(L_ERR, "PDT:init_hash: no more shm\n");
 		return NULL;
+	}
+	memset(hash, 0, hash_size*sizeof(pd_entry_t));
 
 	/* create mutex semaphores for each entry of the hash */
 	for(i=0; i<hash_size; i++)
 	{
 		if(lock_init(&hash[i].lock) == 0)
+		{
+			LOG(L_ERR, "PDT:init_hash: cannot init the lock\n");
 			goto error;
+		}
 	
 		hash[i].e = NULL;
 	}
@@ -152,9 +186,9 @@ error:
 }
 
 
-double_hash_t* init_double_hash(int hs_two_pow)
+pdt_hash_t* pdt_init_hash(int hs_two_pow)
 {
-	double_hash_t* hash = NULL;
+	pdt_hash_t* hash = NULL;
 	int hash_size;
 
 	if(hs_two_pow>MAX_HSIZE_TWO_POW || hs_two_pow<0)
@@ -164,305 +198,274 @@ double_hash_t* init_double_hash(int hs_two_pow)
 
 
 	/* space for the double_hash is allocated in share memory */
-	hash = (double_hash_t*)shm_malloc(sizeof(double_hash_t));
+	hash = (pdt_hash_t*)shm_malloc(sizeof(pdt_hash_t));
 	if(hash == NULL)
+	{
+		LOG(L_ERR, "PDT:pdt_init_hash: no more shm\n");
 		return NULL;
+	}
 
-	if( (hash->dhash = init_hash(hash_size)) == NULL )
+	if(lock_init(&hash->diff_lock) == 0)
 	{
 		shm_free(hash);
+		LOG(L_ERR, "PDT:pdt_init_hash: cannot init the diff lock\n");
 		return NULL;
 	}
 	
-	if( (hash->chash = init_hash(hash_size)) == NULL )
+	if( (hash->dhash = init_hash(hash_size)) == NULL )
 	{
-		free_hash(hash->dhash, hash_size, ERASE_CELL);
+		lock_destroy(&hash->diff_lock);
 		shm_free(hash);
+		LOG(L_ERR, "PDT:pdt_init_hash: no more shm!\n");
 		return NULL;
 	}
-
+	
 	hash->hash_size = hash_size;
 
 	return hash;
 }
 
 
-void free_hash(h_entry_t* hash, unsigned int hash_size, int do_cell)
+void free_hash(pd_entry_t* hash, unsigned int hash_size)
 {
-    int   i;   /* index for hash entries */
-    entry_t *tmp, /* just a temporary variable */
-			*it;  /* iterator through cells of a has entry */
-    if(!hash || hash_size<=0)
+    int   i;
+    pd_t *tmp, *it;
+    if(hash==NULL || hash_size<=0)
 		return;
     
-	/* free memory occupied by all hash entries */
 	for(i=0; i<hash_size; i++)
 	{
-		/* iterator through the i-th entry of the hash */
 		it = hash[i].e;
-		
-		/* as long as we have a cell */
 		while(it != NULL)
 		{
-			/* retains the next cell */
 	    	tmp = it->n;
-			free_entry(it, do_cell);
-			/* the iterator points up to the next cell */
+			free_cell(it);
 			it = tmp;
 		}
 		lock_destroy(&hash[i].lock);
     }
-
 	shm_free(hash);
 }
 
-void free_double_hash(double_hash_t* hash)
+void pdt_free_hash(pdt_hash_t* hash)
 {
-	free_hash(hash->dhash, hash->hash_size, ERASE_CELL);	
-	free_hash(hash->chash, hash->hash_size, NOT_ERASE_CELL);
+	free_hash(hash->dhash, hash->hash_size);	
+	lock_destroy(&hash->diff_lock);
+	
+	/* todo: destroy diff list */
+	
 	shm_free(hash);
 }
 
-int add_to_double_hash(double_hash_t* hash, dc_t* cell)
-{
-	if(add_to_hash(hash->dhash, hash->hash_size, cell, DHASH)<0)
-		return -1;
-	
-	if(add_to_hash(hash->chash, hash->hash_size, cell, CHASH)<0)
-	{
-		remove_from_hash(hash->dhash, hash->hash_size, cell, DHASH);
-		return -1;
-	}	
-	
-	return 0;
-}
-
-int add_to_hash(h_entry_t* hash, unsigned int hash_size, dc_t* cell, int type)
+int pdt_add_to_hash(pdt_hash_t *hash, str *sp, str *sd)
 {
 	int hash_entry=0;
-	entry_t *it, *tmp;
-	entry_t * e;
+	unsigned int dhash;
+	pd_t *it, *tmp;
+	pd_t *cell;
 	
-	if(!hash || !cell || hash_size>MAX_HASH_SIZE)
-		return -1;
-    
-	/* find the list where we have to introduce the new cell */
-	if(type==DHASH)
-		hash_entry = get_hash_entry(cell->dhash, hash_size);
-	else 
-	if(type==CHASH)
-		hash_entry = get_hash_entry(cell->code, hash_size);
-	else
-		return -1;	
-
-
-	lock_get(&hash[hash_entry].lock);
-	
-	/* first element of the list */	
-	it = hash[hash_entry].e;
-
-	/* find the place where to insert the new cell */
-	/* a double linked list in the hash is kept alphabetically
-	 * or numerical ordered */    
-	if(type==DHASH)
-	{		
-		tmp = NULL;
-		while(it!=NULL && it->dc->dhash < cell->dhash)
-		{
-			tmp = it;
-			it = it->n;
-		}
-	}
-	else
+	if(hash==NULL || sp==NULL || sd==NULL)
 	{
-		tmp = NULL;
-		while( it!=NULL && it->dc->code < cell->code )
-		{
-			tmp = it;
-			it = it->n;
-		}
+		LOG(L_ERR, "PDT:pdt_add_to_hash: bad parameters\n");
+		return -1;
+	}
+    
+	dhash = pdt_compute_hash(sd->s);
+	hash_entry = get_hash_entry(dhash, hash->hash_size);
+
+	lock_get(&hash->dhash[hash_entry].lock);
+	
+	it = hash->dhash[hash_entry].e;
+
+	tmp = NULL;
+	while(it!=NULL && it->dhash < dhash)
+	{
+		tmp = it;
+		it = it->n;
 	}
     
 	/* we need a new entry for this cell */
-	e = new_entry(cell);	
-	if(e == NULL)
+	cell = new_cell(sp, sd);	
+	if(cell == NULL)
 	{
-		lock_release(&hash[hash_entry].lock);
+		lock_release(&hash->dhash[hash_entry].lock);
 		return -1;
 	}
 	
 
 	if(tmp)
-		tmp->n=e;
+		tmp->n=cell;
 	else
-		hash[hash_entry].e = e;
+		hash->dhash[hash_entry].e = cell;
 	
-	e->p=tmp;
-	e->n=it;
+	cell->p=tmp;
+	cell->n=it;
 	
 	if(it)
-	it->p=e;
+		it->p=cell;
 
-	lock_release(&hash[hash_entry].lock);
+	lock_release(&hash->dhash[hash_entry].lock);
 
 	return 0;
 }
 
-int remove_from_double_hash(double_hash_t* hash, dc_t* cell)
-{
-	if(!cell)
-		return 0;	
-		
-	if(!hash)
-		return -1;	
-
-	/* DHASH frees the memory of cell */
-	remove_from_hash(hash->dhash, hash->hash_size, cell, DHASH);
-	remove_from_hash(hash->chash, hash->hash_size, cell, CHASH);
-
-	return 0;	
-}
-
-int remove_from_hash(h_entry_t* hash, unsigned int hash_size, dc_t* cell, int type)
+int pdt_remove_from_hash(pdt_hash_t *hash, str *sd)
 {
 	int hash_entry=0;
-	entry_t *it, *tmp;
-	
-	if(!cell)
-		return 0;
-	
-	if(!hash) 
+	unsigned int dhash;
+	pd_t *it, *tmp;
+
+	if(sd==NULL)
+		return 0;	
+		
+	if(hash==NULL)
+	{
+		LOG(L_ERR, "PDT:pdt_remove_from_hash: bad parameters\n");
 		return -1;
-    
+	}
+	
 	/* find the list where the cell must be */
-	if(type==DHASH)
-		hash_entry = get_hash_entry(cell->dhash, hash_size);
-	else 
-		if(type==CHASH)
-			hash_entry = get_hash_entry(cell->code, hash_size);
-	else
-		return -1;	
+	dhash = pdt_compute_hash(sd->s);
+	hash_entry = get_hash_entry(dhash, hash->hash_size);
 
 
-	lock_get(&hash[hash_entry].lock);
+	lock_get(&hash->dhash[hash_entry].lock);
 	
 	/* first element of the list */	
-	it = hash[hash_entry].e;
+	it = hash->dhash[hash_entry].e;
 
 	/* find the cell in the list */
 	/* a double linked list in the hash is kept alphabetically
 	* or numerical ordered */    
 	tmp = NULL;
-	while(it!=NULL && it->dc != cell)
+	while(it!=NULL)
 	{
+		if( it->dhash==dhash && it->domain.len==sd->len
+				&& strncasecmp(it->domain.s, sd->s, sd->len)==0)
+			break;
 		tmp = it;
 		it = it->n;
 	}
 	
-	if(it)
+	if(it!=NULL)
 	{
-		if(tmp)
+		if(tmp!=NULL)
 			tmp->n = it->n;
 		else
-			hash[hash_entry].e = it->n;
+			hash->dhash[hash_entry].e = it->n;
 
 		if(it->n)
 			it->n->p = it->p;
 
-		free_entry(it, (type==DHASH?ERASE_CELL:NOT_ERASE_CELL));
+		free_cell(it);
 	}
 	
-	lock_release(&hash[hash_entry].lock);
+	lock_release(&hash->dhash[hash_entry].lock);
 
 	return 0;
 }
 
-char* get_domain_from_hash(h_entry_t* hash, unsigned int hash_size, code_t code)
-{
-	int hash_entry;
-	entry_t* it;
-	
-	if(!hash || hash_size>MAX_HASH_SIZE)
-		return NULL;
-	
-	/* find out the list in the hash where this code could be */
-	hash_entry = get_hash_entry(code, hash_size);
-
-	lock_get(&hash[hash_entry].lock);
-	
-	/* parsing the list */
-	it = hash[hash_entry].e;
-	while(it!=NULL && it->dc->code<code)
-			it = it->n;
-
-	lock_release(&hash[hash_entry].lock);
-
-	/* the code does not exist */	
-	if(it==NULL || it->dc->code > code )
-		return NULL;
-	else
-		/* returns the associated domain name */	
-		return it->dc->domain;	
-			
-}
-
-dc_t* get_code_from_hash(h_entry_t* hash, unsigned int hash_size, char* domain)
+str* pdt_get_prefix(pdt_hash_t *ph, str* sd)
 {
 	int hash_entry;
 	unsigned int dhash;
-	entry_t* it;
+	pd_t* it;
 	
-	if(!hash || hash_size>MAX_HASH_SIZE)
-		return NULL;
-	
-	dhash = compute_hash(domain);
-	hash_entry = get_hash_entry(dhash, hash_size);
-
-	lock_get(&hash[hash_entry].lock);
-	
-	/* parsing the list */
-	it = hash[hash_entry].e;
-	while(it!=NULL && it->dc->dhash<=dhash)
+	if(ph==NULL || ph->dhash==NULL || ph->hash_size>MAX_HASH_SIZE)
 	{
-		if(it->dc->dhash == dhash && strcasecmp(it->dc->domain, domain)==0)
+		LOG(L_ERR, "PDT:pdt_get_prefix: bad parameters\n");
+		return NULL;
+	}
+
+	dhash = pdt_compute_hash(sd->s);
+	hash_entry = get_hash_entry(dhash, ph->hash_size);
+
+	lock_get(&ph->dhash[hash_entry].lock);
+	
+	it = ph->dhash[hash_entry].e;
+	while(it!=NULL && it->dhash<=dhash)
+	{
+		if(it->dhash==dhash && it->domain.len==sd->len
+				&& strncasecmp(it->domain.s, sd->s, sd->len)==0)
 		{
-			lock_release(&hash[hash_entry].lock);
-			return it->dc;
+			lock_release(&ph->dhash[hash_entry].lock);
+			return &it->prefix;
 		}
 		it = it->n;
 	}
 
-	lock_release(&hash[hash_entry].lock);
+	lock_release(&ph->dhash[hash_entry].lock);
 
 	return NULL;
 }
 
-void print_hash(h_entry_t* hash, unsigned int hash_size)
+int pdt_check_pd(pdt_hash_t *ph, str *sp, str *sd)
+{
+	int i;
+	unsigned int dhash;
+	pd_t* it;
+	
+	if(ph==NULL || sp==NULL || sd==NULL)
+	{
+		LOG(L_ERR, "PDT:pdt_check_pd: bad parameters\n");
+		return -1;
+	}
+    
+	dhash = pdt_compute_hash(sd->s);
+	
+	for(i=0; i<ph->hash_size; i++)
+	{
+		lock_get(&ph->dhash[i].lock);
+		it = ph->dhash[i].e;
+		while(it != NULL)
+		{
+			if((it->domain.len==sd->len
+					&& strncasecmp(it->domain.s, sd->s, sd->len)==0)
+				|| (it->prefix.len==sp->len
+					&& strncasecmp(it->prefix.s, sp->s, sp->len)==0))
+			{
+				lock_release(&ph->dhash[i].lock);
+				return 1;
+			}
+			
+	    	it = it->n;
+		}
+		lock_release(&ph->dhash[i].lock);
+    }
+
+	return 0;
+}
+
+void pdt_print_hash(pdt_hash_t* hash)
 {
 	int i, count;
-	entry_t *it;
+	pd_t *it;
 	
-	if(!hash || hash_size>MAX_HASH_SIZE)
-		return;
-
-	for(i=0; i<hash_size; i++)
+	if(hash==NULL)
 	{
-		lock_get(&hash[i].lock);
+		DBG("PDT:pdt_print_hash: empty...\n");
+		return;
+	}
+	
+	for(i=0; i<hash->hash_size; i++)
+	{
+		lock_get(&hash->dhash[i].lock);
 
-		it = hash[i].e;
-		printf("Entry<%d>:\n", i);
+		it = hash->dhash[i].e;
+		DBG("PDT:pdt_print_hash: entry<%d>:\n", i);
 		count = 0;
 		while(it!=NULL)
 		{
-			printf("|Domain: %s |Code: %d | DHash:%u \n",
-					it->dc->domain, it->dc->code, it->dc->dhash);
+			DBG("PDT:pdt_print_hash: |Domain: %.*s |Code: %.*s | DHash:%u \n",
+					it->domain.len, it->domain.s,
+					it->prefix.len, it->prefix.s, it->dhash);
 			it = it->n;
 			count++;
 		}
 
-		lock_release(&hash[i].lock);
+		lock_release(&hash->dhash[i].lock);
 
-		printf("---- has %d records\n\n", count);
+		DBG("PDT:pdt_print_hash: ---- has %d records\n\n", count);
 		
 	}
 
@@ -470,7 +473,7 @@ void print_hash(h_entry_t* hash, unsigned int hash_size)
 
 /* be sure s!=NULL */
 /* compute a hash value for a string, knowing also the hash dimension */
-unsigned int compute_hash(char* s)
+unsigned int pdt_compute_hash(char* s)
 {
 	#define h_inc h+=v^(v>>3);
 		

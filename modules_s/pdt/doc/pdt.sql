@@ -7,8 +7,8 @@ CREATE DATABASE pdt;
 USE pdt;
 
 -- create table
-CREATE TABLE domains(
-	code INTEGER NOT NULL PRIMARY KEY,
+CREATE TABLE prefix_domain (
+	prefix VARCHAR(32) NOT NULL PRIMARY KEY,
 	domain VARCHAR(255) NOT NULL DEFAULT ""
 );
 

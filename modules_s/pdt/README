@@ -3,7 +3,7 @@ pdt Module
 
 Elena-Ramona Modroiu
 
-   FhG FOKUS
+   Voice-System
 
 Edited by
 
@@ -25,10 +25,12 @@ Elena-Ramona Modroiu
 
               1.3.1. db_url (string)
               1.3.2. db_table (string)
-              1.3.3. terminator (integer)
-              1.3.4. start_range (integer)
+              1.3.3. prefix_column (string)
+              1.3.4. domain_column (string)
               1.3.5. prefix (string)
               1.3.6. hsize_2pow (integer)
+              1.3.7. sync_time (integer)
+              1.3.8. clean_time (integer)
 
         1.4. Exported Functions
 
@@ -36,57 +38,60 @@ Elena-Ramona Modroiu
 
         1.5. Installation & Running
 
+              1.5.1. FIFO Commands
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. 
+   1-1. prefix-domain translation
    1-2. Set db_url parameter
    1-3. Set db_table parameter
-   1-4. Set terminator parameter
-   1-5. Set start_range parameter
+   1-4. Set prefix_column parameter
+   1-5. Set domain_column parameter
    1-6. Set prefix parameter
    1-7. Set hsize_2pow parameter
-   1-8. prefix2domain usage
+   1-8. Set sync_time parameter
+   1-9. Set clean_time parameter
+   1-10. prefix2domain usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   This module translates numerical codes into domains and update
-   accordingly the R-URI.
+   This module translates a numerical prefix into a domain and
+   updates accordingly the request URI.
 
    The module looks up at the R-URI part of a message and if the
    user part begins with an established prefix it will update the
-   URI. Updating the uri consists of: read the code after the
-   prefix from the user part of the uri and keep the rest as the
-   user part of the new uri. The host part will be the domain
-   matched for the leading code.
+   URI. Updating the uri consists of: remove the prefix from the
+   user part of the uri and keep the rest as the user part of the
+   new uri. The host and port are changed with the domain matched
+   for the leading prefix.
 
-   [<prefix>]<code><userid><:password>@<mydomain.com> ...
+   <prefix><userid><:password>@<mydomain.com> ...
 
    and the result will be:
 
    <userid><:password>@<domain[:port]>...
 
-   Example 1-1. 
-prefix=2
-code=3330
-domain[3330]=iptel.org
+   Example 1-1. prefix-domain translation
+prefix=123
+domain[123]=alpha.org
 
-2333091001@mydomain.com  => 91001@iptel.org
+sip:12391001@mydomain.com  => sip:91001@alpha.org
 
-   The code is always ended with a special digit (a parameter of
-   the module). This digit will not be inside the code at all.
+   The prefix could be prefixed by other digits. These digits
+   will not be used to look up the domain (the classic example,
+   00 used for international calls, then follows the country
+   prefix). For more information on this, see 'prefix' parameter.
 
-     * See SQL script for creating databases and a sample of cfg
-       file in './doc/'.
-     * The web interface is in doc/web/ and the SQL script for
-       creating the database for user interface is
-       './doc/admin.sql'.
-     * Sample shell script to use with fifo interface is
-       './doc/fifo.sh'.
+     * A sample config file and the MySQL script to create the
+       database needed by PDT are located in './doc/'.
+     * Sample shell scripts to manage prefix-domain pairs are
+       also located in './doc/' (pdt_fifo_add.sh,
+       pdt_fifo_delete.sh, pdt_fifo_list.sh).
      _________________________________________________________
 
 1.2. Dependencies
@@ -95,7 +100,7 @@ domain[3330]=iptel.org
 
    The following modules must be loaded before this module:
 
-     * A SER database module.
+     * A SER database module (e.g., mysql, dbtext).
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -117,7 +122,7 @@ domain[3330]=iptel.org
 
    Example 1-2. Set db_url parameter
 ...
-modparam("pdt", "param_name", "param_value")
+modparam("pdt", "db_url", "mysql://user:xxx@127.0.0.1/ser")
 ...
      _________________________________________________________
 
@@ -125,51 +130,51 @@ modparam("pdt", "param_name", "param_value")
 
    Table name.
 
-   Default value is "domains". 
+   Default value is "prefix_domain". 
 
    Example 1-3. Set db_table parameter
 ...
-modparam("pdt", "db_table", "domains")
+modparam("pdt", "db_table", "pdt")
 ...
      _________________________________________________________
 
-1.3.3. terminator (integer)
+1.3.3. prefix_column (string)
 
-   The digit ending a code.
+   Name of 'prefix' column.
 
-   Default value is 0. 
+   Default value is "prefix". 
 
-   Example 1-4. Set terminator parameter
+   Example 1-4. Set prefix_column parameter
 ...
-modparam("pdt", "terminator", 1)
+modparam("pdt", "prefix_column", "code")
 ...
      _________________________________________________________
 
-1.3.4. start_range (integer)
+1.3.4. domain_column (string)
 
-   Default start value for allocating prefixes.
+   Name of 'domain' column.
 
-   Default value is 10. 
+   Default value is "domain". 
 
-   Example 1-5. Set start_range parameter
+   Example 1-5. Set domain_column parameter
 ...
-modparam("pdt", "start_range", 10)
+modparam("pdt", "domain_column", "hostname")
 ...
      _________________________________________________________
 
 1.3.5. prefix (string)
 
-   Default prefix who denotes what URI needs to be translated--if
-   it is NULL the module will not check the R-URI against it and
-   the code is considered starting from the first digit.
-   Otherwise, the module will check first if the R-URI starts
-   with it and will skip it to find the code.
+   Default leading prefix who denotes what URI needs to be
+   translated - if it is NULL the module will not check the R-URI
+   against it and the PDT prefix is considered starting from the
+   first digit. Otherwise, the module will check first if the
+   R-URI starts with it and will skip it to look up the domain.
 
    Default value is NULL. 
 
    Example 1-6. Set prefix parameter
 ...
-modparam("pdt", "prefix", "123")
+modparam("pdt", "prefix", "00")
 ...
      _________________________________________________________
 
@@ -185,16 +190,46 @@ modparam("pdt", "hsize_2pow", 4)
 ...
      _________________________________________________________
 
+1.3.7. sync_time (integer)
+
+   Time in seconds to synchronize the cache of each process with
+   the changes made through FIFO. Any prefix-domain change made
+   through FIFO is guaranteed to have efect after this period of
+   time past.
+
+   Default value is 600. 
+
+   Example 1-8. Set sync_time parameter
+...
+modparam("pdt", "sync_time", 300)
+...
+     _________________________________________________________
+
+1.3.8. clean_time (integer)
+
+   Time in seconds to clean the changes inserted via FIFO. The
+   changes will be removed from FIFO diff list only when all SER
+   processes applied these changes.
+
+   Default value is 900. 
+
+   Example 1-9. Set clean_time parameter
+...
+modparam("pdt", "clean_time", 600)
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. prefix2domain()
 
    Build a new URI if it is necessary. Returns 1 when the
    translation was made or there was nothing to translate (user
-   part of the URI is empty or it does not match the prefix
-   parameter). Returns -1 in error cases.
+   part of the URI is empty, it does not match the prefix
+   parameter or there is no domain associated with a possible
+   prefix from user part). Returns -1 in error cases.
 
-   Example 1-8. prefix2domain usage
+   Example 1-10. prefix2domain usage
 ...
 prefix2domain();
 ...
@@ -202,49 +237,39 @@ prefix2domain();
 
 1.5. Installation & Running
 
-   Notes about installation and running.
+   Make sure you have created the table needed by this module.
+     _________________________________________________________
+
+1.5.1. FIFO Commands
+
+   The modules uses only the cache to look up domains. If you
+   want to add or delete a new prefix-domain pair you have to use
+   FIFO commands. All changes made via FIFO are applied to
+   database. The database is loaded only at SER start up time.
+
+   There are three FIFO commands to use with PDT.
+
+     * pdt_add - add a new prefix-domain pair
+     * pdt_delete - remove a prefix-domain pair
+     * pdt_list - list the prefixes and the domains
+
+   Example shell scripts for these commands are placed in
+   './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
+   pdt_fifo_list.sh). More about, in the comments before the
+   implementation of the functions, inside the 'pdt.c' file.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
 
-   The module registers also a function that works with the fifo
-   server ( get_domaincode ). That will provide support for a web
-   user interface which will be used by admins to register new
-   domains and by simple users to find the code for a domain.
-
-   Registered domains are stored in a database and in tables in
-   share memory. The database is kept consistent with the tables
-   in memory. When a new domain is registered the information
-   goes first in the database and only than in tables in share
-   memory.
-
-   Data in share memory is kept in hashtables to have fast
-   searches. Searches are possible for domains, but also for
-   codes. Searches for codes are necessary more often, every time
-   when a message that needs to be translated passes through SER
-   Searches for domains are requested by the user interface only.
-
-   Through the web interface a normal user can find the code for
-   a domain and a privileged user (i.e., admins) can register new
-   domains too. The web interface also encounters problems of
-   mutual exclusion. Any user of the interface posts a request to
-   the fifo server and waits his response in a file. The file
-   must be unique per user to avoid interfering responses for
-   different simultaneous user. That problem is solved using
-   session per user offered by the PHP language.
+   No function exported for use in another SER module.
      _________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
-   3.1. Where can I find more about SER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
+   3.1. Where can I post a question about this module?
+   3.2. How can I report a bug?
 
-   3.1. Where can I find more about SER?
-
-   Take a look at http://iptel.org/ser.
-
-   3.2. Where can I post a question about this module?
+   3.1. Where can I post a question about this module?
 
    First at all check if your question was already answered on
    one of our mailing lists:
@@ -257,9 +282,9 @@ Chapter 3. Frequently Asked Questions
    or CVS snapshots should be send to <serdev@iptel.org>.
 
    If you want to keep the mail private, send it to
-   <serhelp@iptel.org>.
+   <ramona@voice-system.ro>.
 
-   3.3. How can I report a bug?
+   3.2. How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://iptel.org/ser/bugs
+   Please send a mail to <serdev@iptel.org> or to
+   <ramona@voice-system.ro>
