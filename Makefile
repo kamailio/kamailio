@@ -16,17 +16,12 @@ modules=$(filter-out $(addprefix modules/, $(exclude_modules)), \
 NAME=ser
 
 # compile-time options
-# NOCR disables seeking for CRs -- breaks standard but is fast
-# recommended: on (speed-up, no implementation really sends CR)
-# MACROEATER replaces frequently called parser helper functions
-# with macros
-# recommanded: on (speed-up)
+# 
 # STATS allows to print out number of packets processed on CTRL-C; 
 # implementation still nasty and reports per-process
 # NO_DEBUG turns off some of the debug messages (DBG(...)).
 # NO_LOG completely turns of all the logging (and DBG(...))
 # DEBUG compiles in some extra debugging code
-# OLD_PARSER uses the old and stable parser (from ser 8.3.2)
 # DNS_IP_HACK faster ip address resolver for ip strings (e.g "127.0.0.1")
 # SHM_MEM    compiles in shared mem. support, needed by some modules and
 #            by USE_SHM_MEM
@@ -48,8 +43,8 @@ DEFS=-DTHREAD -DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
-#mode = debug
-mode = release
+mode = debug
+#mode = release
 
 # platform dependent settings
 
@@ -60,10 +55,10 @@ CC=gcc
 LD=gcc
 
 ifeq ($(mode), release)
-	CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
+	CFLAGS=-O2 -fPIC -DPIC -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
 	LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
 else
-	CFLAGS=-g -Wcast-align -Winline
+	CFLAGS=-g -fPIC -DPIC -Wcast-align -Winline
 	LDFLAGS=-g -Wl,-E
 endif
 

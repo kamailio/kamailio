@@ -16,7 +16,6 @@
  */
 
 
-#ifndef OLD_PARSER
 
 #include <stdlib.h>
 #include "dprint.h"
@@ -1736,4 +1735,3 @@ error:
 }
 
 
-#endif

@@ -43,19 +43,8 @@
 
 static char id[]="@(#) $Id$";
 static char version[]="ser 0.8.3.9";
-static char flags[]="NOCR:"
-#ifdef NOCR
-"On"
-#else
-"Off"
-#endif
-", MACROEATER:"
-#ifdef MACROEATER
-"On"
-#else
-"Off"
-#endif
-", STATS:"
+static char flags[]=
+"STATS:"
 #ifdef STATS
 "On"
 #else
@@ -69,9 +58,6 @@ static char flags[]="NOCR:"
 #endif
 #ifdef DEBUG
 ", DEBUG"
-#endif
-#ifdef OLD_PARSER
-", OLD_PARSER"
 #endif
 #ifdef DNS_IP_HACK
 ", DNS_IP_HACK"

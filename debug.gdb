@@ -1,5 +1,5 @@
 file ./ser
-set args -f t_debug.cfg
+set args -f td.cfg
 break main
 #break dump_all_statistic
 #break lock_initialize

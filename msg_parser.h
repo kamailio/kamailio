@@ -195,15 +195,8 @@ struct sip_uri{
 
 char* parse_fline(char* buffer, char* end, struct msg_start* fl);
 char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl);
-#ifdef OLD_PARSER 
-char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f);
-int field_name(char *s, int len);
-#endif
 char* parse_hostport(char* buf, str* host, short int* port);
 
-#ifdef OLD_PARSER 
-char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb);
-#endif
 int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 int parse_uri(char *buf, int len, struct sip_uri* uri);
 int parse_headers(struct sip_msg* msg, int flags);
@@ -211,11 +204,9 @@ int parse_headers(struct sip_msg* msg, int flags);
 void free_uri(struct sip_uri* u);
 
 
-#ifndef OLD_PARSER
 char* parse_hname(char* buf, char* end, struct hdr_field* hdr);
 char* parse_via(char* buffer, char* end, struct via_body *vb);
 char* parse_cseq(char* buffer, char* end, struct cseq_body *cb);
-#endif
 
 void free_via_param_list(struct via_param *vp);
 void free_via_list(struct via_body *vb);
