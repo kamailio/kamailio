@@ -279,6 +279,7 @@ static inline int save_ruri(struct sip_msg* _m)
 
 	     /* Insert it */
 	if (insert_new_lump_before(anchor, s, 8 + _m->first_line.u.request.uri.len + 3, 0) == 0) {
+		pkg_free(s);
 		LOG(L_ERR, "save_ruri(): Can't insert lump\n");
 		return -4;
 	}

@@ -374,6 +374,7 @@ int insert_RR(struct sip_msg* _m, str* _l)
 	}
 	
 	if (insert_new_lump_before(anchor, _l->s, _l->len, 0) == 0) {
+		
 		LOG(L_ERR, "insert_RR(): Can't insert Record-Route\n");
 		return -2;
 	}
