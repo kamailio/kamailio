@@ -35,6 +35,7 @@
  *  2003-02-11  removed calls to upd_send & tcp_send & replaced them with
  *               calls to msg_send (andrei)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-02  fixed get_send_socket for tcp fwd to udp (andrei)
  */
 
 
@@ -151,35 +152,44 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 	send_sock=0;
 	/* check if we need to change the socket (different address families -
 	 * eg: ipv4 -> ipv6 or ipv6 -> ipv4) */
+	switch(proto){
 #ifdef USE_TCP
-	if (proto==PROTO_TCP){
+		case PROTO_TCP:
 		/* on tcp just use the "main address", we don't really now the
 		 * sending address (we can find it out, but we'll need also to see
 		 * if we listen on it, and if yes on which port -> too complicated*/
-		switch(to->s.sa_family){
-			case AF_INET:	send_sock=sendipv4_tcp;
-							break;
+			switch(to->s.sa_family){
+				/* FIXME */
+				case AF_INET:	send_sock=sendipv4_tcp;
+								break;
 #ifdef USE_IPV6
-			case AF_INET6:	send_sock=sendipv6_tcp;
-							break;
+				case AF_INET6:	send_sock=sendipv6_tcp;
+								break;
 #endif
-			default:		LOG(L_ERR, "get_send_socket: BUG: don't know how"
+				default:	LOG(L_ERR, "get_send_socket: BUG: don't know how"
 									" to forward to af %d\n", to->s.sa_family);
-		}
-	}else
+			}
+			break;
 #endif
-	      if ((bind_address==0) ||(to->s.sa_family!=bind_address->address.af)){
-		switch(to->s.sa_family){
-			case AF_INET:	send_sock=sendipv4;
-							break;
+		case PROTO_UDP:
+			if ((bind_address==0)||(to->s.sa_family!=bind_address->address.af)||
+				  (bind_address->proto!=PROTO_UDP)){
+				switch(to->s.sa_family){
+					case AF_INET:	send_sock=sendipv4;
+									break;
 #ifdef USE_IPV6
-			case AF_INET6:	send_sock=sendipv6;
-							break;
+					case AF_INET6:	send_sock=sendipv6;
+									break;
 #endif
-			default:		LOG(L_ERR, "get_send_socket: BUG: don't know how"
-									" to forward to af %d\n", to->s.sa_family);
-		}
-	}else send_sock=bind_address;
+					default:	LOG(L_ERR, "get_send_socket: BUG: don't know"
+										" how to forward to af %d\n",
+										to->s.sa_family);
+				}
+			}else send_sock=bind_address;
+			break;
+		default:
+			LOG(L_CRIT, "BUG: get_send_socket: unkown proto %d\n", proto);
+	}
 	return send_sock;
 }
 

@@ -417,11 +417,14 @@ again:
 			DBG("calling receive_msg(%p, %d, )\n",
 					req->start, (int)(req->parsed-req->start));
 			/* just for debugging use sendipv4 as receiving socket  FIXME*/
+			bind_address=con->rcv.bind_address;
+			/*
 			if (con->rcv.dst_ip.af==AF_INET6){
 				bind_address=sendipv6_tcp;
 			}else{
 				bind_address=sendipv4_tcp;
 			}
+			*/
 			con->rcv.proto_reserved1=con->id; /* copy the id */
 			c=*req->parsed; /* ugly hack: zero term the msg & save the
 							   previous char, req->parsed should be ok

@@ -18,6 +18,7 @@ x (different way) add request header bitmap field for the modules
 - fix bind_address for tcp (in some  way)
 - add conflict in debs/rpms/etc (conflict w/ older ser-mysql, ser-jabber)
 - new packages ser-radius etc
+- tcp_destroy (called on ser exit)
 
 
 High priority:
