@@ -1,4 +1,5 @@
 #! /bin/sh
+# $Id$
 # postinst script for ser-0.8.7
 #
 # see: dh_installdeb(1)
@@ -25,6 +26,7 @@ set -e
 
 case "$1" in
     configure)
+        adduser --system --group --home /var/run/ser ser
 
     ;;
 

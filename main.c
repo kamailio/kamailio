@@ -42,6 +42,8 @@
 #include <sys/fcntl.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 
 #include <sys/ioctl.h>
@@ -247,6 +249,8 @@ int server_signature=1;
 int received_dns = 0;      
 char* working_dir = 0;
 char* chroot_dir = 0;
+char* user=0;
+char* group=0;
 int uid = 0;
 int gid = 0;
 /* a hint to reply modules whether they should send reply
@@ -869,6 +873,8 @@ int main(int argc, char** argv)
 	char port_no_str[MAX_PORT_LEN];
 	int port_no_str_len;
 	int ret;
+	struct passwd *pw_entry;
+	struct group  *gr_entry;
 
 	/*init*/
 	port_no_str_len=0;
@@ -1027,19 +1033,10 @@ int main(int argc, char** argv)
 					chroot_dir=optarg;
 					break;
 			case 'u':
-					uid=strtol(optarg, &tmp, 10);
-					if ((tmp==0) ||(*tmp)){
-						fprintf(stderr, "bad uid number: -u %s\n", optarg);
-						goto error;
-					}
-					/* test if string?*/
+					user=optarg;
 					break;
 			case 'g':
-					gid=strtol(optarg, &tmp, 10);
-					if ((tmp==0) ||(*tmp)){
-						fprintf(stderr, "bad gid number: -g %s\n", optarg);
-						goto error;
-					}
+					group=optarg;
 					break;
 			case 'P':
 					pid_file=optarg;
@@ -1130,6 +1127,33 @@ int main(int argc, char** argv)
 #endif
 	
 	if (working_dir==0) working_dir="/";
+	
+	/* get uid/gid */
+	if (user){
+		uid=strtol(user, &tmp, 10);
+		if ((tmp==0) ||(*tmp)){
+			/* maybe it's a string */
+			pw_entry=getpwnam(user);
+			if (pw_entry==0){
+				fprintf(stderr, "bad user name/uid number: -u %s\n", user);
+				goto error;
+			}
+			uid=pw_entry->pw_uid;
+			gid=pw_entry->pw_gid;
+		}
+	}
+	if (group){
+		gid=strtol(user, &tmp, 10);
+		if ((tmp==0) ||(*tmp)){
+			/* maybe it's a string */
+			gr_entry=getgrnam(group);
+			if (gr_entry==0){
+				fprintf(stderr, "bad group name/gid number: -u %s\n", group);
+				goto error;
+			}
+			gid=gr_entry->gr_gid;
+		}
+	}
 
 	if (sock_no==0) {
 		/* try to get all listening ipv4 interfaces */
@@ -1196,7 +1220,6 @@ int main(int argc, char** argv)
 			if (add_alias(*h, strlen(*h))<0){
 				LOG(L_ERR, "ERROR: main: add_alias failed\n");
 			}
-		
 		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
 														 format*/
 		if ((tmp=ip_addr2a(&sock_info[r].address))==0) goto error;
@@ -1235,7 +1258,8 @@ int main(int argc, char** argv)
 		sock_info[r].port_no_str.len=strlen(port_no_str);
 		
 #ifdef EXTRA_DEBUG
-		printf("              %s [%s]:%s\n",sock_info[r].name.s,
+		printf("              %.*s [%s]:%s\n", sock_info[r].name.len, 
+				sock_info[r].name.s,
 				sock_info[r].address_str.s, sock_info[r].port_no_str.s);
 #endif
 	}

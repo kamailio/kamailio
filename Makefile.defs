@@ -8,18 +8,28 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -16
+EXTRAVERSION = -99
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 
-prefix = /usr/local
-cfg-prefix = $(prefix)
-bin-prefix = $(prefix)
-modules-prefix= $(prefix)
-doc-prefix = $(prefix)
-man-prefix = $(prefix)
+ # install location
+PREFIX = /usr/local
+prefix = $(PREFIX)
+# install path is $(basedir) $(prefix) 
+# example:
+#  creating a bin. archive in /tmp, which unpacks in /usr/local
+#  basedir=/tmp
+#  prefix=/usr/local
+basedir = 
+# install prefixes for various stuff
+cfg-prefix = $(basedir)$(prefix)
+bin-prefix = $(basedir)$(prefix)
+modules-prefix = $(basedir)$(prefix)
+doc-prefix = $(basedir)$(prefix)
+man-prefix = $(basedir)$(prefix)
+ut-prefix = $(basedir)$(prefix)
 
 # dirs
 cfg-dir = etc/ser/
@@ -27,6 +37,10 @@ bin-dir = sbin/
 modules-dir = lib/ser/modules/
 doc-dir = share/doc/ser/
 man-dir = share/man/
+ut-prefix = bin/
+# target dirs for various stuff
+cfg-target = $(prefix)/$(cfg-dir)
+modules-target = $(prefix)/$(modules-dir)
 
 
 ifeq ($(OS), solaris)
@@ -37,11 +51,19 @@ else
 INSTALL = install 
 TAR= tar
 endif
-INSTALL-CFG = $(INSTALL) -m 644
+
+# INSTALL-CFG = $(INSTALL) -m 644
 INSTALL-BIN = $(INSTALL) -m 755
 INSTALL-MODULES = $(INSTALL) -m 755
 INSTALL-DOC = $(INSTALL) -m 644
 INSTALL-MAN = $(INSTALL) -m 644
+
+#set some vars from the environment (and not make builtins)
+CC   := $(shell echo "$${CC}")
+LEX  := $(shell echo "$${LEX}")
+YACC := $(shell echo "$${YACC}")
+
+
 
 
 # compile-time options
@@ -103,16 +125,15 @@ INSTALL-MAN = $(INSTALL) -m 644
 #  		if enabled, allows forking of the snmp agent just before child
 #  		forking (done at the top of main_loop). Needed if you want
 #  		to use the snmp module.
-
-DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
-	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
+DEFS= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
+	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' \
+	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
 	 -DF_MALLOC \
-	 -DEXTRA_DEBUG \
 	 #-DDBG_QM_MALLOC \
 	 #-DVQ_MALLOC  
 	 #-DCONTACT_BUG
@@ -127,13 +148,17 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 
 #PROFILE=  -pg #set this if you want profiling
 #mode = debug
-mode = release
+ifeq ($(mode),)
+	mode = release
+endif
 
 # platform dependent settings
 
 
 #common
-CC=gcc
+ifeq ($(CC),)
+	CC=gcc
+endif
 LD= $(CC)
 CC_LONGVER=$(shell if  $(CC) -v 2>/dev/null; then \
 						$(CC) -v 2>&1 ;\
@@ -228,8 +253,7 @@ ifeq ($(ARCH), armv4l)
 	DEFS+= -DFAST_LOCK
 endif
 
-
-
+CFLAGS=
 # setting CFLAGS
 ifeq ($(mode), release)
 	#if i386
@@ -354,7 +378,7 @@ endif	#ARCH, i386
 
 	
 
-
+LDFLAGS=
 # setting LDFLAGS
 ifeq	($(CC_NAME), gcc)
 ifeq		($(ARCH), sparc64)
@@ -426,8 +450,12 @@ ifeq	($(CC_NAME), suncc)
 MOD_CFLAGS=-Kpic  $(CFLAGS)
 endif
 
-LEX=flex
-YACC=bison
+ifeq ($(LEX),)
+	LEX=flex
+endif
+ifeq ($(YACC),)
+	YACC=bison
+endif
 YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
@@ -452,9 +480,9 @@ ifeq  ($(OS), solaris)
 	YACC=yacc
 
 ifeq ($(CC_NAME), suncc)
-	LIBS=-lfast -lresolv
+	LIBS+= -lfast 
 endif
-	LIBS+=-ldl -L/usr/local/lib -L/usr/lib/mysql -lfl -lxnet -lrt -lnsl
+	LIBS+= -L/usr/local/lib -L/usr/lib/mysql -lxnet -lrt -lnsl
 	# -lrt needed for sched_yield
 endif
 

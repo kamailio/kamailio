@@ -34,8 +34,8 @@ build-stamp: configure-stamp
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE) all 
-	$(MAKE) modules modules=modules/mysql
+	$(MAKE) all  exclude_modules=mysql cfg-target=/etc/ser/
+	$(MAKE) modules modules=modules/mysql cfg-target=/etc/ser/
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
 
 	touch build-stamp
@@ -57,14 +57,17 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/ser
-	$(MAKE) install  \
-		prefix=$(CURDIR)/debian/ser/usr \
-		cfg-prefix=$(CURDIR)/debian/ser 
-	
+	$(MAKE) install  exclude_modules=mysql \
+		basedir=$(CURDIR)/debian/ser \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser \
+		cfg-target=/etc/ser/
 	# install only the mysql module
 	$(MAKE) install-modules modules=modules/mysql  \
-		prefix=$(CURDIR)/debian/ser-mysql-module/usr \
-		cfg-prefix=$(CURDIR)/debian/ser-mysql-module 
+		basedir=$(CURDIR)/debian/ser-mysql-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-mysql-module \
+		cfg-target=/etc/ser/
 	#dh_movefiles
 
 
@@ -84,7 +87,7 @@ binary-common:
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-#	dh_installinit
+	dh_installinit
 	dh_installcron
 	dh_installman
 	dh_installinfo

@@ -418,7 +418,7 @@ static inline struct hostent* ip_addr2he(char* name, int len,
 	p_aliases[0]=0; /* no aliases*/
 	p_addr[1]=0; /* only one address*/
 	p_addr[0]=address;
-	strncpy(hostname, name, (len<256)?len:256);
+	strncpy(hostname, name, (len<256)?len+1:256);
 	if (ip->len>16) return 0;
 	memcpy(address, ip->u.addr, ip->len);
 	

@@ -38,7 +38,7 @@ dep: $(depends)
 static: $(objs)
 
 .PHONY: clean
-clean:
+clean: 
 	-@rm -f $(objs) $(NAME) $(objs:.o=.il) 2>/dev/null
 	-@for r in $(modules) $(static_modules_path) "" ; do \
 		if [ -n "$$r" ]; then \
@@ -46,6 +46,7 @@ clean:
 			$(MAKE) -C $$r clean ; \
 		fi ; \
 	done
+	@if [ -n "$(modules)" ]; then cd utils/gen_ha1; $(MAKE) clean; fi
 
 .PHONY: proper
 .PHONY: distclean

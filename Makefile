@@ -10,7 +10,8 @@ auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 #include  source related defs
 include Makefile.sources
 
-exclude_modules=CVS cpl cpl-c ext radius_acc radius_auth snmp mysql 
+override exclude_modules:=CVS cpl cpl-c ext radius_acc radius_auth snmp mysql \
+	$(exclude_modules)
 static_modules=
 static_modules_path=$(addprefix modules/, $(static_modules))
 extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))
@@ -49,7 +50,7 @@ $(NAME): static_modules
 lex.yy.c: cfg.lex $(ALLDEP)
 	$(LEX) $<
 
-cfg.tab.c: cfg.y $(ALLDEP)
+cfg.tab.c: cfg.y  $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
 .PHONY: all
@@ -85,27 +86,32 @@ dbg: ser
 
 .PHONY: tar
 tar: mantainer-clean 
-	$(TAR) -C .. -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+	$(TAR) -C .. \
+		--exclude=$(notdir $(CURDIR))/test \
+		--exclude=$(notdir $(CURDIR))/tmp \
+		--exclude=$(notdir $(CURDIR))/debian/ser \
+		--exclude=$(notdir $(CURDIR))/debian/ser-mysql-module \
+		 -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
 
 # binary dist. tar.gz
 .PHONY: bin
 bin:
 	mkdir -p tmp/ser/usr/local
-	$(MAKE) install prefix=tmp/ser/usr/local
+	$(MAKE) install basedir=tmp/ser prefix=/usr/local 
 	$(TAR) -C tmp/ser/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
 	rm -rf tmp/ser
 
 .PHONY: deb
 deb:
-	dpkg-buildpackage -rfakeroot -pgpg -sgpg
+	dpkg-buildpackage -rfakeroot -tc
 
 .PHONY: sunpkg
 sunpkg:
 	mkdir -p tmp/ser
 	mkdir -p tmp/ser_sun_pkg
-	$(MAKE) install prefix=tmp/ser
+	$(MAKE) install basedir=tmp/ser prefix=/usr/local
 	(cd solaris; \
-	pkgmk -r ../tmp/ser/ -o -d ../tmp/ser_sun_pkg/ -v "$(RELEASE)" ; \
+	pkgmk -r ../tmp/ser/usr/local -o -d ../tmp/ser_sun_pkg/ -v "$(RELEASE)" ;\
 	cd ..)
 	cat /dev/null > ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local
 	pkgtrans -s tmp/ser_sun_pkg/ ../$(NAME)-$(RELEASE)-$(OS)-$(ARCH)-local \
@@ -147,14 +153,22 @@ $(man-prefix)/$(man-dir)/man8:
 $(man-prefix)/$(man-dir)/man5:
 		mkdir -p $(man-prefix)/$(man-dir)/man5
 
-install-cfg:
-		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
+install-cfg: $(cfg-prefix)/$(cfg-dir)
+		sed -e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
+			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg
+		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg
+#		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
-install-bin:
+install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1
 		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
+		$(INSTALL-BIN) scripts/sc $(bin-prefix)/$(bin-dir)/serctl
+		$(INSTALL-BIN) scripts/ser_mysql.sh  $(bin-prefix)/$(bin-dir)
+		$(INSTALL-BIN) utils/gen_ha1/gen_ha1 $(bin-prefix)/$(bin-dir)
 
+utils/gen_ha1/gen_ha1:
+		cd utils/gen_ha1; $(MAKE) all
 
-install-modules:
+install-modules: modules $(modules-prefix)/$(modules-dir)
 	-@for r in $(modules_full_path) "" ; do \
 		if [ -n "$$r" ]; then \
 			$(INSTALL-MODULES)  $$r  $(modules-prefix)/$(modules-dir) ; \
@@ -162,10 +176,10 @@ install-modules:
 	done 
 
 
-install-doc:
+install-doc: $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) README $(doc-prefix)/$(doc-dir)
 
-install-man:
+install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8
 	$(INSTALL-MAN)  ser.cfg.5 $(man-prefix)/$(man-dir)/man5
 

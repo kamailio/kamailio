@@ -114,6 +114,8 @@ struct id_list* lst_tmp;
 %token LOADMODULE
 %token MODPARAM
 %token MAXBUFFER
+%token USER
+%token GROUP
 
 
 
@@ -273,7 +275,13 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| FIFO EQUAL STRING { fifo=$3; }
 		| FIFO EQUAL error { yyerror("string value expected"); }
 		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
-		| FIFO_MODE EQUAL NUMBER { yyerror("int value expected"); }
+		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
+		| USER EQUAL STRING     { user=$3; }
+		| USER EQUAL ID         { user=$3; }
+		| USER EQUAL error      { yyerror("string value expected"); }
+		| GROUP EQUAL STRING     { group=$3; }
+		| GROUP EQUAL ID         { group=$3; }
+		| GROUP EQUAL error      { yyerror("string value expected"); }
 		| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 		| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 		| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

@@ -74,6 +74,8 @@ extern int syn_branch;
 /* extern int process_no; */
 extern int sip_warning;
 extern int server_signature;
+extern char* user;
+extern char* group;
 /*
  * debug & log_stderr moved to dprint.h*/
 

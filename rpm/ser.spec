@@ -10,7 +10,7 @@ Release:      %rel
 Packager:     Jan Janak <J.Janak@sh.cvut.cz>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://iptel.org/ser/stable/%{name}-%{ver}.tar.gz
+Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
 Source2:      ser.init
 URL:          http://iptel.org/ser
 Vendor:       FhG Fokus
@@ -43,7 +43,7 @@ entries.
 %setup
 
 %build
-make all exclude_modules="%exclude"
+make all exclude_modules="%exclude" cfg-target=/%{_sysconfdir}/ser/
 cd utils/gen_ha1
 make
 
@@ -61,6 +61,8 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 	     doc-dir=ser/ \
 	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
 	     man-dir="" \
+		 cfg-target=/%{_sysconfdir}/ser/ \
+		 modules-target=/%{_libdir}/ser/modules/ \
 	     exclude_modules="%exclude"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
@@ -138,6 +140,9 @@ fi
 
 
 %changelog
+* Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
+- modified make install & make: added cfg-target & modules-target
+
 * Sun Sep 08 2002 Jan Janak <J.Janak@sh.cvut.cz>
 - Created subpackage containing mysql connectivity support.
 

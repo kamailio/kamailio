@@ -9,12 +9,16 @@
 #
 # Version:	@(#)skeleton  1.8  03-Mar-1998  miquels@cistron.nl
 #
-# This file was automatically customized by dh-make on Tue, 16 Jul 2002 15:41:31 +0200
+#  adapted for ser by Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+# $Id$
+
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/ser
 NAME=ser
 DESC=ser
+PIDFILE=/var/run/$NAME/$NAME.pid
+PARAMS="-P $PIDFILE -u ser -g ser"
 
 test -f $DAEMON || exit 0
 
@@ -23,13 +27,13 @@ set -e
 case "$1" in
   start)
 	echo -n "Starting $DESC: $NAME"
-	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON
+	start-stop-daemon --start --quiet --pidfile $PIDFILE \
+		--exec $DAEMON -- $PARAMS
 	echo "."
 	;;
   stop)
 	echo -n "Stopping $DESC: $NAME"
-	start-stop-daemon --oknodo --stop --quiet --pidfile /var/run/$NAME.pid \
+	start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
 		--exec $DAEMON
 	echo "."
 	;;
@@ -43,7 +47,7 @@ case "$1" in
 	#
 	# echo "Reloading $DESC configuration files."
 	# start-stop-daemon --stop --signal 1 --quiet --pidfile \
-	#	/var/run/$NAME.pid --exec $DAEMON
+	#	$PIDFILE --exec $DAEMON
   #;;
   restart|force-reload)
 	#
@@ -53,10 +57,10 @@ case "$1" in
 	#
 	echo -n "Restarting $DESC: $NAME"
 	start-stop-daemon --stop --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
+		$PIDFILE --exec $DAEMON
 	sleep 1
 	start-stop-daemon --start --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
+		$PIDFILE --exec $DAEMON  -- $PARAMS
 	echo "."
 	;;
   *)

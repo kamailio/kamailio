@@ -10,7 +10,7 @@ Release:      %rel
 Packager:     Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://iptel.org/ser/stable/%{name}-%{ver}.tar.gz
+Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
 Source2:      ser.init.SuSE
 URL:          http://iptel.org/ser
 Vendor:       FhG Fokus
@@ -43,7 +43,7 @@ entries.
 %setup
 
 %build
-make all exclude_modules="%exclude"
+make all cfg-target=/%{_sysconfdir}/ser/ exclude_modules="%exclude"
 cd utils/gen_ha1
 make
 
@@ -61,6 +61,8 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 	     doc-dir=ser/ \
 	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
 	     man-dir="" \
+		 cfg-target=/%{_sysconfdir}/ser/ \
+		 modules-target=/%{_libdir}/ser/modules/ \
 	     exclude_modules="%exclude"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
@@ -139,6 +141,9 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+* Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
+- modified make install & make: added cfg-target & modules-target
+
 * Wen Sep 25 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 - Copyed mysql connectivity subpackage from orig rpm.spec.
 
