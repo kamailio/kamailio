@@ -503,8 +503,56 @@ error:
 
 
 
-char * build_res_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_len)
+char * build_res_buf_from_sip_req(unsigned int code , char *text , struct sip_msg* msg, unsigned int *returned_len)
 {
+	char                    *buf=0, *p;
+	unsigned int       len,foo,i;
+	struct hdr_field  *hdr;
+
+	/*computes the lenght of the new response buffer*/
+	len = 0;
+	/* first line */
+	len += 3/*code*/ + 1/*space*/ + strlen(text) + 1/*new line*/;
+	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
+	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
+		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) +1;
+	/* end of message */
+	len += 1; /*new line*/
+
+	/*allocating mem*/
+	buf = (char*) malloc( len );
+	if (!buf)
+	{
+		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory\n");
+		goto error;
+	}
+
+	/* filling the buffer*/
+	/* first line */
+	for ( i=2 , foo = code  ;  i>=0  ;  i-- , foo=foo/10 )
+		*(p+i) = '0' + foo - ( foo/10 )*10;
+	p += 3;
+	*(p++) = ' ' ;
+	memcpy( p , text , strlen(text) );
+	p += strlen(text);
+	*(p++) = '\n';
+	/* headers*/
+	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
+		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		{
+			memcpy( p , hdr->name.s ,  ((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
+			*(p++) = '\n';
+		}
+
+	*(p++) = '\n';
+	*returned_len=len;
+	return buf;
+error:
+	if (buf) free(buf);
+	*returned_len=0;
+	return 0;
 }
 
 

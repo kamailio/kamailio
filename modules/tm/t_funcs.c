@@ -272,7 +272,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    T->outbound_request[branch]->timeout         = RETR_T1;
    /* send the request */
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen , 
-		&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+		(struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 }
 
 
@@ -506,19 +506,19 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    /* getting the hash_index from the brach param , via header*/
    begin = p_msg->via1->branch->value.s;
    for(  ; *begin!='.' ; begin++ );
-   hash_index = strtol( ++begin , &end , 10 );
+   hash_index = strtol( ++begin , &end , 16 );
    /*if the hash index is corect */
    if  ( *end=='.' && hash_index>=0 && hash_index<TABLE_ENTRIES-1 )
    {
       /* getting the entry label value */
       begin=end++ ;
-      entry_label = strtol( ++begin , &end , 10 );
+      entry_label = strtol( ++begin , &end , 16 );
       /* if the entry label also is corect */
       if  ( *end=='.' && entry_label>=0 )
       {
          /* getting the branch_id value */
          begin=end++ ;
-         branch_id = strtol( ++begin , &end , 10 );
+         branch_id = strtol( ++begin , &end , 16 );
          /* if the entry label also is corect */
           if  ( branch_id>=0 )
           {
