@@ -165,7 +165,9 @@ int bind_dbmod(char* mod);
 
 
 /*
- * Get version of a table
+ * Get the version of the given table. If there is
+ * no row for the table then the function returns
+ * version 0. -1 is returned on error.
  */
 int table_version(db_con_t* con, const str* table);
 

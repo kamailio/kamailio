@@ -96,6 +96,7 @@ int bind_dbmod(char* mod)
 
 /*
  * Get version of a table
+ * If there is no row for the given table, return version 0
  */
 int table_version(db_con_t* connection, const str* table)
 {
@@ -127,8 +128,13 @@ int table_version(db_con_t* connection, const str* table)
 		return -1;
 	}
 
+	if (RES_ROW_N(res) == 0) {
+		DBG("table_version(): No row for table %s found\n", table->len, ZSW(table->s));
+		return 0;
+	}
+
 	if (RES_ROW_N(res) != 1) {
-		LOG(L_ERR, "table_version(): Invalid number of rows received: %d, %.*s\n", RES_ROW_N(res), table->len, table->s);
+		LOG(L_ERR, "table_version(): Invalid number of rows received: %d, %.*s\n", RES_ROW_N(res), table->len, ZSW(table->s));
 		db_free_query(connection, res);
 		return -1;
 	}
