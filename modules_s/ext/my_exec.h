@@ -1,3 +1,10 @@
+/*
+ *
+ * $Id$
+ *
+ */
+
+
 #ifndef _MY_POPEN_H
 #define _MY_POPEN_H
 
@@ -12,12 +19,12 @@ struct program
 	int   stat;
 };
 
-struct program _private_prog;
-
 
 int init_ext();
 int start_prog( char *cmd );
 int kill_prog();
+
+extern struct program _private_prog;
 
 
 #ifndef _MY_POPEN_NO_INLINE

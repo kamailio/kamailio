@@ -1,3 +1,9 @@
+/*
+ * $Id$
+ *
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -6,26 +12,51 @@
 #include <errno.h>
 #include <string.h>
 #define  _MY_POPEN_NO_INLINE
+
+#include "../../dprint.h"
+#include "../../error.h"
+#include "config.h"
+
 #include "my_exec.h"
 
-
+struct program _private_prog;
 
 
 static void sig_chld(int signo)
 {
-	printf("We have a dead child\n");
+	int status;
+
+	DBG("DEBUG: child left\n");
 
 	if ( !_private_prog.pid)
 		/*is not ours */
 		return;
 
-	while(waitpid(_private_prog.pid, &(_private_prog.stat), 0)<0)
-		if (errno!=EINTR)
+	while(waitpid(_private_prog.pid, &(_private_prog.stat), 0)<0) {
+		LOG(L_ERR, "ERROR: waitpid failed, errno=%d\n", errno );
+		if (errno==EINTR)
+			continue;
+		else
 			return;
+	}
+
+	if (WIFEXITED(_private_prog.stat)) {
+		status=WEXITSTATUS(_private_prog.stat);
+		DBG("DEBUG: child terminted with status %d\n", status );
+		if (status!=0) {
+			LOG(L_ERR, "ERROR: child terminated, status=%d \n", status);
+		}
+	} else {
+       	LOG(L_ERR, "ERROR: child terminated abruptly; "
+           	"signaled=%d,stopped=%d\n",
+           	WIFSIGNALED(_private_prog.stat),
+           	WIFSTOPPED(_private_prog.stat));
+   	}
 
 	_private_prog.pid = 0;
 	_private_prog.fd_in = 0;
 	_private_prog.fd_in = 0;
+
 }
 
 
@@ -53,14 +84,20 @@ int start_prog( char *cmd )
 		return -1;
 
 	/* pipes for std_in and std_out */
-	if (pipe(p_in)<0)
+	if (pipe(p_in)<0) {
+		LOG(L_ERR, "ERROR: start_prog: open(pipe_in) failed\n");
 		return -1;
-	if (pipe(p_out)<0)
+	}
+	if (pipe(p_out)<0) {
+		LOG(L_ERR, "ERROR: start_prog: open(pipe_out) failed\n");
 		return -1;
+	}
 
 	/* let's fork */
-	if ((pid=fork())<0 )
+	if ((pid=fork())<0 ) {
+		LOG(L_ERR, "ERROR: start_prog: forking failed\n");
 		return -1;
+	}
 
 	if (pid) {
 		/* parent */
@@ -82,7 +119,7 @@ int start_prog( char *cmd )
 			dup2(p_out[1],STDOUT_FILENO);
 			close(p_out[1]);
 		}
-		execl("/bin/bash","bash","-c",cmd,0);
+		execl(SHELL,SHELL_NAME,SHELL_PARAM,cmd,0);
 		_exit(127);
 	}
 

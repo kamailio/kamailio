@@ -1,3 +1,10 @@
+/*
+ * $Id$
+ *
+ */
+
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,6 +20,7 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "my_exec.h"
+#include "config.h"
 
 #define MAX_BUFFER_LEN 1024
 
@@ -21,6 +29,10 @@ static int ext_child_init(int);
 static int ext_rewriteuser(struct sip_msg*, char*, char* );
 static int ext_rewriteuri(struct sip_msg*, char*, char* );
 static int fixup_ext_rewrite(void** param, int param_no);
+
+
+
+
 
 
 struct module_exports exports= {
@@ -68,16 +80,17 @@ static int ext_child_init(int child)
 
 static int fixup_ext_rewrite(void** param, int param_no)
 {
-	int fd;
-
 	if (param_no==1) {
-		fd = open(*param,O_RDONLY);
-		if (fd==-1) {
-			LOG(L_ERR,"ERROR:fixup_ext_rewrite: [%s] -> %s\n",
-				(char*)*param,strerror(errno));
+		if (access(*param,X_OK)<0) {
+			LOG(L_WARN, "WARNING: fixup_ext_rewrite: program '%s'"
+			"not executable : %s (shell command?)\n",
+				(char *) *param, strerror(errno));
+		}
+		if (access(SHELL,X_OK)<0) {
+			LOG(L_ERR, "ERROR: fixup_ext_rewrite: %s : %s\n",
+				SHELL, strerror(errno));
 			return E_UNSPEC;
 		}
-		close(fd);
 	}
 	return 0;
 }
@@ -87,12 +100,13 @@ static int fixup_ext_rewrite(void** param, int param_no)
 
 inline char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
 {
-	static char buf[MAX_BUFFER_LEN];
+	static char buf[MAX_PIPE_BUFFER_LEN];
 	int len;
 	int ret;
 
 	/* launch the external program */
 	if ( start_prog(cmd)!=0 ) {
+		ser_error=E_EXEC;
 		LOG(L_ERR,"ERROR:run_ext_prog: cannot launch external program\n");
 		return 0;
 	}
@@ -130,6 +144,7 @@ inline char *run_ext_prog(char *cmd, char *in, int in_len, int *out_len)
 	*out_len = len;
 	return buf;
 kill_it:
+	ser_error=E_EXEC;
 	kill_prog();
 	wait_prog();
 	close_prog_input();
@@ -177,8 +192,9 @@ static int ext_rewriteuser(struct sip_msg *msg, char *cmd, char *foo_str )
 	buf.s = run_ext_prog(cmd, parsed_uri.user.s, parsed_uri.user.len,
 		&buf.len );
 	if ( !buf.s || !buf.len) {
-		LOG(L_ERR,"ERROR:ext_rewriteuser: empty string returned by external"
-			" program -> abort rewritening!\n");
+
+		LOG(L_ERR,"ERROR:ext_rewriteuser: run_ext_prog returned null, "
+			"ser_error=%d\n", ser_error );
 		goto error;
 	}
 
@@ -288,8 +304,8 @@ static int ext_rewriteuri(struct sip_msg *msg, char *cmd, char *foo_str )
 	/*  run the external program */
 	buf.s = run_ext_prog(cmd, uri->s, uri->len, &buf.len );
 	if ( !buf.s || !buf.len) {
-		LOG(L_ERR,"ERROR:ext_rewriteuri: empty string returned by external"
-			" program -> abort rewritening!\n");
+		LOG(L_ERR,"ERROR:ext_rewriteuser: run_ext_prog returned null, "
+			"ser_error=%d\n", ser_error );
 		return -1;
 	}
 
