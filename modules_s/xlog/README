@@ -38,7 +38,7 @@ Desc:   print a formated message using LOG function
 
 Name:   xdbg
 Params: - format: the formatted string to be printed.
-		Example: xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru>\n")
+		Example: xdbg("time [%Tf] method <%rm> r-uri <%ru>\n")
 Desc:   print a formatted message using DBG function
 
 		
@@ -60,3 +60,4 @@ Desc:   print a formatted message using DBG function
 - %tt : 'To' tag
 - %mi : SIP message id
 - %pp : process id (pid)
+- %is : IP source address 

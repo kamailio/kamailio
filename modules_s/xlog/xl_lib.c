@@ -330,6 +330,16 @@ static int xl_get_callid(struct sip_msg *msg, str *res)
 	return 0;
 }
 
+static int xl_get_srcip(struct sip_msg *msg, str *res)
+{
+    if(msg==NULL || res==NULL)
+        return -1;
+
+    res->s = ip_addr2a(&msg->rcv.src_ip);
+    res->len = strlen(res->s);
+   
+    return 0;
+}
 
 int xl_parse_format(char *s, xl_elog_p *el)
 {
@@ -462,6 +472,17 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					break;
 					default:
 						e->itf = xl_get_null;
+				}
+			break;
+			case 'i':
+				p++;
+				switch(*p)
+				{
+					case 's':
+						e->itf = xl_get_srcip;
+					break;
+					default:
+					e->itf = xl_get_null; 			
 				}
 			break;
 			case '%':
