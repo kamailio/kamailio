@@ -33,6 +33,7 @@
  *  2003-04-09  uri2sock moved from uac.c (janakj)
  *  2003-04-14  added get_proto to determine protocol from uri unless
  *              specified explicitely (jiri)
+ *  2003-07-07  get_proto takes now two protos as arguments (andrei)
  */
 
 
@@ -51,41 +52,36 @@
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 
+/* a forced_proto takes precedence if != PROTO_NONE */
 inline static enum sip_protos get_proto(enum sip_protos force_proto,
-       struct sip_uri *u)
+										enum sip_protos proto)
 {
-       /* calculate transport protocol */
-       switch(force_proto) {
-               case PROTO_NONE:        /* no protocol has been forced -- look at uri */
-                       switch(u->proto) {
-                               case PROTO_NONE: /* uri default to UDP */
-                                       return PROTO_UDP;
-                               case PROTO_UDP: /* transport specified explicitely */
+	/* calculate transport protocol */
+	switch(force_proto) {
+		case PROTO_NONE: /* no protocol has been forced -- look at proto */
+			switch(proto) {
+				case PROTO_NONE: /* uri default to UDP */
+						return PROTO_UDP;
+				case PROTO_UDP:/* transport specified explicitely */
 #ifdef USE_TCP
-                               case PROTO_TCP:
+				case PROTO_TCP:
 #endif
-#ifdef USE_TLS
-                               case PROTO_TLS:
-#endif
-                                       return u->proto;
-                               default:
-                                       LOG(L_ERR, "ERROR: get_proto: unsupported transport: %d\n",
-                                               u->proto );
-                                       return PROTO_NONE;
-                       }
-               case PROTO_UDP: /* some protocol has been forced -- take it */
+						return proto;
+				default:
+						LOG(L_ERR, "ERROR: get_proto: unsupported transport:"
+								" %d\n", proto );
+						return PROTO_NONE;
+			}
+		case PROTO_UDP: /* some protocol has been forced -- take it */
 #ifdef USE_TCP
-               case PROTO_TCP:
+		case PROTO_TCP:
 #endif
-#ifdef USE_TLS
-               case PROTO_TLS:
-#endif
-                       return force_proto;
-               default:
-                       LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
-                               "%d\n", force_proto);
-                       return PROTO_NONE;
-       }
+			return force_proto;
+		default:
+			LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
+					"%d\n", force_proto);
+			return PROTO_NONE;
+	}
 }
 
 
@@ -106,7 +102,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 	
 	p = mk_proxy(&parsed_uri.host, 
 		      parsed_uri.port_no, 
-		      get_proto(proto, &parsed_uri));
+		      get_proto(proto, parsed_uri.proto));
 	if (p == 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
 		    uri->len, ZSW(uri->s));
@@ -134,6 +130,7 @@ static inline struct socket_info *uri2sock(str *uri, union sockaddr_union *to_su
 	
 	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
 		   (proxy->port) ? proxy->port : SIP_PORT);
+			/* we use proxy->proto since uri2proxy just set it correctly*/
 	send_sock = get_send_socket(to_su, proxy->proto);
 	if (!send_sock) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 

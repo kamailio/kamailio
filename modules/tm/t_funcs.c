@@ -38,6 +38,7 @@
  *  2003-04-14  use protocol from uri (jiri)
  *  2003-04-25  do it (^) really everywhere (jiri)
  *  2003-04-26  do it (^) really really really everywhere (jiri)
+ *  2003-07-07  added get_proto calls when proxy!=0 (andrei)
  */
 
 
@@ -237,7 +238,8 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 					ret=E_BAD_ADDRESS;
 					goto done;
 			}
-			ret=forward_request( p_msg , proxy, proxy->proto) ;
+			proto=proxy->proto; /* uri2proxy set it correctly */
+			ret=forward_request( p_msg , proxy, proto) ;
 			free_proxy( proxy );	
 			pkg_free( proxy );
 #ifdef ACK_FORKING_HACK
@@ -247,20 +249,21 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 				p_msg->new_uri=ack_uri;
 				proxy=uri2proxy(GET_NEXT_HOP(p_msg), proto);
 				if (proxy==0) continue;
-				forward_request(p_msg, proxy, proxy->proto);
+				forward_request(p_msg, proxy, proxy->proto); /* ok, uri2proxy*/
 				free_proxy( proxy );	
 				pkg_free( proxy );
 			}
 			p_msg->new_uri=backup_uri;
 #endif
 		} else {
-			ret=forward_request( p_msg , proxy, proxy->proto ) ;
+			proto=get_proto(proto, proxy->proto);
+			ret=forward_request( p_msg , proxy, proto ) ;
 #ifdef ACK_FORKING_HACK
 			backup_uri=p_msg->new_uri;
 			init_branch_iterator();
 			while((ack_uri.s=next_branch(&ack_uri.len))) {
 				p_msg->new_uri=ack_uri;
-				forward_request(p_msg, proxy, proxy->proto);
+				forward_request(p_msg, proxy, proto);
 			}
 			p_msg->new_uri=backup_uri;
 #endif
