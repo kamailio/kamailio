@@ -559,7 +559,7 @@ rpid() {
 		add|rm)
 		        MODE=$1;
 
-			if [ "$MODE" == "add" ] ; then
+			if [ "$MODE" = "add" ] ; then
 			    ARG_NUM=3;
 			else
 			    ARG_NUM=2;
@@ -911,7 +911,7 @@ case $1 in
 		chmod a+w $path
 		trap "rm $path;  clear; echo sc monitor ^C-ed; exit 1" 2
 		attempt=0
-		if [ "$2" == "" ]; then
+		if [ "$2" = "" ]; then
 		    loops=-1;
 		else
 		    loops=$2;
