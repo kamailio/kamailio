@@ -53,17 +53,7 @@
 
 #define JB_CLIENT_OPEN_STREAM	"<stream:stream to='%s' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'>"
 
-#define JB_IQ_AUTH_REQ			"<iq id='%s%d' type='get'><query xmlns='jabber:iq:auth'><username>%s</username></query></iq>"
-
-#define JB_IQ_AUTH_PL_SEND		"<iq id='%s%d' type='set'><query xmlns='jabber:iq:auth'><username>%s</username><password>%s</password><resource>%s</resource></query></iq>"
-
-#define JB_IQ_AUTH_DG_SEND		"<iq id='%s%d' type='set'><query xmlns='jabber:iq:auth'><username>%s</username><digest>%s</digest><resource>%s</resource></query></iq>"
-
-#define JB_IQ_ROSTER_GET		"<iq type='get'><query xmlns='jabber:iq:roster'/></iq>"
-
-#define JB_MSG_NORMAL			"<message to='%s' type='normal'><body>%s</body></message>"
-
-#define JB_MSG_CHAT				"<message to='%s' type='chat'><body>%s</body></message>"
+#define JB_IQ_ROSTER_GET	"<iq type='get'><query xmlns='jabber:iq:roster'/></iq>"
 
 
 /**

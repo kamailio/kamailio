@@ -48,8 +48,8 @@
 typedef struct _xj_jalias
 {
 	int size;
+	str *jdm;
 	str *a;
-	str *b;
 } t_xj_jalias, *xj_jalias;
 
 typedef struct _xj_worker
@@ -79,7 +79,7 @@ int  xj_wlist_set_pids(xj_wlist, int *, int);
 int  xj_wlist_get(xj_wlist, str *, str **);
 void xj_wlist_del(xj_wlist, str *, int);
 void xj_wlist_free(xj_wlist);
-int  xj_wlist_set_aliases(xj_wlist, char *);
+int  xj_wlist_set_aliases(xj_wlist, char *, char *);
  
 int xj_worker_process(xj_wlist, char*, int, int, int, int, int, int, db_con_t*);
 

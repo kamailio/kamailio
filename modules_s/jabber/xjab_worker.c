@@ -1,5 +1,5 @@
 /*
- * eXtended JABber module - Jabber connections pool
+ * eXtended JABber module - worker implemetation
  *
  *
  * Copyright (C) 2001-2003 Fhg Fokus
@@ -48,6 +48,8 @@
 #include "xode.h"
 
 #include "mdefines.h"
+
+#define XJAB_RESOURCE "serXjab"
 
 /** TM bind */
 extern struct tm_binds tmb;
@@ -240,15 +242,19 @@ void xj_wlist_free(xj_wlist jwl)
 		_M_SHM_FREE(jwl->workers);
 	}
 
-	if(jwl->aliases != NULL && jwl->aliases->size > 0)
+	if(jwl->aliases != NULL)
 	{
-		for(i=0; i<jwl->aliases->size; i++)
+		if(jwl->aliases->jdm != NULL)
 		{
-			_M_SHM_FREE(jwl->aliases->a[i].s);
-			_M_SHM_FREE(jwl->aliases->b[i].s);
+			_M_SHM_FREE(jwl->aliases->jdm->s);
+			_M_SHM_FREE(jwl->aliases->jdm);
 		}
-		_M_SHM_FREE(jwl->aliases->a);
-		_M_SHM_FREE(jwl->aliases->b);
+		if(jwl->aliases->size > 0)
+		{
+			for(i=0; i<jwl->aliases->size; i++)
+				_M_SHM_FREE(jwl->aliases->a[i].s);
+			_M_SHM_FREE(jwl->aliases->a);
+		}
 		_M_SHM_FREE(jwl->aliases);
 		jwl->aliases = NULL;
 	}
@@ -330,15 +336,49 @@ int xj_wlist_get(xj_wlist jwl, str *sid, str **p)
 	return -1;
 }
 
-int  xj_wlist_set_aliases(xj_wlist jwl, char *als)
+int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 {
-	char *p, *p0, *p1;
+	char *p, *p0;
 	int i;
 	
 	DBG("XJAB:xj_wlist_set_aliases\n");
 	if(jwl == NULL)
 		return -1;
-	if(als == NULL || strlen(als)<2)
+	if(!jd) // || !als || strlen(als)<2)
+		return 0;
+	
+	if((jwl->aliases = (xj_jalias)_M_SHM_MALLOC(sizeof(t_xj_jalias)))==NULL)
+	{
+		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory.\n");
+		return -1;
+	}
+	
+	jwl->aliases->jdm = NULL;
+	jwl->aliases->size = 0;
+	jwl->aliases->a = NULL;
+	
+	if(jd != NULL && strlen(jd)>2)
+	{
+		if((jwl->aliases->jdm = (str*)_M_SHM_MALLOC(sizeof(str)))== NULL)
+		{
+			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!?\n");
+			_M_SHM_FREE(jwl->aliases);
+			jwl->aliases = NULL;
+			return -1;		
+		}
+		jwl->aliases->jdm->len = strlen(jd);
+		if((jwl->aliases->jdm->s=(char*)_M_SHM_MALLOC(jwl->aliases->jdm->len))
+				== NULL)
+		{
+			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!?!\n");
+			_M_SHM_FREE(jwl->aliases->jdm);
+			_M_SHM_FREE(jwl->aliases);
+			jwl->aliases = NULL;
+		}
+		strncpy(jwl->aliases->jdm->s, jd, jwl->aliases->jdm->len);
+	}
+	
+	if(!als || strlen(als)<2)
 		return 0;
 	
 	if((p = strchr(als, ';')) == NULL)
@@ -346,78 +386,63 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als)
 		DBG("XJAB:xj_wlist_set_aliases: bad parameter value\n");
 		return -1;
 	}
-	//*p = 0;
-	if((jwl->aliases = (xj_jalias)_M_SHM_MALLOC(sizeof(t_xj_jalias)))==NULL)
-	{
-		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory.\n");
-		return -1;
-	}
+	
 	if((jwl->aliases->size = atoi(als)) <= 0)
 	{
 		DBG("XJAB:xj_wlist_set_aliases: wrong number of aliases\n");
-		_M_SHM_FREE(jwl->aliases);
-		jwl->aliases = NULL;
-		return -1;
+		return 0;
 	}
+	
 	if((jwl->aliases->a = (str*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(str)))
 			== NULL)
 	{
 		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory..\n");
+		if(jwl->aliases->jdm)
+		{
+			_M_SHM_FREE(jwl->aliases->jdm->s);
+			_M_SHM_FREE(jwl->aliases->jdm);
+		}
 		_M_SHM_FREE(jwl->aliases);
 		jwl->aliases = NULL;
 		return -1;
 	}
-	if((jwl->aliases->b = (str*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(str)))
-			== NULL)
-	{
-		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory...\n");
-		_M_SHM_FREE(jwl->aliases->a);
-		_M_SHM_FREE(jwl->aliases);
-		jwl->aliases = NULL;
-		return -1;
-	}
+	
 	p++;
 	for(i=0; i<jwl->aliases->size; i++)
 	{
-		if((p0 = strchr(p, ';'))==NULL || (p1 = strchr(p, '='))==NULL
-				|| p1 >= p0)
+		if((p0 = strchr(p, ';'))==NULL)
 		{
 			DBG("XJAB:xj_wlist_set_aliases: bad parameter value format\n");
 			goto clean;
 		}
-		jwl->aliases->a[i].len = p1 - p;
+		jwl->aliases->a[i].len = p0 - p;
 		if((jwl->aliases->a[i].s = (char*)_M_SHM_MALLOC(jwl->aliases->a[i].len))
 				== NULL)
 		{
 			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!\n");
 			goto clean;
 		}
-	
-		p1++;
-		jwl->aliases->b[i].len = p0 - p1;
-		if((jwl->aliases->b[i].s = (char*)_M_SHM_MALLOC(jwl->aliases->b[i].len))
-				== NULL)
-		{
-			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!!\n");
-			_M_SHM_FREE(jwl->aliases->a[i].s);
-			goto clean;
-		}
-
+			
 		strncpy(jwl->aliases->a[i].s, p, jwl->aliases->a[i].len);
-		strncpy(jwl->aliases->b[i].s, p1, jwl->aliases->b[i].len);
+		DBG("XJAB:xj_wlist_set_aliases: alias[%d/%d]=%.*s\n", 
+				i+1, jwl->aliases->size, jwl->aliases->a[i].len, 
+				jwl->aliases->a[i].s);
 		p = p0 + 1;
 	}
 	return 0;
 
 clean:
+	if(jwl->aliases->jdm)
+	{
+		_M_SHM_FREE(jwl->aliases->jdm->s);
+		_M_SHM_FREE(jwl->aliases->jdm);
+	}
 	while(i>0)
 	{
 		_M_SHM_FREE(jwl->aliases->a[i-1].s);
-		_M_SHM_FREE(jwl->aliases->b[i-1].s);
 		i--;
 	}
 	_M_SHM_FREE(jwl->aliases->a);
-	_M_SHM_FREE(jwl->aliases->b);
 	_M_SHM_FREE(jwl->aliases);
 	jwl->aliases = NULL;
 	return -1;
@@ -536,63 +561,84 @@ int xj_send_sip_msgz(str *to, str *from, str *contact, char *msg)
  */
 int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 {
-	char *p;
+	char *p, *p0;
 	int i;
-	str *x, *y;
 	
 	if(!src || !dst || !src->s || !dst->s )
 		return -1; 
 	
-	DBG("XJAB:xj_address_translation:%d: - checking alias\n", 
-			_xj_pid);	
-	
-	if(!als || als->size <= 0)
-	{
-		dst->s = src->s;
-		dst->len = src->len;
-		return 0;
-	}
+	if(!als || !als->jdm || !als->jdm->s || als->jdm->len <= 0)
+		goto done;
 	
 	dst->len = 0;
-	
+	DBG("XJAB:xj_address_translation:%d: - checking aliases\n", 
+			_xj_pid);
 	p = src->s;
+
 	while(p<(src->s + src->len)	&& *p != '@') 
 		p++;
-	if(*p == '@')
-	{
-		p++;
+	if(*p != '@')
+		goto done;
+
+	p++;
+	
+	/*** checking aliases */
+	if(als->size > 0)
 		for(i=0; i<als->size; i++)
+			if(!strncasecmp(p, als->a[i].s, als->a[i].len))
+				goto done;
+	
+	DBG("XJAB:xj_address_translation:%d: - doing address corection\n", 
+			_xj_pid);	
+
+	if(!flag)
+	{
+		if(!strncasecmp(p, als->jdm->s, als->jdm->len))
 		{
-			if(!flag)
-			{
-				x = &als->a[i];
-				y = &als->b[i];
-			}
+			DBG("XJAB:xj_address_translation:%d: - that is for"
+				" Jabber network\n", _xj_pid);
+			dst->len = p - src->s - 1;
+			strncpy(dst->s, src->s, dst->len);
+			dst->s[dst->len]=0;
+			if((p = strchr(dst->s, '%')) != NULL)
+				*p = '@';
 			else
 			{
-				x = &als->b[i];
-				y = &als->a[i];
+				DBG("XJAB:xj_address_translation:%d: - wrong Jabber"
+				" destination\n", _xj_pid);
+				return -1;
 			}
-	
-			if(!strncasecmp(p, x->s, x->len))
-			{
-				DBG("XJAB:xj_address_translation:%d: - alias corection\n", 
-						_xj_pid);
-				strncpy(dst->s, src->s, p - src->s);
-				dst->s[p - src->s]=0;
-				strncat(dst->s, y->s, y->len);
-				dst->len  = strlen(dst->s);
-				break;
-			}
+			return 0;
 		}
+		DBG("XJAB:xj_address_translation:%d: - wrong Jabber"
+			" destination!\n", _xj_pid);
+		return -1;		
 	}
-	
-	if(dst->len <= 0)
+	else
 	{
-		dst->s = src->s;
-		dst->len = src->len;
+		*(p-1) = '%';
+		p0 = src->s + src->len;
+		while(p0 > p)
+		{
+			if(*p0 == '/')
+			{
+				src->len = p0 - src->s;
+				*p0 = 0;
+			}
+			p0--;
+		}
+		strncpy(dst->s, src->s, src->len);
+		dst->s[src->len] = '@';
+		dst->s[src->len+1] = 0;
+		strncat(dst->s, als->jdm->s, als->jdm->len);
+		dst->len = strlen(dst->s);
+		return 0;
 	}
-	return 0;
+
+done:
+	dst->s = src->s;
+	dst->len = src->len;
+	return 0;	
 }
 
 /**
@@ -648,7 +694,8 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int pipe,
 		mset = set;
 
 		tmv.tv_sec = (jcp->jmqueue.size == 0)?wtime:1;
-		DBG("XJAB:xj_worker:%d: select waiting %ds\n",_xj_pid,(int)tmv.tv_sec);
+		DBG("XJAB:xj_worker:%d: select waiting %ds - queue=%d\n",_xj_pid,
+				(int)tmv.tv_sec, jcp->jmqueue.size);
 		tmv.tv_usec = 0;
 
 		ret = select(maxfd+1, &mset, NULL, NULL, &tmv);
@@ -762,7 +809,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int pipe,
 		if(xj_jcon_user_auth(jbc,
 			(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val),
 			(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val),
-			"jbcl") < 0)
+			XJAB_RESOURCE) < 0)
 		{
 			DBG("XJAB:xj_worker:%d: Authentication to the Jabber server"
 				" failed ...\n", _xj_pid);

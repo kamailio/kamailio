@@ -76,6 +76,7 @@ char *jaddress = "127.0.0.1";
 int jport = 5222;
 
 char *jaliases = NULL;
+char *jdomain  = NULL;
 
 int delay_time = 90;
 int sleep_time = 20;
@@ -110,6 +111,7 @@ struct module_exports exports= {
 		"db_url",
 		"jaddress",
 		"aliases",
+		"jdomain",
 		"jport",
 		"workers",
 		"max_jobs",
@@ -118,6 +120,7 @@ struct module_exports exports= {
 		"sleep_time"
 	},
 	(modparam_t[]) {   /* Module parameter types */
+		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
@@ -134,6 +137,7 @@ struct module_exports exports= {
 		&db_url,
 		&jaddress,
 		&jaliases,
+		&jdomain,
 		&jport,
 		&nrw,
 		&max_jobs,
@@ -141,7 +145,7 @@ struct module_exports exports= {
 		&delay_time,
 		&sleep_time
 	},
-	10,      /* Number of module paramers */
+	11,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -251,7 +255,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if(xj_wlist_set_aliases(jwl, jaliases) < 0)
+	if(xj_wlist_set_aliases(jwl, jaliases, jdomain) < 0)
 	{
 		DBG("XJAB:mod_init: error setting aliases\n");
 		return -1;
@@ -322,6 +326,8 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	struct to_body to, from;
 	struct sip_uri _uri;
 	int pipe, fl;
+	struct to_param *foo,*bar;
+	char   *cp, *buf=0;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
 	if ( imb.im_extract_body(msg,&body)==-1 )
@@ -330,25 +336,38 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 				" from sip msg!\n");
 		goto error;
 	}
+
+	
 	// check for FROM header
-	if(msg->from != NULL)
+	if(!msg->from)
 	{
-		memset( &from , 0, sizeof(from) );
-		parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len+1,
-						&from);
-		if(from.error == PARSE_OK)
-			DBG("XJAB: xjab_send_message: From parsed OK.\n");
-		else
-		{
-			DBG("XJAB: xjab_send_message: From NOT parsed\n");
-			goto error;
-		}
-	}
-	else
-	{
-		DBG("XJAB: xjab_send_message: cannot find FROM HEADER!\n");
+		LOG(L_ERR,"XJAB: xjab_send_message: cannot find FROM HEADER!\n");
 		goto error;
 	}
+	
+	/* parsing from header */
+	memset(&from,0,sizeof(from));
+	cp = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
+	buf = (char*)pkg_malloc(msg->from->body.len+1);
+	if (!buf) 
+	{
+		DBG("XJAB: xjab_send_message: error no free pkg memory\n");
+		goto error;
+	}
+	memcpy(buf,cp,msg->from->body.len+1);
+	parse_to(buf,buf+msg->from->body.len+1,&from);
+	if (from.error!=PARSE_OK ) 
+	{
+		DBG("XJAB: xjab_send_message: error cannot parse from header\n");
+		goto error;
+	}
+	/* we are not intrested in from param-> le's free them now*/
+	for(foo=from.param_lst ; foo ; foo=bar)
+	{
+		bar = foo->next;
+		pkg_free(foo);
+	}
+	
 	// get the communication pipe with the worker
 	if((pipe = xj_wlist_get(jwl, &from.uri, &p)) < 0)
 	{
@@ -460,8 +479,12 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 		goto error;
 	}
 	
+	if (buf) 
+		pkg_free(buf);	
 	return 1;
 error:
+	if (buf) 
+		pkg_free(buf);
 	return -1;
 }
 
