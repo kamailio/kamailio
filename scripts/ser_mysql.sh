@@ -289,7 +289,7 @@ CREATE TABLE pending (
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
-  UNIQUE KEY USER_ID (USER_ID),
+  PRIMARY KEY (USER_ID, domain),
   KEY USER_ID_2 (USER_ID),
   UNIQUE KEY phplib_id (phplib_id)
 ) $TABLE_TYPE;
@@ -355,7 +355,7 @@ CREATE TABLE subscriber (
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
-  UNIQUE KEY USER_ID (USER_ID),
+  PRIMARY KEY (USER_ID, domain),
   KEY USER_ID_2 (USER_ID)
 ) $TABLE_TYPE;
 
