@@ -81,6 +81,10 @@ usage() {
 	echo 
 	echo "   commands labeled with (*) will prompt for a MySQL password"
 	echo "   if the variable PW is set, the password will not be prompted"
+
+	if [ "0$VERIFY_ACL" -eq 1 ] ; then
+		echo "   ACL privileges are: $ACL_GROUPS"
+	fi
 	echo
 }
 
