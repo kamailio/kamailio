@@ -557,13 +557,13 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	struct hdr_field  *hdr;
 	struct lump_rpl   *lump;
 	int               i;
-	str               *tag_str;
 	char              backup;
 	char              *received_buf;
 	int               received_len;
 	char              *warning;
 	unsigned int      warning_len;
 	int r;
+	str to_tag;
 
 	received_buf=0;
 	received_len=0;
@@ -606,8 +606,9 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 			case HDR_TO:
 				if (new_tag)
 				{
-					if (get_to(msg)->tag_value.s )
-						len+=new_tag_len-get_to(msg)->tag_value.len;
+					to_tag=get_to(msg)->tag_value;
+					if (to_tag.s )
+						len+=new_tag_len-to_tag.len;
 					else
 						len+=new_tag_len+5/*";tag="*/;
 				}
@@ -668,14 +669,13 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 		{
 			case HDR_TO:
 				if (new_tag){
-					if (get_to(msg)->tag_value.s ) {
-						tag_str =&(get_to(msg)->tag_value);
+					if (to_tag.s ) {
 						append_str_trans( p, hdr->name.s ,
-							tag_str->s-hdr->name.s,msg);
+							to_tag.s-hdr->name.s,msg);
 						append_str( p, new_tag,new_tag_len,msg);
-						append_str_trans( p,tag_str->s+tag_str->len,
+						append_str_trans( p,to_tag.s+to_tag.len,
 							((hdr->body.s+hdr->body.len )-
-							(tag_str->s+tag_str->len)),msg);
+							(to_tag.s+to_tag.len)),msg);
 						append_str( p, CRLF,CRLF_LEN,msg);
 					}else{
 						append_str_trans( p, hdr->name.s ,

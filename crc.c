@@ -217,6 +217,12 @@ void crcitt_string_array( char *dst, str src[], int size )
 		/* bug ... printed ccitt value longer than CRC32_LEN */
 		LOG(L_CRIT, "ERROR: crcitt_string_array: string conversion incomplete\n");
 	}
+	/* padding */
+	while( str_len ) {
+		*dst='0';
+		dst++;
+		str_len--;
+	}
 }
 		
 				
