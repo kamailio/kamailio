@@ -55,6 +55,7 @@ extern char* method_col;
 extern char* db_url;
 extern int   timer_interval;
 extern int   db_mode;
+extern int   use_mode;
 
 extern db_con_t* db;   /* Dabase connection handle */
 

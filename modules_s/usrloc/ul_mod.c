@@ -62,6 +62,7 @@ char* method_col     = "method";                           /* Name of column con
 char* db_url         = "sql://ser:heslo@localhost/ser";    /* Database URL */
 int   timer_interval = 60;                                 /* Timer interval in seconds */
 int   db_mode        = 0;                                  /* Database sync scheme: 0-no db, 1-write through, 2-write back */
+int   use_domain     = 0;                                  /* Whether usrloc should use domain part of aor */
 
 
 db_con_t* db; /* Database connection handle */
@@ -125,7 +126,8 @@ struct module_exports exports = {
 		"method_col",
 		"db_url",
 		"timer_interval",
-		"db_mode"
+		"db_mode",
+		"use_domain"
 	},
 
 	(modparam_t[]) {
@@ -137,6 +139,7 @@ struct module_exports exports = {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM
 	},
@@ -151,9 +154,10 @@ struct module_exports exports = {
 		&method_col,
 		&db_url,
 		&timer_interval,
-		&db_mode
+		&db_mode,
+		&use_domain
 	},
-	10,          /* Number of parameters */
+	11,          /* Number of parameters */
 
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
