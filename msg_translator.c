@@ -507,7 +507,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	msg->via1->host.s[msg->via1->host.len] = 0;
 	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
 		if ((received_buf=received_builder(msg,&received_len))==0)
-			goto error;
+			goto error1; /* free also line_buf */
 	}
 	msg->via1->host.s[msg->via1->host.len] = backup;
 
@@ -515,9 +515,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* try to add it before msg. 1st via */
 	/* add first via, as an anchor for second via*/
 	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
-	if (anchor==0) goto error;
+	if (anchor==0) goto error1;
 	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
-		goto error;
+		goto error1; /* free also line_buf*/
 	/* if received needs to be added, add anchor after host and add it */
 	if (received_len){
 		if (msg->via1->params.s){
@@ -535,9 +535,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		}
 		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
 				HDR_VIA);
-		if (anchor==0) goto error;
+		if (anchor==0) goto error2; /* free also received_buf */
 		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
-				==0 ) goto error;
+				==0 ) goto error2; /* free also received_buf */
 	}
 
 	/* compute new msg len and fix overlapping zones*/
@@ -577,8 +577,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	return new_buf;
 
 error1:
-	if (received_buf) pkg_free(received_buf);
 	if (line_buf) pkg_free(line_buf);
+error2:
+	if (received_buf) pkg_free(received_buf);
 error:
 	if (new_buf) local_free(new_buf);
 	*returned_len=0;
