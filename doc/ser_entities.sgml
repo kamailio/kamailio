@@ -41,6 +41,8 @@
 <!ENTITY ietf "<ulink url='http://www.ietf.org'>IETF</ulink>">
 <!ENTITY im "<acronym>IM</acronym>">
 <!ENTITY smtp "<acronym>SMTP</acronym>">
+<!ENTITY gnu "<ulink url='http://www.gnu.org'>GNU</ulink>">
+<!ENTITY gpl "<ulink url='http://www.gnu.org/licenses/licenses.html#GPL'>GPL</ulink>">
 
 <!-- Often used RFCs -->
 
