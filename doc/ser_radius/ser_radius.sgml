@@ -567,6 +567,37 @@ libradiusclient.so.0: cannot open shared object file: No such file or directory
 		    </simpara>
 		</answer>
 	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I configured everything as described in this HOWTO, but I get the following
+			message from radiusclient librarary <quote> check_radius_reply: received
+			invalid reply digest from RADIUS server</quote>. What does that mean ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			That means that radiusclient library was unable to verify digest of the
+			RADIUS message (it is not related to &sip; digest) because shared secret of
+			the client and server do not match.
+		    </simpara>
+		    <note>
+			<simpara>
+			    FreeRADIUS server has two files that can contain definitions of clients
+			    and corresponding shared secrets--<filename
+				moreinfo="none">clients</filename> and <filename
+			    moreinfo="none">clients.conf</filename>.
+			</simpara>
+			<simpara>
+			    If you have proper shared secret in one file and you still get the
+			    mentioned error message then check also the other file. This can easily
+			    happen to clients running on the same host (127.0.0.1 or localhost),
+			    because <filename moreinfo="none">clients.conf</filename> contains
+			    definition for localhost by default with secret <quote>testing123</quote>.
+			</simpara>
+		    </note>
+		</answer>
+	    </qandaentry>
 	</qandaset>
     </chapter>
 </book>
