@@ -55,8 +55,8 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			goto error;
 		}
 		ip4->ip = msg->src_ip.u.addr32[0];
-		lock(BT4_lock);
-		if ((old_ip4=add234(ipv4_bt,ip4))!=ip4) {
+		lock(&bt_locks[IPv4]);
+		if ((old_ip4=add234(btrees[IPv4],ip4))!=ip4) {
 			/* the src ip already in tree */
 			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d]\n",
 				old_ip4->ip,old_ip4->counter[1],old_ip4->counter[0]);
@@ -65,11 +65,11 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 				LOG(L_INFO,"INFO: src IP v4 [%x]exceeded!!\n",old_ip4->ip);
 				goto exceed;
 			}
-			unlock(BT4_lock);
+			unlock(&bt_locks[IPv4]);
 			shm_free(ip4);
 		} else {
 			/* new record */
-			unlock(BT4_lock);
+			unlock(&bt_locks[IPv4]);
 			DBG("DEBUG:pike_check_req: new IPv4 src [%X]\n",ip4->ip);
 		}
 	} else {
@@ -79,4 +79,20 @@ error:
 exceed:
 	return -1;
 }
+
+
+
+
+void clean_routine(void *param)
+{
+}
+
+
+
+
+void swap_routine(void *param)
+{
+}
+
+
 

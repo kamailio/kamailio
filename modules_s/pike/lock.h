@@ -1,5 +1,5 @@
 #ifndef _PIKE_LOCK_H
-#define _PIKE_LOCK_Hi
+#define _PIKE_LOCK_H
 
 #include <sys/types.h>
 #include <sys/ipc.h>

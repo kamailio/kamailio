@@ -84,9 +84,9 @@ ser_lock_t* create_semaphores(int nr)
 	int        sem_set;
 #endif
 
-	lock_set = shm_malloc(nr*sizeof(ser_lock_t));
+	lock_set = pkg_malloc(nr*sizeof(ser_lock_t));
 	if (lock_set==0){
-		LOG(L_CRIT, "ERROR: pike_create_semaphores: out of shm mem\n");
+		LOG(L_CRIT, "ERROR: pike_create_semaphores: out of pkg mem\n");
 		goto error;
 	}
 #ifdef FAST_LOCK
@@ -124,9 +124,6 @@ void destroy_semaphores(ser_lock_t *sem_set)
 
 	if (sem_set && semctl( sem_set[0].entry_semaphore,0,IPC_RMID,0)==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, entry_semaphore cleanup failed\n");
-
-	shm_free(sem_set);
-	sem_set = 0;
 #endif
 }
 

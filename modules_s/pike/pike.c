@@ -31,9 +31,10 @@ int max_value = 500;
 int timeout   = 60*60;
 
 /* global variables */
-tree234     *ipv4_bt;
-tree234     *ipv6_bt;
-ser_lock_t  *pike_locks;
+tree234                 *btress[IP_TYPES];
+ser_lock_t              bt_locks[IP_TYPES];
+struct pike_timer_head  timers[IP_TYPES];
+
 
 
 
@@ -82,18 +83,29 @@ struct module_exports exports= {
 
 static int pike_init(void)
 {
+	ser_lock_t *pike_locks;
+
 	printf("pike - initializing\n");
-	/* init the B trees - ipv4 and ipv6 */
-	ipv4_bt = newtree234(cmp_ipv4);
-	ipv6_bt = newtree234(cmp_ipv6);
 	/* init semaphore */
 	if ((pike_locks = create_semaphores(PIKE_NR_LOCKS))==0) {
 		LOG(L_ERR,"ERROR:pike_init: create sem failed!\n");
 		goto error;
 	}
-	/* registering function timer */
+		/* init the B trees - ipv4 and ipv6 */
+	btrees[IPv4] = newtree234(cmp_ipv4);
+	btrees[IPv6] = newtree234(cmp_ipv6);
+	memcpy((void*)bt_locks,(void*)pike_locks,2*sizeof(ser_lock_t));
+	/* setting up timers */
+	memset(&timers,0,2*sizeof(struct pike_timer_head));
+	memcpy( (void*)&(timers[IPv4].sem), (void*)(pike_locks+2),
+		sizeof(ser_lock_t));
+	memcpy( (void*)&(timers[IPv6].sem), (void*)(pike_locks+3),
+		sizeof(ser_lock_t));
+	/* registering timeing functions  */
+	register_timer( clean_routine , 0, 1 );
+	register_timer( swap_routine , 0, time_unit );
 
-
+	pkg_free(pike_locks);
 	return 0;
 error:
 	return -1;
@@ -106,14 +118,15 @@ error:
 static int pike_exit(void)
 {
 	/* empty the timer list*/
-	lock(PTL_lock);
+	lock(&(timers[IPv4].sem));
+	lock(&(timers[IPv6].sem));
 	/* destroy the B trees - ipv4 and ipv6 */
-	lock(BT4_lock);
-	lock(BT6_lock);
-	freetree234(ipv4_bt,free_elem);
-	freetree234(ipv6_bt,free_elem);
-	/* detroy semaphore */
-	destroy_semaphores(pike_locks);
+	lock(&(bt_locks[IPv4]));
+	lock(&(bt_locks[IPv6]));
+	freetree234(btrees[IPv4],free_elem);
+	freetree234(btrees[IPv6],free_elem);
+	/* destroy semaphore */
+	destroy_semaphores(bt_locks);
 	return 0;
 }
 
