@@ -484,6 +484,8 @@ deeperror:
 	return 0;
 }
 
+
+
 /* shallow pkg copy of a lump list
  *
  * if either original list empty or error occur returns, 0
@@ -496,6 +498,8 @@ struct lump* dup_lump_list( struct lump *l )
 	deep_error=0;
 	return dup_lump_list_r(l, LD_NEXT, &deep_error);
 }
+
+
 
 void free_duped_lump_list(struct lump* l)
 {
@@ -527,6 +531,59 @@ void free_duped_lump_list(struct lump* l)
 		if (crt->flags!=LUMPFLAG_DUPED) /* (+) ... see above */
 			free_lump(crt);
 		pkg_free(crt);
+	}
+}
+
+
+
+void del_nonshm_lump( struct lump** lump_list )
+{
+	struct lump *r, *foo, *crt, **prev, *prev_r;
+
+	prev = lump_list;
+	crt = *lump_list;
+
+	while (crt) {
+		if (crt->flags!=LUMPFLAG_SHMEM) {
+			/* unlink it */
+			foo = crt;
+			crt = crt->next;
+			foo->next = 0;
+			/* update the 'next' link of the previous lump */
+			*prev = crt;
+			/* entire before/after list must be removed */
+			free_lump_list( foo );
+		} else {
+			/* check on before and prev list for non-shmem lumps */
+			r = crt->after;
+			prev_r = crt;
+			while(r){
+				foo=r; r=r->after;
+				if (foo->flags!=LUMPFLAG_SHMEM) {
+					prev_r->after = r;
+					free_lump(foo);
+					pkg_free(foo);
+				} else {
+					prev_r = foo;
+				}
+			}
+			/* before */
+			r = crt->before;
+			prev_r = crt;
+			while(r){
+				foo=r; r=r->before;
+				if (foo->flags!=LUMPFLAG_SHMEM) {
+					prev_r->before = r;
+					free_lump(foo);
+					pkg_free(foo);
+				} else {
+					prev_r = foo;
+				}
+			}
+			/* go to next lump */
+			prev = &(crt->next);
+			crt = crt->next;
+		}
 	}
 }
 

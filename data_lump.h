@@ -77,4 +77,8 @@ struct lump* dup_lump_list( struct lump *l );
 /* frees a shallowly duplicated lump list */
 void free_duped_lump_list(struct lump* l);
 
+
+/* remove all non-SHMEM lumps from the list */
+void del_nonshm_lump( struct lump** lump_list );
+
 #endif

@@ -57,7 +57,7 @@
 #define HDR_CONTENTLENGTH      (1 << 11)  /* Content-Length header field */
 #define HDR_AUTHORIZATION      (1 << 12)  /* Authorization header field */
 #define HDR_EXPIRES            (1 << 13)  /* Expires header field */
-#define HDR_PROXYAUTH          (1 << 14)  /* Proxy-Authorization header field */
+#define HDR_PROXYAUTH          (1 << 14)  /* Proxy-Authorization hdr field */
 #define HDR_SUPPORTED          (1 << 15)  /* Supported  header field */
 #define HDR_PROXYREQUIRE       (1 << 16)  /* Proxy-Require header field */
 #define HDR_UNSUPPORTED        (1 << 17)  /* Unsupported header field */
@@ -69,11 +69,19 @@
 #define HDR_PRIORITY           (1 << 23)  /* Priority header field */
 #define HDR_SUBJECT            (1 << 24)  /* Subject header field */
 #define HDR_USERAGENT          (1 << 25)  /* User-Agent header field */
-#define HDR_ACCEPTDISPOSITION  (1 << 26)  /* Accept-Disposition header field */
-#define HDR_CONTENTDISPOSITION (1 << 27)  /* Content-Disposition header field */
+#define HDR_ACCEPTDISPOSITION  (1 << 26)  /* Accept-Disposition hdr field */
+#define HDR_CONTENTDISPOSITION (1 << 27)  /* Content-Disposition hdr field */
 #define HDR_DIVERSION          (1 << 28)  /* Diversion header field */
 #define HDR_RPID               (1 << 29)  /* Remote-Party-ID header field */
 #define HDR_OTHER              (1 << 30)  /* Some other header field */
+
+
+/* returns true if the header links allocated memory on parse field */
+#define hdr_allocs_parse( _hdr ) \
+	(((_hdr)->type)&(HDR_VIA|HDR_TO|HDR_FROM|HDR_CONTACT|HDR_ROUTE|\
+		HDR_RECORDROUTE|HDR_AUTHORIZATION|HDR_EXPIRES|HDR_PROXYAUTH|\
+		HDR_EVENT|HDR_ACCEPT|HDR_CONTENTDISPOSITION|HDR_DIVERSION|HDR_RPID))
+
 
 
 /* 
