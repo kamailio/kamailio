@@ -135,7 +135,8 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 								 struct via_body* via )
 {
 	struct hostent* he;
-	char *host_copy;
+	//char *host_copy;
+	char backup;
 
 
 #ifdef DNS_IP_HACK
@@ -157,17 +158,27 @@ int update_sock_struct_from_via( union sockaddr_union* to,
            BTW: when is via->host.s non null terminated? tm copy?
 		   - andrei 
 			Yes -- it happened on generating a 408 by TM; -jiri
+		   if you consider that via is never placed to the end of
+		   the msg buffer (so we can happily work with via->host.s[len]),
+		   insted of making a copy, we can simply backup the first caracter
+		   after via and put a 0 there -> call resolvehost -> restore it
+		   - bogdan
 		*/
 		if (via->host.s[via->host.len]){
-			host_copy=pkg_malloc( via->host.len+1 );
+			/*host_copy = pkg_malloc( via->host.len+1 );
 			if (!host_copy) {
-				LOG(L_NOTICE, "ERROR: update_sock_struct_from_via: not enough memory\n");
+				LOG(L_NOTICE, "ERROR: update_sock_struct_from_via:"
+					" not enough memory\n");
 				return -1;
 			}
 			memcpy(host_copy, via->host.s, via->host.len );
 			host_copy[via->host.len]=0;
 			he=resolvehost(host_copy);
-			pkg_free( host_copy );
+			pkg_free( host_copy );*/
+			backup = via->host.s[via->host.len];
+			via->host.s[via->host.len] = 0;
+			he=resolvehost(via->host.s);
+			via->host.s[via->host.len] = backup;
 		}else{
 			he=resolvehost(via->host.s);
 		}
