@@ -1,0 +1,75 @@
+#
+# $Id$
+#
+# Various URI checks
+#
+
+Module depends on: a dabase module
+
+Exported Parameters:
+-------------------
+
+Name:    db_url
+Type:    str
+Default: "sql://serro:47serro11@localhost/ser"
+Desc:    URL of the database to be used
+
+Name:    uri_table
+Type:    str
+Default: "uri"
+Desc:    Table containing list of allowed URIs
+         for each user.
+
+Name:    uri_user_column
+Type:    str
+Default: "username"
+Desc:    Column holding usernames in the URI table
+
+Name:    uri_domain_column
+Type:    str
+Default: "domain"
+Desc:    Column holding domain in the URI table
+
+Name:    uri_uriuser_column
+Type:    str
+Default: "uri_user"
+Desc:    Column holding uri username in the URI table
+
+Name:    subscriber_table
+Type:    str
+Default: "subscriber"
+Desc:    Name of the subscriber table
+
+Name:    subscriber_user_column
+Type:    str
+Default: "username"
+Desc:    Column holding username in subscriber table
+
+Name:    subscriber_domain_column
+Type:    str
+Default: "domain"
+Desc:    Column hodling domains in the subscriber table
+
+
+Exported Functions:
+------------------
+
+Name:   is_user
+Params: username
+Desc:   Check if the username in credentials matches
+        the given username
+
+Name:   check_to
+Params: -
+Desc:   Check To username against URI table or digest
+        credentials
+	
+Name:   check_from
+Params: -
+Desc:   Check From username against URI table or digest
+        credentials
+	
+Name:   does_uri_exist
+Params: -
+Desc:   Check if username in the request URI belongs to an
+        existing user
