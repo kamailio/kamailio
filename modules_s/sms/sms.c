@@ -15,6 +15,9 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../globals.h"
+#include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
 #include "libsms_modem.h"
@@ -35,11 +38,13 @@ char *networks_config = 0;
 char *modems_config   = 0;
 char *links_config    = 0;
 char *default_net_str = 0;
+char *domain_str      = 0;
 
 /*global vaiables*/
-int default_net=0;
-int max_sms_parts = MAX_SMS_PARTS;
-
+int  default_net   = 0;
+int  max_sms_parts = MAX_SMS_PARTS;
+str  domain;
+int  *queued_msgs  = 0;
 
 
 struct module_exports exports= {
@@ -67,23 +72,26 @@ struct module_exports exports= {
 		"modems",
 		"links",
 		"default_net",
-		"max_sms_parts"
+		"max_sms_parts",
+		"domain"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
-		INT_PARAM
+		INT_PARAM,
+		STR_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&networks_config,
 		&modems_config,
 		&links_config,
 		&default_net_str,
-		&max_sms_parts
+		&max_sms_parts,
+		&domain_str
 	},
-	5,      /* Number of module paramers */
+	6,      /* Number of module paramers */
 
 	sms_init,   /* module initialization function */
 	(response_function) 0,
@@ -495,24 +503,32 @@ int global_init()
 	{
 		/* create the pipe*/
 		if (pipe(net_pipe)==-1) {
-			LOG(L_ERR,"ERROR: sms_child_init: cannot create pipe!\n");
+			LOG(L_ERR,"ERROR: sms_global_init: cannot create pipe!\n");
 			goto error;
 		}
 		networks[i].pipe_out = net_pipe[0];
 		net_pipes_in[i] = net_pipe[1];
 		/* sets reading from pipe to non blocking */
 		if ((foo=fcntl(net_pipe[0],F_GETFL,0))<0) {
-			LOG(L_ERR,"ERROR: sms_child_init: cannot get flag for pipe"
+			LOG(L_ERR,"ERROR: sms_blobal_init: cannot get flag for pipe"
 				" - fcntl\n");
 			goto error;
 		}
 		foo |= O_NONBLOCK;
 		if (fcntl(net_pipe[0],F_SETFL,foo)<0) {
-			LOG(L_ERR,"ERROR: sms_child_init: cannot set flag for pipe"
+			LOG(L_ERR,"ERROR: sms_global_init: cannot set flag for pipe"
 				" - fcntl\n");
 			goto error;
 		}
 	}
+
+	/* alloc in shm for queued_msgs */
+	queued_msgs = (int*)shm_malloc(sizeof(int));
+	if (!queued_msgs) {
+		LOG(L_ERR,"ERROR: sms_global_init: cannot get shm memory!\n");
+		goto error;
+	}
+	*queued_msgs = 0;
 
 	return 1;
 error:
@@ -524,11 +540,34 @@ error:
 
 int sms_child_init(int rank)
 {
-	int i, foo;
+	int  i, foo;
+	char *p;
 
 	/* only the child 0 will execut this */
 	if (rank)
 		goto done;
+
+	/*fix domain lenght*/
+	if (domain_str) {
+		domain.s = domain_str;
+		domain.len = strlen(domain_str);
+	} else {
+		/*do I have to add port?*/
+		i = (sock_info[0].port_no_str.len && sock_info[0].port_no!=5060);
+		domain.len = sock_info[0].name.len + i*sock_info[0].port_no_str.len;
+		domain.s = (char*)pkg_malloc(domain.len);
+		if (!domain.s) {
+			LOG(L_ERR,"ERROR:sms_init_child: no free pkg memeory!\n");
+			goto error;
+		}
+		p = domain.s;
+		memcpy(p,sock_info[0].name.s,sock_info[0].name.len);
+		p += sock_info[0].name.len;
+		if (i) {
+			memcpy(p,sock_info[0].port_no_str.s,sock_info[0].port_no_str.len);
+			p += sock_info[0].port_no_str.len;
+		}
+	}
 
 	/* creats processes for each modem */
 	for(i=0;i<nr_of_modems;i++)
@@ -569,6 +608,12 @@ static int sms_init(void)
 static int sms_exit(void)
 {
 	int i;
+
+	if (!domain_str)
+		pkg_free(domain.s);
+
+	if (queued_msgs)
+		shm_free(queued_msgs);
 
 	for(i=0;i<nr_of_modems;i++)
 		/* if the modem is open -> close it!*/

@@ -120,8 +120,8 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	int  pdu_len=0;
 	int  foo;
 
-	memcpy(tmp,msg->to,msg->to_user_len);
-	foo = msg->to_user_len;
+	memcpy(tmp,msg->to,msg->to_len);
+	foo = msg->to_len;
 	tmp[foo] = 0;
 	// terminate the number with F if the length is odd
 	if ( foo%2 ) {
@@ -143,10 +143,10 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	/* concatenate the first part of the PDU string */
 	if (mdm->mode==MODE_OLD)
 		pdu_len += sprintf(pdu,"%02X00%02X91%s00%02X%02X",flags,
-			msg->to_user_len,tmp,coding,msg->text_len);
+			msg->to_len,tmp,coding,msg->text_len);
 	else
 		pdu_len += sprintf(pdu,"00%02X00%02X91%s00%02XA7%02X",flags,
-			msg->to_user_len,tmp,coding,msg->text_len);
+			msg->to_len,tmp,coding,msg->text_len);
 	/* Create the PDU string of the message */
 	if (msg->is_binary)
 		pdu_len += binary2pdu(msg->text,msg->text_len,pdu+pdu_len);
@@ -154,7 +154,6 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 		pdu_len += ascii2pdu(msg->text,msg->text_len,pdu+pdu_len,
 			msg->cs_convert);
 	/* concatenate the text to the PDU string */
-	//strcat(pdu,tmp);
 	return pdu_len;
 }
 
@@ -177,7 +176,7 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 	if (mdm->mode==MODE_OLD)
 		clen = sprintf(command,"AT+CMGS=%i\r",pdu_len/2);
 	else if (mdm->mode==MODE_ASCII)
-		clen = sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to_user_len,
+		clen = sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to_len,
 			sms_messg->to);
 	else
 		clen = sprintf(command,"AT+CMGS=%i\r",pdu_len/2-1);
@@ -217,6 +216,6 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 	if (err_code==0)
 		LOG(L_WARN,"WARNNING: something spuky is going on with the modem!"
 			" Re-inited and tried fro 10 times without success!\n");
-	return (err_code==3?-1:1);
+	return (err_code==0?-2:(err_code==3?-1:1));
 }
 

@@ -9,11 +9,21 @@
 #define MAX_NETWORKS  5       /* max number of networks */
 
 #define MAX_CHAR_BUF 128        /* max length of character buffer */
-#define MAX_CONFIG_PARAM 1024 /* max length of a config parameter */
+#define MAX_CONFIG_PARAM 1024   /* max length of a config parameter */
 #define MAX_SMS_LENGTH   160
+#define MAX_SMS_PARTS    4      /* maximum number of parts for a sms */
+#define MAX_QUEUED_MESSAGES 100 /* maximum nr of messges waitting to send */
 
-#define SMS_FROM      "\n\rFrom "
-#define SMS_FROM_LEN  7
+#define SMS_HDR_BF_ADDR      "From "
+#define SMS_HDR_BF_ADDR_LEN  (sizeof(SMS_HDR_BF_ADDR)-1)
+#define SMS_HDR_AF_ADDR      " (if you reply DONOT remove it)\r\n"
+#define SMS_HDR_AF_ADDR_LEN  (sizeof(SMS_HDR_AF_ADDR)-1)
+#define SMS_FOOTER           "\r\n[IPTEL.ORG - a look into SIP future]"
+#define SMS_FOOTER_LEN       (sizeof(SMS_FOOTER)-1)
+#define SMS_EDGE_PART        "( / )"
+#define SMS_EDGE_PART_LEN    (sizeof(SMS_EDGE_PART)-1)
+#define SMS_TRUNCATED        "(truncated)"
+#define SMS_TRUNCATED_LEN    (sizeof(SMS_TRUNCATED)-1)
 
 
 struct network {
@@ -37,11 +47,10 @@ struct modem {
 };
 
 struct sms_msg {
-	char text[MAX_SMS_LENGTH+1];
+	char *text;
 	int  text_len;
 	char to[MAX_CHAR_BUF+1];
 	int  to_len;
-	int  to_user_len;
 	char from[MAX_CHAR_BUF+1];
 	int  from_len;
 	int  is_binary;
@@ -63,9 +72,12 @@ struct incame_sms {
 
 extern struct modem modems[MAX_MODEMS];
 extern struct network networks[MAX_NETWORKS];
-extern int net_pipes_in[MAX_NETWORKS];
-extern int nr_of_networks;
-extern int nr_of_modems;
+extern int  net_pipes_in[MAX_NETWORKS];
+extern int  nr_of_networks;
+extern int  nr_of_modems;
+extern int  max_sms_parts;
+extern str  domain;
+extern int  *queued_msgs;
 
 
 void modem_process(struct modem*);
