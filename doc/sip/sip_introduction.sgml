@@ -796,7 +796,7 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 			    <imagedata align="center" fileref="figures/trapezoid.png" format="PNG">
 			</imageobject>
 			<textobject>
-			    <phrase>Message flow showing &sip trapezoid.</phrase>
+			    <phrase>Message flow showing &sip; trapezoid.</phrase>
 			</textobject>
 		    </mediaobject>
 		</figure>
