@@ -99,16 +99,12 @@ db_con_t* dbt_init(const char* _sqlurl)
 	}
 	memset(_res, 0, sizeof(db_con_t) + sizeof(dbt_con_t));
 	
-	CON_CONNECTED(_res) = 0;
-
 	DBT_CON_CONNECTION(_res) = dbt_cache_get_db(&_s);
 	if (!DBT_CON_CONNECTION(_res))
 	{
 		LOG(L_ERR, "DBT:dbt_init: cannot get the link to database\n");
 		return NULL;
 	}
-
-	CON_CONNECTED(_res) = 1;
 
     return _res;
 }
