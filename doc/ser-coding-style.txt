@@ -1,0 +1,46 @@
+# $Id$
+#
+# SER Coding Style
+#
+#  2004-06-07  Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.franhofer.de>
+
+
+Important rules:
+- use tabs for identations
+- tabs are set to 4 spaces
+- break lines longer than 80 characters
+- don't use c++ style comments (//); they belong in c++-
+- don't declare variable inside blocks.
+  e.g:
+     if (){
+	   int i;
+   or
+      for (i=0; ...){
+	  int a;
+- declare functions as follows (braces placement):
+  int function(int x)
+  {
+      /* body */
+  }
+- try to avoid c99 specific stuff, it might not work with older compilers
+
+
+Not so important rules:
+- don't declare and init variable in the same time (unless they are static or global)
+  e.g.:
+        use instead of int i=0;
+        int i;
+        /* ... */
+        i=0;
+- with the exception of functions, put the opening brace on the same line
+  and the closing brace aligned to the first character in the line:
+   if (cond) {
+       /* ...*/
+   }
+- avoid mixed case naming for variables or functions
+- try to describe what a function does in a comment at the head of the function
+  (try to document at least the return values)
+
+If you are editing someone elses code, try to use his coding conventions (unless they contradict with some of the above rules).
+
+
