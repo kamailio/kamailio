@@ -73,6 +73,8 @@
 #include "xjab_util.h"
 
 
+MODULE_VERSION
+
 /** TM bind */
 struct tm_binds tmb;
 
