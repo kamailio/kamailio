@@ -334,20 +334,15 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if ((a->p1_type==EXPR_ST)&&a->p1.data){
 					v=eval_expr((struct expr*)a->p1.data, msg);
 					if (v<0){
-						LOG(L_WARN,"WARNING: do_action:"
-									"error in expression\n");
+						if (v==EXPR_DROP){ /* hack to quit on DROP*/
+							ret=0;
+							break;
+						}else{
+							LOG(L_WARN,"WARNING: do_action:"
+										"error in expression\n");
+						}
 					}
-#if 0
-					/*andrei: totally wrong, it will bail out at the first 
-					 * false expression and if w/o else!!!!!!*/
-
-					/* jku ret=1;  default is continue */
-					ret=( v!=0); /* stop if things went wrong,
-								  continue if FALSE (<0) or
-								  TRUE (>0) returned */
-					/* jku: if (v==1){ */
-#endif
-
+					
 					ret=1;  /*default is continue */
 					if (v>0) {
 						if ((a->p2_type==ACTIONS_ST)&&a->p2.data){

@@ -279,7 +279,7 @@ error:
 
 
 
-/* returns: 0/1 (false/true) or -1 on error */
+/* returns: 0/1 (false/true) or -1 on error, -127 EXPR_DROP */
 static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 
@@ -314,7 +314,9 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				ret=!(!e->r.intval); /* !! to transform it in {0,1} */
 				break;
 		case ACTION_O:
-				ret=(run_actions( (struct action*)e->r.param, msg)>=0)?1:0;
+				ret=run_actions( (struct action*)e->r.param, msg);
+				if (ret<=0) ret=(ret==0)?EXPR_DROP:0;
+				else ret=1;
 				break;
 		default:
 				LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",
@@ -327,7 +329,7 @@ error:
 
 
 
-/* ret= 0/1 (true/false) & -1 on error */
+/* ret= 0/1 (true/false) ,  -1 on error or EXPR_DROP (-127)  */
 int eval_expr(struct expr* e, struct sip_msg* msg)
 {
 	static int rec_lev=0;
