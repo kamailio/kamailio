@@ -227,7 +227,7 @@ tryagain:
 	r=semop( s.semaphore_set, &pbuf ,  1 /* just 1 op */ );
 
 	if (r==-1) {
-		if (errno=EINTR) {
+		if (errno==EINTR) {
 			DBG("signal received in a semaphore\n");
 			goto tryagain;
 		} else LOG(L_ERR, "ERROR: change_semaphore: %s\n", strerror(errno));

@@ -683,16 +683,16 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 			break;
 		case SIP_REQUEST:
 			DBG("SIP Request:\n");
-			DBG(" method:  <%s>\n",fl->u.request.method);
-			DBG(" uri:     <%s>\n",fl->u.request.uri);
-			DBG(" version: <%s>\n",fl->u.request.version);
+			DBG(" method:  <%s>\n",fl->u.request.method.s);
+			DBG(" uri:     <%s>\n",fl->u.request.uri.s);
+			DBG(" version: <%s>\n",fl->u.request.version.s);
 			flags=HDR_VIA;
 			break;
 		case SIP_REPLY:
 			DBG("SIP Reply  (status):\n");
-			DBG(" version: <%s>\n",fl->u.reply.version);
-			DBG(" status:  <%s>\n",fl->u.reply.status);
-			DBG(" reason:  <%s>\n",fl->u.reply.reason);
+			DBG(" version: <%s>\n",fl->u.reply.version.s);
+			DBG(" status:  <%s>\n",fl->u.reply.status.s);
+			DBG(" reason:  <%s>\n",fl->u.reply.reason.s);
 			flags=HDR_VIA|HDR_VIA2;
 			break;
 		default:
@@ -710,7 +710,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
 			msg->via1->name.s, msg->via1->version.s,
 			msg->via1->transport.s, msg->via1->host.s,
-			msg->via1->port_str, msg->via1->port);
+			msg->via1->port_str.s, msg->via1->port);
 		if (msg->via1->params.s)  DBG(";<%s>", msg->via1->params.s);
 		if (msg->via1->comment.s) DBG(" <%s>", msg->via1->comment.s);
 		DBG ("\n");
@@ -719,7 +719,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
 			msg->via2->name.s, msg->via2->version.s,
 			msg->via2->transport.s, msg->via2->host.s,
-			msg->via2->port_str, msg->via2->port);
+			msg->via2->port_str.s, msg->via2->port);
 		if (msg->via2->params.s)  DBG(";<%s>", msg->via2->params.s);
 		if (msg->via2->comment.s) DBG(" <%s>", msg->via2->comment.s);
 		DBG ("\n");
