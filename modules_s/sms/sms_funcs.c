@@ -105,7 +105,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	/* we are not intrested in from param-> le's us free them now*/
 	for(foo=from_parsed.param_lst ; foo ; foo=bar){
 		bar = foo->next;
-		pkg_free(foo)
+		pkg_free(foo);
 	}
 
 	/* copy "from" into sms struct */
