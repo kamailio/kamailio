@@ -3,8 +3,12 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
-0.8.13 changes
+0.8.99-dev changes
 
+
+new archs:
+ - mips2/cobalt experimental support
+ - x86_64 experimental support
 modules:
  - TM saves the avp list into transactions, and make it available into
    callbacks, failure and reply routes.
