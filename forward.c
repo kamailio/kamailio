@@ -37,6 +37,8 @@
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-02  fixed get_send_socket for tcp fwd to udp (andrei)
  *  2003-04-03  added su_setport (andrei)
+ *  2003-04-04  update_sock_struct_from_via now differentiates between
+ *               local replies  & "normal" replies (andrei)
  */
 
 
@@ -351,6 +353,7 @@ error:
 
 
 int update_sock_struct_from_via( union sockaddr_union* to,
+								 struct sip_msg* msg,
 								 struct via_body* via )
 {
 	struct hostent* he;
@@ -359,24 +362,36 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	unsigned short port;
 
 	port=0;
-	if (via->rport && via->rport->value.s){
-		port=str2s(via->rport->value.s, via->rport->value.len, &err);
-		if (err){
-			LOG(L_NOTICE, "ERROR: forward_reply: bad rport value(%.*s)\n",
-					via->rport->value.len, via->rport->value.s);
-			port=0;
-		}
-	}
-	if (via->received){
-		DBG("update_sock_struct_from_via: using 'received'\n");
-		name=&(via->received->value);
-		/* making sure that we won't do SRV lookup on "received"
-		 * (possible if no DNS_IP_HACK is used)*/
-		if (port==0) port=via->port?via->port:SIP_PORT; 
+	if(via==msg->via1){ 
+		/* _local_ reply, we ignore any rport or received value
+		 * (but we will send back to the original port if rport is
+		 *  present) */
+		if (via->rport) port=msg->rcv.src_port;
+		else port=via->port;
+		name=&(via->host); /* received=ip in 1st via is ignored (it's
+							  not added by us so it's bad) */
 	}else{
-		DBG("update_sock_struct_from_via: using via host\n");
-		name=&(via->host);
-		if (port==0) port=via->port;
+		/* "normal" reply, we use rport's & received value if present */
+		if (via->rport && via->rport->value.s){
+			DBG("update_sock_struct_from_via: using 'rport'\n");
+			port=str2s(via->rport->value.s, via->rport->value.len, &err);
+			if (err){
+				LOG(L_NOTICE, "ERROR: forward_reply: bad rport value(%.*s)\n",
+						via->rport->value.len, via->rport->value.s);
+				port=0;
+			}
+		}
+		if (via->received){
+			DBG("update_sock_struct_from_via: using 'received'\n");
+			name=&(via->received->value);
+			/* making sure that we won't do SRV lookup on "received"
+			 * (possible if no DNS_IP_HACK is used)*/
+			if (port==0) port=via->port?via->port:SIP_PORT; 
+		}else{
+			DBG("update_sock_struct_from_via: using via host\n");
+			name=&(via->host);
+			if (port==0) port=via->port;
+		}
 	}
 	/* we do now a malloc/memcpy because gethostbyname loves \0-terminated 
 	   strings; -jiri 
@@ -460,7 +475,7 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	proto=msg->via2->proto;
-	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
+	if (update_sock_struct_from_via( to, msg, msg->via2 )==-1) goto error;
 
 
 #ifdef USE_TCP

@@ -54,7 +54,8 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto);
 int check_self(str* host, unsigned short port);
 int forward_request( struct sip_msg* msg,  struct proxy_l* p, int proto);
 int update_sock_struct_from_via( union sockaddr_union* to,
-								struct via_body* via );
+								 struct sip_msg* msg,
+								 struct via_body* via );
 
 /* use src_ip, port=src_port if rport, via port if via port, 5060 otherwise */
 #define update_sock_struct_from_ip(  to, msg ) \
