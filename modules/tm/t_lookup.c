@@ -130,6 +130,7 @@
  * CANCEL/ACK than in original INVITE
  */
 int ruri_matching=1;
+int via1_matching=1;
 
 /* presumably matching transaction for an e2e ACK */
 static struct cell *t_ack;
@@ -416,7 +417,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			if (!EQ_LEN(from)) continue;
 			if (!EQ_LEN(to)) continue;
 			if (ruri_matching && !EQ_REQ_URI_LEN) continue;
-			if (!EQ_VIA_LEN(via1)) continue;
+			if (via1_matching && !EQ_VIA_LEN(via1)) continue;
 
 			/* length ok -- move on */
 			if (!EQ_STR(callid)) continue;
@@ -424,7 +425,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			if (!EQ_STR(from)) continue;
 			if (!EQ_STR(to)) continue;
 			if (ruri_matching && !EQ_REQ_URI_STR) continue;
-			if (!EQ_VIA_STR(via1)) continue;
+			if (via1_matching && !EQ_VIA_STR(via1)) continue;
 
 			/* request matched ! */
 			DBG("DEBUG: non-ACK matched\n");
@@ -466,10 +467,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			 * more elements to match: r-uri and via; allow
 			 * mismatching r-uri as an config option for broken
 			 * UACs */
-			if (ruri_matching && ! EQ_REQ_URI_LEN ) continue;
-			if (! EQ_VIA_LEN(via1)) continue;
+			if (ruri_matching && !EQ_REQ_URI_LEN ) continue;
+			if (via1_matching && !EQ_VIA_LEN(via1)) continue;
 			if (ruri_matching && !EQ_REQ_URI_STR) continue;
-			if (!EQ_VIA_STR(via1)) continue;
+			if (via1_matching && !EQ_VIA_STR(via1)) continue;
 
 			/* wow -- we survived all the check! we matched! */
 			DBG("DEBUG: non-2xx ACK matched\n");
@@ -583,7 +584,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 #endif
 		if (ruri_matching && !EQ_REQ_URI_LEN)
 			continue;
-		if (!EQ_VIA_LEN(via1))
+		if (via1_matching && !EQ_VIA_LEN(via1))
 			continue;
 
 		/* check the content now */
@@ -604,7 +605,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 #endif
 		if (ruri_matching && !EQ_REQ_URI_STR)
 			continue;
-		if (!EQ_VIA_STR(via1))
+		if (via1_matching && !EQ_VIA_STR(via1))
 			continue;
 
 		/* found */

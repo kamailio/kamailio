@@ -47,6 +47,7 @@
 
 extern unsigned int     global_msg_id;
 extern int ruri_matching;
+extern int via1_matching;
 
 void init_t();
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
@@ -69,7 +70,6 @@ int t_unref( struct sip_msg *p_msg);
  */
 int t_check( struct sip_msg* , int *branch );
 
-typedef struct cell * (*tgett_f)(void);
 struct cell *get_t();
 
 /* use carefully or better not at all -- current transaction is 

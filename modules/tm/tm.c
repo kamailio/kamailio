@@ -211,13 +211,12 @@ static cmd_export_t cmds[]={
 	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,     0, 0},
 	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,     0, 0},
 	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,     0, 0},
-
-	{T_GETT,				(cmd_function)get_t,			NO_SCRIPT,		0,0},
 	{0,0,0,0,0}
 };
 
 static param_export_t params[]={
 	{"ruri_matching", INT_PARAM, &ruri_matching                         },
+	{"via1_matching", INT_PARAM, &via1_matching                         },
 	{"fr_timer",      INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])     },
 	{"fr_inv_timer",  INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST]) },
 	{"wt_timer",      INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])     },
