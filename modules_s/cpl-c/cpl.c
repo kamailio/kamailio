@@ -390,17 +390,17 @@ static inline int get_dest_user(struct sip_msg *msg, str *user)
 
 	/*  get the user_name from new_uri/RURI/To */
 	DBG("DEBUG:cpl-c:get_dest_user: tring to get user from new_uri\n");
-	if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
+	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)==-1
 	|| !uri.user.len )
 	{
 		DBG("DEBUG:cpl-c:get_dest_user: tring to get user from R_uri\n");
 		if ( parse_uri( msg->first_line.u.request.uri.s,
-		msg->first_line.u.request.uri.len ,&uri)||!uri.user.len )
+		msg->first_line.u.request.uri.len ,&uri)==-1 || !uri.user.len )
 		{
 			DBG("DEBUG:cpl-c:get_dest_user: tring to get user from To\n");
-			if (!msg->to || !get_to(msg) ||
-			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
-			||!uri.user.len)
+			if ( ((!msg->to&&parse_headers(msg,HDR_TO,0)==-1) || !msg->to ) ||
+			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)==-1
+			|| !uri.user.len)
 			{
 				LOG(L_ERR,"ERROR:cpl-c:get_dest_user: unable to extract user"
 					" name from RURI or To header!\n");
@@ -519,65 +519,80 @@ error:
 #define REMOVE_ACTION       "remove"
 #define REMOVE_ACTION_LEN   (sizeof(REMOVE_ACTION)-1)
 
+#define REMOVE_SCRIPT       0xcaca
+#define STORE_SCRIPT        0xbebe
 
-static inline int do_store_script(struct sip_msg *msg)
+static inline int do_script_action(struct sip_msg *msg, int action)
 {
 	str  body;
 	str  user;
 	str  bin;
 	char foo;
-	int  ret;
 
-	/* get the message's body
-	 * anyhow we have to call this function, so let's do it at the beginning
-	 * to force the parsing of all the headers - like this we avoid separat
-	 * calls of parse_headers function for FROM, CONTENT_LENGTH, etc  */
-	body.s = get_body( msg );
-	if (body.s==0) {
-		LOG(L_ERR,"ERROR:cpl-c:do_store_cpl: cannot extract body from msg!\n");
-		goto error;
-	}
-
-	/* content-length (if present) must be already parsed */
-	if (!msg->content_length) {
-		LOG(L_ERR,"ERROR:cpl-c:do_store_cpl: no Content-Length hdr found!\n");
+	/* content-length (if present) */
+	if ( (!msg->content_length && parse_headers(msg,HDR_CONTENTLENGTH,0)==-1)
+	|| !msg->content_length) {
+		LOG(L_ERR,"ERROR:cpl-c:do_script_action: no Content-Length "
+			"hdr found!\n");
 		goto error;
 	}
 	body.len = get_content_length( msg );
-	if (body.len==0) {
-		LOG(L_ERR,"ERROR:cpl-c:do_store_cpl: 0 content-len found for store\n");
-		goto error;
-	}
 
 	/* get the user name */
 	if (get_dest_user( msg, &user)==-1)
 		goto error;
-
-	/* we have the script, the user -> compile the script and place it into 
-	 * database */
-
-	/* get the binary coding for the XML file */
-	if ( encodeCPL( &body, &bin)!=1)
-		goto error;
-
+	/* make the user zero terminated -  it's safe - it'a an incomming request,
+	 * so I'm the only process working with it (no sync problems) and user
+	 * points inside the message and all the time it's something after it (no
+	 * buffer overflow)*/
 	foo = user.s[user.len];
 	user.s[user.len] = 0;
-	/* write both the XML and binary formats into database */
-	ret = write_to_db( db_hdl, user.s, &body, &bin);
-	user.s[user.len] = foo;
-	if (ret!=1)
-		goto error;
 
+	/* we have the script and the user */
+	switch (action) {
+		case STORE_SCRIPT :
+			/* check the len -> it must not be 0 */
+			if (body.len==0) {
+				LOG(L_ERR,"ERROR:cpl-c:do_script_action: 0 content-len found "
+					"for store\n");
+				goto error_1;
+			}
+			/* get the message's body */
+			body.s = get_body( msg );
+			if (body.s==0) {
+				LOG(L_ERR,"ERROR:cpl-c:do_script_action: cannot extract "
+					"body from msg!\n");
+				goto error_1;
+			}
+			/* now compile the script and place it into database */
+			/* get the binary coding for the XML file */
+			if ( encodeCPL( &body, &bin)!=1)
+				goto error_1;
+
+			/* write both the XML and binary formats into database */
+			if (write_to_db( db_hdl, user.s, &body, &bin)!=1)
+				goto error_1;
+			break;
+		case REMOVE_SCRIPT:
+			/* check the len -> it must be 0 */
+			if (body.len!=0) {
+				LOG(L_ERR,"ERROR:cpl-c:do_script_action: non-0 content-len "
+					"found for remove\n");
+				goto error_1;
+			}
+			/* remove the script for the user */
+			if (rmv_from_db( db_hdl, user.s)!=1)
+				goto error_1;
+
+			break;
+	}
+
+	user.s[user.len] = foo;
 	return 0;
+error_1:
+	user.s[user.len] = foo;
 error:
 	return -1;
-}
-
-
-
-static inline int do_remove_script(struct sip_msg *msg)
-{
-	return 0;
 }
 
 
@@ -637,19 +652,20 @@ static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 		!strncasecmp( param->body.s, STORE_ACTION, STORE_ACTION_LEN)) {
 			/* it's a store action -> get the script from body message and store
 			 * it into database (CPL and BINARY format) */
-			if (do_store_script(msg)==-1)
+			if (do_script_action( msg, STORE_SCRIPT)==-1)
 				goto error;
 		} else
 		if (param->body.len==REMOVE_ACTION_LEN &&
 		!strncasecmp( param->body.s, REMOVE_ACTION, REMOVE_ACTION_LEN)) {
 			/* it's a remove action -> remove the script from database */
-			if (do_remove_script(msg)==-1)
+			if (do_script_action( msg, REMOVE_SCRIPT)==-1)
 				goto error;
 		} else {
 			LOG(L_ERR,"ERROR:cpl_process_register: unknown action <%.*s>\n",
 				param->body.len,param->body.s);
 			goto error;
 		}
+		/* send a 200 OK reply back */
 		sl_reply( msg, (char*)200, "OK");
 		/* I send the reply and I don't want to resturn to script execution, so
 		 * I return 0 to do break */
