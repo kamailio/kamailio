@@ -20,6 +20,7 @@ static int w_add_maxfwd_header(struct sip_msg* msg, char* str, char* str2);
 static int w_is_maxfwd_zero(struct sip_msg* msg, char* str, char* str2);
 static int w_reply_to_maxfwd_zero(struct sip_msg* msg, char* str, char* str2);
 static int fixup_add_maxfwd_header(void** param, int param_no);
+static int w_is_maxfwd_present(struct sip_msg* msg, char* str, char* str2);
 
 
 static struct module_exports mf_exports= {
@@ -27,17 +28,20 @@ static struct module_exports mf_exports= {
 	(char*[]){			"mf_decrement_maxfwd",
 				"mf_add_maxfwd_header",
 				"mf_is_maxfwd_zero",
-				"mf_reply_to_maxfwd_zero"
+				"mf_reply_to_maxfwd_zero",
+				"mf_is_maxfwd_present"
 			},
 	(cmd_function[]){
 					w_decrement_maxfwd,
 					w_add_maxfwd_header,
 					w_is_maxfwd_zero,
-					w_reply_to_maxfwd_zero
+					w_reply_to_maxfwd_zero,
+					w_is_maxfwd_present
 					},
 	(int[]){
 				0,
 				1,
+				0,
 				0,
 				0
 			},
@@ -45,9 +49,10 @@ static struct module_exports mf_exports= {
 				0,
 				fixup_add_maxfwd_header,
 				0,
+				0,
 				0
 		},
-	4,
+	5,
 	(response_function) 0,
 	(destroy_function) 0,
 	0
@@ -108,5 +113,11 @@ static int w_reply_to_maxfwd_zero(struct sip_msg* msg, char* str, char* str2)
 {
 	return reply_to_maxfwd_zero( msg );
 }
+
+static int w_is_maxfwd_present(struct sip_msg* msg, char* str, char* str2)
+{
+	return is_maxfwd_present( msg );
+}
+
 
 

@@ -3,21 +3,22 @@
 #include "../../ut.h"
 
 
-int                mf_global_id;
-int                mf_hdr_value;
-
+int  mf_global_id;
+int  mf_hdr_value;
 
 
 #define search_for_mf_hdr( _msg , _error ) \
 	do{\
-		if ( !(_msg)->maxforwards ) {\
-			DBG("DEBUG: 1 search_for_MAX_FORWARDS : MF=%x\n",(_msg)->maxforwards);\
-			if  ( parse_headers( _msg , HDR_MAXFORWARDS )==-1 ){\
-				LOG( L_ERR , "ERROR: search_for_mf_header :"\
-				  " parsing MAX_FORWARD header failed!\n");\
-				goto _error;\
+		if ( mf_global_id!=(_msg)->id ) {\
+			mf_global_id  = (_msg)->id;\
+			if ( !(_msg)->maxforwards ) {\
+				DBG("DEBUG : search_for_mf_hdr : searching for max_forwards header\n");\
+				if  ( parse_headers( _msg , HDR_MAXFORWARDS )==-1 ){\
+					LOG( L_ERR , "ERROR: search_for_mf_header :"\
+					  " parsing MAX_FORWARD header failed!\n");\
+					goto _error;\
+				}\
 			}\
-			DBG("DEBUG: 2 search_for_MAX_FORWARDS : MF=%x\n",(_msg)->maxforwards);\
 		}\
 	}while(0);
 
@@ -64,6 +65,16 @@ int mf_startup()
 {
 	mf_global_id = 0;
 	return 1;
+}
+
+
+
+int is_maxfwd_present( struct sip_msg* msg )
+{
+	search_for_mf_hdr( msg , error );
+	return ( msg->maxforwards?1:-1);
+error:
+	return -1;
 }
 
 
