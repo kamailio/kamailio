@@ -32,6 +32,9 @@
  * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
  * 2003-07-04  fixed eof for tcp_read_req  (andrei)
  * 2003-07-09  fix a possible bug in tcp_receive_loop (andrei)
+ * 2003-07-30  tcp_read* updated to use tcp_connection and tcpconn->state --
+ *              fixes false EOF on multiple reqs/packet; 
+ *              backported from unstable (andrei)
  */
 
 #ifdef USE_TCP
@@ -63,9 +66,14 @@
 /* reads next available bytes
  * return number of bytes read, 0 on EOF or -1 on error,
  * sets also r->error */
-int tcp_read(struct tcp_req *r, int fd)
+int tcp_read(struct tcp_connection *c)
 {
 	int bytes_free, bytes_read;
+	struct tcp_req* r;
+	int fd;
+	
+	r=&c->req;
+	fd=c->fd;
 	
 	bytes_free=TCP_BUF_SIZE- (int)(r->pos - r->buf);
 	
@@ -86,6 +94,9 @@ again:
 			r->error=TCP_READ_ERROR;
 			return -1;
 		}
+	}else if (bytes_read==0){
+		c->state=S_CONN_EOF;
+		DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
 	}
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
@@ -105,10 +116,11 @@ again:
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_req *r, int fd)
+int tcp_read_headers(struct tcp_connection *c)
 {
 	int bytes, remaining;
 	char *p;
+	struct tcp_req* r;
 	
 	#define crlf_default_skip_case \
 					case '\n': \
@@ -151,11 +163,12 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 							  break
 
 
+	r=&c->req; 
 	/* if we still have some unparsed part, parse it first, don't do the read*/
 	if (r->parsed<r->pos){
 		bytes=0;
 	}else{
-		bytes=tcp_read(r, fd);
+		bytes=tcp_read(c);
 		if (bytes<=0) return bytes;
 	}
 	p=r->parsed;
@@ -379,7 +392,7 @@ int tcp_read_req(struct tcp_connection* con)
 		req=&con->req;
 again:
 		if(req->error==TCP_REQ_OK){
-			bytes=tcp_read_headers(req, s);
+			bytes=tcp_read_headers(con);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -394,7 +407,12 @@ again:
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if ((req->complete==0) && (bytes==0)){
+			/* eof check:
+			 * is EOF if eof on fd and req.  not complete yet,
+			 * if req. is complete we might have a second unparsed
+			 * request after it, so postpone release_with_eof
+			 */
+			if ((con->state==S_CONN_EOF) && (req->complete==0)){
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
@@ -476,8 +494,10 @@ again:
 			req->bytes_to_go=0;
 			/* if we still have some unparsed bytes, try to  parse them too*/
 			if (size) goto again;
-			else if (bytes==0) resp=CONN_EOF;/* 0 bytes read, this is an EOF*/
-			
+			else if (con->state==S_CONN_EOF){
+				DBG( "tcp_read_req: EOF after reading complete request\n");
+				resp=CONN_EOF;
+			}
 		}
 		
 		

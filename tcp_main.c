@@ -39,6 +39,7 @@
  *               a temp. socket and store in in *->bind_address: added
  *               find_tcp_si, modified tcpconn_connect (andrei)
  *  2003-04-14  set sockopts to TOS low delay (andrei)
+ *  2003-07-30  tcpconn->state added (andrei)
  */
 
 
@@ -135,6 +136,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	
 	c->refcnt=0;
 	c->bad=0;
+	c->state=S_CONN_OK;
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
 	c->rcv.proto=PROTO_TCP;

@@ -25,9 +25,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- * history:
+ * History:
  * --------
- * 2003-01-29 tcp buffer size ++-ed to allow for 0-terminator
+ *  2003-01-29 tcp buffer size ++-ed to allow for 0-terminator
+ *  2003-07-30 tcpconn->state and tcp_conn_states added (andrei)
  */
 
 
@@ -56,6 +57,8 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
 		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE 
 	};
+
+enum tcp_conn_states { S_CONN_OK=0, S_CONN_EOF };
 
 /* fd communication commands */
 enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
@@ -96,6 +99,7 @@ struct tcp_connection{
 #endif
 	struct tcp_req req; /* request data */
 	volatile int refcnt;
+	int state; /* connection state, only EOF and OK for now */
 	int bad; /* if set this is a "bad" connection */
 	int timeout; /* connection timeout, after this it will be removed*/
 	unsigned addr_hash; /* hash indexes in the 2 tables */
