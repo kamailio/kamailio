@@ -47,8 +47,8 @@ struct lump_rpl* add_lump_rpl(struct sip_msg *msg, char *s, int len, int flags)
 
 	/* some checkings */
 	if ( (flags&(LUMP_RPL_HDR|LUMP_RPL_BODY))==(LUMP_RPL_HDR|LUMP_RPL_BODY)
-	|| (flags&(LUMP_RPL_HDR|LUMP_RPL_BODY))==0) {
-		LOG(L_ERR,"ERROR:add_lump_rpl: bad type flags (none or both)!\n");
+	|| (flags&(LUMP_RPL_HDR|LUMP_RPL_BODY))==0 || (flags&LUMP_RPL_SHMEM) ) {
+		LOG(L_ERR,"ERROR:add_lump_rpl: bad flags combination (%d)!\n",flags);
 		goto error;
 	}
 	if (len<=0 || s==0) {
@@ -101,7 +101,7 @@ error:
 
 
 
-void free_lump_rpl(struct lump_rpl* lump)
+inline void free_lump_rpl(struct lump_rpl* lump)
 {
 	if (lump) {
 		if (!((lump->flags)&LUMP_RPL_NOFREE) && ((lump->flags)&LUMP_RPL_NODUP)
@@ -130,6 +130,19 @@ void unlink_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 			prev->next = foo->next;
 		else
 			msg->reply_lump = foo->next;
+	}
+}
+
+
+
+void del_nonshm_lump_rpl( struct lump_rpl **head_list)
+{
+	struct lump_rpl *foo;
+
+	while( (*head_list) && (((*head_list)->flags&LUMP_RPL_SHMEM)==0) ) {
+		foo = (*head_list);
+		(*head_list) = foo->next;
+		free_lump_rpl( foo );
 	}
 }
 

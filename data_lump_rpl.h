@@ -44,6 +44,7 @@
 #define LUMP_RPL_BODY    (1<<2)
 #define LUMP_RPL_NODUP   (1<<3)
 #define LUMP_RPL_NOFREE  (1<<4)
+#define LUMP_RPL_SHMEM   (1<<5)
 
 struct lump_rpl
 {
@@ -57,5 +58,7 @@ struct lump_rpl* add_lump_rpl(struct sip_msg *, char *, int , int );
 void free_lump_rpl(struct lump_rpl* );
 
 void unlink_lump_rpl(struct sip_msg *, struct lump_rpl* );
+
+void del_nonshm_lump_rpl(  struct lump_rpl ** );
 
 #endif

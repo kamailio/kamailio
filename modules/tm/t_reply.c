@@ -494,11 +494,11 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		run_trans_callbacks( TMCB_ON_FAILURE, t, &fake_req, rpl, code);
 	}
 	if (t->on_negative) {
-	/* avoid recursion -- if failure_route forwards, and does not 
-	 * set next failure route, failure_route will not be rentered
-	 * on failure */
-	t_on_negative(0);
-	/* run a reply_route action if some was marked */
+		/* avoid recursion -- if failure_route forwards, and does not 
+		 * set next failure route, failure_route will not be rentered
+		 * on failure */
+		t_on_negative(0);
+		/* run a reply_route action if some was marked */
 		if (run_actions(failure_rlist[t->on_negative], &fake_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
 	}
@@ -512,6 +512,9 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		pkg_free(fake_req.new_uri.s);
 		fake_req.new_uri.s = 0;
 	}
+	del_nonshm_lump_rpl( &(fake_req.reply_lump) );
+	/* if failure handler changed flag, update transaction context */
+	shmem_msg->flags = fake_req.flags;
 
 	return 1;
 }
