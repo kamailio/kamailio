@@ -45,6 +45,7 @@
 #include "../../data_lump.h"
 #include "../../globals.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_uri.h"
 #include "utils.h"
 #include "rr_mod.h"
 
@@ -280,6 +281,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	char *rr;
 	char *p;
 	struct to_body *from;
+	struct sip_uri puri;
 
 	from=0; /* fool -Wall */
 
@@ -288,19 +290,24 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	len = RR_PREFIX_LEN;
 	
      /* first try to look at r-uri for a username */
-	user.s = _m->first_line.u.request.uri.s;
-	user.len = _m->first_line.u.request.uri.len;
-	get_username(&user);
+	if (parse_uri(_m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len, &puri) < 0) {
+		LOG(L_ERR, "build_RR: Error while parsing R-URI\n");
+		return 0;
+	}
 	
+	user = puri.user;
+
 	/* no username in original uri -- hmm; maybe it is a uri
-	   with just host address and username is in a preloaded route,
-	   which is now no rewritten r-uri (assumed rewriteFromRoute
-	   was called somewhere in script's beginning) 
-     */
+	 * with just host address and username is in a preloaded route,
+	 * which is now no rewritten r-uri (assumed rewriteFromRoute
+	 * was called somewhere in script's beginning) 
+	 */
 	if (user.len==0 && _m->new_uri.s) {
-		user.s = _m->new_uri.s;
-		user.len = _m->new_uri.len;
-		get_username(&user);
+		if (parse_uri(_m->new_uri.s, _m->new_uri.len, &puri) < 0) {
+			LOG(L_ERR, "build_RR(): Error while parsing new_uri\n");
+			return 0;
+		}
+		user = puri.user;
 	}
 	len+=user.len+1 /* '@' */;
 	
@@ -330,7 +337,6 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	*_l=len;
 	p=rr;
 
-	
 	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);p+=RR_PREFIX_LEN;
 	
 	if (_lr && use_fast_cmp) {

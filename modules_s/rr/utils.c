@@ -28,7 +28,6 @@
  */
 
 #include "utils.h"
-#include "../../ut.h"
 
 
 /*
@@ -49,29 +48,3 @@ char* find_not_quoted(str* _s, char _c)
 	return 0;
 }
 
-
-/*
- * Extract username part from URI
- */
-int get_username(str* _s)
-{
-	char* at, *dcolon, *dc;
-	dcolon = find_not_quoted(_s, ':');
-
-	if (dcolon == 0) return -1;
-
-	_s->s = dcolon + 1;
-	_s->len -= dcolon - _s->s + 1;
-	
-	at = q_memchr(_s->s, '@', _s->len);
-	dc = q_memchr(_s->s, ':', _s->len);
-	if (at) {
-		if ((dc) && (dc < at)) {
-			_s->len = dc - _s->s;
-			return 0;
-		}
-		
-		_s->len = at - _s->s;
-		return 0;
-	} else return -2;
-}

@@ -45,8 +45,8 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../globals.h"
-#include "utils.h"
 #include "common.h"
+#include "utils.h"
 #include "rr_mod.h"
 
 

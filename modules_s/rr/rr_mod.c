@@ -51,6 +51,9 @@ static int child_init(int rank);
 static int int_fixup(void** param, int param_no);
 
 
+/*
+ * Exported functions
+ */
 static cmd_export_t cmds[]={
 	{"loose_route",  loose_route,   0, 0        },
 	{"strict_route", strict_route,  0, 0        },
@@ -58,18 +61,21 @@ static cmd_export_t cmds[]={
 	{0,0,0,0}
 };
 
+
+/*
+ * Exported parameters
+ */
 static param_export_t params[]={
-	{"use_fast_cmp",   INT_PARAM,  &use_fast_cmp      },
-	{"append_fromtag", INT_PARAM,  &rr_append_fromtag },
+	{"use_fast_cmp",   INT_PARAM,  &use_fast_cmp     },
+	{"append_fromtag", INT_PARAM,  &rr_append_fromtag},
 	{0,0,0}
 };
 
 
 struct module_exports exports = {
 	"rr",
-	cmds,
-	params,
-	
+	cmds,      /* Exported functions */
+	params,    /* Exported parameters */
 	mod_init,  /* initialize module */
 	0,         /* response function*/
 	0,         /* destroy function */
@@ -80,7 +86,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	fprintf(stderr, "Record Route - initializing\n");
+	DBG("rr - initializing\n");
 	return 0;
 }
 
@@ -89,12 +95,12 @@ static int child_init(int rank)
 {
 	     /* Different children may be listening on
 	      * different IPs or ports and therefore we
-	      * must generate hash in every child
+	      * must generate hash in each child
 	      */
 	generate_hash();
 
 	if (generate_rr_suffix()) {
-		LOG(L_ERR, "child_init: Error while generating RR suffix\n");
+		LOG(L_ERR, "rr:child_init(): Error while generating RR suffix\n");
 		return -1;
 	}
 

@@ -27,7 +27,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -38,10 +37,4 @@
  */
 char* find_not_quoted(str* _s, char _c);
 
-
-/*
- * Extract username part from URI
- */
-int get_username(str* _s);
-
-#endif
+#endif /* UTILS_H */
