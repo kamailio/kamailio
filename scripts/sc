@@ -136,8 +136,13 @@ fifo_cmd()
 		exit 1
 	fi
 
+	# start reader now so that it is ready for replies
+	# immediately after a request was sent out
+	cat < $path &
+
+	# issue request
 	if [ "$#" -eq 1 ] ; then
-		cat > $SER_FIFO <<EOF
+		cat > $SER_FIFO <<EOF 
 :$1:$name
 
 EOF
@@ -155,9 +160,8 @@ $3
 
 EOF
 	fi
-
-
-	cat < $path
+	# wait for the reader to complete
+	wait
 	rm $path
 }
 
@@ -167,37 +171,41 @@ print_stats() {
 
 echo "[cycle #: $3; if constant make sure server lives and fifo is on]"
 
+cat < $2 &
 cat > $SER_FIFO <<EOF
 :version:$1
 
 :uptime:$1
 
 EOF
-cat < $2
+wait
 echo
 
 echo Transaction Statistics
+cat < $2 &
 cat > $SER_FIFO <<EOF
 :t_stats:$1
 
 EOF
-cat < $2
+wait
 echo
 
 echo Stateless Server Statistics
+cat < $2 &
 cat > $SER_FIFO <<EOF
 :sl_stats:$1
 
 EOF
-cat < $2
+wait
 echo
 
 echo UsrLoc Stats
+cat < $2 &
 cat > $SER_FIFO <<EOF
 :ul_stats:$1
 
 EOF
-cat < $2
+wait
 }
 
 
