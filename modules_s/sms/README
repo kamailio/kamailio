@@ -156,10 +156,6 @@ message containing explanations regarding the error.
 
 4. Modules dependency
 
-The SMS module use the IM module (which is more a library) in order to perform
-some checkings over the incoming SIP message and to extract its body. The IM
-module has to be compiled also, but is not necessary to load it from the SER
-script.
 Also, the TM module is used for sending statefull MSG requests. So, please
 compile and specificly load ands configure the TM module.
 
