@@ -91,15 +91,15 @@ char* pass_column_2 = "ha1b";
 char* sec          = 0;        /* If the parameter was not used, the secret phrase
 				* will be auto-generated
 				*/                   
-char* grp_table    = "grp";    /* Table name where group definitions are stored */
-char* grp_user_col = "user";
-char* grp_grp_col  = "grp";
-int   calc_ha1     = 0;
-int   nonce_expire = 300;
-int   retry_count  = 5;
-
+char* grp_table      = "grp";    /* Table name where group definitions are stored */
+char* grp_user_col   = "user";
+char* grp_domain_col = "domain";
+char* grp_grp_col    = "grp";
+int   calc_ha1       = 0;
+int   nonce_expire   = 300;
+int   retry_count    = 5;
 char* realm_realm_col = "realm";
-
+int   grp_use_domain = 0;
 
 str secret;
 db_con_t* db_handle;   /* Database connection handle */
@@ -120,7 +120,6 @@ struct module_exports exports = {
 		"www_challenge",
 		"proxy_challenge",
 		"is_user",
-		"is_in_group",
 		"check_to",
 		"check_from",
 		"consume_credentials",
@@ -135,7 +134,6 @@ struct module_exports exports = {
 		www_challenge,
 		proxy_challenge,
 		is_user,
-		is_in_group,
 		check_to,
 		check_from,
 		consume_credentials,
@@ -144,14 +142,14 @@ struct module_exports exports = {
 		is_uri_host_local,
 		does_uri_exist
 	},
-	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 2, 1, 1, 1},
+	(int[]) {2, 2, 2, 2, 1, 0, 0, 0, 2, 1, 1, 1},
 	(fixup_function[]) {
 		str_fixup, str_fixup, 
 		challenge_fixup, challenge_fixup, 
-		str_fixup, str_fixup, 0, 0,
+		str_fixup, 0, 0,
 		0, hf_fixup, 0, 0, 0
 	},
-	13,
+	12,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */
@@ -165,13 +163,15 @@ struct module_exports exports = {
 		"secret",              /* Secret phrase used to generate nonce */
 		"group_table",         /* Group table name */
 		"group_user_column",   /* Group table user column name */
+		"group_column_column", /* Group table domain column name */
 		"group_group_column",  /* Group table group column name */
 		"calculate_ha1",       /* If set to yes, instead of ha1 value auth module will
                                         * fetch plaintext password from database and calculate
                                         * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
 		"retry_count",         /* How many times a client is allowed to retry */
-		"realm_realm_col"      /* Realm column in table of local realms */
+		"realm_realm_col",     /* Realm column in table of local realms */
+		"group_use_domain"
 		
 	},   /* Module parameter names */
 	(modparam_t[]) {
@@ -186,10 +186,12 @@ struct module_exports exports = {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		STR_PARAM,
 	        INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
-		STR_PARAM
+		STR_PARAM,
+		INT_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
 		&db_url,
@@ -202,17 +204,19 @@ struct module_exports exports = {
 		&sec,
 		&grp_table,
 		&grp_user_col,
+		&grp_domain_col,
 		&grp_grp_col,
 		&calc_ha1,
 		&nonce_expire,
 		&retry_count,
-		&realm_realm_col
+		&realm_realm_col,
+		&grp_use_domain
 		
 	},   /* Module parameter variable pointers */
 #ifdef USER_DOMAIN_HACK
-	13,      /* Numberof module parameters */
+	15,      /* Numberof module parameters */
 #else
-	12,      /* Number of module paramers */
+	14,      /* Number of module paramers */
 #endif					     
 	mod_init,   /* module initialization function */
 	NULL,       /* response function */

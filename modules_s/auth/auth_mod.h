@@ -56,14 +56,17 @@ extern char* pass_column_2;   /* Column containg HA1 string constructed
 extern str secret;            /* secret phrase used to generate nonce */
 extern char* grp_table;       /* 'group' table name */
 extern char* grp_user_col;    /* 'user' column name in group table */
+extern char* grp_domain_col;  /* 'domain' column name in group table */
 extern char* grp_grp_col;     /* "group' column name in group table */
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int nonce_expire;      /* nonce expire interval */
 extern int retry_count;       /* How many time a client can retry */
- 
+extern char* realm_realm_col; /* Realm column in table of local realms */
+extern int grp_use_domain;    /* Use domain in is_user_in */
+
 extern db_con_t* db_handle;   /* Database connection handle */
 
-extern char* realm_realm_col; /* Realm column in table of local realms */
+
 
 /* Stateless reply function pointer */
 extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
