@@ -1839,6 +1839,12 @@ timer(unsigned int ticks, void *param)
 	pkg_free(buf);
 }
 
+#define DSTIP_PARAM ";dstip="
+#define DSTIP_PARAM_LEN (sizeof(DSTIP_PARAM) - 1)
+
+#define DSTPORT_PARAM ";dstport="
+#define DSTPORT_PARAM_LEN (sizeof(DSTPORT_PARAM) - 1)
+
 
 /*
  * Create received SIP uri that will be either
@@ -1850,7 +1856,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 {
 	static char buf[MAX_URI_SIZE];
 	char* p;
-	str ip, port;
+	str src_ip, src_port, dst_ip, dst_port;
 	int len;
 	str proto;
 
@@ -1859,10 +1865,13 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 		return -1;
 	}
 
-	ip.s = ip_addr2a(&m->rcv.src_ip);
-	ip.len = strlen(ip.s);
+	src_ip.s = ip_addr2a(&m->rcv.src_ip);
+	src_ip.len = strlen(src_ip.s);
+	src_port.s = int2str(m->rcv.src_port, &src_port.len);
 
-	port.s = int2str(m->rcv.src_port, &port.len);
+	dst_ip.s = ip_addr2a(&m->rcv.dst_ip);
+	dst_ip.len = strlen(dst_ip.s);
+	dst_port.s = int2str(m->rcv.dst_port, &dst_port.len);
 
 	switch(m->rcv.proto) {
 	case PROTO_NONE:
@@ -1891,11 +1900,14 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 		return -1;
 	}
 
-	len = 4 + ip.len + 1 + port.len;
+	len = 4 + src_ip.len + 1 + src_port.len;
 	if (proto.s) {
 		len += TRANSPORT_PARAM_LEN;
 		len += proto.len;
 	}
+
+	len += DSTIP_PARAM_LEN + dst_ip.len;
+	len += DSTPORT_PARAM_LEN + dst_port.len;
 
 	if (len > MAX_URI_SIZE) {
 		LOG(L_ERR, "create_rcv_uri: Buffer too small\n");
@@ -1906,13 +1918,13 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	memcpy(p, "sip:", 4);
 	p += 4;
 	
-	memcpy(p, ip.s, ip.len);
-	p += ip.len;
+	memcpy(p, src_ip.s, src_ip.len);
+	p += src_ip.len;
 
 	*p++ = ':';
 	
-	memcpy(p, port.s, port.len);
-	p += port.len;
+	memcpy(p, src_port.s, src_port.len);
+	p += src_port.len;
 
 	if (proto.s) {
 		memcpy(p, TRANSPORT_PARAM, TRANSPORT_PARAM_LEN);
@@ -1921,6 +1933,16 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 		memcpy(p, proto.s, proto.len);
 		p += proto.len;
 	}
+
+	memcpy(p, DSTIP_PARAM, DSTIP_PARAM_LEN);
+	p += DSTIP_PARAM_LEN;
+	memcpy(p, dst_ip.s, dst_ip.len);
+	p += dst_ip.len;
+
+	memcpy(p, DSTPORT_PARAM, DSTPORT_PARAM_LEN);
+	p += DSTPORT_PARAM_LEN;
+	memcpy(p, dst_port.s, dst_port.len);
+	p += dst_port.len;
 
 	uri->s = buf;
 	uri->len = len;
