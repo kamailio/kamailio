@@ -223,6 +223,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 #endif
 	/* fail over to normal lookup */
 
+	DBG("DEBUG: mk_proxy: doing DNS lookup...\n");
 	he=sip_resolvehost(name, &(p->port));
 	if (he==0){
 		ser_error=E_BAD_ADDRESS;

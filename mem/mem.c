@@ -2,8 +2,10 @@
  * $Id *
  */
 
+#include <stdio.h>
 #include "../config.h"
 #include "../dprint.h"
+#include "../globals.h"
 #include "mem.h"
 
 #ifdef PKG_MALLOC
@@ -42,6 +44,8 @@ int init_mallocs()
 	#endif
 	if (mem_block==0){
 		LOG(L_CRIT, "could not initialize memory pool\n");
+		fprintf(stderr, "Too much pkg memory demanded: %d\n",
+			PKG_MEM_POOL_SIZE );
 		return -1;
 	}
 #endif
@@ -49,6 +53,8 @@ int init_mallocs()
 #ifdef SHM_MEM
 	if (shm_mem_init()<0) {
 		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
+		 fprintf(stderr, "Too much shared memory demanded: %d\n",
+			shm_mem_size );
 		return -1;
 	}
 #endif

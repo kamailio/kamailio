@@ -49,9 +49,11 @@
 static int
 	entry_semaphore=0, 
 	timer_semaphore=0, 
-	reply_semaphore=0,
+	reply_semaphore=0;
+#ifdef _OBSOLETED
 	ack_semaphore=0;
-#ifdef WAIT
+#endif
+#ifdef _XWAIT
 static int  wait_semaphore=0;
 #endif
 /* and the maximum number of semaphores in the entry_semaphore set */
@@ -171,9 +173,11 @@ again:
 			semctl( entry_semaphore, 0 , IPC_RMID , 0 );
 		if (reply_semaphore>0)
 			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
+#ifdef _OBSOLETED
 		if (ack_semaphore>0)
 			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
-#ifdef WAIT
+#endif
+#ifdef _XWAIT
 		if (wait_semaphore>0)
 			semctl(wait_semaphore, 0 , IPC_RMID , 0 );
 #endif
@@ -233,7 +237,7 @@ again:
 			goto error;
 		}
 	}
-	
+#ifdef _OBSOLETED	
 	if ((ack_semaphore=init_semaphore_set(sem_nr))<0){
 		if (errno==EINVAL || errno==ENOSPC ) {
 			DBG( "DEBUG:lock_initialize: ack semaphore initialization"
@@ -247,8 +251,9 @@ again:
 			goto error;
 		}
 	}
+#endif
 
-#ifdef WAIT
+#ifdef _XWAIT
 	if ((wait_semaphore=init_semaphore_set(sem_nr))<0){
 		if (errno==EINVAL || errno==ENOSPC ) {
 			DBG( "DEBUG:lock_initialize: wait semaphore initialization"
@@ -281,7 +286,6 @@ error:
 void lock_cleanup()
 {
 	/* must check if someone uses them, for now just leave them allocated*/
-	LOG(L_INFO, "INFO: lock_cleanup:  clean-up still not implemented properly \n");
 }
 
 #else
@@ -294,7 +298,6 @@ void lock_cleanup()
 	   no other process lives 
 	*/
 
-	LOG(L_INFO, "INFO: lock_cleanup:  clean-up still not implemented properly (no sibling check)\n");
 	/* sibling double-check missing here; install a signal handler */
 
 	if (entry_semaphore > 0 && 
@@ -306,18 +309,24 @@ void lock_cleanup()
 	if (reply_semaphore > 0 &&
 	    semctl( reply_semaphore, 0 , IPC_RMID , 0 )==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, reply_semaphore cleanup failed\n");
+#ifdef _OBSOLETED
 	if (ack_semaphore > 0 &&
 	    semctl( ack_semaphore, 0 , IPC_RMID , 0 )==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, ack_semaphore cleanup failed\n");
-#ifdef WAIT
+#endif
+#ifdef _XWAIT
 	if (wait_semaphore > 0 &&
 		semctl( wait_semaphore, 0 , IPC_RMID , 0 )==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, wait_semaphore cleanup failed\n");
 #endif
 
 
-	entry_semaphore = timer_semaphore = reply_semaphore = ack_semaphore = 0;
-#ifdef WAIT
+	entry_semaphore = timer_semaphore = reply_semaphore 
+#ifdef _OBSOLETED
+		= ack_semaphore 
+#endif
+		= 0;
+#ifdef _XWAIT
 	wait_semaphore = 0;
 #endif
 
@@ -333,17 +342,21 @@ int init_cell_lock( struct cell *cell )
 {
 #ifdef FAST_LOCK
 	init_lock(cell->reply_mutex);
+#ifdef _OBSOLETED
 	init_lock(cell->ack_mutex);
-#ifdef WAIT
+#endif
+#ifdef _XWAIT
 	init_lock(cell->wait_mutex);
 #endif
 	return 0;
 #else
 	cell->reply_mutex.semaphore_set=reply_semaphore;
 	cell->reply_mutex.semaphore_index = cell->hash_index % sem_nr;
+#ifdef _OBSOLETED
 	cell->ack_mutex.semaphore_set=ack_semaphore;
 	cell->ack_mutex.semaphore_index = cell->hash_index % sem_nr;
-#ifdef WAIT
+#endif
+#ifdef _XWAIT
 	cell->wait_mutex.semaphore_set=wait_semaphore;
 	cell->wait_mutex.semaphore_index = cell->hash_index % sem_nr;
 #endif /* WAIT */

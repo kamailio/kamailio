@@ -1,6 +1,73 @@
 /*
  * $Id$
+ *
  */
+
+/* 
+  timer.c is where we implement TM timers. It has been designed
+  for high performance using some techniques of which timer users
+  need to be aware.
+
+	One technique is "fixed-timer-length". We maintain separate 
+	timer lists, all of them include elements of the same time
+	to fire. That allows *appending* new events to the list as
+	opposed to inserting them by time, which is costly due to
+	searching time spent in a mutex. The performance benefit is
+	noticeable. The limitation is you need a new timer list for
+	each new timer length.
+
+	Another technique is the timer process slices off expired elements
+	from the list in a mutex, but executes the timer after the mutex
+	is left. That saves time greatly as whichever process wants to
+	add/remove a timer, it does not have to wait until the current
+	list is processed. However, be aware the timers may hit in a delayed
+	manner; you have no guarantee in your process that after resetting a timer, 
+	it will no more hit. It might have been removed by timer process,
+    and is waiting to be executed.  The following example shows it:
+
+			PROCESS1				TIMER PROCESS
+
+	0.								timer hits, it is removed from queue and
+									about to be executed
+	1.	process1 decides to
+		reset the timer 
+	2.								timer is executed now
+	3.	if the process1 naively
+		thinks the timer could not 
+		have been executed after 
+		resetting the timer, it is
+		WRONG -- it was (step 2.)
+
+	So be careful when writing the timer handlers. Currently defined timers 
+	don't hurt if they hit delayed, I hope at least. Retransmission timer 
+	may results in a useless retransmission -- not too bad. FR timer not too
+	bad either as timer processing uses a REPLY mutex making it safe to other
+	processing affecting transaction state. Wait timer not bad either -- processes
+	putting a transaction on wait don't do anything with it anymore.
+
+		Example when it does not hurt:
+
+			P1						TIMER
+	0.								RETR timer removed from list and
+									scheduled for execution
+	1. 200/BYE received->
+	   reset RETR, put_on_wait
+	2.								RETR timer executed -- too late but it does
+									not hurt
+	3.								WAIT handler executed
+
+	The rule of thumb is don't touch data you put under a timer. Create data,
+    put them under a timer, and let them live until they are safely destroyed from
+    wait/delete timer.  The only safe place to manipulate the data is 
+    from timer process in which delayed timers cannot hit (all timers are
+    processed sequentially).
+
+	A "bad example" -- rewriting content of retransmission buffer
+	in an unprotected way is bad because a delayed retransmission timer might 
+	hit. Thats why our reply retransmission procedure is enclosed in 
+	a REPLY_LOCK.
+
+*/
 
 
 #include "config.h"
@@ -84,6 +151,10 @@ void remove_timer_unsafe(  struct timer_link* tl )
 	};
 #endif
 	if (is_in_timer_list2( tl )) {
+#ifdef EXTRA_DEBUG
+		DBG("DEBUG: unlinking timer: tl=%p, timeout=%d, group=%d\n", 
+			tl, tl->time_out, tl->tg);
+#endif
 		tl->prev_tl->next_tl = tl->next_tl;
 		tl->next_tl->prev_tl = tl->prev_tl;
 		tl->next_tl = 0;
@@ -98,7 +169,7 @@ void remove_timer_unsafe(  struct timer_link* tl )
 /* put a new cell into a list nr. list_id within a hash_table;
    set initial timeout */
 void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
-													unsigned int time_out )
+	unsigned int time_out )
 {
 #ifdef EXTRA_DEBUG
 	if (timer_list->last_tl.prev_tl==0) {
@@ -128,7 +199,7 @@ void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 
 /* detach items passed by the time from timer list */
 struct timer_link  *check_and_split_time_list( struct timer *timer_list,
-																int time )
+	int time )
 {
 	struct timer_link *tl , *end, *ret;
 
@@ -173,4 +244,84 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 }
 
 
+
+/* stop timer */
+void reset_timer( struct s_table *hash_table,
+	struct timer_link* tl )
+{
+	/* disqualify this timer from execution by setting its time_out
+	   to zero; it will stay in timer-list until the timer process
+	   starts removing outdated elements; then it will remove it
+	   but not execute; there is a race condition, though -- see
+	   timer.c for more details
+	*/
+	tl->time_out = TIMER_DELETED;
+#ifdef EXTRA_DEBUG
+	DBG("DEBUG: reset_timer (group %d, tl=%p)\n", tl->tg, tl );
+#endif
+#ifdef _OBSOLETED
+	/* lock(timer_group_lock[ tl->tg ]); */
+	/* hack to work arround this timer group thing*/
+	lock(hash_table->timers[timer_group[tl->tg]].mutex);
+	remove_timer_unsafe( tl );
+	unlock(hash_table->timers[timer_group[tl->tg]].mutex);
+	/*unlock(timer_group_lock[ tl->tg ]);*/
+#endif
+}
+
+
+
+
+/* determine timer length and put on a correct timer list */
+void set_timer( struct s_table *hash_table,
+	struct timer_link *new_tl, enum lists list_id )
+{
+	unsigned int timeout;
+	struct timer* list;
+
+
+	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
+		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
+#ifdef EXTRA_DEBUG
+		abort();
+#endif
+		return;
+	}
+	timeout = timer_id2timeout[ list_id ];
+	list= &(hash_table->timers[ list_id ]);
+
+	lock(list->mutex);
+	/* make sure I'm not already on a list */
+	remove_timer_unsafe( new_tl );
+	add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+	unlock(list->mutex);
+}
+
+/* similar to set_timer, except it allows only one-time
+   timer setting and all later attempts are ignored */
+void set_1timer( struct s_table *hash_table,
+	struct timer_link *new_tl, enum lists list_id )
+{
+	unsigned int timeout;
+	struct timer* list;
+
+
+	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
+		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
+#ifdef EXTRA_DEBUG
+		abort();
+#endif
+		return;
+	}
+	timeout = timer_id2timeout[ list_id ];
+	list= &(hash_table->timers[ list_id ]);
+
+	lock(list->mutex);
+	if (!(new_tl->time_out>TIMER_DELETED)) {
+		/* make sure I'm not already on a list */
+		/* remove_timer_unsafe( new_tl ); */
+		add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+	}
+	unlock(list->mutex);
+}
 

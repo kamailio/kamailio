@@ -49,6 +49,8 @@
 
 #ifdef VQ_MALLOC
 
+#include <stdlib.h>
+
 #include "../config.h"
 #include "../globals.h"
 #include "vq_malloc.h"
@@ -79,7 +81,7 @@ void my_assert( int assertation, int line, char *file, char *function )
 {
 	if (assertation) return;
 
-	LOG(L_CRIT,"CRIT: assertation failed in $s (%s:%d)\n",
+	LOG(L_CRIT,"CRIT: assertation failed in %s (%s:%d)\n",
 		function, file, line);
 	abort();
 }
@@ -88,16 +90,15 @@ void my_assert( int assertation, int line, char *file, char *function )
 void vqm_debug_frag(struct vqm_block* qm, struct vqm_frag* f)
 {
 
-	int r;
 
 	if (f->check!=ST_CHECK_PATTERN){
-		LOG(L_CRIT, "BUG: vqm_*: fragm. %x beginning overwritten(%x)!\n",
+		LOG(L_CRIT, "BUG: vqm_*: fragm. %p beginning overwritten(%x)!\n",
 				f, f->check);
 		vqm_status(qm);
 		abort();
 	};
 	if (memcmp(f->end_check, END_CHECK_PATTERN, END_CHECK_PATTERN_LEN)!=0) {
-		LOG(L_CRIT, "BUG: vqm_*: fragm. %x end overwritten(%*s)!\n",
+		LOG(L_CRIT, "BUG: vqm_*: fragm. %p end overwritten(%*s)!\n",
 				f, END_CHECK_PATTERN_LEN, f->end_check );
 		vqm_status(qm);
 		abort();
@@ -235,7 +236,6 @@ static inline void vqm_detach_free( struct vqm_block* qm, struct vqm_frag* frag)
 {
 
 	struct vqm_frag *prev, *next;
-	struct vqm_frag_end *end;
 
 	prev=FRAG_END(frag)->prv_free; 
 	next=frag->u.nxt_free;
@@ -260,8 +260,8 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 	
 #ifdef DBG_QM_MALLOC
 	unsigned int demanded_size;
-	DBG("vqm_malloc(%x, %d) called from %s: %s(%d)\n", qm, size, file, func,
-			line);
+	DBG("vqm_malloc(%p, %d) called from %s: %s(%d)\n", qm, size, file,
+	 func, line);
 	demanded_size = size;
 #endif
 	new_chunk=0;
@@ -285,7 +285,11 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 
 	if (!new_chunk) { /* no chunk can be reused; slice one from the core */
 		new_chunk=MORE_CORE( qm, bucket, size );
-		if (!new_chunk) return 0;
+		if (!new_chunk) {
+			LOG(L_ERR, "vqm_malloc(%p, %d) called from %s: %s(%d)\n", 
+				qm, size, file, func, line);
+			return 0;
+		}
 	}
 	new_chunk->u.inuse.magic = FR_USED;
 	new_chunk->u.inuse.bucket=bucket;
@@ -295,7 +299,7 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 	new_chunk->line=line;
 	new_chunk->demanded_size=demanded_size;
 	qm->usage[ bucket ]++;
-	DBG("vqm_malloc( %x, %d ) returns address %x in bucket %d, real-size %d \n",
+	DBG("vqm_malloc( %p, %d ) returns address %p in bucket %d, real-size %d \n",
 		qm, demanded_size, (char*)new_chunk+sizeof(struct vqm_frag), 
 		bucket, size );
 
@@ -317,9 +321,10 @@ void vqm_free(struct vqm_block* qm, void* p)
 	unsigned char b;
 
 #ifdef DBG_QM_MALLOC
-	DBG("vqm_free(%x, %x), called from %s: %s(%d)\n", qm, p, file, func, line);
+	DBG("vqm_free(%p, %p), called from %s: %s(%d)\n", 
+		qm, p, file, func, line);
 	if (p>(void *)qm->core_end || p<(void*)qm->init_core){
-		LOG(L_CRIT, "BUG: vqm_free: bad pointer %x (out of memory block!) - "
+		LOG(L_CRIT, "BUG: vqm_free: bad pointer %p (out of memory block!) - "
 				"aborting\n", p);
 		abort();
 	}
@@ -389,13 +394,13 @@ void vqm_free(struct vqm_block* qm, void* p)
 
 void dump_frag( struct vqm_frag* f, int i )
 {
-	LOG(L_INFO, "    %3d. address=%x  real size=%d bucket=%d\n", i, 
+	LOG(L_INFO, "    %3d. address=%p  real size=%d bucket=%d\n", i, 
 		(char*)f+sizeof(struct vqm_frag), f->size, f->u.inuse.bucket);
 #ifdef DBG_QM_MALLOC
 	LOG(L_INFO, "            demanded size=%d\n", f->demanded_size );
 	LOG(L_INFO, "            alloc'd from %s: %s(%d)\n",
 		f->file, f->func, f->line);
-	LOG(L_INFO, "        start check=%x, end check= %*s\n",
+	LOG(L_INFO, "        start check=%x, end check= %.*s\n",
 			f->check, END_CHECK_PATTERN_LEN, f->end_check );
 #endif
 }
@@ -403,9 +408,9 @@ void dump_frag( struct vqm_frag* f, int i )
 void vqm_status(struct vqm_block* qm)
 {
 	struct vqm_frag* f;
-	unsigned int i,j,on_list;
+	unsigned int i,on_list;
 
-	LOG(L_INFO, "vqm_status (%x):\n", qm);
+	LOG(L_INFO, "vqm_status (%p):\n", qm);
 	if (!qm) return;
 	LOG(L_INFO, " heap size= %d, available: %d\n", 
 		qm->core_end-qm->init_core, qm->free_core );
@@ -422,7 +427,7 @@ void vqm_status(struct vqm_block* qm)
 	DBG("dumping bucket statistics:\n");
 	for (i=0; i<=BIG_BUCKET(qm); i++) {
 		for(on_list=0, f=qm->next_free[i]; f; f=f->u.nxt_free ) on_list++;
-		LOG(L_DBG, "    %3d. bucket: in use: %d, on free list: %d\n", 
+		LOG(L_DBG, "    %3d. bucket: in use: %ld, on free list: %d\n", 
 			i, qm->usage[i], on_list );
 	}
 #endif

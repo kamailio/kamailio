@@ -76,9 +76,6 @@ INSTALL-MAN = $(INSTALL) -m 644
 #		issues additional debugging information if lock/unlock is called
 # -DFAST_LOCK
 #		uses fast arhitecture specific locking (see the arh. specific section)
-# -DNOISY_REPLIES
-#		turns on appending User-agent and Content-length:0 to ser-generated
-#		replies; 
 # -DBUSY_WAIT
 #		uses busy waiting on the lock
 # -DADAPTIVE_WAIT
@@ -90,37 +87,29 @@ INSTALL-MAN = $(INSTALL) -m 644
 # -DNOSMP
 #		don't use smp compliant locking (faster but won't work on SMP machines)
 #		(not yet enabled)
-# -DWAIT
-#		protection against race condiditions; turn off only for debugging;
-#       to become non-optional if stable
-#
-# -SILENT_FR
-#		if defined, when FR timer hits (in tm) cancel is sent only if forking
-#		if used; otherwise, just delete the transaction without doing anything
+# -DNO_PINGTEL_TAG_HACK
+#		if enabled, To-header-field will be less liberal and will not accept
+#		'tag=' (tag parameter with equal sign and without value); it is called
+#		this way because such message was sighted from a Pingtel phone
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
-	 -DWAIT \
-	 -DSILENT_FR \
-	 -DNOISY_REPLIES -DVERY_NOISY_REPLIES\
-	 -DPINGTEL_TAG_HACK\
-	 -DF_MALLOC \
- 	 -DUSE_SYNONIM\
 	 -DUSE_IPV6 \
+	 -DEXTRA_DEBUG \
+	 -DVQ_MALLOC  -DDBG_QM_MALLOC \
+	 #-DCONTACT_BUG
+	 #-DF_MALLOC \
+	 #-DDBG_LOCK
 	 #-DNO_DEBUG \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
 	 #-DEXTRA_DEBUG 
-	 #-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
-	 #-DDBG_QM_MALLOC 
-# -DUSE_SHM_MEM
-#-DSTATS 
-#-DNO_LOG
-
-
+	 #-DUSE_SHM_MEM
+	 #-DSTATS 
+	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
 #mode = debug

@@ -1,5 +1,10 @@
 #ifdef DBG_QM_MALLOC
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+
 #include "../globals.h"
 #include "../config.h"
 
@@ -33,7 +38,7 @@ void memtest()
                                                                 __LINE__);
 	char tst_mem[TEST_SIZE];
 	struct MY_BLOCK* mem_block;
-	char *p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*p8,*p9;
+	char *p0,*p1,*p2,*p3,*p4,*p5,*p6/*,*p7,*p8,*p9*/;
 	int i, j, f;
 	char *p[TEST_RUN];
 	int t;

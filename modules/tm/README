@@ -1,5 +1,303 @@
-Issues
-- currently, each process keeps a T with properly
-  increased ref_count -> it can never be deleted
-  by the delete timer
-  Action: none, we don't mind
+#
+# $Id$
+#
+# TM Module README
+#
+# Module depends on: none
+#
+
+TM Module enables stateful processing of SIP transactions.
+The main use of stateful logic, which is costly in terms of
+memory and CPU, is some services inherently need state.
+For example, transaction-based accounting (module acc) needs
+to process transaction state as opposed to individual messages,
+and any kinds of forking must be implemented statefuly.
+Other use of stateful processing is it trading CPU caused by 
+retransmission processing for memory. That makes however only
+sense if CPU consumption per request is huge. For example,
+if you want to avoid costly DNS resolution for every retransmission
+of a request to an unresolveable destination, use stateful mode.
+Then, only the initial message burdens server by DNS queries,
+subsequent retranmissions will be dropped and will not result in
+more processes blocked by DNS resolution. The price is more 
+memory consumption and higher processing latency.
+
+From user's perspective, there are two major functions :
+t_relay and t_relay_to. Both setup transaction state,
+absorb retransmissions from upstream, generate downstream
+retransmissions and correlate replies to requests.
+t_relay forwards to current uri (be it original request's
+uri or a uri changed by some of uri-modifying functions,
+such as sethost). t_relay_to forwards to a specific address.
+
+In general, if TM is used, it copies clones of received SIP
+messages in shared memory. That costs the memory and also CPU
+time (memcpys, lookups, shmem locks, etc.) Note that non-TM
+functions operate over the received message in private memory,
+that means that any core operations will have no effect on
+statefuly processed messages after creating the transactional
+state. For example, calling addRecordRoute *after* t_relay
+is pretty useless, as the RR is added to privately held message
+whereas its TM clone is being forwarded.
+
+TM is quite big and uneasy to programm -- lot of mutexes, shared
+memory access, malloc & free, timers -- you really need to be careful
+when you do anything. To simplify TM programming, there is the
+instrument of callbacks. The callback mechanisms allow programmers
+to register their functions to specific event. See t_hooks.h
+for a list of possible events.
+
+Other things programmers may want to know is UAC -- it is 
+a very simplictic code which allows you to generate your own
+transactions. Particularly useful for things like NOTIFYs or
+IM gateways. The UAC takes care of all the transaction
+machinery: retransmissions , FR timeouts, forking, etc.
+See t_uac prototype in uac.h for more details. Who wants to
+see the transaction result may register for a callback.
+
+Exported parameters:
+--------------------
+
+Name:		fr_timer
+Type:		int (seconds)
+Default:	FR_TIME_OUT=30
+Desc:		timer which hits if no final reply for a request or
+			ACK for a negative INVITE reply arrives
+
+Name:		fr_inv_timer
+Type:		int(seconds)
+Default:	INV_FR_TIME_OUT=120
+Desc:		timer which hits if no final reply for an INVITE
+			arrives after a provisional message was received
+
+Name:		wt_timer
+Type:		int (seconds)
+Default:	WT_TIME_OUT=5
+Desc:		time for which a transaction stays in memory to absorb
+			delayed messages after it completed; also, when this
+			timer hits, retransmission of local cancels is stopped
+			(a puristic but complex behviour would be not to enter
+			wait state until local branches are finished by a final
+			reply or FR timer -- we simplified)
+
+Name:		delete_timer
+Type:		int (seconds)
+Default:	DEL_TIME_OUT=2
+Desc:		time after which a to-be-deleted transaction currently
+			ref-ed by a process will be tried to be deleted again
+
+Name:		retr_timer1p1, 2, 3
+Type:		int (seconds)
+Default:	RETR_T1=1, 2*RETR_T1, 4*RETR_T1
+Desc:		retransmission period
+
+Name:		retr_timer2
+Type:		int (seconds)
+Default:	RETR_T2=4
+Desc:		maximum retransmission period
+
+Name:		noisy_ctimer
+Type:		int (boolean)
+Default:	0 (FALSE)
+Desc:		if set, on FR timer INVITE transactions will be 
+			explicitly cancelled if possible, silently dropped
+			otherwise; preferably, it is turned off to allow
+			very long ringing; this behaviour is overridden if
+			a request is forked, or some functionality explicitly
+			turned it off for a transaction (like acc does to avoid
+			unaccounted transactions due to expired timer)
+
+Exported Functions:
+-------------------
+
+For use in scripts, t_relay_to and t_relay are design. All other
+functions are advanced and should be used with care.
+
+Name: 	t_relay_to
+Params:	ip address, port number
+Desc:	relay a message statefuly to a fixed destination; this along with
+		t_relay is the function most users want to use -- all other are
+		mostly for programming; programmers interested in writing TM
+		logic should review how t_relay is implemented in tm.c and how
+		TM callbacks work
+
+Name:	t_relay
+Params:	0
+Desc:	relay a message statefuly to destination indicated in current URI;
+		(if the original URI was rewritten by UsrLoc, RR, strip/prefix,
+		etc., the new URI will be taken); returns a negative value on
+		failure -- you may still want to send a negative reply upstream
+		statelessly not to leave upstream UAC in lurch
+Example: if (!t_relay()) { sl_reply_error(); break; };
+
+Name:	t_on_negative
+Params:	reply_route
+Desc:	sets reply routing block, to which control is passed after
+		a transaction completed with a negative result but before
+		sending a final reply; In the refered block, you can
+		either start a new branch (good for services such as
+		forward_on_no_reply) or send a final reply on your own
+		(good for example for message silo, which received 
+		a negative reply from upstream and wants to tell
+		upstream "202 I will take care of it"); Note that the
+		set of command which are useable within reply_routes is
+		strictly limited to rewriting URI, initiating new branches,
+		logging, and sending 'unsafe' replies (t_reply_unsafe). Any 
+		other commands may result in unpredictable behaviour and 
+		possible server failure.
+		Note that whenever reply_route is entered, uri is reset to
+		value which it had on relaying. If it temporarily changed
+		during a reply_route processing, subsequent reply_route
+		will ignore the changed value and use again the original
+		one.
+Example: route { t_on_negative("1"); t_relay(); } reply_route[1] {
+			revert_uri(); setuser("voicemail"); append_branch(); }
+
+		see test/onr.cfg for a more complex example of combination
+		of serial with parallel forking
+
+
+Name:	append_branch (actually part of core now)
+Params:	uri
+Desc:	adds a new destination to destination set; if used,
+		a subsequent call to t_relay (or t_forward_nonack, 
+		on which t_relay is based) than introduces
+	    a new branch and forks a transaction; append_branch may
+		also be called from reply processing -- this may 
+	    be particularly useful for services such as
+		"fork_on_no_reply"
+
+Name:	append_branch
+Params:	0
+Desc:	similarly to t_fork_to, it extends destination set
+		by a new entry; the difference is that current uri
+		is taken as new entry;
+Example: set_user("john"); t_fork(); set_user("alice");
+		 t_fork(); t_relay();
+
+-----   ----  ---- medium-advanced commands here --- on -----
+
+Name:	t_newtran
+Params: 0
+Desc:	creates a new transaction, returns a negative value on 
+	    error; this is the only way a script can add a new transaction 
+	    in an atomic way; typically, it is used to deploy a UAS
+Example: see test/uas.cfg: 
+	    if (t_newtran()) { log("UAS logic"); t_reply("999","hello"); }
+		else sl_reply_error();
+
+Name:	t_reply
+Params:	code, reason phrase
+Desc: 	sends a stateful reply after a transaction has been
+		established; see t_newtran for usage; note: never use
+	    t_reply from within reply_route ... always use t_reply_unsafe
+
+----- only --- advanced --- commands --- from --- here --- on -----
+
+Name:	t_lookup_request
+Params:	0
+Desc:	checks if a transaction exists; returns a positive value
+		if so, negative otherwise; most likely you will not want
+	    to use it, as a typicall application of a looku-up is to
+	    introduce a new transaction if none was found; however
+	    this is safely (atomically) done using t_newtran
+
+
+Name:	t_retransmit_reply
+Params:	0
+Desc:	retransmits a reply sent previously by UAS transaction
+
+Name:	t_release
+Params:	0
+Desc:	remove transaction from memory (it will be first put on
+		a wait timer to absorb delayed messages)
+
+Name:	t_forward_nonack
+Params:	ip, port
+Desc:	mainly for internal -- forward a non-ACK request statefuly
+
+Name:	register_tmcb
+Params:	callback type, callback function
+Desc:	for programmatic use only -- register a function to be called
+		back on an event; see t_hooks.h for more details
+
+Name:	load_tm
+Params:	*import_structure
+Desc:	for programmatic use only -- import exported TM functions;
+		see the acc module for an example of use
+
+Name:	t_reply_unsafe
+Params:	code, reason phrase
+Desc: 	sends a stateful reply after a transaction has been
+		established; it can only be used from reply processing;
+	    using it from regular processing will introduce erroneous
+	    conditions; using t_reply from reply_processing will
+	    introduce a deadlock
+
+External Usage of TM
+---------------------
+There are applications which would like to generate SIP
+transactions without too big onvolvement in SIP stack, transaction
+management, etc. An example of such an application
+is sending instant messages from a website. To address needs
+of such apps, SER accepts requests for new transactions via
+fifo pipes too. If you want to enable this feature, statrt
+FIFO server by configuration option
+	fifo="/tmp/filename"
+Then, an application can easily launch a new transaction by
+writing a transaction request to this named pipe. The request
+must follow very simple format, whic is
+ :t_uac:[<file_name>]\n<method>\n<dst uri>\n<CR_separated_headers>\n<body>\n\n\n
+(Filename is to where a report will be dumped. ser assumes /tmp
+as file's directory.)
+
+A convenience library fifo_uac.c implements this simple functionality.
+Note the the request write must be atomic, otherwise the request
+might get intermixes with writes from other writers.
+You can easily use it via Unix command-line tools, see the following
+example:
+---
+[jiri@bat jiri]$ cat > /tmp/fifo
+:t_uac:xxx
+MESSAGE
+sip:mrx@iptel.org
+header:value
+foo:bar
+bznk:hjhjk
+p_header: p_value
+
+body body body
+yet body
+end of body
+
+
+
+---
+or use an example file and call cat test/transaction.fifo > /tmp/fifo
+
+
+Known Issues
+-----------
+- need to revisit profiling again
+- review whether there is not potential for to-tag
+  rewriting and ACK matching
+- we don't have authentication merging on forking
+- branch tid is not used yet
+- local ACK/CANCELs copy'n'pastes Route and ignores deleted
+  Routes
+- 6xx should be delayed 
+- possibly, performance could be improved by not parsing non-INVITEs,
+  as they do not be replied with 100, and do not result in ACK/CANCELs,
+  and other things which take parsing. However, we need to rethink
+  whether we don't need parsed headers later for something else.
+  Remember, when we now conserver a request in sh_mem, we can't apply
+  any pkg_mem operations to it any more. (that might be redesigned too)
+- t_replicate should be done more cleanly -- Vias, Routes, etc. should
+  be removed from a message prior to replicating it
+- SNMP support
+- lookup fails to recognize subsequent requests which have additional 
+  leading spaces in header field values
+- make UAC session-aware (as opposed to just transaction aware) -- needed
+  for keeing SUB-NOT dialog state, etc. Currently, there are only
+  place-holders for in in TM.
+- places labeled with "HACK" strongly deserve beautification

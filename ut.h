@@ -9,6 +9,9 @@
 
 #include "dprint.h"
 
+
+struct sip_msg;
+
 /* returns string beginning and length without insignificant chars */
 #define trim_len( _len, _begin, _mystr ) \
 	do{ 	static char _c; \
@@ -42,6 +45,9 @@
 	translate_pointer((_p_msg)->orig,(_p_msg)->buf,(_via)->name.s)
 
 
+/* char to hex conversion table */
+static char fourbits2char[16] = { '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
 
 /* converts a str to an u. short, returns the u. short and sets *err on
@@ -156,7 +162,7 @@ static inline char* q_memchr(char* p, int c, unsigned int size)
 }
 	
 
-static int reverse_hex2int( char *c, int len )
+inline static int reverse_hex2int( char *c, int len )
 {
 	char *pc;
 	int r;
@@ -195,5 +201,30 @@ inline static int int2reverse_hex( char **c, int *size, int nr )
 	return nr ? -1 /* number not processed; too little space */ : 1;
 }
 
+/* double output length assumed ; does NOT zero-terminate */
+inline static int string2hex( 
+	/* input */ unsigned char *str, int len,
+	/* output */ char *hex )
+{
+	int orig_len;
+
+	if (len==0) {
+		*hex='0';
+		return 1;
+	}
+
+	orig_len=len;
+	while ( len ) {
+
+		*hex=fourbits2char[(*str) >> 4];
+		hex++;
+		*hex=fourbits2char[(*str) & 0xf];
+		hex++;
+		len--;
+		str++;
+
+	}
+	return orig_len-len;
+}
 
 #endif

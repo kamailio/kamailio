@@ -5,7 +5,10 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
-
+/* timer timestamp value indicating a timer has been 
+   deactived and shall not be executed
+*/
+#define TIMER_DELETED	1
 
 
 
@@ -32,6 +35,7 @@ extern unsigned int timer_id2timeout[NR_OF_TIMER_LISTS];
 struct timer;
 
 #include "lock.h"
+#include "t_funcs.h"
 
 
 /* all you need to put a cell in a timer list
@@ -40,7 +44,7 @@ typedef struct timer_link
 {
 	struct timer_link *next_tl;
 	struct timer_link *prev_tl;
-	unsigned int       time_out;
+	volatile unsigned int       time_out;
 	void              *payload;
 	struct timer      *timer_list;
 	enum timer_groups  tg;
@@ -63,5 +67,15 @@ void reset_timer_list( struct s_table* hash_table, enum lists list_id);
 void remove_timer_unsafe(  struct timer_link* tl ) ;
 void add_timer_unsafe( struct timer*, struct timer_link*, unsigned int);
 struct timer_link  *check_and_split_time_list( struct timer*, int);
+
+void reset_timer( struct s_table *hash_table,
+	struct timer_link* tl );
+/* determine timer length and put on a correct timer list */
+void set_timer( struct s_table *hash_table,
+	struct timer_link *new_tl, enum lists list_id );
+/* similar to set_timer, except it allows only one-time
+   timer setting and all later attempts are ignored */
+void set_1timer( struct s_table *hash_table,
+	struct timer_link *new_tl, enum lists list_id );
 
 #endif

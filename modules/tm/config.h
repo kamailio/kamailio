@@ -10,9 +10,14 @@
 #define T_TABLE_POWER    12
 #define TABLE_ENTRIES    (1 << (T_TABLE_POWER))
 
-/* maximum number of forks per transaction */
-enum fork_list { MAX_FORK=4 , NO_RPL_BRANCH ,NR_OF_CLIENTS};
-enum fork_type { DEFAULT, NO_RESPONSE };
+/* this is where table size is defined now -- sort of
+   ugly, core should not be bothered by TM table size,
+   but on the other, core's stateless forwarding should 
+   have consistent branch generation with stateful mode
+   and needs to calculate branch/hash, for which table size
+   is needed 
+*/
+#include "../../hash_func.h"
 
 /* maximumum length of localy generated acknowledgement */
 #define MAX_ACK_LEN   1024
@@ -41,11 +46,9 @@ enum fork_type { DEFAULT, NO_RESPONSE };
 #define REPLY_OVERBUFFER_LEN 160
 #define TAG_OVERBUFFER_LEN 32
 
-/* character which separates individual parts of MPLS-ized branch */
-#ifdef BRUT_HACK
-#	define BRANCH_SEPARATOR 'X'
-#else
-#	define BRANCH_SEPARATOR '.'
-#endif
-
+/* dimensions of FIFO server */
+#define MAX_METHOD	64
+#define MAX_HEADER	1024
+#define MAX_BODY	1024
+#define MAX_DST	512
 #endif

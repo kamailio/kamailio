@@ -46,6 +46,7 @@ SEND	send
 LOG		log
 ERROR	error
 ROUTE	route
+REPLY_ROUTE reply_route
 EXEC	exec
 SETFLAG		setflag
 RESETFLAG	resetflag
@@ -57,8 +58,10 @@ SET_USER		"rewriteuser"|"setuser"|"setu"
 SET_USERPASS	"rewriteuserpass"|"setuserpass"|"setup"
 SET_PORT		"rewriteport"|"setport"|"setp"
 SET_URI			"rewriteuri"|"seturi"
+REVERT_URI		"revert_uri"
 PREFIX			"prefix"
 STRIP			"strip"
+APPEND_BRANCH	"append_branch"
 IF				"if"
 ELSE			"else"
 
@@ -94,7 +97,12 @@ STAT	statistics
 MAXBUFFER maxbuffer
 CHILDREN children
 CHECK_VIA	check_via
-LOOP_CHECKS	loop_checks
+SYN_BRANCH syn_branch
+SIP_WARNING sip_warning
+FIFO fifo
+FIFO_MODE fifo_mode
+SERVER_SIGNATURE server_signature
+REPLY_TO_VIA reply_to_via
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -148,6 +156,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
 <INITIAL>{LEN_GT}	{ count(); yylval.strval=yytext; return LEN_GT; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
+<INITIAL>{REPLY_ROUTE}	{ count(); yylval.strval=yytext; return REPLY_ROUTE; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
@@ -155,8 +164,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SET_USERPASS}	{ count(); yylval.strval=yytext; return SET_USERPASS; }
 <INITIAL>{SET_PORT}	{ count(); yylval.strval=yytext; return SET_PORT; }
 <INITIAL>{SET_URI}	{ count(); yylval.strval=yytext; return SET_URI; }
+<INITIAL>{REVERT_URI}	{ count(); yylval.strval=yytext; return REVERT_URI; }
 <INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
 <INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
+<INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; return APPEND_BRANCH; }
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
@@ -181,7 +192,12 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MAXBUFFER}	{ count(); yylval.strval=yytext; return MAXBUFFER; }
 <INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
-<INITIAL>{LOOP_CHECKS}	{ count(); yylval.strval=yytext; return LOOP_CHECKS; }
+<INITIAL>{SYN_BRANCH}	{ count(); yylval.strval=yytext; return SYN_BRANCH; }
+<INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
+<INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
+<INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
+<INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
+<INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 

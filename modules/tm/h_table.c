@@ -2,15 +2,28 @@
  * $Id$
  */
 
-#include "hash_func.h"
+#include "../../mem/shm_mem.h"
+#include "../../hash_func.h"
 #include "h_table.h"
 #include "../../dprint.h"
-#include "sh_malloc.h"
 #include "../../md5utils.h"
 /* bogdan test */
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../error.h"
+#include "t_reply.h"
+#include "t_cancel.h"
+
+unsigned int transaction_count( void )
+{
+	unsigned int i;
+	unsigned int count;
+
+	count=0;	
+	for (i=0; i<TABLE_ENTRIES; i++) 
+		count+=hash_table->entrys[i].entries;
+	return count;
+}
 
 
 
@@ -18,6 +31,7 @@ void free_cell( struct cell* dead_cell )
 {
 	char *b;
 	int i;
+	struct sip_msg *rpl;
 
 	release_cell_lock( dead_cell );
 	shm_lock();
@@ -27,31 +41,35 @@ void free_cell( struct cell* dead_cell )
 		sip_msg_free_unsafe( dead_cell->uas.request );
 	if ( dead_cell->uas.response.buffer )
 		shm_free_unsafe( dead_cell->uas.response.buffer );
+	if (dead_cell->uas.to_tag.s)
+		shm_free_unsafe(dead_cell->uas.to_tag.s);
+
+	/* completion callback */
+	if (dead_cell->cbp) shm_free_unsafe(dead_cell->cbp);
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
 	{
 		/* retransmission buffer */
 		if ( (b=dead_cell->uac[i].request.buffer) )
-		{
 			shm_free_unsafe( b );
-			b = 0;
-		}
+#ifdef OLD_CANCEL
 		if ( (b=dead_cell->uac[i].request.ack) )
-		{
 			shm_free_unsafe( b );
-			b = 0;
-		}
 		if ( (b=dead_cell->uac[i].request.cancel) )
-		{
 			shm_free_unsafe( b );
-			b = 0;
+#endif
+		b=dead_cell->uac[i].local_cancel.buffer;
+		if (b!=0 && b!=BUSY_BUFFER)
+			shm_free_unsafe( b );
+		rpl=dead_cell->uac[i].reply;
+		if (rpl && rpl!=FAKED_REPLY) {
+			sip_msg_free_unsafe( rpl );
 		}
+#ifdef _OBSOLETED
 		if ( (b=dead_cell->uac[i].rpl_buffer.s) )
-		{
 			shm_free_unsafe( b );
-			b = 0;
-		}
+#endif
 	}
 
 	/* the cell's body */
@@ -67,16 +85,16 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
 	unsigned int i;
-#ifndef USE_SYNONIM
-	str          src[8];
-#endif
+	unsigned int rand;
+	int size;
+	char *c;
+	struct ua_client *uac;
 
-	/* do we have the source for the build process? */
-	if (!p_msg)
-		return NULL;
+	/* avoid 'unitialized var use' warning */
+	rand=0;
 
 	/* allocs a new cell */
-	new_cell = (struct cell*)sh_malloc( sizeof( struct cell ) );
+	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
 	if  ( !new_cell ) {
 		ser_error=E_OUT_OF_MEM;
 		return NULL;
@@ -90,66 +108,75 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.fr_timer.tg=TG_FR;
 	new_cell->uas.response.fr_timer.payload =
 		new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
+	new_cell->uas.response.my_T=new_cell;
 
 	/* bogdan - debug */
 	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
 		via_s(p_msg->via1,p_msg));*/
 
-	new_cell->uas.request = sip_msg_cloner(p_msg);
+	if (p_msg) {
+		new_cell->uas.request = sip_msg_cloner(p_msg);
+		if (!new_cell->uas.request)
+			goto error;
+	}
 
-    /* bogdan - debug */
-    /*fprintf(stderr,"after clone VIA |%.*s|\n",
-		via_len(new_cell->uas.request->via1),
-		via_s(new_cell->uas.request->via1,new_cell->uas.request) );*/
-
-	if (!new_cell->uas.request)
-		goto error;
-	new_cell->uas.tag = &( get_to(new_cell->uas.request)->tag_value );
+	/* new_cell->uas.to_tag = &( get_to(new_cell->uas.request)->tag_value ); */
 	new_cell->uas.response.my_T = new_cell;
 
 	/* UAC */
-	for(i=0;i<MAX_FORK;i++)
+	for(i=0;i<MAX_BRANCHES;i++)
 	{
-		new_cell->uac[i].request.my_T = new_cell;
-		new_cell->uac[i].request.branch = i;
-		new_cell->uac[i].request.fr_timer.tg = TG_FR;
-		new_cell->uac[i].request.retr_timer.tg = TG_RT;
-		new_cell->uac[i].request.retr_timer.payload = 
-			new_cell->uac[i].request.fr_timer.payload =
-			&(new_cell->uac[i].request);
+		uac=&new_cell->uac[i];
+		uac->request.my_T = new_cell;
+		uac->request.branch = i;
+		uac->request.fr_timer.tg = TG_FR;
+		uac->request.retr_timer.tg = TG_RT;
+		uac->request.retr_timer.payload = 
+			uac->request.fr_timer.payload =
+			&uac->request;
+		uac->local_cancel=uac->request;
 	}
 
 	/* global data for transaction */
-	new_cell->hash_index = p_msg->hash_index;
+	if (p_msg) {
+		new_cell->hash_index = p_msg->hash_index;
+	} else {
+		rand = random();
+		new_cell->hash_index = rand % TABLE_ENTRIES ;
+	}
 	new_cell->wait_tl.payload = new_cell;
 	new_cell->dele_tl.payload = new_cell;
 	new_cell->relaied_reply_branch   = -1;
-	new_cell->T_canceled = T_UNDEFINED;
+	/* new_cell->T_canceled = T_UNDEFINED; */
 	new_cell->wait_tl.tg=TG_WT;
 	new_cell->dele_tl.tg=TG_DEL;
-#ifndef USE_SYNONIM
-	src[0]= p_msg->from->body;
-	src[1]= p_msg->to->body;
-	src[2]= p_msg->callid->body;
-	src[3]= p_msg->first_line.u.request.uri;
-	src[4]= get_cseq( p_msg )->number;
 
-	/* topmost Via is part of transaction key as well ! */
-	src[5]= p_msg->via1->host;
-	src[6]= p_msg->via1->port_str;
-	if (p_msg->via1->branch) {
-		src[7]= p_msg->via1->branch->value;
-		MDStringArray ( new_cell->md5, src, 8 );
-	} else {
-		MDStringArray ( new_cell->md5, src, 7 );
+	if (!syn_branch) {
+		if (p_msg) {
+			/* char value of a proxied transaction is
+			   calculated out of header-fileds forming
+			   transaction key
+			*/
+			char_msg_val( p_msg, new_cell->md5 );
+		} else {
+			/* char value for a UAC transaction is created
+			   randomly -- UAC is an originating stateful element 
+			   which cannot be refreshed, so the value can be
+			   anything
+			*/
+			/* HACK : not long enough */
+			c=new_cell->md5;
+			size=MD5_LEN;
+			memset(c, '0', size );
+			int2reverse_hex( &c, &size, rand );
+		}
 	}
- #endif
 
 	init_cell_lock(  new_cell );
 	return new_cell;
 
 error:
-	sh_free(new_cell);
+	shm_free(new_cell);
 	return NULL;
 }
 
@@ -183,7 +210,7 @@ void free_hash_table( struct s_table *hash_table )
 		for ( i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
 			release_timerlist_lock( &(hash_table->timers[i]) );
 
-		sh_free( hash_table );
+		shm_free( hash_table );
 	}
 }
 
@@ -198,7 +225,7 @@ struct s_table* init_hash_table()
 	int              i;
 
 	/*allocs the table*/
-	hash_table = (struct s_table*)sh_malloc( sizeof( struct s_table ) );
+	hash_table = (struct s_table*)shm_malloc( sizeof( struct s_table ) );
 	if ( !hash_table )
 		goto error;
 
@@ -248,6 +275,9 @@ void insert_into_hash_table_unsafe( struct s_table *hash_table,
 	} else p_entry->first_cell = p_cell;
 
 	p_entry->last_cell = p_cell;
+
+	/* update stats */
+	p_entry->entries++;
 }
 
 
@@ -255,21 +285,22 @@ void insert_into_hash_table_unsafe( struct s_table *hash_table,
 
 void insert_into_hash_table(struct s_table *hash_table,  struct cell * p_cell)
 {
-	lock( &(hash_table->entrys[ p_cell->hash_index ].mutex) );
+	LOCK_HASH(p_cell->hash_index);
 	insert_into_hash_table_unsafe( hash_table,  p_cell );
-	unlock( &(hash_table->entrys[ p_cell->hash_index ].mutex) );
+	UNLOCK_HASH(p_cell->hash_index);
 }
 
 
 
 
 /*  Un-link a  cell from hash_table, but the cell itself is not released */
-void remove_from_hash_table(struct s_table *hash_table,  struct cell * p_cell)
+void remove_from_hash_table_unsafe(struct s_table *hash_table,  
+ struct cell * p_cell)
 {
 	struct entry*  p_entry  = &(hash_table->entrys[p_cell->hash_index]);
 
 	/* unlink the cell from entry list */
-	lock( &(p_entry->mutex) );
+	/* lock( &(p_entry->mutex) ); */
 
 	if ( p_cell->prev_cell )
 		p_cell->prev_cell->next_cell = p_cell->next_cell;
@@ -280,8 +311,10 @@ void remove_from_hash_table(struct s_table *hash_table,  struct cell * p_cell)
 		p_cell->next_cell->prev_cell = p_cell->prev_cell;
 	else
 		p_entry->last_cell = p_cell->prev_cell;
+	/* update stats */
+	p_entry->entries--;
 
-	unlock( &(p_entry->mutex) );
+	/* unlock( &(p_entry->mutex) ); */
 }
 
 

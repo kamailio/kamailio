@@ -22,6 +22,7 @@
 #define CHILD_NO    8
 
 #define RT_NO 10 /* routing tables number */
+#define REPLY_RT_NO 10 /* reply routing tables number */
 #define DEFAULT_RT 0 /* default routing table */
 
 #define MAX_REC_LEV 100 /* maximum number of recursive calls */
@@ -46,8 +47,8 @@
 
 #define MAX_WARNING_LEN  256
 		
-#define MY_BRANCH ";branch=0"
-#define MY_BRANCH_LEN 9
+#define MY_BRANCH ";branch="
+#define MY_BRANCH_LEN 8
 
 
 #define MAX_PORT_LEN 7 /* ':' + max 5 letters + \0 */
@@ -88,8 +89,16 @@
 #define MAX_VIA_LINE_SIZE	240
 #define MAX_RECEIVED_SIZE	57
 
-/* maximum number of processes is constrained by capacity of
-   process bitmaps */
-#define MAX_PROCESSES (sizeof( process_bm_t) * 8 )
+/* maximum number of branches per transaction */
+#define MAX_BRANCHES    4
 
+/* maximum length of a FIFO server command */
+#define MAX_FIFO_COMMAND 512
+
+/* buffer dimensions for FIFO server */
+#define MAX_CONSUME_BUFFER 1024
+/* where reply pipes may be opened */
+#define FIFO_DIR "/tmp/"
+/* max length of the text of fifo 'print' command */
+#define MAX_PRINT_TEXT 256
 #endif

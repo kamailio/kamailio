@@ -1,5 +1,16 @@
 /*
  * $Id$
+ * 
+ * cloning a message into shared memory (TM keeps a snapshot
+ * of messages in memory); note that many operations, which
+ * allocate pkg memory (such as parsing) cannot be used with
+ * a cloned message -- it would result in linking pkg structures
+ * to shmem msg and eventually in a memory error 
+ *
+ * the cloned message is stored in a single memory fragment to
+ * save too many shm_mallocs -- these are expensive as they
+ * not only take lookup in fragment table but also a shmem lock
+ * operation (the same for shm_free)
  */
 
 #include <stdio.h>
@@ -154,6 +165,12 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 						len+=ROUND4(sizeof(struct via_param ));
 				}
 				break;
+			default:
+				if (hdr->parsed) {
+					LOG(L_WARN, "WARNING: sip_msg_cloner: "
+						"header body ignored: %d\n", hdr->type );
+				}
+				break;
 		}/*switch*/
 	}/*for all headers*/
 
@@ -184,7 +201,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
 		len+=rpl_lump->text.len;
 
-	p=(char *)sh_malloc(len);foo=p;
+	p=(char *)shm_malloc(len);foo=p;
 	if (!p)
 	{
 		LOG(L_ERR , "ERROR: sip_msg_cloner: cannot allocate memory\n" );
@@ -252,6 +269,11 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 			hdr->name.s);
 		new_hdr->body.s = translate_pointer(new_msg->buf, org_msg->buf,
 			hdr->body.s);
+		/* by default, we assume we don't understand this header in TM
+		   and better set it to zero; if we do, we will set a specific
+		   valu in the following switch statement
+		*/
+		new_hdr->parsed=0;
 
 		switch (hdr->type)
 		{
@@ -359,6 +381,42 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				break;
 			case HDR_ROUTE :
 				new_msg->route = new_hdr;
+				break;
+			case HDR_RECORDROUTE :
+				new_msg->record_route = new_hdr;
+				break;
+			case HDR_CONTENTTYPE :
+				new_msg->content_type = new_hdr;
+				break;
+			case HDR_CONTENTLENGTH :
+				new_msg->content_length = new_hdr;
+				break;
+			case HDR_AUTHORIZATION :
+				new_msg->authorization = new_hdr;
+				break;
+			case HDR_EXPIRES :
+				new_msg->expires = new_hdr;
+				break;
+			case HDR_PROXYAUTH :
+				new_msg->proxy_auth = new_hdr;
+				break;
+			case HDR_WWWAUTH :
+				new_msg->www_auth = new_hdr;
+				break;
+			case HDR_SUPPORTED :
+				new_msg->supported = new_hdr;
+				break;
+			case HDR_REQUIRE :
+				new_msg->require = new_hdr;
+				break;
+			case HDR_PROXYREQUIRE :
+				new_msg->proxy_require = new_hdr;
+				break;
+			case HDR_UNSUPPORTED :
+				new_msg->unsupported = new_hdr;
+				break;
+			case HDR_ALLOW :
+				new_msg->unsupported = new_hdr;	
 				break;
 		}/*switch*/
 

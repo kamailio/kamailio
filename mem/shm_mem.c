@@ -5,6 +5,8 @@
 
 #ifdef SHM_MEM
 
+#include <stdlib.h>
+
 #include "shm_mem.h"
 #include "../config.h"
 #include "../globals.h"
@@ -81,6 +83,37 @@ inline static void* sh_realloc(void* p, unsigned int size)
     guarantee for buffer content; if allocation fails, we return
     NULL
 */
+
+#ifdef DBG_QM_MALLOC
+void* _shm_resize( void* p, unsigned int s, char* file, char* func, unsigned int line)
+#else
+void* _shm_resize( void* p , unsigned int s)
+#endif
+{
+#ifdef VQ_MALLOC
+	struct vqm_frag *f;
+#endif
+	if (p==0) {
+		DBG("WARNING:vqm_resize: resize(0) called\n");
+		return shm_malloc( s );
+	}
+#	ifdef DBG_QM_MALLOC
+#	ifdef VQ_MALLOC
+	f=(struct  vqm_frag*) ((char*)p-sizeof(struct vqm_frag));
+	DBG("_shm_resize(%p, %d), called from %s: %s(%d)\n",  
+		p, s, file, func, line);
+	VQM_DEBUG_FRAG(shm_block, f);
+	if (p>(void *)shm_block->core_end || p<(void*)shm_block->init_core){
+		LOG(L_CRIT, "BUG: vqm_free: bad pointer %p (out of memory block!) - "
+				"aborting\n", p);
+		abort();
+	}
+#endif
+#	endif
+	return sh_realloc( p, s ); 
+}
+
+#ifdef _OBSOLETED
 #ifdef DBG_QM_MALLOC
 void* _shm_resize( void* p, unsigned int s, char* file, char* func, unsigned int line)
 #else
@@ -108,10 +141,11 @@ void* _shm_resize( void* p , unsigned int s)
 #	ifdef VQ_MALLOC
 	f=(struct  vqm_frag*) ((char*)p-sizeof(struct vqm_frag));
 #	ifdef DBG_QM_MALLOC
-	DBG("_shm_resize(%x, %d), called from %s: %s(%d)\n",  p, s, file, func, line);
+	DBG("_shm_resize(%p, %d), called from %s: %s(%d)\n",  
+		p, s, file, func, line);
 	VQM_DEBUG_FRAG(shm_block, f);
 	if (p>(void *)shm_block->core_end || p<(void*)shm_block->init_core){
-		LOG(L_CRIT, "BUG: vqm_free: bad pointer %x (out of memory block!) - "
+		LOG(L_CRIT, "BUG: vqm_free: bad pointer %p (out of memory block!) - "
 				"aborting\n", p);
 		abort();
 	}
@@ -126,6 +160,7 @@ void* _shm_resize( void* p , unsigned int s)
 	/* we can't make the request happy with current size */
 	return sh_realloc( p, s ); 
 }
+#endif
 
 
 

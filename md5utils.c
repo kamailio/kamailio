@@ -80,8 +80,7 @@ void MDStringArray (char *dst, str src[], int size)
   }
   MDFinal (digest, &context);
 
-  for (i=0; i<16; i++)
-    sprintf(dst+i*2, "%02x", digest[i] );
+  string2hex(digest, 16, dst );
+  DBG("DEBUG: MD5 calculated: %.*s\n", MD5_LEN, dst );
 
-  DBG("DEBUG: MD5 calculated: %32s\n", dst );
 }

@@ -74,3 +74,13 @@ void free_hdr_field_lst(struct hdr_field* hf)
 		pkg_free(foo);
 	}
 }
+
+void dump_hdr_field( struct hdr_field* hf )
+{
+	LOG(L_ERR, "DEBUG: dump_hdr_field: type=%d, name=%.*s, "
+		"body=%.*s, parsed=%p, next=%p\n",
+		hf->type, hf->name.len, hf->name.s,
+		hf->body.len, hf->body.s,
+		hf->parsed, hf->next );
+}
+

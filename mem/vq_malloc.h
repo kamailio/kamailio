@@ -113,6 +113,7 @@ struct vqm_block{
 struct vqm_block* vqm_malloc_init(char* address, unsigned int size);
 
 #ifdef DBG_QM_MALLOC
+void vqm_debug_frag(struct vqm_block* qm, struct vqm_frag* f);
 void* vqm_malloc(struct vqm_block*, unsigned int size, char* file, char* func, 
 					unsigned int line);
 void  vqm_free(struct vqm_block*, void* p, char* file, char* func, 

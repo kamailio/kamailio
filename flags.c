@@ -16,12 +16,12 @@ int setflag( struct sip_msg* msg, flag_t flag ) {
 }
 
 int resetflag( struct sip_msg* msg, flag_t flag ) {
-	msg->flags &= ~ flag;
+	msg->flags &= ~ (1 << flag);
 	return 1;
 }
 
 int isflagset( struct sip_msg* msg, flag_t flag ) {
-	return msg->flags & (1<<flag) ? 1 : -1;
+	return (msg->flags & (1<<flag)) ? 1 : -1;
 }
 
 int flag_in_range( flag_t flag ) {

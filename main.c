@@ -36,6 +36,7 @@
 #include "resolve.h"
 #include "parser/parse_hname2.h"
 #include "parser/digest/digest_parser.h"
+#include "fifo_server.h"
 
 
 #include "stats.h"
@@ -93,21 +94,6 @@ static char flags[]=
 #ifdef DEBUG_DMALLOC
 ", DEBUG_DMALLOC"
 #endif
-#ifdef SILENT_FR
-", SILENT_FR"
-#endif
-#ifdef USE_SYNONIM
-", USE_SYNONIM"
-#endif
-#ifdef NOISY_REPLIES
-", NOISY_REPLIES"
-#endif
-#ifdef VERY_NOISY_REPLIES
-", VERY_NOISY_REPLIES"
-#endif
-#ifdef NEW_HNAME
-", NEW_HNAME"
-#endif
 #ifdef FAST_LOCK
 ", FAST_LOCK"
 #ifdef BUSY_WAIT
@@ -125,7 +111,6 @@ static char flags[]=
 static char help_msg[]= "\
 Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
 Options:\n\
-    -c           Perform loop checks and compute branches\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -p port      Listen on the specified port (default: 5060)\n\
                  applies to the last address in -l and to all \n\
@@ -173,8 +158,8 @@ void print_ct_constants()
 #endif
 */
 	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
-			" MAX_URI_SIZE %d, MAX_PROCESSES %d, BUF_SIZE %d\n",
-		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, MAX_PROCESSES,
+			" MAX_URI_SIZE %d, BUF_SIZE %d\n",
+		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, 
 		BUF_SIZE );
 }
 
@@ -209,14 +194,29 @@ int sig_flag = 0;              /* last signal received */
 int debug = 0;
 int dont_fork = 0;
 int log_stderr = 0;
-int check_via =  0;        /* check if reply first via host==us */
-int loop_checks = 0;	/* calculate branches and check for loops/spirals */
-int received_dns = 0;      /* use dns and/or rdns or to see if we need to 
-                              add a ;received=x.x.x.x to via: */
+/* check if reply first via host==us */
+int check_via =  0;        
+/* shall use stateful synonym branches? faster but not reboot-safe */
+int syn_branch = 0;
+/* should replies include extensive warnings? by default yes,
+   good for trouble-shooting
+*/
+int sip_warning = 1;
+/* should localy-generated messages include server's signature?
+   be default yes, good for trouble-shooting
+*/
+int server_signature=1;
+/* use dns and/or rdns or to see if we need to add 
+   a ;received=x.x.x.x to via: */
+int received_dns = 0;      
 char* working_dir = 0;
 char* chroot_dir = 0;
 int uid = 0;
 int gid = 0;
+/* a hint to reply modules whether they should send reply
+   to IP advertised in Via or IP from which a request came
+*/
+int reply_to_via=0;
 
 #if 0
 char* names[MAX_LISTEN];              /* our names */
@@ -497,6 +497,12 @@ int main_loop()
 			LOG(L_ERR, "init_child failed\n");
 			goto error;
 		}
+
+		/* if configured to do so, start a server for accepting FIFO commands */
+		if (open_fifo_server()<0) {
+			LOG(L_ERR, "opening fifo server failed\n");
+			goto error;
+		}
 		is_main=1; /* hack 42: call init_child with is_main=0 in case
 					 some modules wants to fork a child */
 		
@@ -542,6 +548,11 @@ int main_loop()
 			/*parent*/
 			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
 		}
+	}
+	/* if configured to do so, start a server for accepting FIFO commands */
+	if (open_fifo_server()<0) {
+		LOG(L_ERR, "opening fifo server failed\n");
+		goto error;
 	}
 	/*this is the main process*/
 	pids[process_no]=getpid();
@@ -590,6 +601,7 @@ int main_loop()
 static void sig_usr(int signo)
 {
 
+
 	if (is_main){
 		if (sig_flag==0) sig_flag=signo;
 		else /*  previous sig. not processed yet, ignoring? */
@@ -604,6 +616,11 @@ static void sig_usr(int signo)
 			case SIGINT:
 			case SIGPIPE:
 			case SIGTERM:
+					/* print memory stats for non-main too */
+					#ifdef PKG_MALLOC
+					LOG(L_INFO, "Memory status (pkg):\n");
+					pkg_status();
+					#endif
 					exit(0);
 					break;
 			case SIGUSR1:
@@ -675,7 +692,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:m:b:l:n:rRvcdDEVhw:t:u:g:P:";
+	"f:p:m:b:l:n:rRvdDEVhw:t:u:g:P:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -747,9 +764,6 @@ int main(int argc, char** argv)
 					break;
 			case 'v':
 					check_via=1;
-					break;
-			case 'c':
-					loop_checks=1;
 					break;
 			case 'r':
 					received_dns|=DO_DNS;
@@ -847,6 +861,11 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
+	/* register a diagnostic FIFO command */
+	if (register_fifo_cmd(print_fifo_cmd, "print", 0)<0) {
+		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+		goto error;
+	}
 
 	/*register builtin  modules*/
 	register_builtin_modules();
@@ -869,17 +888,19 @@ int main(int argc, char** argv)
 
 	
 	if (children_no<=0) children_no=CHILD_NO;
+#ifdef _OBSOLETED
 	else if (children_no >= MAX_PROCESSES ) {
 		fprintf(stderr, "ERROR: too many children processes configured;"
 				" maximum is %d\n",
 			MAX_PROCESSES-1 );
 		goto error;
 	}
+#endif
 	
 	if (working_dir==0) working_dir="/";
 	/*alloc pids*/
 #ifdef SHM_MEM
-	pids=shm_malloc(sizeof(int)*(children_no+1));
+	pids=shm_malloc(sizeof(int)*(children_no+1/*timer */+1/*fifo*/));
 #else
 	pids=malloc(sizeof(int)*(children_no+1));
 #endif

@@ -17,6 +17,7 @@
 #include "sr_module.h"
 #include "mem/mem.h"
 #include "globals.h"
+#include "dset.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -179,6 +180,18 @@ int do_action(struct action* a, struct sip_msg* msg)
 			ret=1;
 			break;
 
+		/* jku -- introduce a new branch */
+		case APPEND_BRANCH_T:
+			if ((a->p1_type!=STRING_ST)) {
+				LOG(L_CRIT, "BUG: do_action: bad append_branch_t %d\n",
+					a->p1_type );
+				ret=E_BUG;
+				break;
+			}
+			ret=append_branch( msg, a->p1.string, 
+				a->p1.string ? strlen(a->p1.string):0 );
+			break;
+
 		/* jku begin: is_length_greater_than */
 		case LEN_GT_T:
 			if (a->p1_type!=NUMBER_ST) {
@@ -279,6 +292,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 			if (ret!=0){
 				LOG(L_NOTICE, "WARNING: exec() returned %d\n", ret);
 			}
+			ret=1;
+			break;
+		case REVERT_URI_T:
+			if (msg->new_uri.s) {
+				pkg_free(msg->new_uri.s);
+				msg->new_uri.len=0;
+				msg->new_uri.s=0;
+			};
 			ret=1;
 			break;
 		case SET_HOST_T:

@@ -16,6 +16,8 @@
 #include "mem/mem.h"
 #include "stats.h"
 #include "ip_addr.h"
+#include "script_cb.h"
+#include "dset.h"
 
 
 #ifdef DEBUG_DMALLOC
@@ -35,8 +37,13 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 #endif
 
 	msg=pkg_malloc(sizeof(struct sip_msg));
-	if (msg==0) goto error1;
+	if (msg==0) {
+		LOG(L_ERR, "ERROR: receive_msg: no mem for sip_msg\n");
+		goto error00;
+	}
 	msg_no++;
+	/* number of vias parsed -- good for diagnostic info in replies */
+	via_cnt=0;
 
 	memset(msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
@@ -52,16 +59,23 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 	msg->orig=(char*) pkg_malloc(len+1);
 	if (msg->orig==0){
 		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
-		goto error1;
+		goto error01;
 	}
 	memcpy(msg->orig, buf, len);
 	msg->orig[len]=0; /* null terminate it,good for using str* functions
 						 on it*/
 	
 	if (parse_msg(buf,len, msg)!=0){
-		goto error;
+		LOG(L_ERR, "ERROR: receive_msg: parse_msg failed\n");
+		goto error02;
 	}
 	DBG("After parse_msg...\n");
+
+	/* execute pre-script callbacks, if any; -jiri */
+	exec_pre_cb(msg);
+	/* ... and clear branches from previous message */
+	clear_branches();
+
 	if (msg->first_line.type==SIP_REQUEST){
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
@@ -71,22 +85,20 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 		}
 		/* check if neccesarry to add receive?->moved to forward_req */
 
-		/* loop checks */
-		if (loop_checks) {
-			DBG("WARNING: receive_msg: Placeholder for loop check."
-				" NOT implemented yet.\n");
-		}
-		
 		/* exec routing script */
 		DBG("preparing to run routing scripts...\n");
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
 #endif
+
 		if (run_actions(rlist[0], msg)<0){
+
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error;
 		}
+
+
 #ifdef STATS
 		gettimeofday( & tve, &tz );
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
@@ -108,8 +120,8 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 			LOG(L_ERR, "ERROR: receive_msg: no 2nd via found in reply\n");
 			goto error;
 		}
-#endif
 		/* check if via1 == us */
+#endif
 
 #ifdef STATS
 		gettimeofday( & tvb, &tz );
@@ -130,10 +142,8 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 #ifdef STATS
 	skipped = 0;
 #endif
-/* jku: skip no more used
-skip:
-	DBG("skip:...\n");
-*/
+	/* execute post-script callbacks, if any; -jiri */
+	exec_post_cb(msg);
 	DBG("receive_msg: cleaning up\n");
 	free_sip_msg(msg);
 	pkg_free(msg);
@@ -143,13 +153,13 @@ skip:
 	return 0;
 error:
 	DBG("error:...\n");
+	/* execute post-script callbacks, if any; -jiri */
+	exec_post_cb(msg);
+error02:
 	free_sip_msg(msg);
+error01:
 	pkg_free(msg);
-	STATS_RX_DROPS;
-	return -1;
-error1:
-	if (msg) pkg_free(msg);
-	pkg_free(buf);
+error00:
 	STATS_RX_DROPS;
 	return -1;
 }

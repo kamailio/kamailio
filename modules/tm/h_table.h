@@ -15,22 +15,19 @@
 #include "../../types.h"
 #include "../../md5utils.h"
 #include "config.h"
-/*#include "t_flags.h"*/
 
 struct s_table;
 struct entry;
 struct cell;
 struct timer;
+struct retr_buf;
 
-#include "sh_malloc.h"
-
-#include "timer.h"
+#include "../../mem/shm_mem.h"
+#include "timer.h" 
 #include "lock.h"
 #include "sip_msg.h"
-
-
-#define T_UNDEFINED  ( (struct cell*) -1 )
-#define T_NULL       ( (struct cell*) 0 )
+#include "t_reply.h"
+#include "t_hooks.h"
 
 
 #define NO_CANCEL       ( (char*) 0 )
@@ -39,7 +36,14 @@ struct timer;
 #define TYPE_LOCAL_CANCEL -1
 #define TYPE_REQUEST       0
 
-
+/* to be able to assess whether a script writer forgot to
+   release a transaction and leave it for ever in memory,
+   we mark it with operations done over it; if none of these
+   flags is set and script is being left, it is a sign of
+   script error and we need to release on writer's
+   behalf
+*/
+enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
 
 typedef struct retr_buf
 {
@@ -49,17 +53,9 @@ typedef struct retr_buf
 
 	char *buffer;
 	int   buffer_len;
-	char *ack;
-	int   ack_len;
-	char *cancel;
-	int   cancel_len;
 
-	/* v6 changes; -jiri
-	struct sockaddr_in to; */
 	union sockaddr_union to;
 	struct socket_info* send_sock;
-
-	size_t tolen;
 
 	/* a message can be linked just to retransmission and FR list */
 	struct timer_link retr_timer;
@@ -81,7 +77,7 @@ typedef struct ua_server
 	struct sip_msg   *request;
 	struct retr_buf  response;
 	unsigned int     status;
-	str              *tag;
+	str              to_tag;
 	unsigned int     isACKed;
 }ua_server_type;
 
@@ -92,11 +88,21 @@ typedef struct ua_server
 typedef struct ua_client
 {
 	struct retr_buf  request;
-	unsigned int     status;
-	str              tag;
+	/* we maintain a separate copy of cancel rather than
+	   reuse the strructure for original request; the 
+	   original request is no longer needed but its delayed
+	   timer may fire and interfere with whoever tries to
+	   rewrite it
+	*/
+	struct retr_buf local_cancel;
+	/* pointer to retransmission buffer where uri is printed;
+	   good for generating ACK/CANCEL */
 	str              uri;
-	str              rpl_buffer;
-	unsigned int     rpl_received;
+	/* if we store a reply (branch picking), this is where it is */
+	struct sip_msg 	*reply;
+	/* if we don't store, we at least want to know the status */
+	int	last_received;
+
 }ua_client_type;
 
 
@@ -109,8 +115,40 @@ typedef struct cell
 	struct cell*     next_cell;
 	struct cell*     prev_cell;
 
-	/* indicates which process is currently processing this transaction */
-	process_bm_t  ref_bitmap;
+	/* needed for generating local ACK/CANCEL for local
+	   transactions; all but cseq_n include the entire
+	   header field value, cseq_n only Cseq number; with
+	   local transactions, pointers point to outbound buffer,
+	   with proxied transactions to inbound request */
+	str from, callid, cseq_n, to;
+	/* a short-cut for remember whether this transaction needs
+	   INVITE-special handling (e.g., CANCEL, ACK, FR...)
+	*/
+	short is_invite;
+	/* method shortcut -- for local transactions, pointer to
+	   outbound buffer, for proxies transactions pointer to
+	   original message; needed for reply matching
+	*/
+	str method;
+
+	/* callback and parameter on completion of local transactions */
+	transaction_cb *completion_cb;
+	/* the parameter stores a pointer to shmem -- it will be released
+	   during freeing transaction too
+	*/
+	void *cbp;
+
+	/* how many processes are currently processing this transaction ;
+	   note that only processes working on a request/reply belonging
+	   to a transaction increase ref_count -- timers don't, since we
+	   rely on transaction state machine to clean-up all but wait timer
+	   when entering WAIT state and the wait timer is the only place
+	   from which a transaction can be deleted (if ref_count==0); good
+	   for protecting from conditions in which wait_timer hits and
+	   tries to delete a transaction whereas at the same time 
+	   a delayed message belonging to the transaction is received
+	*/
+	volatile unsigned int ref_count;
 	/* tells in which hash table entry the cell lives */
 	unsigned int  hash_index;
 	/* sequence number within hash collision slot */
@@ -120,47 +158,43 @@ typedef struct cell
 	struct timer_link wait_tl;
 	struct timer_link dele_tl;
 
-	/* useful data */
 	/* number of forks */
 	int nr_of_outgoings;
 	/* nr of replied branch */
 	int relaied_reply_branch;
-	/* transaction that is canceled (usefull only for CANCEL req) */
-	struct cell *T_canceled;
 	/* UA Server */
 	struct ua_server  uas;
 	/* UA Clients */
-	struct ua_client  uac[ NR_OF_CLIENTS ];
+	struct ua_client  uac[ MAX_BRANCHES ];
 
 	/* protection against concurrent reply processing */
 	ser_lock_t   reply_mutex;
-	/* protection against concurrent ACK processing */
-	ser_lock_t	ack_mutex;
 
-/*	tflags_t	flags; */
+	/* the route to take if no final positive reply arrived */
+	unsigned int on_negative;
+	/* set to one if you want to disallow silent transaction
+	   dropping when C timer hits
+	*/
+	int noisy_ctimer;
+	/* is it a local transaction ? */
+	int local;
 
-#ifdef WAIT
+#ifdef _XWAIT
 	/* protection against reentering WAIT state */
 	ser_lock_t	wait_mutex;
 	/* has the transaction been put on wait status ? */
 	int on_wait;
 #endif
 
-	/* this is where destination is stored for picked branch;
-	good if a need to forward ACK later on */
-	/* v6 changes; -jiri
-	struct sockaddr_in ack_to; */
-	union sockaddr_union ack_to;
-#ifndef	USE_SYNONIM
-	/* MD5checksum */
+	/* MD5checksum  (meaningful only if syn_branch=0 */
 	char md5[MD5_LEN];
-#endif
 
 #ifdef	EXTRA_DEBUG
 	/* scheduled for deletion ? */
 	short damocles;
 #endif
-
+	/* has the transaction been scheduled to die? */
+	enum kill_reason kr;
 }cell_type;
 
 
@@ -174,6 +208,7 @@ typedef struct entry
 	unsigned int    next_label;
 	/* sync mutex */
 	ser_lock_t      mutex;
+	unsigned int	entries;
 }entry_type;
 
 
@@ -193,10 +228,14 @@ struct s_table* init_hash_table();
 void   free_hash_table( struct s_table* hash_table );
 void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
-void   remove_from_hash_table(struct s_table *hash_table,struct cell * p_cell);
-void   insert_into_hash_table(struct s_table *hash_table,struct cell * p_cell);
+void   remove_from_hash_table_unsafe(struct s_table *hash_table,
+	struct cell * p_cell);
+void   insert_into_hash_table(struct s_table *hash_table,
+	struct cell * p_cell);
 void   insert_into_hash_table_unsafe( struct s_table *hash_table,
 		struct cell * p_cell );
+
+unsigned int transaction_count( void );
 
 #endif
 

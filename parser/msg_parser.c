@@ -20,6 +20,7 @@
 #include "parse_hname2.h"
 
 
+
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
 #endif
@@ -27,6 +28,8 @@
 
 #define parse_hname(_b,_e,_h) parse_hname2((_b),(_e),(_h))
 
+/* number of via's encounteded */
+int via_cnt;
 
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
@@ -53,6 +56,9 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	}
 	switch(hdr->type){
 		case HDR_VIA:
+			/* keep number of vias parsed -- we want to report it in
+			   replies for diagnostic purposes */
+			via_cnt++;
 			vb=pkg_malloc(sizeof(struct via_body));
 			if (vb==0){
 				LOG(L_ERR, "get_hdr_field: out of memory\n");
@@ -388,7 +394,9 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 			DBG(" version: <%s>\n",fl->u.reply.version.s);
 			DBG(" status:  <%s>\n",fl->u.reply.status.s);
 			DBG(" reason:  <%s>\n",fl->u.reply.reason.s);
-			flags=HDR_VIA | HDR_VIA2;
+			/* flags=HDR_VIA | HDR_VIA2; */
+			/* we don't try to parse VIA2 for local messages; -Jiri */
+			flags=HDR_VIA;
 			break;
 		default:
 			DBG("unknown type %d\n",fl->type);
@@ -465,22 +473,17 @@ void free_sip_msg(struct sip_msg* msg)
 }
 
 
-#if 0
-/* it's a macro now*/
 /* make sure all HFs needed for transaction identification have been
    parsed; return 0 if those HFs can't be found
 */
+
 int check_transaction_quadruple( struct sip_msg* msg )
 {
-   return 
-	(parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ, 0)!=-1 &&
-	 msg->from && msg->to && msg->callid && msg->cseq);
-  /* replaced by me ( :) andrei)
-   ( (msg->from || (parse_headers( msg, HDR_FROM, 0)!=-1 && msg->from)) &&
-   (msg->to|| (parse_headers( msg, HDR_TO, 0)!=-1 && msg->to)) &&
-   (msg->callid|| (parse_headers( msg, HDR_CALLID, 0)!=-1 && msg->callid)) &&
-   (msg->cseq|| (parse_headers( msg, HDR_CSEQ, 0)!=-1 && msg->cseq)) ) ? 1 : 0;
-  */
-
+	if ( parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ,0)!=-1
+		&& msg->from && msg->to && msg->callid && msg->cseq ) {
+		return 1;
+	} else {
+		ser_error=E_BAD_TUPEL;
+		return 0;
+	}
 }
-#endif

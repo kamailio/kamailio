@@ -222,6 +222,30 @@ void print_action(struct action* a)
 			case EXEC_T:
 					DBG("exec(");
 					break;
+			case REVERT_URI_T:
+					DBG("revert_uri(");
+					break;
+			case STRIP_T:
+					DBG("strip(");
+					break;
+			case APPEND_BRANCH_T:
+					DBG("append_branch(");
+					break;
+			case PREFIX_T:
+					DBG("prefix(");
+					break;
+			case LEN_GT_T:
+					DBG("len_gt(");
+					break;
+			case SETFLAG_T:
+					DBG("setflag(");
+					break;
+			case RESETFLAG_T:
+					DBG("resetflag(");
+					break;
+			case ISFLAGSET_T:
+					DBG("isflagset(");
+					break;
 			case SET_HOST_T:
 					DBG("sethost(");
 					break;

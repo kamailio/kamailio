@@ -3,33 +3,59 @@
 List of currently available ser modules
 ----------------------------------------------------------
 Name	Use		 	 Maturity	Purpose/Depends on
+(owner)
 ----------------------------------------------------------
 acc		regular		 stable		transaction accounting
-		/example				(the module servers also
+(jku)	/example				(the module servers also
 							    as example of how to bind
 								to transaction management)
 								-tm
+
 auth	regular		 stable		digest authentication
-								-sl
+(jja)							-sl
 								-mysql
+
 cpl		experimental alpha		Call Processing Language
+(bia)
+
 ext		experimental alpha		Execution of external URI
-								processing logic
+(bia)							processing logic
+
 im		temporary	 alpha		Stateless instant messaging	
-								client
+(bia)							client
+
 jabber	experimental beta		SIP2Jabber gateway
+(dcm)
+
 maxfwd	regular		 stable		Max-Forwards check
+(bia)
+
 mysql	regular		 stable		supporting MySql interface
+(jja)
+
 pike	experimental alpha		excessive load detection
+(bia)
+
 print	example		 stable		Printing Message to stdout
+(ape)
+
 rr		regular		 stable		Record-Routing
+(jja)
+
 sl		regular		 stable		Stateless Replies
+(bia)
+
 sms		regular		 stable		SMS gateway
-								-tm
+(bia)								-tm
+
 textops regular		 stable		Message Textual Operations
+(ape)
+
 tm		regular		 beta		Transaction Management
+(ape)
+
 usrloc	regular		 stable		User Location
-								-sl
+(jja)								-sl
 								-mysql (optionally)
 
 
@@ -44,3 +70,8 @@ ser programmers.
 Maturity is label as stable if a module has been deployed
 for longer time, alpha if it is still being developed and
 beta if it is under test.
+
+Modules underway include presence server functionality,
+firewall control, message store and more. If you are
+interested in any of these or other modules, write us
+to info@iptel.org.

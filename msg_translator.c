@@ -1,4 +1,5 @@
-/* $Id$
+/* 
+ * $Id$
  *
  */
 
@@ -19,15 +20,7 @@
 #include "data_lump_rpl.h"
 #include "ip_addr.h"
 #include "resolve.h"
-
-
-
-#define MAX_VIA_LINE_SIZE      240
-#define MAX_RECEIVED_SIZE  57
-
-/* mallocs for local stuff (not needed to be shared mem?)*/
-#define local_malloc(s) pkg_malloc((s))
-#define local_free(s)   pkg_free((s))
+#include "ut.h"
 
 
 #define append_str(_dest,_src,_len,_msg) \
@@ -99,101 +92,12 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 }
 
 
-char* via_builder( struct sip_msg *msg , unsigned int *len, 
-					struct socket_info* send_sock )
-{
-	unsigned int  via_len, branch_len, extra_len;
-	char               *line_buf;
-
-	line_buf=0;
-	extra_len=0;
-
-	line_buf=pkg_malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
-	if (line_buf==0){
-		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: via_builder: out of memory\n");
-		goto error;
-	}
-	via_len=MY_VIA_LEN+send_sock->address_str.len; /*space included in MY_VIA*/
-#ifdef USE_IPV6
-	if (send_sock->address.af==AF_INET6) via_len+=2; /* [ ]*/
-#endif
-
-	/* jku: if we compute branches using MD5 it will take 32 bytes */
-	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN)+
-					msg->add_to_branch_len;
-
-	if ((via_len+send_sock->port_no_str.len+branch_len
-								+CRLF_LEN)<MAX_VIA_LINE_SIZE){
-		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
-#ifdef USE_IPV6
-	if (send_sock->address.af==AF_INET6) {
-		line_buf[MY_VIA_LEN]='[';
-		line_buf[MY_VIA_LEN+1+send_sock->address_str.len]=']';
-		extra_len=1;
-	}
-#endif
-		memcpy(line_buf+MY_VIA_LEN+extra_len, send_sock->address_str.s,
-									send_sock->address_str.len);
-		if (send_sock->port_no!=SIP_PORT){
-			memcpy(line_buf+via_len, send_sock->port_no_str.s,
-									 send_sock->port_no_str.len);
-			via_len+=send_sock->port_no_str.len;
-		}
-
-		/* jku: branch parameter */
-		memcpy(line_buf+via_len, MY_BRANCH, MY_BRANCH_LEN );
-		via_len+=MY_BRANCH_LEN;
-		/* loop checks ?
-		if (loop_checks) {
-			if (check_transaction_quadruple( msg )) {
-				str src[5];
-				int r;
-				src[0]= msg->from->body;
-				src[1]= msg->to->body;
-				src[2]= msg->callid->body;
-				src[3]= msg->first_line.u.request.uri;
-				src[4]= get_cseq( msg )->number;
-				MDStringArray ( line_buf+via_len-1, src, 5 );
-				via_len+=MD5_LEN - 1;
-			} else DBG("DEBUG: via_builder: required HFs for "
-					"loop checking missing\n");
-		}  */
-		/* someone wants me to add something to branch here ? */
-		if ( msg->add_to_branch_len ){
-			memcpy(line_buf+via_len-1, msg->add_to_branch_s,
-				msg->add_to_branch_len );
-			via_len+=msg->add_to_branch_len-1;
-		}
-
-		memcpy(line_buf+via_len, CRLF, CRLF_LEN);
-		via_len+=CRLF_LEN;
-		line_buf[via_len]=0; /* null terminate the string*/
-	}else{
-		LOG(L_ERR, " ERROR: via_builder: via too long (%d)\n",
-				via_len);
-		ser_error=E_BUG;
-		goto error;
-	}
-
-	*len = via_len;
-	return line_buf;
-
-error:
-	if (line_buf) pkg_free(line_buf);
-	return 0;
-}
-
-
-
-
-#ifdef VERY_NOISY_REPLIES
 char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 {
 	static char buf[MAX_WARNING_LEN];
 	static unsigned int fix_len=0;
 	str *foo;
-	char *p;
+	int print_len;
 
 	if (!fix_len)
 	{
@@ -209,42 +113,28 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 		fix_len += 24;
 	}
 
-	p = buf+fix_len;
-	/* adding pid */
-	if (p-buf+10+2>=MAX_WARNING_LEN)
-		goto done;
-	p += sprintf(p, "pid=%d", pids?pids[process_no]:0 );
-	*(p++)=' ';
-
-	/*adding src_ip*/
-	if (p-buf+26+2>=MAX_WARNING_LEN)
-		goto done;
-	p += sprintf(p,"req_src_ip=%s",ip_addr2a(&msg->src_ip));
-	*(p++)=' ';
-
-	/*adding in_uri*/
-	if(p-buf+7+msg->first_line.u.request.uri.len+2>=MAX_WARNING_LEN)
-		goto done;
-	p += sprintf( p, "in_uri=%.*s",msg->first_line.u.request.uri.len,
-		msg->first_line.u.request.uri.s);
-	*(p++) = ' ';
-
 	/*adding out_uri*/
 	if (msg->new_uri.s)
 		foo=&(msg->new_uri);
 	else
 		foo=&(msg->first_line.u.request.uri);
-	if(p-buf+8+foo->len+2>=MAX_WARNING_LEN)
-		goto done;
-	p += sprintf( p, "out_uri=%.*s", foo->len, foo->s);
+	print_len=snprintf(buf+fix_len, MAX_WARNING_LEN-fix_len,
+		"pid=%d req_src_ip=%s in_uri=%.*s out_uri=%.*s via_cnt%c=%d\"",
+		pids?pids[process_no]:0,
+		ip_addr2a(&msg->src_ip),
+		msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s,
+		foo->len, foo->s, 
+		msg->parsed_flag & HDR_EOH ? '=' : '>', /* should be = */
+		via_cnt );
 
-done:
-	*(p++) = '\"';
-	*(p) = 0;
-	*returned_len = p-buf;
-	return buf;
+	if (print_len==-1) {
+		*returned_len=0;
+		return 0;
+	} else {
+		*returned_len=fix_len+print_len;
+		return buf;
+	}
 }
-#endif
 
 
 
@@ -265,7 +155,7 @@ char* received_builder(struct sip_msg *msg, int *received_len)
 	buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 	if (buf==0){
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
+		LOG(L_ERR, "ERROR: received_builder: out of memory\n");
 		return 0;
 	}
 	/*
@@ -312,7 +202,7 @@ static inline int lumps_len(struct lump* l)
 					break;
 				default:
 					/* only ADD allowed for before/after */
-					LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op "
+					LOG(L_CRIT, "BUG: lumps_len: invalid op "
 							"for data lump (%x)\n", r->op);
 			}
 		}
@@ -341,7 +231,7 @@ static inline int lumps_len(struct lump* l)
 				/* do nothing */
 				break;
 			default:
-				LOG(L_CRIT,"BUG:build_req_buf_from_sip_req: invalid"
+				LOG(L_CRIT,"BUG:lumps_len: invalid"
 							" op for data lump (%x)\n", r->op);
 		}
 		for (r=t->after;r;r=r->after){
@@ -351,7 +241,7 @@ static inline int lumps_len(struct lump* l)
 					break;
 				default:
 					/* only ADD allowed for before/after */
-					LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid"
+					LOG(L_CRIT, "BUG:lumps_len: invalid"
 								" op for data lump (%x)\n", r->op);
 			}
 		}
@@ -391,7 +281,7 @@ static /*inline*/ void process_lumps(	struct lump* l,	char* new_buf,
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
@@ -408,7 +298,7 @@ static /*inline*/ void process_lumps(	struct lump* l,	char* new_buf,
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
@@ -439,7 +329,7 @@ static /*inline*/ void process_lumps(	struct lump* l,	char* new_buf,
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n",r->op);
 					}
 				}
@@ -458,13 +348,13 @@ static /*inline*/ void process_lumps(	struct lump* l,	char* new_buf,
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
 				break;
 			default:
-					LOG(L_CRIT, "BUG: build_req_buf_from_sip_req: "
+					LOG(L_CRIT, "BUG: process_lumps: "
 							"unknown op (%x)\n", t->op);
 		}
 	}
@@ -487,6 +377,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char  backup;
 	unsigned int offset, s_offset, size;
 	struct lump* anchor;
+	int r;
 
 	uri_len=0;
 	orig=msg->orig;
@@ -497,27 +388,29 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	received_buf=0;
 
 
-	line_buf = via_builder( msg, &via_len, send_sock);
+	line_buf = via_builder( &via_len, send_sock, 
+		msg->add_to_branch_s, msg->add_to_branch_len);
 	if (!line_buf){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
-		goto error1;
+		goto error00;
 	}
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
-		if ((received_buf=received_builder(msg,&received_len))==0)
-			goto error1; /* free also line_buf */
-	}
+	r=check_address(&msg->src_ip, msg->via1->host.s, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
+	if (r!=0){
+		if ((received_buf=received_builder(msg,&received_len))==0)
+			goto error01;  /* free also line_buf */
+	}
 
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
 	/* add first via, as an anchor for second via*/
 	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
-	if (anchor==0) goto error1;
+	if (anchor==0) goto error01;
 	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
-		goto error1; /* free also line_buf*/
+		goto error01;
 	/* if received needs to be added, add anchor after host and add it */
 	if (received_len){
 		if (msg->via1->params.s){
@@ -535,9 +428,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		}
 		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
 				HDR_VIA);
-		if (anchor==0) goto error2; /* free also received_buf */
+		if (anchor==0) goto error02; /* free also line_buf */
 		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
-				==0 ) goto error2; /* free also received_buf */
+				==0 ) goto error02; /* free also line_buf */
 	}
 
 	/* compute new msg len and fix overlapping zones*/
@@ -547,11 +440,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		uri_len=msg->new_uri.len;
 		new_len=new_len-msg->first_line.u.request.uri.len+uri_len;
 	}
-	new_buf=(char*)local_malloc(new_len+1);
+	new_buf=(char*)pkg_malloc(new_len+1);
 	if (new_buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
-		goto error;
+		goto error00;
 	}
 
 	offset=s_offset=0;
@@ -576,17 +469,14 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	*returned_len=new_len;
 	return new_buf;
 
-error1:
-	if (line_buf) pkg_free(line_buf);
-error2:
+error01:
+	pkg_free(line_buf);
+error02:
 	if (received_buf) pkg_free(received_buf);
-error:
-	if (new_buf) local_free(new_buf);
+error00:
 	*returned_len=0;
 	return 0;
 }
-
-
 
 
 char * build_res_buf_from_sip_res( struct sip_msg* msg,
@@ -617,7 +507,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 		via_len+=msg->via1->hdr.len+1;
 	}
 	/* remove the first via*/
-	if (del_lump( &(msg->repl_add_rm), via_offset, via_len, 0)==0){
+	if (del_lump( &(msg->repl_add_rm), via_offset, via_len, HDR_VIA)==0){
 		LOG(L_ERR, "build_res_buf_from_sip_res: error trying to remove first"
 					"via\n");
 		goto error;
@@ -625,10 +515,9 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	new_len=len+lumps_len(msg->repl_add_rm);
 
 	DBG(" old size: %d, new size: %d\n", len, new_len);
-	new_buf=(char*)local_malloc(new_len+1);/* +1 is for debugging
-											(\0 to print it )*/
+	new_buf=(char*)pkg_malloc(new_len+1); /* +1 is for debugging (\0 to print it )*/
 	if (new_buf==0){
-		LOG(L_ERR, "ERROR: build_res_buf_from_sip_res: out of memory\n");
+		LOG(L_ERR, "ERROR: build_res_buf_from_sip_res: out of mem\n");
 		goto error;
 	}
 	new_buf[new_len]=0; /* debug: print the message */
@@ -644,7 +533,6 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	*returned_len=new_len;
 	return new_buf;
 error:
-	if (new_buf) local_free(new_buf);
 	*returned_len=0;
 	return 0;
 }
@@ -666,29 +554,38 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	char              backup;
 	char              *received_buf;
 	int               received_len;
-#ifdef VERY_NOISY_REPLIES
 	char              *warning;
 	unsigned int      warning_len;
-#endif
+	int r;
 
 	received_buf=0;
 	received_len=0;
 	buf=0;
+	/* make -Wall happy */
+	warning=0;
 
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
 	of SIP :( ) */
-	parse_headers( msg, HDR_EOH, 0 );
+	if (parse_headers( msg, HDR_EOH, 0 )==-1) {
+		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
+			"alas, parse_headers failed\n");
+		goto error00;
+	}
 
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
-		if ((received_buf=received_builder(msg,&received_len))==0)
-			goto error;
-	}
+	r=check_address(&msg->src_ip, msg->via1->host.s, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
+	if (r!=0) {
+		if ((received_buf=received_builder(msg,&received_len))==0) {
+			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
+				"alas, received_builder failed\n");
+			goto error00;
+		}
+	}
 
 	/*computes the lenght of the new response buffer*/
 	len = 0;
@@ -718,25 +615,29 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	/*lumps length*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
-#ifdef NOISY_REPLIES
-	/*server header*/
-	len += SERVER_HDR_LEN + CRLF_LEN;
-	/*content length header*/
-	len +=CONTENT_LEN_LEN + CRLF_LEN;
-#endif
-#ifdef VERY_NOISY_REPLIES
-	warning = warning_builder(msg,&warning_len);
-	len += warning_len + CRLF_LEN;
-#endif
+	if (server_signature) {
+		/*server header*/
+		len += SERVER_HDR_LEN + CRLF_LEN;
+		/*content length header*/
+		len +=CONTENT_LEN_LEN + CRLF_LEN;
+	}
+	if (sip_warning) {
+		warning = warning_builder(msg,&warning_len);
+		if (warning==0) {
+			LOG(L_ERR, "ERROR: warning too big\n");
+			goto error01;
+		}
+		len += warning_len + CRLF_LEN;
+	}
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
 	/*allocating mem*/
-	buf = (char*) local_malloc( len+1 );
+	buf = (char*) pkg_malloc( len+1 );
 	if (!buf)
 	{
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory "
 			" ; needs %d\n",len);
-		goto error;
+		goto error01;
 	}
 
 	/* filling the buffer*/
@@ -800,32 +701,151 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 		memcpy(p,lump->text.s,lump->text.len);
 		p += lump->text.len;
 	}
-#ifdef NOISY_REPLIES
-	/*server header*/
-	memcpy( p, SERVER_HDR , SERVER_HDR_LEN );
-	p+=SERVER_HDR_LEN;
-	memcpy( p, CRLF, CRLF_LEN );
-	p+=CRLF_LEN;
-	/* content length header*/
-	memcpy( p, CONTENT_LEN , CONTENT_LEN_LEN );
-	p+=CONTENT_LEN_LEN;
-	memcpy( p, CRLF, CRLF_LEN );
-	p+=CRLF_LEN;
-#endif
-#ifdef VERY_NOISY_REPLIES
-	memcpy( p, warning, warning_len);
-	p+=warning_len;
-	memcpy( p, CRLF, CRLF_LEN);
-	p+=CRLF_LEN;
-#endif
+	if (server_signature) {
+		/*server header*/
+		memcpy( p, SERVER_HDR , SERVER_HDR_LEN );
+		p+=SERVER_HDR_LEN;
+		memcpy( p, CRLF, CRLF_LEN );
+		p+=CRLF_LEN;
+		/* content length header*/
+		memcpy( p, CONTENT_LEN , CONTENT_LEN_LEN );
+		p+=CONTENT_LEN_LEN;
+		memcpy( p, CRLF, CRLF_LEN );
+		p+=CRLF_LEN;
+	}
+	if (sip_warning) {
+		memcpy( p, warning, warning_len);
+		p+=warning_len;
+		memcpy( p, CRLF, CRLF_LEN);
+		p+=CRLF_LEN;
+	}
 	/*end of message*/
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	*(p) = 0;
 	*returned_len = len;
+	/* in req2reply, received_buf is not introduced to lumps and
+	   needs to be deleted here
+	*/
+	if (received_buf) pkg_free(received_buf);
 	return buf;
-error:
-	if (buf) local_free(buf);
+
+error01:
+	if (received_buf) pkg_free(received_buf);
+error00:
 	*returned_len=0;
 	return 0;
+}
+
+/* return number of chars printed or 0 if space exceeded;
+   assumes buffer sace of at least MAX_BRANCH_PARAM_LEN
+ */
+
+int branch_builder( unsigned int hash_index,
+	/* only either parameter useful */
+	unsigned int label, char * char_v,
+	int branch,
+	char *branch_str, int *len )
+{
+
+	char *begin;
+	int size;
+
+	/* no hash_id --- whoever called me wants to have
+	   very simple branch_id
+	*/
+	if (hash_index==0) {
+		*branch_str='0';
+		*len=1;
+		return *len;
+	}
+
+	/* hash id provided ... start with it */
+	size=MAX_BRANCH_PARAM_LEN;
+	begin=branch_str;
+	*len=0;
+	if (int2reverse_hex( &begin, &size, hash_index)==-1)
+		return 0;
+
+	if (size) {
+		*begin=BRANCH_SEPARATOR;
+		begin++; size--;
+	} else return 0;
+
+	/* label is set -- use it ... */
+	if (label) {
+		if (int2reverse_hex( &begin, &size, label )==-1)
+			return 0;
+	} else { /* ... no label -- char value is used */
+		if (memcpy(begin,char_v,MD5_LEN)) {
+			begin+=MD5_LEN; size-=MD5_LEN;
+		} else return 0;
+	}
+
+	if (size) {
+		*begin=BRANCH_SEPARATOR;
+		begin++; size--;
+	} else return 0;
+
+	if (int2reverse_hex( &begin, &size, branch)==-1)
+		return 0;
+
+	*len=MAX_BRANCH_PARAM_LEN-size;
+	return size;
+		
+}
+
+
+char* via_builder( unsigned int *len, 
+	struct socket_info* send_sock,
+	char *branch, int branch_len )
+{
+	unsigned int  via_len, extra_len;
+	char               *line_buf;
+	int max_len;
+
+
+	max_len=MY_VIA_LEN+send_sock->address_str.len /* space in MY_VIA */
+		+2 /* just in case it it a v6 address ... [ ] */
+		+send_sock->port_no_str.len
+		+MY_BRANCH_LEN+branch_len+CRLF_LEN+1;
+	line_buf=pkg_malloc( max_len );
+	if (line_buf==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: via_builder: out of memory\n");
+		return 0;
+	}
+
+	extra_len=0;
+
+	via_len=MY_VIA_LEN+send_sock->address_str.len; /*space included in MY_VIA*/
+
+	memcpy(line_buf, MY_VIA, MY_VIA_LEN);
+#	ifdef USE_IPV6
+	if (send_sock->address.af==AF_INET6) {
+		line_buf[MY_VIA_LEN]='[';
+		line_buf[MY_VIA_LEN+1+send_sock->address_str.len]=']';
+		extra_len=1;
+		via_len+=2; /* [ ]*/
+	}
+#	endif
+	memcpy(line_buf+MY_VIA_LEN+extra_len, send_sock->address_str.s,
+		send_sock->address_str.len);
+	if (send_sock->port_no!=SIP_PORT){
+		memcpy(line_buf+via_len, send_sock->port_no_str.s,
+			 send_sock->port_no_str.len);
+		via_len+=send_sock->port_no_str.len;
+	}
+
+	/* branch parameter */
+	memcpy(line_buf+via_len, MY_BRANCH, MY_BRANCH_LEN );
+	via_len+=MY_BRANCH_LEN;
+	memcpy(line_buf+via_len, branch, branch_len );
+	via_len+=branch_len;
+	memcpy(line_buf+via_len, CRLF, CRLF_LEN);
+	via_len+=CRLF_LEN;
+	line_buf[via_len]=0; /* null terminate the string*/
+
+	*len = via_len;
+	return line_buf;
 }

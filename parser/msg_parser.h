@@ -9,6 +9,7 @@
 #include "../data_lump.h"
 #include "../flags.h"
 #include "../ip_addr.h"
+#include "../md5utils.h"
 #include "parse_def.h"
 #include "parse_cseq.h"
 #include "parse_to.h"
@@ -96,12 +97,13 @@ struct sip_msg {
 	
 	str new_uri; /* changed first line uri*/
 	
-	struct lump* add_rm;         /* used for all the forwarded messages */
-	struct lump* repl_add_rm;    /* only for localy generated replies !!!*/
-	struct lump_rpl *reply_lump;
-	
-	     /* str add_to_branch */ 
-	     /* whatever whoever want to append to branch comes here */
+	struct lump* add_rm;         /* used for all the forwarded requests */
+	struct lump* repl_add_rm;    /* used for all the forwarded replies */
+	struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
+
+	/* str add_to_branch; 
+	   whatever whoever want to append to branch comes here 
+	*/
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
 	
@@ -115,6 +117,13 @@ struct sip_msg {
 	flag_t flags;	
 };
 
+/* pointer to a fakes message which was never received ;
+   (when this message is "relayed", it is generated out
+    of the original request)
+*/
+#define FAKED_REPLY     ((struct sip_msg *) -1)
+
+extern int via_cnt;
 
 int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 
@@ -126,19 +135,39 @@ void free_sip_msg(struct sip_msg* msg);
    parsed; return 0 if those HFs can't be found
  */
 
-#define check_transaction_quadruple(msg ) \
-	(parse_headers((msg), HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ, 0)!=-1 && \
-	(msg)->from && (msg)->to && (msg)->callid && (msg)->cseq)
+int check_transaction_quadruple( struct sip_msg* msg );
 
-/* restored to the original double-check and put macro params
-   in parenthesses  -jiri */
-/* re-reverted to the shorter version -andrei 
-#define check_transaction_quadruple(msg ) \
-   ( ((msg)->from || (parse_headers( (msg), HDR_FROM, 0)!=-1 && (msg)->from)) && 	\
-   ((msg)->to|| (parse_headers( (msg), HDR_TO, 0)!=-1 && (msg)->to)) &&		\
-   ((msg)->callid|| (parse_headers( (msg), HDR_CALLID, 0)!=-1 && (msg)->callid)) &&\
-   ((msg)->cseq|| (parse_headers( (msg), HDR_CSEQ, 0)!=-1 && (msg)->cseq)) && \
-   ((msg)->via1|| (parse_headers( (msg), HDR_VIA, 0)!=-1 && (msg)->via1)) ) 
-*/
+/* calculate characteristic value of a message -- this value
+   is used to identify a transaction during the process of
+   reply matching
+ */
+inline static int char_msg_val( struct sip_msg *msg, char *cv )
+{
+	str src[8];
+
+	if (!check_transaction_quadruple(msg)) {
+		LOG(L_ERR, "ERROR: can't calculate char_value due "
+			"to a parsing error\n");
+		memset( cv, '0', MD5_LEN );
+		return 0;
+	}
+
+	src[0]= msg->from->body;
+	src[1]= msg->to->body;
+	src[2]= msg->callid->body;
+	src[3]= msg->first_line.u.request.uri;
+	src[4]= get_cseq( msg )->number;
 	
+	/* topmost Via is part of transaction key as well ! */
+	src[5]= msg->via1->host;
+	src[6]= msg->via1->port_str;
+	if (msg->via1->branch) {
+		src[7]= msg->via1->branch->value;
+		MDStringArray ( cv, src, 8 );
+	} else {
+		MDStringArray( cv, src, 7 );
+	}
+	return 1;
+}
+
 #endif

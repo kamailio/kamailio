@@ -216,7 +216,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 				{
 					case PARA_VALUE_QUOTED:
 						break;
-#ifdef PINGTEL_TAG_HACK
+#ifndef NO_PINGTEL_TAG_HACK
 					case TAG3:
 						param->type = TAG_PARAM;
 						param->name.len = 3;

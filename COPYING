@@ -1,3 +1,29 @@
+-------------------------------------------------------------------------
+IMPORTANT NOTES
+
+1) The GPL applies to this copy of SIP Express Router software (ser).
+   For a license to use the ser software under conditions
+   other than those described here, or to purchase support for this
+   software, please contact iptel.org by e-mail at the following addresses:
+
+    info@iptel.org
+
+   (see http://www.gnu.org/copyleft/gpl-faq.html#TOCHeardOtherLicense
+    for an explanation how parallel licenses comply with GPL)
+
+2) ser software allows programmers to plug-in external modules to the
+   core part. Note that GPL mandates all plug-ins developed for the
+   ser software released under GPL license to be GPL-ed as well.
+
+   (see http://www.gnu.org/copyleft/gpl-faq.html#GPLAndPlugins
+    for a detailed explanation)
+
+3) Note that the GPL bellow is copyrighted by the Free Software Foundation,
+   but the ser software is copyrighted by iptel.org.
+
+
+-------------------------------------------------------------------------
+
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991
 

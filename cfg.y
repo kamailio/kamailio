@@ -56,15 +56,18 @@ void* f_tmp;
 %token LOG_TOK
 %token ERROR
 %token ROUTE
+%token REPLY_ROUTE
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
 %token PREFIX
 %token STRIP
+%token APPEND_BRANCH
 %token SET_USER
 %token SET_USERPASS
 %token SET_PORT
 %token SET_URI
+%token REVERT_URI
 %token IF
 %token ELSE
 %token URIHOST
@@ -90,7 +93,12 @@ void* f_tmp;
 %token STAT
 %token CHILDREN
 %token CHECK_VIA
-%token LOOP_CHECKS
+%token SYN_BRANCH
+%token SIP_WARNING
+%token FIFO
+%token FIFO_MODE
+%token SERVER_SIGNATURE
+%token REPLY_TO_VIA
 %token LOADMODULE
 %token MODPARAM
 %token MAXBUFFER
@@ -151,6 +159,7 @@ statements:	statements statement {}
 statement:	assign_stm 
 		| module_stm
 		| route_stm 
+		| reply_route_stm
 		| CR	/* null statement*/
 	;
 
@@ -180,8 +189,18 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| CHILDREN EQUAL error { yyerror("number expected"); } 
 		| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 		| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
-		| LOOP_CHECKS EQUAL NUMBER { loop_checks=$3; }
-		| LOOP_CHECKS EQUAL error { yyerror("boolean value expected"); }
+		| SYN_BRANCH EQUAL NUMBER { syn_branch=$3; }
+		| SYN_BRANCH EQUAL error { yyerror("boolean value expected"); }
+		| SIP_WARNING EQUAL NUMBER { sip_warning=$3; }
+		| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
+		| FIFO EQUAL STRING { fifo=$3; }
+		| FIFO EQUAL error { yyerror("string value expected"); }
+		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
+		| FIFO_MODE EQUAL NUMBER { yyerror("int value expected"); }
+		| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
+		| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
+		| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
+		| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
 		| LISTEN EQUAL ip  {
 								if (sock_no< MAX_LISTEN){
 									tmp=ip_addr2a($3);
@@ -346,6 +365,17 @@ route_stm:	ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 											YYABORT; }
 										}
 		| ROUTE error { yyerror("invalid  route  statement"); }
+	;
+
+reply_route_stm: REPLY_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+										if (($3<REPLY_RT_NO)&&($3>=1)){
+											push($6, &reply_rlist[$3]);
+										} else {
+											yyerror("invalid reply routing"
+												"table number");
+											YYABORT; }
+										}
+		| REPLY_ROUTE error { yyerror("invalid reply_route statement"); }
 	;
 /*
 rules:	rules rule { push($2, &$1); $$=$1; }
@@ -685,6 +715,12 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 														"number expected"); }
 
+		| APPEND_BRANCH LPAREN STRING RPAREN { $$=mk_action( APPEND_BRANCH_T,
+													STRING_ST, 0, $3, 0) ; }
+		| APPEND_BRANCH LPAREN RPAREN { $$=mk_action( APPEND_BRANCH_T,
+													STRING_ST, 0, 0, 0 ) ; }
+		| APPEND_BRANCH {  $$=mk_action( APPEND_BRANCH_T, STRING_ST, 0, 0, 0 ) ; }
+
 		| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action( SET_HOSTPORT_T, 
 														STRING_ST, 0, $3, 0); }
 		| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
@@ -710,6 +746,8 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 										"string expected"); }
+		| REVERT_URI LPAREN RPAREN { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
+		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| ID LPAREN RPAREN			{ f_tmp=(void*)find_export($1, 0);
 									   if (f_tmp==0){
 										yyerror("unknown command, missing"

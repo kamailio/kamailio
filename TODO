@@ -16,16 +16,16 @@ x (different way) add request header bitmap field for the modules
 
 
 High priority:
-- fix/replace T_REF/T_UNREF
-- review all the tm locking
+x fix/replace T_REF/T_UNREF
+x review all the tm locking
 x if () {} else {}
 x plugin interface
 x ipv6 support
-- reply ("response line")
-- drop ACKs for our replies
+x reply ("response line")
+x drop ACKs for our replies
 - icmp error handling
-- add To-tag (for the replies)
-- add User-Agent (for the replies)
+x add To-tag (for the replies)
+x add User-Agent (for the replies)
 
 Low priority:
 x fix via address someday
@@ -38,7 +38,7 @@ x forward to received= if present
 - exec improvments (add format strings to it)
 - command line switch for checking the config file syntax
 - config file version (a la sendmail)
-- loop detection
+0 loop detection
 - cfg. file reload
 - flags for using names or ip adresses in Via ?
 
@@ -55,6 +55,6 @@ x the same for rpm
 - the same for FreeBSD and Slackware
 
 
-- jku: branch hash computation over canonical values
-- jku: loop checking
+x jku: branch hash computation over canonical values
+0 jku: loop checking
 - jku: try CRC as opposed to MD5

@@ -29,6 +29,8 @@
 
 /* main routing script table  */
 struct action* rlist[RT_NO];
+/* reply routing table */
+struct action* reply_rlist[REPLY_RT_NO];
 
 
 static int fix_actions(struct action* a); /*fwd declaration*/
@@ -426,6 +428,13 @@ int fix_rls()
 			}
 		}
 	}
+	for(i=0;i<REPLY_RT_NO;i++){
+		if(reply_rlist[i]){
+			if ((ret=fix_actions(reply_rlist[i]))!=0){
+				return ret;
+			}
+		}
+	}
 	return 0;
 }
 
@@ -443,6 +452,17 @@ void print_rl()
 		}
 		DBG("routing table %d:\n",j);
 		for (t=rlist[j],i=0; t; i++, t=t->next){
+			print_action(t);
+		}
+		DBG("\n");
+	}
+	for(j=0; j<REPLY_RT_NO; j++){
+		if (reply_rlist[j]==0){
+			if (j==0) DBG("WARNING: the main reply routing table is empty\n");
+			continue;
+		}
+		DBG("routing table %d:\n",j);
+		for (t=reply_rlist[j],i=0; t; i++, t=t->next){
 			print_action(t);
 		}
 		DBG("\n");

@@ -4,13 +4,16 @@
  * message printing
  */
 
-#include "hash_func.h"
+#include "../../hash_func.h"
+#include "../../globals.h"
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"
+#include "t_msgbuilder.h"
+#include "uac.h"
 
 
 
@@ -19,270 +22,256 @@
 			memcpy((_d),(_s),(_len));\
 			(_d) += (_len);\
 		}while(0);
+#define append_str( _p, _str ) \
+		do { \
+			memcpy((_p), (_str).s, (_str).len); \
+			(_p)+=(_str).len; \
+		} while(0);
 
 
-/* Builds a CANCEL request based on an INVITE request. CANCEL is send
- * to same address as the INVITE */
-int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
+/* Build a local request based on a previous request; main
+   customers of this function are local ACK and local CANCEL
+ */
+char *build_local(struct cell *Trans,unsigned int branch,
+	unsigned int *len, char *method, int method_len, str *to)
 {
-	struct sip_msg      *p_msg;
-	struct hdr_field    *hdr;
 	char                *cancel_buf, *p, *via;
-	unsigned int         len, via_len;
+	unsigned int         via_len;
+	struct hdr_field    *hdr;
+	char branch_buf[MAX_BRANCH_PARAM_LEN];
+	int branch_len;
 
-	if ( !Trans->uac[branch].rpl_received )
+	if ( Trans->uac[branch].last_received<100)
 	{
-		DBG("DEBUG: t_build_and_send_CANCEL: no response ever received"
-			" : dropping local cancel! \n");
-		return 1;
+		DBG("DEBUG: build_local: no response ever received"
+			" : dropping local request! \n");
+		goto error;
 	}
 
-	if (Trans->uac[branch].request.cancel!=NO_CANCEL)
-	{
-		DBG("DEBUG: t_build_and_send_CANCEL: branch (%d)was already canceled"
-			" : dropping local cancel! \n",branch);
-		return 1;
-	}
-
-	cancel_buf = 0;
-	via = 0;
-	p_msg = Trans->uas.request;
-
-	/* method, separators, version */
-	len=SIP_VERSION_LEN + CANCEL_LEN + 2 /* spaces */ + CRLF_LEN;
-	/* if URL was overridden .... */
-	if (Trans->uac[branch].uri.s)
-		len+=Trans->uac[branch].uri.len;
-	else
-	/* ... otherwise use the inbound URL */
-		len+=REQ_LINE(p_msg).uri.len;
+	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
+	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
+	*len+=Trans->uac[branch].uri.len;
 
 	/*via*/
-	if ( add_branch_label(Trans,p_msg,branch)==-1 )
+	if (!t_calc_branch(Trans,  branch, 
+		branch_buf, &branch_len ))
 		goto error;
-	via = via_builder(p_msg , &via_len, Trans->uac[branch].request.send_sock );
+	via=via_builder(&via_len, Trans->uac[branch].request.send_sock,
+		branch_buf, branch_len );
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
 			"no via header got from builder\n");
 		goto error;
 	}
-	len+= via_len;
+	*len+= via_len;
 	/*headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next ) {
-		if (hdr->type==HDR_FROM || hdr->type==HDR_CALLID 
-			|| hdr->type==HDR_TO )
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
-		else if (hdr->type==HDR_CSEQ)
-			len += hdr->name.len + 2 + ((struct cseq_body*)hdr->parsed)->number.len +
-				1+CANCEL_LEN+CRLF_LEN;
-	}
-	/* User Agent, Conteny Length, EoM */
-	len += USER_AGENT_LEN + CRLF_LEN +
-		CONTENT_LEN_LEN + CRLF_LEN +
-		CRLF_LEN;
+	*len+=Trans->from.len+CRLF_LEN
+		+Trans->callid.len+CRLF_LEN
+		+to->len+CRLF_LEN
+		/* CSeq: 101 CANCEL */
+		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
 
-	cancel_buf=sh_malloc( len+1 );
+	/* copy'n'paste Route headers */
+	if (!Trans->local) {
+		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
+			 if (hdr->type==HDR_ROUTE)
+				len+=((hdr->body.s+hdr->body.len ) - hdr->name.s ) + 
+					CRLF_LEN ;
+	}
+
+	/* User Agent */
+	if (server_signature) {
+		*len += USER_AGENT_LEN + CRLF_LEN;
+	}
+	/* Content Length, EoM */
+	*len+=CONTENT_LEN_LEN + CRLF_LEN + CRLF_LEN;
+
+	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: cannot allocate memory\n");
-		goto error;
+		goto error01;
 	}
 	p = cancel_buf;
 
-	append_mem_block( p, CANCEL " ", CANCEL_LEN +1 );
-	if (Trans->uac[branch].uri.s) {
-		append_mem_block( p, Trans->uac[branch].uri.s, 
-			Trans->uac[branch].uri.len);
-	} else {
-		append_mem_block(p,REQ_LINE(p_msg).uri.s,
-			REQ_LINE(p_msg).uri.len );
-	}
+	append_mem_block( p, method, method_len );
+	append_mem_block( p, " ", 1 );
+	append_str( p, Trans->uac[branch].uri );
 	append_mem_block( p, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
 
 	/* insert our via */
 	append_mem_block(p,via,via_len);
 
 	/*other headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-	{
-		if(hdr->type==HDR_FROM||hdr->type==HDR_CALLID||hdr->type==HDR_TO)
-		{
-			append_mem_block(p,hdr->name.s,
-				((hdr->body.s+hdr->body.len)-hdr->name.s) );
-			append_mem_block(p, CRLF, CRLF_LEN );
-		} else if ( hdr->type==HDR_CSEQ )
-		{
-			append_mem_block(p,hdr->name.s, hdr->name.len );
-			append_mem_block(p,": ", 2 );
-			append_mem_block(p, ((struct cseq_body*)hdr->parsed)->number.s,
-				((struct cseq_body*)hdr->parsed)->number.len );
-			append_mem_block(p, " " CANCEL CRLF, 1+CANCEL_LEN+CRLF_LEN);
-		}
+	append_str( p, Trans->from );
+	append_mem_block( p, CRLF, CRLF_LEN );
+	append_str( p, Trans->callid );
+	append_mem_block( p, CRLF, CRLF_LEN );
+	append_str( p, *to );
+	append_mem_block( p, CRLF, CRLF_LEN );
+	append_str( p, Trans->cseq_n );
+	append_mem_block( p, " ", 1 );
+	append_mem_block( p, method, method_len );
+	append_mem_block( p, CRLF, CRLF_LEN );
+
+	if (!Trans->local)  {
+		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
+			if(hdr->type==HDR_ROUTE) {
+				append_mem_block(p, hdr->name.s,
+					hdr->body.s+hdr->body.len-hdr->name.s );
+				append_mem_block(p, CRLF, CRLF_LEN );
+			}
 	}
 
-	/* User Agent header, Content Length, EoM */
-	append_mem_block(p,USER_AGENT CRLF CONTENT_LEN CRLF CRLF ,
-		USER_AGENT_LEN + CRLF_LEN + CONTENT_LEN_LEN + CRLF_LEN + CRLF_LEN);
+	/* User Agent header */
+	if (server_signature) {
+		append_mem_block(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
+	}
+	/* Content Length, EoM */
+	append_mem_block(p, CONTENT_LEN CRLF CRLF ,
+		CONTENT_LEN_LEN + CRLF_LEN + CRLF_LEN);
 	*p=0;
 
-	if (Trans->uac[branch].request.cancel) {
-		shm_free( cancel_buf );
-		LOG(L_WARN, "send_cancel: Warning: CANCEL already sent out\n");
-		goto error;
-	}
-
-	Trans->uac[branch].request.activ_type = TYPE_LOCAL_CANCEL;
-	Trans->uac[branch].request.cancel = cancel_buf;
-	Trans->uac[branch].request.cancel_len = len;
-
-	/*sets and starts the FINAL RESPONSE timer */
-	set_timer(hash_table,&(Trans->uac[branch].request.fr_timer),FR_TIMER_LIST);
-	/* sets and starts the RETRANS timer */
-	Trans->uac[branch].request.retr_list = RT_T1_TO_1;
-	set_timer(hash_table,&(Trans->uac[branch].request.retr_timer),RT_T1_TO_1);
-	DBG("DEBUG: T_build_and_send_CANCEL : sending cancel...\n");
-	SEND_CANCEL_BUFFER( &(Trans->uac[branch].request) );
-
 	pkg_free(via);
-	return 1;
+	return cancel_buf;
+error01:
+	pkg_free(via);
 error:
-	if (via) pkg_free(via);
-	return -1;
+	return NULL;
 }
 
 
-/* Builds an ACK request based on an INVITE request. ACK is send
- * to same address */
-char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
+
+char *build_uac_request(  str msg_type, str dst,
+    	str headers, str body, int branch, 
+		struct cell *t, int *len)
 {
-	struct sip_msg      *p_msg , *r_msg;
-	struct hdr_field    *hdr;
-	char                *ack_buf, *p, *via;
-	unsigned int         len, via_len;
+	char *via;
+	int via_len;
+	char content_len[10];
+	int content_len_len;
+	char *buf;
+	char *w;
+	int dummy;
 
-	ack_buf = 0;
-	via =0;
-	p_msg = trans->uas.request;
-	r_msg = rpl;
+	char branch_buf[MAX_BRANCH_PARAM_LEN];
+	int branch_len;
 
-	if ( parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to )
-	{
-		LOG(L_ERR, "ERROR: t_build_ACK: "
-			"cannot generate a HBH ACK if key HFs in reply missing\n");
+	static int from_len=0;
+
+	buf=0;
+	if (from_len==0) from_len=strlen(uac_from);
+	
+	*len=SIP_VERSION_LEN+msg_type.len+2/*spaces*/+CRLF_LEN+
+		dst.len;
+
+	if (!t_calc_branch(t, branch, branch_buf, &branch_len )) {
+		LOG(L_ERR, "ERROR: build_uac_request: branch calculation failed\n");
 		goto error;
 	}
-
-	len = USER_AGENT_LEN + CRLF_LEN;
-	/*first line's len */
-	len += 4/*reply code and one space*/+
-		p_msg->first_line.u.request.version.len+CRLF_LEN;
-	/*uri's len*/
-	if (trans->uac[branch].uri.s)
-		len += trans->uac[branch].uri.len +1;
-	else
-		len += p_msg->first_line.u.request.uri.len +1;
-	/*adding branch param*/
-	if ( add_branch_label( trans , trans->uas.request , branch)==-1 )
-		goto error;
-	/*via*/
-	via = via_builder(p_msg , &via_len, trans->uac[branch].request.send_sock );
-	if (!via)
-	{
-		LOG(L_ERR, "ERROR: t_build_ACK: "
-			"no via header got from builder\n");
+	via=via_builder(&via_len, t->uac[branch].request.send_sock,
+		branch_buf, branch_len );
+	
+	if (!via) {
+		LOG(L_ERR, "ERROR: build_uac_request: via building failed\n");
 		goto error;
 	}
-	len+= via_len;
-	/*headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-		if (hdr->type==HDR_FROM||hdr->type==HDR_CALLID||hdr->type==HDR_CSEQ)
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
-		else if ( hdr->type==HDR_TO )
-			len += ((r_msg->to->body.s+r_msg->to->body.len ) -
-				r_msg->to->name.s ) + CRLF_LEN ;
-	/* CSEQ method : from INVITE-> ACK */
-	len -= 3  ;
-	/* end of message */
-	len += CRLF_LEN; /*new line*/
-
-	ack_buf = sh_malloc(len+1);
-	if (!ack_buf)
-	{
-		LOG(L_ERR, "ERROR: t_build_and_ACK: cannot allocate memory\n");
+	*len+=via_len;
+	/* content length */
+	content_len_len=snprintf(
+		content_len, sizeof(content_len), "%d", body.len );
+	/* header names and separators */
+	*len+=
+		+CSEQ_LEN+CRLF_LEN
+		+TO_LEN+CRLF_LEN
+		+CALLID_LEN+CRLF_LEN
+		+CONTENT_LENGTH_LEN+CRLF_LEN
+		+ (server_signature ? USER_AGENT_LEN + CRLF_LEN : 0 )
+		+FROM_LEN+CRLF_LEN
+		+CRLF_LEN; /* EoM */
+	/* header field value and body length */
+	*len+= msg_type.len+1+UAC_CSEQNR_LEN /* CSeq: method, delimitor, number  */
+		+ dst.len /* To */
+		+ RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN /* call-id */
+		+ from_len+FROMTAG_LEN+MD5_LEN+
+		+ content_len_len
+		+ headers.len
+		+ body.len;
+	
+	buf=shm_malloc( *len+1 );
+	if (!buf) {
+		LOG(L_ERR, "ERROR: t_uac: no shmem\n");
 		goto error1;
 	}
-	p = ack_buf;
-
-	/* first line */
-	memcpy( p , "ACK " , 4);
-	p += 4;
-	/* uri */
-	if ( trans->uac[branch].uri.s )
-	{
-		memcpy(p,trans->uac[branch].uri.s,trans->uac[branch].uri.len);
-		p +=trans->uac[branch].uri.len;
-	}else{
-		memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
-			p_msg->first_line.u.request.uri.len );
-		p += p_msg->first_line.u.request.uri.len;
+	w=buf;
+	memapp( w, msg_type.s, msg_type.len ); 
+	memapp( w, " ", 1); 
+	t->uac[branch].uri.s=w; t->uac[branch].uri.len=dst.len;
+	memapp( w, dst.s, dst.len ); 
+	memapp( w, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
+	memapp( w, via, via_len );
+	t->cseq_n.s=w; t->cseq_n.len=CSEQ_LEN+UAC_CSEQNR_LEN;
+	memapp( w, CSEQ UAC_CSEQNR " ", CSEQ_LEN + UAC_CSEQNR_LEN+ 1 );
+	memapp( w, msg_type.s, msg_type.len );
+	t->to.s=w+CRLF_LEN; t->to.len=TO_LEN+dst.len;
+	memapp( w, CRLF TO, CRLF_LEN + TO_LEN  );
+	memapp( w, dst.s, dst.len );
+	t->callid.s=w+CRLF_LEN; t->callid.len=CALLID_LEN+RAND_DIGITS+1+
+		MAX_PID_LEN+1+MAX_SEQ_LEN;
+	memapp( w, CRLF CALLID, CRLF_LEN + CALLID_LEN  );
+	memapp( w, call_id, RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN );
+	memapp( w, CRLF CONTENT_LEN, CRLF_LEN + CONTENT_LEN_LEN);
+	memapp( w, content_len, content_len_len );
+	if (server_signature) {
+		memapp( w, CRLF USER_AGENT CRLF FROM, 
+			CRLF_LEN+USER_AGENT_LEN+CRLF_LEN+FROM_LEN);
+	} else {
+		memapp( w, CRLF  FROM, 
+			CRLF_LEN+FROM_LEN);
 	}
-	/* SIP version */
-	*(p++) = ' ';
-	memcpy(p,p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf),
-		p_msg->first_line.u.request.version.len );
-	p += p_msg->first_line.u.request.version.len;
-	memcpy( p, CRLF, CRLF_LEN );
-	p+=CRLF_LEN;
+	t->from.s=w-FROM_LEN; t->from.len=FROM_LEN+from_len+FROMTAG_LEN+MD5_LEN;
+	memapp( w, uac_from, from_len );
+	memapp( w, FROMTAG, FROMTAG_LEN );
+	memapp( w, from_tag, MD5_LEN );
+	memapp( w, CRLF, CRLF_LEN );
 
-	/* insert our via */
-	memcpy( p , via , via_len );
-	p += via_len;
-
-	/*other headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-	{
-		if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
-		{
-			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
-				((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
-			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
-			memcpy( p, CRLF, CRLF_LEN );
-			p+=CRLF_LEN;
-		}
-		else if ( hdr->type==HDR_TO )
-		{
-			memcpy( p , r_msg->orig+(r_msg->to->name.s-r_msg->buf) ,
-				((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s));
-			p+=((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s);
-			memcpy( p, CRLF, CRLF_LEN );
-			p+=CRLF_LEN;
-		}
-		else if ( hdr->type==HDR_CSEQ )
-		{
-			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
-				((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s));
-			p+=((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s);
-			memcpy( p , "ACK" CRLF, 3+CRLF_LEN );
-			p += 3+CRLF_LEN;
-		}
+	memapp( w, headers.s, headers.len );
+	/* EoH */
+	memapp( w, CRLF, CRLF_LEN );
+	if ( body.s ) {
+		memapp( w, body.s, body.len );
 	}
-
-	/* end of message */
-	memcpy( p , USER_AGENT CRLF CRLF , USER_AGENT_LEN + CRLF_LEN + CRLF_LEN );
-	p +=  USER_AGENT_LEN + CRLF_LEN + CRLF_LEN;
-
-	pkg_free( via );
-	DBG("DEBUG: t_build_ACK: ACK generated\n");
-
-	*(ret_len) = p-ack_buf;
-	return ack_buf;
-
+	/* ugly HACK -- debugging has shown len shorter by one */
+	dummy=*len+1;
+	*len=dummy;
+#	ifdef EXTRA_DEBUG
+	if (w-buf != *len ) abort();
+#	endif
+	
+	
 error1:
-	pkg_free(via );
+	pkg_free(via);	
 error:
-	return 0;
+	return buf;
+	
 }
 
 
+int t_calc_branch(struct cell *t, 
+	int b, char *branch, int *branch_len)
+{
+	return syn_branch ?
+		branch_builder( t->hash_index,
+			t->label, 0,
+			b, branch, branch_len )
+		: branch_builder( t->hash_index,
+			0, t->md5,
+			b, branch, branch_len );
+}
 
+int t_setbranch( struct cell *t, struct sip_msg *msg, int b )
+{
+	return t_calc_branch( t, b, 
+		msg->add_to_branch_s, &msg->add_to_branch_len );
+}

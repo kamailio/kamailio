@@ -8,13 +8,20 @@
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
-#include "hash_func.h"
+#include "../../hash_func.h"
+#include "../../globals.h"
+#include "../../dset.h"
 #include "t_funcs.h"
-#include "t_fork.h"
-
 #include "t_hooks.h"
+#include "t_msgbuilder.h"
+#include "ut.h"
+#include "t_cancel.h"
+#include "t_lookup.h"
+#include "t_fwd.h"
+#include "fix_lumps.h"
 
 
+#ifdef _OBSOLETED
 #define shm_free_lump( _lmp) \
 	do{\
 		if ((_lmp)) {\
@@ -23,367 +30,367 @@
 			shm_free((_lmp));\
 		}\
 	}while(0);
+#endif
 
+char *print_uac_request( struct cell *t, struct sip_msg *i_req,
+	int branch, str *uri, int *len, struct socket_info *send_sock )
+{
+	char *buf, *shbuf;
+
+	shbuf=0;
+
+	/* ... we calculate branch ... */	
+	if (!t_setbranch( t, i_req, branch )) {
+		LOG(L_ERR, "ERROR: print_uac_request: branch computation failed\n");
+		goto error01;
+	}
+
+	/* ... update uri ... */
+	i_req->new_uri=*uri;
+
+	/* ... give apps a chance to change things ... */
+	callback_event( TMCB_REQUEST_OUT, t, i_req, -i_req->REQ_METHOD);
+
+	/* ... and build it now */
+	buf=build_req_buf_from_sip_req( i_req, len, send_sock );
+	if (!buf) {
+		LOG(L_ERR, "ERROR: print_uac_request: no pkg_mem\n"); 
+		ser_error=E_OUT_OF_MEM;
+		goto error01;
+	}
+	/*	clean Via's we created now -- they would accumulate for
+		other branches  and for  shmem i_req they would mix up
+	 	shmem with pkg_mem
+	*/
+#ifdef OBSOLETED
+	if (branch) for(b=i_req->add_rm,b1=0;b;b1=b,b=b->next)
+		if (b->type==HDR_VIA) {
+			for(a=b->before;a;)
+				{c=a->before;free_lump(a);pkg_free(a);a=c;}
+			for(a=b->after;a;)
+				{c=a->after;free_lump(a);pkg_free(a);a=c;}
+			if (b1) b1->next = b->next;
+			else i_req->add_rm = b->next;
+			free_lump(b);pkg_free(b);
+		}
+#endif
+	free_via_lump(&i_req->add_rm);
+
+	shbuf=(char *)shm_malloc(*len);
+	if (!shbuf) {
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: print_uac_request: no shmem\n");
+		goto error02;
+	}
+	memcpy( shbuf, buf, *len );
+
+error02:
+	pkg_free( buf );
+error01:
+	return shbuf;
+}
+
+/* introduce a new uac to transaction; returns its branch id (>=0)
+   or error (<0); it doesn't send a message yet -- a reply to it
+   might itnerfere with the processes of adding multiple branches
+*/
+int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
+	struct proxy_l *proxy )
+{
+
+	int ret;
+	short temp_proxy;
+	union sockaddr_union to;
+	unsigned short branch;
+	struct socket_info* send_sock;
+	char *shbuf;
+	unsigned int len;
+
+	branch=t->nr_of_outgoings;
+	if (branch==MAX_BRANCHES) {
+		LOG(L_ERR, "ERROR: add_uac: maximum number of branches exceeded\n");
+		ret=E_CFG;
+		goto error;
+	}
+
+	/* check existing buffer -- rewriting should never occur */
+	if (t->uac[branch].request.buffer) {
+		LOG(L_CRIT, "ERROR: add_uac: buffer rewrite attempt\n");
+		ret=ser_error=E_BUG;
+		goto error;
+	}
+
+	/* check DNS resolution */
+	if (proxy) temp_proxy=0; else {
+		proxy=uri2proxy( uri );
+		if (proxy==0)  {
+			ret=E_BAD_ADDRESS;
+			goto error;
+		}
+		temp_proxy=1;
+	}
+
+	if (proxy->ok==0) {
+		if (proxy->host.h_addr_list[proxy->addr_idx+1])
+			proxy->addr_idx++;
+		else proxy->addr_idx=0;
+		proxy->ok=1;
+	}
+
+	hostent2su( &to, &proxy->host, proxy->addr_idx, 
+		proxy->port ? htons(proxy->port):htons(SIP_PORT));
+
+	send_sock=get_send_socket( &to );
+	if (send_sock==0) {
+		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d "
+			" (no corresponding listening socket)\n",
+			to.s.sa_family );
+		ret=ser_error=E_NO_SOCKET;
+		goto error01;
+	}
+
+	/* now message printing starts ... */
+	shbuf=print_uac_request( t, request, branch, uri, 
+		&len, send_sock );
+	if (!shbuf) {
+		ret=ser_error=E_OUT_OF_MEM;
+		goto error01;
+	}
+
+	/* things went well, move ahead and install new buffer! */
+	t->uac[branch].request.to=to;
+	t->uac[branch].request.send_sock=send_sock;
+	t->uac[branch].request.buffer=shbuf;
+	t->uac[branch].request.buffer_len=len;
+	t->uac[branch].uri.s=t->uac[branch].request.buffer+
+		request->first_line.u.request.method.len+1;
+	t->uac[branch].uri.len=uri->len;
+	t->nr_of_outgoings++;
+
+	/* update stats */
+	proxy->tx++;
+	proxy->tx_bytes+=len;
+
+	/* done! */	
+	ret=branch;
+		
+error01:
+	if (temp_proxy) {
+		free_proxy( proxy );
+		free( proxy );
+	}
+error:
+	return ret;
+}
+
+int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, 
+	struct cell *t_invite, int branch )
+{
+	int ret;
+	char *shbuf;
+	int len;
+
+	if (t_cancel->uac[branch].request.buffer) {
+		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
+		ret=ser_error=E_BUG;
+		goto error;
+	}	
+
+	/* note -- there is a gap in proxy stats -- we don't update 
+	   proxy stats with CANCEL (proxy->ok, proxy->tx, etc.)
+	*/
+
+	/* print */
+	shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
+		&t_invite->uac[branch].uri, &len, 
+		t_invite->uac[branch].request.send_sock);
+	if (!shbuf) {
+		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
+		ret=ser_error=E_OUT_OF_MEM;
+		goto error;
+	}
+	
+	/* install buffer */
+	t_cancel->uac[branch].request.to=t_invite->uac[branch].request.to;
+	t_cancel->uac[branch].request.send_sock=t_invite->uac[branch].request.send_sock;
+	t_cancel->uac[branch].request.buffer=shbuf;
+	t_cancel->uac[branch].request.buffer_len=len;
+	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer+
+		cancel_msg->first_line.u.request.method.len+1;
+	t_cancel->uac[branch].uri.len=t_invite->uac[branch].uri.len;
+	
+
+	/* success */
+	ret=1;
+
+
+error:
+	return ret;
+}
+
+void e2e_cancel( struct sip_msg *cancel_msg, 
+	struct cell *t_cancel, struct cell *t_invite )
+{
+	branch_bm_t cancel_bm;
+	int i;
+	int lowest_error;
+	str backup_uri;
+	int ret;
+
+	cancel_bm=0;
+	lowest_error=0;
+
+	backup_uri=cancel_msg->new_uri;
+	/* determine which branches to cancel ... */
+	which_cancel( t_invite, &cancel_bm );
+	/* ... and install CANCEL UACs */
+	for (i=0; i<t_invite->nr_of_outgoings; i++)
+		if (cancel_bm & (1<<i)) {
+			ret=e2e_cancel_branch(cancel_msg, t_cancel, t_invite, i);
+			if (ret<0) cancel_bm &= ~(1<<i);
+			if (ret<lowest_error) lowest_error=ret;
+		}
+	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
+	t_cancel->label=t_invite->label;
+	cancel_msg->new_uri=backup_uri;
+
+	/* send them out */
+	for (i=0; i<t_cancel->nr_of_outgoings; i++) {
+		if (cancel_bm & (1<<i)) {
+			if (SEND_BUFFER( &t_cancel->uac[i].request)==-1) {
+				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
+			}
+			start_retr( &t_cancel->uac[i].request );
+		}
+	}
+
+
+	/* if error occured, let it know upstream (final reply
+	   will also move the transaction on wait state
+	*/
+	if (lowest_error<0) {
+		LOG(L_ERR, "ERROR: cancel error\n");
+		t_reply( t_cancel, cancel_msg, 500, "cancel error");
+	/* if there are pending branches, let upstream know we
+	   are working on it
+	*/
+	} else if (cancel_bm) {
+		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
+		t_reply( t_cancel, cancel_msg, 100, "trying to cancel" );
+	/* if the transaction exists, but there is no more pending
+	   branch, tell usptream we're done
+	*/
+	} else {
+		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
+		t_reply( t_cancel, cancel_msg, 200, "ok, no more pending branches" );
+	}
+}
 
 
 /* function returns:
  *       1 - forward successfull
  *      -1 - error during forward
  */
-int t_forward_nonack( struct sip_msg* p_msg , 
-					  struct proxy_l * p )
-/* v6; -jiri									unsigned int dest_ip_param ,
-												unsigned int dest_port_param )
-*/
+int t_forward_nonack( struct cell *t, struct sip_msg* p_msg , 
+	struct proxy_l * proxy )
 {
-	int          branch;
-	unsigned int len;
-	char         *buf, *shbuf;
-	struct cell  *T_source = T;
-	struct lump  *a,*b,*b1,*c;
 	str          backup_uri;
-	int			 ret;
-	struct socket_info* send_sock;
-	union sockaddr_union to;
+	int branch_ret, lowest_ret;
+	str current_uri;
+	branch_bm_t	added_branches;
+	int first_branch;
+	int i;
+	struct cell *t_invite;
 
+	/* make -Wall happy */
+	current_uri.s=0;
 
-	/* default error value == -1; be more specific if you want to */
-	ret=-1;
-	buf    = 0;
-	shbuf  = 0;
-	backup_uri.s = p_msg->new_uri.s;
-	backup_uri.len = p_msg->new_uri.len;
+	t->kr|=REQ_FWDED;
 
-
-
-	/* are we forwarding for the first time? */
-	if ( T->uac[0].request.buffer )
-	{	/* rewriting a request should really not happen -- retransmission
-		   does not rewrite, whereas a new request should be written
-		   somewhere else */
-		LOG( L_CRIT, "ERROR: t_forward_nonack: attempt to rewrite"
-			" request structures\n");
-		ser_error=E_BUG;
-		return 0;
+	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
+		t_invite=t_lookupOriginalT( hash_table, p_msg );
+		if (t_invite!=T_NULL) {
+			e2e_cancel( p_msg, t, t_invite );
+			UNREF(t_invite);
+			return 1;
+		}
 	}
 
-	/* v6; -jiri ... copynpasted from forward_request */
-	/* if error try next ip address if possible */
-	if (p->ok==0){
-		if (p->host.h_addr_list[p->addr_idx+1])
-			p->addr_idx++;
-		else p->addr_idx=0;
-		p->ok=1;
-	}
-	hostent2su(&to, &p->host, p->addr_idx,
-    	(p->port)?htons(p->port):htons(SIP_PORT));
+	/* backup current uri ... add_uac changes it */
+	backup_uri = p_msg->new_uri;
+	/* if no more specific error code is known, use this */
+	lowest_ret=E_BUG;
+	/* branches added */
+	added_branches=0;
+	/* branch to begin with */
+	first_branch=t->nr_of_outgoings;
 
-	/* sets as first fork the default outgoing */
-	nr_forks++;
-	/* v6; -jiri
-	t_forks[0].ip = dest_ip_param;
-	t_forks[0].port = dest_port_param;
+	/* on first-time forwarding, use current uri, later only what
+	   is in additional branches (which may be continuously refilled
 	*/
-	t_forks[0].to=to;
-	t_forks[0].uri.len = p_msg->new_uri.len;
-	t_forks[0].uri.s =  p_msg->new_uri.s;
-	t_forks[0].free_flag = 0;
+	if (first_branch==0) {
+		branch_ret=add_uac( t, p_msg, 
+			p_msg->new_uri.s ? &p_msg->new_uri :  
+				&p_msg->first_line.u.request.uri,
+			proxy );
+		if (branch_ret>=0) 
+			added_branches |= 1<<branch_ret;
+		else
+			lowest_ret=branch_ret;
+	}
 
-	DBG("DEBUG: t_forward_nonack: first time forwarding\n");
-	/* special case : CANCEL */
-	if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
-	{
-		DBG("DEBUG: t_forward_nonack: it's CANCEL\n");
-		/* find original cancelled transaction; if found, use its
-		   next-hops; otherwise use those passed by script */
-		if ( T->T_canceled==T_UNDEFINED )
-			T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
-		/* if found */
-		if ( T->T_canceled!=T_NULL )
-		{
-			for(nr_forks=0;nr_forks<T->T_canceled->nr_of_outgoings;nr_forks++)
-			{
-				/* if in 1xx status, send to the same destination */
-				if ( (T->T_canceled->uac[nr_forks].status/100)==1 )
-				{
-					DBG("DEBUG: t_forward_nonack: branch %d not finalize"
-						": sending CANCEL for it\n",nr_forks);
-					/* v6; -jiri
-					t_forks[nr_forks].ip =
-					  T->T_canceled->uac[nr_forks].request.to.sin_addr.s_addr; 
-					t_forks[nr_forks].port =
-					  T->T_canceled->uac[nr_forks].request.to.sin_port;
-					*/
-					t_forks[nr_forks].to = T->T_canceled->uac[nr_forks].request.to;
+	init_branch_iterator(p_msg);
+	while((current_uri.s=next_branch( &current_uri.len))) {
+		branch_ret=add_uac( t, p_msg, &current_uri, proxy );
+		/* pick some of the errors in case things go wrong;
+		   note that picking lowest error is just as good as
+		   any other algorithm which picks any other negative
+		   branch result */
+		if (branch_ret>=0) 
+			added_branches |= 1<<branch_ret;
+		else
+			lowest_ret=branch_ret;
+	}
+	/* consume processed branches */
+	clear_branches();
 
-					t_forks[nr_forks].uri.len =
-					  T->T_canceled->uac[nr_forks].uri.len;
-					t_forks[nr_forks].uri.s =
-					  T->T_canceled->uac[nr_forks].uri.s;
-					t_forks[nr_forks].free_flag = 0;
-				}else{
-					/* transaction exists, but nothing to cancel */
-					DBG("DEBUG: t_forward_nonack: branch %d finalized"
-						": no CANCEL sent here\n",nr_forks);
-					/* -v6; -jiri
-					t_forks[nr_forks].ip = 0;
-					*/
-					t_forks[nr_forks].inactive= 1;
-				}
+	/* restore original URI */
+	p_msg->new_uri=backup_uri;
+
+	/* don't forget to clear all branches processed so far */
+
+	/* things went wrong ... no new branch has been fwd-ed at all */
+	if (added_branches==0)
+		return lowest_ret;
+
+	/* if someone set on_negative, store in in T-context */
+	t->on_negative=get_on_negative();
+
+	/* send them out now */
+	for (i=first_branch; i<t->nr_of_outgoings; i++) {
+		if (added_branches & (1<<i)) {
+			if (SEND_BUFFER( &t->uac[i].request)==-1) {
+				LOG(L_ERR, "ERROR: add_uac: sending request failed\n");
+				if (proxy) { proxy->errors++; proxy->ok=0; }
 			}
-#ifdef USE_SYNONIM
-			T_source = T->T_canceled;
-			T->label  = T->T_canceled->label;
-#endif
-		} else { /* transaction doesnot exists  */
-			DBG("DEBUG: t_forward_nonack: canceled request not found! "
-			"nothing to CANCEL\n");
+			start_retr( &t->uac[i].request );
 		}
-	}/* end special case CANCEL*/
-
-#ifndef USE_SYNONIM
-	branch=0;
-	if ( nr_forks && add_branch_label( T_source, T->uas.request , branch )==-1)
-		goto error;
-#endif
-
-	DBG("DEBUG: t_forward_nonack: nr_forks=%d\n",nr_forks);
-	for(branch=0;branch<nr_forks;branch++)
-	{
-		/* -v6; -jiri if (!t_forks[branch].ip) */
-		if (t_forks[branch].inactive)
-			goto end_loop;
-		DBG("DEBUG: t_forward_nonack: branch = %d\n",branch);
-		/*generates branch param*/
-		if ( add_branch_label( T_source, p_msg , branch )==-1)
-			goto error;
-		/* remove all the HDR_VIA type lumps */
-		if (branch)
-			for(b=p_msg->add_rm,b1=0;b;b1=b,b=b->next)
-				if (b->type==HDR_VIA)
-				{
-					for(a=b->before;a;)
-						{c=a->before;free_lump(a);pkg_free(a);a=c;}
-					for(a=b->after;a;)
-						{c=a->after;free_lump(a);pkg_free(a);a=c;}
-					if (b1) b1->next = b->next;
-						else p_msg->add_rm = b->next;
-					free_lump(b);pkg_free(b);
-				}
-		/* updates the new uri*/
-		p_msg->new_uri.s = t_forks[branch].uri.s;
-		p_msg->new_uri.len = t_forks[branch].uri.len;
-
-		T->uac[branch].request.to = t_forks[branch].to;
-		send_sock=get_send_socket( & T->uac[branch].request.to );
-		if (send_sock==0) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: can't fwd to af %d "
-				"no corresponding listening socket\n", 
-				T->uac[branch].request.to.s.sa_family);
-			ser_error=E_NO_SOCKET;
-			goto error;
-		}
-		T->uac[branch].request.send_sock=send_sock;
-		
-		callback_event( TMCB_REQUEST_OUT, T, p_msg );	
-		/* _test_insert_to_reply(p_msg, "Foo: Bar\r\n");*/
-		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len, send_sock ))) {
-			ser_error=ret=E_OUT_OF_MEM;
-			goto error;
-		}
-		/* allocates a new retrans_buff for the outbound request */
-		DBG("DEBUG: t_forward_nonack: building outbound request"
-			" for branch %d.\n",branch);
-		shbuf = (char *) shm_malloc( len );
-		if (!shbuf)
-		{
-			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem buffer\n");
-			ser_error=ret=E_OUT_OF_MEM;
-			goto error;
-		}
-		T->uac[branch].request.buffer = shbuf;
-		T->uac[branch].request.buffer_len = len ;
-		memcpy( T->uac[branch].request.buffer , buf , len );
-		/* keeps a hooker to uri inside buffer*/
-		T->uac[branch].uri.s = T->uac[branch].request.buffer +
-			(p_msg->first_line.u.request.uri.s - p_msg->buf);
-		T->uac[branch].uri.len=t_forks[branch].uri.s?(t_forks[branch].uri.len)
-			:(p_msg->first_line.u.request.uri.len);
-		/* send the request */
-		/* v6; -jiri
-		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch].ip;
-		T->uac[branch].request.to.sin_port = t_forks[branch].port;
-		T->uac[branch].request.to.sin_family = AF_INET;
-		*/
-		T->uac[branch].request.to = t_forks[branch].to;
-		p->tx++;
-		p->tx_bytes+=len;
-		if (SEND_BUFFER( &(T->uac[branch].request) )==-1) {
-			p->errors++;
-			p->ok=0;
-			ser_error=ret=E_SEND;
-			goto error;
-		}
-		/* should have p->errors++; p->ok=0; on error here... */
-
-
-		pkg_free( buf ) ;
-		buf=NULL;
-
-		DBG("DEBUG: t_forward_nonack: starting timers (retrans and FR) %d\n",
-			get_ticks() );
-		/*sets and starts the FINAL RESPONSE timer */
-		set_timer( hash_table, &(T->uac[branch].request.fr_timer),
-		/*p_msg->REQ_METHOD==METHOD_INVITE?FR_INV_TIMER_LIST:FR_TIMER_LIST);*/
-			FR_TIMER_LIST ); 
-		/* sets and starts the RETRANS timer */
-		T->uac[branch].request.retr_list = RT_T1_TO_1;
-		set_timer( hash_table, &(T->uac[branch].request.retr_timer),
-			RT_T1_TO_1 );
-		end_loop:
-		T->nr_of_outgoings++ ;
-		DBG("DEBUG: branch %d done; outgoing uri=|%.*s|\n",branch,
-			T->uac[branch].uri.len,T->uac[branch].uri.s);
 	}
-
-	/* if we have a branch spec. for NO_RESPONSE_RECEIVED, we have to 
-	move it immediatly after the last parallel branch */
-	/* v6; -jiri 
-	if (t_forks[NO_RPL_BRANCH].ip && T->nr_of_outgoings!=NO_RPL_BRANCH ) */
-	if (!t_forks[NO_RPL_BRANCH].inactive && T->nr_of_outgoings!=NO_RPL_BRANCH )
-	{
-		branch = T->nr_of_outgoings;
-		/* v6; -jiri
-		T->uac[branch].request.to.sin_addr.s_addr = t_forks[NO_RPL_BRANCH].ip;
-		T->uac[branch].request.to.sin_port = t_forks[NO_RPL_BRANCH].port;
-		*/
-		T->uac[branch].request.to = t_forks[NO_RPL_BRANCH].to;
-
-		T->uac[branch].uri.s = t_forks[NO_RPL_BRANCH].uri.s;
-		T->uac[branch].uri.len = t_forks[NO_RPL_BRANCH].uri.len;
-	}
-	p_msg->new_uri.s = backup_uri.s;
-	p_msg->new_uri.len = backup_uri.len;
-	t_clear_forks();
 	return 1;
+}	
 
-error:
-	if (shbuf) shm_free(shbuf);
-	T->uac[branch].request.buffer=NULL;
-	if (buf) pkg_free( buf );
-	p_msg->new_uri.s = backup_uri.s;
-	p_msg->new_uri.len = backup_uri.len;
-	t_clear_forks();
-	return ret;
-}
-
-
-int forward_serial_branch(struct cell* Trans,int branch)
+int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy )
 {
-	struct sip_msg*  p_msg = Trans->uas.request;
-	struct lump      *a, *b, *b1, *c;
-	unsigned int     len;
-	char             *buf=0, *shbuf=0;
-	str              backup_uri;
-	union sockaddr_union *to;
-	struct socket_info* send_sock;
+	/* this is a quite horrible hack -- we just take the message
+	   as is, including Route-s, Record-route-s, and Vias ,
+	   forward it downstream and prevent replies received
+	   from relaying by setting the replication/local_trans bit;
 
-	backup_uri.s = p_msg->new_uri.s;
-	backup_uri.len = p_msg->new_uri.len;
+		nevertheless, it should be good enough for the primary
+		customer of this function, REGISTER replication
 
-	/*generates branch param*/
-	if ( add_branch_label( Trans, p_msg , branch )==-1)
-		goto error;
-	/* remove all the HDR_VIA type lumps - they are in SHM memory!!! */
-	for(b=p_msg->add_rm,b1=0;b;b1=b,b=b->next)
-		if (b->type==HDR_VIA)
-		{
-			for(a=b->before;a;)
-				{c=a->before;shm_free_lump(a);a=c;}
-			for(a=b->after;a;)
-				{c=a->after;shm_free_lump(a);a=c;}
-			if (b1) b1->next = b->next;
-				else p_msg->add_rm = b->next;
-			shm_free_lump(b);
-		}
-
-	LOG(L_ERR,"DEBUG: t_forward_serial_branch: building req for branch"
-		"%d; uri=|%.*s|.\n", branch, Trans->uac[branch].uri.len,
-		Trans->uac[branch].uri.s);
-	/* updates the new uri*/
-	p_msg->new_uri.s = Trans->uac[branch].uri.s;
-	p_msg->new_uri.len = Trans->uac[branch].uri.len;
-
-	to=&Trans->uac[branch].request.to;
-	send_sock=get_send_socket(to);
-	if (send_sock==0) {
-		LOG(L_ERR, "ERROR: t_forward_nonack: can't fwd to af %d "
-		"no corresponding listening socket\n", to->s.sa_family );
-		ser_error=E_NO_SOCKET;
-		goto error;
-	}
-	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len, send_sock )))
-		goto error;
-	shm_free(Trans->uac[branch].uri.s);
-
-	/* allocates a new retrans_buff for the outbound request */
-	shbuf = (char *) shm_malloc( len );
-	if (!shbuf)
-	{
-		LOG(L_ERR, "ERROR: t_forward_serial_branch: out of shmem buffer\n");
-		goto error;
-	}
-	Trans->uac[branch].request.buffer = shbuf;
-	Trans->uac[branch].request.buffer_len = len ;
-	memcpy( Trans->uac[branch].request.buffer , buf , len );
-	/* keeps a hooker to uri inside buffer*/
-	Trans->uac[branch].uri.s = Trans->uac[branch].request.buffer +
-		(p_msg->first_line.u.request.uri.s - p_msg->buf);
-	Trans->uac[branch].uri.len=p_msg->new_uri.len?(p_msg->new_uri.len)
-		:(p_msg->first_line.u.request.uri.len);
-	Trans->nr_of_outgoings++ ;
-	/* send the request */
-	/* -v6; -jiri Trans->uac[branch].request.to.sin_family = AF_INET; */
-	SEND_BUFFER( &(T->uac[branch].request) );
-
-	pkg_free( buf ) ;
-	buf=NULL;
-
-	DBG("DEBUG: t_forward_serial_branch:starting timers (retrans and FR) %d\n",
-		get_ticks() );
-	/*sets and starts the FINAL RESPONSE timer */
-	set_timer( hash_table, &(T->uac[branch].request.fr_timer), 
-			FR_TIMER_LIST ); 
-			/* p_msg->REQ_METHOD==METHOD_INVITE ? FR_INV_TIMER_LIST : FR_TIMER_LIST ); */
-	/* sets and starts the RETRANS timer */
-	T->uac[branch].request.retr_list = RT_T1_TO_1;
-	set_timer( hash_table, &(T->uac[branch].request.retr_timer), RT_T1_TO_1 );
-
-	p_msg->new_uri.s = backup_uri.s;
-	p_msg->new_uri.len = backup_uri.len;
-
-	for(b=p_msg->add_rm,b1=0;b;b1=b,b=b->next)
-		if (b->type==HDR_VIA)
-		{
-			for(a=b->before;a;)
-				{c=a->before;free_lump(a);pkg_free(a);a=c;}
-			for(a=b->after;a;)
-				{c=a->after;free_lump(a);pkg_free(a);a=c;}
-			if (b1) b1->next = b->next;
-				else p_msg->add_rm = b->next;
-			free_lump(b);pkg_free(b);
-		}
-
-	return 1;
-
-error:
-	if (shbuf) shm_free(shbuf);
-	T->uac[branch].request.buffer=NULL;
-	if (buf) pkg_free( buf );
-	p_msg->new_uri.s = backup_uri.s;
-	p_msg->new_uri.len = backup_uri.len;
-	return -1;
+		if we want later to make it thoroughly, we need to
+		introduce delete lumps for all the header fields above
+	*/
+	return t_relay_to(p_msg, proxy, 1 /* replicate */);
 }
-
-
-
