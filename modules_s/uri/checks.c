@@ -75,17 +75,17 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 
 	c = (auth_body_t*)(h->parsed);
 
-	if (!c->digest.username.len) {
+	if (!c->digest.username.whole.len) {
 		DBG("is_user(): Username not found in credentials\n");
 		return -1;
 	}
 
-	if (s->len != c->digest.username.len) {
+	if (s->len != c->digest.username.whole.len) {
 		DBG("is_user(): Username length does not match\n");
 		return -1;
 	}
 
-	if (!memcmp(s->s, c->digest.username.s, s->len)) {
+	if (!memcmp(s->s, c->digest.username.whole.s, s->len)) {
 		DBG("is_user(): Username matches\n");
 		return 1;
 	} else {
@@ -131,10 +131,10 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 
 	if (!puri.user.len) return -4;
 
-	len = c->digest.username.len;
+	len = c->digest.username.whole.len;
 
 	if (puri.user.len == len) {
-		if (!strncasecmp(puri.user.s, c->digest.username.s, len)) {
+		if (!strncasecmp(puri.user.s, c->digest.username.whole.s, len)) {
 			DBG("check_username(): Username is same\n");
 			return 1;
 		}
