@@ -52,6 +52,7 @@ enum rps {
 };
 
 extern char tm_tags[TOTAG_VALUE_LEN];
+extern char *tm_tag_suffix;
 
 enum route_mode { MODE_REQUEST=1, MODE_ONREPLY, MODE_ONFAILURE };
 extern enum route_mode rmode;

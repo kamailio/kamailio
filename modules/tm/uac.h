@@ -30,62 +30,61 @@
  * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  */
 
-
 #ifndef _UAC_H
 #define _UAC_H
 
-#include "defs.h"
-
-
 #include <stdio.h>
-#include "config.h"
-#include "t_dlg.h"
+#include "../../str.h"
+#include "dlg.h"
+#include "t_hooks.h"
 
-/* substitution character for FIFO UAC */
-#define SUBST_CHAR '!'
+#define DEFAULT_CSEQ 10 /* Default CSeq number */
 
-#define DEFAULT_CSEQ	10
+extern char *uac_from;  /* UAC From parameter */
 
-extern char *uac_from;
-extern char *fifo;
-extern int fifo_mode;
 
-int uac_init();
-int uac_child_init( int rank );
-
-typedef int (*tuac_f)(str *msg_type, str *dst, str *headers,str *body,
-	str *from, transaction_cb completion_cb, void *cbp,
-	struct dialog *dlg );
-
-typedef int (*tuacdlg_f)(str* msg_type, str* dst, int proto, str* ruri, str* to,
-			 str* from, str* totag, str* fromtag, int* cseq,
-			 str* callid, str* headers, str* body,
-			 transaction_cb completion_cb, void* cbp
-			 );
-
-/* look at uac.c for usage guidelines */
 /*
- * Send a request within a dialog
+ * Function prototypes
  */
-int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OPTIONS etc. */
-	      str* dst,                     /* Real destination (can be different 
-										   than R-URI */
-		  int proto,
-	      str* ruri,                    /* Request-URI */
-	      str* to,                      /* To - including tag */
-	      str* from,                    /* From - including tag */
-	      str* totag,                   /* To tag */
-	      str* fromtag,                 /* From tag */
-	      int* cseq,                    /* CSeq */
-	      str* cid,                     /* Call-ID */
-	      str* headers,                 /* Optional headers including CRLF */
-	      str* body,                    /* Message body */
-	      transaction_cb completion_cb, /* Callback parameter */
-	      void* cbp                     /* Callback pointer */
-	      );
+typedef int (*reqwith_t)(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
+typedef int (*reqout_t)(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
+typedef int (*req_t)(str* m, str* ruri, str* t, str* f, str* h, str* b, transaction_cb c, void* cp);
 
 
-int fifo_uac_dlg( FILE *stream, char *response_file );
+/*
+ * Generate a fromtag based on given Call-ID
+ */
+void generate_fromtag(str* tag, str* callid);
+
+
+/*
+ * Initialization function
+ */
+int uac_init(void);
+
+
+/*
+ * Send a request
+ */
+int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb, void* cbp);
+
+
+/*
+ * Send a message within a dialog
+ */
+int req_within(str* m, str* h, str* b, dlg_t* d, transaction_cb c, void* cp);
+
+
+/*
+ * Send an initial request that will start a dialog
+ */
+int req_outside(str* m, str* t, str* f, str* h, str* b, dlg_t** d, transaction_cb c, void* cp);
+
+
+/*
+ * Send a transactional request, no dialogs involved
+ */
+int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_cb c, void* cp);
 
 
 #endif

@@ -92,4 +92,7 @@
 /* to-tag separator for stateful processing */
 #define TM_TAG_SEPARATOR '-'
 
+/* FIFO substitution character */
+#define SUBST_CHAR '!'
+
 #endif

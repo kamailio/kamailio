@@ -31,8 +31,8 @@
 #define _MSGBUILDER_H
 
 #include "../../ip_addr.h"
-
 #include "defs.h"
+#include "dlg.h"
 
 
 #define CSEQ "CSeq: "
@@ -71,21 +71,11 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	struct cell *t, unsigned int *len);
 
 
-char *build_uac_request_dlg(str* msg,            /* Method */
-	                    str* ruri,           /* Request-URI */
-	                    str* to,             /* To header field w/o tag */
-	                    str* from,           /* From header field w/o tag */
-	                    str* totag,          /* To tag */
-	                    str* fromtag,        /* From tag */
-	                    unsigned int cseq,  /* CSeq number */
-	                    str* callid,         /* Call-ID */
-	                    str* headers,        /* Headers to be appended including CRLF */
-	                    str* body,           /* Body of the message */
-	                    int branch,         /* Branch */
-	                    struct cell *t,
-	                    unsigned int *len,
-						struct socket_info *send_sock
-	                   );
+/*
+ * Create a request
+ */
+char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int branch, 
+		    struct cell *t, int* len, struct socket_info* send_sock);
 
 
 int t_calc_branch(struct cell *t,

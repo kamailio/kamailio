@@ -26,99 +26,118 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-/*
+ *
  * History:
  * -------
  *  2003-02-13  added proto to uri2proxy (andrei)
+ *  2003-04-09  uri2sock moved from uac.c (janakj)
  *  2003-04-14  added get_proto to determine protocol from uri unless
  *              specified explicitely (jiri)
-*/
+ */
 
 
 #ifndef _TM_UT_H
 #define _TM_UT_H
 
-#include "defs.h"
-#include "../../ip_addr.h"
 
-
-#include "../../dprint.h"
-#include "../../error.h"
-#include "../../ut.h"
+#include "../../proxy.h"
 #include "../../str.h"
+#include "../../parser/parse_uri.h"
+#include "../../dprint.h"
+#include "../../ut.h"
+#include "../../ip_addr.h"
+#include "../../error.h"
+#include "../../forward.h"
+#include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 
-
 inline static enum sip_protos get_proto(enum sip_protos force_proto,
-	struct sip_uri *u)
+       struct sip_uri *u)
 {
-	/* calculate transport protocol */
-	switch(force_proto) {
-		case PROTO_NONE: 	/* no protocol has been forced -- look at uri */
-			switch(u->proto) {
-				case PROTO_NONE: /* uri default to UDP */
-					return PROTO_UDP;
-				case PROTO_UDP: /* transport specified explicitely */
+       /* calculate transport protocol */
+       switch(force_proto) {
+               case PROTO_NONE:        /* no protocol has been forced -- look at uri */
+                       switch(u->proto) {
+                               case PROTO_NONE: /* uri default to UDP */
+                                       return PROTO_UDP;
+                               case PROTO_UDP: /* transport specified explicitely */
 #ifdef USE_TCP
-				case PROTO_TCP:
+                               case PROTO_TCP:
 #endif
-					return u->proto;
-				default:
-					LOG(L_ERR, "ERROR: get_proto: unsupported transport: %d\n",
-						u->proto );
-					return PROTO_NONE;
-			}
-		case PROTO_UDP: /* some protocol has been forced -- take it */
+                                       return u->proto;
+                               default:
+                                       LOG(L_ERR, "ERROR: get_proto: unsupported transport: %d\n",
+                                               u->proto );
+                                       return PROTO_NONE;
+                       }
+               case PROTO_UDP: /* some protocol has been forced -- take it */
 #ifdef USE_TCP
-		case PROTO_TCP:
+               case PROTO_TCP:
 #endif
-			return force_proto;
-		default:
-			LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
-				"%d\n", force_proto);
-			return PROTO_NONE;
-	}
+                       return force_proto;
+               default:
+                       LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
+                               "%d\n", force_proto);
+                       return PROTO_NONE;
+       }
 }
 
+
+
+/*
+ * Convert a URI into a proxy structure
+ */
 inline static struct proxy_l *uri2proxy( str *uri, int proto )
 {
 	struct sip_uri parsed_uri;
-	unsigned int  port; 
 	struct proxy_l *p;
-	int err;
-	enum sip_protos out_proto;
 
-	if (parse_uri(uri->s, uri->len, &parsed_uri)<0) {
-		LOG(L_ERR, "ERROR: t_relay: bad_uri: %.*s\n",
-			uri->len, uri->s );
+	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
+		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: %.*s\n",
+		    uri->len, uri->s );
 		return 0;
 	}
-	if (parsed_uri.port.s){ 
-		port=str2s(parsed_uri.port.s, parsed_uri.port.len, &err);
-		if (err){
-			LOG(L_ERR, "ERROR: t_relay: bad port in uri: <%.*s>\n",
-				parsed_uri.port.len, parsed_uri.port.s);
-			return 0;
-		}
-	/* fixed use of SRV resolver
-	} else port=SIP_PORT; */
-	} else port=0;
-
-	out_proto=get_proto(proto,&parsed_uri);
-	if (out_proto==PROTO_NONE) {
-		LOG(L_ERR, "ERROR: uri2proxy: transport can't be determined "
-			"for URI <%.*s>\n", uri->len, uri->s );
+	
+	p = mk_proxy(&parsed_uri.host, 
+		      parsed_uri.port_no, 
+		      get_proto(proto, &parsed_uri));
+	if (p == 0) {
+		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
+		    uri->len, ZSW(uri->s));
 		return 0;
 	}
-
-	p=mk_proxy(&(parsed_uri.host), port, out_proto);
-	if (p==0) {
-		LOG(L_ERR, "ERROR: t_relay: bad host name in URI <%.*s>\n",
-			uri->len, uri->s);
-		return 0;
-	}
+	
 	return p;
 }
 
-#endif
+
+/*
+ * Convert a URI into socket_info
+ */
+static inline struct socket_info *uri2sock(str *uri, union sockaddr_union *to_su, int proto)
+{
+	struct proxy_l *proxy;
+	struct socket_info* send_sock;
+
+	proxy = uri2proxy(uri, proto);
+	if (!proxy) {
+		ser_error = E_BAD_ADDRESS;
+		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
+		return 0;
+	}
+	
+	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
+		   (proxy->port) ? proxy->port : SIP_PORT);
+	send_sock = get_send_socket(to_su, proxy->proto);
+	if (!send_sock) {
+		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
+		    to_su->s.sa_family);
+		ser_error = E_NO_SOCKET;
+	}
+
+	free_proxy(proxy);
+	pkg_free(proxy);
+	return send_sock;
+}
+
+#endif /* _TM_UT_H */

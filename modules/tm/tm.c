@@ -90,13 +90,13 @@
 #include "ut.h"
 #include "t_reply.h"
 #include "uac.h"
+#include "uac_fifo.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
 #include "t_stats.h"
+#include "callid.h"
 
 MODULE_VERSION
-
-
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
@@ -106,21 +106,20 @@ inline static int fixup_t_send_reply(void** param, int param_no);
 inline static int fixup_str2int( void** param, int param_no);
 inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
-inline static int w_t_newdlg( struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, 
-									char *);
+				    char *);
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
-									char *);
+				    char *);
 inline static int w_t_replicate( struct sip_msg  *p_msg , 
-							char *proxy, /* struct proxy_l *proxy expected */
-							char *_foo       /* nothing expected */ );
+				 char *proxy, /* struct proxy_l *proxy expected */
+				 char *_foo       /* nothing expected */ );
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
-							char *proxy, /* struct proxy_l *proxy expected */
-							char *_foo       /* nothing expected */ );
+				     char *proxy, /* struct proxy_l *proxy expected */
+				     char *_foo       /* nothing expected */ );
 inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
-							char *proxy, /* struct proxy_l *proxy expected */
-							char *_foo       /* nothing expected */ );
+				     char *proxy, /* struct proxy_l *proxy expected */
+				     char *_foo       /* nothing expected */ );
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
 inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
@@ -157,14 +156,21 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
-	{T_UAC_DLG,            (cmd_function)t_uac_dlg,         NO_SCRIPT,     0, 0},
 	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
 	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0, 0},
 	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0, 0},
 	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0, 0},
 	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0, 0},
 	{T_ADDBLIND,           (cmd_function)add_blind_uac,     NO_SCRIPT,     0, 0},
-	{"t_newdlg",           (cmd_function)w_t_newdlg,        0,             0, 0},
+	{"t_request_within",   (cmd_function)req_within,        NO_SCRIPT,     0, 0},
+	{"t_request_outside",  (cmd_function)req_outside,       NO_SCRIPT,     0, 0},
+	{"t_request",          (cmd_function)request,           NO_SCRIPT,     0, 0},
+	{"new_dlg_uac",        (cmd_function)new_dlg_uac,       NO_SCRIPT,     0, 0},
+	{"dlg_response_uac",   (cmd_function)dlg_response_uac,  NO_SCRIPT,     0, 0},
+	{"new_dlg_uas",        (cmd_function)new_dlg_uas,       NO_SCRIPT,     0, 0},
+	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,     0, 0},
+	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,     0, 0},
+	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,     0, 0},
 	{0,0,0,0,0}
 };
 
@@ -179,6 +185,7 @@ static param_export_t params[]={
 	{"retr_timer1p3", INT_PARAM, &(timer_id2timeout[RT_T1_TO_3])        },
 	{"retr_timer2",   INT_PARAM, &(timer_id2timeout[RT_T2])             },
 	{"noisy_ctimer",  INT_PARAM, &noisy_ctimer                          },
+	{"uac_from",      STR_PARAM, &uac_from                              },
 	{0,0,0}
 };
 
@@ -261,11 +268,16 @@ static int mod_init(void)
 		return -1;
 	}
 
-
-	if (register_fifo_cmd(fifo_uac_dlg, "t_uac_dlg", 0)<0) {
-		LOG(L_CRIT, "cannot register fifo uac\n");
+	if (init_callid() < 0) {
+		LOG(L_CRIT, "Error while initializin Call-ID generator\n");
 		return -1;
 	}
+
+	if (register_fifo_cmd(fifo_uac, "t_uac_dlg", 0) < 0) {
+		LOG(L_CRIT, "cannot register fifo t_uac\n");
+		return -1;
+	}
+
 	if (register_fifo_cmd(fifo_hash, "t_hash", 0)<0) {
 		LOG(L_CRIT, "cannot register hash\n");
 		return -1;
@@ -317,11 +329,12 @@ static int mod_init(void)
 }
 
 static int child_init(int rank) {
-	if (uac_child_init(rank)==-1) {
-		LOG(L_ERR, "ERROR: child_init: uac_child_init error\n");
-		return -1;
+	if (child_init_callid(rank) < 0) {
+		LOG(L_ERR, "ERROR: child_init: Error while initializing Call-ID generator\n");
+		return -2;
 	}
-	return 1;
+
+	return 0;
 }
 
 
@@ -506,14 +519,6 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 		return -1;
 }
 
-
-
-
-
-inline static int w_t_newdlg( struct sip_msg* p_msg, char* foo, char* bar ) 
-{
-	return t_newdlg( p_msg );
-}
 
 inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar ) 
 {

@@ -219,7 +219,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 
 	/* now message printing starts ... */
 	shbuf=print_uac_request( t, request, branch, uri, 
-		&len, send_sock, proxy->proto);
+		&len, send_sock, proxy->proto );
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error01;

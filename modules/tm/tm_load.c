@@ -58,10 +58,6 @@ int load_tm( struct tm_binds *tmb)
 		LOG(L_ERR, LOAD_ERROR "'t_relay' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_uac_dlg=(tuacdlg_f)find_export(T_UAC_DLG, NO_SCRIPT, 0)) ) {
-		LOG( L_ERR, LOAD_ERROR "'t_uac_dlg' not found\n");
-		return -1;
-	}
 	if (!(tmb->t_reply=(treply_f)find_export(T_REPLY, 2, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
@@ -90,7 +86,42 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;
 	}
-
+	if (!(tmb->t_request_within=(reqwith_t)find_export("t_request_within", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_request_within' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_request_outside=(reqout_t)find_export("t_request_outside", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_request_outside' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_request=(req_t)find_export("t_request", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_request' not found\n");
+		return -1;
+	}
+	if (!(tmb->new_dlg_uac=(new_dlg_uac_f)find_export("new_dlg_uac", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'new_dlg_uac' not found\n");
+		return -1;
+	}
+        if (!(tmb->dlg_response_uac=(dlg_response_uac_f)find_export("dlg_response_uac", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'dlg_response_uac' not found\n");
+		return -1;
+        }
+        if (!(tmb->new_dlg_uas=(new_dlg_uas_f)find_export("new_dlg_uas", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'new_dlg_uas' not found\n");
+		return -1;
+	}
+        if (!(tmb->dlg_request_uas=(dlg_request_uas_f)find_export("dlg_request_uas", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'dlg_request_uas' not found\n");
+		return -1;
+	}
+	if (!(tmb->free_dlg=(free_dlg_f)find_export("free_dlg", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'free_dlg' not found\n");
+		return -1;
+	}
+	if (!(tmb->print_dlg=(print_dlg_f)find_export("print_dlg", NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'print_dlg' not found\n");
+		return -1;
+	}
+	
 	return 1;
-
 }

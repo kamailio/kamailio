@@ -45,7 +45,7 @@ typedef int (*taddblind_f)( /*struct cell *t */ );
 int t_replicate(struct sip_msg *p_msg, struct proxy_l * proxy, int proto);
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
     int branch, str *uri, unsigned int *len, struct socket_info *send_sock,
-	enum sip_protos proto);
+    enum sip_protos proto);
 void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite );
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel, struct cell *t_invite, int branch );
 int add_uac(	struct cell *t, struct sip_msg *request, str *uri, str* next_hop,

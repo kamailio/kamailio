@@ -7,6 +7,6 @@
 
 auto_gen=
 NAME=tm.so
-LIBS= 
+LIBS=
 
 include ../../Makefile.modules

@@ -31,7 +31,7 @@
  * ----------
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-02-13  build_uac_request uses proto (andrei)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
+ * 2003-02-28  scratchpad compatibility abandoned (jiri)
  * 2003-04-14  build_local no longer checks reply status as it
  *             is now called before reply status is updated to
  *             avoid late ACK sending (jiri)
@@ -177,188 +177,262 @@ error:
 }
 
 
-
-char *build_uac_request_dlg(str* msg,           /* Method */
-			    str* ruri,          /* Request-URI */
-			    str* to,            /* To */
-			    str* from,          /* From */
-			    str* totag,         /* To header tag */
-			    str* fromtag,       /* From header tag */
-			    unsigned int cseq,  /* CSeq number */
-			    str* callid,        /* Call-ID */
-			    str* headers,       /* Headers to be appended */
-			    str* body,          /* Body of the message */
-			    int branch,         /* Branch */
-			    struct cell *t,     
-			    unsigned int *len,
-				struct socket_info* send_sock
-				)
+/*
+ * Convert lenght of body into asciiz
+ */
+static inline int print_content_length(str* dest, str* body)
 {
-	char *via, *buf, *w, content_len[10], cseq_str[10], branch_buf[MAX_BRANCH_PARAM_LEN];
-	char *tmp;
-	int content_len_len, cseq_str_len, branch_len;
-	str branch_str;
-	unsigned int via_len;
+	static char content_length[10];
+	int len;
+	char* tmp;
 
-	buf=0;
-	content_len_len = 0; /* Makes gcc happy */
-
-	     /* 
-	      * Print Content-Length
-	      */
+	     /* Print Content-Length */
 	if (body) {
-		tmp=int2str(body->len, &content_len_len);
-		if (content_len_len>=sizeof(content_len)) {
-			LOG(L_ERR, "ERROR: build_uac_request_dlg: content_len too big\n");
-			return 0;
+		tmp = int2str(body->len, &len);
+		if (len >= sizeof(content_length)) {
+			LOG(L_ERR, "ERROR: print_content_length: content_len too big\n");
+			return -1;
 		}
-		memcpy(content_len, tmp, content_len_len); 
+		memcpy(content_length, tmp, len); 
+		dest->s = content_length;
+		dest->len = len;
+	} else {
+		dest->s = 0;
+		dest->len = 0;
+	}
+	return 0;
+}
+
+
+/*
+ * Convert CSeq number into asciiz
+ */
+static inline int print_cseq_num(str* _s, dlg_t* _d)
+{
+	static char cseq[10];
+	char* tmp;
+	int len;
+
+	tmp = int2str(_d->loc_seq.value, &len);
+	if (len >= sizeof(cseq)) {
+		LOG(L_ERR, "print_cseq_num: cseq too big\n");
+		return -1;
 	}
 	
-	     /* 
-	      * Print CSeq 
-	      */
-	tmp=int2str(cseq, &cseq_str_len);
-	if (cseq_str_len >= sizeof(cseq_str)) {
-		LOG(L_ERR, "ERROR: build_uac_request_dlg: cseq too big\n");
+	memcpy(cseq, tmp, len);
+	_s->s = cseq;
+	_s->len = len;
+	return 0;
+}
+
+
+/*
+ * Create Via header
+ */
+static inline int assemble_via(str* dest, struct cell* t, struct socket_info* sock, int branch)
+{
+	static char branch_buf[MAX_BRANCH_PARAM_LEN];
+	char* via;
+	int len, via_len;
+	str branch_str;
+
+	if (!t_calc_branch(t, branch, branch_buf, &len)) {
+		LOG(L_ERR, "ERROR: build_via: branch calculation failed\n");
+		return -1;
+	}
+	
+	branch_str.s = branch_buf;
+	branch_str.len = len;
+
+	printf("!!!proto: %d\n", sock->proto);
+
+	via = via_builder(&via_len, sock, &branch_str, 0, sock->proto);
+	if (!via) {
+		LOG(L_ERR, "build_via: via building failed\n");
+		return -2;
+	}
+	
+	dest->s = via;
+	dest->len = via_len;
+	return 0;
+}
+
+
+/*
+ * Print Request-URI
+ */
+static inline char* print_request_uri(char* w, str* method, dlg_t* dialog, struct cell* t, int branch)
+{
+	memapp(w, method->s, method->len); 
+	memapp(w, " ", 1); 
+
+	t->uac[branch].uri.s = w; 
+	t->uac[branch].uri.len = dialog->hooks.request_uri->len;
+
+	memapp(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len); 
+	memapp(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
+
+	return w;
+}
+
+
+/*
+ * Print To header field
+ */
+static inline char* print_to(char* w, dlg_t* dialog, struct cell* t)
+{
+	t->to.s = w;
+	t->to.len = TO_LEN + dialog->rem_uri.len + CRLF_LEN;
+
+	memapp(w, TO, TO_LEN);
+	memapp(w, dialog->rem_uri.s, dialog->rem_uri.len);
+
+	if (dialog->id.rem_tag.len) {
+		t->to.len += TOTAG_LEN + dialog->id.rem_tag.len ;
+		memapp(w, TOTAG, TOTAG_LEN);
+		memapp(w, dialog->id.rem_tag.s, dialog->id.rem_tag.len);
+	}
+
+	memapp(w, CRLF, CRLF_LEN);
+	return w;
+}
+
+
+/*
+ * Print From header field
+ */
+static inline char* print_from(char* w, dlg_t* dialog, struct cell* t)
+{
+	t->from.s = w;
+	t->from.len = FROM_LEN + dialog->loc_uri.len + CRLF_LEN;
+
+	memapp(w, FROM, FROM_LEN);
+	memapp(w, dialog->loc_uri.s, dialog->loc_uri.len);
+
+	if (dialog->id.loc_tag.len) {
+		t->from.len += FROMTAG_LEN + dialog->id.loc_tag.len;
+		memapp(w, FROMTAG, FROMTAG_LEN);
+		memapp(w, dialog->id.loc_tag.s, dialog->id.loc_tag.len);
+	}
+
+	memapp(w, CRLF, CRLF_LEN);
+	return w;
+}
+
+
+/*
+ * Print CSeq header field
+ */
+static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
+{
+	t->cseq_n.s = w; 
+	/* don't include method name and CRLF -- subsequent
+	 * local reuqests ACK/CANCEl will add their own */
+	t->cseq_n.len = CSEQ_LEN + cseq->len; 
+
+	memapp(w, CSEQ, CSEQ_LEN);
+	memapp(w, cseq->s, cseq->len);
+	memapp(w, " ", 1);
+	memapp(w, method->s, method->len);
+	return w;
+}
+
+
+/*
+ * Print Call-ID header field
+ */
+static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
+{
+	t->callid.s = w + CRLF_LEN; 
+	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
+	memapp(w, CRLF CALLID, CRLF_LEN + CALLID_LEN);
+	memapp(w, dialog->id.call_id.s, dialog->id.call_id.len);
+	memapp(w, CRLF, CRLF_LEN);
+	return w;
+}
+
+
+/*
+ * Create a request
+ */
+char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int branch, 
+			struct cell *t, int* len, struct socket_info* send_sock)
+{
+	char* buf, *w;
+	str content_length, cseq, via;
+
+	if (!method || !dialog) {
+		LOG(L_ERR, "build_uac_req(): Invalid parameter value\n");
 		return 0;
 	}
-	memcpy(cseq_str, tmp, cseq_str_len);
-	
-	*len = msg->len + 1 + ruri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
+	if (print_content_length(&content_length, body) < 0) {
+		LOG(L_ERR, "build_uac_req(): Error while printing content-length\n");
+		return 0;
+	}
+	if (print_cseq_num(&cseq, dialog) < 0) {
+		LOG(L_ERR, "build_uac_req(): Error while printing CSeq number\n");
+		return 0;
+	}
+	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
 
-	if (!t_calc_branch(t, branch, branch_buf, &branch_len)) {
-		LOG(L_ERR, "ERROR: build_uac_request_dlg: branch calculation failed\n");
-		goto error;
+	if (assemble_via(&via, t, send_sock, branch) < 0) {
+		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
+		return 0;
 	}
-	
-	branch_str.s=branch_buf;
-	branch_str.len=branch_len;
-	via = via_builder(&via_len, send_sock,
-			&branch_str, 0, send_sock->proto);
-	if (!via) {
-		LOG(L_ERR, "ERROR: build_uac_request_dlg: via building failed\n");
-		goto error;
-	}
-	
-	*len += via_len;
-	
-	/* header names and separators */
-	*len +=   TO_LEN + CRLF_LEN
-		+ FROM_LEN + CRLF_LEN
-		+ CSEQ_LEN + CRLF_LEN
-		+ CALLID_LEN + CRLF_LEN
-		+ ((body) ? (CONTENT_LENGTH_LEN + CRLF_LEN) : 0)
-		+ (server_signature ? USER_AGENT_LEN + CRLF_LEN : 0)
-		+ CRLF_LEN; /* EoM */
-	
-	     /* header field value and body length */
-	*len +=   to->len + 
-			((totag && totag->len) ? (TOTAG_LEN + totag->len) : 0) /* To */
-		+ from->len +  /* From */
-			((fromtag && fromtag->len) ? FROMTAG_LEN + fromtag->len:0)
-		+ cseq_str_len + 1 + msg->len                        /* CSeq */
-		+ callid->len                                        /* Call-ID */
-		+ ((body) ? (content_len_len) : 0)                   /* Content-Length */
-		+ ((headers) ? (headers->len) : 0)                   /* Headers */
-		+ ((body) ? (body->len) : 0);                        /* Body */
-	
+	*len += via.len;
+
+	*len += TO_LEN + dialog->rem_uri.len
+		+ (dialog->id.rem_tag.len ? (TOTAG_LEN + dialog->id.rem_tag.len) : 0) + CRLF_LEN;    /* To */
+	*len += FROM_LEN + dialog->loc_uri.len
+		+ (dialog->id.loc_tag.len ? (FROMTAG_LEN + dialog->id.loc_tag.len) : 0) + CRLF_LEN;  /* From */
+	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
+	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
+	*len += calculate_routeset_length(dialog);                                                   /* Route set */
+	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);                   /* Content-Length */
+	*len += (server_signature ? (USER_AGENT_LEN + CRLF_LEN) : 0);                                /* Signature */
+	*len += (headers ? headers->len : 0);                                                        /* Additional headers */
+	*len += (body ? body->len : 0);                                                              /* Message body */
+	*len += CRLF_LEN;                                                                            /* End of Header */
+
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
-		LOG(L_ERR, "ERROR: build_uac_request_dlg: no shmem\n");
-		goto error1;
+		LOG(L_ERR, "build_uac_req(): no shmem\n");
+		goto error;
 	}
 	
 	w = buf;
 
-	     /* First line */
-	memapp(w, msg->s, msg->len); 
-	memapp(w, " ", 1); 
+	w = print_request_uri(w, method, dialog, t, branch);  /* Request-URI */
+	memapp(w, via.s, via.len);                            /* Top-most Via */
+	w = print_to(w, dialog, t);                           /* To */
+	w = print_from(w, dialog, t);                         /* From */
+	w = print_cseq(w, &cseq, method, t);                  /* CSeq */
+	w = print_callid(w, dialog, t);                       /* Call-ID */
+	w = print_routeset(w, dialog);                        /* Route set */
 
-	t->uac[branch].uri.s = w; 
-	t->uac[branch].uri.len = ruri->len;
-
-	memapp(w, ruri->s, ruri->len); 
-	memapp(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
-
-	     /* First Via */
-	memapp(w, via, via_len);
-
-	     /* To */
-	t->to.s = w;
-	t->to.len= TO_LEN+to->len+CRLF_LEN;
-	memapp(w, TO, TO_LEN);
-	memapp(w, to->s, to->len);
-	if (totag && totag->len ) {
-		t->to.len += TOTAG_LEN + totag->len ;
-		memapp(w, TOTAG, TOTAG_LEN);
-		memapp(w, totag->s, totag->len);
-	}
-	memapp(w, CRLF, CRLF_LEN);
-
-	     /* From */
-	t->from.s = w;
-	t->from.len = FROM_LEN + from->len + CRLF_LEN;
-	memapp(w, FROM, FROM_LEN);
-	memapp(w, from->s, from->len);
-  	if (fromtag && fromtag->len ) { 
-		t->from.len+= FROMTAG_LEN + fromtag->len;
-		memapp(w, FROMTAG, FROMTAG_LEN);
-		memapp(w, fromtag->s, fromtag->len);
-	}
-	memapp(w, CRLF, CRLF_LEN);
-	
-	     /* CSeq */
-	t->cseq_n.s = w; 
-	/* don't include method name and CRLF -- subsequent
-	 * local reuqests ACK/CANCEl will add their own */
-	t->cseq_n.len = CSEQ_LEN + cseq_str_len; 
-
-	memapp(w, CSEQ, CSEQ_LEN);
-	memapp(w, cseq_str, cseq_str_len);
-	memapp(w, " ", 1);
-	memapp(w, msg->s, msg->len);
-
-	     /* Call-ID */
-	t->callid.s = w + CRLF_LEN; 
-	t->callid.len = CALLID_LEN + callid->len + CRLF_LEN;
-	memapp(w, CRLF CALLID, CRLF_LEN + CALLID_LEN);
-	memapp(w, callid->s, callid->len);
-	memapp(w, CRLF, CRLF_LEN);
-	
 	     /* Content-Length */
 	if (body) {
 		memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		memapp(w, content_len, content_len_len);
+		memapp(w, content_length.s, content_length.len);
 		memapp(w, CRLF, CRLF_LEN);
 	}
 	
 	     /* Server signature */
-	if (server_signature) {
-		memapp(w, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
-	}
-
-	     /* Headers */
-	if (headers) {
-		memapp(w, headers->s, headers->len);
-	}
-
-	     /* EoH */
+	if (server_signature) memapp(w, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+	if (headers) memapp(w, headers->s, headers->len);
 	memapp(w, CRLF, CRLF_LEN);
-	
-	     /* Body */
-	if (body) {
-		memapp(w, body->s, body->len);
-	}
+     	if (body) memapp(w, body->s, body->len);
 
 #ifdef EXTRA_DEBUG
 	if (w-buf != *len ) abort();
 #endif
-	
- error1:
-	pkg_free(via);	
- error:
+
+	pkg_free(via.s);
 	return buf;
+
+ error:
+	pkg_free(via.s);
+	return 0;
 }
 
 

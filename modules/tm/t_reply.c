@@ -83,7 +83,7 @@ enum route_mode rmode=MODE_REQUEST;
 /* private place where we create to-tags for replies */
 /* janakj: made public, I need to access this value to store it in dialogs */
 char tm_tags[TOTAG_VALUE_LEN];
-static char *tm_tag_suffix;
+char *tm_tag_suffix;
 
 /* where to go if there is no positive reply */
 static int goto_on_negative=0;

@@ -41,6 +41,8 @@
 #include "../../ut.h"
 #include "../../config.h"
 #include "dlg.h"
+#include "t_reply.h"
+#include "../../parser/parser_f.h"
 
 
 #define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
@@ -51,6 +53,31 @@
 
 #define ROUTE_SEPARATOR "," CRLF "       "
 #define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
+
+
+/*** Temporary hack ! */
+/*
+ * This function skips name part
+ * uri parsed by parse_contact must be used
+ * (the uri must not contain any leading or
+ *  trailing part and if angle bracket were
+ *  used, right angle bracket must be the
+ *  last character in the string)
+ *
+ * _s will be modified so it should be a tmp
+ * copy
+ */
+void get_raw_uri(str* _s)
+{
+        char* aq;
+        
+        if (_s->s[_s->len - 1] == '>') {
+                aq = find_not_quoted(_s, '<');
+                _s->len -= aq - _s->s + 2;
+                _s->s = aq + 1;
+        }
+}
+
 
 
 /*
@@ -108,6 +135,19 @@ static inline int calculate_hooks(dlg_t* _d)
 		if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
 		else _d->hooks.request_uri = &_d->rem_uri;
 		_d->hooks.next_hop = _d->hooks.request_uri;
+	}
+
+	if ((_d->hooks.request_uri) && (_d->hooks.request_uri->s) && (_d->hooks.request_uri->len)) {
+		_d->hooks.ru.s = _d->hooks.request_uri->s;
+		_d->hooks.ru.len = _d->hooks.request_uri->len;
+		_d->hooks.request_uri = &_d->hooks.ru;
+		get_raw_uri(_d->hooks.request_uri);
+	}
+	if ((_d->hooks.next_hop) && (_d->hooks.next_hop->s) && (_d->hooks.next_hop->len)) {
+		_d->hooks.nh.s = _d->hooks.next_hop->s;
+		_d->hooks.nh.len = _d->hooks.next_hop->len;
+		_d->hooks.next_hop = &_d->hooks.nh;
+		get_raw_uri(_d->hooks.next_hop);
 	}
 
 	return 0;
@@ -275,7 +315,6 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 					LOG(L_ERR, "get_route_set(): Error while duplicating rr_t\n");
 					goto error;
 				}
-				
 				if (_order == NORMAL_ORDER) {
 					if (!*_rs) *_rs = t;
 					if (last) last->next = t;
@@ -310,7 +349,7 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 
 	     /* Parse the whole message, we will need all Record-Route headers */
 	if (parse_headers(_m, HDR_EOH, 0) == -1) {
-		LOG(L_ERR, "dlg_new_resp_uac(): Error while parsing headers\n");
+		LOG(L_ERR, "response2dlg(): Error while parsing headers\n");
 		return -1;
 	}
 	
@@ -558,7 +597,7 @@ static inline int get_cseq_value(struct sip_msg* _m, unsigned int* _cs)
  */
 static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 {
-	struct to_param* ptr;
+	struct to_param* ptr, *prev;
 	struct to_body* body;
 	char* tag = 0; /* Makes gcc happy */
 	int tag_len = 0, len;
@@ -575,35 +614,42 @@ static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 	body = (struct to_body*)_h->parsed;
 
 	ptr = body->param_lst;
+	prev = 0;
 	while(ptr) {
 		if (ptr->type == TAG_PARAM) break;
+		prev = ptr;
 		ptr = ptr->next;
 	}
 
 	if (ptr) {
-	     /* Tag param found */
-		tag = ptr->name.s;
+		     /* Tag param found */
+		if (prev) {
+			tag = prev->value.s + prev->value.len;
+		} else {
+			tag = body->body.s + body->body.len;
+		}
+		
 		if (ptr->next) {
 			tag_len = ptr->next->name.s - tag;
 		} else {
-			tag_len = body->body.s + body->body.len - tag;
+			tag_len = _h->body.s + _h->body.len - tag;
 		}
 	}
 
-	_s->s = shm_malloc(body->body.len - tag_len);
+	_s->s = shm_malloc(_h->body.len - tag_len);
 	if (!_s->s) {
 		LOG(L_ERR, "get_dlg_uri(): No memory left\n");
 		return -1;
 	}
 
 	if (tag_len) {
-		len = tag - body->body.s;
-		memcpy(_s->s, body->body.s, len);
-		memcpy(_s->s + len, tag + tag_len, body->body.len - len - tag_len);
-		_s->len = body->body.len - tag_len;
+		len = tag - _h->body.s;
+		memcpy(_s->s, _h->body.s, len);
+		memcpy(_s->s + len, tag + tag_len, _h->body.len - len - tag_len);
+		_s->len = _h->body.len - tag_len;
 	} else {
-		memcpy(_s->s, body->body.s, body->body.len);
-		_s->len = body->body.len;
+		memcpy(_s->s, _h->body.s, _h->body.len);
+		_s->len = _h->body.len;
 	}
 
 	return 0;
@@ -668,11 +714,12 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 /*
  * Establishing a new dialog, UAS side
  */
-int new_dlg_uas(struct sip_msg* _req, int _code, str* _tag, dlg_t** _d)
+int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 {
 	dlg_t* res;
+	str tag;
 
-	if (!_req || !_tag || !_d) {
+	if (!_req || /*!_tag ||*/ !_d) {
 		LOG(L_ERR, "new_dlg_uas(): Invalid parameter value\n");
 		return -1;
 	}
@@ -695,11 +742,12 @@ int new_dlg_uas(struct sip_msg* _req, int _code, str* _tag, dlg_t** _d)
 		return -4;
 	}
 
-	if (_tag->len) {
-		if (str_duplicate(&res->id.loc_tag, _tag) < 0) {
-			free_dlg(res);
-			return -5;
-		}
+	tag.s = tm_tags;
+	tag.len = TOTAG_VALUE_LEN;
+	calc_crc_suffix(_req, tm_tag_suffix);
+	if (str_duplicate(&res->id.loc_tag, &tag) < 0) {
+		free_dlg(res);
+		return -5;
 	}
 	
 	*_d = res;

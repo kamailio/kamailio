@@ -77,6 +77,8 @@ typedef struct dlg_id {
  * message within dialog
  */
 typedef struct dlg_hooks {
+	str ru;
+	str nh;
 	str* request_uri;   /* This should be put into Request-URI */
 	str* next_hop;      /* Where the message should be really sent */
 	rr_t* first_route;  /* First route to be printed into the message */
@@ -108,36 +110,41 @@ typedef struct dlg {
  * Create a new dialog
  */
 int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
+typedef int (*new_dlg_uac_f)(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
 
 
 /*
  * A response arrived, update dialog
  */
 int dlg_response_uac(dlg_t* _d, struct sip_msg* _m);
-
+typedef int (*dlg_response_uac_f)(dlg_t* _d, struct sip_msg* _m);
 
 /*
  * Establishing a new dialog, UAS side
  */
-int new_dlg_uas(struct sip_msg* _req, int _code, str* _tag, dlg_t** _d);
+int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d);
+typedef int (*new_dlg_uas_f)(struct sip_msg* _req, int _code, dlg_t** _d);
 
 
 /*
  * UAS side - update a dialog from a request
  */
 int dlg_request_uas(dlg_t* _d, struct sip_msg* _m);
+typedef int (*dlg_request_uas_f)(dlg_t* _d, struct sip_msg* _m);
 
 
 /*
  * Destroy a dialog state
  */
 void free_dlg(dlg_t* _d);
+typedef void (*free_dlg_f)(dlg_t* _d);
 
 
 /*
  * Print a dialog structure, just for debugging
  */
 void print_dlg(FILE* out, dlg_t* _d);
+typedef void (*print_dlg_f)(FILE* out, dlg_t* _d);
 
 
 /*
