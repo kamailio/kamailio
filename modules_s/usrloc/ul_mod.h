@@ -68,7 +68,8 @@ extern int db_mode;
 extern int use_domain;
 extern int desc_time_order;
 
-extern db_con_t* db;   /* Dabase connection handle */
+extern db_con_t* ul_dbh;   /* Dabase connection handle */
+extern db_func_t ul_dbf;
 
 
 #endif /* UL_MOD_H */

@@ -24,13 +24,66 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /*
+  * History:
+  * --------
+  *  2004-06-06  updated to the new DB api (andrei)
+  */
 
 #include "../../mem/shm_mem.h"
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "cpl_db.h"
 
+static db_con_t* db_hdl=0;
+static db_func_t cpl_dbf;
 
+
+
+int cpl_db_bind(char* db_url)
+{
+	if (bind_dbmod(db_url, &cpl_dbf )) {
+		LOG(L_CRIT, "ERROR:cpl_db_bind: cannot bind to database module! "
+		"Did you forget to load a database module ?\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+
+int cpl_db_init(char* db_url, char* db_table)
+{
+	if (cpl_dbf.init==0){
+		LOG(L_CRIT, "BUG: cpl_db_init: unbound database module\n");
+		return -1;
+	}
+	db_hdl=cpl_dbf.init(db_url);
+	if (db_hdl==0){
+		LOG(L_CRIT,"ERROR:cpl_db_init: cannot initialize database "
+			"connection\n");
+		goto error;
+	}
+	if (cpl_dbf.use_table(db_hdl, db_table)<0) {
+		LOG(L_CRIT,"ERROR:cpl_db_init: cannot select table \"%s\"\n",db_table);
+		goto error;
+	}
+	return 0;
+error:
+	if (db_hdl){
+		cpl_dbf.close(db_hdl);
+		db_hdl=0;
+	}
+	return -1;
+}
+
+void cpl_db_close()
+{
+	if (db_hdl && cpl_dbf.close){
+		cpl_dbf.close(db_hdl);
+		db_hdl=0;
+	}
+}
 
 
 /* gets from database the cpl script in binary format; the returned script is
@@ -38,7 +91,7 @@
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script( db_con_t *db_hdl, str *user, str *script, char* key)
+int get_user_script(str *user, str *script, char* key)
 {
 	db_key_t   keys_cmp[] = {"user"};
 	db_key_t   keys_ret[] = { key };
@@ -49,7 +102,8 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script, char* key)
 	vals[0].type = DB_STRING;
 	vals[0].nul  = 0;
 	vals[0].val.string_val = user->s;
-	if (db_query(db_hdl, keys_cmp, 0, vals, keys_ret, 1, 1, NULL, &res) < 0) {
+	if (cpl_dbf.query(db_hdl, keys_cmp, 0, vals, keys_ret, 1, 1, NULL, &res)
+			< 0){
 		LOG(L_ERR,"ERROR:cpl-c:get_user_script: db_query failed\n");
 		goto error;
 	}
@@ -79,11 +133,11 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script, char* key)
 		}
 	}
 
-	db_free_query( db_hdl, res);
+	cpl_dbf.free_query( db_hdl, res);
 	return 1;
 error:
 	if (res)
-		db_free_query( db_hdl, res);
+		cpl_dbf.free_query( db_hdl, res);
 	script->s = 0;
 	script->len = 0;
 	return -1;
@@ -96,7 +150,7 @@ error:
  * Returns:  1 - success
  *          -1 - error
  */
-int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin)
+int write_to_db(char *usr, str *xml, str *bin)
 {
 	db_key_t   keys[] = {"user","cpl_xml","cpl_bin"};
 	db_val_t   vals[3];
@@ -106,7 +160,7 @@ int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin)
 	vals[0].type = DB_STRING;
 	vals[0].nul  = 0;
 	vals[0].val.string_val = usr;
-	if (db_query(db_con, keys, 0, vals, keys, 1, 1, NULL, &res) < 0) {
+	if (cpl_dbf.query(db_hdl, keys, 0, vals, keys, 1, 1, NULL, &res) < 0) {
 		LOG(L_ERR,"ERROR:cpl:write_to_db: db_query failed\n");
 		goto error;
 	}
@@ -133,14 +187,14 @@ int write_to_db(db_con_t *db_con, char *usr, str *xml, str *bin)
 	/* insert or update ? */
 	if (res->n==0) {
 		DBG("DEBUG:cpl:write_to_db:No user %s in CPL databse->insert\n",usr);
-		if (db_insert(db_con, keys, vals, 3) < 0) {
+		if (cpl_dbf.insert(db_hdl, keys, vals, 3) < 0) {
 			LOG(L_ERR,"ERROR:cpl:write_to_db: insert failed !\n");
 			goto error;
 		}
 	} else {
 		DBG("DEBUG:cpl:write_to_db:User %s already in CPL database ->"
 			" update\n",usr);
-		if (db_update(db_con, keys, 0, vals, keys+1, vals+1, 1, 2) < 0) {
+		if (cpl_dbf.update(db_hdl, keys, 0, vals, keys+1, vals+1, 1, 2) < 0) {
 			LOG(L_ERR,"ERROR:cpl:write_to_db: updare failed !\n");
 			goto error;
 		}
@@ -159,7 +213,7 @@ error:
  * Returns:  1 - success
  *          -1 - error
  */
-int rmv_from_db(db_con_t *db_con, char *usr)
+int rmv_from_db(char *usr)
 {
 	db_key_t   keys[] = {"user"};
 	db_val_t   vals[1];
@@ -169,7 +223,7 @@ int rmv_from_db(db_con_t *db_con, char *usr)
 	vals[0].nul  = 0;
 	vals[0].val.string_val = usr;
 
-	if (db_delete(db_con, keys, NULL, vals, 1) < 0) {
+	if (cpl_dbf.delete(db_hdl, keys, NULL, vals, 1) < 0) {
 		LOG(L_ERR,"ERROR:cpl-c:rmv_from_db: error when deleting script for "
 			"user \"%s\"\n",usr);
 		return -1;

@@ -44,6 +44,8 @@
  * 2003-05-09  new xj_worker_precess function cleaning - some part of it moved
  *             to xj_worker_check_qmsg and xj_worker_check_watcher functions,
  *             (dcm)
+ * 2004-06-07  new DB api => xj_worker_process takes another parameter: dbf
+ *              (andrei)
  */
 
 #include <string.h>
@@ -254,10 +256,11 @@ done:
  * - jport : port of the jabber server
  * - rank : worker's rank
  * - db_con : connection to database
+ *   dbf: database module callbacks structure
  * #return : 0 on success or <0 on error
  */
 int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
-		db_con_t* db_con)
+		db_con_t* db_con, db_func_t* dbf)
 {
 	int pipe, ret, i, pos, maxfd, flag;
 	xj_jcon_pool jcp;
@@ -417,7 +420,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_worker:%d: new connection for <%s>.\n", _xj_pid, buff);
 #endif		
-		if(db_query(db_con, keys, 0, vals, col, 2, 2, NULL, &res) != 0 ||
+		if(dbf->query(db_con, keys, 0, vals, col, 2, 2, NULL, &res) != 0 ||
 			RES_ROW_N(res) <= 0)
 		{
 #ifdef XJ_EXTRA_DEBUG
@@ -489,7 +492,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		/** wait for a while - the worker is tired */
 		//sleep(3);
 		
-		if ((res != NULL) && (db_free_query(db_con,res) < 0))
+		if ((res != NULL) && (dbf->free_query(db_con,res) < 0))
 		{
 			DBG("XJAB:xj_worker:%d:Error while freeing"
 				" SQL result - worker terminated\n", _xj_pid);
@@ -607,7 +610,7 @@ step_v: // error connecting to Jabber server
 		xj_wlist_del(jwl, jsmsg->jkey, _xj_pid);
 
 		// cleaning db_query
-		if ((res != NULL) && (db_free_query(db_con,res) < 0))
+		if ((res != NULL) && (dbf->free_query(db_con,res) < 0))
 		{
 			DBG("XJAB:xj_worker:%d:Error while freeing"
 				" SQL result - worker terminated\n", _xj_pid);

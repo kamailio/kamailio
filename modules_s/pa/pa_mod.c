@@ -29,6 +29,7 @@
 /*
  * 2003-03-11  updated to the new module exports interface (andrei)
  * 2003-03-16  flags export parameter added (janakj)
+ * 2004-06-08  updated to the new DB api (andrei)
  */
 
 
@@ -65,6 +66,8 @@ struct tm_binds tmb;
 
 /** database */
 db_con_t* pa_db; /* Database connection handle */
+db_func_t pa_dbf;
+
 int use_db = 0;
 str db_url;
 int use_place_table = 0;
@@ -201,7 +204,7 @@ static int pa_mod_init(void)
 			LOG(L_ERR, "pa_mod_init(): no db_url specified but use_db=1\n");
 			return -1;
 		}
-		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
+		if (bind_dbmod(db_url.s, &pa_dbf) < 0) { /* Find database module */
 			LOG(L_ERR, "pa_mod_init(): Can't bind database module via url %s\n", db_url.s);
 			return -1;
 		}
@@ -219,9 +222,11 @@ static int pa_child_init(int _rank)
  	     /* Shall we use database ? */
 	if (use_db) { /* Yes */
 		pa_db = NULL;
-		pa_db = db_init(db_url.s); /* Initialize a new separate connection */
+		pa_db = pa_dbf.init(db_url.s); /* Initialize a new separate 
+										  connection */
 		if (!pa_db) {
-			LOG(L_ERR, "pa_child_init(%d): Error while connecting database\n", _rank);
+			LOG(L_ERR, "ERROR: pa_child_init(%d): "
+					"Error while connecting database\n", _rank);
 			return -1;
 		}
 	}
@@ -235,7 +240,7 @@ static void pa_destroy(void)
 {
 	free_all_pdomains();
 	if (use_db) {
-		db_close(pa_db);
+		pa_dbf.close(pa_db);
 	}
 }
 

@@ -218,13 +218,13 @@ int register_udomain(const char* _n, udomain_t** _d)
 	      * to use database
 	      */
 	if (db_mode != NO_DB) {
-		con = db_init(db_url.s);
+		con = ul_dbf.init(db_url.s);
 		if (!con) {
 			LOG(L_ERR, "register_udomain(): Can not open database connection\n");
 			goto err;
 		}
 
-		ver = table_version(con, &s);
+		ver = table_version(&ul_dbf, con, &s);
 
 		if (ver < 0) {
 			LOG(L_ERR, "register_udomain(): Error while querying table version\n");
@@ -240,7 +240,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 			goto err;
 		}
 
-		db_close(con);
+		ul_dbf.close(con);
 	}
 
 	d->next = root;
@@ -250,7 +250,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 	return 0;
 
  err:
-	if (con) db_close(con);
+	if (con) ul_dbf.close(con);
 	free_udomain(d->d);
 	shm_free(d->name.s);
 	shm_free(d);

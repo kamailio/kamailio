@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2004-06-07  updated to the new DB api, moved reload_trusted_table (andrei)
+ */
 
 #include <sys/types.h>
 #include <regex.h>
@@ -47,6 +52,9 @@ struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
 struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
 
 
+static db_con_t* db_handle = 0;
+static db_func_t perm_dbf;
+
 /*
  * Initialize data structures
  */
@@ -60,8 +68,9 @@ int init_trusted(void)
 		LOG(L_INFO, "db_url parameter of permissions module not set, disabling allow_trusted\n");
 		return 0;
 	} else {
-		if (bind_dbmod(db_url) < 0) {
-			LOG(L_ERR, "Load a database support module\n");
+		if (bind_dbmod(db_url, &perm_dbf) < 0) {
+			LOG(L_ERR, "ERROR: persmissions: init_trusted: "
+					"load a database support module\n");
 			return -1;
 		}
 	}
@@ -70,23 +79,24 @@ int init_trusted(void)
 	hash_table = 0;
 
 	if (db_mode == ENABLE_CACHE) {
-		db_handle = db_init(db_url);
+		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
-			LOG(L_ERR, "init_trusted(): Unable to connect database\n");
+			LOG(L_ERR, "ERROR: permissions: init_trusted():"
+					" Unable to connect database\n");
 			return -1;
 		}
 
 		name.s = trusted_table;
 		name.len = strlen(trusted_table);
-		ver = table_version(db_handle, &name);
+		ver = table_version(&perm_dbf, db_handle, &name);
 
 		if (ver < 0) {
 			LOG(L_ERR, "permissions:init_trusted(): Error while querying table version\n");
-			db_close(db_handle);
+			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
 			LOG(L_ERR, "permissions:init_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
-			db_close(db_handle);
+			perm_dbf.close(db_handle);
 			return -1;
 		}		
 		
@@ -95,7 +105,7 @@ int init_trusted(void)
 		
 		if (init_trusted_unixsock() < 0) {
 			LOG(L_ERR, "permissions:init_trusted(): Error while initializing unixsock interface\n");
-			db_close(db_handle);
+			perm_dbf.close(db_handle);
 			return -1;
 		}
 
@@ -115,7 +125,7 @@ int init_trusted(void)
 			goto error;
 		}
 			
-		db_close(db_handle);
+		perm_dbf.close(db_handle);
 	}
 	return 0;
 
@@ -143,23 +153,26 @@ int init_child_trusted(int rank)
 	if (((db_mode == DISABLE_CACHE) && (rank > 0)) || 
 	    ((db_mode == ENABLE_CACHE) && (rank == PROC_FIFO))
 	   ) {
-		db_handle = db_init(db_url);
+		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
-			LOG(L_ERR, "init_child_trusted(): Unable to connect database\n");
+			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
+					" Unable to connect database\n");
 			return -1;
 		}
 
 		name.s = trusted_table;
 		name.len = strlen(trusted_table);
-		ver = table_version(db_handle, &name);
+		ver = table_version(&perm_dbf, db_handle, &name);
 
 		if (ver < 0) {
-			LOG(L_ERR, "init_child_trusted(): Error while querying table version\n");
-			db_close(db_handle);
+			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
+					" Error while querying table version\n");
+			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "init_child_trusted(): Invalid table version (use ser_mysql.sh reinstall)\n");
-			db_close(db_handle);
+			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
+					" Invalid table version (use ser_mysql.sh reinstall)\n");
+			perm_dbf.close(db_handle);
 			return -1;
 		}		
 
@@ -298,7 +311,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		cols[0] = proto_col;
 		cols[1] = from_col;
 
-		if (db_use_table(db_handle, trusted_table) < 0) {
+		if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
 			LOG(L_ERR, "allow_trusted(): Error while trying to use trusted table\n");
 			return -1;
 		}
@@ -306,18 +319,18 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		VAL_TYPE(vals) = DB_STRING;
 		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
 
-		if (db_query(db_handle, keys, 0, vals, cols, 1, 2, 0, &res) < 0) {
+		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 2, 0, &res) < 0){
 			LOG(L_ERR, "allow_trusted(): Error while querying database\n");
 			return -1;
 		}
 
 		if (RES_ROW_N(res) == 0) {
-			db_free_query(db_handle, res);
+			perm_dbf.free_query(db_handle, res);
 			return -1;
 		}
 		
 		result = match_res(_msg, res);
-		db_free_query(db_handle, res);
+		perm_dbf.free_query(db_handle, res);
 		return result;
 	} else if (db_mode == ENABLE_CACHE) {
 		return match_hash_table(*hash_table, _msg);
@@ -325,4 +338,85 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		LOG(L_ERR, "allow_trusted(): Error - set db_mode parameter of permissions module properly\n");
 		return -1;
 	}
+}
+
+
+
+/*
+ * Reload trusted table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_trusted_table(void)
+{
+	db_key_t cols[2];
+	db_res_t* res;
+	db_row_t* row;
+	db_val_t* val;
+
+	struct trusted_list **new_hash_table;
+	int i;
+
+	cols[0] = source_col;
+	cols[1] = proto_col;
+	cols[2] = from_col;
+
+	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
+		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
+				" Error while trying to use trusted table\n");
+		return -1;
+	}
+
+	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
+		LOG(L_ERR, "ERROR: permsissions: reload_trusted_table():"
+				" Error while querying database\n");
+		return -1;
+	}
+
+	/* Choose new hash table and free its old contents */
+	if (*hash_table == hash_table_1) {
+		empty_hash_table(hash_table_2);
+		new_hash_table = hash_table_2;
+	} else {
+		empty_hash_table(hash_table_1);
+		new_hash_table = hash_table_1;
+	}
+
+	row = RES_ROWS(res);
+
+	DBG("Number of rows in trusted table: %d\n", RES_ROW_N(res));
+		
+	for (i = 0; i < RES_ROW_N(res); i++) {
+		val = ROW_VALUES(row + i);
+		if ((ROW_N(row + i) == 3) &&
+		    (VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
+		    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
+		    (VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2)) {
+			if (hash_table_insert(new_hash_table,
+					       (char *)VAL_STRING(val),
+					       (char *)VAL_STRING(val + 1),
+					       (char *)VAL_STRING(val + 2)) == -1) {
+				LOG(L_ERR, "ERROR: permissions: "
+						"trusted_reload(): Hash table problem\n");
+				perm_dbf.free_query(db_handle, res);
+				perm_dbf.close(db_handle);
+				return -1;
+			}
+			DBG("Tuple <%s, %s, %s> inserted into trusted hash table\n",
+			    VAL_STRING(val), VAL_STRING(val + 1), VAL_STRING(val + 2));
+		} else {
+			LOG(L_ERR, "ERROR: permissions: trusted_reload():"
+					" Database problem\n");
+			perm_dbf.free_query(db_handle, res);
+			perm_dbf.close(db_handle);
+			return -1;
+		}
+	}
+
+	perm_dbf.free_query(db_handle, res);
+
+	*hash_table = new_hash_table;
+
+	DBG("Trusted table reloaded successfully.\n");
+	
+	return 1;
 }

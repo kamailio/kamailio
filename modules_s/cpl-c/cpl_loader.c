@@ -310,7 +310,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	logs[1] = enc_log;
 
 	/* write both the XML and binary formats into database */
-	if (write_to_db( db_hdl, user, &xml, &bin)!=1) {
+	if (write_to_db(user, &xml, &bin)!=1) {
 		logs[1].s = DB_SAVE_ERR;
 		logs[1].len = strlen( DB_SAVE_ERR );
 		goto error1;
@@ -382,7 +382,7 @@ int cpl_remove( FILE *fifo_stream, char *response_file )
 		goto error1;
 	}
 
-	if (rmv_from_db( db_hdl, user)!=1) {
+	if (rmv_from_db(user)!=1) {
 		logs[1].s = DB_RMV_ERR;
 		logs[1].len = sizeof(DB_RMV_ERR);
 		goto error1;
@@ -445,7 +445,7 @@ int cpl_get( FILE *fifo_stream, char *response_file )
 	}
 
 	/* get the script for this user */
-	if (get_user_script( db_hdl, &user, &script, "cpl_xml")==-1) {
+	if (get_user_script(&user, &script, "cpl_xml")==-1) {
 		logs[1].s = DB_GET_ERR;
 		logs[1].len = strlen( DB_GET_ERR );
 		goto error1;

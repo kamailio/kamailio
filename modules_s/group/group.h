@@ -45,4 +45,9 @@
 int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
 
 
+int group_db_init(char* db_url);
+int group_db_bind(char* db_url);
+void group_db_close();
+int group_db_ver(char* db_url, str* name);
+
 #endif /* GROUP_H */

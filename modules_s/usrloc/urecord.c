@@ -30,6 +30,7 @@
  * ---------
  * 2003-03-12 added replication mark and zombie state support (nils)
  * 2004-03-17 generic callbacks added (bogdan)
+ * 2004-06-07 updated to the new DB api (andrei)
  */
 
 
@@ -464,10 +465,11 @@ int db_delete_urecord(urecord_t* _r)
 	     /* FIXME */
 	memcpy(b, _r->domain->s, _r->domain->len);
 	b[_r->domain->len] = '\0';
-	db_use_table(db, b);
+	ul_dbf.use_table(ul_dbh, b);
 
-	if (db_delete(db, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
-		LOG(L_ERR, "db_delete_urecord(): Error while deleting from database\n");
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
+		LOG(L_ERR, "ERROR: db_delete_urecord():"
+				" Error while deleting from database\n");
 		return -1;
 	}
 

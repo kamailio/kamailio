@@ -39,6 +39,7 @@
  * 2003-04-06 rank 0 changed to 1 in child_init (janakj)
  * 2003-06-19 fixed too many Jabber workers bug (mostly on RH9.0) (dcm)
  * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
+ * 2004-06-07 db API update (andrei)
  */
 
 
@@ -94,11 +95,12 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 xj_wlist jwl = NULL;
 
 /** Structure that represents database connection */
-db_con_t** db_con;
+static db_con_t** db_con;
+static db_func_t jabber_dbf;
 
 /** parameters */
 
-char *db_url   = "mysql://root@127.0.0.1/sip_jab";
+static char *db_url   = "mysql://root@127.0.0.1/sip_jab";
 char *db_table = "jusers";
 char *registrar=NULL; //"sip:registrar@iptel.org";
 
@@ -200,7 +202,7 @@ static int mod_init(void)
 	}
 
 	/* import mysql functions */
-	if (bind_dbmod(db_url))
+	if (bind_dbmod(db_url, &jabber_dbf)<0)
 	{
 		LOG(L_ERR, "XJAB:mod_init: error - database module not found\n");
 		return -1;
@@ -251,7 +253,7 @@ static int mod_init(void)
 	
 	for(i=0; i<nrw; i++)
 	{
-		db_con[i] = db_init(db_url);
+		db_con[i] = jabber_dbf.init(db_url);
 		if (!db_con[i])
 		{
 			LOG(L_ERR, "XJAB:mod_init: Error while connecting database\n");
@@ -259,7 +261,7 @@ static int mod_init(void)
 		}
 		else
 		{
-			db_use_table(db_con[i], db_table);
+			jabber_dbf.use_table(db_con[i], db_table);
 			DBG("XJAB:mod_init: Database connection opened successfuly\n");
 		}
 	}
@@ -340,7 +342,8 @@ static int child_init(int rank)
 										" pid\n");
 						return -1;
 					}
-					xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
+					xj_worker_process(jwl,jaddress,jport,i,db_con[i],
+							&jabber_dbf);
 					exit(0);
 				}
 			}
@@ -667,7 +670,7 @@ void destroy(void)
 	if(db_con != NULL)
 	{
 		for(i = 0; i<nrw; i++)
-			db_close(db_con[i]);
+			jabber_dbf.close(db_con[i]);
 		shm_free(db_con);
 	}
 			
@@ -825,7 +828,7 @@ void xjab_check_workers(int mpid)
 					" worker's pid - w[%d]\n", i);
 				return;
 			}
-			xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
+			xj_worker_process(jwl,jaddress,jport,i,db_con[i], &jabber_dbf);
 			exit(0);
 		}
 	}			

@@ -54,6 +54,7 @@
 #include "subscribe.h"
 #include "publish.h"
 #include "common.h"
+#include "pa_mod.h"
 
 #define CRLF "\r\n"
 #define CRLF_L (sizeof(CRLF) - 1)
@@ -85,7 +86,6 @@
 #define add_str(_s) (strs[n_strs].s = (_s.s), strs[n_strs].len = (_s.len), len += _s.len, n_strs++)
 #define add_pstr(_s) (strs[n_strs].s = (_s->s), strs[n_strs].len = (_s->len), len += _s->len, n_strs++)
 
-extern db_con_t* pa_db; /* Database connection handle */
 
 /*
  * Add a user information
@@ -247,8 +247,8 @@ int pa_location_init(void)
 	  result_cols[room_col = n_result_cols++] = "room";
 	  result_cols[placeid_col = n_result_cols++] = "placeid";
 
-	  db_use_table(pa_db, place_table);
-	  if (db_query (pa_db, query_cols, query_ops, query_vals,
+	  pa_dbf.use_table(pa_db, place_table);
+	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
 	       LOG(L_ERR, "db_new_tuple(): Error while querying tuple\n");
 	       return -1;
@@ -282,7 +282,7 @@ int pa_location_init(void)
 			row_vals[room_col].nul);
 	       }
 	  }
-	  db_free_query(pa_db, res);
+	  pa_dbf.free_query(pa_db, res);
 	  if (use_bsearch)
 	       qsort(location_placeid_table, location_placeid_n_rows,
 		     sizeof(struct location_placeid_row),

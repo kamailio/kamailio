@@ -44,13 +44,11 @@
 /*
  * Module parameters variables
  */
-extern str db_url;          /* Database URL */
 extern str table;           /* 'group' table name */
 extern str user_column;     /* 'user' column name in group table */
 extern str domain_column;   /* 'domain' column name in group table */
 extern str group_column;    /* "group' column name in group table */
 extern int use_domain;      /* Use domain in is_user_in */
 
-extern db_con_t* db_handle;   /* Database connection handle */
 
 #endif /* GROUP_MOD_H */

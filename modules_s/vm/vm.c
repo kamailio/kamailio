@@ -38,6 +38,7 @@
  * 2003-12-14 in write_to_vm_fifo() "for"+"malloc"+"write" replaced by a single
  *            "writev" (bogdan)
  * 2004-04-07 Added Radius support (jih)
+ * 2004-06-07 updated to the new db api (andrei)
  *
  */
 
@@ -125,7 +126,7 @@ struct val vals[V_MAX];
 #endif
 
 #ifdef WITH_DB_SUPPORT
-char* vm_db_url = 0;                     /* Database URL */
+static char* vm_db_url = 0;                     /* Database URL */
 char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
 
@@ -133,6 +134,7 @@ char* user_column = "username";
 char* domain_column = "domain";
 
 static db_con_t* db_handle = 0;
+static db_func_t vm_dbf;
 #endif
 
 int use_domain = 0;
@@ -216,7 +218,7 @@ static int vm_mod_init(void)
 
 #ifdef WITH_DB_SUPPORT
 	/* init database support only if needed */
-	if (vm_db_url && bind_dbmod(vm_db_url)) {
+	if (vm_db_url && bind_dbmod(vm_db_url, &vm_dbf)) {
 		LOG(L_ERR, "ERROR: vm_mod_init: unable to bind db\n");
 		return -1;
 	}
@@ -267,8 +269,8 @@ static int vm_init_child(int rank)
 
 #ifdef WITH_DB_SUPPORT
 	if (vm_db_url) {
-		assert(db_init);
-		db_handle=db_init(vm_db_url);
+		assert(vm_dbf.init);
+		db_handle=vm_dbf.init(vm_db_url);
 
 		if(!db_handle) {
 			LOG(L_ERR, "ERROR; vm_init_child: could not init db %s\n", 
@@ -312,8 +314,9 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	VAL_NULL(&vals[1]) = 0;
 	VAL_STR(&vals[1])  = *host;
 
-	db_use_table(db_handle,subscriber_table);
-	if ((*db_query)(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1), 1, 0, &email_res))
+	vm_dbf.use_table(db_handle, subscriber_table);
+	if (vm_dbf.query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1),
+				1, 0, &email_res))
 	{
 		LOG(L_ERR,"ERROR: vm: db_query() failed.\n");
 		goto error;
@@ -325,7 +328,7 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	}
 
 	if(email_res)
-		(*db_free_query)(db_handle,email_res);
+		vm_dbf.free_query(db_handle, email_res);
 
 	return 0;
 error:

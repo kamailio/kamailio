@@ -30,6 +30,7 @@
  * ---------
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-11-04  multidomain support for mysql introduced (jiri)
+ * 2004-06-06  removed db_url, db_handle (andrei)
  */
 
 
@@ -67,9 +68,7 @@ extern int db_flag;
 extern int db_missed_flag;
 extern int db_localtime;
 
-extern db_con_t* db_handle; /* Database connection handle */
 
-extern char *db_url;
 extern char *db_table_acc;
 extern char *db_table_mc;
 

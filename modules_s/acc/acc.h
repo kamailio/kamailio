@@ -28,6 +28,7 @@
  * --------
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-11-04  multidomain support for mysql introduced (jiri)
+ * 2004-06-06  cleanup: acc_db_{bind,init,close} added (andrei)
  */
 
 #ifndef _ACC_H
@@ -114,6 +115,9 @@ void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 	unsigned int code);
 
 #ifdef SQL_ACC
+int acc_db_bind(char* db_url);
+int acc_db_init();
+void acc_db_close();
 int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		str* phrase,  char *table, char *fmt);
 void acc_db_missed( struct cell* t, struct sip_msg *reply,

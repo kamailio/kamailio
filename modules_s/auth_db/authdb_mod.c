@@ -33,6 +33,7 @@
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  * 2003-04-05: default_uri #define used (jiri)
+ * 2004-06-06  cleanup: static & auth_db_{init,bind,close.ver} used (andrei)
  */
 
 #include <stdio.h>
@@ -98,7 +99,7 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 /*
  * Module parameter variables
  */
-str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+static str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str user_column      = {USER_COL, USER_COL_LEN};
 str domain_column    = {DOMAIN_COL, DOMAIN_COL_LEN};
 str rpid_column      = {RPID_COL, RPID_COL_LEN};
@@ -108,7 +109,6 @@ int calc_ha1         = 0;
 int use_domain       = 1;    /* Use also domain when looking up a table row */
 int use_rpid         = 0;    /* Fetch Remote-Party-ID */
 
-db_con_t* db_handle;   /* Database connection handle */
 
 
 /*
@@ -156,13 +156,7 @@ struct module_exports exports = {
 static int child_init(int rank)
 {
 	     /* Close connection opened in mod_init */
-	db_handle = db_init(db_url.s);
-	if (!db_handle) {
-		LOG(L_ERR, "auth_db:init_child(): Unable to connect database\n");
-		return -1;
-	}
-
-	return 0;
+	return auth_db_init(db_url.s);
 }
 
 
@@ -178,10 +172,7 @@ static int mod_init(void)
 	pass_column_2.len = strlen(pass_column.s);
 
 	     /* Find a database module */
-	if (bind_dbmod(db_url.s) < 0) {
-		LOG(L_ERR, "auth_db:mod_init(): Unable to bind database module\n");
-		return -1;
-	}
+	if (auth_db_bind(db_url.s)<0) return -1;
 
 	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
 	post_auth_func = (post_auth_f)find_export("post_auth", 0, 0);
@@ -204,7 +195,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	if (db_handle) db_close(db_handle);
+	auth_db_close();
 }
 
 
@@ -231,17 +222,7 @@ static int str_fixup(void** param, int param_no)
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
-		db_handle = db_init(db_url.s);
-		if (!db_handle) {
-			LOG(L_ERR, "auth_db:str_fixup(): Unable to open database connection\n");
-			return -1;
-		}
-
-		ver = table_version(db_handle, &name);
-
-		db_close(db_handle);
-		db_handle = 0;
-
+		ver=auth_db_ver(db_url.s, &name);
 		if (ver < 0) {
 			LOG(L_ERR, "auth_db:str_fixup(): Error while querying table version\n");
 			return -1;

@@ -32,6 +32,8 @@
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
  * 2003-04-06: db connection closed in mod_init (janakj)
+ * 2004-06-06  updated to the new DB api, cleanup: static dbf & handler,
+ *              calls to domain_db_{bind,init,close,ver} (andrei)
  */
 
 
@@ -68,7 +70,7 @@ MODULE_VERSION
 /*
  * Module parameter variables
  */
-str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+static str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 int db_mode = 0;			/* Database usage mode: 0 = no cache, 1 = cache */
 str domain_table = {DOMAIN_TABLE, DOMAIN_TABLE_LEN};     /* Name of domain table */
 str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};           /* Name of domain column */
@@ -76,7 +78,6 @@ str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};           /* Name of domain colum
 /*
  * Other module variables
  */
-db_con_t* db_handle = NULL;		/* Database connection handle */
 struct domain_list ***hash_table;	/* Pointer to current hash table pointer */
 struct domain_list **hash_table_1;	/* Pointer to hash table 1 */
 struct domain_list **hash_table_2;	/* Pointer to hash table 2 */
@@ -130,28 +131,22 @@ static int mod_init(void)
 	domain_col.len = strlen(domain_col.s);
 
 	/* Check if database module has been loaded */
-	if (bind_dbmod(db_url.s)) {
-		LOG(L_ERR, "domain:mod_init(): Unable to bind database module\n");
-		return -1;
-	}
+	if (domain_db_bind(db_url.s)<0)  return -1;
 
 	/* Check if cache needs to be loaded from domain table */
 	if (db_mode == 1) {
-		db_handle = db_init(db_url.s);
-		if (!db_handle) {
-			LOG(L_ERR, "domain:mod_init(): Unable to connect database\n");
-			return -1;
-		}
-
+		if (domain_db_init(db_url.s)<0) return -1;
 		     /* Check table version */
-		ver = table_version(db_handle, &domain_table);
+		ver = domain_db_ver(&domain_table);
 		if (ver < 0) {
-			LOG(L_ERR, "domain:mod_init(): Error while querying table version\n");
-			db_close(db_handle);
+			LOG(L_ERR, "ERROR: domain:mod_init(): "
+					"error while querying table version\n");
+			domain_db_close();
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "domain:mod_init(): Invalid table version (use ser_mysql.sh reinstall)\n");
-			db_close(db_handle);
+			LOG(L_ERR, "ERROR: domain:mod_init(): invalid table"
+					" version (use ser_mysql.sh reinstall)\n");
+			domain_db_close();
 			return -1;
 		}		
 
@@ -159,20 +154,23 @@ static int mod_init(void)
 		(void)init_domain_fifo();
 
 		if (init_domain_unixsock() < 0) {
-			LOG(L_ERR, "domain:mod_init(): Error while initializing unix socket interface\n");
-			db_close(db_handle);
+			LOG(L_ERR, "ERROR: domain:mod_init(): error while initializing"
+					" unix socket interface\n");
+			domain_db_close();
 			return -1;
 		}
 
 		/* Initializing hash tables and hash table variable */
 		hash_table_1 = (struct domain_list **)shm_malloc(sizeof(struct domain_list *) * HASH_SIZE);
 		if (hash_table_1 == 0) {
-			LOG(L_ERR, "domain: mod_init(): No memory for hash table\n");
+			LOG(L_ERR, "ERROR: domain: mod_init(): "
+					"No memory for hash table\n");
 		}
 
 		hash_table_2 = (struct domain_list **)shm_malloc(sizeof(struct domain_list *) * HASH_SIZE);
 		if (hash_table_2 == 0) {
-			LOG(L_ERR, "domain: mod_init(): No memory for hash table\n");
+			LOG(L_ERR, "ERROR: domain: mod_init():"
+					" No memory for hash table\n");
 		}
 		for (i = 0; i < HASH_SIZE; i++) {
 			hash_table_1[i] = hash_table_2[i] = (struct domain_list *)0;
@@ -182,11 +180,12 @@ static int mod_init(void)
 		*hash_table = hash_table_1;
 
 		if (reload_domain_table() == -1) {
-			LOG(L_CRIT, "domain:mod_init(): Domain table reload failed\n");
+			LOG(L_CRIT, "ERROR: domain:mod_init():"
+					" Domain table reload failed\n");
 			return -1;
 		}
 			
-		db_close(db_handle);
+		domain_db_close();
 	}
 
 	return 0;
@@ -197,13 +196,12 @@ static int child_init(int rank)
 {
 	/* Check if database is needed by child */
 	if (((db_mode == 0) && (rank > 0)) || ((db_mode == 1) && (rank == PROC_FIFO))) {
-		db_handle = db_init(db_url.s);
-		if (!db_handle) {
-			LOG(L_ERR, "domain:child_init(): Unable to connect database\n");
+		if (domain_db_init(db_url.s)<0) {
+			LOG(L_ERR, "ERROR: domain:child_init():"
+					" Unable to connect to the database\n");
 			return -1;
 		}
 	}
-
 	return 0;
 }
 

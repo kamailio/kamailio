@@ -29,6 +29,8 @@
  * History:
  * --------
  * 2003-02-25 - created by janakj
+ * 2004-06-07   updated to the new DB api, added group_db_{bind,init,close,ver}
+ *               (andrei)
  *
  */
 
@@ -43,6 +45,10 @@
 #include "../../parser/parse_uri.h"
 #include "group.h"
 #include "group_mod.h"                   /* Module parameters */
+
+
+static db_con_t* db_handle = 0;   /* Database connection handle */
+static db_func_t group_dbf;
 
 
 /*
@@ -172,8 +178,9 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 
 	VAL_STR(vals + 1) = *((str*)_grp);
 	
-	db_use_table(db_handle, table.s);
-	if (db_query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2), 1, 0, &res) < 0) {
+	group_dbf.use_table(db_handle, table.s);
+	if (group_dbf.query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2),
+				1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");
 		return -5;
 	}
@@ -181,12 +188,71 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	if (RES_ROW_N(res) == 0) {
 		DBG("is_user_in(): User is not in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
-		db_free_query(db_handle, res);
+		group_dbf.free_query(db_handle, res);
 		return -6;
 	} else {
 		DBG("is_user_in(): User is in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
-		db_free_query(db_handle, res);
+		group_dbf.free_query(db_handle, res);
 		return 1;
 	}
+}
+
+
+int group_db_init(char* db_url)
+{
+	if (group_dbf.init==0){
+		LOG(L_CRIT, "BUG: group_db_bind: null dbf \n");
+		goto error;
+	}
+	db_handle=group_dbf.init(db_url);
+	if (db_handle==0){
+		LOG(L_ERR, "ERROR: group_db_bind: unable to connect to the "
+				"database\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+int group_db_bind(char* db_url)
+{
+	if (bind_dbmod(db_url, &group_dbf)<0){
+		LOG(L_ERR, "ERROR: group_db_bind: unable to bind to the database"
+				" module\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+void group_db_close()
+{
+	if (db_handle && group_dbf.close){
+		group_dbf.close(db_handle);
+		db_handle=0;
+	}
+}
+
+
+int group_db_ver(char* db_url, str* name)
+{
+	db_con_t* dbh;
+	int ver;
+
+	if (group_dbf.init==0){
+		LOG(L_CRIT, "BUG: group_db_ver: unbound database\n");
+		return -1;
+	}
+	dbh=group_dbf.init(db_url);
+	if (dbh==0){
+		LOG(L_ERR, "ERROR: group_db_ver: unable to open database "
+				"connection\n");
+		return -1;
+	}
+	ver=table_version(&group_dbf, dbh, name);
+	group_dbf.close(dbh);
+	return ver;
 }

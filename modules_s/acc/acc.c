@@ -29,6 +29,8 @@
  * --------
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-11-04  multidomain support for mysql introduced (jiri)
+ * 2004-06-06  updated to the new DB api, cleanup: acc_db_{bind, init,close)
+ *              added (andrei)
  */
 
 
@@ -85,6 +87,15 @@ extern int diameter_client_port;
 static int diam_attr[] = { AVP_SIP_FROM_URI, AVP_SIP_TO_URI, AVP_SIP_OURI, 
 	AVP_SIP_CALLID, AVP_SIP_TO_TAG, AVP_SIP_FROM_TAG, AVP_SIP_CSEQ };
 #endif
+
+#ifdef SQL_ACC
+
+static char* acc_db_url=0;
+static db_func_t acc_dbf;
+static db_con_t* db_handle=0;
+
+#endif
+
 
 static inline struct hdr_field *valid_to( struct cell *t, 
 				struct sip_msg *reply)
@@ -425,6 +436,50 @@ void acc_log_ack(  struct cell* t , struct sip_msg *ack )
 
 #ifdef SQL_ACC
 
+
+/* binds to the corresponding database module
+ * returns 0 on success, -1 on error */
+int acc_db_bind(char* db_url)
+{
+	acc_db_url=db_url;
+	if (bind_dbmod(acc_db_url, &acc_dbf)<0){
+		LOG(L_ERR, "ERROR: acc_db_init: bind_db failed\n");
+		return -1;
+	}
+	
+	return 0;
+}
+
+
+
+/* initialize the database connection
+ * returns 0 on success, -1 on error */
+int acc_db_init()
+{
+	if (acc_db_url){
+		db_handle=acc_dbf.init(acc_db_url);
+		if (db_handle==0){
+			LOG(L_ERR, "ERROR: acc_db_init: unable to connect to the "
+					"database\n");
+			return -1;
+		}
+		return 0;
+	}else{
+		LOG(L_CRIT, "BUG: acc_db_init: null db url\n");
+		return -1;
+	}
+}
+
+
+
+/* close a db connection */
+void acc_db_close()
+{
+	if (db_handle && acc_dbf.close)	acc_dbf.close(db_handle);
+}
+
+
+
 int acc_db_request( struct sip_msg *rq, struct hdr_field *to, 
 				str *phrase, char *table, char *fmt)
 {
@@ -459,7 +514,7 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		return -1;
 	}
 
-	if (!db_url) {
+	if (!acc_db_url) {
 		LOG(L_ERR, "ERROR: can't log -- no db_url set\n");
 		return -1;
 	}
@@ -479,8 +534,8 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 	VAL_NULL(vals+i)=0;
 	VAL_STRING(vals+i)=time_s;
 
-	db_use_table(db_handle, table);
-	if (db_insert(db_handle, keys, vals, i+1) < 0) {
+	acc_dbf.use_table(db_handle, table);
+	if (acc_dbf.insert(db_handle, keys, vals, i+1) < 0) {
 		LOG(L_ERR, "ERROR: acc_request: "
 				"Error while inserting to database\n");
 		return -1;;

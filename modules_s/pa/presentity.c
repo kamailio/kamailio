@@ -44,7 +44,6 @@
 #include "pa_mod.h"
 #include "location.h"
 
-extern db_con_t* pa_db;
 extern int use_db;
 extern char *presentity_table;
 
@@ -174,9 +173,9 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 
 	  result_cols[presid_col = n_result_cols++] = "presid";
 
-	  db_use_table(pa_db, presentity_table);
+	  pa_dbf.use_table(pa_db, presentity_table);
 	  while (!presid) {
-	       if (db_query (pa_db, query_cols, query_ops, query_vals,
+	       if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			     result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
 		    LOG(L_ERR, "db_new_tuple(): Error while querying presentity\n");
 		    return -1;
@@ -192,12 +191,13 @@ int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 	       } else {
 		    /* insert new record into database */
 		    LOG(L_INFO, "new_tuple: inserting %d cols into table\n", n_query_cols);
-		    if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+		    if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
+					< 0) {
 			 LOG(L_ERR, "db_new_tuple(): Error while inserting tuple\n");
 			 return -1;
 		    }
 	       }
-	       db_free_query(pa_db, res);
+	       pa_dbf.free_query(pa_db, res);
 	  }
      }
 
@@ -282,8 +282,9 @@ int db_update_presentity(presentity_t* _p)
 	       {
 		    int n_query_cols = 2;
 		    LOG(L_INFO, "db_update_presentity: cleaning contact from table\n");
-		    db_use_table(pa_db, presentity_contact_table);
-		    if (db_delete(pa_db, query_cols, query_ops, query_vals, n_query_cols) < 0) {
+		    pa_dbf.use_table(pa_db, presentity_contact_table);
+		    if (pa_dbf.delete(pa_db, query_cols, query_ops, query_vals,
+						n_query_cols) < 0) {
 			 LOG(L_ERR, "db_new_tuple(): Error while deleting tuple\n");
 			 return -1;
 		    }
@@ -385,12 +386,12 @@ int db_update_presentity(presentity_t* _p)
 	       }
 
 	       if (n_updates > (sizeof(query_cols)/sizeof(db_key_t)))
-		    LOG(L_ERR, "too many update values. n_selectors=%d, n_updates=%d dbf.update=%p\n", 
-			n_selectors, n_updates, dbf.update);
+		    LOG(L_ERR, "too many update values. n_selectors=%d, n_updates=%d "
+					"dbf.update=%p\n", 
+			n_selectors, n_updates, pa_dbf.update);
 
-	       db_use_table(pa_db, presentity_contact_table);
-	       if (db_insert(pa_db, 
-			     query_cols, query_vals, n_updates) < 0) {
+	       pa_dbf.use_table(pa_db, presentity_contact_table);
+	       if (pa_dbf.insert(pa_db, query_cols, query_vals, n_updates) < 0) {
 		    LOG(L_ERR, "db_update_presentity: Error while updating database\n");
 		    return -1;
 	       }
@@ -901,8 +902,8 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 	  result_cols[uri_col = n_result_cols++] = "uri";
 	  result_cols[presid_col = n_result_cols++] = "presid";
 
-	  db_use_table(pa_db, presentity_table);
-	  if (db_query (pa_db, query_cols, query_ops, query_vals,
+	  pa_dbf.use_table(pa_db, presentity_table);
+	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
 	       LOG(L_ERR, "db_new_tuple(): Error while querying presentity\n");
 	       return -1;
@@ -929,7 +930,7 @@ int pdomain_load_presentities(pdomain_t *pdomain)
 			 presentity->presid = presid;
 		    }
 	       }
-	       db_free_query(pa_db, res);
+	       pa_dbf.free_query(pa_db, res);
 	  }
 	  
 	  { 

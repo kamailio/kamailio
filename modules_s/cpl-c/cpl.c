@@ -29,6 +29,7 @@
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
+ * 2004-06-06  updated to the new DB api (andrei)
  */
 
 
@@ -85,8 +86,6 @@ str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
                              * terminated string in "TZ=value" format;
                              * used only by run_time_switch */
 
-/* this vars are used outside only for loading scripts */
-db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 
 int (*cpl_sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
@@ -258,11 +257,7 @@ static int cpl_init(void)
 	}
 
 	/* bind to the mysql module */
-	if (bind_dbmod( DB_URL )) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot bind to database module! "
-			"Did you forget to load a database module ?\n");
-		goto error;
-	}
+	if (cpl_db_bind(DB_URL)<0) goto error;
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
@@ -386,21 +381,8 @@ static int cpl_child_init(int rank)
 		}
 	}
 
-	if ( (db_hdl=db_init(DB_URL))==0 ) {
-		LOG(L_CRIT,"ERROR:cpl_child_init: cannot initialize database "
-			"connection\n");
-		goto error;
-	}
-	if (db_use_table( db_hdl, DB_TABLE) < 0) {
-		LOG(L_CRIT,"ERROR:cpl_child_init: cannot select table \"%s\"\n",
-			DB_TABLE);
-		goto error;
-	}
-
-	return 0;
+	return cpl_db_init(DB_URL, DB_TABLE);
 error:
-	if (db_hdl)
-		db_close(db_hdl);
 	return -1;
 }
 
@@ -554,7 +536,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	/* get the script for this user */
-	if (get_user_script( db_hdl, &user, &script, "cpl_bin")==-1)
+	if (get_user_script(&user, &script, "cpl_bin")==-1)
 		goto error1;
 
 	/* has the user a non-empty script? if not, return normaly, allowing ser to
@@ -687,7 +669,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 			}
 
 			/* write both the XML and binary formats into database */
-			if (write_to_db( db_hdl, user.s, &body, &bin)!=1) {
+			if (write_to_db(user.s, &body, &bin)!=1) {
 				cpl_err = &intern_err;
 				goto error_1;
 			}
@@ -700,7 +682,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 				goto error_1;
 			}
 			/* remove the script for the user */
-			if (rmv_from_db( db_hdl, user.s)!=1) {
+			if (rmv_from_db(user.s)!=1) {
 				cpl_err = &intern_err;
 				goto error_1;
 			}
@@ -727,7 +709,7 @@ static inline int do_script_download(struct sip_msg *msg)
 		goto error;
 
 	/* get the user's xml script from the database */
-	if (get_user_script( db_hdl, &user, &script, "cpl_xml")==-1)
+	if (get_user_script(&user, &script, "cpl_xml")==-1)
 		goto error;
 
 	/* add a lump with content-type hdr */

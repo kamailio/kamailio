@@ -30,6 +30,8 @@
  * ---------
  * 2003-02-28 scratchpad compatibility abandoned
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2004-06-06 updated to the new DB api, added auth_db_{init,bind,close,ver}
+ *             (andrei)
  */
 
 
@@ -46,6 +48,8 @@
 
 #define MESSAGE_500 "Server Internal Error"
 
+static db_con_t* db_handle=0; /* database connection handle */
+static db_func_t  auth_dbf;
 
 static char rpid_buffer[MAX_RPID_LEN];
 static str rpid = {rpid_buffer, 0};
@@ -76,8 +80,8 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 
 	n = (use_domain ? 2 : 1);
 	nc = (use_rpid ? 2 : 1);
-	db_use_table(db_handle, _table);
-	if (db_query(db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0) {
+	auth_dbf.use_table(db_handle, _table);
+	if (auth_dbf.query(db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
@@ -85,7 +89,7 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
 		    _username->user.len, ZSW(_username->user.s), (use_domain ? (_domain->len) : 0), ZSW(_domain->s));
-		db_free_query(db_handle, res);
+		auth_dbf.free_query(db_handle, res);
 		return 1;
 	}
 
@@ -108,7 +112,7 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 		memcpy(_rpid->s, result.s, _rpid->len);
 	}
 
-	db_free_query(db_handle, res);
+	auth_dbf.free_query(db_handle, res);
 	return 0;
 }
 
@@ -225,4 +229,62 @@ int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
 int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
 	return authorize(_m, (str*)_realm, _table, HDR_AUTHORIZATION);
+}
+
+
+
+int auth_db_init(char* db_url)
+{
+	if (auth_dbf.init==0){
+		LOG(L_CRIT, "BUG: auth_db_bind: null dbf\n");
+		goto error;
+	}
+	db_handle=auth_dbf.init(db_url);
+	if (db_handle==0){
+		LOG(L_ERR, "ERROR: auth_db_bind: unable to connect to the database\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+int auth_db_bind(char* db_url)
+{
+	if (bind_dbmod(db_url, &auth_dbf)<0){
+		LOG(L_ERR, "ERROR: auth_db_bind: unable to bind to the database"
+				" module\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+void auth_db_close()
+{
+	if (db_handle && auth_dbf.close){
+		auth_dbf.close(db_handle);
+		db_handle=0;
+	}
+}
+
+
+int auth_db_ver(char* db_url, str* name)
+{
+	db_con_t* dbh;
+	int ver;
+
+	if (auth_dbf.init==0){
+		LOG(L_CRIT, "BUG: auth_db_ver: unbound database\n");
+		return -1;
+	}
+	dbh=auth_dbf.init(db_url);
+	if (dbh==0){
+		LOG(L_ERR, "ERROR: auth_db_ver: unable to open database connection\n");
+		return -1;
+	}
+	ver=table_version(&auth_dbf, dbh, name);
+	auth_dbf.close(dbh);
+	return ver;
 }

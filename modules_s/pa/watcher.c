@@ -39,7 +39,6 @@
 #include "watcher.h"
 #include "presentity.h"
 
-extern db_con_t* pa_db;
 
 char *doctype_name[] = {
 	[DOC_XPIDF] = "DOC_XPIDF",
@@ -279,8 +278,8 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	  result_cols[event_col = n_result_cols++] = "event";
 	  result_cols[display_name_col = n_result_cols++] = "display_name";
 		
-	  db_use_table(pa_db, watcherinfo_table);
-	  if (db_query (pa_db, query_cols, query_ops, query_vals,
+	  pa_dbf.use_table(pa_db, watcherinfo_table);
+	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
 	       LOG(L_ERR, "new_watcher(): Error while querying tuple\n");
 	       return -1;
@@ -370,13 +369,14 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 
 	       /* insert new record into database */
 	       LOG(L_INFO, "new_tuple: inserting %d cols into table\n", n_query_cols);
-	       if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+	       if (pa_dbf.insert(pa_db, query_cols, query_vals, n_query_cols)
+				   < 0) {
 		    LOG(L_ERR, "db_new_tuple(): Error while inserting tuple\n");
 		    return -1;
 	       }
 	  }
 	  if (res)
-	       db_free_query(pa_db, res);
+	       pa_dbf.free_query(pa_db, res);
      }
 
      return 0;
@@ -416,8 +416,8 @@ int db_read_watcherinfo(presentity_t *_p)
 	  result_cols[expires_col = n_result_cols++] = "expires";
 	  result_cols[watcher_event_col = n_result_cols++] = "event";
 		
-	  db_use_table(pa_db, watcherinfo_table);
-	  if (db_query (pa_db, query_cols, query_ops, query_vals,
+	  pa_dbf.use_table(pa_db, watcherinfo_table);
+	  if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
 	       LOG(L_ERR, "db_read_watcherinfo(): Error while querying watcherinfo\n");
 	       return -1;
@@ -483,7 +483,7 @@ int db_read_watcherinfo(presentity_t *_p)
 		    }
 	       }
 	  }
-	  db_free_query(pa_db, res);
+	  pa_dbf.free_query(pa_db, res);
 	  LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s' done\n", _p->uri.s);
      }
      return 0;

@@ -36,6 +36,7 @@
  * 2003-04-05: default_uri #define used (jiri)
  * 2003-04-21 failed fifo init stops init process (jiri)
  * 2004-03-17 generic callbacks added (bogdan)
+ * 2004-06-07 updated to the new DB api (andrei)
  */
 
 #include <stdio.h>
@@ -118,7 +119,8 @@ int use_domain      = 0;              /* Whether usrloc should use domain part o
 int desc_time_order = 0;              /* By default do not enable timestamp ordering */                  
 
 
-db_con_t* db; /* Database connection handle */
+db_con_t* ul_dbh; /* Database connection handle */
+db_func_t ul_dbf;
 
 
 /*
@@ -224,8 +226,8 @@ static int mod_init(void)
 
 	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
-			LOG(L_ERR, "mod_init(): Can't bind database module\n");
+		if (bind_dbmod(db_url.s, &ul_dbf) < 0) { /* Find database module */
+			LOG(L_ERR, "ERROR: mod_init(): Can't bind database module\n");
 			return -1;
 		}
 	}
@@ -238,9 +240,10 @@ static int child_init(int _rank)
 {
  	     /* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		db = db_init(db_url.s); /* Get a new database connection */
-		if (!db) {
-			LOG(L_ERR, "child_init(%d): Error while connecting database\n", _rank);
+		ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
+		if (!ul_dbh) {
+			LOG(L_ERR, "ERROR: child_init(%d): "
+					"Error while connecting database\n", _rank);
 			return -1;
 		}
 	}
@@ -264,7 +267,7 @@ static void destroy(void)
 	}
 	
 	/* All processes close database connection */
-	if (db) db_close(db);
+	if (ul_dbh) ul_dbf.close(ul_dbh);
 
 	/* free callbacks list */
 	destroy_ulcb_list();

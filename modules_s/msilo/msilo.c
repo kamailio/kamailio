@@ -42,6 +42,7 @@
  * 2003-04-07: m_dump takes a parameter which sets the way the outgoing URI
  *             is computed (dcm)
  * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
+ * 2004-06-07 updated to the new DB api (andrei)
  */
 
 #include <stdio.h>
@@ -123,8 +124,8 @@
 MODULE_VERSION
 
 /** database connection */
-db_con_t *db_con = NULL;
-
+static db_con_t *db_con = NULL;
+static db_func_t msilo_dbf;
 
 /** precessed msg list - used for dumping the messages */
 msg_list ml = NULL;
@@ -202,7 +203,7 @@ static int mod_init(void)
 	DBG("MSILO: initializing ...\n");
 
 	/* binding to mysql module  */
-	if (bind_dbmod(db_url))
+	if (bind_dbmod(db_url, &msilo_dbf))
 	{
 		DBG("MSILO: ERROR: Database module not found\n");
 		return -1;
@@ -237,7 +238,11 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	DBG("MSILO: init_child #%d / pid <%d>\n", rank, getpid());
-	db_con = db_init(db_url);
+	if (msilo_dbf.init==0){
+		LOG(L_CRIT, "BUG: msilo: child_init: database not bound\n");
+		return -1;
+	}
+	db_con = msilo_dbf.init(db_url);
 	if (!db_con)
 	{
 		LOG(L_ERR,"MSILO: child %d: Error while connecting database\n", rank);
@@ -245,7 +250,7 @@ static int child_init(int rank)
 	}
 	else
 	{
-		db_use_table(db_con, db_table);
+		msilo_dbf.use_table(db_con, db_table);
 		DBG("MSILO: child %d: Database connection opened successfully\n", rank);
 	}
 	return 0;
@@ -500,7 +505,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	db_vals[nr_keys].val.int_val = val;
 	nr_keys++;
 
-	if(db_insert(db_con, db_keys, db_vals, nr_keys) < 0)
+	if(msilo_dbf.insert(db_con, db_keys, db_vals, nr_keys) < 0)
 	{
 		LOG(L_ERR, "MSILO:m_store: error storing message\n");
 		goto error;
@@ -660,8 +665,8 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[0].val.str_val.s = pto->uri.s;
 	db_vals[0].val.str_val.len = pto->uri.len;
 
-	if((db_query(db_con,db_keys,NULL,db_vals,db_cols,db_no_keys,db_no_cols,
-			NULL,&db_res)==0) && (RES_ROW_N(db_res) > 0))
+	if((msilo_dbf.query(db_con,db_keys,NULL,db_vals,db_cols,db_no_keys,
+				db_no_cols, NULL,&db_res)==0) && (RES_ROW_N(db_res) > 0))
 	{
 		DBG("MSILO:m_dump: dumping [%d] messages for <%.*s>!!!\n", 
 				RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
@@ -687,7 +692,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					str_vals[STR_IDX_FROM]) < 0)
 			{
 				DBG("MSILO:m_dump: headers bulding failed!!!\n");
-				if (db_free_query(db_con, db_res) < 0)
+				if (msilo_dbf.free_query(db_con, db_res) < 0)
 					DBG("MSILO:m_dump: Error while freeing result of"
 						" query\n");
 				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
@@ -731,7 +736,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	 * Free the result because we don't need it
 	 * anymore
 	 */
-	if (db_free_query(db_con, db_res) < 0)
+	if (msilo_dbf.free_query(db_con, db_res) < 0)
 		DBG("MSILO:m_dump: Error while freeing result of query\n");
 
 	return 1;
@@ -768,7 +773,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 			n++;
 			if(n==MAX_DEL_KEYS)
 			{
-				if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+				if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0) 
 					DBG("MSILO:clean_silo: error cleaning %d messages.\n",n);
 				n = 0;
 			}
@@ -777,7 +782,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 	}
 	if(n>0)
 	{
-		if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+		if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0) 
 			DBG("MSILO:clean_silo: error cleaning %d messages\n", n);
 		n = 0;
 	}
@@ -792,7 +797,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 		db_vals[0].type = DB_INT;
 		db_vals[0].nul = 0;
 		db_vals[0].val.int_val = (int)time(NULL);
-		if (db_delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
+		if (msilo_dbf.delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
 			DBG("MSILO:clean_silo: ERROR cleaning expired messages\n");
 	}
 }
@@ -806,8 +811,8 @@ void destroy(void)
 	DBG("MSILO: destroy module ...\n");
 	msg_list_free(ml);
 
-	if(db_con)
-		db_close(db_con);
+	if(db_con && msilo_dbf.close)
+		msilo_dbf.close(db_con);
 }
 
 /** 

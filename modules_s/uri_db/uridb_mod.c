@@ -33,6 +33,7 @@
  *  2003-03-19  replaces all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-05: default_uri #define used (jiri)
  *  2004-03-20: has_totag introduced (jiri)
+ *  2004-06-07  updated to the new DB api (andrei)
  */
 
 
@@ -81,7 +82,7 @@ static int mod_init(void);       /* Module initialization function */
 /*
  * Module parameter variables
  */
-str db_url                = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+static str db_url         = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str uri_table             = {URI_TABLE, URI_TABLE_LEN};               /* Name of URI table */
 str uri_user_col          = {USER_COL, USER_COL_LEN};                 /* Name of username column in URI table */
 str uri_domain_col        = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of domain column in URI table */
@@ -92,7 +93,6 @@ str subscriber_domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};             /* Name of
 
 int use_uri_table = 0;     /* Should uri table be used */
 int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
-db_con_t* db_handle = 0;   /* Database connection handle */
 
 
 /*
@@ -144,13 +144,7 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	db_handle = db_init(db_url.s);
-	if (!db_handle) {
-		LOG(L_ERR, "uri_db:init_child(%d): Unable to connect database\n", rank);
-		return -1;
-	}
-	return 0;
-
+	return uridb_db_init(db_url.s);
 }
 
 
@@ -163,50 +157,43 @@ static int mod_init(void)
 
 	DBG("uri_db - initializing\n");
 
-	if (bind_dbmod(db_url.s)) {
-		LOG(L_ERR, "uri_db:mod_init(): No database module found\n");
+	if (uridb_db_bind(db_url.s)) {
+		LOG(L_ERR, "ERROR: uri_db:mod_init(): No database module found\n");
 		return -1;
 	}
-
-	db_handle = db_init(db_url.s);
-	if (!db_handle) {
-		LOG(L_ERR, "uri_db:mod_init(): Unable to connect database\n");
-		return -1;
-	}
-
 	     /* Check table version */
-	ver = table_version(db_handle, &uri_table);
+	ver = uridb_db_ver(db_url.s, &uri_table);
 	if (ver < 0) {
-		LOG(L_ERR, "uri_db:mod_init(): Error while querying table version\n");
+		LOG(L_ERR, "ERROR: uri_db:mod_init():"
+				" Error while querying table version\n");
 		goto err;
 	} else if (ver < URI_TABLE_VERSION) {
-		LOG(L_ERR, "uri_db:mod_init(): Invalid table version of uri table (use ser_mysql.sh reinstall)\n");
+		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version"
+				" of uri table (use ser_mysql.sh reinstall)\n");
 		goto err;
 	}		
 
 	     /* Check table version */
-	ver = table_version(db_handle, &subscriber_table);
+	ver = uridb_db_ver(db_url.s, &subscriber_table);
 	if (ver < 0) {
-		LOG(L_ERR, "uri_db:mod_init(): Error while querying table version\n");
+		LOG(L_ERR, "ERROR: uri_db:mod_init():"
+				" Error while querying table version\n");
 		goto err;
 	} else if (ver < SUBSCRIBER_TABLE_VERSION) {
-		LOG(L_ERR, "uri_db:mod_init(): Invalid table version of subscriber table (use ser_mysql.sh reinstall)\n");
+		LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version of"
+				" subscriber table (use ser_mysql.sh reinstall)\n");
 		goto err;
 	}		
 	
-	db_close(db_handle);
 	return 0;
 
  err:
-	db_close(db_handle);
 	return -1;
 }
 
 
 static void destroy(void)
 {
-	if (db_handle) {
-		db_close(db_handle);
-	}
+	uridb_db_close();
 }
 

@@ -28,6 +28,7 @@
  * -------
  * 2003-04-07: a structure for both hashes introduced (ramona) 
  * 2003-04-06: db connection closed in mod_init (janakj)
+ * 2004-06-07  updated to the new DB api (andrei)
  */
 
 /*
@@ -70,11 +71,12 @@ double_hash_t *hash = NULL;
 code_t *next_code = NULL;
 
 /** database connection */
-db_con_t *db_con = NULL;
+static db_con_t *db_con = NULL;
+static db_func_t pdt_dbf;
 
 
 /** parameters */
-char *db_url = "mysql://root@127.0.0.1/pdt";
+static char *db_url = "mysql://root@127.0.0.1/pdt";
 char *db_table = "domains";
 
 /** pstn prefix */
@@ -249,14 +251,14 @@ static int mod_init(void)
 	}
 
 	/* binding to mysql module */
-	if(bind_dbmod(db_url))
+	if(bind_dbmod(db_url, &pdt_dbf))
 	{
 		LOG(L_ERR, "PDT: mod_init: Database module not found\n");
 		goto error1;
 	}
 
 	/* open a connection with the database */
-	db_con = db_init(db_url);
+	db_con = pdt_dbf.init(db_url);
 	if(!db_con)
 	{
 	
@@ -265,7 +267,7 @@ static int mod_init(void)
 	}
 	else
 	{
-		db_use_table(db_con, db_table);
+		pdt_dbf.use_table(db_con, db_table);
 		DBG("PDT: mod_init: Database connection opened successfully\n");
 	}
 	
@@ -278,7 +280,7 @@ static int mod_init(void)
 	
 	/* loading all information from database */
 	*next_code = 0;
-	if(db_query(db_con, NULL, NULL, NULL, NULL, 0, 0, "code", &db_res)==0)
+	if(pdt_dbf.query(db_con, NULL, NULL, NULL, NULL, 0, 0, "code", &db_res)==0)
 	{
 		for(i=0; i<RES_ROW_N(db_res); i++)
 		{
@@ -320,7 +322,7 @@ static int mod_init(void)
 		
 
 		/* free up the space allocated for response */
-		if(db_free_query(db_con, db_res)<0)
+		if(pdt_dbf.free_query(db_con, db_res)<0)
 		{
 			LOG(L_ERR, "PDT: mod_init: error when freeing"
 				" up the response space\n");
@@ -333,14 +335,14 @@ static int mod_init(void)
 		goto error;
 	}
 
-	db_close(db_con); /* janakj - close the connection */
+	pdt_dbf.close(db_con); /* janakj - close the connection */
 	/* success code */
 	return 0;
 
 error:
 	free_double_hash(hash);
 error2:
-	db_close(db_con);
+	pdt_dbf.close(db_con);
 error1:	
 	shm_free(next_code);
 	lock_destroy(&l);
@@ -352,7 +354,7 @@ static int mod_child_init(int r)
 {
 	DBG("PDT: mod_child_init #%d / pid <%d>\n", r, getpid());
 
-	db_con = db_init(db_url);
+	db_con = pdt_dbf.init(db_url);
 	if(!db_con)
 	{
 	  LOG(L_ERR,"PDT: child %d: Error while connecting database\n",r);
@@ -360,7 +362,7 @@ static int mod_child_init(int r)
 	}
 	else
 	{
-	  db_use_table(db_con, db_table);
+	  pdt_dbf.use_table(db_con, db_table);
 	  DBG("PDT:child %d: Database connection opened successfuly\n",r);
 	}
 	return 0;
@@ -525,8 +527,8 @@ static void mod_destroy(void)
 	DBG("PDT: mod_destroy : Cleaning up\n");
 	if (hash)
 		free_double_hash(hash);
-	if (db_con)
-		db_close(db_con);
+	if (db_con && pdt_dbf.close)
+		pdt_dbf.close(db_con);
 	if (next_code)
 		shm_free(next_code);
 	lock_destroy(&l);
@@ -631,7 +633,7 @@ int get_domainprefix(FILE *stream, char *response_file)
 	DBG("%d %.*s\n", code, sdomain.len, sdomain.s);
 			
 	/* insert a new domain into database */
-	if(db_insert(db_con, db_keys, db_vals, NR_KEYS)<0)
+	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
 	{
 		/* next available code is still code */
 		*next_code = code;
@@ -662,7 +664,7 @@ error:
 	/* next available code is still code */
 	*next_code = code;
 	/* delete from database */
-	if(db_delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
+	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
 		LOG(L_ERR,"PDT: get_domaincode: database/share-memory are inconsistent\n");
 	lock_release(&l);
 	
@@ -746,7 +748,7 @@ static int get_domainprefix_unixsock(str* msg)
 	DBG("%d %.*s\n", code, sdomain.len, sdomain.s);
 			
 	/* insert a new domain into database */
-	if(db_insert(db_con, db_keys, db_vals, NR_KEYS)<0)
+	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
 	{
 		/* next available code is still code */
 		*next_code = code;
@@ -776,7 +778,7 @@ static int get_domainprefix_unixsock(str* msg)
 	/* next available code is still code */
 	*next_code = code;
 	/* delete from database */
-	if(db_delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
+	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
 		LOG(L_ERR,"PDT: get_domaincode: database/share-memory are inconsistent\n");
 	lock_release(&l);
 	unixsock_reply_asciiz("500 Database/shared-memory are inconsistent\n");

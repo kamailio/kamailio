@@ -45,5 +45,13 @@ int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2);
  */
 int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
 
+int domain_db_bind(char* db_url);
+int domain_db_init(char* db_url);
+void domain_db_close();
+int domain_db_ver(str* name);
+
+int reload_domain_table();
+
+
 
 #endif /* DOMAIN_H */

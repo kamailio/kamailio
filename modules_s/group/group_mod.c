@@ -32,7 +32,8 @@
  *  2003-03-11 - New module interface (janakj)
  *  2003-03-16 - flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
- *  2003-04-05 default_uri #define used (jiri)
+ *  2003-04-05  default_uri #define used (jiri)
+ *  2004-06-07  updated to the new DB api: calls to group_db_* (andrei)
  */
 
 
@@ -89,14 +90,13 @@ static int hf_fixup(void** param, int param_no);
 /*
  * Module parameter variables
  */
-str db_url        = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
+static str db_url        = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str table         = {TABLE, TABLE_LEN};         /* Table name where group definitions are stored */
 str user_column   = {USER_COL, USER_COL_LEN};
 str domain_column = {DOMAIN_COL, DOMAIN_COL_LEN};
 str group_column  = {GROUP_COL, GROUP_COL_LEN};
 int use_domain    = 0;
 
-db_con_t* db_handle = 0;   /* Database connection handle */
 
 
 /*
@@ -139,13 +139,7 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	db_handle = db_init(db_url.s);
-	if (!db_handle) {
-		LOG(L_ERR, "group:init_child(): Unable to connect database\n");
-		return -1;
-	}
-
-	return 0;
+	return group_db_init(db_url.s);
 }
 
 
@@ -163,38 +157,26 @@ static int mod_init(void)
 	group_column.len = strlen(group_column.s);
 
 	     /* Find a database module */
-	if (bind_dbmod(db_url.s)) {
-		LOG(L_ERR, "mod_init(): Unable to bind database module\n");
+	if (group_db_bind(db_url.s)) {
 		return -1;
 	}
-
-	db_handle = db_init(db_url.s);
-	if (!db_handle) {
-		LOG(L_ERR, "group:mod_init(): Unable to connect database\n");
-		return -1;
-	}
-
-	ver = table_version(db_handle, &table);
+	ver = group_db_ver(db_url.s, &table);
 	if (ver < 0) {
 		LOG(L_ERR, "group:mod_init(): Error while querying table version\n");
-		db_close(db_handle);
 		return -1;
 	} else if (ver < TABLE_VERSION) {
-		LOG(L_ERR, "group:mod_init(): Invalid table version (use ser_mysql.sh reinstall)\n");
-		db_close(db_handle);
+		LOG(L_ERR, "group:mod_init(): Invalid table version "
+				"(use ser_mysql.sh reinstall)\n");
 		return -1;
 	}
 	
-	db_close(db_handle);
 	return 0;
 }
 
 
 static void destroy(void)
 {
-	if (db_handle) {
-		db_close(db_handle);
-	}
+	group_db_close();
 }
 
 

@@ -91,7 +91,7 @@ int process_ins_list(str* _d)
 	     /* FIXME */
 		memcpy(b, _d->s, _d->len);
 		b[_d->len] = '\0';
-		db_use_table(db, b);
+		ul_dbf.use_table(ul_dbh, b);
 	
 		VAL_TYPE(vals) = DB_STR;
 		VAL_TYPE(vals + 1) = DB_STR;
@@ -134,7 +134,7 @@ int process_ins_list(str* _d)
 
 		VAL_INT(vals + 7) = p->state;
 
-		if (db_insert(db, keys, vals, 8) < 0) {
+		if (ul_dbf.insert(ul_dbh, keys, vals, 8) < 0) {
 			LOG(L_ERR, "process_ins_list(): Error while inserting into database\n");
 			return -1;
 		}

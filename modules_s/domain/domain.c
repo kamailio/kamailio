@@ -26,7 +26,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+ /*
+  * History:
+  * --------
+  *  2004-06-07  updated to the new DB api, moved reload_table here, created 
+  *               domain_db_{init.bind,ver,close} (andrei)
+  */
 
 #include "domain_mod.h"
 #include "hash.h"
@@ -34,6 +39,64 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../ut.h"
+
+static db_con_t* db_handle=0;
+static db_func_t domain_dbf;
+
+/* helper db functions*/
+
+int domain_db_bind(char* db_url)
+{
+	if (bind_dbmod(db_url, &domain_dbf )) {
+		LOG(L_CRIT, "ERROR: domain_db_bind: cannot bind to database module! "
+		"Did you forget to load a database module ?\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+
+int domain_db_init(char* db_url)
+{
+	if (domain_dbf.init==0){
+		LOG(L_CRIT, "BUG: domain_db_init: unbound database module\n");
+		goto error;
+	}
+	db_handle=domain_dbf.init(db_url);
+	if (db_handle==0){
+		LOG(L_CRIT, "ERROR:domain_db_init: cannot initialize database "
+							"connection\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+void domain_db_close()
+{
+	if (db_handle && domain_dbf.close){
+		domain_dbf.close(db_handle);
+		db_handle=0;
+	}
+}
+
+
+
+int domain_db_ver(str* name)
+{
+	int ver;
+
+	if (db_handle==0){
+		LOG(L_CRIT, "BUG:domain_db_ver: null database handler\n");
+		return -1;
+	}
+	ver=table_version(&domain_dbf, db_handle, name);
+	return ver;
+}
+
 
 
 /*
@@ -50,7 +113,7 @@ int is_domain_local(str* _host)
 		keys[0]=domain_col.s;
 		cols[0]=domain_col.s;
 		
-		if (db_use_table(db_handle, domain_table.s) < 0) {
+		if (domain_dbf.use_table(db_handle, domain_table.s) < 0) {
 			LOG(L_ERR, "is_local(): Error while trying to use domain table\n");
 			return -1;
 		}
@@ -61,7 +124,8 @@ int is_domain_local(str* _host)
 		VAL_STR(vals).s = _host->s;
 		VAL_STR(vals).len = _host->len;
 
-		if (db_query(db_handle, keys, 0, vals, cols, 1, 1, 0, &res) < 0) {
+		if (domain_dbf.query(db_handle, keys, 0, vals, cols, 1, 1, 0, &res) < 0
+				) {
 			LOG(L_ERR, "is_local(): Error while querying database\n");
 			return -1;
 		}
@@ -69,12 +133,12 @@ int is_domain_local(str* _host)
 		if (RES_ROW_N(res) == 0) {
 			DBG("is_local(): Realm '%.*s' is not local\n", 
 			    _host->len, ZSW(_host->s));
-			db_free_query(db_handle, res);
+			domain_dbf.free_query(db_handle, res);
 			return -1;
 		} else {
 			DBG("is_local(): Realm '%.*s' is local\n", 
 			    _host->len, ZSW(_host->s));
-			db_free_query(db_handle, res);
+			domain_dbf.free_query(db_handle, res);
 			return 1;
 		}
 	} else {
@@ -119,3 +183,74 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
 
 	return is_domain_local(&(_msg->parsed_uri.host));
 }
+
+
+
+/*
+ * Reload domain table to new hash table and when done, make new hash table
+ * current one.
+ */
+int reload_domain_table ( void )
+{
+/*	db_key_t keys[] = {domain_col}; */
+	db_val_t vals[1];
+	db_key_t cols[1];
+	db_res_t* res;
+	db_row_t* row;
+	db_val_t* val;
+
+	struct domain_list **new_hash_table;
+	int i;
+
+	cols[0] = domain_col.s;
+
+	if (domain_dbf.use_table(db_handle, domain_table.s) < 0) {
+		LOG(L_ERR, "reload_domain_table(): Error while trying to use domain table\n");
+		return -1;
+	}
+
+	VAL_TYPE(vals) = DB_STR;
+	VAL_NULL(vals) = 0;
+    
+	if (domain_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 1, 0, &res) < 0) {
+		LOG(L_ERR, "reload_domain_table(): Error while querying database\n");
+		return -1;
+	}
+
+	/* Choose new hash table and free its old contents */
+	if (*hash_table == hash_table_1) {
+		hash_table_free(hash_table_2);
+		new_hash_table = hash_table_2;
+	} else {
+		hash_table_free(hash_table_1);
+		new_hash_table = hash_table_1;
+	}
+
+	row = RES_ROWS(res);
+
+	DBG("Number of rows in domain table: %d\n", RES_ROW_N(res));
+		
+	for (i = 0; i < RES_ROW_N(res); i++) {
+		val = ROW_VALUES(row + i);
+		if ((ROW_N(row) == 1) && (VAL_TYPE(val) == DB_STRING)) {
+			
+			DBG("Value: %s inserted into domain hash table\n", VAL_STRING(val));
+
+			if (hash_table_install(new_hash_table, (char *)(VAL_STRING(val))) == -1) {
+				LOG(L_ERR, "domain_reload(): Hash table problem\n");
+				domain_dbf.free_query(db_handle, res);
+				return -1;
+			}
+		} else {
+			LOG(L_ERR, "domain_reload(): Database problem\n");
+			domain_dbf.free_query(db_handle, res);
+			return -1;
+		}
+	}
+	domain_dbf.free_query(db_handle, res);
+
+	*hash_table = new_hash_table;
+	
+	return 1;
+}
+

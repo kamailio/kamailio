@@ -39,6 +39,8 @@
  * 2003-11-04  multidomain support for mysql introduced (jiri)
  * 2003-12-04  global TM callbacks switched to per transaction callbacks
  *             (bogdan)
+ * 2004-06-06  db cleanup: static db_url, calls to acc_db_{bind,init,close)
+ *              (andrei)
  */
 
 #include <stdio.h>
@@ -78,9 +80,6 @@ static int mod_init( void );
 static void destroy(void);
 static int child_init(int rank);
 
-#ifdef SQL_ACC
-db_con_t* db_handle;   /* Database connection handle */
-#endif
 
 /* buffer used to read from TCP connection*/
 #ifdef DIAM_ACC
@@ -126,7 +125,7 @@ int diameter_client_port=3000;
 #endif
 
 #ifdef SQL_ACC
-char *db_url=DEFAULT_DB_URL; /* Database url */
+static char *db_url=DEFAULT_DB_URL; /* Database url */
 
 /* sql flags, that need to be set for a transaction to 
  * be reported; 0=any, 1..MAX_FLAG otherwise; by default
@@ -308,8 +307,8 @@ static int mod_init( void )
 	}
 
 #ifdef SQL_ACC
-	if (bind_dbmod(db_url)) {
-		LOG(L_ERR, "ERROR:acc:mod_init: bind_db failed..."
+	if (acc_db_bind(db_url)<0){
+		LOG(L_ERR, "ERROR:acc_db_init: failed..."
 				"did you load a database module?\n");
 		return -1;
 	}
@@ -361,11 +360,8 @@ static int mod_init( void )
 static int child_init(int rank)
 {
 #ifdef SQL_ACC
-	db_handle = db_init(db_url);
-	if (!db_handle) {
-        LOG(L_ERR, "acc:init_child(): Unable to connect database\n");
+	if (acc_db_init()<0)
 		return -1;
-	}
 #endif
 
 /* DIAMETER */
@@ -399,7 +395,7 @@ static int child_init(int rank)
 static void destroy(void)
 {
 #ifdef SQL_ACC
-    if (db_handle) db_close(db_handle);
+	acc_db_close();
 #endif
 #ifdef DIAM_ACC
 	close_tcp_connection(sockfd);

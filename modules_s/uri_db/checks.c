@@ -30,6 +30,8 @@
  * --------
  * 2003-02-26: Created by janakj
  * 2004-03-20: has_totag introduced (jiri)
+ * 2004-06-07  updated to the new DB api, added uridb_db_{bind,init,close,ver}
+ *              (andrei)
  */
 
 #include <string.h>
@@ -42,6 +44,9 @@
 #include "../../db/db.h"                /* Database API */
 #include "uridb_mod.h"
 #include "checks.h"
+
+static db_con_t* db_handle = 0;   /* Database connection handle */
+static db_func_t uridb_dbf;
 
 
 /*
@@ -107,8 +112,9 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 			return -6;
 		}
 
-		if (db_use_table(db_handle, uri_table.s) < 0) {
-			LOG(L_ERR, "check_username(): Error while trying to use uri table\n");
+		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
+			LOG(L_ERR, "ERROR: check_username(): "
+					"Error while trying to use uri table\n");
 		}
 
 		keys[0] = uri_user_col.s;
@@ -123,8 +129,10 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
     		VAL_STR(vals + 1) = c->digest.realm;
 		VAL_STR(vals + 2) = puri.user;
 
-		if (db_query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0) {
-			LOG(L_ERR, "check_username(): Error while querying database\n");
+		if (uridb_dbf.query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0)
+		{
+			LOG(L_ERR, "ERROR: check_username():"
+					" Error while querying database\n");
 			return -7;
 		}
 
@@ -135,12 +143,12 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 		if (RES_ROW_N(res) == 0) {
 			DBG("check_username(): From/To user '%.*s' is spoofed\n", 
 			    puri.user.len, ZSW(puri.user.s));
-			db_free_query(db_handle, res);
+			uridb_dbf.free_query(db_handle, res);
 			return -8;
 		} else {
 			DBG("check_username(): From/To user '%.*s' and auth user match\n", 
 			    puri.user.len, ZSW(puri.user.s));
-			db_free_query(db_handle, res);
+			uridb_dbf.free_query(db_handle, res);
 			return 1;
 		}
 	} else {
@@ -203,15 +211,17 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	if (use_uri_table) {
-		if (db_use_table(db_handle, uri_table.s) < 0) {
-			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
+		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
+			LOG(L_ERR, "ERROR: does_uri_exist(): "
+					"Error while trying to use uri table\n");
 		}
 		keys[0] = uri_uriuser_col.s;
 		keys[1] = uri_domain_col.s;
 		cols[0] = uri_uriuser_col.s;
 	} else {
-		if (db_use_table(db_handle, subscriber_table.s) < 0) {
-			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
+		if (uridb_dbf.use_table(db_handle, subscriber_table.s) < 0) {
+			LOG(L_ERR, "ERROR: does_uri_exist():"
+					" Error while trying to use subscriber table\n");
 		}
 		keys[0] = subscriber_user_col.s;
 		keys[1] = subscriber_domain_col.s;
@@ -223,18 +233,78 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	VAL_STR(vals) = _msg->parsed_uri.user;
 	VAL_STR(vals + 1) = _msg->parsed_uri.host;
 
-	if (db_query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1), 1, 0, &res) < 0) {
+	if (uridb_dbf.query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1),
+				1, 0, &res) < 0) {
 		LOG(L_ERR, "does_uri_exist(): Error while querying database\n");
 		return -2;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
 		DBG("does_uri_exit(): User in request uri does not exist\n");
-		db_free_query(db_handle, res);
+		uridb_dbf.free_query(db_handle, res);
 		return -3;
 	} else {
 		DBG("does_uri_exit(): User in request uri does exist\n");
-		db_free_query(db_handle, res);
+		uridb_dbf.free_query(db_handle, res);
 		return 1;
 	}
+}
+
+
+
+int uridb_db_init(char* db_url)
+{
+	if (uridb_dbf.init==0){
+		LOG(L_CRIT, "BUG: uridb_db_bind: null dbf\n");
+		goto error;
+	}
+	db_handle=uridb_dbf.init(db_url);
+	if (db_handle==0){
+		LOG(L_ERR, "ERROR: uridb_db_bind: unable to connect to the database\n");
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
+int uridb_db_bind(char* db_url)
+{
+	if (bind_dbmod(db_url, &uridb_dbf)<0){
+		LOG(L_ERR, "ERROR: uridb_db_bind: unable to bind to the database"
+				" module\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+void uridb_db_close()
+{
+	if (db_handle && uridb_dbf.close){
+		uridb_dbf.close(db_handle);
+		db_handle=0;
+	}
+}
+
+
+int uridb_db_ver(char* db_url, str* name)
+{
+	db_con_t* dbh;
+	int ver;
+
+	if (uridb_dbf.init==0){
+		LOG(L_CRIT, "BUG: uridb_db_ver: unbound database\n");
+		return -1;
+	}
+	dbh=uridb_dbf.init(db_url);
+	if (dbh==0){
+		LOG(L_ERR, "ERROR: uridb_db_ver: unable to open database connection\n");
+		return -1;
+	}
+	ver=table_version(&uridb_dbf, dbh, name);
+	uridb_dbf.close(dbh);
+	return ver;
 }

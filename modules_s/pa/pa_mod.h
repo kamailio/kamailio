@@ -32,6 +32,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../tm/tm_load.h"
+#include "../../db/db.h"
 
 extern int default_expires;
 extern double default_priority;
@@ -39,6 +40,10 @@ extern int timer_interval;
 
 /* TM bind */
 extern struct tm_binds tmb;
+
+/* DB module bind */
+extern db_func_t pa_dbf;
+extern db_con_t* pa_db;
 
 /* PA database */
 extern int use_db;

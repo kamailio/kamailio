@@ -30,6 +30,7 @@
  * ---------
  * 2003-03-12 added replication mark and three zombie states (nils)
  * 2004-03-17 generic callbacks added (bogdan)
+ * 2004-06-07 updated to the new DB api (andrei)
  */
 
 
@@ -499,9 +500,9 @@ int db_insert_ucontact(ucontact_t* _c)
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
-	db_use_table(db, b);
+	ul_dbf.use_table(ul_dbh, b);
 
-	if (db_insert(db, keys, vals, (use_domain) ? (10) : (9)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (10) : (9)) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -588,9 +589,9 @@ int db_update_ucontact(ucontact_t* _c)
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
-	db_use_table(db, b);
+	ul_dbf.use_table(ul_dbh, b);
 
-	if (db_update(db, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 7) < 0) {
+	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 7) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
@@ -634,9 +635,9 @@ int db_delete_ucontact(ucontact_t* _c)
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
-	db_use_table(db, b);
+	ul_dbf.use_table(ul_dbh, b);
 
-	if (db_delete(db, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
+	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
 		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
 		return -1;
 	}
