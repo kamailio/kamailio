@@ -20,7 +20,7 @@ core:
        time before an ongoing connect will be aborted
    tcp_send_timeout= seconds
        time after a tcp connection will be closed if it is not available 
-       for writing in this interval (and ser wants to sen something on it)
+       for writing in this interval (and ser wants to send something on it)
    tcp_accept_aliases= yes|no
        if a message received over a tcp connection has "alias" in its via
        a new tcp alias port will be created for the connection the message

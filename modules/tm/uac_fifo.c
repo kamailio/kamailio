@@ -202,7 +202,7 @@ static inline int fifo_cbp(char** shm_file, char* response_file)
 		}
 		memcpy(*shm_file, response_file, fn_len);
 	} else {
-		shm_file = 0;
+		*shm_file = 0;
 	}
 	return 0;
 }
