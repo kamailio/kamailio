@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -58,25 +62,40 @@ struct domain_list ***hash_table;            /* Pointer to current hash table po
 struct domain_list **hash_table_1;           /* Pointer to hash table 1 */
 struct domain_list **hash_table_2;           /* Pointer to hash table 2 */
 
+
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"is_from_local",     is_from_local,     0, 0},
+	{"is_uri_host_local", is_uri_host_local, 0, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"db_url",               STR_PARAM, &db_url},
+	{"db_mode",              INT_PARAM, &db_mode},
+	{"domain_table",         STR_PARAM, &domain_table},
+	{"domain_domain_column", STR_PARAM, &domain_domain_col},
+	{0, 0, 0}
+};
+
+
 /*
  * Module interface
  */
 struct module_exports exports = {
 	"domain", 
-	(char*[]) {"is_from_local", "is_uri_host_local"},
-	(cmd_function[]) {is_from_local, is_uri_host_local},
-	(int[]) {0, 0},
-	(fixup_function[]) {0, 0},
-	2, /* number of functions*/
-	(char*[]){"db_url", "db_mode", "domain_table", "domain_domain_column"},
-	(modparam_t[]){STR_PARAM, INT_PARAM, STR_PARAM, STR_PARAM},
-	(void*[]){&db_url, &db_mode, &domain_table, &domain_domain_col},
-	4,
-	
+	cmds,      /* Exported functions */
+	params,    /* Exported parameters */
 	mod_init,  /* module initialization function */
-	NULL,      /* response function*/
+	0,         /* response function*/
 	destroy,   /* destroy function */
-	NULL,      /* cancel function */
+	0,         /* cancel function */
 	child_init /* per-child init function */
 };
 
