@@ -8,6 +8,7 @@
 # extra debug messages
 DEFS+=-DDBT_EXTRA_DEBUG
  
+include ../../Makefile.defs
 auto_gen=
 NAME=dbtext.so
 LIBS=
