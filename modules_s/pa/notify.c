@@ -253,6 +253,7 @@ static inline int create_headers(struct watcher* _w)
 
 static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 {
+	int len;
 	xpidf_status_t st;
 	struct to_body parsed;
 
@@ -261,21 +262,20 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	      * will be generated, callid will be callid,
 	      * from will be put in to including tag
 	      */
+	len = BUF_LEN;
 
-	if (start_xpidf_doc(&body, BUF_LEN) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): start_xpidf_doc failed\n");
+	if (start_xpidf_doc(&body, &len) < 0) {
 		return -1;
 	}
 
-	printf("%.*s\n", _p->uri.len, _p->uri.s);
 	parse_to(_p->uri.s, _p->uri.s + _p->uri.len + 1, &parsed);
 	if (parsed.error == PARSE_ERROR) {
 		LOG(L_ERR, "send_xpidf_notify(): Error while parsing\n");
 		return -2;
 	}
 
-	if (xpidf_add_presentity(&body, BUF_LEN - body.len, &parsed.uri) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
+	len = BUF_LEN - body.len;
+	if (xpidf_add_presentity(&body, &len, &parsed.uri) < 0) {
 		return -3;
 	}
 
@@ -284,13 +284,13 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	default: st = XPIDF_ST_CLOSED; break;
 	}
 
-	if (xpidf_add_address(&body, BUF_LEN - body.len, &parsed.uri, st) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
+	len = BUF_LEN - body.len;
+	if (xpidf_add_address(&body, &len, &parsed.uri, st) < 0) {
 		return -3;
 	}
 
-	if (end_xpidf_doc(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): end_xpidf_doc failed\n");
+	len = BUF_LEN - body.len;
+	if (end_xpidf_doc(&body, &len) < 0) {
 		return -5;
 	}
 
@@ -309,6 +309,7 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	lpidf_status_t st;
 	struct to_body parsed;
+	int len;
 
 	parse_to(_p->uri.s, _p->uri.s + _p->uri.len, &parsed);
 	if (parsed.error == PARSE_ERROR) {
@@ -316,8 +317,8 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 		return -1;
 	}
 
-	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &parsed.uri) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
+	len = BUF_LEN - body.len;
+	if (lpidf_add_presentity(&body, &len, &parsed.uri) < 0) {
 		return -2;
 	}
 
@@ -326,8 +327,8 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 	default: st = LPIDF_ST_OPEN; break;
 	}
 
-	if (lpidf_add_address(&body, BUF_LEN - body.len, &parsed.uri, st) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
+	len = BUF_LEN - body.len;
+	if (lpidf_add_address(&body, &len, &parsed.uri, st) < 0) {
 		return -3;
 	}
 

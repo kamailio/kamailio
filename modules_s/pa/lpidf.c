@@ -59,11 +59,16 @@
 /*
  * Add a presentity information
  */
-int lpidf_add_presentity(str* _b, int _l, str* _uri)
+int lpidf_add_presentity(str* _b, int* _l, str* _uri)
 {
-	if (_l < (TO_START_L + _uri->len + TO_END_L + CRLF_L)) {
+	int len;
+
+	len = TO_START_L + _uri->len + TO_END_L + CRLF_L;
+
+	if (*_l < len) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "lpidf_add_presentity(): Buffer too small\n");
+		*_l = len - *_l;
 		return -1;
 	}
 
@@ -77,18 +82,22 @@ int lpidf_add_presentity(str* _b, int _l, str* _uri)
 /*
  * Add a contact address with given status
  */
-int lpidf_add_address(str* _b, int _l, str* _addr, lpidf_status_t _st)
+int lpidf_add_address(str* _b, int* _l, str* _addr, lpidf_status_t _st)
 {
 	str s;
+	int len;
 
 	switch(_st) {
 	case LPIDF_ST_OPEN:   s.s = Q_OPEN; s.len = Q_OPEN_L;     break;
 	case LPIDF_ST_CLOSED: s.s = Q_CLOSED; s.len = Q_CLOSED_L; break;
 	}
 
-	if (_l < (CONTACT_START_L + _addr->len + CONTACT_MIDDLE_L + s.len + 2)) {
+	len = CONTACT_START_L + _addr->len + CONTACT_MIDDLE_L + s.len + CRLF_L;
+
+	if (*_l < len) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "lpidf_add_address(): Buffer too small\n");
+		*_l = len - *_l; 
 		return -1;
 	}
 	
