@@ -45,14 +45,12 @@
 
 
 /* to-tag including pre-calculated and fixed part */
-char           sl_tag[TOTAG_LEN];
+static char           sl_tag[TOTAG_LEN];
 /* from here, the variable prefix begins */
-char           *tag_suffix;
+static char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
    we do not filter */
-unsigned int  *sl_timeout;
-
-
+static unsigned int  *sl_timeout;
 
 
 int sl_startup()
