@@ -237,7 +237,7 @@ INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
-
+INSERT INTO version VALUES ( 'trusted', '1');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -559,10 +559,18 @@ CREATE TABLE preferences (
 	  
 
 #
+# Table structure for table trusted
+CREATE TABLE trusted (
+  src_ip varchar(39) NOT NULL,
+  proto varchar(4) NOT NULL,
+  from_pattern varchar(64) NOT NULL,
+  PRIMARY KEY (src_ip, proto, from_pattern)
+) $TABLE_TYPE;
+
+
+#
 # Table structure for table 'server_monitoring_agg'
 #
-
-
 DROP TABLE IF EXISTS server_monitoring_agg;
 CREATE TABLE server_monitoring_agg (
   param varchar(32) NOT NULL default '',
