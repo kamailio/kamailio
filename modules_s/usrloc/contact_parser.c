@@ -95,8 +95,10 @@ static inline void parse_params(char* _b, time_t* _exp, float* _q)
 
 	if (!_b) return;
 
-	p = trim(find_next_param(_b));
-	if (!p) return;
+	p = find_next_param(_b);
+	if (!p) p = _b;
+	p = trim(p);
+
 	do {
 		if (p) end = find_next_param(p);
 		if (end) *(end - 1) = '\0';
