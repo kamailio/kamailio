@@ -413,7 +413,6 @@ static int faked_env(struct sip_msg *fake,
 	/* set items, which will be duped to pkg_mem, to zero, so that
 	 * "restore" called on error does not free the original items */
 	fake->add_rm=0;
-	fake->body_lumps = 0;
 	fake->new_uri.s=0; fake->new_uri.len=0; 
 
 	/* remember we are back in request processing, but process
@@ -460,21 +459,12 @@ static int faked_env(struct sip_msg *fake,
 			goto restore;
 		}
 	}
-	
-	if (shmem_msg->body_lumps) {
-		fake->body_lumps=dup_lump_list(shmem_msg->body_lumps);
-		if (!fake->body_lumps) { /* non_empty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_reply: body lump dup failed\n");
-			goto restore;
-		}
-	}
 	/* success */
 	return 1;
 
 restore:
 	/* restore original environment and destroy faked message */
 	free_duped_lump_list(fake->add_rm);
-	free_duped_lump_list(fake->body_lumps);
 	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
 	set_t(backup_t);
 	global_msg_id=backup_msgid;

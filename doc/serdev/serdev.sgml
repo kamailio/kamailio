@@ -1454,8 +1454,6 @@ struct sip_msg {
 		
     struct lump* add_rm;         /* used for all the forwarded 
                                   * requests */
-    struct lump* body_lumps;     /* Lumps that modify message body
-                                  * (update Content-Length */
     struct lump* repl_add_rm;    /* used for all the forwarded replies */
     struct lump_rpl *reply_lump; /* only for locally generated replies !!!*/
 
