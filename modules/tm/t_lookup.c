@@ -134,13 +134,9 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
 			&& /*from length*/ EQ_LEN(from)
 			&& /*to body*/get_to(t_msg)->body.len==get_to(p_msg)->body.len
-			&& printf("------>0.4   %d (%d,%d)\n",p_cell->status,p_cell->tag->len,get_to(p_msg)->tag_value.len)
 			&& /*to tag*/p_cell->tag->len==get_to(p_msg)->tag_value.len
-			&& printf("------>0.5   %d\n",p_cell->status)
 			&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_LEN )
-			&& printf("------>0.6   %d\n",p_cell->status)
-			&& /*VIA*/(p_cell->status==200 || EQ_VIA_LEN(via1))
-			&& printf("------>2   %d\n",p_cell->status)  )
+			&& /*VIA*/(p_cell->status==200 || EQ_VIA_LEN(via1)) )
 				/* so far the lengths are the same
 				-> let's check the contents */
 				if (/*callid*/!memcmp( t_msg->callid->body.s,
@@ -152,10 +148,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 					get_to(p_msg)->body.s,get_to(t_msg)->body.len)
 				&& /*to tag*/!memcmp(p_cell->tag->s,
 					get_to(p_msg)->tag_value.s,p_cell->tag->len)
-				&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_STR||
-					printf("------>1   %d\n",p_cell->status) )
-				&& /*VAI*/(p_cell->status==200 ||EQ_VIA_STR(via1) ||
-						printf("------>2   %d\n",p_cell->status) ) )
+				&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_STR)
+				&& /*VAI*/(p_cell->status==200 ||EQ_VIA_STR(via1)) )
 					{ /* WE FOUND THE GOLDEN EGG !!!! */
 						goto found;
 					}

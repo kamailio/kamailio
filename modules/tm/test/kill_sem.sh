@@ -1,4 +1,4 @@
 #!/bin/sh
 
-ipcrm sem `ipcs -s |grep $(whoami) | awk '{ print $2; }'`
-ipcrm shm `ipcs -m | grep $(whoami) |awk '{ print $2; }'` 
+ipcrm sem `cat /proc/sysvipc/sem | awk '{ print $2; }'`
+ipcrm shm `cat /proc/sysvipc/shm | awk '{ print $2; }'` 

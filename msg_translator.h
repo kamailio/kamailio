@@ -16,8 +16,10 @@ char * build_req_buf_from_sip_req (	struct sip_msg* msg,
 char * build_res_buf_from_sip_res(	struct sip_msg* msg,
 				unsigned int *returned_len);
 
-char * build_res_buf_from_sip_req(	unsigned int code , 
+char * build_res_buf_from_sip_req(	unsigned int code ,
 				char *text ,
+				char *new_tag ,
+				unsigned int new_tag_len ,
 				struct sip_msg* msg,
 				unsigned int *returned_len);
 char* via_builder( 			struct sip_msg *msg ,

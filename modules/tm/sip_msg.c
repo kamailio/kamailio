@@ -287,7 +287,6 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_anchor = &((*lump_anchor)->next);
       lump_chain = lump_chain->next;
    }
-   DBG("-----------> len=%d <---> written=%d\n",len,p-foo);
    return new_msg;
 }
 

@@ -18,6 +18,18 @@
 #define MAX_RECEIVED_SIZE  57
 
 
+#define append_str(_dest,_src,_len,_msg) \
+	do{\
+		memcpy( (_dest) , (_src) , (_len) );\
+		(_dest) += (_len) ;\
+	}while(0);
+
+#define append_str_trans(_dest,_src,_len,_msg) \
+	do{\
+		memcpy( (_dest) , (_msg)->orig+((_src)-(_msg)->buf) , (_len) );\
+		(_dest) += (_len) ;\
+	}while(0);
+
 
 
 /* faster than inet_ntoa */
@@ -532,15 +544,14 @@ error:
 
 
 char * build_res_buf_from_sip_req(	unsigned int code ,
-	char *text , struct sip_msg* msg, unsigned int *returned_len)
+	char *text, char *new_tag, unsigned int new_tag_len,
+	struct sip_msg* msg, unsigned int *returned_len)
 {
 	char                    *buf, *p;
 	unsigned int       len,foo;
 	struct hdr_field  *hdr;
 	int                       i;
-#ifdef BRUT_HACK
-	struct hdr_field  *to, *from, *callid, *cseq, *via;
-#endif
+	str                        *tag_str;
 
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
@@ -554,27 +565,24 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ + strlen(text) + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-#ifdef BRUT_HACK
-	{
-		len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
-		if ( hdr->type==HDR_VIA ) via = hdr;
-		else if ( hdr->type==HDR_FROM) from = hdr;
-		else if (hdr->type==HDR_CALLID) callid = hdr;
-		else if ( hdr->type==HDR_TO) to = hdr;
-		else if ( hdr->type==HDR_CSEQ) cseq = hdr;
-		else len-=((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
-	}
-#else
-		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
-				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
-				hdr->type==HDR_CSEQ )
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN;
-#endif
+		switch (hdr->type)
+		{
+			case HDR_TO:
+				if (new_tag)
+					if (get_to(msg)->tag_value.s )
+						len+=new_tag_len-get_to(msg)->tag_value.len;
+					else
+						len+=new_tag_len+5/*";tag="*/;
+			case HDR_VIA:
+			case HDR_FROM:
+			case HDR_CALLID:
+			case HDR_CSEQ:
+				len += ((hdr->body.s+hdr->body.len )-hdr->name.s )+CRLF_LEN;
+		}
 	/*content length header*/
 	len +=CONTENT_LEN_LEN + CRLF_LEN;
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
-
 	/*allocating mem*/
 	buf = 0;
 	buf = (char*) malloc( len+1 );
@@ -600,32 +608,38 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	/* headers*/
-#ifdef BRUT_HACK
-#define	COPY_HF(_hf) memcpy(p, msg->orig+(_hf->name.s-msg->buf), \
-			((_hf->body.s+_hf->body.len ) - \
-			_hf->name.s )); \
-			p+=((_hf->body.s+_hf->body.len)-_hf->name.s ) ; \
-			memcpy( p, CRLF, CRLF_LEN ); \
-			p+=CRLF_LEN;
-
-	COPY_HF(via);
-	COPY_HF(from);
-	COPY_HF(to);
-	COPY_HF(callid);
-	COPY_HF(cseq);
-#else
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
-		hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		switch (hdr->type)
 		{
-			memcpy( p , msg->orig+(hdr->name.s-msg->buf) ,
-					((hdr->body.s+hdr->body.len ) -
-					hdr->name.s ) );
-			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) ;
-			memcpy( p, CRLF, CRLF_LEN );
-			p+=CRLF_LEN;
+			case HDR_TO:
+				if (new_tag){
+					if (get_to(msg)->tag_value.s ) {
+						tag_str =&(get_to(msg)->tag_value);
+						append_str_trans( p, hdr->name.s ,
+							tag_str->s-hdr->name.s,msg);
+						append_str( p, new_tag,new_tag_len,msg);
+						append_str_trans( p,tag_str->s+tag_str->len,
+							((hdr->body.s+hdr->body.len )-
+							(tag_str->s+tag_str->len)),msg);
+						append_str( p, CRLF,CRLF_LEN,msg);
+					}else{
+						append_str_trans( p, hdr->name.s ,
+							((hdr->body.s+hdr->body.len )-hdr->name.s ),
+							msg);
+						append_str( p, ";tag=",5,msg);
+						append_str( p, new_tag,new_tag_len,msg);
+						append_str( p, CRLF,CRLF_LEN,msg);
+					}
+				break;
+				}
+			case HDR_VIA:
+			case HDR_FROM:
+			case HDR_CALLID:
+			case HDR_CSEQ:
+				append_str_trans( p, hdr->name.s ,
+					((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
+				append_str( p, CRLF,CRLF_LEN,msg);
 		}
-#endif
 
 	/* content length header*/
 	memcpy( p, CONTENT_LEN , CONTENT_LEN_LEN );

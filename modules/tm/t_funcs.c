@@ -658,7 +658,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 	}
 	*/
 
-	buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+	buf = build_res_buf_from_sip_req(code,text,0,0,T->inbound_request,&len);
 	DBG("DEBUG: t_send_reply: buffer computed\n");
 	if (!buf)
 	{
@@ -676,7 +676,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 		{
 			LOG(L_ERR, "ERROR: t_send_reply: cannot lookup reply dst: %s\n",
 				p_msg->via1->host.s );
-			goto error;
+			goto error2;
 		}
 
 		rb->retr_timer.tg=TG_RT;
