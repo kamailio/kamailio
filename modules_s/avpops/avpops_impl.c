@@ -305,6 +305,10 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 		/* do DB query */
 		res = db_load_avp( &uuid, 0, 0, dbp->sa.s, dbp->table.s);
+	} else  if (sp->flags&AVPOPS_VAL_STR) {
+		/* use the STR val as uuid */
+		/* do DB query */
+		res = db_load_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table.s);
 	} else {
 		LOG(L_CRIT,"BUG:avpops:load_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -381,6 +385,12 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		keys_off = 0;
 		keys_nr = 4;
 		store_vals[0].val.str_val = uuid;
+	} else if (sp->flags&AVPOPS_VAL_STR) {
+		/* use the STR value as uuid */
+		/* set values for keys  */
+		keys_off = 0;
+		keys_nr = 4;
+		store_vals[0].val.str_val = *sp->val.s;
 	} else {
 		LOG(L_CRIT,"BUG:avpops:store_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -491,6 +501,10 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 		/* do DB delete */
 		res = db_delete_avp( &uuid, 0, 0, dbp->sa.s, dbp->table.s);
+	} else if (sp->flags&AVPOPS_VAL_STR) {
+		/* use the STR value as uuid */
+		/* do DB delete */
+		res = db_delete_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table.s);
 	} else {
 		LOG(L_CRIT,"BUG:avpops:dbdelete_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -875,15 +889,16 @@ cycle2:
 		/* do check */
 		if (val->flags&AVPOPS_OP_EQ)
 		{
-			if (avp_val.s->len!=ck_val.s->len)
-				return -1;
-			if (val->flags&AVPOPS_FLAG_CI)
+			if (avp_val.s->len==ck_val.s->len)
 			{
-				if (strncasecmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0)
-					return 1;
-			} else {
-				if (strncmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0 )
-					return 1;
+				if (val->flags&AVPOPS_FLAG_CI)
+				{
+					if (strncasecmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0)
+						return 1;
+				} else {
+					if (strncmp(avp_val.s->s,ck_val.s->s,ck_val.s->len)==0 )
+						return 1;
+				}
 			}
 		} else if (val->flags&AVPOPS_OP_LT) {
 			n = (avp_val.s->len>=ck_val.s->len)?avp_val.s->len:ck_val.s->len;
@@ -931,6 +946,7 @@ next:
 			goto cycle1;
 	}
 
+	DBG("DEBUG:avpops:check_avp: checked failed\n");
 	return -1; /* check failed */
 error:
 	return -1;

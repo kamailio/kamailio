@@ -228,38 +228,54 @@ static int fixup_db_avp(void** param, int param_no)
 	s = (char*)*param;
 	if (param_no==1)
 	{
-		if ( *s!='$' || (++s)==0)
+		if (*s!='$')
 		{
-			LOG(L_ERR,"ERROR:avops:fixup_db_avp: bad param 1; expected : "
-				"$[alias|from|to|ruri]\n");
-			return E_UNSPEC;
-		}
-		
-		if ( (p=strchr(s,'/'))!=0)
-			*(p++) = 0;
-		if ( (!strcasecmp( "from", s) && (flags=AVPOPS_USE_FROM)) 
-		|| (!strcasecmp( "to", s) && (flags=AVPOPS_USE_TO)) 
-		|| (!strcasecmp( "ruri", s) && (flags=AVPOPS_USE_RURI)) )
-		{
-			/* check for extra flags/params */
-			if (p&&(!strcasecmp( "domain",p)&&!(flags|=AVPOPS_FLAG_DOMAIN)))
-			{
-				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: unknow flag <%s>\n",p);
-				return E_UNSPEC;
-			}
-			/* compose the db_param structure */
+			/* is a constant string -> use it as uuid*/
 			sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 			if (sp==0) {
 				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
 			memset( sp, 0, sizeof(struct fis_param));
-			sp->flags = flags|AVPOPS_VAL_NONE;
-		} else if ( p || (sp=lookup_avp_alias(s))==0 )
-		{
-			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
-				" unknown!\n",s);
-			return E_UNSPEC;
+			sp->flags = AVPOPS_VAL_STR;
+			sp->val.s = (str*)pkg_malloc(strlen(s)+1+sizeof(str));
+			if (sp->val.s==0) {
+				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
+				return E_OUT_OF_MEM;
+			}
+			sp->val.s->s = ((char*)sp->val.s) + sizeof(str);
+			sp->val.s->len = strlen(s);
+			strcpy(sp->val.s->s,s);
+		} else {
+			/* is a variable $xxxxx */
+			s++;
+			if ( (p=strchr(s,'/'))!=0)
+				*(p++) = 0;
+			if ( (!strcasecmp( "from", s) && (flags=AVPOPS_USE_FROM)) 
+			|| (!strcasecmp( "to", s) && (flags=AVPOPS_USE_TO)) 
+			|| (!strcasecmp( "ruri", s) && (flags=AVPOPS_USE_RURI)) )
+			{
+				/* check for extra flags/params */
+				if (p&&(!strcasecmp("domain",p)&&!(flags|=AVPOPS_FLAG_DOMAIN)))
+				{
+					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: unknow flag "
+						"<%s>\n",p);
+					return E_UNSPEC;
+				}
+				/* compose the db_param structure */
+				sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
+				if (sp==0) {
+					LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem\n");
+					return E_OUT_OF_MEM;
+				}
+				memset( sp, 0, sizeof(struct fis_param));
+				sp->flags = flags|AVPOPS_VAL_NONE;
+			} else if ( p || (sp=lookup_avp_alias(s))==0 )
+			{
+				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: source/flags \"%s\""
+					" unknown!\n",s);
+				return E_UNSPEC;
+			}
 		}
 		pkg_free(*param);
 		*param=(void*)sp;
