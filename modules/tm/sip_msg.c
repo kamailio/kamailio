@@ -6,7 +6,7 @@
 
 struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 {
-    struct sip_msg   *new_msg=NULL;
+    struct sip_msg   *new_msg=0;
     struct hdr_field  *header, *last_hdr, *new_hdr;
 
     /* clones the sip_msg structure */
@@ -132,7 +132,7 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 error:
 	sip_msg_free( new_msg );
 	sh_free( new_msg );
-	return NULL;
+	return 0;
 
 }
 

@@ -36,7 +36,8 @@ static struct module_exports nm_exports= {
 				"t_forward_def",
 				"t_forward_uri",
 				"t_send_reply",
-				"t_retransmit_reply"
+				"t_retransmit_reply",
+				"t_release"
 			},
 	(cmd_function[]){
 					t_add_transaction,
@@ -46,6 +47,7 @@ static struct module_exports nm_exports= {
 					t_forward_uri,
 					w_t_send_reply,
 					t_retransmit_reply,
+					t_put_on_wait
 					},
 	(int[]){
 				0,
@@ -54,6 +56,7 @@ static struct module_exports nm_exports= {
 				1,
 				0,
 				2,
+				0,
 				0
 			},
 	(fixup_function[]){
@@ -63,9 +66,10 @@ static struct module_exports nm_exports= {
 				fixup_t_forward_def,
 				0,
 				fixup_t_send_reply,
+				0,
 				0
 		},
-	7,
+	8,
 	(response_function) t_on_reply_received
 };
 

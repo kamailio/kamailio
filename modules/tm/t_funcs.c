@@ -592,6 +592,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    }
 
    buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+
    if (!buf)
    {
       DBG("DEBUG: t_send_reply: response building failed\n");
