@@ -36,6 +36,7 @@
  *  2003-03-01  start_retr changed to retransmit only for UDP
  *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
  *  2003-04-14  use protocol from uri (jiri)
+ *  2003-04-25  do it (^) really everywhere (jiri)
  */
 
 
@@ -252,7 +253,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			p_msg->new_uri=backup_uri;
 #endif
 		} else {
-			ret=forward_request( p_msg , proxy, proto ) ;
+			ret=forward_request( p_msg , proxy, proxy->proto ) ;
 #ifdef ACK_FORKING_HACK
 			backup_uri=p_msg->new_uri;
 			init_branch_iterator();
