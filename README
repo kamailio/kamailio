@@ -20,10 +20,12 @@ Configuration files:
 	Global parameters:
 		- debug
 		- listen
+		- alias
 		- port
 		- fork
 		- children_no
 		- log_stderror
+		- fifo
 		- loadmodule "path/modulename"
 		...
 
@@ -38,12 +40,15 @@ Configuration files:
 			- uri
 			- method
 			- src_ip
-			- dst_ip [not working yet]
+			- dst_ip
+			- myself
 		Rvalues:
 			- string
 			- integer
 			- ipv4 or ipv6 address
 			- netv4 or netv6 address
+			- myself (matches any uri or ip address the server listens on or 
+			 registered as an alias for the server)
 			
 	Commands:
 		- forward

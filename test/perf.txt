@@ -100,5 +100,6 @@ ser gcc3.2         20             704  725       1137  1202      1460  1575
 
 stress:
 test calls: 1000000
-                   20          100 procs (cps)
+                  100          100 procs (cps)
+                                   107* - out of mem
 

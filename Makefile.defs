@@ -8,10 +8,10 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -15-tests
+EXTRAVERSION = -16
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
-OS = $(shell uname -s)
+OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 
 prefix = /usr/local
@@ -28,7 +28,15 @@ modules-dir = lib/ser/modules/
 doc-dir = share/doc/ser/
 man-dir = share/man/
 
+
+ifeq ($(OS), solaris)
+#use GNU versions
+INSTALL = ginstall
+TAR = gtar
+else
 INSTALL = install 
+TAR= tar
+endif
 INSTALL-CFG = $(INSTALL) -m 644
 INSTALL-BIN = $(INSTALL) -m 755
 INSTALL-MODULES = $(INSTALL) -m 755
@@ -431,7 +439,7 @@ ifeq ($(OS), Linux)
 	#same as common
 endif
 
-ifeq  ($(OS), SunOS)
+ifeq  ($(OS), solaris)
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
 		#LDFLAGS=-O2 $(PROFILE)
@@ -450,7 +458,7 @@ endif
 	# -lrt needed for sched_yield
 endif
 
-ifeq ($(OS), FreeBSD)
+ifeq ($(OS), freebsd)
 
 	YACC=yacc
 	LIBS= -lfl  #dlopen is in libc

@@ -83,9 +83,17 @@ static_modules:
 dbg: ser
 	gdb -command debug.gdb
 
-
+.PHONY: tar
 tar: mantainer-clean 
-	tar -C .. -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+	$(TAR) -C .. -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+
+# binary dist. tar.gz
+.PHONY: bin
+bin:
+	mkdir -p tmp/ser/usr/local
+	$(MAKE) install prefix=tmp/ser/usr/local
+	$(TAR) -C tmp/ser/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
+	rm -rf tmp/ser
 
 
 install: all mk-install-dirs install-cfg install-bin install-modules \

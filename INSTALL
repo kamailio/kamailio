@@ -15,16 +15,12 @@ TODO
 --we'll probably go for mysql dependancy,
   then INSTALL needs to be completely
   changed
---see TROUBLES -- on some hosts, like mine (Jiri)
-  ser binds to 127.0.0.1 -- not really good for
-  quick-start
-
 
 
 Installation Notes
 
 Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, Solaris/sparc64,
-Win*/i386 (CYGWIN)
+Win*/i386 (CYGWIN) - only the core
 (for other arhitectures the Makefile must be edited)
 
 There are various configuration options defined in the Makefile.
@@ -219,47 +215,4 @@ C) Troubleshooting
 /etc/init.d/ser restart
 listen
 aliases
-
-
-TROUBLES
-
-In the following config, ser bound itself to /dev/lo -- not
-good for quick start.
-
-
-[jiri@cat jiri]$ hostname -a
-localhost.localdomain localhost 
-[jiri@cat jiri]$ hostname
-cat
-[jiri@cat jiri]$ 
-
-
-[root@cat log]# uname -a
-Linux cat 2.4.18-3 #1 Thu Apr 18 07:37:53 EDT 2002 i686 unknown
-
-/etc/hosts
-
-# Do not remove the following line, or various programs
-# that require network functionality will fail.
-127.0.0.1       cat     localhost.localdomain   localhost
-
-
-[root@cat log]# /sbin/ifconfig 
-eth0      Link encap:Ethernet  HWaddr 00:08:02:38:D9:A0  
-          inet addr:192.168.0.16  Bcast:192.168.0.255  Mask:255.255.255.0
-          UP BROADCAST RUNNING PROMISC MULTICAST  MTU:1500  Metric:1
-          RX packets:152917 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:87759 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:35 txqueuelen:100 
-          RX bytes:216441566 (206.4 Mb)  TX bytes:5542812 (5.2 Mb)
-          Interrupt:5 Base address:0x7000 
-
-lo        Link encap:Local Loopback  
-          inet addr:127.0.0.1  Mask:255.0.0.0
-          UP LOOPBACK RUNNING  MTU:16436  Metric:1
-          RX packets:162 errors:0 dropped:0 overruns:0 frame:0
-          TX packets:162 errors:0 dropped:0 overruns:0 carrier:0
-          collisions:0 txqueuelen:0 
-          RX bytes:10568 (10.3 Kb)  TX bytes:10568 (10.3 Kb)
-
 
