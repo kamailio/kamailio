@@ -102,6 +102,7 @@ BEGIN {
 	ua_magicppc=0;
 	ua_scs=0;
 	ua_edgeaccess=0;
+	ua_tkc=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -117,6 +118,7 @@ BEGIN {
 	server_lucent=0;
 	server_snom=0;
 	server_edgeaccess=0;
+	server_mcet=0;
 	server_xx=0
 
 }
@@ -125,6 +127,10 @@ BEGIN {
 
 ua==0 && /User-Agent:.*snom/ {
 	ua_snom++
+	ua=1
+}
+ua==0 && /User-Agent:.*tkcPhone/ {
+	ua_tkc++
 	ua=1
 }
 ua==0 && /User-Agent:.*Windows RTC/ {
@@ -323,6 +329,10 @@ server==0 && /Server:.*Lucent/ {
 }
 server==0 && /Server:.*EdgEAccEss/ {
 	server_edgeaccess++
+	server=1
+}
+server==0 && /Server:.*MCET/ {
+	server_mcet++
 	server=1
 }
 server==0 && /Server:/ {
@@ -642,6 +652,7 @@ END {
 	print "MagicPPC: " ua_magicppc " SCS: " ua_scs 
 	print "SJPhone: " ua_sjphone " KPhone: " ua_kphone
 	print "Yamaha: " ua_yamaha 
+	print "tkcPhone: " ua_tkc
 	print "EdgeAccess: " ua_edgeaccess
 	print "UFO: " ua_xx
 
@@ -654,6 +665,7 @@ END {
 	print "snom: " server_snom
 	print "lucent: " server_lucent
 	print "edgeAccess: " server_edgeaccess
+	print "mcet: " server_mcet 
 	print "UFO: " server_xx
 }
 '
