@@ -22,7 +22,7 @@
 	(p_msg->first_line.u.request.uri.len==t_msg->first_line.u.request.uri.len)
 #define EQ_REQ_URI_STR\
 	( memcmp( t_msg->first_line.u.request.uri.s,\
-	translate_pointer(p_msg->orig,p_msg->buf, p_msg->first_line.u.request.uri.s),\
+	translate_pointer(p_msg->orig,p_msg->buf,p_msg->first_line.u.request.uri.s),\
 	p_msg->first_line.u.request.uri.len)==0)
 #define EQ_VIA_LEN(_via)\
 	( (p_msg->via1->bsize-(p_msg->_via->name.s-(p_msg->_via->hdr.s+p_msg->_via->hdr.len)))==\
@@ -108,7 +108,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	tmp_cell = 0;
 	while( p_cell )
 	{
-		t_msg = p_cell->inbound_request;
+		t_msg = p_cell->uas.request;
+
 		/* is it the wanted transaction ? */
 		if ( !isACK )
 		{ /* is not an ACK request */
@@ -133,9 +134,9 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
 			&& /*from length*/ EQ_LEN(from)
 			&& /*to uri*/get_to(t_msg)->uri.len==get_to(p_msg)->uri.len
-			&& /*to tag*/p_cell->tag->len==get_to(p_msg)->tag_value.len
-			&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_LEN )
-			&& /*VIA*/(p_cell->status==200 || EQ_VIA_LEN(via1)) )
+			&& /*to tag*/p_cell->uas.tag->len==get_to(p_msg)->tag_value.len
+			&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_LEN )
+			&& /*VIA*/(p_cell->uas.status==200 || EQ_VIA_LEN(via1)) )
 				/* so far the lengths are the same
 				-> let's check the contents */
 				if (/*callid*/!memcmp( t_msg->callid->body.s,
@@ -145,10 +146,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 				&& /*from*/EQ_STR(from)
 				&& /*to uri*/!memcmp(get_to(t_msg)->uri.s,
 					get_to(p_msg)->uri.s,get_to(t_msg)->uri.len)
-				&& /*to tag*/!memcmp(p_cell->tag->s,
-					get_to(p_msg)->tag_value.s,p_cell->tag->len)
-				&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_STR)
-				&& /*VAI*/(p_cell->status==200 ||EQ_VIA_STR(via1)) )
+				&& /*to tag*/!memcmp(p_cell->uas.tag->s,
+					get_to(p_msg)->tag_value.s,p_cell->uas.tag->len)
+				&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_STR)
+				&& /*VAI*/(p_cell->uas.status==200 ||EQ_VIA_STR(via1)) )
 					{ /* WE FOUND THE GOLDEN EGG !!!! */
 						goto found;
 					}
@@ -187,7 +188,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 	struct cell     *p_cell;
 	struct cell     *tmp_cell;
 	unsigned int     hash_index=0;
-	struct sip_msg  *t_msg;
+	struct sip_msg  *t_msg=0;
 
 
 	/* start searching into the table */
@@ -199,11 +200,11 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 	tmp_cell = 0;
 	while( p_cell )
 	{
-		t_msg = p_cell->inbound_request;
+		t_msg = p_cell->uas.request;
 
 		/* is it the wanted transaction ? */
 		/* first only the length are checked */
-		if ( p_cell->inbound_request->REQ_METHOD!=METHOD_CANCEL
+		if ( p_cell->uas.request->REQ_METHOD!=METHOD_CANCEL
 			&& /*callid length*/ EQ_LEN(callid)
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
 			&& EQ_REQ_URI_LEN
@@ -324,13 +325,13 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 	{
 		/* is it the cell with the wanted entry_label? */
 		if ( (get_cseq(p_msg)->method.len ==
-		get_cseq(p_cell->inbound_request)->method.len)
+		get_cseq(p_cell->uas.request)->method.len)
 		&& ((get_cseq(p_msg)->method.s[0] ==
-		get_cseq(p_cell->inbound_request)->method.s[0] && (*local_cancel=0)==0)
-		|| (get_cseq(p_cell->inbound_request)->method.s[0]=='I' &&
+		get_cseq(p_cell->uas.request)->method.s[0] && (*local_cancel=0)==0)
+		|| (get_cseq(p_cell->uas.request)->method.s[0]=='I' &&
 		get_cseq(p_msg)->method.s[0]=='C'
-		&& p_cell->outbound_cancel[branch_id]!=NO_CANCEL
-		&& p_cell->outbound_cancel[branch_id]!=EXTERNAL_CANCEL
+		&& p_cell->uac[branch_id].request.cancel!=NO_CANCEL
+		&& p_cell->uac[branch_id].request.cancel!=EXTERNAL_CANCEL
 		&& (*local_cancel=1)==1))
 #ifdef USE_SYNONIM
 		&& (p_cell->label == entry_label )
@@ -340,9 +341,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 #endif
 		)
 			/* has the transaction the wanted branch? */
-			if ( p_cell->nr_of_outgoings>branch_id &&
-			p_cell->outbound_request[branch_id] )
- 			{/* WE FOUND THE GOLDEN EGG !!!! */
+			if ( p_cell->nr_of_outgoings>branch_id )
+			{/* WE FOUND THE GOLDEN EGG !!!! */
 				T = p_cell;
 				*p_branch = branch_id;
 				T_REF( T );
@@ -429,6 +429,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	char *begin;
 	int size, orig_size;
 
+	p_msg->add_to_branch_len = 0; /*bogdan*/
 	begin=p_msg->add_to_branch_s+p_msg->add_to_branch_len;
 	orig_size = size=MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len;
 
@@ -479,7 +480,7 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 		if (parse_headers(p_msg, HDR_EOH )==-1)
 			return AIN_ERROR;
 		lret = t_lookup_request( p_msg, 1 /* leave locked */ );
-		if (lret==0) return AIN_ERROR;	
+		if (lret==0) return AIN_ERROR;
 		if (lret==-1) {
 			/* transaction not found, it's a new request */
 			if ( p_msg->REQ_METHOD==METHOD_ACK ) {
@@ -504,7 +505,7 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 			if (p_msg->REQ_METHOD!=METHOD_ACK)
 				return AIN_RETR;
 			else {
-				if (T->inbound_request_isACKed)
+				if (T->uas.isACKed)
 					return AIN_RTRACK;
 				else
 					return AIN_OLDACK;

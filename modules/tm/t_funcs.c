@@ -23,9 +23,12 @@
 
 
 
-struct cell         *T;
+struct cell      *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
+unsigned int     nr_forks;
+unsigned int     t_forks[MAX_FORK+1][2];
+
 
 void timer_routine(unsigned int, void*);
 
@@ -50,6 +53,9 @@ int tm_startup()
 
 	/* register the timer function */
 	register_timer( timer_routine , hash_table , 1 );
+
+	/* fork table */
+	nr_forks = 0;
 
 	/*first msg id*/
 	global_msg_id = 0;
@@ -157,28 +163,28 @@ int t_unref( /* struct sip_msg* p_msg */ )
 /* ----------------------------HELPER FUNCTIONS-------------------------------- */
 
 
-int t_update_timers_after_sending_reply( struct retrans_buff *rb )
+int t_update_timers_after_sending_reply( struct retr_buf *rb )
 {
 	struct cell *Trans = rb->my_T;
 
 	/* make sure that if we send something final upstream, everything else
 	   will be cancelled */
-	if (Trans->status>=300&&Trans->inbound_request->REQ_METHOD==METHOD_INVITE)
+	if (Trans->uas.status>=300&&Trans->uas.request->REQ_METHOD==METHOD_INVITE)
 	{
 		rb->retr_list = RT_T1_TO_1;
 		set_timer( hash_table, &(rb->retr_timer), RT_T1_TO_1 );
 		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
-	} else if ( Trans->inbound_request->REQ_METHOD==METHOD_CANCEL ) {
+	} else if ( Trans->uas.request->REQ_METHOD==METHOD_CANCEL ) {
 		if ( Trans->T_canceled==T_UNDEFINED )
 			Trans->T_canceled = t_lookupOriginalT( hash_table ,
-				Trans->inbound_request );
+				Trans->uas.request );
 		if ( Trans->T_canceled==T_NULL )
 			return 1;
 		/* put CANCEL transaction on wait only if canceled transaction already
 		    is in final status and there is nothing to cancel; */
-		if ( Trans->T_canceled->status>=200)
+		if ( Trans->T_canceled->uas.status>=200)
 			t_put_on_wait( Trans );
-	} else if (Trans->status>=200)
+	} else if (Trans->uas.status>=200)
 		t_put_on_wait( Trans );
    return 1;
 }
@@ -192,13 +198,13 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
  * Returns 	- branch number (0,1,...) which should be relayed
  *         -1 if nothing to be relayed
  */
-int t_should_relay_response( struct cell *Trans , int new_code, 
-	int branch , int *should_store )
+int t_should_relay_response( struct cell *Trans , int new_code,
+									int branch , int *should_store )
 {
 	int T_code;
 	int b, lowest_b, lowest_s;
 
-	T_code = Trans->status;
+	T_code = Trans->uac[branch].status;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -208,9 +214,9 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 	*/
 
 	/* if final response sent out, allow only INVITE 2xx  */
-	if ( T_code >= 200 ) { 
+	if ( T_code >= 200 ) {
 		if (new_code>=200 && new_code < 300  && 
-			Trans->inbound_request->REQ_METHOD==METHOD_INVITE) {
+			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
 			DBG("DBG: t_should_relay: 200 INV after final sent\n");
 			*should_store=1;
 			return branch;
@@ -234,13 +240,12 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 					continue;
 				}
 				/* there is still an unfinished UAC transaction; wait now! */
-				if ( !Trans->inbound_response[b] ||
-					Trans->inbound_response[b]->REPLY_STATUS<200 )
+				if ( Trans->uac[b].status<200 )
 					return -1;
-				if ( Trans->inbound_response[b]->REPLY_STATUS<lowest_s )
+				if ( Trans->uac[b].status<lowest_s )
 				{
 					lowest_b =b;
-					lowest_s = T->inbound_response[b]->REPLY_STATUS;
+					lowest_s = T->uac[b].status;
 				}
 			}
 			return lowest_b;
@@ -251,9 +256,10 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 		}
 		/* 100 won't be relayed */
 		else {
-			if (!T->inbound_response[branch]) *should_store=1;
+			if (!T->uac[branch].rpl_received) *should_store=1;
 			else *should_store=0;
-			return -1;
+			if (T_code==0) return branch;
+				else return -1;
 		}
 	}
 
@@ -299,9 +305,8 @@ int t_put_on_wait(  struct cell  *Trans  )
 
 	/* cancel pending client transactions, if any */
 	for( i=0 ; i<Trans->nr_of_outgoings ; i++ )
-		if ( Trans->inbound_response[i] && 
-		REPLY_CLASS(Trans->inbound_response[i])==1)
-			t_cancel_branch(i);
+		if ( Trans->uac[i].rpl_received && Trans->uac[i].status<200 )
+			t_build_and_send_CANCEL(Trans , i);
 
 
 	/* we don't need outbound requests anymore -- let's save
@@ -329,155 +334,6 @@ int t_put_on_wait(  struct cell  *Trans  )
 
 
 
-/*
-  */
-int t_cancel_branch(unsigned int branch)
-{
-	LOG(L_ERR, "ERROR: t_cancel_branch: NOT IMPLEMENTED YET\n");
-	return 1;
-}
-
-
-
-#ifdef _REALLY_TOO_OLD
-/* Builds an ACK request based on an INVITE request. ACK is send
-  * to same address */
-int t_build_and_send_ACK(struct cell *Trans,unsigned int branch,
-														struct sip_msg* rpl)
-{
-	struct sip_msg      *p_msg , *r_msg;
-	struct hdr_field    *hdr;
-	char                *ack_buf, *p, *via;
-	unsigned int         len, via_len;
-	int                  n;
-	struct retrans_buff *srb;
-
-	ack_buf = 0;
-	via =0;
-	p_msg = Trans->inbound_request;
-	r_msg = rpl;
-
-	if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
-	{
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
-			"cannot generate a HBH ACK if key HFs in reply missing\n");
-		goto error;
-	}
-
-	len = 0;
-	/*first line's len */
-	len += 4/*reply code and one space*/+
-		p_msg->first_line.u.request.version.len+CRLF_LEN;
-	/*uri's len*/
-	if (p_msg->new_uri.s)
-		len += p_msg->new_uri.len +1;
-	else
-		len += p_msg->first_line.u.request.uri.len +1;
-	/*via*/
-	via = via_builder( p_msg , &via_len );
-	if (!via)
-	{
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
-			"no via header got from builder\n");
-		goto error;
-	}
-	len+= via_len;
-	/*headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-		if (hdr->type==HDR_FROM||hdr->type==HDR_CALLID||hdr->type==HDR_CSEQ)
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
-		else if ( hdr->type==HDR_TO )
-			len += ((r_msg->to->body.s+r_msg->to->body.len ) -
-				r_msg->to->name.s ) + CRLF_LEN ;
-	/* CSEQ method : from INVITE-> ACK */
-	len -= 3  ;
-	/* end of message */
-	len += CRLF_LEN; /*new line*/
-
-	srb=(struct retrans_buff*)sh_malloc(sizeof(struct retrans_buff)+len+1);
-	if (!srb)
-	{
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
-		goto error1;
-	}
-	ack_buf = (char *) srb + sizeof(struct retrans_buff);
-	p = ack_buf;
-
-	/* first line */
-	memcpy( p , "ACK " , 4);
-	p += 4;
-	/* uri */
-	if ( p_msg->new_uri.s )
-	{
-		memcpy(p,p_msg->orig+(p_msg->new_uri.s-p_msg->buf),p_msg->new_uri.len);
-		p +=p_msg->new_uri.len;
-	}else{
-		memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
-			p_msg->first_line.u.request.uri.len );
-		p += p_msg->first_line.u.request.uri.len;
-	}
-	/* SIP version */
-	*(p++) = ' ';
-	memcpy(p,p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf),
-		p_msg->first_line.u.request.version.len );
-	p += p_msg->first_line.u.request.version.len;
-	memcpy( p, CRLF, CRLF_LEN );
-	p+=CRLF_LEN;
-
-	/* insert our via */
-	memcpy( p , via , via_len );
-	p += via_len;
-
-	/*other headers*/
-	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
-	{
-		if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
-		{
-			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
-				((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
-			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
-			memcpy( p, CRLF, CRLF_LEN );
-			p+=CRLF_LEN;
-		}
-		else if ( hdr->type==HDR_TO )
-		{
-			memcpy( p , r_msg->orig+(r_msg->to->name.s-r_msg->buf) ,
-				((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s));
-			p+=((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s);
-			memcpy( p, CRLF, CRLF_LEN );
-			p+=CRLF_LEN;
-		}
-		else if ( hdr->type==HDR_CSEQ )
-		{
-			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
-				((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s));
-			p+=((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s);
-			memcpy( p , "ACK" CRLF, 3+CRLF_LEN );
-			p += 3+CRLF_LEN;
-		}
-	}
-
-	/* end of message */
-	memcpy( p , CRLF , CRLF_LEN );
-	p += CRLF_LEN;
-
-	send_ack( T, branch, srb, p-ack_buf );
-	pkg_free( via );
-	DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
-	return 0;
-
-error1:
-	pkg_free(via );
-error:
-	return -1;
-}
-
-#endif /* _REALLY_TOO_OLD */
-
-
-
-
-
 /* Builds a CANCEL request based on an INVITE request. CANCEL is send
  * to same address as the INVITE */
 int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
@@ -486,26 +342,24 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	struct hdr_field    *hdr;
 	char                *cancel_buf, *p, *via;
 	unsigned int         len, via_len;
-	struct retrans_buff *srb;
 
-
-	if ( !Trans->inbound_response[branch] )
+	if ( !Trans->uac[branch].rpl_received )
 	{
 		DBG("DEBUG: t_build_and_send_CANCEL: no response ever received"
 			" : dropping local cancel! \n");
 		return 1;
 	}
 
-	if (Trans->outbound_cancel[branch]!=NO_CANCEL)
+	if (Trans->uac[branch].request.cancel!=NO_CANCEL)
 	{
-		DBG("DEBUG: t_build_and_send_CANCEL: this branch was already canceled"
-			" : dropping local cancel! \n");
+		DBG("DEBUG: t_build_and_send_CANCEL: branch (%d)was already canceled"
+			" : dropping local cancel! \n",branch);
 		return 1;
 	}
 
 	cancel_buf = 0;
 	via = 0;
-	p_msg = Trans->inbound_request;
+	p_msg = Trans->uas.request;
 
 	len = 0;
 	/*first line's len - CANCEL and INVITE has the same lenght */
@@ -515,6 +369,8 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	if (p_msg->new_uri.s)
 		len += p_msg->new_uri.len - req_line(p_msg).uri.len;
 	/*via*/
+	if ( add_branch_label(Trans,p_msg,branch)==-1 )
+		goto error;
 	via = via_builder( p_msg , &via_len );
 	if (!via)
 	{
@@ -535,13 +391,12 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	/* end of message */
 	len += CRLF_LEN;
 
-	srb=(struct retrans_buff*)sh_malloc(sizeof(struct retrans_buff)+len+1);
-	if (!srb)
+	cancel_buf=sh_malloc( len+1 );
+	if (!cancel_buf)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: cannot allocate memory\n");
 		goto error;
 	}
-	cancel_buf = (char*) srb + sizeof(struct retrans_buff);
 	p = cancel_buf;
 
 	/* first line -> do we have a new URI? */
@@ -590,30 +445,23 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	append_mem_block(p,CRLF,CRLF_LEN);
 	*p=0;
 
-	memset( srb, 0, sizeof( struct retrans_buff ) );
-	memcpy( & srb->to, & Trans->outbound_request[branch]->to,
-		sizeof (struct sockaddr_in));
-	srb->tolen = sizeof (struct sockaddr_in);
-	srb->my_T = Trans;
-	srb->fr_timer.payload = srb->retr_timer.payload = srb;
-	srb->branch = branch;
-	srb->status = STATUS_LOCAL_CANCEL;
-	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
-	srb->bufflen = len;
-	if (Trans->outbound_cancel[branch]) {
-		shm_free( srb );	
+	if (Trans->uac[branch].request.cancel) {
+		shm_free( cancel_buf );
 		LOG(L_WARN, "send_cancel: Warning: CANCEL already sent out\n");
 		goto error;
 	}
-	Trans->outbound_cancel[branch] = srb;
-	/*sets and starts the FINAL RESPONSE timer */
-	set_timer( hash_table, &(srb->fr_timer), FR_TIMER_LIST );
 
+	Trans->uac[branch].request.activ_type = TYPE_LOCAL_CANCEL;
+	Trans->uac[branch].request.cancel = cancel_buf;
+	Trans->uac[branch].request.cancel_len = len;
+
+	/*sets and starts the FINAL RESPONSE timer */
+	set_timer(hash_table,&(Trans->uac[branch].request.fr_timer),FR_TIMER_LIST);
 	/* sets and starts the RETRANS timer */
-	srb->retr_list = RT_T1_TO_1;
-	set_timer( hash_table, &(srb->retr_timer), RT_T1_TO_1 );
+	Trans->uac[branch].request.retr_list = RT_T1_TO_1;
+	set_timer(hash_table,&(Trans->uac[branch].request.retr_timer),RT_T1_TO_1);
 	DBG("DEBUG: T_build_and_send_CANCEL : sending cancel...\n");
-	SEND_BUFFER( srb );
+	SEND_CANCEL_BUFFER( &(Trans->uac[branch].request) );
 
 	pkg_free(via);
 	return 1;
@@ -692,12 +540,12 @@ void delete_cell( struct cell *p_cell )
 int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port)
 {
 	struct hostent  *nhost;
-	unsigned int      ip, port;
-	struct sip_uri    parsed_uri;
-	str                      uri;
-	int                      err;
+	unsigned int    ip, port;
+	struct sip_uri  parsed_uri;
+	str             uri;
+	int             err;
 #ifdef DNS_IP_HACK
-	int                      len;
+	int             len;
 #endif
 
 	/* the original uri has been changed? */
@@ -763,6 +611,34 @@ error:
 
 
 
+int t_add_fork( unsigned int ip , unsigned int port)
+{
+	if (nr_forks+1>=MAX_FORK)
+	{
+		LOG(L_ERR,"ERROR:t_add_fork: trying to add new fork ->"
+			" MAX_FORK exceded\n");
+		return -1;
+	}
+
+	nr_forks++;
+	t_forks[nr_forks][0] = ip;
+	t_forks[nr_forks][1] = port;
+
+	return 1;
+}
+
+
+
+
+int t_clear_forks( )
+{
+	nr_forks = 0;
+	return 1;
+}
+
+
+
+
 
 
 /*---------------------------TIMERS FUNCTIONS-------------------------------*/
@@ -773,10 +649,10 @@ error:
 
 inline void retransmission_handler( void *attr)
 {
-	struct retrans_buff* r_buf ;
+	struct retr_buf* r_buf ;
 	enum lists id;
-	DBG("DEBUG: entering retransmisson with attr = %p\n",attr);
-	r_buf = (struct retrans_buff*)attr;
+
+	r_buf = (struct retr_buf*)attr;
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
@@ -788,11 +664,17 @@ inline void retransmission_handler( void *attr)
 	/*the transaction is already removed from RETRANSMISSION_LIST by timer*/
 	/* retransmision */
 	DBG("DEBUG: retransmission_handler : resending (t=%p)\n", r_buf->my_T);
-	if (r_buf->status!=STATUS_LOCAL_CANCEL && r_buf->status!=STATUS_REQUEST){
-		T=r_buf->my_T;
-		t_retransmit_reply();
-	}else{
-		SEND_BUFFER( r_buf );
+	switch ( r_buf->activ_type )
+	{
+		case (TYPE_REQUEST):
+			SEND_BUFFER( r_buf );
+			break;
+		case (TYPE_LOCAL_CANCEL):
+			SEND_CANCEL_BUFFER( r_buf );
+			break;
+		default:
+			T=r_buf->my_T;
+			t_retransmit_reply();
 	}
 
 	id = r_buf->retr_list;
@@ -808,7 +690,7 @@ inline void retransmission_handler( void *attr)
 
 inline void final_response_handler( void *attr)
 {
-	struct retrans_buff* r_buf = (struct retrans_buff*)attr;
+	struct retr_buf* r_buf = (struct retr_buf*)attr;
 
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) 
@@ -820,16 +702,16 @@ inline void final_response_handler( void *attr)
 #endif
 
 	/* the transaction is already removed from FR_LIST by the timer */
-	if (r_buf->status==STATUS_LOCAL_CANCEL)
+	if (r_buf->activ_type==TYPE_LOCAL_CANCEL)
 	{
 		DBG("DEBUG: FR_handler: stop retransmission for Local Cancel\n");
 		reset_timer( hash_table , &(r_buf->retr_timer) );
 		return;
 	}
 	/* send a 408 */
-	if ( r_buf->my_T->status<200
+	if ( r_buf->my_T->uac[r_buf->branch].status<200
 #ifdef SILENT_FR
-	&& (0)
+	&& (r_buf->my_T->nr_of_outgoings>1)
 	/*should be fork==yes, but we don't have forking yet - bogdan */
 #endif
 	)
@@ -843,9 +725,10 @@ inline void final_response_handler( void *attr)
 		FR timer; thus I fake the values now to avoid recalculating T
 		and refcount++ JKU */
 		T=r_buf->my_T;
-		global_msg_id=T->inbound_request->id;
+		global_msg_id=T->uas.request->id;
 		DBG("DEBUG: FR_handler: send 408 (%p)\n", r_buf->my_T);
-		t_send_reply( r_buf->my_T->inbound_request,408,"Request Timeout" );
+		t_send_reply( r_buf->my_T->uas.request, 408, "Request Timeout",
+			r_buf->branch);
 	}else{
 		/* put it on WT_LIST - transaction is over */
 		DBG("DEBUG: final_response_handler:-> put on wait"
@@ -966,26 +849,23 @@ void timer_routine(unsigned int ticks , void * attr)
 
 
 
-#ifndef _REALLY_TOO_OLD
-
 /* Builds an ACK request based on an INVITE request. ACK is send
-  * to same address */
-struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int branch )
+ * to same address */
+char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
 {
 	struct sip_msg      *p_msg , *r_msg;
 	struct hdr_field    *hdr;
 	char                *ack_buf, *p, *via;
 	unsigned int         len, via_len;
-	struct retrans_buff *srb;
 
 	ack_buf = 0;
 	via =0;
-	p_msg = trans->inbound_request;
+	p_msg = trans->uas.request;
 	r_msg = rpl;
 
 	if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
 	{
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
+		LOG(L_ERR, "ERROR: t_build_ACK: "
 			"cannot generate a HBH ACK if key HFs in reply missing\n");
 		goto error;
 	}
@@ -999,11 +879,14 @@ struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int bra
 		len += p_msg->new_uri.len +1;
 	else
 		len += p_msg->first_line.u.request.uri.len +1;
+	/*adding branch param*/
+	if ( add_branch_label( trans , trans->uas.request , branch)==-1 )
+		goto error;
 	/*via*/
 	via = via_builder( p_msg , &via_len );
 	if (!via)
 	{
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
+		LOG(L_ERR, "ERROR: t_build_ACK: "
 			"no via header got from builder\n");
 		goto error;
 	}
@@ -1020,13 +903,12 @@ struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int bra
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
 
-	srb=(struct retrans_buff*)sh_malloc(sizeof(struct retrans_buff)+len+1);
-	if (!srb)
+	ack_buf = sh_malloc(len+1);
+	if (!ack_buf)
 	{
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
+		LOG(L_ERR, "ERROR: t_build_and_ACK: cannot allocate memory\n");
 		goto error1;
 	}
-	ack_buf = (char *) srb + sizeof(struct retrans_buff);
 	p = ack_buf;
 
 	/* first line */
@@ -1087,16 +969,11 @@ struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int bra
 	memcpy( p , CRLF , CRLF_LEN );
 	p += CRLF_LEN;
 
-	/* fill in the structure */
-	srb->bufflen = p-ack_buf;
-	srb->tolen = sizeof( struct sockaddr_in );
-	srb->my_T = trans;
-	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
-	memcpy( &srb->to, & trans->outbound_request[ branch ]->to, sizeof (struct sockaddr_in));
-
 	pkg_free( via );
-	DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
-	return srb;
+	DBG("DEBUG: t_build_ACK: ACK generated\n");
+
+	*(ret_len) = p-ack_buf;
+	return ack_buf;
 
 error1:
 	pkg_free(via );
@@ -1104,6 +981,5 @@ error:
 	return 0;
 }
 
-#endif
 
 

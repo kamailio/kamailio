@@ -20,22 +20,22 @@
 
 
 
-/*static int test_f(struct sip_msg*, char*,char*);*/
 static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
-//static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
 static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar );
 static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* bar );
-static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar );
-
-static int t_relay_to( struct sip_msg  *p_msg ,  char *str_ip , char *str_port  );
+static int w_t_add_transaction(struct sip_msg* p_msg, char* foo, char* bar );
+static int t_relay_to( struct sip_msg *p_msg, char *str_ip, char *str_port);
 static int t_relay( struct sip_msg  *p_msg ,  char* foo, char* bar  );
 static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2);
+static int w_t_add_fork(struct sip_msg* msg, char* str, char* str2);
+static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2);
 static void w_onbreak(struct sip_msg* msg) { t_unref(); }
+
 
 static struct module_exports nm_exports= {
 	"tm_module",
@@ -49,7 +49,9 @@ static struct module_exports nm_exports= {
 				"t_relay_to",
 				"t_relay",
 				"t_forward_nonack",
-				"t_forward_ack"
+				"t_forward_ack",
+				"t_fork_to",
+				"t_clear_forks"
 			},
 	(cmd_function[]){
 					w_t_add_transaction,
@@ -61,7 +63,9 @@ static struct module_exports nm_exports= {
 					t_relay_to,
 					t_relay,
 					w_t_forward_nonack,
-					w_t_forward_ack
+					w_t_forward_ack,
+					w_t_add_fork,
+					w_t_clear_forks
 					},
 	(int[]){
 				0, /* t_add_transaction */
@@ -73,7 +77,9 @@ static struct module_exports nm_exports= {
 				2, /* t_relay_to */
 				0, /* t_relay */
 				2, /* t_forward_nonack */
-				2  /* t_forward_ack */
+				2, /* t_forward_ack */
+				2, /* t_fork_to */
+				0  /* t_clear_forks */
 			},
 	(fixup_function[]){
 				0,						/* t_add_transaction */
@@ -84,10 +90,12 @@ static struct module_exports nm_exports= {
 				0,						/* t_unref */
 				fixup_t_forward,		/* t_relay_to */
 				0,						/* t_relay */
-				fixup_t_forward, 		/* t_forward_nonack */
-				fixup_t_forward 		/* t_forward_ack */
+				fixup_t_forward,		/* t_forward_nonack */
+				fixup_t_forward,		/* t_forward_ack */
+				fixup_t_forward,		/* t_fork_to */
+				0						/* t_clear_forks */
 		},
-	10,
+	12,
 	(response_function) t_on_reply,
 	(destroy_function) tm_shutdown,
 	w_onbreak,
@@ -107,6 +115,7 @@ struct module_exports* mod_register()
 	if (tm_startup()==-1) return 0;
 	return &nm_exports;
 }
+
 
 
 
@@ -159,43 +168,6 @@ static int fixup_t_forward(void** param, int param_no)
 }
 
 
-/*
-static int fixup_t_forward_def(void** param, int param_no)
-{
-	char* name;
-	struct hostent* he;
-	int err;
-#ifdef DNS_IP_HACK
-	unsigned int ip;
-	int len;
-#endif
-
-	DBG("TM module: fixup_t_forward_def(%s, %d)\n", (char*)*param, param_no);
-	if (param_no==1){
-		name=*param;
-#ifdef DNS_IP_HACK
-		len=strlen(name);
-		ip=str2ip(name, len, &err);
-		if (err==0){
-			goto copy;
-		}
-#endif
-		/ fail over to normal lookup /
-		he=gethostbyname(name);
-		if (he==0){
-			LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
-						" \"%s\"\n", name);
-			return E_BAD_ADDRESS;
-		}
-		memcpy(&ip, he->h_addr_list[0], sizeof(unsigned int));
-	copy:
-		free(*param);
-		*param=(void*)ip;
-		return 0;
-	}
-	return 0;
-}
-*/
 
 
 static int fixup_t_send_reply(void** param, int param_no)
@@ -221,25 +193,33 @@ static int fixup_t_send_reply(void** param, int param_no)
 
 
 
+
 static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_check( msg , 0 , 0 ) ? 1 : -1;
 }
 
+
+
+
 static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2)
 {
 	if (t_check( msg , 0 , 0 )==-1) return -1;
 	if (!T) {
-		DBG("DEBUG: t_forward_ack: no transaction found for request forwarding\n");
+		DBG("DEBUG: t_forward_ack: no transaction found \n");
 		return -1;
 	}
 	return t_forward_ack(msg, (unsigned int) str, (unsigned int) str2);
 }
+
+
+
+
 static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2)
 {
 	if (t_check( msg , 0 , 0)==-1) return -1;
 	if (!T) {
-		DBG("DEBUG: t_forward_nonack: no transaction found for request forwarding\n");
+		DBG("DEBUG: t_forward_nonack: no transaction found\n");
 		return -1;
 	}
 	return t_forward_nonack(msg, (unsigned int) str, (unsigned int) str2);
@@ -255,8 +235,11 @@ static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
 			"for which no T-state has been established\n");
 		return -1;
 	}
-	return t_send_reply(msg, (unsigned int) str, str2);
+	return t_send_reply(msg, (unsigned int) str, str2, 0);
 }
+
+
+
 
 static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 {
@@ -267,12 +250,17 @@ static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 }
 
 
+
+
 static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar )
 {
 	if (T==T_UNDEFINED || T==T_NULL)
 		return -1;
     return t_unref( /* p_msg */ );
 }
+
+
+
 
 static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
 {
@@ -285,6 +273,9 @@ static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
 	return 1;
 }
 
+
+
+
 static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
 	if (t_check( p_msg , 0 , 0 )==-1) return -1;
 	if (T) {
@@ -293,6 +284,23 @@ static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
 	}
 	return t_add_transaction( p_msg );
 }
+
+
+
+
+static int w_t_add_fork(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_add_fork((unsigned int)str, (unsigned int)str2);
+}
+
+
+
+
+static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_clear_forks();
+}
+
 
 
 
@@ -323,14 +331,14 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 				if ( p_msg->REQ_METHOD==METHOD_CANCEL)
 				{
 					DBG( "SER: new CANCEL\n");
-					if ( !t_send_reply( p_msg , 200, "glad to cancel") )
+					if ( !t_send_reply( p_msg , 200, "glad to cancel", 0) )
 						DBG( "SER:ERROR: t_send_reply\n");
 				} else if (p_msg->REQ_METHOD==METHOD_INVITE)
 				{
 					DBG( "SER: new INVITE\n");
 					if (!t_send_reply( p_msg , 100 ,
-					"trying -- your call is important to us"))
-						LOG( L_CRIT,"SER: ERROR: t_send_reply (100)\n");
+					"trying -- your call is important to us",0))
+						DBG("SER: ERROR: t_send_reply (100)\n");
 				} else {
 					DBG( "SER: new transaction\n");
 				}
@@ -359,8 +367,7 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 				DBG( "SER: WARNING: bad ACK forward\n");
 			ret = 1;
 			break;
-		case AIN_RTRACK:
-			DBG("SER: ACK retransmission detected: drop ACK!\n");
+		case AIN_RTRACK:	/* ACK retransmission */
 			ret = 1;
 			break;
 		default:

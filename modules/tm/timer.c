@@ -70,7 +70,6 @@ void remove_timer_unsafe(  struct timer_link* tl )
 		abort();
 	};
 #endif
-
 	if (is_in_timer_list2( tl )) {
 		tl->prev_tl->next_tl = tl->next_tl;
 		tl->next_tl->prev_tl = tl->prev_tl;

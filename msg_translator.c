@@ -170,11 +170,9 @@ char* via_builder( struct sip_msg *msg , unsigned int *len )
 		via_len+=MY_BRANCH_LEN;
 		/* loop checks ?
 		if (loop_checks) {
-
 			if (check_transaction_quadruple( msg )) {
 				str src[5];
 				int r;
-
 				src[0]= msg->from->body;
 				src[1]= msg->to->body;
 				src[2]= msg->callid->body;
@@ -182,11 +180,9 @@ char* via_builder( struct sip_msg *msg , unsigned int *len )
 				src[4]= get_cseq( msg )->number;
 				MDStringArray ( line_buf+via_len-1, src, 5 );
 				via_len+=MD5_LEN - 1;
-
 			} else DBG("DEBUG: via_builder: required HFs for "
 					"loop checking missing\n");
 		}  */
-		//DBG("DEBUG: XXX will add branch now: %s (%d)\n", msg->add_to_branch_s, msg->add_to_branch_len );
 		/* someone wants me to add something to branch here ? */
 		if ( msg->add_to_branch_len ){
 			memcpy(line_buf+via_len-1, msg->add_to_branch_s,
@@ -329,7 +325,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
-	/*add first via, as an anchor for second via*/
+	/* add first via, as an anchor for second via*/
 	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
 	if (anchor==0) goto error;
 	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
@@ -450,7 +446,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
 									"invalid op for data lump (%x)\n", r->op);
-
 					}
 				}
 				/* copy "main" part */

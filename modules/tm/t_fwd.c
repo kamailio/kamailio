@@ -16,170 +16,161 @@
  *      -1 - error during forward
  */
 int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
-	unsigned int dest_port_param )
+											unsigned int dest_port_param )
 {
-	unsigned int        dest_ip = dest_ip_param;
-	unsigned int        dest_port = dest_port_param;
-	int                  branch;
-	unsigned int         len;
-	char                *buf, *shbuf;
-	struct retrans_buff *rb = 0;
-	struct cell         *T_source = T;
+	int          branch,i;
+	unsigned int len;
+	char         *buf, *shbuf;
+	struct cell  *T_source = T;
+	struct lump  *a,*b,*b1,*c;
 
 
-	buf=NULL;
-	shbuf = NULL;
-	branch = 0;	/* we don't do any forking right now */
+	buf    = 0;
+	shbuf  = 0;
+	t_forks[0][0] = dest_ip_param;
+	t_forks[0][1] = dest_port_param;
 
-	if ( T->outbound_request[branch]==NULL )
-	{
-		DBG("DEBUG: t_forward_nonack: first time forwarding\n");
-		/* special case : CANCEL */
-		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
-		{
-			DBG("DEBUG: t_forward_nonack: it's CANCEL\n");
-			/* find original cancelled transaction; if found, use its
-			   next-hops; otherwise use those passed by script */
-			if ( T->T_canceled==T_UNDEFINED )
-				T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
-			/* if found */
-			if ( T->T_canceled!=T_NULL )
-			{
-				/* if in 1xx status, send to the same destination */
-				if ( (T->T_canceled->status/100)==1 )
-				{
-					DBG("DEBUG: t_forward_nonack: it's CANCEL and I will send "
-						"to the same place where INVITE went\n");
-					dest_ip=T->T_canceled->outbound_request[branch]->
-						to.sin_addr.s_addr;
-					dest_port = T->T_canceled->outbound_request[branch]->
-						to.sin_port;
-#ifdef USE_SYNONIM
-					T_source = T->T_canceled;
-					T->label  = T->T_canceled->label;
-#endif
-				} else { /* transaction exists, but nothing to cancel */
-					DBG("DEBUG: t_forward_nonack: it's CANCEL but "
-						"I have nothing to cancel here\n");
-					/* forward CANCEL as a stand-alone transaction */
-				}
-			} else { /* transaction doesnot exists  */
-				DBG("DEBUG: t_forward_nonack: canceled request not found! "
-				"nothing to CANCEL\n");
-			}
-		}/* end special case CANCEL*/
-
-		if ( add_branch_label( T_source, T->inbound_request , branch )==-1)
-			goto error;
-		if ( add_branch_label( T_source, p_msg , branch )==-1)
-			goto error;
-		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
-			goto error;
-
-		/* allocates a new retrans_buff for the outbound request */
-		DBG("DEBUG: t_forward_nonack: building outbound request\n");
-		shm_lock();
-		rb = (struct retrans_buff*) shm_malloc_unsafe( sizeof(struct retrans_buff)  );
-		if (!rb)
-		{
-			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem\n");
-			shm_unlock();
-			goto error;
-		}
-		shbuf = (char *) shm_malloc_unsafe( len );
-		if (!shbuf)
-		{
-			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem buffer\n");
-			shm_unlock();
-			goto error;
-		}
-		shm_unlock();
-		memset( rb , 0 , sizeof (struct retrans_buff) );
-		rb->retr_timer.tg=TG_RT;
-		rb->fr_timer.tg=TG_FR;
-		rb->retr_buffer = shbuf;
-		rb->retr_timer.payload =  rb;
-		rb->fr_timer.payload =  rb;
-		rb->my_T =  T;
-		T->nr_of_outgoings = 1;
-		rb->bufflen = len ;
-		memcpy( rb->retr_buffer , buf , len );
-		/* send the request */
-		/* known to be in network order */
-		rb->to.sin_port     =  dest_port;
-		rb->to.sin_addr.s_addr =  dest_ip;
-		rb->to.sin_family = AF_INET;
-		T->outbound_request[branch] = rb;
-		SEND_BUFFER( rb );
-		/* link the retransmission buffer to our structures when the job is done */
-		pkg_free( buf ) ; buf=NULL;
-
-		DBG("DEBUG: t_forward_nonack: starting timers (retrans and FR) %d\n",get_ticks() );
-		/*sets and starts the FINAL RESPONSE timer */
-		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
-
-		/* sets and starts the RETRANS timer */
-		rb->retr_list = RT_T1_TO_1;
-		set_timer( hash_table, &(rb->retr_timer), RT_T1_TO_1 );
-	}/* end for the first time */ else {
-		/* rewriting a request should really not happen -- retransmission
-	       does not rewrite, whereas a new request should be written
-		   somewhere else
-		*/
-		LOG( L_CRIT, "ERROR: t_forward_nonack: attempt to rewrite request structures\n");
+	/* are we forwarding for the first time? */
+	if ( T->uac[0].request.buffer )
+	{	/* rewriting a request should really not happen -- retransmission
+		   does not rewrite, whereas a new request should be written
+		   somewhere else */
+		LOG( L_CRIT, "ERROR: t_forward_nonack: attempt to rewrite"
+			" request structures\n");
 		return 0;
 	}
 
-	if (  p_msg->REQ_METHOD==METHOD_CANCEL )
+	DBG("DEBUG: t_forward_nonack: first time forwarding\n");
+	/* special case : CANCEL */
+	if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
 	{
-		DBG("DEBUG: t_forward_nonack: forwarding CANCEL\n");
-		/* if no transaction to CANCEL */
-		/* or if the canceled transaction has a final status -> drop the CANCEL*/
-		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
+		DBG("DEBUG: t_forward_nonack: it's CANCEL\n");
+		/* find original cancelled transaction; if found, use its
+		   next-hops; otherwise use those passed by script */
+		if ( T->T_canceled==T_UNDEFINED )
+			T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
+		/* if found */
+		if ( T->T_canceled!=T_NULL )
 		{
-			reset_timer( hash_table, &(rb->fr_timer ));
-			reset_timer( hash_table, &(rb->retr_timer ));
-			return 1;
+			/* if in 1xx status, send to the same destination */
+			if ( (T->T_canceled->uas.status/100)==1 )
+			{
+				DBG("DEBUG: t_forward_nonack: it's CANCEL and I will send "
+					"to the same place where INVITE went\n");
+				nr_forks = T->T_canceled->nr_of_outgoings-1;
+				for(i=0;i<T->T_canceled->nr_of_outgoings;i++)
+				{
+					t_forks[i][0] =
+						T->T_canceled->uac[i].request.to.sin_addr.s_addr;
+					t_forks[i][1] =
+						T->T_canceled->uac[i].request.to.sin_port;
+				}
+#ifdef USE_SYNONIM
+				T_source = T->T_canceled;
+				T->label  = T->T_canceled->label;
+#endif
+			} else { /* transaction exists, but nothing to cancel */
+				DBG("DEBUG: t_forward_nonack: it's CANCEL but "
+					"I have nothing to cancel here\n");
+				/* forward CANCEL as a stand-alone transaction */
+			}
+		} else { /* transaction doesnot exists  */
+			DBG("DEBUG: t_forward_nonack: canceled request not found! "
+			"nothing to CANCEL\n");
 		}
+	}/* end special case CANCEL*/
+
+	DBG("DEBUG: t_forward_nonack: nr_forks=%d\n",nr_forks);
+	for(branch=0;branch<nr_forks+1;branch++)
+	{
+		DBG("DEBUG: t_forward_nonack: branch = %d\n",branch);
+		/*generates branch param*/
+		//if ( add_branch_label( T_source, T->uas.request , branch )==-1)
+		//	goto error;
+		if ( add_branch_label( T_source, p_msg , branch )==-1)
+			goto error;
+		/* remove all the HDR_VIA type lumps */
+		if (branch)
+			for(b=p_msg->add_rm,b1=0;b;b1=b,b=b->next)
+				if (b->type==HDR_VIA)
+				{
+					for(a=b->before;a;)
+						{c=a->before;free_lump(a);a=c;}
+					for(a=b->after;a;)
+						{c=a->after;free_lump(a);a=c;}
+					if (b1) b1->next = b->next;
+						else p_msg->add_rm = b->next;
+					free_lump(b);
+				}
+		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
+			goto error;
+		/* allocates a new retrans_buff for the outbound request */
+		DBG("DEBUG: t_forward_nonack: building outbound request"
+			" for branch %d.\n",branch);
+		shbuf = (char *) shm_malloc( len );
+		if (!shbuf)
+		{
+			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem buffer\n");
+			goto error;
+		}
+		T->uac[branch].request.buffer = shbuf;
+		T->uac[branch].request.buffer_len = len ;
+		memcpy( T->uac[branch].request.buffer , buf , len );
+		T->nr_of_outgoings++ ;
+		/* send the request */
+		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch][0];
+		T->uac[branch].request.to.sin_port = t_forks[branch][1];
+		T->uac[branch].request.to.sin_family = AF_INET;
+		SEND_BUFFER( &(T->uac[branch].request) );
+
+		pkg_free( buf ) ;
+		buf=NULL;
+
+		DBG("DEBUG: t_forward_nonack: starting timers (retrans and FR) %d\n",
+			get_ticks() );
+		/*sets and starts the FINAL RESPONSE timer */
+		set_timer( hash_table, &(T->uac[branch].request.fr_timer),
+			FR_TIMER_LIST );
+		/* sets and starts the RETRANS timer */
+		T->uac[branch].request.retr_list = RT_T1_TO_1;
+		set_timer( hash_table, &(T->uac[branch].request.retr_timer),
+			RT_T1_TO_1 );
 	}
+
 	return 1;
 
 error:
 	if (shbuf) shm_free(shbuf);
-	if (rb) {
-		shm_free(rb);
-		T->outbound_request[branch]=NULL;
-	}
+	T->uac[branch].request.buffer=NULL;
 	if (buf) pkg_free( buf );
-
 	return -1;
-
 }
+
+
+
 
 int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 										unsigned int dest_port_param )
 {
 	int branch;
 	unsigned int len;
-	char *buf;
-	struct retrans_buff *srb;
+	char *buf, *ack;
 #ifdef _DONT_USE
 	struct sockaddr_in to_sock;
 #endif
 
 
-
 	/* drop local ACKs */
-	if (T->status/100!=2 ) {
-		DBG("DEBUG: local ACK dropped\n");
+	if (T->uas.status/100!=2 ) {
+		DBG("DEBUG: t_forward_ACK:  local ACK dropped\n");
 		return 1;
 	}
 
 	branch=T->relaied_reply_branch;
 	/* double-check for odd relaying */
 	if ( branch <0 || branch>=T->nr_of_outgoings ) {
-		DBG("DEBUG: t_forward_ack: strange relaied_reply_branch: %d out of %d\n",
-			branch, T->nr_of_outgoings );
+		DBG("DEBUG: t_forward_ack: strange relaied_reply_branch:"
+			" %d out of %d\n",branch, T->nr_of_outgoings );
 		return -1;
 	}
 
@@ -191,7 +182,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	}
 	/* not able to build outbound request -- then better give up */
 	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))  {
-		LOG( L_ERR, "ERROR: t_forward_ack failed to generate outbound message\n" );
+		LOG(L_ERR,"ERROR: t_forward_ack failed to generate outbound ACK\n");
 		return 0;
 	};
 
@@ -203,26 +194,21 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	}
 #endif
 
-	shm_lock();
 	/* check for bizzar race condition if two processes receive
 	   two ACKs concurrently; use shmem semaphore for protection
 	   -- we have to enter it here anyway (the trick with inACKed
-	   inside the protection region)
-    */
-	if  (T->inbound_request_isACKed ) {
-		shm_unlock();
-		LOG(L_WARN, "Warning: ACK received when there's one; check upstream\n");
+	   inside the protection region) */
+	if  (T->uas.isACKed ) {
+		LOG(L_WARN,"Warning: ACK received when there's one; check upstream\n");
 		return 1;
 	}
-	srb = (struct retrans_buff *) shm_malloc_unsafe( sizeof( struct retrans_buff ) + len );
-	T->inbound_request_isACKed = 1;
-	shm_unlock();
-
-	memcpy( (char *) srb + sizeof ( struct retrans_buff ), buf, len );
+	ack = shm_malloc( len );
+	memcpy(ack , buf , len);
 	pkg_free( buf );
 
-	relay_ack( T, branch, srb, len );
-	return 1;
+	T->uas.isACKed = 1;
+	SEND_PR_BUFFER( &(T->uac[branch].request), ack, len );
+	return attach_ack( T, branch, ack , len );
 
 #ifdef _DON_USE
 fwd_sl: /* some strange conditions occured; try statelessly */

@@ -22,10 +22,11 @@ struct timer;
 struct entry;
 struct cell;
 
-extern struct cell         *T;
+extern struct cell      *T;
 extern unsigned int     global_msg_id;
 extern struct s_table*  hash_table;
-
+extern unsigned int     t_forks[MAX_FORK+1][2];
+extern unsigned int     nr_forks;
 
 #include "sh_malloc.h"
 
@@ -54,31 +55,26 @@ extern struct s_table*  hash_table;
 
 #define SEND_PR_BUFFER(_rb,_bf,_le ) \
 	{\
-		if ((_rb) && (_bf) && (_le) ) \
-		{\
+		if ((_bf) && (_le) && (_bf) ) {\
 			udp_send( (_bf), (_le), (struct sockaddr*)&((_rb)->to) , \
 				sizeof(struct sockaddr_in) ); \
-		} else { \
-			LOG(L_CRIT,"ERROR:attempt to send an empty buffer from %s (%d)"\
-				"(%p,%p,%d)\n",__FUNCTION__, __LINE__,(_rb),(_bf),(_le));\
+		}else{ \
+			LOG(L_CRIT,"ERROR: sending an empty buffer from %s (%d)\n",\
+				__FUNCTION__, __LINE__ );\
 		}\
-	}\
+	}
 
-#define SEND_BUFFER( _rb ) SEND_PR_BUFFER( \
-	_rb,(_rb)->retr_buffer, (_rb)->bufflen )
+#define SEND_ACK_BUFFER( _rb ) \
+	SEND_PR_BUFFER( (_rb) , (_rb)->ack , (_rb)->ack_len )
+
+#define SEND_CANCEL_BUFFER( _rb ) \
+	SEND_PR_BUFFER( (_rb) , (_rb)->cancel , (_rb)->cancel_len )
+
+#define SEND_BUFFER( _rb ) \
+	SEND_PR_BUFFER( (_rb) , (_rb)->buffer , (_rb)->buffer_len )
+
 
 /*
-#define SEND_BUFFER( _rb ) ({ if ((_rb)->retr_buffer) \
-	{ udp_send( (_rb)->retr_buffer, \
-	  (_rb)->bufflen, (struct sockaddr*)&((_rb)->to) , \
-	  sizeof(struct sockaddr_in) ); \
-	} else \
-	DBG("ERROR: attempt to send an empty buffer from %s (%d)", \
-	__FUNCTION__, __LINE__ ); })
-*/
-
-
-/* 
   macros for reference bitmap (lock-less process non-exclusive ownership) 
 */
 #define T_IS_REFED(_T_cell) ((_T_cell)->ref_bitmap)
@@ -124,24 +120,7 @@ extern struct s_table*  hash_table;
 #endif
 
 
-	
 
-#ifdef _OLD_XX
-#define unref_T(_T_cell) \
-	( {\
-		lock( &(hash_table->entrys[(_T_cell)->hash_index].mutex) );\
-		(_T_cell)->ref_counter--;\
-		DBG_REF("unref", (_T_cell)); \
-		unlock( &(hash_table->entrys[(_T_cell)->hash_index].mutex) );\
-	} );
-
-/* we assume that ref_T is only called from places where
-   the associated locks are set up and we don't need to
-   lock/unlock
-*/
-#define ref_T(_T_cell) ({ ((_T_cell)->ref_counter++); \
-		DBG_REF("ref", (_T_cell));	})
-#endif
 
 enum addifnew_status { AIN_ERROR, AIN_RETR, AIN_NEW, AIN_NEWACK,
 	AIN_OLDACK, AIN_RTRACK } ;
@@ -187,12 +166,12 @@ int t_forward_uri( struct sip_msg* p_msg  );
 
 
 
+
 /* This function is called whenever a reply for our module is received;
  * we need to register this function on module initialization;
  * Returns :   0 - core router stops
  *             1 - core router relay statelessly
  */
-
 int t_on_reply( struct sip_msg  *p_msg ) ;
 
 
@@ -219,7 +198,7 @@ int t_on_request_received_uri( struct sip_msg  *p_msg ) ;
 
 
 /* returns 1 if everything was OK or -1 for error
-*/
+ */
 int t_release_transaction( struct sip_msg* );
 
 
@@ -237,7 +216,7 @@ int t_retransmit_reply( /* struct sip_msg * */  );
 /* Force a new response into inbound response buffer.
  * returns 1 if everything was OK or -1 for erro
  */
-int t_send_reply( struct sip_msg * , unsigned int , char *  );
+int t_send_reply( struct sip_msg * , unsigned int , char *  , unsigned int);
 
 
 
@@ -260,42 +239,44 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked );
 int t_all_final( struct cell * );
 int t_build_and_send_ACK( struct cell *Trans , unsigned int brach ,
 	struct sip_msg* rpl);
-int t_cancel_branch(unsigned int branch); //TO DO
 int t_should_relay_response( struct cell *Trans, int new_code, int branch,
 	int *should_store );
-int t_update_timers_after_sending_reply( struct retrans_buff *rb );
+int t_update_timers_after_sending_reply( struct retr_buf *rb );
 int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
 int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip,
 	unsigned int *param_port);
-struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans,
-	int branch );
+int t_build_and_send_CANCEL(struct cell *Trans, unsigned int branch);
+char *build_ack( struct sip_msg* rpl, struct cell *trans, int branch ,
+	int *ret_len);
 enum addifnew_status t_addifnew( struct sip_msg* p_msg );
-
+int t_add_fork( unsigned int ip , unsigned int port);
+int t_clear_forks( );
 
 
 
 inline int static attach_ack(  struct cell *t, int branch,
-    struct retrans_buff *srb )
+									char *ack, int ack_len )
 {
 	LOCK_ACK( t );
-	if (t->outbound_ack[branch]) {
+	if (t->uac[branch].request.ack) {
 		UNLOCK_ACK(t);
-		shm_free( srb );
+		shm_free( ack );
 		LOG(L_WARN, "attach_ack: Warning: ACK already sent out\n");
 		return 0;
 	}
-	t->outbound_ack[branch] = srb;
+	t->uac[branch].request.ack = ack;
+	t->uac[branch].request.ack_len = ack_len;
 	UNLOCK_ACK( t );
 	return 1;
 }
 
 
 
-
-inline int static relay_ack( struct cell *t, int branch, 
-	struct retrans_buff *srb, int len )
+/*
+inline int static relay_ack( struct cell *t, int branch,
+						struct retrans_buff *srb, int len )
 {
 	memset( srb, 0, sizeof( struct retrans_buff ) );
 	memcpy( & srb->to, & t->ack_to, sizeof (struct sockaddr_in));
@@ -306,7 +287,7 @@ inline int static relay_ack( struct cell *t, int branch,
 	srb->bufflen = len;
 	SEND_BUFFER( srb );
 	return attach_ack( t, branch, srb );
-}
+}*/
 
 
 
@@ -360,27 +341,20 @@ static inline void reset_retr_timers( struct s_table *h_table,
 													struct cell *p_cell )
 {
 	int ijk;
-	struct retrans_buff *rb;
 
 	/* lock the first timer list of the FR group -- all other
 	   lists share the same lock*/
 	lock(hash_table->timers[RT_T1_TO_1].mutex);
-	remove_timer_unsafe( & p_cell->outbound_response.retr_timer );
+	remove_timer_unsafe( & p_cell->uas.response.retr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-		if ( (rb = p_cell->outbound_request[ijk]) )
-			remove_timer_unsafe( & rb->retr_timer );
-		if ( (rb = p_cell->outbound_cancel[ijk]) )
-			remove_timer_unsafe( & rb->retr_timer );
+		remove_timer_unsafe( & p_cell->uac[ijk].request.retr_timer );
 	}
 	unlock(hash_table->timers[RT_T1_TO_1].mutex);
 
 	lock(hash_table->timers[FR_TIMER_LIST].mutex);
-	remove_timer_unsafe( & p_cell->outbound_response.fr_timer );
+	remove_timer_unsafe( & p_cell->uas.response.fr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-		if ( (rb = p_cell->outbound_request[ijk]) )
-			remove_timer_unsafe( & rb->fr_timer );
-		if ( (rb = p_cell->outbound_cancel[ijk]) )
-			remove_timer_unsafe( & rb->fr_timer );
+		remove_timer_unsafe( & p_cell->uac[ijk].request.fr_timer );
 	}
 	unlock(hash_table->timers[FR_TIMER_LIST].mutex);
 	DBG("DEBUG:stop_RETR_and_FR_timers : timers stopped\n");

@@ -11,7 +11,7 @@
 #define TABLE_ENTRIES  		(1 << (T_TABLE_POWER))
 
 /* maximum number of forks per transaction */
-#define MAX_FORK		2
+#define MAX_FORK		4
 
 /* maximumum length of localy generated acknowledgement */
 #define MAX_ACK_LEN 		1024

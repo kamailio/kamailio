@@ -31,17 +31,26 @@ struct timer;
 #define T_NULL       ( (struct cell*) 0 )
 
 
-#define NO_CANCEL       ( (struct retrans_buff*) 0 )
-#define EXTERNAL_CANCEL ( (struct retrans_buff*) -1)
+#define NO_CANCEL       ( (char*) 0 )
+#define EXTERNAL_CANCEL ( (char*) -1)
 
-#define STATUS_LOCAL_CANCEL -1
-#define STATUS_REQUEST       0
+#define TYPE_LOCAL_CANCEL -1
+#define TYPE_REQUEST       0
 
 
-typedef struct retrans_buff
+
+typedef struct retr_buf
 {
-	char *retr_buffer;
-	int   bufflen;
+	int activ_type;
+	/* set to status code if the buffer is a reply,
+	0 if request or -1 if local CANCEL */
+
+	char *buffer;
+	int   buffer_len;
+	char *ack;
+	int   ack_len;
+	char *cancel;
+	int   cancel_len;
 
 	struct sockaddr_in to;
 	size_t tolen;
@@ -49,18 +58,39 @@ typedef struct retrans_buff
 	/* a message can be linked just to retransmission and FR list */
 	struct timer_link retr_timer;
 	struct timer_link fr_timer;
+	enum lists retr_list;
 
 	/*the cell that containes this retrans_buff*/
 	struct cell* my_T;
 	unsigned int branch;
 
-	enum lists retr_list;
+}retr_buf_type;
 
-	/* set to status code if the buffer is a reply, 
-	0 if request or -1 if local CANCEL */
-	int status;
 
-}retrans_buff_type;
+
+/* User Agent Server content */
+
+typedef struct ua_server
+{
+	struct sip_msg   *request;
+	struct retr_buf  response;
+	unsigned int     status;
+	str              *tag;
+	unsigned int     isACKed;
+}ua_server_type;
+
+
+
+/* User Agent Client content */
+
+typedef struct ua_client
+{
+	struct retr_buf  request;
+	unsigned int     status;
+	str              tag;
+	unsigned int     rpl_received;
+}ua_client_type;
+
 
 
 /* transaction context */
@@ -82,23 +112,17 @@ typedef struct cell
 	struct timer_link wait_tl;
 	struct timer_link dele_tl;
 
-	/*the transaction that is canceled (usefull only for CANCEL req)*/
-	struct cell *T_canceled;
-
 	/* useful data */
+	/* number of forks */
+	int nr_of_outgoings;
+	/* nr of replied branch */
+	int relaied_reply_branch;
+	/* transaction that is canceled (usefull only for CANCEL req) */
+	struct cell *T_canceled;
 	/* UA Server */
-	struct sip_msg       *inbound_request;
-	struct retrans_buff   outbound_response;
-	unsigned int          status;
-	str                  *tag;
-	unsigned int          inbound_request_isACKed;
-	int                   relaied_reply_branch;
-	int                   nr_of_outgoings;
+	struct ua_server  uas;
 	/* UA Clients */
-	struct retrans_buff   *outbound_request[ MAX_FORK ];
-	struct sip_msg        *inbound_response[ MAX_FORK ];
-	struct retrans_buff   *outbound_ack[ MAX_FORK ];
-	struct retrans_buff   *outbound_cancel[ MAX_FORK ];
+	struct ua_client  uac[ MAX_FORK ];
 
 	/* protection against concurrent reply processing */
 	ser_lock_t   reply_mutex;
@@ -131,12 +155,12 @@ typedef struct cell
 /* double-linked list of cells with hash synonyms */
 typedef struct entry
 {
-   struct cell*       first_cell;
-   struct cell*       last_cell;
-   /* currently highest sequence number in a synonym list */
-   unsigned int    next_label;
-   /* sync mutex */
-   ser_lock_t                 mutex;
+	struct cell*    first_cell;
+	struct cell*    last_cell;
+	/* currently highest sequence number in a synonym list */
+	unsigned int    next_label;
+	/* sync mutex */
+	ser_lock_t      mutex;
 }entry_type;
 
 
@@ -144,19 +168,23 @@ typedef struct entry
 /* transaction table */
 struct s_table
 {
-   /* table of hash entries; each of them is a list of synonyms  */
-   struct entry   entrys[ TABLE_ENTRIES ];
-   /* table of timer lists */
-   struct timer   timers[ NR_OF_TIMER_LISTS ];
+	/* table of hash entries; each of them is a list of synonyms  */
+	struct entry   entrys[ TABLE_ENTRIES ];
+	/* table of timer lists */
+	struct timer   timers[ NR_OF_TIMER_LISTS ];
 };
 
 
+
 struct s_table* init_hash_table();
-void free_hash_table( struct s_table* hash_table );
-void free_cell( struct cell* dead_cell );
+void   free_hash_table( struct s_table* hash_table );
+void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
-void remove_from_hash_table( struct s_table *hash_table, struct cell * p_cell );
-void insert_into_hash_table( struct s_table *hash_table, struct cell * p_cell );
-void insert_into_hash_table_unsafe( struct s_table *hash_table, struct cell * p_cell );
+void   remove_from_hash_table(struct s_table *hash_table,struct cell * p_cell);
+void   insert_into_hash_table(struct s_table *hash_table,struct cell * p_cell);
+void   insert_into_hash_table_unsafe( struct s_table *hash_table,
+		struct cell * p_cell );
 
 #endif
+
+
