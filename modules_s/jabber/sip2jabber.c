@@ -253,12 +253,12 @@ int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl, ch
 	p = msg_buff + strlen(msg_buff);
 	_msg_transform(p, msg, msgl, i);
 
-	strncat(msg_buff, "\n-From:  ", 8);
+	strncat(msg_buff, "\n[From:  ", 8);
 
 	p = msg_buff + strlen(msg_buff);
 	_msg_transform(p, sig, sigl, i);
 
-	strcat(msg_buff, "</body></message>");
+	strcat(msg_buff, "]</body></message>");
 
 	//sprintf(msg_buff, JB_MSG_NORMAL, to, msg);
 	send(jbc->sock, msg_buff, strlen(msg_buff), 0);
@@ -267,7 +267,7 @@ int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl, ch
 }
 
 /**
- * recive a mmesage from a JABBER connection
+ * receive a message from a JABBER connection
  */
 int jb_recv_msg(jbconnection jbc, char *from, char *msg)
 {

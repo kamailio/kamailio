@@ -18,13 +18,18 @@
 
 jbconnection jbc = NULL;
 
+/** parameters */
+
+char *jaddress;
+int jport;
+
 static int mod_init(void);
 static int jab_send_message(struct sip_msg*, char*, char* );
 
 void destroy(void);
 
 struct module_exports exports= {
-	"jabber_module",
+	"jabber",
 	(char*[]){
 				"jab_send_message"
 			},
@@ -39,11 +44,20 @@ struct module_exports exports= {
 		},
 	1,
 
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
-
+	(char*[]) {   /* Module parameter names */
+		"jaddress",
+		"jport"
+	},
+	(modparam_t[]) {   /* Module parameter types */
+		STR_PARAM,
+		INT_PARAM
+	},
+	(void*[]) {   /* Module parameter variable pointers */
+		&jaddress,
+		&jport
+	},
+	2,      /* Number of module paramers */
+	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,
@@ -55,7 +69,7 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	DBG("JABBER: initializing\n");
-	jbc = jb_init_jbconnection("gorn.fokus.gmd.de", 5222);
+	jbc = jb_init_jbconnection(jaddress, jport);
 
 	if(jb_connect_to_server(jbc))
 	{
@@ -103,13 +117,20 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	strncat(buff, "@", 1);
 	strncat(buff, host.s, host.len);
 	DBG("JABER:DEST: %s\n", buff);
-	if(msg->from != NULL && parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len + 1, &from) >= 0)
-	{
-		jb_send_sig_msg(jbc, buff, user.len+host.len+1, body.s, body.len, from.body.s, from.body.len);
+	if(msg->from != NULL) {
+		memset( &from , 0, sizeof(from) );
+		parse_to(msg->from->body.s, msg->from->body.s + msg->from->body.len + 1, &from);
+		if(from.error == PARSE_OK)
+		{
+			DBG("JABBER: From parsed OK.\n");
+			jb_send_sig_msg(jbc, buff, user.len+host.len+1, body.s, body.len, from.body.s, from.body.len);
+		}
+		else
+		{
+			DBG("JABER: From NOT parsed\n");
+			jb_send_msg(jbc, buff, user.len+host.len+1, body.s, body.len);
+		}
 	}
-	else
-		jb_send_msg(jbc, buff, user.len+host.len+1, body.s, body.len);
-
 	return 1;
 error:
 	return -1;
