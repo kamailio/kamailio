@@ -60,7 +60,7 @@
 	do {\
 		if ( (char*)(_ptr_)>(_intr_)->script.len+(_intr_)->script.s ) {\
 			LOG(L_ERR,"ERROR:cpl_c: overflow detected ip=%p ptr=%p in "\
-			"func. %s, line %d\n",(_intr_)->ip,_ptr_,__FUNCTION__,__LINE__);\
+			"func. %s, line %d\n",(_intr_)->ip,_ptr_,__FILE__,__LINE__);\
 			goto _error_; \
 		} \
 	}while(0)
@@ -70,7 +70,7 @@
 		if ( (char*)((_intr_)->ip+(_len_)) > \
 		(_intr_)->script.len+(_intr_)->script.s ) {\
 			LOG(L_ERR,"ERROR:cpl_c: overflow detected ip=%p offset=%d in "\
-			"func. %s, line %d\n",(_intr_)->ip,_len_,__FUNCTION__,__LINE__);\
+			"func. %s, line %d\n",(_intr_)->ip,_len_,__FILE__,__LINE__);\
 			goto _error_; \
 		} \
 	}while(0)
@@ -90,7 +90,7 @@
 	do{\
 		if ( ((int)(_len_))-(_FIXUP_)<=0 ) {\
 			LOG(L_ERR,"ERROR:cpl_c:%s:%d: attribute is an empty string\n",\
-				__FUNCTION__,__LINE__);\
+				__FILE__,__LINE__);\
 			goto _error_; \
 		} else {\
 			check_overflow_by_ptr( (_p_)+(_len_), _intr_, _error_);\

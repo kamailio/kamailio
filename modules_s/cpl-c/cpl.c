@@ -69,7 +69,9 @@ char   *log_dir          = 0; /*directory where the user log should be dumped*/
 int    cpl_cmd_pipe[2];
 struct tm_binds cpl_tmb;
 
-char *cpl_orig_tz = 0; /* used only by run_time_switch */
+str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
+                             * terminated string in "TZ=value" format;
+                             * used only by run_time_switch */
 
 /* this vars are used outside only for loading scripts */
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
@@ -151,6 +153,7 @@ static int cpl_init(void)
 {
 	load_tm_f  load_tm;
 	struct stat stat_t;
+	char *ptr;
 	int val;
 
 	LOG(L_INFO,"CPL - initializing\n");
@@ -265,8 +268,16 @@ static int cpl_init(void)
 		goto error;
 	}
 
-	/* get a pointer to the original TZ env. variable */
-	cpl_orig_tz = getenv("TZ");
+	/* make a copy of the original TZ env. variable */
+	if ( (ptr=getenv("TZ"))!=0 ) {
+		cpl_orig_tz.len = 3/*"TZ="*/ + strlen(ptr) + 1;
+		if ( (cpl_orig_tz.s=shm_malloc(cpl_orig_tz.len))==0 ) {
+			LOG(L_ERR,"ERROR:cpl_init: no more shm mem. for saving TZ!\n");
+			goto error;
+		}
+		memcpy(cpl_orig_tz.s,"TZ=",3);
+		strcpy(cpl_orig_tz.s+3,ptr);
+	}
 
 	return 0;
 error:

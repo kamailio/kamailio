@@ -76,7 +76,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 	do{\
 		if ((_p_)+(_offset_)>=(_end_)) { \
 			LOG(L_ERR,"ERROR:cpl-c:%s:%d: overflow -> buffer to small\n",\
-				__FUNCTION__,__LINE__);\
+				__FILE__,__LINE__);\
 			goto _error_;\
 		}\
 	}while(0)\
@@ -113,7 +113,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 		trimlr( (_val_) );\
 		if ((_val_).len==0) {\
 			LOG(L_ERR,"ERROR:cpl_c:%s:%d: attribute <%s> has an "\
-				"empty value\n",__FUNCTION__,__LINE__,(_attr_name_));\
+				"empty value\n",__FILE__,__LINE__,(_attr_name_));\
 			goto _error_;\
 		}\
 	}while(0)\
@@ -251,7 +251,7 @@ static inline unsigned char *decode_mail_url(unsigned char *p,
 						(*len)++;
 						*(p++) = c;
 						if (*len==URL_MAILTO_LEN &&
-						!strncasecmp(p-(*len),URL_MAILTO_STR,(*len)) ) {
+						!strncasecmp((char*)(p-(*len)),URL_MAILTO_STR,(*len))) {
 							DBG("DEBUG:cpl_c:decode_mail_url: MAILTO: found at"
 								" the begining of TO -> removed\n");
 							p -= (*len);
