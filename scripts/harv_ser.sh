@@ -127,6 +127,7 @@ BEGIN {
 	ua_draytek=0;
 	ua_st280;
 	ua_dta=0;
+	ua_fci=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -387,6 +388,10 @@ ua==0 && /User-Agent:.*X-Lite/ {
 }
 ua==0 && /User-Agent:.*DTA/ {
 	ua_dta++
+	ua=1
+}
+ua==0 && /User-Agent:.*FCI/ {
+	ua_fci++
 	ua=1
 }
 ua==0 && /User-Agent:.*ST280/ {
@@ -888,6 +893,7 @@ END {
 	print "DrayTek: " ua_draytek
 	print "ST: " ua_st
 	print "DTA: " ua_dta
+	print "FCI IPRanger: " ua_fci
 	print "UFO: " ua_xx
 
 	print "## Servers"
