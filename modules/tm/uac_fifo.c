@@ -504,6 +504,7 @@ static inline int print_uris(FILE* out, struct sip_msg* reply)
 	memset(dlg, 0, sizeof(dlg_t));
 	if (dlg_response_uac(dlg, reply) < 0) {
 		LOG(L_ERR, "print_routes(): Error while creating dialog structure\n");
+		free_dlg(dlg);
 		return -2;
 	}
 
