@@ -128,21 +128,40 @@ jab_wlist jab_wlist_init(int **pipes, int size, int max)
  * - jwl - pointer to workers list
  * - ch - string representation of the contact, e.g. 'sip:100.100.100.100:5060'
  * #return : 0 on success or <0 on error
+ * info: still has 0 at the end of string
  */
 int jab_wlist_init_contact(jab_wlist jwl, char *ch)
 {
+	int f = 0; // correction flag: 1 -> must be converted to <sip: ... > 
 	if(ch == NULL)
 		return -1;
 	if((jwl->contact_h = (str*)_M_SHM_MALLOC(sizeof(str))) == NULL)
 		return -1;
 	jwl->contact_h->len = strlen(ch);
+
+	if(jwl->contact_h->len > 2 && strstr(ch, "sip:") == NULL)
+	{
+		// contact correction
+		jwl->contact_h->len += 6;
+		f = 1;
+	}
+
 	if((jwl->contact_h->s=(char*)_M_SHM_MALLOC(jwl->contact_h->len+1))==NULL)
 	{
 		_M_SHM_FREE(jwl->contact_h);
 		return -2;
 	}
-	strcpy(jwl->contact_h->s, ch);
 	
+	if(f)
+	{
+		strncpy(jwl->contact_h->s, "<sip:", 5);
+		strcpy(jwl->contact_h->s+5, ch);
+		jwl->contact_h->s[jwl->contact_h->len-1] = '>';
+		jwl->contact_h->s[jwl->contact_h->len] = 0;
+	}
+	else
+		strcpy(jwl->contact_h->s, ch);
+
 	return 0;
 }
 
@@ -315,8 +334,8 @@ void jab_wlist_del(jab_wlist jwl, str *sid, int _pid)
  */
 int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 {
-	char buf[512], buf1[512];
-	str tfrom, tcontact;
+	char buf[512];
+	str tfrom;
 	// from correction
 	strcpy(buf, "<sip:");
 	strncat(buf, from->s, from->len);
@@ -330,21 +349,7 @@ int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 	else
 		tfrom.s = buf+5;
 	if(contact != NULL && contact->len > 2)
-	{
-	    // contact correction
-	    strcpy(buf1, "<sip:");
-	    strncat(buf1, contact->s, contact->len);
-	    tcontact.len = contact->len;
-	    if(strstr(buf1+5, "sip:") == NULL)
-	    {
-			tcontact.len += 5;
-			buf1[tcontact.len++] = '>';
-			tcontact.s = buf1;
-	    }
-	    else
-			tcontact.s = buf1+5;
-	    return im_send_message(to, to, &tfrom, &tcontact, msg);
-	}
+	    return im_send_message(to, to, &tfrom, contact, msg);
 	else
 	    return im_send_message(to, to, &tfrom, &tfrom, msg);
 }
