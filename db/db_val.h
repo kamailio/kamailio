@@ -17,7 +17,8 @@ typedef enum {
         DB_DOUBLE,
 	DB_STRING,
 	DB_STR,
-	DB_DATETIME
+	DB_DATETIME,
+	DB_BLOB
 } db_type_t;
 
 
@@ -33,6 +34,7 @@ typedef struct {
 		time_t       time_val;   /* unix time value */
 		const char*  string_val; /* NULL terminated string */
 		str          str_val;    /* str string value */
+		str          blob_val;   /* Blob data */
 	} val;                           /* union of all possible types */
 } db_val_t;
 
@@ -48,12 +50,13 @@ typedef struct {
 #define VAL_TIME(dv)   ((dv)->val.time_val)
 #define VAL_STRING(dv) ((dv)->val.string_val)
 #define VAL_STR(dv)    ((dv)->val.str_val)
+#define VAL_BLOB(dv)   ((dv)->val.blob_val)
 
 
 /*
  * Convert string to given type
  */
-int str2val(db_type_t _t, db_val_t* _v, const char* _s);
+int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l);
 
 
 /*

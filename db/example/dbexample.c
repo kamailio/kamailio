@@ -72,6 +72,12 @@ static int print_res(db_res_t* _r)
 				       RES_ROWS(_r)[i].values[j].val.str_val.len,
 				       RES_ROWS(_r)[i].values[j].val.str_val.s);
 				break;
+
+			case DB_BLOB:
+				printf("%.*s ",
+				       RES_ROWS(_r)[i].values[j].val.blob_val.len,
+				       RES_ROWS(_r)[i].values[j].val.blob_val.s);
+				break;
 			}
 			
 		}
@@ -162,7 +168,7 @@ struct module_exports* mod_register()
 	      * Specify a table name, that will
 	      * be used for manipulations
 	      */
-	if (db_use_table(h, DB_TABLE) == FALSE) {
+	if (db_use_table(h, DB_TABLE) < 0) {
 		fprintf(stderr, "Error while calling db_use_table\n");
 		return &dbex_exports;
 	}
@@ -170,22 +176,22 @@ struct module_exports* mod_register()
 	     /* If you do not specify any keys and values to be
 	      * matched, all rows will be deleted
 	      */
-	if (db_delete(h, NULL, NULL, 0) == FALSE) {
+	if (db_delete(h, NULL, NULL, 0) < 0) {
 		fprintf(stderr, "Error while flushing table\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals1, 4) == FALSE) {
+	if (db_insert(h, keys1, vals1, 4) < 0) {
 		fprintf(stderr, "Error while inserting line 1\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals2, 4) == FALSE) {
+	if (db_insert(h, keys1, vals2, 4) < 0) {
 		fprintf(stderr, "Error while inserting line 2\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals3, 4) == FALSE) {
+	if (db_insert(h, keys1, vals3, 4) < 0) {
 		fprintf(stderr, "Error while inserting line 3\n");
 		return &dbex_exports;
 	}
@@ -194,7 +200,7 @@ struct module_exports* mod_register()
 	      * Let's delete middle line with
 	      * user = foo2@bar2.com and q = 1.3
 	      */
-	if (db_delete(h, keys2, vals4, 2) == FALSE) {
+	if (db_delete(h, keys2, vals4, 2) < 0) {
 		fprintf(stderr, "Error while deleting line\n");
 		return &dbex_exports;
 	}
@@ -202,7 +208,7 @@ struct module_exports* mod_register()
 	     /*
 	      * Modify last line
 	      */
-	if (db_update(h, keys3, vals5, keys4, vals6, 2, 2) == FALSE) {
+	if (db_update(h, keys3, vals5, keys4, vals6, 2, 2) < 0) {
 		fprintf(stderr, "Error while modifying table\n");
 		return &dbex_exports;
 	}
@@ -211,7 +217,7 @@ struct module_exports* mod_register()
 	      * Last but not least, dump the result of db_query
 	      */
 
-	if (db_query(h, NULL, NULL, NULL, 0, 0, NULL, &res) == FALSE) {
+	if (db_query(h, NULL, NULL, NULL, 0, 0, NULL, &res) < 0) {
 		fprintf(stderr, "Error while querying table\n");
 		return &dbex_exports;
 	}
@@ -223,7 +229,7 @@ struct module_exports* mod_register()
 	      * Free the result because we don't need it
 	      * anymore
 	      */
-	if (db_free_query(h, res) == FALSE) {
+	if (db_free_query(h, res) < 0) {
 		fprintf(stderr, "Error while freeing result of query\n");
 		return &dbex_exports;
 	}

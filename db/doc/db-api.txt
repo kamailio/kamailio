@@ -81,6 +81,7 @@ information, see the next section.
        DB_STRING,    /* String */
        DB_STR,       /* str structure */
        DB_DATETIME   /* Date and time */
+       DB_BLOB       /* Binary large object */
    } db_type_t;
 
 1.3.3 Macros
@@ -100,6 +101,7 @@ DB_DOUBLE   - Value in the database represents a decimal number
 DB_STRING   - Value in the database represents a string
 DB_STR      - Value in the database represents a string
 DB_DATETIME - Value in the database represents date and time
+DB_BLOB     - Value in the database represents binary large object
 
 These datatypes are automaticaly recognized, converted from internal database
 representation and stored in the variable of corresponding type.
@@ -114,6 +116,8 @@ representation and stored in the variable of corresponding type.
              double double_val;       /* Double value */
              time_t time_val;         /* Unix time_t value */
              const char* string_val;  /* Zero terminated string */
+	     str str_val;             /* str structure */
+             str blob_val;            /* Structure describing blob */
          } val;
     } db_val_t;
 
@@ -171,7 +175,7 @@ Example: if (VAL_TYPE(val) == DB_STRING) {
              printf("%s", VAL_STRING(val));
          }
 
-1.4.3.6 VAL_STR(value) Macro
+1.4.3.7 VAL_STR(value) Macro
 
 Use this macro if you need to access str structure in the db_val_t structure.
 
@@ -179,6 +183,13 @@ Example: if (VAL_TYPE(val) == DB_STR) {
              printf("%.*s", VAL_STR(val).len, VAL_STR(val).s);
          }
 
+1.4.3.8 VAL_BLOB(value) Macro
+
+Use this macro if you need to access blob value in the db_val_t structure.
+
+Example: if (VAL_TYPE(val) == DB_BLOB) {
+	     printf("%.*s", VAL_BLOB(val).len, VAL_BLOB(val).s);
+         }
 
 1.5 Type db_row_t
 
