@@ -37,6 +37,7 @@
 #include "pa_mod.h"
 #include "lpidf.h"
 #include "xpidf.h"
+#include "pidf.h"
 #include "common.h"
 #include "paerrno.h"
 #include "notify.h"
@@ -340,26 +341,42 @@ static inline int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 
 static inline int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 {
-	lpidf_status_t st;
+	xpidf_status_t st;
 
-	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
-		return -2;
+	     /* Send a notify, saved Contact will be put in
+	      * Request-URI, To will be put in from and new tag
+	      * will be generated, callid will be callid,
+	      * from will be put in to including tag
+	      */
+
+	if (start_pidf_doc(&body, BUF_LEN) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): start_pidf_doc failed\n");
+		return -1;
 	}
 
-	switch(_p->state) {
-	case PS_OFFLINE: st = LPIDF_ST_CLOSED; break;
-	default: st = LPIDF_ST_OPEN; break;
-	}
-
-	if (lpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
+	if (pidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): pidf_add_presentity failed\n");
 		return -3;
 	}
 
+	switch(_p->state) {
+	case PS_ONLINE: st = XPIDF_ST_OPEN; break;
+	default: st = XPIDF_ST_CLOSED; break;
+	}
+
+	if (pidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st, &_p->location) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): pidf_add_address failed\n");
+		return -3;
+	}
+
+	if (end_pidf_doc(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): end_xpidf_doc failed\n");
+		return -5;
+	}
+
 	if (create_headers(_w) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): Error while adding headers\n");
-		return -4;
+		LOG(L_ERR, "send_pidf_notify(): Error while adding headers\n");
+		return -6;
 	}
 
 	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);

@@ -368,12 +368,12 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 	if (presentity->location.len && strcmp(presentity->location.s, location.s) != 0)
 		changed = 1;
 
-	if (0)
 	if (presentity->location.s)
 		free(presentity->location.s);
 
 	presentity->location.len = location.len;
-	presentity->location.s = strdup(location_s);
+	presentity->location.s = shm_malloc(location.len);
+	strcpy(presentity->location.s, location_s);
 
 	if (changed) {
 		notify_watchers(presentity);

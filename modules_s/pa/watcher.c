@@ -81,6 +81,12 @@ void free_watcher(watcher_t* _w)
 }
 
 
+static char *doctype_name[] = {
+	[DOC_XPIDF] = "DOC_XPIDF",
+	[DOC_LPIDF] = "DOC_LPIDF",
+	[DOC_PIDF] = "DOC_PIDF"
+};
+
 /*
  * Print contact, for debugging purposes only
  */
@@ -89,7 +95,7 @@ void print_watcher(FILE* _f, watcher_t* _w)
 	fprintf(_f, "---Watcher---\n");
 	fprintf(_f, "uri    : '%.*s'\n", _w->uri.len, ZSW(_w->uri.s));
 	fprintf(_f, "expires: %d\n", (int)(_w->expires - time(0)));
-	fprintf(_f, "accept : %s\n", (_w->accept == DOC_XPIDF) ? ("DOC_XPIDF") : ("DOC_LPIDF"));
+	fprintf(_f, "accept : %s\n", doctype_name[_w->accept]);
 	fprintf(_f, "next   : %p\n", _w->next);
 	tmb.print_dlg(_f, _w->dialog);
 	fprintf(_f, "---/Watcher---\n");
