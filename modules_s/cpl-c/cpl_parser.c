@@ -123,8 +123,8 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 #define MAX_EMAIL_BODY_SIZE    512
 #define MAX_EMAIL_SUBJECT_SIZE 32
 
-static inline unsigned char *decode_mail_url(unsigned char *p,
-						unsigned char *p_end, char *url, unsigned char *nr_attr)
+static inline unsigned char *decode_mail_url(char *p, char *p_end, char *url,
+														unsigned char *nr_attr)
 {
 	static char buf[ MAX_EMAIL_HDR_SIZE ];
 	char c;
@@ -251,7 +251,7 @@ static inline unsigned char *decode_mail_url(unsigned char *p,
 						(*len)++;
 						*(p++) = c;
 						if (*len==URL_MAILTO_LEN &&
-						!strncasecmp((char*)(p-(*len)),URL_MAILTO_STR,(*len))) {
+						!strncasecmp(p-(*len),URL_MAILTO_STR,(*len))) {
 							DBG("DEBUG:cpl_c:decode_mail_url: MAILTO: found at"
 								" the begining of TO -> removed\n");
 							p -= (*len);
@@ -287,11 +287,10 @@ error:
 /* Attr. encoding for ADDRESS node:
  *   | attr_t(2) attr_len(2) attr_val(2*x) |  IS/CONTAINS/SUBDOMAIN_OF attr (NT)
  */
-inline int encode_address_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_address_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -334,11 +333,11 @@ error:
  *   | attr1_t(2) attr1_val(2) |                FIELD attr
  *  [| attr2_t(2) attr2_val(2) |]?              SUBFILED attr
  */
-inline int encode_address_switch_attr(xmlNodePtr node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_address_switch_attr(xmlNodePtr node, char *node_ptr,
+																char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -409,15 +408,14 @@ error:
 /* Attr. encoding for LANGUAGE node:
  *   | attr_t(2) attr_len(2) attr_val(2*x) |              MATCHES attr  (NNT)
  */
-inline int encode_lang_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_lang_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
-	unsigned char  *end;
-	unsigned char  *val_bk;
+	char           *end;
+	char           *val_bk;
 	str            val;
 
 	nr_attr = &(NR_OF_ATTR(node_ptr));
@@ -476,11 +474,10 @@ error:
  *   | attr1_t(2) attr1_val(2) |                  LESS/GREATER/EQUAL attr
  *  [| attr2_t(2) attr2_len(2) attr_val(2*x) |]?  PRIOSTR attr (NT)
  */
-inline int encode_priority_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_priority_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char  *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -539,11 +536,11 @@ error:
  *  [| attr1_t(2) attr1_len(2) attr_val(2*x) |]?  IS attr  (NT)
  *  [| attr2_t(2) attr2_len(2) attr_val(2*x) |]?  CONTAINS attr (NT)
  */
-inline int encode_string_switch_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_string_switch_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -593,11 +590,10 @@ error:
  *  [| attr1_t(2) attr1_len(2) attr_val(2*x) |]?  IS attr  (NT)
  *  [| attr2_t(2) attr2_len(2) attr_val(2*x) |]?  CONTAINS attr (NT)
  */
-inline int encode_string_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_string_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char  *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -636,11 +632,11 @@ error:
  *  [| attr1_t(2) attr1_len(2) attr_val(2*x) |]?  TZID attr  (NT)
  *  [| attr2_t(2) attr2_len(2) attr_val(2*x) |]?  TZURL attr (NT)
  */
-inline int encode_time_switch_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_time_switch_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -696,11 +692,10 @@ error:
  *  [| attr16_t(2) attr16_len(2) attr_val16(2*x) |]?  BYDAY attr (NT)
  *  [| attr17_t(2) attr17_len(2) attr_val17(2*x) |]?  BYWEEKNO attr (NT)
  */
-inline int encode_time_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_time_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -783,12 +778,11 @@ error:
  * [| attr2_t(2) attr2_val(2) |]?                   PRIORITY attr
  * [| attr3_t(2) attr3_val(2) |]?                   CLEAR attr
  */
-inline int encode_location_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_location_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	struct sip_uri uri;
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	unsigned short nr;
 	str            val;
@@ -853,12 +847,11 @@ error:
 /* Attr. encoding for REMOVE_LOCATION node:
  * [| attr1_t(2) attr1_len(2) attr1_val(2*x) |]?    LOCATION attr  (NT)
  */
-inline int encode_rmvloc_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_rmvloc_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	struct sip_uri uri;
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -907,11 +900,10 @@ error:
  * [| attr2_t(2) attr2_val(2) |]?                   TIMEOUT attr
  * [| attr3_t(2) attr3_val(2) |]?                   ORDERING attr
  */
-inline int encode_proxy_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_proxy_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	unsigned int   nr;
 	str            val;
@@ -982,11 +974,10 @@ error:
  *  | attr1_t(2) attr1_val(2) |                      STATUS attr
  * [| attr2_t(2) attr2_len(2) attr2_val(2*x)|]?      REASON attr (NT)
  */
-inline int encode_reject_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_reject_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	unsigned int   nr;
 	str            val;
@@ -1052,11 +1043,10 @@ error:
  *  | attr1_t(2) attr1_val(2) |                      STATUS attr
  * [| attr2_t(2) attr2_len(2) attr2_val(2*x)|]?      REASON attr (NT)
  */
-inline int encode_redirect_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_redirect_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -1097,11 +1087,10 @@ error:
  *  [| attr1_t(2) attr1_len(2) attr1_val(2*x) |]?       NAME attr  (NT)
  *  [| attr2_t(2) attr2_len(2) attr2_val(2*x) |]?       COMMENT attr (NT)
  */
-inline int encode_log_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_log_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 	str            val;
 
@@ -1144,11 +1133,10 @@ error:
  *  [| attr2_t(2) attr2_len(2) attr2_val(2*x) |]?      SUBJECT_ATTR attr (NNT)
  *  [| attr3_t(2) attr3_len(2) attr3_val(2*x) |]?      BODY_ATTR attr (NNT)
  */
-inline int encode_mail_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_mail_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
 
 	nr_attr = &(NR_OF_ATTR(node_ptr));
@@ -1177,8 +1165,8 @@ error:
 
 /* Attr. encoding for SUBACTION node:
  */
-inline int encode_subaction_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_subaction_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
 {
 	xmlAttrPtr     attr;
 	str            val;
@@ -1211,13 +1199,12 @@ error:
 /* Attr. encoding for SUB node:
  *   | attr1_t(2) attr1_val(2) |              REF_ATTR attr
  */
-inline int encode_sub_attr(xmlNodePtr  node, unsigned char *node_ptr,
-														unsigned char *buf_end)
+inline int encode_sub_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
 {
 	xmlAttrPtr     attr;
-	unsigned char  *p, *p_orig;
+	char           *p, *p_orig;
 	unsigned char  *nr_attr;
-	unsigned char  *sub_ptr;
+	char           *sub_ptr;
 	str            val;
 
 	nr_attr = &(NR_OF_ATTR(node_ptr));
@@ -1253,7 +1240,7 @@ error:
 /* Returns :  -1 - error
  *            >0 - subtree size of the given node
  */
-int encode_node( xmlNodePtr node, unsigned char *p, unsigned char *p_end)
+int encode_node( xmlNodePtr node, char *p, char *p_end)
 {
 	xmlNodePtr kid;
 	unsigned short sub_tree_size;
@@ -1449,7 +1436,7 @@ error:
 
 int encodeCPL( str *xml, str *bin)
 {
-	static unsigned char buf[ENCONDING_BUFFER_SIZE];
+	static char buf[ENCONDING_BUFFER_SIZE];
 	xmlDocPtr  doc;
 	xmlNodePtr cur;
 
