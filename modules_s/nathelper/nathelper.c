@@ -117,6 +117,7 @@
  */
 
 #include "nhelpr_funcs.h"
+#include "../../flags.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../data_lump.h"
@@ -172,6 +173,10 @@ MODULE_VERSION
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
 #define	CPORT		"22222"
+
+/* Anti foot-shooting flags to be set after altering SDP */
+#define	SDP_IP_AFS	250
+#define	SDP_PORT_AFS	251
 
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
@@ -890,6 +895,18 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	    memcmp(newip->s, oldip->s, newip->len) == 0)
 		return 0;
 
+	/*
+	 * Since rewriting the same info twice will mess SDP up,
+	 * apply simple anti foot shooting measure - put flag on
+	 * messages that have been altered and check it when
+	 * another request comes.
+	 */
+	if (isflagset(msg, SDP_IP_AFS)) {
+		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
+		  "SDP twice, check your config!\n");
+		return -1;
+	}
+
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
@@ -953,6 +970,8 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		pkg_free(nip.s);
 		return -1;
 	}
+	setflag(msg, SDP_IP_AFS);
+
 	if (insert_new_lump_after(anchor, nip.s, nip.len, 0) == 0) {
 		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
 		pkg_free(nip.s);
@@ -973,6 +992,18 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	if (newport->len == oldport->len &&
 	    memcmp(newport->s, oldport->s, newport->len) == 0)
 		return 0;
+
+	/*
+	 * Since rewriting the same info twice will mess SDP up,
+	 * apply simple anti foot shooting measure - put flag on
+	 * messages that have been altered and check it when
+	 * another request comes.
+	 */
+	if (isflagset(msg, SDP_PORT_AFS)) {
+		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
+		  "SDP twice, check your config!\n");
+		return -1;
+	}
 
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
@@ -1014,6 +1045,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 		pkg_free(buf);
 		return -1;
 	}
+	setflag(msg, SDP_PORT_AFS);
 	return 0;
 }
 
