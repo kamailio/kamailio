@@ -137,6 +137,12 @@ struct module_exports exports= {
 #endif
 				T_UAC_DLG,
 				"load_tm",
+#ifdef VOICE_MAIL
+				T_REPLY_WB,
+				T_IS_LOCAL,
+				T_GET_TI,
+				T_LOOKUP_IDENT,
+#endif
 				"t_newdlg"
 			},
 	(cmd_function[]){
@@ -160,6 +166,12 @@ struct module_exports exports= {
 #endif
 					(cmd_function) t_uac_dlg,
 					(cmd_function) load_tm,
+#ifdef VOICE_MAIL
+					(cmd_function) t_reply_with_body,
+					(cmd_function) t_is_local,
+					(cmd_function) t_get_trans_ident,
+					(cmd_function) t_lookup_ident,
+#endif
 					w_t_newdlg,
 					},
 	(int[]){
@@ -182,6 +194,12 @@ struct module_exports exports= {
 #endif
 				NO_SCRIPT /* t_uac_dlg */,
 				NO_SCRIPT /* load_tm */,
+#ifdef VOICE_MAIL
+				NO_SCRIPT /* t_reply_with_body */,
+				NO_SCRIPT /* t_is_local */,
+				NO_SCRIPT /* t_get_trans_ident */,
+				NO_SCRIPT /* t_lookup_ident */,
+#endif
 				0 /* t_newdlg */
 			},
 	(fixup_function[]){
@@ -204,6 +222,12 @@ struct module_exports exports= {
 #endif
 				0,                                              /* t_uac_dlg */
 				0,						/* load_tm */
+#ifdef VOICE_MAIL
+				0, /* t_reply_with_body */
+				0, /* t_is_local */
+				0, /* t_get_trans_ident */
+				0, /* t_lookup_ident */
+#endif
 				0						/* t_newdlg */
 	
 		},
@@ -211,10 +235,12 @@ struct module_exports exports= {
 	1+
 #endif
 #ifdef _OBSO
-	15,
-#else
-	14,
+	1+
 #endif
+#ifdef VOICE_MAIL
+	4+
+#endif
+	14,
 
 	/* ------------ exported variables ---------- */
 	(char *[]) { /* Module parameter names */

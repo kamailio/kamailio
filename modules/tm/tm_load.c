@@ -63,6 +63,24 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
+#ifdef VOICE_MAIL
+	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export(T_REPLY_WB, NO_SCRIPT)) ) {
+	        LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_is_local=(tget_ti_f)find_export(T_IS_LOCAL, NO_SCRIPT)) ) {
+	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_get_trans_ident=(tget_ti_f)find_export(T_GET_TI, NO_SCRIPT)) ) {
+	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
+		return -1;
+	}
+	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export(T_LOOKUP_IDENT, NO_SCRIPT)) ) {
+	        LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
+		return -1;
+	}
+#endif
 #ifdef _OBSO
 	if (!(tmb->t_reply_unsafe=(treply_f)find_export(T_REPLY_UNSAFE, 2)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_reply_unsafe' not found\n");

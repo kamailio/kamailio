@@ -814,6 +814,20 @@ error:
 char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					char *new_tag, unsigned int new_tag_len,
 					struct sip_msg* msg, unsigned int *returned_len)
+#ifdef VOICE_MAIL
+{
+    return build_res_buf_with_body_from_sip_req(code,text,new_tag,new_tag_len,
+						0,0, /* no body */
+						0,0, /* no content type */
+						msg,returned_len);
+}
+
+char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
+					     char *new_tag, unsigned int new_tag_len ,
+					     char *body, unsigned int body_len,
+					     char *content_type, unsigned int content_type_len,
+					     struct sip_msg* msg, unsigned int *returned_len)
+#endif
 {
 	char              *buf, *p;
 	unsigned int      len,foo;
@@ -830,6 +844,10 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	unsigned int      warning_len;
 	unsigned int	  text_len;
 	int r;
+#ifdef VOICE_MAIL
+	char content_len[27];
+	int content_len_len;
+#endif
 #ifndef PRESERVE_ZT
 	char *after_body;
 #endif
@@ -928,9 +946,17 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	if (server_signature) {
 		/*server header*/
 		len += SERVER_HDR_LEN + CRLF_LEN;
+#ifndef VOICE_MAIL
 		/*content length header*/
 		len +=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
+#endif
 	}
+#ifdef VOICE_MAIL
+	content_len_len=snprintf(content_len, sizeof(content_len), "Content-Length: %d", body_len);
+	len += content_len_len + CRLF_LEN;
+	if(content_type_len)
+	    len += content_type_len + CRLF_LEN;
+#endif
 	if (sip_warning) {
 		warning = warning_builder(msg,&warning_len);
 		if (warning) len += warning_len + CRLF_LEN;
@@ -938,6 +964,11 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	}
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
+
+#ifdef VOICE_MAIL
+	if(body_len)
+	    len += body_len;
+#endif
 	/*allocating mem*/
 	buf = (char*) pkg_malloc( len+1 );
 	if (!buf)
@@ -1062,12 +1093,27 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 		p+=SERVER_HDR_LEN;
 		memcpy( p, CRLF, CRLF_LEN );
 		p+=CRLF_LEN;
+#ifndef VOICE_MAIL
 		/* content length header*/
 		memcpy( p, CONTENT_LENGTH "0" , CONTENT_LENGTH_LEN+1 );
 		p+=CONTENT_LENGTH_LEN+1;
 		memcpy( p, CRLF, CRLF_LEN );
 		p+=CRLF_LEN;
+#endif
 	}
+
+#ifdef VOICE_MAIL
+	memcpy( p, content_len, content_len_len );
+	p+=content_len_len;
+	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
+	if(content_type_len){
+	    memcpy( p, content_type, content_type_len );
+	    p+=content_type_len;
+	    memcpy( p, CRLF, CRLF_LEN );
+	    p+=CRLF_LEN;
+	}
+#endif
 	if (sip_warning && warning) {
 		memcpy( p, warning, warning_len);
 		p+=warning_len;
@@ -1077,6 +1123,12 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	/*end of message*/
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
+#ifdef VOICE_MAIL
+	if(body_len){
+	    memcpy ( p, body, body_len );
+	    p+=body_len;
+	}
+#endif
 	*(p) = 0;
 	*returned_len = len;
 	/* in req2reply, received_buf is not introduced to lumps and

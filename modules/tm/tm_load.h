@@ -37,6 +37,9 @@
 #include "uac.h"
 #include "t_fwd.h"
 #include "t_reply.h"
+#ifdef VOICE_MAIL
+#    include "t_lookup.h"
+#endif
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -48,6 +51,9 @@
 #endif
 #define T_UAC_DLG "t_uac_dlg"
 #define T_REPLY "t_reply"
+#ifdef VOICE_MAIL
+#define T_REPLY_WB "t_reply_with_body"
+#endif
 #define T_REPLY_UNSAFE "t_reply_unsafe"
 #define T_FORWARD_NONACK "t_forward_nonack"
 
@@ -62,6 +68,12 @@ struct tm_binds {
 #endif
 	tuacdlg_f               t_uac_dlg;
 	treply_f		t_reply;
+#ifdef VOICE_MAIL
+        treply_wb_f             t_reply_with_body;
+        tislocal_f              t_is_local;
+        tget_ti_f               t_get_trans_ident;
+        tlookup_ident_f         t_lookup_ident;
+#endif
 	treply_f		t_reply_unsafe;
 	tfwd_f			t_forward_nonack;
 };

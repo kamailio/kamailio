@@ -60,6 +60,11 @@ typedef unsigned int branch_bm_t;
 /* reply export types */
 typedef int (*treply_f)( struct sip_msg* p_msg,
 	unsigned int code, char * text );
+#ifdef VOICE_MAIL
+typedef int (*treply_wb_f)( struct sip_msg* p_msg,
+	unsigned int code, char * text, char * body, 
+	char * new_header, char * to_tag);
+#endif
 
 #define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
 #define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
@@ -78,6 +83,21 @@ int t_on_reply( struct sip_msg  *p_msg ) ;
  */
 int t_retransmit_reply( /* struct sip_msg * */  );
 
+
+/* send a UAS reply
+ * Warning: 'buf' and 'len' should already have been build.
+ * returns 1 if everything was OK or -1 for erro
+ */
+#ifdef VOICE_MAIL
+
+int t_reply_light( struct cell *trans, char* buf, unsigned int len,
+		   unsigned int code, char * text,
+		   char *to_tag, unsigned int to_tag_len);
+
+int t_reply_with_body( struct sip_msg* p_msg, unsigned int code, 
+		       char * text, char * body, char * new_header, char * to_tag );
+
+#endif
 
 /* send a UAS reply
  * returns 1 if everything was OK or -1 for erro

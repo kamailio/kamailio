@@ -491,6 +491,18 @@ error:
 }
 
 
+#ifdef VOICE_MAIL
+static int _reply_light( struct cell *trans, char* buf, unsigned int len,
+			 unsigned int code, char * text, 
+			 char *to_tag, unsigned int to_tag_len, int lock );
+
+int t_reply_light( struct cell *t, char* buf, unsigned int len,
+		   unsigned int code, char * text,
+		   char *to_tag, unsigned int to_tag_len )
+{
+    return _reply_light( t, buf, len, code, text, to_tag, to_tag_len, 1 /* lock replies */ );
+}
+#endif
 
 int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
 	char * text )
@@ -512,18 +524,25 @@ int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 static int _reply( struct cell *trans, struct sip_msg* p_msg, 
 	unsigned int code, char * text, int lock )
 {
+#ifndef VOICE_MAIL
 	unsigned int len, buf_len=0;
 	char * buf;
 	struct retr_buf *rb;
 
 	branch_bm_t cancel_bitmap;
+#else
+	unsigned int len;
+	char * buf;
+#endif
 
 	if (code>=200) trans->kr|=REQ_RPLD;
 	/*
 	buf = build_res_buf_from_sip_req(code,text,trans->uas.tag->s,
 		trans->uas.tag->len, trans->uas.request,&len);
 	*/
+#ifndef VOICE_MAIL
 	cancel_bitmap=0;
+#endif
 	/* compute the buffer in private memory prior to entering lock;
 	 * create to-tag if needed */
 	if (code>=180 && p_msg->to 
@@ -533,11 +552,34 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 		buf = build_res_buf_from_sip_req(code,text, 
 				tm_tags, TOTAG_LEN, 
 				p_msg,&len);
+#ifdef VOICE_MAIL
+
+		return _reply_light(trans,buf,len,code,text,
+				    tm_tags, TOTAG_LEN,
+				    lock);
+#endif
 	} else {
 		buf = build_res_buf_from_sip_req(code,text, 0,0, /* no to-tag */
 			p_msg,&len);
+#ifdef VOICE_MAIL
+
+		return _reply_light(trans,buf,len,code,text,
+				    0,0, /* no to-tag */
+				    lock);
+#endif
 	}
 	DBG("DEBUG: t_reply: buffer computed\n");
+#ifdef VOICE_MAIL
+}
+
+static int _reply_light( struct cell *trans, char* buf, unsigned int len,
+			 unsigned int code, char * text, 
+			 char *to_tag, unsigned int to_tag_len, int lock )
+{
+	struct retr_buf *rb;
+	unsigned int buf_len=0;
+	branch_bm_t cancel_bitmap=0;
+#endif
 	if (!buf)
 	{
 		DBG("DEBUG: t_reply: response building failed\n");
@@ -571,6 +613,19 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 	rb->buffer_len = len ;
 	memcpy( rb->buffer , buf , len );
+#ifdef VOICE_MAIL
+	if(to_tag){
+	    trans->uas.to_tag.s = (char*)shm_resize( trans->uas.to_tag.s, to_tag_len );
+	    if(! trans->uas.to_tag.s ){
+			LOG(L_ERR, "ERROR: t_reply: cannot allocate shmem buffer\n");
+			// Is it ok? or should i free rb->buffer also, 
+			// or will it be freed in free_cell() ?
+			goto error2; 
+	    }
+	    trans->uas.to_tag.len = to_tag_len;
+	    memcpy( trans->uas.to_tag.s, to_tag, to_tag_len );
+	}
+#endif
 	/* needs to be protected too because what timers are set depends
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
@@ -1027,3 +1082,55 @@ done:
 	return 0;
 }
 
+#ifdef VOICE_MAIL
+
+#include <assert.h>
+
+int t_reply_with_body( struct sip_msg* p_msg, unsigned int code, char * text, char * body, char * new_header, char * to_tag )
+{
+    struct cell * t;
+    //char to_tag[64];
+    str  s_to_tag,sb,snh;
+    char* res_buf;
+    int res_len,ret;
+
+    /*  check if we have a transaction */
+    if (t_check(p_msg, 0)==-1) {
+	LOG(L_ERR,"ERROR: t_reply_with_body: no transaction found.\n");
+	return -1;
+    }
+
+    t=get_t();
+    assert(t);
+
+    s_to_tag.s = to_tag;
+    if(to_tag)
+	s_to_tag.len = strlen(to_tag);
+
+    // mark the transaction as replied
+    t->kr|=REQ_RPLD;
+
+    /* compute the response */
+    sb.s = body;
+    sb.len = strlen(body);
+    snh.s = new_header;
+    snh.len = strlen(new_header);
+
+    res_buf = build_res_buf_with_body_from_sip_req(code,text, s_to_tag.s, s_to_tag.len,
+						   sb.s,sb.len,
+						   snh.s,snh.len,
+						   p_msg,&res_len);
+    
+    DBG("t_reply_with_body: buffer computed\n");
+    // frees 'res_buf' ... no panic !
+    ret = t_reply_light(t, res_buf, res_len, code, text,
+			s_to_tag.s, s_to_tag.len);
+
+    // TODO: i'm not sure i should do this here ...
+    if(t_unref(p_msg) == -1)
+	LOG(L_WARN,"WARNING: fifo_t_reply: could not unref transaction %p\n",t);
+
+    return ret;
+}
+
+#endif

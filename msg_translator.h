@@ -54,6 +54,18 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 				unsigned int new_tag_len ,
 				struct sip_msg* msg,
 				unsigned int *returned_len);
+#ifdef VOICE_MAIL
+char * build_res_buf_with_body_from_sip_req(	unsigned int code ,
+				char *text ,
+				char *new_tag ,
+				unsigned int new_tag_len ,
+				char *body ,
+				unsigned int body_len,
+				char *content_type,
+				unsigned int content_type_len,
+				struct sip_msg* msg,
+				unsigned int *returned_len);
+#endif
 
 char* via_builder( unsigned int *len,
 	struct socket_info* send_sock,

@@ -141,6 +141,10 @@ YACC := $(shell echo "$${YACC}")
 # -DUSE_TCP
 #		compiles in tcp support (highly experimental for now, it will probably
 #		not work, use it only if you really now what you are doing)
+# -DVOICE_MAIL
+#               enables voicemail support in ser core and in tm module
+#               voicemail needs also -D_TOTAG
+
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH)\
 	 -DCFG_DIR='"$(cfg-target)"'\
@@ -149,7 +153,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
-	 -DDBG_QM_MALLOC \
+	 -DVOICE_MAIL \
+	 -D_TOTAG \
 	 -DUSE_TCP \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
