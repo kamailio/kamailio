@@ -258,6 +258,9 @@ INSERT INTO version VALUES ( 'preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
 INSERT INTO version VALUES ( 'speed_dial', '1');
+INSERT INTO version VALUES ( 'gw', '1');
+INSERT INTO version VALUES ( 'gw_grp', '1');
+INSERT INTO version VALUES ( 'lcr', '1');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -681,6 +684,41 @@ CREATE TABLE speed_dial (
   PRIMARY KEY  ($USERCOL,domain,domain_from_req_uri,username_from_req_uri)
 ) $TABLE_TYPE;
 
+#
+# Table structure for table 'gw'
+#
+
+CREATE TABLE gw (
+  gw_name VARCHAR(128) NOT NULL,
+  ip_addr INT UNSIGNED NOT NULL,
+  port SMALLINT UNSIGNED,
+  grp_id INT UNSIGNED NOT NULL,
+  PRIMARY KEY (gw_name),
+  KEY (grp_id)
+) $TABLE_TYPE;
+
+#
+# Table structure for table 'gw_grp'
+#
+
+CREATE TABLE gw_grp (
+  grp_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  grp_name VARCHAR(64) NOT NULL
+) $TABLE_TYPE;
+
+#
+# Table structure for table 'lcr'
+#
+
+CREATE TABLE lcr (
+  prefix varchar(16) NOT NULL,
+  from_uri varchar(128) NOT NULL DEFAULT '%',
+  grp_id INT UNSIGNED NOT NULL,
+  priority TINYINT UNSIGNED NOT NULL,
+  KEY (prefix),
+  KEY (from_uri),
+  KEY (grp_id)
+) $TABLE_TYPE;
 
 
 # add an admin user "admin" with password==heslo,
