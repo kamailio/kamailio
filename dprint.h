@@ -45,16 +45,18 @@
 
 extern int debug;
 extern int log_stderr;
+extern int log_facility;
 
 
 #define DPRINT_LEV	1
-/* log facility (see syslog(3)) */
-#define L_FAC  LOG_DAEMON
 /* priority at which we log */
 #define DPRINT_PRIO LOG_DEBUG
 
 
 void dprint (char* format, ...);
+
+int str2facility(char *s);
+
 
 #ifdef NO_DEBUG
 	#ifdef __SUNPRO_C
@@ -70,7 +72,7 @@ void dprint (char* format, ...);
 					if (log_stderr){ \
 						dprint (__VA_ARGS__); \
 					}else{ \
-						syslog(DPRINT_LEV|L_FAC,  __VA_ARGS__); \
+						syslog(DPRINT_LEV|log_facility,  __VA_ARGS__); \
 					}\
 				} \
 			}while(0)
@@ -81,7 +83,7 @@ void dprint (char* format, ...);
 					if (log_stderr){ \
 						dprint (fmt, ## args); \
 					}else{ \
-						syslog(DPRINT_LEV|L_FAC, fmt, ## args); \
+						syslog(DPRINT_LEV|log_facility, fmt, ## args); \
 					}\
 				} \
 			}while(0)
@@ -108,25 +110,25 @@ void dprint (char* format, ...);
 					else { \
 						switch(lev){ \
 							case L_CRIT: \
-								syslog(LOG_CRIT | L_FAC, __VA_ARGS__); \
+								syslog(LOG_CRIT|log_facility, __VA_ARGS__); \
 								break; \
 							case L_ALERT: \
-								syslog(LOG_ALERT | L_FAC, __VA_ARGS__); \
+								syslog(LOG_ALERT|log_facility, __VA_ARGS__); \
 								break; \
 							case L_ERR: \
-								syslog(LOG_ERR | L_FAC, __VA_ARGS__); \
+								syslog(LOG_ERR|log_facility, __VA_ARGS__); \
 								break; \
 							case L_WARN: \
-								syslog(LOG_WARNING | L_FAC, __VA_ARGS__);\
+								syslog(LOG_WARNING|log_facility, __VA_ARGS__);\
 								break; \
 							case L_NOTICE: \
-								syslog(LOG_NOTICE | L_FAC, __VA_ARGS__); \
+								syslog(LOG_NOTICE|log_facility, __VA_ARGS__); \
 								break; \
 							case L_INFO: \
-								syslog(LOG_INFO | L_FAC, __VA_ARGS__); \
+								syslog(LOG_INFO|log_facility, __VA_ARGS__); \
 								break; \
 							case L_DBG: \
-								syslog(LOG_DEBUG | L_FAC, __VA_ARGS__); \
+								syslog(LOG_DEBUG|log_facility, __VA_ARGS__); \
 								break; \
 						} \
 					} \
@@ -140,25 +142,25 @@ void dprint (char* format, ...);
 					else { \
 						switch(lev){ \
 							case L_CRIT: \
-								syslog(LOG_CRIT | L_FAC, fmt, ##args); \
+								syslog(LOG_CRIT|log_facility, fmt, ##args); \
 								break; \
 							case L_ALERT: \
-								syslog(LOG_ALERT | L_FAC, fmt, ##args); \
+								syslog(LOG_ALERT|log_facility, fmt, ##args); \
 								break; \
 							case L_ERR: \
-								syslog(LOG_ERR | L_FAC, fmt, ##args); \
+								syslog(LOG_ERR|log_facility, fmt, ##args); \
 								break; \
 							case L_WARN: \
-								syslog(LOG_WARNING | L_FAC, fmt, ##args); \
+								syslog(LOG_WARNING|log_facility, fmt, ##args);\
 								break; \
 							case L_NOTICE: \
-								syslog(LOG_NOTICE | L_FAC, fmt, ##args); \
+								syslog(LOG_NOTICE|log_facility, fmt, ##args); \
 								break; \
 							case L_INFO: \
-								syslog(LOG_INFO | L_FAC, fmt, ##args); \
+								syslog(LOG_INFO|log_facility, fmt, ##args); \
 								break; \
 							case L_DBG: \
-								syslog(LOG_DEBUG | L_FAC, fmt, ##args); \
+								syslog(LOG_DEBUG|log_facility, fmt, ##args); \
 								break; \
 						} \
 					} \

@@ -291,6 +291,8 @@ int sig_flag = 0;              /* last signal received */
 int debug = L_NOTICE;
 int dont_fork = 0;
 int log_stderr = 0;
+/* log facility (see syslog(3)) */
+int log_facility = LOG_DAEMON;
 int config_check = 0;
 /* check if reply first via host==us */
 int check_via =  0;        
@@ -533,7 +535,7 @@ int daemonize(char*  name)
 	}
 	
 	if (log_stderr==0)
-		openlog(name, LOG_PID|LOG_CONS, LOG_DAEMON);
+		openlog(name, LOG_PID|LOG_CONS, log_facility);
 		/* LOG_CONS, LOG_PERRROR ? */
 	return  0;
 
@@ -699,7 +701,7 @@ static void sig_usr(int signo)
 					break;
 			case SIGCHLD:
 #ifndef 			STOP_JIRIS_CHANGES
-					LOG(L_INFO, "INFO: SIGCHLD received: "
+					DBG("INFO: SIGCHLD received: "
 						"we do not worry about grand-children\n");
 #else
 					exit(0); /* terminate if one child died */

@@ -35,6 +35,19 @@
  
 #include <stdarg.h>
 #include <stdio.h>
+#include <strings.h>
+
+static char* str_fac[]={"LOG_AUTH","LOG_AUTHPRIV","LOG_CRON","LOG_DAEMON",
+					"LOG_FTP","LOG_KERN","LOG_LOCAL0","LOG_LOCAL1",
+					"LOG_LOCAL2","LOG_LOCAL3","LOG_LOCAL4","LOG_LOCAL5",
+					"LOG_LOCAL6","LOG_LOCAL7","LOG_LPR","LOG_MAIL",
+					"LOG_NEWS","LOG_SYSLOG","LOG_USER","LOG_UUCP",0};
+static int int_fac[]={LOG_AUTH , LOG_AUTHPRIV , LOG_CRON , LOG_DAEMON ,
+					LOG_FTP , LOG_KERN , LOG_LOCAL0 , LOG_LOCAL1 ,
+					LOG_LOCAL2 , LOG_LOCAL3 , LOG_LOCAL4 , LOG_LOCAL5 ,
+					LOG_LOCAL6 , LOG_LOCAL7 , LOG_LPR , LOG_MAIL ,
+					LOG_NEWS , LOG_SYSLOG , LOG_USER , LOG_UUCP};
+
 
 void dprint(char * format, ...)
 {
@@ -45,4 +58,16 @@ void dprint(char * format, ...)
 	vfprintf(stderr,format,ap);
 	fflush(stderr);
 	va_end(ap);
+}
+
+
+int str2facility(char *s)
+{
+	int i;
+
+	for( i=0; str_fac[i] ; i++) {
+		if (!strcasecmp(s,str_fac[i]))
+			return int_fac[i];
+	}
+	return -1;
 }
