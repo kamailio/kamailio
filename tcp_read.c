@@ -30,6 +30,7 @@
  * 2002-12-??  created by andrei.
  * 2003-02-10  zero term before calling receive_msg & undo afterwards (andrei)
  * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
+ * 2003-07-04  fixed eof for tcp_read_req  (andrei)
  */
 
 #ifdef USE_TCP
@@ -375,9 +376,8 @@ int tcp_read_req(struct tcp_connection* con)
 		resp=CONN_RELEASE;
 		s=con->fd;
 		req=&con->req;
-		size=0;
 again:
-		if(req->complete==0 && req->error==TCP_REQ_OK){
+		if(req->error==TCP_REQ_OK){
 			bytes=tcp_read_headers(req, s);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
@@ -393,7 +393,7 @@ again:
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-			if ((size==0) && (bytes==0)){
+			if ((req->complete==0) && (bytes==0)){
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
@@ -475,6 +475,7 @@ again:
 			req->bytes_to_go=0;
 			/* if we still have some unparsed bytes, try to  parse them too*/
 			if (size) goto again;
+			else if (bytes==0) resp=CONN_EOF;/* 0 bytes read, this is an EOF*/
 			
 		}
 		
