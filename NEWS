@@ -4,6 +4,15 @@ Release notes for SIP Express Router (ser)
 $Id$
 
 ***********************************************
+* Changes/fixes introduced in 0.8.12-r1
+***********************************************
+
+ - full nathelper support (backported from HEAD)
+ - openbsd 3.4 support
+
+
+
+***********************************************
 * Changes/fixes introduced in 0.8.12
 ***********************************************
 +--------------------------------------------------------+
