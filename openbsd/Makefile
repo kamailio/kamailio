@@ -2,11 +2,12 @@
 # Date created:        6 November 2002
 # Whom:                andrei
 #
+# $OpenBSD$
 #
 # $Id$
 #
 
-COMMENT=	"SIP Express Router"
+COMMENT= "SIP Express Router"
 
 PORTNAME= ser
 PORTVERSION= 0.8.11pre29
@@ -21,13 +22,11 @@ PERMIT_PACKAGE_FTP=	Yes
 PERMIT_DISTFILES_CDROM=	Yes
 PERMIT_DISTFILES_FTP=	Yes
 
-#MAN8=ser.8
-#MAN5=ser.cfg.5
-
 
 USE_GMAKE= yes
 # we override the DISTFILE NAME
-DISTNAME= ${PORTNAME}-${PORTVERSION}_src
+DISTNAME= ${PORTNAME}-${PORTVERSION}
+DISTFILES= ${DISTNAME}_src.tar.gz
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
 
 pre-fetch:
