@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-03-01  kr set through a function now (jiri)
  */
 
 #include "defs.h"
@@ -71,6 +75,17 @@ void unlock_hash(int i);
    flags is set and script is being left, it is a sign of
    script error and we need to release on writer's
    behalf
+
+   REQ_FWDED means there is a UAC with final response timer
+             ticking. If it hits, transaction will be completed.
+   REQ_RPLD means that a transaction has been replied -- either
+            it implies going to wait state, or for invite transactions
+            FR timer is ticking until ACK arrives
+   REQ_RLSD means that a transaction was put on wait explicitely
+            from t_release_transaction
+   REQ_EXIST means that this request is a retransmission which does not
+            affect transactional state
+         
 */
 enum kill_reason { REQ_FWDED=1, REQ_RPLD=2, REQ_RLSD=4, REQ_EXIST=8 };
 
@@ -251,6 +266,14 @@ struct s_table
 	struct entry   entrys[ TABLE_ENTRIES ];
 };
 
+inline static void set_kr( struct cell *t, enum kill_reason kr )
+{
+	if (t->kr!=0) {
+		LOG(L_ERR, "ERROR: set_kr: kill_reason reset: from=%d to=%d\n",
+		t->kr, kr);
+	}
+	t->kr|=kr;
+}
 
 struct s_table* get_tm_table();
 struct s_table* init_hash_table();

@@ -28,9 +28,10 @@
 /*
  * History:
  * -------
- *  2003-02-13  proto support added (andrei)
+ *  2003-03-01  kr set through a function now (jiri)
  *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
  *              nameser_compat.h (andrei)
+ *  2003-02-13  proto support added (andrei)
  */
 
 #include "defs.h"
@@ -342,7 +343,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* make -Wall happy */
 	current_uri.s=0;
 
-	t->kr|=REQ_FWDED;
+	set_kr(t, REQ_FWDED);
 
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
 		t_invite=t_lookupOriginalT(  p_msg );

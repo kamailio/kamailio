@@ -27,12 +27,13 @@
  *
  * History:
  * --------
+ * 2003-03-01  kr set through a function now (jiri)
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-19  faked lump list created in on_reply handlers
- * 2003-02-13  updated to use rb->dst (andrei)
  * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (TOTAG_LEN was defined
  *             twice with different values!)  (andrei)
+ * 2003-02-13  updated to use rb->dst (andrei)
+ * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-19  faked lump list created in on_reply handlers
  */
 
 #include "defs.h"
@@ -501,7 +502,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	char * buf;
 #endif
 
-	if (code>=200) trans->kr|=REQ_RPLD;
+	if (code>=200) set_kr(trans,REQ_RPLD);
 	/*
 	buf = build_res_buf_from_sip_req(code,text,trans->uas.tag->s,
 		trans->uas.tag->len, trans->uas.request,&len);
@@ -1069,7 +1070,7 @@ int t_reply_with_body( struct sip_msg* p_msg, unsigned int code, char * text, ch
 	s_to_tag.len = strlen(to_tag);
 
     // mark the transaction as replied
-    t->kr|=REQ_RPLD;
+    set_kr(t,REQ_RPLD);
 
     /* compute the response */
     sb.s = body;

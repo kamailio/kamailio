@@ -29,6 +29,7 @@
 /*
  * History:
  * -------
+ *  2003-03-01  start_retr changed to retransmit only for UDP
  *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
  */
 
@@ -67,8 +68,10 @@ int send_pr_buffer( struct retr_buf *rb,
 
 void start_retr( struct retr_buf *rb )
 {
-	rb->retr_list=RT_T1_TO_1;
-	set_timer( &rb->retr_timer, RT_T1_TO_1 );
+	if (rb->dst.proto==PROTO_UDP) {
+		rb->retr_list=RT_T1_TO_1;
+		set_timer( &rb->retr_timer, RT_T1_TO_1 );
+	}
 	set_timer( &rb->fr_timer, FR_TIMER_LIST );
 }
 
@@ -98,7 +101,7 @@ void tm_shutdown()
 */
 int t_release_transaction( struct cell *trans )
 {
-	trans->kr|=REQ_RLSD;
+	set_kr(trans,REQ_RLSD);
 
 	reset_timer( & trans->uas.response.fr_timer );
 	reset_timer( & trans->uas.response.retr_timer );
@@ -118,17 +121,6 @@ int t_release_transaction( struct cell *trans )
 void put_on_wait(  struct cell  *Trans  )
 {
 
-#ifdef _XWAIT
-	LOCK_WAIT(Trans);
-	if (Trans->on_wait)
-	{
-		DBG("DEBUG: t_put_on_wait: already on wait\n");
-		UNLOCK_WAIT(Trans);
-	} else {
-		Trans->on_wait=1;
-		UNLOCK_WAIT(Trans);
-	}
-#endif
 #ifdef EXTRA_DEBUG
 	DBG("DEBUG: put on WAIT \n");
 #endif

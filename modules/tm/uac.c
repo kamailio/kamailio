@@ -44,6 +44,7 @@
  *
  * History:
  * --------
+ * 2003-03-01  kr set through a function now (jiri)
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-27 FIFO/UAC now dumps reply -- good for CTD (jiri)
  * 2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
@@ -359,7 +360,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 
 	new_cell->is_invite = msg->len == INVITE_LEN && memcmp(msg->s, INVITE, INVITE_LEN) == 0;
 	new_cell->local= 1 ;
-	new_cell->kr = REQ_FWDED;
+	set_kr(new_cell, REQ_FWDED);
 
 	request = &new_cell->uac[branch].request;
 	request->dst.to = to_su;
