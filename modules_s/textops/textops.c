@@ -35,12 +35,19 @@
  *
  * History:
  * -------
+ * 2003-01-29: - rewriting actions (replace, search_append) now begin
+ *               at the second line -- previously, they could affect
+ *               first line too, which resulted in wrong calculation of
+ *               forwarded requests and an error consequently
+ *             - replace_all introduced
+ * 2003-01-28 scratchpad removed (jiri)
  * 2003-01-18: append_urihf introduced (jiri)
  */
 
 
 
 
+#include "../../comp_defs.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../data_lump.h"
@@ -55,6 +62,7 @@
 
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
+static int replace_all_f(struct sip_msg* msg, char* key, char* str);
 static int search_append_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 static int append_hf(struct sip_msg* msg, char* str1, char* str2);
@@ -72,6 +80,7 @@ struct module_exports exports= {
 			"search",
 			"search_append",
 			"replace",
+			"replace_all",
 			"append_to_reply",
 			"append_hf",
 			"append_urihf"
@@ -80,12 +89,14 @@ struct module_exports exports= {
 			search_f,
 			search_append_f,
 			replace_f,
+			replace_all_f,
 			append_to_reply_f,
 			append_hf,
 			append_urihf
 	},
 	(int[]) {
 			1,
+			2,
 			2,
 			2,
 			1,
@@ -96,11 +107,12 @@ struct module_exports exports= {
 			fixup_regex,
 			fixup_regex,
 			fixup_regex,
+			fixup_regex,
 			0,
 			str_fixup,
 			str_fixup
 	},
-	6,
+	7,
 
 	0,      /* Module parameter names */
 	0,      /* Module parameter types */
@@ -121,13 +133,27 @@ static int mod_init(void)
 	return 0;
 }
 
+static char *get_header(struct sip_msg *msg)
+{
+#ifdef SCRATCH
+	return msg->orig+msg->first_line.len;
+#else
+	return msg->buf+msg->first_line.len;
+#endif
+}
+
+
 
 static int search_f(struct sip_msg* msg, char* key, char* str2)
 {
 	/*we registered only 1 param, so we ignore str2*/
 	regmatch_t pmatch;
 
+#ifdef SCRATCH
 	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
+#else
+	if (regexec((regex_t*) key, msg->buf, 1, &pmatch, 0)!=0) return -1;
+#endif
 	return 1;
 }
 
@@ -139,10 +165,15 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 	regmatch_t pmatch;
 	char* s;
 	int len;
+	char *begin;
+	int off;
 
-	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
+	begin=get_header(msg); /* msg->orig/buf previously .. uri problems */
+	off=begin-msg->buf;
+
+	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
-		if ((l=anchor_lump(&msg->add_rm, pmatch.rm_eo, 0, 0))==0)
+		if ((l=anchor_lump(&msg->add_rm, off+pmatch.rm_eo, 0, 0))==0)
 			return -1;
 		len=strlen(str);
 		s=pkg_malloc(len);
@@ -162,6 +193,51 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 }
 
 
+static int replace_all_f(struct sip_msg* msg, char* key, char* str)
+{
+
+
+	struct lump* l;
+	regmatch_t pmatch;
+	char* s;
+	int len;
+	char* begin;
+	int off;
+	int ret;
+
+	begin=get_header(msg); /* msg->orig previously .. uri problems */
+	ret=-1; /* pessimist: we will not find any */
+	len=strlen(str);
+
+	while (begin<msg->buf+msg->len 
+				&& regexec((regex_t*) key, begin, 1, &pmatch, 0)==0) {
+		off=begin-msg->buf;
+		if (pmatch.rm_so==-1){
+			LOG(L_ERR, "ERROR: replace_all_f: offset unknown\n");
+			return -1;
+		}
+		if ((l=del_lump(&msg->add_rm, pmatch.rm_so+off,
+						pmatch.rm_eo-pmatch.rm_so, 0))==0) {
+			LOG(L_ERR, "ERROR: replace_all_f: del_lump failed\n");
+			return -1;
+		}
+		s=pkg_malloc(len);
+		if (s==0){
+			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
+			return -1;
+		}
+		memcpy(s, str, len); 
+		if (insert_new_lump_after(l, s, len, 0)==0){
+			LOG(L_ERR, "ERROR: could not insert new lump\n");
+			pkg_free(s);
+			return -1;
+		}
+		/* new cycle */
+		begin=begin+pmatch.rm_eo;
+		ret=1;
+	} /* while found ... */
+	return ret;
+}
 
 static int replace_f(struct sip_msg* msg, char* key, char* str)
 {
@@ -169,10 +245,16 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 	regmatch_t pmatch;
 	char* s;
 	int len;
+	char* begin;
+	int off;
 
-	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
+	begin=get_header(msg); /* msg->orig previously .. uri problems */
+
+	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
+	off=begin-msg->buf;
+
 	if (pmatch.rm_so!=-1){
-		if ((l=del_lump(&msg->add_rm, pmatch.rm_so,
+		if ((l=del_lump(&msg->add_rm, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
 		len=strlen(str);
@@ -182,7 +264,7 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 			return -1;
 		}
 		memcpy(s, str, len); 
-		if (insert_new_lump_after(l, s, strlen(str), 0)==0){
+		if (insert_new_lump_after(l, s, len, 0)==0){
 			LOG(L_ERR, "ERROR: could not insert new lump\n");
 			pkg_free(s);
 			return -1;

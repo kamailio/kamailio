@@ -23,12 +23,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ * History:
+ * ----------
+ * 2002-01-28 scratchpad removed (jiri)
  */
 
 
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../comp_defs.h"
 #include "mf_funcs.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
@@ -92,9 +97,11 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
 	n = btostr(mf_val->s,x-1);
 	if ( n<mf_val->len )
 		mf_val->s[n] = ' ';
+#ifdef SCRATCH
 	n = btostr(translate_pointer(msg->orig,msg->buf,mf_val->s),x-1);
 	if ( n<mf_val->len )
 		*(translate_pointer(msg->orig,msg->buf,mf_val->s+n)) = ' ';
+#endif
 	return 1;
 
 error:

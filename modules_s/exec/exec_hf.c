@@ -28,6 +28,7 @@
  *
  * history
  * -------
+ * 2003-01-29 scratchpad removed
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -568,7 +569,11 @@ environment_t *set_env(struct sip_msg *msg)
 		goto error01;
 	}
 	/* create now the strings for environment variables */
+#ifdef SCRATCH
 	if (!create_vars(hf_list, msg->orig-msg->buf)) {
+#else
+	if (!create_vars(hf_list, 0)) {
+#endif
 		LOG(L_ERR, "ERROR: set_env: create_vars failed\n");
 		goto error00;
 	}
