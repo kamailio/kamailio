@@ -1669,7 +1669,7 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	while(c) {
-		param = (char*)pkg_malloc(RECEIVED_LEN + uri.len);
+		param = (char*)pkg_malloc(RECEIVED_LEN + 2 + uri.len);
 		if (!param) {
 			LOG(L_ERR, "add_rcv_param: No memory left\n");
 			return -1;
