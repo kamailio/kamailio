@@ -909,6 +909,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	struct socket_info* send_sock;
 	struct via_body* via;
 	int proto;
+	int backup_mhomed;
 
 	via=msg->via1;
 	if (!reply_to_via) {
@@ -926,7 +927,13 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	}
 	rb->dst.proto=proto;
 	rb->dst.proto_reserved1=msg->rcv.proto_reserved1;
+	/* turn off mhomed for generating replies -- they are ideally sent to where
+	   request came from to make life with NATs and other beasts easier
+	*/
+	backup_mhomed=mhomed;
+	mhomed=0;
 	send_sock=get_send_socket(&rb->dst.to, proto);
+	mhomed=backup_mhomed;
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d, proto %d "
 			"no socket\n", rb->dst.to.s.sa_family, proto);
