@@ -457,6 +457,7 @@ consume:
 int open_fifo_server()
 {
 	char *t;
+	struct stat filestat;
 
 	if (fifo==NULL) {
 		DBG("TM: open_uac_fifo: no fifo will be opened\n");
@@ -468,12 +469,30 @@ int open_fifo_server()
 		return 1;
 	}
 	DBG("TM: open_uac_fifo: opening fifo...\n");
-	if ((mkfifo(fifo, fifo_mode)<0) && (errno!=EEXIST)) {
-		LOG(L_ERR, "ERROR: open_fifo_server; can't create FIFO: "
-			"%s (mode=%d)\n",
-			strerror(errno), fifo_mode);
-		return -1;
-	} 
+	if (stat(fifo, &filestat)==-1) { /* FIFO doesn't exist yet ... */
+		LOG(L_DBG, "DEBUG: open_fifo_server: FIFO stat failed: %s\n",
+			strerror(errno));
+		if ((mkfifo(fifo, fifo_mode)<0)) {
+			LOG(L_ERR, "ERROR: open_fifo_server; can't create FIFO: "
+					"%s (mode=%d)\n",
+					strerror(errno), fifo_mode);
+			return -1;
+		} 
+		DBG("DEBUG: FIFO created @ %s\n", fifo );
+		if ((chmod(fifo, fifo_mode)<0)) {
+			LOG(L_ERR, "ERROR: open_fifo_server; can't chmod FIFO: "
+					"%s (mode=%d)\n",
+					strerror(errno), fifo_mode);
+			return -1;
+		}
+	} else { /* file can be stat-ed, check if it is really a FIFO */
+		if (!(S_ISFIFO(filestat.st_mode))) {
+			LOG(L_ERR, "ERROR: open_fifo_server: "
+				"the file is not a FIFO: %s\n",
+				fifo );
+			return -1;
+		}
+	}
 	DBG("DEBUG: fifo %s opened, mode=%d\n", fifo, fifo_mode );
 	time(&up_since);
 	t=ctime(&up_since);
