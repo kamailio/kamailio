@@ -506,6 +506,7 @@ getFromAddress(struct sip_msg *msg)
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
     str uri;
+    char *ptr;
 
     if (parse_from_header(msg) == -1) {
         LOG(L_ERR, "error: mediaproxy/getFromAddress(): error parsing From: field\n");
@@ -522,6 +523,10 @@ getFromAddress(struct sip_msg *msg)
         uri.len -= 4;
     }
 
+    if ((ptr = mp_memmem(uri.s, uri.len, ";", 1))!=NULL) {
+        uri.len = ptr - uri.s;
+    }
+
     return uri;
 }
 
@@ -533,6 +538,7 @@ getToAddress(struct sip_msg *msg)
     static char buf[16] = "unknown"; // buf is here for a reason. don't
     static str notfound = {buf, 7};  // use the constant string directly!
     str uri;
+    char *ptr;
 
     if (!msg->to) {
         LOG(L_ERR, "error: mediaproxy/getToAddress(): missing To: field\n");
@@ -547,6 +553,10 @@ getToAddress(struct sip_msg *msg)
     if (strncmp(uri.s, "sip:", 4)==0) {
         uri.s += 4;
         uri.len -= 4;
+    }
+
+    if ((ptr = mp_memmem(uri.s, uri.len, ";", 1))!=NULL) {
+        uri.len = ptr - uri.s;
     }
 
     return uri;
@@ -1277,7 +1287,7 @@ EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
         return -1;
     }
 
-    sprintf(command, "delete %.*s flags=\n", callId.len, callId.s);
+    sprintf(command, "delete %.*s info=\n", callId.len, callId.s);
     result = sendMediaproxyCommand(command);
 
     pkg_free(command);
