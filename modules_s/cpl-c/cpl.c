@@ -49,6 +49,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
+#include "../tm/tm_load.h"
 #include "cpl_run.h"
 #include "cpl_db.h"
 #include "cpl_loader.h"
@@ -63,6 +64,8 @@ int  cache_timeout = 5;
 cmd_function sl_send_rpl = 0;
 char *log_dir     = 0;    /*directory where the user log should be dumped*/
 int   cpl_cmd_pipe[2];
+struct tm_binds cpl_tmb;
+
 
 /* this vars are used outside only for loading scripts */
 char *dtd_file     = 0;
@@ -140,6 +143,7 @@ static int fixup_cpl_run_script(void** param, int param_no)
 
 static int cpl_init(void)
 {
+	load_tm_f  load_tm;
 	struct stat stat_t;
 	int val;
 
@@ -219,6 +223,16 @@ static int cpl_init(void)
 			"Did you forget to load the sl module ?\n");
 		goto error;
 	}
+
+	/* import the TM auto-loading function */
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
+		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import load_tm\n");
+		goto error;
+	}
+	/* let the auto-loading function load all TM stuff */
+	if (load_tm( &cpl_tmb )==-1) 
+		goto error;
+
 
 	/* register the fifo command */
 	if (register_fifo_cmd( cpl_loader, "LOAD_CPL", 0)!=1) {
