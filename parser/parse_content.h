@@ -45,6 +45,7 @@ struct mime_type {
 #define TYPE_TEXT            1
 #define TYPE_MESSAGE         2
 #define TYPE_APPLICATION     3
+#define TYPE_MULTIPART       4
 #define TYPE_ALL             0xfe
 #define TYPE_UNKNOWN         0xff
 
@@ -52,6 +53,13 @@ struct mime_type {
 #define SUBTYPE_CPIM         2
 #define SUBTYPE_SDP          3
 #define SUBTYPE_CPLXML       4
+#define SUBTYPE_PIDFXML      5
+#define SUBTYPE_RLMIXML      6
+#define SUBTYPE_RELATED      7
+#define SUBTYPE_LPIDFXML     8
+#define SUBTYPE_XPIDFXML     9
+#define SUBTYPE_WATCHERINFOXML     10
+#define SUBTYPE_EXTERNAL_BODY      11
 #define SUBTYPE_ALL          0xfe
 #define SUBTYPE_UNKNOWN      0xff
 
