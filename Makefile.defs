@@ -30,6 +30,7 @@
 #              and other FreeBSD arches for which no fast locking assembly
 #              code exists (sobomax)
 #  2003-11-08  mips1 support introduced (andrei)
+#  2003-11-24  openbsd 3.4 (elf) fixes (andrei)
 
 
 # check if already included/exported
@@ -43,13 +44,14 @@ export makefile_defs
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL =   12
+SUBLEVEL =   13
 EXTRAVERSION = -dev-23-merged
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
+OSREL = $(shell uname -r)
 
 # TLS support
 TLS ?= 
@@ -701,7 +703,7 @@ ifeq ($(OS), freebsd)
 endif
 
 ifeq ($(OS), openbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"' -DHAVE_GETHOSTBYNAME2 \
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN  -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_UNION_SEMUN -DHAVE_MSGHDR_MSG_CONTROL
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
@@ -711,8 +713,14 @@ ifeq ($(OS), openbsd)
 	YACC=yacc
 	# no sched_yield on openbsd unless linking with c_r (not recommended)
 	LIBS= -lfl 
-	LDFLAGS=        # openbsd ld doesn't like -O2 or -E
+	OPENBSD_IS_AOUT= $(shell echo "$(OSREL)" | \
+				sed -e 's/^3\.[0-3][^0-9]*$$/yes/' |sed -e 's/^[0-2]\..*/yes/')
+	
+ifeq ($(OPENBSD_IS_AOUT), yes)
+		DEFS+=-DDLSYM_PREFIX='"_"'
+		LDFLAGS=        # openbsd ld doesn't like -O2 or -E
 endif
+endif   # if opensd
 	
 ifeq ($(OS), netbsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 \
