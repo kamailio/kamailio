@@ -392,13 +392,12 @@ rpid() {
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
-				set_user $2
-				is_user 
+				is_user  $2
 				if [ $? -ne 0 ] ; then
 					echo non-existent user
 					exit 1;
 				fi
-				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN' "
+				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$2' AND $REALM_COLUMN='$SIP_DOMAIN' "
 			elif [ $# -ne 1 ] ; then
 				usage
 				exit 1
@@ -422,12 +421,12 @@ rpid() {
 			fi
 
 			prompt_pw
-			set_user $2
-			is_user 
+			is_user $2
 			if [ $? -ne 0 ] ; then
 				echo non-existent user
 				exit 1
 			fi
+			SIP_USER="$2"
 			shift 2
 
 			if [ "$MODE" = "add" ] ; then
@@ -438,14 +437,14 @@ rpid() {
 
 			QUERY="UPDATE $SUB_TABLE \
                 	SET $RPID_COLUMN=$RPID_VAL \
-                	WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN';"
+                	WHERE $SUBSCRIBER_COLUMN='$SIP_USER' AND $REALM_COLUMN='$SIP_DOMAIN';"
 				sql_query "$QUERY"
 				if [ $? -ne 0 ] ; then
 					echo "SQL Error"
 					exit 1
 				fi
 
-			$0 rpid show $SERUSER@$SERDOMAIN
+			$0 rpid show $SIP_USER@$SIP_DOMAIN
 
 			;;
 
