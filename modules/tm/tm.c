@@ -580,7 +580,7 @@ static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo)
 	}
 
 	/* do the flush */
-	switch ((int)dir) {
+	switch ((long)dir) {
 		case  1:
 			t->uas.request->flags = msg->flags;
 			break;
@@ -588,7 +588,8 @@ static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo)
 			msg->flags = t->uas.request->flags;
 			break;
 		default:
-			LOG(L_ERR,"ERROR:t_flush_flags: unknown direction %d\n",(int)dir);
+			LOG(L_ERR,"ERROR:t_flush_flags: unknown direction %ld\n",
+					(long)dir);
 			return -1;
 	}
 	return 1;
