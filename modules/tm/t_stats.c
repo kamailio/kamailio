@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-06-27  tm_stats & friends freed on exit only if non-null (andrei)
+ */
 
 
 #include "defs.h"
@@ -39,7 +44,7 @@
 #include "../../fifo_server.h"
 #include "../../pt.h"
 
-struct t_stats *tm_stats;
+struct t_stats *tm_stats=0;
 
 
 /* we don't worry about locking data during reads (unlike
@@ -147,10 +152,13 @@ int init_tm_stats(void)
 
 error4:
 	shm_free(tm_stats->s_client_transactions);
+	tm_stats->s_client_transactions=0;
 error3:
 	shm_free(tm_stats->s_transactions);
+	tm_stats->s_transactions=0;
 error2:
 	shm_free(tm_stats->s_waiting);
+	tm_stats->s_waiting=0;
 error1:
 	shm_free(tm_stats);
 error0:
@@ -159,8 +167,13 @@ error0:
 
 void free_tm_stats()
 {
-	shm_free(tm_stats->s_client_transactions);
-	shm_free(tm_stats->s_transactions);
-	shm_free(tm_stats->s_waiting);
-	shm_free(tm_stats);
+	if (tm_stats!=0){
+		if (tm_stats->s_client_transactions) 
+			shm_free(tm_stats->s_client_transactions);
+		if (tm_stats->s_transactions)
+			shm_free(tm_stats->s_transactions);
+		if (tm_stats->s_waiting)
+			shm_free(tm_stats->s_waiting);
+		shm_free(tm_stats);
+	}
 }
