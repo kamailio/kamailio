@@ -521,7 +521,7 @@ int tr_print(tmrec_p _trp)
 		printf("\n(null)\n");
 		return -1;
 	}
-	printf("\Recurrence definition\n-- start time ---\n");
+	printf("Recurrence definition\n-- start time ---\n");
 	printf("Sys time: %d\n", (int)_trp->dtstart);
 	printf("Time: %02d:%02d:%02d\n", _trp->ts.tm_hour, 
 				_trp->ts.tm_min, _trp->ts.tm_sec);
