@@ -16,6 +16,8 @@ Without MUSTs, I will not like the phone.
   which is getting it right today, 2003-02)
 - REFER (correctly please)
 - reasonable provisioning
+- the phones must be able to detect loss of Ethernet connectivity,
+  display it, and re-REGISTER when reconnected
 
 II) RECOMMENDED
 
