@@ -479,7 +479,7 @@ ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= athlon64
 					CFLAGS+=-minline-all-stringops \
 							-falign-loops \
-							-mcpu=$(CPU) \
+							#-mcpu=$(CPU) \ # not working on all x86_64 gccs
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
