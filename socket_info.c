@@ -565,12 +565,17 @@ int fix_all_socket_lists()
 		if (add_interfaces(0, AF_INET, 0,  PROTO_UDP, &udp_listen)==0){
 			/* if ok, try to add the others too */
 #ifdef USE_TCP
-			if (add_interfaces(0, AF_INET, 0,  PROTO_TCP, &tcp_listen)!=0)
-				goto error;
+			if (!tcp_disable){
+				if (add_interfaces(0, AF_INET, 0,  PROTO_TCP, &tcp_listen)!=0)
+					goto error;
 #ifdef USE_TLS
-			if (add_interfaces(0, AF_INET, 0, PROTO_TLS, &tls_listen)!=0)
-				goto error;
+				if (!tls_disable){
+					if (add_interfaces(0, AF_INET, 0, PROTO_TLS,
+								&tls_listen)!=0)
+					goto error;
+				}
 #endif
+			}
 #endif
 		}else{
 			/* if error fall back to get hostname */
