@@ -75,7 +75,6 @@ typedef struct _xj_jcon
 	int allowed;	// allowed IM networks
 	int ready;		// time when the connection is ready for sending messages
 
-	int *close;		// t_uac callback parameter
 	int nrjconf;	// number of open conferences
 	tree234 *jconf; // open conferences
 } t_xj_jcon, *xj_jcon;

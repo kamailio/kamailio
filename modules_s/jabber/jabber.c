@@ -33,9 +33,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/ipc.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -43,6 +45,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../globals.h"
+#include "../../timer.h"
 #include "../../parser/parse_uri.h"
 
 #include "../im/im_load.h"
@@ -51,6 +54,7 @@
 #include "xjab_worker.h"
 #include "xjab_util.h"
 #include "../../db/db.h"
+
 
 /** TM bind */
 struct tm_binds tmb;
@@ -81,6 +85,7 @@ char *jdomain  = NULL;
 int delay_time = 90;
 int sleep_time = 20;
 int cache_time = 600;
+int check_time = 20;
 
 int **pipes = NULL;
 
@@ -88,6 +93,7 @@ static int mod_init(void);
 static int child_init(int rank);
 
 int xjab_manage_sipmsg(struct sip_msg *msg, int type);
+void xjab_check_workers(int mpid);
 
 static int jab_send_message(struct sip_msg*, char*, char*);
 static int jab_send_bye(struct sip_msg*, char*, char*);
@@ -135,7 +141,8 @@ struct module_exports exports= {
 		"max_jobs",
 		"cache_time",
 		"delay_time",
-		"sleep_time"
+		"sleep_time",
+		"check_time"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
@@ -161,9 +168,10 @@ struct module_exports exports= {
 		&max_jobs,
 		&cache_time,
 		&delay_time,
-		&sleep_time
+		&sleep_time,
+		&check_time
 	},
-	11,      /* Number of module paramers */
+	12,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -289,41 +297,49 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	int i;
-	int *pids = NULL;
+	int i, j, mpid, cpid;
 	
 	DBG("XJAB:child_init: initializing child <%d>\n", rank);
 	if(rank == 0)
 	{
-		pids = (int*)pkg_malloc(nrw*sizeof(int));
-		if (pids == NULL)
+		if((mpid=fork())<0 )
 		{
-			DBG("XJAB:child_init: error while allocating pid's\n");
-			return -1;
-		}
-		/** launching the workers */
-		for(i=0;i<nrw;i++)
-		{
-			if ( (pids[i]=fork())<0 )
-			{
-				DBG("XJAB:child_init: error - cannot launch worker\n");
+			DBG("XJAB:child_init: error - cannot launch worker's manager\n");
 				return -1;
-			}
-			if (pids[i] == 0)
-			{
-				close(pipes[i][1]);
-				xj_worker_process(jwl,jaddress,jport,pipes[i][0],db_con[i]);
-				exit(0);
-			}
 		}
-	
-		if(xj_wlist_set_pids(jwl, pids, nrw) < 0)
+		if(mpid == 0)
 		{
-			DBG("XJAB:child_init: error setting pid's\n");
-			return -1;
+			/** launching the workers */
+			for(i=0;i<nrw;i++)
+			{
+				if ( (cpid=fork())<0 )
+				{
+					DBG("XJAB:child_init: error - cannot launch worker\n");
+					return -1;
+				}
+				if (cpid == 0)
+				{
+					for(j=0;j<nrw;j++)
+						if(j!=i) close(pipes[j][0]);
+					close(pipes[i][1]);
+					if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
+					{
+						DBG("XJAB:child_init: error setting worker's pid\n");
+						return -1;
+					}
+					xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
+					exit(0);
+				}
+			}
+
+			mpid = getpid();
+			while(1)
+			{
+				sleep(check_time);
+				xjab_check_workers(mpid);
+			}
+			exit(0);
 		}
-		if(pids)
-			pkg_free(pids);
 	}
 	
 	if(pipes)
@@ -581,12 +597,13 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 
 	jsmsg->jkey = p;
 	jsmsg->type = type;
-	jsmsg->jkey->hash = jkey.hash;
+	//jsmsg->jkey->hash = jkey.hash;
 
 	DBG("XJAB:xjab_manage_sipmsg:%d: sending <%p> to worker through <%d>\n",
 			getpid(), jsmsg, pipe);
 	// sending the SHM pointer of SIP message to the worker
-	if(write(pipe, &jsmsg, sizeof(jsmsg)) != sizeof(jsmsg))
+	fl = write(pipe, &jsmsg, sizeof(jsmsg));
+	if(fl != sizeof(jsmsg))
 	{
 		DBG("XJAB:xjab_manage_sipmsg: error when writting to worker pipe!\n");
 		if(type == XJ_SEND_MESSAGE)
@@ -628,5 +645,52 @@ void destroy(void)
 			
 	xj_wlist_free(jwl);
 	DBG("XJAB: Unloaded\n");
+}
+
+void xjab_check_workers(int mpid)
+{
+	int i, n, stat;
+	DBG("XJAB:%d:xjab_check_workers: time=%d\n", mpid, get_ticks());
+	if(!jwl || jwl->len <= 0)
+		return;
+	for(i=0; i < jwl->len; i++)
+	{
+		if(jwl->workers[i].pid <= 0)
+			continue;
+				stat = 0;
+		n = waitpid(jwl->workers[i].pid, &stat, WNOHANG);
+		if(n == 0)
+			continue;
+		
+		DBG("XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
+			" - status %d err=%d errno=%d\n", i, 
+			jwl->workers[i].pid, stat, n, errno);
+		if(n==jwl->workers[i].pid)
+		{
+			DBG("XJAB:%d:xjab_check_workers: create a new worker\n", mpid);
+			xj_wlist_set_pid(jwl, -1, i);
+			if ( (stat=fork())<0 )
+			{
+				DBG("XJAB:xjab_check_workers: error - cannot launch worker\n");
+				return;
+			}
+			if (stat == 0)
+			{
+				if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
+				{
+					DBG("XJAB:xjab_check_workers: error setting worker's pid\n");
+					return;
+				}
+				xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
+				exit(0);
+			}
+		}
+		else
+		{
+			LOG(L_ERR, "XJAB:xjab_check_workers: error - worker[%d][pid=%d] lost"
+				" forever\n", i, jwl->workers[i].pid);
+			xj_wlist_set_pid(jwl, -1, i);
+		}
+	}			
 }
 

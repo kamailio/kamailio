@@ -50,7 +50,8 @@ typedef struct _xj_jalias
 typedef struct _xj_worker
 {
 	int pid;			// process id
-	int pipe;			// communication pipe
+	int wpipe;			// communication pipe - write
+	int rpipe;			// communication pipe - read
 	int nr;				// number of jobs
 	tree234 *sip_ids;   // sip ids allocated for the worker
 } t_xj_worker, *xj_worker;
@@ -72,7 +73,7 @@ typedef struct _xj_wlist
 
 xj_wlist xj_wlist_init(int **, int, int, int, int, int);
 int  xj_wlist_init_contact(xj_wlist, char *);
-int  xj_wlist_set_pids(xj_wlist, int *, int);
+int  xj_wlist_set_pid(xj_wlist, int, int);
 int  xj_wlist_get(xj_wlist, xj_jkey, xj_jkey*);
 int  xj_wlist_check(xj_wlist, xj_jkey, xj_jkey*);
 void xj_wlist_del(xj_wlist, xj_jkey, int);

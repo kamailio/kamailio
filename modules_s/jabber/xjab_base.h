@@ -46,6 +46,7 @@
 typedef struct _xj_jkey
 {
 	int hash;
+	int flag;
 	str *id;
 } t_xj_jkey, *xj_jkey;
 

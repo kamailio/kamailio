@@ -80,14 +80,6 @@ xj_jcon xj_jcon_init(char *hostname, int port)
 		_M_FREE(jbc);
 		return NULL;
 	}
-	if((jbc->close = (int*)_M_SHM_MALLOC(sizeof(int)))==NULL)
-	{
-		_M_FREE(jbc->hostname);
-		_M_FREE(jbc);
-		return NULL;
-
-	}
-	*jbc->close = 0;
     strcpy(jbc->hostname, hostname);
 	jbc->allowed = jbc->ready = XJ_NET_NUL;
 	jbc->jconf = NULL;
@@ -474,11 +466,7 @@ int xj_jcon_free(xj_jcon jbc)
 		_M_FREE(jbc->hostname);
 	if(jbc->stream_id != NULL)
 		_M_FREE(jbc->stream_id);
-	if(jbc->close != NULL)
-	{
-		_M_SHM_FREE(jbc->close);
-		jbc->close = NULL;
-	}
+	
 	if(jbc->resource != NULL)
 		_M_FREE(jbc->resource);
 	DBG("XJAB:xj_jcon_free: %d conferences\n", jbc->nrjconf);
@@ -545,7 +533,7 @@ int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol)
 		DBG("XJAB: xj_jcon_is_ready: destination=conference\n");
 		
 		if((jcf=xj_jcon_get_jconf(jbc, &sto))!=NULL)
-			return (jcf->status & XJ_JCONF_READY)?0:1;
+			return (jcf->status & XJ_JCONF_READY)?0:3;
 		
 		DBG("XJAB: xj_jcon_is_ready: conference does not exist\n");
 		return -1;
