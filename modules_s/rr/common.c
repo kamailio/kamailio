@@ -200,7 +200,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		}
 		user = puri.user;
 	}
-	len += user.len + 1 /* '@' */;
+	len += user.len + 1; /* '@' */
 
 	if (_m->rcv.bind_address->address.af == AF_INET6) {
 		len += _m->rcv.bind_address->address_str.len + 2;
@@ -209,7 +209,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	}
 
 	if (_m->rcv.bind_address->port_no != SIP_PORT) {
-		p += _m->rcv.bind_address->port_no_str.len;
+		len += _m->rcv.bind_address->port_no_str.len;
 	}
 
 	if (_lr && use_fast_cmp) len += MD5_LEN;
@@ -269,7 +269,6 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		pkg_free(rr);
 		return 0;
 	}
-	
 	
 	if (_m->rcv.bind_address->port_no != SIP_PORT) {
 		memcpy(p, _m->rcv.bind_address->port_no_str.s, _m->rcv.bind_address->port_no_str.len);
