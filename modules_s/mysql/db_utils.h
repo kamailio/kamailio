@@ -26,8 +26,8 @@
  */
 
 
-#ifndef __DB_UTILS_H__
-#define __DB_UTILS_H__
+#ifndef DB_UTILS_H
+#define DB_UTILS_H
 
 #define __USE_XOPEN /* Because of strptime */
 #include <time.h>
