@@ -44,6 +44,8 @@ entries.
 
 %build
 make all cfg-target=/%{_sysconfdir}/ser/ exclude_modules="%exclude"
+cp modules/mysql/Makefile modules/mysql/Makefile.orig
+sed -e "s/\#-L\/usr\/lib\/mysql/-L\/usr\/lib\/mysql/g" modules/mysql/Makefile.orig > modules/mysql/Makefile
 make modules modules=modules/mysql cfg-target=/%{_sysconfdir}/ser/
 cd utils/gen_ha1
 make
@@ -65,18 +67,11 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 		 cfg-target=/%{_sysconfdir}/ser/ \
 		 modules-target=/%{_libdir}/ser/modules/ \
 	     exclude_modules="%exclude"
-
 make install-modules modules=modules/mysql \
-	     cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
-             cfg-dir=ser/ \
-	     bin-prefix=$RPM_BUILD_ROOT/%{_sbindir} \
-	     bin-dir="" \
 	     modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
 	     modules-dir=modules/ \
 	     doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
 	     doc-dir=ser/ \
-	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
-	     man-dir="" \
 	     cfg-target=/%{_sysconfdir}/ser/ \
 	     modules-target=/%{_libdir}/ser/modules/
 
@@ -154,6 +149,9 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+* Thu Sep 26 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+- Added library path to mysql/Makefile to build on SuSE 8.0
+
 * Thu Sep 26 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 - Added 'make [modules|modules-install]' to adapted Makefile changes
 
