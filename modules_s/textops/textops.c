@@ -54,6 +54,7 @@
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  *  2004-05-09: append_time introduced (jiri)
  *  2004-07-06  subst_user added (like subst_uri but only for user) (sobomax)
+ *  2004-11-12  subst_user changes (old serdev mails) (andrei)
  */
 
 
@@ -311,13 +312,15 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 	struct subst_expr* se;
 	int off;
 	int ret;
+	int nmatches;
 	
 	se=(struct subst_expr*)subst;
 	begin=get_header(msg);  /* start after first line to avoid replacing
 							   the uri */
 	off=begin-msg->buf;
 	ret=-1;
-	if ((lst=subst_run(se, begin, msg))==0) goto error; /* not found */
+	if ((lst=subst_run(se, begin, msg, &nmatches))==0)
+		goto error; /* not found */
 	for (rpl=lst; rpl; rpl=rpl->next){
 		DBG(" %s: subst_f: replacing at offset %d [%.*s] with [%.*s]\n",
 				exports.name, rpl->offset+off,
@@ -341,6 +344,8 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 error:
 	DBG("subst_f: lst was %p\n", lst);
 	if (lst) replace_lst_free(lst);
+	if (nmatches<0)
+		LOG(L_ERR, "ERROR: %s: subst_run failed\n", exports.name);
 	return ret;
 }
 
@@ -370,7 +375,7 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 	 * message will always be > uri.len */
 	c=tmp[len];
 	tmp[len]=0;
-	result=subst_str(tmp, msg, se); /* pkg malloc'ed result */
+	result=subst_str(tmp, msg, se, 0); /* pkg malloc'ed result */
 	tmp[len]=c;
 	if (result){
 		DBG("%s: subst_uri_f: match - old uri= [%.*s], new uri= [%.*s]\n",
@@ -392,38 +397,35 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 {
 	int rval;
-	str ruri;
-	struct sip_uri uri;
 	str* result;
 	struct subst_expr* se;
 	struct action act;
+	str user;
+	char c;
+	int nmatches;
 
-	if (msg->new_uri.len <= 0 && msg->first_line.u.request.uri.len <= 0) {
-		LOG(L_ERR, "subst_user(): URI is missed\n");
-		return -1;
+	c=0;
+	if (parse_sip_msg_uri(msg)<0){
+		return -1; /* error, bad uri */
 	}
-	ruri.len = msg->new_uri.s ? msg->new_uri.len :
-	    msg->first_line.u.request.uri.len;
-	ruri.s = alloca(ruri.len);
-	if (ruri.s == NULL) {
-		LOG(L_ERR, "subst_user(): No memory left\n");
-		return -1;
+	if (msg->parsed_uri.user.s==0){
+		/* no user in uri */
+		user.s="";
+		user.len=0;
+	}else{
+		user=msg->parsed_uri.user;
+		c=user.s[user.len];
+		user.s[user.len]=0;
 	}
-	memcpy(ruri.s, msg->new_uri.s ? msg->new_uri.s :
-	    msg->first_line.u.request.uri.s, ruri.len);
-	if (parse_uri(ruri.s, ruri.len, &uri) < 0) {
-		LOG(L_ERR, "subst_user(): can't parse request URI\n");
-		return -1;
-	}
-
 	se=(struct subst_expr*)subst;
-	uri.user.s[uri.user.len] = '\0';
-	result=subst_str(uri.user.s, msg, se); /* pkg malloc'ed result */
+	result=subst_str(user.s, msg, se, &nmatches);/* pkg malloc'ed result */
+	if (c)	user.s[user.len]=c;
 	if (result == NULL) {
-		LOG(L_ERR, "subst_user(): subst_str() failed\n");
+		if (nmatches<0)
+			LOG(L_ERR, "subst_user(): subst_str() failed\n");
 		return -1;
 	}
-	result->s[result->len] = '\0';
+	/* result->s[result->len] = '\0';  --subst_str returns 0-term strings */
 	memset(&act, 0, sizeof(act)); /* be on the safe side */
 	act.type = SET_USER_T;
 	act.p1_type = STRING_ST;
