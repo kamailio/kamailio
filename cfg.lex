@@ -351,7 +351,10 @@ static char* addstr(char * src, char ** dest)
 	unsigned len1, len2;
 	
 	if (*dest==0){
-		*dest=strdup(src);
+		len1 = strlen(src);
+		*dest = pkg_malloc(len1 + 1);
+		if (*dest == 0) goto error;
+		memcpy(*dest, src, len1 + 1);
 	}else{
 		len1=strlen(*dest);
 		len2=strlen(src);
