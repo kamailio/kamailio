@@ -180,6 +180,18 @@ static int mod_init(void)
 		return -1;
 	}
 
+	     /*
+	      * Test if use_domain parameters of usrloc and registrar
+	      * module are equal
+	      */
+	if (ul.use_domain != use_domain) {
+		LOG(L_ERR, "ERROR: 'use_domain' parameters of 'usrloc' and 'registrar' modules"
+		    " must have the same value !\n");
+		LOG(L_ERR, "(Hint: Did you forget to use modparam(\"registrar\", \"use_domain\", 1) in"
+			" in your ser.cfg ?)\n");
+		return -1;
+	}
+
 	return 0;
 }
 

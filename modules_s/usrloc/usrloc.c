@@ -30,7 +30,7 @@
  
 #include "usrloc.h"
 #include "../../sr_module.h"
-
+#include "ul_mod.h"
 
 int bind_usrloc(usrloc_api_t* api)
 {
@@ -132,6 +132,8 @@ int bind_usrloc(usrloc_api_t* api)
 		LOG(L_ERR, "bind_usrloc(): Can't bind register_ulcb\n");
 		return -1;
 	}
+
+	api->use_domain = use_domain;
 
 	return 0;
 }
