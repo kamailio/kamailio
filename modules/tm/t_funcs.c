@@ -22,6 +22,10 @@ int tm_startup()
    hash_table->timers[WT_TIMER_LIST].timeout_handler             = wait_handler;
    hash_table->timers[DELETE_LIST].timeout_handler                 = delete_handler;
 
+   /*first msg id*/
+   global_msg_id = 0;
+   T = 0;
+
    return 0;
 }
 
@@ -263,15 +267,16 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       free( buf ) ;
    }/* end for the first time */
 
+   /*sets and starts the FINAL RESPONSE timer */
+   add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
 
    /* sets and starts the RETRANS timer */
-   T->outbound_request[branch]->nr_retrans    = 0;
-   T->outbound_request[branch]->max_retrans = 
-	(T->inbound_request->first_line.u.request.method_value==METHOD_INVITE) ? 
-	MAX_INVITE_RETR : MAX_NON_INVITE_RETR;
-   T->outbound_request[branch]->timeout         = RETR_T1;
+   T->outbound_request[branch]->timeout_ceiling  = RETR_T2;
+   T->outbound_request[branch]->timeout_value    = RETR_T1;
+   insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
+
    /* send the request */
-   udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen , 
+   udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
 		(struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 }
 
@@ -296,12 +301,14 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    if ( !T )
       return 0;
 
-   /* on a non-200 reply to INVITE, generate local ACK and stop retransmission of the INVITE */
+   /* stop retransmission */
+   remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+
+   /* on a non-200 reply to INVITE, generate local ACK */
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
    {
       DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
       t_build_and_send_ACK( T , branch );
-      remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
       t_store_incoming_reply( T , branch , p_msg );
    }
 
@@ -311,24 +318,22 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    /*let's check the current inbound response status (is final or not) */
    if ( T->inbound_response && (T->status/100)>1 )
-   {   /*a final reply was already sent upstream */
-       /* alway relay 2xx immediately ; drop anything else */
+   {  /*a final reply was already sent upstream */
+      /* alway relay 2xx immediately ; drop anything else */
       DBG("DEBUG: t_on_reply_received: something final had been relayed\n");
       if ( p_msg->first_line.u.reply.statusclass==2 )
           t_relay_reply( T , branch , p_msg );
-       /* nothing to do for the ser core */
+      /* nothing to do for the ser core */
       return 1;
    }
    else
    {  /* no reply sent yet or sent but not final*/
       DBG("DEBUG: t_on_reply_received: no reply sent yet or sent but not final\n");
 
-      /* stops the request's retransmission*/
-      remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
       /* restart retransmission if provisional response came for a non_INVITE -> retrasmit at RT_T2*/
       if ( p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value!=METHOD_INVITE )
       {
-         T->outbound_request[branch]->timeout = RETR_T2;
+         T->outbound_request[branch]->timeout_value = RETR_T2;
          insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T2 );
       }
 
@@ -384,14 +389,16 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
           t_cancel_branch(i);
 
    /* make double-sure we have finished everything */
-   /* retranssmision list */
+   /* remove from  retranssmision  and  final response   list */
    remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+   remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
    for( i=0 ; i<T->nr_of_outgoings ; i++ )
+   {
       remove_from_timer_list( hash_table , &(T->outbound_request[i]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-   /* final response list */
-   remove_from_timer_list( hash_table , &(T->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-
-   add_to_tail_of_timer_list( hash_table, &(T->tl[WT_TIMER_LIST]), WT_TIMER_LIST, WT_TIME_OUT );
+      remove_from_timer_list( hash_table , &(T->outbound_request[i]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+   }
+   /* adds to Wait list*/
+   add_to_tail_of_timer_list( hash_table, &(T->wait_tl), WT_TIMER_LIST, WT_TIME_OUT );
    return 0;
 }
 
@@ -461,7 +468,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
           T->inbound_response->dest_port      = ntohl(T->inbound_response->to.sin_port);
           T->inbound_response->to.sin_family = AF_INET;
       }
-
+      T->status = code;
       T->inbound_response->bufflen = len ;
       T->inbound_response->buffer   = (char*)sh_malloc( len );
       memcpy( T->inbound_response->buffer , buf , len );
@@ -470,6 +477,10 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       /* make sure that if we send something final upstream, everything else will be cancelled */
       if ( code>=200 )
          t_put_on_wait( p_msg );
+
+      /* if the code is 3,4,5,6 class for an INVITE -> starts retrans timer*/
+      if ( p_msg->first_line.u.request.method_value==METHOD_INVITE && code>=300)
+         insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
 
       t_retransmit_reply( p_msg );
    }
@@ -726,6 +737,7 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    if ( T->inbound_response )
    {
       sh_free( T->inbound_response->buffer );
+      remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
    }
    else
    {
@@ -760,6 +772,11 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    /* make sure that if we send something final upstream, everything else will be cancelled */
    if (T->outbound_response[branch]->first_line.u.reply.statusclass>=2 )
       t_put_on_wait( p_msg );
+
+   /* if the code is 3,4,5,6 class for an INVITE-> starts retrans timer*/
+   if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE &&
+         T->outbound_response[branch]->first_line.u.reply.statusclass>=300)
+            insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
 
    t_retransmit_reply( p_msg );
 }
@@ -850,82 +867,6 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
 
 
 
-
-
-
-
-/*---------------------------------TIMEOUT HANDLERS--------------------------------------*/
-
-
-void retransmission_handler( void *attr)
-{
-   struct retrans_buff* r_buf = (struct retrans_buff*)attr;
-
-   /* the transaction is already removed from RETRANSMISSION_LIST by the timer */
-
-   /* do we still have to retransmit? */
-   if ( r_buf->nr_retrans<=r_buf->max_retrans )
-   {
-       /* computs the new timeout. */
-       if ( r_buf->timeout<RETR_T2 )
-          r_buf->timeout *=2;
-       r_buf->nr_retrans++;
-       /* re-insert into RETRASMISSIONS_LIST */
-       insert_into_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , r_buf->timeout );
-   }
-   else
-   {
-    // send also 408 ?  TO DO !!!!!!
-   }
-
-}
-
-
-
-
-void final_response_handler( void *attr)
-{
-   struct cell *p_cell = (struct cell*)attr;
-
-   /* the transaction is already removed from FR_LIST by the timer */
-   /* send a 408 (some dirty trick)*/
-   /* TO DO!!!!! to build the message  and to send*/
-   p_cell->status = 408;
-   /* put it on WT_LIST - transaction is over */
-   add_to_tail_of_timer_list( hash_table , &(p_cell->tl[WT_TIMER_LIST]) , WT_TIMER_LIST , WT_TIME_OUT );
-
-}
-
-
-
-
-void wait_handler( void *attr)
-{
-   struct cell *p_cell = (struct cell*)attr;
-
-   /* the transaction is already removed from WT_LIST by the timer */
-   /* the cell is removed from the hash table */
-    remove_from_hash_table( hash_table, p_cell );
-   /* put it on DEL_LIST - sch for del */
-    add_to_tail_of_timer_list( hash_table, &(p_cell->tl[DELETE_LIST]), DELETE_LIST, DEL_TIME_OUT );
-}
-
-
-
-
-void delete_handler( void *attr)
-{
-   struct cell *p_cell = (struct cell*)attr;
-
-   /* the transaction is already removed from DEL_LIST by the timer */
-    /* if is not refenceted -> is deleted*/
-    if ( p_cell->ref_counter==0 )
-       free_cell( p_cell );
-    else
-       /* else it's readded to del list for future del */
-       add_to_tail_of_timer_list( hash_table, &(p_cell->tl[DELETE_LIST]), DELETE_LIST, DEL_TIME_OUT );
-}
-
 /* append appropriate branch labels for fast reply-transaction matching
    to outgoing requests
 */
@@ -939,7 +880,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	if (p_msg->add_to_branch.len+ .... > MAX_BRANCH_PARAM_LEN ) {
 		LOG(L_ERR, "ERROR: add_branch_label: too small branch buffer\n");
 		return -1;
-	}	
+	}
 */
 
 	/* check if there already was something else -- if not, allocate */
@@ -955,3 +896,76 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	branch;
 */
 }
+
+
+
+
+
+
+/*---------------------------------TIMEOUT HANDLERS--------------------------------------*/
+
+
+void retransmission_handler( void *attr)
+{
+   struct retrans_buff* r_buf = (struct retrans_buff*)attr;
+
+   /* the transaction is already removed from RETRANSMISSION_LIST by the timer */
+
+   /* computs the new timeout. */
+   if ( r_buf->timeout_value<r_buf->timeout_ceiling )
+      r_buf->timeout_value *=2;
+
+   /* retransmision */
+   udp_send( r_buf->buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
+
+   /* re-insert into RETRASMISSIONS_LIST */
+   insert_into_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , r_buf->timeout_value );
+}
+
+
+
+
+void final_response_handler( void *attr)
+{
+   struct cell *p_cell = (struct cell*)attr;
+
+   /* the transaction is already removed from FR_LIST by the timer */
+   /* send a 408 */
+   t_send_reply( p_cell->inbound_request , 408 , "Request Timeout" );
+   /* put it on WT_LIST - transaction is over */
+   t_put_on_wait(  p_cell->inbound_request );
+}
+
+
+
+
+void wait_handler( void *attr)
+{
+   struct cell *p_cell = (struct cell*)attr;
+
+   /* the transaction is already removed from WT_LIST by the timer */
+   /* the cell is removed from the hash table */
+    remove_from_hash_table( hash_table, p_cell );
+   /* put it on DEL_LIST - sch for del */
+    add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
+}
+
+
+
+
+void delete_handler( void *attr)
+{
+   struct cell *p_cell = (struct cell*)attr;
+
+   /* the transaction is already removed from DEL_LIST by the timer */
+    /* if is not refenceted -> is deleted*/
+    if ( p_cell->ref_counter==0 )
+       free_cell( p_cell );
+    else
+       /* else it's readded to del list for future del */
+       add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
+}
+
+
+
+

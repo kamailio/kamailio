@@ -141,8 +141,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    init_cell_lock(  new_cell );
    /* ref counter is 0 */
    /* all pointers from timers list tl are NULL */
-   for( i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
-      new_cell->tl->payload = new_cell;
+   new_cell->wait_tl.payload = new_cell;
 
    /* inbound request */
    /* force parsing all the needed headers*/

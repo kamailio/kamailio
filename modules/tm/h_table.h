@@ -53,11 +53,10 @@ typedef struct retrans_buff
    socklen_t tolen;
    */
    size_t tolen;
-   /* a message can be linked just to one retransmission list */
-   struct timer_link tl[1];
-   unsigned int nr_retrans;
-   unsigned int max_retrans;
-   unsigned int timeout;
+   /* a message can be linked just to retransmission and FR list */
+   struct timer_link tl[2];
+   unsigned int timeout_ceiling;
+   unsigned int timeout_value;
 }retrans_buff_type;
 
 
@@ -78,8 +77,9 @@ typedef struct cell
    /* sequence number within hash collision slot */
    unsigned int  label;
 
-   /* bindings to all timer links in which a cell may be located */
-   struct timer_link tl[NR_OF_TIMER_LISTS];
+   /* bindings to wait and delete timer */
+   struct timer_link wait_tl;
+   struct timer_link dele_tl;
 
    /* usefull data */
    /* incoming request and its response*/

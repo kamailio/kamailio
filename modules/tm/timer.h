@@ -12,7 +12,7 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine
    wait if no final response comes back*/
-#define FR_TIME_OUT     16
+#define FR_TIME_OUT     64
 
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/
@@ -24,10 +24,7 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 
 
 #define RETR_T1  1
-#define RETR_T2  2
-
-#define MAX_INVITE_RETR           7
-#define MAX_NON_INVITE_RETR  11
+#define RETR_T2  4
 
 
 /* all you need to put a cell in a timer list:
