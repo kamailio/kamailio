@@ -35,7 +35,7 @@ $fifo_cmd=":t_uac:".$myfilename."\n".
     "REFER\n".$caller."\n".
     "p-version: ".$signature."\n".
     "Contact: ".$web_contact."\n".
-    "Refered-By: ".$web_contact."\n".
+    "Referred-By: ".$web_contact."\n".
 	"Refer-To: ".$callee."\n".
     "\n". /* EoHeader */
     ".\n\n"; /* EoFifoRequest */
