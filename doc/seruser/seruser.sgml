@@ -196,8 +196,7 @@
 	</section> <!-- serfeatures -->
 
 	<section id="usecases">
-	    <title>Use Cases
-	    </title>
+	    <title>Use Cases</title>
 	    <para>
 		This section illustrates the most frequent uses of SIP. In all these scenarios, 
 		the SIP Express Router (SER) can be easily deployed as the glue connecting all 
@@ -305,7 +304,14 @@
 
 			<warning>
 			    <para>
-				ser's request processing language allows to make request decisions based on current URI. When a request if forked to multiple destinations, only the first branch's URI is used as input for script processing. This might lead to unexpected results. Whenever a URI resolves to multiple different next-hop URIs, only the first is processed which may result in handling not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP address and PSTN gateway SIP address. If the IP phone address is the first, then script execution ignores the second branch and vice versa. That might result in ignoring of gateway admission control rules or applying them unnecessarily to non-gateway destinations.
+				ser's request processing language allows to make request decisions based on current URI. 
+				When a request if forked to multiple destinations, only the first branch's URI is used as 
+				input for script processing. This might lead to unexpected results. Whenever a URI resolves 
+				to multiple different next-hop URIs, only the first is processed which may result in handling 
+				not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP 
+				address and PSTN gateway SIP address. If the IP phone address is the first, then script 
+				execution ignores the second branch and vice versa. That might result in ignoring of 
+				gateway admission control rules or applying them unnecessarily to non-gateway destinations.
 			    </para>
 			</warning>
 		    </listitem>
@@ -399,11 +405,12 @@
 # if requests URI is nummerical and starts with
 # zero, forward statelessly, otherwise forward 
 # statefuly
+
 if (uri=~"^sip:0[0-9]*@iptel.org) {
-# statelessly
+    # statelessly
     forward( 192.168.99.3, 5080 );
 } else {
-# statefully
+    # statefully
     t_relay_to( "192.168.99.3", "5080" );
 }
 		</programlisting>
@@ -468,8 +475,10 @@ if (uri=~"dan@foo.bar") {
 # is the request method REGISTER?
 
 if (method=="REGISTER") {
+
     # are authentication credential valid ? ...
     if (!www_authorize("iptel.org", "subscriber")) {
+
         # .... no, challange user and stop processing
         www_challenge("iptel.org", "0");
         break;
@@ -477,6 +486,7 @@ if (method=="REGISTER") {
 
 # ... credentials valid -> save a new entry
 # in user location database
+
     save("location");
     break;
 };
@@ -565,6 +575,7 @@ if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 # from an IP addres (useful for example for
 # authentication by IP address if digest is not
 # supported) AND the request method is INVITE
+
 # if ( (src_ip==192.68.77.110 and method=="INVITE")
 # ...
 </programlisting>
@@ -610,9 +621,11 @@ if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 # first of all, load the module!
 loadmodule "/usr/lib/ser/modules/sl.so
 route{
+
     # when ser acts as stateless server, it must
     # consume acknowledgments
     sl_filter_ack();
+
     # now reply
     sl_send_reply("404", "Not Found");
 }
@@ -984,120 +997,126 @@ reply_route[2] {
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<emphasis>debug</emphasis> - Set log level, this is number between 0 and 9.
+			<varname>debug</varname> - Set log level, this is number between 0 and 9.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>fork</emphasis> - If set to yes, the server will spawn children. If set to no, the main
+			<varname>fork</varname> - If set to yes, the server will spawn children. If set to no, the main
 			process will be processing all messages (this is mainly for debugging).
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>log_stderror</emphasis> - If set to yes, the server will print its debugging 
+			<varname>log_stderror</varname> - If set to yes, the server will print its debugging 
 			information to standard error output. If set to no, <command moreinfo="none">syslog</command> 
 			will be used.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			listen
+			<varname>listen</varname> - list of all IP addresses or hostnames SER should listen on.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			alias
+			<varname>alias</varname> - Add IP addresses or hostnames to list of name aliases.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			dns
+			<varname>dns</varname> - Uses dns to check if it is necessary to add a "received=" field to a via.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			rev_dns
+			<varname>rev_dns</varname> - Same as dns but use reverse DNS.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			port
+			<varname>port</varname> - Listens on the specified port (default 5060). It applies to the last 
+			address specified in listen and to all the following that do not have a corresponding "port" option.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			statistics
+			<varname>statistics</varname> - File in which statistics should be written.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			maxbuffer
+			<varname>maxbuffer</varname> - Maximum receive buffer size which will not be exceeded by 
+			the auto-probing procedure even if the OS allows.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>children</emphasis> - Specifies how many children should be created when fork is set to yes.
+			<varname>children</varname> - Specifies how many children should be created when fork is set to yes.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>check_via</emphasis>
+			<varname>check_via</varname> - Turn on or off Via host checking when forwarding replies.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>syn_branch</emphasis>
+			<varname>syn_branch</varname> - Shall the server use stateful synonym branches? It is faster but not 
+			reboot-safe.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>mem_log</emphasis>
+			<varname>mem_log</varname> - Debugging level for memory statistics.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>sip_warning</emphasis>
+			<varname>sip_warning</varname> - Should replies include extensive warnings? By default yes,
+			it is good for trouble-shooting.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>fifo</emphasis> - FIFO special file pathname, for example "/tmp/ser_fifo".
+			<varname>fifo</varname> - FIFO special file pathname, for example "/tmp/ser_fifo".
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>fifo_mode</emphasis> - Permissions of the FIFO special file.
+			<varname>fifo_mode</varname> - Permissions of the FIFO special file.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			server_signature
+			<varname>server_signature</varname> - Should localy-generated messages include server's signature?
+			By default yes, it is good for trouble-shooting.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			reply_to_via
+			<varname>reply_to_via</varname> - A hint to reply modules whether they should send reply
+			to IP advertised in Via or IP from which a request came.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>user | uid</emphasis> - uid to be used by the server. 
+			<varname>user | uid</varname> - uid to be used by the server. 
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>group | gid</emphasis> - gid to be used by the server.
+			<varname>group | gid</varname> - gid to be used by the server.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>loadmodule</emphasis> - Specifies a module to be loaded (for example "/usr/lib/ser/modules/tm.so" 
+			<varname>loadmodule</varname> - Specifies a module to be loaded (for example "/usr/lib/ser/modules/tm.so" 
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>modparam</emphasis> - Module parameter configuration. The commands takes three parameters:
+			<varname>modparam</varname> - Module parameter configuration. The commands takes three parameters:
 			<itemizedlist>
 			    <listitem>
 				<para>
@@ -1124,122 +1143,346 @@ reply_route[2] {
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<emphasis>forward</emphasis>
+			<command>forward</command> - Forward the request to given destination.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> forward("foo.bar.com");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>drop</emphasis>
+			<command>drop</command> - Drop the request and stop processing.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> drop();
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>send</emphasis>
+			<command>send</command> - Send the message as is to the third party (without Via processing, good for
+			spying).
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> send("foo.bar.com");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>log</emphasis>
+			<command>log</command> - Log a message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> log("This is a message\n");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>error</emphasis>
+			<command>error</command> - Report and error (same as log but in different log level).
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> error("This is an error message\n");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>route</emphasis>
+			<command>route</command> - This marks a route statement in the configuration file.
+		    </para>
+		    <example>
+			<title>route</title>
+			<programlisting format="linespecific">
+route {
+    forward("host", "port");
+}
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>reply_route</command> - This marks a reply_route in the configuration statement.
+		    </para>
+		    <example>
+			<title>reply_route</title>
+			<programlisting format="linespecific">
+reply_route[1] {
+    rewriteuri("sip:nonsense@iptel.org");
+    append_branch();
+    t_on_negative("2");
+}
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>exec</command> - Execute an external command.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> exec("rm -rf /");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>reply_route</emphasis>
+			<command>setflag</command> - Set flag in the message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setflag(1);
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>exec</emphasis>
+			<command>resetflag</command> - Reset flag in the message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> resetflag(1);
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>setflag</emphasis>
+			<command>isflagset</command> - Test whether a particular flag is set.
+		    </para>
+		    <example>
+			<title>isflagset</title>
+			<programlisting format="linespecific">
+if (isflagset(1)) {
+    ....
+};
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>len_gt</command> - If length of the message is greater than value given as parameter, the
+			command will return 1 (indicating true). Otherwise -1 (indicating false) will be returned.
+		    </para>
+		    <example>
+			<title>len_gt</title>
+			<programlisting format="linespecific">
+if (len_gt(1000)) {
+    ....
+};
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>rewritehost | sethost | seth</command> - Rewrite host part of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> sethost("foo.bar.com");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>resetflag</emphasis>
+			<command>rewritehostport | sethostport | sethp</command> - Rewrite host and port part of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> sethostport("foo.bar.com:5060");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>isflagset</emphasis>
+			<command>rewriteuser | setuser | setu</command> - Rewrite or set username part of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setuser("joe");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>len_gt</emphasis>
+			<command>rewriteuserpass | setuserpass | setup</command> - Rewrite or set username and password part
+			of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setuserpass("joe:mypass");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>rewritehost | sethost | seth</emphasis>
+			<command>rewriteport | setport | setp</command> - Rewrite or set port of the Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> setport("5060");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>rewritehostport | sethostport | sethp</emphasis>
+			<command>rewriteuri | seturi</command> - Rewrite or set the whole Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> seturi("sip:joe@foo.bar.com:5060");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>rewriteuser | setuser | setu</emphasis>
+			<command>revert_uri</command> - Revert changes made to the Request URI and use original Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> revert_uri();
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>rewriteuserpass | setuserpass | setup</emphasis>
+			<command>prefix</command> - Add prefix to username in Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> prefix("123");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>rewriteport | setport | setp</emphasis>
+			<command>strip</command> - Remove first n characters of username in Request URI.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> strip(3);
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>rewriteuri | seturi</emphasis>
+			<command>append_branch</command> - Append a new destination to destination set of the message.
+		    </para>
+		    <para>
+			<emphasis>Example:</emphasis> append_branch("sip:foo.bar.com");
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>revert_uri</emphasis>
+			<command>if</command> - If statement.
+		    </para>
+		    <example>
+			<title>if</title>
+			<programlisting format="linespecific">
+if (...) {
+    ...
+};
+</programlisting>
+		    </example>
+		</listitem>
+		<listitem>
+		    <para>
+			<command>else</command> - Else statement.
+		    </para>
+		    <example>
+			<title>else</title>
+			<programlisting format="linespecific">
+if (...) {
+    ...
+} else {
+    ...
+};
+</programlisting>
+		    </example>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>Command Line Parameters</title>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>-h</emphasis> - Displays a short usage description, including all available options.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>prefix</emphasis>
+			<emphasis>-c</emphasis> - Performs loop checks and computes branches.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>strip</emphasis>
+			<emphasis>-r</emphasis> - Uses dns to check if it is necessary to add a "received=" field to a via.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>append_branch</emphasis>
+			<emphasis>-R</emphasis> - Same as -r but uses reverse dns.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>if</emphasis>
+			<emphasis>-v</emphasis> - Turns on via host checking when forwarding replies.
 		    </para>
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>else</emphasis>
+			<emphasis>-d</emphasis> - Turns on debugging, multiple -d increase debugging level.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-D</emphasis> - Runs ser in the foreground (it doesn't fork into daemon mode).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-E</emphasis> - Sends all the log messages to stderr.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-V</emphasis> - Displays the version number.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-f config-file</emphasis> - Reads the configuration from "config-file" (default ./ser.cfg).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-l address</emphasis> - Listens on the specified address. Multiple -l mean listening 
+			on multiple addresses. The default behaviour is to listen on all the ipv4 interfaces.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-p port</emphasis> - Listens on the specified port (default 5060). It applies to the last 
+			address specified with -l and to all the following that do not have a corresponding -p.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-n processes-no</emphasis> - Specifies the number of children processes forked per 
+			interface (default 8).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-b max_rcv_buf_size</emphasis> - Maximum receive buffer size which will not be exceeded by 
+			the auto-probing procedure even if the OS allows.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-m shared_mem_size</emphasis> - Size of the shared memory which will be allocated (in Megabytes).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-w working-dir</emphasis> - Specifies the working directory. In the very improbable event 
+			that will crash, the core file will be generated here.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-t chroot-dir</emphasis> - Forces ser to chroot after reading the config file.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-u uid</emphasis> - Changes the user id under which ser runs.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-g gid</emphasis> - Changes the group id under which ser runs.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-P pid-file</emphasis> - Creates a file containing the pid of the main ser process.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>-i fifo-path</emphasis> - Creates a fifo, usefull for monitoring ser status.
 		    </para>
 		</listitem>
 	    </itemizedlist>
