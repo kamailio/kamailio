@@ -142,6 +142,10 @@ typedef enum {
 	note that callbacks MUST be installed before forking
     (callback lists do not live in shmem and have no access
 	protection), i.e., at best from mod_init functions.
+
+	also, note: the callback param is currently not used;
+	if whoever wishes to use a callback parameter, use
+	trans->cbp
 */
 
 typedef void (transaction_cb) ( struct cell* t, struct sip_msg* msg, 

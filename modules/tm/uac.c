@@ -281,8 +281,8 @@ static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su,
  *           'headers' parameter
  * - cb ..   callback to be called when transaction completes; if none
  *           present, no callback will be called
- * - cbp ..  callback parameter -- value passed to callback function
- *           when called
+ * - cbp ..  callback parameter -- value stored in transaction context
+ *           
  *
  */
 int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OPTIONS etc. */
