@@ -148,7 +148,7 @@ static Bool testPrivateVia(struct sip_msg* msg);
 /* Local global variables */
 static char *mediaproxySocket = "/var/run/proxydispatcher.sock";
 
-static int natpingInterval = 20; // 20 seconds
+static int natpingInterval = 60; // 60 seconds
 
 static usrloc_api_t userLocation;
 
