@@ -600,7 +600,7 @@ int t_add_fork( unsigned int ip, unsigned int port, char* uri_s,
 			unsigned int uri_len, enum fork_type type, unsigned char free_flag)
 {
 	unsigned int pos=0;
-	char         *foo;
+	char         *foo=0;
 
 	switch (type)
 	{
@@ -617,7 +617,7 @@ int t_add_fork( unsigned int ip, unsigned int port, char* uri_s,
 			if (t_forks[NO_RPL_BRANCH].ip)
 				LOG(L_WARN,"WARNING:t_add_fork: trying to add NO_RPL fork ->"
 					" it was set before -> overriding\n");
-			if (uri_s && uri_len && free_flag==0)
+			if (uri_s && uri_len)
 			{
 				foo = (char*)shm_malloc(uri_len);
 				if (!foo)
@@ -626,8 +626,10 @@ int t_add_fork( unsigned int ip, unsigned int port, char* uri_s,
 					return -1;
 				}
 				memcpy(foo,uri_s,uri_len);
-				uri_s = foo;
 			}
+			if (free_flag && uri_s)
+				pkg_free(uri_s);
+			uri_s = foo;
 			free_flag = 0;
 			pos = NO_RPL_BRANCH;
 	}
