@@ -1077,6 +1077,8 @@ ACCOMPANYING utils:
 - sipsak
 - serweb
 
+- FIFO and service creation
+
 follow the mysql pattern, tehy have a very nice documentation
 -->
 
