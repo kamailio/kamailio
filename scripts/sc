@@ -76,6 +76,7 @@ if [ "0$VERIFY_ACL" -eq 1 ] ; then
 	EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
 fi
 cat <<EOF
+sc $Revision$
 usage: 
            < subscribers >
  $CMD add <name> <password> <email> ... add a new subscriber (*)
