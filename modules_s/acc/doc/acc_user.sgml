@@ -106,7 +106,7 @@
 	    module with properly set defines. Uncomment the SQL_ACC and RAD_ACC lines in
 	    modules/acc/Makefile. To compile SQL support, you need to have mysqlclient package on
 	    your system. To compile RADIUS support, you need to have radiusclient installed on your
-	    system (version 0.4.0 or higher is required) which is available from
+	    system (version 0.4.1 or higher is required) which is available from
 	    <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
 	    http://developer.berlios.de/projects/radiusclient-ng/</ulink>. The radius client needs to
 	    be configured properly. To do so, use the template at etc/radiusclient.conf and make sure

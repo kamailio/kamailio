@@ -21,7 +21,7 @@
 	    radius server we perform some sanity checks over the credentials to make sure that only
 	    well formed credentials will get to the server. We have implemented radius
 	    authentication according to draft-sterman-aaa-sip-00. This module requires radiusclient
-	    library version 0.4.0 or higher which is available from <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
+	    library version 0.4.1 or higher which is available from <ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
 	    http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 	</para>
 	<para>How to configure radius server -- more detailed description -- TBD.</para>
