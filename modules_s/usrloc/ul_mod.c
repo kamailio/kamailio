@@ -241,12 +241,13 @@ static int mod_init(void)
 			LOG(L_ERR, "ERROR: mod_init(): Can't bind database module\n");
 			return -1;
 		}
+		if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
+			LOG(L_ERR, "usrloc:mod_init: Database module does not implement"
+						" all functions needed by the module\n");
+			return -1;
+		}
 	}
 
-	if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
-		LOG(L_ERR, "usrloc:mod_init: Database module does not implement all functions needed by the module\n");
-		return -1;
-	}
 
 	return 0;
 }
