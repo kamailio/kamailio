@@ -62,8 +62,10 @@ static int xdbg_fixup(void** param, int param_no);
 void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"xlog",  xlog,  2, xlog_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
+		 ONREPLY_ROUTE},
+	{"xdbg",  xdbg,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE | 
+		ONREPLY_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -203,11 +205,9 @@ static int xdbg_fixup(void** param, int param_no)
 			{
 				LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]\n",
 					(char*)(*param));
-				pkg_free(model);
 				return E_UNSPEC;
 			}
 			
-			//pkg_free(*param);
 			*param = (void*)model;
 			return 0;
 		}

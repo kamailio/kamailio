@@ -62,6 +62,8 @@ Chapter 1. User's Guide
      * %ft : 'From' tag
      * %rm : request's method
      * %ru : request's r-uri
+     * %rr : reply's reason
+     * %rs : reply's status
      * %tu : 'To' uri
      * %tt : 'To' tag
      * %mi : SIP message id

@@ -75,6 +75,16 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %rr : reply's reason
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rs : reply's status
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %tu : 'To' uri
 		</para>
 	    </listitem>

@@ -159,10 +159,45 @@ static int xl_get_method(struct sip_msg *msg, str *res)
 	return 0;
 }
 
+static int xl_get_status(struct sip_msg *msg, str *res)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+	{
+		res->s = msg->first_line.u.reply.status.s;
+		res->len = msg->first_line.u.reply.status.len;		
+	}
+	else
+		return xl_get_null(msg, res);
+	
+	return 0;
+}
+
+static int xl_get_reason(struct sip_msg *msg, str *res)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)
+	{
+		res->s = msg->first_line.u.reply.reason.s;
+		res->len = msg->first_line.u.reply.reason.len;		
+	}
+	else
+		return xl_get_null(msg, res);
+	
+	return 0;
+}
+
 static int xl_get_ruri(struct sip_msg *msg, str *res)
 {
 	if(msg==NULL || res==NULL)
 		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)	/* REPLYs dont have a ruri */
+		return xl_get_null(msg, res);
 
 	if(msg->parsed_uri_ok==0 /* R-URI not parsed*/ && parse_sip_msg_uri(msg)<0)
 	{
@@ -170,7 +205,8 @@ static int xl_get_ruri(struct sip_msg *msg, str *res)
 		return xl_get_null(msg, res);
 	}
 	
-	res->s=msg->parsed_uri.user.len>0?msg->parsed_uri.user.s:msg->parsed_uri.host.s;
+	res->s = msg->parsed_uri.user.len>0 ? msg->parsed_uri.user.s :
+										  msg->parsed_uri.host.s;
 	res->len = msg->parsed_uri.user.len+
 				msg->parsed_uri.passwd.len+
 				msg->parsed_uri.host.len+
@@ -442,6 +478,12 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					case 'u':
 						e->itf = xl_get_ruri;
 					break;
+					case 's':
+						e->itf = xl_get_status;
+					break;
+					case 'r':
+						e->itf = xl_get_reason;
+					break;
 					default:
 						e->itf = xl_get_null;
 				}
@@ -529,7 +571,7 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 			if(n+it->text.len < *len)
 			{
 				strncat(buf, it->text.s, it->text.len);
-				n+= it->text.len;
+				n += it->text.len;
 			}
 			else
 				goto overflow;
