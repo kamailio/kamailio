@@ -266,6 +266,8 @@ static int ul_add(FILE* pipe, char* response_file)
 	
 	table.s = table_s;
 	user.s = user_s;
+	strlower(&user);
+
 	contact.s = contact_s;
 	expires.s = expires_s;
 	q.s = q_s;
@@ -351,6 +353,8 @@ int static ul_rm( FILE *pipe, char *response_file )
 	}
 
 	aor.s = user;
+	strlower(&aor);
+
 	t.s = table;
 
 	fifo_find_domain(&t, &d);
@@ -426,6 +430,8 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 	}
 
 	aor.s = user;
+	strlower(&aor);
+
 	t.s = table;
 	c.s = contact;
 
@@ -550,6 +556,8 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 	}
 
 	aor.s = user;
+	strlower(&aor);
+
 	t.s = table;
 	
 	fifo_find_domain(&t, &d);

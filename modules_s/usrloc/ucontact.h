@@ -62,6 +62,7 @@ typedef struct ucontact {
         int cseq;              /* CSeq value */
 	unsigned int replicate;/* replication marker */
 	cstate_t state;        /* State of the contact */
+	unsigned int flags;    /* Various flags (NAT, supported methods etc) */
 	struct ucontact* next; /* Next contact in the linked list */
 	struct ucontact* prev; /* Previous contact in the linked list */
 } ucontact_t;
@@ -71,7 +72,7 @@ typedef struct ucontact {
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q, 
-		 str* _callid, int _cseq, int _rep, ucontact_t** _c);
+		 str* _callid, int _cseq, int _rep, unsigned int _fl, ucontact_t** _c);
 
 
 /*
@@ -89,7 +90,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 /*
  * Update existing contact in memory with new values
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs);
+int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, unsigned int _fl);
 
 
 
@@ -157,12 +158,12 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
-int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs);
+int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, unsigned int _fl);
 
 /*
  * Update ucontact with new values with addtional replication argument
  */
-int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep);
+int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep, unsigned int _fl);
 
 
 #endif /* UCONTACT_H */

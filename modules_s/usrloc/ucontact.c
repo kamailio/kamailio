@@ -46,7 +46,7 @@
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q,
-		 str* _callid, int _cseq, int _rep, ucontact_t** _c)
+		 str* _callid, int _cseq, int _rep, unsigned int _fl, ucontact_t** _c)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!(*_c)) {
@@ -85,7 +85,8 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q,
 	(*_c)->next = 0;
 	(*_c)->prev = 0;
 	(*_c)->state = CS_NEW;
-	
+	(*_c)->flags = _fl;
+
 	return 0;
 }	
 
@@ -132,6 +133,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "CSeq   : %d\n", _c->cseq);
 	fprintf(_f, "replic : %u\n", _c->replicate);
 	fprintf(_f, "State  : %s\n", st);
+	fprintf(_f, "Flags  : %u\n", _c->flags);
 	fprintf(_f, "next   : %p\n", _c->next);
 	fprintf(_f, "prev   : %p\n", _c->prev);
 	fprintf(_f, "~~~/Contact~~~~\n");
@@ -141,7 +143,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 /*
  * Update ucontact structure in memory
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
+int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, unsigned int _fl)
 {
 	char* ptr;
 	
