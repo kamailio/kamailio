@@ -502,7 +502,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	db_key_t keys[12];
 	db_val_t vals[12];
 	
-	if ((_c->flags & FL_MEM) != FL_MEM) {
+	if (_c->flags & FL_MEM) {
 		return 0;
 	}
 
@@ -616,7 +616,7 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys2[9];
 	db_val_t vals2[9];
 
-	if ((_c->flags & FL_MEM) != FL_MEM) {
+	if (_c->flags & FL_MEM) {
 		return 0;
 	}
 
@@ -722,7 +722,7 @@ int db_delete_ucontact(ucontact_t* _c)
 	db_key_t keys[3];
 	db_val_t vals[3];
 
-	if ((_c->flags & FL_MEM) != FL_MEM) {
+	if (_c->flags & FL_MEM) {
 		return 0;
 	}
 
