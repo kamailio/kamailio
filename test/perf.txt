@@ -1,0 +1,34 @@
+#$Id$
+#
+# ser measurements
+
+date: 20.09.2002
+
+hardware: dorian 2*Athlon 1200 (ser) <=gigabit=> mobile34 2*PIII 900 (turbosip)
+
+version: ser 0.8.7-14-gpl (i386/Linux)
+flags: STATS:Off, USE_IPV6, NO_DEBUG, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC,
+FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024, MAX_RECV_BUFFER_SIZE 262144,
+MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040
+
+ser command: ./ser -f test/test-throughput.cfg -l 10.0.0.179 -n 1 -D 
+ser command: ./ser -f test/th-uri-fast.cfg     -l 10.0.0.179 -n 1 -D -m 256
+
+test calls: 100000 
+
+stateless:
+
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser   gcc-3.2      20            3093  2967     3267  3398       3536  3549
+                  100            4587  4669     5011  5181       4872  4985 
+                  150            4920  4836     5161  5127       5122  5134
+
+tm:
+
+ser  gcc-3.2      20             2456  2448     3158  3147       3137  3179
+                 100             2535  2535     3429  3445       3399  3365
+                 150             2537* 2542*    3448  3473       3359  3407*
+                 200             2546* 2560*    3434* 2948+      3365* 3425*
+
+(*) - retransmissions ( 500ms)
+(+) - retransmissions (2000ms)
