@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 /* 
  * TODO: Optimize short variants of headers
  *       Test, Test, Test....
@@ -193,7 +197,7 @@ static inline int unify(int key)
 	     hdr->type = HDR_CONTACT; \
 	     hdr->name.len = 7;       \
 	     *(p + 3) = '\0';         \
-	     return (p + 7);          \
+	     return (p + 4);          \
 	                              \
      case act2:                       \
 	     hdr->type = HDR_CONTACT; \
