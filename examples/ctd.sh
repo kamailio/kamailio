@@ -116,7 +116,7 @@ line==4 { print $0; next; }
 # main
 
 # set up exit cleaner
-trap "rm -f $dlg $fifo_reply; exit" 0
+trap "rm -f $dlg $fifo_reply; exit 1" 0
 
 # set up FIFO communication
 
@@ -200,14 +200,14 @@ EOF
 
 # report REFER status
 wait $fifo_job
-ret="$?"
+ref_ret="$?"
 
-if [ "$ret" -ne "0" ] ; then
+if [ "$ref_ret" -ne "0" ] ; then
 	echo "refer failed"
-	exit 1
+else
+	echo "refer succeeded"
 fi
 
-echo "refer succeeded"
 
 # well, URI is trying to call TARGET but still maintains the
 # dummy call we established with previous INVITE transaction:
@@ -239,3 +239,8 @@ if [ "$ret" -ne "0" ] ; then
 	exit 1
 fi
 echo "bye succeeded"
+
+# clean-up
+trap 0
+rm -f $dlg $fifo_reply
+exit $ref_ret
