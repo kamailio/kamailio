@@ -1,0 +1,51 @@
+#
+# $Id$
+#
+
+Exec module allows to start an external command when
+from a ser script. The commands may be any valid
+shell commands -- the command string is passed to
+shell using 'popen' command. ser passes additionaly
+source address of request in environment variable
+SRCIP.
+
+Exported parameters:
+---------------------
+
+Name:	exec_timer
+Type:	int
+Default: 0
+Desc:	specifies the longest time a program is allows to
+	    execute; if the time is exceeded, the program is
+		killed
+
+Exported functions:
+-------------------
+Name:	exec_uri
+Params:	command -- command to be executed; 
+Desc:	executes an external command; current uri is passed
+		to the command as parameter; output of the command
+		is considered URI set (separated by lines)
+
+Name:	exec_user
+Params:	command -- command to be executed; 
+Desc:	executes an external command; user part of current uri is passed
+		to the command as parameter; output of the command
+		is considered URI set (separated by lines)
+
+Name:	exec_cmd
+Params: command -- command to be executed
+Desc:	executes an external command; the whole message is passed to
+		it in input, no command-line parameters are added, output of
+		the command is not processed
+
+Example of use: see etc/exec.cfg
+
+
+Known Issues
+------------
+
+- kill.c is really ugly and not useable (it cannot work with popen); a redo
+  using some other technique would allow more generatily (commands would
+  be able to both process input and generate output), would allow for
+  killing processes,  but would also introduce additional complexity
