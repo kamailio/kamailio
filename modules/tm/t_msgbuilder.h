@@ -30,6 +30,8 @@
 #ifndef _MSGBUILDER_H
 #define _MSGBUILDER_H
 
+#include "../../ip_addr.h"
+
 #include "defs.h"
 
 
@@ -96,7 +98,8 @@ char *build_uac_request_dlg(str* msg,            /* Method */
 	                    str* body,           /* Body of the message */
 	                    int branch,         /* Branch */
 	                    struct cell *t,
-	                    unsigned int *len
+	                    unsigned int *len,
+						struct socket_info *send_sock
 	                   );
 
 

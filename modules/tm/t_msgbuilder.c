@@ -332,7 +332,9 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 			    str* body,          /* Body of the message */
 			    int branch,         /* Branch */
 			    struct cell *t,     
-			    unsigned int *len)
+			    unsigned int *len,
+				struct socket_info* send_sock
+				)
 {
 	char *via, *buf, *w, content_len[10], cseq_str[10], branch_buf[MAX_BRANCH_PARAM_LEN];
 	int content_len_len, cseq_str_len, branch_len;
@@ -368,8 +370,8 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 		goto error;
 	}
 
-	via = via_builder(&via_len, t->uac[branch].request.send_sock, 
-			branch_buf, branch_len, t->uac[branch].request.send_sock->proto);
+	via = via_builder(&via_len, send_sock,
+			branch_buf, branch_len, send_sock->proto);
 	if (!via) {
 		LOG(L_ERR, "ERROR: build_uac_request_dlg: via building failed\n");
 		goto error;
@@ -387,7 +389,8 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 		+ CRLF_LEN; /* EoM */
 	
 	     /* header field value and body length */
-	*len +=   to->len + ((totag) ? (TOTAG_LEN + totag->len) : 0) /* To */
+	*len +=   to->len + 
+			((totag && totag->len) ? (TOTAG_LEN + totag->len) : 0) /* To */
 		+ from->len + FROMTAG_LEN + fromtag->len             /* From */
 		+ cseq_str_len + 1 + msg->len                        /* CSeq */
 		+ callid->len                                        /* Call-ID */
@@ -418,11 +421,11 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 
 	     /* To */
 	t->to.s = w;
-	t->to.len = TO_LEN + to->len + ((totag) ? (TOTAG_LEN + totag->len) : 0);
-
+	t->to.len= TO_LEN+to->len;
 	memapp(w, TO, TO_LEN);
 	memapp(w, to->s, to->len);
-	if (totag) {
+	if (totag && totag->len ) {
+		t->to.len += TOTAG_LEN + totag->len ;
 		memapp(w, TOTAG, TOTAG_LEN);
 		memapp(w, totag->s, totag->len);
 	}
