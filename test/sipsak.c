@@ -397,8 +397,6 @@ void warning_extract(char *message)
 {
 	char *warning, *end, *mid, *server;
 	int srvsize;
-	struct hostent* he, re;
-	struct in_addr in;
 
 	warning=strstr(message, "Warning");
 	if (warning) {
@@ -504,6 +502,7 @@ void shoot(char *buff)
 		else
 			nretries=255;
 		namebeg=1;
+		maxforw=0;
 		create_msg(buff, REQ_OPT);
 		add_via(buff);
 	}
@@ -672,7 +671,7 @@ void shoot(char *buff)
 								crlf=contact;
 							bar=malloc(crlf-foo+1);
 							strncpy(bar, foo, crlf-foo);
-							sprintf(bar+(crlf-foo), "\0");
+							sprintf(bar+(crlf-foo), "0");
 							if ((contact=strstr(bar, "sip"))==NULL) {
 								printf("error: cannot find sip in the Contact of this redirect:\n%s\n", reply);
 								exit(2);
@@ -731,18 +730,19 @@ void shoot(char *buff)
 							printf("%s\n", reply);
 #endif
 							namebeg++;
+							maxforw++;
 							create_msg(buff, REQ_OPT);
 							add_via(buff);
 							continue;
 						}
 						else {
 							crlf=strchr(reply,'\n');
-							sprintf(crlf, "\0");
+							sprintf(crlf, "0");
 							crlf++;
 							contact=strstr(crlf, "Contact");
 							if (contact){
 								crlf=strchr(contact,'\n');
-								sprintf(crlf, "\0");
+								sprintf(crlf, "0");
 								printf("   %s\n", contact);
 							}
 							else {
@@ -841,7 +841,7 @@ void shoot(char *buff)
 						}
 						else {
 							printf("warning: did not received 4xx\n");
-							if (verbose) printf("sended:\n%s\nreceived:\n%s\n");
+							if (verbose) printf("sended:\n%s\nreceived:\n%s\n", buff, reply);
 						}
 						if (nameend==(i+1)) {
 							if (randretrys == 0) {
@@ -1122,10 +1122,10 @@ int main(int argc, char *argv[])
 			via_ins=1;
 		}
 		if (!warning_ext) {
-			printf("warning: IP extract from waring activated to be more informational\n");
+			printf("warning: IP extract from warning activated to be more informational\n");
 			warning_ext=1;
 		}
-		if (maxforw==-1) maxforw=0;
+		if (maxforw==-1) maxforw=255;
 	}
 	else if (usrloc) {
 		if (trace || flood || randtrash) {
