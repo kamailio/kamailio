@@ -1,86 +1,170 @@
-#
-# README of domain module -- Juha Heinanen April 1, 2003
-#
 
-Domain module implements checks that based on domain table determine if
-a host part of an URI is "local" or not.  A "local" domain is one that
-the proxy is responsible for.
+Domain Module
 
-Domain module operates in caching or non-caching mode depending on value
-of module parameter db_mode.  In caching mode domain module reads the
-contents of domain table into cache memory when the module is loaded.
-After that domain table is re-read only when module is given
-domain_reload fifo command.  Any changes in domain table must thus be
-followed by domain_reload command in order to reflect them in module
-behavior.  In non-caching mode domain module always queries domain table
-in the database.
+Juha Heinanen
 
-Caching is implemented using a hash table.  The size of the hash table
-is given by HASH_SIZE constant defined in domain_mod.h.  Its "factory
-default" value is 128.
+Edited by
 
+Juha Heinanen
 
-Depends on:
-----------
+   Copyright © 2002, 2003 Juha Heinanen
+     _________________________________________________________
 
-mysql
+   Table of Contents
+   1. User's Guide
 
-Exported parameters:
--------------------
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
 
-Name:	 db_url
-Type:    string
-Default: "sql://serro:47serro11@localhost/ser"
-Desc:    URL for accessing the database.
+              1.3.1. db_url (string)
+              1.3.2. db_mode (integer)
+              1.3.3. domain_table (string)
+              1.3.4. domain_column (string)
 
-Name:	 db_mode
-Type:    int
-Default: 0
-Desc:    Database usage mode: 0 = non-caching, 1 = caching
+        1.4. Exported Functions
 
-Name:	 domain_table
-Type:    string
-Default: "domain"
-Desc:    Name of table containing names of local domains that the proxy
-	 is responsible for.  Local users must have in their sip uri a
-	 host part that is equal to one of these domains.
+              1.4.1. is_from_local()
 
-Name:	 domain_col
-Type:	 string
-Default: "domain"
-Desc:	 Name of column containing domains in domain table
+        1.5. FIFO Commands
 
-Exported Functions:
-------------------
+              1.5.1. domain_reload
+              1.5.2. domain_dump
 
-Name:	is_from_local
-Params:	-
-Desc:	Checks based on domain table if host part of From header uri is
-	one of the local domains that the proxy is responsible for
+        1.6. Known Limitations
 
-Name:	is_uri_host_local
-Params:	-
-Desc:	Checks based on domain table if request uri belongs to one of the
-	local domains
+   2. Developer's Guide
+   3. Frequently Asked Questions
 
-Fifo Commands:
--------------
+   List of Examples
+   1-1. Setting db_url parameter
+   1-2. nonce_expire example
+   1-3. Setting domain_table parameter
+   1-4. Setting domain_column parameter
+   1-5. is_from_local usage
+     _________________________________________________________
 
-Name:	domain_reload
-Params: -
-Desc:	Causes domain module to re-read the contents of domain table
-	into cache memory.
+Chapter 1. User's Guide
 
-Name:	domain_dump
-Params: -
-Desc:	Causes domain module to dump hash indexes and domain names in
-	its cache memory.
+1.1. Overview
 
+   Domain module implements checks that based on domain table
+   determine if a host part of an URI is "local" or not. A
+   "local" domain is one that the proxy is responsible for.
 
-Known Limitations
------------------
+   Domain module operates in caching or non-caching mode
+   depending on value of module parameter db_mode. In caching
+   mode domain module reads the contents of domain table into
+   cache memory when the module is loaded. After that domain
+   table is re-read only when module is given domain_reload fifo
+   command. Any changes in domain table must thus be followed by
+   domain_reload command in order to reflect them in module
+   behavior. In non-caching mode domain module always queries
+   domain table in the database.
 
-There is an unlikely race condition on domain list update.
-If a process uses a table, which is reloaded at the same 
-time twice through FIFO, the second reload will delete the
-original table still in use by the process.
+   Caching is implemented using a hash table. The size of the
+   hash table is given by HASH_SIZE constant defined in
+   domain_mod.h. Its "factory default" value is 128.
+     _________________________________________________________
+
+1.2. Dependencies
+
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
+
+     * database -- Any database module
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   This is URL of the database to be used.
+
+   Default value is "sql://serro:47serro11@localhost/ser"
+
+   Example 1-1. Setting db_url parameter
+modparam("domain", "db_url", "sql://ser:pass@db_host/ser")
+     _________________________________________________________
+
+1.3.2. db_mode (integer)
+
+   Database mode. 0 means non-caching, 1 means caching.
+
+   Default value is 0 (non-caching).
+
+   Example 1-2. nonce_expire example
+modparam("domain", "db_mode", 1)   # Use chaching
+     _________________________________________________________
+
+1.3.3. domain_table (string)
+
+   Name of table containing names of local domains that the proxy
+   is responsible for. Local users must have in their sip uri a
+   host part that is equal to one of these domains.
+
+   Default value is "domain".
+
+   Example 1-3. Setting domain_table parameter
+modparam("domain", "domain_table", "new_name")
+     _________________________________________________________
+
+1.3.4. domain_column (string)
+
+   Name of column containing domains in domain table.
+
+   Default value is "domain".
+
+   Example 1-4. Setting domain_column parameter
+modparam("domain", "domain_column", "domain_col")
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. is_from_local()
+
+   Checks based on domain table if host part of From header uri
+   is one of the local domains that the proxy is responsible for
+
+   Example 1-5. is_from_local usage
+...
+if (is_from_local()) {
+    ...
+};
+...
+     _________________________________________________________
+
+1.5. FIFO Commands
+
+1.5.1. domain_reload
+
+   Causes domain module to re-read the contents of domain table
+   into cache memory.
+     _________________________________________________________
+
+1.5.2. domain_dump
+
+   Causes domain module to dump hash indexes and domain names in
+   its cache memory.
+     _________________________________________________________
+
+1.6. Known Limitations
+
+   There is an unlikely race condition on domain list update. If
+   a process uses a table, which is reloaded at the same time
+   twice through FIFO, the second reload will delete the original
+   table still in use by the process.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   To be done.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. What is the meaning of life ?
+
+   3.1. What is the meaning of life ?
+
+   42
