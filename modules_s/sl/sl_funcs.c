@@ -29,6 +29,8 @@
   * -------
   * 2003-02-11  modified sl_send_reply to use the transport independend
   *              msg_send  (andrei)
+  * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (it was defined twice
+  *              w/ different values!)  (andrei)
   */
 
 
@@ -52,7 +54,7 @@
 
 
 /* to-tag including pre-calculated and fixed part */
-static char           sl_tag[TOTAG_LEN];
+static char           sl_tag[TOTAG_VALUE_LEN];
 /* from here, the variable prefix begins */
 static char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
@@ -153,7 +155,8 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
 		calc_crc_suffix( msg, tag_suffix );
-		buf = build_res_buf_from_sip_req(code,text,sl_tag,TOTAG_LEN,msg ,&len);
+		buf = build_res_buf_from_sip_req(code,text,sl_tag,TOTAG_VALUE_LEN,
+											msg ,&len);
 	} else {
 		buf = build_res_buf_from_sip_req(code,text,0,0,msg ,&len);
 	}
@@ -228,12 +231,12 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 
 	if (msg->to) {
 		tag_str = &(get_to(msg)->tag_value);
-		if ( tag_str->len==TOTAG_LEN )
+		if ( tag_str->len==TOTAG_VALUE_LEN )
 		{
 			/* calculate the variable part of to-tag */	
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
-			if (memcmp(tag_str->s,sl_tag,TOTAG_LEN)==0) {
+			if (memcmp(tag_str->s,sl_tag,TOTAG_VALUE_LEN)==0) {
 				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
 				return 0;
 			}
