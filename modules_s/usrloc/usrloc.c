@@ -148,11 +148,12 @@ void build_contact_buf(char* _buf, int* _len, location_t* _loc)
 
 	t = time(NULL);
 	
-	memcpy(_buf, "Contact: <", 10);
-	l = 10;
+	memcpy(_buf, "Contact: ", 9);
+	l = 9;
 
 	ptr = _loc->contacts;
 	while(ptr) {
+		*(_buf + l++) = '<';
 		memcpy(_buf + l, ptr->c.s, ptr->c.len);
 		l += ptr->c.len;
 		memcpy(_buf + l, ">;q=", 4);
