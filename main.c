@@ -165,6 +165,7 @@ extern FILE* yyin;
 extern int yyparse();
 
 
+static int is_main=0; /* flag = is this the  "main" process? */
 
 /* daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
@@ -247,7 +248,8 @@ int main_loop()
 					}
 				}
 		}
-		/* receive loop */
+		/* main process, receive loop */
+		is_main=1;
 		udp_rcv_loop();
 	}else{
 		for(r=0;r<addresses_no;r++){
@@ -269,6 +271,8 @@ int main_loop()
 			close(udp_sock); /*parent*/
 		}
 	}
+	/*this is the main process*/
+	is_main=1;
 	if (timer_list){
 		for(;;){
 			/* debug:  instead of doing something usefull */
@@ -308,15 +312,18 @@ static void sig_usr(int signo)
 		DPrint("INT received, program terminates\n");
 		DPrint("Thank you for flying ser\n");
 		/* WARNING: very dangerous, might be unsafe*/
-		destroy_modules();
+		if (is_main)
+			destroy_modules();
 #ifdef PKG_MALLOC
 		pkg_status();
 #endif
 #ifdef SHM_MEM
-		shm_status();
+		if (is_main)
+			shm_status();
 #endif
 #ifdef SHM_MEM
-		shm_mem_destroy();
+		if (is_main)
+			shm_mem_destroy();
 #endif
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
