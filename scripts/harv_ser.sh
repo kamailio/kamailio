@@ -48,7 +48,7 @@ BEGIN {
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
         rpl406=0;rpl407=0;rpl408=0;rpl410=0; rpl415=0;
         rpl476=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
-		rpl488=0;
+		rpl488=0;rpl489=0;
         rpl4xx=0;
 	rpl479=0;
     rpl500=0;rpl501=0;rpl502=0;rpl503=0;rpl5xx=0;
@@ -427,6 +427,10 @@ reply==0 && request=0 {
     rpl488++
     next
 }
+/SIP\/2\.0 489/ {
+    rpl489++
+    next
+}
 /SIP\/2\.0 479/ {
     rpl479++
     next
@@ -542,6 +546,7 @@ END {
 	print "486 (Busy Here): " rpl486 
 	print "487 (Request Terminated): " rpl487
 	print "488 (Not Acceptable): " rpl488
+	print "489 (Bad Event): " rpl489
 	print "4xx: " rpl4xx  
     print "500 (Server Internal Error): " rpl500 
 	print "501 (Not Implemented): " rpl501 
