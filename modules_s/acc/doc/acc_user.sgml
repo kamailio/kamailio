@@ -552,6 +552,30 @@ acc_rad_request("Some comment");
 </programlisting>
 	    </example>
 	</section>
+	<section>
+	    <title><function moreinfo="none">acc_diam_request(comment)</function></title>
+	    <para>
+		Like <function moreinfo="none">acc_log_request</function>, 
+		<function moreinfo="none">acc_diam_requst</function> reports on a request. It
+		reports to Diameter server.
+	    </para> 
+	    <para>
+		Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>comment</emphasis> - Comment to be appended.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>acc_diam_request usage</title>
+		<programlisting format="linespecific">
+...
+acc_diam_request("Some comment");
+...
+</programlisting>
+	    </example>
+	</section>
     </section>
 </chapter>
 
