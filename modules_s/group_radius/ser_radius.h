@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Group Membership - R
+ * Group Membership - Radius
  * Definitions not found in radiusclient.h
  *
  * Copyright (C) 2001-2003 Fhg Fokus
