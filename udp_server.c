@@ -330,8 +330,8 @@ int udp_rcv_loop()
 		buf[len]=0; /* no need to save the previous char */
 
 #ifndef NO_ZERO_CHECKS
-		if (len==0) {
-			LOG(L_WARN, "WARNING: empty packet received\n");
+		if (len<5) {
+			DBG("DEBUG: probing packet received\n");
 			continue;
 		}
 		if (buf[len-1]==0) {
