@@ -446,7 +446,7 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
 #ifdef PARANOID
-	if ((!_h) || (!_r) || (!_s)) {
+	if ((!_h) || (!_s)) {
 		LOG(L_ERR, "db_raw_query(): Invalid parameter value\n");
 		return -1;
 	}
@@ -457,7 +457,9 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 		return -2;
 	}
 
-	return get_result(_h, _r);
+	if(_r)
+	    return get_result(_h, _r);
+	return 0;
 }
 
 
