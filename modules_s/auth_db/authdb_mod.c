@@ -44,8 +44,8 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "authorize.h"
+#include "../auth/aaa_avps.h"
 #include "../auth/api.h"
-#include "aaa_avps.h"
 
 MODULE_VERSION
 
@@ -72,9 +72,6 @@ static int mod_init(void);
 static int str_fixup(void** param, int param_no);
 
 
-pre_auth_f pre_auth_func = 0;
-post_auth_f post_auth_func = 0;
-
 /*
  * Pointer to reply function in stateless module
  */
@@ -93,31 +90,28 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 #define PASS_COL_2 "ha1b"
 #define PASS_COL_2_LEN (sizeof(PASS_COL_2) - 1)
 
-#define AVPS_COL_INT "domn"
-#define AVPS_COL_INT_LEN (sizeof(AVPS_COL_INT) - 1)
-
-#define AVPS_COL_STR "uuid|rpid"
-#define AVPS_COL_STR_LEN (sizeof(AVPS_COL_STR) - 1)
-
+#define DEFAULT_CRED_LIST "rpid"
 
 /*
  * Module parameter variables
  */
-static str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str user_column      = {USER_COL, USER_COL_LEN};
-str domain_column    = {DOMAIN_COL, DOMAIN_COL_LEN};
-str pass_column      = {PASS_COL, PASS_COL_LEN};
-str pass_column_2    = {PASS_COL_2, PASS_COL_2_LEN};
-static str avps_column_int  = {AVPS_COL_INT, AVPS_COL_INT_LEN};
-static str avps_column_str  = {AVPS_COL_STR, AVPS_COL_STR_LEN};
-str *avps_int        = NULL;
-str *avps_str        = NULL;
-int avps_int_n       = 0;
-int avps_str_n       = 0;
-int calc_ha1         = 0;
-int use_domain       = 0;    /* Use also domain when looking up a table row */
+static char* db_url         = DEFAULT_RODB_URL;
+str user_column             = {USER_COL, USER_COL_LEN};
+str domain_column           = {DOMAIN_COL, DOMAIN_COL_LEN};
+str pass_column             = {PASS_COL, PASS_COL_LEN};
+str pass_column_2           = {PASS_COL_2, PASS_COL_2_LEN};
 
 
+int calc_ha1                = 0;
+int use_domain              = 0;   /* Use also domain when looking up a table row */
+
+db_con_t* auth_db_handle = 0;      /* database connection handle */
+db_func_t auth_dbf;
+auth_api_t auth_api;
+
+str credentials_list        = {DEFAULT_CRED_LIST, sizeof(DEFAULT_CRED_LIST)};
+str* credentials;          /* Parsed list of credentials to load */
+int credentials_n;         /* Number of credentials in the list */
 
 /*
  * Exported functions
@@ -133,15 +127,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url.s         },
-	{"user_column",       STR_PARAM, &user_column.s    },
-	{"domain_column",     STR_PARAM, &domain_column.s  },
-	{"password_column",   STR_PARAM, &pass_column.s    },
-	{"password_column_2", STR_PARAM, &pass_column_2.s  },
-	{"avps_column_int",   STR_PARAM, &avps_column_int.s},
-	{"avps_column_str",   STR_PARAM, &avps_column_str.s},
-	{"calculate_ha1",     INT_PARAM, &calc_ha1         },
-	{"use_domain",        INT_PARAM, &use_domain       },
+	{"db_url",            STR_PARAM, &db_url             },
+	{"user_column",       STR_PARAM, &user_column.s      },
+	{"domain_column",     STR_PARAM, &domain_column.s    },
+	{"password_column",   STR_PARAM, &pass_column.s      },
+	{"password_column_2", STR_PARAM, &pass_column_2.s    },
+	{"calculate_ha1",     INT_PARAM, &calc_ha1           },
+	{"use_domain",        INT_PARAM, &use_domain         },
+	{"load_credentials",  STR_PARAM, &credentials_list.s },
 	{0, 0, 0}
 };
 
@@ -163,35 +156,44 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	     /* Close connection opened in mod_init */
-	return auth_db_init(db_url.s);
+	auth_db_handle = auth_dbf.init(db_url);
+	if (auth_db_handle == 0){
+		LOG(L_ERR, "auth_db:child_init: unable to connect to the database\n");
+		return -1;
+	}
+
+	return 0;
 }
 
 
 static int mod_init(void)
 {
+	bind_auth_t bind_auth;
 
 	DBG("auth_db module - initializing\n");
 
-	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
 	pass_column.len = strlen(pass_column.s);
 	pass_column_2.len = strlen(pass_column.s);
 
-	if (aaa_avps_init(&avps_column_int, &avps_column_str, &avps_int,
-	    &avps_str, &avps_int_n, &avps_str_n) == -1)
-		return -1;
+	credentials_list.len = strlen(credentials_list.s);
 
 	     /* Find a database module */
-	if (auth_db_bind(db_url.s)<0)
+
+	if (bind_dbmod(db_url, &auth_dbf) < 0){
+		LOG(L_ERR, "auth_db:child_init: Unable to bind a database driver\n");
 		return -2;
+	}
 
-	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
-	post_auth_func = (post_auth_f)find_export("post_auth", 0, 0);
+        bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+        if (!bind_auth) {
+		LOG(L_ERR, "auth_db:mod_init: Unable to find bind_auth function\n");
+	        return -1;
+	}
 
-	if (!(pre_auth_func && post_auth_func)) {
-		LOG(L_ERR, "auth_db:mod_init(): This module requires auth module\n");
+	if (bind_auth(&auth_api) < 0) {
+		LOG(L_ERR, "auth_db:child_init: Unable to bind auth module\n");
 		return -3;
 	}
 
@@ -201,14 +203,19 @@ static int mod_init(void)
 		return -4;
 	}
 
+	if (aaa_avps_init(&credentials_list, &credentials, &credentials_n)) {
+		return -1;
+	}
+
 	return 0;
 }
 
 
-
 static void destroy(void)
 {
-	auth_db_close();
+	if (auth_db_handle) {
+		auth_dbf.close(auth_db_handle);
+	}
 }
 
 
@@ -217,6 +224,7 @@ static void destroy(void)
  */
 static int str_fixup(void** param, int param_no)
 {
+	db_con_t* dbh;
 	str* s;
 	int ver;
 	str name;
@@ -235,12 +243,18 @@ static int str_fixup(void** param, int param_no)
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
-		ver=auth_db_ver(db_url.s, &name);
+		dbh = auth_dbf.init(db_url);
+		if (!dbh) {
+			LOG(L_ERR, "auth_db:str_fixup: Unable to open database connection\n");
+			return -1;
+		}
+		ver = table_version(&auth_dbf, dbh, &name);
+		auth_dbf.close(dbh);
 		if (ver < 0) {
-			LOG(L_ERR, "auth_db:str_fixup(): Error while querying table version\n");
+			LOG(L_ERR, "auth_db:str_fixup: Error while querying table version\n");
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "auth_db:str_fixup(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			LOG(L_ERR, "auth_db:str_fixup: Invalid table version (use ser_mysql.sh reinstall)\n");
 			return -1;
 		}
 	}

@@ -51,11 +51,9 @@
 
 #define MESSAGE_500 "Server Internal Error"
 
-static db_con_t* db_handle=0; /* database connection handle */
-static db_func_t  auth_dbf;
 
 static inline int get_ha1(struct username* _username, str* _domain,
-    char* _table, char* _ha1, db_res_t** res)
+			  char* _table, char* _ha1, db_res_t** res)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -63,7 +61,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	str result;
 	int n, nc;
 
-	col = pkg_malloc(sizeof(*col) * (avps_int_n + avps_str_n + 1));
+	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
 	if (col == NULL) {
 		LOG(L_ERR, "get_ha1(): Error while allocating memory\n");
 		return -1;
@@ -72,10 +70,10 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	keys[0] = user_column.s;
 	keys[1] = domain_column.s;
 	col[0] = (_username->domain.len && !calc_ha1) ? (pass_column_2.s) : (pass_column.s);
-	for (n = 0; n < avps_int_n; n++)
-		col[1 + n] = avps_int[n].s;
-	for (n = 0; n < avps_str_n; n++)
-		col[1 + avps_int_n + n] = avps_str[n].s;
+
+	for (n = 0; n < credentials_n; n++) {
+		col[1 + n] = credentials[n].s;
+	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
@@ -87,14 +85,14 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	VAL_STR(vals + 1).len = _domain->len;
 
 	n = (use_domain ? 2 : 1);
-	nc = 1 + avps_int_n + avps_str_n;
-	if (auth_dbf.use_table(db_handle, _table) < 0) {
+	nc = 1 + credentials_n;
+	if (auth_dbf.use_table(auth_db_handle, _table) < 0) {
 		LOG(L_ERR, "get_ha1(): Error in use_table\n");
 		pkg_free(col);
 		return -1;
 	}
 
-	if (auth_dbf.query(db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
+	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		pkg_free(col);
 		return -1;
@@ -166,23 +164,55 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 
 
 /*
+ * Generate AVPs from the database result
+ */
+static int generate_avps(db_res_t* result)
+{
+	int i;
+	int_str iname, ivalue;
+	str value;
+
+	for (i = 1; i <= credentials_n; i++) {
+		value.s = (char*)VAL_STRING(&(result->rows[0].values[i]));
+
+		if (VAL_NULL(&(result->rows[0].values[i]))
+		    || value.s == NULL) {
+			continue;
+		}
+		
+		iname.s = &credentials[i];
+		value.len = strlen(value.s);
+		ivalue.s = &value;
+
+		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue) < 0) {
+			LOG(L_ERR, "generate_avps: Error while creating AVPs\n");
+			return -1;
+		}
+
+		DBG("generate_avps: set string AVP \'%.*s = %.*s\'\n",
+		    iname.s->len, ZSW(iname.s->s), value.len, ZSW(value.s));
+	}
+
+	return 0;
+}
+
+
+/*
  * Authorize digest credentials
  */
 static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _hftype)
 {
 	char ha1[256];
-	int res, i;
+	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
-	str domain, value;
-	int_str iname, ivalue;
+	str domain;
 	db_res_t* result;
-	str rpid;
 
 	domain = *_realm;
 
-	ret = pre_auth_func(_m, &domain, _hftype, &h);
+	ret = auth_api.pre_auth(_m, &domain, _hftype, &h);
 
 	switch(ret) {
 	case ERROR:            return 0;
@@ -203,62 +233,33 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	}
 	if (res > 0) {
 		     /* Username not found in the database */
-		auth_dbf.free_result(db_handle, result);
+		auth_dbf.free_result(auth_db_handle, result);
 		return -1;
 	}
 
 	     /* Recalculate response, it must be same to authorize successfully */
         if (!check_response(&(cred->digest), &_m->first_line.u.request.method, ha1)) {
-		rpid.s = NULL;
-		rpid.len = 0;
-		for (i = 0; i < avps_str_n; i++) {
-			if (avps_str[i].len != 4
-					|| VAL_NULL(&(result->rows[0].values[1 + avps_int_n + i]))
-					|| memcmp(avps_str[i].s, "rpid", 4) != 0)
-				continue;
-			rpid.s = (char*)VAL_STRING(&(result->rows[0].values[1 + avps_int_n + i]));
-			if(rpid.s!=NULL)
-				rpid.len = strlen(rpid.s);
-		}
-		ret = post_auth_func(_m, h, &rpid);
+		ret = auth_api.post_auth(_m, h);
 		switch(ret) {
 		case ERROR:
-			auth_dbf.free_result(db_handle, result);
-			return 0;
+			auth_dbf.free_result(auth_db_handle, result);
+			return 1;
+
 		case NOT_AUTHORIZED:
-			auth_dbf.free_result(db_handle, result);
+			auth_dbf.free_result(auth_db_handle, result);
 			return -1;
+
 		case AUTHORIZED:
-			for (i = 0; i < avps_int_n; i++) {
-				if(VAL_NULL(&(result->rows[0].values[1 + i])))
-					continue;
-				iname.s = &(avps_int[i]);
-				ivalue.n = VAL_INT(&(result->rows[0].values[1 + i]));
-				add_avp(AVP_NAME_STR, iname, ivalue);
-				DBG("authorize(): set integer AVP \'%.*s = %d\'\n",
-				    iname.s->len, ZSW(iname.s->s), ivalue.n);
-			}
-			for (i = 0; i < avps_str_n; i++) {
-				value.s = (char*)VAL_STRING(&(result->rows[0].values[1 + avps_int_n + i]));
-				if(VAL_NULL(&(result->rows[0].values[1 + avps_int_n + i]))
-						|| value.s==NULL)
-					continue;
-				iname.s = &(avps_str[i]);
-				value.len = strlen(value.s);
-				ivalue.s = &value;
-				add_avp(AVP_NAME_STR | AVP_VAL_STR, iname, ivalue);
-				DBG("authorize(): set string AVP \'%.*s = %.*s\'\n",
-				    iname.s->len, ZSW(iname.s->s), value.len, ZSW(value.s));
-			}
-			auth_dbf.free_result(db_handle, result);
+			generate_avps(result);
+			auth_dbf.free_result(auth_db_handle, result);
 			return 1;
 		default:
-			auth_dbf.free_result(db_handle, result);
+			auth_dbf.free_result(auth_db_handle, result);
 			return -1;
 		}
 	}
 
-	auth_dbf.free_result(db_handle, result);
+	auth_dbf.free_result(auth_db_handle, result);
 	return -1;
 }
 
@@ -279,62 +280,4 @@ int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
 int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
 	return authorize(_m, (str*)_realm, _table, HDR_AUTHORIZATION);
-}
-
-
-
-int auth_db_init(char* db_url)
-{
-	if (auth_dbf.init==0){
-		LOG(L_CRIT, "BUG: auth_db_bind: null dbf\n");
-		goto error;
-	}
-	db_handle=auth_dbf.init(db_url);
-	if (db_handle==0){
-		LOG(L_ERR, "ERROR: auth_db_bind: unable to connect to the database\n");
-		goto error;
-	}
-	return 0;
-error:
-	return -1;
-}
-
-
-int auth_db_bind(char* db_url)
-{
-	if (bind_dbmod(db_url, &auth_dbf)<0){
-		LOG(L_ERR, "ERROR: auth_db_bind: unable to bind to the database"
-				" module\n");
-		return -1;
-	}
-	return 0;
-}
-
-
-void auth_db_close()
-{
-	if (db_handle && auth_dbf.close){
-		auth_dbf.close(db_handle);
-		db_handle=0;
-	}
-}
-
-
-int auth_db_ver(char* db_url, str* name)
-{
-	db_con_t* dbh;
-	int ver;
-
-	if (auth_dbf.init==0){
-		LOG(L_CRIT, "BUG: auth_db_ver: unbound database\n");
-		return -1;
-	}
-	dbh=auth_dbf.init(db_url);
-	if (dbh==0){
-		LOG(L_ERR, "ERROR: auth_db_ver: unable to open database connection\n");
-		return -1;
-	}
-	ver=table_version(&auth_dbf, dbh, name);
-	auth_dbf.close(dbh);
-	return ver;
 }

@@ -37,7 +37,6 @@
 int auth_db_init(char* db_url);
 int auth_db_bind(char* db_url);
 void auth_db_close();
-int auth_db_ver(char* db_url, str* name);
 
 /*
  * Authorize using Proxy-Authorization header field
