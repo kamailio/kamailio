@@ -410,6 +410,68 @@ modparam("acc", "db_missed_flag", 3)
 </programlisting>
 	    </example>
 	</section>
+
+	<section>
+	    <title><varname>diameter_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account a transaction -- DIAMETER specific.
+	    </para>
+	    <para>
+		Default value is 1.
+	    </para>
+	    <example>
+		<title>diameter_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_flag", 2)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>diameter_missed_flag</varname> (integer)</title>
+	    <para>
+		Request flag which needs to be set to account missed calls -- DIAMETER specific.
+	    </para>
+	    <para>
+		Default value is 2.
+	    </para>
+	    <example>
+		<title>diameter_missed_flag example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_missed_flag", 3)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>diameter_client_host</varname> (string)</title>
+	    <para>
+		Hostname of the machine where the DIAMETER Client is running -- DIAMETER specific.
+	    </para>
+	    <para>
+		Default value is <quote>localhost</quote>.
+	    </para>
+	    <example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_client_host", "iptel.org")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>diameter_client_port</varname> (int)</title>
+	    <para>
+		Port number where the Diameter Client is listening -- DIAMETER specific.
+	    </para>
+	    <para>
+		Default value is 3000.
+	    </para>
+	    <example>
+		<title>diameter_client_host example</title>
+		<programlisting format="linespecific">
+modparam("acc", "diameter_client_port", 3000)
+</programlisting>
+	    </example>
+	</section>
+
     </section>
     <section>
 	<title>Exported Functions</title>
