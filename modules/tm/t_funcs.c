@@ -1,6 +1,7 @@
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
+#include "../../parser_f.h"
 
 struct cell         *T;
 unsigned int     global_msg_id;
@@ -558,7 +559,24 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    return 0;
 }
 
-
+/* converts a string with positive hexadecimal number to an integer;
+   if a non-hexadecimal character encountered within 'len', -1 is
+   returned
+*/
+int str_unsigned_hex_2_int( char *c, int len )
+{
+	int r=0;
+	int i;
+	int d;
+	
+	for (i=0; i<len; i++ ) {
+		if (c[i]>='0' && c[i]<='9') d=c[i]-'0'; else
+		if (c[i]>='a' && c[i]<='f') d=c[i]-'a'+10; else
+		if (c[i]>='A' && c[i]<='F') d=c[i]-'A'+10; else
+		return -1;
+		r = r<<4 +d;
+	}
+}
 
 
 /* Returns 0 - nothing found
@@ -571,59 +589,80 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    unsigned int hash_index = 0;
    unsigned int entry_label  = 0;
    unsigned int branch_id    = 0;
-   char  *begin, *end;
+   char  *hashi, *syni, *branchi, *p, *n;
+   int hashl, synl, branchl;
+   int scan_space;
 
+   /* split the branch into pieces: loop_detection_check(ignored),
+      hash_table_id, synonym_id, branch_id
+   */
+   p=p_msg->via1->branch->value.s;
+   scan_space=p_msg->via1->branch->value.len;
 
-   /* getting the hash_index from the brach param , via header*/
-   begin = p_msg->via1->branch->value.s;
-   for(  ; *begin!='.' ; begin++ );
-   hash_index = strtol( ++begin , &end , 10 );
-   /*if the hash index is corect */
-   if  ( *end=='.' && hash_index>=0 && hash_index<TABLE_ENTRIES-1 )
+   /* loop detection ... ignore */ 
+   n=eat_token2_end( p, p+scan_space, '.');
+   scan_space-=n-p;
+   if (n==p || scan_space<2 || *n!='.') goto nomatch;
+   p=n+1; scan_space--;
+
+   /* hash_id */
+   n=eat_token2_end( p, p+scan_space, '.'); 
+   hashl=n-p;
+   scan_space-=hashl;
+   if (!hashl || scan_space<2 || *n!='.') goto nomatch;
+   hashi=p;
+   p=n+1;scan_space--;
+
+   /* sequence id */
+   n=eat_token2_end( p, p+scan_space, '.');
+   synl=n-p;
+   scan_space-=synl;
+   if (!synl || scan_space<2 || *n!='.') goto nomatch;
+   syni=p;
+   p=n+1;scan_space--;
+
+   /* branch id */  /*  should exceed the scan_space */
+   n=eat_token_end( p, p+scan_space );
+   branchl=n-p;
+   if (!branchl ) goto nomatch; 
+   branchi=p;
+
+   if ((hash_index=str_unsigned_hex_2_int(hashi, hashl))==0 ||
+        hash_index>=TABLE_ENTRIES ||
+       (entry_label=str_unsigned_hex_2_int(syni, synl))==0 ||
+       (branch_id=str_unsigned_hex_2_int(branchi, branchl))==0 ||
+	branch_id>=MAX_FORK )
+	goto nomatch;
+
+   /*all the cells from the entry are scan to detect an entry_label matching */
+   p_cell     = hash_table->entrys[hash_index].first_cell;
+   tmp_cell = 0;
+   while( p_cell )
    {
-      /* getting the entry label value */
-      begin=end++ ;
-      entry_label = strtol( ++begin , &end , 10 );
-      /* if the entry label also is corect */
-      if  ( *end=='.' && entry_label>=0 )
-      {
-         /* getting the branch_id value */
-         begin=end++ ;
-         branch_id = strtol( ++begin , &end , 10 );
-         /* if the entry label also is corect */
-          if  ( branch_id>=0 )
-          {
-             /*all the cells from the entry are scan to detect an entry_label matching */
-             p_cell     = hash_table->entrys[hash_index].first_cell;
-             tmp_cell = 0;
-            while( p_cell )
-             {
-                /* the transaction is referenceted for reading */
-                ref_cell( p_cell );
-                /* is it the cell with the wanted entry_label? */
-                if ( p_cell->label = entry_label )
-                   /* has the transaction the wanted branch? */
-                   if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
-                    {/* WE FOUND THE GOLDEN EGG !!!! */
-                       p_Trans = &p_cell;
-                       *p_branch = branch_id;
-                       unref_cell( p_cell );
-                       return 1;
-                    }
+      /* the transaction is referenceted for reading */
+      ref_cell( p_cell );
+      /* is it the cell with the wanted entry_label? */
+      if ( p_cell->label = entry_label )
+      /* has the transaction the wanted branch? */
+      if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
+      {/* WE FOUND THE GOLDEN EGG !!!! */
+		*p_Trans = p_cell;
+		*p_branch = branch_id;
+		unref_cell( p_cell );
+		return 1;
+	}
+      /* next cell */
+      tmp_cell = p_cell;
+      p_cell = p_cell->next_cell;
 
-               /* next cell */
-               tmp_cell = p_cell;
-               p_cell = p_cell->next_cell;
-
-               /* the transaction is dereferenceted */
-               unref_cell( tmp_cell );
-             }
-          }
-      }
-   }
+      /* the transaction is dereferenceted */
+      unref_cell( tmp_cell );
+   } /* while p_cell */
 
    /* nothing found */
+nomatch:
    *p_branch = -1;
+   *p_Trans = NULL;
    return 0;
 }
 
