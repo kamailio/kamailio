@@ -64,19 +64,27 @@ float def_q;                /* default_q converted to float in mod_init */
  */
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
-static cmd_export_t cmds[]={
+
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
 	{"save",         save,         1, domain_fixup, REQUEST_ROUTE},
 	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE},
 	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
-static param_export_t params[]={
-	{"default_expires",  INT_PARAM, &default_expires},
-	{"default_q",        INT_PARAM, &default_q},
-	{"append_branches",  INT_PARAM, &append_branches},
-	{"use_domain",       INT_PARAM, &use_domain},
-	{"case_sensitive",   INT_PARAM, &case_sensitive},
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"default_expires", INT_PARAM, &default_expires},
+	{"default_q",       INT_PARAM, &default_q      },
+	{"append_branches", INT_PARAM, &append_branches},
+	{"use_domain",      INT_PARAM, &use_domain     },
+	{"case_sensitive",  INT_PARAM, &case_sensitive },
 	{0,0,0}
 };
 
@@ -101,7 +109,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	printf( "Initializing registrar module\n");
+	DBG("registrar - initializing\n");
 
              /*
               * We will need sl_send_reply from stateless
@@ -109,12 +117,12 @@ static int mod_init(void)
 	      */
         sl_reply = find_export("sl_send_reply", 2, 0);
 	if (!sl_reply) {
-		LOG(L_ERR, "This module requires sl module\n");
+		LOG(L_ERR, "registrar: This module requires sl module\n");
 		return -1;
 	}
 	
 	if (bind_usrloc() < 0) {
-		LOG(L_ERR, "Can't find usrloc module\n");
+		LOG(L_ERR, "registar: Can't find usrloc module\n");
 		return -1;
 	}
 

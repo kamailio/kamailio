@@ -30,7 +30,7 @@
  * ----------
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-02-28 scratcpad compatibility abandoned (jiri)
- * 2003-03-21  save_noreply added, provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
+ * 2003-03-21  save_noreply added, patch provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
  */
 
 
@@ -153,7 +153,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		trim_trailing(&callid);
 		
 		     /* Get CSeq number of the message */
-		if (str2int(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
+		if (str2int(&get_cseq(_m)->number, &cseq) < 0) {
 			rerrno = R_INV_CSEQ;
 			LOG(L_ERR, "insert(): Error while converting cseq number\n");
 			ul_delete_urecord(_d, _a);
@@ -320,7 +320,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 /*
  * Process REGISTER request and save it's contacts
  */
-int save_real(struct sip_msg* _m, char* _t, char* _s, int doreply)
+static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int doreply)
 {
 	contact_t* c;
 	int st;
@@ -346,12 +346,12 @@ int save_real(struct sip_msg* _m, char* _t, char* _s, int doreply)
 
 	if (c == 0) {
 		if (st) {
-			if (star((udomain_t*)_t, &aor) < 0) goto error;
+			if (star(_t, &aor) < 0) goto error;
 		} else {
-			if (no_contacts((udomain_t*)_t, &aor) < 0) goto error;
+			if (no_contacts(_t, &aor) < 0) goto error;
 		}
 	} else {
-		if (contacts(_m, c, (udomain_t*)_t, &aor) < 0) goto error;
+		if (contacts(_m, c, _t, &aor) < 0) goto error;
 	}
 
 	if (doreply && (send_reply(_m) < 0)) return -1;
@@ -368,7 +368,7 @@ int save_real(struct sip_msg* _m, char* _t, char* _s, int doreply)
  */
 int save(struct sip_msg* _m, char* _t, char* _s)
 {
-	return save_real(_m, _t, _s, 1);
+	return save_real(_m, (udomain_t*)_t, _s, 1);
 }
 
 
@@ -377,5 +377,5 @@ int save(struct sip_msg* _m, char* _t, char* _s)
  */
 int save_noreply(struct sip_msg* _m, char* _t, char* _s)
 {
-	return save_real(_m, _t, _s, 0);
+	return save_real(_m, (udomain_t*)_t, _s, 0);
 }
