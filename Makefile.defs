@@ -8,6 +8,7 @@
 #  2003-02-24  added LOCALBASE, fixed doc-dir for freebsd - patch provided
 #               by Maxim Sobolev <sobomax@FreeBSD.org>
 #  2003-02-25  added -DDISABLE_NAGLE
+#  2003-03-02  added -DDIGEST_DOMAIN (janakj)
 
 
 #version number
@@ -158,6 +159,13 @@ YACC := $(shell echo "$${YACC}")
 # -DVOICE_MAIL
 #               enables voicemail support in ser core and in tm module
 #               voicemail needs also -D_TOTAG
+#
+# -DDIGEST_DOMAIN
+#               enables further parsing of digest username. Some clients put @domain
+#               in username digest parameter because realm parameter is not protected
+#               by the digest. This hasn't been standardized, but several user agents
+#               use this.
+
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH)\
@@ -171,6 +179,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -D_TOTAG \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
+	 -DDIGEST_DOMAIN \
 	 -DDBG_QM_MALLOC \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
