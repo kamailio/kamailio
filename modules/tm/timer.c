@@ -227,7 +227,7 @@ static void delete_cell( struct cell *p_cell, int unlock )
 		DBG("DEBUG: delete_cell %p: can't delete -- still reffed\n",
 			p_cell);
 		/* it's added to del list for future del */
-		set_timer( &(p_cell->dele_tl), DELETE_LIST );
+		set_timer( &(p_cell->dele_tl), DELETE_LIST, 0 );
 	} else {
 		if (unlock) UNLOCK_HASH(p_cell->hash_index);
 		DBG("DEBUG: delete transaction %p\n", p_cell );
@@ -312,7 +312,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 	r_buf->retr_list = id < RT_T2 ? id + 1 : RT_T2;
 	
 	retr_tl->timer_list= NULL; /* set to NULL so that set_timer will work */
-	set_timer( retr_tl, id < RT_T2 ? id + 1 : RT_T2 );
+	set_timer( retr_tl, id < RT_T2 ? id + 1 : RT_T2, 0 );
 
 	DBG("DEBUG: retransmission_handler : done\n");
 }
@@ -616,6 +616,29 @@ static void remove_timer_unsafe(  struct timer_link* tl )
 }
 
 
+/* put a new cell into a list nr. list_id */
+static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
+	unsigned int time_out )
+{
+	struct timer_link* ptr;
+
+	tl->time_out = time_out;
+	tl->timer_list = timer_list;
+
+	for(ptr = timer_list->last_tl.prev_tl; 
+	    ptr != &timer_list->first_tl; 
+	    ptr = ptr->prev_tl) {
+		if (ptr->time_out <= time_out) break;
+	}
+
+	tl->prev_tl = ptr;
+	tl->next_tl = ptr->next_tl;
+	tl->prev_tl->next_tl = tl;
+	tl->next_tl->prev_tl = tl;
+
+	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
+}
+
 
 
 /* put a new cell into a list nr. list_id */
@@ -728,7 +751,7 @@ void reset_timer( struct timer_link* tl )
  *             same for an expired timer: only it's handler can
  *             set it again, an external set_timer has no guarantee
  */
-void set_timer( struct timer_link *new_tl, enum lists list_id )
+void set_timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext_timeout )
 {
 	unsigned int timeout;
 	struct timer* list;
@@ -741,7 +764,13 @@ void set_timer( struct timer_link *new_tl, enum lists list_id )
 #endif
 		return;
 	}
-	timeout = timer_id2timeout[ list_id ];
+
+	if (!ext_timeout) {
+		timeout = timer_id2timeout[ list_id ];
+	} else {
+		timeout = *ext_timeout;
+	}
+
 	list= &(timertable->timers[ list_id ]);
 
 	lock(list->mutex);
@@ -756,14 +785,17 @@ void set_timer( struct timer_link *new_tl, enum lists list_id )
 	}
 	/* make sure I'm not already on a list */
 	remove_timer_unsafe( new_tl );
-	add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+	     /*
+	       add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+	     */
+	insert_timer_unsafe( list, new_tl, get_ticks()+timeout);
 end:
 	unlock(list->mutex);
 }
 
 /* similar to set_timer, except it allows only one-time
    timer setting and all later attempts are ignored */
-void set_1timer( struct timer_link *new_tl, enum lists list_id )
+void set_1timer( struct timer_link *new_tl, enum lists list_id, unsigned int* ext_timeout )
 {
 	unsigned int timeout;
 	struct timer* list;
@@ -776,14 +808,23 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id )
 #endif
 		return;
 	}
-	timeout = timer_id2timeout[ list_id ];
+
+	if (!ext_timeout) {
+		timeout = timer_id2timeout[ list_id ];
+	} else {
+		timeout = *ext_timeout;
+	}
+
 	list= &(timertable->timers[ list_id ]);
 
 	lock(list->mutex);
 	if (!(new_tl->time_out>TIMER_DELETED)) {
 		/* make sure I'm not already on a list */
 		/* remove_timer_unsafe( new_tl ); */
+		/*
 		add_timer_unsafe( list, new_tl, get_ticks()+timeout);
+		*/
+		insert_timer_unsafe( list, new_tl, get_ticks()+timeout);
 
 		/* set_1timer is used only by WAIT -- that's why we can
 		   afford updating wait statistics; I admit its not nice

@@ -59,8 +59,17 @@
 #include "config.h"
 #include "t_stats.h"
 
+#define FR_TIMER_AVP "callee_fr_timer"
+#define FR_TIMER_AVP_LEN (sizeof(FR_TIMER_AVP) - 1)
 
+#define FR_INV_TIMER_AVP "callee_fr_inv_timer"
+#define FR_INV_TIMER_AVP_LEN (sizeof(FR_INV_TIMER_AVP) - 1)
 
+str fr_timer_param = {FR_TIMER_AVP, FR_TIMER_AVP_LEN};
+int_str fr_timer_avp;
+
+str fr_inv_timer_param = {FR_INV_TIMER_AVP, FR_INV_TIMER_AVP_LEN};
+int_str fr_inv_timer_avp;
 
 
 /* ----------------------------------------------------- */
@@ -166,7 +175,7 @@ void put_on_wait(  struct cell  *Trans  )
 		4.									WAIT timer executed,
 											transaction deleted
 	*/
-	set_1timer( &Trans->wait_tl, WT_TIMER_LIST );
+	set_1timer( &Trans->wait_tl, WT_TIMER_LIST, 0 );
 }
 
 
@@ -319,3 +328,51 @@ done:
 }
 
 
+
+
+/*
+ * Initialize parameters containing the ID of
+ * AVPs with variable timers
+ */
+void init_avp_params(void)
+{
+	fr_timer_avp.s = &fr_timer_param;
+	fr_inv_timer_avp.s = &fr_inv_timer_param;
+
+	fr_timer_param.len = strlen(fr_timer_param.s);
+	fr_inv_timer_param.len = strlen(fr_timer_param.s);
+}
+
+
+/*
+ * Get the FR_{INV}_TIMER from corresponding AVP
+ */
+int avp2timer(int* timer, int_str param)
+{
+	struct usr_avp *avp;
+	int_str val_istr;
+	int err;
+
+	if (!timer) {
+		LOG(L_ERR, "avp2timer: Invalid parameter value\n");
+		return -1;
+	}
+
+	avp = search_first_avp(AVP_VAL_STR | AVP_NAME_STR, param, &val_istr);
+	if (!avp) {
+		DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
+		return 1;
+	}
+	
+	if (avp->flags & AVP_VAL_STR) {
+		*timer = str2s(val_istr.s->s, val_istr.s->len, &err);
+		if (err) {
+			LOG(L_ERR, "avp2timer: Error while converting string to integer\n");
+			return -1;
+		}
+	} else {
+		*timer = val_istr.n;
+	}
+
+	return 0;
+}

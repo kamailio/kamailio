@@ -267,6 +267,8 @@ static param_export_t params[]={
 	{"uac_from",              STR_PARAM, &uac_from                              },
 	{"unix_tx_timeout",       INT_PARAM, &tm_unix_tx_timeout                    },
 	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
+	{"fr_timer_avp",          STR_PARAM, &fr_timer_param.s                      },
+	{"fr_inv_timer_avp",      STR_PARAM, &fr_inv_timer_param.s                  },
 	{0,0,0}
 };
 
@@ -540,6 +542,8 @@ static int mod_init(void)
 			0 /* empty param */ );
 	register_script_cb( script_init, PRE_SCRIPT_CB , 
 			0 /* empty param */ );
+
+	init_avp_params();
 
 	return 0;
 }

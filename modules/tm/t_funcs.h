@@ -56,6 +56,7 @@
 #include "../../md5utils.h"
 #include "../../ip_addr.h"
 #include "../../parser/parse_uri.h"
+#include "../../usr_avp.h"
 
 #include "config.h"
 #include "lock.h"
@@ -63,6 +64,11 @@
 #include "sip_msg.h"
 #include "h_table.h"
 #include "ut.h"
+
+extern str fr_timer_param; /* AVP containing the fr_timer */
+extern int_str fr_timer_avp;
+extern str fr_inv_timer_param; /* AVP containing the fr_inv_timer */
+extern int_str fr_inv_timer_avp;
 
 
 struct s_table;
@@ -106,14 +112,27 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
+/*
+ * Get the FR_{INV}_TIMER from corresponding AVP
+ */
+int avp2timer(int* timer, int_str param);
+
 
 static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 {
+	int timer;
+
 	if (retr) {
 		rb->retr_list=RT_T1_TO_1;
-		set_timer( &rb->retr_timer, RT_T1_TO_1 );
+		set_timer( &rb->retr_timer, RT_T1_TO_1, 0 );
 	}
-	set_timer(&rb->fr_timer, FR_TIMER_LIST);
+
+	if (!avp2timer(&timer, fr_timer_avp)) {
+		DBG("_set_fr_retr: FR_TIMER = %d\n", timer);
+		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
+	} else {
+		set_timer(&rb->fr_timer, FR_TIMER_LIST, 0);
+	}
 }
 
 static void inline start_retr(struct retr_buf *rb)
@@ -155,6 +174,15 @@ void cleanup_localcancel_timers( struct cell *t );
 
 int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;
+
+
+void init_avp_params(void);
+
+
+/*
+ * Get the FR_TIMER from corresponding AVP
+ */
+int avp2fr_timer(int* timer, struct sip_msg* msg);
 
 #endif
 
