@@ -28,6 +28,7 @@
  * History:
  * --------
  * 2003-04-04  grand acc cleanup (jiri)
+ * 2003-11-04  multidomain support for mysql introduced (jiri)
  */
 
 
@@ -197,6 +198,16 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				} 
 				ATR(FROMUSER);
 				break;
+			case 'X': /* from user */
+				val_arr[cnt]=&na;
+				if (rq->from && (from=get_from(rq))
+						&& from->uri.len) {
+					parse_uri(from->uri.s, from->uri.len, &from_uri);
+					if (from_uri.host.len) 
+							val_arr[cnt]=&from_uri.host;
+				} 
+				ATR(FROMDOMAIN);
+				break;
 			case 't':
 				val_arr[cnt]=(to && to->body.len) ? &to->body : &na;
 				ATR(TO);
@@ -240,10 +251,15 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				val_arr[cnt]=cr?cr:&na;
 				ATR(UID);
 				break;
-			case 'p':
+			case 'p': /* user part of request-uri */
 				val_arr[cnt]=rq->parsed_orig_ruri.user.len ?
 					& rq->parsed_orig_ruri.user : &na;
 				ATR(UP_IURI);
+				break;
+			case 'D': /* domain part of request-uri */
+				val_arr[cnt]=rq->parsed_orig_ruri.host.len ?
+					& rq->parsed_orig_ruri.host : &na;
+				ATR(RURI_DOMAIN);
 				break;
 			default:
 				LOG(L_CRIT, "BUG: acc_log_request: uknown char: %c\n",
@@ -399,7 +415,7 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		acc_sip_method_col, acc_i_uri_col, 
 		acc_o_uri_col, acc_sip_from_col, acc_sip_callid_col,
    		acc_sip_to_col, acc_sip_status_col, acc_user_col, 
-		acc_totag_col, acc_fromtag_col, acc_time_col};
+		acc_totag_col, acc_fromtag_col, acc_domain_col, acc_time_col };
 
 	struct tm *tm;
 	time_t timep;
