@@ -79,7 +79,7 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 #endif
 
 	db_use_table(db_handle, _table);
-	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) < 0) {
+	if (db_query(db_handle, keys, 0, vals, col, 2, 1, NULL, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
