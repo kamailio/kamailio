@@ -237,7 +237,8 @@ struct rdata* get_record(char* name, int type)
 		p+=2;
 		/* check for type */
 		if (rtype!=type){
-			LOG(L_WARN, "WARNING: get_record: wrong type in answer\n");
+			LOG(L_ERR, "WARNING: get_record: wrong type in answer (%d!=%d)\n",
+					rtype, type);
 			p+=rdlength;
 			continue;
 		}
