@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __SIPDATE_H__
 #define __SIPDATE_H__
 

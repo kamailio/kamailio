@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #include "mysql.h"
 #include "dbcon_mysql.h"
 #include "../../dprint.h"

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 /*
  * FILE:   base64.c
  * AUTHOR: Colin Perkins

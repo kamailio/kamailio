@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __DB_ROW_H__
 #define __DB_ROW_H__
 

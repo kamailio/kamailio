@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __C_ELEM_H__
 #define __C_ELEM_H__
 

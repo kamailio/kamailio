@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __DBCON_MYSQL_H__
 #define __DBCON_MYSQL_H__
 

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __CONTACT_PARSER_H__
 #define __CONTACT_PARSER_H__
 

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __MYSQL_H__
 #define __MYSQL_H__
 

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __TIMER_DIRTY__
 #define __TIMER_DIRTY__
 

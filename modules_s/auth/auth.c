@@ -1,3 +1,9 @@
+/* 
+ * $Id$ 
+ */
+
+
+
 #include "auth.h"
 #include <stdlib.h>
 #include "../../sr_module.h"

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __TIMER_NEW__
 #define __TIMER_NEW__
 

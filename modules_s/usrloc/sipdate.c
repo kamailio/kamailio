@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #include "sipdate.h"
 
 

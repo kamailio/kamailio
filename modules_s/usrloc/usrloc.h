@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __USRLOC_H__
 #define __USRLOC_H__
 

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #include "db_val.h"
 #include "defs.h"
 #include <stdlib.h>

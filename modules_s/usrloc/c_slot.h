@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __C_SLOT_H__
 #define __C_SLOT_H__
 

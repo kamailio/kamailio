@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __DB_KEY_H__
 #define __DB_KEY_H__
 
