@@ -13,11 +13,11 @@
 #define stop_RETR_and_FR_timers(h_table,p_cell)    \
            { int ijk; \
            if ( p_cell->outbound_response )  {  \
-               remove_from_timer_list( h_table , &(p_cell->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST ); \
-               remove_from_timer_list( h_table , &(p_cell->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST ); } \
+               remove_from_timer_list( h_table , (&(p_cell->outbound_response->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST ); \
+               remove_from_timer_list( h_table , (&(p_cell->outbound_response->tl[FR_TIMER_LIST])) , FR_TIMER_LIST ); } \
            for( ijk=0 ; ijk<p_cell->nr_of_outgoings ; ijk++ )  { \
-               remove_from_timer_list( h_table , &(p_cell->outbound_request[ijk]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST ); \
-               remove_from_timer_list( h_table , &(p_cell->outbound_request[ijk]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST ); } \
+               remove_from_timer_list( h_table , (&(p_cell->outbound_request[ijk]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST ); \
+               remove_from_timer_list( h_table , (&(p_cell->outbound_request[ijk]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST ); } \
            }
 
 
@@ -309,12 +309,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
       DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
       /*sets and starts the FINAL RESPONSE timer */
-      add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
+      insert_into_timer_list( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST, FR_TIME_OUT );
 
       /* sets and starts the RETRANS timer */
       T->outbound_request[branch]->timeout_ceiling  = RETR_T2;
       T->outbound_request[branch]->timeout_value    = RETR_T1;
-      insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
+      insert_into_timer_list( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
     /* if we are forwarding a CANCEL*/
@@ -324,8 +324,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       /* or if the canceled transaction has a final status -> drop the CANCEL*/
       if ( !T->T_canceled || T->T_canceled->status>=200)
        {
-           remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST);
-           remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST );
+           remove_from_timer_list( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST);
+           remove_from_timer_list( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])), RETRASMISSIONS_LIST );
          return 1;
        }
    }
@@ -437,10 +437,13 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    DBG("DEBUG: t_on_reply_received: Original status =%d\n",T->status);
 
    /* stop retransmission */
-   remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+   remove_from_timer_list( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST );
    /* stop final response timer only if I got a final response */
    if ( p_msg->first_line.u.reply.statusclass>1 )
-      remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+      remove_from_timer_list( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST );
+   /* if a got the first prov. response for an INVITE -> change FR_TIME_OUT to INV_FR_TIME_UT */
+   if ( !T->inbound_response[branch] && p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
+      insert_into_timer_list( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST , INV_FR_TIME_OUT);
 
    /* on a non-200 reply to INVITE, generate local ACK */
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
@@ -461,7 +464,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    if ( p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value!=METHOD_INVITE )
    {
       T->outbound_request[branch]->timeout_value = RETR_T2;
-      insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T2 );
+      insert_into_timer_list( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST , RETR_T2 );
    }
 
    /*store the inbound reply*/
@@ -935,8 +938,8 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    if ( trans->outbound_response )
    {
       sh_free( trans->outbound_response->retr_buffer );
-      remove_from_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-      remove_from_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+      remove_from_timer_list( hash_table , (&(trans->outbound_response->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST );
+      remove_from_timer_list( hash_table , (&(trans->outbound_response->tl[FR_TIMER_LIST])) , FR_TIMER_LIST );
    }
    else
    {
@@ -999,10 +1002,8 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
    {
             rb->timeout_ceiling  = RETR_T2;
             rb->timeout_value    = RETR_T1;
-            remove_from_timer_list( hash_table , &(rb->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-            insert_into_timer_list( hash_table , &(rb->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-            remove_from_timer_list( hash_table , &(rb->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-            insert_into_timer_list( hash_table , &(rb->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+            insert_into_timer_list( hash_table , (&(rb->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST , RETR_T1 );
+            insert_into_timer_list( hash_table , (&(rb->tl[FR_TIMER_LIST])) , FR_TIMER_LIST , FR_TIME_OUT );
    }
    else if ( Trans->inbound_request->first_line.u.request.method_value==METHOD_CANCEL )
    {
@@ -1085,7 +1086,7 @@ int t_put_on_wait(  struct cell  *Trans  )
    /* remove from  retranssmision  and  final response   list */
    stop_RETR_and_FR_timers(hash_table,Trans) ;
    /* adds to Wait list*/
-   add_to_tail_of_timer_list( hash_table, &(Trans->wait_tl), WT_TIMER_LIST, WT_TIME_OUT );
+   add_to_tail_of_timer_list( hash_table, (&(Trans->wait_tl)), WT_TIMER_LIST, WT_TIME_OUT );
    return 1;
 }
 
@@ -1252,7 +1253,7 @@ void retransmission_handler( void *attr)
    udp_send( r_buf->retr_buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
 
    /* re-insert into RETRASMISSIONS_LIST */
-   insert_into_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , r_buf->timeout_value );
+   insert_into_timer_list( hash_table , (&(r_buf->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST , r_buf->timeout_value );
 }
 
 
@@ -1267,7 +1268,7 @@ void final_response_handler( void *attr)
    if ( r_buf->my_T->status<200)
    {
       DBG("DEBUG: final_response_handler : stop retransmission and send 408\n");
-      remove_from_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+      remove_from_timer_list( hash_table , (&(r_buf->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST );
       t_send_reply( r_buf->my_T->inbound_request , 408 , "Request Timeout" );
    }
    else
@@ -1291,7 +1292,7 @@ void wait_handler( void *attr)
    remove_from_hash_table( hash_table, p_cell );
    stop_RETR_and_FR_timers(hash_table,p_cell) ;
    /* put it on DEL_LIST - sch for del */
-    add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
+    add_to_tail_of_timer_list( hash_table, (&(p_cell->dele_tl)), DELETE_LIST, DEL_TIME_OUT );
 }
 
 
@@ -1312,7 +1313,7 @@ void delete_handler( void *attr)
     {
        DBG("DEBUG: delete_handler : re post for delete\n");
        /* else it's readded to del list for future del */
-       add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
+       add_to_tail_of_timer_list( hash_table, (&(p_cell->dele_tl)), DELETE_LIST, DEL_TIME_OUT );
     }
 }
 
@@ -1341,3 +1342,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 		return 0;
 	}
 }
+
+
+
+

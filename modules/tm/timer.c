@@ -10,7 +10,7 @@
 /* put a new cell into a list nr. list_id within a hash_table;
   * set initial timeout
   */
-void add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out )
+void add_to_tail_of_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out )
 {
    struct timer* timer_list = &(hash_table->timers[ list_id ]);
 
@@ -39,7 +39,7 @@ void add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link* 
 
 /*
   */
-void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new_tl, int list_id , unsigned int time_out )
+void insert_into_timer_list_nocheck( struct s_table* hash_table , struct timer_link* new_tl, int list_id , unsigned int time_out )
 {
    struct timer          *timer_list = &(hash_table->timers[ list_id ]);
    struct timer_link  *tl;
@@ -47,7 +47,7 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
    new_tl->time_out = time_out + hash_table->time;
    DBG("DEBUG: insert_into_timer[%d]: %d, %p\n",list_id,new_tl->time_out,new_tl);
 
-    /* if we have an empty list*/
+   /* if we have an empty list*/
    if ( !timer_list->first_tl )
    {
       new_tl->next_tl= 0;
@@ -89,13 +89,11 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
 
 /* remove a cell from a list nr. list_id within a hash_table;
 */
-void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl , int list_id)
+void remove_from_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl , int list_id)
 {
    struct timer* timers=&(hash_table->timers[ list_id ]);
    DBG("DEBUG: remove_from_timer[%d]: %d, %p \n",list_id,tl->time_out,tl);
 
-   if ( is_in_timer_list(tl,list_id)  )
-   {
       lock( timers->mutex );
       if ( tl->prev_tl )
          tl->prev_tl->next_tl = tl->next_tl;
@@ -108,7 +106,6 @@ void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl 
       unlock( timers->mutex );
       tl->next_tl = 0;
       tl->prev_tl = 0;
-   }
 }
 
 

@@ -17,11 +17,12 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine
    wait if no final response comes back*/
-#define FR_TIME_OUT     30
+#define FR_TIME_OUT            16
+#define INV_FR_TIME_OUT     30
 
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/
-#define WT_TIME_OUT      8
+#define WT_TIME_OUT      5
 
 /* DELETE timer ... tells how long should the transaction persist in memory
    after it was removed from the hash table and before it will be deleted */
@@ -34,6 +35,28 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 
 #define is_in_timer_list(tl,id)  \
              (tl->next_tl || tl->prev_tl || (!tl->next_tl && !tl->prev_tl && tl==hash_table->timers[id].first_tl) )
+
+
+#define insert_into_timer_list(hash_table,new_tl,list_id,time_out) \
+             {\
+                if ( is_in_timer_list(new_tl,list_id)  )\
+                   remove_from_timer_list_nocheck( hash_table , new_tl , list_id);\
+                insert_into_timer_list_nocheck(hash_table,new_tl,list_id,time_out);\
+             }
+
+#define add_to_tail_of_timer_list(hash_table,new_tl,list_id,time_out) \
+             {\
+                if ( is_in_timer_list(new_tl,list_id)  )\
+                   remove_from_timer_list_nocheck( hash_table , new_tl , list_id);\
+                add_to_tail_of_timer_list_nocheck(hash_table,new_tl,list_id,time_out);\
+             }
+
+#define remove_from_timer_list(hash_table,tl,list_id) \
+             {\
+                if ( !is_in_timer_list(tl,list_id)  )\
+                   remove_from_timer_list_nocheck( hash_table , tl , list_id);\
+             }
+
 
 
 /* all you need to put a cell in a timer list:
@@ -49,9 +72,9 @@ typedef struct timer_link
 #include "h_table.h"
 
 
-void                        add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link * tl , int list_id, unsigned int time_out );
-void                        insert_into_timer_list( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out );
-void                        remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl , int list_id);
+void                        add_to_tail_of_timer_list_nocheck( struct s_table* hash_table , struct timer_link * tl , int list_id, unsigned int time_out );
+void                        insert_into_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out );
+void                        remove_from_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl , int list_id);
 struct timer_link  *remove_from_timer_list_from_head( struct s_table* hash_table, int list_id );
 void                       *timer_routine(void * attr);
 
