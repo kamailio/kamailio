@@ -160,6 +160,7 @@ int rt;  /* Type of route block for find_export */
 %token MEMLOG
 %token SIP_WARNING
 %token FIFO
+%token FIFO_DIR
 %token FIFO_MODE
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
@@ -254,14 +255,6 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 								}
 							}
 						}
-		 |	ID			{	$$=pkg_malloc(strlen($1)+1);
-		 					if ($$==0){
-									LOG(L_CRIT, "ERROR: cfg. parser: out of "
-											"memory.\n");
-							}else{
-									strncpy($$, $1, strlen($1)+1);
-							}
-						}
 		 |	STRING			{	$$=pkg_malloc(strlen($1)+1);
 		 					if ($$==0){
 									LOG(L_CRIT, "ERROR: cfg. parser: out of "
@@ -334,6 +327,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
 		| FIFO EQUAL STRING { fifo=$3; }
 		| FIFO EQUAL error { yyerror("string value expected"); }
+		| FIFO_DIR EQUAL STRING { fifo_dir=$3; }
+		| FIFO_DIR EQUAL error { yyerror("string value expected"); }
 		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
 		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
 		| USER EQUAL STRING     { user=$3; }

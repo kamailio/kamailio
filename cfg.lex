@@ -150,6 +150,7 @@ MEMLOG	memlog
 SIP_WARNING sip_warning
 FIFO fifo
 FIFO_MODE fifo_mode
+FIFO_DIR  fifo_dir
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
 USER		"user"|"uid"
@@ -280,6 +281,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
+<INITIAL>{FIFO_DIR}    { count(); yylval.strval=yytext; return FIFO_DIR; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
