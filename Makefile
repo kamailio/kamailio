@@ -3,7 +3,8 @@
 # sip_router makefile
 #
 # WARNING: requires gmake (GNU Make)
-#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 8), WinNT (cygwin)
+#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 8), OpenBSD (3.2),
+#  limited WinNT (cygwin) support
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 

@@ -36,8 +36,13 @@ ut-prefix = $(basedir)$(prefix)
 cfg-dir = etc/ser/
 bin-dir = sbin/
 modules-dir = lib/ser/modules/
-doc-dir = share/doc/ser/
-man-dir = share/man/
+ifeq ($(OS), linux)
+	doc-dir = share/doc/ser/
+	man-dir = share/man/
+else
+	doc-dir=doc/ser/
+	man-dir=man/
+endif
 ut-prefix = bin/
 # target dirs for various stuff
 cfg-target = $(prefix)/$(cfg-dir)
@@ -473,7 +478,7 @@ endif
 
 
 #os specific stuff
-ifeq ($(OS), Linux)
+ifeq ($(OS), linux)
 	#same as common
 endif
 
