@@ -601,14 +601,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 				switch (status)
 				{
 					case DISPLAY_QUOTED:
-						switch (*(tmp+1))
-						{
-							case '\n':
-							case '\r':
-								break;
-							default:
-								tmp++;
-						}
+						tmp++; /* jump over next char */
+						break;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
 							"in status %d: <<%.*s>> .\n",
