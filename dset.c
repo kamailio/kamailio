@@ -68,7 +68,7 @@ struct branch
 static struct branch branches[MAX_BRANCHES - 1];
 
 /* how many of them we have */
-static unsigned int nr_branches = 0;
+unsigned int nr_branches = 0;
 
 /* branch iterator */
 static int branch_iterator = 0;
