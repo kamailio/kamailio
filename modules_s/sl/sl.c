@@ -69,7 +69,7 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_sl_reply_error(struct sip_msg* msg, char* str, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
 static int mod_init(void);
-static int mod_destroy();
+static void mod_destroy();
 
 #ifdef STATIC_SL
 struct module_exports sl_exports = {
@@ -114,7 +114,7 @@ struct module_exports exports= {
 
 	mod_init,   /* module initialization function */
 	(response_function) 0,
-	(destroy_function) sl_shutdown,
+	mod_destroy,
 	0,
 	0  /* per-child init function */
 };
@@ -139,10 +139,10 @@ static int mod_init(void)
 
 
 
-static int mod_destroy()
+static void mod_destroy()
 {
 	sl_stats_destroy();
-	return sl_shutdown();
+	sl_shutdown();
 }
 
 
