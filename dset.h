@@ -12,7 +12,6 @@
 #define CONTACT_DELIM ", "
 #define CONTACT_DELIM_LEN 2
 
-char *create_dset( struct sip_msg *msg, int *len );
 
 struct branch
 {
@@ -33,4 +32,5 @@ void init_branch_iterator();
 char *next_branch( int *len );
 void clear_branches();
 
+char *print_dset( struct sip_msg *msg, int *len );
 #endif

@@ -88,7 +88,7 @@ int append_branch( struct sip_msg *msg, char *uri, int uri_len )
 
 
 
-char *create_dset( struct sip_msg *msg, int *len ) 
+char *print_dset( struct sip_msg *msg, int *len ) 
 {
 	int cnt;
 	str uri;
