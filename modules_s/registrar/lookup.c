@@ -135,11 +135,10 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (!append_branches) goto skip;
 
 	while(ptr) {
-		if (ptr->expires > act_time) {
+		if (ptr->expires > act_time && (ptr->state < CS_ZOMBIE_N)) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				ul.unlock_udomain((udomain_t*)_t);
-				return 1; /* Return OK here so the function succeeds */
+				goto skip; /* Return OK here so the function succeeds */
 			}
 			nat |= ptr->flags & FL_NAT;
 		} 
