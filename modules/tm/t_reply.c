@@ -465,7 +465,8 @@ static int faked_env(struct sip_msg *fake,
 	 * "restore" called on error does not free the original items */
 	fake->add_rm=0;
 	fake->body_lumps=0;
-	fake->new_uri.s=0; fake->new_uri.len=0; 
+	fake->new_uri.s=0; fake->new_uri.len=0;
+	fake->parsed_uri_ok = 0;
 
 	/* remember we are back in request processing, but process
 	 * a shmem-ed replica of the request; advertise it in rmode;
