@@ -45,7 +45,7 @@
 #include "dbt_api.h"
 
 #ifndef CFG_DIR
-#define CFG_DIR "/"
+#define CFG_DIR "/tmp"
 #endif
 
 #define DBT_ID		"dbtext://"
