@@ -45,6 +45,7 @@ typedef struct _xj_jalias
 	int size;	// number of aliases
 	str *jdm;	// Jabber domain
 	char dlm;	// user part delimitator
+	str *proxy; // outbound proxy
 	str *a;		// aliases
 	char *d;	// user part delimitator for aliases
 } t_xj_jalias, *xj_jalias;
@@ -78,7 +79,8 @@ int  xj_wlist_get(xj_wlist, xj_jkey, xj_jkey*);
 int  xj_wlist_check(xj_wlist, xj_jkey, xj_jkey*);
 void xj_wlist_del(xj_wlist, xj_jkey, int);
 void xj_wlist_free(xj_wlist);
-int  xj_wlist_set_aliases(xj_wlist, char *, char *);
+int  xj_wlist_set_aliases(xj_wlist, char *, char *, char *);
+int  xj_wlist_check_aliases(xj_wlist, str*);
 int  xj_wlist_clean_jobs(xj_wlist, int, int); 
 
 int xj_worker_process(xj_wlist, char*, int, int, db_con_t*);
@@ -90,8 +92,8 @@ void xj_sig_handler(int s);
 
 /**********             ***/
 
-int xj_send_sip_msg(str *, str *, str *, int *);
-int xj_send_sip_msgz(str *, str *, char *, int *);
+int xj_send_sip_msg(str *, str *, str *, str *, int *);
+int xj_send_sip_msgz(str *,str *, str *, char *, int *);
 void xj_tuac_callback(struct cell *, struct sip_msg *,
 			int, void *);
 void xj_worker_check_jcons(xj_wlist, xj_jcon_pool, int, fd_set*);

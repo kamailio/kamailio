@@ -64,6 +64,9 @@
 
 #define XJ_MSG_POOL_SIZE	10
 
+// proxy address
+#define _PADDR(a)	((a)->aliases->proxy)
+
 /** TM bind */
 extern struct tm_binds tmb;
 
@@ -82,7 +85,7 @@ static str jab_gw_name = {"sip_to_jabber_gateway", 21};
 int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 {
 	char *p, *p0;
-	int i;
+	int i, ll;
 	
 	if(!src || !dst || !src->s || !dst->s )
 		return -1; 
@@ -102,12 +105,18 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 		goto done;
 
 	p++;
+	ll = src->s + src->len - p;
+
+#ifdef XJ_EXTRA_DEBUG
+	DBG("XJAB:xj_address_translation:%d: - domain is [%.*s]\n",_xj_pid,ll,p);
+#endif
 	
 	/*** checking aliases */
 	if(als->size > 0)
 	{
 		for(i=0; i<als->size; i++)
-			if(!strncasecmp(p, als->a[i].s, als->a[i].len))
+			if(als->a[i].len == ll && 
+				!strncasecmp(p, als->a[i].s, als->a[i].len))
 			{
 				if(als->d[i])
 				{
@@ -147,7 +156,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 	
 	if(flag & XJ_ADDRTR_A2B)
 	{
-		if(strncasecmp(p, als->jdm->s, als->jdm->len))
+		if(als->jdm->len != ll || strncasecmp(p, als->jdm->s, als->jdm->len))
 		{
 			DBG("XJA:xj_address_translation:%d: - wrong Jabber"
 				" destination <%.*s>!\n", _xj_pid, src->len, src->s);
@@ -315,7 +324,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 					_xj_pid, jcp->jmqueue.jsm[i]->to.len, 
 					jcp->jmqueue.jsm[i]->to.s);
 #endif
-				xj_send_sip_msgz(jcp->jmqueue.jsm[i]->jkey->id, 
+				xj_send_sip_msgz(_PADDR(jwl), jcp->jmqueue.jsm[i]->jkey->id, 
 						&jcp->jmqueue.jsm[i]->to, XJ_DMSG_ERR_SENDIM,
 						&jcp->jmqueue.ojc[i]->jkey->flag);
 				if(jcp->jmqueue.jsm[i]!=NULL)
@@ -408,7 +417,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm) &&
 				(!jbc||!xj_jcon_get_jconf(jbc,&jsmsg->to,jwl->aliases->dlm)))
 				{
-					xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+					xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 						XJ_DMSG_ERR_NOTJCONF, NULL);
 					goto step_w;
 				}
@@ -426,7 +435,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
 					xj_jcon_del_jconf(jbc, &jsmsg->to, jwl->aliases->dlm,
 						XJ_JCMD_UNSUBSCRIBE);
-				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+				xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 					XJ_DMSG_INF_JCONFEXIT, NULL);
 				goto step_w;
 			case XJ_GO_OFFLINE:
@@ -459,7 +468,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			DBG("XJAB:xj_worker:%d: no database result when looking"
 				" for associated Jabber account\n", _xj_pid);
 #endif
-			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
+			xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to, 
 				XJ_DMSG_ERR_JGWFORB, NULL);
 			
 			goto step_v;
@@ -471,7 +480,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		{
 			DBG("XJAB:xj_worker:%d: Cannot connect"
 				" to the Jabber server ...\n", _xj_pid);
-			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
+			xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to, 
 				XJ_DMSG_ERR_NOJSRV, NULL);
 
 			goto step_v;
@@ -491,7 +500,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				" failed ...\n", _xj_pid);
 			xj_jcon_disconnect(jbc);
 			
-			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
+			xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to, 
 					XJ_DMSG_ERR_JAUTH, NULL);
 			
 			xj_jcon_free(jbc);
@@ -504,7 +513,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			DBG("XJAB:xj_worker:%d: Keeping connection to Jabber server"
 				" failed! Not enough memory ...\n", _xj_pid);
 			xj_jcon_disconnect(jbc);
-			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,	
+			xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,	
 					XJ_DMSG_ERR_JGWFULL, NULL);
 			xj_jcon_free(jbc);
 			goto step_v;
@@ -604,7 +613,7 @@ step_z:
 					{
 						// unable to join the conference 
 						// --- send back to SIP user a msg
-						xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
+						xj_send_sip_msgz(_PADDR(jwl),jsmsg->jkey->id,&jsmsg->to,
 							XJ_DMSG_ERR_JOINJCONF, &jbc->jkey->flag);
 						goto step_w;
 					}
@@ -615,7 +624,7 @@ step_z:
 			{
 				// unable to get the conference 
 				// --- send back to SIP user a msg
-				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
+				xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 						XJ_DMSG_ERR_NEWJCONF, &jbc->jkey->flag);
 				goto step_w;
 			}
@@ -642,7 +651,7 @@ step_z:
 						jsmsg->msg.s, jsmsg->msg.len,
 						(flag&XJ_ADDRTR_CON)?XJ_JMSG_GROUPCHAT:XJ_JMSG_CHAT)<0)
 							
-						xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+						xj_send_sip_msgz(_PADDR(jwl),jsmsg->jkey->id,&jsmsg->to,
 							XJ_DMSG_ERR_SENDJMSG, &jbc->jkey->flag);
 				}
 				else
@@ -659,7 +668,7 @@ step_z:
 				{
 					DBG("XJAB:xj_worker:%d: SCHEDULING the message FAILED."
 							" Message was dropped.\n",_xj_pid);
-					xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+					xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 						XJ_DMSG_ERR_STOREJMSG, &jbc->jkey->flag);
 					goto step_w;
 				}
@@ -667,16 +676,16 @@ step_z:
 					goto step_y;
 	
 			case 2:
-				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+				xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 						XJ_DMSG_ERR_NOREGIM, &jbc->jkey->flag);
 				goto step_w;
 			case 3: // not joined to Jabber conference
-				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+				xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 						XJ_DMSG_ERR_NOTJCONF, &jbc->jkey->flag);
 				goto step_w;
 				
 			default:
-				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
+				xj_send_sip_msgz(_PADDR(jwl), jsmsg->jkey->id, &jsmsg->to,
 						XJ_DMSG_ERR_SENDJMSG, &jbc->jkey->flag);
 				goto step_w;
 		}
@@ -746,8 +755,8 @@ step_y:
 					DBG("XJAB:xj_worker:%d: ERROR -"
 						" connection to jabber lost on socket <%d> ...\n",
 						_xj_pid, jcp->ojc[i]->sock);
-					xj_send_sip_msgz(jcp->ojc[i]->jkey->id, &jab_gw_name, 
-						XJ_DMSG_ERR_DISCONNECTED, &jbc->jkey->flag);
+					xj_send_sip_msgz(_PADDR(jwl), jcp->ojc[i]->jkey->id,
+						&jab_gw_name,XJ_DMSG_ERR_DISCONNECTED,&jbc->jkey->flag);
 					// make sure that will ckeck expired connections
 					ltime = jcp->ojc[i]->expire = -1;
 					FD_CLR(jcp->ojc[i]->sock, &set);
@@ -927,7 +936,8 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 			ts.s = lbuf;
 			ts.len = strlen(lbuf);
 	
-			if(xj_send_sip_msg(sid, &jcf->uri, &ts, &jbc->jkey->flag)<0)
+			if(xj_send_sip_msg(als->proxy, sid, &jcf->uri, &ts,
+						&jbc->jkey->flag)<0)
 				DBG("XJAB:xj_manage_jab: ERROR SIP MESSAGE was not sent!\n");
 #ifdef XJ_EXTRA_DEBUG
 			else
@@ -946,7 +956,7 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 			ts.s = lbuf;
 			ts.len = strlen(lbuf);
 	
-			if(xj_send_sip_msg(sid, &tf, &ts, &jbc->jkey->flag) < 0)
+			if(xj_send_sip_msg(als->proxy, sid, &tf, &ts, &jbc->jkey->flag)<0)
 				DBG("XJAB:xj_manage_jab: ERROR SIP MESSAGE was not sent ...\n");
 #ifdef XJ_EXTRA_DEBUG
 			else
@@ -985,11 +995,11 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 				if ((p = xode_get_attrib(y, "code")) != NULL
 						&& atoi(p) == 409)
 				{
-					xj_send_sip_msgz(sid, &tf, XJ_DMSG_ERR_JCONFNICK,
-					&jbc->jkey->flag);
+					xj_send_sip_msgz(als->proxy, sid, &tf,
+							XJ_DMSG_ERR_JCONFNICK, &jbc->jkey->flag);
 					goto ready;
 				}
-				xj_send_sip_msgz(sid, &tf, XJ_DMSG_ERR_JCONFREFUSED,
+				xj_send_sip_msgz(als->proxy,sid,&tf,XJ_DMSG_ERR_JCONFREFUSED,
 						&jbc->jkey->flag);
 			}
 
@@ -1252,7 +1262,7 @@ void xj_sig_handler(int s)
  * - msg : body of the message
  * #return : 0 on success or <0 on error
  */
-int xj_send_sip_msg(str *to, str *from, str *msg, int *cbp)
+int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 {
 	str  msg_type = { "MESSAGE", 7};
 	char buf[512];
@@ -1301,11 +1311,11 @@ int xj_send_sip_msg(str *to, str *from, str *msg, int *cbp)
 	tfrom.s = buf;
 	
 	// building Contact and Content-Type
-	strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
-	str_hdr.len = 24 + CRLF_LEN + 9;
+	strcpy(buf1,"Content-Type: text/plain"CRLF);//"Contact: ");
+	str_hdr.len = 24 + CRLF_LEN;// + 9;
 	
-	strncat(buf1,tfrom.s,tfrom.len);
-	str_hdr.len += tfrom.len;
+	//strncat(buf1,tfrom.s,tfrom.len);
+	//str_hdr.len += tfrom.len;
 	//strncat(buf1,"sip:193.175.135.68:5060",23);
 	//str_hdr.len += 23;
 	
@@ -1324,7 +1334,7 @@ int xj_send_sip_msg(str *to, str *from, str *msg, int *cbp)
 		//return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom,
 		//			xj_tuac_callback, (void*)pcbp, 0);
 		return tmb.t_uac_dlg(&msg_type, /* Type of the message */
-					0,                  /* Real destination */
+					proxy,              /* Real destination */
 					to,                 /* Request-URI */
 					to,                 /* To */
 					&tfrom,             /* From */
@@ -1341,7 +1351,7 @@ int xj_send_sip_msg(str *to, str *from, str *msg, int *cbp)
 	else
 		//return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom, 0 , 0, 0);
 		return tmb.t_uac_dlg(&msg_type, /* Type of the message */
-					0,                  /* Real destination */
+					proxy,              /* Real destination */
 					to,                 /* Request-URI */
 					to,                 /* To */
 					&tfrom,             /* From */
@@ -1364,7 +1374,7 @@ int xj_send_sip_msg(str *to, str *from, str *msg, int *cbp)
  * - msg : body of the message, string terminated by zero
  * #return : 0 on success or <0 on error
  */
-int xj_send_sip_msgz(str *to, str *from, char *msg, int *cbp)
+int xj_send_sip_msgz(str *proxy, str *to, str *from, char *msg, int *cbp)
 {
 	str tstr;
 	int n;
@@ -1374,7 +1384,7 @@ int xj_send_sip_msgz(str *to, str *from, char *msg, int *cbp)
 
 	tstr.s = msg;
 	tstr.len = strlen(msg);
-	if((n = xj_send_sip_msg(to, from, &tstr, cbp)) < 0)
+	if((n = xj_send_sip_msg(proxy, to, from, &tstr, cbp)) < 0)
 		DBG("JABBER: jab_send_sip_msgz: ERROR SIP MESSAGE wasn't sent to"
 			" [%.*s]...\n", tstr.len, tstr.s);
 #ifdef XJ_EXTRA_DEBUG
@@ -1403,7 +1413,8 @@ int xj_wlist_clean_jobs(xj_wlist jwl, int idx, int fl)
 			DBG("XJAB:xj_wlist_send_info: sending disconnect message"
 				" to <%.*s>\n",	p->id->len, p->id->s);
 #endif
-			xj_send_sip_msgz(p->id,&jab_gw_name,XJ_DMSG_INF_DISCONNECTED,NULL);
+			xj_send_sip_msgz(_PADDR(jwl), p->id, &jab_gw_name,
+					XJ_DMSG_INF_DISCONNECTED, NULL);
 		}
 		jwl->workers[idx].nr--;
 		xj_jkey_free_p(p);
@@ -1414,7 +1425,7 @@ int xj_wlist_clean_jobs(xj_wlist jwl, int idx, int fl)
 
 
 /**
- *
+ * callback function for TM
  */
 void xj_tuac_callback( struct cell *t, struct sip_msg *msg,
 			int code, void *param)
@@ -1442,7 +1453,7 @@ void xj_tuac_callback( struct cell *t, struct sip_msg *msg,
 }
 
 /**
- *
+ * check for expired conections
  */
 void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *pset)
 {
@@ -1461,7 +1472,7 @@ void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *ps
 		DBG("XJAB:xj_worker:%d: connection expired for <%.*s> \n",
 			_xj_pid, jcp->ojc[i]->jkey->id->len, jcp->ojc[i]->jkey->id->s);
 #endif
-		xj_send_sip_msgz(jcp->ojc[i]->jkey->id, &jab_gw_name,
+		xj_send_sip_msgz(_PADDR(jwl), jcp->ojc[i]->jkey->id, &jab_gw_name,
 				XJ_DMSG_INF_JOFFLINE, NULL);
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_worker:%d: connection's close flag =%d\n",

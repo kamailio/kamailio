@@ -155,6 +155,11 @@ void xj_wlist_free(xj_wlist jwl)
 			_M_SHM_FREE(jwl->aliases->jdm->s);
 			_M_SHM_FREE(jwl->aliases->jdm);
 		}
+		if(jwl->aliases->proxy != NULL)
+		{
+			_M_SHM_FREE(jwl->aliases->proxy->s);
+			_M_SHM_FREE(jwl->aliases->proxy);
+		}
 		if(jwl->aliases->size > 0)
 		{
 			for(i=0; i<jwl->aliases->size; i++)
@@ -315,7 +320,12 @@ error:
 	return -1;
 }
 
-int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
+/**
+ * set IM aliases, jdomain and outbound proxy
+ *
+ * #return 0 if OK
+ */
+int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 {
 	char *p, *p0, *p1;
 	int i, n;
@@ -336,11 +346,13 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 	}
 	
 	jwl->aliases->jdm = NULL;
+	jwl->aliases->proxy = NULL;
 	jwl->aliases->dlm = XJ_DEF_JDELIM; // default user part delimitator
 	jwl->aliases->size = 0;
 	jwl->aliases->a = NULL;
 	jwl->aliases->d = NULL;
 
+	// set the jdomain
 	if(jd != NULL && (n=strlen(jd))>2)
 	{
 		p = jd;
@@ -374,6 +386,40 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 #endif
 	}
 	
+	// set the proxy address
+	if(pa && strlen(pa)>0)
+	{
+		if((jwl->aliases->proxy = (str*)_M_SHM_MALLOC(sizeof(str)))==NULL)
+		{
+			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!!\n");
+			goto clean3;		
+		}
+		i = jwl->aliases->proxy->len = strlen(pa);
+		// check if proxy address has sip: prefix
+		if(i < 4 || pa[0]!='s' || pa[1]!='i' || pa[2]!='p' || pa[3]!=':')
+			jwl->aliases->proxy->len += 4;
+		if((jwl->aliases->proxy->s=
+					(char*)_M_SHM_MALLOC(jwl->aliases->proxy->len))
+				== NULL)
+		{
+			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!!!\n");
+			_M_SHM_FREE(jwl->aliases->proxy);
+			goto clean3;
+		}
+		p0 = jwl->aliases->proxy->s;
+		if(jwl->aliases->proxy->len != i)
+		{
+			strncpy(p0, "sip:", 4);
+			p0 += 4;
+		}
+		strncpy(p0, pa, i);
+#ifdef XJ_EXTRA_DEBUG
+		DBG("XJAB:xj_wlist_set_aliases: outbound proxy=[%.*s]\n",
+			jwl->aliases->proxy->len, jwl->aliases->proxy->s);
+#endif
+	}
+	
+	// set the IM aliases
 	if(!als || strlen(als)<2)
 		return 0;
 	
@@ -450,6 +496,12 @@ clean1:
 		_M_SHM_FREE(jwl->aliases->d);
 
 clean2:
+	if(jwl->aliases->proxy)
+	{
+		_M_SHM_FREE(jwl->aliases->proxy->s);
+		_M_SHM_FREE(jwl->aliases->proxy);
+	}
+clean3:
 	if(jwl->aliases->jdm)
 	{
 		_M_SHM_FREE(jwl->aliases->jdm->s);
@@ -458,6 +510,52 @@ clean2:
 	_M_SHM_FREE(jwl->aliases);
 	jwl->aliases = NULL;
 	return -1;
+}
+
+
+/**
+ * check if the adr contains jdomain or an alias
+ * - jwl : pointer to the workers list
+ * - addr: the address to check against jdomain and aliases
+ * #returns 0 - if contains or !=0 if not
+ */
+int  xj_wlist_check_aliases(xj_wlist jwl, str *addr)
+{
+	char *p, *p0;
+	int ll, i;
+	if(!jwl || !jwl->aliases || !addr || !addr->s || addr->len<=0)
+		return -1;
+
+	// find '@'
+	p = addr->s;
+	while(p < addr->s + addr->len && *p != '@')
+		p++;
+	if(p >= addr->s + addr->len)
+		return -1;
+	
+	p++;
+	ll = addr->s + addr->len - p;
+	
+	// check parameters
+	p0 = p;
+	while(p0 < p + ll && *p0 != ';')
+		p0++;
+	if(p0 < p + ll)
+		ll = p0 - p;
+	
+	ll = addr->s + addr->len - p;
+	if(jwl->aliases->jdm && jwl->aliases->jdm->len == ll && 
+			!strncasecmp(jwl->aliases->jdm->s, p, ll))
+		return 0;
+
+	if(jwl->aliases->size <= 0)
+		return 1;
+	
+	for(i = 0; i < jwl->aliases->size; i++)
+		if(jwl->aliases->a[i].len == ll && 
+			!strncasecmp(p, jwl->aliases->a[i].s, ll))
+				return 0;
+	return 1;
 }
 
 /**

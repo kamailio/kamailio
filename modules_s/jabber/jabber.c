@@ -80,6 +80,7 @@ int jport = 5222;
 
 char *jaliases = NULL;
 char *jdomain  = NULL;
+char *proxy	   = NULL;
 
 int delay_time = 90;
 int sleep_time = 20;
@@ -142,6 +143,7 @@ struct module_exports exports= {
 		"db_url",
 		"jaddress",
 		"aliases",
+		"proxy",
 		"jdomain",
 		"jport",
 		"workers",
@@ -152,6 +154,7 @@ struct module_exports exports= {
 		"check_time"
 	},
 	(modparam_t[]) {   /* Module parameter types */
+		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
@@ -168,6 +171,7 @@ struct module_exports exports= {
 		&db_url,
 		&jaddress,
 		&jaliases,
+		&proxy,
 		&jdomain,
 		&jport,
 		&nrw,
@@ -177,7 +181,7 @@ struct module_exports exports= {
 		&sleep_time,
 		&check_time
 	},
-	11,      /* Number of module paramers */
+	12,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -196,6 +200,11 @@ static int mod_init(void)
 	int  i;
 
 	DBG("XJAB:mod_init: initializing ...\n");
+	if(!jdomain)
+	{
+		DBG("XJAB:mod_init: ERROR jdomain is NULL\n");
+		return -1;
+	}
 
 	/* import mysql functions */
 	if (bind_dbmod())
@@ -272,12 +281,12 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if(xj_wlist_set_aliases(jwl, jaliases, jdomain) < 0)
+	if(xj_wlist_set_aliases(jwl, jaliases, jdomain, proxy) < 0)
 	{
-		DBG("XJAB:mod_init: error setting aliases\n");
+		DBG("XJAB:mod_init: error setting aliases and outbound proxy\n");
 		return -1;
 	}
-	
+
 	DBG("XJAB:mod_init: initialized ...\n");	
 	return 0;
 }
@@ -395,7 +404,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	struct to_body to, *from;
 	struct sip_uri _uri;
 	int pipe, fl;
-	char   *buf=0;
+	char   *pc=0;
 	t_xj_jkey jkey, *p;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
@@ -479,15 +488,28 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			DBG("XJAB:xjab_manage_sipmsg: ERROR:strange SIP msg type!\n");
 			goto error;
 	}
+
+	// if is for going ONLINE/OFFLINE we do not need the destination
+	if(type==XJ_GO_ONLINE || type==XJ_GO_OFFLINE)
+		goto prepare_job;
 	
 	// determination of destination
+	// - try to get first new_uri or r-uri, but check them against jdomain
+	// and aliases
 	dst.len = 0;
 	if( msg->new_uri.len > 0 )
 	{
-		DBG("XJAB:xjab_manage_sipmsg: using NEW URI for destination\n");
 		dst.s = msg->new_uri.s;
 		dst.len = msg->new_uri.len;
-	} else if ( msg->first_line.u.request.uri.len > 0 )
+		if(xj_wlist_check_aliases(jwl, &dst))
+			dst.len = 0;
+#ifdef XJ_EXTRA_DEBUG
+		else
+			DBG("XJAB:xjab_manage_sipmsg: using NEW URI for destination\n");
+#endif
+	}
+	
+	if (dst.len == 0 &&  msg->first_line.u.request.uri.len > 0 )
 	{
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xjab_manage_sipmsg: parsing URI from first line\n");
@@ -500,31 +522,55 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		}
 		if(_uri.user.len > 0)
 		{
-			DBG("XJAB:xjab_manage_sipmsg: using URI for destination\n");
 			dst.s = msg->first_line.u.request.uri.s;
 			dst.len = msg->first_line.u.request.uri.len;
+			if(xj_wlist_check_aliases(jwl, &dst))
+				dst.len = 0;
+#ifdef XJ_EXTRA_DEBUG
+			else
+				DBG("XJAB:xjab_manage_sipmsg: using URI for destination\n");
+#endif
 		}
 	}
+
 	if(dst.len == 0 && msg->to != NULL)
 	{
 		if(msg->to->parsed)
 		{
+#ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xjab_manage_sipmsg: TO already parsed\n");
+#endif
 			dst.s = ((struct to_body*)msg->to->parsed)->uri.s;
 			dst.len = ((struct to_body*)msg->to->parsed)->uri.len;
+			if(xj_wlist_check_aliases(jwl, &dst))
+				dst.len = 0;
+#ifdef XJ_EXTRA_DEBUG
+			else
+				DBG("XJAB:xjab_manage_sipmsg: using TO for destination\n");
+#endif
 		}
 		else
 		{
+#ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xjab_manage_sipmsg: TO NOT parsed -> parsing ...\n");
+#endif
 			memset( &to , 0, sizeof(to) );
 			parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1,
 				&to);
 			if(to.uri.len > 0) // to.error == PARSE_OK)
 			{
+#ifdef XJ_EXTRA_DEBUG
 				DBG("XJAB:xjab_manage_sipmsg: TO parsed OK <%.*s>.\n",
 					to.uri.len, to.uri.s);
+#endif
 				dst.s = to.uri.s;
 				dst.len = to.uri.len;
+				if(xj_wlist_check_aliases(jwl, &dst))
+					dst.len = 0;
+#ifdef XJ_EXTRA_DEBUG
+				else
+					DBG("XJAB:xjab_manage_sipmsg: using TO for destination\n");
+#endif
 			}
 			else
 			{
@@ -556,11 +602,25 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			dst.s -= 3;
 			dst.len += 3;
 		}
-		
+#ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xjab_manage_sipmsg: DESTINATION corrected [%.*s].\n", 
 				dst.len, dst.s);
+#endif
 	}
-	
+	// check for parameters
+	pc = dst.s;
+	while(pc < dst.s + dst.len && *pc!=';')
+		pc++;
+	if(pc < dst.s+dst.len)
+	{
+		dst.len = pc - dst.s;
+#ifdef XJ_EXTRA_DEBUG
+		DBG("XJAB:xjab_manage_sipmsg: DESTINATION corrected again [%.*s].\n", 
+				dst.len, dst.s);
+#endif
+	}
+
+prepare_job:
 	//putting the SIP message parts in share memory to be accessible by workers
     jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
 	memset(jsmsg, 0, sizeof(t_xj_sipmsg));
@@ -578,10 +638,12 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			}
 			strncpy(jsmsg->msg.s, body.s, jsmsg->msg.len);
 		break;
-		case XJ_JOIN_JCONF:
-		case XJ_EXIT_JCONF:
 		case XJ_GO_ONLINE:
 		case XJ_GO_OFFLINE:
+			dst.len = 0;
+			dst.s = 0;
+		case XJ_JOIN_JCONF:
+		case XJ_EXIT_JCONF:
 			jsmsg->msg.len = 0;
 			jsmsg->msg.s = NULL;
 		break;
@@ -590,15 +652,23 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			shm_free(jsmsg);
 			goto error;
 	}
-	jsmsg->to.len = dst.len;
-	if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1)) == NULL)
+	if(dst.len>0)
 	{
-		if(type == XJ_SEND_MESSAGE)
-			shm_free(jsmsg->msg.s);
-		shm_free(jsmsg);
-		goto error;
+		jsmsg->to.len = dst.len;
+		if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1))==NULL)
+		{
+			if(type == XJ_SEND_MESSAGE)
+				shm_free(jsmsg->msg.s);
+			shm_free(jsmsg);
+			goto error;
+		}
+		strncpy(jsmsg->to.s, dst.s, jsmsg->to.len);
 	}
-	strncpy(jsmsg->to.s, dst.s, jsmsg->to.len);
+	else
+	{
+		jsmsg->to.len = 0;
+		jsmsg->to.s   = 0;
+	}
 
 	jsmsg->jkey = p;
 	jsmsg->type = type;
@@ -618,12 +688,8 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		goto error;
 	}
 	
-	if (buf) 
-		pkg_free(buf);	
 	return 1;
 error:
-	if (buf) 
-		pkg_free(buf);
 	return -1;
 }
 
