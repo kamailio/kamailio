@@ -263,6 +263,7 @@ static inline void qm_detach_free(struct qm_block* qm, struct qm_frag* frag)
 }
 
 
+
 #ifdef DBG_QM_MALLOC
 static inline struct qm_frag* qm_find_free(struct qm_block* qm, 
 											unsigned int size,
@@ -452,6 +453,9 @@ void qm_free(struct qm_block* qm, void* p)
 	next=FRAG_NEXT(f);
 	if (((char*)next < (char*)qm->last_frag_end) &&( next->u.is_free)){
 		/* join */
+#ifdef DBG_QM_MALLOC
+		qm_debug_frag(qm, next);
+#endif
 		qm_detach_free(qm, next);
 		size+=next->size+FRAG_OVERHEAD;
 		qm->real_used-=FRAG_OVERHEAD;
@@ -463,7 +467,7 @@ void qm_free(struct qm_block* qm, void* p)
 		/*	(struct qm_frag*)((char*)f - (struct qm_frag_end*)((char*)f-
 								sizeof(struct qm_frag_end))->size);*/
 #ifdef DBG_QM_MALLOC
-		qm_debug_frag(qm, f);
+		qm_debug_frag(qm, prev);
 #endif
 		if (prev->u.is_free){
 			/*join*/
