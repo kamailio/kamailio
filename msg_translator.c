@@ -28,17 +28,18 @@
  *
  * History:
  * --------
- * 2003-03-01 VOICE_MAIL defs removed (jiri)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-01-20 bug_fix: use of return value of snprintf aligned to C99 (jiri)
- * 2003-01-23 added rport patches, contributed by 
- *             Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
- *             (andrei)
- * 2003-01-24 added i param to via of outgoing requests (used by tcp),
- *             modified via_builder params (andrei)
- * 2003-01-27 more rport fixes (make use of new via_param->start)  (andrei)
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-29 scratchpad removed (jiri)
+ * 2003-03-01  VOICE_MAIL defs removed (jiri)
+ * 2003-02-28  scratchpad compatibility abandoned (jiri)
+ * 2003-01-20  bug_fix: use of return value of snprintf aligned to C99 (jiri)
+ * 2003-01-23  added rport patches, contributed by 
+ *              Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
+ *              (andrei)
+ * 2003-01-24  added i param to via of outgoing requests (used by tcp),
+ *              modified via_builder params (andrei)
+ * 2003-01-27  more rport fixes (make use of new via_param->start)  (andrei)
+ * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-29  scratchpad removed (jiri)
+ * 2003-03-18  killed the build_warning snprintf (andrei)
  *
  */
 
@@ -144,8 +145,34 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 	static char buf[MAX_WARNING_LEN];
 	static unsigned int fix_len=0;
 	str *foo;
-	int print_len;
+	int print_len, l;
+	int clen;
+	char* t;
 
+#define str_pair_print(string, string2, string2_len) \
+		do{ \
+			l=strlen((string)); \
+		if ((clen+(string2_len)+l)>MAX_WARNING_LEN) \
+			goto error_overflow; \
+		memcpy(buf+clen, (string), l); \
+		clen+=l; \
+		memcpy(buf+clen, (string2), (string2_len)); \
+		clen+=(string2_len); }while(0)
+		
+		
+#define str_int_print(string, intval)\
+		do{\
+			t=int2str((intval), &print_len); \
+			str_pair_print(string, t, print_len);\
+		} while(0)
+		
+#define str_ipaddr_print(string, ipaddr_val)\
+		do{\
+			t=ip_addr2a((ipaddr_val)); \
+			print_len=strlen(t); \
+			str_pair_print(string, t, print_len);\
+		} while(0)
+	
 	if (!fix_len)
 	{
 		memcpy(buf+fix_len,WARNING, WARNING_LEN);
@@ -159,31 +186,34 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 		memcpy(buf+fix_len, WARNING_PHRASE,WARNING_PHRASE_LEN);
 		fix_len += WARNING_PHRASE_LEN;
 	}
-
+	
 	/*adding out_uri*/
 	if (msg->new_uri.s)
 		foo=&(msg->new_uri);
 	else
 		foo=&(msg->first_line.u.request.uri);
-	print_len=snprintf(buf+fix_len, MAX_WARNING_LEN-fix_len,
-		"pid=%d req_src_ip=%s req_src_port=%d in_uri=%.*s out_uri=%.*s"
-		" via_cnt%c=%d\"",
-		my_pid(),
-		ip_addr2a(&msg->rcv.src_ip),
-		ntohs(msg->rcv.src_port),
-		msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s,
-		foo->len, foo->s, 
-		msg->parsed_flag & HDR_EOH ? '=' : '>', /* should be = */
-		via_cnt );
-
-	if (print_len==-1 || print_len>=MAX_WARNING_LEN-fix_len) {
+		clen=fix_len;
+		
+		/* pid= */
+		str_int_print("pid=", my_pid());
+		/* req_src_ip= */
+		str_ipaddr_print(" req_src_ip=", &msg->rcv.src_ip);
+		str_int_print(" req_src_port=", ntohs(msg->rcv.src_port));
+		str_pair_print(" in_uri=", msg->first_line.u.request.uri.s,
+									msg->first_line.u.request.uri.len);
+		str_pair_print(" out_uri=", foo->s, foo->len);
+		str_pair_print(" via_cnt", msg->parsed_flag & HDR_EOH ? "=" : ">", 1);
+		str_int_print("=", via_cnt);
+		if (clen<MAX_WARNING_LEN){ buf[clen]='"'; clen++; }
+		else goto error_overflow;
+		
+		
+		*returned_len=clen;
+		return buf;
+error_overflow:
 		LOG(L_ERR, "ERROR: warning_builder: buffer size exceeded\n");
 		*returned_len=0;
 		return 0;
-	} else {
-		*returned_len=fix_len+print_len;
-		return buf;
-	}
 }
 
 
