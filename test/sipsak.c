@@ -40,7 +40,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <arpa/inet.h>
 #include <sys/poll.h>
 
-#define SIPSAK_VERSION "v0.1"
+#define SIPSAK_VERSION "v0.4"
 #define RESIZE		1024
 #define BUFSIZE		4096
 #define FQDN_SIZE   200
@@ -86,10 +86,10 @@ bouquets and brickbats to farhan@hotfoon.com
 
 long address;
 int verbose, nameend, namebeg, expires_t, flood;
-int maxforw, lport, rport, randtrash, trashchar;
+int maxforw, lport, rport, randtrash, trashchar, numeric;
 int file_b, uri_b, trace, via_ins, usrloc, redirects;
 char *username, *domainname;
-char fqdn[FQDN_SIZE];
+char fqdn[FQDN_SIZE], messusern[FQDN_SIZE];
 char message[BUFSIZE], mes_reply[BUFSIZE];
 
 /* take either a dot.decimal string of ip address or a 
@@ -155,11 +155,15 @@ long getaddress(char *host)
 /* because the full qualified domain name is needed by many other
    functions it will be determined by this function.*/
 void get_fqdn(){
-	char hname[100], dname[100];
+	char hname[100], dname[100], hlp[18];
 	size_t namelen=100;
+	struct hostent* he;
+	int i;
+	unsigned char *addrp;
+	char *fqdnp;
 
 	if (gethostname(&hname[0], namelen) < 0) {
-		printf("error: cannot determine domainname\n");
+		printf("error: cannot determine hostname\n");
 		exit(2);
 	}
 	/* a hostname with dots should be a domainname */
@@ -175,6 +179,25 @@ void get_fqdn(){
 	}
 	else {
 		strcpy(fqdn, hname);
+	}
+
+	if (numeric) {
+		he=gethostbyname(fqdn);
+		if (he) {
+			addrp = he->h_addr_list[0];
+			hlp[0]=fqdn[0]='\0';
+			fqdnp = &fqdn[0];
+			for (i = 0; i < 3; i++) {
+				sprintf(hlp, "%i.", addrp[i]);
+				fqdnp = strcat(fqdn, hlp);
+			}
+			sprintf(hlp, "%i", addrp[3]);
+			fqdnp = strcat(fqdn, hlp);
+		}
+		else {
+			printf("error: can not resolve hostname\n");
+			exit(2);
+		}
 	}
 
 #ifdef DEBUG
@@ -256,13 +279,14 @@ void create_msg(char *buff, int action){
 #ifdef DEBUG
 			printf("username: %s\ndomainname: %s\n", username, domainname);
 #endif
-			usern=malloc(strlen(username)+6);
+			usern=malloc(strlen(username)+10);
+			sprintf(messusern, "%s sip:%s%i", MES_STR, username, namebeg);
 			sprintf(usern, "%s%i", username, namebeg);
 			/* build the register, message and the 200 we need in for 
 			   USRLOC on one function call*/
 			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, expires_t);
 			c=rand();
-			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
+			sprintf(message, "%s sip:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
 			sprintf(mes_reply, "%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_LEN_STR);
 #ifdef DEBUG
 			printf("message:\n%s\n", message);
@@ -717,7 +741,7 @@ void shoot(char *buff)
 							case 1:
 								/* now we sended the message and look if its 
 								   forwarded to us*/
-								if (!strncmp(reply, MES_STR, MES_STR_LEN)) {
+								if (!strncmp(reply, messusern, strlen(messusern))) {
 									if (verbose) {
 										crlf=strstr(reply, "\r\n\r\n");
 										crlf=crlf+4;
@@ -732,7 +756,7 @@ void shoot(char *buff)
 								}
 								else {
 									if (verbose)
-										printf("\nreceived:\n%s", reply);
+										printf("\nreceived:\n%s\n", reply);
 									printf("error: didn't received the 'MESSAGE' we sended. aborting\n");
 									exit(1);
 								}
@@ -740,8 +764,8 @@ void shoot(char *buff)
 							case 2:
 								/* finnaly we sended our reply on the message and 
 								   look if this is also forwarded to us*/
-								if (!strncmp(reply, MES_STR, MES_STR_LEN)){
-									printf("warning: received another 'MESSAGE'. retransmission?!\n");
+								while (!strncmp(reply, messusern, strlen(messusern))){
+									printf("warning: received 'MESSAGE' retransmission!\n");
 									ret = recv(ssock, reply, BUFSIZE, 0);
 								}
 								if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
@@ -837,7 +861,7 @@ void print_help() {
 		" flood : sipsak -F [-c number] -s sip:uri\n"
 		" random: sipsak -R [-T number] -s sip:uri\n\n"
 		" additional parameter in every modus:\n"
-		"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
+		"                [-d] [-i] [-l port] [-m number] [-n] [-r port] [-v]\n"
 		"   -h           displays this help message\n"
 		"   -f filename  the file which contains the SIP message to send\n"
 		"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
@@ -856,6 +880,7 @@ void print_help() {
 		"   -l port      the local port to use (default: any)\n"
 		"   -r port      the remote port to use (default: 5060)\n"
 		"   -m number    the value for the max-forwards header field\n"
+		"   -n           use IPs instead of fqdn in the Via-Line\n"
 		"   -i           deactivate the insertion of a Via-Line\n"
 		"   -d           ignore redirects\n"
 		"   -v           be more verbose\n\n"
@@ -873,6 +898,7 @@ int main(int argc, char *argv[])
 
 	/* some initialisation to be shure */
 	file_b=uri_b=trace=lport=usrloc=flood=verbose=randtrash=trashchar = 0;
+	numeric = 0;
 	namebeg=nameend=maxforw = -1;
 	via_ins=redirects = 1;
 	username = NULL;
@@ -883,11 +909,12 @@ int main(int argc, char *argv[])
 	memset(message, 0, BUFSIZE);
 	memset(mes_reply, 0, BUFSIZE);
 	memset(fqdn, 0, FQDN_SIZE);
+	memset(messusern, 0, FQDN_SIZE);
 
 	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
-	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:r:Rs:tT:uv")) != EOF){
+	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:nr:Rs:tT:uv")) != EOF){
 		switch(c){
 			case 'b':
 				//namebeg=atoi(optarg);
@@ -954,6 +981,9 @@ int main(int argc, char *argv[])
 					printf("error: non-numerical number of max-forwards\n");
 					exit(2);
 				}
+				break;
+			case 'n':
+				numeric = 1;
 				break;
 			case 'r':
 				rport=atoi(optarg);
