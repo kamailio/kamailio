@@ -44,6 +44,9 @@
 #include "dbt_res.h"
 #include "dbt_api.h"
 
+#define DBT_ID		"dbtext:"
+#define DBT_ID_LEN	(sizeof(DBT_ID)-1)
+
 /*
  * Initialize database connection
  */
@@ -60,6 +63,14 @@ db_con_t* dbt_init(const char* _sqlurl)
 	}
 	_s.s = (char*)_sqlurl;
 	_s.len = strlen(_sqlurl);
+	if(_s.len <= DBT_ID_LEN || strncmp(_s.s, DBT_ID, DBT_ID_LEN)!=0)
+	{
+		LOG(L_ERR, "DBT:dbt_init: invalid database URL - should be:"
+			" <%s/path/to/directory>\n", DBT_ID);
+		return NULL;
+	}
+	_s.s   += DBT_ID_LEN;
+	_s.len -= DBT_ID_LEN;
 	_res = pkg_malloc(sizeof(db_con_t)+sizeof(dbt_con_t));
 	if (!_res)
 	{
