@@ -32,29 +32,28 @@
  *            possible issues with too small buffer
  */
 
-
-#include <time.h>
-#include <stdio.h>
-#include "../../dprint.h"
-#include "../../parser/digest/digest.h" /* cred_body_t get_authorized_cred*/
-#include "defs.h"
-#ifdef AUTO_REALM
-#include "../../parser/parse_uri.h"
-#endif
-#include "../../str.h"
+#include "../../data_lump.h"
 #include "../../mem/mem.h"
+#include "../../parser/digest/digest.h"
+#include "auth_mod.h"
+#include "common.h"
 #include "challenge.h"
-#include "nonce.h"                      /* calc_nonce */
-#include "common.h"                     /* send_resp */
-#include "auth_mod.h"                   /* Module parameters */
+#include "nonce.h"
 
 
-#define MESSAGE_407 "Proxy Authentication Required"
-#define MESSAGE_401 "Unauthorized"
-#define MESSAGE_403 "Forbidden"
-
-#define WWW_AUTH_CHALLENGE   "WWW-Authenticate"
+/*
+ * proxy_challenge function sends this reply
+ */
+#define MESSAGE_407          "Proxy Authentication Required"
 #define PROXY_AUTH_CHALLENGE "Proxy-Authenticate"
+
+
+/*
+ * www_challenge function send this reply
+ */
+#define MESSAGE_401        "Unauthorized"
+#define WWW_AUTH_CHALLENGE "WWW-Authenticate"
+
 
 #define QOP_PARAM	  ", qop=\"auth\""
 #define QOP_PARAM_LEN	  (sizeof(QOP_PARAM)-1)
@@ -72,13 +71,13 @@
  * Create {WWW,Proxy}-Authenticate header field
  */
 static inline char *build_auth_hf(int _retries, int _stale, str* _realm, 
-	int* _len, int _qop, char* _hf_name)
+				  int* _len, int _qop, char* _hf_name)
 {
-
+	
 	int hf_name_len;
 	char *hf, *p;
 
-	/* length calculation */
+	     /* length calculation */
 	*_len=hf_name_len=strlen(_hf_name);
 	*_len+=DIGEST_REALM_LEN
 		+_realm->len
@@ -91,7 +90,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 		+DIGEST_MD5_LEN
 #endif
 		+CRLF_LEN ;
-
+	
 	p=hf=pkg_malloc(*_len+1);
 	if (!hf) {
 		LOG(L_ERR, "ERROR: build_auth_hf: no memory\n");
@@ -103,8 +102,8 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN);p+=DIGEST_REALM_LEN;
 	memcpy(p, _realm->s, _realm->len);p+=_realm->len;
 	memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN);p+=DIGEST_NONCE_LEN;
-	calc_nonce(p, time(0) + nonce_expire, _retries, &secret);
-		p+=NONCE_LEN;
+	calc_nonce(p, time(0) + nonce_expire, &secret);
+	p+=NONCE_LEN;
 	*p='"';p++;
 	if (_qop) {
 		memcpy(p, QOP_PARAM, QOP_PARAM_LEN);
@@ -119,7 +118,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 #endif
 	memcpy(p, CRLF, CRLF_LEN ); p+=CRLF_LEN;
 	*p=0; /* zero terminator, just in case */
-
+	
 	DBG("build_auth_hf(): \'%s\'\n", hf);
 	return hf;
 }
@@ -136,9 +135,7 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 	auth_body_t* cred = 0;
 	char *auth_hf;
 	int ret;
-#ifdef AUTO_REALM
 	struct sip_uri uri;
-#endif
 
 	switch(_code) {
 	case 401: get_authorized_cred(_msg->authorization, &h); break;
@@ -147,7 +144,6 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
-#ifdef AUTO_REALM
 	if (_realm->len == 0) {
 		if (get_realm(_msg, &uri) < 0) {
 			LOG(L_ERR, "challenge(): Error while extracting URI\n");
@@ -160,44 +156,20 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 
 		_realm = &uri.host;
 	}
-#endif
 
-	if (cred != 0) {
-		if (cred->nonce_retries > retry_count) {
-			DBG("challenge(): Retry count exceeded, sending Forbidden\n");
-			_code = 403;
-			_message = MESSAGE_403;
-			auth_hf_len = 0;
-			auth_hf=0;
-		} else {
-			if (cred->stale == 0) {
-				cred->nonce_retries++;
-			} else {
-				cred->nonce_retries = 0;
-			}
-			
-			auth_hf=build_auth_hf(cred->nonce_retries, cred->stale, 
-				      _realm, &auth_hf_len,
-				      _qop, _challenge_msg);
-			if (!auth_hf) {
-				LOG(L_ERR, "ERROR: challenge: no mem, w/o cred\n");
-				return -1;
-			}
-		}
-	} else {
-		auth_hf=build_auth_hf(0, 0, _realm, &auth_hf_len, _qop, _challenge_msg);
-		if (!auth_hf) {
-			LOG(L_ERR, "ERROR: challenge: no mem w/cred\n");
-			return -1;
-		}
+	auth_hf = build_auth_hf(0, 0, _realm, &auth_hf_len, _qop, _challenge_msg);
+	if (!auth_hf) {
+		LOG(L_ERR, "ERROR: challenge: no mem w/cred\n");
+		return -1;
 	}
 	
-	ret=send_resp(_msg, _code, _message, auth_hf, auth_hf_len);
+	ret = send_resp(_msg, _code, _message, auth_hf, auth_hf_len);
 	if (auth_hf) pkg_free(auth_hf);
-	if (ret==-1) {
+	if (ret == -1) {
 		LOG(L_ERR, "challenge(): Error while sending response\n");
 		return -1;
 	}
+	
 	return 0;
 }
 
@@ -217,4 +189,32 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
 	return challenge(_msg, (str*)_realm, (int)_qop, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
+}
+
+
+/*
+ * Remove used credentials from a SIP message header
+ */
+int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	struct hdr_field* h;
+	int len;
+
+	get_authorized_cred(_m->authorization, &h);
+	if (!h) {
+		get_authorized_cred(_m->proxy_auth, &h);
+		if (!h) {
+			LOG(L_ERR, "consume_credentials(): No authorized credentials found (error in scripts)\n");
+			return -1;
+		}
+	}
+
+	len=h->len;
+
+	if (del_lump(&_m->add_rm, h->name.s - _m->buf, len, 0) == 0) {
+		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");
+		return -1;
+	}
+
+	return 1;
 }

@@ -38,13 +38,13 @@
 /*
  * Length of nonce string in bytes
  */
-#define NONCE_LEN (8+8+32)
+#define NONCE_LEN (8+32)
 
 
 /*
  * Calculate nonce value
  */
-void calc_nonce(char* _nonce, int _expires, int _retry, str* _secret);
+void calc_nonce(char* _nonce, int _expires, str* _secret);
 
 
 /*
@@ -60,15 +60,9 @@ time_t get_nonce_expires(str* _nonce);
 
 
 /*
- * Get retry counter from nonce string
- */
-int get_nonce_retry(str* _nonce);
-
-
-/*
  * Check if the nonce is stale
  */
-int nonce_is_stale(str* _nonce);
+int is_nonce_stale(str* _nonce);
 
 
 #endif /* NONCE_H */

@@ -46,4 +46,10 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _str2);
 
 
-#endif /* CHALLENGE_H */
+/*
+ * Remove used credentials from a SIP message header
+ */
+int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+#endif /* AUTH_H */

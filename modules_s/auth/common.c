@@ -1,8 +1,7 @@
 /*
  * $Id$
  *
- * Common functions needed by authorize
- * and challenge functions
+ * Digest Authentication Module
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -28,12 +27,46 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+#include "../../dprint.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
-#include "../../ut.h"                /* q_memchr* */
-#include "../../parser/parse_from.h" /* parse_from_header */
-#include "../../parser/parse_uri.h"  /* parse_uri */
+#include "auth_mod.h"
 #include "common.h"
-#include "auth_mod.h"                /* sl_reply */
+
+
+/* 
+ * Return parsed To or From, host part of the parsed uri is realm
+ */
+int get_realm(struct sip_msg* _m, struct sip_uri* _u)
+{
+	str uri;
+
+	if ((REQ_LINE(_m).method.len == 8) && (strncmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
+		if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
+			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+			return -1;
+		}
+		
+		     /* Body of To header field is parsed automatically */
+		uri = get_to(_m)->uri; 
+	} else {
+		if (parse_from_header(_m) < 0) {
+			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+			return -2;
+		}
+
+		uri = get_from(_m)->uri;
+	}
+
+	if (parse_uri(uri.s, uri.len, _u) < 0) {
+		LOG(L_ERR, "get_realm(): Error while parsing URI\n");
+		return -3;
+	}
+	
+	return 0;
+}
 
 
 /*
@@ -52,117 +85,3 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
 	
 	return sl_reply(_m, (char*)_code, _reason);
 }
-
-
-/*
- * Finds specified character, that is not quoted 
- * If there is no such character, returns NULL
- *
- * PARAMS : char* _b : input buffer
- *        : char _c  : character to find
- * RETURNS: char*    : points to character found, NULL if not found
- */
-static inline char* find_not_quoted(str* _b, char _c)
-{
-	int quoted = 0, i;
-	
-	if (_b->s == 0) return 0;
-
-	for(i = 0; i < _b->len; i++) {
-		if (!quoted) {
-			if (_b->s[i] == '\"') quoted = 1;
-			else if (_b->s[i] == _c) return _b->s + i;
-		} else {
-			if ((_b->s[i] == '\"') && (_b->s[i - 1] != '\\')) quoted = 0;
-		}
-	}
-	return 0;
-}
-
-
-/*
- * Cut username part of a URL
- */
-int get_username(str* _s)
-{
-	char* at, *dcolon, *dc;
-
-	     /* Find double colon, double colon
-	      * separates schema and the rest of
-	      * URL
-	      */
-	dcolon = find_not_quoted(_s, ':');
-
-	     /* No double colon found means error */
-	if (!dcolon) {
-		_s->len = 0;
-		return -1;
-	}
-
-	     /* Skip the double colon */
-	_s->len -= dcolon + 1 - _s->s;
-	_s->s = dcolon + 1;
-
-	     /* Try to find @ or another doublecolon
-	      * if the URL contains also pasword, username
-	      * and password will be delimited by double
-	      * colon, if there is no password, @ delimites
-	      * username from the rest of the URL, if there
-	      * is no @, there is no username in the URL
-	      */
-	at = q_memchr(_s->s, '@', _s->len); /* FIXME: one pass */
-	dc = q_memchr(_s->s, ':', _s->len);
-	if (at) {
-		     /* The double colon must be before
-		      * @ to delimit username, otherwise
-		      * it delimits hostname from port number
-		      */
-		if ((dc) && (dc < at)) {
-			_s->len = dc - dcolon - 1;
-			return 0;
-		}
-		
-		_s->len = at - dcolon - 1;
-		return 0;
-	}
-
-	_s->len = 0;
-	return -2;
-}
-
-
-#ifdef AUTO_REALM
-
-/* 
- * Return parsed To or From, host part of the parsed uri is realm
- */
-int get_realm(struct sip_msg* _m, struct sip_uri* _u)
-{
-	str uri;
-
-	if ((REQ_LINE(_m).method.len == 8) && (strncmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
-		if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
-			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
-			return -1;
-		}
-
-		     /* Body of To header field is parsed automatically */
-		uri = get_to(_m)->uri; 
-	} else {
-		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
-			return -2;
-		}
-
-		uri = get_from(_m)->uri;
-	}
-
-	if (parse_uri(uri.s, uri.len, _u) < 0) {
-		LOG(L_ERR, "get_realm(): Error while parsing URI\n");
-		return -3;
-	}
-
-	return 0;
-}
-
-#endif

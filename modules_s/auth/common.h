@@ -1,8 +1,7 @@
 /*
  * $Id$
  *
- * Common function needed by authorize
- * and challenge related functions
+ * Digest Authentication Module
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -28,37 +27,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #ifndef COMMON_H
 #define COMMON_H
 
 #include "../../parser/msg_parser.h"
-#include "../../str.h"
-#include "defs.h"
-
 
 #define MESSAGE_400 "Bad Request"
+#define MESSAGE_500 "Server Internal Error"
 
-
-/*
- * Send a response
- */
-int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len);
-
-
-/*
- * Cut username part of a URL
- */
-int get_username(str* _s);
-
-
-#ifdef AUTO_REALM
 
 /* 
  * Return parsed To or From, host part of the parsed uri is realm
  */
 int get_realm(struct sip_msg* _m, struct sip_uri* _u);
 
-#endif
+
+/*
+ * Create a response with given code and reason phrase
+ * Optionaly add new headers specified in _hdr
+ */
+int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len);
 
 #endif /* COMMON_H */

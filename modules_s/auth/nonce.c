@@ -35,8 +35,8 @@
 #include "../../md5global.h"
 #include "../../md5.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 #include "nonce.h"
-#include "rfc2617.h"
 
 
 /*
@@ -44,7 +44,7 @@
  * destination array must be at least 8 bytes long,
  * this string is NOT zero terminated
  */
-static inline void int2hex(char* _d, int _s)
+static inline void integer2hex(char* _d, int _s)
 {
 	int i;
 	unsigned char j;
@@ -75,7 +75,7 @@ static inline void int2hex(char* _d, int _s)
 /*
  * Convert hex string to integer
  */
-static inline int hex2int(char* _s)
+static inline int hex2integer(char* _s)
 {
 	unsigned int i, res = 0;
 
@@ -99,26 +99,24 @@ static inline int hex2int(char* _s)
  * Nonce value consists of time in seconds since 1.1 1970 and
  * secret phrase
  */
-inline void calc_nonce(char* _nonce, int _expires, int _retry, str* _secret)
+inline void calc_nonce(char* _nonce, int _expires, str* _secret)
 {
 	MD5_CTX ctx;
 	char bin[16];
 
 	MD5Init(&ctx);
 	
-	int2hex(_nonce, _expires);
+	integer2hex(_nonce, _expires);
 	MD5Update(&ctx, _nonce, 8);
-
-	int2hex(_nonce + 8, _retry);
-	MD5Update(&ctx, _nonce + 8, 8);
 
 	MD5Update(&ctx, _secret->s, _secret->len);
 	MD5Final(bin, &ctx);
-	cvt_hex(bin, _nonce + 16);
+	string2hex(bin, 16, _nonce + 8);
+	_nonce[8 + 32] = '\0';
 
-	DBG("calc_nonce(): _expires=%d, _retry=%d, _secret=%.*s -> "
+	DBG("calc_nonce(): _expires=%d, _secret=%.*s -> "
 	    "nonce=[%s]\n",
-	    _expires, _retry, _secret->len, _secret->s, _nonce);
+	    _expires, _secret->len, _secret->s, _nonce);
 
 }
 
@@ -128,17 +126,7 @@ inline void calc_nonce(char* _nonce, int _expires, int _retry, str* _secret)
  */
 inline time_t get_nonce_expires(str* _n)
 {
-	return (time_t)hex2int(_n->s);
-}
-
-
-/*
- * Get retry counter from nonce string
- */
-inline int get_nonce_retry(str* _n)
-{
-	if (!_n->s) return 0;
-	return hex2int(_n->s + 8);
+	return (time_t)hex2integer(_n->s);
 }
 
 
@@ -148,7 +136,7 @@ inline int get_nonce_retry(str* _n)
  */
 int check_nonce(str* _nonce, str* _secret)
 {
-	int expires, retry;
+	int expires;
 	char non[NONCE_LEN + 1];
 
 	if (_nonce->s == 0) {
@@ -160,9 +148,7 @@ int check_nonce(str* _nonce, str* _secret)
 	}
 
 	expires = get_nonce_expires(_nonce);
-	retry = get_nonce_retry(_nonce);
-
-	calc_nonce(non, expires, retry, _secret);
+	calc_nonce(non, expires, _secret);
 
 	DBG("check_nonce(): comparing [%.*s] and [%.*s]\n",
 	    _nonce->len, _nonce->s, NONCE_LEN, non);
@@ -178,13 +164,13 @@ int check_nonce(str* _nonce, str* _secret)
 /*
  * Check if a nonce is stale
  */
-int nonce_is_stale(str* _n) 
+int is_nonce_stale(str* _n) 
 {
-	if (!_n->s) return -1;
+	if (!_n->s) return 0;
 
 	if (get_nonce_expires(_n) < time(0)) {
-		return 0;
-	} else {
 		return 1;
+	} else {
+		return 0;
 	}
 }

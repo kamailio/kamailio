@@ -31,19 +31,17 @@
  * 2003-02-26: checks and group moved to separate modules (janakj)
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <time.h>
 #include "../../sr_module.h"
 #include "../../dprint.h"
-#include "../../ut.h"
-#include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../error.h"
+#include "../../ut.h"
 #include "auth_mod.h"
-#include "defs.h"
-#include "authorize.h"
 #include "challenge.h"
+#include "api.h"
 
 
 #define RAND_SECRET_LEN 32
@@ -54,13 +52,6 @@
  */
 static void destroy(void);
 
-
-/*
- * Module child-init function prototype
- */
-static int child_init(int rank);
-
-
 /*
  * Module initialization function prototype
  */
@@ -68,6 +59,10 @@ static int mod_init(void);
 
 
 static int challenge_fixup(void** param, int param_no);
+
+/*  
+ * Convert char* parameter to str* parameter   
+ */
 static int str_fixup(void** param, int param_no);
 
 
@@ -80,127 +75,57 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 /*
  * Module parameter variables
  */
-char* db_url       = "sql://serro:47serro11@localhost/ser";
-char* user_column  = "user";
-char* domain_column = "domain";
-char* pass_column  = "ha1";
-
-#ifdef USER_DOMAIN_HACK
-char* pass_column_2 = "ha1b";
-#endif
-
-char* sec_param    = 0;        /* If the parameter was not used, the secret phrase
-				* will be auto-generated
-				*/                   
-char* sec_rand     = 0;
-int   calc_ha1       = 0;
-int   nonce_expire   = 300;
-int   retry_count    = 5;
+char* sec_param    = 0;   /* If the parameter was not used, the secret phrase will be auto-generated */
+int   nonce_expire = 300; /* Nonce lifetime */
 
 str secret;
-db_con_t* db_handle;   /* Database connection handle */
+char* sec_rand = 0;
 
 
 /*
  * Module interface
  */
-#ifdef STATIC_AUTH
-struct module_exports auth_exports = {
-#else
 struct module_exports exports = {
-#endif
 	"auth", 
 	(char*[]) { 
-		"www_authorize",
-		"proxy_authorize",
 		"www_challenge",
 		"proxy_challenge",
 		"consume_credentials",
+		"~pre_auth",
+		"~post_auth"
 	},
 	(cmd_function[]) {
-		www_authorize,
-		proxy_authorize,
 		www_challenge,
 		proxy_challenge,
 		consume_credentials,
+		(cmd_function)pre_auth,
+		(cmd_function)post_auth
 	},
-	(int[]) {2, 2, 2, 2, 0},
+	(int[]) {2, 2, 0, 0, 0},
 	(fixup_function[]) {
-		str_fixup, str_fixup, 
-		challenge_fixup, challenge_fixup, 
-		0
+		challenge_fixup, challenge_fixup, 0, 0, 0
 	},
 	5,
 	
 	(char*[]) {
-		"db_url",              /* Database URL */
-		"user_column",         /* User column name */
-		"domain_column",       /* Domain column name */
-		"password_column",     /* HA1/password column name */
-#ifdef USER_DOMAIN_HACK
-		"password_column_2",
-#endif
-
 		"secret",              /* Secret phrase used to generate nonce */
-		"calculate_ha1",       /* If set to yes, instead of ha1 value auth module will
-                                        * fetch plaintext password from database and calculate
-                                        * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
-		"retry_count",         /* How many times a client is allowed to retry */
-	},   /* Module parameter names */
+	},                             /* Module parameter names */
 	(modparam_t[]) {
 		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-#ifdef USER_DOMAIN_HACK
-		STR_PARAM,
-#endif
-		STR_PARAM,
-	        INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
+		INT_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
-		&db_url,
-		&user_column,
-		&domain_column,
-		&pass_column,
-#ifdef USER_DOMAIN_HACK
-		&pass_column_2,
-#endif
 		&sec_param,
-		&calc_ha1,
 		&nonce_expire,
-		&retry_count,
-	},   /* Module parameter variable pointers */
-#ifdef USER_DOMAIN_HACK
-	9,      /* Numberof module parameters */
-#else
-	8,      /* Number of module paramers */
-#endif					     
+	},          /* Module parameter variable pointers */
+	2,          /* Number of module paramers */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
 	0,          /* oncancel function */
-	child_init  /* child initialization function */
+	0           /* child initialization function */
 };
-
-
-static int child_init(int rank)
-{
-	if (db_url == 0) {
-		LOG(L_ERR, "auth:init_child(): Use db_url parameter\n");
-		return -1;
-	}
-	db_handle = db_init(db_url);
-	if (!db_handle) {
-		LOG(L_ERR, "auth:init_child(): Unable to connect database\n");
-		return -1;
-	}
-	return 0;
-
-}
 
 
 /*
@@ -236,12 +161,6 @@ static int mod_init(void)
 {
 	printf("auth module - initializing\n");
 	
-	     /* Find a database module */
-	if (bind_dbmod()) {
-		LOG(L_ERR, "mod_init(): Unable to bind database module\n");
-		return -1;
-	}
-
 	sl_reply = find_export("sl_send_reply", 2);
 
 	if (!sl_reply) {
@@ -270,7 +189,6 @@ static int mod_init(void)
 static void destroy(void)
 {
 	if (sec_rand) pkg_free(sec_rand);
-	db_close(db_handle);
 }
 
 
@@ -298,24 +216,24 @@ static int challenge_fixup(void** param, int param_no)
 }
 
 
-/*
- * Convert char* parameter to str* parameter
+/*  
+ * Convert char* parameter to str* parameter   
  */
 static int str_fixup(void** param, int param_no)
 {
 	str* s;
-
+	
 	if (param_no == 1) {
 		s = (str*)malloc(sizeof(str));
 		if (!s) {
 			LOG(L_ERR, "str_fixup(): No memory left\n");
 			return E_UNSPEC;
 		}
-
+		
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
 	}
-
+	
 	return 0;
 }

@@ -31,47 +31,16 @@
 #ifndef AUTH_MOD_H
 #define AUTH_MOD_H
 
-#include "../../db/db.h"
-#include "defs.h"
 #include "../../str.h"
-#include "../../parser/digest/digest.h" /* auth_body_t */
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
-
 
 /*
  * Module parameters variables
  */
-
-extern char* db_url;          /* Database URL */
-extern char* user_column;     /* 'user' column name */
-extern char* domain_column;   /* 'domain' column name */
-extern char* pass_column;     /* 'password' column name */
-
-extern char* domain_column;	
-
-#ifdef USER_DOMAIN_HACK
-extern char* pass_column_2;   /* Column containg HA1 string constructed
-			       * of user@domain username
-			       */
-#endif
-
 extern str secret;            /* secret phrase used to generate nonce */
-extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int nonce_expire;      /* nonce expire interval */
-extern int retry_count;       /* How many time a client can retry */
-
-extern char* uri_table;       /* Name of URI table */
-extern char* uri_user_col;    /* Name of user column in URI table */
-extern char* uri_domain_col;  /* Name of domain column in URI table */
-extern char* uri_uriuser_col; /* Name of uri_user column in URI table */
-extern int use_uri_table;     /* Should URI table be used ? */
-
-extern db_con_t* db_handle;   /* Database connection handle */
-
-
 
 /* Stateless reply function pointer */
 extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
-
 
 #endif /* AUTH_MOD_H */
