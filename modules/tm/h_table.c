@@ -33,6 +33,7 @@
  * 2003-03-30  set_kr for requests only (jiri)
  * 2003-04-04  bug_fix: REQ_IN callback not called for local 
  *             UAC transactions (jiri)
+ * 2003-09-12  timer_link->tg will be set only if EXTRA_DEBUG (andrei)
  */
 
 #include "defs.h"
@@ -174,8 +175,10 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	memset( new_cell, 0, sizeof( struct cell ) );
 
 	/* UAS */
+#ifdef EXTRA_DEBUG
 	new_cell->uas.response.retr_timer.tg=TG_RT;
 	new_cell->uas.response.fr_timer.tg=TG_FR;
+#endif
 	new_cell->uas.response.fr_timer.payload =
 	new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
 	new_cell->uas.response.my_T=new_cell;
@@ -205,8 +208,10 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 		uac=&new_cell->uac[i];
 		uac->request.my_T = new_cell;
 		uac->request.branch = i;
+#ifdef EXTRA_DEBUG
 		uac->request.fr_timer.tg = TG_FR;
 		uac->request.retr_timer.tg = TG_RT;
+#endif
 		uac->request.retr_timer.payload = 
 		uac->request.fr_timer.payload = &uac->request;
 		uac->local_cancel=uac->request;
@@ -226,8 +231,10 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->dele_tl.payload = new_cell;
 	new_cell->relaied_reply_branch   = -1;
 	/* new_cell->T_canceled = T_UNDEFINED; */
+#ifdef EXTRA_DEBUG
 	new_cell->wait_tl.tg=TG_WT;
 	new_cell->dele_tl.tg=TG_DEL;
+#endif
 
 	if (!syn_branch) {
 		if (p_msg) {
