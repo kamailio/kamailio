@@ -35,7 +35,7 @@
 
 
 /*
- * Do loose routing as defined in RFC3621
+ * Do loose routing as per RFC3621
  */
 int loose_route(struct sip_msg* _m, char* _s1, char* _s2);
 

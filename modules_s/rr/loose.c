@@ -49,6 +49,13 @@
 #include "rr_mod.h"
 
 
+#define ROUTE_PREFIX "Route: <"
+#define ROUTE_PREFIX_LEN (sizeof(ROUTE_PREFIX)-1)
+
+#define ROUTE_SUFFIX ">\r\n"
+#define ROUTE_SUFFIX_LEN (sizeof(ROUTE_SUFFIX)-1)
+
+
 /*
  * Find out if a URI contains r2 parameter which indicates
  * that we put 2 record routes
@@ -170,7 +177,7 @@ static inline int is_myself(struct receive_info* rcv, str* _uri)
 				DBG("is_myself(): equal\n");
 				return 1;
 			} else DBG("is_myself(): hosts differ\n");
-		} else DBG("is_myself(): Host length differs\n");
+		} else DBG("is_myself(): Host lengths differ\n");
 	} else DBG("is_myself(): Ports differ\n");
 	
 	return 0;
@@ -320,6 +327,7 @@ static inline int save_ruri(struct sip_msg* _m)
 {
 	struct lump* anchor;
 	char *s;
+	int len;
 
 	     /* We must parse the whole message header here,
 	      * because Request-URI must be saved in last
@@ -338,21 +346,22 @@ static inline int save_ruri(struct sip_msg* _m)
 	}
 
 	     /* Create buffer for new lump */
-	s = (char*)pkg_malloc(8 + _m->first_line.u.request.uri.len + 3 + 1);
+	len = ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len + ROUTE_SUFFIX_LEN + 1; /* Terminating zero */
+	s = (char*)pkg_malloc(len);
 	if (!s) {
 		LOG(L_ERR, "save_ruri(): No memory left\n");
 		return -3;
 	}
 
 	     /* Create new header field */
-	memcpy(s, "Route: <", 8);
-	memcpy(s + 8, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-	memcpy(s + 8 + _m->first_line.u.request.uri.len, ">\r\n", 3 + 1);
+	memcpy(s, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
+	memcpy(s + ROUTE_PREFIX_LEN, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
+	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len, ROUTE_SUFFIX, ROUTE_SUFFIX_LEN + 1);
 
 	DBG("save_ruri(): New header: '%s'\n", s);
 
 	     /* Insert it */
-	if (insert_new_lump_before(anchor, s, 8 + _m->first_line.u.request.uri.len + 3, 0) == 0) {
+	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
 		pkg_free(s);
 		LOG(L_ERR, "save_ruri(): Can't insert lump\n");
 		return -4;
@@ -367,7 +376,7 @@ static inline int save_ruri(struct sip_msg* _m)
  *
  * Returns 0 on success, negative number on an error
  */
-static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r)
+static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r, rr_t* _p)
 {
 	str* uri;
 
@@ -385,7 +394,7 @@ static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hd
 		return -2;
 	}
 	
-	if (remove_route(_m, _hdr, _r, 0) < 0) {
+	if (remove_route(_m, _hdr, _r, _p) < 0) {
 		LOG(L_ERR, "hsr(): Error while removing next Route URI\n");
 		return -3;
 	}
@@ -444,7 +453,7 @@ static inline int find_last_route(struct sip_msg* _m, struct hdr_field** _h, rr_
  * The function returns 1 if there is no route left and a negative
  * number on error. 0 is returned if everything went OK.
  */
-static inline int rem_2nd_route(struct sip_msg* _m, struct hdr_field** _h, rr_t** _r, rr_t** _p)
+static inline int remove_2nd_route(struct sip_msg* _m, struct hdr_field** _h, rr_t** _r, rr_t** _p)
 {
 	int res;
 
@@ -454,13 +463,13 @@ static inline int rem_2nd_route(struct sip_msg* _m, struct hdr_field** _h, rr_t*
 	} else {
 		res = find_next_route(_m, _h, _r, _p);
 		if (res < 0) {
-			LOG(L_ERR, "rem_2nd_route): Error while parsing headers\n");
+			LOG(L_ERR, "remove_2nd_route): Error while parsing headers\n");
 			return -2;
 		} else if (res > 0) return 1;  /* No next route header field found */
 	}
 	
 	if (remove_route(_m, *_h, *_r, 0) < 0) {
-		LOG(L_ERR, "rem_2nd_route(): Error while removing my 2nd route\n");
+		LOG(L_ERR, "remove_2nd_route(): Error while removing my 2nd route\n");
 		return -3;
 	}
 	return 0;
@@ -481,7 +490,7 @@ static inline int route_after_strict(struct sip_msg* _m)
 	rt = (rr_t*)hdr->parsed;
 
 	if (enable_double_rr && is_2rr(&_m->first_line.u.request.uri)) {
-		res = rem_2nd_route(_m, &hdr, &rt, &prev);
+		res = remove_2nd_route(_m, &hdr, &rt, &prev);
 		if (res < 0) return -2;  /* Error */
 		if (res > 0) return 0;   /* No next route found */
 	}
@@ -579,7 +588,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 
 		uri = &rt->nameaddr.uri;
 		if (enable_double_rr && is_2rr(uri)) {
-			res = rem_2nd_route(_m, &hdr, &rt, &prev);
+			res = remove_2nd_route(_m, &hdr, &rt, &prev);
 			if (res < 0) return -2;  /* Error */
 			if (res > 0) return 0;   /* No next route found */
 		}
@@ -591,7 +600,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 	DBG("ral(): URI to be processed: '%.*s'\n", uri->len, uri->s);
 	if (is_strict(uri)) {
 		DBG("ral(): Next URI is a strict router\n");
-		if (handle_strict_router(_m, hdr, rt) < 0) {
+		if (handle_strict_router(_m, hdr, rt, prev) < 0) {
 			LOG(L_ERR, "ral(): Error while handling strict router\n");
 			return -5;
 		}

@@ -47,8 +47,8 @@
 
 /*
  * Parse the message and find first occurence of
- * Route header field. The function returns -1 on
- * an parser error, 0 if there is a Route HF and
+ * Route header field. The function returns -1 or -2 
+ * on a parser error, 0 if there is a Route HF and
  * 1 if there is no Route HF.
  */
 int find_first_route(struct sip_msg* _m)
@@ -60,7 +60,7 @@ int find_first_route(struct sip_msg* _m)
 		if (_m->route) {
 			if (parse_rr(_m->route) < 0) {
 				LOG(L_ERR, "find_first_route(): Error while parsing Route HF\n");
-				return -1;
+				return -2;
 			}
 			return 0;
 		} else {
@@ -103,7 +103,6 @@ int rewrite_RURI(struct sip_msg* _m, str* _s)
        }
        
        pkg_free(buffer);
-       
        return 0;
 }
 

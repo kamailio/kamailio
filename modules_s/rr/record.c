@@ -97,7 +97,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 /*
  * build a Record-Route header field
  */
-static inline int build_rr(struct lump* _l, int _lr, str* user, str* tag, int _inbound)
+static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user, str* tag, int _inbound)
 {
 	char* prefix, *suffix, *crlf, *r2;
 	int suffix_len, prefix_len;
@@ -140,13 +140,18 @@ static inline int build_rr(struct lump* _l, int _lr, str* user, str* tag, int _i
 	if (!(_l = insert_new_lump_after(_l, prefix, prefix_len, 0))) goto lump_err;
 	prefix = 0;
 	if (!(_l = insert_subst_lump_after(_l, _inbound ? SUBST_RCV_ALL : SUBST_SND_ALL, 0))) goto lump_err;
-	if (!(_l = insert_new_lump_after(_l, suffix, suffix_len, 0))) goto lump_err;
+	if (enable_double_rr) {
+		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0))) goto lump_err;
+		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0))) goto lump_err;
+		r2 = 0;
+	} else {
+		pkg_free(r2);
+		r2 = 0;
+	}
+	if (!(_l2 = insert_new_lump_before(_l2, suffix, suffix_len, 0))) goto lump_err;
 	suffix = 0;
-	if (!(_l = insert_new_lump_after(_l, crlf, 2, 0))) goto lump_err;
+	if (!(_l2 = insert_new_lump_before(_l2, crlf, 2, 0))) goto lump_err;
 	crlf = 0;
-	if (!(_l = insert_cond_lump_before(_l, COND_TRUE, 0))) goto lump_err;
-	if (!insert_new_lump_after(_l, r2, RR_R2_LEN, 0)) goto lump_err;
-	r2 = 0;
 	return 0;
 	
  lump_err:
@@ -166,7 +171,7 @@ static inline int build_rr(struct lump* _l, int _lr, str* user, str* tag, int _i
  */
 static inline int insert_RR(struct sip_msg* _m, int _lr)
 {
-	struct lump* l;
+	struct lump* l, *l2;
 	str user;
 	struct to_body* from;
 	
@@ -185,29 +190,38 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 		}
 		from = (struct to_body*)_m->from->parsed;
 	}
+
+	if (enable_double_rr) {
+		l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+		l2 = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+		if (!l || !l2) {
+			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
+			return -5;
+		}
+		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
+		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
+		if (!l || !l2) {
+			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
+			return -6;
+		}
+		if (build_rr(l, l2, _lr, &user, &from->tag_value, OUTBOUND) < 0) {
+			LOG(L_ERR, "insert_RR(): Error while inserting outbound Record-Route\n");
+			return -7;
+		}
+	}
 	
 	l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
-	if (!l) {
+	l2 = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+	if (!l || !l2) {
 		LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 		return -3;
 	}
 	
-	if (build_rr(l, _lr, &user, &from->tag_value, INBOUND) < 0) {
+	if (build_rr(l, l2, _lr, &user, &from->tag_value, INBOUND) < 0) {
 		LOG(L_ERR, "insert_RR(): Error while insering inbound Record-Route\n");
 		return -4;
 	}
 
-	if (enable_double_rr) {
-		l = insert_cond_lump_before(l, COND_TRUE, 0);
-		if (!l) {
-			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
-			return -5;
-		}
-		if (build_rr(l, _lr, &user, &from->tag_value, OUTBOUND) < 0) {
-			LOG(L_ERR, "insert_RR(): Error while inserting outbound Record-Route\n");
-			return -6;
-		}
-	}
 	return 0;
 }
 
