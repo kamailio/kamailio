@@ -8,9 +8,13 @@ eXtended JABber module
 2.2 Features
 3. Exported parameters
 4. Exported functions
-5. Admin guide
-6. User guide
+5. Admin's guide
+6. User's guide
 7. Contacts
+
+[Revisions]
+2002-12-10: Daniel MIERLA
+2003-01-16: Daniel MIERLA
 
 
 1. Description
@@ -104,8 +108,8 @@ Desc:		aliases for hostnames.
 			changed	to <delimX> if the destination address contains <aliasX>.
 			
 			(Ex: jdomain is 'jabber.x.com=*' and msn_alias is
-			'msn.x.com'. The destination address for MSN Network, on SIP side,
-			is like 'username*hotmail.com@msn.x.com=%'. The destination address
+			'msn.x.com=%'. The destination address for MSN Network, on SIP side,
+			is like 'username*hotmail.com@msn.x.com'. The destination address
 			will be transformed to 'username%hotmail.com@msn.x.com'. 
 			'msn.x.com' must be the same as the JID associated with MSN
 			transport in Jabber configuration file (usually is 'jabberd.xml'))
@@ -123,7 +127,7 @@ Desc:		maximum jobs per worker
 Name:		cache_time
 Type:		integer (seconds)
 Default:	600
-Desc:		cache time of a Jabber conection
+Desc:		cache time of a Jabber connection
 
 Name:		delay_time
 Type:		integer (seconds)
@@ -171,8 +175,8 @@ Params:	none
 Desc:	logoff from Jabber server the associated Jabber ID of the SIP user
 
 
-5. Admin guide
--------------
+5. Admin's guide
+----------------
 
 The Jabber server setup is not a subject of this guide. Check
 http://www.jabber.org for that.
@@ -244,8 +248,8 @@ The destination address MUST follow the next patterns:
 Note: 'jabber_alias' is the first part of 'jdomain'.
   
 
-6. User guide
---------------
+6. User's guide
+---------------
 
 The user must activate his Jabber account associated with his SIP id. For each
 other IM network on which he wants to send messages, he must set an account for
