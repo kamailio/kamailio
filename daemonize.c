@@ -68,7 +68,12 @@ int daemonize(char*  name)
 
 	p=-1;
 
-
+	/* flush std file descriptors to avoid flushes after fork
+	 *  (same message appearing multiple times)
+	 *  and switch to unbuffered
+	 */
+	setbuf(stdout, 0);
+	setbuf(stderr, 0);
 	if (chroot_dir&&(chroot(chroot_dir)<0)){
 		LOG(L_CRIT, "Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
 		goto error;
