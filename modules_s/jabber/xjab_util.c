@@ -65,20 +65,23 @@ xj_jcon_pool xj_jcon_pool_init(int size, int jlen, int ch)
 	jcp->jmqueue.len = jlen;
 	jcp->jmqueue.size = 0;
 	jcp->jmqueue.cache = (ch>0)?ch:90;
-	if((jcp->jmqueue.expire = (int*)_M_MALLOC(jlen*sizeof(int)))==NULL)
+	jcp->jmqueue.expire = (int*)_M_MALLOC(jlen*sizeof(int));
+	if(jcp->jmqueue.expire == NULL)
 	{
 		_M_FREE(jcp->ojc);
 		_M_FREE(jcp);
 		return NULL;
 	}
-	if((jcp->jmqueue.jsm=(xj_sipmsg*)_M_MALLOC(jlen*sizeof(xj_sipmsg)))==NULL)
+	jcp->jmqueue.jsm=(xj_sipmsg*)_M_MALLOC(jlen*sizeof(xj_sipmsg));
+	if(jcp->jmqueue.jsm == NULL)
 	{
 		_M_FREE(jcp->jmqueue.expire);
 		_M_FREE(jcp->ojc);
 		_M_FREE(jcp);
 		return NULL;
 	}
-	if((jcp->jmqueue.ojc = (xj_jcon*)_M_MALLOC(jlen*sizeof(xj_jcon)))==NULL)
+	jcp->jmqueue.ojc = (xj_jcon*)_M_MALLOC(jlen*sizeof(xj_jcon));
+	if(jcp->jmqueue.ojc == NULL)
 	{
 		_M_FREE(jcp->jmqueue.expire);
 		_M_FREE(jcp->jmqueue.jsm);
@@ -132,7 +135,7 @@ int xj_jcon_pool_del_jmsg(xj_jcon_pool jcp, int idx)
 {
 	if(jcp == NULL)
 		return -1;
-	if(jcp->jmqueue.size == 0)
+	if(jcp->jmqueue.size <= 0)
 		return -2;
 	jcp->jmqueue.size--;
 	jcp->jmqueue.jsm[idx] = NULL;
@@ -169,20 +172,20 @@ int xj_jcon_pool_add(xj_jcon_pool jcp, xj_jcon jc)
  * - id : id of the Jabber connection
  * #return : pointer to the open connection to Jabber structure or NULL on error
  */
-xj_jcon xj_jcon_pool_get(xj_jcon_pool jcp, str *id)
+xj_jcon xj_jcon_pool_get(xj_jcon_pool jcp, xj_jkey jkey)
 {
 	int i = 0;
 	xj_jcon _ojc;
 	
-	if(jcp == NULL || id == NULL)
+	if(jcp==NULL || jkey==NULL || jkey->id==NULL || jkey->id->s==NULL)
 		return NULL;
 
 	DBG("XJAB:xj_jcon_pool_get: looking for the connection of <%.*s>"
-		" into the pool\n", id->len, id->s);
+		" into the pool\n", jkey->id->len, jkey->id->s);
 	while(i < jcp->len)
 	{
-	 	if((jcp->ojc[i]!=NULL) && (!strncmp(jcp->ojc[i]->id->s, id->s, 
-				id->len)))
+	 	if((jcp->ojc[i]!=NULL) && jcp->ojc[i]->jkey->hash==jkey->hash && 
+			(!strncmp(jcp->ojc[i]->jkey->id->s, jkey->id->s, jkey->id->len)))
 	 	{
 	 		_ojc = jcp->ojc[i];
 	 		//jcp->ojc[i] = NULL;
@@ -200,19 +203,19 @@ xj_jcon xj_jcon_pool_get(xj_jcon_pool jcp, str *id)
  * - id : id of the Jabber connection
  * #return : 0 on success or <0 on error
  */
-int xj_jcon_pool_del(xj_jcon_pool jcp, str *id)
+int xj_jcon_pool_del(xj_jcon_pool jcp, xj_jkey jkey)
 {
 	int i = 0;
 	
-	if(jcp == NULL)
+	if(jcp==NULL || jkey==NULL || jkey->id==NULL || jkey->id->s==NULL)
 		return -1;
 
 	DBG("XJAB:xj_jcon_pool_del: removing a connection from the pool\n");
 
 	while(i < jcp->len)
 	{
-	 	if((jcp->ojc[i]!=NULL) && (!strncmp(jcp->ojc[i]->id->s, id->s,
-			id->len)))
+	 	if((jcp->ojc[i]!=NULL) && jcp->ojc[i]->jkey->hash==jkey->hash && 
+			(!strncmp(jcp->ojc[i]->jkey->id->s,jkey->id->s,jkey->id->len)))
 	 	{
 	 		xj_jcon_free(jcp->ojc[i]);
 	 		jcp->ojc[i] = NULL;

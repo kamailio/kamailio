@@ -28,29 +28,11 @@
 
 
 #ifndef _XJAB_UTIL_H_
-#define _XHAB_UTIL_H_
+#define _XJAB_UTIL_H_
 
-#include<sys/types.h>
-#include<sys/socket.h>
-#include<netinet/in.h>
-#include<netdb.h>
-#include<sys/un.h>
-
+#include "xjab_base.h"
 #include "xjab_jcon.h"
-#include "tree234.h"
 #include "../../str.h"
-#include "../../db/db.h"
-#include "lock.h"
-#include "../tm/tm_load.h"
-
-/**********             ***/
-
-typedef struct _xj_sipmsg
-{
-	str *from; // pointer to FROM
-	str to;    // destination
-	str msg;   // message body
-} t_xj_sipmsg, *xj_sipmsg;
 
 /**********             ***/
 
@@ -77,16 +59,14 @@ typedef struct _xj_jcon_pool
 
 xj_jcon_pool xj_jcon_pool_init(int, int, int);
 int xj_jcon_pool_add(xj_jcon_pool, xj_jcon);
-xj_jcon xj_jcon_pool_get(xj_jcon_pool, str*);
-int xj_jcon_pool_del(xj_jcon_pool, str*);
+xj_jcon xj_jcon_pool_get(xj_jcon_pool, xj_jkey);
+int xj_jcon_pool_del(xj_jcon_pool, xj_jkey);
 void xj_jccon_pool_free(xj_jcon_pool);
 void xj_jcon_pool_print(xj_jcon_pool);
 int xj_jcon_pool_add_jmsg(xj_jcon_pool, xj_sipmsg, xj_jcon);
 int xj_jcon_pool_del_jmsg(xj_jcon_pool, int);
 
 /**********             ***/
-
-char *shahash(const char *);
 
 #endif
 

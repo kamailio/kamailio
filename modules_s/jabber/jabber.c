@@ -86,25 +86,43 @@ int **pipes = NULL;
 
 static int mod_init(void);
 static int child_init(int rank);
-static int jab_send_message(struct sip_msg*, char*, char* );
+
+int xjab_manage_sipmsg(struct sip_msg *msg, int type);
+
+static int jab_send_message(struct sip_msg*, char*, char*);
+static int jab_send_bye(struct sip_msg*, char*, char*);
+static int jab_join_jconf(struct sip_msg*, char*, char*);
+static int jab_exit_jconf(struct sip_msg*, char*, char*);
+static int jab_go_online(struct sip_msg*, char*, char*);
+static int jab_go_offline(struct sip_msg*, char*, char*);
 
 void destroy(void);
 
 struct module_exports exports= {
 	"jabber",
 	(char*[]){
-		"jab_send_message"
+		"jab_send_message",
+		"jab_send_bye",
+		"jab_join_jconf",
+		"jab_exit_jconf",
+		"jab_go_online",
+		"jab_go_offline"
 	},
 	(cmd_function[]){
-		jab_send_message
+		jab_send_message,
+		jab_send_bye,
+		jab_join_jconf,
+		jab_exit_jconf,
+		jab_go_online,
+		jab_go_offline
 	},
 	(int[]){
-		0
+		0, 0, 0, 0, 0, 0
 	},
 	(fixup_function[]){
-		0
+		0, 0, 0, 0, 0, 0
 	},
-	1,
+	6,
 
 	(char*[]) {   /* Module parameter names */
 		"contact",
@@ -243,7 +261,8 @@ static int mod_init(void)
 			pipes[i][1]);
 	}
 	
-	if((jwl = xj_wlist_init(pipes, nrw, max_jobs)) == NULL)
+	if((jwl = xj_wlist_init(pipes,nrw,max_jobs,cache_time,sleep_time,
+				delay_time)) == NULL)
 	{
 		DBG("XJAB:mod_init: error initializing workers list\n");
 		return -1;
@@ -293,8 +312,7 @@ static int child_init(int rank)
 			if (pids[i] == 0)
 			{
 				close(pipes[i][1]);
-				xj_worker_process(jwl, jaddress, jport, pipes[i][0], max_jobs,
-					cache_time,	sleep_time, delay_time, db_con[i]);
+				xj_worker_process(jwl,jaddress,jport,pipes[i][0],db_con[i]);
 				exit(0);
 			}
 		}
@@ -317,22 +335,77 @@ static int child_init(int rank)
 }
 
 /**
- * send the SIP message through Jabber
+ * send the SIP MESSAGE through Jabber
  */
 static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 {
-	str body, dst, /*host, user,*/ *p;
+	DBG("XJAB: processing SIP MESSAGE\n");
+	return xjab_manage_sipmsg(msg, XJ_SEND_MESSAGE);
+}
+
+/**
+ * send the SIP BYE through Jabber
+ */
+static int jab_send_bye(struct sip_msg *msg, char* foo1, char * foo2)
+{
+	DBG("XJAB: processing SIP BYE\n");
+	return xjab_manage_sipmsg(msg, XJ_SEND_BYE);
+}
+
+/**
+ * join a Jabber conference
+ */
+static int jab_join_jconf(struct sip_msg *msg, char* foo1, char * foo2)
+{
+	DBG("XJAB: join a Jabber conference\n");
+	return xjab_manage_sipmsg(msg, XJ_JOIN_JCONF);
+}
+
+/**
+ * exit from Jabber conference
+ */
+static int jab_exit_jconf(struct sip_msg *msg, char* foo1, char * foo2)
+{
+	DBG("XJAB: exit from a Jabber conference\n");
+	return xjab_manage_sipmsg(msg, XJ_EXIT_JCONF);
+}
+
+/**
+ * go online in Jabber network
+ */
+static int jab_go_online(struct sip_msg *msg, char* foo1, char * foo2)
+{
+	DBG("XJAB: go online in Jabber network\n");
+	return xjab_manage_sipmsg(msg, XJ_GO_ONLINE);
+}
+
+/**
+ * go offline in Jabber network
+ */
+static int jab_go_offline(struct sip_msg *msg, char* foo1, char * foo2)
+{
+	DBG("XJAB: go offline in Jabber network\n");
+	return xjab_manage_sipmsg(msg, XJ_GO_OFFLINE);
+}
+
+/**
+ * manage SIP message
+ */
+int xjab_manage_sipmsg(struct sip_msg *msg, int type)
+{
+	str body, dst;
 	xj_sipmsg jsmsg;
 	struct to_body to, from;
 	struct sip_uri _uri;
 	int pipe, fl;
 	struct to_param *foo,*bar;
 	char   *cp, *buf=0;
+	t_xj_jkey jkey, *p;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
-	if ( imb.im_extract_body(msg,&body)==-1 )
+	if (type==XJ_SEND_MESSAGE && imb.im_extract_body(msg,&body)==-1 )
 	{
-		LOG(L_ERR,"ERROR:XJAB:xjab_send_message: cannot extract body"
+		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR:cannot extract body"
 				" from sip msg!\n");
 		goto error;
 	}
@@ -341,7 +414,7 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	// check for FROM header
 	if(!msg->from)
 	{
-		LOG(L_ERR,"XJAB: xjab_send_message: cannot find FROM HEADER!\n");
+		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: cannot find FROM HEADER!\n");
 		goto error;
 	}
 	
@@ -351,14 +424,14 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 	buf = (char*)pkg_malloc(msg->from->body.len+1);
 	if (!buf) 
 	{
-		DBG("XJAB: xjab_send_message: error no free pkg memory\n");
+		DBG("XJAB:xjab_manage_sipmsg: error no free pkg memory\n");
 		goto error;
 	}
 	memcpy(buf,cp,msg->from->body.len+1);
 	parse_to(buf,buf+msg->from->body.len+1,&from);
 	if (from.error!=PARSE_OK ) 
 	{
-		DBG("XJAB: xjab_send_message: error cannot parse from header\n");
+		DBG("XJAB:xjab_manage_sipmsg: error cannot parse from header\n");
 		goto error;
 	}
 	/* we are not intrested in from param-> le's free them now*/
@@ -367,33 +440,55 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 		bar = foo->next;
 		pkg_free(foo);
 	}
-	
+
+	jkey.hash = xj_get_hash(&from.uri, NULL);
+	jkey.id = &from.uri;
 	// get the communication pipe with the worker
-	if((pipe = xj_wlist_get(jwl, &from.uri, &p)) < 0)
+	switch(type)
 	{
-		DBG("XJAB: xjab_send_message: cannot find pipe of the worker!\n");
-		goto error;
+		case XJ_SEND_MESSAGE:
+		case XJ_JOIN_JCONF:
+		case XJ_GO_ONLINE:
+			if((pipe = xj_wlist_get(jwl, &jkey, &p)) < 0)
+			{
+				DBG("XJAB:xjab_manage_sipmsg: cannot find pipe of the worker!\n");
+				goto error;
+			}
+		break;
+		case XJ_SEND_BYE:
+		case XJ_EXIT_JCONF:
+		case XJ_GO_OFFLINE:
+			if((pipe = xj_wlist_check(jwl, &jkey, &p)) < 0)
+			{
+				DBG("XJAB:xjab_manage_sipmsg: no open Jabber session for"
+						" <%.*s>!\n", from.uri.len, from.uri.s);
+				goto error;
+			}
+		break;
+		default:
+			DBG("XJAB:xjab_manage_sipmsg: ERROR:strange SIP msg type!\n");
+			goto error;
 	}
 	
 	// determination of destination
 	dst.len = 0;
 	if( msg->new_uri.len > 0 )
 	{
-		DBG("XJAB: xjab_send_message: using NEW URI for destination\n");
+		DBG("XJAB:xjab_manage_sipmsg: using NEW URI for destination\n");
 		dst.s = msg->new_uri.s;
 		dst.len = msg->new_uri.len;
 	} else if ( msg->first_line.u.request.uri.len > 0 )
 	{
-		DBG("XJAB: xjab_send_message: parsing URI from first line\n");
+		DBG("XJAB:xjab_manage_sipmsg: parsing URI from first line\n");
 		if(parse_uri(msg->first_line.u.request.uri.s,
 					msg->first_line.u.request.uri.len, &_uri) < 0)
 		{
-			DBG("XJAB: xjab_send_message: ERROR parsing URI from first line\n");
+			DBG("XJAB:xjab_manage_sipmsg: ERROR parsing URI from first line\n");
 			goto error;
 		}
 		if(_uri.user.len > 0)
 		{
-			DBG("XJAB: xjab_send_message: using URI for destination\n");
+			DBG("XJAB:xjab_manage_sipmsg: using URI for destination\n");
 			dst.s = msg->first_line.u.request.uri.s;
 			dst.len = msg->first_line.u.request.uri.len;
 		}
@@ -406,20 +501,20 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 				&to);
 		if(to.uri.len > 0) // to.error == PARSE_OK)
 		{
-			DBG("XJAB: xjab_send_message: TO parsed OK <%.*s>.\n",
+			DBG("XJAB:xjab_manage_sipmsg: TO parsed OK <%.*s>.\n",
 				to.uri.len, to.uri.s);
 			dst.s = to.uri.s;
 			dst.len = to.uri.len;
 		}
 		else
 		{
-			DBG("XJAB: xjab_send_message: TO NOT parsed\n");
+			DBG("XJAB:xjab_manage_sipmsg: TO NOT parsed\n");
 			goto error;
 		}
 	}
 	if(dst.len == 0)
 	{
-		DBG("XJAB: xjab_send_message: destination not found in SIP message\n");
+		DBG("XJAB:xjab_manage_sipmsg: destination not found in SIP message\n");
 		goto error;
 	}
 	
@@ -441,7 +536,7 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 			dst.len += 3;
 		}
 		
-		DBG("XJAB: xjab_send_message: DESTINATION corrected <%.*s>.\n", 
+		DBG("XJAB:xjab_manage_sipmsg: DESTINATION corrected [%.*s].\n", 
 				dst.len, dst.s);
 	}
 	
@@ -449,33 +544,55 @@ static int jab_send_message(struct sip_msg *msg, char* foo1, char * foo2)
     jsmsg = (xj_sipmsg)shm_malloc(sizeof(t_xj_sipmsg));
     if(jsmsg == NULL)
     	return -1;
-	jsmsg->to.len = dst.len;
-	jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1);
-	if(jsmsg->to.s == NULL)
+	
+	switch(type)
 	{
+		case XJ_SEND_MESSAGE:
+			jsmsg->msg.len = body.len;
+			if((jsmsg->msg.s = (char*)shm_malloc(jsmsg->msg.len+1)) == NULL)
+			{
+				shm_free(jsmsg);
+				goto error;
+			}
+			strncpy(jsmsg->msg.s, body.s, jsmsg->msg.len);
+		break;
+		case XJ_SEND_BYE:
+		case XJ_JOIN_JCONF:
+		case XJ_EXIT_JCONF:
+		case XJ_GO_ONLINE:
+		case XJ_GO_OFFLINE:
+			jsmsg->msg.len = 0;
+			jsmsg->msg.s = NULL;
+		break;
+		default:
+			DBG("XJAB:xjab_manage_sipmsg: this SHOULD NOT appear\n");
+			shm_free(jsmsg);
+			goto error;
+	}
+	jsmsg->to.len = dst.len;
+	if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1)) == NULL)
+	{
+		if(type == XJ_SEND_MESSAGE)
+			shm_free(jsmsg->msg.s);
 		shm_free(jsmsg);
 		goto error;
 	}
 	strncpy(jsmsg->to.s, dst.s, jsmsg->to.len);
-	
-	jsmsg->msg.len = body.len;
-	jsmsg->msg.s = (char*)shm_malloc(jsmsg->msg.len+1);
-	if(jsmsg->msg.s == NULL)
-	{
-		shm_free(jsmsg->to.s);
-		shm_free(jsmsg);
-		goto error;
-	}
-	strncpy(jsmsg->msg.s, body.s, jsmsg->msg.len);
-	
-	jsmsg->from = p;
-	
-	DBG("XJAB: xjab_send_message:%d: sending <%p> to worker through <%d>\n",
+
+	jsmsg->jkey = p;
+	jsmsg->type = type;
+	jsmsg->jkey->hash = jkey.hash;
+
+	DBG("XJAB:xjab_manage_sipmsg:%d: sending <%p> to worker through <%d>\n",
 			getpid(), jsmsg, pipe);
 	// sending the SHM pointer of SIP message to the worker
 	if(write(pipe, &jsmsg, sizeof(jsmsg)) != sizeof(jsmsg))
 	{
-		DBG("XJAB: xjab_send_message: error when writting to worker pipe!\n");
+		DBG("XJAB:xjab_manage_sipmsg: error when writting to worker pipe!\n");
+		if(type == XJ_SEND_MESSAGE)
+			shm_free(jsmsg->msg.s);
+		shm_free(jsmsg->to.s);
+		shm_free(jsmsg);
 		goto error;
 	}
 	

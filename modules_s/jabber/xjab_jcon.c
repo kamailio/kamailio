@@ -55,27 +55,44 @@
 
 #define JB_IQ_ROSTER_GET	"<iq type='get'><query xmlns='jabber:iq:roster'/></iq>"
 
+#define XJ_MAX_JCONF	12
+
 
 /**
  * init a JABBER connection
  */
 xj_jcon xj_jcon_init(char *hostname, int port)
 {
-	xj_jcon jbc = (xj_jcon)_M_MALLOC(sizeof(struct _xj_jcon));
+	xj_jcon jbc = NULL;
+	if(hostname==NULL || strlen(hostname)<=0)
+		return NULL;
+	
+	jbc = (xj_jcon)_M_MALLOC(sizeof(struct _xj_jcon));
 	if(jbc == NULL)
 		return NULL;
 	jbc->sock=-1;
     jbc->port = port;
     jbc->juid = -1;
 	jbc->seq_nr = 0;
-    jbc->hostname = (char*)_M_MALLOC(strlen(hostname));
+    jbc->hostname = (char*)_M_MALLOC(strlen(hostname)+1);
 	if(jbc->hostname == NULL)
 	{
 		_M_FREE(jbc);
 		return NULL;
 	}
+	if((jbc->close = (int*)_M_SHM_MALLOC(sizeof(int)))==NULL)
+	{
+		_M_FREE(jbc->hostname);
+		_M_FREE(jbc);
+		return NULL;
+
+	}
+	*jbc->close = 0;
     strcpy(jbc->hostname, hostname);
 	jbc->allowed = jbc->ready = XJ_NET_NUL;
+	jbc->jconf = NULL;
+	jbc->nrjconf = 0;
+
     return jbc;
 }
 
@@ -148,7 +165,7 @@ int xj_jcon_disconnect(xj_jcon jbc)
 		return -1;
 	DBG("XJAB:xj_jcon_disconnect: -----START-----\n");
     DBG("XJAB:xj_jcon_disconnect: socket [%d]\n", jbc->sock);
-	xj_jcon_send_presence(jbc, "unavailable", NULL, NULL);
+	xj_jcon_send_presence(jbc, NULL, "unavailable", NULL, NULL);
 	if(send(jbc->sock, "</stream:stream>", 16, 0) < 16)
 		DBG("XJAB:xj_jcon_disconnect: error closing stream\n");
 	if(close(jbc->sock) == -1)
@@ -305,7 +322,7 @@ int xj_jcon_user_auth(xj_jcon jbc, char *username, char *passwd,
 			strncasecmp(xode_get_attrib(x, "type"), "result", 6))
 		goto errorx;
 	
-	jbc->resource = (char*)_M_MALLOC(strlen(resource));
+	jbc->resource = (char*)_M_MALLOC(strlen(resource)+1);
 	strcpy(jbc->resource, resource);
 
 	jbc->allowed = XJ_NET_ALL;
@@ -334,7 +351,8 @@ int xj_jcon_get_roster(xj_jcon jbc)
  * send a message through a JABBER connection
  * params are pairs (buffer, len)
  */
-int xj_jcon_send_msg(xj_jcon jbc, char *to, int tol, char *msg, int msgl)
+int xj_jcon_send_msg(xj_jcon jbc, char *to, int tol, char *msg, 
+		int msgl, int type)
 {
 	char msg_buff[4096], *p;
 	int n;
@@ -350,7 +368,17 @@ int xj_jcon_send_msg(xj_jcon jbc, char *to, int tol, char *msg, int msgl)
 	strncpy(msg_buff, to, tol);
 	msg_buff[tol] = 0;
 	xode_put_attrib(x, "to", msg_buff);
-	xode_put_attrib(x, "type", "chat");
+	switch(type)
+	{
+		case XJ_JMSG_CHAT:
+			xode_put_attrib(x, "type", "chat");
+			break;
+		case XJ_JMSG_GROUPCHAT:
+			xode_put_attrib(x, "type", "groupchat");
+			break;
+		default:
+			xode_put_attrib(x, "type", "normal");
+	}
 
 	p = xode_to_str(x);
 	n = strlen(p);
@@ -386,7 +414,7 @@ int xj_jcon_recv_msg(xj_jcon jbc, char *from, char *msg)
  * status - "online", "away", "unavailable" ...
  * priority - "0", "1", ...
  */
-int xj_jcon_send_presence(xj_jcon jbc, char *type, char *status,
+int xj_jcon_send_presence(xj_jcon jbc, char *sto, char *type, char *status,
 				char *priority)
 {
 	char *p;
@@ -398,6 +426,8 @@ int xj_jcon_send_presence(xj_jcon jbc, char *type, char *status,
 	DBG("XJAB:xj_jcon_send_presence: -----START-----\n");
 	
 	x= xode_new_tag("presence");
+	if(sto != NULL)
+		xode_put_attrib(x, "to", sto);
 	if(type != NULL)
 		xode_put_attrib(x, "type", type);
 	if(status != NULL)
@@ -420,6 +450,7 @@ int xj_jcon_send_presence(xj_jcon jbc, char *type, char *status,
 		goto error;
 	}
 	xode_free(x);
+	DBG("XJAB:xj_jcon_send_presence: presence status was sent\n");
 	return 0;
 error:
 	xode_free(x);
@@ -431,6 +462,8 @@ error:
  */
 int xj_jcon_free(xj_jcon jbc)
 {
+	xj_jconf jcf;
+	
 	if(jbc == NULL)
 		return -1;
 	DBG("XJAB:xj_jcon_free: -----START-----\n");
@@ -441,15 +474,22 @@ int xj_jcon_free(xj_jcon jbc)
 		_M_FREE(jbc->hostname);
 	if(jbc->stream_id != NULL)
 		_M_FREE(jbc->stream_id);
-    /*******
-	if(jbc->username != NULL)
-		_M_FREE(jbc->username);
-	if(jbc->passwd != NULL)
-		_M_FREE(jbc->passwd);
-	*/
+	DBG("XJAB:xj_jcon_free: -----STEP A\n");	
+	if(jbc->close != NULL)
+	{
+		_M_SHM_FREE(jbc->close);
+		jbc->close = NULL;
+	}
+	DBG("XJAB:xj_jcon_free: -----STEP B\n");	
 	if(jbc->resource != NULL)
 		_M_FREE(jbc->resource);
-
+	DBG("XJAB:xj_jcon_free: %d conferences\n", jbc->nrjconf);
+	while(jbc->nrjconf > 0)
+	{
+		if((jcf=delpos234(jbc->jconf,0))!=NULL)
+			xj_jconf_free(jcf);
+		jbc->nrjconf--;
+	}
 	_M_FREE(jbc);
 	DBG("XJAB:xj_jcon_free: -----END-----\n");
 	return 0;
@@ -463,13 +503,13 @@ int xj_jcon_free(xj_jcon jbc)
  * - delay_time : time needed to became an active connection
  * #return : pointer to the structure or NULL on error
  */
-int xj_jcon_set_attrs(xj_jcon jbc, str *id, int cache_time, 
+int xj_jcon_set_attrs(xj_jcon jbc, xj_jkey jkey, int cache_time, 
 				int delay_time)
 {
 	int t;
-	if(jbc==NULL || id==NULL)
+	if(jbc==NULL || jkey==NULL || jkey->id==NULL || jkey->id->s==NULL)
 		return -1;
-	jbc->id = id;
+	jbc->jkey = jkey;
 	t = get_ticks();
 	jbc->expire = t + cache_time;
 	jbc->ready = t + delay_time;
@@ -486,7 +526,8 @@ int xj_jcon_update(xj_jcon jbc, int cache_time)
 {
 	if(jbc == NULL)
 		return -1;
-	DBG("XJAB: xj_jcon_update -----START-----\n");
+	DBG("XJAB: xj_jcon_update [%.*s] %d\n", 
+			jbc->jkey->id->len, jbc->jkey->id->s, cache_time);
 	jbc->expire = get_ticks() + cache_time;
 	return 0;	
 }
@@ -494,8 +535,23 @@ int xj_jcon_update(xj_jcon jbc, int cache_time)
 int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol)
 {
 	char *p;
+	str sto;
+	xj_jconf jcf = NULL;
 	if(!jbc || !to || tol <= 0)
 		return -1;
+	
+	sto.s = to;
+	sto.len = tol;
+	if(!xj_jconf_check_addr(&sto))
+	{
+		DBG("XJAB: xj_jcon_is_ready: destination=conference\n");
+		
+		if((jcf=xj_jcon_get_jconf(jbc, &sto))!=NULL)
+			return (jcf->status & XJ_JCONF_READY)?0:1;
+		
+		DBG("XJAB: xj_jcon_is_ready: conference does not exist\n");
+		return -1;
+	}
 	
 	p = to;
 	while(p < to+tol && *p!='@') 
@@ -514,10 +570,126 @@ int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol)
 
 	if(!strncasecmp(p, XJ_YAH_NAME, XJ_YAH_LEN))
 		return (jbc->ready & XJ_NET_YAH)?0:((jbc->allowed & XJ_NET_YAH)?1:2);
-	
+
+	DBG("XJAB: xj_jcon_is_ready: destination=jabber\n");	
 	return 0;
 }
 
+xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid)
+{
+	xj_jconf jcf = NULL, p;
+
+	if(!jbc || !sid || !sid->s || sid->len <= 0)
+		return NULL;
+	DBG("XJAB: xj_jcon_get_jconf: looking for conference\n");	
+	
+	if((jcf = xj_jconf_new(sid))==NULL)
+		return NULL;
+	if(xj_jconf_init_sip(jcf, jbc->jkey->id))
+		goto clean;
+	if(jbc->nrjconf && (p = find234(jbc->jconf, (void*)jcf, NULL)) != NULL)
+	{
+		DBG("XJAB: xj_jcon_get_jconf: conference found\n");
+		xj_jconf_free(jcf);
+		return p;
+	}
+	
+	if(jbc->nrjconf >= XJ_MAX_JCONF)
+		goto clean;
+
+	if(jbc->nrjconf==0)
+		if(jbc->jconf==NULL)
+			if((jbc->jconf = newtree234(xj_jconf_cmp)) == NULL)
+				goto clean;
+
+	if((p = add234(jbc->jconf, (void*)jcf)) != NULL)
+	{
+		DBG("XJAB: xj_jcon_get_jconf: new conference created\n");
+		jbc->nrjconf++;
+		return p;
+	}
+
+clean:
+	DBG("XJAB: xj_jcon_get_jconf: error looking for conference\n");
+	xj_jconf_free(jcf);
+	return NULL;
+}
+
+xj_jconf xj_jcon_check_jconf(xj_jcon jbc, char* id)
+{
+	str sid;
+	xj_jconf jcf = NULL, p = NULL;
+
+	if(!jbc || !id || !jbc->nrjconf)
+		return NULL;
+	DBG("XJAB: xj_jcon_get_jconf: looking for conference\n");	
+	
+	sid.s = id;
+	sid.len = strlen(id);
+	if((jcf = xj_jconf_new(&sid))==NULL)
+		return NULL;
+	if(xj_jconf_init_jab(jcf))
+		goto clean;
+	if((p = find234(jbc->jconf, (void*)jcf, NULL)) != NULL)
+	{
+		DBG("XJAB: xj_jcon_get_jconf: conference found\n");
+		xj_jconf_free(jcf);
+		return p;
+	}
+clean:
+	DBG("XJAB: xj_jcon_get_jconf: conference not found\n");
+	xj_jconf_free(jcf);
+	return NULL;	
+}
+
+int xj_jcon_jconf_presence(xj_jcon jbc, xj_jconf jcf, char* type, 
+		char* status)
+{
+	char buff[256];
+	
+	strncpy(buff, jcf->room.s, 
+			jcf->room.len + jcf->server.len +1);
+	buff[jcf->room.len + jcf->server.len +1] = '/';
+	buff[jcf->room.len + jcf->server.len +2] = 0;
+	buff[jcf->room.len] = '@';
+	strncat(buff, jcf->nick.s, jcf->nick.len);
+
+	return xj_jcon_send_presence(jbc,buff,type,status,NULL);
+}
+
+int  xj_jcon_del_jconf(xj_jcon jbc, str *sid, int flag)
+{
+	xj_jconf jcf = NULL, p = NULL;
+	
+	if(!jbc || !sid || !sid->s || sid->len <= 0)
+		return -1;
+	
+	DBG("XJAB: xj_jcon_del_jconf: deleting conference of <%.*s>\n",
+			sid->len, sid->s);
+	
+	if((jcf = xj_jconf_new(sid))==NULL)
+		return -1;
+	if(xj_jconf_init_sip(jcf, jbc->jkey->id))
+	{
+		xj_jconf_free(jcf);
+		return -1;
+	}
+	
+	p = del234(jbc->jconf, (void*)jcf);
+
+	if(p != NULL)
+	{
+		if(flag == XJ_JCMD_UNSUBSCRIBE)
+			xj_jcon_jconf_presence(jbc, jcf, "unavailable", NULL);
+		jbc->nrjconf--;
+		xj_jconf_free(p);
+		DBG("XJAB: xj_jcon_del_jconf: conference deleted\n");
+	}
+
+	xj_jconf_free(jcf);
+
+	return 0;
+}
 
 /**********    *********/
 
