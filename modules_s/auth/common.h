@@ -39,7 +39,7 @@
 /* 
  * Return parsed To or From, host part of the parsed uri is realm
  */
-int get_realm(struct sip_msg* _m, struct sip_uri* _u);
+int get_realm(struct sip_msg* _m, int _hftype, struct sip_uri* _u);
 
 
 /*

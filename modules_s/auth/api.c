@@ -129,7 +129,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL)) return AUTHORIZED;
 
 	if (_realm->len == 0) {
-		if (get_realm(_m, &uri) < 0) {
+		if (get_realm(_m, _hftype, &uri) < 0) {
 			LOG(L_ERR, "pre_auth(): Error while extracting realm\n");
 			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
 				LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
