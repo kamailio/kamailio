@@ -213,7 +213,7 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 
 			p = (rr_t*)ptr->parsed;
 			while(p) {
-				if (duplicate_rr(_m, &t, p) < 0) {
+				if (shm_duplicate_rr(_m, &t, p) < 0) {
 					LOG(L_ERR, "get_route_set(): Error while duplicating rr_t\n");
 					goto error;
 				}
@@ -237,7 +237,7 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 	return 0;
 
  error:
-        free_rr(_rs);
+        shm_free_rr(_rs);
 	return -1;
 }
 
@@ -703,7 +703,7 @@ void free_dlg(dlg_t* _d)
 	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 
 	     /* Free all routes in the route set */
-	free_rr(&_d->route_set);
+	shm_free_rr(&_d->route_set);
 	shm_free(_d);
 }
 
