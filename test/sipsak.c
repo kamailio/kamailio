@@ -720,6 +720,35 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	exit(1);
 }
 
+void print_help() {
+	printf("sipsak %s ", SIPSAK_VERSION);
+#ifdef DEBUG
+	printf("(compiled with DEBUG) ");
+#endif
+	printf("modi:\n"
+		" shoot : sipsak -f filename -s sip:uri\n"
+		" trace : sipsak [-f filename] -s sip:uri -t\n"
+		" USRLOC: sipsak [-b number] -e number -s sip:uri -u\n"
+		" additional parameter in every modus:\n"
+		"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
+		"   -h           displays this help message\n"
+		"   -f filename  the file which contains the SIP message to send\n"
+		"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
+		"   -t           activates the traceroute modus\n"
+		"   -u           activates the USRLOC modus\n"
+		"   -b number    the starting number appendix to the user name in USRLOC modus\n"
+		"   -e number    the ending numer of the appendix to the user name in USRLOC modus\n"
+		"   -l port      the local port to use\n"
+		"   -r port      the remote port to use\n"
+		"   -m number    the value for the max-forwards header field\n"
+		"   -i           deactivate the insertion of a Via-Line\n"
+		"   -d           ignore redirects\n"
+		"   -v           be more verbose\n"
+		"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
+		"so don't expect them to work with ugly or malformed messages.\n");
+	exit(0);
+};
+
 int main(int argc, char *argv[])
 {
 	long	address;
@@ -732,15 +761,17 @@ int main(int argc, char *argv[])
 	/* some initialisation to be shure */
 	username=NULL;
 	verbose=0;
-	namebeg=nameend=-1;
+	namebeg=nameend=maxforw=-1;
 
-	fbool=sbool=tbool=lport=maxforw=ubool=0;
+	fbool=sbool=tbool=lport=ubool=0;
 	vbool=dbool=1;
     rport=5060;
 	memset(buff, 0, BUFSIZE);
 	memset(message, 0, BUFSIZE);
 	memset(mes_reply, 0, BUFSIZE);
 	memset(fqdn, 0, FQDN_SIZE);
+
+	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
 	while ((c=getopt(argc,argv,"b:de:f:hil:m:r:s:tuv")) != EOF){
@@ -780,32 +811,7 @@ int main(int argc, char *argv[])
 				fbool=1;
 				break;
 			case 'h':
-				printf("sipsak %s ", SIPSAK_VERSION);
-#ifdef DEBUG
-				printf("(compiled with DEBUG) ");
-#endif
-				printf("modi:\n"
-						" shoot : sipsak -f filename -s sip:uri\n"
-						" trace : sipsak [-f filename] -s sip:uri -t\n"
-						" USRLOC: sipsak [-b number] -e number -s sip:uri -u\n"
-						" additional parameter in every modus:\n"
-						"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
-						"   -h           displays this help message\n"
-						"   -f filename  the file which contains the SIP message to send\n"
-						"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
-						"   -t           activates the traceroute modus\n"
-						"   -u           activates the USRLOC modus\n"
-						"   -b number    the starting number appendix to the user name in USRLOC modus\n"
-						"   -e number    the ending numer of the appendix to the user name in USRLOC modus\n"
-						"   -l port      the local port to use\n"
-						"   -r port      the remote port to use\n"
-						"   -m number    the value for the max-forwards header field\n"
-						"   -i           deactivate the insertion of a Via-Line\n"
-						"   -d           ignore redirects\n"
-						"   -v           be more verbose\n"
-						"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
-						"so don't expect them to work with ugly or malformed messages.\n");
-				exit(0);
+				print_help();
 				break;
 			case 'i':
 				vbool=0;
@@ -819,7 +825,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'm':
 				maxforw=atoi(optarg);
-				if (!maxforw) {
+				if (maxforw==-1) {
 					puts("error: non-numerical number of max-forwards");
 					exit(2);
 				}
