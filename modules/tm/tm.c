@@ -103,40 +103,51 @@
 
 MODULE_VERSION
 
+/* fixup functions */
+static int fixup_t_send_reply(void** param, int param_no);
+static int fixup_str2int( void** param, int param_no);
+static int fixup_hostport2proxy(void** param, int param_no);
+static int fixup_str2regexp(void** param, int param_no);
+
+
+/* init functions */
+static int mod_init(void);
+static int child_init(int rank);
+
+
+/* exported functions */
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
-
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
-inline static int fixup_t_send_reply(void** param, int param_no);
-inline static int fixup_str2int( void** param, int param_no);
-inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* bar );
+inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
+				char* bar );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, 
-				    char *);
+				 char *);
 #ifdef USE_TCP
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
-				    char *);
+				char *);
 #endif
 #ifdef USE_TLS
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
-				    char *);
+				char *);
 #endif
 inline static int w_t_replicate( struct sip_msg  *p_msg , 
-				 char *proxy, /* struct proxy_l *proxy expected */
-				 char *_foo       /* nothing expected */ );
+				char *proxy, /* struct proxy_l *proxy expected */
+				char *_foo       /* nothing expected */ );
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
-				     char *proxy, /* struct proxy_l *proxy expected */
-				     char *_foo       /* nothing expected */ );
+				char *proxy, /* struct proxy_l *proxy expected */
+				char *_foo       /* nothing expected */ );
 #ifdef USE_TCP
 inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
-				     char *proxy, /* struct proxy_l *proxy expected */
-				     char *_foo       /* nothing expected */ );
+				char *proxy, /* struct proxy_l *proxy expected */
+				char *_foo       /* nothing expected */ );
 #endif
 #ifdef USE_TLS
 inline static int w_t_replicate_tls( struct sip_msg  *p_msg , 
-				     char *proxy, /* struct proxy_l *proxy expected */
-				     char *_foo       /* nothing expected */ );
+				char *proxy, /* struct proxy_l *proxy expected */
+				char *_foo       /* nothing expected */ );
 #endif
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
 inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
@@ -147,74 +158,93 @@ inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
 #ifdef USE_TLS
 inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
 #endif
-inline static int fixup_hostport2proxy(void** param, int param_no);
-inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo );
-inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo );
+inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
+inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
+inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
+inline static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo);
 
 
-static int mod_init(void);
-
-static int child_init(int rank);
 
 
 static cmd_export_t cmds[]={
-	{"t_newtran",          w_t_newtran,             0, 0,                    REQUEST_ROUTE},
-	{"t_lookup_request",   w_t_check,               0, 0,                    REQUEST_ROUTE},
-	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply,   
+	{"t_newtran",          w_t_newtran,             0, 0,
+			REQUEST_ROUTE},
+	{"t_lookup_request",   w_t_check,               0, 0,
+			REQUEST_ROUTE},
+	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,                    REQUEST_ROUTE},
-	{"t_release",          w_t_release,             0, 0,                    REQUEST_ROUTE},
-	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,
+			REQUEST_ROUTE},
+	{"t_release",          w_t_release,             0, 0,
+			REQUEST_ROUTE},
+	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #ifdef USE_TCP
-	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy, REQUEST_ROUTE|FAILURE_ROUTE},
+	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef USE_TLS
-	{T_RELAY_TO_TLS,       w_t_relay_to_tls,        2, fixup_hostport2proxy, REQUEST_ROUTE|FAILURE_ROUTE},
+	{T_RELAY_TO_TLS,       w_t_relay_to_tls,        2, fixup_hostport2proxy,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
-	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy, REQUEST_ROUTE},
-	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
+	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
 #ifdef USE_TCP
-	{"t_replicate_tcp",    w_t_replicate_tcp,       2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_replicate_tcp",    w_t_replicate_tcp,       2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
 #endif
 #ifdef USE_TLS
-	{"t_replicate_tls",    w_t_replicate_tls,       2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_replicate_tls",    w_t_replicate_tls,       2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
 #endif
-	{T_RELAY,              w_t_relay,               0, 0,                    
+	{T_RELAY,              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy, REQUEST_ROUTE},
-	{T_FORWARD_NONACK_URI, w_t_forward_nonack_uri,  0, 0,                    REQUEST_ROUTE},
-	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
+	{T_FORWARD_NONACK_URI, w_t_forward_nonack_uri,  0, 0,
+			REQUEST_ROUTE},
+	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
 #ifdef USE_TCP
-	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
 #endif
 #ifdef USE_TLS
-	{T_FORWARD_NONACK_TLS, w_t_forward_nonack_tls,  2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_FORWARD_NONACK_TLS, w_t_forward_nonack_tls,  2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
 #endif
 	{"t_on_failure",       w_t_on_negative,         1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
-	/* not applicable from the script */
-	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
-	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
-	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0, 0},
-	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0, 0},
-	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0, 0},
-	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0, 0},
-	{T_ADDBLIND,           (cmd_function)add_blind_uac,     NO_SCRIPT,     0, 0},
-	{"t_request_within",   (cmd_function)req_within,        NO_SCRIPT,     0, 0},
-	{"t_request_outside",  (cmd_function)req_outside,       NO_SCRIPT,     0, 0},
-	{"t_request",          (cmd_function)request,           NO_SCRIPT,     0, 0},
-	{"new_dlg_uac",        (cmd_function)new_dlg_uac,       NO_SCRIPT,     0, 0},
-	{"dlg_response_uac",   (cmd_function)dlg_response_uac,  NO_SCRIPT,     0, 0},
-	{"new_dlg_uas",        (cmd_function)new_dlg_uas,       NO_SCRIPT,     0, 0},
-	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,     0, 0},
-	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,     0, 0},
-	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,     0, 0},
+	{"t_check_status",     t_check_status,          1, fixup_str2regexp,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"t_flush_flags",     t_flush_flags,            1, fixup_str2int,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 
-	{T_GETT,				(cmd_function)get_t,			NO_SCRIPT,		0,0},
+	/* not applicable from the script */
+	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
+	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,   0, 0},
+	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,   0, 0},
+	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,   0, 0},
+	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,   0, 0},
+	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,   0, 0},
+	{T_ADDBLIND,           (cmd_function)add_blind_uac,     NO_SCRIPT,   0, 0},
+	{"t_request_within",   (cmd_function)req_within,        NO_SCRIPT,   0, 0},
+	{"t_request_outside",  (cmd_function)req_outside,       NO_SCRIPT,   0, 0},
+	{"t_request",          (cmd_function)request,           NO_SCRIPT,   0, 0},
+	{"new_dlg_uac",        (cmd_function)new_dlg_uac,       NO_SCRIPT,   0, 0},
+	{"dlg_response_uac",   (cmd_function)dlg_response_uac,  NO_SCRIPT,   0, 0},
+	{"new_dlg_uas",        (cmd_function)new_dlg_uas,       NO_SCRIPT,   0, 0},
+	{"dlg_request_uas",    (cmd_function)dlg_request_uas,   NO_SCRIPT,   0, 0},
+	{"free_dlg",           (cmd_function)free_dlg,          NO_SCRIPT,   0, 0},
+	{"print_dlg",          (cmd_function)print_dlg,         NO_SCRIPT,   0, 0},
+	{T_GETT,               (cmd_function)get_t,             NO_SCRIPT,   0,0},
 	{0,0,0,0,0}
 };
+
 
 static param_export_t params[]={
 	{"ruri_matching", INT_PARAM, &ruri_matching                         },
@@ -251,7 +281,10 @@ struct module_exports exports= {
 	child_init /* per-child init function */
 };
 
-inline static int fixup_str2int( void** param, int param_no)
+
+
+/**************************** fixup functions ******************************/
+static int fixup_str2int( void** param, int param_no)
 {
 	unsigned long go_to;
 	int err;
@@ -271,21 +304,115 @@ inline static int fixup_str2int( void** param, int param_no)
 	return 0;
 }
 
+
+/* (char *hostname, char *port_nr) ==> (struct proxy_l *, -)  */
+static int fixup_hostport2proxy(void** param, int param_no)
+{
+	unsigned int port;
+	char *host;
+	int err;
+	struct proxy_l *proxy;
+	str s;
+	
+	DBG("TM module: fixup_t_forward(%s, %d)\n", (char*)*param, param_no);
+	if (param_no==1){
+		DBG("TM module: fixup_t_forward: param 1.. do nothing, wait for #2\n");
+		return 0;
+	} else if (param_no==2) {
+
+		host=(char *) (*(param-1)); 
+		port=str2s(*param, strlen(*param), &err);
+		if (err!=0) {
+			LOG(L_ERR, "TM module:fixup_t_forward: bad port number <%s>\n",
+				(char*)(*param));
+			 return E_UNSPEC;
+		}
+		s.s = host;
+		s.len = strlen(host);
+		proxy=mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
+		if (proxy==0) {
+			LOG(L_ERR, "ERROR: fixup_t_forwardv6: bad host name in URI <%s>\n",
+				host );
+			return E_BAD_ADDRESS;
+		}
+		/* success -- fix the first parameter to proxy now ! */
+
+		/* FIXME: janakj, mk_proxy doesn't make copy of host !! */
+		/*pkg_free( *(param-1)); you're right --andrei*/
+		*(param-1)=proxy;
+		return 0;
+	} else {
+		LOG(L_ERR,"ERROR: fixup_t_forwardv6 called with parameter #<>{1,2}\n");
+		return E_BUG;
+	}
+}
+
+
+/* (char *code, char *reason_phrase)==>(int code, r_p as is) */
+static int fixup_t_send_reply(void** param, int param_no)
+{
+	unsigned long code;
+	int err;
+
+	if (param_no==1){
+		code=str2s(*param, strlen(*param), &err);
+		if (err==0){
+			pkg_free(*param);
+			*param=(void*)code;
+			return 0;
+		}else{
+			LOG(L_ERR, "TM module:fixup_t_send_reply: bad  number <%s>\n",
+					(char*)(*param));
+			return E_UNSPEC;
+		}
+	}
+	/* second param => no conversion*/
+	return 0;
+}
+
+
+static int fixup_str2regexp(void** param, int param_no)
+{
+	regex_t* re;
+
+	if (param_no==1) {
+		if ((re=pkg_malloc(sizeof(regex_t)))==0)
+			return E_OUT_OF_MEM;
+		if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
+			pkg_free(re);
+			LOG(L_ERR,"ERROR: %s : bad re %s\n", exports.name, (char*)*param);
+			return E_BAD_RE;
+		}
+		/* free string */
+		pkg_free(*param);
+		/* replace it with the compiled re */
+		*param=re;
+	} else {
+		LOG(L_ERR,"ERROR: fixup_str2regexp called with parameter != 1\n");
+		return E_BUG;
+	}
+	return 0;
+}
+
+
+
+
+/***************************** init functions *****************************/
 static int w_t_unref( struct sip_msg *foo, void *bar)
 {
 	return t_unref(foo);
 }
 
+
 static int script_init( struct sip_msg *foo, void *bar)
 {   
 	/* we primarily reset all private memory here to make sure
-	   private values left over from previous message will
-	   not be used again
-    */
+	 * private values left over from previous message will
+	 * not be used again */
 
 	if (foo->first_line.type==SIP_REQUEST){
 		/* make sure the new message will not inherit previous
-	   		message's t_on_negative value
+			message's t_on_negative value
 		*/
 		t_on_negative( 0 );
 		t_on_reply(0);
@@ -295,13 +422,12 @@ static int script_init( struct sip_msg *foo, void *bar)
 		 * how to behave */
 		rmode=MODE_REQUEST;
 	}
-
 	return 1;
 }
 
+
 static int mod_init(void)
 {
-
 	DBG( "TM - initializing...\n");
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
@@ -381,80 +507,96 @@ static int child_init(int rank) {
 }
 
 
-/* (char *hostname, char *port_nr) ==> (struct proxy_l *, -)  */
 
-inline static int fixup_hostport2proxy(void** param, int param_no)
+
+
+/**************************** wrapper functions ***************************/
+static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 {
-	unsigned int port;
-	char *host;
-	int err;
-	struct proxy_l *proxy;
-	str s;
-	
-	DBG("TM module: fixup_t_forward(%s, %d)\n", (char*)*param, param_no);
-	if (param_no==1){
-		DBG("TM module: fixup_t_forward: param 1.. do nothing, wait for #2\n");
-		return 0;
-	} else if (param_no==2) {
+	regmatch_t pmatch;
+	struct cell *t;
+	char *status;
+	char backup;
+	int lowest_status;
+	int n;
 
-		host=(char *) (*(param-1)); 
-		port=str2s(*param, strlen(*param), &err);
-		if (err!=0) {
-			LOG(L_ERR, "TM module:fixup_t_forward: bad port number <%s>\n",
-				(char*)(*param));
-			 return E_UNSPEC;
-		}
-		s.s = host;
-		s.len = strlen(host);
-		proxy=mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
-		if (proxy==0) {
-			LOG(L_ERR, "ERROR: fixup_t_forwardv6: bad host name in URI <%s>\n",
-				host );
-			return E_BAD_ADDRESS;
-		}
-		/* success -- fix the first parameter to proxy now ! */
-
-		/* FIXME: janakj, mk_proxy doesn't make copy of host !! */
-		/*pkg_free( *(param-1)); you're right --andrei*/
-		*(param-1)=proxy;
-		return 0;
-	} else {
-		LOG(L_ERR, "ERROR: fixup_t_forwardv6 called with parameter #<>{1,2}\n");
-		return E_BUG;
+	/* first get the transaction */
+	if (t_check( msg , 0 )==-1) return -1;
+	if ( (t=get_t())==0) {
+		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
+			"which has no T-state established\n");
+		return -1;
 	}
+	backup = 0;
+
+	switch (rmode) {
+		case MODE_REQUEST:
+			/* use the status of the last sent reply */
+			status = int2str( t->uas.status, 0);
+			break;
+		case MODE_ONREPLY:
+			/* use the status of the current reply */
+			status = msg->first_line.u.reply.status.s;
+			backup = status[msg->first_line.u.reply.status.len];
+			status[msg->first_line.u.reply.status.len] = 0;
+			break;
+		case MODE_ONFAILURE:
+			/* use the status of the winning reply */
+			lowest_status=999;
+			for ( n=0; n<t->nr_of_outgoings ; n++ ) {
+				if ( t->uac[n].last_received<lowest_status ) {
+					lowest_status = t->uac[n].last_received;
+				}
+			}
+			status = int2str( lowest_status , 0);
+			break;
+		default:
+			LOG(L_ERR,"ERROR:t_check_status: unsupported mode %d\n",rmode);
+			return -1;
+	}
+
+	DBG("DEBUG:t_check_status: checked status is <%s>\n",status);
+	/* do the checking */
+	n = regexec((regex_t*)regexp, status, 1, &pmatch, 0);
+
+	if (backup) status[msg->first_line.u.reply.status.len] = backup;
+	if (n!=0) return -1;
+	return 1;
 }
 
 
-/* (char *code, char *reason_phrase)==>(int code, r_p as is) */
-inline static int fixup_t_send_reply(void** param, int param_no)
+static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo)
 {
-	unsigned long code;
-	int err;
+	struct cell *t;
 
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LOG(L_ERR, "TM module:fixup_t_send_reply: bad  number <%s>\n",
-					(char*)(*param));
-			return E_UNSPEC;
-		}
+	/* first get the transaction */
+	if (t_check( msg , 0 )==-1) return -1;
+	if ( (t=get_t())==0) {
+		LOG(L_ERR, "ERROR: t_flush_flags: cannot flush flags for a message "
+			"which has no T-state established\n");
+		return -1;
 	}
-	/* second param => no conversion*/
-	return 0;
+
+	/* do the flush */
+	switch ((int)dir) {
+		case  1:
+			t->uas.request->flags = msg->flags;
+			break;
+		case  2:
+			msg->flags = t->uas.request->flags;
+			break;
+		default:
+			LOG(L_ERR,"ERROR:t_flush_flags: unknown direction %d\n",(int)dir);
+			return -1;
+	}
+	return 1;
 }
-
-
 
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_check( msg , 0  ) ? 1 : -1;
 }
-
 
 
 inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
@@ -486,17 +628,20 @@ inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
 }
 
+
 inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
 																	char *bar)
 {
 	return _w_t_forward_nonack(msg, 0, PROTO_NONE);
 }
 
+
 inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
 	return _w_t_forward_nonack(msg, proxy, PROTO_UDP);
 }
+
 
 #ifdef USE_TCP
 inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
@@ -506,6 +651,7 @@ inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 }
 #endif
 
+
 #ifdef USE_TLS
 inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 										char* foo)
@@ -513,7 +659,6 @@ inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 	return _w_t_forward_nonack(msg, proxy, PROTO_TLS);
 }
 #endif
-
 
 
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
@@ -556,8 +701,6 @@ inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 		return t_release_transaction( t );
 	return 1;
 }
-
-
 
 
 inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
@@ -609,6 +752,8 @@ inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo )
 	LOG(L_CRIT, "BUG: w_t_on_negative entered in unsupported mode\n");
 	return -1;
 }
+
+
 inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 {
 	struct cell *t;
@@ -634,6 +779,7 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 	return -1;
 }
 
+
 inline static int _w_t_relay_to( struct sip_msg  *p_msg , 
 	struct proxy_l *proxy )
 {
@@ -658,6 +804,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 	return 0;
 }
 
+
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
@@ -665,6 +812,7 @@ inline static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
 	((struct proxy_l *)proxy)->proto=PROTO_UDP;
 	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
 }
+
 
 #ifdef USE_TCP
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , 
@@ -675,6 +823,7 @@ inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
 	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
 }
 #endif
+
 
 #ifdef USE_TLS
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , 
@@ -687,7 +836,6 @@ inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
 #endif
 
 
-
 inline static int w_t_replicate( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
@@ -695,12 +843,14 @@ inline static int w_t_replicate( struct sip_msg  *p_msg ,
 	return t_replicate(p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto );
 }
 
+
 inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
 	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_UDP );
 }
+
 
 #ifdef USE_TCP
 inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
@@ -711,6 +861,7 @@ inline static int w_t_replicate_tcp( struct sip_msg  *p_msg ,
 }
 #endif
 
+
 #ifdef USE_TLS
 inline static int w_t_replicate_tls( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
@@ -719,7 +870,6 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_TLS );
 }
 #endif
-
 
 
 inline static int w_t_relay( struct sip_msg  *p_msg , 

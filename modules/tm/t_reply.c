@@ -620,7 +620,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* if all_final return lowest */
 		picked_branch=pick_branch(branch,new_code, Trans, &picked_code);
 		if (picked_branch==-2) { /* branches open yet */
-			*should_store=1;	
+			*should_store=1;
 			*should_relay=-1;
 			return RPS_STORE;
 		}
