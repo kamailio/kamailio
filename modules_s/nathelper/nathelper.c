@@ -36,10 +36,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * ---------
- * 2003-10-09	nat_uac_test introduced (jiri)
  */
 
 #include "nhelpr_funcs.h"
@@ -56,8 +52,6 @@
 #include "../../timer.h"
 #include "../../ut.h"
 #include "../registrar/sip_msg.h"
-#include "../../msg_translator.h"
-#include "../usrloc/usrloc.h"
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/un.h>
@@ -66,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <regex.h>
 
 MODULE_VERSION
 
@@ -77,19 +70,13 @@ MODULE_VERSION
 #define PF_LOCAL PF_UNIX
 #endif
 
-
-/* NAT UAC test constants */
-#define CONTACT_1918        "[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
-#define NAT_UAC_TEST_1918	0x01
-#define NAT_UAC_TEST_RCVD	0x02
-
-static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
+static int update_clen(struct sip_msg *, int);
 static int extract_mediaip(str *, str *);
 static int extract_mediaport(str *, str *);
-static int alter_mediaip(struct sip_msg *, str *, str *, str *, int);
-static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
+static int alter_mediaip(struct sip_msg *, str *, str *, str *, int *, int);
+static int alter_mediaport(struct sip_msg *, str *, str *, str *, int *, int);
 static char *send_rtpp_command(str *, char, int);
 static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
 
@@ -97,34 +84,21 @@ static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
 
-
-static usrloc_api_t ul;
+static int (*get_all_ucontacts)(void *buf, int len) = NULL;
 
 static int cblen = 0;
 static int natping_interval = 0;
-
-/*
- * If this parameter is set then the natpinger will ping only contacts
- * that have the NAT flag set in user location database
- */
-static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
-static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
-
-static regex_t* key_m1918;
 
 static cmd_export_t cmds[]={
-		{"fix_nated_contact", fix_nated_contact_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"fix_nated_sdp",     fix_nated_sdp_f,     1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"force_rtp_proxy",   force_rtp_proxy_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"nat_uac_test",      nat_uac_test_f,      1, fixup_str2int, REQUEST_ROUTE                 },
+		{"fix_nated_contact", fix_nated_contact_f, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
+		{"fix_nated_sdp", fix_nated_sdp_f, 1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
+		{"force_rtp_proxy", force_rtp_proxy_f, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 		{0, 0, 0, 0, 0}
 	};
 
 static param_export_t params[]={
 	{"natping_interval", INT_PARAM, &natping_interval},
-	{"ping_nated_only",  INT_PARAM, &ping_nated_only },
-	{"rtpproxy_sock",    STR_PARAM, &rtpproxy_sock},
 	{0, 0, 0}
 };
 
@@ -142,32 +116,15 @@ struct module_exports exports={
 static int
 mod_init(void)
 {
-	bind_usrloc_t bind_usrloc;
 
 	if (natping_interval > 0) {
-		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-		if (!bind_usrloc) {
-			LOG(L_ERR, "nathelper: Can't find usrloc module\n");
- 			return -1;
- 		}
-
-		if (bind_usrloc(&ul) < 0) {
+		get_all_ucontacts =
+		    (int (*)(void *, int))find_export("ul_get_all_ucontacts", 1, 0);
+		if (!get_all_ucontacts) {
+			LOG(L_ERR, "This module requires usrloc module\n");
 			return -1;
 		}
-
 		register_timer(timer, NULL, natping_interval);
-	}
-
-	/* compile 1918 address RE */
-	key_m1918=pkg_malloc(sizeof(regex_t));
-	if (!key_m1918) {
-		LOG(L_ERR, "ERROR: nathelper: no mem for RE\n");
-		return -1;
-	}
-	if (regcomp(key_m1918, CONTACT_1918, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
-		pkg_free(key_m1918);
-		LOG(L_ERR, "ERROR: nathelper: failure to compule 1918 RE\n");
-		return -1;
 	}
 
 	return 0;
@@ -205,9 +162,6 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 	return NULL;
 }
 
- 
-
-
 /*
  * Replaces ip:port pair in the Contact: field with the source address
  * of the packet and/or adds direction=active option to the SDP.
@@ -242,7 +196,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		uri.port.s = uri.host.s + uri.host.len;
 
 	offset = c->uri.s - msg->buf;
-	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT);
+	anchor = del_lump(&msg->add_rm, offset, c->uri.len, HDR_CONTACT);
 	if (anchor == 0)
 		return -1;
 
@@ -307,64 +261,16 @@ fixup_str2int( void** param, int param_no)
 
 #define CLEN_LEN	10
 
-
-
-/* 
- * test for occurence of RFC1918 IP address in Contact HF
- */
-static int contact_1918(struct sip_msg* msg)
-{
-	regmatch_t pmatch;
-	int fnd;
-	char backup;
-
-	if ((msg->contact == NULL)&&
-					((parse_headers(msg,HDR_CONTACT,0) == -1))) {
-		DBG("DEBUG: nathelper/contact1918: Contact not found\n");
-		return 0;
-	}
-	if (msg->contact == NULL || msg->contact->body.s==NULL ) {
-		DBG("DEBUG: nathelper/contact1918: Contact sanity check failed\n");
-		return 0;
-	}
-	backup=msg->contact->body.s[msg->contact->body.len];
-	fnd=regexec( key_m1918, msg->contact->body.s, 1, &pmatch, 0)==0;
-	msg->contact->body.s[msg->contact->body.len]=backup;
-	return fnd;
-}
-
-static int
-nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
-{
-	int tests;
-
-	tests = (int)(long) str1;
-
-	/* return true if any of the NAT-UAC tests holds */
-	
-	/* test if source address of signaling different from
-	 * address advertised in Via */
-	if ((tests & NAT_UAC_TEST_RCVD) && received_test(msg)) 
-		return 1;
-	/* test for occurences of RFC1918 addresses in Contact
-	 * header field */
-	if ((tests & NAT_UAC_TEST_1918) && contact_1918(msg))
-		return 1;
-
-	/* no test succeeded */
-	return -1;
-
-}
-
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldip, oldip1, newip;
-	int level;
+	int level, added_len;
 	char *buf;
 	struct lump* anchor;
 
 	level = (int)(long)str1;
+	added_len = 0;
 
 	if (extract_body(msg, &body) == -1 || body.len == 0) {
 		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
@@ -372,7 +278,8 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & ADD_ADIRECTION) {
-		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
+		anchor = anchor_lump(&(msg->add_rm),
+		    body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
 			return -1;
@@ -388,6 +295,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			pkg_free(buf);
 			return -1;
 		}
+		added_len += ADIRECTION_LEN;
 	}
 
 	if (level & FIX_MEDIAIP) {
@@ -403,17 +311,55 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 
 		newip.s = ip_addr2a(&msg->rcv.src_ip);
 		newip.len = strlen(newip.s);
-		if (alter_mediaip(msg, &body, &oldip, &newip, 1) == -1) {
+		if (alter_mediaip(msg, &body, &oldip, &newip,
+		    &added_len, 1) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
 			return -1;
 		}
-		if (oldip1.len > 0 && alter_mediaip(msg, &body, &oldip1, &newip, 0) == -1) {
+		if (oldip1.len > 0 && alter_mediaip(msg, &body, &oldip1, &newip,
+		    &added_len, 0) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter media IP");
 			return -1;
 		}
 	}
 
 finalise:
+	/* Check that Content-Length needs to be updated */
+	if (added_len != 0) {
+		return (update_clen(msg, body.len + added_len));
+	}
+	return 1;
+}
+
+static int
+update_clen(struct sip_msg* msg, int newlen)
+{
+	char *buf;
+	int len, offset;
+	struct lump* anchor;
+
+	buf = pkg_malloc(CLEN_LEN * sizeof(char));
+	if (buf == NULL) {
+		LOG(L_ERR, "ERROR: update_clen: out of memory\n");
+		return -1;
+	}
+	offset = msg->content_length->body.s - msg->buf;
+	len = msg->content_length->body.len;
+	anchor = del_lump(&msg->add_rm, offset, len, HDR_CONTENTLENGTH);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: update_clen: del_lump failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	len = snprintf(buf, CLEN_LEN, "%d", newlen);
+	if (len >= CLEN_LEN)
+		len = CLEN_LEN - 1;
+	if (insert_new_lump_after(anchor, buf, len, HDR_CONTENTLENGTH) == NULL) {
+		LOG(L_ERR, "ERROR: update_clen: insert_new_lump_after failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+
 	return 1;
 }
 
@@ -481,7 +427,7 @@ extract_mediaport(str *body, str *mediaport)
 	trim_len(mediaport->len, mediaport->s, *mediaport);
 
 	if (mediaport->len < 7 || memcmp(mediaport->s, "audio", 5) != 0 ||
-	  !isspace(mediaport->s[5])) {
+	  !isspace((int)mediaport->s[5])) {
 		LOG(L_ERR, "ERROR: extract_mediaport: can't parse `m=' in SDP\n");
 		return -1;
 	}
@@ -492,7 +438,8 @@ extract_mediaport(str *body, str *mediaport)
 }
 
 static int
-alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preserve)
+alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip,
+  int *clendelta, int preserve)
 {
 	char *buf;
 	int offset;
@@ -506,7 +453,8 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 		return 0;
 
 	if (preserve != 0) {
-		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
+		anchor = anchor_lump(&(msg->add_rm),
+		    body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaip: anchor_lump failed\n");
 			return -1;
@@ -525,6 +473,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 			pkg_free(buf);
 			return -1;
 		}
+		*clendelta += AOLDMEDIAIP_LEN + oldip->len + CRLF_LEN;
 	}
 
 	buf = pkg_malloc(newip->len);
@@ -533,7 +482,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 		return -1;
 	}
 	offset = oldip->s - msg->buf;
-	anchor = del_lump(msg, offset, oldip->len, 0);
+	anchor = del_lump(&msg->add_rm, offset, oldip->len, 0);
 	if (anchor == NULL) {
 		LOG(L_ERR, "ERROR: alter_mediaip: del_lump failed\n");
 		pkg_free(buf);
@@ -545,11 +494,13 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 		pkg_free(buf);
 		return -1;
 	}
+	*clendelta += newip->len - oldip->len;
 	return 0;
 }
 
 static int
-alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int preserve)
+alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
+  int *clendelta, int preserve)
 {
 	char *buf;
 	int offset;
@@ -561,7 +512,8 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 		return 0;
 
 	if (preserve != 0) {
-		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
+		anchor = anchor_lump(&(msg->add_rm),
+		    body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaport: anchor_lump failed\n");
 			return -1;
@@ -580,6 +532,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 			pkg_free(buf);
 			return -1;
 		}
+		*clendelta += AOLDMEDIPRT_LEN + oldport->len + CRLF_LEN;
 	}
 
 	buf = pkg_malloc(newport->len);
@@ -588,7 +541,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 		return -1;
 	}
 	offset = oldport->s - msg->buf;
-	anchor = del_lump(msg, offset, oldport->len, 0);
+	anchor = del_lump(&msg->add_rm, offset, oldport->len, 0);
 	if (anchor == NULL) {
 		LOG(L_ERR, "ERROR: alter_mediaport: del_lump failed\n");
 		pkg_free(buf);
@@ -600,6 +553,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 		pkg_free(buf);
 		return -1;
 	}
+	*clendelta += newport->len - oldport->len;
 	return 0;
 }
 
@@ -614,9 +568,9 @@ send_rtpp_command(str *callid, char command, int getreply)
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_LOCAL;
-	strncpy(addr.sun_path, rtpproxy_sock,
+	strncpy(addr.sun_path, "/var/run/rtpproxy.sock",
 	    sizeof(addr.sun_path) - 1);
-#if !defined(__linux__) && !defined(__solaris__)
+#ifdef HAVE_SOCKADDR_SA_LEN
 	addr.sun_len = strlen(addr.sun_path);
 #endif
 
@@ -666,7 +620,7 @@ static int
 force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, oldip1, newport, newip;
-	int create, port;
+	int create, port, cldelta;
 	char buf[16];
 	char *cp;
 
@@ -709,15 +663,19 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	newip.s = ip_addr2a(&msg->rcv.dst_ip);
 	newip.len = strlen(newip.s);
 
-	if (alter_mediaip(msg, &body, &oldip, &newip, 0) == -1)
+	cldelta = 0;
+	if (alter_mediaip(msg, &body, &oldip, &newip, &cldelta, 0) == -1)
 		return -1;
 	if (oldip1.len > 0 &&
-	    alter_mediaip(msg, &body1, &oldip1, &newip, 0) == -1)
+	    alter_mediaip(msg, &body1, &oldip1, &newip, &cldelta, 0) == -1)
 		return -1;
-	if (alter_mediaport(msg, &body, &oldport, &newport, 0) == -1)
+	if (alter_mediaport(msg, &body, &oldport, &newport, &cldelta, 0) == -1)
 		return -1;
 
-	return 1;
+	if (cldelta == 0)
+		return 1;
+
+	return (update_clen(msg, body.len + cldelta));
 }
 
 static void
@@ -739,7 +697,7 @@ timer(unsigned int ticks, void *param)
 			return;
 		}
 	}
-	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
+	rval = get_all_ucontacts(buf, cblen);
 	if (rval > 0) {
 		if (buf != NULL)
 			pkg_free(buf);
@@ -749,7 +707,7 @@ timer(unsigned int ticks, void *param)
 			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
 			return;
 		}
-		rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only ? FL_NAT : 0));
+		rval = get_all_ucontacts(buf, cblen);
 		if (rval != 0) {
 			pkg_free(buf);
 			return;
