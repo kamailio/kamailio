@@ -63,7 +63,7 @@ static inline char* q_inet_itoa(unsigned long ip)
 		q_inet_itoa_buf[offset+2]=c+'0';
 		q_inet_itoa_buf[offset+3]=0;
 	}else if (b){
-		
+
 		q_inet_itoa_buf[offset+1]=c+'0';
 		q_inet_itoa_buf[offset+2]=0;
 	}else{
@@ -118,7 +118,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 
 char * build_req_buf_from_sip_req(	struct sip_msg* msg,
-									unsigned int *returned_len)
+				unsigned int *returned_len)
 {
 	unsigned int len, new_len, via_len, received_len, uri_len, branch_len;
 	char* line_buf;
@@ -337,7 +337,8 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 		offset+=uri_len;
 		s_offset+=msg->first_line.u.request.uri.len; /* skip original uri */
 	}
-/* copy msg adding/removing lumps */
+	new_buf[new_len]=0;
+	/* copy msg adding/removing lumps */
 	for (t=msg->add_rm;t;t=t->next){
 		switch(t->op){
 			case LUMP_ADD:
