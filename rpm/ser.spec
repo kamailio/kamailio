@@ -21,13 +21,13 @@ BuildPrereq:  make flex bison
 %description
 Ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
 proxy server. Written entirely in C, ser can handle thousands calls
-per second even on low-budget hardware. C Shell like scripting language
+per second even on low-budget hardware. A C Shell like scripting language
 provides full control over the server's behaviour. It's modular
 architecture allows only required functionality to be loaded.
-Currently the following modules are available: Digest Authentication,
-CPL scripts, Instant Messaging, MySQL support, Presence Agent, Radius
-Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
-Module, Registrar and User Location.
+Currently the following modules are available: digest authentication,
+CPL scripts, instant messaging, MySQL support, a presence agent, radius
+authentication, record routing, an SMS gateway, a jabber gateway, a 
+transaction module, registrar and user location.
 
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
@@ -171,6 +171,9 @@ fi
 - added a separate rpm for the jabber modules
 - moved all the binaries to sbin
 - removed obsolete installs (make install installs everything now)
+
+* Fri Oct 25 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Minor description fixes
 
 * Fri Oct  4 2002 Jiri Kuthan <jiri@iptel.org>
 - exec module introduced
