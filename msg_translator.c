@@ -393,7 +393,7 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 
 
 
-char* clen_builder(struct sip_msg* msg, unsigned int *clen_len, int diff)
+char* clen_builder(struct sip_msg* msg, int *clen_len, int diff)
 {
 	char* buf;
 	int len;

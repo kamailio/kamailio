@@ -8,7 +8,8 @@
 Exceptions:
  a. compilation (this includes warning) fixes
  b. bug fixes
- c. small changes due to a new release in the very near future (allowed only for the release manager)
+ c. api changes (some external functions definitions change)
+ d. small changes due to a new release in the very near future (allowed only for the release manager)
 
 
 2. Code requirements

@@ -1,6 +1,11 @@
 $Id$
 
 ( - todo, x - done)
+- apply & modify Maxim's server_name patch
+- change subst_run/str to return error (different from not found)
+- change subst_user as on serdev
+- tm : fake_env: fake also bind_address (else the default will be used
+ in the failure route)
 - [core] parse_uri support for new uri params
 - [core] on sig_child, kill the processes if they don't exit in a 
   reasonable time

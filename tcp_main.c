@@ -184,7 +184,7 @@ static int tcp_blocking_connect(int fd, const struct sockaddr *servaddr,
 	struct timeval timeout;
 	int ticks;
 	int err;
-	int err_len;
+	unsigned int err_len;
 	
 again:
 	n=connect(fd, servaddr, addrlen);

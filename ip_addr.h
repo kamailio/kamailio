@@ -383,15 +383,15 @@ static inline int hostent2su( union sockaddr_union* su,
 	return 0;
 }
 
-
-
+/* maximum size of a str returned by ip_addr2a (including \0) */
+#define IP_ADDR_MAX_STR_SIZE 40 /* 1234:5678:9012:3456:7890:1234:5678:9012\0 */
 /* fast ip_addr -> string convertor;
  * it uses an internal buffer
  */
 static inline char* ip_addr2a(struct ip_addr* ip)
 {
 
-	static char buff[40];/* 1234:5678:9012:3456:7890:1234:5678:9012\0 */
+	static char buff[IP_ADDR_MAX_STR_SIZE];
 	int offset;
 	register unsigned char a,b,c;
 #ifdef USE_IPV6

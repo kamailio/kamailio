@@ -1243,10 +1243,12 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 
 	/* create header fields the same way tm does itself, then compare headers */
 	endpos = print_callid_mini(callid_header, callid);
-	DBG("created comparable call_id header field: >%.*s<\n", endpos - callid_header, callid_header); 
+	DBG("created comparable call_id header field: >%.*s<\n", 
+			(int)(endpos - callid_header), callid_header); 
 
 	endpos = print_cseq_mini(cseq_header, &cseq, &invite_method);
-	DBG("created comparable cseq header field: >%.*s<\n", endpos - cseq_header, cseq_header); 
+	DBG("created comparable cseq header field: >%.*s<\n", 
+			(int)(endpos - cseq_header), cseq_header); 
 
 	LOCK_HASH(hash_index);
 	DBG("just locked hash index %u, looking for transactions there:\n", hash_index);
