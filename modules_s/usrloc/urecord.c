@@ -122,11 +122,12 @@ void print_urecord(FILE* _f, urecord_t* _r)
  *                          2) descending modification time
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-			unsigned int _flags, int _rep, struct ucontact** _con, str* _ua, str* _recv)
+			unsigned int _flags, int _rep, struct ucontact** _con, str* _ua, str* _recv,
+			struct socket_info* sock)
 {
 	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _rep, _con, _ua, _recv) < 0) {
+	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _rep, _con, _ua, _recv, sock) < 0) {
 		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
@@ -497,9 +498,10 @@ void release_urecord(urecord_t* _r)
  * into urecord
  */
 int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
-			int _cs, unsigned int _flags, int _rep, struct ucontact** _con, str* _ua, str* _recv)
+			int _cs, unsigned int _flags, int _rep, struct ucontact** _con, str* _ua, str* _recv,
+			struct socket_info* sock)
 {
-	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _rep, _con, _ua, _recv) < 0) {
+	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _rep, _con, _ua, _recv, sock) < 0) {
 		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -526,9 +528,10 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _ci
  * inserts a contact without replication
  */
 int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
-		    int _cs, unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv)
+		    int _cs, unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
+		    struct socket_info* sock)
 {
-	return insert_ucontact_rep(_r, _c, _e, _q, _cid, _cs, _flags, 0, _con, _ua, _recv);
+	return insert_ucontact_rep(_r, _c, _e, _q, _cid, _cs, _flags, 0, _con, _ua, _recv, sock);
 }
 
 /*

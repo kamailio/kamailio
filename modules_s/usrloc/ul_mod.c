@@ -37,6 +37,7 @@
  * 2003-04-21 failed fifo init stops init process (jiri)
  * 2004-03-17 generic callbacks added (bogdan)
  * 2004-06-07 updated to the new DB api (andrei)
+ * 2005-02-25 incoming socket is saved in ucontact record (bogdan)
  */
 
 #include <stdio.h>

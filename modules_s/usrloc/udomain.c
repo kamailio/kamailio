@@ -31,6 +31,7 @@
  * 2004-06-07 updated to the new DB api (andrei)
  * 2004-08-23  hash function changed to process characters as unsigned
  *             -> no negative results occur (jku)
+ * 2005-02-25 incoming socket is saved in ucontact record (bogdan)
  *   
  */
 
@@ -40,6 +41,10 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "../../ut.h"
+#include "../../parser/parse_param.h"
+#include "../../parser/parse_uri.h"
+#include "../../resolve.h"
+#include "../../socket_info.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "del_list.h"
 #include "ins_list.h"
@@ -205,6 +210,72 @@ void print_udomain(FILE* _f, udomain_t* _d)
 }
 
 
+static struct socket_info* find_socket(str* received)
+{
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	struct hostent* he;
+	struct ip_addr ip;
+	struct socket_info* si;
+	param_t* params;
+	unsigned short port;
+	char* buf;
+	int error;
+
+	if (!received) return 0;
+
+	si = 0;
+	if (parse_uri(received->s, received->len, &puri) < 0) {
+		LOG(L_ERR, "find_socket: Error while parsing received URI\n");
+		return 0;
+	}
+	
+	if (parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
+		LOG(L_ERR, "find_socket: Error while parsing received URI parameters\n");
+		return 0;
+	}
+
+	if (!hooks.uri.dstip->body.s || !hooks.uri.dstip->body.len) goto end;
+
+	buf = (char*)pkg_malloc(hooks.uri.dstip->body.len + 1);
+	if (!buf) {
+		LOG(L_ERR, "find_socket: No memory left\n");
+		goto end;
+	}
+	memcpy(buf, hooks.uri.dstip->body.s, hooks.uri.dstip->body.len);
+	buf[hooks.uri.dstip->body.len] = '\0';
+
+	he = resolvehost(buf);
+	if (he == 0) {
+		LOG(L_ERR, "find_socket: Unable to resolve '%s'\n", buf);
+		pkg_free(buf);
+		goto end;
+	}
+	pkg_free(buf);
+
+	if (hooks.uri.dstport->body.s && hooks.uri.dstport->body.len) {
+		port = str2s(hooks.uri.dstport->body.s, hooks.uri.dstport->body.len, &error);
+		if (error != 0) {
+			LOG(L_ERR, "find_socket: Unable to convert port number\n");		
+			goto end;
+		}
+	} else {
+		port = 0;
+	}
+
+	hostent2ip_addr(&ip, he, 0);
+	si = find_si(&ip, port, puri.proto);
+	if (si == 0) {
+		LOG(L_ERR, "find_socket: Unable to find socket, using the default one\n");
+		goto end;
+	}
+	
+ end:
+	if (params) free_params(params);
+	return si;
+}
+
+
 
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
@@ -214,7 +285,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	db_row_t* row;
 	int i, cseq, rep, state;
 	unsigned int flags;
-
+	struct socket_info* sock;
 	str user, contact, callid, ua, received;
 	str* rec;
 	char* domain;
@@ -313,12 +384,16 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			if (received.s) {
 				received.len = strlen(received.s);
 				rec = &received;
+
+				sock = find_socket(&received);
 			} else {
 				received.len = 0;
 				rec = 0;
+				sock = 0;
 			}
 		} else {
 			rec = 0;
+			sock = 0;
 		}
 
 		if (use_domain) {
@@ -337,7 +412,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c, &ua, rec) < 0) {
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c, &ua, rec, sock) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);

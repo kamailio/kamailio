@@ -80,11 +80,11 @@ static inline int find_dlist(str* _n, dlist_t** _d)
  *
  * Information is packed into the buffer as follows:
  *
- * +------------+----------+------------+-----------
- * |contact1.len|contact1.s|contact2.len|contact2.s|
- * +------------+----------+------------+-----------
- * |.......................|contactN.len|contactN.s|
- * +------------+----------+------------+----------+
+ * +------------+----------+-----+------------+----------+-----+
+ * |contact1.len|contact1.s|sock1|contact2.len|contact2.s|sock2|
+ * +------------+----------+-----+------------+----------+-----+
+ * |.............................|contactN.len|contactN.s|sockN|
+ * +------------+----------+-----+------------+----------+-----+
  * |000000000000|
  * +------------+
  */
@@ -117,24 +117,34 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags)
 				if ((c->flags & flags) != flags)
 					continue;
 				if (c->received.s) {
-					if (len >= (int)(sizeof(c->received.len) + c->received.len)) {
+					if (len >= (int)(sizeof(c->received.len) +
+							 c->received.len + sizeof(c->sock))) {
 						memcpy(cp, &c->received.len, sizeof(c->received.len));
 						cp = (char*)cp + sizeof(c->received.len);
 						memcpy(cp, c->received.s, c->received.len);
 						cp = (char*)cp + c->received.len;
-						len -= sizeof(c->received.len) + c->received.len;
+						memcpy(cp, &c->sock, sizeof(c->sock));
+						cp = (char*)cp + sizeof(c->sock);
+						len -= sizeof(c->received.len) + c->received.len +
+							sizeof(c->sock);
 					} else {
-						shortage += sizeof(c->received.len) + c->received.len;
+						shortage += sizeof(c->received.len) +
+							c->received.len + sizeof(c->sock);
 					}
 				} else {
-					if (len >= (int)(sizeof(c->c.len) + c->c.len)) {
+					if (len >= (int)(sizeof(c->c.len) + c->c.len +
+					sizeof(c->sock))) {
 						memcpy(cp, &c->c.len, sizeof(c->c.len));
 						cp = (char*)cp + sizeof(c->c.len);
 						memcpy(cp, c->c.s, c->c.len);
 						cp = (char*)cp + c->c.len;
-						len -= sizeof(c->c.len) + c->c.len;
+						memcpy(cp, &c->sock, sizeof(c->sock));
+						cp = (char*)cp + sizeof(c->sock);
+						len -= sizeof(c->c.len) + c->c.len + sizeof(c->sock);
 					} else {
-						shortage += sizeof(c->c.len) + c->c.len;
+						shortage += sizeof(c->c.len) + c->c.len +
+							sizeof(c->sock);
+
 					}
 				}
 			}

@@ -31,6 +31,7 @@
  * 2003-03-12 added replication mark and three zombie states (nils)
  * 2004-03-17 generic callbacks added (bogdan)
  * 2004-06-07 updated to the new DB api (andrei)
+ * 2005-02-25 incoming socket is saved in ucontact record (bogdan)
  */
 
 
@@ -41,6 +42,7 @@
 #include "../../ut.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
+#include "../../ip_addr.h"
 #include "ul_mod.h"
 #include "ul_callback.h"
 
@@ -49,7 +51,8 @@
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
-		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c, str* _ua, str* _recv)
+		 str* _callid, int _cseq, unsigned int _flags, int _rep, 
+		 ucontact_t** _c, str* _ua, str* _recv, struct socket_info* sock)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!(*_c)) {
@@ -117,6 +120,7 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
 	(*_c)->prev = 0;
 	(*_c)->state = CS_NEW;
 	(*_c)->flags = _flags;
+	(*_c)->sock = sock;
 
 	return 0;
 }	
@@ -169,6 +173,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "received  : '%.*s'\n", _c->received.len, ZSW(_c->received.s));
 	fprintf(_f, "State     : %s\n", st);
 	fprintf(_f, "Flags     : %u\n", _c->flags);
+	fprintf(_f, "Sock      : %p\n", _c->sock);
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
 	fprintf(_f, "~~~/Contact~~~~\n");
@@ -179,7 +184,8 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
  * Update ucontact structure in memory
  */
 int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
-			unsigned int _set, unsigned int _res, str* _ua, str* _recv)
+			unsigned int _set, unsigned int _res, str* _ua, str* _recv,
+			struct socket_info* sock)
 {
 	char* ptr;
 	
@@ -243,6 +249,7 @@ int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _
 	_c->cseq = _cs;
 	_c->flags |= _set;
 	_c->flags &= ~_res;
+	_c->sock = sock;
 
 	return 0;
 }
@@ -774,17 +781,20 @@ int db_delete_ucontact(ucontact_t* _c)
  * FIXME: I'm not sure if we need this...
  */
 int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
-			unsigned int _set, unsigned int _res, str* _ua, str* _recv)
+			unsigned int _set, unsigned int _res, str* _ua, str* _recv,
+			struct socket_info* sock)
 {
 	_c->replicate = _rep;
-	return mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua, _recv);
+	return mem_update_ucontact(_c, _e, _q, _cid, _cs, 
+				   _set, _res, _ua, _recv, sock);
 }
 
 /*
  * Update ucontact with new values
  */
 int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
-		    unsigned int _set, unsigned int _res, str* _ua, str* _recv)
+		    unsigned int _set, unsigned int _res, str* _ua, str* _recv,
+		    struct socket_info* sock)
 {
 	/* run callbacks for UPDATE event */
 	if (exists_ulcb_type(UL_CONTACT_UPDATE))
@@ -792,7 +802,7 @@ int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
-	if (mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua, _recv) < 0) {
+	if (mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua, _recv, sock) < 0) {
 		LOG(L_ERR, "update_ucontact(): Error while updating\n");
 		return -1;
 	}
@@ -804,3 +814,4 @@ int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 	}
 	return 0;
 }
+
