@@ -47,7 +47,7 @@
 #include "usr_avp.h"
 
 
-
+/* usr_avp data bodies */
 struct str_int_data {
 	str  name;
 	int  val;
@@ -56,6 +56,12 @@ struct str_int_data {
 struct str_str_data {
 	str  name;
 	str  val;
+};
+
+/* avp aliases structs*/
+struct avp_spec {
+	int type;
+	int_str name;
 };
 
 struct avp_galias {
@@ -458,15 +464,19 @@ error:
 }
 
 
-struct avp_spec *lookup_avp_galias(char *alias, int len)
+int lookup_avp_galias(str *alias, int *type, int_str *avp_name)
 {
 	struct avp_galias *ga;
 
 	for( ga=galiases ; ga ; ga=ga->next )
-		if (len==ga->alias.len && (strncasecmp( alias, ga->alias.s, len)==0) )
-			return &ga->avp;
+		if (alias->len==ga->alias.len &&
+		(strncasecmp( alias->s, ga->alias.s, alias->len)==0) ) {
+			*type = ga->avp.type;
+			*avp_name = ga->avp.name;
+			return 0;
+		}
 
-	return 0;
+	return -1;
 }
 
 
@@ -476,6 +486,9 @@ int parse_avp_name( str *name, int *type, int_str *avp_name)
 {
 	unsigned int id;
 	char c;
+
+	if (name==0 || name->s==0 || name->len==0)
+		goto error;
 
 	if (name->len>=2 && name->s[1]==':') {
 		c = name->s[0];
@@ -511,6 +524,28 @@ int parse_avp_name( str *name, int *type, int_str *avp_name)
 	return 0;
 error:
 	return -1;
+}
+
+
+int parse_avp_spec( str *name, int *type, int_str *avp_name)
+{
+	str alias;
+
+	if (name==0 || name->s==0 || name->len==0)
+		return -1;
+
+	if (name->s[0]==GALIAS_CHAR_MARKER) {
+		/* it's an avp alias */
+		if (name->len==1) {
+			LOG(L_ERR,"ERROR:parse_avp_spec: empty alias\n");
+			return -1;
+		}
+		alias.s = name->s+1;
+		alias.len = name->len-1;
+		return lookup_avp_galias( &alias, type, avp_name);
+	} else {
+		return parse_avp_name( name, type, avp_name);
+	}
 }
 
 

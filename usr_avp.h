@@ -50,24 +50,18 @@ struct usr_avp {
 };
 
 
-struct avp_spec {
-	int type;
-	int_str name;
-};
-
-
 #define AVP_NAME_STR     (1<<0)
 #define AVP_VAL_STR      (1<<1)
 
+#define GALIAS_CHAR_MARKER  '$'
+
 /* add functions */
 int add_avp( unsigned short flags, int_str name, int_str val);
-
 
 /* search functions */
 struct usr_avp *search_first_avp( unsigned short name_type, int_str name,
 															int_str *val );
 struct usr_avp *search_next_avp( struct usr_avp *avp, int_str *val  );
-
 
 /* free functions */
 void reset_avps( );
@@ -83,9 +77,10 @@ struct usr_avp** get_avp_list( );
 
 /* global alias functions (manipulation and parsing)*/
 int add_avp_galias_str(char *alias_definition);
-struct avp_spec *lookup_avp_galias(char *alias, int len);
+int lookup_avp_galias(str *alias, int *type, int_str *avp_name);
 int add_avp_galias(str *alias, int type, int_str avp_name);
 int parse_avp_name( str *name, int *type, int_str *avp_name);
+int parse_avp_spec( str *name, int *type, int_str *avp_name);
 
 #endif
 
