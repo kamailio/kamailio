@@ -42,8 +42,9 @@ Patch: http://iptel.org/~janakj/nonce.c.patch
 Workaround: Apply the patch to 0.8.10 sources
 CVS status: fixed
 ---------------------------------------------------------------
-Desc: ser 0.8.10 reports No memory left when an INVITE containing Route
+Desc: ser 0.8.10 memory leak when an INVITE containing Route
       header fields is received.
+      Symptoms: ser reports No memory left or crashes with BUG: qm_*: fragm.
 BugId:n/a
 Ser version: 0.8.10
 Patch: http://iptel.org/~janakj/invroute.patch
