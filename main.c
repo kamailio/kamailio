@@ -294,6 +294,8 @@ int sig_flag = 0;              /* last signal received */
 int debug = L_NOTICE;
 int dont_fork = 0;
 int log_stderr = 0;
+/* log facility (see syslog(3)) */
+int log_facility = LOG_DAEMON;
 int config_check = 0;
 /* check if reply first via host==us */
 int check_via =  0;        
@@ -534,7 +536,7 @@ int daemonize(char*  name)
 	}
 	
 	if (log_stderr==0)
-		openlog(name, LOG_PID|LOG_CONS, LOG_DAEMON);
+		openlog(name, LOG_PID|LOG_CONS, log_facility);
 		/* LOG_CONS, LOG_PERRROR ? */
 	return  0;
 

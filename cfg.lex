@@ -155,6 +155,7 @@ OR		"or"|"||"|"|"
 DEBUG	debug
 FORK	fork
 LOGSTDERROR	log_stderror
+LOGFACILITY	log_facility
 LISTEN		listen
 ALIAS		alias
 DNS		 dns
@@ -315,6 +316,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DEBUG}	{ count(); yylval.strval=yytext; return DEBUG; }
 <INITIAL>{FORK}		{ count(); yylval.strval=yytext; return FORK; }
 <INITIAL>{LOGSTDERROR}	{ yylval.strval=yytext; return LOGSTDERROR; }
+<INITIAL>{LOGFACILITY}	{ yylval.strval=yytext; return LOGFACILITY; }
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{ALIAS}	{ count(); yylval.strval=yytext; return ALIAS; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
