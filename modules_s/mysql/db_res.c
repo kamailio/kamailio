@@ -98,6 +98,10 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 			RES_TYPES(_r)[i] = DB_BLOB;
 			break;
 
+		case FIELD_TYPE_SET:
+			RES_TYPES(_r)[i] = DB_BITMAP;
+			break;
+
 		default:
 			RES_TYPES(_r)[i] = DB_STRING;
 			break;
