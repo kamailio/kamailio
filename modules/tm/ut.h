@@ -34,6 +34,7 @@
  *  2003-04-14  added get_proto to determine protocol from uri unless
  *              specified explicitely (jiri)
  *  2003-07-07  get_proto takes now two protos as arguments (andrei)
+ *              tls/sips support for get_proto & uri2proxy (andrei)
  */
 
 
@@ -66,6 +67,9 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 #ifdef USE_TCP
 				case PROTO_TCP:
 #endif
+#ifdef USE_TLS
+				case PROTO_TLS:
+#endif
 						return proto;
 				default:
 						LOG(L_ERR, "ERROR: get_proto: unsupported transport:"
@@ -75,6 +79,9 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 		case PROTO_UDP: /* some protocol has been forced -- take it */
 #ifdef USE_TCP
 		case PROTO_TCP:
+#endif
+#ifdef USE_TLS
+		case PROTO_TLS:
 #endif
 			return force_proto;
 		default:
@@ -93,6 +100,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 {
 	struct sip_uri parsed_uri;
 	struct proxy_l *p;
+	enum sip_protos uri_proto;
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: %.*s\n",
@@ -100,9 +108,18 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 		return 0;
 	}
 	
+	if (parsed_uri.secure){
+		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
+			LOG(L_ERR, "ERROR: uri2proxy: bad transport  for sips uri: %d\n",
+					parsed_uri.proto);
+			return 0;
+		}else
+			uri_proto=PROTO_TLS;
+	}else
+		uri_proto=parsed_uri.proto;
 	p = mk_proxy(&parsed_uri.host, 
 		      parsed_uri.port_no, 
-		      get_proto(proto, parsed_uri.proto));
+		      get_proto(proto, uri_proto));
 	if (p == 0) {
 		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
 		    uri->len, ZSW(uri->s));
