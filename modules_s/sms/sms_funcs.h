@@ -13,8 +13,6 @@
 #define MAX_SMS_LENGTH   160
 
 
-#define MODE_OLD   1
-
 
 
 struct network {
@@ -32,7 +30,7 @@ struct modem {
 	int  mode;
 	int  report;
 	int  fd;
-	int  boundrate;
+	int  baudrate;
 };
 
 struct sms_msg {

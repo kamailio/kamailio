@@ -16,6 +16,15 @@ mailto:s.frings@mail.isis.de
 
 #include <termios.h>
 #include "sms_funcs.h"
+
+
+#define MODE_OLD      1
+#define MODE_DIGICOM  2
+#define MODE_ASCII    3
+#define MODE_NEW      4
+
+#define ERROR_SLEEP_TIME 10
+
 //int modem;
 //int baudrate;
 //int errorsleeptime;
@@ -34,11 +43,12 @@ mailto:s.frings@mail.isis.de
 // functions reads 0.1s more and returns then.
 // The command may be empty or NULL. 
 
-//int put_command(char* command,char* answer,int max,int timeout,char* expect);
+int put_command(int fd,char* command,char* answer,int max,int timeout,
+																char* expect);
 
-//void setmodemparams(); /* setup serial port */
+int setmodemparams( struct modem *mdm);
 
-//void initmodem();
+int initmodem(struct modem *mdm, char *smsc);
 
 int openmodem(struct modem *mdm);
 

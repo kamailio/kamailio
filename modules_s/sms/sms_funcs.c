@@ -1,8 +1,11 @@
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
 #include "../../dprint.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
+#include "libsms_modem.h"
+#include "libsms_put_sms.h"
 
 
 
@@ -82,6 +85,9 @@ void modem_process(struct modem *mdm)
 	int empty_pipe;
 	int modem_open;
 
+	mdm->baudrate = 14;
+	mdm->mode = MODE_NEW;
+
 	sleep(1);
 
 	while(1)
@@ -116,12 +122,20 @@ void modem_process(struct modem *mdm)
 				/* do I have to open/init the modem? */
 				if (!modem_open) {
 					DBG("DEBUG:modem_process: openning modem\n");
+					if (openmodem(mdm)==-1) {
+						LOG(L_ERR,"ERROR:modem_process: cannot open modem!"
+							" %s \n",strerror(errno));
+						exit(0);
+					}
+					setmodemparams(mdm);
+					initmodem(mdm,0/*smsc*/);
 					modem_open = 1;
 				}
 
 				/* compute and send the sms */
 				DBG("DEBUG:modem_process: processing sms: to:[%s] "
 					"body=[%s]\n",sms_messg.to,sms_messg.text);
+				putsms( &sms_messg , mdm);
 
 				counter++;
 				/* if I reached the limit -> set not to wait */
@@ -129,8 +143,9 @@ void modem_process(struct modem *mdm)
 					dont_wait = 1;
 			}/*while*/
 			/* if the modem is open -> close it!*/
-			if (modem_open){
+			if (modem_open) {
 				DBG("DEBUG:modem_process: closing modem\n");
+				closemodem(mdm);
 			}
 		}/*for*/
 		if (!dont_wait)

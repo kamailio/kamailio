@@ -1,7 +1,9 @@
 #ifndef _LIBSMS_PUTSMS_H
 #define _LIBSMS_PUTSMS_H
 
-void make_pdu(struct sms_msg*, struct modem*, char*);
+#include "sms_funcs.h"
+
+int putsms( struct sms_msg *sms_messg, struct modem *mdm);
 
 
 #endif

@@ -21,256 +21,235 @@ mailto:s.frings@mail.isis.de
 #include <syslog.h>
 #include <sys/ioctl.h>
 #include "libsms_modem.h"
+#include "../../dprint.h"
 
 
-#ifdef old
-int put_command(char* command,char* answer,int max,int timeout,char* expect)
+
+
+int put_command(int fd, char* command, char* answer, int max, int timeout,
+																char* expect)
 {
-  int count=0;
-  int readcount;
-  int toread;
-  char tmp[100];
-  int timeoutcounter=0;
-  int found=0;
-  int available;
-  int status;
+	int count=0;
+	int readcount;
+	int toread;
+	char tmp[100];
+	int timeoutcounter=0;
+	int found=0;
+	int available;
+	int status;
 
-  // send command
-  if (command) if (command[0])
-  {
-  // Cycwin does not support TIOC functions and has not workaround for this.
-  // So do not check CTS on Cygwin.
-#ifndef WINDOWS
-    ioctl(modem,TIOCMGET,&status);
-    while (!(status & TIOCM_CTS))
-    {
-      // write(1,",",1);
-      usleep(100000);
-      timeoutcounter++;
-      ioctl(modem,TIOCMGET,&status);
-      if (timeoutcounter>=timeout)
-      {
-        writelogfile(LOG_INFO,"\nModem is not clear to send");
-        return 0;
-      }
-    }
-#endif
-    writelogfile(LOG_DEBUG,"->%s",command);
-    write(modem,command,strlen(command));
-    tcdrain(modem);
-  }
+	if (command==0 || command[0]==0 ) {
+		LOG(L_ERR,"ERROR:put_command: NULL comand received! \n");
+		return 0;
+	}
 
+	ioctl(fd,TIOCMGET,&status);
+	while (!(status & TIOCM_CTS))
+	{
+		usleep(100000);
+		timeoutcounter++;
+		ioctl(fd,TIOCMGET,&status);
+		if (timeoutcounter>=timeout) {
+			LOG(L_INFO,"INFO:put_command: Modem is not clear to send\n");
+			return 0;
+		}
+	}
 
-  answer[0]=0;
-  do
-  {
-    // try to read some bytes.
+	//DBG("DEBUG: put_command: ->%s \n",command);
+	write(fd,command,strlen(command));
+	tcdrain(fd);
 
-    // Cygwin does not support TIOC functions and has not workaround for this.
-    // So do not check number of available bytes
-#ifndef WINDOWS
-    ioctl(modem,FIONREAD,&available);	// how many bytes are available to read?
-    if (available<1)			// if 0 then wait a little bit and retry
-    {
-      usleep(100000);
-      //write(1,".",1);
-      timeoutcounter++;
-      ioctl(modem,FIONREAD,&available);
-    }
-#else
-    // Only for Windows. Read as much as possible
-    usleep(100000);
-    //write(1,".",1);
-    timeoutcounter++;
-    available=sizeof(tmp)-1;
-#endif
-    if (available>0)
-    {
-      // How many bytes do I wan t to read maximum? Not more than tmp buffer size.
-      toread=max-count-1;
-      if (toread>sizeof(tmp)-1)
-        toread=sizeof(tmp)-1;
-      // And how many bytes are available?
-      if (available<toread)
-        toread=available;
-      // read data
-      readcount=read(modem,tmp,toread);
-      if (readcount<0)
-        readcount=0;
-      tmp[readcount]=0;
-      // add read bytes to the output buffer
-      if (readcount)
-      {
-        strcat(answer,tmp);
-        count+=readcount;
+	answer[0]=0;
+	do
+	{
+		// try to read some bytes.
+		ioctl(fd,FIONREAD,&available);
+		// how many bytes are available to read?
+		if (available<1)  // if 0 then wait a little bit and retry
+		{
+			usleep(100000);
+			timeoutcounter++;
+			ioctl(fd,FIONREAD,&available);
+		}
+		if (available>0)
+		{
+			/* How many bytes do I wan t to read maximum? 
+			Not more than tmp buffer size. */
+			toread=max-count-1;
+			if (toread>sizeof(tmp)-1)
+				toread=sizeof(tmp)-1;
+			// And how many bytes are available?
+			if (available<toread)
+				toread=available;
+			// read data
+			readcount=read(fd,tmp,toread);
+			if (readcount<0)
+				readcount=0;
+			tmp[readcount]=0;
+			// add read bytes to the output buffer
+			if (readcount) {
+				strcat(answer,tmp);
+				count+=readcount;
+				/* if we have more time to read, check if we got already
+				the expected string */
+				if ((timeoutcounter<timeout) && (found==0)) {
+					// check if it's the expected answer
+					if ((strstr(answer,"OK\r")) || (strstr(answer,"ERROR")))
+						found=1;
+					if (expect && expect[0] && strstr(answer,expect))
+						found=1;
+					// if found then set timoutcounter to read 0.1s more
+					if (found)
+						timeoutcounter=timeout-1;
+				}
+			}
+		}
+	// repeat until timout
+	}while (timeoutcounter<timeout);
 
-        // if we have more time to read, check if we got already the expected string
-        if ((timeoutcounter<timeout) && (found==0))
-        {
-          // check if it's the expected answer
-          if ((strstr(answer,"OK\r")) || (strstr(answer,"ERROR")))
-            found=1;
-          if (expect) if (expect[0])
-            if (strstr(answer,expect))
-              found=1;
-          // if found then set timoutcounter to read 0.1s more
-          if (found)
-            timeoutcounter=timeout-1;
-        }
-      }
-    }
-  }
-  // repeat until timout
-  while (timeoutcounter<timeout);
-
-  writelogfile(LOG_DEBUG,"<-%s",answer);
-
-  return count;
+	//DBG("DEBUG:put_command: <-[%s] \n",answer);
+	return count;
 }
 
-void setmodemparams() /* setup serial port */
+
+
+
+/* setup serial port */
+int setmodemparams( struct modem *mdm )
 {
-  struct termios newtio;
-  bzero(&newtio, sizeof(newtio));
-  newtio.c_cflag = baudrate | CRTSCTS | CS8 | CLOCAL | CREAD | O_NDELAY;
-// uncomment next line to disable hardware handshake
-// newtio.c_cflag &= ~CRTSCTS;
-  newtio.c_iflag = IGNPAR;
-  newtio.c_oflag = 0;
-  newtio.c_lflag = 0;
-#ifdef WINDOWS
-  newtio.c_cc[VTIME]    = 0;
-#else
-  newtio.c_cc[VTIME]    = 1;
-#endif
-  newtio.c_cc[VMIN]     = 0;
-  tcflush(modem, TCIOFLUSH);
-  tcsetattr(modem,TCSANOW,&newtio);
+	struct termios newtio;
+
+	bzero(&newtio, sizeof(newtio));
+	newtio.c_cflag = mdm->baudrate | CRTSCTS | CS8 | CLOCAL | CREAD | O_NDELAY;
+	//uncomment next line to disable hardware handshake
+	//newtio.c_cflag &= ~CRTSCTS;
+	newtio.c_iflag = IGNPAR;
+	newtio.c_oflag = 0;
+	newtio.c_lflag = 0;
+	newtio.c_cc[VTIME]    = 1;
+	newtio.c_cc[VMIN]     = 0;
+	tcflush(mdm->fd, TCIOFLUSH);
+	tcsetattr(mdm->fd,TCSANOW,&newtio);
+	return 0;
 }
 
-void initmodem()
+
+
+
+int initmodem(struct modem *mdm, char *smsc)
 {
-  char command[100];
-  char answer[500];
-  int retries=0;
-  int success=0;
+	char command[100];
+	char answer[500];
+	int retries=0;
+	int success=0;
+	int errorsleeptime=ERROR_SLEEP_TIME;
 
-  if (initstring[0])
-  {
-    writelogfile(LOG_INFO,"Initializing modem");
-    put_command(initstring,answer,sizeof(answer),100,0);
-  }
+	/*if (initstring[0])
+	{
+		writelogfile(LOG_INFO,"Initializing modem");
+		put_command(initstring,answer,sizeof(answer),100,0);
+	}*/
 
-  if (pin[0])
-  {
-    writelogfile(LOG_INFO,"Checking if modem needs PIN");
-    put_command("AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
-    if (strstr(answer,"+CPIN: SIM PIN"))
-    {
-      writelogfile(LOG_NOTICE,"Modem needs PIN, entering PIN...");
-      sprintf(command,"AT+CPIN=\"%s\"\r",pin);
-      put_command(command,answer,sizeof(answer),300,0);
-      put_command("AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
-      if (strstr(answer,"+CPIN: SIM PIN"))
-      {
-        writelogfile(LOG_ERR,"Modem did not accept this PIN");
-        exit(2);
-      }
-      else if (strstr(answer,"+CPIN: READY"))
-        writelogfile(LOG_INFO,"PIN Ready");
-    }
-    if (strstr(answer,"+CPIN: SIM PUK"))
-    {
-      writelogfile(LOG_CRIT,"Your PIN is locked. Unlock it manually");
-      exit(2);
-    }
-  }
+	if (mdm->pin[0]) {
+		/* Checking if modem needs PIN */
+		put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
+		if (strstr(answer,"+CPIN: SIM PIN")) {
+			LOG(L_INFO,"INFO:initmodem: Modem needs PIN, entering PIN...\n");
+			sprintf(command,"AT+CPIN=\"%s\"\r",mdm->pin);
+			put_command(mdm->fd,command,answer,sizeof(answer),300,0);
+			put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),
+				50,"+CPIN:");
+			if (!strstr(answer,"+CPIN: READY")) {
+				if (strstr(answer,"+CPIN: SIM PIN")) {
+					LOG(L_ERR,"ERROR:initmodem: Modem did not accept"
+						" this PIN\n");
+					goto error;
+				} else if (strstr(answer,"+CPIN: SIM PUK")) {
+					LOG(L_ERR,"ERROR:initmodem: YourPIN is locked!"
+						" Unlock it manually!\n");
+					goto error;
+				} else {
+					goto error;
+				}
+			}
+			LOG(L_INFO,"INFO:initmodem: PIN Ready!\n");
+		}
+	}
 
-  if (strcmp(mode,"digicom")==0)
-    success=1;
-  else
-  {
-    writelogfile(LOG_INFO,"Checking if Modem is registered to the network");
-    success=0;
-    retries=0;
-    do
-    {
-      retries++;
-      put_command("AT+CREG?\r",answer,sizeof(answer),100,0);
-      if (strstr(answer,"1"))
-      {
-        writelogfile(LOG_INFO,"Modem is registered to the network");
-        success=1;
-      }
-      else if (strstr(answer,"5"))
-      {
-      	// added by Thomas Stoeckel
-      	writelogfile(LOG_INFO,"Modem is registered to a roaming partner network");
-	success=1;
-      }
-      else if (strstr(answer,"ERROR"))
-      {
-        writelogfile(LOG_INFO,"Ignoring that modem does not support +CREG command.");
-	success=1;
-      }
-      else
-      {
-        writelogfile(LOG_NOTICE,"Waiting %i sec. before to retrying",errorsleeptime);
-        sleep(errorsleeptime);
-      }
-    }
-    while ((success==0)&&(retries<10));
-  }
+	if (mdm->mode==MODE_DIGICOM)
+		success=1;
+	else {
+		LOG(L_INFO,"INFO:initmodem: Checking if Modem is registered to"
+			" the network\n");
+		success=0;
+		retries=0;
+		do
+		{
+			retries++;
+			put_command(mdm->fd,"AT+CREG?\r",answer,sizeof(answer),100,0);
+			if (strstr(answer,"1"))
+			{
+				LOG(L_INFO,"INFO:initmodem: Modem is registered to the"
+					" network\n");
+				success=1;
+			} else if (strstr(answer,"5")) {
+				// added by Thomas Stoeckel
+				LOG(L_INFO,"INFO:initmodem: Modem is registered to a"
+					" roaming partner network\n");
+				success=1;
+			} else if (strstr(answer,"ERROR")) {
+				LOG(L_WARN,"WARNING:initmodem: Ignoring that modem does"
+					" not support +CREG command.\n");
+				success=1;
+			} else {
+				LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
+					" retrying\n",errorsleeptime);
+				sleep(errorsleeptime);
+			}
+		}while ((success==0)&&(retries<10));
+	}
 
-  if (success==0)
-  {
-    writelogfile(LOG_ERR,"Error: Modem is not registered to the network");
-    exit(3);
-  }
+	if (success==0) {
+		LOG(L_ERR,"ERROR:initmodem: Modem is not registered to the network\n");
+		goto error;
+	}
 
+	if (mdm->mode==MODE_ASCII || mdm->mode==MODE_DIGICOM) {
+		//LOG(L_INFO,"INFO:initmodem:Selecting ASCII mode 1\n");
+		strcpy(command,"AT+CMGF=1\r");
+	} else {
+		//LOG(L_INFO,"INFO:initmodem:Selecting PDU mode 0\n");
+		strcpy(command,"AT+CMGF=0\r");
+	}
 
-  if ((strcmp(mode,"ascii")==0) || (strcmp(mode,"digicom")==0))
-  {
-    writelogfile(LOG_INFO,"Selecting ASCII mode 1");
-    strcpy(command,"AT+CMGF=1\r");
-  }
-  else
-  {
-    writelogfile(LOG_INFO,"Selecting PDU mode 0");
-    strcpy(command,"AT+CMGF=0\r");
-  }
+	retries=0;
+	success=0;
+	do {
+		retries++;
+		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
+		if (strstr(answer,"ERROR")) {
+			LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
+				" retrying\n",errorsleeptime);
+			sleep(errorsleeptime);
+		} else
+			success=1;
+	}while ((success==0)&&(retries<3));
 
-  retries=0;
-  success=0;
-  do
-  {
-    retries++;
-    put_command(command,answer,sizeof(answer),50,0);
-    if (strstr(answer,"ERROR"))
-    {
-      writelogfile(LOG_NOTICE,"Waiting %i sec. before to retrying",errorsleeptime);
-      sleep(errorsleeptime);
-    }
-    else
-      success=1;
-  }
-  while ((success==0)&&(retries<3));
-  
-  if (success==0)
-  {
-    writelogfile(LOG_ERR,"Error: Modem did not accept PDU mode");
-    exit(3);
-  }
+	if (success==0) {
+		LOG(L_ERR,"ERROR:initmodem: Modem did not accept PDU mode\n");
+		goto error;
+	}
 
-  if (smsc[0])
-  {
-    writelogfile(LOG_INFO,"Changing SMSC");
-    sprintf(command,"AT+CSCA=\"+%s\"\r",smsc);
-    put_command(command,answer,sizeof(answer),50,0);
-  }
+	if (smsc && smsc[0]) {
+		DBG("DEBUG:initmodem: Changing SMSC\n");
+		sprintf(command,"AT+CSCA=\"+%s\"\r",smsc);
+		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
+	}
 
+	return 0;
+error:
+	return -1;
 }
-#endif
 
 
 

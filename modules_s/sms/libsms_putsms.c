@@ -21,10 +21,8 @@ mailto:s.frings@mail.isis.de
 #include <syslog.h>
 #include "sms_funcs.h"
 #include "libsms_charset.h"
+#include "libsms_modem.h"
 
-//#include "version.h"
-//#include "modeminit.h"
-//#include "logging.h"
 /*
 char message[500];
 int is_binary;  // 1 is binary file
@@ -309,74 +307,59 @@ void make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	strcat(pdu,tmp);
 }
 
-#ifdef old
-/* send sms */
-void putsms()
-{
-  char command[500];
-  char command2[500];
-  char answer[500];
-  char pdu[500];
-  int retries;
-  make_pdu(to,message,messagelen,pdu);
-  if (strcmp(mode,"old")==0)
-    sprintf(command,"AT+CMGS=%i\r",strlen(pdu)/2);
-  else if (strcmp(mode,"ascii")==0)
-    sprintf(command,"AT+CMGS=\"+%s\"\r",to);  
-    // for Siemens M20
-    // sprintf(command,"AT+CMGS=\"%s\",129,\r",to);
-  else
-    sprintf(command,"AT+CMGS=%i\r",strlen(pdu)/2-1);
-  if (strcmp(mode,"ascii")==0)
-    sprintf(command2,"%s\x1A",message);  
-  else
-    sprintf(command2,"%s\x1A",pdu);
-  retries=0;
-  while (1)
-  {
-    retries+=1;
-    put_command(command,answer,sizeof(answer),50,0);
-    put_command(command2,answer,sizeof(answer),300,0);
-    if (strstr(answer,"ERROR"))
-    {
-      writelogfile(LOG_ERR,"Uups, the modem said ERROR.");
-      tcsetattr(modem,TCSANOW,&oldtio);
-      if (retries<2)
-      {
-        writelogfile(LOG_ERR,"trying again in %i sec.",errorsleeptime);
-	sleep(errorsleeptime);
-	// the next line is a workaround for an unknown buggy gsm modem.
-	put_command("\r\x1A\r",answer,sizeof(answer),10,0);
-	sleep(1);
-      }
-      else
-        exit(4);
-    }
-    else if (strstr(answer,"OK"))
-      return;
-    else
-    {
-      writelogfile(LOG_WARNING,"Maybe could not send message, modem did not confirm submission.");
-      tcsetattr(modem,TCSANOW,&oldtio);
-      exit(4);
-    }
-  }
-}
-#endif
 
-#ifdef old
-int main(int argc,char** argv)
+
+
+/* send sms */
+int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 {
-  char tmp[100];
-  parsearguments(argc,argv);
-  snprintf(tmp,sizeof(tmp),"putsms (%s)",modemname); tmp[sizeof(tmp)-1]=0;
-  openlogfile(tmp,logfile,LOG_DAEMON,loglevel);
-  writelogfile(LOG_INFO,"Sending SMS");  
-  openmodem();
-  setmodemparams();
-  initmodem();
-  putsms();
-  tcsetattr(modem,TCSANOW,&oldtio);
-  return 0;
+	char command[500];
+	char command2[500];
+	char answer[500];
+	char pdu[500];
+	int retries;
+
+	make_pdu(sms_messg, mdm, pdu);
+	if (mdm->mode==MODE_OLD)
+		sprintf(command,"AT+CMGS=%i\r",strlen(pdu)/2);
+	else if (mdm->mode==MODE_ASCII)
+		sprintf(command,"AT+CMGS=\"+%s\"\r",sms_messg->to);
+		// for Siemens M20
+		// sprintf(command,"AT+CMGS=\"%s\",129,\r",to);
+	else
+		sprintf(command,"AT+CMGS=%i\r",strlen(pdu)/2-1);
+
+	if (mdm->mode==MODE_ASCII)
+		sprintf(command2,"%s\x1A",sms_messg->text);  
+	else
+		sprintf(command2,"%s\x1A",pdu);
+
+	retries=0;
+	while (1)
+	{
+		retries+=1;
+		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
+		put_command(mdm->fd,command2,answer,sizeof(answer),300,0);
+		if (strstr(answer,"ERROR"))
+		{
+			LOG(L_ERR,"ERROR: putsms: Uups, the modem said ERROR.\n");
+			tcsetattr(mdm->fd,TCSANOW,&(mdm->oldtio));
+			if (retries<2)
+			{
+				LOG(L_ERR,"ERROR: putsms: trying again in %i sec.",
+					ERROR_SLEEP_TIME);
+				sleep(ERROR_SLEEP_TIME);
+				//the next line is a workaround for an unknown buggy gsm modem
+				put_command(mdm->fd,"\r\x1A\r",answer,sizeof(answer),10,0);
+				sleep(1);
+			} else
+				return -1;
+		} else {
+			if (!strstr(answer,"OK"))
+				LOG(L_WARN,"WARNING: putsms: Maybe could not send message,"
+					" modem did not confirm submission.");
+			return 0;
+		}
+	}
 }
-#endif
+
