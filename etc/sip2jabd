@@ -94,6 +94,21 @@ start_jab() {
 		RETVAL=$?
 		# echo
 	fi
+	
+	sleep 1
+	### Checking if processes are started
+	if [ `ps auxw | grep ${JABBERD} | head --lines=1 | awk '{print $11}'` = ${JABBERD} ]
+	then
+		echo "Jabber server:           [[   STARTED   ]]"
+	else
+		echo "Jabber server:           [[ NOT STARTED ]]"
+	fi
+	if [ `ps auxw | grep ${JICQEXT} | head --lines=1 | awk '{print $11}'` != "grep" ]
+	then
+		echo "ICQ transport:           [[   STARTED   ]]"
+	else
+		echo "ICQ transport:           [[ NOT STARTED ]]"
+	fi
 }
 
 ### Stop SER
@@ -135,7 +150,15 @@ start_ser() {
 		# -> don't set uid, we want to collect core dumps
 		# -u $USR -g $GRP
 	fi
-	echo
+
+	sleep 1
+	### Checking if processes are started
+	if [ `ps auxw | grep ${HM}/${BIN} | head --lines=1 | awk '{print $11}'` = ${HM}/${BIN} ]
+	then
+		echo "SIP router:              [[   STARTED   ]]"
+	else
+		echo "SIP router:              [[ NOT STARTED ]]"
+	fi
 }
 
 case "$1" in
@@ -148,7 +171,7 @@ case "$1" in
 		stop_jab
 	;;
 	restart)
-		echo -n "Restarting SIP2Jabber ..."
+		echo "Restarting SIP2Jabber ..."
 		stop_ser
 		stop_jab
 		sleep 2
