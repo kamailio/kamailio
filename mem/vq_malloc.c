@@ -269,7 +269,9 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 	bucket = size2bucket( qm, &size );
 
 	if (IS_BIGBUCKET(qm, bucket)) {	/* the kilo-bucket uses first-fit */
+#ifdef DBG_QM_MALLOC
 		DBG("vqm_malloc: processing a big fragment\n");
+#endif
 		for (f=qm->next_free[bucket] ; f; f=f->u.nxt_free ) 
 			if (f->size>=size) { /* first-fit */
 				new_chunk=f;
@@ -286,8 +288,13 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 	if (!new_chunk) { /* no chunk can be reused; slice one from the core */
 		new_chunk=MORE_CORE( qm, bucket, size );
 		if (!new_chunk) {
-			LOG(L_ERR, "vqm_malloc(%p, %d) called from %s: %s(%d)\n", 
+#ifdef DBG_QM_MALLOC
+			LOG(L_DBG, "vqm_malloc(%p, %d) called from %s: %s(%d)\n", 
 				qm, size, file, func, line);
+#else
+			LOG(L_DBG, "vqm_malloc(%p, %d) called from %s: %s(%d)\n", 
+				qm, size);
+#endif
 			return 0;
 		}
 	}
