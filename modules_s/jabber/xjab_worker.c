@@ -449,7 +449,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			DBG("XJAB:xj_worker:%d: Cannot connect"
 				" to the Jabber server ...\n", _xj_pid);
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
-				jwl->contact_h, XJ_DMSG_ERR_NOJSRV, &jbc->jkey->flag);
+				jwl->contact_h, XJ_DMSG_ERR_NOJSRV, NULL);
 
 			goto step_v;
 		}
@@ -468,7 +468,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			xj_jcon_disconnect(jbc);
 			
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-				jwl->contact_h, XJ_DMSG_ERR_JAUTH, &jbc->jkey->flag);
+				jwl->contact_h, XJ_DMSG_ERR_JAUTH, NULL);
 			
 			xj_jcon_free(jbc);
 			goto step_v;
@@ -481,7 +481,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				" failed! Not enough memory ...\n", _xj_pid);
 			xj_jcon_disconnect(jbc);
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, jwl->contact_h,	
-				XJ_DMSG_ERR_JGWFULL, &jbc->jkey->flag);
+				XJ_DMSG_ERR_JGWFULL, NULL);
 			xj_jcon_free(jbc);
 			goto step_v;
 		}
@@ -606,7 +606,12 @@ step_z:
 				goto step_w;
 		}
 
-step_v:
+step_v: // error connecting to Jabber server
+		
+		// cleaning jab_wlist
+		xj_wlist_del(jwl, jsmsg->jkey, _xj_pid);
+
+		// cleaning db_query
 		if ((res != NULL) && (db_free_query(db_con,res) < 0))
 		{
 			DBG("XJAB:xj_worker:%d:Error while freeing"
@@ -1135,20 +1140,25 @@ int xj_send_sip_msgz(str *to, str *from, str *contact, char *msg, int *cbp)
 
 /**
  * send disconnected info to all SIP users associated with worker idx
+ * and clean the entries from wlist
  */
-int xj_wlist_send_info(xj_wlist jwl, int idx)
+int xj_wlist_clean_jobs(xj_wlist jwl, int idx, int fl)
 {
-	int i;
 	xj_jkey p;
 	if(jwl==NULL || idx < 0 || idx >= jwl->len || !jwl->workers[idx].sip_ids)
 		return -1;
 	s_lock_at(jwl->sems, idx);
-	for(i=0; (p=(xj_jkey)index234(jwl->workers[idx].sip_ids, i))!=NULL; i++)
+	while((p=(xj_jkey)delpos234(jwl->workers[idx].sip_ids, 0))!=NULL)
 	{
-		DBG("XJAB:xj_wlist_send_info: sending disconnect message to <%.*s>\n",
-			p->id->len, p->id->s);
-		xj_send_sip_msgz(p->id, &jab_gw_name, NULL, XJ_DMSG_INF_DISCONNECTED,
-			NULL);
+		if(fl)
+		{
+			DBG("XJAB:xj_wlist_send_info: sending disconnect message"
+				" to <%.*s>\n",	p->id->len, p->id->s);
+			xj_send_sip_msgz(p->id, &jab_gw_name, NULL, 
+				XJ_DMSG_INF_DISCONNECTED, NULL);
+		}
+		jwl->workers[idx].nr--;
+		xj_jkey_free_p(p);
 	}
 	s_unlock_at(jwl->sems, idx);
 	return 0;

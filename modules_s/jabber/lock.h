@@ -86,7 +86,7 @@ static inline int s_unlock( smart_lock *s )
 /* lock semaphore s */
 static inline int s_lock_at(smart_lock *s, int i)
 {
-	DBG("JABBER: s_lock_at: <%d>\n", i);
+	DBG("XJAB: s_lock_at: <%d>\n", i);
 #ifdef FAST_LOCK
 	get_lock(&s[i]);
 	return 0;
@@ -99,7 +99,7 @@ static inline int s_lock_at(smart_lock *s, int i)
 /* ulock semaphore */
 static inline int s_unlock_at(smart_lock *s, int i)
 {
-	DBG("JABBER: s_unlock_at: <%d>\n", i);
+	DBG("XJAB: s_unlock_at: <%d>\n", i);
 #ifdef FAST_LOCK
 	release_lock(&s[i]);
 	return 0;

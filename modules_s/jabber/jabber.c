@@ -675,7 +675,7 @@ void xjab_check_workers(int mpid)
 		if(n==jwl->workers[i].pid)
 		{
 			DBG("XJAB:%d:xjab_check_workers: create a new worker\n", mpid);
-			xj_wlist_send_info(jwl, i);
+			xj_wlist_clean_jobs(jwl, i, 1);
 			xj_wlist_set_pid(jwl, -1, i);
 			if ( (stat=fork())<0 )
 			{

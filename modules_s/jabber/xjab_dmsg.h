@@ -41,9 +41,9 @@
 
 #define XJ_DMSG_ERR_JGWFORB "ERROR: Your message was not sent. You do not have permission to use the gateway."
 
-#define XJ_DMSG_ERR_NOJSRV "ERROR: Your message was not sent. Cannot connect to the Jabber server."
+#define XJ_DMSG_ERR_NOJSRV "ERROR: Your message was not sent. Cannot connect to Jabber server."
 
-#define XJ_DMSG_ERR_JAUTH "ERROR: Your message was not sent. Authentication to the Jabber server failed."
+#define XJ_DMSG_ERR_JAUTH "ERROR: Your message was not sent. Authentication to Jabber server failed."
 
 #define XJ_DMSG_ERR_JGWFULL "ERROR: Your message was not sent. SIP-2-JABBER gateway is full."
 
