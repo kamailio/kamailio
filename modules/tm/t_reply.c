@@ -232,22 +232,69 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 }
 
 
+/*
+ * Build an ACK to a negative reply
+ */
 static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	unsigned int *ret_len)
 {
 	str to;
 
-    if ( parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to )
-    {
-        LOG(L_ERR, "ERROR: t_build_ACK: "
-            "cannot generate a HBH ACK if key HFs in reply missing\n");
-        return NULL;
+    if ( parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to ) {
+	    LOG(L_ERR, "ERROR: t_build_ACK: "
+		"cannot generate a HBH ACK if key HFs in reply missing\n");
+	    return NULL;
     }
-	to.s=rpl->to->name.s;
-	to.len=rpl->to->len;
+    to.s=rpl->to->name.s;
+    to.len=rpl->to->len;
     return build_local( trans, branch, ret_len,
-        ACK, ACK_LEN, &to );
+			ACK, ACK_LEN, &to );
 }
+
+
+/*
+ * The function builds an ACK to 200 OK of local transactions, honor the
+ * route set, the URI to which the message should be sent will be returned
+ * in next_hop parameter
+ */
+static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch,
+			     unsigned int *ret_len, str* next_hop)
+{
+	str to;
+	if (parse_headers(rpl, HDR_EOH, 0) == -1 || !rpl->to) {
+		LOG(L_ERR, "ERROR: build_local_ack: Error while parsing headers\n");
+		return 0;
+	}
+	
+	to.s = rpl->to->name.s;
+	to.len = rpl->to->len;
+	return build_dlg_ack(rpl, trans, branch, &to, ret_len, next_hop);
+}
+
+
+/*
+ * The function is used to send a localy generated ACK to INVITE
+ * (tm generates the ACK on behalf of application using UAC
+ */
+static int send_local_ack(str* next_hop, char* ack, int ack_len)
+{
+	struct socket_info* send_sock;
+	union sockaddr_union to_su;
+	
+	if (!next_hop) {
+		LOG(L_ERR, "send_local_ack: Invalid parameter value\n");
+		return -1;
+	}
+
+	send_sock = uri2sock(next_hop, &to_su, PROTO_NONE);
+	if (!send_sock) {
+		LOG(L_ERR, "send_local_ack: no socket found\n");
+		return -1;
+	}	
+
+	return msg_send(send_sock, send_sock->proto, &to_su, 0, ack, ack_len);
+}
+
 
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			 unsigned int code, char * text, 
@@ -1079,6 +1126,7 @@ int reply_received( struct sip_msg  *p_msg )
 	branch_bm_t cancel_bitmap;
 	struct ua_client *uac;
 	struct cell *t;
+	str next_hop;
 
 
 	/* make sure we know the assosociated transaction ... */
@@ -1122,14 +1170,25 @@ int reply_received( struct sip_msg  *p_msg )
            on_reply processing, which may take very long, like if it
            is attempted to establish a TCP connection to a fail-over dst
         */
-	if (t->is_invite && (msg_status>=300 || (t->local && msg_status>=200))) {
-		ack = build_ack( p_msg, t, branch, &ack_len);
-		if (ack) {
-			SEND_PR_BUFFER( &uac->request, ack, ack_len );
-			shm_free(ack);
+	if (t->is_invite) {
+		if (t->local && msg_status >= 200) {
+			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
+			if (ack) {
+				if (send_local_ack(&next_hop, ack, ack_len) < 0) {
+					LOG(L_ERR, "Error while seding local ACK\n");
+				}
+				shm_free(ack);
+			}
+		} else if (msg_status >= 300) {
+			ack = build_ack(p_msg, t, branch, &ack_len);
+			if (ack) {
+				SEND_PR_BUFFER(&uac->request, ack, ack_len);
+				shm_free(ack);
+			}
 		}
-	} /* ack-ing negative INVITE replies */
-	/* processing of on_reply block */
+	}
+
+	     /* processing of on_reply block */
 	if (t->on_reply) {
 		rmode=MODE_ONREPLY;
 		/* transfer transaction flag to message context */
