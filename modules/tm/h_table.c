@@ -6,6 +6,7 @@
 #include "h_table.h"
 #include "../../dprint.h"
 #include "sh_malloc.h"
+ #include "../../md5utils.h"
 
 /*   Frees the all the containes of a cell and the cell's body itself
   */
@@ -132,6 +133,7 @@ error:
 struct cell*  build_cell( struct sip_msg* p_msg )
 {
    struct cell*  new_cell;
+   str                src[5];
    int                i;
 
     DBG("DEBUG: build_cell : start\n");
@@ -168,8 +170,17 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	goto error;
    new_cell->relaied_reply_branch   = -1;
    new_cell->T_canceled = T_UNDEFINED;
+#ifndef USE_SYNONIM
+   src[0]= p_msg->from->body;
+   src[1]= p_msg->to->body;
+   src[2]= p_msg->callid->body;
+   src[3]= p_msg->first_line.u.request.uri;
+   src[4]= get_cseq( p_msg )->number;
+   MDStringArray ( new_cell->md5, src, 5 );
 
-    init_cell_lock(  new_cell ); 
+#endif
+
+    init_cell_lock(  new_cell );
 
    DBG("DEBUG: build_cell : done\n");
    return new_cell;

@@ -100,6 +100,10 @@ typedef struct cell
 	   good if a need to forward ACK later on
 	*/
 	struct sockaddr_in ack_to;
+#ifndef	USE_SYNONIM
+	/* MD5checksum */
+	char md5[32];
+#endif
 
 #ifdef	EXTRA_DEBUG
 	/* scheduled for deletion ? */

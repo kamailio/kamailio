@@ -252,6 +252,7 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 	p=p_msg->via1->branch->value.s;
 	scan_space=p_msg->via1->branch->value.len;
 
+#ifndef USE_SYNONIM
 	/* loop detection ... ignore */
 	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
 	loopl = n-p;
@@ -259,6 +260,7 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 	if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
 	loopi=p;
 	p=n+1; scan_space--;
+#endif
 
 	/* hash_id */
 	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
@@ -414,7 +416,10 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	begin=p_msg->add_to_branch_s+p_msg->add_to_branch_len;
 	orig_size = size=MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len;
 
+#ifndef USE_SYNONIM
+	if (memcpy(begin,trans->md5,32)) {begin+=32;size-=32;} else return -1;
 	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
+#endif
 	if (int2reverse_hex( &begin, &size, trans->hash_index)==-1) return -1;
 #ifdef USE_SYNONIM
 	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;

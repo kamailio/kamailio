@@ -31,8 +31,11 @@
 #define HDR_OTHER       65536 /*unknown header type*/
 
 /* maximum length of values appended to Via-branch parameter */
-#define	MAX_BRANCH_PARAM_LEN	32
-
+#ifdef USE_SYNONIM
+#define MAX_BRANCH_PARAM_LEN  22
+#else
+#define MAX_BRANCH_PARAM_LEN  48
+#endif
 /* via param types
  * WARNING: keep in sync w/ FIN_*, GEN_PARAM and PARAM_ERROR from via_parse.c*/
 enum{
