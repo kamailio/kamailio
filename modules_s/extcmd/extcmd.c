@@ -183,8 +183,8 @@ int extcmd_child_init(int rank)
 {
 	int foo;
 
-	/* only the child 0 will fork */
-	if (rank==0) {
+	/* only the child 1 will fork */
+	if (rank==1) {
 		/* creats a process that listen for connetions */
 		if ( (foo=fork())<0 ) {
 			LOG(L_ERR,"ERROR: extcmd_child_init: cannot fork \n");

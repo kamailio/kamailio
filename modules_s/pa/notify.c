@@ -44,34 +44,64 @@
 
 
 #define CONTENT_TYPE "Content-Type: "
-#define CONTENT_TYPE_LEN  14
+#define CONTENT_TYPE_LEN  (sizeof(CONTENT_TYPE) - 1)
 
 #define CONT_TYPE_XPIDF "application/xpidf+xml"
-#define CONT_TYPE_XPIDF_LEN  21
+#define CONT_TYPE_XPIDF_LEN  (sizeof(CONT_TYPE_XPIDF) - 1)
 
 #define CONT_TYPE_LPIDF "text/lpidf"
-#define CONT_TYPE_LPIDF_LEN 10
+#define CONT_TYPE_LPIDF_LEN (sizeof(CONT_TYPE_LPIDF) - 1)
 
 #define SUBSCRIPTION_STATE "Subscription-State: "
-#define SUBSCRIPTION_STATE_LEN 20
+#define SUBSCRIPTION_STATE_LEN (sizeof(SUBSCRIPTION_STATE) - 1)
 
 #define SS_EXPIRES ";expires="
-#define SS_EXPIRES_LEN 9
+#define SS_EXPIRES_LEN (sizeof(SS_EXPIRES) - 1)
 
 #define SS_REASON ";reason="
-#define SS_REASON_LEN 8
-
+#define SS_REASON_LEN (sizeof(SS_REASON) - 1)
 
 #define CRLF "\r\n"
+#define CRLF_LEN (sizeof(CRLF) - 1)
+
+#define ST_ACTIVE "active"
+#define ST_ACTIVE_LEN (sizeof(ST_ACTIVE) - 1)
+
+#define ST_TERMINATED "terminated"
+#define ST_TERMINATED_LEN (sizeof(ST_TERMINATED) - 1)
+
+#define ST_PENDING "pending"
+#define ST_PENDING_LEN (sizeof(ST_PENDING) - 1)
+
+#define REASON_DEACTIVATED "deactivated"
+#define REASON_DEACTIVATED_LEN (sizeof(REASON_DEACTIVATED) - 1)
+
+#define REASON_NORESOURCE "noresource"
+#define REASON_NORESOURCE_LEN (sizeof(REASON_NORESOURCE) - 1)
+
+#define REASON_PROBATION "probation"
+#define REASON_PROBATION_LEN (sizeof(REASON_PROBATION) - 1)
+
+#define REASON_REJECTED "rejected"
+#define REASON_REJECTED_LEN (sizeof(REASON_REJECTED) - 1)
+
+#define REASON_TIMEOUT "timeout"
+#define REASON_TIMEOUT_LEN (sizeof(REASON_TIMEOUT) - 1)
+
+#define REASON_GIVEUP "giveup"
+#define REASON_GIVEUP_LEN (sizeof(REASON_GIVEUP) - 1)
+
+#define METHOD_NOTIFY "NOTIFY"
+#define METHOD_NOTIFY_LEN (sizeof(METHOD_NOTIFY) - 1)
 
 
 /*
  * Subscription-State values
  */
 static str subs_states[] = {
-	{"active", 6},
-	{"terminated", 10},
-	{"pending", 7}
+	{ST_ACTIVE, S   T_ACTIVE_LEN     },
+	{ST_TERMINATED, ST_TERMINATED_LEN},
+	{ST_PENDING,    ST_PENDING_LEN   }
 };
 
 
@@ -79,16 +109,16 @@ static str subs_states[] = {
  * Subscription-State reason parameter values
  */
 static str reason[] = {
-	{"deactivated", 11},
-	{"noresource", 10},
-	{"probation", 9},
-	{"rejected", 8},
-	{"timeout", 7},
-	{"giveup", 6}
+	{REASON_DEACTIVATED, REASON_DEACTIVATED_LEN},
+	{REASON_NORESOURCE,  REASON_NORESOURCE_LEN },
+	{REASON_PROBATION,   REASON_PROBATION_LEN  },
+	{REASON_REJECTED,    REASON_REJECTED_LEN   },
+	{REASON_TIMEOUT,     REASON_TIMEOUT_LEN    },
+	{REASON_GIVEUP,      REASON_GIVEUP_LEN     }
 };
 
 
-static str method = { "NOTIFY", 6 };
+static str method = {METHOD_NOTIFY, METHOD_NOTIFY_LEN};
 
 
 #define BUF_LEN 1024
@@ -118,25 +148,25 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 {
 	switch(_d) {
 	case DOC_XPIDF:
-		if (_l < CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + 2) {
+		if (_l < CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + CRLF_LEN) {
 			paerrno = PA_SMALL_BUFFER;
 			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
 			return -1;
 		}
 		memcpy(_h->s + _h->len, CONTENT_TYPE CONT_TYPE_XPIDF CRLF,
-		       CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + 2);
-		_h->len += CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + 2;
+		       CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + CRLF_LEN);
+		_h->len += CONTENT_TYPE_LEN + CONT_TYPE_XPIDF_LEN + CRLF_LEN;
 		return 0;
 		
 	case DOC_LPIDF:
-		if (_l < CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + 2) {
+		if (_l < CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + CRLF_LEN) {
 			paerrno = PA_SMALL_BUFFER;
 			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
 			return -2;
 		}
 		memcpy(_h->s + _h->len, CONTENT_TYPE CONT_TYPE_LPIDF CRLF,
-		       CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN +2);
-		_h->len += CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + 2;
+		       CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + CRLF_LEN);
+		_h->len += CONTENT_TYPE_LEN + CONT_TYPE_LPIDF_LEN + CRLF_LEN;
 		return 0;
 
 	default:
@@ -170,7 +200,7 @@ static inline void itos(str* _s, unsigned int _i)
 static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_t _r, time_t _e)
 {
 	if (_l < SUBSCRIPTION_STATE_LEN + subs_states[_s].len + SS_EXPIRES_LEN + 10 + 
-	    SS_REASON_LEN + reason[_r].len + 2) {
+	    SS_REASON_LEN + reason[_r].len + CRLF_LEN) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "add_subs_state_hf(): Buffer too small\n");
 		return -1;
@@ -200,8 +230,8 @@ static inline int add_subs_state_hf(str* _h, int _l, subs_state_t _s, ss_reason_
 		break;
 	}
 
-	memcpy(_h->s + _h->len, CRLF, 2);
-	_h->len += 2;
+	memcpy(_h->s + _h->len, CRLF, CRLF_LEN);
+	_h->len += CRLF_LEN;
 	
 	return 0;
 }

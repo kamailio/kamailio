@@ -30,6 +30,7 @@
 #ifndef PAERRNO_H
 #define PAERRNO_H
 
+
 typedef enum paerr {
 	PA_OK,            /* Everything went OK */
 	PA_PARSE_ERR,     /* Error while parsing headers */

@@ -35,24 +35,25 @@
 
 
 #define TO_START "To: <"
-#define TO_START_LEN 5
+#define TO_START_LEN (sizeof(TO_START) - 1)
 
 #define TO_END ">"
-#define TO_END_LEN 1
+#define TO_END_LEN (sizeof(TO_END_LEN) - 1)
 
-#define CONTACT_START     "Contact: <"
-#define CONTACT_START_LEN 10 
+#define CONTACT_START "Contact: <"
+#define CONTACT_START_LEN (sizeof(CONTACT_START) - 1) 
 
-#define CONTACT_MIDDLE     ">;q="
-#define CONTACT_MIDDLE_LEN 4
+#define CONTACT_MIDDLE ">;q="
+#define CONTACT_MIDDLE_LEN (sizeof(CONTACT_MIDDLE) - 1)
 
-#define Q_OPEN     "1"
-#define Q_OPEN_LEN 1
+#define Q_OPEN "1"
+#define Q_OPEN_LEN (sizeof(Q_OPEN) - 1)
 
 #define Q_CLOSED "0"
-#define Q_CLOSED_LEN 1
+#define Q_CLOSED_LEN (sizeof(Q_CLOSED) - 1)
 
 #define CRLF "\r\n"
+#define CRLF_LEN (sizeof(CRLF) - 1)
 
 
 /*
@@ -72,8 +73,8 @@ int lpidf_add_presentity(str* _b, int _l, str* _uri)
 	memcpy(_b->s + _b->len, _uri->s, _uri->len);
 	_b->len += _uri->len;
 
-	memcpy(_b->s + _b->len, TO_END CRLF, TO_END_LEN + 2);
-	_b->len += TO_END_LEN + 2;
+	memcpy(_b->s + _b->len, TO_END CRLF, TO_END_LEN + CRLF_LEN);
+	_b->len += TO_END_LEN + CRLF_LEN;
 
 	return 0;
 }
@@ -110,8 +111,8 @@ int lpidf_add_address(str* _b, int _l, str* _addr, lpidf_status_t _st)
 	memcpy(_b->s + _b->len, s.s, s.len);
 	_b->len += s.len;
 
-	memcpy(_b->s + _b->len, CRLF, 2);
-	_b->len += 2;
+	memcpy(_b->s + _b->len, CRLF, CRLF_LEN);
+	_b->len += CRLF_LEN;
 
 	return 0;
 }

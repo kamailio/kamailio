@@ -44,22 +44,22 @@
 static inline void paerrno2msg(int* _c, char** _m)
 {
 	switch(paerrno) {
-	case PA_OK:        *_c = 200; *_m = MSG_200; break;
-	case PA_PARSE_ERR: *_c = 400; *_m = MSG_400 " - Error while parsing headers"; break;
-	case PA_CONTACT_MISS:   *_c = 400; *_m = MSG_400 " - Contact header field missing"; break;
-	case PA_FROM_MISS: *_c = 400; *_m = MSG_400 " - From header field missing"; break;
-	case PA_EVENT_MISS: *_c = 400; *_m = MSG_400 " - Event header field missing"; break;
-	case PA_EVENT_PARSE: *_c = 400; *_m = MSG_400 " - Error while parsing Event header field"; break;
+	case PA_OK:            *_c = 200; *_m = MSG_200;                                               break;
+	case PA_PARSE_ERR:     *_c = 400; *_m = MSG_400 " - Error while parsing headers";              break;
+	case PA_CONTACT_MISS:  *_c = 400; *_m = MSG_400 " - Contact header field missing";             break;
+	case PA_FROM_MISS:     *_c = 400; *_m = MSG_400 " - From header field missing";                break;
+	case PA_EVENT_MISS:    *_c = 400; *_m = MSG_400 " - Event header field missing";               break;
+	case PA_EVENT_PARSE:   *_c = 400; *_m = MSG_400 " - Error while parsing Event header field";   break;
 	case PA_EXPIRES_PARSE: *_c = 400; *_m = MSG_400 " - Error while parsing Expires header field"; break;
-	case PA_EVENT_UNSUPP: *_c = 500; *_m = MSG_500 " - Unsupported event package"; break;
-	case PA_NO_MEMORY: *_c = 500; *_m = MSG_500 " - No memory left on the server"; break;
-	case PA_TIMER_ERROR: *_c = 500; *_m = MSG_500 " - Error while running timer"; break;
-	case PA_EXTRACT_USER: *_c = 400; *_m = MSG_400 " - Cannot extract username from URI"; break;
-	case PA_CONT_PARSE: *_c = 400; *_m = MSG_400 " - Error while parsing Contact"; break;
-	case PA_CONT_STAR: *_c = 400; *_m = MSG_400 " - Star not allowed in Contact"; break;
-	case PA_FROM_ERROR: *_c = 400; *_m = MSG_400 " - Error while parsing From"; break;
-	case PA_SMALL_BUFFER: *_c = 500; *_m = MSG_500 " - Buffer too small on server"; break;
-	case PA_UNSUPP_DOC: *_c = 500; *_m = MSG_500 " - Unsupported presence document format"; break;
+	case PA_EVENT_UNSUPP:  *_c = 500; *_m = MSG_500 " - Unsupported event package";                break;
+	case PA_NO_MEMORY:     *_c = 500; *_m = MSG_500 " - No memory left on the server";             break;
+	case PA_TIMER_ERROR:   *_c = 500; *_m = MSG_500 " - Error while running timer";                break;
+	case PA_EXTRACT_USER:  *_c = 400; *_m = MSG_400 " - Cannot extract username from URI";         break;
+	case PA_CONT_PARSE:    *_c = 400; *_m = MSG_400 " - Error while parsing Contact";              break;
+	case PA_CONT_STAR:     *_c = 400; *_m = MSG_400 " - Star not allowed in Contact";              break;
+	case PA_FROM_ERROR:    *_c = 400; *_m = MSG_400 " - Error while parsing From";                 break;
+	case PA_SMALL_BUFFER:  *_c = 500; *_m = MSG_500 " - Buffer too small on server";               break;
+	case PA_UNSUPP_DOC:    *_c = 500; *_m = MSG_500 " - Unsupported presence document format";     break;
 	}
 }
 

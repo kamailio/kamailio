@@ -33,59 +33,58 @@
 #include <string.h>
 
 #define CRLF "\r\n"
+#define CRLF_LEN (sizeof(CRLF) - 1)
 
+#define PUBLIC_ID "//IETF//DTD RFCxxxx XPIDF 1.0//EN"
+#define PUBLIC_ID_LEN (sizeof(PUBLIC_ID) - 1)
 
-#define PUBLIC_ID     "//IETF//DTD RFCxxxx XPIDF 1.0//EN"
-#define PUBLIC_ID_LEN 33
+#define MIME_TYPE "application/xpidf+xml"
+#define MIME_TYPE_LEN (sizeof(MIME_TYPE) - 1)
 
-#define MIME_TYPE     "application/xpidf+xml"
-#define MIME_TYPE_LEN 21
-
-#define XML_VERSION      "<?xml version=\"1.0\"?>"
-#define XML_VERSION_LEN  21
+#define XML_VERSION "<?xml version=\"1.0\"?>"
+#define XML_VERSION_LEN  (sizeof(XML_VERSION) - 1)
 
 #define PRESENCE_STAG "<presence>"
-#define PRESENCE_STAG_LEN 10
+#define PRESENCE_STAG_LEN (sizeof(PRESENCE_STAG) - 1)
 
-#define PRESENCE_ETAG     "</presence>"
-#define PRESENCE_ETAG_LEN 11
+#define PRESENCE_ETAG "</presence>"
+#define PRESENCE_ETAG_LEN (sizeof(PRESENCE_ETAG) - 1)
 
-#define ADDRESS_ETAG     "</address>"
-#define ADDRESS_ETAG_LEN 10
+#define ADDRESS_ETAG "</address>"
+#define ADDRESS_ETAG_LEN (sizeof(ADDRESS_ETAG) - 1)
 
-#define ATOM_ETAG     "</atom>"
-#define ATOM_ETAG_LEN 7
+#define ATOM_ETAG "</atom>"
+#define ATOM_ETAG_LEN (sizeof(ATOM_ETAG) - 1)
 
-#define XPIDF_DTD     "xpidf.dtd"
-#define XPIDF_DTD_LEN 9
-
+#define XPIDF_DTD "xpidf.dtd"
+#define XPIDF_DTD_LEN (sizeof(XPDIF_DTD) - 1)
 
 #define DOCTYPE "<!DOCTYPE presence PUBLIC \"" PUBLIC_ID "\" \"" XPIDF_DTD "\">"
-#define DOCTYPE_LEN 27 + PUBLIC_ID_LEN + 3 + XPIDF_DTD_LEN + 2
+#define DOCTYPE_LEN (sizeof(DOCTYPE) - 1)
 
-#define PRESENTITY_START     "<presentity uri=\""
-#define PRESENTITY_START_LEN 17
+#define PRESENTITY_START "<presentity uri=\""
+#define PRESENTITY_START_LEN (sizeof(PRESENTITY_START) - 1)
 
-#define PRESENTITY_END     ";method=SUBSCRIBE\"/>"
-#define PRESENTITY_END_LEN 20
+#define PRESENTITY_END ";method=SUBSCRIBE\"/>"
+#define PRESENTITY_END_LEN (sizeof(PRESENTITY_END) - 1)
 
-#define ATOM_STAG     "<atom id=\"9r28r49\">"
-#define ATOM_STAG_LEN 19
+#define ATOM_STAG "<atom id=\"9r28r49\">"
+#define ATOM_STAG_LEN (sizeof(ATOM_STAG) - 1)
 
-#define ADDRESS_START     "<address uri=\""
-#define ADDRESS_START_LEN 14
+#define ADDRESS_START "<address uri=\""
+#define ADDRESS_START_LEN (sizeof(ADDRESS_START) - 1)
 
-#define ADDRESS_END     "\">"
-#define ADDRESS_END_LEN 2
+#define ADDRESS_END "\">"
+#define ADDRESS_END_LEN (sizeof(ADDRESS_END) - 1)
 
-#define STATUS_OPEN     "<status status=\"open\"/>"
-#define STATUS_OPEN_LEN 23
+#define STATUS_OPEN "<status status=\"open\"/>"
+#define STATUS_OPEN_LEN (sizeof(STATUS_OPEN) - 1)
 
-#define STATUS_CLOSED     "<status status=\"closed\"/>"
-#define STATUS_CLOSED_LEN 25
+#define STATUS_CLOSED "<status status=\"closed\"/>"
+#define STATUS_CLOSED_LEN (sizeof(STATUS_CLOSED) - 1)
 
-#define STATUS_INUSE     "<status status=\"inuse\"/>"
-#define STATUS_INUSE_LEN 24
+#define STATUS_INUSE "<status status=\"inuse\"/>"
+#define STATUS_INUSE_LEN (sizeof(STATUS_INUSE) - 1)
 
 
 /*
@@ -93,17 +92,17 @@
  */
 int start_xpidf_doc(str* _b, int _l)
 {
-	if ((XML_VERSION_LEN + 2 +
-	     DOCTYPE_LEN + 2 +
-	     PRESENCE_STAG_LEN + 2) > _l) {
+	if ((XML_VERSION_LEN + CRLF_LEN +
+	     DOCTYPE_LEN + CRLF_LEN +
+	     PRESENCE_STAG_LEN + CRLF_LEN) > _l) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "start_xpidf_doc(): Buffer too small\n");
 		return -1;
 	}
 
 	memcpy(_b->s + _b->len, XML_VERSION CRLF DOCTYPE CRLF PRESENCE_STAG CRLF,
-	       XML_VERSION_LEN + 2 + DOCTYPE_LEN + 2 + PRESENCE_STAG_LEN + 2);
-	_b->len += XML_VERSION_LEN + 2 + DOCTYPE_LEN + 2 + PRESENCE_STAG_LEN + 2;
+	       XML_VERSION_LEN + CRLF_LEN + DOCTYPE_LEN + CRLF_LEN + PRESENCE_STAG_LEN + CRLF_LEN);
+	_b->len += XML_VERSION_LEN + CRLF_LEN + DOCTYPE_LEN + CRLF_LEN + PRESENCE_STAG_LEN + CRLF_LEN;
 
 	return 0;
 }
@@ -114,7 +113,7 @@ int start_xpidf_doc(str* _b, int _l)
  */
 int xpidf_add_presentity(str* _b, int _l, str* _uri)
 {
-	if (_l < PRESENTITY_START_LEN + _uri->len + PRESENTITY_END_LEN + 2) {
+	if (_l < PRESENTITY_START_LEN + _uri->len + PRESENTITY_END_LEN + CRLF_LEN) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "pidf_add_presentity(): Buffer too small\n");
 		return -1;
@@ -126,8 +125,8 @@ int xpidf_add_presentity(str* _b, int _l, str* _uri)
 	memcpy(_b->s + _b->len, _uri->s, _uri->len);
 	_b->len += _uri->len;
 
-	memcpy(_b->s + _b->len, PRESENTITY_END CRLF, PRESENTITY_END_LEN + 2);
-	_b->len += PRESENTITY_END_LEN + 2;
+	memcpy(_b->s + _b->len, PRESENTITY_END CRLF, PRESENTITY_END_LEN + CRLF_LEN);
+	_b->len += PRESENTITY_END_LEN + CRLF_LEN;
 
 	return 0;
 }
@@ -149,30 +148,30 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 	}
 
 	if (_l < 
-	    (ATOM_STAG_LEN + 2 +
-	     ADDRESS_START_LEN + _addr->len + ADDRESS_END_LEN + 2 +
-	     len + 2 +
-	     ADDRESS_ETAG_LEN + 2 +
-	     ATOM_ETAG_LEN + 2)) {
+	    (ATOM_STAG_LEN + CRLF_LEN +
+	     ADDRESS_START_LEN + _addr->len + ADDRESS_END_LEN + CRLF_LEN +
+	     len + CRLF_LEN +
+	     ADDRESS_ETAG_LEN + CRLF_LEN +
+	     ATOM_ETAG_LEN + CRLF_LEN)) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "xpidf_add_address(): Buffer too small\n");
 		return -1;
 	}
 
-	memcpy(_b->s + _b->len, ATOM_STAG CRLF ADDRESS_START, ATOM_STAG_LEN + 2 + ADDRESS_START_LEN);
-	_b->len += ATOM_STAG_LEN + 2 + ADDRESS_START_LEN;
+	memcpy(_b->s + _b->len, ATOM_STAG CRLF ADDRESS_START, ATOM_STAG_LEN + CRLF_LEN + ADDRESS_START_LEN);
+	_b->len += ATOM_STAG_LEN + CRLF_LEN + ADDRESS_START_LEN;
 
 	memcpy(_b->s + _b->len, _addr->s, _addr->len);
 	_b->len += _addr->len;
 
-	memcpy(_b->s + _b->len, ADDRESS_END CRLF, ADDRESS_END_LEN + 2);
-	_b->len += ADDRESS_END_LEN + 2;
+	memcpy(_b->s + _b->len, ADDRESS_END CRLF, ADDRESS_END_LEN + CRLF_LEN);
+	_b->len += ADDRESS_END_LEN + CRLF_LEN;
 
 	memcpy(_b->s + _b->len, p, len);
 	_b->len += len;
 
-	memcpy(_b->s + _b->len, CRLF ADDRESS_ETAG CRLF ATOM_ETAG CRLF, 2 + ADDRESS_ETAG_LEN + 2 + ATOM_ETAG_LEN + 2);
-	_b->len += 2 + ADDRESS_ETAG_LEN + 2 + ATOM_ETAG_LEN + 2;
+	memcpy(_b->s + _b->len, CRLF ADDRESS_ETAG CRLF ATOM_ETAG CRLF, CRLF_LEN + ADDRESS_ETAG_LEN + CRLF_LEN + ATOM_ETAG_LEN + CRLF_LEN);
+	_b->len += CRLF_LEN + ADDRESS_ETAG_LEN + CRLF_LEN + ATOM_ETAG_LEN + CRLF_LEN;
 
 	return 0;
 }
@@ -183,14 +182,14 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
  */
 int end_xpidf_doc(str* _b, int _l)
 {
-	if (_l < (PRESENCE_ETAG_LEN + 2)) {
+	if (_l < (PRESENCE_ETAG_LEN + CRLF_LEN)) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "end_xpidf_doc(): Buffer too small\n");
 		return -1;
 	}
 
-	memcpy(_b->s + _b->len, PRESENCE_ETAG CRLF, PRESENCE_ETAG_LEN + 2);
-	_b->len += PRESENCE_ETAG_LEN + 2;
+	memcpy(_b->s + _b->len, PRESENCE_ETAG CRLF, PRESENCE_ETAG_LEN + CRLF_LEN);
+	_b->len += PRESENCE_ETAG_LEN + CRLF_LEN;
 
 	return 0;
 }

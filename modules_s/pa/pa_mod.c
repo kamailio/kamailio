@@ -49,22 +49,29 @@ int default_expires = 3600;
 /** TM bind */
 struct tm_binds tmb;
 
+
+/*
+ * Exported functions
+ */
 static cmd_export_t cmds[]={
 	{"subscribe",  subscribe,  1, subscribe_fixup, REQUEST_ROUTE},
-	{0,0,0,0,0}
+	{0, 0, 0, 0, 0}
 };
 
+
+/*
+ * Exported parameters
+ */
 static param_export_t params[]={
 	{"default_expires", INT_PARAM, &default_expires},
-	{0,0,0}
+	{0, 0, 0}
 };
 
 
 struct module_exports exports = {
 	"pa", 
-	cmds,
-	params,
-	
+	cmds,     /* Exported functions */
+	params,   /* Exported parameters */
 	mod_init, /* module initialization function */
 	0,        /* response function*/
 	destroy,  /* destroy function */
@@ -77,7 +84,7 @@ static int mod_init(void)
 {
 	load_tm_f load_tm;
 
-	fprintf(stderr, "Presence Agent - initializing\n");
+	DBG("Presence Agent - initializing\n");
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {

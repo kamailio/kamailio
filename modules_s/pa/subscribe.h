@@ -34,7 +34,7 @@
 
 
 #define DOCUMENT_TYPE "application/cpim-pidf+xml"
-#define DOCUMENT_TYPE_LEN 25
+#define DOCUMENT_TYPE_LEN (sizeof(DOCUMENT_TYPE) - 1)
 
 
 /*
