@@ -57,11 +57,19 @@ static int int_fixup(void** param, int param_no);
 /*
  * Exported functions
  */
+
+/*
+ * I do not want people to use strict routing so it is disabled by default,
+ * you should always use loose routing, if you really need strict routing then
+ * you can replace the last zeroes with REQUEST_ROUTE to enable strict_route and
+ * record_route_strict. Don't do that unless you know what you are really doing !
+ * Oh, BTW, have I mentioned already that you shouldn't use strict routing ?
+ */
 static cmd_export_t cmds[]={
 	{"loose_route",         loose_route,         0, 0, REQUEST_ROUTE},
 	{"strict_route",        strict_route,        0, 0, 0            },
 	{"record_route",        record_route,        0, 0, REQUEST_ROUTE},
-	{"record_route_strict", record_route_strict, 0, 0, REQUEST_ROUTE},
+	{"record_route_strict", record_route_strict, 0, 0, 0            },
 	{0,0,0,0,0}
 };
 
@@ -102,12 +110,6 @@ static int child_init(int rank)
 	      * must generate hash in each child
 	      */
 	generate_hash();
-
-	if (generate_rr_suffix()) {
-		LOG(L_ERR, "rr:child_init(): Error while generating RR suffix\n");
-		return -1;
-	}
-
 	return 0;
 }
 

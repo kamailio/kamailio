@@ -60,9 +60,6 @@ extern char rr_hash[MD5_LEN];
 void generate_hash(void);
 
 
-int generate_rr_suffix(void);
-
-
 /*
  * Parse the message and find first occurence of
  * Route header field. The function returns -1 on

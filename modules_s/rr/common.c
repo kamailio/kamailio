@@ -49,8 +49,6 @@
 #include "rr_mod.h"
 
 
-static char rr_s[256];
-static str rr_suffix;
 char rr_hash[MD5_LEN];
 
 /*
@@ -71,42 +69,6 @@ void generate_hash(void)
 	src[2].len = bind_address->port_no_str.len;
 	MDStringArray(rr_hash, src, 3);
 }
-
-
-int generate_rr_suffix(void)
-{
-	rr_suffix.s = rr_s;
-	rr_suffix.len = 0;
-
-	switch(bind_address->address.af) {
-	case AF_INET:
-		memcpy(rr_suffix.s, bind_address->address_str.s, bind_address->address_str.len);
-		rr_suffix.len = bind_address->address_str.len;
-		break;
-		
-	case AF_INET6:
-		rr_suffix.s[0] = '[';
-		rr_suffix.len = 1;
-
-		memcpy(rr_suffix.s + rr_suffix.len, bind_address->address_str.s, bind_address->address_str.len);
-		rr_suffix.len += bind_address->address_str.len;
-		rr_suffix.s[rr_suffix.len++] = ']';
-		break;
-		
-	default:
-		LOG(L_ERR, "generate_rr_suffix(): Unsupported PF type: %d\n", bind_address->address.af);
-		return -1;
-	}
-	
-	
-	if (bind_address->port_no != SIP_PORT) {
-		memcpy(rr_suffix.s + rr_suffix.len, bind_address->port_no_str.s, bind_address->port_no_str.len);
-		rr_suffix.len += bind_address->port_no_str.len;
-	}
-	
-	return 0;
-}
-
 
 
 /*
@@ -240,9 +202,18 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	}
 	len += user.len + 1 /* '@' */;
 
+	if (_m->rcv.bind_address->address.af == AF_INET6) {
+		len += _m->rcv.bind_address->address_str.len + 2;
+	} else {
+		len += _m->rcv.bind_address->address_str.len;
+	}
+
+	if (_m->rcv.bind_address->port_no != SIP_PORT) {
+		p += _m->rcv.bind_address->port_no_str.len;
+	}
+
 	if (_lr && use_fast_cmp) len += MD5_LEN;
 
-	len += rr_suffix.len;
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
 			LOG(L_ERR, "build_RR: From parsing failed\n");
@@ -278,9 +249,33 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	*p = '@';
 	p++;
 
-	memcpy(p, rr_suffix.s, rr_suffix.len);
-	p += rr_suffix.len;
+	switch(_m->rcv.bind_address->address.af) {
+	case AF_INET:
+		memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
+		p += _m->rcv.bind_address->address_str.len;
+		break;
+		
+	case AF_INET6:
+		*p = '[';
+		p++;
+		memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
+		p += _m->rcv.bind_address->address_str.len;
+		*p = ']';
+		p++;
+		break;
+		
+	default:
+		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", _m->rcv.bind_address->address.af);
+		pkg_free(rr);
+		return 0;
+	}
 	
+	
+	if (_m->rcv.bind_address->port_no != SIP_PORT) {
+		memcpy(p, _m->rcv.bind_address->port_no_str.s, _m->rcv.bind_address->port_no_str.len);
+		p += _m->rcv.bind_address->port_no_str.len;
+	}
+
 	if (append_fromtag && from->tag_value.s) {
 		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN); 
 		p += RR_FROMTAG_LEN;
