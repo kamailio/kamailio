@@ -3,11 +3,12 @@
 1 linux-i386/gcc2.95
 2 linux-i386/gcc3.3
 3 linux-i386/icc
-4 freebsd-i386/gcc
-5 openbsd-i386/gcc
-6 netbsd-ultrasparc/gcc
-7 solaris/gcc
-8 solaris/sun cc
+4 freebsd_4.5-i386/gcc
+5 freebsd_5.0-i386/gcc3.2
+6 openbsd_3.1-i386/gcc
+7 netbsd_1.6-ultrasparc/gcc
+8 solaris_8.0-ultrasparc/gcc
+9 solaris_8.0-ultrasparc/sun cc 5.3
 
 W - warnings
 E - errors
@@ -27,45 +28,45 @@ checked:
 5 - 2003-05-26
 
 
-module_name       1  2  3  4  5  6  7  8
-core                 o  o  o  o  o  o  o
-acc               o  I  I  I  o* I  I  I
-auth              o  o  o  o  o  o  o  o
-auth_db           o  o  o  o  o  o  o  o
-auth_radius       o  I  I  I  I  I  I  I
-cpl             P o  o  o  o  o  o  o  o
-cpl-c           D I  I  I  I  I  I  I  I
-dbtext            o  o  o  o  o  o  o  o
-domain            o  o  o  o  o  o  o  o
-enum              o  o  o  o  o  o  o  o
-exec              o  o  o  o  o  o  o  o
-ext               o  o  o  o  o  o  o  o
-extcmd            o  o  o  o  o  o  o  o
-group             o  o  o  o  o  o  o  o
-group_radius      W  I  I  I  I  I  I  I
-jabber            o  o  o  o  o  o  W+ W
-mangler           o  o  o  o  o  o  o  o
-maxfwd            o  o  o  o  o  o  o  o
-msilo             o  o  o  o  o  o  o  o
-mysql             o  o  o  o  o  o  o  o
-nathelper         o  o  o  o  o  o  o  o
-pa                o  o  o  o  o  o  o  o
-pdt               o  o  o  o  o  o  o  o
-persmissions      o  o  o  o  o  o  o  o
-pike              o  o  o  o  o  o  o  o
-postgress         I  I  I  I  I  I  I  I
-print             o  o  o  o  o  o  o  o
-registrar         o  o  o  o  o  o  o  o
-rr                o  o  o  o  o  o  o  o
-sl                o  o  o  o  o  o  o  o
-sms               o  o  o  o  o  o  o  o
-snmp      D       I  I  I  I  I  I  I  I
-textops           o  o  o  o  o  o  o  o
-tm                o  o  o  o  o  o  o  o
-uri               o  o  o  o  o  o  o  o
-uri_radius        o  I  I  I  I  I  I  I
-usrloc            o  o  o  o  o  o  o  o
-vm                o  o  o  o  o  o  o  o
+module_name       1  2  3  4  5  6  7  8  9
+core                 o  o  o  o  o  o  o  o
+acc               o  I  I  I  o* o* I  I  I
+auth              o  o  o  o  o  o  o  o  o
+auth_db           o  o  o  o  o  o  o  o  o
+auth_radius       o  I  I  I  I  I  I  I  I
+cpl             P o  o  o  o  o  o  o  o  o
+cpl-c           D I  I  I  I  I  I  I  I  I
+dbtext            o  o  o  o  o  o  o  o  o
+domain            o  o  o  o  o  o  o  o  o
+enum              o  o  o  o  o  o  o  o  o
+exec              o  o  o  o  o  o  o  o  o
+ext               o  o  o  o  o  o  o  o  o
+extcmd            o  o  o  o  o  o  o  o  o
+group             o  o  o  o  o  o  o  o  o
+group_radius      W  I  I  I  I  I  I  I  I
+jabber            o  o  o  o  o  o  o  W+ W
+mangler           o  o  o  o  o  o  o  o  o
+maxfwd            o  o  o  o  o  o  o  o  o
+msilo             o  o  o  o  o  o  o  o  o
+mysql             o  o  o  o  I  o  o  o  o
+nathelper         o  o  o  o  o  o  o  o  o
+pa                o  o  o  o  o  o  o  o  o
+pdt               o  o  o  o  o  o  o  o  o
+persmissions      o  o  o  o  o  o  o  o  o
+pike              o  o  o  o  o  o  o  o  o
+postgress         I  I  I  I  I  I  I  I  I
+print             o  o  o  o  o  o  o  o  o
+registrar         o  o  o  o  o  o  o  o  o
+rr                o  o  o  o  o  o  o  o  o
+sl                o  o  o  o  o  o  o  o  o
+sms               o  o  o  o  o  o  o  o  o
+snmp      D       I  I  I  I  I  I  I  I  I
+textops           o  o  o  o  o  o  o  o  o
+tm                o  o  o  o  o  o  o  o  o
+uri               o  o  o  o  o  o  o  o  o
+uri_radius        o  I  I  I  I  I  I  I  I
+usrloc            o  o  o  o  o  o  o  o  o
+vm                o  o  o  o  o  o  o  o  o
 
 
 [*] - w/o radius & mysql
