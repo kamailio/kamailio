@@ -110,14 +110,23 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				hdr->name.s, hdr->body.len, to_b->uri.len,to_b->uri.s);
 			DBG("DEBUG: to body [%.*s]\n",to_b->body.len,to_b->body.s);
 			break;
-		case HDR_CONTENTTYPE:
-		case HDR_CONTENTLENGTH:
 		case HDR_FROM:
 		case HDR_CALLID:
 		case HDR_CONTACT:
-		case HDR_ROUTE:   /* janakj, HDR_ROUTE was missing here */
+		case HDR_ROUTE:
 		case HDR_RECORDROUTE:
 		case HDR_MAXFORWARDS:
+		case HDR_CONTENTTYPE:
+		case HDR_CONTENTLENGTH:
+	        case HDR_AUTHORIZATION:
+	        case HDR_EXPIRES:
+	        case HDR_PROXYAUTH:
+	        case HDR_WWWAUTH:
+	        case HDR_SUPPORTED:
+	        case HDR_REQUIRE:
+	        case HDR_PROXYREQUIRE:
+	        case HDR_UNSUPPORTED:
+	        case HDR_ALLOW:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
