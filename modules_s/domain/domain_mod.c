@@ -52,12 +52,25 @@ static int child_init(int rank);
 MODULE_VERSION
 
 /*
+ * Version of domain table required by the module,
+ * increment this value if you change the table in
+ * an backwards incompatible way
+ */
+#define TABLE_VERSION 1
+
+#define DOMAIN_TABLE "domain"
+#define DOMAIN_TABLE_LEN (sizeof(DOMAIN_TABLE) - 1)
+
+#define DOMAIN_COL "domain"
+#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
+
+/*
  * Module parameter variables
  */
-char* db_url = DEFAULT_RODB_URL;
+str db_url = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 int db_mode = 0;			/* Database usage mode: 0 = no cache, 1 = cache */
-char* domain_table = "domain";          /* Name of domain table */
-char* domain_col = "domain";            /* Name of domain column */
+str domain_table = {DOMAIN_TABLE, DOMAIN_TABLE_LEN};     /* Name of domain table */
+str domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};           /* Name of domain column */
 
 /*
  * Other module variables
@@ -82,10 +95,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",		STR_PARAM, &db_url	},
-	{"db_mode",             INT_PARAM, &db_mode     },
-	{"domain_table",        STR_PARAM, &domain_table},
-	{"domain_col",          STR_PARAM, &domain_col  },
+	{"db_url",		STR_PARAM, &db_url.s	  },
+	{"db_mode",             INT_PARAM, &db_mode       },
+	{"domain_table",        STR_PARAM, &domain_table.s},
+	{"domain_col",          STR_PARAM, &domain_col.s  },
 	{0, 0, 0}
 };
 
@@ -107,24 +120,40 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	int i;
+	int i, ver;
 
 	DBG("domain - initializing\n");
 	
+	db_url.len = strlen(db_url.s);
+	domain_table.len = strlen(domain_table.s);
+	domain_col.len = strlen(domain_col.s);
+
 	/* Check if database module has been loaded */
-	if (bind_dbmod(db_url)) {
+	if (bind_dbmod(db_url.s)) {
 		LOG(L_ERR, "domain:mod_init(): Unable to bind database module\n");
 		return -1;
 	}
 
 	/* Check if cache needs to be loaded from domain table */
 	if (db_mode == 1) {
-		db_handle = db_init(db_url);
+		db_handle = db_init(db_url.s);
 		if (!db_handle) {
 			LOG(L_ERR, "domain:mod_init(): Unable to connect database\n");
 			return -1;
 		}
-		
+
+		     /* Check table version */
+		ver = table_version(db_handle, &domain_table);
+		if (ver < 0) {
+			LOG(L_ERR, "domain:mod_init(): Error while querying table version\n");
+			db_close(db_handle);
+			return -1;
+		} else if (ver < TABLE_VERSION) {
+			LOG(L_ERR, "domain:mod_init(): Invalid table version (use ser_mysql.sh reinstall)\n");
+			db_close(db_handle);
+			return -1;
+		}		
+
 		/* Initialize fifo interface */
 		(void)init_domain_fifo();
 
@@ -161,7 +190,7 @@ static int child_init(int rank)
 {
 	/* Check if database is needed by child */
 	if (((db_mode == 0) && (rank > 0)) || ((db_mode == 1) && (rank == PROC_FIFO))) {
-		db_handle = db_init(db_url);
+		db_handle = db_init(db_url.s);
 		if (!db_handle) {
 			LOG(L_ERR, "domain:child_init(): Unable to connect database\n");
 			return -1;

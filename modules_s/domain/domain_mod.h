@@ -33,6 +33,7 @@
 
 
 #include "../../db/db.h"
+#include "../../str.h"
 
 
 /*
@@ -51,10 +52,10 @@ struct domain_list {
 /*
  * Module parameters variables
  */
-extern char* db_url;            /* Database URL */
+extern str db_url;              /* Database URL */
 extern int db_mode;             /* Database usage mode: 0 = no cache, 1 = cache */
-extern char* domain_table;	/* Domain table name */
-extern char* domain_col;	/* Domain column name */
+extern str domain_table;	/* Domain table name */
+extern str domain_col;   	/* Domain column name */
 
 
 /*
