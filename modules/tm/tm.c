@@ -31,9 +31,8 @@ static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str
 static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
-//static int fixup_t_on_request_received(void** param, int param_no);
-
 static void w_onbreak(struct sip_msg* msg) { t_unref(msg, NULL, NULL); }
+
 
 static struct module_exports nm_exports= {
 	"tm_module",
