@@ -1311,11 +1311,11 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 	tfrom.s = buf;
 	
 	// building Contact and Content-Type
-	strcpy(buf1,"Content-Type: text/plain"CRLF);//"Contact: ");
-	str_hdr.len = 24 + CRLF_LEN;// + 9;
+	strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
+	str_hdr.len = 24 + CRLF_LEN + 9;
 	
-	//strncat(buf1,tfrom.s,tfrom.len);
-	//str_hdr.len += tfrom.len;
+	strncat(buf1,tfrom.s,tfrom.len);
+	str_hdr.len += tfrom.len;
 	//strncat(buf1,"sip:193.175.135.68:5060",23);
 	//str_hdr.len += 23;
 	
