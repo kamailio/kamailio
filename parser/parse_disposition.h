@@ -37,7 +37,7 @@
 
 
 #define get_content_disposition(_msg_) \
-	((struct content_disposition*)((_msg_)->content_disposition->parsed))
+	((struct disposition*)((_msg_)->content_disposition->parsed))
 
 
 struct disposition_param {
