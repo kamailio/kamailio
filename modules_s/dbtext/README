@@ -1,48 +1,185 @@
-# $Id$
 
-DBTEXT module
--------------
+DBTEXT Module
 
-The module implements a simplified database engine based on text files. 
-It can be used by DB interface of SER instead of other database modules
-(like MySQL).
+Daniel-Constantin Mierla
 
-The module has no parameters or exported methods for usage in SER's scripts.
+   FhG FOKUS
 
-Design of engine
-----------------
+Edited by
 
-- a database is represented by a directory
-- a table is represented by a text file from db directory
+Daniel-Constantin Mierla
 
-Internal format of table
-------------------------
+   Copyright © 2003, 2004 by FhG FOKUS
+     _________________________________________________________
 
-- first line is the definition of the columns
-	* the name of column must not include white spaces
-	* the format of column description: "name(type,attr)"
-	* the type of columns can be 'int', 'double' or 'str' (strings with size
-			less than 4KB)
-	* a column can have one of the attributes
-		> null - accept null values in a field of that column
-		> auto - only for 'int' columns, the value is auto-incremented if
-			is not provided a value in queries
-		> if no attribute is set, the fields of the column cannot have
-			null value
-- each other line is a row with data
-- each field is separated by ':'
-- no value between two ':' (or between ':' and start/end of row) means
-	null value
-- next characters must be escaped in strings: '\n', '\r', '\t', ':'
-- 0 -- the zero value must be escaped too
+   Table of Contents
+   1. User's Guide
 
-Sample of a table
------------------
+        1.1. Overview
 
-->
+              1.1.1. Design of dbtext engine
+              1.1.2. Internal format of a dbtext table
+
+        1.2. Dependencies
+
+              1.2.1. SER modules
+              1.2.2. External libraries or applications
+
+        1.3. Exported Parameters
+        1.4. Exported Functions
+        1.5. Installation & Running
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   The  module  implements  a simplified database engine based on
+   text  files.  It  can  be  used by SER DB interface instead of
+   other database module (like MySQL).
+
+   The  module is meant for use in demos or small devices that do
+   not  support  other  DB modules. It keeps everything in memory
+   and  if you deal with large amount of data you may run quickly
+   out  of  memory.  Also,  it  has  not implemented all standard
+   database  facilities  (like  order  by),  it  includes minimal
+   functionality to work properly (who knows ?!?) with SER.
+     _________________________________________________________
+
+1.1.1. Design of dbtext engine
+
+   The dbtext database system architecture:
+
+     * a database is represented by a directory in the local file
+       system.
+     * a  table  is  represented  by  a text file inside database
+       directory.
+     _________________________________________________________
+
+1.1.2. Internal format of a dbtext table
+
+   First  line is the definition of the columns. Each column must
+   be declared as follows:
+
+     * the name of column must not include white spaces.
+     * the format of a column definition is: name(type,attr).
+     * the type of a column can be:
+          + int - integer numbers.
+          + double - real numbers with two decimals.
+          + str - strings with maximum size of 4KB.
+     * a column can have one of the attributes:
+          + auto  -  only for 'int' columns, the maximum value in
+            that  column  is incremented and stored in this field
+            if it is not provided in queries.
+          + null - accept null values in column fields.
+          + if  no  attribute  is  set,  the fields of the column
+            cannot have null value.
+     * each  other  line  is  a row with data. The line ends with
+       "\n".
+     * the fields are separated by ":".
+     * no  value between two ':' (or between ':' and start/end of
+       a row) means "null" value.
+     * next  characters  must  be escaped in strings: "\n", "\r",
+       "\t", ":".
+     * 0 -- the zero value must be escaped too.
+
+   Example 1-1. Sample of a dbtext table
+...
 id(int,auto) name(str) flag(double) desc(str,null)
 1:nick:0.34:a\tgood\: friend
 2:cole:-3.75:colleague
-3:lina:2.50:
-<-
+3:bob:2.50:
+...
 
+   Example 1-2. Minimal SER location dbtext table definition
+...
+username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
+...
+
+   Example 1-3. Minimal SER subscriber dbtext table example
+...
+username(str) password(str) ha1(str) domain(str) ha1b(str)
+suser:supasswd:xxx:iptel.org:xxx
+...
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER modules
+
+   The next modules must be loaded before this module:
+
+     * none.
+     _________________________________________________________
+
+1.2.2. External libraries or applications
+
+   The  next  libraries  or applications must be installed before
+   running SER with this module:
+
+     * none.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+   None.
+     _________________________________________________________
+
+1.4. Exported Functions
+
+   None.
+     _________________________________________________________
+
+1.5. Installation & Running
+
+   Compile  the  module  and load it instead of mysql or other DB
+   modules.
+
+   Example 1-4. Load the dbtext module
+...
+loadmodule "/path/to/ser/modules/dbtext.so"
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   Once you have the module loaded, you can use the API specified
+   by  SER DB interface. Take a look at SER Developer's Guide for
+   more information.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://www.iptel.org/ser/.
+
+   3.2. Where can I post a question about this module?
+
+   First  at  all  check if your question was already answered on
+   one of our mailing lists: SER-Users
+
+   (http://mail.iptel.org/mailman/listinfo/serusers/)
+
+   or SER-Developers
+
+   (http://mail.iptel.org/mailman/listinfo/serdev/).
+
+   Any  mails  regarding  stable  SER  release  must  be  sent to
+   <serusers@iptel.org> while <serdev@iptel.org> must be used for
+   under-developing version.
+
+   If   you   want   to   keep  the  mail  private,  send  it  to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please      follow     the     guidelines     provided     at:
+   http://www.iptel.org/ser/bugs/.

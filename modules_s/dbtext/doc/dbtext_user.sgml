@@ -1,0 +1,234 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		The module implements a simplified database engine based on text
+		files. It can be used by SER DB interface instead of other database
+		module (like MySQL).
+	</para>
+	<para>
+		The module is meant for use in demos or small devices that do not
+		support other DB modules. It keeps everything in memory and if you deal
+		with large amount of data you may run quickly out of memory. Also, it has
+		not implemented all standard database facilities (like order by), it
+		includes minimal functionality to work properly (who knows ?!?) with SER.
+	</para>
+	    <section>
+		<title>Design of dbtext engine</title>
+		<para>
+		The dbtext database system architecture:
+	    	<itemizedlist>
+			<listitem>
+			    <para>
+				a database is represented by a directory in the local file
+				system.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				a table is represented by a text file inside database directory.
+				</para>
+			</listitem>
+	    	</itemizedlist>
+		</para>
+		</section>
+	    <section>
+		<title>Internal format of a dbtext table</title>
+		<para>
+		First line is the definition of the columns. Each column must be
+		declared as follows:
+	    	<itemizedlist>
+			<listitem>
+			    <para>
+				the name of column must not include white spaces.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				the format of a column definition is: 
+				<emphasis>name(type,attr)</emphasis>.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				the type of a column can be: 
+			    	<itemizedlist>
+					<listitem>
+			    	<para>
+					<emphasis>int</emphasis> - integer numbers.
+					</para>
+					</listitem>
+					<listitem>
+			    	<para>
+					<emphasis>double</emphasis> - real numbers with two decimals.
+					</para>
+					</listitem>
+					<listitem>
+			    	<para>
+					<emphasis>str</emphasis> - strings with maximum size of 4KB.
+					</para>
+					</listitem>
+	    			</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				a column can have one of the attributes: 
+			    	<itemizedlist>
+					<listitem>
+			    	<para>
+					<emphasis>auto</emphasis> - only for 'int' columns,
+					the maximum value in that column is incremented and stored
+					in this field if it is not provided in queries.
+					</para>
+					</listitem>
+					<listitem>
+			    	<para>
+					<emphasis>null</emphasis> - accept null values in column
+					fields.
+					</para>
+					</listitem>
+					<listitem>
+			    	<para>
+					if no attribute is set, the fields of the column cannot have
+					null value.
+					</para>
+					</listitem>
+	    			</itemizedlist>
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				each other line is a row with data. The line ends with
+				<quote>\n</quote>.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				the fields are separated by <quote>:</quote>.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				no value between two ':' (or between ':' and start/end of a row)
+				means <quote>null</quote> value.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				next characters must be escaped in strings: <quote>\n</quote>,
+				<quote>\r</quote>, <quote>\t</quote>, <quote>:</quote>.
+				</para>
+			</listitem>
+			<listitem>
+			    <para>
+				 <emphasis>0</emphasis> -- the zero value must be escaped too.
+				</para>
+			</listitem>
+	    	</itemizedlist>
+		</para>
+		<example>
+		<title>Sample of a dbtext table</title>
+<programlisting format="linespecific">
+...
+id(int,auto) name(str) flag(double) desc(str,null)
+1:nick:0.34:a\tgood\: friend
+2:cole:-3.75:colleague
+3:bob:2.50:
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Minimal &ser; location dbtext table definition</title>
+<programlisting format="linespecific">
+...
+username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
+...
+</programlisting>
+		</example>
+		<example>
+		<title>Minimal &ser; subscriber dbtext table example</title>
+<programlisting format="linespecific">
+...
+username(str) password(str) ha1(str) domain(str) ha1b(str)
+suser:supasswd:xxx:iptel.org:xxx
+...
+</programlisting>
+		</example>
+		</section>
+    </section>
+    <section>
+	<title>Dependencies</title>
+		<section>
+	    	<title>&ser; modules</title>
+		<para>
+		    The next modules must be loaded before this module:
+	    	<itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>none</emphasis>.
+				</para>
+			</listitem>
+	    	</itemizedlist>
+		</para>
+		</section>
+		<section>
+	    	<title>External libraries or applications</title>
+		<para>
+		    The next libraries or applications must be installed before running
+			&ser; with this module:
+	    	<itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>none</emphasis>.
+				</para>
+			</listitem>
+	    	</itemizedlist>
+		</para>
+		</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+		<para>
+			<emphasis>None</emphasis>.
+	   	</para>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+		<para>
+			<emphasis>None</emphasis>.
+	   	</para>
+    </section>
+    <section>
+		<title>Installation & Running</title>
+		<para>
+		Compile the module and load it instead of mysql or other DB modules.
+		</para>
+		<example>
+		<title>Load the dbtext module</title>
+<programlisting format="linespecific">
+...
+loadmodule "/path/to/ser/modules/dbtext.so"
+...
+</programlisting>
+		</example>
+	</section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("&parentsgml;" "Book" "chapter")
+End:
+-->
