@@ -47,7 +47,11 @@
 #define MESSAGE_500 "Server Internal Error"
 
 
-static inline int get_ha1(struct username* _username, str* _domain, char* _table, char* _ha1, char* _rpid)
+static char rpid_buffer[MAX_RPID_LEN];
+static str rpid = {rpid_buffer, 0};
+
+
+static inline int get_ha1(struct username* _username, str* _domain, char* _table, char* _ha1, str* _rpid)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -98,12 +102,10 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 		_ha1[result.len] = '\0';
 	}
 
-	if (use_rpid && VAL_NULL(&(res->rows[0].values[1])) != 1) {
+	if (use_rpid && (VAL_NULL(&(res->rows[0].values[1])) == 0)) {
 		result.s = (char*)VAL_STRING(&(res->rows[0].values[1]));
-		result.len = strlen(result.s);
-		memcpy(_rpid, result.s, result.len);
-		_rpid[result.len] = '\0';
-		DBG("RPID: %s\n", _rpid);
+		_rpid->len = strlen(result.s);
+		memcpy(_rpid->s, result.s, _rpid->len);
 	}
 
 	db_free_query(db_handle, res);
@@ -158,12 +160,11 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _hftype)
 {
 	char ha1[256];
-	char rpid_buffer[MAX_RPID_LEN];
 	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
-	str domain, rpid;
+	str domain;
 
 	domain = *_realm;
 
@@ -178,7 +179,10 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username, &domain, _table, ha1, rpid_buffer);
+	     /* Clear the rpid buffer from previous value*/
+	rpid.len = 0;
+
+	res = get_ha1(&cred->digest.username, &domain, _table, ha1, &rpid);
         if (res < 0) {
 		     /* Error while accessing the database */
 		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
@@ -188,14 +192,6 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	} else if (res > 0) {
 		     /* Username not found in the database */
 		return -1;
-	}
-
-	if (use_rpid) {
-		rpid.s = rpid_buffer;
-		rpid.len = strlen(rpid_buffer);
-	} else {
-		rpid.s = NULL;
-		rpid.len = 0;
 	}
 
 	     /* Recalculate response, it must be same to authorize sucessfully */

@@ -53,6 +53,7 @@
  * Buffer to store rpid retrieved from the radius server
  */
 static char rpid_buffer[MAX_RPID_LEN];
+static str rpid = {rpid_buffer, 0};
 
 
 /* 
@@ -86,7 +87,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	auth_result_t ret;
 	struct hdr_field* h;
 	auth_body_t* cred;
-	str* uri, rpid;
+	str* uri;
 	struct sip_uri puri;
 	str user, domain;
 
@@ -124,7 +125,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	user.s = (char *)pkg_malloc(puri.user.len);
 	un_escape(&(puri.user), &user);
 
-	rpid.s = rpid_buffer;
+	     /* Clear the rpid buffer from previous value */
 	rpid.len = 0;
 
 	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user, &rpid);
