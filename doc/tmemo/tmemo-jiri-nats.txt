@@ -132,9 +132,8 @@ comments:     jh: i like this one.  cisco ios nat that is built in every
                 version though.
               jdr (in a private chat): it requires too much application
                 awareness from router vendors
-              jku: when I use intertex, my ssh connections freeze after   
-                some time on-line, not all Ethernet devices work with it;
-                sometimes turning it off and on is needed
+              jku: not all Ethernet devices work with it; sometimes turning 
+                it off and on is needed
 
 ----------------------------------------------------------------
 technique:    STUN
