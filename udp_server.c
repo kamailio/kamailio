@@ -203,7 +203,7 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 	int n;
 
 /*	struct sockaddr_in a2;*/
-
+/*
 #ifndef NO_DEBUG
 #define MAX_IP_LENGTH 18
 	char ip_txt[MAX_IP_LENGTH];
@@ -218,17 +218,17 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 	p=ntohs(a->sin_port);
 	DBG("DEBUG: udp_send: ");
 
-	if (tolen < sizeof(struct sockaddr_in)) 
+	if (tolen < sizeof(struct sockaddr_in))
 		DBG("DEBUG: tolen small\n");
-	if (a->sin_family && a->sin_family != AF_INET) 
+	if (a->sin_family && a->sin_family != AF_INET)
 		DBG("DEBUG: to not INET\n");
-	if (a->sin_port == 0) 
+	if (a->sin_port == 0)
 		DBG("DEBUG: no port\n");
 
 	DBG(" destination: IP=%s, port=%u; packet:\n", ip_txt, p);
 	DBG(" destination (hex): IP=%x, port=%x;\n", a->sin_addr.s_addr, a->sin_port );
 	DBG("%*s\n", len, buf );
-#endif
+#endif*/
 /*
 	memset(&a2, 0, sizeof(struct sockaddr_in));
 	a2.sin_family = a->sin_family;

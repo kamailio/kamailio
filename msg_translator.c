@@ -156,7 +156,6 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 	/* jku: if we compute branches using MD5 it will take 32 bytes */
 	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN)+
 					msg->add_to_branch_len;
-	DBG("DEBUG: XXX via building entered; ( branch len %d)\n", msg->add_to_branch_len );
 
 	if ((via_len+port_no_str_len+branch_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
 		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
@@ -175,28 +174,28 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 			if (check_transaction_quadruple( msg )) {
 				str src[5];
 				int r;
-			
+
 				src[0]= msg->from->body;
-				src[1]= msg->to->body; 
-				src[2]= msg->callid->body; 
-				src[3]= msg->first_line.u.request.uri; 
+				src[1]= msg->to->body;
+				src[2]= msg->callid->body;
+				src[3]= msg->first_line.u.request.uri;
 				src[4]= get_cseq( msg )->number;
 
 				MDStringArray ( line_buf+via_len-1, src, 5 );
-				DBG("DEBUG: build_req_buf_from_sip_req: branch loop "
-						"detection: %s, %s, %s, %s, %s -> %s32\n",
-					msg->from->body.s, msg->to->body.s, msg->callid->body.s, 
+				//DBG("DEBUG: build_req_buf_from_sip_req: branch loop "
+				//		"detection: %s, %s, %s, %s, %s -> %s32\n",
+					msg->from->body.s, msg->to->body.s, msg->callid->body.s,
 					msg->first_line.u.request.uri.s,
 					((struct cseq_body *)(msg->cseq->parsed))->number.s,
 					line_buf+via_len-1 );
-				DBG("WARNING: build_req_buf_from_sip_req: branch computation "
-						"NOT over canonical values\n");
+				//DBG("WARNING: build_req_buf_from_sip_req: branch computation "
+				//		"NOT over canonical values\n");
 				via_len+=MD5_LEN - 1;
-				
+
 			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for "
 					"loop checking missing\n");
 		}
-		DBG("DEBUG: XXX will add branch now: %s (%d)\n", msg->add_to_branch_s, msg->add_to_branch_len );
+		//DBG("DEBUG: XXX will add branch now: %s (%d)\n", msg->add_to_branch_s, msg->add_to_branch_len );
 		/* someone wants me to add something to branch here ? */
 		memcpy(line_buf+via_len, msg->add_to_branch_s,
 				msg->add_to_branch_len );

@@ -89,7 +89,7 @@ void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl 
    struct timer* timers=&(hash_table->timers[ list_id ]);
    DBG("DEBUG: remove_from_timer[%d]: %d, %p \n",list_id,tl->time_out,tl);
 
-   if (tl->next_tl || tl->prev_tl || (!tl->next_tl && !tl->prev_tl && tl==timers->first_tl)   )
+   if ( is_in_timer_list(tl,list_id)  )
    {
       lock( timers->mutex );
       if ( tl->prev_tl )

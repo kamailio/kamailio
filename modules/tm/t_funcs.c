@@ -3,6 +3,21 @@
 #include "../../config.h"
 #include "../../parser_f.h"
 
+
+#define stop_RETR_and_FR_timers(h_table,p_cell)    \
+           { int ijk; \
+           if ( p_cell->outbound_response )  {  \
+               remove_from_timer_list( h_table , &(p_cell->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST ); \
+               remove_from_timer_list( h_table , &(p_cell->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST ); } \
+           for( ijk=0 ; ijk<p_cell->nr_of_outgoings ; ijk++ )  { \
+               remove_from_timer_list( h_table , &(p_cell->outbound_request[ijk]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST ); \
+               remove_from_timer_list( h_table , &(p_cell->outbound_request[ijk]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST ); } \
+           }
+
+
+
+
+
 struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
@@ -256,6 +271,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
                return 1;
             }
          }
+         else
+         {
+            /* transaction doesnot exists  */
+            DBG("DEBUG: t_forward: canceled request not found! nothing to CANCEL\n");
+            return 1;
+         }
       }/* end special case CANCEL*/
 
       /* allocates a new retrans_buff for the outbound request */
@@ -480,18 +501,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
 
    /* make double-sure we have finished everything */
    /* remove from  retranssmision  and  final response   list */
-   DBG("DEBUG: t_put_on_wait: remove inboud stuff from lists\n");
-   if ( T->outbound_response )
-   {
-      remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-      remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-   }
-   for( i=0 ; i<T->nr_of_outgoings ; i++ )
-   {
-      DBG("DEBUG: t_put_on_wait: remove outboud stuff[%d] from lists\n",i);
-      remove_from_timer_list( hash_table , &(T->outbound_request[i]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-      remove_from_timer_list( hash_table , &(T->outbound_request[i]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-   }
+   stop_RETR_and_FR_timers(hash_table,T) ;
    /* adds to Wait list*/
    add_to_tail_of_timer_list( hash_table, &(T->wait_tl), WT_TIMER_LIST, WT_TIME_OUT );
    return 1;
@@ -531,46 +541,50 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
   */
 int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 {
-      	unsigned int len;
-      	char * buf = NULL;
-        struct hostent  *nhost;
-        unsigned int      ip, port;
-        char foo;
-	int err;
-        struct retrans_buff* rb = NULL;
+   unsigned int len;
+   char * buf = NULL;
+   struct hostent  *nhost;
+   unsigned int      ip, port;
+   char foo;
+   int err;
+   struct retrans_buff* rb = NULL;
 
-   	DBG("DEBUG: t_send_reply: entered\n");
-   	t_check( hash_table, p_msg );
+   DBG("DEBUG: t_send_reply: entered\n");
+   t_check( hash_table, p_msg );
 
-   	if (!T) {
-		LOG(L_ERR, "ERROR: cannot send a t_reply to a message for which no T-state has been established\n");
-		return -1;
-   	} ;
+   if (!T)
+   {
+      LOG(L_ERR, "ERROR: cannot send a t_reply to a message for which no T-state has been established\n");
+     return -1;
+   }
 
-      	buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
-        DBG("DEBUG: t_send_reply: after build\n");
-      	if (!buf)
-      	{
-         	DBG("DEBUG: t_send_reply: response building failed\n");
-		goto error;
-      	}
+   buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+   DBG("DEBUG: t_send_reply: after build\n");
+   if (!buf)
+   {
+      DBG("DEBUG: t_send_reply: response building failed\n");
+     goto error;
+   }
 
-     	if ( T->outbound_response) {
-		if (  T->outbound_response->retr_buffer )
-      		{
-			sh_free( T->outbound_response->retr_buffer );
-			T->outbound_response->retr_buffer = NULL;
-	 	}
-	} else {
-		rb = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-		if (!rb) {
-			LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem\n");
-			goto error;
-		} 
-		T->outbound_response = rb;
-		memset( T->outbound_response , 0 , sizeof (struct retrans_buff) );
-	}
-
+   if ( T->outbound_response)
+   {
+      if (  T->outbound_response->retr_buffer )
+       {
+          sh_free( T->outbound_response->retr_buffer );
+          T->outbound_response->retr_buffer = NULL;
+       }
+   }
+   else
+   {
+      rb = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+     if (!rb)
+      {
+        LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem\n");
+       goto error;
+      }
+      T->outbound_response = rb;
+      memset( T->outbound_response , 0 , sizeof (struct retrans_buff) );
+   }
 
 	/* initialize retransmission structure */
 	if (update_sock_struct_from_via(  &(T->outbound_response->to),  p_msg->via1 )==-1) {
@@ -638,7 +652,8 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    /* it's a CANCEL request for sure */
 
    /* start searching into the table */
-   hash_index = hash( p_msg->callid , get_cseq(p_msg)->number  ) ;
+   hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number  ) ;
+   DBG("DEBUG: t_lookupOriginalT: searching on hash entry %d\n",hash_index );
 
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -663,7 +678,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
                                    //if ( /*tag*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && !memcmp( p_cell->inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )) )
                                       if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                           if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
-                                             if ( /*req_uri*/ memcmp( p_cell->inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len ) )
+                                             if ( /*req_uri*/ !memcmp( p_cell->inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len ) )
                                              { /* WE FOUND THE GOLDEN EGG !!!! */
                                                 unref_cell( p_cell );
                                                 return p_cell;
@@ -892,8 +907,8 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
    int                 lowest_v = 999;
 
    for(  ; i<T->nr_of_outgoings ; i++ )
-      if ( T->inbound_response[i] && 
-	   T->inbound_response[i]->first_line.u.reply.statuscode>=200 && 
+      if ( T->inbound_response[i] &&
+	   T->inbound_response[i]->first_line.u.reply.statuscode>=200 &&
 	   T->inbound_response[i]->first_line.u.reply.statuscode<lowest_v )
       {
          lowest_i =i;
@@ -1164,8 +1179,9 @@ void wait_handler( void *attr)
 
    /* the transaction is already removed from WT_LIST by the timer */
    /* the cell is removed from the hash table */
-   DBG("DEBUG: wait_handler : removing from table\n");
-    remove_from_hash_table( hash_table, p_cell );
+   DBG("DEBUG: wait_handler : removing from table ans stopping all timers\n");
+   remove_from_hash_table( hash_table, p_cell );
+   stop_RETR_and_FR_timers(hash_table,p_cell) ;
    /* put it on DEL_LIST - sch for del */
     add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
 }
