@@ -7,6 +7,7 @@ NAME=postgres.so
 
 # libpq-fe.h locations
 DEFS +=-I/usr/local/pgsql/include
-LIBS=-L/usr/local/pgsql/lib -lpq
+LIBS=-L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql -L/usr/pkg/lib \
+		-L/usr/pkg/lib/pgsql -lpq
 
 include ../../Makefile.modules
