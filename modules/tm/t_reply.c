@@ -221,9 +221,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	DBG("DEBUG: t_on_reply: Original status=%d (%d,%d)\n",
 		T->status,branch,local_cancel);
 
-	/* special cases (local cancel reply and another 100 reply!)*/
-	if (p_msg->REPLY_STATUS==100 && T->status==100)
-		goto error;
+	/* special cases (local cancel reply)*/
 	if (local_cancel==1)
 	{
 		reset_timer( hash_table, &(T->outbound_cancel[branch]->retr_timer));
@@ -281,7 +279,6 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	/* *** store and relay message as needed *** */
 	relay = t_should_relay_response( T , msg_status, branch, &save_clone );
-
 	if (relay >= 0 ) {
 		orp_rb= & T->outbound_response;
 		/* if there is no reply yet, initialize the structure */

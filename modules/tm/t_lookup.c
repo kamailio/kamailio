@@ -104,12 +104,11 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	lock(&(hash_table->entrys[p_msg->hash_index].mutex));
 
 	/* all the transactions from the entry are compared */
-	p_cell     = hash_table->entrys[p_msg->hash_index].first_cell;
+	p_cell   = hash_table->entrys[p_msg->hash_index].first_cell;
 	tmp_cell = 0;
 	while( p_cell )
 	{
 		t_msg = p_cell->inbound_request;
-
 		/* is it the wanted transaction ? */
 		if ( !isACK )
 		{ /* is not an ACK request */
@@ -357,6 +356,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 	} /* while p_cell */
 
 	/* nothing found */
+	unlock(&(hash_table->entrys[hash_index].mutex));
 	DBG("DEBUG: t_reply_matching: no matching transaction exists\n");
 
 nomatch2:
