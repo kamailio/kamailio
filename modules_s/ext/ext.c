@@ -49,6 +49,8 @@
 #include "my_exec.h"
 #include "config.h"
 
+MODULE_VERSION
+
 #define MAX_BUFFER_LEN 1024
 
 
