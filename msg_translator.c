@@ -628,26 +628,28 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ +
 		strlen(text) + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
-	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-		switch (hdr->type)
-		{
-			case HDR_TO:
-				if (new_tag)
-				{
-					to_tag=get_to(msg)->tag_value;
-					if (to_tag.s )
-						len+=new_tag_len-to_tag.len;
-					else
-						len+=new_tag_len+5/*";tag="*/;
-				}
-			case HDR_VIA:
+	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
+		if (hdr->type==HDR_TO) {
+			if (new_tag)
+			{
+				to_tag=get_to(msg)->tag_value;
+				if (to_tag.s )
+					len+=new_tag_len-to_tag.len;
+				else
+					len+=new_tag_len+TOTAG_LEN/*";tag="*/;
+			}
+		} else if (hdr->type==HDR_VIA) {
 				if (hdr==msg->h_via1) len += received_len;
-			case HDR_FROM:
-			case HDR_CALLID:
-			case HDR_CSEQ:
-			case HDR_RECORDROUTE:
-				len += ((hdr->body.s+hdr->body.len )-hdr->name.s )+CRLF_LEN;
+		} else if (hdr->type==HDR_RECORDROUTE) {
+				/* RR only for 1xx and 2xx replies */
+				if (code<180 || code>=300) continue;
+		} else if (!(hdr->type==HDR_FROM 
+					|| hdr->type==HDR_CALLID
+					|| hdr->type==HDR_CSEQ)) {
+			continue;
 		}
+		len += ((hdr->body.s+hdr->body.len )-hdr->name.s )+CRLF_LEN;
+	}
 	/*lumps length*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
@@ -709,7 +711,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 						append_str_trans( p, hdr->name.s ,
 							((hdr->body.s+hdr->body.len )-hdr->name.s ),
 							msg);
-						append_str( p, ";tag=",5,msg);
+						append_str( p, TOTAG,TOTAG_LEN,msg);
 						append_str( p, new_tag,new_tag_len,msg);
 						append_str( p, CRLF,CRLF_LEN,msg);
 					}
@@ -722,14 +724,16 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					append_str( p, received_buf, received_len, msg);
 				append_str( p, CRLF,CRLF_LEN,msg);
 				break;
+			case HDR_RECORDROUTE:
+				/* RR only for 1xx and 2xx replies */
+				if (code<180 || code>=300) break;
 			case HDR_FROM:
 			case HDR_CALLID:
 			case HDR_CSEQ:
-			case HDR_RECORDROUTE:
-				append_str_trans( p, hdr->name.s ,
-					((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
-				append_str( p, CRLF,CRLF_LEN,msg);
-		}
+					append_str_trans( p, hdr->name.s ,
+						((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
+					append_str( p, CRLF,CRLF_LEN,msg);
+		} /* for switch */
 	/*lumps*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 	{

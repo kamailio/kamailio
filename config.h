@@ -82,6 +82,9 @@
 #define RECEIVED   ";received="
 #define RECEIVED_LEN 10
 
+#define TOTAG ";tag="
+#define TOTAG_LEN (sizeof(TOTAG_LEN)-1)
+
 #define SRV_PREFIX "_sip._udp."
 #define SRV_PREFIX_LEN 10
 
