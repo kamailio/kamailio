@@ -44,8 +44,15 @@
 #include "../../error.h"
 
 
-#define DEMO
-/* DEMOING */
+#include "mangler.h"
+#include "sdp_mangler.h"
+#include "contact_ops.h"
+#include "utils.h"
+#include "common.h"
+
+
+
+
 #ifdef DEMO
 
 #include "../tm/t_hooks.h"
@@ -55,11 +62,6 @@ struct tm_binds tmb;
 	
 #endif
 
-
-#include "mangler.h"
-#include "sdp_mangler.h"
-#include "contact_ops.h"
-#include "utils.h"
 
 
 
@@ -104,7 +106,7 @@ static param_export_t params[] = {
 static cmd_export_t cmds[] = 
 {
 	{"sdp_mangle_ip", sdp_mangle_ip, 2,0, REQUEST_ROUTE}, // fixup_char2str?
-	{"sdp_mangle_port",sdp_mangle_port, 1, fixup_char2int, REQUEST_ROUTE},
+	{"sdp_mangle_port",sdp_mangle_port, 1,0, REQUEST_ROUTE},// fixup_char2int if I use an int as offset
 	{"encode_contact",encode_contact,2,0,REQUEST_ROUTE},//fixup_char2str
 	{"decode_contact",decode_contact,0,0,REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
@@ -160,8 +162,9 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 	else
 		{
 			fprintf(stdout,"NOT INVITE(REGISTER?) received \n%s\n",msg->buf);fflush(stdout);
-			//encode_contact(msg,"enc_prefix","100.200.100.200");
-			decode_contact(msg,NULL,NULL);
+			i = encode_contact(msg,"enc_prefix","100.200.100.200");
+			//i = decode_contact(msg,NULL,NULL);
+			fprintf(stdout,"decode/encode = returned %d\n",i);fflush(stdout);
 		}	
 	fflush(stdout);
 }

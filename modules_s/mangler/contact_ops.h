@@ -36,10 +36,18 @@
 #ifndef CONTACT_OPS_H
 #define CONTACT_OPS_H
 
-#define DEFAULT_SEPARATOR "*"
+/* if you want to parse all contacts not just de first one */
+
 
 
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "common.h"
+
+#define ENCODE_ALL_CONTACTS 1
+#define DECODE_ALL_CONTACTS 1
+
+#define DEFAULT_SEPARATOR "*"
+
 
 char *contact_flds_separator;
 

@@ -1,5 +1,5 @@
 /*
- * Sdp mangler module
+ * mangler module
  *
  * $Id$
  *
@@ -57,13 +57,13 @@ patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
 		return -3;
 	if ((anchor = del_lump (&msg->add_rm, off, oldlen, 0)) == 0)
 	{
-		LOG (L_ERR, "ERROR: error lumping with del_lump\n");
+		LOG (L_ERR, "ERROR: patch: error lumping with del_lump\n");
 		return -4;
 	}
 	if ((insert_new_lump_after (anchor, newstr, newlen, 0)) == 0)
 	{
 		LOG (L_ERR,
-		     "ERROR: error lumping with insert_new_lump_after\n");
+		     "ERROR: patch: error lumping with insert_new_lump_after\n");
 		return -5;
 	}
 
@@ -85,15 +85,13 @@ patch_content_length (struct sip_msg *msg, unsigned int newValue)
 	{
 		if (parse_headers (msg, HDR_CONTENTLENGTH, 0) == -1)
 		{
-			LOG (L_ERR,
-			     "ERROR: parse headers on Content-Length failed\n");
+			LOG (L_ERR,"ERROR: patch_content_length: parse headers on Content-Length failed\n");
 			return -1;
 		}
 		contentLength = msg->content_length;
 		if (contentLength == NULL)
 		{
-			LOG (L_ERR,
-			     "ERROR: parse headers on Content-Length succeded but msg->content_length is still NULL\n");
+			LOG (L_ERR,"ERROR: patch_content_length: parse headers on Content-Length succeded but msg->content_length is still NULL\n");
 			return -2;
 		}
 	}
@@ -103,7 +101,7 @@ patch_content_length (struct sip_msg *msg, unsigned int newValue)
 	s = pkg_malloc (len);
 	if (s == NULL)
 	{
-		LOG (L_ERR, "ERROR: unable to allocate %d bytes\n", len);
+		LOG (L_ERR, "ERROR: patch_content_length: unable to allocate %d bytes\n", len);
 		return -3;
 	}
 	memcpy (s, pos, len);
@@ -112,12 +110,11 @@ patch_content_length (struct sip_msg *msg, unsigned int newValue)
 	    (msg, contentLength->body.s, contentLength->body.len, s, len) < 0)
 	{
 		pkg_free (s);
-		LOG (L_ERR, "ERROR: lumping failed\n");
+		LOG (L_ERR, "ERROR: patch_content_length: lumping failed\n");
 		return -4;
 	}
 
-	DBG ("DEBUG: Succeded in altering Content-Length to new value %u\n",
-	     newValue);
+	DBG ("DEBUG: Succeded in altering Content-Length to new value %u\n",newValue);
 
 	return 0;
 

@@ -146,16 +146,22 @@ parse_ip_address (char *c, unsigned int *address)	//inet_aton
 		{
 			quat = atoi (p);
 			if (quat > 255)
+				{
 				return 0;
+				}
 			else
 				addrp[3] = (unsigned char) quat;
 			return 1;
 		}
 		else
+			{
 			return 0;
+			}
 	}
 	else
+		{
 		return 0;
+		}
 }
 
 /* return 1 if ALL str is a positive number or 0. no + signs allowed*/

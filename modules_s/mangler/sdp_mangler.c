@@ -1,5 +1,5 @@
 /*
- * Sdp mangler module
+ * mangler module
  *
  * $Id$
  *
@@ -39,15 +39,16 @@
 #include "sdp_mangler.h"
 #include "ip_helper.h"
 #include "utils.h"
+#include "common.h"
 #include "../../mem/mem.h"
 #include "../../data_lump.h"
 #include "../../parser/hf.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../ut.h"
+#include "../../parser/msg_parser.h"	/* struct sip_msg */
 
 
-#define DEBUG
 
 
 int
@@ -55,7 +56,6 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 {
 	int oldContentLength, newContentLength, oldlen, err, oldPort, newPort,
 		diff, offsetValue,len,off,ret,needToDealocate;
-	
 	struct lump *l;
 	regmatch_t pmatch;
 	regex_t *re;
@@ -69,28 +69,37 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 	 * Checking if msg has a payload
 	 */
 	if (msg == NULL)
-		return -5;
+		{
+		LOG(L_ERR,"ERROR: sdp_mangle_port: Received NULL for msg \n");
+		return -1;
+		}
 	oldContentLength = strtol (msg->content_length->body.s, NULL, 10);	/* de inlocuit ? */
 	if (oldContentLength <= 0)
-		return -1;
-	/*
-	if (offset == NULL)
+		{
+		LOG(L_ERR,"ERROR: sdp_mangle_port: Received <= 0 for Content-Length \n");
 		return -2;
+		}
+	
+	if (offset == NULL)
+		return -14;
 	if (sscanf (offset, "%d", &offsetValue) != 1)
 	{
-		return -3;
+		LOG(L_ERR,"ERROR: sdp_mangle_port: Invalid value for offset \n");
+		return -13;
 	}
-	*/
-	offsetValue = (int)offset;
+	
+	//offsetValue = (int)offset;
 #ifdef DEBUG
+	fprintf (stdout,"---START--------MANGLE PORT-----------------\n");
 	fprintf(stdout,"===============OFFSET = %d\n",offsetValue);
 #endif
 	
-	if ((offsetValue < -65536) || (offsetValue > 65536))
+	if ((offsetValue < MIN_OFFSET_VALUE) || (offsetValue > MAX_OFFSET_VALUE))
 	{
-		return -4;
+		LOG(L_ERR,"ERROR: sdp_mangle_port: Invalid value %d for offset \n",offsetValue);
+		return -3;
 	}
-	begin = msg->buf + msg->first_line.len;	// inlocuiesc cu begin = getbody */
+	begin = get_body(msg); //msg->buf + msg->first_line.len;	// inlocuiesc cu begin = getbody */
 	ret = -1;
 
 	/* try to use precompiled expressions */
@@ -108,7 +117,7 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 			if (re == NULL)
 				{
 				LOG(L_ERR,"ERROR: sdp_mangle_port: Unable to allocate re\n");
-				return -9;
+				return -4;
 				}
 			needToDealocate = 1;
 			if ((regcomp (re, key, REG_EXTENDED)) != 0)
@@ -123,72 +132,102 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 			}
 	
 	diff = 0;
-	while (begin < msg->buf + msg->len
-	       && regexec (re, begin, 1, &pmatch, 0) == 0)
+	while ((begin < msg->buf + msg->len) && (regexec (re, begin, 1, &pmatch, 0) == 0))
 	{
 		off = begin - msg->buf;
 		if (pmatch.rm_so == -1)
 		{
-			LOG (L_ERR, "ERROR: replace_all_f: offset unknown\n");
-			return -1;
+			LOG (L_ERR, "ERROR: sdp_mangle_port: offset unknown\n");
+			return -6;
 		}
-
-		pos = (char *) memrchr (begin + pmatch.rm_so, ' ',
-					pmatch.rm_eo - pmatch.rm_so);
+	
+#ifdef STRICT_CHECK
+		pmatch.rm_eo --; /* return with one space */
+#endif
+	
+		pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
 		pos++;		/* jumping over space */
 		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* port length */
 
 		/* convert port to int */
 		oldPort = str2s (pos, oldlen, &err);
 		if (err)
-			return -4;
-		if ((oldPort < 1) || (oldPort > 65536))	/* we silently fail,we ignore this match or return -11 */
-		{
+			{
+			LOG(L_ERR,"ERROR: sdp_mangle_port: Error converting [%.*s] to int\n",oldlen,pos);
+#ifdef STRICT_CHECK
+			return -7;
+#else
 			goto continue1;
+#endif
+			}
+		if ((oldPort < MIN_ORIGINAL_PORT) || (oldPort > MAX_ORIGINAL_PORT))	/* we silently fail,we ignore this match or return -11 */
+		{
+			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching old port\n");
+#ifdef STRICT_CHECK
+			return -8;
+#else
+			goto continue1;
+#endif
 		}
 		newPort = oldPort + offsetValue;
 		/* new port is between 1 and 65536, or so should be */
-		if ((newPort < 1) || (newPort > 65536))	/* we silently fail,we ignore this match */
+		if ((newPort < MIN_MANGLED_PORT) || (newPort > MAX_MANGLED_PORT))	/* we silently fail,we ignore this match */
 		{
+			LOG(L_WARN,"WARNING: sdp_mangle_port: Silent fail for not matching new port\n");
+#ifdef STRICT_CHECK
+			return -9;
+#else
 			goto continue1;
+#endif
 		}
 
-		len = 1;
-		while ((newPort = (newPort / 10)) != 0)
-			len++;
-		newPort = oldPort + offsetValue;
+#ifdef DEBUG
+		fprintf(stdout,"Extracted port is %d and mangling to %d\n",oldPort,newPort);
+#endif
 
+		/*
+		len = 1;
+		while ((newPort = (newPort / 10)) != 0)	len++;
+		newPort = oldPort + offsetValue;
+		*/
+		if (newPort >= 10000) len = 5;
+			else
+				if (newPort >= 1000) len = 4;
+					else
+						if (newPort >= 100) len = 3;
+							else
+								if (newPort >= 10) len = 2;
+									else len = 1;
+
+		/* replaced five div's + 1 add with most probably 1 comparison or 2 */							
+		
 		/* deleting old port */
-		if ((l =
-		     del_lump (&msg->add_rm,
-			       pmatch.rm_so + off + (pos -
-						     (begin + pmatch.rm_so)),
-			       oldlen, 0)) == 0)
+		if ((l = del_lump (&msg->add_rm,pmatch.rm_so + off + (pos -(begin + pmatch.rm_so)),oldlen, 0)) == 0)
 		{
-			LOG (L_ERR,
-			     "ERROR: replace_all_f: del_lump failed\n");
-			return -1;
+			LOG (L_ERR,"ERROR: sdp_mangle_port: del_lump failed\n");
+			return -10;
 		}
 		s = pkg_malloc (len);
 		if (s == 0)
 		{
-			LOG (L_ERR,
-			     "ERROR: replace_f: mem. allocation failure\n");
-			return -1;
+			LOG (L_ERR,"ERROR: sdp_mangle_port : memory allocation failure\n");
+			return -11;
 		}
 		snprintf (buf, len + 1, "%u", newPort);	/* converting to string */
 		memcpy (s, buf, len);
 
 		if (insert_new_lump_after (l, s, len, 0) == 0)
 		{
-			LOG (L_ERR, "ERROR: could not insert new lump\n");
+			LOG (L_ERR, "ERROR: sdp_mangle_port: could not insert new lump\n");
 			pkg_free (s);
-			return -1;
+			return -12;
 		}
 		diff = diff + len /*new length */  - oldlen;
 		/* new cycle */
 		ret++;
-	      continue1:
+#ifndef STRICT_CHECK
+continue1:
+#endif
 		begin = begin + pmatch.rm_eo;
 
 	}			/* while  */
@@ -206,7 +245,11 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		newContentLength = oldContentLength + diff;
 		patch_content_length (msg, newContentLength);
 	}
-	
+
+#ifdef DEBUG
+	fprintf (stdout,"---END--------MANGLE PORT-----------------\n");
+#endif
+
 	return ret+1;
 }
 
@@ -222,43 +265,62 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 	char *s, *pos,*begin,*key;
 	char buffer[16];	/* 123.456.789.123\0 */
 
+#ifdef DEBUG
+	fprintf (stdout,"---START--------MANGLE IP-----------------\n");
+#endif
 
+	
 	key = IP_REGEX;
 
 	/*
 	 * Checking if msg has a payload
 	 */
 	if (msg == NULL)
-		return -5;
+		{
+		LOG(L_ERR,"ERROR: sdp_mangle_ip: Received NULL for msg\n");
+		return -1;
+		}
 	oldContentLength = strtol (msg->content_length->body.s, NULL, 10);	/* de inlocuit ? */
 	if (oldContentLength <= 0)
-		return -1;
+		{
+		LOG(L_ERR,"ERROR: sdp_mangle_ip: Received <= for Content-Length\n");
+		return -2;
+		}
 
 	/* checking oldip */
 	if (oldip == NULL)
+		{
+		LOG(L_ERR,"ERROR: sdp_mangle_ip: Received NULL for oldip\n");
 		return -3;
+		}
 	/* checking newip */
 	if (newip == NULL)
+		{
+		LOG(L_ERR,"ERROR: sdp_mangle_ip: Received NULL for newip\n");
 		return -4;
+		}
 	i = parse_ip_netmask (oldip, &pos, &mask);
 
 	if (i == -1)
 	{
 		/* invalid value for the netmask specified in oldip */
-		return -8;
+		LOG(L_ERR,"ERROR: sdp_mangle_ip: invalid value for the netmask specified in oldip\n");
+		return -5;
 	}
 	else
 	{
 		i = parse_ip_address (pos, &address);
-		if (pos != NULL)
-			free (pos);
+		if (pos != NULL) free (pos);
 		if (i == 0)
-			return -9;	/* parse error in ip */
+			{
+			LOG(L_ERR,"ERROR: sdp_mangle_ip: invalid value for the ip specified in oldip\n");
+			return -6;	/* parse error in ip */
+			}
 	}
 
 	/* now we have in address/netmask binary values */
 
-	begin = msg->buf + msg->first_line.len;	// inlocuiesc cu begin = getbody */
+	begin = get_body(msg);//msg->buf + msg->first_line.len;	// inlocuiesc cu begin = getbody */
 	ret = -1;
 	len = strlen (newip);
 
@@ -278,13 +340,13 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 			if (re == NULL)
 				{
 				LOG(L_ERR,"ERROR: sdp_mangle_ip: Unable to allocate re\n");
-				return -9;
+				return -7;
 				}
 			needToDealocate = 1;
 			if ((regcomp (re, key, REG_EXTENDED)) != 0)
 				{
 				LOG(L_ERR,"ERROR: sdp_mangle_ip: Unable to compile %s \n",key);
-				return -5;
+				return -8;
 				}
 #ifdef DEBUG
 		fprintf(stdout,"Using ALLOCATED expression for ip ...\n");
@@ -292,24 +354,32 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 			}
 
 	diff = 0;
-	while (begin < msg->buf + msg->len
-	       && regexec (re, begin, 1, &pmatch, 0) == 0)
+	while ((begin < msg->buf + msg->len) && (regexec (re, begin, 1, &pmatch, 0) == 0))
 	{
 		off = begin - msg->buf;
 		if (pmatch.rm_so == -1)
 		{
-			LOG (L_ERR,
-			     "ERROR: sdp_mangler_port: offset unknown\n");
-			return -1;
+			LOG (L_ERR,"ERROR: sdp_mangler_ip: offset unknown\n");
+			return -9;
 		}
-
-		pos = (char *) memrchr (begin + pmatch.rm_so, ' ',
-					pmatch.rm_eo - pmatch.rm_so);
+	
+#ifdef STRICT_CHECK
+		pmatch.rm_eo --; /* return with one space,\n,\r */
+#endif
+	
+		pos = (char *) memrchr (begin + pmatch.rm_so, ' ',pmatch.rm_eo - pmatch.rm_so);
 		pos++;		/* jumping over space */
 		oldlen = (pmatch.rm_eo - pmatch.rm_so) - (pos - (begin + pmatch.rm_so));	/* ip length */
 		if (oldlen > 15)
 		{
+			LOG(L_WARN,"WARNING: sdp_mangle_ip: Silent fail because oldlen > 15\n");
+#ifdef STRICT_CHECK
+			return -10;
+#else 
 			goto continue2;	/* silent fail return -10; invalid ip format ,probably like 1000.3.12341.2 */
+#endif
+
+			
 		}
 		buffer[0] = '\0';
 		strncat ((char *) buffer, pos, oldlen);	
@@ -317,48 +387,53 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		i = parse_ip_address (buffer, &locatedIp);
 		if (i == 0)
 		{
-			DBG ("DEBUG:mangle_ip silent fail on parse_address %s\n",buffer);
-			goto continue2;	/* silent fail */
+			LOG(L_WARN,"WARNING: sdp_mangle_ip: Silent fail on parsing matched address \n");
+			
+#ifdef STRICT_CHECK
+			return -11;
+#else 
+			goto continue2;	
+#endif
 		}
 		if (same_net (locatedIp, address, mask) == 0)
 		{
-			DBG ("DEBUG:mangle_ip silent fail on matching filter for address %s\n",buffer);
+			LOG(L_WARN,"WARNING: sdp_mangle_ip: Silent fail because matched address is not in network\n");
+#ifdef DEBUG
+		fprintf(stdout,"Extracted ip is %s and not mangling \n",buffer);
+#endif
 			goto continue2;	/* not in the same net, skiping */
 		}
+#ifdef DEBUG
+		fprintf(stdout,"Extracted ip is %s and mangling to %s\n",buffer,newip);
+#endif
 
 
 		/* replacing ip */
 
 		/* deleting old ip */
-		if ((l =
-		     del_lump (&msg->add_rm,
-			       pmatch.rm_so + off + (pos -
-						     (begin + pmatch.rm_so)),
-			       oldlen, 0)) == 0)
+		if ((l = del_lump (&msg->add_rm,pmatch.rm_so + off + (pos - (begin + pmatch.rm_so)),oldlen, 0)) == 0)
 		{
-			LOG (L_ERR,
-			     "ERROR: replace_all_f: del_lump failed\n");
-			return -1;
+			LOG (L_ERR,"ERROR: sdp_mangle_ip: del_lump failed\n");
+			return -12;
 		}
 		s = pkg_malloc (len);
 		if (s == 0)
 		{
-			LOG (L_ERR,
-			     "ERROR: replace_f: mem. allocation failure\n");
-			return -1;
+			LOG (L_ERR,"ERROR: sdp_mangle_ip: mem. allocation failure\n");
+			return -13;
 		}
 		memcpy (s, newip, len);
 
 		if (insert_new_lump_after (l, s, len, 0) == 0)
 		{
-			LOG (L_ERR, "ERROR: could not insert new lump\n");
+			LOG (L_ERR, "ERROR: sdp_mangle_ip: could not insert new lump\n");
 			pkg_free (s);
-			return -1;
+			return -14;
 		}
 		diff = diff + len /*new length */  - oldlen;
 		/* new cycle */
 		ret++;
-	      continue2:
+continue2:
 		begin = begin + pmatch.rm_eo;
 
 	}			/* while */
@@ -376,6 +451,11 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		newContentLength = oldContentLength + diff;
 		patch_content_length (msg, newContentLength);
 	}
+
+#ifdef DEBUG
+	fprintf (stdout,"---END--------MANGLE IP-----------------\n");
+#endif
+
 	return ret+1;
 
 }
@@ -420,11 +500,17 @@ int compile_expresions(char *port,char *ip)
 int free_compiled_expresions()
 {
 	if (portExpression != NULL) 
+		{
 		regfree(portExpression);
+		pkg_free(portExpression);
+		portExpression = NULL;
+		}
 	if (ipExpression != NULL) 
+		{
 		regfree(ipExpression);
-	portExpression = NULL;
-	ipExpression = NULL;
+		pkg_free(ipExpression);
+		ipExpression = NULL;
+		}
 	return 0;
 }
 
