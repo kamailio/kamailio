@@ -110,11 +110,15 @@ int dbt_result_free(dbt_result_p _dres)
 	while(_rp)
 	{
 		_rp0=_rp;
-		for(i=0; i<_dres->nrcols; i++)
+		if(_rp0->fields)
 		{
-			if(_dres->colv[i].type==DB_STR 
-					&& _rp0->fields[i].val.str_val.s)
-				pkg_free(_rp0->fields[i].val.str_val.s);
+			for(i=0; i<_dres->nrcols; i++)
+			{
+				if(_dres->colv[i].type==DB_STR 
+						&& _rp0->fields[i].val.str_val.s)
+					pkg_free(_rp0->fields[i].val.str_val.s);
+			}
+			pkg_free(_rp0->fields);
 		}
 		pkg_free(_rp0);
 		_rp=_rp->next;
@@ -173,6 +177,7 @@ int* dbt_get_refs(dbt_table_p _dtp, db_key_t* _k, int _n)
 		}
 		if(j>=_dtp->nrcols)
 		{
+			DBG("DBT:dbt_get_refs: ERROR column <%s> not found\n", _k[i]);
 			pkg_free(_lref);
 			return NULL;
 		}

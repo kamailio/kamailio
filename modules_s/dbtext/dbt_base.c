@@ -128,7 +128,7 @@ int dbt_free_query(db_con_t* _h, db_res_t* _r)
 	
 	if(dbt_result_free(DBT_CON_RESULT(_h)) < 0) 
 	{
-		LOG(L_ERR, "DBT:dbt_free_query: Unable to free result structure\n");
+		LOG(L_ERR, "DBT:dbt_free_query: Unable to free internal structure\n");
 		return -1;
 	}
 	DBT_CON_RESULT(_h) = NULL;
@@ -209,7 +209,10 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		if(dbt_row_match(_dtp, _drp, lkey, _op, _v, _n))
 		{
 			if(dbt_result_extract_fields(_dtp, _drp, lres, _dres))
+			{
+				DBG("DBT:db_query: error extracting result fields!\n");
 				goto clean;
+			}
 		}
 		_drp = _drp->next;
 	}
@@ -273,7 +276,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	dbt_row_p _drp = NULL;
 	
 	str stbl;
-	int i, j;
+	int *lkey=NULL, i, j;
 	
 	if (!_h || !CON_TABLE(_h))
 	{
@@ -285,7 +288,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	if(!_k || !_v || _n<=0)
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_insert: no value to insert\n");
+		DBG("DBT:dbt_insert: no key-value to insert\n");
 #endif
 		return -1;
 	}
@@ -301,6 +304,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	}
 
 	lock_get(&_tbc->sem);
+	
 	_dtp = _tbc->dtp;
 	if(!_dtp)
 	{
@@ -314,6 +318,12 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		goto error;
 	}
 	
+	if(_k)
+	{
+		lkey = dbt_get_refs(_dtp, _k, _n);
+		if(!lkey)
+			goto error;
+	}
 	_drp = dbt_row_new(_dtp->nrcols);
 	if(!_drp)
 	{
@@ -323,28 +333,25 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	
 	for(i=0; i<_n; i++)
 	{
-		stbl.s = (char*)_k[i];
-		stbl.len = strlen(_k[i]);
-		for(j=0; j<_dtp->nrcols; j++)
+		j = (lkey)?lkey[i]:i;
+		if(dbt_is_neq_type(_dtp->colv[j]->type, _v[i].type))
 		{
-			if(stbl.len == _dtp->colv[j]->name.len
-				&& !strncasecmp(stbl.s, _dtp->colv[j]->name.s, stbl.len))
-			{
-				if(dbt_is_neq_type(_dtp->colv[j]->type, _v[i].type))
-				{
-					DBG("DBT:db_insert: incompatible types!\n");
-					goto clean;
-				}
-				if(dbt_row_set_val(_drp, &(_v[i]), _v[i].type, j))
-				{
-					DBG("DBT:db_insert: cannot set v[%d] in c[%d]!\n", i, j);
-					goto clean;
-				}
-			}
+			DBG("DBT:db_insert: incompatible types v[%d] - c[%d]!\n", i, j);
+			goto clean;
 		}
+		if(dbt_row_set_val(_drp, &(_v[i]), _v[i].type, j))
+		{
+			DBG("DBT:db_insert: cannot set v[%d] in c[%d]!\n", i, j);
+			goto clean;
+		}
+		
 	}
+
 	if(dbt_table_add_row(_dtp, _drp))
+	{
+		DBG("DBT:db_insert: cannot insert the new row!!\n");
 		goto clean;
+	}
 
 #ifdef DBT_EXTRA_DEBUG
 	dbt_print_table(_dtp, NULL);
@@ -352,26 +359,27 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	
 	lock_release(&_tbc->sem);
 
+	if(lkey)
+		pkg_free(lkey);
+
 	DBG("DBT:db_insert: done!\n");
 
     return 0;
 	
 error:
 	lock_release(&_tbc->sem);
+	if(lkey)
+		pkg_free(lkey);
 	DBG("DBT:db_insert: error inserting row in table!\n");
     return -1;
+	
 clean:
 	lock_release(&_tbc->sem);
+	if(lkey)
+		pkg_free(lkey);
 	
-	if(_drp)
-	{
-		for(j=0; j<_dtp->nrcols; j++)
-		{
-			if(_drp->fields[j].type==DB_STR && _drp->fields[j].val.str_val.s)
-				shm_free(_drp->fields[j].val.str_val.s);
-		}
-		shm_free(_drp);
-	}
+	if(_drp) // free row
+		dbt_row_free(_dtp, _drp);
 	
 	DBG("DBT:db_insert: make clean!\n");
     return -1;
@@ -385,7 +393,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	tbl_cache_p _tbc = NULL;
 	dbt_table_p _dtp = NULL;
 	dbt_row_p _drp = NULL, _drp0 = NULL;
-	int i, *lkey = NULL;
+	int *lkey = NULL;
 	str stbl;
 
 	if (!_h || !CON_TABLE(_h))
@@ -445,11 +453,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 				(_drp->next)->prev = _drp->prev;
 			_dtp->nrrows--;
 			// free row
-			for(i=0; i<_dtp->nrcols; i++)
-				if(_dtp->colv[i]->type==DB_STR
-						&& _drp->fields[i].val.str_val.s)
-					shm_free(_drp->fields[i].val.str_val.s);
-			shm_free(_drp);
+			dbt_row_free(_dtp, _drp);
 		}
 		_drp = _drp0;
 	}

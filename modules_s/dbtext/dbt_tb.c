@@ -77,6 +77,21 @@ dbt_column_p dbt_column_new(char *_s, int _l)
 /**
  *
  */
+int dbt_column_free(dbt_column_p dcp)
+{
+	
+	if(!dcp)
+		return -1;
+	if(dcp->name.s)
+		shm_free(dcp->name.s);
+	shm_free(dcp);
+ 
+	return 0;
+}
+
+/**
+ *
+ */
 dbt_row_p dbt_row_new(int _nf)
 {
 	int i;
@@ -99,6 +114,29 @@ dbt_row_p dbt_row_new(int _nf)
 	_drp->next = _drp->prev = NULL;
 
 	return _drp;
+}
+
+/**
+ *
+ */
+int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
+{
+	int i;
+	
+	if(!_dtp || !_drp)
+		return -1;
+	
+	if(_drp->fields)
+	{
+		for(i=0; i<_dtp->nrcols; i++)
+			if(_dtp->colv[i]->type==DB_STR
+					&& _drp->fields[i].val.str_val.s)
+				shm_free(_drp->fields[i].val.str_val.s);
+		shm_free(_drp->fields);
+	}
+	shm_free(_drp);
+
+	return 0;
 }
 
 /**
@@ -138,25 +176,9 @@ done:
 /**
  *
  */
-int dbt_column_free(dbt_column_p dcp)
-{
-	
-	if(!dcp)
-		return -1;
-	if(dcp->name.s)
-		shm_free(dcp->name.s);
-	shm_free(dcp);
- 
-	return 0;
-}
-
-/**
- *
- */
 int dbt_table_free_rows(dbt_table_p _dtp)
 {
 	dbt_row_p _rp=NULL, _rp0=NULL;
-	int i = 0;
 	
 	if(!_dtp || !_dtp->rows || !_dtp->colv)
 		return -1;
@@ -165,14 +187,7 @@ int dbt_table_free_rows(dbt_table_p _dtp)
 	{
 		_rp0=_rp;
 		_rp=_rp->next;
-		i = 0;
-		for(i = 0; i < _dtp->nrcols; i++)
-		{
-			if(_dtp->colv[i]->type==DB_STR && _rp0->fields[i].val.str_val.s)
-				shm_free(_rp0->fields[i].val.str_val.s);
-		}
-		shm_free(_rp0->fields);
-		shm_free(_rp0);
+		dbt_row_free(_dtp, _rp0);
 	}
 	
 	dbt_table_update_flags(_dtp, DBT_TBFL_MODI, DBT_FL_SET, 1);

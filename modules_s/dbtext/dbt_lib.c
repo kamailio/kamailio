@@ -483,8 +483,8 @@ int dbt_db_free(dbt_db_p _dbp)
 	while(_tbc)
 	{
 		_tbc0 = _tbc;
+		tbl_cache_free(_tbc0);
 		_tbc = _tbc->next;
-		tbl_cache_free(_tbc);
 	}
 	
 	if(_dbp->name.s)
@@ -526,6 +526,7 @@ int tbl_cache_free(tbl_cache_p _tbc)
 		dbt_table_free(_tbc->dtp);
 	
 	lock_destroy(&_tbc->sem);
+	shm_free(_tbc);
 	
 	return 0;
 }

@@ -147,6 +147,7 @@ dbt_row_p dbt_row_new(int);
 dbt_table_p dbt_table_new(char*, int);
 tbl_cache_p tbl_cache_new();
 
+int dbt_row_free(dbt_table_p, dbt_row_p);
 int dbt_column_free(dbt_column_p);
 int dbt_table_free_rows(dbt_table_p);
 int dbt_table_free(dbt_table_p);

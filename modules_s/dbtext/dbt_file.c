@@ -417,6 +417,7 @@ done:
 	return dtp;
 clean:
 	/// ????? FILL IT IN - incomlete row/column
+	// memory leak?!?! with last incomplete row
 	DBG("DBT:dbt_load_file: error at row=%d col=%d c=%c\n", crow+1, ccol+1, c);
 	if(dtp)
 		dbt_table_free(dtp);
