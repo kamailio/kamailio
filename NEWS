@@ -10,6 +10,9 @@ new archs:
  - mips2/cobalt experimental support
  - x86_64 experimental support
 modules:
+ - nathelper received port  test (flag 16 for nat_uac_test): compares the
+   source port of the message with sip port in the first Via and returns
+   true if different.
  - TM saves the avp list into transactions, and make it available into
    callbacks, failure and reply routes.
  - VM functionality was transfered into TM module. Instead of fetching the
