@@ -88,6 +88,7 @@ CHECK_VIA	check_via
 LOOP_CHECKS	loop_checks
 
 LOADMODULE	loadmodule
+MODPARAM        modparam
 
 /* values */
 YES			"yes"|"true"|"on"|"enable"
@@ -162,6 +163,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 <INITIAL>{LOOP_CHECKS}	{ count(); yylval.strval=yytext; return LOOP_CHECKS; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
+<INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{EQUAL_T}	{ count(); return EQUAL_T; }

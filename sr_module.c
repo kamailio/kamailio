@@ -31,32 +31,32 @@ struct sr_module* modules=0;
 
 
 /* initializes statically built (compiled in) modules*/
-int init_builtin_modules()
+int register_builtin_modules()
 {
 	int ret;
 
 	ret=0;
 	#ifdef STATIC_TM
-		ret=register_module(tm_mod_register,"built-in", 0);
+		ret=register_module(tm_exports,"built-in", 0);
 		if (ret<0) return ret;
 	#endif
 	#ifdef STATIC_MAXFWD
-		ret=register_module(maxfwd_mod_register, "built-in", 0);
+		ret=register_module(maxfwd_exports, "built-in", 0);
 		if (ret<0) return ret;
 	#endif
 
 #ifdef STATIC_AUTH
-		ret=register_module(tm_mod_register, "built-in", 0);
+		ret=register_module(tm_exports, "built-in", 0);
 		if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_RR
-		ret=register_module(rr_mod_register, "built-in", 0);
+		ret=register_module(rr_exports, "built-in", 0);
 		if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_USRLOC
-		ret=register_module(usrloc_mod_register, "built-in", 0);
+		ret=register_module(usrloc_exports, "built-in", 0);
 		if (ret<0) return ret;
 #endif
 	
@@ -67,18 +67,13 @@ int init_builtin_modules()
 
 /* registers a module,  register_f= module register  functions
  * returns <0 on error, 0 on success */
-int register_module(module_register register_f, char* path, void* handle)
+int register_module(struct module_exports* e, char* path, void* handle)
 {
 	int ret;
-	struct module_exports* e;
 	struct sr_module* mod;
 	
 	ret=-1;
-	e=(*register_f)();
-	if (e==0){
-		LOG(L_ERR, "ERROR: mod_register returned null\n");
-		goto error;
-	}
+
 	/* add module to the list */
 	if ((mod=malloc(sizeof(struct sr_module)))==0){
 		LOG(L_ERR, "load_module: memory allocation failure\n");
@@ -122,7 +117,7 @@ int load_module(char* path)
 {
 	void* handle;
 	char* error;
-	module_register	mod_register;
+	struct module_exports* exp;
 	struct sr_module* t;
 	
 	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
@@ -140,12 +135,12 @@ int load_module(char* path)
 		}
 	}
 	/* launch register */
-	mod_register = (module_register)dlsym(handle, "mod_register");
+	exp = (struct module_exports*)dlsym(handle, "exports");
 	if ( (error =dlerror())!=0 ){
 		LOG(L_ERR, "ERROR: load_module: %s\n", error);
 		goto error1;
 	}
-	if (register_module(mod_register, path, handle)<0) goto error1;
+	if (register_module(exp, path, handle)<0) goto error1;
 	return 0;
 
 error1:
@@ -179,6 +174,28 @@ cmd_function find_export(char* name, int param_no)
 }
 
 
+void* find_param_export(char* mod, char* name, modparam_t type)
+{
+	struct sr_module* t;
+	int r;
+
+	for(t = modules; t; t = t->next) {
+		if (strcmp(mod, t->exports->name) == 0) {
+			for(r = 0; r < t->exports->par_no; r++) {
+				if ((strcmp(name, t->exports->param_names[r]) == 0) &&
+				    (t->exports->param_types[r] == type)) {
+					DBG("find_param_export: found <%s> in module %s [%s]\n",
+					    name, t->exports->name, t->path);
+					return t->exports->param_pointers[r];
+				}
+			}
+		}
+	}
+	DBG("find_param_export: parameter <%s> or module <%s> not found\n", name, mod);
+	return 0;
+}
+
+
 
 /* finds a module, given a pointer to a module function *
  * returns pointer to module, & if i i!=0, *i=the function index */
@@ -204,4 +221,23 @@ void destroy_modules()
 
 	for(t=modules;t;t=t->next)
 		if  ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
+}
+
+
+/*
+ * Initialize all loaded modules, the initialization
+ * is done *AFTER* the configuration file is parsed
+ */
+int init_modules(void)
+{
+	struct sr_module* t;
+	
+	for(t = modules; t; t = t->next) {
+		if ((t->exports) && (t->exports->init_f))
+			if (t->exports->init_f() != 0) {
+				LOG(L_ERR, "init_modules(): Error while initializing module %s\n", t->exports->name);
+				return -1;
+			}
+	}
+	return 0;
 }
