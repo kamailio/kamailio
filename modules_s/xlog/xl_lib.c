@@ -679,7 +679,7 @@ int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len)
 	{
 		/* put the text */
 		if(it->text.s && it->text.len>0) {
-			if(n+it->text.len+1 <= *len) {
+			if(n+it->text.len+1 >= *len) {
 				LOG(L_ERR, "XLOG: xl_print_log: buffer text overflow ...\n");
 				break;
 			}
