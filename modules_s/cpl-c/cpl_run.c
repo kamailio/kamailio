@@ -23,7 +23,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+ *
+ * History:
+ * -------
+ * 2003-01-23 : created (bogdan)
+ * 2003-09-11 : build_lump_rpl() merged into add_lump_rpl() (bogdan)
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -662,13 +667,12 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	memcpy(cp,CRLF,CRLF_LEN);
 
 	/* add the lump to the reply */
-	lump = build_lump_rpl( lump_str.s , lump_str.len , LUMP_RPL_HDR);
+	lump = add_lump_rpl( intr->msg, lump_str.s , lump_str.len , LUMP_RPL_HDR);
 	if(!lump) {
-		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to build lump_rpl! \n");
+		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to add lump_rpl! \n");
 		pkg_free( lump_str.s );
 		goto runtime_error;
 	}
-	add_lump_rpl( intr->msg , lump );
 
 	/* send the reply */
 	if (permanent)
@@ -676,7 +680,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	else
 		i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
 
-	/* msg which I'm working with can be in private memory or is a clone into
+	/* msg which I'm working on can be in private memory or is a clone into
 	 * shared memory (if I'm after a failed proxy); So, it's better to removed
 	 * by myself the lump that I added previosly */
 	unlink_lump_rpl( intr->msg, lump);

@@ -37,6 +37,7 @@
   * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
   * 2003-09-11: sl_tag converted to str to fit to the new
   *               build_res_buf_from_sip_req() interface (bogdan)
+  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
   */
 
 
@@ -120,7 +121,6 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	unsigned int       len;
 	union sockaddr_union to;
 	char *dset;
-	struct lump_rpl *dset_lump;
 	int dset_len;
 	struct bookmark dummy_bm;
 
@@ -149,8 +149,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	if (code>=300 && code<400) {
 		dset=print_dset(msg, &dset_len);
 		if (dset) {
-			dset_lump=build_lump_rpl(dset, dset_len, LUMP_RPL_HDR);
-			add_lump_rpl(msg, dset_lump);
+			add_lump_rpl(msg, dset, dset_len, LUMP_RPL_HDR);
 		}
 	}
 

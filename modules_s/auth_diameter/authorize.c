@@ -29,7 +29,7 @@
  * History:
  * -------
  * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
- *
+ * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags  (bogdan)
  */
 
 #include <stdio.h>
@@ -728,15 +728,14 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 int send_resp(struct sip_msg* m, int code, char* reason,
 					char* hdr, int hdr_len)
 {
-	struct lump_rpl* ptr;
-	
 	/* Add new headers if there are any */
-	if ((hdr) && (hdr_len)) 
-	{
-		ptr = build_lump_rpl(hdr, hdr_len, LUMP_RPL_HDR);
-		add_lump_rpl(m, ptr);
+	if ((hdr) && (hdr_len)) {
+		if (add_lump_rpl( m, hdr, hdr_len, LUMP_RPL_HDR)==0) {
+			LOG(L_ERR,"ERROR:auth_diamter:send_resp: unable to append hdr\n");
+			return -1;
+		}
 	}
-	
+
 	return sl_reply(m, (char*)(long)code, reason);
 }
 

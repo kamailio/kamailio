@@ -28,6 +28,7 @@
  * -------
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
+ * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 
@@ -666,8 +667,6 @@ error:
 
 static inline int do_script_download(struct sip_msg *msg)
 {
-	struct lump_rpl *ct_type;
-	struct lump_rpl *body;
 	str  user  = {0,0};
 	str script = {0,0};
 
@@ -680,21 +679,18 @@ static inline int do_script_download(struct sip_msg *msg)
 		goto error;
 
 	/* add a lump with content-type hdr */
-	ct_type = build_lump_rpl( CONTENT_TYPE_HDR, CONTENT_TYPE_HDR_LEN,
-		LUMP_RPL_HDR);
-	if (ct_type==0) {
+	if (add_lump_rpl( msg, CONTENT_TYPE_HDR, CONTENT_TYPE_HDR_LEN,
+	LUMP_RPL_HDR)==0) {
 		LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build hdr lump\n");
 		cpl_err = &intern_err;
 		goto error;
 	}
-	add_lump_rpl(  msg, ct_type);
 
 	if (script.s!=0) {
 		/*DBG("script len=%d\n--------\n%.*s\n--------\n",
 			script.len, script.len, script.s);*/
 		/* user has a script -> add a body lump */
-		body = build_lump_rpl( script.s, script.len, LUMP_RPL_BODY);
-		if (body==0) {
+		if ( add_lump_rpl( msg, script.s, script.len, LUMP_RPL_BODY)==0) {
 			LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build "
 				"body lump\n");
 			cpl_err = &intern_err;
@@ -702,13 +698,6 @@ static inline int do_script_download(struct sip_msg *msg)
 		}
 		/* build_lump_rpl duplicates the added text, so free the original */
 		shm_free( script.s );
-		/* add the lump */
-		if (add_lump_rpl( msg, body)==-1) {
-			LOG(L_CRIT,"BUG:cpl-c:do_script_download: body lump "
-				"already added\n");
-			cpl_err = &intern_err;
-			goto error;
-		}
 	}
 
 	return 0;

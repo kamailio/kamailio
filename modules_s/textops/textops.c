@@ -51,6 +51,7 @@
  *  2003-08-19  subst added (support for sed like res:s/re/repl/flags) (andrei)
  *  2003-08-20  subst_uri added (like above for uris) (andrei)
  *  2003-09-11  updated to new build_lump_rpl() interface (bogdan)
+ *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 
@@ -449,15 +450,11 @@ static int fixup_substre(void** param, int param_no)
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
 {
-	struct lump_rpl *lump;
-
-	lump = build_lump_rpl( key, strlen(key), LUMP_RPL_HDR);
-	if (!lump)
+	if ( add_lump_rpl( msg, key, strlen(key), LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"ERROR:append_to_reply : unable to create lump_rl\n");
+		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
 		return -1;
 	}
-	add_lump_rpl( msg , lump );
 
 	return 1;
 }

@@ -31,6 +31,7 @@
  * 2003-03-15: In case of HDR_PROXYAUTH we always extract realm from From,
  *             even for REGISTERS
  * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
+ * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 
@@ -86,13 +87,13 @@ int get_realm(struct sip_msg* _m, int _hftype, struct sip_uri* _u)
 int send_resp(struct sip_msg* _m, int _code, char* _reason,
 					char* _hdr, int _hdr_len)
 {
-	struct lump_rpl* ptr;
-	
-	     /* Add new headers if there are any */
+	/* Add new headers if there are any */
 	if ((_hdr) && (_hdr_len)) {
-		ptr = build_lump_rpl(_hdr, _hdr_len, LUMP_RPL_HDR);
-		add_lump_rpl(_m, ptr);
+		if (add_lump_rpl( _m, _hdr, _hdr_len, LUMP_RPL_HDR)==0) {
+			LOG(L_ERR,"ERROR:auth:send_resp: unable to append hdr\n");
+			return -1;
+		}
 	}
-	
+
 	return sl_reply(_m, (char*)(long)_code, _reason);
 }

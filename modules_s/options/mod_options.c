@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 #include "mod_options.h"
@@ -131,7 +135,6 @@ static int mod_init(void) {
 static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	str rpl_hf;
 	int offset = 0;
-	struct lump_rpl *p;
 
 	/* check if it is called for an OPTIONS request */
 	if ((_msg->REQ_METHOD==METHOD_OTHER) &&
@@ -192,19 +195,18 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 #endif
 
 
-	p = build_lump_rpl(rpl_hf.s, rpl_hf.len, LUMP_RPL_HDR);
-	pkg_free(rpl_hf.s);
-	if (p) {
-		add_lump_rpl(_msg, p);
+	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
+	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
 		if (sl_reply(_msg, (char*)200, "OK") == -1) {
 			LOG(L_ERR, "options_reply(): failed to send 200 via send_reply\n");
 			return -1;
 		}
 		else
 			return 0;
+	} else {
+		pkg_free(rpl_hf.s);
+		LOG(L_ERR, "options_reply(): add_lump_rpl failed\n");
 	}
-	else
-		LOG(L_ERR, "options_reply(): build_lump_rpl failed\n");
 
 error:
 	if (sl_reply(_msg, (char*)500, "Server internal error") == -1) {

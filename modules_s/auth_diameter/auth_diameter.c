@@ -160,10 +160,12 @@ static int mod_child_init(int r)
 	return 0;
 }
 
+#if 0
 static void destroy(void)
 {
 	close_tcp_connection(sockfd);
 }
+#endif
 
 
 /*

@@ -24,13 +24,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-/*
- * 2003-01-23 switched from t_uac to t_uac_dlg, adapted to new way of
- * parsing for Content-Type; by bogdan
- * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
+ *
+ * History:
+ * --------
+ * 2003-01-23: switched from t_uac to t_uac_dlg, adapted to new way of
+ *             parsing for Content-Type (bogdan)
+ * 2003-08-05: adapted to the new parse_content_type_hdr function (bogdan)
  * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
+ * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 
