@@ -191,7 +191,12 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	printf( "Initializing usrloc module\n");
+	printf( "Initializing usrloc module (OOO_HACK: "
+#ifdef OOO_HACK
+		"On)\n");
+#else
+		"Off)\n");
+#endif
 
 	     /*
 	      * We will need sl_send_reply from stateless
