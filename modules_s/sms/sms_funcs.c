@@ -749,6 +749,7 @@ void modem_process(struct modem *mdm)
 		used_mem = max_mem = 10;
 		cpms_unsuported = 1;
 	}
+	DBG("DEBUG:modem_process: modem maximum memory is %d\n",max_mem);
 
 	set_gettime_function();
 
@@ -760,8 +761,6 @@ void modem_process(struct modem *mdm)
 			counter = 0;
 			empty_pipe = 0;
 			net = &(networks[mdm->net_list[i]]);
-			DBG("DEBUG:modem_process: %s processing sms for net %s \n",
-				mdm->device, net->name);
 			/*getting msgs from pipe*/
 			while( counter<net->max_sms_per_call && !empty_pipe )
 			{
@@ -773,7 +772,6 @@ void modem_process(struct modem *mdm)
 						LOG(L_ERR,"ERROR:modem_process: truncated message"
 						" read from pipe! -> discarted\n");
 					else if (errno==EAGAIN) {
-						DBG("DEBUG:modem_process: out pipe emptied!! \n");
 						empty_pipe = 1;
 					}
 					counter++;
@@ -788,8 +786,10 @@ void modem_process(struct modem *mdm)
 				}
 
 				/* compute and send the sms */
-				DBG("DEBUG:modem_process: processing sms: \n\tTo:[%.*s] "
-					"\n\tBody=<%d>[%.*s]\n",sms_messg->to.len,sms_messg->to.s,
+				DBG("DEBUG:modem_process: %s processing sms for net %s:"
+					" \n\tTo:[%.*s]\n\tBody=<%d>[%.*s]\n",
+					mdm->device, net->name,
+					sms_messg->to.len,sms_messg->to.s,
 					sms_messg->text.len,sms_messg->text.len,sms_messg->text.s);
 				if ( send_as_sms( sms_messg , mdm)==-1 )
 					last_smsc_index = -1;
@@ -812,6 +812,7 @@ void modem_process(struct modem *mdm)
 
 		/* if any, let's get them */
 		if (used_mem)
+			DBG("DEBUG:modem_process: %d new SMS on modem\n",used_mem);
 			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
 				if (getsms(&sms,mdm,i)!=-1) {
 					k++;

@@ -236,8 +236,6 @@ int check_memory(struct modem *mdm, int flag)
 								"convert into integer used_memory from CPMS"
 								" response\n");
 						} else {
-							DBG("DEBUG:sms_check_memory: Used memory is %i\n",
-								foo);
 							return foo;
 						}
 					}
@@ -249,8 +247,6 @@ int check_memory(struct modem *mdm, int flag)
 								"convert into integer max_memory from CPMS"
 								" response\n");
 						} else {
-							DBG("DEBUG:sms_check_memory: Max memory is %i\n",
-								foo);
 							return foo;
 						}
 					}
