@@ -684,6 +684,17 @@ static int uptime_fifo_cmd( FILE *stream, char *response_file )
 	return 1;
 }
 
+static int kill_fifo_cmd( FILE *stream, char *response_file )
+{
+	if (response_file==0 || *response_file==0 ) { 
+		LOG(L_ERR, "ERROR: uptime_fifo_cmd: null file\n");
+		return -1;
+	}
+	fifo_reply(response_file, "200 killing now..." );
+	kill(0, SIGTERM);
+	return 1;
+}
+
 static int which_fifo_cmd(FILE *stream, char *response_file )
 {
 	FILE *reply_pipe;
@@ -763,6 +774,10 @@ int register_core_fifo()
 	}
 	if (register_fifo_cmd(ps_fifo_cmd, FIFO_PS, 0)<0) {
 		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PS);
+		return -1;
+	}
+	if (register_fifo_cmd(kill_fifo_cmd, FIFO_KILL, 0)<0) {
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_KILL);
 		return -1;
 	}
 	return 1;

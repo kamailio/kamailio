@@ -49,6 +49,8 @@
 #define FIFO_ARG "arg"
 /* print server's working directory */
 #define FIFO_PWD "pwd"
+/* kill the server */
+#define FIFO_KILL "kill"
 
 #define MAX_CTIME_LEN 128
 
