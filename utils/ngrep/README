@@ -1,0 +1,3 @@
+these patches to ngrep allow ngrep to display messages
+in line by line manner, good for postprocessing of textual
+protocols
