@@ -30,62 +30,21 @@
 
 
 #include <string.h>
-#include "../../dprint.h"
-#include "../../db/db.h"
+#include "../../dprint.h"               /* Logging */
+#include "../../db/db.h"                /* Generic database API */
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
-#include "../../parser/hf.h"
-#include "../../parser/parse_from.h"
+#include "../../parser/hf.h"            /* Header Field types */
+#include "../../parser/parse_from.h"    /* From parser */
 #include "group.h"
 #include "auth_mod.h"                   /* Module parameters */
 #include "common.h"
 
 
 /*
- * Check if the username matches the username in credentials
- */
-int is_user(struct sip_msg* _msg, char* _user, char* _str2)
-{
-	str* s;
-	struct hdr_field* h;
-	auth_body_t* c;
-
-	s = (str*)_user;
-
-	get_authorized_cred(_msg->authorization, &h);
-	if (!h) {
-		get_authorized_cred(_msg->proxy_auth, &h);
-		if (!h) {
-			LOG(L_ERR, "is_user(): No authorized credentials found (error in scripts)\n");
-			return -1;
-		}
-	}
-
-	c = (auth_body_t*)(h->parsed);
-
-	if (!c->digest.username.len) {
-		DBG("is_user(): Username not found in credentials\n");
-		return -1;
-	}
-
-	if (s->len != c->digest.username.len) {
-		return -1;
-	}
-
-	if (!memcmp(s->s, c->digest.username.s, s->len)) {
-		DBG("is_user(): Username matches\n");
-		return 1;
-	} else {
-		DBG("is_user(): Username differs\n");
-		return -1;
-	}
-}
-
-
-/*
  * Check if the user specified in credentials is a member
  * of given group
  */
-int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
+int is_in_group(struct sip_msg* _m, char* _group, char* _str2)
 {
 	db_key_t keys[] = {grp_user_col, grp_grp_col};
 	db_val_t vals[2];
@@ -94,9 +53,9 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
 	struct hdr_field* h;
 	auth_body_t* c;
 
-	get_authorized_cred(_msg->authorization, &h);
+	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
-		get_authorized_cred(_msg->proxy_auth, &h);
+		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
 			LOG(L_ERR, "is_in_group(): No authorized credentials found (error in scripts)\n");
 			return -1;
@@ -158,13 +117,9 @@ static inline int get_request_user(struct sip_msg* _m, str* _s)
  */
 static inline int get_to_user(struct sip_msg* _m, str* _s)
 {
-	if (!_m->to && (parse_headers(_m, HDR_TO, 0) == -1)) {
-		LOG(L_ERR, "is_user_in(): Error while parsing message\n");
+	if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
+		LOG(L_ERR, "is_user_in(): Can't get To header field\n");
 		return -1;
-	}
-	if (!_m->to) {
-		LOG(L_ERR, "is_user_in(): To HF not found\n");
-		return -2;
 	}
 	
 	_s->s = ((struct to_body*)_m->to->parsed)->uri.s;
@@ -172,7 +127,7 @@ static inline int get_to_user(struct sip_msg* _m, str* _s)
 
 	if (get_username(_s) < 0) {
 		LOG(L_ERR, "get_to_user(): Error while extracting username\n");
-		return -3;
+		return -2;
 	}
 	return 0;
 }
@@ -185,7 +140,7 @@ static inline int get_from_user(struct sip_msg* _m, str* _s)
 {
 	if (parse_from_header(_m) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while parsing From body\n");
-		return -5;
+		return -1;
 	}
 	
 	_s->s = ((struct to_body*)_m->from->parsed)->uri.s;
@@ -193,7 +148,7 @@ static inline int get_from_user(struct sip_msg* _m, str* _s)
 
 	if (get_username(_s) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while extracting username\n");
-		return -6;
+		return -2;
 	}
 
 	return 0;
@@ -213,7 +168,7 @@ static inline int get_cred_user(struct sip_msg* _m, str* _s)
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
 			LOG(L_ERR, "is_user_in(): No authorized credentials found (error in scripts)\n");
-			return -6;
+			return -1;
 		}
 	}
 	

@@ -141,7 +141,11 @@ int check_nonce(str* _nonce, str* _secret)
 	char non[NONCE_LEN + 1];
 
 	if (_nonce->s == 0) {
-		return 0;  /* Invalid nonce */
+		return -1;  /* Invalid nonce */
+	}
+
+	if (NONCE_LEN != _nonce->len) {
+		return 1; /* Lengths must be equal */
 	}
 
 	expires = get_nonce_expires(_nonce);
@@ -149,29 +153,24 @@ int check_nonce(str* _nonce, str* _secret)
 
 	calc_nonce(non, expires, retry, _secret);
 
-	if (NONCE_LEN != _nonce->len) {
-		return 0; /* Lengths must be equal */
-	}
-
 	if (!memcmp(non, _nonce->s, _nonce->len)) {
-		return 1;
+		return 0;
 	}
 
-	return 0;
+	return 2;
 }
 
 
 /*
- * Returns 1 if nonce is stale
- * 0 otherwise
+ * Check if a nonce is stale
  */
 int nonce_is_stale(str* _n) 
 {
-	if (!_n->s) return 0;
+	if (!_n->s) return -1;
 
-	if (get_nonce_expires(_n) < time(NULL)) {
-		return 1;
-	} else {
+	if (get_nonce_expires(_n) < time(0)) {
 		return 0;
+	} else {
+		return 1;
 	}
 }

@@ -30,17 +30,58 @@
 
 #include <string.h>
 #include "../../str.h"
-#include "../../dprint.h"
+#include "../../dprint.h"               /* Debugging */
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
-#include "../../ut.h"
+#include "../../ut.h"                   /* Handy utilities */
 #include "checks.h"
 #include "defs.h"
 #include "common.h"
 
 
+/*
+ * Check if the username matches the username in credentials
+ */
+int is_user(struct sip_msg* _m, char* _user, char* _str2)
+{
+	str* s;
+	struct hdr_field* h;
+	auth_body_t* c;
+
+	s = (str*)_user;
+
+	get_authorized_cred(_m->authorization, &h);
+	if (!h) {
+		get_authorized_cred(_m->proxy_auth, &h);
+		if (!h) {
+			LOG(L_ERR, "is_user(): No authorized credentials found (error in scripts)\n");
+			return -1;
+		}
+	}
+
+	c = (auth_body_t*)(h->parsed);
+
+	if (!c->digest.username.len) {
+		DBG("is_user(): Username not found in credentials\n");
+		return -1;
+	}
+
+	if (s->len != c->digest.username.len) {
+		DBG("is_user(): Username length does not match\n");
+		return -1;
+	}
+
+	if (!memcmp(s->s, c->digest.username.s, s->len)) {
+		DBG("is_user(): Username matches\n");
+		return 1;
+	} else {
+		DBG("is_user(): Username differs\n");
+		return -1;
+	}
+}
+
 
 /*
- * Check if To header field contains the same username
+ * Check if a header field contains the same username
  * as digest credentials
  */
 static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
@@ -56,7 +97,7 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 	int len;
 
 	if (!_h) {
-		LOG(L_ERR, "check_username(): To HF not found\n");
+		LOG(L_ERR, "check_username(): Header Field not found\n");
 		return -1;
 	}
 
@@ -65,7 +106,7 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
 			LOG(L_ERR, "check_username(): No authorized credentials found (error in scripts)\n");
-			return -1;
+			return -2;
 		}
 	}
 
@@ -76,10 +117,10 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 
 	if (get_username(&user) < 0) {
 		LOG(L_ERR, "check_username(): Can't extract username\n");
-		return -1;
+		return -3;
 	}
 
-	if (!user.len) return -1;
+	if (!user.len) return -4;
 
 	len = c->digest.username.len;
 
@@ -91,30 +132,38 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 #endif
 
 	if (user.len == len) {
-		if (strncasecmp(user.s, c->digest.username.s, len) == 0) {
-			DBG("check_username(): auth id and To username are equal\n");
+		if (!memcmp(user.s, c->digest.username.s, len)) {
+			DBG("check_username(): Username is same\n");
 			return 1;
 		}
 	}
 	
-	DBG("check_username(): auth id and To username differ\n");
-	return -1;
+	DBG("check_username(): Username is different\n");
+	return -5;
 }
 
 
 /*
  * Check username part in To header field
  */
-int check_to(struct sip_msg* _msg, char* _s1, char* _s2)
+int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	return check_username(_msg, _msg->to);
+	if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
+		LOG(L_ERR, "check_to(): Error while parsing To header field\n");
+		return -1;
+	}
+	return check_username(_m, _m->to);
 }
 
 
 /*
  * Check username part in From header field
  */
-int check_from(struct sip_msg* _msg, char* _s1, char* _s2)
+int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	return check_username(_msg, _msg->from);
+	if (!_m->from && ((parse_headers(_m, HDR_FROM, 0) == -1) || (!_m->from))) {
+		LOG(L_ERR, "check_from(): Error while parsing From header field\n");
+		return -1;
+	}
+	return check_username(_m, _m->from);
 }

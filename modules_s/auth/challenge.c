@@ -59,7 +59,7 @@ static inline void build_auth_hf(int _retries, int _stale, char* _realm, char* _
 {
 	char nonce[NONCE_LEN + 1];
 	
-	calc_nonce(nonce, time(NULL) + nonce_expire, _retries, &secret);
+	calc_nonce(nonce, time(0) + nonce_expire, _retries, &secret);
 	nonce[NONCE_LEN] = '\0';
 	
 	*_len = snprintf(_buf, AUTH_HF_LEN,
@@ -75,7 +75,7 @@ static inline void build_auth_hf(int _retries, int _stale, char* _realm, char* _
 			 (_stale) ? (", stale=true") : ("")
 			 );		
 	
-	DBG("build_auth_hf(): %s\n", _buf);
+	DBG("build_auth_hf(): \'%s\'\n", _buf);
 }
 
 
@@ -118,7 +118,7 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
 	}
 	
 	if (send_resp(_msg, _code, _message, auth_hf, auth_hf_len) == -1) {
-		LOG(L_ERR, "www_challenge(): Error while sending response\n");
+		LOG(L_ERR, "challenge(): Error while sending response\n");
 		return -1;
 	}
 	return 0;

@@ -36,6 +36,12 @@
 
 
 /*
+ * Check if given username matches those in digest credentials
+ */
+int is_user(struct sip_msg* _msg, char* _user, char* _str2);
+
+
+/*
  * Check if To header field contains the same username
  * as digest credentials
  */

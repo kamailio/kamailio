@@ -32,17 +32,18 @@
 #include "../../parser/hf.h"            /* HDR_PROXYAUTH & HDR_AUTHORIZATION */
 #include "../../str.h"
 #include "../../parser/digest/digest.h" /* dig_cred_t */
-#include "../../db/db.h"
-#include "../../mem/mem.h"
+#include "../../db/db.h"                /* Database API */
+#include "../../mem/mem.h"              /* Memory subsystem */
 #include "authorize.h"
 #include "defs.h"                       /* ACK_CANCEL_HACK */
-#include "nonce.h"
+#include "nonce.h"                      /* Nonce related functions */
 #include "common.h"                     /* send_resp */
 #include "auth_mod.h"
 #include "rfc2617.h"
 
 
 #define MESSAGE_400 "Bad Request"
+#define MESSAGE_500 "Server Internal Error"
 
 
 /*
@@ -69,6 +70,15 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 	VAL_STR(vals) = *_user;
 	VAL_STR(vals + 1) = *_realm;
 
+	     /*
+	      * Some user agents put domain in the username, since we
+	      * have only usernames in database, remove domain part
+	      * if the server uses HA1 precalculated strings in the
+	      * database, then switch over to another column, which
+	      * contains HA1 strings calculated also with domain, the
+	      * original column contains HA1 strings calculated without
+	      * the domain part
+	      */
 #ifdef USER_DOMAIN_HACK
 	at = memchr(_user->s, '@', _user->len);
 	if (at) {
@@ -80,26 +90,42 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 	}
 #endif
 
+	     /* 
+	      * Query the database either for HA1 string or plaintext password,
+	      * it depends on calculate_ha1 variable value
+	      */
 	db_use_table(db_handle, _table);
 	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
 
+	     /*
+	      * There is no such username in the database, return 1
+	      */
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s\'\n", _user->len, _user->s);
 		db_free_query(db_handle, res);
-		return -1;
+		return 1;
 	}
 
         result.s = (char*)ROW_VALUES(RES_ROWS(res))[0].val.string_val;
 	result.len = strlen(result.s);
 
+	     /*
+	      * If calculate_ha1 variable is set to true, calculate HA1 
+	      * string on the fly from username, realm and plaintext 
+	      * password obtained from the database and return the 
+	      * calculated HA1 string
+	      *
+	      * If calculate_ha1 is not set, we have the HA1 already,
+	      * just return it
+	      */
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
 		calc_HA1(HA_MD5, _user, _realm, &result, 0, 0, _ha1);
-		DBG("get_ha1(): HA1 string calculated: %s\n", _ha1);
+		DBG("get_ha1(): HA1 string calculated: \'%s\'\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
 		_ha1[result.len] = '\0';
@@ -118,24 +144,36 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 {
 	HASHHEX resp, hent;
 
+	     /*
+	      * First, we have to verify that the response received has
+	      * the same length as responses created by us
+	      */
 	if (_cred->response.len != 32) {
-		LOG(L_ERR, "check_response(): Receive response len != 32\n");
-		return -1;
+		DBG("check_response(): Receive response len != 32\n");
+		return 1;
 	}
 
+	     /*
+	      * Now, calculate our response from parameters received
+	      * from the user agent
+	      */
 	calc_response(_ha1, &(_cred->nonce), 
 		      &(_cred->nc), &(_cred->cnonce), 
 		      &(_cred->qop.qop_str), _cred->qop.qop_parsed == QOP_AUTHINT,
 		      _method, &(_cred->uri), hent, resp);
 	
-	DBG("check_response(): Our result = %s\n", resp);
+	DBG("check_response(): Our result = \'%s\'\n", resp);
 	
+	     /*
+	      * And simply compare the strings, the user is
+	      * authorized if they match
+	      */
 	if (!memcmp(resp, _cred->response.s, 32)) {
 		DBG("check_response(): Authorization is OK\n");
 		return 0;
 	} else {
 		DBG("check_response(): Authorization failed\n");
-		return 1;
+		return 2;
 	}
 }
 
@@ -149,16 +187,20 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 	int res;
 	str* r;
 
+	     /*
+	      * Determine if we should use WWW-Authorization or
+	      * Proxy-Authorization header fields, this parameter
+	      * is set in www_authorize and proxy_authorize
+	      */
 	switch(_hftype) {
 	case HDR_AUTHORIZATION: hook = &(_m->authorization); break;
 	case HDR_PROXYAUTH:     hook = &(_m->proxy_auth);    break;
-	default:
-		LOG(L_ERR, "find_credentials(): Invalid header field typ as parameter\n");
-		return -1;
+	default:                hook = &(_m->authorization); break;
 	}
 
-	*_h = 0;
-	
+	     /*
+	      * If the credentials haven't been parsed yet, do it now
+	      */
 	if (*hook == 0) {
 		     /* No credentials parsed yet */
 		if (parse_headers(_m, _hftype, 0) == -1) {
@@ -169,14 +211,15 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 
 	ptr = *hook;
 
+	     /*
+	      * Iterate through the credentials in the message and
+	      * find credentials with given realm
+	      */
 	while(ptr) {
 		res = parse_credentials(ptr);
 		if (res < 0) {
 			LOG(L_ERR, "find_credentials(): Error while parsing credentials\n");
-			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
-				LOG(L_ERR, "find_credentials(): Error while sending 400 reply\n");
-			}
-			return -1;
+			return -3;
 		} else if (res == 0) {
 			r = &(((auth_body_t*)(ptr->parsed))->digest.realm);
 
@@ -191,7 +234,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		prev = ptr;
 		if (parse_headers(_m, _hftype, 1) == -1) {
 			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
-			return -3;
+			return -4;
 		} else {
 			if (prev != _m->last_header) {
 				if (_m->last_header->type == _hftype) ptr = _m->last_header;
@@ -199,14 +242,18 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 			} else ptr = 0;
 		}
 	}
-	return 0;
+	
+	     /*
+	      * Credentials with given realm not found
+	      */
+	return 1;
 }
 
 
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int _hftype)
+static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _hftype)
 {
 	char ha1[256];
 	int res;
@@ -219,8 +266,8 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	      * challenged because it must have the same CSeq as
 	      * the request to be cancelled
 	      */
-	if ((_msg->REQ_METHOD == METHOD_ACK) || 
-	    (_msg->REQ_METHOD == METHOD_CANCEL)) {
+	if ((_m->REQ_METHOD == METHOD_ACK) || 
+	    (_m->REQ_METHOD == METHOD_CANCEL)) {
 	        return 1;
 	}
 #endif
@@ -229,35 +276,33 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	      * in the message, parse them and return pointer to
 	      * parsed structure
 	      */
-	if (find_credentials(_msg, _realm, _hftype, &h) < 0) {
+	res = find_credentials(_m, _realm, _hftype, &h);
+	if (res < 0) {
 		LOG(L_ERR, "authorize(): Error while looking for credentials\n");
-		return -1;
-	}
-
-	     /*
-	      * No credentials with given realm found, don't authorize
-	      */
-	if (h == 0) {
+		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
+			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+			return -1;
+		}
+		return 0;
+	} else if (res > 0) {
 		DBG("authorize(): Credentials with given realm not found\n");
 		return -1;
 	}
 
+	     /* Pointer to the parsed credentials */
 	cred = (auth_body_t*)(h->parsed);
 
-	     /* Check credentials correctness here 
-	      * FIXME: 400s should be sent from routing scripts, but we will need
-	      * variables for that
-	      */
+	     /* Check credentials correctness here */
 	if (check_dig_cred(&(cred->digest)) != E_DIG_OK) {
 		LOG(L_ERR, "authorize(): Credentials received are not filled properly\n");
-
-		if (send_resp(_msg, 400, MESSAGE_400, NULL, 0) == -1) {
+		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+			return -1;
 		}
 		return 0;
 	}
 
-	if (check_nonce(&(cred->digest.nonce), &secret) == 0) {
+	if (check_nonce(&(cred->digest.nonce), &secret) != 0) {
 		LOG(L_ALERT, "authorize(): Invalid nonce value received, very suspicious !\n");
 		return -1;
 	}
@@ -270,17 +315,26 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	     /* Calculate or fetch from the dabase HA1 string, which
 	      * is necessary for request recalculation
 	      */
-        if (get_ha1(&(cred->digest.username), _realm, _table, ha1) == -1) {
+	res = get_ha1(&cred->digest.username, _realm, _table, ha1);
+        if (res < 0) {
+		     /* Error while accessing the database */
+		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
+			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
+			return -1;
+		}
+		return 0;
+	} else if (res > 0) {
+		     /* Username not found */
 		return -1;
 	}
 
 	     /* Recalculate response, it must be same to authorize sucessfully */
-        res = check_response(&(cred->digest), &_msg->first_line.u.request.method, ha1);
+        res = check_response(&(cred->digest), &_m->first_line.u.request.method, ha1);
 
 	if (res == 0) {  /* response was OK */
-		if (nonce_is_stale(&(cred->digest.nonce))) {
-			if ((_msg->REQ_METHOD == METHOD_ACK) || 
-			    (_msg->REQ_METHOD == METHOD_CANCEL)) {
+		if (!nonce_is_stale(&(cred->digest.nonce))) {
+			if ((_m->REQ_METHOD == METHOD_ACK) || 
+			    (_m->REQ_METHOD == METHOD_CANCEL)) {
 				     /* Method is ACK or CANCEL, we must accept stale
 				      * nonces because there is no way how to challenge
 				      * with new nonce (ACK has no response associated 
@@ -303,9 +357,13 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	}
 
  mark:
-	if (mark_authorized_cred(_msg, h) < 0) {
+	if (mark_authorized_cred(_m, h) < 0) {
 		LOG(L_ERR, "authorize(): Error while marking parsed credentials\n");
-		return -1;
+		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
+			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
+			return -1;
+		}
+		return 0;
 	}
 	return 1;
 }
@@ -314,19 +372,19 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 /*
  * Authorize using Proxy-Authorize header field
  */
-int proxy_authorize(struct sip_msg* _msg, char* _realm, char* _table)
+int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
 	     /* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (str*)_realm, _table, HDR_PROXYAUTH);
+	return authorize(_m, (str*)_realm, _table, HDR_PROXYAUTH);
 }
 
 
 /*
  * Authorize using WWW-Authorize header field
  */
-int www_authorize(struct sip_msg* _msg, char* _realm, char* _table)
+int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return authorize(_msg, (str*)_realm, _table, HDR_AUTHORIZATION);
+	return authorize(_m, (str*)_realm, _table, HDR_AUTHORIZATION);
 }
 
 
@@ -353,5 +411,3 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 
 	return 1;
 }
-
-

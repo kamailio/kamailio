@@ -3,9 +3,7 @@
   any other function
 - Create some examples how to use digest parser
 
-- cnonce, nonce-count
 - Consider MD5-Sess support(will require to store passwords in clear text)
 - auth-int support
 - Database cache
 - Option to use memory only
-- Send internal error in case of any problem
