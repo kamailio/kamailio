@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -182,7 +182,7 @@ static inline void init_synonym_id( struct cell *t )
 		p_msg=t->uas.request;
 		if (p_msg) {
 			/* char value of a proxied transaction is
-			   calculated out of header-fileds forming
+			   calculated out of header-fields forming
 			   transaction key
 			*/
 			char_msg_val( p_msg, t->md5 );
@@ -351,14 +351,14 @@ error0:
 
 
 /*  Takes an already created cell and links it into hash table on the
- *  appropiate entry. */
+ *  appropriate entry. */
 void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 {
 	struct entry* p_entry;
 
 	p_cell->hash_index=_hash;
 
-	/* locates the apropiate entry */
+	/* locates the appropriate entry */
 	p_entry = &tm_table->entrys[ _hash ];
 
 	p_cell->label = p_entry->next_label++;

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -84,16 +84,16 @@ struct cell;
  * with it).
  *
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
- * an existing transaction. It may or may not be a retranmisssion.
+ * an existing transaction. It may or may not be a retransmission.
  *
- *  TMCB_RESPONSE_OUT -- a final reply was sent out (eiter local 
+ *  TMCB_RESPONSE_OUT -- a final reply was sent out (either local 
  *  or proxied) -- there is nothing more you can change from
  *  the callback, it is good for accounting-like uses.
  *
  *    Note: the message passed to callback may also have
  *    value FAKED_REPLY (like other reply callbacks) which
- *    indicates a psedo_reply caused by a timer. Check for
- *    this value before derefing -- you will cause a segfault
+ *    indicates a pseudo_reply caused by a timer. Check for
+ *    this value before deferring -- you will cause a segfault
  *    otherwise. Check for t->uas.request validity too if you
  *    need it ... locally initiated UAC transactions set it to 0.
  *
@@ -118,8 +118,8 @@ struct cell;
  *  made to forward a reply; it is parametrized by pkg message 
  *  which caused the transaction to complete (which is not 
  *  necessarily the same which will be forwarded). As forwarding
- *  has not been executed and may fail, there is no guarentee
- *  a reply will be successfuly sent out at this point of time.
+ *  has not been executed and may fail, there is no guarantee
+ *  a reply will be successfully sent out at this point of time.
  *
  *     Note: TMCB_REPLY_ON_FAILURE and TMCB_REPLY_FWDED are
  *     called from reply mutex which is used to deterministically
@@ -137,7 +137,7 @@ struct cell;
  *  TMCB_E2EACK_IN -- called when an ACK belonging to a proxied
  *  INVITE transaction completed with 200 arrived. Note that
  *  because it can be only dialog-wise matched, only the first
- *  transaction occurence will be matched with spirals. If
+ *  transaction occurrence will be matched with spirals. If
  *  record-routing is not enabled, you will never receive the
  *  ACK and the callback will be never triggered.
  *
@@ -160,7 +160,7 @@ struct cell;
 */
 
 
-/* pack structure with all params passed toa callback function */
+/* pack structure with all params passed to callback function */
 struct tmcb_params {
 	struct sip_msg* req;
 	struct sip_msg* rpl;

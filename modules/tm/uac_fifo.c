@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -238,7 +238,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 	union sockaddr_union to_su;
 	struct socket_info* send_sock;
 
-	ret=0; /* pesimist: assume failure */
+	ret=0; /* pessimist: assume failure */
 	total_len=0;
 	last=&sl;
 	last->next=0;
@@ -429,7 +429,7 @@ static inline int fifo_check_msg(struct sip_msg* msg, str* method, char* resp, s
 			if (c >= '0' && c <= '9' ) *cseq = (*cseq) * 10 + c - '0';
 			else {
 			        DBG("found non-numerical in CSeq: <%i>='%c'\n",(unsigned int)c,c);
-				fifo_uac_error(resp, 400, "non-nummerical CSeq");
+				fifo_uac_error(resp, 400, "non-numerical CSeq");
 				return -6;
 			}
 		}
@@ -568,7 +568,7 @@ static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 		fprintf(f, "%s\n", ps->rpl->headers->name.s);
 		fclose(f);
 	}
-	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
+	DBG("DEBUG: fifo_callback successfully completed\n");
 done:
 	shm_free(filename);
 }

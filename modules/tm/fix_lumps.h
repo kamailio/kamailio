@@ -7,7 +7,7 @@
  *
  * I admit it is not a nice hack; -jiri 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -31,7 +31,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 /*
- * Histoy:
+ * History:
  * -------
  *  2003-11-24  changed free_via_lump to free_via_clen_lump and make it
  *              handle CONTENTLENGTH lumps also (andrei)

@@ -2,7 +2,7 @@
  *
  * Shared memory functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -28,7 +28,7 @@
 /*
  * History:
  * --------
- *  2003-03-12  splited shm_mem_init in shm_getmem & shm_mem_init_mallocs
+ *  2003-03-12  split shm_mem_init in shm_getmem & shm_mem_init_mallocs
  *               (andrei)
  *  2004-07-27  ANON mmap support, needed on darwin (andrei)
  */
@@ -81,7 +81,7 @@ inline static void* sh_realloc(void* p, unsigned int size)
 }
 
 /* look at a buffer if there is perhaps enough space for the new size
-   (It is benefitial to do so because vq_malloc is pretty stateful
+   (It is beneficial to do so because vq_malloc is pretty stateful
     and if we ask for a new buffer size, we can still make it happy
     with current buffer); if so, we return current buffer again;
     otherwise, we free it, allocate a new one and return it; no

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -57,7 +57,7 @@ int init_tmcb_lists()
 	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
 		( sizeof(struct tmcb_head_list) );
 	if (req_in_tmcb_hl==0) {
-		LOG(L_CRIT,"ERROR:tm:init_tmcb_lists: nomore shared mem\n");
+		LOG(L_CRIT,"ERROR:tm:init_tmcb_lists: no more shared mem\n");
 		return -1;
 	}
 	req_in_tmcb_hl->first = 0;
@@ -115,7 +115,7 @@ inline int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 
 /* register a callback function 'f' for 'types' mask of events;
  * will be called back whenever one of the events occurs in transaction module
- * (global or per transacation, depinding of event type)
+ * (global or per transaction, depending of event type)
 */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 											transaction_cb f, void *param )

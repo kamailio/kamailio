@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -61,7 +61,7 @@ int _test_insert_to_reply( struct sip_msg *msg, char *str )
         return 0;
     }
     if (insert_new_lump_before(anchor,buf, len, 0)==0) {
-        LOG(L_ERR, "_test_insert_to_reply: inser_new_lump failed\n");
+        LOG(L_ERR, "_test_insert_to_reply: insert_new_lump failed\n");
         return 0;
     }
     return 1;

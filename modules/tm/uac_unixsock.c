@@ -124,7 +124,7 @@ static int get_nexthop(str* nexthop, struct sip_uri* pnexthop, str* msg)
 /*
  * Read header into a static buffer (it is necessary because
  * the unixsock_read_lineset performs CRLF recovery and thus
- * the resul may be longer than the original
+ * the result may be longer than the original
  */
 static int get_headers(str* headers, str* msg)
 {
@@ -210,7 +210,7 @@ static int check_msg(struct sip_msg* msg, str* method, str* body,
 				*cseq = (*cseq) * 10 + c - '0';
 			} else {
 			        DBG("check_msg: Found non-numerical in CSeq: <%i>='%c'\n", (unsigned int)c, c);
-				unixsock_reply_asciiz("400 Non-numberical CSeq");
+				unixsock_reply_asciiz("400 Non-numerical CSeq");
 				goto err;
 			}
 		}
@@ -267,7 +267,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 	union sockaddr_union to_su;
 	struct socket_info* send_sock;
 
-	ret = 0; /* pesimist: assume failure */
+	ret = 0; /* pessimist: assume failure */
 	total_len = 0;
 	last = &sl;
 	last->next = 0;

@@ -12,7 +12,7 @@
  * not only take lookup in fragment table but also a shmem lock
  * operation (the same for shm_free)
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -62,7 +62,7 @@
 
 
 /* rounds to the first 4 byte multiple on 32 bit archs 
- * and to the first 8 byte multipe on 64 bit archs */
+ * and to the first 8 byte multiple on 64 bit archs */
 #define ROUND4(s) \
 	(((s)+(sizeof(char*)-1))&(~(sizeof(char*)-1)))
 
@@ -466,7 +466,7 @@ do { \
 			hdr->body.s);
 		/* by default, we assume we don't understand this header in TM
 		   and better set it to zero; if we do, we will set a specific
-		   valu in the following switch statement
+		   value in the following switch statement
 		*/
 		new_hdr->parsed=0;
 
@@ -660,7 +660,7 @@ do { \
 		new_msg->last_header = last_hdr;
 	}
 
-	/* clonning data lump */
+	/* cloning data lump */
 #define CLONE_LUMP_LIST(anchor, list) \
 do { \
 	struct lump* lump_tmp, *l; \

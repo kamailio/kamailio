@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -41,7 +41,7 @@ enum rps {
 	RPS_ERROR=0,	
 	/* transaction completed but we still accept the reply */
 	RPS_PUSHED_AFTER_COMPLETION,
-	/* reply dscarded */
+	/* reply discarded */
 	RPS_DISCARDED,
 	/* reply stored for later processing */
 	RPS_STORE,
@@ -89,7 +89,7 @@ int t_retransmit_reply( /* struct sip_msg * */  );
 
 /* send a UAS reply
  * Warning: 'buf' and 'len' should already have been build.
- * returns 1 if everything was OK or -1 for erro
+ * returns 1 if everything was OK or -1 for error
  */
 
 #ifdef _OBSO
@@ -103,7 +103,7 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 
 
 /* send a UAS reply
- * returns 1 if everything was OK or -1 for erro
+ * returns 1 if everything was OK or -1 for error
  */
 int t_reply( struct cell *t, struct sip_msg * , unsigned int , char * );
 /* the same as t_reply, except it does not claim

@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -253,7 +253,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 	}
 	/* now when out-of-lock do the cancel I/O */
 	if (do_cancel_branch) cancel_branch(t, branch );
-	/* it's cleaned up on error; if no error occured and transaction
+	/* it's cleaned up on error; if no error occurred and transaction
 	   completed regularly, I have to clean-up myself
 	*/
 	if (reply_status==RPS_COMPLETED) {
@@ -263,7 +263,7 @@ static void fake_reply(struct cell *t, int branch, int code )
 		*/
 		/* don't need to issue cancels -- local cancels have been
 		   issued branch by branch and this last branch was
-		   cancelled now too
+		   canceled now too
 		*/
 		/* then the only thing to do now is to put the transaction
 		   on FR/wait state 
@@ -290,7 +290,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 #endif
 
 	/*the transaction is already removed from RETRANSMISSION_LIST by timer*/
-	/* retransmision */
+	/* retransmission */
 	if ( r_buf->activ_type==TYPE_LOCAL_CANCEL 
 		|| r_buf->activ_type==TYPE_REQUEST ) {
 			DBG("DEBUG: retransmission_handler : "
@@ -359,7 +359,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 #		ifdef EXTRA_DEBUG
 		if (t->uas.request->REQ_METHOD!=METHOD_INVITE
 			|| t->uas.status < 200 ) {
-			LOG(L_ERR, "ERROR: final_response_handler: uknown type reply buffer\n");
+			LOG(L_ERR, "ERROR: final_response_handler: unknown type reply buffer\n");
 			abort();
 		}
 #		endif
@@ -497,9 +497,9 @@ void unlink_timer_lists()
 	/* unlink the timer lists */
 	for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
 		reset_timer_list( i );
-	DBG("DEBUG: unlink_timer_lists : empting DELETE list\n");
+	DBG("DEBUG: unlink_timer_lists : emptying DELETE list\n");
 	/* deletes all cells from DELETE_LIST list 
-	   (they are no more accessible from enrys) */
+	   (they are no more accessible from entrys) */
 	while (tl!=end) {
 		tmp=tl->next_tl;
 		free_cell( get_dele_timer_payload(tl) );
@@ -700,8 +700,8 @@ static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 
 /* stop timer
  * WARNING: a reset'ed timer will be lost forever
- *  (succesive set_timer won't work unless you're lucky
- *   an catch the race condition, the ideea here is there is no
+ *  (successive set_timer won't work unless you're lucky
+ *   an catch the race condition, the idea here is there is no
  *   guarantee you can do anything after a timer_reset)*/
 void reset_timer( struct timer_link* tl )
 {
@@ -735,7 +735,7 @@ void set_timer( struct timer_link *new_tl, enum lists list_id )
 
 
 	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
-		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
+		LOG(L_CRIT, "ERROR: set_timer: unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();
 #endif
@@ -770,7 +770,7 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id )
 
 
 	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
-		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
+		LOG(L_CRIT, "ERROR: set_timer: unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();
 #endif

@@ -35,7 +35,9 @@ Jiri Kuthan
 
         1.4. Exported Functions
 
-              1.4.1. t_relay_to(ip, port)
+              1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip,
+                      port)
+
               1.4.2. t_relay()
               1.4.3. t_on_negative(reply_route)
               1.4.4. append_branch()
@@ -68,7 +70,7 @@ Jiri Kuthan
    1-7. Set retr_timer1p4 parameter
    1-8. Set retr_timer2 parameter
    1-9. Set noisy_ctimer parameter
-   1-10. t_relay_to usage
+   1-10. t_relay_to_udp usage
    1-11. t_relay usage
    1-12. t_on_negative usage
    1-13. append_branch usage
@@ -89,36 +91,37 @@ Chapter 1. User's Guide
    and CPU, is some services inherently need state. For example,
    transaction-based accounting (module acc) needs to process
    transaction state as opposed to individual messages, and any
-   kinds of forking must be implemented statefuly. Other use of
+   kinds of forking must be implemented statefully. Other use of
    stateful processing is it trading CPU caused by retransmission
    processing for memory. That makes however only sense if CPU
    consumption per request is huge. For example, if you want to
    avoid costly DNS resolution for every retransmission of a
-   request to an unresolveable destination, use stateful mode.
+   request to an unresolvable destination, use stateful mode.
    Then, only the initial message burdens server by DNS queries,
-   subsequent retranmissions will be dropped and will not result
+   subsequent retransmissions will be dropped and will not result
    in more processes blocked by DNS resolution. The price is more
    memory consumption and higher processing latency.
 
-   From user's perspective, there are two major functions :
-   t_relay and t_relay_to. Both setup transaction state, absorb
-   retransmissions from upstream, generate downstream
-   retransmissions and correlate replies to requests. t_relay
-   forwards to current URI (be it original request's URI or a URI
-   changed by some of URI-modifying functions, such as sethost).
-   t_relay_to forwards to a specific address.
+   From user's perspective, there are these major functions :
+   t_relay, t_relay_to_udp and t_relay_to_tcp. All of them setup
+   transaction state, absorb retransmissions from upstream,
+   generate downstream retransmissions and correlate replies to
+   requests. t_relay forwards to current URI (be it original
+   request's URI or a URI changed by some of URI-modifying
+   functions, such as sethost). t_relay_to_udp and t_relay_to_tcp
+   forward to a specific address over UDP or TCP respectively.
 
    In general, if TM is used, it copies clones of received SIP
    messages in shared memory. That costs the memory and also CPU
    time (memcpys, lookups, shmem locks, etc.) Note that non-TM
    functions operate over the received message in private memory,
    that means that any core operations will have no effect on
-   statefuly processed messages after creating the transactional
+   statefully processed messages after creating the transactional
    state. For example, calling record_route after t_relay is
    pretty useless, as the RR is added to privately held message
    whereas its TM clone is being forwarded.
 
-   TM is quite big and uneasy to programm--lot of mutexes, shared
+   TM is quite big and uneasy to program--lot of mutexes, shared
    memory access, malloc & free, timers--you really need to be
    careful when you do anything. To simplify TM programming,
    there is the instrument of callbacks. The callback mechanisms
@@ -126,7 +129,7 @@ Chapter 1. User's Guide
    event. See t_hooks.h for a list of possible events.
 
    Other things programmers may want to know is UAC--it is a very
-   simplictic code which allows you to generate your own
+   simplistic code which allows you to generate your own
    transactions. Particularly useful for things like NOTIFYs or
    IM gateways. The UAC takes care of all the transaction
    machinery: retransmissions , FR timeouts, forking, etc. See
@@ -184,7 +187,7 @@ modparam("tm", "fr_inv_timer", 200)
    Time for which a transaction stays in memory to absorb delayed
    messages after it completed; also, when this timer hits,
    retransmission of local cancels is stopped (a puristic but
-   complex behviour would be not to enter wait state until local
+   complex behavior would be not to enter wait state until local
    branches are finished by a final reply or FR timer--we
    simplified).
 
@@ -260,8 +263,8 @@ modparam("tm", "retr_timer2", 8)
 1.3.9. noisy_ctimer (integer)
 
    If set, on FR timer INVITE transactions will be explicitly
-   cancelled if possible, silently dropped otherwise. Preferably,
-   it is turned off to allow very long ringing. This behaviour is
+   canceled if possible, silently dropped otherwise. Preferably,
+   it is turned off to allow very long ringing. This behavior is
    overridden if a request is forked, or some functionality
    explicitly turned it off for a transaction (like acc does to
    avoid unaccounted transactions due to expired timer).
@@ -276,9 +279,9 @@ modparam("tm", "noisy_ctimer", 1)
 
 1.4. Exported Functions
 
-1.4.1. t_relay_to(ip, port)
+1.4.1. t_relay_to_udp(ip, port), t_relay_to_tcp(ip, port)
 
-   Relay a message statefuly to a fixed destination. This along
+   Relay a message statefully to a fixed destination. This along
    with t_relay is the function most users want to use--all other
    are mostly for programming. Programmers interested in writing
    TM logic should review how t_relay is implemented in tm.c and
@@ -289,15 +292,15 @@ modparam("tm", "noisy_ctimer", 1)
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 1-10. t_relay_to usage
+   Example 1-10. t_relay_to_udp usage
 ...
-t_relay_to("1.2.3.4", "5060");
+t_relay_to_udp("1.2.3.4", "5060");
 ...
      _________________________________________________________
 
 1.4.2. t_relay()
 
-   Relay a message statefuly to destination indicated in current
+   Relay a message statefully to destination indicated in current
    URI. (If the original URI was rewritten by UsrLoc, RR,
    strip/prefix, etc., the new URI will be taken). Returns a
    negative value on failure--you may still want to send a
@@ -314,15 +317,15 @@ if (!t_relay()) { sl_reply_error(); break; };
 
    Sets reply routing block, to which control is passed after a
    transaction completed with a negative result but before
-   sending a final reply. In the refered block, you can either
+   sending a final reply. In the referred block, you can either
    start a new branch (good for services such as
    forward_on_no_reply) or send a final reply on your own (good
    for example for message silo, which received a negative reply
    from upstream and wants to tell upstream "202 I will take care
-   of it"). Note that the set of command which are useable within
+   of it"). Note that the set of command which are usable within
    reply_routes is strictly limited to rewriting URI, initiating
    new branches, logging, and sending stateful replies (t_reply).
-   Any other commands may result in unpredictable behaviour and
+   Any other commands may result in unpredictable behavior and
    possible server failure. Note that whenever reply_route is
    entered, uri is reset to value which it had on relaying. If it
    temporarily changed during a reply_route processing,
@@ -404,7 +407,7 @@ t_reply("404", "Not found");
 
    Checks if a transaction exists. Returns a positive value if
    so, negative otherwise. Most likely you will not want to use
-   it, as a typicall application of a looku-up is to introduce a
+   it, as a typical application of a looku-up is to introduce a
    new transaction if none was found. However this is safely
    (atomically) done using t_newtran.
 
@@ -440,7 +443,7 @@ t_release();
 1.4.10. t_forward_nonack(ip, port)
 
    mainly for internal usage--forward a non-ACK request
-   statefuly.
+   statefully.
 
    Meaning of the parameters is as follows:
 
@@ -534,7 +537,7 @@ Chapter 2. Developer's Guide
 
 2.1. Defines
 
-     * ACK_TAG enables stricter matching of acknowledgemnts
+     * ACK_TAG enables stricter matching of acknowledgments
        including to-tags. Without it, to-tags are ignored. It is
        disabled by default for two reasons:
           + It eliminates an unlikely race condition in which
@@ -543,7 +546,7 @@ Chapter 2. Developer's Guide
           + It makes UACs happy who set wrong to-tags.
        It should not make a difference, as there may be only one
        negative reply sent upstream and 200/ACKs are not matched
-       as they consititute another transaction. It will make no
+       as they constitute another transaction. It will make no
        difference at all when the new magic cookie matching is
        enabled anyway.
      * CANCEL_TAG similarly enables strict matching of CANCELs

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -40,7 +40,7 @@
 #include "lock.h"
 
 /* timer timestamp value indicating a timer has been 
-   deactived and shall not be executed
+   deactivated and shall not be executed
 */
 #define TIMER_DELETED	1
 
@@ -60,7 +60,7 @@ enum lists
 };
 
 /* all you need to put a cell in a timer list
-   links to neighbours and timer value */
+   links to neighbors and timer value */
 typedef struct timer_link
 {
 	struct timer_link     *next_tl;

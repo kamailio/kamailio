@@ -7,7 +7,7 @@
  * supported during client generation, in all other places
  * it is -- adding it should be simple
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -86,7 +86,7 @@ int uac_init(void)
 
 	if (RAND_MAX < TABLE_ENTRIES) {
 		LOG(L_WARN, "Warning: uac does not spread "
-		    "accross the whole hash table\n");
+		    "across the whole hash table\n");
 	}
 	/* on tcp/tls bind_address is 0 so try to get the first address we listen
 	 * on no matter the protocol */
@@ -327,7 +327,7 @@ int request(str* m, str* ruri, str* to, str* from, str* h, str* b, transaction_c
 	generate_fromtag(&fromtag, &callid);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {
-		LOG(L_ERR, "request(): Error while creating temorary dialog\n");
+		LOG(L_ERR, "request(): Error while creating temporary dialog\n");
 		goto err;
 	}
 

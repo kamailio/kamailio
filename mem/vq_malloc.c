@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -34,7 +34,7 @@
  *
  * About:
  * aggressive, wasteful and very quick malloc library built for
- * servers that continuously alocate and release chunks of only
+ * servers that continuously allocate and release chunks of only
  * few sizes:
  * - free lists are organized by size (which eliminates long list traversal 
  *   thru short free chunks if a long one is asked)
@@ -43,17 +43,17 @@
  *    freeing
  * - the last bucket holds unlikely, huge, variable length chunks;
  *   they are maintained as stack growing from the opposite direction
- *   of our heap; coalesing is enabled; stack-like first-fit used to
+ *   of our heap; coalescing is enabled; stack-like first-fit used to
  *   find free fragments
  *
- * TODO: possibly, some delayed coalescation wouldn't hurt; also, further
+ * TODO: possibly, some delayed coalescence wouldn't hurt; also, further
  * optimization will certainly speed-up the entire process a lot; using
  * knowledge of application as well as trying to make pipeline happy
  * (from which I am sadly far away now)
  * provides optimization space; trying to use other memory allocators
  * to compare would be a great thing to do too;
  *
- * also, comparing to other memory allocaters (like Horde) would not
+ * also, comparing to other memory allocators (like Horde) would not
  * be a bad idea: those folks have been doing that for ages and specifically
  * Horde has been heavily optimized for multi-processor machines
  *
@@ -158,7 +158,7 @@ unsigned char size2bucket( struct vqm_block* qm, int *size  )
 		b = qm->s2b[ real_size ];
 		*size = qm->s2s[ real_size ];
 	/* there might be various allocations slightly 1>1k, I still
-	   don't want to be too agressive and increase useless 
+	   don't want to be too aggressive and increase useless 
 	   allocations in small steps
     	*/	
 	} else {
@@ -396,8 +396,8 @@ void vqm_free(struct vqm_block* qm, void* p)
 		next=FRAG_NEXT(f);
 		if  ((char *)next +sizeof( struct vqm_frag) < qm->core_end) {
 			VQM_DEBUG_FRAG(qm, next);
-			if (! FRAG_ISUSED(next)) { /* coalescate with next fragment */
-				DBG("vqm_free: coalescated with next\n");
+			if (! FRAG_ISUSED(next)) { /* coalesce with next fragment */
+				DBG("vqm_free: coalesced with next\n");
 				vqm_detach_free(qm, next);
 				f->size+=next->size;
 				FRAG_END(f)->size=f->size;
@@ -407,8 +407,8 @@ void vqm_free(struct vqm_block* qm, void* p)
 		if (first_big &&  f>first_big) {
 			prev=FRAG_PREV(f);
 			VQM_DEBUG_FRAG(qm, prev);
-			if (!FRAG_ISUSED(prev)) { /* coalescate with prev fragment */
-				DBG("vqm_free: coalescated with prev\n");
+			if (!FRAG_ISUSED(prev)) { /* coalesce with prev fragment */
+				DBG("vqm_free: coalesced with prev\n");
 				vqm_detach_free(qm, prev );
 				prev->size+=f->size;
 				f=prev;

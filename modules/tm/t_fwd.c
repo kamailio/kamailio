@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -343,7 +343,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	}
 
 
-	/* if error occured, let it know upstream (final reply
+	/* if error occurred, let it know upstream (final reply
 	   will also move the transaction on wait state
 	*/
 	if (lowest_error<0) {
@@ -354,9 +354,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	*/
 	} else if (cancel_bm) {
 		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
-		t_reply( t_cancel, cancel_msg, 200, CANCELLING );
+		t_reply( t_cancel, cancel_msg, 200, CANCELING );
 	/* if the transaction exists, but there is no more pending
-	   branch, tell usptream we're done
+	   branch, tell upstream we're done
 	*/
 	} else {
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
@@ -366,9 +366,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 #ifdef LOCAL_487
 
 	/* local 487s have been deprecated -- it better handles
-	 * race conditions (UAS sending 200); hopefuly there are
+	 * race conditions (UAS sending 200); hopefully there are
 	 * no longer UACs who go crazy waiting for the 487 whose
-	 * forwarding is being blocked by other unreponsive branch
+	 * forwarding is being blocked by other unresponsive branch
 	 */
 
 	/* we could await downstream UAS's 487 replies; however,
@@ -386,13 +386,13 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	   try, and the later one will result in error message 
 	   "can't reply twice"
 	*/
-	t_reply(t_invite, t_invite->uas.request, 487, CANCELLED );
+	t_reply(t_invite, t_invite->uas.request, 487, CANCELED );
 #endif
 }
 
 
 /* function returns:
- *       1 - forward successfull
+ *       1 - forward successful
  *      -1 - error during forward
  */
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg , 
@@ -469,7 +469,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
-			LOG(L_ERR, "ERROR: t_forward_nonack: no branched for fwding\n");
+			LOG(L_ERR, "ERROR: t_forward_nonack: no branched for forwarding\n");
 			return -1;
 		}
 		LOG(L_ERR, "ERROR: t_forward_nonack: failure to add branches\n");

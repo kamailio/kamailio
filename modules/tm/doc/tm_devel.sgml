@@ -18,7 +18,7 @@
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    ACK_TAG enables stricter matching of acknowledgemnts including to-tags. Without
+		    ACK_TAG enables stricter matching of acknowledgments including to-tags. Without
 		    it, to-tags are ignored. It is disabled by default for two reasons: 
 		</para>
 		<itemizedlist>
@@ -40,7 +40,7 @@
 		<para>
 		    It should not make a difference, as there may be only one
 		    negative reply sent upstream and 200/ACKs are not matched
-		    as they consititute another transaction. It will make no
+		    as they constitute another transaction. It will make no
 		    difference at all when the new magic cookie matching is
 		    enabled anyway.
 		</para>

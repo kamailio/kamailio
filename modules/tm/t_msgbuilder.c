@@ -3,7 +3,7 @@
  *
  * message printing
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -487,7 +487,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 
 
 /*
- * Convert lenght of body into asciiz
+ * Convert length of body into asciiz
  */
 static inline int print_content_length(str* dest, str* body)
 {
@@ -649,7 +649,7 @@ static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
 {
 	t->cseq_n.s = w; 
 	/* don't include method name and CRLF -- subsequent
-	 * local reuqests ACK/CANCEl will add their own */
+	 * local requests ACK/CANCEL will add their own */
 	t->cseq_n.len = CSEQ_LEN + cseq->len; 
 	w = print_cseq_mini(w, cseq, method);
 	return w;

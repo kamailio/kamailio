@@ -3,7 +3,7 @@
  *
  * transaction maintenance functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -107,13 +107,13 @@ void tm_shutdown()
 	unlink_timer_lists();
 
 	/* destroy the hash table */
-	DBG("DEBUG: tm_shutdown : empting hash table\n");
+	DBG("DEBUG: tm_shutdown : emptying hash table\n");
 	free_hash_table( );
 	DBG("DEBUG: tm_shutdown : releasing timers\n");
 	free_timer_table();
 	DBG("DEBUG: tm_shutdown : removing semaphores\n");
 	lock_cleanup();
-	DBG("DEBUG: tm_shutdown : destroing tmcb lists\n");
+	DBG("DEBUG: tm_shutdown : destroying tmcb lists\n");
 	destroy_tmcb_lists();
 	free_tm_stats();
 	DBG("DEBUG: tm_shutdown : done\n");
@@ -178,10 +178,10 @@ static int kill_transaction( struct cell *trans )
 	int reply_ret;
 	int ret;
 
-	/*  we reply statefuly and enter WAIT state since error might
-		have occured in middle of forking and we do not
+	/*  we reply statefully and enter WAIT state since error might
+		have occurred in middle of forking and we do not
 		want to put the forking burden on upstream client;
-		howver, it may fail too due to lack of memory */
+		however, it may fail too due to lack of memory */
 
 	ret=err2reason_phrase( ser_error, &sip_err,
 		err_buffer, sizeof(err_buffer), "TM" );
@@ -281,7 +281,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	t=get_t();
 	if (replicate) t->flags|=T_IS_LOCAL_FLAG;
 
-	/* INVITE processing might take long, partcularly because of DNS
+	/* INVITE processing might take long, particularly because of DNS
 	   look-ups -- let upstream know we're working on it */
 	if (p_msg->REQ_METHOD==METHOD_INVITE )
 	{

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -50,8 +50,8 @@
 #define SEM_MAX		4096
 
 /* we implement mutex here using lock sets; as the number of
-   sempahores may be limited (e.g. sysv) and number of synchronized 
-   elements high, we partition the sync'ed SER elements and share 
+   semaphores may be limited (e.g. sysv) and number of synchronized 
+   elements high, we partition the synced SER elements and share 
    semaphores in each of the partitions; we try to use as many 
    semaphores as OS gives us for finest granularity. 
 
@@ -84,7 +84,7 @@ static ser_lock_t* timer_group_lock=0; /* pointer to a TG_NR lock array,
 								    it's safer if we alloc this in shared mem 
 									( required for fast lock ) */
 
-/* intitialize the locks; return 0 on success, -1 otherwise
+/* initialize the locks; return 0 on success, -1 otherwise
 */
 int lock_initialize()
 {
@@ -157,7 +157,7 @@ again:
 					continue;
 				/* failure after we stepped back; give up */
 			} else {
-					DBG("DEBUG: lock_initialize:   second time sempahore"
+					DBG("DEBUG: lock_initialize:   second time semaphore"
 							" allocation failure\n");
 					goto error;
 			}
@@ -210,7 +210,7 @@ void lock_cleanup()
 /* remove the semaphore set from system */
 void lock_cleanup()
 {
-	/* that's system-wide; all othe processes trying to use
+	/* that's system-wide; all other processes trying to use
 	   the semaphore will fail! call only if it is for sure
 	   no other process lives 
 	*/
@@ -257,7 +257,7 @@ int init_entry_lock( struct s_table* ht, struct entry *entry )
 #else
 	/* just advice which of the available semaphores to use;
 	   specifically, all entries are partitioned into as
-	   many partitions as number of available semaphors allows
+	   many partitions as number of available semaphores allows
         */
 	entry->mutex.semaphore_set=entry_semaphore;
 	entry->mutex.semaphore_index = ( ((char *)entry - (char *)(ht->entrys ) )

@@ -18,13 +18,13 @@
 	    use of stateful logic, which is costly in terms of memory and <acronym>CPU</acronym>, is
 	    some services inherently need state. For example, transaction-based accounting (module
 	    acc) needs to process transaction state as opposed to individual messages, and any kinds
-	    of forking must be implemented statefuly. Other use of stateful processing is it trading
+	    of forking must be implemented statefully. Other use of stateful processing is it trading
 	    <acronym>CPU</acronym> caused by retransmission processing for memory. That makes
 	    however only sense if <acronym>CPU</acronym> consumption per request is huge. For
 	    example, if you want to avoid costly <acronym>DNS</acronym> resolution for every
-	    retransmission of a request to an unresolveable destination, use stateful mode. Then,
+	    retransmission of a request to an unresolvable destination, use stateful mode. Then,
 	    only the initial message burdens server by <acronym>DNS</acronym> queries, subsequent
-	    retranmissions will be dropped and will not result in more processes blocked by
+	    retransmissions will be dropped and will not result in more processes blocked by
 	    <acronym>DNS</acronym> resolution. The price is more memory consumption and higher
 	    processing latency.
 	</para>
@@ -42,20 +42,20 @@
 	    messages in shared memory. That costs the memory and also <acronym>CPU</acronym> time
 	    (memcpys, lookups, shmem locks, etc.)  Note that non-<acronym>TM</acronym> functions
 	    operate over the received message in private memory, that means that any core operations
-	    will have no effect on statefuly processed messages after creating the transactional
+	    will have no effect on statefully processed messages after creating the transactional
 	    state. For example, calling record_route <emphasis>after</emphasis> t_relay is pretty
 	    useless, as the <acronym>RR</acronym> is added to privately held message whereas its
 	    <acronym>TM</acronym> clone is being forwarded.
 	</para>
 	<para>
-	    <acronym>TM</acronym> is quite big and uneasy to programm--lot of mutexes, shared memory
+	    <acronym>TM</acronym> is quite big and uneasy to program--lot of mutexes, shared memory
 	    access, malloc & free, timers--you really need to be careful when you do anything. To
 	    simplify <acronym>TM</acronym> programming, there is the instrument of callbacks. The
 	    callback mechanisms allow programmers to register their functions to specific event. See
 	    t_hooks.h for a list of possible events.
 	</para>
 	<para>
-	    Other things programmers may want to know is &uac;--it is a very simplictic code which
+	    Other things programmers may want to know is &uac;--it is a very simplistic code which
 	    allows you to generate your own transactions. Particularly useful for things like
 	    NOTIFYs or <acronym>IM</acronym> gateways. The &uac; takes care of all the transaction
 	    machinery: retransmissions , FR timeouts, forking, etc.  See t_uac prototype in uac.h
@@ -141,7 +141,7 @@ modparam("tm", "fr_inv_timer", 200)
 	    <para>
 		Time for which a transaction stays in memory to absorb delayed messages after it
 		completed; also, when this timer hits, retransmission of local cancels is stopped (a
-		puristic but complex behviour would be not to enter wait state until local branches
+		puristic but complex behavior would be not to enter wait state until local branches
 		are finished by a final reply or FR timer--we simplified).
 	    </para>
 	    <para>
@@ -263,9 +263,9 @@ modparam("tm", "retr_timer2", 8)
 	<section>
 	    <title><varname>noisy_ctimer</varname> (integer)</title>
 	    <para>
-		If set, on FR timer INVITE transactions will be explicitly cancelled if possible,
+		If set, on FR timer INVITE transactions will be explicitly canceled if possible,
 		silently dropped otherwise. Preferably, it is turned off to allow very long ringing.
-		This behaviour is overridden if a request is forked, or some functionality
+		This behavior is overridden if a request is forked, or some functionality
 		explicitly turned it off for a transaction (like acc does to avoid unaccounted
 		transactions due to expired timer).
 	    </para>
@@ -295,7 +295,7 @@ modparam("tm", "noisy_ctimer", 1)
 		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>
 	    </title>
 	    <para>
-		Relay a message statefuly to a fixed destination. This along with <function
+		Relay a message statefully to a fixed destination. This along with <function
 		    moreinfo="none">t_relay</function> is the function most users want to use--all
 		other are mostly for programming. Programmers interested in writing
 		<acronym>TM</acronym> logic should review how t_relay is implemented in tm.c and
@@ -327,7 +327,7 @@ t_relay_to_udp("1.2.3.4", "5060");
 		<function moreinfo="none">t_relay()</function>
 	    </title>
 	    <para>
-		Relay a message statefuly to destination indicated in current &uri;. (If the
+		Relay a message statefully to destination indicated in current &uri;. (If the
 		original &uri; was rewritten by UsrLoc, RR, strip/prefix, etc., the new &uri; will
 		be taken). Returns a negative value on failure--you may still want to send a
 		negative reply upstream statelessly not to leave upstream &uac; in lurch.
@@ -348,14 +348,14 @@ if (!t_relay()) { sl_reply_error(); break; };
 	    </title>
 	    <para>
 		Sets reply routing block, to which control is passed after a transaction completed
-		with a negative result but before sending a final reply. In the refered block, you
+		with a negative result but before sending a final reply. In the referred block, you
 		can either start a new branch (good for services such as forward_on_no_reply) or
 		send a final reply on your own (good for example for message silo, which received a
 		negative reply from upstream and wants to tell upstream <quote>202 I will take care
-		of it</quote>). Note that the set of command which are useable within reply_routes
+		of it</quote>). Note that the set of command which are usable within reply_routes
 		is strictly limited to rewriting &uri;, initiating new branches, logging, and
 		sending stateful replies (<function>t_reply</function>). Any other commands may
-		result in unpredictable behaviour and possible server failure. Note that whenever
+		result in unpredictable behavior and possible server failure. Note that whenever
 		reply_route is entered, uri is reset to value which it had on relaying. If it
 		temporarily changed during a reply_route processing, subsequent reply_route will
 		ignore the changed value and use again the original one.
@@ -472,7 +472,7 @@ t_reply("404", "Not found");
 	    </title>
 	    <para>
 		Checks if a transaction exists. Returns a positive value if so, negative otherwise.
-		Most likely you will not want to use it, as a typicall application of a looku-up is
+		Most likely you will not want to use it, as a typical application of a looku-up is
 		to introduce a new transaction if none was found. However this is safely
 		(atomically) done using <function>t_newtran</function>.
 	    </para>
@@ -528,7 +528,7 @@ t_release();
 		<function moreinfo="none">t_forward_nonack(ip, port)</function>
 	    </title>
 	    <para>
-		mainly for internal usage--forward a non-ACK request statefuly.
+		mainly for internal usage--forward a non-ACK request statefully.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>

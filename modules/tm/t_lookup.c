@@ -5,10 +5,10 @@
  * existing transactions. Note that we do not do SIP-compliant
  * request matching as asked by SIP spec. We do bitwise matching of 
  * all header fields in requests which form a transaction key. 
- * It is much faster and it worx pretty well -- we haven't 
+ * It is much faster and it works pretty well -- we haven't 
  * had any interop issue neither in lab nor in bake-offs. The reason
  * is that retransmissions do look same as original requests
- * (it would be really silly if they wuld be mangled). The only
+ * (it would be really silly if they would be mangled). The only
  * exception is we parse To as To in ACK is compared to To in
  * reply and both  of them are constructed by different software.
  * 
@@ -26,7 +26,7 @@
  * -jiri
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -68,7 +68,7 @@
  * 2003-04-04  bug_fix: RESPONSE_IN callback not called for local
  *             UAC transactions (jiri)
  * 2003-04-07  new transactions inherit on_negative and on_relpy from script
- *             variables on instatntiation (jiri)
+ *             variables on instantiation (jiri)
  * 2003-04-30  t_newtran clean up (jiri)
  * 2003-08-21  request lookups fixed to skip UAC transactions, 
  *             thanks Ed (jiri)
@@ -254,7 +254,7 @@ static inline int via_matching( struct via_body *inv_via,
 				ack_via->tid.len)!=0)
 		return 0;
 	/* ok, tid matches -- now make sure that the
-	 * originater matches too to avoid confusion with
+	 * originator matches too to avoid confusion with
 	 * different senders generating the same tid
 	 */
 	if (inv_via->host.len!=ack_via->host.len)
@@ -376,7 +376,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		p_msg->hash_index,isACK);
 
 
-	/* asume not found */
+	/* assume not found */
 	ret=-1;
 
 	/* first of all, look if there is RFC3261 magic cookie in branch; if
@@ -517,7 +517,7 @@ found:
 
 
 
-/* function lookups transaction being cancelled by CANCEL in p_msg;
+/* function lookups transaction being canceled by CANCEL in p_msg;
  * it returns:
  *       0 - transaction wasn't found
  *       T - transaction found
@@ -624,7 +624,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 
 notfound:
 	/* no transaction found */
-	DBG("DEBUG: t_lookupOriginalT: no CANCEL maching found! \n" );
+	DBG("DEBUG: t_lookupOriginalT: no CANCEL matching found! \n" );
 	UNLOCK_HASH(hash_index);
 	DBG("DEBUG: t_lookupOriginalT completed\n");
 	return 0;
@@ -663,7 +663,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	
 	short is_cancel;
 
-	/* make compiler warnnings happy */
+	/* make compiler warnings happy */
 	loopi=0;
 	loopl=0;
 	syni=0;
@@ -728,7 +728,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		|| (syn_branch ? (entry_label=reverse_hex2int(syni, synl))<0 
 			: loopl!=MD5_LEN )
 	) {
-		DBG("DEBUG: t_reply_matching: poor reply lables %d label %d "
+		DBG("DEBUG: t_reply_matching: poor reply labels %d label %d "
 			"branch %d\n",hash_index, entry_label, branch_id );
 		goto nomatch2;
 	}
@@ -763,7 +763,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			continue;
 
 		/* does method match ? (remember -- CANCELs have the same branch
-		   as cancelled transactions) */
+		   as canceled transactions) */
 		req_method=p_cell->method;
 		if ( /* method match */
 			! ((cseq_method.len==req_method.len 
@@ -771,8 +771,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			/* or it is a local cancel */
 			|| (is_cancel && is_invite(p_cell)
 				/* commented out -- should_cancel_branch set it to
-				   BUSY_BUFFER to avoid collisions with repliesl;
-				   thus, we test here by bbuffer size
+				   BUSY_BUFFER to avoid collisions with replies;
+				   thus, we test here by buffer size
 				*/
 				/* && p_cell->uac[branch_id].local_cancel.buffer ))) */
 				&& p_cell->uac[branch_id].local_cancel.buffer_len ))) 
@@ -788,7 +788,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		UNLOCK_HASH(hash_index);
 		DBG("DEBUG: t_reply_matching: reply matched (T=%p)!\n",T);
 		/* if this is a 200 for INVITE, we will wish to store to-tags to be
-		 * able to distuingish retransmissions later and not to call
+		 * able to distinguish retransmissions later and not to call
  		 * TMCB_RESPONSE_OUT uselessly; we do it only if callbacks are
 		 * enabled -- except callback customers, nobody cares about 
 		 * retransmissions of multiple 200/INV or ACK/200s
@@ -896,7 +896,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			p_msg->id,global_msg_id,T);
 	} else {
 		if (T)
-			DBG("DEBUG: t_check: T alredy found!\n");
+			DBG("DEBUG: t_check: T already found!\n");
 		else
 			DBG("DEBUG: t_check: T previously sought and not found\n");
 	}
@@ -999,7 +999,7 @@ static inline int new_t(struct sip_msg *p_msg)
 
 	+1	if a request did not match a transaction
 		- it that was an ack, the calling function
-		  shall forward statelessy
+		  shall forward statelessly
 		- otherwise it means, a new transaction was
 		  introduced and the calling function
 		  shall reply/relay/whatever_appropriate
@@ -1038,7 +1038,7 @@ int t_newtran( struct sip_msg* p_msg )
 			LOG(L_ERR, "ERROR: t_newtran: EoH not parsed\n");
 			return E_OUT_OF_MEM;
 	}
-	/* t_lookup_requests attmpts to find the transaction; 
+	/* t_lookup_requests attempts to find the transaction; 
 	   it also calls check_transaction_quadruple -> it is
 	   safe to assume we have from/callid/cseq/to
 	*/ 
@@ -1108,7 +1108,7 @@ int t_newtran( struct sip_msg* p_msg )
   	   the transaction 
 	*/
 	if (!init_rb( &T->uas.response, p_msg)) {
-		LOG(L_ERR, "ERROR: t_newtran: unresolveable via1\n");
+		LOG(L_ERR, "ERROR: t_newtran: unresolvable via1\n");
 		put_on_wait( T );
 		t_unref(p_msg);
 		return E_BAD_VIA;
@@ -1219,7 +1219,7 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	struct cell* p_cell;
 	unsigned hash_index;
 
-	/* I use MAX_HEADER, not shure if this is a good choice... */
+	/* I use MAX_HEADER, not sure if this is a good choice... */
 	char callid_header[MAX_HEADER];
 	char cseq_header[MAX_HEADER];
 	/* save return value of print_* functions here */
@@ -1257,7 +1257,7 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
 	  p_cell; p_cell = p_cell->next_cell ) {
 		
-		/* compare complete header fields, casecmp to make shure invite=INVITE */
+		/* compare complete header fields, casecmp to make sure invite=INVITE */
 		if ( (strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
 			&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len) == 0) ) {
 			DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n", p_cell->callid.len, 

@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -35,7 +35,7 @@
  *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-03-01  kr set through a function now (jiri)
  *  2003-03-06  saving of to-tags for ACK/200 matching introduced, 
- *              voicemail changes accepted, udpated to new callback
+ *              voicemail changes accepted, updated to new callback
  *              names (jiri)
  *  2003-03-10  fixed new to tag bug/typo (if w/o {})  (andrei)
  *  2003-03-16  removed _TOTAG (jiri)
@@ -119,7 +119,7 @@ static int goto_on_reply=0;
    t_relay when a reply may arrive after we set this
    value; that's why we do it how we do it, i.e.,
    *inside*  t_relay using hints stored in private memory
-   before t_reay is called
+   before t_relay is called
 */
 
 
@@ -232,9 +232,9 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 				&& memcmp(i->tag.s, tag->s, tag->len) ==0 ){
 			/* to tag already recorded */
 #ifdef XL_DEBUG
-			LOG(L_CRIT, "DEBUG: update_totag_set: totag retranmission\n");
+			LOG(L_CRIT, "DEBUG: update_totag_set: totag retransmission\n");
 #else
-			DBG("DEBUG: update_totag_set: totag retranmission\n");
+			DBG("DEBUG: update_totag_set: totag retransmission\n");
 #endif
 			return 1;
 		}
@@ -336,7 +336,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	if (!buf)
 	{
 		DBG("DEBUG: _reply_light: response building failed\n");
-		/* determine if there are some branches to be cancelled */
+		/* determine if there are some branches to be canceled */
 		if ( is_invite(trans) ) {
 			if (lock) LOCK_REPLIES( trans );
 			which_cancel(trans, &cancel_bitmap );
@@ -483,7 +483,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		 */
 		backup_mode=rmode;
 		rmode=MODE_ONFAILURE;
-		/* also, tm actions look in beginning whether tranaction is
+		/* also, tm actions look in beginning whether transaction is
 		 * set -- whether we are called from a reply-processing 
 		 * or a timer process, we need to set current transaction;
 		 * otherwise the actions would attempt to look the transaction
@@ -610,7 +610,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	}
 	if (t->on_negative) {
 		/* avoid recursion -- if failure_route forwards, and does not 
-		 * set next failure route, failure_route will not be rentered
+		 * set next failure route, failure_route will not be reentered
 		 * on failure */
 		on_failure = t->on_negative;
 		t->on_negative=0;
@@ -663,14 +663,14 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 	return lowest_b;
 }
 
-/* This is the neuralgical point of reply processing -- called
+/* This is the neurological point of reply processing -- called
  * from within a REPLY_LOCK, t_should_relay_response decides
  * how a reply shall be processed and how transaction state is
  * affected.
  *
  * Checks if the new reply (with new_code status) should be sent or not
  *  based on the current
- * transactin status.
+ * transaction status.
  * Returns 	- branch number (0,1,...) which should be relayed
  *         -1 if nothing to be relayed
  */
@@ -708,9 +708,9 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	/* if final response received at this branch, allow only INVITE 2xx */
 	if (Trans->uac[branch].last_received>=200
 			&& !(inv_through && Trans->uac[branch].last_received<300)) {
-		/* don't report on retranmissions */
+		/* don't report on retransmissions */
 		if (Trans->uac[branch].last_received==new_code) {
-			DBG("DEBUG: final reply retrasnmission\n");
+			DBG("DEBUG: final reply retransmission\n");
 			goto discard;
 		}
 		/* if you FR-timed-out, faked a local 408 and 487 came, don't
@@ -747,7 +747,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		}
 
 		/* no more pending branches -- try if that changes after
-		   a callback; save banch count to be able to determine
+		   a callback; save branch count to be able to determine
 		   later if new branches were initiated */
 		branch_cnt=Trans->nr_of_outgoings;
 
@@ -923,7 +923,7 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 #		endif
 
 		/* when we later do things such as challenge aggregation,
-	   	   we should parse the message here before we conservate
+	   	   we should parse the message here before we conserve
 		   it in shared memory; -jiri
 		*/
 		if (rpl==FAKED_REPLY)
@@ -996,7 +996,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			run_trans_callbacks( TMCB_RESPONSE_FWDED, t, t->uas.request,
 				p_msg, msg_status );
 		}
-		/* try bulding the outbound reply from either the current
+		/* try building the outbound reply from either the current
 		 * or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg==FAKED_REPLY) {
@@ -1039,7 +1039,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 		/* attempt to copy the message to UAS's shmem:
 		   - copy to-tag for ACK matching as well
-		   -  allocate little a bit more for provisionals as
+		   -  allocate little a bit more for provisional as
 		      larger messages are likely to follow and we will be 
 		      able to reuse the memory frag 
 		*/
@@ -1096,7 +1096,7 @@ error01:
 	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
 	UNLOCK_REPLIES(t);
 	if (is_invite(t)) cancel_uacs( t, *cancel_bitmap );
-	/* a serious error occured -- attempt to send an error reply;
+	/* a serious error occurred -- attempt to send an error reply;
 	   it will take care of clean-ups  */
 
 	/* failure */
@@ -1197,7 +1197,7 @@ int reply_received( struct sip_msg  *p_msg )
 	str next_hop;
 	struct usr_avp **backup_list;
 
-	/* make sure we know the assosociated transaction ... */
+	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
 		return 1;
 	/*... if there is none, tell the core router to fwd statelessly */
@@ -1248,7 +1248,7 @@ int reply_received( struct sip_msg  *p_msg )
 			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
 			if (ack) {
 				if (send_local_ack(&next_hop, ack, ack_len) < 0) {
-					LOG(L_ERR, "Error while seding local ACK\n");
+					LOG(L_ERR, "Error while sending local ACK\n");
 				}
 				shm_free(ack);
 			}
@@ -1299,7 +1299,7 @@ int reply_received( struct sip_msg  *p_msg )
 			set_timer( & uac->request.fr_timer,
 				FR_INV_TIMER_LIST );
 		} else {
-			/* non-invite: restart retransmisssions (slow now) */
+			/* non-invite: restart retransmissions (slow now) */
 			uac->request.retr_list=RT_T2;
 			set_timer(  & uac->request.retr_timer, RT_T2 );
 		}
@@ -1307,7 +1307,7 @@ int reply_received( struct sip_msg  *p_msg )
 
 done:
 	/* don't try to relay statelessly neither on success
-       (we forwarded statefuly) nor on error; on troubles, 
+       (we forwarded statefully) nor on error; on troubles, 
 	   simply do nothing; that will make the other party to 
 	   retransmit; hopefuly, we'll then be better off */
 	return 0;
@@ -1383,7 +1383,7 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	ret=_reply_light( trans, rpl.s, rpl.len, code, text, 
 		s_to_tag.s, s_to_tag.len, 1 /* lock replies */, &bm );
 	/* this is ugly hack -- the function caller may wish to continue with
-	 * transction and I unref; however, there is now only one use from
+	 * transaction and I unref; however, there is now only one use from
 	 * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
 	 */
 	UNREF(trans);
@@ -1612,7 +1612,7 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 
 	ret = _reply_light(trans, rpl.s, rpl.len, code, text->s,  to_tag->s, to_tag->len, 1 /* lock replies */, &bm);
 	     /* this is ugly hack -- the function caller may wish to continue with
-	      * transction and I unref; however, there is now only one use from
+	      * transaction and I unref; however, there is now only one use from
 	      * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
 	      */
 	UNREF(trans);

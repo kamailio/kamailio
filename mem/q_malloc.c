@@ -1,7 +1,7 @@
 /* $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -30,7 +30,7 @@
  *  ????-??-??  created by andrei
  *  2003-04-14  more debugging added in DBG_QM_MALLOC mode (andrei)
  *  2003-06-29  added qm_realloc (andrei)
- *  2004-07-19  fragments book keeping code and suport for 64 bits
+ *  2004-07-19  fragments book keeping code and support for 64 bits
  *               memory blocks (64 bits machine & size>=2^32) (andrei)
  *              GET_HASH s/</<=/ (avoids waste of 1 hash cell) (andrei)
  */
@@ -548,7 +548,7 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned int size)
 #ifdef DBG_QM_MALLOC
 		DBG("qm_realloc: shrinking from %ld to %d\n", f->size, size);
 		if(split_frag(qm, f, size, file, "fragm. from qm_realloc", line)!=0){
-		DBG("qm_realloc : shrinked succesfull\n");
+		DBG("qm_realloc : shrinked successful\n");
 #else
 		if(split_frag(qm, f, size)!=0){
 #endif

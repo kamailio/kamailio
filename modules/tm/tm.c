@@ -16,7 +16,7 @@
  * * his fatherly eye watching over us day and night.*
  * *                                                 *
  * * Please, preserve this codework heritage, as     *
- * * it's unlikly for fresh, juicy pices of code to  *
+ * * it's unlikely for fresh, juicy pieces of code to  *
  * * arise to give him the again the chance to       *
  * * demonstrate his clean-up and improvement skills.*
  * *                                                 *
@@ -28,7 +28,7 @@
  * ***************************************************
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -444,7 +444,7 @@ static int mod_init(void)
 	}
 
 	if (init_callid() < 0) {
-		LOG(L_CRIT, "Error while initializin Call-ID generator\n");
+		LOG(L_CRIT, "Error while initializing Call-ID generator\n");
 		return -1;
 	}
 
@@ -729,7 +729,7 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 	t=get_t();
 	if (t) {
 		if (p_msg->REQ_METHOD==METHOD_ACK) {
-			LOG(L_WARN, "WARNING: : ACKs ansmit_replies not replied\n");
+			LOG(L_WARN, "WARNING: : ACKs transmit_replies not replied\n");
 			return -1;
 		}
 		return t_retransmit_reply( t );
