@@ -79,8 +79,8 @@ SEND_TCP	send_tcp
 LOG		log
 ERROR	error
 ROUTE	route
-FAILURE_ROUTE failure_route
-ONREPLY_ROUTE onreply_route
+ROUTE_FAILURE failure_route
+ROUTE_ONREPLY onreply_route
 EXEC	exec
 SETFLAG		setflag
 RESETFLAG	resetflag
@@ -212,8 +212,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
 <INITIAL>{LEN_GT}	{ count(); yylval.strval=yytext; return LEN_GT; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
-<INITIAL>{ONREPLY_ROUTE}	{ count(); yylval.strval=yytext; return ONREPLY_ROUTE; }
-<INITIAL>{FAILURE_ROUTE}	{ count(); yylval.strval=yytext; return FAILURE_ROUTE; }
+<INITIAL>{ROUTE_ONREPLY}	{ count(); yylval.strval=yytext;
+								return ROUTE_ONREPLY; }
+<INITIAL>{ROUTE_FAILURE}	{ count(); yylval.strval=yytext;
+								return ROUTE_FAILURE; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }

@@ -79,6 +79,8 @@ INSTALL ?= install
 TAR ?= tar
 endif
 
+INSTALL-TOUCH = touch          # used to create the file first (good to 
+                               #  make solaris install work)
 # INSTALL-CFG = $(INSTALL) -m 644
 INSTALL-BIN = $(INSTALL) -m 755
 INSTALL-MODULES = $(INSTALL) -m 755

@@ -107,8 +107,8 @@ int rt;  /* Type of route block for find_export */
 %token LOG_TOK
 %token ERROR
 %token ROUTE
-%token FAILURE_ROUTE
-%token ONREPLY_ROUTE
+%token ROUTE_FAILURE
+%token ROUTE_ONREPLY
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
@@ -466,7 +466,7 @@ route_stm:  ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 		| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 
-failure_route_stm: FAILURE_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+failure_route_stm: ROUTE_FAILURE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 										if (($3<FAILURE_RT_NO)&&($3>=1)){
 											push($6, &failure_rlist[$3]);
 										} else {
@@ -474,10 +474,10 @@ failure_route_stm: FAILURE_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 												"table number");
 											YYABORT; }
 										}
-		| FAILURE_ROUTE error { yyerror("invalid failure_route statement"); }
+		| ROUTE_FAILURE error { yyerror("invalid failure_route statement"); }
 	;
 
-onreply_route_stm: ONREPLY_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+onreply_route_stm: ROUTE_ONREPLY LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 										if (($3<ONREPLY_RT_NO)&&($3>=1)){
 											push($6, &onreply_rlist[$3]);
 										} else {
@@ -485,7 +485,7 @@ onreply_route_stm: ONREPLY_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 												"table number");
 											YYABORT; }
 										}
-		| ONREPLY_ROUTE error { yyerror("invalid failure_route statement"); }
+		| ROUTE_ONREPLY error { yyerror("invalid failure_route statement"); }
 	;
 /*
 rules:	rules rule { push($2, &$1); $$=$1; }
