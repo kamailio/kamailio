@@ -96,6 +96,7 @@ int t_uac(
 	struct dialog *dlg );
 
 
+/* look at uac.c for usage guidelines */
 /*
  * Send a request within a dialog
  */
@@ -118,6 +119,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 int fifo_uac( FILE *stream, char *response_file );
 int fifo_uac_from( FILE *stream, char *response_file );
 #endif
+
 
 int fifo_uac_dlg( FILE *stream, char *response_file );
 
