@@ -12,14 +12,14 @@ struct lump_rpl* build_lump_rpl( char* text, int len )
 	lump = (struct lump_rpl*) pkg_malloc(sizeof(struct lump_rpl));
 	if (!lump)
 	{
-		LOG(L_ERR,"ERROR:build_lump_rpl : no free memory!\n");
+		LOG(L_ERR,"ERROR:build_lump_rpl : no free memory (struct)!\n");
 		goto error;
 	}
 
 	lump->text.s = pkg_malloc( len );
 	if (!lump->text.s)
 	{
-		LOG(L_ERR,"ERROR:build_lump_rpl : no free memory!\n");
+		LOG(L_ERR,"ERROR:build_lump_rpl : no free memory (%d)!\n", len );
 		goto error;
 	}
 
