@@ -1536,13 +1536,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										"string expected"); }
 		| REVERT_URI LPAREN RPAREN { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
-		| FORCE_RPORT LPAREN RPAREN	{
-							#ifdef USE_TCP
-								$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); 
-							#else
-								yyerror("tcp support not compiled in");
-							#endif
-							}
+		| FORCE_RPORT LPAREN RPAREN	{ $$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
 		| FORCE_RPORT				{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
 		| FORCE_TCP_ALIAS LPAREN NUMBER RPAREN	{
 					#ifdef USE_TCP
