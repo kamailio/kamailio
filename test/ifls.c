@@ -131,9 +131,10 @@ int ls_ifflags(char* name, int family , int options)
 		/*if (ifr.ifr_flags & IFF_DYNAMIC ) printf ("DYNAMIC ");*/
 		printf ("\n");
 	};
-
+	close(s);
 	return 0;
 error:
+	close(s);
 	return -1;
 }
 
@@ -209,8 +210,10 @@ int ls_ifs(char* name, int family, int options)
 		}
 	}
 	free(ifc.ifc_req); /*clean up*/
+	close(s);
 	return  0;
 error:
+	close(s);
 	return -1;
 }
 
