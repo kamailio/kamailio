@@ -15,7 +15,6 @@
 #include "contact_parser.h"
 
 
-#define BUF_SIZE 256      /* Maximum buffer size */
 
 
 extern char* db_table;    /* Database table name parameter variable */
