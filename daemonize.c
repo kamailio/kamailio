@@ -36,6 +36,16 @@
 
 
 #include <sys/types.h>
+
+#define _XOPEN_SOURCE   /* needed on linux for the  getpgid prototype,  but
+                           openbsd 3.2 won't include common types (uint a.s.o)
+                           if defined before including sys/types.h */
+#define _XOPEN_SOURCE_EXTENDED /* same as above */
+#define __USE_XOPEN_EXTENDED /* same as above, overrides features.h */
+#define __EXTENSIONS__ /* needed on solaris: if XOPEN_SOURCE is defined
+                          struct timeval defintion from <sys/time.h> won't
+                          be included => workarround define _EXTENSIONS_
+                           -andrei */
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
@@ -43,13 +53,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/resource.h> /* setrlimit */
-
-#define _XOPEN_SOURCE   /* needed on linux for the  getpgid prototype */
-#define _XOPEN_SOURCE_EXTENDED /* same as above */
-#define __EXTENSIONS__ /* needed on solaris: if XOPEN_SOURCE is defined
-                          struct timeval defintion from <sys/time.h> won't
-                          be included => workarround define _EXTENSIONS_
-                           -andrei */
 #include <unistd.h>
 #include <sys/time.h>    
 

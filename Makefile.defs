@@ -35,6 +35,7 @@
 #  2004-09-12  mips2 & cobalt support introduced (andrei)
 #  2004-09-28  x86_64 support introduced (andrei)
 #  2004-12-14  gcc-3.4 special case added (andrei)
+#  2004-12-15  HAVE_ALLOCA_H added (andrei)
 
 
 # check if already included/exported
@@ -787,7 +788,7 @@ LIBS= -lfl -ldl -lresolv
 #os specific stuff
 ifeq ($(OS), linux)
 	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
-			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL
+			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_SYSV_SEM  # try posix sems
 		found_lock_method=yes
@@ -795,7 +796,8 @@ ifeq ($(OS), linux)
 endif
 
 ifeq  ($(OS), solaris)
-	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD
+	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD \
+			-DHAVE_ALLOCA_H
 	ifneq ($(found_lock_method), yes)
 		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
 		found_lock_method=yes
