@@ -10,6 +10,6 @@
 /*
  * To header field parser
  */
-char* parse_from(char* buffer, char *end, struct from_body *from_b);
+int parse_from_header(struct hdr_field* hdr);
 
 #endif
