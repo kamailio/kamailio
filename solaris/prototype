@@ -24,6 +24,7 @@ f none lib/ser/modules/group.so 0755 bin bin
 f none lib/ser/modules/jabber.so 0755 bin bin
 f none lib/ser/modules/mangler.so 0755 bin bin
 f none lib/ser/modules/maxfwd.so 0755 bin bin
+f none lib/ser/modules/mediaproxy.so 0755 bin bin
 f none lib/ser/modules/msilo.so 0755 bin bin
 f none lib/ser/modules/mysql.so 0755 bin bin
 f none lib/ser/modules/nathelper.so 0755 bin bin

@@ -16,6 +16,7 @@ lib/ser/modules/group.so
 lib/ser/modules/jabber.so
 lib/ser/modules/mangler.so
 lib/ser/modules/maxfwd.so
+lib/ser/modules/mediaproxy.so
 lib/ser/modules/msilo.so
 lib/ser/modules/mysql.so
 lib/ser/modules/nathelper.so
