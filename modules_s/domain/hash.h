@@ -1,6 +1,6 @@
-/* domain_mod.h v 0.2 2002/12/27
+/* hash.h v 0.1 2002/12/28
  *
- * Domain module headers
+ * Header file for hash table functions
  *
  * Copyright (C) 2002-2003 Juha Heinanen
  *
@@ -27,42 +27,14 @@
  */
 
 
-#ifndef DOMAIN_MOD_H
-#define DOMAIN_MOD_H
+#ifndef _HASH_H
+#define _HASH_H
 
+#include <stdio.h>
 
-#include "../../db/db.h"
+extern int hash_table_install (struct domain_list **hash_table, char *domain);
+int hash_table_lookup (char *domain, int len);
+extern void hash_table_print (struct domain_list **hash_table, FILE *reply_file);
+extern void hash_table_free (struct domain_list **hash_table);
 
-
-/*
- * Constants
- */
-#define HASH_SIZE 128
-
-/*
- * Type definitions
- */
-struct domain_list {
-	char *domain;
-	struct domain_list *next;
-};
-
-/*
- * Module parameters variables
- */
-extern char* db_url;              /* Database URL */
-extern int db_mode;               /* Database usage mode: 0 = no cache, 1 = cache */
-extern char* domain_table;        /* Domain table name */
-extern char* domain_domain_col;   /* Domain column name */
-
-
-/*
- * Other module variables
- */
-extern db_con_t* db_handle; /* Database connection handle */
-extern struct domain_list *hash_table_1[HASH_SIZE]; /* Hash table for domains */
-extern struct domain_list *hash_table_2[HASH_SIZE]; /* Hash table for domains */
-extern struct domain_list **current_hash_table;
-
-
-#endif /* DOMAIN_MOD_H */
+#endif

@@ -28,6 +28,7 @@
 
 
 #include "domain_mod.h"
+#include "hash.h"
 #include "../../db/db.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
@@ -38,37 +39,43 @@
  */
 int is_domain_local(str* _host)
 {
-	db_key_t keys[] = {domain_domain_col};
-	db_val_t vals[1];
-	db_key_t cols[] = {domain_domain_col};
-	db_res_t* res;
+	if (db_mode == 0) {
+		db_key_t keys[] = {domain_domain_col};
+		db_val_t vals[1];
+		db_key_t cols[] = {domain_domain_col};
+		db_res_t* res;
 
-	if (db_use_table(db_handle, domain_table) < 0) {
-		LOG(L_ERR, "is_local(): Error while trying to use domain table\n");
-	}
+		if (db_use_table(db_handle, domain_table) < 0) {
+			LOG(L_ERR, "is_local(): Error while trying to use domain table\n");
+			return -1;
+		}
 
-	VAL_TYPE(vals) = DB_STR;
-	VAL_NULL(vals) = 0;
-    
-	VAL_STR(vals).s = _host->s;
-	VAL_STR(vals).len = _host->len;
+		VAL_TYPE(vals) = DB_STR;
+		VAL_NULL(vals) = 0;
+		
+		VAL_STR(vals).s = _host->s;
+		VAL_STR(vals).len = _host->len;
 
-	if (db_query(db_handle, keys, vals, cols, 1, 1, 0, &res) < 0) {
-		LOG(L_ERR, "is_local(): Error while querying database\n");
-		return -1;
-	}
+		if (db_query(db_handle, keys, 0, vals, cols, 1, 1, 0, &res) < 0) {
+			LOG(L_ERR, "is_local(): Error while querying database\n");
+			return -1;
+		}
 
-	if (RES_ROW_N(res) == 0) {
-		DBG("is_local(): Realm \'%.*s\' is not local\n", 
-		    _host->len, _host->s);
-		db_free_query(db_handle, res);
-		return -1;
+		if (RES_ROW_N(res) == 0) {
+			DBG("is_local(): Realm \'%.*s\' is not local\n", 
+			    _host->len, _host->s);
+			db_free_query(db_handle, res);
+			return -1;
+		} else {
+			DBG("is_local(): Realm \'%.*s\' is local\n", 
+			    _host->len, _host->s);
+			db_free_query(db_handle, res);
+			return 1;
+		}
 	} else {
-		DBG("is_local(): Realm \'%.*s\' is local\n", 
-		    _host->len, _host->s);
-		db_free_query(db_handle, res);
-		return 1;
+		return hash_table_lookup (_host->s, _host->len);
 	}
+			
 }
 
 /*
@@ -85,7 +92,7 @@ int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	if (!(_msg->from->parsed)) {
-		if (parse_from_header(_msg->from) == -1) {
+		if (parse_from_header(_msg) == -1) {
 			LOG(L_ERR, "is_from_local(): Can't parse from header\n");
 			return -1;
 		}
@@ -97,7 +104,6 @@ int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	ret = is_domain_local(&(uri.host));
-	free_uri(&uri);
 	return ret;
 }
 

@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include "../../sr_module.h"
 #include "domain.h"
-
+#include "fifo.h"
 
 /*
  * Module management function prototypes
@@ -40,20 +40,26 @@ static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
 
+
 /*
  * Module parameter variables
  */
 char* db_url = "sql://serro:47serro11@localhost/ser";
+int db_mode = 0;                      /* Database usage mode: 0 = no cache, 1 = cache */
 char* domain_table = "domain";        /* Name of domain table */
 char* domain_domain_col = "domain";   /* Name of domain column */
-
 
 /*
  * Other module variables
  */
-db_con_t* db_handle;   /* Database connection handle */
+db_con_t* db_handle = NULL;                  /* Database connection handle */
+struct domain_list *hash_table_1[HASH_SIZE]; /* Hash table for domains */
+struct domain_list *hash_table_2[HASH_SIZE]; /* Hash table for domains */
+struct domain_list **current_hash_table;
 
-
+/*
+ * Module interface
+ */
 struct module_exports exports = {
 	"domain", 
 	(char*[]) {"is_from_local", "is_uri_host_local"},
@@ -61,10 +67,10 @@ struct module_exports exports = {
 	(int[]) {0, 0},
 	(fixup_function[]) {0, 0},
 	2, /* number of functions*/
-	(char*[]){"db_url", "domain_table", "domain_domain_column"},
-	(modparam_t[]){STR_PARAM, STR_PARAM, STR_PARAM},
-	(void*[]){&db_url, &domain_table, &domain_domain_col},
-	3,
+	(char*[]){"db_url", "db_mode", "domain_table", "domain_domain_column"},
+	(modparam_t[]){STR_PARAM, INT_PARAM, STR_PARAM, STR_PARAM},
+	(void*[]){&db_url, &db_mode, &domain_table, &domain_domain_col},
+	4,
 	
 	mod_init,  /* module initialization function */
 	NULL,      /* response function*/
@@ -76,12 +82,36 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	printf("Domain module - initializing\n");
+	int i;
+
+	fprintf(stderr, "domain - initializing\n");
 	
-	/* Check if database modulke has been laoded */
+	/* Check if database module has been laoded */
 	if (bind_dbmod()) {
 		LOG(L_ERR, "domain:mod_init(): Unable to bind database module\n");
 		return -1;
+	}
+
+	/* Check if cache needs to be loaded from domain table */
+	if (db_mode == 1) {
+		db_handle = db_init(db_url);
+		if (!db_handle) {
+			LOG(L_ERR, "domain:mod_init(): Unable to connect database\n");
+			return -1;
+		}
+		
+		/* Initialize fifo interface */
+		(void)init_domain_fifo();
+
+		/* Initializing hash tables and hash table variable */
+		for (i = 0; i < HASH_SIZE; i++) {
+			hash_table_1[i] = hash_table_2[i] = (struct domain_list *)0;
+		}
+		current_hash_table = hash_table_1;
+		if (reload_domain_table() == -1) {
+			LOG(L_CRIT, "domain:mod_init(): Domain table reload failed\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -90,16 +120,20 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if (db_url == NULL) {
-		LOG(L_ERR, "domain:init_child(): Use db_url parameter\n");
-		return -1;
+	/* Check if database is needed by child */
+	if (db_mode == 0) {
+		if (db_url == NULL) {
+			LOG(L_ERR, "domain:child_init(): Use db_url parameter\n");
+			return -1;
+		}
+
+		db_handle = db_init(db_url);
+		if (!db_handle) {
+			LOG(L_ERR, "domain:child_init(): Unable to connect database\n");
+			return -1;
+		}
 	}
 
-	db_handle = db_init(db_url);
-	if (!db_handle) {
-		LOG(L_ERR, "auth:init_child(): Unable to connect database\n");
-		return -1;
-	}
 	return 0;
 
 }
@@ -107,5 +141,5 @@ static int child_init(int rank)
 
 static void destroy(void)
 {
-	db_close(db_handle);
+	if (db_handle) db_close(db_handle);
 }

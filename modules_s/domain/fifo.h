@@ -1,6 +1,6 @@
-/* domain_mod.h v 0.2 2002/12/27
+/* fifo.h v 0.1 2002/12/28
  *
- * Domain module headers
+ * Header file for domain fifo functions
  *
  * Copyright (C) 2002-2003 Juha Heinanen
  *
@@ -27,42 +27,16 @@
  */
 
 
-#ifndef DOMAIN_MOD_H
-#define DOMAIN_MOD_H
+#ifndef _FIFO_H
+#define _FIFO_H
 
 
-#include "../../db/db.h"
+#define DOMAIN_RELOAD "domain_reload"
+#define DOMAIN_DUMP "domain_dump"
 
 
-/*
- * Constants
- */
-#define HASH_SIZE 128
-
-/*
- * Type definitions
- */
-struct domain_list {
-	char *domain;
-	struct domain_list *next;
-};
-
-/*
- * Module parameters variables
- */
-extern char* db_url;              /* Database URL */
-extern int db_mode;               /* Database usage mode: 0 = no cache, 1 = cache */
-extern char* domain_table;        /* Domain table name */
-extern char* domain_domain_col;   /* Domain column name */
+int init_domain_fifo( void );
+int reload_domain_table( void );
 
 
-/*
- * Other module variables
- */
-extern db_con_t* db_handle; /* Database connection handle */
-extern struct domain_list *hash_table_1[HASH_SIZE]; /* Hash table for domains */
-extern struct domain_list *hash_table_2[HASH_SIZE]; /* Hash table for domains */
-extern struct domain_list **current_hash_table;
-
-
-#endif /* DOMAIN_MOD_H */
+#endif
