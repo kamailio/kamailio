@@ -3,12 +3,21 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
-0.8.12 changes
+***********************************************
+* Changes/fixes introduced in 0.8.12
+***********************************************
++--------------------------------------------------------+
+| WARNING: if you want to use a 0.8.11 config script     |
+| with 0.8.12, replace if ( len_gt(number) ) with:       |
+|                      if ( msg:len > bumber )           |
++--------------------------------------------------------+
+
+New Features
+============
 
 texops:
  - subst('s/re/repl/flags') support
 core:
- - memory leak in digest credentials parser fixed
  - added switch to check the config file (-c)
  - changes: removed len_gt() and replaced with if (msg:len op number|max_len)
  - multiple operator support: ==, != for special operations (e.g myself, ip)
@@ -39,15 +48,35 @@ core:
        message; see set_advertised_address & s/address/port/g
 
 usrloc:
- - ~ from the begining of exported functions removed -- not needed anymore
  - usernames are case insensitive
  
 registrar:
  - lookup function succeeds when appending of a branch failed
 
 auth_db:
- - fixed a bug in HA1 calculation
  - support for rpid stored in database (thanks to Jakob Schlyter)
+
+Bug fixes
+=========
+- memory leak in digest credentials parser fixed
+- authenticathion ha1 didn't include domain if username was of the form
+  user@domain and calculate_ha1 was set to yes (modules/auth_db)
+- tm reply processing race condition (modules/tm), special thanks go to
+ Dong Liu
+- Many bugs in pa module fixed, works with registrar again.
+ 
+Security updates
+================
+ 
+- fifo processing code will write responses only to other
+ fifos and only if they are not hard-linked, also default
+ ser fifo persmissions were changed to 0600.
+                                                                                
+Performance improvements
+========================
+- tuned internal malloc implementation parameters to better reflect the
+actual workload (malloc is a little bit faster now)
+
  
 
 ***********************************************
