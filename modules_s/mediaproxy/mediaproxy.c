@@ -680,19 +680,18 @@ getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
         return False;
 
     if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): error parsing Contact body\n");
+        LOG(L_ERR, "error: mediaproxy/getContactURI(): cannot parse Contact header\n");
         return False;
     }
 
     *_c = ((contact_body_t*)msg->contact->parsed)->contacts;
 
     if (*_c == NULL) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): error parsing Contact body\n");
         return False;
     }
 
     if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-        LOG(L_ERR, "error: mediaproxy/getContactURI(): error parsing Contact URI\n");
+        LOG(L_ERR, "error: mediaproxy/getContactURI(): cannot parse Contact URI\n");
         return False;
     }
 
