@@ -5,7 +5,6 @@
 #include "db_key.h"
 #include "db_val.h"
 #include "db_con.h"
-#include <mysql/mysql.h>
 
 
 struct db_row;
@@ -20,6 +19,11 @@ typedef struct db_res {
 	int n;                     /* Number of rows */
 } db_res_t;
 
+#define RES_NAMES(re) ((re)->col.names)
+#define RES_TYPES(re) ((re)->col.types)
+#define RES_COL_N(re) ((re)->col.n)
+#define RES_ROWS(re)  ((re)->rows)
+#define RES_ROW_N(re) ((re)->n)
 
 /*
  * Create a new result structure 

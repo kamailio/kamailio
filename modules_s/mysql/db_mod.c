@@ -1,50 +1,42 @@
 #include "../../sr_module.h"
-#include <stdio.h>
 #include "dbase.h"
+#include <stdio.h>
 
-typedef int (*mod_func)(struct sip_msg* msg, char* str, char* str2);
+/*
+ * MySQL database module interface
+ */
 
-
-static struct module_exports mysql_exports = { "mysql", 
-					      (char*[]) {
-						      "db_init",
-						      "db_close",
-						      "db_query",
-						      "db_free_query"
-						      "db_insert",
-						      "db_delete",
-						      "db_update"
-					      },
-					      (cmd_function[]) {
-						      (mod_func)db_init,
-						      (mod_func)db_close,
-						      (mod_func)db_query,
-						      (mod_func)db_free_query,
-						      (mod_func)db_insert,
-						      (mod_func)db_delete,
-						      (mod_func)db_update
-					      },
-					      (int[]) {
-						      1,
-						      1,
-						      2,
-						      2,
-						      2,
-						      2,
-						      2,
-					      },
-					      (fixup_function[]) {
-						      0,
-						      0,
-						      0,
-						      0,
-						      0,
-						      0,
-						      0
-					      },
-					      7, /* number of functions*/
-					      0, /* response function*/
-					      0  /* destroy function */
+static struct module_exports mysql_exports = {	
+	"mysql",
+	(char*[]) {
+		"db_use_table",
+		"db_init",
+		"db_close",
+		"db_query",
+		"db_free_query",
+		"db_insert",
+		"db_delete",
+		"db_update"
+	},
+	(cmd_function[]) {
+		(cmd_function)use_table,
+		(cmd_function)db_init,
+		(cmd_function)db_close,
+		(cmd_function)db_query,
+		(cmd_function)db_free_query,
+		(cmd_function)db_insert,
+		(cmd_function)db_delete,
+		(cmd_function)db_update
+	},
+	(int[]) {
+                2, 1, 2, 2, 2, 2, 2, 2
+	},
+	(fixup_function[]) {
+		0, 0, 0, 0, 0, 0, 0, 0
+	},
+	8, /* number of functions*/
+	0, /* response function*/
+	0  /* destroy function */
 };
 
 

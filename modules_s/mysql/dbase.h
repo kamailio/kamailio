@@ -30,9 +30,12 @@ void db_close (db_con_t* _h);
  * _n: nmber of key=values pairs to compare
  * _nc: number of columns to return
  * _o: order by the specified column
+ * _r: Result will be stored in this variable
+ *     NULL if there is no result
  */
-db_res_t* db_query (db_con_t* _h, db_key_t* _k, 
-		 db_val_t* _v, db_key_t* _c, int _n, int _nc);
+int db_query (db_con_t* _h, db_key_t* _k, 
+	      db_val_t* _v, db_key_t* _c, int _n, int _nc,
+	      db_res_t** _r);
 
 int db_free_query (db_con_t* _h, db_res_t* _r);
 
