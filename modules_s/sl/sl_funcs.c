@@ -158,7 +158,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		goto error;
 	}
 
-	send_sock=get_send_socket(&to);
+	send_sock=get_send_socket(&to, msg->rcv.proto);
 	if (send_sock!=0)
 	{
 		udp_send( send_sock, buf, len,  &to);
