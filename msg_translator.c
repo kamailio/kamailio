@@ -183,7 +183,6 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 
 	extra_len = 0;
 	source_ip=&msg->rcv.src_ip;
-	buf = 0;
 
 	buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 	if (buf==0){
@@ -191,16 +190,11 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 		LOG(L_ERR, "ERROR: received_builder: out of memory\n");
 		return 0;
 	}
-	/*
-	received_len=snprintf(buf, MAX_RECEIVED_SIZE,
-							";received=%s",
-							inet_ntoa(*(struct in_addr *)&source_ip));
-	*/
 	memcpy(buf, RECEIVED, RECEIVED_LEN);
 	if ( (tmp=ip_addr2a(source_ip))==0)
 		return 0; /* error*/
 	tmp_len=strlen(tmp);
-	len=RECEIVED_LEN+tmp_len;
+	len=RECEIVED_LEN+tmp_len+1; /* space for  null termination */
 	if(source_ip->af==AF_INET6){
 		len+=2;
 		buf[RECEIVED_LEN]='[';
@@ -212,6 +206,32 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 	buf[len]=0; /*null terminate it */
 
 	*received_len = len;
+	return buf;
+}
+
+
+
+char* rport_builder(struct sip_msg *msg, unsigned int *rport_len)
+{
+	char* buf;
+	char* tmp;
+	int tmp_len;
+	int len;
+	
+	tmp_len=0;
+	tmp=int2str(ntohs(msg->rcv.src_port), &tmp_len);
+	len=RPORT_LEN+tmp_len+1; /* space for null term */
+	buf=pkg_malloc(sizeof(char)*len);
+	if (buf==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: rport_builder: out of memory\n");
+		return 0;
+	}
+	memcpy(buf, RPORT, RPORT_LEN);
+	memcpy(buf+RPORT_LEN, tmp, tmp_len);
+	buf[len]=0; /*null terminate it*/
+	
+	*rport_len=len;
 	return buf;
 }
 
@@ -402,9 +422,10 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
 								struct socket_info* send_sock, int proto)
 {
-	unsigned int len, new_len, received_len, uri_len, via_len;
+	unsigned int len, new_len, received_len, rport_len, uri_len, via_len;
 	char* line_buf;
 	char* received_buf;
+	char* rport_buf;
 	char* new_buf;
 	char* orig;
 	char* buf;
@@ -418,8 +439,10 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	buf=msg->buf;
 	len=msg->len;
 	received_len=0;
+	rport_len=0;
 	new_buf=0;
 	received_buf=0;
+	rport_buf=0;
 
 
 	line_buf = via_builder( &via_len, send_sock, 
@@ -436,6 +459,12 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	if (r!=0){
 		if ((received_buf=received_builder(msg,&received_len))==0)
 			goto error01;  /* free also line_buf */
+	}
+	
+	/* check if rport needs to be updated */
+	if (msg->via1->rport && msg->via1->rport->value.s==0){
+		if ((rport_buf=rport_builder(msg, &rport_len))==0)
+			goto error01; /* free everything */
 	}
 
 	/* add via header to the list */
@@ -462,9 +491,17 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		}
 		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
 				HDR_VIA);
-		if (anchor==0) goto error02; /* free also line_buf */
+		if (anchor==0) goto error02; /* free received_buf */
 		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
-				==0 ) goto error02; /* free also line_buf */
+				==0 ) goto error02; /* free received_buf */
+	}
+	/* if rport needs to be updated, delete it and add it's value */
+	if (rport_len){
+		anchor=del_lump(&(msg->add_rm), msg->via1->rport->name.s-buf,
+							msg->via1->rport->name.len, HDR_VIA);
+		if (anchor==0) goto error03; /* free rport_buf*/
+		if (insert_new_lump_after(anchor, rport_buf, rport_len, HDR_VIA)==0)
+			goto error03; /* free rport_buf*/
 	}
 
 	/* compute new msg len and fix overlapping zones*/
@@ -514,6 +551,8 @@ error01:
 	pkg_free(line_buf);
 error02:
 	if (received_buf) pkg_free(received_buf);
+error03:
+	if (rport_buf) pkg_free(rport_buf);
 error00:
 	*returned_len=0;
 	return 0;

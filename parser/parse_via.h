@@ -25,6 +25,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* 
+ *  2003-01-21  added rport parsing code, contributed by
+ *               Maxim Sobolev  <sobomax@FreeBSD.org>
+ *  2003-01-21  added extra via param parsing code (i=...), used
+ *               by tcp to identify the sending socket, by andrei
+ */
+
+
 
 #ifndef PARSE_VIA_H
 #define PARSE_VIA_H
@@ -32,11 +40,11 @@
 #include "../str.h"
 
 /* via param types
- * WARNING: keep in sync w/ FIN_*, GEN_PARAM and PARAM_ERROR from via_parse.c
+ * WARNING: keep in sync with parse_via.c FIN_HIDDEN... 
  */
 enum {
 	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH, 
-	PARAM_MADDR, PARAM_RECEIVED, GEN_PARAM,
+	PARAM_MADDR, PARAM_RECEIVED, PARAM_RPORT, PARAM_I, GEN_PARAM,
 	PARAM_ERROR
 };
 
@@ -72,6 +80,8 @@ struct via_body {
 	struct via_param* branch;
 	str tid; /* transaction id, part of branch */
 	struct via_param* received;
+	struct via_param* rport;
+	struct via_param* i;
 	
 	struct via_body* next; /* pointer to next via body string if
 				  compact via or null */

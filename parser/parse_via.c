@@ -29,14 +29,14 @@
  */
 
 
-/* parsing:           compact form:
- */
 
 /* 
- * still TODO/test:
- *  x parse next via
- *  - return a list of header structs
- *  - return list of params
+ *  2003-01-21  added rport parsing code, contributed by
+ *               Maxim Sobolev  <sobomax@FreeBSD.org>
+ *  2003-01-23  added extra via param parsing code (i=...), used
+ *               by tcp to identify the sending socket, by andrei
+ *  2003-01-23  fixed rport parsing code to accept rport w/o any value,
+ *               by andrei
  */
 
 
@@ -80,8 +80,8 @@ enum {
 
 
 /* param related states
- * WARNING: keep the FIN*, GEN_PARAM & PARAM_ERROR in sync w/ PARAM_* from
- * msg_parser.h !*/
+ * WARNING: keep in sync with parse_via.h, PARAM_HIDDEN, ...
+ */
 enum {	
 	L_VALUE = 200, F_VALUE, P_VALUE, P_STRING,
 	HIDDEN1, HIDDEN2, HIDDEN3, HIDDEN4, HIDDEN5,
@@ -90,8 +90,10 @@ enum {
 	MADDR1, MADDR2, MADDR3, MADDR4,
 	RECEIVED1, RECEIVED2, RECEIVED3, RECEIVED4, RECEIVED5, RECEIVED6,
 	RECEIVED7,
+	RPORT1, RPORT2, RPORT3,
 	     /* fin states (227-...)*/
 	FIN_HIDDEN = 230, FIN_TTL, FIN_BRANCH, FIN_MADDR, FIN_RECEIVED,
+	FIN_RPORT, FIN_I
 	     /*GEN_PARAM,
 	       PARAM_ERROR*/ /* declared in msg_parser.h*/
 };
@@ -130,6 +132,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_MADDR:
 					case FIN_RECEIVED:
+					case FIN_RPORT:
+					case FIN_I:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -165,6 +169,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_MADDR:
 					case FIN_RECEIVED:
+					case FIN_RPORT:
+					case FIN_I:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -205,6 +211,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_MADDR:
 					case FIN_RECEIVED:
+					case FIN_RPORT:
+					case FIN_I:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -236,6 +244,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_MADDR:
 					case FIN_RECEIVED:
+					case FIN_RPORT:
+					case FIN_I:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -263,6 +273,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case ';':
 				switch(state){
 					case FIN_HIDDEN:
+					case FIN_RPORT: /* rport can appear w/o a value */
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -272,6 +283,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_MADDR:
 					case FIN_TTL:
 					case FIN_RECEIVED:
+					case FIN_I:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c> in"
 								" state %d\n", *tmp, state);
 						goto error;
@@ -292,6 +304,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case ',':
 				switch(state){
 					case FIN_HIDDEN:
+					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -301,6 +314,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_MADDR:
 					case FIN_TTL:
 					case FIN_RECEIVED:
+					case FIN_I:
 						LOG(L_ERR, "ERROR: parse_via_param: new via found" 
 								"(',') when '=' expected (state %d=)\n",
 								state);
@@ -346,7 +360,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case 'I':
 				switch(state){
 					case F_PARAM:
-						state=GEN_PARAM;
+						state=FIN_I;
 						param->name.s=tmp;
 						break;
 					case HIDDEN1:
@@ -463,6 +477,9 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case TTL1:
 						state=TTL2;
 						break;
+					case RPORT3:
+						state=FIN_RPORT;
+						break;
 					case GEN_PARAM:
 						break;
 					case F_CR:
@@ -550,6 +567,9 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case BRANCH1:
 						state=BRANCH2;
 						break;
+					case RPORT2:
+						state=RPORT3;
+						break;
 					case GEN_PARAM:
 						break;
 					case F_CR:
@@ -624,14 +644,43 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=GEN_PARAM;
 				}
 				break;
-
+			case 'p':
+			case 'P':
+				switch(state){
+					case RECEIVED1:
+						state=RPORT1;
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end_via;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'o':
+			case 'O':
+				switch(state){
+					case RPORT1:
+						state=RPORT2;
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end_via;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
 			default:
 				switch(state){
 					case F_PARAM:
 						state=GEN_PARAM;
 						param->name.s=tmp;
 						break;
-					case  GEN_PARAM:
+					case GEN_PARAM:
 						break;
 					case F_CR:
 					case F_LF:
@@ -755,6 +804,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						param->value.len=tmp-param->value.s;
 						state=F_PARAM;
 						goto endofvalue;
+					case F_VALUE:
+						*tmp=0;
+						param->value.len=0;
+						state=F_PARAM;
+						goto endofvalue;
 					case P_STRING:
 						break; /* what to do? */
 					case F_LF:
@@ -762,6 +816,14 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case F_CRLF:
 						state=END_OF_HEADER;
 						goto end_via;
+					case L_VALUE:
+						if (param->type==FIN_RPORT){
+							param->value.len=0;
+							param->value.s=0; /* null value */
+							state=F_PARAM;
+							goto endofvalue;
+						};
+						/* no break */
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
 								" in state %d\n", *tmp, state);
@@ -776,11 +838,19 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						state=F_VIA;
 						goto endofvalue;
 					case P_STRING:
-						case F_LF:
+					case F_LF:
 					case F_CR:
 					case F_CRLF:
 						state=END_OF_HEADER;
 						goto end_via;
+					case L_VALUE:
+						if (param->type==FIN_RPORT){
+							param->value.len=0;
+							param->value.s=0; /* null value */
+							state=F_VIA;
+							goto endofvalue;
+						};
+						/* no break */
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
 								" in state %d\n", *tmp, state);
@@ -847,8 +917,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 	
  end_via:
 	     /* if we are here we found an "unexpected" end of via
-	      *  (cr/lf). This is valid only if the param type is GEN_PARAM*/
-	if (param->type==GEN_PARAM){
+	      *  (cr/lf). This is valid only if the param type is GEN_PARAM or
+		  *  RPORT (the only ones which can miss the value; HIDDEN is a 
+		  *  special case )*/
+	if ((param->type==GEN_PARAM)||(param->type==PARAM_RPORT)){
 		saved_state=L_PARAM; /* change the saved_state, we have an unknown
 		                        param. w/o a value */
 		goto endofparam;
@@ -1097,6 +1169,7 @@ parse_again:
 				switch(state){
 					case F_PROTO:
 						state=UDP1;
+						vb->transport.s=tmp;
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
@@ -1121,6 +1194,7 @@ parse_again:
 				switch(state){
 					case F_PROTO:
 						state=TCP1;
+						vb->transport.s=tmp;
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
@@ -1713,6 +1787,10 @@ parse_again:
 							vb->branch=param;
 						else if (param->type==PARAM_RECEIVED)
 							vb->received=param;
+						else if (param->type==PARAM_RPORT)
+							vb->rport=param;
+						else if (param->type==PARAM_I)
+							vb->i=param;
 						break;
 					case P_PARAM:
 						break;
