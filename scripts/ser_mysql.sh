@@ -226,7 +226,7 @@ GRANT SELECT ON $1.* TO ${ROUSER}@$DBHOST IDENTIFIED BY '$RO_PW';
 
 CREATE TABLE version (
    table_name varchar(64) NOT NULL,
-   version smallint(5) DEFAULT '0' NOT NULL
+   table_version smallint(5) DEFAULT '0' NOT NULL
 ) $TABLE_TYPE;
 
 #
@@ -717,12 +717,18 @@ case $1 in
 		fi
 		#5 restoring table content
 		echo "restoring table content"
+
+		# Recreate perms column here so that subsequent
+		# restore succeeds
+		
 		ser_restore $DBNAME ${tmp_file}.2
 		if [ "$?" -ne 0 ] ; then
 			echo "reinstall: restoring table failed"
 			rm $tmp_file*
 			exit 1
 		fi
+		
+		# Drop perms column here
 #XX
 #		rm $tmp_file*
 		exit 0

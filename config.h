@@ -186,9 +186,9 @@
 #define DEFAULT_RODB_URL "mysql://serro:47serro11@localhost/ser"
 #define DEFAULT_RODB_URL_LEN (sizeof(DEFAULT_RODB_URL) - 1)
 
-/* table holdin versions of other ser tables */
+/* table holding versions of other ser tables */
 #define VERSION_TABLE "version"
-#define VERSION_COLUMN "version"
+#define VERSION_COLUMN "table_version"
 #define TABLENAME_COLUMN "table_name"
 
 /* minimum packet size; smaller packets will be dropped silently */
