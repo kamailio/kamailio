@@ -137,14 +137,15 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	MKDEP=$(CC) -MM $(DEFS)
 	#transform gcc version into 2.9x or 3.0
-	CC_SHORTVER=$(shell echo $(CC_VER) | cut -d" " -f 2| \
+	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
-				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/')
+				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/' -e \
+				 	's/3\../3.0/')
 endif
 
 ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	CC_NAME=suncc
-	CC_SHORTVER=$(shell echo $(CC_LONGVER)|head -1| \
+	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -1| \
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
 	MKDEP=$(CC) -xM1 $(DEFS)
