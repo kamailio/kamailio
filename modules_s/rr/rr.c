@@ -194,7 +194,6 @@ int remFirstRoute(struct sip_msg* _m, char* _next)
 
 
 
-
 static void get_username(str* _s)
 {
 	char* at, *dcolon, *dc;
@@ -254,16 +253,27 @@ int buildRRLine(struct sip_msg* _m, str* _l)
 		*(_l->s + _l->len++) = '@';
 	}
 
-	_l->len += sprintf(_l->s + _l->len, "%d.%d.%d.%d", 
-			   (addresses[0] & 0x000000ff),
-			   (addresses[0] & 0x0000ff00) >>  8,
-			   (addresses[0] & 0x00ff0000) >> 16,
-			   (addresses[0] & 0xff000000) >> 24
-			   );
+	switch(sock_info->address.af) {
+	case AF_INET:
+		memcpy(_l->s + _l->len, sock_info->address_str.s, sock_info->address_str.len);
+		_l->len += sock_info->address_str.len;
+		break;
+
+	case AF_INET6:
+		_l->s[_l->len++] = '[';
+		memcpy(_l->s + _l->len, sock_info->address_str.s, sock_info->address_str.len);
+		_l->len += sock_info->address_str.len;
+		_l->s[_l->len++] = ']';
+		break;
+
+	default:
+		LOG(L_ERR, "buildRRLine(): Unsupported PF type: %d\n", sock_info->address.af);
+		break;
+	}
 
 	     /*	memcpy(_l->s + _l->len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len); */
 	     /* _l->len += _m->first_line.u.request.uri.len; */
-
+	
 	if (port_no != 5060) {
 		_l->len +=  sprintf(_l->s + _l->len, ":%d", port_no);
 	}
