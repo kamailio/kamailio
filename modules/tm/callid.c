@@ -78,18 +78,19 @@ int init_callid(void)
 		return -1;
 	}
 	
-	for(rand_bits = 0, i = RAND_MAX; i; i >>= 1, rand_bits++);  /* how long are the rand()s ? */
+	for(rand_bits = 1, i = RAND_MAX; i; i >>= 1, rand_bits++);  /* how long are the rand()s ? */
 	i = callid_prefix.len * 4 / rand_bits; /* how many rands() fit in the ULONG ? */
 
 	     /* now fill in the callid with as many random
 	      * numbers as you can + 1 */
-	callid_nr = rand(); /* this is the + 1 */
+       	callid_nr = rand(); /* this is the + 1 */
+
 	while(i--) {
 		callid_nr <<= rand_bits;
 		callid_nr |= rand();
 	}
 
-	i = snprintf(callid_prefix.s, callid_prefix.len, "%0*lx", callid_prefix.len, callid_nr);
+	i = snprintf(callid_prefix.s, callid_prefix.len + 1, "%0*lx", callid_prefix.len, callid_nr);
 	if ((i == -1) || (i > callid_prefix.len)) {
 		LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
 		return -2;
