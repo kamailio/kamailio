@@ -65,24 +65,27 @@ static inline void reset_retr_timers( struct s_table *h_table,
 
 	DBG("DEBUG:stop_RETR_and_FR_timers : start \n");
 	/* lock the first timer list of the FR group -- all other
-	   lists share the same lock
-	*/
-	lock(  hash_table->timers[RT_T1_TO_1].mutex );
+	   lists share the same lock*/
+	lock(  hash_table->timers[FR_TIMER_LIST].mutex );
+	/* reset_timer( h_table, &(p_cell->outbound_response.retr_timer)); */
 	remove_timer_unsafe( & p_cell->outbound_response.retr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
 			if ( rb = p_cell->outbound_request[ijk] ) {
+				/* reset_timer(h_table, &(rb->retr_timer)); */
 				remove_timer_unsafe( & rb->retr_timer );
 			}
 		}
-	unlock(  hash_table->timers[RT_T1_TO_1].mutex );
-	lock(  hash_table->timers[FR_TIMER_LIST].mutex );
+	unlock(  hash_table->timers[FR_TIMER_LIST].mutex );
+	lock(  hash_table->timers[RT_T1_TO_1].mutex );
+	/* reset_timer( h_table, &(p_cell->outbound_response.fr_timer)); */
 	remove_timer_unsafe( & p_cell->outbound_response.fr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
 			if ( rb = p_cell->outbound_request[ijk] ) {
+				/* reset_timer(h_table, &(rb->fr_timer)); */
 				remove_timer_unsafe( & rb->fr_timer );
 			}
 		}
-	unlock(  hash_table->timers[FR_TIMER_LIST].mutex );
+	unlock(  hash_table->timers[RT_T1_TO_1].mutex );
 	DBG("DEBUG:stop_RETR_and_FR_timers : stop\n");
 }
 
@@ -1007,8 +1010,13 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
 
     len = 0;
     /*first line's len */
-    len += 4+p_msg->first_line.u.request.uri.len+1+
-		p_msg->first_line.u.request.version.len+CRLF_LEN;
+    len += 4/*reply code and one space*/+
+       p_msg->first_line.u.request.version.len+CRLF_LEN;
+    /*uri's len*/
+    if (p_msg->new_uri.s)
+       len += p_msg->new_uri.len +1;
+    else
+       len += p_msg->first_line.u.request.uri.len +1;
     /*via*/
     via = via_builder( p_msg , &via_len );
     if (!via)
@@ -1045,8 +1053,16 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    memcpy( p , "ACK " , 4);
    p += 4;
 
-   memcpy( p , p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf) , p_msg->first_line.u.request.uri.len );
-   p += p_msg->first_line.u.request.uri.len;
+   if ( p_msg->new_uri.s )
+   {
+      memcpy(p,p_msg->orig+(p_msg->new_uri.s-p_msg->buf),
+         p_msg->new_uri.len );
+      p +=p_msg->new_uri.len;
+   }else{
+      memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
+         p_msg->first_line.u.request.uri.len );
+      p += p_msg->first_line.u.request.uri.len;
+   }
 
    *(p++) = ' ';
 

@@ -140,7 +140,7 @@ void receive_stdin_loop()
 	#define BSIZE 1024
 	char buf[BSIZE+1];
 	int len;
-	
+
 	while(1){
 		len=fread(buf,1,BSIZE,stdin);
 		buf[len+1]=0;
@@ -459,7 +459,6 @@ int main(int argc, char** argv)
 
 	//memtest();
 	//hashtest();
-
 
 	/* process command line (get port no, cfg. file path etc) */
 	opterr=0;

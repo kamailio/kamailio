@@ -36,6 +36,10 @@
 #define CONTENT_LEN "Content-Length: 0"
 #define CONTENT_LEN_LEN 17
 
+#define USER_AGENT "User-Agent: Sip EXpress router"\
+                                     "(" VERSION " (" ARCH "/" OS"))"
+ #define USER_AGENT_LEN (sizeof(USER_AGENT)-1)
+
 #define MY_BRANCH ";branch=0"
 #define MY_BRANCH_LEN 9
 

@@ -31,7 +31,8 @@
 		(_dest) += (_len) ;\
 	}while(0);
 
-
+extern char version[];
+extern int version_len;
 
 /* faster than inet_ntoa */
 static inline char* q_inet_itoa(unsigned long ip)
@@ -584,6 +585,8 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/*lumps length*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
+	/*user agent header*/
+	len += USER_AGENT_LEN ;
 	/*content length header*/
 	len +=CONTENT_LEN_LEN + CRLF_LEN;
 	/* end of message */
@@ -652,6 +655,11 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		memcpy(p,lump->text.s,lump->text.len);
 		p += lump->text.len;
 	}
+	/*user agent header*/
+	memcpy( p, USER_AGENT , USER_AGENT_LEN );
+	p+=USER_AGENT_LEN;
+	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
 	/* content length header*/
 	memcpy( p, CONTENT_LEN , CONTENT_LEN_LEN );
 	p+=CONTENT_LEN_LEN;
