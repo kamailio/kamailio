@@ -38,13 +38,11 @@
  */
 typedef struct {
 	char* table;           /* Default table to use */
-	int connected;         /* 1 if database is connected */
-	unsigned long tail[1]; /* Variable length tail
+	unsigned long tail;    /* Variable length tail
 				* database module specific */    
 } db_con_t;
 
 
-#define CON_CONNECTED(cn)  ((cn)->connected)
 #define CON_TABLE(cn)      ((cn)->table)
 #define CON_TAIL(cn)       ((cn)->tail)
 
