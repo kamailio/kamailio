@@ -40,6 +40,7 @@
  *  2003-04-26  do it (^) really really really everywhere (jiri)
  *  2003-07-07  added get_proto calls when proxy!=0 (andrei)
  *  2004-02-13  t->is_invite and t->local replaced with flags (bogdan)
+ *  2004-02-18  t_write_req imported from vm module (bogdan)
  */
 
 #include <limits.h>
@@ -438,31 +439,28 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	static char     cmd_buf[CMD_BUFFER_MAX];
 	static str      empty_param = {".",1};
 	static str      email_attr = {"email",5};
-	str             body;
-	unsigned int    hash_index;
-	unsigned int    label;
-	contact_body_t* cb=0;
-	name_addr_t     na;
-	struct usr_avp  *email_avp;
-	str             str_uri;
-	contact_t*      c=0;
-	int             int_buflen, l;
-	char*           i2s;
-	char*           s;
-	rr_t*           record_route;
-	char            fproxy_lr;
-	str             route;
-	str             next_hop;
-	str             hdrs;
-	int             msg_flags_size;
+	unsigned int      hash_index;
+	unsigned int      label;
+	contact_body_t*   cb=0;
+	contact_t*        c=0;
+	name_addr_t       na;
+	rr_t*             record_route;
 	struct hdr_field* p_hdr;
 	param_hooks_t     hooks;
-	int             parse_flags;
-	int             ret;
-	str             tmp_s;
+	struct usr_avp    *email_avp;
+	str               body;
+	str               str_uri;
+	int               l;
+	char*             s;
+	char              fproxy_lr;
+	str               route;
+	str               next_hop;
+	str               hdrs;
+	int               parse_flags;
+	int               ret;
+	str               tmp_s;
 
 	ret = -1;
-	email_avp = 0;
 
 	if(msg->first_line.type != SIP_REQUEST){
 		LOG(L_ERR,"ERROR:tm:t_write_req: called for something else then"
@@ -471,6 +469,8 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	}
 
 	parse_flags = 0;
+	email_avp = 0;
+	body = empty_param;
 
 	/* parse all -- we will need every header field for a UAS
 	 * avoid parsing if in FAILURE_ROUTE - all hdr have already been parsed */
@@ -627,10 +627,6 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	DBG("DEBUG:tm:t_write_req: next r-uri: %.*s\n",
 		str_uri.len,str_uri.len ? str_uri.s : "");
 
-	body = empty_param;
-	//email = empty_param;
-	//domain = empty_param;
-
 	if( REQ_LINE(msg).method_value==METHOD_INVITE ) {
 		/* get body */
 		if( (body.s = get_body(msg)) == 0 ){
@@ -649,18 +645,16 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	}
 
 	/* additional headers */
-	hdrs.s=hdrs_buf; hdrs.len=0;
-	s = hdrs_buf;
-
-	if(hdrs.len+12+sizeof(flag_t)+1 >= HDRS_BUFFER_MAX){
+	hdrs.s = s = hdrs_buf;
+	l = sizeof(flag_t);
+	if (l+12+1 >= HDRS_BUFFER_MAX) {
 		LOG(L_ERR,"ERROR:tm:t_write_req: buffer overflow "
 			"while copying optional header\n");
 		goto error3;
 	}
-	append_str(s,"P-MsgFlags: ",12); hdrs.len += 12;
-	msg_flags_size = sizeof(flag_t);
-	int2reverse_hex(&s, &msg_flags_size, (int)msg->msg_flags);
-	hdrs.len += sizeof(flag_t) - msg_flags_size;
+	append_str(s,"P-MsgFlags: ",12); hdrs.len = 12;
+	int2reverse_hex(&s, &l, (int)msg->msg_flags);
+	hdrs.len += sizeof(flag_t) - l;
 	append_chr(s,'\n'); hdrs.len++;
 
 	for(p_hdr = msg->headers;p_hdr;p_hdr = p_hdr->next) {
@@ -719,20 +713,22 @@ int t_write_req(struct sip_msg* msg, char* vm_fifo, char* action)
 	eol_line(14)=get_to(msg)->tag_value;	/* to tag */
 	eol_line(15)=get_cseq(msg)->number;	/* cseq number */
 
-	i2s=int2str(hash_index, &l);		/* hash:label */
+	eol_line(16).s=id_buf;       /* hash:label */
+	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
 		LOG(L_ERR, "ERROR:tm:t_write_req: too big hash\n");
 		goto error3;
 	}
-	memcpy(id_buf, i2s, l);
-	id_buf[l]=':';int_buflen=l+1;
-	i2s=int2str(label, &l);
-	if (l+1+int_buflen>=IDBUF_LEN) {
+	memcpy(id_buf, s, l);
+	id_buf[l]=':';
+	eol_line(16).len=l+1;
+	s = int2str(label, &l);
+	if (l+1+eol_line(16).len>=IDBUF_LEN) {
 		LOG(L_ERR, "ERROR:tm:t_write_req: too big label\n");
 		goto error3;
 	}
-	memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-	eol_line(16).s=id_buf;eol_line(16).len=int_buflen;
+	memcpy(id_buf+eol_line(16).len, s, l);
+	eol_line(16).len+=l;
 
 	eol_line(17) = route.len ? route : empty_param;
 	eol_line(18) = next_hop;

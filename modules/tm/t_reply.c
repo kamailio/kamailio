@@ -59,6 +59,7 @@
  *              to transaction context (jiri)
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
+ *  2004-02-18  fifo_t_reply imported from vm module (bogdan)
  */
 
 
