@@ -254,7 +254,7 @@ static char* get_plain_uri(const str* uri)
 static int check_routing(struct sip_msg* msg, int idx) 
 {
 	struct hdr_field *from;
-	int len;
+	int len, q;
 	static char from_str[EXPRESSION_LENGTH+1];
 	static char ruri_str[EXPRESSION_LENGTH+1];
 	char* uri_str;
@@ -331,7 +331,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 
  check_branches:
 	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len))) {
+	while((branch.s = next_branch(&branch.len, &q))) {
 		uri_str = get_plain_uri(&branch);
 		if (!uri_str) {
 			LOG(L_ERR, "check_uri(): Error while extracting plain URI\n");

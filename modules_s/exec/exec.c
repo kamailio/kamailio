@@ -162,7 +162,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 			msg->new_uri.len=uri_len;
 			msg->parsed_uri_ok=0; /* invalidate current parsed uri */
 		} else {
-			if (append_branch(msg, uri_line, uri_len)==-1) {
+			if (append_branch(msg, uri_line, uri_len, Q_UNSPECIFIED)==-1) {
 				LOG(L_ERR, "ERROR: exec_str: append_branch failed;"
 					" too many or too long URIs?\n");
 				goto error02;
