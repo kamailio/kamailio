@@ -25,17 +25,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "../../db/db_val.h"
-#include "defs.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "db_utils.h"
-#include "../../dprint.h"
 #include <string.h>
 #include <mysql/mysql.h>
+#include "../../db/db_val.h"
+#include "../../dprint.h"
+#include "defs.h"
+#include "db_utils.h"
 
 
+/*
+ * Convert a string to integer
+ */
 static inline int str2int(const char* _s, int* _v)
 {
 #ifdef PARANOID
@@ -49,6 +51,9 @@ static inline int str2int(const char* _s, int* _v)
 }
 
 
+/*
+ * Convert a string to double
+ */
 static inline int str2double(const char* _s, double* _v)
 {
 #ifdef PARANOID
@@ -62,6 +67,9 @@ static inline int str2double(const char* _s, double* _v)
 }
 
 
+/* 
+ * Convert a string to time_t
+ */
 static inline int str2time(const char* _s, time_t* _v)
 {
 #ifdef PARANOID
@@ -75,6 +83,9 @@ static inline int str2time(const char* _s, time_t* _v)
 }
 
 
+/*
+ * Convert an integer to string
+ */
 static inline int int2str(int _v, char* _s, int* _l)
 {
 #ifdef PARANOID
@@ -88,6 +99,9 @@ static inline int int2str(int _v, char* _s, int* _l)
 }
 
 
+/*
+ * Convert a double to string
+ */
 static inline int double2str(double _v, char* _s, int* _l)
 {
 #ifdef PARANOID
@@ -101,6 +115,9 @@ static inline int double2str(double _v, char* _s, int* _l)
 }
 
 
+/*
+ * Convert time_t to string
+ */
 static inline int time2str(time_t _v, char* _s, int* _l)
 {
 	int l;
@@ -286,5 +303,3 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	}
 	return -8;
 }
-
-

@@ -30,12 +30,12 @@
 
 #define _GNU_SOURCE /* To avoid strptime warning */
 
-#include "db_utils.h"
 #include <string.h>
+#include <time.h>
+#include "db_utils.h"
 #include "utils.h"
 #include "defs.h"
 
-#include <time.h>
 
 
 /*

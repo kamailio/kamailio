@@ -28,13 +28,17 @@
  */
 
 
+#include <string.h>
 #include "../../db/db_con.h"
-#include "defs.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include <string.h>
+#include "defs.h"
 
 
+/*
+ * Store name of table that will be used by
+ * subsequent database functions
+ */
 int use_table(db_con_t* _h, const char* _t)
 {
 	char* ptr;

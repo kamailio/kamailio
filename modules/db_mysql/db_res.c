@@ -27,16 +27,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "../../db/db_res.h"
-#include "defs.h"
 #include <stdlib.h>
+#include <mysql/mysql.h>
+#include "../../db/db_res.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include <mysql/mysql.h>
+#include "defs.h"
 #include "con_mysql.h"
 
 
+/*
+ * Get and convert columns from a result
+ */
 static inline int get_columns(db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
@@ -98,6 +100,9 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 }
 
 
+/*
+ * Release memory used by rows
+ */
 static inline int free_rows(db_res_t* _r)
 {
 	int i;
@@ -115,6 +120,9 @@ static inline int free_rows(db_res_t* _r)
 }
 
 
+/*
+ * Convert rows from mysql to db API representation
+ */
 static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
@@ -155,6 +163,9 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 }
 
 
+/*
+ * Release memory used by columns
+ */
 static inline int free_columns(db_res_t* _r)
 {
 #ifdef PARANOID
@@ -214,6 +225,9 @@ int convert_result(db_con_t* _h, db_res_t* _r)
 }
 
 
+/*
+ * Release memory used by a result structure
+ */
 int free_result(db_res_t* _r)
 {
 #ifdef PARANOID

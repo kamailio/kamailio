@@ -27,11 +27,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "utils.h"
 #include <string.h>
+#include "utils.h"
 #include "defs.h"
 
+
+/* FIXME: to be removed */
 
 /*
  * Remove any tabs and spaces from the begining and the end of
