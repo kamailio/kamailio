@@ -57,11 +57,4 @@ typedef enum dig_par {
  */
 int parse_param_name(str* _s, dig_par_t* _type);
 
-
-/*
- * Initialize hash table
- */
-void init_digest_htable(void);
-
-
 #endif /* PARAM_PARSER_H */

@@ -86,12 +86,6 @@ typedef struct dig_cred {
 
 
 /*
- * Initialize digest parser
- */
-void init_digest_parser(void);
-
-
-/*
  * Initialize a digest credentials structure
  */
 void init_dig_cred(dig_cred_t* _c);

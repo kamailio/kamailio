@@ -362,12 +362,3 @@ void init_dig_cred(dig_cred_t* _c)
 	memset(_c, 0, sizeof(dig_cred_t));
 }
 
-
-/*
- * Initialize digest_parser
- */
- 
-void init_digest_parser(void)
-{
-        init_digest_htable();
-}
