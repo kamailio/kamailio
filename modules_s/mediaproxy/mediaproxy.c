@@ -8,8 +8,9 @@
  * The mediaproxy module shares it's working principle with the nathelper
  * module. It also uses a similar interface for communicating with SER
  * (exported functions perform similar actions).
- * Credits should go to them for all their original ideas also present in
- * mediaproxy, as well as for the SER interface which they have designed.
+ * Credits should go to Porta Software Ltd. for all their original ideas that
+ * are also present in mediaproxy, as well as for the SER interface which they
+ * have originally designed.
  *
  * The difference between mediaproxy and nathelper is that mediaproxy tries
  * to implement the same ideas using a semantically different approach.
@@ -552,6 +553,7 @@ getUserAgent(struct sip_msg* msg)
 
 // Get URI from the Contact: field.
 // Derived from get_contact_uri() from the nathelper module.
+// (c) goes to the nathelper module authors.
 static Bool
 getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
 {
@@ -936,7 +938,8 @@ rfc1918address(str *address)
 
 
 // This function is a copy (with minor modifications) of the timer()
-// function from the nathleper module. proper credits should go there.
+// function from the nathleper module.
+// (c) go to the nathelper authors.
 static void
 pingClients(unsigned int ticks, void *param)
 {
@@ -1253,7 +1256,7 @@ ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
 // Preserve port for SIP asymmetric clients
 //
 // Function was originally based on fix_nated_contact_f from the nathelper
-// module (added more features since). proper credits should go there.
+// module (added more features since). (c) shared with the nathelper authors.
 static int
 FixContact(struct sip_msg* msg, char* str1, char* str2)
 {
