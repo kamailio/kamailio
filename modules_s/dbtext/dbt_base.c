@@ -98,6 +98,7 @@ db_con_t* dbt_init(const char* _sqlurl)
 		return NULL;
 	}
 	memset(_res, 0, sizeof(db_con_t) + sizeof(dbt_con_t));
+	_res->tail = (unsigned long)((char*)_res+sizeof(db_con_t));
 	
 	DBT_CON_CONNECTION(_res) = dbt_cache_get_db(&_s);
 	if (!DBT_CON_CONNECTION(_res))

@@ -99,7 +99,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	if(!_s || !_s->s || _s->len<=0)
 		return NULL;
 
-	DBG("DBT:dbt_cache_get_db: looking for db!\n");
+	DBG("DBT:dbt_cache_get_db: looking for db %.*s!\n",_s->len,_s->s);
 
 	lock_get(_cachesem);
 	
@@ -113,6 +113,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 					&& !strncasecmp(_dcache->dbp->name.s, _s->s, _s->len))
 			{
 				lock_release(&_dcache->sem);
+				DBG("DBT:dbt_cache_get_db: db already cached!\n");
 				goto done;
 			}
 		}
