@@ -130,17 +130,6 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	memcpy(prefix, RR_PREFIX, RR_PREFIX_LEN);
 	if (user->len) {
 		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
-#ifdef ENABLE_USER_CHECK
-		/* don't add the ignored user into a RR */
-		if(i_user.len && i_user.len == user->len && 
-				!strncmp(i_user.s, user->s, i_user.len))
-		{
-			if(prefix[RR_PREFIX_LEN]=='x')
-				prefix[RR_PREFIX_LEN]='y';
-			else
-				prefix[RR_PREFIX_LEN]='x';
-		}
-#endif
 		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
 	
@@ -199,9 +188,9 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 {
 	struct lump* l, *l2;
 	str user;
-	struct to_body* from;
+	str* tag;
 	
-	from = 0; /* Makes gcc happy */
+	tag=0;
 	user.len = 0;
 	
 	if (get_username(_m, &user) < 0) {
@@ -214,12 +203,12 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 			LOG(L_ERR, "insert_RR(): From parsing failed\n");
 			return -2;
 		}
-		from = (struct to_body*)_m->from->parsed;
+		tag=&((struct to_body*)_m->from->parsed)->tag_value;
 	}
 
 	if (enable_double_rr) {
-		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
-		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+		l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+		l2 = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 			return -5;
@@ -230,20 +219,20 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
 			return -6;
 		}
-		if (build_rr(l, l2, _lr, &user, &from->tag_value, OUTBOUND) < 0) {
+		if (build_rr(l, l2, _lr, &user, tag, OUTBOUND) < 0) {
 			LOG(L_ERR, "insert_RR(): Error while inserting outbound Record-Route\n");
 			return -7;
 		}
 	}
 	
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
-	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+	l2 = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
 		LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 		return -3;
 	}
 	
-	if (build_rr(l, l2, _lr, &user, &from->tag_value, INBOUND) < 0) {
+	if (build_rr(l, l2, _lr, &user, tag, INBOUND) < 0) {
 		LOG(L_ERR, "insert_RR(): Error while insering inbound Record-Route\n");
 		return -4;
 	}
@@ -311,7 +300,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		from = (struct to_body*)_m->from->parsed;
 	}
 	
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l) {
 		LOG(L_ERR, "record_route_preset(): Error while creating an anchor\n");
 		return -3;
