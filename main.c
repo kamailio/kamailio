@@ -1080,7 +1080,6 @@ int main(int argc, char** argv)
 	}
 
 
-	init_hfname_parser();
 	init_digest_parser();
 
 	/* init hash fucntion */
