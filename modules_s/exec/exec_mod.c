@@ -10,6 +10,7 @@
 #include "../../str.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
+#include "../../parser/parse_uri.h"
 
 #include "exec.h"
 #include "kill.h"
