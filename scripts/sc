@@ -87,6 +87,7 @@ ACL_TABLE=grp
 ACL_USER_COLUMN=username
 ACL_GROUP_COLUMN=grp
 ACL_MODIFIED_COLUMN=last_modified
+ACL_DOMAIN_COLUMN=domain
 
 # aliases table
 A_TABLE=aliases
@@ -420,8 +421,8 @@ acl() {
 				fi
 
         		QUERY="insert into $ACL_TABLE \
-                	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN) \
-                	values ('$SIP_USER','$1', now());"
+                	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN, $ACL_DOMAIN_COLUMN ) \
+                	values ('$SIP_USER','$1', now(), '$SIP_DOMAIN' );"
 				sql_query "$QUERY"
 				if [ $? -ne 0 ] ; then
 					echo "SQL Error"
