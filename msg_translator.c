@@ -53,7 +53,7 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 	/* maybe we are lucky and name it's an ip */
 	s=ip_addr2a(ip);
 	if (s){
-		DBG("check_address(%s, %s, %d)\n", ip_addr2a(ip), name, resolver);
+		DBG("check_address(%s, %s, %d)\n", s, name, resolver);
 	#ifdef USE_IPV6
 		if ((ip->af==AF_INET6) && (strcasecmp(name, s)==0))
 				return 0;
@@ -164,7 +164,8 @@ char* received_builder(struct sip_msg *msg, int *received_len)
 							inet_ntoa(*(struct in_addr *)&source_ip));
 	*/
 	memcpy(buf, RECEIVED, RECEIVED_LEN);
-	tmp=ip_addr2a(source_ip);
+	if ( (tmp=ip_addr2a(source_ip))==0)
+		return 0; /* error*/
 	tmp_len=strlen(tmp);
 	len=RECEIVED_LEN+tmp_len;
 	if(source_ip->af==AF_INET6){

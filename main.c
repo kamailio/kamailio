@@ -20,6 +20,12 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include <sys/ioctl.h>
+#include <net/if.h>
+#ifdef __sun__
+#include <sys/sockio.h>
+#endif
+
 #include "config.h"
 #include "dprint.h"
 #include "route.h"
@@ -681,14 +687,129 @@ static void sig_usr(int signo)
 
 
 
-void test();
+/* add all family type addresses of interface if_name to the socket_info array
+ * if if_name==0, adds all addresses on all interfaces
+ * WARNING: it only works with ipv6 addresses on FreeBSD
+ * return: -1 on error, 0 on success
+ */
+int add_interfaces(char* if_name, int family, unsigned short port)
+{
+	struct ifconf ifc;
+	struct ifreq* ifr;
+	struct ifreq ifrcopy;
+	char*  last;
+	int size;
+	int lastlen;
+	int s;
+	char* tmp;
+	struct ip_addr addr;
+	int ret;
+	
+	/* ipv4 or ipv6 only*/
+	s=socket(family, SOCK_DGRAM, 0);
+	ret=-1;
+	lastlen=0;
+	ifc.ifc_req=0;
+	for (size=10; ; size*=2){
+		ifc.ifc_len=size*sizeof(struct ifreq);
+		ifc.ifc_req=(struct ifreq*) malloc(size*sizeof(struct ifreq));
+		if (ifc.ifc_req==0){
+			fprintf(stderr, "memory allocation failure\n");
+			goto error;
+		}
+		if (ioctl(s, SIOCGIFCONF, &ifc)==-1){
+			if(errno==EBADF) return 0; /* invalid descriptor => no such ifs*/
+			fprintf(stderr, "ioctl failed: %s\n", strerror(errno));
+			goto error;
+		}
+		if  ((lastlen) && (ifc.ifc_len==lastlen)) break; /*success,
+														   len not changed*/
+		lastlen=ifc.ifc_len;
+		/* try a bigger array*/
+		free(ifc.ifc_req);
+	}
+	
+	last=(char*)ifc.ifc_req+ifc.ifc_len;
+	for(ifr=ifc.ifc_req; (char*)ifr<last;
+			ifr=(struct ifreq*)((char*)ifr+sizeof(ifr->ifr_name)+
+			#ifdef  __FreeBSD__
+				MAX(ifr->ifr_addr.sa_len, sizeof(struct sockaddr))
+			#else
+				( (ifr->ifr_addr.sa_family==AF_INET)?
+					sizeof(struct sockaddr_in):
+					((ifr->ifr_addr.sa_family==AF_INET6)?
+						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
+			#endif
+				)
+		)
+	{
+		if (ifr->ifr_addr.sa_family!=family){
+			/*printf("strange family %d skipping...\n",
+					ifr->ifr_addr.sa_family);*/
+			continue;
+		}
+		
+		if (if_name==0){ /* ignore down ifs only if listening on all of them*/
+			memcpy(&ifrcopy, ifr, sizeof(ifrcopy));
+			/*get flags*/
+			if (ioctl(s, SIOCGIFFLAGS,  &ifrcopy)!=-1){ /* ignore errors */
+				/* if if not up, skip it*/
+				if (!(ifrcopy.ifr_flags & IFF_UP)) continue;
+			}
+		}
+		
+		
+		
+		if ((if_name==0)||
+			(strncmp(if_name, ifr->ifr_name, sizeof(ifr->ifr_name))==0)){
+			
+				/*add address*/
+			if (sock_no<MAX_LISTEN){
+				sockaddr2ip_addr(&addr, &ifr->ifr_addr);
+				if ((tmp=ip_addr2a(&addr))==0) goto error;
+				/* fill the strings*/
+				sock_info[sock_no].name.s=(char*)malloc(strlen(tmp)+1);
+				if(sock_info[sock_no].name.s==0){
+					fprintf(stderr, "Out of memory.\n");
+					goto error;
+				}
+				/* fill in the new name and port */
+				sock_info[sock_no].name.len=strlen(tmp);
+				strncpy(sock_info[sock_no].name.s, tmp, 
+							sock_info[sock_no].name.len+1);
+				sock_info[sock_no].port_no=port;
+				sock_no++;
+				ret=0;
+			}else{
+				fprintf(stderr, "Too many addresses (max %d)\n", MAX_LISTEN);
+				goto error;
+			}
+		}
+			/*
+			printf("%s:\n", ifr->ifr_name);
+			printf("        ");
+			print_sockaddr(&(ifr->ifr_addr));
+			printf("        ");
+			ls_ifflags(ifr->ifr_name, family, options);
+			printf("\n");*/
+	}
+	free(ifc.ifc_req); /*clean up*/
+	close(s);
+	return  ret;
+error:
+	if (ifc.ifc_req) free(ifc.ifc_req);
+	close(s);
+	return -1;
+}
+
+
 
 int main(int argc, char** argv)
 {
 
 	FILE* cfg_stream;
 	struct hostent* he;
-	int c,r;
+	int c,r,t;
 	char *tmp;
 	char** h;
 	struct host_alias* a;
@@ -963,24 +1084,42 @@ int main(int argc, char** argv)
 	memset(pids, 0, sizeof(int)*(children_no+1));
 
 	if (sock_no==0) {
-		/* get our address, only the first one */
-		if (uname (&myname) <0){
-			fprintf(stderr, "cannot determine hostname, try -l address\n");
-			goto error;
+		/* try to get all listening ipv4 interfaces */
+		if (add_interfaces(0, AF_INET, 0)==-1){
+			/* if error fall back to get hostname*/
+			/* get our address, only the first one */
+			if (uname (&myname) <0){
+				fprintf(stderr, "cannot determine hostname, try -l address\n");
+				goto error;
+			}
+			sock_info[sock_no].name.s=(char*)malloc(strlen(myname.nodename)+1);
+			if (sock_info[sock_no].name.s==0){
+				fprintf(stderr, "Out of memory.\n");
+				goto error;
+			}
+			sock_info[sock_no].name.len=strlen(myname.nodename);
+			strncpy(sock_info[sock_no].name.s, myname.nodename,
+					sock_info[sock_no].name.len+1);
+			sock_no++;
 		}
-		sock_info[sock_no].name.s=(char*)malloc(strlen(myname.nodename)+1);
-		if (sock_info[sock_no].name.s==0){
-			fprintf(stderr, "Out of memory.\n");
-			goto error;
-		}
-		sock_info[sock_no].name.len=strlen(myname.nodename);
-		strncpy(sock_info[sock_no].name.s, myname.nodename,
-				sock_info[sock_no].name.len+1);
-		sock_no++;
 	}
 
+	/* try to change all the interface names into addresses
+	 *  --ugly hack */
+	for (r=0; r<sock_no;){
+		if (add_interfaces(sock_info[r].name.s, AF_INET,
+					sock_info[r].port_no)!=-1){
+			/* success => remove current entry (shift the entire array)*/
+			free(sock_info[r].name.s);
+			memmove(&sock_info[r], &sock_info[r+1], 
+						(sock_no-r)*sizeof(struct socket_info));
+			sock_no--;
+			continue;
+		}
+		r++;
+	}
 	/* get ips & fill the port numbers*/
-	printf("Listening on ");
+	printf("Listening on \n");
 	for (r=0; r<sock_no;r++){
 		he=resolvehost(sock_info[r].name.s);
 		if (he==0){
@@ -1010,7 +1149,7 @@ int main(int argc, char** argv)
 		
 		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
 														 format*/
-		tmp=ip_addr2a(&sock_info[r].address);
+		if ((tmp=ip_addr2a(&sock_info[r].address))==0) goto error;
 		sock_info[r].address_str.s=(char*)malloc(strlen(tmp)+1);
 		if (sock_info[r].address_str.s==0){
 			fprintf(stderr, "Out of memory.\n");
@@ -1045,9 +1184,49 @@ int main(int argc, char** argv)
 		strncpy(sock_info[r].port_no_str.s, port_no_str, strlen(port_no_str)+1);
 		sock_info[r].port_no_str.len=strlen(port_no_str);
 		
-		printf("%s [%s]:%s\n",sock_info[r].name.s, sock_info[r].address_str.s,
-				sock_info[r].port_no_str.s);
+		printf("              %s [%s]:%s\n",sock_info[r].name.s,
+				sock_info[r].address_str.s, sock_info[r].port_no_str.s);
 	}
+	/* removing duplicate addresses*/
+	for (r=0; r<sock_no; r++){
+		for (t=r+1; t<sock_no;){
+			if ((sock_info[r].port_no==sock_info[t].port_no) &&
+				(sock_info[r].address.af==sock_info[t].address.af) &&
+				(memcmp(sock_info[r].address.u.addr, 
+						sock_info[t].address.u.addr,
+						sock_info[r].address.len)  == 0)
+				){
+				printf("removing duplicate (%d) %s [%s] == (%d) %s [%s]\n",
+						r, sock_info[r].name.s, sock_info[r].address_str.s,
+						t, sock_info[t].name.s, sock_info[t].address_str.s);
+				
+				/* add the name to the alias list*/
+				if ((!sock_info[t].is_ip) && (
+						(sock_info[t].name.len!=sock_info[r].name.len)||
+						(strncmp(sock_info[t].name.s, sock_info[r].name.s,
+								 sock_info[r].name.len)!=0))
+					)
+					add_alias(sock_info[t].name.s, sock_info[t].name.len);
+						
+				/* free space*/
+				free(sock_info[t].name.s);
+				free(sock_info[t].address_str.s);
+				free(sock_info[t].port_no_str.s);
+				/* shift the array*/
+				memmove(&sock_info[t], &sock_info[t+1], 
+							(sock_no-t)*sizeof(struct socket_info));
+				sock_no--;
+				continue;
+			}
+			t++;
+		}
+	}
+	/* print all the listen addresses */
+	printf("Listening on \n");
+	for (r=0; r<sock_no; r++)
+		printf("              %s [%s]:%s\n",sock_info[r].name.s,
+				sock_info[r].address_str.s, sock_info[r].port_no_str.s);
+
 	printf("Aliases: ");
 	for(a=aliases; a; a=a->next) printf("%.*s ", a->alias.len, a->alias.s);
 	printf("\n");

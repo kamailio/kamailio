@@ -30,10 +30,17 @@
 #endif
 
 
+struct id_list{
+	char* s;
+	struct id_list* next;
+};
+
 extern int yylex();
 void yyerror(char* s);
 char* tmp;
 void* f_tmp;
+struct id_list* lst_tmp;
+
 
 %}
 
@@ -45,6 +52,7 @@ void* f_tmp;
 	struct action* action;
 	struct net* ipnet;
 	struct ip_addr* ipaddr;
+	struct id_list* idlst;
 }
 
 /* terminals */
@@ -142,6 +150,8 @@ void* f_tmp;
 %type <ipaddr> ipv4, ipv6, ip
 %type <ipnet> ipnet
 %type <strval> host
+%type <strval> listen_id
+%type <idlst>  id_lst
 /*%type <route_el> rules;
   %type <route_el> rule;
 */
@@ -165,6 +175,67 @@ statement:	assign_stm
 		| reply_route_stm
 		| CR	/* null statement*/
 	;
+
+listen_id:	ip			{	tmp=ip_addr2a($1);
+		 					if(tmp==0){
+								LOG(L_CRIT, "ERROR: cfg. parser: bad ip "
+										"addresss.\n");
+								$$=0;
+							}else{
+								$$=malloc(strlen(tmp)+1);
+								if ($$==0){
+									LOG(L_CRIT, "ERROR: cfg. parser: out of "
+											"memory.\n");
+								}else{
+									strncpy($$, tmp, strlen(tmp)+1);
+								}
+							}
+						}
+		 |	ID			{	$$=malloc(strlen($1)+1);
+		 					if ($$==0){
+									LOG(L_CRIT, "ERROR: cfg. parser: out of "
+											"memory.\n");
+							}else{
+									strncpy($$, $1, strlen($1)+1);
+							}
+						}
+		 |	STRING			{	$$=malloc(strlen($1)+1);
+		 					if ($$==0){
+									LOG(L_CRIT, "ERROR: cfg. parser: out of "
+											"memory.\n");
+							}else{
+									strncpy($$, $1, strlen($1)+1);
+							}
+						}
+		 |	host		{	$$=malloc(strlen($1)+1);
+		 					if ($$==0){
+									LOG(L_CRIT, "ERROR: cfg. parser: out of "
+											"memory.\n");
+							}else{
+									strncpy($$, $1, strlen($1)+1);
+							}
+						}
+	;
+
+id_lst:	  listen_id	{	$$=malloc(sizeof(struct id_list));
+						if ($$==0){
+							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+						}else{
+							$$->s=$1;
+							$$->next=0;
+						}
+					}
+		| listen_id id_lst	{
+						$$=malloc(sizeof(struct id_list));
+						if ($$==0){
+							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+						}else{
+							$$->s=$1;
+							$$->next=$2;
+						}
+							}
+		;
+
 
 assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DEBUG EQUAL error  { yyerror("number  expected"); }
@@ -204,67 +275,21 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 		| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
 		| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
-		| LISTEN EQUAL ip  {
-								if (sock_no< MAX_LISTEN){
-									tmp=ip_addr2a($3);
-								/*	tmp=inet_ntoa(*(struct in_addr*)&$3);*/
-									if (tmp==0){
-										LOG(L_CRIT, "ERROR: cfg. parser: "
-											" bad ip address: %s\n",
-											strerror(errno));
-									}else{
-										sock_info[sock_no].name.s=
-												(char*)malloc(strlen(tmp)+1);
-										if (sock_info[sock_no].name.s==0){
-											LOG(L_CRIT, "ERROR: cfg. parser: "
-														"out of memory.\n");
-										}else{
-											strncpy(sock_info[sock_no].name.s,
-													tmp, strlen(tmp)+1);
-											sock_info[sock_no].name.len=
-													strlen(tmp);
-											sock_info[sock_no].port_no=
-													port_no;
-											sock_no++;
-										}
-									}
-								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser:"
-												" too many listen addresses"
-												"(max. %d).\n", MAX_LISTEN);
-								}
-							  }
-		| LISTEN EQUAL ID	 {
+		| LISTEN EQUAL id_lst {
+							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
 								if (sock_no < MAX_LISTEN){
 									sock_info[sock_no].name.s=
-												(char*)malloc(strlen($3)+1);
-									if (sock_info[sock_no].name.s==0){
-										LOG(L_CRIT, "ERROR: cfg. parser:"
-														" out of memory.\n");
-									}else{
-										strncpy(sock_info[sock_no].name.s, $3,
-													strlen($3)+1);
-										sock_info[sock_no].name.len=strlen($3);
-										sock_info[sock_no].port_no= port_no;
-										sock_no++;
-									}
-								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser: "
-												"too many listen addresses"
-												"(max. %d).\n", MAX_LISTEN);
-								}
-							  }
-		| LISTEN EQUAL STRING {
-								if (sock_no < MAX_LISTEN){
-									sock_info[sock_no].name.s=
-										(char*)malloc(strlen($3)+1);
+										(char*)malloc(strlen(lst_tmp->s)+1);
 									if (sock_info[sock_no].name.s==0){
 										LOG(L_CRIT, "ERROR: cfg. parser:"
 													" out of memory.\n");
+										break;
 									}else{
-										strncpy(sock_info[sock_no].name.s, $3,
-												strlen($3)+1);
-										sock_info[sock_no].name.len=strlen($3);
+										strncpy(sock_info[sock_no].name.s,
+												lst_tmp->s,
+												strlen(lst_tmp->s)+1);
+										sock_info[sock_no].name.len=
+													strlen(lst_tmp->s);
 										sock_info[sock_no].port_no=port_no;
 										sock_no++;
 									}
@@ -272,34 +297,16 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									LOG(L_CRIT, "ERROR: cfg. parser: "
 												"too many listen addresses"
 												"(max. %d).\n", MAX_LISTEN);
+									break;
 								}
-							  }
-		| LISTEN EQUAL  host {
-								if (sock_no < MAX_LISTEN){
-									sock_info[sock_no].name.s=
-										(char*)malloc(strlen($3)+1);
-									if (sock_info[sock_no].name.s==0){
-										LOG(L_CRIT, "ERROR: cfg. parser:"
-													" out of memory.\n");
-									}else{
-										strncpy(sock_info[sock_no].name.s, $3,
-												strlen($3)+1);
-										sock_info[sock_no].name.len=strlen($3);
-										sock_info[sock_no].port_no=port_no;
-										sock_no++;
-									}
-								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser: "
-												"too many listen addresses"
-												"(max. %d).\n", MAX_LISTEN);
-								}
-							  }
-		
+							}
+							 }
 		| LISTEN EQUAL  error { yyerror("ip address or hostname"
 						"expected"); }
-		| ALIAS  EQUAL STRING { add_alias($3, strlen($3)); }
-		| ALIAS  EQUAL ID     { add_alias($3, strlen($3)); }
-		| ALIAS  EQUAL host   { add_alias($3, strlen($3)); }
+		| ALIAS EQUAL  id_lst { 
+								for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
+									add_alias(lst_tmp->s, strlen(lst_tmp->s));
+							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
