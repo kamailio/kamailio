@@ -47,41 +47,26 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
    new_tl->time_out = time_out ;
    DBG("DEBUG: insert_into_timer[%d]: %d, %p\n",list_id,new_tl->time_out,new_tl);
 
-   /* if we have an empty list*/
-   if ( !timer_list->first_tl )
-   {
-      new_tl->next_tl= 0;
-      new_tl->prev_tl = 0;
-      lock( timer_list->mutex );
-      timer_list->first_tl = new_tl;
-      timer_list->last_tl = new_tl;
-      unlock( timer_list->mutex );
-      return;
-   }
 
-   for( tl=timer_list->first_tl ; tl && tl->time_out<new_tl->time_out ; tl=tl->next_tl );
+       lock( timer_list->mutex );
+       for( tl=timer_list->first_tl ; tl && tl->time_out<new_tl->time_out ; 
+               tl=tl->next_tl );
+       if ( tl ) {
+               /* insert before tl*/
+               new_tl->prev_tl = tl->prev_tl;
+               tl->prev_tl = new_tl;
+       } else { /* at the end or empty list */
+               new_tl->prev_tl = timer_list->last_tl;
+               new_tl->next_tl = NULL;
+               timer_list->last_tl = new_tl;
+       }
+       if (new_tl->prev_tl ) 
+               new_tl->prev_tl->next_tl = new_tl;
+       else
+               timer_list->first_tl = new_tl;
+       new_tl->next_tl = new_tl;
+       unlock( timer_list->mutex );
 
-   lock( timer_list->mutex );
-   if ( tl )
-   {
-      /* insert before tl*/
-      new_tl->prev_tl = tl->prev_tl;
-      tl->prev_tl = new_tl;
-      if ( new_tl->prev_tl )
-         new_tl->prev_tl->next_tl = new_tl;
-      else
-         timer_list->first_tl = new_tl;
-      new_tl->next_tl = tl;
-   }
-   else
-   {
-      /* insert at the end */
-      new_tl->next_tl = 0;
-      new_tl->prev_tl = timer_list->last_tl;
-      timer_list->last_tl->next_tl = new_tl;
-      timer_list->last_tl = new_tl ;
-    }
-    unlock( timer_list->mutex );
 }
 
 
@@ -158,4 +143,16 @@ void timer_routine(unsigned int ticks , void * attr)
             timers[id].timeout_handler( tl->payload );
          }
 }
+
+void remove_delete_list( struct s_table *hash_table )
+{
+        struct timer_link *tl;
+
+        /* lock( hash_table->timers[DELETE_LIST].mutex );*/
+        while( tl=remove_from_timer_list_from_head( hash_table, DELETE_LIST ) ) {
+                free_cell( (struct cell *) tl->payload );
+        }
+        /* unlock( hash_table->timers[DELETE_LIST].mutex ); */
+}
+
 

@@ -66,7 +66,6 @@ void free_hash_table( struct s_table *hash_table )
 {
    struct cell* p_cell;
    struct cell* tmp_cell;
-   struct timer_link *tl;
    int   i;
 
    if (hash_table)
@@ -84,8 +83,14 @@ void free_hash_table( struct s_table *hash_table )
       }
 
       /* deletes all cells from DELETE_LIST list (they are no more accessible from enrys) */
+        lock( hash_table->timers[DELETE_LIST].mutex );
+        remove_delete_list( hash_table );
+        unlock( hash_table->timers[DELETE_LIST].mutex );
+
+      /*
       while( (tl=remove_from_timer_list_from_head( hash_table, DELETE_LIST ))!=0 )
          free_cell( p_cell ) ;
+      */
 
       /* the mutexs for sync the lists are released*/
       for ( i=0 ; i<NR_OF_TIMER_LISTS ; i++ )

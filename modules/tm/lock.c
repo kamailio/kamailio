@@ -212,11 +212,14 @@ tryagain:
 int init_cell_lock( struct cell *cell )
 {
 	/* just advice which of the available semaphores to use;
-	   specifically, all cells in an entry use the same one
-	   shared with its entry lock
+		shared with the lock belonging to the next hash entry lock
+            (so that there are no collisions if one wants to try to
+             lock on a cell as well as its list)
+
         */
 	cell->mutex.semaphore_set=entry_semaphore,
-	cell->mutex.semaphore_index=cell->hash_index / sem_nr;
+	cell->mutex.semaphore_index=(cell->hash_index % sem_nr + 1)%sem_nr;
+
 }
 
 int init_entry_lock( struct s_table* hash_table, struct entry *entry )
@@ -226,9 +229,9 @@ int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 	   many partitions as number of available semaphors allows
         */
 	entry->mutex.semaphore_set=entry_semaphore;
-	entry->mutex.semaphore_index =
-		((void *)entry - (void *)(hash_table->entrys ) )
-			/ ( sizeof(struct entry) * sem_nr );
+	entry->mutex.semaphore_index = ( ((void *)entry - (void *)(hash_table->entrys ) )
+               / sizeof(struct entry) ) % sem_nr;
+
 }
 
 int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
