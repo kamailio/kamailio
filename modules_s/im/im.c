@@ -34,7 +34,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <error.h>
+#include <errno.h>
 
 #include "../../sr_module.h"
 #include "../../error.h"
