@@ -331,6 +331,24 @@ warning: IP extract from warning activated to be more informational
 				    them.
 				</para>
 			    </listitem>
+				<listitem>
+				<para>
+					In your script expressions compare IP addresses without
+					enclosing them in quotes. Enclosing IP addresses in
+					quotes may cause additional reverse DNS lookups.
+					<example>
+						<title>IP Address Comparison</title>
+						<programlisting>
+# this expression takes no DNS lookup
+if (src_ip==192.168.2.15) {
+....
+# whereas this does
+if (src_ip=="192.168.2.15") {
+...
+						</programlisting>
+					</example>
+				</para>
+				</listitem>
 			</itemizedlist>
 		    </para>
 		</answer>
@@ -1349,7 +1367,10 @@ if (to me):
 			    In both cases, the reason is probably an error in
 			    request routing script which caused an infinite loop.
 			    You can easily verify whether this happens by
-			    watching SIP traffic on loopback interface. A typical
+			    watching SIP traffic on loopback interface. 
+			</para>
+			<para>
+				A most comon
 			    reason for misrouting is a failure to match local
 			    domain correctly. If a server fails to recognize
 			    a request for itself, it will try to forward it
@@ -1359,8 +1380,37 @@ if (to me):
 			    value of max_forwards header field reaches zero
 			    or the request grows too big. Solutions is easy:
 			    make sure that domain matching is correctly
-			    configured. See <xref linkend="domainmatching">
+			    configured. In easy case, it is as simple as adding
+				an alias configuration option. See <xref linkend="domainmatching">
 			    for more information how to get it right.
+			</para>
+			<para>
+				Other favorite misconfiguration is forgetting to
+				rewrite a URI before a request is forwarded.
+			</para>
+			<para>
+				Also, the failure not to include loose routing in your
+				scripts may lead to infinite loops. Make sure that you
+				include the following script fragment immediately after
+				request sanity checks:
+				<example>
+					<title>
+						Processing of Loose Routes Must be Present
+					</title>
+<programlisting>
+    if (len_gt( max_len )) {
+        sl_send_reply("513", "Message too big");
+        break;
+    };
+
+    # DON'T FORGET THE FOLLOWING LINES
+	    if (loose_route()) {
+        t_relay();
+        break;
+    };
+</programlisting>
+				</example>
+
 			</para>
 		    </answer>		    
 		</qandaentry>
