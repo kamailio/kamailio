@@ -130,6 +130,17 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	memcpy(prefix, RR_PREFIX, RR_PREFIX_LEN);
 	if (user->len) {
 		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
+#ifdef ENABLE_USER_CHECK
+		/* don't add the ignored user into a RR */
+		if(i_user.len && i_user.len == user->len && 
+				!strncmp(i_user.s, user->s, i_user.len))
+		{
+			if(prefix[RR_PREFIX_LEN]=='x')
+				prefix[RR_PREFIX_LEN]='y';
+			else
+				prefix[RR_PREFIX_LEN]='x';
+		}
+#endif
 		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
 	
@@ -207,8 +218,8 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	}
 
 	if (enable_double_rr) {
-		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
-		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+		l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+		l2 = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 			return -5;
@@ -225,8 +236,8 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 		}
 	}
 	
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
-	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+	l2 = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
 		LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 		return -3;
@@ -300,7 +311,7 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		from = (struct to_body*)_m->from->parsed;
 	}
 	
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l) {
 		LOG(L_ERR, "record_route_preset(): Error while creating an anchor\n");
 		return -3;

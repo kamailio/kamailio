@@ -208,17 +208,20 @@ static inline int is_myself(str* _host, unsigned short _port)
 #endif
 {
 	int ret;
+	
+	ret = check_self(_host, _port ? _port : SIP_PORT);
+	if (ret < 0) return 0;
+
 #ifdef ENABLE_USER_CHECK
 	if(i_user.len && i_user.len==_user->len
 			&& !strncmp(i_user.s, _user->s, _user->len))
 	{
 		DBG("RR:is_myself: this URI isn't mine\n");
-		return 0;
+		return -1;
 	}
 #endif
-	ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
-	if (ret < 0) return 0;
-	else return ret;
+	
+	return ret;
 }
 
 
@@ -368,7 +371,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	}
 
 	     /* Create an anchor */
-	anchor = anchor_lump(_m, _m->unparsed - _m->buf, 0, 0);
+	anchor = anchor_lump(&_m->add_rm, _m->unparsed - _m->buf, 0, 0);
 	if (anchor == 0) {
 		LOG(L_ERR, "save_ruri(): Can't get anchor\n");
 		return -2;
@@ -433,7 +436,7 @@ static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hd
 		rem_len = _r->next->nameaddr.name.s - _hdr->body.s;
 	}
 
-	if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
+	if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
 		LOG(L_ERR, "hsr(): Can't remove Route HF\n");
 		return -9;
 	}			
@@ -517,7 +520,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
 			      */
-			if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
+			if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
 				LOG(L_ERR, "ras(): Can't remove Route HF\n");
 				return -1;
 			}
@@ -565,7 +568,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			rem_off = hdr->name.s;
 			rem_len = hdr->len;
 		}
-		if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
+		if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
 			LOG(L_ERR, "ras(): Can't remove Route HF\n");
 			return -5;
 		}
@@ -583,7 +586,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			      */
 			rem_off = hdr->body.s;
 			rem_len = rt->nameaddr.name.s - hdr->body.s;
-			if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
+			if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
 				LOG(L_ERR, "ras(): Can't remove Route HF\n");
 				return -6;
 			}			
@@ -616,7 +619,7 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			rem_off = hdr->name.s;
 			rem_len = hdr->len;
 		}
-		if (!del_lump(_m, rem_off - _m->buf, rem_len, 0)) {
+		if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
 			LOG(L_ERR, "ras(): Can't remove Route HF\n");
 			return -9;
 		}
@@ -632,6 +635,9 @@ static inline int route_after_loose(struct sip_msg* _m)
 	struct sip_uri puri;
 	rr_t* rt;
 	int res;	
+#ifdef ENABLE_USER_CHECK
+	int ret;
+#endif
 	str* uri;
 
 	hdr = _m->route;
@@ -645,7 +651,8 @@ static inline int route_after_loose(struct sip_msg* _m)
 
 	     /* IF the URI was added by me, remove it */
 #ifdef ENABLE_USER_CHECK
-	if (is_myself(&puri.user, &puri.host, puri.port_no))
+	ret=is_myself(&puri.user, &puri.host, puri.port_no);
+	if (ret>0)
 #else
 	if (is_myself(&puri.host, puri.port_no))
 #endif
@@ -655,7 +662,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 			     /* No next route in the same header, remove the whole header
 			      * field immediately
 			      */
-			if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
+			if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
 				LOG(L_ERR, "ral(): Can't remove Route HF\n");
 				return -2;
 			}
@@ -676,7 +683,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 				     /* No next route in the same header, remove the whole header
 				      * field immediately
 				      */
-				if (!del_lump(_m, hdr->name.s - _m->buf, hdr->len, 0)) {
+				if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
 					LOG(L_ERR, "ral(): Can't remove Route HF\n");
 					return -4;
 				}
@@ -699,6 +706,11 @@ static inline int route_after_loose(struct sip_msg* _m)
 			return -6;
 		}
 	} else {
+#ifdef ENABLE_USER_CHECK
+		/* check if it the ignored user */
+		if(ret < 0)
+			return 0;
+#endif	
 		DBG("ral(): Topmost URI is NOT myself\n");
 	}
 	
@@ -718,7 +730,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 		      * and must be removed here
 		      */
 		if (rt != hdr->parsed) {
-			if (!del_lump(_m, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
+			if (!del_lump(&_m->add_rm, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
 				LOG(L_ERR, "ral(): Can't remove Route HF\n");
 				return -8;
 			}			
