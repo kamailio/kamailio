@@ -238,7 +238,7 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 
 	/* set the path for logging */
 	strcpy( file, log_dir);
-	file_ptr = file + sizeof(log_dir);
+	file_ptr = file + strlen(log_dir);
 	*(file_ptr++) = '/';
 
 	while(1) {
