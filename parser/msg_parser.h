@@ -43,7 +43,7 @@
 
 #include "../comp_defs.h"
 #include "../str.h"
-#include "../lump_struct.h"
+#include "../data_lump.h"
 #include "../flags.h"
 #include "../ip_addr.h"
 #include "../md5utils.h"
@@ -67,6 +67,7 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 	METHOD_BYE=8, METHOD_OTHER=16 };
 
 #define FL_FORCE_RPORT 1 /* force rport */
+#define FL_FORCE_ACTIVE 2 /* force active SDP */
 
 
 #define IFISMETHOD(methodname,firstchar)                                  \
@@ -212,7 +213,6 @@ struct sip_msg {
 	struct sip_uri parsed_orig_ruri;
 	
 	struct lump* add_rm;       /* used for all the forwarded requests/replies */
-	struct lump* body_lumps;     /* Lumps that update Content-Length */
 	struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
 
 	/* str add_to_branch; 
