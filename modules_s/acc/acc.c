@@ -161,5 +161,5 @@ void acc_ack_report(  struct cell* t , struct sip_msg *ack )
 		ack->new_uri.len, ack->new_uri.s,
 		ack->callid->body.len, ack->callid->body.s,
 		ack->from->body.len, ack->from->body.s,
-		rq->REPLY_STATUS );
+		t->uas.status );
 }
