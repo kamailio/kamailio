@@ -1,45 +1,102 @@
 /*
  * $Id$
+ *
+ * Checks if To and From header fields contain the same
+ * username as digest credentials
  */
 
 #include "checks.h"
 #include "../../str.h"
 #include "../../dprint.h"
 #include <string.h>
-#include "utils.h"
-#include "auth.h"
 #include "defs.h"
+#include "../../parser/digest/digest.h" /* get_authorized_cred */
 
+
+/*
+ * Finds specified character, that is not quoted 
+ * If there is no such character, returns NULL
+ *
+ * PARAMS : char* _b : input buffer
+ *        : char _c  : character to find
+ * RETURNS: char*    : points to character found, NULL if not found
+ */
+static inline char* find_not_quoted(str* _b, char _c)
+{
+	int quoted = 0, i;
+	
+	if (_b->s == 0) return NULL;
+
+	for(i = 0; i < _b->len; i++) {
+		if (!quoted) {
+			if (_b->s[i] == '\"') quoted = 1;
+			else if (_b->s[i] == _c) return _b->s + i;
+		} else {
+			if ((_b->s[i] == '\"') && (_b->s[i - 1] != '\\')) quoted = 0;
+		}
+	}
+	return NULL;
+}
+
+
+/*
+ * Cut username part of a URL
+ */
 static inline void get_username(str* _s)
 {
 	char* at, *dcolon, *dc;
-	dcolon = find_not_quoted(_s->s, ':');
 
+	     /* Find double colon, double colon
+	      * separates schema and the rest of
+	      * URL
+	      */
+	dcolon = find_not_quoted(_s, ':');
+
+	     /* No double colon found means error */
 	if (!dcolon) {
 		_s->len = 0;
 		return;
 	}
+
+	     /* Skip the double colon */
+	_s->len -= dcolon + 1 - _s->s;
 	_s->s = dcolon + 1;
 
-	at = strchr(_s->s, '@');
-	dc = strchr(_s->s, ':');
+	     /* Try to find @ or another doublecolon
+	      * if the URL contains also pasword, username
+	      * and password will be delimited by double
+	      * colon, if there is no password, @ delimites
+	      * username from the rest of the URL, if there
+	      * is no @, there is no username in the URL
+	      */
+	at = memchr(_s->s, '@', _s->len); /* FIXME: one pass */
+	dc = memchr(_s->s, ':', _s->len);
 	if (at) {
+		     /* The double colon must be before
+		      * @ to delimit username, otherwise
+		      * it delimits hostname from port number
+		      */
 		if ((dc) && (dc < at)) {
 			_s->len = dc - dcolon - 1;
 			return;
 		}
 		
 		_s->len = at - dcolon - 1;
-		/*	_s->s[_s->len] = '\0'; */
 	} else {
 		_s->len = 0;
 	} 
 }
 
 
-
-int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
+/*
+ * Check if To header field contains the same username
+ * as digest credentials
+ */
+static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 {
+	struct hdr_field* h;
+	auth_body_t* c;
+
 #ifdef USER_DOMAIN_HACK
 	char* ptr;
 #endif
@@ -47,78 +104,63 @@ int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
 	str user;
 	int len;
 
-	if (!_msg->to) {
-		LOG(L_ERR, "check_to(): To HF not found\n");
+	if (!_h) {
+		LOG(L_ERR, "check_username(): To HF not found\n");
 		return -1;
 	}
 
-	user.s = _msg->to->body.s;
-	user.len = _msg->to->body.len;
+	get_authorized_cred(_m->authorization, &h);
+	if (!h) {
+		get_authorized_cred(_m->proxy_auth, &h);
+		if (!h) {
+			LOG(L_ERR, "is_user(): No authorized credentials found (error in scripts)\n");
+			return -1;
+		}
+	}
+
+	c = (auth_body_t*)(h->parsed);
+
+	user.s = _h->body.s;
+	user.len = _h->body.len;
 
 	get_username(&user);
 
 	if (!user.len) return -1;
 
-	len = state.cred.username.len;
+	len = c->digest.username.len;
 
 #ifdef USER_DOMAIN_HACK
-	ptr = memchr(state.cred.username.s, '@', len);
+	ptr = memchr(c->digest.username.s, '@', len);
 	if (ptr) {
-		len = ptr - state.cred.username.s;
+		len = ptr - c->digest.username.s;
 	}
 #endif
 
-	/* FIXME !! */
 	if (user.len == len) {
-		if (!strncasecmp(user.s, state.cred.username.s, user.len)) {
-			DBG("check_to(): auth id and To username are equal\n");
+		if (strncasecmp(user.s, c->digest.username.s, len) == 0) {
+			DBG("check_username(): auth id and To username are equal\n");
 			return 1;
 		}
 	}
-
-	DBG("check_to(): auth id and To username differ\n");
+	
+	DBG("check_username(): auth id and To username differ\n");
 	return -1;
 }
 
 
-int check_from(struct sip_msg* _msg, char* _str1, char* _str2)
+/*
+ * Check username part in To header field
+ */
+int check_to(struct sip_msg* _msg, char* _s1, char* _s2)
 {
-#ifdef USER_DOMAIN_HACK
-	char* ptr;
-#endif
+	return check_username(_msg, _msg->to);
+}
 
-	int len;
-	str user;
 
-	if (!_msg->from) {
-		LOG(L_ERR, "check_from(): From HF not found\n");
-		return -1;
-	}
-
-	user.s = _msg->from->body.s;
-	user.len = _msg->from->body.len;
-
-	get_username(&user);
-
-	if (!user.len) return -1;
-
-	len = state.cred.username.len;
-
-#ifdef USER_DOMAIN_HACK
-	ptr = memchr(state.cred.username.s, '@', len);
-	if (ptr) {
-		len = ptr - state.cred.username.s;
-	}
-#endif
-
-	/* FIXME !! */
-	if (user.len == len) {
-		if (!strncasecmp(user.s, state.cred.username.s, user.len)) {
-			DBG("check_from(): auth id and From username are equal\n");
-			return 1;
-		}
-	}
-
-	DBG("check_from(): auth id and From username differ\n");
-	return -1;
+/*
+ * Check username part in From header field
+ */
+int check_from(struct sip_msg* _msg, char* _s1, char* _s2)
+{
+	return check_username(_msg, _msg->from);
 }

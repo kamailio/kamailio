@@ -1,13 +1,18 @@
 /*
  * $Id$
+ *
+ * Digest Authentication Module
  */
 
-#ifndef auth_mod_h
-#define auth_mod_h
+#ifndef AUTH_MOD_H
+#define AUTH_MOD_H
 
 #include "../../db/db.h"
 #include "defs.h"
 #include "../../str.h"
+#include "../../parser/digest/digest.h" /* auth_body_t */
+#include "../../parser/msg_parser.h"    /* struct sip_msg */
+
 
 /*
  * Module parameters variables
@@ -19,7 +24,9 @@ extern char* realm_column;  /* 'realm' column name */
 extern char* pass_column;   /* 'password' column name */
 
 #ifdef USER_DOMAIN_HACK
-extern char* pass_column_2;
+extern char* pass_column_2; /* Column containg HA1 string constructed
+			     * of user@domain username
+			     */
 #endif
 
 extern str secret;          /* secret phrase used to generate nonce */
@@ -32,4 +39,9 @@ extern int retry_count;     /* How many time a client can retry */
  
 extern db_con_t* db_handle; /* Database connection handle */
 
-#endif
+
+/* Stateless reply function pointer */
+extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
+
+
+#endif /* AUTH_MOD_H */

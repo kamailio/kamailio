@@ -1,115 +1,151 @@
 /*
  * $Id$
+ *
+ * Nonce related functions
  */
 
 #include "nonce.h"
-#include "calc.h"
+#include "rfc2617.h"
 #include <time.h>
-#include "utils.h"
-#include "../../dprint.h"
-#include "auth_mod.h"  /* module parameters */
 #include "../../md5global.h"
 #include "../../md5.h"
 #include <string.h>
 
+
 /*
- * Nonce related functions
+ * Convert an integer to its hex representation,
+ * destination array must be at least 8 bytes long,
+ * this string is NOT zero terminated
  */
+static inline void int2hex(char* _d, int _s)
+{
+	int i;
+	unsigned char j;
+	char* s = (char*)&_s;
+    
+	for (i = 0; i < 4; i++) {
+		
+		j = (s[4 - i - 1] >> 4) & 0xf;
+		if (j <= 9) {
+			_d[i * 2] = (j + '0');
+		} else { 
+			_d[i * 2] = (j + 'a' - 10);
+		}
+
+		j = s[4 - i - 1] & 0xf;
+		if (j <= 9) {
+			_d[i * 2 + 1] = (j + '0');
+		} else {
+		       _d[i * 2 + 1] = (j + 'a' - 10);
+		}
+	}
+}
+
+
+/*
+ * Convert hex string to integer
+ */
+static inline int hex2int(char* _s)
+{
+	unsigned int i, res = 0;
+
+	for(i = 0; i < 8; i++) {
+		res *= 16;
+		if ((_s[i] >= '0') && (_s[i] <= '9')) {
+			res += _s[i] - '0';
+		} else if ((_s[i] >= 'a') && (_s[i] <= 'f')) {
+			res += _s[i] - 'a' + 10;
+		} else if ((_s[i] >= 'A') && (_s[i] <= 'F')) {
+			res += _s[i] - 'A' + 10;
+		} else return 0;
+	}
+
+	return res;
+}
+
 
 /*
  * Calculate nonce value
  * Nonce value consists of time in seconds since 1.1 1970 and
  * secret phrase
  */
-void calc_nonce(char* _nonce, int _expires, int _retry, str* _secret)
+inline void calc_nonce(char* _nonce, int _expires, int _retry, str* _secret)
 {
 	MD5_CTX ctx;
 	char bin[16];
 
-	DBG("exipires: %d, retry: %d\n", _expires, _retry);
-
 	MD5Init(&ctx);
 	
-	to_hex(_nonce, (char*)&_expires, 4);
+	int2hex(_nonce, _expires);
 	MD5Update(&ctx, _nonce, 8);
 
-	to_hex(_nonce + 8, (char*)&_retry, 4);
+	int2hex(_nonce + 8, _retry);
 	MD5Update(&ctx, _nonce + 8, 8);
 
 	MD5Update(&ctx, _secret->s, _secret->len);
 	MD5Final(bin, &ctx);
-	CvtHex(bin, _nonce + 16);
-
-	DBG("calc_nonce(): nonce=%s\n", _nonce);
+	cvt_hex(bin, _nonce + 16);
 }
-
-
-int check_nonce(char* _nonce, str* _secret)
-{
-	int expires, retry;
-	char non[NONCE_LEN];
-
-	if (!_nonce) return 0;  /* Invalid nonce */
-
-	expires = get_nonce_expires(_nonce);
-	retry = get_nonce_retry(_nonce);
-
-	DBG("expires: %d\n", expires);
-	DBG("retry: %d\n", retry);
-
-	calc_nonce(non, expires, retry, _secret);
-
-	if (!memcmp(non, _nonce, NONCE_LEN)) return 1;
-
-	return 0;
-}
-
-
-static inline int hex_to_int(char* _str)
-{
-	unsigned int i, res = 0;
-#ifdef PARANOID
-	if (!_str) {
-		return 0;
-	}
-#endif
-	for(i = 0; i < 8; i++) {
-		res *= 16;
-		if ((_str[i] >= '0') && (_str[i] <= '9'))      res += _str[i] - '0';
-		else if ((_str[i] >= 'a') && (_str[i] <= 'f')) res += _str[i] - 'a' + 10;
-		else if ((_str[i] >= 'A') && (_str[i] <= 'F')) res += _str[i] - 'A' + 10;
-		else return 0;
-	}
-	return res;
-}
-
 
 
 /*
  * Get expiry time from nonce string
  */
-time_t get_nonce_expires(char* _nonce)
+inline time_t get_nonce_expires(str* _n)
 {
-	return (time_t)hex_to_int(_nonce);
+	return (time_t)hex2int(_n->s);
 }
 
 
 /*
  * Get retry counter from nonce string
  */
-int get_nonce_retry(char* _nonce)
+inline int get_nonce_retry(str* _n)
 {
-	if (!_nonce) return 0;
-	return hex_to_int(_nonce + 8);
+	if (!_n->s) return 0;
+	return hex2int(_n->s + 8);
 }
 
 
-
-int nonce_is_stale(char* _nonce) 
+/*
+ * Check, if the nonce received from client is
+ * correct
+ */
+int check_nonce(str* _nonce, str* _secret)
 {
-	if (!_nonce) return 0;
+	int expires, retry;
+	char non[NONCE_LEN + 1];
 
-	if (get_nonce_expires(_nonce) < time(NULL)) {
+	if (_nonce->s == 0) {
+		return 0;  /* Invalid nonce */
+	}
+
+	expires = get_nonce_expires(_nonce);
+	retry = get_nonce_retry(_nonce);
+
+	calc_nonce(non, expires, retry, _secret);
+
+	if (NONCE_LEN != _nonce->len) {
+		return 0; /* Lengths must be equal */
+	}
+
+	if (!memcmp(non, _nonce->s, _nonce->len)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Returns 1 if nonce is stale
+ * 0 otherwise
+ */
+int nonce_is_stale(str* _n) 
+{
+	if (!_n->s) return 0;
+
+	if (get_nonce_expires(_n) < time(NULL)) {
 		return 1;
 	} else {
 		return 0;

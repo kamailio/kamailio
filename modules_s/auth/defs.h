@@ -1,32 +1,35 @@
 /* 
  * $Id$ 
+ *
+ * Common definitions
  */
-#ifndef __DEFS_H__
-#define __DEFS_H__
+
+#ifndef DEFS_H
+#define DEFS_H
 
 #define PARANOID
-
-#define WWW_AUTH_RESPONSE "Authorization"
-#define PROXY_AUTH_RESPONSE  "Proxy-Authorization"
-
-#define WWW_AUTH_CHALLENGE "WWW-Authenticate"
-#define PROXY_AUTH_CHALLENGE "Proxy-Authenticate"
-
-#define AUTH_HF_LEN 512
 
 /*
  * Helper definitions
  */
 
-#define MESSAGE_407 "Proxy Authentication Required"
-#define MESSAGE_401 "Unauthorized"
-#define MESSAGE_400 "Bad Request"
-#define MESSAGE_403 "Forbidden"
-
+/*
+ * the module will accept and authorize also username
+ * of form user@domain which some broken clients send
+ */
 #define USER_DOMAIN_HACK
+
+
+/*
+ * If the method is ACK, it is always authorized
+ */
 #define ACK_CANCEL_HACK
 
-/* print algorithm name in challenge explicitely */
+
+/* 
+ * Send algorithm=MD5 in challenge
+ */
 #define PRINT_MD5
 
-#endif
+
+#endif /* DEFS_H */

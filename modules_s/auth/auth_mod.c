@@ -1,5 +1,7 @@
 /* 
  * $Id$ 
+ *
+ * Digest Authentication Module
  */
 
 #include "auth_mod.h"
@@ -8,11 +10,12 @@
 #include "../../dprint.h"
 #include "defs.h"
 #include <string.h>
-#include "auth.h"
 #include "checks.h"
 #include "group.h"
 #include "../../ut.h"
 #include "../../error.h"
+#include "authorize.h"
+#include "challenge.h"
 
 
 /*
@@ -34,6 +37,7 @@ static int mod_init(void);
 
 
 static int challenge_fixup(void** param, int param_no);
+static int str_fixup(void** param, int param_no);
 
 
 /*
@@ -46,7 +50,7 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
  * Module parameter variables
  */
 char* db_url       = "sql://janakj:heslo@localhost/ser";
-char* user_column  = "user_id";
+char* user_column  = "user";
 char* realm_column = "realm";
 char* pass_column  = "ha1";
 
@@ -83,7 +87,9 @@ struct module_exports exports = {
 		"is_user",
 		"is_in_group",
 		"check_to",
-		"check_from"
+		"check_from",
+		"consume_credentials",
+		"is_user_in"
 	},
 	(cmd_function[]) {
 		www_authorize,
@@ -93,13 +99,18 @@ struct module_exports exports = {
 		is_user,
 		is_in_group,
 		check_to,
-		check_from
+		check_from,
+		consume_credentials,
+		is_user_in,
 	},
-	(int[]) {2, 2, 2, 2, 1, 1, 0, 0},
+	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 1},
 	(fixup_function[]) {
-		NULL, NULL, challenge_fixup, challenge_fixup, NULL, NULL, NULL, NULL
+		str_fixup, str_fixup, 
+		challenge_fixup, challenge_fixup, 
+		str_fixup, str_fixup, 0, 0,
+		0, str_fixup
 	},
-	8,
+	9,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */
@@ -233,6 +244,29 @@ static int challenge_fixup(void** param, int param_no)
 			    (char*)(*param));
 			return E_UNSPEC;
 		}
+	}
+
+	return 0;
+}
+
+
+/*
+ * Convert char* parameter to str* parameter
+ */
+static int str_fixup(void** param, int param_no)
+{
+	str* s;
+
+	if (param_no == 1) {
+		s = (str*)malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "authorize_fixup(): No memory left\n");
+			return E_UNSPEC;
+		}
+
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
 	}
 
 	return 0;
