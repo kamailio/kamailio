@@ -11,6 +11,7 @@
 # 2003-01-21 changed SILO table definition, by dcm
 #
 # History:
+# 2003-03-05: Changed user to username, user is reserved word (janakj)
 # 2003-01-26 statistics table introduced (jiri)
 # 2003-01-25: Optimized keys of some core tables (janakj)
 # 2003-01-25: USER_ID changed to user everywhere (janakj)
@@ -184,7 +185,7 @@ CREATE TABLE active_sessions (
 
 
 CREATE TABLE aliases (
-  user varchar(50) NOT NULL default '',
+  username varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
@@ -192,7 +193,7 @@ CREATE TABLE aliases (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  PRIMARY KEY user (user, domain, contact)
+  PRIMARY KEY usr (username, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -222,11 +223,11 @@ CREATE TABLE event (
 
 
 CREATE TABLE grp (
-  user varchar(50) NOT NULL default '',
+  username varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY(user, domain, grp)
+  PRIMARY KEY(username, domain, grp)
 ) $TABLE_TYPE;
 
 
@@ -238,7 +239,7 @@ CREATE TABLE grp (
 
 
 CREATE TABLE location (
-  user varchar(50) NOT NULL default '',
+  username varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
@@ -246,7 +247,7 @@ CREATE TABLE location (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  PRIMARY KEY(user, domain, contact)
+  PRIMARY KEY(username, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -282,7 +283,7 @@ CREATE TABLE missed_calls (
 
 CREATE TABLE pending (
   phplib_id varchar(32) NOT NULL default '',
-  user varchar(100) NOT NULL default '',
+  username varchar(100) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -300,8 +301,8 @@ CREATE TABLE pending (
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
-  PRIMARY KEY (user, domain),
-  KEY user_2 (user),
+  PRIMARY KEY (username, domain),
+  KEY user_2 (username),
   UNIQUE KEY phplib_id (phplib_id)
 ) $TABLE_TYPE;
 
@@ -346,7 +347,7 @@ CREATE TABLE reserved (
 
 CREATE TABLE subscriber (
   phplib_id varchar(32) NOT NULL default '',
-  user varchar(100) NOT NULL default '',
+  username varchar(100) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -365,8 +366,8 @@ CREATE TABLE subscriber (
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
-  PRIMARY KEY (user, domain),
-  KEY user_2 (user)
+  PRIMARY KEY (username, domain),
+  KEY user_2 (username)
 ) $TABLE_TYPE;
 
 # hook-table for all posssible future config values
@@ -408,11 +409,11 @@ CREATE TABLE domain (
 # Table structure for table 'uri' -- uri user parts users are allowed to use
 #
 CREATE TABLE uri (
-  user varchar(50) NOT NULL default '',
+  username varchar(50) NOT NULL default '',
   domain varchar(50) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY (user, domain, uri_user)
+  PRIMARY KEY (username, domain, uri_user)
 ) $TABLE_TYPE;
 
 #
@@ -475,7 +476,7 @@ CREATE TABLE server_monitoring_ul (
 # add an admin user "admin" with password==heslo, 
 # so that one can try it out on quick start
 
-INSERT INTO subscriber (user, password, first_name, last_name, phone, 
+INSERT INTO subscriber (username, password, first_name, last_name, phone, 
 	email_address, datetime_created, datetime_modified, confirmation, 
 	flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms ) 
 	VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
