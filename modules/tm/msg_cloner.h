@@ -7,6 +7,7 @@
 #define sh_free( ptr )        free(ptr)
 
 
-struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg );
+struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg );
+void                     sip_msg_free( struct sip_msg *org_msg );
 
 #endif
