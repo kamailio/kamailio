@@ -48,6 +48,7 @@
 #include "../../fifo_server.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_content.h"
 #include "../../db/db.h"
 #include "../tm/tm_load.h"
 #include "cpl_run.h"
@@ -77,6 +78,7 @@ MODULE_VERSION
 
 
 static int cpl_run_script(struct sip_msg* msg, char* str, char* str2);
+static int cpl_process_register(struct sip_msg* msg, char* str, char* str2);
 static int fixup_cpl_run_script(void** param, int param_no);
 static int cpl_init(void);
 static int cpl_child_init(int rank);
@@ -88,6 +90,7 @@ static int cpl_exit(void);
  */
 static cmd_export_t cmds[] = {
 	{"cpl_run_script", cpl_run_script, 1, fixup_cpl_run_script, REQUEST_ROUTE},
+	{"cpl_process_register", cpl_process_register, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -422,4 +425,45 @@ error:
 }
 
 
+
+static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
+{
+	int ret;
+	int mime;
+	int *mimes;
+
+	/* make sure that is a REGISTER ??? */
+
+	/* here should be the CONTACT- hack */
+
+	/* is there a CONTENT-TYPE hdr ? */
+	mime = parse_content_type_hdr( msg );
+	if (mime==-1)
+		goto error;
+
+	/* check the mime type */
+	DBG("DEBUG: mime found %u, %u\n",mime>>16, mime&0x00ff);
+	if ( mime && mime==(TYPE_APPLICATION<<16)+SUBTYPE_CPL ) {
+		/* can be an upload or remove -> check for the content-purpos and
+		 * content- action headers */
+		DBG("DEBUG:cpl_process_register: ");
+	}
+
+	/* is there a ACCEPT hdr ? */
+	ret = parse_accept_hdr( msg );
+	if (ret==-1)
+		goto error;
+	if (ret!=0) {
+		/* accept header present */
+		mimes = get_accept( msg );
+		while (mimes && *mimes) {
+			DBG("DEBUG: accept mime found %u, %u\n",
+				(*mimes)>>16,(*mimes)&0x00ff);
+			mimes++;
+		}
+	}
+
+error:
+	return -1;
+}
 
