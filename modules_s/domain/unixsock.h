@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Header file for hash table functions
+ * UNIX Socket Interface
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2004 FhG FOKUS
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,16 +27,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef _UNIXSOCK_H
+#define _UNIXSOCK_H 1
 
-#ifndef _HASH_H
-#define _HASH_H
+/*
+ * Register domain unixsock functions
+ */
+int init_domain_unixsock(void);
 
-#include <stdio.h>
-#include "domain_mod.h"
 
-extern int hash_table_install (struct domain_list **hash_table, char *domain);
-int hash_table_lookup (str *domain);
-extern void hash_table_print (struct domain_list **hash_table, FILE *reply_file);
-extern void hash_table_free (struct domain_list **hash_table);
-
-#endif
+#endif /* _UNIXSOCK_H */
