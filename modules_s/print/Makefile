@@ -15,6 +15,8 @@ NAME=print.so
 LDFLAGS=-O2 -shared
 LIBS=
 
+ALLDEP=Makefile ../../Makefile
+
 ifeq ($(ARCH), SunOS)
 LDFLAGS=-O2 -G
 endif
