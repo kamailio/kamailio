@@ -322,7 +322,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned int size)
 #ifdef DBG_F_MALLOC
 	DBG("fm_realloc(%p, %p, %d) called from %s: %s(%d)\n", qm, p, size,
 			file, func, line);
-	if (p>(void*)qm->last_frag || p<(void*)qm->first_frag){
+	if ((p)&&(p>(void*)qm->last_frag || p<(void*)qm->first_frag)){
 		LOG(L_CRIT, "BUG: fm_free: bad pointer %p (out of memory block!) - "
 				"aborting\n", p);
 		abort();

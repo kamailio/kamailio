@@ -102,7 +102,7 @@ struct tcp_connection{
 	volatile int refcnt;
 	int type; /* PROTO_TCP or a protocol over it, e.g. TLS */
 	int flags; /* connection related flags */
-	int state; /* connection state, not used by raw tcp */
+	int state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	int timeout; /* connection timeout, after this it will be removed*/
 	unsigned addr_hash; /* hash indexes in the 2 tables */

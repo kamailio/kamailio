@@ -2,8 +2,13 @@ $Id$
 
 ( - todo, x - done)
 
+- regex subst on uris?
+- port receive.c pre_script_cb fix from stable
+- extend alias to include port numbers :
+    something like alias= foo1.bar:5080 foo2.bar foo3.bar:*
+
 release:
-- check via ipv6 fixes and backport to stable
+x check via ipv6 fixes and backport to stable
 x fix kill(0, SIGTERM) on startup error (will kill also the launching shell
  if non-interactive)
 - fix modules destroy (some modules will try to free uninitialized resources
