@@ -1,26 +1,10 @@
 $Id$
 
-******************************************************
-* Note well: ser has not been released yet. Tarballs *
-* available at berlios are meant for developers.     *
-* Stay tuned -- we will release ser shortly,         *
-* including RPM packages and documentation.          *
-*                                                    *
-* -Jiri, 2002-09-23                                  *
-******************************************************
-
-
-
-TODO
---we'll probably go for mysql dependancy,
-  then INSTALL needs to be completely
-  changed
-
 
 Installation Notes
 
-Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, Solaris/sparc64,
-Win*/i386 (CYGWIN) - only the core
+Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386,
+Solaris/sparc64, Win*/i386 (CYGWIN) - only the core
 (for other arhitectures the Makefile must be edited)
 
 There are various configuration options defined in the Makefile.
@@ -28,20 +12,27 @@ There are various configuration options defined in the Makefile.
 Requirements:
 
 
-- gcc >= 2.9x; 3.0.x recommended (it will work with older version but it might
- require some options tweaking for best performance)
+- gcc or icc : gcc >= 2.9x; 3.[12] recommended (it will work with older version
+  but it might require some options tweaking for best performance)
 - bison or yacc (Berkley yacc)
 - flex
-- gmake (on Linux this is the standard "make")
+- GNU make (on Linux this is the standard "make", on FreeBSD and Solaris is
+ called "gmake")
+- sed and tr (used in the makefiles)
+- GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
+- GNU install or BSD install (on Solaris "ginstall") if you want "make
+  install", "make bin", "make sunpkg" to work
+
 
 OS Notes:
 
 - FreeBSD: make sure gmake, bison & flex are installed
-- Solaris: as above; you can use Solaris's yacc instead of bison
-- Windows: it works in windows but you must install a recent cygwin version
-	(http://www.cygwin.com/) and also install a newer regex library version
-	(>=0.12). 
-	
+- Solaris: as above; you can use Solaris's yacc instead of bison. You might
+  need also gtar and ginstall.
+- Windows: it works in windows (only the core) but you must install a recent
+  cygwin version (http://www.cygwin.com/) and also install a newer regex
+  library version (>=0.12). 
+    
 
 
 
@@ -79,9 +70,13 @@ make exclude_modules="CVS textops" modules
 
 make static_modules=tm PROFILE=-pg all
 
--compile with gcc-3.0 instead of gcc
+-compile with gcc-3.2 instead of gcc
 
-make CC=gcc-3.0 all
+make CC=gcc-3.2 all
+
+or
+
+CC=gcc-3.2 make all
 
 
 
@@ -107,17 +102,25 @@ Make tags:
 
 make TAGS
 
-Create a tar.gz with the sources:
+Create a tar.gz with the sources (in ../):
 
 make tar
 
-Create a tar.gz with the binary distribution:
+Create a tar.gz with the binary distribution (in ../):
 
 make bin
 
-Create a solaris package:
+Create a gzipped solaris package (in ../):
 
 make sunpkg
+
+Create debian packages (in ../):
+
+make deb
+
+or
+
+dpkg-buildpackage
 
 Install:
 
@@ -149,20 +152,49 @@ needed for storing user credentials.)
 A) Quick Start
 ----------------------------------------------
 
-1) Download an RPM package from our site
-	http://www.iptel.org/ser/
+1) Download an RPM or debian package from our site
+    http://www.iptel.org/ser
+If you don't use an rpm or debian based distro, try our tar.gz'ed binaries
+ (ser-$(version)_$(os)_$(arch).tar.gz, e.g: ser-0.8.8_linux_i386.tar.gz).
+If you use Solaris 8 you can try our solaris package.
+
 2) install the package
-	rpm -i <pachage_name>
+RPM:
+    rpm -i <package_name>
+debian:
+    dpkg -i <package_name>
+tar.gz:
+    cd /; tar zxvf <package_name>_os_arch.tar.gz
+    (it will install in /usr/local/, and the configuration file in
+     /usr/local/etc/ser/ser.cfg)
+Solaris:
+    gunzip <package_name>.gz ; pkgadd -d <package_name>
+    
 3) start the server
-	/etc/init.d/ser start
+RPM:
+    /etc/init.d/ser start
+debian:
+    ser is started automatically after the install
+    (in case something fails you can start it wiht /etc/init.d/ser start)
+tar.gz:
+    the tar.gz does not include an init.d script, you'll have to create one of
+    your own or adapt one from the source distribution (debian/init.d,
+    rpm/ser.init.*, gentoo/ser.init)
+    You can start ser directly with /usr/local/sbin/ser.
+Solaris:
+    see tar.gz.
+    
 4) optionally, watch server's health using the
    serctl utility
-	- to do so, first set the environment
-	  variable SIP_DOMAIN to your domain 
-	  name, e.g., in Bourne shell, call
-	    export SIP_DOMAIN="foo.bar"
-	- run the serctl utility
-	    /usr/sbin/serctl moni
+    - to do so, first set the environment
+      variable SIP_DOMAIN to your domain 
+      name, e.g., in Bourne shell, call
+        export SIP_DOMAIN="foo.bar"
+    - run the serctl utility
+        /usr/sbin/serctl moni
+      or
+        /usr/local/sbin/serctl moni (if you installed from a tar.gz or solaris
+        package)
 5) Register with the server using your favorite
    SIP User Agent. You may want to look at configuration
    hints for use of iptel.org site at
@@ -189,10 +221,15 @@ you need to make sure MySQL is installed on
 your box.
 
 
-1) Download an RPM *source* package from our site
-	http://www.iptel.org/ser/
+1) Download the package containing the ser mysql module from: 
+    http://www.iptel.org/ser/
+    (rpm and deb provided, the binary tar.gz distribution and the solaris
+    package do not include it, if you use them you'll have to rebuild from the
+    source).
 2) install the package
-	rpm -i <pachage_name>
+    rpm -i <package_name>
+    or
+    dpkg -i <package_name>
 3) create MySQL tables
     /usr/sbin/ser_mysql.sh create
 4) configure ser to use SQL
@@ -207,8 +244,8 @@ your box.
         www_challenge("iptel.org", "0"); 
         break;
       };
-5) start the server
-	/etc/init.d/ser start
+5) restart the server
+    /etc/init.d/ser restart
 6) you can now start  managing the server using
    the serctl utility; you need to first set the
    environment variable SIP_DOMAIN to your local

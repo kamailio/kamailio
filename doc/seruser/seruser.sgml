@@ -1,4 +1,5 @@
-<!DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd">
+<!-- $Id$ -->
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
 
 <book label="seruser" id="seruser" lang="EN">
 <?dbhtml filename="index.html">
@@ -64,7 +65,53 @@
     
     <toc></toc>
     
-    <chapter id="general">	<title>General Information</title>	<para>	<section id="about_ser">	    <title>About SIP Express Router (ser)</title>	    <para> SIP Express Router (SER) is an industrial-strength, free VoIP server based on the session initiation protocol (SIP RFC2543-bis). It is engineered to power IP telephony infrastructures up to large scale. The server keeps track of users, sets up VoIP sessions, relays instant messages and creates space for new plug-in applications. Its proven interoperability guarantees seamless integration with components from other vendors, eliminating the risk of a single-vendor trap. It has successfully participated in various interoperability tests in which it worked with the products of other leading SIP vendors.	    </para>	    <para>The SIP Express Router enables a flexible plug-in model for new applications: Third parties can easily link their plug-ins with the server code and provide thereby advanced and customized services. In this way, plug-ins such as SNMP support, RADIUS accounting,or SMS gateway have already been developed and are provided as advanced features. Other modules are underway: Presence server,firewall control, and more.	    </para>	    <para>Its performance and robustness allows it to serve millions of users and accommodate needs of very large operators. With a $3000 dual-CPU, the SIP Express Router is able to power IP telephony services in an area as large as the Bay Area during peak hours. Even on an IPAQ PDA, the server withstands 150 calls per second (CPS)! The server has been powering our iptel.org free SIP site withstanding heavy daily load that is further increasing with the popularity of Microsoft's Messenger.  		    </para>	    <para>The SIP Express Router is extremely configurable to allow the creation of various routing and admission policies as well as setting up new and customized services. Its configurability allows it to serve many roles: network security barrier, application server, or PSTN gateway guard for example.		</para>	    	</section> 	<section id="about_iptel">
+    <chapter id="general">
+	<title>General Information</title>
+	<para>
+	<section id="about_ser">
+	    <title>About SIP Express Router (ser)</title>
+	    <para>
+ SIP Express Router (SER) is an industrial-strength, free VoIP 
+server based on the session initiation protocol (SIP RFC2543-bis). 
+It is engineered to power IP telephony infrastructures up to large 
+scale. The server keeps track of users, sets up VoIP sessions, 
+relays instant messages and creates space for new plug-in applications. 
+Its proven interoperability guarantees seamless integration with 
+components from other vendors, eliminating the risk of a single-vendor 
+trap. It has successfully participated in various interoperability 
+tests in which it worked with the products of other leading SIP vendors.
+	    </para>
+	    <para>
+The SIP Express Router enables a flexible plug-in model for new 
+applications: Third parties can easily link their plug-ins with 
+the server code and provide thereby advanced and customized services. 
+In this way, plug-ins such as SNMP support, RADIUS accounting,
+or SMS gateway have already been developed and are provided as 
+advanced features. Other modules are underway: Presence server,
+firewall control, and more.
+
+	    </para>
+	    <para>
+Its performance and robustness allows it to serve millions of users and accommodate needs of very large operators. With a $3000 dual-CPU, the 
+SIP Express Router is able to power IP telephony services in an area 
+as large as the Bay Area during peak hours. Even on an IPAQ PDA, the server 
+withstands 150 calls per second (CPS)! The server has been powering our 
+iptel.org free SIP site withstanding heavy daily load that is further 
+increasing with the popularity of Microsoft's Messenger.  
+	
+	    </para>
+	    <para>
+The SIP Express Router is extremely configurable to allow the creation of 
+various routing and admission policies as well as setting up new and 
+customized services. Its configurability allows it to serve many roles: 
+network security barrier, application server, or PSTN gateway guard for 
+example.
+		</para>
+
+	    
+	</section> 
+
+	<section id="about_iptel">
 	    <title>About iptel.org</title>
 	    <para>
 		iptel.org is a know-how company spun off from Germany's national 
@@ -130,7 +177,7 @@ SIP Express Router has been engineered to power large scale networks: its capaci
 		    Replacing a traditional PBX in an enterprise can achieve reasonable savings. Enterprises can deploy a single infrastructure for both voice and data and bridge distant locations over the Internet. Additionally, they can benefit of integration of voice and data.
 		</para>
 		<para>
-		    The SIP Express Router scales from SOHOs to large, international enterprises. Even a single installation on a common PC is able to serve VoIP signaling of any worlds enterprise.  Its policy-based routing language makes implementation of numbering plans of companies spread across the world very easy. ACL features allow for protection of PSTN gateway from unauthorized callers. 
+		    The SIP Express Router scales from SOHOs to large, international enterprises. Even a single installation on a common PC is able to serve VoIP signaling of any worlds enterprise.  Its policy-based routing language makes implementation of numbering plans of companies spread across the world very easy. ACL features allow for protection of PSTN gateway from unauthorized callers.
 		</para>
 		<para>
 		    SIP Express Routers support for programmable routing and accounting efficiently allows for implementation of such a scenario.
