@@ -114,7 +114,11 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 /*
  * Module exports structure
  */
+#ifdef STATIC_USRLOC
+struct module_exports usrloc_exports = {
+#else
 struct module_exports exports = {
+#endif
 	"usrloc", 
 	(char*[]) {
 		"save_contact",

@@ -69,7 +69,11 @@ db_con_t* db_handle;   /* Database connection handle */
 /*
  * Module interface
  */
+#ifdef STATIC_AUTH
+struct module_exports auth_exports = {
+#else
 struct module_exports exports = {
+#endif
 	"auth", 
 	(char*[]) { 
 		"www_authorize",
