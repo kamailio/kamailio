@@ -14,7 +14,7 @@
 # config vars
 #################################################################
 DBNAME=ser
-DBHOST=dbhost
+DBHOST=localhost
 USERNAME=ser
 DEFAULT_PW=heslo
 ROUSER=serro
