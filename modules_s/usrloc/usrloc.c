@@ -352,6 +352,7 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 	c_elem_t* el;
 	str user;
 	time_t t;
+	contact_t* ptr;
 	
 	if (!_msg->to) {
 		if (parse_headers(_msg, HDR_TO) == -1) {
@@ -381,21 +382,24 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 	
 	t = time(NULL);
 	el = cache_get(c, &user);
-	if (el) {
-		if ((el->loc->contacts) && (el->loc->contacts->expires >= t)) {
+	if (el) { 
+		ptr = el->loc->contacts;
+		while ((ptr) && (ptr->expires < t)) ptr = ptr->next;
+		
+		if (ptr) {
 			DBG("lookup_contact(): Binding find, rewriting Request-URI\n");
-			if (rwrite(_msg, &(el->loc->contacts->c)) == FALSE) {
+			if (rwrite(_msg, &(ptr->c)) == FALSE) {
 				LOG(L_ERR, "lookup_contact(): Unable to rewrite request URI\n");
 				cache_release_elem(el);
 				return -1;
 			}
 			cache_release_elem(el);
-		        return 1;	
+			return 1;	
 		} else {
-                        DBG("lookup_contact(): Binding has expired\n");
+			DBG("lookup_contact(): Binding has expired or not found\n");
 			cache_release_elem(el);
 			return -1;
-	        };
+		}
 	} else {
 		DBG("lookup_contact(): No binding found in database\n");
 		return -2;
