@@ -45,7 +45,7 @@
 
 #include "dprint.h"
 
-enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS };
+enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP };
 
 
 struct ip_addr{

@@ -26,13 +26,14 @@
  *
  * History
  * -------
- *  2003-03-06  enum_request_method changed to begin with 1;
- *             0 reserved for invalid values; (jiri)
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-01-28  removed scratchpad (jiri)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-03-06  enum_request_method changed to begin with 1;
+ *               0 reserved for invalid values; (jiri)
  *  2003-03-31  removed sip_msg->repl_add_rm (andrei)
  *  2003-04-01  2 macros added: GET_NEXT_HOP and GET_RURI (janakj)
  *  2003-04-04  structure for parsed inbound uri added (jiri)
+ *  2003-04-11  updated the  sip_uri structure (lots of fields added) (andrei)
  */
 
 
@@ -98,6 +99,8 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 (((m)->new_uri.s && (m)->new_uri.len) ? ((m)->new_uri) : ((m)->first_line.u.request.uri))
 
 
+#if 0
+	/* old version */
 struct sip_uri {
 	str user;     /* Username */
 	str passwd;   /* Password */
@@ -107,7 +110,31 @@ struct sip_uri {
 	str headers;  
 	unsigned short port_no;
 };
+#endif
 
+struct sip_uri {
+	str user;     /* Username */
+	str passwd;   /* Password */
+	str host;     /* Host name */
+	str port;     /* Port number */
+	str params;   /* Parameters */
+	str headers;  
+	unsigned short port_no;
+	unsigned short proto; /* from transport */
+	/* parameters */
+	str transport;
+	str ttl;
+	str user_param;
+	str maddr;
+	str method;
+	str lr;
+	/* values */
+	str transport_val;
+	str ttl_val;
+	str user_param_val;
+	str maddr_val;
+	str method_val;
+};
 
 
 struct sip_msg {
