@@ -28,11 +28,6 @@
  *
  * History:
  * --------
- * 2003-03-18  killed the build_warning snprintf (andrei)
- * 2003-03-06  totags in outgoing replies bookmarked to enable
- *             ACK/200 tag matching
- * 2003-03-01  VOICE_MAIL defs removed (jiri)
- * 2003-02-28  scratchpad compatibility abandoned (jiri)
  * 2003-01-20  bug_fix: use of return value of snprintf aligned to C99 (jiri)
  * 2003-01-23  added rport patches, contributed by 
  *              Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
@@ -42,7 +37,13 @@
  * 2003-01-27  more rport fixes (make use of new via_param->start)  (andrei)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-29  scratchpad removed (jiri)
+ * 2003-02-28  scratchpad compatibility abandoned (jiri)
+ * 2003-03-01  VOICE_MAIL defs removed (jiri)
+ * 2003-03-06  totags in outgoing replies bookmarked to enable
+ *             ACK/200 tag matching (andrei)
+ * 2003-03-18  killed the build_warning snprintf (andrei)
  * 2003-03-31  added subst lump support (andrei)
+ * 2003-04-01  added opt (conditional) lump support (andrei)
  *
  */
 
@@ -356,6 +357,71 @@ char* clen_builder(struct sip_msg* msg, unsigned int *clen_len)
 
 
 
+/* checks if a lump opt condition 
+ * returns 1 if cond is true, 0 if false */
+static inline int lump_check_opt(	enum lump_conditions cond,
+									struct sip_msg* msg,
+									struct socket_info* snd_s
+									)
+{
+	struct ip_addr* ip;
+	unsigned short port;
+	int proto;
+
+#define get_ip_port_proto \
+			if (snd_s==0){ \
+				LOG(L_CRIT, "ERROR: lump_check_opt: null send socket\n"); \
+				return 1; /* we presume they are different :-) */ \
+			} \
+			if (msg->rcv.bind_address){ \
+				ip=&msg->rcv.bind_address->address; \
+				port=msg->rcv.bind_address->port_no; \
+				proto=msg->rcv.bind_address->proto; \
+			}else{ \
+				ip=&msg->rcv.dst_ip; \
+				port=msg->rcv.dst_port; \
+				proto=msg->rcv.proto; \
+			} \
+			
+	switch(cond){
+		case COND_FALSE:
+			return 0;
+		case COND_TRUE:
+			return 1;
+		case COND_IF_DIFF_REALMS:
+			get_ip_port_proto;
+			/* faster tests first */
+			if ((port==snd_s->port_no)&&(proto==snd_s->proto)&&
+				(ip_addr_cmp(ip, &snd_s->address)))
+				return 0;
+			else return 1;
+		case COND_IF_DIFF_AF:
+			get_ip_port_proto;
+			if (ip->af!=snd_s->address.af) return 1;
+			else return 0;
+		case COND_IF_DIFF_PROTO:
+			get_ip_port_proto;
+			if (proto!=snd_s->proto) return 1;
+			else return 0;
+		case COND_IF_DIFF_PORT:
+			get_ip_port_proto;
+			if (port!=snd_s->port_no) return 1;
+			else return 0;
+		case COND_IF_DIFF_IP:
+			get_ip_port_proto;
+			if (ip_addr_cmp(ip, &snd_s->address)) return 0;
+			else return 1;
+		case COND_IF_RAND:
+			return (rand()>=RAND_MAX/2);
+		default:
+			LOG(L_CRIT, "BUG: lump_check_opt: unknown lump condition %d\n",
+					cond);
+	}
+	return 0; /* false */
+}
+
+
+
 /* computes the "unpacked" len of a lump list,
    code moved from build_req_from_req */
 static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
@@ -430,6 +496,9 @@ static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 	new_len=0;
 	
 	for(t=msg->add_rm;t;t=t->next){
+		/* skip if this is an OPT lump and the condition is not satisfied */
+		if ((t->op==LUMP_ADD_OPT) && !lump_check_opt(t->u.cond, msg, send_sock))
+			continue;
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
 				case LUMP_ADD:
@@ -438,18 +507,29 @@ static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 				case LUMP_ADD_SUBST:
 					SUBST_LUMP_LEN(r);
 					break;
+				case LUMP_ADD_OPT:
+					/* skip if this is an OPT lump and the condition is 
+					 * not satisfied */
+					if (!lump_check_opt(r->u.cond, msg, send_sock))
+						goto skip_before;
+					break;
 				default:
 					/* only ADD allowed for before/after */
 						LOG(L_CRIT, "BUG: lumps_len: invalid op "
 							"for data lump (%x)\n", r->op);
 			}
 		}
+skip_before:
 		switch(t->op){
 			case LUMP_ADD:
 				new_len+=t->len;
 				break;
 			case LUMP_ADD_SUBST:
 				SUBST_LUMP_LEN(t);
+				break;
+			case LUMP_ADD_OPT:
+				/* we don't do anything here, it's only a condition for
+				 * before & after */
 				break;
 			case LUMP_DEL:
 				/* fix overlapping deleted zones */
@@ -483,12 +563,19 @@ static inline int lumps_len(struct sip_msg* msg, struct socket_info* send_sock)
 				case LUMP_ADD_SUBST:
 					SUBST_LUMP_LEN(r);
 					break;
+				case LUMP_ADD_OPT:
+					/* skip if this is an OPT lump and the condition is 
+					 * not satisfied */
+					if (!lump_check_opt(r->u.cond, msg, send_sock))
+						goto skip_after;
+					break;
 				default:
 					/* only ADD allowed for before/after */
 					LOG(L_CRIT, "BUG:lumps_len: invalid"
 								" op for data lump (%x)\n", r->op);
 			}
 		}
+skip_after:
 	}
 	return new_len;
 }
@@ -634,6 +721,13 @@ static inline void process_lumps(	struct sip_msg* msg,
 		switch(t->op){
 			case LUMP_ADD:
 			case LUMP_ADD_SUBST:
+			case LUMP_ADD_OPT:
+				/* skip if this is an OPT lump and the condition is 
+				 * not satisfied */
+				if ((t->op==LUMP_ADD_OPT) &&
+						(!lump_check_opt(t->u.cond, msg, send_sock))) 
+					continue;
+				break;
 				/* just add it here! */
 				/* process before  */
 				for(r=t->before;r;r=r->before){
@@ -646,18 +740,35 @@ static inline void process_lumps(	struct sip_msg* msg,
 						case LUMP_ADD_SUBST:
 							SUBST_LUMP(r);
 							break;
+						case LUMP_ADD_OPT:
+							/* skip if this is an OPT lump and the condition is 
+					 		* not satisfied */
+							if (!lump_check_opt(r->u.cond, msg, send_sock))
+								goto skip_before;
+							break;
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
+skip_before:
 				/* copy "main" part */
-				if(t->op==LUMP_ADD){
-					memcpy(new_buf+offset, t->u.value, t->len);
-					offset+=t->len;
-				}else{
-					SUBST_LUMP(t);
+				switch(t->op){
+					case LUMP_ADD:
+						memcpy(new_buf+offset, t->u.value, t->len);
+						offset+=t->len;
+						break;
+					case LUMP_ADD_SUBST:
+						SUBST_LUMP(t);
+						break;
+					case LUMP_ADD_OPT:
+						/* do nothing, it's only a condition */
+						break;
+					default: 
+						/* should not ever get here */
+						LOG(L_CRIT, "BUG: process_lumps: unhandled data lump "
+								" op %d\n", t->op);
 				}
 				/* process after */
 				for(r=t->after;r;r=r->after){
@@ -670,12 +781,19 @@ static inline void process_lumps(	struct sip_msg* msg,
 						case LUMP_ADD_SUBST:
 							SUBST_LUMP(r);
 							break;
+						case LUMP_ADD_OPT:
+							/* skip if this is an OPT lump and the condition is 
+					 		* not satisfied */
+							if (!lump_check_opt(r->u.cond, msg, send_sock))
+								goto skip_after;
+							break;
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
+skip_after:
 				break;
 			case LUMP_NOP:
 			case LUMP_DEL:
@@ -704,12 +822,19 @@ static inline void process_lumps(	struct sip_msg* msg,
 						case LUMP_ADD_SUBST:
 							SUBST_LUMP(r);
 							break;
+						case LUMP_ADD_OPT:
+							/* skip if this is an OPT lump and the condition is 
+					 		* not satisfied */
+							if (!lump_check_opt(r->u.cond, msg, send_sock))
+								goto skip_nop_before;
+							break;
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n",r->op);
 					}
 				}
+skip_nop_before:
 				/* process main (del only) */
 				if (t->op==LUMP_DEL){
 					/* skip len bytes from orig msg */
@@ -726,12 +851,19 @@ static inline void process_lumps(	struct sip_msg* msg,
 						case LUMP_ADD_SUBST:
 							SUBST_LUMP(r);
 							break;
+						case LUMP_ADD_OPT:
+							/* skip if this is an OPT lump and the condition is 
+					 		* not satisfied */
+							if (!lump_check_opt(r->u.cond, msg, send_sock)) 
+								goto skip_nop_after;
+							break;
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:process_lumps: "
 									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
+skip_nop_after:
 				break;
 			default:
 					LOG(L_CRIT, "BUG: process_lumps: "

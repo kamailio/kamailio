@@ -30,6 +30,7 @@
  * --------
  *  2003-01-29  s/int/enum ... more convenient for gdb (jiri)
  *  2003-03-31  added subst lumps -- they expand in ip addr, port a.s.o (andrei)
+ *  2003-04-01  added opt (condition) lumps (andrei)
  */
 
 
@@ -37,12 +38,33 @@
 #define data_lump_h
 
 
-enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD, LUMP_ADD_SUBST };
-enum lump_subst{ SUBST_NOP=0,
-				 SUBST_RCV_IP,    SUBST_SND_IP,
-				 SUBST_RCV_PORT,  SUBST_SND_PORT,
-				 SUBST_RCV_PROTO, SUBST_SND_PROTO
+enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD, LUMP_ADD_SUBST, LUMP_ADD_OPT };
+enum lump_subst{ SUBST_NOP=0,                     /* do nothing */
+				 SUBST_RCV_IP,    SUBST_SND_IP,   /* add ip address */
+				 SUBST_RCV_PORT,  SUBST_SND_PORT, /* add port no */
+				 SUBST_RCV_PROTO, SUBST_SND_PROTO /* add protocol */
 				};
+				/* Where:
+				   SND = sending, e.g the src ip of the outgoing message
+				   RCV = received e.g the dst ip of the original incoming msg,
+				    or the ip of the ser socket on which the msg was received
+					*/
+
+enum lump_conditions {	COND_FALSE,         /* always false */
+						COND_TRUE,          /* always true */
+						COND_IF_DIFF_REALMS,/* true if RCV realm != SND realm */
+						COND_IF_DIFF_AF,    /* true if RCV af != SND af */
+						COND_IF_DIFF_PROTO, /* true if RCV proto != SND proto */
+						COND_IF_DIFF_PORT,  /* true if RCV port != SND port */
+						COND_IF_DIFF_IP,    /* true if RCV ip != SND ip */
+						COND_IF_RAND        /* 50-50 random prob.of being true*/
+						};
+						/* Where: 
+						   REALM= ip_addr:port:proto
+						   af   = address family (ipv4 or ipv6)
+						   proto = protocol (tcp, udp, tls)
+						*/
+
 enum lump_flag { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2 };
 
 struct lump{
@@ -52,6 +74,7 @@ struct lump{
 	union{
 		int offset; /* used for DEL, MODIFY */
 		enum lump_subst subst; /*what to subst: ip addr, port, proto*/
+		enum lump_conditions cond; /* condition for LUMP_ADD_OPT */
 		char * value; /* used for ADD */
 	}u;
 	int len; /* length of this header field */
