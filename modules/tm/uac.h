@@ -53,7 +53,8 @@ void uac_child_init( int rank );
 void generate_callid();
 
 typedef int (*tuac_f)(str *msg_type, str *dst, str *headers,str *body,
-	str *from, transaction_cb completion_cb );
+	str *from, transaction_cb completion_cb, void *cbp,
+	struct dialog *dlg );
 
 /* transactional UAC; look for an example of usage at fifo_uac */
 int t_uac( 
