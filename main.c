@@ -440,14 +440,21 @@ void handle_sigs()
 
 	switch(sig_flag){
 		case 0: break; /* do nothing*/
-		case SIGINT:
 		case SIGPIPE:
+				/* SIGPIPE might be rarely received on use of
+				   exec module; simply ignore it
+				 */
+				LOG(L_WARN, "WARNING: SIGPIPE received and ignored\n");
+				break;
+		case SIGINT:
 		case SIGTERM:
 			/* we end the program in all these cases */
 			if (sig_flag==SIGINT)
 				DBG("INT received, program terminates\n");
-			else if (sig_flag==SIGPIPE)
+#ifdef OBSOLETED
+			else if (sig_flag==SIGPIPE) 
 				DBG("SIGPIPE received, program terminates\n");
+#endif
 			else
 				DBG("SIGTERM received, program terminates\n");
 				
