@@ -1,0 +1,253 @@
+
+uri_db Module
+
+Jan Janak
+
+   FhG FOKUS
+
+Edited by
+
+Jan Janak
+
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. db_url (string)
+              1.3.2. uri_table (string)
+              1.3.3. uri_user_column (string)
+              1.3.4. uri_domain_column (string)
+              1.3.5. uri_uriuser_column (string)
+              1.3.6. subscriber_table (string)
+              1.3.7. subscriber_user_column (string)
+              1.3.8. subscriber_domain_column (string)
+
+        1.4. Exported Functions
+
+              1.4.1. check_to()
+              1.4.2. check_from()
+              1.4.3. does_uri_exist()
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set db_url parameter
+   1-2. Set uri_table parameter
+   1-3. Set uri_user_column parameter
+   1-4. Set uri_domain_column parameter
+   1-5. Set uri_uriuser_column parameter
+   1-6. Set subscriber_table parameter
+   1-7. Set subscriber_user_column parameter
+   1-8. Set subscriber_domain_column parameter
+   1-9. check_to usage
+   1-10. check_from usage
+   1-11. does_uri_exist usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Various checks related to SIP URI.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * a SER database module.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. db_url (string)
+
+   URL of the database to be used.
+
+   Default value is "mysql://serro:47serro11@localhost/ser". 
+
+   Example 1-1. Set db_url parameter
+...
+modparam("module", "db_url", "mysql://username:password@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.2. uri_table (string)
+
+   Table containing list of allowed URIs for each user.
+
+   Default value is "uri". 
+
+   Example 1-2. Set uri_table parameter
+...
+modparam("module", "uri_table", "uri")
+...
+     _________________________________________________________
+
+1.3.3. uri_user_column (string)
+
+   Column holding usernames in the URI table.
+
+   Default value is "username". 
+
+   Example 1-3. Set uri_user_column parameter
+...
+modparam("module", "uri_user_column", "username")
+...
+     _________________________________________________________
+
+1.3.4. uri_domain_column (string)
+
+   Column holding domain in the URI table.
+
+   Default value is "domain". 
+
+   Example 1-4. Set uri_domain_column parameter
+...
+modparam("module", "uri_domain_column", "domain")
+...
+     _________________________________________________________
+
+1.3.5. uri_uriuser_column (string)
+
+   Column holding URI username in the URI table.
+
+   Default value is "uri_user". 
+
+   Example 1-5. Set uri_uriuser_column parameter
+...
+modparam("module", "uri_uriuser_column", "uri_user")
+...
+     _________________________________________________________
+
+1.3.6. subscriber_table (string)
+
+   Name of the subscriber table.
+
+   Default value is "subscriber". 
+
+   Example 1-6. Set subscriber_table parameter
+...
+modparam("module", "subscriber_table", "subscriber")
+...
+     _________________________________________________________
+
+1.3.7. subscriber_user_column (string)
+
+   Column holding username in subscriber table.
+
+   Default value is "username". 
+
+   Example 1-7. Set subscriber_user_column parameter
+...
+modparam("module", "subscriber_user_column", "username")
+...
+     _________________________________________________________
+
+1.3.8. subscriber_domain_column (string)
+
+   Column hodling domains in the subscriber table.
+
+   Default value is "domain". 
+
+   Example 1-8. Set subscriber_domain_column parameter
+...
+modparam("module", "subscriber_domain_column", "domain")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. check_to()
+
+   Check To username against URI table or digest credentials.
+
+   Example 1-9. check_to usage
+...
+if (check_to()) {
+    ...
+};
+...
+     _________________________________________________________
+
+1.4.2. check_from()
+
+   Check From username against URI table or digest credentials.
+
+   Example 1-10. check_from usage
+...
+if (check_from()) {
+    ...
+};
+...
+     _________________________________________________________
+
+1.4.3. does_uri_exist()
+
+   Check if username in the request URI belongs to an existing
+   user.
+
+   Example 1-11. does_uri_exist usage
+...
+if (does_uri_exist()) {
+    ...
+};
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs
