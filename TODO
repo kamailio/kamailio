@@ -3,11 +3,11 @@ $Id$
 ( - todo, x - done)
 
 release:
-- fix modules makefiles (so that cd modules/foo; make will also link the proper
+x fix modules makefiles (so that cd modules/foo; make will also link the proper
    libs)
-- fix -march=..., or compile w/ i386 for the release
+x fix -march=..., or compile w/ i386 for the release
 x resolver should resolve [ipv6]
-- remove parse_uri debugging info
+x remove parse_uri debugging info
 - fix DBG("<%.*s>", len, _null_)
 x add -t, -w, -u -g equivalents to the config file
 x force add rport : force_rport()

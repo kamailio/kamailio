@@ -94,7 +94,7 @@ binary-common:
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-	dh_installinit
+	dh_installinit --init-script=ser -- defaults 23
 	dh_installcron
 	dh_installman
 	dh_installinfo
