@@ -68,7 +68,7 @@ void receive_stdin_loop()
 
 char* cfg_file = 0;
 unsigned short port_no = 0; /* port on which we listen */
-int child_no = 0;           /* number of children processing requests */
+int children_no = 0;           /* number of children processing requests */
 int debug = 0;
 int dont_fork = 0;
 int log_stderr = 0;
@@ -80,8 +80,111 @@ char* names[MAX_LISTEN];               /* our names */
 unsigned long addresses[MAX_LISTEN];   /* our ips */
 int addresses_no=0;                    /* number of names/ips */
 
+/* ipc related globals */
+int process_no = 0;
+#ifdef ROUTE_SRV
+#endif
 
 
+
+#define MAX_FD 32 /* maximum number of inherited open file descriptors,
+		    (normally it shouldn't  be bigger  than 3) */
+
+/* daemon init, return 0 on success, -1 on error */
+int daemonize(char*  name)
+{
+	pid_t pid;
+	int r;
+	
+	if (log_stderr==0)
+		openlog(name, LOG_PID, LOG_DAEMON); /* LOG_CONS, LOG_PERRROR ? */
+
+	if (chdir("/")<0){
+		LOG(L_CRIT,"cannot chroot:%s\n", strerror(errno));
+		goto error;
+	}
+	
+	/* fork to become!= group leader*/
+	if ((pid=fork())<0){
+		LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
+		goto error;
+	}
+	if (pid!=0){
+		/* parent process => exit*/
+		exit(0);
+	}
+	/* become session leader to drop the ctrl. terminal */
+	if (setsid()<0){
+		LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
+	}
+	/* fork again to drop group  leadership */
+	if ((pid=fork())<0){
+		LOG(L_CRIT, "Cannot  fork:%s\n", strerror(errno));
+		goto error;
+	}
+	if (pid!=0){
+		/*parent process => exit */
+		exit(0);
+	}
+	
+	/* close any open file descriptors */
+	
+	for (r=0;r<MAX_FD; r++){
+		if ((r==3) && log_stderr)  continue;
+		close(r);
+	}
+	
+	return  0;
+
+error:
+	return -1;
+}
+
+
+
+/* main loop */
+int main_loop()
+{
+	int r, i;
+	pid_t pid;
+
+	/* one "main" process and n children handling i/o */
+
+	if (dont_fork){
+		/* only one address */
+		if (udp_init(addresses[0],port_no)==-1) goto error;
+		/* receive loop */
+		udp_rcv_loop();
+	}else{
+		for(r=0;r<addresses_no;r++){
+			for(i=0;i<children_no;i++){
+				if ((pid=fork())<0){
+					LOG(L_CRIT,  "main_loop: Cannot fork\n");
+					goto error;
+				}
+				if (pid==0){
+					/* child */
+					if (udp_init(addresses[r], port_no)==-1) goto error;
+					return udp_rcv_loop();
+				}
+			}
+		}
+	}
+		
+	for(;;){
+		/* debug:  instead of select */
+		sleep(1);
+	}
+	
+	return 0;
+ error:
+	return -1;
+
+}
+	
+	
+	
+	
 int main(int argc, char** argv)
 {
 
@@ -123,7 +226,7 @@ int main(int argc, char** argv)
 					}
 					break;
 			case 'n':
-					child_no=strtol(optarg, tmp, 10);
+					children_no=strtol(optarg, tmp, 10);
 					if (tmp &&(*tmp)){
 						fprintf(stderr, "bad process number: -n %s\n", optarg);
 						goto error;
@@ -175,8 +278,8 @@ int main(int argc, char** argv)
 	
 	/* fill missing arguments with the default values*/
 	if (cfg_file==0) cfg_file=CFG_FILE;
-	if (port_no==0) port_no=SIP_PORT;
-	if (child_no==0) child_no=CHILD_NO;
+	if (port_no<=0) port_no=SIP_PORT;
+	if (children_no<=0) children_no=CHILD_NO;
 	if (addresses_no==0) {
 		/* get our address, only the first one */
 		if (uname (&myname) <0){
@@ -227,13 +330,12 @@ int main(int argc, char** argv)
 
 
 	/* init_daemon? */
-
-	/* only one address for now */
-	if (udp_init(addresses[0],port_no)==-1) goto error;
-	/* start/init other processes/threads ? */
-
-	/* receive loop */
-	udp_rcv_loop();
+	if (!dont_fork){
+		if ( daemonize(argv[0]) <0 ) goto error;
+	}
+		
+	
+	return main_loop();
 
 
 error:
