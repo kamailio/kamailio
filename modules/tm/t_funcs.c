@@ -399,7 +399,7 @@ int t_forward_uri( struct sip_msg* p_msg  )
 
    if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
    {
-      LOG( L_ERR , "ERROR: t_forward_uri: unable to extarct ip and port from uri!\n" );
+      LOG( L_ERR , "ERROR: t_forward_uri: unable to parse uri!\n");
       return -1;
    }
 
@@ -1325,7 +1325,7 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
 	{
 		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
-		   "unable to parse destination uri\n");
+		   "unable to parse destination uri: %.*s\n", uri.len, uri.s );
 		goto error;
 	}
 
@@ -1336,7 +1336,8 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 		port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
 		if ( err<0 ){
 			LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: converting port "
-				"from str to int failed; using default SIP port\n");
+				"from str to int failed; using default SIP port\n\turi:%.*s\n",
+				uri.len, uri.s );
 			port = SIP_PORT;
 		}
 	}
@@ -1354,7 +1355,7 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	if ( !nhost )
 	{
 		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
-		  "cannot resolve host\n");
+		  "cannot resolve host in uri: %.*s\n", uri.len, uri.s );
 		free_uri(&parsed_uri);
 		goto error;
 	}
