@@ -48,9 +48,9 @@ Bogdan-Andrei Iancu
    1-3. Set cpl_dtd_file parameter
    1-4. Set log_dir parameter
    1-5. Set proxy_recurse parameter
-   1-6. Set proxy_recurse parameter
-   1-7. Set proxy_recurse parameter
-   1-8. Set proxy_recurse parameter
+   1-6. Set proxy_route parameter
+   1-7. Set nat_flag parameter
+   1-8. Set lookup_domain parameter
    1-9. cpl_run_script usage
      _________________________________________________________
 
@@ -176,7 +176,7 @@ modparam("cpl_c","proxy_recurse",2)
 
    Default value of this parameter is 0 (none). 
 
-   Example 1-6. Set proxy_recurse parameter
+   Example 1-6. Set proxy_route parameter
 ...
 modparam("cpl_c","proxy_route",1)
 ...
@@ -190,7 +190,7 @@ modparam("cpl_c","proxy_route",1)
 
    Default value of this parameter is 6. 
 
-   Example 1-7. Set proxy_recurse parameter
+   Example 1-7. Set nat_flag parameter
 ...
 modparam("cpl_c","nat_flag",4)
 ...
@@ -204,7 +204,7 @@ modparam("cpl_c","nat_flag",4)
 
    Default value of this parameter is 0. 
 
-   Example 1-8. Set proxy_recurse parameter
+   Example 1-8. Set lookup_domain parameter
 ...
 modparam("cpl_c","lookup_domain",1)
 ...

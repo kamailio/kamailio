@@ -200,7 +200,7 @@ modparam("cpl_c","proxy_recurse",2)
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<title>Set <varname>proxy_route</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
 modparam("cpl_c","proxy_route",1)
@@ -221,7 +221,7 @@ modparam("cpl_c","proxy_route",1)
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<title>Set <varname>nat_flag</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
 modparam("cpl_c","nat_flag",4)
@@ -242,7 +242,7 @@ modparam("cpl_c","nat_flag",4)
 				</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<title>Set <varname>lookup_domain</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
 modparam("cpl_c","lookup_domain",1)
