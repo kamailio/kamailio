@@ -128,6 +128,7 @@ eliminates a need for the "HTTP reporting hack" in jdr's architecture.
 Session status is reported in SIP URIs. Cooperating components just 
 need to agree on a scheme for URI usage. That should be easy for SIP 
 servers as URI processing is a primary SIP ability.
+(A similar proposal for such use of URIs was stated in [msuri].)
 
 A simple application of this more distributed approach is REFER-based 
 "click-to-dial" service. In this scenario, a media component gets somehow 
@@ -305,6 +306,7 @@ B) References
 [featureinteraction] http://www.iptel.org/ietf/callprocessing/apps/#draft-rosenberg-sipping-app-interaction-framework
 [festival] http://www.cstr.ed.ac.uk/projects/festival
 [mscml] http://www.iptel.org/ietf/callprocessing/apps/#draft-vandyke-mscml
+[msuri] http://www.iptel.org/info/players/ietf/allsipdir/draft-burger-sipping-msuri-01.txt
 [kpml] http://www.iptel.org/ietf/callprocessing/apps/#draft-burger-sipping-kpml
 [nv] http://www.naturalvoices.att.com/
 [refer] http://www.iptel.org/ietf/callprocessing/refer/#draft-ietf-sip-refer
