@@ -23,13 +23,23 @@ core:
  - new parts:
        UNIX domain socket server implemented
  - changes: 
-       protocol and port can be specified in the alias and listen lines, e.g.:
+    -  core dump-ing is enabled by default, see also disable_core_dump
+    -  protocol and port can be specified in the alias and listen lines, e.g.:
         alias= tcp:foo.bar:* udp:test.bar:5080 foo.com
         listen= eth0   tcp:eth0:5065 udp:127.0.0.1 [3ffe::1]
- - multiple operator support: ==, != for special operations (e.g myself, ip)
+    - multiple operator support: ==, != for special operations (e.g myself, ip)
                               ==, !=, ~= for strings
                               ==, !=, >, <, >=, <= for integers
  - new config variables:
+   disable_core_dump= yes|no 
+       by default core dump limits are set to unlimited or a high enough
+       value, set this config variable o yes to disable core dump-ing
+       (will set core limits to 0)
+   open_files_limit= number
+       if set and bigger than the current open file limit, ser will try
+       to increase its open file limit to this number. Note: ser must be
+       started as root to be able to increase a limit past the hard limit
+       (which, for open files, is 1024 on most systems)
    tcp_connect_timeout= seconds
        time before an ongoing connect will be aborted
    tcp_send_timeout= seconds
