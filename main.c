@@ -1473,11 +1473,11 @@ try_again:
 		goto error;
 	}
 	
-	/* register a diagnostic FIFO command */
+	/* register a diagnostic FIFO command  - moved to fifo server - bogdan
 	if (register_core_fifo()<0) {
 		LOG(L_CRIT, "unable to register core FIFO commands\n");
 		goto error;
-	}
+	}*/
 
 	/*register builtin  modules*/
 	register_builtin_modules();
