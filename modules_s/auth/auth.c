@@ -1,4 +1,4 @@
-/*
+ /*
  * $Id$
  */
 
@@ -28,7 +28,7 @@ static cred_t cred;
 extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
 
 
-static void to_hex(unsigned char* _dst, unsigned char *_src, int _src_len)
+static void to_hex(char* _dst, char *_src, int _src_len)
 {
 	unsigned short i;
 	unsigned char j;
@@ -60,7 +60,7 @@ static inline void calc_nonce(char* _realm, char* _nonce)
 	char bin[16];
 	
 	t = time(NULL) / 60;
-	to_hex(_nonce, (unsigned char*)&t, 8);
+	to_hex(_nonce, (char*)&t, 8);
 	
 	MD5Init(&ctx);
 	MD5Update(&ctx, _nonce, 8);
