@@ -428,7 +428,7 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 	}
 
 	timep = time(NULL);
-	tm = gmtime(&timep);
+	tm = db_localtime ? localtime(&timep) : gmtime(&timep);
 	strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
 
 

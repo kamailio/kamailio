@@ -58,6 +58,7 @@ extern int service_type;
 #ifdef SQL_ACC
 extern int db_flag;
 extern int db_missed_flag;
+extern int db_localtime;
 
 extern db_con_t* db_handle; /* Database connection handle */
 

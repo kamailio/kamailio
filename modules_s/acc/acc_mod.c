@@ -109,8 +109,10 @@ char *db_url=DEFAULT_DB_URL; /* Database url */
  */
 int db_flag = 0;
 int db_missed_flag = 0;
+int db_localtime = 0;
 
 char *db_table_acc="acc"; /* name of database table> */
+
 
 /* names of columns in tables acc/missed calls*/
 char* acc_sip_from_col      = "sip_from";
