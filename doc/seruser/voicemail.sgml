@@ -111,7 +111,7 @@
 	<example>
                 <title>Example ser Config File</title>
 		<programlisting>
-		... to be done ...
+&voicemailcfg;
 		</programlisting>
 	</example>
 </section>

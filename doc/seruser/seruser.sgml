@@ -23,6 +23,7 @@
 <!ENTITY releasenotes SYSTEM "../../NEWS">
 <!ENTITY install SYSTEM "../../INSTALL">
 <!ENTITY voicemail SYSTEM "voicemail.sgml">
+<!ENTITY voicemailcfg SYSTEM "../../modules/vm/etc/ser.cfg">
 
 
 
