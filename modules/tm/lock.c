@@ -89,7 +89,7 @@ int unlock( lock_t s )
 }
 
 
-int change_sem( int semaphore_id , int val )
+int change_semaphore( int semaphore_id , int val )
 {
    struct sembuf pbuf;
 

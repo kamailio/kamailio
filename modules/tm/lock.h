@@ -24,7 +24,7 @@ int lock_cleanup();
 
 int lock( lock_t s );
 
-int change_sem( int semaphore_id , int val );
+int change_semaphore( int semaphore_id , int val );
 
 init_cell_lock( struct cell *cell );
 init_entry_lock( struct entry *entry );
