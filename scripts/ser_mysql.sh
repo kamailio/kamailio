@@ -13,6 +13,7 @@
 # 2003-01-24: Changed realm column of subscriber and pending
 #             tables to domain (janakj)
 # 2003-01-25: Optimized keys of some core tables (janakj)
+# 2003-01-25: USER_ID changed to user everywhere (janakj)
 #
 
 #################################################################
@@ -276,26 +277,26 @@ CREATE TABLE missed_calls (
 
 CREATE TABLE pending (
   phplib_id varchar(32) NOT NULL default '',
-  USER_ID varchar(100) NOT NULL default '',
-  PASSWORD varchar(25) NOT NULL default '',
-  FIRST_NAME varchar(25) NOT NULL default '',
-  LAST_NAME varchar(45) NOT NULL default '',
-  PHONE varchar(15) NOT NULL default '',
-  EMAIL_ADDRESS varchar(50) NOT NULL default '',
-  DATETIME_CREATED datetime NOT NULL default '0000-00-00 00:00:00',
-  DATETIME_MODIFIED datetime NOT NULL default '0000-00-00 00:00:00',
+  user varchar(100) NOT NULL default '',
+  password varchar(25) NOT NULL default '',
+  first_name varchar(25) NOT NULL default '',
+  last_name varchar(45) NOT NULL default '',
+  phone varchar(15) NOT NULL default '',
+  email_address varchar(50) NOT NULL default '',
+  datetime_created datetime NOT NULL default '0000-00-00 00:00:00',
+  datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
   confirmation varchar(64) NOT NULL default '',
   flag char(1) NOT NULL default 'o',
-  SendNotification varchar(50) NOT NULL default '',
-  Greeting varchar(50) NOT NULL default '',
-  HA1 varchar(128) NOT NULL default '',
+  sendnotification varchar(50) NOT NULL default '',
+  greeting varchar(50) NOT NULL default '',
+  ha1 varchar(128) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
-  PRIMARY KEY (USER_ID, domain),
-  KEY USER_ID_2 (USER_ID),
+  PRIMARY KEY (user, domain),
+  KEY user_2 (user),
   UNIQUE KEY phplib_id (phplib_id)
 ) $TABLE_TYPE;
 
@@ -326,8 +327,8 @@ CREATE TABLE phonebook (
 
 
 CREATE TABLE reserved (
-  user_id char(100) NOT NULL default '',
-  UNIQUE KEY user_id (user_id)
+  user char(100) NOT NULL default '',
+  UNIQUE KEY user2(user)
 ) $TABLE_TYPE;
 
 
@@ -340,27 +341,27 @@ CREATE TABLE reserved (
 
 CREATE TABLE subscriber (
   phplib_id varchar(32) NOT NULL default '',
-  USER_ID varchar(100) NOT NULL default '',
-  PASSWORD varchar(25) NOT NULL default '',
-  FIRST_NAME varchar(25) NOT NULL default '',
-  LAST_NAME varchar(45) NOT NULL default '',
-  PHONE varchar(15) NOT NULL default '',
-  EMAIL_ADDRESS varchar(50) NOT NULL default '',
-  DATETIME_CREATED datetime NOT NULL default '0000-00-00 00:00:00',
-  DATETIME_MODIFIED datetime NOT NULL default '0000-00-00 00:00:00',
+  user varchar(100) NOT NULL default '',
+  password varchar(25) NOT NULL default '',
+  first_name varchar(25) NOT NULL default '',
+  last_name varchar(45) NOT NULL default '',
+  phone varchar(15) NOT NULL default '',
+  email_address varchar(50) NOT NULL default '',
+  datetime_created datetime NOT NULL default '0000-00-00 00:00:00',
+  datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
   confirmation varchar(64) NOT NULL default '',
   flag char(1) NOT NULL default 'o',
-  SendNotification varchar(50) NOT NULL default '',
-  Greeting varchar(50) NOT NULL default '',
-  HA1 varchar(128) NOT NULL default '',
+  sendnotification varchar(50) NOT NULL default '',
+  greeting varchar(50) NOT NULL default '',
+  ha1 varchar(128) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
-  PRIMARY KEY (USER_ID, domain),
-  KEY USER_ID_2 (USER_ID)
+  PRIMARY KEY (user, domain),
+  KEY user_2 (user)
 ) $TABLE_TYPE;
 
 # hook-table for all posssible future config values
@@ -413,9 +414,9 @@ CREATE TABLE uri (
 # add an admin user "admin" with password==heslo, 
 # so that one can try it out on quick start
 
-INSERT INTO subscriber (USER_ID, PASSWORD, FIRST_NAME, LAST_NAME, PHONE, 
-	EMAIL_ADDRESS, DATETIME_CREATED, DATETIME_MODIFIED, confirmation, 
-	flag, SendNotification, Greeting, HA1, domain, ha1b, phplib_id, perms ) 
+INSERT INTO subscriber (user, password, first_name, last_name, phone, 
+	email_address, datetime_created, datetime_modified, confirmation, 
+	flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms ) 
 	VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
 	'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00', 
 	'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '', 
