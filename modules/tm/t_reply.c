@@ -466,7 +466,7 @@ static inline int fake_req(struct sip_msg *faked_req,
 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
 		faked_req->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
 		if (!faked_req->new_uri.s) {
-			LOG(L_ERR, "ERROR: run_failure_handlers: no uri/pkg mem\n");
+			LOG(L_ERR, "ERROR: fake_req: no uri/pkg mem\n");
 			goto error00;
 		}
 		faked_req->new_uri.len=shmem_msg->new_uri.len;
@@ -481,7 +481,7 @@ static inline int fake_req(struct sip_msg *faked_req,
 	if (shmem_msg->add_rm) {
 		faked_req->add_rm=dup_lump_list(shmem_msg->add_rm);
 		if (!faked_req->add_rm) { /* non_emty->empty ... failure */
-			LOG(L_ERR, "ERROR: run_failure_handlers: lump dup failed\n");
+			LOG(L_ERR, "ERROR: fake_req: lump dup failed\n");
 			goto error01;
 		}
 	}
@@ -532,7 +532,7 @@ void inline static free_faked_req(struct sip_msg *faked_req, struct cell *t)
 		hdr->parsed>=(void*)t->uas.end_request)) {
 			/* header parsed filed doesn't point inside uas.request memory
 			 * chunck -> it was added by failure funcs.-> free it as pkg */
-			DBG("DBG:run_failure_handlers: removing hdr->parsed %d\n",
+			DBG("DBG:free_faked_req: removing hdr->parsed %d\n",
 					hdr->type);
 			clean_hdr_field(hdr);
 			hdr->parsed = 0;
