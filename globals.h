@@ -68,4 +68,6 @@ extern int process_no;
 
 extern int reply_to_via;
 
+extern int is_main;
+
 #endif

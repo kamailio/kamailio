@@ -258,7 +258,7 @@ extern FILE* yyin;
 extern int yyparse();
 
 
-static int is_main=0; /* flag = is this the  "main" process? */
+int is_main=0; /* flag = is this the  "main" process? */
 
 char* pid_file = 0; /* filename as asked by use */
 
