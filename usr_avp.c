@@ -27,6 +27,7 @@
  * History:
  * ---------
  *  2004-02-06  created (bogdan)
+ *  2004-06-06  updated to the current DB api (andrei)
  */
 
 
@@ -43,6 +44,7 @@
 
 
 static db_con_t  *avp_db_con = 0;
+static db_func_t avp_dbf; /* database call backs */
 struct usr_avp   *users_avps = 0;
 char             *avp_db_url = 0;
 
@@ -59,16 +61,16 @@ int init_avp_child( int rank )
 			return 0;
 		}
 		/* init db connection */
-		if ( bind_dbmod(avp_db_url) < 0 ) {
+		if ( bind_dbmod(avp_db_url, &avp_dbf) < 0 ) {
 			LOG(L_ERR,"ERROR:init_avp_child: unable to find any db module\n");
 			return -1;
 		}
-		if ( (avp_db_con=db_init( avp_db_url ))==0) {
+		if ( (avp_db_con=avp_dbf.init( avp_db_url ))==0) {
 			/* connection failed */
 			LOG(L_ERR,"ERROR:init_avp_child: unable to connect to database\n");
 			return -1;
 		}
-		if (db_use_table( avp_db_con, AVP_DB_TABLE )<0) {
+		if (avp_dbf.use_table( avp_db_con, AVP_DB_TABLE )<0) {
 			/* table selection failed */
 			LOG(L_ERR,"ERROR:init_avp_child: unable to select db table\n");
 			return -1;
@@ -167,7 +169,7 @@ inline static db_res_t *do_db_query(struct sip_uri *uri,char *attr,int use_dom)
 	}
 
 	/* do the DB query */
-	if ( db_query( avp_db_con, keys_cmp, 0/*op*/, vals_cmp, keys_ret,
+	if ( avp_dbf.query( avp_db_con, keys_cmp, 0/*op*/, vals_cmp, keys_ret,
 	nr_keys_cmp, 3, 0/*order*/, &res) < 0)
 		return 0;
 
@@ -291,7 +293,7 @@ int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 		DBG("DEBUG:load_avp: no avp found for %.*s@%.*s <%s>\n",
 			uri.user.len,uri.user.s,(use_dom!=0)*uri.host.len,uri.host.s,
 			attr?attr:"NULL");
-		db_free_query( avp_db_con, res);
+		avp_dbf.free_query( avp_db_con, res);
 		/*no avp found*/
 		return 1;
 	}
@@ -334,7 +336,7 @@ int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 		users_avps = avp;
 	}
 
-	db_free_query( avp_db_con, res);
+	avp_dbf.free_query( avp_db_con, res);
 	return 0;
 error:
 	return -1;

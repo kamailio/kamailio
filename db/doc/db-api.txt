@@ -1,4 +1,8 @@
-$Id$
+# $Id$
+# 
+# History:
+# --------
+#  2004-06-06  updated (bind_dbmod and obsoleted db_* macros)  (andrei)
 
 Generic Database Interface
 --------------------------
@@ -332,19 +336,28 @@ prefix). This function MUST be called __FIRST__ !
 
 2.1.2 Prototype
 
-   int bind_dbmod(void);
+   int bind_dbmod(char* db_url, db_func_t* dbf);
 
 2.1.3 Parameters
 
-The function takes no parameters.
+The function takes two parameters, the first parameter must contain a database 
+connection URL or a database module name. The db_url is of the form 
+"mysql://username:password@host:port/database" or
+"mysql" (database module name).
+In the case of a database connection URL, this function looks only at the first
+token (the database protocol). In the example above that would be "mysql":
+The second parameter will be filled by this function with the corresponding
+ database module callbacks (see the db_func_t structure definition in
+  db.h and the callbacks definitions below).
+
 
 2.1.4 Return Value
 
-The function returns 0 if it was able to find addresses of all other 
-functions, otherwise value < 0 is returned.
+The function returns 0 if it was able to find the addresses of all the 
+corresponding module database functions and a value < 0 otherwise.
 
 
-2.2 Function db_init
+2.2 Callback dbf.init
 
 2.2.1 Description
 
@@ -354,7 +367,7 @@ function is called.
 
 2.2.2 Prototype
 
-   db_con_t* db_init(const char* _sql_url);
+   db_con_t* (*db_init_f)(const char* _sql_url);
 
 2.2.3 Parameters
 
@@ -378,7 +391,7 @@ The function returns pointer to db_con_t* representing the connection if it was
 successful, otherwise 0 is returned.
 
 
-2.3 Function db_close
+2.3 Callback dbf.close
 
 2.3.1 Description
 
@@ -388,7 +401,7 @@ allocated memory. The function db_close must be the very last function called.
 
 2.3.2 Prototype
 
-   void db_close(db_con_t* _h);
+   void (*db_close_f)(db_con_t* _h);
 
 2.3.3 Parameters
 
@@ -400,7 +413,7 @@ structure representing database connection that should be closed.
 Function doesn't return anything.
 
 
-2.4 Function db_query
+2.4 Callback dbf.query
 
 2.4.1 Description
 
@@ -408,7 +421,7 @@ This function implements SELECT SQL directive.
 
 2.4.2 Prototype
 
-   int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
+   int (*db_query_f)(db_con_t* _h, db_key_t* _k, db_op_t* _op,
                 db_val_t* _v, db_key_t* _c, 
 	        int _n, int _nc, db_key_t _o, db_res_t** _r);
 
@@ -443,7 +456,7 @@ You must call db_free_query _BEFORE_ you can call db_query again !
 The function returns 0 if everything is OK, otherwise value < 0 is returned.
 
 
-2.5 Function db_free_query
+2.5 Callback dbf.free_query
 
 2.5.1 Description
 
@@ -454,7 +467,7 @@ again !
 
 2.5.2 Prototype
 
-   int db_free_query(db_con_t* _h, db_res_t* _r);
+   int (*db_free_query_f)(db_con_t* _h, db_res_t* _r);
 
 2.5.3 Parameters
 
@@ -468,7 +481,7 @@ The function returns 0 if everything is OK, otherwise the function returns
 value < 0.
 
 
-2.6 Function db_insert
+2.6 Callback dbf.insert
 
 2.6.1 Description
 
@@ -477,7 +490,7 @@ rows in a table using this function.
 
 2.6.2 Prototype
 
-   int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+   int (*db_insert_f)(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 2.6.3 Parameters
 
@@ -493,7 +506,7 @@ The function returns 0 if everything is OK, otherwise the function returns
 value < 0.
 
 
-2.7 Function db_delete
+2.7 Callback dbf.delete
 
 2.7.1 Description
 
@@ -502,7 +515,8 @@ more rows from a table.
 
 2.7.2 Prototype
 
-   int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+   int (*db_delete_f)(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
+                       int _n);
 
 2.7.3 Parameters
 
@@ -524,7 +538,7 @@ The function returns 0 if everything is OK, otherwise the function returns
 value < 0.
 
 
-2.8 Function db_update
+2.8 Callback dbf.update
 
 2.8.1 Description
 
@@ -533,7 +547,7 @@ or more rows in a table using this function.
 
 2.8.2 Prototype
 
-   int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
+   int (*db_update_f)(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	         db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 2.8.3 Parameters
@@ -554,7 +568,7 @@ The function returns 0 if everything is OK, otherwise the function returns
 value < 0.
 
 
-2.9 Function db_use_table
+2.9 Callback dbf.use_table
 
 2.9.1 Description
 
@@ -564,7 +578,7 @@ that table.
 
 2.9.2 Prototype
 
-   int db_use_table_f(db_con_t* _h, const char* _t);
+   int (*db_use_table_f)(db_con_t* _h, const char* _t);
 
 2.9.3 Parameters
 

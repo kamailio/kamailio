@@ -62,6 +62,7 @@
  *  2003-10-30  DB interface exported via FIFO (bogdan)
  *  2004-03-09  open_fifo_server split into init_ and start_ (andrei)
  *  2004-04-29  added chown(sock_user, sock_group)  (andrei)
+ *  2004-06-06  updated to the new DB interface  & init_db_fifo (andrei)
  */
 
 
@@ -97,6 +98,8 @@ char *fifo=0; /* FIFO name */
 char* fifo_dir=DEFAULT_FIFO_DIR; /* dir where reply fifos are allowed */
 char *fifo_db_url = 0;
 pid_t fifo_pid;
+
+
 /* file descriptors */
 static int fifo_read=0;
 static int fifo_write=0;
@@ -890,20 +893,8 @@ int register_core_fifo()
 	if (fifo_db_url==0) {
 		LOG(L_WARN,"WARNING: no fifo_db_url given - "
 			"fifo DB commands disabled!\n");
-	} else if ( bind_dbmod(fifo_db_url)==0 ) {
-		if (register_fifo_cmd(db_fifo_cmd, FIFO_DB, 0)<0) {
-			LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_DB);
-			return -1;
-		} else {
-			if ( (fifo_db_con=db_init( fifo_db_url ))==0) {
-				/* connection failed */
-			LOG(L_ERR,"ERROR: unable to connect to database -> "
-				"fifo DB commands disabled!\n");
-			}
-		}
-	} else {
-		LOG(L_WARN,"WARNING: unable to find any db module - "
-			"fifo DB commands disabled!\n");
+	} else if (init_db_fifo(fifo_db_url)<0){
+		return -1;
 	}
 	return 1;
 }

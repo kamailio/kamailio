@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /*
+  * History:
+  * --------
+  *  2004-06-06  bind_dbmod takes dbf as parameter (andrei)
+  */
 
 
 #include "db.h"
@@ -33,25 +38,36 @@
 #include "../str.h"
 #include "../ut.h"
 
-db_func_t dbf;
 
 
-int bind_dbmod(char* mod)
+/* fills mydbf with the corresponding db module callbacks
+ * returns 0 on success, -1 on error
+ * on error mydbf will contain only 0s */
+int bind_dbmod(char* mod, db_func_t* mydbf)
 {
 	char* tmp, *p;
 	int len;
+	db_func_t dbf;
 
 	if (!mod) {
-		LOG(L_ERR, "bind_dbmod(): Invalid database module name\n");
+		LOG(L_CRIT, "BUG: bind_dbmod(): null database module name\n");
 		return -1;
 	}
+	if (mydbf==0) {
+		LOG(L_CRIT, "BUG: bind_dbmod(): null dbf parameter\n");
+		return -1;
+	}
+	/* for safety we initialize mydbf with 0 (this will cause
+	 *  a segfault immediately if someone tries to call a function
+	 *  from it without checking the return code from bind_dbmod -- andrei */
+	memset((void*)mydbf, 0, sizeof(db_func_t));
 
 	p = strchr(mod, ':');
 	if (p) {
 		len = p - mod;
 		tmp = (char*)pkg_malloc(len + 1);
 		if (!tmp) {
-			LOG(L_ERR, "bind_dbmod(): No memory left\n");
+			LOG(L_ERR, "ERROR: bind_dbmod(): No memory left\n");
 			return -1;
 		}
 		memcpy(tmp, mod, len);
@@ -60,33 +76,35 @@ int bind_dbmod(char* mod)
 		tmp = mod;
 	}
 
-	db_use_table = (db_use_table_f)find_mod_export(tmp, "db_use_table", 2, 0);
-	if (db_use_table == 0) goto err;
+	dbf.use_table = (db_use_table_f)find_mod_export(tmp, "db_use_table", 2, 0);
+	if (dbf.use_table == 0) goto err;
 
-	db_init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
-	if (db_init == 0) goto err;
+	dbf.init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
+	if (dbf.init == 0) goto err;
 
-	db_close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
-	if (db_close == 0) goto err;
+	dbf.close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
+	if (dbf.close == 0) goto err;
 
-	db_query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
-	if (db_query == 0) goto err;
+	dbf.query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
+	if (dbf.query == 0) goto err;
 
-	db_raw_query = (db_raw_query_f)find_mod_export(tmp, "db_raw_query", 2, 0);
-	if (db_raw_query == 0) goto err;
+	dbf.raw_query = (db_raw_query_f)find_mod_export(tmp, "db_raw_query", 2, 0);
+	if (dbf.raw_query == 0) goto err;
 
-	db_free_query = (db_free_query_f)find_mod_export(tmp, "db_free_query", 2, 0);
-	if (db_free_query == 0) goto err;
+	dbf.free_query = (db_free_query_f)find_mod_export(tmp, "db_free_query", 2,
+														0);
+	if (dbf.free_query == 0) goto err;
 
-	db_insert = (db_insert_f)find_mod_export(tmp, "db_insert", 2, 0);
-	if (db_insert == 0) goto err;
+	dbf.insert = (db_insert_f)find_mod_export(tmp, "db_insert", 2, 0);
+	if (dbf.insert == 0) goto err;
 
-	db_delete = (db_delete_f)find_mod_export(tmp, "db_delete", 2, 0);
-	if (db_delete == 0) goto err;
+	dbf.delete = (db_delete_f)find_mod_export(tmp, "db_delete", 2, 0);
+	if (dbf.delete == 0) goto err;
 
-	db_update = (db_update_f)find_mod_export(tmp, "db_update", 2, 0);
-	if (db_update == 0) goto err;
+	dbf.update = (db_update_f)find_mod_export(tmp, "db_update", 2, 0);
+	if (dbf.update == 0) goto err;
 
+	*mydbf=dbf; /* copy */
 	return 0;
 
  err:
@@ -99,19 +117,19 @@ int bind_dbmod(char* mod)
  * Get version of a table
  * If there is no row for the given table, return version 0
  */
-int table_version(db_con_t* connection, const str* table)
+int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 {
 	db_key_t key[1], col[1];
 	db_val_t val[1];
 	db_res_t* res;
 	int ret;
 
-	if (!connection || !table) {
-		LOG(L_ERR, "table_version(): Invalid parameter value\n");
+	if (!dbf||!connection || !table) {
+		LOG(L_CRIT, "BUG: table_version(): Invalid parameter value\n");
 		return -1;
 	}
 
-	if (db_use_table(connection, VERSION_TABLE) < 0) {
+	if (dbf->use_table(connection, VERSION_TABLE) < 0) {
 		LOG(L_ERR, "table_version(): Error while changing table\n");
 		return -1;
 	}
@@ -124,7 +142,7 @@ int table_version(db_con_t* connection, const str* table)
 	
 	col[0] = VERSION_COLUMN;
 	
-	if (db_query(connection, key, 0, val, col, 1, 1, 0, &res) < 0) {
+	if (dbf->query(connection, key, 0, val, col, 1, 1, 0, &res) < 0) {
 		LOG(L_ERR, "table_version(): Error in db_query\n");
 		return -1;
 	}
@@ -136,11 +154,11 @@ int table_version(db_con_t* connection, const str* table)
 
 	if (RES_ROW_N(res) != 1) {
 		LOG(L_ERR, "table_version(): Invalid number of rows received: %d, %.*s\n", RES_ROW_N(res), table->len, ZSW(table->s));
-		db_free_query(connection, res);
+		dbf->free_query(connection, res);
 		return -1;
 	}
 
 	ret = VAL_INT(ROW_VALUES(RES_ROWS(res)));
-	db_free_query(connection, res);
+	dbf->free_query(connection, res);
 	return ret;
 }

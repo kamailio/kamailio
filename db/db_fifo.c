@@ -27,6 +27,7 @@
  * History:
  * --------
  *  2003-10-21  file created (bogdan)
+ *  2004-06-06  init_db_fifo added, DB api updated (andrei)
  */
 
 
@@ -43,6 +44,7 @@
 #include "../dprint.h"
 #include "../str.h"
 #include "db.h"
+#include "db_fifo.h"
 
 #define MAX_SIZE_LINE 512
 #define MAX_ARRAY     32
@@ -119,7 +121,8 @@
 
 static char   buf[MAX_SIZE_LINE];
 static FILE*  rpl;
-db_con_t*     fifo_db_con;
+static db_con_t*     fifo_db_con=0;
+static db_func_t fifo_dbf;
 
 
 
@@ -558,6 +561,32 @@ static inline void print_res(db_res_t* res, FILE *rpl)
 
 
 
+/* binds the database module, initializes the database and 
+ * registers the db fifo cmd
+ * returns 0 on success, -1 on error */
+int init_db_fifo(char* fifo_db_url)
+{
+	if ( bind_dbmod(fifo_db_url, &fifo_dbf)==0 ) {
+		if ( (fifo_db_con=fifo_dbf.init( fifo_db_url ))==0) {
+			/* connection failed */
+			LOG(L_ERR,"ERROR: init_db_fifo: unable to connect to database -> "
+				"fifo DB commands disabled!\n");
+		}else if (register_fifo_cmd(db_fifo_cmd, FIFO_DB, 0)<0) {
+			LOG(L_ERR, "ERROR: init_db_fifo: unable to register '%s'"
+					" FIFO cmd\n", FIFO_DB);
+		} else {
+			return 0; /* success */
+		}
+	}else{
+		LOG(L_WARN, "WARNING: init_db_fifo: unable to find any db module - "
+			"fifo DB commands disabled!\n");
+	}
+	return -1; /* error */
+}
+
+
+
+
 
 int db_fifo( FILE *fifo, char *response_file )
 {
@@ -577,6 +606,8 @@ int db_fifo( FILE *fifo, char *response_file )
 	ret = -1; /* default is error */
 	rpl =  0;
 
+	if (fifo_db_con==0) /* disabled due to database init/binding errors */
+		goto error;
 	/* first check the response file */
 	rpl = open_reply_pipe( response_file );
 	if (rpl==0)
@@ -649,9 +680,9 @@ int db_fifo( FILE *fifo, char *response_file )
 		trim_spaces(line);
 		/* run the command */
 		if (db_cmd==RAWQUERY_CMD)
-			n = db_raw_query( fifo_db_con, line.s, 0);
+			n = fifo_dbf.raw_query( fifo_db_con, line.s, 0);
 		else
-			n = db_raw_query( fifo_db_con, line.s, &select_res);
+			n = fifo_dbf.raw_query( fifo_db_con, line.s, &select_res);
 		if (n!=0) {
 			double_log("Internal Server error - DB query failed");
 			goto error;
@@ -661,7 +692,7 @@ int db_fifo( FILE *fifo, char *response_file )
 			/* get all response and write them into reply fifo */
 			print_res( select_res, rpl);
 			/* free the query response */
-			db_free_query( fifo_db_con, select_res);
+			fifo_dbf.free_query( fifo_db_con, select_res);
 		}
 		/* done with success */
 		goto done;
@@ -677,7 +708,7 @@ int db_fifo( FILE *fifo, char *response_file )
 
 	/* select the correct table */
 	line.s[line.len] = 0; /* make it null terminated */
-	db_use_table( fifo_db_con, line.s);
+	fifo_dbf.use_table( fifo_db_con, line.s);
 
 	/*read 'where' avps */
 	if (get_avps( fifo , keys2, ops2, vals2, &nr2, MAX_ARRAY)!=0 )
@@ -686,8 +717,8 @@ int db_fifo( FILE *fifo, char *response_file )
 	switch (db_cmd) {
 		case SELECT_CMD:
 			/* push the query */
-			n = db_query( fifo_db_con, nr2?keys2:0, nr2?ops2:0, nr2?vals2:0,
-				nr1?keys1:0, nr2, nr1, 0, &select_res );
+			n = fifo_dbf.query( fifo_db_con, nr2?keys2:0, nr2?ops2:0,
+						nr2?vals2:0, nr1?keys1:0, nr2, nr1, 0, &select_res );
 			if (n!=0) {
 				double_log("Internal Server error - DB query failed");
 				goto error2;
@@ -695,7 +726,7 @@ int db_fifo( FILE *fifo, char *response_file )
 			/* get all response and write them into reply fifo */
 			print_res( select_res, rpl);
 			/* free the query response */
-			db_free_query( fifo_db_con, select_res);
+			fifo_dbf.free_query( fifo_db_con, select_res);
 			break;
 		case UPDATE_CMD:
 			if (nr1==0) {
@@ -711,8 +742,8 @@ int db_fifo( FILE *fifo, char *response_file )
 				}
 			}/*end for*/
 			/* push the query */
-			n = db_update( fifo_db_con, nr2?keys2:0, nr2?ops2:0, nr2?vals2:0,
-				keys1, vals1, nr2, nr1 );
+			n = fifo_dbf.update( fifo_db_con, nr2?keys2:0, nr2?ops2:0,
+					nr2?vals2:0, keys1, vals1, nr2, nr1 );
 			if (n!=0) {
 				double_log("Internal Server error - DB query failed");
 				goto error2;
@@ -720,8 +751,8 @@ int db_fifo( FILE *fifo, char *response_file )
 			break;
 		case DELETE_CMD:
 			/* push the query */
-			n = db_delete( fifo_db_con, nr2?keys2:0, nr2?ops2:0, nr2?vals2:0,
-				nr2);
+			n = fifo_dbf.delete( fifo_db_con, nr2?keys2:0, nr2?ops2:0,
+					nr2?vals2:0, nr2);
 			if (n!=0) {
 				double_log("Internal Server error - DB query failed");
 				goto error2;
@@ -741,7 +772,7 @@ int db_fifo( FILE *fifo, char *response_file )
 				}
 			}/*end for*/
 			/* push the query */
-			n = db_insert( fifo_db_con, nr2?keys2:0, nr2?vals2:0, nr2);
+			n = fifo_dbf.insert( fifo_db_con, nr2?keys2:0, nr2?vals2:0, nr2);
 			if (n!=0) {
 				double_log("Internal Server error - DB query failed");
 				goto error2;

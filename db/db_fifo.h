@@ -35,8 +35,7 @@
 #define db_fifo_cmd  db_fifo
 #define FIFO_DB      "DB"
 
-extern db_con_t*   fifo_db_con;
-
+int init_db_fifo(char* db_url);
 int db_fifo( FILE *fifo_stream, char *response_file );
 
 

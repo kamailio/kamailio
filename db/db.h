@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2004-06-06  removed db_* macros and global dbf (andrei)
+ */
 
 
 #ifndef DB_H
@@ -141,27 +146,13 @@ typedef struct db_func {
 } db_func_t;
 
 
+
 /*
  * Bind database module functions
  * returns TRUE if everything went OK
  * FALSE otherwise
  */
-
-extern db_func_t dbf;
-
-
-#define db_use_table  (dbf.use_table)
-#define db_init       (dbf.init)
-#define db_close      (dbf.close)
-#define db_query      (dbf.query)
-#define db_raw_query  (dbf.raw_query)
-#define db_free_query (dbf.free_query)
-#define db_insert     (dbf.insert)
-#define db_delete     (dbf.delete)
-#define db_update     (dbf.update)
-
-
-int bind_dbmod(char* mod);
+int bind_dbmod(char* mod, db_func_t* dbf);
 
 
 /*
@@ -169,7 +160,7 @@ int bind_dbmod(char* mod);
  * no row for the table then the function returns
  * version 0. -1 is returned on error.
  */
-int table_version(db_con_t* con, const str* table);
+int table_version(db_func_t* dbf, db_con_t* con, const str* table);
 
 
 #endif /* DB_H */
