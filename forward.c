@@ -196,23 +196,32 @@ int forward_reply(char * orig, char* buf,
 	/* we must remove the first via */
 	via_len=msg->via1.size;
 	size=msg->via1.hdr-buf;
+	printf("via len: %d, initial size: %d\n", via_len, size);
 	if (msg->via1.next){
 		/* keep hdr =substract hdr size +1 (hdr':') and add
 		 */
 		via_len-=strlen(msg->via1.hdr)+1;
 		size+=strlen(msg->via1.hdr)+1;
+	    printf(" adjusted via len: %d, initial size: %d\n",
+				via_len, size);
 	}
-	new_len=len-size;
-	new_buf=(char*)malloc(new_len);
+	new_len=len-via_len;
+	
+	printf(" old size: %d, new size: %d\n", len, new_len);
+	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging (\0 to print it )*/
 	if (new_buf==0){
 		DPrint("ERROR: forward_reply: out of memory\n");
 		goto error;
 	}
+	new_buf[new_len]=0; /* debug: print the message */
 	memcpy(new_buf, orig, size);
 	offset=size;
 	s_offset=size+via_len;
 	memcpy(new_buf+offset,orig+s_offset, len-s_offset);
 	 /* send it! */
+	printf(" copied size: orig:%d, new: %d, rest: %d\n",
+			s_offset, offset, 
+			len-s_offset );
 	printf("Sending: to %s:%d, \n%s.\n",
 			msg->via2.host, 
 			(unsigned short)msg->via2.port,
