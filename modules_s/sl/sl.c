@@ -133,7 +133,7 @@ static void mod_destroy()
 
 static int fixup_sl_send_reply(void** param, int param_no)
 {
-	unsigned int code;
+	unsigned long code;
 	int err;
 
 	if (param_no==1){
@@ -158,7 +158,7 @@ static int fixup_sl_send_reply(void** param, int param_no)
 
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2)
 {
-	return sl_send_reply(msg,(unsigned int)str,str2);
+	return sl_send_reply(msg,(unsigned int)(unsigned long)str,str2);
 }
 
 

@@ -90,7 +90,7 @@ static int mod_init(void)
 
 static int fixup_maxfwd_header(void** param, int param_no)
 {
-	unsigned int code;
+	unsigned long code;
 	int err;
 
 	if (param_no==1){
@@ -98,7 +98,7 @@ static int fixup_maxfwd_header(void** param, int param_no)
 		if (err==0){
 			if (code>255){
 				LOG(L_ERR, "MAXFWD module:fixup_maxfwd_header: "
-					"number to big <%d> (max=255)\n",code);
+					"number to big <%ld> (max=255)\n",code);
 				return E_UNSPEC;
 			}
 			pkg_free(*param);
@@ -125,7 +125,7 @@ static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
 	switch (val)
 	{
 		case -1:
-			add_maxfwd_header( msg, (unsigned int)str1 );
+			add_maxfwd_header( msg, (unsigned int)(unsigned long)str1 );
 			break;
 		case -2:
 			break;

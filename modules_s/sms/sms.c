@@ -123,7 +123,7 @@ struct module_exports exports= {
 
 static int fixup_sms_send_msg_to_net(void** param, int param_no)
 {
-	int net_nr,i;
+	long net_nr,i;
 
 	if (param_no==1) {
 		for(net_nr=-1,i=0;i<nr_of_networks&&net_nr==-1;i++)
@@ -186,7 +186,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 				mdm->mode = MODE_NEW;
 			} else {
 				LOG(L_ERR,"ERROR: invalid value \"%.*s\" for param [m]\n",
-					arg_end-arg-2,arg+2);
+					(int)(arg_end-arg-2),arg+2);
 				goto error;
 			}
 			break;
@@ -442,7 +442,7 @@ int parse_config_lines()
 				mdm_nr = i;
 		if (mdm_nr==-1) {
 			LOG(L_ERR,"ERROR:sms_parse_conf_line: unknown modem %.*s \n,",
-				p-start, start);
+				(int)(p-start), start);
 			goto error;
 		}
 		/*get associated networks list*/
@@ -466,7 +466,8 @@ int parse_config_lines()
 					net_nr = i;
 			if (net_nr==-1) {
 				LOG(L_ERR,"ERROR:SMS parse modem config - associated"
-					" net <%.*s> not found in net list\n",p-start,start);
+					" net <%.*s> not found in net list\n",
+					(int)(p-start), start);
 				goto error;
 			}
 			DBG("DEBUG:sms startup: linking net \"%s\" to modem \"%s\" on "
@@ -506,7 +507,8 @@ int parse_config_lines()
 parse_error:
 	LOG(L_ERR,"ERROR: SMS %s config: parse error before  chr %d [%.*s]\n",
 		(step==1)?"modems":(step==2?"netwoks":"links"),
-		p - ((step==1)?modems_config:(step==2?networks_config:links_config)),
+		(int)(p - ((step==1)?modems_config:
+				   (step==2?networks_config:links_config))),
 		(*p==0)?4:1,(*p==0)?"NULL":p );
 error:
 	return -1;
@@ -669,6 +671,6 @@ static int w_sms_send_msg(struct sip_msg *msg, char *foo, char *bar)
 
 static int w_sms_send_msg_to_net(struct sip_msg *msg, char *net_nr, char *foo)
 {
-	return push_on_network(msg,(unsigned int)net_nr);
+	return push_on_network(msg,(unsigned int)(unsigned long)net_nr);
 }
 

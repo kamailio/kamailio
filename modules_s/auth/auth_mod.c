@@ -206,7 +206,7 @@ static void destroy(void)
 
 static int challenge_fixup(void** param, int param_no)
 {
-	unsigned int qop;
+	unsigned long qop;
 	int err;
 	
 	if (param_no == 1) {

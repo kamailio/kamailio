@@ -82,7 +82,8 @@ int get_realm(struct sip_msg* _m, int _hftype, struct sip_uri* _u)
  * Create a response with given code and reason phrase
  * Optionaly add new headers specified in _hdr
  */
-int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len)
+int send_resp(struct sip_msg* _m, int _code, char* _reason,
+					char* _hdr, int _hdr_len)
 {
 	struct lump_rpl* ptr;
 	
@@ -92,5 +93,5 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
 		add_lump_rpl(_m, ptr);
 	}
 	
-	return sl_reply(_m, (char*)_code, _reason);
+	return sl_reply(_m, (char*)(long)_code, _reason);
 }

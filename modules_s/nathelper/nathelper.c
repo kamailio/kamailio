@@ -248,7 +248,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 inline static int
 fixup_str2int( void** param, int param_no)
 {
-	unsigned int go_to;
+	unsigned long go_to;
 	int err;
 
 	if (param_no == 1) {
@@ -285,7 +285,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	char *buf, *cp;
 	struct lump* anchor;
 
-	level = (int)str1;
+	level = (int)(long)str1;
 	added_len = 0;
 
 	if (extract_body(msg, &body) == -1 || body.len == 0) {

@@ -148,7 +148,7 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 				ptr = buf + buf_len;
 			}else{
 				/* process the CDS */
-				DBG("DEBUG:put_command:CDS=[%.*s]\n",ptr-pos,pos);
+				DBG("DEBUG:put_command:CDS=[%.*s]\n",(int)(ptr-pos),pos);
 				cds_report_func(mdm,pos,ptr-pos);
 			}
 		}

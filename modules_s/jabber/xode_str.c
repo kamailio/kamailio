@@ -95,7 +95,7 @@ void xode_spooler(xode_spool s, ...)
     while(1)
     {
         arg = va_arg(ap,char *);
-        if((int)arg == (int)s || arg == NULL)
+        if((void*)arg == (void*)s || arg == NULL)
             break;
         else
             xode_spool_add(s, arg);
@@ -144,7 +144,7 @@ char *xode_spool_str(xode_pool p, ...)
     while(1)
     {
         arg = va_arg(ap,char *);
-        if((int)arg == (int)p)
+        if((void*)arg == (void*)p)
             break;
         else
             xode_spool_add(s, arg);

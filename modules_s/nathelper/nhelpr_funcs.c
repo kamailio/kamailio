@@ -160,7 +160,7 @@ int check_content_type(struct sip_msg *msg)
 
 	if (*p==';'||*p==' '||*p=='\t'||*p=='\n'||*p=='\r'||*p==0) {
 		DBG("DEBUG:check_content_type: type <%.*s> found valid\n",
-			p-str_type.s,str_type.s);
+			(int)(p-str_type.s), str_type.s);
 		return 1;
 	} else {
 		LOG(L_ERR,"ERROR:check_content_type: bad end for type!\n");

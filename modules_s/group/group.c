@@ -106,7 +106,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	db_key_t col[1];
 	db_res_t* res;
 	str uri;
-	int hf_type;
+	long hf_type;
 	struct sip_uri puri;
 	struct hdr_field* h;
 	struct auth_body* c = 0; /* Makes gcc happy */
@@ -116,7 +116,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	keys[2] = domain_column;
 	col[0] = group_column;
 	
-	hf_type = (int)_hf;
+	hf_type = (long)_hf;
 
 	switch(hf_type) {
 	case 1: /* Request-URI */
