@@ -67,7 +67,7 @@ int diameter_is_user_in(struct sip_msg* _msg, char* group, char* _s2);
  * Module parameter variables
  */
 char* diameter_client_host = "localhost";
-char* diameter_client_port = "3000";
+int diameter_client_port = 3000;
 int use_domain = 0;
 
 rd_buf_t *rb;
@@ -94,7 +94,7 @@ static int str_fixup(void** param, int param_no); /* char* -> str* */
  */
 static param_export_t params[] = {
 	{"diameter_client_host", STR_PARAM, &diameter_client_host},
-	{"diameter_client_port", STR_PARAM, &diameter_client_port},
+	{"diameter_client_port", INT_PARAM, &diameter_client_port},
 	{"use_domain", INT_PARAM, &use_domain},
 	{0, 0, 0}
 };

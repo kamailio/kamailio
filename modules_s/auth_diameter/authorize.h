@@ -57,10 +57,6 @@ int diameter_authorize(struct hdr_field* cred, str* p_method,
 
 int srv_response(struct sip_msg* msg, rd_buf_t* rb, int hftype);
 
-int init_mytcp(char* host, char* port);
-
-int tcp_send_rcv(int sockfd, char* buf, int len, rd_buf_t* resp);
-
 int send_resp(struct sip_msg* _m, int _code, char* _reason,
 					char* _hdr, int _hdr_len);
 

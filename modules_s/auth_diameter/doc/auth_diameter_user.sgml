@@ -105,7 +105,7 @@ modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 	    </example>
 	</section>
 	<section>
-	    <title><varname>diameter_client_port</varname> (string)</title>
+	    <title><varname>diameter_client_port</varname> (int)</title>
 	    <para>
 		Port number where the DIAMETER Client is listening.
 	    </para>
@@ -118,7 +118,7 @@ modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 		<title>Set <varname>diameter_client_port</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("auth_diameter", "diameter_client_port", "3000")
+modparam("auth_diameter", "diameter_client_port", 3000)
 ...
 </programlisting>
 	    </example>

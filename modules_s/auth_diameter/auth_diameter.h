@@ -39,7 +39,7 @@
 #define M_NAME "auth_diameter"
 
 extern char *diameter_client_host;
-extern char* diameter_client_port;
+extern int diameter_client_port;
 
 /* Stateless reply function pointer */
 extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);

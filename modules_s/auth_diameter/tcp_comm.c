@@ -58,13 +58,11 @@
 #define MAX_TRIES	10
 
 /* it initializes the TCP connection */ 
-int init_mytcp(char* host, char* port)
+int init_mytcp(char* host, int port)
 {
-	int portno, sockfd;
+	int sockfd;
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
-
-	portno = atoi(port);
     
 	sockfd = socket(PF_INET, SOCK_STREAM, 0);
 	
@@ -81,11 +79,11 @@ int init_mytcp(char* host, char* port)
 		return -1;
     }
 
-	memset((char *) &serv_addr, 0, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = PF_INET;
     memcpy((char *)&serv_addr.sin_addr.s_addr, (char *)server->h_addr,
 					server->h_length);
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons(port);
 	
     if (connect(sockfd, (const struct sockaddr *)&serv_addr, 
 							sizeof(serv_addr)) < 0) 

@@ -51,7 +51,7 @@ void reset_read_buffer(rd_buf_t *rb);
 int do_read( int socket, rd_buf_t *p);
 
 /* it initializes the TCP connection */ 
-int init_mytcp(char* host, char* port);
+int init_mytcp(char* host, int port);
 
 /* send a message over an already opened TCP connection */
 int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* resp,
