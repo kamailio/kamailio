@@ -10,11 +10,11 @@
 /* put a new cell into a list nr. list_id within a hash_table;
   * set initial timeout
   */
-void add_to_tail_of_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out )
+void add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out )
 {
    struct timer* timer_list = &(hash_table->timers[ list_id ]);
 
-   tl->time_out = time_out + hash_table->time;
+   tl->time_out = time_out;
    tl->next_tl= 0;
    DBG("DEBUG: add_to_tail_of_timer[%d]: %d, %p\n",list_id,tl->time_out,tl);
 
@@ -39,12 +39,12 @@ void add_to_tail_of_timer_list_nocheck( struct s_table* hash_table , struct time
 
 /*
   */
-void insert_into_timer_list_nocheck( struct s_table* hash_table , struct timer_link* new_tl, int list_id , unsigned int time_out )
+void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new_tl, int list_id , unsigned int time_out )
 {
    struct timer          *timer_list = &(hash_table->timers[ list_id ]);
    struct timer_link  *tl;
 
-   new_tl->time_out = time_out + hash_table->time;
+   new_tl->time_out = time_out ;
    DBG("DEBUG: insert_into_timer[%d]: %d, %p\n",list_id,new_tl->time_out,new_tl);
 
    /* if we have an empty list*/
@@ -89,7 +89,7 @@ void insert_into_timer_list_nocheck( struct s_table* hash_table , struct timer_l
 
 /* remove a cell from a list nr. list_id within a hash_table;
 */
-void remove_from_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl , int list_id)
+void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl , int list_id)
 {
    struct timer* timers=&(hash_table->timers[ list_id ]);
    DBG("DEBUG: remove_from_timer[%d]: %d, %p \n",list_id,tl->time_out,tl);
@@ -142,30 +142,20 @@ struct timer_link  *remove_from_timer_list_from_head( struct s_table* hash_table
 
 
 
-void * timer_routine(void * attr)
+void timer_routine(unsigned int ticks , void * attr)
 {
    struct s_table      *hash_table = (struct s_table *)attr;
    struct timer*         timers= hash_table->timers;
-   struct timeval       a_sec;
    struct timer_link* tl;
-   int unsigned*         time =  &(hash_table->time);
    int                           id;
 
+   DBG("%d\n", ticks);
 
-   while (1)
-   {
-      a_sec.tv_sec   = 1;
-      a_sec.tv_usec = 0;
-      select( 0 , 0 , 0 ,0 , &a_sec );
-      (*time)++;
-      DBG("%d\n", *time);
-
-      for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
-         while ( timers[ id ].first_tl && timers[ id ].first_tl->time_out <= *time )
+   for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
+         while ( timers[ id ].first_tl && timers[ id ].first_tl->time_out <= ticks )
          {
             tl = remove_from_timer_list_from_head( hash_table, id );
             timers[id].timeout_handler( tl->payload );
          }
-   } /* while (1) */
 }
 

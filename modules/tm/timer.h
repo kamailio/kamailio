@@ -37,28 +37,6 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
              (tl->next_tl || tl->prev_tl || (!tl->next_tl && !tl->prev_tl && tl==hash_table->timers[id].first_tl) )
 
 
-#define insert_into_timer_list(hash_table,new_tl,list_id,time_out) \
-             {\
-                if ( is_in_timer_list(new_tl,list_id)  )\
-                   remove_from_timer_list_nocheck( hash_table , new_tl , list_id);\
-                insert_into_timer_list_nocheck(hash_table,new_tl,list_id,time_out);\
-             }
-
-#define add_to_tail_of_timer_list(hash_table,new_tl,list_id,time_out) \
-             {\
-                if ( is_in_timer_list(new_tl,list_id)  )\
-                   remove_from_timer_list_nocheck( hash_table , new_tl , list_id);\
-                add_to_tail_of_timer_list_nocheck(hash_table,new_tl,list_id,time_out);\
-             }
-
-#define remove_from_timer_list(hash_table,tl,list_id) \
-             {\
-                if ( !is_in_timer_list(tl,list_id)  )\
-                   remove_from_timer_list_nocheck( hash_table , tl , list_id);\
-             }
-
-
-
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value         */
 typedef struct timer_link
@@ -72,11 +50,11 @@ typedef struct timer_link
 #include "h_table.h"
 
 
-void                        add_to_tail_of_timer_list_nocheck( struct s_table* hash_table , struct timer_link * tl , int list_id, unsigned int time_out );
-void                        insert_into_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out );
-void                        remove_from_timer_list_nocheck( struct s_table* hash_table , struct timer_link* tl , int list_id);
+void                        add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link * tl , int list_id, unsigned int time_out );
+void                        insert_into_timer_list( struct s_table* hash_table , struct timer_link* tl, int list_id , unsigned int time_out );
+void                        remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl , int list_id);
 struct timer_link  *remove_from_timer_list_from_head( struct s_table* hash_table, int list_id );
-void                       *timer_routine(void * attr);
+void                       timer_routine(unsigned int, void *);
 
 
 #endif

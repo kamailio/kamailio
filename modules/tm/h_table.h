@@ -93,6 +93,9 @@ typedef struct cell
    struct cell *T_canceled;
    struct cell *T_canceler;
 
+   /*if the request received an ACK - used only by INVITE*/
+   unsigned int isACKed;
+
    /* usefull data */
    /* UA Server */
    struct sip_msg         *inbound_request;
@@ -128,10 +131,6 @@ struct s_table
    struct entry   entrys[ TABLE_ENTRIES ];
    /* table of timer lists */
    struct timer   timers[ NR_OF_TIMER_LISTS ];
-   /* current time */
-   unsigned int   time;
-   /* timer process pid*/
-   unsigned int   timer_pid;
 };
 
 
