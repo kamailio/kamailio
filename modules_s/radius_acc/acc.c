@@ -1,5 +1,4 @@
-/* $Id: acc.c
- *
+/*
  * Radius accounting module. We log requests and replies by 
  * attaching to the callbacks in the transaction module. The 
  * accounting requests are constructed using the radiusclient
@@ -136,43 +135,29 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
    		if (rc_avpair_add(&send, PW_SIP_RESPONSE_CODE, &av_type, 0) == NULL) {
       		DBG("radius_log_reply(): ERROR:PW_SIP_RESPONSE_CODE \n");
 			return(ERROR_RC);
-    	}
-  	}
-		
-	/* 
-	 * Add calling station ID, URL in FROM string 
-	 */
-	if (msg->from->parsed == 0) {
-		/* Do whatever is supposed to be done in shared mem */
-		parse_from_header(msg->from);
-	} 
-	
-	from = (struct to_body *)msg->from->parsed;
-	
-	if (from->error == PARSE_OK) {
-		tmp = cleanbody(from->uri);
-		
-		/*If the parsing's OK then we can safely add the tags */
-		if (rc_avpair_add(&send,PW_SIP_FROM_TAG,
-					&from->tag_value.s[0], 0) == NULL) {
-			DBG("radius_log_reply(): ERROR:PW_SIP_FROM_TAG \n");
-    		return(ERROR_RC);
 		}
-	} else {
-		DBG("radius_log_reply(): Error parsing from body \n");
-		/* 
-		 * Since the from body wasn't parsed correctly, copy the
-		 * From body 
-		 */
-		tmp = &rq->from->body.s[0];
+	}
+
+	/* Add calling station ID, URL in FROM string */
+	if ( parse_from_header( msg )==-1 ) {
+		DBG("radius_log_reply(): Error getting from body \n");
+		return(ERROR_RC);
+	}
+	from = (struct to_body *)msg->from->parsed;
+	tmp = cleanbody(from->uri);
+
+	/*If the parsing's OK then we can safely add the tags */
+	if (rc_avpair_add(&send,PW_SIP_FROM_TAG,&from->tag_value.s[0],0)==NULL) {
+		DBG("radius_log_reply(): ERROR:PW_SIP_FROM_TAG \n");
+		return(ERROR_RC);
 	}
 
 	if (rc_avpair_add(&send, PW_CALLING_STATION_ID, tmp, 0) == NULL) {
-    	DBG("radius_log_reply(): ERROR:PW_CALLING_STATION_ID %s \n", 
-									rq->from->body.s);
+		DBG("radius_log_reply(): ERROR:PW_CALLING_STATION_ID %s \n",
+			rq->from->body.s);
 		return(ERROR_RC);
 	}
-								
+
 	/* 
 	 * Add called station ID, URL in TO string parse_to_param
 	 */
@@ -443,36 +428,20 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
    		DBG("radius_log_ack(): ERROR:PW_SIP_RESPONSE_CODE \n");
 		return(ERROR_RC);
 	}
-  	
-	/* 
-	 * Add calling station ID, URL in FROM string 
-	 */
-	if (msg->from->parsed == 0) {
-		/* Do whatever is supposed to be done in shared mem */
-		parse_from_header(msg->from);
-	} 
-	
-	from = (struct to_body *)msg->from->parsed;
 
-	if (from->error == PARSE_OK) {
-		tmp = cleanbody(from->uri);
-		
-		/* Add sip-from-tag string */
-  		if (rc_avpair_add(&send,PW_SIP_FROM_TAG, 
-									&from->tag_value.s[0], 0) == NULL) {
-    		DBG("radius_log_ack(): ERROR: PW_SIP_FROM_TAG \n");
-			return(ERROR_RC);
-    	} 
-
-	} else {
-		DBG("radius_log_ack(): Error parsing from body \n");
-		/* 
-		 * Since the from body wasn't parsed correctly, copy the
-		 * From body 
-		 */
-		tmp = &msg->from->body.s[0];
+	/* Add calling station ID, URL in FROM string */
+	if ( parse_from_header( msg )==-1 ) {
+		DBG("radius_log_ack(): Error getting from body \n");
+		return(ERROR_RC);
 	}
+	from = (struct to_body *)msg->from->parsed;
+	tmp = cleanbody(from->uri);
 
+	/*If the parsing's OK then we can safely add the tags */
+	if (rc_avpair_add(&send,PW_SIP_FROM_TAG,&from->tag_value.s[0],0)==NULL) {
+		DBG("radius_log_ack(): ERROR:PW_SIP_FROM_TAG \n");
+		return(ERROR_RC);
+	}
 
 	if (rc_avpair_add(&send, PW_CALLING_STATION_ID, tmp, 0) == NULL) {
     	DBG("radius_log_ack(): ERROR:PW_CALLING_STATION_ID %s \n", 
@@ -744,40 +713,26 @@ int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
    		if (rc_avpair_add(&send, PW_SIP_RESPONSE_CODE, &av_type, 0) == NULL) {
       		DBG("rad_acc_request(): ERROR:PW_SIP_RESPONSE_CODE \n");
 			return(ERROR_RC);
-    	}
-  	}
-		
-	/* 
-	 * Add calling station ID, URL in FROM string 
-	 */
-	if (rq->from->parsed == 0) {
-		/* Do whatever is supposed to be done in shared mem */
-		parse_from_header(rq->from);
-	} 
-	
-	from = (struct to_body *)rq->from->parsed;
-	
-	if (from->error == PARSE_OK) {
-		tmp = cleanbody(from->uri);
-		
-		/*If the parsing's OK then we can safely add the tags */
-		if (rc_avpair_add(&send,PW_SIP_FROM_TAG,
-					&from->tag_value.s[0], 0) == NULL) {
-			DBG("rad_acc_request(): ERROR:PW_SIP_FROM_TAG \n");
-    		return(ERROR_RC);
 		}
-	} else {
-		DBG("rad_acc_request(): Error parsing from body \n");
-		/* 
-		 * Since the from body wasn't parsed correctly, copy the
-		 * From body 
-		 */
-		tmp = &rq->from->body.s[0];
+	}
+
+	/* Add calling station ID, URL in FROM string */
+	if ( parse_from_header( msg )==-1 ) {
+		DBG("radius_log_request(): Error getting from body \n");
+		return(ERROR_RC);
+	}
+	from = (struct to_body *)msg->from->parsed;
+	tmp = cleanbody(from->uri);
+
+	/*If the parsing's OK then we can safely add the tags */
+	if (rc_avpair_add(&send,PW_SIP_FROM_TAG,&from->tag_value.s[0],0)==NULL) {
+		DBG("radius_log_request(): ERROR:PW_SIP_FROM_TAG \n");
+		return(ERROR_RC);
 	}
 
 	if (rc_avpair_add(&send, PW_CALLING_STATION_ID, tmp, 0) == NULL) {
-    	DBG("rad_acc_request(): ERROR:PW_CALLING_STATION_ID %s \n", 
-									rq->from->body.s);
+		DBG("rad_acc_request(): ERROR:PW_CALLING_STATION_ID %s \n",
+			rq->from->body.s);
 		return(ERROR_RC);
 	}
 								

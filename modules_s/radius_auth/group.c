@@ -389,20 +389,11 @@ static inline int get_to_user(struct sip_msg* _m, str* _s)
  */
 static inline int get_from_user(struct sip_msg* _m, str* _s)
 {
-	if (!_m->from && (parse_headers(_m, HDR_FROM, 0) == -1)) {
-		LOG(L_ERR, "is_user_in(): Error while parsing message\n");
-		return -3;
-	}
-	if (!_m->from) {
-		LOG(L_ERR, "is_user_in(): From HF not found\n");
-		return -4;
-	}
-	
-	if (parse_from_header(_m->from) < 0) {
+	if (parse_from_header( _m)==-1 ) {
 		LOG(L_ERR, "is_user_in(): Error while parsing From body\n");
 		return -5;
 	}
-	
+
 	_s->s = ((struct to_body*)_m->from->parsed)->uri.s;
 	_s->len = ((struct to_body*)_m->from->parsed)->uri.len;
 

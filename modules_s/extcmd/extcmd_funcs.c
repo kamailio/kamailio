@@ -41,6 +41,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_from.h"
 #include "../tm/tm_load.h"
 
 
@@ -138,14 +139,11 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 {
 	anchor_t anchor;
 	str    body;
-	struct to_body  from_parsed;
-	struct to_param *foo,*bar;
+	struct to_body  *from;
 	char   *cmd;
 	int    cmd_len;
-	char   *buf;
 	char   *p;
 
-	buf = 0;
 	/* get th content-type and content-length headers */
 	if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
 	|| !msg->content_type || !msg->content_length) {
@@ -170,35 +168,16 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	}
 	body.len = (int)msg->content_length->parsed;
 
-	if (!msg->from) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: no FROM header found!\n");
-		goto error;
-	}
-
 	if (!msg->to) {
 		LOG(L_ERR,"ERROR:extcmd:dump_msg: no TO header found!\n");
 		goto error;
 	}
 
-	/* parsing from header */
-	memset(&from_parsed,0,sizeof(from_parsed));
-	p = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
-	buf = (char*)pkg_malloc(msg->from->body.len+1);
-	if (!buf) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: no free pkg memory\n");
+	if ( parse_from_header(msg)==-1 ) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot get FROM header!\n");
 		goto error;
 	}
-	memcpy(buf,p,msg->from->body.len+1);
-	parse_to(buf,buf+msg->from->body.len+1,&from_parsed);
-	if (from_parsed.error!=PARSE_OK ) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot parse from header\n");
-		goto error;
-	}
-	/* we are not intrested in from param-> le's free them now*/
-	for(foo=from_parsed.param_lst ; foo ; foo=bar){
-		bar = foo->next;
-		pkg_free(foo);
-	}
+	from = (struct to_body*)msg->from->parsed;
 
 	/* adds contact header into reply */
 	if (extcmd_add_contact(msg,&(get_to(msg)->uri))==-1) {
@@ -210,7 +189,7 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	/* computes the amount of memory needed */
 	cmd_len = HEADER_SIZE + /* commnad header */
 		+ 4 + body.len /*body + size */
-		+ 4 + from_parsed.uri.len /* from + size */
+		+ 4 + from->uri.len /* from + size */
 		+ 4 + get_to(msg)->uri.len /* to + size */
 		+ 4 + 0; /* extra_headers + size */
 	/* allocs a chunk of shm memory */
@@ -239,11 +218,11 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	p = p-4;
 	put_int_h2n( get_to(msg)->uri.len, p, 4);
 	/* copy from's body */
-	p = p - from_parsed.uri.len;
-	memcpy( p, from_parsed.uri.s, from_parsed.uri.len);
+	p = p - from->uri.len;
+	memcpy( p, from->uri.s, from->uri.len);
 	/* put from's lengh */
 	p = p-4;
-	put_int_h2n( from_parsed.uri.len, p, 4);
+	put_int_h2n( from->uri.len, p, 4);
 	/* add the cmd size */
 	p = p-4;
 	put_int_h2n( cmd_len-HEADER_SIZE, p, 4);
@@ -264,10 +243,10 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 		goto error;
 	}
 
-	if (buf) pkg_free(buf);
+	//if (buf) pkg_free(buf);
 	return 1;
 error:
-	if (buf) pkg_free(buf);
+	//if (buf) pkg_free(buf);
 	return -1;
 }
 

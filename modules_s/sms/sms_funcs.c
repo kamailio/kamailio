@@ -37,6 +37,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_from.h"
 #include "../../data_lump_rpl.h"
 #include "../tm/t_hooks.h"
 #include "../tm/uac.h"
@@ -147,13 +148,11 @@ int push_on_network(struct sip_msg *msg, int net)
 	str    body;
 	struct sip_uri  uri;
 	struct sms_msg  *sms_messg;
-	struct to_body  from_parsed;
-	struct to_param *foo,*bar;
-	char   *p, *buf=0;
+	struct to_body  *from;
+	char   *p;
 	int    flag;
 	int    len;
 
-	buf = 0;
 	/* get th content-type and content-length headers */
 	if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
 	|| !msg->content_type || !msg->content_length) {
@@ -177,11 +176,6 @@ int push_on_network(struct sip_msg *msg, int net)
 		goto error;
 	}
 	body.len = (int)msg->content_length->parsed;
-
-	if (!msg->from) {
-		LOG(L_ERR,"ERROR:sms_push_on_net: no FROM header found!\n");
-		goto error1;
-	}
 
 	/* we try to get the user name (phone number) first from the RURI 
 	   (in our case means from new_uri or from first_line.u.request.uri);
@@ -222,24 +216,11 @@ int push_on_network(struct sip_msg *msg, int net)
 	}
 
 	/* parsing from header */
-	memset(&from_parsed,0,sizeof(from_parsed));
-	p = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
-	buf = (char*)pkg_malloc(msg->from->body.len+1);
-	if (!buf) {
-		LOG(L_ERR,"ERROR:sms_push_on_net: no free pkg memory\n");
+	if ( parse_from_header( msg )==-1 ) {
+		LOG(L_ERR,"ERROR:sms_push_on_net: cannot get FROM header\n");
 		goto error;
 	}
-	memcpy(buf,p,msg->from->body.len+1);
-	parse_to(buf,buf+msg->from->body.len+1,&from_parsed);
-	if (from_parsed.error!=PARSE_OK ) {
-		LOG(L_ERR,"ERROR:sms_push_on_net: cannot parse from header\n");
-		goto error;
-	}
-	/* we are not intrested in from param-> le's free them now*/
-	for(foo=from_parsed.param_lst ; foo ; foo=bar){
-		bar = foo->next;
-		pkg_free(foo);
-	}
+	from = (struct to_body*)msg->from->parsed;
 
 	/* adds contact header into reply */
 	if (add_contact(msg,&(uri.user))==-1) {
@@ -249,9 +230,9 @@ int push_on_network(struct sip_msg *msg, int net)
 
 	/*-------------BUILD AND FILL THE SMS_MSG STRUCTURE --------------------*/
 	/* computes the amount of memory needed */
-	len = SMS_HDR_BF_ADDR_LEN + from_parsed.uri.len
+	len = SMS_HDR_BF_ADDR_LEN + from->uri.len
 		+ SMS_HDR_AF_ADDR_LEN + body.len + SMS_FOOTER_LEN /*text to send*/
-		+ from_parsed.uri.len /* from */
+		+ from->uri.len /* from */
 		+ uri.user.len-1 /* to user (wihout '+') */
 		+ sizeof(struct sms_msg) ; /* the sms_msg structure */
 	/* allocs a new sms_msg structure in shared memory */
@@ -263,9 +244,9 @@ int push_on_network(struct sip_msg *msg, int net)
 	p = (char*)sms_messg + sizeof(struct sms_msg);
 
 	/* copy "from" into sms struct */
-	sms_messg->from.len = from_parsed.uri.len;
+	sms_messg->from.len = from->uri.len;
 	sms_messg->from.s = p;
-	append_str(p,from_parsed.uri.s,from_parsed.uri.len);
+	append_str(p,from->uri.s,from->uri.len);
 
 	/* copy "to.user" - we have to strip out the '+' */
 	sms_messg->to.len = uri.user.len-1;
@@ -297,11 +278,9 @@ int push_on_network(struct sip_msg *msg, int net)
 	}
 
 	free_uri(&uri);
-	if (buf) pkg_free(buf);
 	return 1;
 error:
 	free_uri(&uri);
-	if (buf) pkg_free(buf);
 error1:
 	return -1;
 }
