@@ -166,6 +166,14 @@ credentials()
 		echo "HA1B calculation failed"
 		exit 1
 	fi
+
+  #PHPLIB_ID of users should be difficulty to guess for security reasons
+  NOW=`date`;
+  PHPLIB_ID=`$GENHA1 "$RANDOM" "$NOW" $SIP_DOMAIN`
+	if [ $? -ne 0 ] ; then
+    echo "PHPLIB_ID calculation failed"
+		exit 1
+	fi
 }
 
 ser_create () # pars: <database name> [<no_init_user>]
@@ -184,7 +192,7 @@ if [ $# -eq 1 ] ; then
 		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
 		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
 		'$HA1', '$SIP_DOMAIN', '$HA1B',
-    '65e397cda0aa8e3202ea22cbd350e4e9' );
+    '$PHPLIB_ID' );
 
     INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
     VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
