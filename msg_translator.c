@@ -783,7 +783,7 @@ skip_clen:
 		anchor=anchor_lump(&(msg->repl_add_rm), msg->unparsed-buf, 0, 
 							HDR_CONTENTLENGTH);
 		DBG("build_res_from_sip_res: adding content-length: %.*s\n",
-				clen_len, clen_buf);
+				(int)clen_len, clen_buf);
 		if (anchor==0) goto error_clen; /* free clen_buf*/
 		if (insert_new_lump_after(anchor, clen_buf, clen_len,
 					HDR_CONTENTLENGTH)==0)
@@ -1120,7 +1120,7 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	*returned_len = len;
 	DBG("build_*: len=%d, diff=%d\n", len, p-buf);
 	DBG("build_*: rport_len=%d, delete_len=%d\n", rport_len, delete_len);
-	DBG("build_*: message=\n%.*s\n", len, buf);
+	DBG("build_*: message=\n%.*s\n", (int)len, buf);
 	/* in req2reply, received_buf is not introduced to lumps and
 	   needs to be deleted here
 	*/

@@ -141,7 +141,7 @@ static int fix_actions(struct action* a)
 	struct action *t;
 	struct proxy_l* p;
 	char *tmp;
-	int ret,r;
+	int ret;
 	cmd_export_t* cmd;
 	struct sr_module* mod;
 	str s;
