@@ -11,10 +11,16 @@
 #define CMD_SEPARATOR ':'
 
 /* core FIFO command set */
+/* echo input */
 #define FIFO_PRINT "print"
+/* print server's uptime */
 #define FIFO_UPTIME "uptime"
+/* print server's version */
 #define FIFO_VERSION "version"
+/* print available FIFO commands */
 #define FIFO_WHICH "which"
+/* print server's process table */
+#define FIFO_PS "ps"
 
 #define MAX_CTIME_LEN 128
 

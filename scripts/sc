@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 #
 # $Id$
 #
@@ -96,8 +96,8 @@ usage:
  $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
            < server health >
  $CMD monitor ......................... show internal status
- $CMD stat ............................ show runnig processes 
-                                        + $CMD show
+ $CMD ps .............................. show runnig processes 
+ $CMD fifo ............................ send raw commands to FIFO
 
    commands labeled with (*) will prompt for a MySQL password
    if the variable PW is set, the password will not be prompted"
@@ -116,8 +116,13 @@ prompt_pw() {
 	fi
 }
 
-ul_dump()
+
+fifo_cmd()
 {
+	if [ "$#" -lt 1 -o "$#" -gt 3 ]; then
+		echo "ERROR: fifo_cmd takes 1..3 parameters and not $#"
+		exit
+	fi
 	name=ser_receiver_$$
 	path=/tmp/$name
 	if [ ! -w $SER_FIFO ]; then
@@ -130,57 +135,28 @@ ul_dump()
 		echo "error opening read fifo $path"
 		exit 1
 	fi
-	cat > $SER_FIFO <<EOF
-:ul_dump:$name
+
+	if [ "$#" -eq 1 ] ; then
+		cat > $SER_FIFO <<EOF
+:$1:$name
 
 EOF
-	cat < $path
-	rm $path
-}
-
-ul_show_contact() # params: <table> <username>
-{
-	name=ser_receiver_$$
-	path=/tmp/$name
-	if [ ! -w $SER_FIFO ]; then
-		echo "Error opening ser's FIFO $SER_FIFO"
-		exit 1
-	fi
-	mkfifo $path
-	if [ $? -ne 0 ] ; then
-		echo "error opening read fifo $path"
-		exit 1
-	fi
-	cat > $SER_FIFO <<EOF
-:ul_show_contact:$name
-$1
+	elif [ "$#" -eq 2 ] ; then 
+		cat > $SER_FIFO <<EOF
+:$1:$name
 $2
 
 EOF
-	cat < $path
-	rm $path
-}
-
-ul_rm() # params: <table> <username>
-{
-	name=ser_receiver_$$
-	path=/tmp/$name
-	if [ ! -w $SER_FIFO ]; then
-		echo "Error opening ser's FIFO $SER_FIFO"
-		echo "Make sure you have line fifo=$SER_FIFO in your config"
-		exit 1
-	fi
-	mkfifo $path
-	if [ $? -ne 0 ] ; then
-		echo "error opening read fifo $path"
-		exit 1
-	fi
-	cat > $SER_FIFO <<EOF
-:ul_rm:$name
-$1
+	elif [ "$#" -eq 3 ] ; then 
+		cat > $SER_FIFO <<EOF
+:$1:$name
 $2
+$3
 
 EOF
+	fi
+
+
 	cat < $path
 	rm $path
 }
@@ -505,7 +481,7 @@ case $1 in
 			usage
 			exit 1
 		fi
-		ul_rm $1 $2
+		fifo_cmd ul_rm $1 $2
 		exit $?
 		;;
 
@@ -563,15 +539,15 @@ case $1 in
 		shift
 	
 		if [ $# -eq 1 ] ; then
-			ul_show_contact $USRLOC $1
+			fifo_cmd ul_show_contact $USRLOC $1
 		else
-			ul_dump
+			fifo_cmd ul_dump
 		fi
 		exit $?
 		;;
 
 	online)
-		ul_dump grep aor| awk '{print $3}' | sort | sort -mu
+		fifo_cmd ul_dump |grep aor| awk '{print $3}' | sort | sort -mu
 		exit $?
 		;;
 
@@ -630,14 +606,8 @@ case $1 in
 		$0 dul $1   > /dev/null 2>&1
         ;;
 			
-	stat)
-        if [ $# -ne 1 ] ; then
-            usage
-            exit 1
-        fi
-		ps -o "pid,user,args" $i -C $SER
-		$0 show
-
+	ps)
+		fifo_cmd ps
 		;;
 
 	acl)
@@ -648,6 +618,11 @@ case $1 in
 	alias)
 		shift
 		ser_alias "$@"
+		;;
+	
+	fifo)
+		shift
+		fifo_cmd "$@"
 		;;
 		
 	*)

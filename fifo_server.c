@@ -48,6 +48,7 @@
 #include "fifo_server.h"
 #include "mem/mem.h"
 #include "sr_module.h"
+#include "pt.h"
 
 /* FIFO server vars */
 char *fifo="/tmp/ser_fifo"; /* FIFO name */
@@ -470,7 +471,8 @@ int open_fifo_server()
 		fifo_server( fifo_stream ); /* never retruns */
 	}
 	/* dad process */
-	pids[process_no]=fifo_pid;
+	pt[process_no].pid=fifo_pid;
+	strncpy(pt[process_no].desc, "fifo server", MAX_PT_DESC );
 	/* make sure the read fifo will not close */
 	fifo_write=open(fifo, O_WRONLY, 0);
 	if (fifo_write<0) {
@@ -546,7 +548,7 @@ static int which_fifo_cmd(FILE *stream, char *response_file )
 
 	reply_pipe=open_reply_pipe(response_file);
 	if (reply_pipe==NULL) {
-		LOG(L_ERR, "ERROR: opening reply pipe (%s) failed\n",
+		LOG(L_ERR, "ERROR: which_fifo_cmd: opening reply pipe (%s) failed\n",
 			response_file );
 		return -1;
 	}
@@ -560,23 +562,51 @@ static int which_fifo_cmd(FILE *stream, char *response_file )
 	return 1;
 }
 
+static int ps_fifo_cmd(FILE *stream, char *response_file )
+{
+	FILE *reply_pipe;
+	int p;
+
+	if (response_file==0 || *response_file==0 ) {
+		 LOG(L_ERR, "ERROR: ps_fifo_cmd: null file\n");
+		return -1;
+	}
+	reply_pipe=open_reply_pipe(response_file);
+	if (reply_pipe==NULL) {
+		LOG(L_ERR, "ERROR: ps_fifo_cmd: opening reply pipe (%s) failed\n",
+			response_file );
+		return -1;
+	}
+
+	for (p=0; p<process_count();p++) 
+		fprintf( reply_pipe, "%d\t%d\t%s\n",
+			p, pt[p].pid, pt[p].desc );
+
+	fclose(reply_pipe);
+	return 1;
+}
+
 
 int register_core_fifo()
 {
 	if (register_fifo_cmd(print_fifo_cmd, FIFO_PRINT, 0)<0) {
-		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PRINT);
 		return -1;
 	}
 	if (register_fifo_cmd(uptime_fifo_cmd, FIFO_UPTIME, 0)<0) {
-		LOG(L_CRIT, "unable to register 'print' FIFO cmd\n");
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_UPTIME);
 		return -1;
 	}
 	if (register_fifo_cmd(print_version_cmd, FIFO_VERSION, 0)<0) {
-		LOG(L_CRIT, "unable to register 'version' FIFO cmd\n");
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_VERSION);
 		return -1;
 	}
 	if (register_fifo_cmd(which_fifo_cmd, FIFO_WHICH, 0)<0) {
-		LOG(L_CRIT, "unable to register 'version' FIFO cmd\n");
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_WHICH);
+		return -1;
+	}
+	if (register_fifo_cmd(ps_fifo_cmd, FIFO_PS, 0)<0) {
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PS);
 		return -1;
 	}
 	return 1;

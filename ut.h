@@ -190,6 +190,8 @@ inline static int string2hex(
 	return orig_len-len;
 }
 
+/* portable sleep in microseconds (no interrupt handling now) */
+
 inline static void sleep_us( unsigned int nusecs )
 {
 	struct timeval tval;

@@ -45,7 +45,7 @@
 #include "fifo_server.h"
 #include "name_alias.h"
 #include "hash_func.h"
-#include "hash_func.h"
+#include "pt.h"
 
 
 #include "stats.h"
@@ -197,7 +197,7 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  auto-probing procedure; may 
 												  be re-configured */
 int children_no = 0;			/* number of children processing requests */
-int *pids=0;					/*array with childrens pids, 0= main proc,
+struct process_table *pt=0;		/*array with childrens pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
 int sig_flag = 0;              /* last signal received */
 int debug = 0;
@@ -390,14 +390,14 @@ void handle_sigs()
 				
 			destroy_modules();
 #ifdef PKG_MALLOC
-			LOG(L_INFO, "Memory status (pkg):\n");
+			LOG(memlog, "Memory status (pkg):\n");
 			pkg_status();
 #endif
 #ifdef SHM_MEM
-			LOG(L_INFO, "Memory status (shm):\n");
+			LOG(memlog, "Memory status (shm):\n");
 			shm_status();
 			/* zero all shmem alloc vars that we still use */
-			pids=0;
+			pt=0;
 			shm_mem_destroy();
 #endif
 			if (pid_file) unlink(pid_file);
@@ -412,11 +412,11 @@ void handle_sigs()
 			dump_all_statistic();
 #endif
 #ifdef PKG_MALLOC
-			LOG(L_INFO, "Memory status (pkg):\n");
+			LOG(memlog, "Memory status (pkg):\n");
 			pkg_status();
 #endif
 #ifdef SHM_MEM
-			LOG(L_INFO, "Memory status (shm):\n");
+			LOG(memlog, "Memory status (shm):\n");
 			shm_status();
 #endif
 			break;
@@ -515,7 +515,8 @@ int main_loop()
 						timer_ticker();
 					}
 				}else{
-						pids[process_no]=pid; /*should be shared mem anway*/
+						pt[process_no].pid=pid; /*should be shared mem anway*/
+						strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 				}
 		}
 
@@ -525,9 +526,12 @@ int main_loop()
 			goto error;
 		}
 		/* main process, receive loop */
-		pids[0]=getpid();
-		/* process_bit = 1; */
 		process_no=0; /*main process number*/
+		pt[process_no].pid=getpid();
+		snprintf(pt[process_no].desc, MAX_PT_DESC, 
+			"stand-alone receiver @ %s:%s", 
+			 bind_address->name.s, bind_address->port_no_str.s );
+		
 		
 		     /* We will call child_init even if we
 		      * do not fork
@@ -544,9 +548,7 @@ int main_loop()
 		return udp_rcv_loop();
 	}else{
 		/* process_no now initialized to zero -- increase from now on
-		   as new processes are forked (while skipping 0 reserved for main ;
-		   not that with multiple listeners, more children processes will
-		   share the same process_no and the pids array will be rewritten
+		   as new processes are forked (while skipping 0 reserved for main )
 		*/
 		for(r=0;r<sock_no;r++){
 			/* create the listening socket (for each address)*/
@@ -581,7 +583,10 @@ int main_loop()
 #endif
 					return udp_rcv_loop();
 				}else{
-						pids[process_no]=pid; /*should be in shared mem.*/
+						pt[process_no].pid=pid; /*should be in shared mem.*/
+						snprintf(pt[process_no].desc, MAX_PT_DESC,
+							"receiver child=%d sock=%d @ %s:%s", i, r, 	
+							sock_info[r].name.s, sock_info[r].port_no_str.s );
 				}
 			}
 			/*parent*/
@@ -615,18 +620,22 @@ int main_loop()
 				timer_ticker();
 			}
 		}else{
-			pids[process_no]=pid;
+			pt[process_no].pid=pid;
+			strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 		}
 	}
 
 	/* main */
-	pids[0]=getpid();
+	pt[0].pid=getpid();
+	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 	/*DEBUG- remove it*/
+#ifdef DEBUG
 	printf("\n% 3d processes, % 3d children * % 3d listening addresses + main + fifo %s\n",
 			process_no+1, children_no, sock_no, (timer_list)?"+ timer":"");
 	for (r=0; r<=process_no; r++){
-		printf("% 3d   % 5d\n", r, pids[r]);
+		printf("% 3d   % 5d\n", r, pt[r].pid);
 	}
+#endif
 	process_no=0; 
 	/* process_bit = 0; */
 	is_main=1;
@@ -670,7 +679,7 @@ static void sig_usr(int signo)
 			case SIGTERM:
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
-					LOG(L_INFO, "Memory status (pkg):\n");
+					LOG(memlog, "Memory status (pkg):\n");
 					pkg_status();
 					#endif
 					exit(0);
@@ -1242,15 +1251,15 @@ int main(int argc, char** argv)
 	
 	/*alloc pids*/
 #ifdef SHM_MEM
-	pids=shm_malloc(sizeof(int)*(children_no*sock_no+1/*main*/+1/*timer */+1/*fifo*/));
+	pt=shm_malloc(sizeof(struct process_table)*process_count());
 #else
-	pids=malloc(sizeof(int)*(children_no*sock_no+1+1+1));
+	pt=malloc(sizeof(struct process_table)*process_count());
 #endif
-	if (pids==0){
+	if (pt==0){
 		fprintf(stderr, "ERROR: out  of memory\n");
 		goto error;
 	}
-	memset(pids, 0, sizeof(int)*(children_no+1));
+	memset(pt, 0, sizeof(struct process_table)*process_count());
 	
 	/* init_daemon? */
 	if (!dont_fork){

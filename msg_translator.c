@@ -22,6 +22,7 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "ut.h"
+#include "pt.h"
 
 
 #define append_str(_dest,_src,_len,_msg) \
@@ -121,7 +122,7 @@ char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 		foo=&(msg->first_line.u.request.uri);
 	print_len=snprintf(buf+fix_len, MAX_WARNING_LEN-fix_len,
 		"pid=%d req_src_ip=%s in_uri=%.*s out_uri=%.*s via_cnt%c=%d\"",
-		pids?pids[process_no]:0,
+		my_pid(),
 		ip_addr2a(&msg->src_ip),
 		msg->first_line.u.request.uri.len, msg->first_line.u.request.uri.s,
 		foo->len, foo->s, 
