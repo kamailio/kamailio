@@ -15,8 +15,8 @@
 #include <netdb.h>
 
 #include "route.h"
-#include "cfg_parser.h"
 #include "dprint.h"
+#include "proxy.h"
 
 /* main routing list */
 struct route_elem* rlist[RT_NO];
@@ -150,7 +150,7 @@ int fix_expr(struct expr* exp)
 int fix_actions(struct action* a)
 {
 	struct action *t;
-	struct proxy* p;
+	struct proxy_l* p;
 	char *tmp;
 	
 	for(t=a; t!=0; t=t->next){

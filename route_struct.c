@@ -234,7 +234,7 @@ void print_action(struct action* a)
 					printf("%d",t->p1.number);
 					break;
 			case IP_ST:
-					print_ip(t->p1.data);
+					print_ip(t->p1.number);
 					break;
 			default:
 					printf("type<%d>", t->p1_type);

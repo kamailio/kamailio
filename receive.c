@@ -15,15 +15,18 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg msg;
 	struct route_elem *re;
-	char * orig;
 
+	/* fill in msg */
+	msg.buf=buf;
+	msg.len=len;
+	msg.src_ip=src_ip;
 	/* make a copy of the message */
-	orig=(char*) malloc(len);
-	if (orig==0){
+	msg.orig=(char*) malloc(len);
+	if (msg.orig==0){
 		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
 		goto error1;
 	}
-	memcpy(orig, buf, len);
+	memcpy(msg.orig, buf, len);
 	
 	if (parse_msg(buf,len, &msg)!=0){
 		goto error;
@@ -38,10 +41,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		/* check if neccesarry to add receive? */
 		
 		/* find route */
-		re=route_match(  msg.first_line.u.request.method,
-						 msg.first_line.u.request.uri,
-						 &rlist
-					  );
+		re=route_match( &msg, &rlist[0]);
 		if (re==0){
 			/* no route found, send back error msg? */
 			LOG(L_WARN, "WARNING: receive_msg: no route found!\n");
@@ -49,8 +49,12 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 		re->tx++;
 		/* send msg */
-		DBG(" found route to: %s\n", re->host.h_name);
-		forward_request(orig, buf, len, &msg, re, src_ip);
+		DBG(" found route \n");
+		if (run_actions(re->actions)<0){
+			LOG(L_WARN, "WARNING: receive_msg: "
+					"error while trying actions\n");
+			goto error;
+		}
 	}else if (msg.first_line.type==SIP_REPLY){
 		/* sanity checks */
 		if (msg.via1.error!=VIA_PARSE_OK){
@@ -64,17 +68,17 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		/* check if via1 == us */
 		
 		/* send the msg */
-		if (forward_reply(orig, buf, len, &msg)==0){
+		if (forward_reply(&msg)==0){
 			DBG(" reply forwarded to %s:%d\n", 
 						msg.via2.host,
 						(unsigned short) msg.via2.port);
 		}
 	}
 skip:
-	free(orig);
+	free(msg.orig);
 	return 0;
 error:
-	free(orig);
+	free(msg.orig);
 error1:
 	return -1;
 }

@@ -58,19 +58,22 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 
 
-int forward_request(char * orig, char* buf, 
-					 unsigned int len,
-					 struct sip_msg* msg,
-					 struct route_elem* re,
+int forward_request( struct sip_msg* msg,
+					 struct proxy_l * p,
 					 unsigned long source_ip)
 {
-	unsigned int new_len, via_len, received_len;
+	unsigned int len, new_len, via_len, received_len;
 	char line_buf[MAX_VIA_LINE_SIZE];
 	char received_buf[MAX_RECEIVED_SIZE];
 	char* new_buf;
+	char* orig;
+	char* buf;
 	int offset, s_offset, size;
 	struct sockaddr_in* to;
 
+	orig=msg->orig;
+	buf=msg->buf;
+	len=msg->len;
 	received_len=0;
 	new_buf=0;
 	to=0;
@@ -131,21 +134,21 @@ int forward_request(char * orig, char* buf,
 			len, new_len, via_len, received_len);
 
 	to->sin_family = AF_INET;
-	to->sin_port = (re->port)?htons(re->port):htons(SIP_PORT);
+	to->sin_port = (p->port)?htons(p->port):htons(SIP_PORT);
 	/* if error try next ip address if possible */
-	if (re->ok==0){
-		if (re->host.h_addr_list[re->current_addr_idx+1])
-			re->current_addr_idx++;
-		re->ok=1;
+	if (p->ok==0){
+		if (p->host.h_addr_list[p->addr_idx+1])
+			p->addr_idx++;
+		p->ok=1;
 	}
 	/* ? not 64bit clean?*/
-	to->sin_addr.s_addr=*((long*)re->host.h_addr_list[re->current_addr_idx]);
+	to->sin_addr.s_addr=*((long*)p->host.h_addr_list[p->addr_idx]);
 
-	re->tx++;
-	re->tx_bytes+=new_len;
+	p->tx++;
+	p->tx_bytes+=new_len;
 	if (udp_send(new_buf, new_len, to, sizeof(struct sockaddr))==-1){
-			re->errors++;
-			re->ok=0;
+			p->errors++;
+			p->ok=0;
 			goto error;
 	}
 
@@ -162,9 +165,7 @@ error:
 
 
 /* removes first via & sends msg to the second */
-int forward_reply(char * orig, char* buf, 
-					 unsigned int len,
-					 struct sip_msg* msg)
+int forward_reply(struct sip_msg* msg)
 {
 
 
@@ -173,7 +174,14 @@ int forward_reply(char * orig, char* buf,
 	int offset, s_offset, size;
 	struct hostent* he;
 	struct sockaddr_in* to;
+	char* orig;
+	char* buf;
+	unsigned int len;
+	
 
+	orig=msg->orig;
+	buf=msg->buf;
+	len=msg->len;
 	new_buf=0;
 	to=0;
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));

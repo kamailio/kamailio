@@ -8,6 +8,7 @@
 
 #include "proxy.h"
 #include "error.h"
+#include "dprint.h"
 
 #include <string.h>
 
@@ -30,9 +31,9 @@ struct proxy_l* find_proxy(char *name, unsigned short port)
 
 
 /* copies a hostent structure*, returns 0 on success, <0 on error*/
-int hostent_cpy(struct hostent *dst, struct hosten* src)
+int hostent_cpy(struct hostent *dst, struct hostent* src)
 {
-	int len, r;
+	int len, r,ret,i,len2;
 
 	/* start copying the host entry.. */
 	/* copy h_name */
@@ -55,7 +56,7 @@ int hostent_cpy(struct hostent *dst, struct hosten* src)
 	memset((void*)dst->h_aliases, 0, sizeof(char*) * (len+1) );
 	for (i=0;i<len;i++){
 		len2=strlen(src->h_aliases[i])+1;
-		dst->.h_aliases[i]=(char*)malloc(sizeof(char)*len2);
+		dst->h_aliases[i]=(char*)malloc(sizeof(char)*len2);
 		if (dst->h_aliases==0){
 			ret=E_OUT_OF_MEM;
 			free(dst->h_name);
@@ -71,19 +72,19 @@ int hostent_cpy(struct hostent *dst, struct hosten* src)
 	if (dst->h_addr_list==0){
 		ret=E_OUT_OF_MEM;
 		free(dst->h_name);
-		for(r=0; h_aliases[r]; r++)	free(dst->h_aliases[r]);
-		free h_aliases[r];
+		for(r=0; dst->h_aliases[r]; r++)	free(dst->h_aliases[r]);
+		free(dst->h_aliases[r]);
 		free(dst->h_aliases);
 		goto error;
 	}
-	memset((void*)dst->.h_addr_list, 0, sizeof(char*) * (len+1) );
+	memset((void*)dst->h_addr_list, 0, sizeof(char*) * (len+1) );
 	for (i=0;i<len;i++){
 		dst->h_addr_list[i]=(char*)malloc(sizeof(char)*src->h_length);
 		if (dst->h_addr_list[i]==0){
 			ret=E_OUT_OF_MEM;
 			free(dst->h_name);
-			for(r=0; h_aliases[r]; r++)	free(dst->h_aliases[r]);
-			free h_aliases[r];
+			for(r=0; dst->h_aliases[r]; r++)	free(dst->h_aliases[r]);
+			free(dst->h_aliases[r]);
 			free(dst->h_aliases);
 			for (r=0; r<i;r++) free(dst->h_addr_list[r]);
 			free(dst->h_addr_list);
@@ -94,7 +95,7 @@ int hostent_cpy(struct hostent *dst, struct hosten* src)
 
 	/* copy h_addr_type & length */
 	dst->h_addrtype=src->h_addrtype;
-	dst->host.h_length=src->h_length;
+	dst->h_length=src->h_length;
 	/*finished hostent copy */
 	
 	return 0;
@@ -108,8 +109,8 @@ error:
 
 struct proxy_l* add_proxy(char* name, unsigned short port)
 {
-	proxy_l* p;
-	struct hostent he;
+	struct proxy_l* p;
+	struct hostent* he;
 	
 	if ((p=find_proxy(name, port))!=0) return p;
 	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
@@ -117,7 +118,7 @@ struct proxy_l* add_proxy(char* name, unsigned short port)
 		LOG(L_CRIT, "ERROR: add_proxy: memory allocation failure\n");
 		goto error;
 	}
-	memset(p,0,sizeof(struct_proxy_l));
+	memset(p,0,sizeof(struct proxy_l));
 	p->name=name;
 	p->port=port;
 	he=gethostbyname(name);

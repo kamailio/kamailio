@@ -64,8 +64,15 @@ struct sip_msg{
 	struct msg_start first_line;
 	struct via_body via1;
 	struct via_body via2;
+
 	unsigned int src_ip;
 	unsigned int dst_ip;
+	char* orig; /* original message copy */
+	char* buf;  /* scratch pad, holds a modfied message,
+				   via, etc. point into it */
+				   
+	unsigned int len; /* message len (orig) */
+	
 };
 
 
