@@ -17,6 +17,6 @@
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("&parentsgml;" "book" "chapter")
+sgml-parent-document: ("module.sgml" "book" "chapter")
 End:
 -->

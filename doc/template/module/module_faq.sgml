@@ -17,8 +17,7 @@
 	    </question>
 	    <answer>
 		<para>
-			Take a look at 
-			<ulink url="&serhomeweb;">&serhomeweb;</ulink>.
+		    Take a look at &serhomelink;.
 		</para>
 	    </answer>
 	</qandaentry>
@@ -28,28 +27,23 @@
 	    </question>
 	    <answer>
 		<para>
-			First at all check if your question was already answered on one of
-			our mailing lists: 
-			SER-Users
+		    First at all check if your question was already answered on one of
+		    our mailing lists: 
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>&seruserslink;</para>
+		    </listitem>
+		    <listitem>
+			<para>&serdevlink;</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+		    E-mails regarding any stable version should be sent to &serusersmail; and e-mail
+		    regarding development versions or CVS snapshots should be send to &serdevmail;.
 		</para>
 		<para>
-			(<ulink url="&serusersweb;">&serusersweb;</ulink>)
-		</para>
-		<para>
-			or SER-Developers
-		</para>
-		<para>
-			(<ulink url="&serdevweb;">&serdevweb;</ulink>).
-		</para>
-		<para>
-			Any mails regarding a stable SER release must be sent to 
-			<email>&serusersmail;</email> while
-			<email>&serdevmail;</email> must be used for under-developing
-			version.
-		</para>
-		<para>
-			If you want to keep the mail private, send it to 
-			<email>&serhelpmail;</email>.
+		    If you want to keep the mail private, send it to &serhelpmail;.
 		</para>
 	    </answer>
 	</qandaentry>
@@ -59,8 +53,7 @@
 	    </question>
 	    <answer>
 		<para>
-			Please follow the guidelines provided at:
-			<ulink url="&serbugsweb;">&serbugsweb;</ulink>.
+		    Please follow the guidelines provided at: &serbugslink;
 		</para>
 	    </answer>
 	</qandaentry>
@@ -69,6 +62,6 @@
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("&parentsgml;" "Book" "chapter")
+sgml-parent-document: ("module.sgml" "Book" "chapter")
 End:
 -->
