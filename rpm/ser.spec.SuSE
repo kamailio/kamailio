@@ -1,6 +1,6 @@
 %define name    ser
-%define ver     0.8.11pre29
-%define rel     1
+%define ver     0.8.11
+%define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
 %define MYSQL_MODULES		mysql
@@ -12,7 +12,7 @@ Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
 Release:      %rel
-Packager:     Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+Packager:     Nils Ohlmeier <nils@iptel.org>
 Copyright:    GPL
 Group:        Networking/Daemons
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
@@ -20,6 +20,7 @@ Source2:      ser.init.SuSE
 URL:          http://www.iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
+Conflicts:    ser < %ver, ser-mysql < %ver, ser-jabber < %ver, ser-radius < %ver
 BuildPrereq:  make flex bison 
 
 
@@ -37,8 +38,8 @@ transaction module, registrar and user location.
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser mysql
-BuildPrereq: mysql-devel
+Requires: ser = %ver
+BuildPrereq: mysql-devel zlib-devel
 
 %description mysql
 The ser-mysql package contains MySQL database connectivity that you
@@ -48,8 +49,8 @@ entries.
 %package  jabber
 Summary:  sip jabber message translation support for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
-BuildPrereq:  expat
+Requires: ser = %ver
+BuildPrereq: expat
 
 %description jabber
 The ser-jabber package contains a sip to jabber message translator.
@@ -57,7 +58,7 @@ The ser-jabber package contains a sip to jabber message translator.
 %package  radius
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  radiusclient
 
 %description radius
@@ -80,22 +81,36 @@ make install skip_modules="%EXCLUDED_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-modules modules="modules/%MYSQL_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-modules modules="modules/%JABBER_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-modules modules="%RADIUS_MOD_PATH" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
+make install-doc modules="modules/%JABBER_MODULES %RADIUS_MOD_PATH" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
+
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
@@ -117,7 +132,37 @@ sbin/insserv etc/init.d/
 
 %files
 %defattr(-,root,root)
-%doc README
+%dir %{_docdir}/ser
+%doc %{_docdir}/ser/AUTHORS
+%doc %{_docdir}/ser/NEWS
+%doc %{_docdir}/ser/INSTALL
+%doc %{_docdir}/ser/README
+%doc %{_docdir}/ser/README-MODULES
+%doc %{_docdir}/ser/README.acc
+%doc %{_docdir}/ser/README.auth
+%doc %{_docdir}/ser/README.auth_db
+%doc %{_docdir}/ser/README.dbtext
+%doc %{_docdir}/ser/README.domain
+%doc %{_docdir}/ser/README.enum
+%doc %{_docdir}/ser/README.exec
+%doc %{_docdir}/ser/README.group
+%doc %{_docdir}/ser/README.maxfwd
+%doc %{_docdir}/ser/README.msilo
+%doc %{_docdir}/ser/README.nathelper
+%doc %{_docdir}/ser/README.pa
+%doc %{_docdir}/ser/README.permissions
+%doc %{_docdir}/ser/README.pike
+%doc %{_docdir}/ser/README.print
+%doc %{_docdir}/ser/README.registrar
+%doc %{_docdir}/ser/README.rr
+%doc %{_docdir}/ser/README.sl
+%doc %{_docdir}/ser/README.sms
+%doc %{_docdir}/ser/README.textops
+%doc %{_docdir}/ser/README.tm
+%doc %{_docdir}/ser/README.uri
+%doc %{_docdir}/ser/README.usrloc
+%doc %{_docdir}/ser/README.vm
+%doc %{_docdir}/ser/README.xlog
 
 %dir %{_sysconfdir}/ser
 %config(noreplace) %{_sysconfdir}/ser/*
@@ -149,6 +194,7 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
 %{_libdir}/ser/modules/vm.so
+%{_libdir}/ser/modules/xlog.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
@@ -167,15 +213,38 @@ sbin/insserv etc/init.d/
 %files jabber
 %defattr(-,root,root)
 %{_libdir}/ser/modules/jabber.so
+%doc %{_docdir}/ser/README.jabber
 
 %files radius
 %defattr(-,root,root)
 %{_libdir}/ser/modules/auth_radius.so
 %{_libdir}/ser/modules/group_radius.so
 %{_libdir}/ser/modules/uri_radius.so
+%doc %{_docdir}/ser/README.auth_radius
+%doc %{_docdir}/ser/README.group_radius
+%doc %{_docdir}/ser/README.uri_radius
 
 
 %changelog
+
+* Wed Aug 28 2003 Nils Ohlmeier <nils@iptel.org>
+- replaced modules Conflicts with required Ser version
+- fixed doc installation for SuSE pathes
+- added doc for jabber and radius
+
+* Wed Aug 28 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- added doc (READMEs, NEWS, AUTHORS a.s.o)
+- added xlog to the modules list
+
+* Wed Aug 27 2003 Nils Ohlmeier <nils@iptel.org>
+- fixed module dependencys
+- added Conflicts for modules
+
+* Wed Aug 27 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.11
+- gen_ha1 is now left in _sbindir
+- removed harv_ser.sh
+- added Conflicts
 
 * Mon Jun 2 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - added a separate rpm for the radius modules

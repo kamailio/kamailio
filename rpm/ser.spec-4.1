@@ -1,5 +1,5 @@
 %define name    ser
-%define ver     0.8.11pre30
+%define ver     0.8.11
 %define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
@@ -38,7 +38,7 @@ transaction module, registrar and user location.
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  mysql-devel zlib-devel
 
 %description mysql
@@ -49,7 +49,7 @@ entries.
 %package  jabber
 Summary:  sip jabber message translation support for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  expat-devel
 
 %description jabber
@@ -58,7 +58,7 @@ The ser-jabber package contains a sip to jabber message translator.
 %package  radius
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser = %ver
 BuildPrereq:  radiusclient-devel
 
 %description radius
@@ -114,11 +114,6 @@ install -m755 $RPM_SOURCE_DIR/ser.init \
               $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/ser
 
 
-mkdir -p $RPM_BUILD_ROOT/%{_bindir}
-install -m755 scripts/harv_ser.sh \
-              $RPM_BUILD_ROOT/%{_bindir}/harv_ser.sh
-
-mv $RPM_BUILD_ROOT/%{_sbindir}/gen_ha1 $RPM_BUILD_ROOT/%{_bindir}
 
 
 %clean
@@ -138,13 +133,13 @@ fi
 %defattr(-,root,root)
 %dir %{_docdir}/ser
 %doc %{_docdir}/ser/AUTHORS
+%doc %{_docdir}/ser/NEWS
 %doc %{_docdir}/ser/INSTALL
 %doc %{_docdir}/ser/README
 %doc %{_docdir}/ser/README-MODULES
 %doc %{_docdir}/ser/README.acc
 %doc %{_docdir}/ser/README.auth
 %doc %{_docdir}/ser/README.auth_db
-%doc %{_docdir}/ser/README.cfg
 %doc %{_docdir}/ser/README.dbtext
 %doc %{_docdir}/ser/README.domain
 %doc %{_docdir}/ser/README.enum
@@ -166,6 +161,7 @@ fi
 %doc %{_docdir}/ser/README.uri
 %doc %{_docdir}/ser/README.usrloc
 %doc %{_docdir}/ser/README.vm
+%doc %{_docdir}/ser/README.xlog
 
 %dir %{_sysconfdir}/ser
 %config(noreplace) %{_sysconfdir}/ser/*
@@ -197,12 +193,12 @@ fi
 %{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
 %{_libdir}/ser/modules/vm.so
+%{_libdir}/ser/modules/xlog.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
 
-%{_bindir}/harv_ser.sh
-%{_bindir}/gen_ha1
+%{_sbindir}/gen_ha1
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -232,6 +228,12 @@ fi
 
 
 %changelog
+
+* Wed Aug 27 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.11
+- gen_ha1 is now left in _sbindir
+- removed harv_ser.sh
+- added xlog to the modules list
 
 * Fri Jun 6 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - added Conflicts:, changed vesion to 0.8.11pre30
