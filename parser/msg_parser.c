@@ -197,8 +197,9 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 	if (next) {
 		orig_flag = msg->parsed_flag;
 		msg->parsed_flag &= ~flags;
-	}
-
+	}else
+		orig_flag=0; 
+	
 	DBG("parse_headers: flags=%d\n", flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		hf=pkg_malloc(sizeof(struct hdr_field));
