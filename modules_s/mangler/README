@@ -1,0 +1,63 @@
+
+
+This is a module to help with SDP mangling.
+Still in testing.
+
+Exported Parameters: None
+--------------------
+
+
+
+Exported Functions:
+------------------
+
+
+Name:	sdp_mangle_ip
+		--------------
+Params:	pattern - a pair ip/mask used to match ip's located inside 
+				  SDP package in lines c=IN IP4 ip
+				  This lines will only be mangled if located ip 
+				  is in the network described by this pattern
+				  Examples of valid patterns are 
+				  	"10.0.0.0/255.0.0.0" or "10.0.0.0/8" etc
+		newip - a string representing the new ip to be put
+				inside SDP package if old ip address matches pattern
+Desc:	Changes ip addresses inside SDP package in lines describing
+		connections like c=IN IP4
+		Currently in only changes IP4 addresses since IP6 probably 
+		will not need to traverse NAT :)
+Example:	res = sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
+Returns: negative on error, or number of replacements - 1
+
+
+Name:	sdp_mangle_port
+		----------------
+Params:	offset - an integer which will be added/substracted from 
+				 the located port.
+Desc:	Changes ports inside SDP package in lines describing
+		media like m=audio 13451
+Example: res = sdp_mangle_port(-12000)
+Returns: negative on error, or number of replacements - 1
+
+
+
+Name:	encode_contact
+		---------------
+Params:	encoding_prefix - something to allow us to determine that a contact is encoded
+		publicip - a routable ip,most probably you should put your external ip of your NAT box
+Desc:	This function will encode uri-s inside Contact header in the following manner
+		sip:username:password@ip:port;transport=protocol goes  sip:enc_pref*username*ip*port*protocol@public_ip
+		* is  the default separator
+Example: if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38"); 
+Returns: negative on error, 0 on succes
+
+
+
+Name:	decode_contact()
+		-----------------
+Params:	separator - a char representing the separator between fields username,password etc.Default encoding uses '*'	
+Desc:	This function will decode uri-s inside Contact header in the following manner
+		sip:enc_pref*username*ip*port*protocol@public_ip goes to sip:username:password@ip:port;transport=protocol
+		
+Example:	if (uri =~ "^enc*") {decode_contact('*');}
+Returns: negative on error, 0 on succes
