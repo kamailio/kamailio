@@ -35,6 +35,7 @@
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-04-04  grand acc cleanup (jiri)
  * 2003-04-06: Opens database connection in child_init only (janakj)
+ * 2003-04-24  parameter validation (0 t->uas.request) added (jiri)
  */
 
 
@@ -352,6 +353,12 @@ static int should_acc_reply(struct cell *t, int code)
 
 	r=t->uas.request;
 
+	/* validation */
+	if (r==0) {
+		LOG(L_ERR, "ERROR: acc: should_acc_reply: 0 request\n");
+		return 0;
+	}
+
 	/* negative transactions reported otherwise only if explicitely 
 	 * demanded */
 	if (!failed_transactions && code >=300) return 0;
@@ -369,6 +376,12 @@ static int should_acc_reply(struct cell *t, int code)
 static void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 	int code, void *param)
 {
+	/* validation */
+	if (t->uas.request==0) {
+		LOG(L_ERR, "ERROR: acc: should_acc_reply: 0 request\n");
+		return;
+	}
+
 	/* don't parse replies in which we are not interested */
 	/* missed calls enabled ? */
 	if (((t->is_invite && code>=300 && is_mc_on(t->uas.request))
@@ -389,6 +402,12 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 #ifdef RAD_ACC
 	int reset_rmf;
 #endif
+
+	/* validation */
+	if (t->uas.request==0) {
+		DBG("DBG: acc: on_missed: no uas.request, local t; skipping\n");
+		return;
+	}
 
 	if (t->is_invite && code>=300) {
 		if (is_log_mc_on(t->uas.request)) {
@@ -428,6 +447,12 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 static void acc_onreply( struct cell* t, struct sip_msg *reply,
 	int code, void *param )
 {
+	/* validation */
+	if (t->uas.request==0) {
+		DBG("DBG: acc: onreply: no uas.request, local t; skipping\n");
+		return;
+	}
+
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
 	   event for missed calls either
