@@ -14,6 +14,8 @@
 #                  Tomas Björklund <tomas@webservices.se>
 #  2003-03-11  PREFIX & LOCALBASE must also be exported (andrei)
 #  2003-04-07  hacked to work with solaris install (andrei)
+#  2003-04-17  exclude modules overwritable from env. or cmd. line,
+#               added include_modules and skip_modules (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -21,11 +23,20 @@ auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 #include  source related defs
 include Makefile.sources
 
-override exclude_modules:=CVS cpl cpl-c ext extcmd mangler nathelper pdt \
-								postgres snmp  \
-							jabber sms pa  msilo im radius_acc radius_auth \
-							auth_radius group_radius uri_radius \
-							$(exclude_modules)
+#extra modules to exclude
+skip_modules?=
+
+# if not set on the cmd. line or the env, exclude this modules:
+exclude_modules?= 			cpl cpl-c ext extcmd mangler nathelper pdt \
+							postgres snmp  \
+							im radius_acc radius_auth \
+							jabber sms pa  msilo \
+							auth_radius group_radius uri_radius 
+# always exclude the CVS dir
+override exclude_modules+= CVS $(skip_modules)
+
+#always include this modules
+include_modules?=
 
 # first 2 lines are excluded because of the experimental or incomplete
 # status of the modules
@@ -42,6 +53,8 @@ DEFS=$(static_defs)
 modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(wildcard modules/*))
+modules:=$(filter-out $(modules), $(addprefix modules/, $(include_modules) )) \
+			$(modules)
 modules_names=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1.so/g' )
 modules_basenames=$(shell echo $(modules)| \

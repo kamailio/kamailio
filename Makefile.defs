@@ -5,7 +5,8 @@
 # Environment variables:
 #   PREFIX, LOCALBASE, BASEDIR
 #   INSTALL, TAR , CC, LEX, YACC,
-#   CPU, CC_EXTRA_OPTS
+#   CPU, CC_EXTRA_OPTS,
+#   exclude_modules, skip_modules, include_modules
 #
 # History:
 # --------

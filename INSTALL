@@ -102,9 +102,27 @@ make mode=debug PROFILE=-pg all
 
 make modules=modules/print modules
 
--compile all the modules except textops
+-compile all the "default" modules except textops and vm
 
-make exclude_modules="CVS textops" modules
+make skip_modules="textops vm" modules
+
+-compile all default modules and include uri_radius (not compiled by default):
+
+make include_modules="uri_radius" modules
+
+-compile all the modules from the modules subdirectory (even the one excluded
+by default):
+
+make exclude_modules="" modules
+
+-compile all the modules from the modules subdirectory excluding vm:
+
+make exclude_modules=vm modules
+
+or
+
+make exclude_modules="" skip_modules=vm modules
+
 
 -compile with the "tm" module statically linked and with profiling
 
