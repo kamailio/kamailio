@@ -59,6 +59,7 @@
  *  2003-02-19  added t_rely_{udp, tcp} (andrei)
  *  2003-03-10  module export interface updated to the new format (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -75,6 +76,7 @@
 #include "../../ut.h"
 #include "../../script_cb.h"
 #include "../../fifo_server.h"
+#include "../../mem/mem.h"
 
 #include "sip_msg.h"
 #include "h_table.h"
@@ -201,7 +203,7 @@ inline static int fixup_str2int( void** param, int param_no)
 	if (param_no==1) {
 		go_to=str2s(*param, strlen(*param), &err );
 		if (err==0) {
-			free(*param);
+			pkg_free(*param);
 			*param=(void *)go_to;
 			return 0;
 		} else {
@@ -346,7 +348,7 @@ inline static int fixup_hostport2proxy(void** param, int param_no)
 		/* success -- fix the first parameter to proxy now ! */
 
 		/* FIXME: janakj, mk_proxy doesn't make copy of host !! */
-		free( *(param-1));
+		/*pkg_free( *(param-1)); you're right --andrei*/
 		*(param-1)=proxy;
 		return 0;
 	} else {
@@ -365,7 +367,7 @@ inline static int fixup_t_send_reply(void** param, int param_no)
 	if (param_no==1){
 		code=str2s(*param, strlen(*param), &err);
 		if (err==0){
-			free(*param);
+			pkg_free(*param);
 			*param=(void*)code;
 			return 0;
 		}else{

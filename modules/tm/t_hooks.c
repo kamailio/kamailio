@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ */
 
 #include "defs.h"
 
@@ -31,6 +36,7 @@
 #include "stdlib.h"
 #include "../../dprint.h"
 #include "../../error.h"
+#include "../../mem/mem.h"
 #include "t_hooks.h"
 
 /* strange things happen if callback_array is static on openbsd */
@@ -50,7 +56,7 @@ int register_tmcb( tmcb_type cbt, transaction_cb f, void *param )
 		return E_BUG;
 	}
 
-	if (!(cbs=malloc( sizeof( struct tm_callback_s)))) {
+	if (!(cbs=pkg_malloc( sizeof( struct tm_callback_s)))) {
 		LOG(L_ERR, "ERROR: register_tmcb: out of mem\n");
 		return E_OUT_OF_MEM;
 	}

@@ -32,6 +32,7 @@
  *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
  *              nameser_compat.h (andrei)
  *  2003-02-13  proto support added (andrei)
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 #include "defs.h"
@@ -44,6 +45,7 @@
 #include "../../timer.h"
 #include "../../hash_func.h"
 #include "../../globals.h"
+#include "../../mem/mem.h"
 #include "../../dset.h"
 #include "t_funcs.h"
 #include "t_hooks.h"
@@ -238,7 +240,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 error01:
 	if (temp_proxy) {
 		free_proxy( proxy );
-		free( proxy );
+		pkg_free( proxy );
 	}
 error:
 	return ret;

@@ -33,6 +33,7 @@
  *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
  *  2003-03-13  send_pr_buffer is called w/ file/function/line debugging
  *               info only if compiling w/ -DEXTRA_DEBUG (andrei)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -46,6 +47,7 @@
 #include "../../ut.h"
 #include "../../hash_func.h"
 #include "../../dset.h"
+#include "../../mem/mem.h"
 #include "t_funcs.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
@@ -233,7 +235,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			}
 			ret=forward_request( p_msg , proxy, proto) ;
 			free_proxy( proxy );	
-			free( proxy );
+			pkg_free( proxy );
 #ifdef ACK_FORKING_HACK
 			backup_uri=p_msg->new_uri;
 			init_branch_iterator();
@@ -243,7 +245,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 				if (proxy==0) continue;
 				forward_request(p_msg, proxy, proto);
 				free_proxy( proxy );	
-				free( proxy );
+				pkg_free( proxy );
 			}
 			p_msg->new_uri=backup_uri;
 #endif

@@ -44,14 +44,15 @@
  *
  * History:
  * --------
- * 2003-03-01  kr set through a function now (jiri)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-02-27 FIFO/UAC now dumps reply -- good for CTD (jiri)
- * 2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
- *              proto & rb->dst (andrei)
- * 2003-01-29  scratchpad removed (jiri)
- * 2003-01-27  fifo:t_uac_dlg completed (jiri)
- * 2003-01-23  t_uac_dlg now uses get_out_socket (jiri)
+ *  2003-01-23  t_uac_dlg now uses get_out_socket (jiri)
+ *  2003-01-27  fifo:t_uac_dlg completed (jiri)
+ *  2003-01-29  scratchpad removed (jiri)
+ *  2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
+ *               proto & rb->dst (andrei)
+ *  2003-02-27  FIFO/UAC now dumps reply -- good for CTD (jiri)
+ *  2003-03-01  kr set through a function now (jiri)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -225,7 +226,7 @@ static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su,
 
 
 	free_proxy(proxy);
-	free(proxy);
+	pkg_free(proxy);
 	return send_sock;
 }
 	
@@ -438,7 +439,7 @@ error01:
 error00:
 /*
 	free_proxy(proxy);
-	free(proxy);
+	pkg_free(proxy);
 */
 
 done: 
