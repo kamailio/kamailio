@@ -60,8 +60,8 @@ inline static void exec_shutdown();
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"exec_dset", w_exec_dset, 1, 0, REQUEST_ROUTE},
-	{"exec_msg",  w_exec_msg,  1, 0, REQUEST_ROUTE},
+	{"exec_dset", w_exec_dset, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"exec_msg",  w_exec_msg,  1, 0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
