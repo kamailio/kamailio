@@ -48,6 +48,7 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 
 	if (tmp.len == 0) {
 		LOG(L_ERR, "expires_parser(): Empty body\n");
+		_e->valid = 0;
 		return -1;
 	}
 
@@ -64,16 +65,25 @@ static inline int expires_parser(char* _s, int _l, exp_body_t* _e)
 			case '\r':
 			case '\n':
 				_e->text.len = i;
+				_e->valid = 1;
 				return 0;
 
 			default:
+				     /* Exit normally here, we want to be backwards compatible with
+				      * RFC2543 entities that can put absolute time here
+				      */
+				     /*
 				LOG(L_ERR, "expires_parser(): Invalid character\n");
 				return -2;
+				     */
+				_e->valid = 0;
+				return 0;
 			}
 		}
 	}
 
 	_e->text.len = _l;
+	_e->valid = 1;
 	return 0;
 }
 
