@@ -54,7 +54,7 @@ static int child_init(int rank);
 char* db_url = "sql://serro:47serro11@localhost/ser";
 int db_mode = 0;                      /* Database usage mode: 0 = no cache, 1 = cache */
 char* domain_table = "domain";        /* Name of domain table */
-char* domain_domain_col = "domain";   /* Name of domain column */
+char* domain_col = "domain";          /* Name of domain column */
 
 /*
  * Other module variables
@@ -79,10 +79,10 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",               STR_PARAM, &db_url           },
-	{"db_mode",              INT_PARAM, &db_mode          },
-	{"domain_table",         STR_PARAM, &domain_table     },
-	{"domain_domain_column", STR_PARAM, &domain_domain_col},
+	{"db_url",               STR_PARAM, &db_url      },
+	{"db_mode",              INT_PARAM, &db_mode     },
+	{"domain_table",         STR_PARAM, &domain_table},
+	{"domain_column",        STR_PARAM, &domain_col  },
 	{0, 0, 0}
 };
 

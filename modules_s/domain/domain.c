@@ -63,8 +63,8 @@ int is_domain_local(str* _host)
 		db_key_t cols[1]; 
 		db_res_t* res;
 
-		keys[0]=domain_domain_col;
-		cols[0]=domain_domain_col;
+		keys[0]=domain_col;
+		cols[0]=domain_col;
 		
 		if (db_use_table(db_handle, domain_table) < 0) {
 			LOG(L_ERR, "is_local(): Error while trying to use domain table\n");
