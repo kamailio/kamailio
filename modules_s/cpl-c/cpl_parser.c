@@ -703,7 +703,8 @@ error:
  *  [| attr16_t(2) attr16_len(2) attr_val16(2*x) |]?  BYDAY attr (NT)
  *  [| attr17_t(2) attr17_len(2) attr_val17(2*x) |]?  BYWEEKNO attr (NT)
  */
-static inline int encode_time_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
+static inline int encode_time_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
 {
 	xmlAttrPtr     attr;
 	char           *p, *p_orig;
@@ -784,12 +785,70 @@ error:
 
 
 
+/* Attr. encoding for LOOKUP node:
+ *  | attr1_t(2) attr1_len(2) attr1_val(2*x) |      SOURCE attr  (NT)
+ * [| attr2_t(2) attr2_val(2) |]?                   CLEAR attr
+ */
+static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
+{
+	xmlAttrPtr     attr;
+	char           *p, *p_orig;
+	unsigned char  *nr_attr;
+	str            val;
+
+	nr_attr = &(NR_OF_ATTR(node_ptr));
+	*nr_attr = 0;
+	p = p_orig = ATTR_PTR(node_ptr);
+
+	FOR_ALL_ATTR(node,attr) {
+		(*nr_attr)++;
+		/* get attribute's value */
+		get_attr_val( attr->name , val, error);
+		if ( !strcasecmp(attr->name,"source") ) {
+			/* this param will not be copied, since it has only one value ;-)*/
+			if ( val.len!=SOURCE_REG_STR_LEN ||
+			strncasecmp( val.s, SOURCE_REG_STR, val.len) ) {
+				LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unsupported value"
+					" <%.*s> in SOURCE param\n",val.len,val.s);
+				goto error;
+			}
+		} else if ( !strcasecmp(attr->name,"clear") ) {
+			set_attr_type(p, CLEAR_ATTR, buf_end, error);
+			if ( val.len==3 && !strncasecmp(val.s,"yes",3) )
+				append_short_attr(p, YES_VAL, buf_end, error);
+			else if ( val.len==2 && !strncasecmp(val.s,"no",2) )
+				append_short_attr(p, NO_VAL, buf_end, error);
+			else {
+				LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unknown value "
+					"<%.*s> for attribute CLEAR\n",val.len,val.s);
+				goto error;
+			}
+		} else if ( !strcasecmp(attr->name,"timeout") ) {
+			LOG(L_WARN,"WARNING:cpl_c:encode_lookup_attr: unsupported param "
+				"TIMEOUT; skipping\n");
+		} else {
+			LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unknown attribute "
+				"<%s>\n",attr->name);
+			goto error;
+		}
+	}
+
+	return p-p_orig;
+error:
+	return -1;
+}
+
+
+
+
 /* Attr. encoding for LOCATION node:
  *  | attr1_t(2) attr1_len(2) attr1_val(2*x) |      URL attr  (NT)
  * [| attr2_t(2) attr2_val(2) |]?                   PRIORITY attr
  * [| attr3_t(2) attr3_val(2) |]?                   CLEAR attr
  */
-static inline int encode_location_attr(xmlNodePtr  node, char *node_ptr, char *buf_end)
+static inline int encode_location_attr(xmlNodePtr  node, char *node_ptr,
+																char *buf_end)
 {
 	struct sip_uri uri;
 	xmlAttrPtr     attr;
@@ -1312,8 +1371,7 @@ int encode_node( xmlNodePtr node, char *p, char *p_end)
 					break;
 				case 'o':case 'O':
 					NODE_TYPE(p) = LOOKUP_NODE;
-					/* we do not encode lookup node because we decide that it's
-					 * to unsecure to run it */
+					attr_size = encode_lookup_attr( node, p, p_end);
 					break;
 				case 'c':case 'C':
 					NODE_TYPE(p) = LOCATION_NODE;

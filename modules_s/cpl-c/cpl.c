@@ -52,6 +52,7 @@
 #include "../../parser/parse_disposition.h"
 #include "../../db/db.h"
 #include "../tm/tm_load.h"
+#include "../usrloc/usrloc.h"
 #include "cpl_run.h"
 #include "cpl_db.h"
 #include "cpl_loader.h"
@@ -63,17 +64,20 @@
 #define MAX_PROXY_RECURSE  10
 
 
-static char *DB_URL      = 0;  /* database url */
-static char *DB_TABLE    = 0;  /* */
+/* modules param variables */
+static char *DB_URL        = 0;  /* database url */
+static char *DB_TABLE      = 0;  /* */
+static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
+static char *lookup_domain = 0;
+int    proxy_recurse       = 0;
+static char   *log_dir     = 0;  /* dir where the user log should be dumped*/
+
+
 static pid_t aux_process = 0;  /* pid of the private aux. process */
-static char *dtd_file    = 0;  /* name of the DTD file for CPL parser */
-
-
-int    proxy_recurse     = 0;
-char   *log_dir          = 0; /*directory where the user log should be dumped*/
 int    cpl_cmd_pipe[2];
-struct tm_binds cpl_tmb;
-
+struct tm_binds cpl_tmb;       /* Structure with pointers to tm funcs */
+usrloc_api_t cpl_ulb;          /* Structure with pointers to usrloc funcs */
+udomain_t*   cpl_domain  = 0;
 str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
                              * terminated string in "TZ=value" format;
                              * used only by run_time_switch */
@@ -81,7 +85,7 @@ str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
 /* this vars are used outside only for loading scripts */
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 
-int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+static int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 MODULE_VERSION
@@ -113,6 +117,7 @@ static param_export_t params[] = {
 	{"cpl_table",     STR_PARAM, &DB_TABLE      },
 	{"cpl_dtd_file",  STR_PARAM, &dtd_file      },
 	{"proxy_recurse", INT_PARAM, &proxy_recurse },
+	{"lookup_domain", STR_PARAM, &lookup_domain },
 	{"log_dir",       STR_PARAM, &log_dir       },
 	{0, 0, 0}
 };
@@ -156,8 +161,9 @@ static int fixup_cpl_run_script(void** param, int param_no)
 
 static int cpl_init(void)
 {
-	load_tm_f  load_tm;
-	struct stat stat_t;
+	bind_usrloc_t bind_usrloc;
+	load_tm_f     load_tm;
+	struct stat   stat_t;
 	char *ptr;
 	int val;
 
@@ -177,7 +183,7 @@ static int cpl_init(void)
 	}
 
 	if (proxy_recurse>MAX_PROXY_RECURSE) {
-		LOG(L_CRIT,"ERROR:cpl_init: value of proxy_recurse param ()%d exceeds "
+		LOG(L_CRIT,"ERROR:cpl_init: value of proxy_recurse param (%d) exceeds "
 			"the maximum safty value (%d)\n",proxy_recurse,MAX_PROXY_RECURSE);
 		goto error;
 	}
@@ -254,6 +260,30 @@ static int cpl_init(void)
 			"you forgot to load the sl module\n");
 		goto error;
 	}
+
+	/* bind to usrloc module if requested */
+	if (lookup_domain) {
+		/* import all usrloc functions */
+		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
+		if (!bind_usrloc) {
+			LOG(L_ERR, "ERROR:cpl_c:cpl_init: Can't bind usrloc\n");
+			goto error;
+		}
+		if (bind_usrloc(&cpl_ulb) < 0) {
+			LOG(L_ERR, "ERROR:cpl_c:cpl_init: importing usrloc failed\n");
+			goto error;
+		}
+		/* convert lookup_domain from char* to udomain_t* pointer */
+		if (cpl_ulb.register_udomain(lookup_domain, &cpl_domain) < 0) {
+			LOG(L_ERR, "ERROR:cpl_c:cpl_init: Error while registering domain "
+				"<%s>\n",lookup_domain);
+			goto error;
+		}
+	} else {
+		LOG(L_NOTICE,"NOTICE:cpl_init: no lookup_domain given -> disable "
+			" lookup node\n");
+	}
+
 
 	/* register the fifo commands */
 	if (register_fifo_cmd( cpl_load, "LOAD_CPL", 0)!=1) {
@@ -480,7 +510,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
 		goto error;
 	/* set the flags */
-	cpl_intr->flags = (unsigned int)str1;
+	cpl_intr->flags = ((unsigned int)str1);
 	/* attache the user */
 	cpl_intr->user = user;
 	/* for OUTGOING we need also the destination user for init. with him
@@ -521,6 +551,7 @@ error:
 		free_cpl_interpreter( cpl_intr );
 	return -1;
 }
+
 
 
 #define CPL_SCRIPT          "script"

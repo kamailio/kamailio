@@ -37,6 +37,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../data_lump_rpl.h"
 #include "../tm/tm_load.h"
+#include "../usrloc/usrloc.h"
 #include "CPL_tree.h"
 #include "loc_set.h"
 #include "cpl_utils.h"
@@ -101,10 +102,10 @@
 	}while(0)
 
 
-extern int    (*sl_send_rpl)(struct sip_msg*, char*, char*);
 extern char   *log_dir;
 extern struct tm_binds cpl_tmb;
-
+extern udomain_t*   cpl_domain;
+extern usrloc_api_t cpl_ulb;
 
 
 struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
@@ -140,11 +141,12 @@ error:
 
 void free_cpl_interpreter(struct cpl_interpreter *intr)
 {
-	DBG("DEBUG:----------------> free intr at %p \n",intr);
 	if (intr) {
 		if (intr->script.s)
 			shm_free( intr->script.s);
 		empty_location_set( &(intr->loc_set) );
+		if (intr->flags&CPL_USER_DUPLICATED)
+			shm_free(intr->user.s);
 		if (intr->flags&CPL_RURI_DUPLICATED)
 			shm_free(intr->ruri);
 		if (intr->flags&CPL_TO_DUPLICATED)
@@ -205,16 +207,50 @@ static inline char *run_cpl_node( struct cpl_interpreter *intr )
  */
 static inline char *run_lookup( struct cpl_interpreter *intr )
 {
+	unsigned short attr_name;
+	unsigned short n;
+	unsigned char  clear;
+	char *p;
 	char *kid;
 	char *failure_kid = 0;
-	int i;
+	char *success_kid = 0;
+	char *notfound_kid = 0;
+	int  i;
+	time_t      tc;
+	urecord_t*  r;
+	ucontact_t* contact;
 
+	clear = NO_VAL;
+
+	/* check the params */
+	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+		get_basic_attr(p,attr_name,n,intr,script_error);
+		switch (attr_name) {
+			case CLEAR_ATTR:
+				if (n!=YES_VAL && n!=NO_VAL)
+					LOG(L_WARN,"WARNING:run_lookup: invalid value (%u) found"
+						" for param. CLEAR in LOOKUP node -> using "
+						"default (%u)!\n",n,clear);
+				else
+					clear = n;
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_lookup: unknown attribute (%d) in "
+					"LOOKUP node\n",attr_name);
+				goto script_error;
+		}
+	}
+
+	/* check the kids */
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
 			case SUCCESS_NODE :
+				success_kid = kid;
+				break;
 			case NOTFOUND_NODE:
+				notfound_kid = kid;
 				break;
 			case FAILURE_NODE:
 				failure_kid = kid;
@@ -226,11 +262,56 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 		}
 	}
 
-	LOG(L_NOTICE,"NOTICE:cpl_c:run_lookup: this node failes by default - "
-		"to unsecure and tiem consuming to be exectuted\n");
-	if (failure_kid)
-		return get_first_child(failure_kid);
+	kid = failure_kid;
+
+	if (cpl_domain) {
+		/* fetch user's contacts via usrloc */
+		tc = time(0);
+		cpl_ulb.lock_udomain( cpl_domain );
+		i = cpl_ulb.get_urecord( cpl_domain, &intr->user, &r);
+		if (i < 0) {
+			/* failure */
+			LOG(L_ERR, "ERROR:run_lookup: Error while querying usrloc\n");
+			cpl_ulb.unlock_udomain( cpl_domain );
+		} else if (i > 0) {
+			/* not found */
+			DBG("DBG:cpl-c:run_lookup: '%.*s' Not found in usrloc\n",
+				intr->user.len, intr->user.s);
+			cpl_ulb.unlock_udomain( cpl_domain );
+			kid = notfound_kid;
+		} else {
+			contact = r->contacts;
+			/* skip expired contacts */
+			while ((contact) && ((contact->expires <= tc) ||
+			(contact->state >= CS_ZOMBIE_N)))
+				contact = contact->next;
+			if (contact) {
+				/* clear loc set if requested */
+				if (clear)
+					empty_location_set( &(intr->loc_set) );
+				/* add first location to set */
+				DBG("DBG:cpl-c:run_lookup: adding <%.*s>q=%d\n",
+					contact->c.len,contact->c.s,(int)(10*contact->q));
+				if (add_location( &(intr->loc_set), &contact->c,
+				(int)(10*contact->q), 1/*dup*/ )==-1) {
+					LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
+						"location to set :-(\n");
+					cpl_ulb.unlock_udomain( cpl_domain );
+					goto runtime_error;
+				}
+				/* set the flag for modifing the location set */
+				intr->flags |= CPL_LOC_SET_MODIFIED;
+			}
+			cpl_ulb.unlock_udomain( cpl_domain );
+		}
+
+	}
+
+	if (kid)
+		return get_first_child(kid);
 	return DEFAULT_ACTION;
+runtime_error:
+	return CPL_RUNTIME_ERROR;
 script_error:
 	return CPL_SCRIPT_ERROR;
 }

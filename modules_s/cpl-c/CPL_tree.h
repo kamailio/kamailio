@@ -146,8 +146,8 @@
 /* attributs and values for LOOKUP node */
 #define  SOURCE_ATTR                 0
 #define  TIMEOUT_ATTR                1    /*shared with PROXY node*/
-#define  USE_ATTR                    3
-#define  IGNORE_ATTR                 4
+#define  SOURCE_REG_STR              "registration"
+#define  SOURCE_REG_STR_LEN          (sizeof("registration")-1)
 
 /* attributs and values for REMOVE_LOCATION node */
 #define  LOCATION_ATTR               0
