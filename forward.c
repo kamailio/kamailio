@@ -113,6 +113,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 		   (host.s[len] will always be ok for a via)
            BTW: when is via->host.s non null terminated? tm copy?
 		   - andrei 
+			Yes -- it happened on generating a 408 by TM; -jiri
 		*/
 		if (via->host.s[via->host.len]){
 			if (!(host_copy=pkg_malloc( via->host.len+1 ))) {
