@@ -125,6 +125,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str** _realm, int _hftype, struct hdr
 	      * challenged because it must have the same CSeq as
 	      * the request to be cancelled
 	      */
+
 	if ((_m->REQ_METHOD == METHOD_ACK) ||  (_m->REQ_METHOD == METHOD_CANCEL)) return AUTHORIZED;
 
 	if ((*_realm)->len == 0) {
@@ -168,7 +169,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str** _realm, int _hftype, struct hdr
 		return ERROR;
 	}
 
-	if (check_nonce(&(c->digest.nonce), &secret) != 0) {
+	if (check_nonce(&c->digest.nonce, &secret) != 0) {
 		LOG(L_ALERT, "pre_auth(): Invalid nonce value received, very suspicious !\n");
 		return NOT_AUTHORIZED;
 	}
