@@ -246,7 +246,7 @@ db_con_t* db_init(const char* _sqlurl)
 		memset(res, 0, sizeof(db_con_t));
 	}
 
-	if (!connect_db(res, _sqlurl)) {
+	if (connect_db(res, _sqlurl) < 0) {
 		LOG(L_ERR, "db_init(): Error while trying to connect database\n");
 		pkg_free(res);
 		return NULL;
