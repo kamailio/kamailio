@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * eXtended JABber module - worker implemetation
  *
  *

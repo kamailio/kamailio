@@ -1,4 +1,6 @@
 /* ====================================================================
+ * $Id$
+ *
  * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

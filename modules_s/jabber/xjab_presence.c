@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * XJAB module
  *
  *

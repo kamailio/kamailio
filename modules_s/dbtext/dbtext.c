@@ -1,4 +1,5 @@
-/* 
+/*
+ * $Id$
  *
  * DBText module interface
  *

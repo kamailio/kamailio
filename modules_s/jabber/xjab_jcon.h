@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * eXtended JABber module - headers for functions used for JABBER srv conection
  *
  *

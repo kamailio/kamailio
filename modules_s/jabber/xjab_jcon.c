@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * eXtended JABber module - functions used for SIP 2 JABBER communication
  *
  *

@@ -8,8 +8,9 @@ include ("libjab.php");
 $jserver = "127.0.0.1";   # Jabber server address
 $jport = "5222";     # Jabber server port
 $jcid  = 0;      # Jabber communication ID
-
-# main SER database - users profile table
+#
+/* **************************************
+# main SER database - users profile table - used for authentication
 $sip_db_srv="127.0.0.1";  # database server
 $sip_db_usr="ser";  # database user
 $sip_db_pas="***";  # database user's password
@@ -17,7 +18,8 @@ $sip_db_db="ser";   # database name
 $sip_db_tab="subscriber";  # name of users table
 $sip_db_cusr="user"; # column name for username
 $sip_db_cpas="password"; # column name for user's password
-
+*************************************** */
+#
 # Jabber module database
 $jab_db_srv="127.0.0.1";  # database server
 $jab_db_usr="ser";  # database user
@@ -59,6 +61,17 @@ if(!isset($action) || $action=="" || !isset($sipname) || $sipname=="" || !isset(
 		<TD>SIP password:</TD><TD><INPUT type="password" name="sippasswd" size="32"></TD>
 		</TR>
 
+		<TR>
+		<TD COLSPAN="2"><b><i><hr></i></b></TD>
+		</TR>
+		<TR>
+		<TD>My Jabber account:</TD>
+		<TD align="right">
+		    <INPUT type="submit" name="action" value="Enable">
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			<INPUT type="submit" name="action" value="Disable">
+		</TD>
+		</TR>
 		<TR>
 		<TD COLSPAN="2"><b><i><hr></i></b></TD>
 		</TR>
@@ -143,23 +156,44 @@ if(!isset($action) || $action=="" || !isset($sipname) || $sipname=="" || !isset(
 else
 {
 	# -----
-	# verify username and password
+	# AUTHENTICATION - verify username and password
 	# -----
+	/* ****************************************
 	echo "<br><h2>Instant Messaging Gateway</h2><hr size=\"1\" width=\"60%\"><br>";
-	$dblink = mysql_connect($sip_db_srv, $sip_db_usr, $sip_db_pas) or html_die("Could not connect to SIP database server");
-	mysql_select_db($sip_db_db, $dblink) or html_die("Could not select SIP database");
+	$dblink = mysql_connect($sip_db_srv, $sip_db_usr, $sip_db_pas) or
+		html_die("Could not connect to SIP database server");
+	mysql_select_db($sip_db_db, $dblink) 
+		or html_die("Could not select SIP database");
 	$query = "SELECT $sip_db_cusr FROM $sip_db_tab WHERE $sip_db_cusr='$sipname' AND $sip_db_cpas='$sippasswd'";
 	dbg_msg("$query <BR>");
 	$result = mysql_query($query) or html_die("Invalid SQL query");
 	if(mysql_num_rows($result) == 0)
 		html_die("Invalid SIP username or password");
 	mysql_close($dblink);
+	***************************************** */
+	#
+	#------------------------------------------------------
+	#
 	# -----
 	# check if is already registered to Jabber gateway
 	# -----
 	$sipuri = "sip:".$sipname."@iptel.org";
 	$dblink = mysql_connect($jab_db_srv, $jab_db_usr, $jab_db_pas) or html_die("Could not connect to Jabber database");
 	mysql_select_db($jab_db_db, $dblink) or html_die("Could not use Jabber database");
+	# ----
+	if($action == "Disable")
+	{
+		$query = "UPDATE jusers SET tyep=1 WHERE sip_id='$sipuri'";
+		$result = mysql_query($query, $dblink);
+		if(mysql_affected_rows() != 1)
+		{
+			mysql_close($dblink);
+			html_die("<br>Cannot find Jabber ID of '$sipname' in database");
+		}
+		mysql_close($dblink);
+		html_die("<br>Your IM account was updated");
+	}
+	# ----
 	$query = "SELECT jab_id FROM jusers WHERE sip_id='$sipuri'";
 	$result = mysql_query($query, $dblink) or html_die("Invalid SQL query");
 	if(mysql_num_rows($result) == 0)
@@ -221,17 +255,34 @@ else
 		jab_disconnect($fd);
 	}
 	# -----
-	$query = "SELECT juid, jab_id, jab_passwd FROM jusers WHERE sip_id='$sipuri'";
+	if($action == "Enable")
+	{
+		$query = "UPDATE jusers SET type=0 WHERE sip_id='$sipuri'";
+		$result = mysql_query($query, $dblink);
+		if(mysql_affected_rows() != 1)
+		{
+			mysql_close($dblink);
+			html_die("<br>Cannot find Jabber ID of '$sipname' in database");
+		}
+		mysql_close($dblink);
+		html_die("<br>Your IM account was updated");
+	}
+	# -----
+	$query="SELECT juid,jab_id,jab_passwd,type FROM jusers WHERE
+	sip_id='$sipuri' and type=0";
 	$result = mysql_query($query, $dblink) or html_die("Invalid SQL query");
 	if(mysql_num_rows($result) != 1 || (!($row = mysql_fetch_array($result))))
 	{
 		mysql_close($dblink);
-		html_die("<br>Can not find Jabber ID of '$sipname' in database");
+		html_die("<br>You do not have an associated Jabber account or it is
+		disabled!<br>Press 'Enable' in order to create a new one or to activate an
+		old one.<br>If error persists, please inform the administrator.");
 	}
 
 	$juid = $row[0];
 	$jab_id = $row[1];
 	$jab_passwd = $row[2];
+	$jab_type = $row[3];
 	dbg_msg("Jabber User ID: $juid<BR>");
 	$fd = jab_connect($jserver, $jport);
 	if(!$fd)

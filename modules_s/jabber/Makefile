@@ -11,6 +11,7 @@ NAME=jabber.so
 
 # extra debug messages
 DEFS+=-DXJ_EXTRA_DEBUG
+# -DHAVE_IHTTP
 
 # expat.h location
 DEFS+=-I$(LOCALBASE)/include -I/usr/pkg/include

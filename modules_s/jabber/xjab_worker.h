@@ -1,4 +1,5 @@
 /*
+ * $Id$
  *
  * eXtended JABber module
  *
