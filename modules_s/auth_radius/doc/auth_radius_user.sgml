@@ -114,7 +114,7 @@ modparam("auth_radius", "service_type", 15)
 		<title><function moreinfo="none">radius_www_authorize</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (radius_www_authorize("iptel.org")) {
+if (!radius_www_authorize("iptel.org")) {
     www_challenge("iptel.org", "1");
 };
 ...
