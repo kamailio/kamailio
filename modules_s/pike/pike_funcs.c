@@ -8,6 +8,7 @@
 #include "pike_funcs.h"
 
 
+int max_value;
 
 
 void print_timer_list(struct pike_timer_head *pth)
