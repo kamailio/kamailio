@@ -38,8 +38,9 @@
 #include "../str.h"
 #include "hf.h"
 
-#define EVENT_OTHER    0
-#define EVENT_PRESENCE 1
+#define EVENT_OTHER          0
+#define EVENT_PRESENCE       1
+#define EVENT_PRESENCE_WINFO 2
 
 
 typedef struct event {
