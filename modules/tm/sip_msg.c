@@ -76,7 +76,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
                    break;
       }
    }
-   /* length of the data lump structures */
+   /* length of the data lump structures
    if (org_msg->first_line.type==SIP_REQUEST)
       lump_chain = org_msg->add_rm;
    else
@@ -99,9 +99,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_chain = lump_chain->next;
    }
 
-   /*length of reply lump structures*/
+   /*length of reply lump structures/
    for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
-       len+=rpl_lump->text.len;
+       len+=rpl_lump->text.len;*/
 
    p=(char *)sh_malloc(len);foo=p;
    if (!p)
@@ -261,7 +261,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 
    }
 
-   /* clonning data lump*/
+   /* clonning data lump
    if (org_msg->first_line.type==SIP_REQUEST) {
       lump_chain = org_msg->add_rm;
       lump_anchor = &(new_msg->add_rm);
@@ -272,7 +272,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    while (lump_chain)
    {
       lump_clone( (*lump_anchor) , lump_chain , p );
-      /*before list*/
+      /*before list/
       lump_tmp = lump_chain->before;
       lump_anchor2 = &((*lump_anchor)->before);
       while ( lump_tmp )
@@ -281,7 +281,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
          lump_anchor2 = &((*lump_anchor2)->before);
          lump_tmp = lump_tmp->before;
       }
-      /*after list*/
+      /*after list/
       lump_tmp = lump_chain->after;
       lump_anchor2 = &((*lump_anchor)->after);
       while ( lump_tmp )
@@ -294,7 +294,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_chain = lump_chain->next;
    }
 
-   /*cloning reply lump structures*/
+   /*cloning reply lump structures/
    rpl_lump_anchor = &(new_msg->reply_lump);
    for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
    {
@@ -306,7 +306,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
        memcpy((*rpl_lump_anchor)->text.s,rpl_lump->text.s,rpl_lump->text.len);
        (*rpl_lump_anchor)->next=0;
        rpl_lump_anchor = &((*rpl_lump_anchor)->next);
-   }
+   }*/
     DBG("DEBUG:cloner --------<%d>---------<%d>-------------\n",len,p-foo);
    return new_msg;
 }
