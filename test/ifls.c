@@ -5,8 +5,14 @@
  */
 
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#ifdef __sun__
+#include <sys/sockio.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,9 +20,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 
 #define FLAGS 1
 
@@ -36,39 +39,80 @@ Options:\n\
 ";
 
 
+#define MAX(a,b) ( ((a)>(b))?(a):(b))
 
-int ls_if(char* name, int family , int options)
+
+
+void print_sockaddr(struct sockaddr* sa)
 {
-	struct ifreq ifr;
-	int s;
 	unsigned char* buf;
 	int r;
 	
+	switch(sa->sa_family){
+	case AF_INET:
+		buf=(char*)&(((struct sockaddr_in*)sa)->sin_addr).s_addr;
+		printf("%d.%d.%d.%d\n", buf[0], buf[1], buf[2], buf[3]);
+		break;
+	case AF_INET6:
+		buf=(((struct sockaddr_in6*)sa)->sin6_addr).s6_addr;
+		for(r=0; r<16; r++) 
+			printf("%02x%s", buf[r], ((r%2)&&(r!=15))?":":"" );
+		printf("\n");
+		break;
+	default:
+		printf("unknown af %d\n", sa->sa_family);
+#ifdef __FreeBSD__
+		for (r=0; r<sa->sa_len; r++) 
+			printf("%02x ", ((unsigned char*)sa)[r]);
+		printf("\n");
+#endif
+	}
+}
+
+
+
+int ls_ifflags(char* name, int family , int options)
+{
+	struct ifreq ifr;
+	int s;
 	
+	memset(&ifr, 0, sizeof(ifr)); /* init to 0 (check if filled)*/
 	s=socket(family, SOCK_DGRAM, 0);
 	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+#if 0	
 	if (ioctl(s, SIOCGIFADDR, &ifr)==-1){
 		if(errno==EBADF) return 0; /* invalid descriptor => no address*/
-		fprintf(stderr, "ls_if: ioctl failed: %s\n", strerror(errno));
+		fprintf(stderr, "ls_if: ioctl for %s failed: %s\n", name, 
+					strerror(errno));
 		goto error;
 	};
 	
 	printf("%s:\n", ifr.ifr_name);
-	if (ifr.ifr_addr.sa_family==AF_INET){
-		buf=&((struct sockaddr_in*)(&ifr.ifr_addr))->sin_addr;
-		printf("        %d.%d.%d.%d\n", buf[0], buf[1], buf[2], buf[3]);
-	}else{
-		buf=&((struct sockaddr_in6*)(&ifr.ifr_addr))->sin6_addr;
-		printf("        ");
-		for(r=0; r<16; r++) printf("%02x%s", buf[r], (r%2)?":":"" );
-		printf("\n");
+	printf("        dbg: family=%d", ifr.ifr_addr.sa_family);
+#ifdef __FreeBSD__
+	printf(", len=%d\n", ifr.ifr_addr.sa_len);
+#else
+	printf("\n");
+#endif
+	if (ifr.ifr_addr.sa_family==0){
+		printf("ls_if: OS BUG: SIOCGIFADDR doesn't work!\n");
+		goto error;
 	}
+	
+	printf("        ");
+	print_sockaddr(&ifr.ifr_addr);
+
+	if (ifr.ifr_addr.sa_family!=family){
+		printf("ls_if: strange family %d\n", ifr.ifr_addr.sa_family);
+		/*goto error;*/
+	}
+#endif
 	if (options & FLAGS){
 		if (ioctl(s, SIOCGIFFLAGS, &ifr)==-1){
-			fprintf(stderr, "ls_if: ioctl failed: %s\n", strerror(errno));
+			fprintf(stderr, "ls_if: flags ioctl for %s  failed: %s\n",
+					name, strerror(errno));
 			goto error;
 		}
-		printf("        ");
 		if (ifr.ifr_flags & IFF_UP) printf ("UP ");
 		if (ifr.ifr_flags & IFF_BROADCAST) printf ("BROADCAST ");
 		if (ifr.ifr_flags & IFF_DEBUG) printf ("DEBUG ");
@@ -77,13 +121,13 @@ int ls_if(char* name, int family , int options)
 		if (ifr.ifr_flags & IFF_RUNNING) printf ("RUNNING ");
 		if (ifr.ifr_flags & IFF_NOARP) printf ("NOARP ");
 		if (ifr.ifr_flags & IFF_PROMISC) printf ("PROMISC ");
-		if (ifr.ifr_flags & IFF_NOTRAILERS) printf ("NOTRAILERS ");
+		/*if (ifr.ifr_flags & IFF_NOTRAILERS) printf ("NOTRAILERS ");*/
 		if (ifr.ifr_flags & IFF_ALLMULTI) printf ("ALLMULTI ");
-		if (ifr.ifr_flags & IFF_MASTER) printf ("MASTER ");
-		if (ifr.ifr_flags & IFF_SLAVE) printf ("SLAVE ");
+		/*if (ifr.ifr_flags & IFF_MASTER) printf ("MASTER ");*/
+		/*if (ifr.ifr_flags & IFF_SLAVE) printf ("SLAVE ");*/
 		if (ifr.ifr_flags & IFF_MULTICAST) printf ("MULTICAST ");
-		if (ifr.ifr_flags & IFF_PORTSEL) printf ("PORTSEL ");
-		if (ifr.ifr_flags & IFF_AUTOMEDIA) printf ("AUTOMEDIA ");
+		/*if (ifr.ifr_flags & IFF_PORTSEL) printf ("PORTSEL ");*/
+		/*if (ifr.ifr_flags & IFF_AUTOMEDIA) printf ("AUTOMEDIA ");*/
 		/*if (ifr.ifr_flags & IFF_DYNAMIC ) printf ("DYNAMIC ");*/
 		printf ("\n");
 	};
@@ -95,17 +139,19 @@ error:
 
 
 
-int ls_all(int family, int options)
+int ls_ifs(char* name, int family, int options)
 {
 	struct ifconf ifc;
 	struct ifreq* ifr;
 	char*  last;
 	int size;
+	int lastlen;
 	int s;
 	
 	/* ipv4 or ipv6 only*/
 	s=socket(family, SOCK_DGRAM, 0);
-	for (size=10; ; size*=2){
+	lastlen=0;
+	for (size=2; ; size*=2){
 		ifc.ifc_len=size*sizeof(struct ifreq);
 		ifc.ifc_req=(struct ifreq*) malloc(size*sizeof(struct ifreq));
 		if (ifc.ifc_req==0){
@@ -117,7 +163,9 @@ int ls_all(int family, int options)
 			fprintf(stderr, "ioctl failed: %s\n", strerror(errno));
 			goto error;
 		}
-		if (ifc.ifc_len<size*sizeof(struct ifreq)) break;
+		if  ((lastlen) && (ifc.ifc_len==lastlen)) break; /*success,
+														   len not changed*/
+		lastlen=ifc.ifc_len;
 		/* try a bigger array*/
 		free(ifc.ifc_req);
 	}
@@ -125,11 +173,40 @@ int ls_all(int family, int options)
 	last=(char*)ifc.ifc_req+ifc.ifc_len;
 	for(ifr=ifc.ifc_req; (char*)ifr<last;
 			ifr=(struct ifreq*)((char*)ifr+sizeof(ifr->ifr_name)+
+			#ifdef  __FreeBSD__
+				MAX(ifr->ifr_addr.sa_len, sizeof(struct sockaddr))
+			#else
 				( (ifr->ifr_addr.sa_family==AF_INET)?
-					sizeof(struct sockaddr_in): sizeof(struct sockaddr_in6)) )
+					sizeof(struct sockaddr_in):
+					((ifr->ifr_addr.sa_family==AF_INET6)?
+						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
+			#endif
+				)
 		)
 	{
-		ls_if(ifr->ifr_name, family, options);
+/*
+		printf("\nls_all dbg: %s family=%d", ifr->ifr_name,
+				 						ifr->ifr_addr.sa_family);
+#ifdef __FreeBSD__
+		printf(", len=%d\n", ifr->ifr_addr.sa_len);
+#else
+		printf("\n");
+#endif
+*/
+		if (ifr->ifr_addr.sa_family!=family){
+			/*printf("strange family %d skipping...\n",
+					ifr->ifr_addr.sa_family);*/
+			continue;
+		}
+		if ((name==0)||
+			(strncmp(name, ifr->ifr_name, sizeof(ifr->ifr_name))==0)){
+			printf("%s:\n", ifr->ifr_name);
+			printf("        ");
+			print_sockaddr(&(ifr->ifr_addr));
+			printf("        ");
+			ls_ifflags(ifr->ifr_name, family, options);
+			printf("\n");
+		}
 	}
 	free(ifc.ifc_req); /*clean up*/
 	return  0;
@@ -201,12 +278,12 @@ int main(int argc, char**argv)
 	
 	if (no==0){
 		/* list all interfaces */
-		if (ipv4) ls_all(AF_INET, options);
-		if (ipv6) ls_all(AF_INET6, options);
+		if (ipv4) ls_ifs(0, AF_INET, options);
+		if (ipv6) ls_ifs(0, AF_INET6, options);
 	}else{
 		for(r=0; r<no; r++){
-			if (ipv4) ls_if(name[r], AF_INET, options);
-			if (ipv6) ls_if(name[r], AF_INET6, options);
+			if (ipv4) ls_ifs(name[r], AF_INET, options);
+			if (ipv6) ls_ifs(name[r], AF_INET6, options);
 		}
 	};
 	
@@ -214,4 +291,4 @@ int main(int argc, char**argv)
 	exit(0);
 error:
 	exit(-1);
-};	
+};
