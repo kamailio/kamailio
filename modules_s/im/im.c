@@ -46,6 +46,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
 #include "im_funcs.h"
+#include "im_load.h"
 
 
 #define  IM_HEADER        "BEGIN_MESSAGE"
@@ -71,18 +72,37 @@ char *fifo_name = 0;
 struct module_exports exports= {
 	"im",
 	(char*[]){
-				"im_dump_msg_to_fifo"
+				"im_dump_msg_to_fifo",
+				/* not applicable from script - only from other modules */
+				"im_extract_body",
+				"im_check_content_type",
+				"im_get_body_len",
+				"load_im"
 			},
 	(cmd_function[]){
-					im_dump_msg_to_fifo
+					im_dump_msg_to_fifo,
+					/* useless from script */
+					(cmd_function)im_extract_body,
+					(cmd_function)im_check_content_type,
+					(cmd_function)im_get_body_len,
+					(cmd_function)load_im
 					},
 	(int[]){
-				0
+				0, /* im_dump_msg_to_fifo */
+				/* useless from script */
+				2, /* im_extract_body */
+				1, /* im_check_content_type */
+				1, /* im_get_body_len */
+				1  /* im_load */
 			},
 	(fixup_function[]){
+				0,
+				0,
+				0,
+				0,
 				0
 		},
-	1,
+	5,
 
 	(char*[]) {   /* Module parameter names */
 		"dump_fifo_name"
@@ -109,7 +129,7 @@ static int im_init(void)
 {
 	int fd;
 
-	printf("sms - initializing\n");
+	DBG("IM - initializing\n");
 
 	if (!fifo_name) {
 		LOG(L_WARN,"WARNING:im_init:no dump fifo name! desabling dumping!!\n");
