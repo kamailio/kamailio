@@ -171,6 +171,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	char* buf;
 	int buf_len;
 	int ret;
+	unsigned int hi;
 
 	ret=-1;
 	
@@ -212,9 +213,10 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	request->dst.proto = send_sock->proto;
 	request->dst.proto_reserved1 = 0;
 
-	LOCK_HASH(new_cell->hash_index);
-	insert_into_hash_table_unsafe(new_cell, dlg2hash(dialog));
-	UNLOCK_HASH(new_cell->hash_index);
+	hi=dlg2hash(dialog);
+	LOCK_HASH(hi);
+	insert_into_hash_table_unsafe(new_cell, hi);
+	UNLOCK_HASH(hi);
 
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,
 		&buf_len, send_sock);
@@ -240,10 +242,10 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	start_retr(request);
 	return 1;
 
-error1:
-	LOCK_HASH(new_cell->hash_index);
+ error1:
+	LOCK_HASH(hi);
 	remove_from_hash_table_unsafe(new_cell);
-	UNLOCK_HASH(new_cell->hash_index);
+	UNLOCK_HASH(hi);
 	free_cell(new_cell);
 error2:
 	return ret;
