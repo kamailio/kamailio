@@ -6,6 +6,7 @@
 #define DB_VAL_H
 
 #include <time.h>
+#include "../str.h"
 
 
 /*
@@ -15,6 +16,7 @@ typedef enum {
 	DB_INT,
         DB_DOUBLE,
 	DB_STRING,
+	DB_STR,
 	DB_DATETIME
 } db_type_t;
 
@@ -30,6 +32,7 @@ typedef struct {
 		double       double_val; /* double value */
 		time_t       time_val;   /* unix time value */
 		const char*  string_val; /* NULL terminated string */
+		str          str_val;    /* str string value */
 	} val;                           /* union of all possible types */
 } db_val_t;
 
@@ -44,6 +47,7 @@ typedef struct {
 #define VAL_DOUBLE(dv) ((dv)->val.double_val)
 #define VAL_TIME(dv)   ((dv)->val.time_val)
 #define VAL_STRING(dv) ((dv)->val.string_val)
+#define VAL_STR(dv)    ((dv)->val.str_val)
 
 
 /*

@@ -79,6 +79,7 @@ information, see the next section.
        DB_INT,       /* Integer number */
        DB_DOUBLE,    /* Decimal number */
        DB_STRING,    /* String */
+       DB_STR,       /* str structure */
        DB_DATETIME   /* Date and time */
    } db_type_t;
 
@@ -97,6 +98,7 @@ recognized and converted by the database API:
 DB_INT      - Value in the database represents an integer number
 DB_DOUBLE   - Value in the database represents a decimal number
 DB_STRING   - Value in the database represents a string
+DB_STR      - Value in the database represents a string
 DB_DATETIME - Value in the database represents date and time
 
 These datatypes are automaticaly recognized, converted from internal database
@@ -167,6 +169,14 @@ Use this macro if you need to access string value in the db_val_t structure.
 
 Example: if (VAL_TYPE(val) == DB_STRING) {
              printf("%s", VAL_STRING(val));
+         }
+
+1.4.3.6 VAL_STR(value) Macro
+
+Use this macro if you need to access str structure in the db_val_t structure.
+
+Example: if (VAL_TYPE(val) == DB_STR) {
+             printf("%.*s", VAL_STR(val).len, VAL_STR(val).s);
          }
 
 

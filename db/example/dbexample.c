@@ -66,6 +66,12 @@ static int print_res(db_res_t* _r)
 				break;
 			case DB_STRING:
 				printf("%s ", RES_ROWS(_r)[i].values[j].val.string_val);
+				break;
+			case DB_STR:
+				printf("%.*s ", 
+				       RES_ROWS(_r)[i].values[j].val.str_val.len,
+				       RES_ROWS(_r)[i].values[j].val.str_val.s);
+				break;
 			}
 			
 		}
@@ -90,24 +96,24 @@ struct module_exports* mod_register()
 	db_key_t keys4[] = {"contact", "q"};
 
 	db_val_t vals1[] = { 
-		{ DB_STRING  , 0, { .string_val = "foo@bar.com" }      },
-		{ DB_STRING  , 0, { .string_val = "real@foo.bar.com" } },
-		{ DB_DOUBLE  , 0, { .double_val = 1.2 }                 },
-		{ DB_DATETIME, 0, { .time_val = 439826493 }            }
+		{ DB_STRING  , 0, { .string_val = "foo@bar.com" }              },
+		{ DB_STR     , 0, { .str_val    = { "real@foo.bar.com", 18 } } },
+		{ DB_DOUBLE  , 0, { .double_val = 1.2 }                        },
+		{ DB_DATETIME, 0, { .time_val   = 439826493 }                  }
 	};
 
 	db_val_t vals2[] = { 
-		{ DB_STRING  , 0, { .string_val = "foo2@bar2.com" }      },
-		{ DB_STRING  , 0, { .string_val = "real2@foo.bar2.com" } },
-		{ DB_DOUBLE  , 0, { .double_val = 1.3 }                   },
-		{ DB_DATETIME, 0, { .time_val = 12345 }                  }
+		{ DB_STRING  , 0, { .string_val = "foo2@bar2.com" }              },
+		{ DB_STR     , 0, { .str_val    = { "real2@foo.bar2.com", 18 } } },
+		{ DB_DOUBLE  , 0, { .double_val = 1.3 }                          },
+		{ DB_DATETIME, 0, { .time_val   = 12345 }                        }
 	};
 
 	db_val_t vals3[] = { 
-		{ DB_STRING  , 0, { .string_val = "foo3@bar3.com" }      },
-		{ DB_STRING  , 0, { .string_val = "real3@foo.bar3.com" } },
-		{ DB_DOUBLE  , 0, { .double_val = 1.5 }                  },
-		{ DB_DATETIME, 0, { .time_val = 123456 }                 }
+		{ DB_STRING  , 0, { .string_val = "foo3@bar3.com" }              },
+		{ DB_STR     , 0, { .str_val    = { "real3@foo.bar3.com", 18 } } },
+		{ DB_DOUBLE  , 0, { .double_val = 1.5 }                          },
+		{ DB_DATETIME, 0, { .time_val   = 123456 }                       }
 	};
 
 	db_val_t vals4[] = {
