@@ -143,7 +143,7 @@
 #define MAX_RPORT_SIZE		13
 
 /* maximum number of branches per transaction */
-#define MAX_BRANCHES    4
+#define MAX_BRANCHES    12
 
 /* maximum length of a FIFO server command */
 #define MAX_FIFO_COMMAND 512
