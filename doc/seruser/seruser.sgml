@@ -2241,6 +2241,31 @@ warning: IP extract from warning activated to be more informational
 		    </para>
 		</answer>
 	    </qandaentry>
+		<qandaentry>
+			<question>
+				<para>
+					Logging
+				</para>
+			</question>
+			<answer>
+				<para>
+					<application>ser</application> by default logs
+					to <application>syslog</application> facility.
+					It is very useful to watch log messages for
+					abnormal behaviour. Log messages, subject to
+					<application>syslog</application> configuration
+					may be stored at different files, or even at remote
+					systems. A typical location of the log file is
+					<filename>/var/log/messages</filename>.
+				</para>
+				<para>
+					One can also use other <application>syslogd</application>
+					implementation. <application>metalog</application>
+					features regular expression matching that enables
+					to filter and group log messages.
+				</para>
+			</answer>
+		</qandaentry>
 	    <qandaentry>
 		<question>
 		    <para>
