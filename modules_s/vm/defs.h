@@ -33,8 +33,4 @@
 #ifndef _VM_DEFS_H
 #define _VM_DEFS_H
 
-/* turn on if you wish to make user lookups using domain name */
-#define MULTI_DOMAIN
-
-
 #endif

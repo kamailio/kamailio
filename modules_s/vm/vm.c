@@ -91,10 +91,8 @@ char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
 
 char* user_column = "username";
-
-#ifdef MULTI_DOMAIN
 char* domain_column = "domain";
-#endif
+int use_domain = 0;
 
 /* #define EXTRA_DEBUG */
 
@@ -121,9 +119,8 @@ static param_export_t params[] = {
 	{"email_column",     STR_PARAM, &email_column    },
 	{"subscriber_table", STR_PARAM, &subscriber_table},
 	{"user_column",      STR_PARAM, &user_column     },
-#ifdef MULTI_DOMAIN
 	{"domain_column",    STR_PARAM, &domain_column   },
-#endif
+	{"use_domain",       INT_PARAM, &use_domain      },
 	{0, 0, 0}
 };
 
@@ -199,21 +196,13 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	VAL_NULL(&(vals[0])) = 0;
 	VAL_STR(&(vals[0]))  = *user;
 	    
-#ifdef MULTI_DOMAIN
 	keys[1] = domain_column;
 	VAL_TYPE(&vals[1]) = DB_STR;
 	VAL_NULL(&vals[1]) = 0;
 	VAL_STR(&vals[1])  = *host;
-#endif
 
 	db_use_table(db_handle,subscriber_table);
-	if ((*db_query)(db_handle, keys, 0, vals, cols, 
-#ifdef MULTI_DOMAIN
-			2, 
-#else
-			1,
-#endif
-			1, 0, &email_res))
+	if ((*db_query)(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1), 1, 0, &email_res))
 	  {
 	    
 	    LOG(L_ERR,"ERROR: vm: db_query() failed.");
