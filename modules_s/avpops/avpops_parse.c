@@ -455,8 +455,8 @@ struct fis_param* parse_check_value(char *s)
 	vp->flags |= flags;
 	return vp;
 parse_error:
-	LOG(L_ERR,"ERROR:avpops:parse_check_value: parse error in <%s> pos %d\n",
-		s,p-s);
+	LOG(L_ERR,"ERROR:avpops:parse_check_value: parse error in <%s> pos %ld\n",
+		s,(long)(p-s));
 error:
 	if (vp) pkg_free(vp);
 	return 0;

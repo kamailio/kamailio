@@ -809,7 +809,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
 					m_tm_callback,    /* Callback function */
-					(void*)mid        /* Callback parameter */
+					(void*)(long)mid        /* Callback parameter */
 				);
 	}
 
@@ -915,13 +915,13 @@ void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 	}
 	if(ps->code < 200 || ps->code >= 300)
 	{
-		DBG("MSILO:m_tm_callback: message <%d> was not sent successfully\n",
-				(int)ps->param);
-		msg_list_set_flag(ml, (int)ps->param, MS_MSG_ERRO);
+		DBG("MSILO:m_tm_callback: message <%ld> was not sent successfully\n",
+				(long)ps->param);
+		msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_ERRO);
 		goto done;
 	}
 
-	msg_list_set_flag(ml, (int)ps->param, MS_MSG_DONE);
+	msg_list_set_flag(ml, (int)(long)ps->param, MS_MSG_DONE);
 	
 done:
 	return;

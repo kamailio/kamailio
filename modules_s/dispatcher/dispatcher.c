@@ -137,7 +137,7 @@ void destroy(void)
 
 static int ds_fixup(void** param, int param_no)
 {
-	int n;
+	long n;
 	int err;
 	if(param_no==1 || param_no==2)
 	{

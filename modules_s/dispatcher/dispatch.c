@@ -496,8 +496,8 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 		return -1;
 	}
 	
-	s = (int)set;
-	a = (int)alg;
+	s = (int)(long)set;
+	a = (int)(long)alg;
 
 	/* get the index of the set */
 	si = _ds_index;

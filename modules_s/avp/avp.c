@@ -115,7 +115,7 @@ static int set_iattr(struct sip_msg* msg, char* attr, char* nr)
 {
 	int_str name, value;
 
-	value.n = (int)nr;
+	value.n = (int)(long)nr;
 	name.s = (str*)attr;
 
 	if (add_avp(AVP_NAME_STR, name, value) != 0) {

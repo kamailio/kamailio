@@ -380,13 +380,13 @@ static int load_fixup(void** param, int param_no)
 		} else {
 			LOG(L_WARN, "load_fixup(): File (%s) not found => empty rule set\n", pathname);
 		}
-		*param = (void*)rules_num;
+		*param = (void*)(long)rules_num;
 		if (param_no == 2) rules_num++;
 	} else {
 		     /* File already parsed, re-use it */
 		LOG(L_INFO, "load_fixup(): File (%s) already loaded, re-using\n", pathname);
 		pkg_free(pathname);
-		*param = (void*)idx;
+		*param = (void*)(long)idx;
 	}
 
 	return 0;
@@ -501,7 +501,7 @@ int allow_routing_0(struct sip_msg* msg, char* str1, char* str2)
 
 int allow_routing_1(struct sip_msg* msg, char* basename, char* s)
 {
-	return check_routing(msg, (int)basename);
+	return check_routing(msg, (int)(long)basename);
 }
 
 
@@ -511,7 +511,7 @@ int allow_routing_1(struct sip_msg* msg, char* basename, char* s)
 int allow_routing_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 {
 	     /* Index converted by load_lookup */
-	return check_routing(msg, (int)allow_file);
+	return check_routing(msg, (int)(long)allow_file);
 }
 
 
@@ -618,11 +618,11 @@ static int check_register(struct sip_msg* msg, int idx)
 
 int allow_register_1(struct sip_msg* msg, char* basename, char* s)
 {
-	return check_register(msg, (int)basename);
+	return check_register(msg, (int)(long)basename);
 }
 
 
 int allow_register_2(struct sip_msg* msg, char* allow_file, char* deny_file)
 {
-	return check_register(msg, (int)allow_file);
+	return check_register(msg, (int)(long)allow_file);
 }
