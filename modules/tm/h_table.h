@@ -26,6 +26,7 @@
  *
  * History:
  * --------
+ * 2003-03-16  removed _TOTAG (jiri)
  * 2003-03-01  kr set through a function now (jiri)
  */
 
@@ -124,12 +125,6 @@ typedef struct ua_server
 	 * we need them for dialog-wise matching of ACKs;
 	 * the pointer shows to shmem-ed reply */
 	str				 local_totag;
-#ifdef _TOTAG
-	str              to_tag;
-#endif
-#ifdef _OBSO
-	unsigned int     isACKed;
-#endif
 }ua_server_type;
 
 

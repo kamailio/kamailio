@@ -27,6 +27,7 @@
  *
  * History:
  * --------
+ * 2003-03-16  removed _TOTAG (jiri)
  * 2003-03-01  kr set through a function now (jiri)
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (TOTAG_LEN was defined
@@ -603,17 +604,6 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		goto error2;
 	}
 
-#ifdef _TOTAG
-	if(to_tag){
-	    trans->uas.to_tag.s = (char*)shm_resize( trans->uas.to_tag.s, to_tag_len );
-	    if(! trans->uas.to_tag.s ){
-			LOG(L_ERR, "ERROR: t_reply: cannot allocate shmem buffer\n");
-			goto error2; 
-	    }
-	    trans->uas.to_tag.len = to_tag_len;
-	    memcpy( trans->uas.to_tag.s, to_tag, to_tag_len );
-	}
-#endif
 
 	rb = & trans->uas.response;
 	rb->activ_type=code;
@@ -671,12 +661,6 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	return 1;
 
 error3:
-#ifdef _TOTAG
-	if (to_tag) {
-		shm_free(trans->uas.to_tag.s);
-		trans->uas.to_tag.s=0;
-	}
-#endif
 error2:
 	if (lock) UNLOCK_REPLIES( trans );
 	pkg_free ( buf );
@@ -788,9 +772,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	struct sip_msg *relayed_msg;
 	struct bookmark bm;
 	int totag_retr;
-#ifdef _TOTAG
-	str	to_tag;
-#endif
 	enum rps reply_status;
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
@@ -891,26 +872,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			update_local_tags(t, &bm, uas_rb->buffer, buf);
 		}
 		tm_stats->replied_localy++;
-#ifdef _TOTAG
-		/* to tag now */
-		if (relayed_code>=300 && t->is_invite) {
-			if (relayed_msg!=FAKED_REPLY) {
-				to_tag=get_to(relayed_msg)->tag_value;
-				t->uas.to_tag.s=(char *)shm_resize( t->uas.to_tag.s,
-					to_tag.len );
-				if (!t->uas.to_tag.s) {
-					LOG(L_ERR, "ERROR: no shmem for to-tag\n");
-					goto error04;
-				}
-				t->uas.to_tag.len=to_tag.len;
-				memcpy(t->uas.to_tag.s, to_tag.s, to_tag.len );
-			} else {
-				if (t->uas.to_tag.s) shm_free(t->uas.to_tag.s);
-				t->uas.to_tag.s=0;
-				t->uas.to_tag.len=0;
-			}
-		}
-#endif
 
 		/* update the status ... */
 		t->uas.status = relayed_code;
@@ -939,11 +900,6 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	/* success */
 	return reply_status;
 
-#ifdef _TOTAG
-error04:
-	shm_free( uas_rb->buffer );
-	uas_rb->buffer=0;
-#endif
 error03:
 	pkg_free( buf );
 error02:

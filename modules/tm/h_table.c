@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History
+ * -------
+ * 2003-03-16  removed _TOTAG (jiri)
  */
 
 #include "defs.h"
@@ -108,10 +112,6 @@ void free_cell( struct cell* dead_cell )
 		sip_msg_free_unsafe( dead_cell->uas.request );
 	if ( dead_cell->uas.response.buffer )
 		shm_free_unsafe( dead_cell->uas.response.buffer );
-#ifdef _TOTAG
-	if (dead_cell->uas.to_tag.s)
-		shm_free_unsafe(dead_cell->uas.to_tag.s);
-#endif
 
 	/* completion callback */
 	if (dead_cell->cbp) shm_free_unsafe(dead_cell->cbp);

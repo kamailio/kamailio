@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-03-16 backwards-compatibility callback names introduced (jiri)
  */
 
 
@@ -34,6 +38,13 @@
 
 struct sip_msg;
 struct cell;
+
+/* backwards compatibility hooks */
+#define TMCB_REPLY TMCB_RESPONSE_OUT
+#define TMCB_E2EACK TMCB_E2EACK_IN
+#define TMCB_REPLY_IN TMCB_RESPONSE_IN
+#define TMCB_REQUEST_OUT TMCB_REQUEST_FWDED
+#define TMCB_ON_NEGATIVE_TMCB_ON_FAILURE
 
 typedef enum { 
 		/* input events */
@@ -75,6 +86,12 @@ typedef enum {
  *    indicates a psedo_reply caused by a timer. Check for
  *    this value before derefing -- you will cause a segfault
  *    otherwise.
+ *
+ *    Also note, that reply callbacks are not called if a transaction
+ *    is dropped silently. That's the case when noisy_ctimer is
+ *    disabled (by default) and C-timer hits. The proxy server then
+ *    drops state silently, doesn't use callbacks and expects the
+ *    transaction to complete statelessly.
  *
  *  TMCB_ON_FAILURE -- called on receipt of a reply or timer;
  *  it means all branches completed with a failure; that's 
