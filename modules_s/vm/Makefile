@@ -6,7 +6,7 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 auto_gen=
-NAME=vm_mod.so
+NAME=vm.so
 LIBS=
 
 ifeq ($(MAKELEVEL), 0)
