@@ -104,56 +104,7 @@ void* _shm_resize( void* p , unsigned int s)
 }
 
 
-inline void shm_lock()
-{
-	struct sembuf sop;
-	
-	sop.sem_num=0;
-	sop.sem_op=-1; /*down*/
-	sop.sem_flg=0 /*SEM_UNDO*/;
-again:
-	semop(shm_semid, &sop, 1);
-#if 0
-	switch(ret){
-		case 0: /*ok*/
-			break;
-		case EINTR: /*interrupted by signal, try again*/
-			DBG("sh_lock: interrupted by signal, trying again...\n");
-			goto again;
-		default:
-			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
-					strerror(errno));
-	}
-#endif
-}
 
-
-
-inline void shm_unlock()
-{
-	struct sembuf sop;
-	
-	sop.sem_num=0;
-	sop.sem_op=1; /*up*/
-	sop.sem_flg=0 /*SEM_UNDO*/;
-again:
-	semop(shm_semid, &sop, 1);
-#if 0
-	/*should ret immediately*/
-	switch(ret){
-		case 0: /*ok*/
-			break;
-		case EINTR: /*interrupted by signal, try again*/
-			DBG("sh_lock: interrupted by signal, trying again...\n");
-			goto again;
-		default:
-			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
-					strerror(errno));
-	}
-#endif
-}
-
-/* ret -1 on erro*/
 int shm_mem_init()
 {
 
