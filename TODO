@@ -2,11 +2,12 @@ $Id$
 
 ( - todo, x - done)
 
+x tcp_main_loop: BUG cases should "conitnue;"
 - change len_gt into and expr (e.g msg:len).
 - sipit: uri == myself doesn't match tls port = 5061
 - sipit: fix check_self & *_alias to work with tcp & tls
 x sipit: fix ipv6 references in check_self
-- regex subst on uris?
+x regex subst on uris?
 x port receive.c pre_script_cb fix from stable
 - extend alias to include port numbers :
     something like alias= foo1.bar:5080 foo2.bar foo3.bar:*
@@ -14,12 +15,12 @@ x port receive.c pre_script_cb fix from stable
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
 
 release:
-- backport: tcp conn id fix to stable + destroy_tcp 
-- backport: acc mem. leak fixes
-- backport: dns mem. leak fixes (resolve.[ch])
-- backport: id_builder receive_msg mem. leak (receive.c)
-- backport: check_self ipv6/case fixes (forward.c)
-- change tcp timeouts to 2 or 3 min?
+x backport: tcp conn id fix to stable + destroy_tcp 
+x backport: acc mem. leak fixes
+x backport: dns mem. leak fixes (resolve.[ch])
+x backport: id_builder receive_msg mem. leak (msg_translator.c)
+x backport: check_self ipv6/case fixes (forward.c)
+x change tcp timeouts to 2 or 3 min?
 x check via ipv6 fixes and backport to stable
 x fix kill(0, SIGTERM) on startup error (will kill also the launching shell
  if non-interactive)

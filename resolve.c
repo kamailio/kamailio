@@ -530,7 +530,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 				}
 			}
 			if (head) free_rdata_list(head); /*clean up*/
-			DBG("sip_resolvehost: not SRV record found for %.*s," 
+			DBG("sip_resolvehost: no SRV record found for %.*s," 
 					" trying 'normal' lookup...\n", name->len, name->s);
 		}
 	}
