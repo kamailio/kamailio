@@ -28,6 +28,8 @@
 /*
  * History:
  * -------
+ *  2003-03-30  we now watch downstream delivery and if it fails, send an
+ *              error message upstream (jiri)
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-06  callbacks renamed; "blind UAC" introduced, which makes
  *              transaction behave as if it was forwarded even if it was
@@ -383,6 +385,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int first_branch;
 	int i;
 	struct cell *t_invite;
+	int success_branch;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -449,14 +452,21 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	t->on_negative=get_on_negative();
 
 	/* send them out now */
+	success_branch=0;
 	for (i=first_branch; i<t->nr_of_outgoings; i++) {
 		if (added_branches & (1<<i)) {
 			if (SEND_BUFFER( &t->uac[i].request)==-1) {
-				LOG(L_ERR, "ERROR: add_uac: sending request failed\n");
+				LOG(L_ERR, "ERROR: t_forward_nonack: sending request failed\n");
 				if (proxy) { proxy->errors++; proxy->ok=0; }
+			} else {
+				success_branch++;
 			}
 			start_retr( &t->uac[i].request );
 		}
+	}
+	if (success_branch<=0) {
+		ser_error=E_SEND;
+		return -1;
 	}
 	return 1;
 }	
