@@ -40,7 +40,7 @@
 
 inline static struct proxy_l *uri2proxy( str *uri )
 {
-	struct sip_uri  parsed_uri;
+	struct sip_uri parsed_uri;
 	unsigned int  port; 
 	struct proxy_l *p;
 	int err;
@@ -55,24 +55,18 @@ inline static struct proxy_l *uri2proxy( str *uri )
 		if (err){
 			LOG(L_ERR, "ERROR: t_relay: bad port in uri: <%.*s>\n",
 				parsed_uri.port.len, parsed_uri.port.s);
-			goto error;
+			return 0;
 		}
 	/* fixed use of SRV resolver
 	} else port=SIP_PORT; */
 	} else port=0;
-	p=mk_proxy(parsed_uri.host.s, port);
+	p=mk_proxy(&(parsed_uri.host), port);
 	if (p==0) {
 		LOG(L_ERR, "ERROR: t_relay: bad host name in URI <%.*s>\n",
 			uri->len, uri->s);
-		goto error;
+		return 0;
 	}
-	free_uri( &parsed_uri );
 	return p;
-
-error:
-	free_uri( &parsed_uri );
-	return 0;
-	
 }
 
 #endif

@@ -360,6 +360,7 @@ inline static int fixup_hostport2proxy(void** param, int param_no)
 	char *host;
 	int err;
 	struct proxy_l *proxy;
+	str s;
 	
 	DBG("TM module: fixup_t_forward(%s, %d)\n", (char*)*param, param_no);
 	if (param_no==1){
@@ -374,13 +375,17 @@ inline static int fixup_hostport2proxy(void** param, int param_no)
 				(char*)(*param));
 			 return E_UNSPEC;
 		}
-		proxy=mk_proxy(host, port);
+		s.s = host;
+		s.len = strlen(host);
+		proxy=mk_proxy(&s, port);
 		if (proxy==0) {
 			LOG(L_ERR, "ERROR: fixup_t_forwardv6: bad host name in URI <%s>\n",
 				host );
 			return E_BAD_ADDRESS;
 		}
 		/* success -- fix the first parameter to proxy now ! */
+
+		/* FIXME: janakj, mk_proxy doesn't make copy of host !! */
 		free( *(param-1));
 		*(param-1)=proxy;
 		return 0;
