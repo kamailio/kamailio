@@ -204,7 +204,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 						*(p++) = FIELD_ATTR;
 						if (val[0]=='D' || val[0]=='d')
 							*(p++) = DESTINATION_VAL;
-						else if (val[6]=='-')
+						else if (val[6]=='A' || val[6]=='a')
 							*(p++) = ORIGINAL_DESTINATION_VAL;
 						else if (!val[6])
 							*(p++) = ORIGIN_VAL;
@@ -377,7 +377,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 						*(p++) = BYWEEKNO_ATTR; break;
 					default: goto error;
 				}
-				foo = strlen(val);
+				foo = strlen(val)+1; /* copy also the /0 from the end */
 				*((unsigned short*)(p)) = (unsigned short)foo;
 				p += 2;
 				memcpy(p,val,foo);
@@ -585,7 +585,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 				switch(attr->name[0]) {
 					case 'R': case 'r':
 						*(p++) = REASON_ATTR;
-						foo = strlen(val);
+						foo = strlen(val)+1; /* grab also the /0 */
 						*((unsigned short*)(p)) = (unsigned short)foo;
 						p += 2;
 						memcpy(p,val,foo);
@@ -667,7 +667,8 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 	*nr_of_attr = nr_attr;
 	return (p-ptr);
 error:
-	LOG(L_ERR,"ERROR:cpl:encript_node_attr: error enconding attributes\n");
+	LOG(L_ERR,"ERROR:cpl:encript_node_attr: error enconding attributes for "
+		"node %d\n",type);
 	return -1;
 }
 

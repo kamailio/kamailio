@@ -42,24 +42,31 @@
 #include "loc_set.h"
 #include "cpl_utils.h"
 #include "cpl_run.h"
+#include "cpl_time.h"
 
 
-#define MAX_SIZE_STATIC_BUF  256
+//#define MAX_SIZE_STATIC_BUF  256
 #define EO_SCRIPT            ((unsigned char*)0xffffffff)
 #define HDR_NOT_FOUND        ((char*)0xffffffff)
 #define UNDEF_CHAR           (0xff)
 
 #define check_overflow_by_ptr(_ptr_,_intr_,_error_) \
 	do {\
-		if ( (char*)(_ptr_)>(_intr_)->script.len+(_intr_)->script.s ) \
+		if ( (char*)(_ptr_)>(_intr_)->script.len+(_intr_)->script.s ) {\
+			LOG(L_ERR,"ERROR:cpl_c: overflow detected ip=%p ptr=%p in "\
+			"func. %s, line %d\n",(_intr_)->ip,_ptr_,__FUNCTION__,__LINE__);\
 			goto _error_; \
+		} \
 	}while(0)
 
 #define check_overflow_by_offset(_len_,_intr_,_error_) \
 	do {\
 		if ( (char*)((_intr_)->ip+(_len_)) > \
-		(_intr_)->script.len+(_intr_)->script.s ) \
+		(_intr_)->script.len+(_intr_)->script.s ) {\
+			LOG(L_ERR,"ERROR:cpl_c: overflow detected ip=%p offset=%d in "\
+			"func. %s, line %d\n",(_intr_)->ip,_len_,__FUNCTION__,__LINE__);\
 			goto _error_; \
+		} \
 	}while(0)
 
 
@@ -122,7 +129,8 @@ inline unsigned char *run_cpl_node( struct cpl_interpreter *intr )
 		if ( NODE_TYPE(kid)==intr->type ) {
 			return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
 		} else if (NODE_TYPE(kid)==SUBACTION_NODE ||
-		NODE_TYPE(kid)==ANCILLARY_NODE) {
+		NODE_TYPE(kid)==ANCILLARY_NODE || NODE_TYPE(kid)==INCOMING_NODE ||
+		NODE_TYPE(kid)==OUTGOING_NODE ) {
 			continue;
 		} else {
 			LOG(L_ERR,"ERROR:run_cpl_node: unknown child type (%d) "
@@ -144,6 +152,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 	unsigned char field, subfield;
 	unsigned char *p;
 	unsigned char *kid;
+	unsigned char attr_name;
 	int i;
 	str cpl_val;
 	str *msg_val;
@@ -153,15 +162,18 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 	field = subfield = UNDEF_CHAR;
 	msg_val = 0;
 
-	DBG(">>>> kids=%d\n",NR_OF_KIDS(intr->ip));
-	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+	i=NR_OF_ATTR(intr->ip);
+	p=ATTR_PTR(intr->ip);
+	check_overflow_by_ptr( p+2*i, intr, error);
+	/* parse the attributes */
+	for( ; i>0 ; i-- ) {
 		if (*p==FIELD_ATTR)
 			field = *(p+1);
 		else if (*p==SUBFIELD_ATTR)
 			subfield = *(p+1);
 		else {
-			LOG(L_ERR,"ERROR:run_address_switch: unknown param type (%d) for "
-				"ADDRESS_SWITCH node\n",*p);
+			LOG(L_NOTICE,"NOTICE:run_address_switch: unknown attribute (%d) "
+				"in ADDRESS_SWITCH node\n",*p);
 			goto error;
 		}
 		p += 2;
@@ -172,20 +184,39 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 		goto error;
 	}
 
+	/* test the condition from all the sub-nodes */
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, error);
 		switch ( NODE_TYPE(kid) ) {
 			case OTHERWISE_NODE :
 				DBG("DEBUG:run_address_switch: matching on OTHERWISE node\n");
 				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
 			case ADDRESS_NODE :
-				if (NR_OF_ATTR(kid)!=1)
-					goto error;
+				/* check the number of attributes */
+				if (NR_OF_ATTR(kid)!=1) {
+					LOG(L_ERR,"ERROR:run_address_switch: incorect nr of attrs "
+						"(%d) in ADDRESS node -> skipping\n",NR_OF_ATTR(kid));
+					continue; /* for cycle for all kids */
+				}
+				/* get the attribute name */
 				p = ATTR_PTR(kid);
-				cpl_val.len = *((unsigned short*)(p+1));
-				cpl_val.s = ((cpl_val.len)?(p+3):0);
+				check_overflow_by_ptr( p+2, intr, error);
+				attr_name = *(p++);
+				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR &&
+				attr_name!=SUBDOMAIN_OF_ATTR) {
+					LOG(L_ERR,"ERROR:run_address_switch: unknown attribut "
+						"(%d) in ADDRESS node ->skipping branch\n",attr_name);
+					continue; /* for cycle for all kids */
+				}
+				/* get attribute value */
+				cpl_val.len = *((unsigned short*)p);
+				check_overflow_by_ptr( p+1+cpl_val.len, intr, error);
+				cpl_val.s = ((cpl_val.len)?(p+2):0);
 				DBG("DEBUG:run_address_switch: testing ADDRESS branch "
-					"(%d)[%.*s](%d)..\n",*p,cpl_val.len,cpl_val.s,cpl_val.len);
+					" attr_name=%d attr_val=[%.*s](%d)..\n",
+					attr_name,cpl_val.len,cpl_val.s,cpl_val.len);
+				/* extract the needed value from the message */
 				if (!msg_val) {
 					switch (field) {
 						case ORIGIN_VAL: /* FROM */
@@ -262,7 +293,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 						(msg_val->len==0)?0:msg_val->len, msg_val->s);
 				}
 				/* does the value from script match the one from message? */
-				switch (*p) {
+				switch (attr_name) {
 					case IS_ATTR:
 						if ( (!msg_val && !cpl_val.s) ||
 						(msg_val && msg_val->len==cpl_val.len &&
@@ -304,10 +335,6 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 							}
 						}
 						break;
-					default:
-						LOG(L_ERR,"ERROR:run_address_switch: unknown attribut"
-							" (%d) in ADDRESS node\n",*p);
-						goto error;
 				}
 				break;
 			default:
@@ -327,6 +354,7 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 	unsigned char field;
 	unsigned char *p;
 	unsigned char *kid;
+	unsigned char attr_name;
 	int i;
 	str cpl_val;
 	str msg_val;
@@ -335,8 +363,11 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 	msg_val.s = 0;
 	msg_val.len = 0;
 
-	DBG(">>>> kids=%d\n",NR_OF_KIDS(intr->ip));
-	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+	i=NR_OF_ATTR(intr->ip);
+	p=ATTR_PTR(intr->ip);
+	check_overflow_by_ptr( p+2*i, intr, error);
+	/* parse the attributes */
+	for( ; i>0 ; i-- ) {
 		if (*p==FIELD_ATTR)
 			field = *(p+1);
 		else {
@@ -354,18 +385,34 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, error);
 		switch ( NODE_TYPE(kid) ) {
 			case OTHERWISE_NODE :
 				DBG("DEBUG:run_string_switch: matching on OTHERWISE node\n");
 				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
 			case STRING_NODE :
-				if (NR_OF_ATTR(kid)!=1)
-					goto error;
+				/* check the number of attributes */
+				if (NR_OF_ATTR(kid)!=1) {
+					LOG(L_ERR,"ERROR:run_string_switch: incorect nr of attrs "
+						"(%d) in STRING node -> skipping\n",NR_OF_ATTR(kid));
+					continue; /* for cycle for all kids */
+				}
+				/* get the attribute name */
 				p = ATTR_PTR(kid);
-				cpl_val.len = *((unsigned short*)(p+1));
-				cpl_val.s = ((cpl_val.len)?(p+3):0);
+				check_overflow_by_ptr( p+2, intr, error);
+				attr_name = *(p++);
+				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR ) {
+					LOG(L_ERR,"ERROR:run_string_switch: unknown attribut "
+						"(%d) in STRING node ->skipping branch\n",attr_name);
+					continue; /* for cycle for all kids */
+				}
+				/* get attribute value */
+				cpl_val.len = *((unsigned short*)p);
+				check_overflow_by_ptr( p+1+cpl_val.len, intr, error);
+				cpl_val.s = ((cpl_val.len)?(p+2):0);
 				DBG("DEBUG:run_string_switch: testing STRING branch "
-					"(%d)[%.*s](%d)..\n",*p,cpl_val.len,cpl_val.s,cpl_val.len);
+					"attr_name=%d attr_val=[%.*s](%d)..\n",
+					attr_name,cpl_val.len,cpl_val.s,cpl_val.len);
 				if (!msg_val.s) {
 					switch (field) {
 						case SUBJECT_VAL: /* SUBJECT */
@@ -425,7 +472,7 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 						"<%.*s>\n",msg_val.len, msg_val.s);
 				}
 				/* does the value from script match the one from message? */
-				switch (*p) {
+				switch (attr_name) {
 					case IS_ATTR:
 						if ( (!msg_val.s && !cpl_val.s) ||
 						(msg_val.len==cpl_val.len &&
@@ -445,10 +492,6 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 								kid+KID_OFFSET(kid,0));
 						}
 						break;
-					default:
-						LOG(L_ERR,"ERROR:run_string_switch: unknown attribut"
-							" (%d) in STRING node\n",*p);
-						goto error;
 				}
 				break;
 			default:
@@ -479,11 +522,13 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 
 	msg_val.s = 0;
 	msg_val.len = 0;
+	msg_attr_val = NORMAL_VAL;
 
 	DBG(">>>> kids=%d\n",NR_OF_KIDS(intr->ip));
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, error);
 		switch ( NODE_TYPE(kid) ) {
 			case OTHERWISE_NODE :
 				DBG("DEBUG:run_priority_switch: matching on OTHERWISE node\n");
@@ -527,7 +572,7 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 					"(attr=%d,val=%d) [%.*s](%d)..\n",
 					attr_name,attr_val,cpl_val.len,cpl_val.s,cpl_val.len);
 				if (!msg_val.s) {
-					if (!intr->subject) {
+					if (!intr->priority) {
 						/* get the PRIORITY header from message */
 						if (!intr->msg->priority &&
 						(parse_headers(intr->msg,HDR_PRIORITY,0)==-1 ||
@@ -639,6 +684,162 @@ error:
 
 
 
+inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
+{
+	unsigned char  *p;
+	unsigned char  *kid;
+	unsigned char  attr_name;
+	unsigned short attr_len;
+	unsigned char  *attr_str;
+	unsigned char  flags;
+	int nr_attrs;
+	int i,j;
+	ac_tm_t att;
+	tmrec_t trt;
+
+	DBG(">>>> kids=%d\n",NR_OF_KIDS(intr->ip));
+
+	/* I'm totally ignoring any attributes if the time-switch node
+	 * let me make it work and I'll about this time zone, etc */
+	DBG("DEBUG:run_priority_switch: checking recv. time stamp <%d>\n",
+		intr->recv_time);
+
+	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, error);
+		switch ( NODE_TYPE(kid) ) {
+			case OTHERWISE_NODE :
+				DBG("DEBUG:run_time_switch: matching on OTHERWISE node\n");
+				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
+			case TIME_NODE :
+				/* init structures */
+				memset( &att, 0, sizeof(att));
+				memset( &trt, 0, sizeof(trt));
+				if(ac_tm_set_time( &att, intr->recv_time))
+					goto error;
+				/* let's see how many attributes we have */
+				nr_attrs = NR_OF_ATTR(kid);
+				/* get the attributes */
+				p = ATTR_PTR(kid);
+				flags = 0;
+				for(j=0;j<nr_attrs;j++) {
+					check_overflow_by_ptr( p+2, intr, error);
+					/* attribute's name */
+					attr_name = (*(p++));
+					/* attribute's value's len */
+					attr_len = *((unsigned short*)(p));
+					check_overflow_by_ptr( p+1+attr_len, intr, error);
+					attr_str = ((attr_len)?(p+2):0);
+					p += 2+attr_len;
+					/* process the attribute */
+					DBG("DEBUG:cpl_c:run_time_node: attribute [%d] found :"
+						"[%s]\n",attr_name, attr_str);
+					switch (attr_name) {
+						case DTSTART_ATTR:
+							if( !attr_str || tr_parse_dtstart(&trt, attr_str))
+								goto parse_err;
+							flags ^= (1<<0);
+							break;
+						case DTEND_ATTR:
+							if( !attr_str || tr_parse_dtend(&trt, attr_str))
+								goto parse_err;
+							flags ^= (1<<1);
+							break;
+						case DURATION_ATTR:
+							if( !attr_str || tr_parse_duration(&trt, attr_str))
+								goto parse_err;
+							flags ^= (1<<1);
+							break;
+						case FREQ_ATTR:
+							if( attr_str && tr_parse_freq(&trt, attr_str))
+								goto parse_err;
+							break;
+						case UNTIL_ATTR:
+							if( attr_str && tr_parse_until(&trt, attr_str))
+								goto parse_err;
+							break;
+						case INTERVAL_ATTR:
+							if( attr_str && tr_parse_interval(&trt, attr_str))
+								goto parse_err;
+							break;
+						case BYDAY_ATTR:
+							if( attr_str && tr_parse_byday(&trt, attr_str))
+								goto parse_err;
+							break;
+						case BYMONTHDAY_ATTR:
+							if( attr_str && tr_parse_bymday(&trt, attr_str))
+								goto parse_err;
+							break;
+						case BYYEARDAY_ATTR:
+							if( attr_str && tr_parse_byyday(&trt, attr_str))
+								goto parse_err;
+							break;
+						case BYMONTH_ATTR:
+							if( attr_str && tr_parse_bymonth(&trt, attr_str))
+								goto parse_err;
+							break;
+						case BYWEEKNO_ATTR:
+							if( attr_str && tr_parse_byweekno(&trt, attr_str))
+								goto parse_err;
+							break;
+						case WKST_ATTR:
+							if( attr_str && tr_parse_wkst(&trt, attr_str))
+								goto parse_err;
+							break;
+						default:
+							LOG(L_WARN,"WARNING:cpl_c:run_time_switch: "
+								"unsupported attribute [%d] found in TIME "
+								"node -> ignoring...\n",attr_name);
+					} /* end attribute switch */
+				} /* end for*/
+				/* check the mandatory attributes */
+				if ( flags!=((1<<0)|(1<<1)) ) {
+					LOG(L_ERR,"ERROR:cpl_c:run_time_switch: attribute DTSTART"
+						",DTEND,DURATION missing or multi-present\n");
+					goto error;
+				}
+				/* does the recv_time match the specified interval?  */
+				j = check_tmrec( &trt, &att, 0);
+				ac_tm_free( &att );
+				tmrec_free( &trt );
+				switch  (j) {
+					case 0:
+						DBG("DEBUG:run_time_switch: matching current "
+							"TIME node\n");
+						return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:
+							kid+KID_OFFSET(kid,0));
+					case -1:
+						LOG(L_ERR,"ERROR:cpl_c:run_time_switch: check_tmrec "
+							"ret. err. when testing time cond. !\n");
+						break;
+					case 1:
+						DBG("DEBUG:cpl_c:run_time_switch: time cond. doesn't"
+							" match !\n");
+						break;
+				}
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_priority_switch: unknown output node type"
+					" (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
+		} /* end switch for NODE_TYPE */
+	} /* end for for all kids */
+
+error:
+	ac_tm_free( &att );
+	tmrec_free( &trt );
+	return 0;
+parse_err:
+	LOG(L_ERR,"ERROR:run_priority_switch: error parsing attr [%d][%s]\n",
+		attr_name,attr_str?(char*)attr_str:"NULL");
+	ac_tm_free( &att );
+	tmrec_free( &trt );
+	return 0;
+}
+
+
+
+
+
 inline unsigned char *run_location( struct cpl_interpreter *intr )
 {
 	unsigned char n;
@@ -655,11 +856,14 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case URL_ATTR:
+				check_overflow_by_ptr( p+2, intr, error);
 				url.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+url.len, intr, error);
 				url.s = ((url.len)?(p+3):0);
 				p += 3+url.len;
 				break;
 			case PRIORITY_ATTR:
+				check_overflow_by_ptr( p+1, intr, error);
 				n = (unsigned char)(*(p+1));
 				if ( n>10)
 					LOG(L_WARN,"WARNING:run_location: invalid value (%u) found"
@@ -670,6 +874,7 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 				p += 2;
 				break;
 			case CLEAR_ATTR:
+				check_overflow_by_ptr( p+1, intr, error);
 				n = (unsigned char)(*(p+1));
 				if (n!=YES_VAL && n!=NO_VAL)
 					LOG(L_WARN,"WARNING:run_location: invalid value (%u) found"
@@ -693,7 +898,10 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 
 	if (clear)
 		empty_location_set( &(intr->loc_set) );
-	add_location( &(intr->loc_set), url.s, url.len, prio );
+	if (add_location( &(intr->loc_set), url.s, url.len, prio )==-1) {
+		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
+		goto error;
+	}
 
 	return ((NR_OF_KIDS(intr->ip)==0)?EO_SCRIPT:
 		(intr->ip+KID_OFFSET(intr->ip,0)));
@@ -714,7 +922,9 @@ inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case LOCATION_ATTR:
+				check_overflow_by_ptr( p+2, intr, error);
 				url.len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+url.len, intr, error);
 				url.s = ((url.len)?(p+3):0);
 				p += 3+url.len;
 				break;
@@ -742,15 +952,13 @@ error:
 
 inline unsigned char *run_reject( struct cpl_interpreter *intr )
 {
-	static char buffer[MAX_SIZE_STATIC_BUF];
 	unsigned char *p;
 	unsigned short status;
-	char *reason;
-	int reason_len;
-	int len;
+	char *reason_s;
+	int   reason_len;
 	int i;
 
-	reason = (char*)UNDEF_CHAR;
+	reason_s = (char*)UNDEF_CHAR;
 	status = UNDEF_CHAR;
 
 	/* sanity check */
@@ -763,19 +971,16 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case STATUS_ATTR:
+				check_overflow_by_ptr( p+2, intr, error);
 				status = *((unsigned short*)(p+1));
 				p += 3;
 				break;
 			case REASON_ATTR:
-				len = *((unsigned short*)(p+1));
-				if (len) {
-					reason_len = (len>MAX_SIZE_STATIC_BUF-1)?
-						(MAX_SIZE_STATIC_BUF-1):(len);
-					memcpy( buffer, p+3, reason_len );
-					buffer[reason_len] = 0;
-					reason = buffer;
-				}
-				p += 3+len;
+				check_overflow_by_ptr( p+2, intr, error);
+				reason_len = *((unsigned short*)(p+1));
+				check_overflow_by_ptr( p+2+reason_len, intr, error);
+				reason_s = p+3;
+				p += 3+reason_len;
 				break;
 			default:
 				LOG(L_WARN,"WARNING:run_reject: unknown attribute "
@@ -784,19 +989,19 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 		}
 	}
 
-	if (reason==(char*)UNDEF_CHAR ) {
+	if (reason_s==(char*)UNDEF_CHAR ) {
 		switch (status) {
 			case 486:
-				reason = "Busy Here";
+				reason_s = "Busy Here";
 				break;
 			case 404:
-				reason = "Not Found";
+				reason_s = "Not Found";
 				break;
 			case 603:
-				reason = "Decline";
+				reason_s = "Decline";
 				break;
 			case 500:
-				reason = "Internal Server Error";
+				reason_s = "Internal Server Error";
 			default:
 				LOG(L_ERR,"ERROR:run_reject: unknown value (%d) for attribute"
 					" STATUS in reject node\n",status);
@@ -804,7 +1009,7 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 		}
 	}
 
-	if (sl_send_rpl( intr->msg, (char*)(int)status, reason )<0) {
+	if (sl_send_rpl( intr->msg, (char*)(int)status, reason_s )<0) {
 		LOG(L_ERR,"ERROR:run_reject: unable to send reject reply!\n");
 		goto error;
 	}
@@ -839,6 +1044,7 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case PERMANENT_ATTR:
+				check_overflow_by_ptr( p+1, intr, error);
 				permanent = *(p+1);
 				if (permanent!=YES_VAL && permanent!=NO_VAL) {
 					LOG(L_ERR,"ERROR:run_redirect: unsupported value (%d) "
@@ -933,6 +1139,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 			case PRIORITY_SWITCH_NODE:
 				DBG("DEBUG:run_cpl_script:processing priority-switch node\n");
 				intr->ip = run_priority_switch( intr );
+				break;
+			case TIME_SWITCH_NODE:
+				DBG("DEBUG:run_cpl_script:processing time-switch node\n");
+				intr->ip = run_time_switch( intr );
 				break;
 			case LOCATION_NODE:
 				DBG("DEBUG:run_cpl_script:processing location node\n");
