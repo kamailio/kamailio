@@ -493,7 +493,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
      return -1;
   }
 
-
+  DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");
   /**/
   for( i=0 ; i<T->nr_of_outgoings ; i++ )
       if ( T->inbound_response[i] && T->inbound_response[i]->first_line.u.reply.statusclass==1)
@@ -861,9 +861,11 @@ int t_check( struct s_table *hash_table , struct sip_msg* p_msg )
    unsigned int branch;
 
    /* is T still up-to-date ? */
+   DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T=%x\n", p_msg->id,global_msg_id,T);
    if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
    {
       global_msg_id = p_msg->id;
+      T = T_UNDEFINED;
       /* transaction lookup */
      if ( p_msg->first_line.type=SIP_REQUEST )
          t_lookup_request( p_msg, 0, 0 );
