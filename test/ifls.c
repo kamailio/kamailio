@@ -51,6 +51,8 @@
 #include <errno.h>
 
 #define FLAGS 1
+#define IF_DOWN 2
+#define IF_UP   4
 
 
 static char* version="ifls 0.1";
@@ -63,6 +65,8 @@ Options:\n\
     -4      list only ipv4 interfaces\n\
     -6      list only ipv6 interfaces\n\
     -f      show also the interface flags\n\
+    -U      brings all the matching interfaces up\n\
+    -D      brings all the matching interfaces down\n\
     -V      version number\n\
     -h      this help message\n\
 ";
@@ -136,7 +140,7 @@ int ls_ifflags(char* name, int family , int options)
 		/*goto error;*/
 	}
 #endif
-	if (options & FLAGS){
+	if (options & (FLAGS|IF_DOWN|IF_UP)){
 		if (ioctl(s, SIOCGIFFLAGS, &ifr)==-1){
 			fprintf(stderr, "ls_if: flags ioctl for %s  failed: %s\n",
 					name, strerror(errno));
@@ -159,7 +163,21 @@ int ls_ifflags(char* name, int family , int options)
 		/*if (ifr.ifr_flags & IFF_AUTOMEDIA) printf ("AUTOMEDIA ");*/
 		/*if (ifr.ifr_flags & IFF_DYNAMIC ) printf ("DYNAMIC ");*/
 		printf ("\n");
+		if (options & IF_DOWN){
+			ifr.ifr_flags &= ~IFF_UP;
+		}
+		if (options & IF_UP){
+			ifr.ifr_flags |= IFF_UP;
+		}
+		if (options & (IF_UP|IF_DOWN)){
+			if (ioctl(s, SIOCSIFFLAGS, &ifr)==-1){
+				fprintf(stderr, "ls_if: set flags ioctl for %s  failed: %s\n",
+						name, strerror(errno));
+				goto error;
+			}
+		}
 	};
+		
 	close(s);
 	return 0;
 error:
@@ -262,7 +280,7 @@ int main(int argc, char**argv)
 	name=0;
 	no=0;
 	opterr=0;
-	while((c=getopt(argc, argv, "a46fhV"))!=-1){
+	while((c=getopt(argc, argv, "a46fhVUD"))!=-1){
 		switch(c){
 			case 'a':
 				ipv6=ipv4=1;
@@ -282,6 +300,12 @@ int main(int argc, char**argv)
 				printf("version: %s\n", version);
 				printf("%s\n", id);
 				exit(0);
+				break;
+			case 'D':
+				options|=IF_DOWN;
+				break;
+			case 'U':
+				options|=IF_UP;
 				break;
 			case 'h':
 				printf("version: %s\n", version);

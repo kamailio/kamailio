@@ -60,10 +60,12 @@
 */
 inline static void free_via_clen_lump( struct lump **list )
 {
-	struct lump *prev_lump, *lump, *a, *foo;
+	struct lump *prev_lump, *lump, *a, *foo, *next;
 
+	next=0;
 	prev_lump=0;
-	for(lump=*list;lump;lump=lump->next) {
+	for(lump=*list;lump;lump=next) {
+		next=lump->next;
 		if (lump->type==HDR_VIA||lump->type==HDR_CONTENTLENGTH) {
 			a=lump->before;
 			while(a) {
