@@ -868,6 +868,11 @@ cycle1:
 		/* the 2nd operator is an avp name -> get avp val */
 		name_type = (((val->flags&AVPOPS_VAL_INT))?0:AVP_NAME_STR);
 		avp2 = search_first_avp( name_type, val->val, &ck_val);
+		if (avp2==0)
+		{
+			DBG("DEBUG:avpops:check_avp: no avp2 found to check\n");
+			goto error;
+		}
 		ck_flg = avp2->flags&AVP_VAL_STR?AVPOPS_VAL_STR:AVPOPS_VAL_INT;
 	} else {
 		ck_val = val->val;
