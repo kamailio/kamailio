@@ -47,3 +47,9 @@ all: $(NAME)
 
 .PHONY: dep
 dep: $(depends)
+
+clean:
+	rm -f *.o
+	rm -f tm
+
+
