@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef _MF_FUNCS_H
 #define _MF_FUNCS_H
 

@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef CRED_H
 #define CRED_H
 

@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef auth_mod_h
 #define auth_mod_h
 

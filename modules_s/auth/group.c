@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #include "group.h"
 #include <string.h>
 #include "../../dprint.h"

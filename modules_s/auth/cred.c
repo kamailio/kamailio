@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #include "cred.h"
 #include "defs.h"
 #include "../../dprint.h"

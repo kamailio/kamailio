@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #include "nonce.h"
 #include "calc.h"
 #include <time.h>

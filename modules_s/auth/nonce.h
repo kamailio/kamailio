@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef NONCE_H
 #define NONCE_H
 

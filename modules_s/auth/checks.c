@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #include "checks.h"
 #include "../../str.h"
 #include "../../dprint.h"
