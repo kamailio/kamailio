@@ -28,11 +28,21 @@
  * ---------
  *  2004-07-21  created (bogdan)
  *  2004-11-14  global aliases support added
+ *  2005-02-14  list with FLAGS USAGE added (bogdan)
  */
 
 #ifndef _SER_URS_AVP_H_
 #define _SER_URS_AVP_H_
 
+/*
+ *   LIST with the allocated flags, their meaning and owner
+ *   flag no.    owner            description
+ *   -------------------------------------------------------
+ *     0        avp_core          avp has a string name
+ *     1        avp_core          avp has a string value
+ *     3        avpops module     avp was loaded from DB
+ *
+ */
 
 #include "str.h"
 
