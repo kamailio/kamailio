@@ -96,7 +96,8 @@ void free_rdata_list(struct rdata* head);
 
 
 
-#define rev_resolvehost(ip) gethostbyaddr((ip)->u.addr, (ip)->len, (ip)->af);
+#define rev_resolvehost(ip)\
+					gethostbyaddr((char*)(ip)->u.addr, (ip)->len, (ip)->af);
 
 
 
