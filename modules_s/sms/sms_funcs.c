@@ -139,7 +139,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	struct sms_msg  *sms_messg;
 	struct to_body  from_parsed;
 	struct to_param *foo,*bar;
-	char   *p;
+	char   *p, *buf=0;
 	int    flag;
 	int    len;
 
@@ -195,7 +195,13 @@ int push_on_network(struct sip_msg *msg, int net)
 	/* parsing from header */
 	memset(&from_parsed,0,sizeof(from_parsed));
 	p = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
-	parse_to(p,p+msg->from->body.len+1,&from_parsed);
+	buf = (char*)pkg_malloc(msg->from->body.len+1);
+	if (!buf) {
+		LOG(L_ERR,"ERROR:sms_push_on_net: no free pkg memory\n");
+		goto error;
+	}
+	memcpy(buf,p,msg->from->body.len+1);
+	parse_to(buf,buf+msg->from->body.len+1,&from_parsed);
 	if (from_parsed.error!=PARSE_OK ) {
 		LOG(L_ERR,"ERROR:sms_push_on_net: cannot parse from header\n");
 		goto error;
@@ -262,9 +268,11 @@ int push_on_network(struct sip_msg *msg, int net)
 	}
 
 	free_uri(&uri);
+	if (buf) pkg_free(buf);
 	return 1;
 error:
 	free_uri(&uri);
+	if (buf) pkg_free(buf);
 error1:
 	return -1;
 }
