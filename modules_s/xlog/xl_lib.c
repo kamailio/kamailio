@@ -177,6 +177,7 @@ static int xl_get_ruri(struct sip_msg *msg, str *res)
 				msg->parsed_uri.port.len+
 				msg->parsed_uri.params.len+
 				msg->parsed_uri.headers.len+
+				(msg->parsed_uri.user.len>0?1:0)+
 				(msg->parsed_uri.passwd.len>0?1:0)+
 				(msg->parsed_uri.port.len>0?1:0)+
 				(msg->parsed_uri.params.len>0?1:0)+
@@ -217,7 +218,7 @@ static int xl_get_from(struct sip_msg *msg, str *res)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->from==NULL && parse_from_header(msg)==-1)
+	if(parse_from_header(msg)==-1)
 	{
 		LOG(L_ERR, "XLOG: xl_get_from: ERROR cannot parse FROM header\n");
 		return xl_get_null(msg, res);
@@ -237,14 +238,15 @@ static int xl_get_from_tag(struct sip_msg *msg, str *res)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg->from==NULL && parse_from_header(msg)==-1)
+	if(parse_from_header(msg)==-1)
 	{
 		LOG(L_ERR, "XLOG: xl_get_from: ERROR cannot parse FROM header\n");
 		return xl_get_null(msg, res);
 	}
 	
 	
-	if(msg->from==NULL || get_from(msg)==NULL || get_from(msg)->tag_value.s==NULL)
+	if(msg->from==NULL || get_from(msg)==NULL 
+			|| get_from(msg)->tag_value.s==NULL)
 		return xl_get_null(msg, res);
 
 	res->s = get_from(msg)->tag_value.s;
