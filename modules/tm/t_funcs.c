@@ -1,9 +1,15 @@
 #include "t_funcs.h"
+#include "../../dprint.h"
 
 struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
 int                      sock_fd;
+
+int t_cancel_branch(unsigned int branch)
+{
+	LOG(L_ERR, "ERROR: t_cancel_branch: NOT IMPLEMENTED YET\n");
+}
 
 int tm_startup()
 {
@@ -246,7 +252,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    T->outbound_request[0]->max_retrans = (T->inbound_request->first_line.u.request.method_value==METHOD_INVITE) ? MAX_INVITE_RETR : MAX_NON_INVITE_RETR;
    T->outbound_request[0]->timeout         = RETR_T1;
    /* send the request */
-   send_udp( T->outbound_request[0]->buffer , T->outbound_request[0]->bufflen , &(T->outbound_request[0]->to) , sizeof(struct sockaddr_in) );
+   udp_send( T->outbound_request[0]->buffer , T->outbound_request[0]->bufflen , &(T->outbound_request[0]->to) , sizeof(struct sockaddr_in) );
 }
 
 
@@ -377,7 +383,7 @@ int t_retransmit_reply( struct sip_msg* p_msg )
    /* if no transaction exists or no reply to be resend -> out */
    if ( T  && T->inbound_response )
    {
-      send_udp( T->inbound_response->buffer , T->inbound_response->bufflen , &(T->inbound_response->to) , sizeof(struct sockaddr_in) );
+      udp_send( T->inbound_response->buffer , T->inbound_response->bufflen , &(T->inbound_response->to) , sizeof(struct sockaddr_in) );
       return 0;
    }
 
@@ -740,7 +746,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    *(p++) = '\n';
 
    /* sends the ACK message to the same destination as the INVITE */
-   send_udp( ack_buf, p-ack_buf, &(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+   udp_send( ack_buf, p-ack_buf, &(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 
    /* free mem*/
    free( ack_buf );
