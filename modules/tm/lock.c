@@ -1,3 +1,8 @@
+/*
+ * $Header$
+ */
+
+
 #include <errno.h>
 
 #include "lock.h"
