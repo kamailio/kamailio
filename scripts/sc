@@ -1,4 +1,4 @@
-#!/bin/sh  
+#!/bin/sh
 #
 # $Id$
 #
@@ -216,16 +216,42 @@ set_user() {
 # quite simplified now -- it captures just very basic
 # errors
 check_uri() {
-	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*" 
+	echo "$1" | $EGREP "^sip(s)?:([a-zA-Z0-9_]+@)?.*\..*"  > /dev/null
+	if [ $? -ne 0 ] ; then 
+		echo "error: invalid URI: $1" > /dev/stderr
+		exit 1
+	fi
 }
 
 # check for alias duplicates
 check_alias() {
-		fifo_cmd ul_show_contact "$ALS_TABLE" "$1" | grep 404 > /dev/null
-		if [ $? -ne 0 ]; then
-			echo error: overlap with an existing alias
+		RES=`fifo_cmd ul_show_contact "$ALS_TABLE" "$1"`
+		RET="$?"
+		if [ $RET -ne 0 ] ; then
+			echo "error: SER/FIFO not accessible: $RET" \
+				> /dev/stderr
 			exit 1
 		fi
+		echo "$RES" | grep "^404" > /dev/null
+		if [ $? -eq 0 ] ; then
+			# alias does not exist yet, go ahead!
+			return 0
+		fi
+		echo "$RES" | grep "^400" > /dev/null
+		if [ $? -eq 0 ] ; then
+			echo "error: 400; check if you use aliases in SER" \
+				> /dev/stderr
+			exit 1
+		fi
+		echo "$RES" | grep "^200" > /dev/null
+		if [ $? -eq 0 ] ; then
+			echo "error: overlap with an existing alias" \
+				> /dev/stderr
+			exit 1
+		fi
+		# other errors
+		echo "error: $RES" > /dev/stderr
+		exit 1
 }
 
 
@@ -272,19 +298,19 @@ fifo_cmd()
 	fi
 	if [ "$#" -lt 1 ]; then
 		echo "ERROR: fifo_cmd must take at least command name as parameter"
-		exit
+		exit 1
 	fi
 	name=ser_receiver_$$
 	path=/tmp/$name
 	if [ ! -w $SER_FIFO ]; then
 		echo "Error opening ser's FIFO $SER_FIFO"
 		echo "Make sure you have line fifo=$SER_FIFO in your config"
-		exit 1
+		exit 2
 	fi
 	mkfifo $path
 	if [ $? -ne 0 ] ; then
 		echo "error opening read fifo $path"
-		exit 1
+		exit 3
 	fi
 	chmod a+w $path
 
