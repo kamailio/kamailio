@@ -126,7 +126,7 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* prot
 		return -1;
 	}
 		
-	np->pattern = (char *) shm_malloc(strlen(pattern));
+	np->pattern = (char *) shm_malloc(strlen(pattern)+1);
 	if (np->pattern == NULL) {
 		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for pattern string\n");
 		return -1;
