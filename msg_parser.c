@@ -209,6 +209,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	char* tmp;
 	char *match;
 	struct via_body *vb;
+	struct cseq_body* cseq_b;
 
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
@@ -241,12 +242,29 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			hdr->parsed=vb;
 			vb->hdr.s=hdr->name.s;
 			vb->hdr.len=hdr->name.len;
-			/*vb->size=tmp-hdr->name.s;*/
 			hdr->body.len=tmp-hdr->body.s;
+			break;
+		case HDR_CSEQ:
+			cseq_b=malloc(sizeof(struct cseq_body));
+			if (cseq_b==0){
+				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				goto error;
+			}
+			memset(cseq_b, 0, sizeof(struct cseq_body));
+			hdr->body.s=tmp;
+			tmp=parse_cseq(tmp, end, cseq_b);
+			if (cseq_b->error==PARSE_ERROR){
+				LOG(L_ERR, "ERROR: get_hdr_field: bad cseq\n");
+				free(cseq_b);
+				goto error;
+			}
+			hdr->parsed=cseq_b;
+			hdr->body.len=tmp-hdr->body.s;
+			DBG("get_hdr_field: cseq <%s>: <%s> <%s>\n",
+					hdr->name.s, cseq_b->number.s, cseq_b->method.s);
 			break;
 		case HDR_TO:
 		case HDR_FROM:
-		case HDR_CSEQ:
 		case HDR_CALLID:
 		case HDR_CONTACT:
 		case HDR_OTHER:
@@ -268,7 +286,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				#endif
 				}else {
 					tmp=end;
-					LOG(L_ERR, "ERROR: get_hdr_field: bad body for <%s>(%d)\n",
+					LOG(L_ERR,
+							"ERROR: get_hdr_field: bad body for <%s>(%d)\n",
 							hdr->name.s, hdr->type);
 					goto error;
 				}
@@ -398,6 +417,54 @@ char* parse_hostport(char* buf, str* host, short int* port)
 		}
 	}
 	return host->s;
+}
+
+
+
+/*BUGGY*/
+char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
+{
+	char *t;
+	char c;
+
+	cb->error=PARSE_ERROR;
+	t=eat_space_end(buf, end);
+	if (t>=end) goto error;
+	
+	cb->number.s=t;
+	t=eat_token_end(t, end);
+	if (t>=end) goto error;
+	*t=0; /*null terminate it*/
+	cb->number.len=t-cb->number.s;
+	t++;
+	t=eat_space_end(t, end);
+	if (t>=end) goto error;
+	cb->method.s=t;
+	t=eat_token_end(t, end);
+	if (t>=end) goto error;
+	c=*t;
+	*t=0; /*null terminate it*/
+	cb->method.len=t-cb->method.s;
+	t++;
+	/*check if the header ends here*/
+	if (c=='\n') goto check_continue;
+	do{
+		for (;(t<end)&&((*t==' ')||(*t=='\t')||(*t=='\r'));t++);
+		if (t>=end) goto error;
+		if (*t!='\n'){
+			LOG(L_ERR, "ERROR:parse_cseq: unexpected char <%c> at end of"
+					" cseq\n", *t);
+			goto error;
+		}
+		t++;
+check_continue:
+	}while( (t<end) && ((*t==' ')||(*t=='\t')) );
+
+	cb->error=PARSE_OK;
+	return t;
+error:
+	LOG(L_ERR, "ERROR: parse_cseq: bad cseq\n");
+	return t;
 }
 
 
@@ -956,6 +1023,9 @@ void clean_hdr_field(struct hdr_field* hf)
 		switch(hf->type){
 			case HDR_VIA:
 				free_via_list(hf->parsed);
+				break;
+			case HDR_CSEQ:
+				free(hf->parsed);
 				break;
 			default:
 				LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",

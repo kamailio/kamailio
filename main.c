@@ -288,7 +288,9 @@ static void sig_usr(int signo)
 		DPrint("Thank you for flying ser\n");
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
+#ifdef STATS
 		dump_all_statistic();
+#endif
 	}
 }
 	
@@ -329,7 +331,9 @@ int main(int argc, char** argv)
 					cfg_file=optarg;
 					break;
 			case 's':
+				#ifdef STATS
 					stat_file=optarg;
+				#endif
 					break;
 			case 'p':
 					port_no=strtol(optarg, &tmp, 10);

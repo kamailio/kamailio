@@ -48,6 +48,8 @@ if (  (*tmp==(firstchar) || *tmp==((firstchar) | 32)) &&                  \
 
 #define VIA_PARSE_OK	1
 #define VIA_PARSE_ERROR -1
+#define PARSE_ERROR -1
+#define PARSE_OK 1
 
 #define SIP_VERSION	"SIP/2.0"
 #define SIP_VERSION_LEN 7
@@ -94,6 +96,16 @@ struct via_body{  /* format: name/version/transport host:port;params comment */
 	struct via_body* next; /* pointer to next via body string if
 							  compact via or null */
 };
+
+
+
+struct cseq_body{
+	int error;
+	str number;
+	str method;
+};
+
+
 
 struct sip_msg{
 	unsigned int id; /* message id, unique/process*/
@@ -155,12 +167,15 @@ char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb);
 #endif
 int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 int parse_uri(char *buf, int len, struct sip_uri* uri);
+int parse_headers(struct sip_msg* msg, int flags);
+
 void free_uri(struct sip_uri* u);
 
 
 #ifndef OLD_PARSER
 char* parse_hname(char* buf, char* end, struct hdr_field* hdr);
 char* parse_via(char* buffer, char* end, struct via_body *vb);
+char* parse_cseq(char* buffer, char* end, struct cseq_body *cb);
 #endif
 
 void free_via_list(struct via_body *vb);
