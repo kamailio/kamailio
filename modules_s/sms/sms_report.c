@@ -102,10 +102,10 @@ void set_gettime_function()
 	t2 = get_ticks();
 	if (!t1 && !t2) {
 		get_time = get_time_sys;
-		DBG("DEBUG:sms:set_gettime_function: using system time function\n");
+		LOG(L_INFO,"INFO:sms:set_gettime_function: using system time func.\n");
 	} else {
 		get_time = get_time_ser;
-		DBG("DEBUG:sms:set_gettime_function: using ser time function\n");
+		LOG(L_INFO,"INFO:sms:set_gettime_function: using ser time func.\n");
 	}
 }
 
