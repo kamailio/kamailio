@@ -181,8 +181,11 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			if (!EQ_STR(from)) continue;
 			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
 				get_to(t_msg)->uri.len)!=0) continue;
-			if (p_cell->uas.to_tag.len!=0 /* to-tags empty */
-				|| memcmp(p_cell->uas.to_tag.s, get_to(p_msg)->tag_value.s,
+			if (
+#ifdef _BUG
+				p_cell->uas.to_tag.len!=0 /* to-tags empty */ || 
+#endif
+				memcmp(p_cell->uas.to_tag.s, get_to(p_msg)->tag_value.s,
 				p_cell->uas.to_tag.len)!=0) continue;
 	
 			/* ok, now only r-uri or via can mismatch; they must match
