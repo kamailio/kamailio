@@ -249,15 +249,17 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 		return -1;
 	}
 
-	tag_str = &(get_to(msg)->tag_value);
-	if ( tag_str->len==TOTAG_LEN )
-	{
-		/* calculate the variable part of to-tag */	
-		calc_crc_suffix(msg);
-		/* test whether to-tag equal now */
-		if (memcmp(tag_str->s,sl_tag,TOTAG_LEN)==0) {
-			DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
-			return 0;
+	if (msg->to) {
+		tag_str = &(get_to(msg)->tag_value);
+		if ( tag_str->len==TOTAG_LEN )
+		{
+			/* calculate the variable part of to-tag */	
+			calc_crc_suffix(msg);
+			/* test whether to-tag equal now */
+			if (memcmp(tag_str->s,sl_tag,TOTAG_LEN)==0) {
+				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
+				return 0;
+			}
 		}
 	}
 
