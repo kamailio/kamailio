@@ -81,7 +81,7 @@ static cmd_export_t cmds[] = {
 	{"~ul_insert_urecord",     (cmd_function)insert_urecord,     1, 0},
 	{"~ul_delete_urecord",     (cmd_function)delete_urecord,     1, 0},
 	{"~ul_get_urecord",        (cmd_function)get_urecord,        1, 0},
-	{"~ul_lock_udomain",       (cmd_function)get_urecord,        1, 0},
+	{"~ul_lock_udomain",       (cmd_function)lock_udomain,       1, 0},
 	{"~ul_unlock_udomain",     (cmd_function)unlock_udomain,     1, 0},
 	{"~ul_release_urecord",    (cmd_function)release_urecord,    1, 0},
 	{"~ul_insert_ucontact",    (cmd_function)insert_ucontact,    1, 0},
