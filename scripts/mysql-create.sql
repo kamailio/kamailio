@@ -4,14 +4,12 @@
 # $Id$
 #
 
-create database ser2;
-use ser2;
+create database ser;
+use ser;
 
 # Users: ser is the regular user, serro only for reading
-GRANT ALL PRIVILEGES ON ser2.* TO ser IDENTIFIED  BY 'heslo';
-GRANT SELECT ON ser2.* TO serro IDENTIFIED BY '47serro11';
-
-
+GRANT ALL PRIVILEGES ON ser.* TO ser IDENTIFIED  BY 'heslo';
+GRANT SELECT ON ser.* TO serro IDENTIFIED BY '47serro11';
 
 # --------------------------------------------------------
 #
