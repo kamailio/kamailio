@@ -37,7 +37,7 @@ int register_builtin_modules()
 
 	ret=0;
 	#ifdef STATIC_TM
-		ret=register_module(tm_exports,"built-in", 0);
+		ret=register_module(tm_exports,"built-in", 0); 
 		if (ret<0) return ret;
 	#endif
 	#ifdef STATIC_MAXFWD
@@ -46,7 +46,7 @@ int register_builtin_modules()
 	#endif
 
 #ifdef STATIC_AUTH
-		ret=register_module(tm_exports, "built-in", 0);
+		ret=register_module(auth_exports, "built-in", 0); 
 		if (ret<0) return ret;
 #endif
 
