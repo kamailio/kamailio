@@ -126,6 +126,15 @@ Desc: 	acc_request reports on a request; particularly, it can be used
 
 Known Issues:
 -------------
+there are some issues with accounting from proxy servers:
+- if a UA fails in middle of conversation, a proxy will ever learn it;
+  in general, a better practice is to account from an end-device
+  (such as PSTN gateway), which best knows about call status
+  (including media status and PSTN status in case of the gateway)
+- record-routing must be turned on, subsequent transactions will not
+  visit the proxy server otherwise (and will consequently not be
+  reported)
+
 Requests processed by 'acc' are taken from TM's shared mem,
 they cannot be parsed any more. This might be an issue in
 the future, when some requests are not parsed for performance
@@ -136,5 +145,4 @@ mesages.
 
 To-DO
 -----
-- reporting to MYSQL
 - printf-like formatting of output message
