@@ -42,16 +42,17 @@ typedef enum db_cap {
 
 
 /*
- * All database functions except raw_query
+ * All database capabilities except raw_query which should be checked
+ * separately when needed
  */
-#define DB_CAP_ALL (DB_CAP_QUERY | DB_CAP_INSERT | DB_CAP_DELETE | DB_CAP_UPDATE)	
+#define DB_CAP_ALL (DB_CAP_QUERY | DB_CAP_INSERT | DB_CAP_DELETE | DB_CAP_UPDATE)
 
 
 /*
  * True if all the capabilities in cpv are supported by module
  * represented by dbf, false otherwise
  */
-#define DB_CAPABILITY(dbf, cpv) ((dbf)->cap & (cpv)) == (cpv))
+#define DB_CAPABILITY(dbf, cpv) (((dbf).cap & (cpv)) == (cpv))
 
 
 #endif /* DB_CAP_H */

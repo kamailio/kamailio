@@ -567,6 +567,12 @@ static inline void print_res(db_res_t* res, FILE *rpl)
 int init_db_fifo(char* fifo_db_url)
 {
 	if ( bind_dbmod(fifo_db_url, &fifo_dbf)==0 ) {
+		if (!DB_CAPABILITY(fifo_dbf, DB_CAP_ALL | DB_CAP_RAW_QUERY)) {
+			LOG(L_ERR, "ERROR: init_db_fifo: Database module does "
+			    "not implement all function needed by AVP code\n");
+			return -1;
+		}
+
 		if ( (fifo_db_con=fifo_dbf.init( fifo_db_url ))==0) {
 			/* connection failed */
 			LOG(L_ERR,"ERROR: init_db_fifo: unable to connect to database -> "

@@ -40,6 +40,7 @@
 #include "db_con.h"
 #include "db_row.h"
 #include "db_res.h"
+#include "db_cap.h"
 
 
 /*
