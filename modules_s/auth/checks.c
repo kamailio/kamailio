@@ -205,7 +205,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2)
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
 		}
 
-		keys[0] = realm_column;
+		keys[0] = domain_column;
 		keys[1] = user_column;
 
 		cols[0] = user_column;
