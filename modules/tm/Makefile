@@ -1,26 +1,49 @@
-CC		= g++
-cc		= gcc
-CCFLAGS 	= -c
-TABLE_DIR          = table
-INCLUDE 	= -include $(TABLE_DIR)/h_table.h
-LIBS		= -lpthread
+#common
+CC=gcc
+LD=gcc
+CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes
+LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
+LEX=flex
+YACC=bison
+YACC_FLAGS=-d -b cfg
+# on linux and freebsd keep it empty (e.g. LIBS= )
+# on solaris add -lxnet (e.g. LIBS= -lxnet)
+LIBS=-lfl -ldl
 
-all: build link
+MKDEP=gcc -M
 
-build:  $(TABLE_DIR)/table.o  tm.o
+ALLDEP=Makefile
 
-link:  tm
+auto_gen=
+sources= $(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen)
+objs= $(sources:.c=.o)
+depends= $(sources:.c=.d)
 
-$(TABLE_DIR)/table.o: Makefile $(TABLE_DIR)/hash_func.c $(TABLE_DIR)/h_table.c $(TABLE_DIR)/h_table.h $(TABLE_DIR)/semaphore.c $(TABLE_DIR)/timer.c
-	$(cc)  $(CCFLAGS)  $(TABLE_DIR)/h_table.c -o $@
+NAME=tm
 
-tm.o: Makefile tm.c
-	$(cc)  $(CCFLAGS)  $(INCLUDE) tm.c -o $@
+ALLDEP=Makefile
 
-tm: Makefile tm.o $(TABLE_DIR)/table.o
-	$(cc)  tm.o $(TABLE_DIR)/table.o $(LIBS)  -o $@
+LDFLAGS=-O2 -shared
+LIBS=
 
-clean:
-	rm -f  $(TABLE_DIR)/*.o || return 0
-	rm -f  *.o || return 0
-	rm -f tm  || return 0
+ifeq ($(ARCH), SunOS)
+LDFLAGS=-O2 -G
+endif
+
+#implicit rules
+%.o:%.c $(ALLDEP)
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
+
+%.d: %.c
+	$(MKDEP) $< >$@
+
+
+$(NAME): $(objs)
+	$(LD) $(LDFLAGS) $(objs) $(LIBS) -o $(NAME)
+
+
+.PHONY: all
+all: $(NAME)
+
+.PHONY: dep
+dep: $(depends)
