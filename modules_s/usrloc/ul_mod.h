@@ -15,6 +15,12 @@
  * Module parameters
  */
 
+
+#define NO_DB         0
+#define WRITE_THROUGH 1
+#define WRITE_BACK    2
+
+
 extern char* user_col;
 extern char* contact_col;
 extern char* expires_col;
@@ -24,8 +30,7 @@ extern char* cseq_col;
 extern char* method_col;
 extern char* db_url;
 extern int   timer_interval;
-extern int   write_through;
-extern int   use_db;
+extern int   db_mode;
 
 extern db_con_t* db;   /* Dabase connection handle */
 

@@ -13,7 +13,7 @@
 /*
  * Find a character occurence that is not quoted
  */
-char* find_not_quoted(str* _s, char _c)
+char* ul_fnq(str* _s, char _c)
 {
 	int quoted = 0, i;
 	
@@ -32,23 +32,16 @@ char* find_not_quoted(str* _s, char _c)
 /*
  * Extract username part from URI
  */
-int get_user(str* _s)
+int ul_get_user(str* _s)
 {
 	char* at, *dcolon, *dc;
-	dcolon = find_not_quoted(_s, ':');
+	dcolon = ul_fnq(_s, ':');
 
-	LOG(L_ERR, "get_user(): %.*s\n", _s->len, _s->s);
-	if (dcolon == 0) {
-		LOG(L_ERR, "No : found\n");
-		abort();
-		return -1;
-	}
+	if (dcolon == 0) return -1;
 
 	_s->s = dcolon + 1;
 	_s->len -= dcolon - _s->s + 1;
 	
-	LOG(L_ERR, "get_user2(): %.*s\n", _s->len, _s->s);
-
 	at = q_memchr(_s->s, '@', _s->len);
 	dc = q_memchr(_s->s, ':', _s->len);
 	if (at) {

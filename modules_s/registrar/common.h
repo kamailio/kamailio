@@ -13,13 +13,13 @@
 /*
  * Find a character occurence that is not quoted
  */
-char* find_not_quoted(str* _s, char _c);
+char* ul_fnq(str* _s, char _c);
 
 
 /*
  * Extract username part from URI
  */
-int get_user(str* _s);
+int ul_get_user(str* _s);
 
 
 /*

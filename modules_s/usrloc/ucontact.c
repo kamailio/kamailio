@@ -17,7 +17,7 @@
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _aor, str* _contact, time_t _e, float _q,
+int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q,
 		 str* _callid, int _cseq, ucontact_t** _c)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
@@ -26,6 +26,8 @@ int new_ucontact(str* _aor, str* _contact, time_t _e, float _q,
 		return -1;
 	}
 
+
+	(*_c)->domain = _dom;
 	(*_c)->aor = _aor;
 
 	(*_c)->c.s = (char*)shm_malloc(_contact->len);
@@ -53,6 +55,7 @@ int new_ucontact(str* _aor, str* _contact, time_t _e, float _q,
 	(*_c)->cseq = _cseq;
 	(*_c)->next = 0;
 	(*_c)->prev = 0;
+	(*_c)->state = CS_NEW;
 	
 	return 0;
 }	
@@ -75,15 +78,24 @@ void free_ucontact(ucontact_t* _c)
 void print_ucontact(ucontact_t* _c)
 {
 	time_t t = time(0);
+	char* st;
+
+	switch(_c->state) {
+	case CS_NEW:   st = "CS_NEW";     break;
+	case CS_SYNC:  st = "CS_SYNC";    break;
+	case CS_DIRTY: st = "CS_DIRTY";   break;
+	default:       st = "CS_UNKNOWN"; break;
+	}
 
 	printf("~~~Contact(%p)~~~\n", _c);
 	printf("domain : \'%.*s\'\n", _c->domain->len, _c->domain->s);
 	printf("aor    : \'%.*s\'\n", _c->aor->len, _c->aor->s);
 	printf("Contact: \'%.*s\'\n", _c->c.len, _c->c.s);
-	printf("Expires: %d\n", (unsigned int)(_c->expires) - t);
+	printf("Expires: %lu\n", (unsigned int)(_c->expires) - t);
 	printf("q      : %10.2f\n", _c->q);
 	printf("Call-ID: \'%.*s\'\n", _c->callid.len, _c->callid.s);
 	printf("CSeq   : %d\n", _c->cseq);
+	printf("State  : %s\n", st);
 	printf("next   : %p\n", _c->next);
 	printf("prev   : %p\n", _c->prev);
 	printf("~~~/Contact~~~~\n");
@@ -91,19 +103,19 @@ void print_ucontact(ucontact_t* _c)
 
 
 /*
- * Update existing contact with new values
+ * Update ucontact structure in memory
  */
-int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
+int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
 {
 	char* ptr;
-
+	
 	if (_c->callid.len < _cid->len) {
 		ptr = (char*)shm_malloc(_cid->len);
 		if (ptr == 0) {
 			LOG(L_ERR, "update_ucontact(): No memory left\n");
 			return -1;
 		}
-
+		
 		memcpy(ptr, _cid->s, _cid->len);
 		shm_free(_c->callid.s);
 		_c->callid.s = ptr;
@@ -111,34 +123,163 @@ int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
 		memcpy(_c->callid.s, _cid->s, _cid->len);
 	}
 	_c->callid.len = _cid->len;
-
+	
 	_c->expires = _e;
 	_c->q = _q;
 	_c->cseq = _cs;
-
-	if (use_db) {
-		if (write_through) {
-			if (db_upd_ucontact(_c) < 0) {
-				LOG(L_ERR, "update_ucontact(): Error while updating database\n");
-			}
-		} else { /* write back */
-
-		}
-	}
 
 	return 0;
 }
 
 
+/* ================ State related functions =============== */
+
+
 /*
- * Delete contact from the database
+ * Update state of the contat if we are using write back scheme
  */
-int db_del_ucontact(ucontact_t* _c)
+void st_update_ucontact(ucontact_t* _c)
+{
+	switch(_c->state) {
+	case CS_NEW:
+		     /* Contact is new and is not in the database yet,
+		      * we remain in the same state here because the
+		      * contact must be inserted later in the timer
+		      */
+		break;
+
+	case CS_SYNC:
+		     /* Modified contact need to be updated also in
+		      * the database, so transit into CS_DIRTY and
+		      * let the timer to do the update again
+		      */
+		_c->state = CS_DIRTY;
+		break;
+
+	case CS_DIRTY:
+		     /* Modification of dirty contact results in
+		      * dirty contact again, don't change anything
+		      */
+		break;
+	}
+}
+
+
+/*
+ * Update state of the contact if we
+ * are using write-back scheme
+ * Returns 1 if the contact should be
+ * delete from memory immediatelly,
+ * 0 otherwise
+ */
+int st_delete_ucontact(ucontact_t* _c)
+{
+	switch(_c->state) {
+	case CS_NEW:
+		     /* Contact is new and isn't in the database
+		      * yet, we can delete it from the memory
+		      * safely
+		      */
+		return 1;
+
+	case CS_SYNC:
+	case CS_DIRTY:
+		     /* Contact is in the database,
+		      * we cannot remove it from the memory 
+		      * directly, but we can set expires to zero
+		      * and the timer will take care of deleting 
+		      * the contact from the memory as well as 
+		      * from the database
+		      */
+		_c->expires = 0;
+		return 0;
+	}
+
+	return 0; /* Makes gcc happy */
+}
+
+
+/*
+ * Called when the timer is about to delete
+ * an expired contact, this routine returns
+ * 1 if the contact should be removed from
+ * the database and 0 otherwise
+ */
+int st_expired_ucontact(ucontact_t* _c)
+{
+	     /* There is no need to change contact
+	      * state, because the contact will
+	      * be deleted anyway
+	      */
+
+	switch(_c->state) {
+	case CS_NEW:
+		     /* Contact is not in the database
+		      * yet, remove it from memory only
+		      */
+		return 0;
+
+	case CS_SYNC:
+	case CS_DIRTY:
+		     /* Remove from database here */
+		return 1;
+	}
+
+	return 0; /* Makes gcc happy */
+}
+
+
+/*
+ * Called when the timer is about flushing the contact,
+ * updates contact state and returns 1 if the contact
+ * should be inserted, 2 if updated and 0 otherwise
+ */
+int st_flush_ucontact(ucontact_t* _c)
+{
+	switch(_c->state) {
+	case CS_NEW:
+		     /* Contact is new and is not in
+		      * the database yet so we have
+		      * to insert it
+		      */
+		_c->state = CS_SYNC;
+		return 1;
+
+	case CS_SYNC:
+		     /* Contact is synchronized, do
+		      * nothing
+		      */
+		return 0;
+
+	case CS_DIRTY:
+		     /* Contact has been modified and
+		      * is in the db already so we
+		      * have to update it
+		      */
+		_c->state = CS_SYNC;
+		return 2;
+	}
+
+	return 0; /* Makes gcc happy */
+}
+
+
+/* ============== Database related functions ================ */
+
+
+/*
+ * Insert contact into the database
+ */
+int db_insert_ucontact(ucontact_t* _c)
 {
 	char b[256];
-	db_key_t keys[2] = {user_col, contact_col};
-	db_val_t vals[2] = {{DB_STR, 0, {.str_val = {_c->aor->s, _c->aor->len}}},
-			    {DB_STR, 0, {.str_val = {_c->c.s, _c->c.len}}}
+	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
+	db_val_t vals[] = {{DB_STR,     0, {.str_val = {_c->aor->s, _c->aor->len}}},
+			  {DB_STR,      0, {.str_val = {_c->c.s, _c->c.len}}},
+			  {DB_DATETIME, 0, {.time_val = _c->expires}},
+			  {DB_DOUBLE,   0, {.double_val = _c->q}},
+			  {DB_STR,      0, {.str_val = {_c->callid.s, _c->callid.len}}},
+			  {DB_INT,      0, {.int_val = _c->cseq}}
 	};
 
 	     /* FIXME */
@@ -146,8 +287,8 @@ int db_del_ucontact(ucontact_t* _c)
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_delete(db, keys, vals, 2) < 0) {
-		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
+	if (db_insert(db, keys, vals, 6) < 0) {
+		LOG(L_ERR, "db_ins_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
 
@@ -158,7 +299,7 @@ int db_del_ucontact(ucontact_t* _c)
 /*
  * Update contact in the database
  */
-int db_upd_ucontact(ucontact_t* _c)
+int db_update_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	db_key_t keys1[2] = {user_col, contact_col};
@@ -188,18 +329,14 @@ int db_upd_ucontact(ucontact_t* _c)
 
 
 /*
- * Insert contact into the database
+ * Delete contact from the database
  */
-int db_ins_ucontact(ucontact_t* _c)
+int db_delete_ucontact(ucontact_t* _c)
 {
 	char b[256];
-	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
-	db_val_t vals[] = {{DB_STR,     0, {.str_val = {_c->aor->s, _c->aor->len}}},
-			  {DB_STR,      0, {.str_val = {_c->c.s, _c->c.len}}},
-			  {DB_DATETIME, 0, {.time_val = _c->expires}},
-			  {DB_DOUBLE,   0, {.double_val = _c->q}},
-			  {DB_STR,      0, {.str_val = {_c->callid.s, _c->callid.len}}},
-			  {DB_INT,      0, {.int_val = _c->cseq}}
+	db_key_t keys[2] = {user_col, contact_col};
+	db_val_t vals[2] = {{DB_STR, 0, {.str_val = {_c->aor->s, _c->aor->len}}},
+			    {DB_STR, 0, {.str_val = {_c->c.s, _c->c.len}}}
 	};
 
 	     /* FIXME */
@@ -207,10 +344,38 @@ int db_ins_ucontact(ucontact_t* _c)
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_insert(db, keys, vals, 6) < 0) {
-		LOG(L_ERR, "db_ins_ucontact(): Error while inserting contact\n");
+	if (db_delete(db, keys, vals, 2) < 0) {
+		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
 		return -1;
 	}
 
+	return 0;
+}
+
+
+/*
+ * Update ucontact with new values
+ */
+int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
+{
+	switch(db_mode) {
+	case NO_DB:
+		return mem_update_ucontact(_c, _e, _q, _cid, _cs);
+		
+	case WRITE_THROUGH:
+		if (mem_update_ucontact(_c, _e, _q, _cid, _cs) < 0) {
+			LOG(L_ERR, "update_ucontact(): Error while updating\n");
+			return -1;
+		}
+
+		if (db_update_ucontact(_c) < 0) {
+			LOG(L_ERR, "update_ucontact(): Error while updating database\n");
+		}
+		return 0;
+
+	case WRITE_BACK:
+		st_update_ucontact(_c);
+		return mem_update_ucontact(_c, _e, _q, _cid, _cs);
+	}
 	return 0;
 }

@@ -53,7 +53,6 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 {
 	urecord_t* r;
 	str user;
-	time_t t;
 	ucontact_t* ptr;
 	int res;
 	
@@ -70,21 +69,24 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (_m->new_uri.s) str_copy(&user, &_m->new_uri);
 	else str_copy(&user, &_m->first_line.u.request.uri);
 	
-	if ((get_user(&user) < 0) || !user.len) {
+	if ((ul_get_user(&user) < 0) || !user.len) {
 		LOG(L_ERR, "lookup(): Error while extracting username\n");
 		return -3;
 	}
 	
 	get_act_time();
 
-	res = ul_get_record((udomain_t*)_t, &user, &r);
+	ul_lock_udomain((udomain_t*)_t);
+	res = ul_get_urecord((udomain_t*)_t, &user, &r);
 	if (res < 0) {
 		LOG(L_ERR, "lookup(): Error while querying usrloc\n");
+		ul_unlock_udomain((udomain_t*)_t);
 		return -4;
 	}
 	
 	if (res > 0) {
 		DBG("lookup(): \'%.*s\' Not found in usrloc\n", user.len, user.s);
+		ul_unlock_udomain((udomain_t*)_t);
 		return -5;
 	}
 
@@ -93,7 +95,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	
 	if (ptr && (rwrite(_m, &ptr->c) < 0)) {
 		LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
-		ul_release_record(r);
+		ul_unlock_udomain((udomain_t*)_t);
 		return -6;
 	}
 	
@@ -105,7 +107,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		if (ptr->expires > act_time) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				ul_release_record(r);
+				ul_unlock_udomain((udomain_t*)_t);
 				return -7;
 			}
 		} 
@@ -113,6 +115,6 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 	
  skip:
-	ul_release_record(r);
+	ul_unlock_udomain((udomain_t*)_t);
 	return 1;
 }

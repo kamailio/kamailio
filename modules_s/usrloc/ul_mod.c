@@ -33,8 +33,7 @@ char* cseq_col       = "cseq";                             /* Name of column con
 char* method_col     = "method";                           /* Name of column containing supported method */
 char* db_url         = "sql://janakj:heslo@localhost/ser"; /* Database URL */
 int   timer_interval = 60;                                 /* Timer interval in seconds */
-int   write_through  = 0;                                  /* Enable or disable write-through cache scheme */
-int   use_db         = 1;                                  /* Specifies whether to use database for persistent storage */
+int   db_mode        = 0;                                  /* Database sync scheme: 0-no db, 1-write through, 2-write back */
 
 
 db_con_t* db; /* Database connection handle */
@@ -43,20 +42,20 @@ db_con_t* db; /* Database connection handle */
 struct module_exports exports = {
 	"usrloc",
 	(char*[]) {
-		"~ul_register_domain", /* Create a new domain */
+		"~ul_register_udomain", /* Create a new domain */
 
-		"~ul_insert_record",   /* Insert record into a domain */
-		"~ul_delete_record",   /* Delete record from a domain */
-		"~ul_get_record",      /* Get record from a domain */
-		"~ul_release_record",  /* Release record obtained using get_record */
+		"~ul_insert_urecord",   /* Insert record into a domain */
+		"~ul_delete_urecord",   /* Delete record from a domain */
+		"~ul_get_urecord",      /* Get record from a domain */
+		"~ul_lock_udomain",     /* Lock domain */
+		"~ul_unlock_udomain",   /* Unlock domain */
 
-		"~ul_new_record",      /* Create new record structure */
-		"~ul_free_record",     /* Release a record structure */
-		"~ul_insert_contact",  /* Insert a new contact into a record */
-		"~ul_delete_contact",  /* Remove a contact from a record */
-		"~ul_get_contact",     /* Return pointer to a contact */
+		"~ul_release_urecord",  /* Release record obtained using get_record */
+		"~ul_insert_ucontact",  /* Insert a new contact into a record */
+		"~ul_delete_ucontact",  /* Remove a contact from a record */
+		"~ul_get_ucontact",     /* Return pointer to a contact */
 
-		"~ul_update_contact"   /* Update a contact */
+		"~ul_update_ucontact"   /* Update a contact */
 	},
 	(cmd_function[]) {
 		(cmd_function)register_udomain,
@@ -64,10 +63,10 @@ struct module_exports exports = {
 		(cmd_function)insert_urecord,
 		(cmd_function)delete_urecord,
 		(cmd_function)get_urecord,
-		(cmd_function)release_urecord,
+		(cmd_function)lock_udomain,
+		(cmd_function)unlock_udomain,
 		
-		(cmd_function)new_urecord,
-		(cmd_function)free_urecord,
+		(cmd_function)release_urecord,
 		(cmd_function)insert_ucontact,
 		(cmd_function)delete_ucontact,
 		(cmd_function)get_ucontact,
@@ -92,8 +91,7 @@ struct module_exports exports = {
 		"method_col",
 		"db_url",
 		"timer_interval",
-		"write_through",
-		"use_db"
+		"db_mode"
 	},
 
 	(modparam_t[]) {
@@ -105,7 +103,6 @@ struct module_exports exports = {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
-		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM
 	},
@@ -120,10 +117,9 @@ struct module_exports exports = {
 		&method_col,
 		&db_url,
 		&timer_interval,
-		&write_through,
-		&use_db
+		&db_mode
 	},
-	11,          /* Number of parameters */
+	10,          /* Number of parameters */
 
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
@@ -142,7 +138,7 @@ static int mod_init(void)
 
 	register_timer(timer, NULL, timer_interval);
 	
-	if (use_db) {
+	if (db_mode != NO_DB) {
 		if (bind_dbmod() < 0) {
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");
 			return -1;
@@ -164,7 +160,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if (use_db) {
+	if (db_mode != NO_DB) {
 		db = db_init(db_url);
 		if (!db) {
 			LOG(L_ERR, "child_init(%d): Error while connecting database\n", rank);

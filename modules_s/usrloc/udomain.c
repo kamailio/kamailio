@@ -165,48 +165,80 @@ void print_udomain(udomain_t* _d)
 }
 
 
-static inline int ins(struct urecord* _r, str* _c, int _e, float _q, str* _cid, int _cs)
+
+int preload_udomain(udomain_t* _d)
 {
-	ucontact_t* c, *ptr, *prev = 0;
+	char b[256];
+	db_key_t columns[6] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
+	db_res_t* res;
+	db_row_t* row;
+	int i, cseq;
 	
-	if (new_ucontact(&_r->aor, _c, _e, _q, _cid, _cs, &c) < 0) {
-		LOG(L_ERR, "ins(): Can't create new contact\n");
+	str user, contact, callid;
+	time_t expires;
+	float q;
+
+	urecord_t* r;
+	ucontact_t* c;
+
+	memcpy(b, _d->name->s, _d->name->len);
+	b[_d->name->len] = '\0';
+	db_use_table(db, b);
+	if (db_query(db, 0, 0, columns, 0, 6, 0, &res) < 0) {
+		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
 
-	ptr = _r->contacts;
-	while(ptr) {
-		if (ptr->q < _q) break;
-		prev = ptr;
-		ptr = ptr->next;
+	if (RES_ROW_N(res) == 0) {
+		DBG("preload_udomain(): Table is empty\n");
+		db_free_query(db, res);
+		return 0;
 	}
 
-	if (ptr) {
-		if (!ptr->prev) {
-			ptr->prev = c;
-			c->next = ptr;
-			_r->contacts = c;
-		} else {
-			c->next = ptr;
-			c->prev = ptr->prev;
-			ptr->prev->next = c;
-			ptr->prev = c;
+	lock_udomain(_d);
+
+	for(i = 0; i < RES_ROW_N(res); i++) {
+		row = RES_ROWS(res) + i;
+		
+		user.s      = (char*)VAL_STRING(ROW_VALUES(row));
+		user.len    = strlen(user.s);
+		contact.s   = (char*)VAL_STRING(ROW_VALUES(row) + 1);
+		contact.len = strlen(contact.s);
+		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
+		q           = VAL_DOUBLE(ROW_VALUES(row) + 3);
+		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
+		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
+		callid.len  = strlen(callid.s);
+
+		if (get_urecord(_d, &user, &r) > 0) {
+			if (mem_insert_urecord(_d, &user, &r) < 0) {
+				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
+				db_free_query(db, res);
+				unlock_udomain(_d);
+				return -2;
+			}
 		}
-	} else if (prev) {
-		prev->next = c;
-		c->prev = prev;
-	} else {
-		_r->contacts = c;
+		
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, &c) < 0) {
+			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
+			db_free_query(db, res);
+			unlock_udomain(_d);
+			return -3;
+		}
+
+		     /* We have to do this, because insert_ucontact sets state to CS_NEW
+		      * and we have the contact in the dabase already
+		      */
+		c->state = CS_SYNC;
 	}
 
-	c->domain = _r->domain;
+	db_free_query(db, res);
+	unlock_udomain(_d);
 	return 0;
 }
 
 
 /*
- * Load data from a database
- */
 int preload_udomain(udomain_t* _d)
 {
 	char b[256];
@@ -220,7 +252,6 @@ int preload_udomain(udomain_t* _d)
 	time_t expires;
 	str s, contact, callid;
 
-	     /* FIXME */
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 	db_use_table(db, b);
@@ -244,32 +275,18 @@ int preload_udomain(udomain_t* _d)
 			DBG("preload_udomain(): Preloading contacts for username \'%s\'\n", user);
 			aor = user;
 
-			if (rec && (insert_urecord(_d, rec) < 0)) {
-				LOG(L_ERR, "preload_udomain(): Error while inserting record\n");
-				free_urecord(rec);
-				db_free_query(db, res);
-				free_urecord(rec);
-				return -2;
-			}
+			if (rec) release_urecord(rec);
 
 			s.s = (char*)user;
 			s.len = strlen(user);
 
-			if (new_urecord(&s, &rec) < 0) {
+			if (insert_urecord(_d_d->name, &s, &rec) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create new record\n");
 				db_free_query(db, res);
 				return -3;
 			}
-			rec->domain = _d->name;
 		}
 		
-		contact.s   = (char*)VAL_STRING(ROW_VALUES(row) + 1);
-		contact.len = strlen(contact.s);
-		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
-		q           = VAL_DOUBLE(ROW_VALUES(row) + 3);
-		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
-		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
-		callid.len  = strlen(callid.s);
 
 		if (ins(rec, &contact, expires, q, &callid, cseq) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while adding contact\n");
@@ -289,142 +306,36 @@ int preload_udomain(udomain_t* _d)
 	db_free_query(db, res);
 	return 0;
 }
+*/
 
 
 /*
  * Insert a new record into domain
  */
-int insert_urecord(udomain_t* _d, urecord_t* _r)
+int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
 	int sl;
-
-	sl = hash_func(_d, _r->aor.s, _r->aor.len);
 	
-	if (sl == -1) {
-		LOG(L_ERR, "insert_urecord(): Error while hashing slot\n");
+	if (new_urecord(_d->name, _aor, _r) < 0) {
+		LOG(L_ERR, "insert_urecord(): Error while creating urecord\n");
 		return -1;
 	}
 
-	get_lock(&_d->lock);
-
-	if (db) {  /* Update database */
-		/*
-	        if (db_insert_location(db, _l) < 0) {
-			LOG(L_ERR, "insert_record(): Error while inserting bindings into database\n");
-			free_element(ptr);
-			release_lock(&_d->lock);
-			return -3;
-		}
-		*/
-	}
-
-	slot_add(&_d->table[sl], _r);
-	udomain_add(_d, _r);
-	_r->domain = _d->name;
-	release_lock(&_d->lock);
+	sl = hash_func(_d, _aor->s, _aor->len);
+	slot_add(&_d->table[sl], *_r);
+	udomain_add(_d, *_r);
 	return 0;
-}
-
-
-/* 
- * It is neccessary to call cache_release_el when you don't need element
- * returned by this function anymore
- *
- * WARNING: You must call no other domain function between get_record
- *          and release_record, if you do so, deadlock will occur !!!
- */
-int get_urecord(udomain_t* _d, str* _a, urecord_t** _r)
-{
-	int sl, i;
-	urecord_t* r;
-
-	sl = hash_func(_d, _a->s, _a->len);
-
-	if (sl == -1) {
-		LOG(L_ERR, "get_urecord(): Error while generating hash\n");
-		return -1;
-	}
-
-	get_lock(&_d->lock);
-	r = _d->table[sl].first;
-
-	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((r->aor.len == _a->len) && !memcmp(r->aor.s, _a->s, _a->len)) {
-			*_r = r;
-			return 0;
-		}
-
-		r = r->s_ll.next;
-	}
-
-	release_lock(&_d->lock);
-	return 1;   /* Nothing found */
 }
 
 
 /*
  * Remove a record from domain
  */
-int delete_urecord(udomain_t* _d, str* _a)
+void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 {
-	int sl, i;
-	urecord_t* r;
-	
-	sl = hash_func(_d, _a->s, _a->len);
-	if (sl == -1) {
-		LOG(L_ERR, "delete_urecord(): Error while generating hash\n");
-		return -1;
-	}
-
-	get_lock(&_d->lock);
-	r = _d->table[sl].first;
-
-	for(i = 0; i < _d->table[sl].n; i++) {
-		if ((r->aor.len == _a->len) && !memcmp(r->aor.s, _a->s, _a->len)) {
-			if (use_db) {
-				if (write_through) {
-					if (db_del_urecord(r) < 0) {
-						LOG(L_ERR, "delete_urecord(): Error while deleting from database\n");
-					}
-				} else {
-				}
-			}
-			
-			udomain_remove(_d, r);
-			slot_rem(&_d->table[sl], r);
-
-			r->domain = 0;
-			free_urecord(r);
-			release_lock(&_d->lock);
-			return 0;
-		}
-
-		r = r->s_ll.next;
-	}
-
-	release_lock(&_d->lock);
-	return 1; /* Record not found */
-}
-
-
-/*
- * Release a record previosly obtained through get_record
- */
-void release_urecord(urecord_t* _r)
-{
-	fl_lock_t* l;
-
-	if (_r->contacts == 0) {
-		l = &_r->slot->d->lock;
-		udomain_remove(_r->slot->d, _r);
-		slot_rem(_r->slot, _r);
-		_r->domain = 0;
-		release_lock(l);
-		free_urecord(_r);
-		return;
-	}
-
-	release_lock(&_r->slot->d->lock);
+	udomain_remove(_d, _r);
+	slot_rem(_r->slot, _r);
+	free_urecord(_r);
 }
 
 
@@ -432,29 +343,127 @@ int timer_udomain(udomain_t* _d)
 {
 	struct urecord* ptr, *t;
 
-	get_lock(&_d->lock);
+	lock_udomain(_d);
 
 	ptr = _d->d_ll.first;
 
 	while(ptr) {
 		if (timer_urecord(ptr) < 0) {
 			LOG(L_ERR, "timer_udomain(): Error in timer_urecord\n");
-			release_lock(&_d->lock);
+			unlock_udomain(_d);
 			return -1;
 		}
 		
+		     /* Remove the entire record
+		      * if it is empty
+		      */
 		if (ptr->contacts == 0) {
 			t = ptr;
 			ptr = ptr->d_ll.next;
-			udomain_remove(t->slot->d, t);
-			slot_rem(t->slot, t);
-			t->domain = 0;
-			free_urecord(t);
+			mem_delete_urecord(_d, t);
 		} else {
 			ptr = ptr->d_ll.next;
 		}
 	}
 	
+	unlock_udomain(_d);
+	return 0;
+}
+
+
+/*
+ * Get lock
+ */
+void lock_udomain(udomain_t* _d)
+{
+	get_lock(&_d->lock);
+}
+
+
+/*
+ * Release lock
+ */
+void unlock_udomain(udomain_t* _d)
+{
 	release_lock(&_d->lock);
+}
+
+
+/*
+ * Create and insert a new record
+ */
+int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
+{
+	if (mem_insert_urecord(_d, _aor, _r) < 0) {
+		LOG(L_ERR, "insert_urecord(): Error while inserting record\n");
+		return -1;
+	}
+	return 0;
+}
+
+
+/*
+ * Obtain a urecord pointer if the urecord exists in domain
+ */
+int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
+{
+	int sl, i;
+	urecord_t* r;
+
+	sl = hash_func(_d, _aor->s, _aor->len);
+
+	r = _d->table[sl].first;
+
+	for(i = 0; i < _d->table[sl].n; i++) {
+		if ((r->aor.len == _aor->len) && !memcmp(r->aor.s, _aor->s, _aor->len)) {
+			*_r = r;
+			return 0;
+		}
+
+		r = r->s_ll.next;
+	}
+
+	return 1;   /* Nothing found */
+}
+
+
+/*
+ * Delete a urecord from domain
+ */
+int delete_urecord(udomain_t* _d, str* _aor)
+{
+	struct ucontact* c, *t;
+	struct urecord* r;
+
+	if (get_urecord(_d, _aor, &r) > 0) {
+		return 0;
+	}
+	
+	switch(db_mode) {
+	case WRITE_THROUGH:
+		if (db_delete_urecord(r) < 0) {
+			LOG(L_ERR, "delete_urecord(): Error while deleting record from database\n");
+		}
+		mem_delete_urecord(_d, r);
+		return 0;
+
+	case WRITE_BACK:
+		c = r->contacts;
+		while(c) {
+			t = c;
+			c = c->next;
+			if (delete_ucontact(r, t) < 0) {
+				LOG(L_ERR, "delete_urecord(): Error while deleting contact\n");
+				return -1;
+			}
+		}
+		release_urecord(r);
+		return 0;
+
+	case NO_DB:
+		mem_delete_urecord(_d, r);
+		return 0;
+	}
+
 	return 0;
 }

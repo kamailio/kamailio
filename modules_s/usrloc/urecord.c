@@ -18,7 +18,7 @@
 /*
  * Create and initialize new record structure
  */
-int new_urecord(str* _aor, urecord_t** _r)
+int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 {
 	*_r = (urecord_t*)shm_malloc(sizeof(urecord_t));
 	if (*_r == 0) {
@@ -35,7 +35,7 @@ int new_urecord(str* _aor, urecord_t** _r)
 	}
 	memcpy((*_r)->aor.s, _aor->s, _aor->len);
 	(*_r)->aor.len = _aor->len;
-	(*_r)->domain = 0;
+	(*_r)->domain = _dom;
 	return 0;
 }
 
@@ -88,16 +88,17 @@ void print_urecord(urecord_t* _r)
  * Contacts are ordered by: 1) q 
  *                          2) descending modification time
  */
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs)
+int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, 
+			 str* _cid, int _cs, struct ucontact** _con)
 {
-	ucontact_t* c, *ptr, *prev = 0;
+	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(&_r->aor, _c, _e, _q, _cid, _cs, &c) < 0) {
-		LOG(L_ERR, "insert_ucontact(): Can't create new contact\n");
+	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _con) < 0) {
+		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
 	
-
+	
 	ptr = _r->contacts;
 	while(ptr) {
 		if (ptr->q < _q) break;
@@ -107,32 +108,20 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
 
 	if (ptr) {
 		if (!ptr->prev) {
-			ptr->prev = c;
-			c->next = ptr;
-			_r->contacts = c;
+			ptr->prev = *_con;
+			(*_con)->next = ptr;
+			_r->contacts = *_con;
 		} else {
-			c->next = ptr;
-			c->prev = ptr->prev;
-			ptr->prev->next = c;
-			ptr->prev = c;
+			(*_con)->next = ptr;
+			(*_con)->prev = ptr->prev;
+			ptr->prev->next = *_con;
+			ptr->prev = *_con;
 		}
 	} else if (prev) {
-		prev->next = c;
-		c->prev = prev;
+		prev->next = *_con;
+		(*_con)->prev = prev;
 	} else {
-		_r->contacts = c;
-	}
-
-	c->domain = _r->domain;
-
-	if (use_db) {
-		if (write_through) {
-			if (db_ins_ucontact(c) < 0) {
-				LOG(L_ERR, "insert_ucontact(): Error while inserting in database\n");
-			}
-		} else { /* write back */
-
-		}
+		_r->contacts = *_con;
 	}
 
 	return 0;
@@ -142,17 +131,8 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
 /*
  * Remove contact from the list
  */
-int delete_ucontact(urecord_t* _r, ucontact_t* _c)
+void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 {
-	if (use_db) {
-		if (write_through) {
-			if (db_del_ucontact(_c) < 0) {
-				LOG(L_ERR, "delete_ucontact(): Error while deleting from database\n");
-			}
-		} else { /* write back */
-		}
-	}
-	
 	if (_c->prev) {
 		_c->prev->next = _c->next;
 		if (_c->next) {
@@ -164,35 +144,16 @@ int delete_ucontact(urecord_t* _r, ucontact_t* _c)
 			_c->next->prev = 0;
 		}
 	}
-
-	_c->domain = 0;
+	
 	free_ucontact(_c);
-	return 0;
 }
 
 
 /*
- * Find a contact
+ * This timer routine is used when
+ * db_mode is set to NO_DB
  */
-int get_ucontact(urecord_t* _r, str* _c, ucontact_t** _co)
-{
-	ucontact_t* ptr;
-
-	ptr = _r->contacts;
-	while(ptr) {
-		if ((_c->len == ptr->c.len) &&
-		    !memcmp(_c->s, ptr->c.s, _c->len)) {
-			*_co = ptr;
-			return 0;
-		}
-		
-		ptr = ptr->next;
-	}
-	return 1;
-}
-
-
-int timer_urecord(urecord_t* _r)
+static inline int nodb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
 
@@ -203,14 +164,12 @@ int timer_urecord(urecord_t* _r)
 			LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
 			    ptr->aor->len, ptr->aor->s,
 			    ptr->c.len, ptr->c.s);
-			
+
 			t = ptr;
 			ptr = ptr->next;
 
-			delete_ucontact(_r, t);
+			mem_delete_ucontact(_r, t);
 		} else {
-			LOG(L_NOTICE, "Binding \'%.*s\',\'%.*s\' is fresh: %d\n", ptr->aor->len, ptr->aor->s,
-				ptr->c.len, ptr->c.s, ptr->expires - act_time);
 			ptr = ptr->next;
 		}
 	}
@@ -219,7 +178,106 @@ int timer_urecord(urecord_t* _r)
 }
 
 
-int db_del_urecord(urecord_t* _r)
+
+/*
+ * This routine is used when db_mode is
+ * set to WRITE_THROUGH
+ */
+static inline int wt_timer(urecord_t* _r)
+{
+	ucontact_t* ptr, *t;
+	
+	ptr = _r->contacts;
+	
+	while(ptr) {
+		if (ptr->expires < act_time) {
+			LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
+			    ptr->aor->len, ptr->aor->s,
+			    ptr->c.len, ptr->c.s);
+			
+			t = ptr;
+			ptr = ptr->next;
+			
+			if (db_delete_ucontact(t) < 0) {
+				LOG(L_ERR, "wt_timer(): Error while deleting contact from database\n");
+			}
+			mem_delete_ucontact(_r, t);
+		} else {
+			ptr = ptr->next;
+		}
+	}
+	
+	return 0;
+}
+
+
+
+/*
+ * Write-back timer
+ */
+static inline int wb_timer(urecord_t* _r)
+{
+	ucontact_t* ptr, *t;
+	int op;
+
+	ptr = _r->contacts;
+
+	while(ptr) {
+		if (ptr->expires < act_time) {
+			t = ptr;
+			ptr = ptr->next;
+
+			     /* Should we remove the contact from the database ? */
+			if (st_expired_ucontact(t) == 1) {
+				if (db_delete_ucontact(t) < 0) {
+					LOG(L_ERR, "wb_timer(): Error while deleting contact from database\n");
+				}
+			}
+			mem_delete_ucontact(_r, t);
+		} else {
+			     /* Determine the operation we have to do */
+			op = st_flush_ucontact(ptr);
+			
+			switch(op) {
+			case 0: /* do nothing, contact is synchronized */
+				break;
+
+			case 1: /* insert */
+				if (db_insert_ucontact(ptr) < 0) {
+					LOG(L_ERR, "wb_timer(): Error while inserting contact in db\n");
+				}
+				break;
+
+			case 2: /* update */
+				if (db_update_ucontact(ptr) < 0) {
+					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
+				}
+				break;
+			}
+
+			ptr = ptr->next;
+		}
+	}
+
+	return 0;
+}
+
+
+
+int timer_urecord(urecord_t* _r)
+{
+	switch(db_mode) {
+	case NO_DB:         return nodb_timer(_r);
+	case WRITE_THROUGH: return wt_timer(_r);
+	case WRITE_BACK:    return wb_timer(_r);
+	}
+
+	return 0; /* Makes gcc happy */
+}
+
+
+
+int db_delete_urecord(urecord_t* _r)
 {
 	char b[256];
 	db_key_t keys[1] = {user_col};
@@ -231,9 +289,92 @@ int db_del_urecord(urecord_t* _r)
 	db_use_table(db, b);
 
 	if (db_delete(db, keys, vals, 1) < 0) {
-		LOG(L_ERR, "db_del_urecord(): Error while deleting from database\n");
+		LOG(L_ERR, "db_delete_urecord(): Error while deleting from database\n");
 		return -1;
 	}
 
 	return 0;
+}
+
+
+/*
+ * Release urecord previously obtained
+ * through get_urecord
+ */
+void release_urecord(urecord_t* _r)
+{
+	if (_r->contacts == 0) {
+		mem_delete_urecord(_r->slot->d, _r);
+	}
+}
+
+
+/*
+ * Create and insert new contact
+ * into urecord
+ */
+int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, struct ucontact** _con)
+{
+	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _con) < 0) {
+		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
+		return -1;
+	}
+	
+	if (db_mode == WRITE_THROUGH) {
+		if (db_insert_ucontact(*_con) < 0) {
+			LOG(L_ERR, "insert_ucontact(): Error while inserting in database\n");
+			mem_delete_ucontact(_r, *_con);
+			return -2;
+		}
+	}
+
+	return 0;
+}
+
+
+/*
+ * Delete ucontact from urecord
+ */
+int delete_ucontact(urecord_t* _r, struct ucontact* _c)
+{
+	switch(db_mode) {
+	case NO_DB:
+		mem_delete_ucontact(_r, _c);
+		return 0;
+
+	case WRITE_THROUGH:
+		if (db_delete_ucontact(_c) < 0) {
+			LOG(L_ERR, "delete_ucontact(): Can't remove contact from database\n");
+		}
+		mem_delete_ucontact(_r, _c);
+		return 0;
+
+	case WRITE_BACK:
+		if (st_delete_ucontact(_c) > 0) {
+			mem_delete_ucontact(_r, _c);
+		}
+		return 0;
+	}
+	return 0;
+}
+
+
+/*
+ * Get pointer to ucontact with given contact
+ */
+int get_ucontact(urecord_t* _r, str* _c, struct ucontact** _co)
+{
+	ucontact_t* ptr;
+	
+	ptr = _r->contacts;
+	while(ptr) {
+		if ((_c->len == ptr->c.len) &&
+		    !memcmp(_c->s, ptr->c.s, _c->len)) {
+			*_co = ptr;
+			return 0;
+		}
+		
+		ptr = ptr->next;
+	}
+	return 1;
 }

@@ -15,6 +15,8 @@
 #include "rerrno.h"
 #include "reply.h"
 #include "convert.h"
+#include "uri.h"
+#include "regtime.h"
 
 
 /*
@@ -26,7 +28,8 @@ static inline int star(udomain_t* _d, str* _u)
 {
 	urecord_t* r;
 	
-	if (ul_delete_record(_d, _u) < 0) {
+	ul_lock_udomain(_d);
+	if (ul_delete_urecord(_d, _u) < 0) {
 		LOG(L_ERR, "star(): Error while removing record from usrloc\n");
 		
 		     /* Delete failed, try to get corresponding
@@ -34,12 +37,13 @@ static inline int star(udomain_t* _d, str* _u)
 		      * contacts
 		      */
 		rerrno = R_UL_DEL_R;
-		if (!ul_get_record(_d, _u, &r)) {
+		if (!ul_get_urecord(_d, _u, &r)) {
 			build_contact(r->contacts);
-			ul_release_record(r);
 		}
+		ul_unlock_udomain(_d);
 		return -1;
 	}
+	ul_unlock_udomain(_d);
 	return 0;
 }
 
@@ -55,17 +59,19 @@ static inline int no_contacts(udomain_t* _d, str* _u)
 	urecord_t* r;
 	int res;
 	
-	res = ul_get_record(_d, _u, &r);
+	ul_lock_udomain(_d);
+	res = ul_get_urecord(_d, _u, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
 		LOG(L_ERR, "no_contacts(): Error while retrieving record from usrloc\n");
+		ul_unlock_udomain(_d);
 		return -1;
 	}
 	
 	if (res == 0) {  /* Contacts found */
 		build_contact(r->contacts);
-		ul_release_record(r);
 	}
+	ul_unlock_udomain(_d);
 	return 0;
 }
 
@@ -79,6 +85,7 @@ static inline int no_contacts(udomain_t* _d, str* _u)
 static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _u)
 {
 	urecord_t* r = 0;
+	ucontact_t* c;
 	int e, cseq;
 	float q;
 	str uri, callid;
@@ -92,19 +99,17 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		if (e == 0) goto skip;
 		
 	        if (r == 0) {
-			if (ul_new_record(_u, &r) < 0) {
+			if (ul_insert_urecord(_d, _u, &r) < 0) {
 				rerrno = R_UL_NEW_R;
-				LOG(L_ERR, "insert(): Can't create new record structure\n");
+				LOG(L_ERR, "insert(): Can't insert new record structure\n");
 				return -2;
 			}
-			     /* FIXME !!! */
-			r->domain = _d->name;
 		}
 		
 		     /* Calculate q value of the contact */
 		if (calc_contact_q(_c->q, &q) < 0) {
 			LOG(L_ERR, "insert(): Error while calculating q\n");
-			ul_free_record(r);
+			ul_delete_urecord(_d, _u);
 			return -3;
 		}
 
@@ -120,14 +125,14 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
 			rerrno = R_INV_CSEQ;
 			LOG(L_ERR, "insert(): Error while converting cseq number\n");
-			ul_free_record(r);
+			ul_delete_urecord(_d, _u);
 			return -4;
 		}
 
-		if (ul_insert_contact(r, &uri, e, q, &callid, cseq) < 0) {
+		if (ul_insert_ucontact(r, &uri, e, q, &callid, cseq, &c) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
-			ul_free_record(r);
+			ul_delete_urecord(_d, _u);
 			return -5;
 		}
 		
@@ -135,15 +140,8 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		_c = get_next_contact(_c);
 	}
 	
-	if (r) {
-		if (ul_insert_record(_d, r) < 0) {
-			rerrno = R_UL_INS_R;
-			LOG(L_ERR, "insert(): Error while inserting record\n");
-			ul_free_record(r);
-			return -6;
-		}
-
-		build_contact(r->contacts);
+	if (r && !r->contacts) {
+		ul_delete_urecord(_d, _u);
 	}
 
 	return 0;
@@ -163,7 +161,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
  */
 static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 {
-	ucontact_t* c;
+	ucontact_t* c, *c2;
 	str uri, callid;
 	int cseq, e;
 	float q;
@@ -180,7 +178,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 		str_copy(&uri, &_c->uri);
 		get_raw_uri(&uri);
 		
-		if (ul_get_contact(_r, &uri, &c) > 0) {
+		if (ul_get_ucontact(_r, &uri, &c) > 0) {
 			LOG(L_ERR, "contact not found\n"); /*d*/
 			     /* Contact not found */
 			if (e != 0) {
@@ -203,7 +201,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				}
 				
 				LOG(L_ERR, "inserting\n"); /*d*/
-				if (ul_insert_contact(_r, &uri, e, q, &callid, cseq) < 0) {
+				if (ul_insert_ucontact(_r, &uri, e, q, &callid, cseq, &c2) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -213,7 +211,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 			LOG(L_ERR, "contact found\n"); /*d*/
 			if (e == 0) {
 				LOG(L_ERR, "deleting\n"); /*d*/
-				if (ul_delete_contact(_r, c) < 0) {
+				if (ul_delete_ucontact(_r, c) < 0) {
 					rerrno = R_UL_DEL_C;
 					LOG(L_ERR, "update(): Error while deleting contact\n");
 					return -5;
@@ -237,7 +235,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				}
 				
 				LOG(L_ERR, "updating\n"); /*d*/
-				if (ul_update_contact(c, e, q, &callid, cseq) < 0) {
+				if (ul_update_ucontact(c, e, q, &callid, cseq) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
@@ -261,10 +259,12 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	urecord_t* r;
 	LOG(L_ERR, "contacts()\n"); /*d*/
 
-	res = ul_get_record(_d, _u, &r);
+	ul_lock_udomain(_d);
+	res = ul_get_urecord(_d, _u, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
 		LOG(L_ERR, "contacts(): Error while retrieving record from usrloc\n");
+		ul_unlock_udomain(_d);
 		return -2;
 	}
 
@@ -272,17 +272,20 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 		if (update(_m, r, _c) < 0) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
 			build_contact(r->contacts);
-			ul_release_record(r);
+			ul_release_urecord(r);
+			ul_unlock_udomain(_d);
 			return -3;
 		}
 		build_contact(r->contacts);
-		ul_release_record(r);
+		ul_release_urecord(r);
 	} else {
 		if (insert(_m, _c, _d, _u) < 0) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
+			ul_unlock_udomain(_d);
 			return -4;
 		}
 	}
+	ul_unlock_udomain(_d);
 	return 0;
 }
 
@@ -311,7 +314,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	str_copy(&user, &((struct to_body*)_m->to->parsed)->uri);
 
 	LOG(L_ERR, "user = \'%.*s\'\n", user.len, user.s);
-	if (get_user(&user) < 0) {
+	if (ul_get_user(&user) < 0) {
 		rerrno = R_TO_USER;
 		LOG(L_ERR, "save(): Can't extract username part from To URI, sending 400\n");
 		goto error;
@@ -332,5 +335,5 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	
  error:
 	send_reply(_m);
-	return -1;
+	return 0;
 }

@@ -5,6 +5,7 @@
  */
 
 #include "reg_mod.h"
+#include <stdio.h>
 #include "../../sr_module.h"
 #include "../../timer.h"
 #include "../../dprint.h"
@@ -113,7 +114,7 @@ static int domain_fixup(void** param, int param_no)
 	udomain_t* d;
 
 	if (param_no == 1) {
-		if (ul_register_domain((char*)*param, &d) < 0) {
+		if (ul_register_udomain((char*)*param, &d) < 0) {
 			LOG(L_ERR, "domain_fixup(): Error while registering domain\n");
 			return E_UNSPEC;
 		}
