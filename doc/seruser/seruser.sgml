@@ -1689,7 +1689,7 @@ route{
 	    </section>
 
 	    <section id="statefulua">
-		<title>Stateful User Agent</title>
+		<title>Stateful User Agent Server</title>
 		<para>
 		    This examples shows how to make ser act as a stateful user
 		    agent (UA). Ability to act as as a stateful UA is essential
@@ -1723,8 +1723,22 @@ route{
 		    a reply for a request. It generates the reply statefully,
 		    i.e., it is kept for future retransmissions in memory.
 		</para>
+		<note>
+			<para>
+				Applications that do not need stateful processing
+				may act as stateless UA Server too. They just use
+				the <command>sl_send_reply</command> action to
+				send replies to requests without keeping any
+				state. The benefit is memory cannot run out,
+				the drawback is that each retransmission needs to
+				be processed as a new request. An example of use
+				of a stateless server is shown in
+		    	<xref linkend="redirectserver"> and
+		    	<xref linkend="executingscript">.
+			</para>
+		</note>
 		<example>
-		    <title>Stateful UA</title>
+		    <title>Stateful UA Server</title>
 		    <programlisting format="linespecific">
 			<!-- ../../examples/uas.cfg -->
 			&statefuluaexample;
@@ -1732,7 +1746,7 @@ route{
 		</example>
 	    </section> <!-- Stateful UAS -->
 
-	    <section>
+	    <section id="redirectserver">
 		<title>Redirect Server</title>
 		<para>
 		    The redirect example shows how to redirect a request
@@ -1768,7 +1782,7 @@ route{
 		</example>
 	    </section> <!-- redirect server-->
 	    
-	    <section>
+	    <section id="executingscript">
 		<title>Executing External Script</title>
 		<para>
 		    Like in the previous example, we show how to
@@ -1802,6 +1816,20 @@ route{
 		    is much easier: it prints fixed URIs on its output using
 		    shell script <command moreinfo="none">echo</command> command.
 		</para>
+		<note>
+			<para>
+				This script works statelessly -- it uses this action for
+				stateless replying, <command>sl_send_reply</command>.
+				No transaction is kept in memory and each request retransmission
+				is processed as a brand-new request. That may be a particular
+				concern if the server logic (<command>exec</command> actions
+				in this example) is too expensive. See 
+		    	<xref linkend="statefulua"> for instructions on how
+				to make server logic stateful, so that retransmissions
+				are absorbed and do not cause re-execution of the logic.
+			
+			</para>
+		</note>
 		<example id="execscript">
 		    <title>Executing External Script</title>
 		    <programlisting format="linespecific">
@@ -2550,7 +2578,24 @@ MySql Password:
 			<para>
 			    To enable call accounting, tm and acc modules need to be loaded,
 			    requests need to be processed statefuly and labeled for
-			    accounting.
+			    accounting. That means, if you want a transaction to be reported,
+				the initial request must have taken the path 
+				"<command>setflag(X)</command>, <command>t_relay</command>"
+				in <application>ser</application> script. X must have the
+				value configured in <varname>acc_flag</varname>
+				configuration option.
+			</para>
+			<para>
+				Also note, that by default only transactions that initiate
+				a SIP dialog (typically INVITE) visit a proxy server.
+				Subsequent transactions are exhanged directly between
+				end-devices, do not visit proxy server and cannot be
+				reported. To be able to report on subsequent transactions,
+				you need to force them visit proxy server by turning 
+				record-routing on. 
+			</para>
+			<para>
+				
 			    <example>
 				<title>Configuration with Enabled Accounting</title>
 				<programlisting format="linespecific">
