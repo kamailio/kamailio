@@ -656,6 +656,30 @@ ssize_t unixsock_reply_send(void)
 
 
 /*
+ * Send a reply
+ */
+ssize_t unixsock_reply_sendto(struct sockaddr_un* to)
+{
+	int ret;
+
+	if (!to) {
+		LOG(L_ERR, "unixsock_reply_sendto: Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = sendto(sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
+		     (struct sockaddr*)to, SUN_LEN(to));
+
+	if (ret == -1) {
+		LOG(L_ERR, "unixsock_reply_sendto: sendto: %s\n", 
+		    strerror(errno));
+	}
+
+	return ret;
+}
+
+
+/*
  * Read a line, the result will be stored in line
  * parameter, the data is not copied, it's just
  * a pointer to an existing buffer
@@ -921,4 +945,13 @@ int unixsock_reply_printf(char* fmt, ...)
 	reply_pos.s += ret;
 	reply_pos.len -= ret;
 	return 0;
+}
+
+
+/*
+ * Return the address of the sender
+ */
+struct sockaddr_un* unix_sender_address(void)
+{
+	return &reply_addr;
 }
