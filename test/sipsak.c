@@ -63,7 +63,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <arpa/inet.h>
 #include <sys/poll.h>
 
-#define SIPSAK_VERSION "v0.6"
+#define SIPSAK_VERSION "v0.6.5"
 #define RESIZE		1024
 #define BUFSIZE		4096
 #define FQDN_SIZE   200
@@ -660,6 +660,9 @@ void shoot(char *buff)
 					perror("send failure");
 					exit( 1 );
 				}
+			}
+			else {
+				dontsend = 0;
 			}
 
 			/* in flood we are only interested in sending so skip the rest */
