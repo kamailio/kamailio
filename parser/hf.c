@@ -59,7 +59,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			free_cseq(hf->parsed);
 			break;
 
-                case HDR_AUTHORIZATION:
+		case HDR_AUTHORIZATION:
 		case HDR_PROXYAUTH:
 			free_credentials((auth_body_t**)(&(hf->parsed)));
 			break;
@@ -78,6 +78,10 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_CONTACT:
 			free_contact((contact_body_t**)(&(hf->parsed)));
+			break;
+
+		case HDR_CONTENTLENGTH:
+		case HDR_CONTENTTYPE:
 			break;
 
 		default:

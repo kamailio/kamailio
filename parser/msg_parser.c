@@ -43,6 +43,7 @@
 #include "../globals.h"
 #include "parse_hname2.h"
 #include "parse_uri.h"
+#include "parse_content.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -64,6 +65,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	struct via_body *vb;
 	struct cseq_body* cseq_b;
 	struct to_body* to_b;
+	int integer;
 
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
@@ -139,24 +141,44 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				hdr->name.s, hdr->body.len, to_b->uri.len,to_b->uri.s);
 			DBG("DEBUG: to body [%.*s]\n",to_b->body.len,to_b->body.s);
 			break;
+		case HDR_CONTENTLENGTH:
+			hdr->body.s=tmp;
+			tmp=parse_content_length(tmp,end, &integer);
+			if (tmp==0){
+				LOG(L_ERR, "ERROR:get_hdr_field: bad content_length header\n");
+				goto error;
+			}
+			hdr->parsed=(void*)integer;
+			hdr->body.len=tmp-hdr->body.s;
+			DBG("DEBUG: get_hdr_body : content_length=%d\n",(int)hdr->parsed);
+			break;
+		case HDR_CONTENTTYPE:
+			hdr->body.s=tmp;
+			tmp=parse_content_type(tmp,end, &integer);
+			if (tmp==0){
+				LOG(L_ERR, "ERROR:get_hdr_field: bad content_type header\n");
+				goto error;
+			}
+			hdr->parsed=(void*)integer;
+			hdr->body.len=tmp-hdr->body.s;
+			DBG("DEBUG: get_hdr_body : content_type=%d\n",(int)hdr->parsed);
+			break;
 		case HDR_FROM:
 		case HDR_CALLID:
 		case HDR_CONTACT:
 		case HDR_ROUTE:
 		case HDR_RECORDROUTE:
 		case HDR_MAXFORWARDS:
-		case HDR_CONTENTTYPE:
-		case HDR_CONTENTLENGTH:
-	        case HDR_AUTHORIZATION:
-	        case HDR_EXPIRES:
-	        case HDR_PROXYAUTH:
-	        case HDR_WWWAUTH:
-	        case HDR_SUPPORTED:
-	        case HDR_REQUIRE:
-	        case HDR_PROXYREQUIRE:
-	        case HDR_UNSUPPORTED:
-	        case HDR_ALLOW:
-	        case HDR_EVENT:
+		case HDR_AUTHORIZATION:
+		case HDR_EXPIRES:
+		case HDR_PROXYAUTH:
+		case HDR_WWWAUTH:
+		case HDR_SUPPORTED:
+		case HDR_REQUIRE:
+		case HDR_PROXYREQUIRE:
+		case HDR_UNSUPPORTED:
+		case HDR_ALLOW:
+		case HDR_EVENT:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -286,39 +308,39 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 				if (msg->content_length==0) msg->content_length = hf;
 				msg->parsed_flag|=HDR_CONTENTLENGTH;
 				break;
-		        case HDR_AUTHORIZATION:
-			        if (msg->authorization==0) msg->authorization = hf;
+			case HDR_AUTHORIZATION:
+				if (msg->authorization==0) msg->authorization = hf;
 				msg->parsed_flag|=HDR_AUTHORIZATION;
 				break;
-        		case HDR_EXPIRES:
+			case HDR_EXPIRES:
 				if (msg->expires==0) msg->expires = hf;
 				msg->parsed_flag|=HDR_EXPIRES;
 				break;
-		        case HDR_PROXYAUTH:
+			case HDR_PROXYAUTH:
 				if (msg->proxy_auth==0) msg->proxy_auth = hf;
 				msg->parsed_flag|=HDR_PROXYAUTH;
 				break;
-		        case HDR_WWWAUTH:
+			case HDR_WWWAUTH:
 				if (msg->www_auth==0) msg->www_auth = hf;
 				msg->parsed_flag|=HDR_WWWAUTH;
 				break;
-		        case HDR_SUPPORTED:
+			case HDR_SUPPORTED:
 				if (msg->supported==0) msg->supported = hf;
 				msg->parsed_flag|=HDR_SUPPORTED;
 				break;
-		        case HDR_REQUIRE:
+			case HDR_REQUIRE:
 				if (msg->require==0) msg->require = hf;
 				msg->parsed_flag|=HDR_REQUIRE;
 				break;
-		        case HDR_PROXYREQUIRE:
+			case HDR_PROXYREQUIRE:
 				if (msg->proxy_require==0) msg->proxy_require = hf;
 				msg->parsed_flag|=HDR_PROXYREQUIRE;
 				break;
-		        case HDR_UNSUPPORTED:
+			case HDR_UNSUPPORTED:
 				if (msg->unsupported==0) msg->unsupported=hf;
 				msg->parsed_flag|=HDR_UNSUPPORTED;
 				break;
-		        case HDR_ALLOW:
+			case HDR_ALLOW:
 				if (msg->allow==0) msg->allow = hf;
 				msg->parsed_flag|=HDR_ALLOW;
 				break;

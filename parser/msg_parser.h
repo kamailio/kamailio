@@ -208,4 +208,24 @@ inline static int char_msg_val( struct sip_msg *msg, char *cv )
 	return 1;
 }
 
+
+/* returns a pointer to the begining of the msg's body
+ */
+inline static char* get_body(struct sip_msg *msg)
+{
+	int offset;
+
+	if ( parse_headers(msg,HDR_EOH, 0)==-1 )
+		return 0;
+
+	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)==0 )
+		offset = CRLF_LEN;
+	else if (*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' )
+		offset = 1;
+	else
+		return 0;
+
+	return msg->unparsed + offset;
+}
+
 #endif
