@@ -44,6 +44,7 @@
  *  2003-03-31  removed msg->repl_add_rm (andrei)
  *  2003-04-04  parsed uris are recalculated on cloning (jiri)
  *  2003-05-07  received, rport & i via shortcuts are also translated (andrei)
+ *  2003-11-11  updated cloning of lump_rpl (bogdan)
  */
 
 #include "defs.h"
@@ -678,7 +679,8 @@ do { \
 	{
 		*(rpl_lump_anchor)=(struct lump_rpl*)p;
 		p+=ROUND4(sizeof( struct lump_rpl ));
-		(*rpl_lump_anchor)->type = rpl_lump->type;
+		(*rpl_lump_anchor)->flags =
+			rpl_lump->flags&(!(LUMP_RPL_NODUP|LUMP_RPL_NOFREE));
 		(*rpl_lump_anchor)->text.len = rpl_lump->text.len;
 		(*rpl_lump_anchor)->text.s=p;
 		p+=ROUND4(rpl_lump->text.len);

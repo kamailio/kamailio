@@ -51,6 +51,7 @@
  *              build_res_buf_with_body_from_sip_req() (bogdan)
  *  2003-11-05  flag context updated from failure/reply handlers back
  *              to transaction context (jiri)
+ *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 
@@ -1202,27 +1203,24 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	/* mark the transaction as replied */
 	if (code>=200) set_kr(REQ_RPLD);
 
-	/* build the lumps for new_header and for body (by bogdan) */
-	hdr_lump = build_lump_rpl( new_header , strlen(new_header) , LUMP_RPL_HDR );
-	if (hdr_lump==0) {
-		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot create hdr lump\n");
+	/* add the lumps for new_header and for body (by bogdan) */
+	hdr_lump = add_lump_rpl( trans->uas.request, new_header,
+		strlen(new_header), LUMP_RPL_HDR );
+	if ( !hdr_lump ) {
+		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add hdr lump\n");
 		goto error;
 	}
-	add_lump_rpl( trans->uas.request, hdr_lump);
 	/* body lump */
 	if(body && strlen(body)) {
-	    body_lump = build_lump_rpl( body , strlen(body) , LUMP_RPL_BODY );
-	    if (body_lump==0) {
-		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot create body lump\n");
-		goto error_1;
-	    }
-	    if (add_lump_rpl( trans->uas.request, body_lump)==-1) {
-		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add body lump\n");
-		goto error_1;
-	    }
+		body_lump = add_lump_rpl( trans->uas.request, body, strlen(body),
+			LUMP_RPL_BODY );
+		if (body_lump==0) {
+			LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add body lump\n");
+			goto error_1;
+		}
+	} else {
+		body_lump = 0;
 	}
-	else
-	    body_lump = 0;
 
 	rpl.s = build_res_buf_from_sip_req(
 			code, text, &s_to_tag,
@@ -1232,10 +1230,10 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	 * memory leak or crashing (lumps are create in private memory) I will
 	 * remove the lumps by myself here (bogdan) */
 	unlink_lump_rpl( trans->uas.request, hdr_lump);
-	pkg_free( hdr_lump );
+	free_lump_rpl( hdr_lump );
 	if( body_lump ) {
-	    unlink_lump_rpl( trans->uas.request, body_lump);
-	    pkg_free( body_lump );
+		unlink_lump_rpl( trans->uas.request, body_lump);
+		free_lump_rpl( body_lump );
 	}
 
 	if (rpl.s==0) {
@@ -1257,7 +1255,7 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	return ret;
 error_1:
 	unlink_lump_rpl( trans->uas.request, hdr_lump);
-	pkg_free( hdr_lump );
+	free_lump_rpl( hdr_lump );
 error:
 	return -1;
 }
