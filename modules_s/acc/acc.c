@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-04-04  grand acc cleanup (jiri)
  */
 
 
@@ -31,405 +35,389 @@
 #include <time.h>
 
 #include "../../dprint.h"
-#include "../../parser/msg_parser.h"
-#include "../tm/t_funcs.h"
 #include "../../error.h"
+#include "../../ut.h"      /* q_memchr */
+#include "../../mem/mem.h"
+#include "../../parser/hf.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/digest/digest.h"
+#include "../tm/t_funcs.h"
 #include "acc_mod.h"
 #include "acc.h"
-#include "../../ut.h"      /* q_memchr */
 
-/********************************************************
- *        str_copy
- *        Copy str structure, doesn't copy
- *        the whole string !
- ********************************************************/
 
-static inline void str_copy(str* _d, str* _s)
+#define ATR(atr)  atr_arr[cnt].s=A_##atr;\
+				atr_arr[cnt].len=A_##atr##_LEN;
+
+static str na={NA, NA_LEN};
+
+static inline struct hdr_field *valid_to( struct cell *t, 
+				struct sip_msg *reply)
 {
-	_d->s = _s->s;
-	_d->len = _s->len;
+	if (reply==FAKED_REPLY || !reply || !reply->to) 
+		return t->uas.request->to;
+	return reply->to;
 }
 
-/********************************************************
- *        ul_fnq
- *        Find a character occurence that is not quoted
- ********************************************************/
 
-char* ul_fnq(str* _s, char _c)
+/* create an array of str's for accounting using a formatting string */
+static int fmt2strar( char *fmt, /* what would you like to account ? */
+		struct sip_msg *rq, /* accounted message */
+		struct hdr_field *to, 
+		str *phrase, 
+		int *total_len, /* total length of accounted values */
+		int *attr_len,  /* total length of accounted attribtue names */
+		str **val_arr, /* that's the output -- must have MAX_ACC_COLUMNS */
+		str *atr_arr)
 {
-	int quoted = 0, i;
+	int cnt, tl, al;
+	struct to_body* from, *pto;
+	struct hdr_field* h;
+	auth_body_t* cred;
+	static struct sip_uri from_uri, to_uri;
 
-	for(i = 0; i < _s->len; i++) {
-		if (!quoted) {
-			if (_s->s[i] == '\"') quoted = 1;
-			else if (_s->s[i] == _c) return _s->s + i;
-		} else {
-			if ((_s->s[i] == '\"') && (_s->s[i - 1] != '\\')) quoted = 0;
-		}
-	}
-	return 0;
-}
+	cnt=tl=al=0;
 
-/********************************************
- *        ul_get_user
- *        Extract username part from URI
- ********************************************/
+	/* we don't care about parsing here; either the function
+	 * was called from script, in which case the wrapping function
+	 * is supposed to parse, or from reply processing in which case
+	 * TM should have preparsed from REQUEST_IN callback; what's not
+	 * here is replaced with NA
+	 */
 
-int ul_get_user(str* _s)
-{
-	char* at, *dcolon, *dc;
-	dcolon = ul_fnq(_s, ':');
 
-	if (dcolon == 0) return -1;
-
-	_s->s = dcolon + 1;
-	_s->len -= dcolon - _s->s + 1;
-
-	at = q_memchr(_s->s, '@', _s->len);
-	dc = q_memchr(_s->s, ':', _s->len);
-	if (at) {
-		if ((dc) && (dc < at)) {
-			_s->len = dc - _s->s;
+	while(*fmt) {
+		if (cnt==MAX_ACC_COLUMNS) {
+			LOG(L_ERR, "ERROR: fmt2strar: too long formatting string\n");
 			return 0;
 		}
-
-		_s->len = at - _s->s;
-		return 0;
-	} else return -2;
+		switch(*fmt) {
+			case 'c':	
+				val_arr[cnt]=rq->callid && rq->callid->body.len
+						? &rq->callid->body : &na;
+				ATR(CALLID);
+				break;
+			case 'i':
+				val_arr[cnt]=&rq->first_line.u.request.uri;
+				ATR(IURI);
+				break;
+			case 'm':
+				val_arr[cnt]=&rq->first_line.u.request.method;
+				ATR(METHOD);
+				break;
+			case 'o':
+				val_arr[cnt]=rq->new_uri.len ? &rq->new_uri : &na;
+				ATR(OURI);
+				break;
+			case 'f':
+				val_arr[cnt]=(rq->from && rq->from->body.len) 
+					? &rq->from->body : &na;
+				ATR(FROM);
+				break;
+			case 'r': /* from-tag */
+				if (rq->from && (from=get_from(rq))
+							&& from->tag_value.len) {
+						val_arr[cnt]=&from->tag_value;
+				} else val_arr[cnt]=&na;
+				ATR(FROMTAG);
+				break;
+			case 'F': /* from-uri */
+				if (rq->from && (from=get_from(rq))
+							&& from->uri.len) {
+						val_arr[cnt]=&from->uri;
+				} else val_arr[cnt]=&na;
+				ATR(FROMURI);
+				break;
+			case '0': /* from user */
+				val_arr[cnt]=&na;
+				if (rq->from && (from=get_from(rq))
+						&& from->uri.len) {
+					parse_uri(from->uri.s, from->uri.len, &from_uri);
+					if (from_uri.user.len) 
+							val_arr[cnt]=&from_uri.user;
+				} 
+				ATR(FROMUSER);
+				break;
+			case 't':
+				val_arr[cnt]=(to && to->body.len) ? &to->body : &na;
+				ATR(TO);
+				break;
+			case 'd':	
+				val_arr[cnt]=(to && (pto=(struct to_body*)(to->parsed))
+					&& pto->tag_value.len) ? 
+					& pto->tag_value : &na;
+				ATR(TOTAG);
+				break;
+			case 'T': /* to-uri */
+				if (rq->to && (pto=get_to(rq))
+							&& pto->uri.len) {
+						val_arr[cnt]=&pto->uri;
+				} else val_arr[cnt]=&na;
+				ATR(TOURI);
+				break;
+			case '1': /* to user */ 
+				val_arr[cnt]=&na;
+				if (rq->to && (pto=get_to(rq))
+							&& pto->uri.len) {
+					parse_uri(pto->uri.s, pto->uri.len, &to_uri);
+					if (to_uri.user.len)
+						val_arr[cnt]=&to_uri.user;
+				} 
+				ATR(TOUSER);
+				break;
+			case 's':
+				val_arr[cnt]=phrase;
+				ATR(STATUS);
+				break;
+			case 'u':
+				get_authorized_cred(rq->proxy_auth, &h);
+				if (!h) get_authorized_cred(rq->authorization, &h);
+				cred=h?(auth_body_t*)(h->parsed):0;
+				val_arr[cnt]=(cred && cred->digest.username.user.len) 
+						? &cred->digest.username.user:&na;
+				ATR(UID);
+				break;
+			case 'p':
+				val_arr[cnt]=rq->parsed_orig_ruri.user.len ?
+					& rq->parsed_orig_ruri.user : &na;
+				ATR(UP_IURI);
+				break;
+			default:
+				LOG(L_CRIT, "BUG: acc_log_request: uknown char: %c\n",
+					*fmt);
+				return 0;
+		} /* switch (*fmt) */
+		tl+=val_arr[cnt]->len;
+		al+=atr_arr[cnt].len;
+		fmt++;
+		cnt++;
+	} /* while (*fmt) */
+	*total_len=tl;
+	*attr_len=al;
+	return cnt;
 }
+
+
+	/* skip leading text and begin with first item's
+	 * separator ", " which will be overwritten by the
+	 * leading text later 
+	 * */
 /********************************************
  *        acc_request
  ********************************************/
-
-int acc_request( struct sip_msg *rq, char * comment, char  *foo)
+int acc_log_request( struct sip_msg *rq, struct hdr_field *to, 
+				str *txt, str *phrase)
 {
-#ifdef SQL_ACC
-    db_key_t keys[] = {mc_sip_method_col, mc_i_uri_col, mc_o_uri_col, mc_sip_from_col, mc_sip_callid_col,
-                        mc_sip_to_col, mc_sip_status_col, mc_user_col, mc_time_col};
-    db_val_t vals[9];
+	int len;
+	char *log_msg;
+	char *p;
+	int attr_cnt;
+	int attr_len;
+	str* val_arr[MAX_ACC_COLUMNS];
+	str atr_arr[MAX_ACC_COLUMNS];
+	int i;
 
-    struct tm *tm;
-    time_t timep;
-    char time_s[20];
-    str user;
-#endif
+	if (skip_cancel(rq)) return 1;
 
-	int comment_len;
-
-	comment_len=strlen(comment);
-
-	/* we can parse here even if we do not knwo whether the
-	   request is an incmoing pkg_mem message or stoed  shmem_msg;
-	   thats because acc_missed_report operating over shmem never
-	   enters acc_missed if the header fields are not parsed
-	   and entering the function from script gives pkg_mem,
-	   which can be parsed
-	*/
-
-	if ( parse_headers(rq, HDR_FROM | HDR_CALLID, 0)==-1
-				|| !(rq->from && rq->callid) ) {
-        LOG(L_ERR, "ERROR: acc_missed: From not found\n");
+	attr_cnt=fmt2strar( log_fmt, rq, to, phrase, 
+					&len, &attr_len, val_arr, atr_arr);
+	if (!attr_cnt) {
+		LOG(L_ERR, "ERROR: acc_log_request: fmt2strar failed\n");
 		return -1;
 	}
-    if (usesyslog) {
-        LOG( log_level,
-            "ACC: call missed: "
-            "i-uri=%.*s, o-uri=%.*s, call_id=%.*s, "
-            "from=%.*s, reason=%.*s\n",
-            rq->first_line.u.request.uri.len,
-            rq->first_line.u.request.uri.s,
-            rq->new_uri.len, rq->new_uri.s,
-            rq->callid->body.len, rq->callid->body.s,
-            rq->from->body.len, rq->from->body.s,
-            comment_len, comment);
-    }
+	len+=attr_len+ACC_LEN+txt->len+A_EOL_LEN 
+		+attr_cnt*(A_SEPARATOR_LEN+A_EQ_LEN)-A_SEPARATOR_LEN;
+	log_msg=pkg_malloc(len);
+	if (!log_msg) {
+		LOG(L_ERR, "ERROR: acc_log_request: no mem\n");
+		return -1;
+	}
 
-#ifdef SQL_ACC
-    if (db_url) {
-        timep = time(NULL);
-        tm = gmtime(&timep);
-        strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
+	/* skip leading text and begin with first item's
+	 * separator ", " which will be overwritten by the
+	 * leading text later 
+	 * */
+	p=log_msg+(ACC_LEN+txt->len-A_SEPARATOR_LEN);
+	for (i=0; i<attr_cnt; i++) {
+		memcpy(p, A_SEPARATOR, A_SEPARATOR_LEN );
+		p+=A_SEPARATOR_LEN;
+		memcpy(p, atr_arr[i].s, atr_arr[i].len);
+		p+=atr_arr[i].len;
+		memcpy(p, A_EQ, A_EQ_LEN);
+		p+=A_EQ_LEN;
+		memcpy(p, val_arr[i]->s, val_arr[i]->len);
+		p+=val_arr[i]->len;
+	}
 
-        str_copy(&user, &rq->first_line.u.request.uri);
+	/* terminating text */
+	memcpy(p, A_EOL, A_EOL_LEN); p+=A_EOL_LEN;
+	/* leading text */
+	p=log_msg;
+	memcpy(p, ACC, ACC_LEN ); p+=ACC_LEN;
+	memcpy(p, txt->s, txt->len); p+=txt->len;
 
-        if ((ul_get_user(&user) < 0) || !user.len) {
-            LOG(L_ERR, "ERROR: acc_request: Error while extracting username\n");
-            return -1;
-        }
+	LOG(log_level, "%s", log_msg );
 
-        /* database columns:
-         * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid", "sip_to", "sip_status", "user", "time"
-         */
-
-        VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = VAL_TYPE(vals + 3) = VAL_TYPE(vals + 4) =
-                VAL_TYPE(vals + 5) = VAL_TYPE(vals + 6) = VAL_TYPE(vals + 7) = DB_STR;
-        VAL_TYPE(vals + 8) = DB_STRING;
-
-        VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = VAL_NULL(vals + 3) = VAL_NULL(vals + 4) =
-                VAL_NULL(vals + 5) = VAL_NULL(vals + 6) = VAL_NULL(vals + 7) = VAL_NULL(vals + 8) = 0;
-
-        VAL_STR(vals).s     = rq->first_line.u.request.method.s;
-        VAL_STR(vals).len   = rq->first_line.u.request.method.len;
-        VAL_STR(vals+1).s   = rq->first_line.u.request.uri.s;
-        VAL_STR(vals+1).len = rq->first_line.u.request.uri.len;
-        VAL_STR(vals+2).s   = rq->new_uri.s;
-        VAL_STR(vals+2).len = rq->new_uri.len;
-        VAL_STR(vals+3).s   = rq->from->body.s;
-        VAL_STR(vals+3).len = rq->from->body.len;
-        VAL_STR(vals+4).s   = rq->callid->body.s;
-        VAL_STR(vals+4).len = rq->callid->body.len;
-        VAL_STR(vals+5).s   = rq->to->body.s;
-        VAL_STR(vals+5).len = rq->to->body.len;
-        VAL_STR(vals+6).s   = comment;
-        VAL_STR(vals+6).len = comment_len;
-        VAL_STR(vals+7).s   = user.s;
-        VAL_STR(vals+7).len = user.len;
-        VAL_STRING(vals+8)  = time_s;
-
-        db_use_table(db_handle, db_table_mc);
-        if (db_insert(db_handle, keys, vals, 9) < 0) {
-            LOG(L_ERR, "ERROR: acc_request: Error while inserting to database\n");
-            return -1;;
-        }
-    }
-#endif
-
-    return 1;
+	pkg_free(log_msg);
+	return 1;
 }
+
+
 
 /********************************************
  *        acc_missed_report
  ********************************************/
 
-void acc_missed_report( struct cell* t, struct sip_msg *reply,
+
+void acc_log_missed( struct cell* t, struct sip_msg *reply,
 	unsigned int code )
 {
-	struct sip_msg *rq;
 	str acc_text;
-
-	rq =  t->uas.request;
-	/* it is coming from TM -- it must be already parsed ! */
-	if (! rq->from ) {
-		LOG(L_ERR, "ERROR: TM request for accounting not parsed\n");
-		return;
-	}
+	static str leading_text={ACC_MISSED, ACC_MISSED_LEN};
 
 	get_reply_status(&acc_text, reply, code);
 	if (acc_text.s==0) {
-		LOG(L_ERR, "ERROR: acc_missed_report: get_reply_status failed\n" );
+		LOG(L_ERR, "ERROR: acc_missed_report: "
+						"get_reply_status failed\n" );
 		return;
 	}
 
-	acc_request(rq, acc_text.s , 0 /* foo */);
+	acc_log_request(t->uas.request, 
+			valid_to(t, reply), &leading_text, &acc_text);
 	pkg_free(acc_text.s);
-
-	/* zdravime vsechny cechy -- jestli jste se dostali se ctenim
-	   kodu az sem a rozumite mu, jste na tom lip, nez autor!
-	   prijmete uprimne blahoprani
-	*/
 }
+
 
 /********************************************
  *        acc_reply_report
  ********************************************/
 
-void acc_reply_report(  struct cell* t , struct sip_msg *reply,
+void acc_log_reply(  struct cell* t , struct sip_msg *reply,
 	unsigned int code )
 {
-#ifdef SQL_ACC
+	str code_str;
+	static str lead={ACC_ANSWERED, ACC_ANSWERED_LEN};
 
-    db_key_t keys[] = {acc_sip_method_col, acc_i_uri_col, acc_o_uri_col, acc_sip_from_col, acc_sip_callid_col,
-                        acc_sip_to_col, acc_sip_status_col, acc_user_col, acc_time_col};
-    db_val_t vals[9];
-
-    struct tm *tm;
-    time_t timep;
-    char time_s[20];
-    str user;
-#endif
-
-	struct sip_msg *rq;
-
-	/* note that we don't worry about *reply -- it may be actually
-	   a pointer FAKED_REPLY and we need only code anyway, anything else is
-	   stored in transaction context
-	*/
-	rq =  t->uas.request;
-
-	/* take call-if from TM -- it is parsed for requests and we do not
-	   want to parse it from reply unnecessarily */
-	/* don't try to parse any more -- the request is conserved in shmem */
-	if ( /*parse_headers(rq, HDR_CALLID)==-1 || */
-		!  (rq->callid && rq->from )) {
-		LOG(L_INFO, "ERROR: attempt to account on a reply to request "
-			"with an invalid Call-ID or From\n");
-		return;
-	}
-    if (usesyslog) {
-        LOG( log_level,
-            "ACC: transaction answered: "
-            "method=%.*s, i-uri=%.*s, o-uri=%.*s, call_id=%.*s, "
-            "from=%.*s, code=%d\n",
-            rq->first_line.u.request.method.len,
-            rq->first_line.u.request.method.s,
-            rq->first_line.u.request.uri.len,
-            rq->first_line.u.request.uri.s,
-            rq->new_uri.len, rq->new_uri.s,
-            rq->callid->body.len, rq->callid->body.s,
-            rq->from->body.len, rq->from->body.s,
-            /* take a reply from message -- that's safe and we don't need to be
-            worried about TM reply status being changed concurrently */
-            code );
-    }
-
-#ifdef SQL_ACC
-    if (db_url) {
-        timep = time(NULL);
-        tm = gmtime(&timep);
-        strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
-
-        str_copy(&user, &rq->first_line.u.request.uri);
-
-        if ((ul_get_user(&user) < 0) || !user.len) {
-            LOG(L_ERR, "ERROR: acc_reply_report: Error while extracting username\n");
-            return;
-        }
-
-        /* database columns:
-         * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid", "sip_to", "sip_status", "user", "time"
-         */
-
-        VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = VAL_TYPE(vals + 3) = VAL_TYPE(vals + 4) =
-                VAL_TYPE(vals + 5) = DB_STR;
-        VAL_TYPE(vals + 6) = DB_INT;
-        VAL_TYPE(vals + 7) = DB_STR;
-        VAL_TYPE(vals + 8) = DB_STRING;
-
-        VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = VAL_NULL(vals + 3) = VAL_NULL(vals + 4) =
-                VAL_NULL(vals + 5) = VAL_NULL(vals + 6) = VAL_NULL(vals + 7) = VAL_NULL(vals + 8) = 0;
-
-        VAL_STR(vals).s     = rq->first_line.u.request.method.s;
-        VAL_STR(vals).len   = rq->first_line.u.request.method.len;
-        VAL_STR(vals+1).s   = rq->first_line.u.request.uri.s;
-        VAL_STR(vals+1).len = rq->first_line.u.request.uri.len;
-        VAL_STR(vals+2).s   = rq->new_uri.s;
-        VAL_STR(vals+2).len = rq->new_uri.len;
-        VAL_STR(vals+3).s   = rq->from->body.s;
-        VAL_STR(vals+3).len = rq->from->body.len;
-        VAL_STR(vals+4).s   = rq->callid->body.s;
-        VAL_STR(vals+4).len = rq->callid->body.len;
-        VAL_STR(vals+5).s   = rq->to->body.s;
-        VAL_STR(vals+5).len = rq->to->body.len;
-        VAL_INT(vals+6)     = code;
-        VAL_STR(vals+7).s   = user.s;
-        VAL_STR(vals+7).len = user.len;
-        VAL_STRING(vals+8)  = time_s;
-
-        db_use_table(db_handle, db_table_acc);
-        if (db_insert(db_handle, keys, vals, 9) < 0) {
-            LOG(L_ERR, "ERROR: acc_reply_report: Error while inserting to database\n");
-            return;
-        }
-    }
-#endif
+	code_str.s=int2str(code, &code_str.len);
+	acc_log_request(t->uas.request, 
+			valid_to(t,reply), &lead, &code_str );
 }
 
 /********************************************
- *        acc_ack_report
+ *        reports for e2e ACKs
  ********************************************/
-
-void acc_ack_report(  struct cell* t , struct sip_msg *ack )
+void acc_log_ack(  struct cell* t , struct sip_msg *ack )
 {
 
-#ifdef SQL_ACC
-    db_key_t keys[] = {acc_sip_method_col, acc_i_uri_col, acc_o_uri_col, acc_sip_from_col, acc_sip_callid_col,
-                        acc_sip_to_col, acc_sip_status_col, acc_user_col, acc_time_col};
-    db_val_t vals[9];
-
-    struct tm *tm;
-    time_t timep;
-    char time_s[20];
-    str user;
-#endif
-
-    struct sip_msg *rq;
+	struct sip_msg *rq;
+	struct hdr_field *to;
+	static str lead={ACC_ACKED, ACC_ACKED_LEN};
+	str code_str;
 
 	rq =  t->uas.request;
 
-	if (/* parse_headers(rq, HDR_CALLID, 0)==-1 || */
-			!( rq->callid && rq->from )) {
-		LOG(L_INFO, "ERROR: attempt to account on a request with invalid Call-ID\n");
-		return;
-	}
-    if (usesyslog) {
-        LOG( log_level, "ACC: transaction acknowledged: "
-            "method=%.*s, i-uri=%.*s, o-uri=%.*s, call_id=%.*s,"
-            "from=%.*s, code=%d\n",
-            /* take all stuff directly from message */
+	if (ack->to) to=ack->to; else to=rq->to;
+	code_str.s=int2str(t->uas.status, &code_str.len);
+	acc_log_request(ack, to, &lead, &code_str );
+}
 
-            /* CAUTION -- need to re-think here !!! The issue is with magic cookie
-            transaction matching all this stuff does not have to be parsed; so I
-            may want to try parsing here; which raises all the annoying issues
-            about in which memory space the parsed structures will live
-            */
-            ack->first_line.u.request.method.len, ack->first_line.u.request.method.s,
-            ack->first_line.u.request.uri.len, ack->first_line.u.request.uri.s,
-            ack->new_uri.len, ack->new_uri.s,
-            ack->callid->body.len, ack->callid->body.s,
-            ack->from->body.len, ack->from->body.s,
-            t->uas.status  );
-
-    }
+/**************** SQL Support *************************/
 
 #ifdef SQL_ACC
-    if (db_url) {
-        timep = time(NULL);
-        tm = gmtime(&timep);
-        strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
 
-        str_copy(&user, &ack->first_line.u.request.uri);
+int acc_db_request( struct sip_msg *rq, struct hdr_field *to, 
+				str *phrase, char *table, char *fmt)
+{
+	db_val_t vals[ALL_LOG_FMT_LEN+1];
+	str* val_arr[ALL_LOG_FMT_LEN+1];
+	str atr_arr[ALL_LOG_FMT_LEN+1];
+	/* caution: keys need to be aligned to formatting strings */
+	db_key_t keys[] = {acc_from_uri, acc_to_uri,
+		acc_sip_method_col, acc_i_uri_col, 
+		acc_o_uri_col, acc_sip_from_col, acc_sip_callid_col,
+   		acc_sip_to_col, acc_sip_status_col, acc_user_col, 
+		acc_time_col};
 
-        if ((ul_get_user(&user) < 0) || !user.len) {
-            LOG(L_ERR, "ERROR: acc_ack_report: Error while extracting username\n");
-            return;
-        }
+	struct tm *tm;
+	time_t timep;
+	char time_s[20];
+	int attr_cnt;
 
-        /* database columns:
-         * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid", "sip_to", "sip_status", "user", "time"
-         */
+	int i;
+	int dummy_len;
 
-        VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = VAL_TYPE(vals + 3) = VAL_TYPE(vals + 4) =
-                VAL_TYPE(vals + 5) = DB_STR;
-        VAL_TYPE(vals + 6) = DB_INT;
-        VAL_TYPE(vals + 7) = DB_STR;
-        VAL_TYPE(vals + 8) = DB_STRING;
+	if (skip_cancel(rq)) return 1;
 
-        VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = VAL_NULL(vals + 3) = VAL_NULL(vals + 4) =
-                VAL_NULL(vals + 5) = VAL_NULL(vals + 6) = VAL_NULL(vals + 7) = VAL_NULL(vals + 8) = 0;
+	/* database columns:
+	 * "sip_method", "i_uri", "o_uri", "sip_from", "sip_callid", 
+	 * "sip_to", "sip_status", "user", "time"
+	 */
+	attr_cnt=fmt2strar( fmt, rq, to, phrase, 
+					&dummy_len, &dummy_len, val_arr, atr_arr);
+	if (!attr_cnt) {
+		LOG(L_ERR, "ERROR: acc_db_request: fmt2strar failed\n");
+		return -1;
+	}
 
-        VAL_STR(vals).s     = ack->first_line.u.request.method.s;
-        VAL_STR(vals).len   = ack->first_line.u.request.method.len;
-        VAL_STR(vals+1).s   = ack->first_line.u.request.uri.s;
-        VAL_STR(vals+1).len = ack->first_line.u.request.uri.len;
-        VAL_STR(vals+2).s   = ack->new_uri.s;
-        VAL_STR(vals+2).len = ack->new_uri.len;
-        VAL_STR(vals+3).s   = ack->from->body.s;
-        VAL_STR(vals+3).len = ack->from->body.len;
-        VAL_STR(vals+4).s   = ack->callid->body.s;
-        VAL_STR(vals+4).len = ack->callid->body.len;
-        VAL_STR(vals+5).s   = ack->to->body.s;
-        VAL_STR(vals+5).len = strlen(ack->to->body.s);
-//        VAL_STR(vals+5).len = ack->to->body.len;
-        VAL_INT(vals+6)     = t->uas.status;
-        VAL_STR(vals+7).s   = user.s;
-        VAL_STR(vals+7).len = user.len;
-        VAL_STRING(vals+8)  = time_s;
+	if (!db_url) {
+		LOG(L_ERR, "ERROR: can't log -- no db_url set\n");
+		return -1;
+	}
 
-        db_use_table(db_handle, db_table_acc);
-        if (db_insert(db_handle, keys, vals, 9) < 0) {
-            LOG(L_ERR, "ERROR: acc_ack_report: Error while inserting to database\n");
-            return;
-        }
-    }
-#endif
+	timep = time(NULL);
+	tm = gmtime(&timep);
+	strftime(time_s, 20, "%Y-%m-%d %H:%M:%S", tm);
+
+
+	for(i=0; i<attr_cnt; i++) {
+		VAL_TYPE(vals+i)=DB_STR;
+		VAL_NULL(vals+i)=0;
+		VAL_STR(vals+i)=*val_arr[i];
+	}
+	/* time */
+	VAL_TYPE(vals+i)=DB_STRING;
+	VAL_NULL(vals+i)=0;
+	VAL_STRING(vals+i)=time_s;
+
+	db_use_table(db_handle, table);
+	if (db_insert(db_handle, keys, vals, i+1) < 0) {
+		LOG(L_ERR, "ERROR: acc_request: "
+				"Error while inserting to database\n");
+		return -1;;
+	}
+
+	return 1;
 }
+
+void acc_db_missed( struct cell* t, struct sip_msg *reply,
+	unsigned int code )
+{
+	str acc_text;
+
+	get_reply_status(&acc_text, reply, code);
+	acc_db_request(t->uas.request, valid_to(t,reply), &acc_text,
+				db_table_mc, SQL_MC_FMT );
+}
+void acc_db_ack(  struct cell* t , struct sip_msg *ack )
+{
+	str code_str;
+
+	code_str.s=int2str(t->uas.status, &code_str.len);
+	acc_db_request(ack, ack->to ? ack->to : t->uas.request->to,
+			&code_str, db_table_acc, SQL_ACC_FMT);
+}
+
+
+
+void acc_db_reply(  struct cell* t , struct sip_msg *reply,
+	unsigned int code )
+{
+	str code_str;
+
+	code_str.s=int2str(code, &code_str.len);
+	acc_db_request(t->uas.request, valid_to(t,reply), &code_str,
+				db_table_acc, SQL_ACC_FMT);
+}
+#endif
+

@@ -25,48 +25,108 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-04-04  grand acc cleanup (jiri)
  */
 
 
-#ifndef _ACC_H
-#define _ACC_H
+#ifndef _ACC_MOD_H
+#define _ACC_MOD_H
 
 #include "../../db/db.h"
+#include "defs.h"
 
 /* module parameter declaration */
-extern char *uid_column;
 extern int log_level;
 extern int early_media;
 extern int failed_transactions;
-extern int flagged_only;
-extern int usesyslog;
+
+extern char *log_fmt;
+extern int report_cancels;
+extern int log_flag;
+extern int log_missed_flag;
+extern int db_flag;
+extern int db_missed_flag;
+
+
+
+
+#ifdef SQL_ACC
 
 extern db_con_t* db_handle; /* Database connection handle */
 
+extern char *db_url;
+extern char *db_table_acc;
+extern char *db_table_mc;
+
+extern char* acc_sip_from_col;
+extern char* acc_sip_to_col;
+extern char* acc_sip_status_col;
+extern char* acc_sip_method_col;
+extern char* acc_i_uri_col;
+extern char* acc_o_uri_col;
+extern char* acc_sip_callid_col;
+extern char* acc_user_col;
+extern char* acc_time_col;
+extern char* acc_from_uri;
+extern char* acc_to_uri;
+
+extern char* mc_sip_from_col;
+extern char* mc_sip_to_col;
+extern char* mc_sip_status_col;
+extern char* mc_sip_method_col;
+extern char* mc_i_uri_col;
+extern char* mc_o_uri_col;
+extern char* mc_sip_callid_col;
+extern char* mc_user_col;
+extern char* mc_time_col;
+
+extern char *uid_column;
+#endif /* SQL_ACC */
+
+static inline int is_log_acc_on(struct sip_msg *rq)
+{   
+	return log_flag && isflagset(rq, log_flag)==1;
+}   
 #ifdef SQL_ACC
-    extern char *db_url;
-    extern char *db_table_acc;
-    extern char *db_table_mc;
-
-    extern char* acc_sip_from_col;
-    extern char* acc_sip_to_col;
-    extern char* acc_sip_status_col;
-    extern char* acc_sip_method_col;
-    extern char* acc_i_uri_col;
-    extern char* acc_o_uri_col;
-    extern char* acc_sip_callid_col;
-    extern char* acc_user_col;
-    extern char* acc_time_col;
-
-    extern char* mc_sip_from_col;
-    extern char* mc_sip_to_col;
-    extern char* mc_sip_status_col;
-    extern char* mc_sip_method_col;
-    extern char* mc_i_uri_col;
-    extern char* mc_o_uri_col;
-    extern char* mc_sip_callid_col;
-    extern char* mc_user_col;
-    extern char* mc_time_col;
+static inline int is_db_acc_on(struct sip_msg *rq)
+{   
+	return db_flag && isflagset(rq, db_flag)==1;
+}   
 #endif
+    
+static inline int is_acc_on(struct sip_msg *rq)
+{   
+	if (is_log_acc_on(rq)) return 1;
+#ifdef SQL_ACC
+	if (is_db_acc_on(rq)) return 1;
+#endif
+	return 0;
+}
+
+static inline int is_log_mc_on(struct sip_msg *rq)
+{
+	return log_missed_flag && isflagset(rq, log_missed_flag)==1;
+}
+
+#ifdef SQL_ACC
+static inline int is_db_mc_on(struct sip_msg *rq)
+{
+	return db_missed_flag && isflagset(rq, db_missed_flag)==1;
+}
+#endif
+
+
+static inline int is_mc_on(struct sip_msg *rq)
+{
+	if (is_log_mc_on(rq)) return 1;
+#ifdef SQL_ACC
+	if (is_db_mc_on(rq)) return 1;
+#endif
+	return 0;
+}
+
 
 #endif

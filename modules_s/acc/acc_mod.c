@@ -28,11 +28,12 @@
  *
  * History:
  * -------
- * 2003-03-11: New module interface (janakj)
  * 2003-03-06: aligned to change in callback names (jiri)
  * 2003-03-06: fixed improper sql connection, now from 
  * 	           child_init (jiri)
+ * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
+ * 2003-04-04  grand acc cleanup (jiri)
  */
 
 
@@ -45,6 +46,7 @@
 #include "../tm/tm_load.h"
 #include "../tm/h_table.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_from.h"
 
 #include "acc_mod.h"
 #include "acc.h"
@@ -56,118 +58,107 @@ static int mod_init( void );
 static void destroy(void);
 static int child_init(int rank);
 
+#ifdef SQL_ACC
 db_con_t* db_handle;   /* Database connection handle */
+#endif
 
 /* ----- Parameter variables ----------- */
 
-/* name of user id (==digest uid) column */
-char *uid_column="uid";
+
+/* what would you like to report on */
+/* should early media replies (183) be logged ? default==no */
+int early_media = 0;
+/* should failed replies (>=3xx) be logged ? default==no */
+int failed_transactions = 0;
+/* would you like us to report CANCELs from upstream too? */
+int report_cancels = 0;
+/* report e2e ACKs too */
+int report_ack = 1;
+
+/* syslog flags, that need to be set for a transaction to 
+ * be reported; 0=any, 1..MAX_FLAG otherwise */
+int log_flag = 1;
+int log_missed_flag = 2;
+/* noisiness level logging facilities are used */
+int log_level=L_NOTICE;
+char *log_fmt=DEFAULT_LOG_FMT;
+
 
 #ifdef SQL_ACC
+char *db_url; /* Database url */
 
-     /* Database url */
-char *db_url;
+/* sql flags, that need to be set for a transaction to 
+ * be reported; 0=any, 1..MAX_FLAG otherwise; by default
+ * set to the same values as syslog -> reporting for both
+ * takes place
+ */
+int db_flag = 1;
+int db_missed_flag = 2;
 
-     /* name of database table, default=="acc" */
-char *db_table_acc="acc";
+char *db_table_acc="acc"; /* name of database table> */
 
-     /* names of columns in table acc*/
+/* names of columns in tables acc/missed calls*/
+char *uid_column="uid"; /* name of user id (==digest uid) column */
 char* acc_sip_from_col      = "sip_from";
 char* acc_sip_to_col        = "sip_to";
 char* acc_sip_status_col    = "sip_status";
 char* acc_sip_method_col    = "sip_method";
 char* acc_i_uri_col         = "i_uri";
 char* acc_o_uri_col         = "o_uri";
+char* acc_from_uri			= "from_uri";
+char* acc_to_uri			= "to_uri";
 char* acc_sip_callid_col    = "sip_callid";
-char* acc_user_col          = "user";
+char* acc_user_col          = "username";
 char* acc_time_col          = "time";
 
-     /* name of missed calls table, default=="missed_calls" */
+/* name of missed calls table, default=="missed_calls" */
 char *db_table_mc="missed_calls";
-
-     /* names of columns in table missed calls*/
-char* mc_sip_from_col      = "sip_from";
-char* mc_sip_to_col        = "sip_to";
-char* mc_sip_status_col    = "sip_status";
-char* mc_sip_method_col    = "sip_method";
-char* mc_i_uri_col         = "i_uri";
-char* mc_o_uri_col         = "o_uri";
-char* mc_sip_callid_col    = "sip_callid";
-char* mc_user_col          = "user";
-char* mc_time_col          = "time";
-
 #endif
 
-/* noisiness level logging facilities are used */
-int log_level=L_NOTICE;
-
-/* should early media replies (183) be logged ? default==no */
-int early_media = 0;
-
-/* should failed replies (>=3xx) be logged ? default==no */
-int failed_transactions = 0;
-
-/* flag which is needed for reporting: 0=any, 1 .. MAX_FLAG flag number */
-int acc_flag = 1;
-
-/* flag which is needed for reporting missed calls */
-int missed_flag = 2;
-
-/* report e2e ACKs too */
-int report_ack = 1;
-
-/* log to syslog too*/
-int usesyslog = 1;
-
-/* ------------- Callback handlers --------------- */
-
-static void acc_onreply( struct cell* t,  struct sip_msg *msg,
-	int code, void *param );
-static void acc_onack( struct cell* t,  struct sip_msg *msg,
-	int code, void *param );
-static void acc_onreq( struct cell* t, struct sip_msg *msg,
-	int code, void *param ) ;
-static void on_missed(struct cell *t, struct sip_msg *reply,
-	int code, void *param );
-
+static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo);
+#ifdef SQL_ACC
+static int w_acc_db_request(struct sip_msg *rq, char *comment, char *foo);
+#endif
 
 static cmd_export_t cmds[] = {
-	{"acc_request", acc_request, 1, 0, REQUEST_ROUTE},
+	{"acc_log_request", w_acc_log_request, 1, 0, REQUEST_ROUTE},
+#ifdef SQL_ACC
+	{"acc_db_request", w_acc_db_request, 2, 0, REQUEST_ROUTE},
+#endif
 	{0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {
+	{"early_media",			INT_PARAM, &early_media          },
+	{"failed_transactions",	INT_PARAM, &failed_transactions  },
+	{"report_ack",			INT_PARAM, &report_ack           },
+	{"report_cancels",		INT_PARAM, &report_cancels 		},
+	/* syslog specific */
+	{"log_flag",			INT_PARAM, &log_flag         	},
+	{"log_missed_flag",		INT_PARAM, &log_missed_flag		},
+	{"log_level",			INT_PARAM, &log_level            },
+	{"log_fmt",				STR_PARAM, &log_fmt				},
+	/* db-specific */
 #ifdef SQL_ACC
-        {"db_table_acc",          STR_PARAM, &db_table_acc         }, 
-	{"db_table_missed_calls", STR_PARAM, &db_table_missed_calls},
+	{"db_flag",				INT_PARAM, &db_flag			},
+	{"db_missed_flag",		INT_PARAM, &db_missed_flag		},
+	{"db_table_acc",          STR_PARAM, &db_table_acc         }, 
+	{"db_table_missed_calls", STR_PARAM, &db_table_mc },
 	{"db_url",                STR_PARAM, &db_url               },
-        {"acc_sip_from_column",   STR_PARAM, &acc_sip_from_column  },
-        {"acc_sip_to_column",     STR_PARAM, &acc_sip_status_column},
-        {"acc_sip_status_column", STR_PARAM, &acc_sip_status_column},
-        {"acc_sip_method_column", STR_PARAM, &acc_sip_method_column},
-        {"acc_i_uri_column",      STR_PARAM, &acc_i_uri_column     },
-        {"acc_o_uri_column",      STR_PARAM, &acc_o_uri_column     },
-        {"acc_sip_callid_column", STR_PARAM, &acc_sip_callid_column},
-        {"acc_user_column",       STR_PARAM, &acc_user_column      },
-        {"acc_time_column",       STR_PARAM, &acc_time_column      },
-        {"mc_sip_from_column",    STR_PARAM, &mc_sip_from_column   },
-        {"mc_sip_to_column",      STR_PARAM, &mc_sip_to_column     },
-        {"mc_sip_status_column",  STR_PARAM, &mc_sip_status_column },
-        {"mc_sip_method_column",  STR_PARAM, &mc_sip_method_column },
-        {"mc_i_uri_column",       STR_PARAM, &mc_i_uri_column      },
-        {"mc_o_uri_column",       STR_PARAM, &mc_o_uri_column      },
-        {"mc_sip_callid_column",  STR_PARAM, &mc_sip_callid_column },
-        {"mc_user_column",        STR_PARAM, &mc_user_column       },
-        {"mc_time_column",        STR_PARAM, &mc_time_column       },
-#endif
+	{"acc_sip_from_column",   STR_PARAM, &acc_sip_from_col  },
+	{"acc_sip_to_column",     STR_PARAM, &acc_sip_status_col},
+	{"acc_sip_status_column", STR_PARAM, &acc_sip_status_col},
+	{"acc_sip_method_column", STR_PARAM, &acc_sip_method_col},
+	{"acc_i_uri_column",      STR_PARAM, &acc_i_uri_col     },
+	{"acc_o_uri_column",      STR_PARAM, &acc_o_uri_col     },
+	{"acc_sip_callid_column", STR_PARAM, &acc_sip_callid_col},
+	{"acc_user_column",       STR_PARAM, &acc_user_col      },
+	{"acc_time_column",       STR_PARAM, &acc_time_col      },
+	{"acc_from_uri_column",		STR_PARAM, &acc_from_uri },
+	{"acc_to_uri_column",		STR_PARAM, &acc_to_uri },
 	{"uid_column",            STR_PARAM, &uid_column           },
-	{"log_level",             INT_PARAM, &log_level            },
-	{"early_media",           INT_PARAM, &early_media          },
-	{"failed_transactions",   INT_PARAM, &failed_transactions  },
-	{"acc_flag",              INT_PARAM, &acc_flag             },
-	{"report_ack",            INT_PARAM, &report_ack           },
-        {"missed_flag",           INT_PARAM, &missed_flag          },
-	{"usesyslog",             INT_PARAM, &usesyslog            }
+#endif
+	{0,0,0}
 };
 
 
@@ -183,6 +174,46 @@ struct module_exports exports= {
 };
 
 
+/* ------------- Callback handlers --------------- */
+
+static void acc_onreply( struct cell* t,  struct sip_msg *msg,
+	int code, void *param );
+static void acc_onack( struct cell* t,  struct sip_msg *msg,
+	int code, void *param );
+static void acc_onreq( struct cell* t, struct sip_msg *msg,
+	int code, void *param ) ;
+static void on_missed(struct cell *t, struct sip_msg *reply,
+	int code, void *param );
+static void acc_onreply_in(struct cell *t, struct sip_msg *reply,
+	int code, void *param);
+
+/* --------------- function definitions -------------*/
+
+static int verify_fmt(char *fmt) {
+
+	if (!fmt) {
+		LOG(L_ERR, "ERROR: verify_fmt: formatting string zero\n");
+		return -1;
+	}
+	if (!(*fmt)) {
+		LOG(L_ERR, "ERROR: verify_fmt: formatting string empty\n");
+		return -1;
+	}
+	if (strlen(fmt)>MAX_ACC_COLUMNS) {
+		LOG(L_ERR, "ERROR: verify_fmt: formatting string too long\n");
+		return -1;
+	}
+
+	while(*fmt) {
+		if (!strchr(ALL_LOG_FMT,*fmt)) {
+			LOG(L_ERR, "ERROR: verify_fmt: char in log_fmt invalid: %c\n", 
+				*fmt);
+			return -1;
+		}
+		fmt++;
+	}
+	return 1;
+}
 
 static int mod_init( void )
 {
@@ -199,6 +230,8 @@ static int mod_init( void )
 	/* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) return -1;
 
+	if (verify_fmt(log_fmt)==-1) return -1;
+
 	/* register callbacks */
 
 	/*  report on completed transactions */
@@ -213,19 +246,28 @@ static int mod_init( void )
 	/* report on missed calls */
 	if (tmb.register_tmcb( TMCB_ON_FAILURE, on_missed, 0 /* empty param */ ) <=0 )
 		return -1;
+	/* get incoming replies ready for processing */
+	if (tmb.register_tmcb( TMCB_RESPONSE_IN, acc_onreply_in, 0 /* empty param */)<=0)
+		return -1;
 
 #ifdef SQL_ACC
     if (db_url == NULL) {
         LOG(L_ERR, "ERROR: acc:init_mod(): Use db_url parameter\n");
 		return -1;
 	}
+
+	if (bind_dbmod()) {
+		LOG(L_ERR, "ERROR: acc: init_child bind_db failed..."
+				"did you load a database module?\n");
+		return -1;
+	}
 	db_handle = db_init(db_url);
 	if (!db_handle) {
-        LOG(L_ERR, "acc:init_child(): Unable to connect database\n");
+        LOG(L_ERR, "ERROR: acc:init_child(): "
+				"Unable to connect database\n");
 		return -1;
-	} else {
-		DBG("DEbug: mod_init(acc): db opened \n");
-	}
+	} 
+	DBG("DEbug: mod_init(acc): db opened \n");
 #endif
 
 	return 0;
@@ -252,76 +294,163 @@ static void destroy(void)
 #endif
 }
 
+
+static inline void acc_preparse_req(struct sip_msg *rq)
+{
+	/* try to parse from for From-tag for accounted transactions; 
+	 * don't be worried about parsing outcome -- if it failed, 
+	 * we will report N/A
+	 */
+	parse_headers(rq, HDR_CALLID| HDR_FROM| HDR_TO, 0 );
+	parse_from_header(rq);
+	parse_orig_ruri(rq);
+}
+
+/* prepare message and transaction context for later accounting */
 static void acc_onreq( struct cell* t, struct sip_msg *msg,
 	int code, void *param )
 {
-	/* disable C timer for accounted calls */
-	if (isflagset( msg, acc_flag)==1 ||
-				(t->is_invite && isflagset( msg, missed_flag))) {
-#		ifdef EXTRA_DEBUG
-		DBG("DEBUG: noisy_timer set for accounting\n");
-#		endif
-		t->noisy_ctimer=1;
+	if (is_acc_on(msg) || is_mc_on(msg)) {
+		acc_preparse_req(msg);
+		/* also, if that is INVITE, disallow silent t-drop */
+		if (msg->REQ_METHOD==METHOD_INVITE) {
+			DBG("DEBUG: noisy_timer set for accounting\n");
+			t->noisy_ctimer=1;
+		}
 	}
 }
 
+/* is this reply of interest for accounting ? */
+static int should_acc_reply(struct cell *t, int code)
+{
+	struct sip_msg *r;
+
+	r=t->uas.request;
+
+	/* negative transactions reported otherwise only if explicitely 
+	 * demanded */
+	if (!failed_transactions && code >=300) return 0;
+	if (!is_acc_on(r))
+		return 0;
+	if (skip_cancel(r))
+		return 0;
+	if (code < 200 && ! (early_media && code==183))
+		return 0;
+
+	return 1; /* seed is through, we will account this reply */
+}
+
+/* parse incoming replies before cloning */
+static void acc_onreply_in(struct cell *t, struct sip_msg *reply,
+	int code, void *param)
+{
+	/* don't parse replies in which we are not interested */
+	/* missed calls enabled ? */
+	if (((t->is_invite && code>=300 && is_mc_on(t->uas.request))
+					|| should_acc_reply(t,code)) 
+				&& (reply && reply!=FAKED_REPLY)) {
+		parse_headers(reply, HDR_TO, 0 );
+	}
+}
+
+/* initiate a report if we previously enabled MC accounting for this t */
 static void on_missed(struct cell *t, struct sip_msg *reply,
 	int code, void *param )
 {
-	struct sip_msg *rq;
+	int reset_lmf; 
+#ifdef SQL_ACC
+	int reset_dmf;
+#endif
 
-	rq = t->uas.request;
-
-	if (t->is_invite
-			&& missed_flag
-			&& isflagset( rq, missed_flag)==1
-			&& code>=300 )
-	{
-		acc_missed_report( t, reply, code);
-		/* don't come here again on next failed branch */
-		resetflag(rq, missed_flag );
+	if (t->is_invite && code>=300) {
+		if (is_log_mc_on(t->uas.request)) {
+			acc_log_missed( t, reply, code);
+			reset_lmf=1;
+		} else reset_lmf=0;
+#ifdef SQL_ACC
+		if (is_db_mc_on(t->uas.request)) {
+			acc_db_missed( t, reply, code);
+			reset_dmf=1;
+		} else reset_dmf=0;
+#endif
+		/* we report on missed calls when the first
+		 * forwarding attempt fails; we do not wish to
+		 * report on every attempt; so we clear the flags; 
+		 * we do it after all reporting is over to be sure
+		 * that all reporting functios got a fair chance
+		 */
+		if (reset_lmf) resetflag(t->uas.request, log_missed_flag);
+#ifdef SQL_ACC
+		if (reset_dmf) resetflag(t->uas.request, db_missed_flag);
+#endif
 	}
 }
 
+
+/* initiate a report if we previously enabled accounting for this t */
 static void acc_onreply( struct cell* t, struct sip_msg *reply,
 	int code, void *param )
 {
-
-	struct sip_msg *rq;
-
-	rq = t->uas.request;
-
 	/* acc_onreply is bound to TMCB_REPLY which may be called
 	   from _reply, like when FR hits; we should not miss this
 	   event for missed calls either
 	*/
 	on_missed(t, reply, code, param );
 
-	/* if acc enabled for flagged transaction, check if flag matches */
-	if (acc_flag && isflagset( rq, acc_flag )==-1) return;
-	/* early media is reported only if explicitely demanded,
-	   other provisional responses are always dropped  */
-	if (code < 200 && ! (early_media && code==183))
-		return;
-	/* negative transactions reported only if explicitely demanded */
-	if (!failed_transactions && code >=300) return;
-
-	/* anything else, i.e., 2xx, always reported */
-	acc_reply_report(t, reply, code);
+	if (!should_acc_reply(t, code)) return;
+	if (is_log_acc_on(t->uas.request))
+		acc_log_reply(t, reply, code);
+#ifdef SQL_ACC
+	if (is_db_acc_on(t->uas.request))
+		acc_db_reply(t, reply, code);
+#endif
 }
+
+
 
 
 static void acc_onack( struct cell* t , struct sip_msg *ack,
 	int code, void *param )
 {
-	struct sip_msg *rq;
-
-	rq = t->uas.request;
 	/* only for those guys who insist on seeing ACKs as well */
 	if (!report_ack) return;
 	/* if acc enabled for flagged transaction, check if flag matches */
-	if (acc_flag && isflagset( rq, acc_flag )==-1) return;
-
-	acc_ack_report(t, ack);
+	if (is_log_acc_on(t->uas.request)) {
+		acc_preparse_req(ack);
+		acc_log_ack(t, ack);
+	}
+#ifdef SQL_ACC
+	if (is_db_acc_on(t->uas.request)) {
+		acc_preparse_req(ack);
+		acc_db_ack(t, ack);
+	}
+#endif
+	
 }
 
+/* these wrappers parse all what may be needed; they don't care about
+ * the result -- accounting functions just display "unavailable" if there
+ * is nothing meaningful
+ */
+static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
+{
+	str txt; str phrase;
+
+	txt.s=ACC_REQUEST;
+	txt.len=ACC_REQUEST_LEN;
+	phrase.s=comment;
+	phrase.len=strlen(comment);	/* fix_param would be faster! */
+	acc_preparse_req(rq);
+	return acc_log_request(rq, rq->to, &txt, &phrase);
+}
+#ifdef SQL_ACC
+static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
+{
+	str phrase;
+
+	phrase.s=comment;
+	phrase.len=strlen(comment);	/* fix_param would be faster! */
+	acc_preparse_req(rq);
+	return acc_db_request(rq, rq->to,&phrase,table, SQL_MC_FMT );
+}
+#endif

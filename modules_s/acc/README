@@ -2,36 +2,60 @@
 # $Id$
 #
 
-Module depends on: tm -- acc registers TM callbacks
+About acc Module
+----------------
 
-acc module is used to report on transactions. 
-(Thus it needs TM for its operation.) To report
-on a transaction, use "setflag" to mark a transaction
-with a flag, load accounting module and set its
-acc_flag to the same flag. The acc module will then
-report on completed transaction to syslog. A typical
-usage of the module takes no acc-specific script command 
--- the functionality binds invisibly through TM.
-Script writers just need to mark the transaction
-for accounting with setflag.
+acc module is used to report on transactions to syslog, SQL and
+RADIUS.  
 
-There is no session accounting -- ser maintains no
-session. If one needs to correlate INVITEs with BYEs for example
-for purpose of billing, then it is better done in the entity
-which collects accounting infromation. Otherwise, 
-SIP server would have to become sessions-stateful, which
-would very baldy impact its scalability.
+To report on a transaction using syslog, use "setflag" to mark 
+a transaction you are interested in with a flag, load accounting 
+module and set its "log_flag" to the same flag number. The acc module 
+will then report on completed transaction to syslog. A typical usage 
+of the module takes no acc-specific script command -- the functionality 
+binds invisibly through transaction processing.  Script writers just 
+need to mark the transaction for accounting with proper setflag.
+
+What is printed depends on module's "log_fmt" parameter. It's a string
+with characters specifying which parts of request should be printed:
+c=Callid,d=to-tag (Dst),f=From,i=In-uri,m=Method,o=Out-uri,r=fRom-tag, 
+s=Status, t=To, u=digest User_id, p=user Part of in-uri. If a value is 
+not present in request, "n/a" is accounted instead.
+
+Note that 
+- a single INVITE may produce multiple accounting reports -- that's
+  due to SIP's forking feature
+- subsequent ACKs and other requests do not hit the server and
+  can't be accounted unless record-routing is enforced. The ACKs 
+  assert very little useful information anyway and reporting on
+  INVITE's 200 makes most accounting scenarios happy.
+- there is no session accounting -- ser maintains no sessions. If one 
+  needs to correlate INVITEs with BYEs for example for purpose of billing, 
+  then it is better done in the entity which collects accounting infromation. 
+  Otherwise, SIP server would have to become sessions-stateful, which
+  would very baldy impact its scalability.
+
+Support for SQL and RADIUS works analogously. You need to enable it
+by recompiling the module with properly set defines. Uncomment the 
+SQL_ACC and RAD_ACC lines in modules/acc/Makefile. To compile SQL 
+support, you need to have mysqlclient package on your system. To 
+compile RADIUS support, you need to have radiusclient installed
+on your system (http://www.mcs-cityline.net/~lf/radius/). The
+radius client needs to be configured properly. To do so, use
+the template at etc/radiusclient.conf and make sure that module's
+CONFIG_FILE points to its location.  In particular, accounting
+secret must match that one configured in server. Uses along with 
+FreeRadius and Radiator (http://www.open.com.au/radiator/) servers 
+have been reported to us.
 
 
-Currently, method, i-uri, o-uri, call-id, from and code
-are printed. Note that from has only informational value
-and unless check_from is used (auth module), there is
-no relationship to user identity.
+- XX CONFIG_FILE -- make it module option
 
 Example:
-	loadmodule "../sip_router/modules/acc/acc.so"
+--------
+	loadmodule "modules/acc/acc.so"
 	modparam("acc", "log_level", 1)
-	modparam("acc", "acc_flag", 1 )
+	modparam("acc", "log_flag", 1 )
 	if (uri=~"sip:+49") /* calls to Germany */ {
 		if (!proxy_authorize(   "iptel.org" /* realm */,
 					"subscriber" /* table name */))  {
@@ -43,25 +67,12 @@ Example:
 			sl_send_reply("403","Forbidden");
 			break;
 		}
-		setflag(1); /* set for accounting (the same value as in acc_flag!)
+		setflag(1); /* set for accounting (the same value as in log_flag!)
 		t_relay(); 	/* enter stateful mode now */
 	};
 
-Note on use: 
-1) an INVITE transaction may per SIP specification result in 
-   multiple positive replies, of which all will be relayed
-   upstream; then, an accounting record will be issued for
-   all of them
-2) ACKs may or may not be reported on; per SIP specification,
-   ACKs may take a different path from INVITEs to which they
-   belong; unless ser is configured to use record-routing,
-   ACKs will never visit the server; even when they do so,
-   they are per specification considered an independent
-   transaction (they have different branch Via parameter)
-   and may not match; We thus recommend that network operators
-   consider an INVITE transaction to complete when a 2xx
-   is received and ignore ACKs in accounting.
 
+Module depends on: tm -- acc registers TM callbacks
 
 Exported parameters:
 ------------------
@@ -73,6 +84,11 @@ Default: L_NOTICE
 Desc:    log level at which accounting messages are issued to
 		 syslog
 
+Name:	log_fmt
+Type:	string
+Default: "miocfs"
+Desc:	defines what parts of header fields will be printed to
+		syslog; see "about" for list of accepted values
 
 Name:    early_media
 Type:    int (boolean)
@@ -85,7 +101,7 @@ Type:    int (boolean)
 Default: 0
 Desc:    should be failed transactions (status>=300) accounted too?
 
-Name:    acc_flag
+Name:    log_flag
 Type:    int
 Default: 1
 Desc:    request flag which needs to be set to account a transaction
@@ -104,6 +120,13 @@ Desc:    Shall 'acc' attempt to account e2e ACKs too? Note that this
 		 path (unless RR enabled) and mismatch original INVITE
 		 (e2e ACKs are a separate transaction).
 
+Name:    report_cancels
+Type:    int (boolean)
+Default: 0
+Desc:    By default, CANCEL reporting is disabled -- most accounting
+ 		 applications are happy to see INVITE's cancellation status.
+		 Turn on if you explicitely want to account CANCEL transactions.
+		
 
 Name:    use_db, db_url, uid_column, db_table
 Type:    not used now
@@ -114,35 +137,18 @@ Desc:    planned for dumping accounting output to mysql
 Exported Functions: 
 ------------------
 
-Name:	acc_request
+Name:	acc_log_request
 Params:	comment
-Desc: 	acc_request reports on a request; particularly, it can be used
-		to report on requests, which are processed statelessly, such
-		as for example usrloc's Not Found and which cannot be reported
-		on using the default stateful TM/acc mechanism; the drawback of
-		using this stateless function is it reports on every single
-		retransmission -- it is then up to the entity, to which the
-		reports are sent, to filter retransmissions
+Desc: 	acc_request reports on a request; for example, it can be used
+		to report on missed calls to off-line users who are replied 404;
+		to avoid multiple reports on UDP request retranmission, you would
+		need to embed the action in stateful processing
+
 
 Known Issues:
 -------------
 there are some issues with accounting from proxy servers:
-- if a UA fails in middle of conversation, a proxy will ever learn it;
+- if a UA fails in middle of conversation, a proxy will never learn it;
   in general, a better practice is to account from an end-device
   (such as PSTN gateway), which best knows about call status
   (including media status and PSTN status in case of the gateway)
-- record-routing must be turned on, subsequent transactions will not
-  visit the proxy server otherwise (and will consequently not be
-  reported)
-
-Requests processed by 'acc' are taken from TM's shared mem,
-they cannot be parsed any more. This might be an issue in
-the future, when some requests are not parsed for performance
-reasons (non-INVITEs don't need to be completely parsed as
-we don't need  to send 100 and hunt for all vias down to EoM)
--- acc relies on parsed message and cannot parse shmem-ed
-mesages.
-
-To-DO
------
-- printf-like formatting of output message

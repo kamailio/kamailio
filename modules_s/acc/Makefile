@@ -8,6 +8,7 @@
 auto_gen=
 NAME=acc.so
 LIBS=
-#DEFS+=-DSQL_ACC
+DEFS+=-DSQL_ACC
+#DEFS+=-DRAD_ACC
 
 include ../../Makefile.modules
