@@ -399,14 +399,13 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 	/* we were not able to process the response due to memory
 	   shortage; simply drop it; hopefuly, we will have more
-           memory on the next try
-	*/
+	memory on the next try */
 	msg_status=p_msg->REPLY_STATUS;
 	msg_class=REPLY_CLASS(p_msg);
 	relay = t_should_relay_response( T , msg_status );
+
 	if (relay && !(clone=sip_msg_cloner( p_msg ))) {
 		T_UNREF( T );
-		/* t_unref( p_msg, NULL, NULL ); */
 		return 0;
 	}
 
@@ -418,7 +417,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	/* stop final response timer only if I got a final response */
 	if ( msg_class>1 )
 		reset_timer( hash_table, &(rb->fr_timer));
-   	/* if a got the first prov. response for an INVITE ->
+	/* if a got the first prov. response for an INVITE ->
 	   change FR_TIME_OUT to INV_FR_TIME_UT */
 	if (!T->inbound_response[branch] && msg_class==1
 	 && T->inbound_request->REQ_METHOD==METHOD_INVITE )
@@ -428,20 +427,20 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	if ( T->inbound_request->REQ_METHOD==METHOD_INVITE )
 	{
 		if ( T->outbound_request_isACKed[branch] )
-		{   /*retransmit*/
+		{	/*retransmit the last ACK*/
+			DBG("DEBUG: t_on_reply_received: retransmitting ACK!!!!!!!!!!!!!!!!!!+!+!+!!\n");
 			SEND_BUFFER( T->outbound_request[branch] );
 		} else if (msg_class>2 ) {   /*on a non-200 reply to INVITE*/
-           		DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-           		if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
-           		{
-               			LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
-						if (clone ) sip_msg_free( clone );
-						/* t_unref( p_msg, NULL, NULL ); */
-						T_UNREF( T );
-               			return 0;
-           		}
-       		}
-   	}
+			DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
+			if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
+			{
+				LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
+				if (clone ) sip_msg_free( clone );
+				T_UNREF( T );
+				return 0;
+			}
+		}
+	}
 
 #	ifdef FORKING
    	/* skipped for the moment*/
@@ -449,7 +448,6 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 	/* if the incoming response code is not reliable->drop it*/
 	if (!relay) {
-		/* t_unref( p_msg, NULL, NULL ); */
 		T_UNREF( T );
 		return 0;
 	}
@@ -646,12 +644,6 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 			"for which no T-state has been established\n");
 		return -1;
 	}
-
-	/* if the incoming response code is not reliable->drop it*/
-	/*
-	if ( !t_should_relay_response( T , code ) )
-		return 1;
-	*/
 
 	rb = & T->outbound_response;
 	if (!rb->retr_buffer) {
@@ -900,37 +892,6 @@ int t_should_relay_response( struct cell *Trans , int new_code )
 	}
 	DBG("DBG: t_should_relay: not to be relayed\n");
 	return 0;
-
-
-/*
-   // have we already sent something?
-   if ( !Trans->outbound_response.retr_buffer )
-   {
-      DBG("DEBUG: t_should_relay_response: %d response relayed (no previous response sent)\n",new_code);
-      return 1;
-   }
-
-   // have we sent a final response?
-   if ( (T_code/100)>1 )
-   {  //final response was sent
-      if ( new_code==200 && Trans->inbound_request->REQ_METHOD==METHOD_INVITE )
-      {
-         DBG("DEBUG: t_should_relay_response: %d response relayed (final satus, but 200 to an INVITE)\n",new_code);
-         return 0;
-      }
-   }
-   else
-   { // provisional response was sent
-      if ( new_code>T_code )
-      {
-         DBG("DEBUG: t_should_relay_response: %d response relayed (higher provisional response)\n",new_code);
-         return 1;
-      }
-   }
-
-   DBG("DEBUG: t_should_relay_response: %d response not relayed\n",new_code);
-   return 0;
-*/
 }
 
 
@@ -1084,7 +1045,20 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
     p += CRLF_LEN;
 
    /* sends the ACK message to the same destination as the INVITE */
-   udp_send( ack_buf, p-ack_buf, (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+   udp_send( ack_buf, p-ack_buf, (struct sockaddr*)&(Trans->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+
+   /* registering the ACK as received, processed and send */
+   Trans->outbound_request_isACKed[branch] = 1;
+   if ( (Trans->outbound_request[branch]->retr_buffer =
+      (char*)shm_resize( Trans->outbound_request[branch]->retr_buffer, p-ack_buf) ))
+   {
+       memcpy ( Trans->outbound_request[branch]->retr_buffer , ack_buf , p-ack_buf);
+       Trans->outbound_request[branch]->bufflen = p-ack_buf;
+   }
+   else
+       Trans->outbound_request[branch]->bufflen = 0;
+
+
    DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
 
    /* free mem*/
