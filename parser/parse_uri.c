@@ -885,7 +885,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		);
 	DBG(" uri params:\n   transport=<%.*s>, val=<%.*s>, proto=%d\n",
 			uri->transport.len, ZSW(uri->transport.s), uri->transport_val.len,
-			uri->transport_val.s, uri->proto);
+			ZSW(uri->transport_val.s), uri->proto);
 	DBG("   user-param=<%.*s>, val=<%.*s>\n",
 			uri->user_param.len, ZSW(uri->user_param.s), 
 			uri->user_param_val.len, ZSW(uri->user_param_val.s));
