@@ -20,6 +20,8 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 									char *text ,
 									struct sip_msg* msg,
 									unsigned int *returned_len);
+char* via_builder( struct sip_msg *msg ,
+									unsigned int *len );
 
 
 

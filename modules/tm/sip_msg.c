@@ -115,6 +115,9 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 	    case HDR_FROM :
 		new_msg->from = new_hdr;
 		break;
+	    case HDR_TO :
+		new_msg->to = new_hdr;
+		break;
 	    case HDR_CSEQ :
 		if (header->parsed)
 		{

@@ -161,7 +161,11 @@ char* via_builder( struct sip_msg *msg , unsigned int *len )
 				src[2]= msg->callid->body;
 				src[3]= msg->first_line.u.request.uri;
 				src[4]= get_cseq( msg )->number;
-
+                                                             DBG("XXXXXXXXXXXXXXX <%s>\n",msg->from->body.s);
+                                                             DBG("XXXXXXXXXXXXXXX <%s>\n",msg->to->body.s);
+                                                             DBG("XXXXXXXXXXXXXXX <%s>\n",msg->callid->body.s);
+                                                             DBG("XXXXXXXXXXXXXXX <%s>\n",msg->first_line.u.request.uri.s);
+                                                             DBG("XXXXXXXXXXXXXXX <%s>\n",get_cseq( msg )->number.s);
 				MDStringArray ( line_buf+via_len-1, src, 5 );
 				/*DBG("DEBUG: build_req_buf_from_sip_req: branch loop "
 				/		"detection: %s, %s, %s, %s, %s -> %s32\n",

@@ -1156,14 +1156,15 @@ int t_cancel_branch(unsigned int branch)
 int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_msg* rpl)
 {
    struct sip_msg* p_msg , *r_msg;
-    struct via_body *via;
-    struct hdr_field *hdr;
-    char *ack_buf, *p;
-    unsigned int len;
-    int n;
+   struct hdr_field *hdr;
+   char *ack_buf, *p, *via;
+   unsigned int len, via_len;
+   int n;
 
+   ack_buf = 0;
+   via =0;
 
-   p_msg = T->inbound_request;
+   p_msg = Trans->inbound_request;
    r_msg = rpl;
 
    if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
@@ -1176,7 +1177,13 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
     /*first line's len */
     len += 4+p_msg->first_line.u.request.uri.len+1+p_msg->first_line.u.request.version.len+CRLF_LEN;
     /*via*/
-    len+= MY_VIA_LEN + names_len[0] + 1+ port_no_str_len + MY_BRANCH_LEN + 3*sizeof(unsigned int) /*branch*/ + CRLF_LEN;
+    via = via_builder( p_msg , &via_len );
+    if (!via)
+    {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no via header got from builder\n");
+	goto error;
+    }
+    len+= via_len;
     /*headers*/
    for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
       if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_CSEQ )
@@ -1215,31 +1222,10 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    p+=CRLF_LEN;
 
    /* insert our via */
-   memcpy( p , MY_VIA , MY_VIA_LEN );
-   p += MY_VIA_LEN;
+   memcpy( p , via , via_len );
+   p += via_len;
 
-   memcpy( p , names[0] , names_len[0] );
-   p += names_len[0];
-
-  // *(p++) = ':';
-
-   memcpy( p , port_no_str , port_no_str_len );
-   p += port_no_str_len;
-
-   memcpy( p, MY_BRANCH, MY_BRANCH_LEN );
-   p+=MY_BRANCH_LEN;
-
-   n=sprintf( p /*, ack_buf + MAX_ACK_LEN - p*/, ".%x.%x.%x%s",
-                 Trans->hash_index, Trans->label, branch, CRLF );
-
-   if (n==-1) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: unable to generate branch\n");
-	goto error;
-   }
-   p+=n;
-
-
-
+   /*other headers*/
    for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
    {
       if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
@@ -1273,11 +1259,13 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
 
    /* free mem*/
    if (ack_buf) free( ack_buf );
+   if (via) free(via );
    return 0;
 
 error:
-   	if (ack_buf) free( ack_buf );
-	return -1;
+   if (ack_buf) free( ack_buf );
+   if (via) free(via );
+   return -1;
 }
 
 
