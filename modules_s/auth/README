@@ -1,0 +1,164 @@
+#
+# $Id$
+#
+
+Module depends on: mysql - Used as interface to database
+                   sl    - Used for stateless replies
+
+
+
+Exported arameters:
+------------------
+
+
+Name:    db_url
+Type:    string
+Default: "sql://janakj:heslo@localhost/ser"
+Desc:    Database url string in form "sql://<user>:<pass>@host/database"
+
+
+Name:    user_column
+Type:    string
+Default: "user"
+Desc:    Name of column containing usernames in subscriber table
+
+
+Name:    realm_column
+Type:    string
+Default: "realm"
+Desc:    Name of column containing realm in subscriber table
+
+
+Name:    password_column
+Type:    string
+Default: "ha1"
+Desc:    Name of column containing (plaintext passwords)/(ha1 strings) if
+         calculate_ha1 parameter is set to true/false.
+
+
+Name:    password_column_2
+Type:    string
+Default: "ha1b"
+Desc:    The parameter can be used if and only if USER_DOMAIN_HACK macro
+         is set in header file defs.h. The column of this name contains
+         alternate ha1 strings calculated from username containing also
+         domain, for example username="jan@iptel.org". This hack is 
+         neccessary for some broken user agents. The parameter has no
+         meaning if "calculate_ha1" is set to true.
+         
+Name:    secret
+Type:    string
+Default: "4e9rhygt90ofw34e8hiof09tg"
+Desc:    Nonce secret phrase
+
+
+Name:    group_table
+Type:    string
+Default: "grp"
+Desc:    Name of table containing group definitions
+
+
+Name:    group_user_column
+Type:    string
+Default: "user"
+Desc:    Name of column containing usernames in group table
+
+
+Name:    group_group_column
+Type:    string
+Default" "grp"
+Desc:    Name of column containing groups in group table
+
+
+Name:    calculate_ha1
+Type:    integer
+Default: false
+Desc:    If set to true, auth module assumed that "password_column"
+         contains plaintext passwords and ha1 string will be calculated
+         at runtime. If set to false, "password_column" must contain
+         precalculated ha1 strings.
+
+
+Name:    nonce_expire
+Type:    integer
+Default: 300
+Desc:    Every nonce is valid only for a limited amount of time. This
+         parameter specifies nonce validity interval in seconds. 
+         
+Name:    retry_count
+Type:    integer
+Default: 5
+Desc:    This parameter specifies how many times a user is allowed to
+         retry authentication with incorrect credentials. After that 
+         the user will receive 403 Forbidden and must retry with different 
+         credentials. This should prevent DoS attacks from misconfigured
+         user agents which try to authenticate with incorrect password 
+         again and again and again......
+         
+
+
+
+Exported Functions:
+------------------
+
+
+Name:   www_authorize
+Params: realm - realm string
+        table - subscriber database table name
+Desc:   Checks credentials in Authorization header field
+
+
+
+Name:   proxy_authorize
+Params: realm - realm string
+        table - subscriber database table name
+Desc:   Checks credentials in Proxy-Authorization header field
+
+
+
+Name:   www_challenge
+Params: realm - realm string
+        qop   - qop string, "1" means use qop parameter
+                            "0" means do not use qop parameter
+Desc:   Challenges a user agent using WWW-Authenticate header
+        field. The second parameter specifies if qop parameter
+        (according to rfc2617) should be used or not.
+
+
+
+Name:   proxy_challenge
+Params: realm - realm string
+        qop   - qop string, "1" means use qop parameter
+                            "0" means do not use qop parameter
+Desc:   Challenges a user agent using Proxy-Authenticate header
+        field. The second parameter specifies if qop parameter
+        (according to rfc2617) should be used or not.
+
+
+
+Name:   is_user
+Params: username - username string
+Desc:   Checks if the specified username and matches the username
+        in credentials
+
+
+
+Name:   is_in_group
+Params: group - group name
+Desc:   Checks if the user specified in credentials is member of
+        given group
+
+
+
+Name:   check_to
+Params: -
+Desc:   Checks if the username given in credentials and username in
+        To header field are equal
+
+
+
+Name:   check_from
+Params: -
+Desc:   Checks if the username given in credentials and username in
+        From header field are equal
+
