@@ -1,0 +1,380 @@
+<!-- $Id$ -->
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<!ENTITY ser "SIP Express Router">
+<!ENTITY moddir "/usr/lib/ser/modules">
+]>
+
+<book>
+    <chapter>
+	<title>Module Interface</title>
+	<abstract>
+	    <para>
+		&ser; features modular architecture which allows us to split &ser;'s functionality across several modules. This approach gives us greater
+		flexibility, only required set of functions can be loaded upon startup which minimizes the server's memory footprint. Modules can be also
+		provided by 3rd party developers and distributed separately from the main server. Most of the functionality that &ser; provides is available
+		through modules, the core itself contains only minimum set of functions that is essential for proper server's behaviour or that is needed by all
+		modules.
+	    </para>
+	    <para>
+		This chapter provides detailed information on module interface of &ser;, which is used to pass information on available functions and parameters
+		from the modules to the core.
+	    </para>
+	</abstract>
+	<section>
+	    <title>Shared Objects</title>
+	    <abstract>
+		<para>
+		    First it would be good to know how &ser; loads and uses modules before we describe the module interface in detail. This section gives a
+		    brief overview of &ser;'s module subsystem.
+		</para>
+	    </abstract>
+	    <para>
+		&ser; modules are compiled as <quote>shared objects</quote>. A file containing a shared object has usually .so suffix. All modules (shared
+		objects) will be stored in one directory after installation. For example <abbrev>tm</abbrev> module, which contains code essential for stateful
+		processing, will be stored in file named <filename moreinfo="none">tm.so</filename>. By default these files are stored in 
+		<filename moreinfo="none">&moddir;</filename> directory.
+	    </para>
+	    <para>
+		You can later load the modules using <command moreinfo="none">loadmodule</command> command in your configuration file. If you want to load
+		previously mentioned <filename moreinfo="none">tm.so</filename> module, you can do it using <command moreinfo="none">loadmodule
+		"&moddir;/tm.so"</command> in your configuration file. This command invokes dynamic linker provided by the operating system which opens
+		<filename moreinfo="none">tm.so</filename> file, loads it into memory and resolves all symbol dependencies (a module might require symbols from
+		the core, for example functions and variables).
+	    </para>
+	    <para>
+		As the last step of the module loading the core tries to find variable named <varname>exports</varname>, which describes all functions and
+		parameters provided by the module. These functions and parameters are later available to the server and can be used either in the configuration
+		file or by other modules.
+	    </para>
+	</section>
+	<section>
+	    <title>Exporting Functions</title>
+	    <abstract>
+		<para>
+		    Each module can provide zero or more functions, which can be used in the configuration file or by other modules internally. This section
+		    gives a detailed description of structure describing exported functions and passing this information to the core through the module
+		    interface.
+		</para>
+	    </abstract>
+	    <para>
+		Each function exported by a module must be described by <structname>cmd_export_t</structname> structure. Structures describing all exported
+		functions are arranged into an array and pointer to the array is then passed to the core. The last element of the array must contain 0 in
+		all it's fields, this element serves as the mark telling the core that this is the very last element of the array and it must stop
+		scanning the array.
+	    </para>
+	    <para>
+		Each exported function is described by the following structure:
+	    </para>
+	    <programlisting format="linespecific">
+struct cmd_export_ {
+	char* name;             /* null terminated command name */
+	cmd_function function;  /* pointer to the corresponding function */
+	int param_no;           /* number of parameters used by the function */
+	fixup_function fixup;   /* pointer to the function called to "fix" the parameters */
+	int flags;              /* Function flags */
+};	   
+
+typedef struct cmd_export_ cmd_export_t;
+</programlisting>
+	    <itemizedlist>
+		<title>Meaning of the fileds:</title>
+		<listitem>
+		    <simpara><varname>char* name</varname><simpara> 
+		    <simpara>
+			This is the name under which the function will be visible to the core. Usually it is the same as the name of the corresponding function.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>cmd_function function</varname></simpara> 
+		    <para>
+			cmd_function type is defined as follows:
+		    </para> 
+		    <programlisting format="linespecific">
+typedef int (*cmd_function)(struct sip_msg*, char*, char*); 
+</programlisting>
+		    <simpara>
+			The first parameter is a <acronym>SIP</acronym> message being processed, the other 2 parameters are given from the configuration file.
+		    </simpara>
+		    <note>
+			<simpara>
+			    From time to time you might need to export a function that has different synopsis. This can happen if you export functions
+			    that are supposed to be called by other modules only and must not be called from the configuration script. In this case you will
+			    have to do type-casting otherwise the compiler will complain and will not compile your module.
+			</simpara>
+			<simpara>
+			    Simply put (cmd_function) just before the function name, for example <varname>(cmd_function)my_function</varname>. Don't use this
+			    unless you know what are you doing ! The server might crash if you pass wrong parameters to the function later !
+			</simpara>
+		    </note>
+		</listitem>
+		<listitem>
+		    <simpara><varname>int param_no</varname></simpara>
+		    <simpara>
+			Number of parameters of the function. It can be 0, 1 or 2. The function will be not visible from the configuration script if you use
+			another value.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>fixup_function fixup</varname></simpara>
+		    <simpara>
+			This is the function that will be used to <quote>fixup</quote> function parameters. Set this field to 0 if you don't need this.
+		    </simpara>
+		    <simpara>
+			If you provide pointer to a fixup function in this field, the fixup function will be called for each occurence of the exported function
+			in the configuration script.
+		    </simpara>
+		    <simpara>
+			The fixup function can be used to perform some operation on the function parameters. For example, if one of the parameters is a regular
+			expression, you can use the fixup to compile the regular expression. The fixup functions are called only once - upon the server startup
+			and so the regular expression will be compiled before the server starts processing messages. When the server calls the exported function
+			to process a <acronym>SIP</acronym> message, the function will be given the already compiled regular expression and doesn't have to
+			compile it again. This is a significant performance improvement.
+		    </simpara>
+		    <simpara>
+			Fixup functions can also be used to convert string to integer. As you have might noticed, the exported functions accept up to 2
+			parameters of type char*. Because of that it is not possible to pass integer parameters from the script files directly. If you want to
+			pass an integer as a parameter, you must pass it as string (i.e. enclosed in quotes).
+		    </simpara>
+		    <simpara>
+			Fixup function can be used to convert the string back to integer. Such a conversion should happend only once because the string
+			parameter doesn't change when the server is running. Fixup is therefore ideal place for the conversion, it will be converted upon the
+			server startup before the server starts processing <acronym>SIP</acronym> messages. After the conversion the function will get directly
+			the converted value. See existing modules for an example of such a fixup function.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>int flags</varname></simpara>
+		    <simpara>
+			Usage of each function can be restricted. You may want to write a function that can be used by other modules but cannot be called from
+			the script. If you write a function that is supposed to process <acronym>SIP</acronym> requests only, you may want to restrict it so it
+			will be never called for <acronym>SIP</acronym> replies and vice versa. That's what is flags field for.
+		    </simpara>
+		    <simpara>
+			This field is OR value of different flags. Currently only REQUEST_ROUTE and REPLY_ROUTE flags are defined and used by the core. If you
+			use REQUEST_ROUTE flag, then the function can be called from the main route block. If you use REPLY_ROUTE flag, then the function can be
+			called from reply route blocks (More on this in the SER User's Guide). If this field is set to 0, then the function can be called
+			internally (i.e. from other modules) only. If you want to make your function callable anywhere in the script, you can use
+			REQUEST_ROUTE | REPLY_ROUTE.
+		    </simpara>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>Exporting Parameters</title>
+	    <abstract>
+		<simpara>
+		    Each module can provide zero or more parameters, which can affect the module's behaviour. This section gives a detailed description of
+		    structures describing exported parameters and passing this information to the core through the module interface.
+		</simpara>
+	    </abstract>
+	    <simpara>
+		Each parameter exported by a module must be described by <structname>param_export_t</structname> structure. Structures describing all exported
+		parameters are arranged into an array and pointer to the array is then passed to the core. The last element of the array must contain 0 in
+		all it's fields, this element serves as the mark telling the core that this is the very last element of the array and it must stop
+		scanning the array (This is same as in array of exported functions).
+	    </simpara>
+	    <simpara>
+		Each exported parameter is described by the following structure:
+	    </simpara>
+	    <programlisting format="linespecific">
+		
+struct param_export_ {
+	char* name;             /* null terminated param. name */
+	modparam_t type;        /* param. type */
+	void* param_pointer;    /* pointer to the param. memory location */
+};
+
+typedef struct param_export_ param_export_t;
+</programlisting>
+	    <itemizedlist>
+		<title>Meaning of the fields:</title>
+		<listitem>
+		    <simpara><varname>char* name</varname></simpara>
+		    <simpara>
+			This is null-terminated name of the parametes as it will be used in the scripts. Usually this is the same as the name of the variable
+			holding the value.
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>modparam_t type</varname></simpara>
+		    <simpara>
+			Type of the parameter. Currently only two types are defined. INT_PARAM for integer parameters (corresponding variable must be of type
+			int) and STR_PARAM for string parameters (corresponding variable must be of type char*).
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>void* param_pointer</varname></simpara>
+		    <simpara>
+			Pointer to the corresponding variable (stored as void* pointer, make sure that the variable has appropriate type depending on the type
+			of the parameter !).
+		    </simpara>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>Module Initialization</title>
+	    <simpara>
+		If you need to initialize your module before the server starts processing <acronym>SIP</acronym> messages, you should provide initialization
+		function. Each module can provide two initialization functions, main initialization function and child-specific initialization function.
+		Fields holding pointers to both initialization functions are in main export structure (will be described later). Simply pass 0 instead of
+		function pointer if you don't need one or both initialization functions.
+	    </simpara>
+	    <simpara>
+		The main initialization function will be called before any other function exported by the module. The function will be called only once, before
+		the main process forks. This function is good for initialization that is common for all the children (processes). The function should return 0
+		if everything went OK and a negative error code otherwise. Server will abort if the function returns a negative value.
+	    </simpara>
+	    <simpara>
+		Per-child initialization function will be called <emphasis>after</emphasis> the main process forks. The function will be called for each child
+		separately. The function should perform initialization that is specific for each child. For example each child process might open it's own
+		database connection to avoid locking of a single connection shared by many processes. Such connections can be opened in the per-child
+		initialization function. The function accepts one parameter which is rank (integer) of child for which the function is being executed. This
+		allows developers to distinguish different children and perform different initialization for each child. The meaning of return value is same as
+		in the main initialization function.
+	    </simpara>
+	</section>
+	<section>
+	    <title>Module Clean-up</title>
+	    <simpara>
+		A module can also export a clean-up function that will be called by the main process when the server shuts down. The function accepts no
+		parameters and return no value.
+	    </simpara>
+	</section>
+	<section>
+	    <title>Module Callbacks</title>
+	    <para>
+		TBD.
+	    </para>
+	</section>
+	<section>
+	    <title><structname>exports</structname> Structure - Assembling the Pieces Together</title>
+	    <simpara>
+		We have already described how a module can export functions and parameters, but we haven't yet described how to pass this information to the
+		core. Each module must have variable named <varname>exports</varname> which is structure module_exports. The variable will be looked up by the
+		core immediately after it loads the module. The structure contains pointers to both arrays (functions, parameters), pointers to both
+		initialization functions, destroy function and the callbacks. So the structure contains everything the core will need.
+	    </simpara>
+	    <simpara>The structure looks like the follows:</simpara>
+	    <programlisting format="linespecific">
+struct module_exports{
+    char* name;                     /* null terminated module name */
+    cmd_export_t* cmds;             /* null terminated array of the exported commands */
+    param_export_t* params;         /* null terminated array of the exported module parameters */
+    init_function init_f;           /* Initilization function */
+    response_function response_f;   /* function used for responses, returns yes or no; can be null */
+    destroy_function destroy_f;     /* function called when the module should be "destroyed", e.g: on ser exit; can be null */
+    onbreak_function onbreak_f;
+    child_init_function init_child_f;  /* function called by all processes after the fork */
+};
+</programlisting>
+	    <itemizedlist>
+		<title>Field description:</title>
+		<listitem>
+		    <simpara><varname>char* name</varname></simpara>
+		    <simpara>Null terminated name of the module</simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>cmd_exports* cmds</varname></simpara>
+		    <simpara>
+			Pointer to the array of exported functions
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>param_export_t* params</varname></simpara>
+		    <simpara>
+			Pointer to the array of exported parameters
+		    </simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>init_function init_f</varname></simpara>
+		    <simpara>Pointer to the module initialization function</simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>response_function response_f</varname></simpara>
+		    <simpara>Pointer to function processing responses</simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>destroy_function destroy_f</varname></simpara>
+		    <simpara>Pointer to the module clean-up function</simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>onbreak_function onbreak_f</varname></simpara>
+		    <simpara>TBD</simpara>
+		</listitem>
+		<listitem>
+		    <simpara><varname>child_init_function init_child_f</varname></simpara>
+		    <simpara>Pointer to the per-child initialization function</simpara>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
+	    <title>Example - Simple Module Interface</title>
+	    <para>
+		Let's suppose that we are going to write a simple module. The module will export two functions - 
+		<function moreinfo="none">foo_req</function> which will be processing <acronym>SIP</acronym> requests and 
+		<function moreinfo="none">foo_int</function> which is an internal function that can be called by other modules only.
+		Both functions will take 2 parameters.
+	    </para>
+	    <programlisting format="linespecific">
+/* Prototypes */
+int foo_req(struct sip_msg* msg, char* param1, char* param2);
+int foo_res(struct sip_msg* msg, char* param1, char* param2);
+
+static cmd_export cmds[] = {
+    {"foo_req", foo_req, 2, 0, ROUTE_REQUEST},
+    {"foo_int", foo_int, 2, 0, 0            },
+    {0, 0, 0, 0}
+};
+</programlisting>
+	    <para>
+		The module will also have two parameters, foo_bar of type integer and bar_foo of type string.
+	    </para>
+	    <programlisting format="linespecific">
+int foo_bar = 0;
+char* bar_foo = "default value";
+
+static param_export params[] = {
+    {"foo_bar", INT_PARAM, &amp;foo_bar},
+    {"bar_foo", STR_PARAM, bar_foo     },
+    {0, 0, 0}
+}; 
+</programlisting>
+	    <para>
+		We will also create both initialization functions and a clean-up function:
+	    </para>
+	    <programlisting format="linespecific">
+static int mod_init(void)
+{
+    printf("foo module initializing\n");
+}
+
+static int child_init(int rank)
+{
+    printf("child nr. %d initializing\n", rank);
+    return 0;
+}
+
+static void destroy(void)
+{
+    printf("foo module cleaning up\n");
+}
+</programlisting>
+	    <para>
+		And finally we put everything into the exports structure:
+	    </para>
+	    <programlisting format="linespecific">
+struct module_exports exports = {
+    "foobar",   /* Module name */
+    cmds,       /* Exported functions */
+    params,     /* Exported parameters */
+    mod_init,   /* Module initialization function */
+    0,          /* Response function */
+    destroy,    /* Clean-up function */
+    0,          /* On Cancel function */
+    child_init  /* Per-child init function */
+};
+</programlisting>
+	    <simpara>And that's it.</simpara>
+	</section>
+    </chapter>
+</book>
