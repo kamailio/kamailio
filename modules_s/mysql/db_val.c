@@ -2,7 +2,7 @@
  * $Id$ 
  */
 
-#include "db_val.h"
+#include "../../db/db_val.h"
 #include "defs.h"
 #include <stdlib.h>
 #include <stdio.h>

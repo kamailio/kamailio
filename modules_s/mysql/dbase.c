@@ -2,7 +2,6 @@
  * $Id$ 
  */
 
-#include "dbase.h"
 #include <mysql/mysql.h>
 #include "db_utils.h"
 #include "../../dprint.h"
@@ -11,6 +10,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "dbase.h"
+
 
 
 /*
