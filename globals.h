@@ -70,6 +70,7 @@ extern int children_no;
 #ifdef USE_TCP
 extern int tcp_children_no;
 extern int tcp_disable;
+extern int tcp_accept_aliases;
 #endif
 #ifdef USE_TLS
 extern int tls_disable;

@@ -48,6 +48,7 @@
  * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
  * 2003-10-13  added FIFO_DIR & proto:host:port listen/alias support (andrei)
  * 2003-10-24  converted to the new socket_info lists (andrei)
+ * 2003-10-28  added tcp_accept_aliases (andrei)
  */
 
 
@@ -148,6 +149,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token SET_URI
 %token REVERT_URI
 %token FORCE_RPORT
+%token FORCE_TCP_ALIAS
 %token IF
 %token ELSE
 %token SET_ADV_ADDRESS
@@ -202,6 +204,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token WDIR
 %token MHOMED
 %token DISABLE_TCP
+%token TCP_ACCEPT_ALIASES
 %token TCP_CHILDREN
 %token DISABLE_TLS
 %token TLSLOG
@@ -409,6 +412,14 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#endif
 									}
 		| DISABLE_TCP EQUAL error { yyerror("boolean value expected"); }
+		| TCP_ACCEPT_ALIASES EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_accept_aliases=$3;
+									#else
+										warn("tcp support not compiled in");
+									#endif
+									}
+		| TCP_ACCEPT_ALIASES EQUAL error { yyerror("boolean value expected"); }
 		| TCP_CHILDREN EQUAL NUMBER {
 									#ifdef USE_TCP
 										tcp_children_no=$3;
@@ -1373,8 +1384,40 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										"string expected"); }
 		| REVERT_URI LPAREN RPAREN { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
-		| FORCE_RPORT LPAREN RPAREN	{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
+		| FORCE_RPORT LPAREN RPAREN	{
+							#ifdef USE_TCP
+								$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); 
+							#else
+								yyerror("tcp support not compiled in");
+							#endif
+							}
 		| FORCE_RPORT				{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
+		| FORCE_TCP_ALIAS LPAREN NUMBER RPAREN	{
+					#ifdef USE_TCP
+						$$=mk_action(FORCE_TCP_ALIAS_T,NUMBER_ST, 0,
+										(void*)$3, 0);
+					#else
+						yyerror("tcp support not compiled in");
+					#endif
+												}
+		| FORCE_TCP_ALIAS LPAREN RPAREN	{
+					#ifdef USE_TCP
+						$$=mk_action(FORCE_TCP_ALIAS_T,0, 0, 0, 0); 
+					#else
+						yyerror("tcp support not compiled in");
+					#endif
+										}
+		| FORCE_TCP_ALIAS				{
+					#ifdef USE_TCP
+						$$=mk_action(FORCE_TCP_ALIAS_T,0, 0, 0, 0);
+					#else
+						yyerror("tcp support not compiled in");
+					#endif
+										}
+		| FORCE_TCP_ALIAS LPAREN error RPAREN	{$$=0; 
+												yyerror("bad argument,"
+														" number expected");
+												}
 		| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
 								$$=0;
 								if ((str_tmp=pkg_malloc(sizeof(str)))==0){

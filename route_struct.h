@@ -31,6 +31,7 @@
  *  2003-04-12  FORCE_RPORT_T added (andrei)
  *  2003-04-22  strip_tail added (jiri)
  *  2003-10-10  >,<,>=,<=, != and MSGLEN_O added (andrei)
+ *  2003-10-28  FORCE_TCP_ALIAS added (andrei)
  */
 
 
@@ -70,7 +71,8 @@ enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T,
 		SEND_TCP_T,
 		FORCE_RPORT_T,
 		SET_ADV_ADDR_T,
-		SET_ADV_PORT_T
+		SET_ADV_PORT_T,
+		FORCE_TCP_ALIAS_T
 };
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 		EXPR_ST, ACTIONS_ST, CMDF_ST, MODFIXUP_ST, URIHOST_ST, URIPORT_ST,

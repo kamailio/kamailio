@@ -35,6 +35,7 @@
  *  2003-04-12  FORCE_RPORT_T added (andrei)
  *  2003-04-22  strip_tail added (jiri)
  *  2003-10-02  added SET_ADV_ADDR_T & SET_ADV_PORT_T (andrei)
+ *  2003-10-29  added FORCE_TCP_ALIAS_T (andrei)
  */
 
 
@@ -627,6 +628,33 @@ int do_action(struct action* a, struct sip_msg* msg)
 				break;
 			}
 			msg->set_global_port=*((str*)a->p1.data);
+			ret=1; /* continue processing */
+			break;
+#ifdef USE_TCP
+		case FORCE_TCP_ALIAS_T:
+			if ( msg->rcv.proto==PROTO_TCP
+#ifdef USE_TLS
+					|| msg->rcv.proto==PROTO_TLS
+#endif
+			   ){
+				
+				if (a->p1_type==NOSUBTYPE)	port=msg->via1->port;
+				else if (a->p1_type==NUMBER_ST) port=(int)a->p1.number;
+				else{
+					LOG(L_CRIT, "BUG: do_action: bad force_tcp_alias"
+							" port type %d\n", a->p1_type);
+					ret=E_BUG;
+					break;
+				}
+						
+				if (tcpconn_add_alias(msg->rcv.proto_reserved1, port,
+									msg->rcv.proto)!=0){
+					LOG(L_ERR, " ERROR: receive_msg: tcp alias failed\n");
+					ret=E_UNSPEC;
+					break;
+				}
+			}
+#endif
 			ret=1; /* continue processing */
 			break;
 		default:

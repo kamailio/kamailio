@@ -43,6 +43,7 @@
  *               handle_new_connect (andrei)
  *  2003-07-09  tls_close called before closing the tcp connection (andrei)
  *  2003-10-24  converted to the new socket_info lists (andrei)
+ *  2003-10-27  tcp port aliases support added (andrei)
  */
 
 
@@ -105,9 +106,10 @@ struct tcp_child{
 };
 
 
+int tcp_accept_aliases=0; /* by default don't accept aliases */
 
-/* connection hash table (after ip&port) */
-struct tcp_connection** tcpconn_addr_hash=0;
+/* connection hash table (after ip&port) , includes also aliases */
+struct tcp_conn_alias** tcpconn_aliases_hash=0;
 /* connection hash table (after connection id) */
 struct tcp_connection** tcpconn_id_hash=0;
 gen_lock_t* tcpconn_lock=0;
@@ -132,6 +134,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		LOG(L_ERR, "ERROR: tcpconn_new: mem. allocation failure\n");
 		goto error;
 	}
+	memset(c, 0, sizeof(struct tcp_connection)); /* zero init */
 	c->s=sock;
 	c->fd=-1; /* not initialized */
 	if (lock_init(&c->write_lock)==0){
@@ -263,14 +266,20 @@ struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 	if (c){
 		TCPCONN_LOCK;
 		/* add it at the begining of the list*/
-		hash=tcp_addr_hash(&c->rcv.src_ip, c->rcv.src_port);
-		c->addr_hash=hash;
-		tcpconn_listadd(tcpconn_addr_hash[hash], c, next, prev);
 		hash=tcp_id_hash(c->id);
 		c->id_hash=hash;
 		tcpconn_listadd(tcpconn_id_hash[hash], c, id_next, id_prev);
+		
+		hash=tcp_addr_hash(&c->rcv.src_ip, c->rcv.src_port);
+		/* set the first alias */
+		c->con_aliases[0].port=c->rcv.src_port;
+		c->con_aliases[0].hash=hash;
+		c->con_aliases[0].parent=c;
+		tcpconn_listadd(tcpconn_aliases_hash[hash], &c->con_aliases[0],
+						next, prev);
+		c->aliases++;
 		TCPCONN_UNLOCK;
-		DBG("tcpconn_add: hashes: %d, %d\n", c->addr_hash, c->id_hash);
+		DBG("tcpconn_add: hashes: %d, %d\n", hash, c->id_hash);
 		return c;
 	}else{
 		LOG(L_CRIT, "tcpconn_add: BUG: null connection pointer\n");
@@ -282,8 +291,12 @@ struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
 /* unsafe tcpconn_rm version (nolocks) */
 void _tcpconn_rm(struct tcp_connection* c)
 {
-	tcpconn_listrm(tcpconn_addr_hash[c->addr_hash], c, next, prev);
+	int r;
 	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
+	/* remove all the aliases */
+	for (r=0; r<c->aliases; r++)
+		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash], 
+						&c->con_aliases[r], next, prev);
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
 	if (c->type==PROTO_TLS) tls_tcpconn_clean(c);
@@ -295,9 +308,13 @@ void _tcpconn_rm(struct tcp_connection* c)
 
 void tcpconn_rm(struct tcp_connection* c)
 {
+	int r;
 	TCPCONN_LOCK;
-	tcpconn_listrm(tcpconn_addr_hash[c->addr_hash], c, next, prev);
 	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
+	/* remove all the aliases */
+	for (r=0; r<c->aliases; r++)
+		tcpconn_listrm(tcpconn_aliases_hash[c->con_aliases[r].hash], 
+						&c->con_aliases[r], next, prev);
 	TCPCONN_UNLOCK;
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
@@ -314,11 +331,12 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 {
 
 	struct tcp_connection *c;
+	struct tcp_conn_alias* a;
 	unsigned hash;
 	
 #ifdef EXTRA_DEBUG
 	DBG("tcpconn_find: %d  port %d\n",id, port);
-	print_ip("tcpconn_find: ip ", ip, "\n");
+	if (ip) print_ip("tcpconn_find: ip ", ip, "\n");
 #endif
 	if (id){
 		hash=tcp_id_hash(id);
@@ -331,14 +349,15 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 		}
 	}else if (ip){
 		hash=tcp_addr_hash(ip, port);
-		for (c=tcpconn_addr_hash[hash]; c; c=c->next){
+		for (a=tcpconn_aliases_hash[hash]; a; a=a->next){
 #ifdef EXTRA_DEBUG
-			DBG("c=%p, c->id=%d, port=%d\n",c, c->id, c->rcv.src_port);
-			print_ip("ip=",&c->rcv.src_ip,"\n");
+			DBG("a=%p, c=%p, c->id=%d, alias port= %d port=%d\n", a, a->parent,
+					a->parent->id, a->port, a->parent->rcv.src_port);
+			print_ip("ip=",&a->parent->rcv.src_ip,"\n");
 #endif
-			if ( (c->state!=S_CONN_BAD) && (port==c->rcv.src_port) &&
-					(ip_addr_cmp(ip, &c->rcv.src_ip)) )
-				return c;
+			if ( (a->parent->state!=S_CONN_BAD) && (port==a->port) &&
+					(ip_addr_cmp(ip, &a->parent->rcv.src_ip)) )
+				return a->parent;
 		}
 	}
 	return 0;
@@ -359,6 +378,67 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 	}
 	TCPCONN_UNLOCK;
 	return c;
+}
+
+
+
+/* add port as an alias for the "id" connection
+ * returns 0 on success,-1 on failure */
+int tcpconn_add_alias(int id, int port, int proto)
+{
+	struct tcp_connection* c;
+	unsigned hash;
+	struct tcp_conn_alias* a;
+	
+	a=0;
+	/* fix the port */
+	port=port?port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT);
+	TCPCONN_LOCK;
+	/* check if alias already exists */
+	c=_tcpconn_find(id, 0, 0);
+	if (c){
+		hash=tcp_addr_hash(&c->rcv.src_ip, port);
+		/* search the aliases for an already existing one */
+		for (a=tcpconn_aliases_hash[hash]; a; a=a->next){
+			if ( (a->parent->state!=S_CONN_BAD) && (port==a->port) &&
+					(ip_addr_cmp(&c->rcv.src_ip, &a->parent->rcv.src_ip)) ){
+				/* found */
+				if (a->parent!=c) goto error_sec;
+				else goto ok;
+			}
+		}
+		if (c->aliases>=TCP_CON_MAX_ALIASES) goto error_aliases;
+		c->con_aliases[c->aliases].parent=c;
+		c->con_aliases[c->aliases].port=port;
+		c->con_aliases[c->aliases].hash=hash;
+		tcpconn_listadd(tcpconn_aliases_hash[hash], 
+								&c->con_aliases[c->aliases], next, prev);
+		c->aliases++;
+	}else goto error_not_found;
+ok:
+	TCPCONN_UNLOCK;
+#ifdef EXTRA_DEBUG
+	if (a) DBG("tcpconn_add_alias: alias already present\n");
+	else   DBG("tcpconn_add_alias: alias port %d for hash %d, id %d\n",
+			port, hash, c->id);
+#endif
+	return 0;
+error_aliases:
+	TCPCONN_UNLOCK;
+	LOG(L_ERR, "ERROR: tcpconn_add_alias: too many aliases for connection %p"
+				" (%d)\n", c, c->id);
+	return -1;
+error_not_found:
+	TCPCONN_UNLOCK;
+	LOG(L_ERR, "ERROR: tcpconn_add_alias: no connection found for id %d\n",id);
+	return -1;
+error_sec:
+	TCPCONN_UNLOCK;
+	LOG(L_ERR, "ERROR: tcpconn_add_alias: possible port hijack attemp\n");
+	LOG(L_ERR, "ERROR: tcpconn_add_alias: alias already present and points"
+			" to another connection (%d : %d and %d : %d)\n",
+			a->parent->id,  port, c->id, port);
+	return -1;
 }
 
 
@@ -516,10 +596,10 @@ void tcpconn_timeout(fd_set* set)
 	
 	ticks=get_ticks();
 	TCPCONN_LOCK; /* fixme: we can lock only on delete IMO */
-	for(h=0; h<TCP_ADDR_HASH_SIZE; h++){
-		c=tcpconn_addr_hash[h];
+	for(h=0; h<TCP_ID_HASH_SIZE; h++){
+		c=tcpconn_id_hash[h];
 		while(c){
-			next=c->next;
+			next=c->id_next;
 			if ((c->refcnt==0) && (ticks>c->timeout)) {
 				DBG("tcpconn_timeout: timeout for hash=%d - %p (%d > %d)\n",
 						h, c, ticks, c->timeout);
@@ -789,9 +869,9 @@ void tcp_main_loop()
 #endif
 		
 		/* check all the read fds (from the tcpconn_addr_hash ) */
-		for (h=0; h<TCP_ADDR_HASH_SIZE; h++){
-			for(tcpconn=tcpconn_addr_hash[h]; tcpconn && n; 
-					tcpconn=tcpconn->next){
+		for (h=0; h<TCP_ID_HASH_SIZE; h++){
+			for(tcpconn=tcpconn_id_hash[h]; tcpconn && n; 
+					tcpconn=tcpconn->id_next){
 				if ((tcpconn->refcnt==0)&&(FD_ISSET(tcpconn->s, &sel_set))){
 					/* new data available */
 					n--;
@@ -967,10 +1047,9 @@ int init_tcp()
 	}
 	*connection_id=1;
 	/* alloc hashtables*/
-	tcpconn_addr_hash=(struct tcp_connection**)shm_malloc(TCP_ADDR_HASH_SIZE*
-								sizeof(struct tcp_connection*));
-
-	if (tcpconn_addr_hash==0){
+	tcpconn_aliases_hash=(struct tcp_conn_alias**)
+			shm_malloc(TCP_ALIAS_HASH_SIZE* sizeof(struct tcp_conn_alias*));
+	if (tcpconn_aliases_hash==0){
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc address hashtable\n");
 		shm_free(connection_id);
 		connection_id=0;
@@ -986,16 +1065,16 @@ int init_tcp()
 		LOG(L_CRIT, "ERROR: init_tcp: could not alloc id hashtable\n");
 		shm_free(connection_id);
 		connection_id=0;
-		shm_free(tcpconn_addr_hash);
-		tcpconn_addr_hash=0;
+		shm_free(tcpconn_aliases_hash);
+		tcpconn_aliases_hash=0;
 		lock_destroy(tcpconn_lock);
 		lock_dealloc((void*)tcpconn_lock);
 		tcpconn_lock=0;
 		goto error;
 	}
 	/* init hashtables*/
-	memset((void*)tcpconn_addr_hash, 0, 
-			TCP_ADDR_HASH_SIZE * sizeof(struct tcp_connection*));
+	memset((void*)tcpconn_aliases_hash, 0, 
+			TCP_ALIAS_HASH_SIZE * sizeof(struct tcp_conn_alias*));
 	memset((void*)tcpconn_id_hash, 0, 
 			TCP_ID_HASH_SIZE * sizeof(struct tcp_connection*));
 	return 0;
@@ -1013,9 +1092,9 @@ void destroy_tcp()
 		lock_dealloc((void*)tcpconn_lock);
 		tcpconn_lock=0;
 	}
-	if(tcpconn_addr_hash){
-		shm_free(tcpconn_addr_hash);
-		tcpconn_addr_hash=0;
+	if(tcpconn_aliases_hash){
+		shm_free(tcpconn_aliases_hash);
+		tcpconn_aliases_hash=0;
 	}
 	if(tcpconn_id_hash){
 		shm_free(tcpconn_id_hash);

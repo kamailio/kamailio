@@ -2,13 +2,14 @@ $Id$
 
 ( - todo, x - done)
 
-- fix aliases for tls_port (add_them?)
+- nathelper: extract_body broken-> uses content_length value form the 
+ message instead of recalculating it + duplicate code for get_body()
 - fix check_sel_op -- add proto for uri proto checks
-- add via alias for tcp port & infinite tcp conn life
+- add setting for infinite tcp conn life?
 
 - fix 2 different fixups for diff. no of parameter
- (add no of params ot struct action?) -- linked to var. no. of params
-- alias support fot tcp/tls port numbers
+ (add no of params to struct action?) -- linked to var. no. of params
+x alias support fot tcp/tls port numbers
 - warning builder set_advertised address support
 - grep parse_uri & replace with parse_sip_msg_uri (e.g do_action!)
 x update AUTHORS, debian/copyright, ser.8, ser.cfg.5 from stable
@@ -17,14 +18,16 @@ x update all package specs from stable
 - add BUG checks for  fd > 0 && fd <= maxfd to all selects?
 x tcp_main_loop: BUG cases should "conitnue;"
 x change len_gt into and expr (e.g msg:len).
-- sipit: uri == myself doesn't match tls port = 5061
-- sipit: fix check_self & *_alias to work with tcp & tls
+x sipit: uri == myself doesn't match tls port = 5061 
+  -- updated: new socket_info list code should fix it
+x sipit: fix check_self & *_alias to work with tcp & tls
+  -- updated: new socket_info list code should fix it
 x sipit: fix ipv6 references in check_self
 x regex subst on uris?
 x port receive.c pre_script_cb fix from stable
-- extend alias to include port numbers :
+x extend alias to include port numbers :
     something like alias= foo1.bar:5080 foo2.bar foo3.bar:*
-- extend listen and alias to include port numbers and protocol:
+x extend listen and alias to include port numbers and protocol:
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
 x added set_advertised_{address,port} -- was: add force_via, force_srcip a.s.o
 (the advertised addresses should be overwritable from the script).
@@ -123,7 +126,7 @@ x man page
 - autoconf scripts
 x Debian package build files
 x the same for rpm
-- the same for FreeBSD and Slackware
+x the same for *BSD
 
 
 x jku: branch hash computation over canonical values

@@ -31,6 +31,7 @@
  *  2003-01-21  added extra via param parsing code (i=...), used
  *               by tcp to identify the sending socket, by andrei
  *  2003-01-27  added a new member (start) to via_param, by andrei
+ *  2003-10-27  added alias to via && PARAM_ALIAS (andrei)
  */
 
 
@@ -45,7 +46,8 @@
  */
 enum {
 	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH, 
-	PARAM_MADDR, PARAM_RECEIVED, PARAM_RPORT, PARAM_I, GEN_PARAM,
+	PARAM_MADDR, PARAM_RECEIVED, PARAM_RPORT, PARAM_I, PARAM_ALIAS,
+	GEN_PARAM,
 	PARAM_ERROR
 };
 
@@ -86,7 +88,7 @@ struct via_body {
 	struct via_param* received;
 	struct via_param* rport;
 	struct via_param* i;
-	
+	struct via_param* alias; /* alias see draft-ietf-sip-connect-reuse-00 */
 	struct via_body* next; /* pointer to next via body string if
 				  compact via or null */
 };

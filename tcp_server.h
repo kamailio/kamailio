@@ -31,7 +31,6 @@
 
 
 
-
 /* "public" functions*/
 
 struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port, 
@@ -40,6 +39,7 @@ void tcpconn_put(struct tcp_connection* c);
 int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 			int id);
 
+int tcpconn_add_alias(int id, int port, int proto);
 
 
 

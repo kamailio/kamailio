@@ -34,6 +34,14 @@ core:
        This is the default value, if empty (default) the socket
        port will be used.
        Same warnings as above.
+   tcp_accept_aliases= yes|no
+       if a message received over a tcp connection has "alias" in its via
+       a new tcp alias port will be created for the connection the message
+       came from (the alias port will be set to the via one).
+       Based on draft-ietf-sip-connect-reuse-00.txt, but using only the port
+       (host aliases are too dangerous IMHO, involve extra DNS
+        lookups and the need for them is questionable)
+       See force_tcp_alias for more details.
  - new script commands:
     set_advertised_address(ip|string)
        same as advertised_address but it affects only the current message:
@@ -42,6 +50,24 @@ core:
     set_advertised_port(no)
        same as advertised_port but it affects only the current
        message; see set_advertised_address & s/address/port/g
+   force_tcp_alias()
+   force_tcp_alias(port)
+       adds a tcp port alias for the current connection (if tcp).
+       Usefull if you want to send all the trafic to port_alias through
+       the same connection this request came from [it could help 
+       for firewall or nat traversal].
+       With no parameters adds the port from the message via as the alias.
+       When the "aliased" connection is closed (e.g. it's idle for too
+       much time), all the port aliases are removed.
+       Note: by default ser closes idle connection after 3 minutes (stable)
+       or 1 minute (unstable) so to take full advantage of tcp aliases for
+       things like firewall and nat traversal, redefine TCP_CON_*TIMEOUT
+       in tcp_conn.h and recompile. Also right now there can be maximum
+       3 port aliases to a connection (you shouldn't need more than one).
+       To change this redefine TCP_CON_MAX_ALIASES in the same file
+       (set it to you desired value + 1; 1 is needed for the real port).
+
+
 
 
 

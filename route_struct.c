@@ -324,6 +324,9 @@ void print_action(struct action* a)
 			case SET_ADV_PORT_T:
 					DBG("set_advertised_port(");
 					break;
+			case FORCE_TCP_ALIAS_T:
+					DBG("force_tcp_alias(");
+					break;
 			default:
 					DBG("UNKNOWN(");
 		}

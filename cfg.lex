@@ -42,6 +42,7 @@
  *  2003-10-07  added hex and octal numbers support (andrei)
  *  2003-10-10  replaced len_gt w/ msg:len (andrei)
  *  2003-10-13  added fifo_dir (andrei)
+ *  2003-10-28  added tcp_accept_aliases (andrei)
  */
 
 
@@ -93,6 +94,7 @@ ROUTE_FAILURE failure_route
 ROUTE_ONREPLY onreply_route
 EXEC	exec
 FORCE_RPORT		"force_rport"|"add_rport"
+FORCE_TCP_ALIAS		"force_tcp_alias"|"add_tcp_alias"
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
@@ -176,6 +178,7 @@ WDIR		"workdir"|"wdir"
 MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
+TCP_ACCEPT_ALIASES	"tcp_accept_aliases"
 DISABLE_TLS		"disable_tls"
 TLSLOG			"tlslog"|"tls_log"
 TLS_PORT_NO		"tls_port_no"
@@ -275,6 +278,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; 
 								return APPEND_BRANCH; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }
+<INITIAL>{FORCE_TCP_ALIAS}	{ count(); yylval.strval=yytext;
+								return FORCE_TCP_ALIAS; }
 	
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
@@ -321,6 +326,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
+<INITIAL>{TCP_ACCEPT_ALIASES}	{ count(); yylval.strval=yytext;
+									return TCP_ACCEPT_ALIASES; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
 <INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
