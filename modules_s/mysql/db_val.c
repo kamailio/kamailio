@@ -135,7 +135,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 		break;
 
 	default:
-		printf("val2str(): Unknow data type\n");
+		DBG("val2str(): Unknow data type\n");
 		return FALSE;
 	}
 	return FALSE;
