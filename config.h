@@ -105,4 +105,11 @@
 
 /* maximum length of Contact heder field in redirection replies */
 #define MAX_REDIRECTION_LEN 512
+
+/* used by FIFO statistics in module to terminate line;
+   extra whitespaces are used to overwrite remainders of
+   previous line if longer than current one
+*/
+#define CLEANUP_EOL "      \n"
+
 #endif

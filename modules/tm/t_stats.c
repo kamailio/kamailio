@@ -25,7 +25,7 @@ int print_stats(  FILE *f )
 		cur_stats->transactions );
 	fprintf(f, "local: %d, ",
 		cur_stats->client_transactions );
-	fprintf(f, "waiting: %d\n",
+	fprintf(f, "waiting: %d" CLEANUP_EOL ,
 		cur_stats->waiting );
 
 	fprintf(f, "Total:\n");
@@ -33,10 +33,10 @@ int print_stats(  FILE *f )
 		acc_stats->transactions );
 	fprintf(f, " local: %d,",
 		acc_stats->client_transactions );
-	fprintf(f, " waiting: %d\n",
+	fprintf(f, " waiting: %d" CLEANUP_EOL ,
 		acc_stats->waiting );
 
-	fprintf(f, "Replied localy: %d\n",
+	fprintf(f, "Replied localy: %d" CLEANUP_EOL ,
 		acc_stats->replied_localy );
 	fprintf(f, "Completion status 6xx: %d,",
 		acc_stats->completed_6xx );
@@ -46,7 +46,7 @@ int print_stats(  FILE *f )
 		acc_stats->completed_4xx );
 	fprintf(f, " 3xx: %d,",
 		acc_stats->completed_3xx );
-	fprintf(f, "2xx: %d\n",
+	fprintf(f, "2xx: %d" CLEANUP_EOL ,
 		acc_stats->completed_2xx );
 	
 	return 1;
