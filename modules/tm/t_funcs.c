@@ -242,7 +242,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 			init_branch_iterator();
 			while((ack_uri.s=next_branch(&ack_uri.len))) {
 				p_msg->new_uri=ack_uri;
-				proxy=uri2proxy(ack_uri, proto);
+				proxy=uri2proxy(&GET_NEXT_HOP(p_msg), proto);
 				if (proxy==0) continue;
 				forward_request(p_msg, proxy, proto);
 				free_proxy( proxy );	
