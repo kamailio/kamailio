@@ -13,6 +13,13 @@
 <!ENTITY accountingexample SYSTEM "../../examples/acc.cfg">
 <!ENTITY replicateexample SYSTEM "../../examples/replicate.cfg">
 <!ENTITY defscr SYSTEM "../../etc/ser.cfg">
+<!ENTITY execstep2 SYSTEM "../../examples/exec_s2.cfg">
+<!ENTITY execstep3 SYSTEM "../../examples/exec_s3.cfg">
+<!ENTITY execstep4 SYSTEM "../../examples/exec_s4.cfg">
+<!ENTITY execstep5 SYSTEM "../../examples/exec_s5.cfg">
+<!ENTITY execstep5b SYSTEM "../../examples/exec_s5b.cfg">
+<!ENTITY releasenotes SYSTEM "../../NEWS">
+<!ENTITY install SYSTEM "../../INSTALL">
 
 
 
@@ -24,7 +31,7 @@
 <?dbhtml filename="index.html">
 
    
-    <title>iptel.org SIP Express Router v0.8.10 -- Admin's Guide</title>
+    <title>iptel.org SIP Express Router v0.8.11 -- Admin's Guide</title>
     <bookinfo>
 	<authorgroup>
 	    <author>
@@ -87,10 +94,10 @@
 	    </para>
 	</abstract>
 	<releaseinfo>
-	    This documentation is continuously updated. For the latest and most complete 
-	    version, visit our site at 
+	    This documentation is continuously updated. For the latest  
+	    version visit our site at 
 	    <ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser</ulink>.
-	    Version of this document is $Revision$.
+	    $Revision$.
 	</releaseinfo>
     </bookinfo>
 
@@ -505,12 +512,25 @@
 		Most up-to-date information including latest and most complete version
 		of this documentation is always available at our website,
 		<ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser/</ulink>.
-		For information on how to install ser, read INSTALL.
-		SGML documentation is available in the 'doc' directory.
+		The site includes links to other important information about
+		<application moreinfo="none">ser</application>, such
+		as installation guidelines (INSTALL), download links,
+		development pages, programmer's manual, etc.
+	    </para>
+	    <para>
 		A SIP tutorial (slide set) is available at 
 		<ulink url="http://www.iptel.org/sip/">http://www.iptel.org/sip/</ulink> .
 	    </para>
 	</section> <!-- info -->
+
+	<section>
+	    <title>Release Notes</title>
+	    <literallayout format="linespecific" class="normal">
+&releasenotes;
+	    </literallayout>
+	</section> <!-- release notes -->
+
+
     </chapter> <!-- general -->
 
     <chapter>
@@ -524,7 +544,7 @@
 		hop of a request. It can be for example used to implement user 
 		location service or enforce static routing to a gateway. Real-world
 		deployments actually ask for quite complex routing logic, which
-		needs to reflex static routes to PSTN gateways, dynamic routes
+		needs to reflect static routes to PSTN gateways, dynamic routes
 		to registered users, authentication policy, capabilities of
 		SIP devices, etc.
 	    </para>
@@ -1591,7 +1611,7 @@ route{
 		<application>ser</application> features.
 	    </para>
 
-	    <section>
+	    <section id="defaultscript">
 		<title>Default Configuration Script</title>		
 		<para>
 		    The configuration script, <filename moreinfo="none">ser.cfg</filename>,
@@ -1668,7 +1688,7 @@ route{
 		</example>
 	    </section>
 
-	    <section>
+	    <section id="statefulua">
 		<title>Stateful User Agent</title>
 		<para>
 		    This examples shows how to make ser act as a stateful user
@@ -1791,7 +1811,7 @@ route{
 		</example>
 	    </section> <!-- exec example -->
 	    
-	    <section>
+	    <section id="replyprocessingsection">
 		<title>Reply Processing (Forward on Unavailable)</title>
 		<para>
 		    Many services depend on status of messages relayed
@@ -1887,7 +1907,7 @@ route{
 			There is also a utility <application moreinfo="none">
 			    scripts/harv_ser.sh</application> in <application moreinfo="none">
 			ser</application> distribution for post-processing
-			of captures messages. It summarizes messages captured
+			of captured messages. It summarizes messages captured
 			by reply status and user-agent header field.
 		    </para>
 		</answer>
@@ -1905,7 +1925,7 @@ route{
 		    tools available, using a simple, text-oriented tool
 		    such as <application>ngrep</application> makes the job very well thanks to SIP's textual nature.
 			</para>
-		    <example>
+		    <example id="usingngrep">
 			<title>Using <application>ngrep</application>
 			</title>
 			<para>In this example, all messages at port 5060
@@ -1953,41 +1973,70 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells: pid=31604 req_src_ip=153.96.1
 		    </para>
 		</question>
 		<answer>
-		    <para>
-			A request may pass any number of proxy servers on
-			its path to its destination. If an error occurs,
-			it may be quite difficult to learn in which of
-			the servers in the chain it originated and what
-			was its cause. <application moreinfo="none">ser
-			</application> does its best and displays extensive
-			diagnostics information in SIP replies. This
-			information is part of the warning header field,
-			and contains the following facts:
+			<para>
+			    A request may pass any number of proxy servers on
+			    its path to its destination. If an error occurs
+			    in the chain, it is difficult for upstream troubleshooters
+			    and/or users complaining to administrators to learn 
+			    more about error circumstances. 
+			    <application moreinfo="none">ser
+			    </application> does its best and displays extensive
+			    diagnostics information in SIP replies. It allows 
+			    troubleshooters and/or users who report to troubleshooters
+			    to gain additional knowledge about request processing
+			    status. 
+			    This extended debugging information is part of the warning 
+			    header field. See <xref linkend="usingngrep"> for an illustration
+			    of a reply that includes such a warning header field. The header
+			    field contains the following pieces of information:
 			<itemizedlist>
 			    <listitem>
 				<para>
 				Server's IP Address -- good to identify
 				from which server in a chain the reply
-				came
+				came.
+				    </para>
+			    </listitem>
+			    <listitem>
+				    <para>
+					Incoming and outgoing URIs -- good to
+					learn for which URI the reply was
+					generated, as it may be rewritten
+					many times in the path. Particularly
+					useful for debugging of numbering plans.
 				    </para>
 			    </listitem>
 			    <listitem>
 				<para>
-				    Incoming and outgoing URIs -- good to
-				    learn for which URI the reply was
-				    generated, as it may be rewritten
-				    many times in the path
+					Number of Via header fields in replied
+					request -- that helps in assessment of
+					request path length. Upstream clients would
+					not know otherwise, how far away in terms
+					of SIP hops their requests were replied.
 				</para>
 			    </listitem>
-			    <listitem>
-				<para>
-				    Number of Via header fields in replied
-				    request -- that helps in assessment of
-				    request path length.
-				</para>
-			    </listitem>
+				<listitem>
+				    <para>
+					Server's process id. That is useful for
+					debugging to discover situations when
+					mutliple servers listen at the same
+					address.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					IP address of previous SIP hop as seen by
+					the SIP server.
+				    </para>
+				</listitem>
 			</itemizedlist>
 		    </para>
+			<para>
+			    If server administrator is not comfortable with
+			    disclosing all this information, he can turn them
+			    off using the <varname>sip_warning</varname> configuration
+			    option.
+			</para>
 		    <para>
 			A nice utility for debugging server chains is
 			<application moreinfo="none">sipsak</application>,
@@ -2243,12 +2292,9 @@ P-hint: OUTBOUND.			    </programlisting>
 		such as user management or controlling access
 		to PSTN gateways.
 	    </para>
-	    <qandaset>
-		<qandaentry>
-		    <question>
-			<para>User Management</para>
-		    </question>
-		    <answer>
+	    <section>
+		<title>User Management</title>
+
 			<para>
 			    There are two tasks related to management of SIP users:
 			    maintaining user accounts and maintaining user contacts.
@@ -2325,15 +2371,10 @@ sip:666@gateway.foo.bar
 404 Username newuser in table location not found
 			    </screen>
 			</para>
-		    </answer>
-		</qandaentry>
-		<qandaentry>
-		    <question>
-			<para>
-			    User Aliases
-			</para>
-		    </question>
-		    <answer>
+	    </section> <!-- user management -->
+	    <section>
+		<title>User Aliases</title>
+
 			<para>
 			    Frequently, it is desirable for a user to have multiple
 			    addresses in a domain. For example, a user with username "john.doe" wants to be
@@ -2412,13 +2453,9 @@ modparam("usrloc", "db_mode",   1)
 modparam("usrloc", "db_url","sql://ser:secret@dbhost/ser")
 			    </programlisting>
 			</para>
-		    </answer>
-		</qandaentry>
-		<qandaentry>
-		    <question>
-			<para>Access Control (PSTN Gateway)</para>
-		    </question>
-		    <answer>
+	    </section> <!-- user aliases -->
+	    <section>
+		<title>Access Control (PSTN Gateway)</title>
 			<para>
 			    It is sometimes important to exercise some sort of
 			    access control. A typical use case is when 
@@ -2489,15 +2526,9 @@ MySql Password:
 +------+-----+---------------------+
 			    </screen>
 			</para>
-		    </answer>
-		</qandaentry>
-		<qandaentry>
-		    <question>
-			<para>
-			    Accounting
-			</para>
-		    </question>
-		    <answer>
+	    </section> <!-- access control -->
+	    <section>
+		<title>Accounting</title>
 			<para>
 			    In some scenarios, like termination of calls in PSTN, SIP administrators
 			    may wish to keep track of placed calls. <application moreinfo="none">ser</application>
@@ -2527,13 +2558,10 @@ MySql Password:
 				</programlisting>
 			    </example>
 			</para>
-		    </answer>
-		</qandaentry>
-		<qandaentry>
-		    <question>
-			<para>Reliability</para>
-		    </question>
-		    <answer>
+	    </section> <!-- accounting -->
+	    <section>
+		<title>Reliability</title>
+
 			<para>
 			    It is essential to guarantee continuous
 			    service operation even under erroneous conditions, 
@@ -2605,16 +2633,9 @@ MySql Password:
 				</programlisting>
 			    </example>
 			</para>
-		    </answer>
-		    
-		</qandaentry>
-		<qandaentry>
-		    <question>
-			<para>
-			    Stateful versus Stateless Forwarding
-			</para>
-		    </question>
-		    <answer>
+	    </section> <!-- reliability -->
+	    <section>
+		<title>Stateful versus Stateless Forwarding</title>
 			<para>
 			    <application moreinfo="none">ser</application> allows both stateless
 			    and stateful request processing. This memo explains what are pros and cons of
@@ -2672,15 +2693,9 @@ MySql Password:
 				</listitem>
 			    </itemizedlist>
 			</para>
-		    </answer>
-		</qandaentry>
-		<qandaentry>
-		    <question>
-			<para>
-			    Serving Multiple Domains
-			</para>
-		    </question>
-		    <answer>
+	    </section> <!-- stateful vs. stateless -->
+	    <section>
+		<title>Serving Multiple Domains</title>
 			<para>
 			    <application moreinfo="none">ser</application> can be configured to
 			    serve multiple domains. To do so, you need to take the following steps:
@@ -2707,11 +2722,82 @@ MySql Password:
 				
 			    </orderedlist>
 			</para>
-		    </answer>
-		</qandaentry>
-	    </qandaset>
-	    
-
+	    </section> <!-- multiple domains -->
+	    <section id="missedcalls">
+		<title>Reporting Missed Calls</title>
+			<para>
+			    <application moreinfo="none">ser</application> can report missed
+			    calls via <application moreinfo="none">syslog</application> facility
+			    or to mysql. Mysql reporting can be utilized by 
+			    <application moreinfo="none">ser</application>'s 
+			    complementary web-interface, <application moreinfo="none">serweb</application>.
+			    (See more in <xref linkend="serweb">).
+			</para>
+			<para>
+			    Reporting on missed calls is enabled by acc module.
+			    There are two cases, on which you want to report. The first
+			    case is when a callee is off-line. The other case is when
+			    a user is on-line, but call establishment fails. There
+			    may be many failure reasons (call cancellation, inactive phone,
+			    busy phone, server timer, etc.), all of them leading to
+			    a negative (>=300) reply sent to caller. The acc module
+			    can be configured to issue a missed-call report whenever
+			    a transaction completes with a negative status. Two following
+			    script fragment deals with both cases.
+			</para>
+			<para>
+			    First, it reports
+			    on calls missed due to off-line callee status
+			    using the <command moreinfo="none">acc_request</command>
+			    action. The action is wrapped in transactional
+			    processing (<command moreinfo="none">t_newtran</command>)
+			    to guarantee that reports are not
+			    duplicated on receipt of retransmissions.
+			    </para>
+			<para>
+			    Secondly, transaction to on-line users are marked
+			    to be reported on failure. That is what the 
+			    <command moreinfo="none">setflag(3)</command> action
+			    is responsible for, along with the configuration option
+			    "missed_flag". This option configures <application moreinfo="none">ser</application>
+			    to report on all transactions, which were marked
+			    with flag 3.			   
+			    <programlisting format="linespecific">
+loadmodule("modules/tm/tm.so");
+loadmodule("modules/acc/acc.so");
+....
+# if a call is labeled using setflag(3) and is missed, it will
+# be reported
+...
+modparam("acc", "missed_flag", 3 );
+if (!lookup("location")) {
+     # call invitations to off-line users are reported using the
+     # acc_request action; to avoid duplicate reports on request
+     # retransmissions, request is processed statefuly (t_newtran,
+     # t_reply)
+     if ((method=="INVITE" || method=="ACK") && t_newtran() ) {
+          t_reply("404", "Not Found");
+	  acc_request("404 Not Found");
+          break;
+     };
+     # all other requests to off-line users are simply replied
+     # statelessly and no reports are issued
+    sl_send_reply("404", "Not Found");
+    break;
+} else {
+     # user on-line; report on failed transactions; mark the
+     # transaction for reporting using the same number as 
+     # configured above; if the call is really missed, a report
+     # will be issued
+     setflag(3);
+     # forward to user's current destination
+     t_relay();
+     break;
+};
+			    </programlisting>
+			    
+			</para>
+	    </section> <!-- missed calls -->
 	</section> <!-- howtos -->
 
 	<section>
@@ -2752,6 +2838,7 @@ MySql Password:
 		<qandaentry>
 		    <question>
 			<para>
+			    <anchor id="msmbug">
 			    Windows Messenger authentication fails.
 			</para>
 		    </question>
@@ -2800,29 +2887,34 @@ MySql Password:
 	<title>Application Writing</title>
 	<para>
 	    <application moreinfo="none">ser</application> offers several
-	    methods to leverage and extend its abilities. They primarily
-	    differ in how easy-to-use and powerful they are. The easiest
-	    way is to couple <application moreinfo="none">ser</application>
-	    with external applications via the <emphasis>exec</emphasis>
-	    module. This module allows execution of logic and URI manipulation 
-	    by external applications on request receipt. While very
-	    simple, many useful services can be
-	    implemented this way. External applications can be written in
-	    any programming language and do not be aware of SIP at all.
-	    They only care of URIs. For example, an external shell script
-	    may send an email whenever a request for a user arrives.
-	    <example>
-		<title>Using External Scripts</title>
-		<programlisting format="linespecific">
-# send email if a request for johndoe arrives
-if (uri=~"^sip:johndoe@") {
-     exec_msg("echo 'body: call arrived'|mail -s 'call for you' johndoe");
-}
-		</programlisting>
-	    </example>
+	    ways to couple its functionality with applications. The coupling
+	    is bidirectional: <application moreinfo="none">ser</application>
+	    can utilize external applications and external applications can
+	    utilize <application moreinfo="none">ser</application>. 
+	    An example of the former direction would be an external program
+	    determining a least-cost route for a called destination  using 
+	    a pricing table. An example of the latter case
+	    is a web application for server provisioning.
+	    Such an application may want to send instant 
+	    messages, query all current user's locations and monitor server
+	    health. An existing web interface to <application moreinfo="none">ser</application>,
+	    <application moreinfo="none">serweb</application>, actually
+	    does all of it. 
 	</para>
 	<para>
-	    The other extreme method for extending <application moreinfo="none">ser</application>
+	    The easiest, language-independent way of using external logic 
+	    from <application moreinfo="none">ser</application> is provided
+	    by exec module. exec module allows <application moreinfo="none">ser</application>
+	    to start external programs on receipt of a request. The
+	    programs can execute arbitrary logic and/or affect routing of SIP
+	    requests. A great benefit of this programming method is it
+	    is language-independent. Programmers may use programming languages
+	    that are effective or with which they are best familiar.
+	    <xref linkend="usingexec"> gives additional examples illustrating 
+	    use of the exec module.
+	</para>
+	<para>
+	    Another method for extending <application moreinfo="none">ser</application>
 	    capabilities is to write new modules in C. This method takes
 	    deeper understanding of <application moreinfo="none">ser</application>
 	    internals but gains the highest flexibility. Modules can implement
@@ -2832,16 +2924,298 @@ if (uri=~"^sip:johndoe@") {
 	    programmer's handbook available from iptel.org website.
 	</para>
 	<para>
-	    There is a middle way too, which allows easy service creation
-	    without in-depth knowledge of <application moreinfo="none">ser</application>
-	    internals. <application moreinfo="none">ser</application> allows
-	    external applications to link via its built-in
-	    <emphasis>application FIFO server</emphasis> described in the next section. 
+	    To address needs of applications wishing to leverage
+	    <application moreinfo="none">ser</application>,
+	    <application moreinfo="none">ser</application> exports
+	    parts of its functionality via its built-in
+	    "Application FIFO server". This is a simple textual
+	    interface that allows any external applications
+	    to communicate with the server. It can be used to
+	    send instant messages, manipulate user contacts,
+	    watch server health, etc. Programs written in any
+	    language (PHP, shell scripts, Perl, C, etc.) can
+	    utilize this feature. How to use it is shown in
+	    <xref linkend="fifoserver">.
 	</para>
-	<section>
+
+
+	<section id="usingexec">
+	    <title>Using exec Module</title>
+	    <para>
+		
+		The easiest way is to couple <application moreinfo="none">ser</application>
+		with external applications via the <emphasis>exec</emphasis>
+		module. This module allows execution of logic and URI manipulation 
+		by external applications on request receipt. While very
+		simple, many useful services can be
+		implemented this way. External applications can be written in
+		any programming language and do not be aware of SIP at all.
+		<application moreinfo="none">ser</application> interacts with
+		the application via standard input/output and environment 
+		variables.
+		
+
+	    </para>
+	
+
+	    <para>
+		For example, an external shell script
+		may send an email whenever a request for a user arrives.
+	    </para>
+
+	    <example>
+		<title>Using exec: Step 1</title>
+		<programlisting format="linespecific">
+# send email if a request for user "jiri" arrives
+if (uri=~"^sip:jiri@") {
+     exec_msg("echo 'body: call arrived'|mail -s 'call for you' jiri");
+}
+		</programlisting>
+	    </example> <!-- step 1 -->
+	    <para>
+		In this example, the <command moreinfo="none">exec_msg</command> 
+		action starts an external shell. It passes a received SIP request
+		to shell's input. In the shell, <command>mail</command> command
+		is called to send a notification by e-mail.
+		The script however features several simplifications:
+		<orderedlist inheritnum="ignore" continuation="restarts">
+		    <listitem>
+			<para>
+			    The email notification does not tell who was calling.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    The logic is not general: it only supports one well-known user (jiri).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    The logic is stateless. It will be executed on
+			    every retransmission.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    It is a script fragment not explaining the 
+			    context. This particular example may be for
+			    example used to report on missed calls.
+			</para>
+		    </listitem>
+		</orderedlist>
+		All of these simplifications are addressed step-by-step
+		in the following examples.
+	    </para>
+	    <example> <!-- step 2: who called me -->
+		<title>Using exec: Step 2, Who Called Me</title>
+		<para>
+		    This example shows how to display caller's address
+		    in email notification. The trick is easy: process
+		    request received on shell programm's input
+		    and grep From header field.
+		</para>
+		<programlisting format="linespecific">
+&execstep2;
+		</programlisting>
+		<para>
+			The following two figures show an example SIP request and
+			email notification generated on its receipt.
+			
+		    <screen format="linespecific">
+
+<![CDATA[
+INVITE sip:jiri@iptel.org SIP/2.0
+Via: SIP/2.0/UDP 195.37.77.100:5040
+Max-Forwards: 10
+From: "alice" <sip:alice@iptel.org>;tag=76ff7a07-c091-4192-84a0-d56e91fe104f
+To: <sip:jiri@iptel.org>
+Call-ID: d10815e0-bf17-4afa-8412-d9130a793d96@213.20.128.35
+CSeq: 2 INVITE
+Contact: <sip:123.20.128.35:9315>
+Content-Type: application/sdp
+Content-Length: 451
+
+--- SDP payload snipped ---
+]]>
+
+		    </screen>
+		
+		    email received:
+		
+			<screen format="linespecific">
+<![CDATA[
+Date: Thu, 12 Dec 2002 14:25:02 +0100
+From: root <root@cat.iptel.org>
+To: jiri@cat.iptel.org
+Subject: request for you
+
+From: "alice" <sip:alice@iptel.org>;tag=76ff7a07-c091-4192-84a0-d56e91fe104f
+request received
+]]>
+		    </screen>
+		</para>
+		<para>
+		    There is another way to learn values of request
+		    header fields, simpler than use of <command moreinfo="none">grep</command>. 
+		    <application moreinfo="none">ser</application>
+		    parses header fields and passes their values in 
+		    environment variables. Their names correspond
+		    to header field names prefixed with "SIP_HF_".
+		<programlisting format="linespecific">
+# send email if a request for "jiri" arrives
+if (uri=~"^sip:jiri@") {
+     exec_msg("echo request received from $SIP_HF_FROM | mail -s 'request for you' jiri");
+};
+		</programlisting>
+		    Moreover, several other values are passed in environment
+		    variables. <varname>SIP_TID</varname> is a token uniquely identifying 
+		    transaction, to which the request belongs. <varname>SIP_DID</varname>
+		    includes to-tag, and is empty in requests creating a dialog.
+		    <varname>SIP_SRCIP</varname> includes IP address, from which the
+		    request was sent. <varname>SIP_RURI</varname> and <varname>SIP_ORURI</varname>
+		    include current request-uri and original request-uri respectively,
+		    <varname>SIP_USER</varname> and <varname>SIP_OUSER</varname> username
+		    parts of these. The following listing shows environment variables
+		    passed to a shell script on receipt of the previous message:
+		    <programlisting format="linespecific">
+<![CDATA[
+SIP_HF_MAX_FORWARDS=10
+SIP_HF_VIA=SIP/2.0/UDP 195.37.77.100:5040
+SIP_HF_CSEQ=2 INVITE
+SIP_HF_FROM="alice" <sip:alice@iptel.org>;tag=76ff7a07-c091-4192-84a0-d56e91fe104f
+SIP_ORUI=sip:jiri@iptel.org
+SIP_HF_CONTENT_LENGTH=451
+SIP_TID=3b6b8295db0835815847b1f35f3b29b8
+SIP_DID=
+SIP_RURI=iptel.org
+SIP_HF_TO=<sip:jiri@iptel.org>
+SIP_OUSER=jiri
+SIP_HF_CALLID=d10815e0-bf17-4afa-8412-d9130a793d96@213.20.128.35
+SIP_SRCIP=195.37.77.100
+SIP_HF_CONTENT_TYPE=application/sdp
+SIP_HF_CONTACT=<sip:123.20.128.35:9315>
+]]>
+		    </programlisting>
+				    
+		</para>
+	    </example> <!-- step 2, who called me -->
+
+
+	    <example>  <!-- step 3,  make the script work for anyone -->
+		<title>Using exec: step 3, Make The Script Work For Anyone</title>
+		<para>
+		    A drawback of the previous example is it works only
+		    for one well-known user: request URI is matched against
+		    his SIP address and notification is sent to his hard-wired email
+		    address. In real scenarios, one would like
+		    to enable such a service for all users without enumerating
+		    their addresses in the script. The missing piece
+		    is translation of user's SIP name to his email address.
+		    This information is maintained in subscriber profiles,
+		    stored in MySQL by <application moreinfo="none">ser</application>.
+		    To translate the username to email address, the executed script
+		    needs to query the MySQL database. That is what this example
+		    shows. First, an SQL query is constructed which looks up
+		    email address of user, for whom a request arrived. If the
+		    query does not return a valid email address, the script
+		    returns with an error status and <application moreinfo="none">ser</application>
+		    script replies with "user does not exist". Otherwise
+		    an email notification is sent.
+		
+		    <programlisting format="linespecific">
+&execstep3;
+		    </programlisting>
+		</para>
+	    </example> <!-- step 3 make the script work for anyone -->
+	    <example> <!-- step 4, stateful processing -->
+		<title>Adding Stateful Processing</title>
+		<para>
+		    The previously improved example still features a shortcoming.
+		    When a message retransmission arrives due to a nework
+		    mistake such as lost reply, the email notification is
+		    executed again and again. That happens because the script
+		    is stateless, i.e., no track of current transactions is
+		    kept. The script does not know whether a request is
+		    a new or a retransmitted one. Transaction management may
+		    be introduced by use of tm module as described in
+		    <xref linkend="statefulua">. In the script,
+		    <command moreinfo="none">t_newtran</command> is first
+		    called to absorb requests retransmission -- if they
+		    occur, script does not continue. Then, as in the previous
+		    example, an exec module action is called. Eventually,
+		    a reply is sent statefully.
+		    <note>
+			<para>
+			    Note carefuly: it is important that the stateful
+			    reply processing (<command moreinfo="none">t_reply</command>)
+			    is used as opposed to using stateless replies
+			    (<command moreinfo="none">sl_send_reply</command>).
+			    Otherwise, the outgoing reply would not affect
+			    transactional context and would not be resent on
+			    receipt of a request retransmission.
+			</para>
+		    </note>
+		    <programlisting format="linespecific">
+&execstep4;
+		    </programlisting>
+		    
+		</para>
+	    </example> <!-- step 4,  stateful processing -->
+	    <example> <!-- step 5, full exec use -->
+		<title>Full Example of exec Use</title>
+		<para>
+		    The last example iteration shows how to integrate the
+		    email notification on missed calls with the default
+		    <application moreinfo="none">ser</application> script
+		    (see <xref linkend="defaultscript">). It generates an
+		    email for every call invitation to an off-line user.
+		    <programlisting format="linespecific">
+&execstep5;
+		    </programlisting>
+		</para>
+		    
+		<para>
+		    Production "missed calls" services may want to 
+		    report on calls missed for other reasons than
+		    being off-line too. Particularly, users may wish to be
+		    reported calls missed due to call cancellation,
+		    busy status or a downstream failure. Such missed
+		    calls can be easily reported to syslog or mysql
+		    using the acc module (see <xref linkend="missedcalls">).
+		    The other, more general way, is to return to request
+		    processing on receipt of a negative reply.
+		    (see <xref linkend="replyprocessingsection">). Before
+		    a request is forwarded, it is labeled to be
+		    re-processed in a <command moreinfo="none">reply_route</command>
+		    on receipt of a negative reply -- this is what
+		    <command moreinfo="none">t_on_negative</command> action
+		    is used for. It does not matter what caused the transaction
+		    to fail -- it may be unresponsive downstream server,
+		    server responding with 6xx, or server sending a 487
+		    reply, because an INVITE was cancelled. When any such
+		    circumstances occur (i.e., transaction does not complete
+		    with a 2xx status code), <command moreinfo="none">reply_route</command>
+		    is entered.
+		</para>
+		<para>
+		    The following <application moreinfo="none">ser</application>
+		    script reports missed calls in all possible cases.
+		    It reports them when a user is off-line as well as when
+		    a user is on-line, but INVITE transaction does not complete
+		    successfully.
+		    <programlisting format="linespecific">
+&execstep5b;
+		    </programlisting>
+		</para>
+		
+	    </example> <!-- step 5, full exec use -->
+
+	</section> <!-- using exec -->
+
+	<section id="fifoserver">
 	    <title>Application FIFO Server</title>
 
-	<para>
+	    <para>
 	    Application FIFO server is a very powerful method to program
 	    SIP services. The most valuable benefit
 	    is it works with SIP-unaware applications
@@ -2858,7 +3232,7 @@ if (uri=~"^sip:johndoe@") {
 	    management utility. The command-line utility can browse
 	    server's in-memory user-location database, display 
 	    running processes and operational statistics.
-	</para>
+	    </para>
 	    <para>
 		The way the FIFO server works is similar to how 
 		<filename moreinfo="none">/proc</filename> filesystem works
@@ -3016,6 +3390,134 @@ EOF
 
 	</section> <!-- FIFO server -->
     </chapter>
+
+    <chapter id="complementaryapps">
+	<title>Complementary Applications</title>
+	<section id="serctl">
+	    <title><application>serctl</application> command-line tool</title>
+	    <para>
+		<application>serctl</application> is a command-line utility which allows to
+		perform most of management tasks needed to operate
+		<application moreinfo="none">ser</application>: adding users, changing their passwords,
+		watching server status, etc. Usage of utility is
+		as follows:
+
+		<example>
+		    <title><application>serctl</application> usage</title>
+		    <programlisting format="linespecific">
+
+usage: 
+           * subscribers *
+ serctl add &lt;username&gt; &lt;password&gt; &lt;email&gt; .. add a new subscriber (*)
+ serctl passwd &lt;username&gt; &lt;passwd&gt; ......... change user's password (*)
+ serctl rm &lt;username&gt; ...................... delete a user (*)
+ serctl mail &lt;username&gt; .................... send an email to a user
+ serctl alias show [&lt;alias&gt;] ............... show aliases
+ serctl alias rm &lt;alias&gt; ................... remove an alias
+ serctl alias add &lt;alias&gt; &lt;uri&gt; ............ add an aliases 
+
+           * access control lists *
+ serctl acl show [&lt;username&gt;] .............. show user membership
+ serctl acl grant &lt;username&gt; &lt;group&gt; ....... grant user membership (*)
+ serctl acl revoke &lt;username&gt; [&lt;group&gt;] .... grant user membership(s) (*)
+
+           * usrloc *
+ serctl ul show [&lt;username&gt;]................ show in-RAM online users
+ serctl ul rm &lt;username&gt; ................... delete user's UsrLoc entries
+ serctl ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UrLoc entry
+ serctl showdb [&lt;username&gt;] ................ show online users flushed in DB
+
+           * server health *
+ serctl monitor ............................ show internal status
+ serctl ps ................................. show runnig processes 
+ serctl fifo ............................... send raw commands to FIFO
+
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
+
+ </programlisting>
+		</example>
+	    </para>
+	    <note>
+		<para>
+
+		Prior to using the utility, you have to first 
+		set the environment variable <constant>SIP_DOMAIN</constant>
+		to locally appropriate value (e.g., "foo.com"). It is
+		needed for calculation of user credentials, which depend
+		    on SIP digest realm. 
+		    (see also <link linkend="msmbug">MSM Authentication Issue</link>)
+	        </para>
+	    </note>
+
+	    <example>
+		<title>Example Output of Server Watching Command 
+		    <command moreinfo="none">sc monitor</command>
+		</title>
+		<programlisting format="linespecific">
+
+[cycle #: 2; if constant make sure server lives and fifo is on]
+Server: Sip EXpress router(0.8.8 (i386/linux))
+Now: Thu Sep 26 23:16:48 2002
+Up Since: Thu Sep 26 12:35:27 2002
+Up time: 38481 [sec]
+
+Transaction Statistics
+Current: 0 (0 waiting) Total: 606 (0 local)       
+Replied localy: 34      
+Completion status 6xx: 0, 5xx: 1, 4xx: 86, 3xx: 0,2xx: 519      
+
+Stateless Server Statistics
+200: 6218 202: 0 2xx: 0      
+300: 0 301: 0 302: 0 3xx: 0      
+400: 0 401: 7412 403: 2 404: 1258 407: 116 408: 0 483: 0 4xx: 25      500: 0 5xx: 0      
+6xx: 0      
+xxx: 0      
+failures: 0      
+
+UsrLoc Stats
+Domain Registered Expired
+'aliases' 9 0
+'location' 29 17
+
+		</programlisting>
+
+	    </example>
+	</section>
+
+	<section id="serweb">
+	    <title>Web User Provisioning -- <application>serweb</application></title>
+	    <para>
+		To make provisioning of user accounts convenient, 
+		a web front-end to <application moreinfo="none">ser</application>,
+		<application moreinfo="none">serweb</application> has been
+		developed. <application moreinfo="none">serweb</application>,
+		a PHP-written web application,
+		allows users to apply for new <application moreinfo="none">ser</application>
+		accounts, and maintain these.
+		Users can manipulate their contacts, keep a phone-book
+		with SIP addresses, change password, send instant SIP messages,
+		and more. Administrators can manipulate any accounts and
+		grant or revoke user privileges.
+	    </para>
+	    <para>
+		<application moreinfo="none">serweb</application> is freely
+		available from berlios site at
+		<ulink url="http://developer.berlios.de/cvs/?group_id=500">
+		http://developer.berlios.de/cvs/?group_id=500</ulink>. Installation
+		takes unpacking tarball to a safe destination at web server
+		(better not in the HTML tree) and configuring 
+		<filename moreinfo="none">config.php</filename> accordingly
+		to local conditions.
+	    </para>
+	    <para>
+		Running <application moreinfo="none">serweb</application> can
+		be seen at iptel.org's SIP site. Just create and use a SIP
+		account at <ulink url="http://www.iptel.org/user/">http://www.iptel.org/user/</ulink>
+	    </para>
+	</section>
+
+    </chapter> <!-- serweb -->
     
     <chapter>
 	<title>Reference</title>
@@ -3663,97 +4165,6 @@ if (len_gt(1024)) {
 	    </itemizedlist>
 	</section>
 
-	<section>
-	    <title><application>serctl</application> command</title>
-	    <para>
-		<application>serctl</application> is a command-line utility which allows to
-		perform most of management tasks needed to operate
-		a server: adding users, changing their passwords,
-		watching server status, etc. Usage of utility is
-		as follows:
-
-		<example>
-		    <title><application>serctl</application> usage</title>
-		    <programlisting format="linespecific">
-
-usage: 
-           * subscribers *
- serctl add &lt;username&gt; &lt;password&gt; &lt;email&gt; .. add a new subscriber (*)
- serctl passwd &lt;username&gt; &lt;passwd&gt; ......... change user's password (*)
- serctl rm &lt;username&gt; ...................... delete a user (*)
- serctl mail &lt;username&gt; .................... send an email to a user
- serctl alias show [&lt;alias&gt;] ............... show aliases
- serctl alias rm &lt;alias&gt; ................... remove an alias
- serctl alias add &lt;alias&gt; &lt;uri&gt; ............ add an aliases 
-
-           * access control lists *
- serctl acl show [&lt;username&gt;] .............. show user membership
- serctl acl grant &lt;username&gt; &lt;group&gt; ....... grant user membership (*)
- serctl acl revoke &lt;username&gt; [&lt;group&gt;] .... grant user membership(s) (*)
-
-           * usrloc *
- serctl ul show [&lt;username&gt;]................ show in-RAM online users
- serctl ul rm &lt;username&gt; ................... delete user's UsrLoc entries
- serctl ul add &lt;username&gt; &lt;uri&gt; ............ introduce a permanent UrLoc entry
- serctl showdb [&lt;username&gt;] ................ show online users flushed in DB
-
-           * server health *
- serctl monitor ............................ show internal status
- serctl ps ................................. show runnig processes 
- serctl fifo ............................... send raw commands to FIFO
-
-   Commands labeled with (*) will prompt for a MySQL password.
-   If the variable PW is set, the password will not be prompted.
-
- </programlisting>
-		</example>
-	    </para>
-	    <note>
-		<para>
-
-
-		Prior to using the utility, you have to first 
-		set the environment variable <constant>SIP_DOMAIN</constant>
-		to locally appropriate value (e.g., "foo.com"). It is
-		needed for calculation of user credentials, which depend
-		on SIP digest realm.
-	        </para>
-	    </note>
-
-	    <example>
-		<title>Example Output of Server Watching Command 
-		    <command moreinfo="none">sc monitor</command>
-		</title>
-		<programlisting format="linespecific">
-
-[cycle #: 2; if constant make sure server lives and fifo is on]
-Server: Sip EXpress router(0.8.8 (i386/linux))
-Now: Thu Sep 26 23:16:48 2002
-Up Since: Thu Sep 26 12:35:27 2002
-Up time: 38481 [sec]
-
-Transaction Statistics
-Current: 0 (0 waiting) Total: 606 (0 local)       
-Replied localy: 34      
-Completion status 6xx: 0, 5xx: 1, 4xx: 86, 3xx: 0,2xx: 519      
-
-Stateless Server Statistics
-200: 6218 202: 0 2xx: 0      
-300: 0 301: 0 302: 0 3xx: 0      
-400: 0 401: 7412 403: 2 404: 1258 407: 116 408: 0 483: 0 4xx: 25      500: 0 5xx: 0      
-6xx: 0      
-xxx: 0      
-failures: 0      
-
-UsrLoc Stats
-Domain Registered Expired
-'aliases' 9 0
-'location' 29 17
-
-		</programlisting>
-
-	    </example>
-	</section>
 
 
 
@@ -3899,20 +4310,7 @@ Domain Registered Expired
 		    </thead>
 
 		    <tbody>
-			<row>
-			    <entry>
-				addRecordRoute
-			    </entry>
-			    <entry>
-				rr
-			    </entry>
-			    <entry>
-				none
-			    </entry>
-			    <entry>
-				record-route request
-			    </entry>
-			</row>
+
 			<row>
 			    <entry>
 				append_hf
@@ -3957,7 +4355,7 @@ Domain Registered Expired
 			</row>
 			<row>
 			    <entry>
-				exec_uri
+				exec_dset
 			    </entry>
 			    <entry>
 				exec
@@ -3968,6 +4366,21 @@ Domain Registered Expired
 			    <entry>
 				execute an external command and replace destination set with
 				its output
+			    </entry>
+			</row>
+			<row>
+			    <entry>
+				exec_msg
+			    </entry>
+			    <entry>
+				exec
+			    </entry>
+			    <entry>
+				command name
+			    </entry>
+			    <entry>
+				execute an external command and pass received SIP request
+				to its input
 			    </entry>
 			</row>
 			<row>
@@ -4033,6 +4446,20 @@ Domain Registered Expired
 			</row>
 			<row>
 			    <entry>
+				loose_route
+			    </entry>
+			    <entry>
+				rr
+			    </entry>
+			    <entry>
+				none
+			    </entry>
+			    <entry>
+				process loose routes in requests
+			    </entry>
+			</row>
+			<row>
+			    <entry>
 				mf_process_maxfwd_header
 			    </entry>
 			    <entry>
@@ -4085,17 +4512,16 @@ Domain Registered Expired
 			</row>
 			<row>
 			    <entry>
-				rewriteFromRoute
+				record_route
 			    </entry>
 			    <entry>
 				rr
 			    </entry>
 			    <entry>
-				none
+				loose routing (1=on, 0=off)
 			    </entry>
 			    <entry>
-				strict routing: use Route header field if present in
-				request
+				record-route a request
 			    </entry>
 			</row>
 			<row>
@@ -4437,23 +4863,12 @@ Domain Registered Expired
     
     <!-- TODO
 
-
-    MISSING
-    - modules
-    - installation
+    serweb
 
     FAQ: 
     - bandwidth, FW/NATs
 
-    HOWTO
-    - serving multiple domains
-    - ACLs
-    - when to use stateless versus stateful
 
-    PROGRAMMING TM
-
-
-    follow the mysql pattern, tehy have a very nice documentation
     -->
 
 </book>
