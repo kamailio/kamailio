@@ -20,6 +20,7 @@
 #include "../../mem/mem.h"
 #include "../../md5utils.h"
 #include "../../ip_addr.h"
+#include "../../parser/parse_uri.h"
 
 #include "config.h"
 #include "lock.h"
