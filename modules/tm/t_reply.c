@@ -36,12 +36,15 @@
  * 2003-01-19  faked lump list created in on_reply handlers
  */
 
+
+#include <assert.h>
 #include "defs.h"
 
 #include "../../comp_defs.h"
 
 #include "../../hash_func.h"
 #include "t_funcs.h"
+#include "h_table.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
@@ -73,6 +76,7 @@ static char *tm_tag_suffix;
 /* where to go if there is no positive reply */
 static int goto_on_negative=0;
 
+
 /* we store the reply_route # in private memory which is
    then processed during t_relay; we cannot set this value
    before t_relay creates transaction context or after
@@ -99,6 +103,88 @@ void tm_init_tags()
 {
 	init_tags(tm_tags, &tm_tag_suffix, 
 		"SER-TM/tags", TM_TAG_SEPARATOR );
+}
+
+/* returns 0 if the message was previously acknowledged
+ * (i.e., no E2EACK callback is needed) and one if the
+ * callback shall be executed */
+int unmatched_totag(struct cell *t, struct sip_msg *ack)
+{
+	struct totag_elem *i;
+	str *tag;
+
+	if (parse_headers(ack, HDR_TO,0)==-1 || 
+				!ack->to ) {
+		LOG(L_ERR, "ERROR: ack_totag_set: To invalid\n");
+		return 1;
+	}
+	tag=&get_to(ack)->tag_value;
+	for (i=t->fwded_totags; i; i=i->next) {
+		if (i->tag.len==tag->len
+				&& memcmp(i->tag.s, tag->s, tag->len)==0) {
+			DBG("DEBUG: totag for e2e ACK found: %d\n", i->acked);
+			/* to-tag recorded, and an ACK has been received for it */
+			if (i->acked) return 0;
+			/* to-tag recorded, but this ACK came for the first time */
+			i->acked=1;
+			return 1;
+		}
+	}
+	/* surprising: to-tag never sighted before */
+	return 1;
+}
+
+
+/* append a newly received tag from a 200/INVITE to 
+ * transaction's set; (only safe if called from within
+ * a REPLY_LOCK); it returns 1 if such a to tag already
+ * exists
+ */
+inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
+{
+	struct totag_elem *i, *n;
+	str *tag;
+	char *s;
+
+	if (!ok->to || !ok->to->parsed) {
+		LOG(L_ERR, "ERROR: update_totag_set: to not parsed\n");
+		return 0;
+	}
+	tag=&get_to(ok)->tag_value;
+	if (!tag->s) {
+		LOG(L_ERR, "ERROR: update_totag_set: no tag in to\n");
+		return 0;
+	}
+
+	for (i=t->fwded_totags; i; i=i->next) {
+		if (i->tag.len==tag->len
+				&& memcmp(i->tag.s, tag->s, tag->len) ==0 )
+			/* to tag already recorded */
+#ifdef XL_DEBUG
+			LOG(L_CRIT, "DEBUG: update_totag_set: totag retranmission\n");
+#else
+			DBG("DEBUG: update_totag_set: totag retranmission\n");
+#endif
+			return 1;
+	}
+	/* that's a new to-tag -- record it */
+	shm_lock();
+	n=(struct totag_elem*) shm_malloc_unsafe(sizeof(struct totag_elem));
+	s=(char *)shm_malloc_unsafe(tag->len);
+	shm_unlock();
+	if (!s || !n) {
+		LOG(L_ERR, "ERROR: update_totag_set: no  memory \n");
+		if (n) shm_free(n);
+		if (s) shm_free(s);
+		return 0;
+	}
+	memset(n, 0, sizeof(struct totag_elem));
+	memcpy(s, tag->s, tag->len );
+	n->tag.s=s;n->tag.len=tag->len;
+	n->next=t->fwded_totags;
+	t->fwded_totags=n;
+	DBG("DEBUG: update_totag_set: new totag \n");
+	return 0;
 }
 
 
@@ -315,7 +401,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		/* no more pending branches -- try if that changes after
 		   a callback
 		*/
-		callback_event( TMCB_ON_NEGATIVE, Trans, 
+		callback_event( TMCB_ON_FAILURE, Trans, 
 			lowest_b==branch?reply:Trans->uac[lowest_b].reply, 
 			lowest_s );
 
@@ -458,18 +544,7 @@ error:
 }
 
 
-#ifdef VOICE_MAIL
-static int _reply_light( struct cell *trans, char* buf, unsigned int len,
-			 unsigned int code, char * text, 
-			 char *to_tag, unsigned int to_tag_len, int lock );
 
-int t_reply_light( struct cell *t, char* buf, unsigned int len,
-		   unsigned int code, char * text,
-		   char *to_tag, unsigned int to_tag_len )
-{
-    return _reply_light( t, buf, len, code, text, to_tag, to_tag_len, 1 /* lock replies */ );
-}
-#endif
 
 int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
 	char * text )
@@ -484,69 +559,26 @@ int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 }
 
 
-
-/* send a UAS reply
- * returns 1 if everything was OK or -1 for error
- */
-static int _reply( struct cell *trans, struct sip_msg* p_msg, 
-	unsigned int code, char * text, int lock )
+static inline void update_local_tags(struct cell *trans, 
+				struct bookmark *bm, char *dst_buffer,
+				char *src_buffer /* to which bm refers */)
 {
-#ifndef VOICE_MAIL
-	unsigned int len, buf_len=0;
-	char * buf;
-	struct retr_buf *rb;
-
-	branch_bm_t cancel_bitmap;
-#else
-	unsigned int len;
-	char * buf;
-#endif
-
-	if (code>=200) set_kr(trans,REQ_RPLD);
-	/*
-	buf = build_res_buf_from_sip_req(code,text,trans->uas.tag->s,
-		trans->uas.tag->len, trans->uas.request,&len);
-	*/
-#ifndef VOICE_MAIL
-	cancel_bitmap=0;
-#endif
-	/* compute the buffer in private memory prior to entering lock;
-	 * create to-tag if needed */
-	if (code>=180 && p_msg->to 
-			&& (get_to(p_msg)->tag_value.s==0 
-			    || get_to(p_msg)->tag_value.len==0)) {
-		calc_crc_suffix( p_msg, tm_tag_suffix );
-		buf = build_res_buf_from_sip_req(code,text, 
-				tm_tags, TOTAG_VALUE_LEN, 
-				p_msg,&len);
-#ifdef VOICE_MAIL
-
-		return _reply_light(trans,buf,len,code,text,
-				    tm_tags, TOTAG_VALUE_LEN,
-				    lock);
-#endif
-	} else {
-		buf = build_res_buf_from_sip_req(code,text, 0,0, /* no to-tag */
-			p_msg,&len);
-#ifdef VOICE_MAIL
-
-		return _reply_light(trans,buf,len,code,text,
-				    0,0, /* no to-tag */
-				    lock);
-#endif
+	if (bm->to_tag_val.s) {
+		trans->uas.local_totag.s=bm->to_tag_val.s-src_buffer+dst_buffer;
+		trans->uas.local_totag.len=bm->to_tag_val.len;
 	}
-	DBG("DEBUG: t_reply: buffer computed\n");
-#ifdef VOICE_MAIL
 }
+
 
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			 unsigned int code, char * text, 
-			 char *to_tag, unsigned int to_tag_len, int lock )
+			 char *to_tag, unsigned int to_tag_len, int lock,
+			 struct bookmark *bm	)
 {
 	struct retr_buf *rb;
-	unsigned int buf_len=0;
-	branch_bm_t cancel_bitmap=0;
-#endif
+	unsigned int buf_len;
+	branch_bm_t cancel_bitmap;
+
 	if (!buf)
 	{
 		DBG("DEBUG: t_reply: response building failed\n");
@@ -560,6 +592,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		goto error;
 	}
 
+	cancel_bitmap=0;
 	if (lock) LOCK_REPLIES( trans );
 	if (trans->is_invite) which_cancel(trans, &cancel_bitmap );
 	if (trans->uas.status>=200) {
@@ -567,6 +600,19 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			" when a final %d was sent out\n", code, trans->uas.status);
 		goto error2;
 	}
+
+#ifdef _TOTAG
+	if(to_tag){
+	    trans->uas.to_tag.s = (char*)shm_resize( trans->uas.to_tag.s, to_tag_len );
+	    if(! trans->uas.to_tag.s ){
+			LOG(L_ERR, "ERROR: t_reply: cannot allocate shmem buffer\n");
+			goto error2; 
+	    }
+	    trans->uas.to_tag.len = to_tag_len;
+	    memcpy( trans->uas.to_tag.s, to_tag, to_tag_len );
+	}
+#endif
+
 	rb = & trans->uas.response;
 	rb->activ_type=code;
 
@@ -576,27 +622,17 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* puts the reply's buffer to uas.response */
 	if (! rb->buffer ) {
 			LOG(L_ERR, "ERROR: t_reply: cannot allocate shmem buffer\n");
-			goto error2;
+			goto error3;
 	}
+	update_local_tags(trans, bm, rb->buffer, buf);
+
 	rb->buffer_len = len ;
 	memcpy( rb->buffer , buf , len );
-#ifdef VOICE_MAIL
-	if(to_tag){
-	    trans->uas.to_tag.s = (char*)shm_resize( trans->uas.to_tag.s, to_tag_len );
-	    if(! trans->uas.to_tag.s ){
-			LOG(L_ERR, "ERROR: t_reply: cannot allocate shmem buffer\n");
-			// Is it ok? or should i free rb->buffer also, 
-			// or will it be freed in free_cell() ?
-			goto error2; 
-	    }
-	    trans->uas.to_tag.len = to_tag_len;
-	    memcpy( trans->uas.to_tag.s, to_tag, to_tag_len );
-	}
-#endif
 	/* needs to be protected too because what timers are set depends
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
 	update_reply_stats( code );
+	trans->relaied_reply_branch=-2;
 	tm_stats->replied_localy++;
 	if (lock) UNLOCK_REPLIES( trans );
 	
@@ -609,7 +645,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			if (trans->completion_cb) 
 				trans->completion_cb( trans, FAKED_REPLY, code, 0 /* empty param */);
 		} else {
-			callback_event( TMCB_REPLY, trans, FAKED_REPLY, code );
+			callback_event( TMCB_RESPONSE_OUT, trans, FAKED_REPLY, code );
 		}
 
 		cleanup_uac_timers( trans );
@@ -632,6 +668,13 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	DBG("DEBUG: t_reply: finished\n");
 	return 1;
 
+error3:
+#ifdef _TOTAG
+	if (totag) {
+		shm_free(trans->uas.to_tag.s);
+		trans->uas.to_tag.s=0;
+	}
+#endif
 error2:
 	if (lock) UNLOCK_REPLIES( trans );
 	pkg_free ( buf );
@@ -644,11 +687,47 @@ error:
 	return -1;
 }
 
+/* send a UAS reply
+ * returns 1 if everything was OK or -1 for error
+ */
+static int _reply( struct cell *trans, struct sip_msg* p_msg, 
+	unsigned int code, char * text, int lock )
+{
+	unsigned int len;
+	char * buf;
+	struct bookmark bm;
+
+	if (code>=200) set_kr(REQ_RPLD);
+	/* compute the buffer in private memory prior to entering lock;
+	 * create to-tag if needed */
+	if (code>=180 && p_msg->to 
+				&& (get_to(p_msg)->tag_value.s==0 
+			    || get_to(p_msg)->tag_value.len==0)) {
+		calc_crc_suffix( p_msg, tm_tag_suffix );
+		buf = build_res_buf_from_sip_req(code,text, 
+				tm_tags, TOTAG_VALUE_LEN, 
+				p_msg,&len, &bm);
+
+		return _reply_light(trans,buf,len,code,text,
+				    tm_tags, TOTAG_VALUE_LEN,
+				    lock, &bm);
+	} else {
+		buf = build_res_buf_from_sip_req(code,text, 0,0, /* no to-tag */
+			p_msg,&len, &bm);
+
+		return _reply_light(trans,buf,len,code,text,
+				    0,0, /* no to-tag */
+				    lock, &bm);
+	}
+	DBG("DEBUG: t_reply: buffer computed\n");
+}
+
 void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 {
 	if ( !t->local 
 		&& t->uas.request->REQ_METHOD==METHOD_INVITE 
-		&& t->uas.status>=300  ) {
+		&& (t->uas.status>=300 || 
+				(t->relaied_reply_branch==-2 && t->uas.status>=200) )) {
 			/* crank timers for negative replies */
 			start_retr( &t->uas.response );
 	} else put_on_wait(t);
@@ -706,6 +785,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int res_len;
 	int relayed_code;
 	struct sip_msg *relayed_msg;
+	struct bookmark bm;
+	int totag_retr;
 #ifdef _TOTAG
 	str	to_tag;
 #endif
@@ -718,6 +799,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	buf=0;
 	relayed_msg=0;
 	relayed_code=0;
+	totag_retr=0;
 
 
 	/* remember, what was sent upstream to know whether we are
@@ -747,12 +829,12 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		   anyway 
         */
 		if (msg_status<300 && branch==relay) {
-			callback_event( TMCB_REPLY_IN, t, p_msg, msg_status );
+			callback_event( TMCB_RESPONSE_FWDED, t, p_msg, msg_status );
 		}
 		/* try bulding the outbound reply from either the current
 	       or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
-		if (relayed_msg ==FAKED_REPLY) {
+		if (relayed_msg==FAKED_REPLY) {
 			tm_stats->replied_localy++;
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
@@ -765,11 +847,11 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 						relayed_code,
 						error_text(relayed_code),
 						tm_tags, TOTAG_VALUE_LEN, 
-						t->uas.request, &res_len );
+						t->uas.request, &res_len, &bm );
 			} else {
 				buf = build_res_buf_from_sip_req( relayed_code,
 					error_text(relayed_code), 0,0, /* no to-tag */
-					t->uas.request, &res_len );
+					t->uas.request, &res_len, &bm );
 			}
 
 		} else {
@@ -804,6 +886,10 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		uas_rb->buffer_len = res_len;
 		memcpy( uas_rb->buffer, buf, res_len );
+		if (relayed_msg==FAKED_REPLY) { /* to-tags for local replies */
+			update_local_tags(t, &bm, uas_rb->buffer, buf);
+		}
+		tm_stats->replied_localy++;
 #ifdef _TOTAG
 		/* to tag now */
 		if (relayed_code>=300 && t->is_invite) {
@@ -828,6 +914,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		/* update the status ... */
 		t->uas.status = relayed_code;
 		t->relaied_reply_branch = relay;
+
+		if (t->is_invite && relayed_msg!=FAKED_REPLY
+				&& relayed_code>=200 && relayed_code < 300
+				&& (callback_array[TMCB_RESPONSE_OUT] ||
+						callback_array[TMCB_E2EACK_IN]))  {
+			totag_retr=update_totag_set(t, relayed_msg);
+		}
 	}; /* if relay ... */
 
 	UNLOCK_REPLIES( t );
@@ -837,7 +930,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
 		DBG("DEBUG: reply relayed. buf=%p: %.9s..., shmem=%p: %.9s\n", 
 			buf, buf, uas_rb->buffer, uas_rb->buffer );
-		callback_event( TMCB_REPLY, t, relayed_msg, relayed_code );
+		if (!totag_retr) 
+				callback_event( TMCB_RESPONSE_OUT, t, relayed_msg, relayed_code );
 		pkg_free( buf );
 	}
 
@@ -881,11 +975,13 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	enum rps reply_status;
 	struct sip_msg *winning_msg;
 	int winning_code;
+	int totag_retr;
 	/* branch_bm_t cancel_bitmap; */
 
 	/* keep warning 'var might be used un-inited' silent */	
 	winning_msg=0;
 	winning_code=0;
+	totag_retr=0;
 
 	*cancel_bitmap=0;
 
@@ -909,13 +1005,23 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		t->uas.status = winning_code;
 		update_reply_stats( winning_code );
+		if (t->is_invite && winning_msg!=FAKED_REPLY 
+				&& winning_code>=200 && winning_code <300
+				&& (callback_array[TMCB_RESPONSE_OUT] ||
+						callback_array[TMCB_E2EACK_IN]))  {
+			totag_retr=update_totag_set(t, winning_msg);
+		}
+		
 	}
 	UNLOCK_REPLIES(t);
 	if (local_winner>=0 && winning_code>=200 ) {
 		DBG("DEBUG: local transaction completed\n");
-		callback_event( TMCB_LOCAL_COMPLETED, t, winning_msg, winning_code );
-		if (t->completion_cb) 
-			t->completion_cb( t, winning_msg, winning_code, 0 /* empty param */);
+		if (!totag_retr) {
+			callback_event( TMCB_LOCAL_COMPLETED, t, winning_msg, 
+				winning_code );
+			if (t->completion_cb) t->completion_cb( t, winning_msg, 
+						winning_code, 0 /* empty param */);
+		}
 	}
 	return reply_status;
 
@@ -1044,33 +1150,24 @@ done:
 	return 0;
 }
 
-#ifdef VOICE_MAIL
 
-#include <assert.h>
 
-int t_reply_with_body( struct sip_msg* p_msg, unsigned int code, char * text, char * body, char * new_header, char * to_tag )
+int t_reply_with_body( struct cell *trans, unsigned int code, 
+		char * text, char * body, char * new_header, char * to_tag )
 {
-    struct cell * t;
-    //char to_tag[64];
+
     str  s_to_tag,sb,snh;
     char* res_buf;
-    int res_len,ret;
-
-    /*  check if we have a transaction */
-    if (t_check(p_msg, 0)==-1) {
-	LOG(L_ERR,"ERROR: t_reply_with_body: no transaction found.\n");
-	return -1;
-    }
-
-    t=get_t();
-    assert(t);
+    int res_len;
+	int ret;
+	struct bookmark bm;
 
     s_to_tag.s = to_tag;
     if(to_tag)
-	s_to_tag.len = strlen(to_tag);
+		s_to_tag.len = strlen(to_tag);
 
-    // mark the transaction as replied
-    set_kr(t,REQ_RPLD);
+    /* mark the transaction as replied */
+    if (code>=200) set_kr(REQ_RPLD);
 
     /* compute the response */
     sb.s = body;
@@ -1078,21 +1175,22 @@ int t_reply_with_body( struct sip_msg* p_msg, unsigned int code, char * text, ch
     snh.s = new_header;
     snh.len = strlen(new_header);
 
-    res_buf = build_res_buf_with_body_from_sip_req(code,text, s_to_tag.s, s_to_tag.len,
-						   sb.s,sb.len,
-						   snh.s,snh.len,
-						   p_msg,&res_len);
+    res_buf = build_res_buf_with_body_from_sip_req(
+					code,text, s_to_tag.s, s_to_tag.len,
+		   			sb.s,sb.len,
+					snh.s,snh.len,
+					trans->uas.request,&res_len, &bm);
     
     DBG("t_reply_with_body: buffer computed\n");
     // frees 'res_buf' ... no panic !
-    ret = t_reply_light(t, res_buf, res_len, code, text,
-			s_to_tag.s, s_to_tag.len);
+    ret=_reply_light( trans, res_buf, res_len, code, text, 
+		s_to_tag.s, s_to_tag.len, 1 /* lock replies */, &bm );
+	/* this is ugly hack -- the function caller may wish to continue with
+	 * transction and I unref; however, there is now only one use from
+	 * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
+	 */
+	UNREF(trans);
+	return ret;
 
-    // TODO: i'm not sure i should do this here ...
-    if(t_unref(p_msg) == -1)
-	LOG(L_WARN,"WARNING: fifo_t_reply: could not unref transaction %p\n",t);
-
-    return ret;
 }
 
-#endif

@@ -336,7 +336,7 @@ inline static void final_response_handler( void *attr)
 	if (r_buf->activ_type>0) {
 #		ifdef EXTRA_DEBUG
 		if (t->uas.request->REQ_METHOD!=METHOD_INVITE
-			|| t->uas.status < 300 ) {
+			|| t->uas.status < 200 ) {
 			LOG(L_ERR, "ERROR: FR timer: uknown type reply buffer\n");
 			abort();
 		}

@@ -75,7 +75,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	i_req->new_uri=*uri;
 
 	/* ... give apps a chance to change things ... */
-	callback_event( TMCB_REQUEST_OUT, t, i_req, -i_req->REQ_METHOD);
+	callback_event( TMCB_REQUEST_FWDED, t, i_req, -i_req->REQ_METHOD);
 
 	/* ... and build it now */
 	buf=build_req_buf_from_sip_req( i_req, len, send_sock, i_req->rcv.proto );
@@ -108,6 +108,45 @@ error02:
 	pkg_free( buf );
 error01:
 	return shbuf;
+}
+
+/* introduce a new uac, which is blind -- it only creates the
+   data structures and starts FR timer, but that's it; it does
+   not print messages and send anything anywhere; that is good
+   for FIFO apps -- the transaction must look operationally
+   and FR must be ticking, whereas the request is "forwarded"
+   using a non-SIP way and will be replied the same way
+*/
+int add_blind_uac( /*struct cell *t*/ )
+{
+	unsigned short branch;
+	struct cell *t;
+
+	t=get_t();
+	if (t==T_UNDEFINED || !t ) {
+		LOG(L_ERR, "ERROR: add_blind_uac: no transaction context\n");
+		return -1;
+	}
+
+	branch=t->nr_of_outgoings;	
+	if (branch==MAX_BRANCHES) {
+		LOG(L_ERR, "ERROR: add_blind_uac: "
+			"maximum number of branches exceeded\n");
+		return -1;
+	}
+	/* make sure it will be replied */
+	t->noisy_ctimer=1; 
+	t->nr_of_outgoings++;
+	/* start FR timer -- protocol set by default to PROTO_NONE,
+       which means retransmission timer will not be started
+    */
+	start_retr(&t->uac[branch].request);
+	/* we are on a timer -- don't need to put on wait on script
+	   clean-up	
+	*/
+	set_kr(REQ_FWDED); 
+
+	return 1; /* success */
 }
 
 /* introduce a new uac to transaction; returns its branch id (>=0)
@@ -343,7 +382,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* make -Wall happy */
 	current_uri.s=0;
 
-	set_kr(t, REQ_FWDED);
+	set_kr(REQ_FWDED);
 
 	if (p_msg->REQ_METHOD==METHOD_CANCEL) {
 		t_invite=t_lookupOriginalT(  p_msg );

@@ -54,17 +54,17 @@ enum rps {
 enum route_mode { MODE_REQUEST=1, MODE_ONREPLY_REQUEST };
 extern enum route_mode rmode;
 
+/* has this to-tag been never seen in previous 200/INVs? */
+int unmatched_totag(struct cell *t, struct sip_msg *ack);
+
 /* branch bitmap type */
 typedef unsigned int branch_bm_t;
 
 /* reply export types */
-typedef int (*treply_f)( struct sip_msg* p_msg,
-	unsigned int code, char * text );
-#ifdef VOICE_MAIL
-typedef int (*treply_wb_f)( struct sip_msg* p_msg,
+typedef int (*treply_f)(struct sip_msg * , unsigned int , char * );
+typedef int (*treply_wb_f)( struct cell* trans,
 	unsigned int code, char * text, char * body, 
 	char * new_header, char * to_tag);
-#endif
 
 #define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
 #define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
@@ -88,16 +88,16 @@ int t_retransmit_reply( /* struct sip_msg * */  );
  * Warning: 'buf' and 'len' should already have been build.
  * returns 1 if everything was OK or -1 for erro
  */
-#ifdef VOICE_MAIL
 
+#ifdef _OBSO
 int t_reply_light( struct cell *trans, char* buf, unsigned int len,
 		   unsigned int code, char * text,
 		   char *to_tag, unsigned int to_tag_len);
+#endif
 
-int t_reply_with_body( struct sip_msg* p_msg, unsigned int code, 
+int t_reply_with_body( struct cell *trans, unsigned int code, 
 		       char * text, char * body, char * new_header, char * to_tag );
 
-#endif
 
 /* send a UAS reply
  * returns 1 if everything was OK or -1 for erro

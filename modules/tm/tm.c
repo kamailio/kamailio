@@ -158,12 +158,11 @@ struct module_exports exports= {
 				"register_tmcb",
 				T_UAC_DLG,
 				"load_tm",
-#ifdef VOICE_MAIL
 				T_REPLY_WB,
 				T_IS_LOCAL,
 				T_GET_TI,
 				T_LOOKUP_IDENT,
-#endif
+				T_ADDBLIND,
 				"t_newdlg"
 			},
 	(cmd_function[]){
@@ -189,12 +188,11 @@ struct module_exports exports= {
 					(cmd_function) register_tmcb,
 					(cmd_function) t_uac_dlg,
 					(cmd_function) load_tm,
-#ifdef VOICE_MAIL
 					(cmd_function) t_reply_with_body,
 					(cmd_function) t_is_local,
 					(cmd_function) t_get_trans_ident,
 					(cmd_function) t_lookup_ident,
-#endif
+					(cmd_function) add_blind_uac,
 					w_t_newdlg,
 					},
 	(int[]){
@@ -219,12 +217,11 @@ struct module_exports exports= {
 				NO_SCRIPT /* register_tmcb */,
 				NO_SCRIPT /* t_uac_dlg */,
 				NO_SCRIPT /* load_tm */,
-#ifdef VOICE_MAIL
 				NO_SCRIPT /* t_reply_with_body */,
 				NO_SCRIPT /* t_is_local */,
 				NO_SCRIPT /* t_get_trans_ident */,
 				NO_SCRIPT /* t_lookup_ident */,
-#endif
+				NO_SCRIPT /* add_blind_uac */,
 				0 /* t_newdlg */
 			},
 	(fixup_function[]){
@@ -249,19 +246,15 @@ struct module_exports exports= {
 				0,						/* register_tmcb */
 				0,                                              /* t_uac_dlg */
 				0,						/* load_tm */
-#ifdef VOICE_MAIL
 				0, /* t_reply_with_body */
 				0, /* t_is_local */
 				0, /* t_get_trans_ident */
 				0, /* t_lookup_ident */
-#endif
+				0, /* add_blind_uac */
 				0						/* t_newdlg */
 	
 		},
-#ifdef VOICE_MAIL
-	4+
-#endif
-	14 + 8 /* *_(UDP|TCP) */,
+	5 /* voicemail */ + 14 + 8 /* *_(UDP|TCP) */,
 
 	/* ------------ exported variables ---------- */
 	(char *[]) { /* Module parameter names */
@@ -345,6 +338,9 @@ static int script_init( struct sip_msg *foo, void *bar)
 	   message's t_on_negative value
 	*/
 	t_on_negative( 0 );
+
+	/* reset the kr status */
+	set_kr(0);
 
 	return 1;
 }
@@ -505,7 +501,11 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
 									 char* _foo, int proto)
 {
 	struct cell *t;
-	if (t_check( msg , 0 )==-1) return -1;
+	if (t_check( msg , 0 )==-1) {
+		LOG(L_ERR, "ERROR: forward_nonack: "
+				"can't forward when no transaction was set up\n");
+		return -1;
+	}
 	t=get_t();
 	if ( t && t!=T_UNDEFINED ) {
 		if (msg->REQ_METHOD==METHOD_ACK) {

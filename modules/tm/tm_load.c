@@ -57,7 +57,6 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
-#ifdef VOICE_MAIL
 	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export(T_REPLY_WB, NO_SCRIPT)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
@@ -74,7 +73,10 @@ int load_tm( struct tm_binds *tmb)
 	        LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
 		return -1;
 	}
-#endif
+	if (!(tmb->t_addblind=(taddblind_f)find_export(T_ADDBLIND, NO_SCRIPT)) ) {
+	        LOG( L_ERR, LOAD_ERROR "'addblind' not found\n");
+		return -1;
+	}
 	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK , 2)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;

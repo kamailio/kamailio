@@ -101,7 +101,7 @@ void tm_shutdown()
 */
 int t_release_transaction( struct cell *trans )
 {
-	set_kr(trans,REQ_RLSD);
+	set_kr(REQ_RLSD);
 
 	reset_timer( & trans->uas.response.fr_timer );
 	reset_timer( & trans->uas.response.retr_timer );

@@ -360,7 +360,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 
 	new_cell->is_invite = msg->len == INVITE_LEN && memcmp(msg->s, INVITE, INVITE_LEN) == 0;
 	new_cell->local= 1 ;
-	set_kr(new_cell, REQ_FWDED);
+	set_kr(REQ_FWDED);
 
 	request = &new_cell->uac[branch].request;
 	request->dst.to = to_su;

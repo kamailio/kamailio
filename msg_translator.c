@@ -829,19 +829,21 @@ error:
 
 char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					char *new_tag, unsigned int new_tag_len,
-					struct sip_msg* msg, unsigned int *returned_len)
+					struct sip_msg* msg, unsigned int *returned_len,
+					struct bookmark *bmark)
 {
     return build_res_buf_with_body_from_sip_req(code,text,new_tag,new_tag_len,
 						0,0, /* no body */
 						0,0, /* no content type */
-						msg,returned_len);
+						msg,returned_len, bmark);
 }
 
 char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 					     char *new_tag, unsigned int new_tag_len ,
 					     char *body, unsigned int body_len,
 					     char *content_type, unsigned int content_type_len,
-					     struct sip_msg* msg, unsigned int *returned_len)
+					     struct sip_msg* msg, unsigned int *returned_len,
+						 struct bookmark *bmark)
 {
 	char              *buf, *p;
 	unsigned int      len,foo;
@@ -862,6 +864,7 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	char *content_len;
 	char *after_body;
 	str to_tag;
+	char *totags;
 
 	received_buf=0;
 	received_len=0;
@@ -1033,6 +1036,8 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 						/* before to-tag */
 						append_str( p, hdr->name.s, to_tag.s-hdr->name.s);
 						/* to tag replacement */
+						bmark->to_tag_val.s=p;
+						bmark->to_tag_val.len=new_tag_len;
 						append_str( p, new_tag,new_tag_len);
 						/* the rest after to-tag */
 						append_str( p, to_tag.s+to_tag.len,
@@ -1041,12 +1046,20 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 						after_body=hdr->body.s+hdr->body.len;
 						append_str( p, hdr->name.s, after_body-hdr->name.s);
 						append_str(p, TOTAG_TOKEN, TOTAG_TOKEN_LEN);
+						bmark->to_tag_val.s=p;
+						bmark->to_tag_val.len=new_tag_len;
 						append_str( p, new_tag,new_tag_len);
 						append_str( p, after_body, 
 										hdr->name.s+hdr->len-after_body);
 					}
 					break;
 				} /* no new to-tag -- proceed to 1:1 copying  */
+				totags=((struct to_body*)(hdr->parsed))->tag_value.s;
+				if (totags) {
+					bmark->to_tag_val.s=p+(totags-hdr->name.s);
+					bmark->to_tag_val.len=
+							((struct to_body*)(hdr->parsed))->tag_value.len;
+				};
 			case HDR_FROM:
 			case HDR_CALLID:
 			case HDR_CSEQ:

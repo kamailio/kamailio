@@ -120,10 +120,16 @@ typedef struct ua_server
 	struct sip_msg   *request;
 	struct retr_buf  response;
 	unsigned int     status;
+	/* keep to-tags for local 200 replies for INVITE -- 
+	 * we need them for dialog-wise matching of ACKs;
+	 * the pointer shows to shmem-ed reply */
+	str				 local_totag;
 #ifdef _TOTAG
 	str              to_tag;
 #endif
+#ifdef _OBSO
 	unsigned int     isACKed;
+#endif
 }ua_server_type;
 
 
@@ -151,6 +157,11 @@ typedef struct ua_client
 }ua_client_type;
 
 
+struct totag_elem {
+	str tag;
+	short acked;
+	struct totag_elem *next;
+};
 
 /* transaction context */
 
@@ -205,7 +216,8 @@ typedef struct cell
 
 	/* number of forks */
 	int nr_of_outgoings;
-	/* nr of replied branch */
+	/* nr of replied branch; 0..MAX_BRANCHES=branch value,
+	 * -1 no reply, -2 local reply */
 	int relaied_reply_branch;
 	/* UA Server */
 	struct ua_server  uas;
@@ -221,15 +233,8 @@ typedef struct cell
 	   dropping when C timer hits
 	*/
 	int noisy_ctimer;
-	/* is it a local transaction ? */
+	/* is it a local UAC transaction ? */
 	int local;
-
-#ifdef _XWAIT
-	/* protection against reentering WAIT state */
-	ser_lock_t	wait_mutex;
-	/* has the transaction been put on wait status ? */
-	int on_wait;
-#endif
 
 	/* MD5checksum  (meaningful only if syn_branch=0 */
 	char md5[MD5_LEN];
@@ -239,7 +244,12 @@ typedef struct cell
 	short damocles;
 #endif
 	/* has the transaction been scheduled to die? */
-	enum kill_reason kr;
+/*	enum kill_reason kr; */
+
+	/* to-tags of 200/INVITEs which were received from downstream and 
+	 * forwarded or passed to UAC; note that there can be arbitrarily 
+	 * many due to downstream forking; */
+	struct totag_elem *fwded_totags;
 }cell_type;
 
 
@@ -266,14 +276,9 @@ struct s_table
 	struct entry   entrys[ TABLE_ENTRIES ];
 };
 
-inline static void set_kr( struct cell *t, enum kill_reason kr )
-{
-	if (t->kr!=0) {
-		LOG(L_ERR, "ERROR: set_kr: kill_reason reset: from=%d to=%d\n",
-		t->kr, kr);
-	}
-	t->kr|=kr;
-}
+
+void set_kr( enum kill_reason kr );
+enum kill_reason get_kr();
 
 struct s_table* get_tm_table();
 struct s_table* init_hash_table();

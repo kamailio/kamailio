@@ -175,8 +175,6 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
-	 -DVOICE_MAIL \
-	 -D_TOTAG \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
 	 -DDIGEST_DOMAIN \
@@ -197,7 +195,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
-#mode = debug
+mode = debug
 ifeq ($(mode),)
 	mode = release
 endif

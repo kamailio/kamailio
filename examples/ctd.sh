@@ -55,7 +55,7 @@ else
 fi
 # address of user wishing to initiate conversation
 if [ -z "$1" ] ; then
-	URI="sip:113311@192.168.2.16"
+	URI="sip:44@192.168.2.16"
 	echo "caller unspecified -- taking default value $URI"
 else
 	URI="$1"

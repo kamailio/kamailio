@@ -37,9 +37,7 @@
 #include "uac.h"
 #include "t_fwd.h"
 #include "t_reply.h"
-#ifdef VOICE_MAIL
-#    include "t_lookup.h"
-#endif
+#include "t_lookup.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -52,13 +50,16 @@
 #define T_RELAY_TCP "t_relay_tcp"
 #define T_UAC_DLG "t_uac_dlg"
 #define T_REPLY "t_reply"
-#ifdef VOICE_MAIL
 #define T_REPLY_WB "t_reply_with_body"
-#endif
+#define T_ADDBLIND "t_add_blind"
 #define T_REPLY_UNSAFE "t_reply_unsafe"
 #define T_FORWARD_NONACK "t_forward_nonack"
 #define T_FORWARD_NONACK_UDP "t_forward_nonack_udp"
 #define T_FORWARD_NONACK_TCP "t_forward_nonack_tcp"
+#define T_GET_TI       "t_get_trans_ident"
+#define T_LOOKUP_IDENT "t_lookup_ident"
+#define T_IS_LOCAL     "t_is_local"
+
 
 
 
@@ -66,14 +67,13 @@ struct tm_binds {
 	register_tmcb_f	register_tmcb;
 	cmd_function	t_relay_to;
 	cmd_function 	t_relay;
-	tuacdlg_f               t_uac_dlg;
+	tuacdlg_f		t_uac_dlg;
 	treply_f		t_reply;
-#ifdef VOICE_MAIL
-        treply_wb_f             t_reply_with_body;
-        tislocal_f              t_is_local;
-        tget_ti_f               t_get_trans_ident;
-        tlookup_ident_f         t_lookup_ident;
-#endif
+	treply_wb_f		t_reply_with_body;
+	tislocal_f		t_is_local;
+	tget_ti_f		t_get_trans_ident;
+	tlookup_ident_f t_lookup_ident;
+	taddblind_f		t_addblind;
 	treply_f		t_reply_unsafe;
 	tfwd_f			t_forward_nonack;
 };

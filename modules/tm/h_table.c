@@ -43,11 +43,25 @@
 #include "t_cancel.h"
 #include "t_stats.h"
 
+static enum kill_reason kr;
+
 /* pointer to the big table where all the transaction data
    lives
 */
 
 static struct s_table*  tm_table;
+
+void set_kr( enum kill_reason _kr )
+{
+	if (kr!=0 && _kr!=0) {
+			DBG("DEBUG: set_kr: kill reason reset: "
+					"old=%d update=%d\n", kr, _kr );
+	}
+	kr|=_kr;
+}
+enum kill_reason get_kr() {
+	return kr;
+}
 
 void lock_hash(int i) 
 {
@@ -84,6 +98,7 @@ void free_cell( struct cell* dead_cell )
 	char *b;
 	int i;
 	struct sip_msg *rpl;
+	struct totag_elem *tt, *foo;
 
 	release_cell_lock( dead_cell );
 	shm_lock();
@@ -114,6 +129,15 @@ void free_cell( struct cell* dead_cell )
 		if (rpl && rpl!=FAKED_REPLY) {
 			sip_msg_free_unsafe( rpl );
 		}
+	}
+
+	/* collected to tags */
+	tt=dead_cell->fwded_totags;
+	while(tt) {
+		foo=tt->next;
+		shm_free_unsafe(tt->tag.s);
+		shm_free_unsafe(tt);
+		tt=foo;
 	}
 
 	/* the cell's body */
@@ -157,6 +181,9 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/* bogdan - debug */
 	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
 		via_s(p_msg->via1,p_msg));*/
+
+	callback_event(TMCB_REQUEST_IN, new_cell, p_msg, 
+			p_msg ? p_msg->REQ_METHOD : METHOD_UNDEF );
 
 	if (p_msg) {
 		new_cell->uas.request = sip_msg_cloner(p_msg);

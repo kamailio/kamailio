@@ -56,7 +56,7 @@
 #define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
 
 /* number methods as power of two to allow bitmap matching */
-enum request_method { METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4, 
+enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_ACK=4, 
 	METHOD_BYE=8, METHOD_OTHER=16 };
 
 

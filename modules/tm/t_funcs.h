@@ -92,10 +92,12 @@ int send_pr_buffer( struct retr_buf *rb,
 	UNREF_UNSAFE(_T_cell); \
 	UNLOCK_HASH( (_T_cell)->hash_index ); })
 #define REF_UNSAFE(_T_cell) ({  (_T_cell)->ref_count++; })
+#ifdef _OBSO
 #define REF(_T_cell) ({ \
 	LOCK_HASH( (_T_cell)->hash_index ); \
 	REF_UNSAFE(_T_cell); \
 	UNLOCK_HASH( (_T_cell)->hash_index ); })
+#endif
 #define INIT_REF_UNSAFE(_T_cell) (_T_cell)->ref_count=1
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
@@ -111,18 +113,13 @@ void tm_shutdown();
 int  t_add_transaction( struct sip_msg* p_msg  );
 
 
-/* returns 1 if everything was OK or -1 for error
- */
+/* returns 1 if everything was OK or -1 for error */
 int t_release_transaction( struct cell *trans );
 
 
-/* int forward_serial_branch(struct cell* Trans,int branch); */
-int t_put_on_wait(  struct cell  *Trans  );
 int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 	unsigned int *param_port);
 
-
-int t_newtran( struct sip_msg* p_msg );
 
 void put_on_wait(  struct cell  *Trans  );
 

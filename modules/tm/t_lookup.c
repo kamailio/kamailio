@@ -71,6 +71,7 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
+#include "../../parser/parse_from.h"
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../hash_func.h"
@@ -141,54 +142,178 @@ struct cell *get_t() { return T; }
 void set_t(struct cell *t) { T=t; }
 void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
 
+static inline int parse_dlg( struct sip_msg *msg )
+{
+	if (parse_headers(msg, HDR_FROM | HDR_CSEQ | HDR_TO, 0)==-1) {
+		LOG(L_ERR, "ERROR: tid_matching: From or Cseq or To invalid\n");
+		return 0;
+	}
+	if (parse_from_header(msg)==-1) {
+		LOG(L_ERR, "ERROR: tid_matching: From broken\n");
+		return 0;
+	}
+	/* To is automatically parsed through HDR_TO in parse bitmap,
+	 * we don't need to worry about it now
+	if (parse_to_header(msg)==-1) {
+		LOG(L_ERR, "ERROR: tid_matching: To broken\n");
+		return 0;
+	}
+	*/
+	return 1;
+}
+
+/* is the ACK (p_msg) in p_msg dialog-wise equal to the INVITE (t_msg) 
+ * except to-tags? */
+static inline int partial_dlg_matching(struct sip_msg *t_msg, struct sip_msg *p_msg)
+{
+	struct to_body *inv_from;
+
+	if (!EQ_LEN(callid)) return 0;
+	if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
+		return 0;
+	inv_from=get_from(t_msg);
+	if (!inv_from) {
+		LOG(L_ERR, "ERROR: partial_dlg_matching: INV/From not parsed\n");
+		return 0;
+	}
+	if (inv_from->tag_value.len!=get_from(p_msg)->tag_value.len)
+		return 0;
+	if (!EQ_STR(callid)) 
+		return 0;
+	if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
+			get_cseq(p_msg)->number.len)!=0)
+		return 0;
+	if (memcmp(inv_from->tag_value.s, get_from(p_msg)->tag_value.s,
+			get_from(p_msg)->tag_value.len)!=0)
+		return 0;
+	return 1;
+}
+
+/* are to-tags in ACK/200 same as those we sent out? */
+static inline int dlg_matching(struct cell *p_cell, struct sip_msg *ack )
+{
+	if (get_to(ack)->tag_value.len!=p_cell->uas.local_totag.len)
+		return 0;
+	if (memcmp(get_to(ack)->tag_value.s,p_cell->uas.local_totag.s,
+				p_cell->uas.local_totag.len)!=0)
+		return 0;
+	return 1;
+}
+
+static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg) 
+{
+	/* partial dialog matching -- no to-tag, only from-tag, 
+	 * callid, cseq number ; */
+	if (!partial_dlg_matching(p_cell->uas.request, p_msg)) 
+		return 0;
+
+  	/* if this transaction is proxied (as opposed to UAS) we're
+	 * done now -- we ignore to-tags; the ACK simply belongs to
+	 * this UAS part of dialog, whatever to-tag it gained
+	 */
+	if (p_cell->relaied_reply_branch!=-2) {
+		return 2; /* e2e proxied ACK */
+	}
+	/* it's a local dialog -- we wish to verify to-tags too */
+	if (dlg_matching(p_cell, p_msg)) {
+		return 1;
+	}
+	return 0;
+}
+
+/* branch-based transaction matching */
+static inline int via_matching( struct via_body *inv_via, 
+				struct via_body *ack_via )
+{
+	if (inv_via->tid.len!=ack_via->tid.len)
+		return 0;
+	if (memcmp(inv_via->tid.s, ack_via->tid.s,
+				ack_via->tid.len)!=0)
+		return 0;
+	/* ok, tid matches -- now make sure that the
+	 * originater matches too to avoid confusion with
+	 * different senders generating the same tid
+	 */
+	if (inv_via->host.len!=ack_via->host.len)
+		return 0;;
+	if (memcmp(inv_via->host.s, ack_via->host.s,
+			ack_via->host.len)!=0)
+		return 0;
+	if (inv_via->port!=ack_via->port)
+		return 0;
+	if (inv_via->transport.len!=ack_via->transport.len)
+		return 0;
+	if (memcmp(inv_via->transport.s, ack_via->transport.s,
+			ack_via->transport.len)!=0)
+		return 0;
+	/* everything matched -- we found it */
+	return 1;
+}
+
 
 /* transaction matching a-la RFC-3261 using transaction ID in branch
- * (the function assumes there is magic cookie in branch) */
+   (the function assumes there is magic cookie in branch) 
+   It returns:
+	 2 if e2e ACK for a proxied transaction found
+     1  if found (covers ACK for local UAS)
+	 0  if not found (trans undefined)
+*/
 
-static struct cell *tid_matching( int hash_index, 
-		struct via_body *via1, 
-		enum request_method skip_method)
+static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
+			enum request_method skip_method)
 {
 	struct cell *p_cell;
 	struct sip_msg  *t_msg;
+	struct via_body *via1;
+	int is_ack;
+	int dlg_parsed;
+	int ret;
 
-
+	via1=p_msg->via1;
+	is_ack=p_msg->REQ_METHOD==METHOD_ACK;
+	dlg_parsed=0;
 	/* update parsed tid */
 	via1->tid.s=via1->branch->value.s+MCOOKIE_LEN;
 	via1->tid.len=via1->branch->value.len-MCOOKIE_LEN;
 
-	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
+	for ( p_cell = get_tm_table()->entrys[p_msg->hash_index].first_cell;
 		p_cell; p_cell = p_cell->next_cell ) 
 	{
 		t_msg=p_cell->uas.request;
 		if (skip_method & t_msg->REQ_METHOD)
 			continue;
-		if (t_msg->via1->tid.len!=via1->tid.len)
+
+		/* dialog matching needs to be applied for ACK/200s */
+		if (is_ack && p_cell->uas.status<300) {
+			/* make sure we have parsed all things we need for dialog
+			 * matching */
+			if (!dlg_parsed) {
+				dlg_parsed=1;
+				if (!parse_dlg(p_msg)) {
+					LOG(L_ERR, "ERROR: tid_matching: dlg parsing failed\n");
+					return 0;
+				}
+			}
+			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
+			if (ret>0) {
+				*trans=p_cell;
+				return ret; /* 2: e2e proxied ACK, 1 e2e UAS ACK */
+			}
+			/* this ACK is neither local "negative" one, nor a proxied
+			 * end-2-end one, nor an end-2-end one for a UAS transaction
+			 * -- we failed to match */
 			continue;
-		if (memcmp(t_msg->via1->tid.s, via1->tid.s,
-				via1->tid.len)!=0)
-			continue;
-		/* ok, tid matches -- now make sure that the
-		 * originater matches too to avoid confusion with
-		 * different senders generating the same tid
-		 */
-		if (via1->host.len!=t_msg->via1->host.len)
-			continue;
-		if (memcmp(via1->host.s, t_msg->via1->host.s,
-					via1->host.len)!=0)
-			continue;
-		if (via1->port!=t_msg->via1->port)
-			continue;
-		if (via1->transport.len!=t_msg->via1->transport.len)
-			continue;
-		if (memcmp(via1->transport.s, t_msg->via1->transport.s,
-					via1->transport.len)!=0)
+		}
+		/* now real tid matching occurs  for negative ACKs and any 
+	 	 * other requests */
+		if (!via_matching(t_msg->via1 /* inv via */, via1 /* ack */ ))
 			continue;
 		/* all matched -- we found the transaction ! */
 		DBG("DEBUG: RFC3261 transaction matched, tid=%.*s\n",
 			via1->tid.len, via1->tid.s);
 
-		return p_cell;
+		*trans=p_cell;
+		return 1;
 	}
 	/* :-( ... we didn't find any */
 	DBG("DEBUG: RFC3261 transaction matching failed\n");
@@ -209,6 +334,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	struct sip_msg  *t_msg;
 	int ret;
 	struct via_param *branch;
+	int match_status;
 
 	/* parse all*/
 	if (check_transaction_quadruple(p_msg)==0)
@@ -221,8 +347,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 
 	/* start searching into the table */
 	if (!p_msg->hash_index)
-		p_msg->hash_index=hash( p_msg->callid->body , 
-			get_cseq(p_msg)->number ) ;
+		p_msg->hash_index=hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
 	isACK = p_msg->REQ_METHOD==METHOD_ACK;
 	DBG("t_lookup_request: start searching: hash=%d, isACK=%d\n",
 		p_msg->hash_index,isACK);
@@ -245,29 +370,20 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			&& memcmp(branch->value.s,MCOOKIE,MCOOKIE_LEN)==0) {
 		/* huhuhu! the cookie is there -- let's proceed fast */
 		LOCK_HASH(p_msg->hash_index);
-		p_cell=tid_matching(p_msg->hash_index, p_msg->via1, 
-				/* skip transactions with different
-				 * method; otherwise CANCEL would 
-				 * match the previous INVITE trans.
-				 */
+		match_status=matching_3261(p_msg,&p_cell, 
+				/* skip transactions with different method; otherwise CANCEL would 
+	 	 		 * match the previous INVITE trans.  */
 				isACK ? ~METHOD_INVITE: ~p_msg->REQ_METHOD);
-		if (p_cell) {
-			/* ACK/200 */
-			if (isACK && p_cell->uas.status>=200 && p_cell->uas.status<300) {
-				/* perhaps there are some spirals on the synonym list, but
-				   it makes no sense to iterate the list until bitter end */
-				t_ack=p_cell;
-				ret=-2;
-				goto notfound;
-			}
-			/* all but 200/ACK */
-			goto found;
-		} 
-		/* new */
-		goto notfound;
+		switch(match_status) {
+				case 0:	goto notfound;	/* no match */
+				case 1:	goto found; 	/* match */
+				case 2:	goto e2e_ack;	/* e2e proxy ACK */
+		}
 	}
 
-	/* ok -- it's ugly old-fashioned transaction matching */
+	/* ok -- it's ugly old-fashioned transaction matching -- it is
+	 * a bit simplified to be fast -- we don't do all the comparisons
+	 * of parsed uri, which was simply too bloated */
 	DBG("DEBUG: proceeding to pre-RFC3261 transaction matching\n");
 
 	/* lock the whole entry*/
@@ -303,63 +419,39 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			/* ACK's relate only to INVITEs */
 			if (t_msg->REQ_METHOD!=METHOD_INVITE) continue;
 
+			/* From|To URI , CallID, CSeq # must be always there */
 			/* compare lengths now */
 			if (!EQ_LEN(callid)) continue;
 			/* CSeq only the number without method ! */
 			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
 				continue;
 			if (! EQ_LEN(from)) continue;
-			/* To only the uri and ... */
+			/* To only the uri -- to many UACs screw up tags  */
 			if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
 				continue;
-			/* don't care about to-tags -- many UAC screw them
-			 * up anyway, and it doesn't hurt if we ignore 
-			 * them */
-#ifdef ACKTAG
-			/* ... its to-tag compared to reply's tag */
-			if (p_cell->uas.to_tag.len!=get_to(p_msg)->tag_value.len)
-				continue;
-#endif
-
-			/* we first skip r-uri and Via and proceed with
-			   content of other header-fields */
-
-			if ( memcmp(t_msg->callid->body.s, p_msg->callid->body.s,
-				p_msg->callid->body.len)!=0) continue;
-			if ( memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
+			if (!EQ_STR(callid)) continue;
+			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
 				get_cseq(p_msg)->number.len)!=0) continue;
 			if (!EQ_STR(from)) continue;
 			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
 				get_to(t_msg)->uri.len)!=0) continue;
-#ifdef ACKTAG
-			if (
-#ifdef _BUG
-				p_cell->uas.to_tag.len!=0 /* to-tags empty */ || 
-#endif
-				memcmp(p_cell->uas.to_tag.s, get_to(p_msg)->tag_value.s,
-				p_cell->uas.to_tag.len)!=0) continue;
-#endif
-	
-			/* ok, now only r-uri or via can mismatch; they must match
-			   for non-2xx; if it is a 2xx, we don't try to match
-			   (we might have checked that earlier to speed-up, but
-			   we still want to see a diagnosti message telling
-			   "this ACK presumably belongs to this 2xx transaction";
-			   might change in future); the reason is 2xx ACKs are
-			   a separate transaction which may carry different
-			   r-uri/via1 and is thus also impossible to match it
-			   uniquely to a spiraled transaction;
-			*/
-			if (p_cell->uas.status>=200 && p_cell->uas.status<300) {
-				DBG("DEBUG: an ACK hit a 2xx transaction (T=%p); "
-					"considered mismatch\n", p_cell );
-				/* perhaps there are some spirals on the synonym list, but
-				   it makes no sense to iterate the list until bitter end */
-				t_ack=p_cell;
-				ret=-2;
-				break;
+
+			/* it is e2e ACK/200 */
+			if (p_cell->uas.status<300) {
+				/* all criteria for proxied ACK are ok */
+				if (p_cell->relaied_reply_branch!=-2) 
+					goto e2e_ack;
+				/* it's a local UAS transaction */
+				if (dlg_matching(p_cell, p_msg))
+					goto found;
+				continue;
 			}
-			/* its for a >= 300 ... everything must match ! */
+
+			/* it is not an e2e ACK/200 -- perhaps it is 
+			 * local negative case; in which case we will want
+			 * more elements to match: r-uri and via; allow
+			 * mismatching r-uri as an config option for broken
+			 * UACs */
 			if (ruri_matching && ! EQ_REQ_URI_LEN ) continue;
 			if (! EQ_VIA_LEN(via1)) continue;
 			if (ruri_matching && !EQ_REQ_URI_STR) continue;
@@ -378,12 +470,21 @@ notfound:
 		UNLOCK_HASH(p_msg->hash_index);
 	}
 	DBG("DEBUG: t_lookup_request: no transaction found\n");
-	return ret;
+	return -1;
+
+e2e_ack:
+	t_ack=p_cell;	/* e2e proxied ACK */
+	set_t(0);
+	if (!leave_new_locked) {
+		UNLOCK_HASH(p_msg->hash_index);
+	}
+	DBG("DEBUG: t_lookup_request: e2e proxy ACK found\n");
+	return -2;
 
 found:
 	set_t(p_cell);
 	REF_UNSAFE( T );
-	set_kr(T, REQ_EXIST);
+	set_kr(REQ_EXIST);
 	UNLOCK_HASH( p_msg->hash_index );
 	DBG("DEBUG: t_lookup_request: transaction found (T=%p)\n",T);
 	return 1;
@@ -402,6 +503,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	unsigned int     hash_index;
 	struct sip_msg  *t_msg;
 	struct via_param *branch;
+	int ret;
 
 
 	/* start searching in the table */
@@ -423,12 +525,12 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 			&& memcmp(branch->value.s,MCOOKIE,MCOOKIE_LEN)==0) {
 		/* huhuhu! the cookie is there -- let's proceed fast */
 		LOCK_HASH(hash_index);
-		p_cell=tid_matching(hash_index, p_msg->via1, 
+		ret=matching_3261(p_msg, &p_cell,
 				/* we are seeking the original transaction --
 				 * skip CANCEL transactions during search
 				 */
 				METHOD_CANCEL);
-		if (p_cell) goto found; else goto notfound;
+		if (ret==1) goto found; else goto notfound;
 	}
 
 	/* no cookies --proceed to old-fashioned pre-3261 t-matching */
@@ -658,6 +760,23 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		REF_UNSAFE( T );
 		UNLOCK_HASH(hash_index);
 		DBG("DEBUG: t_reply_matching: reply matched (T=%p)!\n",T);
+		/* if this is a 200 for INVITE, we will wish to store to-tags to be
+		 * able to distuingish retransmissions later and not to call
+ 		 * TMCB_RESPONSE_OUT uselessly; we do it only if callbacks are
+		 * enabled -- except callback customers, nobody cares about 
+		 * retransmissions of multiple 200/INV or ACK/200s
+		 */
+		if (p_cell->is_invite && p_msg->REPLY_STATUS>=200 
+				&& p_msg->REPLY_STATUS<300 
+				&& ( (!p_cell->local && 
+					(callback_array[TMCB_RESPONSE_OUT]||
+						callback_array[TMCB_E2EACK_IN]))
+					|| (p_cell->local && callback_array[TMCB_LOCAL_COMPLETED]) )) {
+			if (parse_headers(p_msg, HDR_TO, 0)==-1) {
+				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
+			}
+		}
+		callback_event(TMCB_RESPONSE_IN, T, p_msg, p_msg->REPLY_STATUS);
 		return 1;
 	} /* for cycle */
 
@@ -675,10 +794,12 @@ nomatch2:
 
 
 
-/* Functions update T (T gets either a valid pointer in it or it equals zero) if no transaction
-  * for current message exists;
-  * it returns 1 if found, 0 if not found, -1 on error
-  */
+/* Determine current transaction
+ *
+ *                   Found      Not Found     Error (e.g. parsing)
+ *  Return Value     1          0             -1
+ *  T                ptr        0             T_UNDEFINED
+ */
 int t_check( struct sip_msg* p_msg , int *param_branch )
 {
 	int local_branch;
@@ -693,8 +814,20 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
 			/* force parsing all the needed headers*/
-			if (parse_headers(p_msg, HDR_EOH, 0 )==-1)
+			if (parse_headers(p_msg, HDR_EOH, 0 )==-1) {
+				LOG(L_ERR, "ERROR: t_check: parsing error\n");
 				return -1;
+			}
+			/* in case, we act as UAS for INVITE and reply with 200,
+			 * we will need to run dialog-matching for subsequent
+			 * ACK, for which we need From-tag; We also need from-tag
+			 * in case people want to have proxied e2e ACKs accounted
+			 */
+			if (p_msg->REQ_METHOD==METHOD_INVITE 
+							&& parse_from_header(p_msg)==-1) {
+				LOG(L_ERR, "ERROR: t_check: from parsing failed\n");
+				return -1;
+			}
 			t_lookup_request( p_msg , 0 /* unlock before returning */ );
 		} else {
 			/* we need Via for branch and Cseq method to distinguish
@@ -738,7 +871,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			DBG("DEBUG: t_check: T previously sought and not found\n");
 	}
 
-	return ((T)?1:0) ;
+	return T ? (T==T_UNDEFINED ? -1 : 1 ) : 0;
 }
 
 int init_rb( struct retr_buf *rb, struct sip_msg *msg)
@@ -840,6 +973,21 @@ int t_newtran( struct sip_msg* p_msg )
 	if (lret<0) {
 		new_cell=0;
 		if ( p_msg->REQ_METHOD!=METHOD_ACK ) {
+			/* REVIEW */
+			/* for ACK-dlw-wise matching, we want From-tags */
+			if (p_msg->REQ_METHOD==METHOD_INVITE) {
+				if (parse_from_header(p_msg)<0) {
+					LOG(L_ERR, "ERROR: t_newtran: no valid From\n");
+					return E_BAD_REQ;
+				}
+			}
+			/* REVIEW */
+			/* make sure uri will be parsed before cloning */
+			if (parse_sip_msg_uri(p_msg)<0) {
+				LOG(L_ERR, "ERROR: t_new_tran: uri invalid\n");
+				return E_BAD_REQ;
+			}
+			
 			/* add new transaction */
 			new_cell = build_cell( p_msg ) ;
 			if  ( !new_cell ){
@@ -867,6 +1015,7 @@ int t_newtran( struct sip_msg* p_msg )
 
 				new_cell->method=new_cell->uas.request->first_line.u.request.method;
 				new_cell->is_invite=p_msg->REQ_METHOD==METHOD_INVITE;
+
 			}
 
 		}
@@ -875,7 +1024,9 @@ int t_newtran( struct sip_msg* p_msg )
 		if (lret==-2) {
 				REF_UNSAFE(t_ack);
 				UNLOCK_HASH(p_msg->hash_index);
-				callback_event( TMCB_E2EACK, t_ack, p_msg, p_msg->REQ_METHOD );
+				if (unmatched_totag(t_ack, p_msg)) {
+						callback_event( TMCB_E2EACK_IN, t_ack, p_msg, p_msg->REQ_METHOD );
+				}
 				UNREF(t_ack);
 		} else { /* not e2e ACK */
 			UNLOCK_HASH(p_msg->hash_index);
@@ -915,10 +1066,13 @@ int t_newtran( struct sip_msg* p_msg )
 
 int t_unref( struct sip_msg* p_msg  )
 {
+	enum kill_reason kr;
+
 	if (T==T_UNDEFINED || T==T_NULL_CELL)
 		return -1;
-	if (T->kr==0 
-		||(p_msg->REQ_METHOD==METHOD_ACK && !(T->kr & REQ_RLSD))) {
+	kr=get_kr();
+	if (kr==0 
+		||(p_msg->REQ_METHOD==METHOD_ACK && !(kr & REQ_RLSD))) {
 		LOG(L_WARN, "WARNING: script writer didn't release transaction\n");
 		t_release_transaction(T);
 	}
@@ -927,7 +1081,6 @@ int t_unref( struct sip_msg* p_msg  )
 	return 1;
 }
 
-#ifdef VOICE_MAIL
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label)
 {
     struct cell* t;
@@ -947,14 +1100,13 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned 
     return 1;
 }
 
-int t_lookup_ident(struct sip_msg** p_msg, unsigned int hash_index, unsigned int label)
+int t_lookup_ident(struct cell ** trans, unsigned int hash_index, unsigned int label)
 {
-    int ret = 0;
     struct cell* p_cell;
 
     if(hash_index >= TABLE_ENTRIES){
-	LOG(L_ERR,"ERROR: t_lookup_ident: invalid hash_index=%u\n",hash_index);
-	return -1;
+		LOG(L_ERR,"ERROR: t_lookup_ident: invalid hash_index=%u\n",hash_index);
+		return -1;
     }
 
     LOCK_HASH(hash_index);
@@ -963,21 +1115,23 @@ int t_lookup_ident(struct sip_msg** p_msg, unsigned int hash_index, unsigned int
     for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
 	  p_cell; p_cell = p_cell->next_cell ) 
     {
-	if(p_cell->label == label){
-	    ret = 1;
-	    break;
-	}
+		if(p_cell->label == label){
+			REF_UNSAFE(p_cell);
+    		UNLOCK_HASH(hash_index);
+			set_t(p_cell);
+			*trans=p_cell;
+			DBG("DEBUG: t_lookup_ident: transaction found\n");
+			return 1;
+		}
     }
+	
+	UNLOCK_HASH(hash_index);
+	set_t(0);
+	*trans=p_cell;
 
-    if(ret==1){
-	DBG("DEBUG: t_lookup_ident: transaction found\n");
-	*p_msg = p_cell->uas.request;
-    }
-    else
 	DBG("DEBUG: t_lookup_ident: transaction not found\n");
     
-    UNLOCK_HASH(hash_index);
-    return ret;
+    return -1;
 }
 
 int t_is_local(struct sip_msg* p_msg)
@@ -995,8 +1149,3 @@ int t_is_local(struct sip_msg* p_msg)
     
     return t->local;
 }
-
-#endif
-
-
-
