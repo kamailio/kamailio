@@ -1505,57 +1505,28 @@ error:
 
 
 
-
-
-char * build_res_buf_from_sip_req( unsigned int code, char *text,
-					char *new_tag, unsigned int new_tag_len,
-					struct sip_msg* msg, unsigned int *returned_len,
-					struct bookmark *bmark)
-{
-    return build_res_buf_with_body_from_sip_req(code,text,new_tag,new_tag_len,
-						0,0, /* no body */
-						0,0, /* no content type */
-						msg,returned_len, bmark);
-}
-
-char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
-					     char *new_tag, unsigned int new_tag_len ,
-					     char *body, unsigned int body_len,
-					     char *content_type, unsigned int content_type_len,
-					     struct sip_msg* msg, unsigned int *returned_len,
-						 struct bookmark *bmark)
+char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
+		struct sip_msg* msg, unsigned int *returned_len, struct bookmark *bmark)
 {
 	char              *buf, *p;
 	unsigned int      len,foo;
 	struct hdr_field  *hdr;
 	struct lump_rpl   *lump;
+	struct lump_rpl   *body;
 	int               i;
 	char              backup;
-	char              *received_buf;
-	char              *rport_buf;
-	unsigned int      received_len;
-	unsigned int      rport_len;
-	unsigned int      delete_len;
-	char              *warning;
-	unsigned int      warning_len;
-	unsigned int	  text_len;
-	int  content_len_len;
-	char *content_len;
-	char content_len_buf[MAX_CONTENT_LEN_BUF];
+	str               received = {0,0};
+	str               rport = {0,0};
+	str               warning = {0,0};
+	str               content_len = {0,0};
+	unsigned int      text_len;
 	char *after_body;
 	str  to_tag;
 	char *totags;
 	int rcvd;
 
-	received_buf=0;
-	received_len=0;
-	rport_buf=0;
-	rport_len=0;
-	delete_len=0;
+	body = 0;
 	buf=0;
-	/* make -Wall happy */
-	warning=0;
-	content_len=0;
 
 	text_len=strlen(text);
 
@@ -1569,6 +1540,9 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 		goto error00;
 	}
 
+	/*computes the lenght of the new response buffer*/
+	len = 0;
+
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
@@ -1577,7 +1551,7 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 						msg->via1->port, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
 	if (rcvd) {
-		if ((received_buf=received_builder(msg,&received_len))==0) {
+		if ((received.s=received_builder(msg,&received.len))==0) {
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 				"alas, received_builder failed\n");
 			goto error00;
@@ -1586,77 +1560,69 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	/* check if rport needs to be updated */
 	if ( (msg->msg_flags&FL_FORCE_RPORT)||
 		(msg->via1->rport /*&& msg->via1->rport->value.s==0*/)){
-		if ((rport_buf=rport_builder(msg, &rport_len))==0){
+		if ((rport.s=rport_builder(msg, &rport.len))==0){
 			LOG(L_ERR, "ERROR: build_res_buf_from_sip_req:"
 							" rport_builder failed\n");
 			goto error01; /* free everything */
 		}
 		if (msg->via1->rport) 
-			delete_len=msg->via1->rport->size+1; /* include ';' */
+			len -= msg->via1->rport->size+1; /* include ';' */
 	}
 
-	/*computes the lenght of the new response buffer*/
-	len = 0;
 	/* first line */
 	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ +
 		text_len + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
-		if (hdr->type==HDR_TO) {
-			if (new_tag)
-			{
-				to_tag=get_to(msg)->tag_value;
-				if (to_tag.s )
-					len+=new_tag_len-to_tag.len;
-				else
-					len+=new_tag_len+TOTAG_TOKEN_LEN/*";tag="*/;
-			}
-			else {
-				len+=hdr->len;
-				continue;
-			}
-		} else if (hdr->type==HDR_VIA) {
+		switch (hdr->type) {
+			case HDR_TO:
+				if (new_tag && new_tag->len) {
+					to_tag=get_to(msg)->tag_value;
+					if (to_tag.len )
+						len+=new_tag->len-to_tag.len;
+					else
+						len+=new_tag->len+TOTAG_TOKEN_LEN/*";tag="*/;
+				} else {
+					len += hdr->len;
+				}
+				break;
+			case HDR_VIA:
 				/* we always add CRLF to via*/
 				len+=(hdr->body.s+hdr->body.len)-hdr->name.s+CRLF_LEN;
-				if (hdr==msg->h_via1) len += received_len+rport_len;
-				continue;
-		} else if (hdr->type==HDR_RECORDROUTE) {
+				if (hdr==msg->h_via1) len += received.len+rport.len;
+				break;
+			case HDR_RECORDROUTE:
 				/* RR only for 1xx and 2xx replies */
-				if (code<180 || code>=300) continue;
-		} else if (!(hdr->type==HDR_FROM 
-					|| hdr->type==HDR_CALLID
-					|| hdr->type==HDR_CSEQ)) {
-			continue;
+				if (code<180 || code>=300)
+					break;
+			case HDR_FROM:
+			case HDR_CALLID:
+			case HDR_CSEQ:
+				/* we keep the original termination for these headers*/
+				len += hdr->len;
 		}
-		len += hdr->len; /* we keep the original termination for these 
-							headers*/
 	}
-	len-=delete_len;
-	/*lumps length*/
-	for(lump=msg->reply_lump;lump;lump=lump->next)
+	/* lumps length */
+	for(lump=msg->reply_lump;lump;lump=lump->next) {
 		len += lump->text.len;
-	if (server_signature) {
-		/*server header*/
+		if (lump->type==LUMP_RPL_BODY && lump->text.s && lump->text.len)
+			body = lump;
+	}
+	/* server header */
+	if (server_signature)
 		len += SERVER_HDR_LEN + CRLF_LEN;
-	}
-
-	if (body_len) {
-		content_len=int2str(body_len, &content_len_len);
-		memcpy(content_len_buf,content_len,content_len_len+1);
-		content_len = content_len_buf;
-		len += CONTENT_LENGTH_LEN + content_len_len + CRLF_LEN;
-		len += body_len;
-	} else {
-		len +=CONTENT_LENGTH_LEN+1 + CRLF_LEN;
-	}
-	if(content_type_len) {
-	    len += content_type_len + CRLF_LEN;
-	}
-
+	/* warning hdr */
 	if (sip_warning) {
-		warning = warning_builder(msg,&warning_len);
-		if (warning) len += warning_len + CRLF_LEN;
+		warning.s = warning_builder(msg,&warning.len);
+		if (warning.s) len += warning.len + CRLF_LEN;
 		else LOG(L_WARN, "WARNING: warning skipped -- too big\n");
+	}
+	/* content length hdr */
+	len += CONTENT_LENGTH_LEN + 1/*0*/ + CRLF_LEN;
+	/* body */
+	if (body) {
+		content_len.s = int2str(body->text.len, &content_len.len);
+		len += content_len.len - 1 + body->text.len;
 	}
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
@@ -1691,13 +1657,13 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 		{
 			case HDR_VIA:
 				if (hdr==msg->h_via1){
-					if (rport_buf){
+					if (rport.s){
 						if (msg->via1->rport){ /* delete the old one */
 							/* copy until rport */
 							append_str_trans( p, hdr->name.s ,
 								msg->via1->rport->start-hdr->name.s-1,msg);
 							/* copy new rport */
-							append_str(p, rport_buf, rport_len);
+							append_str(p, rport.s, rport.len);
 							/* copy the rest of the via */
 							append_str_trans(p, msg->via1->rport->start+
 												msg->via1->rport->size, 
@@ -1708,15 +1674,15 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 							/* normal whole via copy */
 							append_str_trans( p, hdr->name.s , 
 								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
-							append_str(p, rport_buf, rport_len);
+							append_str(p, rport.s, rport.len);
 						}
 					}else{
 						/* normal whole via copy */
 						append_str_trans( p, hdr->name.s , 
 								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
 					}
-					if (received_buf)
-						append_str( p, received_buf, received_len);
+					if (received.s)
+						append_str( p, received.s, received.len);
 				}else{
 					/* normal whole via copy */
 					append_str_trans( p, hdr->name.s,
@@ -1730,14 +1696,14 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 				append_str(p, hdr->name.s, hdr->len);
 				break;
 			case HDR_TO:
-				if (new_tag){
+				if (new_tag && new_tag->len){
 					if (to_tag.s ) { /* replacement */
 						/* before to-tag */
 						append_str( p, hdr->name.s, to_tag.s-hdr->name.s);
 						/* to tag replacement */
 						bmark->to_tag_val.s=p;
-						bmark->to_tag_val.len=new_tag_len;
-						append_str( p, new_tag,new_tag_len);
+						bmark->to_tag_val.len=new_tag->len;
+						append_str( p, new_tag->s,new_tag->len);
 						/* the rest after to-tag */
 						append_str( p, to_tag.s+to_tag.len,
 							hdr->name.s+hdr->len-(to_tag.s+to_tag.len));
@@ -1746,8 +1712,8 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 						append_str( p, hdr->name.s, after_body-hdr->name.s);
 						append_str(p, TOTAG_TOKEN, TOTAG_TOKEN_LEN);
 						bmark->to_tag_val.s=p;
-						bmark->to_tag_val.len=new_tag_len;
-						append_str( p, new_tag,new_tag_len);
+						bmark->to_tag_val.len=new_tag->len;
+						append_str( p, new_tag->s,new_tag->len);
 						append_str( p, after_body, 
 										hdr->name.s+hdr->len-after_body);
 					}
@@ -1764,72 +1730,68 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 			case HDR_CSEQ:
 					append_str(p, hdr->name.s, hdr->len);
 		} /* for switch */
-	/*lumps*/
+	/* lumps */
 	for(lump=msg->reply_lump;lump;lump=lump->next)
-	{
-		memcpy(p,lump->text.s,lump->text.len);
-		p += lump->text.len;
-	}
+		if (lump->type==LUMP_RPL_HDR){
+			memcpy(p,lump->text.s,lump->text.len);
+			p += lump->text.len;
+		}
+	/* server header */
 	if (server_signature) {
-		/*server header*/
 		memcpy( p, SERVER_HDR , SERVER_HDR_LEN );
 		p+=SERVER_HDR_LEN;
 		memcpy( p, CRLF, CRLF_LEN );
 		p+=CRLF_LEN;
 	}
-	
-	if (body_len) {
-		memcpy(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN );
-		p+=CONTENT_LENGTH_LEN;
-		memcpy( p, content_len, content_len_len );
-		p+=content_len_len;
-		memcpy( p, CRLF, CRLF_LEN );
-		p+=CRLF_LEN;
+	/* content_length hdr */
+	memcpy(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN );
+	p+=CONTENT_LENGTH_LEN;
+	if (content_len.len) {
+		memcpy( p, content_len.s, content_len.len );
+		p+=content_len.len;
 	} else {
-		/* content length header*/
-		memcpy( p, CONTENT_LENGTH "0" CRLF, CONTENT_LENGTH_LEN+1+CRLF_LEN );
-		p+=CONTENT_LENGTH_LEN+1+CRLF_LEN;
+		*(p++) = '0';
 	}
-	if(content_type_len){
-	    memcpy( p, content_type, content_type_len );
-	    p+=content_type_len;
-	    memcpy( p, CRLF, CRLF_LEN );
-	    p+=CRLF_LEN;
-	}
-	if (sip_warning && warning) {
-		memcpy( p, warning, warning_len);
-		p+=warning_len;
+	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
+	/* warning header */
+	if (warning.s) {
+		memcpy( p, warning.s, warning.len);
+		p+=warning.len;
 		memcpy( p, CRLF, CRLF_LEN);
 		p+=CRLF_LEN;
 	}
 	/*end of message*/
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
-	if(body_len){
-	    memcpy ( p, body, body_len );
-	    p+=body_len;
+	/* body */
+	if (body) {
+		memcpy ( p, body->text.s, body->text.len );
+		p+=body->text.len;
 	}
+
 	*(p) = 0;
 	*returned_len = len;
 	/* in req2reply, received_buf is not introduced to lumps and
 	   needs to be deleted here
 	*/
-	if (received_buf) pkg_free(received_buf);
-	if (rport_buf) pkg_free(rport_buf);
+	if (received.s) pkg_free(received.s);
+	if (rport.s) pkg_free(rport.s);
 	return buf;
 
 error01:
-	if (received_buf) pkg_free(received_buf);
-	if (rport_buf) pkg_free(rport_buf);
+	if (received.s) pkg_free(received.s);
+	if (rport.s) pkg_free(rport.s);
 error00:
 	*returned_len=0;
 	return 0;
 }
 
+
+
 /* return number of chars printed or 0 if space exceeded;
    assumes buffer sace of at least MAX_BRANCH_PARAM_LEN
  */
-
 int branch_builder( unsigned int hash_index,
 	/* only either parameter useful */
 	unsigned int label, char * char_v,

@@ -33,7 +33,7 @@
 #include "data_lump_rpl.h"
 
 
-struct lump_rpl* build_lump_rpl( char* text, int len )
+struct lump_rpl* build_lump_rpl( char* text, int len , int type)
 {
 	struct lump_rpl *lump = 0;
 
@@ -53,6 +53,7 @@ struct lump_rpl* build_lump_rpl( char* text, int len )
 
 	memcpy(lump->text.s,text,len);
 	lump->text.len = len;
+	lump->type = type;
 	lump->next = 0;
 
 	return lump;
@@ -64,7 +65,7 @@ error:
 
 
 
-void add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
+int add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 {
 	struct lump_rpl *foo;
 
@@ -72,9 +73,18 @@ void add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 	{
 		msg->reply_lump = lump;
 	}else{
-		for(foo=msg->reply_lump;foo->next;foo=foo->next);
+		if (lump->type!=LUMP_RPL_BODY)
+			for(foo=msg->reply_lump;foo->next;foo=foo->next);
+		else
+			for(foo=msg->reply_lump;foo->next;foo=foo->next)
+				if (lump->type==LUMP_RPL_BODY) {
+					LOG(L_ERR,"ERROR:add_lump_rpl: LUMP_RPL_BODY "
+						"already added!\n");
+					return -1;
+				}
 		foo->next = lump;
 	}
+	return 0;
 }
 
 
@@ -85,5 +95,26 @@ void free_lump_rpl(struct lump_rpl* lump)
 	if (lump) pkg_free(lump);
 }
 
+
+void unlink_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
+{
+	struct lump_rpl *foo,*prev;
+
+	/* look for the lump to be unlink */
+	foo = msg->reply_lump;
+	prev = 0;
+	while( foo && foo!=lump ) {
+		prev = foo;
+		foo = foo->next;
+	}
+
+	/* if the lump was found into the list -> unlink it */
+	if (foo) {
+		if (prev)
+			prev->next = foo->next;
+		else
+			msg->reply_lump = foo->next;
+	}
+}
 
 
