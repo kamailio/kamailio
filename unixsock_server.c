@@ -53,6 +53,23 @@
 #include "unixsock_server.h"
 #include "tsend.h"
 
+
+/* AF_LOCAL is not defined on solaris */
+#if !defined(AF_LOCAL)
+#define AF_LOCAL AF_UNIX
+#endif
+#if !defined(PF_LOCAL)
+#define PF_LOCAL PF_UNIX
+#endif
+
+
+/* solaris doesn't have SUN_LEN */
+#ifndef SUN_LEN
+#define SUN_LEN(sa)	 ( strlen((sa)->sun_path) + \
+					 (size_t)(((struct sockaddr_un*)0)->sun_path) )
+#endif
+
+
 #define UNIXSOCK_BUF_SIZE BUF_SIZE
 
 char* unixsock_name = 0;
