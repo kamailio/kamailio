@@ -40,7 +40,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   12
-EXTRAVERSION = dev-t06
+EXTRAVERSION = dev-t07
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -272,7 +272,9 @@ DEFS+= $(extra_defs) \
 	 -DUSE_IPV6 \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
-	 -DDBG_QM_MALLOC \
+	 -DF_MALLOC \
+	# -DDBG_F_MALLOC \
+	# -DDBG_QM_MALLOC \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DNO_LOG

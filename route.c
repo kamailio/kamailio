@@ -370,9 +370,8 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 			 * !!??!! review: remove this? */
 			he=rev_resolvehost(ip);
 			if (he==0){
-				DBG( "comp_ip: could not rev_resolve ip address: ");
-				print_ip(ip);
-				DBG("\n");
+				print_ip( "comp_ip: could not rev_resolve ip address: ",
+							ip, "\n");
 				ret=0;
 			}else{
 				/*  compare with primary host name */

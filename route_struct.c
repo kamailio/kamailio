@@ -184,7 +184,7 @@ void print_expr(struct expr* exp)
 					print_net((struct net*)exp->r.param);
 					break;
 			case IP_ST:
-					print_ip((struct ip_addr*)exp->r.param);
+					print_ip("", (struct ip_addr*)exp->r.param, "");
 					break;
 			case ACTIONS_ST:
 					print_action((struct action*)exp->r.param);
@@ -328,7 +328,7 @@ void print_action(struct action* a)
 					DBG("%lu",t->p1.number);
 					break;
 			case IP_ST:
-					print_ip((struct ip_addr*)t->p1.data);
+					print_ip("", (struct ip_addr*)t->p1.data, "");
 					break;
 			case EXPR_ST:
 					print_expr((struct expr*)t->p1.data);

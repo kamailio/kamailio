@@ -268,7 +268,7 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
 
 
 /* returns 0 on success, -1 on error;
- * new_size < size & rounduped already!*/
+ * new_size < size & rounded-up already!*/
 static inline
 #ifdef DBG_QM_MALLOC
 int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned int new_size,

@@ -147,6 +147,8 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		c->rcv.dst_ip=ba->address;
 		c->rcv.dst_port=ba->port_no;
 	}
+	print_ip("tcpconn_new: new tcp connection: ", &c->rcv.src_ip, "\n");
+	DBG(     "tcpconn_new: on port %d, type %d\n", c->rcv.src_port, type);
 	init_tcp_req(&c->req);
 	c->id=connection_id++;
 	c->rcv.proto_reserved1=0; /* this will be filled before receive_message*/
@@ -313,15 +315,15 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 	unsigned hash;
 	
 #ifdef EXTRA_DEBUG
-	DBG("tcpconn_find: %d ",id ); print_ip(ip); DBG(" %d\n", port);
+	DBG("tcpconn_find: %d  port %d\n",id, port);
+	print_ip("tcpconn_find: ip ", ip, "\n");
 #endif
 	if (id){
 		hash=tcp_id_hash(id);
 		for (c=tcpconn_id_hash[hash]; c; c=c->id_next){
 #ifdef EXTRA_DEBUG
-			DBG("c=%p, c->id=%d, ip=",c, c->id);
-			print_ip(&c->rcv.src_ip);
-			DBG(" port=%d\n", c->rcv.src_port);
+			DBG("c=%p, c->id=%d, port=%d\n",c, c->id, c->rcv.src_port);
+			print_ip("ip=", &c->rcv.src_ip, "\n");
 #endif
 			if ((id==c->id)&&(c->state!=S_CONN_BAD)) return c;
 		}
@@ -329,9 +331,8 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 		hash=tcp_addr_hash(ip, port);
 		for (c=tcpconn_addr_hash[hash]; c; c=c->next){
 #ifdef EXTRA_DEBUG
-			DBG("c=%p, c->id=%d, ip=",c, c->id);
-			print_ip(&c->rcv.src_ip);
-			DBG(" port=%d\n", c->rcv.src_port);
+			DBG("c=%p, c->id=%d, port=%d\n",c, c->id, c->rcv.src_port);
+			print_ip("ip=",&c->rcv.src_ip,"\n");
 #endif
 			if ( (c->state!=S_CONN_BAD) && (port==c->rcv.src_port) &&
 					(ip_addr_cmp(ip, &c->rcv.src_ip)) )

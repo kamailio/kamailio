@@ -42,6 +42,17 @@
 #include "../config.h"
 #include "../dprint.h"
 
+/* fix debug defines, DBG_F_MALLOC <=> DBG_QM_MALLOC */
+#ifdef F_MALLOC
+	#ifdef DBG_F_MALLOC
+		#ifndef DBG_QM_MALLOC
+			#define DBG_QM_MALLOC
+		#endif
+	#elif defined(DBG_QM_MALLOC)
+		#define DBG_F_MALLOC
+	#endif
+#endif
+
 #ifdef PKG_MALLOC
 #	ifdef VQ_MALLOC
 #		include "vq_malloc.h"
@@ -66,10 +77,13 @@
 				__FUNCTION__, __LINE__)
 #			define pkg_free(p)   vqm_free(mem_block, (p), __FILE__,  \
 				__FUNCTION__, __LINE__)
+#			warn "no proper realloc implementation, use another mem. alloc"
 #		elif defined F_MALLOC
 #			define pkg_malloc(s) fm_malloc(mem_block, (s),__FILE__, \
 				__FUNCTION__, __LINE__)
 #			define pkg_free(p)   fm_free(mem_block, (p), __FILE__,  \
+				__FUNCTION__, __LINE__)
+#			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s),__FILE__, \
 				__FUNCTION__, __LINE__)
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s),__FILE__, \
@@ -85,6 +99,7 @@
 #			define pkg_free(p)   vqm_free(mem_block, (p))
 #		elif defined F_MALLOC
 #			define pkg_malloc(s) fm_malloc(mem_block, (s))
+#			define pkg_realloc(p, s) fm_realloc(mem_block, (p), (s))
 #			define pkg_free(p)   fm_free(mem_block, (p))
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s))

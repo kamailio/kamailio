@@ -118,6 +118,13 @@ void  fm_free(struct fm_block*, void* p, char* file, char* func,
 void  fm_free(struct fm_block*, void* p);
 #endif
 
+#ifdef DBG_F_MALLOC
+void*  fm_realloc(struct fm_block*, void* p, unsigned int size, 
+					char* file, char* func, unsigned int line);
+#else
+void*  fm_realloc(struct fm_block*, void* p, unsigned int size);
+#endif
+
 void  fm_status(struct fm_block*);
 
 

@@ -93,24 +93,29 @@ error:
 
 
 
-void print_ip(struct ip_addr* ip)
+void print_ip(char* p, struct ip_addr* ip, char *s)
 {
 	switch(ip->af){
 		case AF_INET:
-			DBG("%d.%d.%d.%d",	ip->u.addr[0],
+			DBG("%s%d.%d.%d.%d%s", (p)?p:"",
+								ip->u.addr[0],
 								ip->u.addr[1],
 								ip->u.addr[2],
-								ip->u.addr[3]);
+								ip->u.addr[3],
+								(s)?s:""
+								);
 			break;
 		case AF_INET6:
-			DBG("%x:%x:%x:%x:%x:%x:%x:%x",	htons(ip->u.addr16[0]),
+			DBG("%s%x:%x:%x:%x:%x:%x:%x:%x%s", (p)?p:"",
+											htons(ip->u.addr16[0]),
 											htons(ip->u.addr16[1]),
 											htons(ip->u.addr16[2]),
 											htons(ip->u.addr16[3]),
 											htons(ip->u.addr16[4]),
 											htons(ip->u.addr16[5]),
 											htons(ip->u.addr16[6]),
-											htons(ip->u.addr16[7])
+											htons(ip->u.addr16[7]),
+											(s)?s:""
 				);
 			break;
 		default:
@@ -153,5 +158,5 @@ void print_net(struct net* net)
 		LOG(L_WARN, "ERROR: print net: null pointer\n");
 		return;
 	}
-	print_ip(&net->ip); DBG("/"); print_ip(&net->mask);
+	print_ip("", &net->ip, "/"); print_ip("", &net->mask, "");
 }

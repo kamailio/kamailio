@@ -64,11 +64,13 @@
 #	define MY_FREE vqm_free
 #	define MY_STATUS vqm_status
 #	define  shm_malloc_init vqm_malloc_init
+#	warn "no proper vq_realloc implementantion, try another memory allocator"
 #elif defined F_MALLOC
 #	include "f_malloc.h"
 	extern struct fm_block* shm_block;
 #	define MY_MALLOC fm_malloc
 #	define MY_FREE fm_free
+#	define MY_REALLOC fm_realloc
 #	define MY_STATUS fm_status
 #	define  shm_malloc_init fm_malloc_init
 #else
@@ -96,6 +98,18 @@ void shm_mem_destroy();
 #define shm_lock()    lock_get(mem_lock)
 #define shm_unlock()  lock_release(mem_lock)
 
+/* fix DBG MALLOC stuff */
+
+/* fix debug defines, DBG_F_MALLOC <=> DBG_QM_MALLOC */
+#ifdef F_MALLOC
+	#ifdef DBG_F_MALLOC
+		#ifndef DBG_QM_MALLOC
+			#define DBG_QM_MALLOC
+		#endif
+	#elif defined(DBG_QM_MALLOC)
+		#define DBG_F_MALLOC
+	#endif
+#endif
 
 
 #ifdef DBG_QM_MALLOC
