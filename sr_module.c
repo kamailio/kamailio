@@ -306,6 +306,17 @@ int init_modules(void)
 int init_child(int rank)
 {
 	struct sr_module* t;
+	char* type;
+
+	switch(rank) {
+	case PROC_MAIN:     type = "PROC_MAIN";     break;
+	case PROC_TIMER:    type = "PROC_TIMER";    break;
+	case PROC_FIFO:     type = "PROC_FIFO";     break;
+	case PROC_TCP_MAIN: type = "PROC_TCP_MAIN"; break;
+	default:            type = "CHILD";         break;
+	}
+	DBG("init_child: initializing %s with rank %d\n", type, rank);
+	
 
 	for(t = modules; t; t = t->next) {
 		if (t->exports->init_child_f) {

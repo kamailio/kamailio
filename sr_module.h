@@ -55,9 +55,14 @@ typedef enum {
 	INT_PARAM,  /* Integer parameter type */
 } modparam_t;       /* Allowed types of parameters */
 
-
 #define REQUEST_ROUTE 1         /* Function can be used in request route blocks */
 #define REPLY_ROUTE 2           /* Function can be used in reply route blocks */
+
+/* Macros - used as rank in child_init function */
+#define PROC_MAIN      0  /* Main ser process */
+#define PROC_TIMER    -1  /* Timer attendant process */
+#define PROC_FIFO     -2  /* FIFO attendant process */
+#define PROC_TCP_MAIN -4  /* TCP main process */
 
 struct cmd_export_ {
 	char* name;             /* null terminated command name */

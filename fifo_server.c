@@ -540,7 +540,7 @@ int open_fifo_server()
 		close(sockfd[0]);
 		unix_tcp_sock=sockfd[1];
 #endif
-		if (init_child(process_no) < 0 ) {
+		if (init_child(PROC_FIFO) < 0 ) {
 			LOG(L_ERR, "ERROR: open_uac_fifo: init_child failed\n");
 			return -1;
 		}

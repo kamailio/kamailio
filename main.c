@@ -31,6 +31,7 @@
  *  2003-03-19  replaced all malloc/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-29  pkg cleaners for fifo and script callbacks introduced (jiri)
  *  2003-03-31  removed snmp part (obsolete & no place in core) (andrei)
+ *  2003-04-06  child_init called in all processes (janakj)
  *
  */
 
@@ -640,6 +641,10 @@ int main_loop()
 					/* child */
 					/* timer!*/
 					/* process_bit = 0; */
+					if (init_child(PROC_TIMER) < 0) {
+						LOG(L_ERR, "timer: init_child failed\n");
+						goto error;
+					}
 					for(;;){
 						sleep(TIMER_TICK);
 						timer_ticker();
@@ -664,11 +669,12 @@ int main_loop()
 		
 		
 		     /* We will call child_init even if we
-		      * do not fork
+		      * do not fork - and it will be called with rank 1 because
+		      * in fact we behave like a child, not like main process
 		      */
 
-		if (init_child(0) < 0) {
-			LOG(L_ERR, "init_child failed\n");
+		if (init_child(1) < 0) {
+			LOG(L_ERR, "main_dontfork: init_child failed\n");
 			goto error;
 		}
 
@@ -729,7 +735,7 @@ int main_loop()
 #endif
 					bind_address=&sock_info[r]; /* shortcut */
 					bind_idx=r;
-					if (init_child(i) < 0) {
+					if (init_child(i + 1) < 0) {
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
 					}
@@ -817,6 +823,10 @@ int main_loop()
 		}else if (pid==0){
 			/* child */
 			/* is_main=0; */
+			if (init_child(PROC_TCP_MAIN) < 0) {
+				LOG(L_ERR, "tcp_main: error in init_child\n");
+				goto error;
+			}
 			tcp_main_loop();
 		}else{
 			pt[process_no].pid=pid;
@@ -847,6 +857,10 @@ int main_loop()
 	/* process_bit = 0; */
 	is_main=1;
 	
+	if (init_child(PROC_MAIN) < 0) {
+		LOG(L_ERR, "main: error in init_child\n");
+		goto error;
+	}
 	for(;;){
 			pause();
 			handle_sigs();
