@@ -234,7 +234,7 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 		return -1;
 	}
 
-	if (_m->last_header->type != HDR_ROUTE) {
+	if ((_m->last_header->type != HDR_ROUTE) || (_m->last_header == *_hdr)) {
 		DBG("fnr(): No next Route HF found\n");
 		return 1;
 	}
