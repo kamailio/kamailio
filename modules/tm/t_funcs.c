@@ -729,6 +729,7 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 			port = SIP_PORT;
 		}
 	}
+	port = htons(port);
 
 	/* getting host address*/
 #ifdef DNS_IP_HACK
