@@ -32,6 +32,8 @@
  * 2003-01-23 added rport patches, contributed by 
  *             Maxim Sobolev <sobomax@FreeBSD.org> and heavily modified by me
  *             (andrei)
+ * 2003-01-24 added i param to via of outgoing requests (used by tcp),
+ *             modified via_builder params (andrei)
  *
  */
 
@@ -240,6 +242,37 @@ char* rport_builder(struct sip_msg *msg, unsigned int *rport_len)
 
 
 
+char* id_builder(struct sip_msg* msg, unsigned int *id_len)
+{
+	char* buf;
+	int len, value_len;
+	char revhex[sizeof(int)*2];
+	char* p;
+	int size;
+	
+	size=sizeof(int)*2;
+	p=&revhex[0];
+	if (int2reverse_hex(&p, &size, msg->rcv.proto_reserved1)==-1){
+		LOG(L_CRIT, "BUG: id_builder: not enough space for id\n");
+		return 0;
+	}
+	value_len=p-&revhex[0];
+	len=ID_PARAM_LEN+value_len+1; /* place for ending \0 */
+	buf=pkg_malloc(sizeof(char)*len);
+	if (buf==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: rport_builder: out of memory\n");
+		return 0;
+	}
+	memcpy(buf, ID_PARAM, ID_PARAM_LEN);
+	memcpy(buf+ID_PARAM_LEN, revhex, value_len);
+	buf[len]=0; /* null terminate it */
+	*id_len=len;
+	return buf;
+}
+
+
+
 /* computes the "unpacked" len of a lump list,
    code moved from build_req_from_req */
 static inline int lumps_len(struct lump* l)
@@ -436,7 +469,19 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	unsigned int offset, s_offset, size;
 	struct lump* anchor;
 	int r;
-
+	str branch;
+	str extra_params;
+	
+#ifdef USE_TCP
+	char* id_buf;
+	int id_len;
+	
+	
+	id_buf=0;
+	id_len=0;
+#endif
+	extra_params.len=0;
+	extra_params.s=0;
 	uri_len=0;
 	orig=msg->orig;
 	buf=msg->buf;
@@ -446,10 +491,25 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	new_buf=0;
 	received_buf=0;
 	rport_buf=0;
+	line_buf=0;
 
-
-	line_buf = via_builder( &via_len, send_sock, 
-		msg->add_to_branch_s, msg->add_to_branch_len, proto);
+	
+#ifdef USE_TCP
+	/* add id if tcp */
+	if (msg->rcv.proto==PROTO_TCP){
+		if  ((id_buf=id_builder(msg, &id_len))==0){
+			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
+							" id_builder failed\n");
+			goto error01; /* free everything */
+		}
+		extra_params.s=id_buf;
+		extra_params.len=id_len;
+	}
+#endif
+	branch.s=msg->add_to_branch_s;
+	branch.len=msg->add_to_branch_len;
+	line_buf = via_builder( &via_len, send_sock, &branch,
+							extra_params.len?&extra_params:0, proto);
 	if (!line_buf){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
 		goto error00;
@@ -558,6 +618,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 
 error01:
 	pkg_free(line_buf);
+#ifdef USE_TCP
+	if (id_buf) pkg_free(id_buf);
+#endif
 error02:
 	if (received_buf) pkg_free(received_buf);
 error03:
@@ -934,7 +997,7 @@ int branch_builder( unsigned int hash_index,
 
 char* via_builder( unsigned int *len, 
 	struct socket_info* send_sock,
-	char *branch, int branch_len, int proto )
+	str* branch, str* extra_params, int proto )
 {
 	unsigned int  via_len, extra_len;
 	char               *line_buf;
@@ -942,9 +1005,11 @@ char* via_builder( unsigned int *len,
 
 
 	max_len=MY_VIA_LEN+send_sock->address_str.len /* space in MY_VIA */
-		+2 /* just in case it it a v6 address ... [ ] */
+		+2 /* just in case it is a v6 address ... [ ] */
 		+send_sock->port_no_str.len
-		+MY_BRANCH_LEN+branch_len+CRLF_LEN+1;
+		+(branch)?(MY_BRANCH_LEN+branch->len):0
+		+(extra_params)?extra_params->len:0
+		+CRLF_LEN+1;
 	line_buf=pkg_malloc( max_len );
 	if (line_buf==0){
 		ser_error=E_OUT_OF_MEM;
@@ -982,10 +1047,18 @@ char* via_builder( unsigned int *len,
 	}
 
 	/* branch parameter */
-	memcpy(line_buf+via_len, MY_BRANCH, MY_BRANCH_LEN );
-	via_len+=MY_BRANCH_LEN;
-	memcpy(line_buf+via_len, branch, branch_len );
-	via_len+=branch_len;
+	if (branch){
+		memcpy(line_buf+via_len, MY_BRANCH, MY_BRANCH_LEN );
+		via_len+=MY_BRANCH_LEN;
+		memcpy(line_buf+via_len, branch->s, branch->len );
+		via_len+=branch->len;
+	}
+	/* extra params  */
+	if (extra_params){
+		memcpy(line_buf+via_len, extra_params->s, extra_params->len);
+		via_len+=extra_params->len;
+	}
+	
 	memcpy(line_buf+via_len, CRLF, CRLF_LEN);
 	via_len+=CRLF_LEN;
 	line_buf[via_len]=0; /* null terminate the string*/

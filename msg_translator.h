@@ -57,12 +57,8 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 
 char* via_builder( unsigned int *len,
 	struct socket_info* send_sock,
-	char *branch, int branch_len, int proto );
+	str *branch, str* extra_params, int proto );
 
-#ifdef _OBSOLETED
-char* via_builder( struct sip_msg *msg ,
-				unsigned int *len, struct socket_info* send_sock);
-#endif
 
 int branch_builder( unsigned int hash_index, 
 	/* only either parameter useful */

@@ -26,8 +26,10 @@
  *
  * History:
  * -------
- * 2001-01-23 support for determination of outbound interface added :
+ * 2003-01-23 support for determination of outbound interface added :
  *            get_out_socket (jiri)
+ * 2003-01-24 reply to rport support added, contributed by
+ *             Maxim Sobolev <sobomax@FreeBSD.org> and modified by andrei
  *
  */
 
@@ -153,7 +155,7 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 #ifdef USE_TCP
 	if (proto==PROTO_TCP){
 		/* on tcp just use the "main address", we don't really now the
-		 * sending address (we can find it out, but we'll find also to see
+		 * sending address (we can find it out, but we'll need also to see
 		 * if we listen on it, and if yes on which port -> too complicated*/
 		switch(to->s.sa_family){
 			case AF_INET:	send_sock=sendipv4_tcp;
@@ -288,10 +290,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
        if it is turned on, we don't care about reboot; we simply put a simple
 	   value in there; better for performance
 	*/
-
-#ifdef USE_TCP
-	if (msg->rcv.proto==PROTO_TCP) id=msg->rcv.proto_reserved1;
-#endif
 	if (syn_branch ) {
 		*msg->add_to_branch_s='0';
 		msg->add_to_branch_len=1;
@@ -367,19 +365,28 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 {
 	struct hostent* he;
 	str* name;
+	int err;
 	unsigned short port;
 
-
+	port=0;
+	if (via->rport && via->rport->value.s){
+		port=str2s(via->rport->value.s, via->rport->value.len, &err);
+		if (err){
+			LOG(L_NOTICE, "ERROR: forward_reply: bad rport value(%.*s)\n",
+					via->rport->value.len, via->rport->value.s);
+			port=0;
+		}
+	}
 	if (via->received){
 		DBG("update_sock_struct_from_via: using 'received'\n");
 		name=&(via->received->value);
 		/* making sure that we won't do SRV lookup on "received"
 		 * (possible if no DNS_IP_HACK is used)*/
-		port=via->port?via->port:SIP_PORT; 
+		if (port==0) port=via->port?via->port:SIP_PORT; 
 	}else{
 		DBG("update_sock_struct_from_via: using via host\n");
 		name=&(via->host);
-		port=via->port;
+		if (port==0) port=via->port;
 	}
 	/* we do now a malloc/memcpy because gethostbyname loves \0-terminated 
 	   strings; -jiri 
@@ -397,6 +404,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 				name->len, name->s);
 		return -1;
 	}
+		
 	hostent2su(to, he, 0, htons(port));
 	return 1;
 }
@@ -413,7 +421,6 @@ int forward_reply(struct sip_msg* msg)
 	int proto;
 #ifdef USE_TCP
 	char* s;
-	char* p;
 	int len;
 	int id;
 #endif
@@ -479,24 +486,13 @@ int forward_reply(struct sip_msg* msg)
 #ifdef USE_TCP
 	 else if (proto==PROTO_TCP){
 		 id=0;
-		/* find id in branch if it exists */
-		if ((msg->via1->branch)&&(msg->via1->branch->value.len>MCOOKIE_LEN) &&
-			(memcmp(msg->via1->branch->value.s, MCOOKIE, MCOOKIE_LEN)==0)){
-			DBG("forward_reply: found branch\n");
-			s=msg->via1->branch->value.s+MCOOKIE_LEN;
-			len=msg->via1->branch->value.len-MCOOKIE_LEN;
-			for (p=s; p<s+len  && *p!=BRANCH_SEPARATOR; p++);
-			p++;
-			for(;p<s+len && *p!=BRANCH_SEPARATOR; p++);
-			p++;
-			if (p<s+len){
-				/* we found the second BRANCH_SEPARATOR, p points after it */
-				len-=(int)(p-s);
-				id=reverse_hex2int(p, len);
-				DBG("forward_reply: id= %x\n", id);
-			}else{
-				DBG("forward_reply: no id in branch\n");
-			}
+		/* find id in i param if it exists */
+		if (msg->via1->i&&msg->via1->i->value.s){
+			s=msg->via1->i->value.s;
+			len=msg->via1->i->value.len;
+			DBG("forward_reply: i=%.*s\n",len, s);
+			id=reverse_hex2int(s, len);
+			DBG("forward_reply: id= %x\n", id);
 		}		
 				
 		if (tcp_send(new_buf, new_len,  to, id)==-1)

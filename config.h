@@ -88,6 +88,9 @@
 #define RPORT ";rport="
 #define RPORT_LEN 7
 
+#define ID_PARAM ";i="
+#define ID_PARAM_LEN 3
+
 #define SRV_PREFIX "_sip._udp."
 #define SRV_PREFIX_LEN 10
 
