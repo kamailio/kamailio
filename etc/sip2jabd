@@ -71,7 +71,7 @@ start_jab() {
 		echo "Starting Jabber server ..."
 		su - ${JUID} -B -c "cd ${JDIR}; ${JABBERD} -c ${CONF}"  > /dev/null 2>&1
 		# echo
-		sleep 1
+		sleep 2
 		echo "Starting ICQ transport - external component ..."
 		su - ${JUID} -c "cd ${JDIR}; ${JICQEXT} > /dev/null 2>&1 &"  > /dev/null 2>&1
 		# echo
@@ -81,7 +81,7 @@ start_jab() {
 		cd ${JDIR}
 		${JABBERD} -B -c ${CONF}
 		# echo
-		sleep 1
+		sleep 2
 		echo "Starting ICQ transport - external component ..."
 		${JICQEXT} > /dev/null 2>&1 &
 		# echo
@@ -140,7 +140,7 @@ case "$1" in
 		echo -n "Restarting SIP2Jabber ..."
 		stop_ser
 		stop_jab
-		sleep 1
+		sleep 2
 		echo
 		start_jab
 		start_ser
