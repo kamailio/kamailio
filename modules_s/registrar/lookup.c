@@ -61,7 +61,7 @@ static inline int rwrite(struct sip_msg* _m, str* _s)
 	memcpy(buffer, _s->s, _s->len);
 	buffer[_s->len] = '\0';
 	
-	DBG("rwrite(): Rewriting Request-URI with \'%s\'\n", buffer);
+	DBG("rwrite(): Rewriting Request-URI with '%s'\n", buffer);
 	act.type = SET_URI_T;
 	act.p1_type = STRING_ST;
 	act.p1.string = buffer;
