@@ -34,7 +34,7 @@ void clean_hdr_field(struct hdr_field* hf)
 
                 case HDR_AUTHORIZATION:
 		case HDR_PROXYAUTH:
-			free_credentials((auth_body_t**)(&(hf->parsed));
+			free_credentials((auth_body_t**)(&(hf->parsed)));
 			break;
 
 		case HDR_FROM:
