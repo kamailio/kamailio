@@ -108,9 +108,11 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	prefix_len = RR_PREFIX_LEN + (user->len ? (user->len + 1) : 0);
 	prefix = pkg_malloc(prefix_len);
 	if (enable_full_lr) {
-		suffix_len = (_lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN) + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
+		suffix_len = (_lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN) + 
+				((tag && tag->len) ? (RR_FROMTAG_LEN + tag->len) : 0);
 	} else {
-		suffix_len = (_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN) + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
+		suffix_len = (_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN) + 
+				((tag && tag->len) ? (RR_FROMTAG_LEN + tag->len) : 0);
 	}
 	suffix = pkg_malloc(suffix_len);
 	
@@ -144,7 +146,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
 	
-	if (tag->len) {
+	if (tag && tag->len) {
 		memcpy(suffix, RR_FROMTAG, RR_FROMTAG_LEN);
 		memcpy(suffix + RR_FROMTAG_LEN, tag->s, tag->len);
 		if (enable_full_lr) {
@@ -200,6 +202,7 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	struct lump* l, *l2;
 	str user;
 	struct to_body* from;
+	str* tag;
 	
 	from = 0; /* Makes gcc happy */
 	user.len = 0;
@@ -215,6 +218,9 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 			return -2;
 		}
 		from = (struct to_body*)_m->from->parsed;
+		tag = &from->tag_value;
+	} else {
+		tag = 0;
 	}
 
 	if (enable_double_rr) {
@@ -230,7 +236,7 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
 			return -6;
 		}
-		if (build_rr(l, l2, _lr, &user, &from->tag_value, OUTBOUND) < 0) {
+		if (build_rr(l, l2, _lr, &user, tag, OUTBOUND) < 0) {
 			LOG(L_ERR, "insert_RR(): Error while inserting outbound Record-Route\n");
 			return -7;
 		}
