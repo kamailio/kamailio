@@ -1,0 +1,149 @@
+#!/bin/sh 
+#
+# $Id$
+#
+# sc: ser control; tool for maintaining ser's databases
+#
+
+# local domain & realm
+DOMAIN=iptel.org
+
+# SQL config
+SQL_DB=csps107
+SQL_HOST=dbhost
+SQL_USER=csps
+
+# the read-only user for whom password may be stored here
+RO_USER=serro
+RO_PW=47serro11
+
+# binaries
+GENHA1='gen_ha1'
+MYSQL='mysql'
+SER='sr'
+
+# SQL names
+USER_COLUMN=user
+REALM_COLUMN=realm
+HA1_COLUMN=HA1
+HA1B_COLUMN=HA1B
+# subscriber table
+TABLE=subscriber
+# Usr Loc Table
+USRLOC=location
+PASSWORD_COLUMN=password
+SUBSCRIBER_COLUMN='user_id'
+EMAIL_COLUMN=email_address
+
+
+
+usage() {
+	echo "usage: "
+	echo -n "   $0 add <name> <realm> <password> <email> "
+	echo "... introduce a new subscriber"
+	echo "   $0 dul <name> ... delete user's UsrLoc entries"
+	echo "   $0 show [<name>] ... show online users"
+	echo "   $0 rm <name> ... delete a user"
+	echo "   $0 stat"
+}
+
+
+case $1 in
+
+	add)
+		if [ $# -ne 5 ] ; then
+			usage
+			exit 1
+		fi
+		shift
+
+		HA1=`$GENHA1 $1 $2 $3`
+		if [ $? -ne 0 ] ; then
+			echo "HA1 calculation failed"
+			exit 1
+		fi
+		HA1B=`$GENHA1 "$1@$DOMAIN" $2 $3`
+		if [ $? -ne 0 ] ; then
+			echo "HA1B calculation failed"
+			exit 1
+		fi
+
+		read -s -p "MySql Password: " PW
+		echo
+		
+		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
+			-e "use $SQL_DB; select count(*) from $TABLE \
+			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$2';" | tail -n1`
+		if [ $CNT -ne 0 ] ; then
+			echo "user '$1' already exists"
+			exit 1
+		fi
+		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
+			-e "use $SQL_DB; insert into $TABLE \
+				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN) \
+				values ('$1','$2','$HA1','$HA1B','$3', '$4');";
+		if [ $? -ne 0 ] ; then
+			echo "introducing a new user to the database failed"
+		else
+			echo "new user added"
+		fi
+
+		;;
+
+	dul)
+		if [ $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+		QUERY="delete from $USRLOC where $USRLOC.$USER_COLUMN='$2'"
+		mysql -h $SQL_HOST -u $SQL_USER "-p" -e "$QUERY ;" $SQL_DB
+		;;
+
+	show)
+		if [ $# -ne 1 -a $# -ne 2 ] ; then
+			usage
+			exit 1
+		fi
+
+		shift
+
+		QUERY1="select $TABLE.$EMAIL_COLUMN from $TABLE where  $TABLE.$SUBSCRIBER_COLUMN='$1'"
+		QUERY2="select $USRLOC.* from $USRLOC where $USRLOC.$USER_COLUMN='$1' order by expires desc"
+		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN from $TABLE, $USRLOC where  \
+			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN" 
+
+		if [ $# -eq 1 ] ; then
+			mysql -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY1 ;" $SQL_DB
+			mysql -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY2 ;" $SQL_DB
+		else
+			mysql -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY3 ;" $SQL_DB
+		fi
+
+		;;
+
+	rm)
+        if [ $# -ne 2 ] ; then
+            usage
+            exit 1
+        fi
+        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$2'"
+        mysql -h $SQL_HOST -u $SQL_USER "-p" -e "$QUERY ;" $SQL_DB
+        ;;
+			
+	stat)
+        if [ $# -ne 1 ] ; then
+            usage
+            exit 1
+        fi
+		ps -o "pid,user,args" $i -C $SER
+		$0 show
+
+		;;
+		
+	*)
+		usage
+		exit 1
+		;;
+
+esac
+
