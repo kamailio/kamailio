@@ -31,6 +31,11 @@
 
 #include "msg_parser.h"
 
+
+/* casting macro for accessing From body */
+#define get_from(p_msg)  ((struct to_body*)(p_msg)->from->parsed)
+
+
 /*
  * To header field parser
  */
