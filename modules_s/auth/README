@@ -123,6 +123,9 @@ Params: realm - realm string
 Desc:   Challenges a user agent using WWW-Authenticate header
         field. The second parameter specifies if qop parameter
         (according to rfc2617) should be used or not.
+		(Turning off is useful primarly to make UAC happy, which
+		have a brokn qop implementation, particularly 	
+		M$ Messenger 4.6).
 
 
 
@@ -133,13 +136,17 @@ Params: realm - realm string
 Desc:   Challenges a user agent using Proxy-Authenticate header
         field. The second parameter specifies if qop parameter
         (according to rfc2617) should be used or not.
+		(Turning off is useful primarly to make UAC happy, which
+		have a brokn qop implementation, particularly 	
+		M$ Messenger 4.6).
 
 
 
 Name:   is_user
 Params: username - username string
 Desc:   Checks if the specified username and matches the username
-        in credentials
+        in credentials. 
+		Call after *_authorize, otherwise the username is uverified.
 
 
 
@@ -147,6 +154,7 @@ Name:   is_in_group
 Params: group - group name
 Desc:   Checks if the user specified in credentials is member of
         given group
+		Call after *_authorize, otherwise the username is uverified.
 
 
 
@@ -154,6 +162,7 @@ Name:   check_to
 Params: -
 Desc:   Checks if the username given in credentials and username in
         To header field are equal
+		Call after *_authorize, otherwise the username is uverified.
 
 
 
@@ -161,4 +170,5 @@ Name:   check_from
 Params: -
 Desc:   Checks if the username given in credentials and username in
         From header field are equal
+		Call after *_authorize, otherwise the username is uverified.
 
