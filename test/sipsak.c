@@ -859,7 +859,7 @@ void print_help() {
 	printf("(compiled with DEBUG) ");
 #endif
 	printf("\n\n"
-		" shoot : sipsak -f filename -s sip:uri\n"
+		" shoot : sipsak [-f filename] -s sip:uri\n"
 		" trace : sipsak -t [-f filename] -s sip:uri\n"
 		" USRLOC: sipsak -u [-b number] -e number [-E number] -s sip:uri\n"
 		" flood : sipsak -F [-c number] -s sip:uri\n"
