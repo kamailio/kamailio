@@ -141,7 +141,6 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->refcnt=0;
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
-	c->rcv.proto=PROTO_TCP;
 	c->rcv.bind_address=ba;
 	if (ba){
 		c->rcv.dst_ip=ba->address;
@@ -793,7 +792,7 @@ void tcp_main_loop()
 		/* start from 1, the "main" process does not transmit anything*/
 		for (r=1; r<process_no && n; r++){
 			if ( (pt[r].unix_sock>0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
-				/* (we can't have a fd==0, 0 i s never closed )*/
+				/* (we can't have a fd==0, 0 is never closed )*/
 				n--;
 				/* errno==EINTR !!! TODO*/
 read_again:

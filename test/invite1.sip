@@ -1,4 +1,4 @@
-INVITE sip:p2@195.37.78.126 SIP/2.0
+INVITE sip:p2@iptel.org SIP/2.0
 Via: SIP/2.0/UDP 192.168.99.100:5040
 From: "GMD FOKUS iptlab" <sip:jiri@iptel.org>;tag=b96b0300ed30f1286-2f5d
 Call-ID: b96b0300-88d30f-66da-63aa@195.37.78.190
@@ -9,7 +9,7 @@ User-Agent: Cisco-SIP-IP-Phone/2
 Accept: application/sdp
 Contact: sip:jiri@195.37.78.190:5060
 Content-Type: application/sdp
-Content-Length: 225
+Content-Length: 218
 
 
 v=0

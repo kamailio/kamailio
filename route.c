@@ -158,6 +158,7 @@ static int fix_actions(struct action* a)
 	for(t=a; t!=0; t=t->next){
 		switch(t->type){
 			case FORWARD_T:
+			case FORWARD_TLS_T:
 			case FORWARD_TCP_T:
 			case FORWARD_UDP_T:
 			case SEND_T:

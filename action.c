@@ -106,6 +106,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 		case FORWARD_TCP_T:
 #endif
+#ifdef USE_TLS
+		case FORWARD_TLS_T:
+#endif
 		case FORWARD_UDP_T:
 
 			if (a->type==FORWARD_UDP_T) proto=PROTO_UDP;

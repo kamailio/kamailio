@@ -106,6 +106,7 @@
 
 #define SRV_UDP_PREFIX "_sip._udp."
 #define SRV_TCP_PREFIX "_sip._tcp."
+#define SRV_TLS_PREFIX "_sip._tls."
 #define SRV_PREFIX_LEN 10
 
 /*used only if PKG_MALLOC is defined*/

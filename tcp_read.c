@@ -399,14 +399,14 @@ int tcp_read_req(struct tcp_connection* con)
 #ifdef USE_TLS
 		if (con->type==PROTO_TLS){
 			if (con->state==S_CONN_ACCEPT){
-				if (tls_accept(con)!=0){
+				if (tls_accept(con, 0)!=0){
 					resp=CONN_ERROR;
 					goto end_req;
 				}
 				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
 			}
 			if(con->state==S_CONN_CONNECT){
-				if (tls_connect(con)!=0){
+				if (tls_connect(con, 0)!=0){
 					resp=CONN_ERROR;
 					goto end_req;
 				}

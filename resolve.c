@@ -497,6 +497,11 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
 					tmp[SRV_PREFIX_LEN + name->len] = '\0';
 					break;
+				case PROTO_TLS:
+					memcpy(tmp, SRV_TLS_PREFIX, SRV_PREFIX_LEN);
+					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_PREFIX_LEN + name->len] = '\0';
+					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
 							proto);

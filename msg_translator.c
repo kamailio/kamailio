@@ -1174,6 +1174,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 							" id_builder failed\n");
 			goto error01; /* free everything */
 		}
+		DBG("build_req_from_req: id added: <%.*s>, rcv proto=%d\n",
+				id_len, id_buf, msg->rcv.proto);
 		extra_params.s=id_buf;
 		extra_params.len=id_len;
 	}
@@ -1183,6 +1185,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 			|| proto==PROTO_TLS
 #endif
 			){
+		DBG("build_req_from_req: checking for clen; proto=%d, rcv->proto=%d\n",
+				proto, msg->rcv.proto);
 		/* first of all parse content-length */
 		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
 			LOG(L_ERR, "build_req_buf_from_sip_req:"
@@ -1885,7 +1889,7 @@ char* via_builder( unsigned int *len,
 	}else if (proto==PROTO_TCP){
 		memcpy(line_buf+MY_VIA_LEN-4, "TCP ", 4);
 	}else if (proto==PROTO_TLS){
-		memcpy(line_buf+MY_VIA_LEN-4, "TLS", 4);
+		memcpy(line_buf+MY_VIA_LEN-4, "TLS ", 4);
 	}else{
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", proto);
 		return 0;
