@@ -32,8 +32,9 @@ static int print_sl_stats(FILE *reply_file)
 	int b, p;
 
 	memset(&total, 0, sizeof(struct sl_stats));
-	if (dont_fork) add_sl_stats(&total, &sl_stats[0]);
-	else for (b=0; b<sock_no; b++)
+	if (dont_fork) {
+		add_sl_stats(&total, &sl_stats[0]);
+	} else for (b=0; b<sock_no; b++)
 		for (p=0; p<children_no; p++) 
 			add_sl_stats(&total, &sl_stats[b*children_no+p]);
 
