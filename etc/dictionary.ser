@@ -1,0 +1,24 @@
+VALUE Service-Type Call-Check           10
+VALUE Service-Type Emergency-Call       13
+VALUE Service-Type Sip                  15
+
+ATTRIBUTE Digest-Response	       206     string
+ATTRIBUTE Digest-Attributes	       207     string
+
+ATTRIBUTE Sip-Uri-User                 208     string
+ATTRIBUTE Sip-Method                   209     integer
+ATTRIBUTE Sip-Req-Uri                  210     string
+ATTRIBUTE Sip-Cc                       212     string
+ATTRIBUTE Sip-Rpid                     213     string
+
+ATTRIBUTE Digest-Realm		      1063     string
+ATTRIBUTE Digest-Nonce		      1064     string
+ATTRIBUTE Digest-Method	              1065     string
+ATTRIBUTE Digest-Uri		      1066     string
+ATTRIBUTE Digest-Qop		      1067     string
+ATTRIBUTE Digest-Algorithm	      1068     string
+ATTRIBUTE Digest-Body-Digest	      1069     string
+ATTRIBUTE Digest-Cnonce	              1070     string
+ATTRIBUTE Digest-Nonce-Count	      1071     string
+ATTRIBUTE Digest-User-Nam	      1072     string
+
