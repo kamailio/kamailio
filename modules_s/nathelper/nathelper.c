@@ -79,7 +79,7 @@ MODULE_VERSION
 
 
 /* NAT UAC test constants */
-#define CONTACT_1918        "[@:](192\\.168\\.|10\\.|172\\.16)"
+#define CONTACT_1918        "[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
 #define NAT_UAC_TEST_1918	0x01
 #define NAT_UAC_TEST_RCVD	0x02
 
