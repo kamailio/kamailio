@@ -41,13 +41,14 @@
 typedef struct name_addr {
 	str name;   /* Display name part */
 	str uri;    /* Uri part without surrounding <> */
-	int len;    /* Total lenght of the field */
+	int len;    /* Total lenght of the field (including all
+		    * whitechars present in the parsed message */
 } name_addr_t;
 
 
 /*
  * Parse name-addr part, the given string can be longer,
- * it will be updated to point right behind the name-addr part
+ * parsing will stop when closing > is found
  */
 int parse_nameaddr(str* _s, name_addr_t* _a);
 

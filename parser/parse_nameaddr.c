@@ -39,7 +39,7 @@
 
 /*
  * Parse name-addr part, the given string can be longer,
- * it will be updated to point right behind the name-addr part
+ * parsing will stop when closing > is found
  */
 int parse_nameaddr(str* _s, name_addr_t* _a)
 {
