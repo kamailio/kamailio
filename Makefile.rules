@@ -41,6 +41,7 @@ static: $(objs)
 clean:
 	-@rm -f $(objs) $(NAME) 2>/dev/null
 	-@for r in $(modules) $(static_modules_path); do \
+		echo "module $$r" ; \
 		$(MAKE) -C $$r clean ; \
 	done
 

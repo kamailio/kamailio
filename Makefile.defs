@@ -78,9 +78,6 @@ endif
 
 ifeq ($(ARCH), sparc64)
 	DEFS+= -DFAST_LOCK
-ifeq($(OS), SunOs)
-	CFLAGS+= -mv8 -Wa,-xarch=v8plus
-endif
 endif
 
 
@@ -140,6 +137,9 @@ ifeq  ($(OS), SunOS)
 	else
 		LDFLAGS=-g $(PROFILE)
 		MOD_LDFLAGS=-g -G
+	endif
+	ifeq ($(ARCH), sparc64)
+		CFLAGS+= -mv8 -Wa,-xarch=v8plus
 	endif
 
 YACC=yacc
