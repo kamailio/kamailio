@@ -533,8 +533,6 @@ int global_init()
 			LOG(L_ERR,"ERROR: sms_global_init: cannot create pipe!\n");
 			goto error;
 		}
-		LOG(L_ERR,"ERROR: sms_global_init : pipe for %s is (%d,%d)\n",
-			networks[i].name, net_pipe[0], net_pipe[1] );
 		networks[i].pipe_out = net_pipe[0];
 		net_pipes_in[i] = net_pipe[1];
 		/* sets reading from pipe to non blocking */
