@@ -23,6 +23,7 @@ REALM_COLUMN=realm
 HA1_COLUMN=HA1
 HA1B_COLUMN=HA1B
 TABLE=subscriber
+PASSWORD_COLUMN=password
 
 if [ $# -ne 3 ] ; then
 	echo "usage: $0 <name> <realm> <password>"
@@ -40,7 +41,7 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 $MYSQL -h $SQL_HOST -u $SQL_USER -p \
-	-e "use $SQL_DB; insert into $TABLE ($USER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN) values ('$1','$2','$HA1','$HA1B');";
+	-e "use $SQL_DB; insert into $TABLE ($USER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN) values ('$1','$2','$HA1','$HA1B','$3');";
 if [ $? -ne 0 ] ; then
 	echo "introducing a new user to the database failed"
 else
