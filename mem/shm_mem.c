@@ -127,6 +127,7 @@ int shm_mem_init()
 
 #ifndef FAST_LOCK
 	union semun su;
+	int ret;
 #endif
 #ifdef SHM_MMAP
 	int fd;
