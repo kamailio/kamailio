@@ -1,7 +1,7 @@
+<!DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd" -->
 <!-- $Id$ -->
-<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
-<!-- local: DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd" -->
-
+<!-- DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" -->
+    
 
 <book label="seruser" id="seruser" lang="EN">
 <?dbhtml filename="index.html">
@@ -571,7 +571,362 @@ if (uri=~"@bat\.iptel\.org") {
 	    </example>
 	
 	</section>
+	<section>
+	    <title>Script Examples</title>
+	    <para>This section demostrates in easy-to-undestand examples
+		how to configure server's behaviour using the embedded
+		scripting language. All scripts follow the ser language 
+		syntax, which dictates the following block ordering:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    global configuration parameters
+			</para>
+		    </listitem>
 
+		    <listitem>
+			<para>
+			    module loading
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    module-specific parameters
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    one or more route blocks containing the
+			    request processing logic
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    optionaly, if modules supporting reply
+			    processing (currently only TM) are loaded,
+			    one or more reply_route blocks containing
+			    logic triggered by received replies
+			</para>
+		    </listitem>
+		</itemizedlist>
+		
+	    </para>
+	    <para>
+		For more complex examples, see the etc directory in
+		ser distribution. In particular, it contains the default
+		script <filename moreinfo="none">ser.cfg</filename> and
+		<filename moreinfo="none">iptel.cfg</filename>. The first
+		script implements a "quick-start" registrar and proxy
+		server. The second, really complex script, is in production
+		use at iptel.org and exploits all ser features.
+		</para>
+	    <section>
+		<title>Stateful User Agent</title>
+		<para>
+		This examples shows how to make ser act as a stateful user
+		agent. Such an agent can process arbitrary logic, such
+		as accounting or SMS gateway. Benefit of running in
+		stateful mode is that request retransmissions are absorbed.
+		Otherwise, the logic (such as sending SMS messages to
+		GSM network) would be executed for each retransmission.
+		</para>
+		<example>
+		    <title>Stateful UA</title>
+		    <programlisting format="linespecific">
+#
+# $Id$
+#
+# this example shows usage of ser as user agent
+# server which does some functionality (in this
+# example, 'log' is used to print a notification
+# on a new transaction) and behaves statefuly
+# (e.g., it retransmits replies on request
+# retransmissions)
+
+# ----------- global configuration parameters ------------------------
+
+debug=3
+fork=no
+#children=2
+log_stderror=yes        # (cmd line: -E)
+check_via=yes     # (cmd. line: -v)
+dns=0           # (cmd. line: -r)
+rev_dns=0      # (cmd. line: -R)
+port=5068
+reply_to_via=no
+
+
+# ------------------ module loading ----------------------------------
+
+loadmodule "/usr/lib/ser/modules/sl.so"
+loadmodule "/usr/lib/ser/modules/print.so"
+loadmodule "/usr/lib/ser/modules/tm.so"
+loadmodule "/usr/lib/ser/modules/usrloc.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# -- usrloc params --
+
+modparam("usrloc", "use_database",   0)
+modparam("usrloc", "flush_interval", 3600)
+# -------------------------  request routing logic -------------------
+
+# main routing logic
+
+route{
+        # for testing purposes, simply okay all REGISTERs
+        if (method=="REGISTER") {
+                log("REGISTER");
+                sl_send_reply("200", "ok");
+                #t_replicate("localhost", "9");
+                break;
+        };
+        # print a message if a call was missed
+
+        if ( t_newtran())
+    {
+                if (method=="ACK") {
+                        log("oops--ACK to a non-existent transaction");
+                        drop;
+                };
+                log("New Transaction Arrived\n");
+        # do what you want to do as a sever
+                if (uri=~"a@") {
+                        if (!t_reply("409", "Bizzar Error")) {
+                                sl_reply_error();
+                        };
+                } else if (uri=~"b@") {
+                        if (!t_reply("979", "You did not expect this did you")) {
+                                sl_reply_error();
+                        };
+                } else {
+                        if (!t_reply("699", "I don't want to chat with you")) {
+                                sl_reply_error();
+                        };
+                } ;
+    } else {
+                sl_reply_error();
+        };
+}
+
+
+		    </programlisting>
+		</example>
+	    </section> <!-- Stateful UAS -->
+	    <section>
+		<title>Redirect Server</title>
+		<para>
+		The redirect example show how to redirect a request
+		to multiple destination using 3xx reply.
+		</para>
+		<example>
+		    <title>Redirect Server</title>
+		    <programlisting format="linespecific">
+#
+# $Id$
+#
+# this example shows use of ser as stateless redirect server
+#
+
+# ----------- global configuration parameters ------------------------
+
+debug=3
+fork=no
+log_stderror=yes        # (cmd line: -E)
+check_via=no # (cmd. line: -v)
+dns=no # (cmd. line: -r)
+syn_branch=1
+reply_to_via=0
+
+# ------------------ module loading ----------------------------------
+
+loadmodule "/usr/lib/ser/modules/sl.so"
+loadmodule "/usr/lib/ser/modules/print.so"
+
+
+# -------------------------  request routing logic -------------------
+
+# main routing logic
+
+route{
+        # for testing purposes, simply okay all REGISTERs
+        if (method=="REGISTER") {
+                log("REGISTER");
+                sl_send_reply("200", "ok");
+                break;
+        };
+        append_branch("sip:parallel@iptel.org:9");
+        append_branch("sip:redirect@iptel.org:9");
+        sl_send_reply("300", "Redirect");
+}
+
+		    </programlisting>
+		</example>
+		
+	    </section> <!-- redirect server-->
+
+	    <section>
+		<title>Executing External Script</title>
+		<para>
+		    Like in the previous example, we show how to
+		    make ser act as a redirect server. The difference is 
+		    that we do not use hardwired redirection address but
+		    get them from external shell commands. We also use
+		    ser's ability to execute shell commands to log
+		    source IP address of incoming SIP requests.
+		</para>
+		<example>
+		    <title>Executing External Script</title>
+		    <programlisting format="linespecific">
+#
+# $Id$
+#
+# this example shows use of ser as stateless redirect server
+# which rewrites URIs using an exernal utility
+#
+
+# ----------- global configuration parameters ------------------------
+
+debug=4
+fork=1
+log_stderror=yes        # (cmd line: -E)
+check_via=no # (cmd. line: -v)
+dns=no # (cmd. line: -r)
+syn_branch=1
+reply_to_via=0
+
+# ------------------ module loading ----------------------------------
+
+loadmodule "/usr/lib/ser/modules/sl.so"
+loadmodule "/usr/lib/ser/modules/print.so"
+loadmodule "/usr/lib/ser/modules/exec_mod.so"
+loadmodule "/usr/lib/ser/modules/ext.so"
+
+# -------------------------  request routing logic -------------------
+
+# main routing logic
+
+route{
+        # for testing purposes, simply okay all REGISTERs
+        if (method=="REGISTER") {
+                log("REGISTER");
+                sl_send_reply("200", "ok");
+                break;
+        };
+
+        # obsoleted
+        #ext_rewriteuri("echo sip:jiri@iptel.org; echo >/dev/null");
+        #break;
+
+        # first dump the message to a file using cat command
+        exec_msg("printenv SRCIP > /tmp/exectest.txt; cat >> /tmp/exectest.txt")
+        # and then rewrite URI using external utility
+        # note that the last echo command trashes input parameter
+        if (exec_uri("echo sip:mra@iptel.org;echo sip:mrb@iptel.org;echo>/dev/null")) {
+
+        #if (exec_uri("/tmp/sh.sh")) {
+                sl_send_reply("300", "Redirect");
+        } else {
+                sl_reply_error();
+                log(1, "alas, rewriting failed\n");
+        };
+}
+
+		    </programlisting>
+		</example>
+	    </section> <!-- exec example -->
+
+	    <section>
+		<title>Reply Processing (Forward on Unavailable)</title>
+		<para>
+		    Here we show how to trigger serial forking when
+		    a relayed request was replied with a negative
+		    status or was not replied at all. Incoming requests
+		    are rewritten to be forwarded to nobody@iptel.org
+		    in parallel with parallel@iptel.org:9. When transaction
+		    times out (the second branch will never deliver 
+		    a reply), reply_route number 1 (as specified in
+		    t_on_negative) will be processed and result in
+		    serial forking (i.e., "forward on unavailable").
+		</para>
+		<example>
+		    <title>Reply Processing</title>
+		    <programlisting format="linespecific">
+#
+# example script showing both types of forking;
+# incoming message is foked in parallel to
+# 'nobody' and 'parallel', if no positive reply
+# appears with final_response timer, nonsense
+# is retried (serial forking); than, destination
+# 'foo' is given last chance
+
+# ----------- global configuration parameters ------------------------
+
+debug=3
+fork=no
+log_stderror=yes        # (cmd line: -E)
+check_via=no # (cmd. line: -v)
+dns=no # (cmd. line: -r)
+syn_branch=1
+reply_to_via=0
+
+
+# ------------------ module loading ----------------------------------
+
+loadmodule "/usr/lib/ser/modules/sl.so"
+loadmodule "/usr/lib/ser/modules/print.so"
+loadmodule "/usr/lib/ser/modules/tm.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# -- tm params --
+modparam("tm", "fr_timer", 10 )
+modparam("tm", "fr_inv_timer", 5 )
+
+# -------------------------  request routing logic -------------------
+
+# main routing logic
+
+route{
+        # for testing purposes, simply okay all REGISTERs
+        if (method=="REGISTER") {
+                log("REGISTER");
+                sl_send_reply("200", "ok");
+                break;
+        };
+        # print a message if a call was missed
+        seturi("sip:nobody@iptel.org");
+        /* parallel branch to sink port -- that will make it
+           wait until timer hits
+        */
+        append_branch("sip:parallel@iptel.org:9");
+        t_on_negative("1");
+        # start parallel forking to nobody and wer.xmla 
+        log(1,"about to relay\n");
+        t_relay();
+}
+
+reply_route[1] {
+        rewriteuri("sip:nonsense@iptel.org");
+        append_branch();
+        log(1,"first redirection\n");
+        t_on_negative("2");
+}
+
+reply_route[2] {
+        rewriteuri("sip:foo@iptel.org");
+        log(1, "second redirection\n");
+        append_branch();
+}
+
+		    </programlisting>
+
+		</example>
+	    </section> <!-- reply processing -->
+
+	    
+
+	</section> <!-- examples -->
 
     </chapter>
     
@@ -608,7 +963,7 @@ MODPARAM        modparam
 	    </para>
 	</section>
 	<section>
-	    <title>Core Command</title>
+	    <title>Core Commands</title>
 	    <para>
 FORWARD forward
 DROP    "drop"|"break"
@@ -638,6 +993,49 @@ ELSE                    "else"
 
 	</section>
 	<section>
+	    <title>serctl command</title>
+	    <para>
+		serctl is a command-line utility which allows to
+		perform most of management tasks need to operate
+		a server: adding users, changing their passwords,
+		watching server status, etc. Usage of utility is
+		as follows:
+		<example>
+		    <title>serctl usage</title>
+		    <programlisting format="linespecific">
+usage: 
+           < subscribers >
+ sc add <name> <password> <email> ... add a new subscriber (*)
+ sc mail <name> ..................... send an email to a user
+ sc rm <name> ....................... delete a user (*)
+ sc alias show [<alias>] ............ show aliases
+ sc alias rm <alias> ................ remove an alias
+ sc alias add <alias> <uri> ......... show aliases
+           < access control lists >
+ sc acl show [<user>] ............... show user membership
+ sc acl grant <user> <group> ........ grant user membership (*)
+ sc acl revoke <user> [<group>] ..... grant user membership(s) (*)
+           < usrloc >
+ sc dul <table> <name> .............. delete user's UsrLoc entries
+ sc show ............................ show online users
+ sc showdb [<name>] ................. show online users flushed in DB
+ sc passwd <user> <passwd> .......... change user's password (*)
+ sc perm <user> <uri> ............... introduce a permanent UrLoc entry
+           < server health >
+ sc monitor ......................... show internal status
+ sc ps .............................. show runnig processes 
+ sc fifo ............................ send raw commands to FIFO
+
+   commands labeled with (*) will prompt for a MySQL password
+   if the variable PW is set, the password will not be prompted"
+
+     ACL privileges are: local ld int voicemail free-pstn
+
+		    </programlisting>
+		</example>
+	    </para>
+	</section>
+	<section>
 	    <title>Modules</title>
 		<para>
 	    Module description is currently located in READMEs of
@@ -650,8 +1048,15 @@ ELSE                    "else"
 
 
 <!-- TODO
+
+
+INCLUDING
+- the examples and license should be better included
+
 MISSING
 - route
+- modules
+- installation
 
 FAQ: 
 - bandwidth, FW/NATs
@@ -660,6 +1065,11 @@ HOWTO
 - implementing dialing plans
 - serving multiple domains
 - ACLs
+- and other operational guidelines
+
+PROGRAMMING TM
+
+follow the mysql pattern, tehy have a very nice documentation
 -->
 
 </book>
