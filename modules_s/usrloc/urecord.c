@@ -346,7 +346,13 @@ int db_delete_urecord(urecord_t* _r)
 {
 	char b[256];
 	db_key_t keys[1] = {user_col};
-	db_val_t vals[1] = {{DB_STR, 0, {.str_val = {_r->aor.s, _r->aor.len}}}};
+	db_val_t vals[1];
+
+	vals[0].type = DB_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val.s = _r->aor.s;
+	vals[0].val.str_val.len = _r->aor.len;
+
 
 	     /* FIXME */
 	memcpy(b, _r->domain->s, _r->domain->len);

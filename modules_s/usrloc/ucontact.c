@@ -298,14 +298,35 @@ int db_insert_ucontact(ucontact_t* _c)
 	char b[256];
 	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col,
 						cseq_col};
-	db_val_t vals[] = {
-			  {DB_STR,      0, {.str_val = {_c->aor->s, _c->aor->len}}},
-			  {DB_STR,      0, {.str_val = {_c->c.s, _c->c.len}}},
-			  {DB_DATETIME, 0, {.time_val = _c->expires}},
-			  {DB_DOUBLE,   0, {.double_val = _c->q}},
-			  {DB_STR,      0, {.str_val = {_c->callid.s, _c->callid.len}}},
-			  {DB_INT,      0, {.int_val = _c->cseq}}
-	};
+	db_val_t vals[6];
+
+	vals[0].type = DB_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val.s = _c->aor->s;
+	vals[0].val.str_val.len = _c->aor->len;
+
+	vals[1].type = DB_STR;
+	vals[1].nul = 0;
+	vals[1].val.str_val.s = _c->c.s; 
+	vals[1].val.str_val.len = _c->c.len;
+
+	vals[2].type = DB_DATETIME;
+	vals[2].nul = 0;
+	vals[2].val.time_val = _c->expires;
+
+	vals[3].type = DB_DOUBLE;
+	vals[3].nul = 0;
+	vals[3].val.double_val = _c->q;
+
+	vals[4].type = DB_STR;
+	vals[4].nul = 0;
+	vals[4].val.str_val.s = _c->callid.s;
+	vals[4].val.str_val.len = _c->callid.len;
+
+	vals[5].type = DB_INT;
+	vals[5].nul = 0;
+	vals[5].val.int_val = _c->cseq;
+
 
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
