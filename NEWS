@@ -82,7 +82,9 @@ acc module:
 auth module:
 ------------
 - auth module has been split in auth, auth_db, auth_radius, group
-  group_radius, uri and uri_radius
+  group_radius, uri and uri_radius 
+- all the parameters that were part of former auth module are now 
+  part of auth_db module
 XXX 
 
 im module:
