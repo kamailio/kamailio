@@ -36,10 +36,13 @@
 #ifndef RR_MOD_H
 #define RR_MOD_H
 
+#ifdef ENABLE_USER_CHECK
+#include "../../str.h"
+extern str i_user;
+#endif
 
 extern int append_fromtag;
 extern int enable_double_rr;
 extern int enable_full_lr;
-
 
 #endif /* RR_MOD_H */

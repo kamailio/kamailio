@@ -201,10 +201,21 @@ static inline int is_2rr(str* _params)
 /*
  * Check if URI is myself
  */
+#ifdef ENABLE_USER_CHECK
+static inline int is_myself(str *_user, str* _host, unsigned short _port)
+#else
 static inline int is_myself(str* _host, unsigned short _port)
+#endif
 {
 	int ret;
-
+#ifdef ENABLE_USER_CHECK
+	if(i_user.len && i_user.len==_user->len
+			&& !strncmp(i_user.s, _user->s, _user->len))
+	{
+		DBG("RR:is_myself: this URI isn't mine\n");
+		return 0;
+	}
+#endif
 	ret = check_self(_host, _port ? _port : SIP_PORT);
 	if (ret < 0) return 0;
 	else return ret;
@@ -494,7 +505,12 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 		return -1;
 	}
 
-	if (is_myself(&puri.host, puri.port_no)) {
+#ifdef ENABLE_USER_CHECK
+	if (is_myself(&puri.user, &puri.host, puri.port_no))
+#else
+	if (is_myself(&puri.host, puri.port_no))
+#endif
+	{
 		     /*	if (enable_double_rr && is_2rr(&_ruri->params)) { */ 
 	      /* DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, ZSW(rt->nameaddr.uri.s)); */
  		if (!rt->next) {
@@ -628,7 +644,12 @@ static inline int route_after_loose(struct sip_msg* _m)
 	}
 
 	     /* IF the URI was added by me, remove it */
-	if (is_myself(&puri.host, puri.port_no)) {
+#ifdef ENABLE_USER_CHECK
+	if (is_myself(&puri.user, &puri.host, puri.port_no))
+#else
+	if (is_myself(&puri.host, puri.port_no))
+#endif
+	{
 		DBG("ral(): Topmost route URI: '%.*s' is me\n", uri->len, ZSW(uri->s));
 		if (!rt->next) {
 			     /* No next route in the same header, remove the whole header
@@ -727,7 +748,12 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		return -1;
 	}
 
-	if (is_myself(&puri.host, puri.port_no)) {
+#ifdef ENABLE_USER_CHECK
+	if (is_myself(&puri.user, &puri.host, puri.port_no))
+#else
+	if (is_myself(&puri.host, puri.port_no))
+#endif
+	{
 		ret = route_after_strict(_m, &puri);
 		if (ret < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_strict\n");

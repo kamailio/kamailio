@@ -45,6 +45,13 @@
 #include "loose.h"
 #include "record.h"
 
+#ifdef ENABLE_USER_CHECK
+#include <string.h>
+#include "../../str.h"
+str i_user;
+char *ignore_user = NULL;
+#endif
+
 int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
 int enable_full_lr = 0;   /* Disabled by default */
@@ -81,6 +88,9 @@ static param_export_t params[] ={
 	{"append_fromtag",   INT_PARAM, &append_fromtag  },
 	{"enable_double_rr", INT_PARAM, &enable_double_rr},
 	{"enable_full_lr",   INT_PARAM, &enable_full_lr  },
+#ifdef ENABLE_USER_CHECK
+	{"ignore_user",      STR_PARAM, &ignore_user     },
+#endif
 	{0, 0, 0 }
 };
 
@@ -100,6 +110,18 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DBG("rr - initializing\n");
+#ifdef ENABLE_USER_CHECK
+	if(ignore_user)
+	{
+		i_user.s = ignore_user;
+		i_user.len = strlen(ignore_user);
+	}
+	else
+	{
+		i_user.s = 0;
+		i_user.len = 0;
+	}
+#endif
 	return 0;
 }
 
