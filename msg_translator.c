@@ -107,7 +107,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 	int i;
 
 	/* maybe we are lucky and name it's an ip */
-	if (strcmp(name, q_inet_itoa( /* *(struct in_addr *)&*/ip ))==0)
+	if (strcmp(name, q_inet_itoa(ip))==0)
 		return 0;
 	if (resolver&DO_DNS){
 		DBG("check_address: doing dns lookup\n");
@@ -282,6 +282,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char* new_buf;
 	char* orig;
 	char* buf;
+	char  backup;
 	unsigned int offset, s_offset, size;
 	unsigned long source_ip;
 	struct lump *t,*r;
@@ -302,8 +303,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
 		goto error1;
 	}
-
 	/* check if received needs to be added */
+	backup = msg->via1->host.s[msg->via1->host.len];
+	msg->via1->host.s[msg->via1->host.len] = 0;
 	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
 		received_buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 		if (received_buf==0){
@@ -322,6 +324,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		memcpy(received_buf+RECEIVED_LEN, tmp, tmp_len);
 		received_buf[received_len]=0; /*null terminate it */
 	}
+	msg->via1->host.s[msg->via1->host.len] = backup;
 
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
@@ -338,7 +341,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		}else{
 				size= msg->via1->host.s-msg->via1->hdr.s+msg->via1->host.len;
 				if (msg->via1->port!=0){
-					size+=strlen(msg->via1->hdr.s+size+1)+1; /* +1 for ':'*/
+					/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
+					size += msg->via1->port_str.len + 1; /* +1 for ':'*/
 				}
 		}
 		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
@@ -347,7 +351,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
 				==0 ) goto error;
 	}
-
 
 	/* compute new msg len and fix overlapping zones*/
 	new_len=len;
@@ -404,7 +407,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 			}
 		}
 	}
-
 
 	if (msg->new_uri.s){
 		uri_len=msg->new_uri.len;

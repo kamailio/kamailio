@@ -27,7 +27,7 @@ struct cell      *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
 unsigned int     nr_forks;
-struct fork      t_forks[MAX_FORK+1];
+struct fork      t_forks[ NR_OF_CLIENTS ];
 
 
 void timer_routine(unsigned int, void*);
@@ -201,13 +201,13 @@ int t_update_timers_after_sending_reply( struct retr_buf *rb )
 int t_should_relay_response( struct cell *Trans , int new_code,
 									int branch , int *should_store )
 {
-	int T_code;
+	//int T_code;
 	int b, lowest_b, lowest_s;
 
-	if (Trans->uas.request->REQ_METHOD==METHOD_INVITE)
-		T_code = Trans->uac[branch].status;
-	else
-		T_code = Trans->uas.status;
+	//if (Trans->uas.request->REQ_METHOD==METHOD_INVITE)
+	//	T_code = Trans->uac[branch].status;
+	//else
+	//T_code = Trans->uas.status;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -215,9 +215,9 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 	   >= 300 are not relayed because 200 was already sent
 	   out
 	*/
-
+	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
 	/* if final response sent out, allow only INVITE 2xx  */
-	if ( T_code >= 200 ) {
+	if ( Trans->uas.status >= 200 ) {
 		if (new_code>=200 && new_code < 300  && 
 			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
 			DBG("DBG: t_should_relay: 200 INV after final sent\n");
@@ -595,25 +595,49 @@ error:
 
 
 
-int t_add_fork( unsigned int ip , unsigned int port, str* uri)
+int t_add_fork( unsigned int ip, unsigned int port, char* uri_s,
+			unsigned int uri_len, enum fork_type type, unsigned char free_flag)
 {
-	if (nr_forks+1>=MAX_FORK)
+	unsigned int pos=0;
+	char         *foo;
+
+	switch (type)
 	{
-		LOG(L_ERR,"ERROR:t_add_fork: trying to add new fork ->"
-			" MAX_FORK exceded\n");
-		return -1;
+		case DEFAULT:
+			if (nr_forks+1>=MAX_FORK)
+			{
+				LOG(L_ERR,"ERROR:t_add_fork: trying to add new fork ->"
+					" MAX_FORK exceded\n");
+				return -1;
+			}
+			pos = ++nr_forks;
+			break;
+		case NO_RESPONSE:
+			if (t_forks[NO_RPL_BRANCH].ip)
+				LOG(L_WARN,"WARNING:t_add_fork: trying to add NO_RPL fork ->"
+					" it was set before -> overriding\n");
+			if (uri_s && uri_len && free_flag==0)
+			{
+				foo = (char*)pkg_malloc(uri_len);
+				if (!foo)
+				{
+					LOG(L_ERR,"ERROR:t_add_fork: cannot get free memory\n");
+					return -1;
+				}
+				memcpy(foo,uri_s,uri_len);
+				uri_s = foo;
+			}
+			free_flag = 0;
+			pos = NO_RPL_BRANCH;
 	}
 
-	nr_forks++;
-	t_forks[nr_forks].ip = ip;
-	t_forks[nr_forks].port = port;
-	if (uri && uri->s && uri->len)
+	t_forks[pos].ip = ip;
+	t_forks[pos].port = port;
+	if (uri_s && uri_len)
 	{
-		t_forks[nr_forks].uri.len = uri->len;
-		t_forks[nr_forks].uri.s = uri->s;
-	}else{
-		t_forks[nr_forks].uri.s = 0;
-		t_forks[nr_forks].uri.len = 0;
+		t_forks[pos].free_flag = free_flag;
+		t_forks[pos].uri.len = uri_len;
+		t_forks[pos].uri.s = uri_s;
 	}
 
 	return 1;
@@ -624,10 +648,16 @@ int t_add_fork( unsigned int ip , unsigned int port, str* uri)
 
 int t_clear_forks( )
 {
+	int i;
+
+	DBG("DEBUG: t_clear_forks: clearing tabel...\n");
+	for(i=1;i<nr_forks;i++)
+		if (t_forks[i].free_flag && t_forks[i].uri.s)
+			pkg_free(t_forks[i].uri.s);
+	memset( t_forks, 0, sizeof(t_forks));
 	nr_forks = 0;
 	return 1;
 }
-
 
 
 
@@ -703,8 +733,12 @@ inline void final_response_handler( void *attr)
 	/* send a 408 */
 	if ( r_buf->my_T->uac[r_buf->branch].status<200
 #ifdef SILENT_FR
-	&& (r_buf->my_T->nr_of_outgoings>1)
-	/* fork==yes  - bogdan */
+	&& (r_buf->my_T->nr_of_outgoings>1     /*if we have forked*/
+		|| r_buf->my_T->uas.request->first_line.u.request.method_value!=
+			METHOD_INVITE                  /*if is not an INVITE */
+		|| r_buf->my_T->uac[r_buf->my_T->nr_of_outgoings].uri.s
+		                                   /*if no on no response was set*/ 
+	)
 #endif
 	)
 	{

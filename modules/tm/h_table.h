@@ -124,7 +124,7 @@ typedef struct cell
 	/* UA Server */
 	struct ua_server  uas;
 	/* UA Clients */
-	struct ua_client  uac[ MAX_FORK ];
+	struct ua_client  uac[ NR_OF_CLIENTS ];
 
 	/* protection against concurrent reply processing */
 	ser_lock_t   reply_mutex;

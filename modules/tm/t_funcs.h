@@ -24,15 +24,17 @@ struct cell;
 
 struct fork
 {
-	unsigned int ip,port;
-	str uri;
+	unsigned int  ip,port;
+	unsigned char free_flag;
+	str           uri;
+
 };
 
 
 extern struct cell      *T;
 extern unsigned int     global_msg_id;
 extern struct s_table*  hash_table;
-extern struct fork      t_forks[MAX_FORK+1];
+extern struct fork      t_forks[ NR_OF_CLIENTS ];
 extern unsigned int     nr_forks;
 
 
@@ -239,6 +241,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param );
 int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param );
+int forward_serial_branch(struct cell* Trans,int branch);
 struct cell* t_lookupOriginalT(  struct s_table* hash_table,
 	struct sip_msg* p_msg );
 int t_reply_matching( struct sip_msg* , int* ,  int* );
@@ -259,7 +262,8 @@ int t_build_and_send_CANCEL(struct cell *Trans, unsigned int branch);
 char *build_ack( struct sip_msg* rpl, struct cell *trans, int branch ,
 	int *ret_len);
 enum addifnew_status t_addifnew( struct sip_msg* p_msg );
-int t_add_fork( unsigned int ip , unsigned int port, str* uri);
+int t_add_fork( unsigned int ip , unsigned int port, char* uri_s,
+	unsigned int uri_len, enum fork_type type, unsigned char free_flag);
 int t_clear_forks( );
 
 
@@ -279,23 +283,6 @@ inline int static attach_ack(  struct cell *t, int branch,
 	UNLOCK_ACK( t );
 	return 1;
 }
-
-
-
-/*
-inline int static relay_ack( struct cell *t, int branch,
-						struct retrans_buff *srb, int len )
-{
-	memset( srb, 0, sizeof( struct retrans_buff ) );
-	memcpy( & srb->to, & t->ack_to, sizeof (struct sockaddr_in));
-	srb->tolen = sizeof (struct sockaddr_in);
-	srb->my_T = t;
-	srb->branch = branch;
-	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
-	srb->bufflen = len;
-	SEND_BUFFER( srb );
-	return attach_ack( t, branch, srb );
-}*/
 
 
 

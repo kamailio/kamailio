@@ -15,6 +15,18 @@
 
 
 
+inline int check_for_no_response( struct cell *Trans ,int code, int relay)
+{
+	if ( code/100>3 && Trans->uac[Trans->nr_of_outgoings].uri.s )
+	{
+		forward_serial_branch( Trans , Trans->nr_of_outgoings );
+		return -1;
+	}
+	return relay;
+}
+
+
+
 /* Retransmits the last sent inbound reply.
  * input: p_msg==request for which I want to retransmit an associated reply
  * Returns  -1 - error
@@ -72,7 +84,7 @@ int t_send_reply( struct sip_msg* p_msg, unsigned int code, char * text,
 	}
 
 	rb = & T->uas.response;
-	if (relay >=0 )
+	if (relay >=0 && (relay=check_for_no_response(T,code,relay))>=0 )
 	{
 		if (!rb->buffer) {
 			/* initialize retransmission structure */
@@ -265,6 +277,8 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	/* *** store and relay message as needed *** */
 	relay = t_should_relay_response( T , msg_status, branch, &save_clone );
+	DBG("DEBUG: t_on_reply: branch=%d, save=%d, relay=%d\n",
+		branch, save_clone, relay );
 
 	if (save_clone)
 	{
@@ -277,8 +291,10 @@ int t_on_reply( struct sip_msg  *p_msg )
 			goto error1;
 		}
 		/* when forking, replies greater then 300 are saved */
-		if (T->nr_of_outgoings>1 && msg_status>=300 )
+		if ((T->nr_of_outgoings>1 || T->uac[T->nr_of_outgoings].uri.s)
+			&& msg_status>=300 )
 		{
+			DBG("DEBUG: t_on_reply: saving reply! \n");
 			str_foo = &(T->uac[branch].rpl_buffer);
 			str_foo->s = shm_resize(str_foo->s, res_len+
 				(str_foo->s?0:REPLY_OVERBUFFER_LEN) );
@@ -299,7 +315,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	}
 
 	rb = & T->uas.response;
-	if (relay >= 0 ) {
+	if (relay >= 0  && (relay=check_for_no_response(T,msg_status,relay))>=0 ) {
 		if (relay!=branch)
 		{
 			str_foo = &(T->uac[relay].rpl_buffer);

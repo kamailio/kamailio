@@ -142,7 +142,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			&& /*to tag*/p_cell->uas.tag->len==get_to(p_msg)->tag_value.len
 			//&& (printf("------To tag OK -> testing uri len\n"))
 			&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_LEN )
-			//&& (printf("------uri OK -> testing via len\n"))
+			&& (printf("------uri OK -> testing via len\n"))
 			&& /*VIA*/(p_cell->uas.status==200 || EQ_VIA_LEN(via1)) )
 				/* so far the lengths are the same
 				-> let's check the contents */
@@ -333,9 +333,6 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 	p_cell = hash_table->entrys[hash_index].first_cell;
 	while( p_cell )
 	{
-		DBG(">>>>>> res=[%.*s]  req=[%.*s]\n",get_cseq(p_msg)->method.len,
-			get_cseq(p_msg)->method.s,get_cseq(p_cell->uas.request)->method.len
-			,get_cseq(p_cell->uas.request)->method.s);
 		/* is it the cell with the wanted entry_label? */
 		if ( (get_cseq(p_msg)->method.len ==
 		get_cseq(p_cell->uas.request)->method.len)
@@ -347,7 +344,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 		&& p_cell->uac[branch_id].request.cancel!=EXTERNAL_CANCEL
 		&& (*local_cancel=1)==1))
 #ifdef USE_SYNONIM
-		&& (p_cell->label == entry_label )
+		&& ( p_cell->label == entry_label )
 #else
 		&& ( p_cell->uas.request->add_to_branch_len>=32 &&
 		!memcmp(p_cell->uas.request->add_to_branch_s,loopi,32))

@@ -11,14 +11,27 @@
 #include "../../ut.h"
 #include "../../timer.h"
 
+
+#define shm_free_lump( _lmp) \
+	do{\
+		if ((_lmp)) {\
+			if ((_lmp)->op==LUMP_ADD && (_lmp)->u.value )\
+				shm_free((_lmp)->u.value);\
+			shm_free((_lmp));\
+		}\
+	}while(0);
+
+
+
+
 /* function returns:
  *       1 - forward successfull
  *      -1 - error during forward
  */
 int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
-											unsigned int dest_port_param )
+												unsigned int dest_port_param )
 {
-	int          branch,i;
+	int          branch;
 	unsigned int len;
 	char         *buf, *shbuf;
 	struct cell  *T_source = T;
@@ -28,11 +41,17 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	buf    = 0;
 	shbuf  = 0;
+	backup_uri.s = p_msg->new_uri.s;
+	backup_uri.len = p_msg->new_uri.len;
+
+	/* sets as first fork the default outgoing */
 	nr_forks++;
 	t_forks[0].ip = dest_ip_param;
 	t_forks[0].port = dest_port_param;
-	backup_uri.s = t_forks[0].uri.s = p_msg->new_uri.s;
-	backup_uri.len = t_forks[0].uri.len = p_msg->new_uri.len;
+	t_forks[0].uri.len = p_msg->new_uri.len;
+	t_forks[0].uri.s =  p_msg->new_uri.s;
+	t_forks[0].free_flag = 0;
+
 
 	/* are we forwarding for the first time? */
 	if ( T->uac[0].request.buffer )
@@ -56,24 +75,27 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		/* if found */
 		if ( T->T_canceled!=T_NULL )
 		{
-			for(nr_forks=0,i=0;i<T->T_canceled->nr_of_outgoings;i++)
+			for(nr_forks=0;nr_forks<T->T_canceled->nr_of_outgoings;nr_forks++)
 			{
 				/* if in 1xx status, send to the same destination */
-				if ( (T->T_canceled->uac[i].status/100)==1 )
+				if ( (T->T_canceled->uac[nr_forks].status/100)==1 )
 				{
 					DBG("DEBUG: t_forward_nonack: branch %d not finalize"
-						": sending CANCEL for it\n",i);
+						": sending CANCEL for it\n",nr_forks);
 					t_forks[nr_forks].ip =
-						T->T_canceled->uac[i].request.to.sin_addr.s_addr;
+					  T->T_canceled->uac[nr_forks].request.to.sin_addr.s_addr;
 					t_forks[nr_forks].port =
-						T->T_canceled->uac[i].request.to.sin_port;
-					t_forks[nr_forks].uri.s = T->T_canceled->uac[i].uri.s;
-					t_forks[nr_forks].uri.len = T->T_canceled->uac[i].uri.len;
-					nr_forks++;
+					  T->T_canceled->uac[nr_forks].request.to.sin_port;
+					t_forks[nr_forks].uri.len =
+					  T->T_canceled->uac[nr_forks].uri.len;
+					t_forks[nr_forks].uri.s =
+					  T->T_canceled->uac[nr_forks].uri.s;
+					t_forks[nr_forks].free_flag = 0;
 				}else{
 					/* transaction exists, but nothing to cancel */
 					DBG("DEBUG: t_forward_nonack: branch %d finalized"
-						": no CANCEL sent here\n",i);
+						": no CANCEL sent here\n",nr_forks);
+					t_forks[nr_forks].ip = 0;
 				}
 			}
 #ifdef USE_SYNONIM
@@ -87,13 +109,15 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	}/* end special case CANCEL*/
 
 #ifndef USE_SYNONIM
-	if ( nr_forks && add_branch_label( T_source, T->uas.request , branch )==-1)
+	if ( nr_forks && add_branch_label( T_source, T->uas.request , 0 )==-1)
 		goto error;
 #endif
 
 	DBG("DEBUG: t_forward_nonack: nr_forks=%d\n",nr_forks);
 	for(branch=0;branch<nr_forks;branch++)
 	{
+		if (!t_forks[branch].ip)
+			goto end_loop;
 		DBG("DEBUG: t_forward_nonack: branch = %d\n",branch);
 		/*generates branch param*/
 		if ( add_branch_label( T_source, p_msg , branch )==-1)
@@ -104,12 +128,12 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 				if (b->type==HDR_VIA)
 				{
 					for(a=b->before;a;)
-						{c=a->before;free_lump(a);a=c;}
+						{c=a->before;free_lump(a);pkg_free(a);a=c;}
 					for(a=b->after;a;)
-						{c=a->after;free_lump(a);a=c;}
+						{c=a->after;free_lump(a);pkg_free(a);a=c;}
 					if (b1) b1->next = b->next;
 						else p_msg->add_rm = b->next;
-					free_lump(b);
+					free_lump(b);pkg_free(b);
 				}
 		/* updates the new uri*/
 		p_msg->new_uri.s = t_forks[branch].uri.s;
@@ -135,7 +159,6 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			:(p_msg->first_line.u.request.uri.len);
 		DBG("DEBUG: uri= |%.*s| \n",T->uac[branch].uri.len,
 			T->uac[branch].uri.s);
-		T->nr_of_outgoings++ ;
 		/* send the request */
 		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch].ip;
 		T->uac[branch].request.to.sin_port = t_forks[branch].port;
@@ -154,11 +177,24 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		T->uac[branch].request.retr_list = RT_T1_TO_1;
 		set_timer( hash_table, &(T->uac[branch].request.retr_timer),
 			RT_T1_TO_1 );
+		end_loop:
+		T->nr_of_outgoings++ ;
+		DBG("DEBUG: branch %d done\n",branch);
 	}
 
+	/* if we have a branch spec. for NO_RESPONSE_RECEIVED, we have to 
+	move it immediatly after the last parallel branch */
+	if (t_forks[NO_RPL_BRANCH].ip && T->nr_of_outgoings!=NO_RPL_BRANCH )
+	{
+		branch = T->nr_of_outgoings;
+		T->uac[branch].request.to.sin_addr.s_addr = t_forks[NO_RPL_BRANCH].ip;
+		T->uac[branch].request.to.sin_port = t_forks[NO_RPL_BRANCH].port;
+		T->uac[branch].uri.s = t_forks[NO_RPL_BRANCH].uri.s;
+		T->uac[branch].uri.len = t_forks[NO_RPL_BRANCH].uri.len;
+	}
 	p_msg->new_uri.s = backup_uri.s;
 	p_msg->new_uri.len = backup_uri.len;
-	nr_forks = 0;
+	t_clear_forks();
 	return 1;
 
 error:
@@ -167,7 +203,7 @@ error:
 	if (buf) pkg_free( buf );
 	p_msg->new_uri.s = backup_uri.s;
 	p_msg->new_uri.len = backup_uri.len;
-	nr_forks = 0;
+	t_clear_forks();
 	return -1;
 }
 
@@ -249,3 +285,105 @@ fwd_sl: /* some strange conditions occured; try statelessly */
 	return 1;
 #endif
 }
+
+
+
+
+int forward_serial_branch(struct cell* Trans,int branch)
+{
+	struct sip_msg*  p_msg = Trans->uas.request;
+	struct lump      *a, *b, *b1, *c;
+	unsigned int     len;
+	char             *buf=0, *shbuf=0;
+	str              backup_uri;
+
+	backup_uri.s = p_msg->new_uri.s;
+	backup_uri.len = p_msg->new_uri.len;
+
+	DBG("DEBUG: t_forward_serial_branch: branch = %d\n",branch);
+	/*generates branch param*/
+	if ( add_branch_label( Trans, p_msg , branch )==-1)
+		goto error;
+	/* remove all the HDR_VIA type lumps - they are in SHM memory!!! */
+	for(b=p_msg->add_rm,b1=0;b;b1=b,b=b->next)
+		if (b->type==HDR_VIA)
+		{
+			for(a=b->before;a;)
+				{c=a->before;shm_free_lump(a);a=c;}
+			for(a=b->after;a;)
+				{c=a->after;shm_free_lump(a);a=c;}
+			if (b1) b1->next = b->next;
+				else p_msg->add_rm = b->next;
+			shm_free_lump(b);
+		}
+
+	/* updates the new uri*/
+	p_msg->new_uri.s = Trans->uac[branch].uri.s;
+	p_msg->new_uri.len = Trans->uac[branch].uri.len;
+	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
+		goto error;
+	pkg_free(Trans->uac[branch].uri.s);
+
+	/* allocates a new retrans_buff for the outbound request */
+	DBG("DEBUG: t_forward_serial_branch: building outbound request"
+		" for branch %d.\n",branch);
+	shbuf = (char *) shm_malloc( len );
+	if (!shbuf)
+	{
+		LOG(L_ERR, "ERROR: t_forward_serial_branch: out of shmem buffer\n");
+		goto error;
+	}
+	Trans->uac[branch].request.buffer = shbuf;
+	Trans->uac[branch].request.buffer_len = len ;
+	memcpy( Trans->uac[branch].request.buffer , buf , len );
+	/* keeps a hooker to uri inside buffer*/
+	Trans->uac[branch].uri.s = Trans->uac[branch].request.buffer +
+		(p_msg->first_line.u.request.uri.s - p_msg->buf);
+	Trans->uac[branch].uri.len=p_msg->new_uri.len?(p_msg->new_uri.len)
+		:(p_msg->first_line.u.request.uri.len);
+	DBG("DEBUG: uri= |%.*s| \n",Trans->uac[branch].uri.len,
+		Trans->uac[branch].uri.s);
+	Trans->nr_of_outgoings++ ;
+	/* send the request */
+	Trans->uac[branch].request.to.sin_family = AF_INET;
+	SEND_BUFFER( &(T->uac[branch].request) );
+
+	pkg_free( buf ) ;
+	buf=NULL;
+
+	DBG("DEBUG: t_forward_serial_branch:starting timers (retrans and FR) %d\n",
+		get_ticks() );
+	/*sets and starts the FINAL RESPONSE timer */
+	set_timer( hash_table, &(T->uac[branch].request.fr_timer), FR_TIMER_LIST );
+	/* sets and starts the RETRANS timer */
+	T->uac[branch].request.retr_list = RT_T1_TO_1;
+	set_timer( hash_table, &(T->uac[branch].request.retr_timer), RT_T1_TO_1 );
+
+	p_msg->new_uri.s = backup_uri.s;
+	p_msg->new_uri.len = backup_uri.len;
+
+	for(b=p_msg->add_rm,b1=0;b;b1=b,b=b->next)
+		if (b->type==HDR_VIA)
+		{
+			for(a=b->before;a;)
+				{c=a->before;free_lump(a);pkg_free(a);a=c;}
+			for(a=b->after;a;)
+				{c=a->after;free_lump(a);pkg_free(a);a=c;}
+			if (b1) b1->next = b->next;
+				else p_msg->add_rm = b->next;
+			free_lump(b);pkg_free(b);
+		}
+
+	return 1;
+
+error:
+	if (shbuf) shm_free(shbuf);
+	T->uac[branch].request.buffer=NULL;
+	if (buf) pkg_free( buf );
+	p_msg->new_uri.s = backup_uri.s;
+	p_msg->new_uri.len = backup_uri.len;
+	return -1;
+}
+
+
+

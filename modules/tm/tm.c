@@ -35,6 +35,7 @@ static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2);
 static int w_t_add_fork_ip(struct sip_msg* msg, char* str, char* str2);
 static int w_t_add_fork_uri(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_add_fork_uri(void** param, int param_no);
+static int w_t_add_fork_on_no_rpl(struct sip_msg* msg,char* str,char* str2);
 static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2);
 static void w_onbreak(struct sip_msg* msg) { t_unref(); }
 
@@ -55,7 +56,8 @@ struct module_exports exports= {
 				"t_forward_ack",
 				"t_fork_to_ip",
 				"t_fork_to_uri",
-				"t_clear_forks"
+				"t_clear_forks",
+				"t_fork_on_no_response"
 			},
 	(cmd_function[]){
 					w_t_add_transaction,
@@ -70,7 +72,8 @@ struct module_exports exports= {
 					w_t_forward_ack,
 					w_t_add_fork_ip,
 					w_t_add_fork_uri,
-					w_t_clear_forks
+					w_t_clear_forks,
+					w_t_add_fork_on_no_rpl
 					},
 	(int[]){
 				0, /* t_add_transaction */
@@ -85,7 +88,8 @@ struct module_exports exports= {
 				2, /* t_forward_ack */
 				2, /* t_fork_to_ip */
 				1, /* t_fork_to_uri */
-				0  /* t_clear_forks */
+				0, /* t_clear_forks */
+				1  /* t_add_fork_on_no_response */
 			},
 	(fixup_function[]){
 				0,						/* t_add_transaction */
@@ -100,9 +104,10 @@ struct module_exports exports= {
 				fixup_t_forward,		/* t_forward_ack */
 				fixup_t_forward,		/* t_fork_to_ip */
 				fixup_t_add_fork_uri,   /* t_fork_to_uri */
-				0						/* t_clear_forks */
+				0,						/* t_clear_forks */
+				fixup_t_add_fork_uri	/* t_add_fork_on_no_response */
 		},
-	13,
+	14,
 	NULL,   /* Module parameter names */
 	NULL,   /* Module parameter types */
 	NULL,   /* Module parameter variable pointers */
@@ -298,7 +303,7 @@ static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
 
 static int w_t_add_fork_ip(struct sip_msg* msg, char* str, char* str2)
 {
-	return t_add_fork((unsigned int)str, (unsigned int)str2, 0);
+	return t_add_fork((unsigned int)str, (unsigned int)str2, 0,0,DEFAULT,0);
 }
 
 
@@ -308,7 +313,7 @@ static int fixup_t_add_fork_uri(void** param, int param_no)
 {
 	unsigned int ip, port;
 	struct fork* fork_pack;
-				 
+
 	if (param_no==1)
 	{
 		fork_pack = (struct fork*)pkg_malloc(sizeof(struct fork));
@@ -318,11 +323,10 @@ static int fixup_t_add_fork_uri(void** param, int param_no)
 				cannot allocate memory!\n");
 			return E_UNSPEC;
 		}
-		fork_pack->uri.s = *param;
 		fork_pack->uri.len = strlen(*param);
+		fork_pack->uri.s = *param;
 		if ( get_ip_and_port_from_uri(&(fork_pack->uri), &ip, &port)==0 )
 		{
-			printf("ip = %d, port =%d\n",ip,port);
 			fork_pack->ip = ip;
 			fork_pack->port = port;
 			*param=(void*)fork_pack;
@@ -334,7 +338,7 @@ static int fixup_t_add_fork_uri(void** param, int param_no)
 		}
 	}
 	/* second param => no conversion*/
-    return 0;
+	return 0;
 }
 
 
@@ -342,8 +346,8 @@ static int fixup_t_add_fork_uri(void** param, int param_no)
 
 static int w_t_add_fork_uri(struct sip_msg* msg, char* str, char* str2)
 {
-    return t_add_fork( ((struct fork*)str)->ip,
-		((struct fork*)str)->port, &((struct fork*)str)->uri );
+	return t_add_fork( ((struct fork*)str)->ip, ((struct fork*)str)->port,
+		((struct fork*)str)->uri.s, ((struct fork*)str)->uri.len, DEFAULT,0);
 }
 
 
@@ -352,6 +356,15 @@ static int w_t_add_fork_uri(struct sip_msg* msg, char* str, char* str2)
 static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_clear_forks();
+}
+
+
+
+
+static int w_t_add_fork_on_no_rpl(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_add_fork( ((struct fork*)str)->ip, ((struct fork*)str)->port,
+		((struct fork*)str)->uri.s,((struct fork*)str)->uri.len,NO_RESPONSE,0);
 }
 
 
