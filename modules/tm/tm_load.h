@@ -52,7 +52,7 @@
 #define T_RELAY_TO           "t_relay_to"
 #define T_RELAY_TO_UDP       "t_relay_to_udp"
 #define T_RELAY_TO_TCP       "t_relay_to_tcp"
-#define T_RELAY_TO_TLS       "t_relay_tls"
+#define T_RELAY_TO_TLS       "t_relay_to_tls"
 #define T_RELAY              "t_relay"
 #define T_REPLY              "t_reply"
 #define T_REPLY_WB           "t_reply_with_body"
@@ -68,7 +68,6 @@
 #define T_IS_LOCAL           "t_is_local"
 #define T_REQUEST_WITHIN     "request_within"
 #define T_REQUEST_OUTSIDE    "request_outside"
-#define T_GETT				 "t_gett"
 
 
 
@@ -95,8 +94,6 @@ struct tm_binds {
 	dlg_request_uas_f  dlg_request_uas;
 	free_dlg_f         free_dlg;
 	print_dlg_f        print_dlg;
-
-	tgett_f			t_gett;
 };
 
 
