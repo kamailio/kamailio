@@ -41,6 +41,7 @@
  *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
  *  2003-10-07  added hex and octal numbers support (andrei)
  *  2003-10-10  replaced len_gt w/ msg:len (andrei)
+ *  2003-10-13  added fifo_dir (andrei)
  */
 
 
@@ -163,6 +164,7 @@ SYN_BRANCH syn_branch
 MEMLOG		"memlog"|"mem_log"
 SIP_WARNING sip_warning
 FIFO fifo
+FIFO_DIR  fifo_dir
 FIFO_MODE fifo_mode
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
@@ -222,6 +224,8 @@ RBRACE		\}
 LBRACK		\[
 RBRACK		\]
 COMMA		","
+COLON		":"
+STAR		\*
 DOT			\.
 CR			\n
 
@@ -330,6 +334,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TLS_CA_LIST}	{ count(); yylval.strval=yytext; 
 										return TLS_CA_LIST; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
+<INITIAL>{FIFO_DIR}	{ count(); yylval.strval=yytext; return FIFO_DIR; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
@@ -362,9 +367,9 @@ EAT_ABLE	[\ \t\b\r]
 							return NUMBER; }
 <INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
 <INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
-<INITIAL>{TCP}			{ count(); yylval.intval=PROTO_TCP; return NUMBER; }
-<INITIAL>{UDP}			{ count(); yylval.intval=PROTO_UDP; return NUMBER; }
-<INITIAL>{TLS}			{ count(); yylval.intval=PROTO_TLS; return NUMBER; }
+<INITIAL>{TCP}			{ count(); return TCP; }
+<INITIAL>{UDP}			{ count(); return UDP; }
+<INITIAL>{TLS}			{ count(); return TLS; }
 <INITIAL>{INET}			{ count(); yylval.intval=AF_INET; return NUMBER; }
 <INITIAL>{INET6}		{ count();
 						#ifdef USE_IPV6
@@ -380,6 +385,8 @@ EAT_ABLE	[\ \t\b\r]
 
 <INITIAL>{COMMA}		{ count(); return COMMA; }
 <INITIAL>{SEMICOLON}	{ count(); return SEMICOLON; }
+<INITIAL>{COLON}	{ count(); return COLON; }
+<INITIAL>{STAR}	{ count(); return STAR; }
 <INITIAL>{RPAREN}	{ count(); return RPAREN; }
 <INITIAL>{LPAREN}	{ count(); return LPAREN; }
 <INITIAL>{LBRACE}	{ count(); return LBRACE; }

@@ -110,6 +110,7 @@ extern unsigned int shm_mem_size;
 /* FIFO server config */
 char extern *fifo; /* FIFO name */
 extern int fifo_mode;
+char extern *fifo_dir; /* dir. where  reply fifos are allowed */
 
 /* moved to pt.h
 extern int *pids;

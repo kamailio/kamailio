@@ -46,6 +46,7 @@
  * 2003-10-10  added <,>,<=,>=, != operators support
  *             added msg:len (andrei)
  * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
+ * 2003-10-13  added FIFO_DIR & proto:host:port listen/alias support (andrei)
  */
 
 
@@ -84,6 +85,8 @@
 
 struct id_list{
 	char* s;
+	int proto;
+	int port;
 	struct id_list* next;
 };
 
@@ -97,6 +100,7 @@ static int rt;  /* Type of route block for find_export */
 static str* str_tmp;
 
 void warn(char* s);
+static struct id_list* mk_listen_id(char*, int, int);
  
 
 %}
@@ -161,6 +165,9 @@ void warn(char* s);
 %token AF
 %token MYSELF
 %token MSGLEN 
+%token UDP
+%token TCP
+%token TLS
 
 /* config vars. */
 %token DEBUG
@@ -178,6 +185,7 @@ void warn(char* s);
 %token MEMLOG
 %token SIP_WARNING
 %token FIFO
+%token FIFO_DIR
 %token FIFO_MODE
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
@@ -242,16 +250,20 @@ void warn(char* s);
 %token SLASH
 %token DOT
 %token CR
+%token COLON
+%token STAR
 
 
 /*non-terminals */
 %type <expr> exp exp_elem /*, condition*/
 %type <action> action actions cmd if_cmd stm
-%type <ipaddr> ipv4 ipv6 ip
+%type <ipaddr> ipv4 ipv6 ipv6addr ip
 %type <ipnet> ipnet
 %type <strval> host
 %type <strval> listen_id
 %type <idlst>  id_lst
+%type <idlst>  phostport
+%type <intval> proto port
 %type <intval> equalop strop intop
 /*%type <route_el> rules;
   %type <route_el> rule;
@@ -312,23 +324,24 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 						}
 	;
 
-id_lst:	  listen_id	{	$$=pkg_malloc(sizeof(struct id_list));
-						if ($$==0){
-							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
-						}else{
-							$$->s=$1;
-							$$->next=0;
-						}
-					}
-		| listen_id id_lst	{
-						$$=pkg_malloc(sizeof(struct id_list));
-						if ($$==0){
-							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
-						}else{
-							$$->s=$1;
-							$$->next=$2;
-						}
-							}
+proto:	  UDP	{ $$=PROTO_UDP; }
+		| TCP	{ $$=PROTO_TCP; }
+		| TLS	{ $$=PROTO_TLS; }
+		;
+
+port:	  NUMBER	{ $$=$1; }
+		| STAR		{ $$=0; }
+;
+
+phostport:	listen_id				{ $$=mk_listen_id($1, 0, 0); }
+			| listen_id COLON port	{ $$=mk_listen_id($1, 0, $3); }
+			| proto COLON listen_id	{ $$=mk_listen_id($3, $1, 0); }
+			| proto COLON listen_id COLON port	{ $$=mk_listen_id($3, $1, $5);}
+			| listen_id COLON error { $$=0; yyerror(" port number expected"); }
+			;
+
+id_lst:		phostport		{  $$=$1 ; }
+		| phostport id_lst	{ $$=$1; $$->next=$2; }
 		;
 
 
@@ -366,6 +379,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| SIP_WARNING EQUAL error { yyerror("boolean value expected"); }
 		| FIFO EQUAL STRING { fifo=$3; }
 		| FIFO EQUAL error { yyerror("string value expected"); }
+		| FIFO_DIR EQUAL STRING { fifo_dir=$3; }
+		| FIFO_DIR EQUAL error { yyerror("string value expected"); }
 		| FIFO_MODE EQUAL NUMBER { fifo_mode=$3; }
 		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
 		| USER EQUAL STRING     { user=$3; }
@@ -519,7 +534,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 												strlen(lst_tmp->s)+1);
 										sock_info[sock_no].name.len=
 													strlen(lst_tmp->s);
-										sock_info[sock_no].port_no=port_no;
+										sock_info[sock_no].port_no=
+													lst_tmp->port;
 										sock_no++;
 									}
 								}else{
@@ -534,7 +550,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 						"expected"); }
 		| ALIAS EQUAL  id_lst { 
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
-								add_alias(lst_tmp->s, strlen(lst_tmp->s), 0);
+								add_alias(lst_tmp->s, strlen(lst_tmp->s), 
+											lst_tmp->port);
 							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 		| ADVERTISED_ADDRESS EQUAL listen_id {
@@ -619,7 +636,7 @@ ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 												}
 	;
 
-ipv6:	IPV6ADDR {
+ipv6addr:	IPV6ADDR {
 					$$=pkg_malloc(sizeof(struct ip_addr));
 					if ($$==0){
 						LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
@@ -638,6 +655,10 @@ ipv6:	IPV6ADDR {
 					}
 				}
 	;
+
+ipv6:	ipv6addr { $$=$1; }
+	| LBRACK ipv6addr RBRACK {$$=$2; }
+;
 
 
 route_stm:  ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
@@ -747,9 +768,11 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 												DSTPORT_O, (void *) $3 ); }
 		| DSTPORT intop error { $$=0; yyerror("number expected"); }
 		| DSTPORT error { $$=0; yyerror("==, !=, <,>, >= or <=  expected"); }
-		| PROTO intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
+		| PROTO intop proto	{ $$=mk_elem(	$2, NUMBER_ST,
 												PROTO_O, (void *) $3 ); }
-		| PROTO intop error { $$=0; yyerror("number expected"); }
+		| PROTO intop error { $$=0;
+								yyerror("protocol expected (udp, tcp or tls)");
+							}
 		| PROTO error { $$=0; yyerror("equal/!= operator expected"); }
 		| AF intop NUMBER	{ $$=mk_elem(	$2, NUMBER_ST,
 												AF_O, (void *) $3 ); }
@@ -1477,6 +1500,23 @@ void yyerror(char* s)
 			column, s);
 	cfg_errors++;
 }
+
+
+static struct id_list* mk_listen_id(char* host, int proto, int port)
+{
+	struct id_list* l;
+	l=pkg_malloc(sizeof(struct id_list));
+	if (l==0){
+		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+	}else{
+		l->s=host;
+		l->port=port;
+		l->proto=proto;
+		l->next=0;
+	}
+	return l;
+}
+
 
 /*
 int main(int argc, char ** argv)

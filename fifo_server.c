@@ -58,6 +58,7 @@
  *  2003-01-29  new built-in fifo commands: arg and pwd (jiri)
  *  2003-10-07  fifo security fixes: permissions, always delete old fifo,
  *               reply fifo checks -- added fifo_check (andrei)
+ *  2003-10-13  addef fifo_dir for reply fifos (andrei)
  */
 
 
@@ -89,6 +90,7 @@
 
 /* FIFO server vars */
 char *fifo=0; /* FIFO name */
+char* fifo_dir=DEFAULT_FIFO_DIR; /* dir where reply fifos are allowed */
 int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP ;
 pid_t fifo_pid;
 /* file descriptors */
@@ -286,14 +288,14 @@ static char *trim_filename( char * file )
 			, file);
 		return 0;
 	}
-	prefix_len=strlen(FIFO_DIR); fn_len=strlen(file);
+	prefix_len=strlen(fifo_dir); fn_len=strlen(file);
 	new_fn=pkg_malloc(prefix_len+fn_len+1);
 	if (new_fn==0) {
 		LOG(L_ERR, "ERROR: trim_filename: no mem\n");
 		return 0;
 	}
 
-	memcpy(new_fn, FIFO_DIR, prefix_len);
+	memcpy(new_fn, fifo_dir, prefix_len);
 	memcpy(new_fn+prefix_len, file, fn_len );
 	new_fn[prefix_len+fn_len]=0;
 
