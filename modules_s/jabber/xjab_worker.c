@@ -1302,6 +1302,11 @@ int xj_manage_jab(char *buf, int len, int *pos, str *sid,
 
 			goto ready;
 		}
+		if(type!=NULL && !strncasecmp(type, "subscribe", 9))
+		{
+			xj_jcon_send_presence(jbc, from, "subscribed", NULL, NULL);
+			goto ready;
+		}
 		if(type == NULL || !strncasecmp(type, "online", 6))
 		{
 			if(strchr(from, '@') == NULL)
