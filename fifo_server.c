@@ -255,6 +255,24 @@ static char *trim_filename( char * file )
 	return new_fn;
 }
 
+/* tell FIFO client what happened via reply pipe */
+void fifo_reply( char *reply_fifo, char *reply_txt)
+{
+	FILE *file_handle;
+
+	file_handle=open_reply_pipe(reply_fifo);
+	if (file_handle==0) {
+		LOG(L_ERR, "ERROR: fifo_reply: no reply pipe %s\n",
+			fifo);
+		return;
+	}
+	if (fprintf(file_handle, "%s", reply_txt)<=0) {
+		LOG(L_ERR, "ERROR: fifo_error: write error (%s): %s\n",
+			fifo, strerror(errno));
+	}
+	fclose(file_handle);
+}
+
 FILE *open_reply_pipe( char *pipe_name )
 {
 	FILE *file_handle;
@@ -346,6 +364,7 @@ static void fifo_server(FILE *fifo_stream)
 		if (f->f(fifo_stream, file)<0) {
 			LOG(L_ERR, "ERROR: fifo_server: command (%s) "
 				"processing failed\n", command );
+#ifdef _OBSOLETED
 			file_handle=open_reply_pipe(file);
 			if (file_handle==0) {
 				LOG(L_ERR, "ERROR: fifo_server: no reply pipe\n");
@@ -356,6 +375,7 @@ static void fifo_server(FILE *fifo_stream)
 				strerror(errno));
 			}
 			fclose(file_handle);
+#endif
 			goto consume;
 		}
 
@@ -431,9 +451,9 @@ int open_fifo_server()
 
 static int print_version_cmd( FILE *stream, char *response_file )
 {
-	int file;
-
 	if (response_file) {
+		fifo_reply(response_file, SERVER_HDR CRLF );
+#ifdef _OBSOLETED
 		file=open( response_file, O_WRONLY );
 		if (file<0) {
 			LOG(L_ERR, "ERROR: print_version_cmd: open error (%s): %s\n",
@@ -447,6 +467,7 @@ static int print_version_cmd( FILE *stream, char *response_file )
 			return -1;
 		}
 		close(file);
+#endif
 	} else {
 		LOG(L_ERR, "ERROR: no file for print_version_cmd\n");
 	}
@@ -459,15 +480,24 @@ static int print_fifo_cmd( FILE *stream, char *response_file )
 {
 	char text[MAX_PRINT_TEXT];
 	int text_len;
-	int file;
 	
 	/* expect one line which will be printed out */
+	if (response_file==0 || *response_file==0 ) { 
+		LOG(L_ERR, "ERROR: print_fifo_cmd: null file\n");
+		return -1;
+	}
 	if (!read_line(text, MAX_PRINT_TEXT, stream, &text_len)) {
+#ifdef _OBSOLETED
 		LOG(L_ERR, "ERROR: print_fifo_cmd: too big text\n");
+#endif
+		fifo_reply(response_file, 
+			"ERROR: print_fifo_cmd: too big text");
 		return -1;
 	}
 	/* now the work begins */
 	if (response_file) {
+		fifo_reply(response_file, text );
+#ifdef _OBSOLETED
 		file=open( response_file , O_WRONLY);
 		if (file<0) {
 			LOG(L_ERR, "ERROR: print_fifo_cmd: open error (%s): %s\n",
@@ -478,9 +508,10 @@ static int print_fifo_cmd( FILE *stream, char *response_file )
 			LOG(L_ERR, "ERROR: print_fifo_cmd: write error: %s\n",
 				 strerror(errno));
 			close(file);
-			return -1;
+			return 1;
 		}
 		close(file);
+#endif
 	} else {
 		LOG(L_INFO, "INFO: print_fifo_cmd: %.*s\n", 
 			text_len, text );

@@ -258,22 +258,30 @@ int fifo_uac( FILE *stream, char *response_file )
 			   and proceed to a new request
 			*/
 			LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: method expected");
 			return -1;
 		}
 		DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
 		if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: destination expected\n");
 			LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
 			return -1;
 		}
 		DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
 		/* now read header fields line by line */
 		if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: HFs expected\n");
 			LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
 			return -1;
 		}
 		DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
 		/* and eventually body */
 		if (!read_body(body, MAX_BODY, stream, &sb.len)) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: body expected\n");
 			LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
 			return -1;
 		}
