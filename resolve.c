@@ -177,7 +177,10 @@ struct rdata* get_record(char* name, int type)
 	head=rd=0;
 	crt=&head;
 	size=res_search(name, C_IN, type, buff.buff, sizeof(buff));
-	if (size<0) goto error;
+	if (size<0) {
+		LOG(L_ERR, "ERROR: get_record: size<0\n");
+		goto error;
+	}
 	else if (size > sizeof(buff)) size=sizeof(buff);
 	
 	p=buff.buff+DNS_HDR_SIZE;
@@ -187,20 +190,29 @@ struct rdata* get_record(char* name, int type)
 
 	for (r=0; r<qno; r++){
 		/* skip the name of the question */
-		if ((p=dns_skipname(p, end))==0) goto error;
+		if ((p=dns_skipname(p, end))==0) {
+			LOG(L_ERR, "ERROR: get_record: skipname==0\n");
+			goto error;
+		}
 		p+=2+2; /* skip QCODE & QCLASS */
 	#if 0
 		for (;(p<end && (*p)); p++);
 		p+=1+2+2; /* skip the ending  '\0, QCODE and QCLASS */
 	#endif
-		if (p>end) goto error;
+		if (p>end) {
+			LOG(L_ERR, "ERROR: get_record: p>end\n");
+			goto error;
+		}
 	};
 	answers_no=ntohs((unsigned short)buff.hdr.ancount);
 	ans_len=ANS_SIZE;
 	t=answer;
 	for (r=0; (r<answers_no) && (p<end); r++){
 		/*  ignore it the default domain name */
-		if ((p=dns_skipname(p, end))==0) goto error;
+		if ((p=dns_skipname(p, end))==0) {
+			LOG(L_ERR, "ERROR: get_record: skip_name=0 (#2)\n");
+			goto error;
+		}
 		/*
 		skip=dn_expand(buff.buff, end, p, t, ans_len);
 		p+=skip;
