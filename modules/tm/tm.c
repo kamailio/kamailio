@@ -728,58 +728,22 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 inline static int w_t_newtran( struct sip_msg* p_msg, char* foo, char* bar ) 
 {
 	/* t_newtran returns 0 on error (negative value means
-	   'transaction exists'
-	*/
+	   'transaction exists' */
 	return t_newtran( p_msg );
 }
 
 
-inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo )
+inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo)
 {
-	struct cell *t;
-
-	if (rmode==MODE_REQUEST || rmode==MODE_ONFAILURE) {
-		t_on_negative( (unsigned int )(long) go_to );
-		return 1;
-	}
-	if (rmode==MODE_ONREPLY ) {
-		/* transaction state is established */
-		t=get_t();
-		if (!t || t==T_UNDEFINED) {
-			LOG(L_CRIT, "BUG: w_t_on_negative entered without t\n");
-			return -1;
-		}
-		t->on_negative=(unsigned int)(long)go_to;
-		return 1;
-	}
-	LOG(L_CRIT, "BUG: w_t_on_negative entered in unsupported mode\n");
-	return -1;
+	t_on_negative( (unsigned int )(long) go_to );
+	return 1;
 }
 
 
 inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 {
-	struct cell *t;
-
-	if (rmode==MODE_REQUEST) {
-		/* it's still in initial request processing stage, transaction
-		 * state is not estabslihed yet, store it in private memory ...
-		 * it will be copied to transaction state when it is set up */
-		t_on_reply( (unsigned int )(long) go_to );
-		return 1;
-	}
-	if (rmode==MODE_ONREPLY || rmode==MODE_ONFAILURE) {
-		/* transaction state is established */
-		t=get_t();
-		if (!t || t==T_UNDEFINED) {
-			LOG(L_CRIT, "BUG: w_t_on_reply entered without t\n");
-			return -1;
-		}
-		t->on_reply=(unsigned int) (long)go_to;
-		return 1;
-	}
-	LOG(L_CRIT, "BUG: w_t_on_reply entered in unsupported mode\n");
-	return -1;
+	t_on_reply( (unsigned int )(long) go_to );
+	return 1;
 }
 
 

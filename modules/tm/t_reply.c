@@ -113,16 +113,33 @@ static int goto_on_reply=0;
    *inside*  t_relay using hints stored in private memory
    before t_reay is called
 */
-  
-  
+
+
 void t_on_negative( unsigned int go_to )
 {
-	goto_on_negative=go_to;
+	struct cell *t = get_t();
+
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already 
+	 * created; if not -> use the static variable */
+	if (!t || t==T_UNDEFINED )
+		goto_on_negative=go_to;
+	else
+		get_t()->on_negative = go_to;
 }
+
 
 void t_on_reply( unsigned int go_to )
 {
-	goto_on_reply=go_to;
+	struct cell *t = get_t();
+
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already 
+	 * created; if not -> use the static variable */
+	if (!t || t==T_UNDEFINED )
+		goto_on_reply=go_to;
+	else
+		get_t()->on_reply = go_to;
 }
 
 
@@ -428,6 +445,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 {
 	static struct sip_msg fake_req;
 	struct sip_msg *shmem_msg = t->uas.request;
+	int on_failure;
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
@@ -497,9 +515,11 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		/* avoid recursion -- if failure_route forwards, and does not 
 		 * set next failure route, failure_route will not be rentered
 		 * on failure */
-		t_on_negative(0);
+		//goto_on_negative = 0;
+		on_failure = t->on_negative;
+		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		if (run_actions(failure_rlist[t->on_negative], &fake_req)<0)
+		if (run_actions(failure_rlist[on_failure], &fake_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
 	}
 

@@ -465,12 +465,6 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		return lowest_ret;
 	}
 
-	/* store script processing value of failure route to transactional
-	   context; if currently 0, this forwarding attempt will no longer 
-	   result in failure_route on error
-	*/
-	t->on_negative=get_on_negative();
-
 	/* send them out now */
 	success_branch=0;
 	for (i=first_branch; i<t->nr_of_outgoings; i++) {
