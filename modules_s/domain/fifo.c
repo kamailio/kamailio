@@ -1,4 +1,5 @@
-/* fifo.c v 0.2 2003/1/19
+/*
+ * $Id$
  *
  * Domain fifo functions
  *

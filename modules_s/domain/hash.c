@@ -1,4 +1,5 @@
-/* hash.c v 0.2 2003/1/19
+/*
+ * $Id$
  *
  * Hash functions for cached domain table
  *

@@ -1,4 +1,5 @@
-/* domain_mod.c v 0.2 2003/1/19
+/*
+ * $Id$
  *
  * Domain module
  *
@@ -77,9 +78,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",               STR_PARAM, &db_url},
-	{"db_mode",              INT_PARAM, &db_mode},
-	{"domain_table",         STR_PARAM, &domain_table},
+	{"db_url",               STR_PARAM, &db_url           },
+	{"db_mode",              INT_PARAM, &db_mode          },
+	{"domain_table",         STR_PARAM, &domain_table     },
 	{"domain_domain_column", STR_PARAM, &domain_domain_col},
 	{0, 0, 0}
 };

@@ -1,4 +1,5 @@
-/* domain_mod.h v 0.2 2003/1/19
+/*
+ * $Id$
  *
  * Domain module headers
  *

@@ -1,4 +1,5 @@
-/* domain.c v 0.2 2002/12/27
+/* 
+ * $Id$
  *
  * Domain table related functions
  *
