@@ -154,6 +154,8 @@ MATCH	=~
 NOT		!|"not"
 AND		"and"|"&&"|"&"
 OR		"or"|"||"|"|"
+PLUS	"+"
+MINUS	"-"
 
 /* config vars. */
 DEBUG	debug
@@ -406,6 +408,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{NOT}		{ count(); return NOT; }
 <INITIAL>{AND}		{ count(); return AND; }
 <INITIAL>{OR}		{ count(); return OR;  }
+<INITIAL>{PLUS}		{ count(); return PLUS; }
+<INITIAL>{MINUS}	{ count(); return MINUS; }
 
 
 

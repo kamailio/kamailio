@@ -262,6 +262,8 @@ static struct id_list* mk_listen_id(char*, int, int);
 %left OR
 %left AND
 %left NOT
+%left PLUS
+%left MINUS
 
 /* values */
 %token <intval> NUMBER
@@ -296,6 +298,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %type <idlst>  phostport
 %type <intval> proto port
 %type <intval> equalop strop intop
+%type <strval> host_sep
 /*%type <route_el> rules;
   %type <route_el> rule;
 */
@@ -974,16 +977,22 @@ ipnet:	ip SLASH ip	{ $$=mk_net($1, $3); }
 						}
 	;
 
+
+
+host_sep:	DOT {$$=".";}
+		|	MINUS {$$="-"; }
+		;
+
 host:	ID				{ $$=$1; }
-	| host DOT ID		{ $$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
+	| host host_sep ID	{ $$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 						  if ($$==0){
 						  	LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
 										" failure while parsing host\n");
 						  }else{
-						  	memcpy($$, $1, strlen($1));
-						  	$$[strlen($1)]='.';
-						  	memcpy($$+strlen($1)+1, $3, strlen($3));
-						  	$$[strlen($1)+1+strlen($3)]=0;
+							memcpy($$, $1, strlen($1));
+							$$[strlen($1)]=*$2;
+							memcpy($$+strlen($1)+1, $3, strlen($3));
+							$$[strlen($1)+1+strlen($3)]=0;
 						  }
 						  pkg_free($1); pkg_free($3);
 						}
