@@ -149,7 +149,7 @@ static inline int no_contacts(udomain_t* _d, str* _a)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _a)
+static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _a, str *ua)
 {
 	urecord_t* r = 0;
 	ucontact_t* c;
@@ -196,7 +196,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 			return -4;
 		}
 
-		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c) < 0) {
+		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
 			ul.delete_urecord(_d, _a);
@@ -230,7 +230,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
+static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* _ua)
 {
 	ucontact_t* c, *c2;
 	str callid;
@@ -269,7 +269,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				}
 				
 				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq,
-						       (fl ? FL_NAT : FL_NONE), &c2) < 0) {
+						       (fl ? FL_NAT : FL_NONE), &c2, _ua) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -303,7 +303,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				
 				if (ul.update_ucontact(c, e, q, &callid, cseq,
 						       (fl ? FL_NAT : FL_NONE),
-						       (fl ? FL_NONE : FL_NAT)) < 0) {
+						       (fl ? FL_NONE : FL_NAT), _ua) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
@@ -325,7 +325,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
  * This function will process request that
  * contained some contact header fields
  */
-static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _a)
+static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _a, str* _ua)
 {
 	int res;
 	urecord_t* r;
@@ -340,7 +340,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update(_m, r, _c) < 0) {
+		if (update(_m, r, _c, _ua) < 0) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
 			build_contact(r->contacts);
 			ul.release_urecord(r);
@@ -350,7 +350,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 		build_contact(r->contacts);
 		ul.release_urecord(r);
 	} else {
-		if (insert(_m, _c, _d, _a) < 0) {
+		if (insert(_m, _c, _d, _a, _ua) < 0) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
 			ul.unlock_udomain(_d);
 			return -4;
@@ -360,6 +360,8 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	return 0;
 }
 
+#define UA_DUMMY_STR "Unknown"
+#define UA_DUMMY_LEN 7
 
 /*
  * Process REGISTER request and save it's contacts
@@ -368,7 +370,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 {
 	contact_t* c;
 	int st;
-	str aor;
+	str aor, ua;
 
 	rerrno = R_FINE;
 
@@ -388,6 +390,17 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 		goto error;
 	}
 
+	ua.len = 0;
+	if (parse_headers(_m, HDR_USERAGENT, 0) != -1 && _m->user_agent &&
+	    _m->user_agent->body.len > 0) {
+		ua.len = _m->user_agent->body.len;
+		ua.s = _m->user_agent->body.s;
+	}
+	if (ua.len == 0) {
+		ua.len = UA_DUMMY_LEN;
+		ua.s = UA_DUMMY_STR;
+	}
+
 	if (c == 0) {
 		if (st) {
 			if (star(_t, &aor) < 0) goto error;
@@ -395,7 +408,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 			if (no_contacts(_t, &aor) < 0) goto error;
 		}
 	} else {
-		if (contacts(_m, c, _t, &aor) < 0) goto error;
+		if (contacts(_m, c, _t, &aor, &ua) < 0) goto error;
 	}
 
 	if (doreply && (send_reply(_m) < 0)) return -1;

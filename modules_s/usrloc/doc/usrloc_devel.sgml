@@ -167,7 +167,7 @@
 	<section>
 	    <title>
 		<function moreinfo="none">ul_insert_ucontact(record, contact, expires, q, callid,
-		cseq, flags, cont)</function>
+		cseq, flags, cont, ua)</function>
 	    </title>
 	    <para>
 		The function inserts a new contact in the given record with specified parameters.
@@ -218,6 +218,12 @@
 	    <itemizedlist>
 		<listitem>
 		    <para><emphasis>ucontact_t* cont</emphasis> - Pointer to newly created structure.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>str* ua</emphasis> - User-Agent of the REGISTER message that contained the contact.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -309,7 +315,7 @@
 	<section>
 	    <title>
 		<function moreinfo="none">ul_update_ucontact(contact, expires, q, callid,
-		cseq, set, res)</function>
+		cseq, set, res, ua)</function>
 	    </title>
 	    <para>
 		The function updates contact with new values.
@@ -356,6 +362,13 @@
 		<listitem>
 		    <para>
 			<emphasis>unsigned int res</emphasis> - OR value of flags to be reset.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<para><emphasis>str* ua</emphasis> - User-Agent of the REGISTER message that contained the contact.
 		    </para>
 		</listitem>
 	    </itemizedlist>

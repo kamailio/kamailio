@@ -42,14 +42,15 @@
 #define UNIXSOCK_CALLID "The-Answer-To-The-Ultimate-Question-Of-Life-Universe-And-Everything"
 #define UNIXSOCK_CALLID_LEN (sizeof(UNIXSOCK_CALLID)-1)
 #define UNIXSOCK_CSEQ 42
-
+#define UNIXSOCK_UA "SIP Express Router UNIXSOCK"
+#define UNIXSOCK_UA_LEN (sizeof(UNIXSOCK_UA)-1)
 
 static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _r, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
 	int res;
-	str cid;
+	str cid, ua;
 	
 	if (_e == 0 && !(_f & FL_PERMANENT)) {
 		LOG(L_ERR, "fifo_add_contact(): expires == 0 and not persistent contact, giving up\n");
@@ -79,14 +80,17 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	cid.s = UNIXSOCK_CALLID;
 	cid.len = UNIXSOCK_CALLID_LEN;
 
+	ua.s = UNIXSOCK_UA;
+	ua.len = UNIXSOCK_UA_LEN;
+
 	if (c) {
-		if (update_ucontact_rep(c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _r, _f, FL_NONE) < 0) {
+		if (update_ucontact_rep(c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _r, _f, FL_NONE, &ua) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
 		}
 	} else {
-		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, _r, &c) < 0) {
+		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, _r, &c, &ua) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;

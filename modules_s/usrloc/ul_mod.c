@@ -90,6 +90,9 @@ MODULE_VERSION
 #define FLAGS_COL "flags"
 #define FLAGS_COL_LEN (sizeof(FLAGS_COL) - 1)
 
+#define USER_AGENT_COL "user_agent"
+#define USER_AGENT_COL_LEN (sizeof(USER_AGENT_COL) - 1)
+
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -112,6 +115,7 @@ str method_col      = {METHOD_COL, METHOD_COL_LEN};         /* Name of column co
 str replicate_col   = {REPLICATE_COL, REPLICATE_COL_LEN};   /* Name of column containing replication mark */
 str state_col       = {STATE_COL, STATE_COL_LEN};           /* Name of column containing contact state */
 str flags_col       = {FLAGS_COL, FLAGS_COL_LEN};           /* Name of column containing flags */
+str user_agent_col  = {USER_AGENT_COL, USER_AGENT_COL_LEN}; /* Name of column containing user agent string */
 str db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN}; /* Database URL */
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
@@ -167,6 +171,7 @@ static param_export_t params[] = {
 	{"db_mode",           INT_PARAM, &db_mode        },
 	{"use_domain",        INT_PARAM, &use_domain     },
 	{"desc_time_order",   INT_PARAM, &desc_time_order},
+	{"user_agent_column", STR_PARAM, &user_agent_col },
 	{0, 0, 0}
 };
 

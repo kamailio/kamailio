@@ -192,6 +192,26 @@ modparam("usrloc", "method_column", "method")
 	</section>
 
 	<section>
+	    <title><varname>user_agent_column</varname> (string)</title>
+	    <para>
+		Name of column containing user-agent values.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>user_agent</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>user_agent_column</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("usrloc", "user_agent_column", "user_agent")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
 		&url; of the database that should be used.

@@ -88,7 +88,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
  * Add a new contact
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-			unsigned int _flags, int _rep, struct ucontact** _con);
+			unsigned int _flags, int _rep, struct ucontact** _con, str *_ua);
 
 
 
@@ -132,9 +132,9 @@ void release_urecord(urecord_t* _r);
  * into urecord with additional replication argument
  */
 typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-				 unsigned int _flags, struct ucontact** _con);
+				 unsigned int _flags, struct ucontact** _con, str *_ua);
 int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-			unsigned int _flags, int _rep, struct ucontact** _con);
+			unsigned int _flags, int _rep, struct ucontact** _con, str *_ua);
 
 /*
  * Create and insert new contact
@@ -142,7 +142,7 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _ci
  */
 
 int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-		    unsigned int _flags, struct ucontact** _con);
+		    unsigned int _flags, struct ucontact** _con, str *_ua);
 
 
 /*

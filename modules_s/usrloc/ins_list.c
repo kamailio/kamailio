@@ -62,6 +62,7 @@ int put_on_ins_list(struct ucontact* _c)
 	p->user = _c->aor;
 	p->cont = &_c->c;
 	p->cid_len = _c->callid.len;
+	p->user_agent = &_c->user_agent;
 
 	memcpy(p->callid, _c->callid.s, p->cid_len);
 
@@ -75,8 +76,8 @@ int process_ins_list(str* _d)
 {
 	struct ins_itm* p;
 	char b[256];
-	db_key_t keys[8];
-	db_val_t vals[8];
+	db_key_t keys[9];
+	db_val_t vals[9];
 
 	keys[0] = user_col.s;
 	keys[1] = contact_col.s;
@@ -86,6 +87,7 @@ int process_ins_list(str* _d)
 	keys[5] = cseq_col.s;
 	keys[6] = replicate_col.s;
 	keys[7] = state_col.s;
+	keys[8] = user_agent_col.s;
 	
 	if (ins_root) {
 	     /* FIXME */
@@ -104,6 +106,7 @@ int process_ins_list(str* _d)
 		VAL_TYPE(vals + 5) = DB_INT;
 		VAL_TYPE(vals + 6) = DB_INT;
 		VAL_TYPE(vals + 7) = DB_INT;
+		VAL_TYPE(vals + 8) = DB_STR;
 
 		VAL_NULL(vals) = 0;
 		VAL_NULL(vals + 1) = 0;
@@ -113,6 +116,7 @@ int process_ins_list(str* _d)
 		VAL_NULL(vals + 5) = 0;
 		VAL_NULL(vals + 6) = 0;
 		VAL_NULL(vals + 7) = 0;
+		VAL_NULL(vals + 8) = 0;
 	}
 
 	while(ins_root) {
@@ -137,7 +141,10 @@ int process_ins_list(str* _d)
 
 		VAL_INT(vals + 7) = p->state;
 
-		if (ul_dbf.insert(ul_dbh, keys, vals, 8) < 0) {
+		VAL_STR(vals + 8).len = p->user_agent->len;
+		VAL_STR(vals + 8).s = p->user_agent->s;
+
+		if (ul_dbf.insert(ul_dbh, keys, vals, 9) < 0) {
 			LOG(L_ERR, "process_ins_list(): Error while inserting into database\n");
 			return -1;
 		}
