@@ -877,11 +877,11 @@ int main_loop()
 #endif
 	/*DEBUG- remove it*/
 #ifdef DEBUG
-	printf("\n% 3d processes, % 3d children * % 3d listening addresses + main"
-			" + fifo %s\n", process_no+1, children_no, sock_no,
+	fprintf(stderr, "\n% 3d processes (%3d), % 3d children * % 3d listening addresses"
+			"+ main + fifo %s\n", process_no+1, process_count(), children_no, sock_no,
 			(timer_list)?"+ timer":"");
 	for (r=0; r<=process_no; r++){
-		printf("% 3d   % 5d\n", r, pt[r].pid);
+		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
 	}
 #endif
 	process_no=0; 

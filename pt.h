@@ -71,8 +71,8 @@ inline static int process_count()
 		/* fifo server */
 		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
 #ifdef USE_TCP
-		+ (!tcp_disable)?( 1/* tcp main */ + tcp_children_no + 
-							(timer_list ? 0: 1)):0 /* add the timer proc.
+		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no + 
+							(timer_list ? 0: 1)):0) /* add the timer proc.
 													  if not already taken
 													  into account */
 #endif
