@@ -7,8 +7,13 @@
 
 auto_gen=
 NAME=jabber.so
+
+# extra debug messages
+DEFS+=-DXJ_EXTRA_DEBUG
+
 # expat.h location
 DEFS+=-I/usr/local/include -I/usr/pkg/include
+
 LIBS=-L/usr/local/lib -L/usr/pkg/lib -lexpat
 
 include ../../Makefile.modules
