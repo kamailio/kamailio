@@ -33,7 +33,7 @@ static struct module_exports auth_exports = {"auth",
 						     check_to,
 						     check_from
 					     },
-					     (int[]) {1, 1, 1, 1, 0, 0},
+					     (int[]) {1, 2, 1, 1, 0, 0},
 					     (fixup_function[]) {
 						     NULL, 
 						     NULL,

@@ -79,7 +79,7 @@ static inline void calc_nonce(char* _realm, char* _nonce)
 /*
  * Create Proxy-Authenticate header field
  */
-static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
+static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len, char* _str2)
 {
 	     /* 8 hex chars time value + 32 hex char MD5 + '\0' */
 	char nonce[41];
@@ -92,9 +92,15 @@ static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
 	      * FIXME: We prefer not to use qop since some clients claim
 	      *        to support that but they don't
 	      */
-	*_len = snprintf(_buf, AUTH_HF_LEN,
-			 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",algorithm=MD5\r\n", 
-			 _realm, nonce);
+	if (!strcasecmp("qop", _str2)) {
+		*_len = snprintf(_buf, AUTH_HF_LEN,
+				 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",qop=\"auth\",algorithm=MD5\r\n", 
+				 _realm, nonce);		
+	} else {
+		*_len = snprintf(_buf, AUTH_HF_LEN,
+				 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",algorithm=MD5\r\n", 
+				 _realm, nonce);
+	}
 	DBG("build_proxy_auth_hf(): %s\n", _buf);
 }
 
@@ -127,7 +133,7 @@ int challenge(struct sip_msg* _msg, char* _realm, char* _str2)
 {
 	int auth_hf_len;
 
-	build_proxy_auth_hf(_realm, auth_hf, &auth_hf_len);
+	build_proxy_auth_hf(_realm, auth_hf, &auth_hf_len, _str2);
 	if (send_resp(_msg, 407, MESSAGE_407, auth_hf, auth_hf_len) == -1) {
 		LOG(L_ERR, "challenge(): Error while sending response\n");
 		return -1;
