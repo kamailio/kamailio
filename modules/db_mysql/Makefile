@@ -4,6 +4,6 @@
 
 auto_gen=
 NAME=mysql.so
-LIBS=-lmysqlclient
+LIBS=-lmysqlclient -L/usr/lib/mysql
 
 include ../../Makefile.modules
