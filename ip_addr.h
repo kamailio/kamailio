@@ -92,7 +92,7 @@ struct receive_info{
 	short src_port;
 	short dst_port;
 	int proto;
-	int proto_reserved1;
+	int proto_reserved1; /* tcp stores the connection id here */
 	int proto_reserved2;
 	union sockaddr_union src_su; /* usefull for replies*/
 	struct socket_info* bind_address; /* sock_info structure on which 

@@ -24,6 +24,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * -------
+ * 2001-??-?? created by andrei
+ * ????-??-?? lots of changes by a lot of people
+ * 2003-02-11 added inline msg_send (andrei)
+ */
 
 
 
@@ -34,6 +41,12 @@
 #include "route.h"
 #include "proxy.h"
 #include "ip_addr.h"
+
+#include "stats.h"
+#include "udp_server.h"
+#ifdef USE_TCP
+#include "tcp_server.h"
+#endif
 
 
 struct socket_info* get_send_socket(union sockaddr_union* su, int proto);
@@ -47,5 +60,51 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 			((msg)->via1->port)?htons((msg)->via1->port): htons(SIP_PORT) )
 
 int forward_reply( struct sip_msg* msg);
+
+
+
+/* params:
+ *  send_sock= 0 if already known (e.g. for udp in some cases), non-0 otherwise
+ *  proto=TCP|UDP
+ *  to = destination,
+ *  id - only used on tcp, it will force sending on connection "id" if id!=0 
+ *       and the connection exists, else it will send to "to" 
+ *       (usefull for sending replies on  the same connection as the request
+ *       that generated them; use 0 if you don't want this)
+ * returns: 0 if ok, -1 on error*/
+static inline int msg_send(	struct socket_info* send_sock, int proto,
+							union sockaddr_union* to, int id,
+							char* buf, int len)
+{
+	
+	if (proto==PROTO_UDP){
+		if (send_sock==0) send_sock=get_send_socket(to, proto);
+		if (send_sock==0){
+			LOG(L_ERR, "msg_send: ERROR: no sending socket found\n");
+			goto error;
+		}
+		if (udp_send(send_sock, buf, len, to)==-1){
+			STATS_TX_DROPS;
+			LOG(L_ERR, "msg_send: ERROR: udp_send failed\n");
+			goto error;
+		}
+	}
+#ifdef USE_TCP
+	else if (proto==PROTO_TCP){
+		if (tcp_send(buf, len, to, id)<0){
+			STATS_TX_DROPS;
+			LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
+			goto error;
+		}
+	}
+#endif
+	else{
+			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", proto);
+			goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
 
 #endif

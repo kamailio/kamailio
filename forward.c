@@ -26,11 +26,14 @@
  *
  * History:
  * -------
- * 2003-01-23 support for determination of outbound interface added :
- *            get_out_socket (jiri)
- * 2003-01-24 reply to rport support added, contributed by
- *             Maxim Sobolev <sobomax@FreeBSD.org> and modified by andrei
- *
+ * 2001-??-??  created by andrei
+ * ????-??-??  lots of changes by a lot of people
+ * 2003-01-23  support for determination of outbound interface added :
+ *              get_out_socket (jiri)
+ * 2003-01-24  reply to rport support added, contributed by
+ *              Maxim Sobolev <sobomax@FreeBSD.org> and modified by andrei
+ * 2003-02-11  removed calls to upd_send & tcp_send & replaced them with
+ *              calls to msg_send (andrei)
  */
 
 
@@ -50,20 +53,15 @@
 #include "parser/msg_parser.h"
 #include "route.h"
 #include "dprint.h"
-#include "udp_server.h"
 #include "globals.h"
 #include "data_lump.h"
 #include "ut.h"
 #include "mem/mem.h"
 #include "msg_translator.h"
 #include "sr_module.h"
-#include "stats.h"
 #include "ip_addr.h"
 #include "resolve.h"
 #include "name_alias.h"
-#ifdef USE_TCP
-#include "tcp_server.h"
-#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -315,34 +313,14 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	DBG("Sending:\n%.*s.\n", (int)len, buf);
 	DBG("orig. len=%d, new_len=%d, proto=%d\n", msg->len, len, proto );
 	
-	
-	if (proto==PROTO_UDP){
-		if (udp_send(send_sock, buf, len,  to)==-1){
-				ser_error=E_SEND;
-				p->errors++;
-				p->ok=0;
-				STATS_TX_DROPS;
-				goto error1;
-		}
-	}
-#ifdef USE_TCP
-	 else if (proto==PROTO_TCP){
-		if (tcp_send(buf, len, to, 0)<0){
-				ser_error=E_SEND;
-				p->errors++;
-				p->ok=0;
-				STATS_TX_DROPS;
-				goto error1;
-		}
-	}
-#endif
-	 else{
-		LOG(L_CRIT, "BUG: forward_request: unknown proto %d\n", proto);
+	if (msg_send(send_sock, proto, to, 0, buf, len)<0){
 		ser_error=E_SEND;
+		p->errors++;
+		p->ok=0;
 		STATS_TX_DROPS;
 		goto error1;
 	}
-
+	
 	/* sent requests stats */
 	STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
 	
@@ -410,22 +388,23 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 }
 
 
+
 /* removes first via & sends msg to the second */
 int forward_reply(struct sip_msg* msg)
 {
 	char* new_buf;
 	union sockaddr_union* to;
-	struct socket_info* send_sock;
 	unsigned int new_len;
 	struct sr_module *mod;
 	int proto;
+	int id; /* used only by tcp*/
 #ifdef USE_TCP
 	char* s;
 	int len;
-	int id;
 #endif
 	
 	to=0;
+	id=0;
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
@@ -470,22 +449,10 @@ int forward_reply(struct sip_msg* msg)
 
 	proto=msg->via2->proto;
 	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
-	send_sock=get_send_socket(to, proto);
-	if (send_sock==0){
-		LOG(L_ERR, "forward_reply: ERROR: no sending socket found\n");
-		goto error;
-	}
 
-	if (proto==PROTO_UDP){
-		if (udp_send(send_sock, new_buf,new_len,  to)==-1)
-		{
-			STATS_TX_DROPS;
-			goto error;
-		}
-	}
+
 #ifdef USE_TCP
-	 else if (proto==PROTO_TCP){
-		 id=0;
+	if (proto==PROTO_TCP){
 		/* find id in i param if it exists */
 		if (msg->via1->i&&msg->via1->i->value.s){
 			s=msg->via1->i->value.s;
@@ -495,19 +462,11 @@ int forward_reply(struct sip_msg* msg)
 			DBG("forward_reply: id= %x\n", id);
 		}		
 				
-		if (tcp_send(new_buf, new_len,  to, id)<0)
-		{
-			STATS_TX_DROPS;
-			goto error;
-		}
 	} 
 #endif
-	else{
-		LOG(L_CRIT, "BUG: forward_reply: unknown proto %d\n", proto);
-		goto error;
-	}
+	if (msg_send(0, proto, to, id, new_buf, new_len)<0) goto error;
 #ifdef STATS
-		STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
+	STATS_TX_RESPONSE(  (msg->first_line.u.reply.statuscode/100) );
 #endif
 
 	DBG(" reply forwarded to %.*s:%d\n", 
