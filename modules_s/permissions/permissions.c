@@ -403,6 +403,8 @@ static int single_fixup(void** param, int param_no)
 	tmp = buffer;
 	ret |= load_fixup(&tmp, 2);
 
+	*param = tmp;
+
 	pkg_free(buffer);
 	return ret;
 }
