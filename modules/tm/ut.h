@@ -59,7 +59,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 		return 0;
 	}
 	if (parsed_uri.port.s){ 
-		port=str2s((unsigned char*)parsed_uri.port.s, parsed_uri.port.len, &err);
+		port=str2s(parsed_uri.port.s, parsed_uri.port.len, &err);
 		if (err){
 			LOG(L_ERR, "ERROR: t_relay: bad port in uri: <%.*s>\n",
 				parsed_uri.port.len, parsed_uri.port.s);

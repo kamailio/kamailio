@@ -322,7 +322,7 @@ int init_entry_lock( struct s_table* ht, struct entry *entry )
 	   many partitions as number of available semaphors allows
         */
 	entry->mutex.semaphore_set=entry_semaphore;
-	entry->mutex.semaphore_index = ( ((void *)entry - (void *)(ht->entrys ) )
+	entry->mutex.semaphore_index = ( ((char *)entry - (char *)(ht->entrys ) )
                / sizeof(struct entry) ) % sem_nr;
 #endif
 	return 0;

@@ -27,6 +27,8 @@
  /* History:
   * --------
   *  2003-02-18  updated various function prototypes (andrei)
+  *  2003-03-10  removed ifdef _OBSO & made redefined all the *UNREF* macros
+  *               in a non-gcc specific way (andrei)
   */
 
 
@@ -86,19 +88,13 @@ int send_pr_buffer( struct retr_buf *rb,
 	SEND_PR_BUFFER( (_rb) , (_rb)->buffer , (_rb)->buffer_len )
 
 
-#define UNREF_UNSAFE(_T_cell) ({  (_T_cell)->ref_count--; })
-#define UNREF(_T_cell) ({ \
+#define UNREF_UNSAFE(_T_cell) ((_T_cell)->ref_count--)
+#define UNREF(_T_cell) do{ \
 	LOCK_HASH( (_T_cell)->hash_index ); \
 	UNREF_UNSAFE(_T_cell); \
-	UNLOCK_HASH( (_T_cell)->hash_index ); })
-#define REF_UNSAFE(_T_cell) ({  (_T_cell)->ref_count++; })
-#ifdef _OBSO
-#define REF(_T_cell) ({ \
-	LOCK_HASH( (_T_cell)->hash_index ); \
-	REF_UNSAFE(_T_cell); \
-	UNLOCK_HASH( (_T_cell)->hash_index ); })
-#endif
-#define INIT_REF_UNSAFE(_T_cell) (_T_cell)->ref_count=1
+	UNLOCK_HASH( (_T_cell)->hash_index ); }while(0)
+#define REF_UNSAFE(_T_cell) ((_T_cell)->ref_count++)
+#define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
 

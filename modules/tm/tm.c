@@ -57,6 +57,7 @@
  *  2003-02-18  added t_forward_nonack_{udp, tcp}, t_relay_to_{udp,tcp},
  *               t_replicate_{udp, tcp} (andrei)
  *  2003-02-19  added t_rely_{udp, tcp} (andrei)
+ *  2003-03-10  module export interface updated to the new format (andrei)
  */
 
 
@@ -126,6 +127,53 @@ static int mod_init(void);
 static int child_init(int rank);
 
 
+static cmd_export_t cmds[]={
+	{"t_newtran",          w_t_newtran,             0, 0                    },
+	{"t_lookup_request",   w_t_check,               0, 0                    },
+	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply   },
+	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0                    },
+	{"t_release",          w_t_release,             0, 0                    },
+	{T_RELAY_TO,           w_t_relay_to,            2, fixup_hostport2proxy },
+	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy },
+	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy },
+	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy },
+	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy },
+	{"t_replicate_tcp",    w_t_replicate_tcp,       2, fixup_hostport2proxy },
+	{T_RELAY,              w_t_relay,               0, 0                    },
+	{T_RELAY_UDP,          w_t_relay_udp,           0, 0                    },
+	{T_RELAY_TCP,          w_t_relay_tcp,           0, 0                    },
+	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy },
+	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy },
+	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy },
+	{"t_on_negative",      w_t_on_negative,         1, fixup_str2int        },
+	/* not applicable from the script -- ugly hack */
+	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0},
+	{T_UAC_DLG,            (cmd_function)t_uac_dlg,         NO_SCRIPT,     0},
+	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0},
+	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0},
+	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0},
+	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0},
+	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0},
+	{T_ADDBLIND,           (cmd_function)add_blind_uac,     NO_SCRIPT,     0},
+	{"t_newdlg",           (cmd_function)w_t_newdlg,        0,             0},
+	{0,0,0,0}
+};
+
+static param_export_t params[]={
+	{"ruri_matching", INT_PARAM, &ruri_matching                         },
+	{"fr_timer",      INT_PARAM, &(timer_id2timeout[FR_TIMER_LIST])     },
+	{"fr_inv_timer",  INT_PARAM, &(timer_id2timeout[FR_INV_TIMER_LIST]) },
+	{"wt_timer",      INT_PARAM, &(timer_id2timeout[WT_TIMER_LIST])     },
+	{"delete_timer",  INT_PARAM, &(timer_id2timeout[DELETE_LIST])       },
+	{"retr_timer1p1", INT_PARAM, &(timer_id2timeout[RT_T1_TO_1])        },
+	{"retr_timer1p2", INT_PARAM, &(timer_id2timeout[RT_T1_TO_2])        },
+	{"retr_timer1p3", INT_PARAM, &(timer_id2timeout[RT_T1_TO_3])        },
+	{"retr_timer2",   INT_PARAM, &(timer_id2timeout[RT_T2])             },
+	{"noisy_ctimer",  INT_PARAM, &noisy_ctimer                          },
+	{0,0,0}
+};
+
+
 #ifdef STATIC_TM
 struct module_exports tm_exports = {
 #else
@@ -133,168 +181,10 @@ struct module_exports exports= {
 #endif
 	"tm",
 	/* -------- exported functions ----------- */
-	(char*[]){			
-				"t_newtran",
-				"t_lookup_request",
-				T_REPLY,
-				"t_retransmit_reply",
-				"t_release",
-				T_RELAY_TO,
-				T_RELAY_TO_UDP,
-				T_RELAY_TO_TCP,
-				"t_replicate",
-				"t_replicate_udp",
-				"t_replicate_tcp",
-				T_RELAY,
-				T_RELAY_UDP,
-				T_RELAY_TCP,
-				T_FORWARD_NONACK,
-				T_FORWARD_NONACK_UDP,
-				T_FORWARD_NONACK_TCP,
-				"t_on_negative",
-
-				/* not applicable from script ... */
-
-				"register_tmcb",
-				T_UAC_DLG,
-				"load_tm",
-				T_REPLY_WB,
-				T_IS_LOCAL,
-				T_GET_TI,
-				T_LOOKUP_IDENT,
-				T_ADDBLIND,
-				"t_newdlg"
-			},
-	(cmd_function[]){
-					w_t_newtran,
-					w_t_check,
-					w_t_reply,
-					w_t_retransmit_reply,
-					w_t_release,
-					w_t_relay_to,
-					w_t_relay_to_udp,
-					w_t_relay_to_tcp,
-					w_t_replicate,
-					w_t_replicate_udp,
-					w_t_replicate_tcp,
-					w_t_relay,
-					w_t_relay_udp,
-					w_t_relay_tcp,
-					w_t_forward_nonack,
-					w_t_forward_nonack_udp,
-					w_t_forward_nonack_tcp,
-					w_t_on_negative,
-
-					(cmd_function) register_tmcb,
-					(cmd_function) t_uac_dlg,
-					(cmd_function) load_tm,
-					(cmd_function) t_reply_with_body,
-					(cmd_function) t_is_local,
-					(cmd_function) t_get_trans_ident,
-					(cmd_function) t_lookup_ident,
-					(cmd_function) add_blind_uac,
-					w_t_newdlg,
-					},
-	(int[]){
-				0, /* t_newtran */
-				0, /* t_lookup_request */
-				2, /* t_reply */
-				0, /* t_retransmit_reply */
-				0, /* t_release */
-				2, /* t_relay_to */
-				2, /* t_relay_to_udp */
-				2, /* t_relay_to_tcp */
-				2, /* t_replicate */
-				2, /* t_replicate_udp */
-				2, /* t_replicate_tcp */
-				0, /* t_relay */
-				0, /* t_relay_udp */
-				0, /* t_relay_tcp */
-				2, /* t_forward_nonack */
-				2, /* t_forward_nonack_udp */
-				2, /* t_forward_nonack_tcp */
-				1, /* t_on_negative */
-				NO_SCRIPT /* register_tmcb */,
-				NO_SCRIPT /* t_uac_dlg */,
-				NO_SCRIPT /* load_tm */,
-				NO_SCRIPT /* t_reply_with_body */,
-				NO_SCRIPT /* t_is_local */,
-				NO_SCRIPT /* t_get_trans_ident */,
-				NO_SCRIPT /* t_lookup_ident */,
-				NO_SCRIPT /* add_blind_uac */,
-				0 /* t_newdlg */
-			},
-	(fixup_function[]){
-				0,						/* t_newtran */
-				0,						/* t_lookup_request */
-				fixup_t_send_reply,		/* t_reply */
-				0,						/* t_retransmit_reply */
-				0,						/* t_release */
-				fixup_hostport2proxy,	/* t_relay_to */
-				fixup_hostport2proxy,	/* t_relay_to_udp */
-				fixup_hostport2proxy,	/* t_relay_to_tcp */
-				fixup_hostport2proxy,	/* t_replicate */
-				fixup_hostport2proxy,	/* t_replicate_udp */
-				fixup_hostport2proxy,	/* t_replicate_tcp */
-				0,						/* t_relay */
-				0,						/* t_relay_udp */
-				0,						/* t_relay_tcp */
-				fixup_hostport2proxy,	/* t_forward_nonack */
-				fixup_hostport2proxy,	/* t_forward_nonack_udp */
-				fixup_hostport2proxy,	/* t_forward_nonack_tcp */
-				fixup_str2int,			/* t_on_negative */
-				0,						/* register_tmcb */
-				0,                                              /* t_uac_dlg */
-				0,						/* load_tm */
-				0, /* t_reply_with_body */
-				0, /* t_is_local */
-				0, /* t_get_trans_ident */
-				0, /* t_lookup_ident */
-				0, /* add_blind_uac */
-				0						/* t_newdlg */
-	
-		},
-	5 /* voicemail */ + 14 + 8 /* *_(UDP|TCP) */,
-
+	cmds,
 	/* ------------ exported variables ---------- */
-	(char *[]) { /* Module parameter names */
-		"ruri_matching",
-		"fr_timer",
-		"fr_inv_timer",
-		"wt_timer",
-		"delete_timer",
-		"retr_timer1p1",
-		"retr_timer1p2",
-		"retr_timer1p3",
-		"retr_timer2",
-		"noisy_ctimer"
-	},
-	(modparam_t[]) { /* variable types */
-		INT_PARAM, /* ruri_matching */
-		INT_PARAM, /* fr_timer */
-		INT_PARAM, /* fr_inv_timer */
-		INT_PARAM, /* wt_timer */
-		INT_PARAM, /* delete_timer */
-		INT_PARAM,/* retr_timer1p1 */
-		INT_PARAM, /* retr_timer1p2 */
-		INT_PARAM, /* retr_timer1p3 */
-		INT_PARAM, /* retr_timer2 */
-		INT_PARAM /* noisy_ctimer */
-	},
-	(void *[]) { /* variable pointers */
-		&ruri_matching,
-		&(timer_id2timeout[FR_TIMER_LIST]),
-		&(timer_id2timeout[FR_INV_TIMER_LIST]),
-		&(timer_id2timeout[WT_TIMER_LIST]),
-		&(timer_id2timeout[DELETE_LIST]),
-		&(timer_id2timeout[RT_T1_TO_1]),
-		&(timer_id2timeout[RT_T1_TO_2]),
-		&(timer_id2timeout[RT_T1_TO_3]),
-		&(timer_id2timeout[RT_T2]),
-		&noisy_ctimer
-	},
-	10,      /* Number of module paramers */
-
+	params,
+	
 	mod_init, /* module initialization function */
 	(response_function) t_on_reply,
 	(destroy_function) tm_shutdown,
@@ -524,19 +414,19 @@ inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
 	return _w_t_forward_nonack(msg, proxy, foo, msg->rcv.proto);
-};
+}
 
 inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
 	return _w_t_forward_nonack(msg, proxy, foo, PROTO_UDP);
-};
+}
 
 inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
 	return _w_t_forward_nonack(msg, proxy, foo, PROTO_TCP);
-};
+}
 
 
 
@@ -597,7 +487,6 @@ inline static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* 
 		return t_retransmit_reply( t );
 	} else 
 		return -1;
-	return 1;
 }
 
 

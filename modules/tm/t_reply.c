@@ -34,6 +34,7 @@
  * 2003-02-13  updated to use rb->dst (andrei)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-19  faked lump list created in on_reply handlers
+ * 2003-03-10  fixed new to tag bug/typo (if w/o {})  (andrei)
  */
 
 
@@ -158,7 +159,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 
 	for (i=t->fwded_totags; i; i=i->next) {
 		if (i->tag.len==tag->len
-				&& memcmp(i->tag.s, tag->s, tag->len) ==0 )
+				&& memcmp(i->tag.s, tag->s, tag->len) ==0 ){
 			/* to tag already recorded */
 #ifdef XL_DEBUG
 			LOG(L_CRIT, "DEBUG: update_totag_set: totag retranmission\n");
@@ -166,6 +167,7 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 			DBG("DEBUG: update_totag_set: totag retranmission\n");
 #endif
 			return 1;
+		}
 	}
 	/* that's a new to-tag -- record it */
 	shm_lock();
@@ -719,7 +721,6 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 				    0,0, /* no to-tag */
 				    lock, &bm);
 	}
-	DBG("DEBUG: t_reply: buffer computed\n");
 }
 
 void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
@@ -1064,7 +1065,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 		return 1;
 	/*... if there is none, tell the core router to fwd statelessly */
 	t=get_t();
-	if ( t<=0 ) return 1;
+	if ( (t==0)||(t==T_UNDEFINED)) return 1;
 
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;
@@ -1158,7 +1159,7 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 
     str  s_to_tag,sb,snh;
     char* res_buf;
-    int res_len;
+    unsigned int res_len;
 	int ret;
 	struct bookmark bm;
 
