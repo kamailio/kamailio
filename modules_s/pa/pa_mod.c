@@ -46,9 +46,7 @@
 #include "location.h"
 #include "pa_mod.h"
 
-
 MODULE_VERSION
-
 
 static int pa_mod_init(void);  /* Module initialization function */
 static int pa_child_init(int _rank);  /* Module child init function */

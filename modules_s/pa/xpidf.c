@@ -96,6 +96,12 @@
  */
 int start_xpidf_doc(str* _b, int _l)
 {
+	if (!_b || !_b->s) {
+		LOG(L_ERR, "start_xpidf_doc: Invalid parameter value\n");
+		paerrno = PA_INTERNAL_ERROR;
+		return -1;
+	}
+
 	if ((XML_VERSION_L + 
 	     CRLF_L +
 	     DOCTYPE_L + 
@@ -119,9 +125,15 @@ int start_xpidf_doc(str* _b, int _l)
  */
 int xpidf_add_presentity(str* _b, int _l, str* _uri)
 {
+	if (!_b || !_b->s || !_uri || !_uri->s) {
+		LOG(L_ERR, "xpidf_add_presentity: Invalid parameter value\n");
+		paerrno = PA_INTERNAL_ERROR;
+		return -1;
+	}
+
 	if (_l < PRESENTITY_START_L + _uri->len + PRESENTITY_END_L + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "pidf_add_presentity(): Buffer too small\n");
+		LOG(L_ERR, "xpidf_add_presentity(): Buffer too small\n");
 		return -1;
 	}
 
@@ -144,20 +156,32 @@ int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 
 	switch(_st) {
 	case XPIDF_ST_OPEN:
-	  p = STATUS_OPEN;   len = STATUS_OPEN_L;
-	  available = MSNSUBSTATUS_ONLINE; len_available = MSNSUBSTATUS_ONLINE_L;
-	  break;
+		p = STATUS_OPEN; 
+		len = STATUS_OPEN_L;
+		available = MSNSUBSTATUS_ONLINE; 
+		len_available = MSNSUBSTATUS_ONLINE_L;
+		break;
 #if 0
 	case XPIDF_ST_INUSE:     
-	  p = STATUS_INUSE;  len = STATUS_INUSE_L;
-	  available = MSNSUBSTATUS_OFFLINE; len_available = MSNSUBSTATUS_OFFLINE_L;
-	  break;
+		p = STATUS_INUSE; 
+		len = STATUS_INUSE_L;
+		available = MSNSUBSTATUS_OFFLINE; 
+		len_available = MSNSUBSTATUS_OFFLINE_L;
+		break;
 #endif
 	default:
 	case XPIDF_ST_CLOSED: 
-	  p = STATUS_CLOSED; len = STATUS_CLOSED_L;
-	  available = MSNSUBSTATUS_OFFLINE; len_available = MSNSUBSTATUS_OFFLINE_L;
-	  break;
+		p = STATUS_CLOSED; 
+		len = STATUS_CLOSED_L;
+		available = MSNSUBSTATUS_OFFLINE; 
+		len_available = MSNSUBSTATUS_OFFLINE_L;
+		break;
+	}
+
+	if (!_b || !_b->s || !_addr || !_addr->s) {
+		LOG(L_ERR, "xpidf_add_address: Invalid parameter value\n");
+		paerrno = PA_INTERNAL_ERROR;
+		return -1;
 	}
 
 	if (_l < (ATOM_STAG_L + 
