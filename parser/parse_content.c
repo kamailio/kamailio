@@ -185,7 +185,7 @@ char* parse_content_type( char* buffer, char* end, int* type)
 	*type = mime;
 	return p;
 error:
-	LOG(L_ERR,"ERROR:parse_content_length: parse error near char [%d][%c]\n",
+	LOG(L_ERR,"ERROR:parse_content_type: parse error near char [%d][%c]\n",
 		*p,*p);
 	return 0;
 }
