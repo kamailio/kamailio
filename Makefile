@@ -19,7 +19,7 @@ extra_objs=$(extra_sources:.c=.o)
 
 static_defs= $(foreach  mod, $(static_modules), \
 		-DSTATIC_$(shell echo $(mod) | tr [:lower:] [:upper:]) )
-DEFS+=$(static_defs)
+DEFS=$(static_defs)
 modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(wildcard modules/*))

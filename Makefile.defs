@@ -125,7 +125,7 @@ YACC := $(shell echo "$${YACC}")
 #  		if enabled, allows forking of the snmp agent just before child
 #  		forking (done at the top of main_loop). Needed if you want
 #  		to use the snmp module.
-DEFS= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
+DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' \
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
@@ -271,7 +271,7 @@ ifeq			($(CC_SHORTVER), 3.0)
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
-$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 					for better results)
 					
 					CFLAGS+=-m486 \
@@ -319,7 +319,7 @@ ifeq			($(CC_SHORTVER), 3.0)
 					#-,faster-structs #faster non Sparc ABI structure copy ops
 else			# CC_SHORTVER, 3.0
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
-$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
 					for better results)
 					
 					CFLAGS+= -mv8 -Wa,-xarch=v8plus
