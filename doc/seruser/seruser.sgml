@@ -1290,7 +1290,7 @@ if (method=="REGISTER") {
 		several times. The question is what is the final URI to which
 		the script fill forward any incoming request.
 		<example>
-		    <title>URI-rewriting Quiz</title>
+		    <title>URI-rewriting Exercise</title>
 		    <programlisting format="linespecific">
 exec_uri("echo sip:2234@foo.bar; echo > /dev/null");
 strip(2);
@@ -2798,6 +2798,126 @@ if (!lookup("location")) {
 			    
 			</para>
 	    </section> <!-- missed calls -->
+	    <section>
+		<title>NAT Traversal</title>
+		<para>
+		    NATs are worst things that ever happened to SIP. These devices
+		    are very popular because they help to conserve IP address space
+		    and save money charged for IP addresses. Unfortunately, they
+		    translate addresses in a way which is not compatible with SIP.
+		    SIP advertises receiver addresses in its payload. The advertised
+		    addresses are invalid out of NATted networks. As a result,
+		    SIP communication does not work accross NATs without extra
+		    effort.
+		</para>
+		<para>
+		    There are few methods that may be deployed to traverse NATs.
+		    How proper their use is depends on the deployment scenario.
+		    Unfortunatelly, all the methods have some limitations and
+		    there is no straight-forward solution addressing all
+		    scenarios. Note that none of these methods takes explicit
+		    support in <application moreinfo="none">ser</application>.
+		</para>
+		<para>
+		    The first issue is whether SIP users are in control of 
+		    their NATs. If not (NATs are either operated by ISP or
+		    they are sealed to prevent users setting them up), the
+		    only method is use of a STUN-enabled phone. STUN is 
+		    a very simple protocol used to fool NAT in such a way,
+		    they permit SIP sessions. Currently, we are aware of
+		    one softphone (kphone) and one hardphone (snom) with
+		    STUN support, other vendors are working on STUN support
+		    too. Unfortunately, STUN gives no NAT traversal
+		    guarantee -- there are types of NATs, so called
+		    symmetric NATs, over which STUN fails to work.
+		    <note>
+			<para>
+			    There is actually yet another method to address
+			    SIP-unaware, user-uncontrolled NATs. It is based
+			    on a proxy server, which relays all signaling and
+			    media and mangles packets to make them more
+			    NAT-friendly. The very serious problem with this
+			    method is it does not scale.
+			</para>
+		    </note>
+		</para>
+		<para>
+		    If users are in control of their own NAT, as typically residential
+		    users are, they can still use STUN. However, they may use other
+		    alternatives too. One of them is to replace their NAT with
+		    a SIP-aware NAT. Such NATs have built-in SIP awareness,
+		    that patches problems caused by address translations. Prices
+		    of such devices are getting low and there are available
+		    implementations (Intertex, Cisco/PIX). No special support
+		    in phones is needed.
+		</para>
+		<para>
+		    Other emerging option is UPnP. UPnP is a protocol that allows
+		    phones to negotiate with NAT boxes. You need UPnP support in
+		    both, NAT and phones. As UPnP NATs are quite affordable,
+		    costs are not an obstacle. Currently, we are aware of one
+		    SIP phone (SNOM) with UPnP support.
+		</para>
+		<para>
+		    Geeks not wishing to upgrade their firewall to a SIP-aware or
+		    UPnP-enabled one may try to configure static address translation.
+		    That takes phones with configuration ability to use fixed port
+		    numbers and advertise outside address in signaling. Cisco phones
+		    have this capability, for example. The NAT devices need to
+		    be configured to translate outside port ranges to the 
+		    ranges configured in phones.		    
+		</para>
+	    </section> <!-- NAT traversal -->
+	    <section>
+		<title>Prevention of Unauthorized Domain Name Use in From</title>
+		<para>
+		    Malicous users can claim a name of domain, to which they do 
+		    not administratively belong, in From header field. This
+		    behaviour cannot be generally prevented. The reason is
+		    that requests with such a faked header field do not need
+		    to visit servers of the domain in question. However, if they
+		    do so, it is desirable to assure that users claiming
+		    membership in a domain are actually associated with it.
+		    Otherwise the faked requests would be relayed and appear
+		    as coming from the domain, which would increase
+		    credibility of the faked address and decrease credibility of
+		    the proxy server.
+		</para>
+		<para>
+		    Preventing unathorized domain name use in relayed requests 
+		    is not difficult.
+		    One needs to authenticate each request with name of the
+		    served domain in From header field. To do so, one can
+		    search for such a header field using <command moreinfo="none">search</command>
+		    action (textops module) and force authentication if the
+		    search succeeds.
+		    <note>
+			<para>
+			    A straight-forward solution might be to authenticate
+			    ALL requests. However, that only works in closed
+			    networks in which all users have an account in the
+			    server domain. In open networks, it is desirable to permit
+			    incoming calls from callers from other domains without
+			    any authentication. For example, a company may wish
+			    to accept calls from unknown callers who are
+			    new prospective customers.
+			    
+			</para>
+		    </note>
+		    <programlisting format="linespecific">
+# does the user claim our domain "foo.bar" in From?
+if (search("^(f|From):.*foo.bar")) {
+        # if so, verify credential
+	if (!proxy_authorize("foo.bar", "subscriber")) { 
+              # don't proceed if credentials broken; challenge
+	      proxy_challenge("foo.bar", "0");
+	      break;
+        };
+};
+		    </programlisting>
+		</para>
+
+	    </section> <!-- faked froms -->
 	</section> <!-- howtos -->
 
 	<section>
@@ -3364,6 +3484,94 @@ EOF
 		    </programlisting>
 		</example>
 		</para>
+	    <example>
+		<title>Manipulation of User Contacts</title>
+		<para>
+		    The following example shows use of FIFO server to manipulate
+		    user's contacts. This may be very practical, if for example
+		    a user wishes to set up his cell phone number as his temporary
+		    contact. The cell phone, which is behind a PSTN gateway, cannot
+		    register automatically using SIP. The user needs to set 
+		    forwarding manually through some convenient web interface.
+		    The web interface needs to have the ability to upload new user's
+		    contacts to <application moreinfo="none">ser</application>.
+		    This is what the <command moreinfo="none">ul_add</command> FIFO
+		    command is good far. Paremeterized by user's name, table name,
+		    expiration time and wight, it allows external applications to
+		    introduce new contacts to server's in-memory user location table.
+		</para>
+		<para>
+		    The example is borrowed from <application moreinfo="none">serweb</application>,
+		    <application moreinfo="none">ser</application>'s web 
+		    PHP-written interface.
+		    It consists of a short "stub" function which carries out
+		    all mechanics of FIFO communication and of forming the FIFO
+		    request.
+		</para>
+		<programlisting format="linespecific">
+<![CDATA[
+
+/* construct and send a FIFO command; the command parameters $sip_address, 
+   $expires are PHP variables originating from an HTML form
+ */
+	$fifo_cmd=":ul_add:".$config->reply_fifo_filename."\n".
+		$config->ul_table."\n".			//table
+		$user_id."\n".		//username
+		$sip_address."\n".				//contact
+		$expires."\n".					//expires
+		$config->ul_priority."\n\n";		//priority
+		$message=write2fifo($fifo_cmd, $errors, $status);
+
+/* .......... snip .................. */
+
+/* this is the stub function for communicating with FIFO server.
+   it dumps a request to FIFO server, opens a reply FIFO and
+   reads server's reply from it
+*/
+function write2fifo($fifo_cmd, &$errors, &$status){
+	global $config;
+
+	/* open fifo now */
+	$fifo_handle=fopen( $config->fifo_server, "w" );
+	if (!$fifo_handle) {
+		$errors[]="sorry -- cannot open fifo"; return;
+	}
+	
+	/* create fifo for replies */
+	@system("mkfifo -m 666 ".$config->reply_fifo_path );
+
+	/* add command separator */
+	$fifo_cmd=$fifo_cmd."\n";
+	
+	/* write fifo command */
+	if (fwrite( $fifo_handle, $fifo_cmd)==-1) {
+	    @unlink($config->reply_fifo_path);
+	    @fclose($fifo_handle);
+		$errors[]="sorry -- fifo writing error"; return;
+	}
+	@fclose($fifo_handle);
+	
+	/* read output now */
+	@$fp = fopen( $config->reply_fifo_path, "r");
+	if (!$fp) {
+	    @unlink($config->reply_fifo_path);
+		$errors[]="sorry -- fifo reading error"; return;
+	}
+
+	$status=fgetS($fp,256);
+	if (!$status) {
+	    @unlink($config->reply_fifo_path);
+		$errors[]="sorry -- fifo reading error"; return;
+	}
+	
+	$rd=fread($fp,8192);
+	@unlink($config->reply_fifo_path);
+	
+	return $rd;
+}
+]]>		   
+		</programlisting>
+	    </example>
 	    <para>
 		See
 		<xref linkend="fiforeference"> for a complete listing
@@ -3763,7 +3971,7 @@ route[2] {
 			The set of actions applicable from within
 			<command moreinfo="none">reply_route</command> blocks is limited.
 			Permitted actions are URI-manipulation actions, logging and
-			sending stateful replies using <command moreinfo="none">t_reply_unsafe</command>.
+			sending stateful replies using <command moreinfo="none">t_reply</command>.
 			Use of other actions may lead to
 			unpredictable results. (We plan to add syntactical checks in the future
 			so that improper action use will be detected during server start-up.)
@@ -4172,7 +4380,8 @@ if (len_gt(1024)) {
 	    <title>Modules</title>
 	    <para>
 		Module description is currently located in READMEs of
-		respective module directories.
+		respective module directories. <filename moreinfo="none">README-MODULES</filename>
+		lists all available modules, including their maturity status.
 		In the current <application moreinfo="none">ser</application>
 		distribution, there are the following modules:
 		<itemizedlist>
