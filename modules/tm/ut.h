@@ -33,7 +33,9 @@ inline static struct proxy_l *uri2proxy( str *uri )
 				parsed_uri.port.len, parsed_uri.port.s);
 			goto error;
 		}
-	} else port=SIP_PORT;
+	/* fixed use of SRV resolver
+	} else port=SIP_PORT; */
+	} else port=0;
 	p=mk_proxy(parsed_uri.host.s, port);
 	if (p==0) {
 		LOG(L_ERR, "ERROR: t_relay: bad host name in URI <%.*s>\n",
