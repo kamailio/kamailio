@@ -26,14 +26,9 @@
  *
  * History:
  * ---------
+ * 2003-03-11 changed to the new locking scheme: locking.h (andrei)
  * 2003-03-12 added replication mark and zombie state (nils)
  */
-/*
- * History:
- * --------
- *  2003-03-11  changed to the new locking scheme: locking.h (andrei)
- */
-
 
 #include "udomain.h"
 #include <string.h>
