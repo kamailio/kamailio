@@ -127,7 +127,7 @@ static int str_fixup(void** param, int param_no)
 
 static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 {
-	char *str, *ptr;
+	char *ptr;
 
 	static struct lump* anchor = 0;
 	static int msg_id = 0;
@@ -143,7 +143,7 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 	}
 	
 	if (msg->diversion) {
-		     /* Insert just before the topmost Diversio header */
+		     /* Insert just before the topmost Diversion header */
 		ptr = msg->diversion->name.s;
 	} else {
 		     /* Insert at the end */
@@ -158,15 +158,8 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 		}
 	}
 	
-	str = pkg_malloc(s->len);
-	if (!str) {
-		LOG(L_ERR, "add_diversion_helper: No memory left\n");
-	}
-	
-	memcpy(str, s->s, s->len);
-	if (!insert_new_lump_before(anchor, str, s->len, 0)) {
+	if (!insert_new_lump_before(anchor, s->s, s->len, 0)) {
 		LOG(L_ERR, "add_diversion_helper: Can't insert lump\n");
-		pkg_free(str);
 		return -3;
 	}
 
@@ -207,7 +200,10 @@ int add_diversion(struct sip_msg* msg, char* r, char* s)
 
 	memcpy(at, CRLF, CRLF_LEN);
 
-	add_diversion_helper(msg, &div_hf);
-	pkg_free(div_hf.s);
+	if (add_diversion_helper(msg, &div_hf) < 0) {
+		pkg_free(div_hf.s);
+		return -1;
+	}
+
 	return 1;
 }
