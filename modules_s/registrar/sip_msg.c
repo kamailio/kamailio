@@ -231,7 +231,7 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 		if (*_e != 0) *_e += act_time;
 	}		
 
-	if ((*_e - act_time) < min_expires) {
+	if ((*_e != 0) && ((*_e - act_time) < min_expires)) {
 		*_e = min_expires + act_time;
 	}
 
