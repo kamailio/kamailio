@@ -546,9 +546,11 @@ int ds_select_dst(struct sip_msg *msg, char *set, char *alg)
 	DBG("DISPATCHER:ds_select_dst: alg hash [%u]\n", hash);
 
 	hash = hash%_ds_list[idx].nr;
-	
-	msg->dst_uri.s   = _ds_list[idx].dlist[hash].uri.s;
-	msg->dst_uri.len = _ds_list[idx].dlist[hash].uri.len;
+
+	if (set_dst_uri(msg, &_ds_list[idx].dlist[hash].uri) < 0) {
+		LOG(L_ERR, "DISPATCHER:dst_select_dst: Error while setting dst_uri\n");
+		return -1;
+	}
 
 	DBG("DISPATCHER:ds_select_dst: selected [%d-%d/%d/%d] <%.*s>\n",
 			a, s, idx, hash, msg->dst_uri.len, msg->dst_uri.s);

@@ -574,7 +574,11 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 		}
 	} else {
 		DBG("ras(): Next hop: '%.*s' is loose router\n", uri->len, ZSW(uri->s));
-		_m->dst_uri = *uri;
+
+		if (set_dst_uri(_m, uri) < 0) {
+			LOG(L_ERR, "ras(): Error while setting dst_uri\n");
+			return -5;
+		}
 
 		     /* Next hop is a loose router - Which means that is is not endpoint yet
 		      * In This case we have to recover from previous strict routing, that means we have
@@ -724,7 +728,11 @@ static inline int route_after_loose(struct sip_msg* _m)
 	} else {
 		     /* Next hop is loose router */
 		DBG("ral(): Next URI is a loose router\n");
-		_m->dst_uri = *uri;
+
+		if (set_dst_uri(_m, uri) < 0) {
+			LOG(L_ERR, "ral(): Error while setting dst_uri\n");
+			return -7;
+		}
 
 		     /* There is a previous route uri which was 2nd uri of mine
 		      * and must be removed here
