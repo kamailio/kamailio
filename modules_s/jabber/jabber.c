@@ -75,7 +75,6 @@ char *db_table = "jusers";
 int nrw = 2;
 int max_jobs = 10;
 
-char *contact = "-";
 char *jaddress = "127.0.0.1";
 int jport = 5222;
 
@@ -140,7 +139,6 @@ struct module_exports exports= {
 	8,
 
 	(char*[]) {   /* Module parameter names */
-		"contact",
 		"db_url",
 		"jaddress",
 		"aliases",
@@ -158,7 +156,7 @@ struct module_exports exports= {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
-		STR_PARAM,
+		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
@@ -167,7 +165,6 @@ struct module_exports exports= {
 		INT_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
-		&contact,
 		&db_url,
 		&jaddress,
 		&jaliases,
@@ -180,7 +177,7 @@ struct module_exports exports= {
 		&sleep_time,
 		&check_time
 	},
-	12,      /* Number of module paramers */
+	11,      /* Number of module paramers */
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -275,12 +272,6 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if(xj_wlist_init_contact(jwl, contact) < 0)
-	{
-		DBG("XJAB:mod_init: error initializing workers list properties\n");
-		return -1;
-	}
-
 	if(xj_wlist_set_aliases(jwl, jaliases, jdomain) < 0)
 	{
 		DBG("XJAB:mod_init: error setting aliases\n");
@@ -410,37 +401,43 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	// extract message body - after that whole SIP MESSAGE is parsed
 	if (type==XJ_SEND_MESSAGE)
 	{
-		/* get th content-type and content-length headers */
-		if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
-		|| !msg->content_type || !msg->content_length) 
-		{
-			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR fetching content-lenght"
-				" and content_type failed! Parse error or headers missing!\n");
-                goto error;
-        }
-
-		/* check the content-type value */
-		if ( (int)msg->content_type->parsed!=CONTENT_TYPE_TEXT_PLAIN
-		&& (int)msg->content_type->parsed!=CONTENT_TYPE_MESSAGE_CPIM ) 
-		{
-			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR invalid content-type for"
-				" a message request! type found=%d\n",
-				(int)msg->content_type->parsed);
-			goto error;
-		}
-
 		/* get the message's body */
 		body.s = get_body( msg );
-		if (body.s==0) 
+		if(body.s==0) 
 		{
 			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot extract body from"
 				" msg\n");
 			goto error;
 		}
-		body.len = (int)msg->content_length->parsed;
+		
+		/* content-length (if present) must be already parsed */
+		if(!msg->content_length)
+		{
+			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR no Content-Length"
+					" header found!\n");
+			goto error;
+		}
+		body.len = get_content_length(msg);
+
+		/* parse the content-type header */
+		if(parse_content_type_hdr(msg)==-1)
+		{
+			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot parse"
+					" Content-Type header\n");
+			goto error;
+		}
+
+		/* check the content-type value */
+		if(get_content_type(msg)!=CONTENT_TYPE_TEXT_PLAIN
+			&& get_content_type(msg)!=CONTENT_TYPE_MESSAGE_CPIM)
+		{
+			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR invalid content-type for"
+				" a message request! type found=%d\n", get_content_type(msg));
+			goto error;
+		}
 	}
 	
-	// check for TO and FROM headers 
+	// check for TO and FROM headers - if is not SIP MESSAGE 
 	if(parse_headers( msg, HDR_TO|HDR_FROM, 0)==-1 || !msg->to || !msg->from)
 	{
 		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: cannot find TO or FROM HEADERS!\n");
@@ -472,9 +469,6 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		case XJ_EXIT_JCONF:
 		case XJ_GO_OFFLINE:
 			if((pipe = xj_wlist_check(jwl, &jkey, &p)) < 0)
-/**
- *
- */
 			{
 				DBG("XJAB:xjab_manage_sipmsg: no open Jabber session for"
 						" <%.*s>!\n", from->uri.len, from->uri.s);
@@ -495,7 +489,9 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		dst.len = msg->new_uri.len;
 	} else if ( msg->first_line.u.request.uri.len > 0 )
 	{
+#ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xjab_manage_sipmsg: parsing URI from first line\n");
+#endif
 		if(parse_uri(msg->first_line.u.request.uri.s,
 					msg->first_line.u.request.uri.len, &_uri) < 0)
 		{
@@ -637,7 +633,9 @@ error:
 void destroy(void)
 {
 	int i;
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB: Unloading module ...\n");
+#endif
 	if(pipes)
 	{ // close the pipes
 		for(i = 0; i < nrw; i++)
@@ -660,7 +658,7 @@ void destroy(void)
 	}
 			
 	xj_wlist_free(jwl);
-	DBG("XJAB: Unloaded\n");
+	DBG("XJAB: Unloaded ...\n");
 }
 
 /**

@@ -40,10 +40,10 @@
 #include "xjab_base.h"
 #include "mdefines.h"
 
-
-/** TM bind */
-extern struct tm_binds tmb;
-
+/**
+ * get the hash code - based on Andrei's function
+ * 
+ */
 int xj_get_hash(str *x, str *y)
 {
 	char* p;

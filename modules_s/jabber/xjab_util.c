@@ -110,8 +110,9 @@ int xj_jcon_pool_add_jmsg(xj_jcon_pool jcp, xj_sipmsg _jsm, xj_jcon _ojc)
 		return -1;
 	if(jcp->jmqueue.size == jcp->jmqueue.len)
 		return -2;
-
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jcon_pool_add_jmsg: add msg into the pool\n");
+#endif
 	for(i = 0; i<jcp->jmqueue.len; i++)
 	{
 		if(jcp->jmqueue.jsm[i] == NULL || jcp->jmqueue.ojc[i] == NULL)
@@ -155,8 +156,9 @@ int xj_jcon_pool_add(xj_jcon_pool jcp, xj_jcon jc)
 	
 	if(jcp == NULL)
 		return -1;
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jcon_pool_add: add connection into the pool\n");
-	
+#endif	
 	while(i < jcp->len && jcp->ojc[i] != NULL)
 		i++;
 	if(i >= jcp->len)
@@ -179,9 +181,10 @@ xj_jcon xj_jcon_pool_get(xj_jcon_pool jcp, xj_jkey jkey)
 	
 	if(jcp==NULL || jkey==NULL || jkey->id==NULL || jkey->id->s==NULL)
 		return NULL;
-
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jcon_pool_get: looking for the connection of <%.*s>"
 		" into the pool\n", jkey->id->len, jkey->id->s);
+#endif
 	while(i < jcp->len)
 	{
 	 	if((jcp->ojc[i]!=NULL) && jcp->ojc[i]->jkey->hash==jkey->hash && 
@@ -209,9 +212,9 @@ int xj_jcon_pool_del(xj_jcon_pool jcp, xj_jkey jkey)
 	
 	if(jcp==NULL || jkey==NULL || jkey->id==NULL || jkey->id->s==NULL)
 		return -1;
-
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jcon_pool_del: removing a connection from the pool\n");
-
+#endif
 	while(i < jcp->len)
 	{
 	 	if((jcp->ojc[i]!=NULL) && jcp->ojc[i]->jkey->hash==jkey->hash && 
@@ -236,7 +239,9 @@ void xj_jcon_pool_free(xj_jcon_pool jcp)
 	int i;
 	if(jcp == NULL)
 		return;
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jcon_pool_free: -----START-----\n");
+#endif
 	if(jcp->ojc != NULL)
 	{
 		for(i=0; i<jcp->len; i++)

@@ -38,7 +38,7 @@
 #include "xjab_presence.h"
 
 /**
- *
+ * create a presence cell
  */
 xj_pres_cell xj_pres_cell_new()
 {
@@ -60,7 +60,7 @@ xj_pres_cell xj_pres_cell_new()
 }
 
 /**
- *
+ * free the presence cell
  */
 void xj_pres_cell_free(xj_pres_cell prc)
 {
@@ -73,7 +73,7 @@ void xj_pres_cell_free(xj_pres_cell prc)
 }
 
 /**
- *
+ * free all presence cell linked to
  */
 void xj_pres_cell_free_all(xj_pres_cell prc)
 {
@@ -90,7 +90,7 @@ void xj_pres_cell_free_all(xj_pres_cell prc)
 }
 
 /**
- *
+ * init a presence cell
  */
 int xj_pres_cell_init(xj_pres_cell prc, str* uid, pa_callback_f f, void* p)
 {
@@ -108,7 +108,7 @@ int xj_pres_cell_init(xj_pres_cell prc, str* uid, pa_callback_f f, void* p)
 }
 
 /**
- *
+ * update attributes for a presence cell
  */
 int xj_pres_cell_update(xj_pres_cell prc, pa_callback_f f, void *p)
 {
@@ -120,7 +120,7 @@ int xj_pres_cell_update(xj_pres_cell prc, pa_callback_f f, void *p)
 }
 
 /**
- *
+ * init a presence list
  */
 xj_pres_list xj_pres_list_init()
 {
@@ -136,7 +136,7 @@ xj_pres_list xj_pres_list_init()
 }
 
 /**
- *
+ * free the presence list
  */
 void xj_pres_list_free(xj_pres_list prl)
 {
@@ -148,7 +148,7 @@ void xj_pres_list_free(xj_pres_list prl)
 }
 
 /**
- *
+ * add, if does not exist, an user in present list
  */
 xj_pres_cell xj_pres_list_add(xj_pres_list prl, xj_pres_cell prc)
 {
@@ -196,7 +196,7 @@ xj_pres_cell xj_pres_list_add(xj_pres_list prl, xj_pres_cell prc)
 }
 
 /**
- *
+ * delete a user from presence list
  */
 int xj_pres_list_del(xj_pres_list prl, str *uid)
 {
@@ -232,7 +232,7 @@ int xj_pres_list_del(xj_pres_list prl, str *uid)
 }
 
 /**
- *
+ * Check if a user is already in presence list
  */
 xj_pres_cell xj_pres_list_check(xj_pres_list prl, str* uid)
 {
@@ -256,7 +256,7 @@ xj_pres_cell xj_pres_list_check(xj_pres_list prl, str* uid)
 }
 
 /**
- *
+ * Notify all users from list
  */
 void xj_pres_list_notifyall(xj_pres_list prl, int s)
 {

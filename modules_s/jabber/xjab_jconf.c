@@ -38,6 +38,9 @@
 #include "xjab_jconf.h"
 #include "xjab_base.h"
 
+/**
+ *
+ */
 xj_jconf xj_jconf_new(str *u)
 {
 	xj_jconf jcf = NULL;
@@ -76,6 +79,9 @@ xj_jconf xj_jconf_new(str *u)
 	return jcf;
 }
 
+/**
+ *
+ */
 int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 {
 	char *p, *p0;
@@ -83,9 +89,9 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 	if(!jcf || !jcf->uri.s || jcf->uri.len <= 0 
 			|| !sid || !sid->s || sid->len <= 0)
 		return -1;
-
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jconf_init_sip: parsing uri\n");
-	
+#endif	
 	p = jcf->uri.s;
 	while(p<(jcf->uri.s + jcf->uri.len)	&& *p != '@') 
 		p++;
@@ -138,8 +144,9 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 	}
 
 	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jconf_init_sip: conferece id=%d\n", jcf->jcid);
-	
+#endif	
 	return 0;
 	
 bad_format:
@@ -147,14 +154,17 @@ bad_format:
 	return -2;
 }
 
+/**
+ *
+ */
 int xj_jconf_init_jab(xj_jconf jcf)
 {
 	char *p, *p0;
 	if(!jcf || !jcf->uri.s || jcf->uri.len <= 0)
 		return -1;
-
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jconf_init_jab: parsing uri\n");
-	
+#endif	
 	p = jcf->uri.s;
 	while(p<(jcf->uri.s + jcf->uri.len)	&& *p != '@') 
 		p++;
@@ -176,8 +186,9 @@ int xj_jconf_init_jab(xj_jconf jcf)
 		jcf->nick.len = jcf->uri.s + jcf->uri.len - jcf->nick.s;
 	}
 	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_jconf_init_jab: conferece id=%d\n", jcf->jcid);
-
+#endif
 	return 0;
 	
 bad_format:
@@ -186,6 +197,9 @@ bad_format:
 }
 
 
+/**
+ *
+ */
 int xj_jconf_set_status(xj_jconf jcf, int s)
 {
 	if(!jcf || !jcf->uri.s || jcf->uri.len <= 0)
@@ -194,6 +208,9 @@ int xj_jconf_set_status(xj_jconf jcf, int s)
 	return 0;
 }
 
+/**
+ *
+ */
 int xj_jconf_cmp(void *a, void *b)
 {
 	int n;
@@ -236,6 +253,9 @@ int xj_jconf_cmp(void *a, void *b)
 	return 0;
 }
 
+/**
+ *
+ */
 int xj_jconf_free(xj_jconf jcf)
 {
 	if(!jcf)
@@ -249,51 +269,9 @@ int xj_jconf_free(xj_jconf jcf)
 	return 0;
 }
 
-int xj_jconf_hash(str *x, str *y)
-{
-	char* p;
-	register unsigned v;
-	register unsigned h;
-
-	if(!x && !y)
-		return 0;
-	h=0;
-	if(x)
-	{
-		for (p=x->s; p<=(x->s+x->len-4); p+=4)
-		{
-			v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-			h+=v^(v>>3);
-		}
-		v=0;
-		for (;p<(x->s+x->len); p++)
-		{ 
-			v<<=8; 
-			v+=*p;
-		}
-		h+=v^(v>>3);
-	}
-	if(y)
-	{
-		for (p=y->s; p<=(y->s+y->len-4); p+=4)
-		{
-			v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
-			h+=v^(v>>3);
-		}
-	
-		v=0;
-		for (;p<(y->s+y->len); p++)
-		{ 
-			v<<=8; 
-			v+=*p;
-		}
-		h+=v^(v>>3);
-	}
-	h=((h)+(h>>11))+((h>>13)+(h>>23));
-	
-	return (h)?h:1;
-}
-
+/**
+ *
+ */
 int xj_jconf_check_addr(str *addr, char dl)
 {
 	char *p;

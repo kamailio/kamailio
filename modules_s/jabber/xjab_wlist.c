@@ -55,9 +55,9 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 
 	if(pipes == NULL || size <= 0 || max <= 0)
 		return NULL;
-
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_wlist_init: -----START-----\n");
-	
+#endif	
 	jwl = (xj_wlist)_M_SHM_MALLOC(sizeof(t_xj_wlist));
 	if(jwl == NULL)
 		return NULL;
@@ -68,7 +68,6 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	jwl->delayt = delay_time;
 	jwl->sleept = sleep_time;
 
-	jwl->contact_h = NULL;
 	jwl->aliases = NULL;
 	jwl->sems = NULL;
 	i = 0;
@@ -110,49 +109,6 @@ clean:
 }
 
 /**
- * init contact address for SIP messages that will be sent by workers
- * - jwl - pointer to workers list
- * - ch - string representation of the contact, e.g. 'sip:100.100.100.100:5060'
- * #return : 0 on success or <0 on error
- * info: still has 0 at the end of string
- */
-int xj_wlist_init_contact(xj_wlist jwl, char *ch)
-{
-	int f = 0; // correction flag: 1 -> must be converted to <sip: ... > 
-	if(ch == NULL)
-		return -1;
-	if((jwl->contact_h = (str*)_M_SHM_MALLOC(sizeof(str))) == NULL)
-		return -1;
-	jwl->contact_h->len = strlen(ch);
-
-	if(jwl->contact_h->len > 2 && strstr(ch, "sip:") == NULL)
-	{
-		// contact correction
-		jwl->contact_h->len += 6;
-		f = 1;
-	}
-
-	if((jwl->contact_h->s=(char*)_M_SHM_MALLOC(jwl->contact_h->len+1))==NULL)
-	{
-		_M_SHM_FREE(jwl->contact_h);
-		return -2;
-	}
-
-	if(f)
-	{
-		strncpy(jwl->contact_h->s, "<sip:", 5);
-		strcpy(jwl->contact_h->s+5, ch);
-		jwl->contact_h->s[jwl->contact_h->len-1] = '>';
-		jwl->contact_h->s[jwl->contact_h->len] = 0;
-	}
-	else
-		strcpy(jwl->contact_h->s, ch);
-
-	return 0;
-}
-
-
-/**
  * set the p.id's of the workers
  * - jwl : pointer to the workers list
  * - pids : p.id's array
@@ -176,14 +132,11 @@ int xj_wlist_set_pid(xj_wlist jwl, int pid, int idx)
 void xj_wlist_free(xj_wlist jwl)
 {
 	int i;
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_wlist_free: freeing 'xj_wlist' memory ...\n");
+#endif
 	if(jwl == NULL)
 		return;
-
-	if(jwl->contact_h != NULL && jwl->contact_h->s != NULL)
-		_M_SHM_FREE(jwl->contact_h->s);
-	if(jwl->contact_h != NULL)
-		_M_SHM_FREE(jwl->contact_h);
 
 	if(jwl->workers != NULL)
 	{
@@ -247,16 +200,20 @@ int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 		if((*p = find234(jwl->workers[i].sip_ids, (void*)jkey, NULL)) != NULL)
 		{
 			s_unlock_at(jwl->sems, i);
+#ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_check: entry exists for <%.*s> in the"
 				" pool of <%d> [%d]\n",jkey->id->len, jkey->id->s,
 				jwl->workers[i].pid,i);
+#endif
 			return jwl->workers[i].wpipe;
 		}
 		s_unlock_at(jwl->sems, i);
 		i++;
 	}
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_wlist_check: entry does not exist for <%.*s>\n",
-			jkey->id->len, jkey->id->s);	
+			jkey->id->len, jkey->id->s);
+#endif
 	return -1;
 }
 
@@ -291,9 +248,11 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 			if(pos >= 0)
 				s_unlock_at(jwl->sems, pos);
 			s_unlock_at(jwl->sems, i);
+#ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_get: entry already exists for <%.*s> in the"
 				" pool of <%d> [%d]\n",jkey->id->len, jkey->id->s,
 				jwl->workers[i].pid,i);
+#endif
 			return jwl->workers[i].wpipe;
 		}
 		if(min > jwl->workers[i].nr)
@@ -336,9 +295,11 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 			msid->hash = jkey->hash;
 			msid->flag = 0;
 			s_unlock_at(jwl->sems, pos);
+#ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_get: new entry for <%.*s> in the pool of"
 				" <%d> - [%d]\n", jkey->id->len, jkey->id->s,
 				jwl->workers[pos].pid, pos);
+#endif
 			return jwl->workers[pos].wpipe;
 		}
 		_M_SHM_FREE(msid->id->s);
@@ -349,8 +310,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 error:
 	if(pos >= 0)
 		s_unlock_at(jwl->sems, pos);
-
-	DBG("XJAB:xj_wlist_get: can not create a new entry for <%.*s>\n",
+	DBG("XJAB:xj_wlist_get: cannot create a new entry for <%.*s>\n",
 				jkey->id->len, jkey->id->s);
 	return -1;
 }
@@ -360,11 +320,14 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 	char *p, *p0, *p1;
 	int i, n;
 	
-	DBG("XJAB:xj_wlist_set_aliases\n");
 	if(jwl == NULL)
 		return -1;
 	if(!jd) // || !als || strlen(als)<2)
 		return 0;
+	
+#ifdef XJ_EXTRA_DEBUG
+	DBG("XJAB:xj_wlist_set_aliases\n");
+#endif
 	
 	if((jwl->aliases = (xj_jalias)_M_SHM_MALLOC(sizeof(t_xj_jalias)))==NULL)
 	{
@@ -405,8 +368,10 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 			jwl->aliases = NULL;
 		}
 		strncpy(jwl->aliases->jdm->s, jd, jwl->aliases->jdm->len);
+#ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_wlist_set_aliases: jdomain=%.*s delim=%c\n",
 			jwl->aliases->jdm->len, jwl->aliases->jdm->s, jwl->aliases->dlm);
+#endif
 	}
 	
 	if(!als || strlen(als)<2)
@@ -463,9 +428,11 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd)
 		}
 			
 		strncpy(jwl->aliases->a[i].s, p, jwl->aliases->a[i].len);
+#ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_wlist_set_aliases: alias[%d/%d]=%.*s delim=%c\n", 
 			i+1, jwl->aliases->size, jwl->aliases->a[i].len, 
 			jwl->aliases->a[i].s, jwl->aliases->d[i]?jwl->aliases->d[i]:'X');
+#endif
 		p = p0 + 1;
 	}
 	return 0;
@@ -515,18 +482,20 @@ void xj_wlist_del(xj_wlist jwl, xj_jkey jkey, int _pid)
 			_pid, jkey->id->len, jkey->id->s, i);
 		return;
 	}
+#ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_wlist_del:%d: trying to delete entry for <%.*s>...\n",
 		_pid, jkey->id->len, jkey->id->s);
-
+#endif
 	s_lock_at(jwl->sems, i);
 	p = del234(jwl->workers[i].sip_ids, (void*)jkey);
 
 	if(p != NULL)
 	{
 		jwl->workers[i].nr--;
-
+#ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_wlist_del:%d: sip id <%.*s> deleted\n", _pid,
 			jkey->id->len, jkey->id->s);
+#endif
 		xj_jkey_free_p(p);
 	}
 
