@@ -34,6 +34,7 @@
  *              added set multicast ttl support (andrei)
  *  2004-07-05  udp_rcv_loop: drop packets with 0 src port + error msg.
  *              cleanups (andrei)
+ *  2005-03-10  multicast options are now set for all the udp sockets (andrei)
  */
 
 
@@ -235,20 +236,6 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 			return -1;
 		}
 		
-		if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, 
-			       &mcast_loopback, sizeof(mcast_loopback))==-1){
-			LOG(L_ERR, "ERROR: setup_mcast_rcvr: setsockopt: %s\n",
-			    strerror(errno));
-			return -1;
-		}
-		if (mcast_ttl>=0){
-			if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_TTL, &mcast_ttl,
-						sizeof(mcast_ttl))==-1){
-				LOG(L_ERR, "ERROR: setup_mcast_rcvr: setosckopt (ttl):"
-						" %s\n", strerror(errno));
-				return -1;
-			}
-		}
 #ifdef USE_IPV6
 	} else if (addr->s.sa_family==AF_INET6){
 		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr, 
@@ -265,23 +252,9 @@ static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
 			return -1;
 		}
 		
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
-			       &mcast_loopback, sizeof(mcast_loopback))==-1){
-			LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", 
-			    strerror(errno));
-			return -1;
-		}
-		if (mcast_ttl>=0){
-			if (setsockopt(sock, IPPROTO_IP, IPV6_MULTICAST_HOPS, &mcast_ttl,
-						sizeof(mcast_ttl))==-1){
-				LOG(L_ERR, "ERROR: setup_mcast_rcvr: setosckopt (ttlv6):"
-						" %s\n", strerror(errno));
-				return -1;
-			}
-		}
 #endif /* USE_IPV6 */
 	} else {
-		LOG(L_ERR, "ERROR: udp_init: Unsupported protocol family\n");
+		LOG(L_ERR, "ERROR: setup_mcast_rcvr: Unsupported protocol family\n");
 		return -1;
 	}
 	return 0;
@@ -341,6 +314,44 @@ int udp_init(struct socket_info* sock_info)
 	if ((sock_info->flags & SI_IS_MCAST) 
 	    && (setup_mcast_rcvr(sock_info->socket, addr)<0)){
 			goto error;
+	}
+	/* set the multicast options */
+	if (addr->s.sa_family==AF_INET){
+		if (setsockopt(sock_info->socket, IPPROTO_IP, IP_MULTICAST_LOOP, 
+						&mcast_loopback, sizeof(mcast_loopback))==-1){
+			LOG(L_ERR, "ERROR: udp_init: setsockopt(IP_MULTICAST_LOOP): %s\n",
+						strerror(errno));
+			goto error;
+		}
+		if (mcast_ttl>=0){
+			if (setsockopt(sock_info->socket, IPPROTO_IP, IP_MULTICAST_TTL,
+						&mcast_ttl, sizeof(mcast_ttl))==-1){
+				LOG(L_ERR, "ERROR: udp_init: setsockopt (IP_MULTICAST_TTL):"
+						" %s\n", strerror(errno));
+				goto error;
+			}
+		}
+#ifdef USE_IPV6
+	} else if (addr->s.sa_family==AF_INET6){
+		if (setsockopt(sock_info->socket, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
+						&mcast_loopback, sizeof(mcast_loopback))==-1){
+			LOG(L_ERR, "ERROR: udp_init: setsockopt (IPV6_MULTICAST_LOOP):"
+					" %s\n", strerror(errno));
+			goto error;
+		}
+		if (mcast_ttl>=0){
+			if (setsockopt(sock_info->socket, IPPROTO_IP, IPV6_MULTICAST_HOPS,
+							&mcast_ttl, sizeof(mcast_ttl))==-1){
+				LOG(L_ERR, "ERROR: udp_init: setssckopt (IPV6_MULTICAST_HOPS):"
+						" %s\n", strerror(errno));
+				goto error;
+			}
+		}
+#endif /* USE_IPV6*/
+	} else {
+		LOG(L_ERR, "ERROR: udp_init: Unsupported protocol family %d\n",
+					addr->s.sa_family);
+		goto error;
 	}
 #endif /* USE_MCAST */
 
