@@ -54,13 +54,13 @@ int lock_initialize()
 
 	/* transaction timers */
 	if ((transaction_timer_semaphore=init_semaphore_set( NR_OF_TIMER_LISTS) ) < 0) {
-		DBG("DEBUG: lock_initialize: transaction timer semaphore allocation failure\n");
+                LOG(L_ERR, "ERROR: lock_initialize:  transaction timer semaphore initialization failure\n");
 		goto error;
 	}
 
 	/* message retransmission timers
         if ((retrasmission_timer_semaphore=init_semaphore_set( NR_OF_RT_LISTS) ) < 0) {
-                DBG("DEBUG: lock_initialize:  retransmission timer semaphore initialization failure\n");
+                LOG(L_ERR, "ERROR: lock_initialize:  retransmission timer semaphore initialization failure\n");
                 goto error;
         } */
 
@@ -73,7 +73,7 @@ int lock_initialize()
 			semctl( entry_semaphore, 0 , IPC_RMID , 0 );
 		entry_semaphore=init_semaphore_set( i );
 		if (entry_semaphore==-1) {
-                        printf("ERROR: entry semaphore initialization failure:  %s\n", strerror( errno ) );
+			DBG("DEBUG: lock_initialize: entry semaphore initialization failure:  %s\n", strerror( errno ) );
 			/* Solaris: EINVAL, Linux: ENOSPC */
                         if (errno==EINVAL || errno==ENOSPC ) {
                                 /* first time: step back and try again */
@@ -84,7 +84,7 @@ int lock_initialize()
                                         continue;
 				/* failure after we stepped back; give up */
                                 } else {
-					DBG("DEBUG: lock_initialize: second time sempahore allocation failure\n");
+				 	LOG(L_ERR, "ERROR: lock_initialize:   second time sempahore allocation failure\n");
 					goto error;
 				}
                         }
@@ -119,7 +119,7 @@ int init_semaphore_set( int size )
 
 	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
 	if (new_semaphore==-1) {
-		DBG("DEBUG: lock_initialize:  failure to allocate a semaphore\n");
+		DBG("DEBUG: init_semaphore_set:  failure to allocate a semaphore\n");
 		return -1;
 	}
 	for (i=0; i<size; i++) {
@@ -131,9 +131,9 @@ int init_semaphore_set( int size )
                 /* binary lock */
                 argument.val = +1;
                 if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
-			DBG("DEBUG: lock_initialize:  failure to initialize a semaphore\n");
+			DBG("DEBUG: init_semaphore_set:  failure to initialize a semaphore\n");
 			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
-				DBG("DEBUG: lock_initialize:  failure to release a semaphore\n");
+				DBG("DEBUG: init_semaphore_set:  failure to release a semaphore\n");
 			return -2;
                 }
         }
@@ -150,30 +150,35 @@ void lock_cleanup()
 	   no other process lives 
 	*/
 
-	DBG("DEBUG: lock_initialize:  clean-up still not implemented properly\n");
+	LOG(L_INFO, "INFO: lock_cleanup:  clean-up still not implemented properly (no sibling check)\n");
 	/* sibling double-check missing here; install a signal handler */
 
 	if (entry_semaphore > 0 && 
 	    semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
-		DBG("ERROR: entry_semaphore cleanup failed\n"); 
+		LOG(L_ERR, "ERROR: lock_cleanup, entry_semaphore cleanup failed\n");
 	if (transaction_timer_semaphore > 0 && 
 	    semctl( transaction_timer_semaphore, 0 , IPC_RMID , 0 )==-1)
-		DBG("ERROR: transaction_timer_semaphore cleanup failed\n"); 
+		LOG(L_ERR, "ERROR: lock_cleanup, transaction_timer_semaphore cleanup failed\n");
 	if (retrasmission_timer_semaphore > 0 &&
 	    semctl( retrasmission_timer_semaphore, 0 , IPC_RMID , 0 )==-1)
 		DBG("ERROR: retrasmission_timer_semaphore cleanup failed\n"); 
+		LOG(L_ERR, "ERROR: lock_cleanup, retrasmission_timer_semaphore cleanup failed\n");
 	
 }
 
 /* lock sempahore s */
 int lock( ser_lock_t s )
 {
+	DBG("DEBUG: lock: entering lock\n");
 	return change_semaphore( s, -1 );
+	DBG("DEBUG: lock: leaving lock\n");
 }
 	
 int unlock( ser_lock_t s )
 {
+	DBG("DEBUG: unlock: entering unlock\n");
 	return change_semaphore( s, +1 );
+	DBG("DEBUG: unlock: leaving unlock\n");
 }
 
 
@@ -190,12 +195,10 @@ tryagain:
    r=semop( s.semaphore_set, &pbuf ,  1 /* just 1 op */ );
 
    if (r==-1) {
-	printf("ERROR occured in change_semaphore: %s\n", 
-		strerror(errno));
 	if (errno=EINTR) {
 		DBG("signal received in a semaphore\n");
 		goto tryagain;
-	}
+	} else LOG(L_ERR, "ERROR: change_semaphore: %s\n", strerror(errno));
     }
    return r;
 }

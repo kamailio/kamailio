@@ -12,7 +12,7 @@ depends= $(sources:.c=.d)
 
 NAME=tm.so
 
-LDFLAGS=-O2 -shared
+SHLIB_LD_FLAGS= -shared
 LIBS= -lpthread
 
 ifeq ($(ARCH), SunOS)
@@ -28,7 +28,7 @@ endif
 
 
 $(NAME): $(objs)
-	$(LD) $(LDFLAGS) $(objs) $(LIBS) -o $(NAME)
+	$(LD) $(LDFLAGS) $(SHLIB_LD_FLAGS) $(objs) $(LIBS) -o $(NAME)
 
 
 .PHONY: all
