@@ -69,7 +69,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	} else IFISMETHOD( INVITE, 'I' )
 	else IFISMETHOD( CANCEL, 'C')
 	else IFISMETHOD( ACK, 'A' )
-	else IFISMETHOD( BYE, 'B' )
+	else IFISMETHOD( BYE, 'B' ) 
 	/* if you want to add another method XXX, include METHOD_XXX in
            H-file (this is the value which you will take later in
            processing and define XXX_LEN as length of method name;
@@ -379,6 +379,7 @@ char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
 		}
 		t++;
 check_continue:
+		;
 	}while( (t<end) && ((*t==' ')||(*t=='\t')) );
 
 	cb->error=PARSE_OK;
@@ -857,7 +858,7 @@ void free_sip_msg(struct sip_msg* msg)
 	pkg_free(msg->orig);
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF
-	pkg_free(msg->buf); */
+	pkg_free(msg->buf); 
 #	endif
 }
 

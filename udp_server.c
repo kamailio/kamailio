@@ -154,7 +154,7 @@ int udp_rcv_loop()
 #ifdef DYN_BUF
 	char* buf;
 #else
-	char buf [BUF_SIZE+1];
+	static char buf [BUF_SIZE+1];
 #endif
 
 	struct sockaddr* from;
@@ -181,7 +181,7 @@ int udp_rcv_loop()
 		if (len==-1){
 			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom: %s\n",
 						strerror(errno));
-			if (errno==EINTR)	goto skip;
+			if (errno==EINTR)	continue; /* goto skip;*/
 			else goto error;
 		}
 		/*debugging, make print* msg work */
@@ -190,7 +190,7 @@ int udp_rcv_loop()
 		/* receive_msg must free buf too!*/
 		receive_msg(buf, len, ((struct sockaddr_in*)from)->sin_addr.s_addr);
 		
-	skip: /* do other stuff */
+	/* skip: do other stuff */
 		
 	}
 	

@@ -14,7 +14,10 @@
 #	ifdef VQ_MALLOC
 #		include "vq_malloc.h"
 		extern struct vqm_block* mem_block;
-#	else
+#	elif defined F_MALLOC
+#		include "f_malloc.h"
+		extern struct fm_block* mem_block;
+#   else
 #		include "q_malloc.h"
 		extern struct qm_block* mem_block;
 #	endif
@@ -28,6 +31,11 @@
 				__FUNCTION__, __LINE__);
 #			define pkg_free(p)   vqm_free(mem_block, (p), __FILE__,  \
 				__FUNCTION__, __LINE__);
+#		elif defined F_MALLOC
+#			define pkg_malloc(s) fm_malloc(mem_block, (s),__FILE__, \
+				__FUNCTION__, __LINE__);
+#			define pkg_free(p)   fm_free(mem_block, (p), __FILE__,  \
+				__FUNCTION__, __LINE__);
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s),__FILE__, \
 				__FUNCTION__, __LINE__);
@@ -38,6 +46,9 @@
 #		ifdef VQ_MALLOC
 #			define pkg_malloc(s) vqm_malloc(mem_block, (s))
 #			define pkg_free(p)   vqm_free(mem_block, (p))
+#		elif defined F_MALLOC
+#			define pkg_malloc(s) fm_malloc(mem_block, (s))
+#			define pkg_free(p)   fm_free(mem_block, (p))
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s))
 #			define pkg_free(p)   qm_free(mem_block, (p))
@@ -45,6 +56,8 @@
 #	endif
 #	ifdef VQ_MALLOC
 #		define pkg_status()  vqm_status(mem_block)
+#	elif defined F_MALLOC
+#		define pkg_status()  fm_status(mem_block)
 #	else
 #		define pkg_status()  qm_status(mem_block)
 #	endif

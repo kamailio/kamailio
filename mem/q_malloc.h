@@ -3,14 +3,17 @@
  * simple & fast malloc library
  */
 
-#if !defined(q_malloc_h) && !defined(VQ_MALLOC)
+#if !defined(q_malloc_h) && !defined(VQ_MALLOC) && !defined(F_MALLOC)
 #define q_malloc_h
 
 
 
 /* defs*/
 
-#define ROUNDTO		16 /* size we round to, must be = 2^n */
+#define ROUNDTO		16 /* size we round to, must be = 2^n  and also
+						 sizeof(qm_frag)+sizeof(qm_frag_end)
+						 must be mutliple of ROUNDTO!
+					   */
 #define MIN_FRAG_SIZE	ROUNDTO
 
 
@@ -47,6 +50,8 @@ struct qm_frag_end{
 #ifdef DBG_QM_MALLOC
 	unsigned int check1;
 	unsigned int check2;
+	unsigned int reserved1;
+	unsigned int reserved2;
 #endif
 	unsigned int size;
 	struct qm_frag* prev_free;

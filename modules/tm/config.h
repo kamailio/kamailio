@@ -8,7 +8,7 @@
 
 /* always use a power of 2 for hash table size */
 #define T_TABLE_POWER		12
-#define TABLE_ENTRIES  		(2 << (T_TABLE_POWER-1))
+#define TABLE_ENTRIES  		(1 << (T_TABLE_POWER))
 
 /* maximum number of forks per transaction */
 #define MAX_FORK		2

@@ -991,8 +991,8 @@ char* parse_fline(char* buffer, char* end, struct msg_start* fl)
 						state=F_CR;
 						break;
 					default:
-						LOG(L_ERR, "ERROR: parse_first_line: invalid
-								message\n");
+						LOG(L_ERR, "ERROR: parse_first_line: invalid" 
+								"message\n");
 						goto error;
 				}
 				break;
@@ -1015,8 +1015,8 @@ char* parse_fline(char* buffer, char* end, struct msg_start* fl)
 						state=F_LF;
 						goto skip;
 					default:
-						LOG(L_ERR, "ERROR: parse_first_line: invalid
-								message\n");
+						LOG(L_ERR, "ERROR: parse_first_line: invalid"
+								" message\n");
 						goto error;
 				}
 				break;

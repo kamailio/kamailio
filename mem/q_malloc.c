@@ -2,7 +2,7 @@
  *
  */
 
-#if !defined(q_malloc) && !(defined VQ_MALLOC)
+#if !defined(q_malloc) && !(defined VQ_MALLOC) && !(defined F_MALLOC)
 #define q_malloc
 
 #include "q_malloc.h"
@@ -130,7 +130,7 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	if (size <(MIN_FRAG_SIZE+FRAG_OVERHEAD)) return 0;
 	size=ROUNDDOWN(size);
 	
-	init_overhead=sizeof(struct qm_block)+sizeof(struct qm_frag)+
+	init_overhead=ROUNDUP(sizeof(struct qm_block))+sizeof(struct qm_frag)+
 		sizeof(struct qm_frag_end);
 	printf("qm_malloc_init: size= %d, init_overhead=%d\n", size, init_overhead);
 	
@@ -147,7 +147,7 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	qm->real_used=init_overhead;
 	qm->max_real_used=qm->real_used;
 	
-	qm->first_frag=(struct qm_frag*)(start+sizeof(struct qm_block));
+	qm->first_frag=(struct qm_frag*)(start+ROUNDUP(sizeof(struct qm_block)));
 	qm->last_frag_end=(struct qm_frag_end*)(end-sizeof(struct qm_frag_end));
 	/* init initial fragment*/
 	qm->first_frag->size=size;
@@ -240,9 +240,8 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 	/*size must be a multiple of 8*/
 	size=ROUNDUP(size);
 	if (size>(qm->size-qm->real_used)) return 0;
-	/*search for a suitable free frag*/
-	f=qm_find_free(qm, size);
 
+	/*search for a suitable free frag*/
 	if ((f=qm_find_free(qm, size))!=0){
 		/* we found it!*/
 		/*detach it from the free list*/
@@ -339,7 +338,6 @@ void qm_free(struct qm_block* qm, void* p)
 	DBG("qm_free: freeing block alloc'ed from %s: %s(%d)\n", f->file, f->func,
 			f->line);
 #endif
-	next=FRAG_NEXT(f);
 	size=f->size;
 	qm->used-=size;
 	qm->real_used-=size;
@@ -349,7 +347,7 @@ void qm_free(struct qm_block* qm, void* p)
 
 #ifdef QM_JOIN_FREE
 	/* join packets if possible*/
-
+	next=FRAG_NEXT(f);
 	if (((char*)next < (char*)qm->last_frag_end) &&( next->u.is_free)){
 		/* join */
 		qm_detach_free(qm, next);
@@ -399,32 +397,27 @@ void qm_status(struct qm_block* qm)
 			qm->used, qm->real_used, qm->size-qm->real_used);
 	LOG(L_INFO, " max used (+overhead)= %d\n", qm->max_real_used);
 	
-	LOG(L_INFO, "dumping all fragments:\n");
+	LOG(L_INFO, "dumping all allocked. fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
-		LOG(L_INFO, "    %3d. %c  address=%x  size=%d\n", i, 
+		if (! f->u.is_free){
+			LOG(L_INFO, "    %3d. %c  address=%x  size=%d\n", i, 
 				(f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
 #ifdef DBG_QM_MALLOC
-		LOG(L_INFO, "            %s from %s: %s(%d)\n",
+			LOG(L_INFO, "            %s from %s: %s(%d)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
-		LOG(L_INFO, "        start check=%x, end check= %x, %x\n",
+			LOG(L_INFO, "        start check=%x, end check= %x, %x\n",
 				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 #endif
+		}
 	}
-	LOG(L_INFO, "dumping free list:\n");
+	LOG(L_INFO, "dumping free list stats :\n");
 	for(h=0,i=0;h<QM_HASH_SIZE;h++){
 		
 		for (f=qm->free_hash[h].head.u.nxt_free,j=0; 
-				f!=&(qm->free_hash[h].head); f=f->u.nxt_free, i++, j++){
-			LOG(L_INFO, "   %5d.[%3d:%3d] %c  address=%x  size=%d\n", i, h, j,
-					(f->u.is_free)?'a':'N',
-					(char*)f+sizeof(struct qm_frag), f->size);
-#ifdef DBG_QM_MALLOC
-			DBG("            %s from %s: %s(%d)\n", 
-				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
-#endif
-		}
+				f!=&(qm->free_hash[h].head); f=f->u.nxt_free, i++, j++);
+		if (j) LOG(L_INFO, "hash= %3d. fragments no.: %5d\n", h, j);
 	}
 	LOG(L_INFO, "-----------------------------\n");
 }

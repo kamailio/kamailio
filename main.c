@@ -41,7 +41,7 @@
 #endif
 
 static char id[]="@(#) $Id$";
-static char version[]=  NAME " " VERSION " (" ARCH ")" ;
+static char version[]=  NAME " " VERSION " (" ARCH "/" OS ")" ;
 static char compiled[]= __TIME__ __DATE__ ;
 static char flags[]=
 "STATS:"
@@ -74,6 +74,9 @@ static char flags[]=
 #ifdef VQ_MALLOC
 ", VQ_MALLOC"
 #endif
+#ifdef F_MALLOC
+", F_MALLOC"
+#endif
 #ifdef USE_SHM_MEM
 ", USE_SHM_MEM"
 #endif
@@ -82,6 +85,9 @@ static char flags[]=
 #endif
 #ifdef DEBUG_DMALLOC
 ", DEBUG_DMALLOC"
+#endif
+#ifdef FAST_LOCK
+", FAST_LOCK"
 #endif
 ;
 
@@ -537,7 +543,9 @@ int main(int argc, char** argv)
 					printf("flags: %s\n", flags );
 					print_ct_constants();
 					printf("%s\n",id);
-					printf("%s compiled on %s at %s\n", __FILE__, __DATE__, __TIME__ );
+					printf("%s compiled on %s at %s with %s\n", __FILE__,
+							__DATE__, __TIME__, COMPILER );
+					
 					exit(0);
 					break;
 			case 'h':
@@ -647,15 +655,15 @@ int main(int argc, char** argv)
 	if (working_dir==0) working_dir="/";
 	/*alloc pids*/
 #ifdef SHM_MEM
-	pids=shm_malloc(sizeof(int)*children_no);
+	pids=shm_malloc(sizeof(int)*(children_no+1));
 #else
-	pids=malloc(sizeof(int)*children_no);
+	pids=malloc(sizeof(int)*(children_no+1));
 #endif
 	if (pids==0){
 		fprintf(stderr, "ERROR: out  of memory\n");
 		goto error;
 	}
-	memset(pids, 0, sizeof(int)*children_no);
+	memset(pids, 0, sizeof(int)*(children_no+1));
 
 	if (addresses_no==0) {
 		/* get our address, only the first one */

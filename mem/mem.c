@@ -18,6 +18,8 @@
 	char mem_pool[PKG_MEM_POOL_SIZE];
 	#ifdef VQ_MALLOC
 		struct vqm_block* mem_block;
+	#elif defined F_MALLOC
+		struct fm_block* mem_block;
 	#else
 		struct qm_block* mem_block;
 	#endif
@@ -29,6 +31,8 @@ int init_mallocs()
         /*init mem*/
 	#ifdef VQ_MALLOC
         	mem_block=vqm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
+	#elif F_MALLOC
+		mem_block=fm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	#else
         	mem_block=qm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	#endif

@@ -22,12 +22,52 @@ int old_hash( str  call_id, str cseq_nr )
 {
    int  hash_code = 0;
    int  i;
+	
+#ifdef i386
+   int ci_len, cs_len;
+   char *ci, *cs;
+   
+	trim_len( ci_len, ci, call_id );
+	trim_len( cs_len, cs, cseq_nr );
+
+		int dummy1;
+		if (call_id.len>=4){
+			asm(
+				"1: \n\r"
+				"addl (%1), %0 \n\r"
+				"add $4, %1 \n\r"
+				"cmp %2, %1 \n\r"
+				"jl 1b  \n\r"
+				: "=r"(hash_code), "=r"(dummy1)
+				:  "0" (hash_code), "1"(ci),
+				"r"( (ci_len & (~3)) +ci)
+			);
+		}
+#else
     if ( call_id.len>0 )
       for( i=0 ; i<call_id.len ; hash_code+=call_id.s[i++]  );
+#endif
+
+#ifdef i386
+
+		int dummy2;
+		if (cseq_nr.len>=4){
+			asm(
+				"1: \n\r"
+				"addl (%1), %0 \n\r"
+				"add $4, %1 \n\r"
+				"cmp %2, %1 \n\r"
+				"jl 1b  \n\r"
+				: "=r"(hash_code), "=r"(dummy2)
+				:  "0" (hash_code), "1"(cs),
+				"r"((cs_len & (~3) )+ cs)
+			);
+		}
+#else
     if ( cseq_nr.len>0 )
       for( i=0 ; i<cseq_nr.len ; hash_code+=cseq_nr.s[i++] );
-
-   return hash_code %= TABLE_ENTRIES;
+#endif
+   return hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
 }
 
 int new_hash( str call_id, str cseq_nr )
@@ -64,7 +104,7 @@ int new_hash( str call_id, str cseq_nr )
 		//hash_code+=crc_32_tab[(cseq_nr.s[i]+hash_code)%243];
 		hash_code+=ccitt_tab[*(cs+i)+123];
 
-	hash_code %= (TABLE_ENTRIES-1);
+	hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
    	return hash_code;
 }
 

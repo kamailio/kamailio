@@ -6,7 +6,8 @@
 #
 
 #
-# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, LIBS, MKDEP, auto_gen, depends, objs
+# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, LIBS, MKDEP, auto_gen, depends, objs,
+# extra_objs, static_modules, static_modules_path
 # (all this must  be defined previously!,  see Makefile.defs & Makefile)
 #
 
@@ -38,8 +39,10 @@ static: $(objs)
 
 .PHONY: clean
 clean:
-	-@rm $(objs) $(NAME) 2>/dev/null
-	-@for r in $(modules); do $(MAKE) -C $$r clean ; done
+	-@rm -f $(objs) $(NAME) 2>/dev/null
+	-@for r in $(modules) $(static_modules_path); do \
+		$(MAKE) -C $$r clean ; \
+	done
 
 
 
@@ -47,12 +50,12 @@ clean:
 .PHONY: distclean
 .PHONY: realclean
 proper realclean distclean: clean 
-	-@rm $(depends) 2>/dev/null
+	-@rm -f $(depends) 2>/dev/null
 	-@for r in $(modules); do $(MAKE) -C $$r proper ; done
 
 .PHONY: mantainer-cleaan
 mantainer-clean: distclean
-	-rm $(auto_gen) TAGS tags *.dbg .*.swp
+	-rm -f $(auto_gen) TAGS tags *.dbg .*.swp
 	-@for r in $(modules); do $(MAKE) -C $$r mantainer-clean ; done
 
 .PHONY: TAGS

@@ -51,6 +51,8 @@ int shm_semid=-1; /*semaphore id*/
 static void* shm_mempool=(void*)-1;
 #ifdef VQ_MALLOC
 	struct vqm_block* shm_block;
+#elif F_MALLOC
+	struct fm_block* shm_block;
 #else
 	struct qm_block* shm_block;
 #endif
@@ -184,6 +186,8 @@ int shm_mem_init()
 	/* init it for malloc*/
 #	ifdef VQ_MALLOC
 		shm_block=vqm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+	#elif defined F_MALLOC
+		shm_block=fm_malloc_init(shm_mempool, SHM_MEM_SIZE);
 #	else
 		shm_block=qm_malloc_init(shm_mempool, SHM_MEM_SIZE);
 #	endif

@@ -15,7 +15,7 @@ Requirements:
 - flex
 - gmake (on Linux this is the standard "make")
 
-Arhitecture Notes:
+OS Notes:
 
 - FreeBSD: make sure gmake, bison & flex are installed
 - Solaris: as above; you can use Solaris's yacc instead of bison
@@ -55,6 +55,14 @@ make modules=modules/print modules
 -compile all the modules except textops
 
 make exclude_modules="CVS textops" modules
+
+-compile with the "tm" module statically linked and with profiling
+
+make static_modules=tm PROFILE=-pg all
+
+-compile with gcc-3.0 instead of gcc
+
+make CC=gcc-3.0 all
 
 
 

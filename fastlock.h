@@ -15,7 +15,7 @@
 #include <sched.h>
 
 
-#ifdef i386
+#ifdef __i386
 
 
 typedef  volatile int lock_t;
