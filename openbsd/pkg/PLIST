@@ -6,6 +6,7 @@ sbin/gen_ha1
 lib/ser/modules/acc.so
 lib/ser/modules/auth.so
 lib/ser/modules/auth_db.so
+lib/ser/modules/auth_diameter.so
 lib/ser/modules/dbtext.so
 lib/ser/modules/domain.so
 lib/ser/modules/enum.so
@@ -38,6 +39,7 @@ share/doc/ser/NEWS
 share/doc/ser/README.acc
 share/doc/ser/README.auth
 share/doc/ser/README.auth_db
+share/doc/ser/README.auth_diameter
 share/doc/ser/README.domain
 share/doc/ser/README.dbtext
 share/doc/ser/README.enum

@@ -14,6 +14,7 @@ d none lib/ser/modules 2755 bin bin
 f none lib/ser/modules/acc.so 0755 bin bin
 f none lib/ser/modules/auth.so 0755 bin bin
 f none lib/ser/modules/auth_db.so 0755 bin bin
+f none lib/ser/modules/auth_diameter.so 0755 bin bin
 f none lib/ser/modules/dbtext.so 0755 bin bin
 f none lib/ser/modules/domain.so 0755 bin bin
 f none lib/ser/modules/enum.so 0755 bin bin
@@ -47,6 +48,7 @@ f none doc/ser/NEWS    0644 bin bin
 f none doc/ser/README.acc 0644 bin bin
 f none doc/ser/README.auth 0644 bin bin
 f none doc/ser/README.auth_db 0644 bin bin
+f none doc/ser/README.auth_diameter 0644 bin bin
 f none doc/ser/README.dbtext  0644 bin bin
 f none doc/ser/README.domain  0644 bin bin
 f none doc/ser/README.enum    0644 bin bin
