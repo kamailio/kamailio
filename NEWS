@@ -110,6 +110,9 @@ core:
        username for identifing the attribute into DB; if no attribute is given,
        all atributes for the given user will be loaded.
        Functions return false is they failed (error) or if no avp was loaded.
+utilities:
+ - ngrep patch for displaying new lines in captured SIP messages is no longer
+   needed; use ngrep V 1.42 with the option "-W byline"
 
 
 
