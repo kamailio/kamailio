@@ -63,7 +63,7 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 		DBG("check_address: doing dns lookup\n");
 		/* try all names ips */
 		he=resolvehost(name);
-		if (he && ip->af==he->h_addrtype){
+		if (ip->af==he->h_addrtype){
 			for(i=0;he && he->h_addr_list[i];i++){
 				if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)
 					return 0;
@@ -235,21 +235,63 @@ done:
 
 
 
+char* received_builder(struct sip_msg *msg, int *received_len)
+{
+	char *buf;
+	int  len;
+	struct ip_addr *source_ip;
+	char *tmp;
+	int  tmp_len;
+	int extra_len;
+
+	extra_len = 0;
+	source_ip=&msg->src_ip;
+	buf = 0;
+
+	buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
+	if (buf==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
+		return 0;
+	}
+	/*
+	received_len=snprintf(buf, MAX_RECEIVED_SIZE,
+							";received=%s",
+							inet_ntoa(*(struct in_addr *)&source_ip));
+	*/
+	memcpy(buf, RECEIVED, RECEIVED_LEN);
+	tmp=ip_addr2a(source_ip);
+	tmp_len=strlen(tmp);
+	len=RECEIVED_LEN+tmp_len;
+	if(source_ip->af==AF_INET6){
+		len+=2;
+		buf[RECEIVED_LEN]='[';
+		buf[RECEIVED_LEN+tmp_len+1]=']';
+		extra_len=1;
+	}
+	
+	memcpy(buf+RECEIVED_LEN+extra_len, tmp, tmp_len);
+	buf[len]=0; /*null terminate it */
+
+	*received_len = len;
+	return buf;
+}
+
+
+
+
 char * build_req_buf_from_sip_req( struct sip_msg* msg,
 								unsigned int *returned_len,
 								struct socket_info* send_sock)
 {
-	unsigned int len, new_len, received_len, uri_len, via_len, extra_len;
+	unsigned int len, new_len, received_len, uri_len, via_len;
 	char* line_buf;
 	char* received_buf;
-	char* tmp;
-	int tmp_len;
 	char* new_buf;
 	char* orig;
 	char* buf;
 	char  backup;
 	unsigned int offset, s_offset, size;
-	struct ip_addr* source_ip;
 	struct lump *t,*r;
 	struct lump* anchor;
 
@@ -257,11 +299,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	orig=msg->orig;
 	buf=msg->buf;
 	len=msg->len;
-	source_ip=&msg->src_ip;
 	received_len=0;
 	new_buf=0;
 	received_buf=0;
-	extra_len=0;
 
 
 	line_buf = via_builder( msg, &via_len, send_sock);
@@ -272,31 +312,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
-		received_buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
-		if (received_buf==0){
-			ser_error=E_OUT_OF_MEM;
-			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
-			goto error1;
-		}
-		/*
-		received_len=snprintf(received_buf, MAX_RECEIVED_SIZE,
-								";received=%s",
-								inet_ntoa(*(struct in_addr *)&source_ip));
-		*/
-		memcpy(received_buf, RECEIVED, RECEIVED_LEN);
-		tmp=ip_addr2a(source_ip);
-		tmp_len=strlen(tmp);
-		received_len=RECEIVED_LEN+tmp_len;
-		if(source_ip->af==AF_INET6){
-			received_len+=2;
-			received_buf[RECEIVED_LEN]='[';
-			received_buf[RECEIVED_LEN+tmp_len+1]=']';
-			extra_len=1;
-		}
-		
-		memcpy(received_buf+RECEIVED_LEN+extra_len, tmp, tmp_len);
-		received_buf[received_len]=0; /*null terminate it */
+	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
+		if ((received_buf=received_builder(msg,&received_len))==0)
+			goto error;
 	}
 	msg->via1->host.s[msg->via1->host.len] = backup;
 
@@ -585,16 +603,32 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	struct lump_rpl   *lump;
 	int               i;
 	str               *tag_str;
+	char              backup;
+	char              *received_buf;
+	int               received_len;
 #ifdef VERY_NOISY_REPLIES
 	char              *warning;
 	unsigned int      warning_len;
 #endif
+
+	received_buf=0;
+	received_len=0;
+	buf=0;
 
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
 	of SIP :( ) */
 	parse_headers( msg, HDR_EOH );
+
+	/* check if received needs to be added */
+	backup = msg->via1->host.s[msg->via1->host.len];
+	msg->via1->host.s[msg->via1->host.len] = 0;
+	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
+		if ((received_buf=received_builder(msg,&received_len))==0)
+			goto error;
+	}
+	msg->via1->host.s[msg->via1->host.len] = backup;
 
 	/*computes the lenght of the new response buffer*/
 	len = 0;
@@ -614,6 +648,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 						len+=new_tag_len+5/*";tag="*/;
 				}
 			case HDR_VIA:
+				if (hdr==msg->h_via1) len += received_len;
 			case HDR_FROM:
 			case HDR_CALLID:
 			case HDR_CSEQ:
@@ -635,7 +670,6 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
 	/*allocating mem*/
-	buf = 0;
 	buf = (char*) local_malloc( len+1 );
 	if (!buf)
 	{
@@ -685,6 +719,12 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					break;
 				}
 			case HDR_VIA:
+				append_str_trans( p, hdr->name.s ,
+					((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
+				if (hdr==msg->h_via1 && received_buf)
+					append_str( p, received_buf, received_len, msg);
+				append_str( p, CRLF,CRLF_LEN,msg);
+				break;
 			case HDR_FROM:
 			case HDR_CALLID:
 			case HDR_CSEQ:

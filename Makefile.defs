@@ -1,8 +1,4 @@
-<<<<<<< Makefile.defs
 # $Id$
-=======
-# $Id$
->>>>>>> 1.99
 #
 # makefile defs (CC, LD,a.s.o)
 #
