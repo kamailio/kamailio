@@ -3,6 +3,10 @@
 
 <!-- Include general SER documentation entities -->
 <!ENTITY % serentities SYSTEM "../ser_entities.sgml">
+
+<!ENTITY % licensing SYSTEM "licensing.sgml">
+<!ENTITY % serweb SYSTEM "serweb.sgml">
+
 %serentities;
 
 ]>
@@ -23,15 +27,96 @@
 	</copyright>
 	<abstract>
 	    <para>
-		A compilation of questions and answers from serhelp, serusers, and serdev mailing lists.
+		A compilation of questions and answers from <email>serhelp@iptel.org</email>,
+		<email>serusers@iptel.org</email>, and <email>serdev@iptel.org</email> mailing
+		lists.
 	    </para>
 	</abstract>
     </bookinfo>
     <toc></toc>
     
     <chapter>
-	<title>Frequently Asked Questions</title>
+	<title>General</title>
 	<qandaset>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is it possible to use &ser; as a &sip; user agent (both of User Agent Client
+			(&uac;) and User Agent Server (&uas;)?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Not easily. &ser; has built-in some functions that allow to use it as user
+			agent, but our primary goal is to develop a server so this is without
+			guarantee and can even dissapear in future versions.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Can &ser; work well together with some of the location server (e. g.LDAP or DNS) ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			&ser;'s built-in location server uses in-<acronym>RAM</acronym> database for
+			high performance and optionally MySQL for persistency. More database
+			protocols may be supplied on contractual basis. As far as I know,
+			<acronym>DNS</acronym> is not used in the industry for user location.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What is a proxy server ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			A proxy server is an entity that routes &sip; messages. See &sip
+			introduction which is part of the distribution.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    What is the difference between proxy server and back to back user agent (B2BUA) ?
+		</question>
+		<answer>
+		    <simpara>
+			The main difference is that proxy servers are transaction-stateful, while
+			B2BUAs are call stateful. That means proxy servers keep state only during
+			&sip; transactions (that is at the beginning and and of a call) and do not
+			keep any state during the whole call.
+		    </simpara>
+		    <simpara>
+			A B2BUA acts merely as connection of two or more user agents which are
+			connected through some means. B2BUAs keep some state (usualy some structures
+			in the memory) during the whole call.
+		    </simpara>
+		    <para>
+			This property gives B2BUA some interesting features that proxies don't
+			have. For example B2BUA can tear down and existing call--proxies can't do
+			that. On the other hand B2BUAs can easily become a bottleneck in terms of
+			scalability.
+		    </para>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			So is &ser; proxy or B2BUA ? Can it terminate an existing call ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			&ser; is a proxy. I can't terminate existing call.
+		    </simpara>
+		</answer>
+	    </qandaentry>
 	    <qandaentry>
 		<question>
 		    <simpara>
@@ -147,19 +232,6 @@
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Is there <quote>send IM</quote> page for sending instant messages only or
-			dies it accept replies as well (i.e. does it act like a full &ua;) ?
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			It can send messages only.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
 			I read <quote>Throughput thousands of calls per second
 			    (<acronym>CPS</acronym>) on a dual-<acronym>CPU</acronym>
 			    <acronym>PC</acronym></quote> on your webpage. How fast is it really ?
@@ -175,22 +247,6 @@
 			USE_IPV6, NO_DEBUG, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC,
 			FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024, MAX_RECV_BUFFER_SIZE
 			262144, MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			Is the &sername; (&ser;) free ? Or do we need to pay ? Becaure my boss worry
-			about that, please help me.
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Yes, it is free. See
-			<ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/COPYING?rev=HEAD&amp;content-type=text/plain">
-			    http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/COPYING?rev=HEAD&amp;content-type=text/plain
-			</ulink>
 		    </simpara>
 		</answer>
 	    </qandaentry>
@@ -237,21 +293,6 @@
 			performance, achieved thousands of <acronym>CPS</acronym> on a
 			<acronym>PC</acronym>--I guess it will take lot of time until your demand
 			hits this capacity.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			I have serweb running. I'm able to connect to <acronym>MySQL</acronym>
-			fine. But it doesn't seem like the form params are getting assigned to
-			variables. Is there something obvious I'm missing?
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Please check if <varname>register_globals</varname> is set to On in your
-			<filename>php.ini</filename> file.
 		    </simpara>
 		</answer>
 	    </qandaentry>
@@ -407,7 +448,7 @@
 		</question>
 		<answer>
 		    <simpara>
-			we no longer disclose our operational policy to the public audience. The
+			We no longer disclose our operational policy to the public audience. The
 			configuration file is only available to our customers under <acronym>NDA</acronym>.
 		    </simpara>
 		</answer>
@@ -649,22 +690,6 @@ ser -E     2>/tmp/ser.log
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Can somebody tell me how to configure the serweb? Which directory should I
-			put those files and which file and parameters should I modify. Or maybe this
-			question was asked previously by somebody already, then please provide me a
-			like to those answers.
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Dan Austin's howto (see &ser; webpage) is probably the currently most
-			extensive documentation available.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
 			I was wondering whether there is a ser module for
 			<acronym>SIP-CGI</acronym>. Or whether there are attempts at creating one?
 		    </simpara>
@@ -698,19 +723,6 @@ ser -E     2>/tmp/ser.log
 		<answer>
 		    <simpara>
 			FIXME.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			Mar 10 16:46:33 ttalksvr /usr/sbin/ser[6592]: connect_db(): Can't connect to
-			local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Make sure your MySQL server is running.
 		    </simpara>
 		</answer>
 	    </qandaentry>
@@ -851,27 +863,6 @@ ser -E     2>/tmp/ser.log
 	    <qandaentry>
 		<question>
 		    <simpara>
-			I get the following error:
-		    </simpara>
-		    <screen format="linespecific">
- 0(5164) db_init(): Error while trying to connect database
- 0(5164) mod_init(): Error while connecting database
- 0(5164) init_modules(): Error while initializing module usrloc
-</screen>
-		    <simpara>
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			usrloc module has variable called db_url which contains username, password,
-			hostname, and name of the database. Make sure the settings are correct. See
-			usrloc module documentation for more information.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
 			Is there a support for accounting ?
 		    </simpara>
 		</question>
@@ -985,38 +976,6 @@ $ORIGIN 9.3.8.1.5.6.2.8.5.3.e164.arpa.
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Trying to load the serweb page I get the following error message: Fatal
-			error: Call to undefined function: mysql_pconnect() in
-			/var/www/html/phplib/db_mysql.inc on line 73
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Configure <acronym>PHP</acronym> to load the MySQL extension.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			I can open the page and even make changes and save
-			them, but I'm receiving the following warning message:
-			Warning: fopen(?/tmp/ser_fifo?, ?w?) ? Permission
-			denied in /var/www/html/serweb/functions.php on line
-			172
-			Sorry - cannot open fifo
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Make sure that the user under which the web server is running has read
-			and write access to the <acronym>FIFO</acronym>.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
 			How can I configure radiator for digest authentication?
 		    </simpara>
 		</question>
@@ -1064,34 +1023,6 @@ $ORIGIN 9.3.8.1.5.6.2.8.5.3.e164.arpa.
 		    </simpara>
 		</answer>
 	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			Is there a way to add/edit/view aliases from serweb?
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			When new user confirm registration, new numeric alias is created. There is
-			no another way to add or edit aliases from serweb.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			I am getting a <quote>Forbidden</quote> reply from the Apache. The Apache is
-			ponting to the +index.php for the serweb. I've only changed the &ip; address
-			of the local host to 127.0.0.1 in the +config.php. Does anyone have any
-			suggestions ?
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Check if the file/folder has read permission for everybody.
-		    </simpara>
-		</answer>
-	    </qandaentry>
 
 	    <qandaentry>
 		<question>
@@ -1102,18 +1033,6 @@ $ORIGIN 9.3.8.1.5.6.2.8.5.3.e164.arpa.
 		<answer>
 		    <simpara>
 			32 Mb.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
-			Does MySQL have to reside on localhost?
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			No.
 		    </simpara>
 		</answer>
 	    </qandaentry>
@@ -1251,33 +1170,6 @@ out_uri=sip:addaline.com via_cnt==1".
 	    <qandaentry>
 		<question>
 		    <simpara>
-			I get following warnings and error on NetBSD when I call
-			user_interface/index.php:
-		    </simpara>
-		    <simpara>
-			[Wed Jul 16 09:56:53 2003] [error] PHP Warning: Call-time pass-by-reference
-			has been deprecated - argument passed by value; If you would like to pass it
-			by reference, modify the declaration of [runtime function name]().  If you
-			would like to enable call-time pass-by-reference, you can set
-			allow_call_time_pass_reference to true in your INI file.  However, future
-			versions may not support this any longer.  in
-			/usr/pkg/share/httpd/htdocs/iptel/phplib/user.inc on line 72 [Wed Jul 16
-			09:56:53 2003] [error] PHP Fatal error: Call to undefined function:
-			mysql_pconnect() in /usr/pkg/share/httpd/htdocs/iptel/phplib/db_mysql.inc on
-			line 73
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Simply do what the text says: enable allow_call_time_pass_reference in
-			<filename>/usr/pkg/etc/php.ini</filename> and install <acronym>PHP</acronym>
-			MySQL support.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
 			I am testing &ser; version 0.8.11pre29 with two <acronym>MSN</acronym>
 			Messenger(v4.6) clients. I tried to send the following MESSAGE through &ser;
 			with record-route header added by &ser;. However, the receiving
@@ -1339,18 +1231,6 @@ out_uri=sip:addaline.com via_cnt==1".
 	    <qandaentry>
 		<question>
 		    <simpara>
-			Is ser compatible with MySQL 4.x ?
-		    </simpara>
-		</question>
-		<answer>
-		    <simpara>
-			Yes.
-		    </simpara>
-		</answer>
-	    </qandaentry>
-	    <qandaentry>
-		<question>
-		    <simpara>
 			Are there any binary packages available ?
 		    </simpara>
 		</question>
@@ -1405,6 +1285,20 @@ out_uri=sip:addaline.com via_cnt==1".
 		    </simpara>
 		</answer>
 	    </qandaentry>
+
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is ser compatible with MySQL 4.x ?
+		</simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+
 	</qandaset>
     </chapter>
 </book>

@@ -1,0 +1,33 @@
+<!-- $Id$ -->
+
+<chapter>
+    <title>Licensing</title>
+    <qandaset>
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Is the &sername; (&ser;) free ? Or do we need to pay ? Becaure my boss worry
+		    about that, please help me.
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Yes, it is free. See
+		    <ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/COPYING?rev=HEAD&amp;content-type=text/plain">
+			http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/COPYING?rev=HEAD&amp;content-type=text/plain
+		    </ulink>
+		</simpara>
+	    </answer>
+	</qandaentry>
+
+	
+
+    </qandaset>
+</chapter>
+
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("serfaq.sgml" "Book" "chapter")
+End:
+-->

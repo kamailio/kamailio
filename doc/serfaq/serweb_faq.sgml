@@ -1,0 +1,184 @@
+<!-- $Id$ -->
+
+<chapter>
+    <title>SERWEB</title>
+    <qandaset>
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Is there <quote>send IM</quote> page for sending instant messages only or does
+		    it accept replies as well (i.e. does it act like a full &ua;) ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    It can send messages only.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    I have serweb running. I'm able to connect to <acronym>MySQL</acronym> fine. But
+		    it doesn't seem like the form params are getting assigned to variables. Is there
+		    something obvious I'm missing?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Please check if <varname>register_globals</varname> is set to On in your
+		    <filename>php.ini</filename> file. The option is set off by default due to
+		    security reasons.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Can somebody tell me how to configure the serweb? Which directory should I put
+		    those files and which file and parameters should I modify. Or maybe this
+		    question was asked previously by somebody already, then please provide me a like
+		    to those answers.
+		</simpara>
+	</question>
+	    <answer>
+		<simpara>
+		    Dan Austin's howto (see &ser; webpage) is probably the currently most extensive
+		    documentation available.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Trying to load the serweb page I get the following error message: Fatal error:
+		    Call to undefined function: mysql_pconnect() in
+		    /var/www/html/phplib/db_mysql.inc on line 73
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Configure <acronym>PHP</acronym> to load the MySQL extension.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    I can open the page and even make changes and save them, but I'm receiving the
+		    following warning message: Warning: fopen(<quote>/tmp/ser_fifo</quote>,
+		    <quote>w</quote>) ? Permission denied in /var/www/html/serweb/functions.php on
+		    line 172 Sorry - cannot open fifo.
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Make sure that the user under which the web server is running has read and write
+		    access to the <acronym>FIFO</acronym>.
+		</simpara>
+	    </answer>
+	</qandaentry>
+    
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Is there a way to add/edit/view aliases from serweb?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    When new user confirm registration, new numeric alias is created. There is no
+		    another way to add or edit aliases from serweb.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    I am getting a <quote>Forbidden</quote> reply from the Apache. The Apache is
+		    pointing to the index.php for the serweb. I've only changed the &ip; address of
+		    the local host to 127.0.0.1 in the config.php. Does anyone have any suggestions
+		    ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Check if the file/folder has read permission for everybody.
+		</simpara>
+	    </answer>
+	</qandaentry>
+
+	<qandaentry>
+	    <question>
+		<simpara>
+		    I get following warnings and error on NetBSD when I call
+		    user_interface/index.php:
+		    </simpara>
+		<simpara>
+		    [Wed Jul 16 09:56:53 2003] [error] PHP Warning: Call-time pass-by-reference has
+		    been deprecated - argument passed by value; If you would like to pass it by
+		    reference, modify the declaration of [runtime function name]().  If you would
+		    like to enable call-time pass-by-reference, you can set
+		    allow_call_time_pass_reference to true in your INI file.  However, future
+		    versions may not support this any longer.  in
+		    /usr/pkg/share/httpd/htdocs/iptel/phplib/user.inc on line 72 [Wed Jul 16
+		    09:56:53 2003] [error] PHP Fatal error: Call to undefined function:
+		    mysql_pconnect() in /usr/pkg/share/httpd/htdocs/iptel/phplib/db_mysql.inc on
+		    line 73
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Simply do what the text says: enable allow_call_time_pass_reference in
+		    <filename>/usr/pkg/etc/php.ini</filename> and install <acronym>PHP</acronym>
+		    MySQL support.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    I started the webserver and got the following message: Starting up of httpd:
+		    [Thu Aug 14 15:16:51 2003] alert ] httpd: Could not determine the of server
+		    fully qualified domain name, using 127.0.0.1 for ServerName 
+		</simpara>
+		<simpara>
+		    Does anyone know where is the problem ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Set ServerName variable in the configuration file of your webserver to hostname
+		    of your computer.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<simpara>
+		    What version of ser should I use with serweb from the CVS ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    CVS version of serweb is aligned to the stable branch of ser. It will not work
+		    with ser 0.8.10 because the database tables have been changed recently.
+		</simpara>
+	    </answer>
+	</qandaentry>
+
+    </qandaset>
+</chapter>
+
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("serfaq.sgml" "Book" "chapter")
+End:
+-->

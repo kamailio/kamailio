@@ -1,0 +1,118 @@
+<!-- $Id$ -->
+
+<chapter>
+    <title>Database Related Questions</title>
+    <qandaset>
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Mar 10 16:46:33 ttalksvr /usr/sbin/ser[6592]: connect_db(): Can't connect to
+		    local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Make sure your MySQL server is running.
+		</simpara>
+	    </answer>
+	</qandaentry>
+
+	<qandaentry>
+	    <question>
+		<simpara>
+		    I get the following error:
+		</simpara>
+		<screen format="linespecific">
+0(5164) db_init(): Error while trying to connect database
+0(5164) mod_init(): Error while connecting database
+0(5164) init_modules(): Error while initializing module usrloc
+</screen>
+		<simpara>
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Modules using database have variable called db_url which contains username,
+		    password, hostname, and name of the database. Make sure the settings are
+		    correct. See module documentation for more information.
+		</simpara>
+	    </answer>
+	</qandaentry>
+
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Does MySQL/Postgres/Whatever have to reside on localhost?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    No.
+		    </simpara>
+	    </answer>
+	</qandaentry>
+
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Why do I need a database ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Many modules need the database. Authentication modules retrieve users'
+		    crecentials from the database, user location module can be configured to store
+		    registered bindings into the database, accounting module can use database to
+		    store CDR and so on.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Which database engines are supported ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    Currently we support MySQL, Postgres and plaintext files.
+		</simpara>
+	    </answer>
+	</qandaentry>
+	
+	<qandaentry>
+	    <question>
+		<simpara>
+		    Which database engine should I use ?
+		</simpara>
+	    </question>
+	    <answer>
+		<simpara>
+		    That depends on your requirements. Performance aspects are probably not very
+		    important. The most stable and proven is MySQL module. Also serctl utility works
+		    well with this database.
+		</simpara>
+		<simpara>
+		    Another option is postgres support which was donated by Greg Faustak. The module
+		    still new and not that mature (read proven) yet. People using the module
+		    reported that it worked well.
+		</simpara>
+		<simpara>
+		    Last option is dbtext module which uses plaintext files to store the data. This
+		    module is somewhat experimental and shouldn't be used for any serious
+		    deployment. The module is quite slow, but it can fit well into small
+		    instalations containing only a couple of users or demos where you need to change
+		    the content of the database often by hand.
+		</simpara>
+	    </answer>
+	</qandaentry>
+
+    </qandaset>
+</chapter>
+
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("serfaq.sgml" "Book" "chapter")
+End:
+-->
