@@ -77,12 +77,6 @@ int synchronize_all_udomains(void);
 
 
 /*
- * Preload content of all domains from database
- */
-int preload_all_udomains(void);
-
-
-/*
  * Get contacts to all registered users
  */
 typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags);

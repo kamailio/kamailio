@@ -202,7 +202,7 @@ static int mod_init(void)
 	register_timer(timer, 0, timer_interval);
 
 	     /* Initialize fifo interface */
-	if (init_ul_fifo()<0) {
+	if (init_ul_fifo() < 0) {
 		LOG(L_ERR, "ERROR: usrloc/fifo initialization failed\n");
 		return -1;
 	}
@@ -212,15 +212,6 @@ static int mod_init(void)
 		if (bind_dbmod(db_url.s) < 0) { /* Find database module */
 			LOG(L_ERR, "mod_init(): Can't bind database module\n");
 			return -1;
-		}
-		
-		     /* Open database connection in parent */
-		db = db_init(db_url.s);
-		if (!db) {
-			LOG(L_ERR, "mod_init(): Error while connecting database\n");
-			return -1;
-		} else {
-			LOG(L_INFO, "mod_init(): Database connection opened successfuly\n");
 		}
 	}
 
@@ -232,8 +223,7 @@ static int child_init(int _rank)
 {
  	     /* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		db_close(db); /* Close connection previously opened by parent */
-		db = db_init(db_url.s); /* Initialize a new separate connection */
+		db = db_init(db_url.s); /* Get a new database connection */
 		if (!db) {
 			LOG(L_ERR, "child_init(%d): Error while connecting database\n", _rank);
 			return -1;

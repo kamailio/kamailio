@@ -201,7 +201,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 
 
 
-int preload_udomain(udomain_t* _d)
+int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	char b[256];
 	db_key_t columns[10];
@@ -209,7 +209,7 @@ int preload_udomain(udomain_t* _d)
 	db_row_t* row;
 	int i, cseq, rep, state;
 	unsigned int flags;
-	
+
 	str user, contact, callid;
 	char* domain;
 	time_t expires;
@@ -231,15 +231,15 @@ int preload_udomain(udomain_t* _d)
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
-	db_use_table(db, b);
-	if (db_query(db, 0, 0, 0, columns, 0, (use_domain) ? (10) : (9), 0, &res) < 0) {
+	db_use_table(_c, b);
+	if (db_query(_c, 0, 0, 0, columns, 0, (use_domain) ? (10) : (9), 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("preload_udomain(): Table is empty\n");
-		db_free_query(db, res);
+		db_free_query(_c, res);
 		return 0;
 	}
 
@@ -271,7 +271,7 @@ int preload_udomain(udomain_t* _d)
 		if (get_urecord(_d, &user, &r) > 0) {
 			if (mem_insert_urecord(_d, &user, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
-				db_free_query(db, res);
+				db_free_query(_c, res);
 				unlock_udomain(_d);
 				return -2;
 			}
@@ -279,7 +279,7 @@ int preload_udomain(udomain_t* _d)
 		
 		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
-			db_free_query(db, res);
+			db_free_query(_c, res);
 			unlock_udomain(_d);
 			return -3;
 		}
@@ -295,7 +295,7 @@ int preload_udomain(udomain_t* _d)
 			c->state = CS_SYNC;
 	}
 
-	db_free_query(db, res);
+	db_free_query(_c, res);
 	unlock_udomain(_d);
 	return 0;
 }
