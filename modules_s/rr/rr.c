@@ -5,6 +5,7 @@
  */
 
 #include "rr.h"
+#include "../../globals.h"
 #include "../../dprint.h"
 #include "utils.h"
 #include "../../route_struct.h"
