@@ -46,6 +46,8 @@
  *  2003-10-10  added switch for config check (-c) (andrei)
  *  2003-10-24  converted to the new socket_info lists (andrei)
  *  2004-02-06  added support for user pref. - init_avp_child() (bogdan)
+ *  2004-03-30  core dump is enabled by default
+ *              added support for increasing the open files limit    (andrei)
  *
  */
 
@@ -327,6 +329,9 @@ char* user=0;
 char* group=0;
 int uid = 0;
 int gid = 0;
+/* more config stuff */
+int disable_core_dump=0; /* by default enabled */
+int open_files_limit=-1; /* don't touch it by default */
 /* a hint to reply modules whether they should send reply
    to IP advertised in Via or IP from which a request came
 */
@@ -1370,10 +1375,6 @@ try_again:
 		goto error;
 	}
 	
-	if (init_modules() != 0) {
-		fprintf(stderr, "ERROR: error while initializing modules\n");
-		goto error;
-	}
 	
 	/*alloc pids*/
 #ifdef SHM_MEM
@@ -1386,6 +1387,20 @@ try_again:
 		goto error;
 	}
 	memset(pt, 0, sizeof(struct process_table)*process_count());
+
+	if (disable_core_dump) set_core_dump(0, 0);
+	else set_core_dump(1, shm_mem_size+PKG_MEM_POOL_SIZE+4*1024*1024);
+	if (open_files_limit>0){
+		if(increase_open_fds(open_files_limit)<0){ 
+			fprintf(stderr, "ERROR: error could not increase file limits\n");
+			goto error;
+		}
+	}
+	
+	if (init_modules() != 0) {
+		fprintf(stderr, "ERROR: error while initializing modules\n");
+		goto error;
+	}
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
 		fprintf(stderr, "ERROR: error %x while trying to fix configuration\n",

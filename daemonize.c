@@ -30,6 +30,7 @@
  * --------
  *  2004-02-20  removed from ser main.c into its own file (andrei)
  *  2004-03-04  moved setuid/setgid in do_suid() (andrei)
+ *  2004-03-25  added increase_open_fds & set_core_dump (andrei)
  */
 
 #include <sys/types.h>
@@ -40,6 +41,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>      /* setrlimit */
+#include <sys/resource.h> /* setrlimit */
 
 #include "daemonize.h"
 #include "globals.h"
@@ -178,3 +181,110 @@ error:
 }
 
 
+
+/* try to increase the open file limit */
+int increase_open_fds(int target)
+{
+	struct rlimit lim;
+	struct rlimit orig;
+	
+	if (getrlimit(RLIMIT_NOFILE, &lim)<0){
+		LOG(L_CRIT, "cannot get the maximum number of file descriptors: %s\n",
+				strerror(errno));
+		goto error;
+	}
+	orig=lim;
+	DBG("current open file limits: %lu/%lu\n",
+			(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
+	if ((lim.rlim_cur==RLIM_INFINITY) || (target<=lim.rlim_cur))
+		/* nothing to do */
+		goto done;
+	else if ((lim.rlim_max==RLIM_INFINITY) || (target<=lim.rlim_max)){
+		lim.rlim_cur=target; /* increase soft limit to target */
+	}else{
+		/* more than the hard limit */
+		LOG(L_INFO, "trying to increase the open file limit"
+				" past the hard limit (%ld -> %d)\n", 
+				(unsigned long)lim.rlim_max, target);
+		lim.rlim_max=target;
+		lim.rlim_cur=target;
+	}
+	DBG("increasing open file limits to: %lu/%lu\n",
+			(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max);
+	if (setrlimit(RLIMIT_NOFILE, &lim)<0){
+		LOG(L_CRIT, "cannot increase the open file limit to"
+				" %lu/%lu: %s\n",
+				(unsigned long)lim.rlim_cur, (unsigned long)lim.rlim_max,
+				strerror(errno));
+		if (orig.rlim_max>orig.rlim_cur){
+			/* try to increase to previous maximum, better than not increasing
+		 	* at all */
+			lim.rlim_max=orig.rlim_max;
+			lim.rlim_cur=orig.rlim_max;
+			if (setrlimit(RLIMIT_NOFILE, &lim)==0){
+				LOG(L_CRIT, " maximum number of file descriptors increased to"
+						" %u\n",(unsigned)orig.rlim_max);
+			}
+		}
+		goto error;
+	}
+done:
+	return 0;
+error:
+	return -1;
+}
+
+
+
+/* enable core dumps */
+int set_core_dump(int enable, int size)
+{
+	struct rlimit lim;
+	struct rlimit newlim;
+	
+	if (enable){
+		if (getrlimit(RLIMIT_CORE, &lim)<0){
+			LOG(L_CRIT, "cannot get the maximum core size: %s\n",
+					strerror(errno));
+			goto error;
+		}
+		if (lim.rlim_cur<size){
+			/* first try max limits */
+			newlim.rlim_max=RLIM_INFINITY;
+			newlim.rlim_cur=newlim.rlim_max;
+			if (setrlimit(RLIMIT_CORE, &newlim)==0) goto done;
+			/* now try with size */
+			if (lim.rlim_max<size){
+				newlim.rlim_max=size;
+			}
+			newlim.rlim_cur=newlim.rlim_max;
+			if (setrlimit(RLIMIT_CORE, &newlim)==0) goto done;
+			/* if this failed too, try rlim_max, better than nothing */
+			newlim.rlim_max=lim.rlim_max;
+			newlim.rlim_cur=newlim.rlim_max;
+			if (setrlimit(RLIMIT_CORE, &newlim)<0){
+				LOG(L_CRIT, "could increase core limits at all: %s\n",
+						strerror (errno));
+			}else{
+				LOG(L_CRIT, "core limits increased only to %lu\n",
+						(unsigned long)lim.rlim_max);
+			}
+			goto error; /* it's an error we haven't got the size we wanted*/
+		}
+		goto done; /*nothing to do */
+	}else{
+		/* disable */
+		newlim.rlim_cur=0;
+		newlim.rlim_max=0;
+		if (setrlimit(RLIMIT_CORE, &newlim)<0){
+			LOG(L_CRIT, "failed to disable core dumps: %s\n",
+					strerror(errno));
+			goto error;
+		}
+	}
+done:
+	DBG("core dump limits set to %lu\n", (unsigned long)newlim.rlim_cur);
+	return 0;
+error:
+	return -1;
+}

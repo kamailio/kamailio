@@ -45,6 +45,7 @@
  *  2003-10-28  added tcp_accept_aliases (andrei)
  *  2003-11-29  added {tcp_send, tcp_connect, tls_*}_timeout (andrei)
  *  2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
+ * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
  */
 
 
@@ -203,6 +204,8 @@ TLS_HANDSHAKE_TIMEOUT	"tls_handshake_timeout"
 TLS_SEND_TIMEOUT	"tls_send_timeout"
 ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
+DISABLE_CORE		"disable_core_dump"
+OPEN_FD_LIMIT		"open_files_limit"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -379,6 +382,10 @@ EAT_ABLE	[\ \t\b\r]
 									return ADVERTISED_ADDRESS; }
 <INITIAL>{ADVERTISED_PORT}		{	count(); yylval.strval=yytext;
 									return ADVERTISED_PORT; }
+<INITIAL>{DISABLE_CORE}		{	count(); yylval.strval=yytext;
+									return DISABLE_CORE; }
+<INITIAL>{OPEN_FD_LIMIT}		{	count(); yylval.strval=yytext;
+									return OPEN_FD_LIMIT; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 

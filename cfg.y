@@ -51,6 +51,7 @@
  * 2003-10-28  added tcp_accept_aliases (andrei)
  * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
  * 2004-02-24  added LOAD_AVP_T and AVP_TO_URI_T (bogdan)
+ * 2004-03-30  added DISABLE_CORE and OPEN_FD_LIMIT (andrei)
  */
 
 
@@ -235,6 +236,8 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token TLS_CA_LIST
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
+%token DISABLE_CORE
+%token OPEN_FD_LIMIT
 
 
 
@@ -637,6 +640,14 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 								}
 		|ADVERTISED_PORT EQUAL error {yyerror("ip address or hostname "
 												"expected"); }
+		| DISABLE_CORE EQUAL NUMBER {
+										disable_core_dump=$3;
+									}
+		| DISABLE_CORE EQUAL error { yyerror("boolean value expected"); }
+		| OPEN_FD_LIMIT EQUAL NUMBER {
+										open_files_limit=$3;
+									}
+		| OPEN_FD_LIMIT EQUAL error { yyerror("number expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 

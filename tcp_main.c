@@ -1228,7 +1228,7 @@ void tcp_main_loop()
 				bytes=recv_all(pt[r].unix_sock, response, sizeof(response));
 				if (bytes==0){
 					/* EOF -> bad, child has died */
-					LOG(L_CRIT, "BUG: tcp_main_loop: dead child %d\n", r);
+					LOG(L_INFO, "INFO: tcp_main_loop: dead child %d\n", r);
 					/* don't listen on it any more */
 					FD_CLR(pt[r].unix_sock, &master_set);
 					/*exit(-1);*/
