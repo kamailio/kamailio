@@ -1025,6 +1025,9 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
       if ( Trans->T_canceled==T_NULL )
             return 1;
       Trans->T_canceled->T_canceler = Trans;
+     /* put CANCEL transaction on wait only if canceled transaction already
+        is in final status and there is nothing to cancel; 
+     */
      if ( Trans->T_canceled->status>=200)
             t_put_on_wait( Trans );
    }
