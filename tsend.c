@@ -58,7 +58,8 @@ int tsend_stream(int fd, char* buf, unsigned int len, int timeout)
 	written=0;
 	initial_len=len;
 	pf.fd=fd;
-	pf.events=POLLIN;
+	pf.events=POLLOUT;
+	
 	
 again:
 	n=send(fd, buf, len,
@@ -86,7 +87,6 @@ again:
 		goto end;
 	}
 	while(1){
-		pf.revents=0;
 		n=poll(&pf, 1, timeout);
 		if (n<0){
 			if (errno==EINTR) continue; /* signal, ignore */
@@ -98,10 +98,17 @@ again:
 			LOG(L_ERR, "ERROR: tsend_stream: send timeout (%d)\n", timeout);
 			goto error;
 		}
-		if (pf.revents&POLLIN){
+		if (pf.revents&POLLOUT){
 			/* we can write again */
 			goto again;
+		}else if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){
+			LOG(L_ERR, "ERROR: tsend_stream: bad poll flags %x\n", 
+					pf.revents);
+			goto error;
 		}
+		/* if POLLIN or POLLPRI or other non-harmfull events happened,
+		 * continue ( although poll should never signal them since we're
+		 * not interested in them => we should never reach this point) */
 	}
 error:
 	return -1;
@@ -128,7 +135,7 @@ int tsend_dgram(int fd, char* buf, unsigned int len, int timeout,
 	written=0;
 	initial_len=len;
 	pf.fd=fd;
-	pf.events=POLLIN;
+	pf.events=POLLOUT;
 	
 again:
 	n=sendto(fd, buf, len, 0, to, tolen);
@@ -150,7 +157,6 @@ again:
 		goto end;
 	}
 	while(1){
-		pf.revents=0;
 		n=poll(&pf, 1, timeout);
 		if (n<0){
 			if (errno==EINTR) continue; /* signal, ignore */
@@ -162,10 +168,17 @@ again:
 			LOG(L_ERR, "ERROR: tsend_dgram: send timeout (%d)\n", timeout);
 			goto error;
 		}
-		if (pf.revents&POLLIN){
+		if (pf.revents&POLLOUT){
 			/* we can write again */
 			goto again;
+		}else if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){
+			LOG(L_ERR, "ERROR: tsend_dgram: bad poll flags %x\n", 
+					pf.revents);
+			goto error;
 		}
+		/* if POLLIN or POLLPRI or other non-harmfull events happened,
+		 * continue ( although poll should never signal them since we're
+		 * not interested in them => we should never reach this point) */
 	}
 error:
 	return -1;
