@@ -415,6 +415,10 @@ void handle_sigs()
 				
 			/* first of all, kill the children also */
 			kill(0, SIGTERM);
+
+			     /* Wait for all the children to die */
+			while(wait(0) > 0);
+
 			destroy_modules();
 #ifdef PKG_MALLOC
 			LOG(memlog, "Memory status (pkg):\n");
