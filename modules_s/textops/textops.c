@@ -16,6 +16,7 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../error.h"
+#include "../../mem/mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,8 +27,10 @@ static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
 static int search_append_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
+static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 
 static int fixup_regex(void**, int);
+static int str_fixup(void** param, int param_no);
 
 static int mod_init(void);
 
@@ -38,31 +41,35 @@ struct module_exports exports= {
 			"search",
 			"search_append",
 			"replace",
-			"append_to_reply"
+			"append_to_reply",
+			"append_hf"
 	},
 	(cmd_function[]) {
 			search_f,
 			search_append_f,
 			replace_f,
-			append_to_reply_f
+			append_to_reply_f,
+			append_hf
 	},
 	(int[]) {
 			1,
 			2,
 			2,
+			1,
 			1
 	},
 	(fixup_function[]){
 			fixup_regex,
 			fixup_regex,
 			fixup_regex,
-			0
+			0,
+			str_fixup
 	},
-	4,
+	5,
 
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
+	0,      /* Module parameter names */
+	0,      /* Module parameter types */
+	0,      /* Module parameter variable pointers */
 	0,      /* Number of module paramers */
 
 	mod_init, /* module initialization function */
@@ -161,3 +168,57 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
 }
 
 
+
+static int append_hf(struct sip_msg* msg, char* str1, char* str2)
+{
+	struct lump* anchor;
+	char *s;
+
+	if (parse_headers(msg, HDR_EOH, 0) == -1) {
+		LOG(L_ERR, "append_hf(): Error while parsing message\n");
+		return -1;
+	}
+
+	anchor = anchor_lump(&msg->add_rm, msg->unparsed - msg->buf, 0, 0);
+	if (anchor == 0) {
+		LOG(L_ERR, "append_hf(): Can't get anchor\n");
+		return -1;
+	}
+
+	s = (char*)pkg_malloc(((str*)str1)->len);
+	if (!s) {
+		LOG(L_ERR, "append_hf(): No memory left\n");
+	}
+
+	memcpy(s, ((str*)str1)->s, ((str*)str1)->len);
+
+	if (insert_new_lump_before(anchor, s, ((str*)str1)->len, 0) == 0) {
+		LOG(L_ERR, "append_hf(): Can't insert lump\n");
+		return -1;
+	}
+
+	return 1;
+}
+
+
+/*
+ * Convert char* parameter to str* parameter
+ */
+static int str_fixup(void** param, int param_no)
+{
+	str* s;
+
+	if (param_no == 1) {
+		s = (str*)malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "str_fixup(): No memory left\n");
+			return E_UNSPEC;
+		}
+
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
+	}
+
+	return 0;
+}
