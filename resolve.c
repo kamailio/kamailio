@@ -157,7 +157,7 @@ struct rdata* get_record(char* name, int type)
 {
 	int size;
 	int qno, answers_no;
-	int r,i;
+	int r;
 	int ans_len;
 	static union dns_query buff;
 	unsigned char* p;
@@ -303,4 +303,59 @@ error:
 		if (head) free_rdata_list(head);
 	return 0;
 }
+
+
+
+/* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
+ * if *port!=0.
+ * returns: hostent struct & *port filled with the port from the SRV record;
+ *  0 on error
+ */
+struct hostent* sip_resolvehost(char* name, unsigned short* port)
+{
+	struct hostent* he;
+	struct rdata* head;
+	struct rdata* l;
+	struct srv_rdata* srv;
+	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
+	int len;
+
+	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
+	if ((port)&&(*port==0)){
+		*port=SIP_PORT; /* just in case we don't find another */
+		len=strlen(name);
+		if ((len+SRV_PREFIX_LEN+1)>MAX_DNS_NAME){
+			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
+						" unable to perform SRV lookup\n", len);
+		}else{
+			memcpy(tmp, SRV_PREFIX, SRV_PREFIX_LEN);
+			memcpy(tmp+SRV_PREFIX_LEN, name, len+1); /*include the ending 0*/
+			
+			head=get_record(tmp, T_SRV);
+			for(l=head; l; l=l->next){
+				if (l->type!=T_SRV) continue; /*should never happen*/
+				srv=(struct srv_rdata*) l->rdata;
+				if (srv==0){
+					LOG(L_CRIT, "sip_resolvehost: BUG: null rdata\n");
+					free_rdata_list(head);
+					break;
+				}
+				he=resolvehost(srv->name);
+				if (he!=0){
+					/* we found it*/
+					DBG("sip_resolvehost: SRV(%s) = %s:%d\n",
+							tmp, srv->name, srv->port);
+					*port=srv->port;
+					free_rdata_list(head); /*clean up*/
+					return he;
+				}
+			}
+			DBG("sip_resolvehost: not SRV record found for %s," 
+					" trying 'normal' lookup...\n", name);
+		}
+	}
+	he=resolvehost(name);
+	return he;
+}
+
 

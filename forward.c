@@ -136,13 +136,29 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 {
 	struct hostent* he;
 	char *host_copy;
+	str* name;
+	unsigned short port;
 
 
 #ifdef DNS_IP_HACK
 	int err;
 	unsigned int ip;
+#endif
 
-	ip=str2ip((unsigned char*)via->host.s,via->host.len,&err);
+
+	if (via->received){
+		DBG("update_sock_struct_from_via: using 'received'\n");
+		name=&(via->received->value);
+		/* making sure that we won't do SRV lookup on "received"
+		 * (possible if no DNS_IP_HACK is used)*/
+		port=via->port?via->port:SIP_PORT; 
+	}else{
+		DBG("update_sock_struct_from_via: using via host\n");
+		name=&(via->host);
+		port=via->port;
+	}
+#ifdef DNS_IP_HACK
+	ip=str2ip((unsigned char*)name->s, name->len,&err);
 	if (err==0){
 		to->sin.sin_family=AF_INET;
 		to->sin.sin_port=(via->port)?htons(via->port): htons(SIP_PORT);
@@ -158,27 +174,30 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 		   - andrei 
 			Yes -- it happened on generating a 408 by TM; -jiri
 		*/
-		if (via->host.s[via->host.len]){
-			host_copy=pkg_malloc( via->host.len+1 );
+		if (name->s[name->len]){
+			host_copy=pkg_malloc( name->len+1 );
 			if (!host_copy) {
 				LOG(L_NOTICE, "ERROR: update_sock_struct_from_via:"
 								" not enough memory\n");
 				return -1;
 			}
-			memcpy(host_copy, via->host.s, via->host.len );
-			host_copy[via->host.len]=0;
-			he=resolvehost(host_copy);
+			memcpy(host_copy, name->s, name->len );
+			host_copy[name->len]=0;
+			DBG("update_sock_struct_from_via: trying SRV lookup\n");
+			he=sip_resolvehost(host_copy, &port);
+			
 			pkg_free( host_copy );
 		}else{
-			he=resolvehost(via->host.s);
+			DBG("update_sock_struct_from_via: trying SRV lookup\n");
+			he=sip_resolvehost(name->s, &port);
 		}
-
+		
 		if (he==0){
-			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
-					via->host.s);
+			LOG(L_NOTICE, "ERROR:forward_reply:resolve_host(%s) failure\n",
+					name->s);
 			return -1;
 		}
-		hostent2su(to, he, 0, (via->port)?htons(via->port): htons(SIP_PORT));
+		hostent2su(to, he, 0, htons(port));
 	}
 	return 1;
 }

@@ -82,6 +82,7 @@ static inline struct hostent* resolvehost(const char* name)
 	return he;
 }
 
+struct hostent* sip_resolvehost(char* name, unsigned short* port);
 
 
 

@@ -1655,6 +1655,8 @@ parse_again:
 						vb->last_param=param;
 						if (param->type==PARAM_BRANCH)
 							vb->branch=param;
+						else if (param->type==PARAM_RECEIVED)
+							vb->received=param;
 						break;
 					case P_PARAM:
 						break;
