@@ -106,7 +106,7 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 	{
 		case 0:
 			/* avp type ID, int value */
-			avp->data = (void*)val.n;
+			avp->data = (void*)(long)val.n;
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
@@ -174,7 +174,7 @@ inline void get_avp_val(struct usr_avp *avp, int_str *val)
 	switch ( avp->flags&(AVP_NAME_STR|AVP_VAL_STR) ) {
 		case 0:
 			/* avp type ID, int value */
-			val->n = (int)(avp->data);
+			val->n = (long)(avp->data);
 			break;
 		case AVP_NAME_STR:
 			/* avp type str, int value */
