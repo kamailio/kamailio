@@ -51,6 +51,10 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_uac' not found\n");
 		return -1;
 	}
+	if (!(tmb->t_uac_dlg=(tuacdlg_f)find_export(T_UAC_DLG, NO_SCRIPT)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_uac_dlg' not found\n");
+		return -1;
+	}
 	if (!(tmb->t_reply=(treply_f)find_export(T_REPLY, 2)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
