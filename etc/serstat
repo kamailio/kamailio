@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 #
 # $Id$
 #
@@ -6,6 +6,14 @@
 # -- if in possession of MySql password -- dump USRLOC database
 # as well
 
+USER_COLUMN='user'
+
+if [ $# -gt 1 ] ; then
+	echo "usage: $0 [username]"
+	exit 1
+elif [ $# -eq 1 ] ; then
+	CLAUSE=" WHERE $USER_COLUMN='$1' "
+fi
 
 PIDS=`ps --no-headers -o "pid" -C sr`
 for i in $PIDS ;  do
@@ -15,4 +23,5 @@ done
 
 #ps  -wwwwww -o "drs,pid,user,group,euser,egroup,fuser,fgroup,args" -C sr 
 
-mysql -h dbhost -u csps -p -e "select * from location;" csps107
+
+mysql -h dbhost -u csps -p -e "select * from location $CLAUSE;" csps107
