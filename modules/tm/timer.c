@@ -156,6 +156,7 @@ unsigned int timer_id2timeout[NR_OF_TIMER_LISTS] = {
 /******************** handlers ***************************/
 
 
+static void unlink_timers( struct cell *t );
 
 static void delete_cell( struct cell *p_cell, int unlock )
 {
@@ -268,6 +269,8 @@ static void fake_reply(struct cell *t, int branch, int code )
 		set_final_timer(  t );
 	}
 }
+
+
 
 
 inline static void retransmission_handler( void *attr)
@@ -578,8 +581,7 @@ void print_timer_list( enum lists list_id)
 
 
 
-
-void remove_timer_unsafe(  struct timer_link* tl )
+static void remove_timer_unsafe(  struct timer_link* tl )
 {
 #ifdef EXTRA_DEBUG
 	if (tl && tl->timer_list &&
@@ -606,7 +608,7 @@ void remove_timer_unsafe(  struct timer_link* tl )
 
 
 /* put a new cell into a list nr. list_id */
-void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
+static void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 	unsigned int time_out )
 {
 #ifdef EXTRA_DEBUG
@@ -636,7 +638,7 @@ void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 
 
 /* detach items passed by the time from timer list */
-struct timer_link  *check_and_split_time_list( struct timer *timer_list,
+static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 	int time )
 {
 	struct timer_link *tl , *end, *ret;
@@ -782,7 +784,10 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id )
 }
 
 
-void unlink_timers( struct cell *t )
+
+/* should be called only from timer process context,
+ * else it's unsafe */
+static void unlink_timers( struct cell *t )
 {
 	int i;
 	int remove_fr, remove_retr;
