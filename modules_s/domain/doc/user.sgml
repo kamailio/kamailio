@@ -1,0 +1,165 @@
+<!-- Domain Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    Domain module implements checks that based on domain table determine if a host part of
+	    an <acronym>URI</acronym> is <quote>local</quote> or not.  A <quote>local</quote> domain
+	    is one that the proxy is responsible for.
+	</para>
+	<para>
+	    Domain module operates in caching or non-caching mode depending on value of module
+	    parameter <parameter moreinfo="none">db_mode</parameter>. In caching mode domain module
+	    reads the contents of domain table into cache memory when the module is loaded.  After
+	    that domain table is re-read only when module is given domain_reload fifo command.  Any
+	    changes in domain table must thus be followed by domain_reload command in order to
+	    reflect them in module behavior. In non-caching mode domain module always queries domain
+	    table in the database.
+	</para>
+	<para>
+	    Caching is implemented using a hash table. The size of the hash table is given by
+	    HASH_SIZE constant defined in domain_mod.h. Its <quote>factory default</quote> value is
+	    128.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the listed modules
+	    must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>database</emphasis> -- Any database module</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		This is <acronym>URL</acronym> of the database to be used.
+	    </para>
+	    <para>
+		Default value is <quote>sql://serro:47serro11@localhost/ser</quote>
+	    </para>
+	    <example>
+		<title>Setting db_url parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "db_url", "sql://ser:pass@db_host/ser")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>db_mode</varname> (integer)</title>
+	    <para>
+		Database mode. 0 means non-caching, 1 means caching.
+	    </para>
+	    <para>
+		Default value is 0 (non-caching).
+	    </para>
+	    <example>
+		<title>nonce_expire example</title>
+		<programlisting format="linespecific">
+modparam("domain", "db_mode", 1)   # Use chaching
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>domain_table</varname> (string)</title>
+	    <para>
+		Name of table containing names of local domains that the proxy is responsible for.
+		Local users must have in their sip uri a host part that is equal to one of these
+		domains.
+	    </para>
+	    <para>
+		Default value is <quote>domain</quote>.
+	    </para>
+	    <example>
+		<title>Setting domain_table parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "domain_table", "new_name")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>domain_column</varname> (string)</title>
+	    <para>
+		Name of column containing domains in domain table.
+	    </para>
+	    <para>
+		Default value is <quote>domain</quote>.
+	    </para>
+	    <example>
+		<title>Setting domain_column parameter</title>
+		<programlisting format="linespecific">
+modparam("domain", "domain_column", "domain_col")
+</programlisting>
+	    </example>
+	</section>
+	
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title><function moreinfo="none">is_from_local()</function></title>
+	    <para>
+		Checks based on domain table if host part of From header uri is
+		one of the local domains that the proxy is responsible for
+	    </para>
+	    <example>
+		<title>is_from_local usage</title>
+		<programlisting format="linespecific">
+...
+if (is_from_local()) {
+    ...
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title><acronym>FIFO</acronym> Commands</title>
+	<section>
+	    <title><function moreinfo="none">domain_reload</function></title>
+	    <para>
+		Causes domain module to re-read the contents of domain table
+		into cache memory.
+	    </para>
+	</section>
+	<section>
+	    <title><function moreinfo="none">domain_dump</function></title>
+	    <para>
+		Causes domain module to dump hash indexes and domain names in
+		its cache memory.
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Known Limitations</title>
+	<para>
+	    There is an unlikely race condition on domain list update.  If a process uses a table,
+	    which is reloaded at the same time twice through <acronym>FIFO</acronym>, the second
+	    reload will delete the original table still in use by the process.
+	</para>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("domain.sgml" "Book" "chapter")
+End:
+-->
