@@ -22,6 +22,19 @@ IMPORTANT NOTES
 3) Note that the GPL bellow is copyrighted by the Free Software Foundation,
    but the ser software is copyrighted by FhG
 
+-------------------------------------------------------------------------
+
+GNU Licence FAQ 
+
+This FAQ provides answers to most frequently asked questions. To fully
+understand implications of the GNU license, read it.
+
+- you can run SER for any purpose
+- you can redistribute it as long as you include source code and
+  license conditions with the distribution
+- you cannot release programs derived from SER without releasing
+  their source code
+
 
 -------------------------------------------------------------------------
 
