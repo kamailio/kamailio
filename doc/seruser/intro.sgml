@@ -1283,7 +1283,7 @@ route{
 		    t_newtran</command> shields subsequent code from retransmissions.
 		    It returns success and continues when a new request arrived.
 		    It exits current route block immediately on receipt of
-		    a retransmissions. It only returns a negative value when
+		    a retransmission. It only returns a negative value when
 		    a serious error, such as lack of memory, occurs.
 		</para>
 		<para>
