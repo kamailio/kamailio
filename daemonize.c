@@ -52,9 +52,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>    
 #include <sys/resource.h> /* setrlimit */
 #include <unistd.h>
-#include <sys/time.h>    
 
 #include "daemonize.h"
 #include "globals.h"
