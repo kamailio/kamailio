@@ -31,6 +31,7 @@
  * ---------
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28: removed 0-terminators from first line (jiri)
+ * 2003-04-26 ZSW (jiri)
  */
 
 
@@ -39,6 +40,7 @@
 #include "msg_parser.h"
 #include "parser_f.h"
 #include "../mem/mem.h"
+#include "../ut.h"
 
 /* grammar:
 	request  =  method SP uri SP version CRLF
@@ -1242,7 +1244,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	if (fl->type==SIP_REPLY) {
 		if (fl->u.request.uri.len!=3) {
 			LOG(L_INFO, "ERROR:parse_first_line: len(status code)!=3: %.*s\n",
-				fl->u.request.uri.len, second );
+				fl->u.request.uri.len, ZSW(second) );
 			goto error;
 		}
 		s1=*second; s2=*(second+1);s3=*(second+2);
@@ -1252,7 +1254,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 			fl->u.reply.statuscode=(s1-'0')*100+10*(s2-'0')+(s3-'0');
 		} else {
 			LOG(L_INFO, "ERROR:parse_first_line: status_code non-numerical: %.*s\n",
-				fl->u.request.uri.len, second );
+				fl->u.request.uri.len, ZSW(second) );
 			goto error;
 		}
 	}
@@ -1298,7 +1300,7 @@ error:
 		for (t=0; t<offset; t++)
 			if (*(buffer+t)) *(prn+t)=*(buffer+t);
 			else *(prn+t)='°';
-		LOG(L_INFO, "ERROR: parsed so far: %.*s\n", offset, prn );
+		LOG(L_INFO, "ERROR: parsed so far: %.*s\n", offset, ZSW(prn) );
 		pkg_free( prn );
 	};
 error1:

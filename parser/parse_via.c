@@ -41,6 +41,7 @@
  *               via->params.s (andrei)
  *  2003-01-28  zero-terminations replaced with VIA_ZT (jiri)
  *  2003-02-28 scratchpad compatibility abandoned (jiri)
+ *  2003-04-26 ZSW (jiri)
  */
 
 
@@ -906,7 +907,7 @@ normal_exit:
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Found param type %d, <%.*s> = <%.*s>; state=%d\n", param->type,
-			param->name.len, param->name.s, 
+			param->name.len, ZSW(param->name.s), 
 			(param->value.len?param->value.len:3),
 			(param->value.len?param->value.s:"n/a"), state);
 	return tmp;
@@ -925,7 +926,7 @@ normal_exit:
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Error on  param type %d, <%.*s>, state=%d, saved_state=%d\n",
-		param->type, param->name.len, param->name.s, state, saved_state);
+		param->type, param->name.len, ZSW(param->name.s), state, saved_state);
 
  error:
 	LOG(L_ERR, "error: parse_via_param\n");
@@ -1868,7 +1869,7 @@ endofpacket:
 		vb->port=str2s(vb->port_str.s, vb->port_str.len, &err);
 		if (err){
 					LOG(L_ERR, "ERROR: parse_via: invalid port number <%.*s>\n",
-						vb->port_str.len, vb->port_str.s);
+						vb->port_str.len, ZSW(vb->port_str.s));
 					goto error;
 		}
 	}
@@ -1881,7 +1882,7 @@ nextvia:
 		vb->port=str2s(vb->port_str.s, vb->port_str.len, &err);
 		if (err){
 					LOG(L_ERR, "ERROR: parse_via: invalid port number <%.*s>\n",
-						vb->port_str.len, vb->port_str.s);
+						vb->port_str.len, ZSW(vb->port_str.s));
 					goto error;
 		}
 	}
@@ -1897,11 +1898,11 @@ nextvia:
 
 error:
 	if (end>buffer){
-		LOG(L_ERR, "ERROR: parse_via on: <%.*s>\n", (int)(end-buffer), buffer);
+		LOG(L_ERR, "ERROR: parse_via on: <%.*s>\n", (int)(end-buffer), ZSW(buffer));
 	}
 	if ((tmp>buffer)&&(tmp<end)){
 		LOG(L_ERR, "ERROR: parse_via parse error, parsed so far:<%.*s>\n",
-				(int)(tmp-buffer), buffer );
+				(int)(tmp-buffer), ZSW(buffer) );
 	}else{
 		LOG(L_ERR, "ERROR: parse_via: via parse error\n");
 	}

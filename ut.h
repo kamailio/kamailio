@@ -28,13 +28,14 @@
  *
  * History
  * ------
- * 2003-03-30 str2int and str2float added (janakj)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-02-13 strlower added (janakj)
- * 2003-01-29 pathmax added (jiri)
- * 2003-01-28 scratchpad removed (jiri)
  * 2003-01-18 un_escape function introduced for convenience of code needing
  *            the complex&slow feature of unescaping
+ * 2003-01-28 scratchpad removed (jiri)
+ * 2003-01-29 pathmax added (jiri)
+ * 2003-02-13 strlower added (janakj)
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
+ * 2003-03-30 str2int and str2float added (janakj)
+ * 2003-04-26 ZSW (jiri)
  */
 
 
@@ -55,6 +56,9 @@
 
 
 struct sip_msg;
+
+/* zero-string wrapper */
+#define ZSW(_c) ((_c)?(_c):"")
 
 /* returns string beginning and length without insignificant chars */
 #define trim_len( _len, _begin, _mystr ) \

@@ -31,15 +31,16 @@
  * 2003-04-11  new parse_uri introduced (better, parses also some parameters,
  *              works in one pass) (andrei)
  * 2003-04-11  ser_error is now set in parse_uri (andrei)
+ * 2003-04-26 ZSW (jiri)
  */
 
 
 #include "parse_uri.h"
 #include <string.h>
 #include "../dprint.h"
-#ifdef PARSE_URI_OLD
+/* #ifdef PARSE_URI_OLD */ /* ZSW */
 #include "../ut.h"   /* q_memchr */
-#endif
+/* #endif */
 #include "../error.h"
 
 /* buf= pointer to begining of uri (sip:x@foo.bar:5060;a=b?h=i)
@@ -875,70 +876,70 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	/* do stuff */
 	DBG("parsed uri:\n user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n host=<%.*s>(%d)\n"
 			" port=<%.*s>(%d): %d\n params=<%.*s>(%d)\n headers=<%.*s>(%d)\n",
-			uri->user.len, uri->user.s, uri->user.len,
-			uri->passwd.len, uri->passwd.s, uri->passwd.len,
-			uri->host.len, uri->host.s, uri->host.len,
-			uri->port.len, uri->port.s, uri->port.len, uri->port_no,
-			uri->params.len, uri->params.s, uri->params.len,
-			uri->headers.len, uri->headers.s, uri->headers.len
+			uri->user.len, ZSW(uri->user.s), uri->user.len,
+			uri->passwd.len, ZSW(uri->passwd.s), uri->passwd.len,
+			uri->host.len, ZSW(uri->host.s), uri->host.len,
+			uri->port.len, ZSW(uri->port.s), uri->port.len, uri->port_no,
+			uri->params.len, ZSW(uri->params.s), uri->params.len,
+			uri->headers.len, ZSW(uri->headers.s), uri->headers.len
 		);
 	DBG(" uri params:\n   transport=<%.*s>, val=<%.*s>, proto=%d\n",
-			uri->transport.len, uri->transport.s, uri->transport_val.len,
+			uri->transport.len, ZSW(uri->transport.s), uri->transport_val.len,
 			uri->transport_val.s, uri->proto);
 	DBG("   user-param=<%.*s>, val=<%.*s>\n",
-			uri->user_param.len, uri->user_param.s, uri->user_param_val.len,
-			uri->user_param_val.s);
+			uri->user_param.len, ZSW(uri->user_param.s), 
+			uri->user_param_val.len, ZSW(uri->user_param_val.s));
 	DBG("   method=<%.*s>, val=<%.*s>\n",
-			uri->method.len, uri->method.s, uri->method_val.len,
-			uri->method_val.s);
+			uri->method.len, ZSW(uri->method.s), 
+			uri->method_val.len, ZSW(uri->method_val.s));
 	DBG("   ttl=<%.*s>, val=<%.*s>\n",
-			uri->ttl.len, uri->ttl.s, uri->ttl_val.len,
-			uri->ttl_val.s);
+			uri->ttl.len, ZSW(uri->ttl.s), 
+			uri->ttl_val.len, ZSW(uri->ttl_val.s));
 	DBG("   maddr=<%.*s>, val=<%.*s>\n",
-			uri->maddr.len, uri->maddr.s, uri->maddr_val.len,
-			uri->maddr_val.s);
-	DBG("   lr=<%.*s>\n", uri->lr.len, uri->lr.s); 
+			uri->maddr.len, ZSW(uri->maddr.s), 
+			uri->maddr_val.len, ZSW(uri->maddr_val.s));
+	DBG("   lr=<%.*s>\n", uri->lr.len, ZSW(uri->lr.s)); 
 	return 0;
 	
 error_too_short:
 	LOG(L_ERR, "ERROR: parse_uri: uri too short: <%.*s> (%d)\n",
-			len, buf, len);
+			len, ZSW(buf), len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_bad_char:
 	LOG(L_ERR, "ERROR: parse_uri: bad char '%c' in state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			*p, state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
+			*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf), len, ZSW(buf), len);
 	return E_BAD_URI;
 error_bad_host:
 	LOG(L_ERR, "ERROR: parse_uri: bad host in uri (error at char %c in"
 			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
-			*p, state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
+			*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf), len, ZSW(buf), len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_bad_port:
 	LOG(L_ERR, "ERROR: parse_uri: bad port in uri (error at char %c in"
 			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
-			*p, state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
+			*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf), len, ZSW(buf), len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_bad_uri:
 	LOG(L_ERR, "ERROR: parse_uri: bad uri,  state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			 state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
+			 state, (int)(p-buf), ZSW(buf), (int)(p-buf), len, ZSW(buf), len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_headers:
 	LOG(L_ERR, "ERROR: parse_uri: bad uri headers: <%.*s>(%d)"
 			" / <%.*s>(%d)\n",
-			uri->headers.len, uri->headers.s, uri->headers.len,
-			len, buf, len);
+			uri->headers.len, ZSW(uri->headers.s), uri->headers.len,
+			len, ZSW(buf), len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_bug:
 	LOG(L_CRIT, "BUG: parse_uri: bad  state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			 state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
+			 state, (int)(p-buf), ZSW(buf), (int)(p-buf), len, ZSW(buf), len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 }
@@ -1073,7 +1074,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	if (uri->port.s) uri->port_no=str2s(uri->port.s, uri->port.len, &err);
 	if (err){
 		LOG(L_DBG, "ERROR: parse_uri: bad port number in sip uri: %.*s\n",
-				uri->port.len, uri->port.s);
+				uri->port.len, ZSW(uri->port.s));
 		ser_error=ret=E_BAD_URI;
 		return ret;
 	}
@@ -1092,7 +1093,7 @@ static inline int _parse_ruri(str *uri,
 
 	if (parse_uri(uri->s, uri->len, parsed_uri)<0) {
 		LOG(L_ERR, "ERROR: _parse_ruri: bad uri <%.*s>\n", 
-				uri->len, uri->s);
+				uri->len, ZSW(uri->s));
 		*status=0;
 		return -1;
 	}

@@ -27,12 +27,14 @@
  * History
  * --------
  * 2003-03-24 Created by janakj
+ * 2003-04-26 ZSW (jiri)
  */
 
 #include <string.h>
 #include "../dprint.h"
 #include "parse_nameaddr.h"
 #include "parser_f.h"
+#include "../ut.h"
 
 
 /*
@@ -81,7 +83,7 @@ int parse_nameaddr(str* _s, name_addr_t* _a)
 void print_nameaddr(FILE* _o, name_addr_t* _a)
 {
 	fprintf(_o, "---name-addr---\n");
-	fprintf(_o, "name: '%.*s'\n", _a->name.len, _a->name.s);
-	fprintf(_o, "uri : '%.*s'\n", _a->uri.len, _a->uri.s);
+	fprintf(_o, "name: '%.*s'\n", _a->name.len, ZSW(_a->name.s));
+	fprintf(_o, "uri : '%.*s'\n", _a->uri.len, ZSW(_a->uri.s));
 	fprintf(_o, "---/name-addr---\n");
 }

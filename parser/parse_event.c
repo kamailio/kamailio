@@ -29,6 +29,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-04-26 ZSW (jiri)
  */
 
 
@@ -38,6 +42,7 @@
 #include <string.h>        /* memset */
 #include "../trim.h"       /* trim_leading */
 #include <stdio.h>         /* printf */
+#include "../ut.h"
 
 
 #define PRES_STR "presence"
@@ -142,7 +147,7 @@ void free_event(event_t** _e)
 void print_event(event_t* _e)
 {
 	printf("===Event===\n");
-	printf("text  : \'%.*s\'\n", _e->text.len, _e->text.s);
+	printf("text  : \'%.*s\'\n", _e->text.len, ZSW(_e->text.s));
 	printf("parsed: %s\n", 
 	       (_e->parsed == EVENT_PRESENCE) ? ("EVENT_PRESENCE") : ("EVENT_OTHER"));
 	printf("===/Event===\n");

@@ -27,6 +27,7 @@
  * History:
  * -------
  * 2003-03-26 Frees also hdr->parsed for Route & Record-Route (janakj)
+ * 2003-04-26 ZSW (jiri)
  */
 
 
@@ -42,6 +43,7 @@
 #include "parse_expires.h"
 #include "parse_rr.h"
 #include "contact/parse_contact.h"
+#include "../ut.h"
 
 
 /* 
@@ -122,8 +124,8 @@ void dump_hdr_field( struct hdr_field* hf )
 {
 	LOG(L_ERR, "DEBUG: dump_hdr_field: type=%d, name=%.*s, "
 		"body=%.*s, parsed=%p, next=%p\n",
-		hf->type, hf->name.len, hf->name.s,
-		hf->body.len, hf->body.s,
+		hf->type, hf->name.len, ZSW(hf->name.s),
+		hf->body.len, ZSW(hf->body.s),
 		hf->parsed, hf->next );
 }
 
