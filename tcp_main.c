@@ -101,7 +101,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		goto error;
 	}
 	c->s=sock;
-	c->fd=sock;
+	c->fd=-1; /* not initialized */
 	c->rcv.src_su=*su;
 	
 	c->refcnt=0;
@@ -241,6 +241,7 @@ int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
 	struct tcp_connection *c;
 	struct ip_addr ip;
 	int port;
+	int fd;
 	long response[2];
 	int n;
 	
@@ -286,22 +287,24 @@ no_id:
 			goto send_it;
 		}
 get_fd:
+			/* todo: see if this is not the same process holding
+			 *  c  and if so send directly on c->fd */
 			DBG("tcp_send: tcp connection found, acquiring fd\n");
 			/* get the fd */
 			response[0]=(long)c;
 			response[1]=CONN_GET_FD;
 			n=write(unix_tcp_sock, response, sizeof(response));
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
-			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &c->fd);
-			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, c->fd);
+			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd);
+			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
 		
 	
 	
 send_it:
 	DBG("tcp_send: sending...\n");
-	n=write(c->fd, buf, len);
-	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, c->fd);
-	close(c->fd);
+	n=write(fd, buf, len);
+	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
+	close(fd);
 	tcpconn_put(c); /* release c (lock; dec refcnt; unlock) */
 	return n;
 }

@@ -68,3 +68,5 @@ x freopen stdin, stdout, stderr to /dev/null
 - add src_port, dst_port, proto to cfg.{y,lex}
 x generic locking lib
 - convert tm to use new locking lib
+- tcp disable nagle & other socket stuff (close()?)
+
