@@ -69,6 +69,11 @@ int add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 {
 	struct lump_rpl *foo;
 
+	if (lump->text.s==0 || lump->text.len==0) {
+		LOG(L_ERR,"ERROR:add_lump_rpl: I won't add an empty lump!\n");
+		return -1;
+	}
+
 	if (!msg->reply_lump)
 	{
 		msg->reply_lump = lump;
