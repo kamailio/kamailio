@@ -448,6 +448,9 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 		case DB_INT:
 			return (_vp->val.int_val<_v->val.int_val)?-1:
 					(_vp->val.int_val>_v->val.int_val)?1:0;
+		case DB_BITMAP:
+			return (_vp->val.bitmap_val<_v->val.bitmap_val)?-1:
+					(_vp->val.bitmap_val>_v->val.bitmap_val)?1:0;
 		case DB_DOUBLE:
 			return (_vp->val.double_val<_v->val.double_val)?-1:
 					(_vp->val.double_val>_v->val.double_val)?1:0;
@@ -487,11 +490,6 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 			if(_l==_vp->val.str_val.len)
 				return -1;
 			return 1;
-	        case DB_BITMAP:
-		        return (_vp->val.bitmap_val<_v->val.bitmap_val)?-1:
-				(_vp->val.bitmap_val>_v->val.bitmap_val)?1:0;
-
-			return 1;
 	}
 	return -2;
 }
@@ -527,17 +525,14 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 	switch(_t1)
 	{
 		case DB_INT:
-			if(_t0==DB_DATETIME)
-				return 0;
-			if(_t0==DB_BITMAP)
+		case DB_BITMAP:
+			if(_t0==DB_DATETIME || _t0==DB_BITMAP || _t0==DB_INT)
 				return 0;
 		case DB_DATETIME:
 			if(_t0==DB_INT)
 				return 0;
-			if(_t0==DB_BITMAP)
-				return 0;
 		case DB_DOUBLE:
-		break;
+			break;
 		case DB_STRING:
 			if(_t0==DB_STR)
 				return 0;
@@ -546,11 +541,6 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 				return 0;
 		case DB_BLOB:
 			if(_t0==DB_STR)
-				return 0;
-	        case DB_BITMAP:
-			if (_t0==DB_INT)
-				return 0;
-			if (_t0==DB_DATETIME)
 				return 0;
 	}
 	return 1;
