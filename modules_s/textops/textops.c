@@ -49,6 +49,7 @@
  *  2003-04-97  actions permitted to be used from failure/reply routes (jiri)
  *  2003-04-21  remove_hf and is_present_hf introduced (jiri)
  *  2003-08-19  subst added (support for sed like res:s/re/repl/flags) (andrei)
+ *  2003-08-20  subst_uri added (like above for uris) (andrei)
  */
 
 
@@ -73,6 +74,7 @@ MODULE_VERSION
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
 static int subst_f(struct sip_msg*, char*, char*);
+static int subst_uri_f(struct sip_msg*, char*, char*);
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int replace_all_f(struct sip_msg* msg, char* key, char* str);
@@ -109,6 +111,8 @@ static cmd_export_t cmds[]={
 	{"is_present_hf",        is_present_hf_f,         1, str_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"subst",            subst_f,             1, fixup_substre,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+	{"subst_uri",            subst_uri_f,     1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{0,0,0,0,0}
 };
@@ -313,6 +317,47 @@ error:
 }
 
 
+
+/* sed-perl style re: s/regular expression/replacement/flags, like
+ *  subst but works on the message uri */
+static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
+{
+	char* tmp;
+	int len;
+	char c;
+	struct subst_expr* se;
+	str* result;
+	
+	se=(struct subst_expr*)subst;
+	if (msg->new_uri.s){
+		len=msg->new_uri.len;
+		tmp=msg->new_uri.s;
+	}else{
+		tmp=msg->first_line.u.request.uri.s;
+		len	=msg->first_line.u.request.uri.len;
+	};
+	/* ugly hack: 0 s[len], and restore it afterwards
+	 * (our re functions require 0 term strings), we can do this
+	 * because we always alloc len+1 (new_uri) and for first_line, the
+	 * message will always be > uri.len */
+	c=tmp[len];
+	tmp[len]=0;
+	result=subst_str(tmp, msg, se); /* pkg malloc'ed result */
+	tmp[len]=c;
+	if (result){
+		DBG("%s: subst_uri_f: match - old uri= [%.*s], new uri= [%.*s]\n",
+				exports.name, len, tmp,
+				(result->len)?result->len:sizeof(""),(result->s)?result->s:"");
+		if (msg->new_uri.s) pkg_free(msg->new_uri.s);
+		msg->new_uri=*result;
+		msg->parsed_uri_ok=0; /* reset "use cached parsed uri" flag */
+		pkg_free(result); /* free str* pointer */
+		return 1; /* success */
+	}
+	return -1; /* false, no subst. made */
+}
+	
+	
 
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {
