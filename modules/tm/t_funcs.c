@@ -4,7 +4,6 @@
 struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
-int                      sock_fd;
 
 
 
@@ -418,6 +417,29 @@ int t_retransmit_reply( struct sip_msg* p_msg )
 }
 
 
+
+
+/* Force a new response into inbound response buffer.
+  */
+int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
+{
+   t_check( hash_table, p_msg );
+
+   if (T)
+   {
+      unsigned int len;
+      char * buf;
+
+      //buf = build_res_buf_from_sip_reg( T->inbound_request );
+      if (!buf)
+      {
+         DBG("DEBUG: t_send_reply: response building failed\n");
+         return -1;
+      }
+
+
+   }
+}
 
 
 
