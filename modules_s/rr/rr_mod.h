@@ -37,8 +37,8 @@
 #define RR_MOD_H
 
 
-extern int use_fast_cmp;
 extern int append_fromtag;
+extern int enable_double_rr;
 
 
 #endif /* RR_MOD_H */

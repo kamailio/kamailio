@@ -31,27 +31,12 @@
  * 2003-03-27 Adapted to new RR parser (janakj)
  */
 
-
 #ifndef COMMON_H
 #define COMMON_H
 
 #include "../../parser/msg_parser.h"
 #include "../../parser/hf.h"
 #include "../../str.h"
-
-
-#define RR_PREFIX "Record-Route: <sip:"
-#define RR_PREFIX_LEN (sizeof(RR_PREFIX)-1)
-#define RR_LR_TERM ";lr>\r\n"
-#define RR_LR_TERM_LEN (sizeof(RR_LR_TERM)-1)
-#define RR_SR_TERM ">\r\n"
-#define RR_SR_TERM_LEN (sizeof(RR_SR_TERM)-1)
-
-#define RR_FROMTAG ";ftag="
-#define RR_FROMTAG_LEN (sizeof(RR_FROMTAG)-1)
-
-
-extern char rr_hash[MD5_LEN];
 
 
 /*
@@ -82,13 +67,6 @@ int rewrite_RURI(struct sip_msg* _m, str* _s);
  * Returns 0 on success, negative number on failure
  */
 int remove_first_route(struct sip_msg* _m, struct hdr_field* _route);
-
-
-/*
- * Insert a new Record-Route Header Field
- * into a SIP message
- */
-int insert_RR(struct sip_msg* _m, str* _l);
 
 
 /*

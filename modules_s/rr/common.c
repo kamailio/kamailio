@@ -33,11 +33,11 @@
  * 2003-01-19 - verification against double record-routing added, 
  *            - option for putting from-tag in record-route added 
  *            - buffer overflow eliminated (jiri)
+ * 2003-04-02 Changed to use substituting lumps (janakj)
  */
 
 #include "common.h"
 #include <string.h>
-#include "../../md5utils.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../action.h"
@@ -49,26 +49,16 @@
 #include "rr_mod.h"
 
 
-char rr_hash[MD5_LEN];
-
-/*
- * Generate hash string that will be inserted in RR
- */
-void generate_hash(void)
-{
-	str src[3];
-	
-	     /*some fix string*/
-	src[0].s = "SIP Express Router" ;
-	src[0].len = 18;
-
-	src[1].s = bind_address->address_str.s ;
-	src[1].len = bind_address->address_str.len;
-
-	src[2].s = bind_address->port_no_str.s;
-	src[2].len = bind_address->port_no_str.len;
-	MDStringArray(rr_hash, src, 3);
-}
+#define RR_PREFIX "Record-Route: <sip:"
+#define RR_PREFIX_LEN (sizeof(RR_PREFIX)-1)
+#define RR_LR_TERM ";lr>\r\n"
+#define RR_LR_TERM_LEN (sizeof(RR_LR_TERM)-1)
+#define RR_SR_TERM ">\r\n"
+#define RR_SR_TERM_LEN (sizeof(RR_SR_TERM)-1)
+#define RR_FROMTAG ";ftag="
+#define RR_FROMTAG_LEN (sizeof(RR_FROMTAG)-1)
+#define RR_TRANSPORT ";transport="
+#define RR_TRANSPORT_LEN (sizeof(RR_TRANSPORT)-1)
 
 
 /*
@@ -161,168 +151,115 @@ int remove_first_route(struct sip_msg* _m, struct hdr_field* _route)
 
 
 /*
- * Builds Record-Route line
- * Returns 0 on success, negative number on a failure
- * if _lr is set to 1, ;lr parameter will be used
+ * Extract username from the Request URI
+ * First try to look at the original Request URI and if there
+ * is no username use the new Request URI
  */
-static char *build_RR(struct sip_msg* _m, int* _l, int _lr, str* _ip)
+static inline int get_username(struct sip_msg* _m, str* _user)
 {
-	str user;
-	int len;
-	char *rr;
-	char *p;
-	struct to_body *from;
 	struct sip_uri puri;
 
-	from = 0; /* fool -Wall */
-
-	/* calculate length first */
-	
-	len = RR_PREFIX_LEN;
-	
-     /* first try to look at r-uri for a username */
+	     /* first try to look at r-uri for a username */
 	if (parse_uri(_m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len, &puri) < 0) {
-		LOG(L_ERR, "build_RR: Error while parsing R-URI\n");
-		return 0;
+		LOG(L_ERR, "get_username(): Error while parsing R-URI\n");
+		return -1;
 	}
-	
-	user = puri.user;
 
 	/* no username in original uri -- hmm; maybe it is a uri
 	 * with just host address and username is in a preloaded route,
 	 * which is now no rewritten r-uri (assumed rewriteFromRoute
 	 * was called somewhere in script's beginning) 
 	 */
-	if (user.len==0 && _m->new_uri.s) {
+	if (!puri.user.len && _m->new_uri.s) {
 		if (parse_uri(_m->new_uri.s, _m->new_uri.len, &puri) < 0) {
-			LOG(L_ERR, "build_RR(): Error while parsing new_uri\n");
-			return 0;
+			LOG(L_ERR, "get_username(): Error while parsing new_uri\n");
+			return -2;
 		}
-		user = puri.user;
-	}
-	len += user.len + 1; /* '@' */
 
-	if (_ip) {
-		len += _ip->len;
-	} else {
-		if (_m->rcv.bind_address->address.af == AF_INET6) {
-			len += _m->rcv.bind_address->address_str.len + 2;
-		} else {
-			len += _m->rcv.bind_address->address_str.len;
-		}
-	}
-	if (_m->rcv.bind_address->port_no != SIP_PORT) {
-		len += _m->rcv.bind_address->port_no_str.len;
 	}
 
-	if (_lr && use_fast_cmp) len += MD5_LEN;
-
-	if (append_fromtag) {
-		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "build_RR: From parsing failed\n");
-			return 0;
-		}
-		from = (struct to_body*)_m->from->parsed;
-		if (from->tag_value.s) len += RR_FROMTAG_LEN + from->tag_value.len;
-	}
-	len += _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN;
-
-	rr = (char*)pkg_malloc(len);
-	if (!rr) {
-		LOG(L_ERR, "build_RR: No memory left\n");
-		return 0;
-	}
-
-	/* fill the buffer now ... */
-
-	*_l = len;
-	p = rr;
-
-	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);
-	p += RR_PREFIX_LEN;
-	
-	if (_lr && use_fast_cmp) {
-		memcpy(p, rr_hash, MD5_LEN);
-		p += MD5_LEN;
-	}
-	if (user.len) {
-		memcpy(p, user.s, user.len);
-		p += user.len;
-	}
-	*p = '@';
-	p++;
-
-	if (_ip) {
-		memcpy(p, _ip->s, _ip->len);
-		p += _ip->len;
-	} else {
-		switch(_m->rcv.bind_address->address.af) {
-		case AF_INET:
-			memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
-			p += _m->rcv.bind_address->address_str.len;
-			break;
-			
-		case AF_INET6:
-			*p = '[';
-			p++;
-			memcpy(p, _m->rcv.bind_address->address_str.s, _m->rcv.bind_address->address_str.len);
-			p += _m->rcv.bind_address->address_str.len;
-			*p = ']';
-			p++;
-			break;
-			
-		default:
-			LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", _m->rcv.bind_address->address.af);
-			pkg_free(rr);
-			return 0;
-		}
-	}
-	
-	if (_m->rcv.bind_address->port_no != SIP_PORT) {
-		memcpy(p, _m->rcv.bind_address->port_no_str.s, _m->rcv.bind_address->port_no_str.len);
-		p += _m->rcv.bind_address->port_no_str.len;
-	}
-
-	if (append_fromtag && from->tag_value.s) {
-		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN); 
-		p += RR_FROMTAG_LEN;
-		memcpy(p, from->tag_value.s, from->tag_value.len);
-		p += from->tag_value.len;
-	}
-
-	if (_lr) {
-		memcpy(p, RR_LR_TERM, RR_LR_TERM_LEN); 
-		p += RR_LR_TERM_LEN;
-	} else {
-		memcpy(p, RR_SR_TERM, RR_SR_TERM_LEN); 
-		p += RR_SR_TERM_LEN;
-	}
-	
-	DBG("build_RR(): '%.*s'", len, rr);
-	
-	return rr;
+	_user->s = puri.user.s;
+	_user->len = puri.user.len;
+	return 0;
 }
 
 
 /*
- * Insert a new Record-Route Header Field
- * into a SIP message
+ * Insert inbound Record-Route
  */
-int insert_RR(struct sip_msg* _m, str* _l)
+static inline int ins_in_rr(struct sip_msg* _m, int _lr, str* user, str* tag)
 {
-	struct lump* anchor;
+	char* prefix, *colon, *transport, *suffix;
+	int suffix_len;
+	struct lump* l;
 
-	anchor = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0 , 0);
-	if (!anchor) {
-		LOG(L_ERR, "insert_RR(): Can't get anchor\n");
-		return -1;
-	}
-	
-	if (!insert_new_lump_before(anchor, _l->s, _l->len, 0)) {
-		
-		LOG(L_ERR, "insert_RR(): Can't insert Record-Route\n");
+	l = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0, 0);
+	if (!l) {
+		LOG(L_ERR, "ins_in_rr(): Error while creating an anchor\n");
 		return -2;
 	}
+
+	prefix = pkg_malloc(RR_PREFIX_LEN + user->len + 1);
+	colon = pkg_malloc(1);
+	transport = pkg_malloc(RR_TRANSPORT_LEN);
+	suffix_len = _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
+	suffix = pkg_malloc(suffix_len);
+
+	if (!(prefix && colon && transport && suffix)) {
+		LOG(L_ERR, "ins_in_rr(): No memory left\n");
+		if (suffix) pkg_free(suffix);
+		if (transport) pkg_free(transport);
+		if (colon) pkg_free(colon);
+		if (prefix) pkg_free(prefix);
+		return -3;
+	}
+
+	memcpy(prefix, RR_PREFIX, RR_PREFIX_LEN);
+	if (user->len) {
+		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
+		prefix[RR_PREFIX_LEN + user->len] = '@';
+	}
+	colon[0] = ':';
+	memcpy(transport, RR_TRANSPORT, RR_TRANSPORT_LEN);
+	
+	if (tag->len) {
+		memcpy(suffix, RR_FROMTAG, RR_FROMTAG_LEN);
+		memcpy(suffix + RR_FROMTAG_LEN, tag->s, tag->len);
+		memcpy(suffix + RR_FROMTAG_LEN + tag->len, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+	} else {
+		memcpy(suffix, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+	}
+
+	if (!(l = insert_new_lump_after(l, prefix, RR_PREFIX_LEN + (user->len ? (user->len + 1) : 0), 0))) goto lump_err;
+	prefix = 0;
+	if (!(l = insert_subst_lump_after(l, SUBST_RCV_IP, 0))) goto lump_err;
+	if (!(l = insert_new_lump_after(l, colon, 1, 0))) goto lump_err;
+	colon = 0;
+	if (!(l = insert_subst_lump_after(l, SUBST_RCV_PORT, 0))) goto lump_err;
+	if (!(l = insert_new_lump_after(l, transport, RR_TRANSPORT_LEN, 0))) goto lump_err;
+	transport = 0;
+	if (!(l = insert_subst_lump_after(l, SUBST_RCV_PROTO, 0))) goto lump_err;
+	if (!(l = insert_new_lump_after(l, suffix, suffix_len, 0))) goto lump_err;
+
+	return 0;
+
+ lump_err:
+	LOG(L_ERR, "insert_RR(): Error while inserting lumps\n");
+	if (prefix) pkg_free(prefix);
+	if (colon) pkg_free(colon);
+	if (transport) pkg_free(transport);
+	if (suffix) pkg_free(suffix);
+	return -4;
+
+}
+
+
+/*
+ * Insert outbound Record-Route if necessarry
+ */
+static inline int ins_out_rr(struct sip_msg* _m, int _lr)
+{
+
 	return 0;
 }
 
@@ -330,9 +267,35 @@ int insert_RR(struct sip_msg* _m, str* _l)
 /*
  * Insert a new Record-Route header field
  */
-static inline int do_RR(struct sip_msg* _m, int _lr, str* _ip)
+static inline int insert_RR(struct sip_msg* _m, int _lr)
 {
-	str b;
+
+	str user;
+	struct to_body* from;
+	
+	from = 0; /* Makes gcc happy */
+	user.len = 0;
+
+	if (get_username(_m, &user) < 0) {
+		LOG(L_ERR, "insert_RR(): Error while extracting username\n");
+		return -1;
+	}
+
+	if (append_fromtag) {
+		if (parse_from_header(_m) < 0) {
+			LOG(L_ERR, "insert_RR: From parsing failed\n");
+			return -1;
+		}
+		from = (struct to_body*)_m->from->parsed;
+	}
+
+	return ins_in_rr(_m, _lr, &user, &from->tag_value);
+
+}
+
+
+static inline int do_RR(struct sip_msg* _m, int _lr)
+{
 	static unsigned int last_rr_msg;
 
 	if (_m->id == last_rr_msg) {
@@ -340,15 +303,8 @@ static inline int do_RR(struct sip_msg* _m, int _lr, str* _ip)
 			return -1;
 	}
 	
-	b.s = build_RR(_m, &b.len, _lr, _ip);	
-	if (!b.s) {
-		LOG(L_ERR, "record_route(): Error while building Record-Route line\n");
-		return -2;
-	}
-
-	if (insert_RR(_m, &b) < 0) {
+	if (insert_RR(_m, _lr) < 0) {
 		LOG(L_ERR, "record_route(): Error while inserting Record-Route line\n");
-		pkg_free(b.s);
 		return -3;
 	}
 
@@ -362,7 +318,7 @@ static inline int do_RR(struct sip_msg* _m, int _lr, str* _ip)
  */
 int record_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	return do_RR(_m, 1, 0);
+	return do_RR(_m, 1);
 }
 
 
@@ -371,7 +327,7 @@ int record_route(struct sip_msg* _m, char* _s1, char* _s2)
  */
 int record_route_ip(struct sip_msg* _m, char* _ip, char* _s2)
 {
-	return do_RR(_m, 1, (str*)_ip);
+	return 1;
 }
 
 
@@ -380,5 +336,5 @@ int record_route_ip(struct sip_msg* _m, char* _ip, char* _s2)
  */
 int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	return do_RR(_m, 0, 0);
+	return do_RR(_m, 0);
 }

@@ -37,7 +37,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include "../../str.h"
-#include "../../md5utils.h"
 #include "../../dprint.h"
 #include "../../parser/hf.h"
 #include "../../data_lump.h"
@@ -51,69 +50,29 @@
 
 
 /*
- * Fast version of uri comparison, uses precomputed hash
- */
-static inline int cmp_fast(str* _uri)
-{
-	char* c;
-	int len;
-	
-	     /* Find the end of the hash part */
-	c = find_not_quoted(_uri, ':');
-	
-	c++;
-	len = _uri->len - (c - _uri->s);
-	
-	if (len > MD5_LEN) {
-		if (!memcmp(c, rr_hash, MD5_LEN)) {
-			DBG("cmp_fast(): Created by me\n");
-			return 0;
-		}
-	}
-
-	DBG("cmp_fast(): Not created by me\n");
-	return 1;
-
-}
-
-
-/*
  * Ordinary URI comparison
  */
-static inline int cmp_slow(str* _uri)
+static inline int is_myself(struct receive_info* rcv, str* _uri)
 {
 	struct sip_uri uri;
 	int port;
 
 	if (parse_uri(_uri->s, _uri->len, &uri) != 0) {
-		LOG(L_ERR, "cmp_slow(): Error while parsing URI\n");
+		LOG(L_ERR, "is_myself(): Error while parsing URI\n");
 	}
 
 	port = (uri.port.s) ? (uri.port_no) : SIP_PORT;
 
-	if (bind_address->port_no == port) {
-		if (uri.host.len == bind_address->address_str.len) {
-			if (!memcmp(uri.host.s, bind_address->address_str.s, uri.host.len)) {
-				DBG("cmp_slow(): equal\n");
+	if (rcv->bind_address->port_no == port) {
+		if (uri.host.len == rcv->bind_address->address_str.len) {
+			if (!memcmp(uri.host.s, rcv->bind_address->address_str.s, uri.host.len)) {
+				DBG("is_myself(): equal\n");
 				return 0;
-			} else DBG("cmp_slow(): hosts differ\n");
-		} else DBG("cmp_slow(): Host length differs\n");
-	} else DBG("cmp_slow(): Ports differ\n");
+			} else DBG("is_myself(): hosts differ\n");
+		} else DBG("is_myself(): Host length differs\n");
+	} else DBG("is_myself(): Ports differ\n");
 	
 	return 1;
-}
-
-
-/*
- * Test if the first Route URI was created by this server
- */
-static inline int is_myself(str* _uri)
-{
-	if (use_fast_cmp) {
-		return ((cmp_fast(_uri) > 0) ? (cmp_slow(_uri)) : 0);
-	} else {
-		return cmp_slow(_uri);
-	}
 }
 
 
@@ -470,7 +429,7 @@ static inline int route_after_loose(struct sip_msg* _m)
 	uri = &rr_body->nameaddr.uri;
 
 	     /* IF the URI was added by me, remove it */
-	if (is_myself(uri) == 0) {
+	if (is_myself(&_m->rcv, uri) == 0) {
 		DBG("ral(): Topmost URI is myself\n");
 		if (remove_first_route(_m, _m->route) < 0) {
 			LOG(L_ERR, "ral(): Error while removing the topmost Route URI\n");
@@ -526,7 +485,7 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 		return 1;
 	}
 		
-	if (is_myself(&(_m->first_line.u.request.uri)) == 0) {
+	if (is_myself(&_m->rcv, &(_m->first_line.u.request.uri)) == 0) {
 		if (route_after_strict(_m) < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_strict\n");
 			return -1;
