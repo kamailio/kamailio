@@ -1,15 +1,15 @@
 #include "hash_func.h"
 
-int hash( char* call_id , char* cseq_nr )
+int hash( str  call_id, str cseq_nr )
 {
-   int     hash_code = 0;
-   char* p;
+   int  hash_code = 0;
+   int  i;
 
-    if ( call_id )
-      for( p=call_id ; (*p)!=0 ; hash_code+=(*p) , p++ );
-    if ( cseq_nr )
-      for( p=cseq_nr ; *p!=0 ; hash_code+=*p , p++ );
+    if ( call_id.len>0 )
+      for( i=0 ; i<call_id.len ; hash_code+=call_id.s[i++]  );
+    if ( cseq_nr.len>0 )
+      for( i=0 ; i<cseq_nr.len ; hash_code+=cseq_nr.s[i++] );
 
-   hash_code %= table_entries;
+   return hash_code %= table_entries;
 }
 

@@ -2,7 +2,8 @@
 #define _HASH_H
 
 #include "globals.h"
+#include "../../str.h"
 
-int hash( char* call_id , char* cseq_nr );
+int hash( str  call_id, str cseq_nr );
 
 #endif
