@@ -731,7 +731,7 @@ onreply_route_stm: ROUTE_ONREPLY LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 												"table number");
 											YYABORT; }
 										}
-		| ROUTE_ONREPLY error { yyerror("invalid failure_route statement"); }
+		| ROUTE_ONREPLY error { yyerror("invalid onreply_route statement"); }
 	;
 /*
 rules:	rules rule { push($2, &$1); $$=$1; }
