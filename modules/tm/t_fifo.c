@@ -559,7 +559,7 @@ error:
 
 
 static inline char* add2buf(char *buf, char *end, char *title, int title_len,
-												char *value , int value_len)
+			    char *value , int value_len)
 {
 	if (buf+title_len+value_len+2+1>=end)
 		return 0;
@@ -575,7 +575,7 @@ static inline char* add2buf(char *buf, char *end, char *title, int title_len,
 
 
 static inline char* append2buf( char *buf, int len, struct sip_msg *req, 
-														struct hdr_avp *ha)
+				struct hdr_avp *ha)
 {
 	struct hdr_field *hdr;
 	struct usr_avp   *avp;
@@ -594,9 +594,11 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 			if (ha->sval.s) {
 				avp_name.s=&ha->sval;
 				avp = search_first_avp( AVP_NAME_STR, avp_name, &avp_val);
+				DBG("AVP <%.*s>: %x\n",avp_name.s->len,avp_name.s->s,(unsigned int)avp);
 			} else {
 				avp_name.n=ha->ival;
 				avp = search_first_avp( 0, avp_name, &avp_val);
+				DBG("AVP <%i>: %x\n",avp_name.n,(unsigned int)avp);
 			}
 			if (avp) {
 				if (avp->flags&AVP_VAL_STR) {
@@ -816,13 +818,19 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	/* additional headers */
 	append.s = s = append_buf;
-	if (sizeof(flag_t)+12+1 >= APPEND_BUFFER_MAX) {
+	if (sizeof(flag_t)*2+12+1 >= APPEND_BUFFER_MAX) {
 		LOG(L_ERR,"assemble_msg: buffer overflow "
 		    "while copying optional header\n");
 		goto error;
 	}
 	append_str(s,"P-MsgFlags: ",12);
-	int2reverse_hex(&s, &l, (int)msg->msg_flags);
+	l = APPEND_BUFFER_MAX - (12+1); /* include trailing `\n'*/
+
+	if (int2reverse_hex(&s, &l, (int)msg->msg_flags) == -1) {
+		LOG(L_ERR,"assemble_msg: buffer overflow "
+		    "while copying optional header\n");
+		goto error;
+	}
 	append_chr(s,'\n');
 
 	if ( twi->append && ((s=append2buf( s, APPEND_BUFFER_MAX-(s-append.s), msg,
