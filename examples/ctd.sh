@@ -26,10 +26,17 @@
 # ------------
 # it only works with UACs supporting REFER; it has been tested 
 # with Cisco 7960 and Mitel 5055; Windows Messenger does not
-# support REFER; dialog parser over-simplified (see inline) but 
-# quite functional (if there is something to be fixed, it is
-# richness of SIP syntax); an awk-only rewrite would be esthetically
-# nicer, imho. Never tested on solaris.
+# support REFER. Never tested on solaris. Dialog parser 
+# over-simplified (see inline) but  quite functional 
+# (if there is something to be fixed, it is richness of SIP 
+# syntax); an awk-only rewrite would be esthetically
+# nicer, imho. Another design alternative would be to
+# create all the dialog values (route set, outbound uri,
+# request uri) in ser, and similarly to vm module return
+# them through FIFO. The CTD app would just then mirror
+# them in subsequent requests and would not have to recompute 
+# everything. One would just compute dialog info, put it in 
+# beginning of FIFO reply, followed by the reply.
 #
 # History:
 # --------
