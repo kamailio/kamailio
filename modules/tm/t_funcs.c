@@ -228,10 +228,8 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
 		DBG( "SER: forwarding ACK  statelessly \n");
 		if (proxy==0) {
-			uri=(p_msg->new_uri.s==0 || p_msg->new_uri.len==0) ?
-				&p_msg->first_line.u.request.uri :
-				&p_msg->new_uri;
-			proxy=uri2proxy( uri, proto );
+			uri = &GET_RURI(p_msg);
+			proxy=uri2proxy(&GET_NEXT_HOP(p_msg), proto);
 			if (proxy==0) {
 					ret=E_BAD_ADDRESS;
 					goto done;

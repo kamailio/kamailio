@@ -160,7 +160,7 @@ int add_blind_uac( /*struct cell *t*/ )
    or error (<0); it doesn't send a message yet -- a reply to it
    might interfere with the processes of adding multiple branches
 */
-int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
+int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	struct proxy_l *proxy, int proto )
 {
 
@@ -188,7 +188,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 	/* check DNS resolution */
 	if (proxy) temp_proxy=0; else {
-		proxy=uri2proxy( uri, proto );
+		proxy=uri2proxy( next_hop ? next_hop : uri, proto );
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
 			goto error;
@@ -414,10 +414,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	   is in additional branches (which may be continuously refilled
 	*/
 	if (first_branch==0) {
-		branch_ret=add_uac( t, p_msg, 
-			p_msg->new_uri.s ? &p_msg->new_uri :  
-				&p_msg->first_line.u.request.uri,
-				proxy, proto );
+		branch_ret=add_uac( t, p_msg, &GET_RURI(p_msg), &GET_NEXT_HOP(p_msg), proxy, proto );
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
@@ -426,7 +423,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	init_branch_iterator();
 	while((current_uri.s=next_branch( &current_uri.len))) {
-		branch_ret=add_uac( t, p_msg, &current_uri, proxy, proto);
+		branch_ret=add_uac( t, p_msg, &current_uri, 0, proxy, proto);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
