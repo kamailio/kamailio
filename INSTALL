@@ -197,15 +197,19 @@ This guide gives you instructions on how to set up the SIP Express
 Router (ser) on your box quickly. In case the default configuration
 does not fly, check documentation at ser site
   http://www.iptel.org/ser/
+to learn how to configure SER for your site.
 
 If the documentation does not resolve your problem you may try contacting 
-us by E-mail at serusers@iptel.org -- that is the mailing list of ser
-community from which you can get most rapid help. To participate in the
-mailing list, subscribe at the following web address:
+our user forum by E-mail at serusers@iptel.org -- that is the mailing list 
+of ser community. To participate in the mailing list, subscribe at the 
+following web address:
   http://mail.iptel.org/mailman/listinfo/serusers
 
-If you are concerned about your privacy, you may post your questions to 
-iptel.org's helpline at serhelp@iptel.org.
+To participate in our commercial support program, contact info@iptel.org.
+The support program will provide you with most timely and accurate help
+for configuration, integration, development and any other technical
+activity.
+
 
 B) Disclaimers
  
@@ -275,6 +279,7 @@ Solaris:
       or
         /usr/local/sbin/serctl moni (if you installed from a tar.gz or solaris
         package)
+
 5) Register with the server using your favorite
    SIP User Agent. You may want to look at configuration
    hints for use of iptel.org site at
@@ -291,11 +296,14 @@ Solaris:
 D) ser with Persistent Data Storage
 
 The default configuration is very simple and features many simplifications. 
-In particular, it does not authenticate users and loses User Location 
-database on reboot. To provide persistency, keep user credentials and remember 
-users' locations across reboots, ser can be configured to use MySQL. Before you 
-proceed, you need to make sure MySQL is installed on your box.
+In particular, it does not authenticate users and loses User Location database 
+on reboot. To provide persistency, keep user credentials and remember users' 
+locations across reboots, ser can be configured to use MySQL. Before you proceed, 
+you need to make sure MySQL is installed on your box. Your MySQL server must be 
+configured to deal with a large number of connection. To increase it, set the 
+following line in [mysqld] section of your configuration file:
 
+   set-variable    = max_connections=500
 
 1) Download the package containing mysql support for ser from: 
     http://www.iptel.org/ser/
