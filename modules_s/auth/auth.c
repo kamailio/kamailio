@@ -18,6 +18,8 @@
 #include <stdio.h>
 #include "../../mem/mem.h"
 #include <string.h>
+#include "auth_mod.h"
+
 
 static char auth_hf[AUTH_HF_LEN];
 
@@ -184,11 +186,11 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c)
 
 static int get_ha1(str* _user, char* _realm, char* _ha1)
 {
-	db_key_t keys[] = {SUBS_USER_COL, SUBS_REALM_COL};
+	db_key_t keys[] = {user_column, realm_column};
 	db_val_t vals[] = {{DB_STRING, 0, {.string_val = _user->s}},
 			   {DB_STRING, 0, {.string_val = _realm}}
 	};
-	db_key_t col[] = {SUBS_HA1_COL};
+	db_key_t col[] = {ha1_column};
 	db_res_t* res;
 
 	const char* ha1;
@@ -200,7 +202,7 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 	}
 #endif
 	
-	db_use_table(db_handle, DB_TABLE);
+	db_use_table(db_handle, table);
 	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) == FALSE) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;

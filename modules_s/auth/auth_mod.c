@@ -17,6 +17,12 @@ static int mod_init(void);
 
 int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
+char* db_url = "sql://janakj:heslo@fokus-3.fokus.plugtests.net/ser";
+char* table = "auth";
+char* user_column = "user";
+char* realm_column = "realm";
+char* ha1_column = "ha1";
+
 struct module_exports exports = {
 	"auth", 
 	(char*[]) { 
@@ -46,10 +52,28 @@ struct module_exports exports = {
 	},
 	6,
 	
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
+	(char*[]) {
+		"db_url",
+		"table",
+		"user_column",
+		"realm_column",
+		"ha1_column"
+	},   /* Module parameter names */
+	(modparam_t[]) {
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM
+	},   /* Module parameter types */
+	(void*[]) {
+		&db_url,
+		&table,
+		&user_column,
+		&realm_column,
+		&ha1_column
+	},   /* Module parameter variable pointers */
+	5,      /* Number of module paramers */
 					     
 	mod_init,   /* module initialization function */
 	NULL,       /* response function */
@@ -63,7 +87,11 @@ db_con_t* db_handle;
 
 static int child_init(int rank)
 {
-	db_handle = db_init(DB_URL);
+	if (db_url == NULL) {
+		LOG(L_ERR, "auth:init_child(): Use db_url parameter\n");
+		return -1;
+	}
+	db_handle = db_init(db_url);
 	if (!db_handle) {
 		LOG(L_ERR, "auth:init_child(): Unable to connect database\n");
 		return -1;
