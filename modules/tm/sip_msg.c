@@ -173,7 +173,6 @@ static inline struct auth_body* auth_body_cloner(char* new_buf, char *org_buf, s
 	new_auth->digest.nonce.s = translate_pointer(new_buf, org_buf, auth->digest.nonce.s);
 	new_auth->digest.uri.s = translate_pointer(new_buf, org_buf, auth->digest.uri.s);
 	new_auth->digest.response.s = translate_pointer(new_buf, org_buf, auth->digest.response.s);
-	new_auth->digest.algorithm.s = translate_pointer(new_buf, org_buf, auth->digest.algorithm.s);
 	new_auth->digest.alg.alg_str.s = translate_pointer(new_buf, org_buf, auth->digest.alg.alg_str.s);
 	new_auth->digest.cnonce.s = translate_pointer(new_buf, org_buf, auth->digest.cnonce.s);
 	new_auth->digest.opaque.s = translate_pointer(new_buf, org_buf, auth->digest.opaque.s);
