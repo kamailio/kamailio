@@ -98,17 +98,17 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	
 	get_act_time();
 
-	ul_lock_udomain((udomain_t*)_t);
-	res = ul_get_urecord((udomain_t*)_t, &aor, &r);
+	ul.lock_udomain((udomain_t*)_t);
+	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
 	if (res < 0) {
 		LOG(L_ERR, "lookup(): Error while querying usrloc\n");
-		ul_unlock_udomain((udomain_t*)_t);
+		ul.unlock_udomain((udomain_t*)_t);
 		return -2;
 	}
 	
 	if (res > 0) {
 		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
-		ul_unlock_udomain((udomain_t*)_t);
+		ul.unlock_udomain((udomain_t*)_t);
 		return -3;
 	}
 
@@ -120,14 +120,14 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (ptr) {
 		if (rwrite(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
-			ul_unlock_udomain((udomain_t*)_t);
+			ul.unlock_udomain((udomain_t*)_t);
 			return -4;
 		}
 		nat |= ptr->flags & FL_NAT;
 		ptr = ptr->next;
 	} else {
 		     /* All contacts expired */
-		ul_unlock_udomain((udomain_t*)_t);
+		ul.unlock_udomain((udomain_t*)_t);
 		return -5;
 	}
 	
@@ -138,7 +138,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		if (ptr->expires > act_time) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
-				ul_unlock_udomain((udomain_t*)_t);
+				ul.unlock_udomain((udomain_t*)_t);
 				return 1; /* Return OK here so the function succeeds */
 			}
 			nat |= ptr->flags & FL_NAT;
@@ -147,7 +147,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 	
  skip:
-	ul_unlock_udomain((udomain_t*)_t);
+	ul.unlock_udomain((udomain_t*)_t);
 
 	if (nat) setflag(_m, nat_flag);
 	return 1;

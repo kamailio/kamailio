@@ -54,6 +54,7 @@ extern dlist_t* root;
  * will be returned, otherwise a new domain will be
  * created
  */
+typedef int (*register_udomain_t)(const char* _n, udomain_t** _d);
 int register_udomain(const char* _n, udomain_t** _d);
 
 
@@ -80,10 +81,13 @@ int synchronize_all_udomains(void);
  */
 int preload_all_udomains(void);
 
+
 /*
  * Get contacts to all registered users
  */
-int get_all_ucontacts(void *, int);
+typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags);
+int get_all_ucontacts(void *, int, unsigned int);
+
 
 /*
  * Find a particular domain

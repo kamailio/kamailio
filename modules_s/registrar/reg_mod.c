@@ -41,7 +41,6 @@
 #include "../../timer.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../usrloc/usrloc.h"
 
 #include "save.h"
 #include "lookup.h"
@@ -52,6 +51,7 @@ MODULE_VERSION
 static int mod_init(void);                           /* Module init function */
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
 
+usrloc_api_t ul;            /* Structure containing pointers to usrloc functions */
 
 int default_expires = 3600; /* Default expires value in seconds */
 int default_q       = 0;    /* Default q value multiplied by 1000 */
@@ -73,10 +73,9 @@ int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         save,         1, domain_fixup, REQUEST_ROUTE},
-	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE},
-	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE 
-				| FAILURE_ROUTE},
+	{"save",         save,         1, domain_fixup, REQUEST_ROUTE                },
+	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
+	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -116,6 +115,8 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
+	bind_usrloc_t bind_usrloc;
+
 	DBG("registrar - initializing\n");
 
              /*
@@ -128,8 +129,13 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	if (bind_usrloc() < 0) {
-		LOG(L_ERR, "registar: Can't find usrloc module\n");
+	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
+	if (!bind_usrloc) {
+		LOG(L_ERR, "registrar: Can't bind usrloc\n");
+		return -1;
+	}
+
+	if (bind_usrloc(&ul) < 0) {
 		return -1;
 	}
 
@@ -147,7 +153,7 @@ static int domain_fixup(void** param, int param_no)
 	udomain_t* d;
 
 	if (param_no == 1) {
-		if (ul_register_udomain((char*)*param, &d) < 0) {
+		if (ul.register_udomain((char*)*param, &d) < 0) {
 			LOG(L_ERR, "domain_fixup(): Error while registering domain\n");
 			return E_UNSPEC;
 		}

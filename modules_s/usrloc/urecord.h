@@ -122,6 +122,7 @@ int db_delete_urecord(urecord_t* _r);
  * Release urecord previously obtained
  * through get_urecord
  */
+typedef void (*release_urecord_t)(urecord_t* _r);
 void release_urecord(urecord_t* _r);
 
 
@@ -129,6 +130,8 @@ void release_urecord(urecord_t* _r);
  * Create and insert new contact
  * into urecord with additional replication argument
  */
+typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, 
+				 unsigned int _flags, struct ucontact** _con);
 int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, 
 			unsigned int _flags, int _rep, struct ucontact** _con);
 
@@ -136,6 +139,7 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, 
  * Create and insert new contact
  * into urecord without replication
  */
+
 int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, 
 		    unsigned int _flags, struct ucontact** _con);
 
@@ -143,12 +147,14 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
 /*
  * Delete ucontact from urecord
  */
+typedef int (*delete_ucontact_t)(urecord_t* _r, struct ucontact* _c);
 int delete_ucontact(urecord_t* _r, struct ucontact* _c);
 
 
 /*
  * Get pointer to ucontact with given contact
  */
+typedef int (*get_ucontact_t)(urecord_t* _r, str* _c, struct ucontact** _co);
 int get_ucontact(urecord_t* _r, str* _c, struct ucontact** _co);
 
 

@@ -32,6 +32,7 @@
 #define REG_MOD_H
 
 #include "../../parser/msg_parser.h"
+#include "../usrloc/usrloc.h"
 
 extern int default_expires;
 extern int default_q;
@@ -43,6 +44,7 @@ extern int nat_flag;
 
 extern float def_q;
 
+usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
 extern int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 

@@ -50,6 +50,7 @@
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_fifo.h"
 #include "notify.h"
+#include "usrloc.h"
 
 MODULE_VERSION
 
@@ -59,6 +60,7 @@ static void destroy(void);                          /* Module destroy function *
 static void timer(unsigned int ticks, void* param); /* Timer handler */
 static int child_init(int rank);                    /* Per-child init function */
 
+extern int bind_usrloc(usrloc_api_t* api);
 
 /*
  * Module parameters and their default values
@@ -101,6 +103,7 @@ static cmd_export_t cmds[] = {
 	{"ul_update_ucontact",    (cmd_function)update_ucontact,    1, 0, 0},
 	{"ul_register_watcher",   (cmd_function)register_watcher,   1, 0, 0},
 	{"ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0, 0},
+	{"ul_bind_usrloc",        (cmd_function)bind_usrloc,        1, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 

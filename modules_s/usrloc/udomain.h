@@ -117,12 +117,14 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
 /*
  * Get lock
  */
+typedef void (*lock_udomain_t)(udomain_t* _d);
 void lock_udomain(udomain_t* _d);
 
 
 /*
  * Release lock
  */
+typedef void (*unlock_udomain_t)(udomain_t* _d);
 void unlock_udomain(udomain_t* _d);
 
 
@@ -132,18 +134,21 @@ void unlock_udomain(udomain_t* _d);
 /*
  * Create and insert a new record
  */
+typedef int (*insert_urecord_t)(udomain_t* _d, str* _aor, struct urecord** _r);
 int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
 /*
  * Obtain a urecord pointer if the urecord exists in domain
  */
+typedef int  (*get_urecord_t)(udomain_t* _d, str* _a, struct urecord** _r);
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
 /*
  * Delete a urecord from domain
  */
+typedef int  (*delete_urecord_t)(udomain_t* _d, str* _a);
 int delete_urecord(udomain_t* _d, str* _aor);
 
 

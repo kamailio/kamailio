@@ -174,6 +174,8 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
+typedef int (*update_ucontact_t)(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, 
+				 unsigned int _set, unsigned int _res);
 int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res);
 
