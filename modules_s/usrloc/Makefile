@@ -13,7 +13,7 @@ depends= $(sources:.c=.d)
 NAME=usrloc.so
 
 LDFLAGS=-O2 -shared
-LIBS=-lmysqlclient
+LIBS=-lmysqlclient -L/usr/lib/mysql
 
 ALLDEP=Makefile ../../Makefile
 
