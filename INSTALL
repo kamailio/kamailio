@@ -26,6 +26,8 @@ Compile:
 
 make
 (or gmake on non-Linux systems)
+make modules 
+or make modules exclude_modules="CVS print" etc.
 
 Install(not done yet):
 
