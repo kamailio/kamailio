@@ -448,12 +448,10 @@ static void unix_server_loop(void)
 	static char buf[UNIXSOCK_BUF_SIZE];
 	struct unixsock_cmd* c;
 
-	buffer.s = buf;
-	buffer.len = 0;
 	
 	while(1) {
 		reply_addr_len = sizeof(reply_addr);
-		ret = recvfrom(rx_sock, buffer.s, UNIXSOCK_BUF_SIZE, 0, 
+		ret = recvfrom(rx_sock, buf, UNIXSOCK_BUF_SIZE, 0, 
 			       (struct sockaddr*)&reply_addr, &reply_addr_len);
 		if (ret == -1) {
 			LOG(L_ERR, "unix_server_loop: recvfrom: (%d) %s\n", 
@@ -466,8 +464,11 @@ static void unix_server_loop(void)
 				    errno, strerror(errno));
 				continue;
 			}
+			LOG(L_CRIT, "BUG: unix_server_loop: unexpected recvfrom error\n");
+			continue;
 		}
 
+		buffer.s = buf;
 		buffer.len = ret;
 		unixsock_reply_reset();
 
