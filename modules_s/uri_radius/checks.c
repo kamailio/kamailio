@@ -31,13 +31,14 @@
  */
 
 
-#include <radiusclient.h>
 #include <string.h>
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"
 #include "ser_radius.h"
 #include "checks.h"
+#include "urirad_mod.h"
+#include <radiusclient.h>
 
 
 /*
@@ -80,7 +81,7 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	 	return -3;
 	}
 
-	service = PW_CALL_CHECK;
+	service = service_type;
 	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0)) {
 		LOG(L_ERR, "radius_does_uri_exist(): Error adding service type\n");
 		rc_avpair_free(send);

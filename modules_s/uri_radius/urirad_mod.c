@@ -32,11 +32,12 @@
  * 2003-03-16 - flags export parameter added (janakj)
  */
 
-#include <radiusclient.h>
 #include "../../dprint.h"
 #include "../../sr_module.h"
 #include "urirad_mod.h"
 #include "checks.h"
+#include "ser_radius.h"
+#include <radiusclient.h>
 
 MODULE_VERSION
 
@@ -48,7 +49,7 @@ static int mod_init(void); /* Module initialization function */
  * Module parameter variables
  */
 char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
-
+int service_type = PW_CALL_CHECK;
 
 /*
  * Exported functions
@@ -64,6 +65,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"radius_config", STR_PARAM, &radius_config},
+	{"service_type", INT_PARAM, &service_type},
 	{0, 0, 0}
 };
 

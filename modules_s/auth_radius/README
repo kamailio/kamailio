@@ -14,6 +14,11 @@ Type:    string
 Default: "/usr/local/etc/radiusclient/radiusclient.conf"
 Desc:    Radiusclient configuration file
 
+Name:    service_type
+Type:    int
+Default: 15 (SIP)
+Desc:    Radius service type used for authentication
+
 Name:    secret
 Type:    string
 Default: "4e9rhygt90ofw34e8hiof09tg"

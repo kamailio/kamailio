@@ -83,6 +83,8 @@
 #define A_UP_IURI_LEN (sizeof(A_UP_IURI)-1)
 #define A_CODE "code"
 #define A_CODE_LEN (sizeof(A_CODE)-1)
+#define A_REALM "realm"
+#define A_REALM_LEN (sizeof(A_REALM)-1)
 
 #define A_SEPARATOR ", " /* must be shorter than ACC! */
 #define A_SEPARATOR_LEN (sizeof(A_SEPARATOR)-1)

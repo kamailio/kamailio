@@ -38,6 +38,7 @@
 /* Service types */
 #define PW_CALL_CHECK                   10
 #define PW_EMERGENCY_CALL               13
+#define PW_SIP                          15
 
 /* Attributes*/
 #define PW_DIGEST_RESPONSE	        206	/* string */

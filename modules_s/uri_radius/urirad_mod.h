@@ -38,5 +38,6 @@
  * Module parameter variables
  */
 extern char* radius_config;   /* radiusclient configuration file */
+extern int service_type;      /* radius service type for uri check */
 
 #endif /* URIRAD_MOD_H */

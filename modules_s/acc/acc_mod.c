@@ -56,6 +56,7 @@
 
 #ifdef RAD_ACC
 #include <radiusclient.h>
+#include "dict.h"
 #endif
 
 MODULE_VERSION
@@ -94,6 +95,7 @@ char *log_fmt=DEFAULT_LOG_FMT;
 char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 int radius_flag = 1;
 int radius_missed_flag = 2;
+int service_type = PW_SIP;
 #endif
 
 

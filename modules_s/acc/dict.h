@@ -40,7 +40,7 @@
 #define PW_SIP_SOURCE_IP_ADDRESS	108 /* ipaddr */
 #define PW_SIP_SOURCE_PORT			109 /* integer */
 
-#define SIP_SERVICE_TYPE		15
+#define PW_SIP		                15  /* SIP service-type */
 #define PW_STATUS_FAILED		15
 
 /* authentication stuff -- we don't need it really for acc */

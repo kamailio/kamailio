@@ -49,7 +49,7 @@
 
 /* caution: keep consistent with definition of rad_attr */
 #ifdef RAD_ACC
-#	define RAD_ACC_FMT "UFTocdrn"
+#	define RAD_ACC_FMT "FTocdrn"
 #endif
 
 

@@ -146,6 +146,11 @@ Desc:	path to radius client configuration file; set the referred config
 		freeRadius servers) and dictionary; see etc for an example of
 		config file and dictionary
 
+Name:    service_type
+Type:    int
+Default: 15 (SIP)
+Desc:    Radius service type used for accounting
+
 Name:	radius_missed_flag, radius_flag -- analogous to syslog flags
 
 

@@ -1,0 +1,26 @@
+#
+# README,v 1.0 2003/5/2 jih
+#
+
+Exported parameters:
+-------------------
+
+Name:    radius_config
+Type:    string
+Default: "/usr/local/etc/radiusclient/radiusclient.conf"
+Desc:    Radiusclient configuration file
+
+Name:    service_type
+Type:    int
+Default: 10 (Call-Check)
+Desc:    Radius service type used in radius_does_uri_exist check
+
+
+Exported Functions:
+------------------
+
+Name:   radius_does_uri_exist
+Params: -
+Desc:   Checks from Radius if user@host in Request-URI is a local
+        user.  Can be used to decide if 404 or 480 should be returned
+	after lookup has failed.

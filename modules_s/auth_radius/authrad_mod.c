@@ -45,6 +45,7 @@
 #include "authrad_mod.h"
 #include "authorize.h"
 #include <radiusclient.h>
+#include "ser_radius.h"
 
 MODULE_VERSION
 
@@ -59,6 +60,7 @@ static int str_fixup(void** param, int param_no); /* char* -> str* */
  * Module parameter variables
  */
 char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+int service_type = PW_SIP;
 
 
 /*
@@ -76,6 +78,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"radius_config", STR_PARAM, &radius_config},
+	{"service_type", INT_PARAM, &service_type},
 	{0, 0, 0}
 };
 

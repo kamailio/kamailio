@@ -58,11 +58,9 @@ static str na={NA, NA_LEN};
 
 #ifdef RAD_ACC
 /* caution: keep these aligned to RAD_ACC_FMT !! */
-static int rad_attr[] = {PW_USER_NAME, 
-	PW_CALLING_STATION_ID, PW_CALLED_STATION_ID,
+static int rad_attr[] = { PW_CALLING_STATION_ID, PW_CALLED_STATION_ID,
 	PW_SIP_TRANSLATED_REQ_URI, PW_ACCT_SESSION_ID, PW_SIP_TO_TAG, 
 	PW_SIP_FROM_TAG, PW_SIP_CSEQ };
-int service_type=SIP_SERVICE_TYPE;
 #endif
 
 
@@ -74,7 +72,7 @@ static inline struct hdr_field *valid_to( struct cell *t,
 	return reply->to;
 }
 
-static inline str *cred(struct sip_msg *rq)
+static inline str *cred_user(struct sip_msg *rq)
 {
 	struct hdr_field* h;
 	auth_body_t* cred;
@@ -86,6 +84,20 @@ static inline str *cred(struct sip_msg *rq)
 	if (!cred || !cred->digest.username.user.len) 
 			return 0;
 	return &cred->digest.username.user;
+}
+
+static inline str *cred_realm(struct sip_msg *rq)
+{
+	struct hdr_field* h;
+	auth_body_t* cred;
+
+	get_authorized_cred(rq->proxy_auth, &h);
+	if (!h) get_authorized_cred(rq->authorization, &h);
+	if (!h) return 0;
+	cred=(auth_body_t*)(h->parsed);
+	if (!cred || !cred->digest.realm.len) 
+			return 0;
+	return &cred->digest.realm;
 }
 
 /* create an array of str's for accounting using a formatting string;
@@ -161,7 +173,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				ATR(FROMTAG);
 				break;
 			case 'U': /* digest, from-uri otherwise */
-				cr=cred(rq);
+				cr=cred_user(rq);
 				if (cr) {
 					ATR(UID);
 					val_arr[cnt]=cr;
@@ -224,7 +236,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				ATR(STATUS);
 				break;
 			case 'u':
-				cr=cred(rq);
+				cr=cred_user(rq);
 				val_arr[cnt]=cr?cr:&na;
 				ATR(UID);
 				break;
@@ -506,7 +518,7 @@ inline UINT4 rad_status(struct sip_msg *rq, str *phrase)
 }
 
 int acc_rad_request( struct sip_msg *rq, struct hdr_field *to, 
-				str *phrase )
+		     str *phrase )
 {
 	str* val_arr[ALL_LOG_FMT_LEN+1];
 	str atr_arr[ALL_LOG_FMT_LEN+1];
@@ -515,6 +527,11 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 	UINT4 av_type;
 	int i;
 	int dummy_len;
+	str* user;
+	str* realm;
+	str user_name;
+	struct sip_uri puri;
+	struct to_body* from;
 #ifdef _OBSO
 	char nullcode="00000";
 	char ccode[6];
@@ -554,12 +571,78 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 		LOG(L_ERR, "ERROR: acc_rad_request: add SIP_METHOD\n");
 		goto error;
 	}
-
+        /* Handle PW_USER_NAME as a special case */
+	user=cred_user(rq);  /* try to take it from credentials */
+	if (user) {
+		realm = cred_realm(rq);
+		if (realm) {
+			user_name.len = user->len+1+realm->len;
+			user_name.s = pkg_malloc(user_name.len);
+			if (!user_name.s) {
+				LOG(L_ERR, "ERROR: acc_rad_request: no memory\n");
+				goto error;
+			}
+			memcpy(user_name.s, user->s, user->len);
+			user_name.s[user->len] = '@';
+			memcpy(user_name.s+user->len+1, realm->s, realm->len);
+			if (!rc_avpair_add(&send, PW_USER_NAME, 
+					   user_name.s, user_name.len)) {
+				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+				    "failed for %d\n", PW_USER_NAME );
+				pkg_free(user_name.s);
+				goto error;
+			}
+			pkg_free(user_name.s);
+		} else {
+			user_name.len = user->len;
+			user_name.s = user->s;
+			if (!rc_avpair_add(&send, PW_USER_NAME, 
+					   user_name.s, user_name.len)) {
+				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+				    "failed for %d\n", PW_USER_NAME );
+				goto error;
+			}
+		}
+	} else {  /* from from uri */
+		if (rq->from && (from=get_from(rq)) && from->uri.len) {
+			if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 ) {
+				LOG(L_ERR, "ERROR: acc_rad_request: Bad From URI\n");
+				goto error;
+			}
+			user_name.len = puri.user.len+1+puri.host.len;
+			user_name.s = pkg_malloc(user_name.len);
+			if (!user_name.s) {
+				LOG(L_ERR, "ERROR: acc_rad_request: no memory\n");
+				goto error;
+			}
+			memcpy(user_name.s, puri.user.s, puri.user.len);
+			user_name.s[puri.user.len] = '@';
+			memcpy(user_name.s+puri.user.len+1, puri.host.s, puri.host.len);
+			if (!rc_avpair_add(&send, PW_USER_NAME, 
+					   user_name.s, user_name.len)) {
+				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+				    "failed for %d\n", PW_USER_NAME );
+				pkg_free(user_name.s);
+				goto error;
+			}
+			pkg_free(user_name.s);
+		} else {
+			user_name.len = na.len;
+			user_name.s = na.s;
+			if (!rc_avpair_add(&send, PW_USER_NAME, 
+					   user_name.s, user_name.len)) {
+				LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
+				    "failed for %d\n", PW_USER_NAME );
+				goto error;
+			}
+		}
+	}
+        /* Remaining attributes from rad_attr vector */
 	for(i=0; i<attr_cnt; i++) {
 		if (!rc_avpair_add(&send, rad_attr[i], 
-					val_arr[i]->s,val_arr[i]->len)) {
+				   val_arr[i]->s,val_arr[i]->len)) {
 			LOG(L_ERR, "ERROR: acc_rad_request: rc_avpaid_add "
-					"failed for %d\n", rad_attr[i] );
+			    "failed for %d\n", rad_attr[i] );
 			goto error;
 		}
 	}
