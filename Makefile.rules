@@ -51,7 +51,7 @@ clean:
 .PHONY: distclean
 .PHONY: realclean
 proper realclean distclean: clean 
-	-@rm -f $(depends) 2>/dev/null
+	-@rm -f $(depends) $(auto_gen) 2>/dev/null
 	-@for r in $(modules) "" ; do \
 		if [ -n "$$r" ]; then \
 			 $(MAKE) -C $$r proper ; \
@@ -60,7 +60,7 @@ proper realclean distclean: clean
 
 .PHONY: mantainer-cleaan
 mantainer-clean: distclean
-	-rm -f $(auto_gen) TAGS tags *.dbg .*.swp
+	-rm -f TAGS tags *.dbg .*.swp
 	-@for r in $(modules) "" ; do \
 		if [ -n "$$r" ]; then \
 			$(MAKE) -C $$r mantainer-clean; \
