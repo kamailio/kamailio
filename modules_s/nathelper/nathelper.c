@@ -900,12 +900,19 @@ extract_mediaport(str *body, str *mediaport)
 	  mediaport->s) - mediaport->s;
 	trim_len(mediaport->len, mediaport->s, *mediaport);
 
-	if (mediaport->len < 7 || memcmp(mediaport->s, "audio", 5) != 0 ||
-	  !isspace((int)mediaport->s[5])) {
+	if (mediaport->len > 6 && memcmp(mediaport->s, "audio", 5) == 0 &&
+	    isspace((int)mediaport->s[5])) {
+		mediaport->s += 5;
+		mediaport->len -= 5;
+	} else if (mediaport->len > 12 && memcmp(mediaport->s, "application", 11) == 0 &&
+	    isspace((int)mediaport->s[11])) {
+		mediaport->s += 11;
+		mediaport->len -= 11;
+	} else {
 		LOG(L_ERR, "ERROR: extract_mediaport: can't parse `m=' in SDP\n");
 		return -1;
 	}
-	cp = eat_space_end(mediaport->s + 5, mediaport->s + mediaport->len);
+	cp = eat_space_end(mediaport->s, mediaport->s + mediaport->len);
 	mediaport->len = eat_token_end(cp, mediaport->s + mediaport->len) - cp;
 	mediaport->s = cp;
 	return 1;
