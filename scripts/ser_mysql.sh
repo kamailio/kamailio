@@ -387,13 +387,13 @@ CREATE TABLE silo(
 
 
 #
-# Table structure for table 'realm' -- realms proxy is responsible for
+# Table structure for table 'domain' -- domains proxy is responsible for
 #
 
-CREATE TABLE realm (
-  realm varchar(50) NOT NULL default '',
+CREATE TABLE domain (
+  domain varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY  (realm)
+  PRIMARY KEY  (domain)
 ) $TABLE_TYPE;
 
 
