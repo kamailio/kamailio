@@ -90,6 +90,8 @@ optimizations:
 tcp stuff:
 x tcp disable nagle 
 - tcp locking/atomic ops review
+- tcp fix simultaneous connects (ser process is blocked until connect timeouts
+ => possible DOS)
 
 tm optimizations:
 

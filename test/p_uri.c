@@ -20,7 +20,8 @@ struct sip_uri {
 
 int parse_uri(char* buf, int len, struct sip_uri* uri)
 {
-	enum states  {	URI_INIT, URI_USER, URI_PASSWORD, URI_HOST, URI_PORT,
+	enum states  {	URI_INIT, URI_USER, URI_PASSWORD, URI_HOST, URI_HOST_P,
+					URI_HOST6_P, URI_HOST6_END, URI_PORT,
 					URI_PARAM, URI_HEADERS };
 	enum states state;
 	char* s;
@@ -54,8 +55,31 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 							found_user=1;\
 							error_headers=0; \
 							state=URI_HOST; \
-						}else goto error_bad_char; 
-	 
+						}else goto error_bad_char 
+#define check_host_end \
+					case ':': \
+						/* found the host */ \
+						uri->host.s=s; \
+						uri->host.len=p-s; \
+						state=URI_PORT; \
+						s=p+1; \
+						break; \
+					case ';': \
+						uri->host.s=s; \
+						uri->host.len=p-s; \
+						state=URI_PARAM; \
+						s=p+1; \
+						break; \
+					case '?': \
+						uri->host.s=s; \
+						uri->host.len=p-s; \
+						state=URI_HEADERS; \
+						s=p+1; \
+						break; \
+					case '&': \
+					case '@': \
+						goto error_bad_char 
+	
 	end=buf+len;
 	p=buf+4;
 	found_user=0;
@@ -69,9 +93,26 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		     (buf[3]==':') ) ) goto error_bad_uri;
 	
 	s=p;
-	state=URI_USER;
 	for(;p<end; p++){
 		switch(state){
+			case URI_INIT:
+				switch(*p){
+					case '[':
+						/* uri =  [ipv6address]... */
+						state=URI_HOST6_P;
+						s=p;
+						break;
+					case ']':
+						/* invalid, no uri can start with ']' */
+					case ':':
+						/* the same as above for ':' */
+						goto error_bad_char;
+					case '@': /* error no user part, or
+								 be forgiving and accept it ? */
+					default:
+						state=URI_USER;
+				}
+				break; 
 			case URI_USER:
 				switch(*p){
 					case '@':
@@ -104,6 +145,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						s=p+1;
 						break;
 						/* almost anything permitted in the user part */
+					case '[':
+					case ']': /* the user part cannot contain "[]" */
+						goto error_bad_char;
 				}
 				break;
 			case URI_PASSWORD: /* this can also be the port (missing user)*/
@@ -142,34 +186,50 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 						found_user=1; /*  there is no user part */
 						s=p+1;
 						break;
+					case '[':
+					case ']':
 					case ':':
 						goto error_bad_char;
 				}
 				break;
 			case URI_HOST:
 				switch(*p){
-					case ':':
-						/* found the host */
-						uri->host.s=s;
-						uri->host.len=p-s;
-						state=URI_PORT;
-						s=p+1;
+					case '[':
+						state=URI_HOST6_P;
 						break;
+					case ':': 
 					case ';':
-						uri->host.s=s;
-						uri->host.len=p-s;
-						state=URI_PARAM;
-						s=p+1;
+					case '?': /* null host name ->invalid */
+					case '&':
+					case '@': /*chars not allowed in hosts names */
+						goto error_bad_host;
+					default:
+						state=URI_HOST_P;
+				}
+				break;
+			case URI_HOST_P:
+				switch(*p){
+					check_host_end;
+				}
+				break;
+			case URI_HOST6_END:
+				switch(*p){
+					check_host_end;
+					default: /*no chars allowed after [ipv6] */
+						goto error_bad_host;
+				}
+				break;
+			case URI_HOST6_P:
+				switch(*p){
+					case ']':
+						state=URI_HOST6_END;
 						break;
-					case '?':
-						uri->host.s=s;
-						uri->host.len=p-s;
-						state=URI_HEADERS;
-						s=p+1;
-						break;
+					case '[':
 					case '&':
 					case '@':
-						goto error_bad_char;
+					case ';':
+					case '?':
+						goto error_bad_host;
 				}
 				break;
 			case URI_PORT:
@@ -271,6 +331,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	}
 	/*end of uri */
 	switch (state){
+		case URI_INIT: /* error empy uri */
+			goto error_too_short;
 		case URI_USER:
 			/* this is the host, it can't be the user */
 			if (found_user) goto error_bad_uri;
@@ -287,10 +349,14 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->user.s=0;
 			uri->user.len=0;
 			break;
-		case URI_HOST:
+		case URI_HOST_P:
+		case URI_HOST6_END:
 			uri->host.s=s;
 			uri->host.len=p-s;
 			break;
+		case URI_HOST: /* error: null host */
+		case URI_HOST6_P: /* error: unterminated ipv6 reference*/
+			goto error_bad_host;
 		case URI_PORT:
 			uri->port.s=s;
 			uri->port.len=p-s;
@@ -327,6 +393,11 @@ error_too_short:
 error_bad_char:
 	LOG(L_ERR, "ERROR: parse_uri: bad char '%c' in state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
+			*p, state, (p-buf), buf, (p-buf), len, buf, len);
+	return -1;
+error_bad_host:
+	LOG(L_ERR, "ERROR: parse_uri: bad host in uri (error at char %c in"
+			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
 			*p, state, (p-buf), buf, (p-buf), len, buf, len);
 	return -1;
 error_bad_uri:
