@@ -116,7 +116,7 @@ if [ ! -e $LOCKF ] ; then
 	
 	if [ -e $TMP ] ; then
 		if [ $HOSTN = $RUNHOST ] ; then
-			$MAILCOMMAND -s "$SER_SUBJECT" $NOTIFY < $TMP
+			$MAILCOMMAND -s "$SERR_SUBJECT" $NOTIFY < $TMP
 			rm -f $TMP
 			touch $LOCKF
 			for i in $SMSNUMBERS; do
