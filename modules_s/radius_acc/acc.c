@@ -108,7 +108,7 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
   	if (rq->first_line.type == SIP_REPLY) {
 		/* take a reply from message -- that's safe and we don't need to be
 		   worried about TM reply status being changed concurrently */
-    	av_type = msg->REPLY_STATUS;
+    	av_type = rq->REPLY_STATUS;
    		if (rc_avpair_add(&send, PW_SIP_RESPONSE_CODE, &av_type, 0) == NULL) {
       		DBG("radius_log_reply(): ERROR:PW_SIP_RESPONSE_CODE \n");
 			return(ERROR_RC);
