@@ -194,14 +194,15 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	register char* p;
 	register int val;
 
-	p = begin;
-	val = READ(p);
-	hdr->name.s = begin;
-
 	if ((end - begin) < 4) {
 		hdr->type = HDR_ERROR;
 		return begin;
 	}
+
+	p = begin;
+	val = READ(p);
+	hdr->name.s = begin;
+
 
 	switch(val) {
 	FIRST_QUATERNIONS;

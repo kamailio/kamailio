@@ -155,8 +155,7 @@ int uac_child_init( int rank )
 			sock_info[bind_idx].address_str.len,
 			sock_info[bind_idx].address_str.s );
 	if (callid_suffix_len==-1) {
-		LOG(L_ERR, "ERROR: uac_child_init: 
-			buffer too small\n");
+		LOG(L_ERR, "ERROR: uac_child_init: buffer too small\n");
 		return -1;
 	}
 	DBG("DEBUG: callid_suffix: %s\n", callid_suffix );

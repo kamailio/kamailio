@@ -44,63 +44,6 @@ extern unsigned short int crc_16_tab[];
 #include "crc.h"
 #include "ut.h"
 
-#ifdef _OBSOLETED
-int old_hash( str  call_id, str cseq_nr )
-{
-   int  hash_code = 0;
-   int  i;
-	
-#if 0 /*def i386*/
-   int ci_len, cs_len;
-   char *ci, *cs;
-   
-	trim_len( ci_len, ci, call_id );
-	trim_len( cs_len, cs, cseq_nr );
-
-		int dummy1;
-		if (call_id.len>=4){
-			asm(
-				"1: \n\r"
-				"addl (%1), %0 \n\r"
-				"add $4, %1 \n\r"
-				"cmp %2, %1 \n\r"
-				"jl 1b  \n\r"
-				: "=r"(hash_code), "=r"(dummy1)
-				:  "0" (hash_code), "1"(ci),
-				"r"( (ci_len & (~3)) +ci)
-			);
-		}
-#else
-    if ( call_id.len>0 )
-      for( i=0 ; i<call_id.len ; hash_code+=call_id.s[i++]  );
-#endif
-
-#if 0 /*def i386*/
-
-		int dummy2;
-		if (cseq_nr.len>=4){
-			asm(
-				"1: \n\r"
-				"addl (%1), %0 \n\r"
-				"add $4, %1 \n\r"
-				"cmp %2, %1 \n\r"
-				"jl 1b  \n\r"
-				: "=r"(hash_code), "=r"(dummy2)
-				:  "0" (hash_code), "1"(cs),
-				"r"((cs_len & (~3) )+ cs)
-			);
-		}
-#else
-    if ( cseq_nr.len>0 )
-      for( i=0 ; i<cseq_nr.len ; hash_code+=cseq_nr.s[i++] );
-#endif
-	/* this is a buggy line, see bellow hot to fix it -- as this
-	   code is obsoleted I dont care anymore
-	*/
-   return hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
-}
-
-#endif
 
 int new_hash( str call_id, str cseq_nr )
 {
@@ -151,6 +94,40 @@ int new_hash( str call_id, str cseq_nr )
 	hash_code=hash_code%(TABLE_ENTRIES-1)+1;
    	return hash_code;
 }
+
+
+
+int new_hash2( str call_id, str cseq_nr )
+{
+#define h_inc h+=v^(v>>3)
+	char* p;
+	register unsigned v;
+	register unsigned h;
+	
+	h=0;
+	
+	
+	for (p=call_id.s; p<=(call_id.s+call_id.len-4); p+=4){
+		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+		h_inc;
+	}
+	v=0;
+	for (;p<(call_id.s+call_id.len); p++){ v<<=8; v+=*p;}
+	h_inc;
+	
+	for (p=cseq_nr.s; p<=(cseq_nr.s+cseq_nr.len-4); p+=4){
+		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+		h_inc;
+	}
+	v=0;
+	for (;p<(cseq_nr.s+cseq_nr.len); p++){ v<<=8; v+=*p;}
+	h_inc;
+	
+	h=((h)+(h>>11))+((h>>13)+(h>>23));
+	return (h)&(TABLE_ENTRIES-1);
+}
+
+
 
 void hashtest_cycle( int hits[TABLE_ENTRIES+5], char *ip )
 {

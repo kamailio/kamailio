@@ -145,6 +145,8 @@ retry:
 			retry_cnt++;
 			if (retry_cnt<4) goto retry;
 		}
+		/* interrupted by signal or ... */
+		if ((errno==EINTR)||(errno==EAGAIN)) goto retry;
 		kill(0, SIGTERM);
 	}
 	/* if we did not read whole line, our buffer is too small

@@ -103,3 +103,119 @@ test calls: 1000000
                   100          100 procs (cps)
                                    107* - out of mem
 
+------------------------------------------------------------------------------
+
+
+
+date: 09.10.2002
+
+hardware: dorian 2*Athlon MP2000 (ser) <=gigabit=> mobile34 2*PIII 900
+
+version: udp_test_proxy (compiled w/ gcc-3.2 -O9 -march=athlon)
+
+command line: ./udp_test_proxy -l 10.0.0.179 -s 5060 -d 10.0.0.34 -p 5090 -n 2;
+              ./udp_test_proxy -l 10.0.0.179 -s 5070 -d 10.0.0.34 -p 5000 -n 2
+
+
+test calls: 100000
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+udp_test_proxy    20                           3984  4015
+                 100                           5140* 5104*
+                 200                           5451* 5529* 
+
+------------------------------------------------------------------------------
+
+
+
+date: 09.10.2002
+
+hardware: dorian 2*Athlon MP2000 (ser) <=gigabit=> mobile34 2*PIII 900
+
+version: ser 0.8.7-14-gpl (i386/Linux)
+flags: STATS:Off, USE_IPV6, NO_DEBUG, DNS_IP_HACK, SHM_MEM, SHM_MMAP,
+PKG_MALLOC, F_MALLOC, FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024,
+MAX_RECV_BUFFER_SIZE 262144, MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040 
+
+
+ser command: ./ser -f test/test-throughput.cfg -l 10.0.0.179 -n 2 -m 256
+ser command: ./ser -f test/th-uri-fast.cfg     -l 10.0.0.179 -n 2 -m 256
+
+test calls: 100000
+
+stateless:
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.7-gpl     20                           3969  4013
+                 100                           5115  5023*
+                 200                           5064* 5065* 
+
+statefull(tm):
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.7-gpl     20                           3388
+                 100                           3513+ 3509+
+                 200                           3583+ 3409+
+
+------------------------------------------------------------------------------
+
+
+
+date: 09.10.2002
+
+hardware: dorian 2*Athlon MP2000 (ser) <=gigabit=> mobile34 2*PIII 900
+
+version: ser 0.8.9 (i386/linux)
+flags: STATS:Off, USE_IPV6, NO_DEBUG, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC,
+FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024, MAX_RECV_BUFFER_SIZE 262144,
+MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040
+
+ser command: ./ser -f test/test-throughput.cfg -l 10.0.0.179 -n 2 -m 256
+ser command: ./ser -f test/th-uri-fast.cfg     -l 10.0.0.179 -n 2 -m 256
+
+test calls: 100000
+
+statefull(tm):
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.9         20                           3420
+                 100                           3415+ 3557+
+                 200                           3401+ 3374++
++NOLOG
++HASH_POWER 10   100                           3661+
+(24kb)           200                           3606+
++HASH_POWER 12   100                           4221
+(96kb)           200                           4295
+
+                  20            3728 3787
++HASH_POWER 16   100                           4319
+(1.5Mb)          200            3788           4447  
+
++HASH_POWER 20   100                           4467+             4740+
+(24Mb)           200                           4595+             4525+
++HASH_POWER 22   100                           4627*             4636*
+(96Mb)           200                                             4664*
+
+
+new_hash2:
+
++HASH_POWER 16   20            3931            4045 4053
+                100                            4148 4618
+                200                                              4923   4931!!
++HASH_POWER 20  200                                              4853+  4987*
++HASH_POWER 22  100                                              4857*
+                200                                              4754*  4811+
+
+
+(!!) - bye retrans?
+
+------------------------------------------------------------------------------
+
+hash dist: ( min/max/diff/nonzero)
+                2^10            2^12                2^14            2^16
+new_hash   98/168/70/1023    13/60/47/4095     1/21/20/16377    1/15/14/55963
+new_hash2  96/166/70/1024    16/53/37/4096     1/21/20/16377    1/11/10/57213
+
+
+hash test results:
+
+                     gcc 2.95   gcc2.95 -O9      gcc3.2 -O9    gcc3.2 athlon
+new_hash             17.6        11.3             11.1
+new_hash2_old        16.6        12.6             10.9
+new_hash2            12           7.1              7.2         7.18

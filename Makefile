@@ -181,6 +181,7 @@ install-doc: $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) README.cfg $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) INSTALL $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) README-MODULES $(doc-prefix)/$(doc-dir)
+	$(INSTALL-DOC) AUTHORS $(doc-prefix)/$(doc-dir)
 
 install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8
