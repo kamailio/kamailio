@@ -50,7 +50,7 @@ usage: $COMMAND create
        $COMMAND backup (dumps current database to stdout)
 	   $COMMAND restore <file> (restores tables from a file)
        $COMMAND copy <new_db> (creates a new db from an existing one)
-       $COMMAND reinstalls (updates to a new SER database)
+       $COMMAND reinstall (updates to a new SER database)
 
        if you want to manipulate database as other MySql user than
        root, want to change database name from default value "$DBNAME",
