@@ -265,7 +265,7 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 	ret=-1;
 	lastlen=0;
 	ifc.ifc_req=0;
-	for (size=10; ; size*=2){
+	for (size=100; ; size*=2){
 		ifc.ifc_len=size*sizeof(struct ifreq);
 		ifc.ifc_req=(struct ifreq*) pkg_malloc(size*sizeof(struct ifreq));
 		if (ifc.ifc_req==0){
