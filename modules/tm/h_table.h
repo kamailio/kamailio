@@ -3,9 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef THREADS
 #include <pthread.h>
-#endif
 #include <arpa/inet.h>
 
 #include "../../msg_parser.h"

@@ -1,4 +1,5 @@
 #include "timer.h"
+#include "../../dprint.h"
 
 
 /* put a new cell into a list nr. list_id within a hash_table;
@@ -10,6 +11,7 @@ void add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link* 
 
    tl->time_out = time_out + hash_table->time;
    tl->next_tl= 0;
+   DBG("DEBUG: add_to_tail_of_timer[%d]: %d, %p\n",list_id,tl->time_out,tl);
 
    /* the entire timer list is locked now -- noone else can manipulate it */
    lock( timer_list->mutex );
@@ -38,16 +40,19 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
    struct timer_link  *tl;
 
    new_tl->time_out = time_out + hash_table->time;
+   DBG("DEBUG: insert_into_timer[%d]: %d, %p\n",list_id,new_tl->time_out,new_tl);
 
     /* if we have an empty list*/
    if ( !timer_list->first_tl )
    {
+      DBG("DEBUG: insert_into_timer[%d]: empty list\n",list_id);
       new_tl->next_tl= 0;
       new_tl->prev_tl = 0;
       lock( timer_list->mutex );
       timer_list->first_tl = new_tl;
       timer_list->last_tl = new_tl;
       unlock( timer_list->mutex );
+      return;
    }
 
    for( tl=timer_list->first_tl ; tl && tl->time_out<new_tl->time_out ; tl=tl->next_tl );
@@ -83,6 +88,7 @@ void insert_into_timer_list( struct s_table* hash_table , struct timer_link* new
 void remove_from_timer_list( struct s_table* hash_table , struct timer_link* tl , int list_id)
 {
    struct timer* timers=&(hash_table->timers[ list_id ]);
+   DBG("DEBUG: remove_from_timer[%d]: %d, %p \n",list_id,tl->time_out,tl);
 
    if (tl->next_tl || tl->prev_tl || (!tl->next_tl && !tl->prev_tl && tl==timers->first_tl)   )
    {
@@ -113,16 +119,20 @@ struct timer_link  *remove_from_timer_list_from_head( struct s_table* hash_table
 
    if  (tl)
    {
+      DBG("DEBUG: remove_from_timer_head[%d]: %d , p=%p , next=%p\n",list_id,tl->time_out,tl,tl->next_tl);
       lock( timers->mutex  );
       timers->first_tl = tl->next_tl;
-     if (!timers->first_tl)
+      if (!timers->first_tl)
          timers->last_tl=0;
-     else
+      else
          tl->next_tl->prev_tl = 0;
       unlock( timers->mutex );
       tl->next_tl = 0;
       tl->prev_tl = 0;
    }
+   else
+      DBG("DEBUG: remove_from_timer_head[%d]: list is empty! nothing to remove!\n",list_id);
+
 
    return tl;
 }
@@ -147,7 +157,7 @@ void * timer_routine(void * attr)
       a_sec.tv_usec = 0;
       select( 0 , 0 , 0 ,0 , &a_sec );
       (*time)++;
-      printf("%d\n", *time);
+      DBG("%d\n", *time);
 
       for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
          while ( timers[ id ].first_tl && timers[ id ].first_tl->time_out <= *time )

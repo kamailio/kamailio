@@ -198,6 +198,8 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
  */
 int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
 {
+   unsigned int dest_ip     = dest_ip_param;
+   unsigned int dest_port  = dest_port_param;
    int	branch = 0;	/* we don't do any forking right now */
 
    /* it's about the same transaction or not? */
@@ -226,8 +228,6 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
    if ( T->outbound_request[branch]==NULL )
    {
-      unsigned int dest_ip     = dest_ip_param;
-      unsigned int dest_port  = dest_port_param;
       unsigned int len;
       char               *buf;
 
@@ -265,11 +265,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       /* store */
       DBG("DEBUG: t_forward: building outbound request\n");
       T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload = &(T->outbound_request[branch]);
-      T->outbound_request[branch]->dest_ip         = dest_ip;
-      T->outbound_request[branch]->dest_port      = dest_port;
       T->outbound_request[branch]->to.sin_family = AF_INET;
-      T->outbound_request[branch]->to.sin_port     =  dest_port;
-      T->outbound_request[branch]->to.sin_addr.s_addr =  dest_ip;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
       buf = build_req_buf_from_sip_req  ( p_msg, &len);
@@ -286,7 +282,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
       DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
       /*sets and starts the FINAL RESPONSE timer */
-      add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
+      //add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
 
       /* sets and starts the RETRANS timer */
       T->outbound_request[branch]->timeout_ceiling  = RETR_T2;
@@ -298,6 +294,10 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	T->outbound_request[branch]->bufflen, T->outbound_request[branch]->bufflen,
 	 T->outbound_request[branch]->buffer);
    /* send the request */
+   T->outbound_request[branch]->dest_ip         = dest_ip;
+   T->outbound_request[branch]->dest_port      = dest_port;
+   T->outbound_request[branch]->to.sin_port     =  dest_port;
+   T->outbound_request[branch]->to.sin_addr.s_addr =  dest_ip;
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
    return 1;
@@ -1006,7 +1006,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    memcpy( p, MY_BRANCH, MY_BRANCH_LEN );
    p+=MY_BRANCH_LEN;
 
-   n=snprintf( p, ack_buf + MAX_ACK_LEN - p, 
+   n=snprintf( p, ack_buf + MAX_ACK_LEN - p,
                  ".%x.%x.%x%s",
                  Trans->hash_index, Trans->label, branch, CRLF );
 
@@ -1037,8 +1037,8 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
 	goto error;
    }
    /* CSeq, EoH */
-   n=snprintf( p, ack_buf + MAX_ACK_LEN - p, 
-                 "Cseq: %*s ACK%s%s", get_cseq(p_msg)->number.len, 
+   n=snprintf( p, ack_buf + MAX_ACK_LEN - p,
+                 "Cseq: %*s ACK%s%s", get_cseq(p_msg)->number.len,
 		get_cseq(p_msg)->number.s, CRLF, CRLF );
    if (n==-1) {
 	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no enough memory for Cseq\n");
@@ -1069,16 +1069,20 @@ void retransmission_handler( void *attr)
    struct retrans_buff* r_buf = (struct retrans_buff*)attr;
 
    /* the transaction is already removed from RETRANSMISSION_LIST by the timer */
+   DBG("DEBUG: retransmission_handler : payload received=%p\n",attr);
 
    /* computs the new timeout. */
    if ( r_buf->timeout_value<r_buf->timeout_ceiling )
       r_buf->timeout_value *=2;
 
    /* retransmision */
-   udp_send( r_buf->buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
+   DBG("DEBUG: retransmission_handler : resending\n");
+   //udp_send( r_buf->buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
 
    /* re-insert into RETRASMISSIONS_LIST */
+   DBG("DEBUG: retransmission_handler : before insert\n");
    insert_into_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , r_buf->timeout_value );
+   DBG("DEBUG: retransmission_handler : after insert\n");
 }
 
 
@@ -1090,6 +1094,7 @@ void final_response_handler( void *attr)
 
    /* the transaction is already removed from FR_LIST by the timer */
    /* send a 408 */
+   DBG("DEBUG: final_response_handler : sending 408\n");
    t_send_reply( p_cell->inbound_request , 408 , "Request Timeout" );
    /* put it on WT_LIST - transaction is over */
    t_put_on_wait(  p_cell->inbound_request );
@@ -1104,6 +1109,7 @@ void wait_handler( void *attr)
 
    /* the transaction is already removed from WT_LIST by the timer */
    /* the cell is removed from the hash table */
+   DBG("DEBUG: wait_handler : removing from table\n");
     remove_from_hash_table( hash_table, p_cell );
    /* put it on DEL_LIST - sch for del */
     add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
@@ -1119,11 +1125,20 @@ void delete_handler( void *attr)
    /* the transaction is already removed from DEL_LIST by the timer */
     /* if is not refenceted -> is deleted*/
     if ( p_cell->ref_counter==0 )
+    {
+       DBG("DEBUG: delete_handler : delete transaction\n");
        free_cell( p_cell );
+    }
     else
+    {
+       DBG("DEBUG: delete_handler : re post for delete\n");
        /* else it's readded to del list for future del */
        add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
+    }
 }
+
+
+
 
 /* append appropriate branch labels for fast reply-transaction matching
    to outgoing requests
@@ -1133,7 +1148,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	char *c;
 	short n;
 
-	n=snprintf( p_msg->add_to_branch_s+p_msg->add_to_branch_len, 
+	n=snprintf( p_msg->add_to_branch_s+p_msg->add_to_branch_len,
 		  MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len,
 		 ".%x.%x.%x",
 		 trans->hash_index, trans->label, branch );
@@ -1141,8 +1156,5 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	if (n==-1) {
 		LOG(L_ERR, "ERROR: add_branch_label: too small branch buffer\n");
 		return -1;
-	} else {
-		p_msg->add_to_branch_len += n;
-		return 0;
-	}
+	} else return 0;
 }
