@@ -11,6 +11,8 @@
 /* FIFO commands */
 #define UL_STATS	"ul_stats"
 #define UL_RM		"ul_rm"
+#define UL_DUMP         "ul_dump"
+#define UL_FLUSH        "ul_flush"
 
 /* buffer dimensions */
 #define MAX_TABLE 128

@@ -7,6 +7,7 @@
 #ifndef DLIST_H
 #define DLIST_H
 
+#include <stdio.h>
 #include "udomain.h"
 #include "../../str.h"
 
@@ -41,7 +42,7 @@ void free_all_udomains(void);
 /*
  * Just for debugging
  */
-void print_all_udomains(void);
+void print_all_udomains(FILE* _f);
 
 
 /*

@@ -8,6 +8,7 @@
 #define URECORD_H
 
 
+#include <stdio.h>
 #include <time.h>
 #include "hslot.h"
 #include "../../str.h"
@@ -48,7 +49,7 @@ void free_urecord(urecord_t* _r);
 /*
  * Print an element, for debugging purposes only
  */
-void print_urecord(urecord_t* _r);
+void print_urecord(FILE* _f, urecord_t* _r);
 
 
 /*

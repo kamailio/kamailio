@@ -8,6 +8,7 @@
 #define UDOMAIN_H
 
 
+#include <stdio.h>
 #include "../../fastlock.h"
 #include "../../str.h"
 #include "urecord.h"
@@ -57,7 +58,7 @@ void free_udomain(udomain_t* _d);
 /*
  * Just for debugging
  */
-void print_udomain(udomain_t* _d);
+void print_udomain(FILE* _f, udomain_t* _d);
 
 
 /*

@@ -144,18 +144,18 @@ void free_all_udomains(void)
 /*
  * Just for debugging
  */
-void print_all_udomains(void)
+void print_all_udomains(FILE* _f)
 {
 	dlist_t* ptr;
 	
 	ptr = root;
 
-	printf("===Domain list===\n");
+	fprintf(_f, "===Domain list===\n");
 	while(ptr) {
-		print_udomain(ptr->d);
+		print_udomain(_f, ptr->d);
 		ptr = ptr->next;
 	}
-	printf("===/Domain list===\n");
+	fprintf(_f, "===/Domain list===\n");
 }
 
 

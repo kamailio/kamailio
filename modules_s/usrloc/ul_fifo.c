@@ -47,6 +47,28 @@ int static ul_stats_cmd( FILE *pipe, char *response_file )
 	return 1;
 }
 
+
+int static ul_dump(FILE* pipe, char* response_file)
+{
+	FILE* reply_file;
+
+	reply_file=open_reply_pipe(response_file);
+	if (reply_file==0) {
+		LOG(L_ERR, "ERROR: ul_dump: file not opened\n");
+		return -1;
+	}
+	print_all_udomains(reply_file);
+	fclose(reply_file);
+	return 1;
+}
+
+int static ul_flush(FILE* pipe, char* response_file)
+{
+	timer_handler();
+	return 1;
+}
+
+
 int static ul_rm( FILE *pipe, char *response_file )
 {
 	char table[MAX_TABLE];
@@ -117,6 +139,14 @@ int init_ul_fifo( void )
 	}
 	if (register_fifo_cmd(ul_rm, UL_RM, 0)<0) {
 		LOG(L_CRIT, "cannot register ul_rm\n");
+		return -1;
+	}
+	if (register_fifo_cmd(ul_dump, UL_DUMP, 0)<0) {
+		LOG(L_CRIT, "cannot register ul_dump\n");
+		return -1;
+	}
+	if (register_fifo_cmd(ul_flush, UL_FLUSH, 0)<0) {
+		LOG(L_CRIT, "cannot register ul_flush\n");
 		return -1;
 	}
 	return 1;

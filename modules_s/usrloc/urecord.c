@@ -6,7 +6,6 @@
 
 
 #include "urecord.h"
-#include <stdio.h>
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
@@ -63,23 +62,23 @@ void free_urecord(urecord_t* _r)
 /*
  * Print a record
  */
-void print_urecord(urecord_t* _r)
+void print_urecord(FILE* _f, urecord_t* _r)
 {
 	ucontact_t* ptr;
 
-	printf("...Record(%p)...\n", _r);
-	printf("domain: \'%.*s\'\n", _r->domain->len, _r->domain->s);
-	printf("aor   : \'%.*s\'\n", _r->aor.len, _r->aor.s);
+	fprintf(_f, "...Record(%p)...\n", _r);
+	fprintf(_f, "domain: \'%.*s\'\n", _r->domain->len, _r->domain->s);
+	fprintf(_f, "aor   : \'%.*s\'\n", _r->aor.len, _r->aor.s);
 	
 	if (_r->contacts) {
 		ptr = _r->contacts;
 		while(ptr) {
-			print_ucontact(ptr);
+			print_ucontact(_f, ptr);
 			ptr = ptr->next;
 		}
 	}
 
-	printf(".../Record...\n");
+	fprintf(_f, ".../Record...\n");
 }
 
 

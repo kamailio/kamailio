@@ -7,7 +7,6 @@
 
 #include "ucontact.h"
 #include <string.h>             /* memcpy */
-#include <stdio.h>              /* printf */
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
@@ -75,7 +74,7 @@ void free_ucontact(ucontact_t* _c)
 /*
  * Print contact, for debugging purposes only
  */
-void print_ucontact(ucontact_t* _c)
+void print_ucontact(FILE* _f, ucontact_t* _c)
 {
 	time_t t = time(0);
 	char* st;
@@ -87,18 +86,18 @@ void print_ucontact(ucontact_t* _c)
 	default:       st = "CS_UNKNOWN"; break;
 	}
 
-	printf("~~~Contact(%p)~~~\n", _c);
-	printf("domain : \'%.*s\'\n", _c->domain->len, _c->domain->s);
-	printf("aor    : \'%.*s\'\n", _c->aor->len, _c->aor->s);
-	printf("Contact: \'%.*s\'\n", _c->c.len, _c->c.s);
-	printf("Expires: %lu\n", (unsigned int)(_c->expires) - t);
-	printf("q      : %10.2f\n", _c->q);
-	printf("Call-ID: \'%.*s\'\n", _c->callid.len, _c->callid.s);
-	printf("CSeq   : %d\n", _c->cseq);
-	printf("State  : %s\n", st);
-	printf("next   : %p\n", _c->next);
-	printf("prev   : %p\n", _c->prev);
-	printf("~~~/Contact~~~~\n");
+	fprintf(_f, "~~~Contact(%p)~~~\n", _c);
+	fprintf(_f, "domain : \'%.*s\'\n", _c->domain->len, _c->domain->s);
+	fprintf(_f, "aor    : \'%.*s\'\n", _c->aor->len, _c->aor->s);
+	fprintf(_f, "Contact: \'%.*s\'\n", _c->c.len, _c->c.s);
+	fprintf(_f, "Expires: %lu\n", (unsigned int)(_c->expires) - t);
+	fprintf(_f, "q      : %10.2f\n", _c->q);
+	fprintf(_f, "Call-ID: \'%.*s\'\n", _c->callid.len, _c->callid.s);
+	fprintf(_f, "CSeq   : %d\n", _c->cseq);
+	fprintf(_f, "State  : %s\n", st);
+	fprintf(_f, "next   : %p\n", _c->next);
+	fprintf(_f, "prev   : %p\n", _c->prev);
+	fprintf(_f, "~~~/Contact~~~~\n");
 }
 
 

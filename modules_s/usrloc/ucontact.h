@@ -8,6 +8,7 @@
 #define UCONTACT_H
 
 
+#include <stdio.h>
 #include <time.h>
 #include "../../str.h"
 
@@ -49,7 +50,7 @@ void free_ucontact(ucontact_t* _c);
 /*
  * Print contact, for debugging purposes only
  */
-void print_ucontact(ucontact_t* _c);
+void print_ucontact(FILE* _f, ucontact_t* _c);
 
 
 /*

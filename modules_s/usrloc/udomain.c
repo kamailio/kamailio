@@ -3,7 +3,6 @@
  */
 
 #include "udomain.h"
-#include <stdio.h>
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
@@ -141,31 +140,31 @@ void free_udomain(udomain_t* _d)
 /*
  * Just for debugging
  */
-void print_udomain(udomain_t* _d)
+void print_udomain(FILE* _f, udomain_t* _d)
 {
 	struct urecord* r;
-	printf("---Domain---\n");
-	printf("name : \'%.*s\'\n", _d->name->len, _d->name->s);
-	printf("size : %d\n", _d->size);
-	printf("table: %p\n", _d->table);
-	printf("d_ll {\n");
-	printf("    n    : %d\n", _d->d_ll.n);
-	printf("    first: %p\n", _d->d_ll.first);
-	printf("    last : %p\n", _d->d_ll.last);
-	printf("}\n");
-	printf("lock : %d\n", _d->lock);
+	fprintf(_f, "---Domain---\n");
+	fprintf(_f, "name : \'%.*s\'\n", _d->name->len, _d->name->s);
+	fprintf(_f, "size : %d\n", _d->size);
+	fprintf(_f, "table: %p\n", _d->table);
+	fprintf(_f, "d_ll {\n");
+	fprintf(_f, "    n    : %d\n", _d->d_ll.n);
+	fprintf(_f, "    first: %p\n", _d->d_ll.first);
+	fprintf(_f, "    last : %p\n", _d->d_ll.last);
+	fprintf(_f, "}\n");
+	fprintf(_f, "lock : %d\n", _d->lock);
 	if (_d->d_ll.n > 0) {
-		printf("\n");
+		fprintf(_f, "\n");
 		r = _d->d_ll.first;
 		while(r) {
-			print_urecord(r);
+			print_urecord(_f, r);
 			r = r->d_ll.next;
 		}
 
 
-		printf("\n");
+		fprintf(_f, "\n");
 	}
-	printf("---/Domain---\n");
+	fprintf(_f, "---/Domain---\n");
 }
 
 
