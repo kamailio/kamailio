@@ -189,7 +189,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 		res = decode_uri (uri, separator, &newUri);
 	
 #ifdef DEBUG
-		fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
+		if (res == 0) fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
 #endif
 		if (res != 0)
 		{
@@ -199,12 +199,22 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 #endif
 		}
 		else
+			/* we do not modify the original first line */
+			if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0)) msg->new_uri = newUri;
+				else
+					{
+						pkg_free(msg->new_uri.s);
+						msg->new_uri = newUri;
+					}
+			
+			
+		/*
 		if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 		{
 			LOG (L_ERR,"ERROR: decode_contact:lumping failed in mangling port \n");
 			return -2;
 		}
-
+		*/
 	return 1;
 }
 
@@ -591,7 +601,7 @@ decode_uri (str uri, char separator, str * result)
 	foo = decode2format (uri, separator, &format);
 	if (foo < 0)
 		{
-		LOG(L_ERR,"ERROR: decode_uri: Error decoding Contact uri [%.*s].Error code %d\n",uri.len,uri.s,foo);
+		LOG(L_ERR,"ERROR: decode_uri: Error decoding Contact uri .Error code %d\n",foo);
 		return foo - 20;
 		}
 	/* sanity check */
