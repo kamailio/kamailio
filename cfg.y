@@ -20,10 +20,12 @@
 #include "sr_module.h"
 #include "modparam.h"
 
+#include "config.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
+
 
 extern int yylex();
 void yyerror(char* s);
@@ -54,6 +56,8 @@ void* f_tmp;
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
+%token PREFIX
+%token STRIP
 %token SET_USER
 %token SET_USERPASS
 %token SET_PORT
@@ -62,9 +66,11 @@ void* f_tmp;
 %token ELSE
 %token URIHOST
 %token URIPORT
+%token MAX_LEN
 %token SETFLAG
 %token RESETFLAG
 %token ISFLAGSET
+%token LEN_GT
 %token METHOD
 %token URI
 %token SRCIP
@@ -562,6 +568,13 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SETFLAG LPAREN NUMBER RPAREN {$$=mk_action( SETFLAG_T, NUMBER_ST, 0,
 													(void *)$3, 0 ); }
 		| SETFLAG error { $$=0; yyerror("missing '(' or ')'?"); }
+
+		| LEN_GT LPAREN NUMBER RPAREN {$$=mk_action( LEN_GT_T, NUMBER_ST, 0,
+													(void *)$3, 0 ); }
+		| LEN_GT LPAREN MAX_LEN RPAREN {$$=mk_action( LEN_GT_T, NUMBER_ST, 0,
+													(void *) BUF_SIZE, 0 ); }
+		| LEN_GT error { $$=0; yyerror("missing '(' or ')'?"); }
+
 		| RESETFLAG LPAREN NUMBER RPAREN {$$=mk_action(	RESETFLAG_T, NUMBER_ST, 0,
 													(void *)$3, 0 ); }
 		| RESETFLAG error { $$=0; yyerror("missing '(' or ')'?"); }
@@ -591,6 +604,18 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SET_HOST error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_HOST LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 														"string expected"); }
+
+		| PREFIX LPAREN STRING RPAREN { $$=mk_action(PREFIX_T, STRING_ST,
+														0, $3, 0); }
+		| PREFIX error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| PREFIX LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| STRIP LPAREN NUMBER RPAREN { $$=mk_action(STRIP_T, NUMBER_ST,
+														0, (void *) $3, 0); }
+		| STRIP error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| STRIP LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"number expected"); }
+
 		| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action( SET_HOSTPORT_T, 
 														STRING_ST, 0, $3, 0); }
 		| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }

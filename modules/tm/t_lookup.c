@@ -1,6 +1,30 @@
 /*
  * $Id$
  *
+ * This C-file takes care of matching requests and replies with
+ * existing transactions. Note that we do not do SIP-compliant
+ * request matching as asked by SIP spec. We do bitwise matching of 
+ * all header fields in requests which form a transaction key. 
+ * It is much faster and it worx pretty well -- we haven't 
+ * had any interop issue neither in lab nor in bake-offs. The reason
+ * is that retransmissions do look same as original requests
+ * (it would be really silly if they wuld be mangled). The only
+ * exception is we parse To as To in ACK is compared to To in
+ * reply and both  of them are constructed by different software.
+ * 
+ * As for reply matching, we match based on branch value -- that is
+ * faster too. There are two versions .. with SYNONYMs #define
+ * enabled, the branch includes ordinal number of a transaction
+ * in a synonym list in hash table and is somewhat faster but
+ * not reboot-resilient. SYNONYMs turned off are little slower
+ * but work across reboots as well.
+ *
+ * The branch parameter is formed as follows:
+ * SYNONYMS  on: hash.synonym.branch
+ * SYNONYMS off: md5.hash.branch
+ *
+ * -jiri
+ *
  */
 
 #include <assert.h>
@@ -130,7 +154,9 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		else
 		{ /* it's a ACK request*/
 			/* first only the length are checked */
-			if ( t_msg->first_line.u.request.method_value==METHOD_INVITE
+			/* use shortcut; -jiri
+			if ( t_msg->first_line.u.request.method_value==METHOD_INVITE */
+			if (t_msg->REQ_METHOD==METHOD_INVITE
 			/* && (fprintf(stderr,"------Method name OK->testing callid len...\n")) */
 			&& /*callid length*/ EQ_LEN(callid)
 			/* && (fprintf(stderr,"------CallID OK -> testing cseq nr len\n")) */
@@ -142,6 +168,15 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			/* && (fprintf(stderr,"------To uri OK -> testing To tag len\n")) */
 			&& /*to tag*/p_cell->uas.tag->len==get_to(p_msg)->tag_value.len
 			/* && (fprintf(stderr,"------To tag OK -> testing uri len\n")) */
+
+			/* in ACKs to 200, r-uri and Via may be different than in
+			   original INVITE; we still try to match the transaction
+			   so that we can retransmit an ACK on resent 200 -- different
+			   from SIP spec which kills transaction state after INVITE-200
+			   and considers 200-ACK a new transaction which just happens
+			   to have the same CSeq. -jiri
+			*/
+
 			&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_LEN )
 			/* && (fprintf(stderr,"------uri OK -> testing via len\n")) */
 			&& /*VIA*/(p_cell->uas.status==200 || EQ_VIA_LEN(via1)) )
@@ -394,7 +429,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 #ifdef USE_SYNONIM
 		|| (entry_label=reverse_hex2int(syni, synl))<0
 #else
-		|| loopl!=32
+		|| loopl!=MD5_LEN
 #endif
 	) {
 		DBG("DEBUG: t_reply_matching: poor reply lables %d label %d "
@@ -406,44 +441,52 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 	DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n",
 		hash_index, entry_label, branch_id );
 
-	/* lock the hole entry*/
-	lock(&(hash_table->entrys[hash_index].mutex));
 
-	/*all the cells from the entry are scan to detect an entry_label matching*/
-	p_cell = hash_table->entrys[hash_index].first_cell;
-	while( p_cell )
-	{
-		/* is it the cell with the wanted entry_label? */
-		if ( (get_cseq(p_msg)->method.len ==
-		get_cseq(p_cell->uas.request)->method.len)
-		&& ((get_cseq(p_msg)->method.s[0] ==
-		get_cseq(p_cell->uas.request)->method.s[0] && (*local_cancel=0)==0)
-		|| (get_cseq(p_cell->uas.request)->method.s[0]=='I' &&
-		get_cseq(p_msg)->method.s[0]=='C'
-		&& p_cell->uac[branch_id].request.cancel!=NO_CANCEL
-		&& p_cell->uac[branch_id].request.cancel!=EXTERNAL_CANCEL
-		&& (*local_cancel=1)==1))
-#ifdef USE_SYNONIM
-		&& ( p_cell->label == entry_label )
-#else
-		&& ( p_cell->uas.request->add_to_branch_len>=32 &&
-		!memcmp(p_cell->uas.request->add_to_branch_s,loopi,32))
-#endif
-		)
-			/* has the transaction the wanted branch? */
-			if ( p_cell->nr_of_outgoings>branch_id )
-			{/* WE FOUND THE GOLDEN EGG !!!! */
-				T = p_cell;
-				*p_branch = branch_id;
-				T_REF( T );
-				unlock(&(hash_table->entrys[hash_index].mutex));
-				DBG("DEBUG: t_reply_matching: reply matched (T=%p,ref=%x)!\n",
-					T,T->ref_bitmap);
-				return 1;
-			}
-		/* next cell */
-		p_cell = p_cell->next_cell;
-	} /* while p_cell */
+	/* search the hash table list at entry 'hash_index'; lock the
+	   entry first 
+	*/
+	lock(&(hash_table->entrys[hash_index].mutex));
+	for (p_cell = hash_table->entrys[hash_index].first_cell; p_cell; 
+		p_cell=p_cell->next_cell) {
+
+		/* does method match ? */
+		if (get_cseq(p_msg)->method.len==
+			  get_cseq(p_cell->uas.request)->method.len 
+			&& get_cseq(p_msg)->method.s[0]==
+			  get_cseq(p_cell->uas.request)->method.s[0]) {
+				*local_cancel=0;
+		/* or is it perhaps a CANCEL ? */
+		} else if ( p_cell->uas.request->REQ_METHOD==METHOD_INVITE 
+			&& get_cseq(p_msg)->method.len==CANCEL_LEN 
+			&& memcmp( get_cseq(p_msg)->method.s, CANCEL, CANCEL_LEN )==0 
+			&& p_cell->uac[branch_id].request.cancel!=NO_CANCEL 
+			&& p_cell->uac[branch_id].request.cancel!=EXTERNAL_CANCEL ) {
+				*local_cancel=1;
+		} else { /* method mismatched */
+			continue;
+		};
+		#ifdef USE_SYNONIM
+		if (p_cell->label != entry_label) 
+			continue;
+		#else
+		if ( p_cell->uas.request->add_to_branch_len<MD5_LEN 
+			 || memcmp(p_cell->uas.request->add_to_branch_s,loopi,MD5_LEN)!=0)
+				continue;
+		#endif
+		/* sanity check ... too high branch ? */
+		if ( branch_id>=p_cell->nr_of_outgoings )
+			continue;
+		/* we passed all disqualifying factors .... the transaction has been
+		   matched !
+		*/
+		T=p_cell;
+		*p_branch = branch_id;
+		T_REF( T );
+		unlock(&(hash_table->entrys[hash_index].mutex));
+		DBG("DEBUG: t_reply_matching: reply matched (T=%p,ref=%x)!\n",
+			T,T->ref_bitmap);
+		return 1;
+	} /* for cycle */
 
 	/* nothing found */
 	unlock(&(hash_table->entrys[hash_index].mutex));
@@ -519,12 +562,24 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	char *begin;
 	int size, orig_size;
 
+	/* this is actually a hack made by Bogdan; I wanted to have a structure
+	   to which anybody can append some branch stuff which may be utilizied
+	   during reply processing; Bogdan ignored that and resets it all the
+	   time to construct multiple branches for multiple via's during
+	   forking (otherwise, the next branch would be now appended to
+	   previous branch)
+
+	   keywords: HACK
+	*/
+     	
 	p_msg->add_to_branch_len = 0; /*bogdan*/
+
+
 	begin=p_msg->add_to_branch_s+p_msg->add_to_branch_len;
 	orig_size = size=MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len;
 
 #ifndef USE_SYNONIM
-	if (memcpy(begin,trans->md5,32)) {begin+=32;size-=32;} else return -1;
+	if (memcpy(begin,trans->md5,MD5_LEN)) {begin+=MD5_LEN;size-=MD5_LEN;} else return -1;
 	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 #endif
 	if (int2reverse_hex( &begin, &size, trans->hash_index)==-1) return -1;

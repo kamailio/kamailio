@@ -168,6 +168,20 @@ int do_action(struct action* a, struct sip_msg* msg)
 			ret=1;
 			break;
 
+		/* jku begin: is_length_greater_than */
+		case LEN_GT_T:
+			if (a->p1_type!=NUMBER_ST) {
+				LOG(L_CRIT, "BUG: do_action: bad len_gt type %d\n",
+					a->p1_type );
+				ret=E_BUG;
+				break;
+			}
+			/* DBG("XXX: message length %d, max %d\n", 
+				msg->len, a->p1.number ); */
+			ret = msg->len >= a->p1.number ? 1 : -1;
+			break;
+		/* jku end: is_length_greater_than */
+			
 		/* jku - begin : flag processing */
 
 		case SETFLAG_T:
@@ -262,8 +276,16 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case SET_USERPASS_T:
 		case SET_PORT_T:
 		case SET_URI_T:
+		case PREFIX_T:
+		case STRIP_T:
 				user=0;
-				if (a->p1_type!=STRING_ST){
+				if (a->type==STRIP_T) {
+					if (a->p1_type!=NUMBER_ST) {
+						LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
+							a->p1_type);
+						break;
+					}
+				} else if (a->p1_type!=STRING_ST){
 					LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->p1_type);
 					ret=E_BUG;
@@ -316,16 +338,43 @@ int do_action(struct action* a, struct sip_msg* msg)
 				/* begin copying */
 				len=strlen("sip:"); if(crt+len>end) goto error_uri;
 				memcpy(crt,"sip:",len);crt+=len;
+
 				/* user */
-				if ((a->type==SET_USER_T)||(a->type==SET_USERPASS_T))
+
+				/* prefix (-jiri) */
+				if (a->type==PREFIX_T) {
 					tmp=a->p1.string;
-				else 
-					tmp=uri.user.s;
-				if (tmp){
 					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+					/* whateever we had before, with prefix we have username now */
+					user=1;
+				}
+
+				if ((a->type==SET_USER_T)||(a->type==SET_USERPASS_T)) {
+					tmp=a->p1.string;
+					len=strlen(tmp);
+				} else if (a->type==STRIP_T) {
+					if (a->p1.number>uri.user.len) {
+						LOG(L_WARN, "Error: too long strip asked; deleting username: "
+							"%d of %s\n", a->p1.number, uri.user.s );
+						len=0;
+					} else if (a->p1.number==uri.user.len) {
+						len=0;
+					} else {
+						tmp=uri.user.s + a->p1.number;
+						len=uri.user.len - a->p1.number;
+					}
+				} else {
+					tmp=uri.user.s;
+					len=uri.user.len;
+				}
+
+				if (len){
+					if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 					user=1; /* we have an user field so mark it */
 				}
+
 				if (a->type==SET_USERPASS_T) tmp=0;
 				else tmp=uri.passwd.s;
 				/* passwd */

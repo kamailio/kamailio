@@ -13,6 +13,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../types.h"
+#include "../../md5utils.h"
 #include "config.h"
 /*#include "t_flags.h"*/
 
@@ -146,7 +147,7 @@ typedef struct cell
 	struct sockaddr_in ack_to;
 #ifndef	USE_SYNONIM
 	/* MD5checksum */
-	char md5[32];
+	char md5[MD5_LEN];
 #endif
 
 #ifdef	EXTRA_DEBUG

@@ -97,6 +97,7 @@ int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
 {
 	int err;
 	struct hostent* he;
+	char *host_copy;
 
 	to->sin_family = AF_INET;
 	to->sin_port = (via->port)?htons(via->port): htons(SIP_PORT);
@@ -107,7 +108,18 @@ int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
 #endif
 	{
 		/* fork? gethostbyname will probably block... */
-		he=gethostbyname(via->host.s);
+		/* we do now a malloc/memcpy because gethostbyname loves \0-terminated 
+		   strings; -jiri */
+		if (!(host_copy=pkg_malloc( via->host.len+1 ))) {
+			LOG(L_NOTICE, "ERROR: update_sock_struct_from_via: not enough memory\n");
+			return -1;
+		}
+		memcpy(host_copy, via->host.s, via->host.len );
+		host_copy[via->host.len]=0;
+		he=gethostbyname(host_copy);
+		/* he=gethostbyname(via->host.s); */
+		pkg_free( host_copy );
+
 		if (he==0){
 			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
 					via->host.s);

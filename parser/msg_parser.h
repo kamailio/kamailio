@@ -68,6 +68,16 @@ enum{
 #define ACK_LEN		3
 #define CANCEL_LEN	6
 #define BYE_LEN		3
+
+#define CANCEL	"CANCEL"
+#define ACK		"ACK"
+#define INVITE "INVITE"
+
+/* convenience short-cut macros */
+#define REQ_METHOD first_line.u.request.method_value
+#define REPLY_STATUS first_line.u.reply.statuscode
+#define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
+
 enum { METHOD_OTHER, METHOD_INVITE, METHOD_CANCEL, METHOD_ACK, METHOD_BYE };
 
 #define IFISMETHOD(methodname,firstchar)                                  \

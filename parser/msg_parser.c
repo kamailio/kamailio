@@ -296,10 +296,11 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				if (match){
 					match++;
 				}else {
-					tmp=end;
 					LOG(L_ERR,
 							"ERROR: get_hdr_field: bad body for <%s>(%d)\n",
 							hdr->name.s, hdr->type);
+					/* abort(); */
+					tmp=end;
 					goto error;
 				}
 				tmp=match;

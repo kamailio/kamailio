@@ -165,8 +165,9 @@ void print_ct_constants()
 #endif
 */
 	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
-			" MAX_URI_SIZE %d, MAX_PROCESSES %d\n",
-		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, MAX_PROCESSES );
+			" MAX_URI_SIZE %d, MAX_PROCESSES %d, BUF_SIZE %d\n",
+		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, MAX_PROCESSES,
+		BUF_SIZE );
 }
 
 /* debuging function */

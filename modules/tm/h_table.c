@@ -66,7 +66,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	struct cell* new_cell;
 	unsigned int i;
 #ifndef USE_SYNONIM
-	str          src[5];
+	str          src[8];
 #endif
 
 	/* do we have the source for the build process? */
@@ -129,8 +129,17 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	src[2]= p_msg->callid->body;
 	src[3]= p_msg->first_line.u.request.uri;
 	src[4]= get_cseq( p_msg )->number;
-	MDStringArray ( new_cell->md5, src, 5 );
-#endif
+
+	/* topmost Via is part of transaction key as well ! */
+	src[5]= p_msg->via1->host;
+	src[6]= p_msg->via1->port_str;
+	if (p_msg->via1->branch) {
+		src[7]= p_msg->via1->branch->value;
+		MDStringArray ( new_cell->md5, src, 8 );
+	} else {
+		MDStringArray ( new_cell->md5, src, 7 );
+	}
+ #endif
 
 	init_cell_lock(  new_cell );
 	return new_cell;

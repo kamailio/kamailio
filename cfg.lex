@@ -49,18 +49,23 @@ EXEC	exec
 SETFLAG		setflag
 RESETFLAG	resetflag
 ISFLAGSET	isflagset
+LEN_GT		len_gt
 SET_HOST		"rewritehost"|"sethost"|"seth"
 SET_HOSTPORT	"rewritehostport"|"sethostport"|"sethp"
 SET_USER		"rewriteuser"|"setuser"|"setu"
 SET_USERPASS	"rewriteuserpass"|"setuserpass"|"setup"
 SET_PORT		"rewriteport"|"setport"|"setp"
 SET_URI			"rewriteuri"|"seturi"
+PREFIX			"prefix"
+STRIP			"strip"
 IF				"if"
 ELSE			"else"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
 URIPORT			"uri:port"
+
+MAX_LEN			"max_len"
 
 
 /* condition keywords */
@@ -137,6 +142,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SETFLAG}	{ count(); yylval.strval=yytext; return SETFLAG; }
 <INITIAL>{RESETFLAG}	{ count(); yylval.strval=yytext; return RESETFLAG; }
 <INITIAL>{ISFLAGSET}	{ count(); yylval.strval=yytext; return ISFLAGSET; }
+<INITIAL>{LEN_GT}	{ count(); yylval.strval=yytext; return LEN_GT; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
@@ -145,11 +151,15 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SET_USERPASS}	{ count(); yylval.strval=yytext; return SET_USERPASS; }
 <INITIAL>{SET_PORT}	{ count(); yylval.strval=yytext; return SET_PORT; }
 <INITIAL>{SET_URI}	{ count(); yylval.strval=yytext; return SET_URI; }
+<INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
+<INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
+
+<INITIAL>{MAX_LEN}	{ count(); yylval.strval=yytext; return MAX_LEN; }
 
 <INITIAL>{METHOD}	{ count(); yylval.strval=yytext; return METHOD; }
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }

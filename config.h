@@ -80,7 +80,7 @@
    avoid terror of excessively huge messages; they are
    useless anyway
 */
-#define BUF_SIZE (MAX_FIXED_BLOCK-32)
+#define BUF_SIZE 3040
 
 /* forwarding  -- Via buffer dimensioning */
 #define MAX_VIA_LINE_SIZE	240
