@@ -31,6 +31,7 @@
  *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
  */
 
 
@@ -533,7 +534,7 @@ int global_init()
 	} else {
 		/*do I have to add port?*/
 		i = (sock_info[0].port_no_str.len && sock_info[0].port_no!=5060);
-		domain.len = sock_info[0].name.len + i*sock_info[0].port_no_str.len;
+		domain.len = sock_info[0].name.len + i*(sock_info[0].port_no_str.len+1);
 		domain.s = (char*)pkg_malloc(domain.len);
 		if (!domain.s) {
 			LOG(L_ERR,"ERROR:sms_init_child: no free pkg memory!\n");
@@ -543,6 +544,7 @@ int global_init()
 		memcpy(p,sock_info[0].name.s,sock_info[0].name.len);
 		p += sock_info[0].name.len;
 		if (i) {
+			*p=':'; p++;
 			memcpy(p,sock_info[0].port_no_str.s,sock_info[0].port_no_str.len);
 			p += sock_info[0].port_no_str.len;
 		}
