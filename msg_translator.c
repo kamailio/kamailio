@@ -1,3 +1,8 @@
+/* $Id$
+ *
+ */
+
+
 #include <sys/socket.h>
 
 #include "msg_translator.h"
@@ -112,7 +117,8 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 
 
-char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_len)
+char * build_req_buf_from_sip_req(	struct sip_msg* msg,
+									unsigned int *returned_len)
 {
 	unsigned int len, new_len, via_len, received_len, uri_len, branch_len;
 	char* line_buf;
@@ -148,7 +154,8 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 	via_len=MY_VIA_LEN+names_len[0]; /* space included in MY_VIA*/
 
 	/* jku: if we compute branches using MD5 it will take 32 bytes */
-	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN) + msg->add_to_branch.len;
+	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN)+
+					msg->add_to_branch.len;
 
 	if ((via_len+port_no_str_len+branch_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
 		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
@@ -175,18 +182,22 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 				src[4]= get_cseq( msg )->number;
 
 				MDStringArray ( line_buf+via_len-1, src, 5 );
-				DBG("DEBUG: build_req_buf_from_sip_req: branch loop detection: %s, %s, %s, %s, %s -> %s32\n",
+				DBG("DEBUG: build_req_buf_from_sip_req: branch loop "
+						"detection: %s, %s, %s, %s, %s -> %s32\n",
 					msg->from->body.s, msg->to->body.s, msg->callid->body.s, 
 					msg->first_line.u.request.uri.s,
 					((struct cseq_body *)(msg->cseq->parsed))->number.s,
 					line_buf+via_len-1 );
-				DBG("WARNING: build_req_buf_from_sip_req: branch computation NOT over canonical values\n");
+				DBG("WARNING: build_req_buf_from_sip_req: branch computation "
+						"NOT over canonical values\n");
 				via_len+=MD5_LEN - 1;
 				
-			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for loop checking missing\n");
+			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for "
+					"loop checking missing\n");
 		}
 		/* someone wants me to add something to branch here ? */
-		memcpy(line_buf+via_len, msg->add_to_branch.s, msg->add_to_branch.len );
+		memcpy(line_buf+via_len, msg->add_to_branch.s,
+				msg->add_to_branch.len );
 		via_len+=msg->add_to_branch.len;
 
 		memcpy(line_buf+via_len, CRLF, CRLF_LEN);
@@ -257,8 +268,8 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 					break;
 				default:
 					/* only ADD allowed for before/after */
-					LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
-								" data lump (%x)\n", r->op);
+					LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op "
+							"for data lump (%x)\n", r->op);
 			}
 		}
 		switch(t->op){
@@ -340,8 +351,8 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
-									" data lump (%x)\n", r->op);
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+									"invalid op for data lump (%x)\n", r->op);
 
 					}
 				}
@@ -358,8 +369,8 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
-									" data lump (%x)\n", r->op);
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
 				break;
@@ -389,8 +400,8 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
-									" data lump (%x)\n", r->op);
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+									"invalid op for data lump (%x)\n", r->op);
 
 					}
 				}
@@ -409,14 +420,14 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 							break;
 						default:
 							/* only ADD allowed for before/after */
-							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: invalid op for"
-									" data lump (%x)\n", r->op);
+							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
+									"invalid op for data lump (%x)\n", r->op);
 					}
 				}
 				break;
 			default:
-					LOG(L_CRIT, "BUG: build_req_buf_from_sip_req: unknown op (%x)\n",
-							t->op);
+					LOG(L_CRIT, "BUG: build_req_buf_from_sip_req: "
+							"unknown op (%x)\n", t->op);
 		}
 	}
 	/* copy the rest of the message */
@@ -438,7 +449,8 @@ error:
 
 
 
-char * build_res_buf_from_sip_res(struct sip_msg* msg, unsigned int *returned_len)
+char * build_res_buf_from_sip_res(	struct sip_msg* msg,
+									unsigned int *returned_len)
 {
 	unsigned int new_len, via_len,r;
 	char* new_buf;
@@ -500,7 +512,10 @@ error:
 
 
 
-char * build_res_buf_from_sip_req(unsigned int code , char *text , struct sip_msg* msg, unsigned int *returned_len)
+char * build_res_buf_from_sip_req(	unsigned int code ,
+									char *text ,
+									struct sip_msg* msg, 
+									unsigned int *returned_len)
 {
 	char                    *buf=0, *p;
 	unsigned int       len,foo,i;
@@ -512,7 +527,9 @@ char * build_res_buf_from_sip_req(unsigned int code , char *text , struct sip_ms
 	len += 3/*code*/ + 1/*space*/ + strlen(text) + 1/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
+				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
+				hdr->type==HDR_CSEQ )
 			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) +1;
 	/* end of message */
 	len += 1; /*new line*/
@@ -536,9 +553,12 @@ char * build_res_buf_from_sip_req(unsigned int code , char *text , struct sip_ms
 	*(p++) = '\n';
 	/* headers*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
+				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
+				hdr->type==HDR_CSEQ )
 		{
-			memcpy( p , hdr->name.s ,  ((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
+			memcpy( p , hdr->name.s ,  ((hdr->body.s+hdr->body.len ) -
+						hdr->name.s ) );
 			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
 			*(p++) = '\n';
 		}
@@ -551,7 +571,3 @@ error:
 	*returned_len=0;
 	return 0;
 }
-
-
-
-
