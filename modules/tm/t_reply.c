@@ -196,6 +196,15 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	/* do UAC cleanup procedures in case we generated
 	   a final answer whereas there are pending UACs */
 	if (code>=200) {
+		if (trans->local) {
+			DBG("DEBUG: local transaction completed from _reply\n");
+			callback_event( TMCB_LOCAL_COMPLETED, trans, FAKED_REPLY, code );
+			if (trans->completion_cb) 
+				trans->completion_cb( trans, FAKED_REPLY, code, 0 /* empty param */);
+		} else {
+			callback_event( TMCB_REPLY, trans, FAKED_REPLY, code );
+		}
+
 		cleanup_uac_timers( trans );
 		if (trans->is_invite) cancel_uacs( trans, cancel_bitmap );
 		set_final_timer(  trans );
