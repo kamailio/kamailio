@@ -458,14 +458,12 @@ void tcp_receive_loop(int unix_sock)
 			timeout.tv_usec=0;
 			sel_set=master_set;
 			nfds=select(maxfd+1, &sel_set, 0 , 0 , &timeout);
-			DBG("tcp receive: out of select: nfds=%d, errno=%d (%s),"
-					         " timeout=%d, master_set=%x, sel_set=%x\n",
-					nfds, errno, strerror(errno), timeout.tv_sec, master_set, 
-					sel_set);
+#ifdef EXTRA_DEBUG
 			for (n=0; n<maxfd; n++){
 				if (FD_ISSET(n, &sel_set)) 
 					DBG("tcp receive: FD %d is set\n", n);
 			}
+#endif
 			if (nfds<0){
 				if (errno==EINTR) continue; /* just a signal */
 				/* errors */
@@ -513,16 +511,18 @@ void tcp_receive_loop(int unix_sock)
 			ticks=get_ticks();
 			for (con=list; con ; con=c_next){
 				c_next=con->c_next; /* safe for removing*/
+#ifdef EXTRA_DEBUG
 				DBG("tcp receive: list fd=%d, id=%d, timeout=%d, refcnt=%d\n",
 						con->fd, con->id, con->timeout, con->refcnt);
+#endif
 				if (nfds && FD_ISSET(con->fd, &sel_set)){
+#ifdef EXTRA_DEBUG
 					DBG("tcp receive: match, fd:isset\n");
+#endif
 					nfds--;
 					resp=tcp_read_req(con);
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
-						DBG("tcp receive: FD_CLR %d, id=%d\n",
-								con->fd,	con->id);
 						tcpconn_listrm(list, con, c_next, c_prev);
 						release_tcpconn(con, resp, unix_sock);
 					}else{
@@ -537,8 +537,6 @@ void tcp_receive_loop(int unix_sock)
 								con, con->timeout, ticks);
 						resp=CONN_RELEASE;
 						FD_CLR(con->fd, &master_set);
-						DBG("tcp receive: FD_CLR %d, id=%d\n",
-								con->fd,	con->id);
 						tcpconn_listrm(list, con, c_next, c_prev);
 						release_tcpconn(con, resp, unix_sock);
 					}
