@@ -102,10 +102,17 @@ exec module:
 - exec_dset takes an additional parameter, which enables 
   validation of SIP URIs returned by external application
 
+jabber module:
+--------------
+- presence support for Jabber users is enabled loading the PA
+  module and using subscribe("jabber") for SUBSCRIBE requests to
+  jabber user 
+
 msilo module:
 -------------
-XXX
-
+- m_store has now a parameter to set what should be considered
+  for storing as destination uri. This enables support for saving
+  the messages on negative replies.
 
 radius_acc module:
 ------------------
