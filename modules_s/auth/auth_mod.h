@@ -56,14 +56,9 @@ extern char* pass_column_2;   /* Column containg HA1 string constructed
 #endif
 
 extern str secret;            /* secret phrase used to generate nonce */
-extern char* grp_table;       /* 'group' table name */
-extern char* grp_user_col;    /* 'user' column name in group table */
-extern char* grp_domain_col;  /* 'domain' column name in group table */
-extern char* grp_grp_col;     /* "group' column name in group table */
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int nonce_expire;      /* nonce expire interval */
 extern int retry_count;       /* How many time a client can retry */
-extern int grp_use_domain;    /* Use domain in is_user_in */
 
 extern char* uri_table;       /* Name of URI table */
 extern char* uri_user_col;    /* Name of user column in URI table */

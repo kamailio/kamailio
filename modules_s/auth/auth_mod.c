@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-02-26: checks and group moved to separate modules (janakj)
  */
 
 
@@ -38,8 +42,6 @@
 #include "../../mem/mem.h"
 #include "auth_mod.h"
 #include "defs.h"
-#include "checks.h"
-#include "group.h"
 #include "authorize.h"
 #include "challenge.h"
 
@@ -67,7 +69,6 @@ static int mod_init(void);
 
 static int challenge_fixup(void** param, int param_no);
 static int str_fixup(void** param, int param_no);
-static int hf_fixup(void** param, int param_no);
 
 
 /*
@@ -92,26 +93,9 @@ char* sec_param    = 0;        /* If the parameter was not used, the secret phra
 				* will be auto-generated
 				*/                   
 char* sec_rand     = 0;
-
-char* grp_table      = "grp";    /* Table name where group definitions are stored */
-char* grp_user_col   = "user";
-char* grp_domain_col = "domain";
-char* grp_grp_col    = "grp";
 int   calc_ha1       = 0;
 int   nonce_expire   = 300;
 int   retry_count    = 5;
-int   grp_use_domain = 0;
-
-/*
- * Uri table holds uri username mappings, a single user
- * can have several aliases
- */
-char* uri_table       = "uri";       /* Name of URI table */
-char* uri_user_col    = "user";      /* Name of user column in URI table */
-char* uri_domain_col  = "domain";    /* Name of domain column in URI table */
-char* uri_uriuser_col = "uri_user";  /* Name of uri_user column in URI table */
-
-int use_uri_table = 0;               /* Should we use URI table ?, default no */
 
 str secret;
 db_con_t* db_handle;   /* Database connection handle */
@@ -131,33 +115,22 @@ struct module_exports exports = {
 		"proxy_authorize",
 		"www_challenge",
 		"proxy_challenge",
-		"is_user",
-		"check_to",
-		"check_from",
 		"consume_credentials",
-		"is_user_in",
-		"does_uri_exist"
 	},
 	(cmd_function[]) {
 		www_authorize,
 		proxy_authorize,
 		www_challenge,
 		proxy_challenge,
-		is_user,
-		check_to,
-		check_from,
 		consume_credentials,
-		is_user_in,
-		does_uri_exist
 	},
-	(int[]) {2, 2, 2, 2, 1, 0, 0, 0, 2, 1},
+	(int[]) {2, 2, 2, 2, 0},
 	(fixup_function[]) {
 		str_fixup, str_fixup, 
 		challenge_fixup, challenge_fixup, 
-		str_fixup, 0, 0,
-		0, hf_fixup, 0
+		0
 	},
-	10,
+	5,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */
@@ -169,22 +142,11 @@ struct module_exports exports = {
 #endif
 
 		"secret",              /* Secret phrase used to generate nonce */
-		"group_table",         /* Group table name */
-		"group_user_column",   /* Group table user column name */
-		"group_column_column", /* Group table domain column name */
-		"group_group_column",  /* Group table group column name */
 		"calculate_ha1",       /* If set to yes, instead of ha1 value auth module will
                                         * fetch plaintext password from database and calculate
                                         * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
 		"retry_count",         /* How many times a client is allowed to retry */
-		"group_use_domain",
-		"uri_table",           /* Name of URI table */
-		"uri_user_col",        /* Name of user column in URI table */
-		"uri_domain_col",      /* Name of domain column in URI table */
-		"uri_uriuser_col",     /* Name of uri_user column in URI table */
-		"use_uri_table"        /* Should URI table be used ? */
-		
 	},   /* Module parameter names */
 	(modparam_t[]) {
 		STR_PARAM,
@@ -195,19 +157,9 @@ struct module_exports exports = {
 		STR_PARAM,
 #endif
 		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
 	        INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
-		INT_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
 		&db_url,
@@ -218,37 +170,26 @@ struct module_exports exports = {
 		&pass_column_2,
 #endif
 		&sec_param,
-		&grp_table,
-		&grp_user_col,
-		&grp_domain_col,
-		&grp_grp_col,
 		&calc_ha1,
 		&nonce_expire,
 		&retry_count,
-		&grp_use_domain,
-		&uri_table,
-		&uri_user_col,
-		&uri_domain_col,
-		&uri_uriuser_col,
-		&use_uri_table
-		
 	},   /* Module parameter variable pointers */
 #ifdef USER_DOMAIN_HACK
-	19,      /* Numberof module parameters */
+	9,      /* Numberof module parameters */
 #else
-	18,      /* Number of module paramers */
+	8,      /* Number of module paramers */
 #endif					     
 	mod_init,   /* module initialization function */
-	NULL,       /* response function */
+	0,          /* response function */
 	destroy,    /* destroy function */
-	NULL,       /* oncancel function */
+	0,          /* oncancel function */
 	child_init  /* child initialization function */
 };
 
 
 static int child_init(int rank)
 {
-	if (db_url == NULL) {
+	if (db_url == 0) {
 		LOG(L_ERR, "auth:init_child(): Use db_url parameter\n");
 		return -1;
 	}
@@ -378,48 +319,3 @@ static int str_fixup(void** param, int param_no)
 
 	return 0;
 }
-
-
-/*
- * Convert HF description string to hdr_field pointer
- *
- * Supported strings: 
- * "Request-URI", "To", "From", "Credentials"
- */
-static int hf_fixup(void** param, int param_no)
-{
-	void* ptr;
-	str* s;
-
-	if (param_no == 1) {
-		ptr = *param;
-		
-		if (!strcasecmp((char*)*param, "Request-URI")) {
-			*param = (void*)1;
-		} else if (!strcasecmp((char*)*param, "To")) {
-			*param = (void*)2;
-		} else if (!strcasecmp((char*)*param, "From")) {
-			*param = (void*)3;
-		} else if (!strcasecmp((char*)*param, "Credentials")) {
-			*param = (void*)4;
-		} else {
-			LOG(L_ERR, "hf_fixup(): Unsupported Header Field identifier\n");
-			return E_UNSPEC;
-		}
-
-		free(ptr);
-	} else if (param_no == 2) {
-		s = (str*)malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "hf_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-
-	return 0;
-}
-
