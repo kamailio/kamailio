@@ -951,11 +951,28 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		default:
 			goto error_bug;
 	}
-	if (uri->type==TEL_URI_T){
-		/* fix tel uris, move the number in uri and empty the host */
-		uri->user=uri->host;
-		uri->host.s="";
-		uri->host.len=0;
+	switch(uri->type){
+		case SIP_URI_T:
+			if ((uri->user_param_val.len == 5) &&
+				(strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
+				uri->type = TEL_URI_T;
+			}
+			break;
+		case SIPS_URI_T:
+			if ((uri->user_param_val.len == 5) &&
+				(strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
+				uri->type = TELS_URI_T;
+			}
+			break;
+		case TEL_URI_T:
+		case TELS_URI_T:
+			/* fix tel uris, move the number in uri and empty the host */
+			uri->user=uri->host;
+			uri->host.s="";
+			uri->host.len=0;
+			break;
+		case ERROR_URI_T:
+			break; /* do nothing, avoids a compilation warning */
 	}
 #ifdef EXTRA_DEBUG
 	/* do stuff */
