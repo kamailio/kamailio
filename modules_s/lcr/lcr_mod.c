@@ -545,7 +545,7 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
     ruri_user = _m->parsed_uri.user;
 
     /* Look for From URI */
-    if ((!_m->from) && (parse_headers(_m, HDR_FROM, 0) == -1)) {
+    if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
 	    LOG(L_ERR, "load_gws(): Error while parsing message\n");
 	    return -1;
     }
