@@ -169,7 +169,7 @@ EOF
 # $1 = name $2=path $3=attempt
 print_stats() {
 
-echo "[cycle #: $3; if constant make sure server lives fifo is on]"
+echo "[cycle #: $3; if constant make sure server lives and fifo is on]"
 
 echo Up Time
 cat > $SER_FIFO <<EOF
