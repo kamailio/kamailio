@@ -33,8 +33,9 @@ NAME=ser
 # PKG_MALLOC uses a faster malloc (exclusive w/ USE_SHM_MEM)
 # USE_SHM_MEM all pkg_malloc => shm_malloc (most mallocs use a common sh. mem.
 #           segment); don't define PKG_MALLOC if you want this!
-DEFS=-DTHREAD -DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM -DUSE_SHM_MEM \
+DEFS=-DTHREAD -DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
 	 -DPKG_MALLOC -DNO_DEBUG
+# -DUSE_SHM_MEM
 #-DNO_DEBUG 
 #-DPKG_MALLOC
 #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
