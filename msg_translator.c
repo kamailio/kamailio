@@ -182,14 +182,14 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 				src[4]= get_cseq( msg )->number;
 
 				MDStringArray ( line_buf+via_len-1, src, 5 );
-				//DBG("DEBUG: build_req_buf_from_sip_req: branch loop "
-				//		"detection: %s, %s, %s, %s, %s -> %s32\n",
+				/*DBG("DEBUG: build_req_buf_from_sip_req: branch loop "
+				/		"detection: %s, %s, %s, %s, %s -> %s32\n",
 					msg->from->body.s, msg->to->body.s, msg->callid->body.s,
 					msg->first_line.u.request.uri.s,
 					((struct cseq_body *)(msg->cseq->parsed))->number.s,
 					line_buf+via_len-1 );
-				//DBG("WARNING: build_req_buf_from_sip_req: branch computation "
-				//		"NOT over canonical values\n");
+				DBG("WARNING: build_req_buf_from_sip_req: branch computation "
+						"NOT over canonical values\n");*/
 				via_len+=MD5_LEN - 1;
 
 			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for "
