@@ -60,7 +60,7 @@ int unixsock_tx_timeout = 2000; /* Timeout for sending replies in miliseconds */
 
 
 static int rx_sock, tx_sock;
-static struct unixsock_cmd* cmd_list;
+static struct unixsock_cmd* cmd_list = 0;
 static char reply_buf[UNIXSOCK_BUF_SIZE];
 static str reply_pos;
 static struct sockaddr_un reply_addr;
