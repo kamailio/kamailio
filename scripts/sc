@@ -162,7 +162,7 @@ check_uri() {
 prompt_pw() {
 	if [ -z "$PW" ] ; then
 		savetty=`stty -g`
-		printf "MySql password: "
+		printf "MySql password: " > /dev/stderr
 		stty -echo
     	read PW
 		stty $savetty
@@ -297,7 +297,7 @@ sql_query() {
 	# if password not yet queried, query it now
 	if [ -z "$PW" ] ; then
 		savetty=`stty -g`
-		printf "MySql password: "
+		printf "MySql password: " > /dev/stderr
 		stty -echo
     	read PW >&2
 		stty $savetty
@@ -333,7 +333,7 @@ usrloc() {
 			if [ $# -eq 2 ] ; then
 				fifo_cmd ul_show_contact $UL_TABLE $2
 			elif [ $# -eq 1 ] ; then
-				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] "
+				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] " > /dev/stderr
 				read answer
 				if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
 					fifo_cmd ul_dump
