@@ -37,7 +37,7 @@
 
 #define JB_MSG_NORMAL			"<message to='%s' type='normal'><body>%s</body></message>"
 
-#define JB_MSG_CHAT				"<message to='%s' type='chat'><body>%s</body></message><message to='%s' type='chat'><body>%s</body></message>"
+#define JB_MSG_CHAT				"<message to='%s' type='chat'><body>%s</body></message>"
 
 
 /**
@@ -241,7 +241,8 @@ int jb_send_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl)
 
 	strcpy(msg_buff, "<message to='");
 	strncat(msg_buff, to, tol);
-	strcat(msg_buff, "' type='normal'><body>");
+	strcat(msg_buff, "' type='chat'><body>");
+    //strcat(msg_buff, "' type='normal'><body>");
 
 	l = strlen(msg_buff);
 	p = msg_buff + l;
@@ -260,7 +261,8 @@ int jb_send_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl)
 	}
 	strcat(msg_buff, "</body></message>");
 
-	//sprintf(msg_buff, JB_MSG_NORMAL, to, msg);
+    //sprintf(msg_buff, JB_MSG_NORMAL, to, msg);
+	//sprintf(msg_buff, JB_MSG_CHAT, to, msg);
 	i = strlen(msg_buff);
 	if(send(jbc->sock, msg_buff, i, 0) < i)
 	{
@@ -283,7 +285,8 @@ int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl,
 
 	strcpy(msg_buff, "<message to='");
 	strncat(msg_buff, to, tol);
-	strcat(msg_buff, "' type='normal'><body>");
+	strcat(msg_buff, "' type='chat'><body>");
+    // strcat(msg_buff, "' type='normal'><body>");
 
 	l = strlen(msg_buff);
 	p = msg_buff + l;
@@ -309,6 +312,7 @@ int jb_send_sig_msg(jbconnection jbc, char *to, int tol, char *msg, int msgl,
 	strcat(msg_buff, "]</body></message>");
 
 	//sprintf(msg_buff, JB_MSG_NORMAL, to, msg);
+    //sprintf(msg_buff, JB_MSG_CHAT, to, msg);
 	i = strlen(msg_buff);
 	if(send(jbc->sock, msg_buff, i, 0) < i)
 	{
