@@ -65,7 +65,7 @@ static int parse_method(str* _next, unsigned int* _method)
 	 case 'A':
 	 case 'a':
 		 if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ck", 2)) {
- 			*_method = METHOD_ACK;
+ 			*_method = METH_ACK;
  			_next->len -= 3;
  			_next->s += 3;
  			return 1;
@@ -76,7 +76,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'B':
  	case 'b':
  		if ((_next->len > 2) && !strncasecmp(_next->s + 1, "ye", 2)) {
- 			*_method = METHOD_BYE;
+ 			*_method = METH_BYE;
  			_next->len -= 3;
  			_next->s += 3;
  			return 1;
@@ -87,7 +87,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'C':
  	case 'c':
  		if ((_next->len > 5) && !strncasecmp(_next->s + 1, "ancel", 5)) {
- 			*_method = METHOD_CANCEL;
+ 			*_method = METH_CANCEL;
  			_next->len -= 6;
  			_next->s += 6;
  			return 1;
@@ -100,14 +100,14 @@ static int parse_method(str* _next, unsigned int* _method)
  		if ((_next->len > 3) &&
  		    ((*(_next->s + 1) == 'N') || (*(_next->s + 1) == 'n'))) {
  			if (!strncasecmp(_next->s + 2, "fo", 2)) {
- 				*_method = METHOD_INFO;
+ 				*_method = METH_INFO;
  				_next->len -= 4;
  				_next->s += 4;
  				return 1;
  			}
 
  			if ((_next->len > 5) && !strncasecmp(_next->s + 2, "vite", 4)) {
- 				*_method = METHOD_INVITE;
+ 				*_method = METH_INVITE;
  				_next->len -= 6;
  				_next->s += 6;
  				return 1;
@@ -118,7 +118,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'M':
  	case 'm':
  		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "essage", 6)) {
- 			*_method = METHOD_MESSAGE;
+ 			*_method = METH_MESSAGE;
  			_next->len -= 7;
  			_next->s += 7;
  			return 1;
@@ -129,7 +129,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'N':
  	case 'n':
  		if ((_next->len > 5) && !strncasecmp(_next->s + 1, "otify", 5)) {
- 			*_method = METHOD_NOTIFY;
+ 			*_method = METH_NOTIFY;
  			_next->len -= 6;
  			_next->s += 6;
  			return 1;
@@ -140,7 +140,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'O':
  	case 'o':
  		if ((_next->len > 6) && !strncasecmp(_next->s + 1, "ptions", 6)) {
- 			*_method = METHOD_OPTIONS;
+ 			*_method = METH_OPTIONS;
  			_next->len -= 7;
  			_next->s += 7;
  			return 1;
@@ -151,7 +151,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'P':
  	case 'p':
  		if ((_next->len > 4) && !strncasecmp(_next->s + 1, "rack", 4)) {
- 			*_method = METHOD_PRACK;
+ 			*_method = METH_PRACK;
  			_next->len -= 5;
  			_next->s += 5;
  			return 1;
@@ -164,14 +164,14 @@ static int parse_method(str* _next, unsigned int* _method)
  		if ((_next->len > 4) &&
  		    ((*(_next->s + 1) == 'E') || (*(_next->s + 1) == 'e'))) {
  			if (!strncasecmp(_next->s + 2, "fer", 3)) {
- 				*_method = METHOD_REFER;
+ 				*_method = METH_REFER;
  				_next->len -= 5;
  				_next->s += 5;
  				return 1;
  			}
 
  			if ((_next->len > 7) && !strncasecmp(_next->s + 2, "gister", 6)) {
- 				*_method = METHOD_REGISTER;
+ 				*_method = METH_REGISTER;
  				_next->len -= 8;
  				_next->s += 8;
  				return 1;
@@ -182,7 +182,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'S':
  	case 's':
  		if ((_next->len > 8) && !strncasecmp(_next->s + 1, "ubscribe", 8)) {
- 			*_method = METHOD_SUBSCRIBE;
+ 			*_method = METH_SUBSCRIBE;
  			_next->len -= 9;
  			_next->s += 9;
  			return 1;
@@ -193,7 +193,7 @@ static int parse_method(str* _next, unsigned int* _method)
  	case 'U':
  	case 'u':
  		if ((_next->len > 5) && !strncasecmp(_next->s + 1, "pdate", 5)) {
- 			*_method = METHOD_UPDATE;
+ 			*_method = METH_UPDATE;
  			_next->len -= 6;
  			_next->s += 6;
  			return 1;
@@ -211,7 +211,7 @@ static int parse_method(str* _next, unsigned int* _method)
  			_next->s++;
  			_next->len--;
  		} while (_next->len && token_char(*(_next->s)));
- 		*_method = METHOD_UNKNOWN;
+ 		*_method = METH_UNKNOWN;
  		return 1;
  	} else {
  		return 0;
