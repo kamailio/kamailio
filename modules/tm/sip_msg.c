@@ -166,10 +166,9 @@ static inline struct auth_body* auth_body_cloner(char* new_buf, char *org_buf, s
 	(*p) += ROUND4(sizeof(struct auth_body));
 	
 	     /* authorized field must be cloned elsewhere */
-	new_auth->digest.username.s = translate_pointer(new_buf, org_buf, auth->digest.username.s);
-#ifdef DIGEST_DOMAIN
-	new_auth->digest.domain.s = translate_pointer(new_buf, org_buf, auth->digest.domain.s);
-#endif
+	new_auth->digest.username.whole.s = translate_pointer(new_buf, org_buf, auth->digest.username.whole.s);
+	new_auth->digest.username.user.s = translate_pointer(new_buf, org_buf, auth->digest.username.user.s);
+	new_auth->digest.username.domain.s = translate_pointer(new_buf, org_buf, auth->digest.username.domain.s);
 	new_auth->digest.realm.s = translate_pointer(new_buf, org_buf, auth->digest.realm.s);
 	new_auth->digest.nonce.s = translate_pointer(new_buf, org_buf, auth->digest.nonce.s);
 	new_auth->digest.uri.s = translate_pointer(new_buf, org_buf, auth->digest.uri.s);
