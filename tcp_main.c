@@ -42,6 +42,7 @@
  *  2003-06-30  moved tcp new connect checking & handling to
  *               handle_new_connect (andrei)
  *  2003-07-09  tls_close called before closing the tcp connection (andrei)
+ *  2003-10-24  converted to the new socket_info lists (andrei)
  */
 
 
@@ -181,14 +182,14 @@ error:
 
 struct socket_info* find_tcp_si(union sockaddr_union* s)
 {
-	int r;
 	struct ip_addr ip;
+	struct socket_info* si;
 	
 	su2ip_addr(&ip, s);
-	for (r=0; r<sock_no; r++)
-		if (ip_addr_cmp(&ip, &tcp_info[r].address)){
+	for (si=tcp_listen; si; si=si->next)
+		if (ip_addr_cmp(&ip, &si->address)){
 			/* found it, we use first match */
-			return &tcp_info[r];
+			return si;
 		}
 	return 0; /* no match */
 }
@@ -728,24 +729,31 @@ void tcp_main_loop()
 	int bytes;
 	struct timeval timeout;
 	int fd;
+	struct socket_info* si;
 
 	/*init */
 	maxfd=0;
 	FD_ZERO(&master_set);
 	/* set all the listen addresses */
-	for (r=0; r<sock_no; r++){
-		if ((tcp_info[r].proto==PROTO_TCP) &&(tcp_info[r].socket!=-1)){
-			FD_SET(tcp_info[r].socket, &master_set);
-			if (tcp_info[r].socket>maxfd) maxfd=tcp_info[r].socket;
+	for (si=tcp_listen; si; si=si->next){
+		if ((si->proto==PROTO_TCP) &&(si->socket!=-1)){
+			FD_SET(si->socket, &master_set);
+			if (si->socket>maxfd) maxfd=si->socket;
+		}else{
+			LOG(L_CRIT, "BUG: tcp_main_loop: non tcp address in tcp_listen\n");
 		}
-#ifdef USE_TLS
-		if ((!tls_disable)&&(tls_info[r].proto==PROTO_TLS) &&
-				(tls_info[r].socket!=-1)){
-			FD_SET(tls_info[r].socket, &master_set);
-			if (tls_info[r].socket>maxfd) maxfd=tls_info[r].socket;
-		}
-#endif
 	}
+#ifdef USE_TLS
+	if (!tls_disable){
+		for (si=tls_listen; si; si=si->next){
+			if ((si->proto==PROTO_TLS) && (si->socket!=-1)){
+				FD_SET(si->socket, &master_set);
+				if (si->socket>maxfd) maxfd=si->socket;
+			}else{
+			LOG(L_CRIT, "BUG: tcp_main_loop: non tls address in tls_listen\n");
+		}
+	}
+#endif
 	/* set all the unix sockets used for child comm */
 	for (r=1; r<process_no; r++){
 		if (pt[r].unix_sock>0){ /* we can't have 0, we never close it!*/
@@ -770,13 +778,13 @@ void tcp_main_loop()
 			n=0;
 		}
 		
-		for (r=0; r<sock_no && n; r++){
-			handle_new_connect(&tcp_info[r], &sel_set, &n);
+		for (si=tcp_listen; si && n; si=si->next)
+			handle_new_connect(si, &sel_set, &n);
 #ifdef USE_TLS
 			if (!tls_disable)
-				handle_new_connect(&tls_info[r], &sel_set, &n);
+				for (si=tls_listen; si && n; si=si->next)
+					handle_new_connect(si, &sel_set, &n);
 #endif
-		}
 		
 		/* check all the read fds (from the tcpconn_addr_hash ) */
 		for (h=0; h<TCP_ADDR_HASH_SIZE; h++){
@@ -1063,7 +1071,6 @@ int tcp_init_children()
 			unix_tcp_sock=sockfd[1];
 			bind_address=0; /* force a SEGFAULT if someone uses a non-init.
 							   bind address on tcp */
-			bind_idx=0;
 			if (init_child(r+children_no+1) < 0) {
 				LOG(L_ERR, "init_children failed\n");
 				goto error;

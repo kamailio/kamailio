@@ -48,6 +48,7 @@
 #include "globals.h"
 #include "crc.h"
 #include "str.h"
+#include "socket_info.h"
 
 #define TOTAG_VALUE_LEN (MD5_LEN+CRC16_LEN+1)
 
@@ -71,12 +72,15 @@ static void inline init_tags( char *tag, char **suffix,
 		char *signature, char separator )
 {
 	str src[3];
-
+	struct socket_info* si;
+	
+	si=get_first_socket();
 	src[0].s=signature; src[0].len=strlen(signature);
-	src[1].s=sock_info[0].address_str.s;
-	src[1].len=sock_info[0].address_str.len;
-	src[2].s=sock_info[0].port_no_str.s;
-	src[2].len=sock_info[0].port_no_str.len;
+	/* if we are not listening on anything we shouldn't be here */
+	src[1].s=si?si->address_str.s:"";
+	src[1].len=si?si->address_str.len:0;
+	src[2].s=si?si->port_no_str.s:"";
+	src[2].len=si?si->port_no_str.len:0;
 
 	MDStringArray( tag, src, 3 );
 

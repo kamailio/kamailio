@@ -123,9 +123,9 @@
 #	include <stdlib.h>
 #	define pkg_malloc(s) \
 	(  { void *v; v=malloc((s)); \
-	   DBG("malloc %x size %d end %x\n", v, s, (unsigned int)v+(s));\
+	   DBG("malloc %p size %d end %p\n", v, s, (char*)v+(s));\
 	   v; } )
-#	define pkg_free(p)  do{ DBG("free %x\n", (p)); free((p)); }while(0);
+#	define pkg_free(p)  do{ DBG("free %p\n", (p)); free((p)); }while(0);
 #	define pkg_status()
 #endif
 

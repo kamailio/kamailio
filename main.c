@@ -44,6 +44,7 @@
  *                see comment above it for explanations. (andrei)
  *  2003-06-29  replaced port_no_str snprintf w/ int2str (andrei)
  *  2003-10-10  added switch for config check (-c) (andrei)
+ *  2003-10-24  converted to the new socket_info lists (andrei)
  *
  */
 
@@ -330,17 +331,15 @@ int names_len[MAX_LISTEN];            /* lengths of the names*/
 struct ip_addr addresses[MAX_LISTEN]; /* our ips */
 int addresses_no=0;                   /* number of names/ips */
 #endif
-struct socket_info sock_info[MAX_LISTEN];/*all addresses we listen/send from*/
+struct socket_info* udp_listen=0;
 #ifdef USE_TCP
-struct socket_info tcp_info[MAX_LISTEN];/*all tcp addresses we listen on*/
+struct socket_info* tcp_listen=0;
 #endif
 #ifdef USE_TLS
-struct socket_info tls_info[MAX_LISTEN]; /* all tls addresses we listen on*/
+struct socket_info* tls_listen=0;
 #endif
-int sock_no=0; /* number of addresses/open sockets*/
 struct socket_info* bind_address=0; /* pointer to the crt. proc.
 									 listening address*/
-int bind_idx; /* same as above but index in the bound[] array */
 struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
 struct socket_info* sendipv6; /* same as above for ipv6 */
 #ifdef USE_TCP
@@ -754,8 +753,9 @@ error:
 /* main loop */
 int main_loop()
 {
-	int r, i;
+	int  i;
 	pid_t pid;
+	struct socket_info* si;
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
@@ -773,12 +773,11 @@ int main_loop()
 		setstats( 0 );
 #endif
 		/* only one address, we ignore all the others */
-		if (udp_init(&sock_info[0])==-1) goto error;
-		bind_address=&sock_info[0];
+		if (udp_init(udp_listen)==-1) goto error;
+		bind_address=udp_listen;
 		sendipv4=bind_address;
 		sendipv6=bind_address; /*FIXME*/
-		bind_idx=0;
-		if (sock_no>1){
+		if (udp_listen->next){
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
 		}
@@ -853,66 +852,55 @@ int main_loop()
 		/* process_no now initialized to zero -- increase from now on
 		   as new processes are forked (while skipping 0 reserved for main )
 		*/
-		for(r=0;r<sock_no;r++){
+		for(si=udp_listen;si;si=si->next){
 			/* create the listening socket (for each address)*/
 			/* udp */
-			if (udp_init(&sock_info[r])==-1) goto error;
+			if (udp_init(si)==-1) goto error;
 			/* get first ipv4/ipv6 socket*/
-			if ((sock_info[r].address.af==AF_INET)&&
-					((sendipv4==0)||(sendipv4->is_lo)))
-				sendipv4=&sock_info[r];
+			if ((si->address.af==AF_INET)&&
+					((sendipv4==0)||(sendipv4->flags&SI_IS_LO)))
+				sendipv4=si;
 	#ifdef USE_IPV6
-			if((sendipv6==0)&&(sock_info[r].address.af==AF_INET6))
-				sendipv6=&sock_info[r];
+			if((sendipv6==0)&&(si->address.af==AF_INET6))
+				sendipv6=si;
 	#endif
+		}
 #ifdef USE_TCP
-			if (!tcp_disable){
-				tcp_info[r]=sock_info[r]; /* copy the sockets */
+		if (!tcp_disable){
+			for(si=tcp_listen; si; si=si->next){
 				/* same thing for tcp */
-				if (tcp_init(&tcp_info[r])==-1)  goto error;
+				if (tcp_init(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
-				if ((tcp_info[r].address.af==AF_INET)&&
-						((sendipv4_tcp==0)||(sendipv4_tcp->is_lo)))
-					sendipv4_tcp=&tcp_info[r];
+				if ((si->address.af==AF_INET)&&
+						((sendipv4_tcp==0)||(sendipv4_tcp->flags&SI_IS_LO)))
+					sendipv4_tcp=si;
 		#ifdef USE_IPV6
-				if((sendipv6_tcp==0)&&(tcp_info[r].address.af==AF_INET6))
-					sendipv6_tcp=&tcp_info[r];
+				if((sendipv6_tcp==0)&&(si->address.af==AF_INET6))
+					sendipv6_tcp=si;
 		#endif
 			}
+		}
 #ifdef USE_TLS
-			if (!tls_disable){
-				tls_info[r]=sock_info[r]; /* copy the sockets */
-				/* fix the port number -- there is no way so far to set-up
-				 * individual tls port numbers */
-				tls_info[r].port_no=tls_port_no; /* FIXME: */
-				tmp=int2str(tls_info[r].port_no, &len);
-				/* we don't need to free the previous content, is uesd
-				 * by tcp & udp! */
-				tls_info[r].port_no_str.s=(char*)pkg_malloc(len+1);
-				if (tls_info[r].port_no_str.s==0){
-					LOG(L_CRIT, "memory allocation failure\n");
-					goto error;
-				}
-				strncpy(tls_info[r].port_no_str.s, tmp, len+1);
-				tls_info[r].port_no_str.len=len;
-				
+		if (!tls_disable){
+			for(si=tls_listen; si; si=si->next){
 				/* same as for tcp*/
-				if (tls_init(&tls_info[r])==-1)  goto error;
+				if (tls_init(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
-				if ((tls_info[r].address.af==AF_INET)&&
-						((sendipv4_tls==0)||(sendipv4_tls->is_lo)))
-					sendipv4_tls=&tls_info[r];
+				if ((si->address.af==AF_INET)&&
+						((sendipv4_tls==0)||(sendipv4_tls->flags&SI_IS_LO)))
+					sendipv4_tls=si;
 		#ifdef USE_IPV6
-				if((sendipv6_tls==0)&&(tls_info[r].address.af==AF_INET6))
-					sendipv6_tls=&tls_info[r];
+				if((sendipv6_tls==0)&&(si->address.af==AF_INET6))
+					sendipv6_tls=si;
 		#endif
 			}
+		}
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
-		}
-		for(r=0; r<sock_no;r++){
+		/* udp processes */
+		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
 				process_no++;
 #ifdef USE_TCP
@@ -935,8 +923,7 @@ int main_loop()
 						unix_tcp_sock=sockfd[1];
 					}
 #endif
-					bind_address=&sock_info[r]; /* shortcut */
-					bind_idx=r;
+					bind_address=si; /* shortcut */
 					if (init_child(i + 1) < 0) {
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
@@ -948,8 +935,8 @@ int main_loop()
 				}else{
 						pt[process_no].pid=pid; /*should be in shared mem.*/
 						snprintf(pt[process_no].desc, MAX_PT_DESC,
-							"receiver child=%d sock=%d @ %s:%s", i, r, 	
-							sock_info[r].name.s, sock_info[r].port_no_str.s );
+							"receiver child=%d sock= %s:%s", i, 	
+							si->name.s, si->port_no_str.s );
 #ifdef USE_TCP
 						if (!tcp_disable){
 							close(sockfd[1]);
@@ -967,8 +954,6 @@ int main_loop()
 
 	/*this is the main process*/
 	bind_address=0;				/* main proc -> it shouldn't send anything, */
-	bind_idx=0;					/* if it does get_send_sock should return
-	                               a good socket */
 	
 	/* if configured to do so, start a server for accepting FIFO commands */
 	if (open_fifo_server()<0) {
@@ -1068,8 +1053,9 @@ int main_loop()
 #endif
 	/*DEBUG- remove it*/
 #ifdef DEBUG
-	fprintf(stderr, "\n% 3d processes (%3d), % 3d children * % 3d listening addresses"
-			"+ main + fifo %s\n", process_no+1, process_count(), children_no, sock_no,
+	fprintf(stderr, "\n% 3d processes (%3d), % 3d children * "
+			"listening addresses + tcp listeners + tls listeners"
+			"+ main + fifo %s\n", process_no+1, process_count(), children_no,
 			(timer_list)?"+ timer":"");
 	for (r=0; r<=process_no; r++){
 		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
@@ -1095,134 +1081,6 @@ int main_loop()
 
 }
 
-/* add all family type addresses of interface if_name to the socket_info array
- * if if_name==0, adds all addresses on all interfaces
- * WARNING: it only works with ipv6 addresses on FreeBSD
- * return: -1 on error, 0 on success
- */
-int add_interfaces(char* if_name, int family, unsigned short port)
-{
-	struct ifconf ifc;
-	struct ifreq ifr;
-	struct ifreq ifrcopy;
-	char*  last;
-	char* p;
-	int size;
-	int lastlen;
-	int s;
-	char* tmp;
-	struct ip_addr addr;
-	int ret;
-
-#ifdef HAVE_SOCKADDR_SA_LEN
-	#ifndef MAX
-		#define MAX(a,b) ( ((a)>(b))?(a):(b))
-	#endif
-#endif
-	/* ipv4 or ipv6 only*/
-	s=socket(family, SOCK_DGRAM, 0);
-	ret=-1;
-	lastlen=0;
-	ifc.ifc_req=0;
-	for (size=10; ; size*=2){
-		ifc.ifc_len=size*sizeof(struct ifreq);
-		ifc.ifc_req=(struct ifreq*) pkg_malloc(size*sizeof(struct ifreq));
-		if (ifc.ifc_req==0){
-			fprintf(stderr, "memory allocation failure\n");
-			goto error;
-		}
-		if (ioctl(s, SIOCGIFCONF, &ifc)==-1){
-			if(errno==EBADF) return 0; /* invalid descriptor => no such ifs*/
-			fprintf(stderr, "ioctl failed: %s\n", strerror(errno));
-			goto error;
-		}
-		if  ((lastlen) && (ifc.ifc_len==lastlen)) break; /*success,
-														   len not changed*/
-		lastlen=ifc.ifc_len;
-		/* try a bigger array*/
-		pkg_free(ifc.ifc_req);
-	}
-	
-	last=(char*)ifc.ifc_req+ifc.ifc_len;
-	for(p=(char*)ifc.ifc_req; p<last;
-			p+=(sizeof(ifr.ifr_name)+
-			#ifdef  HAVE_SOCKADDR_SA_LEN
-				MAX(ifr.ifr_addr.sa_len, sizeof(struct sockaddr))
-			#else
-				( (ifr.ifr_addr.sa_family==AF_INET)?
-					sizeof(struct sockaddr_in):
-					((ifr.ifr_addr.sa_family==AF_INET6)?
-						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
-			#endif
-				)
-		)
-	{
-		/* copy contents into ifr structure
-		 * warning: it might be longer (e.g. ipv6 address) */
-		memcpy(&ifr, p, sizeof(ifr));
-		if (ifr.ifr_addr.sa_family!=family){
-			/*printf("strange family %d skipping...\n",
-					ifr->ifr_addr.sa_family);*/
-			continue;
-		}
-		
-		/*get flags*/
-		ifrcopy=ifr;
-		if (ioctl(s, SIOCGIFFLAGS,  &ifrcopy)!=-1){ /* ignore errors */
-			/* ignore down ifs only if listening on all of them*/
-			if (if_name==0){ 
-				/* if if not up, skip it*/
-				if (!(ifrcopy.ifr_flags & IFF_UP)) continue;
-			}
-		}
-		
-		
-		
-		if ((if_name==0)||
-			(strncmp(if_name, ifr.ifr_name, sizeof(ifr.ifr_name))==0)){
-			
-				/*add address*/
-			if (sock_no<MAX_LISTEN){
-				sockaddr2ip_addr(&addr, 
-					(struct sockaddr*)(p+(long)&((struct ifreq*)0)->ifr_addr));
-				if ((tmp=ip_addr2a(&addr))==0) goto error;
-				/* fill the strings*/
-				sock_info[sock_no].name.s=(char*)pkg_malloc(strlen(tmp)+1);
-				if(sock_info[sock_no].name.s==0){
-					fprintf(stderr, "Out of memory.\n");
-					goto error;
-				}
-				/* fill in the new name and port */
-				sock_info[sock_no].name.len=strlen(tmp);
-				strncpy(sock_info[sock_no].name.s, tmp, 
-							sock_info[sock_no].name.len+1);
-				sock_info[sock_no].port_no=port;
-				/* mark if loopback */
-				if (ifrcopy.ifr_flags & IFF_LOOPBACK) 
-					sock_info[sock_no].is_lo=1;
-				sock_no++;
-				ret=0;
-			}else{
-				fprintf(stderr, "Too many addresses (max %d)\n", MAX_LISTEN);
-				goto error;
-			}
-		}
-			/*
-			printf("%s:\n", ifr->ifr_name);
-			printf("        ");
-			print_sockaddr(&(ifr->ifr_addr));
-			printf("        ");
-			ls_ifflags(ifr->ifr_name, family, options);
-			printf("\n");*/
-	}
-	pkg_free(ifc.ifc_req); /*clean up*/
-	close(s);
-	return  ret;
-error:
-	if (ifc.ifc_req) pkg_free(ifc.ifc_req);
-	close(s);
-	return -1;
-}
 
 
 
@@ -1230,14 +1088,9 @@ int main(int argc, char** argv)
 {
 
 	FILE* cfg_stream;
-	struct hostent* he;
-	int c,r,t;
+	int c,r;
 	char *tmp;
-	char** h;
-	struct host_alias* a;
-	struct utsname myname;
 	char *options;
-	int len;
 	int ret;
 	struct passwd *pw_entry;
 	struct group  *gr_entry;
@@ -1287,9 +1140,7 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad port number: -p %s\n", optarg);
 						goto error;
 					}
-					if (sock_no>0) sock_info[sock_no-1].port_no=port_no;
 					break;
-
 			case 'm':
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
 					if (tmp &&(*tmp)){
@@ -1311,23 +1162,8 @@ int main(int argc, char** argv)
 					break;
 			case 'l':
 					/* add a new addr. to our address list */
-					if (sock_no < MAX_LISTEN){
-						sock_info[sock_no].name.s=
-										(char*)pkg_malloc(strlen(optarg)+1);
-						if (sock_info[sock_no].name.s==0){
-							fprintf(stderr, "Out of memory.\n");
-							goto error;
-						}
-						strncpy(sock_info[sock_no].name.s, optarg,
-												strlen(optarg)+1);
-						sock_info[sock_no].name.len=strlen(optarg);
-						/* set default port */
-						sock_info[sock_no].port_no=port_no;
-						sock_no++;
-					}else{
-						fprintf(stderr, 
-									"Too many addresses (max. %d).\n",
-									MAX_LISTEN);
+					if (add_listen_iface(optarg, 0, 0, 0)!=0){
+						fprintf(stderr, "failed to add new listen address\n");
 						goto error;
 					}
 					break;
@@ -1534,188 +1370,23 @@ try_again:
 			gid=gr_entry->gr_gid;
 		}
 	}
-
-	if (sock_no==0) {
-		/* try to get all listening ipv4 interfaces */
-		if (add_interfaces(0, AF_INET, 0)==-1){
-			/* if error fall back to get hostname*/
-			/* get our address, only the first one */
-			if (uname (&myname) <0){
-				fprintf(stderr, "cannot determine hostname, try -l address\n");
-				goto error;
-			}
-			sock_info[sock_no].name.s=
-								(char*)pkg_malloc(strlen(myname.nodename)+1);
-			if (sock_info[sock_no].name.s==0){
-				fprintf(stderr, "Out of memory.\n");
-				goto error;
-			}
-			sock_info[sock_no].name.len=strlen(myname.nodename);
-			strncpy(sock_info[sock_no].name.s, myname.nodename,
-					sock_info[sock_no].name.len+1);
-			sock_no++;
-		}
-	}
-
-	/* try to change all the interface names into addresses
-	 *  --ugly hack */
-	for (r=0; r<sock_no;){
-		if (add_interfaces(sock_info[r].name.s, AF_INET,
-					sock_info[r].port_no)!=-1){
-			/* success => remove current entry (shift the entire array)*/
-			pkg_free(sock_info[r].name.s);
-			memmove(&sock_info[r], &sock_info[r+1], 
-						(sock_no-r)*sizeof(struct socket_info));
-			sock_no--;
-			continue;
-		}
-		r++;
-	}
-	/* get ips & fill the port numbers*/
-#ifdef EXTRA_DEBUG
-	printf("Listening on \n");
-#endif
-	for (r=0; r<sock_no;r++){
-		/* fix port number, port_no should be !=0 here */
-		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
-		tmp=int2str(sock_info[r].port_no, &len);
-		if (len>=MAX_PORT_LEN){
-			fprintf(stderr, "ERROR: bad port number: %d\n", 
-						sock_info[r].port_no);
-			goto error;
-		}
-		sock_info[r].port_no_str.s=(char*)pkg_malloc(len+1);
-		if (sock_info[r].port_no_str.s==0){
-			fprintf(stderr, "Out of memory.\n");
-			goto error;
-		}
-		strncpy(sock_info[r].port_no_str.s, tmp, len+1);
-		sock_info[r].port_no_str.len=len;
-		
-		/* get "official hostnames", all the aliases etc. */
-		he=resolvehost(sock_info[r].name.s);
-		if (he==0){
-			DPrint("ERROR: could not resolve %s\n", sock_info[r].name.s);
-			goto error;
-		}
-		/* check if we got the official name */
-		if (strcasecmp(he->h_name, sock_info[r].name.s)!=0){
-			if (add_alias(sock_info[r].name.s, sock_info[r].name.len,
-							sock_info[r].port_no, 0)<0){
-				LOG(L_ERR, "ERROR: main: add_alias failed\n");
-			}
-			/* change the oficial name */
-			pkg_free(sock_info[r].name.s);
-			sock_info[r].name.s=(char*)pkg_malloc(strlen(he->h_name)+1);
-			if (sock_info[r].name.s==0){
-				fprintf(stderr, "Out of memory.\n");
-				goto error;
-			}
-			sock_info[r].name.len=strlen(he->h_name);
-			strncpy(sock_info[r].name.s, he->h_name, sock_info[r].name.len+1);
-		}
-		/* add the aliases*/
-		for(h=he->h_aliases; h && *h; h++)
-			if (add_alias(*h, strlen(*h), sock_info[r].port_no, 0)<0){
-				LOG(L_ERR, "ERROR: main: add_alias failed\n");
-			}
-		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
-														 format*/
-		if ((tmp=ip_addr2a(&sock_info[r].address))==0) goto error;
-		sock_info[r].address_str.s=(char*)pkg_malloc(strlen(tmp)+1);
-		if (sock_info[r].address_str.s==0){
-			fprintf(stderr, "Out of memory.\n");
-			goto error;
-		}
-		strncpy(sock_info[r].address_str.s, tmp, strlen(tmp)+1);
-		/* set is_ip (1 if name is an ip address, 0 otherwise) */
-		sock_info[r].address_str.len=strlen(tmp);
-		if 	(	(sock_info[r].address_str.len==sock_info[r].name.len)&&
-				(strncasecmp(sock_info[r].address_str.s, sock_info[r].name.s,
-						 sock_info[r].address_str.len)==0)
-			){
-				sock_info[r].is_ip=1;
-				/* do rev. dns on it (for aliases)*/
-				he=rev_resolvehost(&sock_info[r].address);
-				if (he==0){
-					DPrint("WARNING: could not rev. resolve %s\n",
-							sock_info[r].name.s);
-				}else{
-					/* add the aliases*/
-					if (add_alias(he->h_name, strlen(he->h_name),
-									sock_info[r].port_no, 0)<0){
-						LOG(L_ERR, "ERROR: main: add_alias failed\n");
-					}
-					for(h=he->h_aliases; h && *h; h++)
-						if (add_alias(*h,strlen(*h),sock_info[r].port_no,0)<0){
-							LOG(L_ERR, "ERROR: main: add_alias failed\n");
-						}
-				}
-		}else{ sock_info[r].is_ip=0; };
-			
-#ifdef EXTRA_DEBUG
-		printf("              %.*s [%s]:%s\n", sock_info[r].name.len, 
-				sock_info[r].name.s,
-				sock_info[r].address_str.s, sock_info[r].port_no_str.s);
-#endif
-	}
-	/* removing duplicate addresses*/
-	for (r=0; r<sock_no; r++){
-		for (t=r+1; t<sock_no;){
-			if ((sock_info[r].port_no==sock_info[t].port_no) &&
-				(sock_info[r].address.af==sock_info[t].address.af) &&
-				(memcmp(sock_info[r].address.u.addr, 
-						sock_info[t].address.u.addr,
-						sock_info[r].address.len)  == 0)
-				){
-#ifdef EXTRA_DEBUG
-				printf("removing duplicate (%d) %s [%s] == (%d) %s [%s]\n",
-						r, sock_info[r].name.s, sock_info[r].address_str.s,
-						t, sock_info[t].name.s, sock_info[t].address_str.s);
-#endif
-				/* add the name to the alias list*/
-				if ((!sock_info[t].is_ip) && (
-						(sock_info[t].name.len!=sock_info[r].name.len)||
-						(strncmp(sock_info[t].name.s, sock_info[r].name.s,
-								 sock_info[r].name.len)!=0))
-					)
-					add_alias(sock_info[t].name.s, sock_info[t].name.len,
-								sock_info[t].port_no, 0);
-						
-				/* free space*/
-				pkg_free(sock_info[t].name.s);
-				pkg_free(sock_info[t].address_str.s);
-				pkg_free(sock_info[t].port_no_str.s);
-				/* shift the array*/
-				memmove(&sock_info[t], &sock_info[t+1], 
-							(sock_no-t)*sizeof(struct socket_info));
-				sock_no--;
-				continue;
-			}
-			t++;
-		}
+	
+	if (fix_all_socket_lists()!=0){
+		fprintf(stderr,  "failed to initialize liste addresses\n");
+		goto error;
 	}
 	/* print all the listen addresses */
 	printf("Listening on \n");
-	for (r=0; r<sock_no; r++)
-		printf("              %s [%s]:%s\n",sock_info[r].name.s,
-				sock_info[r].address_str.s, sock_info[r].port_no_str.s);
-
-	printf("Aliases: ");
-	for(a=aliases; a; a=a->next) 
-		if (a->port)
-			printf("%.*s:%d ", a->alias.len, a->alias.s, a->port);
-		else
-			printf("%.*s:* ", a->alias.len, a->alias.s);
+	print_all_socket_lists();
+	printf("Aliases: \n");
+	/*print_aliases();*/
+	print_aliases();
 	printf("\n");
-	if (sock_no==0){
-		fprintf(stderr, "ERROR: no listening sockets");
-		goto error;
-	}
+	
 	if (dont_fork){
 		fprintf(stderr, "WARNING: no fork mode %s\n", 
-				(sock_no>1)?" and more than one listen address found (will"
-							" use only the the first one)":"");
+				(udp_listen->next)?" and more than one listen address found"
+				"(will use only the the first one)":"");
 	}
 	if (config_check){
 		fprintf(stderr, "config file ok, exiting...\n");

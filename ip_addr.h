@@ -77,6 +77,9 @@ union sockaddr_union{
 };
 
 
+
+enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2 };
+
 struct socket_info{
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
@@ -84,10 +87,11 @@ struct socket_info{
 	str address_str;        /* ip address converted to string -- optimization*/
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
-	int is_ip; /* 1 if name is an ip address, 0 if not  -- optimization*/
-	int is_lo; /* 1 if is a loopback, 0 if not */
+	enum si_flags flags; /* SI_IS_IP | SI_IS_LO */
 	union sockaddr_union su; 
 	int proto; /* tcp or udp*/
+	struct socket_info* next;
+	struct socket_info* prev;
 };
 
 

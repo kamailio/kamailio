@@ -47,6 +47,7 @@
  *             added msg:len (andrei)
  * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
  * 2003-10-13  added FIFO_DIR & proto:host:port listen/alias support (andrei)
+ * 2003-10-24  converted to the new socket_info lists (andrei)
  */
 
 
@@ -67,8 +68,10 @@
 #include "sr_module.h"
 #include "modparam.h"
 #include "ip_addr.h"
+#include "socket_info.h"
 #include "name_alias.h"
 #include "ut.h"
+
 
 #include "config.h"
 #ifdef USE_TLS
@@ -84,7 +87,7 @@
 #undef _ALLOCA_H
 
 struct id_list{
-	char* s;
+	char* name;
 	int proto;
 	int port;
 	struct id_list* next;
@@ -327,6 +330,7 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 proto:	  UDP	{ $$=PROTO_UDP; }
 		| TCP	{ $$=PROTO_TCP; }
 		| TLS	{ $$=PROTO_TLS; }
+		| STAR	{ $$=0; }
 		;
 
 port:	  NUMBER	{ $$=$1; }
@@ -355,10 +359,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DNS EQUAL error { yyerror("boolean value expected"); }
 		| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 		| REV_DNS EQUAL error { yyerror("boolean value expected"); }
-		| PORT EQUAL NUMBER   { port_no=$3; 
-								if (sock_no>0) 
-									sock_info[sock_no-1].port_no=port_no;
-							  }
+		| PORT EQUAL NUMBER   { port_no=$3; }
 		| STAT EQUAL STRING {
 					#ifdef STATS
 							stat_file=$3;
@@ -521,27 +522,13 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
 		| LISTEN EQUAL id_lst {
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
-								if (sock_no < MAX_LISTEN){
-									sock_info[sock_no].name.s=(char*)
-											pkg_malloc(strlen(lst_tmp->s)+1);
-									if (sock_info[sock_no].name.s==0){
-										LOG(L_CRIT, "ERROR: cfg. parser:"
-													" out of memory.\n");
-										break;
-									}else{
-										strncpy(sock_info[sock_no].name.s,
-												lst_tmp->s,
-												strlen(lst_tmp->s)+1);
-										sock_info[sock_no].name.len=
-													strlen(lst_tmp->s);
-										sock_info[sock_no].port_no=
-													lst_tmp->port;
-										sock_no++;
-									}
-								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser: "
-												"too many listen addresses"
-												"(max. %d).\n", MAX_LISTEN);
+								if (add_listen_iface(	lst_tmp->name,
+														lst_tmp->port,
+														lst_tmp->proto,
+														0
+													)!=0){
+									LOG(L_CRIT,  "ERROR: cfg. parser: failed"
+											" to add listen address\n");
 									break;
 								}
 							}
@@ -550,7 +537,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 						"expected"); }
 		| ALIAS EQUAL  id_lst { 
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
-								add_alias(lst_tmp->s, strlen(lst_tmp->s), 
+								add_alias(lst_tmp->name, strlen(lst_tmp->name),
 											lst_tmp->port, lst_tmp->proto);
 							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
@@ -1509,7 +1496,7 @@ static struct id_list* mk_listen_id(char* host, int proto, int port)
 	if (l==0){
 		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
 	}else{
-		l->s=host;
+		l->name=host;
 		l->port=port;
 		l->proto=proto;
 		l->next=0;

@@ -284,7 +284,9 @@ static inline struct hostent* resolvehost(char* name)
 	static struct hostent* he2=0;
 #endif
 #ifndef DNS_IP_HACK
+#ifdef USE_IPV6
 	int len;
+#endif
 #endif
 #ifdef DNS_IP_HACK
 	struct ip_addr* ip;
@@ -304,6 +306,7 @@ static inline struct hostent* resolvehost(char* name)
 	}
 	
 #else /* DNS_IP_HACK */
+#ifdef USE_IPV6
 	len=0;
 	if (*name=='['){
 		len=strlen(name);
@@ -313,6 +316,7 @@ static inline struct hostent* resolvehost(char* name)
 			goto skip_ipv4;
 		}
 	}
+#endif
 #endif
 	/* ipv4 */
 	he=gethostbyname(name);

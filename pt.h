@@ -43,6 +43,7 @@
 
 #include "globals.h"
 #include "timer.h"
+#include "socket_info.h"
 
 #define MAX_PT_DESC	128
 
@@ -63,9 +64,13 @@ extern int process_no;
 */
 inline static int process_count()
 {
+	int udp_listeners;
+	struct socket_info* si;
+	
+	for (si=udp_listen, udp_listeners=0; si; si=si->next, udp_listeners++);
     return 
 		/* receivers and attendant */
-		(dont_fork ? 1 : children_no*sock_no + 1)
+		(dont_fork ? 1 : children_no*udp_listeners + 1)
 		/* timer process */
 		+ (timer_list ? 1 : 0 )
 		/* fifo server */

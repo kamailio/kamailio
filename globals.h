@@ -46,19 +46,10 @@
 extern char * cfg_file;
 extern int config_check;
 extern char *stat_file;
-extern struct socket_info sock_info[]; /* all addresses we listen/send from*/
-#ifdef USE_TCP
-extern struct socket_info tcp_info[]; /* all tcp sockets we listen on*/
-#endif
-#ifdef USE_TLS
-extern struct socket_info tls_info[]; /* tcp-tls sockets */
-#endif
-extern int sock_no; /* number of addresses/open sockets*/
 extern unsigned short port_no;
 
 extern struct socket_info* bind_address; /* pointer to the crt. proc.
 											listening address */
-extern int bind_idx; /* same as above but index in the bound[] array */
 extern struct socket_info* sendipv4; /* ipv4 socket to use when msg.
 										comes from ipv6*/
 extern struct socket_info* sendipv6; /* same as above for ipv6 */
