@@ -113,7 +113,6 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	result = is_e164(&(uri.user));
-	free_uri(&uri);
 	return result;
 }
 
