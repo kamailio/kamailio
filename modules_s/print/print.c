@@ -7,7 +7,6 @@
 
 
 #include "../../sr_module.h"
-#include "../../dprint.h"
 #include <stdio.h>
 
 static int print_f(struct sip_msg*, char*,char*);
@@ -33,7 +32,6 @@ static int print_f(struct sip_msg* msg, char* str, char* str2)
 {
 	/*we registered only 1 param, so we ignore str2*/
 	printf("%s\n",str);
-	DBG("just printed %s\n",str);
 	return 1;
 }
 
