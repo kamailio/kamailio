@@ -133,7 +133,7 @@ static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 				prio = 10; /* set default to minimum */
 			}
 			/* add the uri to location set */
-			if (add_location( loc_set, &contacts->uri,prio, 1/*dup*/)!=0) {
+			if (add_location( loc_set, &contacts->uri,prio, CPL_LOC_DUPL)!=0) {
 				LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: unable to add "
 				"<%.*s>\n",contacts->uri.len,contacts->uri.s);
 			}

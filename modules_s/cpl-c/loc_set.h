@@ -39,12 +39,16 @@
 #include "../../dprint.h"
 
 
+#define CPL_LOC_DUPL    (1<<0)
+#define CPL_LOC_NATED   (1<<0)
+
 
 struct location {
 	struct address {
 		str uri;
 		unsigned int priority;
 	}addr;
+	int flags;
 	struct location *next;
 };
 
@@ -61,19 +65,19 @@ static inline void free_location( struct location *loc)
  * list starts with the smallest prio!
  * For locations having the same prio val, the adding orser will be keept */
 static inline int add_location(struct location **loc_set, str *uri,
-											unsigned int prio, int dup)
+											unsigned int prio, int flags)
 {
 	struct location *loc;
 	struct location *foo, *bar;
 
 	loc = (struct location*)shm_malloc(
-		sizeof(struct location)+(dup?uri->len+1:0) );
+		sizeof(struct location)+((flags&CPL_LOC_DUPL)?uri->len+1:0) );
 	if (!loc) {
 		LOG(L_ERR,"ERROR:add_location: no more free shm memory!\n");
 		return -1;
 	}
 
-	if (dup) {
+	if (flags&CPL_LOC_DUPL) {
 		loc->addr.uri.s = ((char*)loc)+sizeof(struct location);
 		memcpy(loc->addr.uri.s,uri->s,uri->len);
 		loc->addr.uri.s[uri->len] = 0;
@@ -82,6 +86,7 @@ static inline int add_location(struct location **loc_set, str *uri,
 	}
 	loc->addr.uri.len = uri->len;
 	loc->addr.priority = prio;
+	loc->flags = flags;
 
 	/* find the proper place for the new location */
 	foo = *loc_set;

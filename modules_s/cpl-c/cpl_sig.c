@@ -34,6 +34,7 @@
 
 extern struct tm_binds cpl_tmb;
 extern int    proxy_route;
+extern int    cpl_nat_flag;
 
 
 /* forwards the msg to the given location set; if flags has set the
@@ -69,6 +70,8 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action failed\n");
 			goto error;
 		}
+		/* is the location NATED? */
+		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_nat_flag);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );
@@ -84,6 +87,8 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 				"appending branch <%s>\n",(*locs)->addr.uri.s);
 			goto error;
 		}
+		/* is the location NATED? */
+		if ((*locs)->flags&CPL_LOC_NATED) setflag(msg,cpl_nat_flag);
 		/* free the location and point to the next one */
 		foo = (*locs)->next;
 		free_location( *locs );

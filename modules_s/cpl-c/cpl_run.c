@@ -111,7 +111,6 @@ extern char            *log_dir;
 extern struct tm_binds cpl_tmb;
 extern udomain_t*      cpl_domain;
 extern usrloc_api_t    cpl_ulb;
-extern int             cpl_nat_flag;
 
 
 struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
@@ -300,15 +299,13 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				DBG("DBG:cpl-c:run_lookup: adding <%.*s>q=%d\n",
 					contact->c.len,contact->c.s,(int)(10*contact->q));
 				if (add_location( &(intr->loc_set), &contact->c,
-				(int)(10*contact->q), 1/*dup*/ )==-1) {
+				(int)(10*contact->q),
+				CPL_LOC_DUPL|((contact->flags & FL_NAT)*CPL_LOC_NATED) )==-1) {
 					LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
 						"location to set :-(\n");
 					cpl_ulb.unlock_udomain( cpl_domain );
 					goto runtime_error;
 				}
-				/* mark as nated */
-				if (contact->flags & FL_NAT)
-					setflag( intr->msg, cpl_nat_flag);
 				/* set the flag for modifing the location set */
 				intr->flags |= CPL_LOC_SET_MODIFIED;
 				/* we found a valid contact */

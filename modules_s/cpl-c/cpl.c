@@ -549,7 +549,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	if ( ((unsigned int)str1)&CPL_RUN_OUTGOING ) {
 		if (get_dest_user( msg, &loc,0)==-1)
 			goto error3;
-		if (add_location( &(cpl_intr->loc_set), &loc,10/*prio*/,1/*dup*/)==-1)
+		if (add_location( &(cpl_intr->loc_set), &loc,10,CPL_LOC_DUPL)==-1)
 			goto error3;
 	}
 
