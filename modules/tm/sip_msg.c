@@ -2,7 +2,7 @@
  * $Id$
  */
 
-
+#include <stdio.h>
 #include "sip_msg.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
@@ -254,12 +254,18 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 		switch (hdr->type)
 		{
 			case HDR_VIA:
+				/*fprintf(stderr,"prepare to clone via |%.*s|\n",
+					via_len((struct via_body*)hdr->parsed),
+					via_s((struct via_body*)hdr->parsed,org_msg));*/
 				if ( !new_msg->via1 )
 				{
 					new_msg->h_via1 = new_hdr;
 					new_msg->via1 = via_body_cloner(new_msg->buf,
 						org_msg->buf, (struct via_body*)hdr->parsed, &p);
 					new_hdr->parsed  = (void*)new_msg->via1;
+					/*fprintf(stderr,"setting via1 |%.*s|\n",
+						via_len(new_msg->via1),
+						via_s(new_msg->via1,new_msg));*/
 					if ( new_msg->via1->next )
 						new_msg->via2 = new_msg->via1->next;
 				}
@@ -276,10 +282,14 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				}
 				else if ( new_msg->via2 && new_msg->via1 )
 				{
-					new_hdr->parsed  = new_msg->via1 = 
+					new_hdr->parsed =  
 						via_body_cloner( new_msg->buf , org_msg->buf ,
 						(struct via_body*)hdr->parsed , &p);
 				}
+                /*fprintf(stderr," via1 is |%.*s|\n",
+                	via_len(new_msg->via1),
+                	via_s(new_msg->via1,new_msg));*/
+  
 				break;
 			case HDR_CSEQ:
 				new_hdr->parsed = p;

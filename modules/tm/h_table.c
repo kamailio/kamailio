@@ -7,7 +7,8 @@
 #include "../../dprint.h"
 #include "sh_malloc.h"
 #include "../../md5utils.h"
-
+/* bogdan test */
+#include "../../ut.h"
 
 
 
@@ -85,7 +86,18 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.fr_timer.tg=TG_FR;
 	new_cell->uas.response.fr_timer.payload =
 		new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
+
+	/* bogdan - debug */
+	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
+		via_s(p_msg->via1,p_msg));*/
+
 	new_cell->uas.request = sip_msg_cloner(p_msg);
+
+    /* bogdan - debug */
+    /*fprintf(stderr,"after clone VIA |%.*s|\n",
+		via_len(new_cell->uas.request->via1),
+		via_s(new_cell->uas.request->via1,new_cell->uas.request) );*/
+
 	if (!new_cell->uas.request)
 		goto error;
 	new_cell->uas.tag = &( get_to(new_cell->uas.request)->tag_value );
