@@ -35,6 +35,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define SIPSAK_VERSION "v0.1"
 #define RESIZE		1024
 #define BUFSIZE		1500
 #define FQDN_SIZE   200
@@ -485,7 +486,8 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 			FD_ZERO(&fd);
 			FD_SET(ssock, &fd); 
 
-			ret = select(6, &fd, NULL, NULL, &tv);
+			//ret = select(6, &fd, NULL, NULL, &tv);
+			ret = select(FD_SETSIZE, &fd, NULL, NULL, &tv);
 			if (ret == 0)
 			{
 				printf("** timeout **\n");
@@ -762,7 +764,11 @@ int main(int argc, char *argv[])
 				fbool=1;
 				break;
 			case 'h':
-				printf("\nmodi:\n"
+				printf("sipsak %s ", SIPSAK_VERSION);
+#ifdef DEBUG
+				printf("(compiled with DEBUG) ");
+#endif
+				printf("modi:\n"
 						" shoot : sipsak -f filename -s sip:uri\n"
 						" trace : sipsak [-f filename] -s sip:uri -t\n"
 						" USRLOC: sipsak [-b number] -e number -s sip:uri -u\n"
