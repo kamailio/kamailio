@@ -25,6 +25,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History
+ * ------
+ * 2003-01-18 un_escape function introduced for convenience of code needing
+ *            the complex&slow feature of unescaping
  */
 
 
@@ -38,6 +43,7 @@
 
 
 #include "dprint.h"
+#include "str.h"
 
 
 struct sip_msg;
@@ -224,5 +230,82 @@ inline static void sleep_us( unsigned int nusecs )
 	tval.tv_usec=nusecs%1000000;
 	select(0, NULL, NULL, NULL, &tval );
 }
+
+inline static int hex2int(char hex_digit)
+{
+	if (hex_digit>='0' && hex_digit<='9')
+		return hex_digit-'0';
+	if (hex_digit>='a' && hex_digit<='f')
+		return hex_digit-'a'+10;
+	if (hex_digit>='A' && hex_digit<='F')
+		return hex_digit-'A'+10;
+	/* no valid hex digit ... */
+	LOG(L_ERR, "ERROR: hex2int: '%c' is no hex char\n", hex_digit );
+	return -1;
+}
+
+/* Un-escape URI user  -- it takes a pointer to original user
+   str, as well as the new, unescaped one, which MUST have
+   an allocated buffer linked to the 'str' structure ;
+   (the buffer can be allocated with the same length as
+   the original string -- the output string is always
+   shorter (if escaped characters occur) or same-long
+   as the original one).
+
+   only printeable characters are permitted
+
+	<0 is returned on an uneascaping error, length of the
+	unescaped string otherwise
+*/
+inline static int un_escape(str *user, str *new_user ) 
+{
+ 	int i, j, value;
+	int hi, lo;
+
+	new_user->len = 0;
+	j = 0;
+
+	for (i = 0; i < user->len; i++) {
+		if (user->s[i] == '%') {
+			if (i + 2 >= user->len) {
+				LOG(L_ERR, "ERROR: un_escape: escape sequence too short in"
+					" '%.*s' @ %d\n",
+					user->len, user->s, i );
+				goto error;
+			}
+			hi=hex2int(user->s[i + 1]);
+			if (hi<0) {
+				LOG(L_ERR, "ERROR: un_escape: non-hex high digit in an escape sequence in"
+					" '%.*s' @ %d\n",
+					user->len, user->s, i+1 );
+				goto error;
+			}
+			lo=hex2int(user->s[i + 2]);
+			if (lo<0) {
+				LOG(L_ERR, "ERROR: non-hex low digit in an escape sequence in "
+					"'%.*s' @ %d\n",
+					user->len, user->s, i+2 );
+				goto error;
+			}
+			value=(hi<<4)+lo;
+			if (value < 32 || value > 126) {
+				LOG(L_ERR, "ERROR: non-ASCII escaped character in '%.*s' @ %d\n",
+					user->len, user->s, i );
+				goto error;
+			}
+			new_user->s[j] = value;
+			i+=2; /* consume the two hex digits, for cycle will move to the next char */
+		} else {
+			new_user->s[j] = user->s[i];
+		}
+        j++; /* good -- we translated another character */
+	}
+	new_user->len = j;
+	return j;
+
+error:
+	new_user->len = j;
+	return -1;
+} 
 
 #endif
