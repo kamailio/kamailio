@@ -55,8 +55,11 @@ int check_self(str* host, unsigned short port);
 int forward_request( struct sip_msg* msg,  struct proxy_l* p, int proto);
 int update_sock_struct_from_via( union sockaddr_union* to,
 								struct via_body* via );
+
+/* use src_ip, port=src_port if rport, via port if via port, 5060 otherwise */
 #define update_sock_struct_from_ip(  to, msg ) \
 	init_su((to), &(msg)->rcv.src_ip, \
+			((msg)->via1->rport)?htons((msg)->rcv.src_port): \
 			((msg)->via1->port)?htons((msg)->via1->port): htons(SIP_PORT) )
 
 int forward_reply( struct sip_msg* msg);

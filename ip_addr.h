@@ -259,6 +259,26 @@ static inline short su_getport(union sockaddr_union* su)
 
 
 
+/* sets the port number */
+static inline void su_setport(union sockaddr_union* su, unsigned short port)
+{
+	switch(su->s.sa_family){
+		case AF_INET:
+			su->sin.sin_port=port;
+			break;
+#ifdef USE_IPV6
+		case AF_INET6:
+			 su->sin6.sin6_port=port;
+			 break;
+#endif
+		default:
+			LOG(L_CRIT,"su_set_port: BUG: unknown address family %d\n",
+						su->s.sa_family);
+	}
+}
+
+
+
 /* inits an ip_addr pointer from a sockaddr_union ip address */
 static inline void su2ip_addr(struct ip_addr* ip, union sockaddr_union* su)
 {

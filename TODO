@@ -71,7 +71,7 @@ x jku: branch hash computation over canonical values
 x freopen stdin, stdout, stderr to /dev/null
 - add a section on building ser & configuring it for maximum performance
  (-DF_MALLOC, -DNO_DBG, ... sip_warning=0, a.s.o)
-- add src_port, dst_port, proto to cfg.{y,lex}
+x add src_port, dst_port, proto to cfg.{y,lex}
 x generic locking lib
 x convert tm to use new locking lib
 - force add rport (setflag(rport)???)
@@ -79,6 +79,7 @@ x convert tm to use new locking lib
 
 optimizations:
 - better timer interface with hashes (a la openbsd)
+- change lumps (flags for malloc type, recursive? see COND lumps )
 - atomic ops?
 - assembly for some very common used function
 - getsock* cache

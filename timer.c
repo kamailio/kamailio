@@ -94,7 +94,9 @@ void destroy_timer()
 
 
 /*register a periodic timer;
- * ret: <0 on error*/
+ * ret: <0 on error
+ * Hint: if you need it in a module, register it from mod_init or it 
+ * won't work otherwise*/
 int register_timer(timer_function f, void* param, unsigned int interval)
 {
 	struct sr_timer* t;

@@ -36,6 +36,7 @@
  *               calls to msg_send (andrei)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-02  fixed get_send_socket for tcp fwd to udp (andrei)
+ *  2003-04-03  added su_setport (andrei)
  */
 
 
