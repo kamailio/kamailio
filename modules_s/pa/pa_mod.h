@@ -34,6 +34,7 @@
 #include "../tm/tm_load.h"
 
 extern int default_expires;
+extern double default_priority;
 extern int timer_interval;
 
 /* TM bind */
@@ -54,10 +55,15 @@ extern int new_watcher_pending;
 extern int callback_update_db;
 extern int callback_lock_pdomain;
 extern int new_tuple_on_publish;
+extern int pa_pidf_priority;
 
 /*
  * compare two str's
  */
 int str_strcmp(const str *stra, const str *strb);
+/*
+ * case-insensitive compare two str's
+ */
+int str_strcasecmp(const str *stra, const str *strb);
 
 #endif /* PA_MOD_H */

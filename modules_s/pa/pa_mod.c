@@ -57,6 +57,8 @@ static void timer(unsigned int ticks, void* param); /* Delete timer for all doma
 
 int default_expires = 3600;  /* Default expires value if not present in the message */
 int timer_interval = 10;     /* Expiration timer interval in seconds */
+double default_priority = 0.5; /* Default priority of presence tuple */
+static int default_priority_percentage = 50; /* expressed as percentage because config file grammar does not support floats */
 
 /** TM bind */
 struct tm_binds tmb;
@@ -77,6 +79,7 @@ int new_watcher_pending = 0;
 int callback_update_db = 1;
 int callback_lock_pdomain = 1;
 int new_tuple_on_publish = 0;
+int pa_pidf_priority = 1;
 
 /*
  * Exported functions
@@ -96,6 +99,7 @@ static cmd_export_t cmds[]={
  */
 static param_export_t params[]={
 	{"default_expires",      INT_PARAM, &default_expires      },
+	{"default_priority_percentage",     INT_PARAM, &default_priority_percentage  },
 	{"timer_interval",       INT_PARAM, &timer_interval       },
 	{"use_db",               INT_PARAM, &use_db               },
 	{"use_place_table",      INT_PARAM, &use_place_table      },
@@ -111,6 +115,7 @@ static param_export_t params[]={
 	{"callback_update_db",   INT_PARAM, &callback_update_db   },
 	{"callback_lock_pdomain", INT_PARAM, &callback_lock_pdomain },
 	{"new_tuple_on_publish", INT_PARAM, &new_tuple_on_publish  },
+	{"pidf_priority",        INT_PARAM, &pa_pidf_priority  },
 	{0, 0, 0}
 };
 
@@ -163,6 +168,16 @@ static int pa_mod_init(void)
 		return -1;
 	}
 
+	if (register_fifo_cmd(fifo_pa_location_contact, "pa_location_contact", 0) < 0) {
+		LOG(L_CRIT, "cannot register fifo pa_location_contact\n");
+		return -1;
+	}
+
+	if (register_fifo_cmd(fifo_pa_watcherinfo, "pa_watcherinfo", 0) < 0) {
+		LOG(L_CRIT, "cannot register fifo pa_watcherinfo\n");
+		return -1;
+	}
+
 	if (init_unixsock_iface() < 0) {
 		LOG(L_ERR, "pa_mod_init: Error while initializing unix socket interface\n");
 		return -1;
@@ -191,6 +206,8 @@ static int pa_mod_init(void)
 			return -1;
 		}
 	}
+
+	default_priority = ((double)default_priority_percentage) / 100.0;
 
 	LOG(L_CRIT, "pa_mod_init done\n");
 	return 0;
@@ -265,6 +282,29 @@ int str_strcmp(const str *stra, const str *strb)
      for (i = 0; i < minlen; i++) {
 	  const char a = stra->s[i];
 	  const char b = strb->s[i];
+	  if (a < b) return -1;
+	  if (a > b) return 1;
+     }
+     if (alen < blen)
+	  return -1;
+     else if (blen > alen)
+	  return 1;
+     else
+	  return 0;
+}
+
+/*
+ * case-insensitive compare two str's
+ */
+int str_strcasecmp(const str *stra, const str *strb)
+{
+     int i;
+     int alen = stra->len;
+     int blen = strb->len;
+     int minlen = (alen < blen ? alen : blen);
+     for (i = 0; i < minlen; i++) {
+	  const char a = tolower(stra->s[i]);
+	  const char b = tolower(strb->s[i]);
 	  if (a < b) return -1;
 	  if (a > b) return 1;
      }
