@@ -342,6 +342,7 @@ child_init(int rank)
 	struct addrinfo hints, *res;
 
 	if (rtpproxy_disable == 0) {
+		mypid = getpid();
 		if (umode != 0) {
 			cp = strrchr(rtpproxy_sock, ':');
 			if (cp != NULL) {
@@ -380,7 +381,6 @@ child_init(int rank)
 	} else {
 		rtpproxy_disable_tout = -1;
 	}
-	mypid = getpid();
 
 	return 0;
 }
