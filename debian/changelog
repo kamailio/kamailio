@@ -1,3 +1,16 @@
+ser (0.8.10) unstable; urgency=low
+
+  * fixes lots of  bugs in 0.8.9 (log not working, ipv6 address conversion)
+  
+  * introduces port support in uri matching with myself
+  
+  * faster hash function (statefull performance increase ~10%)
+
+  * modules updates (sms, jabber)
+
+ -- Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>  Mon, 4 Nov 2002
+ 18:20:18 +0200
+
 ser (0.8.9) unstable; urgency=low
 
   * fixes a few bugs in 0.8.8 (primary some modules which where linked to some bad libs)
