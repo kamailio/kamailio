@@ -101,6 +101,7 @@ BEGIN {
 	ua_yamaha=0;
 	ua_magicppc=0;
 	ua_scs=0;
+	ua_edgeaccess=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -115,6 +116,7 @@ BEGIN {
 	server_sapphire=0;
 	server_lucent=0;
 	server_snom=0;
+	server_edgeaccess=0;
 	server_xx=0
 
 }
@@ -249,6 +251,10 @@ ua==0 && /User-Agent:.*SCS/ {
 	ua_scs++
 	ua=1
 }
+ua==0 && /User-Agent:.*EdgEAccEss/ {
+	ua_edgeaccess++
+	ua=1
+}
 
 
  { comment="hack to deal with old version of ngrep (breaking in columns)"
@@ -313,6 +319,10 @@ server==0 && /Server:.*snom/ {
 }
 server==0 && /Server:.*Lucent/ {
 	server_lucent++
+	server=1
+}
+server==0 && /Server:.*EdgEAccEss/ {
+	server_edgeaccess++
 	server=1
 }
 server==0 && /Server:/ {
@@ -632,6 +642,7 @@ END {
 	print "MagicPPC: " ua_magicppc " SCS: " ua_scs 
 	print "SJPhone: " ua_sjphone " KPhone: " ua_kphone
 	print "Yamaha: " ua_yamaha 
+	print "EdgeAccess: " ua_edgeaccess
 	print "UFO: " ua_xx
 
 	print "## Servers"
@@ -642,6 +653,7 @@ END {
 	print "sapphire: " server_sapphire
 	print "snom: " server_snom
 	print "lucent: " server_lucent
+	print "edgeAccess: " server_edgeaccess
 	print "UFO: " server_xx
 }
 '
