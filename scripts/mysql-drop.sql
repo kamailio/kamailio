@@ -1,4 +1,0 @@
-/* $Id$ */
-
-drop database ser;
-
