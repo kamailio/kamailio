@@ -62,35 +62,40 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export(T_REPLY_WB, NO_SCRIPT, 0)) ) {
-	        LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
+	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export
+	(T_REPLY_WB, NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_reply_with_body' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL, NO_SCRIPT, 0)) ) {
-	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
+	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL,NO_SCRIPT,0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_get_trans_ident=(tget_ti_f)find_export(T_GET_TI, NO_SCRIPT, 0)) ) {
-	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
+	if (!(tmb->t_get_trans_ident=(tget_ti_f)find_export
+	(T_GET_TI, NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export(T_LOOKUP_IDENT, NO_SCRIPT, 0)) ) {
-	        LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
+	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export
+	(T_LOOKUP_IDENT, NO_SCRIPT, 0)) ) {
+		LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_addblind=(taddblind_f)find_export(T_ADDBLIND, NO_SCRIPT, 0)) ) {
-	        LOG( L_ERR, LOAD_ERROR "'addblind' not found\n");
+	if (!(tmb->t_addblind=(taddblind_f)find_export(T_ADDBLIND,NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'addblind' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK , 2, 0)) ) {
+	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK,2,0))) {
 		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_request_within=(reqwith_t)find_export("t_request_within", NO_SCRIPT, 0)) ) {
+	if (!(tmb->t_request_within=(reqwith_t)find_export
+	("t_request_within", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_request_within' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_request_outside=(reqout_t)find_export("t_request_outside", NO_SCRIPT, 0)) ) {
+	if (!(tmb->t_request_outside=(reqout_t)find_export
+	("t_request_outside", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_request_outside' not found\n");
 		return -1;
 	}
@@ -98,19 +103,23 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'t_request' not found\n");
 		return -1;
 	}
-	if (!(tmb->new_dlg_uac=(new_dlg_uac_f)find_export("new_dlg_uac", NO_SCRIPT, 0)) ) {
+	if (!(tmb->new_dlg_uac=(new_dlg_uac_f)find_export
+	("new_dlg_uac", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'new_dlg_uac' not found\n");
 		return -1;
 	}
-        if (!(tmb->dlg_response_uac=(dlg_response_uac_f)find_export("dlg_response_uac", NO_SCRIPT, 0)) ) {
+	if (!(tmb->dlg_response_uac=(dlg_response_uac_f)find_export
+	("dlg_response_uac", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'dlg_response_uac' not found\n");
 		return -1;
-        }
-        if (!(tmb->new_dlg_uas=(new_dlg_uas_f)find_export("new_dlg_uas", NO_SCRIPT, 0)) ) {
+	}
+	if (!(tmb->new_dlg_uas=(new_dlg_uas_f)find_export
+	("new_dlg_uas", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'new_dlg_uas' not found\n");
 		return -1;
 	}
-        if (!(tmb->dlg_request_uas=(dlg_request_uas_f)find_export("dlg_request_uas", NO_SCRIPT, 0)) ) {
+	if (!(tmb->dlg_request_uas=(dlg_request_uas_f)find_export
+	("dlg_request_uas", NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'dlg_request_uas' not found\n");
 		return -1;
 	}
@@ -118,10 +127,10 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'free_dlg' not found\n");
 		return -1;
 	}
-	if (!(tmb->print_dlg=(print_dlg_f)find_export("print_dlg", NO_SCRIPT, 0)) ) {
+	if (!(tmb->print_dlg=(print_dlg_f)find_export("print_dlg",NO_SCRIPT,0))) {
 		LOG( L_ERR, LOAD_ERROR "'print_dlg' not found\n");
 		return -1;
 	}
-	
+
 	return 1;
 }

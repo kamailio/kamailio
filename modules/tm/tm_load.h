@@ -59,6 +59,7 @@
 #define T_ADDBLIND           "t_add_blind"
 #define T_REPLY_UNSAFE       "t_reply_unsafe"
 #define T_FORWARD_NONACK     "t_forward_nonack"
+#define T_FORWARD_NONACK_URI "t_forward_nonack_uri"
 #define T_FORWARD_NONACK_UDP "t_forward_nonack_udp"
 #define T_FORWARD_NONACK_TCP "t_forward_nonack_tcp"
 #define T_FORWARD_NONACK_TLS "t_forward_nonack_tls"

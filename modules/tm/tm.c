@@ -67,6 +67,8 @@
  *  2003-07-07  added t_relay_to_tls, t_replicate_tls, t_forward_nonack_tls
  *              added #ifdef USE_TCP, USE_TLS
  *              removed t_relay_{udp,tcp,tls} (andrei)
+ *  2003-09-26  added t_forward_nonack_uri() - same as t_forward_nonack() but
+ *              takes no parameters -> forwards to uri (bogdan)
  */
 
 
@@ -137,6 +139,7 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 				     char *_foo       /* nothing expected */ );
 #endif
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
+inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
 #ifdef USE_TCP
 inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
@@ -179,6 +182,7 @@ static cmd_export_t cmds[]={
 	{T_RELAY,              w_t_relay,               0, 0,                    
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_FORWARD_NONACK_URI, w_t_forward_nonack_uri,  0, 0,                    REQUEST_ROUTE},
 	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
 #ifdef USE_TCP
 	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
@@ -451,7 +455,7 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 
 
 inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
-									 char* _foo, int proto)
+																	int proto)
 {
 	struct cell *t;
 	if (t_check( msg , 0 )==-1) {
@@ -476,20 +480,26 @@ inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, foo, PROTO_NONE);
+	return _w_t_forward_nonack(msg, proxy, PROTO_NONE);
+}
+
+inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char *foo,
+																	char *bar)
+{
+	return _w_t_forward_nonack(msg, 0, PROTO_NONE);
 }
 
 inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, foo, PROTO_UDP);
+	return _w_t_forward_nonack(msg, proxy, PROTO_UDP);
 }
 
 #ifdef USE_TCP
 inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, foo, PROTO_TCP);
+	return _w_t_forward_nonack(msg, proxy, PROTO_TCP);
 }
 #endif
 
@@ -497,7 +507,7 @@ inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
 inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 										char* foo)
 {
-	return _w_t_forward_nonack(msg, proxy, foo, PROTO_TLS);
+	return _w_t_forward_nonack(msg, proxy, PROTO_TLS);
 }
 #endif
 
