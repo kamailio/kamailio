@@ -494,7 +494,6 @@ case $1 in
 	start)
 		DIR=`dirname $0`
 		echo
-		echo "DIR is $DIR"
 		echo -n "Starting SER : "
 		if [ -r $PID_FILE ] ; then
 			echo "PID file exists! ($PID_FILE) already running?"
