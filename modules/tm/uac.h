@@ -31,6 +31,7 @@ void generate_callid();
 typedef int (*tuac_f)(str *msg_type, str *dst, str *headers,str *body,
 	transaction_cb completion_cb );
 
+/* transactional UAC; look for an example of usage at fifo_uac */
 int t_uac( 
 	/* MESSAGE, OPTIONS, etc. */
 	str *msg_type,  
