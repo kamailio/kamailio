@@ -26,15 +26,14 @@
  */
 
 
-#ifndef PARSE_FROM
-#define PARSE_FROM
+#ifndef _PARSE_FROM_H
+#define _PARSE_FROM_H
 
-#include "../str.h"
-#include "parse_to.h"
-#include "hf.h"
+#include "msg_parser.h"
+
 /*
  * To header field parser
  */
-int parse_from_header(struct hdr_field* hdr);
+int parse_from_header( struct sip_msg *msg);
 
 #endif

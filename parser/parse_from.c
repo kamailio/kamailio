@@ -1,5 +1,4 @@
 /*
- * @author Stelios Sidiroglou-Douskos <ssi@fokus.gmd.de>
  * $Id$
  *
  * Copyright (C) 2001-2003 Fhg Fokus
@@ -41,39 +40,44 @@
  * anything in core that is not *needed* so this method gets called by 
  * rad_acc module and any other modules that needs the FROM header.
  *
- * params: hdr : Hook to the from header
+ * params: msg : sip msg
  * returns 0 on success,
- *		   -1 on failure.
+ *        -1 on failure.
  */
-int parse_from_header(struct hdr_field* hdr) 
+int parse_from_header( struct sip_msg *msg)
 {
 	struct to_body* from_b;
-	
-	from_b = pkg_malloc(sizeof(struct to_body));
-	if (from_b == 0) {
-		LOG(L_ERR, "parse_from_header: out of memory\n");
+
+	if ( !msg->from && ( parse_headers(msg,HDR_FROM,0)==-1 || !msg->from)) {
+		LOG(L_ERR,"ERROR:parse_from_header: bad msg or missing FROM header\n");
 		goto error;
 	}
-			
+
+	/* maybe the header is already parsed! */
+	if (msg->from->parsed)
+		return 0;
+
+	/* bad luck! :-( - we have to parse it */
+	/* first, get some memory */
+	from_b = pkg_malloc(sizeof(struct to_body));
+	if (from_b == 0) {
+		LOG(L_ERR, "ERROR:parse_from_header: out of pkg_memory\n");
+		goto error;
+	}
+
+	/* now parse it!! */
 	memset(from_b, 0, sizeof(struct to_body));
-	parse_to(hdr->body.s, hdr->body.s + hdr->body.len + 1, from_b);
+	parse_to(msg->from->body.s,msg->from->body.s+msg->from->body.len+1,from_b);
 	if (from_b->error == PARSE_ERROR) {
-		LOG(L_ERR, "ERROR: parse_from_header: bad from header\n");
+		LOG(L_ERR, "ERROR:parse_from_header: bad from header\n");
 		pkg_free(from_b);
 		goto error;
 	}
-	hdr->parsed = from_b;	
-	DBG("DEBUG: parse_from_header: <%s> [%d]; uri=[%.*s] \n",
-		hdr->name.s, hdr->body.len, from_b->uri.len, from_b->uri.s);
-	DBG("DEBUG: from body [%.*s]\n",from_b->body.len, from_b->body.s);	
+	msg->from->parsed = from_b;
 
 	return 0;
-
-	error:
-	/* more debugging, msg->orig is/should be null terminated*/
-	LOG(L_ERR, "ERROR: parse_from_header: \n");
+error:
 	return -1;
-
 }
 
 

@@ -39,16 +39,16 @@ enum {
 };
 
 
-enum { 
-	START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN, 
-	S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED, 
+enum {
+	START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN,
+	S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED,
 	URI_OR_TOKEN, MAYBE_URI_END, END, F_CR, F_LF, F_CRLF
 };
 
 
-enum { 
-	S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, 
-	TAG3, PARA_VALUE_TOKEN , PARA_VALUE_QUOTED, E_PARA_VALUE, PARA_START
+enum {
+	S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2,
+	TAG3, PARA_VALUE_TOKEN , PARA_VALUE_QUOTED, E_PARA_VALUE
 };
 
 
@@ -78,9 +78,8 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 	char  *tmp;
 
 	param=0;
-	status=PARA_START;
-	saved_status=PARA_START;
-
+	status=E_PARA_VALUE;
+	saved_status=E_PARA_VALUE;
 	for( tmp=buffer; tmp<end; tmp++)
 	{
 		switch(*tmp)
@@ -95,12 +94,10 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case TAG1:
 					case TAG2:
 						param->name.len = tmp-param->name.s;
-						*tmp=0;
 						status = S_EQUAL;
 						break;
 					case PARA_VALUE_TOKEN:
 						param->value.len = tmp-param->value.s;
-						*tmp=0;
 						status = E_PARA_VALUE;
 						add_param( param , to_b );
 						break;
@@ -128,13 +125,11 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case TAG1:
 					case TAG2:
 						param->name.len = tmp-param->name.s;
-						*tmp=0;
 						saved_status = S_EQUAL;
 						status = F_LF;
 						break;
 					case PARA_VALUE_TOKEN:
 						param->value.len = tmp-param->value.s;
-						*tmp=0;
 						saved_status = E_PARA_VALUE;
 						status = F_LF;
 						add_param( param , to_b );
@@ -168,13 +163,11 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case TAG1:
 					case TAG2:
 						param->name.len = tmp-param->name.s;
-						*tmp=0;
 						saved_status = S_EQUAL;
 						status = F_CR;
 						break;
 					case PARA_VALUE_TOKEN:
 						param->value.len = tmp-param->value.s;
-						*tmp=0;
 						saved_status = E_PARA_VALUE;
 						status = F_CR;
 						add_param( param , to_b );
@@ -184,6 +177,34 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case F_LF:
 						status=saved_status;
 						goto endofheader;
+					default:
+						LOG( L_ERR , "ERROR: parse_to_param : "
+							"unexpected char [%c] in status %d: <<%.*s>> .\n",
+							*tmp,status, (int)(tmp-buffer), buffer);
+						goto error;
+				}
+				break;
+			case 0:
+				switch (status)
+				{
+#ifndef NO_PINGTEL_TAG_HACK
+					case TAG3:
+						param->type = TAG_PARAM;
+						param->name.len = 3;
+						status = S_EQUAL;
+					case S_EQUAL:
+					case S_PARA_VALUE:
+						saved_status=status;
+						goto endofheader;
+#endif
+					case PARA_VALUE_TOKEN:
+						status = E_PARA_VALUE;
+						param->value.len = tmp-param->value.s;
+						add_param( param , to_b );
+					case E_PARA_VALUE:
+						saved_status = status;
+						goto endofheader;
+						break;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
 							"unexpected char [%c] in status %d: <<%.*s>> .\n",
@@ -219,7 +240,6 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						break;
 					case PARA_VALUE_QUOTED:
 						param->value.len=tmp-param->value.s-1 ;
-						*tmp = 0;
 						add_param( param , to_b );
 						status = E_PARA_VALUE;
 						break;
@@ -258,8 +278,6 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case PARA_VALUE_TOKEN:
 						param->value.len=tmp-param->value.s;
 						add_param(param,to_b);
-					case PARA_START:
-						*tmp=0;
 					case E_PARA_VALUE:
 						param = (struct to_param*)
 							pkg_malloc(sizeof(struct to_param));
@@ -398,7 +416,6 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 					case TAG1:
 					case TAG2:
 						param->name.len = tmp-param->name.s;
-						*tmp=0;
 						status = S_PARA_VALUE;
 						break;
 					case S_EQUAL:
@@ -419,6 +436,11 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 			default:
 				switch (status)
 				{
+					case TAG1:
+					case TAG2:
+					case TAG3:
+						status = PARA_NAME;
+						break;
 					case PARA_VALUE_TOKEN:
 					case PARA_NAME:
 					case PARA_VALUE_QUOTED:
@@ -459,9 +481,9 @@ endofheader:
 	return tmp;
 
 error:
-	LOG(L_ERR, "to_param parse error\n");
 	if (param) pkg_free(param);
 	to_b->error=PARSE_ERROR;
+	*returned_status = status;
 	return tmp;
 }
 
@@ -476,7 +498,7 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 
 	status=START_TO;
 	to_b->error=PARSE_OK;
-	foo=0;	
+	foo=0;
 
 	for( tmp=buffer; tmp<end; tmp++)
 	{
@@ -494,7 +516,6 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						break;
 					case URI_ENCLOSED:
 						to_b->uri.len = tmp - to_b->uri.s;
-						//*tmp = 0;
 						status = E_URI_ENCLOSED;
 						break;
 					case URI_OR_TOKEN:
@@ -546,6 +567,22 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 					case F_CR:
 					case F_LF:
 						status=saved_status;
+						goto endofheader;
+					default:
+						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
+							"in status %d: <<%.*s>> .\n",
+							*tmp,status, (int)(tmp-buffer), buffer);
+						goto error;
+				}
+				break;
+			case 0:
+				switch (status)
+				{
+					case URI_OR_TOKEN:
+					case MAYBE_URI_END:
+						to_b->uri.len = tmp - to_b->uri.s;
+					case END:
+						saved_status = status = END;
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
@@ -606,7 +643,6 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 					case DISPLAY_QUOTED:
 						break;
 					case URI_ENCLOSED:
-						//*tmp = 0;
 					case E_URI_ENCLOSED:
 						to_b->uri.len = tmp - to_b->uri.s;
 						status = END;
@@ -659,7 +695,6 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 					case END:
 						to_b->body.len = tmp-to_b->body.s;
 						tmp = parse_to_param(tmp,end,to_b,&saved_status);
-						//if (foo) *foo=0;
 						goto endofheader;
 					case F_CRLF:
 					case F_LF:
@@ -710,12 +745,10 @@ endofheader:
 	/* check if error*/
 	switch(status){
 		case MAYBE_URI_END:
-			//*foo=0;
 			to_b->uri.len = foo - to_b->uri.s;
 		case END:
 			to_b->body.len = tmp - to_b->body.s;
 		case E_PARA_VALUE:
-			*(tmp-1)=0;
 			break;
 		default:
 			LOG(L_ERR, "ERROR: parse_to: invalid To -  unexpected "
@@ -725,7 +758,6 @@ endofheader:
 	return tmp;
 
 error:
-	LOG(L_ERR, "to parse error\n");
 	to_b->error=PARSE_ERROR;
 	return tmp;
 
