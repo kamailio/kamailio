@@ -421,6 +421,7 @@ case $1 in
 			'1.00', 'call-id-for-ever', '1',
 			now() );"
 			sql_query "$QUERY"
+		echo "Changes do not take effect until server restarted"
 		;;
 
 
