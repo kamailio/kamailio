@@ -452,7 +452,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 				if(ojc == NULL)
 				{ // NO OPEN CONNECTION FOR THIS SIP ID
 					DBG("JABBER:worker_process:%d: new connection for <%s> ...\n", _pid, buff);
-					if (db_query(db_con, keys, vals, col, 1, 2, NULL, &res) != 0)
+					if (db_query(db_con, keys, vals, col, 1, 2, NULL, &res) == 0)
 					{
 
 						if (RES_ROW_N(res) != 0)
@@ -514,7 +514,7 @@ int worker_process(jab_wlist jwl, char* jaddress, int jport, int pipe, int size,
 							jab_send_sip_msgz(jsmsg->from, &jsmsg->to, jwl->contact_h, "ERROR: Your message was not sent. You do not have permision to use the gateway.");
 							error = 1;
 						}
-						if ((res != NULL) && (db_free_query(db_con, res) == 0))
+						if ((res != NULL) && (db_free_query(db_con, res) < 0))
 						{
 							DBG("JABBER:worker_process:%d: Error while freeing SQL result\n", _pid);
 							return -1;
