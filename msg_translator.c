@@ -1164,7 +1164,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	
 #ifdef USE_TCP
 	/* add id if tcp */
-	if (msg->rcv.proto==PROTO_TCP){
+	if (msg->rcv.proto==PROTO_TCP
+#ifdef USE_TLS
+			|| msg->rcv.proto==PROTO_TLS
+#endif
+			){
 		if  ((id_buf=id_builder(msg, &id_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
 							" id_builder failed\n");
@@ -1174,7 +1178,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		extra_params.len=id_len;
 	}
 	/* if sending proto == tcp, check if Content-Length needs to be added*/
-	if (proto==PROTO_TCP){
+	if (proto==PROTO_TCP
+#ifdef USE_TLS
+			|| proto==PROTO_TLS
+#endif
+			){
 		/* first of all parse content-length */
 		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
 			LOG(L_ERR, "build_req_buf_from_sip_req:"
@@ -1390,7 +1398,11 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 #ifdef USE_TCP
 
 	/* if sending proto == tcp, check if Content-Length needs to be added*/
-	if (msg->via2 && (msg->via2->proto==PROTO_TCP)){
+	if (msg->via2 && ((msg->via2->proto==PROTO_TCP)
+#ifdef USE_TLS
+				|| (msg->via2->proto==PROTO_TLS)
+#endif
+				)){
 		DBG("build_res_from_sip_res: checking content-length for \n%.*s\n",
 				(int)msg->len, msg->buf);
 		/* first of all parse content-length */
@@ -1872,6 +1884,8 @@ char* via_builder( unsigned int *len,
 		/* dop nothing */
 	}else if (proto==PROTO_TCP){
 		memcpy(line_buf+MY_VIA_LEN-4, "TCP ", 4);
+	}else if (proto==PROTO_TLS){
+		memcpy(line_buf+MY_VIA_LEN-4, "TLS", 4);
 	}else{
 		LOG(L_CRIT, "BUG: via_builder: unknown proto %d\n", proto);
 		return 0;

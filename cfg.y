@@ -103,6 +103,7 @@ int rt;  /* Type of route block for find_export */
 /* keywords */
 %token FORWARD
 %token FORWARD_TCP
+%token FORWARD_TLS
 %token FORWARD_UDP
 %token SEND
 %token SEND_TCP
@@ -921,6 +922,71 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| FORWARD_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| FORWARD_TCP LPAREN error RPAREN { $$=0; yyerror("bad forward_tcp"
 										"argument"); }
+		| FORWARD_TLS LPAREN host RPAREN	{ $$=mk_action(	FORWARD_TLS_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD_TLS LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_TLS_T,
+														STRING_ST,
+														NUMBER_ST,
+														$3,
+														0);
+										}
+		| FORWARD_TLS LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_TLS_T,
+														IP_ST,
+														NUMBER_ST,
+														(void*)$3,
+														0);
+										}
+		| FORWARD_TLS LPAREN host COMMA NUMBER RPAREN { $$=mk_action(
+																FORWARD_TLS_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+												 }
+		| FORWARD_TLS LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(
+																FORWARD_TLS_T,
+																 STRING_ST,
+																 NUMBER_ST,
+																$3,
+																(void*)$5);
+													}
+		| FORWARD_TLS LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TLS_T,
+																 IP_ST,
+																 NUMBER_ST,
+																 (void*)$3,
+																(void*)$5);
+												  }
+		| FORWARD_TLS LPAREN URIHOST COMMA URIPORT RPAREN {
+													$$=mk_action(FORWARD_TLS_T,
+																 URIHOST_ST,
+																 URIPORT_ST,
+																0,
+																0);
+													}
+													
+									
+		| FORWARD_TLS LPAREN URIHOST COMMA NUMBER RPAREN {
+													$$=mk_action(FORWARD_TLS_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																(void*)$5);
+													}
+		| FORWARD_TLS LPAREN URIHOST RPAREN {
+													$$=mk_action(FORWARD_TLS_T,
+																 URIHOST_ST,
+																 NUMBER_ST,
+																0,
+																0);
+										}
+		| FORWARD_TLS error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| FORWARD_TLS LPAREN error RPAREN { $$=0; yyerror("bad forward_tcp"
+										"argument"); }
+		
 		| SEND LPAREN host RPAREN	{ $$=mk_action(	SEND_T,
 													STRING_ST,
 													NUMBER_ST,

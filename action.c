@@ -112,6 +112,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 			else if (a->type==FORWARD_TCP_T) proto= PROTO_TCP;
 #endif
+#ifdef USE_TLS
+			else if (a->type==FORWARD_TLS_T) proto= PROTO_TLS;
+#endif
 			else proto=msg->rcv.proto;
 			if (a->p1_type==URIHOST_ST){
 				/*parse uri*/
@@ -150,6 +153,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 					case PROTO_UDP:
 #ifdef USE_TCP
 					case PROTO_TCP:
+#endif
+#ifdef USE_TLS
+					case PROTO_TLS:
 #endif
 						proto=u->proto;
 						break;
@@ -224,7 +230,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 					else{
 					/*tcp*/
-					ret=tcp_send(msg->buf, msg->len, to, 0);
+					ret=tcp_send(PROTO_TCP, msg->buf, msg->len, to, 0);
 				}
 #endif
 			}

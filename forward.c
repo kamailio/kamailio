@@ -176,6 +176,21 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 			}
 			break;
 #endif
+#ifdef USE_TLS
+		case PROTO_TLS:
+			switch(to->s.sa_family){
+				/* FIXME */
+				case AF_INET:	send_sock=sendipv4_tls;
+								break;
+#ifdef USE_IPV6
+				case AF_INET6:	send_sock=sendipv6_tls;
+								break;
+#endif
+				default:	LOG(L_ERR, "get_send_socket: BUG: don't know how"
+									" to forward to af %d\n", to->s.sa_family);
+			}
+			break;
+#endif /* USE_TLS */
 		case PROTO_UDP:
 			if ((bind_address==0)||(to->s.sa_family!=bind_address->address.af)||
 				  (bind_address->proto!=PROTO_UDP)){
@@ -482,7 +497,11 @@ int forward_reply(struct sip_msg* msg)
 
 
 #ifdef USE_TCP
-	if (proto==PROTO_TCP){
+	if (proto==PROTO_TCP
+#ifdef USE_TLS
+			|| proto==PROTO_TLS
+#endif
+			){
 		/* find id in i param if it exists */
 		if (msg->via1->i&&msg->via1->i->value.s){
 			s=msg->via1->i->value.s;

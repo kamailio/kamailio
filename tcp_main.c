@@ -368,7 +368,8 @@ void tcpconn_put(struct tcp_connection* c)
 
 
 /* finds a tcpconn & sends on it */
-int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
+int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
+				int id)
 {
 	struct tcp_connection *c;
 	struct ip_addr ip;
@@ -406,7 +407,7 @@ no_id:
 		if (c==0){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
-			if ((c=tcpconn_connect(to, PROTO_TCP))==0){
+			if ((c=tcpconn_connect(to, type))==0){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}
@@ -457,7 +458,12 @@ get_fd:
 send_it:
 	DBG("tcp_send: sending...\n");
 	lock_get(&c->write_lock);
-	n=send(fd, buf, len,
+#ifdef USE_TLS
+	if (c->type==PROTO_TLS)
+		n=tls_blocking_write(c, fd, buf, len);
+	else
+#endif
+		n=send(fd, buf, len,
 #ifdef HAVE_MSG_NOSIGNAL
 			MSG_NOSIGNAL
 #else
