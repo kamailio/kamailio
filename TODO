@@ -2,6 +2,9 @@ $Id$
 
 ( - todo, x - done)
 
+x update AUTHORS, debian/copyright, ser.8, ser.cfg.5 from stable
+x update Makefile*  from stable
+x update all package specs from stable
 - add BUG checks for  fd > 0 && fd <= maxfd to all selects?
 x tcp_main_loop: BUG cases should "conitnue;"
 - change len_gt into and expr (e.g msg:len).
@@ -16,7 +19,7 @@ x port receive.c pre_script_cb fix from stable
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
 
 release:
-- print_cseq_num max. size fix.
+x print_cseq_num max. size fix.
 x backport: tcp conn id fix to stable + destroy_tcp 
 x backport: acc mem. leak fixes
 x backport: dns mem. leak fixes (resolve.[ch])
