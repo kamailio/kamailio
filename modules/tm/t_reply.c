@@ -269,7 +269,8 @@ int t_retransmit_reply( struct cell *t )
 	   not yet, don't try to retransmit
 	*/
 	if (!t->uas.response.send_sock) {
-		LOG(L_ERR, "ERROR: no resolved dst to retransmit\n");
+		LOG(L_WARN, "WARNING: t_retransmit_reply: "
+			"no resolved dst to retransmit\n");
 		return -1;
 	}
 
