@@ -55,7 +55,6 @@ f none doc/ser/README.group 0644 bin bin
 f none doc/ser/README.jabber 0644 bin bin
 f none doc/ser/README.maxfwd 0644 bin bin
 f none doc/ser/README.msilo 0644 bin bin
-f none doc/ser/README.mysql 0644 bin bin
 f none doc/ser/README.nathelper 0644 bin bin
 f none doc/ser/README.pa 0644 bin bin
 f none doc/ser/README.permissions 0644 bin bin

@@ -1,7 +1,13 @@
 %define name    ser
-%define ver     0.8.10
-%define rel     2
-%define exclude CVS radius_acc radius_auth snmp mysql jabber
+%define ver     0.8.11pre29
+%define rel     0
+
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
+%define MYSQL_MODULES		mysql
+%define JABBER_MODULES		jabber
+%define RADIUS_MODULES		auth_radius group_radius uri_radius
+%define RADIUS_MOD_PATH		modules/auth_radius modules/group_radius modules/uri_radius
+
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
@@ -48,45 +54,48 @@ BuildPrereq:  expat
 %description jabber
 The ser-jabber package contains a sip to jabber message translator.
 
+%package  radius
+Summary:  ser radius authentication, group and uri check modules.
+Group:    System Environment/Daemons
+Requires: ser
+BuildPrereq:  radiusclient-devel
+
+%description radius
+The ser-radius package contains modules for radius authentication, group
+ membership and uri checking.
 
 %prep
 %setup
 
 %build
-make all exclude_modules="%exclude" cfg-target=/%{_sysconfdir}/ser/
-make modules modules=modules/mysql  cfg-target=/%{_sysconfdir}/ser/
-make modules modules=modules/jabber cfg-target=/%{_sysconfdir}/ser/
+make all skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%MYSQL_MODULES"  cfg-target=/%{_sysconfdir}/ser/
+make modules modules="modules/%JABBER_MODULES" cfg-target=/%{_sysconfdir}/ser/
+make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
 
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
-make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
-             cfg-dir=ser/ \
-	     bin-prefix=$RPM_BUILD_ROOT/%{_sbindir} \
-	     bin-dir="" \
-	     modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
-	     modules-dir=modules/ \
-	     doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
-	     doc-dir=ser/ \
-	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
-	     man-dir="" \
-		 cfg-target=/%{_sysconfdir}/ser/ \
-		 modules-target=/%{_libdir}/ser/modules/ \
-	     exclude_modules="%exclude"
-make install-modules modules=modules/mysql \
-           modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
-           modules-dir=modules/ \
-           doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
-           doc-dir=ser/ \
-           cfg-target=/%{_sysconfdir}/ser/ \
-           modules-target=/%{_libdir}/ser/modules/
-make install-modules modules=modules/jabber \
-           modules-prefix=$RPM_BUILD_ROOT/%{_libdir}/ser \
-           modules-dir=modules/ \
-           doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
-           doc-dir=ser/ \
-           cfg-target=/%{_sysconfdir}/ser/ \
-           modules-target=/%{_libdir}/ser/modules/
+make install skip_modules="%EXCLUDED_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules modules="modules/%MYSQL_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules modules="modules/%JABBER_MODULES" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/ser/ 
+make install-modules modules="%RADIUS_MOD_PATH" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		cfg-prefix=$RPM_BUILD_ROOT \
+		cfg-target=/%{_sysconfdir}/ser/ 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
@@ -118,10 +127,17 @@ sbin/insserv etc/init.d/
 %dir %{_libdir}/ser/modules
 %{_libdir}/ser/modules/acc.so
 %{_libdir}/ser/modules/auth.so
+%{_libdir}/ser/modules/auth_db.so
+%{_libdir}/ser/modules/dbtext.so
+%{_libdir}/ser/modules/domain.so
+%{_libdir}/ser/modules/enum.so
 %{_libdir}/ser/modules/exec.so
-%{_libdir}/ser/modules/im.so
+%{_libdir}/ser/modules/group.so
 %{_libdir}/ser/modules/maxfwd.so
 %{_libdir}/ser/modules/msilo.so
+%{_libdir}/ser/modules/nathelper.so
+%{_libdir}/ser/modules/pa.so
+%{_libdir}/ser/modules/permissions.so
 %{_libdir}/ser/modules/pike.so
 %{_libdir}/ser/modules/print.so
 %{_libdir}/ser/modules/registrar.so
@@ -130,7 +146,9 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/sms.so
 %{_libdir}/ser/modules/textops.so
 %{_libdir}/ser/modules/tm.so
+%{_libdir}/ser/modules/uri.so
 %{_libdir}/ser/modules/usrloc.so
+%{_libdir}/ser/modules/vm.so
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
@@ -150,8 +168,19 @@ sbin/insserv etc/init.d/
 %defattr(-,root,root)
 %{_libdir}/ser/modules/jabber.so
 
+%files radius
+%defattr(-,root,root)
+%{_libdir}/ser/modules/auth_radius.so
+%{_libdir}/ser/modules/group_radius.so
+%{_libdir}/ser/modules/uri_radius.so
+
 
 %changelog
+
+* Mon Jun 2 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- added a separate rpm for the radius modules
+- updated to the new makefile variables (removed lots of unnecessary stuff)
+
 * Tue Nov 12 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 - replaced expat-devel with expat
 - removed leading + from a few lines

@@ -19,6 +19,7 @@
 #  2003-05-30  added extra_defs & EXTRA_DEFS
 #               Makefile.defs force-included to allow recursive make
 #               calls -- see comment (andrei)
+#  2003-06-02   make tar changes -- unpacks in $NAME-$RELEASE  (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -158,15 +159,14 @@ tar:
 		--exclude=*.bz2 \
 		--exclude=*.tar \
 		-cf - $(notdir $(CURDIR)) | \
-			(mkdir -p tmp/_tar; \
-			    cd tmp/_tar; $(TAR) -xf - ) && \
-			    mv tmp/_tar/$(notdir $(CURDIR)) \
-			                  tmp/_tar/"$(NAME)-$(RELEASE)" && \
-			    (cd tmp/_tar && $(TAR) \
+			(mkdir -p tmp/_tar1; mkdir -p tmp/_tar2 ; \
+			    cd tmp/_tar1; $(TAR) -xf - ) && \
+			    mv tmp/_tar1/$(notdir $(CURDIR)) \
+			       tmp/_tar2/"$(NAME)-$(RELEASE)" && \
+			    (cd tmp/_tar2 && $(TAR) \
 			                    -zcf ../../"$(NAME)-$(RELEASE)_src".tar.gz \
 			                               "$(NAME)-$(RELEASE)" ) ; \
-			    rm -rf tmp/_tar
-#		 -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+			    rm -rf tmp/_tar1; rm -rf tmp/_tar2
 
 # binary dist. tar.gz
 .PHONY: bin
