@@ -76,6 +76,7 @@
  *             (bogdan)
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
+ * 2004-10-10: use of mhomed disabled for replies (jiri)
  */
 
 #include "defs.h"
