@@ -33,8 +33,8 @@
 #include "../../parser/hf.h"
 #include "../../dprint.h"
 #include "../../parser/parse_expires.h"  
+#include "../../ut.h"
 #include "reg_mod.h"                     /* Module parameters */
-#include "convert.h"                     /* atof, atoi */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"
 
@@ -224,7 +224,7 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 	if (!_ep || (_ep->body.len == 0)) {
 		*_e = get_expires_hf(_m);
 	} else {
-		if (atoi(&_ep->body, _e) < 0) {
+		if (str2int(&_ep->body, _e) < 0) {
 			*_e = 3600;
 			     /*
 			       rerrno = R_INV_EXP;
@@ -249,7 +249,7 @@ int calc_contact_q(param_t* _q, float* _r)
 	if (!_q || (_q->body.len == 0)) {
 		*_r = def_q;
 	} else {
-		if (atof(&_q->body, _r) < 0) {
+		if (str2float(&_q->body, _r) < 0) {
 			rerrno = R_INV_Q; /* Invalid q parameter */
 			LOG(L_ERR, "calc_contact_q(): Invalid q parameter\n");
 			return -1;
