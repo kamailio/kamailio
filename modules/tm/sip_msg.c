@@ -51,11 +51,16 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 
     /* via1 (via_body* type) */
     if (org_msg->via1)
-	 new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via1 );
+         new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via1 );
 
     /* via2 (via_body* type) */
     if (org_msg->via2)
-	new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via2 );
+    {
+        if (org_msg->via1 && org_msg->via1->next )
+            new_msg->via2 = new_msg->via1->next;
+        else
+            new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via2 );
+    }
 
     /* all the headers */
     new_msg->h_via1=0;
@@ -91,6 +96,7 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		  new_hdr->parsed = (void*)sh_malloc( sizeof(struct cseq_body) );
 		  memcpy( new_hdr->parsed , header->parsed , sizeof(struct cseq_body) );
 		  ((struct cseq_body*)new_hdr->parsed)->number.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->number.s );
+		  ((struct cseq_body*)new_hdr->parsed)->method.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->method.s );
 		}
 		new_msg->cseq = new_hdr;
 		break;
@@ -188,7 +194,9 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
     }
 
     if ( new_via->next )
-	new_via->next = via_body_cloner( new_buf , org_buf , org_via->next );
+        new_via->next = via_body_cloner( new_buf , org_buf , org_via->next );
+
+   return new_via;
 }
 
 
@@ -224,7 +232,52 @@ char*   translate_pointer( char* new_buf , char *org_buf , char* p)
 
 /* Frees the memory occupied by a SIP message
   */
-void free_uri(struct sip_uri* u)
+void sh_free_lump(struct lump* lmp)
+{
+	if (lmp && (lmp->op==LUMP_ADD)){
+		if (lmp->u.value) sh_free(lmp->u.value);
+		lmp->u.value=0;
+		lmp->len=0;
+	}
+}
+
+
+
+void sh_free_lump_list(struct lump* l)
+{
+	struct lump* t, *r, *foo,*crt;
+	t=l;
+	while(t){
+		crt=t;
+		t=t->next;
+	/*
+		 dangerous recursive clean
+		if (crt->before) free_lump_list(crt->before);
+		if (crt->after)  free_lump_list(crt->after);
+	*/
+		/* no more recursion, clean after and before and that's it */
+		r=crt->before;
+		while(r){
+			foo=r; r=r->before;
+			sh_free_lump(foo);
+			sh_free(foo);
+		}
+		r=crt->after;
+		while(r){
+			foo=r; r=r->after;
+			sh_free_lump(foo);
+			sh_free(foo);
+		}
+
+		/*clean current elem*/
+		sh_free_lump(crt);
+		sh_free(crt);
+	}
+}
+
+
+
+void sh_free_uri(struct sip_uri* u)
 {
    if (u)
    {
@@ -245,7 +298,7 @@ void free_uri(struct sip_uri* u)
 
 
 
-void free_via_param_list(struct via_param* vp)
+void sh_free_via_param_list(struct via_param* vp)
 {
    struct via_param* foo;
    while(vp)
@@ -258,7 +311,7 @@ void free_via_param_list(struct via_param* vp)
 
 
 
-void free_via_list(struct via_body* vb)
+void sh_free_via_list(struct via_body* vb)
 {
    struct via_body* foo;
    while(vb)
@@ -266,7 +319,7 @@ void free_via_list(struct via_body* vb)
       foo=vb;
       vb=vb->next;
      if (foo->param_lst)
-        free_via_param_list(foo->param_lst);
+        sh_free_via_param_list(foo->param_lst);
       sh_free(foo);
     }
 }
@@ -274,21 +327,22 @@ void free_via_list(struct via_body* vb)
 
 /* frees a hdr_field structure,
  * WARNING: it frees only parsed (and not name.s, body.s)*/
-void clean_hdr_field(struct hdr_field* hf)
+void sh_clean_hdr_field(struct hdr_field* hf)
 {
    if (hf->parsed)
    {
       switch(hf->type)
       {
          case HDR_VIA:
-   DBG("DEBUG: sip_msg_free : via headers\n");
-               free_via_list(hf->parsed);
+   DBG("DEBUG: sh_clean_hdr_field : via headers\n");
+               sh_free_via_list(hf->parsed);
              break;
          case HDR_CSEQ:
-   DBG("DEBUG: sip_msg_free : cseq headers\n");
+   DBG("DEBUG: sh_clean_hdr_field : cseq headers\n");
                 sh_free(hf->parsed);
              break;
          default:
+   DBG("DEBUG: sh_clean_hdr_field : unknown headers\n");
       }
    }
 }
@@ -297,18 +351,17 @@ void clean_hdr_field(struct hdr_field* hf)
 
 /* frees a hdr_field list,
  * WARNING: frees only ->parsed and ->next*/
-void free_hdr_field_lst(struct hdr_field* hf)
+void sh_free_hdr_field_lst(struct hdr_field* hf)
 {
    struct hdr_field* foo;
-  DBG("DEBUG: free_hdr_field_lst : \n");
 
    while(hf)
     {
-      DBG("DEBUG: free_hdr_field_lst : \n");
+      DBG("DEBUG: free_hdr_field_lst : %s [%d]\n",hf->name.s, hf->type);
        foo=hf;
        hf=hf->next;
-       clean_hdr_field(foo);
-       pkg_free(foo);
+       sh_clean_hdr_field(foo);
+       sh_free(foo);
     }
 }
 
@@ -319,20 +372,20 @@ void sip_msg_free(struct sip_msg* msg)
 {
    if (!msg) return;
 
+   DBG("DEBUG: sip_msg_free : start\n");
+
    if (msg->new_uri.s)
    {
       sh_free(msg->new_uri.s);
       msg->new_uri.len=0;
    }
-   LOG(L_ERR, "ERROR: sip_msg_free : headers and via1/via2 freeing still missing\n");
-   //if (msg->headers)
-    //  free_hdr_field_lst(msg->headers);
-   DBG("DEBUG: sip_msg_free : lump\n");
+   if (msg->headers)
+      sh_free_hdr_field_lst(msg->headers);
    if (msg->add_rm)
-      free_lump_list(msg->add_rm);
+      sh_free_lump_list(msg->add_rm);
    if (msg->repl_add_rm)
-      free_lump_list(msg->repl_add_rm);
+      sh_free_lump_list(msg->repl_add_rm);
    if (msg->orig) sh_free( msg->orig );
    if (msg->buf) sh_free( msg->buf );
-   
+
 }

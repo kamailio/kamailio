@@ -114,7 +114,7 @@ int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
 int t_relay_reply( struct cell* , unsigned int , struct sip_msg* );
 int t_check( struct s_table* , struct sip_msg*  );
 int t_all_final( struct cell * );
-int t_build_and_send_ACK( struct cell *Trans , unsigned int brach );
+int t_build_and_send_ACK( struct cell *Trans , unsigned int brach , struct sip_msg* rpl);
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
 int t_cancel_branch(unsigned int branch); //TO DO

@@ -677,7 +677,7 @@ error:
    time; if you call it twice and the HF is found on second time too,
    it's not replaced in the well-known HF pointer but just added to
    header list; if you want to use a dumbie convenience function which will
-   give you the first occurance of a header you are interested in, 
+   give you the first occurance of a header you are interested in,
    look at check_transaction_quadruple
 */
 int parse_headers(struct sip_msg* msg, int flags)
@@ -686,10 +686,10 @@ int parse_headers(struct sip_msg* msg, int flags)
 	char* tmp;
 	char* rest;
 	char* end;
-	
+
 	end=msg->buf+msg->len;
 	tmp=msg->unparsed;
-	
+
 	DBG("parse_headers: flags=%d\n", flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		hf=pkg_malloc(sizeof(struct hdr_field));
@@ -707,6 +707,7 @@ int parse_headers(struct sip_msg* msg, int flags)
 			case HDR_EOH:
 				msg->eoh=tmp; /* or rest?*/
 				msg->parsed_flag|=HDR_EOH;
+				pkg_free(hf);
 				goto skip;
 			case HDR_OTHER: /*do nothing*/
 				break;
@@ -769,7 +770,7 @@ int parse_headers(struct sip_msg* msg, int flags)
 skip:
 	msg->unparsed=tmp;
 	return 0;
-	
+
 error:
 	if (hf) pkg_free(hf);
 	return -1;

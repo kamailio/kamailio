@@ -172,14 +172,14 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
       { /* it's a ACK request*/
          /* first only the length are checked */
          if ( /*from length*/ p_cell->inbound_request->from->body.len == p_msg->from->body.len )
-            if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
+            //if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
                if ( /*callid length*/ p_cell->inbound_request->callid->body.len == p_msg->callid->body.len )
                   if ( /*cseq_nr length*/ get_cseq(p_cell->inbound_request)->number.len == get_cseq(p_msg)->number.len )
                       if ( /*cseq_method type*/ p_cell->inbound_request->first_line.u.request.method_value == METHOD_INVITE  )
                          //if ( /*tag length*/ p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len )
                             /* so far the lengths are the same -> let's check the contents */
                             if ( /*from*/ !memcmp( p_cell->inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
-                               if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
+                               //if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
                                   //if ( /*tag*/ !memcmp( p_cell->tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
                                      if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                         if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
@@ -393,7 +393,7 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
   */
 int t_on_reply_received( struct sip_msg  *p_msg )
 {
-   unsigned int  branch;
+   unsigned int  branch,len;
 
    global_msg_id = p_msg->id;
 
@@ -403,16 +403,18 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    /* if no T found ->tell the core router to forward statelessly */
    if ( T<=0 )
       return 1;
+   DBG("DEBUG: t_on_reply_received: Original status =%d\n",T->status);
 
    /* stop retransmission */
    remove_from_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+   // ??? what about FR_TIMER ????
 
    /* on a non-200 reply to INVITE, generate local ACK */
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE && p_msg->first_line.u.reply.statusclass>2 )
    {
       DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-      t_build_and_send_ACK( T , branch );
-      t_store_incoming_reply( T , branch , p_msg );
+      //t_store_incoming_reply( T , branch , p_msg );
+      t_build_and_send_ACK( T , branch , p_msg );
    }
 
    #ifdef FORKING
@@ -420,7 +422,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    #endif
 
    /*let's check the current inbound response status (is final or not) */
-   if ( T->inbound_response && (T->status/100)>1 )
+   if ( T->inbound_response[branch] && (T->status/100)>1 )
    {  /*a final reply was already sent upstream */
       /* alway relay 2xx immediately ; drop anything else */
       DBG("DEBUG: t_on_reply_received: something final had been relayed\n");
@@ -444,7 +446,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       /* relay ringing and OK immediately */
       if ( p_msg->first_line.u.reply.statusclass ==1 || p_msg->first_line.u.reply.statusclass ==2  )
       {
-	   DBG("DEBUG: t_on_reply_received:  relay ringing and OK immediately \n");
+           DBG("DEBUG: t_on_reply_received:  relay ringing and OK immediately \n");
            if ( p_msg->first_line.u.reply.statuscode > T->status )
               t_relay_reply( T , branch , p_msg );
          return 0;
@@ -453,7 +455,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       /* error final responses are only stored */
       if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
       {
-	   DBG("DEBUG: t_on_reply_received:  error final responses are only stored  \n");
+         DBG("DEBUG: t_on_reply_received:  error final responses are only stored  \n");
          t_store_incoming_reply( T , branch , p_msg );
          if ( t_all_final(T) )
               relay_lowest_reply_upstream( T , p_msg );
@@ -588,6 +590,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 
       T->outbound_response->tl[RETRASMISSIONS_LIST].payload = T->outbound_response;
       T->outbound_response->tl[FR_TIMER_LIST].payload = T->outbound_response;
+      T->outbound_response->to.sin_family = AF_INET;
       T->outbound_response->my_T = T;
    }
 
@@ -741,20 +744,21 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    /* split the branch into pieces: loop_detection_check(ignored),
       hash_table_id, synonym_id, branch_id
    */
+
    if (! ( p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s) )
 	goto nomatch;
 
    p=p_msg->via1->branch->value.s;
    scan_space=p_msg->via1->branch->value.len;
 
-   /* loop detection ... ignore */ 
+   /* loop detection ... ignore */
    n=eat_token2_end( p, p+scan_space, '.');
    scan_space-=n-p;
    if (n==p || scan_space<2 || *n!='.') goto nomatch;
    p=n+1; scan_space--;
 
    /* hash_id */
-   n=eat_token2_end( p, p+scan_space, '.'); 
+   n=eat_token2_end( p, p+scan_space, '.');
    hashl=n-p;
    scan_space-=hashl;
    if (!hashl || scan_space<2 || *n!='.') goto nomatch;
@@ -773,7 +777,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    /* branch id */  /*  should exceed the scan_space */
    n=eat_token_end( p, p+scan_space );
    branchl=n-p;
-   if (!branchl ) goto nomatch; 
+   if (!branchl ) goto nomatch;
    branchi=p;
 
 
@@ -781,7 +785,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    entry_label=str_unsigned_hex_2_int(syni, synl);
    branch_id=str_unsigned_hex_2_int(branchi, branchl);
 
-   DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n", 
+   DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n",
 	hash_index, entry_label, branch_id );
 
    /* sanity check */
@@ -799,13 +803,14 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
       /* the transaction is referenceted for reading */
       ref_cell( p_cell );
       /* is it the cell with the wanted entry_label? */
-      if ( p_cell->label = entry_label )
+      if ( p_cell->label == entry_label )
       /* has the transaction the wanted branch? */
       if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
       {/* WE FOUND THE GOLDEN EGG !!!! */
 		*p_Trans = p_cell;
 		*p_branch = branch_id;
 		unref_cell( p_cell );
+                              DBG("DEBUG: t_reply_matching: reply matched!\n");
 		return 1;
 	}
       /* next cell */
@@ -838,8 +843,16 @@ int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_
    if ( Trans->inbound_response[branch] )
       free_sip_msg( Trans->inbound_response[branch] ) ;
    /* force parsing all the needed headers*/
-   parse_headers(p_msg, HDR_VIA|HDR_TO|HDR_FROM|HDR_CALLID|HDR_CSEQ );
+   if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO )==-1 ||
+        !p_msg->via1 || !p_msg->via2 || !p_msg->to )
+   {
+      LOG( L_ERR , "ERROR: t_store_incoming_reply: unable to parse headers !\n"  );
+      return -1;
+   }
    Trans->inbound_response[branch] = sip_msg_cloner( p_msg );
+   Trans->status = p_msg->first_line.u.reply.statuscode;
+   DBG("DEBUG: t_store_incoming_reply: reply stored\n");
+   return 1;
 }
 
 
@@ -895,10 +908,11 @@ int t_all_final( struct cell *Trans )
    unsigned int i;
 
    for( i=0 ; i<Trans->nr_of_outgoings ; i++  )
-      if (  !Trans->inbound_response[i] || (Trans->inbound_response[i]) && Trans->inbound_response[i]->first_line.u.reply.statuscode<200 )
+      if (  !Trans->inbound_response[i] ||  Trans->inbound_response[i]->first_line.u.reply.statuscode<=200 )
          return 0;
 
-   return 1;
+  DBG("DEBUG: t_all_final: final state!!!!:)) \n");
+  return 1;
 }
 
 
@@ -922,6 +936,8 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
          lowest_v = T->inbound_response[i]->first_line.u.reply.statuscode;
       }
 
+   DBG("DEBUG: relay_lowest_reply_upstream: lowest reply [%d]=%d\n",lowest_i,lowest_v);
+
    if ( lowest_i != -1 )
       push_reply_from_uac_to_uas( T ,lowest_i );
 
@@ -944,6 +960,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    {
       sh_free( trans->outbound_response->retr_buffer );
       remove_from_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+      // final response ????
    }
    else
    {
@@ -956,8 +973,13 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 	trans->outbound_response = NULL;
 	return -1;
       }
+      /*init retrans buffer*/
       memset( trans->outbound_response , 0 , sizeof (struct retrans_buff) );
       trans->outbound_response->tl[RETRASMISSIONS_LIST].payload = trans->outbound_response;
+      trans->outbound_response->tl[FR_TIMER_LIST].payload = trans->outbound_response;
+      trans->outbound_response->to.sin_family = AF_INET;
+      trans->outbound_response->my_T = trans;
+
       if (update_sock_struct_from_via(  &(trans->outbound_response->to),  trans->inbound_response[branch]->via2 )==-1) {
 	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: cannot lookup reply dst: %s\n",
 		trans->inbound_response[branch]->via2->host.s );
@@ -968,7 +990,9 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    }
 
    /*  */
+   DBG("DEBUG: push_reply_from_uac_to_uas: building buf from response\n");
    buf = build_res_buf_from_sip_res ( trans->inbound_response[branch], &len);
+   DBG("DEBUG: push_reply_from_uac_to_uas: after building\n");
    if (!buf) {
 	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: no shmem for outbound reply buffer\n");
         return -1;
@@ -979,10 +1003,24 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
    free( buf ) ;
 
    /* make sure that if we send something final upstream, everything else will be cancelled */
+   if ( trans->status>=300 &&  trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE )
+   {
+            T->outbound_response->timeout_ceiling  = RETR_T2;
+            T->outbound_response->timeout_value    = RETR_T1;
+            remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+            insert_into_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+            remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+            insert_into_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+   }
+   else if (trans->status>=200)
+            t_put_on_wait( trans->inbound_request );
+
+    /*
+   // make sure that if we send something final upstream, everything else will be cancelled
    if (trans->inbound_response[branch]->first_line.u.reply.statusclass>=2 )
       t_put_on_wait( trans->inbound_request );
 
-   /* if the code is 3,4,5,6 class for an INVITE-> starts retrans timer*/
+   // if the code is 3,4,5,6 class for an INVITE-> starts retrans timer
    if ( trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE &&
          trans->inbound_response[branch]->first_line.u.reply.statusclass>=300)
          {
@@ -991,7 +1029,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
             insert_into_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
             insert_into_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
          }
-
+    */
    t_retransmit_reply( trans->inbound_request, 0 , 0 );
 }
 
@@ -1016,48 +1054,83 @@ int copy_hf( char **dst, struct hdr_field* hf, char *bumper )
    *dst+= hf->name.len ;
    **dst = ':'; (*dst)++;
    **dst = ' '; (*dst)++;
-   memcpy(*dst, hf->body.s, hf->body.len);
+   memcpy(*dst, hf->body.s, hf->body.len-1);
    *dst+= hf->body.len;
    memcpy( *dst, CRLF, CRLF_LEN );
    *dst+=CRLF_LEN;
    return 0;
 }
-  
+
 
 
 
 /* Builds an ACK request based on an INVITE request. ACK is send
   * to same address
   */
-int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
+int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_msg* rpl)
 {
-    struct sip_msg* p_msg = T->inbound_request;
+   struct sip_msg* p_msg , *r_msg;
     struct via_body *via;
     struct hdr_field *hdr;
-    char *ack_buf=NULL, *p;
+    char *ack_buf, *p;
     unsigned int len;
     int n;
 
-   /* enough place for first line and Via ? */
+
+   p_msg = T->inbound_request;
+   r_msg = rpl;
+
+   if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
+   {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot generate a HBH ACK if key HFs in INVITE missing\n");
+	goto error;
+   }
+
+    len = 0;
+    /*first line's len */
+    len += 4+p_msg->first_line.u.request.uri.len+1+p_msg->first_line.u.request.version.len+CRLF_LEN;
+    /*via*/
+    len+= MY_VIA_LEN + names_len[0] + 1+ port_no_str_len + MY_BRANCH_LEN + 3*sizeof(unsigned int) /*branch*/ + CRLF_LEN;
+    /*headers*/
+   for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+      if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID || hdr->type==HDR_CSEQ )
+                 len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) ;
+      else if ( hdr->type==HDR_TO )
+                 len += ((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s ) ;
+
+   /* CSEQ method : from INVITE-> ACK*/
+   len -= 3;
+   /* end of message */
+   len += CRLF_LEN; /*new line*/
+
+   /*
+   // enough place for first line and Via ?
    if ( 4 + p_msg->first_line.u.request.uri.len + 1 + p_msg->first_line.u.request.version.len +
-	CRLF_LEN + MY_VIA_LEN + names_len[0] + 1 + port_no_str_len + MY_BRANCH_LEN  < MAX_ACK_LEN ) {
+	CRLF_LEN + MY_VIA_LEN + names_len[0] + 1 + port_no_str_len + MY_BRANCH_LEN  > MAX_ACK_LEN ) {
 		LOG( L_ERR, "ERROR: t_build_and_send_ACK: no place for FL/Via\n");
 		goto error;
    }
+   */
+   ack_buf = (char *)malloc( len +1);
+   if (!ack_buf)
+   {
+       LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
+       goto error;
+   }
 
-   ack_buf = (char *)malloc( MAX_ACK_LEN );
    p = ack_buf;
+   DBG("DEBUG: t_build_and_send_ACK: len = %d \n",len);
 
    /* first line */
    memcpy( p , "ACK " , 4);
    p += 4;
 
-   memcpy( p , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len );
+   memcpy( p , p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf) , p_msg->first_line.u.request.uri.len );
    p += p_msg->first_line.u.request.uri.len;
 
    *(p++) = ' ';
 
-   memcpy( p , p_msg->first_line.u.request.version.s , p_msg->first_line.u.request.version.len );
+   memcpy( p , p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf) , p_msg->first_line.u.request.version.len );
    p += p_msg->first_line.u.request.version.len;
 
    memcpy( p, CRLF, CRLF_LEN );
@@ -1070,7 +1143,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    memcpy( p , names[0] , names_len[0] );
    p += names_len[0];
 
-   *(p++) = ':';
+  // *(p++) = ':';
 
    memcpy( p , port_no_str , port_no_str_len );
    p += port_no_str_len;
@@ -1078,37 +1151,59 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    memcpy( p, MY_BRANCH, MY_BRANCH_LEN );
    p+=MY_BRANCH_LEN;
 
-   n=snprintf( p, ack_buf + MAX_ACK_LEN - p,
-                 ".%x.%x.%x%s",
+   n=sprintf( p /*, ack_buf + MAX_ACK_LEN - p*/, ".%x.%x.%x%s",
                  Trans->hash_index, Trans->label, branch, CRLF );
 
    if (n==-1) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: not enough memory for branch\n");
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: unable to generate branch\n");
 	goto error;
    }
    p+=n;
 
-   if (!check_transaction_quadruple( p_msg )) {
-	LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot generate a HBH ACK if key HFs in INVITE missing\n");
-	goto error;
-   }
 
-   /* To */
+
+   for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+   {
+      if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
+	{
+		memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
+			((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
+		p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
+	}
+      else if ( hdr->type==HDR_TO )
+	{
+		memcpy( p , r_msg->orig+(r_msg->to->name.s-r_msg->buf) ,
+			((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s ) );
+		p += ((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s );
+	}
+       else if ( hdr->type==HDR_CSEQ )
+	{
+		memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
+			(( ((struct cseq_body*)hdr->parsed)->method.s ) - hdr->name.s ) );
+		p += (( ((struct cseq_body*)hdr->parsed)->method.s ) - hdr->name.s );
+		memcpy( p , "ACK" CRLF, 3+CRLF_LEN );
+		p += 3+CRLF_LEN;
+	}
+    }
+
+
+/*
+   // To
    if (copy_hf( &p, p_msg->to , ack_buf + MAX_ACK_LEN )==-1) {
 	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for To\n");
 	goto error;
    }
-   /* From */
+   // From
    if (copy_hf( &p, p_msg->from, ack_buf + MAX_ACK_LEN )==-1) {
 	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for From\n");
 	goto error;
    }
-   /* CallId */
+   // CallId
    if (copy_hf( &p, p_msg->callid, ack_buf + MAX_ACK_LEN )==-1) {
 	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for callid\n");
 	goto error;
    }
-   /* CSeq, EoH */
+   // CSeq, EoH
    n=snprintf( p, ack_buf + MAX_ACK_LEN - p,
                  "Cseq: %*s ACK%s%s", get_cseq(p_msg)->number.len,
 		get_cseq(p_msg)->number.s, CRLF, CRLF );
@@ -1117,10 +1212,13 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
 	goto error;
    }
    p+=n;
-
+*/
+    memcpy( p , CRLF , CRLF_LEN );
+    p += CRLF_LEN;
 
    /* sends the ACK message to the same destination as the INVITE */
    udp_send( ack_buf, p-ack_buf, (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+   DBG("DEBUG: t_build_and_send_ACK: ACK sent\n",);
 
    /* free mem*/
    if (ack_buf) free( ack_buf );
