@@ -45,34 +45,6 @@
 #include "lookup.h"
 
 
-/*
- * Rewrite Request-URI
- */
-static inline int rewrite(struct sip_msg* _m, str* _s)
-{
-	char* buf;
-
-	buf = (char*)pkg_malloc(_s->len + 1);
-	if (!buf) {
-		LOG(L_ERR, "rewrite(): No memory left\n");
-		return -1;
-	}
-
-	memcpy(buf, _s->s, _s->len);
-	buf[_s->len] = '\0';
-
-	_m->parsed_uri_ok = 0;
-	if (_m->new_uri.s) {
-		pkg_free(_m->new_uri.s);
-	}
-
-	_m->new_uri.s = buf;
-	_m->new_uri.len = _s->len;
-
-	DBG("rewrite(): Rewriting Request-URI with '%.*s'\n", _s->len, buf);
-	return 0;
-}
-
 
 /*
  * Lookup contact in the database and rewrite Request-URI
@@ -116,7 +88,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		ptr = ptr->next;
 	
 	if (ptr) {
-		if (rewrite(_m, &ptr->c) < 0) {
+		if (rewrite_uri(_m, &ptr->c) < 0) {
 			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
 			ul.unlock_udomain((udomain_t*)_t);
 			return -4;
