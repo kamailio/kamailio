@@ -221,7 +221,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy,
 					ret=E_BAD_ADDRESS;
 					goto done;
 			}
-			ret=forward_request( p_msg , proxy ) ;
+			ret=forward_request( p_msg , proxy, p_msg->rcv.proto) ;
 			free_proxy( proxy );	
 			free( proxy );
 #ifdef ACK_FORKING_HACK
@@ -238,7 +238,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy,
 			p_msg->new_uri=backup_uri;
 #endif
 		} else {
-			ret=forward_request( p_msg , proxy ) ;
+			ret=forward_request( p_msg , proxy, p_msg->rcv.proto ) ;
 #ifdef ACK_FORKING_HACK
 			backup_uri=p_msg->new_uri;
 			init_branch_iterator();

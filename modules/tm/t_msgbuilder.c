@@ -81,7 +81,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		branch_buf, &branch_len ))
 		goto error;
 	via=via_builder(&via_len, Trans->uac[branch].request.send_sock,
-		branch_buf, branch_len );
+		branch_buf, branch_len, Trans->uac[branch].request.send_sock->proto );
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
@@ -225,7 +225,7 @@ char *build_uac_request(  str msg_type, str dst, str from,
 		goto error;
 	}
 	via=via_builder(&via_len, t->uac[branch].request.send_sock,
-		branch_buf, branch_len );
+		branch_buf, branch_len, t->uac[branch].request.send_sock->proto);
 	
 	if (!via) {
 		LOG(L_ERR, "ERROR: build_uac_request: via building failed\n");
@@ -365,7 +365,8 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 		goto error;
 	}
 
-	via = via_builder(&via_len, t->uac[branch].request.send_sock, branch_buf, branch_len);
+	via = via_builder(&via_len, t->uac[branch].request.send_sock, 
+			branch_buf, branch_len, t->uac[branch].request.send_sock->proto);
 	if (!via) {
 		LOG(L_ERR, "ERROR: build_uac_request_dlg: via building failed\n");
 		goto error;

@@ -202,7 +202,7 @@ int t_uac( str *msg_type, str *dst,
 	/* T->uac[branch].request.to_len=sizeof(union sockaddr_union); */
 	hostent2su(&to, &proxy->host, proxy->addr_idx, 
 		(proxy->port)?htons(proxy->port):htons(SIP_PORT));
-	send_sock=get_send_socket( &to );
+	send_sock=get_send_socket( &to, PROTO_UDP );
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: t_uac: no corresponding listening socket "
 			"for af %d\n", to.s.sa_family );
@@ -345,7 +345,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 
 	branch=0;
 	hostent2su(&to_su, &proxy->host, proxy->addr_idx, (proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
-	send_sock=get_send_socket(&to_su);
+	send_sock=get_send_socket(&to_su, PROTO_UDP);
 	if (send_sock == 0) {
 		LOG(L_ERR, "ERROR: t_uac_dlg: no corresponding listening socket for af %d\n", to_su.s.sa_family );
 		ret = E_NO_SOCKET;

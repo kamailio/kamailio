@@ -724,7 +724,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg )
 			return 0;
 		}
 	}
-	send_sock=get_send_socket(&rb->to);
+	send_sock=get_send_socket(&rb->to, msg->rcv.proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d "
 			"no socket\n", rb->to.s.sa_family);
