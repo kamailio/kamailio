@@ -125,15 +125,15 @@ int push_on_network(struct sip_msg *msg, int net)
 	   we go for "to" header
 	*/
 	flag = 0;
-	DBG("DEBUG:sms_push_on_net: tring to get user from new_uri\n");
-	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
-	|| (flag=1)!=1 || !uri.user.len )
+	DBG("DEBUG:sms_push_on_net: tring to get user from R_uri\n");
+	if ( parse_uri( msg->first_line.u.request.uri.s,
+	msg->first_line.u.request.uri.len ,&uri)||(flag=1)!=1||!uri.user.len )
 	{
 		if (flag) free_uri(&uri);
 		flag = 0;
-		DBG("DEBUG:sms_push_on_net: tring to get user from R_uri\n");
-		if ( parse_uri( msg->first_line.u.request.uri.s,
-		msg->first_line.u.request.uri.len ,&uri)||(flag=1)!=1||!uri.user.len )
+		DBG("DEBUG:sms_push_on_net: tring to get user from new_uri\n");
+		if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
+		|| (flag=1)!=1 || !uri.user.len )
 		{
 			if (flag) free_uri(&uri);
 			flag = 0;
@@ -190,14 +190,21 @@ int push_on_network(struct sip_msg *msg, int net)
 	append_str(p, SMS_FOOTER, SMS_FOOTER_LEN);
 
 	/* copy user from uri */
-	sms_messg.to_len = uri.user.len;
-	if (sms_messg.to_len>MAX_CHAR_BUF) {
+	if (uri.user.len<2 || uri.user.s[0]!='+' || uri.user.s[1]<'1'
+	|| uri.user.s[1]>'9') {
+		LOG(L_ERR,"ERROR:sms_push_on_net: user tel number [%.*s] does not"
+			"respect international format\n",uri.user.len,uri.user.s);
+		goto error;
+	}
+	if (uri.user.len>MAX_CHAR_BUF) {
 		LOG(L_ERR,"ERROR:sms_push_on_net: user tel number"
 			" longer than %d\n",MAX_CHAR_BUF);
 		goto error;
 	}
+	/* we have to strip out the '+' */
+	sms_messg.to_len = uri.user.len-1;
 	p = sms_messg.to;
-	append_str(p,uri.user.s,uri.user.len);
+	append_str(p, uri.user.s+1, sms_messg.to_len);
 
 	/* setting up sms characteristics */
 	sms_messg.is_binary = 0;
@@ -241,13 +248,13 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 	from.len = contact.len = 0;
 
 	/* From header */
-	from.len = 5 /*"<sip:"*/ +  from_user->len/*user*/ + 1/*"@"*/
+	from.len = 6 /*"<sip:+"*/ +  from_user->len/*user*/ + 1/*"@"*/
 		+ domain.len /*host*/ + 1 /*">"*/ + SMS_FROM_TAG_LEN;
 	from.s = (char*)pkg_malloc(from.len);
 	if (!from.s)
 		goto error;
 	p=from.s;
-	append_str(p,"<sip:",5);
+	append_str(p,"<sip:+",6);
 	append_str(p,from_user->s,from_user->len);
 	*(p++)='@';
 	append_str(p,domain.s,domain.len);
@@ -256,13 +263,13 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 
 	/* Contact header */
 	if (use_contact) {
-		contact.len = 5 /*"<sip:"*/ + from_user->len/*user*/ + 1/*"@"*/
+		contact.len = 6 /*"<sip:+"*/ + from_user->len/*user*/ + 1/*"@"*/
 			+ domain.len/*host*/ + 1 /*">"*/;
 		contact.s = (char*)pkg_malloc(contact.len);
 		if (!contact.s)
 			goto error;
 		p=contact.s;
-		append_str(p,"<sip:",5);
+		append_str(p,"<sip:+",6);
 		append_str(p,from_user->s,from_user->len);
 		*(p++)='@';
 		append_str(p,domain.s,domain.len);
