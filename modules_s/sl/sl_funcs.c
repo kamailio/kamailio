@@ -72,6 +72,12 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 			msg->via1->host.s );
 		goto error;
 	}
+	/* To header is needed (tag param in particular)*/
+	if (parse_headers(msg,HDR_TO)==-1 || msg->to==0)
+	{
+		LOG(L_ERR, "ERROR: sl_send_reply: cannot find/parse To\n");
+		goto error;
+	}
 	/* to:tag is added only for INVITEs without To tag in order
 	to be able to capture the ACK*/
 	if ( msg->first_line.u.request.method_value==METHOD_INVITE

@@ -1,6 +1,8 @@
 #include "sms_funcs.h"
 
 
+
+
 int sms_extract_body(struct sip_msg *msg, str *body )
 {
 	if ( parse_headers(msg,HDR_EOH)==-1 )
@@ -8,6 +10,9 @@ int sms_extract_body(struct sip_msg *msg, str *body )
 		LOG(L_ERR,"ERROR: sms_extract_body:unable to parse all headers!\n");
 		goto error;
 	}
+
+	/* get the lenght from COntent-Lenght header */
+
 
 	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)!=0 )
 	{
