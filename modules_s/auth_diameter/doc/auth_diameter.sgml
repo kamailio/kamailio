@@ -1,0 +1,53 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "auth_diameter_user.sgml">
+<!ENTITY devel SYSTEM "auth_diameter_devel.sgml">
+<!ENTITY faq SYSTEM "auth_diameter_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>AUTH_DIAMETER Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>modroiu@fokus.fraunhofer.de</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<address>
+		    <email>modroiu@fokus.fraunhofer.de</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <year>2004</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
