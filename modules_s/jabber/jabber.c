@@ -940,8 +940,11 @@ int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
 		char *_hb, int *_hl)
 {
-	xj_jkey p;
+	t_xj_jkey jkey, *p;
+	str _u;
+	ih_param_p _ipp = NULL;
 	int idx, i, maxcount;
+	char *cp;
 
 	if(!_irp || !_bb || !_bl || *_bl <= 0 || !_hb || !_hl || *_hl <= 0)
 		return -1;
@@ -951,8 +954,63 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 	strcpy(_bb, "<h4>Active XMPP connections</h4>");
 	
 	if(_irp->params)
-		strcat(_bb, "<br><b>Close action not implemented yet!</b><br>");
+	{
+		strcat(_bb, "<br><b>Close action is alpha release!</b><br>");
+		_ipp = _irp->params;
+		i = 0;
+		while(_ipp)
+		{
+			switch(_ipp->name[0])
+			{
+				case 'w':
+					idx = 0;
+					cp = _ipp->value;
+					while(*cp && *cp>='0' && *cp<='9')
+					{
+						idx = idx*10 + *cp-'0';
+						cp++;
+					}
+					i++;
+				break;
+				case 'u':
+					_u.s = _ipp->value;
+					_u.len = strlen(_ipp->value);
+					jkey.id = &_u;
+					i++;
+				break;
+				case 'i':
+					jkey.hash = 0;
+					cp = _ipp->value;
+					while(*cp && *cp>='0' && *cp<='9')
+					{
+						jkey.hash = jkey.hash*10 + *cp-'0';
+						cp++;
+					}
+					i++;
+				break;
+				
+			}
+			_ipp = _ipp->next;
+		}
+		if(i!=3 || idx < 0 || idx >= jwl->len)
+		{
+			strcat(_bb, "<br><b><i>Bad parameters!</i></b>\n");
+		}
+		else
+		{
+			strcat(_bb, "<br><b><i>The connection of [");
+			strcat(_bb, _u.s);
 
+			if(xj_wlist_set_flag(jwl, &jkey, XJ_FLAG_CLOSE) < 0)
+				strcat(_bb, "] does not exist!</i></b>\n");
+			else
+				strcat(_bb, "] was scheduled for closing!</i></b>\n");
+		}
+		*_bl = strlen(_bb);
+
+		return 0;
+	}
+	
 	if(jwl!=NULL && jwl->len > 0 && jwl->workers!=NULL)
 	{
 		for(idx=0; idx<jwl->len; idx++)

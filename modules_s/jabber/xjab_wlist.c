@@ -298,7 +298,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 			msid->id->len = jkey->id->len;
 			memcpy(msid->id->s, jkey->id->s, jkey->id->len);
 			msid->hash = jkey->hash;
-			msid->flag = 0;
+			msid->flag = XJ_FLAG_OPEN;
 			s_unlock_at(jwl->sems, pos);
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_get: new entry for <%.*s> in the pool of"
@@ -319,6 +319,49 @@ error:
 				jkey->id->len, jkey->id->s);
 	return -1;
 }
+
+int xj_wlist_set_flag(xj_wlist jwl, xj_jkey jkey, int fl)
+{
+	int i;
+	xj_jkey p = NULL;
+	if(jwl==NULL || jkey==NULL || jkey->id==NULL || jkey->id->s==NULL)
+		return -1;
+	
+#ifdef XJ_EXTRA_DEBUG
+	DBG("XJAB:xj_wlist_set_flag: looking for <%.*s>"
+		" having id=%d\n", jkey->id->len, jkey->id->s, jkey->hash);
+#endif
+			
+	i = 0;
+	while(i < jwl->len)
+	{
+		s_lock_at(jwl->sems, i);
+		if(jwl->workers[i].pid <= 0)
+		{
+			s_unlock_at(jwl->sems, i);
+			i++;
+			continue;
+		}
+		if((p=find234(jwl->workers[i].sip_ids, (void*)jkey, NULL)) != NULL)
+		{
+			p->flag = fl;
+			s_unlock_at(jwl->sems, i);
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_wlist_set_flag: the connection for <%.*s>"
+				" marked with flag=%d", jkey->id->len, jkey->id->s, fl);
+#endif
+			return jwl->workers[i].wpipe;
+		}
+		s_unlock_at(jwl->sems, i);
+		i++;
+	}
+#ifdef XJ_EXTRA_DEBUG
+	DBG("XJAB:xj_wlist_set_flag: entry does not exist for <%.*s>\n",
+			jkey->id->len, jkey->id->s);
+#endif
+	return -1;
+}
+
 
 /**
  * set IM aliases, jdomain and outbound proxy

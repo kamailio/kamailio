@@ -41,6 +41,9 @@
 #define XJ_REG_WATCHER		32
 #define XJ_DEL_WATCHER		64
 
+#define XJ_FLAG_OPEN		0
+#define XJ_FLAG_CLOSE		1
+
 
 typedef void (*pa_callback_f)(str* _user, int _state, void *p);
 

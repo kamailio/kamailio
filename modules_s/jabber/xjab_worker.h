@@ -77,6 +77,7 @@ xj_wlist xj_wlist_init(int **, int, int, int, int, int);
 int  xj_wlist_set_pid(xj_wlist, int, int);
 int  xj_wlist_get(xj_wlist, xj_jkey, xj_jkey*);
 int  xj_wlist_check(xj_wlist, xj_jkey, xj_jkey*);
+int  xj_wlist_set_flag(xj_wlist, xj_jkey, int);
 void xj_wlist_del(xj_wlist, xj_jkey, int);
 void xj_wlist_free(xj_wlist);
 int  xj_wlist_set_aliases(xj_wlist, char *, char *, char *);

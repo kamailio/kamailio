@@ -1450,7 +1450,7 @@ void xj_tuac_callback( struct cell *t, struct sip_msg *msg,
 		DBG("XJAB: xj_tuac_callback: no 2XX return code - connection set"
 			" as expired \n");
 #endif
-		*(*((int**)t->cbp)) = 1;	
+		*(*((int**)t->cbp)) = XJ_FLAG_CLOSE;	
 	}
 }
 
@@ -1466,7 +1466,7 @@ void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *ps
 	{
 		if(jcp->ojc[i] == NULL)
 			continue;
-		if(jcp->ojc[i]->jkey->flag==0 &&
+		if(jcp->ojc[i]->jkey->flag==XJ_FLAG_OPEN &&
 			jcp->ojc[i]->expire > ltime)
 			continue;
 			
@@ -1500,7 +1500,7 @@ void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *ps
 		}
 
 		// send offline presence to all subscribers
-		if(jcp->ojc[i]->expire > 0 && jcp->ojc[i]->plist)
+		if(jcp->ojc[i]->plist)
 		{
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_worker:%d: sending offline status to SIP"
