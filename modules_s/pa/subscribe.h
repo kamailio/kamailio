@@ -32,11 +32,24 @@
 
 #include "../../parser/msg_parser.h"
 
+
 /*
  * Handle a subscribe Request
  */
-int subscribe(struct sip_msg* _m, char* _s1, char* _s2);
+int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2);
 
+
+/*
+ * Return 1 if the subscription exists and 0 if not
+ */
+int existing_subscription(struct sip_msg* _m, char* _domain, char* _s2);
+
+
+/*
+ * Returns 1 if possibly a user agent can handle SUBSCRIBE
+ * itself, 0 if it cannot for sure
+ */
+int pua_exists(struct sip_msg* _m, char* _domain, char* _s2);
 
 
 #endif /* SUBSCRIBE_H */

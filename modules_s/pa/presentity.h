@@ -90,5 +90,11 @@ int notify_watchers(presentity_t* _p);
 void print_presentity(FILE* _f, presentity_t* _p);
 
 
+/*
+ * Find a given watcher in the list
+ */
+int find_watcher(struct presentity* _p, str* _uri, watcher_t** _w);
+
+
 #endif /* PRESENTITY_H */
 

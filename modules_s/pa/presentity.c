@@ -173,3 +173,26 @@ int notify_watchers(presentity_t* _p)
 	}
 	return 0;
 }
+
+
+/*
+ * Find a given watcher in the list
+ */
+int find_watcher(struct presentity* _p, str* _uri, watcher_t** _w)
+{
+	watcher_t* ptr;
+
+	ptr = _p->watchers;
+
+	while(ptr) {
+		if ((_uri->len == ptr->uri.len) &&
+		    (!memcmp(_uri->s, ptr->uri.s, _uri->len))) {
+			*_w = ptr;
+			return 0;
+		}
+			
+		ptr = ptr->next;
+	}
+	
+	return 1;
+}
