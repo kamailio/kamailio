@@ -47,6 +47,7 @@
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-97  actions permitted to be used from failure/reply routes (jiri)
+ *  2003-04-21  remove_hf and is_present_hf introduced (jiri)
  */
 
 
@@ -67,6 +68,8 @@
 
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
+static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
+static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int replace_all_f(struct sip_msg* msg, char* key, char* str);
 static int search_append_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
@@ -95,6 +98,10 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"append_urihf",     append_urihf,      2, str_fixup,   
 			REQUEST_ROUTE|FAILURE_ROUTE},
+	{"remove_hf",        remove_hf_f,         1, str_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+	{"is_present_hf",        is_present_hf_f,         1, str_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{0,0,0,0,0}
 };
 
@@ -247,6 +254,46 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 			return -1;
 		}
 		
+		return 1;
+	}
+	return -1;
+}
+
+static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+{
+	struct hdr_field *hf;
+	struct lump* l;
+	int cnt;
+
+	cnt=0;
+	/* we need to be sure we have seen all HFs */
+	parse_headers(msg, HDR_EOH, 0);
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len!=((str *)str_hf)->len)
+			continue;
+		if (strncasecmp(hf->name.s, ((str *)str_hf)->s, hf->name.len)!=0)
+			continue;
+		l=del_lump(&msg->add_rm, hf->name.s-msg->buf, hf->len, 0);
+		if (l==0) {
+			LOG(L_ERR, "ERROR: remove_hf_f: no memory\n");
+			return -1;
+		}
+		cnt++;
+	}
+	return cnt==0 ? -1 : 1;
+}
+
+static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+{
+	struct hdr_field *hf;
+
+	/* we need to be sure we have seen all HFs */
+	parse_headers(msg, HDR_EOH, 0);
+	for (hf=msg->headers; hf; hf=hf->next) {
+		if (hf->name.len!=((str *)str_hf)->len)
+			continue;
+		if (strncasecmp(hf->name.s, ((str *)str_hf)->s, hf->name.len)!=0)
+			continue;
 		return 1;
 	}
 	return -1;

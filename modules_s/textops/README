@@ -43,9 +43,17 @@ Desc:	appends txt after the last header field
 Example: append_hf("P-hint: VOICEMAIL\r\n");
 
 Name:	append_urihf(prefix,suffix)
+Desc:	append header field name with original r-URI in middle
 Params: prefix -- string (usually at least header field name)
 		suffix -- string (usually at least line terminator)
 Example: append_urihf("CC-Diversion: ", "\r\n")
+
+Name:	is_present_hf(hf_name)
+Desc:	return true if a header field is present in message
+Params: header field dame
+Example: if (is_present_hf("From")) log(1, "From HF Present");
+Notes:  takes header field names "as is" and doesn't distinguish
+		compact names
 
 Known Limitations:
 ------------------
