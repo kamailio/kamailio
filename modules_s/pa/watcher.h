@@ -48,11 +48,24 @@ typedef enum doctype {
 
 typedef enum watcher_status {
 	WS_PENDING = 0,
-	WS_ACTIVE
+	WS_ACTIVE = 1,
+	WS_WAITING = 2,
+	WS_TERMINATED = 3
 } watcher_status_t;
 
+typedef enum watcher_event {
+	WE_SUBSCRIBE = 0,
+	WE_APPROVED = 1,
+	WE_DEACTIVATED = 2,
+	WE_PROBATION = 3,
+	WE_REJECTED = 4,
+	WE_TIMEOUT = 5,
+	WE_GIVEUP = 6,
+	WE_NORESOURCE = 7
+} watcher_event_t;
+
 typedef enum wflags {
-	WFLAG_SUBSCRIPTION_CHANGED
+	WFLAG_SUBSCRIPTION_CHANGED=1
 } wflags_t;
 
 /*
@@ -67,10 +80,21 @@ typedef struct watcher {
 	dlg_t* dialog;          /* Dialog handle */
 	str s_id;               /* id of this watcherinfo statement */
 	wflags_t flags;
+        watcher_event_t  event;
 	watcher_status_t status; /* status of subscription */
 	struct watcher* next;   /* Next watcher in the list */
 } watcher_t;
  
+
+/*
+ * Convert watcher status name to enum
+ */
+watcher_status_t watcher_status_from_string(str *wsname);
+
+/*
+ * Convert watcher event name to enum
+ */
+watcher_event_t watcher_event_from_string(str *wename);
 
 /*
  * Create a new watcher structure

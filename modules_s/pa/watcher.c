@@ -59,12 +59,53 @@ char *event_package_name[] = {
 	NULL
 };
 
+static str watcher_status_names[] = {
+     [WS_PENDING] = { "pending", 7 },
+     [WS_ACTIVE] = { "active", 6 },
+     [WS_WAITING] = { "waiting", 7 },
+     [WS_TERMINATED] = { "terminated", 10 },
+     { 0, 0 }
+};
 
-int event_package_from_name(str *epname) 
+static str watcher_event_names[] = {
+     [WE_SUBSCRIBE]   = { "subscribe",   9 },
+     [WE_APPROVED]    = { "approved",    8 },
+     [WE_DEACTIVATED] = { "deactivated", 11 },
+     [WE_PROBATION]   = { "probation",   9 },
+     [WE_REJECTED]    = { "rejected",    8 },
+     [WE_TIMEOUT]     = { "timeout",     7 },
+     [WE_GIVEUP]      = { "giveup",      6 },
+     [WE_NORESOURCE]  = { "noresource",  10 },
+     { 0, 0 }
+};
+
+int event_package_from_string(str *epname) 
 {
      int i;
      for (i = 0; event_package_name[i]; i++) {
-	  if (strncmp(epname->s, event_package_name[i], epname->len) == 0) {
+	  if (strcasecmp(epname->s, event_package_name[i]) == 0) {
+	       return i;
+	  }
+     }
+     return 0;
+}
+
+watcher_status_t watcher_status_from_string(str *wsname) 
+{
+     int i;
+     for (i = 0; watcher_status_names[i].len; i++) {
+	  if (str_strcasecmp(wsname, &watcher_status_names[i]) == 0) {
+	       return i;
+	  }
+     }
+     return 0;
+}
+
+watcher_event_t watcher_event_from_string(str *wename) 
+{
+     int i;
+     for (i = 0; watcher_event_names[i].len; i++) {
+	  if (str_strcasecmp(wename, &watcher_event_names[i]) == 0) {
 	       return i;
 	  }
      }
@@ -164,6 +205,7 @@ int new_watcher_no_wb(presentity_t *_p, str* _uri, time_t _e, int event_package,
 	watcher->expires = _e; /* Expires value */
 	watcher->accept = _a;  /* Accepted document type */
 	watcher->dialog = _dlg; /* Dialog handle */
+	watcher->event = WE_SUBSCRIBE;
 	*_w = watcher;
 
 	return 0;
@@ -192,15 +234,15 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
      }
 
      if (use_db) {
-	  db_key_t query_cols[10];
-	  db_op_t query_ops[10];
-	  db_val_t query_vals[10];
+	  db_key_t query_cols[11];
+	  db_op_t query_ops[11];
+	  db_val_t query_vals[11];
 
-	  db_key_t result_cols[4];
+	  db_key_t result_cols[5];
 	  db_res_t *res;
 	  int n_query_cols = 0;
 	  int n_result_cols = 0;
-	  int s_id_col, status_col, display_name_col;
+	  int s_id_col, status_col, display_name_col, event_col;
 	  char *package = event_package_name[watcher->event_package];
 
 	  LOG(L_ERR, "db_new_watcher starting\n");
@@ -234,22 +276,25 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 
 	  result_cols[s_id_col = n_result_cols++] = "s_id";
 	  result_cols[status_col = n_result_cols++] = "status";
+	  result_cols[event_col = n_result_cols++] = "event";
 	  result_cols[display_name_col = n_result_cols++] = "display_name";
 		
 	  db_use_table(pa_db, watcherinfo_table);
 	  if (db_query (pa_db, query_cols, query_ops, query_vals,
 			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
-	       LOG(L_ERR, "db_new_tuple(): Error while querying tuple\n");
+	       LOG(L_ERR, "new_watcher(): Error while querying tuple\n");
 	       return -1;
 	  }
-	  LOG(L_INFO, "new_tuple: getting values: res=%p res->n=%d\n",
+	  LOG(L_INFO, "new_watcher: getting values: res=%p res->n=%d\n",
 	      res, (res ? res->n : 0));
 	  if (res && res->n > 0) {
 	       /* fill in tuple structure from database query result */
 	       db_row_t *row = &res->rows[0];
 	       db_val_t *row_vals = ROW_VALUES(row);
-	       str s_id;
-	       str status;
+	       str s_id = { 0, 0 };
+	       str status = { 0, 0 };
+	       str event_str = { 0, 0 };
+	       watcher_event_t watcher_event = WE_SUBSCRIBE;
 	       if (!row_vals[s_id_col].nul) {
 		    s_id.s = row_vals[s_id_col].val.string_val;
 		    s_id.len = strlen(s_id.s);
@@ -258,9 +303,16 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 		    status.s = row_vals[status_col].val.string_val;
 		    status.len = strlen(status.s);
 	       }
-
-	       if (strcmp(status.s, "pending") == 0) {
-		    watcher->status = WS_PENDING;
+	       if (!row_vals[event_col].nul) {
+		    event_str.s = row_vals[event_col].val.string_val;
+		    event_str.len = strlen(event_str.s);
+		    watcher_event = watcher_event_from_string(&event_str);
+	       }
+	       watcher->event = watcher_event;
+	       
+	       LOG(L_ERR, "new_watcher: status=%.*s\n", status.len, status.s);
+	       if (status.len) {
+		    watcher->status = watcher_status_from_string(&status);
 	       } else {
 		    watcher->status = WS_ACTIVE;
 	       }
@@ -294,8 +346,7 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 	       query_cols[n_query_cols] = "event";
 	       query_vals[n_query_cols].type = DB_STR;
 	       query_vals[n_query_cols].nul = 0;
-	       query_vals[n_query_cols].val.str_val.s = "subscribe";
-	       query_vals[n_query_cols].val.str_val.len = strlen("subscribe");
+	       query_vals[n_query_cols].val.str_val = watcher_event_names[watcher->event];
 	       n_query_cols++;
 
 	       query_cols[n_query_cols] = "display_name";
@@ -324,7 +375,8 @@ int new_watcher(presentity_t *_p, str* _uri, time_t _e, int event_package, docty
 		    return -1;
 	       }
 	  }
-	  db_free_query(pa_db, res);
+	  if (res)
+	       db_free_query(pa_db, res);
      }
 
      return 0;
@@ -341,11 +393,11 @@ int db_read_watcherinfo(presentity_t *_p)
 	  db_op_t query_ops[5];
 	  db_val_t query_vals[5];
 
-	  db_key_t result_cols[8];
+	  db_key_t result_cols[9];
 	  db_res_t *res;
 	  int n_query_cols = 1;
 	  int n_result_cols = 0;
-	  int w_uri_col, s_id_col, event_package_col, status_col, display_name_col, accepts_col, expires_col;
+	  int w_uri_col, s_id_col, event_package_col, status_col, watcher_event_col, display_name_col, accepts_col, expires_col;
 
 	  // LOG(L_ERR, "db_read_watcherinfo starting\n");
 	  query_cols[0] = "r_uri";
@@ -362,6 +414,7 @@ int db_read_watcherinfo(presentity_t *_p)
 	  result_cols[display_name_col = n_result_cols++] = "display_name";
 	  result_cols[accepts_col = n_result_cols++] = "accepts";
 	  result_cols[expires_col = n_result_cols++] = "expires";
+	  result_cols[watcher_event_col = n_result_cols++] = "event";
 		
 	  db_use_table(pa_db, watcherinfo_table);
 	  if (db_query (pa_db, query_cols, query_ops, query_vals,
@@ -375,14 +428,16 @@ int db_read_watcherinfo(presentity_t *_p)
 	       for (i = 0; i < res->n; i++) {
 		    db_row_t *row = &res->rows[i];
 		    db_val_t *row_vals = ROW_VALUES(row);
-		    str w_uri;
-		    str s_id;
-		    str event_package_str;
-		    int event_package;
+		    str w_uri = { 0, 0 };
+		    str s_id = { 0, 0 };
+		    str event_package_str = { 0, 0 };
+		    int event_package = EVENT_PRESENCE;
+		    str watcher_event_str = { 0, 0 };
+		    watcher_event_t watcher_event = WE_SUBSCRIBE;
 		    int accepts = row_vals[accepts_col].val.int_val;
 		    int expires = row_vals[expires_col].val.int_val;
-		    str status;
-		    str display_name;
+		    str status = { 0, 0 };
+		    str display_name = { 0, 0 };
 		    watcher_t *watcher = NULL;
 		    if (!row_vals[w_uri_col].nul) {
 			 w_uri.s = row_vals[w_uri_col].val.string_val;
@@ -395,29 +450,31 @@ int db_read_watcherinfo(presentity_t *_p)
 		    if (!row_vals[event_package_col].nul) {
 			 event_package_str.s = row_vals[event_package_col].val.string_val;
 			 event_package_str.len = strlen(event_package_str.s);
-			 event_package = event_package_from_name(&event_package_str);
+			 event_package = event_package_from_string(&event_package_str);
 		    }
 		    if (!row_vals[status_col].nul) {
 			 status.s = row_vals[status_col].val.string_val;
 			 status.len = strlen(status.s);
+		    }
+		    if (!row_vals[watcher_event_col].nul) {
+			 watcher_event_str.s = row_vals[watcher_event_col].val.string_val;
+			 watcher_event_str.len = strlen(watcher_event_str.s);
+			 watcher_event = watcher_event_from_string(&watcher_event_str);
 		    }
 		    if (!row_vals[display_name_col].nul) {
 			 display_name.s = row_vals[display_name_col].val.string_val;
 			 display_name.len = strlen(display_name.s);
 		    }
 
-		    if (!find_watcher(_p, &w_uri, event_package, &watcher) == 0) {
+		    if (find_watcher(_p, &w_uri, event_package, &watcher) != 0) {
 			 new_watcher_no_wb(_p, &w_uri, expires, event_package, accepts, NULL, &display_name, &watcher);
 		    }
 		    if (watcher) {
-			 if (strcmp(status.s, "pending") == 0) {
-			      watcher->status = WS_PENDING;
-			 } else {
-			      if (watcher->status == WS_PENDING) {
-				   watcher->flags |= WFLAG_SUBSCRIPTION_CHANGED;
-			      }
-			      watcher->status = WS_ACTIVE;
-			 }
+			 watcher_status_t ws = watcher_status_from_string(&status);
+			 if (watcher->status != ws)
+			      watcher->flags |= WFLAG_SUBSCRIPTION_CHANGED;
+			 watcher->status = ws;
+			 watcher->event = watcher_event;
 			     
 			 if (s_id.s) {
 			      strncpy(watcher->s_id.s, s_id.s, S_ID_LEN);
@@ -427,6 +484,7 @@ int db_read_watcherinfo(presentity_t *_p)
 	       }
 	  }
 	  db_free_query(pa_db, res);
+	  LOG(L_ERR, "db_read_watcherinfo:  _p->uri='%s' done\n", _p->uri.s);
      }
      return 0;
 }
@@ -464,11 +522,6 @@ int update_watcher(watcher_t* _w, time_t _e)
 	_w->expires = _e;
 	return 0;
 }
-
-static str watcher_status_names[] = {
-	{ "pending", 7 },
-	{ "active", 6 }
-};
 
 #define CRLF "\r\n"
 #define CRLF_L (sizeof(CRLF) - 1)
@@ -539,7 +592,7 @@ int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
 	add_string(STATUS_START, STATUS_START_L);
 	add_str(watcher_status_names[status]);
 	add_string(EVENT_START, EVENT_START_L);
-	add_string("subscribe", 9);
+	add_str(watcher_event_names[watcher->event]);
 	add_string(SID_START, SID_START_L);
 	add_str(watcher->s_id);
 	if (watcher->display_name.len > 0) {
