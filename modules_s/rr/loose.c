@@ -756,7 +756,6 @@ static inline int route_after_loose(struct sip_msg* _m)
 int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	struct sip_uri puri;
-	int ret;
 
 	if (find_first_route(_m) != 0) {
 		DBG("loose_route(): There is no Route HF\n");
@@ -774,19 +773,16 @@ int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 	if (is_myself(&puri.host, puri.port_no))
 #endif
 	{
-		ret = route_after_strict(_m, &puri);
-		if (ret < 0) {
+		if (route_after_strict(_m, &puri) < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_strict\n");
 			return -1;
 		}
 	} else {
-		ret = route_after_loose(_m);
-		if (ret < 0) {
+		if (route_after_loose(_m) < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_loose\n");
 			return -1;
 		}
 	}
 
-	if (ret) return -1;
-	else return 1;
+	return 1;
 }
