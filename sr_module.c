@@ -15,6 +15,9 @@ struct sr_module* modules=0;
 #ifdef STATIC_TM
 	extern struct module_exports* tm_mod_register();
 #endif
+#ifdef STATIC_MAXFWD
+	extern struct module_exports* maxfwd_mod_register();
+#endif
 
 
 /* initializes statically built (compiled in) modules*/
@@ -24,7 +27,7 @@ int init_builtin_modules()
 		register_module(tm_mod_register,"built-in", 0);
 	#endif
 	#ifdef STATIC_MAXFWD
-		register_module(maxfwd_mod_register, "buitl-in", 0);
+		register_module(maxfwd_mod_register, "built-in", 0);
 	#endif
 }
 
