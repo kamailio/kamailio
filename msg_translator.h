@@ -3,9 +3,11 @@
 
 #include "msg_parser.h"
 
-char * build_buf_from_sip_request  (struct sip_msg* msg, unsigned int *returned_len);
-char * build_buf_from_sip_response(struct sip_msg* msg, unsigned int *returned_len);
+char * build_req_buf_from_sip_req  (struct sip_msg* msg, unsigned int *returned_len);
 
+char * build_res_buf_from_sip_res(struct sip_msg* msg, unsigned int *returned_len);
+
+char * build_res_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_len);
 
 
 

@@ -44,7 +44,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	struct sockaddr_in* to;
 
 
-	buf = build_buf_from_sip_request( msg, &len);
+	buf = build_req_buf_from_sip_req( msg, &len);
 	if (!buf){
 		LOG(L_ERR, "ERROR: forward_reply: building failed\n");
 		goto error;
@@ -134,7 +134,7 @@ int forward_reply(struct sip_msg* msg)
 
 	/* here will be called the T Module !!!!!!  */
 
-	new_buf = build_buf_from_sip_request( msg, &new_len);
+	new_buf = build_res_buf_from_sip_res( msg, &new_len);
 	if (!new_buf){
 		LOG(L_ERR, "ERROR: forward_reply: building failed\n");
 		goto error;

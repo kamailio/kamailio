@@ -110,7 +110,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 
 
-char * build_buf_from_sip_request(struct sip_msg* msg, unsigned int *returned_len)
+char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_len)
 {
 	unsigned int len, new_len, via_len, received_len, uri_len;
 	char* line_buf;
@@ -400,7 +400,7 @@ error:
 
 
 
-char * build_buf_from_sip_response(struct sip_msg* msg, unsigned int *returned_len)
+char * build_res_buf_from_sip_res(struct sip_msg* msg, unsigned int *returned_len)
 {
 	unsigned int new_len, via_len,r;
 	char* new_buf;
@@ -457,6 +457,15 @@ error:
 	*returned_len=0;
 	return 0;
 }
+
+
+
+
+
+char * build_res_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_len)
+{
+}
+
 
 
 
