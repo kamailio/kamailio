@@ -21,6 +21,7 @@
 #include "globals.h"
 #include "data_lump.h"
 #include "ut.h"
+#include "mem.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -163,7 +164,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		goto error;
 	}
 
-	line_buf=malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
+	line_buf=pkg_malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
 	if (line_buf==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error1;
@@ -193,7 +194,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	
 	/* check if received needs to be added */
 	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
-		received_buf=malloc(sizeof(char)*MAX_RECEIVED_SIZE);
+		received_buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 		if (received_buf==0){
 			LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 			goto error1;
@@ -451,8 +452,8 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	/* received_buf & line_buf will be freed in receiv_msg by free_lump_list*/
 	return 0;
 error1:
-	if (line_buf) free(line_buf);
-	if (received_buf) free(received_buf);
+	if (line_buf) pkg_free(line_buf);
+	if (received_buf) pkg_free(received_buf);
 error:
 	if (new_buf) free(new_buf);
 	if (to) free(to);
@@ -517,7 +518,8 @@ int forward_reply(struct sip_msg* msg)
 	new_len=len-via_len;
 	
 	DBG(" old size: %d, new size: %d\n", len, new_len);
-	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging (\0 to print it )*/
+	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging 
+											(\0 to print it )*/
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;

@@ -158,6 +158,11 @@ int process_no = 0;
 /* cfg parsing */
 int cfg_errors=0;
 
+#ifdef PKG_MALLOC
+char mem_pool[PKG_MEM_POOL_SIZE];
+struct qm_block* mem_block;
+#endif
+
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
@@ -286,12 +291,18 @@ static void sig_usr(int signo)
 			else
 				printf("statistics dump to %s failed\n", stat_file );
 #endif
+#ifdef PKG_MALLOC
+		pkg_status();
+#endif
 		DPrint("INT received, program terminates\n");
 		DPrint("Thank you for flying ser\n");
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
 		dump_all_statistic();
+#endif
+#ifdef PKG_MALLOC
+		pkg_status();
 #endif
 	}
 }
@@ -512,7 +523,7 @@ int main(int argc, char** argv)
 
 #ifdef PKG_MALLOC
 	/*init mem*/
-	mem_block=qm_malloc_init(mem_pool, MEM_POOL_SIZE);
+	mem_block=qm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	if (mem_block==0){
 		LOG(L_CRIT, "could not initialize memory pool\n");
 		goto error;

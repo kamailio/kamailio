@@ -33,9 +33,7 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	char* end;
 	struct qm_block* qm;
 	unsigned int init_overhead;
-	unsigned int init_size;
 	
-	init_size=size;
 	/* make address and size multiple of 8*/
 	start=(char*)( ((unsigned int)address%8)?((unsigned int)address+8)/8*8:
 			(unsigned int)address);
@@ -54,9 +52,10 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	end=start+size;
 	qm=(struct qm_block*)start;
 	memset(qm, 0, sizeof(struct qm_block));
-	qm->init_size=init_size;
-	qm->size=size-init_overhead;
+	size-=init_overhead;
+	qm->size=size;
 	qm->real_used=init_overhead;
+	qm->max_real_used=qm->real_used;
 	
 	qm->first_frag=(struct qm_frag*)(start+sizeof(struct qm_block));
 	qm->last_frag_end=(struct qm_frag_end*)(end-sizeof(struct qm_frag_end));
@@ -150,6 +149,8 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 			}
 			qm->real_used+=f->size;
 			qm->used+=f->size;
+			if (qm->max_real_used<qm->real_used)
+				qm->max_real_used=qm->real_used;
 			return (char*)f+sizeof(struct qm_frag);
 		}
 	}
@@ -197,6 +198,7 @@ void qm_free(struct qm_block* qm, void* p)
 			f=prev;
 		}
 	}
+	f->size=size;
 	FRAG_END(f)->size=f->size;
 	qm_insert_free(qm, f);
 }
@@ -209,10 +211,10 @@ void qm_status(struct qm_block* qm)
 	int i;
 
 	DBG("qm_status (%x):\n", qm);
-	DBG(" init_size= %d", qm->init_size);
-	DBG(" heap size= %d", qm->size);
+	DBG(" heap size= %d\n", qm->size);
 	DBG(" used= %d, used+overhead=%d, free=%d\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
+	DBG(" max used (+overhead)= %d\n", qm->max_real_used);
 	
 	DBG("dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
@@ -220,7 +222,8 @@ void qm_status(struct qm_block* qm)
 		DBG("    %3d. %c  address=%x  size=%d\n", i, (f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
 	DBG("dumping free list:\n");
-	for (f=qm->free_lst.u.nxt_free; f!=&(qm->free_lst); f=f->u.nxt_free)
+	for (f=qm->free_lst.u.nxt_free,i=0; f!=&(qm->free_lst); f=f->u.nxt_free,
+			i++)
 		DBG("    %3d. %c  address=%x  size=%d\n", i, (f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
 	DBG("-----------------------------\n");

@@ -22,10 +22,10 @@ struct qm_frag_end{
 
 
 struct qm_block{
-	unsigned int init_size;
 	unsigned int size; /* total size */
 	unsigned int used; /* alloc'ed size*/
 	unsigned int real_used; /* used+malloc overhead*/
+	unsigned int max_real_used;
 	
 	struct qm_frag* first_frag;
 	struct qm_frag_end* last_frag_end;
