@@ -8,6 +8,11 @@
 #        table definitons
 # USAGE: call the command without any parameters for info
 #
+# History:
+#
+# 2003-01-24: Changed realm column of subscriber and pending
+#             tables to domain (janakj)
+# 2003-01-25: Optimized keys of some core tables (janakj)
 #
 
 #################################################################
@@ -125,7 +130,7 @@ INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '1');
 INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'silo', '1');
-INSERT INTO version VALUES ( 'realm', '1');
+INSERT INTO version VALUES ( 'domain', '1');
 INSERT INTO version VALUES ( 'uri', '1');
 
 
@@ -181,7 +186,7 @@ CREATE TABLE aliases (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  KEY user (user, domain, contact)
+  PRIMARY KEY user (user, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -198,8 +203,7 @@ CREATE TABLE event (
   user varchar(50) NOT NULL default '',
   uri varchar(255) NOT NULL default '',
   description varchar(255) NOT NULL default '',
-  PRIMARY KEY  (id),
-  UNIQUE KEY id (id)
+  PRIMARY KEY (id)
 ) $TABLE_TYPE;
 
 
@@ -215,7 +219,8 @@ CREATE TABLE grp (
   user varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
-  last_modified datetime NOT NULL default '0000-00-00 00:00:00'
+  last_modified datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY(user, domain, grp)
 ) $TABLE_TYPE;
 
 
@@ -235,7 +240,7 @@ CREATE TABLE location (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  KEY user (user, domain, contact)
+  PRIMARY KEY(user, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -308,8 +313,7 @@ CREATE TABLE phonebook (
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
   sip_uri varchar(128) NOT NULL default '',
-  PRIMARY KEY  (id),
-  UNIQUE KEY id (id)
+  PRIMARY KEY  (id)
 ) $TABLE_TYPE;
 
 
