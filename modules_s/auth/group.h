@@ -5,7 +5,7 @@
 #ifndef GROUP_H
 #define GROUP_H
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 
 
 int is_user(struct sip_msg* _msg, char* _user, char* _str2);

@@ -7,7 +7,7 @@
 #ifndef __RR_H__
 #define __RR_H__
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 #include "../../str.h"
 
 /*

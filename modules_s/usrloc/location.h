@@ -7,7 +7,7 @@
 
 #include <time.h>
 #include "contact.h"
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 #include "db.h"
 
 

@@ -5,7 +5,7 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 #include "cred.h"
 
 

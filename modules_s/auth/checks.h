@@ -5,7 +5,7 @@
 #ifndef CHECKS_H
 #define CHECKS_H
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 #include "../../str.h"
 
 

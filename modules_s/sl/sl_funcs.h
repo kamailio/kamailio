@@ -5,7 +5,7 @@
 #ifndef _SL_FUNCS_H
 #define SL_FUNCS_H
 
-#include "../../msg_parser.h"
+#include "../../parser/msg_parser.h"
 
 #define SL_RPL_WAIT_TIME  2  // in sec
 
