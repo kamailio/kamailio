@@ -82,10 +82,12 @@ Chapter 1. User's Guide
    In addition there are parameters that can be used to override names
    of the AVPs used by LCR module:
 
-     * gw_addr_avp	  (default "lcr_gw_addr")
-     * gw_port_avp	  (default "lcr_gw_port")
-     * contact_avp	  (default "lcr_contact")
+     * gw_addr_port_avp	  (default "1400")
+     * contact_avp	  (default "1401")
      * fr_inv_timer_avp	  (default "fr_inv_timer_avp")
+
+   If string value of gw_addr_port_avp or contact_avp contains only
+   digits, the name of the AVP is int value of the string.
 
    Finally, there are two parameters used by sequential forwarding:
 
@@ -103,8 +105,8 @@ Chapter 1. User's Guide
 1.4.1. load_gws()
 
    Loads addresses and ports of gateways matching From URI and user part
-   of Request-URI to gw_addr_avp and gw_port_avp, respectively.  Returns
-   1 or -1 depending on success.
+   of Request-URI to gw_addr_port_avp AVPs.  Returns 1 or -1 depending
+   on success.
 
    Example:
 
@@ -116,12 +118,11 @@ Chapter 1. User's Guide
 1.4.2. next_gw()
 
    If called from a route block, replaces host:port part of Request-URI
-   by the first gw_addr_avp and gw_port_avp AVP values and destroys those
-   AVP values.
+   by the first gw_addr_port_avp AVP value and destroys that AVP.
 
    If called from a failure route block, appends a new branch to request,
    where host:port part of Request-URI is replaced by the first
-   gw_addr_avp, and gw_port_avp AVP values and destroys those AVP values.
+   gw_addr_port_avp AVP value and destroys that AVP.
 
    Returns 1 on success and -1 if there were no gateways left or if an
    error occurred (see syslog).
@@ -156,12 +157,11 @@ Chapter 1. User's Guide
 1.4.4. load_contacts()
 
    Loads contacts in destination set in increasing qvalue order as
-   values of lcr_contact attribute.  If all contacts in the destination
-   set have the same qvalue, load_contacts() does not do
-   anything thus minimizing performance impact of sequential forking
-   capability when it is not needed.  Returns 1 if loading of contacts
-   succeeded or there was nothing to do.  Returns -1 on error (see
-   syslog).
+   values of lcr_contact AVP.  If all contacts in the destination set
+   have the same qvalue, load_contacts() does not do anything thus
+   minimizing performance impact of sequential forking capability when
+   it is not needed.  Returns 1 if loading of contacts succeeded or
+   there was nothing to do.  Returns -1 on error (see syslog).
 
    Example:
 
@@ -173,16 +173,16 @@ Chapter 1. User's Guide
 1.4.5. next_contacts()
 
    If called from a route block, replaces Request-URI with the first
-   lcr_contact AVP value, adds the remaining lcr_contact AVP values
-   with the same qvalue as branches, and destroys those AVP values.  It
-   does nothing if there are no lcr_contact AVPs.  Returns 1 if there
-   were no errors and -1 if an error occurred (see syslog).
+   lcr_contact AVP value, adds the remaining lcr_contact AVP values with
+   the same qvalue as branches, and destroys those AVPs.  It does
+   nothing if there are no lcr_contact AVPs.  Returns 1 if there were no
+   errors and -1 if an error occurred (see syslog).
 
    If called from a failure route block, adds the first lcr_contact AVP
    value and all following lcr_contact AVP values with the same qvalue
-   as new branches to request and destroys those AVP values.  Returns 1
-   if new branches were successfully added and -1 on error (see syslog)
-   or if there were no more lcr_contact AVP values.
+   as new branches to request and destroys those AVPs.  Returns 1 if new
+   branches were successfully added and -1 on error (see syslog) or if
+   there were no more lcr_contact AVPs.
 
    Must be preceded by successful load_contacts() call.
 

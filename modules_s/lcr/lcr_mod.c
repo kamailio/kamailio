@@ -28,6 +28,8 @@
  * -------
  *  2005-02-14: Introduced lcr module (jh)
  *  2005-02-20: Added sequential forking functions (jh)
+ *  2005-02-25: Added support for int AVP names, combined addr and port
+ *              AVPs (jh)
  */
 
 #include <stdio.h>
@@ -100,9 +102,8 @@ int reload_gws ( void );
 #define MAX_NO_OF_GWS 32
 
 /* Default avp names */
-#define DEF_GW_ADDR_AVP "lcr_gw_addr"
-#define DEF_GW_PORT_AVP "lcr_gw_port"
-#define DEF_CONTACT_AVP "lcr_contact"
+#define DEF_GW_ADDR_PORT_AVP "1400"
+#define DEF_CONTACT_AVP "1401"
 #define DEF_FR_INV_TIMER_AVP "fr_inv_timer_avp"
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
@@ -134,8 +135,8 @@ str lcr_table        = {LCR_TABLE, LCR_TABLE_LEN};
 str prefix_col       = {PREFIX_COL, PREFIX_COL_LEN};
 str from_uri_col     = {FROM_URI_COL, FROM_URI_COL_LEN};
 str priority_col     = {PRIORITY_COL, PRIORITY_COL_LEN};
-str gw_addr_avp      = {DEF_GW_ADDR_AVP, sizeof(DEF_GW_ADDR_AVP) - 1};
-str gw_port_avp      = {DEF_GW_PORT_AVP, sizeof(DEF_GW_PORT_AVP) - 1};
+str gw_addr_port_avp = {DEF_GW_ADDR_PORT_AVP,
+			sizeof(DEF_GW_ADDR_PORT_AVP) - 1};
 str contact_avp      = {DEF_CONTACT_AVP, sizeof(DEF_CONTACT_AVP) - 1};
 str inv_timer_avp    = {DEF_FR_INV_TIMER_AVP, sizeof(DEF_FR_INV_TIMER_AVP)
 			-1 };
@@ -153,7 +154,15 @@ struct contact {
     struct contact *next;
 };
 
-int_str addr_name, port_name, contact_name, inv_timer_name;
+union addr_port {
+    unsigned char ap[6];
+    unsigned int addr;
+    unsigned short port[3];
+};
+
+int_str addr_port_name, contact_name, inv_timer_name;
+unsigned short gw_ap_avp_name_str;
+unsigned short contact_avp_name_str;
 
 struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
@@ -198,8 +207,7 @@ static param_export_t params[] = {
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
 	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
 	{"priority_column",          STR_PARAM, &priority_col.s },
-	{"gw_addr_avp",              STR_PARAM, &gw_addr_avp.s  },
-	{"gw_port_avp",              STR_PARAM, &gw_port_avp.s  },
+	{"gw_addr_port_avp",         STR_PARAM, &gw_addr_port_avp.s },
 	{"contact_avp",              STR_PARAM, &contact_avp.s  },
         {"fr_inv_timer_avp",         STR_PARAM, &inv_timer_avp.s  },
         {"fr_inv_timer",             INT_PARAM, &inv_timer      },
@@ -310,6 +318,7 @@ static int mod_init(void)
 {
 	load_tm_f  load_tm;
 	int ver, i;
+	unsigned int par;
 
 	DBG("lcr - initializing\n");
 
@@ -338,8 +347,7 @@ static int mod_init(void)
 	prefix_col.len = strlen(prefix_col.s);
 	from_uri_col.len = strlen(from_uri_col.s);
         priority_col.len = strlen(priority_col.s);
-	gw_addr_avp.len = strlen(gw_addr_avp.s);
-	gw_port_avp.len = strlen(gw_port_avp.s);
+	gw_addr_port_avp.len = strlen(gw_addr_port_avp.s);
 	contact_avp.len = strlen(contact_avp.s);
 	inv_timer_avp.len = strlen(inv_timer_avp.s);
 
@@ -396,9 +404,21 @@ static int mod_init(void)
 		goto err;
 	}
 
-	addr_name.s = &gw_addr_avp;
-	port_name.s = &gw_port_avp;
-	contact_name.s = &contact_avp;
+	/* Assign parameter names */
+	if (str2int(&gw_addr_port_avp, &par) == 0) {
+	    addr_port_name.n = par;
+	    gw_ap_avp_name_str = 0;
+	} else {
+	    addr_port_name.s = &gw_addr_port_avp;
+	    gw_ap_avp_name_str = AVP_NAME_STR;
+	}
+	if (str2int(&contact_avp, &par) == 0) {
+	    contact_name.n = par;
+	    contact_avp_name_str = 0;
+	} else {
+	    contact_name.s = &contact_avp;
+	    contact_avp_name_str = AVP_NAME_STR;
+	}
 	inv_timer_name.s = &inv_timer_avp;
 
 	return 0;
@@ -526,16 +546,18 @@ void print_gws (FILE *reply_file)
 
 
 /*
- * Load GW info from database to lcr_gw_addr and lcr_gw_port AVPs
+ * Load GW info from database to lcr_gw_addr_port AVPs
  */
 int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 {
     db_res_t* res;
     db_row_t *row, *r;
     int_str val;	    
-    str ruri_user, from_uri;
+    str ruri_user, from_uri, value;
     char query[MAX_QUERY_SIZE];
     int q_len, i, j;
+    union addr_port ap;
+    unsigned int addr;
 
     /* Find Request-URI user */
     if (parse_sip_msg_uri(_m) < 0) {
@@ -586,23 +608,24 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 		LOG(L_ERR, "load_gws(): Gateway IP address is NULL\n");
 		goto skip;
 	}
-      	val.n = (int)VAL_INT(ROW_VALUES(row));
+      	addr = (unsigned int)VAL_INT(ROW_VALUES(row));
 	for (j = i + 1; j < RES_ROW_N(res); j++) {
-		r =  RES_ROWS(res) + j;
-		if (val.n == (int)VAL_INT(ROW_VALUES(r))) goto skip;
+		r = RES_ROWS(res) + j;
+		if (addr == (unsigned int)VAL_INT(ROW_VALUES(r))) goto skip;
 	}
-	add_avp(AVP_NAME_STR, addr_name, val);
-	DBG("DEBUG:load_gws(): Added AVP <%.*s,%x>\n",
-	    addr_name.s->len, addr_name.s->s, val.n);
-
+	ap.addr = addr;
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
-		val.n = 0;
+		ap.port[2] = 0;
 	} else {
-		val.n = (int)VAL_INT(ROW_VALUES(row) + 1);
+		ap.port[2] = (int)VAL_INT(ROW_VALUES(row) + 1);
 	}
-	add_avp(AVP_NAME_STR, port_name, val);
-	DBG("DEBUG:load_gws(): Added AVP <%.*s,%d>\n",
-	    port_name.s->len, port_name.s->s, val.n);
+	value.s = &(ap.ap[0]);
+	value.len = 6;
+	val.s = &value;
+	add_avp(gw_ap_avp_name_str|AVP_VAL_STR, addr_port_name, val);
+	DBG("load_gws(): DEBUG: Added gw_addr_port_avp <%x, %d>\n",
+	    *((unsigned int *)(val.s->s)),
+	    *((unsigned short *)(val.s->s + 4)));
     skip:
 	continue;
     }
@@ -629,24 +652,27 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     struct ip_addr addr;
     struct usr_avp *avp;
     str uri, uri_user, addr_str;
-    char *at, *port;
+    char *at, *port_string;
+    union addr_port *ap;
+    unsigned int address, port;
 
-    avp = search_first_avp(AVP_NAME_STR, addr_name, &val);
+    avp = search_first_avp(gw_ap_avp_name_str, addr_port_name, &val);
     if (!avp) return -1;
+
+    ap = (union addr_port *)(val.s->s);
+    address = ap->addr;
+    port = (ap->port)[2];
+    destroy_avp(avp);
 
     addr.af = AF_INET;
     addr.len = 4;
-    addr.u.addr32[0] = (unsigned)val.n;
-    destroy_avp(avp);
+    addr.u.addr32[0] = address;
 
     if (*(tmb.route_mode) == MODE_REQUEST) {
 
-	avp = search_first_avp(AVP_NAME_STR, port_name, &val);
-	if (!avp) return -1;
-
 	act.p1.string = ip_addr2a(&addr);
 
-	if (val.n == 0) {
+	if (port == 0) {
 	    act.type = SET_HOSTPORT_T;
 	    act.p1_type = STRING_ST;
 	    rval = do_action(&act, _m);
@@ -655,13 +681,11 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    act.p1_type = STRING_ST;
 	    rval = do_action(&act, _m);
 	    if (rval != 1) return -1;
-	    act.p1.string = int2str((unsigned)val.n, &port_len);
+	    act.p1.string = int2str(port, &port_len);
 	    act.type = SET_PORT_T;
 	    act.p1_type = STRING_ST;
 	    rval = do_action(&act, _m);
 	}
-
-	destroy_avp(avp);
 
 	if (rval != 1) {
 	    LOG(L_ERR, "next_gw(): ERROR: do_action failed with return value <%d>\n", rval);
@@ -672,15 +696,13 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
     } else { /* MODE_ONFAILURE */
 
-	avp = search_first_avp(AVP_NAME_STR, port_name, &val);
-	if (!avp) return -1;
-	if (val.n == 0) {
-	    port = "5060";
-	    port_len = 4;
+	if (port != 0) {
+	    port_string = int2str(port, &port_len);
+	    port_len = port_len + 1;
 	} else {
-	    port = int2str(val.n, &port_len);
+	    port_string = (char *)0;
+	    port_len = 0;
 	}
-	destroy_avp(avp);
 
 	addr_str.s = ip_addr2a(&addr);
 	addr_str.len = strlen(addr_str.s);
@@ -692,7 +714,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
 	uri_user = _m->parsed_uri.user;
 
-	uri.len = 4 + uri_user.len + 1 + addr_str.len + 1 + port_len + 1;
+	uri.len = 4 + uri_user.len + 1 + addr_str.len + port_len + 1;
 	if (uri.len > MAX_URI_SIZE) {
 	    LOG(L_ERR, "next_gw(): URI is too long\n");
 	    return -1;
@@ -712,9 +734,13 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	at = at + 1;
 	memcpy(at, addr_str.s, addr_str.len);
 	at = at + addr_str.len;
-	*at = ':';
-	at = at + 1;
-	memcpy(at, port, port_len + 1);
+	if (port != 0) {
+	    *at = ':';
+	    at = at + 1;
+	    memcpy(at, port_string, port_len + 1);
+	} else {
+	    *at = '\0';
+	}
 
 	act.type = APPEND_BRANCH_T;
 	act.p1_type = STRING_ST;
@@ -728,7 +754,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    return -1;
 	}
 
-	return -1;
+	return 1;
     }	    
 }
 
@@ -863,7 +889,7 @@ rest:
 	curr = contacts;
 	while (curr) {
 	    val.s = &(curr->uri);
-	    add_avp(AVP_NAME_STR|AVP_VAL_STR|(curr->q_flag),
+	    add_avp(contact_avp_name_str|AVP_VAL_STR|(curr->q_flag),
 		    contact_name, val);
 	    curr = curr->next;
 	}
@@ -875,7 +901,8 @@ rest:
 	free_contact_list(contacts);
 
 	/* Print all avp_contact_avp attributes */
-	avp = search_first_avp(AVP_NAME_STR|AVP_VAL_STR, contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str|AVP_VAL_STR,
+			       contact_name, &val);
 	do {
 	    DBG("load_contacts(): DEBUG: Loaded <%s>, q_flag <%d>\n",
 		val.s->s, avp->flags & Q_FLAG);
@@ -902,8 +929,9 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
     if (*(tmb.route_mode) == MODE_REQUEST) {
 	
-	/* Find first avp_contact_avp value */
-	avp = search_first_avp(AVP_NAME_STR|AVP_VAL_STR, contact_name, &val);
+	/* Find first lcr_contact_avp value */
+	avp = search_first_avp(contact_avp_name_str|AVP_VAL_STR,
+			       contact_name, &val);
 	if (!avp) {
 	    DBG("next_contacts(): DEBUG: No AVPs -- we are done!\n");
 	    return 1;
@@ -958,7 +986,8 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 
     } else { /* MODE_ONFAILURE */
 	
-	avp = search_first_avp(AVP_NAME_STR|AVP_VAL_STR, contact_name, &val);
+	avp = search_first_avp(contact_avp_name_str|AVP_VAL_STR,
+			       contact_name, &val);
 	if (!avp) return -1;
 
 	prev = avp;
