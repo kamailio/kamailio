@@ -87,6 +87,21 @@ static char flags[]=
 #ifdef DEBUG_DMALLOC
 ", DEBUG_DMALLOC"
 #endif
+#ifdef SILENT_FR
+", SILENT_FR"
+#endif
+#ifdef USE_SYNONIM
+", USE_SYNONIM"
+#endif
+#ifdef NOISY_REPLIES
+", NOISY_REPLIES"
+#endif
+#ifdef VERY_NOISY_REPLIES
+", VERY_NOISY_REPLIES"
+#endif
+#ifdef NEW_HNAME
+", NEW_HNAME"
+#endif
 #ifdef FAST_LOCK
 ", FAST_LOCK"
 #ifdef BUSY_WAIT
