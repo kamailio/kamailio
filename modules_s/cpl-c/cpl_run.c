@@ -40,6 +40,7 @@
 #include "../../data_lump_rpl.h"
 #include "CPL_tree.h"
 #include "loc_set.h"
+#include "cpl_utils.h"
 #include "cpl_run.h"
 
 
@@ -265,7 +266,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 					case IS_ATTR:
 						if ( (!msg_val && !cpl_val.s) ||
 						(msg_val && msg_val->len==cpl_val.len &&
-						memcmp(msg_val->s,cpl_val.s,cpl_val.len)==0)) {
+						strncasecmp(msg_val->s,cpl_val.s,cpl_val.len)==0)) {
 							DBG("DEBUG:run_address_switch: matching on "
 								"ADDRESS node (IS)\n");
 							return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:
@@ -277,7 +278,13 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 							LOG(L_WARN,"WARNING:run_addres_switch: operator "
 							"CONTAINS applys only to DISPLAY -> ignored\n");
 						} else {
-							/* not implemeted ;-) */
+							if ( msg_val && cpl_val.len<=msg_val->len &&
+							strcasestr_str(msg_val, &cpl_val)!=0 ) {
+								DBG("DEBUG:run_address_switch: matching on "
+									"ADDRESS node (CONTAINS)\n");
+								return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:
+									kid+KID_OFFSET(kid,0));
+							}
 						}
 						break;
 					case SUBDOMAIN_OF_ATTR:
@@ -287,7 +294,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 								" ignored\n");
 						} else {
 							if (msg_val && msg_val->len>=cpl_val.len &&
-							memcmp( cpl_val.s, msg_val->s+(msg_val->len-
+							strncasecmp( cpl_val.s, msg_val->s+(msg_val->len-
 							cpl_val.len), cpl_val.len)==0 && msg_val->s[1+
 							msg_val->len-cpl_val.len]=='.') {
 								DBG("DEBUG:run_address_switch: matching on "
@@ -297,6 +304,10 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 							}
 						}
 						break;
+					default:
+						LOG(L_ERR,"ERROR:run_address_switch: unknown attribut"
+							" (%d) in ADDRESS node\n",*p);
+						goto error;
 				}
 				break;
 			default:
@@ -308,6 +319,148 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 error:
 	return 0;
 }
+
+
+
+inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
+{
+	unsigned char field;
+	unsigned char *p;
+	unsigned char *kid;
+	int i;
+	str cpl_val;
+	str msg_val;
+
+	field = UNDEF_CHAR;
+	msg_val.s = 0;
+	msg_val.len = 0;
+
+	DBG(">>>> kids=%d\n",NR_OF_KIDS(intr->ip));
+	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
+		if (*p==FIELD_ATTR)
+			field = *(p+1);
+		else {
+			LOG(L_ERR,"ERROR:run_string_switch: unknown param type (%d) for "
+				"STRING_SWITCH node\n",*p);
+			goto error;
+		}
+		p += 2;
+	}
+
+	if (field==UNDEF_CHAR) {
+		LOG(L_ERR,"ERROR:run_string_switch: mandatory param FIELD no found\n");
+		goto error;
+	}
+
+	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		switch ( NODE_TYPE(kid) ) {
+			case OTHERWISE_NODE :
+				DBG("DEBUG:run_string_switch: matching on OTHERWISE node\n");
+				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
+			case STRING_NODE :
+				if (NR_OF_ATTR(kid)!=1)
+					goto error;
+				p = ATTR_PTR(kid);
+				cpl_val.len = *((unsigned short*)(p+1));
+				cpl_val.s = ((cpl_val.len)?(p+3):0);
+				DBG("DEBUG:run_string_switch: testing STRING branch "
+					"(%d)[%.*s](%d)..\n",*p,cpl_val.len,cpl_val.s,cpl_val.len);
+				if (!msg_val.s) {
+					switch (field) {
+						case SUBJECT_VAL: /* SUBJECT */
+							if (!intr->subject) {
+								/* get the subject header */
+								if (!intr->msg->subject &&
+								(parse_headers(intr->msg,HDR_SUBJECT,0)==-1 ||
+								!intr->msg->subject)) {
+									LOG(L_ERR,"ERROR:run_string_switch: bad "
+										"msg or missing SUBJECT header\n");
+									goto error;
+								}
+								intr->subject = 
+									&(intr->msg->subject->body);
+								trim_len( msg_val.len,msg_val.s,
+									*(intr->subject));
+							}
+							break;
+						case ORGANIZATION_VAL: /* ORGANIZATION */
+							if (!intr->organization) {
+								/* get the organization header */
+								if (!intr->msg->organization &&
+								(parse_headers(intr->msg,HDR_ORGANIZATION,0)
+								==-1 || !intr->msg->organization)) {
+									LOG(L_ERR,"ERROR:run_string_switch: bad "
+										"msg or missing ORGANIZATION hdr\n");
+									goto error;
+								}
+								intr->organization =
+									&(intr->msg->organization->body);
+								trim_len( msg_val.len,msg_val.s,
+									*(intr->organization));
+							}
+							break;
+						case USER_AGENT_VAL: /* User Agent */
+							if (!intr->user_agent) {
+								/* get the  header */
+								if (!intr->msg->user_agent &&
+								(parse_headers(intr->msg,HDR_USERAGENT,0)
+								==-1 || !intr->msg->user_agent)) {
+									LOG(L_ERR,"ERROR:run_string_switch: bad "
+										"msg or missing USERAGENT hdr\n");
+									goto error;
+								}
+								intr->user_agent =
+									&(intr->msg->user_agent->body);
+								trim_len( msg_val.len,msg_val.s,
+									*(intr->user_agent));
+							}
+							break;
+						default:
+							LOG(L_ERR,"ERROR:run_string_switch: unknown "
+								"attribute (%d) in STRING node\n",field);
+							goto error;
+					}
+					DBG("DEBUG:run_string_switch: extracted msg string is "
+						"<%.*s>\n",msg_val.len, msg_val.s);
+				}
+				/* does the value from script match the one from message? */
+				switch (*p) {
+					case IS_ATTR:
+						if ( (!msg_val.s && !cpl_val.s) ||
+						(msg_val.len==cpl_val.len &&
+						strncasecmp(msg_val.s,cpl_val.s,cpl_val.len)==0)) {
+							DBG("DEBUG:run_string_switch: matching on "
+								"STRING node (IS)\n");
+							return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:
+								kid+KID_OFFSET(kid,0));
+						}
+						break;
+					case CONTAINS_ATTR:
+						if (cpl_val.len<=msg_val.len && 
+						strcasestr_str(&msg_val, &cpl_val)!=0 ) {
+							DBG("DEBUG:run_string_switch: matching on "
+								"STRING node (CONTAINS)\n");
+							return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:
+								kid+KID_OFFSET(kid,0));
+						}
+						break;
+					default:
+						LOG(L_ERR,"ERROR:run_string_switch: unknown attribut"
+							" (%d) in STRING node\n",*p);
+						goto error;
+				}
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_string_switch: unknown output node type "
+					"(%d) for STRING_SWITCH node\n",NODE_TYPE(kid));
+		}
+	}
+
+error:
+	return 0;
+}
+
 
 
 
@@ -597,6 +750,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 			case ADDRESS_SWITCH_NODE:
 				DBG("DEBUG:run_cpl_script:processing address-switch node\n");
 				intr->ip = run_address_switch( intr );
+				break;
+			case STRING_SWITCH_NODE:
+				DBG("DEBUG:run_cpl_script:processing string-switch node\n");
+				intr->ip = run_string_switch( intr );
 				break;
 			case LOCATION_NODE:
 				DBG("DEBUG:run_cpl_script:processing location node\n");

@@ -23,46 +23,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * History:
+ * -------
+ * 2003-06-24: file created (bogdan)
+
  */
 
-#ifndef _CPL_RUN_H
-#define _CPL_RUN_H
+#ifndef _CPL_UTILS_H
+#define _CPL_UTILS_H
 
+#include <ctype.h>
 #include "../../str.h"
-#include "../../parser/msg_parser.h"
-
-#define CPL_INCOMING_TYPE   1
-#define CPL_OUTGOING_TYPE   2
-
-#define SCRIPT_END               1
-#define SCRIPT_TO_BE_CONTINUED   2
 
 
+/* looks for s2 into s1 */
+static inline char *strcasestr_str(str *s1, str *s2)
+{
+	int i,j;
+	for(i=0;i<s1->len-s2->len;i++) {
+		for(j=0;j<s2->len;j++) {
+			if ( !((s1->s[i+j]==s2->s[j]) ||
+			( isalpha(s1->s[i+j]) && ((s1->s[i+j])^(s2->s[j]))==0x20 )) )
+				break;
+		}
+		if (j==s2->len)
+			return s1->s+i;
+	}
+	return 0;
+}
 
-struct cpl_interpreter {
-	str script;            /* CPL script */
-	unsigned char *ip;     /* instruction pointer */
-	int recv_time;         /* receiving time stamp */
-	struct sip_msg *msg;
-	unsigned char  type;
-	struct location *loc_set;     /* location set */
-	str *ruri;
-	str *to;
-	str *from;
-	str *subject;
-	str *organization;
-	str *user_agent;
-	str *accepted_langs;
-	str *priority;
-};
 
-struct cpl_interpreter* build_cpl_interpreter( struct sip_msg *msg,
-											str *script, unsigned int type);
-
-void free_cpl_interpreter(struct cpl_interpreter *intr);
-
-int run_cpl_script( struct cpl_interpreter *cpl_intr );
 
 #endif
+
+
 
 
