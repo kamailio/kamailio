@@ -62,7 +62,7 @@ struct im_binds imb;
 
 
 #define ERR_NUMBER_TEXT " is an invalid number! Please resend your SMS "\
-	"using a number in (contry code)(area code)(local number) format. Thanks"\
+	"using a number in +(contry code)(area code)(local number) format. Thanks"\
 	" for using our service!"
 #define ERR_NUMBER_TEXT_LEN (sizeof(ERR_NUMBER_TEXT)-1)
 
@@ -81,7 +81,8 @@ struct im_binds imb;
 	"further information regarding your SMS delivery! Your message was: "
 #define STORED_NOTE_LEN  (sizeof(STORED_NOTE)-1)
 
-#define OK_MSG "Your SMS was finally successfull delivered! Your message was: "
+#define OK_MSG "Your SMS was finally successfully delivered!"\
+	" Your message was: "
 #define OK_MSG_LEN  (sizeof(OK_MSG)-1)
 
 #define CONTENT_TYPE_HDR     "Content-Type: text/plain"
