@@ -38,6 +38,7 @@ char *default_net_str = 0;
 
 /*global vaiables*/
 int default_net=0;
+int max_sms_parts = MAX_SMS_PARTS;
 
 
 
@@ -65,21 +66,24 @@ struct module_exports exports= {
 		"networks",
 		"modems",
 		"links",
-		"default_net"
+		"default_net",
+		"max_sms_parts"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
-		STR_PARAM
+		STR_PARAM,
+		INT_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&networks_config,
 		&modems_config,
 		&links_config,
-		&default_net_str
+		&default_net_str,
+		&max_sms_parts
 	},
-	4,      /* Number of module paramers */
+	5,      /* Number of module paramers */
 
 	sms_init,   /* module initialization function */
 	(response_function) 0,
@@ -482,13 +486,9 @@ error:
 
 
 
-int sms_child_init(int rank)
+int global_init()
 {
 	int i, net_pipe[2], foo;
-
-	/* only the child 0 will execut this */
-	if (rank)
-		goto done;
 
 	/* creats pipes for networks */
 	for(i=0;i<nr_of_networks;i++)
@@ -513,6 +513,22 @@ int sms_child_init(int rank)
 			goto error;
 		}
 	}
+
+	return 1;
+error:
+	return -1;
+}
+
+
+
+
+int sms_child_init(int rank)
+{
+	int i, foo;
+
+	/* only the child 0 will execut this */
+	if (rank)
+		goto done;
 
 	/* creats processes for each modem */
 	for(i=0;i<nr_of_modems;i++)
@@ -541,6 +557,8 @@ static int sms_init(void)
 	printf("sms - initializing\n");
 
 	if (parse_config_lines()==-1)
+		return -1;
+	if (global_init()==-1)
 		return -1;
 	return 0;
 }
