@@ -622,11 +622,20 @@ static int check_register(struct sip_msg* msg, int idx)
 		return -1;
 	}
 
-	if (!msg->to || !msg->contact) {
+	if (!msg->to) {
 		LOG(L_ERR, "check_register(): To or Contact not found\n");
 		return -1;
 	}
 	
+	if (!msg->contact) {
+		     /* REGISTER messages that contain no Contact header field
+		      * are allowed. Such messages do not modify the contents of
+		      * the user location database anyway and thus are not harmful
+		      */
+		DBG("check_register(): No Contact found, allowing\n");
+		return 1;
+	}
+
 	     /* Check if the REGISTER message contains start Contact and if
 	      * so then allow it
 	      */
