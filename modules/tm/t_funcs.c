@@ -1001,7 +1001,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    p+=MY_BRANCH_LEN;
 
    n=snprintf( p, ack_buf + MAX_ACK_LEN - p, 
-                 ".%h.%h.%h%s",
+                 ".%x.%x.%x%s",
                  Trans->hash_index, Trans->label, branch, CRLF );
 
    if (n==-1) {
@@ -1129,7 +1129,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 
 	n=snprintf( p_msg->add_to_branch_s+p_msg->add_to_branch_len, 
 		  MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len,
-		 "\\.%h\\.%h\\.%h",
+		 ".%x.%x.%x",
 		 trans->hash_index, trans->label, branch );
 	DBG("DEBUG: branch created now: %s (%d)\n", p_msg->add_to_branch_s, p_msg->add_to_branch_len );
 	if (n==-1) {
