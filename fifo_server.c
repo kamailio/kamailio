@@ -300,8 +300,8 @@ static void fifo_server(FILE *fifo_stream)
 			goto consume;
 		}
 		if (*buf!=CMD_SEPARATOR) {
-			LOG(L_ERR, "ERROR: fifo_server: command must start with %c\n", 
-				CMD_SEPARATOR);
+			LOG(L_ERR, "ERROR: fifo_server: command must begin with %c: %.*s\n", 
+				CMD_SEPARATOR, line_len, buf );
 			goto consume;
 		}
 		command=buf+1;
@@ -389,9 +389,16 @@ int open_fifo_server()
 	}
 	if (fifo_pid==0) { /* child == FIFO server */
 		LOG(L_INFO, "INFO: fifo process starting: %d\n", getpid());
+		/* call per-child module initialization too -- some
+		   FIFO commands may need it
+		*/
+		if (init_child(0) < 0 ) {
+			LOG(L_ERR, "ERROR: open_uac_fifo: init_child failed\n");
+			return -1;
+		}
 		fifo_read=open(fifo, O_RDONLY, 0);
 		if (fifo_read<0) {
-			LOG(L_ERR, "SER: open_uac_fifo: fifo_read did not open: %s\n",
+			LOG(L_ERR, "ERROR: open_uac_fifo: fifo_read did not open: %s\n",
 				strerror(errno));
 			return -1;
 		}
