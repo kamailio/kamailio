@@ -309,7 +309,6 @@ static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, stru
 		}
 	}
 
-
 	return 0;
 }
 
