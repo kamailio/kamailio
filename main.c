@@ -35,6 +35,7 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "parser/parse_hname2.h"
+#include "parser/digest/digest_parser.h"
 
 
 #include "stats.h"
@@ -832,9 +833,8 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
-#ifdef NEW_HNAME
-    init_htable();
-#endif
+
+        init_hfname_parser();
 
 	/*init mallocs (before parsing cfg !)*/
 	if (init_mallocs()==-1)

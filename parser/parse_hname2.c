@@ -281,7 +281,7 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 /*
  * Create synonym-less (precalculated) hash table
  */
-void init_htable(void)
+void init_hfname_parser(void)
 {
 	int i, j, k;
 
