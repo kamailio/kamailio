@@ -108,7 +108,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int proto )
 		return 0;
 	}
 	
-	if (parsed_uri.secure){
+	if (parsed_uri.type==SIPS_URI_T){
 		if ((parsed_uri.proto!=PROTO_TCP) && (parsed_uri.proto!=PROTO_NONE)){
 			LOG(L_ERR, "ERROR: uri2proxy: bad transport  for sips uri: %d\n",
 					parsed_uri.proto);

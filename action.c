@@ -174,10 +174,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 							goto error_fwd_uri;
 					}
 #ifdef USE_TLS
-					if (u->secure){
+					if (u->type==SIPS_URI_T){
 						if (u->proto==PROTO_UDP){
 							LOG(L_ERR, "ERROR: do_action: forward: secure uri"
-									" incompatible with transport %d\n", u->proto);
+									" incompatible with transport %d\n",
+									u->proto);
 							ret=E_BAD_PROTO;
 							goto error_fwd_uri;
 						}

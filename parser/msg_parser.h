@@ -37,6 +37,7 @@
  *  2003-04-12  added msg_flags to sip_msg (andrei)
  *  2003-11-02  added diversion header field to sip_msg (jh)
  *  2004-11-08  added force_send_socket (andrei)
+ *  2005-02-25  uri types added (sip, sips & tel)  (andrei)
  */
 
 
@@ -121,6 +122,9 @@ struct sip_uri {
 };
 #endif
 
+enum _uri_type{ERROR_URI_T=0, SIP_URI_T, SIPS_URI_T, TEL_URI_T};
+typedef enum _uri_type uri_type;
+
 struct sip_uri {
 	str user;     /* Username */
 	str passwd;   /* Password */
@@ -130,7 +134,7 @@ struct sip_uri {
 	str headers;  
 	unsigned short port_no;
 	unsigned short proto; /* from transport */
-	int secure; /* 1 if is a sips, 0 otherwise */
+	uri_type type; /* uri scheme */
 	/* parameters */
 	str transport;
 	str ttl;

@@ -33,6 +33,7 @@
  * 2003-04-11  ser_error is now set in parse_uri (andrei)
  * 2003-04-26  ZSW (jiri)
  * 2003-07-03  sips:, r2, lr=on support added (andrei)
+ * 2005-02-25  preliminary tel uri support (andrei)
  */
 
 
@@ -96,6 +97,11 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	char* pass;
 	int found_user;
 	int error_headers;
+	unsigned int scheme;
+	
+#define SIP_SCH		0x3a706973
+#define SIPS_SCH	0x73706973
+#define TEL_SCH		0x3a6c6574
 	
 #define case_port( ch, var) \
 	case ch: \
@@ -315,15 +321,18 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	port_no=0;
 	state=URI_INIT;
 	memset(uri, 0, sizeof(struct sip_uri)); /* zero it all, just to be sure*/
-	/*look for sip:*/
+	/*look for sip:, sips: or tel:*/
 	if (len<5) goto error_too_short;
-	if (! ( ((buf[0]|0x20)=='s')&&((buf[1]|0x20)=='i')&&((buf[2]|0x20)=='p')))
-		goto error_bad_uri;
-	if (buf[3]!=':'){
-		/* parse also sips: */
-		if  (((buf[3]|0x20)=='s')&&(buf[4]==':')) {p++; uri->secure=1;}
+	scheme=buf[0]+(buf[1]<<8)+(buf[2]<<16)+(buf[3]<<24);
+	scheme|=0x20202020;
+	if (scheme==SIP_SCH){
+		uri->type=SIP_URI_T;
+	}else if(scheme==SIPS_SCH){
+		if(buf[4]==':'){ p++; uri->type=SIPS_URI_T;}
 		else goto error_bad_uri;
-	}
+	}else if (scheme==TEL_SCH){
+		uri->type=TEL_URI_T;
+	}else goto error_bad_uri;
 	
 	s=p;
 	for(;p<end; p++){
@@ -942,11 +951,18 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 		default:
 			goto error_bug;
 	}
-	
-#if EXTRA_DEBUG
+	if (uri->type==TEL_URI_T){
+		/* fix tel uris, move the number in uri and empty the host */
+		uri->user=uri->host;
+		uri->host.s="";
+		uri->host.len=0;
+	}
+#ifdef EXTRA_DEBUG
 	/* do stuff */
-	DBG("parsed uri:\n user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n host=<%.*s>(%d)\n"
-			" port=<%.*s>(%d): %d\n params=<%.*s>(%d)\n headers=<%.*s>(%d)\n",
+	DBG("parsed uri:\n type=%d user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n"
+			" host=<%.*s>(%d)\n port=<%.*s>(%d): %d\n params=<%.*s>(%d)\n"
+			" headers=<%.*s>(%d)\n",
+			uri->type,
 			uri->user.len, ZSW(uri->user.s), uri->user.len,
 			uri->passwd.len, ZSW(uri->passwd.s), uri->passwd.len,
 			uri->host.len, ZSW(uri->host.s), uri->host.len,
