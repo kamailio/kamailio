@@ -126,7 +126,7 @@ static int fixup_t_forward(void** param, int param_no)
 		name=*param;
 #ifdef DNS_IP_HACK
 		len=strlen(name);
-		ip=str2ip(name, len, &err);
+		ip=str2ip((unsigned char*)name, len, &err);
 		if (err==0){
 			goto copy;
 		}

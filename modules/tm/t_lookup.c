@@ -240,13 +240,13 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 /* Returns 0 - nothing found
  *         1  - T found
  */
-int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch ,
-												unsigned int *local_cancel)
+int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
+											 int *local_cancel)
 {
 	struct cell*  p_cell;
-	unsigned int hash_index   = 0;
-	unsigned int entry_label  = 0;
-	unsigned int branch_id    = 0;
+	int hash_index   = 0;
+	int entry_label  = 0;
+	int branch_id    = 0;
 	char  *hashi, *syni, *branchi, *p, *n;
 	int hashl, synl, branchl;
 	int scan_space;
@@ -427,7 +427,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch, int *param_cancel)
 int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 {
 	char *begin;
-	unsigned int size, orig_size;
+	int size, orig_size;
 
 	begin=p_msg->add_to_branch_s+p_msg->add_to_branch_len;
 	orig_size = size=MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len;

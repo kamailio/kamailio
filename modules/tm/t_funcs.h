@@ -248,7 +248,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param );
 struct cell* t_lookupOriginalT(  struct s_table* hash_table,
 	struct sip_msg* p_msg );
-int t_reply_matching( struct sip_msg* , unsigned int* , unsigned int* );
+int t_reply_matching( struct sip_msg* , int* ,  int* );
 int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked );
 int t_all_final( struct cell * );

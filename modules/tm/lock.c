@@ -322,40 +322,6 @@ void lock_cleanup()
 #endif /*FAST_LOCK*/
 
 
-/* lock semaphore s */
-#ifdef DBG_LOCK
-inline int _lock( ser_lock_t* s , char *file, char *function, unsigned int line )
-#else
-inline int _lock( ser_lock_t* s )
-#endif
-{
-#ifdef DBG_LOCK
-	DBG("DEBUG: lock : entered from %s , %s(%d)\n", function, file, line );
-#endif
-#ifdef FAST_LOCK
-	get_lock(s);
-	return 0;
-#else
-	return change_semaphore( s, -1 );
-#endif
-}
-
-#ifdef DBG_LOCK
-inline int _unlock( ser_lock_t* s, char *file, char *function, unsigned int line )
-#else
-inline int _unlock( ser_lock_t* s )
-#endif
-{
-#ifdef DBG_LOCK
-	DBG("DEBUG: unlock : entered from %s, %s:%d\n", file, function, line );
-#endif
-#ifdef FAST_LOCK
-	release_lock(s);
-	return 0;
-#else
-	return change_semaphore( s, +1 );
-#endif
-}
 
 
 

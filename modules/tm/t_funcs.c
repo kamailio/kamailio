@@ -712,7 +712,8 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	if ( parsed_uri.port.s==0 || parsed_uri.port.len==0 )
 		port = SIP_PORT;
 	else{
-		port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
+		port = str2s( (unsigned char*) parsed_uri.port.s, parsed_uri.port.len,
+						&err );
 		if ( err<0 ){
 			LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: converting port "
 				"from str to int failed; using default SIP port\n\turi:%.*s\n",
@@ -725,7 +726,7 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	/* getting host address*/
 #ifdef DNS_IP_HACK
 	len=strlen( parsed_uri.host.s );
-	ip=str2ip(parsed_uri.host.s, len, &err);
+	ip=str2ip( (unsigned char*)parsed_uri.host.s, len, &err);
 	if (err==0)
 		goto success;
 #endif

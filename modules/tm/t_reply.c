@@ -121,7 +121,7 @@ error:
 
 
 
-
+#if 0
 /* Push a previously stored reply from UA Client to UA Server
  * and send it out */
 static int push_reply( struct cell* trans , unsigned int branch ,
@@ -181,7 +181,7 @@ error1:
 error:
 	return -1;
 }
-
+#endif
 
 
 
@@ -192,8 +192,8 @@ error:
   */
 int t_on_reply( struct sip_msg  *p_msg )
 {
-	unsigned int branch, msg_status, msg_class, save_clone;
-	unsigned int local_cancel;
+	int branch, msg_status, msg_class, save_clone;
+	int local_cancel;
 	struct sip_msg *clone=0, *backup=0;
 	int relay;
 	int start_fr = 0;

@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include "../../dprint.h"
 
 
 
@@ -56,22 +57,13 @@ static int init_semaphore_set( int size );
 */
 
 #ifdef DBG_LOCK
-int _lock( ser_lock_t* s , char *file, char *function, unsigned int line );
-int _unlock( ser_lock_t* s, char *file, char *function, unsigned int line );
 #define lock(_s) _lock( (_s), __FILE__, __FUNCTION__, __LINE__ )
 #define unlock(_s) _unlock( (_s), __FILE__, __FUNCTION__, __LINE__ )
 #else
-int _lock( ser_lock_t* s );
-int _unlock( ser_lock_t* s );
 #define lock(_s) _lock( (_s) )
 #define unlock(_s) _unlock( (_s) )
 #endif
 
-/*
-#ifndef FAST_LOCK
-static int change_semaphore( ser_lock_t s  , int val );
-#endif
-*/
 
 int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* hash_table, struct entry *entry );
@@ -81,6 +73,52 @@ int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id);
 int release_cell_lock( struct cell *cell );
 int release_entry_lock( struct entry *entry );
 int release_timerlist_lock( struct timer *timerlist );
+
+
+#ifndef FAST_LOCK
+static int change_semaphore( ser_lock_t s  , int val );
+#endif
+
+
+/* lock semaphore s */
+#ifdef DBG_LOCK
+static inline int _lock( ser_lock_t* s , char *file, char *function,
+							unsigned int line )
+#else
+static inline int _lock( ser_lock_t* s )
+#endif
+{
+#ifdef DBG_LOCK
+	DBG("DEBUG: lock : entered from %s , %s(%d)\n", function, file, line );
+#endif
+#ifdef FAST_LOCK
+	get_lock(s);
+	return 0;
+#else
+	return change_semaphore( s, -1 );
+#endif
+}
+
+
+
+#ifdef DBG_LOCK
+static inline int _unlock( ser_lock_t* s, char *file, char *function,
+		unsigned int line )
+#else
+static inline int _unlock( ser_lock_t* s )
+#endif
+{
+#ifdef DBG_LOCK
+	DBG("DEBUG: unlock : entered from %s, %s:%d\n", file, function, line );
+#endif
+#ifdef FAST_LOCK
+	release_lock(s);
+	return 0;
+#else
+	return change_semaphore( s, +1 );
+#endif
+}
+
 
 #endif
 
