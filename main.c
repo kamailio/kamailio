@@ -99,7 +99,7 @@
 #ifdef USE_TCP
 #include "tcp_init.h"
 #ifdef USE_TLS
-#include "tls_init.h"
+#include "tls/tls_init.h"
 #endif
 #endif
 

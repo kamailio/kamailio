@@ -14,6 +14,9 @@
 sources=$(filter-out $(auto_gen), $(wildcard *.c) $(wildcard mem/*.c) \
 		$(wildcard parser/*.c) $(wildcard parser/digest/*.c) \
 		$(wildcard parser/contact/*.c) $(wildcard db/*.c) ) $(auto_gen)
+ifneq ($(TLS),)
+	sources+= $(wildcard tls/*.c)
+endif
 objs=$(sources:.c=.o)
 extra_objs=
 depends=$(sources:.c=.d)

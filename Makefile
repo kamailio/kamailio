@@ -154,6 +154,8 @@ tar:
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
 		--exclude=$(notdir $(CURDIR))/debian/ser* \
+		--exclude=$(notdir $(CURDIR))/tls* \
+		--exclude=$(notdir $(CURDIR))/ser_tls* \
 		--exclude=CVS* \
 		--exclude=*.[do] \
 		--exclude=*.so \
