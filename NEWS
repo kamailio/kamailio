@@ -86,6 +86,9 @@ auth module:
 - auth_radius contains functions needed for radius authentication
 - group module contains group membership checking functions
 - group_radius contains radius group membeship checking functions
+- is_in_group has been renamed to is_user_in and places to groups
+  module
+- check_to and check_from have been moved to the uri module
  
 
 im module:
