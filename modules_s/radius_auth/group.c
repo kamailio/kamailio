@@ -15,7 +15,8 @@
 #include "../../parser/hf.h"
 #include "../../parser/parse_from.h"
 #include "common.h"
-
+#include <radiusclient.h>
+#include "utils.h"
 
 /*
  * Check if the username matches the username in credentials
@@ -57,6 +58,200 @@ int is_user(struct sip_msg* _msg, char* _user, char* _str2)
 	}
 }
 
+/*
+ * This is an alternative version that works with the implementation
+ * provided by freeradius. The difference here is that all the parameters
+ * are placed into one Attribute (DIGEST_ATTRIBUTES) so that to economize
+ * on name-mapping on the radius servers. I have kept the code structure
+ * similar to the previous example and have adjusted to DIGEST_ATTRIBUTES
+ * prior to sending the msg for code simplicity.
+ */
+char* radius_get_group(dig_cred_t * cred, str* _method) 
+{
+	int             result;
+    char            msg[4096];
+    VALUE_PAIR      *send, *received;
+    UINT4           service;
+    VALUE_PAIR 		*vp;    
+	str				method;
+	char*			group;
+
+	//group = NULL;
+	send = NULL;
+	
+	method.s = _method->s;
+	method.len = _method->len;
+
+	/*
+	 * Add all the user digest parameters according to the qop defined.
+	 * Most devices tested only offer support for the simplest digest.
+	 */
+	if (rc_avpair_add(&send, PW_USER_NAME, 
+						cleanbody(cred->username), 0) == NULL)
+    	return(NULL);
+
+	if (rc_avpair_add(&send, PW_DIGEST_USER_NAME, 
+						cleanbody(cred->username), 0) == NULL)
+    	return (NULL);
+
+	if (rc_avpair_add(&send, PW_DIGEST_REALM, 
+						cleanbody(cred->realm), 0) == NULL)
+        return (NULL);
+ 
+	if (rc_avpair_add(&send, PW_DIGEST_NONCE, 
+						cleanbody(cred->nonce), 0) == NULL)
+        return (NULL);
+ 
+	if (rc_avpair_add(&send, PW_DIGEST_URI, 
+						cleanbody(cred->uri), 0) == NULL)
+        return (NULL);
+	
+	if (rc_avpair_add(&send, PW_DIGEST_METHOD, 
+						cleanbody(method), 0) == NULL)
+        return (NULL);
+	
+	/* 
+	 * Add the additional authentication fields according to the QOP.
+	 */
+	if (cred->qop.qop_parsed == QOP_AUTH) {
+		if (rc_avpair_add(&send, PW_DIGEST_QOP, "auth", 0) == NULL) {
+        	return (NULL);
+		}
+		
+		if (rc_avpair_add(&send, PW_DIGEST_NONCE, 
+							cleanbody(cred->nc), 0) == NULL)
+        return (NULL);
+		
+		if (rc_avpair_add(&send, PW_DIGEST_CNONCE, 
+							cleanbody(cred->cnonce), 0) == NULL) {
+        	return (NULL);
+		}
+		
+	} else if (cred->qop.qop_parsed == QOP_AUTHINT) {
+		if (rc_avpair_add(&send, PW_DIGEST_QOP, "auth-int", 0) == NULL)
+        	return (NULL);
+
+		if (rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, 
+							cleanbody(cred->nc), 0) == NULL) {
+			return (NULL);
+		}
+		
+		if (rc_avpair_add(&send, PW_DIGEST_CNONCE, 
+							cleanbody(cred->cnonce), 0) == NULL) {
+        	return (NULL);
+		}
+
+		if (rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, 
+							cleanbody(cred->opaque), 0) == NULL) {
+        	return (NULL);
+		}
+		
+	} else  {
+		/* send nothing for qop == "" */
+	}
+	
+	
+
+	/*
+	 * Now put everything place all the previous attributes into the
+	 * PW_DIGEST_ATTRIBUTES
+	 */
+	
+	/*
+	 *  Fix up Digest-Attributes issues see draft-sterman-aaa-sip-00
+	 */
+	for (vp = send; vp != NULL; vp = vp->next) {
+		switch (vp->attribute) {
+	  		default:
+	    	break;
+
+			/* Fall thru the know values */
+			case PW_DIGEST_REALM:
+			case PW_DIGEST_NONCE:
+			case PW_DIGEST_METHOD:
+			case PW_DIGEST_URI:
+			case PW_DIGEST_QOP:
+			case PW_DIGEST_ALGORITHM:
+			case PW_DIGEST_BODY_DIGEST:
+			case PW_DIGEST_CNONCE:
+			case PW_DIGEST_NONCE_COUNT:
+			case PW_DIGEST_USER_NAME:
+	
+			/* overlapping! */
+			memmove(&vp->strvalue[2], &vp->strvalue[0], vp->lvalue);
+			vp->strvalue[0] = vp->attribute - PW_DIGEST_REALM + 1;
+			vp->lvalue += 2;
+			vp->strvalue[1] = vp->lvalue;
+			vp->attribute = PW_DIGEST_ATTRIBUTES;
+			break;
+		}
+	}
+
+	/* Add the response... What to calculate against... */
+	if (rc_avpair_add(&send, PW_DIGEST_RESPONSE, 
+						cleanbody(cred->response), 0) == NULL)
+        return (NULL);
+
+	/* Indicate the service type, Authenticate only in our case */
+       service = PW_AUTHENTICATE_ONLY;
+	if (rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0) == NULL) {
+		DBG("radius_authorize() Error adding service type \n");
+	 	return (NULL);  	
+	}
+       
+    result = rc_auth(0, send, &received, msg);
+       
+    if (result == OK_RC) {
+    	DBG("RADIUS AUTHENTICATION SUCCESS \n");
+		/*TODO:vp_printlist*/
+		if (msg != NULL) {
+			DBG("You belong to group: %s \n", msg);
+			group = &msg[0];
+		}
+	} else {
+		DBG("RADIUS AUTHENTICATION FAILURE \n");
+	}
+    return group;
+}
+
+int radius_is_in_group(struct sip_msg* msg, char* _group) {
+	char* 			group;
+	auth_body_t * 	cred;
+	
+	/* Extract credentials */
+	if (!(msg->authorization)) {
+		     /* No credentials parsed yet */
+		if (parse_headers(msg, HDR_AUTHORIZATION, 0) == -1) {
+			LOG(L_ERR, "radis_log_reply: Error while parsing auth headers\n");
+			return -2;
+		}
+	}
+	
+	/* Parse only if there's something there... */
+	if (msg->authorization) {
+		if (parse_credentials(msg->authorization) != -1) {
+			cred = (auth_body_t*)(msg->authorization->parsed);
+			if (check_dig_cred(&(cred->digest)) != E_DIG_OK) {
+				LOG(L_ERR, "radius_log_reply: Credentials missing\n");
+				return(-1);
+			} 
+		}
+	} 
+
+	group = radius_get_group(&(cred->digest), 
+					&(msg->first_line.u.request.method));
+	if (group) {
+		if (strncmp(_group, group, strlen(_group)) == 0) {
+			DBG("User is in group %s\n", group);
+			return(1);
+		} else {
+			DBG("User in not part of group %s\n", group);
+			return(-1);
+		}
+	} else {
+		return(-1);
+	}
+}
 
 /*
  * Check if the user specified in credentials is a member

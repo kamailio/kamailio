@@ -86,6 +86,7 @@ struct module_exports exports = {
 		"radius_proxy_challenge",
 		"is_user",
 		"is_in_group",
+		"radius_is_in_group",
 		"check_to",
 		"check_from",
 		"consume_credentials",
@@ -98,19 +99,20 @@ struct module_exports exports = {
 		radius_proxy_challenge,
 		is_user,
 		is_in_group,
+		radius_is_in_group,
 		check_to,
 		check_from,
 		consume_credentials,
 		is_user_in
 	},
-	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 2},
+	(int[]) {2, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2},
 	(fixup_function[]) {
 		str_fixup, str_fixup, 
 		challenge_fixup, challenge_fixup, 
 		str_fixup, str_fixup, 0, 0,
 		0, hf_fixup
 	},
-	10,
+	11,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */

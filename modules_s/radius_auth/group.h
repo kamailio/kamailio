@@ -22,6 +22,10 @@ int is_user(struct sip_msg* _msg, char* _user, char* _str2);
  */
 int is_in_group(struct sip_msg* _msg, char* _group, char* _str2);
 
+/*
+ * Check if a user is member of a group using radius
+ */
+int radius_is_in_group(struct sip_msg* msg, char* _group);
 
 /*
  * Check if username in specified header field is in a table
