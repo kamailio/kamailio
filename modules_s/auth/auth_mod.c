@@ -88,9 +88,11 @@ char* pass_column  = "ha1";
 char* pass_column_2 = "ha1b";
 #endif
 
-char* sec          = 0;        /* If the parameter was not used, the secret phrase
+char* sec_param    = 0;        /* If the parameter was not used, the secret phrase
 				* will be auto-generated
 				*/                   
+char* sec_rand     = 0;
+
 char* grp_table      = "grp";    /* Table name where group definitions are stored */
 char* grp_user_col   = "user";
 char* grp_domain_col = "domain";
@@ -215,7 +217,7 @@ struct module_exports exports = {
 #ifdef USER_DOMAIN_HACK
 		&pass_column_2,
 #endif
-		&sec,
+		&sec_param,
 		&grp_table,
 		&grp_user_col,
 		&grp_domain_col,
@@ -268,8 +270,8 @@ static inline int generate_random_secret(void)
 {
 	int i;
 
-	sec = (char*)pkg_malloc(RAND_SECRET_LEN);
-	if (!sec) {
+	sec_rand = (char*)pkg_malloc(RAND_SECRET_LEN);
+	if (!sec_rand) {
 		LOG(L_ERR, "generate_random_secret(): No memory left\n");		
 		return -1;
 	}
@@ -277,10 +279,10 @@ static inline int generate_random_secret(void)
 	srandom(time(0));
 
 	for(i = 0; i < RAND_SECRET_LEN; i++) {
-		sec[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+		sec_rand[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
 	}
 
-	secret.s = sec;
+	secret.s = sec_rand;
 	secret.len = RAND_SECRET_LEN;
 
 	     /*	DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
@@ -307,7 +309,7 @@ static int mod_init(void)
 	}
 
 	     /* If the parameter was not used */
-	if (sec == 0) {
+	if (sec_param == 0) {
 		     /* Generate secret using random generator */
 		if (generate_random_secret() < 0) {
 			LOG(L_ERR, "mod_init(): Error while generating random secret\n");
@@ -315,7 +317,7 @@ static int mod_init(void)
 		}
 	} else {
 		     /* Otherwise use the parameter's value */
-		secret.s = sec;
+		secret.s = sec_param;
 		secret.len = strlen(secret.s);
 	}
 	
@@ -326,6 +328,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
+	if (sec_rand) pkg_free(sec_rand);
 	db_close(db_handle);
 }
 
