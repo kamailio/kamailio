@@ -74,8 +74,8 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 	struct location        *loc  = 0;
 	int rez;
 
-	DBG("DEBUG:cpl-c:failed_reply: ------------------------------>\n"
-		" ---------------> failed reply from proxy was sent\n");
+	DBG("DEBUG:cpl-c:negativ_reply: ------------------------------>\n"
+		" ---------------> negativ reply from proxy was sent\n");
 
 	intr->flags |= CPL_PROXY_DONE;
 	intr->msg = t->uas.request;
@@ -161,14 +161,15 @@ error:
 
 /* the purpose of the final reply is to trash down the interpreter structure!
  * it's the safest place to do that, since this callback it's called only once
- * per transaction ;-) */
+ * per transaction for final codes (>=200) ;-) */
 static void final_reply( struct cell* t, struct sip_msg* msg, int code,
 																void *param )
 {
-	DBG("DEBUG:cpl-c:failed_reply: ----------------------------->\n"
-		" ---------------> final reply from proxy received\n");
+	DBG("DEBUG:cpl-c:final_reply: code=%d  -------------->\n"
+		" ---------------> final reply from proxy received\n",code);
 
-	free_cpl_interpreter( (struct cpl_interpreter*)param );
+	if (code>=200)
+		free_cpl_interpreter( (struct cpl_interpreter*)param );
 }
 
 
@@ -328,21 +329,21 @@ inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 			if (intr->priority!=STR_NOT_FOUND)
 				intr->flags |= CPL_PRIORITY_DUPLICATED;
 		}
-	}
 
-	/* as I am interested in getting the responses back - I need to install
-	 * some callback functions for replies  */
-	if (cpl_tmb.register_req_cb( intr->msg, TMCB_RESPONSE_OUT, final_reply,
-	intr) <= 0 ) {
-		LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
-			"TMCB_RESPONSE_OUT callback\n");
-		goto runtime_error;
-	}
-	if (cpl_tmb.register_req_cb( intr->msg, TMCB_ON_FAILURE, failed_reply,
-	intr) <= 0 ) {
-		LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
-			"TMCB_ON_FAILURE callback\n");
-		goto runtime_error;
+		/* as I am interested in getting the responses back - I need to install
+		 * some callback functions for replies  */
+		if (cpl_tmb.register_req_cb( intr->msg, TMCB_RESPONSE_OUT, final_reply,
+		intr) <= 0 ) {
+			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
+				"TMCB_RESPONSE_OUT callback\n");
+			goto runtime_error;
+		}
+		if (cpl_tmb.register_req_cb( intr->msg, TMCB_ON_FAILURE, failed_reply,
+		intr) <= 0 ) {
+			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
+				"TMCB_ON_FAILURE callback\n");
+			goto runtime_error;
+		}
 	}
 
 	switch (intr->proxy.ordering) {

@@ -116,7 +116,7 @@ error:
 
 void free_cpl_interpreter(struct cpl_interpreter *intr)
 {
-	DBG("******** freeing -> intr=%p\n",intr);
+	DBG("DEBUG:----------------> free intr at %p \n",intr);
 	if (intr) {
 		if (intr->script.s)
 			shm_free( intr->script.s);
@@ -483,7 +483,7 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 		}
 	}
 
-	if ( cpl_tmb.t_reply(intr->msg, (int)status, reason_s ) ) {
+	if ( cpl_tmb.t_reply(intr->msg, (int)status, reason_s )!=1 ) {
 		LOG(L_ERR,"ERROR:run_reject: unable to send reject reply!\n");
 		goto runtime_error;
 	}
@@ -581,7 +581,7 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 		i = cpl_tmb.t_reply( intr->msg, (int)301, "Moved permanently" );
 	else
 		i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
-	if (i<0) {
+	if (i!=1) {
 		LOG(L_ERR,"ERROR:run_redirect: unable to send redirect reply!\n");
 		goto runtime_error;
 	}
