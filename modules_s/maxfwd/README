@@ -1,0 +1,39 @@
+# 
+# $Id$
+#
+
+From: Bogdan Andrei Iancu <iancu@fokus.gmd.de>
+
+
+
+                           Max-Forward (maxfwd) Module
+
+
+1.Description
+
+Implements all the operations regarding MAX-Forward header, like adding it (if
+not present) or decrementing and checking the value of the existent one 
+
+
+2.Module parameters
+
+None.
+
+
+3.Exported functions
+
+ - mf_process_maxfwd_header(max_value)
+If no Max-Forward header is present in the received request, a header will be
+added having the original value equal with "max_value". An OK code is returned
+by the function.
+If a Max-Forward header is already present, its value will be decremented. If
+after this operation its value will be positive non-zero, an OK code will be
+returned. Otherwise (for a zero value) an error code will be returned.
+Note that an error code will be also returned if the SIP message couldn't
+be parsed or if the Max-Forwrd header's body invalid (non numerical string or
+negative numerical value)
+
+
+4.Modules dependency
+
+None.
