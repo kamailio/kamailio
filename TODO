@@ -2,6 +2,8 @@ $Id$
 
 ( - todo, x - done)
 
+- [fifo] fix fgets error handling (it does not set errno, ferror should be
+   be used, right now kills all ser if interrupted by a signal)
 - [mem] make shm_realloc be fragmentation friendly: call shm_compact_frags
    for the small frags?, don't produce smaller frags -- be wastefull?
 - [mem] qm_comact_frags (compacts frags if possible)
@@ -29,6 +31,11 @@ x update AUTHORS, debian/copyright, ser.8, ser.cfg.5 from stable
 x update Makefile*  from stable
 x update all package specs from stable
 - [tcp] add BUG checks for  fd > 0 && fd <= maxfd to all selects?
+- [tcp] switch to poll if HAVE_POLL defined (it's unifix so  everybody 
+   should have it, but it would be slower on systems emulating it, like
+   older linuxes)
+- [tcp] switch to epoll if HAVE_EPOLL defined (linux 2.6.*)
+- [tcp] switch to SIGIO if no epoll (linux only, better than poll?)
 x tcp_main_loop: BUG cases should "conitnue;"
 x change len_gt into and expr (e.g msg:len).
 x sipit: uri == myself doesn't match tls port = 5061 
