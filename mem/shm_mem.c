@@ -89,8 +89,7 @@ inline static void* sh_realloc(void* p, unsigned int size)
 */
 
 #ifdef DBG_QM_MALLOC
-void* _shm_resize( void* p, unsigned int s, char* file, char* func,
-					unsigned int line)
+void* _shm_resize( void* p, unsigned int s, char* file, char* func, int line)
 #else
 void* _shm_resize( void* p , unsigned int s)
 #endif

@@ -280,6 +280,7 @@ DEFS+= $(extra_defs) \
 	 -DDISABLE_NAGLE \
 	 -DF_MALLOC \
 	# -DDBG_QM_MALLOC \
+	# -DDBG_QM_MALLOC \
 	# -DF_MALLOC \
 	# -DDBG_F_MALLOC \
 	# -DDBG_QM_MALLOC \
