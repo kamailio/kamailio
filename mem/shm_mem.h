@@ -50,6 +50,7 @@
 
 
 #include "../dprint.h"
+#include "../locking.h"
 
 #ifdef VQ_MALLOC
 #	include "vq_malloc.h"
@@ -71,77 +72,17 @@
 #	define MY_STATUS qm_status
 #endif
 
-#ifdef FAST_LOCK
-#include "../fastlock.h"
 	
-	extern fl_lock_t* mem_lock;
-#else
-extern  int shm_semid;
-#endif
+	extern lock_t* mem_lock;
 
 
 int shm_mem_init();
 void shm_mem_destroy();
 
 
-#ifdef FAST_LOCK
 
-#define shm_lock()    get_lock(mem_lock)
-#define shm_unlock()  release_lock(mem_lock)
-
-#else
-/* inline functions (do not move them to *.c, they won't be inlined anymore) */
-static inline void shm_lock()
-{
-
-	struct sembuf sop;
-	int ret;
-	
-	sop.sem_num=0;
-	sop.sem_op=-1; /*down*/
-	sop.sem_flg=0 /*SEM_UNDO*/;
-again:
-	ret=semop(shm_semid, &sop, 1);
-
-	switch(ret){
-		case 0: /*ok*/
-			break;
-		case EINTR: /*interrupted by signal, try again*/
-			DBG("sh_lock: interrupted by signal, trying again...\n");
-			goto again;
-		default:
-			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
-					strerror(errno));
-	}
-}
-
-
-
-static inline void shm_unlock()
-{
-	struct sembuf sop;
-	int ret;
-	
-	sop.sem_num=0;
-	sop.sem_op=1; /*up*/
-	sop.sem_flg=0 /*SEM_UNDO*/;
-again:
-	ret=semop(shm_semid, &sop, 1);
-	/*should ret immediately*/
-	switch(ret){
-		case 0: /*ok*/
-			break;
-		case EINTR: /*interrupted by signal, try again*/
-			DBG("sh_lock: interrupted by signal, trying again...\n");
-			goto again;
-		default:
-			LOG(L_ERR, "ERROR: sh_lock: error waiting on semaphore: %s\n",
-					strerror(errno));
-	}
-}
-
-/* ret -1 on erro*/
-#endif
+#define shm_lock()    lock_get(mem_lock)
+#define shm_unlock()  lock_release(mem_lock)
 
 
 

@@ -141,6 +141,15 @@ static char flags[]=
 #ifdef BUSY_WAIT
 "-BUSY_WAIT"
 #endif
+#ifdef USE_PTHREAD_MUTEX
+", USE_PTHREAD_MUTEX"
+#endif
+#ifdef USE_POSIX_SEM
+", USE_POSIX_SEM"
+#endif
+#ifdef USE_SYSV_SEM
+", USE_SYSV_SEM"
+#endif
 #ifdef ADAPTIVE_WAIT
 "-ADAPTIVE_WAIT"
 #endif

@@ -105,7 +105,7 @@ inline static lock_t* lock_init(lock_t* lock)
 }
 
 #define lock_get(lock) sem_wait(lock)
-#define lock_release(lock) sem_release(lock)
+#define lock_release(lock) sem_post(lock)
 
 
 #elif defined USE_SYSV_SEM
@@ -127,21 +127,16 @@ inline static lock_t* lock_init(lock_t* lock)
 
 typedef int lock_t;
 
-inline static lock_t* lock_alloc()
-{
-	lock_t* l;
-	
-	l=shm_malloc(sizeof(lock_t));
-	if (l==0) return 0;
-	*l=semget(IPC_PRIVATE, 1, 0700);
-	if (*l==-1) return 0;
-	return l;
-}
+#define lock_alloc() shm_malloc(sizeof(lock_t))
+#define lock_dealloc(lock) shm_free(lock)
 
 
 inline static lock_t* lock_init(lock_t* lock)
 {
 	union semun su;
+	
+	*lock=semget(IPC_PRIVATE, 1, 0700);
+	if (*lock==-1) return 0;
 	su.val=1;
 	if (semctl(*lock, 0, SETVAL, su)==-1){
 		/* init error*/
@@ -157,7 +152,7 @@ inline static void lock_destroy(lock_t* lock)
 
 #define lock_dealloc(lock) shm_free(lock)
 
-inline void lock_get(lock_t* lock)
+inline static void lock_get(lock_t* lock)
 {
 	struct sembuf sop;
 
@@ -167,7 +162,7 @@ inline void lock_get(lock_t* lock)
 	semop(*lock, &sop, 1);
 }
 
-inline void lock_release(lock_t* lock)
+inline static void lock_release(lock_t* lock)
 {
 	struct sembuf sop;
 	

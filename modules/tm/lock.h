@@ -27,8 +27,8 @@
 
 
 
-#ifndef _SEMAPHORE_H
-#define _SEMAPHORE_H
+#ifndef __lock_h
+#define __lock_h
 
 #include <sys/types.h>
 #include <sys/ipc.h>

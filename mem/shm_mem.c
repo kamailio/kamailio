@@ -45,37 +45,13 @@
 
 #endif
 
-#ifdef FAST_LOCK
-#include "../fastlock.h"
-#endif
-
-
-
-
-/* define semun */
-#if defined(HAVE_UNION_SEMUN) && !defined(_SEM_SEMUN_UNDEFINED)
-	/* union semun is defined by including <sys/sem.h> */
-#else
-	/* according to X/OPEN we have to define it ourselves */
-	union semun {
-		int val;                    /* value for SETVAL */
-		struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
-		unsigned short int *array;  /* array for GETALL, SETALL */
-		struct seminfo *__buf;      /* buffer for IPC_INFO */
-	};
-#endif
-
 
 
 #ifndef SHM_MMAP
 static int shm_shmid=-1; /*shared memory id*/
 #endif
 
-#ifdef FAST_LOCK
-fl_lock_t* mem_lock=0;
-#else
-int shm_semid=-1; /*semaphore id*/
-#endif
+lock_t* mem_lock=0;
 
 static void* shm_mempool=(void*)-1;
 #ifdef VQ_MALLOC
@@ -191,10 +167,6 @@ void* _shm_resize( void* p , unsigned int s)
 int shm_mem_init()
 {
 
-#ifndef FAST_LOCK
-	union semun su;
-	int ret;
-#endif
 #ifdef SHM_MMAP
 	int fd;
 #else
@@ -238,25 +210,6 @@ int shm_mem_init()
 		return -1;
 	}
 
-#ifndef FAST_LOCK
-	/* alloc a semaphore (for malloc)*/
-	shm_semid=semget(IPC_PRIVATE, 1, 0700);
-	if (shm_semid==-1){
-		LOG(L_CRIT, "ERROR: shm_mem_init: could not allocate semaphore: %s\n",
-				strerror(errno));
-		shm_mem_destroy();
-		return -1;
-	}
-	/* set its value to 1 (mutex)*/
-	su.val=1;
-	ret=semctl(shm_semid, 0, SETVAL, su);
-	if (ret==-1){
-		LOG(L_CRIT, "ERROR: shm_mem_init: could not set initial semaphore"
-				" value: %s\n", strerror(errno));
-		shm_mem_destroy();
-		return -1;
-	}
-#endif
 	/* init it for malloc*/
 #	ifdef VQ_MALLOC
 		shm_block=vqm_malloc_init(shm_mempool, /* SHM_MEM_SIZE */ shm_mem_size );
@@ -271,10 +224,17 @@ int shm_mem_init()
 		shm_mem_destroy();
 		return -1;
 	}
-#ifdef FAST_LOCK
-	mem_lock=shm_malloc_unsafe(sizeof(fl_lock_t));
-	init_lock(*mem_lock);
-#endif
+	mem_lock=shm_malloc_unsafe(sizeof(lock_t)); /* skip lock_alloc, race cond*/
+	if (mem_lock==0){
+		LOG(L_CRIT, "ERROR: shm_mem_init: could not allocate lock\n");
+		shm_mem_destroy();
+		return -1;
+	}
+	if (lock_init(mem_lock)==0){
+		LOG(L_CRIT, "ERROR: shm_mem_init: could not initialize lock\n");
+		shm_mem_destroy();
+		return -1;
+	}
 	
 	DBG("shm_mem_init: success\n");
 	
@@ -287,9 +247,6 @@ void shm_mem_destroy()
 {
 #ifndef SHM_MMAP
 	struct shmid_ds shm_info;
-#endif
-#ifndef FAST_LOCK
-	union semun zero_un;
 #endif
 	
 	DBG("shm_mem_destroy\n");
@@ -307,13 +264,8 @@ void shm_mem_destroy()
 		shm_shmid=-1;
 	}
 #endif
-#ifndef FAST_LOCK
-	if (shm_semid!=-1) {
-		zero_un.val=0;
-		semctl(shm_semid, 0, IPC_RMID, zero_un);
-		shm_semid=-1;
-	}
-#endif
+	if (mem_lock) lock_destroy(mem_lock); /* we don't need to dealloc it*/
+	
 }
 
 

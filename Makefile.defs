@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre3-tcp0
+EXTRAVERSION = pre4-tcp0-locking
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -112,6 +112,13 @@ YACC := $(shell echo "$${YACC}")
 #		issues additional debugging information if lock/unlock is called
 # -DFAST_LOCK
 #		uses fast arhitecture specific locking (see the arh. specific section)
+# -DUSE_SYSV_SEM
+#		uses sys v sems for locking (slower & limited number)
+# -DUSE_PTHREAD_MUTEX
+#		uses pthread mutexes, faster than sys v or posix sems, but do not 
+#		work on all systems inter-processes (e.g. linux)
+# -DUSE_POSIX_SEM
+#		uses posix semaphores for locking (faster than sys v)
 # -DBUSY_WAIT
 #		uses busy waiting on the lock
 # -DADAPTIVE_WAIT
@@ -276,21 +283,26 @@ endif
 
 # arh. specific definitions
 ifeq ($(ARCH), i386)
-	DEFS+= -DFAST_LOCK
+	use_fast_lock=yes
 endif
 
 ifeq ($(ARCH), sparc64)
 ifeq 	($(CC_NAME), gcc)
-		DEFS+= -DFAST_LOCK
+	use_fast_lock=yes
 endif
 endif
 
 ifeq ($(ARCH), arm)
-	DEFS+= -DFAST_LOCK
+	use_fast_lock=yes
 endif
 
 ifeq ($(ARCH), ppc)
+	use_fast_lock=yes
+endif
+
+ifeq ($(use_fast_lock), yes)
 	DEFS+= -DFAST_LOCK
+	found_lock_method=yes
 endif
 
 CFLAGS=
@@ -514,10 +526,18 @@ LIBS= -lfl -ldl -lresolv
 #os specific stuff
 ifeq ($(OS), linux)
 	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_SYSV_SEM  # try posix sems
+		found_lock_method=yes
+	endif
 endif
 
 ifeq  ($(OS), solaris)
 	DEFS+= -DHAVE_GETIPNODEBYNAME -DHAVE_SYS_SOCKIO_H -DHAVE_SCHED_YIELD
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		found_lock_method=yes
+	endif
 	ifeq ($(mode), release)
 		#use these only if you're using gcc with Solaris ld
 		#LDFLAGS=-O2 $(PROFILE)
@@ -539,6 +559,10 @@ endif
 ifeq ($(OS), freebsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN \
 		-DHAVE_SCHED_YIELD
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		found_lock_method=yes
+	endif
 	YACC=yacc
 	LIBS= -lfl  #dlopen is in libc
 endif
@@ -546,6 +570,10 @@ endif
 ifeq ($(OS), openbsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"' -DHAVE_GETHOSTBYNAME2 \
 		-DHAVE_UNION_SEMUN
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_PTHREAD_MUTEX  # try pthread sems
+		found_lock_method=yes
+	endif
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
 	# no sched_yield on openbsd unless linking with c_r (not recommended)
@@ -555,10 +583,24 @@ endif
 	
 ifeq ($(OS), netbsd)
 	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DHAVE_GETHOSTBYNAME2 
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_SYSV_SEM  # try pthread sems
+		found_lock_method=yes
+	endif
 	YACC=yacc
 	LIBS= -lfl 
 endif
 
 ifneq (,$(findstring CYGWIN, $(OS)))
 	#cygwin is the same as common
+	ifneq ($(found_lock_method), yes)
+		DEFS+= -DUSE_SYSV_SEM  # try sys v sems
+		found_lock_method=yes
+	endif
+endif
+
+ifneq ($(found_lock_method), yes)
+$(warning	No locking method found so far, trying SYS V sems)
+		DEFS+= -DUSE_SYSV_SEM  # try sys v sems
+		found_lock_method=yes
 endif
