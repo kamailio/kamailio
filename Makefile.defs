@@ -247,8 +247,9 @@ ifeq	($(ARCH), sparc64)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  $(PROFILE) -Winline\
-					-Wmissing-prototypes -Wall\
-					-Wcast-align \
+					-Wall\
+					#-Wcast-align \
+					#-Wmissing-prototypes 
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					#use 32bit for now
