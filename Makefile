@@ -116,7 +116,7 @@ $(man-prefix)/$(man-dir)/man5:
 		mkdir -p $(man-prefix)/$(man-dir)/man5
 
 install-cfg:
-		$(INSTALL-CFG) ser.cfg $(cfg-prefix)/$(cfg-dir)
+		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
 install-bin:
 		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
