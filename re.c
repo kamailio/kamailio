@@ -30,6 +30,7 @@
  * History:
  * --------
  *   2003-08-04  created by andrei
+ *   2004-11-12  minor api extension, added *count (andrei)
  */
 
 
@@ -386,8 +387,12 @@ error:
 
 
 /* WARNING: input must be 0 terminated! */
+/* returns: 0 if no match or error, or subst result; if count!=0
+ *           it will be set to 0 (no match), the number of matches
+ *           or -1 (error).
+ */
 struct replace_lst* subst_run(struct subst_expr* se, const char* input,
-								struct sip_msg* msg)
+								struct sip_msg* msg, int* count)
 {
 	struct replace_lst *head;
 	struct replace_lst **crt;
@@ -396,10 +401,12 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 	regmatch_t* pmatch;
 	int nmatch;
 	int eflags;
+	int cnt;
 	
 	
 	/* init */
 	head=0;
+	cnt=0;
 	crt=&head;
 	p=input;
 	nmatch=se->max_pmatch+1;
@@ -439,21 +446,28 @@ struct replace_lst* subst_run(struct subst_expr* se, const char* input,
 			}
 			crt=&((*crt)->next);
 			p+=pmatch[0].rm_eo;
+			cnt++;
 		}
 	}while((r==0) && se->replace_all);
 	pkg_free(pmatch);
+	if (count)*count=cnt;
 	return head;
 error:
 	if (head) replace_lst_free(head);
 	if (pmatch) pkg_free(pmatch);
+	if (count) *count=-1;
 	return 0;
 }
 
 
 
 /* returns the substitution result in a str, input must be 0 term
- *  0 on no match or malloc error */ 
-str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se)
+ *  0 on no match or malloc error
+ *  if count is non zero it will be set to the number of matches, or -1
+ *   if error 
+ */ 
+str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se,
+				int* count)
 {
 	str* res;
 	struct replace_lst *lst;
@@ -468,7 +482,7 @@ str* subst_str(const char *input, struct sip_msg* msg, struct subst_expr* se)
 	/* compute the len */
 	len=strlen(input);
 	end=input+len;
-	lst=subst_run(se, input, msg);
+	lst=subst_run(se, input, msg, count);
 	if (lst==0){
 		DBG("subst_str: no match\n");
 		return 0;
@@ -510,5 +524,6 @@ error:
 		if (res->s) pkg_free(res->s);
 		pkg_free(res);
 	}
+	if (count) *count=-1;
 	return 0;
 }
