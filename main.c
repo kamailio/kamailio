@@ -752,6 +752,7 @@ int main_loop()
 		/* process_no now initialized to zero -- increase from now on
 		   as new processes are forked (while skipping 0 reserved for main )
 		*/
+
 		for(si=udp_listen;si;si=si->next){
 			/* create the listening socket (for each address)*/
 			/* udp */
@@ -800,6 +801,15 @@ int main_loop()
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop priviledges */
+
+		     /* Initialize Unix domain socket server before forking so that all
+		      * children inherit opened socket for sending and receiving
+		      */
+		if (init_unixsock_server()<0) {
+			LOG(L_ERR, "Error while initializing Unix domain socket server\n");
+			goto error;
+		}
+
 		/* udp processes */
 		for(si=udp_listen; si; si=si->next){
 			for(i=0;i<children_no;i++){
@@ -863,12 +873,6 @@ int main_loop()
 	/* if configured to do so, start a server for accepting FIFO commands */
 	if (open_fifo_server()<0) {
 		LOG(L_ERR, "opening fifo server failed\n");
-		goto error;
-	}
-
-	     /* Initialize Unix domain socket server */
-	if (init_unixsock_server()<0) {
-		LOG(L_ERR, "Error while initializing Unix domain socket server\n");
 		goto error;
 	}
 
