@@ -191,5 +191,9 @@
 #define VERSION_COLUMN "version"
 #define TABLENAME_COLUMN "table_name"
 
+/* minimum packet size; smaller packets will be dropped silently */
+#define MIN_UDP_PACKET        32
+
+
 
 #endif

@@ -330,7 +330,7 @@ int udp_rcv_loop()
 		buf[len]=0; /* no need to save the previous char */
 
 #ifndef NO_ZERO_CHECKS
-		if (len<5) {
+		if (len<MIN_UDP_PACKET) {
 			DBG("DEBUG: probing packet received\n");
 			continue;
 		}
