@@ -150,9 +150,8 @@ static inline int decode_from( str *src , str *dst)
 }
 
 
-/* IMPORTANT: Since FROM hdr _must_ have all the time the tag parameter,
- * we assume that uri is also all the time quoted by <> (which is required
- * if the hdr has parameters).
+/* 
+ * if display name does not exist, then from_dsp is ignored
  */
 int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 {
@@ -178,22 +177,19 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	}
 
 	/* first deal with display name */
-	if (from_dsp)
+	if (from_dsp && from->display.len)
 	{
 		/* must be replaced/ removed */
 		l = 0;
-		if (from->display.len)
+		/* there is already a display -> remove it */
+		DBG("DEBUG:uac:replace_from: removing display [%.*s]\n",
+			from->display.len,from->display.s);
+		/* build del lump */
+		l = del_lump( msg, from->display.s-msg->buf, from->display.len, 0);
+		if (l==0)
 		{
-			/* there is already a display -> remove it */
-			DBG("DEBUG:uac:replace_from: removing display [%.*s]\n",
-				from->display.len,from->display.s);
-			/* build del lump */
-			l = del_lump( msg, from->display.s-msg->buf, from->display.len, 0);
-			if (l==0)
-			{
-				LOG(L_ERR,"ERROR:uac:replace_from: display del lump failed\n");
-				goto error;
-			}
+			LOG(L_ERR,"ERROR:uac:replace_from: display del lump failed\n");
+			goto error;
 		}
 		/* some new display to set? */
 		if (from_dsp->s)
@@ -207,8 +203,8 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 					offset--;
 					if (from->body.s>msg->buf+offset)
 					{
-						LOG(L_ERR,"ERROR:uac:replace_from: broken from hdr; "
-							" no <>\n");
+						LOG(L_ERR,"ERROR:uac:replace_from: no <> and there"
+								" is dispaly name\n");
 						goto error;
 					}
 				}
