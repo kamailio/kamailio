@@ -30,6 +30,7 @@
  * History:
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
  */
 
 #include <stdio.h>
@@ -46,16 +47,16 @@ static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-	{"~db_use_table",  (cmd_function)use_table,     2, 0},
-	{"~db_init",       (cmd_function)db_init,       1, 0},
-	{"~db_close",      (cmd_function)db_close,      2, 0},
-	{"~db_query",      (cmd_function)db_query,      2, 0},
-	{"~db_raw_query",  (cmd_function)db_raw_query,  2, 0},
-	{"~db_free_query", (cmd_function)db_free_query, 2, 0},
-	{"~db_insert",     (cmd_function)db_insert,     2, 0},
-	{"~db_delete",     (cmd_function)db_delete,     2, 0},
-	{"~db_update",     (cmd_function)db_update,     2, 0},
-	{0,0,0,0}
+	{"~db_use_table",  (cmd_function)use_table,     2, 0, 0},
+	{"~db_init",       (cmd_function)db_init,       1, 0, 0},
+	{"~db_close",      (cmd_function)db_close,      2, 0, 0},
+	{"~db_query",      (cmd_function)db_query,      2, 0, 0},
+	{"~db_raw_query",  (cmd_function)db_raw_query,  2, 0, 0},
+	{"~db_free_query", (cmd_function)db_free_query, 2, 0, 0},
+	{"~db_insert",     (cmd_function)db_insert,     2, 0, 0},
+	{"~db_delete",     (cmd_function)db_delete,     2, 0, 0},
+	{"~db_update",     (cmd_function)db_update,     2, 0, 0},
+	{0,0,0,0,0}
 };
 
 
