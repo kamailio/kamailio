@@ -285,3 +285,53 @@ qvalue_t get_ruri_q(void)
 {
 	return ruri_q;
 }
+
+
+
+/*
+ * Get actual Request-URI
+ */
+int get_request_uri(struct sip_msg* _m, str* _u)
+{
+	     /* Use new_uri if present */
+	if (_m->new_uri.s) {
+		_u->s = _m->new_uri.s;
+		_u->len = _m->new_uri.len;
+	} else {
+		_u->s = _m->first_line.u.request.uri.s;
+		_u->len = _m->first_line.u.request.uri.len;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Rewrite Request-URI
+ */
+int rewrite_uri(struct sip_msg* _m, str* _s)
+{
+        char* buf;
+
+        buf = (char*)pkg_malloc(_s->len + 1);
+        if (!buf) {
+                LOG(L_ERR, "ERROR: TOI: rewrite_uri: No memory left\n");
+                return -1;
+        }
+
+        memcpy(buf, _s->s, _s->len);
+        buf[_s->len] = '\0';
+
+        _m->parsed_uri_ok = 0;
+        if (_m->new_uri.s) {
+                pkg_free(_m->new_uri.s);
+        }
+
+        _m->new_uri.s = buf;
+        _m->new_uri.len = _s->len;
+
+        DBG("TOI: rewrite_uri: Rewriting Request-URI with '%.*s'\n", _s->len, 
+																		   buf);
+        return 0;
+}
+

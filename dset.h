@@ -74,4 +74,8 @@ void set_ruri_q(qvalue_t q);
  */
 qvalue_t get_ruri_q(void);
 
+int get_request_uri(struct sip_msg* _m, str* _u);
+int rewrite_uri(struct sip_msg* _m, str* _s);
+
+
 #endif /* _DSET_H */
