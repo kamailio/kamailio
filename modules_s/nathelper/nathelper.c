@@ -1,19 +1,5 @@
 /* $Id$
  *
- * Ser module, it implements the following commands:
- * fix_nated_contact() - replaces host:port in Contact field with host:port
- *			 we received this message from
- * fix_nated_sdp() - replaces IP address in the SDP with IP address
- *		     and/or adds direction=active option to the SDP
- * force_rtp_proxy() - rewrite IP address and UDP port in the SDP
- *		       body in such a way that RTP traffic visits
- *		       RTP proxy running on the same machine as a
- *		       ser itself
- *
- * Beware, those functions will only work correctly if the UA supports
- * symmetric signalling and media (not all do)!!!
- *
- *
  * Copyright (C) 2003 Porta Software Ltd
  *
  * This file is part of ser, a free SIP server.
@@ -111,6 +97,17 @@
  *		(internal->internal) and `ee' (external->external). See
  *		example file alg.cfg for details.
  *
+ * 2004-03-15	If the rtp proxy test failed (wrong version or not started)
+ *		retry test from time to time, when some *rtpproxy* function
+ *		is invoked. Minimum interval between retries can be
+ *		configured via rtpproxy_disable_tout module parameter (default
+ *		is 60 seconds). Setting it to -1 will disable periodic
+ *		rechecks completely, setting it to 0 will force checks
+ *		for each *rtpproxy* function call. (andrei)
+ *
+ * 2004-03-22	Fix assignment of rtpproxy_retr and rtpproxy_tout module
+ *		parameters.
+ *
  */
 
 #include "nhelpr_funcs.h"
@@ -178,6 +175,7 @@ static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *gencookie();
+static int rtpp_test(int, int);
 static char *send_rtpp_command(struct iovec *, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
@@ -213,6 +211,7 @@ static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
 static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock";
 static int rtpproxy_disable = 0;
+static int rtpproxy_disable_tout = 60;
 static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
 static int umode = 0;
@@ -220,7 +219,7 @@ static int controlfd;
 static pid_t mypid;
 static unsigned int myseqn = 0;
 
-static cmd_export_t cmds[]={
+static cmd_export_t cmds[] = {
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
@@ -231,17 +230,18 @@ static cmd_export_t cmds[]={
 	{0, 0, 0, 0, 0}
 };
 
-static param_export_t params[]={
-	{"natping_interval", INT_PARAM, &natping_interval },
-	{"ping_nated_only",  INT_PARAM, &ping_nated_only  },
-	{"rtpproxy_sock",    STR_PARAM, &rtpproxy_sock    },
-	{"rtpproxy_disable", INT_PARAM, &rtpproxy_disable },
-	{"rtpproxy_retr",    INT_PARAM, &rtpproxy_disable },
-	{"rtpproxy_tout",    INT_PARAM, &rtpproxy_disable },
+static param_export_t params[] = {
+	{"natping_interval",      INT_PARAM, &natping_interval      },
+	{"ping_nated_only",       INT_PARAM, &ping_nated_only       },
+	{"rtpproxy_sock",         STR_PARAM, &rtpproxy_sock         },
+	{"rtpproxy_disable",      INT_PARAM, &rtpproxy_disable      },
+	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
+	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
+	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
 	{0, 0, 0}
 };
 
-struct module_exports exports={
+struct module_exports exports = {
 	"nathelper",
 	cmds,
 	params,
@@ -309,9 +309,8 @@ mod_init(void)
 static int
 child_init(int rank)
 {
-	int rtpp_ver, n;
+	int n;
 	char *cp;
-	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
 	struct addrinfo hints, *res;
 
 	if (rtpproxy_disable == 0) {
@@ -349,23 +348,9 @@ child_init(int rank)
 			freeaddrinfo(res);
 		}
 
-		cp = send_rtpp_command(v, 2);
-		if (cp == NULL) {
-			LOG(L_WARN,"WARNING: nathelper: can't get version of "
-			    "the RTP proxy\n");
-			rtpproxy_disable = 1;
-		} else {
-			rtpp_ver = atoi(cp);
-			if (rtpp_ver != SUP_CPROTOVER) {
-				LOG(L_WARN, "WARNING: nathelper: unsupported "
-				    "version of RTP proxy found: %d supported, "
-				    "%d present\n", SUP_CPROTOVER, rtpp_ver);
-				rtpproxy_disable = 1;
-			}
-		}
-		if (rtpproxy_disable != 0)
-			LOG(L_WARN, "WARNING: nathelper: support for RTP proxy"
-			    "has been disabled\n");
+		rtpproxy_disable = rtpp_test(0, 1);
+	} else {
+		rtpproxy_disable_tout = -1;
 	}
 	mypid = getpid();
 
@@ -1031,6 +1016,41 @@ gencookie()
 	return cook;
 }
 
+static int
+rtpp_test(int isdisabled, int force)
+{
+	int rtpp_ver;
+	static int recheck_ticks = 0;
+	char *cp;
+	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
+
+	if (force == 0) {
+		if (isdisabled == 0)
+			return 0;
+		if (recheck_ticks < get_ticks())
+			return 1;
+	}
+	cp = send_rtpp_command(v, 2);
+	if (cp == NULL) {
+		LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
+		    "the RTP proxy\n");
+	} else {
+		rtpp_ver = atoi(cp);
+		if (rtpp_ver == SUP_CPROTOVER)
+			return 0;
+		LOG(L_WARN, "WARNING: rtpp_test: unsupported "
+		    "version of RTP proxy found: %d supported, "
+		    "%d present\n", SUP_CPROTOVER, rtpp_ver);
+	}
+	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy"
+	    "has been disabled%s\n",
+	    rtpproxy_disable_tout < 0 ? "" : " temporarily");
+	if (rtpproxy_disable_tout >= 0)
+		recheck_ticks = get_ticks() + rtpproxy_disable_tout;
+
+	return 1;
+}
+
 static char *
 send_rtpp_command(struct iovec *v, int vcnt)
 {
@@ -1141,6 +1161,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
 						/* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
 
+	rtpproxy_disable = rtpp_test(rtpproxy_disable, 0);
 	if (rtpproxy_disable != 0) {
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: support for RTP proxy "
 		    "is disabled\n");
@@ -1222,6 +1243,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 
+	rtpproxy_disable = rtpp_test(rtpproxy_disable, 0);
 	if (rtpproxy_disable != 0) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: support for RTP proxy "
 		    "is disabled\n");
