@@ -14,12 +14,13 @@
 # config vars
 #################################################################
 DBNAME=ser
+DBHOST=dbhost
 USERNAME=ser
 DEFAULT_PW=heslo
 ROUSER=serro
 RO_PW=47serro11
-CMD="mysql -p -u "
-BACKUP_CMD="mysqldump -p -c -t -u "
+CMD="mysql -h $DBHOST -p -u "
+BACKUP_CMD="mysqldump -h $DBHOST -p -c -t -u "
 TABLE_TYPE="TYPE=MyISAM"
 SQL_USER="root"
 
@@ -92,6 +93,34 @@ use $1;
 # Users: ser is the regular user, serro only for reading
 GRANT ALL PRIVILEGES ON $1.* TO $USERNAME IDENTIFIED  BY '$DEFAULT_PW';
 GRANT SELECT ON $1.* TO $ROUSER IDENTIFIED BY '$RO_PW';
+
+
+#
+# Table structure versions
+#
+
+CREATE TABLE version (
+   table_name varchar(64) NOT NULL,
+   version smallint(5) DEFAULT '0' NOT NULL
+) $TABLE_TYPE;
+
+#
+# Dumping data for table 'version'
+#
+
+INSERT INTO version VALUES ( 'subscriber', '1');
+INSERT INTO version VALUES ( 'reserved', '1');
+INSERT INTO version VALUES ( 'phonebook', '1');
+INSERT INTO version VALUES ( 'pending', '1');
+INSERT INTO version VALUES ( 'missed_calls', '1');
+INSERT INTO version VALUES ( 'location', '1');
+INSERT INTO version VALUES ( 'grp', '1');
+INSERT INTO version VALUES ( 'event', '1');
+INSERT INTO version VALUES ( 'aliases', '1');
+INSERT INTO version VALUES ( 'active_sessions', '1');
+INSERT INTO version VALUES ( 'acc', '1');
+
+
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -231,6 +260,7 @@ CREATE TABLE missed_calls (
 
 
 CREATE TABLE pending (
+  phplib_id varchar(32) NOT NULL default '',
   USER_ID varchar(100) NOT NULL default '',
   PASSWORD varchar(25) NOT NULL default '',
   FIRST_NAME varchar(25) NOT NULL default '',
@@ -247,7 +277,8 @@ CREATE TABLE pending (
   REALM varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   UNIQUE KEY USER_ID (USER_ID),
-  KEY USER_ID_2 (USER_ID)
+  KEY USER_ID_2 (USER_ID),
+  UNIQUE KEY phplib_id (phplib_id),
 ) $TABLE_TYPE;
 
 
