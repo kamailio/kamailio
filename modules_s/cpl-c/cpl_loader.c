@@ -38,6 +38,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/uio.h>
 #include <errno.h>
 #include <string.h>
 #include "../../str.h"
@@ -156,6 +157,38 @@ error:
 
 
 
+/* Writes the cpl log into the given file.
+ */
+void write_log_to_file( char *response_file, str *log )
+{
+	int fd;
+
+	/* open file for write */
+	fd = open( response_file, O_WRONLY|O_CREAT|O_TRUNC/*|O_NOFOLLOW*/, 0600 );
+	if (fd==-1) {
+		LOG(L_ERR,"ERROR:cpl-c:write_logs_to_file: cannot open response file "
+			"<%s>: %s\n", response_file, strerror(errno));
+		return;
+	}
+
+	/* write the log */
+again:
+	if ( write( fd, log->s, log->len)==-1) {
+		if (errno==EINTR) {
+			goto again;
+		} else {
+			LOG(L_ERR,"ERROR:cpl-c:write_logs_to_file: write failed: %s\n",
+				strerror(errno) );
+		}
+	}
+
+	/* close the file*/
+	close( fd );
+	return;
+}
+
+
+
 /* Triggered by fifo server -> implements LOAD_CPL command
  * Command format:
  * -----------------------
@@ -175,6 +208,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	int cpl_file_len;
 	str xml = {0,0};
 	str bin = {0,0};
+	str log = {0,0};
 
 	DBG("DEBUG:cpl-c:cpl_load: \"LOAD_CPL\" FIFO commnad received!\n");
 
@@ -204,8 +238,11 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		goto error;
 
 	/* get the binary coding for the XML file */
-	if ( encodeCPL( &xml, &bin)!=1)
+	if (encodeCPL( &xml, &bin, &log)!=1) {
+		if (log.len && log.s && response_file )
+			write_log_to_file( response_file, &log);
 		goto error1;
+	}
 
 	/* write both the XML and binary formats into database */
 	if (write_to_db( db_hdl, user, &xml, &bin)!=1)
@@ -214,8 +251,14 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	/* free the memory used for storing the cpl script in XML format */
 	pkg_free( xml.s );
 
+	/* if any logs were generated -> dump them into response file */
+	if (log.len && log.s && response_file )
+		write_log_to_file( response_file, &log);
+
+	if (log.s) pkg_free ( log.s );
 	return 1;
 error1:
+	if (log.s) pkg_free ( log.s );
 	pkg_free ( xml.s );
 error:
 	return -1;

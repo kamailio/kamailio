@@ -31,7 +31,7 @@
 #include "../../str.h"
 
 int init_CPL_parser( char* DTD_filename );
-int encodeCPL(str *xml, str *bin);
+int encodeCPL(str *xml, str *bin, str *log);
 
 
 #endif

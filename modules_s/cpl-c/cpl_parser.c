@@ -42,12 +42,14 @@
 #include "../../ut.h"
 #include "CPL_tree.h"
 #include "sub_list.h"
+#include "cpl_log.h"
 
 
 
 static struct node *list = 0;
-static xmlDtdPtr     dtd;   /* DTD file */
-static xmlValidCtxt  cvp;   /* validating context */
+static xmlDtdPtr     dtd;     /* DTD file */
+static xmlValidCtxt  cvp;     /* validating context */
+static xmlSAXHandler sax_hdl; /* SAX handler */
 
 
 typedef unsigned short length_type ;
@@ -125,6 +127,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 			goto _error_;\
 		}\
 	}while(0)\
+
 
 
 #define MAX_EMAIL_HDR_SIZE   7 /*we are looking only for SUBJECT and BODY ;-)*/
@@ -1443,8 +1446,12 @@ error:
 }
 
 
+#define BAD_XML      "CPL script is not a valid XML document"
+#define BAD_XML_LEN  (sizeof(BAD_XML)-1)
+#define BAD_CPL      "CPL script doesn't respect CPL grammar"
+#define BAD_CPL_LEN  (sizeof(BAD_CPL)-1)
 
-int encodeCPL( str *xml, str *bin)
+int encodeCPL( str *xml, str *bin, str *log)
 {
 	static char buf[ENCONDING_BUFFER_SIZE];
 	xmlDocPtr  doc;
@@ -1453,15 +1460,22 @@ int encodeCPL( str *xml, str *bin)
 	doc  = 0;
 	list = 0;
 
+	/* reset all the logs (if any) to catch some possible err/warn/notice
+	 * from the parser/validater/encoder */
+	reset_logs();
+
 	/* parse the xml */
 	doc = xmlParseDoc( (unsigned char*)xml->s );
+	//doc = xmlSAXParseDoc( &sax_hdl, (unsigned char*)xml->s, 0/*recovery*/);
 	if (!doc) {
+		append_log( 1, ERR BAD_XML LF, ERR_LEN+BAD_XML_LEN+LF_LEN);
 		LOG(L_ERR,"ERROR:cpl:encodeCPL:CPL script not parsed successfully\n");
 		goto error;
 	}
 
 	/* check the xml against dtd */
 	if (xmlValidateDtd(&cvp, doc, dtd)!=1) {
+		append_log( 1, ERR BAD_CPL LF, ERR_LEN+BAD_CPL_LEN+LF_LEN);
 		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: CPL script do not matche DTD\n");
 		goto error;
 	}
@@ -1481,13 +1495,34 @@ int encodeCPL( str *xml, str *bin)
 
 	xmlFreeDoc(doc);
 	if (list) delete_list(list);
+	/* compile the log buffer */
+	compile_logs( log );
 	bin->s = buf;
-	write_to_file("cpl.dat", bin); /* only for debugging */
+	/*write_to_file("cpl.dat", bin);  only for debugging */
 	return 1;
 error:
 	if (doc) xmlFreeDoc(doc);
 	if (list) delete_list(list);
+	/* compile the log buffer */
+	compile_logs( log );
 	return 0;
+}
+
+
+
+static void err_print(void *ctx, const char *msg, ...)
+{
+	va_list ap;
+	//char *t;
+
+	va_start( ap, msg);
+	LOG(L_ERR,"->>>> my errr <%s>\n",msg);
+	//while ( (t=va_arg(ap, char *))!=0) {
+	//	LOG(L_ERR,"   -> <%s>\n",t);
+	//}
+	printf(msg,ap);
+	append_log( 2, ERR, ERR_LEN, msg, strlen(msg) );
+	va_end(ap);
 }
 
 
@@ -1495,6 +1530,10 @@ error:
 /* loads and parse the dtd file; a validating context is created */
 int init_CPL_parser( char* DTD_filename )
 {
+	/* build a new context for the parser */
+	memset( &sax_hdl, 0, sizeof(xmlSAXHandler));
+	sax_hdl.error = (errorSAXFunc)err_print;
+
 	dtd = xmlParseDTD( NULL, (unsigned char*)DTD_filename);
 	if (!dtd) {
 		LOG(L_ERR,"ERROR:cpl-c:init_CPL_parser: DTD not parsed successfully\n");
