@@ -196,7 +196,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 	}
 
 	/* is there a table name ? */
-	if ( *s )
+	if (s && *s)
 	{
 		s++;
 		if (*s=='$')
@@ -234,7 +234,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			{
 				LOG(L_ERR,"ERROR:avpops:parse_avp_db: scheme <%s> not found\n",
 					tmp.s);
-				goto error;;
+				goto error;
 			}
 			/* update scheme flags with AVP name type*/
 			dbp->scheme->db_flags|=dbp->a.flags&AVPOPS_VAL_STR?AVP_NAME_STR:0;
