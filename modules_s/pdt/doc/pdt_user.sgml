@@ -1,0 +1,255 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module translates numerical codes into domains and update accordingly the R-&uri;.
+	</para>
+	<para>
+	    The module looks up at the R-&uri; part of a message and if the user part begins with an
+	    established prefix it will update the &uri;. Updating the uri consists of: read the code
+	    after the prefix from the user part of the uri and keep the rest as the user part of the
+	    new uri. The host part will be the domain matched for the leading code.
+	</para>
+	<para>
+	    [&lt;prefix&gt;]&lt;code&gt;&lt;userid&gt;&lt;:password&gt;@&lt;mydomain.com&gt; ...
+	</para>
+	<para>
+	    and the result will be:
+	</para>
+	<para>
+	    &lt;userid&gt;&lt;:password&gt;@&lt;domain[:port]&gt;...
+	</para>
+	<example>
+	    <title></title>
+	    <programlisting format="linespecific">
+prefix=2
+code=3330
+domain[3330]=iptel.org
+
+2333091001@mydomain.com  => 91001@iptel.org    
+</programlisting>
+	</example>
+	<para>
+	    The code is always ended with a special digit (a parameter of the module). This digit
+	    will not be inside the code at all.
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    See <acronym>SQL</acronym> script for creating databases and a sample of cfg file in './doc/'.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    The web interface is in doc/web/ and the <acronym>SQL</acronym> script for
+		    creating the database for user interface is './doc/admin.sql'.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Sample shell script to use with fifo interface is './doc/fifo.sh'.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>A &ser; database module</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		<acronym>SQL</acronym> &url; of database--username, password, host, port and
+		database (ex: sql://username:password@hostname.com/database)
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>sql://root@127.0.0.1/pdt</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "param_name", "param_value")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>db_table</varname> (string)</title>
+	    <para>
+		Table name.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>domains</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "db_table", "domains")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>terminator</varname> (integer)</title>
+	    <para>
+		The digit ending a code.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>terminator</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "terminator", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>start_range</varname> (integer)</title>
+	    <para>
+		Default start value for allocating prefixes.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 10.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>start_range</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "start_range", 10)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>prefix</varname> (string)</title>
+	    <para>
+		Default prefix who denotes what &uri; needs to be translated--if it is NULL the
+		module will not check the R-&uri; against it and the code is considered starting
+		from the first digit. Otherwise, the module will check first if the R-&uri; starts
+		with it and will skip it to find the code.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is NULL.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>prefix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "prefix", "123")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>hsize_2pow</varname> (integer)</title>
+	    <para>
+		Number of the hash entries = 2^hash_size.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 4.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>hsize_2pow</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pdt", "hsize_2pow", 4)
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">prefix2domain()</function>
+	    </title>
+	    <para>
+		Build a new &uri; if it is necessary. Returns 1 when the translation was made or there
+		was nothing to translate (user part of the &uri; is empty or it does not match the
+		prefix parameter). Returns -1 in error cases.
+	    </para>
+	    <example>
+		<title><function>prefix2domain</function> usage</title>
+		<programlisting format="linespecific">
+...
+prefix2domain();
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Installation & Running</title>
+	<para>Notes about installation and running.</para>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pdt.sgml" "Book" "chapter")
+End:
+-->

@@ -1,0 +1,43 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Developer's Guide</title>
+    <para>
+	The module registers also a function that works with the fifo server ( get_domaincode ).
+	That will provide support for a web user interface which will be used by admins to register
+	new domains and by simple users to find the code for a domain.
+    </para>
+    <para>
+	Registered domains are stored in a database and in tables in share memory. The database is
+	kept consistent with the tables in memory. When a new domain is registered the information
+	goes first in the database and only than in tables in share memory.
+    </para>
+    <para>
+	Data in share memory is kept in hashtables to have fast searches. Searches are 
+	possible for domains, but also for codes. Searches for codes are necessary more 
+	often, every time when a message that needs to be translated passes through &ser;
+	Searches for domains are requested by the user interface only.
+    </para>
+    <para>
+	Through the web interface a normal user can find the code for a domain and a privileged user
+	(i.e., admins) can register new domains too. The web interface also encounters problems of
+	mutual exclusion. Any user of the interface posts a request to the fifo server and waits his
+	response in a file. The file must be unique per user to avoid interfering responses for
+	different simultaneous user. That problem is solved using session per user offered by the
+	<acronym>PHP</acronym> language.
+    </para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("pdt.sgml" "book" "chapter")
+End:
+-->
