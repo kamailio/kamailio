@@ -1,11 +1,24 @@
 Things we have omitted for now:
 
-- we don't make a deep copy of msg->lump_list
+- we don't make a deep copy of msg->lump_list; that means
+  that all changes made prior to going stateful go lost
 - we don't generate CANCELs for forked requests
 - no ACK matching (waiting for To-tag)
 - no SIP-wise HF comparison within T-matching
   (just memcmp)
 - 6xx should be delayed indeed
+- ACK of 2xx INV caching (avoid e2e retransmission
+  of an ACK hit the proxy too)
+
+- Via:
+	- branch
+		- loop check
+		- hash table & index
+		- branch
+	- mid & response routing
+
+- T-language
 
 To improve:
 - too many memcpies
+- faster syncing
