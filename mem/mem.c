@@ -23,6 +23,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * History:
+ * --------
+ *  2003-04-08  init_mallocs split into init_{pkg,shm}_malloc (andrei)
+ * 
  */
 
 
@@ -55,7 +61,8 @@
 	#endif
 #endif
 
-int init_mallocs()
+
+int init_pkg_mallocs()
 {
 #ifdef PKG_MALLOC
 	/*init mem*/
@@ -73,7 +80,13 @@ int init_mallocs()
 		return -1;
 	}
 #endif
+	return 0;
+}
 
+
+
+int init_shm_mallocs()
+{
 #ifdef SHM_MEM
 	if (shm_mem_init()<0) {
 		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
@@ -83,7 +96,6 @@ int init_mallocs()
 	}
 #endif
 	return 0;
-
 }
 
 

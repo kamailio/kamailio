@@ -13,6 +13,7 @@
 #               by Maxim Sobolev   <sobomax@FreeBSD.org> and 
 #                  Tomas Björklund <tomas@webservices.se>
 #  2003-03-11  PREFIX & LOCALBASE must also be exported (andrei)
+#  2003-04-07  hacked to work with solaris install (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -20,8 +21,10 @@ auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 #include  source related defs
 include Makefile.sources
 
-override exclude_modules:=CVS cpl cpl-c ext radius_acc radius_auth snmp jabber sms pa extcmd msilo \
-	$(exclude_modules)
+override exclude_modules:=CVS cpl cpl-c ext radius_acc radius_auth snmp \
+							jabber sms pa extcmd msilo \
+							auth_radius group_radius uri_radius \
+							$(exclude_modules)
 static_modules=
 static_modules_path=$(addprefix modules/, $(static_modules))
 extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))

@@ -31,6 +31,8 @@
  * --------
  *  2003-03-10  __FUNCTION__ is a gcc-ism, defined it to "" for sun cc
  *               (andrei)
+ *  2003-03-07  split init_malloc into init_pkg_mallocs & init_shm_mallocs 
+ *               (andrei)
  */
 
 
@@ -109,6 +111,7 @@
 #	define pkg_status()
 #endif
 
-int init_mallocs();
+int init_pkg_mallocs();
+int init_shm_mallocs();
 
 #endif

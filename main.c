@@ -32,6 +32,8 @@
  *  2003-03-29  pkg cleaners for fifo and script callbacks introduced (jiri)
  *  2003-03-31  removed snmp part (obsolete & no place in core) (andrei)
  *  2003-04-06  child_init called in all processes (janakj)
+ *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and 
+ *               init_shm_mallocs called after cmd. line parsing (andrei)
  *
  */
 
@@ -1088,8 +1090,8 @@ int main(int argc, char** argv)
 	ret=-1;
 	my_argc=argc; my_argv=argv;
 	
-	/*init mallocs (before parsing cfg or cmd line !)*/
-	if (init_mallocs()==-1)
+	/*init pkg mallocs (before parsing cfg or cmd line !)*/
+	if (init_pkg_mallocs()==-1)
 		goto error;
 
 	/* added by jku: add exit handler */
@@ -1308,6 +1310,13 @@ try_again:
 	
 
 
+	/*init shm mallocs (before parsing cfg !)
+	 *  this must be here to allow setting shm mem size from the command line
+	 *  and it must also be before init_timer and init_tcp
+	 *  => if shm_mem should be settable from the cfg file move everything
+	 *  after --andrei */
+	if (init_shm_mallocs()==-1)
+		goto error;
 	/*init timer, before parsing the cfg!*/
 	if (init_timer()<0){
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
@@ -1335,14 +1344,14 @@ try_again:
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
 	}
-
-
-
+	
+	
+	
 	print_rl();
-
+	
 	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;
-
+	
 	
 	if (children_no<=0) children_no=CHILD_NO;
 #ifdef USE_TCP
