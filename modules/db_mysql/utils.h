@@ -1,10 +1,12 @@
 /* 
  * $Id$ 
+ *
+ * MySQL module utilities
  */
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#ifndef UTILS_H
+#define UTILS_H
 
 char* trim(char* _s);
 
-#endif
+#endif /* UTILS_H */

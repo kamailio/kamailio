@@ -9,237 +9,258 @@
 #include "db_utils.h"
 #include "../../dprint.h"
 #include <string.h>
+#include <mysql/mysql.h>
 
 
-static int str2int   (const char* _s, int* _v);
-static int str2double(const char* _s, double* _v);
-static int str2time  (const char* _s, time_t* _v);
-static int int2str   (int _v, char* _s, int* _l);
-static int double2str(double _v, char* _s, int* _l);
-static int time2str  (time_t _v, char* _s, int* _l);
-
-
-/*
- * Does not copy strings
- */
-int str2val(db_type_t _t, db_val_t* _v, const char* _s)
-{
-#ifdef PARANOID
-	if (!_v) {
-		LOG(L_ERR, "str2val(): Invalid parameter value\n");
-		return FALSE;
-	}
-#endif
-
-	if (!_s) {
-		VAL_TYPE(_v) = _t;
-		VAL_NULL(_v) = 1;
-		return TRUE;
-	}
-
-	switch(_t) {
-	case DB_INT:
-		if (str2int(_s, &VAL_INT(_v)) == FALSE) {
-			LOG(L_ERR, "str2val(): Error while converting integer value from string\n");
-			return FALSE;
-		} else {
-			VAL_TYPE(_v) = DB_INT;
-			return TRUE;
-		}
-		break;
-	
-	case DB_DOUBLE:
-		if (str2double(_s, &VAL_DOUBLE(_v)) == FALSE) {
-			LOG(L_ERR, "str2val(): Error while converting double value from string\n");
-			return FALSE;
-		} else {
-			VAL_TYPE(_v) = DB_DOUBLE;
-			return TRUE;
-		}
-		break;
-
-	case DB_STRING:
-		VAL_STRING(_v) = _s;
-		VAL_TYPE(_v) = DB_STRING;
-		return TRUE;
-
-	case DB_STR:
-		VAL_STR(_v).s = (char*)_s;
-		VAL_STR(_v).len = strlen(_s);
-		VAL_TYPE(_v) = DB_STR;
-		return TRUE;
-
-	case DB_DATETIME:
-		if (str2time(_s, &VAL_TIME(_v)) == FALSE) {
-			LOG(L_ERR, "str2val(): Error while converting datetime value from string\n");
-			return FALSE;
-		} else {
-			VAL_TYPE(_v) = DB_DATETIME;
-			return TRUE;
-		}
-		break;
-	}
-	return FALSE;
-}
-
-
-int val2str(db_val_t* _v, char* _s, int* _len)
-{
-	int l;
-#ifdef PARANOID
-	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
-		LOG(L_ERR, "val2str(): Invalid parameter value\n");
-		return FALSE;
-	}
-#endif
-	if (VAL_NULL(_v)) {
-		*_len = snprintf(_s, *_len, "NULL");
-		return TRUE;
-	}
-	
-	switch(VAL_TYPE(_v)) {
-	case DB_INT:
-		if (int2str(VAL_INT(_v), _s, _len) == FALSE) {
-			LOG(L_ERR, "val2str(): Error while converting string to int\n");
-			return FALSE;
-		} else {
-			return TRUE;
-		}
-		break;
-
-	case DB_DOUBLE:
-		if (double2str(VAL_DOUBLE(_v), _s, _len) == FALSE) {
-			LOG(L_ERR, "val2str(): Error while converting string to double\n");
-			return FALSE;
-		} else {
-			return TRUE;
-		}
-		break;
-
-	case DB_STRING:
-		l = strlen(VAL_STRING(_v));
-		if (*_len < (l + 2)) {
-			LOG(L_ERR, "val2str(): Destination buffer too short\n");
-			return FALSE;
-		} else {
-			*_s++ = '\'';
-			memcpy(_s, VAL_STRING(_v), l);
-			*(_s + l) = '\'';
-			*(_s + l + 1) = '\0'; /* FIXME */
-			*_len = l + 2;
-			return TRUE;
-		}
-		break;
-
-	case DB_STR:
-		l = VAL_STR(_v).len;
-		if (*_len < l) {
-			LOG(L_ERR, "val2str(): Destination buffer too short\n");
-			return FALSE;
-		} else {
-			*_s++ = '\'';
-			memcpy(_s, VAL_STR(_v).s, l);
-			*(_s + l) = '\'';
-			*(_s + l + 1) = '\0';
-			*_len = l + 2;
-			return TRUE;
-		}
-		break;
-
-	case DB_DATETIME:
-		if (time2str(VAL_TIME(_v), _s, _len) == FALSE) {
-			LOG(L_ERR, "val2str(): Error while converting string to time_t\n");
-			return FALSE;
-		} else {
-			return TRUE;
-		}
-		break;
-
-	default:
-		DBG("val2str(): Unknow data type\n");
-		return FALSE;
-	}
-	return FALSE;
-}
-
-
-static int str2int(const char* _s, int* _v)
+static inline int str2int(const char* _s, int* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2int(): Invalid parameter value\n");
-		return FALSE;
+		return -1;
 	}
 #endif
 	*_v = atoi(_s);
-	return TRUE;
+	return 0;
 }
 
 
-static int str2double(const char* _s, double* _v)
+static inline int str2double(const char* _s, double* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2double(): Invalid parameter value\n");
-		return FALSE;
+		return -1;
 	}
 #endif
 	*_v = atof(_s);
-	return TRUE;
+	return 0;
 }
 
 
-static int str2time(const char* _s, time_t* _v)
+static inline int str2time(const char* _s, time_t* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
 		LOG(L_ERR, "str2time(): Invalid parameter value\n");
-		return FALSE;
+		return -1;
 	}
 #endif
 	*_v = mysql2time(_s);
-	return TRUE;
+	return 0;
 }
 
 
-static int int2str(int _v, char* _s, int* _l)
+static inline int int2str(int _v, char* _s, int* _l)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
 		LOG(L_ERR, "int2str(): Invalid parameter value\n");
-		return FALSE;
+		return -1;
 	}
 #endif
 	*_l = snprintf(_s, *_l, "%-d", _v);
-	return TRUE;
+	return 0;
 }
 
 
-static int double2str(double _v, char* _s, int* _l)
+static inline int double2str(double _v, char* _s, int* _l)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
 		LOG(L_ERR, "double2str(): Invalid parameter value\n");
-		return FALSE;
+		return -1;
 	}
 #endif
 	*_l = snprintf(_s, *_l, "%-10.2f", _v);
-	return TRUE;
+	return 0;
 }
 
 
-static int time2str(time_t _v, char* _s, int* _l)
+static inline int time2str(time_t _v, char* _s, int* _l)
 {
 	int l;
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (*_l < 2))  {
 		LOG(L_ERR, "Invalid parameter value\n");
-		return FALSE;
+		return -1;
 	}
 #endif
 	*_s++ = '\'';
 	l = time2mysql(_v, _s, *_l - 1);
 	*(_s + l) = '\'';
 	*_l = l + 2;
-	return TRUE;
+	return 0;
 }
+
+/*
+ * Does not copy strings
+ */
+int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
+{
+#ifdef PARANOID
+	if (!_v) {
+		LOG(L_ERR, "str2val(): Invalid parameter value\n");
+		return -1;
+	}
+#endif
+
+	if (!_s) {
+		VAL_TYPE(_v) = _t;
+		VAL_NULL(_v) = 1;
+		return 0;
+	}
+
+	switch(_t) {
+	case DB_INT:
+		if (str2int(_s, &VAL_INT(_v)) < 0) {
+			LOG(L_ERR, "str2val(): Error while converting integer value from string\n");
+			return -2;
+		} else {
+			VAL_TYPE(_v) = DB_INT;
+			return 0;
+		}
+		break;
+	
+	case DB_DOUBLE:
+		if (str2double(_s, &VAL_DOUBLE(_v)) < 0) {
+			LOG(L_ERR, "str2val(): Error while converting double value from string\n");
+			return -3;
+		} else {
+			VAL_TYPE(_v) = DB_DOUBLE;
+			return 0;
+		}
+		break;
+
+	case DB_STRING:
+		VAL_STRING(_v) = _s;
+		VAL_TYPE(_v) = DB_STRING;
+		return 0;
+
+	case DB_STR:
+		VAL_STR(_v).s = (char*)_s;
+		VAL_STR(_v).len = _l;
+		VAL_TYPE(_v) = DB_STR;
+		return 0;
+
+	case DB_DATETIME:
+		if (str2time(_s, &VAL_TIME(_v)) < 0) {
+			LOG(L_ERR, "str2val(): Error while converting datetime value from string\n");
+			return -4;
+		} else {
+			VAL_TYPE(_v) = DB_DATETIME;
+			return 0;
+		}
+		break;
+
+	case DB_BLOB:
+		VAL_BLOB(_v).s = (char*)_s;
+		VAL_BLOB(_v).len = _l;
+		VAL_TYPE(_v) = DB_BLOB;
+		return 0;
+	}
+	return -5;
+}
+
+
+/*
+ * Used when converting result from a query
+ */
+int val2str(db_val_t* _v, char* _s, int* _len)
+{
+	int l;
+	char* old_s;
+
+#ifdef PARANOID
+	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
+		LOG(L_ERR, "val2str(): Invalid parameter value\n");
+		return -1;
+	}
+#endif
+	if (VAL_NULL(_v)) {
+		*_len = snprintf(_s, *_len, "NULL");
+		return 0;
+	}
+	
+	switch(VAL_TYPE(_v)) {
+	case DB_INT:
+		if (int2str(VAL_INT(_v), _s, _len) < 0) {
+			LOG(L_ERR, "val2str(): Error while converting string to int\n");
+			return -2;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_DOUBLE:
+		if (double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
+			LOG(L_ERR, "val2str(): Error while converting string to double\n");
+			return -3;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_STRING:
+		l = strlen(VAL_STRING(_v));
+		if (*_len < (l + 3)) {
+			LOG(L_ERR, "val2str(): Destination buffer too short\n");
+			return -4;
+		} else {
+			*_s++ = '\'';
+			memcpy(_s, VAL_STRING(_v), l);
+			*(_s + l) = '\'';
+			*(_s + l + 1) = '\0'; /* FIXME */
+			*_len = l + 2;
+			return 0;
+		}
+		break;
+
+	case DB_STR:
+		l = VAL_STR(_v).len;
+		if (*_len < (l + 3)) {
+			LOG(L_ERR, "val2str(): Destination buffer too short\n");
+			return -5;
+		} else {
+			*_s++ = '\'';
+			memcpy(_s, VAL_STR(_v).s, l);
+			*(_s + l) = '\'';
+			*(_s + l + 1) = '\0';
+			*_len = l + 2;
+			return 0;
+		}
+		break;
+
+	case DB_DATETIME:
+		if (time2str(VAL_TIME(_v), _s, _len) < 0) {
+			LOG(L_ERR, "val2str(): Error while converting string to time_t\n");
+			return -6;
+		} else {
+			return 0;
+		}
+		break;
+
+	case DB_BLOB:
+		l = VAL_BLOB(_v).len;
+		if (*_len < (l * 2 + 3)) {
+			LOG(L_ERR, "val2str(): Destination buffer too short\n");
+			return -7;
+		} else {
+			old_s = _s;
+			*_s++ = '\'';
+			_s += mysql_escape_string(_s, VAL_STR(_v).s, l);
+			*_s++ = '\'';
+			*_s = '\0';
+			*_len = _s - old_s;
+			return 0;
+		}			
+		break;
+
+	default:
+		DBG("val2str(): Unknow data type\n");
+		return -7;
+	}
+	return -8;
+}
+
+

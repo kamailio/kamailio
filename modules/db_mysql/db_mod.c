@@ -1,5 +1,7 @@
 /* 
  * $Id$ 
+ *
+ * MySQL module interface
  */
 
 #include "../../sr_module.h"

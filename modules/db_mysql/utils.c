@@ -1,10 +1,13 @@
 /* 
  * $Id$ 
+ *
+ * MySQL module utilities
  */
 
 #include "utils.h"
 #include <string.h>
 #include "defs.h"
+
 
 /*
  * Remove any tabs and spaces from the begining and the end of
