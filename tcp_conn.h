@@ -33,6 +33,13 @@
 
 
 #define TCP_BUF_SIZE 65535
+#define TCP_CON_TIMEOUT 60 /* in  seconds */
+#define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
+							 the connection to the tcp master process */
+#define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
+#define TCP_CHILD_SELECT_TIMEOUT 2 /* the same as above but for children */
+
+
 enum {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR, TCP_REQ_OVERRUN, 
 	 	TCP_REQ_BAD_LEN };
 enum {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
@@ -44,7 +51,6 @@ enum {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 
 struct tcp_req{
 	struct tcp_req* next;
-	int fd;
 	/* sockaddr ? */
 	char buf[TCP_BUF_SIZE]; /* bytes read so far*/
 	char* pos; /* current position in buf */
@@ -59,17 +65,51 @@ struct tcp_req{
 };
 
 
-#define init_tcp_req( r, f) \
+
+
+struct tcp_connection{
+	int s; /*socket, used by "tcp main" */
+	int fd; /* used only by "children" */
+	struct ip_addr ip; /* peer ip */
+	int sock_idx; /* receiving socket index in the tcp_info array */
+	union sockaddr_union su;
+	struct tcp_req req; /* request data */
+	int refcnt;
+	int timeout; /* connection timeout, after this it will be removed*/
+	struct tcp_connection* next;
+	struct tcp_connection* prev;
+};
+
+
+
+
+#define init_tcp_req( r) \
 	do{ \
 		memset( (r), 0, sizeof(struct tcp_req)); \
-		(r)->fd=(f); \
 		(r)->parsed=(r)->pos=(r)->buf; \
 		(r)->error=TCP_REQ_OK;\
 		(r)->state=H_STARTWS; \
 	}while(0)
 
 
+/* add a tcpconn to a list*/
+#define tcpconn_listadd(head, c) \
+	do{ \
+		/* add it at the begining of the list*/ \
+		(c)->next=(head); \
+		(c)->prev=0; \
+		if ((head)) (head)->prev=(c); \
+		(head)=(c); \
+	} while(0)
 
+
+/* remove a tcpconn from a list*/
+#define tcpconn_listrm(head, c) \
+	do{ \
+		if ((head)==(c)) (head)=(c)->next; \
+		if ((c)->next) (c)->next->prev=(c)->prev; \
+		if ((c)->prev) (c)->prev->next=(c)->next; \
+	}while(0)
 
 
 

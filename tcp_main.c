@@ -28,6 +28,11 @@
 
 #ifdef USE_TCP
 
+
+#ifndef SHM_MEM
+#error "shared memory support needed (add -DSHM_MEM to Makefile.defs)"
+#endif
+
 #include <sys/select.h>
 
 #include <sys/time.h>
@@ -43,8 +48,10 @@
 
 #include "ip_addr.h"
 #include "pass_fd.h"
+#include "tcp_conn.h"
 #include "globals.h"
 #include "mem/mem.h"
+
 
 
 #define local_malloc pkg_malloc
@@ -62,14 +69,6 @@ struct tcp_child{
 
 enum { CONN_OK, CONN_ERROR };
 
-struct tcp_connection{
-	int s; /*socket */
-	struct ip_addr ip;
-	union sockaddr_union su;
-	int refcnt;
-	struct tcp_connection* next;
-	struct tcp_connection* prev;
-};
 
 
 
@@ -83,7 +82,7 @@ struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su)
 	struct tcp_connection *c;
 	
 
-	c=(struct tcp_connection*)local_malloc(sizeof(struct tcp_connection));
+	c=(struct tcp_connection*)shm_malloc(sizeof(struct tcp_connection));
 	if (c==0){
 		LOG(L_ERR, "ERROR: tcpconn_add: mem. allocation failure\n");
 		goto error;
@@ -92,12 +91,11 @@ struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su)
 	c->su=*su;
 	c->refcnt=0;
 	su2ip_addr(&c->ip, su);
+	init_tcp_req(&c->req);
+	c->timeout=get_ticks()+TCP_CON_TIMEOUT;
 
 	/* add it at the begining of the list*/
-	c->next=conn_list;
-	c->prev=0;
-	if (conn_list) conn_list->prev=c;
-	conn_list=c;
+	tcpconn_listadd(conn_list, c);
 	return c;
 	
 error:
@@ -108,11 +106,29 @@ error:
 
 void tcpconn_rm(struct tcp_connection* c)
 {
+	tcpconn_listrm(conn_list, c);
+	shm_free(c);
+}
+
+
+/* very ineficient for now, use hashtable some day - FIXME*/
+void tcpconn_timeout()
+{
+	struct tcp_connection *c, *next;
+	int jiffies;;
 	
-	if (conn_list==c) conn_list=c->next;
-	if (c->next) c->next->prev=c->prev;
-	if (c->prev) c->prev->next=c->next;
-	local_free(c);
+	
+	jiffies=get_ticks();
+	c=conn_list;
+	while(c){
+		next=c->next;
+		if ((c->refcnt==0) && (jiffies<c->timeout)) {
+			DBG("tcpconn_timeout: timeout for %p (%d < %d)\n",
+					c, jiffies, c->timeout);
+			tcpconn_rm(c);
+		}
+		c=next;
+	}
 }
 
 
@@ -195,6 +211,7 @@ void tcp_main_loop()
 	int state;
 	int bytes;
 	socklen_t su_len;
+	struct timeval timeout;
 
 	/*init */
 	maxfd=0;
@@ -219,9 +236,14 @@ void tcp_main_loop()
 	
 	while(1){
 		sel_set=master_set;
-		n=select(maxfd+1, &sel_set, 0 ,0 , 0);
+		timeout->tv_sec=TCP_MAIN_SELECT_TIMEOUT;
+		timeout->tv_usec=0;
+		n=select(maxfd+1, &sel_set, 0 ,0 , &timeout);
 		if (n<0){
+			if (errno==EINTR) continue; /* just a signal */
 			/* errors */
+			LOG(L_ERR, "ERROR: tcp_main_loop: select:(%d) %s\n", errno,
+					strerror(errno));
 		}
 		
 		for (r=0; r<sock_no && n; r++){
@@ -301,6 +323,8 @@ read_again:
 						if (tcpconn->refcnt==0){
 							FD_SET(tcpconn->s, &master_set);
 							if (maxfd<tcpconn->s) maxfd=tcpconn->s;
+							/* update the timeout*/
+							tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
 						}
 					}else{
 						/*error, we should destroy it */
@@ -317,6 +341,9 @@ read_again:
 				}
 			}
 		}
+		
+		/* remove old connections */
+		tcpconn_timeout();
 	
 	}
 }

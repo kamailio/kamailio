@@ -241,7 +241,7 @@ static inline int init_su( union sockaddr_union* su,
 
 
 
-/* inits a struct sockaddr_union from a struct hostent, an address index int
+/* inits a struct sockaddr_union from a struct hostent, an address index in
  * the hostent structure and a port no.
  * WARNING: no index overflow  checks!
  * returns 0 if ok, -1 on error (unknown address family) */

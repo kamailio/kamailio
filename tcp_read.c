@@ -52,7 +52,7 @@
 /* reads next available bytes
  * return number of bytes read, 0 on EOF or -1 on error,
  * sets also r->error */
-int tcp_read(struct tcp_req *r)
+int tcp_read(struct tcp_req *r, int fd)
 {
 	int bytes_free, bytes_read;
 	
@@ -64,7 +64,7 @@ int tcp_read(struct tcp_req *r)
 		return -1;
 	}
 again:
-	bytes_read=read(r->fd, r->pos, bytes_free);
+	bytes_read=read(fd, r->pos, bytes_free);
 
 	if(bytes_read==-1){
 		if (errno == EWOULDBLOCK || errno == EAGAIN){
@@ -92,7 +92,7 @@ again:
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_req *r)
+int tcp_read_headers(struct tcp_req *r, int fd)
 {
 	int bytes, remaining;
 	char *p;
@@ -133,7 +133,7 @@ int tcp_read_headers(struct tcp_req *r)
 
 
 	
-	bytes=tcp_read(r);
+	bytes=tcp_read(r, fd);
 	if (bytes<=0) return bytes;
 	p=r->parsed;
 	
@@ -313,52 +313,86 @@ skip:
 
 void tcp_receive_loop(int unix_sock)
 {
-	struct tcp_req req;
+	struct tcp_req* req;
+	struct tcp_connection* list; /* list with connections in use */
+	struct tcp_connection* con;
 	int bytes;
 	long size;
 	int n;
-	long id;
+	int nfds;
 	int s;
 	long state;
 	long response[2];
+	fd_set master_set;
+	fd_set sel_set;
+	int maxfd;
+	struct timeval timeout;
 	
 	
-	
+	/* init */
+	list=con=0;
+	FD_ZERO(&master_set);
+	FD_SET(unix_sock, &master_set);
+	maxfd=unix_sock;
 	
 	/* listen on the unix socket for the fd */
 	for(;;){
-			n=receive_fd(unix_sock, &id, sizeof(id), &s);
-			if (n<0){
-				if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR){
-					continue;
-				}else{
-					fprintf(stderr, "ERROR: tcp_receive_loop: read_fd: %s\n",
+			timeout->tv_sec=TCP_CHILD_SELECT_TIMEOUT;
+			timeout->tv_usec=0;
+			sel_set=master_set;
+			nfds=select(maxfd+1, &sel_set, 0 , 0 , &timeout);
+			if (nfds<0){
+				if (errno==EINTR) continue; /* just a signal */
+				/* errors */
+				LOG(L_ERR, "ERROR: tcp_receive_loop: select:(%d) %s\n", errno,
+					strerror(errno));
+				continue;
+			}
+			if (FD_ISSET(unix_sock, &sel_set)){
+				nfds--;
+				/* a new conn from "main" */
+				n=receive_fd(unix_sock, &con, sizeof(con), &s);
+				if (n<0){
+					if (errno == EWOULDBLOCK || errno == EAGAIN ||
+							errno == EINTR){
+						continue;
+					}else{
+						LOG(L_CRIT,"BUG: tcp_receive_loop: read_fd: %s\n",
 							strerror(errno));
-					abort(); /* big error*/
+						abort(); /* big error*/
+					}
 				}
-			}
-			if (n==0){
-					fprintf(stderr, 
-							"WARNING: tcp_receive_loop: 0 bytes read\n");
+				if (n==0){
+					LOG(L_ERR, "WARNING: tcp_receive_loop: 0 bytes read\n");
 					continue;
-			}
-			fprintf(stderr, "received n=%d id=%ld, fd=%d\n", n, id, s);
-			if (s==-1) {
-					fprintf(stderr, "ERROR: tcp_receive_loop: read_fd:"
+				}
+				DBG("received n=%d con=%ld, fd=%d\n", n, con, s);
+				if (s==-1) {
+					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
 									"no fd read\n");
 					state=-1;
 					goto end_req; /* ?*/
+				}
+				if (con==0){
+					LOG(L_ERR, "ERROR: tcp_receive_loop: null pointer\n");
+					state=-1;
+					goto end_req;
+				}
+				con->fd=s;
+				FD_SET(s, &master_set);
+				if (maxfd<s) maxfd=s;
+				tcpconn_listadd(list, con);
 			}
-		
-		init_tcp_req(&req, s);
-		
-		
-	again:
-		while(req.complete==0 && req.error==TCP_REQ_OK){
-			bytes=tcp_read_headers(&req);
-			/* if timeout state=0; goto end__req; */
+			for (con=list; con && nfds ; con=con->next){
+				if (FD_ISSET(con->fd, &sel_set)){
+					nfds--;
+					req=&con->req;
+again:
+		while(req->complete==0 && req->error==TCP_REQ_OK){
+			bytes=tcp_read_headers(req, s);
+						/* if timeout state=0; goto end__req; */
 			fprintf(stderr, "read= %d bytes, parsed=%d, state=%d, error=%d\n",
-					bytes, req.parsed-req.buf, req.state, req.error );
+					bytes, req->parsed-req->buf, req->state, req->error );
 			if (bytes==-1){
 				fprintf(stderr, "ERROR!\n");
 				state=-1;
@@ -371,19 +405,19 @@ void tcp_receive_loop(int unix_sock)
 			}
 
 		}
-		if (req.error!=TCP_REQ_OK){
+		if (req->error!=TCP_REQ_OK){
 			fprintf(stderr, "bad request, state=%d, error=%d\n",
-					req.state, req.error);
+					req->state, req->error);
 			state=-1;
 			goto end_req;
 		}
 		fprintf(stderr, "end of header part\n");
-		fprintf(stderr, "headers:\n%.*s.\n",req.body-req.buf, req.buf);
-		if (req.has_content_len){
-			fprintf(stderr, "content-length= %d\n", req.content_len);
-			fprintf(stderr, "body:\n%.*s\n", req.content_len, req.body);
+		fprintf(stderr, "headers:\n%.*s.\n",req->body-req->buf, req->buf);
+		if (req->has_content_len){
+			fprintf(stderr, "content-length= %d\n", req->content_len);
+			fprintf(stderr, "body:\n%.*s\n", req->content_len, req->body);
 		}else{
-			req.error=TCP_REQ_BAD_LEN;
+			req->error=TCP_REQ_BAD_LEN;
 			fprintf(stderr, "content length not present or unparsable\n");
 			state=-1;
 			goto end_req;
@@ -393,21 +427,21 @@ void tcp_receive_loop(int unix_sock)
 		state=0;
 		/* just for debugging use sendipv4 as receiving socket */
 		DBG("calling receive_msg(%p, %d, %p)\n",
-				req.buf, (int)(req.parsed-req.buf), &sendipv4->su);
+				req->buf, (int)(req->parsed-req->buf), &sendipv4->su);
 		bind_address=sendipv4;
-		receive_msg(req.buf, req.parsed-req.buf, &sendipv4->su);
+		receive_msg(req->buf, req->parsed-req->buf, &sendipv4->su);
 
 		/* prepare for next request */
-		size=req.pos-req.body;
-		if (size) memmove(req.buf, req.body, size);
+		size=req->pos-req->body;
+		if (size) memmove(req->buf, req->body, size);
 		fprintf(stderr, "\npreparing for new request, kept %ld bytes\n", size);
-		req.pos=req.buf+size;
-		req.parsed=req.buf;
-		req.body=0;
-		req.error=TCP_REQ_OK;
-		req.state=H_STARTWS;
-		req.complete=req.content_len=req.has_content_len=0;
-		req.bytes_to_go=0;
+		req->pos=req->buf+size;
+		req->parsed=req->buf;
+		req->body=0;
+		req->error=TCP_REQ_OK;
+		req->state=H_STARTWS;
+		req->complete=req->content_len=req->has_content_len=0;
+		req->bytes_to_go=0;
 	
 		/* process last req. */
 		
@@ -418,7 +452,7 @@ void tcp_receive_loop(int unix_sock)
 		/* release req & signal the parent */
 		if (s!=-1) close(s);
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
-		response[0]=id;
+		response[0]=con;
 		response[1]=state;
 		write(unix_sock, response, sizeof(response));
 		
