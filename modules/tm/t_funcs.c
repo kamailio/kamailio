@@ -60,14 +60,17 @@ int t_add_transaction( struct sip_msg* p_msg )
     /* if the transaction is not found yet we are tring to look for it*/
    if ( (int)T==-1 )
       /* if the lookup's result is not 0 means that it's a retransmission */
-      if ( t_lookup_request( p_msg ) )
+      if ( t_lookup_request( p_msg ) )	{
+	 DBG("DEBUG: t_add_transaction: won't add a retransmission\n");
          return -1;
+      }
 
    /* creates a new transaction */
    new_cell = build_cell( p_msg ) ;
    if  ( !new_cell )
       return -2;
    insert_into_hash_table( hash_table , new_cell );
+   DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
 
    T = new_cell;
    return 0;
