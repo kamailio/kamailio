@@ -34,10 +34,13 @@ include Makefile.defs
 export DEFS PROFILE CC  LD MKDEP MKTAGS CFLAGS LDFLAGS MOD_CFLAGS MOD_LDFLAGS
 export LEX YACC YACC_FLAGS
 
+
 # include the common rules
 include Makefile.rules
 
 #extra targets 
+
+$(NAME): static_modules
 
 lex.yy.c: cfg.lex $(ALLDEP)
 	$(LEX) $<
@@ -48,7 +51,6 @@ cfg.tab.c: cfg.y $(ALLDEP)
 .PHONY: all
 all: $(NAME) modules
 
-$(NAME): static_modules
 
 
 .PHONY: modules
@@ -76,3 +78,5 @@ dbg: ser
 
 tar: mantainer-clean 
 	tar -C .. -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+
+

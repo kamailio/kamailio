@@ -13,12 +13,12 @@
 
 
 #implicit rules
-%.o:%.c $(ALLDEP)
+%.o:%.c  $(ALLDEP)
 	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
 	@set -e; $(MKDEP) $< \
-	|  sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
+	|  sed 's#\($*\)\.o[ :]*#\1.o $@ : #g' > $@; \
 	[ -s $@ ] || rm -f $@
 
 
@@ -59,7 +59,9 @@ mantainer-clean: distclean
 TAGS:
 	$(MKTAGS) 
 	
-
+ifeq (,$(MAKECMDGOALS))
+include $(depends)
+endif
 ifneq (,$(filter-out clean proper distclean realclean mantainer-clean TAGS \
 		tar modules, $(MAKECMDGOALS)))
 include $(depends)
