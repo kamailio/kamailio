@@ -171,7 +171,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 	}
 
 	if (check_nonce(&c->digest.nonce, &secret) != 0) {
-		LOG(L_ALERT, "pre_auth(): Invalid nonce value received, very suspicious !\n");
+		DBG("pre_auth(): Invalid nonce value received\n");
 		return NOT_AUTHORIZED;
 	}
 
