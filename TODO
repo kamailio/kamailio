@@ -16,6 +16,7 @@ x port receive.c pre_script_cb fix from stable
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
 
 release:
+- print_cseq_num max. size fix.
 x backport: tcp conn id fix to stable + destroy_tcp 
 x backport: acc mem. leak fixes
 x backport: dns mem. leak fixes (resolve.[ch])

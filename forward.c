@@ -106,7 +106,7 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 				strerror(errno));
 		goto error;
 	}
-	len=sockaddru_len(from);
+	len=sizeof(from);
 	if (getsockname(temp_sock, &from.s, &len)==-1) {
 		LOG(L_ERR, "ERROR: get_out_socket: getsockname failed: %s\n",
 				strerror(errno));
