@@ -45,6 +45,7 @@
 #define _TAGS_H
 
 #include "parser/msg_parser.h"
+#include "globals.h"
 #include "crc.h"
 #include "str.h"
 
