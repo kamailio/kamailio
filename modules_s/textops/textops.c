@@ -105,15 +105,6 @@ static int fixup_substre(void**, int);
 static int str_fixup(void** param, int param_no);
 
 static int mod_init(void);
-/* RFC822-conformant dates format:
-
-   %a -- abbreviated week of day name (locale), %d day of month
-   as decimal number, %b abbreviated month name (locale), %Y
-   year with century, %T time in 24h notation
-*/
-#define TIME_FORMAT "Date: %a, %d %b %Y %H:%M:%S GMT"
-
-
 
 
 static cmd_export_t cmds[]={
