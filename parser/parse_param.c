@@ -370,7 +370,7 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 				goto ok;
 			}
 		} else {
-			t->len = _s->s - t->name.s;
+			t->len = t->name.len;
 		}
 
 		if (_s->s[0] == ',') goto ok; /* To be able to parse header parameters */

@@ -64,7 +64,7 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 	last = 0;
 
 	while(1) {
-		     /* Allocate and clear rr stucture */
+		     /* Allocate and clear rr structure */
 		r = (rr_t*)pkg_malloc(sizeof(rr_t));
 		if (!r) {
 			LOG(L_ERR, "parse_rr(): No memory left\n");
@@ -83,10 +83,11 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		s.s = r->nameaddr.name.s + r->nameaddr.len;  /* Point just behind > */
 		s.len -= r->nameaddr.len;
 
-		     /* Nothing left, finish */
-		if (s.len == 0) goto ok;
+		trim_leading(&s); /* Skip any whitechars */
+
+		if (s.len == 0) goto ok; /* Nothing left, finish */
 		
-		if (s.s[0] == ';') {         /* Contact parameter found */
+		if (s.s[0] == ';') {         /* Route parameter found */
 			s.s++;
 			s.len--;
 			trim_leading(&s);
@@ -106,9 +107,15 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 			     /* Copy hooks */
 			     /*r->r2 = hooks.rr.r2; */
 
+			trim_leading(&s);
 			if (s.len == 0) goto ok;
 		}
 
+		if (s.s[0] != ',') {
+			LOG(L_ERR, "parse_rr(): Invalid character '%c', comma expected\n", s.s[0]);
+			goto error;
+		}
+		
 		     /* Next character is comma or end of header*/
 		s.s++;
 		s.len--;
