@@ -99,6 +99,7 @@
 #define MAX_CONSUME_BUFFER 1024
 /* where reply pipes may be opened */
 #define FIFO_DIR "/tmp/"
+#define FIFO_DIR_LEN 5
 /* max length of the text of fifo 'print' command */
 #define MAX_PRINT_TEXT 256
 

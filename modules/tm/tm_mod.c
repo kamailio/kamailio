@@ -26,6 +26,7 @@
 #include "uac.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
+#include "t_stats.h"
 
 
 
@@ -234,6 +235,11 @@ static int mod_init(void)
 	}
 	if (register_fifo_cmd(fifo_uac, "t_uac", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo uac\n");
+		return -1;
+	}
+	
+	if (init_stats()<0) {
+		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
 		return -1;
 	}
 

@@ -8,6 +8,11 @@
 # realm
 DOMAIN=iptel.org
 
+# ser's FIFO server
+SER_FIFO=/tmp/ser_fifo
+# period in which stats are reprinted
+WATCH_PERIOD=2
+
 # SQL config
 SQL_DB=csps107
 SQL_HOST=dbhost
@@ -96,6 +101,16 @@ prompt_pw() {
     	read -s -p "MySql Password: " PW
     	echo
 	fi
+}
+
+# $1 = name $2=path $3=attempt
+print_stats() {
+echo "[cycle: $3; if screen empty, make sure server is alive]"
+cat > $SER_FIFO <<EOF
+
+:t_stats:$1
+EOF
+cat < $2
 }
 
 
@@ -368,6 +383,30 @@ case $1 in
 			echo "ok -- but beware, the server caches the usrloc entries"
 			echo "and the changes don't take effect until ser reboot"
 		fi
+		;;
+
+	stats)
+		name=ser_receiver_$$
+		path=/tmp/$name
+		if [ ! -w $SER_FIFO ]; then
+			echo "Error opening ser's FIFO $SER_FIFO"
+			echo "Make sure you have line fifo=$SER_FIFO in your config"
+			exit 1
+		fi
+		mkfifo $path
+		if [ $? -ne 0 ] ; then
+			echo "error opening read fifo $path"
+			exit 1
+		fi
+		attempt=0
+		while [ 1 -eq 1 ]; do
+			attempt=`expr $attempt + 1`
+			clear
+			print_stats $name $path $attempt
+			sleep $WATCH_PERIOD
+		done
+		rm $path
+		exit 0
 		;;
 
 	mail)

@@ -13,6 +13,7 @@
 #include "../../error.h"
 #include "t_reply.h"
 #include "t_cancel.h"
+#include "t_stats.h"
 
 unsigned int transaction_count( void )
 {
@@ -278,6 +279,12 @@ void insert_into_hash_table_unsafe( struct s_table *hash_table,
 
 	/* update stats */
 	p_entry->entries++;
+	cur_stats->transactions++;
+	acc_stats->transactions++;
+	if (p_cell->local) {
+		cur_stats->client_transactions++;
+		acc_stats->client_transactions++;
+	}
 }
 
 
@@ -313,6 +320,9 @@ void remove_from_hash_table_unsafe(struct s_table *hash_table,
 		p_entry->last_cell = p_cell->prev_cell;
 	/* update stats */
 	p_entry->entries--;
+	cur_stats->transactions--;
+	if (p_cell->local) cur_stats->client_transactions--;
+	cur_stats->waiting--;
 
 	/* unlock( &(p_entry->mutex) ); */
 }

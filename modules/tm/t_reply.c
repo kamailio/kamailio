@@ -23,6 +23,7 @@
 #include "t_lookup.h"
 #include "t_fwd.h"
 #include "fix_lumps.h"
+#include "t_stats.h"
 
 /* where to go if there is no positive reply */
 static int goto_on_negative=0;
@@ -47,6 +48,20 @@ int t_on_negative( unsigned int go_to )
 unsigned int get_on_negative()
 {
 	return goto_on_negative;
+}
+
+static void update_reply_stats( int code ) {
+	if (code>=600) {
+		acc_stats->completed_6xx++;
+	} else if (code>=500) {
+		acc_stats->completed_5xx++;
+	} else if (code>=400) {
+		acc_stats->completed_4xx++;
+	} else if (code>=300) {
+		acc_stats->completed_3xx++;
+	} else if (code>=200) {
+		acc_stats->completed_2xx++;
+	}
 }
 
 
@@ -174,7 +189,8 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	/* needs to be protected too because what timers are set depends
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
-
+	update_reply_stats( code );
+	acc_stats->replied_localy++;
 	if (lock) UNLOCK_REPLIES( trans );
 	
 	/* do UAC cleanup procedures in case we generated
@@ -335,6 +351,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				free_via_lump(&relayed_msg->repl_add_rm);
 			}
 		}
+		update_reply_stats( relayed_code );
 		if (!buf) {
 			LOG(L_ERR, "ERROR: relay_reply: "
 				"no mem for outbound reply buffer\n");
@@ -454,6 +471,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			winning_code=winning_msg->REPLY_STATUS;
 		}
 		t->uas.status = winning_code;
+		update_reply_stats( winning_code );
 	}
 	UNLOCK_REPLIES(t);
 	if (local_winner>=0 && winning_code>=200 ) {
