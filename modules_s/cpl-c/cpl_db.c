@@ -122,7 +122,7 @@ int write_to_db( char *usr, char *bin_s, int bin_len, char *xml_s, int xml_len)
 	} else {
 		DBG("DEBUG:cpl:write_to_db:User %s already in CPL database ->"
 			" update\n",usr);
-		if (db_update(db_con, keys, vals, keys+1, vals+1, 1, 3) < 0) {
+		if (db_update(db_con, keys, 0, vals, keys+1, vals+1, 1, 3) < 0) {
 			LOG(L_ERR,"ERROR:cpl:write_to_db: updare failed !\n");
 			goto error;
 		}
