@@ -119,6 +119,8 @@ BEGIN {
 	ua_edial=0;
 	ua_gs=0;
 	ua_sipps=0;
+	ua_i3micro=0;
+	ua_act=0;
 	ua_ibm=0;
 	ua_xx=0;
 
@@ -350,6 +352,14 @@ ua==0 && /User-Agent:.*IBM user agent/ {
 }
 ua==0 && /User-Agent:.*Vega/ {
 	ua_vega++
+	ua=1
+}
+ua==0 && /User-Agent:.*i3micro/ {
+	ua_i3micro++
+	ua=1
+}
+ua==0 && /User-Agent:.*ACT/ {
+	ua_act++
 	ua=1
 }
 ua==0 && /User-Agent:.*X-Lite/ {
@@ -601,6 +611,10 @@ reply==0 && request=0 {
     rpl477++
     next
 }
+/SIP\/2\.0 480/ {
+    rpl480++
+    next
+}
 /SIP\/2\.0 481/ {
     rpl481++
     next
@@ -796,6 +810,8 @@ END {
 	print "vegastream: " ua_vega
 	print "Ahead SIPPS: " ua_sipps
 	print "IBM user agent: " ua_ibm
+	print "i3micro: " ua_i3micro
+	print "ACT: " ua_act
 	print "UFO: " ua_xx
 
 	print "## Servers"
