@@ -722,7 +722,7 @@ checkContentType(struct sip_msg *msg)
         return False;
     }
 
-    if (!(isspace(type.s[15]) || type.s[15] == ';' || type.s[15] == 0)) {
+    if (!(isspace((int)type.s[15]) || type.s[15] == ';' || type.s[15] == 0)) {
         LOG(L_ERR,"error: mediaproxy/checkContentType(): invalid character "
             "after Content-Type!\n");
         return False;
@@ -1341,7 +1341,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
     str fromAddr, toAddr, fromTag, toTag;
     char *clientIP, *ptr, *command, *result, *agent, *fromType, *toType, *info;
     int streamCount, i, port, count, portCount, cmdlen, infolen, success, type;
-    StreamInfo streams[64];
+    StreamInfo streams[64], stream;
     Bool request;
 
     if (msg->first_line.type == SIP_REQUEST) {
@@ -1418,7 +1418,8 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         userAgent.len*3 + infolen + 128;
 
     for (i=0; i<streamCount; i++) {
-        cmdlen += streams[i].port.len + streams[i].ip.len + 2;
+        stream = streams[i];
+        cmdlen += stream.ip.len + stream.port.len + stream.type.len + 4;
     }
 
     command = pkg_malloc(cmdlen);
@@ -1434,9 +1435,10 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
 
     for (i=0, ptr=command+count; i<streamCount; i++) {
         char c = (i==0 ? ' ' : ',');
-        count = sprintf(ptr, "%c%.*s:%.*s", c,
+        count = sprintf(ptr, "%c%.*s:%.*s:%.*s", c,
                         streams[i].ip.len, streams[i].ip.s,
-                        streams[i].port.len, streams[i].port.s);
+                        streams[i].port.len, streams[i].port.s,
+                        streams[i].type.len, streams[i].type.s);
         ptr += count;
     }
 
