@@ -127,16 +127,19 @@ again:
 	MY_MALLOC(shm_block, (_size), __FILE__, __FUNCTION__, __LINE__ )
 
 
-
-inline static void* shm_malloc(unsigned int size)
+inline static void* _shm_malloc(unsigned int size, 
+	char *file, char *function, int line )
 {
 	void *p;
 	
 	shm_lock();\
-	p=shm_malloc_unsafe(size);
+	p=MY_MALLOC(shm_block, size, file, function, line );
 	shm_unlock();
 	return p; 
 }
+
+#define shm_malloc( _size ) _shm_malloc((_size), \
+	__FILE__, __FUNCTION__, __LINE__ )
 
 
 
@@ -150,6 +153,7 @@ do { \
 		shm_unlock(); \
 }while(0)
 
+void* _shm_resize( void*, unsigned int, char*, char*, unsigned int);
 #define shm_resize(_p, _s ) \
 	_shm_resize( (_p), (_s),   __FILE__, __FUNCTION__, __LINE__)
 
@@ -171,12 +175,7 @@ inline static void* shm_malloc(unsigned int size)
 }
 
 
-#ifdef DBG_QM_MALLOC
-void* _shm_resize( void*, unsigned int, char*, char*, unsigned int);
-#else
 void* _shm_resize( void*, unsigned int);
-#endif
-
 
 #define shm_free_unsafe( _p ) MY_FREE(shm_block, (_p))
 
