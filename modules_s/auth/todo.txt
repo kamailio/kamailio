@@ -3,3 +3,4 @@
 - Put HA1 value into database
 - Write a simple cmd line HA1 generator
 - cnonce, nonce-count
+- Crashes when user = tester
