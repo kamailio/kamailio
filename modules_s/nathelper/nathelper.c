@@ -988,7 +988,7 @@ send_rtpp_command(struct iovec *v, int vcnt)
 			fds[0].revents = 0;
 		}
 		v[0].iov_base = gencookie();
-		v[0].iov_len = 33;
+		v[0].iov_len = strlen(v[0].iov_base);
 		for (i = 0; i < rtpproxy_retr; i++) {
 			do {
 				len = writev(controlfd, v, vcnt);
@@ -1008,9 +1008,10 @@ send_rtpp_command(struct iovec *v, int vcnt)
 					    "can't read reply from a RTP proxy\n");
 					return NULL;
 				}
-				if (len >= 32 && memcmp(buf, v[0].iov_base, 32) == 0) {
-					len -= 32;
-					cp += 32;;
+				if (len >= (v[0].iov_len - 1) &&
+				    memcmp(buf, v[0].iov_base, (v[0].iov_len - 1)) == 0) {
+					len -= (v[0].iov_len - 1);
+					cp += (v[0].iov_len - 1);
 					if (len != 0) {
 						len--;
 						cp++;
