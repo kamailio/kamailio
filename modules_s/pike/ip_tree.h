@@ -25,7 +25,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+/*
+ * History:
+ * --------
+ *  2004-07-28  s/lock_set_t/gen_lock_set_t/ because of a type conflict
+ *              on darwin (andrei)
+ */
 
 #ifndef _IP_TREE_H
 #define _IP_TREE_H
@@ -68,7 +73,7 @@ struct ip_tree
 		gen_lock_t     *lock;
 	} entries[MAX_IP_BRANCHES];
 	unsigned short max_hits;
-	lock_set_t   *entry_lock_set;
+	gen_lock_set_t   *entry_lock_set;
 };
 
 

@@ -147,12 +147,13 @@ void destroy_report_queue()
 {
 	int i;
 
-	for(i=0;i<NR_CELLS;i++)
-		if (report_queue[i].sms)
-			free_report_cell(&(report_queue[i]));
-	if (report_queue)
+	if (report_queue){
+		for(i=0;i<NR_CELLS;i++)
+			if (report_queue[i].sms)
+				free_report_cell(&(report_queue[i]));
 		shm_free(report_queue);
-	report_queue = 0;
+		report_queue = 0;
+	}
 }
 
 

@@ -654,7 +654,7 @@ static int sms_init(void)
 
 static int sms_exit(void)
 {
-	if (!domain_str)
+	if ((!domain_str) && (domain.s))
 		pkg_free(domain.s);
 
 	if (queued_msgs)
