@@ -1,0 +1,350 @@
+
+                       Mediaproxy SER module
+
+                        Copyright Dan Pascu
+    		       2002-2004 AG Projects
+
+
+  Mediaproxy is a SER module that is designed to allow automatic NAT
+traversal for the majority of existing SIP clients. This means that there
+will be no need to configure anything in particular on the NAT box to allow
+these clients to work behind NAT when using the mediaproxy module.
+
+Section 1 for a description of the modus operandi.
+Section 2 describes the types of SIP phones that work with mediaproxy and a
+          short description about how the NAT traversal is working.
+Section 3 is about mediaproxy features.
+Section 4 describes the exported module parameters and functions.
+Section 5 is a comparison with nathelper and a description of how to adjust
+          ser.cfg if you want to switch from nathelper module to mediaproxy
+          module
+
+1. Principle of operation
+   ----------------------
+
+  This NAT traversal solution operates by placing a mediaproxy server in the
+middle between 2 SIP user-agents. It mangles the SDP messages for both of
+them in a way that will make the parties talk with mediaproxy while they
+think they talk directly with each other.
+
+To achieve this, mediaproxy is actually composed by 2 components:
+  - the SER mediaproxy module itself
+  - an external proxy server called SER MediaProxy (available from
+    http://mediaproxy.ag-projects.com/ )
+
+To avoid confusion in this document the mediaproxy module will be called
+'module' or 'mediaproxy module', while the mediaproxy server will be called
+'proxy server' from here on.
+
+  The proxy server can be run on the same machine as the module or on a
+remote host. Moreover it is possible for a single module to control multiple
+proxy servers running on multiple geographically distributed hosts. To find
+out more about the architecture of SER MediaProxy please read the
+documentation that comes with it.
+
+  To be able to act as a proxy between the 2 talking parties, the machine(s)
+running the module/proxy server must have a public IP address.
+
+  The module will ask the proxy server to allocate as many sockets as there
+are media streams in the SDP body of the SIP INVITE/Ok messages. The proxy
+server will send back to the module the address and port(s) for them. Then
+the module will replace the original contact IP and RTP ports from the SDP
+messages with the ones provided by the proxy server. By doing this both
+clients will try to contact the proxy server instead of talking directly
+with each other. Once the clients contact the proxy server, it will record
+the addresses they came from and will know where to forward packets received
+from the other party This is needed because the address/port the NAT box
+will allocate for the leaving streams is not known before they actually
+leave the NAT box. However the address of the proxy server is always known
+(being a public one) so the 2 parties know where to connect and then after
+they did so, the proxy learns the addresses they came from and can forward
+packets between them.
+
+
+2. Types of SIP clients
+   --------------------
+
+  The SIP clients that will work transparently behind NAT when using the
+mediaproxy module are the so-called symmetric clients. The symmetric clients
+have the particularity that use the same port to send the data as the one
+they use to receive it. In other words, if they are for example configured
+to use port 5060 for SIP signaling, they will use the same port when sending
+data as well as when receiving it. This must be true for both the SIP
+signaling as well as the RTP streams for a client to work transparently with
+the mediaproxy module without any additional configuration on the NAT box.
+
+  This ability is important because the only way to get back to a client
+behind NAT is to send to the IP address and port the packet was received
+from. Once a packet is sent from the client behind NAT to the outside world,
+it opens a communication channel in the NAT box that is open in both
+directions for a while (it will timeout after a while after no more data is
+sent through it, but it can be kept active by sending data through it at
+certain regular time intervals). While this channel is open, any data sent
+to the public address and port that the NAT box assigned for the address and
+port the client behind NAT is sending from (and this mapping is guaranteed
+to be unique), will go back straight to the address and port the client has
+sent from. This is why is necessary for the clients to be symmetric. If they
+listen on the same port they sent from, the data sent back to the public
+address that the NAT box assigned to the leaving packets will actually reach
+the listening port of the client behind NAT.
+
+  Some SIP clients implement particular algorithms to detect if they are
+actually behind a NAT box and try to act smart by detecting the IP address
+of the NAT box (or simply allowing one to manually configure it), and then
+use this IP address in the SIP and SDP messages instead of their own private
+IP address. This situation can be confusing for a module that tries to
+perform transparent NAT traversal as it can wrongly mistake such a client
+that is behind NAT with a client that is actually in the public address
+space. However for the mediaproxy module it is not important if the clients
+apply or not this kind of behavior, as it is able to cope with both
+situations gracefully.
+
+  This doesn't mean that mediaproxy is not able to work with asymmetric
+clients behind NAT, but in their case special static forwarding routes need
+to be configured on the NAT box.
+
+  Mediaproxy has special support for asymmetric clients, can detect them and
+send the data to the ports they expect it to, however they can work behind
+NAT only if static routes are configured on the NAT box since there is no
+way of getting back to an address/port that has not previously opened a data
+channel in the NAT box by sending something out first. Nevertheless the
+support for asymmetric clients is important, because without it they won't
+be able to work even when they have public Internet addresses. Also this
+support allows one to use an asymmetric client behind NAT if he can
+configure the NAT box to forward the packets meant to that client.
+
+  The only requirement a symmetric SIP client must met to be able to work
+transparently behind NAT when using the mediaproxy module is to accept to be
+configured to use a so called outbound proxy and this proxy must be the one
+running with the mediaproxy module loaded.
+
+
+3. Features
+   --------
+
+- make symmetric clients work behind NAT transparently if they use the SIP
+  server as the outbound SIP server.
+- handle all media streams specified in the SDP body. There is a limit of 64
+  RTP streams per session in the code now, but we hardly find this to be a
+  limitation for the time being.
+- able to distribute RTP traffic load on multiple proxy servers running on
+  multiple hosts.
+- able to specify which proxy server to use based on the SIP domain of the
+  caller/destination (done by the proxy server's dispatcher module)
+- handle asymmetric clients properly. They can even work behind NAT if a
+  proper port forwarding is done for them on the NAT box.
+
+
+4. Module parameters and exported functions
+   ----------------------------------------
+
+  The module exports the following parameters:
+
+  - mediaproxy_socket
+
+    it is the path to the filesystem socket where the proxy server
+    listens for commands from the module.
+
+  - sip_asymmetrics
+
+    it is the path to a file that lists regular expressions that match
+    'User-Agent' or 'Server' fields from clients that are asymmetric
+    regarding SIP signaling. Needed to detect when a client is asymmetric
+    regarding SIP signaling. An example file is in the config/ subdirectory.
+
+  - rtp_asymmetrics
+
+    it is the path to a file that lists regular expressions that match
+    'User-Agent' or 'Server' fields from clients that are asymmetric
+    regarding the RTP media. Needed to detect when a client is asymmetric
+    regarding the RTP media. An example file is in the config/ subdirectory.
+
+  - natping_interval
+
+    it holds an integer value representing how often the module will
+    send packets to all registered clients that are behind NAT to keep
+    their opened channels alive. Represents an interval in seconds.
+
+Parameters are set in the SER configuration file by using the modparam
+command. Below are examples, which contain the actual default values of the
+parameters. If you are Ok with them it is not necessary to specify them in the
+configuration file at all.
+
+modparam("mediaproxy", "mediaproxy_socket", "/var/run/proxydispatcher.sock")
+modparam("mediaproxy", "sip_asymmetrics", "/etc/ser/sip-asymmetrics-clients")
+modparam("mediaproxy", "rtp_asymmetrics", "/etc/ser/rtp-asymmetrics-clients")
+modparam("mediaproxy", "natping_interval", 20)
+
+  The module exports the following functions:
+
+  - client_nat_test(type)
+
+    tests if the client is behind NAT or not. The types of tests are
+    specified by the type parameter which represents a sum of the 
+    following numbers (add the values of the ones you wish to perform
+    tests for):
+
+      1 - tests if client has a private IP address (as defined by RFC1918)
+          in the Contact field of the SIP message.
+      2 - tests if client has contacted SER from an address that is
+          different from the one in the Via field.
+      4 - tests if client has a private IP address (as defined by RFC1918)
+          in the top Via field of the SIP message.
+
+    for example calling client_nat_test("3") in ser.cfg will perform
+    first 2 tests listen above and return true as soon as one succeeds
+    if both fail will return false.
+
+  - fix_nated_contact()
+
+    will replace the IP:Port in the Contact field of the SIP message
+    with the ones the SIP message was received from. For clients that
+    are asymmetric regarding SIP signaling (as determined from the
+    sip_asymmetrics file) will preserve the port.
+    usually called after an if (client_nat_test(type)) has succeded
+
+  - use_media_proxy()
+
+    will make a call to the proxy server and replace the IPs and ports
+    in the SDP body with the ones returned by the proxy server for
+    each media stream that the SDP message describes. This will force
+    the media streams to be routed through the proxy server.
+    called when you want to make the session go through a proxy server
+
+  - end_media_session()
+
+    will call on the proxy server to end the media session for that call
+    this is done at the end of the call to instruct the proxy server to
+    free the resources allocated to that call as well as to save log
+    information about the call.
+    called when a session should end (BYE or CANCEL received)
+
+
+5. Comparison with the nathelper module
+   ------------------------------------
+
+  After reading all this you may wonder what this module can offer you that
+the nathelper module (a similar nat traversal solution) can't and why was
+necessary to develop this module.
+
+While at surface they seem to offer about the same functionality, there are
+a few core differences that make them quite different.
+
+  The main difference is that mediaproxy tries to move the complex logic of
+decision in the module or the proxy servers, unlike the nathelper module which
+has most of the decision logic in the many options you can pass to it's
+various functions. However we don't find this to be the best approach as it
+results in overly cryptic or overly complex ser configuration files. Just
+imagine for example if you want to control 20 SIP domains and use a different
+proxy server for each of them. If the only way to specify them would be as
+parameters to the function that calls for the use of the proxy server in a
+session, you will end up with 20 ifs in the ser.cfg file to specify all.
+If later you want to add 50 more domains you can imagine how unnecessary
+complex the configuration file will become. Same holds true for example if you
+specify that there are asymmetric clients involved in a call using flags to
+the force_rtp_proxy() call as nathelper does. If you have a list of 20 clients
+you end up with 20 tests in ser.cfg and multiple calls to force_rtp_proxy()
+with different flags Having even 3-4 flags that one can pass to a function
+makes things even worse as there will be many combinations and accordingly
+many ifs.
+Moreover some decisions are to complex to be taken by a couple of ifs in the
+ser configuration file. They need complex analysis of the SIP message which
+can't be properly done in the configuration file.
+By moving the complexity of these decisions into the module or the proxy
+server, we not only simplify the configuration file, but we also allow one to
+adjust this logic using external tools.
+
+As you have noticed, only one of our functions accepts parameters all the
+others do the job automatically as configured by external configuration files
+(in case of fix_nated_contact()), or SRV records in DNS (the way the 
+use_media_proxy() function determines which proxy server to use).
+
+  Then the information that each module pass to the proxy server is quite
+different. This is because the proxy servers (called SER MediaProxy in the
+mediaproxy case and rtpproxy in the nathelper case) have different
+architectures and different philosophies. By design the nathelper's rtpproxy
+server is only one. It can run on the same host or a remote host but there is
+only one rtpproxy that the nathelper can control.
+On the contrary, the mediaproxy module is able to control multiple proxy
+servers and they can be local or remote or both. Moreover the selection about
+what mediaproxy is used is based on the domain of the caller/destination.
+There is also a default proxy server that can be used if a domain doesn't have
+defined it's own mediaproxy servers.
+Any of these proxy servers (the ones defined for a given domain or the default
+one) can be in fact composed by a cluster of mediaproxy servers that will load
+balance the rtp media traffic between them.
+
+Also to be able to move logic into the proxy servers as described above, the
+mediaproxy module needs to pass more information to the proxy server about a
+call.
+
+  Last but not least, the proxy servers that are the counterpart of the
+mediaproxy and nathelper modules make the most of the difference.
+While as said above the nathelper module only controls 1 rtpproxy (be it local
+or remote) the main focus of the mediaproxy module and it's mediaproxy server
+is to allow one to specify different (eventually multiple) proxy servers for a
+given SIP domain. These servers can be local, remote or both.
+Also if they are multiple for a given domain, they allow load balancing of
+traffic between them as well as fallbacks if some of they stop working.
+SER MediaProxy does this by using DNS SRV records (you can read more about the
+SER MediaProxy architecture and modus operandi in it's own documentation).
+
+If you use the nathelper module and you want to switch to mediaproxy module
+here is how you can migrate your configuration:
+
+- load the mediaproxy.so module instead of the nathelper.so module
+- the following nathelper module parameters have the following mediaproxy
+  equivalents:
+
+  - natping_interval - remains the same. same meaning too.
+  - ping_nated_only  - should be removed. mediaproxy only pings NATed
+                       clients as it doesn't make sense to ping clients
+                       that are not behind NAT (as the only purpose of the
+                       ping's is to keep the NAT channel open).
+  - rtpproxy_sock    - becomes mediaproxy_socket
+  - rtpproxy_disable - should be removed as there is no mediaproxy equivalent
+                       we see no point in disabling it. it was loaded to be
+                       used after all :P
+  - rtpproxy_retr
+  - rtpproxy_tout    - should be removed as there is no mediaproxy equivalent
+                       these 2 relate to how the nathelper module talks with
+                       the remote rtpproxy. This is done by the dispatcher in
+                       the SER MediaProxy proxy server.
+
+
+- replace the functions using the following scheme:
+
+   Functions that perform the same functionality or more have kept names
+   (fix_nated_contact() being the only one in this situations). The others
+   that offer equivalent functionality but with different semantics have been
+   renamed to avoid confusion.
+
+  - fix_nated_contact() - same name, same functionality, except our version
+                          can deal with asymmetric clients correctly, by
+                          preserving the port.
+  - nat_uac_test()      - replace with the client_nat_test() function.
+                          The only difference is that our function doesn't
+                          support checking if the SDP body has private IPs.
+                          We find this to be an ill designed feature as the
+                          SDP body may contain multiple contact IPs (one at
+                          the session level and possibly others specified by
+                          the media streams themselves).
+                          Moreover the session level one may be missing if
+                          each media stream specifies an IP. Even more these
+                          IPs can be different and some may be public while
+                          others private. Logic involved to make any useful
+                          decision is out of the grasp of a simple function
+                          parameter in ser.cfg.
+  - unforce_rtp_proxy() - replaced by end_media_session(). no changes needed
+  - force_rtp_proxy()   - replace with use_media_proxy(). However if you used
+                          options to force_rtp_proxy() you need to remove them
+                          Most of the options are automatically handled
+                          internally (except the internal/external flags)
+  - fix_nated_sdp()     - Not available, as we think this this has a different
+                          target (packet mangling trying to make the packet
+                          go directly between parties without a proxy in the
+                          middle).
+
+- install SER MediaProxy. mediaproxy works in conjunction with it. It doesn't
+  support nathelper's rtpproxy. Also SER MediaProxy is not compatible with
+  nathelper module anymore.

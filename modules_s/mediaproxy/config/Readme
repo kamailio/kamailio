@@ -1,0 +1,8 @@
+
+sip-asymmetric-clients and rtp-asymmetric-clients list clients that are
+asymmetric regarding the SIP signaling respective the RTP media streams.
+
+By default these files should go in /etc/ser/ (unless specifically
+configured to be somewhere else using the sip_asymmetrics and/or
+rtp_asymmetrics options available with the mediaproxy module.
+
