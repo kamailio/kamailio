@@ -72,7 +72,7 @@ struct val {
 #define	A_DIGEST_USER_NAME		25
 #define	A_SIP_GROUP			26
 #define	A_CISCO_AVPAIR			27
-#define	A_MAX				27
+#define	A_MAX				28
 
 #define	V_STATUS_START			0
 #define	V_STATUS_STOP			1
