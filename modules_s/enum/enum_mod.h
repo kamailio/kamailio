@@ -31,8 +31,14 @@
 #ifndef ENUM_MOD_H
 #define ENUM_MOD_H
 
+
+#include "../../str.h"
+
+
 /*
- * Module parameters variables
+ * Internal module variables
  */
+extern str suffix;           /* str version of domain_suffix */
+
 
 #endif /* ENUM_MOD_H */

@@ -1,5 +1,5 @@
 #
-# README of enum module -- Juha Heinanen Dec 27, 2002
+# README of enum module -- Juha Heinanen March 9, 2003
 #
 
 Enum module implements enum_query function that makes an enum query
@@ -7,50 +7,58 @@ based on the user part of the current request URI.  The function assumes
 that the user part consists of an international phone number of the form
 +decimal-digits, where the number of digits is at least 2 and at most
 15.  Out of this number enum_query forms a domain name, where the digits
-are in reverse order and separated by dots followed by .e164.arpa.  For
-example, if the user part is +35831234567, the domain name will be
-7.6.5.4.3.2.1.3.8.5.3.e164.arpa.
+are in reverse order and separated by dots followed by domain suffix
+that by default is "e164.arpa.".  For example, if the user part is
++35831234567, the domain name will be "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.".
 
 After forming the name, enum_query queries from DNS its NAPTR records.
 From the possible response the current version of enum_query chooses the
-FIRST record, whose flags field has string value "u" and whose service
-field has string value "e2u+sip" (case is ignored in both cases).  If no
-such record is found, enum_query returns -1.
+FIRST record, whose flags field has string value "u" and whose services
+field has string value "e2u+[service:]sip" (case is ignored in both
+cases).  "service" is given to enum_query as a parameter.  If its value
+is "", then "e2u+sip" is looked for.  If no such record is found,
+enum_query returns -1.
 
 If such a record is found, enum_query checks if its regexp field is of
 the form !xxx!yyy!. If yes, enum_query replaces the current request uri
-with yyy, which it assumes to contain a sip or sips type ur, and returns
-value 1.  In order for this to yield the desired result, the regular
-expression in xxx must be greedy, e.g., "^.*$", that matches the whole
-of any string.  The current version of enum_query doesn't check that.
+with yyy, which it assumes to contain a sip or sips type uri, and
+returns value 1.  In order for this to yield the desired result, the
+regular expression in xxx must be greedy, e.g., "^.*$", that matches the
+whole of any string.  The current version of enum_query does not check
+that.
 
-If the regexp field is not of the form !xxx!yyy!, enum_query returns
--1.
+If the regexp field is not of the form !xxx!yyy!, enum_query returns -1.
 
 In addition to enum_query, enum module implements is_from_user_e164
 function that checks if the user part of from URI is an E164 number.
 
 TODO: In enum_query, more checks and proper implementation of the NAPTR
-record selection algorithm by taking into account the order and
-preference fields (see draft-ietf-sipping-e164-02).
+record selection algorithm could be implemented by taking into account
+the order and preference fields (see draft-ietf-sipping-e164-02).
 
 Exported parameters:
 -------------------
 
-None.
+Name:	domain_suffix
+Type:	string
+Default:	"e164.arpa."
+Desc:	The domain suffix to be added to the domain name obtained from
+	the digits of an E164 number. 
 
 Exported Functions:
 ------------------
 
 Name:	enum_query()
-Params:	-
-Desc:	Replaces the current request uri with the result of a successful
+Params:	service
+Desc:   Replaces the current request uri with the result of a successful
 	enum query on the user part of the current request uri, which is
-	assumed to be of the form +up-to-15-decimal-digits.  Returns -1
-	if enum_query fails and 1 otherwise.
+	assumed to be of the form +up-to-15-decimal-digits.  An NAPTR
+	record whose flags field has string value "u" and whose services
+	field has string value "e2u+service:sip" or "e2u+sip" (if
+	service string == "") is looked for.  Returns -1 if enum_query
+	fails and 1 otherwise.
 
 Name:	is_from_user_e164()
 Params:	-
 Desc:	Checks if the user part of from URI an E164 number of the form
 	+up-to-15-decimal-digits.  Returns 1 if yes and -1 if not.
-

@@ -36,6 +36,7 @@
 #include "enum_mod.h"
 #include <stdio.h>
 #include "../../sr_module.h"
+#include "../../error.h"
 #include "enum.h"
 /*
  * Module initialization function prototype
@@ -44,11 +45,29 @@ static int mod_init(void);
 
 
 /*
+ * Fixup functions
+ */
+static int str_fixup(void** param, int param_no);
+
+
+/*
+ * Module parameter variables
+ */
+char* domain_suffix = "e164.arpa.";
+
+
+/*
+ * Internal module variables
+ */
+str suffix;
+
+
+/*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        enum_query,        0, 0, REQUEST_ROUTE},
-	{"is_from_user_e164", is_from_user_e164, 0, 0, REQUEST_ROUTE},
+	{"enum_query",        enum_query,        1, str_fixup, REQUEST_ROUTE},
+	{"is_from_user_e164", is_from_user_e164, 0, 0,         REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -57,6 +76,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
+        {"domain_suffix", STR_PARAM, &domain_suffix},
 	{0, 0, 0}
 };
 
@@ -79,5 +99,32 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	printf("enum module - initializing\n");
+	
+	suffix.s = domain_suffix;
+	suffix.len = strlen(suffix.s);
+
+	return 0;
+}
+
+
+/*
+ * Convert char* parameter to str* parameter
+ */
+static int str_fixup(void** param, int param_no)
+{
+	str* s;
+
+	if (param_no == 1) {
+		s = (str*)malloc(sizeof(str));
+		if (!s) {
+			LOG(L_ERR, "authorize_fixup(): No memory left\n");
+			return E_UNSPEC;
+		}
+
+		s->s = (char*)*param;
+		s->len = strlen(s->s);
+		*param = (void*)s;
+	}
+
 	return 0;
 }

@@ -36,6 +36,27 @@
 #include "../../mem/mem.h"
 
 
+/* Checks if NAPTR record has flag u and its services field
+ * e2u+[service:]sip
+ */
+inline int sip_match( struct naptr_rdata* naptr, str* service)
+{
+  if (service->len == 0) {
+    return (naptr->flags_len == 1) &&
+      ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
+      (naptr->services_len == 7) &&
+      (strncasecmp(naptr->services, "e2u+sip", 7) == 0);
+  } else {
+    return (naptr->flags_len == 1) &&
+      ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
+      (naptr->services_len == service->len + 8) &&
+      (strncasecmp(naptr->services, "e2u+", 4) == 0) &&
+      (strncasecmp(naptr->services + 4, service->s, service->len) == 0) &&
+      (strncasecmp(naptr->services + 4 + service->len, ":sip", 4) == 0);
+  }
+}
+
+
 /*
  * Check that From header is properly parsed and if so,
  * return pointer to parsed From header.  Otherwise return NULL.
@@ -133,15 +154,18 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
  * returs -1.
  */
 
-int enum_query(struct sip_msg* _msg, char* _s1, char* _s2)
+int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 {
 	char *s, *first, *second, *third;
 	int len, i, j, result;
-	char name[41];
+	char name[MAX_DOMAIN_SIZE];
 
 	struct rdata* head;
 	struct rdata* l;
 	struct naptr_rdata* naptr;
+
+	str* service;
+	service = (str*)_service;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LOG(L_ERR, "enum_query(): uri parsing failed\n");
@@ -185,10 +209,7 @@ int enum_query(struct sip_msg* _msg, char* _s1, char* _s2)
 		    naptr->flags_len, (int)(naptr->flags_len), naptr->flags, naptr->services_len,
 		    (int)(naptr->services_len), naptr->services, naptr->regexp_len,
 		    (int)(naptr->regexp_len), naptr->regexp);
-		if ((naptr->flags_len == 1) &&
-		    ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
-		    (naptr->services_len == 7) &&
-		    (strncasecmp(naptr->services, "e2u+sip", 7) == 0)) {
+		if (sip_match(naptr, service) != 0) {
 			len = naptr->regexp_len;
 			if (len > 0) {
 				first = &(naptr->regexp[0]);

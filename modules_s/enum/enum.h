@@ -31,18 +31,24 @@
 #ifndef ENUM_H
 #define ENUM_H
 
+
 #include "../../parser/msg_parser.h"
+
+
+#define MAX_DOMAIN_SIZE 256
 		
+
 /*
  * Check if from user is an e164 number
  */
 int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2);
 
+
 /*
  * Make enum query and if query succeeds, replace current uri with the
  * result of the query
  */
-int enum_query(struct sip_msg* _msg, char* _str1, char* _str2);
+int enum_query(struct sip_msg* _msg, char* _service, char* _str2);
 
 
 #endif /* ENUM_H */
