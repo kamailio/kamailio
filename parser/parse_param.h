@@ -123,4 +123,10 @@ void free_params(param_t* _p);
 void print_params(param_t* _p);
 
 
+/*
+ * Duplicate linked list of parameters
+ */
+int duplicate_params(param_t** _n, param_t* _p);
+
+
 #endif /* PARSE_PARAM_H */

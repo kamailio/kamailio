@@ -418,3 +418,40 @@ void print_params(param_t* _p)
 		ptr = ptr->next;
 	}
 }
+
+
+/*
+ * Duplicate linked list of parameters
+ */
+int duplicate_params(param_t** _n, param_t* _p)
+{
+	param_t* last, *ptr, *t;
+
+	if (!_n || !_p) {
+		LOG(L_ERR, "duplicate_params(): Invalid parameter value\n");
+		return -1;
+	}
+	
+	last = 0;
+	*_n = 0;
+	ptr = _p;
+	while(ptr) {
+		t = (param_t*)pkg_malloc(sizeof(param_t));
+		if (!t) {
+			LOG(L_ERR, "duplicate_params(): Invalid parameter value\n");
+			goto err;
+		}
+		memcpy(t, ptr, sizeof(param_t));
+		t->next = 0;
+
+		if (!*_n) *_n = t;
+		if (last) last->next = t;
+		last = t;
+
+		ptr = ptr->next;
+	}
+
+ err:
+	free_params(*_n);
+	return 0;
+}

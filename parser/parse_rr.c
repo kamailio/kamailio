@@ -173,3 +173,62 @@ void print_rr(rr_t* _r)
 		ptr = ptr->next;
 	}
 }
+
+
+/*
+ * Translate all pointers in the structure and also
+ * in all parameters in the list
+ */
+static inline void xlate_pointers(struct sip_msg* _m, rr_t* _r)
+{
+	param_t* ptr;
+	_r->nameaddr.uri.s = translate_pointer(_r->nameaddr.name.s, _m->buf, _r->nameaddr.uri.s);
+	
+	ptr = _r->params;
+	while(ptr) {
+		if (ptr->type == P_R2) _r->r2 = ptr;
+		ptr->name.s = translate_pointer(_r->nameaddr.name.s, _m->buf, ptr->name.s);
+		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _m->buf, ptr->body.s);		
+		ptr = ptr->next;
+	}
+}
+
+
+/*
+ * Duplicate a single rr_t structure using pkg_malloc
+ */
+int duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
+{
+	int len;
+	rr_t* res;
+
+	if (!_m || !_new || _r) {
+		LOG(L_ERR, "duplicate_rr(): Invalid parameter value\n");
+		return -1;
+	}
+
+	if (_r->params) {
+		len = _r->params->name.s + _r->params->len - _r->nameaddr.name.s;
+	} else {
+		len = _r->nameaddr.len;
+	}
+
+	res = pkg_malloc(sizeof(rr_t) + len);
+	if (!res) {
+		LOG(L_ERR, "duplicate_rr(): No memory left\n");
+		return -2;
+	}
+
+        res->nameaddr.name.s = (char*)res + sizeof(rr_t);
+	memcpy(res->nameaddr.name.s, _r->nameaddr.name.s, len);
+
+	if (duplicate_params(&res->params, _r->params) < 0) {
+		LOG(L_ERR, "Error while duplicating parameters\n");
+		pkg_free(res);
+		return -3;
+	}
+
+	xlate_pointers(_m, res);
+	*_new = res;
+	return 0;
+}
