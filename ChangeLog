@@ -1,7 +1,12 @@
+2002-11-14 13:21  Jan Janak <J.Janak@sh.cvut.cz>
+
+	* ChangeLog: Introduced ChangeLog automagically generated from the
+	CVS repository history.  The ChangeLog starts on 2002-09-27 - the
+	first public release 0.8.8
+
 2002-11-14 11:18  Daniel Constantin Mierla <mierla@fokus.gmd.de>
 
-	* modules/jabber/README (1.8): XJAB module	- readme file
-	updated
+	* modules/jabber/README: XJAB module	- readme file updated
 
 2002-11-14 03:58  Jan Janak <J.Janak@sh.cvut.cz>
 
@@ -21,7 +26,7 @@
 	* rpm/ser.spec.SuSE (1.13): - Replaced nonexisting expat-devel with
 	expat.	- Rmoved leading + from some lines.
 
-====================== 2002-09-27 Release 0.8.10 ==============================
+====================== 2002-11-12 Release 0.8.10 ==============================
 
 2002-11-12 17:21  Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
 
