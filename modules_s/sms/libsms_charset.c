@@ -9,7 +9,8 @@ Either version 2 of the License, or (at your option) any later version.
 
 http://www.isis.de/members/~s.frings
 mailto:s.frings@mail.isis.de
-*/
+ */
+
 
 #include "libsms_charset.h"
 

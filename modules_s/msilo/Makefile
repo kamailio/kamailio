@@ -7,6 +7,6 @@
 
 auto_gen=
 NAME=msilo.so
-LIBS=`pwd`/../im/im.so `pwd`/../tm/tm_mod.so
+LIBS=`pwd`/../im/im.so `pwd`/../tm/tm.so
 
 include ../../Makefile.modules

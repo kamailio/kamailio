@@ -1,3 +1,29 @@
+/*
+ * $Id$
+ *
+ * Copyright (C) 2001-2003 Fhg Fokus
+ *
+ * This file is part of ser, a free SIP server.
+ *
+ * ser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #include "msfuncs.h"
 
@@ -14,6 +40,7 @@
 #include "../../globals.h"
 #include "../../udp_server.h"
 #include "../im/im_funcs.h"
+#include "../../pt.h"
 
 #define EAT_SPACES(_p, _e)	\
 			while((*(_p)) && ((_p) <= (_e)) && (*(_p)==' '\
@@ -41,7 +68,31 @@
  * - dst: destination buffer
  * - dlen: max length of destination buffer
  * #return: destination length => OK; -1 => error
+ *
+ * Copyright (C) 2001-2003 Fhg Fokus
+ *
+ * This file is part of ser, a free SIP server.
+ *
+ * ser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
 int apo_escape(char* src, int slen, char* dst, int dlen)
 {
 	int i, j;
@@ -148,7 +199,7 @@ int m_send_message(int mid, str *uri, str *to, str *from, str *contact,
 		sock_info[0].name.len,sock_info[0].name.s,CRLF,
 		from->len,from->s,MSILO_TAG,mid,CRLF,
 		to->len,to->s,CRLF,
-		pids?pids[process_no]:0,rand(),call_id++,
+		my_pid(),rand(),call_id++,
 			sock_info[0].address_str.len,sock_info[0].address_str.s,CRLF,
 		1/*cseq_nr++*/,CRLF,
 		contact->s?"Contact: ":"",contact->len,contact->s,contact->s?CRLF:"",
