@@ -77,7 +77,9 @@ int parse_sql_url(char* _url, char** _user, char** _pass,
 
 	at = strchr(slash, '@');
 
-	db_slash = strchr(slash, '/');
+	db_slash = strrchr(slash, '/');
+	if (db_slash <= at)
+		db_slash = NULL;
 	if (db_slash) {
 		*db_slash++ = '\0';
 		*_db = trim(db_slash);
