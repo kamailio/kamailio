@@ -113,6 +113,7 @@
  * 2004-03-24	Fix newport for null ip address case (e.g onhold re-INVITE)
  * 				(andrei)
  * 2004-09-30	added received port != via port test (andrei) 
+ * 2004-10-10   force_socket option introduced (jiri)
  *
  */
 
@@ -137,6 +138,7 @@
 #include "../../msg_translator.h"
 #include "../usrloc/usrloc.h"
 #include "../../usr_avp.h"
+#include "../../socket_info.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -202,6 +204,8 @@ static usrloc_api_t ul;
 
 static int cblen = 0;
 static int natping_interval = 0;
+struct socket_info* force_socket = 0;
+
 
 static struct {
 	const char *cnetaddr;
@@ -221,6 +225,7 @@ static struct {
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
 static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock";
+static char *force_socket_str = 0;
 static int rtpproxy_disable = 0;
 static int rtpproxy_disable_tout = 60;
 static int rtpproxy_retr = 5;
@@ -253,6 +258,7 @@ static param_export_t params[] = {
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
 	{"received_avp",          INT_PARAM, &rcv_avp               },
+	{"force_socket",          STR_PARAM, &force_socket_str		},
 	{0, 0, 0}
 };
 
@@ -274,6 +280,13 @@ mod_init(void)
 	char *cp;
 	bind_usrloc_t bind_usrloc;
 	struct in_addr addr;
+	str socket_str;
+
+	if (force_socket_str) {
+		socket_str.s=force_socket_str;
+		socket_str.len=strlen(socket_str.s);
+		force_socket=grep_sock_info(&socket_str,0,0);
+	}
 
 	if (natping_interval > 0) {
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
@@ -1570,7 +1583,7 @@ timer(unsigned int ticks, void *param)
 			continue;
 		}
 		hostent2su(&to, he, 0, curi.port_no);
-		send_sock = get_send_socket(&to, PROTO_UDP);
+		send_sock=force_socket ? force_socket : get_send_socket(&to, PROTO_UDP);
 		if (send_sock == NULL) {
 			LOG(L_ERR, "ERROR: nathelper::timer: can't get sending socket\n");
 			continue;

@@ -123,6 +123,8 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	char *dset;
 	int dset_len;
 	struct bookmark dummy_bm;
+	int backup_mhomed;
+	int ret;
 
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
@@ -173,7 +175,16 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	}
 	
 
-	if (msg_send(0, msg->rcv.proto, &to, msg->rcv.proto_reserved1, buf, len)<0)
+	/* supress multhoming support when sending a reply back -- that makes sure
+	   that replies will come from where requests came in; good for NATs
+	   (there is no known use for mhomed for locally generated replies;
+	    note: forwarded cross-interface replies do benefit of mhomed!
+	*/
+	backup_mhomed=mhomed;
+	mhomed=0;
+	ret=msg_send(0, msg->rcv.proto, &to, msg->rcv.proto_reserved1, buf, len);
+	mhomed=backup_mhomed;
+	if (ret<0) 
 		goto error;
 	
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
