@@ -12,6 +12,13 @@ $Id$
 * Changes introduced in 0.8.11
 ***********************************************
 
++--------------------------------------------------------+
+| CAUTION: the 0.8.11 release include changes which      |
+| are incompatible with scripts and databases used       |
+| in previous versions. Care is advised when upgrading   |
+| from previous releases to 0.8.11.                      |
++--------------------------------------------------------+
+
 New features
 =============
 - presence agent [pa module]

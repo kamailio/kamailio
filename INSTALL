@@ -22,6 +22,15 @@ TOC
 
 
 
++--------------------------------------------------------+
+| CAUTION: the 0.8.11 release include changes which      |
+| are incompatible with scripts and databases used       |
+| in previous versions. Care is advised when upgrading   |
+| from previous releases to 0.8.11.                      |
++--------------------------------------------------------+
+
+
+
 1. Supported Architectures and Requirements
 -------------------------------------------
 
