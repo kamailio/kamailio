@@ -1,4 +1,4 @@
-#!/bin/sh  
+#!/bin/sh 
 #
 # $Id$
 #
@@ -97,8 +97,9 @@ usage:
  $CMD passwd <user> <passwd> .......... change user's password (*)
  $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
            < server health >
- $CMD stat ............................ show runnig processes + $0 show
  $CMD monitor ......................... show internal status
+ $CMD stat ............................ show runnig processes 
+                                        + $CMD show
 
    commands labeled with (*) will prompt for a MySQL password
    if the variable PW is set, the password will not be prompted"
@@ -120,41 +121,39 @@ prompt_pw() {
 # $1 = name $2=path $3=attempt
 print_stats() {
 
-echo "[cycle: $3; if screen empty, make sure server is alive and option fifo is set]"
+echo "[cycle: $3; if screen not update, make sure "
+echo " server is alive and option fifo is set]"
 
 echo Up Time
 cat > $SER_FIFO <<EOF
-
 :uptime:$1
+
 EOF
 cat < $2
 echo
 
 echo Transaction Statistics
 cat > $SER_FIFO <<EOF
-
 :t_stats:$1
+
 EOF
 cat < $2
 echo
 
 echo Stateless Server Statistics
 cat > $SER_FIFO <<EOF
-
 :sl_stats:$1
+
 EOF
 cat < $2
 echo
 
 echo UsrLoc Stats
 cat > $SER_FIFO <<EOF
-
 :ul_stats:$1
+
 EOF
 cat < $2
-echo
-
-
 }
 
 
