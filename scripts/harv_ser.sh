@@ -110,6 +110,7 @@ BEGIN {
 	ua_lgelite=0;
 	ua_asterisk=0;
 	ua_commworks=0;
+	ua_sipsak=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -293,6 +294,10 @@ ua==0 && /User-Agent:.*Asterisk/ {
 }
 ua==0 && /User-Agent:.*CommWorks/ {
 	ua_commworks++
+	ua=1
+}
+ua==0 && /User-Agent:.*sipsak/ {
+	ua_sipsak++
 	ua=1
 }
 ua==0 && /User-Agent:.*SIPimp\.org/ {
@@ -711,6 +716,7 @@ END {
 	print "LG-Elite: " ua_lgelite
 	print "Asterisk: " ua_asterisk
 	print "CommWorks: " ua_commworks
+	print "sipsak: " ua_sipsak
 	print "UFO: " ua_xx
 
 	print "## Servers"
