@@ -14,6 +14,10 @@
 
 struct t_stats *cur_stats, *acc_stats;
 
+
+/* we don't worry about locking data during reads (unlike
+   setting values which always happens from some locks) */
+  
 int print_stats(  FILE *f )
 {
 	time_t now;
