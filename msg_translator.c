@@ -117,40 +117,21 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 
 
-char * build_req_buf_from_sip_req(	struct sip_msg* msg,
-				unsigned int *returned_len)
-{
-	unsigned int len, new_len, via_len, received_len, uri_len, branch_len;
-	char* line_buf;
-	char* received_buf;
-	char* tmp;
-	int tmp_len;
-	char* new_buf;
-	char* orig;
-	char* buf;
-	unsigned int offset, s_offset, size;
-	unsigned long source_ip;
-	struct lump *t,*r;
-	struct lump* anchor;
 
-	orig=msg->orig;
-	buf=msg->buf;
-	len=msg->len;
-	source_ip=msg->src_ip;
-	received_len=0;
-	new_buf=0;
+
+
+char* via_builder( struct sip_msg *msg , unsigned int *len )
+{
+	unsigned int  via_len, branch_len;
+	char               *line_buf;
+
 	line_buf=0;
-	received_buf=0;
 
 	line_buf=pkg_malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
 	if (line_buf==0){
-		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
-		goto error1;
+		LOG(L_ERR, "ERROR: via_builder: out of memory\n");
+		goto error;
 	}
-/*
-	via_len=snprintf(line_buf, MAX_VIA_LINE_SIZE, "Via: SIP/2.0/UDP %s:%d\r\n",
-						names[0], port_no);
-*/
 	via_len=MY_VIA_LEN+names_len[0]; /* space included in MY_VIA*/
 
 	/* jku: if we compute branches using MD5 it will take 32 bytes */
@@ -207,10 +188,57 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 	}else{
 		LOG(L_ERR, "build_req_buf_from_sip_req: ERROR: via too long (%d)\n",
 				via_len);
-		goto error1;
+		goto error;
 	}
 
+	*len = via_len;
+	return line_buf;
 
+error:
+	if (line_buf) pkg_free(line_buf);
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+char * build_req_buf_from_sip_req(	struct sip_msg* msg,
+				unsigned int *returned_len)
+{
+	unsigned int len, new_len, received_len, uri_len, via_len;
+	char* line_buf;
+	char* received_buf;
+	char* tmp;
+	int tmp_len;
+	char* new_buf;
+	char* orig;
+	char* buf;
+	unsigned int offset, s_offset, size;
+	unsigned long source_ip;
+	struct lump *t,*r;
+	struct lump* anchor;
+
+	orig=msg->orig;
+	buf=msg->buf;
+	len=msg->len;
+	source_ip=msg->src_ip;
+	received_len=0;
+	new_buf=0;
+	received_buf=0;
+
+
+	line_buf = via_builder( msg, &via_len );
+	if (!line_buf){
+		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
+		goto error1;
+	}
 
 	/* check if received needs to be added */
 	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
@@ -440,8 +468,8 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 	return new_buf;
 
 error1:
-	if (line_buf) pkg_free(line_buf);
 	if (received_buf) pkg_free(received_buf);
+	if (line_buf) pkg_free(line_buf);
 error:
 	if (new_buf) free(new_buf);
 	*returned_len=0;

@@ -72,6 +72,12 @@ int tm_startup()
 
 void tm_shutdown()
 {
+    int i;
+
+    /*unlink the lists*/
+    for( i=NR_OF_TIMER_LISTS ; i>=0 ; i-- )
+       hash_table->timers[ i ].first_tl = hash_table->timers[ i ].last_tl = 0;
+
     /* destroy the hash table */
     free_hash_table( hash_table );
 }
