@@ -188,7 +188,7 @@ static void acc_onreply( struct cell* t, struct sip_msg *reply,
 	if (!failed_transactions && code >=300) return;
 
 	/* anything else, i.e., 2xx, always reported */
-	acc_reply_report(t, reply);
+	acc_reply_report(t, reply, code);
 }
 
 

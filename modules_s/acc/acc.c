@@ -10,6 +10,7 @@
 #include "../tm/t_funcs.h"
 #include "../../error.h"
 #include "acc_mod.h"
+#include "acc.h"
 
 
 int acc_request( struct sip_msg *rq, char * comment, char  *foo)
