@@ -59,7 +59,11 @@ static struct module_exports mf_exports= {
 };
 
 
+#ifdef STATIC_MAXFWD
+struct module_exports* maxfwd_mod_register()
+#else
 struct module_exports* mod_register()
+#endif
 {
 	fprintf(stderr, "maxfwd - registering\n");
 	mf_startup();
