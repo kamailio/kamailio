@@ -94,7 +94,6 @@ MODULE_VERSION
 #define PF_LOCAL PF_UNIX
 #endif
 
-
 /* NAT UAC test constants */
 #define CONTACT_1918		"[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
 #define SDP_1918		"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
@@ -104,6 +103,7 @@ MODULE_VERSION
 
 /* Handy macro */
 #define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
+#define ISNULLADDR(sx)		((sx).len == 7 && memcmp("0.0.0.0", (sx).s, 7) == 0)
 
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
@@ -453,6 +453,8 @@ sdp_1918(struct sip_msg* msg)
 		LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
 		return 0;
 	}
+	if (ISNULLADDR(ip))
+		return 0;
 	backup = ip.s[ip.len];
 	ip.s[ip.len] = '\0';
 	fnd = regexec(&key_sdp_1918, ip.s, 1, &pmatch, 0) == 0;
