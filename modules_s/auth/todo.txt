@@ -1,6 +1,6 @@
 - Check for old nonce
 - Use stale parameter
-- Put HA1 value into database
-- Write a simple cmd line HA1 generator
 - cnonce, nonce-count
-- Crashes when user = tester
+- Conside MD5-Sess support(will require to store passwords in clear text)
+- auth-int support
+- prepsat aby pouzivalo sl modul

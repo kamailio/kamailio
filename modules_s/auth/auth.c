@@ -82,8 +82,8 @@ static inline void calc_nonce(char* _realm, unsigned char* _nonce)
 	unsigned char bin[16];
 	HASHHEX hash;
 	
-	t = time(NULL);
-	to_hex(_nonce, (unsigned char*)time, 8);
+	t = time(NULL) / 60;
+	to_hex(_nonce, (unsigned char*)&t, 8);
 	
 	MD5Init(&ctx);
 	MD5Update(&ctx, _nonce, 8);
@@ -251,6 +251,8 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 	HASHHEX HA1;
 	HASHHEX hent;
 	char* qop;
+	unsigned char nonce[33];
+
 
 #ifdef PARANOID
 	if ((!_cred) || (!_ha1) || (!_method)) {
@@ -278,8 +280,12 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 		break;
 	}
 		
-	DigestCalcResponse(_ha1, _cred->nonce.s, _cred->nonce_count.s, _cred->cnonce.s, qop, _method->s,
+	printf("before calc\n");
+	calc_nonce(_cred->realm.s, nonce);
+	printf("after calc\n");
+	DigestCalcResponse(_ha1, nonce, _cred->nonce_count.s, _cred->cnonce.s, qop, _method->s,
 			   _cred->uri.s, hent, resp);
+	printf("after digest\n");
 
 	DBG("check_cred(): Our result = %s\n", resp);
 
