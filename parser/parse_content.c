@@ -115,7 +115,7 @@ static type_node_t subtype_tree[] = {
 			{'p',SUBTYPE_SDP,0,-1},
 	{'c',SUBTYPE_UNKNOWN,1,25},
 		{'p',SUBTYPE_UNKNOWN,2,-1},
-			{'i',SUBTYPE_UNKNOWN,1,29},
+			{'i',SUBTYPE_UNKNOWN,1,20},
 				{'m',SUBTYPE_CPIM,0,-1},
 			{'l',SUBTYPE_UNKNOWN,1,-1},
 				{'+',TYPE_UNKNOWN,1,-1},
