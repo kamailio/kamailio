@@ -181,10 +181,10 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
    int                  hash_index;
 
    /* it's about the same transaction or not?*/
-   if ( global_msg_id != p_msg->msg_id )
+   if ( global_msg_id != p_msg->id )
    {
       T = (struct cell*)-1;
-      global_msg_id = p_msg->msg_id;
+      global_msg_id = p_msg->id;
    }
 
     /* if the transaction is not found yet we are tring to look for it*/
@@ -194,7 +194,7 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
          return -1;
 
    /* creates a new transaction */
-   hash_index   = hash( p_msg->call_id , p_msg->cseq_nr );
+   hash_index   = hash( p_msg->callid , p_msg->cseq_nr );
    match_entry = &hash_table->entrys[hash_index];
 
    new_cell = sh_malloc( sizeof( struct cell ) );
@@ -252,10 +252,10 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
    unsigned int  isACK = 0;
 
    /* it's about the same transaction or not?*/
-   if ( global_msg_id != p_msg->msg_id )
+   if ( global_msg_id != p_msg->id )
    {
       T = (struct cell*)-1;
-      global_msg_id = p_msg->msg_id;
+      global_msg_id = p_msg->id;
    }
 
     /* if  T is previous found -> return found */
@@ -267,7 +267,7 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
       return 0;
 
    /* start searching into the table */
-   hash_index = hash( p_msg->call_id , p_msg->cseq_nr ) ;
+   hash_index = hash( p_msg->callid , p_msg->cseq_nr ) ;
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  )
       isACK = 1;
 
@@ -286,14 +286,14 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
          if ( /*from length*/ p_cell->transaction.inbound_request->from->body.len == p_msg->from->body.len )
             if ( /*to length*/ p_cell->transaction.inbound_request->to->body.len == p_msg->to->body.len )
                 if ( /*tag length*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && p_cell->transaction.inbound_request->tag->body.len == p_msg->tag->body.len) )
-                  if ( /*callid length*/ p_cell->transaction.inbound_request->call_id->body.len == p_msg->call_id->body.len )
+                  if ( /*callid length*/ p_cell->transaction.inbound_request->callid->body.len == p_msg->callid->body.len )
                      if ( /*cseq_nr length*/ p_cell->transaction.inbound_request->cseq_nr->body.len == p_msg->cseq_nr->body.len )
                          if ( /*cseq_method length*/ p_cell->transaction.inbound_request->cseq_method->body.len == p_msg->cseq_method->body.len )
                             /* so far the lengths are the same -> let's check the contents */
                             if ( /*from*/ !memcmp( p_cell->transaction.inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
                                if ( /*to*/ !memcmp( p_cell->transaction.inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
                                 if ( /*tag*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && !memcmp( p_cell->transaction.inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )) )
-                                     if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->call_id->body.s , p_msg->call_id->body.s , p_msg->call_id->body.len ) )
+                                     if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                         if ( /*cseq_nr*/ !memcmp( p_cell->transaction.inbound_request->cseq_nr->body.s , p_msg->cseq_nr->body.s , p_msg->cseq_nr->body.len ) )
                                            if ( /*cseq_method*/ !memcmp( p_cell->transaction.inbound_request->cseq_method->body.s , p_msg->cseq_method->body.s , p_msg->cseq_method->body.len ) )
                                               { /* WE FOUND THE GOLDEN EGG !!!! */
@@ -307,7 +307,7 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
          /* first only the length are checked */
          if ( /*from length*/ p_cell->transaction.inbound_request->from->body.len == p_msg->from->body.len )
             if ( /*to length*/ p_cell->transaction.inbound_request->to->body.len == p_msg->to->body.len )
-               if ( /*callid length*/ p_cell->transaction.inbound_request->call_id->body.len == p_msg->call_id->body.len )
+               if ( /*callid length*/ p_cell->transaction.inbound_request->callid->body.len == p_msg->callid->body.len )
                   if ( /*cseq_nr length*/ p_cell->transaction.inbound_request->cseq_nr->body.len == p_msg->cseq_nr->body.len )
                       if ( /*cseq_method length*/ p_cell->transaction.inbound_request->cseq_method->body.len == 6 /*INVITE*/ )
                          if ( /*tag length*/ p_cell->transaction.tag &&  p_cell->transaction.tag->len==p_msg->tag->body.len )
@@ -315,7 +315,7 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
                             if ( /*from*/ !memcmp( p_cell->transaction.inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
                                if ( /*to*/ !memcmp( p_cell->transaction.inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
                                   if ( /*tag*/ !memcmp( p_cell->transaction.tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
-                                     if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->call_id->body.s , p_msg->call_id->body.s , p_msg->call_id->body.len ) )
+                                     if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                         if ( /*cseq_nr*/ !memcmp( p_cell->transaction.inbound_request->cseq_nr->body.s , p_msg->cseq_nr->body.s , p_msg->cseq_nr->body.len ) )
                                            if ( /*cseq_method*/ !memcmp( p_cell->transaction.inbound_request->cseq_method->body.s , "INVITE" , 6 ) )
                                               { /* WE FOUND THE GOLDEN EGG !!!! */
@@ -351,7 +351,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    /* it's a CANCEL request for sure */
 
    /* start searching into the table */
-   hash_index = hash( p_msg->call_id , p_msg->cseq_nr ) ;
+   hash_index = hash( p_msg->callid , p_msg->cseq_nr ) ;
 
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -366,7 +366,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
       if ( /*from length*/ p_cell->transaction.inbound_request->from->body.len == p_msg->from->body.len )
          if ( /*to length*/ p_cell->transaction.inbound_request->to->body.len == p_msg->to->body.len )
             if ( /*tag length*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && p_cell->transaction.inbound_request->tag->body.len == p_msg->tag->body.len) )
-               if ( /*callid length*/ p_cell->transaction.inbound_request->call_id->body.len == p_msg->call_id->body.len )
+               if ( /*callid length*/ p_cell->transaction.inbound_request->callid->body.len == p_msg->callid->body.len )
                   if ( /*cseq_nr length*/ p_cell->transaction.inbound_request->cseq_nr->body.len == p_msg->cseq_nr->body.len )
                       if ( /*cseq_method length*/ p_cell->transaction.inbound_request->cseq_method->body.len != 6 /*CANCEL*/ )
                          if ( /*req_uri length*/ p_cell->transaction.inbound_request->first_line.u.request.uri.len == p_msg->first_line.u.request.uri.len )
@@ -374,7 +374,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
                              if ( /*from*/ !memcmp( p_cell->transaction.inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
                                 if ( /*to*/ !memcmp( p_cell->transaction.inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
                                    if ( /*tag*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && !memcmp( p_cell->transaction.inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )) )
-                                      if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->call_id->body.s , p_msg->call_id->body.s , p_msg->call_id->body.len ) )
+                                      if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
                                           if ( /*cseq_nr*/ !memcmp( p_cell->transaction.inbound_request->cseq_nr->body.s , p_msg->cseq_nr->body.s , p_msg->cseq_nr->body.len ) )
                                              if ( /*cseq_method*/ strcmp( p_cell->transaction.inbound_request->cseq_method->body.s , "CANCEL" ) )
                                                 if ( /*req_uri*/ memcmp( p_cell->transaction.inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len ) )
@@ -405,7 +405,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
 int t_forward( struct s_table* hash_table , struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
 {
    /* it's about the same transaction or not? */
-   if ( global_msg_id != p_msg->msg_id )
+   if ( global_msg_id != p_msg->id )
    {
       T = (struct cell*)-1;
       global_msg_id = p_msg->msg_id;
