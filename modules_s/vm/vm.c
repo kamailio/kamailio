@@ -1,4 +1,5 @@
 /*
+ * $Id$
  *
  * $Id$
  *
@@ -80,6 +81,7 @@ static str empty_param = {".",1};
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt );
 static int init_tmb();
 static int vm_action(struct sip_msg*, char* fifo, char*);
+static int vmt_action(struct sip_msg*, char* fifo, char*);
 static int vm_mod_init(void);
 static int vm_init_child(int rank);
 
@@ -95,7 +97,7 @@ char* user_column = "username";
 char* domain_column = "domain";
 #endif
 
-#define EXTRA_DEBUG
+/* #define EXTRA_DEBUG */
 
 db_con_t* db_handle = 0;
 
@@ -106,7 +108,8 @@ db_con_t* db_handle = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"vm", vm_action, 2, 0, REQUEST_ROUTE},
+	{"vm", vm_action, 2, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"vmt", vmt_action, 2, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -234,7 +237,7 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	    email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
 	    email->len = strlen(email->s);
 	
-#ifdef MULTI_DOMAIN
+#ifdef REMOVE
 	    domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
 	    domain->s = strlen(domain->s);
 #endif	    
@@ -246,6 +249,28 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	return 0;
  error:
 	return -1;
+}
+
+
+static int vmt_action(struct sip_msg* msg, char* fifo, char* action) 
+{
+#ifdef UNDER_CONSTRUCTION
+	int status;
+
+    status=(*_tmb.t_newtran)(msg);
+	if (status<=0) /* retransmission or error; return; */
+			return status;
+	/* send a provisional reply back */
+    status=(*_tmb.t_reply)(msg, 100, "trying media server for you");
+	/* contact SEMS */
+	status=vm_action(msg, fifo, action);
+	if (status<=0) {
+    	status=(*_tmb.t_reply)(msg, 500, "media server unavailable");
+		return status;
+	}
+#endif
+	/* success */
+	return 1;
 }
 
 static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
