@@ -51,9 +51,6 @@
 	        goto dc_end;               \
         }
 
-#define IZAT_CASE                  \
-        switch(LOWER_DWORD(val)) { \
-
 
 #define IZAT_CASE                  \
         switch(LOWER_DWORD(val)) { \
