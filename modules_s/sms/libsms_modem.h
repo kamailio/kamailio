@@ -24,23 +24,26 @@ mailto:s.frings@mail.isis.de
 #define MODE_ASCII    3
 #define MODE_NEW      4
 
+#define READ_SLEEP   10000
+#define READ_TIMEOUT  10
+
+typedef int(*cds_report)( struct modem* , char* , int );
 
 
-// put_command
-// Sends a command to the modem and waits max timout*0.1 seconds for an answer.
-// The function returns the length of the answer.
-// The answer can be Ok, ERROR or expect. After getting the answer the
-// functions reads 0.1s more and returns then.
-// The command may be empty or NULL. 
+/* put_command
+   Sends a command to the modem and waits max timout*0.1 seconds for an answer.
+   The function returns the length of the answer.
+   The answer can be Ok, ERROR or expect.
+   The command may be empty or NULL  */
 
-int put_command(int fd,char* command, int clen, char* answer,int max,
-													int timeout,char* expect);
+int put_command( struct modem *mdm, char* command, int clen, char* answer,
+											int max, int timeout,char* expect);
 
 int setmodemparams( struct modem *mdm);
 
 int checkmodem(struct modem *mdm);
 
-int initmodem(struct modem *mdm);
+int initmodem(struct modem *mdm, cds_report cds_report_f);
 
 int setsmsc(struct modem *mdm, char *smsc);
 

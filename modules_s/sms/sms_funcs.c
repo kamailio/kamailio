@@ -56,7 +56,7 @@ int nr_of_modems;
 int max_sms_parts;
 int *queued_msgs;
 int use_contact;
-int use_sms_report;
+int sms_report_type;
 struct tm_binds tmb;
 struct im_binds imb;
 
@@ -75,6 +75,15 @@ struct im_binds imb;
 	"the following message couldn't be sent : "
 #define ERR_MODEM_TEXT_LEN (sizeof(ERR_MODEM_TEXT)-1)
 
+#define STORED_NOTE "NOTE: Your SMS received provisional confirmation"\
+	" 48 \"Delivery is not yet possible\". The SMS was store on the "\
+	"SMSCenter for further delivery. Our gateway cannot guarantee "\
+	"further information regarding your SMS delivery! Your message was: "
+#define STORED_NOTE_LEN  (sizeof(STORED_NOTE)-1)
+
+#define OK_MSG "Your SMS was finally successfull delivered! Your message was: "
+#define OK_MSG_LEN  (sizeof(OK_MSG)-1)
+
 #define CONTENT_TYPE_HDR     "Content-Type: text/plain"
 #define CONTENT_TYPE_HDR_LEN (sizeof(CONTENT_TYPE_HDR)-1)
 
@@ -89,7 +98,7 @@ struct im_binds imb;
 
 #define no_sip_addr_begin(_p) \
 	( (_p)!=' ' && (_p)!='\t' && (_p)!='-' && (_p)!='=' && (_p)!='\r'\
-	&& (_p)!='\n' && (_p)!=';' && (_p)!=',')
+	&& (_p)!='\n' && (_p)!=';' && (_p)!=',' && (_p)!='.' && (_p)!=':')
 
 
 
@@ -477,7 +486,7 @@ int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 		sms_messg->text.len = buf_len;
 		if ( (ret_code=putsms(sms_messg,mdm))<0)
 			goto error;
-		if (use_sms_report)
+		if (sms_report_type!=NO_REPORT)
 			add_sms_into_report_queue(ret_code,sms_messg,
 				p-use_nice*(nr_chunks>1)*SMS_EDGE_PART_LEN,len_array[i]);
 	}
@@ -546,9 +555,10 @@ int send_sms_as_sip( struct incame_sms *sms )
 				is_pattern = 0;
 		if (!is_pattern) {
 			/* first header part is broken -> let's give it a chance
-			   and pars for the first word delimitator */
+			   and parse for the first word delimitator */
 			while(p<sms->ascii+sms->userdatalength && no_sip_addr_begin(*p))
 				p++;
+			p++;
 			if (p+9>=sms->ascii+sms->userdatalength) {
 				LOG(L_ERR,"ERROR:send_sms_as_sip: unable to find sip_address"
 					" start in sms body [%s]!\n",sms->ascii);
@@ -566,7 +576,7 @@ int send_sms_as_sip( struct incame_sms *sms )
 		/* goes to the end of the address */
 		while(p<sms->ascii+sms->userdatalength && is_in_sip_addr(*p) )
 			p++;
-		if (p==sms->ascii+sms->userdatalength) {
+		if (p>=sms->ascii+sms->userdatalength) {
 			LOG(L_ERR,"ERROR:send_sms_as_sip: cannot find sip address end in"
 				"sms body [%s]!\n",sms->ascii);
 		}
@@ -582,7 +592,7 @@ int send_sms_as_sip( struct incame_sms *sms )
 	} else {
 		/* no trace of the pattern sent along with the orig sms*/
 		do {
-			if ((p[0]=='s'||p[0]=='S') && (p[1]=='i'||p[1]=='I') 
+			if ((p[0]=='s'||p[0]=='S') && (p[1]=='i'||p[1]=='I')
 			&& (p[2]=='p'||p[2]=='P') && p[3]==':') {
 				/* we got the address beginning */
 				sip_addr.s = p;
@@ -597,13 +607,17 @@ int send_sms_as_sip( struct incame_sms *sms )
 				sip_addr.len = p-sip_addr.s;
 			} else {
 				/* parse to the next word */
-				while(p<sms->ascii+sms->userdatalength&&no_sip_addr_begin(*p))
-					p++;
+				DBG("*** Skipping word len=%d\n",sms->userdatalength);
+				while(p<sms->ascii+sms->userdatalength&&no_sip_addr_begin(*p)){
+					DBG("**** p=%c\n",*(p++));
+				}
+				p++;
 				if (p+9>=sms->ascii+sms->userdatalength) {
-					LOG(L_ERR,"ERROR:send_sms_as_sip: unable to find sip "
+				LOG(L_ERR,"ERROR:send_sms_as_sip: unable to find sip "
 						"address start in sms body [%s]!\n",sms->ascii);
 					goto error;
 				}
+				DBG("*** Done\n");
 			}
 		}while (!sip_addr.len);
 	}
@@ -654,19 +668,47 @@ int check_sms_report( struct incame_sms *sms )
 {
 	struct sms_msg *sms_messg;
 	str *s1, *s2;
+	int old;
 	int res;
 
 	DBG("DEBUG:sms:check_sms_report: Report for sms number %d.\n",sms->sms_id);
-	res = relay_report_to_queue(sms->sms_id, sms->sender ,sms->ascii[0]);
-	if (res==-1) {
-		/* the sms wasd confirmed with an error code -> we have to send a
+	res=relay_report_to_queue( sms->sms_id, sms->sender, sms->ascii[0], &old);
+	if (res==3) { /* error */
+		/* the sms was confirmed with an error code -> we have to send a
 		message to the SIP user */
 		s1 = get_error_str(sms->ascii[0]);
 		s2 = get_text_from_report_queue(sms->sms_id);
 		sms_messg = get_sms_from_report_queue(sms->sms_id);
 		send_error( sms_messg, s1->s, s1->len, s2->s, s2->len);
-		remove_sms_from_report_queue(sms->sms_id);
+	} else if (res==1 && sms->ascii[0]==48 && old!=48) { /* provisional 48 */
+		/* the sms was provisinal confirmed with a 48 code -> was stored
+		by SMSC -> no further real-time tracing posible */
+		s2 = get_text_from_report_queue(sms->sms_id);
+		sms_messg = get_sms_from_report_queue(sms->sms_id);
+		send_error( sms_messg, STORED_NOTE, STORED_NOTE_LEN, s2->s, s2->len);
+	} else if (res==2 && old==48) {
+		/* we received OK for a SMS that had received prev. an 48 code.
+		The note that we send for 48 has to be now clarify */
+		s2 = get_text_from_report_queue(sms->sms_id);
+		sms_messg = get_sms_from_report_queue(sms->sms_id);
+		send_error( sms_messg, OK_MSG, OK_MSG_LEN, s2->s, s2->len);
 	}
+	if (res>1) /* final response */
+		remove_sms_from_report_queue(sms->sms_id);
+
+	return 1;
+}
+
+
+
+
+int check_cds_report( struct modem *mdm, char *cds, int cds_len)
+{
+	struct incame_sms sms;
+
+	if (cds2sms( &sms, mdm, cds, cds_len)==-1)
+		return -1;
+	check_sms_report( &sms );
 	return 1;
 }
 
@@ -698,7 +740,7 @@ void modem_process(struct modem *mdm)
 	}
 
 	setmodemparams(mdm);
-	initmodem(mdm);
+	initmodem(mdm,check_cds_report);
 
 	if ( (max_mem=check_memory(mdm,MAX_MEM))==-1 ) {
 		LOG(L_WARN,"WARNING:modem_process: CPMS command unsuported!"
@@ -785,17 +827,16 @@ void modem_process(struct modem *mdm)
 				}
 			}
 
+		/* if reports are used, checks for expired records in report queue */
+		if (sms_report_type!=NO_REPORT)
+			check_timeout_in_report_queue();
+
 		/* sleep -> if it's needed */
 		if (!dont_wait) {
-			/* if reports are used, check for expired records in report queue*/
-			if (use_sms_report) check_timeout_in_report_queue();
-			sleep(mdm->looping_interval);
+				sleep(mdm->looping_interval);
 		}
 	}/*while*/
 }
-
-
-
 
 
 

@@ -43,5 +43,7 @@ int check_memory( struct modem *mdm, int flag);
 
 void swapchars(char* string, int len);
 
+int cds2sms(struct incame_sms *sms, struct modem *mdm, char *s, int s_len);
+
 #endif
 

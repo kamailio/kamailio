@@ -32,7 +32,7 @@
 #include "sms_report.h"
 #include "sms_funcs.h"
 
-#define REPORT_TIMEOUT     1*60
+#define REPORT_TIMEOUT     1*60*60   // one hour
 #define START_ERR_MSG      "Your message (or part of it) couldn't be "\
                            "delivered. The SMS Center said: "
 #define START_ERR_MSG_LEN  (strlen(START_ERR_MSG))
@@ -177,11 +177,13 @@ void add_sms_into_report_queue(int id, struct sms_msg *sms, char *p, int l)
 
 
 
-int  relay_report_to_queue(int id, char *phone, int status)
+int  relay_report_to_queue(int id, char *phone, int status, int *old_status)
 {
 	struct report_cell *cell;
+	int    ret_code;
 
 	cell = &(report_queue[id]);
+	ret_code = 0;
 
 	/* first, do we have a match into the sms queue? */
 	if (!cell->sms) {
@@ -196,29 +198,26 @@ int  relay_report_to_queue(int id, char *phone, int status)
 		goto done;
 	}
 
+	if (old_status)
+		*old_status = cell->status;
 	cell->status = status;
 	if (status>=0 && status<32) {
-		/* means OK -> trash the cell */
-		free_report_cell(cell);
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d confirmed with code %d\n",
 			id, status);
-		goto done;
-	} else if (status<38) {
+		ret_code = 2; /* sucess */
+	} else if (status<64) {
 		/* provisional report */
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d received prov. report with"
 			" code %d\n",id, status);
-		goto done;
+		ret_code = 1; /* provisional */
 	} else {
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d received error report with"
 			" code %d\n",id, status);
-		/* error */
-		goto error;
+		ret_code = 3; /* error */
 	}
 
 done:
-	return 1;
-error:
-	return -1;
+	return ret_code;
 }
 
 
@@ -296,13 +295,13 @@ str* get_error_str(int status)
 			break;
 		case 37: strcat(sms->ascii,"Still trying,error in SME");
 			break;
-		*/
 		case 48:
 			err_str.s =
 			START_ERR_MSG"Delivery is not possible"END_ERR_MSG;
 			err_str.len = 24 + START_ERR_MSG_LEN + END_ERR_MSG_LEN;
 			break;
-		case 64: 
+		*/
+		case 64:
 			err_str.s =
 			START_ERR_MSG"Error, remote procedure error"END_ERR_MSG;
 			err_str.len = 29 + START_ERR_MSG_LEN + END_ERR_MSG_LEN;

@@ -68,9 +68,9 @@ char *domain_str      = 0;
 int    default_net    = 0;
 int    max_sms_parts  = MAX_SMS_PARTS;
 str    domain;
-int    *queued_msgs   = 0;
-int    use_contact    = 0;
-int    use_sms_report = 0;
+int    *queued_msgs    = 0;
+int    use_contact     = 0;
+int    sms_report_type = NO_REPORT;
 struct tm_binds tmb;
 struct im_binds imb;
 
@@ -102,7 +102,7 @@ struct module_exports exports= {
 		"max_sms_parts",
 		"domain",
 		"use_contact",
-		"use_sms_report"
+		"sms_report_type"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
@@ -122,7 +122,7 @@ struct module_exports exports= {
 		&max_sms_parts,
 		&domain_str,
 		&use_contact,
-		&use_sms_report
+		&sms_report_type
 	},
 	8,      /* Number of module paramers */
 
@@ -294,13 +294,13 @@ error:
 int parse_config_lines()
 {
 	char *p,*start;
-	int  i, k, step = 1;
+	int  i, k, step;
 	int  mdm_nr, net_nr;
 
 	nr_of_networks = 0;
 	nr_of_modems = 0;
 
-	step = 0;
+	step = 1;
 	/* parsing modems configuration string */
 	if ( (p = modems_config)==0) {
 		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"modems\" not"
@@ -321,7 +321,7 @@ int parse_config_lines()
 		modems[nr_of_modems].device[0] = 0;
 		modems[nr_of_modems].pin[0] = 0;
 		modems[nr_of_modems].mode = MODE_NEW;
-		modems[nr_of_modems].retry = 10;
+		modems[nr_of_modems].retry = 4;
 		modems[nr_of_modems].looping_interval = 20;
 		modems[nr_of_modems].baudrate = B9600;
 		memset(modems[nr_of_modems].net_list,0XFF,
@@ -599,7 +599,7 @@ int global_init()
 	}
 
 	/* if report will be used, init the report queue */
-	if (use_sms_report && !init_report_queue()) {
+	if (sms_report_type!=NO_REPORT && !init_report_queue()) {
 		LOG(L_ERR,"ERROR: sms_global_init: cannot get shm memory!\n");
 		goto error;
 	}
@@ -652,7 +652,7 @@ error:
 
 static int sms_init(void)
 {
-	DBG("SMS - initializing\n");
+	LOG(L_INFO,"SMS - initializing\n");
 
 	if (parse_config_lines()==-1)
 		return -1;
@@ -672,7 +672,7 @@ static int sms_exit(void)
 	if (queued_msgs)
 		shm_free(queued_msgs);
 
-	if (use_sms_report)
+	if (sms_report_type!=NO_REPORT)
 		destroy_report_queue();
 
 	return 0;

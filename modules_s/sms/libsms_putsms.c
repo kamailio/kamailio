@@ -25,7 +25,7 @@ mailto:s.frings@mail.isis.de
 #include "libsms_modem.h"
 
 
-int  use_sms_report;
+int  sms_report_type;
 
 static char hexa[16] = {
 	'0','1','2','3','4','5','6','7',
@@ -133,15 +133,9 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	// Swap every second character
 	swapchars(tmp,foo);
 	flags = 0x01;   /* SMS-Sumbit MS to SMSC */
-	if (use_sms_report)
+	if (sms_report_type!=NO_REPORT)
 		flags |= 0x20 ; /* status report request */
 	coding=240+1; // Dummy + Class 1
-	/*if (msg->is_binary)
-	{
-		coding+=4; // 8 Bit
-		if (msg->udh)
-			flags+=64; // User Data Header
-	}*/
 	if (mdm->mode!=MODE_OLD)
 		flags+=16; // Validity field
 	/* concatenate the first part of the PDU string */
@@ -218,24 +212,24 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 		clen2=sprintf(command2,"%.*s\x1A",pdu_len,pdu);
 
 	sms_id = 0;
-	for(err_code=0,retries=0;err_code<2 && retries<10; retries++)
+	for(err_code=0,retries=0;err_code<2 && retries<mdm->retry; retries++)
 	{
-		if (put_command(mdm->fd,command,clen,answer,sizeof(answer),50,0)
-		&& put_command(mdm->fd,command2,clen2,answer,sizeof(answer),300,0)
+		if (put_command(mdm,command,clen,answer,sizeof(answer),50,"\r\n> ")
+		&& put_command(mdm,command2,clen2,answer,sizeof(answer),1000,0)
 		&& strstr(answer,"OK") )
 		{
 			/* no error during sending and the modem said OK */
 			err_code = 2;
 			/* if reports were request, we have to fetch the sms id from
 			the modem reply to keep trace of the status reports */
-			if (use_sms_report) {
+			if (sms_report_type!=NO_REPORT) {
 				sms_id = fetch_sms_id(answer);
 				if (sms_id==-1)
 					err_code = 1;
 			}
 		} else {
 			/* we have an error */
-			if (checkmodem(mdm)!=0) {
+			if (checkmodem(mdm)==-1) {
 				err_code = 0;
 				LOG(L_WARN,"WARNING: putsms: resending last sms! \n");
 			} else if (err_code==0) {
@@ -251,7 +245,8 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 
 	if (err_code==0)
 		LOG(L_WARN,"WARNNING: something spuky is going on with the modem!"
-			" Re-inited and re-tried for 10 times without success!\n");
+			" Re-inited and re-tried for %d times without success!\n",
+			mdm->retry);
 	return (err_code==0?-2:(err_code==2?sms_id:-1));
 }
 
