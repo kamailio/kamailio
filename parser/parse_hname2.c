@@ -84,7 +84,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_supp.h"     /* Supported */
 #include "case_dive.h"     /* Diversion */
 #include "case_remo.h"     /* Remote-Party-ID */
-#include "case_sip.h"      /* SIP-If-Match */
+
 
 #define READ(val) \
 (*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
@@ -111,7 +111,6 @@ static inline char* skip_ws(char* p, unsigned int size)
         case _acce_: acce_CASE; \
         case _orga_: orga_CASE; \
         case _prio_: prio_CASE; \
-        case _sip_:  sip_CASE; \
         case _subj_: subj_CASE; \
         case _user_: user_CASE; \
         case _dive_: dive_CASE; \
