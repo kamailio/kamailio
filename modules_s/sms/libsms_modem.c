@@ -341,6 +341,13 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 	}
 	cds_report_func = cds_report_f;
 
+	if (mdm->smsc[0]) {
+		LOG(L_INFO,"INFO:initmodem: Changing SMSC to \"%s\"\n",mdm->smsc);
+		setsmsc(mdm,mdm->smsc);
+	}
+
+
+
 	return 0;
 error:
 	return -1;
@@ -386,7 +393,6 @@ int setsmsc(struct modem *mdm, char *smsc)
 	int  clen;
 
 	if (smsc && smsc[0]) {
-		DBG("DEBUG:initmodem: Changing SMSC\n");
 		clen=sprintf(command,"AT+CSCA=\"+%s\"\r",smsc);
 		put_command(mdm,command,clen,answer,sizeof(answer),50,0);
 	}

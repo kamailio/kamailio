@@ -186,6 +186,10 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 				goto error;
 			}
 			break;
+		case 'c':  /* sms center number */
+			memcpy(mdm->smsc,arg+2,arg_end-arg-2);
+			mdm->smsc[arg_end-arg-2] = 0;
+			break;
 		case 'r':  /* retry time */
 			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
@@ -218,6 +222,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 				case  9600: foo=B9600; break;
 				case 19200: foo=B19200; break;
 				case 38400: foo=B38400; break;
+				case 57600: foo=B57600; break;
 				default:
 					LOG(L_ERR,"ERROR:set_modem_arg: unsupported value %d "
 						"for [b] arg!\n",foo);
@@ -227,6 +232,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			break;
 		default:
 			LOG(L_ERR,"ERROR:set_modem_arg: unknow param name [%c]\n",*arg);
+			goto error;
 	}
 
 	return 1;
@@ -247,10 +253,6 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 	}
 	switch (*arg)
 	{
-		case 'c':  /* sms center number */
-			memcpy(net->smsc,arg+2,arg_end-arg-2);
-			net->smsc[arg_end-arg-2] = 0;
-			break;
 		case 'm':  /* maximum sms per one call */
 			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
@@ -262,6 +264,7 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 			break;
 		default:
 			LOG(L_ERR,"ERROR:set_network_arg: unknow param name [%c]\n",*arg);
+			goto error;
 	}
 
 	return 1;
@@ -299,6 +302,7 @@ int parse_config_lines()
 			goto parse_error;
 		memcpy(modems[nr_of_modems].name, start, p-start);
 		modems[nr_of_modems].name[p-start] = 0;
+		modems[nr_of_modems].smsc[0] = 0;
 		modems[nr_of_modems].device[0] = 0;
 		modems[nr_of_modems].pin[0] = 0;
 		modems[nr_of_modems].mode = MODE_NEW;
@@ -337,6 +341,11 @@ int parse_config_lines()
 				" associated\n",modems[nr_of_modems].name);
 			goto error;
 		}
+		if (modems[nr_of_modems].smsc[0]==0) {
+			LOG(L_WARN,"WARNING:SMS parse config modem: modem %s has no sms"
+				" center associated -> using the default one from modem\n",
+				modems[nr_of_modems].name);
+		}
 		nr_of_modems++;
 		eat_spaces(p);
 		if (*p==';') {
@@ -368,7 +377,6 @@ int parse_config_lines()
 			goto parse_error;
 		memcpy(networks[nr_of_networks].name, start, p-start);
 		networks[nr_of_networks].name[p-start] = 0;
-		networks[nr_of_networks].smsc[0] = 0;
 		networks[nr_of_networks].max_sms_per_call = 10;
 		/*get network parameters*/
 		eat_spaces(p);
@@ -395,11 +403,6 @@ int parse_config_lines()
 			goto parse_error;
 		p++;
 		/* end of element */
-		if (networks[nr_of_networks].smsc[0]==0) {
-			LOG(L_ERR,"ERROR:SMS parse config networks: network %s has no sms"
-				" center associated\n",networks[nr_of_networks].name);
-			goto error;
-		}
 		nr_of_networks++;
 		eat_spaces(p);
 		if (*p==';')

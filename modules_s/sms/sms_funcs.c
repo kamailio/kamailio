@@ -623,9 +623,9 @@ int send_sms_as_sip( struct incame_sms *sms )
 				sip_addr.len = p-sip_addr.s;
 			} else {
 				/* parse to the next word */
-				DBG("*** Skipping word len=%d\n",sms->userdatalength);
+				/*DBG("*** Skipping word len=%d\n",sms->userdatalength);*/
 				while(p<sms->ascii+sms->userdatalength&&no_sip_addr_begin(*p)){
-					DBG("**** p=%c\n",*(p++));
+					p++;
 				}
 				p++;
 				if (p+9>=sms->ascii+sms->userdatalength) {
@@ -633,7 +633,7 @@ int send_sms_as_sip( struct incame_sms *sms )
 						"address start in sms body [%s]!\n",sms->ascii);
 					goto error;
 				}
-				DBG("*** Done\n");
+				/*DBG("*** Done\n");*/
 			}
 		}while (!sip_addr.len);
 	}
@@ -740,13 +740,11 @@ void modem_process(struct modem *mdm)
 	int counter;
 	int dont_wait;
 	int empty_pipe;
-	int last_smsc_index;
 	int cpms_unsuported;
 	int max_mem=0, used_mem=0;
 
 	sms_messg = 0;
 	cpms_unsuported = 0;
-	last_smsc_index = -1;
 
 	/* let's open/init the modem */
 	DBG("DEBUG:modem_process: openning modem\n");
@@ -798,20 +796,13 @@ void modem_process(struct modem *mdm)
 				}
 				(*queued_msgs)--;
 
-				/*sets the apropriat sms center*/
-				if (last_smsc_index!=mdm->net_list[i]) {
-					setsmsc(mdm,net->smsc);
-					last_smsc_index = mdm->net_list[i];
-				}
-
 				/* compute and send the sms */
 				DBG("DEBUG:modem_process: %s processing sms for net %s:"
 					" \n\tTo:[%.*s]\n\tBody=<%d>[%.*s]\n",
 					mdm->device, net->name,
 					sms_messg->to.len,sms_messg->to.s,
 					sms_messg->text.len,sms_messg->text.len,sms_messg->text.s);
-				if ( send_as_sms( sms_messg , mdm)==-1 )
-					last_smsc_index = -1;
+				send_as_sms( sms_messg , mdm);
 
 				counter++;
 				/* if I reached the limit -> set not to wait */
@@ -826,7 +817,6 @@ void modem_process(struct modem *mdm)
 				LOG(L_ERR,"ERROR:modem_process: CPMS command failed!"
 					" cannot get used mem -> using 10\n");
 				used_mem = 10;
-				last_smsc_index = -1;
 			}
 
 		/* if any, let's get them */
