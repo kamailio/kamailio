@@ -17,7 +17,7 @@
 
 
 
-typedef  volatile int lock_t;
+typedef  volatile int fl_lock_t;
 
 
 
@@ -26,7 +26,7 @@ typedef  volatile int lock_t;
 
 
 /*test and set lock, ret 1 if lock held by someone else, 0 otherwise*/
-inline static int tsl(lock_t* lock)
+inline static int tsl(fl_lock_t* lock)
 {
 	volatile char val;
 #ifdef __i386
@@ -47,7 +47,7 @@ inline static int tsl(lock_t* lock)
 
 
 
-inline static void get_lock(lock_t* lock)
+inline static void get_lock(fl_lock_t* lock)
 {
 	
 	while(tsl(lock)){
@@ -57,7 +57,7 @@ inline static void get_lock(lock_t* lock)
 
 
 
-inline static void release_lock(lock_t* lock)
+inline static void release_lock(fl_lock_t* lock)
 {
 	char val;
 

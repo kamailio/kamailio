@@ -43,7 +43,7 @@ static int shm_shmid=-1; /*shared memory id*/
 #endif
 
 #ifdef FAST_LOCK
-lock_t* mem_lock=0;
+fl_lock_t* mem_lock=0;
 #else
 int shm_semid=-1; /*semaphore id*/
 #endif
@@ -198,7 +198,7 @@ int shm_mem_init()
 		return -1;
 	}
 #ifdef FAST_LOCK
-	mem_lock=shm_malloc_unsafe(sizeof(lock_t));
+	mem_lock=shm_malloc_unsafe(sizeof(fl_lock_t));
 	init_lock(*mem_lock);
 #endif
 	

@@ -50,7 +50,7 @@
 #ifdef FAST_LOCK
 #include "../fastlock.h"
 	
-	extern lock_t* mem_lock;
+	extern fl_lock_t* mem_lock;
 #else
 extern  int shm_semid;
 #endif
