@@ -318,7 +318,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
      * value - the value to be written into the AVP. Parameter
        syntax:
           + value = (variable) | (fix_value) 
-          + variable = '$src_ip' |
+          + variable = '$src_ip' | '$hdr[name]' |
             (sip_uri)['/'('username'|'domain')]) 
           + sip_uri = '$from' | '$to' | '$ruri' 
           + fix_value = 'i:'integer | 's:'string | string 
@@ -331,6 +331,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
 avp_write("$to","i:678");
 avp_write("$ruri/username","$email");
 avp_write("$src_ip","s:ip");
+avp_write("$hdr[call-id]","i:11");
 avp_write("i:333","i:6");
 ...
      _________________________________________________________

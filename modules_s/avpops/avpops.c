@@ -42,6 +42,7 @@
 
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_hname2.h"
 #include "../../sr_module.h"
 #include "../../str.h"
 #include "../../dprint.h"
@@ -357,8 +358,10 @@ static int fixup_db_store_avp(void** param, int param_no)
 
 static int fixup_write_avp(void** param, int param_no)
 {
+	struct hdr_field hdr;
 	struct fis_param *ap;
 	int  flags;
+	int  len;
 	char *s;
 	char *p;
 
@@ -374,7 +377,7 @@ static int fixup_write_avp(void** param, int param_no)
 			if ((++s)==0)
 			{
 				LOG(L_ERR,"ERROR:avops:fixup_write_avp: bad param 1; "
-					"expected : $[from|to|ruri] or int/str value\n");
+					"expected : $[from|to|ruri|hdr] or int/str value\n");
 				return E_UNSPEC;
 			}
 			if ( (p=strchr(s,'/'))!=0)
@@ -382,7 +385,8 @@ static int fixup_write_avp(void** param, int param_no)
 			if ( (!strcasecmp( "from", s) && (flags|=AVPOPS_USE_FROM))
 				|| (!strcasecmp( "to", s) && (flags|=AVPOPS_USE_TO))
 				|| (!strcasecmp( "ruri", s) && (flags|=AVPOPS_USE_RURI))
-				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP)) )
+				|| (!strcasecmp( "src_ip", s) && (flags|=AVPOPS_USE_SRC_IP))
+				|| (!strncasecmp( "hdr", s, 3) && (flags|=AVPOPS_USE_HDRREQ)) )
 			{
 				ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 				if (ap==0)
@@ -393,13 +397,50 @@ static int fixup_write_avp(void** param, int param_no)
 				}
 				memset( ap, 0, sizeof(struct fis_param));
 				/* any falgs ? */
-				if ( p && !( (flags&AVPOPS_USE_SRC_IP)==0 && (
+				if ( p && !(!(flags&(AVPOPS_USE_SRC_IP|AVPOPS_USE_HDRREQ)) && (
 				(!strcasecmp("username",p) && (flags|=AVPOPS_FLAG_USER)) ||
 				(!strcasecmp("domain", p) && (flags|=AVPOPS_FLAG_DOMAIN)))) )
 				{
 					LOG(L_ERR,"ERROR:avpops:fixup_write_avp: flag \"%s\""
 						" unknown!\n", p);
 					return E_UNSPEC;
+				}
+				if (flags&AVPOPS_USE_HDRREQ)
+				{
+					len = strlen(s);
+					if (len<6 || s[3]!='[' || s[len-1]!=']')
+					{
+						LOG(L_ERR,"ERROR:avpops:fixup_write_avp: invalid hdr "
+							"specificatoin \"%s\"\n",s);
+						return E_UNSPEC;
+					}
+					s[len-1] = ':';
+					/* parse header name */
+					if (parse_hname2( s+4, s+len, &hdr)==0) {
+						LOG(L_ERR,"BUG:avpops:fixup_write_avp: parse header "
+							"failed\n");
+						return E_UNSPEC;
+					}
+					if (hdr.type==HDR_OTHER_T) {
+						/* duplicate hdr name */
+						len -= 5; /*hdr[]*/
+						ap->val.s = (str*)pkg_malloc(sizeof(str)+len+1);
+						if (ap->val.s==0)
+						{
+							LOG(L_ERR,"ERROR:avpops:fixup_write_avp: no more "
+								"pkg mem\n");
+							return E_OUT_OF_MEM;
+						}
+						ap->val.s->s = ((char*)(ap->val.s)) + sizeof(str);
+						ap->val.s->len = len;
+						memcpy( ap->val.s->s, s+4, len);
+						ap->val.s->s[len] = 0;
+						DBG("DEBUF:avpops:fixup_write_avp: hdr=<%s>\n",
+							ap->val.s->s);
+					} else {
+						ap->val.n = hdr.type;
+						flags |= AVPOPS_VAL_INT;
+					}
 				}
 				ap->flags = flags|AVPOPS_VAL_NONE;
 			} else {

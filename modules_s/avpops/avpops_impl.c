@@ -549,6 +549,34 @@ error:
 }
 
 
+static inline str *search_hdr(struct sip_msg* msg, struct fis_param *hdr_def)
+{
+	static str body;
+	struct hdr_field *hdr;
+
+	/* parse all HDRs */
+	if (parse_headers( msg, HDR_EOH_F, 0)!=0) {
+		LOG(L_ERR,"ERROR:tm:append2buf: parsing hdrs failed\n");
+		return 0;
+	}
+	/* search the HDR */
+	if (hdr_def->flags&AVPOPS_VAL_INT) {
+		for(hdr=msg->headers;hdr;hdr=hdr->next)
+			if (hdr_def->val.n==hdr->type)
+				goto found;
+	} else {
+		for(hdr=msg->headers;hdr;hdr=hdr->next)
+			if (hdr_def->val.s->len==hdr->name.len &&
+			strncasecmp( hdr_def->val.s->s, hdr->name.s, hdr->name.len)==0)
+				goto found;
+	}
+	return 0;
+found:
+	/* trim the body */
+	trim_len( body.len, body.s, hdr->body );
+	return &body;
+}
+
 
 int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 													struct fis_param *ap)
@@ -570,6 +598,12 @@ int ops_write_avp(struct sip_msg* msg, struct fis_param *src,
 			}
 			s_ip.len = strlen(s_ip.s);
 			avp_val.s = &s_ip;
+		} else if (src->flags&(AVPOPS_USE_HDRREQ|AVPOPS_USE_HDRRPL)) {
+			/* get data from hdr */
+			if ( (avp_val.s=search_hdr(msg,src))==0 ) {
+				DBG("DEBUG:avpops:write_avp: hdr not found\n");
+				goto error;
+			}
 		} else {
 			/* get data from uri (from,to,ruri) */
 			if (src->flags&(AVPOPS_FLAG_USER|AVPOPS_FLAG_DOMAIN))
