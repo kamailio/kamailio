@@ -97,7 +97,7 @@
 #define DUMP_IDX_INC_TIME	5
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
-	if (RES_ROWS(_res)[_r].values[_c].nul != 0) \
+	if (RES_ROWS(_res)[_r].values[_c].nul == 0) \
 	{ \
 		switch(RES_ROWS(_res)[_r].values[_c].type) \
 		{ \
@@ -110,8 +110,8 @@
 			(_str).s=(char*)RES_ROWS(_res)[_r].values[_c].val.str_val.s; \
 			break; \
 		case DB_BLOB: \
-			(_str).len=RES_ROWS(_res)[_r].values[_c].val.str_val.len; \
-			(_str).s=(char*)RES_ROWS(_res)[_r].values[_c].val.str_val.s; \
+			(_str).len=RES_ROWS(_res)[_r].values[_c].val.blob_val.len; \
+			(_str).s=(char*)RES_ROWS(_res)[_r].values[_c].val.blob_val.s; \
 			break; \
 		default: \
 			(_str).len=0; \
@@ -660,9 +660,6 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[0].val.str_val.s = pto->uri.s;
 	db_vals[0].val.str_val.len = pto->uri.len;
 
-
-	memset(str_vals, 0, IDX_NO*sizeof(str));
-	
 	if((db_query(db_con,db_keys,NULL,db_vals,db_cols,db_no_keys,db_no_cols,
 			NULL,&db_res)==0) && (RES_ROW_N(db_res) > 0))
 	{
@@ -679,6 +676,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 				continue;
 			}
 			
+			memset(str_vals, 0, IDX_NO*sizeof(str));
 			SET_STR_VAL(str_vals[STR_IDX_FROM], db_res, i, DUMP_IDX_FROM);
 			SET_STR_VAL(str_vals[STR_IDX_TO], db_res, i, DUMP_IDX_TO);
 			SET_STR_VAL(str_vals[STR_IDX_BODY], db_res, i, DUMP_IDX_BODY);
