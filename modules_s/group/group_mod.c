@@ -32,6 +32,7 @@
  *  2003-03-11 - New module interface (janakj)
  *  2003-03-16 - flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free
+ *  2003-04-05 default_uri #define used (jiri)
  */
 
 
@@ -72,7 +73,7 @@ static int hf_fixup(void** param, int param_no);
 /*
  * Module parameter variables
  */
-char* db_url       = "sql://serro:47serro11@localhost/ser";
+char* db_url       = DEFAULT_RODB_URL;
 
 char* table        = "grp";    /* Table name where group definitions are stored */
 char* user_col     = "username";

@@ -31,6 +31,7 @@
  *  2003-03-11: New module interface (janakj)
  *  2003-03-16: flags export parameter added (janakj)
  *  2003-03-19  replaces all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-05: default_uri #define used (jiri)
  */
 
 
@@ -56,7 +57,7 @@ static int str_fixup(void** param, int param_no);
 /*
  * Module parameter variables
  */
-char* db_url                = "sql://serro:47serro11@localhost/ser";
+char* db_url                = DEFAULT_RODB_URL;
 char* uri_table             = "uri";        /* Name of URI table */
 char* uri_user_col          = "username";   /* Name of username column in URI table */
 char* uri_domain_col        = "domain";     /* Name of domain column in URI table */

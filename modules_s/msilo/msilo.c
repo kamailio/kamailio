@@ -32,6 +32,7 @@
  * 2003-03-11  updated to the new module interface (andrei)
  *             removed non-constant intializers to some strs (andrei)
  * 2003-03-16  flags parameter added (janakj)
+ * 2003-04-05: default_uri #define used (jiri)
  */
 
 #include <stdio.h>
@@ -121,7 +122,7 @@ struct tm_binds tmb;
 
 /** parameters */
 
-char *db_url="sql://root@127.0.0.1/msilo";
+char *db_url=DEFAULT_DB_URL;
 char *db_table="silo";
 char *registrar=NULL; //"sip:registrar@iptel.org";
 int  expire_time=259200;

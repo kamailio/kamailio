@@ -33,6 +33,7 @@
  * 2003-03-11 New module interface (janakj)
  * 2003-03-12 added replication and state columns (nils)
  * 2003-03-16 flags export parameter added (janakj)
+ * 2003-04-05: default_uri #define used (jiri)
  */
 
 
@@ -69,7 +70,7 @@ char* cseq_col       = "cseq";                             /* Name of column con
 char* method_col     = "method";                           /* Name of column containing supported method */
 char* replicate_col  = "replicate";                        /* Name of column containing replication mark */
 char* state_col      = "state";                            /* Name of column containing contact state */
-char* db_url         = "sql://ser:heslo@localhost/ser";    /* Database URL */
+char* db_url         = DEFAULT_DB_URL;    					/* Database URL */
 int   timer_interval = 60;                                 /* Timer interval in seconds */
 int   db_mode        = 0;                                  /* Database sync scheme: 0-no db, 1-write through, 2-write back */
 int   use_domain     = 0;                                  /* Whether usrloc should use domain part of aor */
