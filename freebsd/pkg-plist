@@ -1,0 +1,22 @@
+etc/ser/ser.cfg
+sbin/ser
+lib/ser/modules/acc.so
+lib/ser/modules/auth.so
+lib/ser/modules/exec.so
+lib/ser/modules/im.so
+lib/ser/modules/jabber.so
+lib/ser/modules/maxfwd.so
+lib/ser/modules/msilo.so
+lib/ser/modules/pike.so
+lib/ser/modules/print.so
+lib/ser/modules/registrar.so
+lib/ser/modules/rr.so
+lib/ser/modules/sl.so
+lib/ser/modules/sms.so
+lib/ser/modules/textops.so
+lib/ser/modules/tm.so
+lib/ser/modules/usrloc.so
+share/doc/ser/README
+@dirrm etc/ser
+@dirrm lib/ser
+@dirrm share/doc/ser

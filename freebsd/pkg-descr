@@ -1,0 +1,15 @@
+ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
+proxy server. Written entirely in C, ser can handle thousands calls
+per second even on low-budget hardware. C Shell like scripting language
+provides full control over the server's behaviour. It's modular
+architecture allows only required functionality to be loaded.
+Currently the following modules are available: Digest Authentication,
+CPL scripts, Instant Messaging, MySQL support, Presence Agent, Radius
+Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction
+Module, Registrar and User Location.
+
+
+WWW: http://www.iptel.org/ser/
+
+- Andrei Pelinescu-Onciul
+pelinescu-onciul@fokus.gmd.de
