@@ -29,6 +29,7 @@
  * History:
  * -------
  * 2003-03-09: Based on auth_mod.c from radius_auth (janakj)
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -56,33 +57,31 @@ char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 
 
 /*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"radius_www_authorize",   radius_www_authorize,   1, str_fixup},
+	{"radius_proxy_authorize", radius_proxy_authorize, 1, str_fixup},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"radius_config", STR_PARAM, &radius_config},
+	{0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
 	"auth_radius", 
-	(char*[]) { 
-		"radius_www_authorize",
-		"radius_proxy_authorize"
-	},
-	(cmd_function[]) {
-		radius_www_authorize,
-		radius_proxy_authorize,
-	},
-	(int[]) {1, 1},
-	(fixup_function[]) {
-		str_fixup, str_fixup
-	},
-	2,
-	(char*[]) {
-		"radius_config"       /* Radius client config file */
-	},                            /* Module parameter names */
-	(modparam_t[]) {
-		STR_PARAM
-	},                            /* Module parameter types */
-	(void*[]) {
-		&radius_config
-	},          /* Module parameter variable pointers */
-	1,          /* Number of module paramers */
+	cmds,       /* Exported functions */
+	params,     /* Exported parameters */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	0,          /* destroy function */
