@@ -110,7 +110,7 @@ int init_twrite_sock(void)
 	     /* Turn non-blocking mode on */
 	flags = fcntl(sock, F_GETFL);
 	if (flags == -1){
-		LOG(L_ERR, "init_twrite_sock: fnctl failed: %s\n",
+		LOG(L_ERR, "init_twrite_sock: fcntl failed: %s\n",
 		    strerror(errno));
 		close(sock);
 		return -1;
