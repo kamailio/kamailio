@@ -333,6 +333,6 @@ int rewrite_uri(struct sip_msg* _m, str* _s)
 
         DBG("TOI: rewrite_uri: Rewriting Request-URI with '%.*s'\n", _s->len, 
 																		   buf);
-        return 0;
+        return 1;
 }
 
