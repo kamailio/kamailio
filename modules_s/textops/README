@@ -40,6 +40,12 @@ Desc:	append txt to the reply?
 Name:	append_hf(txt)
 Params:	txt - string (usually a new header)
 Desc:	appends txt after the last header field
+Example: append_hf("P-hint: VOICEMAIL\r\n");
+
+Name:	append_urihf(prefix,suffix)
+Params: prefix -- string (usually at least header field name)
+		suffix -- string (usually at least line terminator)
+Example: append_urihf("CC-Diversion: ", "\r\n")
 
 Known Limitations:
 ------------------

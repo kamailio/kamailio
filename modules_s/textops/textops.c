@@ -31,6 +31,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * History:
+ * -------
+ * 2003-01-18: append_urihf introduced (jiri)
  */
 
 
@@ -53,6 +58,7 @@ static int replace_f(struct sip_msg*, char*, char*);
 static int search_append_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 static int append_hf(struct sip_msg* msg, char* str1, char* str2);
+static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 
 static int fixup_regex(void**, int);
 static int str_fixup(void** param, int param_no);
@@ -67,30 +73,34 @@ struct module_exports exports= {
 			"search_append",
 			"replace",
 			"append_to_reply",
-			"append_hf"
+			"append_hf",
+			"append_urihf"
 	},
 	(cmd_function[]) {
 			search_f,
 			search_append_f,
 			replace_f,
 			append_to_reply_f,
-			append_hf
+			append_hf,
+			append_urihf
 	},
 	(int[]) {
 			1,
 			2,
 			2,
 			1,
-			1
+			1,
+			2
 	},
 	(fixup_function[]){
 			fixup_regex,
 			fixup_regex,
 			fixup_regex,
 			0,
+			str_fixup,
 			str_fixup
 	},
-	5,
+	6,
 
 	0,      /* Module parameter names */
 	0,      /* Module parameter types */
@@ -211,11 +221,13 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str)
 }
 
 
+/* add str1 to end of header or str1.r-uri.str2 */
 
-static int append_hf(struct sip_msg* msg, char* str1, char* str2)
+static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 {
 	struct lump* anchor;
 	char *s;
+	int len;
 
 	if (parse_headers(msg, HDR_EOH, 0) == -1) {
 		LOG(L_ERR, "append_hf(): Error while parsing message\n");
@@ -228,20 +240,38 @@ static int append_hf(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 
-	s = (char*)pkg_malloc(((str*)str1)->len);
+	len=str1->len;
+	if (str2) len+= str2->len + REQ_LINE(msg).uri.len;
+
+	s = (char*)pkg_malloc(len);
 	if (!s) {
 		LOG(L_ERR, "append_hf(): No memory left\n");
 	}
 
-	memcpy(s, ((str*)str1)->s, ((str*)str1)->len);
+	memcpy(s, str1->s, str1->len);
+	if (str2) {
+		memcpy(s+str1->len, REQ_LINE(msg).uri.s, REQ_LINE(msg).uri.len);
+		memcpy(s+str1->len+REQ_LINE(msg).uri.len, str2->s, str2->len );
+	}
 
-	if (insert_new_lump_before(anchor, s, ((str*)str1)->len, 0) == 0) {
+	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
 		LOG(L_ERR, "append_hf(): Can't insert lump\n");
 		return -1;
 	}
 
 	return 1;
 }
+
+static int append_hf(struct sip_msg *msg, char *str1, char *str2 )
+{
+	return append_hf_helper(msg, (str *) str1, (str *) 0);
+}
+
+static int append_urihf(struct sip_msg *msg, char *str1, char *str2 )
+{
+	return append_hf_helper(msg, (str *) str1, (str *) str2);
+}
+
 
 
 /*
@@ -251,17 +281,15 @@ static int str_fixup(void** param, int param_no)
 {
 	str* s;
 
-	if (param_no == 1) {
-		s = (str*)malloc(sizeof(str));
-		if (!s) {
-			LOG(L_ERR, "str_fixup(): No memory left\n");
-			return E_UNSPEC;
-		}
-
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+	s = (str*)malloc(sizeof(str));
+	if (!s) {
+		LOG(L_ERR, "str_fixup(): No memory left\n");
+		return E_UNSPEC;
 	}
+
+	s->s = (char*)*param;
+	s->len = strlen(s->s);
+	*param = (void*)s;
 
 	return 0;
 }
