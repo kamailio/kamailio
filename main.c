@@ -801,10 +801,6 @@ int main(int argc, char** argv)
 	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
 #endif
 	
-	if (init_modules() != 0) {
-		fprintf(stderr, "ERROR: error while initializing modules\n");
-		goto error;
-	}
 
 	print_rl();
 	/* fix routing lists */
@@ -903,6 +899,10 @@ int main(int argc, char** argv)
 	/* init_daemon? */
 	if (!dont_fork){
 		if ( daemonize(argv[0]) <0 ) goto error;
+	}
+	if (init_modules() != 0) {
+		fprintf(stderr, "ERROR: error while initializing modules\n");
+		goto error;
 	}
 
 	return main_loop();
