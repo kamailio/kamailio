@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -21,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11 New module interface (janakj)
  */
 
 #include "../../fifo_server.h"
@@ -70,40 +76,43 @@ db_con_t* db_handle = 0;
 
 #define get_from(p_msg)      ((struct to_body*)(p_msg)->from->parsed)
 
+
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"vm_start", vm_start, 1, 0},
+	{"vm_stop",  vm_stop,  1, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"db_url",           STR_PARAM, &vm_db_url       },
+	{"email_column",     STR_PARAM, &email_column    },
+	{"subscriber_table", STR_PARAM, &subscriber_table},
+	{"user_column",      STR_PARAM, &user_column     },
+#ifdef MULTI_DOMAIN
+	{"domain_column",    STR_PARAM, &domain_column   },
+#endif
+	{0, 0, 0}
+};
+
+
 struct module_exports exports = {
     "voicemail", 
-    (char*[]){"vm_start","vm_stop"},
-    (cmd_function[]){vm_start,vm_stop},
-    (int[]){1,1},
-    (fixup_function[]){0,0},
-    2, /* number of functions*/
-    
-    (char*[]) {
-	"db_url", "email_column", "subscriber_table", "user_column"
-#ifdef MULTI_DOMAIN
-		, "domain_column"
-#endif
-    },
-    (modparam_t[]) {
-	STR_PARAM, STR_PARAM, STR_PARAM, STR_PARAM
-#ifdef MULTI_DOMAIN
-			, STR_PARAM
-#endif
-    },
-    (void*[]) {
-	&vm_db_url, &email_column, &subscriber_table, &user_column, 
-#ifdef MULTI_DOMAIN
-		&domain_column
-#endif
-    },
-    5,
-    
+    cmds,         /* Exported commands */
+    params,       /* Exported parameters */
     vm_mod_init,  /* module initialization function */
     0,            /* response function*/
     0,            /* destroy function */
     0,            /* oncancel function */
     vm_init_child /* per-child init function */
 };
+
 
 static int vm_mod_init(void)
 {
