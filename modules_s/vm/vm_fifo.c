@@ -99,27 +99,27 @@ int fifo_vm_reply( FILE* stream, char *response_file )
     if (!read_line(sc.s, 16, stream, &sc.len)||sc.len==0) {
 		LOG(L_ERR, "ERROR: fifo_t_reply: code expected\n");
 		fifo_reply(response_file, "400 fifo_t_reply: code expected");
-		return 1;
+		return -1;
     }
 
     icode = str2s(sc.s,sc.len,&ret);
     if(ret){
 		LOG(L_ERR, "ERROR: fifo_t_reply: code(int) has wrong format\n");
 		fifo_reply(response_file, "400 fifo_t_reply: code(int) has wrong format");
-		return 1;
+		return -1;
     }
 
     if(!read_line(sr.s, 128, stream, &sr.len)||sr.len==0){
 		LOG(L_ERR, "ERROR: fifo_t_reply: reason expected\n");
 		fifo_reply(response_file, "400 fifo_t_reply: reason expected");
-		return 1;
+		return -1;
     }
     sr.s[sr.len]='\0';
 
     if (!read_line(sti.s, 128, stream, &sti.len)||sti.len==0) {
 		LOG(L_ERR, "ERROR: fifo_t_reply: trans_id expected\n");
 		fifo_reply(response_file, "400 fifo_t_reply: trans_id expected");
-		return 1;
+		return -1;
     }
     sti.s[sti.len]='\0';
     DBG("DEBUG: fifo_t_reply: trans_id=%.*s\n",sti.len,sti.s);
@@ -127,23 +127,23 @@ int fifo_vm_reply( FILE* stream, char *response_file )
     if(sscanf(sti.s,"%u:%u", &hash_index, &label) != 2){
 		LOG(L_ERR, "ERROR: fifo_t_reply: invalid trans_id (%s)\n",sti.s);
 		fifo_reply(response_file, "400 fifo_t_reply: invalid trans_id");
-		return 1;
+		return -1;
     }
     DBG("DEBUG: fifo_t_reply: hash_index=%u label=%u\n",hash_index,label);
 
     if( !read_line(sttag.s,64,stream,&sttag.len) || sttag.len==0 ){
 		LOG(L_ERR, "ERROR: fifo_t_reply: to-tag expected\n");
 		fifo_reply(response_file, "400 fifo_t_reply: to-ta expected");
-		return 1;
+		return -1;
     }
     sttag.s[sttag.len]='\0';
     DBG("DEBUG: fifo_t_reply: to-tag: %.*s\n",sttag.len,sttag.s);
 
     /*  parse the new headers */
-    if (!read_line_set(snh.s, MAX_HEADER, stream, &snh.len)/*||snh.len==0*/) {
+    if (!read_line_set(snh.s, MAX_HEADER, stream, &snh.len)) {
 		LOG(L_ERR, "ERROR: fifo_t_reply: while reading new headers\n");
 		fifo_reply(response_file, "400 fifo_t_reply: while reading new headers");
-		return 1;
+		return -1;
     }
     trim_r(snh);
     snh.s[snh.len]='\0';
@@ -159,26 +159,20 @@ int fifo_vm_reply( FILE* stream, char *response_file )
     if( ((*_tmb.t_lookup_ident)(&trans,hash_index,label)) < 0 ) {
 		LOG(L_ERR,"ERROR: fifo_t_reply: lookup failed\n");
 		fifo_reply(response_file, "481 fifo_t_reply: no such transaction");
-		return 1;
+		return -1;
     }
 
-#ifdef _OBSO /* if there is a bug, let's fix it and not hide it :) */
-    // Ugly fix to avoid crash at t_lookup:161 (tid_matching)
-    if(!msg->via1->transport.s)
-	msg->via1->transport.len = 0;
-#endif
-
-	/* it's refcounted now, t_reply_with body unrefs for me -- I can 
-	 * continue but may not use T anymore  */
+    /* it's refcounted now, t_reply_with body unrefs for me -- I can 
+     * continue but may not use T anymore  */
     ret = (*_tmb.t_reply_with_body)(trans,icode,reason,body,new_headers,to_tag);
 
-	if (ret<0) {
-		LOG(L_ERR, "ERROR: fifo_t_reply: reply failed\n");
-		fifo_reply(response_file, "500 fifo_t_reply: reply failed");
-		return 1;
-	}
-
-	fifo_reply(response_file, "200 fifo_t_reply succeeded\n");
+    if (ret<0) {
+	LOG(L_ERR, "ERROR: fifo_t_reply: reply failed\n");
+	fifo_reply(response_file, "500 fifo_t_reply: reply failed");
+	return -1;
+    }
+    
+    fifo_reply(response_file, "200 fifo_t_reply succeeded\n");
     DBG("DEBUG: fifo_t_reply: ################ end ##############\n");
     return 1;
 

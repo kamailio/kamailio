@@ -82,12 +82,10 @@
 #define SQL_EQUAL      " = "
 #define SQL_EQUAL_LEN  3
 
-#define VM_FIFO_PARAMS 18
-
-#define VM_INVITE      "invite"
-#define VM_BYE         "bye"
+#define VM_FIFO_PARAMS 20
 
 #define ROUTE_BUFFER_MAX 512
+#define HDRS_BUFFER_MAX  512
 
 MODULE_VERSION
 
@@ -285,7 +283,9 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     char            route_buffer[ROUTE_BUFFER_MAX];
     str             route;
     str             next_hop;
-    struct hdr_field* rr_hdr;
+    char            hdrs_buf[HDRS_BUFFER_MAX];
+    str             hdrs;
+    struct hdr_field* p_hdr;
     param_hooks_t     hooks;
     str               tmp_str;
 
@@ -359,17 +359,17 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     route.s = route_buffer; route.len = 0;
     s = route_buffer;
 
-    rr_hdr = msg->record_route;
-    if(rr_hdr && (!rr_hdr->parsed && parse_rr(rr_hdr))){
+    p_hdr = msg->record_route;
+    if(p_hdr && (!p_hdr->parsed && parse_rr(p_hdr))){
 	LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
 	goto error;
     }
 	    
-    record_route = rr_hdr ? rr_hdr->parsed : 0;
+    record_route = p_hdr ? p_hdr->parsed : 0;
     fproxy_lr = 0;
     next_hop = empty_param;
 
-    if(rr_hdr && record_route){
+    if(p_hdr && record_route){
 
 #define copy_route(s,len,rs,rlen) \
    do {\
@@ -386,7 +386,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
      append_str(s,">",1);len++;\
    } while(0);
 
-	if(rr_hdr->body.len){
+	if(p_hdr->body.len){
 	      
 	    /* Parse all parameters */
 	    tmp_str = record_route->nameaddr.uri;
@@ -403,25 +403,25 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 		copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
 	    }
 	}
-	rr_hdr = rr_hdr->next;
+	p_hdr = p_hdr->next;
 
-	for(;;rr_hdr = rr_hdr->next){
+	for(;;p_hdr = p_hdr->next){
 
-	    if(rr_hdr && (rr_hdr->type == HDR_RECORDROUTE) && rr_hdr->body.len){
+	    if(p_hdr && (p_hdr->type == HDR_RECORDROUTE) && p_hdr->body.len){
 	      
-		if(!rr_hdr->parsed && parse_rr(rr_hdr)){
+		if(!p_hdr->parsed && parse_rr(p_hdr)){
 		    LOG(L_ERR,"ERROR: %s : vm: "
 			"while parsing <Record-route:> header\n",exports.name);
 		    goto error;
 		}
 	      
-		for(record_route = rr_hdr->parsed; record_route; record_route = record_route->next){
+		for(record_route = p_hdr->parsed; record_route; record_route = record_route->next){
 		    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 		    copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
 		}
 	    } 
 
-	    if(rr_hdr == msg->last_header)
+	    if(p_hdr == msg->last_header)
 		break;
 	}
 
@@ -435,15 +435,13 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     }
 
     DBG("vm: calculated route: %.*s\n",route.len,route.len ? route.s : "");
-
-    /*parse_uri();*/
     DBG("vm: next r-uri: %.*s\n",str_uri.len,str_uri.len ? str_uri.s : "");
 	
     body = empty_param;
     email = empty_param;
     domain = empty_param;
 
-    if(strcmp(action,VM_BYE)){
+    if( !strncmp(REQ_LINE(msg).method.s,"INVITE",REQ_LINE(msg).method.len) ){
 
 	if( (body.s = get_body(msg)) == 0 ){
 	    LOG(L_ERR, "ERROR: vm: get_body failed\n");
@@ -459,25 +457,53 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	domain = msg->parsed_uri.host;
     }
 
+    hdrs.s=hdrs_buf; hdrs.len=0;
+    s = hdrs_buf;
+
+    if( !strncmp(REQ_LINE(msg).method.s,"REFER",REQ_LINE(msg).method.len) ){
+	
+	for(p_hdr = msg->headers;;p_hdr = p_hdr->next){
+
+	    if( p_hdr->type & HDR_OTHER ){
+		append_str(s,p_hdr->name.s,p_hdr->name.len);
+		hdrs.len += p_hdr->name.len;
+		append_str(s,": ",2); hdrs.len+=2;
+		append_str(s,p_hdr->body.s,p_hdr->body.len);
+		hdrs.len += p_hdr->body.len;
+		if(*(s-1) != '\n'){
+		    append_str(s,"\n",1);
+		    hdrs.len++;
+		}
+	    }
+
+	    if(p_hdr==msg->last_header){
+		append_str(s,".",1);
+		hdrs.len++;
+		break;
+	    }
+	}
+    }
+
     lines[0].s=action; lines[0].len=strlen(action);
 
-    lines[1]=msg->parsed_uri.user;		/* user from r-uri */
-    lines[2]=email;			        /* email address from db */
-    lines[3]=domain;                        /* domain */
+    lines[1]=REQ_LINE(msg).method;
+    lines[2]=msg->parsed_uri.user;		/* user from r-uri */
+    lines[3]=email;			        /* email address from db */
+    lines[4]=domain;                        /* domain */
 
-    lines[4]=msg->rcv.bind_address->address_str; /* dst ip */
+    lines[5]=msg->rcv.bind_address->address_str; /* dst ip */
 
-    lines[5]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
-    lines[6]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
+    lines[6]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
+    lines[7]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
 
-    lines[7]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
+    lines[8]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
 
-    lines[8]=get_from(msg)->body;		/* from */
-    lines[9]=msg->to->body;			/* to */
-    lines[10]=msg->callid->body;		/* callid */
-    lines[11]=get_from(msg)->tag_value;	/* from tag */
-    lines[12]=get_to(msg)->tag_value;	/* to tag */
-    lines[13]=get_cseq(msg)->number;	/* cseq number */
+    lines[9]=get_from(msg)->body;		/* from */
+    lines[10]=msg->to->body;			/* to */
+    lines[11]=msg->callid->body;		/* callid */
+    lines[12]=get_from(msg)->tag_value;	/* from tag */
+    lines[13]=get_to(msg)->tag_value;	/* to tag */
+    lines[14]=get_cseq(msg)->number;	/* cseq number */
 
     i2s=int2str(hash_index, &l);		/* hash:label */
     if (l+1>=IDBUF_LEN) {
@@ -491,11 +517,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	goto error;
     }
     memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-    lines[14].s=id_buf;lines[14].len=int_buflen;
+    lines[15].s=id_buf;lines[15].len=int_buflen;
 
-    lines[15]=route.len ? route : empty_param;
-    lines[16]=next_hop;
-    lines[17].s=body.s; lines[17].len=body.len;
+    lines[16]=route.len ? route : empty_param;
+    lines[17]=next_hop;
+    lines[18]=hdrs.len ? hdrs : empty_param;
+    lines[19]=body;
 
     if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
 	 ==-1 ) {
