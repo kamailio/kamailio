@@ -817,6 +817,11 @@ int unixsock_read_lineset(str* lineset, str* source)
 		return -1;
 	}
 
+	if (!lineset->s || !lineset->len) {
+		LOG(L_ERR, "unixsock_read_lineset: Buffer too small\n");
+		return -1;
+	}
+
 	if (source->len < 2) {
 		LOG(L_ERR, "unixsock_read_lineset: Not enough input "
 		    "data (malformed message ?)\n");
@@ -836,10 +841,12 @@ int unixsock_read_lineset(str* lineset, str* source)
 			if (source->s[i] == '.') {
 				state = ST_CRLF;
 			} else if (source->s[i] == '\n') {
+				if (len + 2 > lineset->len) goto buf_err;
 				lineset->s[len++] = '\r';
 				lineset->s[len++] = '\n';
 				state = ST_NEWLINE;
 			} else {
+				if (len + 1 > lineset->len) goto buf_err;
 				lineset->s[len++] = source->s[i];
 			}
 			break;
@@ -851,6 +858,7 @@ int unixsock_read_lineset(str* lineset, str* source)
 				source->len -= i + 1;
 				return 0;
 			} else {
+				if (len + 2 > lineset->len) goto buf_err;
 				lineset->s[len++] = '.';
 				lineset->s[len++] = source->s[i];
 				state = ST_DATA;
@@ -859,10 +867,12 @@ int unixsock_read_lineset(str* lineset, str* source)
 
 		case ST_DATA:
 			if (source->s[i] == '\n') {
+				if (len + 2 > lineset->len) goto buf_err;
 				lineset->s[len++] = '\r';
 				lineset->s[len++] = '\n';
 				state = ST_NEWLINE;
 			} else {
+				if (len + 1 > lineset->len) goto buf_err;
 				lineset->s[len++] = source->s[i];
 			}
 			break;
@@ -871,6 +881,7 @@ int unixsock_read_lineset(str* lineset, str* source)
 			if (source->s[i] == '.') {
 				state = ST_CRLF;
 			} else {
+				if (len + 1 > lineset->len) goto buf_err;
 				lineset->s[len++] = source->s[i];
 				state = ST_DATA;
 			}
@@ -879,6 +890,10 @@ int unixsock_read_lineset(str* lineset, str* source)
 	}
 
 	LOG(L_ERR, "unixsock_read_body: Could not find the end of the body\n");
+	return -1;
+
+ buf_err:
+	LOG(L_ERR, "unixsock_read_lineset: Buffer too small\n");
 	return -1;
 }
 
