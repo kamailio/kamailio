@@ -334,8 +334,8 @@ done:
 /*
  * Send a request within a dialog
  * 
- * Some parameters are required, some are optional (i.e., ephemeral
- * or default values are created if 0 is passed as parameter). The
+ * Some parameters are required, some are optional (i.e., ephemeral,
+ * default or empty values are created if 0 is passed as parameter). The
  * optional parameters are typically used to set some header fields
  * to dialog-related values (as opposed to having them set to
  * ephemeral values).
@@ -344,10 +344,10 @@ done:
  * - msg ..   specifies type of message, such as "OPTIONS"
  * - ruri ..  specifies request URI; 
  * - from ..  value of From header field (if it already includes from tag, 
- *            the fromtag parameter MUST point to en empty string)
- * - to ...   value of To header field (if it already includes to tag,
- *            the totag parameter MUST point to an empty string)
- * - totag .. to tag
+ *            the fromtag parameter MUST point to en empty string; if 
+ *            fromtag is 0, an ephemeral tag is always appended)
+ * - to ...   value of To header field (if it already includes to tag in it,
+ *            or you do not wish to set a to-tag the totag parameter MUST be 0)
  * 
  * Optional:
  * - dst     transport destination (expressed as URI) -- if present,
@@ -361,6 +361,8 @@ done:
  *           and point to an empty string -- that only makes sense if
  *           application includes the tag in From and does not care to
  *           separate the tag from the rest of header field
+ * - totag   To HF tag; if 0, no to-tag is appended (unless it is already
+ *           part of to)
  * - cid ..  callid; if 0, ephemeral value is created; transactions
  *           within a dialog need to set this value to dialog's callid
  * - cseq .. CSeq; if 0, default value (DEFAULT_CSEQ) is used; transactions
@@ -415,8 +417,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	if (!msg || !msg->s
 				|| !ruri || !ruri->s
 				|| !from || !from->s
-				|| !to || !to->s
-				|| !totag ) {
+				|| !to || !to->s ) {
 		LOG(L_ERR, "ERROR: t_uac_dlg: invalid parameters\n");
 		ser_error = ret = E_INVALID_PARAMS;
 		goto done;
