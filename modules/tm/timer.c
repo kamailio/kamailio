@@ -628,7 +628,7 @@ static void insert_timer_unsafe( struct timer *timer_list, struct timer_link *tl
 	for(ptr = timer_list->last_tl.prev_tl; 
 	    ptr != &timer_list->first_tl; 
 	    ptr = ptr->prev_tl) {
-		if (ptr->time_out <= time_out) break;
+		if ((ptr->time_out != TIMER_DELETED) && (ptr->time_out <= time_out)) break;
 	}
 
 	tl->prev_tl = ptr;
