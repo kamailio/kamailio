@@ -505,7 +505,6 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			dst.s = msg->first_line.u.request.uri.s;
 			dst.len = msg->first_line.u.request.uri.len;
 		}
-		free_uri(&_uri);
 	}
 	if(dst.len == 0 && msg->to != NULL)
 	{

@@ -41,6 +41,7 @@
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/parse_uri.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "my_exec.h"
@@ -296,10 +297,8 @@ static int ext_rewriteuser(struct sip_msg *msg, char *cmd, char *foo_str )
 	}
 
 done:
-	free_uri(&parsed_uri);
 	return 1;
 error:
-	free_uri(&parsed_uri);
 	return -1;
 }
 

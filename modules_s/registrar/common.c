@@ -120,7 +120,6 @@ int extract_aor(struct sip_msg* _m, str* _a)
 		if (_a->len > MAX_AOR_LEN) {
 			rerrno = R_AOR_LEN;
 			LOG(L_ERR, "extract_aor(): Address Of Record too long, sending 500\n");
-			free_uri(&puri);
 			return -2;
 		}
 
@@ -135,8 +134,6 @@ int extract_aor(struct sip_msg* _m, str* _a)
 		} else {
 			strlower(_a);
 		}
-
-		free_uri(&puri);
 	} else {
 		if (get_username(&aor) < 0) {
 			rerrno = R_TO_USER;

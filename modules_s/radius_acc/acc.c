@@ -70,7 +70,6 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
   	int result;                           	/* Acct request status */
   	VALUE_PAIR *send = NULL;              	/* Radius Value pairs */
   	UINT4 client_port;                    	/* sip port */
-  	struct sip_uri uri;                   	/* sip uri structure */   
   	int len, ret;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
@@ -217,12 +216,6 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
     	buf = rq->first_line.u.request.uri.s;
     	len = rq->first_line.u.request.uri.len;
   	}
-  	ret = parse_uri(buf, len, &uri);
-  	if (ret < 0) {
-    	LOG(L_ERR, "ERROR: Accounting bad_uri <%s>,"
-				" dropping packet\n",tmp);
-    	return(ERROR_RC);
-  	}
 
 	/*
 	 * If available, take user-name from digest else extract the FROM field.
@@ -365,7 +358,6 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	int result;                           	/* Acct request status */
   	VALUE_PAIR *send = NULL;              	/* Radius Value pairs */
   	UINT4 client_port;                    	/* sip port */
-  	struct sip_uri uri;                   	/* sip uri structure */   
   	int len, ret;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
@@ -495,13 +487,6 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	} else{
     	buf = msg->first_line.u.request.uri.s;
     	len = msg->first_line.u.request.uri.len;
-  	}
-
-  	ret = parse_uri(buf, len, &uri);
-  	if (ret < 0) {
-    	LOG(L_ERR, "ERROR: Accounting bad_uri <%s>,"
-			" dropping packet\n",tmp);
-    	return(ERROR_RC);
   	}
 
   	/*
@@ -651,7 +636,6 @@ int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
   	int result;                           	/* Acct request status */
   	VALUE_PAIR *send = NULL;              	/* Radius Value pairs */
   	UINT4 client_port;                    	/* sip port */
-  	struct sip_uri uri;                   	/* sip uri structure */   
   	int len, ret;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
@@ -794,12 +778,6 @@ int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
   	} else{
     	buf = rq->first_line.u.request.uri.s;
     	len = rq->first_line.u.request.uri.len;
-  	}
-  	ret = parse_uri(buf, len, &uri);
-  	if (ret < 0) {
-    	LOG(L_ERR, "ERROR: Accounting bad_uri <%s>,"
-				" dropping packet\n",tmp);
-    	return(ERROR_RC);
   	}
 
 	/*
