@@ -56,7 +56,7 @@ error:
 
 
 
-int inline im_check_content_type(struct sip_msg *msg)
+int im_check_content_type(struct sip_msg *msg)
 {
 	static unsigned int text[16] = {
 		0x74786574/*text*/,0x74786554/*texT*/,0x74784574/*teXt*/,
@@ -91,7 +91,7 @@ int inline im_check_content_type(struct sip_msg *msg)
 		0x4d497063/*CPim*/,0x4d497043/*CPiM*/,0x4d495063/*CPIm*/,
 		0x4d495043/*CPIM*/ };
 	str           str_type;
-	unsigned int  i,x,mime;
+	unsigned int  x,mime;
 	char          *p;
 
 	if (!msg->content_type)

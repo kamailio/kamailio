@@ -13,33 +13,67 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../im/im_funcs.h"
+#include "sms_funcs.h"
 
 
 
 static int mod_init(void);
-static int sms_send_message(struct sip_msg*, char*, char* );
+static int sms_send_msg(struct sip_msg*, char*, char* );
+static int sms_send_msg_to_net(struct sip_msg*, char*, char*);
+static int sms_send_msg_to_center(struct sip_msg* , char*, char*);
+
+
+/* parameters */
+char *networks_config;
+char *modems_config;
+int  looping_interval;
+int  max_sms_per_call;
+
 
 
 struct module_exports exports= {
 	"sms_module",
 	(char*[]){
-				"sms_send_message"
+				"sms_send_msg_to_net",
+				"sms_send_msg_to_center",
+				"sms_send_msg"
 			},
 	(cmd_function[]){
-					sms_send_message
+					sms_send_msg_to_net,
+					sms_send_msg_to_center,
+					sms_send_msg
 					},
 	(int[]){
+				1,
+				1,
 				0
 			},
 	(fixup_function[]){
+				0,
+				0,
 				0
 		},
-	1,
+	3,
 
-	NULL,   /* Module parameter names */
-	NULL,   /* Module parameter types */
-	NULL,   /* Module parameter variable pointers */
-	0,      /* Number of module paramers */
+	(char*[]) {   /* Module parameter names */
+		"networks",
+		"modems",
+		"looping_interval",
+		"max_sms_per_call"
+	},
+	(modparam_t[]) {   /* Module parameter types */
+		STR_PARAM,
+		STR_PARAM,
+		INT_PARAM,
+		INT_PARAM
+	},
+	(void*[]) {   /* Module parameter variable pointers */
+		&networks_config,
+		&modems_config,
+		&looping_interval,
+		&max_sms_per_call
+	},
+	4,      /* Number of module paramers */
 
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -59,7 +93,7 @@ static int mod_init(void)
 
 
 
-static int sms_send_message(struct sip_msg *msg, char* foo1, char * foo2)
+static int sms_send_msg(struct sip_msg *msg, char *foo, char *bar)
 {
 	str body;
 
@@ -73,5 +107,22 @@ static int sms_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 error:
 	return -1;
 }
+
+
+
+
+static int sms_send_msg_to_net(struct sip_msg *msg, char *net_name, char *foo)
+{
+	return 1;
+}
+
+
+
+
+static int sms_send_msg_to_center(struct sip_msg *msg, char *smsc, char *foo)
+{
+	return 1;
+}
+
 
 
