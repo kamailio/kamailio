@@ -194,6 +194,7 @@ int forward_reply(struct sip_msg* msg)
 	
 	to=0;
 	new_buf=0;
+#ifdef Bogdan
 	/*check if first via host = us */
 	if (check_via){
 		for (r=0; r<sock_no; r++)
@@ -208,7 +209,7 @@ int forward_reply(struct sip_msg* msg)
 			goto error;
 		}
 	}
-
+#endif
 	/* quick hack, slower for mutliple modules*/
 	for (mod=modules;mod;mod=mod->next){
 		if ((mod->exports) && (mod->exports->response_f)){
