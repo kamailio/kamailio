@@ -72,9 +72,8 @@ struct val {
 #define	A_DIGEST_USER_NAME		25
 #define	A_SIP_GROUP			26
 #define	A_CISCO_AVPAIR			27
-#define A_VM_EMAIL                      28
-#define A_VM_LANGUAGE                   29
-#define	A_MAX				30
+#define A_SIP_AVP                       28
+#define	A_MAX				29
 
 #define	V_STATUS_START			0
 #define	V_STATUS_STOP			1
@@ -83,8 +82,9 @@ struct val {
 #define	V_EMERGENCY_CALL		4
 #define	V_SIP_SESSION			5
 #define	V_GROUP_CHECK			6
-#define	V_VM_INFO		        7
-#define	V_MAX				8
+#define	V_SIP_CALLER_AVPS		7
+#define	V_SIP_CALLEE_AVPS		8
+#define	V_MAX				9
 
 #define	INIT_AV(rh, at, vl, fn, e1, e2)					\
 {									\
