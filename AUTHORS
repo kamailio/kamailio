@@ -8,7 +8,7 @@
 
 N: Andrei Pelinescu - Onciul
 C: andrei
-E: pelinescu-onciul@fokus.gmd.de
+E: pelinescu-onciul@fokus.fraunhofer.de
 P: 2CF56A2D   D96D 8B80 BA31 9B93 6208  5D68 3910 FA00 2CF5 6A2D
 D: 
 
@@ -40,11 +40,26 @@ E: jh@song.fi
 W: http://lohi.eng.song.fi
 D:
 
+N: Maxim Sobolev
+C: sobomax
+E:
+D:
+
+N: Miklos Tirpak
+C: tirpi
+E:
+D:
+
 N: Nils Ohlmeier
 C: calrissian, noh
 E: nils@iptel.org
 W: http://www.ohlmeier.org
 P: BAD6CA40   B5E7 4FB0 800F 0A2C E3E9  4073 C7C3 F275 BAD6 CA40
+D:
+
+N: Ramona-Elena Modroiu
+C: ramona
+E:
 D:
 
 N: Raphael Coeffic
