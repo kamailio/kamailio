@@ -193,6 +193,7 @@ struct sip_msg {
 	struct hdr_field* accept_disposition;
 	struct hdr_field* diversion;
 	struct hdr_field* rpid;
+	struct hdr_field* server;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/

@@ -84,6 +84,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_supp.h"     /* Supported */
 #include "case_dive.h"     /* Diversion */
 #include "case_remo.h"     /* Remote-Party-ID */
+#include "case_serv.h"     /* Server */
 
 
 #define READ(val) \
@@ -114,7 +115,8 @@ static inline char* skip_ws(char* p, unsigned int size)
         case _subj_: subj_CASE; \
         case _user_: user_CASE; \
         case _dive_: dive_CASE; \
-        case _remo_: remo_CASE;
+        case _remo_: remo_CASE; \
+        case _serv_: serv_CASE;
 
 
 #define PARSE_COMPACT(id)          \

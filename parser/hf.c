@@ -130,10 +130,10 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_ACCEPTLANGUAGE:
 			break;
-			
+
 		case HDR_ORGANIZATION:
 			break;
-			
+
 		case HDR_PRIORITY:
 			break;
 
@@ -156,6 +156,9 @@ void clean_hdr_field(struct hdr_field* hf)
 
 		case HDR_RPID:
 			free_to(hf->parsed);
+			break;
+
+		case HDR_SERVER:
 			break;
 
 		default:
