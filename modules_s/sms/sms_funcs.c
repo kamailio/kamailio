@@ -171,15 +171,15 @@ int push_on_network(struct sip_msg *msg, int net)
 	   we go for "to" header
 	*/
 	flag = 0;
-	DBG("DEBUG:sms_push_on_net: tring to get user from R_uri\n");
-	if ( parse_uri( msg->first_line.u.request.uri.s,
-	msg->first_line.u.request.uri.len ,&uri)||(flag=1)!=1||!uri.user.len )
+	DBG("DEBUG:sms_push_on_net: tring to get user from new_uri\n");
+	if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
+	|| (flag=1)!=1 || !uri.user.len )
 	{
 		if (flag) free_uri(&uri);
 		flag = 0;
-		DBG("DEBUG:sms_push_on_net: tring to get user from new_uri\n");
-		if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
-		|| (flag=1)!=1 || !uri.user.len )
+		DBG("DEBUG:sms_push_on_net: tring to get user from R_uri\n");
+		if ( parse_uri( msg->first_line.u.request.uri.s,
+		msg->first_line.u.request.uri.len ,&uri)||(flag=1)!=1||!uri.user.len )
 		{
 			if (flag) free_uri(&uri);
 			flag = 0;
