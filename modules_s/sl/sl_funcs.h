@@ -9,11 +9,6 @@
 
 #define TOTAG_SEPARATOR		'.'
 
-#define CONTACT "Contact: "
-#define CONTACT_LEN 9
-#define CONTACT_DELIM ", "
-#define CONTACT_DELIM_LEN 2
-
 #define SL_RPL_WAIT_TIME  2  // in sec
 
 #define TOTAG_LEN MD5_LEN+CRC16_LEN+1
