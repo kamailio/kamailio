@@ -38,6 +38,7 @@
 #include "clients.h"
 #include "../../error.h"
 #include "../../str.h"
+#include "../../ip_addr.h"
 #include "../../data_lump_rpl.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_content.h"
@@ -612,8 +613,8 @@ void extcmd_server_process( int server_sock )
 	fd_set read_set;
 	fd_set wait_set;
 	client_t *client;
-	struct sockaddr sa;
-	int sa_len;
+	union sockaddr_union sau;
+	int sau_len;
 	str cmd;
 	int cmd_type;
 	int max_fd;
@@ -634,6 +635,7 @@ void extcmd_server_process( int server_sock )
 		goto error;
 	}
 
+	sau_len = sizeof( union sockaddr_union );
 	/* prepare fd set for select */
 	FD_ZERO( &wait_set );
 	max_fd = 0;
@@ -658,7 +660,7 @@ void extcmd_server_process( int server_sock )
 		/* let's see what we read */
 		/* maybe is a connect request !?*/
 		if ( FD_ISSET(server_sock, &read_set) ) {
-			fd = accept( server_sock, &sa, &sa_len);
+			fd=accept(server_sock,(struct sockaddr*)&sau,(socklen_t*)&sau_len);
 			if (fd==-1) {
 				LOG(L_ERR,"ERROR: extcmd_server_process: accept faild : %s\n",
 					strerror(errno) );
