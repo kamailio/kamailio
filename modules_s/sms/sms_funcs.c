@@ -58,6 +58,7 @@ int *queued_msgs;
 int use_contact;
 int use_sms_report;
 struct tm_binds tmb;
+struct im_binds imb;
 
 
 #define ERR_NUMBER_TEXT " is an invalid number! Please resend your SMS "\
@@ -143,7 +144,7 @@ int push_on_network(struct sip_msg *msg, int net)
 	int    flag;
 	int    len;
 
-	if ( im_extract_body(msg,&body)==-1 )
+	if ( imb.im_extract_body(msg,&body)==-1 )
 	{
 		LOG(L_ERR,"ERROR:sms_push_on_net:cannot extract body from msg!\n");
 		goto error1;

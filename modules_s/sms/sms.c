@@ -40,7 +40,7 @@
 #include "../../globals.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include "../im/im_funcs.h"
+#include "../im/im_load.h"
 #include "../tm/tm_load.h"
 #include "sms_funcs.h"
 #include "sms_report.h"
@@ -72,6 +72,7 @@ int    *queued_msgs   = 0;
 int    use_contact    = 0;
 int    use_sms_report = 0;
 struct tm_binds tmb;
+struct im_binds imb;
 
 struct module_exports exports= {
 	"sms",
@@ -529,16 +530,26 @@ error:
 int global_init()
 {
 	load_tm_f  load_tm;
+	load_im_f  load_im;
 	int        i, net_pipe[2], foo;
 	char       *p;
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
-		LOG(L_ERR, "ERROR: sms: global_init: can't import load_tm\n");
+		LOG(L_ERR, "ERROR: sms: global_init: cannot import load_tm\n");
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) 
+		goto error;
+
+	/* import the IM auto-loading function */
+	if ( !(load_im=(load_im_f)find_export("load_im", 1))) {
+		LOG(L_ERR, "ERROR: sms: global_init: cannot import load_im\n");
+		goto error;
+	}
+	/* let the auto-loading function load all TM stuff */
+	if (load_im( &imb )==-1) 
 		goto error;
 
 	/*fix domain lenght*/
@@ -641,7 +652,7 @@ error:
 
 static int sms_init(void)
 {
-	printf("sms - initializing\n");
+	DBG("SMS - initializing\n");
 
 	if (parse_config_lines()==-1)
 		return -1;
