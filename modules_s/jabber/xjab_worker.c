@@ -544,10 +544,10 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		else
 			res = NULL;
 
+step_z:
 		if(jsmsg->type == XJ_GO_ONLINE)
 			goto step_w;
 		
-step_z:
 		if(jsmsg->type == XJ_REG_WATCHER)
 		{ // register a presence watcher
 			if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
@@ -631,7 +631,7 @@ step_z:
 				goto step_w;
 			}
 		}
-		if(jsmsg->type == XJ_JOIN_JCONF)
+		if(jsmsg->type != XJ_SEND_MESSAGE)
 			goto step_w;
 		
 		// here will come only XJ_SEND_MESSAGE
@@ -1387,11 +1387,11 @@ int xj_send_sip_msgz(str *proxy, str *to, str *from, char *msg, int *cbp)
 	tstr.s = msg;
 	tstr.len = strlen(msg);
 	if((n = xj_send_sip_msg(proxy, to, from, &tstr, cbp)) < 0)
-		DBG("JABBER: jab_send_sip_msgz: ERROR SIP MESSAGE wasn't sent to"
-			" [%.*s]...\n", tstr.len, tstr.s);
+		DBG("XJAB: jab_send_sip_msgz: ERROR SIP MESSAGE wasn't sent to"
+			" [%.*s]...\n", to->len, to->s);
 #ifdef XJ_EXTRA_DEBUG
 	else
-		DBG("JABBER: jab_send_sip_msgz: SIP MESSAGE was sent to [%.*s]...\n",
+		DBG("XJAB: jab_send_sip_msgz: SIP MESSAGE was sent to [%.*s]...\n",
 			to->len, to->s);
 #endif
 	return n;

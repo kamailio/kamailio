@@ -53,6 +53,10 @@
 
 #include "../tm/tm_load.h"
 
+#ifdef HAVE_IHTTP
+#include "../ihttp/ih_load.h"
+#endif
+
 #include "xjab_load.h"
 #include "xjab_worker.h"
 #include "xjab_util.h"
@@ -60,6 +64,16 @@
 
 /** TM bind */
 struct tm_binds tmb;
+
+#ifdef HAVE_IHTTP
+/** iHTTP bind */
+struct ih_binds ihb;
+/** iHTTP callback functions */
+int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+		char *_hb, int *_hl);
+int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+		char *_hb, int *_hl);
+#endif
 
 /** workers list */
 xj_wlist jwl = NULL;
@@ -196,7 +210,9 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	load_tm_f load_tm;
-//	load_im_f load_im;
+#ifdef HAVE_IHTTP
+	load_ih_f load_ih;
+#endif
 	int  i;
 
 	DBG("XJAB:mod_init: initializing ...\n");
@@ -228,10 +244,21 @@ static int mod_init(void)
 	if (load_tm( &tmb )==-1)
 		return -1;
 
+#ifdef HAVE_IHTTP
+	/* import the iHTTP auto-loading function */
+	if ( !(load_ih=(load_ih_f)find_export("load_ih", IH_NO_SCRIPT_F))) {
+		LOG(L_ERR, "ERROR:xjab:mod_init: can't import load_ih\n");
+		return -1;
+	}
+	/* let the auto-loading function load all TM stuff */
+	if (load_ih( &ihb )==-1)
+		return -1;
+#endif
+	
 	pipes = (int**)pkg_malloc(nrw*sizeof(int*));
 	if (pipes == NULL)
 	{
-		DBG("XJAB:mod_init: Error while allocating pipes\n");
+		DBG("XJAB:mod_init:Error while allocating pipes\n");
 		return -1;
 	}
 	
@@ -301,6 +328,13 @@ static int child_init(int rank)
 	DBG("XJAB:child_init: initializing child <%d>\n", rank);
 	if(rank == 0)
 	{
+#ifdef HAVE_IHTTP
+		/** register iHTTP callbacks -- go forward in any case*/
+		ihb.reg_f("xjab", "XMPP Gateway", IH_MENU_YES,
+				xjab_mod_info, NULL);
+		ihb.reg_f("xjabc", "XMPP connections", IH_MENU_YES,
+				xjab_connections, NULL);
+#endif
 		if((mpid=fork())<0 )
 		{
 			DBG("XJAB:child_init: error - cannot launch worker's manager\n");
@@ -859,3 +893,107 @@ void xjab_check_workers(int mpid)
 	}			
 }
 
+#ifdef HAVE_IHTTP
+int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+		char *_hb, int *_hl)
+{
+	if(!_irp || !_bb || !_bl || *_bl <= 0 || !_hb || !_hl || *_hl <= 0)
+		return -1;
+	*_hl = 0;
+	*_hb = 0;
+	
+	strcpy(_bb, "<h4>SER2Jabber Gateway</h4>");
+	strcat(_bb, "<br>Module parameters:<br>");
+	strcat(_bb, "<br> -- db table = ");
+	strcat(_bb, db_table);
+	strcat(_bb, "<br> -- workers = ");
+	strcat(_bb, int2str(nrw, NULL));
+	strcat(_bb, "<br> -- max jobs per worker = ");
+	strcat(_bb, int2str(max_jobs, NULL));
+
+	strcat(_bb, "<br> -- jabber server address = ");
+	strcat(_bb, jaddress);
+	strcat(_bb, "<br> -- jabber server port = ");
+	strcat(_bb, int2str(jport, NULL));
+
+	strcat(_bb, "<br> -- aliases = ");
+	strcat(_bb, (jaliases)?jaliases:"NULL");
+	strcat(_bb, "<br> -- jabber domain = ");
+	strcat(_bb, (jdomain)?jdomain:"NULL");
+	strcat(_bb, "<br> -- proxy address = ");
+	strcat(_bb, (proxy)?proxy:"NULL");
+
+	strcat(_bb, "<br> -- delay time = ");
+	strcat(_bb, int2str(delay_time, NULL));
+	strcat(_bb, "<br> -- sleep time = ");
+	strcat(_bb, int2str(sleep_time, NULL));
+	strcat(_bb, "<br> -- cache time = ");
+	strcat(_bb, int2str(cache_time, NULL));
+	strcat(_bb, "<br> -- check time = ");
+	strcat(_bb, int2str(check_time, NULL));
+	
+	*_bl = strlen(_bb);
+
+	return 0;
+}
+
+int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
+		char *_hb, int *_hl)
+{
+	xj_jkey p;
+	int idx, i, maxcount;
+
+	if(!_irp || !_bb || !_bl || *_bl <= 0 || !_hb || !_hl || *_hl <= 0)
+		return -1;
+	
+	*_hl = 0;
+	*_hb = 0;
+	strcpy(_bb, "<h4>Active XMPP connections</h4>");
+	
+	if(_irp->params)
+		strcat(_bb, "<br><b>Close action not implemented yet!</b><br>");
+
+	if(jwl!=NULL && jwl->len > 0 && jwl->workers!=NULL)
+	{
+		for(idx=0; idx<jwl->len; idx++)
+		{
+			strcat(_bb, "<br><b><i>Worker[");
+			strcat(_bb, int2str(idx, NULL));
+			strcat(_bb, "]</i></b> &nbsp;&nbsp;pid=");
+			strcat(_bb, int2str(jwl->workers[idx].pid, NULL));
+			strcat(_bb, " &nbsp;&nbsp;nr of jobs=");
+			strcat(_bb, int2str(jwl->workers[idx].nr, NULL));
+			if(!jwl->workers[idx].sip_ids)
+				continue;
+			s_lock_at(jwl->sems, idx);
+			maxcount = count234(jwl->workers[idx].sip_ids);
+			for (i = 0; i < maxcount; i++) 
+			{
+				p = (xj_jkey)index234(jwl->workers[idx].sip_ids, i);
+				if(p == NULL)
+					continue;
+				strcat(_bb, "<br>&nbsp;&nbsp;&nbsp;");
+				strcat(_bb, int2str(i, NULL));
+				strcat(_bb, ".&nbsp;&nbsp;&nbsp;");
+				strcat(_bb, "<a href=\"xjabc?w=");
+				strcat(_bb, int2str(idx, NULL));
+				strcat(_bb, "&i=");
+				strcat(_bb, int2str(p->hash, NULL));
+				strcat(_bb, "&u=");
+				strncat(_bb, p->id->s, p->id->len);
+				strcat(_bb, "\">close</a>");
+				strcat(_bb, "&nbsp;&nbsp;&nbsp;");
+				strcat(_bb, int2str(p->hash, NULL));
+				strcat(_bb, "&nbsp;&nbsp;&nbsp;");
+				strncat(_bb, p->id->s, p->id->len);
+			}
+			s_unlock_at(jwl->sems, idx);
+		}
+	}
+	
+	*_bl = strlen(_bb);
+
+	return 0;
+}
+
+#endif // HAVE_IHTTP
