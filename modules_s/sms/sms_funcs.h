@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef _SMS_FUNCS_H
 #define  _SMS_FUNCS_H
 
