@@ -23,7 +23,7 @@
 
 
 # normal rules
-$(NAME): $(objs)
+$(NAME): $(objs) $(ALLDEP)
 	$(LD) $(LDFLAGS) $(objs) $(LIBS) -o $(NAME) 
 
 

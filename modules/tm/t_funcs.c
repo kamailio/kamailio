@@ -140,8 +140,11 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
 
    /* creates a new transaction */
    new_cell = build_cell( p_msg ) ;
-   if  ( !new_cell )
+   if  ( !new_cell ){
+	   LOG(L_ERR, "ERROR: add_transaction: out of mem:\n");
+	   sh_status();
       return -1;
+	}
    /*insert the transaction into hash table*/
    insert_into_hash_table( hash_table , new_cell );
    DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
@@ -1223,7 +1226,7 @@ int t_put_on_wait(  struct cell  *Trans  )
   if ( is_in_timer_list( (&(Trans->wait_tl)) , WT_TIMER_LIST) )
   {
      DBG("DEBUG: t_put_on_wait: already on wait\n");
-     return -1;
+     return 1;
   }
 
    DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");

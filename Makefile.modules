@@ -19,7 +19,7 @@ ALLDEP+=../../Makefile.defs
 else
 # called by the main Makefile
 
-ALLDEP+=../../Makefile
+ALLDEP+=../../Makefile ../../Makefile.defs
 
 endif
 

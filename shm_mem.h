@@ -12,7 +12,13 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+
+#ifndef SHM_MMAP
+
 #include <sys/shm.h>
+
+#endif
+
 #include <sys/sem.h>
 #include <string.h>
 #include <errno.h>

@@ -66,6 +66,9 @@ static char flags[]=
 #ifdef SHM_MEM
 ", SHM_MEM"
 #endif
+#ifdef SHM_MMAP
+", SHM_MMAP"
+#endif
 #ifdef PKG_MALLOC
 ", PKG_MALLOC"
 #endif
@@ -342,7 +345,8 @@ static void sig_usr(int signo)
 		if (is_main)
 			shm_mem_destroy();
 #endif
-		goto bye;
+		DPrint("Thank you for flying " NAME "\n");
+		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
 		dump_all_statistic();
@@ -356,9 +360,6 @@ static void sig_usr(int signo)
 		shm_status();
 #endif
 	}
-bye:
-	DPrint("Thank you for flying " NAME "\n");
-	exit(0);
 }
 
 
