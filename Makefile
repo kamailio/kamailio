@@ -22,8 +22,10 @@ DEFS+=$(static_defs)
 modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(wildcard modules/*))
-modules_names=$(patsubst modules/%/, %.so, $(modules))
-modules_full_path=$(join $(modules), $(modules_names))
+modules_names=$(shell echo $(modules)| \
+				sed -e 's/modules\/\([^/ ]*\)\/*/\1.so/g' )
+#modules_names=$(patsubst modules/%, %.so, $(modules))
+modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 
 NAME=ser
 
@@ -87,11 +89,12 @@ tar: mantainer-clean
 
 
 install: all mk-install-dirs install-cfg install-bin install-modules \
-	install-doc
+	install-doc install-man
 
 
 mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
-			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir)
+			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir) \
+			$(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 
 $(cfg-prefix)/$(cfg-dir): 
 		mkdir -p $(cfg-prefix)/$(cfg-dir)
@@ -106,6 +109,11 @@ $(modules-prefix)/$(modules-dir):
 $(doc-prefix)/$(doc-dir):
 		mkdir -p $(doc-prefix)/$(doc-dir)
 
+$(man-prefix)/$(man-dir)/man8:
+		mkdir -p $(man-prefix)/$(man-dir)/man8
+
+$(man-prefix)/$(man-dir)/man5:
+		mkdir -p $(man-prefix)/$(man-dir)/man5
 
 install-cfg:
 		$(INSTALL-CFG) ser.cfg $(cfg-prefix)/$(cfg-dir)
@@ -125,4 +133,7 @@ install-modules:
 install-doc:
 	$(INSTALL-DOC) README $(doc-prefix)/$(doc-dir)
 
+install-man:
+	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8
+	$(INSTALL-MAN)  ser.cfg.5 $(man-prefix)/$(man-dir)/man5
 

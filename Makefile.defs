@@ -19,18 +19,21 @@ cfg-prefix = $(prefix)
 bin-prefix = $(prefix)
 modules-prefix= $(prefix)
 doc-prefix = $(prefix)
+man-prefix = $(prefix)
 
 # dirs
 cfg-dir = etc/ser/
 bin-dir = sbin/
 modules-dir = lib/ser/modules/
-doc-dir = doc/ser/
+doc-dir = share/doc/ser/
+man-dir = share/man/
 
 INSTALL = install 
 INSTALL-CFG = $(INSTALL) -m 644
 INSTALL-BIN = $(INSTALL) -m 755
 INSTALL-MODULES = $(INSTALL) -m 755
 INSTALL-DOC = $(INSTALL) -m 644
+INSTALL-MAN = $(INSTALL) -m 644
 
 
 # compile-time options

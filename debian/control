@@ -1,0 +1,12 @@
+Source: ser
+Section: net
+Priority: optional
+Maintainer: Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
+Build-Depends: debhelper (>> 3.0.0)
+Standards-Version: 3.5.2
+
+Package: ser
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: Sip Express Router, very fast and configurable SIP proxy
+ ser or Sip Express Router is a very fast and configurable SIP proxy.
