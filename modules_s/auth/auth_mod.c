@@ -107,10 +107,11 @@ str rpid_prefix;
 char* rpid_suffix_param = ";party=calling;id-type=subscriber;screen=yes";
 str rpid_suffix;
 
+
 /*
  * head of auto-generated realm to be stripped if present
  */
-static char *realm_prefix_param= 0;
+static char* realm_prefix_param = "";
 str realm_prefix;
 
 
@@ -134,11 +135,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"secret",       STR_PARAM, &sec_param        },
-	{"nonce_expire", INT_PARAM, &nonce_expire     },
-	{"rpid_prefix",  STR_PARAM, &rpid_prefix_param},
-	{"rpid_suffix",  STR_PARAM, &rpid_suffix_param},
-	{"realm_prefix",  STR_PARAM, &realm_prefix_param},
+	{"secret",       STR_PARAM, &sec_param         },
+	{"nonce_expire", INT_PARAM, &nonce_expire      },
+	{"rpid_prefix",  STR_PARAM, &rpid_prefix_param },
+	{"rpid_suffix",  STR_PARAM, &rpid_suffix_param },
+	{"realm_prefix", STR_PARAM, &realm_prefix_param},
 	{0, 0, 0}
 };
 
@@ -217,9 +218,8 @@ static int mod_init(void)
 	rpid_suffix.s = rpid_suffix_param;
 	rpid_suffix.len = strlen(rpid_suffix.s);
 
-
-	realm_prefix.s=realm_prefix_param;
-	realm_prefix.len=strlen(realm_prefix_param);
+	realm_prefix.s = realm_prefix_param;
+	realm_prefix.len = strlen(realm_prefix_param);
 
 	return 0;
 }
