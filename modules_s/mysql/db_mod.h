@@ -37,5 +37,6 @@
 #define DB_MOD_H
 
 extern int ping_interval;
+extern int auto_reconnect;
 
 #endif /* DB_MOD_H */
