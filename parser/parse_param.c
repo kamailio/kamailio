@@ -38,6 +38,7 @@
 #include "../dprint.h"
 #include "../trim.h"
 #include "../mem/mem.h"
+#include "../mem/shm_mem.h"
 #include "parse_param.h"
 
 
@@ -369,15 +370,34 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 /*
  * Free linked list of parameters
  */
-void free_params(param_t* _p)
+static inline void do_free_params(param_t* _p, int _shm)
 {
 	param_t* ptr;
 	
 	while(_p) {
 		ptr = _p;
 		_p = _p->next;
-		pkg_free(ptr);
-	}
+		if (_shm) shm_free(ptr);
+		else pkg_free(ptr);
+	}	
+}
+
+
+/*
+ * Free linked list of parameters
+ */
+void free_params(param_t* _p)
+{
+	do_free_params(_p, 0);
+}
+
+
+/*
+ * Free linked list of parameters
+ */
+void shm_free_params(param_t* _p)
+{
+	do_free_params(_p, 1);
 }
 
 
@@ -426,7 +446,7 @@ void print_params(param_t* _p)
 /*
  * Duplicate linked list of parameters
  */
-int duplicate_params(param_t** _n, param_t* _p)
+static inline int do_duplicate_params(param_t** _n, param_t* _p, int _shm)
 {
 	param_t* last, *ptr, *t;
 
@@ -439,7 +459,11 @@ int duplicate_params(param_t** _n, param_t* _p)
 	*_n = 0;
 	ptr = _p;
 	while(ptr) {
-		t = (param_t*)pkg_malloc(sizeof(param_t));
+		if (_shm) {
+			t = (param_t*)shm_malloc(sizeof(param_t));
+		} else {
+			t = (param_t*)pkg_malloc(sizeof(param_t));
+		}
 		if (!t) {
 			LOG(L_ERR, "duplicate_params(): Invalid parameter value\n");
 			goto err;
@@ -455,6 +479,24 @@ int duplicate_params(param_t** _n, param_t* _p)
 	}
 
  err:
-	free_params(*_n);
+	do_free_params(*_n, _shm);
 	return 0;
+}
+
+
+/*
+ * Duplicate linked list of parameters
+ */
+int duplicate_params(param_t** _n, param_t* _p)
+{
+	return do_duplicate_params(_n, _p, 0);
+}
+
+
+/*
+ * Duplicate linked list of parameters
+ */
+int shm_duplicate_params(param_t** _n, param_t* _p)
+{
+	return do_duplicate_params(_n, _p, 1);
 }

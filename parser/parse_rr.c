@@ -31,6 +31,7 @@
 #include <string.h>
 #include "parse_rr.h"
 #include "../mem/mem.h"
+#include "../mem/shm_mem.h"
 #include "../dprint.h"
 #include "../trim.h"
 #include "../ut.h"
@@ -139,7 +140,7 @@ int parse_rr(struct hdr_field* _h)
  * Free list of rrs
  * _r is head of the list
  */
-void free_rr(rr_t** _r)
+static inline void do_free_rr(rr_t** _r, int _shm)
 {
 	rr_t* ptr;
 
@@ -149,8 +150,31 @@ void free_rr(rr_t** _r)
 		if (ptr->params) {
 			free_params(ptr->params);
 		}
-		pkg_free(ptr);
+		if (_shm) shm_free(ptr);
+		else pkg_free(ptr);
 	}
+}
+
+
+/*
+ * Free list of rrs
+ * _r is head of the list
+ */
+
+void free_rr(rr_t** _r)
+{
+	do_free_rr(_r, 0);
+}
+
+
+/*
+ * Free list of rrs
+ * _r is head of the list
+ */
+
+void shm_free_rr(rr_t** _r)
+{
+	do_free_rr(_r, 1);
 }
 
 
@@ -198,7 +222,7 @@ static inline void xlate_pointers(struct sip_msg* _m, rr_t* _r)
 /*
  * Duplicate a single rr_t structure using pkg_malloc
  */
-int duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
+static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int _shm)
 {
 	int len;
 	rr_t* res;
@@ -214,7 +238,8 @@ int duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
 		len = _r->nameaddr.len;
 	}
 
-	res = pkg_malloc(sizeof(rr_t) + len);
+	if (_shm) res = shm_malloc(sizeof(rr_t) + len);
+	else res = pkg_malloc(sizeof(rr_t) + len);
 	if (!res) {
 		LOG(L_ERR, "duplicate_rr(): No memory left\n");
 		return -2;
@@ -225,11 +250,30 @@ int duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
 
 	if (duplicate_params(&res->params, _r->params) < 0) {
 		LOG(L_ERR, "Error while duplicating parameters\n");
-		pkg_free(res);
+		if (_shm) shm_free(res);
+		else pkg_free(res);
 		return -3;
 	}
 
 	xlate_pointers(_m, res);
 	*_new = res;
 	return 0;
+}
+
+
+/*
+ * Duplicate a single rr_t structure using pkg_malloc
+ */
+int duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
+{
+	return do_duplicate_rr(_m, _new, _r, 0);
+}
+
+
+/*
+ * Duplicate a single rr_t structure using pkg_malloc
+ */
+int shm_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r)
+{
+	return do_duplicate_rr(_m, _new, _r, 1);
 }
