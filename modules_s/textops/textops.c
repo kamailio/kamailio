@@ -48,6 +48,7 @@
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-97  actions permitted to be used from failure/reply routes (jiri)
  *  2003-04-21  remove_hf and is_present_hf introduced (jiri)
+ *  2003-08-19  subst added (support for sed like res:s/re/repl/flags) (andrei)
  */
 
 
@@ -60,6 +61,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../re.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +72,7 @@ MODULE_VERSION
 
 static int search_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
+static int subst_f(struct sip_msg*, char*, char*);
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int replace_all_f(struct sip_msg* msg, char* key, char* str);
@@ -79,6 +82,7 @@ static int append_hf(struct sip_msg* msg, char* str1, char* str2);
 static int append_urihf(struct sip_msg* msg, char* str1, char* str2);
 
 static int fixup_regex(void**, int);
+static int fixup_substre(void**, int);
 static int str_fixup(void** param, int param_no);
 
 static int mod_init(void);
@@ -103,6 +107,8 @@ static cmd_export_t cmds[]={
 	{"remove_hf",        remove_hf_f,         1, str_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{"is_present_hf",        is_present_hf_f,         1, str_fixup,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
+	{"subst",            subst_f,             1, fixup_substre,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE}, 
 	{0,0,0,0,0}
 };
@@ -263,9 +269,43 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 
 
 
-/* per style s/regular expression/replacement/flags */
-static int subst_f(struct sip_msg* msg, char* subst_expr)
+/* sed-perl style re: s/regular expression/replacement/flags */
+static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 {
+	struct lump* l;
+	struct replace_lst* lst;
+	struct replace_lst* rpl;
+	char* begin;
+	struct subst_expr* se;
+	int off;
+	int ret;
+	
+	se=(struct subst_expr*)subst;
+	begin=get_header(msg);  /* start after first line to avoid replacing
+							   the uri */
+	off=begin-msg->buf;
+	ret=-1;
+	if ((lst=subst_run(se, begin, msg))==0) goto error; /* not found */
+	for (rpl=lst; rpl; rpl=rpl->next){
+		if ((l=del_lump(&msg->add_rm, rpl->offset+off, rpl->size, 0))==0)
+			goto error;
+		/* hack to avoid re-copying rpl, possible because both 
+		 * replace_lst & lumps use pkg_malloc */
+		if (insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0)==0){
+			LOG(L_ERR, "ERROR: %s: subst_f: could not insert new lump\n",
+					exports.name);
+			goto error;
+		}
+		/* hack continued: set rpl.s to 0 so that replace_lst_free will
+		 * not free it */
+		rpl->rpl.s=0;
+		rpl->rpl.len=0;
+	}
+	ret=1;
+error:
+	DBG("subst_f: lst was %p\n", lst);
+	if (lst) replace_lst_free(lst);
+	return ret;
 }
 
 
@@ -328,6 +368,30 @@ static int fixup_regex(void** param, int param_no)
 	pkg_free(*param);
 	/* replace it with the compiled re */
 	*param=re;
+	return 0;
+}
+
+
+
+static int fixup_substre(void** param, int param_no)
+{
+	struct subst_expr* se;
+	str subst;
+
+	DBG("%s module -- fixing %s\n", exports.name, (char*)(*param));
+	if (param_no!=1) return 0;
+	subst.s=*param;
+	subst.len=strlen(*param);
+	se=subst_parser(&subst);
+	if (se==0){
+		LOG(L_ERR, "ERROR: %s: bad subst. re %s\n", exports.name, 
+				(char*)*param);
+		return E_BAD_RE;
+	}
+	/* free string */
+	pkg_free(*param);
+	/* replace it withj the compiled subst. re */
+	*param=se;
 	return 0;
 }
 

@@ -143,6 +143,33 @@ replace("ser", "Sip Express Router");
 
 	<section>
 	    <title>
+		<function moreinfo="none">subst('/re/repl/flags')</function>
+	    </title>
+	    <para>
+		Replaces re with repl (sed or perl like).
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>'/re/repl/flags'</emphasis> - sed like regular 
+				expression. flags can be a combination of i (case insensitive),
+				g (global) or s (match newline don't treat it as end of line).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>subst</function> usage</title>
+		<programlisting format="linespecific">
+...
+# replace the uri in to: with the message uri (just an example)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
 		<function moreinfo="none">append_to_reply(txt)</function>
 	    </title>
 	    <para>
