@@ -52,6 +52,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+MODULE_VERSION
+
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int update_clen(struct sip_msg *, int);
