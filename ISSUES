@@ -9,6 +9,15 @@ beginning with the newest release. Issues related to
 operating systems are summarized in the bottom.
 
 ---------------------------------------------------------------
+Desc: 3261 ACKs for 200s are consumed by stateful processing
+Ser version: 0.8.10
+Reason: 200/ACKs which happen to have the same transaction ID
+        as original INVITE were not distinguished from hbh
+        ACKs and consequently absorbed
+Patch: http://www.iptel.org/ser/issues/tid3261ack.patch
+Workaround: apply the patch to 0.8.10 sources
+CVS status: fixed
+---------------------------------------------------------------
 Desc: on sparc machines, usage of mysql library causes a bus error
 Ser version: 0.8.10
 Reason: ser is compiled with DBG_QM_MALLOC, which mistakenly uses
