@@ -40,6 +40,8 @@
 #define FROM_LEN (sizeof(FROM)-1)
 #define FROMTAG ";tag="
 #define FROMTAG_LEN (sizeof(FROMTAG)-1)
+#define TOTAG ";tag="
+#define TOTAG_LEN (sizeof(TOTAG)-1)
 
 #ifdef _OBSOLETED
 #define UAC_CSEQNR "1"
@@ -77,6 +79,23 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	str fromtag, int cseq, str callid, str headers, 
 	str body, int branch,
 	struct cell *t, unsigned int *len);
+
+
+char *build_uac_request_dlg(str* msg,            /* Method */
+	                    str* ruri,           /* Request-URI */
+	                    str* to,             /* To header field w/o tag */
+	                    str* from,           /* From header field w/o tag */
+	                    str* totag,          /* To tag */
+	                    str* fromtag,        /* From tag */
+	                    unsigned int cseq,  /* CSeq number */
+	                    str* callid,         /* Call-ID */
+	                    str* headers,        /* Headers to be appended including CRLF */
+	                    str* body,           /* Body of the message */
+	                    int branch,         /* Branch */
+	                    struct cell *t,
+	                    unsigned int *len
+	                   );
+
 
 int t_calc_branch(struct cell *t,
 	int b, char *branch, int *branch_len);

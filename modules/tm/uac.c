@@ -42,6 +42,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <limits.h>
+#include <string.h>
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
@@ -82,6 +83,8 @@ static int rand_len;	/* number of chars to display max rand */
 static char callid[CALLID_NR_LEN+CALLID_SUFFIX_LEN];
 
 char *uac_from="\"UAC Account\" <sip:uac@dev.null:9>";
+
+str uac_from_str;
 
 static char from_tag[ FROM_TAG_LEN+1 ];
 
@@ -143,6 +146,9 @@ int uac_init() {
 
 	MDStringArray( from_tag, src, 3 );
 	from_tag[MD5_LEN]=CID_SEP;
+
+	uac_from_str.s = uac_from;
+	uac_from_str.len = strlen(uac_from);
 
 	return 1;
 }
@@ -296,6 +302,166 @@ done:
 	if (cbp) shm_free(cbp);
 	return ser_error=ret;
 }
+
+
+/*
+ * Send a request within a dialog
+ */
+int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OPTIONS etc. */
+	      str* dst,                     /* Real destination (can be different than R-URI) */
+	      str* ruri,                    /* Request-URI */
+	      str* to,                      /* To - w/o tag*/
+	      str* from,                    /* From - w/o tag*/
+	      str* totag,                   /* To tag */
+	      str* fromtag,                 /* From tag */
+	      int* cseq,                    /* Variable holding CSeq */
+	      str* cid,                     /* Call-ID */
+	      str* headers,                 /* Optional headers including CRLF */
+	      str* body,                    /* Message body */
+	      transaction_cb completion_cb, /* Callback parameter */
+	      void* cbp                     /* Callback pointer */
+	      )
+{
+
+	int r, branch, ret;
+	unsigned int req_len;
+	char *buf;
+	struct cell *new_cell;
+	struct proxy_l *proxy;
+	union sockaddr_union to_su;
+	struct socket_info* send_sock;
+	struct retr_buf *request;
+	str callid_s, ftag, tmp;
+
+	/* make -Wall shut up */
+	ret=0;
+
+	proxy = uri2proxy((dst) ? (dst) : ((ruri) ? (ruri) : (to)));
+	if (proxy == 0) {
+		ser_error = ret = E_BAD_ADDRESS;
+		LOG(L_ERR, "ERROR: t_uac_dlg: Can't create a dst proxy\n");
+		goto done;
+	}
+
+	branch=0;
+	hostent2su(&to_su, &proxy->host, proxy->addr_idx, (proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
+	send_sock=get_send_socket(&to_su);
+	if (send_sock == 0) {
+		LOG(L_ERR, "ERROR: t_uac_dlg: no corresponding listening socket for af %d\n", to_su.s.sa_family );
+		ret = E_NO_SOCKET;
+		goto error00;
+	}
+	
+	     /* No Call-ID given, calculate it */
+	if (cid == 0) {
+		callid_nr++;
+		r = snprintf(callid, rand_len + 1, "%0*lx", rand_len, callid_nr);
+		if (r == -1) {
+			LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
+			goto error00;
+		}
+
+		     /* fix the ZT 0 */
+		callid[rand_len] = CID_SEP;
+		callid_s.s = callid;
+		callid_s.len = rand_len + callid_suffix_len;
+	}
+
+	new_cell = build_cell(0); 
+	if (!new_cell) {
+		ret = E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: t_uac: short of cell shmem\n");
+		goto error00;
+	}
+
+	new_cell->completion_cb = completion_cb;
+	new_cell->cbp = cbp;
+
+	/* cbp is installed -- tell error handling bellow not to free it */
+	cbp = 0;
+
+	new_cell->is_invite = msg->len == INVITE_LEN && memcmp(msg->s, INVITE, INVITE_LEN) == 0;
+	new_cell->local= 1 ;
+	new_cell->kr = REQ_FWDED;
+
+	request = &new_cell->uac[branch].request;
+	request->to = to_su;
+	request->send_sock = send_sock;
+
+	/* need to put in table to calculate label which is needed for printing */
+	LOCK_HASH(new_cell->hash_index);
+	insert_into_hash_table_unsafe(new_cell);
+	UNLOCK_HASH(new_cell->hash_index);
+
+	if (fromtag == 0) {
+		     /* calculate from tag from callid */
+		crcitt_string_array(&from_tag[MD5_LEN + 1], (cid) ? (cid) : (&callid_s), 1);
+		ftag.s = from_tag; 
+		ftag.len = FROM_TAG_LEN;
+	}
+
+	buf = build_uac_request_dlg(msg, 
+				    (ruri) ? (ruri) : (to),
+				    to, 
+				    (from) ? (from) : (&uac_from_str), 
+				    totag,
+				    (fromtag) ? (fromtag) : (&ftag), 
+				    (cseq) ? (*cseq) : DEFAULT_CSEQ, 
+				    (cid) ? (cid) : (&callid_s), 
+				    headers, 
+				    body, 
+				    branch,
+				    new_cell,
+				    &req_len);
+	if (!buf) {
+		ret = E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: t_uac: short of req shmem\n");
+		goto error01;
+	}
+	new_cell->method.s = buf;
+	new_cell->method.len = msg->len;
+
+	request->buffer = buf;
+	request->buffer_len = req_len;
+	new_cell->nr_of_outgoings++;
+
+	proxy->tx++;
+	proxy->tx_bytes += req_len;
+
+	if (SEND_BUFFER(request) == -1) {
+		if (dst) {
+			tmp = *dst;
+		} else if (ruri) {
+			tmp = *ruri;
+		} else {
+			tmp = *to;
+		}
+		LOG(L_ERR, "ERROR: t_uac: UAC sending to \'%.*s\' failed\n", tmp.len, tmp.s);
+		proxy->errors++;
+		proxy->ok = 0;
+	}
+	
+	start_retr(request);
+
+	/* success */
+	return 1;
+
+error01:
+	LOCK_HASH(new_cell->hash_index);
+	remove_from_hash_table_unsafe(new_cell);
+	UNLOCK_HASH(new_cell->hash_index);
+	free_cell(new_cell);
+
+error00:
+	free_proxy(proxy);
+	free(proxy);
+
+done: 
+	/* if we did not install cbp, release it now */
+	if (cbp) shm_free(cbp);
+	return ser_error = ret;
+}
+
 
 static void fifo_callback( struct cell *t, struct sip_msg *msg,
 	int code, void *param)

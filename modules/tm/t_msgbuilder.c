@@ -317,6 +317,174 @@ error:
 }
 
 
+char *build_uac_request_dlg(str* msg,           /* Method */
+			    str* ruri,          /* Request-URI */
+			    str* to,            /* To */
+			    str* from,          /* From */
+			    str* totag,         /* To header tag */
+			    str* fromtag,       /* From header tag */
+			    unsigned int cseq,  /* CSeq number */
+			    str* callid,        /* Call-ID */
+			    str* headers,       /* Headers to be appended */
+			    str* body,          /* Body of the message */
+			    int branch,         /* Branch */
+			    struct cell *t,     
+			    unsigned int *len)
+{
+	char *via, *buf, *w, content_len[10], cseq_str[10], branch_buf[MAX_BRANCH_PARAM_LEN];
+	int content_len_len, cseq_str_len, branch_len;
+	unsigned int via_len;
+
+	buf=0;
+	content_len_len = 0; /* Makes gcc happy */
+
+	     /* 
+	      * Print Content-Length
+	      */
+	if (body) {
+		content_len_len = snprintf(content_len, sizeof(content_len), "%d", body->len);
+		if (content_len_len == -1) {
+			LOG(L_ERR, "ERROR: build_uac_request_dlg: content_len too big\n");
+			return 0;
+		}
+	}
+	
+	     /* 
+	      * Print CSeq 
+	      */
+	cseq_str_len = snprintf(cseq_str, sizeof(cseq_str), "%d", cseq);
+	if (cseq_str_len == -1) {
+		LOG(L_ERR, "ERROR: build_uac_request_dlg: cseq too big\n");
+		return 0;
+	}
+	
+	*len = msg->len + 1 + ruri->len + 1 + SIP_VERSION_LEN + CRLF_LEN;
+
+	if (!t_calc_branch(t, branch, branch_buf, &branch_len)) {
+		LOG(L_ERR, "ERROR: build_uac_request_dlg: branch calculation failed\n");
+		goto error;
+	}
+
+	via = via_builder(&via_len, t->uac[branch].request.send_sock, branch_buf, branch_len);
+	if (!via) {
+		LOG(L_ERR, "ERROR: build_uac_request_dlg: via building failed\n");
+		goto error;
+	}
+	
+	*len += via_len;
+	
+	/* header names and separators */
+	*len +=   TO_LEN + CRLF_LEN
+		+ FROM_LEN + CRLF_LEN
+		+ CSEQ_LEN + CRLF_LEN
+		+ CALLID_LEN + CRLF_LEN
+		+ ((body) ? (CONTENT_LENGTH_LEN + CRLF_LEN) : 0)
+		+ (server_signature ? USER_AGENT_LEN + CRLF_LEN : 0)
+		+ CRLF_LEN; /* EoM */
+	
+	     /* header field value and body length */
+	*len +=   to->len + ((totag) ? (TOTAG_LEN + totag->len) : 0) /* To */
+		+ from->len + FROMTAG_LEN + fromtag->len             /* From */
+		+ cseq_str_len + 1 + msg->len                        /* CSeq */
+		+ callid->len                                        /* Call-ID */
+		+ ((body) ? (content_len_len) : 0)                   /* Content-Length */
+		+ ((headers) ? (headers->len) : 0)                   /* Headers */
+		+ ((body) ? (body->len) : 0);                        /* Body */
+	
+	buf = shm_malloc(*len + 1);
+	if (!buf) {
+		LOG(L_ERR, "ERROR: build_uac_request_dlg: no shmem\n");
+		goto error1;
+	}
+	
+	w = buf;
+
+	     /* First line */
+	memapp(w, msg->s, msg->len); 
+	memapp(w, " ", 1); 
+
+	t->uac[branch].uri.s = w; 
+	t->uac[branch].uri.len = ruri->len;
+
+	memapp(w, ruri->s, ruri->len); 
+	memapp(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
+
+	     /* First Via */
+	memapp(w, via, via_len);
+
+	     /* To */
+	t->to.s = w;
+	t->to.len = TO_LEN + to->len + ((totag) ? (TOTAG_LEN + totag->len) : 0);
+
+	memapp(w, TO, TO_LEN);
+	memapp(w, to->s, to->len);
+	if (totag) {
+		memapp(w, TOTAG, TOTAG_LEN);
+		memapp(w, totag->s, totag->len);
+	}
+	memapp(w, CRLF, CRLF_LEN);
+
+	     /* From */
+	t->from.s = w;
+	t->from.len = FROM_LEN + from->len + FROMTAG_LEN + fromtag->len;
+
+	memapp(w, FROM, FROM_LEN);
+	memapp(w, from->s, from->len);
+	memapp(w, FROMTAG, FROMTAG_LEN);
+	memapp(w, fromtag->s, fromtag->len);
+	memapp(w, CRLF, CRLF_LEN);
+	
+	     /* CSeq */
+	t->cseq_n.s = w; 
+	t->cseq_n.len = CSEQ_LEN + cseq_str_len;
+
+	memapp(w, CSEQ, CSEQ_LEN);
+	memapp(w, cseq_str, cseq_str_len);
+	memapp(w, " ", 1);
+	memapp(w, msg->s, msg->len);
+
+	     /* Call-ID */
+	t->callid.s = w + CRLF_LEN; 
+	t->callid.len = callid->len;
+	memapp(w, CRLF CALLID, CRLF_LEN + CALLID_LEN);
+	memapp(w, callid->s, callid->len);
+
+	     /* Content-Length */
+	if (body) {
+		memapp(w, CRLF CONTENT_LENGTH, CRLF_LEN + CONTENT_LENGTH_LEN);
+		memapp(w, content_len, content_len_len);
+		memapp(w, CRLF, CRLF_LEN);
+	}
+	
+	     /* Server signature */
+	if (server_signature) {
+		memapp(w, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
+	}
+
+	     /* Headers */
+	if (headers) {
+		memapp(w, headers->s, headers->len);
+	}
+
+	     /* EoH */
+	memapp(w, CRLF, CRLF_LEN);
+	
+	     /* Body */
+	if (body) {
+		memapp(w, body->s, body->len);
+	}
+
+#ifdef EXTRA_DEBUG
+	if (w-buf != *len ) abort();
+#endif
+	
+ error1:
+	pkg_free(via);	
+ error:
+	return buf;
+}
+
+
 int t_calc_branch(struct cell *t, 
 	int b, char *branch, int *branch_len)
 {

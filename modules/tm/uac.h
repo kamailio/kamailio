@@ -86,6 +86,26 @@ int t_uac(
 	void *cbp,
 	struct dialog *dlg );
 
+
+/*
+ * Send a request within a dialog
+ */
+int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OPTIONS etc. */
+	      str* dst,                     /* Real destination (can be different than R-URI */
+	      str* ruri,                    /* Request-URI */
+	      str* to,                      /* To - including tag */
+	      str* from,                    /* From - including tag */
+	      str* totag,                   /* To tag */
+	      str* fromtag,                 /* From tag */
+	      int* cseq,                    /* CSeq */
+	      str* cid,                     /* Call-ID */
+	      str* headers,                 /* Optional headers including CRLF */
+	      str* body,                    /* Message body */
+	      transaction_cb completion_cb, /* Callback parameter */
+	      void* cbp                     /* Callback pointer */
+	      );
+
+
 int fifo_uac( FILE *stream, char *response_file );
 int fifo_uac_from( FILE *stream, char *response_file );
 #endif
