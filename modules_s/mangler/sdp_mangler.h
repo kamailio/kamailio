@@ -41,15 +41,19 @@
 #include <regex.h>
 
 
-
+#define PORT_REGEX "m=[a-z]+ [0-9]{1,5}"
+#define IP_REGEX "(c=IN IP4 [0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})"
 
 
 #define MANGLE_IP 1
 #define MANGLE_PORT 2
 #define MANGLE_BOTH 4
 
-extern regex_t *portExpression;
-extern regex_t *ipExpression;
+
+
+regex_t *portExpression;
+regex_t *ipExpression;
+
 
 
 /* replaces all apearences of a port in lines like m=audio port with
@@ -71,5 +75,8 @@ int sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused);
 */
 
 int sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip);
+
+int compile_expresions(char *port,char *ip);
+int free_compiled_expresions();
 
 #endif

@@ -27,7 +27,7 @@ Desc:	Changes ip addresses inside SDP package in lines describing
 		Currently in only changes IP4 addresses since IP6 probably 
 		will not need to traverse NAT :)
 Example:	res = sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
-Returns: negative on error, or number of replacements - 1
+Returns: negative on error, or number of replacements 
 
 
 Name:	sdp_mangle_port
@@ -37,7 +37,7 @@ Params:	offset - an integer which will be added/substracted from
 Desc:	Changes ports inside SDP package in lines describing
 		media like m=audio 13451
 Example: res = sdp_mangle_port(-12000)
-Returns: negative on error, or number of replacements - 1
+Returns: negative on error, or number of replacements 
 
 
 

@@ -37,6 +37,11 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
+#include "sdp_mangler.h"
+
+extern regex_t *portExpression;
+extern regex_t *ipExpression;
+
 
 
 #endif

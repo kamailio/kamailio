@@ -44,12 +44,16 @@
 #include "../../error.h"
 
 
+//#define DEBUG
 /* DEBUGING */
+#ifdef DEBUG
+
 #include "../tm/t_hooks.h"
 #include "../tm/tm_load.h"
 #include "../tm/h_table.h"
 struct tm_binds tmb; 
-
+	
+#endif
 
 
 #include "mangler.h"
@@ -120,6 +124,8 @@ child_init (int rank)
 	return 0;
 }
 
+#ifdef DEBUG
+/* MANGLING EXAMPLE */
 /* ================================================================= */
 static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 {
@@ -138,7 +144,7 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 			fprintf(stdout,"INVITE:received \n%s\n",msg->buf);fflush(stdout);
 			i = sdp_mangle_port(msg,(char *)1000,NULL);
 			fprintf(stdout,"sdp_mangle_port returned %d\n",i);fflush(stdout);
-			i = sdp_mangle_ip(msg,"10.0.0.0/8","123.124.125.126");
+			i = sdp_mangle_ip(msg,"10.0.0.0/16","123.124.125.126");
 			fprintf(stdout,"sdp_mangle_ip returned %d\n",i);fflush(stdout);
 			
 			}
@@ -153,15 +159,21 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 	fflush(stdout);
 }
 
-
+#endif
 
 
 int
 prepare ()
 {
-	load_tm_f load_tm;
-	fprintf(stdout,"===============NEW RUN================\n");
+
+	/* using precompiled expressions to speed things up*/
+	compile_expresions(PORT_REGEX,IP_REGEX);
 	
+#ifdef DEBUG
+	load_tm_f load_tm;
+	
+	
+	fprintf(stdout,"===============NEW RUN================\n");
 	//register callbacks 
 
 	if (!(load_tm=(load_tm_f)find_export("load_tm",NO_SCRIPT,0)))
@@ -172,7 +184,7 @@ prepare ()
 	if (load_tm(&tmb)==-1) return -1;
 	
 	if (tmb.register_tmcb(TMCB_REQUEST_OUT,func_invite,0) <= 0) return -1;
-	
+#endif	
 	return 0;
 }
 
@@ -181,6 +193,8 @@ prepare ()
 static int
 mod_init (void)
 {
+	ipExpression = NULL;
+	portExpression = NULL;
 	prepare ();
 	/*
 	 * Might consider to compile at load time some regex to avoid compilation
@@ -194,7 +208,11 @@ static void
 destroy (void)
 {
 	/*free some compiled regex expressions */
-	
+	free_compiled_expresions();	
+#ifdef DEBUG
+	fprintf(stdout,"Freeing precompiled expressions\n");
+#endif
+
 	return;
 }
 

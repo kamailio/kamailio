@@ -47,23 +47,24 @@
 #include "../../ut.h"
 
 
+#define DEBUG
+
 
 int
 sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 {
 	int oldContentLength, newContentLength, oldlen, err, oldPort, newPort,
-		diff, offsetValue;
+		diff, offsetValue,len,off,ret,needToDealocate;
+	
 	struct lump *l;
 	regmatch_t pmatch;
-	char *s, *pos;
-	int len;
-	char *begin;
-	int off;
-	int ret;
-	regex_t re;
-	char *key;
+	regex_t *re;
+	char *s, *pos,*begin,*key;
 	char buf[6];
-	key = "m=[a-z]+ [0-9]{1,5}";
+	
+	
+	
+	key = PORT_REGEX;
 	/*
 	 * Checking if msg has a payload
 	 */
@@ -81,7 +82,9 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 	}
 	*/
 	offsetValue = (int)offset;
-	//printf("===============OFFSET = %d\n",offsetValue);
+#ifdef DEBUG
+	fprintf(stdout,"===============OFFSET = %d\n",offsetValue);
+#endif
 	
 	if ((offsetValue < -65536) || (offsetValue > 65536))
 	{
@@ -90,13 +93,38 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 	begin = msg->buf + msg->first_line.len;	// inlocuiesc cu begin = getbody */
 	ret = -1;
 
+	/* try to use precompiled expressions */
+	needToDealocate = 0;
+	if (portExpression != NULL) 
+		{
+		re = portExpression;
+#ifdef DEBUG
+		fprintf(stdout,"Using PRECOMPILED expression for port ...\n");
+#endif
+		}
+		else /* we are not using precompiled expressions */
+			{
+			re = pkg_malloc(sizeof(regex_t));
+			if (re == NULL)
+				{
+				LOG(L_ERR,"ERROR: sdp_mangle_port: Unable to allocate re\n");
+				return -9;
+				}
+			needToDealocate = 1;
+			if ((regcomp (re, key, REG_EXTENDED)) != 0)
+				{
+				LOG(L_ERR,"ERROR: sdp_mangle_port: Unable to compile %s \n",key);
+				return -5;
+				}
+#ifdef DEBUG
+		fprintf(stdout,"Using ALLOCATED expression for port ...\n");
+#endif
 
-	if ((regcomp (&re, key, REG_EXTENDED)) != 0)
-		return -5;
-
+			}
+	
 	diff = 0;
 	while (begin < msg->buf + msg->len
-	       && regexec (&re, begin, 1, &pmatch, 0) == 0)
+	       && regexec (re, begin, 1, &pmatch, 0) == 0)
 	{
 		off = begin - msg->buf;
 		if (pmatch.rm_so == -1)
@@ -164,7 +192,14 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		begin = begin + pmatch.rm_eo;
 
 	}			/* while  */
-	regfree (&re);
+	if (needToDealocate)
+		{
+		regfree (re);
+		pkg_free(re);
+#ifdef DEBUG
+		fprintf(stdout,"Dealocating expression for port ...\n");
+#endif
+		}
 	
 	if (diff != 0)
 	{
@@ -172,28 +207,23 @@ sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused)
 		patch_content_length (msg, newContentLength);
 	}
 	
-	return ret;
+	return ret+1;
 }
 
 
 int
 sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 {
-	int i, oldContentLength, newContentLength, diff, oldlen;
+	int i, oldContentLength, newContentLength, diff, oldlen,len,off,ret,needToDealocate;
 	unsigned int mask, address, locatedIp;
 	struct lump *l;
 	regmatch_t pmatch;
-	char *s, *pos;
-	int len;
-	char *begin;
-	int off;
-	int ret;
-	regex_t re;
-	char *key;
+	regex_t *re;
+	char *s, *pos,*begin,*key;
 	char buffer[16];	/* 123.456.789.123\0 */
 
 
-	key = "(c=IN IP4 [0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})";
+	key = IP_REGEX;
 
 	/*
 	 * Checking if msg has a payload
@@ -232,12 +262,38 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 	ret = -1;
 	len = strlen (newip);
 
-	if ((regcomp (&re, key, REG_EXTENDED)) != 0)
-		return -5;
+	/* try to use precompiled expressions */
+	needToDealocate = 0;
+	if (ipExpression != NULL) 
+		{
+		re = ipExpression;
+#ifdef DEBUG
+		fprintf(stdout,"Using PRECOMPILED expression for ip ...\n");
+#endif
+
+		}
+		else /* we are not using precompiled expressions */
+			{
+			re = pkg_malloc(sizeof(regex_t));
+			if (re == NULL)
+				{
+				LOG(L_ERR,"ERROR: sdp_mangle_ip: Unable to allocate re\n");
+				return -9;
+				}
+			needToDealocate = 1;
+			if ((regcomp (re, key, REG_EXTENDED)) != 0)
+				{
+				LOG(L_ERR,"ERROR: sdp_mangle_ip: Unable to compile %s \n",key);
+				return -5;
+				}
+#ifdef DEBUG
+		fprintf(stdout,"Using ALLOCATED expression for ip ...\n");
+#endif
+			}
 
 	diff = 0;
 	while (begin < msg->buf + msg->len
-	       && regexec (&re, begin, 1, &pmatch, 0) == 0)
+	       && regexec (re, begin, 1, &pmatch, 0) == 0)
 	{
 		off = begin - msg->buf;
 		if (pmatch.rm_so == -1)
@@ -306,13 +362,69 @@ sdp_mangle_ip (struct sip_msg *msg, char *oldip, char *newip)
 		begin = begin + pmatch.rm_eo;
 
 	}			/* while */
-	regfree (&re);		/* if I am going to use precompiled expressions to be removed */
+	if (needToDealocate)
+	{
+	regfree (re);		/* if I am going to use precompiled expressions to be removed */
+	pkg_free(re);
+#ifdef DEBUG
+		fprintf(stdout,"Dealocating expression for ip ...\n");
+#endif
+	}
 	
 	if (diff != 0)
 	{
 		newContentLength = oldContentLength + diff;
 		patch_content_length (msg, newContentLength);
 	}
-	return ret;
+	return ret+1;
 
 }
+
+int compile_expresions(char *port,char *ip)
+{
+	portExpression = NULL;
+	portExpression = pkg_malloc(sizeof(regex_t));
+	if (portExpression != NULL)
+		{
+		if ((regcomp (portExpression,port, REG_EXTENDED)) != 0)
+			{
+			LOG(L_ERR,"ERROR: compile_expresions: Unable to compile portExpression [%s]\n",port);
+			pkg_free(portExpression);
+			portExpression = NULL;
+			}
+		}
+	else
+		{
+			LOG(L_ERR,"ERROR: compile_expresions: Unable to alloc portExpression \n");
+		}
+	
+	ipExpression = NULL;
+	ipExpression = pkg_malloc(sizeof(regex_t));
+	if (ipExpression != NULL)
+		{
+		if ((regcomp (ipExpression,ip, REG_EXTENDED)) != 0)
+			{
+			LOG(L_ERR,"ERROR: compile_expresions: Unable to compile ipExpression [%s]\n",ip);
+			pkg_free(ipExpression);
+			ipExpression = NULL;
+			}
+		}
+	else
+		{
+			LOG(L_ERR,"ERROR: compile_expresions: Unable to alloc ipExpression \n");
+		}
+	
+	return 0;
+}
+
+int free_compiled_expresions()
+{
+	if (portExpression != NULL) 
+		regfree(portExpression);
+	if (ipExpression != NULL) 
+		regfree(ipExpression);
+	portExpression = NULL;
+	ipExpression = NULL;
+	return 0;
+}
+
