@@ -3,7 +3,7 @@
  *
  * MySQL module interface
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -71,7 +71,7 @@ static param_export_t params[] = {
 struct module_exports exports = {	
 	"mysql",
 	cmds,
-	params, /*  module paramers */
+	params, /*  module parameters */
 	0,      /* module initialization function */
 	0,      /* response function*/
 	0,      /* destroy function */
