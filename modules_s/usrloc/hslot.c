@@ -47,13 +47,12 @@ void slot_add(hslot_t* _s, struct urecord* _r)
 {
 	if (_s->n == 0) {
 		_s->first = _s->last = _r;
-		_s->n++;
 	} else {
 		_r->s_ll.prev = _s->last;
 		_s->last->s_ll.next = _r;
 		_s->last = _r;
 	}
-	
+	_s->n++;
 	_r->slot = _s;
 }
 

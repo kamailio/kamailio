@@ -13,6 +13,7 @@
 #include "utime.h"
 #include "ul_mod.h"
 
+
 /*
  * List of all registered domains
  */
@@ -169,12 +170,11 @@ int timer_handler(void)
 	get_act_time(); /* Get and save actual time */
 
 	ptr = root;
-
 	while(ptr) {
 		res |= timer_udomain(ptr->d);
 		ptr = ptr->next;
 	}
-
+	
 	return res;
 }
 
