@@ -2,6 +2,7 @@ $Id$
 
 ( - todo, x - done)
 
+- [doc] document force_rport()
 - [fifo] fix fgets error handling (it does not set errno always,
    , right now kills all ser if interrupted by a signal on ?solaris?)
 - [mem] make shm_realloc be fragmentation friendly: call shm_compact_frags
