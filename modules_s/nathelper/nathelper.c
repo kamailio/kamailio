@@ -119,7 +119,7 @@ mod_init(void)
 
 	if (natping_interval > 0) {
 		get_all_ucontacts =
-		    (int (*)(void *, int))find_export("~ul_get_all_ucontacts", 1, 0);
+		    (int (*)(void *, int))find_export("ul_get_all_ucontacts", 1, 0);
 		if (!get_all_ucontacts) {
 			LOG(L_ERR, "This module requires usrloc module\n");
 			return -1;
