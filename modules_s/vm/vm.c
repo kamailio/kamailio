@@ -82,7 +82,7 @@
 #define SQL_EQUAL      " = "
 #define SQL_EQUAL_LEN  3
 
-#define VM_FIFO_PARAMS 20
+#define VM_FIFO_PARAMS 21
 
 #define ROUTE_BUFFER_MAX 512
 #define HDRS_BUFFER_MAX  512
@@ -484,26 +484,27 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	}
     }
 
-    lines[0].s=action; lines[0].len=strlen(action);
+    lines[0].s=FIFO_VERSION; lines[0].len=strlen(FIFO_VERSION);
+    lines[1].s=action; lines[1].len=strlen(action);
 
-    lines[1]=REQ_LINE(msg).method;
-    lines[2]=msg->parsed_uri.user;		/* user from r-uri */
-    lines[3]=email;			        /* email address from db */
-    lines[4]=domain;                        /* domain */
+    lines[2]=REQ_LINE(msg).method;
+    lines[3]=msg->parsed_uri.user;		/* user from r-uri */
+    lines[4]=email;			        /* email address from db */
+    lines[5]=domain;                        /* domain */
 
-    lines[5]=msg->rcv.bind_address->address_str; /* dst ip */
+    lines[6]=msg->rcv.bind_address->address_str; /* dst ip */
 
-    lines[6]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
-    lines[7]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
+    lines[7]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
+    lines[8]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
 
-    lines[8]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
+    lines[9]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
 
-    lines[9]=get_from(msg)->body;		/* from */
-    lines[10]=msg->to->body;			/* to */
-    lines[11]=msg->callid->body;		/* callid */
-    lines[12]=get_from(msg)->tag_value;	/* from tag */
-    lines[13]=get_to(msg)->tag_value;	/* to tag */
-    lines[14]=get_cseq(msg)->number;	/* cseq number */
+    lines[10]=get_from(msg)->body;		/* from */
+    lines[11]=msg->to->body;			/* to */
+    lines[12]=msg->callid->body;		/* callid */
+    lines[13]=get_from(msg)->tag_value;	/* from tag */
+    lines[14]=get_to(msg)->tag_value;	/* to tag */
+    lines[15]=get_cseq(msg)->number;	/* cseq number */
 
     i2s=int2str(hash_index, &l);		/* hash:label */
     if (l+1>=IDBUF_LEN) {
@@ -517,12 +518,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	goto error;
     }
     memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-    lines[15].s=id_buf;lines[15].len=int_buflen;
+    lines[16].s=id_buf;lines[16].len=int_buflen;
 
-    lines[16]=route.len ? route : empty_param;
-    lines[17]=next_hop;
-    lines[18]=hdrs.len ? hdrs : empty_param;
-    lines[19]=body;
+    lines[17]=route.len ? route : empty_param;
+    lines[18]=next_hop;
+    lines[19]=hdrs.len ? hdrs : empty_param;
+    lines[20]=body;
 
     if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
 	 ==-1 ) {
