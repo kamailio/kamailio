@@ -39,7 +39,6 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 			return -3;
 		}
 	}
-	pkg_free(lengths);
 	return 0;
 }
 
