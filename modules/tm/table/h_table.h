@@ -25,7 +25,7 @@ struct cell;
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value
 */
-struct timer_link 
+struct timer_link
 {
 	struct cell *timer_next_cell, *timer_prev_cell;
 	unsigned int time_out;
@@ -39,19 +39,21 @@ typedef struct  timer
    int                  sem;
 } timer_type;
 
+
+
 typedef struct cell
 {
    /* linking data */
    struct cell*     next_cell;
    struct cell*     prev_cell;
+
    /* tells in which hash table entry the cell lives */
-   int		    hash_index;
-   /* textual encoding of entry index in hash-table; 
+   int                   hash_index;
+   /* textual encoding of entry index in hash-table;
       used for looking up transactions for replies */
-   char*  via_label;
+   char*               via_label;
    /* sequence number within hash collision slot; ascending
-      across the synonym list
-   */
+      across the synonym list */
    int                   label;
 
    /*sync data */
@@ -98,7 +100,7 @@ typedef struct entry
 struct s_table
 {
    /* table of hash entries; each of them is a list of synonyms  */
-   struct entry*   entrys; 
+   struct entry*   entrys;
    /* table of timer lists */
    struct timer*   timers;
    /* pointers to items which had ref-count>0 on the first
@@ -111,28 +113,27 @@ struct s_table
 #ifdef THREADS
    pthread_t         timer_thread_id;
 #endif
-   /* current time */ 
-   /* jku: who does set it ? */
-   unsigned int   time;
+   /* current time */
+  unsigned int   time;
 };
 
 
 struct s_table* init_hash_table();
 void free_hash_table( struct s_table* hash_table );
-struct cell* add_Transaction( 
-	struct s_table* hash_table, char* incoming_req_uri, char* from, char* to, 
+struct cell* add_Transaction(
+	struct s_table* hash_table, char* incoming_req_uri, char* from, char* to,
 	char* tag, char* call_id, char* cseq_nr ,char* cseq_method );
-struct cell* lookup_for_Transaction_by_req( 
-	struct s_table* hash_table, char* from, char* to, char* tag, 
+struct cell* lookup_for_Transaction_by_req(
+	struct s_table* hash_table, char* from, char* to, char* tag,
 	char* call_id , char* cseq_nr ,char* cseq_method );
-struct cell* lookup_for_Transaction_by_ACK( 
-	struct s_table* hash_table, char* from, char* to, char* tag, 
+struct cell* lookup_for_Transaction_by_ACK(
+	struct s_table* hash_table, char* from, char* to, char* tag,
 	char* call_id, char* cseq_nr );
-struct cell* lookup_for_Transaction_by_CANCEL( 
-	struct s_table* hash_table,char *req_uri, char* from, char* to, 
+struct cell* lookup_for_Transaction_by_CANCEL(
+	struct s_table* hash_table,char *req_uri, char* from, char* to,
 	char* tag, char* call_id, char* cseq_nr );
-struct cell* lookup_for_Transaction_by_res( 
-	struct s_table* hash_table, char* label, char* from, char* to, 
+struct cell* lookup_for_Transaction_by_res(
+	struct s_table* hash_table, char* label, char* from, char* to,
 	char* tag, char* call_id, char* cseq_nr ,char* cseq_method );
 void unref_Cell( struct cell* p_cell);
 

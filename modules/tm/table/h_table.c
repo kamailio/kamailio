@@ -30,28 +30,28 @@ void free_hash_table( struct s_table *hash_table )
       if ( hash_table->entrys )
       {
 
-	 /* remove the hash table entry by entry */
+         /* remove the hash table entry by entry */
          for( i = 0 ; i<table_entries; i++)
           {
              remove_sem( hash_table->entrys[i].sem );
-	     /* delete all synonyms at hash-collision-slot i */
-	     for( p_cell = hash_table->entrys[i].first_cell; p_cell; p_cell = tmp_cell )
-	     {
-		tmp_cell = p_cell->next_cell;
+             /* delete all synonyms at hash-collision-slot i */
+              for( p_cell = hash_table->entrys[i].first_cell; p_cell; p_cell = tmp_cell )
+              {
+                tmp_cell = p_cell->next_cell;
                 free_cell( p_cell );
               }
           }
           sh_free( hash_table->entrys );
       }
 
-	/* delete all cells on the to-be-deleted list */
-       for( p_cell = hash_table->timers[DELETE_LIST].first_cell; p_cell; p_cell = tmp_cell )
-        {
-                tmp_cell = p_cell->tl[DELETE_LIST].timer_next_cell;
-                remove_timer_from_head( hash_table, p_cell, DELETE_LIST );
-                free_cell( p_cell );
-       }
-	
+     /* delete all cells on the to-be-deleted list */
+      for( p_cell = hash_table->timers[DELETE_LIST].first_cell; p_cell; p_cell = tmp_cell )
+      {
+          tmp_cell = p_cell->tl[DELETE_LIST].timer_next_cell;
+          remove_timer_from_head( hash_table, p_cell, DELETE_LIST );
+          free_cell( p_cell );
+      }
+
       if ( hash_table->timers)
       {
          sh_free( hash_table->timers );
@@ -123,8 +123,8 @@ struct s_table* init_hash_table()
 
 
 
-struct cell* add_Transaction( struct s_table* hash_table, 
-	char* incoming_req_uri, char* from, char* to, char* tag, 
+struct cell* add_Transaction( struct s_table* hash_table,
+	char* incoming_req_uri, char* from, char* to, char* tag,
 	char* call_id, char* cseq_nr ,char* cseq_method )
 {
    struct cell*    new_cell;
@@ -231,7 +231,7 @@ void unref_Cell( struct cell* p_cell)
  *  different than ACK -> perfect To matche is performed.
  *  WARNING : in case of a returned transaction, this transaction is NOT  unref !!!
  */
-struct cell* lookup_for_Transaction_by_req( struct s_table* hash_table, char* from, 
+struct cell* lookup_for_Transaction_by_req( struct s_table* hash_table, char* from,
 	char* to, char* tag, char* call_id , char* cseq_nr ,char* cseq_method )
 {
    struct cell*  p_cell;
@@ -281,7 +281,7 @@ struct cell* lookup_for_Transaction_by_req( struct s_table* hash_table, char* fr
  *  is nor used, only standard search. Being a ACK, a special matching for the tag attr from To header is performed.
  *  WARNING : in case of a returned transaction, this transaction is NOT  unref !!!
  */
-struct cell* lookup_for_Transaction_by_ACK( struct s_table* hash_table, 
+struct cell* lookup_for_Transaction_by_ACK( struct s_table* hash_table,
 	char* from, char* to, char* tag, char* call_id, char* cseq_nr )
 {
    struct cell*  p_cell;
@@ -308,8 +308,8 @@ struct cell* lookup_for_Transaction_by_ACK( struct s_table* hash_table,
       ref_Cell( p_cell );
 
       //is the wanted cell ?
-      if ( p_cell->from_length == from_len && p_cell->to_length == to_len &&p_cell->call_id_length == call_id_len && p_cell->cseq_nr_length == cseq_nr_len && p_cell->cseq_method_length == 3  )
-         if ( !strcmp(p_cell->from,from) && !strcmp(p_cell->to,to) && !strcmp(p_cell->call_id,call_id) && !strcmp(p_cell->cseq_nr,cseq_nr) && !strcmp(p_cell->cseq_method,"ACK")  )
+      if ( p_cell->from_length == from_len && p_cell->to_length == to_len &&p_cell->call_id_length == call_id_len && p_cell->cseq_nr_length == cseq_nr_len  )
+         if ( !strcmp(p_cell->from,from) && !strcmp(p_cell->to,to) && !strcmp(p_cell->call_id,call_id) && !strcmp(p_cell->cseq_nr,cseq_nr)  )
             {
              trans_tag        = p_cell->res_tag;
              trans_tag_len = p_cell->res_tag_length;
@@ -368,8 +368,8 @@ struct cell* lookup_for_Transaction_by_CANCEL( struct s_table* hash_table,
       ref_Cell( p_cell );
 
       //is the wanted cell ?
-      if ( p_cell->incoming_req_uri_length == req_uri_len && p_cell->from_length == from_len && p_cell->to_length == to_len && p_cell->req_tag_length == tag_len && p_cell->call_id_length == call_id_len && p_cell->cseq_nr_length == cseq_nr_len && p_cell->cseq_method_length == 6  )
-         if ( !strcmp(p_cell->incoming_req_uri,req_uri) && !strcmp(p_cell->from,from) && !strcmp(p_cell->to,to) && !strcmp(p_cell->req_tag,tag) && !strcmp(p_cell->call_id,call_id) && !strcmp(p_cell->cseq_nr,cseq_nr) && !strcmp(p_cell->cseq_method,"CANCEL")  )
+      if ( p_cell->incoming_req_uri_length == req_uri_len && p_cell->from_length == from_len && p_cell->to_length == to_len && p_cell->req_tag_length == tag_len && p_cell->call_id_length == call_id_len && p_cell->cseq_nr_length == cseq_nr_len  )
+         if ( !strcmp(p_cell->incoming_req_uri,req_uri) && !strcmp(p_cell->from,from) && !strcmp(p_cell->to,to) && !strcmp(p_cell->req_tag,tag) && !strcmp(p_cell->call_id,call_id) && !strcmp(p_cell->cseq_nr,cseq_nr)  )
               return p_cell;
       //next cell
       tmp_cell = p_cell;
