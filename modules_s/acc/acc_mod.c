@@ -42,6 +42,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -414,7 +415,10 @@ static inline void acc_preparse_req(struct sip_msg *rq)
 	 */
 	parse_headers(rq, HDR_CALLID| HDR_FROM| HDR_TO, 0 );
 	parse_from_header(rq);
-	parse_orig_ruri(rq);
+
+	if (strchr(log_fmt, 'p') || strchr(log_fmt, 'D')) {
+		parse_orig_ruri(rq);
+	}
 }
 
 
