@@ -62,7 +62,7 @@ int basic2status(str basic)
 {
 	int i;
 	for ( i= 0; i < PS_NSTATES; i++ ) {
-		if (str_strcmp(&pstate_name[i], &basic) == 0) {
+		if (str_strcasecmp(&pstate_name[i], &basic) == 0) {
 			return i;
 		}
 	}
@@ -250,7 +250,7 @@ int db_update_presentity(presentity_t* _p)
      if (use_db) {
 	  presence_tuple_t *tuple;
 	  db_key_t query_cols[22];
-	  db_op_t query_ops[2];
+	  db_op_t query_ops[22];
 	  db_val_t query_vals[22];
 	  int n_selectors = 2;
 
@@ -275,8 +275,9 @@ int db_update_presentity(presentity_t* _p)
 	       query_vals[1].nul = 0;
 	       query_vals[1].val.str_val.s = tuple->contact.s;
 	       query_vals[1].val.str_val.len = tuple->contact.len;
-	       LOG(L_ERR, "db_update_presentity:  tuple->contact=%.*s len=%d\n basic=%d", 
-		   tuple->contact.len, tuple->contact.s, tuple->contact.len, tuple->state);
+	       LOG(L_ERR, "db_update_presentity:  tuple->contact=%.*s len=%d\n basic=%d expires=%ld priority=%f", 
+		   tuple->contact.len, tuple->contact.s, tuple->contact.len, tuple->state,
+		   tuple->expires, tuple->priority);
 
 	       {
 		    int n_query_cols = 2;
@@ -368,6 +369,20 @@ int db_update_presentity(presentity_t* _p)
 		    query_vals[n_updates].val.double_val = tuple->location.radius;
 		    n_updates++;
 	       }
+	       if (tuple->priority != 0.0) {
+		    query_cols[n_updates] = "priority";
+		    query_vals[n_updates].type = DB_DOUBLE;
+		    query_vals[n_updates].nul = 0;
+		    query_vals[n_updates].val.double_val = tuple->priority;
+		    n_updates++;
+	       }
+	       if (tuple->expires != 0) {
+		    query_cols[n_updates] = "expires";
+		    query_vals[n_updates].type = DB_DATETIME;
+		    query_vals[n_updates].nul = 0;
+		    query_vals[n_updates].val.time_val = tuple->expires;
+		    n_updates++;
+	       }
 
 	       if (n_updates > (sizeof(query_cols)/sizeof(db_key_t)))
 		    LOG(L_ERR, "too many update values. n_selectors=%d, n_updates=%d dbf.update=%p\n", 
@@ -388,7 +403,7 @@ int db_update_presentity(presentity_t* _p)
 /*
  * Create a new presence_tuple
  */
-int new_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
+int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence_tuple_t ** _t)
 {
      presence_tuple_t* tuple;
      int size = 0;
@@ -409,6 +424,7 @@ int new_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
      memset(tuple, 0, sizeof(presence_tuple_t));
 
 
+     tuple->state = PS_UNKNOWN;
      tuple->contact.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_STR_LEN + TUPLE_STATUS_STR_LEN;
      tuple->status.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_STR_LEN;
      strncpy(tuple->contact.s, _contact->s, _contact->len);
@@ -419,6 +435,8 @@ int new_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
      tuple->location.floor.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_FLOOR_OFFSET;
      tuple->location.room.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_ROOM_OFFSET;
      tuple->location.packet_loss.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_PACKET_LOSS_OFFSET;
+     tuple->expires = expires;
+     tuple->priority = default_priority;
 
      *_t = tuple;
 
@@ -443,7 +461,7 @@ int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
 	tuple = _p->tuples;
 	LOG(L_ERR, "find_presence_tuple: _p=%p _p->tuples=%p\n", _p, _p->tuples);
 	while (tuple) {
-		if (str_strcmp(&tuple->contact, _contact) == 0) {
+		if (str_strcasecmp(&tuple->contact, _contact) == 0) {
 			*_t = tuple;
 			return 0;
 		}
@@ -517,7 +535,8 @@ void print_presentity(FILE* _f, presentity_t* _p)
 
 int timer_presentity(presentity_t* _p)
 {
-	watcher_t* ptr, *t;
+	watcher_t* watcher, *t;
+	presence_tuple_t *tuple;
 
 	if (_p && _p->flags)
 	     LOG(L_ERR, "timer_presentity: _p=%p %s flags=%x watchers=%p\n", _p, _p->uri.s, _p->flags, _p->watchers);
@@ -551,39 +570,49 @@ int timer_presentity(presentity_t* _p)
 		notify_watchers(_p);
 	}
 
-	ptr = _p->watchers;
+	tuple = _p->tuples;
+	while (tuple) {
+	  presence_tuple_t *next_tuple = tuple->next;
+	  if (tuple->expires < act_time) {
+	    LOG(L_ERR, "Expiring tuple %.*s\n", tuple->contact.len, tuple->contact.s);
+	    remove_presence_tuple(_p, tuple);
+	  }
+	  tuple = next_tuple;
+	}
+
+	watcher = _p->watchers;
 
 	if (0) print_presentity(stdout, _p);
-	while(ptr) {
-	        if (ptr->expires <= act_time) {
-		  LOG(L_ERR, "Removing watcher %.*s\n", ptr->uri.len, ptr->uri.s);
-			ptr->expires = 0;
-			send_notify(_p, ptr);
-			t = ptr;
-			ptr = ptr->next;
+	while(watcher) {
+	        if (watcher->expires <= act_time) {
+		  LOG(L_ERR, "Removing watcher %.*s\n", watcher->uri.len, watcher->uri.s);
+			watcher->expires = 0;
+			send_notify(_p, watcher);
+			t = watcher;
+			watcher = watcher->next;
 			remove_watcher(_p, t);
 			free_watcher(t);
 			continue;
 		}
 		
-		ptr = ptr->next;
+		watcher = watcher->next;
 	}
 
-	ptr = _p->winfo_watchers;
+	watcher = _p->winfo_watchers;
 
-	while(ptr) {
-	        if (ptr->expires <= act_time) {
-		  LOG(L_ERR, "Removing watcher %.*s\n", ptr->uri.len, ptr->uri.s);
-			ptr->expires = 0;
-			send_notify(_p, ptr);
-			t = ptr;
-			ptr = ptr->next;
+	while(watcher) {
+	        if (watcher->expires <= act_time) {
+		  LOG(L_ERR, "Removing watcher %.*s\n", watcher->uri.len, watcher->uri.s);
+			watcher->expires = 0;
+			send_notify(_p, watcher);
+			t = watcher;
+			watcher = watcher->next;
 			remove_winfo_watcher(_p, t);
 			free_watcher(t);
 			continue;
 		}
 		
-		ptr = ptr->next;
+		watcher = watcher->next;
 	}
 	return 0;
 }
@@ -611,23 +640,23 @@ int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, docty
  */
 int remove_watcher(presentity_t* _p, watcher_t* _w)
 {
-	watcher_t* ptr, *prev;
+	watcher_t* watcher, *prev;
 
-	ptr = _p->watchers;
+	watcher = _p->watchers;
 	prev = 0;
 	
-	while(ptr) {
-		if (ptr == _w) {
+	while(watcher) {
+		if (watcher == _w) {
 			if (prev) {
-				prev->next = ptr->next;
+				prev->next = watcher->next;
 			} else {
-				_p->watchers = ptr->next;
+				_p->watchers = watcher->next;
 			}
 			return 0;
 		}
 
-		prev = ptr;
-		ptr = ptr->next;
+		prev = watcher;
+		watcher = watcher->next;
 	}
 	
 	     /* Not found */
@@ -701,23 +730,23 @@ int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package,
  */
 int remove_winfo_watcher(presentity_t* _p, watcher_t* _w)
 {
-	watcher_t* ptr, *prev;
+	watcher_t* watcher, *prev;
 
-	ptr = _p->winfo_watchers;
+	watcher = _p->winfo_watchers;
 	prev = 0;
 	
-	while(ptr) {
-		if (ptr == _w) {
+	while(watcher) {
+		if (watcher == _w) {
 			if (prev) {
-				prev->next = ptr->next;
+				prev->next = watcher->next;
 			} else {
-				_p->winfo_watchers = ptr->next;
+				_p->winfo_watchers = watcher->next;
 			}
 			return 0;
 		}
 
-		prev = ptr;
-		ptr = ptr->next;
+		prev = watcher;
+		watcher = watcher->next;
 	}
 	
 	     /* Not found */
@@ -774,7 +803,7 @@ resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri)
 	resource_list_t *last = NULL;
 	fprintf(stderr, "resource_lists_append_unique: list=%p uri=%.*s\n", list, uri->len, uri->s);
 	while (list) {
-		if (str_strcmp(&list->uri, uri) == 0)
+		if (str_strcasecmp(&list->uri, uri) == 0)
 		     return head;
 		last = list;
 		list = list->next;
@@ -801,7 +830,7 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
 	resource_list_t *last = NULL;
 	resource_list_t *next = NULL;
 	while (list) {
-		if (str_strcmp(&list->uri, uri) == 0)
+		if (str_strcasecmp(&list->uri, uri) == 0)
 			goto remove;
 		last = list;
 		list = list->next;
