@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ */
+
+
 #include "sip_msg.h"
 #include "../../dprint.h"
 #include "../../mem.h"

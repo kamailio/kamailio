@@ -1,3 +1,9 @@
+/*
+ * $Id$
+ */
+
+
+
 #include "hash_func.h"
 #include "../../dprint.h"
 

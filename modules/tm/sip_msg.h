@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ */
+
+
 #ifndef _SIP_MSG_H
 #define _SIP_MSG_H
 

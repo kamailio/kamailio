@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ */
+
+
 #include "h_table.h"
 #include "../../dprint.h"
 #include "sh_malloc.h"

@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ */
+
+
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"

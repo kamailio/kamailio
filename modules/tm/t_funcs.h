@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ */
+
+
 #ifndef _T_FUNCS_H
 #define _T_FUNCS_H
 

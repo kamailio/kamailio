@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ */
+
+
 #ifndef _H_TABLE_H
 #define _H_TABLE_H
 
