@@ -27,9 +27,10 @@
 
 /**
  *
- * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
- * 2003-01-23 switched from t_uac to t_uac_dlg, by dcm
- * 
+ * 2003-02-28  protocolization of t_uac_dlg completed (jiri)
+ * 2003-01-23  switched from t_uac to t_uac_dlg, by dcm
+ * 2003-03-11  updated to the new module interface (andrei)
+ *             removed non-constant intializers to some strs (andrei)
  */
 
 #include <stdio.h>
@@ -150,52 +151,29 @@ void m_clean_silo(unsigned int ticks, void *);
 static void m_tm_callback( struct cell *t, struct sip_msg *msg,
 	int code, void *param);
 
+static cmd_export_t cmds[]={
+	{"m_store",  m_store, 0, 0},
+	{"m_dump",   m_dump,  0, 0},
+	{0,0,0,0}
+};
+
+
+static param_export_t params[]={
+	{"db_url",       STR_PARAM, &db_url},
+	{"db_table",     STR_PARAM, &db_table},
+	{"registrar",    STR_PARAM, &registrar},
+	{"expire_time",  INT_PARAM, &expire_time},
+	{"check_time",   INT_PARAM, &check_time},
+	{"clean_period", INT_PARAM, &clean_period},
+	{0,0,0}
+};
+
+
 /** module exports */
 struct module_exports exports= {
 	"msilo",
-	(char*[]){
-		"m_store",
-		"m_dump"
-	},
-	(cmd_function[]){
-		m_store,
-		m_dump
-	},
-	(int[]){
-		0,
-		0
-	},
-	(fixup_function[]){
-		0,
-		0
-	},
-	2,
-
-	(char*[]) {   /* Module parameter names */
-		"db_url",
-		"db_table",
-		"registrar",
-		"expire_time",
-		"check_time",
-		"clean_period"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&db_url,
-		&db_table,
-		&registrar,
-		&expire_time,
-		&check_time,
-		&clean_period
-	},
-	6,      /* Number of module paramers */
+	cmds,
+	params,
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -606,11 +584,13 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	int i, db_no_cols = IDX_NO, db_no_keys = 1, *msg_id, mid, n;
 	char hdr_buf[1024], body_buf[1024], *p;
 
-	str str_vals[IDX_NO], *sp, ctaddr, 
-			hdr_str  = { hdr_buf, 1024 }, 
-			body_str = { body_buf, 1024 };
+	str str_vals[IDX_NO], *sp, ctaddr, hdr_str , body_str;
 
 	DBG("MSILO:m_dump: ------------ start ------------\n");
+	hdr_str.s=hdr_buf;
+	hdr_str.len=1024;
+	body_str.s=body_buf;
+	body_str.len=1024;
 	
 	// check for TO header 
 	if(parse_headers(msg, HDR_TO, 0)==-1 || !msg->to || !msg->to->body.s)

@@ -25,6 +25,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-11  fixed some SYSV semaphore problems on solaris (andrei)
+ */
 
 
 #include <errno.h>
@@ -47,7 +51,7 @@ static int init_semaphore_set( int size )
 {
 	int new_semaphore, i;
 
-	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
+	new_semaphore=semget ( IPC_PRIVATE, size, 0700 );
 	if (new_semaphore==-1) {
 		DBG("DEBUG:init_semaphore_set(%d):  failure to allocate a"
 					" semaphore: %s\n", size, strerror(errno));
@@ -64,7 +68,7 @@ static int init_semaphore_set( int size )
 		if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
 			DBG("DEBUG:init_semaphore_set:  failure to "
 				"initialize a semaphore: %s\n", strerror(errno));
-			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
+			if (semctl( new_semaphore, 0 , IPC_RMID , 0 )==-1)
 				DBG("DEBUG:init_semaphore_set:  failure to release"
 					" a semaphore\n");
 			return -2;
@@ -151,7 +155,7 @@ void destroy_semaphores(smart_lock *sem_set)
 		" properly (no sibling check)\n");
 	/* sibling double-check missing here; install a signal handler */
 
-	if (sem_set && semctl( sem_set[0].entry_semaphore,0,IPC_RMID,0)==-1)
+	if (sem_set && semctl( sem_set[0].semaphore_set,0,IPC_RMID,0)==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, entry_semaphore cleanup failed\n");
 #endif
 	shm_free((void*)sem_set);
