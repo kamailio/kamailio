@@ -324,8 +324,8 @@ static int ul_add(FILE* pipe, char* response_file)
 			   user.len, user.s, contact.len, contact.s, table.len, table.s);
 		return 1;
 	} else {
-		fifo_reply(response_file, "400 Table \'%.*s\' Not Found\n", 
-			table.len, table.s);
+		fifo_reply(response_file, "400 Table \'%.*s\' not found in memory, use save(\'%.*s\') or lookup(\'%.*s\') in the configuration script first\n", 
+			table.len, table.s, table.len, table.s, table.len, table.s);
 		return 1;
 	}
 }
