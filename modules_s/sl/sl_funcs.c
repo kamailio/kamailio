@@ -71,10 +71,6 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 {
 	char               *buf;
 	unsigned int       len;
-
-/* changes after introduction of v6; -jiri
-	struct sockaddr_in to;
-*/
 	union sockaddr_union to;
 	str suffix_source[3];
 	struct socket_info* send_sock;
