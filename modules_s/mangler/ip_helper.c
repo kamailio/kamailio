@@ -1,4 +1,3 @@
-//ddadaa
 /*
  * Sdp mangler module
  *

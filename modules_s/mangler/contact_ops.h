@@ -56,7 +56,7 @@ int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip);
 int decode_contact (struct sip_msg *msg, char *separator,char *unused);
 
 
-int free_uri_format (struct uri_format format);
+int free_uri_format (struct uri_format *format);
 	
 int encode2format (str uri, struct uri_format *format);
 int decode2format (str uri, char separator, struct uri_format *format);

@@ -198,19 +198,21 @@ decode_contact (struct sip_msg *msg, char *sep,char *unused)
 
 
 int
-free_uri_format (struct uri_format format)
+free_uri_format (struct uri_format *format)
 {
 	printf("Start of Dealocating format \n");
-	if (format.username.len > 0)
-		pkg_free (format.username.s);
-	if (format.password.len > 0)
-		pkg_free (format.password.s);
-	if (format.ip.len > 0)
-		pkg_free (format.ip.s);
-	if (format.port.len > 0)
-		pkg_free (format.port.s);
-	if (format.protocol.len > 0)
-		pkg_free (format.protocol.s);
+	if (format->username.len > 0)
+		{printf("1 \n");pkg_free (format->username.s);
+		}
+	if (format->password.len > 0)
+		{printf("2 \n");pkg_free (format->password.s);}
+	if (format->ip.len > 0)
+		{printf("3 \n");pkg_free (format->ip.s);}
+	if (format->port.len > 0)
+		{printf("4 \n");pkg_free (format->port.s);}
+	if (format->protocol.len > 0)
+		{printf("5 \n");pkg_free (format->protocol.s);}
+	memset(format,0,sizeof(struct uri_format));
 	printf("End of Dealocating format \n");fflush(stdout);
 	return 0;
 }
@@ -262,10 +264,12 @@ encode2format (str uri, struct uri_format *format)
 		return foo;
 	}
 
+	/* fields are directly pointing to parts of the message.They must not be deallocated */
 	(*format).username = sipUri.user;
 	(*format).password = sipUri.passwd;
 	(*format).ip = sipUri.host;
 	(*format).port = sipUri.port;
+	
 
 	string = sipUri.params.s;
 	foo = sipUri.params.len;
@@ -291,7 +295,8 @@ encode2format (str uri, struct uri_format *format)
 		else
 			break;
 	}
-
+	
+	
 	//fprintf (stdout, "protocol=%.*s\n", (*format).protocol.len,(*format).protocol.s);
 	//fprintf (stdout, "first=%d second=%d\n", (*format).first,(*format).second);
 	
@@ -357,8 +362,8 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 		//we have on pos[res] a NULL octet
 		//it will be NULL terminated
 		//I can do hacks like writing fewer octets and overwriting the last one
-	
 	*/
+	
 	memcpy (pos, uri.s, format.first);	// copy all till sip: inclusive 
 	pos = pos + format.first;
 	
@@ -405,16 +410,17 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	memcpy (pos, public_ip, strlen (public_ip));
 	pos = pos + strlen (public_ip);	// might be optimezed by gcc.Will see 
 	memcpy (pos, uri.s + format.second, uri.len - format.second);
-		
-	fprintf (stdout, "Adding2 [%d] ->%.*s\n", uri.len - format.second,uri.len - format.second, uri.s + format.second);
 	
-	free_uri_format (format);
+	fprintf (stdout, "Adding2 [%d] ->%.*s\n", uri.len - format.second,uri.len - format.second, uri.s + format.second);
+
+	/* Because called parse_uri format contains pointers to the inside of msg,must not deallocate */
+	/* free_uri_format (&format);*/
 
 
 	fprintf (stdout, "NEW NEW uri is->[%.*s]\n", (*result).len, (*result).s);
 	return 0;
 error2:
-	free_uri_format (format);
+	/*free_uri_format (&format);*/
 	return -10;
 }
 
@@ -557,7 +563,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 	return 0;
 error1:
 	
-	free_uri_format (*format);
+	free_uri_format (format);
 	return foo;
 
 }
@@ -657,13 +663,13 @@ decode_uri (str uri, char separator, str * result)
 	fflush (stdout);
 	memcpy (pos, uri.s + format.second, uri.len - format.second);	/* till end: */
 
-	free_uri_format (format);
+	free_uri_format (&format);
 
 	fprintf (stdout, "New decoded uri is->[%.*s]\n", (*result).len,
 		 (*result).s);
 	return 0;
 error3:
-	free_uri_format (format);
+	free_uri_format (&format);
 	return foo;
 
 }
