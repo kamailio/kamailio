@@ -306,9 +306,10 @@
 	    <title>Obtaining Technical Assistance</title>
 		<para>
 			iptel.org offers qualified professional services. We help you to 
-			plan your network, configure your server, set up applications, 
-			integrate SIP components with each other, and set up features
-			such as redundancy or multidomain support. Our customer alert services
+			plan your network, configure your server, build applications, 
+			integrate SIP components with each other, and set up advanced features
+			such as redundancy, multidomain support, CLID interworking and others
+			not described in this document. Our customer alert services
 			notifies you on all new features and code fixes. We help you to
 			solve operational troubles in short time and keep you updated on
 			latest operational practices. Ask info@iptel.org for
