@@ -1217,12 +1217,14 @@ int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, un
 	{
 		LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: "
 		  "cannot resolve host\n");
+		free_uri(&parsed_uri);
 		goto error;
 	}
 	memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
 
 
 success:
+	free_uri(&parsed_uri);
 	*param_ip = ip;
 	*param_port = port;
 	return 0;
