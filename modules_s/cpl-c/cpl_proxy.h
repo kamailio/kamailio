@@ -158,7 +158,7 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 		" ---------------> negativ reply from proxy was sent\n");
 
 	intr->flags |= CPL_PROXY_DONE;
-	intr->msg = t->uas.request;
+	intr->msg = cpl_tmb.t_get_fake_req();
 
 	/* if it's a redirect-> do I have to added to the location set ? */
 	if (intr->proxy.recurse && code/100==3) {
