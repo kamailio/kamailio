@@ -27,18 +27,23 @@
  * History:
  * ---------
  *  2004-07-21  created (bogdan)
- *  2004-10-09  interface more flexibil - more function available (bogdan)
+ *  2004-10-09  interface more flexible - more function available (bogdan)
  *  2004-11-07  AVP string values are kept 0 terminated (bogdan)
+ *  2004-11-14  global aliases support added
  */
 
 
 #include <assert.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "sr_module.h"
 #include "dprint.h"
 #include "str.h"
 #include "ut.h"
 #include "mem/shm_mem.h"
+#include "mem/mem.h"
 #include "usr_avp.h"
 
 
@@ -53,7 +58,13 @@ struct str_str_data {
 	str  val;
 };
 
+struct avp_galias {
+	str alias;
+	struct avp_spec  avp;
+	struct avp_galias *next;
+};
 
+static struct avp_galias *galiases = 0;
 static struct usr_avp *global_avps = 0;
 static struct usr_avp **crt_avps  = &global_avps;
 
@@ -318,7 +329,7 @@ inline void destroy_avp_list( struct usr_avp **list )
 {
 	struct usr_avp *avp, *foo;
 
-	DBG("DEBUG:destroy_avp_list: destroying list %p\n",*list);
+	DBG("DEBUG:destroy_avp_list: destroying list %p\n", *list);
 	avp = *list;
 	while( avp ) {
 		foo = avp;
@@ -340,7 +351,6 @@ void reset_avps( )
 }
 
 
-
 struct usr_avp** set_avp_list( struct usr_avp **list )
 {
 	struct usr_avp **foo;
@@ -351,4 +361,223 @@ struct usr_avp** set_avp_list( struct usr_avp **list )
 	crt_avps = list;
 	return foo;
 }
+
+
+
+
+/********* global aliases functions ********/
+
+static inline int check_avp_galias(str *alias, int type, int_str avp_name)
+{
+	struct avp_galias *ga;
+
+	type &= AVP_NAME_STR;
+
+	for( ga=galiases ; ga ; ga=ga->next ) {
+		/* check for duplicated alias names */
+		if ( alias->len==ga->alias.len &&
+		(strncasecmp( alias->s, ga->alias.s, alias->len)==0) )
+			return -1;
+		/*check for duplicated avp names */
+		if (type==ga->avp.type) {
+			if (type&AVP_NAME_STR){
+				if (avp_name.s->len==ga->avp.name.s->len &&
+				(strncasecmp(avp_name.s->s, ga->avp.name.s->s,
+							 					avp_name.s->len)==0) )
+					return -1;
+			} else {
+				if (avp_name.n==ga->avp.name.n)
+					return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+
+int add_avp_galias(str *alias, int type, int_str avp_name)
+{
+	struct avp_galias *ga;
+
+	if ((type&AVP_NAME_STR && (!avp_name.s || !avp_name.s->s ||
+								!avp_name.s->len)) ||!alias || !alias->s ||
+		!alias->len ){
+		LOG(L_ERR, "ERROR:add_avp_galias: null params received\n");
+		goto error;
+	}
+
+	if (check_avp_galias(alias,type,avp_name)!=0) {
+		LOG(L_ERR, "ERROR:add_avp_galias: duplicate alias/avp entry\n");
+		goto error;
+	}
+
+	ga = (struct avp_galias*)pkg_malloc( sizeof(struct avp_galias) );
+	if (ga==0) {
+		LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
+		goto error;
+	}
+
+	ga->alias.s = (char*)pkg_malloc( alias->len+1 );
+	if (ga->alias.s==0) {
+		LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
+		goto error1;
+	}
+	memcpy( ga->alias.s, alias->s, alias->len);
+	ga->alias.len = alias->len;
+
+	ga->avp.type = type&AVP_NAME_STR;
+
+	if (type&AVP_NAME_STR) {
+		ga->avp.name.s = (str*)pkg_malloc( sizeof(str)+avp_name.s->len+1 );
+		if (ga->avp.name.s==0) {
+			LOG(L_ERR, "ERROR:add_avp_galias: no more pkg memory\n");
+			goto error2;
+		}
+		ga->avp.name.s->s = ((char*)ga->avp.name.s)+sizeof(str);
+		ga->avp.name.s->len = avp_name.s->len;
+		memcpy( ga->avp.name.s->s, avp_name.s->s, avp_name.s->len);
+		ga->avp.name.s->s[avp_name.s->len] = 0;
+		DBG("DEBUG:add_avp_galias: registering <%s> for avp name <%s>\n",
+			ga->alias.s, ga->avp.name.s->s);
+	} else {
+		ga->avp.name.n = avp_name.n;
+		DBG("DEBUG:add_avp_galias: registering <%s> for avp id <%d>\n",
+			ga->alias.s, ga->avp.name.n);
+	}
+
+	ga->next = galiases;
+	galiases = ga;
+
+	return 0;
+error2:
+	pkg_free(ga->alias.s);
+error1:
+	pkg_free(ga);
+error:
+	return -1;
+}
+
+
+struct avp_spec *lookup_avp_galias(char *alias, int len)
+{
+	struct avp_galias *ga;
+
+	for( ga=galiases ; ga ; ga=ga->next )
+		if (len==ga->alias.len && (strncasecmp( alias, ga->alias.s, len)==0) )
+			return &ga->avp;
+
+	return 0;
+}
+
+
+/* parsing functions */
+
+int parse_avp_name( str *name, int *type, int_str *avp_name)
+{
+	unsigned int id;
+	char c;
+
+	if (name->len>=2 && name->s[1]==':') {
+		c = name->s[0];
+		name->s += 2;
+		name->len -= 2;
+		if (name->len==0)
+			goto error;
+		switch (c) {
+			case 's': case 'S':
+				*type = AVP_NAME_STR;
+				avp_name->s = name;
+				break;
+			case 'i': case 'I':
+				*type = 0;
+				if (str2int( name, &id)!=0) {
+					LOG(L_ERR, "ERROR:parse_avp_name: invalid ID "
+						"<%.*s> - not a number\n", name->len, name->s);
+					goto error;
+				}
+				avp_name->n = (int)id;
+				break;
+			default:
+				LOG(L_ERR, "ERROR:parse_avp_name: unsupported type "
+					"[%c]\n", c);
+				goto error;
+		}
+	} else {
+		/*default is string name*/
+		*type = AVP_NAME_STR;
+		avp_name->s = name;
+	}
+
+	return 0;
+error:
+	return -1;
+}
+
+
+int add_avp_galias_str(char *alias_definition)
+{
+	int_str avp_name;
+	char *s;
+	str  name;
+	str  alias;
+	int  type;
+
+	s = alias_definition;
+	while(*s && isspace((int)*s))
+		s++;
+
+	while (*s) {
+		/* parse alias name */
+		alias.s = s;
+		while(*s && *s!=';' && !isspace((int)*s) && *s!='=')
+			s++;
+		if (alias.s==s || *s==0 || *s==';')
+			goto parse_error;
+		alias.len = s-alias.s;
+		while(*s && isspace((int)*s))
+			s++;
+		/* equal sign */
+		if (*s!='=')
+			goto parse_error;
+		s++;
+		while(*s && isspace((int)*s))
+			s++;
+		/* avp name */
+		name.s = s;
+		while(*s && *s!=';' && !isspace((int)*s))
+			s++;
+		if (name.s==s)
+			goto parse_error;
+		name.len = s-name.s;
+		while(*s && isspace((int)*s))
+			s++;
+		/* check end */
+		if (*s!=0 && *s!=';')
+			goto parse_error;
+		if (*s==';') {
+			for( s++ ; *s && isspace((int)*s) ; s++ );
+			if (*s==0)
+				goto parse_error;
+		}
+
+		if (parse_avp_name( &name, &type, &avp_name)!=0) {
+			LOG(L_ERR, "ERROR:add_avp_galias_str: <%.*s> not a valid AVP "
+				"name\n", name.len, name.s);
+			goto error;
+		}
+
+		if (add_avp_galias( &alias, type, avp_name)!=0) {
+			LOG(L_ERR, "ERROR:add_avp_galias_str: add global alias failed\n");
+			goto error;
+		}
+	} /*end while*/
+
+	return 0;
+parse_error:
+	LOG(L_ERR, "ERROR:add_avp_galias_str: parse error in <%s> around "
+		"pos %ld\n", alias_definition, (long)(s-alias_definition));
+error:
+	return -1;
+}
+
 

@@ -27,6 +27,7 @@
  * History:
  * ---------
  *  2004-07-21  created (bogdan)
+ *  2004-11-14  global aliases support added
  */
 
 #ifndef _SER_URS_AVP_H_
@@ -41,13 +42,19 @@ typedef union {
 } int_str;
 
 
-
 struct usr_avp {
 	unsigned short id;
 	unsigned short flags;
 	struct usr_avp *next;
 	void *data;
 };
+
+
+struct avp_spec {
+	int type;
+	int_str name;
+};
+
 
 #define AVP_NAME_STR     (1<<0)
 #define AVP_VAL_STR      (1<<1)
@@ -74,6 +81,11 @@ str* get_avp_name(struct usr_avp *avp);
 struct usr_avp** set_avp_list( struct usr_avp **list );
 struct usr_avp** get_avp_list( );
 
+/* global alias functions (manipulation and parsing)*/
+int add_avp_galias_str(char *alias_definition);
+struct avp_spec *lookup_avp_galias(char *alias, int len);
+int add_avp_galias(str *alias, int type, int_str avp_name);
+int parse_avp_name( str *name, int *type, int_str *avp_name);
 
 #endif
 

@@ -1,13 +1,12 @@
 $Id$
 
 ( - todo, x - done)
-- apply & modify Maxim's server_name patch
-- change subst_run/str to return error (different from not found)
-- change subst_user as on serdev
-- tm : fake_env: fake also bind_address (else the default will be used
+x change subst_run/str to return error (different from not found)
+x change subst_user as on serdev
+x tm : fake_env: fake also bind_address (else the default will be used
  in the failure route)
 - [core] parse_uri support for new uri params
-- [core] on sig_child, kill the processes if they don't exit in a 
+x [core] on sig_child, kill the processes if they don't exit in a 
   reasonable time
 - [doc] document force_rport()
 - [fifo] fix fgets error handling (it does not set errno always,
@@ -17,9 +16,9 @@ $Id$
 - [mem] qm_compact_frags (compacts frags if possible), keep a 
         fragment count/bucket and if too much mem. is blocked in one bucket
         de-frag.
-- [mem] investigate: don't produce frag if frag size < request
+x [mem] investigate: don't produce frag if frag size < request
       (should reduce the unrequested fragments number)
-- [mem] investigate: keep an used/unused flag per fragment, on free
+x [mem] investigate: keep an used/unused flag per fragment, on free
       check if neighboring frags were not used and if so defragment
 - [timer] multiple timers? at least ticks should no be affected by the amount
    of work done in the timer handlers
@@ -67,7 +66,7 @@ x extend listen and alias to include port numbers and protocol:
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
 x added set_advertised_{address,port} -- was: add force_via, force_srcip a.s.o
 (the advertised addresses should be overwritable from the script).
-- ? add force_outbound_socket(ip)? (choose an apropriate socket from the
+x ? add force_outbound_socket(ip)? (choose an apropriate socket from the
  listen list for sending the msg; works on udp only)
 
 release:
@@ -144,7 +143,7 @@ x fix via address someday
 x forward to received= if present
 - make it easier to register a statically linkable module.
 x add support for -u user and -g group (not only -u uid, -g uid)
-- change uid/gid after opening the sockets
+x change uid/gid after opening the sockets
 - exec improvments (add format strings to it)
 x command line switch for checking the config file syntax
 - config file version (a la sendmail)
