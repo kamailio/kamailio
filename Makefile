@@ -19,7 +19,11 @@
 #  2003-05-30  added extra_defs & EXTRA_DEFS
 #               Makefile.defs force-included to allow recursive make
 #               calls -- see comment (andrei)
-#  2003-06-02   make tar changes -- unpacks in $NAME-$RELEASE  (andrei)
+#  2003-06-02  make tar changes -- unpacks in $NAME-$RELEASE  (andrei)
+#  2003-06-03  make install-cfg will properly replace the module path
+#               in the cfg (re: /usr/.*lib/ser/modules)
+#              ser.cfg.default is installed only if there is a previous
+#               cfg. -- fixes packages containing ser.cfg.default (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -227,13 +231,14 @@ $(man-prefix)/$(man-dir)/man8:
 
 $(man-prefix)/$(man-dir)/man5:
 		mkdir -p $(man-prefix)/$(man-dir)/man5
-
+		
+# note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
 install-cfg: $(cfg-prefix)/$(cfg-dir)
-		sed -e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
+		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
 			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.default
 		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.default
 		if [ ! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
-			cp -p $(cfg-prefix)/$(cfg-dir)ser.cfg.default \
+			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.default \
 				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
 		fi
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
