@@ -1,27 +1,35 @@
-#include "lock.h"
+#include <errno.h>
 
-/* we implement locking using semaphores here; we generate a single
-   semaphore set, try to allocate as many semaphores in it as OS
-   supports and keep them in the semphore set; it's application's
-   reponsibility to decide how to distribute semaphores across
-   its data set; if we are happy and have many semaphores, every
-   mutexed piece of data will get its own semaphore; not likely
-   though, as typically this number is low and number of sync'ed
-   data items is very high
+#include "lock.h"
+#include "globals.h"
+#include "timer.h"
+
+/* we implement mutex here using System V semaphores; as number of
+   sempahores is limited and number of synchronized elements
+   high, we partition the SER elements and share semaphores in
+   each of them; we try to use as much semaphores as OS
+   gives us for finest granularity; perhaps later we will
+   add some arch-dependent mutex code that will not have
+   ipc's dimensioning limitations and will provide us with
+   fast unlimited mutexing
+
+   we allocate the locks according to the following plans:
+
+   1) we try to allocate as many semaphores as possible
+   2) we grab first NR_OF_TIMER_LISTS semaphores for the
+      timer list
+   3) we take the remainder of semaphores R, and split
+      the hash-table table_entries into R partitiones;
+      within each partition, each entry shares the same
+      semaphore
+   4) every cell shares the same semaphore as its entry
+
 */
 
 /* keep the semaphore here */
 int semaphore;
-
-/* after initialization I will certainly want to
-   dimension partitioning; I need now hash_table_size
-   + number_of_lists locks; the customer of this
-   procedure should adapt hash_table_size
-   accordingly
-
-        probing should return ENOSPC
-*/
-
+/* and the number of semaphores */
+int sem_nr;
 
 
 /* intitialize the locks; return 0 for unlimited number of locks
@@ -35,15 +43,20 @@ int semaphore;
 int lock_initialize()
 {
 	int i;
-	int probe=12;
-	/* probing should return ENOSPC */
-	semaphore=semget ( IPC_PRIVATE, probe, IPC_CREAT | IPC_PERMISSIONS );
+	
+	sem_nr=12;
+	/* probing should return if too big:
+		Solaris: EINVAL
+		Linux: ENOSPC
+	*/
+	semaphore=semget ( IPC_PRIVATE, sem_nr, IPC_CREAT | IPC_PERMISSIONS );
 	/* if we failed to initialize, return */
 	if (semaphore==-1) return -1;
 
+
 	/* initialize semaphores */
 	
-	for (i=0; i<probe; i++) {
+	for (i=0; i<sem_nr; i++) {
 		union semun {
 			int val;
 			struct semid_ds *buf;
@@ -53,72 +66,101 @@ int lock_initialize()
 		argument.val = +1;
 		if (semctl( semaphore , i , SETVAL , argument )==-1) {
 			/* return semaphore */
+			DBG("failed to initialize semaphore\n");
 			lock_cleanup();
 			return -1;
 		}
 	}
 	
 	/* return number of  sempahores in the set */
-	return probe;
+	return sem_nr;
 }
 
 /* remove the semaphore set from system */
 int lock_cleanup()
 {
-
 	/* that's system-wide; all othe processes trying to use
 	   the semaphore will fail! call only if it is for sure
 	   no other process lives 
 	*/
 
-	/* sibling double-check missing here */
+	DBG("clean-up still not implemented properly\n");
+	/* sibling double-check missing here; install a signal handler */
+
 	return  semctl( semaphore, 0 , IPC_RMID , 0 ) ;
 }
 
 /* lock sempahore s */
 int lock( lock_t s )
 {
-/* don't forget EINTER */
 	return change_sem( s, -1 );
 }
-
+	
 int unlock( lock_t s )
 {
-	return change_sem( s, 1 );
-	
+	return change_sem( s, +1 );
 }
 
 
 int change_semaphore( int semaphore_id , int val )
 {
    struct sembuf pbuf;
+   int r;
 
    pbuf.sem_num = semaphore_id ;
    pbuf.sem_op =val;
    pbuf.sem_flg = 0;
 
-   return semop( semaphore , &pbuf ,  1 /* just 1 op */ );
+tryagain:
+   r=semop( semaphore , &pbuf ,  1 /* just 1 op */ );
+
+   if (r==-1) {
+	printf("ERROR occured in change_semaphore: %d, %d, %s\n", 
+		semaphore_id, val, strerror(errno));
+	if (errno=EINTR) {
+		DBG("signal received in a semaphore\n");
+		goto tryagain;
+	}
+    }
+   return r;
 }
 
-struct s_table;
-struct timer;
-struct cell;
+int init_cell_lock( struct cell *cell )
+{
+	/* just advice which of the available semaphores to use;
+	   specifically, all cells in an entry use the same one
+        */
+	cell->lock=cell->hash_index / sem_nr + NR_OF_TIMER_LISTS;
+}
 
+int init_entry_lock( struct entry *entry )
+{
+	/* just advice which of the available semaphores to use;
+	   specifically, all entries are partitioned into as
+	   many partitions as number of available semaphors allows
+        */
+	entry->lock= (entry - hash_table ) / sizeof(struct entry) + NR_OF_TIMER_LISTS;
 
-init_cell_lock( struct cell *cell )
-{}
-init_entry_lock( struct entry *entry )
-{}
-init_timerlist_lock( struct timer *timerlist )
-{}
+}
+int init_timerlist_lock( struct timer *timerlist )
+{
+	/* each timer list has its own semaphore */
+	entry->lock=timerlist->id;
+}
 
-release_cell_lock( struct cell *cell )
-{}
-release_entry_lock( struct entry *entry )
-{}
+int release_cell_lock( struct cell *cell )
+{
+	/* don't do anything here -- the init_*_lock procedures
+	   just advised on usage of shared semaphores but did not 
+	   generate them
+	*/
+}
+int release_entry_lock( struct entry *entry )
+{
+	/* the same as above */
+}
 
 release_timerlist_lock( struct timer *timerlist )
-{}
-
-
-
+{
+	/* the same as above */
+}

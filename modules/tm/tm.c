@@ -3,6 +3,8 @@
 
 #include "tm.h"
 
+struct s_table*  hash_table;
+
 int request_received( struct s_table* hash_table, 
 		char* incoming_req_uri, char *from, char* to, char* tag, 
 		char* call_id, char* cseq_nr ,char* cseq_method, char* outgoing_req_uri)
@@ -240,7 +242,6 @@ int response_received(  struct s_table* hash_table, char* reply_code, char* inco
 
 int main()
 {
-   struct s_table*  hash_table;
     struct cell* cell1,*cell2 , *cell3 ,*cell4;
 
    hash_table = init_hash_table();
