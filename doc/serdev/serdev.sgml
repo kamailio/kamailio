@@ -6887,26 +6887,16 @@ if (t_newtran()) {
 			    <varname>q</varname> - New q value.
 			</para>
 			<para>
-			    <varname>callid</varname> - New Call-ID
+			    <varname>callid</varname> - New Call-ID.
 			</para>
 			<para>
-			    <varname>cseq</varname> - New CSeq
+			    <varname>cseq</varname> - New CSeq.
 			</para>
 		    </listitem>
 		</itemizedlist>
 	    </section>
 	</section> <!-- usrloc -->
     </chapter> <!-- basic-modules -->
-
-    <chapter id="sip-msg-modif">
-	<title><acronym>SIP</acronym> Message Modifications</title>
-	<para>TBD.</para>
-    </chapter> <!-- sip-msg-modif -->
-
-    <chapter>
-	<title>The Timer subsystem</title>
-	<para>TBD.</para>
-    </chapter>
 
 <!--    
 
