@@ -45,7 +45,7 @@ skip_modules?=
 # if not set on the cmd. line or the env, exclude this modules:
 exclude_modules?= 			cpl cpl-c ext extcmd \
 							postgres snmp \
-							im radius_acc radius_auth \
+							im \
 							jabber mysql \
 							auth_radius group_radius uri_radius 
 # always exclude the CVS dir
