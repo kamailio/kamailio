@@ -767,6 +767,8 @@ int unixsock_read_body(str* body, str* source)
 		case ST_CRLF:
 			if (source->s[i] == '\n') {
 				body->len = last_dot;
+				source->s += i + 1;
+				source->len -= i + 1;
 				return 0;
 			} else if (source->s[i] != '\r') {
 				state = ST_DATA;
@@ -845,6 +847,8 @@ int unixsock_read_lineset(str* lineset, str* source)
 		case ST_CRLF:
 			if (source->s[i] == '\n') {
 				lineset->len = len;
+				source->s += i + 1;
+				source->len -= i + 1;
 				return 0;
 			} else {
 				lineset->s[len++] = '.';
@@ -969,7 +973,7 @@ int unixsock_reply_printf(char* fmt, ...)
 /*
  * Return the address of the sender
  */
-struct sockaddr_un* unix_sender_addr(void)
+struct sockaddr_un* unixsock_sender_addr(void)
 {
 	return &reply_addr;
 }
