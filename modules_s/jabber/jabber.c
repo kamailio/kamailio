@@ -37,6 +37,7 @@
  * 2003-03-11 New module interface (janakj)
  * 2003-03-16 flags export parameter added (janakj)
  * 2003-04-06 rank 0 changed to 1 in child_init (janakj)
+ * 2003-06-19 fixed too many Jabber workers bug (mostly on RH9.0) (dcm)
  */
 
 
@@ -789,7 +790,7 @@ void xjab_check_workers(int mpid)
 		{
 			stat = 0;
 			n = waitpid(jwl->workers[i].pid, &stat, WNOHANG);
-			if(n == 0)
+			if(n == 0 || n!=jwl->workers[i].pid)
 				continue;
 		
 			LOG(L_ERR,"XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
