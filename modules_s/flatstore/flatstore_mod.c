@@ -115,7 +115,7 @@ static int mod_init(void)
 
 	     /* Initialize fifo interface */
 	if (init_flat_fifo() < 0) {
-		LOG(L_ERR, "usrloc/fifo initialization failed\n");
+		LOG(L_ERR, "flatstore: FIFO initialization failed\n");
 		return -1;
 	}
 
