@@ -34,7 +34,7 @@
 
 #define rity_CASE                             \
         if (LOWER_DWORD(val) == _rity_) {     \
-	        hdr->type = HDR_PRIORITY;     \
+	        hdr->type = HDR_PRIORITY_T;     \
 		p += 4;                       \
 		goto dc_end;                  \
 	}                                     \

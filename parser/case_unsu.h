@@ -41,12 +41,12 @@
 #define TED_CASE                             \
         switch(LOWER_DWORD(val)) {           \
         case _ted1_:                         \
-                hdr->type = HDR_UNSUPPORTED; \
+                hdr->type = HDR_UNSUPPORTED_T; \
                 hdr->name.len = 11;          \
 	        return (p + 4);              \
                                              \
         case _ted2_:                         \
-                hdr->type = HDR_UNSUPPORTED; \
+                hdr->type = HDR_UNSUPPORTED_T; \
                 p += 4;                      \
 	        goto dc_end;                 \
         }

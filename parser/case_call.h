@@ -41,12 +41,12 @@
 #define ID_CASE                      \
      switch(LOWER_DWORD(val)) {      \
      case __id1_:                    \
-	     hdr->type = HDR_CALLID; \
+	     hdr->type = HDR_CALLID_T; \
 	     hdr->name.len = 7;      \
 	     return (p + 4);         \
 	                             \
      case __id2_:                    \
-	     hdr->type = HDR_CALLID; \
+	     hdr->type = HDR_CALLID_T; \
 	     p += 4;                 \
 	     goto dc_end;            \
      }

@@ -34,7 +34,7 @@
 #define allo_CASE                  \
     p += 4;                        \
     if (LOWER_BYTE(*p) == 'w') {   \
-            hdr->type = HDR_ALLOW; \
+            hdr->type = HDR_ALLOW_T; \
             p++;                   \
 	    goto dc_end;           \
     }                              \

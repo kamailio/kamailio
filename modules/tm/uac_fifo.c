@@ -65,10 +65,10 @@ struct str_list {
 
 
 #define skip_hf(_hf) (             \
-    ((_hf)->type == HDR_FROM)   || \
-    ((_hf)->type == HDR_TO)     || \
-    ((_hf)->type == HDR_CALLID) || \
-    ((_hf)->type == HDR_CSEQ)      \
+    ((_hf)->type == HDR_FROM_T)   || \
+    ((_hf)->type == HDR_TO_T)     || \
+    ((_hf)->type == HDR_CALLID_T) || \
+    ((_hf)->type == HDR_CSEQ_T)      \
 )
 
 
@@ -595,7 +595,7 @@ int fifo_uac(FILE *stream, char *response_file)
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
 	faked_msg.len = headers.len; 
 	faked_msg.buf = faked_msg.unparsed = headers.s;
-	if (parse_headers(&faked_msg, HDR_EOH, 0) == -1 ) {
+	if (parse_headers(&faked_msg, HDR_EOH_F, 0) == -1 ) {
 		DBG("DEBUG: fifo_uac: parse_headers failed\n");
 		fifo_uac_error(response_file, 400, "HFs unparseable");
 		goto error;

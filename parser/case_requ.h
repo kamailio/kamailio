@@ -42,12 +42,12 @@
 #define IRE_CASE                         \
         switch(LOWER_DWORD(val)) {       \
         case _ire1_:                     \
-                hdr->type = HDR_REQUIRE; \
+                hdr->type = HDR_REQUIRE_T; \
                 hdr->name.len = 7;       \
                 return (p + 4);          \
                                          \
         case _ire2_:                     \
-                hdr->type = HDR_REQUIRE; \
+                hdr->type = HDR_REQUIRE_T; \
                 p += 4;                  \
                 goto dc_end;             \
         }

@@ -35,7 +35,7 @@
     if (LOWER_BYTE(*p) == 'n') {               \
             p++;                               \
             if (LOWER_BYTE(*p) == 't') {       \
-                    hdr->type = HDR_USERAGENT; \
+                    hdr->type = HDR_USERAGENT_T; \
                     p++;                       \
                     goto dc_end;               \
             }                                  \

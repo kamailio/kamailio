@@ -48,7 +48,7 @@ int parse_from_header( struct sip_msg *msg)
 {
 	struct to_body* from_b;
 
-	if ( !msg->from && ( parse_headers(msg,HDR_FROM,0)==-1 || !msg->from)) {
+	if ( !msg->from && ( parse_headers(msg,HDR_FROM_F,0)==-1 || !msg->from)) {
 		LOG(L_ERR,"ERROR:parse_from_header: bad msg or missing FROM header\n");
 		goto error;
 	}

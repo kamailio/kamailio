@@ -37,7 +37,7 @@
         case _orte_:                               \
 	        p += 4;                            \
 	        if (LOWER_BYTE(*p) == 'd') {       \
-		        hdr->type = HDR_SUPPORTED; \
+		        hdr->type = HDR_SUPPORTED_T; \
                         p++;                       \
                         goto dc_end;               \
                 }                                  \

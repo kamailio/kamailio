@@ -35,7 +35,7 @@
 #define serv_CASE                   \
     p += 4;                         \
     if (LOWER_BYTE(*p) == 'e' && LOWER_BYTE(p[1]) == 'r') {   \
-            hdr->type = HDR_SERVER; \
+            hdr->type = HDR_SERVER_T; \
             p+= 2;                  \
 	    goto dc_end;            \
     }                               \

@@ -35,6 +35,7 @@
  *  2003-03-31  removed msg->repl_add_rm (andrei)
  *  2003-04-26 ZSW (jiri)
  *  2003-05-01  parser extended to support Accept header field (janakj)
+ *  2005-02-23  parse_headers uses hdr_flags_t now (andrei)
  */
 
 
@@ -80,12 +81,12 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
 		DBG("found end of header\n");
-		hdr->type=HDR_EOH;
+		hdr->type=HDR_EOH_T;
 		return buf;
 	}
 
 	tmp=parse_hname(buf, end, hdr);
-	if (hdr->type==HDR_ERROR){
+	if (hdr->type==HDR_ERROR_T){
 		LOG(L_ERR, "ERROR: get_hdr_field: bad header\n");
 		goto error;
 	}
@@ -102,7 +103,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	 * next header field
 	 */
 	switch(hdr->type){
-		case HDR_VIA:
+		case HDR_VIA_T:
 			/* keep number of vias parsed -- we want to report it in
 			   replies for diagnostic purposes */
 			via_cnt++;
@@ -124,7 +125,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			vb->hdr.len=hdr->name.len;
 			hdr->body.len=tmp-hdr->body.s;
 			break;
-		case HDR_CSEQ:
+		case HDR_CSEQ_T:
 			cseq_b=pkg_malloc(sizeof(struct cseq_body));
 			if (cseq_b==0){
 				LOG(L_ERR, "get_hdr_field: out of memory\n");
@@ -145,7 +146,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 					cseq_b->number.len, ZSW(cseq_b->number.s), 
 					cseq_b->method.len, cseq_b->method.s);
 			break;
-		case HDR_TO:
+		case HDR_TO_T:
 			to_b=pkg_malloc(sizeof(struct to_body));
 			if (to_b==0){
 				LOG(L_ERR, "get_hdr_field: out of memory\n");
@@ -167,7 +168,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			DBG("DEBUG: to body [%.*s]\n",to_b->body.len,
 				ZSW(to_b->body.s));
 			break;
-		case HDR_CONTENTLENGTH:
+		case HDR_CONTENTLENGTH_T:
 			hdr->body.s=tmp;
 			tmp=parse_content_length(tmp,end, &integer);
 			if (tmp==0){
@@ -179,33 +180,33 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			DBG("DEBUG: get_hdr_body : content_length=%d\n",
 					(int)(long)hdr->parsed);
 			break;
-		case HDR_SUPPORTED:
-		case HDR_CONTENTTYPE:
-		case HDR_FROM:
-		case HDR_CALLID:
-		case HDR_CONTACT:
-		case HDR_ROUTE:
-		case HDR_RECORDROUTE:
-		case HDR_MAXFORWARDS:
-		case HDR_AUTHORIZATION:
-		case HDR_EXPIRES:
-		case HDR_PROXYAUTH:
-		case HDR_PROXYREQUIRE:
-		case HDR_UNSUPPORTED:
-		case HDR_ALLOW:
-		case HDR_EVENT:
-	        case HDR_ACCEPT:
-	        case HDR_ACCEPTLANGUAGE:
-	        case HDR_ORGANIZATION:
-	        case HDR_PRIORITY:
-	        case HDR_SUBJECT:
-	        case HDR_USERAGENT:
-	        case HDR_CONTENTDISPOSITION:
-	        case HDR_ACCEPTDISPOSITION:
-	        case HDR_DIVERSION:
-	        case HDR_RPID:
-	        case HDR_REFER_TO:
-		case HDR_OTHER:
+		case HDR_SUPPORTED_T:
+		case HDR_CONTENTTYPE_T:
+		case HDR_FROM_T:
+		case HDR_CALLID_T:
+		case HDR_CONTACT_T:
+		case HDR_ROUTE_T:
+		case HDR_RECORDROUTE_T:
+		case HDR_MAXFORWARDS_T:
+		case HDR_AUTHORIZATION_T:
+		case HDR_EXPIRES_T:
+		case HDR_PROXYAUTH_T:
+		case HDR_PROXYREQUIRE_T:
+		case HDR_UNSUPPORTED_T:
+		case HDR_ALLOW_T:
+		case HDR_EVENT_T:
+		case HDR_ACCEPT_T:
+		case HDR_ACCEPTLANGUAGE_T:
+		case HDR_ORGANIZATION_T:
+		case HDR_PRIORITY_T:
+		case HDR_SUBJECT_T:
+		case HDR_USERAGENT_T:
+		case HDR_CONTENTDISPOSITION_T:
+		case HDR_ACCEPTDISPOSITION_T:
+		case HDR_DIVERSION_T:
+		case HDR_RPID_T:
+		case HDR_REFER_TO_T:
+		case HDR_OTHER_T:
 			/* just skip over it */
 			hdr->body.s=tmp;
 			/* find end of header */
@@ -238,7 +239,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	return tmp;
 error:
 	DBG("get_hdr_field: error exit\n");
-	hdr->type=HDR_ERROR;
+	hdr->type=HDR_ERROR_T;
 	hdr->len=tmp-hdr->name.s;
 	return tmp;
 }
@@ -247,7 +248,10 @@ error:
 
 /* parse the headers and adds them to msg->headers and msg->to, from etc.
  * It stops when all the headers requested in flags were parsed, on error
- * (bad header) or end of headers */
+ * (bad header) or end of headers
+ * WARNING: parse_headers was changed to use hdr_flags_t (the flags are now
+ *          different from the header types). Don't call it with a header type
+ *          (HDR_xxx_T), only with header flags (HDR_xxx_F)!*/
 /* note: it continues where it previously stopped and goes ahead until
    end is encountered or desired HFs are found; if you call it twice
    for the same HF which is present only once, it will fail the second
@@ -257,13 +261,13 @@ error:
    give you the first occurrence of a header you are interested in,
    look at check_transaction_quadruple
 */
-int parse_headers(struct sip_msg* msg, int flags, int next)
+int parse_headers(struct sip_msg* msg, hdr_flags_t flags, int next)
 {
 	struct hdr_field* hf;
 	char* tmp;
 	char* rest;
 	char* end;
-	int orig_flag;
+	hdr_flags_t orig_flag;
 
 	end=msg->buf+msg->len;
 	tmp=msg->unparsed;
@@ -274,7 +278,7 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 	}else
 		orig_flag=0; 
 	
-	DBG("parse_headers: flags=%d\n", flags);
+	DBG("parse_headers: flags=%llx\n", (unsigned long long)flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		hf=pkg_malloc(sizeof(struct hdr_field));
 		if (hf==0){
@@ -283,150 +287,151 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 			goto error;
 		}
 		memset(hf,0, sizeof(struct hdr_field));
-		hf->type=HDR_ERROR;
+		hf->type=HDR_ERROR_T;
 		rest=get_hdr_field(tmp, msg->buf+msg->len, hf);
 		switch (hf->type){
-			case HDR_ERROR:
+			case HDR_ERROR_T:
 				LOG(L_INFO,"ERROR: bad header  field\n");
 				goto  error;
-			case HDR_EOH:
+			case HDR_EOH_T:
 				msg->eoh=tmp; /* or rest?*/
-				msg->parsed_flag|=HDR_EOH;
+				msg->parsed_flag|=HDR_EOH_F;
 				pkg_free(hf);
 				goto skip;
-			case HDR_OTHER: /*do nothing*/
+			case HDR_OTHER_T: /*do nothing*/
 				break;
-			case HDR_CALLID:
+			case HDR_CALLID_T:
 				if (msg->callid==0) msg->callid=hf;
-				msg->parsed_flag|=HDR_CALLID;
+				msg->parsed_flag|=HDR_CALLID_F;
 				break;
-			case HDR_TO:
+			case HDR_TO_T:
 				if (msg->to==0) msg->to=hf;
-				msg->parsed_flag|=HDR_TO;
+				msg->parsed_flag|=HDR_TO_F;
 				break;
-			case HDR_CSEQ:
+			case HDR_CSEQ_T:
 				if (msg->cseq==0) msg->cseq=hf;
-				msg->parsed_flag|=HDR_CSEQ;
+				msg->parsed_flag|=HDR_CSEQ_F;
 				break;
-			case HDR_FROM:
+			case HDR_FROM_T:
 				if (msg->from==0) msg->from=hf;
-				msg->parsed_flag|=HDR_FROM;
+				msg->parsed_flag|=HDR_FROM_F;
 				break;
-			case HDR_CONTACT:
+			case HDR_CONTACT_T:
 				if (msg->contact==0) msg->contact=hf;
-				msg->parsed_flag|=HDR_CONTACT;
+				msg->parsed_flag|=HDR_CONTACT_F;
 				break;
-			case HDR_MAXFORWARDS:
+			case HDR_MAXFORWARDS_T:
 				if(msg->maxforwards==0) msg->maxforwards=hf;
-				msg->parsed_flag|=HDR_MAXFORWARDS;
+				msg->parsed_flag|=HDR_MAXFORWARDS_F;
 				break;
-			case HDR_ROUTE:
+			case HDR_ROUTE_T:
 				if (msg->route==0) msg->route=hf;
-				msg->parsed_flag|=HDR_ROUTE;
+				msg->parsed_flag|=HDR_ROUTE_F;
 				break;
-			case HDR_RECORDROUTE:
+			case HDR_RECORDROUTE_T:
 				if (msg->record_route==0) msg->record_route = hf;
-				msg->parsed_flag|=HDR_RECORDROUTE;
+				msg->parsed_flag|=HDR_RECORDROUTE_F;
 				break;
-			case HDR_CONTENTTYPE:
+			case HDR_CONTENTTYPE_T:
 				if (msg->content_type==0) msg->content_type = hf;
-				msg->parsed_flag|=HDR_CONTENTTYPE;
+				msg->parsed_flag|=HDR_CONTENTTYPE_F;
 				break;
-			case HDR_CONTENTLENGTH:
+			case HDR_CONTENTLENGTH_T:
 				if (msg->content_length==0) msg->content_length = hf;
-				msg->parsed_flag|=HDR_CONTENTLENGTH;
+				msg->parsed_flag|=HDR_CONTENTLENGTH_F;
 				break;
-			case HDR_AUTHORIZATION:
+			case HDR_AUTHORIZATION_T:
 				if (msg->authorization==0) msg->authorization = hf;
-				msg->parsed_flag|=HDR_AUTHORIZATION;
+				msg->parsed_flag|=HDR_AUTHORIZATION_F;
 				break;
-			case HDR_EXPIRES:
+			case HDR_EXPIRES_T:
 				if (msg->expires==0) msg->expires = hf;
-				msg->parsed_flag|=HDR_EXPIRES;
+				msg->parsed_flag|=HDR_EXPIRES_F;
 				break;
-			case HDR_PROXYAUTH:
+			case HDR_PROXYAUTH_T:
 				if (msg->proxy_auth==0) msg->proxy_auth = hf;
-				msg->parsed_flag|=HDR_PROXYAUTH;
+				msg->parsed_flag|=HDR_PROXYAUTH_F;
 				break;
-		        case HDR_PROXYREQUIRE:
+			case HDR_PROXYREQUIRE_T:
 				if (msg->proxy_require==0) msg->proxy_require = hf;
-				msg->parsed_flag|=HDR_PROXYREQUIRE;
+				msg->parsed_flag|=HDR_PROXYREQUIRE_F;
 				break;
-	                case HDR_SUPPORTED:
+			case HDR_SUPPORTED_T:
 				if (msg->supported==0) msg->supported=hf;
-				msg->parsed_flag|=HDR_SUPPORTED;
+				msg->parsed_flag|=HDR_SUPPORTED_F;
 				break;
-			case HDR_UNSUPPORTED:
+			case HDR_UNSUPPORTED_T:
 				if (msg->unsupported==0) msg->unsupported=hf;
-				msg->parsed_flag|=HDR_UNSUPPORTED;
+				msg->parsed_flag|=HDR_UNSUPPORTED_F;
 				break;
-			case HDR_ALLOW:
+			case HDR_ALLOW_T:
 				if (msg->allow==0) msg->allow = hf;
-				msg->parsed_flag|=HDR_ALLOW;
+				msg->parsed_flag|=HDR_ALLOW_F;
 				break;
-			case HDR_EVENT:
+			case HDR_EVENT_T:
 				if (msg->event==0) msg->event = hf;
-				msg->parsed_flag|=HDR_EVENT;
+				msg->parsed_flag|=HDR_EVENT_F;
 				break;
-		        case HDR_ACCEPT:
+			case HDR_ACCEPT_T:
 				if (msg->accept==0) msg->accept = hf;
-				msg->parsed_flag|=HDR_ACCEPT;
+				msg->parsed_flag|=HDR_ACCEPT_F;
 				break;
-		        case HDR_ACCEPTLANGUAGE:
+			case HDR_ACCEPTLANGUAGE_T:
 				if (msg->accept_language==0) msg->accept_language = hf;
-				msg->parsed_flag|=HDR_ACCEPTLANGUAGE;
+				msg->parsed_flag|=HDR_ACCEPTLANGUAGE_F;
 				break;
-		        case HDR_ORGANIZATION:
+			case HDR_ORGANIZATION_T:
 				if (msg->organization==0) msg->organization = hf;
-				msg->parsed_flag|=HDR_ORGANIZATION;
+				msg->parsed_flag|=HDR_ORGANIZATION_F;
 				break;
-		        case HDR_PRIORITY:
+			case HDR_PRIORITY_T:
 				if (msg->priority==0) msg->priority = hf;
-				msg->parsed_flag|=HDR_PRIORITY;
+				msg->parsed_flag|=HDR_PRIORITY_F;
 				break;
-		        case HDR_SUBJECT:
+			case HDR_SUBJECT_T:
 				if (msg->subject==0) msg->subject = hf;
-				msg->parsed_flag|=HDR_SUBJECT;
+				msg->parsed_flag|=HDR_SUBJECT_F;
 				break;
-		        case HDR_USERAGENT:
+			case HDR_USERAGENT_T:
 				if (msg->user_agent==0) msg->user_agent = hf;
-				msg->parsed_flag|=HDR_USERAGENT;
+				msg->parsed_flag|=HDR_USERAGENT_F;
 				break;
-		        case HDR_CONTENTDISPOSITION:
+			case HDR_CONTENTDISPOSITION_T:
 				if (msg->content_disposition==0) msg->content_disposition = hf;
-				msg->parsed_flag|=HDR_CONTENTDISPOSITION;
+				msg->parsed_flag|=HDR_CONTENTDISPOSITION_F;
 				break;
-		        case HDR_ACCEPTDISPOSITION:
+			case HDR_ACCEPTDISPOSITION_T:
 				if (msg->accept_disposition==0) msg->accept_disposition = hf;
-				msg->parsed_flag|=HDR_ACCEPTDISPOSITION;
+				msg->parsed_flag|=HDR_ACCEPTDISPOSITION_F;
 				break;
-		        case HDR_DIVERSION:
+			case HDR_DIVERSION_T:
 				if (msg->diversion==0) msg->diversion = hf;
-				msg->parsed_flag|=HDR_DIVERSION;
+				msg->parsed_flag|=HDR_DIVERSION_F;
 				break;
-		        case HDR_RPID:
+			case HDR_RPID_T:
 				if (msg->rpid==0) msg->rpid = hf;
-				msg->parsed_flag|=HDR_RPID;
+				msg->parsed_flag|=HDR_RPID_F;
 				break;
-		        case HDR_REFER_TO:
+			case HDR_REFER_TO_T:
 				if (msg->refer_to==0) msg->refer_to = hf;
-				msg->parsed_flag|=HDR_REFER_TO;
+				msg->parsed_flag|=HDR_REFER_TO_F;
 				break;
-			case HDR_VIA:
-				msg->parsed_flag|=HDR_VIA;
-				DBG("parse_headers: Via found, flags=%d\n", flags);
+			case HDR_VIA_T:
+				msg->parsed_flag|=HDR_VIA_F;
+				DBG("parse_headers: Via found, flags=%llx\n",
+						(unsigned long long)flags);
 				if (msg->via1==0) {
 					DBG("parse_headers: this is the first via\n");
 					msg->h_via1=hf;
 					msg->via1=hf->parsed;
 					if (msg->via1->next){
 						msg->via2=msg->via1->next;
-						msg->parsed_flag|=HDR_VIA2;
+						msg->parsed_flag|=HDR_VIA2_F;
 					}
 				}else if (msg->via2==0){
 					msg->h_via2=hf;
 					msg->via2=hf->parsed;
-					msg->parsed_flag|=HDR_VIA2;
+					msg->parsed_flag|=HDR_VIA2_F;
 					DBG("parse_headers: this is the second via\n");
 				}
 				break;
@@ -476,7 +481,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	char* second_via;
 	struct msg_start *fl;
 	int offset;
-	int flags;
+	hdr_flags_t flags;
 
 	/* eat crlf from the beginning */
 	for (tmp=buf; (*tmp=='\n' || *tmp=='\r')&&
@@ -502,7 +507,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 				ZSW(fl->u.request.uri.s));
 			DBG(" version: <%.*s>\n",fl->u.request.version.len,
 				ZSW(fl->u.request.version.s));
-			flags=HDR_VIA;
+			flags=HDR_VIA_F;
 			break;
 		case SIP_REPLY:
 			DBG("SIP Reply  (status):\n");
@@ -514,7 +519,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 					ZSW(fl->u.reply.reason.s));
 			/* flags=HDR_VIA | HDR_VIA2; */
 			/* we don't try to parse VIA2 for local messages; -Jiri */
-			flags=HDR_VIA;
+			flags=HDR_VIA_F;
 			break;
 		default:
 			DBG("unknown type %d\n",fl->type);
@@ -619,7 +624,7 @@ void free_sip_msg(struct sip_msg* msg)
 
 int check_transaction_quadruple( struct sip_msg* msg )
 {
-	if ( parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ,0)!=-1
+	if ( parse_headers(msg, HDR_FROM_F|HDR_TO_F|HDR_CALLID_F|HDR_CSEQ_F,0)!=-1
 		&& msg->from && msg->to && msg->callid && msg->cseq ) {
 		return 1;
 	} else {

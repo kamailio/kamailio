@@ -33,7 +33,7 @@
 
 
 #define from_CASE             \
-        hdr->type = HDR_FROM; \
+        hdr->type = HDR_FROM_T; \
         p += 4;               \
         goto dc_end
 

@@ -293,7 +293,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		len += ROUND4(sizeof( struct hdr_field));
 		switch (hdr->type)
 		{
-			case HDR_VIA:
+			case HDR_VIA_T:
 				for (via=(struct via_body*)hdr->parsed;via;via=via->next)
 				{
 					len+=ROUND4(sizeof(struct via_body));
@@ -303,8 +303,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 				}
 				break;
 
-			case HDR_TO:
-			case HDR_FROM:
+			case HDR_TO_T:
+			case HDR_FROM_T:
 				/* From header might be unparsed */
 				if (hdr->parsed) {
 					len+=ROUND4(sizeof(struct to_body));
@@ -315,43 +315,42 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 				}
 				break;
 
-			case HDR_CSEQ:
+			case HDR_CSEQ_T:
 				len+=ROUND4(sizeof(struct cseq_body));
 				break;
 
 
-			case HDR_AUTHORIZATION:
-			case HDR_PROXYAUTH:
+			case HDR_AUTHORIZATION_T:
+			case HDR_PROXYAUTH_T:
 				if (hdr->parsed) {
 					len += ROUND4(AUTH_BODY_SIZE);
 				}
 				break;
 
-			case HDR_CALLID:
-			case HDR_CONTACT:
-			case HDR_MAXFORWARDS:
-			case HDR_ROUTE:
-			case HDR_RECORDROUTE:
-			case HDR_CONTENTTYPE:
-			case HDR_CONTENTLENGTH:
-			case HDR_EXPIRES:
-			case HDR_SUPPORTED:
-			case HDR_PROXYREQUIRE:
-			case HDR_UNSUPPORTED:
-			case HDR_ALLOW:
-			case HDR_EVENT:
-			case HDR_ACCEPT:
-			case HDR_ACCEPTLANGUAGE:
-			case HDR_ORGANIZATION:
-			case HDR_PRIORITY:
-			case HDR_SUBJECT:
-			case HDR_USERAGENT:
-			case HDR_ACCEPTDISPOSITION:
-			case HDR_CONTENTDISPOSITION:
-		        case HDR_DIVERSION:
-		        case HDR_RPID:
-		        case HDR_REFER_TO:
-
+			case HDR_CALLID_T:
+			case HDR_CONTACT_T:
+			case HDR_MAXFORWARDS_T:
+			case HDR_ROUTE_T:
+			case HDR_RECORDROUTE_T:
+			case HDR_CONTENTTYPE_T:
+			case HDR_CONTENTLENGTH_T:
+			case HDR_EXPIRES_T:
+			case HDR_SUPPORTED_T:
+			case HDR_PROXYREQUIRE_T:
+			case HDR_UNSUPPORTED_T:
+			case HDR_ALLOW_T:
+			case HDR_EVENT_T:
+			case HDR_ACCEPT_T:
+			case HDR_ACCEPTLANGUAGE_T:
+			case HDR_ORGANIZATION_T:
+			case HDR_PRIORITY_T:
+			case HDR_SUBJECT_T:
+			case HDR_USERAGENT_T:
+			case HDR_ACCEPTDISPOSITION_T:
+			case HDR_CONTENTDISPOSITION_T:
+			case HDR_DIVERSION_T:
+			case HDR_RPID_T:
+			case HDR_REFER_TO_T:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -477,7 +476,7 @@ do { \
 
 		switch (hdr->type)
 		{
-			case HDR_VIA:
+			case HDR_VIA_T:
 				/*fprintf(stderr,"prepare to clone via |%.*s|\n",
 					via_len((struct via_body*)hdr->parsed),
 					via_s((struct via_body*)hdr->parsed,org_msg));*/
@@ -511,7 +510,7 @@ do { \
 						(struct via_body*)hdr->parsed , &p);
 				}
 				break;
-			case HDR_CSEQ:
+			case HDR_CSEQ_T:
 				new_hdr->parsed = p;
 				p +=ROUND4(sizeof(struct cseq_body));
 				memcpy(new_hdr->parsed, hdr->parsed, sizeof(struct cseq_body));
@@ -523,9 +522,9 @@ do { \
 					((struct cseq_body*)hdr->parsed)->method.s );
 				new_msg->cseq = new_hdr;
 				break;
-			case HDR_TO:
-			case HDR_FROM:
-				if (hdr->type == HDR_TO) {
+			case HDR_TO_T:
+			case HDR_FROM_T:
+				if (hdr->type == HDR_TO_T) {
 					new_msg->to = new_hdr;
 				} else {
 					new_msg->from = new_hdr;
@@ -570,85 +569,88 @@ do { \
 						= new_to_prm;
 				}
 				break;
-			case HDR_CALLID:
+			case HDR_CALLID_T:
 				new_msg->callid = new_hdr;
 				break;
-			case HDR_CONTACT:
+			case HDR_CONTACT_T:
 				new_msg->contact = new_hdr;
 				break;
-			case HDR_MAXFORWARDS :
+			case HDR_MAXFORWARDS_T:
 				new_msg->maxforwards = new_hdr;
 				break;
-			case HDR_ROUTE :
+			case HDR_ROUTE_T:
 				new_msg->route = new_hdr;
 				break;
-			case HDR_RECORDROUTE :
+			case HDR_RECORDROUTE_T:
 				new_msg->record_route = new_hdr;
 				break;
-			case HDR_CONTENTTYPE :
+			case HDR_CONTENTTYPE_T:
 				new_msg->content_type = new_hdr;
 				new_msg->content_type->parsed = hdr->parsed;
 				break;
-			case HDR_CONTENTLENGTH :
+			case HDR_CONTENTLENGTH_T:
 				new_msg->content_length = new_hdr;
 				new_msg->content_length->parsed = hdr->parsed;
 				break;
-			case HDR_AUTHORIZATION :
+			case HDR_AUTHORIZATION_T:
 				new_msg->authorization = new_hdr;
 				if (hdr->parsed) {
 					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
 						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
-			case HDR_EXPIRES :
+			case HDR_EXPIRES_T:
 				new_msg->expires = new_hdr;
 				break;
-			case HDR_PROXYAUTH :
+			case HDR_PROXYAUTH_T:
 				new_msg->proxy_auth = new_hdr;
 				if (hdr->parsed) {
 					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
 						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
-			case HDR_SUPPORTED :
+			case HDR_SUPPORTED_T:
 				new_msg->supported = new_hdr;
 				break;
-			case HDR_PROXYREQUIRE :
+			case HDR_PROXYREQUIRE_T:
 				new_msg->proxy_require = new_hdr;
 				break;
-			case HDR_UNSUPPORTED :
+			case HDR_UNSUPPORTED_T:
 				new_msg->unsupported = new_hdr;
 				break;
-			case HDR_ALLOW :
+			case HDR_ALLOW_T:
 				new_msg->allow = new_hdr;	
 				break;
-			case HDR_EVENT:
+			case HDR_EVENT_T:
 				new_msg->event = new_hdr;
 				break;
-			case HDR_ACCEPT:
+			case HDR_ACCEPT_T:
 				new_msg->accept = new_hdr;
 				break;
-			case HDR_ACCEPTLANGUAGE:
+			case HDR_ACCEPTLANGUAGE_T:
 				new_msg->accept_language = new_hdr;
 				break;
-			case HDR_ORGANIZATION:
+			case HDR_ORGANIZATION_T:
 				new_msg->organization = new_hdr;
 				break;
-			case HDR_PRIORITY:
+			case HDR_PRIORITY_T:
 				new_msg->priority = new_hdr;
 				break;
-			case HDR_SUBJECT:
+			case HDR_SUBJECT_T:
 				new_msg->subject = new_hdr;
 				break;
-			case HDR_USERAGENT:
+			case HDR_USERAGENT_T:
 				new_msg->user_agent = new_hdr;
 				break;
-			case HDR_ACCEPTDISPOSITION:
+			case HDR_ACCEPTDISPOSITION_T:
 				new_msg->accept_disposition = new_hdr;
 				break;
-			case HDR_CONTENTDISPOSITION:
+			case HDR_CONTENTDISPOSITION_T:
 				new_msg->content_disposition = new_hdr;
 				break;
+			default:
+				/* ignore the rest*/
+				;
 		}/*switch*/
 
 		if ( last_hdr )

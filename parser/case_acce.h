@@ -34,12 +34,12 @@
 #define age_CASE                                \
         switch(LOWER_DWORD(val)) {              \
         case _age1_:                            \
-	        hdr->type = HDR_ACCEPTLANGUAGE; \
+	        hdr->type = HDR_ACCEPTLANGUAGE_T; \
 	        hdr->name.len = 15;             \
 	        return (p + 4);                 \
                                                 \
         case _age2_:                            \
-                hdr->type = HDR_ACCEPTLANGUAGE; \
+                hdr->type = HDR_ACCEPTLANGUAGE_T; \
                 p += 4;                         \
 	        goto dc_end;                    \
         }
@@ -59,7 +59,7 @@
         if (LOWER_BYTE(*p) == 'o') {                       \
                 p++;                                       \
                 if (LOWER_BYTE(*p) == 'n') {               \
-                        hdr->type = HDR_ACCEPTDISPOSITION; \
+                        hdr->type = HDR_ACCEPTDISPOSITION_T; \
                         p++;                               \
                         goto dc_end;                       \
                 }                                          \
@@ -110,7 +110,7 @@
     if (LOWER_BYTE(*p) == 'p') {            \
             p++;                            \
             if (LOWER_BYTE(*p) == 't') {    \
-                    hdr->type = HDR_ACCEPT; \
+                    hdr->type = HDR_ACCEPT_T; \
                     p++;                    \
                     goto dc_end;            \
             }                               \

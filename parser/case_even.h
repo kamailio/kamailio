@@ -35,7 +35,7 @@
 #define even_CASE                     \
     p += 4;                           \
     if (LOWER_BYTE(*p) == 't') {      \
-            hdr->type = HDR_EVENT;    \
+            hdr->type = HDR_EVENT_T;    \
             p++;                      \
 	    goto dc_end;              \
     }                                 \

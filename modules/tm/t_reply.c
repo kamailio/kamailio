@@ -179,7 +179,7 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 	struct totag_elem *i;
 	str *tag;
 
-	if (parse_headers(ack, HDR_TO,0)==-1 || 
+	if (parse_headers(ack, HDR_TO_F,0)==-1 || 
 				!ack->to ) {
 		LOG(L_ERR, "ERROR: unmatched_totag: To invalid\n");
 		return 1;
@@ -273,7 +273,7 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 {
 	str to;
 
-    if (parse_headers(rpl,HDR_TO, 0)==-1 || !rpl->to ) {
+    if (parse_headers(rpl,HDR_TO_F, 0)==-1 || !rpl->to ) {
         LOG(L_ERR, "ERROR: build_ack: "
             "cannot generate a HBH ACK if key HFs in reply missing\n");
         return NULL;
@@ -294,7 +294,7 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch
 			     unsigned int *ret_len, str* next_hop)
 {
 	str to;
-	if (parse_headers(rpl, HDR_EOH, 0) == -1 || !rpl->to) {
+	if (parse_headers(rpl, HDR_EOH_F, 0) == -1 || !rpl->to) {
 		LOG(L_ERR, "ERROR: build_local_ack: Error while parsing headers\n");
 		return 0;
 	}

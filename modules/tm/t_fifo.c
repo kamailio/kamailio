@@ -354,7 +354,7 @@ int parse_tw_append( modparam_t type, void* val)
 			}
 			foo.s[foo.len] = bar;
 			ha->ival = hdr.type;
-			if (hdr.type==HDR_OTHER || ha->title.s==0) {
+			if (hdr.type==HDR_OTHER_T || ha->title.s==0) {
 				/* duplicate hdr name */
 				ha->sval.s = (char*)pkg_malloc(foo.len+1);
 				if (ha->sval.s==0) {
@@ -615,14 +615,14 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 		} else if (ha->type==ELEM_IS_HDR) {
 			/* parse the HDRs */
 			if (!msg_parsed) {
-				if (parse_headers( req, HDR_EOH, 0)!=0) {
+				if (parse_headers( req, HDR_EOH_F, 0)!=0) {
 					LOG(L_ERR,"ERROR:tm:append2buf: parsing hdrs failed\n");
 					goto error;
 				}
 				msg_parsed = 1;
 			}
 			/* search the HDR */
-			if (ha->ival==HDR_OTHER) {
+			if (ha->ival==HDR_OTHER_T) {
 				for(hdr=req->headers;hdr;hdr=hdr->next)
 					if (ha->sval.len==hdr->name.len &&
 					strncasecmp( ha->sval.s, hdr->name.s, hdr->name.len)==0)
@@ -680,7 +680,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	}
 
 	/* parse all -- we will need every header field for a UAS */
-	if ( parse_headers(msg, HDR_EOH, 0)==-1) {
+	if ( parse_headers(msg, HDR_EOH_F, 0)==-1) {
 		LOG(L_ERR,"assemble_msg: parse_headers failed\n");
 		goto error;
 	}
@@ -770,7 +770,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		}
 		for(p_hdr = p_hdr->next;p_hdr;p_hdr = p_hdr->next) {
 			/* filter out non-RR hdr and empty hdrs */
-			if( (p_hdr->type!=HDR_RECORDROUTE) || p_hdr->body.len==0)
+			if( (p_hdr->type!=HDR_RECORDROUTE_T) || p_hdr->body.len==0)
 				continue;
 
 			if(p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ){

@@ -41,12 +41,12 @@
 #define EXPI_RES_CASE                    \
         switch(LOWER_DWORD(val)) {       \
         case _res1_:                     \
-		hdr->type = HDR_EXPIRES; \
+		hdr->type = HDR_EXPIRES_T; \
 		hdr->name.len = 7;       \
 		return (p + 4);          \
                                          \
         case _res2_:                     \
-		hdr->type = HDR_EXPIRES; \
+		hdr->type = HDR_EXPIRES_T; \
 		p += 4;                  \
 		goto dc_end;             \
         }

@@ -139,7 +139,7 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	register unsigned int val;
 
 	if ((end - begin) < 4) {
-		hdr->type = HDR_ERROR;
+		hdr->type = HDR_ERROR_T;
 		return begin;
 	}
 
@@ -157,25 +157,25 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 			switch(LOWER_BYTE(*(p + 1))) {          
 			case 'o':                   
 			case ' ':                   
-				hdr->type = HDR_TO; 
+				hdr->type = HDR_TO_T; 
 				p += 2;             
 				goto dc_end;        
 				
 			case ':':                   
-				hdr->type = HDR_TO; 
+				hdr->type = HDR_TO_T; 
 				hdr->name.len = 1;  
 				return (p + 2);     
 			}                           
 			break;
 
-		case 'v': PARSE_COMPACT(HDR_VIA);           break;
-		case 'f': PARSE_COMPACT(HDR_FROM);          break;
-		case 'i': PARSE_COMPACT(HDR_CALLID);        break;
-		case 'm': PARSE_COMPACT(HDR_CONTACT);       break;
-		case 'l': PARSE_COMPACT(HDR_CONTENTLENGTH); break;
-		case 'k': PARSE_COMPACT(HDR_SUPPORTED);     break;
-		case 'c': PARSE_COMPACT(HDR_CONTENTTYPE);   break;
-		case 'o': PARSE_COMPACT(HDR_EVENT);         break;
+		case 'v': PARSE_COMPACT(HDR_VIA_T);           break;
+		case 'f': PARSE_COMPACT(HDR_FROM_T);          break;
+		case 'i': PARSE_COMPACT(HDR_CALLID_T);        break;
+		case 'm': PARSE_COMPACT(HDR_CONTACT_T);       break;
+		case 'l': PARSE_COMPACT(HDR_CONTENTLENGTH_T); break;
+		case 'k': PARSE_COMPACT(HDR_SUPPORTED_T);     break;
+		case 'c': PARSE_COMPACT(HDR_CONTENTTYPE_T);   break;
+		case 'o': PARSE_COMPACT(HDR_EVENT_T);         break;
 		}
 		goto other;
         }
@@ -194,12 +194,12 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
  other:    
 	p = q_memchr(p, ':', end - p);
 	if (!p) {        /* No double colon found, error.. */
-		hdr->type = HDR_ERROR;
+		hdr->type = HDR_ERROR_T;
 		hdr->name.s = 0;
 		hdr->name.len = 0;
 		return 0;
 	} else {
-		hdr->type = HDR_OTHER;
+		hdr->type = HDR_OTHER_T;
 		hdr->name.len = p - hdr->name.s;
 		return (p + 1);
 	}

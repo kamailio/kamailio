@@ -5,7 +5,7 @@
         switch(LOWER_DWORD(val)) {          \
         case _atch_:                        \
 		DBG("end of SIP-If-Match\n"); \
-                hdr->type = HDR_SIPIFMATCH; \
+                hdr->type = HDR_SIPIFMATCH_T; \
                 p += 4;                     \
                 goto dc_end;                \
         }

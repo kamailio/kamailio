@@ -163,7 +163,7 @@ void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
 
 static inline int parse_dlg( struct sip_msg *msg )
 {
-	if (parse_headers(msg, HDR_FROM | HDR_CSEQ | HDR_TO, 0)==-1) {
+	if (parse_headers(msg, HDR_FROM_F | HDR_CSEQ_F | HDR_TO_F, 0)==-1) {
 		LOG(L_ERR, "ERROR: parse_dlg: From or Cseq or To invalid\n");
 		return 0;
 	}
@@ -800,7 +800,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 				has_tran_tmcbs(p_cell,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
 			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell,TMCB_LOCAL_COMPLETED))
 		)) {
-			if (parse_headers(p_msg, HDR_TO, 0)==-1) {
+			if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {
 				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
 			}
 		}
@@ -845,7 +845,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
 			/* force parsing all the needed headers*/
-			if (parse_headers(p_msg, HDR_EOH, 0 )==-1) {
+			if (parse_headers(p_msg, HDR_EOH_F, 0 )==-1) {
 				LOG(L_ERR, "ERROR: t_check: parsing error\n");
 				return -1;
 			}
@@ -864,7 +864,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			/* we need Via for branch and Cseq method to distinguish
 			   replies with the same branch/cseqNr (CANCEL)
 			*/
-			if ( parse_headers(p_msg, HDR_VIA1|HDR_CSEQ, 0 )==-1
+			if ( parse_headers(p_msg, HDR_VIA1_F|HDR_CSEQ_F, 0 )==-1
 			|| !p_msg->via1 || !p_msg->cseq ) {
 				LOG(L_ERR, "ERROR: reply cannot be parsed\n");
 				return -1;
@@ -875,7 +875,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			*/
             if ( get_cseq(p_msg)->method.len==INVITE_LEN 
 				&& memcmp( get_cseq(p_msg)->method.s, INVITE, INVITE_LEN )==0 ) {
-					if (parse_headers(p_msg, HDR_TO, 0)==-1
+					if (parse_headers(p_msg, HDR_TO_F, 0)==-1
 						|| !p_msg->to)  {
 						LOG(L_ERR, "ERROR: INVITE reply cannot be parsed\n");
 						return -1;
@@ -1038,11 +1038,11 @@ int t_newtran( struct sip_msg* p_msg )
 	   shmem with pkg_mem
 	*/
 	
-	if (parse_headers(p_msg, HDR_EOH, 0 )) {
+	if (parse_headers(p_msg, HDR_EOH_F, 0 )) {
 		LOG(L_ERR, "ERROR: t_newtran: parse_headers failed\n");
 		return E_BAD_REQ;
 	}
-	if ((p_msg->parsed_flag & HDR_EOH)!=HDR_EOH) {
+	if ((p_msg->parsed_flag & HDR_EOH_F)!=HDR_EOH_F) {
 			LOG(L_ERR, "ERROR: t_newtran: EoH not parsed\n");
 			return E_OUT_OF_MEM;
 	}

@@ -52,10 +52,10 @@ struct str_list {
 
 
 #define skip_hf(_hf) (             \
-    ((_hf)->type == HDR_FROM)   || \
-    ((_hf)->type == HDR_TO)     || \
-    ((_hf)->type == HDR_CALLID) || \
-    ((_hf)->type == HDR_CSEQ)      \
+    ((_hf)->type == HDR_FROM_T)   || \
+    ((_hf)->type == HDR_TO_T)     || \
+    ((_hf)->type == HDR_CALLID_T) || \
+    ((_hf)->type == HDR_CSEQ_T)      \
 )
 
 
@@ -504,7 +504,7 @@ int unixsock_uac(str* msg)
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
 	faked_msg.len = headers.len; 
 	faked_msg.buf = faked_msg.unparsed = headers.s;
-	if (parse_headers(&faked_msg, HDR_EOH, 0) == -1 ) {
+	if (parse_headers(&faked_msg, HDR_EOH_F, 0) == -1 ) {
 		unixsock_reply_asciiz("400 HFs unparsable\n");
 		unixsock_reply_send();
 		goto error;

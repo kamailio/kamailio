@@ -33,7 +33,7 @@
 
 
 #define cseq_CASE          \
-     hdr->type = HDR_CSEQ; \
+     hdr->type = HDR_CSEQ_T; \
      p += 4;               \
      goto dc_end
 

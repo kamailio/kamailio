@@ -255,7 +255,12 @@ static int fix_actions(struct action* a)
 					return E_BUG;
 				}
 				he=resolvehost(((struct socket_id*)t->p1.data)->name);
-				if (he==0) return E_BAD_ADDRESS;
+				if (he==0){
+					LOG(L_ERR, "ERROR: fix_actions: force_send_socket:"
+								" could not resolve %s\n",
+							((struct socket_id*)t->p1.data)->name);
+					return E_BAD_ADDRESS;
+				}
 				hostent2ip_addr(&ip, he, 0);
 				si=find_si(&ip, ((struct socket_id*)t->p1.data)->port,
 								((struct socket_id*)t->p1.data)->proto);
@@ -567,7 +572,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				}
 				break;
 		case TO_URI_O:
-				if ((msg->to==0) && ((parse_headers(msg, HDR_TO, 0)==-1) ||
+				if ((msg->to==0) && ((parse_headers(msg, HDR_TO_F, 0)==-1) ||
 							(msg->to==0))){
 					LOG(L_ERR, "ERROR: eval_elem: bad or missing"
 								" To: header\n");

@@ -34,7 +34,7 @@
 
 #define ARDS_CASE                            \
         if (LOWER_DWORD(val) == _ards_) {    \
-	        hdr->type = HDR_MAXFORWARDS; \
+	        hdr->type = HDR_MAXFORWARDS_T; \
 	        p += 4;                      \
 		goto dc_end;                 \
 	}

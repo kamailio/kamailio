@@ -45,7 +45,7 @@ int parse_refer_to_header( struct sip_msg *msg )
 	struct to_body* refer_to_b;
 	
  	if ( !msg->refer_to &&
-	     (parse_headers(msg, HDR_REFER_TO,0)==-1 || !msg->refer_to)) {
+	     (parse_headers(msg, HDR_REFER_TO_F,0)==-1 || !msg->refer_to)) {
  		goto error;
  	}
  

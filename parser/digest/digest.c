@@ -197,8 +197,8 @@ int mark_authorized_cred(struct sip_msg* _m, struct hdr_field* _h)
 	struct hdr_field* f;
 	
 	switch(_h->type) {
-	case HDR_AUTHORIZATION: f = _m->authorization; break;
-	case HDR_PROXYAUTH:     f = _m->proxy_auth;    break;
+	case HDR_AUTHORIZATION_T: f = _m->authorization; break;
+	case HDR_PROXYAUTH_T:     f = _m->proxy_auth;    break;
 	default:
 		LOG(L_ERR, "mark_authorized_cred(): Invalid header field type\n");
 		return -1;

@@ -45,7 +45,8 @@ int parse_diversion_header(struct sip_msg *msg)
 {
  	struct to_body* diversion_b;
 	
- 	if (!msg->diversion && (parse_headers(msg, HDR_DIVERSION, 0) == -1 || !msg->diversion)) {
+ 	if (!msg->diversion && (parse_headers(msg, HDR_DIVERSION_F, 0) == -1 ||
+				!msg->diversion)) {
  		goto error;
  	}
  

@@ -36,7 +36,7 @@
 	        p += 4;                                \
 		switch(LOWER_BYTE(*p)) {               \
 		case 'n':                              \
-		        hdr->type = HDR_AUTHORIZATION; \
+		        hdr->type = HDR_AUTHORIZATION_T; \
 			p++;                           \
 			goto dc_end;                   \
                                                        \

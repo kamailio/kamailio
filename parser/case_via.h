@@ -38,12 +38,12 @@
 #include "../comp_defs.h"
 
 #define via1_CASE            \
-        hdr->type = HDR_VIA; \
+        hdr->type = HDR_VIA_T; \
         hdr->name.len = 3;   \
         return (p + 4)        
 
 #define via2_CASE            \
-        hdr->type = HDR_VIA; \
+        hdr->type = HDR_VIA_T; \
         p += 4;              \
         goto dc_end
 

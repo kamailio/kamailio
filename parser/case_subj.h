@@ -35,12 +35,12 @@
 #define ect_CASE                         \
         switch(LOWER_DWORD(val)) {       \
         case _ect1_:                     \
-	        hdr->type = HDR_SUBJECT; \
+	        hdr->type = HDR_SUBJECT_T; \
 	        hdr->name.len = 7;       \
 	        return (p + 4);          \
                                          \
         case _ect2_:                     \
-                hdr->type = HDR_SUBJECT; \
+                hdr->type = HDR_SUBJECT_T; \
                 p += 4;                  \
 	        goto dc_end;             \
         }

@@ -44,7 +44,7 @@ int parse_rpid_header( struct sip_msg *msg )
 {
 	struct to_body* rpid_b;
 	
- 	if ( !msg->rpid && (parse_headers(msg,HDR_RPID,0)==-1 || !msg->rpid)) {
+ 	if ( !msg->rpid && (parse_headers(msg, HDR_RPID_F, 0)==-1 || !msg->rpid)) {
  		goto error;
  	}
  

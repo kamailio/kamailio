@@ -37,7 +37,7 @@
         case _rsio_:                               \
 	        p += 4;                            \
 	        if (LOWER_BYTE(*p) == 'n') {       \
-		        hdr->type = HDR_DIVERSION; \
+		        hdr->type = HDR_DIVERSION_T; \
                         p++;                       \
                         goto dc_end;               \
                 }                                  \

@@ -34,12 +34,12 @@
 #define _ID_CASE                         \
         switch(LOWER_DWORD(val)) {       \
         case __id1_:                     \
-	        hdr->type = HDR_RPID;    \
+	        hdr->type = HDR_RPID_T;    \
 	        hdr->name.len = 15;      \
 	        return (p + 4);          \
                                          \
         case __id2_:                     \
-                hdr->type = HDR_RPID;    \
+                hdr->type = HDR_RPID_T;    \
                 p += 4;                  \
 	        goto dc_end;             \
         }

@@ -56,109 +56,109 @@ void clean_hdr_field(struct hdr_field* hf)
 {
 	if (hf->parsed){
 		switch(hf->type){
-		case HDR_VIA:
+		case HDR_VIA_T:
 			free_via_list(hf->parsed);
 			break;
 
-		case HDR_TO:
+		case HDR_TO_T:
 			free_to(hf->parsed);
 			break;
 
-		case HDR_FROM:
+		case HDR_FROM_T:
 			free_to(hf->parsed);
 			break;
 
-		case HDR_CSEQ:
+		case HDR_CSEQ_T:
 			free_cseq(hf->parsed);
 			break;
 
-		case HDR_CALLID:
+		case HDR_CALLID_T:
 			break;
 
-		case HDR_CONTACT:
+		case HDR_CONTACT_T:
 			free_contact((contact_body_t**)(&(hf->parsed)));
 			break;
 
-		case HDR_MAXFORWARDS:
+		case HDR_MAXFORWARDS_T:
 			break;
 
-		case HDR_ROUTE:
+		case HDR_ROUTE_T:
 			free_rr((rr_t**)(&hf->parsed));
 			break;
 
-		case HDR_RECORDROUTE:
+		case HDR_RECORDROUTE_T:
 			free_rr((rr_t**)(&hf->parsed));
 			break;
 
-		case HDR_CONTENTTYPE:
+		case HDR_CONTENTTYPE_T:
 			break;
 
-		case HDR_CONTENTLENGTH:
+		case HDR_CONTENTLENGTH_T:
 			break;
 
-		case HDR_AUTHORIZATION:
+		case HDR_AUTHORIZATION_T:
 			free_credentials((auth_body_t**)(&(hf->parsed)));
 			break;
 
-		case HDR_EXPIRES:
+		case HDR_EXPIRES_T:
 			free_expires((exp_body_t**)(&(hf->parsed)));
 			break;
 
-		case HDR_PROXYAUTH:
+		case HDR_PROXYAUTH_T:
 			free_credentials((auth_body_t**)(&(hf->parsed)));
 			break;
 
-		case HDR_SUPPORTED:
+		case HDR_SUPPORTED_T:
 			break;
 
-		case HDR_PROXYREQUIRE:
+		case HDR_PROXYREQUIRE_T:
 			break;
 
-		case HDR_UNSUPPORTED:
+		case HDR_UNSUPPORTED_T:
 			break;
 
-		case HDR_ALLOW:
+		case HDR_ALLOW_T:
 			break;
 
-		case HDR_EVENT:
+		case HDR_EVENT_T:
 			free_event((event_t**)(&(hf->parsed)));
 			break;
 
-		case HDR_ACCEPT:
+		case HDR_ACCEPT_T:
 			pkg_free(hf->parsed);
 			break;
 
-		case HDR_ACCEPTLANGUAGE:
+		case HDR_ACCEPTLANGUAGE_T:
 			break;
 			
-		case HDR_ORGANIZATION:
+		case HDR_ORGANIZATION_T:
 			break;
 			
-		case HDR_PRIORITY:
+		case HDR_PRIORITY_T:
 			break;
 
-		case HDR_SUBJECT:
+		case HDR_SUBJECT_T:
 			break;
 
-		case HDR_USERAGENT:
+		case HDR_USERAGENT_T:
 			break;
 
-		case HDR_ACCEPTDISPOSITION:
+		case HDR_ACCEPTDISPOSITION_T:
 			break;
 
-		case HDR_CONTENTDISPOSITION:
+		case HDR_CONTENTDISPOSITION_T:
 			free_disposition( ((struct disposition**)(&hf->parsed)) );
 			break;
 
-		case HDR_DIVERSION:
+		case HDR_DIVERSION_T:
 			free_to(hf->parsed);
 			break;
 
-		case HDR_RPID:
+		case HDR_RPID_T:
 			free_to(hf->parsed);
 			break;
 
-		case HDR_REFER_TO:
+		case HDR_REFER_TO_T:
 			free_to(hf->parsed);
 			break;
 

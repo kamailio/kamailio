@@ -30,7 +30,7 @@
 
 #define r_to_CASE                          \
         if (LOWER_DWORD(val) == _r_to_) {  \
-                hdr->type = HDR_REFER_TO;  \
+                hdr->type = HDR_REFER_TO_T;  \
                 p += 4;                    \
                 goto dc_end;               \
         }

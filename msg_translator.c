@@ -288,7 +288,8 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 	str_pair_print(" in_uri=", msg->first_line.u.request.uri.s,
 								msg->first_line.u.request.uri.len);
 	str_pair_print(" out_uri=", foo->s, foo->len);
-	str_pair_print(" via_cnt", msg->parsed_flag & HDR_EOH ? "=" : ">", 1);
+	str_pair_print(" via_cnt",
+					(msg->parsed_flag & HDR_EOH_F)==HDR_EOH_F ? "=" : ">", 1);
 	str_int_print("=", via_cnt);
 	if (clen<MAX_WARNING_LEN){ buf[clen]='"'; clen++; }
 	else goto error_overflow;
@@ -1208,7 +1209,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 	    || proto == PROTO_TLS
 #endif
 	    ) {
-		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
+		if (parse_headers(msg, HDR_CONTENTLENGTH_F, 0)==-1){
 			LOG(L_ERR, "adjust_clen: error parsing content-length\n");
 			goto error;
 		}
@@ -1218,7 +1219,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 			 * - whole message was parsed by the above parse_headers
 			 *   which did not find content-length */
 			anchor=anchor_lump(msg, msg->unparsed-msg->buf, 0,
-												HDR_CONTENTLENGTH);
+												HDR_CONTENTLENGTH_T);
 			if (anchor==0){
 				LOG(L_ERR, "adjust_clen: cannot set clen anchor\n");
 				goto error;
@@ -1229,7 +1230,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 	
 	
 	if ((anchor==0) && body_delta){
-		if (parse_headers(msg, HDR_CONTENTLENGTH, 0) == -1) {
+		if (parse_headers(msg, HDR_CONTENTLENGTH_F, 0) == -1) {
 			LOG(L_ERR, "adjust_clen: Error parsing Content-Length\n");
 			goto error;
 		}
@@ -1246,7 +1247,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 			 *   which did not find content-length */
 			if (proto!=PROTO_UDP){
 				anchor=anchor_lump(msg, msg->unparsed-msg->buf, 0,
-													HDR_CONTENTLENGTH);
+													HDR_CONTENTLENGTH_T);
 				if (anchor==0){
 					LOG(L_ERR, "adjust_clen: cannot set clen anchor\n");
 					goto error;
@@ -1257,7 +1258,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 		}else{
 			/* Content-Length has been found, remove it */
 			anchor = del_lump(	msg, msg->content_length->name.s - msg->buf,
-								msg->content_length->len, HDR_CONTENTLENGTH);
+								msg->content_length->len, HDR_CONTENTLENGTH_T);
 			if (anchor==0) {
 				LOG(L_ERR, "adjust_clen: Can't remove original"
 							" Content-Length\n");
@@ -1270,7 +1271,7 @@ static inline int adjust_clen(struct sip_msg* msg, int body_delta, int proto)
 		clen_buf = clen_builder(msg, &clen_len, body_delta);
 		if (!clen_buf) goto error;
 		if (insert_new_lump_after(anchor, clen_buf, clen_len,
-					HDR_CONTENTLENGTH) == 0)
+					HDR_CONTENTLENGTH_T) == 0)
 			goto error;
 	}
 
@@ -1384,9 +1385,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
 	/* add first via, as an anchor for second via*/
-	anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA);
+	anchor=anchor_lump(msg, msg->via1->hdr.s-buf, 0, HDR_VIA_T);
 	if (anchor==0) goto error01;
-	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
+	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA_T)==0)
 		goto error01;
 	/* find out where the offset of the first parameter that should be added
 	 * (after host:port), needed by add receive & maybe rport */
@@ -1412,29 +1413,29 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		if (msg->via1->received){ /* received already present => overwrite it*/
 			via_insert_param=del_lump(msg,
 								msg->via1->received->start-buf-1, /*;*/
-								msg->via1->received->size+1, /*;*/ HDR_VIA);
+								msg->via1->received->size+1, /*;*/ HDR_VIA_T);
 		}else if (via_insert_param==0){ /* receive not present, ok */
-			via_insert_param=anchor_lump(msg,
-										msg->via1->hdr.s-buf+size,0, HDR_VIA);
+			via_insert_param=anchor_lump(msg, msg->via1->hdr.s-buf+size, 0,
+											HDR_VIA_T);
 		}
 		if (via_insert_param==0) goto error02; /* free received_buf */
 		if (insert_new_lump_after(via_insert_param, received_buf, received_len,
-					HDR_VIA) ==0 ) goto error02; /* free received_buf */
+					HDR_VIA_T) ==0 ) goto error02; /* free received_buf */
 	}
 	/* if rport needs to be updated, delete it if present and add it's value */
 	if (rport_len){
 		if (msg->via1->rport){ /* rport already present */
 			via_insert_param=del_lump(msg,
 								msg->via1->rport->start-buf-1, /*';'*/
-								msg->via1->rport->size+1 /* ; */, HDR_VIA);
+								msg->via1->rport->size+1 /* ; */, HDR_VIA_T);
 		}else if (via_insert_param==0){ /*force rport, no rport present */
 			/* no rport, add it */
-			via_insert_param=anchor_lump(msg,
-										msg->via1->hdr.s-buf+size,0, HDR_VIA);
+			via_insert_param=anchor_lump(msg, msg->via1->hdr.s-buf+size, 0,
+											HDR_VIA_T);
 		}
 		if (via_insert_param==0) goto error03; /* free rport_buf */
 		if (insert_new_lump_after(via_insert_param, rport_buf, rport_len,
-									HDR_VIA) ==0 )
+									HDR_VIA_T) ==0 )
 			goto error03; /* free rport_buf */
 			
 	}
@@ -1540,7 +1541,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	}
 
 	/* remove the first via*/
-	if (del_lump( msg, via_offset, via_len, HDR_VIA)==0){
+	if (del_lump( msg, via_offset, via_len, HDR_VIA_T)==0){
 		LOG(L_ERR, "build_res_buf_from_sip_res: error trying to remove first"
 					"via\n");
 		goto error;
@@ -1610,7 +1611,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
 	of SIP :( ) */
-	if (parse_headers( msg, HDR_EOH, 0 )==-1) {
+	if (parse_headers( msg, HDR_EOH_F, 0 )==-1) {
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: "
 			"alas, parse_headers failed\n");
 		goto error00;
@@ -1645,7 +1646,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
 		switch (hdr->type) {
-			case HDR_TO:
+			case HDR_TO_T:
 				if (new_tag && new_tag->len) {
 					to_tag=get_to(msg)->tag_value;
 					if (to_tag.len )
@@ -1655,20 +1656,24 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 				}
 				len += hdr->len;
 				break;
-			case HDR_VIA:
+			case HDR_VIA_T:
 				/* we always add CRLF to via*/
 				len+=(hdr->body.s+hdr->body.len)-hdr->name.s+CRLF_LEN;
 				if (hdr==msg->h_via1) len += received_len+rport_len;
 				break;
-			case HDR_RECORDROUTE:
+			case HDR_RECORDROUTE_T:
 				/* RR only for 1xx and 2xx replies */
 				if (code<180 || code>=300)
 					break;
-			case HDR_FROM:
-			case HDR_CALLID:
-			case HDR_CSEQ:
+			case HDR_FROM_T:
+			case HDR_CALLID_T:
+			case HDR_CSEQ_T:
 				/* we keep the original termination for these headers*/
 				len += hdr->len;
+				break;
+			default:
+				/* do nothing, we are interested only in the above headers */
+				;
 		}
 	}
 	/* lumps length */
@@ -1724,7 +1729,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
 		switch (hdr->type)
 		{
-			case HDR_VIA:
+			case HDR_VIA_T:
 				if (hdr==msg->h_via1){
 					if (rport_buf){
 						if (msg->via1->rport){ /* delete the old one */
@@ -1759,12 +1764,12 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 				}
 				append_str( p, CRLF,CRLF_LEN);
 				break;
-			case HDR_RECORDROUTE:
+			case HDR_RECORDROUTE_T:
 				/* RR only for 1xx and 2xx replies */
 				if (code<180 || code>=300) break;
 				append_str(p, hdr->name.s, hdr->len);
 				break;
-			case HDR_TO:
+			case HDR_TO_T:
 				if (new_tag && new_tag->len){
 					if (to_tag.s ) { /* replacement */
 						/* before to-tag */
@@ -1794,10 +1799,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 					bmark->to_tag_val.len=
 							((struct to_body*)(hdr->parsed))->tag_value.len;
 				};
-			case HDR_FROM:
-			case HDR_CALLID:
-			case HDR_CSEQ:
+			case HDR_FROM_T:
+			case HDR_CALLID_T:
+			case HDR_CSEQ_T:
 					append_str(p, hdr->name.s, hdr->len);
+					break;
+			default:
+				/* do nothing, we are interested only in the above headers */
+				;
 		} /* end switch */
 	} /* end for */
 	/* lumps */
