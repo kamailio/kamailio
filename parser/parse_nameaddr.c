@@ -48,8 +48,6 @@ int parse_nameaddr(str* _s, name_addr_t* _a)
 		return -1;
 	}
 
-	memset(_a, 0, sizeof(name_addr_t));
-
 	_a->name.s = _s->s;
 
 	_a->uri.s = find_not_quoted(_s, '<'); 

@@ -27,6 +27,7 @@
  * History
  * --------
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
+ * 2003-03-24 find_not_quoted function added (janakj)
  */
 
 
@@ -101,5 +102,6 @@ inline static char* find_not_quoted(str* _s, char _c)
 	}
 	return 0;
 }
+
 
 #endif /* parser_f_h */
