@@ -6,7 +6,7 @@ foo: bar
 x: y
 p_header: p_value
 Contact: <sip:195.37.77.100:9>
-Content-Type: text/plain; charset=UTF-8;msgr=WAAtAE0ATQBTAC0ASQBNAC0ARgBvAHIAbQBhAHQAOgAgAEYATgA9AE0AUwAlADIAMABTAGgAZQBsAGwAJQAyADAARABsAGcAOwAgAEUARgA9ADsAIABDAE8APQAwADsAIABDAFMAPQAwADsAIABQAEYAPQAwAA0ACgANAAoA
+Content-Type: text/plain; charset=UTF-8
 
 I love you man!!!!
 .
