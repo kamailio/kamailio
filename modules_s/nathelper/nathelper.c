@@ -374,6 +374,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & ADD_ADIRECTION) {
+		msg->msg_flags |= FL_FORCE_ACTIVE;
 		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
