@@ -189,7 +189,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
  */
 static inline int ins_in_rr(struct sip_msg* _m, int _lr, str* user, str* tag)
 {
-	char* prefix, *colon, *transport, *suffix;
+	char* prefix, *suffix;
 	int suffix_len;
 	struct lump* l;
 
@@ -200,16 +200,12 @@ static inline int ins_in_rr(struct sip_msg* _m, int _lr, str* user, str* tag)
 	}
 
 	prefix = pkg_malloc(RR_PREFIX_LEN + user->len + 1);
-	colon = pkg_malloc(1);
-	transport = pkg_malloc(RR_TRANSPORT_LEN);
 	suffix_len = _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
 	suffix = pkg_malloc(suffix_len);
 
-	if (!(prefix && colon && transport && suffix)) {
+	if (!prefix && !suffix) {
 		LOG(L_ERR, "ins_in_rr(): No memory left\n");
 		if (suffix) pkg_free(suffix);
-		if (transport) pkg_free(transport);
-		if (colon) pkg_free(colon);
 		if (prefix) pkg_free(prefix);
 		return -3;
 	}
@@ -219,9 +215,7 @@ static inline int ins_in_rr(struct sip_msg* _m, int _lr, str* user, str* tag)
 		memcpy(prefix + RR_PREFIX_LEN, user->s, user->len);
 		prefix[RR_PREFIX_LEN + user->len] = '@';
 	}
-	colon[0] = ':';
-	memcpy(transport, RR_TRANSPORT, RR_TRANSPORT_LEN);
-	
+
 	if (tag->len) {
 		memcpy(suffix, RR_FROMTAG, RR_FROMTAG_LEN);
 		memcpy(suffix + RR_FROMTAG_LEN, tag->s, tag->len);
@@ -232,13 +226,7 @@ static inline int ins_in_rr(struct sip_msg* _m, int _lr, str* user, str* tag)
 
 	if (!(l = insert_new_lump_after(l, prefix, RR_PREFIX_LEN + (user->len ? (user->len + 1) : 0), 0))) goto lump_err;
 	prefix = 0;
-	if (!(l = insert_subst_lump_after(l, SUBST_RCV_IP, 0))) goto lump_err;
-	if (!(l = insert_new_lump_after(l, colon, 1, 0))) goto lump_err;
-	colon = 0;
-	if (!(l = insert_subst_lump_after(l, SUBST_RCV_PORT, 0))) goto lump_err;
-	if (!(l = insert_new_lump_after(l, transport, RR_TRANSPORT_LEN, 0))) goto lump_err;
-	transport = 0;
-	if (!(l = insert_subst_lump_after(l, SUBST_RCV_PROTO, 0))) goto lump_err;
+	if (!(l = insert_subst_lump_after(l, SUBST_RCV_ALL, 0))) goto lump_err;
 	if (!(l = insert_new_lump_after(l, suffix, suffix_len, 0))) goto lump_err;
 
 	return 0;
@@ -246,8 +234,6 @@ static inline int ins_in_rr(struct sip_msg* _m, int _lr, str* user, str* tag)
  lump_err:
 	LOG(L_ERR, "insert_RR(): Error while inserting lumps\n");
 	if (prefix) pkg_free(prefix);
-	if (colon) pkg_free(colon);
-	if (transport) pkg_free(transport);
 	if (suffix) pkg_free(suffix);
 	return -4;
 
