@@ -87,6 +87,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'A':
 			case 'a':
 					switch(state){
+						case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 						case VIA2:
 								state=F_VIA;
 								break;
@@ -146,6 +150,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'O':
 			case 'o':
 					switch(state){
+						case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 						case FROM2:
 							state=FROM3;
 							break;
@@ -220,6 +228,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'S':
 			case 's':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case C_START:
 								state=CSEQ2;
 								break;
@@ -234,6 +246,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'E':
 			case 'e':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case CSEQ2:
 								state=CSEQ3;
 								break;
@@ -248,6 +264,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'Q':
 			case 'q':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case CSEQ3:
 								state=F_CSEQ;
 								break;
@@ -259,6 +279,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'L':
 			case 'l':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case CALLID2:
 								state=CALLID3;
 								break;
@@ -273,6 +297,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'D':
 			case 'd':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case CALLID6:
 								state=F_CALLID;
 								break;
@@ -287,6 +315,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'N':
 			case 'n':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case CONTACT2:
 								state=CONTACT3;
 								break;
@@ -298,6 +330,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'X':
 			case 'x':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case MAXFORWARDS2:
 								state=MAXFORWARDS3;
 								break;
@@ -308,6 +344,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 						break;
 			case '-':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case CALLID4:
 								state=CALLID5;
 								break;
@@ -322,6 +362,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'W':
 			case 'w':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case MAXFORWARDS7:
 								state=MAXFORWARDS8;
 								break;
@@ -333,6 +377,10 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 			case 'U':
 			case 'u':
 						switch(state){
+							case INITIAL:
+								state=UNKNOWN_HEADER;
+								hdr->name.s=t;
+								break;
 							case ROUTE2:
 								state=ROUTE3;
 								break;
