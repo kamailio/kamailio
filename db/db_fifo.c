@@ -149,18 +149,22 @@ error:
 }
 
 
-
+/* returns : -1 bad key list
+ *           -2 server error
+ *            1 success */
 int get_keys( FILE *fifo , db_key_t *keys, int *nr, int max_nr)
 {
 	str line;
 	char *key;
+	int ret;
 
 	*nr = 0;
+	ret = -1;
 
 	while(1) {
 		/* read a new line */
 		line.s = buf;
-		if (read_line( line.s, MAX_SIZE_LINE, fifo, &line.len)!=1) {
+		if (!read_line( line.s, MAX_SIZE_LINE, fifo, &line.len) || !line.len) {
 			LOG(L_ERR,"ERROR:get_keys: cannot read key name\n");
 			goto error;
 		}
@@ -175,6 +179,7 @@ int get_keys( FILE *fifo , db_key_t *keys, int *nr, int max_nr)
 			key = (char*)pkg_malloc(line.len+1);
 			if (key==0) {
 				LOG(L_ERR,"ERROR:get_key: no more pkg memory\n");
+				ret = -2;
 				goto error;
 			}
 			memcpy( key, line.s, line.len);
@@ -189,7 +194,7 @@ int get_keys( FILE *fifo , db_key_t *keys, int *nr, int max_nr)
 error:
 	for(;*nr;*nr--)
 		pkg_free( (void*)keys[*nr] );
-	return -1;
+	return ret;
 }
 
 
@@ -197,8 +202,8 @@ error:
 int db_fifo( FILE *fifo, char *response_file )
 {
 	static db_key_t keys1[MAX_ARRAY];
-	static db_op_t  ops1[MAX_ARRAY];
-	static db_val_t vals1[MAX_ARRAY];
+	//static db_op_t  ops1[MAX_ARRAY];
+	//static db_val_t vals1[MAX_ARRAY];
 	static db_key_t keys2[MAX_ARRAY];
 	static db_op_t  ops2[MAX_ARRAY];
 	static db_val_t vals2[MAX_ARRAY];
@@ -206,6 +211,7 @@ int db_fifo( FILE *fifo, char *response_file )
 	str   line;
 	int   db_cmd;
 	int   nr1, nr2;
+	int   ret;
 
 	/* first check the response file */
 	rpl = open_reply_pipe( response_file );
@@ -214,7 +220,8 @@ int db_fifo( FILE *fifo, char *response_file )
 
 	/* first name must be the real name of the DB operation */
 	line.s = buf;
-	if (read_line( line.s, MAX_SIZE_LINE, fifo, &line.len)!=1) {
+	if (!read_line( line.s, MAX_SIZE_LINE, fifo, &line.len) || line.len==0) {
+		fprintf( rpl, "DB command name expected\n");
 		LOG(L_ERR,"ERROR:db_fifo: cannot read fifo cmd name\n");
 		goto error;
 	}
@@ -234,6 +241,7 @@ int db_fifo( FILE *fifo, char *response_file )
 	&& !strncasecmp( line.s, UPDATE_STR, line.len)) {
 		db_cmd = UPDATE_CMD;
 	} else {
+		fprintf( rpl, "unknown DB command \"%.*s\"\n",line.len,line.s);
 		LOG(L_ERR,"ERROR:db_fifo: unknown command \"%.*s\"\n",
 			line.len,line.s);
 		goto error;
@@ -242,9 +250,18 @@ int db_fifo( FILE *fifo, char *response_file )
 
 	if (db_cmd==SELECT_CMD) {
 		/* read the colums to be fetched */
-		if ( get_keys( fifo, keys1, &nr1, MAX_ARRAY)==-1 )
+		ret = get_keys( fifo, keys1, &nr1, MAX_ARRAY);
+		if (ret==-1) {
+			fprintf( rpl, "Bad key list in SELECT DB command "
+				"(missing '.' at the end?)\n");
+			LOG(L_ERR,"ERROR:db_fifo: bad key list termination in SELECT cmd"
+				"(missing '.' at the end?)\n");
 			goto error;
-		if (nr1==0) {
+		} else if (ret==-2) {
+			fprintf( rpl, "Internal Server error\n");
+			goto error;
+		} else if (nr1==0) {
+			fprintf( rpl, "Empty key list found in SELECT DB command\n");
 			LOG(L_ERR,"ERROR:db_fifo: no keys specified in SELECT cmd\n");
 			goto error;
 		}
@@ -254,21 +271,23 @@ int db_fifo( FILE *fifo, char *response_file )
 
 	/* read the table name */
 	line.s = buf;
-	if (read_line( line.s, MAX_SIZE_LINE, fifo, &line.len)!=1) {
+	if (!read_line( line.s, MAX_SIZE_LINE, fifo, &line.len) || !line.len) {
+		fprintf( rpl, "Table name expected\n");
 		LOG(L_ERR,"ERROR:db_fifo: cannot read table name\n");
 		goto error;
 	}
 	trim_spaces(line);
 
 	/*read 'where' avps */
-	if (get_avps( fifo , keys1, ops1, vals1, &nr2, MAX_ARRAY)==-1)
-		goto error;
+	//if (get_avps( fifo , keys2, ops2, vals2, &nr2, MAX_ARRAY)==-1)
+	//	goto error;
 
 
 	if (db_cmd==SELECT_CMD) {
 		 
 	}
 
+	fclose(rpl);
 	return 0;
 error:
 	if (rpl) fclose(rpl);
