@@ -3,6 +3,8 @@ $Id$
 ( - todo, x - done)
 
 release:
+- fix modules makefiles (so that cd modules/foo; make will also link the proper
+   libs)
 - fix -march=..., or compile w/ i386 for the release
 x resolver should resolve [ipv6]
 - remove parse_uri debugging info

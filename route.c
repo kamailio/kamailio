@@ -36,6 +36,8 @@
  *  2003-04-01  added dst_port, proto, af; renamed comp_port to comp_no,
  *               inlined all the comp_* functions (andrei)
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
+ *  2003-05-23  comp_ip fixed, now it will resolve its operand and compare
+ *              the ip with all the addresses (andrei)
  */
 
  
@@ -350,14 +352,21 @@ inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 		case STRING_ST:
 		case RE_ST:
 			/* 1: compare with ip2str*/
-		/* !!!??? review reminder ( resolve(name) & compare w/ all ips? */
-#if 0
-			ret=comp_str(inet_ntoa(*(struct in_addr*)&a), param, op,
-						subtype);
+			ret=comp_str(ip_addr2a(ip), param, op, subtype);
 			if (ret==1) break;
-#endif
-			/* 2: (slow) rev dns the address
-			 * and compare with all the aliases */
+			/* 2: resolve (name) & compare w/ all the ips */
+			he=resolvehost((char*)param);
+			if (he==0){
+				DBG("comp_ip: could not resolve %s\n", (char*)param);
+			}else if (he->h_addrtype==ip->af){
+				for(h=he->h_addr_list;(ret!=1)&& (*h); h++){
+					ret=(memcmp(ip->u.addr, *h, ip->len)==0);
+				}
+				if (ret==1) break;
+			}
+			/* 3: (slow) rev dns the address
+			 * and compare with all the aliases
+			 * !!??!! review: remove this? */
 			he=rev_resolvehost(ip);
 			if (he==0){
 				DBG( "comp_ip: could not rev_resolve ip address: ");
