@@ -30,6 +30,8 @@
  *  2003-02-10  undoed the above changes (andrei)
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-14  set sockopts to TOS low delay (andrei)
+ *  2004-07-05  udp_rcv_loop: drop packets with 0 src port + error msg.
+ *              cleanups (andrei)
  */
 
 
@@ -289,7 +291,7 @@ int udp_rcv_loop()
 #else
 	static char buf [BUF_SIZE+1];
 #endif
-
+	char *tmp;
 	union sockaddr_union* from;
 	unsigned int fromlen;
 	struct receive_info ri;
@@ -319,23 +321,35 @@ int udp_rcv_loop()
 		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0, &from->s,
 											&fromlen);
 		if (len==-1){
+			if (errno==EAGAIN){
+				DBG("udp_rcv_loop: packet with bad checksum received\n");
+				continue;
+			}
 			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom:[%d] %s\n",
 						errno, strerror(errno));
-			if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK)||
-					(errno==ECONNREFUSED))
+			if ((errno==EINTR)||(errno==EWOULDBLOCK)|| (errno==ECONNREFUSED))
 				continue; /* goto skip;*/
 			else goto error;
 		}
 		/* we must 0-term the messages, receive_msg expects it */
 		buf[len]=0; /* no need to save the previous char */
 
+		ri.src_su=*from;
+		su2ip_addr(&ri.src_ip, from);
+		ri.src_port=su_getport(from);
+
 #ifndef NO_ZERO_CHECKS
 		if (len<MIN_UDP_PACKET) {
-			DBG("DEBUG: probing packet received\n");
+			tmp=ip_addr2a(&ri.src_ip);
+			DBG("udp_rcv_loop: probing packet received from %s %d\n",
+					tmp, htons(ri.src_port));
 			continue;
 		}
 		if (buf[len-1]==0) {
-			LOG(L_WARN, "WARNING: upstream bug - 0-terminated packet\n");
+			tmp=ip_addr2a(&ri.src_ip);
+			LOG(L_WARN, "WARNING: udp_rcv_loop: "
+					"upstream bug - 0-terminated packet from %s %d\n",
+					tmp, htons(ri.src_port));
 			len--;
 		}
 #endif
@@ -346,9 +360,11 @@ int udp_rcv_loop()
 			continue;
 		}
 #endif
-		ri.src_su=*from;
-		su2ip_addr(&ri.src_ip, from);
-		ri.src_port=su_getport(from);
+		if (ri.src_port==0){
+			tmp=ip_addr2a(&ri.src_ip);
+			LOG(L_INFO, "udp_rcv_loop: dropping 0 port packet from %s\n", tmp);
+			continue;
+		}
 		
 		
 		/* receive_msg must free buf too!*/

@@ -47,6 +47,8 @@
  *             added msg:len (andrei)
  * 2003-10-11  if(){} doesn't require a ';' after it anymore (andrei)
  * 2003-11-20  added {tcp_connect, tcp_send, tls_*}_timeout (andrei)
+ * 2004-07-05  src_ip & dst_ip will detect ip addresses between quotes
+ *              (andrei)
  */
 
 
@@ -67,8 +69,10 @@
 #include "sr_module.h"
 #include "modparam.h"
 #include "ip_addr.h"
+#include "resolve.h"
 #include "name_alias.h"
 #include "ut.h"
+
 
 #include "config.h"
 #ifdef USE_TLS
@@ -96,6 +100,8 @@ static void* f_tmp;
 static struct id_list* lst_tmp;
 static int rt;  /* Type of route block for find_export */
 static str* str_tmp;
+static str s_tmp;
+static struct ip_addr* ip_tmp;
 
 void warn(char* s);
  
@@ -809,8 +815,19 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 		| SRCIP equalop ipnet	{ $$=mk_elem(	$2, NET_ST,
 												SRCIP_O, $3);
 								}
-		| SRCIP strop STRING	{ $$=mk_elem(	$2, STRING_ST,
+		| SRCIP strop STRING	{	s_tmp.s=$3;
+									s_tmp.len=strlen($3);
+									ip_tmp=str2ip(&s_tmp);
+									if (ip_tmp==0)
+										ip_tmp=str2ip6(&s_tmp);
+									if (ip_tmp){
+										$$=mk_elem(	$2, NET_ST, SRCIP_O,
+												mk_net_bitlen(ip_tmp, 
+														ip_tmp->len*8) );
+									}else{
+										$$=mk_elem(	$2, STRING_ST,
 												SRCIP_O, $3);
+									}
 								}
 		| SRCIP strop host	{ $$=mk_elem(	$2, STRING_ST,
 												SRCIP_O, $3);
@@ -825,8 +842,19 @@ exp_elem:	METHOD strop STRING	{$$= mk_elem(	$2, STRING_ST,
 		| DSTIP equalop ipnet	{ $$=mk_elem(	$2, NET_ST,
 												DSTIP_O, $3);
 								}
-		| DSTIP strop STRING	{ $$=mk_elem(	$2, STRING_ST,
+		| DSTIP strop STRING	{	s_tmp.s=$3;
+									s_tmp.len=strlen($3);
+									ip_tmp=str2ip(&s_tmp);
+									if (ip_tmp==0)
+										ip_tmp=str2ip6(&s_tmp);
+									if (ip_tmp){
+										$$=mk_elem(	$2, NET_ST, DSTIP_O,
+												mk_net_bitlen(ip_tmp, 
+														ip_tmp->len*8) );
+									}else{
+										$$=mk_elem(	$2, STRING_ST,
 												DSTIP_O, $3);
+									}
 								}
 		| DSTIP strop host	{ $$=mk_elem(	$2, STRING_ST,
 												DSTIP_O, $3);
