@@ -179,6 +179,38 @@ static inline struct auth_body* auth_body_cloner(char* new_buf, char *org_buf, s
 	return new_auth;
 }
 
+static inline void clone_authorized_hooks(struct sip_msg* new, struct sip_msg* old)
+{
+	struct hdr_field* ptr, *new_ptr, *hook1, *hook2;
+	char stop = 0;
+
+	get_authorized_cred(old->authorization, &hook1);
+	if (!hook1) stop = 1;
+	
+	get_authorized_cred(old->proxy_auth, &hook2);
+	if (!hook2) stop |= 2;
+
+	ptr = old->headers;
+	new_ptr = new->headers;
+
+	while(ptr) {
+		if (ptr == hook1) {
+			((struct auth_body*)new->authorization->parsed)->authorized = new_ptr;
+			stop |= 1;
+		}
+		
+		if (ptr == hook2) {
+			((struct auth_body*)new->proxy_auth->parsed)->authorized = new_ptr;
+			stop |= 2;
+		}
+
+		if (stop == 3) break;
+
+		ptr = ptr->next;
+		new_ptr = new_ptr->next;
+	}
+}
+
 
 #define AUTH_BODY_SIZE sizeof(struct auth_body)
 
@@ -591,6 +623,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 		rpl_lump_anchor = &((*rpl_lump_anchor)->next);
 	}
 
+	clone_authorized_hooks(new_msg, org_msg);
+	
 	return new_msg;
 }
 
