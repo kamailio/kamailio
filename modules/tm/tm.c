@@ -85,6 +85,7 @@
 #include "../../ut.h"
 #include "../../script_cb.h"
 #include "../../fifo_server.h"
+#include "../../usr_avp.h"
 #include "../../mem/mem.h"
 
 #include "sip_msg.h"
@@ -108,6 +109,7 @@ static int fixup_t_send_reply(void** param, int param_no);
 static int fixup_str2int( void** param, int param_no);
 static int fixup_hostport2proxy(void** param, int param_no);
 static int fixup_str2regexp(void** param, int param_no);
+static int fixup_string2str( void** param, int param_no);
 
 
 /* init functions */
@@ -162,6 +164,7 @@ inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char *foo);
 inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 inline static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo);
+static int t_attr_to_uri(struct sip_msg* msg, char *s, char *foo);
 
 
 
@@ -222,6 +225,8 @@ static cmd_export_t cmds[]={
 	{"t_check_status",     t_check_status,          1, fixup_str2regexp,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_flush_flags",     t_flush_flags,            1, fixup_str2int,
+			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"t_attr_to_uri",     t_attr_to_uri,            1, fixup_string2str,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 
 	/* not applicable from the script */
@@ -300,6 +305,25 @@ static int fixup_str2int( void** param, int param_no)
 				(char *)(*param));
 			return E_CFG;
 		}
+	}
+	return 0;
+}
+
+
+static int fixup_string2str( void** param, int param_no)
+{
+	str *s;
+
+	if (param_no==1) {
+		s = (str*)pkg_malloc(sizeof(str));
+		if (s==0) {
+			LOG(L_ERR,"ERROR:fixup_string2str: nomore pkg mem\n");
+			return E_OUT_OF_MEM;
+		}
+		s->s = (char*)*param;
+		s->len = strlen( (char*)*param );
+		*param = (void*)s;
+		return 0;
 	}
 	return 0;
 }
@@ -515,6 +539,38 @@ static int child_init(int rank) {
 
 
 /**************************** wrapper functions ***************************/
+static int t_attr_to_uri(struct sip_msg* msg, char *s, char *foo)
+{
+	struct usr_avp   *avp;
+	char             *uri;
+
+	/* look for the attribute */
+	avp = search_avp( (str*)s );
+	if (avp==0)
+		return -1;
+	if (avp->val_type!=AVP_TYPE_STR) {
+		LOG(L_ERR,"ERROR:tm:t_attr_to_uri: attribute <%.*s> doesn't has a "
+			" STR value\n", ((str*)s)->len, ((str*)s)->s);
+		return -1;
+	}
+	/* replace the ruri */
+	uri = (char*)pkg_malloc( avp->val.str_val.len+1 );
+	if (uri==0) {
+		LOG(L_ERR,"ERROR:tm:t_attr_to_uri: no more pkg memory\n");
+		return -1;
+	}
+	memcpy( uri, avp->val.str_val.s, avp->val.str_val.len);
+	uri[avp->val.str_val.len] = 0;
+	if (msg->new_uri.s)
+		pkg_free( msg->new_uri.s );
+	msg->new_uri.s = uri;
+	msg->new_uri.len = avp->val.str_val.len;
+	msg->parsed_uri_ok=0;
+
+	return 1;
+}
+
+
 static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 {
 	regmatch_t pmatch;
