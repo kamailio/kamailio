@@ -76,11 +76,13 @@
 #include "../../msg_translator.h"
 #include "../usrloc/usrloc.h"
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <ctype.h>
 #include <errno.h>
-#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,8 +98,6 @@ MODULE_VERSION
 #endif
 
 /* NAT UAC test constants */
-#define	IP_1918			"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
-#define	CONTACT_1918		("[@:]" IP_1918)
 #define	NAT_UAC_TEST_C_1918	0x01
 #define	NAT_UAC_TEST_RCVD	0x02
 #define	NAT_UAC_TEST_V_1918	0x04
@@ -131,6 +131,17 @@ static usrloc_api_t ul;
 static int cblen = 0;
 static int natping_interval = 0;
 
+static struct {
+	const char *cnetaddr;
+	u_int32_t netaddr;
+	u_int32_t mask;
+} nets_1918[] = {
+	{"10.0.0.0",    0, 0xfffffffful << 24},
+	{"172.16.0.0",  0, 0xfffffffful << 20},
+	{"192.168.0.0", 0, 0xfffffffful << 16},
+	{NULL, 0, 0}
+};
+
 /*
  * If this parameter is set then the natpinger will ping only contacts
  * that have the NAT flag set in user location database
@@ -140,15 +151,12 @@ static const char sbuf[4] = {0, 0, 0, 0};
 static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
 static int rtpproxy_disable = 0;
 
-static regex_t key_contact_1918;
-static regex_t key_ip_1918;
-
 static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"force_rtp_proxy",   force_rtp_proxy_f,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy_from_f, 1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE }, 
+	{"force_rtp_proxy",   force_rtp_proxy_from_f, 1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"nat_uac_test",      nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0}
 };
@@ -175,10 +183,11 @@ struct module_exports exports={
 static int
 mod_init(void)
 {
-	int rtpp_ver;
+	int rtpp_ver, i;
 	char *cp;
 	bind_usrloc_t bind_usrloc;
 	struct iovec v[1] = {{"V", 1}};
+	struct in_addr addr;
 
 	if (natping_interval > 0) {
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
@@ -194,11 +203,11 @@ mod_init(void)
 		register_timer(timer, NULL, natping_interval);
 	}
 
-	/* compile 1918 address REs */
-	if (regcomp(&key_contact_1918, CONTACT_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE) ||
-	    regcomp(&key_ip_1918, IP_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
-		LOG(L_ERR, "ERROR: nathelper: failure to compule 1918 RE\n");
-		return -1;
+	/* Prepare 1918 networks list */
+	for (i = 0; nets_1918[i].cnetaddr != NULL; i++) {
+		if (inet_aton(nets_1918[i].cnetaddr, &addr) != 1)
+			abort();
+		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
 	}
 
 	if (rtpproxy_disable == 0) {
@@ -324,8 +333,33 @@ get_callid(struct sip_msg* _m, str* _cid)
 }
 
 /*
+ * Extract URI from the Contact header field
+ */
+static inline int
+get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
+{
+
+	if ((parse_headers(_m, HDR_CONTACT, 0) == -1) || !_m->contact)
+		return -1;
+	if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
+		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		return -1;
+	}
+	*_c = ((contact_body_t*)_m->contact->parsed)->contacts;
+	if (*_c == NULL) {
+		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		return -1;
+	}
+	if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
+		LOG(L_ERR, "get_contact_uri: Error while parsing Contact URI\n");
+		return -1;
+	}
+	return 0;
+}
+
+/*
  * Replaces ip:port pair in the Contact: field with the source address
- * of the packet and/or adds direction=active option to the SDP.
+ * of the packet.
  */
 static int
 fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
@@ -336,21 +370,8 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	struct lump* anchor;
 	struct sip_uri uri;
 
-	if ((parse_headers(msg, HDR_CONTACT, 0) == -1) || !msg->contact)
+	if (get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
-	if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {
-		LOG(L_ERR, "fix_nated_contact: Error while parsing Contact body\n");
-		return -1;
-	}
-	c = ((contact_body_t*)msg->contact->parsed)->contacts;
-	if (!c) {
-		LOG(L_ERR, "fix_nated_contact: Error while parsing Contact body\n");
-		return -1;
-	}
-	if (parse_uri(c->uri.s, c->uri.len, &uri) < 0 || uri.host.len <= 0) {
-		LOG(L_ERR, "fix_nated_contact: Error while parsing Contact URI\n");
-		return -1;
-	}
 	if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
 		return -1;
 	if (uri.port.len == 0)
@@ -409,29 +430,48 @@ fixup_str2int( void** param, int param_no)
 }
 
 /*
+ * Test if IP address pointed to by saddr belongs to RFC1918 networks
+ */
+static inline int
+is1918addr(str *saddr)
+{
+	struct in_addr addr;
+	u_int32_t netaddr;
+	int i, rval;
+	char backup;
+
+	rval = -1;
+	backup = saddr->s[saddr->len];
+	saddr->s[saddr->len] = '\0';
+	if (inet_aton(saddr->s, &addr) != 1)
+		goto theend;
+	netaddr = ntohl(addr.s_addr);
+	for (i = 0; nets_1918[i].cnetaddr != NULL; i++) {
+		if ((netaddr & nets_1918[i].mask) == nets_1918[i].netaddr) {
+			rval = 1;
+			goto theend;
+		}
+	}
+	rval = 0;
+
+theend:
+	saddr->s[saddr->len] = backup;
+	return rval;
+}
+
+/*
  * test for occurence of RFC1918 IP address in Contact HF
  */
 static int
 contact_1918(struct sip_msg* msg)
 {
-	regmatch_t pmatch;
-	int fnd;
-	char backup;
+	struct sip_uri uri;
+	contact_t* c;
 
-	if ((msg->contact == NULL) &&
-	    ((parse_headers(msg, HDR_CONTACT, 0) == -1))) {
-		DBG("DEBUG: nathelper/contact1918: Contact not found\n");
-		return 0;
-	}
-	if (msg->contact == NULL || msg->contact->body.s == NULL ) {
-		DBG("DEBUG: nathelper/contact1918: Contact sanity check failed\n");
-		return 0;
-	}
-	backup = msg->contact->body.s[msg->contact->body.len];
-	msg->contact->body.s[msg->contact->body.len] = '\0';
-	fnd = regexec(&key_contact_1918, msg->contact->body.s, 1, &pmatch, 0) == 0;
-	msg->contact->body.s[msg->contact->body.len] = backup;
-	return fnd;
+	if (get_contact_uri(msg, &uri, &c) == -1)
+		return -1;
+
+	return (is1918addr(&(uri.host)) == 1) ? 1 : 0;
 }
 
 /*
@@ -441,26 +481,19 @@ static int
 sdp_1918(struct sip_msg* msg)
 {
 	str body, ip;
-	regmatch_t pmatch;
-	int fnd;
-	char backup;
 
 	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
 		return 0;
 	}
-
 	if (extract_mediaip(&body, &ip) == -1) {
 		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
 		return 0;
 	}
 	if (ISNULLADDR(ip))
 		return 0;
-	backup = ip.s[ip.len];
-	ip.s[ip.len] = '\0';
-	fnd = regexec(&key_ip_1918, ip.s, 1, &pmatch, 0) == 0;
-	ip.s[ip.len] = backup;
-	return fnd;
+
+	return (is1918addr(&ip) == 1) ? 1 : 0;
 }
 
 /*
@@ -469,15 +502,8 @@ sdp_1918(struct sip_msg* msg)
 static int
 via_1918(struct sip_msg* msg)
 {
-	regmatch_t pmatch;
-	int fnd;
-	char backup;
 
-	backup = msg->via1->host.s[msg->via1->host.len];
-	msg->via1->host.s[msg->via1->host.len] = '\0';
-	fnd = regexec(&key_ip_1918, msg->via1->host.s, 1, &pmatch, 0) == 0;
-	msg->via1->host.s[msg->via1->host.len] = backup;
-	return fnd;
+	return (is1918addr(&(msg->via1->host)) == 1) ? 1 : 0;
 }
 
 static int
@@ -983,8 +1009,12 @@ static int
 force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str newip;
-	newip.s = ip_addr2a(&msg->rcv.dst_ip);
-	newip.len = strlen(newip.s);
+	char *cp;
+
+	cp = ip_addr2a(&msg->rcv.dst_ip);
+	newip.len = strlen(cp);
+	newip.s = alloca(newip.len + 1);
+	memcpy(newip.s, cp, newip.len + 1);
 	return do_force_rtp_proxy(msg, &newip);
 }
 
@@ -992,8 +1022,9 @@ static int
 force_rtp_proxy_from_f(struct sip_msg* msg, char* ip, char* str2)
 {
 	str newip;
+
 	newip.s = ip;
-	newip.len = strlen(newip.s);	
+	newip.len = strlen(newip.s);
 	return do_force_rtp_proxy(msg, &newip);
 }
 
