@@ -43,6 +43,7 @@
  *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-03-31  removed msg->repl_add_rm (andrei)
  *  2003-04-04  parsed uris are recalculated on cloning (jiri)
+ *  2003-05-07  received, rport & i via shortcuts are also translated (andrei)
  */
 
 #include "defs.h"
@@ -132,9 +133,22 @@ inline struct via_body* via_body_cloner( char* new_buf,
 				(*p) += ROUND4(sizeof(struct via_param));
 				new_vp->name.s=translate_pointer(new_buf,org_buf,vp->name.s);
 				new_vp->value.s=translate_pointer(new_buf,org_buf,vp->value.s);
-
-				if (new_vp->type==PARAM_BRANCH)
-					new_via->branch = new_vp;
+				
+				/* "translate" the shportcuts */
+				switch(new_vp->type){
+					case PARAM_BRANCH:
+							new_via->branch = new_vp;
+							break;
+					case PARAM_RECEIVED:
+							new_via->received = new_vp;
+							break;
+					case PARAM_RPORT:
+							new_via->rport = new_vp;
+							break;
+					case PARAM_I:
+							new_via->i = new_vp;
+							break;
+				}
 
 				if (last_new_vp)
 					last_new_vp->next = new_vp;

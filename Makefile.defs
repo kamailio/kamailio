@@ -13,19 +13,19 @@
 #              created by andrei
 #  2003-02-24  added LOCALBASE, fixed doc-dir for freebsd - patch provided
 #               by Maxim Sobolev <sobomax@FreeBSD.org>
-#  2003-02-25  added -DDISABLE_NAGLE
+#  2003-02-25  added -DDISABLE_NAGLE (andrei)
 #  2003-03-02  added -DDIGEST_DOMAIN (janakj)
 #  2003-03-10  added -xcode=pic32 for module compilation w/ sun cc
 #               (too many symbols for pic13)  (andrei)
 #  2003-04-16  added CC_EXTRA_OPTS, s/march/mcpu, added CPU (cpu to optimize 
-#               for, used only with gcc-3.x)
+#               for, used only with gcc-3.x) (andrei)
 
 
 #version number
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre22
+EXTRAVERSION = pre23
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
