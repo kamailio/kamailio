@@ -581,10 +581,12 @@ static int check_register(struct sip_msg* msg, int idx)
 	strncpy(to_str, ((struct to_body*)msg->to->parsed)->uri.s, len);
 	to_str[len] = '\0';
 
-	c = contact_iterator(msg, 0);
+	if (contact_iterator(&c, msg, 0) < 0) {
+		return -1;
+	}
 
 	while(c) {
-		contact_str = get_plain_uri(&c->uri);		
+		contact_str = get_plain_uri(&c->uri);
 		if (!contact_str) {
 			LOG(L_ERR, "check_register(): Can't extract plain Contact URI\n");
 			return -1;
@@ -604,7 +606,9 @@ static int check_register(struct sip_msg* msg, int idx)
 		}
 
 	skip_deny:
-		c = contact_iterator(msg, c);
+		if (contact_iterator(&c, msg, c) < 0) {
+			return -1;
+		}
 	}
 
 	DBG("check_register(): No contact denied => Allowed\n");
