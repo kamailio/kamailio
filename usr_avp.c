@@ -28,6 +28,7 @@
  * ---------
  *  2004-07-21  created (bogdan)
  *  2004-10-09  interface more flexibil - more function available (bogdan)
+ *  2004-11-07  AVP string values are kept 0 terminated (bogdan)
  */
 
 
@@ -85,11 +86,11 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 	if (flags&AVP_NAME_STR) {
 		if (flags&AVP_VAL_STR)
 			len += sizeof(struct str_str_data)-sizeof(void*) + name.s->len
-				+ val.s->len;
+				+ (val.s->len+1);
 		else
 			len += sizeof(struct str_int_data)-sizeof(void*) + name.s->len;
 	} else if (flags&AVP_VAL_STR)
-			len += sizeof(str)-sizeof(void*) + val.s->len;
+			len += sizeof(str)-sizeof(void*) + (val.s->len+1);
 
 	avp = (struct usr_avp*)shm_malloc( len );
 	if (avp==0) {
@@ -123,6 +124,7 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 			s->len = val.s->len;
 			s->s = (char*)s + sizeof(str);
 			memcpy( s->s, val.s->s , s->len);
+			s->s[s->len] = 0;
 			break;
 		case AVP_NAME_STR|AVP_VAL_STR:
 			/* avp type str, str value */
@@ -133,6 +135,7 @@ int add_avp(unsigned short flags, int_str name, int_str val)
 			ssd->val.len = val.s->len;
 			ssd->val.s = ssd->name.s + ssd->name.len;
 			memcpy( ssd->val.s , val.s->s, val.s->len);
+			ssd->val.s[ssd->val.len] = 0;
 			break;
 	}
 
