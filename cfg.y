@@ -209,7 +209,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 
-module_stm:	LOADMODULE STRING	{ DBG("loading module %s", $2);
+module_stm:	LOADMODULE STRING	{ DBG("loading module %s\n", $2);
 		  						  if (load_module($2)!=0){
 								  		yyerror("failed to load module");
 								  }
@@ -554,8 +554,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 										"string expected"); }
-		| ID LPAREN STRING RPAREN { DBG(" %s - doing nothing", $1);
-									f_tmp=find_export($1);
+		| ID LPAREN STRING RPAREN { f_tmp=find_export($1);
 									if (f_tmp==0){
 										yyerror("unknown command %s, missing"
 										" loadmodule?\n");

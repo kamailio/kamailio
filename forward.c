@@ -116,7 +116,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
-	DBG("forward_request: before via\n");
 	/*add first via, as an anchor for second via*/
 	anchor=anchor_lump(&(msg->add_rm), msg->via1.hdr-buf, 0, HDR_VIA);
 	if (anchor==0) goto error;
@@ -124,7 +123,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		goto error;
 	/* if received needs to be added, add anchor after host and add it */
 	if (received_len){
-	DBG("forward_request: adding received\n");
 		if (msg->via1.params){
 				size= msg->via1.params-msg->via1.hdr-1; /*compensate for ';' */
 		}else{
@@ -142,11 +140,8 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	
 	/* compute new msg len*/
 	new_len=len;
-	DBG("forward_request: computing new_len\n");
 	for(t=msg->add_rm;t;t=t->next){
-		DBG("forward_request: in for t.(%x)..\n", t);
 		for(r=t->before;r;r=r->before){
-		DBG("- forward_request: in for r...\n");
 			switch(r->op){
 				case LUMP_ADD:
 					new_len+=r->len;
@@ -172,7 +167,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 							" op for data lump (%x)\n", r->op);
 		}
 		for (r=t->after;r;r=r->after){
-		DBG("- forward_request: in for2 r...\n");
 			switch(r->op){
 				case LUMP_ADD:
 					new_len+=r->len;
@@ -190,7 +184,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		uri_len=strlen(msg->new_uri); 
 		new_len=new_len-strlen(msg->first_line.u.request.uri)+uri_len;
 	}
-	DBG("forward_request: new_len=%d\n",new_len);
 	new_buf=(char*)malloc(new_len+1);
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
@@ -211,7 +204,6 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 /* copy msg adding/removing lumps */
 	for (t=msg->add_rm;t;t=t->next){
-		DBG("adding/rming %x, op=%x, offset=%d\n", t, t->op, t->u.offset);
 		switch(t->op){
 			case LUMP_ADD:
 				/* just add it here! */

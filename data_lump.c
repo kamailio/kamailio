@@ -159,13 +159,11 @@ struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
 	tmp->u.offset=offset;
 	tmp->len=len;
 	prev=0;
-	DBG("anchor: new tmp=%x\n", tmp);
 	for (t=*list;t; prev=t, t=t->next){
 		/* insert it sorted after offset */
 		if (((t->op==LUMP_DEL)||(t->op==LUMP_NOP))&&(t->u.offset>offset))
 			break;
 	}
-	DBG("anchor: inserting it between %x and %x (*list=%x)\n", prev, t,*list);
 	tmp->next=t;
 	
 	if (prev) prev->next=tmp;
@@ -177,13 +175,11 @@ struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
 
 void free_lump(struct lump* lmp)
 {
-	DBG("- free_lump(%x), op=%d\n", lmp, lmp->op);
 	if (lmp && (lmp->op==LUMP_ADD)){
 		if (lmp->u.value) free(lmp->u.value);
 		lmp->u.value=0;
 		lmp->len=0;
 	}
-	DBG("- exiting free_lump(%x)\n", lmp);
 }
 
 
@@ -192,19 +188,14 @@ void free_lump_list(struct lump* l)
 {
 	struct lump* t, *crt;
 	t=l;
-	DBG("+ free_lump_list(%x)\n", l);
 	while(t){
 		crt=t;
 		t=t->next;
-		DBG("free_lump_list: freeing %x\n", crt);
 		/* dangerous recursive clean*/
 		if (crt->before) free_lump_list(crt->before);
 		if (crt->after)  free_lump_list(crt->after);
-		DBG("free_lump_list: back from recursive calls (%x) \n", crt);
 		/*clean current elem*/
 		free_lump(crt);
 		free(crt);
-		DBG("after free_lump_list: %x\n", crt);
 	}
-	DBG("+ exiting free_lump_list(%x)\n", l);
 }

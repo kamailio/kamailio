@@ -3,14 +3,13 @@
 # sip_router makefile
 #
 # WARNING: requires gmake (GNU Make)
-#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 6)
+#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 6), WinNT
 
-lex_f=lex.yy.c
-yacc_f=cfg.tab.c
-sources= $(filter-out $(lex_f) $(yacc_f), $(wildcard *.c)) $(lex_f) \
-$(yacc_f) 
-objs= $(sources:.c=.o)
-depends= $(sources:.c=.d)
+auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
+sources=$(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen) 
+objs=$(sources:.c=.o)
+depends=$(sources:.c=.d)
+modules=$(wildcard modules/*)
 
 NAME=ser
 
@@ -26,10 +25,11 @@ DEFS=-DNOCR -DMACROEATER
 
 ARCH = $(shell uname -s)
 
-ifeq ($(ARCH), Linux)
-
+#common
 CC=gcc
+LD=gcc
 CFLAGS=-O2 -Wcast-align #-Wmissing-prototypes 
+LDFLAGS=-Wl,-O2 -Wl,-E
 LEX=flex
 YACC=bison
 YACC_FLAGS=-d -b cfg
@@ -37,60 +37,48 @@ YACC_FLAGS=-d -b cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS=-lfl -ldl
 
-endif 
+
+ifeq ($(ARCH), Linux)
+
+endif
 ifeq  ($(ARCH), SunOS)
 
 MAKE=gmake
-CC=gcc
-CFLAGS=-O2 -Wcast-align
-LEX=flex
 YACC=yacc
-YACC_FLAGS=-d -b cfg
-LIBS=-lfl -ldl -L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
+LIBS=$(LIBS) -L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
 
 endif
 ifeq ($(ARCH), FreeBSD)
 
 MAKE=gmake
-CC=gcc
-CFLAGS=-O2 -Wcast-align
-LEX=flex
 YACC=yacc
-YACC_FLAGS=-d -b cfg
-LIBS=-lfl -ldl
 
 endif
+ifneq (,$(findstring CYGWIN, $(ARCH)))
 
-ifeq ($(ARCH), CYGWIN_NT-4.0)
-
-CC=gcc
-CFLAGS=-O2 -Wcast-align #-Wmissing-prototypes  -Wall
-LEX=flex
-YACC=bison
-YACC_FLAGS=-d -b cfg
-# on linux and freebsd keep it empty (e.g. LIBS= )
-# on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl -ldl
+#cygwin is the same as common
 
 endif
 
 
-MKDEP=gcc -M $(DEFS)
+MKDEP=gcc -M 
 
 ALLDEP=Makefile
 
+export #export all variables for the sub-makes
+
+
 #implicit rules
-
-
 %.o:%.c $(ALLDEP)
 	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 
 %.d: %.c
 	$(MKDEP) $< >$@
 
+
 # normal rules
 $(NAME): $(objs)
-	$(CC) $(CFLAGS) $(objs) -o $(NAME) $(LIBS)
+	$(LD) $(LDFLAGS) $(objs) $(LIBS) -o $(NAME) 
 
 lex.yy.c: cfg.lex $(ALLDEP)
 	$(LEX) $<
@@ -99,8 +87,9 @@ cfg.tab.c: cfg.y $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
 
+
 .PHONY: all
-all: $(NAME)
+all: $(NAME) modules
 
 .PHONY: dep
 dep: $(depends)
@@ -108,10 +97,19 @@ dep: $(depends)
 .PHONY: clean
 clean:
 	-rm $(objs) $(NAME)
+	-for r in $(modules); do $(MAKE) -C $$r clean ; done
+
+.PHONY: modules
+modules:
+	-for r in $(modules); do \
+		$(MAKE) -C $$r ; \
+	done
+
 
 .PHONY: proper
-proper: clean
+proper: clean 
 	-rm $(depends)
+	-for r in $(modules); do $(MAKE) -C $$r proper ; done
 
 include $(depends)
 
