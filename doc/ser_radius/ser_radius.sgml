@@ -187,8 +187,7 @@ acctserver      localhost
 		used by &ser is not included in the source tarball of &ser;, so far it is in
 		unstable branch of the <ulink url="http://iptel.org/ser/cvs">CVS</ulink> only, but
 		it will be included in one of future releases. Meanwhile you can get it from <ulink
-		url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/sip_router/etc/dictionary.ser?rev=HEAD">the
-		CVS</ulink>.
+		url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/sip_router/etc/dictionary.ser?rev=HEAD">here</ulink>.
 	    </simpara>
 	    <simpara>
 		Download the file and put it into <filename
