@@ -54,7 +54,9 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 #		issues additional debugging information if lock/unlock is called
 # -DFAST_LOCK
 #		uses fast arhitecture specific locking (see the arh. specific section)
-#
+# -DNOISY_REPLIES
+#		turns on appending User-agent and Content-length:0 to ser-generated
+#		replies; 
 # -DBUSY_WAIT
 #		uses busy waiting on the lock
 # -DADAPTIVE_WAIT
@@ -66,21 +68,27 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 # -DNOSMP
 #		don't use smp compliant locking (faster but won't work on SMP machines)
 #		(not yet enabled)
+# -DWAIT
+#		protection against race condiditions; turn off only for debugging;
+#       to become non-optional if stable
+# -DNEW_HNAME
+#		32-bit header name parsing; turn off for lower speed ;-) or debugging; to become non-optional if fast and stable
+# -DSRL Shortened Reply Lock -- moves more code, esp. "send" out
+#  of locks for greater speed; to become non-optional if fast and stable
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
 	 -DF_MALLOC  -DUSE_SYNONIM\
 	 -DNO_DEBUG \
+	 -DWAIT -DNEW_HNAME -DNOISY_REPLIES -DSRL
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
 	 #-DEXTRA_DEBUG 
 	 #-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	 #-DDBG_QM_MALLOC #-DNO_DEBUG
-#-DEXTRA_DEBUG
 # -DUSE_SHM_MEM
 #-DNO_DEBUG
-#-DPKG_MALLOC
 #-DNO_DEBUG#-DSTATS -DNO_DEBUG
 #-DNO_LOG
 
@@ -235,7 +243,7 @@ ifeq  ($(OS), SunOS)
 
 	YACC=yacc
 	LIBS+=-L/usr/local/lib -lxnet -lrt # or -lnsl -lsocket or -lglibc ?
-	# -lrt needed for sched_yield
+	# -lrt needed for sched_yield; some systems may require -lposix4
 endif
 
 ifeq ($(OS), FreeBSD)

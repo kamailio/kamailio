@@ -33,16 +33,35 @@ extern struct s_table*  hash_table;
 #include "sip_msg.h"
 
 
-#define LOCK_REPLIES(_t) lock(&((_t)->reply_mutex) )
-#define UNLOCK_REPLIES(_t) unlock(&((_t)->reply_mutex) )
-#define LOCK_ACK(_t) lock(&((_t)->ack_mutex) )
-#define UNLOCK_ACK(_t) unlock(&((_t)->ack_mutex) )
+#define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
+#define UNLOCK_REPLIES(_t) unlock(&(_t)->reply_mutex )
+#define LOCK_ACK(_t) lock(&(_t)->ack_mutex )
+#define UNLOCK_ACK(_t) unlock(&(_t)->ack_mutex )
+#define LOCK_WAIT(_t) lock(&(_t)->wait_mutex )
+#define UNLOCK_WAIT(_t) unlock(&(_t)->wait_mutex )
 
 
 /* convenience short-cut macros */
 #define REQ_METHOD first_line.u.request.method_value
 #define REPLY_STATUS first_line.u.reply.statuscode
 #define REPLY_CLASS(_reply) ((_reply)->REPLY_STATUS/100)
+
+/* send a private buffer: utilize a retransmission structure
+   but take a separate buffer not refered by it; healthy
+   for reducing time spend in REPLIES locks
+*/
+
+#define SEND_PR_BUFFER(_rb,_bf,_le ) ({ if ((_rb)->retr_buffer) \
+	{ udp_send( (_bf), (_le), (struct sockaddr*)&((_rb)->to) , \
+	   sizeof(struct sockaddr_in) ); \
+	} else { \
+	DBG("ERROR: attempt to send an empty buffer from %s (%d)", \
+	__FUNCTION__, __LINE__ ); }})
+
+#define SEND_BUFFER( _rb ) SEND_PR_BUFFER( \
+	_rb,(_rb)->retr_buffer, (_rb)->bufflen )
+
+/*
 #define SEND_BUFFER( _rb ) ({ if ((_rb)->retr_buffer) \
 	{ udp_send( (_rb)->retr_buffer, \
 	  (_rb)->bufflen, (struct sockaddr*)&((_rb)->to) , \
@@ -50,6 +69,7 @@ extern struct s_table*  hash_table;
 	} else \
 	DBG("ERROR: attempt to send an empty buffer from %s (%d)", \
 	__FUNCTION__, __LINE__ ); })
+*/
 
 
 /* 
@@ -165,7 +185,12 @@ int t_forward_uri( struct sip_msg* p_msg  );
   *  Returns :   0 - core router stops
   *                    1 - core router relay statelessly
   */
+
+#ifdef SRL
+int t_on_reply( struct sip_msg  *p_msg ) ;
+#else
 int t_on_reply_received( struct sip_msg  *p_msg ) ;
+#endif
 
 
 
@@ -201,7 +226,7 @@ int t_release_transaction( struct sip_msg* );
   * Returns  -1 -error
   *                1 - OK
   */
-int t_retransmit_reply( struct sip_msg *  );
+int t_retransmit_reply( /* struct sip_msg * */  );
 
 
 
@@ -234,7 +259,14 @@ int t_should_relay_response( struct cell *Trans, int new_code, int branch, int *
 int t_update_timers_after_sending_reply( struct retrans_buff *rb );
 int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
+
+#ifdef SRL
+static int push_reply( struct cell* trans , unsigned int branch , 
+    char *buf, unsigned int len);
+#else
 static int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
+#endif
+
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
 int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port);
 

@@ -30,6 +30,7 @@
 #endif
 #include "sr_module.h"
 #include "timer.h"
+#include "msg_parser.h"
 
 
 #include <signal.h>
@@ -126,6 +127,7 @@ Options:\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
                  auto-probing procedure even if  OS allows\n\
+	-m nr        Size of shared memory allocated in Megabytes\n\
     -w  dir      change the working directory to \"dir\" (default \"/\")\n\
     -t  dir      chroot to \"dir\"\n\
     -u uid       change uid \n\
@@ -141,9 +143,11 @@ void print_ct_constants()
 #ifdef ADAPTIVE_WAIT
 	printf("ADAPTIVE_WAIT_LOOPS=%d, ", ADAPTIVE_WAIT_LOOPS);
 #endif
+/*
 #ifdef SHM_MEM
 	printf("SHM_MEM_SIZE=%d, ", SHM_MEM_SIZE);
 #endif
+*/
 	printf("MAX_RECV_BUFFER_SIZE %d, MAX_LISTEN %d,"
 			" MAX_URI_SIZE %d, MAX_PROCESSES %d\n",
 		MAX_RECV_BUFFER_SIZE, MAX_LISTEN, MAX_URI_SIZE, MAX_PROCESSES );
@@ -203,6 +207,9 @@ process_bm_t process_bit = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
+
+/* shared memory (in MB) */
+unsigned int shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
@@ -483,7 +490,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:b:l:n:rRvcdDEVhw:t:u:g:";
+	"f:p:m:b:l:n:rRvcdDEVhw:t:u:g:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -501,6 +508,15 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad port number: -p %s\n", optarg);
 						goto error;
 					}
+					break;
+
+			case 'm':
+					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
+					if (tmp &&(*tmp)){
+						fprintf(stderr, "bad shmem size number: -m %s\n", optarg);
+						goto error;
+					};
+					LOG(L_INFO, "ser: shared memory allocated: %d MByte\n", shm_mem_size );
 					break;
 
 			case 'b':
@@ -618,6 +634,10 @@ int main(int argc, char** argv)
 				strerror(errno));
 		goto error;
 	}
+
+#ifdef NEW_HNAME
+    init_htable();
+#endif
 
 	/*init mallocs (before parsing cfg !)*/
 	if (init_mallocs()==-1)

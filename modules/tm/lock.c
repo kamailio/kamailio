@@ -51,6 +51,9 @@ static int
 	timer_semaphore=0, 
 	reply_semaphore=0,
 	ack_semaphore=0;
+#ifdef WAIT
+static int  wait_semaphore=0;
+#endif
 /* and the maximum number of semaphores in the entry_semaphore set */
 static int sem_nr;
 /* timer group locks */
@@ -166,6 +169,11 @@ again:
 			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
 		if (ack_semaphore>0)
 			semctl(reply_semaphore, 0 , IPC_RMID , 0 );
+#ifdef WAIT
+		if (wait_semaphore>0)
+			semctl(wait_semaphore, 0 , IPC_RMID , 0 );
+#endif
+
 
 		if (i==0){
 			LOG(L_CRIT, "lock_initialize: could not allocate semaphore"
@@ -236,6 +244,23 @@ again:
 		}
 	}
 
+#ifdef WAIT
+	if ((wait_semaphore=init_semaphore_set(sem_nr))<0){
+		if (errno==EINVAL || errno==ENOSPC ) {
+			DBG( "DEBUG:lock_initialize: wait semaphore initialization"
+				" failure: %s\n", strerror(errno));
+			probe_run==1;
+			i--;
+			goto again;
+		}else{
+			LOG(L_CRIT, "ERROR:lock_initialize: wait semaphore initialization"
+				" failure: %s\n", strerror(errno));
+			goto error;
+		}
+	}
+#endif
+
+
 
 
 	/* return success */
@@ -280,8 +305,18 @@ void lock_cleanup()
 	if (ack_semaphore > 0 &&
 	    semctl( ack_semaphore, 0 , IPC_RMID , 0 )==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, ack_semaphore cleanup failed\n");
+#ifdef WAIT
+	if (wait_semaphore > 0 &&
+		semctl( wait_semaphore, 0 , IPC_RMID , 0 )==-1)
+		LOG(L_ERR, "ERROR: lock_cleanup, wait_semaphore cleanup failed\n");
+#endif
+
 
 	entry_semaphore = timer_semaphore = reply_semaphore = ack_semaphore = 0;
+#ifdef WAIT
+	wait_semaphore = 0;
+#endif
+
 
 }
 #endif /*FAST_LOCK*/
@@ -329,13 +364,20 @@ int init_cell_lock( struct cell *cell )
 #ifdef FAST_LOCK
 	init_lock(cell->reply_mutex);
 	init_lock(cell->ack_mutex);
+#ifdef WAIT
+	init_lock(cell->wait_mutex);
+#endif
 	return 0;
 #else
 	cell->reply_mutex.semaphore_set=reply_semaphore;
 	cell->reply_mutex.semaphore_index = cell->hash_index % sem_nr;
 	cell->ack_mutex.semaphore_set=ack_semaphore;
 	cell->ack_mutex.semaphore_index = cell->hash_index % sem_nr;
-#endif
+#ifdef WAIT
+	cell->wait_mutex.semaphore_set=wait_semaphore;
+	cell->wait_mutex.semaphore_index = cell->hash_index % sem_nr;
+#endif /* WAIT */
+#endif /* FAST_LOCK */
 	return 0;
 }
 

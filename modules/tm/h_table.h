@@ -97,7 +97,13 @@ typedef struct cell
 	/* protection against concurrent reply processing */
 	ser_lock_t   reply_mutex;
 	/* protection against concurrent ACK processing */
-	ser_lock_t   ack_mutex;
+	ser_lock_t	ack_mutex;
+#ifdef WAIT
+	/* protection against reentering WAIT state */
+	ser_lock_t	wait_mutex;
+	/* has the transaction been put on wait status ? */
+	int on_wait;
+#endif
 
 	/* this is where destination is stored for picked branch;
 	good if a need to forward ACK later on */
@@ -111,6 +117,7 @@ typedef struct cell
 	/* scheduled for deletion ? */
 	short damocles;
 #endif
+
 }cell_type;
 
 

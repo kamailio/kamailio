@@ -33,11 +33,11 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	if ( T->outbound_request[branch]==NULL )
 	{
-		DBG("DEBUG: t_forward: first time forwarding\n");
+		DBG("DEBUG: t_forward_nonack: first time forwarding\n");
 		/* special case : CANCEL */
 		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
 		{
-			DBG("DEBUG: t_forward: it's CANCEL\n");
+			DBG("DEBUG: t_forward_nonack: it's CANCEL\n");
 			/* find original cancelled transaction; if found, use its
 			   next-hops; otherwise use those passed by script */
 			if ( T->T_canceled==T_UNDEFINED )
@@ -48,7 +48,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 				/* if in 1xx status, send to the same destination */
 				if ( (T->T_canceled->status/100)==1 )
 				{
-					DBG("DEBUG: t_forward: it's CANCEL and I will send "
+					DBG("DEBUG: t_forward_nonack: it's CANCEL and I will send "
 						"to the same place where INVITE went\n");
 					dest_ip=T->T_canceled->outbound_request[branch]->
 						to.sin_addr.s_addr;
@@ -59,12 +59,12 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 					T->label  = T->T_canceled->label;
 #endif
 				} else { /* transaction exists, but nothing to cancel */
-					DBG("DEBUG: t_forward: it's CANCEL but "
+					DBG("DEBUG: t_forward_nonack: it's CANCEL but "
 						"I have nothing to cancel here\n");
 					/* forward CANCEL as a stand-alone transaction */
 				}
 			} else { /* transaction doesnot exists  */
-				DBG("DEBUG: t_forward: canceled request not found! "
+				DBG("DEBUG: t_forward_nonack: canceled request not found! "
 				"nothing to CANCEL\n");
 			}
 		}/* end special case CANCEL*/
@@ -77,19 +77,19 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			goto error;
 
 		/* allocates a new retrans_buff for the outbound request */
-		DBG("DEBUG: t_forward: building outbound request\n");
+		DBG("DEBUG: t_forward_nonack: building outbound request\n");
 		shm_lock();
 		rb = (struct retrans_buff*) shm_malloc_unsafe( sizeof(struct retrans_buff)  );
 		if (!rb)
 		{
-			LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
+			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem\n");
 			shm_unlock();
 			goto error;
 		}
 		shbuf = (char *) shm_malloc_unsafe( len );
 		if (!shbuf)
 		{
-			LOG(L_ERR, "ERROR: t_forward: out of shmem buffer\n");
+			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem buffer\n");
 			shm_unlock();
 			goto error;
 		}
@@ -114,9 +114,11 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		/* link the retransmission buffer to our structures when the job is done */
 		free( buf ) ; buf=NULL;
 
-		DBG("DEBUG: t_forward: starting timers (retrans and FR) %d\n",get_ticks() );
+		DBG("DEBUG: t_forward_nonack: starting timers (retrans and FR) %d\n",get_ticks() );
 		/*sets and starts the FINAL RESPONSE timer */
+#ifdef FR
 		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
+#endif
 
 		/* sets and starts the RETRANS timer */
 		rb->retr_list = RT_T1_TO_1;
@@ -132,12 +134,14 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	if (  p_msg->REQ_METHOD==METHOD_CANCEL )
 	{
-		DBG("DEBUG: t_forward: forwarding CANCEL\n");
+		DBG("DEBUG: t_forward_nonack: forwarding CANCEL\n");
 		/* if no transaction to CANCEL */
 		/* or if the canceled transaction has a final status -> drop the CANCEL*/
 		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
 		{
+#ifdef FR
 			reset_timer( hash_table, &(rb->fr_timer ));
+#endif
 			reset_timer( hash_table, &(rb->retr_timer ));
 			return 1;
 		}
@@ -182,7 +186,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		return -1;
 	}
 
-	DBG("DEBUG: t_forward: forwarding ACK [%d]\n",branch);
+	DBG("DEBUG: t_forward_ack: forwarding ACK [%d]\n",branch);
 	/* not able to build branch -- then better give up */
 	if ( add_branch_label( T, p_msg , branch )==-1) {
 		LOG( L_ERR, "ERROR: t_forward_ack failed to add branch label\n" );

@@ -142,13 +142,13 @@ int shm_mem_init()
 				strerror(errno));
 		return -1;
 	}
-	shm_mempool=mmap(0, SHM_MEM_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED,
+	shm_mempool=mmap(0, /* SHM_MEM_SIZE */ shm_mem_size, PROT_READ|PROT_WRITE, MAP_SHARED,
 						fd ,0);
 	/* close /dev/zero */
 	close(fd);
 #else
 	
-	shm_shmid=shmget(IPC_PRIVATE, SHM_MEM_SIZE, 0700);
+	shm_shmid=shmget(IPC_PRIVATE, /* SHM_MEM_SIZE */ shm_mem_size , 0700);
 	if (shm_shmid==-1){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not allocate shared memory"
 				" segment: %s\n", strerror(errno));
@@ -185,11 +185,11 @@ int shm_mem_init()
 #endif
 	/* init it for malloc*/
 #	ifdef VQ_MALLOC
-		shm_block=vqm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+		shm_block=vqm_malloc_init(shm_mempool, /* SHM_MEM_SIZE */ shm_mem_size );
 	#elif defined F_MALLOC
-		shm_block=fm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+		shm_block=fm_malloc_init(shm_mempool, /* SHM_MEM_SIZE */ shm_mem_size );
 #	else
-		shm_block=qm_malloc_init(shm_mempool, SHM_MEM_SIZE);
+		shm_block=qm_malloc_init(shm_mempool, /* SHM_MEM_SIZE */ shm_mem_size );
 #	endif
 	if (shm_block==0){
 		LOG(L_CRIT, "ERROR: shm_mem_init: could not initialize shared"
@@ -218,7 +218,7 @@ void shm_mem_destroy()
 	DBG("shm_mem_destroy\n");
 	if (shm_mempool && (shm_mempool!=(void*)-1)) {
 #ifdef SHM_MMAP
-		munmap(shm_mempool, SHM_MEM_SIZE);
+		munmap(shm_mempool, /* SHM_MEM_SIZE */ shm_mem_size );
 #else
 		shmdt(shm_mempool);
 #endif

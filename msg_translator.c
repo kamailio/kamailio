@@ -587,10 +587,12 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/*lumps length*/
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
+#ifdef NOISY_REPLIES
 	/*user agent header*/
 	len += USER_AGENT_LEN + CRLF_LEN;
 	/*content length header*/
 	len +=CONTENT_LEN_LEN + CRLF_LEN;
+#endif
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
 	/*allocating mem*/
@@ -658,6 +660,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		p += lump->text.len;
 	}
 	/*user agent header*/
+#ifdef NOISY_REPLIES
 	memcpy( p, USER_AGENT , USER_AGENT_LEN );
 	p+=USER_AGENT_LEN;
 	memcpy( p, CRLF, CRLF_LEN );
@@ -667,6 +670,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	p+=CONTENT_LEN_LEN;
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
+#endif
 	/*end of message*/
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;

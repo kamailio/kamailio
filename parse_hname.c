@@ -45,7 +45,7 @@ enum { INITIAL=0,
 
 
 /* returns end or pointer to next elem*/
-char* parse_hname(char* p, char* end, struct hdr_field* hdr)
+char* parse_hname1(char* p, char* end, struct hdr_field* hdr)
 {
 
 	char* t;

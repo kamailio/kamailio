@@ -46,6 +46,16 @@ void print_timer_list(struct s_table* hash_table, enum lists list_id)
 /* static void remove_from_timer_list_dummy(  struct timer_link* tl ) */
 void remove_timer_unsafe(  struct timer_link* tl )
 {
+#ifdef EXTRA_DEBUG
+	if (tl && tl->timer_list &&
+		tl->timer_list->last_tl.prev_tl==0) {
+		LOG( L_CRIT,
+		"CRITICAL : Oh no, zero link in trailing timer element\n");
+		abort();
+	};
+#endif
+
+
 	if (is_in_timer_list2( tl )) {
 		tl->prev_tl->next_tl = tl->next_tl;
 		tl->next_tl->prev_tl = tl->prev_tl;
@@ -61,6 +71,14 @@ void remove_timer_unsafe(  struct timer_link* tl )
 void add_timer_unsafe( struct timer *timer_list,
 	struct timer_link *tl, unsigned int time_out )
 {
+#ifdef EXTRA_DEBUG
+	if (timer_list->last_tl.prev_tl==0) {
+	LOG( L_CRIT,
+		"CRITICAL : Oh no, zero link in trailing timer element\n");
+		abort();
+	};
+#endif
+
 	/*	remove_from_timer_list( tl ); */
 	/* the entire timer list is locked now -- noone else can manipulate it */
 	/* lock( timer_list->mutex ); */
@@ -116,6 +134,14 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
 		timer_list->first_tl.next_tl = tl;	
 		tl->prev_tl = & timer_list->first_tl;
 	}
+#ifdef EXTRA_DEBUG
+	if (timer_list->last_tl.prev_tl==0) {
+		LOG( L_CRIT,
+		"CRITICAL : Oh no, zero link in trailing timer element\n");
+		abort();
+	};
+#endif
+
 
    /* give the list lock away */
    unlock(timer_list->mutex);

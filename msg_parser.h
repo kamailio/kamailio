@@ -30,6 +30,7 @@
 #define HDR_RECORDROUTE  512
 #define HDR_OTHER       65536 /*unknown header type*/
 
+
 /* maximum length of values appended to Via-branch parameter */
 #ifdef USE_SYNONIM
 #define MAX_BRANCH_PARAM_LEN  22
@@ -52,6 +53,12 @@ enum{
 #define get_cseq( p_msg)  ((struct cseq_body*)(p_msg)->cseq->parsed)
 #define get_to( p_msg)      ((struct to_body*)(p_msg)->to->parsed)
 
+#ifdef NEW_HNAME
+#	define parse_hname(_b,_e,_h) parse_hname2((_b),(_e),(_h))
+	void init_htable(void);
+#else
+#	define parse_hname(_b,_e,_h) parse_hname1((_b),(_e),(_h))
+#endif
 
 
 #define INVITE_LEN	6
@@ -233,7 +240,10 @@ int parse_headers(struct sip_msg* msg, int flags);
 void free_uri(struct sip_uri* u);
 
 
-char* parse_hname(char* buf, char* end, struct hdr_field* hdr);
+/* char* parse_hname(char* buf, char* end, struct hdr_field* hdr); */
+char* parse_hname1(char* buf, char* end, struct hdr_field* hdr);
+char* parse_hname2(char* buf, char* end, struct hdr_field* hdr);
+
 char* parse_via(char* buffer, char* end, struct via_body *vb);
 char* parse_to(char* buffer, char* end, struct to_body *to_b);
 char* parse_cseq(char* buffer, char* end, struct cseq_body *cb);

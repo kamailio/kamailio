@@ -41,4 +41,6 @@ extern int *pids;
 extern int cfg_errors;
 extern unsigned int msg_no;
 
+extern unsigned int shm_mem_size;
+
 #endif

@@ -408,107 +408,6 @@ int t_forward_uri( struct sip_msg* p_msg  )
 #endif
 
 
-/*  This function is called whenever a reply for our module is received; 
-  * we need to register  this function on module initialization;
-  *  Returns :   0 - core router stops
-  *              1 - core router relay statelessly
-  */
-int t_on_reply_received( struct sip_msg  *p_msg )
-{
-	unsigned int  branch,len, msg_status, msg_class, save_clone;
-	struct sip_msg *clone, *backup;
-	int relay;
-	int start_fr;
-	int is_invite;
-	struct retrans_buff *rb;
-
-
-	/* make sure we know the assosociated tranaction ... */
-	if (t_check( p_msg  , &branch )==-1) return 1;
-	/* ... if there is no such, tell the core router to forward statelessly */
-	if ( T<=0 ) return 1;
-
-	DBG("DEBUG: t_on_reply_received: Original status =%d\n",T->status);
-
-	/* it can take quite long -- better do it now than later 
-	   inside a reply_lock */
-	if (!(clone=sip_msg_cloner( p_msg ))) {
-		goto error;
-	}
-	msg_status=p_msg->REPLY_STATUS;
-	msg_class=REPLY_CLASS(p_msg);
-	is_invite= T->inbound_request->REQ_METHOD==METHOD_INVITE;
-
-	/* *** stop timers *** */
-	rb=T->outbound_request[branch];
-	/* stop retransmission */
-	reset_timer( hash_table, &(rb->retr_timer));
-	/* stop final response timer only if I got a final response */
-	if ( msg_class>1 )
-		reset_timer( hash_table, &(rb->fr_timer));
-
-	LOCK_REPLIES( T );
-   	/* if a got the first prov. response for an INVITE ->
-	   change FR_TIME_OUT to INV_FR_TIME_UT */
-	start_fr = !T->inbound_response[branch] && msg_class==1 && is_invite;
-
-	/* *** store and relay message as needed *** */
-	relay = t_should_relay_response( T , msg_status, branch, &save_clone );
-
-	if (save_clone) {
-		/* release previously hold message */
-		backup = T->inbound_response[branch];
-		T->inbound_response[branch] = clone;
-		T->tag=&(get_to(clone)->tag_value);
-	} else {
-		backup = NULL;
-		sip_msg_free( clone );
-	}
-
-	if (relay>=0 &&  push_reply_from_uac_to_uas( T, relay)==-1 ) {
-		/* restore original state first */
-		if (save_clone) T->inbound_response[branch] = backup;
-		/* restart FR */
-		start_fr=1;
-		goto cleanup;
-	}
-
-
-	/* *** ACK handling *** */
-	if ( is_invite )
-	{
-		if ( T->outbound_ack[branch] )
-		{   /*retransmit*/
-			SEND_BUFFER( T->outbound_ack[branch] );
-		} else if (msg_class>2 ) {   /*on a non-200 reply to INVITE*/
-           		DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-           		if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
-           		{
-               		LOG( L_ERR , "ERROR: t_on_reply_received: unable to send ACK\n" );
-					/* restart FR */
-					start_fr=1;
-           		}
-       		}
-   	}
-cleanup:
-	UNLOCK_REPLIES( T );
-	if (backup) sip_msg_free(backup);
-	if (start_fr) set_timer( hash_table, &(rb->fr_timer), FR_INV_TIMER_LIST );
-   	/* restart retransmission if a provisional response came for 
-	   a non_INVITE -> retrasmit at RT_T2*/
-	if ( msg_class==1 && !is_invite )
-	{
-		rb->retr_list = RT_T2;
-		set_timer( hash_table, &(rb->retr_timer), RT_T2 );
-	}
-error:
-	T_UNREF( T );
-	/* don't try to relay statelessly on error; on troubles, simply do nothing;
-           that will make the other party to retransmit; hopefuly, we'll then 
-           be better off */
-	return 0;
-}
-
 #ifdef _OBSOLETED_TM
 int t_on_request_received( struct sip_msg  *p_msg , 
 	unsigned int ip , unsigned int port)
@@ -612,30 +511,6 @@ int t_release_transaction( struct sip_msg* p_msg)
 
 
 
-/* Retransmits the last sent inbound reply.
-
-  * input: p_msg==request for which I want to retransmit an associated
-    reply
-  * Returns  -1 -error
-  *                1 - OK
-  */
-int t_retransmit_reply( struct sip_msg* p_msg   )
-{
-/*	if (t_check( p_msg  , 0 )==-1) return 1; */
-
-   /* if no transaction exists or no reply to be resend -> out */
-/*   if ( T ) */
-   {
-	LOCK_REPLIES( T );
-	SEND_BUFFER( & T->outbound_response );
-	UNLOCK_REPLIES( T );
-	return 1;
-   }
-
-  /* no transaction found */
-/*   return -1; */
-}
-
 
 
 
@@ -649,170 +524,6 @@ int t_unref( /* struct sip_msg* p_msg */ )
 }
 
 
-
-
-/* Force a new response into inbound response buffer.
-  * returns 1 if everything was OK or -1 for erro
-  */
-int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
-{
-	unsigned int len, buf_len;
-	char * buf, *shbuf;
-	struct retrans_buff *rb;
-
-	DBG("DEBUG: t_send_reply: entered\n");
-	/* if (t_check( p_msg , 0 )==-1) return -1;
-
-	if (!T)
-	{
-		LOG(L_ERR, "ERROR: t_send_reply: cannot send a t_reply to a message "
-			"for which no T-state has been established\n");
-		return -1;
-	}
-	*/
-
-	buf = build_res_buf_from_sip_req(code,text,0,0,T->inbound_request,&len);
-	DBG("DEBUG: t_send_reply: buffer computed\n");
-	if (!buf)
-	{
-		DBG("DEBUG: t_send_reply: response building failed\n");
-		goto error;
-	}
-
-	LOCK_REPLIES( T );
-
-	rb = & T->outbound_response;
-	if (!rb->retr_buffer) {
-		/* initialize retransmission structure */
-		memset( rb , 0 , sizeof (struct retrans_buff) );
-		if (update_sock_struct_from_via(  &(rb->to),  p_msg->via1 )==-1)
-		{
-			LOG(L_ERR, "ERROR: t_send_reply: cannot lookup reply dst: %s\n",
-				p_msg->via1->host.s );
-			goto error2;
-		}
-
-		rb->retr_timer.tg=TG_RT;
-		rb->fr_timer.tg=TG_FR;
-		rb->retr_timer.payload = rb;
-		rb->fr_timer.payload = rb;
-		rb->to.sin_family = AF_INET;
-		rb->my_T = T;
-		rb->reply = code;
-	}
-
-
-	/* if this is a first reply (?100), longer replies will probably follow;
-	   try avoiding shm_resize by higher buffer size */
-	buf_len = rb->retr_buffer ? len : len + REPLY_OVERBUFFER_LEN;
-
-	if (! (rb->retr_buffer = (char*)shm_resize( rb->retr_buffer, buf_len )))
-	{
-		LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
-		goto error2;
-	}
-	rb->bufflen = len ;
-	memcpy( rb->retr_buffer , buf , len );
-	T->status = code;
-	SEND_BUFFER( rb );
-	/* needs to be protected too because what timers are set depends
-	   on current transactions status
-	*/
-	t_update_timers_after_sending_reply( rb );
-	UNLOCK_REPLIES( T );
-
-	free( buf ) ;
-	/* start/stops the proper timers*/
-
-	DBG("DEBUG: t_send_reply: finished\n");
-
-	return 1;
-
-error2:
-	free ( buf );
-error:
-	return -1;
-}
-
-
-
-/* Push a previously stored reply from UA Client to UA Server
-  * and send it out
-  */
-static int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
-{
-	char *buf;
-	unsigned int len, buf_len;
-	struct retrans_buff *rb;
-
-	DBG("DEBUG: push_reply_from_uac_to_uas: start\n");
-	rb= & trans->outbound_response;
-	/* if there is a reply, release the buffer (everything else stays same) */
-	if ( ! rb->retr_buffer ) {
-		/*init retrans buffer*/
-		memset( rb , 0 , sizeof (struct retrans_buff) );
-		if (update_sock_struct_from_via(  &(rb->to),
-			trans->inbound_response[branch]->via2 )==-1) {
-				LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
-					"cannot lookup reply dst: %s\n",
-				trans->inbound_response[branch]->via2->host.s );
-				goto error;
-		}
-		rb->retr_timer.tg=TG_RT;
-		rb->fr_timer.tg=TG_FR;
-		rb->retr_timer.payload = rb;
-		rb->fr_timer.payload =  rb;
-		rb->to.sin_family = AF_INET;
-		rb->my_T = trans;
-		rb->reply = trans->inbound_response[branch]->REPLY_STATUS;
-
-	} else {
-		reset_timer( hash_table, &(rb->retr_timer));
-		reset_timer( hash_table, &(rb->fr_timer));
-	}
-
-	/*  generate the retrans buffer */
-	buf = build_res_buf_from_sip_res ( trans->inbound_response[branch], &len);
-	if (!buf) {
-		LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
-			"no shmem for outbound reply buffer\n");
-		goto error;
-	}
-
-	/* if this is a first reply (?100), longer replies will probably follow;
-	try avoiding shm_resize by higher buffer size */
-	buf_len = rb->retr_buffer ? len : len + REPLY_OVERBUFFER_LEN;
-	if (! (rb->retr_buffer = (char*)shm_resize( rb->retr_buffer, buf_len )))
-	{
-		LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
-		goto error1;
-	}
-	rb->bufflen = len ;
-	memcpy( rb->retr_buffer , buf , len );
-	free( buf ) ;
-
-	/* update the status*/
-	trans->status = trans->inbound_response[branch]->REPLY_STATUS;
-	if ( trans->inbound_response[branch]->REPLY_STATUS>=200 &&
-		trans->relaied_reply_branch==-1 ) {
-
-		memcpy( & trans->ack_to, & trans->outbound_request[ branch ]->to,
-			sizeof( struct sockaddr_in ) );
-		trans->relaied_reply_branch = branch;
-	}
-
-	/* start/stops the proper timers*/
-	t_update_timers_after_sending_reply( rb );
-
-	/*send the reply*/
-	SEND_BUFFER( rb );
-	return 1;
-
-error1:
-	free( buf );
-error:
-	return -1;
-}
 
 
 
@@ -941,11 +652,30 @@ int t_put_on_wait(  struct cell  *Trans  )
 	unsigned int i;
 	struct retrans_buff* rb;
 
+#ifndef WAIT
 	if (is_in_timer_list2( &(Trans->wait_tl)))
   	{
 		DBG("DEBUG: t_put_on_wait: already on wait\n");
 		return 1;
 	}
+#else
+	/* have some race conditons occured and we already
+	  entered/passed the wait status previously?
+	  if so, exit now
+	*/
+
+	LOCK_WAIT(T);
+	if (Trans->on_wait)
+	{
+		DBG("DEBUG: t_put_on_wait: already on wait\n");
+		UNLOCK_WAIT(T);
+		return 1;
+	} else {
+		Trans->on_wait=1;
+		UNLOCK_WAIT(T);
+	};
+#endif
+
 
 	/* remove from  retranssmision  and  final response   list */
 	DBG("DEBUG: t_put_on_wait: stopping timers (FR and RETR)\n");
@@ -1402,9 +1132,13 @@ void retransmission_handler( void *attr)
 	/* retransmision */
 	DBG("DEBUG: retransmission_handler : resending (t=%p)\n", r_buf->my_T);
 	if (r_buf->reply) {
+		T=r_buf->my_T;
+/*
 		LOCK_REPLIES( r_buf->my_T );
 		SEND_BUFFER( r_buf );
 		UNLOCK_REPLIES( r_buf->my_T );
+*/
+		t_retransmit_reply();
 	}else{
 		SEND_BUFFER( r_buf );
 	}
