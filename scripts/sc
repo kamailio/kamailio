@@ -99,6 +99,8 @@ A_CSEQ_COLUMN=cseq
 A_LAST_MODIFIED_COLUMN=last_modified
 
 FIFO_DBG=0
+
+EGREP="egrep"
 #===================================================================
 
 
@@ -153,7 +155,7 @@ EOF
 # quite simplified now -- it captures just very basic
 # errors
 check_uri() {
-	echo "$1" | grep -E "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
+	echo "$1" | $EGREP "^sip:([a-zA-Z0-9_]+@)?.*\..*" 
 }
 
 
