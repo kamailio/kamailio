@@ -1036,12 +1036,13 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    len += CRLF_LEN; /*new line*/
 
    /* ack_buf = (char *)pkg_malloc( len +1); */
-	srb = (struct retrans_buff *) sh_malloc( sizeof(struct retrans_buff) + len + 1 );
-	if (!srb) {
-		LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
-		goto error1;
-	}
-	ack_buf = (char *) srb + sizeof(struct retrans_buff);
+   srb = (struct retrans_buff *) sh_malloc(
+          sizeof(struct retrans_buff) + len +1 );
+   if (!srb) {
+      LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
+     goto error1;
+    }
+    ack_buf = (char *) srb + sizeof(struct retrans_buff);
 
    p = ack_buf;
    DBG("DEBUG: t_build_and_send_ACK: len = %d \n",len);
@@ -1062,10 +1063,8 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    }
 
    *(p++) = ' ';
-
    memcpy( p , p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf) , p_msg->first_line.u.request.version.len );
    p += p_msg->first_line.u.request.version.len;
-
    memcpy( p, CRLF, CRLF_LEN );
    p+=CRLF_LEN;
 

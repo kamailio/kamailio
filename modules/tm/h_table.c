@@ -16,41 +16,35 @@ void free_cell( struct cell* dead_cell )
 	struct retrans_buff* rb;
 	char *b;
 
-	DBG("DEBUG: free_cell: start\n");
 	/* UA Server */
-	DBG("DEBUG: free_cell: inbound request %p\n",dead_cell->inbound_request);
 	release_cell_lock( dead_cell );
 	shm_lock();
 	if ( dead_cell->inbound_request )
 		sip_msg_free_unsafe( dead_cell->inbound_request );
-	DBG("DEBUG: free_cell: outbound response %p\n",dead_cell->outbound_response);
 	if (b=dead_cell->outbound_response.retr_buffer) shm_free_unsafe( b );
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
 	{
 		/* outbound requests*/
-		DBG("DEBUG: free_cell: outbound_request[%d] %p\n",i,dead_cell->outbound_request[i]);
 		if ( rb=dead_cell->outbound_request[i] )
-   		{
+		{
 			if (rb->retr_buffer) shm_free_unsafe( rb->retr_buffer );
-	 		dead_cell->outbound_request[i] = NULL;
-         		shm_free_unsafe( rb );
-   		}
+			dead_cell->outbound_request[i] = NULL;
+			shm_free_unsafe( rb );
+		}
 		/* outbound ACKs, if any */
 		if (rb=dead_cell->outbound_ack[i] )
 			shm_free_unsafe( rb );
-   		/* outbound requests*/
-   		DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
-   		if ( dead_cell -> inbound_response[i] )
-       		sip_msg_free_unsafe( dead_cell->inbound_response[i] );
-   	}
-   	/* mutex */
-   	/* release_cell_lock( dead_cell ); */
-   	/* the cell's body */
-   	shm_free_unsafe( dead_cell );
+		/* outbound requests*/
+		if ( dead_cell -> inbound_response[i] )
+		sip_msg_free_unsafe( dead_cell->inbound_response[i] );
+	}
+	/* mutex */
+	/* release_cell_lock( dead_cell ); */
+	/* the cell's body */
+	shm_free_unsafe( dead_cell );
 	shm_unlock();
-   	DBG("DEBUG: free_cell: done\n");
 }
 
 
@@ -136,14 +130,12 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    str                src[5];
    int                i;
 
-    DBG("DEBUG: build_cell : start\n");
     /* do we have the source for the build process? */
    if (!p_msg)
       return NULL;
 
    /* allocs a new cell */
    new_cell = (struct cell*)sh_malloc( sizeof( struct cell ) );
-   DBG("DEBUG: build_cell : malloc done\n");
    if  ( !new_cell )
       return NULL;
 
@@ -165,7 +157,6 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    new_cell->dele_tl.payload = new_cell;
 
    new_cell->inbound_request =  sip_msg_cloner(p_msg) ;
-   DBG("DEBUG: build_cell : clone done\n");
    if (!new_cell->inbound_request)
 	goto error;
    new_cell->relaied_reply_branch   = -1;
@@ -183,7 +174,6 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
     init_cell_lock(  new_cell );
 
-   DBG("DEBUG: build_cell : done\n");
    return new_cell;
 
 error:
@@ -210,7 +200,7 @@ void    insert_into_hash_table_unsafe( struct s_table *hash_table,  struct cell 
 		p_entry->last_cell->next_cell = p_cell;
 		p_cell->prev_cell = p_entry->last_cell;
 	} else p_entry->first_cell = p_cell;
-	
+
 	p_entry->last_cell = p_cell;
 }
 

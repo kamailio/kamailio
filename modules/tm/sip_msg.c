@@ -82,17 +82,17 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    else
       lump_chain = org_msg->repl_add_rm;
    while (lump_chain)
-   {  
+   {
       len += lump_len( lump_chain );
       lump_tmp = lump_chain->before;
       while ( lump_tmp )
-      {  
+      {
          len += lump_len( lump_tmp );
          lump_tmp = lump_tmp->before;
       }
       lump_tmp = lump_chain->after;
       while ( lump_tmp )
-      {  
+      {
          len += lump_len( lump_tmp );
          lump_tmp = lump_tmp->after;
       }
@@ -270,13 +270,13 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_anchor = &(new_msg->repl_add_rm);
    }
    while (lump_chain)
-   {  
+   {
       lump_clone( (*lump_anchor) , lump_chain , p );
       /*before list*/
       lump_tmp = lump_chain->before;
       lump_anchor2 = &((*lump_anchor)->before);
       while ( lump_tmp )
-      {  
+      {
          lump_clone( (*lump_anchor2) , lump_tmp , p );
          lump_anchor2 = &((*lump_anchor2)->before);
          lump_tmp = lump_tmp->before;
@@ -285,7 +285,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       lump_tmp = lump_chain->after;
       lump_anchor2 = &((*lump_anchor)->after);
       while ( lump_tmp )
-      {  
+      {
          lump_clone( (*lump_anchor2) , lump_tmp , p );
          lump_anchor2 = &((*lump_anchor2)->after);
          lump_tmp = lump_tmp->after;
@@ -307,7 +307,6 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
        (*rpl_lump_anchor)->next=0;
        rpl_lump_anchor = &((*rpl_lump_anchor)->next);
    }
-    DBG("DEBUG:cloner --------<%d>---------<%d>-------------\n",len,p-foo);
    return new_msg;
 }
 
