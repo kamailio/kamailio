@@ -6458,12 +6458,10 @@ if (t_newtran()) {
 
 	    <important>
 		<para>
-		    Usrloc is convenient module only. It's functions cannot
-		    be called from scripts directly (hence the ~ at the 
-		    beginning) but are used by registrar module internally.
-		    This module will be utilized by more modules in the future
-		    and therefore it is standalone. Use registrar module functions
-		    if you need usrloc support in your scripts.
+		    Usrloc is convenient module only. It's functions cannot be called from scripts
+		    directly, but are used by registrar module internally.  This module will be
+		    utilized by more modules in the future and therefore it is standalone. Use
+		    registrar module functions if you need usrloc support in your scripts.
 		</para>
 	    </important>
 
@@ -6651,7 +6649,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_register_domain</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_register_domain</function></funcdef>
 				<paramdef>const char* <parameter moreinfo="none">name</parameter></paramdef>
 			    </funcprototype>
 			</funcsynopsis>
@@ -6675,7 +6673,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_insert_urecord</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_insert_urecord</function></funcdef>
 				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
 				<paramdef>str* <parameter moreinfo="none">aor</parameter></paramdef>
 				<paramdef>urecord_t** <parameter moreinfo="none">rec</parameter></paramdef>
@@ -6703,7 +6701,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_delete_urecord</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_delete_urecord</function></funcdef>
 				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
 				<paramdef>str* <parameter moreinfo="none">aor</parameter></paramdef>
 			    </funcprototype>
@@ -6724,7 +6722,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_get_urecord</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_get_urecord</function></funcdef>
 				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
 				<paramdef>str* <parameter moreinfo="none">aor</parameter></paramdef>
 			    </funcprototype>
@@ -6744,7 +6742,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_lock_udomain</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_lock_udomain</function></funcdef>
 				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
 			    </funcprototype>
 			</funcsynopsis>
@@ -6763,7 +6761,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_unlock_udomain</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_unlock_udomain</function></funcdef>
 				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
 			    </funcprototype>
 			</funcsynopsis>
@@ -6778,7 +6776,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_release_urecord</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_release_urecord</function></funcdef>
 				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
 			    </funcprototype>
 			</funcsynopsis>
@@ -6795,7 +6793,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_insert_ucontact</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_insert_ucontact</function></funcdef>
 				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
 				<paramdef>str* <parameter moreinfo="none">contact</parameter></paramdef>
 				<paramdef>time_t <parameter moreinfo="none">expires</parameter></paramdef>
@@ -6835,7 +6833,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_delete_ucontact</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_delete_ucontact</function></funcdef>
 				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
 				<paramdef>ucontact_t* <parameter moreinfo="none">contact</parameter></paramdef>
 			    </funcprototype>
@@ -6855,7 +6853,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_get_ucontact</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_get_ucontact</function></funcdef>
 				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
 				<paramdef>str* <parameter moreinfo="none">contact</parameter></paramdef>
 			    </funcprototype>
@@ -6876,7 +6874,7 @@ if (t_newtran()) {
 		    <listitem>
 			<funcsynopsis>
 			    <funcprototype>
-				<funcdef>int <function moreinfo="none">~ul_update_ucontact</function></funcdef>
+				<funcdef>int <function moreinfo="none">ul_update_ucontact</function></funcdef>
 				<paramdef>ucontact_t* <parameter moreinfo="none">contact</parameter></paramdef>
 				<paramdef>time_t <parameter moreinfo="none">expires</parameter></paramdef>
 				<paramdef>float <parameter moreinfo="none">q</parameter></paramdef>
