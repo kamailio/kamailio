@@ -199,111 +199,59 @@ static int vm_get_user_info( str* user,   /*[in]*/
 {
         db_res_t*       email_res=0;
     
-#ifdef _OBSO
-	char*           s=0;
-        str             email_query;
+	db_key_t keys[2];
+	db_val_t vals[2];
+	db_key_t cols[1];
 
-	    email_query.len = SQL_SELECT_LEN
-		+ strlen(email_column)
-		+ SQL_FROM_LEN
-		+ strlen(subscriber_table)
-		+ SQL_WHERE_LEN
-		+ strlen(user_column)
-		+ SQL_EQUAL_LEN
-		+ user->len + 2/* strlen("''") */
+	keys[0] = user_column;
+	cols[0] = email_column;
+	VAL_TYPE(&(vals[0])) = DB_STR;
+	VAL_NULL(&(vals[0])) = 0;
+	VAL_STR(&(vals[0]))  = *user;
+	    
 #ifdef MULTI_DOMAIN
-		+ SQL_AND_LEN
-		+ strlen(domain_column)
-		+ SQL_EQUAL_LEN
-		+ host->len + 2/* strlen("''") */
+	keys[1] = domain_column;
+	VAL_TYPE(&vals[1]) = DB_STR;
+	VAL_NULL(&vals[1]) = 0;
+	VAL_STR(&vals[1])  = *host;
 #endif
-		;
-	    
-	    email_query.s = malloc(email_query.len+1);
-	    if(!email_query.s){
-		LOG(L_ERR,"ERROR: %s: not enough memory\n",
-		    exports.name);
-		goto error;
-	    }
-	    s = email_query.s;
-	    append_str(s,SQL_SELECT,SQL_SELECT_LEN);
-	    append_str(s,email_column,strlen(email_column));
-	    append_str(s,SQL_FROM,SQL_FROM_LEN);
-	    append_str(s,subscriber_table,strlen(subscriber_table));
-	    append_str(s,SQL_WHERE,SQL_WHERE_LEN);
-	    append_str(s,user_column,strlen(user_column));
-	    append_str(s,SQL_EQUAL,SQL_EQUAL_LEN);
-	    *s = '\''; s++;
-	    append_str(s,user->s,user->len);
-	    *s = '\''; s++;
+
+	db_use_table(db_handle,subscriber_table);
+	if ((*db_query)(db_handle, keys, 0, vals, cols, 
 #ifdef MULTI_DOMAIN
-	    append_str(s,SQL_AND,SQL_AND_LEN);
-	    append_str(s,domain_column,strlen(domain_column));
-	    append_str(s,SQL_EQUAL,SQL_EQUAL_LEN);
-	    *s = '\''; s++;
-	    append_str(s,msg->parsed_uri.host.s,msg->parsed_uri.host.len);
-	    *s = '\''; s++;
-#endif
-	    *s = '\0';
-	    
-	    
-	    (*db_raw_query)(db_handle,email_query.s,&email_res);
-	    free(email_query.s);
+			2, 
 #else
-	    db_key_t keys[2];
-	    db_val_t vals[2];
-	    db_key_t cols[1];
-
-	    keys[0] = user_column;
-	    cols[0] = email_column;
-	    VAL_TYPE(&(vals[0])) = DB_STR;
-	    VAL_NULL(&(vals[0])) = 0;
-	    VAL_STR(&(vals[0]))  = *user;
-
-#ifdef MULTI_DOMAIN
-	    keys[1] = domain_column;
-	    VAL_TYPE(&vals[1]) = DB_STR;
-	    VAL_NULL(&vals[1]) = 0;
-	    VAL_STR(&vals[1])  = *host;
+			1,
 #endif
-
-	    db_use_table(db_handle,subscriber_table);
-	    if ((*db_query)(db_handle, keys, 0, vals, cols, 
-#ifdef MULTI_DOMAIN
-			    2, 
-#else
-			    1,
-#endif
-			    1, 0, &email_res))
-	    {
-
-		LOG(L_ERR,"ERROR: vm: db_query() failed.");
-		goto error;
-	    }
-#endif
+			1, 0, &email_res))
+	  {
 	    
-	    if( (!email_res) || (email_res->n != 1) ){
+	    LOG(L_ERR,"ERROR: vm: db_query() failed.");
+	    goto error;
+	  }
 	    
-		if(email_res)
-		    (*db_free_query)(db_handle,email_res);
+	if( (!email_res) || (email_res->n != 1) ){
+	  
+	  if(email_res)
+	    (*db_free_query)(db_handle,email_res);
 		
-		LOG( L_ERR,"ERROR: %s: no email for user '%.*s'",
-		     exports.name,
-		     user->len,user->s);
-		goto error;
-	    }
+	  LOG( L_ERR,"ERROR: %s: no email for user '%.*s'",
+	       exports.name,
+	       user->len,user->s);
+	  goto error;
+	}
 	    
-	    email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
-	    email->len = strlen(email->s);
-
+	email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
+	email->len = strlen(email->s);
+	
 #ifdef MULTI_DOMAIN
-	    domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
-	    domain->s = strlen(domain->s);
+	domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
+	domain->s = strlen(domain->s);
 #endif	    
-
-	    return 0;
-error:
-	    return -1;
+	
+	return 0;
+ error:
+	return -1;
 }
 
 static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
@@ -392,10 +340,6 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
         if(!str_uri.len)
 	    str_uri = get_from(msg)->uri;
 
-	//if(parse_nameaddr(str* _s, name_addr_t* _a)){
-	//    LOG(L_ERR,"ERROR: parse_nameaddr failed\n");
-	//}
-
 	route.s = route_buffer; route.len = 0;
 	s = route_buffer;
 
@@ -476,7 +420,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	email = empty_param;
 	domain = empty_param;
 
-	if(!strcmp(action,VM_INVITE)){
+	if(strcmp(action,VM_BYE)){
 
 	    if( (body.s = get_body(msg)) == 0 ){
 		LOG(L_ERR, "ERROR: vm: get_body failed\n");
@@ -497,13 +441,14 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	lines[1]=msg->parsed_uri.user;		/* user from r-uri */
 	lines[2]=email;			        /* email address from db */
 	lines[3]=domain;                        /* domain */
-	/*  lines[4].s=ip_addr2a(&msg->rcv.dst_ip); */
-	/*  lines[4].len=strlen(lines[4].s); */
+
 	lines[4]=msg->rcv.bind_address->address_str; /* dst ip */
-	lines[5]=msg->rcv.bind_address->port_no_str; /* port */
+
+	lines[5]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
 	lines[6]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
-	/*  lines[6]=empty_param; */
+
 	lines[7]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
+
 	lines[8]=get_from(msg)->body;		/* from */
 	lines[9]=msg->to->body;			/* to */
 	lines[10]=msg->callid->body;		/* callid */
