@@ -1,0 +1,51 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "permissions_user.sgml">
+<!ENTITY devel SYSTEM "permissions_devel.sgml">
+<!ENTITY faq SYSTEM "permissions_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>permissions Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Miklos</firstname>
+		<surname>Tirpak</surname>
+		<address>
+		    <email>mtirpak@sztaki.hu</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Miklos</firstname>
+		<surname>Tirpak</surname>
+		<address>
+		    <email>mtirpak@sztaki.hu</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>Miklos Tirpak</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>

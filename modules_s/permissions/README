@@ -1,46 +1,168 @@
-#
-# $Id$
-#
-# PERMISSIONS module
-#
 
-Description:
-------------
+permissions Module
 
-Permissions module is used to determinate if a call has appropriate permission to be established.
-Permissions can be menaged in configuraton files simular to hosts.allow and hosts.deny:
+Miklos Tirpak
 
-The search stops at the first match:
-    - Routing will be allowed when a (FROM,TO) pair matches an entry in the /etc/ser/permissions.allow file.
-    - Otherwise, routing will be denied when a (FROM,TO) pair matches an entry in the /etc/ser/permissions.deny file.
-    - Otherwise, routing will be allowed.
+Edited by
 
-A non-existing permission control file is treated as if it were an empty file.
-Thus, permission control can be turned off by providing no permission control files.
-	      
-FROM and TO headers are always compared with regular expressions! For the syntax see the sample file: config/permissions.allow
+Miklos Tirpak
 
+   Copyright © 2003 Miklos Tirpak
+     _________________________________________________________
 
-Exported parameters: none
--------------------
+   Table of Contents
+   1. User's Guide
 
+        1.1. Overview
+        1.2. Dependencies
 
-Exported functions:
-------------------
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
 
-Name:	allow_routing()
-Params:	-
-Desc:	Returns true if the (FROM,TO) pair in the received sip message has appropriate permission according to the configuration files.
+        1.3. Exported Parameters
 
+              1.3.1. allow_file (string)
+              1.3.2. deny_file (string)
 
-TODO:
-----
-Create your own configuration files /etc/ser/permissions.allow and /etc/ser/permissions.deny! Samples can be found in the config directory.
+        1.4. Exported Functions
 
+              1.4.1. allow_routing()
 
-Module dependency: none
------------------
+   2. Developer's Guide
+   3. Frequently Asked Questions
 
+   List of Examples
+   1-1. Set allow_file parameter
+   1-2. Set deny_file parameter
+   1-3. allow_routing usage
+     _________________________________________________________
 
-Author:	Miklós Tirpák
-	mtirpak@sztaki.hu
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Permissions module is used to determinate if a call has
+   appropriate permission to be established. Permissions can be
+   menaged in configuraton files simular to hosts.allow and
+   hosts.deny:
+
+   The search stops at the first match:
+
+     * Routing will be allowed when a (FROM, Request URI) pair
+       matches an entry in the
+       /usr/local/etc/ser/permissions.allow file.
+     * Otherwise, routing will be denied when a (FROM, Request
+       URI) pair matches an entry in the
+       /usr/local/etc/ser/permissions.deny file.
+     * Otherwise, routing will be allowed.
+
+   A non-existing permission control file is treated as if it
+   were an empty file. Thus, permission control can be turned off
+   by providing no permission control files.
+
+   FROM header and Request URI are always compared with regular
+   expressions! For the syntax see the sample file:
+   config/permissions.allow
+
+   Note
+
+   Create your own configuration files
+   /usr/local/etc/ser/permissions.allow and
+   /usr/local/etc/ser/permissions.deny! Samples can be found in
+   the config directory.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other SER modules.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. allow_file (string)
+
+   File for the allow rules.
+
+   Default value is "/usr/local/etc/ser/permissions.allow". 
+
+   Example 1-1. Set allow_file parameter
+...
+modparam("permissions", "allow_file", "/etc/permissions.allow")
+...
+     _________________________________________________________
+
+1.3.2. deny_file (string)
+
+   File for the deny rules.
+
+   Default value is "/usr/local/etc/ser/permissions.deny". 
+
+   Example 1-2. Set deny_file parameter
+...
+modparam("permissions", "deny_file", "/etc/permissions.deny")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. allow_routing()
+
+   Returns true if the (FROM, Request URI) pair in the received
+   sip message has appropriate permission according to the
+   configuration files.
+
+   Example 1-3. allow_routing usage
+...
+if (allow_routing()) {
+    t_relay();
+};
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs

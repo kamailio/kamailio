@@ -1,0 +1,157 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    Permissions module is used to determinate if a call has appropriate permission to be
+	    established.  Permissions can be menaged in configuraton files simular to hosts.allow
+	    and hosts.deny:
+	</para>
+	<para>
+	    The search stops at the first match:
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    Routing will be allowed when a (FROM, Request URI) pair matches an entry in the
+		    /usr/local/etc/ser/permissions.allow file.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Otherwise, routing will be denied when a (FROM, Request URI) pair matches an
+		    entry in the /usr/local/etc/ser/permissions.deny file.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    Otherwise, routing will be allowed.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<para>
+	    A non-existing permission control file is treated as if it were an empty file. Thus,
+	    permission control can be turned off by providing no permission control files.
+	</para>
+	<para>
+	    FROM header and Request &uri; are always compared with regular expressions! For the syntax
+	    see the sample file: config/permissions.allow
+	</para>
+	<note>
+	    <para>
+		Create your own configuration files /usr/local/etc/ser/permissions.allow and
+		/usr/local/etc/ser/permissions.deny! Samples can be found in the config directory.
+	    </para>
+	</note>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>allow_file</varname> (string)</title>
+	    <para>
+		File for the allow rules.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/usr/local/etc/ser/permissions.allow</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>allow_file</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "allow_file", "/etc/permissions.allow")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>deny_file</varname> (string)</title>
+	    <para>
+		File for the deny rules.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>/usr/local/etc/ser/permissions.deny</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>deny_file</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("permissions", "deny_file", "/etc/permissions.deny")
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">allow_routing()</function>
+	    </title>
+	    <para>
+		Returns true if the (FROM, Request URI) pair in the received sip message has
+		appropriate permission according to the configuration files.
+	    </para>
+	    <example>
+		<title><function>allow_routing</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (allow_routing()) {
+    t_relay();
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("permissions.sgml" "Book" "chapter")
+End:
+-->
