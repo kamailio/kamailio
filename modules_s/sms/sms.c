@@ -25,6 +25,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11 updated to the new module exports interface (andrei)
+ */
 
 
 #include <stdio.h>
@@ -72,58 +77,33 @@ int    use_contact     = 0;
 int    sms_report_type = NO_REPORT;
 struct tm_binds tmb;
 
+
+static cmd_export_t cmds[]={
+	{"sms_send_msg_to_net",  w_sms_send_msg_to_net, 1, 
+		fixup_sms_send_msg_to_net },
+	{"sms_send_msg",         w_sms_send_msg,        0,  0},
+	{0,0,0,0}
+};
+
+
+static param_export_t params[]={
+	{"networks",        STR_PARAM, &networks_config },
+	{"modems",          STR_PARAM, &modems_config   },
+	{"links",           STR_PARAM, &links_config    },
+	{"default_net",     STR_PARAM, &default_net_str },
+	{"max_sms_parts",   INT_PARAM, &max_sms_parts   },
+	{"domain",          STR_PARAM, &domain_str      },
+	{"use_contact",     INT_PARAM, &use_contact     },
+	{"sms_report_type", INT_PARAM, &sms_report_type },
+	{0,0,0}
+};
+
+
 struct module_exports exports= {
 	"sms",
-	(char*[]){
-				"sms_send_msg_to_net",
-				"sms_send_msg"
-			},
-	(cmd_function[]){
-					w_sms_send_msg_to_net,
-					w_sms_send_msg
-					},
-	(int[]){
-				1,
-				0
-			},
-	(fixup_function[]){
-				fixup_sms_send_msg_to_net,
-				0
-		},
-	2,
-
-	(char*[]) {   /* Module parameter names */
-		"networks",
-		"modems",
-		"links",
-		"default_net",
-		"max_sms_parts",
-		"domain",
-		"use_contact",
-		"sms_report_type"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM,
-		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&networks_config,
-		&modems_config,
-		&links_config,
-		&default_net_str,
-		&max_sms_parts,
-		&domain_str,
-		&use_contact,
-		&sms_report_type
-	},
-	8,      /* Number of module paramers */
-
+	cmds,
+	params,
+	
 	sms_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) sms_exit,   /* module exit function */
@@ -204,7 +184,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			}
 			break;
 		case 'r':  /* retry time */
-			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
+			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [r] arg to"
 					" integer!\n");
@@ -213,7 +193,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			mdm->retry = foo;
 			break;
 		case 'l':  /* looping interval */
-			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
+			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [l] arg to"
 					" integer!\n");
@@ -222,7 +202,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			mdm->looping_interval = foo;
 			break;
 		case 'b':  /* baudrate */
-			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
+			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [b] arg to"
 					" integer!\n");
@@ -269,7 +249,7 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 			net->smsc[arg_end-arg-2] = 0;
 			break;
 		case 'm':  /* maximum sms per one call */
-			foo=str2s((unsigned char*)arg+2,arg_end-arg-2,&err);
+			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
 				LOG(L_ERR,"ERROR:set_network_arg: cannot convert [m] arg to"
 					" integer!\n");
