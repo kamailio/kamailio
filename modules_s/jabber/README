@@ -1,163 +1,98 @@
-# $Id$
 
-To: sr <sr@iptel.org>
-Subject: [Sr] IM gateway capabilities and limitations
+eXtended JABber module
+======================
 
-Hello,
+This is new version of Jabber module that integrates XODE XML parser for
+parsing Jabber messages. That introduces a new module dependece: expat library.
 
-I made a brief about what IM gateway can or cannot do. The characteristics are what I found about on mailing lists or home page of the applications. I will keep the document updated with what it's coming.
+Expat is a common XML library and is the fastest available for Linux/Unix, 
+the second over all, after msxml library. It is integrated in most of well known
+Linux distributions.
 
-There is some place where I can put these documents, this, the other one sent couple days ago
-(imgw.pdf) and other future documents, where they can be accessed by anybody of us? Sending them to the list wastes a lot of space.
+New features
+------------
+- posibility to manage all kinds of Jabber messages (message/presence/iq)
+- aliases - posibility to set host aliases for addresses (see parameter's desc.)
+- gateways detection - ability to see whether an IM gateway is up or down
 
-Best regards,
-  Daniel
+Features
+--------
+- send received SIP MESSAGE messages to different IM networks (Jabber, ICQ,
+MSN, AIM, Yahoo) using a Jabber server
+- send as SIP MESSAGE messages incoming Jabber instant messages
 
+Exported parameters:
+--------------------
 
-IM Gateway - capabilities and limitations - v1.0
-================================================
+Name:		contact
+Type:		string 
+Default:	none
+Desc:		contact header for SIP messages - if not set, the header
+			is filled with value of 'From'
+			
+Name:		db_url
+Type:		string
+Default:	"sql://root@127.0.0.1/sip_jab"
+Desc:		username, password, host, port and database
+			(ex: sql://username:password@hostname.com/database)
 
-The gateway allows the message passing between SIP users and other
-IM users (ICQ, AIM, Yahoo ...).
+Name:		jaddress
+Type:		string
+Default:	"127.0.0.1"
+Desc:		IP or hostname of Jabber server 
 
-IM Gateway uses for this a Jabber server which has the facility of supporting
-many IM protocols (they are called IM transports). So, in fact, the gateway is
-between SIP and Jabber.
+Name:		jport
+Type:		integer
+Default:	5222
+Desc:		port of Jabber server
 
-Because the most of the IM protocols are not open source and they are the
-property of some companies, Jabber does not provide full support for these
-protocols. From time to time, the owner of the protocol changes the protocol
-structure, and for a while, that transport is no longer available. There are
-some guys doing some kind of reverse engineering on these protocols. But not
-whole protocol structure is discovered, each transport has its own limitations.
+Name:		aliases
+Type:		string
+Default:	none
+Desc:		aliases for hostnames. 
+			Format: "N;alias1=name1;...;aliasN=nameN;"
+			Example of real usage: main SER is running on 'domain.com', for 
+			each IM	gateway exists a DNS alias 'im.domain.com'. When SIP users
+			want to send messages to IM network, destination is like 
+			'id@im.domain.com'. If Jabber server is on another machine 
+			'alpha.domain.com', only messages with destination 
+			'id@alpha.domain.com' are considered for itself. If 
+			aliases="1;jabber.domain.com=alpha.domain.com;" all messages for 
+			'id@jabber.domain.com' are sent to Jabber with destination 
+			'id@alpha.domain.com', and now Jabber recognize that the message
+			is for one of local Jabber users. If destination has a hostname,
+			other than machine's name or IM gateways alias, Jabber server tries
+			to connect to that host, considering that host another Jabber srv.
 
-In additions, many of the IM native clients allow only one user to be online at
-a moment, and IM servers could easy say that the hosts which have more than one
-open connection are not using a native client and block those addresses or the
-accounts.
+Name:		workers
+Type:		integer
+Default:	2
+Desc:		number of workers
 
-Next, are presented the IM transports that are running on our Jabber server, or
-they are wanted to be available. The capabilities and limitations are what can
-be found on the net about transports.
+Name:		max_jobs
+Type:		integer
+Default:	10
+Desc:		maximum jobs per worker
 
+Name:		cache_time
+Type:		integer (seconds)
+Default:	600
+Desc:		cache time of a Jabber conection
 
-AIM transport
--------------
-It is only one well known version of aim-transport.
-(web location: http://aim-transport.jabberstudio.org/)
-AIM-t provides basic interoperability between Jabber and AIM/ICQ network.
-Currently AIM-t is undergoing massive changes. It will be a standalone component
-once this is finished.
+Name:		delay_time
+Type:		integer (seconds)
+Default:	90
+Desc:		time to keep a SIP message
 
-* capabilities
-- currently supporting basic presence and messaging.
-- reliable messaging (via server only)
-- simple user info retrieval (ICQ only)
- may take some time, just wait...
-- SMS sending (ICQ)
- send "SEND-SMS:number:text" to any ICQ user, for example
- "SEND-SMS:+4917012345:Test"
-- away message retrieval (AIM only)
-- offline messages (ICQ only)
+Name:		sleep_time
+Type:		integer (seconds)
+Default:	20
+Desc:		time between expired Jabber connections checking
 
-* limitations
-- NO file transfer
-- NO multichat
-- NO user search
-- NO incoming SMS
-- NO import of server buddy lists
-- NO handling of incoming ICQ auth requests
-- ICQ messages may get dropped by AOL servers if your contact uses an old
- ICQv5 client.
+Exported Functions:
+-------------------
 
-
-ICQ transport
--------------
-Excepting the AIM transport, there exists another distribution for ICQ
-transport.
-(web location: http://icqv7-t.sourceforge.net/)
-
-* capabilities
-- messaging (through server only)
-- presence notification
-- SMS support
-
-* limitations
-- no file transfer
-
-The AIM transport for ICQ.
-- see AIM transport
-
-A new versions of ICQ transport seems to be available now. But now place from
-where it can be downloaded - I sent a mail asking for a distribution.
-
-A short description can be found at
-http://mailman.jabber.org/pipermail/jdev/2002-July/012343.html
-
-
-IRC transport
--------------
-(web location: http://download.jabber.org/contrib/irc-transport.tar.gz)
-This version of IRC transport is a beta version
-
-* capabilities
-- It will connect to irc servers and allow you to talk to them, but it is still
- in heavy development
-
-* limitations
-- private messaging does not yet function
-- transport registration/notify will not be supported
-- groupchat 1.0 and 1.1 will not be supported in favor of the 2.0
- iq:conferenec/iq:browse protocol you will be able to log into and create
- password protected groups now (although this may not work yet)
-- there still may be some other bugs but they aren't caught yet.
-- in testing, it has been fairly stable, although some functionality may
- not be there yet.
-- requires jabberd version 1.4 several functions used, including MIO,
- MTQ, and xhash functions were not available in previous jabber server
- versions
-
-
-MSN transport
--------------
-(web location: http://msn-transport.jabberstudio.org/)
-* capabilities
-- provides basic interoperability between Jabber and MSN (messaging/presence)
-* limitations
-- there are memory leaks in MSN-t so is better to be run in a seperate process
- and restart it from time to time
-- MSN-t uses TCP port 1863 for incoming connections so you have to open this
- port if you use a firewall.
-- the other parts excepting messaging/presence
-
-Yahoo transport
----------------
-(web location: http://yahoo-transport.jabberstudio.org/)
-
-As of 2002-07-10 this transport has ceased functioning (probably due to YIM
- protocol changes).
-The transport is being worked on - see JDEV mailing list :
-http://mailman.jabber.org/pipermail/jdev/2002-July/012327.html
-
-* capabilities
-- log into Yahoo Messenger server, and send/recv messages.
-* limitations
-
-
--------------------------------------------------------
-I've been trying to make available the Yahoo! transport on Jabber server from 'bat.iptel.org', but Jabber does not connect to Yahoo server. The problem is that Yahoo! changed the protocol.
-
-
-http://mailman.jabber.org/pipermail/jadmin/2002-July/005987.html
-http://mailman.jabber.org/pipermail/jadmin/2002-July/006093.html
-
-
-Someone is working on the new version.
-
-
-http://mailman.jabber.org/pipermail/jadmin/2002-July/006087.html
-
-
-Best regards,
-  Daniel
-
+Name: 	jab_send_message
+Params:	none
+Desc:	converts SIP MESSAGE message to a Jabber message and sends it to Jabber
+		server.

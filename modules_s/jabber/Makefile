@@ -7,6 +7,6 @@
 
 auto_gen=
 NAME=jabber.so
-LIBS=
+LIBS=-lexpat
 
 include ../../Makefile.modules
