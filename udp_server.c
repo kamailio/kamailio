@@ -145,7 +145,7 @@ int udp_init(struct socket_info* sock_info)
 		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
-#ifdef __linux__
+#if defined (__linux__) && defined(UDP_ERRORS)
 	optval=1;
 	/* enable error receiving on unconnected sockets */
 	if(setsockopt(sock_info->socket, SOL_IP, IP_RECVERR,
@@ -223,6 +223,17 @@ int udp_rcv_loop()
 		}
 		/*debugging, make print* msg work */
 		buf[len+1]=0;
+
+#ifndef NO_ZERO_CHECKS
+		if (len==0) {
+			LOG(L_WARN, "WARNING: empty packet received\n");
+			continue;
+		}
+		if (buf[len-1]==0) {
+			LOG(L_WARN, "WARNING: upstream bug - 0-terminated packet\n");
+			len--;
+		}
+#endif
 		
 		/* receive_msg must free buf too!*/
 		receive_msg(buf, len, from);
@@ -242,19 +253,14 @@ error:
 
 
 
-/* which socket to use? main socket or new one? */
-int udp_send(struct socket_info *source, char *buf, unsigned len,
-				union sockaddr_union*  to, unsigned tolen)
-{
-
-	int n;
-
+#ifdef DBG_MSG_QA
 /* message quality assurance -- frequently, bugs in ser have
    been indicated by zero characters or long whitespaces
    in generated messages; this debugging option aborts if
    any such message is sighted
 */
-#ifdef DBG_MSG_QA
+void dbg_msg_qa(char *buf, int len)
+{
 #define _DBG_WS_LEN 3
 #define _DBG_WS "   "
 
@@ -308,8 +314,23 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 
 
 qa_passed:
+	return;
+}
 
 #endif
+
+/* which socket to use? main socket or new one? */
+int udp_send(struct socket_info *source, char *buf, unsigned len,
+				union sockaddr_union*  to, unsigned tolen)
+{
+
+	int n;
+
+#ifdef DBG_MSG_QA
+	/* aborts on error, does nothing otherwise */
+	dbg_msg_qa( buf, len );
+#endif
+
 
 again:
 	n=sendto(source->socket, buf, len, 0, &to->s, tolen);
