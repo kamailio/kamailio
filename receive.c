@@ -81,7 +81,6 @@ str default_via_port={0,0};
 int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info) 
 {
 	struct sip_msg* msg;
-	int ret;
 #ifdef STATS
 	int skipped = 1;
 	struct timeval tvb, tve;	
@@ -125,7 +124,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
-			goto error;
+			goto error02;
 		}
 		/* check if necessary to add receive?->moved to forward_req */
 		/* check for the alias stuff */
@@ -156,16 +155,14 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   (like presence of at least one via), so you can count
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
-		ret=exec_pre_cb(msg);
-		if (ret<=0){
-			if (ret<0) goto error;
-			else goto end; /* drop the message -- no error -- andrei */
-		}
+		if (exec_pre_req_cb(msg)==0 )
+			goto end; /* drop the request */
+
 		/* exec the routing script */
 		if (run_actions(rlist[0], msg)<0) {
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
-			goto error;
+			goto error_req;
 		}
 
 #ifdef STATS
@@ -176,21 +173,16 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		DBG("successfully ran routing scripts...(%d usec)\n", diff);
 		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
 #endif
+
+		/* execute post request-script callbacks */
+		exec_post_req_cb(msg);
 	}else if (msg->first_line.type==SIP_REPLY){
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
-			goto error;
+			goto error02;
 		}
-#if 0
-		if ((msg->via2==0) || (msg->via2->error!=PARSE_OK)){
-			/* no second via => error? */
-			LOG(L_ERR, "ERROR: receive_msg: no 2nd via found in reply\n");
-			goto error;
-		}
-		/* check if via1 == us */
-#endif
 
 #ifdef STATS
 		gettimeofday( & tvb, &tz );
@@ -204,11 +196,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		   (like presence of at least one via), so you can count
 		   on via1 being parsed in a pre-script callback --andrei
 		*/
-		ret=exec_pre_cb(msg);
-		if (ret<=0){
-			if (ret<0) goto error;
-			else goto end; /* drop the message -- no error -- andrei */
-		}
+		if (exec_pre_rpl_cb(msg)==0 )
+			goto end; /* drop the request */
 
 		/* send the msg */
 		forward_reply(msg);
@@ -220,13 +209,15 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 		stats->acc_res_time+=diff;
 		DBG("successfully ran reply processing...(%d usec)\n", diff);
 #endif
+
+		/* execute post reply-script callbacks */
+		exec_post_rpl_cb(msg);
 	}
+
 end:
 #ifdef STATS
 	skipped = 0;
 #endif
-	/* execute post-script callbacks, if any; -jiri */
-	exec_post_cb(msg);
 	/* free possible loaded avps -bogdan */
 	reset_avps();
 	DBG("receive_msg: cleaning up\n");
@@ -236,10 +227,10 @@ end:
 	if (skipped) STATS_RX_DROPS;
 #endif
 	return 0;
-error:
-	DBG("error:...\n");
-	/* execute post-script callbacks, if any; -jiri */
-	exec_post_cb(msg);
+error_req:
+	DBG("receive_msg: error:...\n");
+	/* execute post request-script callbacks */
+	exec_post_req_cb(msg);
 	/* free possible loaded avps -bogdan */
 	reset_avps();
 error02:
