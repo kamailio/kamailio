@@ -92,8 +92,9 @@ usage:
  $CMD acl grant <user> <group> ........ grant user membership (*)
  $CMD acl revoke <user> [<group>] ..... grant user membership(s) (*)
            < usrloc >
- $CMD dul <name> ...................... delete user's UsrLoc entries (*)
+ $CMD dul <table> <name> .............. delete user's UsrLoc entries (*)
  $CMD show [<name>] ................... show online users
+ $CMD showdb [<name>] ................. show online users flushed in DB
  $CMD passwd <user> <passwd> .......... change user's password (*)
  $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
            < server health >
@@ -117,6 +118,53 @@ prompt_pw() {
     	echo
 	fi
 }
+
+ul_dump()
+{
+	name=ser_receiver_$$
+	path=/tmp/$name
+	if [ ! -w $SER_FIFO ]; then
+		echo "Error opening ser's FIFO $SER_FIFO"
+		echo "Make sure you have line fifo=$SER_FIFO in your config"
+		exit 1
+	fi
+	mkfifo $path
+	if [ $? -ne 0 ] ; then
+		echo "error opening read fifo $path"
+		exit 1
+	fi
+	cat > $SER_FIFO <<EOF
+:ul_dump:$name
+
+EOF
+	cat < $path
+	rm $path
+}
+
+ul_rm() # params: <table> <username>
+{
+	name=ser_receiver_$$
+	path=/tmp/$name
+	if [ ! -w $SER_FIFO ]; then
+		echo "Error opening ser's FIFO $SER_FIFO"
+		echo "Make sure you have line fifo=$SER_FIFO in your config"
+		exit 1
+	fi
+	mkfifo $path
+	if [ $? -ne 0 ] ; then
+		echo "error opening read fifo $path"
+		exit 1
+	fi
+	cat > $SER_FIFO <<EOF
+:ul_rm:$name
+$1
+$2
+
+EOF
+	cat < $path
+	rm $path
+}
+
 
 # $1 = name $2=path $3=attempt
 print_stats() {
@@ -425,26 +473,13 @@ case $1 in
 
 
 	dul)
+		shift
 		if [ $# -ne 2 ] ; then
 			usage
 			exit 1
 		fi
-		prompt_pw
-		QUERY="select count(*) from $USRLOC \
-			where $USRLOC.$USER_COLUMN='$2';"
-		CNT=`sql_query "$QUERY" "-B" | grep -v ERROR | tail -n1`
-		if [ "0$CNT" -eq 0 ] ; then
-			echo Nothing to delete
-			exit 1
-		fi
-		QUERY="delete from $USRLOC where $USRLOC.$USER_COLUMN='$2'"
-		sql_query "$QUERY"
-		if [ $? -ne 0 ] ; then
-			echo "database operation failed"
-		else
-			echo "ok -- but beware, the server caches the usrloc entries"
-			echo "and the changes don't take effect until ser reboot"
-		fi
+		ul_rm $1 $2
+		exit $?
 		;;
 
 	monitor|console|moni|con)
@@ -497,8 +532,13 @@ case $1 in
 
 		;;
 
+	show)
+		ul_dump
+		exit $?
+		;;
 
-	show|user)
+
+	showdb|userdb)
 		if [ $# -eq 2 ] ; then
 			is_user $2
 			if [ $? -ne 0 ] ; then
