@@ -48,6 +48,10 @@
  *              => ip:port;transport=proto (andrei)
  * 2003-04-12  added FL_FORCE_RPORT support (andrei)
  * 2003-04-13  updated warning builder -- fixed (andrei)
+ * 2003-07-10  check_via_address knows now how to compare with ipv6 address
+ *              references (e.g [::1]) (andrei)
+ *             build_req_fomr_sip_req no longer adds 1 for ipv6 via parameter
+ *              position calculations ([] are part of host.s now) (andrei)
  *
  */
 /* Via special params:
@@ -148,15 +152,25 @@ static int check_via_address(struct ip_addr* ip, str *name,
 	struct hostent* he;
 	int i;
 	char* s;
+	int len;
 
 	/* maybe we are lucky and name it's an ip */
 	s=ip_addr2a(ip);
 	if (s){
-		DBG("check_address(%s, %.*s, %d)\n", 
+		DBG("check_via_address(%s, %.*s, %d)\n", 
 			s, name->len, name->s, resolver);
+		len=strlen(s);
 
 	#ifdef USE_IPV6
-		if ((ip->af==AF_INET6) && (strncasecmp(name->s, s, name->len)==0))
+		/* check if name->s is an ipv6 address or an ipv6 address ref. */
+		if ((ip->af==AF_INET6) &&
+				(	((len==name->len)&&(strncasecmp(name->s, s, name->len)==0))
+					||
+					((len==(name->len-2))&&(name->s[0]=='[')&&
+						(name->s[name->len-1]==']')&&
+						(strncasecmp(name->s+1, s, len)==0))
+				)
+		   )
 			return 0;
 		else
 	#endif
@@ -164,13 +178,13 @@ static int check_via_address(struct ip_addr* ip, str *name,
 			if (strncmp(name->s, s, name->len)==0) 
 				return 0;
 	}else{
-		LOG(L_CRIT, "check_address: BUG: could not convert ip address\n");
+		LOG(L_CRIT, "check_via_address: BUG: could not convert ip address\n");
 		return -1;
 	}
 
 	if (port==0) port=SIP_PORT;
 	if (resolver&DO_DNS){
-		DBG("check_address: doing dns lookup\n");
+		DBG("check_via_address: doing dns lookup\n");
 		/* try all names ips */
 		he=sip_resolvehost(name, &port, 0); /* FIXME proto? */
 		if (he && ip->af==he->h_addrtype){
@@ -181,7 +195,7 @@ static int check_via_address(struct ip_addr* ip, str *name,
 		}
 	}
 	if (resolver&DO_REV_DNS){
-		DBG("check_address: doing rev. dns lookup\n");
+		DBG("check_via_address: doing rev. dns lookup\n");
 		/* try reverse dns */
 		he=rev_resolvehost(ip);
 		if (he && (strncmp(he->h_name, name->s, name->len)==0))
@@ -1255,9 +1269,12 @@ skip_clen:
 				/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
 				size += msg->via1->port_str.len + 1; /* +1 for ':'*/
 			}
+#if 0
+			/* no longer necessary, now hots.s contains [] */
 		#ifdef USE_IPV6
 			if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
 		#endif
+#endif
 	}
 	/* if received needs to be added, add anchor after host and add it, or 
 	 * overwrite the previous one if already present */
