@@ -88,6 +88,11 @@ void shm_mem_destroy();
 
 #ifdef DBG_QM_MALLOC
 
+#ifdef __SUNPRO_C
+		#define __FUNCTION__ ""  /* gcc specific */
+#endif
+
+
 #define shm_malloc_unsafe(_size ) \
 	MY_MALLOC(shm_block, (_size), __FILE__, __FUNCTION__, __LINE__ )
 

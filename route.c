@@ -29,8 +29,9 @@
  *
  * History:
  * --------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-01-28 scratchpad removed, src_port introduced (jiri)
+ * 2003-02-28  scratchpad compatibility abandoned (jiri)
+ * 2003-01-28  scratchpad removed, src_port introduced (jiri)
+ * 2003-03-10  updated to the new module exports format (andrei)
  */
 
  
@@ -141,6 +142,7 @@ static int fix_actions(struct action* a)
 	struct proxy_l* p;
 	char *tmp;
 	int ret,r;
+	cmd_export_t* cmd;
 	struct sr_module* mod;
 	str s;
 	
@@ -215,19 +217,16 @@ static int fix_actions(struct action* a)
 				}
 				break;
 			case MODULE_T:
-				if ((mod=find_module(t->p1.data, &r))!=0){
-					DBG("fixing %s %s\n", mod->path,
-							mod->exports->cmd_names[r]);
-					if (mod->exports->fixup_pointers[r]){
-						if (mod->exports->param_no[r]>0){
-							ret=mod->exports->fixup_pointers[r](&t->p2.data,
-																1);
+				if ((mod=find_module(t->p1.data, &cmd))!=0){
+					DBG("fixing %s %s\n", mod->path, cmd->name);
+					if (cmd->fixup){
+						if (cmd->param_no>0){
+							ret=cmd->fixup(&t->p2.data, 1);
 							t->p2_type=MODFIXUP_ST;
 							if (ret<0) return ret;
 						}
-						if (mod->exports->param_no[r]>1){
-							ret=mod->exports->fixup_pointers[r](&t->p3.data,
-																2);
+						if (cmd->param_no>1){
+							ret=cmd->fixup(&t->p3.data, 2);
 							t->p3_type=MODFIXUP_ST;
 							if (ret<0) return ret;
 						}

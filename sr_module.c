@@ -23,6 +23,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-10  switched to new module_exports format: updated find_export,
+ *               find_export_param, find_module (andrei)
+ */
 
 
 #include "sr_module.h"
@@ -191,15 +197,15 @@ skip:
 cmd_function find_export(char* name, int param_no)
 {
 	struct sr_module* t;
-	int r;
+	cmd_export_t* cmd;
 
 	for(t=modules;t;t=t->next){
-		for(r=0;r<t->exports->cmd_no;r++){
-			if((strcmp(name, t->exports->cmd_names[r])==0)&&
-				(t->exports->param_no[r]==param_no) ){
+		for(cmd=t->exports->cmds; cmd && cmd->name; cmd++){
+			if((strcmp(name, cmd->name)==0)&&
+				(cmd->param_no==param_no) ){
 				DBG("find_export: found <%s> in module %s [%s]\n",
 						name, t->exports->name, t->path);
-				return t->exports->cmd_pointers[r];
+				return cmd->function;
 			}
 		}
 	}
@@ -211,16 +217,16 @@ cmd_function find_export(char* name, int param_no)
 void* find_param_export(char* mod, char* name, modparam_t type)
 {
 	struct sr_module* t;
-	int r;
+	param_export_t* param;
 
 	for(t = modules; t; t = t->next) {
 		if (strcmp(mod, t->exports->name) == 0) {
-			for(r = 0; r < t->exports->par_no; r++) {
-				if ((strcmp(name, t->exports->param_names[r]) == 0) &&
-				    (t->exports->param_types[r] == type)) {
+			for(param=t->exports->params;param && param->name ; param++) {
+				if ((strcmp(name, param->name) == 0) &&
+				    (param->type == type)) {
 					DBG("find_param_export: found <%s> in module %s [%s]\n",
 					    name, t->exports->name, t->path);
-					return t->exports->param_pointers[r];
+					return param->param_pointer;
 				}
 			}
 		}
@@ -233,15 +239,17 @@ void* find_param_export(char* mod, char* name, modparam_t type)
 
 
 /* finds a module, given a pointer to a module function *
- * returns pointer to module, & if i i!=0, *i=the function index */
-struct sr_module* find_module(void* f, int *i)
+ * returns pointer to module, & if  c!=0, *c=pointer to the
+ * function cmd_export structure*/
+struct sr_module* find_module(void* f, cmd_export_t  **c)
 {
 	struct sr_module* t;
-	int r;
+	cmd_export_t* cmd;
+	
 	for (t=modules;t;t=t->next){
-		for(r=0;r<t->exports->cmd_no;r++) 
-			if (f==(void*)t->exports->cmd_pointers[r]) {
-				if (i) *i=r;
+		for(cmd=t->exports->cmds; cmd && cmd->name; cmd++) 
+			if (f==(void*)cmd->function) {
+				if (c) *c=cmd;
 				return t;
 			}
 	}

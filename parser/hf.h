@@ -71,12 +71,12 @@
  * Format: name':' body 
  */
 struct hdr_field {   
-	int type;                /* Header field type */
-	str name;                /* Header field name */
-	str body;                /* Header field body */
-	int len;				 /* length from body until EoHF (incl. CRLF) */
-	void* parsed;            /* Parsed data structures */
-	struct hdr_field* next;  /* Next header field in the list */
+	int type;               /* Header field type */
+	str name;               /* Header field name */
+	str body;               /* Header field body (may not include CRLF) */
+	int len;				/* length from hdr start until EoHF (incl.CRLF) */
+	void* parsed;           /* Parsed data structures */
+	struct hdr_field* next; /* Next header field in the list */
 };
 
 

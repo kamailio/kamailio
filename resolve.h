@@ -134,12 +134,12 @@ static inline struct ip_addr* str2ip(str* st)
 	static struct ip_addr ip;
 	unsigned char* s;
 
-	s = st->s;
+	s=(unsigned char*)st->s;
 
 	/*init*/
 	ip.u.addr32[0]=0;
 	i=0;
-	limit=st->s + st->len;
+	limit=(unsigned char*)(st->s + st->len);
 
 	for(;s<limit ;s++){
 		if (*s=='.'){
@@ -187,7 +187,7 @@ static inline struct ip_addr* str2ip6(str* st)
 	unsigned char* s;
 	
 	/* init */
-	s=st->s;
+	s=(unsigned char*)st->s;
 	i=idx1=rest=0;
 	double_colon=0;
 	no_colons=0;
@@ -195,7 +195,7 @@ static inline struct ip_addr* str2ip6(str* st)
 	ip.len=16;
 	addr_start=ip.u.addr16;
 	addr=addr_start;
-	limit=st->s+st->len;
+	limit=(unsigned char*)(st->s+st->len);
 	memset(addr_start, 0 , 8*sizeof(unsigned short));
 	memset(addr_end, 0 , 8*sizeof(unsigned short));
 	for (; s<limit; s++){

@@ -38,7 +38,7 @@
  *             modified via_builder params (andrei)
  * 2003-01-27 more rport fixes (make use of new via_param->start)  (andrei)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-29 scrathcpad removed (jiri)
+ * 2003-01-29 scratchpad removed (jiri)
  *
  */
 
@@ -220,7 +220,7 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 	}
 	
 	memcpy(buf+RECEIVED_LEN+extra_len, tmp, tmp_len);
-	buf[len+1]=0; /*null terminate it */
+	buf[len]=0; /*null terminate it */
 
 	*received_len = len;
 	return buf;
@@ -237,8 +237,8 @@ char* rport_builder(struct sip_msg *msg, unsigned int *rport_len)
 	
 	tmp_len=0;
 	tmp=int2str(ntohs(msg->rcv.src_port), &tmp_len);
-	len=RPORT_LEN+tmp_len; /* space for null term */
-	buf=pkg_malloc(sizeof(char)*(len+1));
+	len=RPORT_LEN+tmp_len;
+	buf=pkg_malloc(sizeof(char)*(len+1));/* space for null term */
 	if (buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: rport_builder: out of memory\n");
@@ -246,7 +246,7 @@ char* rport_builder(struct sip_msg *msg, unsigned int *rport_len)
 	}
 	memcpy(buf, RPORT, RPORT_LEN);
 	memcpy(buf+RPORT_LEN, tmp, tmp_len);
-	buf[len+1]=0; /*null terminate it*/
+	buf[len]=0; /*null terminate it*/
 	
 	*rport_len=len;
 	return buf;
@@ -269,8 +269,8 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 		return 0;
 	}
 	value_len=p-&revhex[0];
-	len=ID_PARAM_LEN+value_len; /* place for ending \0 */
-	buf=pkg_malloc(sizeof(char)*(len+1));
+	len=ID_PARAM_LEN+value_len; 
+	buf=pkg_malloc(sizeof(char)*(len+1));/* place for ending \0 */
 	if (buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: rport_builder: out of memory\n");
@@ -278,7 +278,7 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 	}
 	memcpy(buf, ID_PARAM, ID_PARAM_LEN);
 	memcpy(buf+ID_PARAM_LEN, revhex, value_len);
-	buf[len+1]=0; /* null terminate it */
+	buf[len]=0; /* null terminate it */
 	*id_len=len;
 	return buf;
 }
@@ -316,7 +316,7 @@ char* clen_builder(struct sip_msg* msg, unsigned int *clen_len)
 	memcpy(buf, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
 	memcpy(buf+CONTENT_LENGTH_LEN, value_s, value_len);
 	memcpy(buf+CONTENT_LENGTH_LEN+value_len, CRLF, CRLF_LEN);
-	buf[len+1]=0; /* null terminate it */
+	buf[len]=0; /* null terminate it */
 	*clen_len=len;
 	return buf;
 }
@@ -522,9 +522,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	
 #ifdef USE_TCP
 	char* id_buf;
-	int id_len;
+	unsigned int id_len;
 	char* clen_buf;
-	int clen_len;
+	unsigned int clen_len;
 	
 	
 	id_buf=0;
@@ -727,7 +727,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 #ifdef USE_TCP
 	struct lump* anchor;
 	char* clen_buf;
-	int clen_len;
+	unsigned int clen_len;
 	
 	clen_buf=0;
 	clen_len=0;
@@ -932,7 +932,10 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 				continue;
 			}
 		} else if (hdr->type==HDR_VIA) {
+				/* we always add CRLF to via*/
+				len+=(hdr->body.s+hdr->body.len)-hdr->name.s+CRLF_LEN;
 				if (hdr==msg->h_via1) len += received_len+rport_len;
+				continue;
 		} else if (hdr->type==HDR_RECORDROUTE) {
 				/* RR only for 1xx and 2xx replies */
 				if (code<180 || code>=300) continue;
@@ -941,7 +944,8 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 					|| hdr->type==HDR_CSEQ)) {
 			continue;
 		}
-		len += hdr->len;
+		len += hdr->len; /* we keep the original termination for these 
+							headers*/
 	}
 	len-=delete_len;
 	/*lumps length*/
@@ -1015,21 +1019,23 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 											msg->via1->rport->size, msg);
 					}else{
 						/* normal whole via copy */
-						append_str_trans( p, hdr->name.s ,
-							((hdr->body.s+hdr->body.len )-hdr->name.s ), msg);
+						append_str_trans( p, hdr->name.s , 
+								(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
 					}
 					if (received_buf)
 						append_str( p, received_buf, received_len);
 				}else{
 					/* normal whole via copy */
-					append_str_trans( p, hdr->name.s ,
-						((hdr->body.s+hdr->body.len )-hdr->name.s ),msg);
+					append_str_trans( p, hdr->name.s,
+							(hdr->body.s+hdr->body.len)-hdr->name.s, msg);
 				}
 				append_str( p, CRLF,CRLF_LEN);
 				break;
 			case HDR_RECORDROUTE:
 				/* RR only for 1xx and 2xx replies */
 				if (code<180 || code>=300) break;
+				append_str(p, hdr->name.s, hdr->len);
+				break;
 			case HDR_TO:
 				if (new_tag){
 					if (to_tag.s ) { /* replacement */
@@ -1078,7 +1084,6 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 		memcpy( p, CRLF, CRLF_LEN );
 		p+=CRLF_LEN;
 	}
-
 	
 	if (body_len) {
 		memcpy(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN );
@@ -1113,6 +1118,9 @@ char * build_res_buf_with_body_from_sip_req( unsigned int code, char *text ,
 	}
 	*(p) = 0;
 	*returned_len = len;
+	DBG("build_*: len=%d, diff=%d\n", len, p-buf);
+	DBG("build_*: rport_len=%d, delete_len=%d\n", rport_len, delete_len);
+	DBG("build_*: message=\n%.*s\n", len, buf);
 	/* in req2reply, received_buf is not introduced to lumps and
 	   needs to be deleted here
 	*/

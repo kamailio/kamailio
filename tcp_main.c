@@ -515,7 +515,6 @@ static int send2child(struct tcp_connection* tcpconn)
 			idx=i;
 			min_busy=0;
 			break;
-			return 0;
 		}else if (min_busy>tcp_children[i].busy){
 			min_busy=tcp_children[i].busy;
 			idx=i;

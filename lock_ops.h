@@ -37,6 +37,8 @@
  *  2003-03-06  removed *_alloc,*_dealloc & moved them to lock_alloc.h
  *              renamed locking.h to lock_ops.h (all this to solve
  *              the locking.h<->shm_mem.h interdependency) (andrei)
+ *  2003-03-10  lock set support added also for PTHREAD_MUTEX & POSIX_SEM
+ *               (andrei)
  *
 Implements:
 
@@ -66,11 +68,6 @@ WARNING: signals are not treated! (some locks are "awakened" by the signals)
 
 typedef fl_lock_t gen_lock_t;
 
-struct lock_set_t_ {
-	long size;
-	gen_lock_t* locks;
-}; /* must be  aligned (32 bits or 64 depending on the arch)*/
-typedef struct lock_set_t_ lock_set_t;
 
 #define lock_destroy(lock) /* do nothing */ 
 
@@ -82,21 +79,6 @@ inline static gen_lock_t* lock_init(gen_lock_t* lock)
 
 #define lock_get(lock) get_lock(lock)
 #define lock_release(lock) release_lock(lock)
-
-/* lock sets */
-
-#define lock_set_destroy(lock_set) /* do nothing */
-
-inline static lock_set_t* lock_set_init(lock_set_t* s)
-{
-	int r;
-	for (r=0; r<s->size; r++) lock_init(&s->locks[r]);
-	return s;
-}
-
-/* WARNING: no boundary checks!*/
-#define lock_set_get(set, i) lock_get(&set->locks[i])
-#define lock_set_release(set, i) lock_release(&set->locks[i])
 
 #elif defined USE_PTHREAD_MUTEX
 #include <pthread.h>
@@ -152,11 +134,6 @@ inline static gen_lock_t* lock_init(gen_lock_t* lock)
 
 typedef int gen_lock_t;
 
-struct lock_set_t_ {
-	int size;
-	int semid;
-};
-typedef struct lock_set_t_ lock_set_t;
 
 
 
@@ -200,8 +177,45 @@ inline static void lock_release(gen_lock_t* lock)
 	semop(*lock, &sop, 1);
 }
 
+
+#else
+#error "no locking method selected"
+#endif
+
+
 /* lock sets */
 
+#if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
+
+struct lock_set_t_ {
+	long size;
+	gen_lock_t* locks;
+}; /* must be  aligned (32 bits or 64 depending on the arch)*/
+typedef struct lock_set_t_ lock_set_t;
+
+
+#define lock_set_destroy(lock_set) /* do nothing */
+
+inline static lock_set_t* lock_set_init(lock_set_t* s)
+{
+	int r;
+	for (r=0; r<s->size; r++) if (lock_init(&s->locks[r])==0) return 0;
+	return s;
+}
+
+/* WARNING: no boundary checks!*/
+#define lock_set_get(set, i) lock_get(&set->locks[i])
+#define lock_set_release(set, i) lock_release(&set->locks[i])
+
+#elif defined(USE_SYSV_SEM)
+
+struct lock_set_t_ {
+	int size;
+	int semid;
+};
+
+
+typedef struct lock_set_t_ lock_set_t;
 inline static lock_set_t* lock_set_init(lock_set_t* s)
 {
 	union semun su;
@@ -247,9 +261,8 @@ inline static void lock_set_release(lock_set_t* s, int n)
 	sop.sem_flg=0;
 	semop(s->semid, &sop, 1);
 }
-
-#else
-#error "no locking method selected"
+#else 
+#error "no lock set method selected"
 #endif
 
 

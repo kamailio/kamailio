@@ -93,8 +93,8 @@ struct socket_info{
 struct receive_info{
 	struct ip_addr src_ip;
 	struct ip_addr dst_ip;
-	short src_port;
-	short dst_port;
+	unsigned short src_port;
+	unsigned short dst_port;
 	int proto;
 	int proto_reserved1; /* tcp stores the connection id here */
 	int proto_reserved2;

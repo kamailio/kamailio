@@ -26,6 +26,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-10  changed module exports interface: added struct cmd_export
+ *               and param_export (andrei)
+ */
 
 
 #ifndef sr_module_h
@@ -49,34 +55,47 @@ typedef enum {
 } modparam_t;       /* Allowed types of parameters */
 
 
+struct cmd_export_ {
+	char* name;             /* null terminated command name */
+	cmd_function function;  /* pointer to the corresponding function */
+	int param_no;           /* number of parameters used by the function */
+	fixup_function fixup;   /* pointer to the function called to "fix" the
+							   parameters */
+};
+
+
+struct param_export_ {
+	char* name;             /* null terminated param. name */
+	modparam_t type;        /* param. type */
+	void* param_pointer;    /* pointer to the param. memory location */
+};
+
+
+typedef struct cmd_export_ cmd_export_t;
+typedef struct param_export_ param_export_t;
+
 struct module_exports{
 	char* name;                     /* null terminated module name */
-	char** cmd_names;               /* cmd names registered by this modules */
-	cmd_function* cmd_pointers;     /* pointers to the corresponding
-									   functions */
-	int* param_no;                  /* number of parameters used
-									   by the function */
-	fixup_function* fixup_pointers; /* pointers to functions called to "fix"
-										the params, e.g: precompile a re */
-	int cmd_no;                     /* number of registered commands
-										(size of cmd_{names,pointers} */
+	
+	cmd_export_t* cmds;             /* null terminated array of the exported
+									   commands */
+	param_export_t* params;         /* null terminated array of the exported
+									   module parameters */
 
-	char** param_names;    /* parameter names registered by this modules */
-	modparam_t* param_types; /* Type of parameters */
-	void** param_pointers; /* Pointers to the corresponding memory locations */
-	int par_no;            /* number of registered parameters */
-
-
-	init_function init_f;         /* Initilization function */
-	response_function response_f; /* function used for responses,
-									returns yes or no; can be null */
-	destroy_function destroy_f;  /* function called when the module should
-									be "destroyed", e.g: on ser exit;
-									can be null */
+	init_function init_f;           /* Initilization function */
+	response_function response_f;   /* function used for responses,
+									   returns yes or no; can be null */
+	destroy_function destroy_f;     /* function called when the module should
+									   be "destroyed", e.g: on ser exit;
+									   can be null */
 	onbreak_function onbreak_f;
 	child_init_function init_child_f;  /* function called by all processes
 										  after the fork */
 };
+
+
+
+
 
 struct sr_module{
 	char* path;
@@ -84,14 +103,15 @@ struct sr_module{
 	struct module_exports* exports;
 	struct sr_module* next;
 };
- 
+
+
 struct sr_module* modules; /* global module list*/
 
 int register_builtin_modules();
 int register_module(struct module_exports*, char*,  void*);
 int load_module(char* path);
 cmd_function find_export(char* name, int param_no);
-struct sr_module* find_module(void *f, int* r);
+struct sr_module* find_module(void *f, cmd_export_t** cmd);
 void destroy_modules();
 int init_child(int rank);
 int init_modules(void);

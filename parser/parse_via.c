@@ -906,7 +906,9 @@ normal_exit:
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Found param type %d, <%.*s> = <%.*s>; state=%d\n", param->type,
-			param->name.len, param->name.s, param->value.len, param->value.s, state);
+			param->name.len, param->name.s, 
+			(param->value.len?param->value.len:3),
+			(param->value.len?param->value.s:"n/a"), state);
 	return tmp;
 	
  end_via:
@@ -1863,7 +1865,7 @@ endofpacket:
 	vb->error=PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
-		vb->port=str2s((unsigned char*)vb->port_str.s, vb->port_str.len, &err);
+		vb->port=str2s(vb->port_str.s, vb->port_str.len, &err);
 		if (err){
 					LOG(L_ERR, "ERROR: parse_via: invalid port number <%.*s>\n",
 						vb->port_str.len, vb->port_str.s);
@@ -1876,7 +1878,7 @@ nextvia:
 	vb->error=PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
-		vb->port=str2s((unsigned char*)vb->port_str.s, vb->port_str.len, &err);
+		vb->port=str2s(vb->port_str.s, vb->port_str.len, &err);
 		if (err){
 					LOG(L_ERR, "ERROR: parse_via: invalid port number <%.*s>\n",
 						vb->port_str.len, vb->port_str.s);

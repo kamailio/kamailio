@@ -41,11 +41,11 @@
  */
 typedef struct type_node_s {
 	char c;                      /* char contained by this node */
-	unsigned char final;         /* says what to be done if the mached string
+	char final;                 /* says what to be done if the matched string
 	                              * ends at this node: -1-> dead end (unknown
 	                              * type) or the index of the sub-type that
-	                              * follows (for types) or the  final type (for
-	                              * sub-types)*/
+	                              * follows (for types) or the  final type 
+	                              * (for sub-types)*/
 	unsigned char nr_sons;       /* the number of sub-nodes */
 	int next;                    /* the next sibling node */
 }type_node_t;

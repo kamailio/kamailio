@@ -2,6 +2,7 @@
 #
 # makefile defs (CC, LD,a.s.o)
 #
+#
 # History:
 # --------
 #              created by andrei
@@ -9,13 +10,15 @@
 #               by Maxim Sobolev <sobomax@FreeBSD.org>
 #  2003-02-25  added -DDISABLE_NAGLE
 #  2003-03-02  added -DDIGEST_DOMAIN (janakj)
+#  2003-03-10  added -xcode=pic32 for module compilation w/ sun cc
+#              (too many symbols for pic13)  (andrei)
 
 
 #version number
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre6-tcp10-lck
+EXTRAVERSION = pre7
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -195,7 +198,10 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
-mode = debug
+
+# WARNING: do not add mode=debug or mode=release anymore in the Makefile,
+# use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
+# debugging symbols in all cases (-g). --andrei
 ifeq ($(mode),)
 	mode = release
 endif
@@ -366,7 +372,7 @@ endif			# CC_SHORTVER, 3.0
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
-			CFLAGS=-O3  -ipo -ipo_obj -unroll  $(PROFILE) \
+			CFLAGS=-g -O3  -ipo -ipo_obj -unroll  $(PROFILE) \
 					 -tpp6 -xK  #-openmp  #optimize for PIII 
 				# -prefetch doesn't seem to work
 				#( ty to inline acroos files, unroll loops,prefetch,
@@ -424,7 +430,7 @@ endif			#CC_SHORTVER, 3.0
 
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
-			CFLAGS+=-xO5 -fast -native -xarch=v8plusa -xCC \
+			CFLAGS+=-g -xO5 -fast -native -xarch=v8plusa -xCC \
 					-xc99 # C99 support
 			# -Dinline="" # add this if cc < 5.3 (define inline as null)
 else
@@ -537,7 +543,7 @@ ifeq	($(CC_NAME), icc)
 MOD_CFLAGS=-Kpic $(CFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
-MOD_CFLAGS=-Kpic  $(CFLAGS)
+MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
 endif
 
 ifeq ($(LEX),)

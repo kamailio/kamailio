@@ -94,15 +94,17 @@ static char fourbits2char[16] = { '0', '1', '2', '3', '4', '5',
 /* converts a str to an u. short, returns the u. short and sets *err on
  * error and if err!=null
   */
-static inline unsigned short str2s(unsigned char* str, unsigned int len,
+static inline unsigned short str2s(char* s, unsigned int len,
 									int *err)
 {
 	unsigned short ret;
 	int i;
 	unsigned char *limit;
 	unsigned char *init;
+	unsigned char* str;
 
 	/*init*/
+	str=(unsigned char*)s;
 	ret=i=0;
 	limit=str+len;
 	init=str;
@@ -147,7 +149,7 @@ static inline int btostr( char *p,  unsigned char val)
 
 
 
-/* returns a pointer to a static buffer containint l in asciiz & sets len */
+/* returns a pointer to a static buffer containing l in asciiz & sets len */
 static inline char* int2str(unsigned int l, int* len)
 {
 	static char r[11]; /* 10 digits + 0 */
