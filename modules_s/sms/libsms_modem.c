@@ -21,6 +21,9 @@ mailto:s.frings@mail.isis.de
 #include <unistd.h>
 #include <syslog.h>
 #include <sys/ioctl.h>
+#ifdef __sun
+#include <sys/filio.h>
+#endif
 #include "libsms_modem.h"
 #include "../../dprint.h"
 
