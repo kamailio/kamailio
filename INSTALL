@@ -251,7 +251,11 @@ your box.
     - if (!www_authorize("iptel.org", "subscriber")) {
         www_challenge("iptel.org", "0"); 
         break;
-      };
+      }; /* be sure to replace realm, the first parameter
+            in www_* actions, with name of your server;
+            some broken UAC implementations don't authenticate
+            otherwise
+          */
 5) restart the server
     /etc/init.d/ser restart
 6) you can now start  managing the server using
@@ -259,6 +263,9 @@ your box.
    environment variable SIP_DOMAIN to your local
    SIP realm, e.g.,
        export SIP_DOMAIN="foo.bar"
+   The realm name should be the value you set in
+   step #4.
+
    a) watch the server status using 'serctl moni'
    b) try to login as user 'admin' with password 'heslo'
    c) try adding new users using 
