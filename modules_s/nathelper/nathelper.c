@@ -735,6 +735,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 
 #define	ADD_ADIRECTION	0x01
 #define	FIX_MEDIP	0x02
+#define	ADD_ANORTPPROXY	0x04
 
 #define	ADIRECTION	"a=direction:active\r\n"
 #define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
@@ -766,23 +767,38 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 
-	if (level & ADD_ADIRECTION) {
+	if (level & (ADD_ADIRECTION | ADD_ANORTPPROXY)) {
 		msg->msg_flags |= FL_FORCE_ACTIVE;
 		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
 			return -1;
 		}
-		buf = pkg_malloc(ADIRECTION_LEN * sizeof(char));
-		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
-			return -1;
+		if (level & ADD_ADIRECTION) {
+			buf = pkg_malloc(ADIRECTION_LEN * sizeof(char));
+			if (buf == NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+				return -1;
+			}
+			memcpy(buf, ADIRECTION, ADIRECTION_LEN);
+			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0) == NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
+				pkg_free(buf);
+				return -1;
+			}
 		}
-		memcpy(buf, ADIRECTION, ADIRECTION_LEN);
-		if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0) == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
-			pkg_free(buf);
-			return -1;
+		if (level & ADD_ANORTPPROXY) {
+			buf = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+			if (buf == NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+				return -1;
+			}
+			memcpy(buf, ANORTPPROXY, ANORTPPROXY_LEN);
+			if (insert_new_lump_after(anchor, buf, ANORTPPROXY_LEN, 0) == NULL) {
+				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
+				pkg_free(buf);
+				return -1;
+			}
 		}
 	}
 
