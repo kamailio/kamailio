@@ -146,7 +146,7 @@ int check_nonce(str* _nonce, str* _secret)
 	calc_nonce(non, expires, _secret);
 
 	DBG("check_nonce(): comparing [%.*s] and [%.*s]\n",
-	    _nonce->len, _nonce->s, NONCE_LEN, non);
+	    _nonce->len, ZSW(_nonce->s), NONCE_LEN, non);
 	
 	if (!memcmp(non, _nonce->s, _nonce->len)) {
 		return 0;

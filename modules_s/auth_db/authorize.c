@@ -34,6 +34,7 @@
 
 
 #include <string.h>
+#include "../../ut.h"
 #include "../../str.h"
 #include "../../db/db.h"
 #include "../../dprint.h"
@@ -75,7 +76,7 @@ static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, 
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
-		    _user->len, _user->s, _domain->len, _domain->s);
+		    _user->len, ZSW(_user->s), _domain->len, ZSW(_domain->s));
 		db_free_query(db_handle, res);
 		return 1;
 	}
@@ -150,7 +151,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
-	str domain;
+	str domain, rpid;
 
 	domain = *_realm;
 
@@ -179,7 +180,11 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	     /* Recalculate response, it must be same to authorize sucessfully */
         if (!check_response(&(cred->digest), &_m->first_line.u.request.method, ha1)) {
-		ret = post_auth_func(_m, h);
+		     /* Not supported yet */
+		rpid.s = 0;
+		rpid.len = 0;
+
+		ret = post_auth_func(_m, h, &rpid);
 		switch(ret) {
 		case ERROR:          return 0;
 		case NOT_AUTHORIZED: return -1;

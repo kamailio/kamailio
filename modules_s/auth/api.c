@@ -34,6 +34,7 @@
 #include "auth_mod.h"
 #include "nonce.h"
 #include "common.h"
+#include "rpid.h"
 
 
 /*
@@ -164,7 +165,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
 	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
 		LOG(L_ERR, "pre_auth(): Credentials received are not filled properly\n");
 		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
-			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+			LOG(L_ERR, "pre_auth(): Error while sending 400 reply\n");
 		}
 		return ERROR;
 	}
@@ -182,7 +183,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
+auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid)
 {
 	auth_body_t* c;
 
@@ -208,10 +209,11 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 	if (mark_authorized_cred(_m, _h) < 0) {
 		LOG(L_ERR, "post_auth(): Error while marking parsed credentials\n");
 		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
-			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+			LOG(L_ERR, "post_auth(): Error while sending 500 reply\n");
 		}
 		return ERROR;
 	}
 
+	save_rpid(_rpid);
 	return AUTHORIZED;
 }

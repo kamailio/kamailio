@@ -47,6 +47,7 @@
 #define PW_SIP_METHOD                   209     /* int */
 #define PW_SIP_REQ_URI                  210     /* string */
 #define PW_SIP_CC                       212     /* string */
+#define PW_SIP_RPID                     213     /* string */
 
 #define PW_DIGEST_REALM		        1063	/* string */
 #define	PW_DIGEST_NONCE		        1064	/* string */

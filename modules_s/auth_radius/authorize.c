@@ -49,6 +49,12 @@
 #include "authrad_mod.h"
 
 
+/*
+ * Buffer to store rpid retrieved from the radius server
+ */
+static char rpid_buffer[MAX_RPID_LEN];
+
+
 /* 
  * Extract URI depending on the request from To or From header 
  */
@@ -80,7 +86,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	auth_result_t ret;
 	struct hdr_field* h;
 	auth_body_t* cred;
-	str* uri;
+	str* uri, rpid;
 	struct sip_uri puri;
 	str user, domain;
 
@@ -118,11 +124,14 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	user.s = (char *)pkg_malloc(puri.user.len);
 	un_escape(&(puri.user), &user);
 
-	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user);
+	rpid.s = rpid_buffer;
+	rpid.len = MAX_RPID_LEN;
+
+	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user, &rpid);
 	pkg_free(user.s);
 
 	if (res == 1) {
-		ret = post_auth_func(_msg, h);
+		ret = post_auth_func(_msg, h, &rpid);
 		switch(ret) {
 		case ERROR:          return 0;
 		case NOT_AUTHORIZED: return -1;

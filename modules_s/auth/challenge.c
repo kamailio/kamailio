@@ -120,7 +120,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	memcpy(p, CRLF, CRLF_LEN ); p+=CRLF_LEN;
 	*p=0; /* zero terminator, just in case */
 	
-	DBG("build_auth_hf(): \'%s\'\n", hf);
+	DBG("build_auth_hf(): '%s'\n", hf);
 	return hf;
 }
 

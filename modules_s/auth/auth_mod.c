@@ -28,10 +28,11 @@
  *
  * History:
  * --------
- * 2003-02-26: checks and group moved to separate modules (janakj)
- * 2003-03-10: New module interface (janakj)
- * 2003-03-16: flags export parameter added (janakj)
- * 2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ * 2003-02-26 checks and group moved to separate modules (janakj)
+ * 2003-03-10 New module interface (janakj)
+ * 2003-03-16 flags export parameter added (janakj)
+ * 2003-03-19 all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
+ * 2003-04-28 rpid contributed by Juha Heinanen added (janakj) 
  */
 
 #include <stdio.h>
@@ -44,6 +45,7 @@
 #include "../../ut.h"
 #include "auth_mod.h"
 #include "challenge.h"
+#include "rpid.h"
 #include "api.h"
 
 MODULE_VERSION
@@ -88,14 +90,23 @@ char* sec_rand = 0;
 
 
 /*
+ * Default Remote-Party-ID suffix
+ */
+char* rpid_suffix_param = ";party=calling;id-type=subscriber;screen=yes";
+str rpid_suffix;
+
+
+/*
  * Exported functions 
  */
 static cmd_export_t cmds[] = {
 	{"www_challenge",       www_challenge,           2, challenge_fixup, REQUEST_ROUTE},
 	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup, REQUEST_ROUTE},
-	{"consume_credentials", consume_credentials,     0, 0              , REQUEST_ROUTE},
-	{"~pre_auth",           (cmd_function)pre_auth,  0, 0              , 0            },
-	{"~post_auth",          (cmd_function)post_auth, 0, 0              , 0            },
+	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
+	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
+        {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE},
+	{"pre_auth",            (cmd_function)pre_auth,  0, 0,               0            },
+	{"post_auth",           (cmd_function)post_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
 };
 
@@ -104,8 +115,9 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"secret",       STR_PARAM, &sec_param   },
-	{"nonce_expire", INT_PARAM, &nonce_expire},
+	{"secret",       STR_PARAM, &sec_param        },
+	{"nonce_expire", INT_PARAM, &nonce_expire     },
+	{"rpid_suffix",  STR_PARAM, &rpid_suffix_param},
 	{0, 0, 0}
 };
 
@@ -156,7 +168,7 @@ static inline int generate_random_secret(void)
 
 static int mod_init(void)
 {
-	printf("auth module - initializing\n");
+	DBG("auth module - initializing\n");
 	
 	sl_reply = find_export("sl_send_reply", 2, 0);
 
@@ -178,6 +190,9 @@ static int mod_init(void)
 		secret.len = strlen(secret.s);
 	}
 	
+	rpid_suffix.s = rpid_suffix_param;
+	rpid_suffix.len = strlen(rpid_suffix.s);
+
 	return 0;
 }
 

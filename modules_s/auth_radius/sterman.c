@@ -47,7 +47,7 @@
  * which can be be used as a check item in the request.  Service type of
  * the request is Authenticate-Only.
  */
-int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user) 
+int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _rpid) 
 {
 	static char msg[4096];
 	VALUE_PAIR *send, *received, *vp;
@@ -209,14 +209,25 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user)
        
 	/* Send request */
 	if (rc_auth(SIP_PORT, send, &received, msg) == OK_RC) {
-		printf("radius_authorize_sterman(): Success\n");
+		DBG("radius_authorize_sterman(): Success\n");
 		rc_avpair_free(send);
+
+		     /* Make a copy of rpid if available */
+		if ((vp = rc_avpair_get(received, PW_SIP_RPID))) {
+			if (_rpid->len < vp->lvalue) {
+				LOG(L_ERR, "radius_authorize_sterman(): rpid buffer too small\n");
+				return -20;
+			}
+			memcpy(_rpid->s, vp->strvalue, vp->lvalue);
+			_rpid->len = vp->lvalue;
+		}
+
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		printf("radius_authorize_sterman(): Failure\n");
+		DBG("radius_authorize_sterman(): Failure\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
-		return -20;
+		return -21;
 	}
 }

@@ -35,6 +35,7 @@
 #include "../../parser/hf.h"
 #include "../../str.h"
 
+#define MAX_RPID_LEN 1024  /* Size of the buffer */
 
 typedef enum auth_result {
 	ERROR = -2 ,        /* Error occured, a reply has been sent out -> return 0 to the ser core */
@@ -59,9 +60,8 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
  * Purpose of this function is to do post authentication steps like
  * marking authorized credentials and so on.
  */
-typedef auth_result_t (*post_auth_f)(struct sip_msg* _m, struct hdr_field* _h);
+typedef auth_result_t (*post_auth_f)(struct sip_msg* _m, struct hdr_field* _h, str* _rpid);
 
-auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h);
-
+auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid);
 
 #endif /* API_H */

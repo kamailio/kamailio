@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Digest Authentication Module
+ * Remote-Party-ID related functions
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -31,22 +31,29 @@
  * 2003-04-28 rpid contributed by Juha Heinanen added (janakj)
  */
 
-#ifndef AUTH_MOD_H
-#define AUTH_MOD_H
+#ifndef RPID_H
+#define RPID_H
 
+#include "../../parser/msg_parser.h"
 #include "../../str.h"
-#include "../../parser/msg_parser.h"    /* struct sip_msg */
 
 
 /*
- * Module parameters variables
+ * Append RPID header field to the message
  */
-extern str secret;            /* secret phrase used to generate nonce */
-extern int nonce_expire;      /* nonce expire interval */
-extern str rpid_suffix;       /* Remote-Party-ID suffix */
+int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-/* Stateless reply function pointer */
-extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
+/*
+ * Check if SIP URI in rpid contains an e164 user part
+ */
+int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2);
 
-#endif /* AUTH_MOD_H */
+
+/*
+ * Store rpid
+ */
+void save_rpid(str* _rpid);
+
+
+#endif /* RPID_H */

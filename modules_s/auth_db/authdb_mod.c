@@ -133,7 +133,7 @@ static int child_init(int rank)
 {
 	db_handle = db_init(db_url);
 	if (!db_handle) {
-		LOG(L_ERR, "auth:init_child(): Unable to connect database\n");
+		LOG(L_ERR, "auth_db:init_child(): Unable to connect database\n");
 		return -1;
 	}
 	return 0;
@@ -143,7 +143,7 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	DBG("auth module - initializing\n");
+	DBG("auth_db module - initializing\n");
 	
 	     /* Find a database module */
 	if (bind_dbmod()) {
@@ -151,8 +151,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	pre_auth_func = (pre_auth_f)find_export("~pre_auth", 0, 0);
-	post_auth_func = (post_auth_f)find_export("~post_auth", 0, 0);
+	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
+	post_auth_func = (post_auth_f)find_export("post_auth", 0, 0);
 
 	if (!(pre_auth_func && post_auth_func)) {
 		LOG(L_ERR, "auth_db:mod_init(): This module requires auth module\n");
