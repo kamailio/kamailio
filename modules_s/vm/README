@@ -2,11 +2,11 @@
 #
 # VM Module README
 #
-# Module depends on: tm, mysql
+# Module depends on: tm and one of the database module
 #
 
-VM module enables the communication between Ser and its voicemail
-system through FIFO calls and server functions.
+VM module enables the communication between Ser and Sems 
+through FIFO calls and server functions.
 
 
 Exported parameters:
@@ -45,28 +45,19 @@ Exported Functions:
 
 Both functions should only get called within a transaction.
 
-Name: 	vm_start
-Params:	voicemail fifo path
-Desc:	relays an INVITE message to the voicemail system
-
-Name: 	vm_stop
-Params:	voicemail fifo path
-Desc:	relays an BYE message to the voicemail system
-
+Name: 	vm
+Params:	voicemail fifo path (Ex. "/tmp/am_fifo"),
+	application name to execute on Sems (Ex. "voicemail").
+Desc:	relays an SIP request to the voicemail system
 
 FIFO Functions:
 ---------------
 
-vm_uac_dlg is now obsoleted by the new 't_uac_dlg' FIFO function.
-Voicemail still uses vm_uac_dlg. 
+You should not use directly this function.
 
 Name:   vm_reply
 Params: see vm_fifo.c
-Desc:   enables voicemail to reply to the other UAC
-
-Name:   vm_uac_dlg
-Params: see vm_fifo.c
-Desc:   enables voicemail to initiate in-dialog transaction
+Desc:   enables voicemail to reply a transaction.
 
 About Voicemail:
 ----------------
@@ -76,142 +67,5 @@ http://developer.berlios.de/projects/sems/
 See its README for details on how to couple it with
 vm module.
 
-
-Review Comments
-===============
-
-First of all, it is a very useful piece of work done very
-nicely. It is beautifuly small, functional, codecs are easy
-to plug in. Passing preparsed values of header fields in 
-a well known order to fifo makes app's life lot of easier. 
-I like it. Thank you.  Suggestions for improvements follow, 
-some of improvements are already committed on CVS.
-
--jiri
-
-a) vm module
--------------
-
-don't use snprintf -- not only is it extremelly slow, but not 
-checking its return value (which is itself a challenge for this 
-function due to ambiguitites around meaning of its return value) 
-is very unsafe.  Especially troublesome if you inject some 
-attacker-driven parts of incoming messages in it.  If sufficiently 
-long, they can cause an overflow. Don't use it.  There are great 
-tools such as memcpy for strings, in2str and dynamic memory 
-allocation. Just calculate length , alloc mem, fill in buffer, 
-use it, release it.
-
-Other unsafe thing is use of strcpy without length checking.
-When you use it for copying email addresses, a malicious user 
-could misuse it, upload a long email to subscriber database
-and cause an overflow. Please replace it. When doing so, make
-me a favor too and replace all occurences of 
-  char xy[magic_number] with char xy[SOME_DEFINE].
-
-I suspect that record-routing is not properly implemented --
-the record-route headers are not passed to voicemail over
-FIFO in vm_start, which precludes proper formatting of
-subsequent requests.  The subsequent BYE must be built 
-using of knowledge of all Record-Route header fields and 
-Contact header field from INVITE. I suggest you do the following:
-- precompute all dialog information before you issue the 
-  fifo invite request. Include this information in your
-  fifo request. In particular, include: 
-  - which uri will be used in r-uri of voicemail's BYE 
-    (INVITE's contact unless strict routing was used, in
-    which case the first item of route set goes there)
-  - route set (merge all uris from all uri lists in
-    all record-route header-fields; at your convenience
-    put it in a single comma-separated line; e.g.,
-      <sip:proxy1.com>, <sip:proxy2.com;lr>
-    keep in mind to update the route set by removing first 
-    item and appending Contact if strict routing used
-  - outbound uri (empty unless loose routing used, in which
-    case the topmost uri of the route set goes there)
-- When you then initiate a BYA, dump these values
-  into t_uac_dlg. (empty values are denoted by "." line)
-- see section 12 of RFC 3261 for detailed spec, or 
-  examples/ctd.sh for running code. (Note that the
-  example implements a UAC which is different from
-  a UAS in that it needs to reverse order of the
-  route set.)
-
-Also, please don't use empty lines in your FIFO commands
-(fifo_reply) -- the fifo server uses them as FIFO request
-delimitors and can get easily confused. If there is an
-optional item (e.g., body) in your FIFO request, which is 
-absent, use single-dot-line to denote it (like in t_uac_dlg).
-
-Likewise, I would suggest to do the same for the voicemail
-FIFO server: empty lines only for end-of-fifo-request.
-
-Another meaningful change to the voicemail fifo protocol would 
-be adding a version number in case we change it in the future 
-and components with different support will talk to each other.
-
-Also, I'd appreaciate having just a single vm fifo action.
-What it should do will be determined with the second parameter.
-E.g., vm("/tmp/fifo", "invite") and vm ("/tmp/fifo", "bye") as
-opposed to vm_invite("/tmp/fifo") and vm_bye("/tmp/fifo").
-That is important to allow richer applications later so that
-one does not need to change the vm module and one can leverage
-the scripting abilities of ser (as opposed to replicating them
-in voicemail server).  BYE replies should be then actually initated 
-from ans_machine via FIFO like INVITEs are. (If a call exists 200, 
-481 otherwise).
-
-How is request merging? (I.e., what happens if an INVITE is
-forked and hits voicemail twice? Will the second INVITE be
-denied -- it should be.)
-
-
-For some reason, I noticed in my test BYE has three CRLFs
-in its end instead of two:
-#
-U 192.168.2.16:5060 -> 192.168.2.33:5060
-  BYE sip:44@192.168.2.33:5060 SIP/2.0..Via: SIP/2.0/UDP 192.168.
-  2.16;branch=z9hG4bK7ec3.71861416.0..To: "44" <sip:44@192.168.2.
-  16>;tag=00036bb90fd3000c63e9b0ad-516eb468..From: <sip:meda@192.
-  168.2.16>;tag=00007ED851ADA0F6..CSeq: 102 BYE..Call-ID: 00036bb
-  9-0fd3007a-730ffce3-15d66391@192.168.2.33..Content-Length: 2..U
-  ser-Agent: Sip EXpress router(0.8.11pre6-tcp9-tm (i386/linux)).
-  .....   
-
-
-b) Some changes I have committed:
----------------------------------
-- vm module actions now include fifo name as parameter
-- there is now MULTI_DOMAIN define to deal with multidomain
-  support in upcoming ser release
-- sql names are now configurable as module parameters
-- writes to FIFO takes place using unbuffered operation
-- some sprintf's removed
-- neither database nor tm is constantly reloaded now -- that
-  all happens on init
-- BYEs are now replied from script (until from FIFO)
-  
-
-It is not clear to me what t_is_local is good for. t->local indicates
-transactions which were intitated localy by ser acting as UAC.
-It should never occur that an incoming BYE matches such 
-a transaction. Unless I missed something, we can don't need
-to care if transaction is local. The "local" value is no longer
-used now.
-
-It is not clear to me why you need storing to_tags in
-transaction context (the _TOTAGS def). imho, to-tags
-are only needed for ACK matching, which we don't do
-anyway.
-
-
-
-c) The ans_machine:
---------------------
-- mysterious incompatibility with MSM 4.7
-- the email message should include content of SIP From HF
-- segfault when SER FIFO not writeable
-- max recording length should be a config param
-- installation of GSM plug-in neither staight-forward nor documented
-- remove the oRTP stack warnings -- they slow-down a lot
-- Solaris port.
+If you need some help or just to report some bug,
+email the author at raphael.coeffic@iptel.org.
