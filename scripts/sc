@@ -7,6 +7,13 @@
 # History:
 # --------
 # 2003-02-23 Thomas's start|stop commands checked in
+#
+# To-DO:
+# -----
+# - generalization for other than mysql databases
+# - front-end to updating administrative mysql password would
+#   be a convenient thing to have
+
 
 # configuration for starting/stopping ser
 PID_FILE=/var/run/ser.pid
