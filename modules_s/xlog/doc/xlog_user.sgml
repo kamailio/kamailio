@@ -30,6 +30,11 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %br : request's first branch
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %ci : call-id
 		</para>
 	    </listitem>
@@ -45,17 +50,17 @@
 	    </listitem>
 	    <listitem>
 		<para>
+		    %ds : destination set
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
 		    %fu : 'From' uri
 		</para>
 	    </listitem>
 	    <listitem>
 		<para>
 		    %ft : 'From' tag
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    %is : IP source address 
 		</para>
 	    </listitem>
 	    <listitem>
@@ -101,6 +106,32 @@
 	    <listitem>
 		<para>
 		    %rs : reply's status
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %rt : 'Refer-To' uri
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Ri : IP address of the interface where the request
+		    has been received
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %Rp : received port
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %si : IP source address 
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    %sp : source port
 		</para>
 	    </listitem>
 	    <listitem>

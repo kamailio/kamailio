@@ -57,9 +57,9 @@ Chapter 1. User's Guide
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
+     * %ds : destination set
      * %fu : 'From' uri
      * %ft : 'From' tag
-     * %is : IP source address
      * %mb : whole SIP message buffer
      * %mf : flags set for current SIP request
      * %mi : SIP message id
@@ -70,6 +70,11 @@ Chapter 1. User's Guide
      * %rr : reply's reason
      * %rs : reply's status
      * %rt : 'Refer-To' uri
+     * %Ri : IP address of the interface where the request has
+       been received
+     * %Rp : received port
+     * %si : IP source address
+     * %sp : source port
      * %tu : 'To' uri
      * %tt : 'To' tag
      * %Ts : unix time stamp

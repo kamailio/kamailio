@@ -105,7 +105,7 @@ static int xl_get_times(struct sip_msg *msg, str *res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(msg_id != msg->id)
+	if(msg_id != msg->id || msg_tm==0)
 	{
 		msg_tm = time(NULL);
 		msg_id = msg->id;
@@ -123,7 +123,7 @@ static int xl_get_timef(struct sip_msg *msg, str *res, str *hp, int hi)
 	
 	if(msg==NULL || res==NULL)
 		return -1;
-	if(msg_id != msg->id)
+	if(msg_id != msg->id || msg_tm==0)
 	{
 		msg_tm = time(NULL);
 		msg_id = msg->id;
@@ -214,19 +214,15 @@ static int xl_get_ruri(struct sip_msg *msg, str *res, str *hp, int hi)
 		return xl_get_null(msg, res, hp, hi);
 	}
 	
-	res->s = msg->parsed_uri.user.len>0 ? msg->parsed_uri.user.s :
-										  msg->parsed_uri.host.s;
-	res->len = msg->parsed_uri.user.len+
-				msg->parsed_uri.passwd.len+
-				msg->parsed_uri.host.len+
-				msg->parsed_uri.port.len+
-				msg->parsed_uri.params.len+
-				msg->parsed_uri.headers.len+
-				(msg->parsed_uri.user.len>0?1:0)+
-				(msg->parsed_uri.passwd.len>0?1:0)+
-				(msg->parsed_uri.port.len>0?1:0)+
-				(msg->parsed_uri.params.len>0?1:0)+
-				(msg->parsed_uri.headers.len>0?1:0);
+	if (msg->new_uri.s!=NULL)
+	{
+		res->s   = msg->new_uri.s;
+		res->len = msg->new_uri.len;
+	} else {
+		res->s   = msg->first_line.u.request.uri.s;
+		res->len = msg->first_line.u.request.uri.len;
+	}
+	
 	return 0;
 }
 
@@ -445,13 +441,58 @@ static int xl_get_callid(struct sip_msg *msg, str *res, str *hp, int hi)
 
 static int xl_get_srcip(struct sip_msg *msg, str *res, str *hp, int hi)
 {
-    if(msg==NULL || res==NULL)
-        return -1;
+	if(msg==NULL || res==NULL)
+		return -1;
 
-    res->s = ip_addr2a(&msg->rcv.src_ip);
-    res->len = strlen(res->s);
+	res->s = ip_addr2a(&msg->rcv.src_ip);
+	res->len = strlen(res->s);
    
-    return 0;
+	return 0;
+}
+
+static int xl_get_srcport(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	int l = 0;
+	char *ch = NULL;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	ch = int2str(msg->rcv.src_port, &l);
+	res->s = ch;
+	res->len = l;
+   
+	return 0;
+}
+
+static int xl_get_rcvip(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+	
+	if(msg->rcv.bind_address==NULL 
+			|| msg->rcv.bind_address->address_str.s==NULL)
+		return xl_get_null(msg, res, hp, hi);
+	
+	res->s   = msg->rcv.bind_address->address_str.s;
+	res->len = msg->rcv.bind_address->address_str.len;
+	
+	return 0;
+}
+
+static int xl_get_rcvport(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+	
+	if(msg->rcv.bind_address==NULL 
+			|| msg->rcv.bind_address->port_no_str.s==NULL)
+		return xl_get_null(msg, res, hp, hi);
+	
+	res->s   = msg->rcv.bind_address->port_no_str.s;
+	res->len = msg->rcv.bind_address->port_no_str.len;
+	
+	return 0;
 }
 
 static int xl_get_useragent(struct sip_msg *msg, str *res, str *hp, int hi)
@@ -490,6 +531,20 @@ static int xl_get_refer_to(struct sip_msg *msg, str *res, str *hp, int hi)
 	res->len = get_refer_to(msg)->uri.len; 
 	
 	return 0;
+}
+
+static int xl_get_dset(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+    if(msg==NULL || res==NULL)
+	return -1;
+    
+    res->s = print_dset(msg, &res->len);
+
+    if ((res->s) == NULL) return xl_get_null(msg, res, hp, hi);
+    
+    res->len -= CRLF_LEN;
+
+    return 0;
 }
 
 static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
@@ -602,6 +657,17 @@ int xl_parse_format(char *s, xl_elog_p *el)
 						e->itf = xl_get_null;
 				}
 			break;
+			case 'd':
+				p++;
+				switch(*p)
+				{
+					case 's':
+						e->itf = xl_get_dset;
+					break;
+					default:
+						e->itf = xl_get_null;
+				}
+			break;
 			case 'f':
 				p++;
 				switch(*p)
@@ -614,17 +680,6 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					break;
 					default:
 						e->itf = xl_get_null;
-				}
-			break;
-			case 'i':
-				p++;
-				switch(*p)
-				{
-					case 's':
-						e->itf = xl_get_srcip;
-					break;
-					default:
-					e->itf = xl_get_null; 			
 				}
 			break;
 			case 'm':
@@ -679,6 +734,34 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					break;
 					default:
 						e->itf = xl_get_null;
+				}
+			break;
+			case 'R':
+				p++;
+				switch(*p)
+				{
+					case 'i':
+						e->itf = xl_get_rcvip;
+					break;
+					case 'p':
+						e->itf = xl_get_rcvport;
+					break;
+					default:
+					e->itf = xl_get_null; 			
+				}
+			break;
+			case 's':
+				p++;
+				switch(*p)
+				{
+					case 'i':
+						e->itf = xl_get_srcip;
+					break;
+					case 'p':
+						e->itf = xl_get_srcport;
+					break;
+					default:
+					e->itf = xl_get_null; 			
 				}
 			break;
 			case 't':
