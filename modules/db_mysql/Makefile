@@ -4,6 +4,9 @@
 
 auto_gen=
 NAME=mysql.so
-LIBS=-lmysqlclient #-L/usr/lib/mysql
+DEFS +=-I/usr/local/mysql/include
+# libmysqlclient locations on RH/Suse and Solaris
+# (Debian does the right thing and puts it in /usr/lib)
+LIBS=-L/usr/lib/mysql -L/usr/local/mysql/lib/mysql/ -lmysqlclient 
 
 include ../../Makefile.modules
