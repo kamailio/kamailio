@@ -135,7 +135,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				ul_unlock_udomain((udomain_t*)_t);
-				return -6;
+				return 1; /* Return OK here so the function succeeds */
 			}
 		} 
 		ptr = ptr->next;
