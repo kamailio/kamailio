@@ -10,7 +10,5 @@ auto_gen=
 NAME=nathelper.so
 LIBS=
 
-DEFS+=-I../..
-
 include ../../Makefile.modules
 
