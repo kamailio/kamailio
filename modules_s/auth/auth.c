@@ -147,6 +147,7 @@ static int send_resp(struct sip_msg* _m, int code, char* _reason, char* _hdr, in
 	}
 
 	udp_send(buf, len, (struct sockaddr*)&to, sizeof(struct sockaddr_in));
+	pkg_free(buf);
 	return 1;
 }
 

@@ -70,6 +70,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	}
 
 	udp_send(buf,len,(struct sockaddr*)&(to),sizeof(struct sockaddr_in));
+	pkg_free(buf);
 	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 
 	return 1;
