@@ -908,24 +908,24 @@ error_too_short:
 error_bad_char:
 	LOG(L_ERR, "ERROR: parse_uri: bad char '%c' in state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			*p, state, (p-buf), buf, (p-buf), len, buf, len);
+			*p, state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
 	return E_BAD_URI;
 error_bad_host:
 	LOG(L_ERR, "ERROR: parse_uri: bad host in uri (error at char %c in"
 			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
-			*p, state, (p-buf), buf, (p-buf), len, buf, len);
+			*p, state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_bad_port:
 	LOG(L_ERR, "ERROR: parse_uri: bad port in uri (error at char %c in"
 			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
-			*p, state, (p-buf), buf, (p-buf), len, buf, len);
+			*p, state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_bad_uri:
 	LOG(L_ERR, "ERROR: parse_uri: bad uri,  state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			 state, (p-buf), buf, (p-buf), len, buf, len);
+			 state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 error_headers:
@@ -938,7 +938,7 @@ error_headers:
 error_bug:
 	LOG(L_CRIT, "BUG: parse_uri: bad  state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			 state, (p-buf), buf, (p-buf), len, buf, len);
+			 state, (int)(p-buf), buf, (int)(p-buf), len, buf, len);
 	ser_error=E_BAD_URI;
 	return E_BAD_URI;
 }

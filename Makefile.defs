@@ -4,7 +4,8 @@
 #
 # Environment variables:
 #   PREFIX, LOCALBASE, BASEDIR
-#   INSTALL, TAR , CC, LEX, YACC
+#   INSTALL, TAR , CC, LEX, YACC,
+#   CPU, CC_EXTRA_OPTS
 #
 # History:
 # --------
@@ -14,7 +15,9 @@
 #  2003-02-25  added -DDISABLE_NAGLE
 #  2003-03-02  added -DDIGEST_DOMAIN (janakj)
 #  2003-03-10  added -xcode=pic32 for module compilation w/ sun cc
-#              (too many symbols for pic13)  (andrei)
+#               (too many symbols for pic13)  (andrei)
+#  2003-04-16  added CC_EXTRA_OPTS, s/march/mcpu, added CPU (cpu to optimize 
+#               for, used only with gcc-3.x)
 
 
 #version number
@@ -28,6 +31,8 @@ OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
 
+# extra CC command line options (e.g  -march=athlon-mp)
+CC_EXTRA_OPTS ?=
  # install location
 PREFIX ?= /usr/local
 LOCALBASE ?= /usr/local
@@ -178,7 +183,7 @@ YACC := $(shell echo "$${YACC}")
 
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
-	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH)\
+	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
@@ -362,9 +367,10 @@ ifeq		($(CC_NAME), gcc)
 					-Wall   \
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
+					CPU ?= athlon
 					CFLAGS+=-minline-all-stringops -malign-double \
 							-falign-loops \
-							-march=athlon \
+							-mcpu=$(CPU) \
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
@@ -408,8 +414,9 @@ ifeq		($(CC_NAME), gcc)
 					#-Wmissing-prototypes 
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
+					CPU ?= ultrasparc
 					#use 32bit for now
-					CFLAGS+= -mcpu=ultrasparc -mtune=ultrasparc  -m32  \
+					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)  -m32  \
 					# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
 					#-mno-epilogue #try to inline function exit code
 					#-mflat # omit save/restore
@@ -483,7 +490,8 @@ endif		#CC_NAME, gcc
 endif	#ARCH, i386
 
 
-	
+CFLAGS+= $(CC_EXTRA_OPTS)
+
 
 LDFLAGS=
 # setting LDFLAGS
