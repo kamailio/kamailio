@@ -202,14 +202,18 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 	char* begin;
 	int off;
 	int ret;
+	int eflags;
 
 	begin=get_header(msg); /* msg->orig previously .. uri problems */
 	ret=-1; /* pessimist: we will not find any */
 	len=strlen(str);
+	eflags=0; /* match ^ at the beginning of the string*/
 
 	while (begin<msg->buf+msg->len 
-				&& regexec((regex_t*) key, begin, 1, &pmatch, 0)==0) {
+				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
+		/* change eflags, not to match any more at string start */
+		eflags|=REG_NOTBOL;
 		if (pmatch.rm_so==-1){
 			LOG(L_ERR, "ERROR: replace_all_f: offset unknown\n");
 			return -1;
