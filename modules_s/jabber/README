@@ -15,6 +15,7 @@ eXtended JABber module
 [Revisions]
 2002-12-10: Daniel MIERLA
 2003-01-16: Daniel MIERLA
+2003-01-27: Daniel MIERLA
 
 
 1. Description
@@ -57,12 +58,6 @@ MSN, AIM, Yahoo) using a Jabber server
 3. Exported parameters
 ----------------------
 
-Name:		contact
-Type:		string 
-Default:	none
-Desc:		contact header for SIP messages - if not set, the header
-			is filled with value of 'From'
-			
 Name:		db_url
 Type:		string
 Default:	"sql://root@127.0.0.1/sip_jab"
@@ -177,6 +172,12 @@ Desc:	log off from Jabber server the associated Jabber ID of the SIP user
 
 5. Admin's guide
 ----------------
+
+NOTE:
+A more complete guide about SIMPLE2Jabber gateway can be found at:
+http://www.iptel.org/ser/. The below part will be removed soon, only the
+manual from web will be updated.
+
 
 The Jabber server setup is not a subject of this guide. Check
 http://www.jabber.org for that.
