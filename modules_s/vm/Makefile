@@ -9,6 +9,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=vm.so
 LIBS=
+DEFS+= -DWITH_LDAP_SUPPORT
 
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!

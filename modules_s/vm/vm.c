@@ -50,7 +50,9 @@
 #include "../../parser/parse_nameaddr.h"
 #include "../../parser/parser_f.h"
 #include "../../parser/contact/parse_contact.h"
+#ifndef WITH_LDAP_SUPPORT
 #include "../../db/db.h"
+#endif
 #include "../tm/tm_load.h"
 //#include "../tm/t_reply.h"
 
@@ -94,17 +96,29 @@ static int vm_init_child(int rank);
 
 struct tm_binds _tmb;
 
+#ifdef WITH_LDAP_SUPPORT
+#define MAX_EMAIL_SIZE  64
+char email_buf[MAX_EMAIL_SIZE];
+
+typedef int (*ldap_get_ui_t)(str*, str*);
+ldap_get_ui_t ldap_get_ui = NULL;
+
+#else
+
 char* vm_db_url = 0;                     /* Database URL */
 char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
 
 char* user_column = "username";
 char* domain_column = "domain";
+
+static db_con_t* db_handle = 0;
+#endif
+
 int use_domain = 0;
 
 /* #define EXTRA_DEBUG */
 
-static db_con_t* db_handle = 0;
 static str       lines_eol[2*VM_FIFO_PARAMS];
 static str       eol={"\n",1};
 
@@ -126,11 +140,13 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
+#ifndef WITH_LDAP_SUPPORT
 	{"db_url",           STR_PARAM, &vm_db_url       },
 	{"email_column",     STR_PARAM, &email_column    },
 	{"subscriber_table", STR_PARAM, &subscriber_table},
 	{"user_column",      STR_PARAM, &user_column     },
 	{"domain_column",    STR_PARAM, &domain_column   },
+#endif
 	{"use_domain",       INT_PARAM, &use_domain      },
 	{0, 0, 0}
 };
@@ -164,11 +180,21 @@ static int vm_mod_init(void)
 		return -1;
 	}
 
+#ifdef WITH_LDAP_SUPPORT
+        ldap_get_ui = (ldap_get_ui_t)find_export("ldap_get_uinfo", 0, 0);
+
+        if (!ldap_get_ui)
+        {
+                LOG(L_ERR, "ERROR: vm_mod_init: This module requires auth_ldap module\n");
+                return -1;
+        }
+#else
 	/* init database support only if needed */
 	if (vm_db_url && bind_dbmod(vm_db_url)) {
 		LOG(L_ERR, "ERROR: vm_mod_init: unable to bind db\n");
 		return -1;
 	}
+#endif
 
 	/* init the line_eol table */
 	for(i=0;i<VM_FIFO_PARAMS;i++) {
@@ -184,6 +210,7 @@ static int vm_init_child(int rank)
 {
 	LOG(L_INFO,"voicemail - initializing child %i\n",rank);
 
+#ifndef WITH_LDAP_SUPPORT
 	if (vm_db_url) {
 		assert(db_init);
 		db_handle=db_init(vm_db_url);
@@ -194,7 +221,7 @@ static int vm_init_child(int rank)
 			return -1;
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -206,6 +233,11 @@ static int vm_get_user_info( str* user,   /*[in]*/
 							str* host,   /*[in]*/
 							str* email   /*[out]*/)
 {
+#ifdef  WITH_LDAP_SUPPORT
+        email->s = email_buf;
+        email->len = MAX_EMAIL_SIZE;
+        return ldap_get_ui(user, email);
+#else
 	db_res_t* email_res=0;
 	db_key_t keys[2];
 	db_val_t vals[2];
@@ -240,6 +272,7 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	return 0;
 error:
 	return -1;
+#endif
 }
 
 
@@ -512,9 +545,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 
 		/*body.len = strlen(body.s); (by bogdan) */
 		body.len = msg->len - (body.s - msg->buf);
-
+#ifndef WITH_LDAP_SUPPORT
 		if(vm_db_url && vm_get_user_info(&msg->parsed_uri.user,
-		&msg->parsed_uri.host, &email) < 0) {
+#else
+		if(vm_get_user_info(&msg->parsed_uri.user,
+#endif
+		   &msg->parsed_uri.host, &email) < 0) {
 			LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
 			goto error3;
 		}
@@ -635,8 +671,6 @@ error2:
 		free_contact( ((contact_body_t**)&msg->contact->parsed) );
 error1:
 	if (parse_flags&VM_FROM_PARSED) {
-		free_from( msg->from->parsed );
-		msg->from->parsed = 0;
 	}
 error:
 	/* 0 would lead to immediate script exit -- -1 returns
