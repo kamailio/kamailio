@@ -803,12 +803,6 @@ int main(int argc, char** argv)
 	
 
 	print_rl();
-	/* fix routing lists */
-	if ( (r=fix_rls())!=0){
-		fprintf(stderr, "ERROR: error %x while trying to fix configuration\n",
-						r);
-		goto error;
-	};
 
 	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;
@@ -904,6 +898,12 @@ int main(int argc, char** argv)
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+	/* fix routing lists */
+	if ( (r=fix_rls())!=0){
+		fprintf(stderr, "ERROR: error %x while trying to fix configuration\n",
+						r);
+		goto error;
+	};
 
 	return main_loop();
 
