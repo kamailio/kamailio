@@ -212,9 +212,11 @@ static inline int su_cmp(union sockaddr_union* s1, union sockaddr_union* s2)
 		case AF_INET:
 			return (s1->sin.sin_port==s2->sin.sin_port)&&
 					(memcmp(&s1->sin.sin_addr, &s2->sin.sin_addr, 4)==0);
+#ifdef USE_IPV6
 		case AF_INET6:
 			return (s1->sin6.sin6_port==s2->sin6.sin6_port)&&
 					(memcmp(&s1->sin6.sin6_addr, &s2->sin6.sin6_addr, 16)==0);
+#endif
 		default:
 			LOG(L_CRIT,"su_cmp: BUG: unknown address family %d\n",
 						s1->s.sa_family);
@@ -230,8 +232,10 @@ static inline short su_getport(union sockaddr_union* su)
 	switch(su->s.sa_family){
 		case AF_INET:
 			return su->sin.sin_port;
+#ifdef USE_IPV6
 		case AF_INET6:
 			return su->sin6.sin6_port;
+#endif
 		default:
 			LOG(L_CRIT,"su_get_port: BUG: unknown address family %d\n",
 						su->s.sa_family);
