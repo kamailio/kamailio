@@ -27,6 +27,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	char* third;
 	char* nl;
 	int offset;
+	char* end;
 	
 	/* grammar:
 		request  =  method SP uri SP version CRLF
@@ -35,9 +36,10 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	*/
 	
 
+	end=buffer+len;
 	/* see if it's a reply (status) */
 	tmp=eat_token(buffer, len);
-	if (tmp==buffer){
+	if ((tmp==buffer)||(tmp>=end)){
 		DPrint("ERROR: empty  or bad first line\n");
 		goto error1;
 	}
@@ -52,7 +54,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	offset=tmp-buffer;
 	second=eat_space(tmp, len-offset);
 	offset+=second-tmp;
-	if (second==tmp){
+	if ((second==tmp)||(tmp>=end)){
 		goto error;
 	}
 	*tmp=0; /* mark the end of the token */
@@ -60,24 +62,41 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	
 	/* next element */
 	tmp=eat_token(second, len-offset);
+	if (tmp>=end){
+		goto error;
+	}
 	offset+=tmp-second;
 	third=eat_space(tmp, len-offset);
 	offset+=third-tmp;
-	if(third==tmp){
+	if ((third==tmp)||(tmp>=end)){
 		goto error;
 	}
 	*tmp=0; /* mark the end of the token */
 	fl->u.request.uri=second;
-	/*  last part */
-	tmp=eat_token(third,len-offset);
-	offset+=tmp-third;
-	if (tmp==third){
-		goto error;
-	}
-	if (! is_empty(tmp, len-offset)){		
-		goto error;
+	/*  last part: for a request it must be the version, for a reply
+	 *  it can contain almost anything, including spaces, so we don't care
+	 *  about it*/
+	if (fl->type==SIP_REQUEST){
+		tmp=eat_token(third,len-offset);
+		offset+=tmp-third;
+		if ((tmp==third)||(tmp>=end)){
+			goto error;
+		}
+		if (! is_empty(tmp, len-offset)){
+			goto error;
+		}
+	}else{
+		tmp=eat_token2(third,len-offset,'\r'); /* find end of line 
+												  ('\n' or '\r') */
+		if (tmp>=end){ /* no crlf in packet => invalid */
+			goto error;
+		}
+		offset+=tmp-third;
 	}
 	nl=eat_line(tmp,len-offset);
+	if (nl>=end){ /* no crlf in packet or only 1 line > invalid */
+		goto error;
+	}
 	*tmp=0;
 	fl->u.request.version=third;
 	
@@ -238,9 +257,9 @@ char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb)
 		switch (*tmp){
 			case ' ':
 				*tmp=0;
+				tmp++;
 				/*the rest is comment? */
-				if (tmp+1-buffer<len){
-					tmp++;
+				if (tmp-buffer<len){
 					comment=tmp;
 					/* eat the comment */
 					for(;((tmp-buffer)<len)&&
@@ -258,8 +277,8 @@ char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb)
 
 			case ';':
 				*tmp=0;
-				if (tmp+1-buffer>=len) goto error;
 				tmp++;
+				if (tmp-buffer>=len) goto error;
 				params=tmp;
 				/* eat till end, first space  or ',' */
 				for(;((tmp-buffer)<len)&&
@@ -283,10 +302,10 @@ char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb)
 
 			case ',':
 				*tmp=0;
-				if (tmp+1-buffer<len){
+				tmp++;
+				if (tmp-buffer<len){
 					/* eat space and ',' */
-					for(tmp=tmp+1; 
-						((tmp-buffer)<len)&&
+					for(;((tmp-buffer)<len)&&
 						(*tmp==' '|| *tmp==',');
 					   tmp++);
 				}
@@ -425,7 +444,7 @@ skip:
 	if (second_via) {
 		tmp=parse_via_body(second_via, strlen(second_via), &vb2);
 		if (vb2.error!=VIA_PARSE_OK){
-			DPrint("ERROR: parsing via body: %s\n", second_via);
+			DPrint("ERROR: parsing via2 body: %s\n", second_via);
 			goto error;
 		}
 		vb2.size=tmp-second_via; 

@@ -21,7 +21,7 @@ int receive_msg(char* buf, unsigned int len)
 	orig=(char*) malloc(len);
 	if (orig==0){
 		DPrint("ERROR: memory allocation failure\n");
-		goto error;
+		goto error1;
 	}
 	memcpy(orig, buf, len);
 	
@@ -74,7 +74,8 @@ skip:
 	free(orig);
 	return 0;
 error:
+	free(orig);
+error1:
 	return -1;
-
 }
 
