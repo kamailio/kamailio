@@ -422,7 +422,7 @@ void handle_sigs()
 							" %d\n", chld, WTERMSIG(chld_status));
 #ifdef WCOREDUMP
 					LOG(L_INFO, "core was %sgenerated\n",
-							 WCOREDUMP(chld_status) ?  "" : "not" );
+							 WCOREDUMP(chld_status) ?  "" : "not " );
 #endif
 				}else if (WIFSTOPPED(chld_status)) 
 					LOG(L_INFO, "child process %d stopped by a"
@@ -559,17 +559,17 @@ int main_loop()
 			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
 		}
 	}
+	/*this is the main process*/
+	pids[process_no]=getpid();
+	process_bit = 0;
+	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
+	bind_idx=0;					/* if it does it will use the first address */
 	/* if configured to do so, start a server for accepting FIFO commands */
 	if (open_fifo_server()<0) {
 		LOG(L_ERR, "opening fifo server failed\n");
 		goto error;
 	}
-	/*this is the main process*/
-	pids[process_no]=getpid();
-	process_bit = 0;
 	is_main=1;
-	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
-	bind_idx=0;					/* if it does it will use the first address */
 
 	if (timer_list){
 		/* fork again for the attendant process*/
