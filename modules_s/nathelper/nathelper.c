@@ -145,12 +145,12 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 static int
 fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	int st, offset, len, len1;
-	str hostname, port;
+	int offset, len, len1;
 	char *cp, *buf, temp[2];
 	contact_t* c;
 	enum {ST1, ST2, ST3, ST4, ST5};
 	struct lump* anchor;
+	struct sip_uri uri;
 
 	if ((parse_headers(msg, HDR_CONTACT, 0) == -1) || !msg->contact)
 		return -1;
@@ -163,56 +163,13 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "fix_nated_contact: Error while parsing Contact body\n");
 		return -1;
 	}
-	st = ST1;
-	port.len = 0;
-	for (cp = c->uri.s + 1; cp < c->uri.s + c->uri.len; cp++) {
-		switch (*cp) {
-		case ':':
-			switch (st) {
-			case ST1:
-				hostname.s = cp + 1;
-				st = ST2;
-				break;
-			case ST2:
-			case ST3:
-				hostname.len = cp - hostname.s + 1;
-				port.s = cp + 1;
-				st = ST4;
-				break;
-			}
-			break;
-
-		case '@':
-			if (st == ST2) {
-				hostname.s = cp + 1;
-				st = ST3;
-			}
-			break;
-
-		case ';':
-		case '>':
-			switch (st) {
-			case ST3:
-				hostname.len = cp - hostname.s;
-				st = ST5;
-				break;
-			case ST4:
-				port.len = cp - port.s;
-				st = ST5;
-				break;
-			}
-			break;
-
-		default:
-			break;
-		}
-	}
-	if (st != ST5 || hostname.len == 0) {
+	if (parse_uri(c->uri.s, c->uri.len, &uri) < 0 || uri.host.len <= 0) {
 		LOG(L_ERR, "fix_nated_contact: Error while parsing Contact URI\n");
 		return -1;
 	}
-	if (port.len == 0)
-		port.s = hostname.s + hostname.len;
+
+	if (uri.port.len == 0)
+		uri.port.s = uri.host.s + uri.host.len;
 
 	offset = c->uri.s - msg->buf;
 	anchor = del_lump(&msg->add_rm, offset, c->uri.len, HDR_CONTACT);
@@ -220,20 +177,20 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 
 	cp = ip_addr2a(&msg->rcv.src_ip);
-	len = c->uri.len + strlen(cp) + 6 /* :port */ - (hostname.len + port.len) + 1;
+	len = c->uri.len + strlen(cp) + 6 /* :port */ - (uri.host.len + uri.port.len) + 1;
 	buf = pkg_malloc(len);
 	if (buf == NULL) {
 		LOG(L_ERR, "ERROR: fix_nated_contact: out of memory\n");
 		return -1;
 	}
-	temp[0] = hostname.s[0];
+	temp[0] = uri.host.s[0];
 	temp[1] = c->uri.s[c->uri.len];
-	c->uri.s[c->uri.len] = hostname.s[0] = '\0';
+	c->uri.s[c->uri.len] = uri.host.s[0] = '\0';
 	len1 = snprintf(buf, len, "%s%s:%d%s", c->uri.s, cp, msg->rcv.src_port,
-	    port.s + port.len);
+	    uri.port.s + uri.port.len);
 	if (len1 < len)
 		len = len1;
-	hostname.s[0] = temp[0];
+	uri.host.s[0] = temp[0];
 	c->uri.s[c->uri.len] = temp[1];
 	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
 		pkg_free(buf);
