@@ -80,7 +80,9 @@
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2);
+#ifdef _OBSOLETED
 inline static int w_t_reply_unsafe(struct sip_msg* msg, char* str, char* str2);
+#endif
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 inline static int fixup_t_send_reply(void** param, int param_no);
 inline static int fixup_str2int( void** param, int param_no);
@@ -113,7 +115,9 @@ struct module_exports exports= {
 				"t_newtran",
 				"t_lookup_request",
 				T_REPLY,
+#ifdef _OBSO
 				T_REPLY_UNSAFE,
+#endif
 				"t_retransmit_reply",
 				"t_release",
 				T_RELAY_TO,
@@ -133,7 +137,9 @@ struct module_exports exports= {
 					w_t_newtran,
 					w_t_check,
 					w_t_reply,
+#ifdef _OBSO
 					w_t_reply_unsafe,
+#endif
 					w_t_retransmit_reply,
 					w_t_release,
 					w_t_relay_to,
@@ -151,7 +157,9 @@ struct module_exports exports= {
 				0, /* t_newtran */
 				0, /* t_lookup_request */
 				2, /* t_reply */
+#ifdef _OBSO
 				2, /* t_reply_unsafe */
+#endif
 				0, /* t_retransmit_reply */
 				0, /* t_release */
 				2, /* t_relay_to */
@@ -168,7 +176,9 @@ struct module_exports exports= {
 				0,						/* t_newtran */
 				0,						/* t_lookup_request */
 				fixup_t_send_reply,		/* t_reply */
+#ifdef _OBSO
 				fixup_t_send_reply,		/* t_reply_unsafe */
+#endif
 				0,						/* t_retransmit_reply */
 				0,						/* t_release */
 				fixup_hostport2proxy,	/* t_relay_to */
@@ -182,7 +192,11 @@ struct module_exports exports= {
 				0						/* t_newdlg */
 	
 		},
+#ifdef _OBSO
 	15,
+#else
+	14,
+#endif
 
 	/* ------------ exported variables ---------- */
 	(char *[]) { /* Module parameter names */
@@ -462,10 +476,19 @@ inline static int w_t_reply(struct sip_msg* msg, char* str, char* str2)
 			"for which no T-state has been established\n");
 		return -1;
 	}
-	return t_reply( t, msg, (unsigned int) str, str2);
+	/* if called from reply_route, make sure that unsafe version
+	 * is called; we are already in a mutex and another mutex in
+	 * the safe version would lead to a deadlock
+	 */
+	if (rmode==MODE_ONREPLY_REQUEST) { 
+		DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
+		return t_reply_unsafe(t, msg, (unsigned int) str, str2);
+	} else {
+		return t_reply( t, msg, (unsigned int) str, str2);
+	}
 }
 
-
+#ifdef _OBSOLETED
 inline static int w_t_reply_unsafe(struct sip_msg* msg, char* str, char* str2)
 {
 	struct cell *t;
@@ -483,6 +506,7 @@ inline static int w_t_reply_unsafe(struct sip_msg* msg, char* str, char* str2)
 	}
 	return t_reply_unsafe(t, msg, (unsigned int) str, str2);
 }
+#endif
 
 
 inline static int w_t_release(struct sip_msg* msg, char* str, char* str2)

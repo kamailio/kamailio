@@ -142,7 +142,7 @@ Desc:	sets reply routing block, to which control is passed after
 		upstream "202 I will take care of it"); Note that the
 		set of command which are useable within reply_routes is
 		strictly limited to rewriting URI, initiating new branches,
-		logging, and sending 'unsafe' replies (t_reply_unsafe). Any 
+		logging, and sending stateful replies (t_reply). Any 
 		other commands may result in unpredictable behaviour and 
 		possible server failure.
 		Note that whenever reply_route is entered, uri is reset to
@@ -189,8 +189,7 @@ Example: see test/uas.cfg:
 Name:	t_reply
 Params:	code, reason phrase
 Desc: 	sends a stateful reply after a transaction has been
-		established; see t_newtran for usage; note: never use
-	    t_reply from within reply_route ... always use t_reply_unsafe
+		established; see t_newtran for usage; 
 
 ----- only --- advanced --- commands --- from --- here --- on -----
 
@@ -226,13 +225,6 @@ Params:	*import_structure
 Desc:	for programmatic use only -- import exported TM functions;
 		see the acc module for an example of use
 
-Name:	t_reply_unsafe
-Params:	code, reason phrase
-Desc: 	sends a stateful reply after a transaction has been
-		established; it can only be used from reply processing;
-	    using it from regular processing will introduce erroneous
-	    conditions; using t_reply from reply_processing will
-	    introduce a deadlock
 
 External Usage of TM
 ---------------------

@@ -48,6 +48,9 @@ enum rps {
 	RPS_PROVISIONAL
 };
 
+enum route_mode { MODE_REQUEST=1, MODE_ONREPLY_REQUEST };
+extern enum route_mode rmode;
+
 /* branch bitmap type */
 typedef unsigned int branch_bm_t;
 

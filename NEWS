@@ -75,4 +75,6 @@ XXX
 
 tm module:
 ----------
-XXX t_uac/FIFO
+- t_reply_unsafe, used in former versions within reply_routes,
+  is deprecated; now t_reply is used from any places in script
+- XXX t_uac/FIFO
