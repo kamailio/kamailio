@@ -301,6 +301,11 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				}
 				/* set the flag for modifing the location set */
 				intr->flags |= CPL_LOC_SET_MODIFIED;
+				/* we found a valid contact */
+				kid = success_kid;
+			} else {
+				/* no valid contact found */
+				kid = notfound_kid;
 			}
 			cpl_ulb.unlock_udomain( cpl_domain );
 		}
