@@ -31,6 +31,7 @@
  * 2003-01-29  src_port added (jiri)
  * 2003-01-23  mhomed added (jiri)
  * 2003-03-19  replaced all mallocs/frees with pkg_malloc/pkg_free (andrei)
+ * 2003-03-19  Added support for route type in find_export (janakj)
  */
 
 
@@ -73,7 +74,8 @@ void yyerror(char* s);
 char* tmp;
 void* f_tmp;
 struct id_list* lst_tmp;
-
+int rt;  /* Type of route block for find_export */
+ 
 
 %}
 
@@ -101,7 +103,7 @@ struct id_list* lst_tmp;
 %token LOG_TOK
 %token ERROR
 %token ROUTE
-%token REPLY_ROUTE
+%token REPL_ROUTE
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
@@ -212,8 +214,9 @@ statements:	statements statement {}
 
 statement:	assign_stm 
 		| module_stm
-		| route_stm 
-		| reply_route_stm
+		| {rt=REQUEST_ROUTE;} route_stm 
+		| {rt=REPLY_ROUTE;} reply_route_stm
+
 		| CR	/* null statement*/
 	;
 
@@ -441,9 +444,9 @@ ipv6:	IPV6ADDR {
 	;
 
 
-route_stm:	ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
+route_stm:  ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 
-		| ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE { 
+	    | ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE { 
 										if (($3<RT_NO) && ($3>=0)){
 											push($6, &rlist[$3]);
 										}else{
@@ -454,7 +457,7 @@ route_stm:	ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 		| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 
-reply_route_stm: REPLY_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
+reply_route_stm: REPL_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 										if (($3<REPLY_RT_NO)&&($3>=1)){
 											push($6, &reply_rlist[$3]);
 										} else {
@@ -462,7 +465,7 @@ reply_route_stm: REPLY_ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE {
 												"table number");
 											YYABORT; }
 										}
-		| REPLY_ROUTE error { yyerror("invalid reply_route statement"); }
+		| REPL_ROUTE error { yyerror("invalid reply_route statement"); }
 	;
 /*
 rules:	rules rule { push($2, &$1); $$=$1; }
@@ -1028,10 +1031,14 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 										"string expected"); }
 		| REVERT_URI LPAREN RPAREN { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
-		| ID LPAREN RPAREN			{ f_tmp=(void*)find_export($1, 0);
+		| ID LPAREN RPAREN			{ f_tmp=(void*)find_export($1, 0, rt);
 									   if (f_tmp==0){
-										yyerror("unknown command, missing"
-										" loadmodule?\n");
+										   if (find_export($1, 0, 0)) {
+											   yyerror("Command cannot be used in the block\n");
+										   } else {
+											   yyerror("unknown command, missing"
+												   " loadmodule?\n");
+										   }
 										$$=0;
 									   }else{
 										$$=mk_action(	MODULE_T,
@@ -1042,10 +1049,14 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 													);
 									   }
 									}
-		| ID LPAREN STRING RPAREN { f_tmp=(void*)find_export($1, 1);
+		| ID LPAREN STRING RPAREN { f_tmp=(void*)find_export($1, 1, rt);
 									if (f_tmp==0){
-										yyerror("unknown command, missing"
-										" loadmodule?\n");
+										if (find_export($1, 1, 0)) {
+											yyerror("Command cannot be used in the block\n");
+										} else {
+											yyerror("unknown command, missing"
+												" loadmodule?\n");
+										}
 										$$=0;
 									}else{
 										$$=mk_action(	MODULE_T,
@@ -1057,10 +1068,14 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 									}
 								  }
 		| ID LPAREN STRING  COMMA STRING RPAREN 
-								  { f_tmp=(void*)find_export($1, 2);
+								  { f_tmp=(void*)find_export($1, 2, rt);
 									if (f_tmp==0){
-										yyerror("unknown command, missing"
-										" loadmodule?\n");
+										if (find_export($1, 2, 0)) {
+											yyerror("Command cannot be used in the block\n");
+										} else {
+											yyerror("unknown command, missing"
+												" loadmodule?\n");
+										}
 										$$=0;
 									}else{
 										$$=mk_action3(	MODULE_T,

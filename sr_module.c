@@ -29,6 +29,7 @@
  *  2003-03-10  switched to new module_exports format: updated find_export,
  *               find_export_param, find_module (andrei)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-19  Support for flags in find_export (janakj)
  */
 
 
@@ -195,8 +196,10 @@ skip:
 
 
 /* searches the module list and returns a pointer to the "name" function or
- * 0 if not found */
-cmd_function find_export(char* name, int param_no)
+ * 0 if not found 
+ * flags parameter os OR value of all flags that must match
+ */
+cmd_function find_export(char* name, int param_no, int flags)
 {
 	struct sr_module* t;
 	cmd_export_t* cmd;
@@ -204,9 +207,11 @@ cmd_function find_export(char* name, int param_no)
 	for(t=modules;t;t=t->next){
 		for(cmd=t->exports->cmds; cmd && cmd->name; cmd++){
 			if((strcmp(name, cmd->name)==0)&&
-				(cmd->param_no==param_no) ){
+			   (cmd->param_no==param_no) &&
+			   ((cmd->flags & flags) == flags)
+			  ){
 				DBG("find_export: found <%s> in module %s [%s]\n",
-						name, t->exports->name, t->path);
+				    name, t->exports->name, t->path);
 				return cmd->function;
 			}
 		}

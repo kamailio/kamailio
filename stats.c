@@ -26,6 +26,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-19: added support for route type in find_export (janakj)
  */
 
 
@@ -325,9 +329,9 @@ int stats_register()
 	const char *func = __FUNCTION__;
 	struct stats_funcs f;
 
-	f.reg_func = (void*) find_export("snmp_register_handler", 2);
-	f.new_func = (void*) find_export("snmp_new_handler", 1);
-	f.free_func = (void*) find_export("snmp_free_handler", 1);
+	f.reg_func = (void*) find_export("snmp_register_handler", 2, 0);
+	f.new_func = (void*) find_export("snmp_new_handler", 1, 0);
+	f.free_func = (void*) find_export("snmp_free_handler", 1, 0);
 	if(!f.reg_func || !f.new_func || !f.free_func) {
 		LOG(L_INFO, "%s: Couldn't find SNMP module\n", func);
 		LOG(L_INFO, "%s: Not reporting stats through SNMP\n", func);
