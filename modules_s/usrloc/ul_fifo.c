@@ -228,26 +228,36 @@ static int ul_add(FILE* pipe, char* response_file)
 	str table, user, contact, expires, q;
 
 	if (!read_line(table_s, MAX_TABLE, pipe, &tlen) || tlen == 0) {
+		fifo_reply(response_file,
+			"ERROR: ul_add: table name expected\n");
 		LOG(L_ERR, "ERROR: ul_add: table name expected\n");
 		return -1;
 	}
 	
 	if (!read_line(user_s, MAX_USER, pipe, &tlen) || tlen == 0) {
+		fifo_reply(response_file,
+			"ERROR: ul_add: aor name expected\n");
 		LOG(L_ERR, "ERROR: ul_add: aor expected\n");
 		return -1;
 	}
 	
 	if (!read_line(contact_s, MAX_CONTACT, pipe, &tlen) || tlen == 0) {
+		fifo_reply(response_file,
+			"ERROR: ul_add: contact expected\n");
 		LOG(L_ERR, "ERROR: ul_add: contact expected\n");
 		return -1;
 	}
 	
 	if (!read_line(expires_s, MAX_EXPIRES, pipe, &tlen) || tlen == 0) {
+		fifo_reply(response_file,
+			"ERROR: ul_add: expires expected\n");
 		LOG(L_ERR, "ERROR: ul_add: expires expected\n");
 		return -1;
 	}
 	
 	if (!read_line(q_s, MAX_Q, pipe, &tlen) || tlen == 0) {
+		fifo_reply(response_file,
+			"ERROR: ul_add: q expected\n");
 		LOG(L_ERR, "ERROR: ul_add: q expected\n");
 		return -1;
 	}
@@ -323,10 +333,14 @@ int static ul_rm( FILE *pipe, char *response_file )
 	str aor, t;
 
 	if (!read_line(table, MAX_TABLE, pipe, &tlen) || tlen==0) {
+		fifo_reply(response_file, 
+			"ERROR: ul_rm: table name expected\n");
 		LOG(L_ERR, "ERROR: ul_rm: table name expected\n");
 		return -1;
 	}
 	if (!read_line(user, MAX_TABLE, pipe, &ulen) || ulen==0) {
+		fifo_reply(response_file, 
+			"ERROR: ul_rm: user name expected\n");
 		LOG(L_ERR, "ERROR: ul_rm: user name expected\n");
 		return -1;
 	}
