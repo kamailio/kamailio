@@ -30,11 +30,16 @@
  */
 
 
+#include <stdlib.h>
+#include <string.h>
 
+#include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../db/db.h"
 #include "../../dprint.h"
+#include "avpops_parse.h"
 #include "avpops_db.h"
+
 
 static db_con_t  *db_hdl=0;     /* DB handler */
 static db_func_t avpops_dbf;    /* DB functions */
@@ -44,6 +49,8 @@ static char      **db_columns;  /* array with names of DB columns */
 static db_key_t   keys_cmp[3]; /* array of keys and values used in selection */
 static db_val_t   vals_cmp[3]; /* statement as in "select" and "delete" */
 
+/* linked list with all defined DB schemes */
+static struct db_scheme  *db_scheme_list=0;
 
 
 int avpops_db_bind(char* db_url)
@@ -96,6 +103,62 @@ error:
 }
 
 
+int avp_add_db_scheme( modparam_t type, param_func_param_t param_val)
+{
+	struct db_scheme *scheme;
+
+	scheme = (struct db_scheme*)pkg_malloc( sizeof(struct db_scheme) );
+	if (scheme==0)
+	{
+		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: no more pkg memory\n");
+		goto error;
+	}
+	memset( scheme, 0, sizeof(struct db_scheme));
+
+	/* parse the scheme */
+	if ( parse_avp_db_scheme( param_val.string, scheme)!=0 )
+	{
+		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: falied to parse scheme\n");
+		goto error;
+	}
+
+	/* check for duplicates */
+	if ( avp_get_db_scheme(scheme->name)!=0 )
+	{
+		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: duplicated scheme name "
+			"<%s>\n",scheme->name);
+		goto error;
+	}
+
+	/* print scheme */
+	DBG("DEBUG:avpops:avp_add_db_scheme: new scheme <%s> added\n"
+		"\t\tuuid_col=<%s>\n\t\tusername_col=<%s>\n"
+		"\t\tdomain_col=<%s>\n\t\tvalue_col=<%s>\n"
+		"\t\tdb_flags=%d\n\t\ttable=<%s>\n",
+		scheme->name,
+		scheme->uuid_col, scheme->username_col,
+		scheme->domain_col, scheme->value_col,
+		scheme->db_flags, scheme->table	);
+
+	scheme->next = db_scheme_list;
+	db_scheme_list = scheme;
+
+	return 0;
+error:
+	return -1;
+}
+
+
+struct db_scheme *avp_get_db_scheme (char *name)
+{
+	struct db_scheme *scheme;
+
+	for( scheme=db_scheme_list ; scheme ; scheme=scheme->next )
+		if ( !strcasecmp( name, scheme->name) )
+			return scheme;
+	return 0;
+}
+
 
 static inline int set_table( char *table, char *func)
 {
@@ -125,36 +188,43 @@ static inline int set_table( char *table, char *func)
 
 
 static inline int prepare_selection( str *uuid, str *username, str *domain,
-																	char *attr)
+										char *attr, struct db_scheme *scheme)
 {
 	unsigned int nr_keys_cmp;
 
 	nr_keys_cmp = 0;
 	if (uuid)
 	{
-		keys_cmp[ nr_keys_cmp ] = db_columns[0]; /*uuid*/
+		/* uuid column */
+		keys_cmp[ nr_keys_cmp ] =
+			(scheme&&scheme->uuid_col)?scheme->uuid_col:db_columns[0];
 		vals_cmp[ nr_keys_cmp ].type = DB_STR;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
 		vals_cmp[ nr_keys_cmp ].val.str_val = *uuid;
 		nr_keys_cmp++;
 	} else {
-		keys_cmp[ nr_keys_cmp ] = db_columns[4]; /*username*/
+		/* username column */
+		keys_cmp[ nr_keys_cmp ] =
+			(scheme&&scheme->username_col)?scheme->username_col:db_columns[4];
 		vals_cmp[ nr_keys_cmp ].type = DB_STR;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
 		vals_cmp[ nr_keys_cmp ].val.str_val = *username;
 		nr_keys_cmp++;
 		if (domain)
 		{
-			keys_cmp[ nr_keys_cmp ] = db_columns[5]; /*domain*/
+			/* domain column */
+			keys_cmp[ nr_keys_cmp ] =
+				(scheme&&scheme->domain_col)?scheme->domain_col:db_columns[5];
 			vals_cmp[ nr_keys_cmp ].type = DB_STR;
 			vals_cmp[ nr_keys_cmp ].nul  = 0;
 			vals_cmp[ nr_keys_cmp ].val.str_val = *domain;
 			nr_keys_cmp++;
 		}
 	}
-	if (attr)
+	if (attr && scheme==0)
 	{
-		keys_cmp[ nr_keys_cmp ] = db_columns[1]; /*attribute*/
+		/* attribute name column */
+		keys_cmp[ nr_keys_cmp ] = db_columns[1];
 		vals_cmp[ nr_keys_cmp ].type = DB_STRING;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
 		vals_cmp[ nr_keys_cmp ].val.string_val = attr;
@@ -165,39 +235,46 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 
 
 db_res_t *db_load_avp( str *uuid, str *username, str *domain,
-													char *attr, char *table)
+							char *attr, char *table, struct db_scheme *scheme)
 {
 	static db_key_t   keys_ret[3];
 	unsigned int      nr_keys_cmp;
+	unsigned int      nr_keys_ret;
 	db_res_t          *res;
 
 	/* prepare DB query */
-	nr_keys_cmp = prepare_selection( uuid, username, domain, attr);
+	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, scheme);
 
 	/* set table */
-	if (set_table( table ,"load")!=0)
+	if (set_table( scheme?scheme->table:table ,"load")!=0)
 		return 0;
 
 	/* return keys */
-	keys_ret[0] = db_columns[1]; /*attribute*/
-	keys_ret[1] = db_columns[2]; /*value*/
-	keys_ret[2] = db_columns[3]; /*type*/
+	if (scheme==0)
+	{
+		keys_ret[0] = db_columns[2]; /*value*/
+		keys_ret[1] = db_columns[1]; /*attribute*/
+		keys_ret[2] = db_columns[3]; /*type*/
+		nr_keys_ret = 3;
+	} else {
+		/* value */
+		keys_ret[0] = scheme->value_col?scheme->value_col:db_columns[2];
+		nr_keys_ret = 1;
+	}
 
 	/* do the DB query */
 	if ( avpops_dbf.query( db_hdl, keys_cmp, 0/*op*/, vals_cmp, keys_ret,
-			nr_keys_cmp, 3, 0/*order*/, &res) < 0)
+			nr_keys_cmp, nr_keys_ret, 0/*order*/, &res) < 0)
 		return 0;
 
 	return res;
 }
 
 
-
 void db_close_query( db_res_t *res )
 {
 	avpops_dbf.free_result( db_hdl, res);
 }
-
 
 
 int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table)
@@ -221,10 +298,10 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table)
 int db_delete_avp( str *uuid, str *username, str *domain, char *attr,
 																char *table)
 {
-	unsigned int      nr_keys_cmp;
+	unsigned int  nr_keys_cmp;
 
 	/* prepare DB query */
-	nr_keys_cmp = prepare_selection( uuid, username, domain, attr);
+	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, 0);
 
 	/* set table */
 	if (set_table( table ,"delete")!=0)

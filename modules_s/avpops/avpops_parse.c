@@ -27,6 +27,7 @@
  * History:
  * ---------
  *  2004-10-04  first version (ramona)
+ *  2004-11-11  DB scheme added (ramona)
  */
 
 
@@ -39,6 +40,24 @@
 #include "../../mem/mem.h"
 #include "avpops_parse.h"
 #include "avpops_aliases.h"
+
+
+#define SCHEME_UUID_COL          "uuid_col"
+#define SCHEME_UUID_COL_LEN      (sizeof(SCHEME_UUID_COL)-1)
+#define SCHEME_USERNAME_COL      "username_col"
+#define SCHEME_USERNAME_COL_LEN  (sizeof(SCHEME_USERNAME_COL)-1)
+#define SCHEME_DOMAIN_COL        "domain_col"
+#define SCHEME_DOMAIN_COL_LEN    (sizeof(SCHEME_DOMAIN_COL)-1)
+#define SCHEME_VALUE_COL         "value_col"
+#define SCHEME_VALUE_COL_LEN     (sizeof(SCHEME_VALUE_COL)-1)
+#define SCHEME_TABLE             "table"
+#define SCHEME_TABLE_LEN         (sizeof(SCHEME_TABLE)-1)
+#define SCHEME_VAL_TYPE          "value_type"
+#define SCHEME_VAL_TYPE_LEN      (sizeof(SCHEME_VAL_TYPE)-1)
+#define SCHEME_INT_TYPE          "integer"
+#define SCHEME_INT_TYPE_LEN      (sizeof(SCHEME_INT_TYPE)-1)
+#define SCHEME_STR_TYPE          "string"
+#define SCHEME_STR_TYPE_LEN      (sizeof(SCHEME_STR_TYPE)-1)
 
 
 char *parse_avp_attr(char *s, struct fis_param *attr, char end)
@@ -107,12 +126,13 @@ error:
 
 
 
-int parse_avp_db(char *s, struct db_param *dbp)
+int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 {
 	struct fis_param *ap;
 	unsigned long ul;
 	str   tmp;
 	char  c;
+	char  have_scheme;
 
 	/* parse the attribute name - check first if it's not an alias */
 	if ( *s=='$')
@@ -177,25 +197,56 @@ int parse_avp_db(char *s, struct db_param *dbp)
 	if ( *s )
 	{
 		s++;
+		if (*s=='$')
+		{
+			if (allow_scheme==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_avp_db: function doesn't "
+					"support DB schemes\n");
+				goto error;
+			}
+			if (dbp->a.flags&AVPOPS_VAL_NONE)
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_avp_db: inconsistent usage of "
+					"DB scheme without complet specification of AVP name\n");
+				goto error;
+			}
+			have_scheme = 1;
+			s++;
+		} else {
+			have_scheme = 0;
+		}
 		tmp.s = s;
 		tmp.len = 0;
 		while ( *s ) s++;
 		tmp.len = s - tmp.s;
 		if (tmp.len==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_av_dbp: empty table name\n");
+			LOG(L_ERR,"ERROR:avpops:parse_av_dbp: empty scheme/table name\n");
 			goto error;
 		}
-		/* duplicate table as str NULL terminated */
-		dbp->table.s = (char*)pkg_malloc( tmp.len + 1 );
-		if (dbp->table.s==0)
+		if (have_scheme)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
-			goto error;;
+			dbp->scheme = avp_get_db_scheme( tmp.s );
+			if (dbp->scheme==0) 
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_avp_db: scheme <%s> not found\n",
+					tmp.s);
+				goto error;;
+			}
+			/* update scheme flags with AVP name type*/
+			dbp->scheme->db_flags|=dbp->a.flags&AVPOPS_VAL_STR?AVP_NAME_STR:0;
+		} else {
+			/* duplicate table as str NULL terminated */
+			dbp->table = (char*)pkg_malloc( tmp.len + 1 );
+			if (dbp->table==0)
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
+				goto error;;
+			}
+			memcpy( dbp->table, tmp.s, tmp.len);
+			dbp->table[tmp.len] = 0;
 		}
-		dbp->table.len = tmp.len;
-		memcpy( dbp->table.s, tmp.s, tmp.len);
-		dbp->table.s[dbp->table.len] = 0;
 	}
 
 	return 0;
@@ -264,7 +315,7 @@ int  parse_avp_aliases(char *s, char c1, char c2)
 			goto error;
 		}
 		/* skip spaces */
-		while (*s && isspace((int)*s))  s++;	
+		while (*s && isspace((int)*s))  s++;
 	}
 
 	return 0;
@@ -463,3 +514,139 @@ error:
 }
 
 
+#define  duplicate_str(_p, _str, _error) \
+	do { \
+		_p = (char*)pkg_malloc(_str.len+1); \
+		if (_p==0) \
+		{ \
+			LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: " \
+				"no more pkg memory\n");\
+			goto _error; \
+		} \
+		memcpy( _p, _str.s, _str.len); \
+		_p[_str.len] = 0; \
+	}while(0)
+
+int parse_avp_db_scheme( char *s, struct db_scheme *scheme)
+{
+	str foo;
+	str bar;
+	char *p;
+
+	if (s==0 || *s==0)
+		goto error;
+	p = s;
+
+	/*parse the name */
+	while (*p && isspace((int)*p)) p++;
+	foo.s = p;
+	while (*p && *p!=':' && !isspace((int)*p)) p++;
+	if (foo.s==p || *p==0)
+		/* missing name or empty scheme */
+		goto parse_error;
+	foo.len = p - foo.s;
+	/* dulicate it */
+	duplicate_str( scheme->name, foo, error);
+
+	/* parse the ':' separator */
+	while (*p && isspace((int)*p)) p++;
+	if (*p!=':')
+		goto parse_error;
+	p++;
+	while (*p && isspace((int)*p)) p++;
+	if (*p==0)
+		goto parse_error;
+
+	/* set as default value type string */
+	scheme->db_flags = AVP_VAL_STR;
+
+	/* parse the attributes */
+	while (*p)
+	{
+		/* get the attribute name */
+		foo.s = p;
+		while (*p && *p!='=' && !isspace((int)*p)) p++;
+		if (p==foo.s || *p==0)
+			/* missing attribute name */
+			goto parse_error;
+		foo.len = p - foo.s;
+
+		/* parse the '=' separator */
+		while (*p && isspace((int)*p)) p++;
+		if (*p!='=')
+			goto parse_error;
+		p++;
+		while (*p && isspace((int)*p)) p++;
+		if (*p==0)
+			goto parse_error;
+
+		/* parse the attribute value */
+		bar.s = p;
+		while (*p && *p!=';' && !isspace((int)*p)) p++;
+		if (p==bar.s)
+			/* missing attribute value */
+			goto parse_error;
+		bar.len = p - bar.s;
+
+		/* parse the ';' separator, if any */
+		while (*p && isspace((int)*p)) p++;
+		if (*p!=0 && *p!=';')
+			goto parse_error;
+		if (*p==';') p++;
+		while (*p && isspace((int)*p)) p++;
+
+		/* identify the attribute */
+		if ( foo.len==SCHEME_UUID_COL_LEN && 
+		!strncasecmp( foo.s, SCHEME_UUID_COL, foo.len) )
+		{
+			duplicate_str( scheme->uuid_col, bar, error);
+		} else
+		if ( foo.len==SCHEME_USERNAME_COL_LEN && 
+		!strncasecmp( foo.s, SCHEME_USERNAME_COL, foo.len) )
+		{
+			duplicate_str( scheme->username_col, bar, error);
+		} else
+		if ( foo.len==SCHEME_DOMAIN_COL_LEN && 
+		!strncasecmp( foo.s, SCHEME_DOMAIN_COL, foo.len) )
+		{
+			duplicate_str( scheme->domain_col, bar, error);
+		} else
+		if ( foo.len==SCHEME_VALUE_COL_LEN && 
+		!strncasecmp( foo.s, SCHEME_VALUE_COL, foo.len) )
+		{
+			duplicate_str( scheme->value_col, bar, error);
+		} else
+		if ( foo.len==SCHEME_TABLE_LEN && 
+		!strncasecmp( foo.s, SCHEME_TABLE, foo.len) )
+		{
+			duplicate_str( scheme->table, bar, error);
+		} else
+		if ( foo.len==SCHEME_VAL_TYPE_LEN && 
+		!strncasecmp( foo.s, SCHEME_VAL_TYPE, foo.len) )
+		{
+			if ( bar.len==SCHEME_INT_TYPE_LEN &&
+			!strncasecmp( bar.s, SCHEME_INT_TYPE, bar.len) )
+				scheme->db_flags &= (~AVP_VAL_STR);
+			else if ( bar.len==SCHEME_STR_TYPE_LEN &&
+			!strncasecmp( bar.s, SCHEME_STR_TYPE, bar.len) )
+				scheme->db_flags = AVP_VAL_STR;
+			else
+			{
+				LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: unknown "
+					"value type <%.*s>\n",bar.len,bar.s);
+				goto error;
+			}
+		} else {
+			LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: unknown "
+				"attribute <%.*s>\n",foo.len,foo.s);
+			goto error;
+		}
+	} /* end while */
+
+	return 0;
+parse_error:
+	LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: parse error in <%s> "
+		"around %d\n",s,p-s);
+error:
+	return -1;
+}

@@ -36,13 +36,29 @@
 
 #include "../../db/db.h"
 #include "../../str.h"
+#include "../../sr_module.h"
+
+
+/* definition of a DB scheme*/
+struct db_scheme
+{
+	char *name;
+	char *uuid_col;
+	char *username_col;
+	char *domain_col;
+	char *value_col;
+	char *table;
+	int  db_flags;
+	struct db_scheme *next;
+};
+
 
 int avpops_db_bind(char* db_url);
 
 int avpops_db_init(char* db_url, char* db_table, char **db_columns);
 
 db_res_t *db_load_avp( str *uuid, str *username, str *domain,
-		char *attr, char *table);
+		char *attr, char *table, struct db_scheme *scheme);
 
 void db_close_query( db_res_t *res );
 
@@ -51,5 +67,8 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table);
 int db_delete_avp( str *uuid, str *username, str *domain,
 		char *attr, char *table);
 
+int avp_add_db_scheme( modparam_t type, param_func_param_t param_val);
+
+struct db_scheme *avp_get_db_scheme( char *name );
 
 #endif

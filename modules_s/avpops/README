@@ -32,7 +32,8 @@ Ramona-Elena Modroiu
               1.3.7. domain_column (string)
               1.3.8. attribute_column (string)
               1.3.9. value_column (string)
-              1.3.10. type_column (integer)
+              1.3.10. type_column (string)
+              1.3.11. db_scheme (string)
 
         1.4. Exported Functions
 
@@ -61,14 +62,15 @@ Ramona-Elena Modroiu
    1-8. Set attribute_column parameter
    1-9. Set value_column parameter
    1-10. Set type_column parameter
-   1-11. avp_db_load usage
-   1-12. avp_db_store usage
-   1-13. avp_db_delete usage
-   1-14. avp_write usage
-   1-15. avp_delete usage
-   1-16. avp_pushto usage
-   1-17. avp_check usage
-   1-18. avp_print usage
+   1-11. Set db_scheme parameter
+   1-12. avp_db_load usage
+   1-13. avp_db_store usage
+   1-14. avp_db_delete usage
+   1-15. avp_write usage
+   1-16. avp_delete usage
+   1-17. avp_pushto usage
+   1-18. avp_check usage
+   1-19. avp_print usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -219,7 +221,7 @@ modparam("avpops","value_column","value")
 ...
      _________________________________________________________
 
-1.3.10. type_column (integer)
+1.3.10. type_column (string)
 
    Name of column containing the AVP type.
 
@@ -228,6 +230,20 @@ modparam("avpops","value_column","value")
    Example 1-10. Set type_column parameter 
 ...
 modparam("avpops","type_column","type")
+...
+     _________________________________________________________
+
+1.3.11. db_scheme (string)
+
+   Definition of a DB schemeto be used for non-standard access to
+   Database information.
+
+   Default value is "NULL". 
+
+   Example 1-11. Set db_scheme parameter 
+...
+modparam("avpops","db_scheme",
+"scheme1:table=subscriber;uuid_column=uuid;value_column=first_name")
 ...
      _________________________________________________________
 
@@ -247,14 +263,15 @@ modparam("avpops","type_column","type")
           + sip_uri = '$from' | '$to' | '$ruri' 
      * name - which AVPs will be loaded from DB into memory.
        Parameter syntax is:
-          + name =
-            (''|'s:'|'i:'|avp_name|avp_alias)['/'table_name] 
+          + name = avp_spec['/'(table_name|'$'db_scheme)] 
+          + avp_spec = ''|'s:'|'i:'|avp_name|avp_alias 
 
-   Example 1-11. avp_db_load usage
+   Example 1-12. avp_db_load usage
 ...
 avp_db_load("$from","i:678");
 avp_db_load("$ruri/domain","i:/domain_preferences");
 avp_db_load("$uuid","s:404fwd/fwd_table");
+avp_db_load("$ruri","i:123/$some_scheme");
 ...
      _________________________________________________________
 
@@ -266,7 +283,7 @@ avp_db_load("$uuid","s:404fwd/fwd_table");
    avp_db_load(source,name) function. Please refer to its
    description.
 
-   Example 1-12. avp_db_store usage
+   Example 1-13. avp_db_store usage
 ...
 avp_db_store("$to","i:678");
 avp_db_store("$ruri/username","$email");
@@ -281,7 +298,7 @@ avp_db_store("$ruri/username","$email");
    avp_db_load(source,name) function. Please refer to its
    description.
 
-   Example 1-13. avp_db_delete usage
+   Example 1-14. avp_db_delete usage
 ...
 avp_db_delete("$to","i:678");
 avp_db_delete("$ruri/username","$email");
@@ -307,7 +324,7 @@ avp_db_delete("$uuid","s:404fwd/fwd_table");
        is:
           + name = avp_name | avp_alias 
 
-   Example 1-14. avp_write usage
+   Example 1-15. avp_write usage
 ...
 avp_write("$to","i:678");
 avp_write("$ruri/username","$email");
@@ -327,12 +344,12 @@ avp_write("i:333","i:6");
           + name = (''|'s:'|'i:'|avp_name|avp_alias)['/'flag] 
           + flag = 'g'|'G' 
 
-   Example 1-15. avp_delete usage
+   Example 1-16. avp_delete usage
 ...
 avp_delete("i:678/g");
 avp_delete("$email");
 avp_delete("i:");
-avp_write("");
+avp_delete("");
 ...
      _________________________________________________________
 
@@ -352,7 +369,7 @@ avp_write("");
           + name = ( avp_name | avp_alias )['/'flags] 
           + flags = 'g' 
 
-   Example 1-16. avp_pushto usage
+   Example 1-17. avp_pushto usage
 ...
 avp_pushto("$ruri","i:678");
 avp_pushto("$ruri/domain","s:backup_domains/g");
@@ -380,7 +397,7 @@ avp_pushto("Foo","$bar/g");
           + fix_value = 'i:'integer | 's:'string | string 
           + flags = 'g' | 'G' | 'i' | 'I' 
 
-   Example 1-17. avp_check usage
+   Example 1-18. avp_check usage
 ...
 avp_check("i:678", "lt/i:345/g");
 avp_check("s:person","eq/$from/I");
@@ -394,7 +411,7 @@ avp_check("s:foo","re/sip:.*@bar.net/g");
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
 
-   Example 1-18. avp_print usage
+   Example 1-19. avp_print usage
 ...
 avp_print();
 ...

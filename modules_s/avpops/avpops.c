@@ -62,7 +62,9 @@ static char *db_columns[6] = {"uuid","attribute","value",
 static int avpops_init(void);
 static int avpops_child_init(int rank);
 
-static int fixup_db_avp(void** param, int param_no);
+static int fixup_db_load_avp(void** param, int param_no);
+static int fixup_db_delete_avp(void** param, int param_no);
+static int fixup_db_store_avp(void** param, int param_no);
 static int fixup_write_avp(void** param, int param_no);
 static int fixup_delete_avp(void** param, int param_no);
 static int fixup_pushto_avp(void** param, int param_no);
@@ -83,11 +85,11 @@ static int w_print_avps(struct sip_msg* msg, char* foo, char *bar);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"avp_db_load", w_dbload_avps, 2, fixup_db_avp,
+	{"avp_db_load", w_dbload_avps, 2, fixup_db_load_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
-	{"avp_db_store", w_dbstore_avps, 2, fixup_db_avp,
+	{"avp_db_store", w_dbstore_avps, 2, fixup_db_store_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
-	{"avp_db_delete", w_dbdelete_avps, 2, fixup_db_avp,
+	{"avp_db_delete", w_dbdelete_avps, 2, fixup_db_delete_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
 	{"avp_write", w_write_avps, 2, fixup_write_avp,
 									REQUEST_ROUTE|FAILURE_ROUTE},
@@ -117,6 +119,7 @@ static param_export_t params[] = {
 	{"type_column",       STR_PARAM, &db_columns[3]  },
 	{"username_column",   STR_PARAM, &db_columns[4]  },
 	{"domain_column",     STR_PARAM, &db_columns[5]  },
+	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, avp_add_db_scheme },
 	{0, 0, 0}
 };
 
@@ -223,13 +226,20 @@ error:
 }
 
 
-static int fixup_db_avp(void** param, int param_no)
+static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 {
 	struct fis_param *sp;
 	struct db_param  *dbp;
 	int flags;
 	char *s;
 	char *p;
+
+	if (DB_URL==0)
+	{
+		LOG(L_ERR,"ERROR:avpops:fixup_db_avp: you have to config a db url "
+			"for using avp_db_xxx functions\n");
+		return E_UNSPEC;
+	}
 
 	s = (char*)*param;
 	if (param_no==1)
@@ -294,7 +304,7 @@ static int fixup_db_avp(void** param, int param_no)
 			return E_OUT_OF_MEM;
 		}
 		memset( dbp, 0, sizeof(struct db_param));
-		if ( parse_avp_db( s, dbp)!=0 )
+		if ( parse_avp_db( s, dbp, allow_scheme)!=0 )
 		{
 			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: parse failed\n");
 			return E_UNSPEC;
@@ -306,6 +316,23 @@ static int fixup_db_avp(void** param, int param_no)
 	return 0;
 }
 
+
+static int fixup_db_load_avp(void** param, int param_no)
+{
+	return fixup_db_avp( param, param_no, 1/*allow scheme*/);
+}
+
+
+static int fixup_db_delete_avp(void** param, int param_no)
+{
+	return fixup_db_avp( param, param_no, 0/*no scheme*/);
+}
+
+
+static int fixup_db_store_avp(void** param, int param_no)
+{
+	return fixup_db_avp( param, param_no, 0/*no scheme*/);
+}
 
 
 static int fixup_write_avp(void** param, int param_no)
@@ -608,12 +635,6 @@ static int fixup_check_avp(void** param, int param_no)
 
 static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 {
-	if (DB_URL==0)
-	{
-		LOG(L_ERR,"ERROR:avpops:w_dbload_avps: you have to config a db url "
-			"for using avp_load function\n");
-		return -1;
-	}
 	return ops_dbload_avps ( msg, (struct fis_param*)source,
 								(struct db_param*)param, use_domain);
 }
@@ -621,12 +642,6 @@ static int w_dbload_avps(struct sip_msg* msg, char* source, char* param)
 
 static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param)
 {
-	if (DB_URL==0)
-	{
-		LOG(L_ERR,"ERROR:avpops:w_dbstore_avps: you have to config a db url "
-			"for using avp_load function\n");
-		return -1;
-	}
 	return ops_dbstore_avps ( msg, (struct fis_param*)source,
 								(struct db_param*)param, use_domain);
 }
@@ -634,12 +649,6 @@ static int w_dbstore_avps(struct sip_msg* msg, char* source, char* param)
 
 static int w_dbdelete_avps(struct sip_msg* msg, char* source, char* param)
 {
-	if (DB_URL==0)
-	{
-		LOG(L_ERR,"ERROR:avpops:w_dbdelete_avps: you have to config a db url "
-			"for using avp_load function\n");
-		return -1;
-	}
 	return ops_dbdelete_avps ( msg, (struct fis_param*)source,
 								(struct db_param*)param, use_domain);
 }

@@ -84,7 +84,12 @@ void init_store_avps( char **db_columns)
 }
 
 
-static int dbrow2avp(struct db_row *row , int flags, int_str attr)
+/* value 0 - attr value
+ * value 1 - attr name
+ * value 2 - attr type
+ */
+static int dbrow2avp(struct db_row *row, int flags, int_str attr,
+														int just_val_flags)
 {
 	unsigned int uint;
 	int  db_flags;
@@ -93,33 +98,46 @@ static int dbrow2avp(struct db_row *row , int flags, int_str attr)
 	int_str avp_attr;
 	int_str avp_val;
 
-	/* check for null fields into the row */
-	if (row->values[0].nul || row->values[1].nul || row->values[2].nul )
+	if (just_val_flags==-1)
 	{
-		LOG( L_ERR, "ERROR:avpops:dbrow2avp: dbrow contains NULL fields\n");
-		return -1;
+		/* check for null fields into the row */
+		if (row->values[0].nul || row->values[1].nul || row->values[2].nul )
+		{
+			LOG( L_ERR, "ERROR:avpops:dbrow2avp: dbrow contains NULL fields\n");
+			return -1;
+		}
+
+		/* check the value types */
+		if ( (row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR)
+			||  (row->values[1].type!=DB_STRING && row->values[1].type!=DB_STR)
+			|| row->values[2].type!=DB_INT )
+		{
+			LOG(L_ERR,"ERROR:avpops:dbrow2avp: wrong field types in dbrow\n");
+			return -1;
+		}
+
+		/* check the content of flag field */
+		uint = (unsigned int)row->values[2].val.int_val;
+		db_flags = ((uint&AVPOPS_DB_NAME_INT)?0:AVP_NAME_STR) |
+			((uint&AVPOPS_DB_VAL_INT)?0:AVP_VAL_STR);
+	
+		DBG("db_flags=%d, flags=%d\n",db_flags,flags);
+		/* does the avp type match ? */
+		if(!((flags&(AVPOPS_VAL_INT|AVPOPS_VAL_STR))==0 ||
+				((flags&AVPOPS_VAL_INT)&&((db_flags&AVP_NAME_STR)==0)) ||
+				((flags&AVPOPS_VAL_STR)&&(db_flags&AVP_NAME_STR))))
+			return -2;
+	} else {
+		/* check the validity of value column */
+		if (row->values[0].nul || 
+		(row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR) )
+		{
+			LOG(L_ERR,"ERROR:avpops:dbrow2avp: empty or wrong type for"
+				" 'value' using scheme\n");
+			return -1;
+		}
+		db_flags = just_val_flags;
 	}
-
-	/* check the value types */
-	if ( (row->values[0].type!=DB_STRING && row->values[0].type!=DB_STR)
-		||  (row->values[1].type!=DB_STRING && row->values[1].type!=DB_STR)
-		|| row->values[2].type!=DB_INT )
-	{
-		LOG(L_ERR,"ERROR:avpops:dbrow2avp: wrong field types in dbrow\n");
-		return -1;
-	}
-
-	/* check the content of flag field */
-	uint = (unsigned int)row->values[2].val.int_val;
-	db_flags = ((uint&AVPOPS_DB_NAME_INT)?0:AVP_NAME_STR) |
-		((uint&AVPOPS_DB_VAL_INT)?0:AVP_VAL_STR);
-
-	DBG("db_flags=%d, flags=%d\n",db_flags,flags);
-	/* does the avp type match ? */
-	if(!((flags&(AVPOPS_VAL_INT|AVPOPS_VAL_STR))==0 ||
-			((flags&AVPOPS_VAL_INT)&&((db_flags&AVP_NAME_STR)==0)) ||
-			((flags&AVPOPS_VAL_STR)&&(db_flags&AVP_NAME_STR))))
-		return -2;
 
 	/* is the avp name already known? */
 	if ( (flags&AVPOPS_VAL_NONE)==0 )
@@ -128,12 +146,12 @@ static int dbrow2avp(struct db_row *row , int flags, int_str attr)
 		avp_attr = attr;
 	} else {
 		/* take the name from db response */
-		if (row->values[0].type==DB_STRING)
+		if (row->values[1].type==DB_STRING)
 		{
-			atmp.s = (char*)row->values[0].val.string_val;
+			atmp.s = (char*)row->values[1].val.string_val;
 			atmp.len = strlen(atmp.s);
 		} else {
-			atmp = row->values[0].val.str_val;
+			atmp = row->values[1].val.str_val;
 		}
 		if (db_flags&AVP_NAME_STR)
 		{
@@ -144,7 +162,7 @@ static int dbrow2avp(struct db_row *row , int flags, int_str attr)
 			if (str2int( &atmp, &uint)==-1)
 			{
 				LOG(L_ERR,"ERROR:avpops:dbrow2avp: name is not ID as flags say"
-					"<%s>\n", atmp.s);
+					" <%s>\n", atmp.s);
 				return -1;
 			}
 			avp_attr.n = (int)uint;
@@ -152,12 +170,12 @@ static int dbrow2avp(struct db_row *row , int flags, int_str attr)
 	}
 
 	/* now get the value as correct type */
-	if (row->values[1].type==DB_STRING)
+	if (row->values[0].type==DB_STRING)
 	{
-		vtmp.s = (char*)row->values[1].val.string_val;
+		vtmp.s = (char*)row->values[0].val.string_val;
 		vtmp.len = strlen(vtmp.s);
 	} else {
-		vtmp = row->values[1].val.str_val;
+		vtmp = row->values[0].val.str_val;
 	}
 	if (db_flags&AVP_VAL_STR)
 	{
@@ -168,7 +186,7 @@ static int dbrow2avp(struct db_row *row , int flags, int_str attr)
 		if (str2int(&vtmp, &uint)==-1)
 		{
 			LOG(L_ERR,"ERROR:avpops:dbrow2avp: value is not int as flags say"
-				"<%s>\n", vtmp.s);
+				" <%s>\n", vtmp.s);
 			return -1;
 		}
 		avp_val.n = (int)uint;
@@ -282,10 +300,10 @@ static int get_avp_as_str(struct fis_param *ap ,str *val)
 int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 									struct db_param *dbp, int use_domain)
 {
-	struct sip_uri  uri;
-	db_res_t       *res;
-	str            uuid;
-	int  i, n;
+	struct sip_uri   uri;
+	db_res_t         *res;
+	str              uuid;
+	int  i, n, sh_flg;
 
 	if (sp->flags&AVPOPS_VAL_NONE)
 	{
@@ -298,7 +316,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* do DB query */
 		res = db_load_avp( 0, (sp->flags&AVPOPS_FLAG_DOMAIN)?&empty:&uri.user,
 				(use_domain||(sp->flags&AVPOPS_FLAG_DOMAIN))?&uri.host:0,
-				dbp->sa.s, dbp->table.s);
+				dbp->sa.s, dbp->table , dbp->scheme);
 	} else if (sp->flags&AVPOPS_VAL_AVP) {
 		/* get uuid from avp */
 		if (get_avp_as_str( sp, &uuid)<0)
@@ -307,11 +325,11 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 			goto error;
 		}
 		/* do DB query */
-		res = db_load_avp( &uuid, 0, 0, dbp->sa.s, dbp->table.s);
+		res = db_load_avp( &uuid, 0, 0, dbp->sa.s, dbp->table, dbp->scheme);
 	} else  if (sp->flags&AVPOPS_VAL_STR) {
 		/* use the STR val as uuid */
 		/* do DB query */
-		res = db_load_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table.s);
+		res = db_load_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table, dbp->scheme);
 	} else {
 		LOG(L_CRIT,"BUG:avpops:load_avps: invalid flag combination (%d)\n",
 			sp->flags);
@@ -325,11 +343,12 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 		goto error;
 	}
 
+	sh_flg = (dbp->scheme)?dbp->scheme->db_flags:-1;
 	/* process the results */
 	for( n=0,i=0 ; i<res->n ; i++)
 	{
 		/* validate row */
-		if ( dbrow2avp( &res->rows[i], dbp->a.flags, dbp->a.val) < 0 )
+		if ( dbrow2avp( &res->rows[i], dbp->a.flags, dbp->a.val, sh_flg) < 0 )
 			continue;
 		n++;
 	}
@@ -423,7 +442,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 				avp->flags&AVP_VAL_STR);
 			/* save avp */
 			if (db_store_avp( store_keys+keys_off, store_vals+keys_off,
-					keys_nr, dbp->table.s)==0 )
+					keys_nr, dbp->table)==0 )
 			{
 				avp->flags |= AVP_IS_IN_DB;
 				n++;
@@ -459,7 +478,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 				avp->flags&AVP_VAL_STR);
 			/* save avp */
 			if (db_store_avp( store_keys+keys_off, store_vals+keys_off,
-			keys_nr, dbp->table.s)==0)
+			keys_nr, dbp->table)==0)
 			{
 				avp->flags |= AVP_IS_IN_DB;
 				n++;
@@ -494,7 +513,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* do DB delete */
 		res = db_delete_avp(0, (sp->flags&AVPOPS_FLAG_DOMAIN)?&empty:&uri.user,
 				(use_domain||(sp->flags&AVPOPS_FLAG_DOMAIN))?&uri.host:0,
-				dbp->sa.s, dbp->table.s);
+				dbp->sa.s, dbp->table);
 	} else if (sp->flags&AVPOPS_VAL_AVP) {
 		/* get uuid from avp */
 		if (get_avp_as_str( sp, &uuid)<0)
@@ -503,11 +522,11 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 			goto error;
 		}
 		/* do DB delete */
-		res = db_delete_avp( &uuid, 0, 0, dbp->sa.s, dbp->table.s);
+		res = db_delete_avp( &uuid, 0, 0, dbp->sa.s, dbp->table);
 	} else if (sp->flags&AVPOPS_VAL_STR) {
 		/* use the STR value as uuid */
 		/* do DB delete */
-		res = db_delete_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table.s);
+		res = db_delete_avp( sp->val.s, 0, 0, dbp->sa.s, dbp->table );
 	} else {
 		LOG(L_CRIT,"BUG:avpops:dbdelete_avps: invalid flag combination (%d)\n",
 			sp->flags);

@@ -234,7 +234,7 @@ modparam("avpops","value_column","value")
 			</example>
 		</section>
 		<section>
-			<title><varname>type_column</varname> (integer)</title>
+			<title><varname>type_column</varname> (string)</title>
 			<para>
 				Name of column containing the AVP type.
 			<para>
@@ -247,6 +247,26 @@ modparam("avpops","value_column","value")
 				<programlisting format="linespecific">
 ...
 modparam("avpops","type_column","type")
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>db_scheme</varname> (string)</title>
+			<para>
+				Definition of a DB schemeto be used for non-standard
+				access to Database information.
+			<para>
+				<emphasis>Default value is <quote>NULL</quote>.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>db_scheme</varname> parameter
+				</title>
+				<programlisting format="linespecific">
+...
+modparam("avpops","db_scheme",
+"scheme1:table=subscriber;uuid_column=uuid;value_column=first_name")
 ...
 				</programlisting>
 			</example>
@@ -286,7 +306,10 @@ modparam("avpops","type_column","type")
 				from DB into memory. Parameter syntax is:
 				<itemizedlist>
 					<listitem><para><emphasis>
-					name = (''|'s:'|'i:'|avp_name|avp_alias)['/'table_name]
+					name = avp_spec['/'(table_name|'$'db_scheme)]
+					</emphasis></para></listitem>
+					<listitem><para><emphasis>
+					avp_spec = ''|'s:'|'i:'|avp_name|avp_alias
 					</emphasis></para></listitem>
 				</itemizedlist>
 				</para>
@@ -299,6 +322,7 @@ modparam("avpops","type_column","type")
 avp_db_load("$from","i:678");
 avp_db_load("$ruri/domain","i:/domain_preferences");
 avp_db_load("$uuid","s:404fwd/fwd_table");
+avp_db_load("$ruri","i:123/$some_scheme");
 ...
 				</programlisting>
 			</example>
@@ -433,7 +457,7 @@ avp_write("i:333","i:6");
 avp_delete("i:678/g");
 avp_delete("$email");
 avp_delete("i:");
-avp_write("");
+avp_delete("");
 ...
 				</programlisting>
 			</example>

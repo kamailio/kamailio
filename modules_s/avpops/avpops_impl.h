@@ -38,6 +38,8 @@
 #include "../../usr_avp.h"
 #include "../../parser/msg_parser.h"
 
+#include "avpops_db.h"
+
 
 
 /* flags used inside avps */
@@ -85,9 +87,10 @@ struct fis_param
 
 struct db_param
 {
-	struct fis_param a;     /* attribute */
-	str              sa;     /* attribute as str (for db queries) */
-	str              table;  /* table name */
+	struct fis_param a;        /* attribute */
+	str              sa;       /* attribute as str (for db queries) */
+	char             *table;   /* DB table/scheme name */
+	struct db_scheme *scheme;  /* DB scheme name */
 };
 
 
