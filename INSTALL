@@ -2,8 +2,9 @@ $Id$
 
 Installation Notes
 
-Supported architectures: Linux, FreeBSD, Solaris, Win* (CYGWIN)
-(for other architectures the Makefile must be edited)
+Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, Solaris/sparc64,
+Win*/i386 (CYGWIN)
+(for other arhitectures the Makefile must be edited)
 
 There are various configuration options defined in the Makefile.
 
