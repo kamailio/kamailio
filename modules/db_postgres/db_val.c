@@ -188,6 +188,7 @@ int str2valp(db_type_t _t, db_val_t* _v, const char* _s, int _l, void *_p)
 
 	switch(_t) {
 	case DB_INT:
+	case DB_BITMAP:
 		sprintf(dbuf, "got int %s", _s);
 		DLOG("str2valp", dbuf);
 		if (str2int(_s, &VAL_INT(_v)) < 0) {
