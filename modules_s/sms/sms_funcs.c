@@ -164,7 +164,8 @@ int push_on_network(struct sip_msg *msg, int net)
 		pkg_free(foo);
 	}
 
-	if (use_contact && add_contact(msg,&(uri.user))==-1) {
+	/* adds contact header into reply */
+	if (add_contact(msg,&(uri.user))==-1) {
 		LOG(L_ERR,"ERROR:sms_push_on_net:can't build contact for reply\n");
 		goto error;
 	}
