@@ -86,15 +86,15 @@ int report_ack = 1;
 
 /* syslog flags, that need to be set for a transaction to 
  * be reported; 0=any, 1..MAX_FLAG otherwise */
-int log_flag = 1;
-int log_missed_flag = 2;
+int log_flag = 0;
+int log_missed_flag = 0;
 /* noisiness level logging facilities are used */
 int log_level=L_NOTICE;
 char *log_fmt=DEFAULT_LOG_FMT;
 #ifdef RAD_ACC
 char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
-int radius_flag = 1;
-int radius_missed_flag = 2;
+int radius_flag = 0;
+int radius_missed_flag = 0;
 int service_type = PW_SIP;
 #endif
 
@@ -107,8 +107,8 @@ char *db_url=DEFAULT_DB_URL; /* Database url */
  * set to the same values as syslog -> reporting for both
  * takes place
  */
-int db_flag = 1;
-int db_missed_flag = 2;
+int db_flag = 0;
+int db_missed_flag = 0;
 
 char *db_table_acc="acc"; /* name of database table> */
 
