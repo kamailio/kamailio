@@ -48,13 +48,13 @@ Jan Janak
               2.1.6. ul_unlock_udomain(domain)
               2.1.7. ul_release_urecord(record)
               2.1.8. ul_insert_ucontact(record, contact, expires,
-                      q, callid, cseq, cont)
+                      q, callid, cseq, flags, cont)
 
               2.1.9. ul_delete_ucontact(record, contact)
               2.1.10. ul_get_ucontact(record, contact)
-              2.1.11. ul_get_all_ucontacts(buf, len)
+              2.1.11. ul_get_all_ucontacts(buf, len, flags)
               2.1.12. ul_update_ucontact(contact, expires, q,
-                      callid, cseq)
+                      callid, cseq, set, res)
 
    3. Frequently Asked Questions
 
@@ -357,7 +357,7 @@ Chapter 2. Developer's Guide
      _________________________________________________________
 
 2.1.8. ul_insert_ucontact(record, contact, expires, q, callid, cseq,
-cont)
+flags, cont)
 
    The function inserts a new contact in the given record with
    specified parameters.
@@ -378,6 +378,8 @@ cont)
 
      * int cseq - CSeq of the REGISTER message that contained the
        contact.
+
+     * unsigned int flags - Flags to be set.
 
      * ucontact_t* cont - Pointer to newly created structure.
      _________________________________________________________
@@ -406,7 +408,7 @@ cont)
      * str_t* contact - URI of the request contact.
      _________________________________________________________
 
-2.1.11. ul_get_all_ucontacts(buf, len)
+2.1.11. ul_get_all_ucontacts(buf, len, flags)
 
    The function retrieves all contacts of all registered users
    and returns them in the caller-supplied buffer. If the buffer
@@ -417,14 +419,21 @@ cont)
    time between two subsequent calls number of registered
    contacts will remain the same.
 
+   If flag parameter is set to non-zero value then only contacts
+   that have the specified flags set will be returned. It is, for
+   example, possible to list only contacts that are behind NAT.
+
    Meaning of the parameters is as follows:
 
      * void* buf - Buffer for returning contacts.
 
      * int len - Length of the buffer.
+
+     * unsigned int flags - Flags that must be set.
      _________________________________________________________
 
-2.1.12. ul_update_ucontact(contact, expires, q, callid, cseq)
+2.1.12. ul_update_ucontact(contact, expires, q, callid, cseq, set,
+res)
 
    The function updates contact with new values.
 
@@ -441,6 +450,10 @@ cont)
 
      * int cseq - CSeq of the REGISTER message that contained the
        contact.
+
+     * unsigned int set - OR value of flags to be set.
+
+     * unsigned int res - OR value of flags to be reset.
      _________________________________________________________
 
 Chapter 3. Frequently Asked Questions

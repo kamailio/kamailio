@@ -211,7 +211,7 @@
 	    </itemizedlist>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>unsigned int flags</emphasis></para> - Flags to be set.
+		    <para><emphasis>unsigned int flags</emphasis> - Flags to be set.</para>
 		</listitem>
 	    </itemizedlist>
 	    <itemizedlist>

@@ -5,6 +5,10 @@
 <!ENTITY devel SYSTEM "auth_devel.sgml">
 <!ENTITY faq SYSTEM "auth_faq.sgml">
 
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
 ]>
 
 <book>

@@ -85,11 +85,11 @@ Chapter 1. User's Guide
 
    URL of the mysql database used to retrieve users.
 
-   Default value is "sql://ser:heslo@localhost/ser". 
+   Default value is "mysql://ser:heslo@localhost/ser". 
 
    Example 1-1. Set db_url parameter
 ...
-modparam("vm", "db_url", "sql://username:password@localhost/ser")
+modparam("vm", "db_url", "mysql://username:password@localhost/ser")
 ...
      _________________________________________________________
 
