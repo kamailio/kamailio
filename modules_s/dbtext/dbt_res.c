@@ -263,6 +263,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 		{
 			case DB_INT:
 			case DB_DATETIME:
+			case DB_BITMAP:
 				_rp->fields[i].type = DB_INT;
 				_rp->fields[i].val.int_val = _drp->fields[n].val.int_val;
 			break;
@@ -534,7 +535,7 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 			if(_t0==DB_BITMAP)
 				return 0;
 		case DB_DOUBLE:
-		break;
+			break;
 		case DB_STRING:
 			if(_t0==DB_STR)
 				return 0;
@@ -545,7 +546,7 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 			if(_t0==DB_STR)
 				return 0;
 		case DB_BITMAP:
-			if (_t0==DB_INT || _t0==DB_DATETIME)
+			if (_t0==DB_INT)
 				return 0;
 	}
 	return 1;
