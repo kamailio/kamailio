@@ -1,6 +1,7 @@
-%define name  ser
-%define ver   0.8.7
-%define rel   1
+%define name    ser
+%define ver     0.8.7
+%define rel     1
+%define exclude CVS pike radius_acc radius_auth snmp
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
@@ -28,12 +29,21 @@ CPL scripts, Instant Messaging, MySQL support, Presence Agent, Radius
 Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
 Module, Registrar and User Location.
 
+%package  mysql
+Summary:  MySQL connectivity for the SIP Express Router.
+Group:    System Environment/Daemons
+Requires: ser
+
+%description mysql
+The ser-mysql package contains MySQL database connectivity that you
+need to use digest authentication module or persistent user location
+entries.
 
 %prep
 %setup
 
 %build
-make all
+make all exclude_modules="%exclude"
 cd utils/gen_ha1
 make
 
@@ -50,7 +60,8 @@ make install cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
 	     doc-prefix=$RPM_BUILD_ROOT/%{_docdir} \
 	     doc-dir=ser/ \
 	     man-prefix=$RPM_BUILD_ROOT/%{_mandir} \
-	     man-dir=""
+	     man-dir="" \
+	     exclude_modules="%exclude"
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init \
@@ -94,16 +105,42 @@ fi
 
 %dir %{_libdir}/ser
 %dir %{_libdir}/ser/modules
-%{_libdir}/ser/modules/*
+%{_libdir}/ser/modules/acc.so
+%{_libdir}/ser/modules/auth.so
+%{_libdir}/ser/modules/cpl.so
+%{_libdir}/ser/modules/ext.so
+%{_libdir}/ser/modules/im.so
+%{_libdir}/ser/modules/jabber.so
+%{_libdir}/ser/modules/maxfwd.so
+%{_libdir}/ser/modules/print.so
+%{_libdir}/ser/modules/registrar.so
+%{_libdir}/ser/modules/rr.so
+%{_libdir}/ser/modules/sl.so
+%{_libdir}/ser/modules/sms.so
+%{_libdir}/ser/modules/textops.so
+%{_libdir}/ser/modules/tm.so
+%{_libdir}/ser/modules/usrloc.so
 
-%{_sbindir}/*
+%{_sbindir}/harv_ser.sh
+%{_sbindir}/ser
+%{_sbindir}/serctl
 %{_bindir}/*
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
 
 
+%files mysql
+%defattr(-,root,root)
+
+%{_libdir}/ser/modules/mysql.so
+%{_sbindir}/ser_mysql.sh
+
+
 %changelog
+* Sun Sep 08 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Created additional package containg mysql connectivity support.
+
 * Mon Sep 02 2002 Jan Janak <J.Janak@sh.cvut.cz>
 - gen_ha1 utility added, scripts added.
 
