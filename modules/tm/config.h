@@ -30,9 +30,12 @@
 #ifndef _TM_CONFIG_H
 #define _TM_CONFIG_H
 
+#ifdef _OBSOLETED
+/* moved to hash.h */
 /* always use a power of 2 for hash table size */
 #define T_TABLE_POWER    12
 #define TABLE_ENTRIES    (1 << (T_TABLE_POWER))
+#endif
 
 /* this is where table size is defined now -- sort of
    ugly, core should not be bothered by TM table size,
