@@ -216,7 +216,6 @@ struct sip_msg{
 	char* orig; /* original message copy */
 	char* buf;  /* scratch pad, holds a modfied message,
 				   via, etc. point into it */
-				   
 	unsigned int len; /* message len (orig) */
 
 	/* modifications */
