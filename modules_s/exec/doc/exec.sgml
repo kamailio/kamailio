@@ -6,36 +6,35 @@
 <!ENTITY faq SYSTEM "exec_faq.sgml">
 
 <!-- Include general SER documentation entities -->
-<!ENTITY % serentities SYSTEM "../../ser_entities.sgml">
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
 %serentities;
 
 ]>
 
 <book>
     <bookinfo>
-	<title>Module's Name</title>
+	<title>exec Module</title>
 	<productname class="trade">&sername;</productname>
 	<authorgroup>
 	    <author>
-		<firstname>AuthorFirstname</firstname>
-		<surname>AuthorLastname</surname>
-		<affiliation><orgname>Organization Name</orgname></affiliation>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
 		<address>
-		    <email>autor@email.net</email>
+		    <email>jiri@iptel.org</email>
 		</address>
 	    </author>
 	    <editor>
-		<firstname>EditorFirstname</firstname>
-		<surname>EditorLastname</surname>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
 		<address>
-		    <email>editor@email.net</email>
+		    <email>jan@iptel.org</email>
 		</address>
 	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2003</year>
-	    <year>2004</year>
-	    <holder>Fill in here</holder>
+	    <holder>FhG FOKUS</holder>
 	</copyright>
 	<revhistory>
 	    <revision>

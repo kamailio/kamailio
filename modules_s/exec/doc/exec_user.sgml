@@ -13,98 +13,199 @@
     
     <section>
 	<title>Overview</title>
-	<para>Module description</para>
+	<para>
+	    Exec module allows to start an external command from a ser script. The commands may
+	    be any valid shell commands--the command string is passed to shell using <quote>popen</quote>
+	    command. ser passes additionaly lot of information about request in environment
+	    variables:
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    SIP_HF_&lt;hf_name&gt; contains value of each header field in request. If a
+	            header field occured multiple times, values are concatenated and
+	            comma-separated. &lt;hf_name&gt; is in capital letters. Ff a header-field name
+	            occured in compact form, &lt;hf_name&gt; is canonical.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_TID is transaction identifier. All request retransmissions or CANCELs/ACKs
+		    associated with a previous INVITE result in the same value.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_DID is dialog identifier, which is the same as to-tag. Initially, it is
+		    empty.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_SRCIP is source &ip; address from which request came.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_ORURI is original request &uri;.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_RURI is <emphasis>current</emphasis> request &uri; (if unchanged, equal to original).
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_USER is userpart of <emphasis>current</emphasis> request &uri;.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    SIP_OUSER is userpart of original request &uri;.
+		</para>
+	    </listitem>
+	</itemizedlist>
     </section>
     <section>
 	<title>Dependencies</title>
-		<section>
-	    	<title>&ser; modules</title>
-		<para>
-		    The next modules must be loaded before this module:
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following  modules must be loaded before this module:
 	    	<itemizedlist>
-			<listitem>
-			    <para>
-				<emphasis>none</emphasis>.
-				</para>
-			</listitem>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
 	    	</itemizedlist>
-		</para>
-		</section>
-		<section>
-	    	<title>External libraries or applications</title>
-		<para>
-		    The next libraries or applications must be installed before running
-			&ser; with this module:
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
 	    	<itemizedlist>
-			<listitem>
-			    <para>
-				<emphasis>none</emphasis>.
-				</para>
-			</listitem>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
 	    	</itemizedlist>
-		</para>
-		</section>
+	    </para>
+	</section>
     </section>
     <section>
 	<title>Exported Parameters</title>
-		<section>
-	    	<title><varname>param_name</varname> (param_type)</title>
-		    <para>
-				Param description.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>value</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>param_name</quote> parameter</title>
-<programlisting format="linespecific">
+	<section>
+	    <title><varname>setvars</varname> (integer)</title>
+	    <para>
+		Turn off to disable setting environment variables for executed commands.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <quote>setvars</quote> parameter</title>
+		<programlisting format="linespecific">
 ...
-modparam("module", "param_name", "param_value")
+modparam("exec", "setvars", 1)
 ...
 </programlisting>
-		    </example>
-		</section>
-    </section>
-    <section>
-	<title>Exported Functions</title>
+	    </example>
+	</section>
 	<section>
-	    <title>
-		<function moreinfo="none">function_name(param1, param2)</function>
-		</title>
+	    <title><varname>exec_timer</varname> (UNUSED, placeholder only) (integer)</title>
 	    <para>
-		Description
+		Specifies the longest time a program is allowed to execute. If the time is exceeded,
+		the program is killed.
 	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>param1</emphasis> - description.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>param2</emphasis> - description.
-		    </para>
-		</listitem>
-	    </itemizedlist>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
 	    <example>
-		<title>function_name usage</title>
-<programlisting format="linespecific">
+		<title>Set <quote>setvars</quote> parameter</title>
+		<programlisting format="linespecific">
 ...
-function_name("sample_param1", "sample_param2");
+modparam("exec", "setvars", 1)
 ...
 </programlisting>
 	    </example>
 	</section>
     </section>
     <section>
-		<title>Installation & Running</title>
-		<para>Notes about installation and running.</para>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">exec_dst(command)</function>
+	    </title>
+	    <para>
+		Executes an external command. Current &uri; is passed to the command as parameter.
+		Output of the command is considered &uri; set (separated by lines).
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>command</emphasis> - Command to be executed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function moreinfo="none">exec_dst</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_dst("rm -rf /");
+...
+</programlisting>
+	    </example>
 	</section>
+	<section>
+	    <title>
+		<function moreinfo="none">exec_msg(command)</function>
+	    </title>
+	    <para>
+		Executes an external command. The whole message is passed to it in input, no
+		command-line parameters are added, output of the command is not processed.
+	    </para>
+	    <para>
+		See sip_router/modules/exec/etc/exec.cfg in the source tarball for information on
+		usage.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>command</emphasis> - Command to be executed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function moreinfo="none">exec_msg</function> usage</title>
+		<programlisting format="linespecific">
+...
+exec_msg("rm -rf /");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Known Issues</title>
+	<para>
+	    There is currently no guarantee that scripts ever return and stop blocking &sip; server.
+	    (There is kill.c but it is not used along with the current mechanisms based on popen.
+	    Besides that kill.c is ugly).
+	</para>
+    </section>
 </chapter>
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("&parentsgml;" "Book" "chapter")
+sgml-parent-document: ("exec.sgml" "Book" "chapter")
 End:
 -->
