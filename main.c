@@ -1409,7 +1409,7 @@ try_again:
 	for (r=0; r<sock_no;r++){
 		/* fix port number, port_no should be !=0 here */
 		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
-		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
+		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, "%d", 
 									(unsigned short) sock_info[r].port_no);
 		/* if buffer too small, snprintf may return per C99 estimated size
 		   of needed space; there is no guarantee how many characters 

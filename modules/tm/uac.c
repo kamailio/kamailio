@@ -50,9 +50,10 @@
  *  2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
  *               proto & rb->dst (andrei)
  *  2003-02-27  FIFO/UAC now dumps reply -- good for CTD (jiri)
- *  2003-03-01  kr set through a function now (jiri)
  *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-03-01  kr set through a function now (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
  */
 
 
@@ -548,6 +549,9 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 						}
 						new=new_str(sock_name->s, sock_name->len,
 								&last, &total_len );
+						if (!new) goto error;
+						/* inefficient - FIXME --andrei*/
+						new=new_str(":", 1, &last, &total_len);
 						if (!new) goto error;
 						new=new_str(portname->s, portname->len,
 								&last, &total_len );

@@ -183,7 +183,7 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 		fix_len +=WARNING_LEN;
 		memcpy(buf+fix_len, bind_address->name.s,bind_address->name.len);
 		fix_len += bind_address->name.len;
-		//*(buf+fix_len++) = ':';
+		*(buf+fix_len) = ':'; fix_len++;
 		memcpy(buf+fix_len,bind_address->port_no_str.s,
 			bind_address->port_no_str.len);
 		fix_len += bind_address->port_no_str.len;
@@ -1574,7 +1574,7 @@ char* via_builder( unsigned int *len,
 
 	max_len=MY_VIA_LEN+send_sock->address_str.len /* space in MY_VIA */
 		+2 /* just in case it is a v6 address ... [ ] */
-		+send_sock->port_no_str.len
+		+1 /*':'*/+send_sock->port_no_str.len
 		+(branch?(MY_BRANCH_LEN+branch->len):0)
 		+(extra_params?extra_params->len:0)
 		+CRLF_LEN+1;
@@ -1609,6 +1609,7 @@ char* via_builder( unsigned int *len,
 	memcpy(line_buf+MY_VIA_LEN+extra_len, send_sock->address_str.s,
 		send_sock->address_str.len);
 	if (send_sock->port_no!=SIP_PORT){
+		line_buf[via_len]=':'; via_len++;
 		memcpy(line_buf+via_len, send_sock->port_no_str.s,
 			 send_sock->port_no_str.len);
 		via_len+=send_sock->port_no_str.len;
