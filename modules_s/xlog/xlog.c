@@ -124,7 +124,7 @@ static int xlog(struct sip_msg* msg, char* lev, char* frm)
 		return -1;
 
 	log_buf[log_len] = '\0';
-	LOG((int)lev, log_buf);
+	LOG((int)(long)lev, log_buf);
 
 	return 1;
 }
@@ -158,7 +158,7 @@ void destroy(void)
 
 static int xlog_fixup(void** param, int param_no)
 {
-	int level;
+	long level;
 	
 	if(param_no==1)
 	{
