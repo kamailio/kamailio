@@ -63,6 +63,7 @@ struct tm_binds tmb;
 #endif
 
 
+MODULE_VERSION
 
 
 
