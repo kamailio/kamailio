@@ -139,12 +139,6 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 		build_auth_hf(0, 0, _realm, auth_hf, &auth_hf_len, _qop, _challenge_msg);
 	}
 	
-#ifdef REALM_HACK
-	if (_realm == &uri.host) {
-		free_uri(&uri);
-	}
-#endif
-
 	if (send_resp(_msg, _code, _message, auth_hf, auth_hf_len) == -1) {
 		LOG(L_ERR, "challenge(): Error while sending response\n");
 		return -1;

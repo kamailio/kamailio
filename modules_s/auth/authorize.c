@@ -391,11 +391,6 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	}
 
  err:
-#ifdef REALM_HACK
-	if (_realm == &uri.host) {
-		free_uri(&uri);
-	}
-#endif
 	return ret;
 }
 
