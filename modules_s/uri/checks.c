@@ -249,10 +249,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		memcpy(new_uri.s, cur_uri->s, cur_uri->len);
 		*(new_uri.s + cur_uri->len) = ';';
 		memcpy(new_uri.s + cur_uri->len + 1, param->s, param->len);
-		LOG(L_ERR, "add_uri_param(): setting new ruri <%.*s>\n",
-		    new_uri.len, new_uri.s);
 		if (set_uri(_msg, new_uri.s, new_uri.len) == 1) {
-			LOG(L_ERR, "add_uri_param(): setting new ruri success\n");
 			goto ok;
 		} else {
 			goto nok;
