@@ -9,17 +9,31 @@ $Id$
 new archs:
  - mips2/cobalt experimental support
  - x86_64 experimental support
+ - OS X (darwin) support
+
 modules:
- -  tm has a new parameter: restart_fr_on_each_reply. If set (default)
-    fr_inv timer will be restarted for each provisional reply, if not set
-    it will be restarted only for the first reply and for replies >=180
-    (but only if increasing, eg.: 180, 181 ...). Usefull when dealing with bad
-    UAs that re-transmit 180s.
+ - enum - support for more than one NAPTR
+ - msilo - explicit multidomain support -- recipient's user ID is stored in
+   the columns username and domain -- r_uri column kept for compatibility
+   reasons (will be removed in future) but not filled by this version of
+   module
+ - mysql - implements a connection pool, all modules will use same connection
+   to access the database
  - nathelper received port  test (flag 16 for nat_uac_test): compares the
    source port of the message with sip port in the first Via and returns
    true if different.
+ - permsions - support for multiple allow/deny files, allow_register function
+ - TM has a new parameter: restart_fr_on_each_reply. If set (default)
+   fr_inv timer will be restarted for each provisional reply, if not set
+   it will be restarted only for the first reply and for replies >=180
+   (but only if increasing, eg.: 180, 181 ...). Usefull when dealing with bad
+   UAs that re-transmit 180s.
  - TM saves the avp list into transactions, and make it available into
    callbacks, failure and reply routes.
+ - TM contains new command - t_write_unix("/tmp/sems.sock", "announcement")
+   sends a message using unix socket interface instead of FIFO interface.
+ - TM contains new config variable - unix_tx_timeout -- it specifies the
+   transmit timeout of t_write_sock
  - VM functionality was transfered into TM module. Instead of fetching the
    email value from DB (as VM), TM looks for the "email" attribute to get the
    value.
@@ -27,16 +41,32 @@ modules:
    vm_reply() fifo functions was replcated by TM with t_reply() fifo function
    NOTE!! because current version of SEMS/AA try to send reply via vm_reply,
    it will not work with the TM version.
- - TM contains new command - t_write_unix("/tmp/sems.sock", "announcement")
-   sends a message using unix socket interface instead of FIFO interface.
- - TM contains new config variable - unix_tx_timeout -- it specifies the
-   transmit timeout of t_write_sock
- - msilo - explicit multidomain support -- recipient's user ID is stored in
-   the columns username and domain -- r_uri column kept for compatibility
-   reasons (will be removed in future) but not filled by this version of
-   module
+ - xlog - printing the body of any header by specifying the name; new
+   specifiers for user-agent, message buffer, message length, message's flags,
+   message id.
+
 new modules:
- - answer server options requests [options]
+ - avp / avp_db / avp_radius - load and check avps per caller or callee
+ - avopos - flexible module for operations with avps and database, introducing
+   a pseudo-varible support in SER configuration file
+ - cpl-c - implementation of Call Processing Language
+ - dispatcher - implements a dispatcher for incoming requests using hashes
+   over parts of the request to select the destination
+ - diversion - implements the Diversion extensions as per 
+   draft-levy-sip-diversion-08
+ - flatstore - simple module that implements very fast inserts for accounting
+   purposes
+ - gflags - keeps a bitmap of flags in shared memory and may be used to change
+   behaviour of server based on value of the flags
+ - options - answer server options requests
+ - speeddial - provides on-server speed dial facilities
+ - uri_db - split from uri module, performs various checks related to SIP URI
+   over database fields
+
+removed modules:
+ - vm - the functionality was transfered to tm module (see t_write_req(...)
+   method)
+
 core:
  - new parts:
        UNIX domain socket server implemented
@@ -52,17 +82,23 @@ core:
     - config: better escape support in strings (e.g. \", \<cr>, \x0a, \012)
     - bad network addresses are now automatically fixed
       (e.g. 192.168.1.80/27 => 192.168.1.64/27)
-    -  avp (Attribute-Value Pair) support added
-    -  multicast support added (see mcast_loopback & mcast_ttl)
-    -  saving of procces group id enabled, if the -G option is specified
-       (a safe way to quickly kill all ser processes)
-    -  core dump-ing is enabled by default, see also disable_core_dump
-    -  protocol and port can be specified in the alias and listen lines, e.g.:
+    - avp (Attribute-Value Pair) support added
+    - avp alias support added
+    - multicast support added (see mcast_loopback & mcast_ttl)
+    - saving of procces group id enabled, if the -G option is specified
+      (a safe way to quickly kill all ser processes)
+    - core dump-ing is enabled by default, see also disable_core_dump
+    - protocol and port can be specified in the alias and listen lines, e.g.:
         alias= tcp:foo.bar:* udp:test.bar:5080 foo.com
         listen= eth0   tcp:eth0:5065 udp:127.0.0.1 [3ffe::1]
     - multiple operator support: ==, != for special operations (e.g myself, ip)
                               ==, !=, ~= for strings
                               ==, !=, >, <, >=, <= for integers
+    - database api changed to support usage of different drivers
+      simultaneously. The database URL must start now with the name of the
+      driver (module). Example: for mysql the DB URL
+      'sql://user:password@dbhost:port/database' must be specified now as
+      'mysql://user:password@dbhost:port/database'
  - new config variables:
    mcast_loopback = <yes/no> - loopback sent multicast datagram, default no.
    mcast_ttl = number - set multicast ttl, default OS specific (usually 1).
@@ -99,8 +135,6 @@ core:
        (host aliases are too dangerous IMHO, involve extra DNS
         lookups and the need for them is questionable)
        See force_tcp_alias for more details.
-   avp_db_url = "DataBase URL"
-       DAtabse to be used for user preferences (AVPs).
    log_facility = LOG_LOCAL0
        if ser logs to syslog, you can control the facility for logging. Very
        useful when you want to divert all ser logs to a different log file.
@@ -133,14 +167,7 @@ core:
        3 port aliases to a connection (you shouldn't need more than one).
        To change this redefine TCP_CON_MAX_ALIASES in the same file
        (set it to you desired value + 1; 1 is needed for the real port).
-   load_avp( "uri_type", "attribute", use_domain)
-   load_avp( "uri_type", use_domain)
-       load from database one or more attributes; uri_type tells from where
-       the username should be taken (can be "ruri", "from", "to"); use_domain
-       can be 0 or non-zero - if non-zero, domain will be used along the
-       username for identifing the attribute into DB; if no attribute is given,
-       all atributes for the given user will be loaded.
-       Functions return false is they failed (error) or if no avp was loaded.
+
 utilities:
  - ngrep patch for displaying new lines in captured SIP messages is no longer
    needed; use ngrep V 1.42 with the option "-W byline"
