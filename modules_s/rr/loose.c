@@ -163,6 +163,7 @@ static inline int is_2rr(str* _params)
 		case 3:
 			switch(s.s[i]) {
 			case ';':  return 1;
+			case '=':  return 1;
 			case ' ':
 			case '\r':
 			case '\n':
@@ -300,6 +301,7 @@ static inline int is_strict(str* _params)
 		case 3:
 			switch(s.s[i]) {
 			case ';':  return 0;
+			case '=':  return 0;
 			case ' ':
 			case '\r':
 			case '\n':
