@@ -37,6 +37,8 @@
  *               by tcp to identify the sending socket, by andrei
  *  2003-01-23  fixed rport parsing code to accept rport w/o any value,
  *               by andrei
+ *  2003-01-27  modified parse_via to set new via_param->start member and
+ *               via->params.s (andrei)
  */
 
 
@@ -103,6 +105,8 @@ enum {
  * state=F_{LF,CR,CRLF}!
  * output state = L_PARAM or F_PARAM or END_OF_HEADER
  * (and saved_state= last state); everything else => error 
+ * WARNING: param->start must be filled before, it's used in param->size 
+ * computation.
  */
 static /*inline*/ char* parse_via_param(char* p, char* end,
 										unsigned char* pstate, 
@@ -159,10 +163,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\n':
 				switch(state){
 					case FIN_HIDDEN:
-					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
 						saved_state=L_PARAM;
 						state=F_LF;
 						goto endofparam;
@@ -171,9 +175,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_MADDR:
 					case FIN_RECEIVED:
 					case FIN_I:
+					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
 						saved_state=L_VALUE;
 						state=F_LF;
 						goto find_value;
@@ -194,6 +200,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						param->type=GEN_PARAM;
 						saved_state=L_VALUE;
 						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
 						state=F_LF;
 						goto find_value;
 				}
@@ -201,10 +208,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\r':
 				switch(state){
 					case FIN_HIDDEN:
-					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
 						saved_state=L_PARAM;
 						state=F_CR;
 						goto endofparam;
@@ -213,9 +220,11 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_MADDR:
 					case FIN_RECEIVED:
 					case FIN_I:
+					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
 						saved_state=L_VALUE;
 						state=F_CR;
 						goto find_value;
@@ -232,6 +241,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 						*tmp=0;
 						param->type=GEN_PARAM;
 						param->name.len=tmp-param->name.s;
+						param->size=tmp-param->start; 
 						saved_state=L_VALUE;
 						state=F_CR;
 						goto find_value;
@@ -732,6 +742,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case F_VALUE: /*eat space*/
 					case P_STRING:
 						saved_state=state;
+						param->size=tmp-param->start;
 						state=F_LF;
 						break;
 					case P_VALUE:
@@ -759,6 +770,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case F_VALUE: /*eat space*/
 					case P_STRING:
 						saved_state=state;
+						param->size=tmp-param->start;
 						state=F_CR;
 						break;
 					case P_VALUE:
@@ -908,7 +920,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 	
  endofparam:
  endofvalue:
-	param->size=tmp-p;
+	param->size=tmp-param->start;
+normal_exit:
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Found param type %d, <%s> = <%s>; state=%d\n", param->type,
@@ -923,7 +936,8 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 	if ((param->type==GEN_PARAM)||(param->type==PARAM_RPORT)){
 		saved_state=L_PARAM; /* change the saved_state, we have an unknown
 		                        param. w/o a value */
-		goto endofparam;
+		/* param->size should be computed before */
+		goto normal_exit;
 	}
 	*pstate=state;
 	*psaved_state=saved_state;
@@ -943,6 +957,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 char* parse_via(char* buffer, char* end, struct via_body *vb)
 {
 	char* tmp;
+	char* param_start;
 	unsigned char state;
 	unsigned char saved_state;
 	int c_nest;
@@ -954,6 +969,7 @@ parse_again:
 	vb->error=PARSE_ERROR;
 	/* parse start of via ( SIP/2.0/UDP    )*/
 	state=F_SIP;
+	param_start=0;
 	for(tmp=buffer;tmp<end;tmp++){
 		switch(*tmp){
 			case ' ':
@@ -1476,6 +1492,7 @@ parse_again:
 						*tmp=0;
 						vb->host.len=tmp-vb->host.s;
 						state=F_PARAM;
+						param_start=tmp+1;
 						break;
 					case P_PORT:
 						*tmp=0; /*mark the end*/
@@ -1483,6 +1500,7 @@ parse_again:
 					case L_PORT:
 					case L_PARAM:
 						state=F_PARAM;
+						param_start=tmp+1;
 						break;
 					case F_PORT:
 						LOG(L_ERR, "ERROR:parse_via:"
@@ -1496,6 +1514,7 @@ parse_again:
 					case P_PARAM:
 						/*hmm next, param?*/
 						state=F_PARAM;
+						param_start=tmp+1;
 						break;
 					case L_VIA:
 					case F_VIA:
@@ -1744,7 +1763,7 @@ parse_again:
 						break;
 					case F_PARAM:
 						/*state=P_PARAM*/;
-						if(vb->params.s==0) vb->params.s=tmp;
+						if(vb->params.s==0) vb->params.s=param_start;
 						param=pkg_malloc(sizeof(struct via_param));
 						if (param==0){
 							LOG(L_ERR, "ERROR:parse_via: mem. allocation"
@@ -1752,21 +1771,25 @@ parse_again:
 							goto error;
 						}
 						memset(param,0, sizeof(struct via_param));
+						param->start=param_start;
 						tmp=parse_via_param(tmp, end, &state, &saved_state,
 											param);
 
 						switch(state){
-							case L_PARAM:
 							case F_PARAM:
+								param_start=tmp+1;
+							case L_PARAM:
 							case F_LF:
 							case F_CR:
 								break;
 							case F_VIA:
-								vb->params.len=tmp-vb->params.s;
+								vb->params.len=param->start+param->size
+												-vb->params.s;
 								*tmp=0;
 								break;
 							case END_OF_HEADER:
-								vb->params.len=tmp-vb->params.s;
+								vb->params.len=param->start+param->size
+												-vb->params.s;
 								break;
 							case PARAM_ERROR:
 								pkg_free(param);

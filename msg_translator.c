@@ -34,6 +34,7 @@
  *             (andrei)
  * 2003-01-24 added i param to via of outgoing requests (used by tcp),
  *             modified via_builder params (andrei)
+ * 2003-01-27 more rport fixes (make use of new via_param->start)  (andrei)
  *
  */
 
@@ -566,7 +567,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 	/* if rport needs to be updated, delete it and add it's value */
 	if (rport_len){
-		anchor=del_lump(&(msg->add_rm), msg->via1->rport->name.s-buf-1, /*';'*/
+		anchor=del_lump(&(msg->add_rm), msg->via1->rport->start-buf-1, /*';'*/
 							msg->via1->rport->size+1 /* ; */, HDR_VIA);
 		if (anchor==0) goto error03; /* free rport_buf*/
 		if (insert_new_lump_after(anchor, rport_buf, rport_len, HDR_VIA)==0)
@@ -853,14 +854,14 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 					if (rport_buf){
 						/* copy until rport */
 						append_str_trans( p, hdr->name.s ,
-							msg->via1->rport->name.s-hdr->name.s-1,msg);
+							msg->via1->rport->start-hdr->name.s-1,msg);
 						/* copy new rport */
 						append_str(p, rport_buf, rport_len, msg);
 						/* copy the rest of the via */
-						append_str_trans(p, msg->via1->rport->name.s+
+						append_str_trans(p, msg->via1->rport->start+
 											msg->via1->rport->size, 
 											hdr->body.s+hdr->body.len-
-											msg->via1->rport->name.s-
+											msg->via1->rport->start-
 											msg->via1->rport->size, msg);
 					}else{
 						/* normal whole via copy */
