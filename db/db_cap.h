@@ -39,6 +39,19 @@ typedef enum db_cap {
 	DB_CAP_DELETE =    1 << 3,  /* Database driver can delete data from database */
 	DB_CAP_UPDATE =    1 << 4   /* Database driver can update data in the database */
 } db_cap_t;
-	
+
+
+/*
+ * All database functions except raw_query
+ */
+#define DB_CAP_ALL (DB_CAP_QUERY | DB_CAP_INSERT | DB_CAP_DELETE | DB_CAP_UPDATE)	
+
+
+/*
+ * True if all the capabilities in cpv are supported by module
+ * represented by dbf, false otherwise
+ */
+#define DB_CAPABILITY(dbf, cpv) ((dbf)->cap & (cpv)) == (cpv))
+
 
 #endif /* DB_CAP_H */
