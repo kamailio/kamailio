@@ -77,13 +77,15 @@ struct my_id* new_my_id(const char* url)
 	}
 	memcpy(ptr->username.s, username, ptr->username.len + 1);
 
-	ptr->password.len = strlen(password);
-	ptr->password.s = (char*)pkg_malloc(ptr->password.len + 1);
-	if (!ptr->password.s) {
-		LOG(L_ERR, "new_connection(): No memory left\n");
-		goto err;
+	if (password) {
+		ptr->password.len = strlen(password);
+		ptr->password.s = (char*)pkg_malloc(ptr->password.len + 1);
+		if (!ptr->password.s) {
+			LOG(L_ERR, "new_connection(): No memory left\n");
+			goto err;
+		}
+		memcpy(ptr->password.s, password, ptr->password.len + 1);
 	}
-	memcpy(ptr->password.s, password, ptr->password.len + 1);
 
 	ptr->host.len = strlen(host);
 	ptr->host.s = (char*)pkg_malloc(ptr->host.len + 1);
