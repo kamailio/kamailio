@@ -35,6 +35,8 @@
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  *  2003-04-12  added force_rport, chdir and wdir (andrei)
  *  2003-04-22  strip_tail added (jiri)
+ *  2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
+ *               require_certificate added (andrei)
  */
 
 
@@ -160,6 +162,12 @@ WDIR		"workdir"|"wdir"
 MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
+DISABLE_TLS		"disable_tls"
+TLS_VERIFY		"tls_verify"
+TLS_REQUIRE_CERTIFICATE "tls_require_certificate"
+TLS_CERTIFICATE	"tls_certificate"
+TLS_PRIVATE_KEY "tls_private_key"
+TLS_CA_LIST		"tls_ca_list"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -281,6 +289,16 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
+<INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
+<INITIAL>{TLS_VERIFY}	{ count(); yylval.strval=yytext; return TLS_VERIFY; }
+<INITIAL>{TLS_REQUIRE_CERTIFICATE}	{ count(); yylval.strval=yytext;
+										return TLS_REQUIRE_CERTIFICATE; }
+<INITIAL>{TLS_CERTIFICATE}	{ count(); yylval.strval=yytext; 
+										return TLS_CERTIFICATE; }
+<INITIAL>{TLS_PRIVATE_KEY}	{ count(); yylval.strval=yytext; 
+										return TLS_PRIVATE_KEY; }
+<INITIAL>{TLS_CA_LIST}	{ count(); yylval.strval=yytext; 
+										return TLS_CA_LIST; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }

@@ -39,6 +39,8 @@
  * 2003-04-12  added force_rport, chroot and wdir (andrei)
  * 2003-04-15  added tcp_children, disable_tcp (andrei)
  * 2003-04-22  strip_tail added (jiri)
+ * 2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
+ *              require_certificate added (andrei)
  */
 
 
@@ -174,6 +176,12 @@ int rt;  /* Type of route block for find_export */
 %token MHOMED
 %token DISABLE_TCP
 %token TCP_CHILDREN
+%token DISABLE_TLS
+%token TLS_VERIFY
+%token TLS_REQUIRE_CERTIFICATE
+%token TLS_CERTIFICATE
+%token TLS_PRIVATE_KEY
+%token TLS_CA_LIST
 
 
 
@@ -369,6 +377,61 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#endif
 									}
 		| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
+		| DISABLE_TLS EQUAL NUMBER {
+									#ifdef USE_TLS
+										tls_disable=$3;
+									#else
+										fprintf(stderr, "WARNING: tls support"
+												"not compiled in\n");
+									#endif
+									}
+		| DISABLE_TLS EQUAL error { yyerror("boolean value expected"); }
+		| TLS_VERIFY EQUAL NUMBER {
+									#ifdef USE_TLS
+										tls_verify_cert=$3;
+									#else
+										fprintf(stderr, "WARNING: tcp support"
+												"not compiled in\n");
+									#endif
+									}
+		| TLS_VERIFY EQUAL error { yyerror("boolean value expected"); }
+		| TLS_REQUIRE_CERTIFICATE EQUAL NUMBER {
+									#ifdef USE_TLS
+										tls_require_cert=$3;
+									#else
+										fprintf(stderr, "WARNING: tcp support"
+												"not compiled in\n");
+									#endif
+									}
+		| TLS_REQUIRE_CERTIFICATE EQUAL error { yyerror("boolean value"
+																" expected"); }
+		| TLS_CERTIFICATE EQUAL STRING { 
+									#ifdef USE_TLS
+											tls_cert_file=$3;
+									#else
+										fprintf(stderr, "WARNING: tls support"
+												"not compiled in\n");
+									#endif
+									}
+		| TLS_CERTIFICATE EQUAL error { yyerror("string value expected"); }
+		| TLS_PRIVATE_KEY EQUAL STRING { 
+									#ifdef USE_TLS
+											tls_pkey_file=$3;
+									#else
+										fprintf(stderr, "WARNING: tls support"
+												"not compiled in\n");
+									#endif
+									}
+		| TLS_PRIVATE_KEY EQUAL error { yyerror("string value expected"); }
+		| TLS_CA_LIST EQUAL STRING { 
+									#ifdef USE_TLS
+											tls_ca_file=$3;
+									#else
+										fprintf(stderr, "WARNING: tls support"
+												"not compiled in\n");
+									#endif
+									}
+		| TLS_CA_LIST EQUAL error { yyerror("string value expected"); }
 		| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 		| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 		| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
