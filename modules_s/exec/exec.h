@@ -27,6 +27,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+#ifndef _EXEC_H
+#define _EXEC_H
 int exec_str(struct sip_msg *msg, char *cmd, char *param);
 int exec_msg(struct sip_msg *msg, char *cmd );
+#endif

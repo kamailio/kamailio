@@ -32,6 +32,9 @@
 #include <strings.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 #include "../../mem/mem.h"
 #include "../../error.h"
 #include "../../config.h"
@@ -40,8 +43,10 @@
 #include "../../dset.h"
 #include "config.h"
 
+#ifdef _OBSOLETED
 static int set_environment(struct sip_msg *msg)
 {
+
 	static char srcip[64];
 
 	if (snprintf(srcip, 64, SRCIP "=%s", ip_addr2a(&msg->rcv.src_ip))==-1) {
@@ -55,32 +60,27 @@ static int set_environment(struct sip_msg *msg)
 	DBG("DEBUG: environment variable set: %s\n", srcip );
 	return 1;
 }
+#endif
 
 int exec_msg(struct sip_msg *msg, char *cmd )
 {
-	int ret;
 	FILE *pipe;
 	int exit_status;
+	int ret;
 
-#ifdef __EXTRA_DEBUG
-	FILE* f;
-	printf("\n\n adding TEST\n\n");
-	putenv("SRCIPA=192.168.99.100");
-	f=popen("printenv > /tmp/xxx", "r");
-	pclose(f);
+#ifdef _OBSOLETED
+	if (set_environment(msg)==0) {
+		LOG(L_ERR, "ERROR: exec_msg: set_environment failed\n");
+		return -1;
+	}
 #endif
-
-	ret=-1;
-	set_environment(msg);
-#ifdef __EXTRA_DEBUG
-	putenv("SRCIPB=192.168.99.100");
-#endif
+	ret=-1; /* pesimist: assume error */
 	pipe=popen( cmd, "w" );
 	if (pipe==NULL) {
 		LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %s\n",
 			cmd);
 		ser_error=E_EXEC;
-		goto error00;
+		return -1;
 	}
 
 	if (fwrite(msg->orig, 1, msg->len, pipe)!=msg->len) {
@@ -96,13 +96,18 @@ error01:
 		LOG(L_ERR, "ERROR: exec_str: error in pipe: %s\n",
 			strerror(errno));
 		ser_error=E_EXEC;
+		ret=-1;
 	}
 	exit_status=pclose(pipe);
-	if (exit_status!=0) {
-		DBG("exec_str: exit_status=%d, errno=%d: %s\n",
-			exit_status, errno, strerror(errno) );
+	if (WIFEXITED(exit_status)) { /* exited properly .... */
+		/* return false if script exited with non-zero status */
+		if (WEXITSTATUS(exit_status)!=0) ret=-1;
+	} else { /* exited erroneously */
+		LOG(L_ERR, "ERROR: exec_msg: cmd %s failed. "
+			"exit_status=%d, errno=%d: %s\n",
+			cmd, exit_status, errno, strerror(errno) );
+		ret=-1;
 	}
-error00:
 	return ret;
 }
 
@@ -119,10 +124,14 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param) {
 	char *new_uri;
 	int exit_status;
 
+#ifdef _OBSOLETED
+	if (set_environment(msg)==0) {
+		LOG(L_ERR, "ERROR: exec_str: set_environment failed\n");
+		return -1;
+	}
+#endif
 	/* pesimist: assume error by default */
 	ret=-1;
-
-	set_environment(msg);
 	l1=strlen(cmd);l2=strlen(param);cmd_len=l1+l2+2;
 	cmd_line=pkg_malloc(cmd_len);
 	if (cmd_line==0) {
@@ -193,11 +202,17 @@ error02:
 		LOG(L_ERR, "ERROR: exec_str: error in pipe: %s\n",
 			strerror(errno));
 		ser_error=E_EXEC;
+		ret=-1;
 	}
 	exit_status=pclose(pipe);
-	if (exit_status!=0) {
-		DBG("exec_str: exit_status=%d, errno=%d: %s\n",
-			exit_status, errno, strerror(errno) );
+	if (WIFEXITED(exit_status)) { /* exited properly .... */
+		/* return false if script exited with non-zero status */
+		if (WEXITSTATUS(exit_status)!=0) ret=-1;
+	} else { /* exited erroneously */
+		LOG(L_ERR, "ERROR: exec_str: cmd %s failed. "
+			"exit_status=%d, errno=%d: %s\n",
+			cmd, exit_status, errno, strerror(errno) );
+		ret=-1;
 	}
 error01:
 	pkg_free(cmd_line);

@@ -6,32 +6,47 @@ Exec module allows to start an external command when
 from a ser script. The commands may be any valid
 shell commands -- the command string is passed to
 shell using 'popen' command. ser passes additionaly
-source address of request in environment variable
-SRCIP.
+lot of information about request in environment
+variables:
+- SIP_HF_<hf_name> contains value of each header field
+  in request; if a header field occured multiple times,
+  values are concatenated and comma-separated; <hf_name>
+  is in capital letters; if a header-field name occured
+  in compact form, <hf_name> is canonical
+- SIP_TID is transaction identifier; all request retransmissions
+  or CANCELs/ACKs associated with a previous INVITE result
+  in the same value
+- SIP_DID is dialog identifier, which is the same as to-tag;
+  initially, it is empty
+- SIP_SRCIP is source IP address from which request came
+- SIP_ORURI is original request URI 
+- SIP_RURI is _current_ request URI (if unchanged, equal to original)
+- SIP_USER is userpart of _current_ request URI
+
 
 Exported parameters:
 ---------------------
 
-Name:	exec_timer
+Name:	setvars
+Type:	int
+Default: 1
+Desc:	turn off to disable setting environment variables
+	for executed commands
+
+Name:	exec_timer (**** UNUSED *** placeholder only)
 Type:	int
 Default: 0
 Desc:	specifies the longest time a program is allows to
-	    execute; if the time is exceeded, the program is
+        execute; if the time is exceeded, the program is
 		killed
 
 Exported functions:
 -------------------
-Name:	exec_uri
+Name:	exec_dst
 Params:	command -- command to be executed; 
 Desc:	executes an external command; current uri is passed
-		to the command as parameter; output of the command
-		is considered URI set (separated by lines)
-
-Name:	exec_user
-Params:	command -- command to be executed; 
-Desc:	executes an external command; user part of current uri is passed
-		to the command as parameter; output of the command
-		is considered URI set (separated by lines)
+	to the command as parameter; output of the command
+	is considered URI set (separated by lines)
 
 Name:	exec_msg
 Params: command -- command to be executed

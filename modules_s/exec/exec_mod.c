@@ -38,13 +38,13 @@
 
 #include "exec.h"
 #include "kill.h"
+#include "exec_hf.h"
 
 unsigned int time_to_kill=0;
 
 static int mod_init( void );
 
-inline static int w_exec_uri(struct sip_msg* msg, char* cmd, char* foo);
-inline static int w_exec_user(struct sip_msg* msg, char* cmd, char* foo);
+inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo);
 inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo);
 
 inline static void exec_shutdown();
@@ -57,26 +57,28 @@ struct module_exports exports= {
 	"exec",
 
 	/* exported functions */
-	( char*[] ) { "exec_uri", "exec_user", "exec_msg" },
-	( cmd_function[] ) { w_exec_uri, w_exec_user, w_exec_msg },
-	( int[] ) { 1, 1, 1 /* params == cmd name */ }, 
-	( fixup_function[]) { 0, 0 , 0 },
-	3, /* number of exported functions */
+	( char*[] ) { "exec_dset", "exec_msg" },
+	( cmd_function[] ) { w_exec_dset, w_exec_msg },
+	( int[] ) { 1, 1 /* params == cmd name */ }, 
+	( fixup_function[]) { 0, 0 },
+	2, /* number of exported functions */
 
 	/* exported variables */
 	(char *[]) { /* variable names */
-		"time_to_kill"
+		"time_to_kill", "setvars"
 	},
 
 	(modparam_t[]) { /* variable types */
 		INT_PARAM, /* time_to_kill */
+		INT_PARAM, /* set vars */
 	},
 
 	(void *[]) { /* variable pointers */
-		&time_to_kill
+		&time_to_kill,
+		&setvars,
 	},
 
-	1,			/* number of variables */
+	2,			/* number of variables */
 
 	mod_init, 	/* initialization module */
 	0,			/* response function */
@@ -98,21 +100,60 @@ static int mod_init( void )
 	return 0;
 }
 
-inline static int w_exec_uri(struct sip_msg* msg, char* cmd, char* foo)
+inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 {
 	str *uri;
+	environment_t *backup;
+	int ret;
+
+	backup=0;
+	if (setvars) {
+		backup=set_env(msg);
+		if (!backup) {
+			LOG(L_ERR, "ERROR: w_exec_msg: no env created\n");
+			return -1;
+		}
+	}
 
 	if (msg->new_uri.s && msg->new_uri.len)
 		uri=&msg->new_uri;
 	else
 		uri=&msg->first_line.u.request.uri;
 
-	return exec_str(msg, cmd, uri->s);
+	ret=exec_str(msg, cmd, uri->s);
+	if (setvars) {
+		unset_env(backup);
+	}
+	return ret;
 }
+
+
+inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
+{
+	environment_t *backup;
+	int ret;
+
+	backup=0;
+	if (setvars) {
+		backup=set_env(msg);
+		if (!backup) {
+			LOG(L_ERR, "ERROR: w_exec_msg: no env created\n");
+			return -1;
+		}
+	}
+	ret=exec_msg(msg,cmd);
+	if (setvars) {
+		unset_env(backup);
+	}
+	return ret;
+}
+
+#ifdef _OBSOLETED
 inline static int w_exec_user(struct sip_msg* msg, char* cmd, char* foo)
 {
 	str *uri;
 	struct sip_uri parsed_uri;
+	int ret;
 
 	if (msg->new_uri.s && msg->new_uri.len)
 		uri=&msg->new_uri;
@@ -125,12 +166,11 @@ inline static int w_exec_user(struct sip_msg* msg, char* cmd, char* foo)
 	if (!parsed_uri.user.s || !parsed_uri.user.len) {
 		LOG(L_WARN, "WARNING: w_exec_user: "
 			"empty username in '%.*s'\n", uri->len, uri->s );
-		return exec_str(msg, cmd, "" );
+		ret=exec_str(msg, cmd, "" );
+	} else {
+		ret=exec_str(msg, cmd, parsed_uri.user.s);
 	}
-	return exec_str(msg, cmd, parsed_uri.user.s);
+	free_uri(&parsed_uri);
+	return ret;
 }
-
-inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
-{
-	return exec_msg(msg,cmd);
-}
+#endif
