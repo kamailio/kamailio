@@ -45,7 +45,7 @@
 
 
 /*
- * Extract username from Request-URI
+ * Get Request-URI
  */
 static inline int get_request_uri(struct sip_msg* _m, str* _u)
 {
@@ -62,7 +62,7 @@ static inline int get_request_uri(struct sip_msg* _m, str* _u)
 
 
 /*
- * Extract username from To header field
+ * Get To header field URI
  */
 static inline int get_to_uri(struct sip_msg* _m, str* _u)
 {
@@ -79,7 +79,7 @@ static inline int get_to_uri(struct sip_msg* _m, str* _u)
 
 
 /*
- * Extract username from From header field
+ * Get From header field URI
  */
 static inline int get_from_uri(struct sip_msg* _m, str* _u)
 {
@@ -96,32 +96,6 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u)
 
 
 /*
- * Extract username from digest credentials
- */
-static inline int get_cred_user(struct sip_msg* _m, str* _u)
-{
-	struct hdr_field* h;
-	auth_body_t* c;
-	
-	get_authorized_cred(_m->authorization, &h);
-	if (!h) {
-		get_authorized_cred(_m->proxy_auth, &h);
-		if (!h) {
-			LOG(L_ERR, "get_cred_user(): No authorized credentials found (error in scripts)\n");
-			return -1;
-		}
-	}
-	
-	c = (auth_body_t*)(h->parsed);
-
-	_u->s = c->digest.username.whole.s;
-	_u->len = c->digest.username.whole.len;
-
-	return 0;
-}
-
-
-/*
  * Check if username in specified header field is in a table
  */
 int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
@@ -130,9 +104,11 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	db_val_t vals[3];
 	db_key_t col[1] = {group_column};
 	db_res_t* res;
-	str uri, user;
+	str uri;
 	int hf_type;
 	struct sip_uri puri;
+	struct hdr_field* h;
+	struct auth_body* c = 0; /* Makes gcc happy */
 	
 	hf_type = (int)_hf;
 
@@ -159,10 +135,16 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 		break;
 
 	case 4: /* Credentials */
-		if (get_cred_user(_msg, &user) < 0) {
-			LOG(L_ERR, "is_user_in(): Error while extracting digest username\n");
-			return -4;
+		get_authorized_cred(_msg->authorization, &h);
+		if (!h) {
+			get_authorized_cred(_msg->proxy_auth, &h);
+			if (!h) {
+				LOG(L_ERR, "is_user_in(): No authorized credentials found (error in scripts)\n");
+				return -1;
+			}
 		}
+	
+		c = (auth_body_t*)(h->parsed);
 		break;
 	}
 
@@ -172,24 +154,20 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 			return -5;
 		}
 
-		if (use_domain) {
-			VAL_TYPE(vals + 2) = DB_STR;
-			VAL_NULL(vals + 2) = 0;
-			VAL_STR(vals + 2) = puri.host;
-		}
-
 		VAL_STR(vals) = puri.user;
+		VAL_STR(vals + 2) = puri.host;
 	} else {
-		VAL_STR(vals) = user;
+		VAL_STR(vals) = c->digest.username.user;
+		VAL_STR(vals + 2) = (c->digest.username.domain.len) ? (c->digest.username.domain) : (c->digest.realm);
 	}
 	
-	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
-	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
+	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
+	VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 
 	VAL_STR(vals + 1) = *((str*)_grp);
 	
 	db_use_table(db_handle, table);
-	if (db_query(db_handle, keys, 0, vals, col, (use_domain && (hf_type != 4)) ? (3): (2), 1, 0, &res) < 0) {
+	if (db_query(db_handle, keys, 0, vals, col, (use_domain) ? (3): (2), 1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");
 		return -5;
 	}

@@ -29,6 +29,7 @@
  * History:
  * --------
  * 2003-02-25 - created by janakj
+ * 2003-03-11 - New module interface (janakj)
  */
 
 
@@ -81,51 +82,39 @@ db_con_t* db_handle = 0;   /* Database connection handle */
 
 
 /*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"is_user_in", is_user_in, 2, hf_fixup},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"db_url",        STR_PARAM, &db_url       },
+	{"table",         STR_PARAM, &table        },
+	{"user_column",   STR_PARAM, &user_column  },
+	{"domain_column", STR_PARAM, &domain_column},
+	{"group_column",  STR_PARAM, &group_column },
+	{"use_domain",    INT_PARAM, &use_domain   },
+	{0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
 	"group", 
-	(char*[]) { 
-		"is_user_in"
-	},
-	(cmd_function[]) {
-		is_user_in
-	},
-	(int[]) {2},
-	(fixup_function[]) {
-		hf_fixup
-	},
-	1,
-	
-	(char*[]) {
-		"db_url",              /* Database URL */
-		"table",               /* Group table name */
-		"user_column",         /* Group table user column name */
-		"domain_column",       /* Group table domain column name */
-		"group_column",        /* Group table group column name */
-		"use_domain"   
-	},   /* Module parameter names */
-	(modparam_t[]) {
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-	        INT_PARAM
-	},   /* Module parameter types */
-	(void*[]) {
-		&db_url,
-		&table,
-		&user_column,
-		&domain_column,
-		&group_column,
-		&use_domain
-	},   /* Module parameter variable pointers */
-	6,
+	cmds,       /* Exported functions */
+	params,     /* Exported parameters */
 	mod_init,   /* module initialization function */
-	NULL,       /* response function */
+	0,          /* response function */
 	destroy,    /* destroy function */
-	0,       /* oncancel function */
+	0,          /* oncancel function */
 	child_init  /* child initialization function */
 };
 
