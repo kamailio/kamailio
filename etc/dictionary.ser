@@ -1,24 +1,61 @@
-VALUE Service-Type Call-Check           10
-VALUE Service-Type Emergency-Call       13
-VALUE Service-Type Sip                  15
+#
+# $Id$
+#
+# SIP RADIUS attributes
+#
+# Schulzrinne indicates attributes according to
+# draft-schulzrinne-sipping-radius-accounting-00
+#
+# Sterman indicates attributes according to
+# draft-sterman-aaa-sip-00
+#
+# Standard indicates a standard RADIUS attribute
+# which is missing in radiusclient dictionary
+#
+# Digest indicates attributes according to
+#
+# Proprietary indicates an attribute that hasn't
+# been standardized
+#
 
-ATTRIBUTE Digest-Response	       206     string
-ATTRIBUTE Digest-Attributes	       207     string
+### acc ###
+ATTRIBUTE Sip-Method                   101  integer    # Schulzrinne
+ATTRIBUTE Sip-Response-Code            102  integer    # Schulzrinne
+ATTRIBUTE Sip-Cseq                     103  string     # Schulzrinne
+ATTRIBUTE Sip-To-Tag                   104  string     # Schulzrinne
+ATTRIBUTE Sip-From-Tag                 105  string     # Schulzrinne
+ATTRIBUTE Sip-Branch-Id                106  string     # Schulzrinne
+ATTRIBUTE Sip-Translated-Req-ID        107  string     # Schulzrinne
+ATTRIBUTE Sip-Source-Ip-Address        108  ipaddr     # Schulzrinne
+ATTRIBUTE Sip-Source-Port              109  integer    # Schulzrinne
+VALUE Service-Type Sip-Session          15             # Schulzrinne
 
-ATTRIBUTE Sip-Uri-User                 208     string
-ATTRIBUTE Sip-Method                   209     integer
-ATTRIBUTE Sip-Req-Uri                  210     string
-ATTRIBUTE Sip-Cc                       212     string
-ATTRIBUTE Sip-Rpid                     213     string
+### auth_radius ###
+# Sip-Session service type is already defined in acc section
+VALUE Service-Type Call-Check           10             # Standard
+VALUE Service-Type Emergency-Call       13             # Proprietary
 
-ATTRIBUTE Digest-Realm		      1063     string
-ATTRIBUTE Digest-Nonce		      1064     string
-ATTRIBUTE Digest-Method	              1065     string
-ATTRIBUTE Digest-Uri		      1066     string
-ATTRIBUTE Digest-Qop		      1067     string
-ATTRIBUTE Digest-Algorithm	      1068     string
-ATTRIBUTE Digest-Body-Digest	      1069     string
-ATTRIBUTE Digest-Cnonce	              1070     string
-ATTRIBUTE Digest-Nonce-Count	      1071     string
-ATTRIBUTE Digest-User-Nam	      1072     string
+ATTRIBUTE Digest-Response	       206     string  # Sterman
+ATTRIBUTE Digest-Attributes	       207     string  # Sterman
 
+ATTRIBUTE Sip-Uri-User                 208     string  # Proprietary
+ATTRIBUTE Sip-Rpid                     213     string  # Proprietary
+
+ATTRIBUTE Digest-Realm		      1063     string  # Sterman
+ATTRIBUTE Digest-Nonce		      1064     string  # Sterman
+ATTRIBUTE Digest-Method	              1065     string  # Sterman
+ATTRIBUTE Digest-Uri		      1066     string  # Sterman
+ATTRIBUTE Digest-Qop		      1067     string  # Sterman
+ATTRIBUTE Digest-Algorithm	      1068     string  # Sterman
+ATTRIBUTE Digest-Body-Digest	      1069     string  # Sterman
+ATTRIBUTE Digest-Cnonce	              1070     string  # Sterman
+ATTRIBUTE Digest-Nonce-Count	      1071     string  # Sterman
+ATTRIBUTE Digest-User-Name	      1072     string  # Sterman
+
+### group_radius ###
+VALUE Service-Type Group-Check          12             # Proprietary
+
+ATTRIBUTE Sip-Group                    211     string  # Proprietary
+
+### uri_radius ###
+# Call-Check service type is already define in auth_radius
