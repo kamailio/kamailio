@@ -28,10 +28,12 @@
 /*
  * History:
  * --------
- * 2003-01-23 switched from t_uac to t_uac_dlg, adapted to new way of
- * parsing for Content-Type; by bogdan
- * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
- * 2003-08-05 adapted to the new parse_content_type_hdr function (bogdan)
+ * 2003-01-23: switched from t_uac to t_uac_dlg, adapted to new way of
+ *              parsing for Content-Type (bogdan)
+ * 2003-02-28: protocolization of t_uac_dlg completed (jiri)
+ * 2003-08-05: adapted to the new parse_content_type_hdr function (bogdan)
+ * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
+ * 2003-09-11: force parsing to hdr when extracting destination user (bogdan)
  */
 
 #include <unistd.h>
@@ -136,7 +138,7 @@ inline int add_contact(struct sip_msg* msg , str* user)
 	*(p++) = '>';
 	append_str( p, CRLF, CRLF_LEN);
 
-	lump = build_lump_rpl( buf , len );
+	lump = build_lump_rpl( buf , len , LUMP_RPL_HDR);
 	if(!lump) {
 		LOG(L_ERR,"ERROR:sms_add_contact: unable to build lump_rpl! \n");
 		pkg_free( buf );
@@ -206,9 +208,9 @@ int push_on_network(struct sip_msg *msg, int net)
 		msg->first_line.u.request.uri.len ,&uri)||!uri.user.len )
 		{
 			DBG("DEBUG:sms_push_on_net: tring to get user from To\n");
-			if (!msg->to || !get_to(msg) ||
-			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
-			||!uri.user.len)
+			if ( ((!msg->to&&parse_headers(msg,HDR_TO,0)==-1) || !msg->to ) ||
+			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)==-1
+			|| !uri.user.len)
 			{
 				LOG(L_ERR,"ERROR:sms_push_on_net: unable to extract user"
 					" name from RURI and To header!\n");
