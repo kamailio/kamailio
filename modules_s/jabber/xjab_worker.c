@@ -39,6 +39,9 @@
  *             with Jabber server is lost or closed, (dcm)
  * 2003-05-09  added new presence status - 'refused' - when the presence
  *             subscription request is refused by target, (dcm)
+ * 2003-05-09  new xj_worker_precess function cleaning - some part of it moved
+ *             to xj_worker_check_qmsg and xj_worker_check_watcher functions,
+ *             (dcm)
  */
 
 #include <string.h>
@@ -68,8 +71,8 @@
 #define XJAB_RESOURCE "serXjab"
 
 #define XJ_ADDRTR_NUL	0
-#define XJ_ADDRTR_A2B	1
-#define XJ_ADDRTR_B2A	2
+#define XJ_ADDRTR_S2J	1
+#define XJ_ADDRTR_J2S	2
 #define XJ_ADDRTR_CON	4
 
 #define XJ_MSG_POOL_SIZE	10
@@ -130,7 +133,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 			{
 				if(als->d[i])
 				{
-					if(flag & XJ_ADDRTR_A2B)
+					if(flag & XJ_ADDRTR_S2J)
 					{
 						strncpy(dst->s, src->s, src->len);
 						p0 = dst->s;
@@ -142,7 +145,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 						}
 						return 0;
 					}
-					if(flag & XJ_ADDRTR_B2A)
+					if(flag & XJ_ADDRTR_J2S)
 					{
 						strncpy(dst->s, src->s, src->len);
 						p0 = dst->s;
@@ -164,7 +167,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 			_xj_pid);	
 #endif
 	
-	if(flag & XJ_ADDRTR_A2B)
+	if(flag & XJ_ADDRTR_S2J)
 	{
 		if(als->jdm->len != ll || strncasecmp(p, als->jdm->s, als->jdm->len))
 		{
@@ -215,7 +218,7 @@ int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
 		}
 		return 0;
 	}
-	if(flag & XJ_ADDRTR_B2A)
+	if(flag & XJ_ADDRTR_J2S)
 	{
 		*(p-1) = als->dlm;
 		p0 = src->s + src->len;
@@ -264,7 +267,6 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 	xj_jconf jcf = NULL;
 	char *p, buff[1024], recv_buff[4096];
 	int flags, nr, ltime = 0;
-	xj_pres_cell prc = NULL;
 	
 	db_key_t keys[] = {"sip_id", "type"};
 	db_val_t vals[2];
@@ -320,91 +322,13 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		tmv.tv_usec = 0;
 
 		ret = select(maxfd+1, &mset, NULL, NULL, &tmv);
-		/** check the queue AND conecction of head element is ready */
-		for(i = 0; i<jcp->jmqueue.size && main_loop; i++)
-		{
-			if(jcp->jmqueue.jsm[i]==NULL || jcp->jmqueue.ojc[i]==NULL)
-			{
-				if(jcp->jmqueue.jsm[i]!=NULL)
-				{
-					xj_sipmsg_free(jcp->jmqueue.jsm[i]);
-					jcp->jmqueue.jsm[i] = NULL;
-					xj_jcon_pool_del_jmsg(jcp, i);
-				}
-				if(jcp->jmqueue.ojc[i]!=NULL)
-					xj_jcon_pool_del_jmsg(jcp, i);
-				continue;
-			}
-			if(jcp->jmqueue.expire[i] < get_ticks())
-			{
-#ifdef XJ_EXTRA_DEBUG
-				DBG("XJAB:xj_worker:%d: message to %.*s is expired\n",
-					_xj_pid, jcp->jmqueue.jsm[i]->to.len, 
-					jcp->jmqueue.jsm[i]->to.s);
-#endif
-				xj_send_sip_msgz(_PADDR(jwl), jcp->jmqueue.jsm[i]->jkey->id, 
-						&jcp->jmqueue.jsm[i]->to, XJ_DMSG_ERR_SENDIM,
-						&jcp->jmqueue.ojc[i]->jkey->flag);
-				if(jcp->jmqueue.jsm[i]!=NULL)
-				{
-					xj_sipmsg_free(jcp->jmqueue.jsm[i]);
-					jcp->jmqueue.jsm[i] = NULL;
-				}
-				/** delete message from queue */
-				xj_jcon_pool_del_jmsg(jcp, i);
-				continue;
-			}
-
-#ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_worker:%d:%d: QUEUE: message[%d] from [%.*s]/to [%.*s]/"
-					"body[%.*s] expires at %d\n",
-					_xj_pid, get_ticks(), i, 
-					jcp->jmqueue.jsm[i]->jkey->id->len,
-					jcp->jmqueue.jsm[i]->jkey->id->s,
-					jcp->jmqueue.jsm[i]->to.len,jcp->jmqueue.jsm[i]->to.s,
-					jcp->jmqueue.jsm[i]->msg.len,jcp->jmqueue.jsm[i]->msg.s,
-					jcp->jmqueue.expire[i]);
-#endif
-			if(xj_jcon_is_ready(jcp->jmqueue.ojc[i], jcp->jmqueue.jsm[i]->to.s,
-					jcp->jmqueue.jsm[i]->to.len, jwl->aliases->dlm))
-				continue;
-
-			/*** address corection ***/
-			flag = XJ_ADDRTR_A2B;
-			if(!xj_jconf_check_addr(&jcp->jmqueue.jsm[i]->to,jwl->aliases->dlm))
-				flag |= XJ_ADDRTR_CON;
-			
-			sto.s = buff; 
-			sto.len = 0;
-			if(xj_address_translation(&jcp->jmqueue.jsm[i]->to,
-				&sto, jwl->aliases, flag) == 0)
-			{
-				/** send message from queue */
-#ifdef XJ_EXTRA_DEBUG
-				DBG("XJAB:xj_worker:%d: SENDING the message from "
-					" local queue to Jabber network ...\n", _xj_pid);
-#endif
-				xj_jcon_send_msg(jcp->jmqueue.ojc[i],
-					sto.s, sto.len,
-					jcp->jmqueue.jsm[i]->msg.s,
-					jcp->jmqueue.jsm[i]->msg.len,
-					(flag&XJ_ADDRTR_CON)?XJ_JMSG_GROUPCHAT:XJ_JMSG_CHAT);
-			}
-			else
-				DBG("XJAB:xj_worker:%d: ERROR SENDING the message from "
-				" local queue to Jabber network ...\n", _xj_pid);
-				
-			if(jcp->jmqueue.jsm[i]!=NULL)
-			{
-				xj_sipmsg_free(jcp->jmqueue.jsm[i]);
-				jcp->jmqueue.jsm[i] = NULL;
-			}
-			/** delete message from queue */
-			xj_jcon_pool_del_jmsg(jcp, i);
-		} // end MSG queue checking
+		
+		// check the msg queue
+		xj_worker_check_qmsg(jwl, jcp);
 		
 		if(ret <= 0)
 			goto step_x;
+
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_worker:%d: something is coming\n", _xj_pid);
 #endif
@@ -565,77 +489,11 @@ step_z:
 			goto step_w;
 		
 		if(jsmsg->type == XJ_REG_WATCHER)
-		{ // register a presence watcher
-			if(!jsmsg->cbf)
-			{
-#ifdef XJ_EXTRA_DEBUG
-				DBG("XJAB:xj_worker:%d: NULL PA callback"
-					" function\n", _xj_pid);
-#endif
-				goto step_w;
-			}
-
-			if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
-			{ // is for a conference - ignore?!?!
-#ifdef XJ_EXTRA_DEBUG
-				DBG("XJAB:xj_worker:%d: presence request for a conference.\n",
-					_xj_pid);
-#endif
-				// set as offline
-				(*(jsmsg->cbf))(&jsmsg->to, XJ_PS_OFFLINE, jsmsg->p);
-				goto step_w;
-			}
-			
-			sto.s = buff; 
-			sto.len = 0;
-
-			if(xj_address_translation(&jsmsg->to, &sto, jwl->aliases, 
-					XJ_ADDRTR_A2B) == 0)
-			{
-				prc = xj_pres_list_check(jbc->plist, &sto);
-				if(!prc)
-				{
-#ifdef XJ_EXTRA_DEBUG
-					DBG("XJAB:xj_worker:%d: NEW presence"
-						" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
-#endif
-					prc = xj_pres_cell_new();
-					if(!prc)
-					{
-						DBG("XJAB:xj_worker:%d: cannot create a presence"
-							" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
-						goto step_w;
-					}
-					if(xj_pres_cell_init(prc, &sto, jsmsg->cbf, jsmsg->p)<0)
-					{
-						DBG("XJAB:xj_worker:%d: cannot init the presence"
-							" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
-						xj_pres_cell_free(prc);
-						goto step_w;
-					}
-					if((prc = xj_pres_list_add(jbc->plist, prc))==NULL)
-					{
-						DBG("XJAB:xj_worker:%d: cannot add the presence"
-							" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
-						goto step_w;
-					}
-					sto.s[sto.len] = 0;
-					if(!xj_jcon_send_subscribe(jbc, sto.s, NULL, "subscribe"))
-						prc->status = XJ_PRES_STATUS_WAIT; 
-				}
-				else
-				{
-					xj_pres_cell_update(prc, jsmsg->cbf, jsmsg->p);
-#ifdef XJ_EXTRA_DEBUG
-					DBG("XJAB:xj_worker:%d: calling CBF(%.*s,%d)\n", _xj_pid,
-						jsmsg->to.len, jsmsg->to.s, prc->state);
-#endif
-					// send presence info to SIP subscriber
-					(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
-				}
-			}
+		{ // update or register a presence watcher
+			xj_worker_check_watcher(jwl, jcp, jbc, jsmsg);
 			goto step_w;
 		}
+		
 		flag = 0;
 		if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
 		{
@@ -682,7 +540,7 @@ step_z:
 				/*** address corection ***/
 				sto.s = buff; 
 				sto.len = 0;
-				flag |= XJ_ADDRTR_A2B;
+				flag |= XJ_ADDRTR_S2J;
 				if(xj_address_translation(&jsmsg->to, &sto, jwl->aliases, 
 							flag) == 0)
 				{
@@ -867,6 +725,7 @@ step_xx:
 	return 0;
 } // end xj_worker_process
 
+
 /**
  * parse incoming message from Jabber server
  */
@@ -997,7 +856,7 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 		ts.len = strlen(from);
 		tf.s = fbuf;
 		tf.len = 0;
-		if(xj_address_translation(&ts, &tf, als, XJ_ADDRTR_B2A) == 0)
+		if(xj_address_translation(&ts, &tf, als, XJ_ADDRTR_J2S) == 0)
 		{
 			ts.s = lbuf;
 			ts.len = strlen(lbuf);
@@ -1247,7 +1106,7 @@ call_pa_cbf:
 		// call the PA callback function
 		tf.s = fbuf;
 		tf.len = 0;
-		if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_B2A)==0)
+		if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_J2S)==0)
 		{
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_manage_jab: calling CBF(%.*s,%d)\n",
@@ -1480,6 +1339,185 @@ void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *ps
 		xj_jcon_disconnect(jcp->ojc[i]);
 		xj_jcon_free(jcp->ojc[i]);
 		jcp->ojc[i] = NULL;
+	}
+}
+
+/**
+ * check if there are msg to send or delete from queue
+ */
+void xj_worker_check_qmsg(xj_wlist jwl, xj_jcon_pool jcp)
+{
+	int i, flag;
+	str sto;
+	char buff[1024];
+
+	if(!jwl || !jcp)
+		return;
+
+	/** check the msg queue AND if the target connection is ready */
+	for(i = 0; i<jcp->jmqueue.size && main_loop; i++)
+	{
+		if(jcp->jmqueue.jsm[i]==NULL || jcp->jmqueue.ojc[i]==NULL)
+		{
+			if(jcp->jmqueue.jsm[i]!=NULL)
+			{
+				xj_sipmsg_free(jcp->jmqueue.jsm[i]);
+				jcp->jmqueue.jsm[i] = NULL;
+				xj_jcon_pool_del_jmsg(jcp, i);
+			}
+			if(jcp->jmqueue.ojc[i]!=NULL)
+				xj_jcon_pool_del_jmsg(jcp, i);
+			continue;
+		}
+		if(jcp->jmqueue.expire[i] < get_ticks())
+		{
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_worker_check_qmsg:%d: message to %.*s is expired\n",
+				_xj_pid, jcp->jmqueue.jsm[i]->to.len, 
+				jcp->jmqueue.jsm[i]->to.s);
+#endif
+			xj_send_sip_msgz(_PADDR(jwl), jcp->jmqueue.jsm[i]->jkey->id, 
+					&jcp->jmqueue.jsm[i]->to, XJ_DMSG_ERR_SENDIM,
+					&jcp->jmqueue.ojc[i]->jkey->flag);
+			if(jcp->jmqueue.jsm[i]!=NULL)
+			{
+				xj_sipmsg_free(jcp->jmqueue.jsm[i]);
+				jcp->jmqueue.jsm[i] = NULL;
+			}
+			/** delete message from queue */
+			xj_jcon_pool_del_jmsg(jcp, i);
+			continue;
+		}
+#ifdef XJ_EXTRA_DEBUG
+		DBG("XJAB:xj_worker_check_qmsg:%d:%d: QUEUE: message[%d] from [%.*s]"
+				"/to [%.*s]/body[%.*s] expires at %d\n",
+				_xj_pid, get_ticks(), i, 
+				jcp->jmqueue.jsm[i]->jkey->id->len,
+				jcp->jmqueue.jsm[i]->jkey->id->s,
+				jcp->jmqueue.jsm[i]->to.len,jcp->jmqueue.jsm[i]->to.s,
+				jcp->jmqueue.jsm[i]->msg.len,jcp->jmqueue.jsm[i]->msg.s,
+				jcp->jmqueue.expire[i]);
+#endif
+		if(xj_jcon_is_ready(jcp->jmqueue.ojc[i], jcp->jmqueue.jsm[i]->to.s,
+				jcp->jmqueue.jsm[i]->to.len, jwl->aliases->dlm))
+			continue;
+		
+		/*** address corection ***/
+		flag = XJ_ADDRTR_S2J;
+		if(!xj_jconf_check_addr(&jcp->jmqueue.jsm[i]->to,jwl->aliases->dlm))
+		flag |= XJ_ADDRTR_CON;
+		
+		sto.s = buff; 
+		sto.len = 0;
+		if(xj_address_translation(&jcp->jmqueue.jsm[i]->to,
+			&sto, jwl->aliases, flag) == 0)
+		{
+			/** send message from queue */
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_worker_check_qmsg:%d: SENDING the message from"
+				" local queue to Jabber network ...\n", _xj_pid);
+#endif
+			xj_jcon_send_msg(jcp->jmqueue.ojc[i],
+				sto.s, sto.len,
+				jcp->jmqueue.jsm[i]->msg.s,
+				jcp->jmqueue.jsm[i]->msg.len,
+				(flag&XJ_ADDRTR_CON)?XJ_JMSG_GROUPCHAT:XJ_JMSG_CHAT);
+		}
+		else
+			DBG("XJAB:xj_worker_check_qmsg:%d: ERROR SENDING the message from"
+				" local queue to Jabber network ...\n", _xj_pid);
+		
+		if(jcp->jmqueue.jsm[i]!=NULL)
+		{
+			xj_sipmsg_free(jcp->jmqueue.jsm[i]);
+			jcp->jmqueue.jsm[i] = NULL;
+		}
+		/** delete message from queue */
+		xj_jcon_pool_del_jmsg(jcp, i);
+	}
+}
+
+
+/**
+ * update or register a presence watcher
+ */
+void xj_worker_check_watcher(xj_wlist jwl, xj_jcon_pool jcp,
+				xj_jcon jbc, xj_sipmsg jsmsg)
+{
+	str sto;
+	char buff[1024];
+	xj_pres_cell prc = NULL;
+
+	if(!jwl || !jcp || !jbc || !jsmsg)
+		return;
+
+	if(!jsmsg->cbf)
+	{
+#ifdef XJ_EXTRA_DEBUG
+		DBG("XJAB:xj_worker_check_watcher:%d: NULL PA callback"
+			" function\n", _xj_pid);
+#endif
+		return;
+	}
+
+	if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
+	{ // is for a conference - ignore?!?!
+#ifdef XJ_EXTRA_DEBUG
+		DBG("XJAB:xj_worker_check_watcher:%d: presence request for a"
+			" conference.\n", _xj_pid);
+#endif
+		// set as offline
+		(*(jsmsg->cbf))(&jsmsg->to, XJ_PS_OFFLINE, jsmsg->p);
+		return;
+	}
+			
+	sto.s = buff; 
+	sto.len = 0;
+
+	if(xj_address_translation(&jsmsg->to, &sto, jwl->aliases, 
+		XJ_ADDRTR_S2J) == 0)
+	{
+		prc = xj_pres_list_check(jbc->plist, &sto);
+		if(!prc)
+		{
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_worker_check_watcher:%d: NEW presence"
+				" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+#endif
+			prc = xj_pres_cell_new();
+			if(!prc)
+			{
+				DBG("XJAB:xj_worker_check_watcher:%d: cannot create a presence"
+					" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+				return;
+			}
+			if(xj_pres_cell_init(prc, &sto, jsmsg->cbf, jsmsg->p)<0)
+			{
+				DBG("XJAB:xj_worker_check_watcher:%d: cannot init the presence"
+					" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+				xj_pres_cell_free(prc);
+				return;
+			}
+			if((prc = xj_pres_list_add(jbc->plist, prc))==NULL)
+			{
+				DBG("XJAB:xj_worker_check_watcher:%d: cannot add the presence"
+					" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+				return;
+			}
+			sto.s[sto.len] = 0;
+			if(!xj_jcon_send_subscribe(jbc, sto.s, NULL, "subscribe"))
+				prc->status = XJ_PRES_STATUS_WAIT; 
+		}
+		else
+		{
+			xj_pres_cell_update(prc, jsmsg->cbf, jsmsg->p);
+#ifdef XJ_EXTRA_DEBUG
+			DBG("XJAB:xj_worker_check_watcher:%d: calling CBF(%.*s,%d)\n",
+				_xj_pid, jsmsg->to.len, jsmsg->to.s, prc->state);
+#endif
+			// send presence info to SIP subscriber
+			(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
+		}
 	}
 }
 
