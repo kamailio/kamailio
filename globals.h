@@ -129,4 +129,9 @@ extern int mhomed;
 extern int my_argc;
 extern char **my_argv;
 
+/* pre-set addresses */
+extern str default_global_address;
+/* pre-ser ports */
+extern str default_global_port;
+
 #endif

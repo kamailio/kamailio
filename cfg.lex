@@ -38,6 +38,7 @@
  *  2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
  *               require_certificate added (andrei)
  *  2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
+ *  2003-10-02  added {,set_}advertised_{address,port} (andrei)
  */
 
 
@@ -106,6 +107,8 @@ STRIP_TAIL		"strip_tail"
 APPEND_BRANCH	"append_branch"
 IF				"if"
 ELSE			"else"
+SET_ADV_ADDRESS	"set_advertised_address"
+SET_ADV_PORT	"set_advertised_port"
 
 /*ACTION LVALUES*/
 URIHOST			"uri:host"
@@ -172,6 +175,8 @@ TLS_REQUIRE_CERTIFICATE "tls_require_certificate"
 TLS_CERTIFICATE	"tls_certificate"
 TLS_PRIVATE_KEY "tls_private_key"
 TLS_CA_LIST		"tls_ca_list"
+ADVERTISED_ADDRESS	"advertised_address"
+ADVERTISED_PORT		"advertised_port"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -260,6 +265,11 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
 <INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
+<INITIAL>{SET_ADV_ADDRESS}	{ count(); yylval.strval=yytext;
+										return SET_ADV_ADDRESS; }
+<INITIAL>{SET_ADV_PORT}	{ count(); yylval.strval=yytext;
+										return SET_ADV_PORT; }
+
 <INITIAL>{URIHOST}	{ count(); yylval.strval=yytext; return URIHOST; }
 <INITIAL>{URIPORT}	{ count(); yylval.strval=yytext; return URIPORT; }
 
@@ -314,6 +324,10 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
+<INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;
+									return ADVERTISED_ADDRESS; }
+<INITIAL>{ADVERTISED_PORT}		{	count(); yylval.strval=yytext;
+									return ADVERTISED_PORT; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 

@@ -34,6 +34,7 @@
  *  2003-04-01  Added support for loose routing in forward (janakj)
  *  2003-04-12  FORCE_RPORT_T added (andrei)
  *  2003-04-22  strip_tail added (jiri)
+ *  2003-10-02  added SET_ADV_ADDR_T & SET_ADV_PORT_T (andrei)
  */
 
 
@@ -606,6 +607,26 @@ int do_action(struct action* a, struct sip_msg* msg)
 			break;
 		case FORCE_RPORT_T:
 			msg->msg_flags|=FL_FORCE_RPORT;
+			ret=1; /* continue processing */
+			break;
+		case SET_ADV_ADDR_T:
+			if (a->p1_type!=STR_ST){
+				LOG(L_CRIT, "BUG: do_action: bad set_advertised_address() "
+						"type %d\n", a->p1_type);
+				ret=E_BUG;
+				break;
+			}
+			msg->set_global_address=*((str*)a->p1.data);
+			ret=1; /* continue processing */
+			break;
+		case SET_ADV_PORT_T:
+			if (a->p1_type!=STR_ST){
+				LOG(L_CRIT, "BUG: do_action: bad set_advertised_port() "
+						"type %d\n", a->p1_type);
+				ret=E_BUG;
+				break;
+			}
+			msg->set_global_port=*((str*)a->p1.data);
 			ret=1; /* continue processing */
 			break;
 		default:

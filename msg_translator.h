@@ -55,6 +55,25 @@ struct bookmark {
 	str to_tag_val;
 };
 
+/* used by via_builder */
+struct hostport {
+	str* host;
+	str* port;
+};
+
+
+#define set_hostport(hp, msg) \
+	do{ \
+		if ((msg) && ((struct sip_msg*)(msg))->set_global_address.len) \
+			(hp)->host=&(((struct sip_msg*)(msg))->set_global_address); \
+		else \
+			(hp)->host=&default_global_address; \
+		if ((msg) && ((struct sip_msg*)(msg))->set_global_port.len) \
+			(hp)->port=&(((struct sip_msg*)(msg))->set_global_port); \
+		else \
+			(hp)->port=&default_global_port; \
+	}while(0)
+
 char * build_req_buf_from_sip_req (	struct sip_msg* msg, 
 				unsigned int *returned_len, struct socket_info* send_sock,
 				int proto);
@@ -84,7 +103,7 @@ char * build_res_buf_with_body_from_sip_req(	unsigned int code ,
 */
 char* via_builder( unsigned int *len,
 	struct socket_info* send_sock,
-	str *branch, str* extra_params, int proto );
+	str *branch, str* extra_params, int proto, struct hostport *hp );
 
 
 int branch_builder( unsigned int hash_index, 

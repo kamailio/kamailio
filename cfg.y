@@ -42,6 +42,7 @@
  * 2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
  *              require_certificate added (andrei)
  * 2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
+ * 2003-10-02  added {,set_}advertised_{address,port} (andrei)
  */
 
 
@@ -63,6 +64,7 @@
 #include "modparam.h"
 #include "ip_addr.h"
 #include "name_alias.h"
+#include "ut.h"
 
 #include "config.h"
 #ifdef USE_TLS
@@ -84,10 +86,12 @@ struct id_list{
 
 extern int yylex();
 void yyerror(char* s);
-char* tmp;
-void* f_tmp;
-struct id_list* lst_tmp;
-int rt;  /* Type of route block for find_export */
+static char* tmp;
+static int i_tmp;
+static void* f_tmp;
+static struct id_list* lst_tmp;
+static int rt;  /* Type of route block for find_export */
+static str* str_tmp;
 
 void warn(char* s);
  
@@ -136,6 +140,8 @@ void warn(char* s);
 %token FORCE_RPORT
 %token IF
 %token ELSE
+%token SET_ADV_ADDRESS
+%token SET_ADV_PORT
 %token URIHOST
 %token URIPORT
 %token MAX_LEN
@@ -195,6 +201,9 @@ void warn(char* s);
 %token TLS_CERTIFICATE
 %token TLS_PRIVATE_KEY
 %token TLS_CA_LIST
+%token ADVERTISED_ADDRESS
+%token ADVERTISED_PORT
+
 
 
 
@@ -527,6 +536,27 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 								add_alias(lst_tmp->s, strlen(lst_tmp->s), 0);
 							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
+		| ADVERTISED_ADDRESS EQUAL listen_id {
+								default_global_address.s=$3;
+								default_global_address.len=strlen($3);
+								}
+		|ADVERTISED_ADDRESS EQUAL error {yyerror("ip address or hostname "
+												"expected"); }
+		| ADVERTISED_PORT EQUAL NUMBER {
+								tmp=int2str($3, &i_tmp);
+								if ((default_global_port.s=pkg_malloc(i_tmp))
+										==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+										default_global_port.len=0;
+								}else{
+									default_global_port.len=i_tmp;
+									memcpy(default_global_port.s, tmp,
+											default_global_port.len);
+								};
+								}
+		|ADVERTISED_PORT EQUAL error {yyerror("ip address or hostname "
+												"expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 
@@ -1341,6 +1371,42 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| REVERT_URI { $$=mk_action( REVERT_URI_T, 0,0,0,0); }
 		| FORCE_RPORT LPAREN RPAREN	{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
 		| FORCE_RPORT				{$$=mk_action(FORCE_RPORT_T,0, 0, 0, 0); }
+		| SET_ADV_ADDRESS LPAREN listen_id RPAREN {
+								$$=0;
+								if ((str_tmp=pkg_malloc(sizeof(str)))==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+								}else{
+										str_tmp->s=$3;
+										str_tmp->len=strlen($3);
+										$$=mk_action(SET_ADV_ADDR_T, STR_ST,
+										             0, str_tmp, 0);
+								}
+												  }
+		| SET_ADV_ADDRESS LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| SET_ADV_ADDRESS error {$$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_ADV_PORT LPAREN NUMBER RPAREN {
+								$$=0;
+								tmp=int2str($3, &i_tmp);
+								if ((str_tmp=pkg_malloc(sizeof(str)))==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+								}else{
+									if ((str_tmp->s=pkg_malloc(i_tmp))==0){
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
+									}else{
+										memcpy(str_tmp->s, tmp, i_tmp);
+										str_tmp->len=i_tmp;
+										$$=mk_action(SET_ADV_PORT_T, STR_ST,
+													0, str_tmp, 0);
+									}
+								}
+								            }
+		| SET_ADV_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| SET_ADV_PORT  error {$$=0; yyerror("missing '(' or ')' ?"); }
 		| ID LPAREN RPAREN			{ f_tmp=(void*)find_export($1, 0, rt);
 									   if (f_tmp==0){
 										   if (find_export($1, 0, 0)) {

@@ -228,6 +228,8 @@ struct sip_msg {
 	      * reached 
 	      */
 	flag_t flags;	
+	str set_global_address;
+	str set_global_port;
 };
 
 /* pointer to a fakes message which was never received ;

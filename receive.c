@@ -59,6 +59,12 @@
 #endif
 
 unsigned int msg_no=0;
+/* address preset vars */
+str default_global_address={0,0};
+str default_global_port={0,0};
+str default_via_address={0,0};
+str default_via_port={0,0};
+
 
 
 /* WARNING: buf must be 0 terminated (buf[len]=0) or some things might 
@@ -93,6 +99,8 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	msg->rcv=*rcv_info;
 	msg->id=msg_no;
+	msg->set_global_address=default_global_address;
+	msg->set_global_port=default_global_port;
 	
 	if (parse_msg(buf,len, msg)!=0){
 		LOG(L_ERR, "ERROR: receive_msg: parse_msg failed\n");
@@ -127,7 +135,6 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 #ifdef  STATS
 		gettimeofday( & tvb, &tz );
 #endif
-
 		if (run_actions(rlist[0], msg)<0){
 
 			LOG(L_WARN, "WARNING: receive_msg: "

@@ -35,6 +35,7 @@
  * 2003-04-14  build_local no longer checks reply status as it
  *             is now called before reply status is updated to
  *             avoid late ACK sending (jiri)
+ * 2003-10-02  added via_builder set host/port support (andrei)
  */
 
 #include "defs.h"
@@ -78,6 +79,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	int branch_len;
 	str branch_str;
+	struct hostport hp;
 
 #ifdef _OBSO
 	if ( Trans->uac[branch].last_received<100)
@@ -98,8 +100,9 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		goto error;
 	branch_str.s=branch_buf;
 	branch_str.len=branch_len;
+	set_hostport(&hp, (Trans->local)?0:(Trans->uas.request));
 	via=via_builder(&via_len, Trans->uac[branch].request.dst.send_sock,
-		&branch_str, 0, Trans->uac[branch].request.dst.proto );
+		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
@@ -236,6 +239,7 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 	int len;
 	unsigned int via_len;
 	str branch_str;
+	struct hostport hp;
 
 	if (!t_calc_branch(t, branch, branch_buf, &len)) {
 		LOG(L_ERR, "ERROR: build_via: branch calculation failed\n");
@@ -249,7 +253,8 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 	printf("!!!proto: %d\n", sock->proto);
 #endif
 
-	via = via_builder(&via_len, sock, &branch_str, 0, sock->proto);
+	set_hostport(&hp, 0);
+	via = via_builder(&via_len, sock, &branch_str, 0, sock->proto, &hp);
 	if (!via) {
 		LOG(L_ERR, "build_via: via building failed\n");
 		return -2;
