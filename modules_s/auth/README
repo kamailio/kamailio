@@ -189,3 +189,11 @@ Params: hf - Use username in this header field, the following values
              "credentials" - Use username digest parameter
         group - grooup name
 Desc:   Checks, if the user is in specified table
+
+Usage Note
+----------
+As long as hop-by-hop requests ACK and CANCEL cannot be challenged
+(see SIP specification), they typically include none or invalid
+credentials. Avoid verification of these credentials in ACK/CANCEL
+messages.  It would result in dropping valid requests.
+
