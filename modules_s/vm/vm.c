@@ -1,5 +1,4 @@
 /*
- * $Id$
  *
  * $Id$
  *
@@ -221,26 +220,9 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	    goto error;
 	  }
 	    
-	if( (!email_res) || (email_res->n != 1) ){
-
-#if 0	  
-	  if(email_res)
-	    (*db_free_query)(db_handle,email_res);
-		
-	  LOG( L_ERR,"ERROR: %s: no email for user '%.*s'",
-	       exports.name,
-	       user->len,user->s);
-	  goto error;
-#endif
-	}
-	else {   
+	if( email_res && (email_res->n == 1) ){
 	    email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
 	    email->len = strlen(email->s);
-	
-#ifdef REMOVE
-	    domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
-	    domain->s = strlen(domain->s);
-#endif	    
 	}
 
 	if(email_res)
@@ -529,11 +511,9 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 
     lines[6]=msg->rcv.bind_address->address_str; /* dst ip */
 
-#ifdef JKUFIX
-    lines[7]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
-#endif
     lines[7]=msg->rcv.dst_port==SIP_PORT ?
 			empty_param : msg->rcv.bind_address->port_no_str; /* port */
+
     lines[8]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
 
     lines[9]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
