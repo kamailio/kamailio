@@ -473,12 +473,8 @@ str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
 		DBG("subst_str: no match\n");
 		return 0;
 	}
-	DBG("subst_str: orig len: %d\n", len);
-	for (l=lst; l; l=l->next){
-		DBG("subst_str: len+=%d (size=%d)\n", l->rpl.len-l->size, l->size );
+	for (l=lst; l; l=l->next)
 		len+=(int)(l->rpl.len)-l->size;
-	}
-	DBG("subst_str: new len: %d\n", len);
 	res=pkg_malloc(sizeof(str));
 	if (res==0){
 		LOG(L_ERR, "ERROR: subst_str: mem. allocation error\n");
