@@ -425,7 +425,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 		create_msg(buff, REQ_REG, lport);
 		retryAfter = 5000;
 	}else if (trace){
-		if (maxforw)
+		if (maxforw!=-1)
 			nretries=maxforw;
 		else
 			nretries=255;
@@ -457,7 +457,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 			exit(2);
 		}
 
-		for (i = 0; i < nretries; i++)
+		for (i = 0; i <= nretries; i++)
 		{
 			if (trace) {
 				set_maxforw(buff, i);
@@ -599,7 +599,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 				else if (trace) {
 					/* in trace we only look for 483, anything else is 
 					   treated as the final reply*/
-					printf("%i: ", i+1);
+					printf("%i: ", i);
 					if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
 						printf("* (483) \n");
 #ifdef DEBUG
@@ -613,7 +613,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 					else {
 						crlf=strchr(reply,'\n');
 						sprintf(crlf, "\0");
-						printf("%s\n", reply);
+//						printf("%s\n", reply);
 						crlf++;
 						contact=strstr(crlf, "Contact");
 						if (contact){
@@ -622,7 +622,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 						printf("   %s\n", contact);
 						}
 						else {
-							printf("received reply without contact:\n%s\n"
+							printf("received reply without contact: %s\n"
 								, reply);
 						}
 						exit(0);
@@ -832,6 +832,7 @@ int main(int argc, char *argv[])
 					puts("error: non-numerical number of max-forwards");
 					exit(2);
 				}
+				break;
 			case 'r':
 				rport=atoi(optarg);
 				if (!rport) {
