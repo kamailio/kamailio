@@ -165,7 +165,7 @@ struct tmcb_params {
 	struct sip_msg* req;
 	struct sip_msg* rpl;
 	int code;
-	void *param;
+	void **param;
 };
 
 /* callback function prototype */

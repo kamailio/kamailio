@@ -178,7 +178,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 		if ( (cbp->types)&type ) {
 			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 				trans, type, cbp->id );
-			params.param = cbp->param;
+			params.param = &(cbp->param);
 			cbp->callback( trans, type, &params );
 		}
 	}
@@ -197,7 +197,7 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
 		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
-		params.param = cbp->param;
+		params.param = &(cbp->param);
 		cbp->callback( trans, cbp->types, &params );
 	}
 }
