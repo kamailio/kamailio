@@ -66,6 +66,9 @@
 	}while(0)
 
 
+extern int proxy_recurse;
+
+
 static inline int parse_q(str *q, unsigned int *prio)
 {
 	if (q->s[0]=='0')
@@ -93,7 +96,8 @@ error:
 static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 													struct location **loc_set)
 {
-	struct contact* contacts;
+	struct sip_uri uri;
+	struct contact *contacts;
 	unsigned int prio;
 
 	/* we need to have the contact header */
@@ -117,6 +121,10 @@ static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 	if ( msg->contact->parsed ) {
 		contacts = ((struct contact_body*)msg->contact->parsed)->contacts;
 		for( ; contacts ; contacts=contacts->next) {
+			/* check if the contact is a valid sip uri */
+			if (parse_uri( contacts->uri.s, contacts->uri.len , &uri)!=0) {
+				continue;
+			}
 			/* convert the q param to int value (if any) */
 			if (contacts->q) {
 				if (parse_q( &(contacts->q->body), &prio )!=0)
@@ -153,8 +161,35 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 	intr->msg = t->uas.request;
 
 	/* if it's a redirect-> do I have to added to the location set ? */
-	/* TO DO
-	 */
+	if (intr->proxy.recurse && code/100==3) {
+		DBG("DEBUG:cpl-c:negativ_reply: recurse level %d processing..\n",
+				intr->proxy.recurse);
+		intr->proxy.recurse--;
+		/* get the locations from the Contact */
+		add_contacts_to_loc_set( msg, &(intr->loc_set));
+		switch (intr->proxy.ordering) {
+			case SEQUENTIAL_VAL:
+				/* update the last_to_proxy to last location from set */
+				if (intr->proxy.last_to_proxy==0) {
+					/* the pointer went through entire old set -> set it to the
+					 * updated set, from the beginning  */
+					if (intr->loc_set==0)
+						/* the updated set is also empty -> proxy ended */
+						break;
+					intr->proxy.last_to_proxy = intr->loc_set;
+				}
+				while(intr->proxy.last_to_proxy->next)
+					intr->proxy.last_to_proxy = intr->proxy.last_to_proxy->next;
+				break;
+			case PARALLEL_VAL:
+				/* push the whole new location set to be proxy */
+				intr->proxy.last_to_proxy = intr->loc_set;
+				break;
+			case FIRSTONLY_VAL:
+				intr->proxy.last_to_proxy = 0;
+				break;
+		}
+	}
 
 	/* the current proxing failed -> do I have another location to try ?
 	 * This applyes only for SERIAL forking or if RECURSE is set */
@@ -261,7 +296,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 	struct location *loc;
 
 	intr->proxy.ordering = PARALLEL_VAL;
-	intr->proxy.recurse = YES_VAL;
+	intr->proxy.recurse = (unsigned short)proxy_recurse;
 
 	/* indentify the attributes */
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
@@ -271,12 +306,18 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 				/* useless param */
 				break;
 			case RECURSE_ATTR:
-				if ( n!=NO_VAL && n!=YES_VAL ) {
-					LOG(L_ERR,"ERROR:run_proxy: invalid value (%u) found"
-						" for attr. RECURSE in PROXY node!\n",n);
-					goto script_error;
+				switch (n) {
+					case NO_VAL:
+						intr->proxy.recurse = 0;
+						break;
+					case YES_VAL:
+						intr->proxy.recurse = (unsigned short)proxy_recurse;
+						break;
+					default:
+						LOG(L_ERR,"ERROR:run_proxy: invalid value (%u) found"
+							" for attr. RECURSE in PROXY node!\n",n);
+						goto script_error;
 				}
-				intr->proxy.recurse = n;
 				break;
 			case ORDERING_ATTR:
 				if (n!=PARALLEL_VAL && n!=SEQUENTIAL_VAL && n!=FIRSTONLY_VAL){

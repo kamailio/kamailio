@@ -58,13 +58,16 @@
 #include "cpl_nonsig.h"
 
 
+#define MAX_PROXY_RECURSE  10
+
+
 static char *DB_URL      = 0;  /* database url */
 static char *DB_TABLE    = 0;  /* */
 static pid_t aux_process = 0;  /* pid of the private aux. process */
 static char *dtd_file    = 0;  /* name of the DTD file for CPL parser */
 
 
-int    cache_timeout     = 5;
+int    proxy_recurse     = 0;
 char   *log_dir          = 0; /*directory where the user log should be dumped*/
 int    cpl_cmd_pipe[2];
 struct tm_binds cpl_tmb;
@@ -104,11 +107,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"cpl_db",        STR_PARAM, &DB_URL       },
-	{"cpl_table",     STR_PARAM, &DB_TABLE     },
-	{"cpl_dtd_file",  STR_PARAM, &dtd_file     },
-	{"cache_timeout", INT_PARAM, &cache_timeout},
-	{"log_dir",       STR_PARAM, &log_dir      },
+	{"cpl_db",        STR_PARAM, &DB_URL        },
+	{"cpl_table",     STR_PARAM, &DB_TABLE      },
+	{"cpl_dtd_file",  STR_PARAM, &dtd_file      },
+	{"proxy_recurse", INT_PARAM, &proxy_recurse },
+	{"log_dir",       STR_PARAM, &log_dir       },
 	{0, 0, 0}
 };
 
@@ -164,11 +167,19 @@ static int cpl_init(void)
 			"found empty\n");
 		goto error;
 	}
+
 	if (DB_TABLE==0) {
 		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_TABLE\" "
 			"found empty\n");
 		goto error;
 	}
+
+	if (proxy_recurse>MAX_PROXY_RECURSE) {
+		LOG(L_CRIT,"ERROR:cpl_init: value of proxy_recurse param ()%d exceeds "
+			"the maximum safty value (%d)\n",proxy_recurse,MAX_PROXY_RECURSE);
+		goto error;
+	}
+
 	if (dtd_file==0) {
 		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"cpl_dtd_file\" "
 			"found empty\n");
@@ -191,6 +202,7 @@ static int cpl_init(void)
 			goto error;
 		}
 	}
+
 	if (log_dir==0) {
 		LOG(L_WARN,"WARNING:cpl_init: log_dir param found void -> logging "
 			" disabled!\n");
