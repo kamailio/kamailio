@@ -106,12 +106,16 @@
 #include "../usrloc/usrloc.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 #include <ctype.h>
 #include <errno.h>
+#include <md5.h>
+#include <netdb.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -138,6 +142,7 @@ MODULE_VERSION
 
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
+#define	CPORT		"22222"
 
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
@@ -146,7 +151,8 @@ static int extract_mediaip(str *, str *);
 static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, str *, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
-static char *send_rtpp_command(const struct iovec *, int, int);
+static char *gencookie();
+static char *send_rtpp_command(struct iovec *, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
@@ -178,8 +184,12 @@ static struct {
  */
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
-static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
+static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock";
 static int rtpproxy_disable = 0;
+static int rtpproxy_retr = 5;
+static int rtpproxy_tout = 1;
+static int umode = 0;
+static int controlfd;
 
 static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -197,6 +207,8 @@ static param_export_t params[]={
 	{"ping_nated_only",  INT_PARAM, &ping_nated_only  },
 	{"rtpproxy_sock",    STR_PARAM, &rtpproxy_sock    },
 	{"rtpproxy_disable", INT_PARAM, &rtpproxy_disable },
+	{"rtpproxy_retr",    INT_PARAM, &rtpproxy_disable },
+	{"rtpproxy_tout",    INT_PARAM, &rtpproxy_disable },
 	{0, 0, 0}
 };
 
@@ -217,7 +229,7 @@ mod_init(void)
 	int rtpp_ver, i;
 	char *cp;
 	bind_usrloc_t bind_usrloc;
-	struct iovec v[1] = {{"V", 1}};
+	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
 	struct in_addr addr;
 
 	if (natping_interval > 0) {
@@ -242,7 +254,87 @@ mod_init(void)
 	}
 
 	if (rtpproxy_disable == 0) {
-		cp = send_rtpp_command(v, 1, 1);
+		/* Make rtpproxy_sock writeable */
+		cp = pkg_malloc(strlen(rtpproxy_sock) + 1);
+		if (cp == NULL) {
+			LOG(L_ERR, "nathelper: Can't allocate memory\n");
+			return -1;
+		}
+		strcpy(cp, rtpproxy_sock);
+		rtpproxy_sock = cp;
+
+		if (strncmp(rtpproxy_sock, "udp:", 4) == 0) {
+			umode = 1;
+			rtpproxy_sock += 4;
+		} else if (strncmp(rtpproxy_sock, "udp6:", 5) == 0) {
+			umode = 6;
+			rtpproxy_sock += 5;
+		} else if (strncmp(rtpproxy_sock, "unix:", 5) == 0) {
+			umode = 0;
+			rtpproxy_sock += 5;
+		}
+
+		if (umode != 0) {
+			int n;
+			struct addrinfo hints, *res;
+
+			cp = strrchr(rtpproxy_sock, ':');
+			if (cp != NULL) {
+				*cp = '\0';
+				cp++;
+			}
+			if (cp == NULL || *cp == '\0')
+				cp = CPORT;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_flags = AI_PASSIVE;
+			hints.ai_family = (umode == 6) ? AF_INET6 : AF_INET;
+			hints.ai_socktype = SOCK_DGRAM;
+			if ((n = getaddrinfo(NULL, "0", &hints, &res)) != 0) {
+				LOG(L_ERR, "nathelper: setbindhost: %s\n", gai_strerror(n));
+				pkg_free(rtpproxy_sock);
+				return -1;
+			}
+
+			controlfd = socket((umode == 6) ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
+			if (controlfd == -1) {
+				LOG(L_ERR, "nathelper: can't create socket\n");
+				close(controlfd);
+				freeaddrinfo(res);
+				pkg_free(rtpproxy_sock);
+				return -1;
+			}
+			if (bind(controlfd, res->ai_addr, res->ai_addrlen) == -1) {
+				LOG(L_ERR, "nathelper: can't bind to a socket\n");
+				close(controlfd);
+				freeaddrinfo(res);
+				pkg_free(rtpproxy_sock);
+				return -1;
+			}
+			freeaddrinfo(res);
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_flags = 0;
+			hints.ai_family = (umode == 6) ? AF_INET6 : AF_INET;
+			hints.ai_socktype = SOCK_DGRAM;
+			if ((n = getaddrinfo(rtpproxy_sock, cp, &hints, &res)) != 0) {
+				LOG(L_ERR, "nathelper: setbindhost: %s\n", gai_strerror(n));
+				close(controlfd);
+				pkg_free(rtpproxy_sock);
+				return -1;
+			}
+
+			if (connect(controlfd, res->ai_addr, res->ai_addrlen) == -1) {
+				LOG(L_ERR, "nathelper: can't connect to a RTP proxy\n");
+				close(controlfd);
+				freeaddrinfo(res);
+				pkg_free(rtpproxy_sock);
+				return -1;
+			}
+			freeaddrinfo(res);
+		}
+
+		cp = send_rtpp_command(v, 2);
 		if (cp == NULL) {
 			LOG(L_WARN,"WARNING: nathelper: can't get version of "
 			    "the RTP proxy\n");
@@ -840,62 +932,133 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 }
 
 static char *
-send_rtpp_command(const struct iovec *v, int vcnt, int getreply)
+gencookie()
+{
+	long val;
+	MD5_CTX context;
+	struct timeval tv;
+	static char cook[34];
+
+	srandomdev();
+	MD5Init(&context);
+	val = random();
+	MD5Update(&context, (const unsigned char *)&val, sizeof(val));
+	gettimeofday(&tv, NULL);
+	MD5Update(&context, (const unsigned char *)&tv, sizeof(tv));
+	MD5End(&context, cook);
+	cook[sizeof(cook) - 2] = ' ';
+	cook[sizeof(cook) - 1] = '\0';
+	return cook;
+}
+
+static char *
+send_rtpp_command(struct iovec *v, int vcnt)
 {
 	struct sockaddr_un addr;
-	int fd, len;
-	static char buf[64];
+	int fd, len, i;
+	char *cp;
+	static char buf[256];
+	struct pollfd fds[1];
 
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_LOCAL;
-	strncpy(addr.sun_path, rtpproxy_sock,
-	    sizeof(addr.sun_path) - 1);
+	len = 0;
+	cp = buf;
+	if (umode == 0) {
+		memset(&addr, 0, sizeof(addr));
+		addr.sun_family = AF_LOCAL;
+		strncpy(addr.sun_path, rtpproxy_sock,
+		    sizeof(addr.sun_path) - 1);
 #ifdef HAVE_SOCKADDR_SA_LEN
-	addr.sun_len = strlen(addr.sun_path);
+		addr.sun_len = strlen(addr.sun_path);
 #endif
 
-	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
-	if (fd < 0) {
-		LOG(L_ERR, "ERROR: send_rtpp_command: can't create socket\n");
-		return NULL;
-	}
-	if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		close(fd);
-		LOG(L_ERR, "ERROR: send_rtpp_command: can't connect to RTP proxy\n");
-		return NULL;
-	}
+		fd = socket(AF_LOCAL, SOCK_STREAM, 0);
+		if (fd < 0) {
+			LOG(L_ERR, "ERROR: send_rtpp_command: can't create socket\n");
+			return NULL;
+		}
+		if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+			close(fd);
+			LOG(L_ERR, "ERROR: send_rtpp_command: can't connect to RTP proxy\n");
+			return NULL;
+		}
 
-	do {
-		len = writev(fd, v, vcnt);
-	} while (len == -1 && errno == EINTR);
-	if (len <= 0) {
-		close(fd);
-		LOG(L_ERR, "ERROR: send_rtpp_command: can't send command to a RTP proxy\n");
-		return NULL;
-	}
-
-	if (getreply != 0) {
 		do {
-			len = read(fd, buf, sizeof(buf) - 1);
+			len = writev(fd, v + 1, vcnt - 1);
 		} while (len == -1 && errno == EINTR);
 		if (len <= 0) {
 			close(fd);
+			LOG(L_ERR, "ERROR: send_rtpp_command: can't send command to a RTP proxy\n");
+			return NULL;
+		}
+		do {
+			len = read(fd, buf, sizeof(buf) - 1);
+		} while (len == -1 && errno == EINTR);
+		close(fd);
+		if (len <= 0) {
 			LOG(L_ERR, "ERROR: send_rtpp_command: can't read reply from a RTP proxy\n");
 			return NULL;
 		}
-		buf[len] = '\0';
+	} else {
+		fds[0].fd = controlfd;
+		fds[0].events = POLLIN;
+		fds[0].revents = 0;
+		/* Drain input buffer */
+		while ((poll(fds, 1, 0) == 1) &&
+		    ((fds[0].revents & POLLIN) != 0)) {
+			recv(controlfd, buf, sizeof(buf) - 1, 0);
+			fds[0].revents = 0;
+		}
+		v[0].iov_base = gencookie();
+		v[0].iov_len = 33;
+		for (i = 0; i < rtpproxy_retr; i++) {
+			do {
+				len = writev(controlfd, v, vcnt);
+			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
+			if (len <= 0) {
+				LOG(L_ERR, "ERROR: send_rtpp_command: "
+				    "can't send command to a RTP proxy\n");
+				return NULL;
+			}
+			while ((poll(fds, 1, rtpproxy_tout * 1000) == 1) &&
+			    (fds[0].revents & POLLIN) != 0) {
+				do {
+					len = recv(controlfd, buf, sizeof(buf) - 1, 0);
+				} while (len == -1 && errno == EINTR);
+				if (len <= 0) {
+					LOG(L_ERR, "ERROR: send_rtpp_command: "
+					    "can't read reply from a RTP proxy\n");
+					return NULL;
+				}
+				if (len >= 32 && memcmp(buf, v[0].iov_base, 32) == 0) {
+					len -= 32;
+					cp += 32;;
+					if (len != 0) {
+						len--;
+						cp++;
+					}
+					goto out;
+				}
+				fds[0].revents = 0;
+			}
+		}
+		if (i == rtpproxy_retr) {
+			LOG(L_ERR, "ERROR: send_rtpp_command: "
+			    "timeout waiting reply from a RTP proxy\n");
+			return NULL;
+		}
 	}
-	close(fd);
 
-	return buf;
+out:
+	cp[len] = '\0';
+	return cp;
 }
 
 static int
 unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str callid, from_tag, to_tag;
-	struct iovec v[4 + 3] = {{"D", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
-				 /* 0 */   /* 1 */   /* 2 */    /* 3 */   /* 4 */    /* 5 */   /* 6 */
+	struct iovec v[1 + 4 + 3] = {{NULL, 0}, {"D", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+						/* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
 
 	if (rtpproxy_disable != 0) {
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: support for RTP proxy "
@@ -914,10 +1077,10 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get From tag\n");
 		return -1;
 	}
-	STR2IOVEC(callid, v[2]);
-	STR2IOVEC(from_tag, v[4]);
-	STR2IOVEC(to_tag, v[6]);
-	send_rtpp_command(v, (to_tag.len > 0) ? 7 : 5, 0);
+	STR2IOVEC(callid, v[3]);
+	STR2IOVEC(from_tag, v[5]);
+	STR2IOVEC(to_tag, v[7]);
+	send_rtpp_command(v, (to_tag.len > 0) ? 8 : 6);
 
 	return 1;
 }
@@ -927,25 +1090,33 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, oldip1, newport, newip;
 	str callid, from_tag, to_tag, tmp;
-	int create, port, len, asymmetric, flookup, internal, argc;
-	char buf[16];
+	int create, port, len, asymmetric, flookup, argc;
+	int oidx;
+	char buf[16], opts[16];
 	char *cp, *cp1;
 	char **ap, *argv[10];
 	struct lump* anchor;
-	struct iovec v[6 + 5] = {{NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
-				 /* 0 */    /* 1 */   /* 2 */    /* 3 */   /* 4 */    /* 5 */   /* 6 */    /* 7 */   /* 8 */    /* 9 */   /* 10 */
+	struct iovec v[1 + 6 + 5] = {{NULL, 0}, {opts, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+						/* 1 */    /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */    /* 10 */  /* 11 */
 
-	asymmetric = flookup = internal = 0;
+	asymmetric = flookup = 0;
+	oidx = 1;
 	for (cp = str1; *cp != '\0'; cp++) {
 		switch (*cp) {
 		case 'a':
 		case 'A':
+			opts[oidx++] = 'A';
 			asymmetric = 1;
 			break;
 
 		case 'i':
 		case 'I':
-			internal = 1;
+			opts[oidx++] = 'I';
+			break;
+
+		case 'e':
+		case 'E':
+			opts[oidx++] = 'E';
 			break;
 
 		case 'l':
@@ -1027,17 +1198,14 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		    "from the message\n");
 		return -1;
 	}
-	if (create == 0)
-		v[0].iov_base = (internal == 0) ? "LA" : "LI";
-	else
-		v[0].iov_base = (internal == 0) ? "UA" : "UI";
-	v[0].iov_len = (internal == 0 && asymmetric == 0) ? 1 : 2;
-	STR2IOVEC(callid, v[2]);
-	STR2IOVEC(newip, v[4]);
-	STR2IOVEC(oldport, v[6]);
-	STR2IOVEC(from_tag, v[8]);
-	STR2IOVEC(to_tag, v[10]);
-	cp = send_rtpp_command(v, (to_tag.len > 0) ? 11 : 9, 1);
+	opts[0] = (create == 0) ? 'L' : 'U';
+	v[1].iov_len = oidx;
+	STR2IOVEC(callid, v[3]);
+	STR2IOVEC(newip, v[5]);
+	STR2IOVEC(oldport, v[7]);
+	STR2IOVEC(from_tag, v[9]);
+	STR2IOVEC(to_tag, v[11]);
+	cp = send_rtpp_command(v, (to_tag.len > 0) ? 12 : 10);
 	if (cp == NULL)
 		return -1;
 	argc = 0;
@@ -1106,7 +1274,7 @@ force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	char arg[1] = {'\0'};
 
-        return force_rtp_proxy1_f(msg, arg, NULL);
+	return force_rtp_proxy1_f(msg, arg, NULL);
 }
 
 static void

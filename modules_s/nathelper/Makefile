@@ -8,7 +8,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=nathelper.so
-LIBS=
+LIBS=-lmd
 
 include ../../Makefile.modules
 
