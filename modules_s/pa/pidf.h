@@ -76,7 +76,7 @@ int end_pidf_tuple(str* _b, int _l);
  */
 int end_pidf_doc(str* _b, int _l);
 
-void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
+void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location_str,
 		str *site_str, str *floor_str, str *room_str,
 		double *xp, double *yp, double *radiusp);
 

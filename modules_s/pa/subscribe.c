@@ -64,26 +64,43 @@ static doctype_t acc;
 
 
 /*
- * FIXME: locking
+ * contact will be NULL if user is offline
+ * fixme:locking
  */
-void callback(str* _user, int state, void* data)
+void callback(str* _user, str *_contact, int state, void* data)
 {
-	struct presentity* ptr;
+	presentity_t *presentity;
+	presence_tuple_t *tuple = NULL;
 	int orig;
 
-	ptr = (struct presentity*)data;
-	orig = ptr->state;
+	presentity = (struct presentity*)data;
+	LOG(L_ERR, "callback: presentity=%p %.*s contact=%p:%.*s\n",
+	    presentity, presentity->uri.len, presentity->uri.s, _contact,
+	    (_contact ? _contact->len : 0), (_contact ? _contact->s : ""));
+	if (_contact) {
+		// lock_pdomain(presentity->pdomain);
 
-	if (state == 0) {
-		ptr->state = PS_OFFLINE;
-	} else {
-		ptr->state = PS_ONLINE;
-	}
+		find_presence_tuple(_contact, presentity, &tuple);
+		if (!tuple) {
+			new_presence_tuple(_contact, presentity, &tuple);
+			add_presence_tuple(presentity, tuple);
+		};
 
-	db_update_presentity(ptr);
+		orig = tuple->state;
 
-	if (orig != state) {
-		notify_watchers(ptr);
+		if (state == 0) {
+			tuple->state = PS_OFFLINE;
+		} else {
+			tuple->state = PS_ONLINE;
+		}
+
+		db_update_presentity(presentity);
+
+		if (orig != state) {
+			notify_watchers(presentity);
+		}
+
+		// unlock_pdomain(presentity->pdomain);
 	}
 }
 
@@ -175,6 +192,8 @@ int parse_accept(struct hdr_field* _h, doctype_t* _a)
 			*_a = DOC_XPIDF;
 		} else if (strstr(buffer, "text/lpidf")) {
 			*_a = DOC_LPIDF;
+		} else if (strstr(buffer, "application/watcherinfo+xml")) {
+			*_a = DOC_WINFO;
 		} else {
 			*_a = DOC_XPIDF;
 		}
@@ -302,7 +321,7 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return -1;
 	}
 
-	if (new_presentity(_puri, _p) < 0) {
+	if (new_presentity(_d, _puri, _p) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}

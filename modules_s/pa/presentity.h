@@ -37,11 +37,11 @@
 #include "pstate.h"
 
 
-#define PRESENTITY_LOCATION_STR_LEN (128 + 32 + 32 + 64)
-#define PRESENTITY_LOCATION_LOC_OFFSET 0
-#define PRESENTITY_LOCATION_SITE_OFFSET 128
-#define PRESENTITY_LOCATION_FLOOR_OFFSET (128+32)
-#define PRESENTITY_LOCATION_ROOM_OFFSET (128+32+32)
+#define TUPLE_LOCATION_STR_LEN (128 + 32 + 32 + 64)
+#define TUPLE_LOCATION_LOC_OFFSET 0
+#define TUPLE_LOCATION_SITE_OFFSET 128
+#define TUPLE_LOCATION_FLOOR_OFFSET (128+32)
+#define TUPLE_LOCATION_ROOM_OFFSET (128+32+32)
 
 typedef struct location {
 	str   loc; /* human readable description of location */
@@ -53,24 +53,32 @@ typedef struct location {
 	double radius;
 } location_t;
 
+typedef struct presence_tuple {
+	str contact;
+	pstate_t state;
+	location_t location;
+	struct presence_tuple *next;
+	struct presence_tuple *prev;
+} presence_tuple_t;
+
+struct pdomain;
+
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
 	int event_package;       /* parsed event package */
-	pstate_t state;          /* State of presentity */
-	location_t location;       /* Physical location of presentity */
-	
+	presence_tuple_t *tuples;
 	watcher_t* watchers;     /* List of watchers */
 	watcher_t* winfo_watchers;  /* Watchers subscribed to winfo */
+	struct pdomain *pdomain; 
 	struct presentity* next; /* Next presentity */
 	struct presentity* prev; /* Previous presentity in list */
 	struct hslot* slot;      /* Hash table collision slot we belong to */
 } presentity_t;
 
-
 /*
  * Create a new presentity
  */
-int new_presentity(str* _uri, presentity_t** _p);
+int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p);
 
 
 /*
@@ -87,6 +95,25 @@ int db_update_presentity(presentity_t* _p);
  * Run a timer handler on the presentity
  */
 int timer_presentity(presentity_t* _p);
+
+
+/*
+ * Create a new presence_tuple
+ */
+int new_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t);
+
+/*
+ * Find a presence_tuple for contact _contact on presentity _p
+ */
+int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t);
+void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
+void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t);
+
+/*
+ * Free all memory associated with a presence_tuple
+ */
+void free_presence_tuple(presence_tuple_t * _t);
+
 
 
 /*

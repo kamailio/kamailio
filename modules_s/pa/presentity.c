@@ -77,7 +77,7 @@ str str_strdup(str string)
 /*
  * Create a new presentity
  */
-int new_presentity(str* _uri, presentity_t** _p)
+int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 {
 	presentity_t* presentity;
 	int size = 0;
@@ -88,7 +88,7 @@ int new_presentity(str* _uri, presentity_t** _p)
 		return -1;
 	}
 
-	size = sizeof(presentity_t) + PRESENTITY_LOCATION_STR_LEN + _uri->len + 1;
+	size = sizeof(presentity_t) + _uri->len + 1;
 	presentity = (presentity_t*)shm_malloc(size);
 	if (!presentity) {
 		paerrno = PA_NO_MEMORY;
@@ -98,194 +98,20 @@ int new_presentity(str* _uri, presentity_t** _p)
 	memset(presentity, 0, sizeof(presentity_t));
 
 
-	presentity->uri.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_STR_LEN;
+	presentity->uri.s = ((char*)presentity) + sizeof(presentity_t);
 	strncpy(presentity->uri.s, _uri->s, _uri->len);
 	_uri->s[_uri->len] = 0;
 	presentity->uri.len = _uri->len;
-	presentity->location.loc.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_LOC_OFFSET;
-	presentity->location.site.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_SITE_OFFSET;
-	presentity->location.floor.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_FLOOR_OFFSET;
-	presentity->location.room.s = ((char*)presentity) + sizeof(presentity_t) + PRESENTITY_LOCATION_ROOM_OFFSET;
+	presentity->pdomain = pdomain;
 
 	*_p = presentity;
 
 	LOG(L_ERR, "new_presentity=%p for uri=%s\n", presentity, presentity->uri.s);
-	
-	if (use_db) {
-		db_key_t query_cols[1];
-		db_op_t  query_ops[1];
-		db_val_t query_vals[1];
-
-		db_key_t result_cols[4];
-		db_res_t *res;
-		int n_query_cols = 1;
-		int n_result_cols = 0;
-		int basic_col, status_col, location_col;
-
-		LOG(L_INFO, "new_presentity: use_db starting\n");
-
-		query_cols[0] = "uri";
-		query_ops[0] = OP_EQ;
-		query_vals[0].type = DB_STR;
-		query_vals[0].nul = 0;
-		query_vals[0].val.str_val = *_uri;
-
-		result_cols[basic_col = n_result_cols++] = "basic";
-		result_cols[status_col = n_result_cols++] = "status";
-		result_cols[location_col = n_result_cols++] = "location";
-
-		db_use_table(pa_db, presentity_table);
-		if (db_query (pa_db, query_cols, query_ops, query_vals,
-			      result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
-			LOG(L_ERR, "db_new_presentity(): Error while querying presentity\n");
-			return -1;
-		}
-		LOG(L_INFO, "new_presentity: getting values: res=%p res->n=%d\n",
-		    res, (res ? res->n : 0));
-		if (res && res->n > 0) {
-			/* fill in presentity structure from database query result */
-			db_row_t *row = &res->rows[0];
-			db_val_t *row_vals = ROW_VALUES(row);
-			str basic = row_vals[basic_col].val.str_val;
-			// str status = row_vals[status_col].val.str_val;
-			str location = row_vals[location_col].val.str_val;
-			if (location.s)
-			  location.len = strlen(location.s);
-
-			LOG(L_INFO, "  basic=%s location=%s\n", basic.s, location.s);
-
-			presentity->state = basic2status(basic);
-			if (location.len)
-				strncpy(presentity->location.loc.s, location.s, location.len);
-
-		} else {
-			/* insert new record into database */
-			LOG(L_INFO, "new_presentity: inserting into table\n");
-			if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
-				LOG(L_ERR, "db_new_presentity(): Error while inserting presentity\n");
-				return -1;
-			}
-		}
-		LOG(L_INFO, "new_presentity: use_db done\n");
-	}
 
 	return 0;
 }
 
 
-/*
- * Sync presentity to db if db is in use
- */
-int db_update_presentity(presentity_t* _p)
-{
-	if (use_db) {
-		char uri_s[128];
-		db_key_t query_cols[1];
-		db_op_t query_ops[1];
-		db_val_t query_vals[1];
-		int n_selectors = sizeof(query_cols)/sizeof(db_key_t);
-
-		db_key_t update_cols[10];
-		db_val_t update_vals[10];
-		int n_updates = 1;
-
-		strncpy(uri_s, _p->uri.s, _p->uri.len);
-		uri_s[_p->uri.len] = 0;
-
-		LOG(L_ERR, "db_update_presentity starting\n");
-		query_cols[0] = "uri";
-		query_ops[0] = OP_EQ;
-		query_vals[0].type = DB_STR;
-		query_vals[0].nul = 0;
-		query_vals[0].val.str_val.s = _p->uri.s;
-		query_vals[0].val.str_val.len = _p->uri.len;
-		LOG(L_ERR, "db_update_presentity:  _p->uri=%.*s uri_s=%s len=%d\n", _p->uri.len, _p->uri.s, uri_s, _p->uri.len);
-
-		update_cols[0] = "basic";
-		update_vals[0].type = DB_STR;
-		update_vals[0].nul = 0;
-		update_vals[0].val.str_val.s = pstate_name[_p->state].s;
-		update_vals[0].val.str_val.len = strlen(pstate_name[_p->state].s);
-
-		LOG(L_ERR, "db_update_presentity:  _p->location=%s len=%d\n", _p->location.loc.s, _p->location.loc.len);
-		if (_p->location.loc.len && _p->location.loc.s) {
-			update_cols[n_updates] = "location";
-			update_vals[n_updates].type = DB_STR;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.str_val = _p->location.loc;
-			LOG(L_ERR, "db_update_presentity:  _p->location.loc=%s len=%d\n", 
-			    _p->location.loc.s, _p->location.loc.len);
-			n_updates++;
-		}
-		if (_p->location.site.len && _p->location.site.s) {
-			update_cols[n_updates] = "site";
-			update_vals[n_updates].type = DB_STR;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.str_val = _p->location.site;
-			LOG(L_ERR, "db_update_presentity:  _p->location.site=%s len=%d\n",
-			    _p->location.site.s, _p->location.site.len);
-			n_updates++;
-		}
-		if (_p->location.floor.len && _p->location.floor.s) {
-			update_cols[n_updates] = "floor";
-			update_vals[n_updates].type = DB_STR;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.str_val = _p->location.floor;
-			LOG(L_ERR, "db_update_presentity:  _p->location.floor=%s len=%d\n", 
-			    _p->location.floor.s, _p->location.floor.len);
-			n_updates++;
-		}
-		if (_p->location.room.len && _p->location.room.s) {
-			update_cols[n_updates] = "room";
-			update_vals[n_updates].type = DB_STR;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.str_val = _p->location.room;
-			LOG(L_ERR, "db_update_presentity:  _p->location.room=%s len=%d\n", 
-			    _p->location.room.s, _p->location.room.len);
-			n_updates++;
-		}
-		if (_p->location.x != 0) {
-			update_cols[n_updates] = "x";
-			update_vals[n_updates].type = DB_DOUBLE;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.double_val = _p->location.x;
-			LOG(L_ERR, "db_update_presentity:  _p->location.x=%f\n", _p->location.x);
-			n_updates++;
-		}
-		if (_p->location.y != 0) {
-			update_cols[n_updates] = "y";
-			update_vals[n_updates].type = DB_DOUBLE;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.double_val = _p->location.y;
-			LOG(L_ERR, "db_update_presentity:  _p->location.y=%f\n", _p->location.y);
-			n_updates++;
-		}
-		if (_p->location.radius != 0) {
-			update_cols[n_updates] = "radius";
-			update_vals[n_updates].type = DB_DOUBLE;
-			update_vals[n_updates].nul = 0;
-			update_vals[n_updates].val.double_val = _p->location.radius;
-			LOG(L_ERR, "db_update_presentity:  _p->location.radius=%f\n", _p->location.radius);
-			n_updates++;
-		}
-
-
-		db_use_table(pa_db, presentity_table);
-
-		LOG(L_INFO, "n_selectors=%d, n_updates=%d dbf.update=%p\n", 
-		    n_selectors, n_updates, dbf.update);
-
-		if (db_update(pa_db, 
-			      query_cols, query_ops, query_vals, 
-			      update_cols, update_vals, n_selectors, n_updates) < 0) {
-			LOG(L_ERR, "db_update_presentity: Error while updating database\n");
-			return -1;
-		}
-
-		LOG(L_INFO, "update_presentity done\n");
-	}
-	return 0;
-}
 
 /*
  * Free all memory associated with a presentity
@@ -293,7 +119,9 @@ int db_update_presentity(presentity_t* _p)
 void free_presentity(presentity_t* _p)
 {
 	watcher_t* ptr;
+	presence_tuple_t *tuple;
 
+	return;
 	while(_p->watchers) {
 		ptr = _p->watchers;
 		_p->watchers = _p->watchers->next;
@@ -306,9 +134,303 @@ void free_presentity(presentity_t* _p)
 		free_watcher(ptr);
 	}
 	
+	while(_p->tuples) {
+		tuple = _p->tuples;
+		_p->tuples = _p->tuples->next;
+		free_presence_tuple(tuple);
+	}
+
 	shm_free(_p);
 }
 
+
+/*
+ * Sync presentity to db if db is in use
+ */
+int db_update_presentity(presentity_t* _p)
+{
+	if (use_db) {
+		presence_tuple_t *tuple = _p->tuples;
+		db_key_t query_cols[2];
+		db_op_t query_ops[2];
+		db_val_t query_vals[2];
+		int n_selectors = sizeof(query_cols)/sizeof(db_key_t);
+
+		db_key_t update_cols[20];
+		db_val_t update_vals[20];
+		int n_updates = 1;
+
+		while (tuple) {
+
+			LOG(L_ERR, "db_update_presentity starting\n");
+			query_cols[0] = "uri";
+			query_ops[0] = OP_EQ;
+			query_vals[0].type = DB_STR;
+			query_vals[0].nul = 0;
+			query_vals[0].val.str_val.s = _p->uri.s;
+			query_vals[0].val.str_val.len = _p->uri.len;
+			LOG(L_ERR, "db_update_presentity:  _p->uri=%.*s len=%d\n", _p->uri.len, _p->uri.s, _p->uri.len);
+
+			query_cols[1] = "contact";
+			query_ops[1] = OP_EQ;
+			query_vals[1].type = DB_STR;
+			query_vals[1].nul = 0;
+			query_vals[1].val.str_val.s = tuple->contact.s;
+			query_vals[1].val.str_val.len = tuple->contact.len;
+			LOG(L_ERR, "db_update_presentity:  tuple->contact=%.*s len=%d\n", tuple->contact.len, tuple->contact.s, tuple->contact.len);
+
+			update_cols[0] = "basic";
+			update_vals[0].type = DB_STR;
+			update_vals[0].nul = 0;
+			update_vals[0].val.str_val.s = pstate_name[tuple->state].s;
+			update_vals[0].val.str_val.len = strlen(pstate_name[tuple->state].s);
+
+			LOG(L_ERR, "db_update_presentity:  tuple->location=%s len=%d\n", tuple->location.loc.s, tuple->location.loc.len);
+			if (tuple->location.loc.len && tuple->location.loc.s) {
+				update_cols[n_updates] = "location";
+				update_vals[n_updates].type = DB_STR;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.str_val = tuple->location.loc;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.loc=%s len=%d\n", 
+				    tuple->location.loc.s, tuple->location.loc.len);
+				n_updates++;
+			}
+			if (tuple->location.site.len && tuple->location.site.s) {
+				update_cols[n_updates] = "site";
+				update_vals[n_updates].type = DB_STR;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.str_val = tuple->location.site;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.site=%s len=%d\n",
+				    tuple->location.site.s, tuple->location.site.len);
+				n_updates++;
+			}
+			if (tuple->location.floor.len && tuple->location.floor.s) {
+				update_cols[n_updates] = "floor";
+				update_vals[n_updates].type = DB_STR;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.str_val = tuple->location.floor;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.floor=%s len=%d\n", 
+				    tuple->location.floor.s, tuple->location.floor.len);
+				n_updates++;
+			}
+			if (tuple->location.room.len && tuple->location.room.s) {
+				update_cols[n_updates] = "room";
+				update_vals[n_updates].type = DB_STR;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.str_val = tuple->location.room;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.room=%s len=%d\n", 
+				    tuple->location.room.s, tuple->location.room.len);
+				n_updates++;
+			}
+			if (tuple->location.x != 0) {
+				update_cols[n_updates] = "x";
+				update_vals[n_updates].type = DB_DOUBLE;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.double_val = tuple->location.x;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.x=%f\n", tuple->location.x);
+				n_updates++;
+			}
+			if (tuple->location.y != 0) {
+				update_cols[n_updates] = "y";
+				update_vals[n_updates].type = DB_DOUBLE;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.double_val = tuple->location.y;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.y=%f\n", tuple->location.y);
+				n_updates++;
+			}
+			if (tuple->location.radius != 0) {
+				update_cols[n_updates] = "radius";
+				update_vals[n_updates].type = DB_DOUBLE;
+				update_vals[n_updates].nul = 0;
+				update_vals[n_updates].val.double_val = tuple->location.radius;
+				LOG(L_ERR, "db_update_presentity:  tuple->location.radius=%f\n", tuple->location.radius);
+				n_updates++;
+			}
+
+
+			db_use_table(pa_db, presentity_table);
+
+			LOG(L_INFO, "n_selectors=%d, n_updates=%d dbf.update=%p\n", 
+			    n_selectors, n_updates, dbf.update);
+
+			if (db_update(pa_db, 
+				      query_cols, query_ops, query_vals, 
+				      update_cols, update_vals, n_selectors, n_updates) < 0) {
+				LOG(L_ERR, "db_update_presentity: Error while updating database\n");
+				return -1;
+			}
+
+			LOG(L_INFO, "updated presence_tuple\n");
+
+			tuple = tuple->next;
+		}
+	}
+	return 0;
+}
+
+
+/*
+ * Create a new presence_tuple
+ */
+int new_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
+{
+	presence_tuple_t* tuple;
+	int size = 0;
+
+	if (!_contact || !_t) {
+		paerrno = PA_INTERNAL_ERROR;
+		LOG(L_ERR, "new_presence_tuple(): Invalid parameter value\n");
+		return -1;
+	}
+
+	size = sizeof(presence_tuple_t) + TUPLE_LOCATION_STR_LEN + _contact->len + 1;
+	tuple = (presence_tuple_t*)shm_malloc(size);
+	if (!tuple) {
+		paerrno = PA_NO_MEMORY;
+		LOG(L_ERR, "new_presence_tuple(): No memory left\n");
+		return -1;
+	}
+	memset(tuple, 0, sizeof(presence_tuple_t));
+
+
+	tuple->contact.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_STR_LEN;
+	strncpy(tuple->contact.s, _contact->s, _contact->len);
+	_contact->s[_contact->len] = 0;
+	tuple->contact.len = _contact->len;
+	tuple->location.loc.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_LOC_OFFSET;
+	tuple->location.site.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_SITE_OFFSET;
+	tuple->location.floor.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_FLOOR_OFFSET;
+	tuple->location.room.s = ((char*)tuple) + sizeof(presence_tuple_t) + TUPLE_LOCATION_ROOM_OFFSET;
+
+	*_t = tuple;
+
+	LOG(L_ERR, "new_tuple=%p for aor=%.*s contact=%.*s\n", tuple, 
+	    _p->uri.len, _p->uri.s,
+	    tuple->contact.len, tuple->contact.s);
+	
+	if (use_db) {
+		db_key_t query_cols[2];
+		db_op_t  query_ops[2];
+		db_val_t query_vals[2];
+
+		db_key_t result_cols[4];
+		db_res_t *res;
+		int n_query_cols = 2;
+		int n_result_cols = 0;
+		int basic_col, status_col, location_col;
+
+		LOG(L_INFO, "new_tuple: use_db starting\n");
+
+		query_cols[0] = "uri";
+		query_ops[0] = OP_EQ;
+		query_vals[0].type = DB_STR;
+		query_vals[0].nul = 0;
+		query_vals[0].val.str_val = _p->uri;
+
+		query_cols[1] = "contact";
+		query_ops[1] = OP_EQ;
+		query_vals[1].type = DB_STR;
+		query_vals[1].nul = 0;
+		query_vals[1].val.str_val = *_contact;
+
+		result_cols[basic_col = n_result_cols++] = "basic";
+		result_cols[status_col = n_result_cols++] = "status";
+		result_cols[location_col = n_result_cols++] = "location";
+
+		db_use_table(pa_db, presentity_table);
+		if (db_query (pa_db, query_cols, query_ops, query_vals,
+			      result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
+			LOG(L_ERR, "db_new_tuple(): Error while querying tuple\n");
+			return -1;
+		}
+		LOG(L_INFO, "new_tuple: getting values: res=%p res->n=%d\n",
+		    res, (res ? res->n : 0));
+		if (res && res->n > 0) {
+			/* fill in tuple structure from database query result */
+			db_row_t *row = &res->rows[0];
+			db_val_t *row_vals = ROW_VALUES(row);
+			str basic = row_vals[basic_col].val.str_val;
+			// str status = row_vals[status_col].val.str_val;
+			str location = row_vals[location_col].val.str_val;
+			if (location.s)
+			  location.len = strlen(location.s);
+
+			LOG(L_INFO, "  basic=%s location=%s\n", basic.s, location.s);
+
+			tuple->state = basic2status(basic);
+			if (location.len)
+				strncpy(tuple->location.loc.s, location.s, location.len);
+
+		} else {
+			/* insert new record into database */
+			LOG(L_INFO, "new_tuple: inserting into table\n");
+			if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+				LOG(L_ERR, "db_new_tuple(): Error while inserting tuple\n");
+				return -1;
+			}
+		}
+		LOG(L_INFO, "new_tuple: use_db done\n");
+	}
+
+	return 0;
+}
+
+/*
+ * Find a presence_tuple for contact _contact on presentity _p
+ */
+int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
+{
+	presence_tuple_t *tuple;
+	if (!_contact || !_contact->len || !_p || !_t) {
+		paerrno = PA_INTERNAL_ERROR;
+		LOG(L_ERR, "find_presence_tuple(): Invalid parameter value\n");
+		return -1;
+	}
+	tuple = _p->tuples;
+	LOG(L_ERR, "find_presence_tuple: _p=%p _p->tuples=%p\n", _p, _p->tuples);
+	while (tuple) {
+		if (strncmp(tuple->contact.s, _contact->s, _contact->len) == 0) {
+			*_t = tuple;
+			return 0;
+		}
+		tuple = tuple->next;
+	}
+	return 1;
+}
+
+void add_presence_tuple(presentity_t *_p, presence_tuple_t *_t)
+{
+	presence_tuple_t *tuples = _p->tuples;
+	LOG(L_ERR, "add_presence_tuple: _p=%p _t=%p\n", _p, _t);
+	_p->tuples = _t;
+	_t->next = tuples;
+	if (tuples) {
+		tuples->prev = _t;
+	}
+}
+
+void remove_presence_tuple(presentity_t *_p, presence_tuple_t *_t)
+{
+	presence_tuple_t *tuples = _p->tuples;
+	if (tuples == _t) {
+		_p->tuples = _t->next;
+	}
+	if (_t->prev) {
+		_t->prev->next = _t->next;
+	}
+	if (_t->next) {
+		_t->next->prev = _t->prev;
+	}
+}
+
+
+/*
+ * Free all memory associated with a presence_tuple
+ */
+void free_presence_tuple(presence_tuple_t * _t)
+{
+	shm_free(_t);
+}
 
 /*
  * Print a presentity
@@ -388,7 +510,7 @@ int timer_presentity(presentity_t* _p)
  */
 int add_watcher(presentity_t* _p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, struct watcher** _w)
 {
-	if (new_watcher(_uri, _e, _a, _dlg, _w) < 0) {
+	if (new_watcher(_p, _uri, _e, _a, _dlg, _w) < 0) {
 		LOG(L_ERR, "add_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}
@@ -450,13 +572,15 @@ int notify_watchers(presentity_t* _p)
  */
 int notify_winfo_watchers(presentity_t* _p)
 {
-	struct watcher* ptr;
+	struct watcher* watcher;
 
-	ptr = _p->winfo_watchers;
+	watcher = _p->winfo_watchers;
 
-	while(ptr) {
-		send_notify(_p, ptr);
-		ptr = ptr->next;
+	LOG(L_ERR, "notify_winfo_watchers: presentity=%.*s winfo_watchers=%p\n", _p->uri.len, _p->uri.s, watcher);
+	while(watcher) {
+		LOG(L_ERR, "notify_winfo_watchers: watcher=%.*s\n", watcher->uri.len, watcher->uri.s);
+		send_notify(_p, watcher);
+		watcher = watcher->next;
 	}
 	return 0;
 }
@@ -468,7 +592,7 @@ int notify_winfo_watchers(presentity_t* _p)
 int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, 
 		      struct watcher** _w)
 {
-	if (new_watcher(_uri, _e, _a, _dlg, _w) < 0) {
+	if (new_watcher(_p, _uri, _e, _a, _dlg, _w) < 0) {
 		LOG(L_ERR, "add_winfo_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}

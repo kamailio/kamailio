@@ -436,13 +436,14 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 	xmlNodeMapByName(cur, name, ns, f, data);
 }
 
-void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
+void parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *location_str,
 		str *site_str, str *floor_str, str *room_str,
 		double *xp, double *yp, double *radiusp)
 {
 	xmlDocPtr doc = NULL;
 	xmlNodePtr presence = NULL;
 	xmlAttrPtr sipuri = NULL;
+	xmlNodePtr contact = NULL;
 	xmlNodePtr basic = NULL;
 	xmlNodePtr location = NULL;
 	xmlNodePtr site = NULL;
@@ -452,6 +453,7 @@ void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
 	xmlNodePtr y = NULL;
 	xmlNodePtr radius = NULL;
 	char *sipuri_text = NULL;
+	char *contact_text = NULL;
 	char *basic_text = NULL;
 	char *location_text = NULL;
 	char *site_text = NULL;
@@ -464,6 +466,7 @@ void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
 	doc = event_body_parse(pidf_body);
 
 	presence = xmlDocGetNodeByName(doc, "presence", NULL);
+	contact = xmlDocGetNodeByName(doc, "contact", NULL);
 	basic = xmlDocGetNodeByName(doc, "basic", NULL);
 	location = xmlDocGetNodeByName(doc, "loc", NULL);
 	site = xmlDocGetNodeByName(doc, "site", NULL);
@@ -472,12 +475,14 @@ void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
 	x = xmlDocGetNodeByName(doc, "x", NULL);
 	y = xmlDocGetNodeByName(doc, "y", NULL);
 	radius = xmlDocGetNodeByName(doc, "radius", NULL);
-	LOG(L_INFO, "presence=%p basic=%p location=%p site=%p floor=%p room=%p\n", 
-	    presence, basic, location, site, floor, room);
+	LOG(L_INFO, "presence=%p contact=%p basic=%p location=%p site=%p floor=%p room=%p\n", 
+	    presence, contact, basic, location, site, floor, room);
 
 	sipuri = xmlNodeGetAttrByName(presence, "entity");
 	if (sipuri)
 		sipuri_text = xmlNodeGetContent(sipuri->children);
+	if (contact)
+		contact_text = xmlNodeGetContent(contact->children);
 	if (basic)
 		basic_text = xmlNodeGetContent(basic->children);
 	if (location)
@@ -495,13 +500,17 @@ void parse_pidf(char *pidf_body, str *basic_str, str *location_str,
 	if (radius)
 		radius_text = xmlNodeGetContent(radius->children);
 
-	LOG(L_INFO, "parse_pidf: sipuri=%p:%s basic=%p:%s location=%p:%s\n",
-	    sipuri, sipuri_text, basic, basic_text, location, location_text);
+	LOG(L_INFO, "parse_pidf: sipuri=%p:%s contact=%p:%s basic=%p:%s location=%p:%s\n",
+	    sipuri, sipuri_text, contact, contact_text, basic, basic_text, location, location_text);
 	LOG(L_INFO, "parse_pidf: site=%p:%s floor=%p:%s room=%p:%s\n",
 	    site, site_text, floor, floor_text, room, room_text);
 	LOG(L_INFO, "parse_pidf: x=%p:%s y=%p:%s radius=%p:%s\n",
 	    x, x_text, y, y_text, radius, radius_text);
 
+	if (contact_str && contact) {
+		contact_str->len = strlen(contact_text);
+		contact_str->s = strdup(contact_text);
+	}
 	if (basic_str && basic) {
 		basic_str->len = strlen(basic_text);
 		basic_str->s = strdup(basic_text);
