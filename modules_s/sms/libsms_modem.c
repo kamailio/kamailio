@@ -26,8 +26,8 @@ mailto:s.frings@mail.isis.de
 
 
 
-int put_command(int fd, char* command, char* answer, int max, int timeout,
-																char* expect)
+int put_command(int fd, char* command, int clen, char* answer, int max,
+													int timeout,char* expect)
 {
 	int count=0;
 	int readcount;
@@ -38,7 +38,7 @@ int put_command(int fd, char* command, char* answer, int max, int timeout,
 	int available;
 	int status;
 
-	if (command==0 || command[0]==0 ) {
+	if (command==0 || command[0]==0 || clen==0) {
 		LOG(L_ERR,"ERROR:put_command: NULL comand received! \n");
 		return 0;
 	}
@@ -55,8 +55,8 @@ int put_command(int fd, char* command, char* answer, int max, int timeout,
 		}
 	}
 
-	//DBG("DEBUG: put_command: ->%s \n",command);
-	write(fd,command,strlen(command));
+	//DBG("DEBUG: put_command: ->%.*s \n",clen,command);
+	write(fd,command,clen);
 	tcdrain(fd);
 
 	answer[0]=0;
@@ -142,6 +142,7 @@ int initmodem(struct modem *mdm)
 	char answer[500];
 	int retries=0;
 	int success=0;
+	int clen=0;
 
 	/*if (initstring[0])
 	{
@@ -152,12 +153,12 @@ int initmodem(struct modem *mdm)
 	if (mdm->pin[0]) {
 		LOG(L_INFO,"INFO:initmodem: let's check if modem wants the PIN\n");
 		/* Checking if modem needs PIN */
-		put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
+		put_command(mdm->fd,"AT+CPIN?\r",9,answer,sizeof(answer),50,"+CPIN:");
 		if (strstr(answer,"+CPIN: SIM PIN")) {
 			LOG(L_INFO,"INFO:initmodem: Modem needs PIN, entering PIN...\n");
-			sprintf(command,"AT+CPIN=\"%s\"\r",mdm->pin);
-			put_command(mdm->fd,command,answer,sizeof(answer),300,0);
-			put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),
+			clen=sprintf(command,"AT+CPIN=\"%s\"\r",mdm->pin);
+			put_command(mdm->fd,command,clen,answer,sizeof(answer),300,0);
+			put_command(mdm->fd,"AT+CPIN?\r",9,answer,sizeof(answer),
 				50,"+CPIN:");
 			if (!strstr(answer,"+CPIN: READY")) {
 				if (strstr(answer,"+CPIN: SIM PIN")) {
@@ -187,7 +188,7 @@ int initmodem(struct modem *mdm)
 		do
 		{
 			retries++;
-			put_command(mdm->fd,"AT+CREG?\r",answer,sizeof(answer),100,0);
+			put_command(mdm->fd,"AT+CREG?\r",9,answer,sizeof(answer),100,0);
 			if (strchr(answer,'1') )
 			{
 				LOG(L_INFO,"INFO:initmodem: Modem is registered to the"
@@ -233,7 +234,15 @@ int initmodem(struct modem *mdm)
 	success=0;
 	do {
 		retries++;
-		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
+		/*quering the modem*/
+		if (mdm->mode==MODE_ASCII || mdm->mode==MODE_DIGICOM) {
+			//LOG(L_INFO,"INFO:initmodem:Selecting ASCII mode 1\n");
+			put_command(mdm->fd,"AT+CMGF=1\r",10,answer,sizeof(answer),50,0);
+		} else {
+			//LOG(L_INFO,"INFO:initmodem:Selecting PDU mode 0\n");
+			put_command(mdm->fd,"AT+CMGF=0\r",10,answer,sizeof(answer),50,0);
+		}
+		/*dealing with the answer*/
 		if (strstr(answer,"ERROR")) {
 			LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
 				" retrying\n",mdm->retry);
@@ -257,20 +266,19 @@ error:
 
 int checkmodem(struct modem *mdm)
 {
-	char command[100];
 	char answer[500];
 	int retries=0;
 	int success=0;
 
 	/* Checking if modem needs PIN */
-	put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
+	put_command(mdm->fd,"AT+CPIN?\r",9,answer,sizeof(answer),50,"+CPIN:");
 	if (!strstr(answer,"+CPIN: READY")) {
 		LOG(L_WARN,"WARNING:sms_checkmodem: modem wants the PIN again!\n");
 		goto reinit;
 	}
 
 	if (mdm->mode!=MODE_DIGICOM) {
-		put_command(mdm->fd,"AT+CREG?\r",answer,sizeof(answer),100,0);
+		put_command(mdm->fd,"AT+CREG?\r",9,answer,sizeof(answer),100,0);
 		if (!strchr(answer,'1') ) {
 			LOG(L_WARN,"WARNING:sms_checkmodem: Modem is not registered to the"
 					" network\n");
@@ -292,11 +300,12 @@ int setsmsc(struct modem *mdm, char *smsc)
 {
 	char command[100];
 	char answer[50];
+	int  clen;
 
 	if (smsc && smsc[0]) {
 		DBG("DEBUG:initmodem: Changing SMSC\n");
-		sprintf(command,"AT+CSCA=\"+%s\"\r",smsc);
-		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
+		clen=sprintf(command,"AT+CSCA=\"+%s\"\r",smsc);
+		put_command(mdm->fd,command,clen,answer,sizeof(answer),50,0);
 	}
 	return 0;
 }

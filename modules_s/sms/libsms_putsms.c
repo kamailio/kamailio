@@ -168,28 +168,29 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 	char command2[500];
 	char answer[500];
 	char pdu[500];
+	int clen,clen2;
 	int retries;
 	int err_code;
 	int pdu_len;
 
 	pdu_len = make_pdu(sms_messg, mdm, pdu);
 	if (mdm->mode==MODE_OLD)
-		sprintf(command,"AT+CMGS=%i\r",pdu_len/2);
+		clen = sprintf(command,"AT+CMGS=%i\r",pdu_len/2);
 	else if (mdm->mode==MODE_ASCII)
-		sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to_user_len,
+		clen = sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to_user_len,
 			sms_messg->to);
 	else
-		sprintf(command,"AT+CMGS=%i\r",pdu_len/2-1);
+		clen = sprintf(command,"AT+CMGS=%i\r",pdu_len/2-1);
 
 	if (mdm->mode==MODE_ASCII)
-		sprintf(command2,"%.*s\x1A",sms_messg->text_len,sms_messg->text);
+		clen2=sprintf(command2,"%.*s\x1A",sms_messg->text_len,sms_messg->text);
 	else
-		sprintf(command2,"%.*s\x1A",pdu_len,pdu);
+		clen2=sprintf(command2,"%.*s\x1A",pdu_len,pdu);
 
 	for(err_code=0,retries=0;err_code<2 && retries<10; retries++)
 	{
-		if (put_command(mdm->fd,command,answer,sizeof(answer),50,0)
-		&& put_command(mdm->fd,command2,answer,sizeof(answer),300,0)
+		if (put_command(mdm->fd,command,clen,answer,sizeof(answer),50,0)
+		&& put_command(mdm->fd,command2,clen2,answer,sizeof(answer),300,0)
 		&& !strstr(answer,"ERROR") )
 		{
 			/* no error during sending and the modem didn't said error */

@@ -121,10 +121,12 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 	char* beginning;
 	char* end;
 	int  foo,err;
+	int  clen;
 
 	// Digicom reports date+time only with AT+CMGL
 	if (mdm->mode==MODE_DIGICOM) {
-		put_command(mdm->fd,"AT+CMGL=\"ALL\"\r",answer,sizeof(answer),200,0);
+		put_command(mdm->fd,"AT+CMGL=\"ALL\"\r",14,answer,
+			sizeof(answer),200,0);
 		/* search for beginning of the answer */
 		position=strstr(answer,"+CMGL: ");
 		if (position) {
@@ -142,8 +144,8 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 		}
 	} else {
 		DBG("DEBUG:fetchsms:Trying to get stored message %i\n",sim);
-		sprintf(command,"AT+CMGR=%i\r",sim);
-		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
+		clen=sprintf(command,"AT+CMGR=%i\r",sim);
+		put_command(mdm->fd,command,clen,answer,sizeof(answer),50,0);
 		/* search for beginning of the answer */
 		position=strstr(answer,"+CMGR:");
 	}
@@ -178,10 +180,11 @@ int fetchsms(struct modem *mdm, int sim, char* pdu)
 void deletesms(struct modem *mdm, int sim) {
 	char command[32];
 	char answer[128];
+	int  clen;
 
 	DBG("DEBUG:deletesms: Deleting message %i !\n",sim);
-	sprintf(command,"AT+CMGD=%i\r",sim);
-	put_command(mdm->fd, command,answer,sizeof(answer),50,0);
+	clen = sprintf(command,"AT+CMGD=%i\r",sim);
+	put_command(mdm->fd, command, clen, answer, sizeof(answer), 50, 0);
 }
 
 
@@ -198,7 +201,7 @@ int check_memory(struct modem *mdm, int flag)
 
 	for(out=0,j=0;!out && j<10; j++) 
 	{
-		if (put_command(mdm->fd,"AT+CPMS?\r",answer,sizeof(answer),50,0)
+		if (put_command(mdm->fd,"AT+CPMS?\r",9,answer,sizeof(answer),50,0)
 		&& (posi=strstr(answer,"+CPMS:"))!=0 )
 		{
 			// Modem supports CPMS command. Read memory size

@@ -32,8 +32,8 @@ mailto:s.frings@mail.isis.de
 // functions reads 0.1s more and returns then.
 // The command may be empty or NULL. 
 
-int put_command(int fd,char* command,char* answer,int max,int timeout,
-																char* expect);
+int put_command(int fd,char* command, int clen, char* answer,int max,
+													int timeout,char* expect);
 
 int setmodemparams( struct modem *mdm);
 
