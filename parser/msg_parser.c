@@ -364,7 +364,7 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 				msg->parsed_flag|=HDR_ALLOW;
 				break;
 			case HDR_EVENT:
-				if (msg->allow==0) msg->event = hf;
+				if (msg->event==0) msg->event = hf;
 				msg->parsed_flag|=HDR_EVENT;
 				break;
 		        case HDR_ACCEPT:
