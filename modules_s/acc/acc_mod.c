@@ -22,8 +22,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
@@ -45,6 +45,10 @@
 struct tm_binds tmb;
 
 static int mod_init( void );
+static void destroy(void);
+static int child_init(int rank);
+
+db_con_t* db_handle;   /* Database connection handle */
 
 /* ----- Parameter variables ----------- */
 
@@ -58,7 +62,32 @@ char *db_url;
 char *uid_column="uid";
 
 /* name of database table, default=="acc" */
-char *db_table="acc";
+char *db_table_acc="acc";
+
+/* names of columns in table acc*/
+char* acc_sip_from_col      = "sip_from";
+char* acc_sip_to_col        = "sip_to";
+char* acc_sip_status_col    = "sip_status";
+char* acc_sip_method_col    = "sip_method";
+char* acc_i_uri_col         = "i_uri";
+char* acc_o_uri_col         = "o_uri";
+char* acc_sip_callid_col    = "sip_callid";
+char* acc_user_col          = "user";
+char* acc_time_col          = "time";
+
+/* name of missed calls table, default=="missed_calls" */
+char *db_table_mc="missed_calls";
+
+/* names of columns in table missed calls*/
+char* mc_sip_from_col      = "sip_from";
+char* mc_sip_to_col        = "sip_to";
+char* mc_sip_status_col    = "sip_status";
+char* mc_sip_method_col    = "sip_method";
+char* mc_i_uri_col         = "i_uri";
+char* mc_o_uri_col         = "o_uri";
+char* mc_sip_callid_col    = "sip_callid";
+char* mc_user_col          = "user";
+char* mc_time_col          = "time";
 
 /* noisiness level logging facilities are used */
 int log_level=L_NOTICE;
@@ -77,6 +106,9 @@ int missed_flag = 2;
 
 /* report e2e ACKs too */
 int report_ack = 1;
+
+/* log to syslog too*/
+int usesyslog = 0;
 
 /* ------------- Callback handlers --------------- */
 
@@ -103,7 +135,8 @@ struct module_exports exports= {
 	/* exported variables */
 	(char *[]) { /* variable names */
 		"use_database",
-		"db_table",
+        "db_table_acc",
+        "db_table_missed_calls",
 		"db_url",
 		"uid_column",
 		"log_level",
@@ -111,7 +144,26 @@ struct module_exports exports= {
 		"failed_transactions",
 		"acc_flag",
 		"report_ack",
-		"missed_flag"
+        "missed_flag",
+        "usesyslog",
+        "acc_sip_from_column",
+        "acc_sip_to_column",
+        "acc_sip_status_column",
+        "acc_sip_method_column",
+        "acc_i_uri_column",
+        "acc_o_uri_column",
+        "acc_sip_callid_column",
+        "acc_user_column",
+        "acc_time_column",
+        "mc_sip_from_column",
+        "mc_sip_to_column",
+        "mc_sip_status_column",
+        "mc_sip_method_column",
+        "mc_i_uri_column",
+        "mc_o_uri_column",
+        "mc_sip_callid_column",
+        "mc_user_column",
+        "mc_time_column"
 	},
 
 	(modparam_t[]) { /* variable types */
@@ -119,17 +171,38 @@ struct module_exports exports= {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		STR_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
-		INT_PARAM
+		INT_PARAM,
+        INT_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+        STR_PARAM
 	},
 
 	(void *[]) { /* variable pointers */
 		&use_db,
-		&db_table,
+        &db_table_acc,
+        &db_table_mc,
 		&db_url,
 		&uid_column,
 		&log_level,
@@ -137,16 +210,35 @@ struct module_exports exports= {
 		&failed_transactions,
 		&acc_flag,
 		&report_ack,
-		&missed_flag
+        &missed_flag,
+        &usesyslog,
+        &acc_sip_from_col,
+        &acc_sip_to_col,
+        &acc_sip_status_col,
+        &acc_sip_method_col,
+        &acc_i_uri_col,
+        &acc_o_uri_col,
+        &acc_sip_callid_col,
+        &acc_user_col,
+        &acc_time_col,
+        &mc_sip_from_col,
+        &mc_sip_to_col,
+        &mc_sip_status_col,
+        &mc_sip_method_col,
+        &mc_i_uri_col,
+        &mc_o_uri_col,
+        &mc_sip_callid_col,
+        &mc_user_col,
+        &mc_time_col
 	},
 
-	10,			/* number of variables */
+    30,         /* number of variables */
 
 	mod_init, 	/* initialization module */
 	0,			/* response function */
-	0,			/* destroy function */
+    destroy,    /* destroy function */
 	0,			/* oncancel function */
-	0			/* per-child init function */
+    child_init  /* per-child init function */
 };
 
 
@@ -167,7 +259,7 @@ static int mod_init( void )
 	if (load_tm( &tmb )==-1) return -1;
 
 	/* register callbacks */
-	if (tmb.register_tmcb( TMCB_REPLY, acc_onreply, 0 /* empty param */ ) <= 0) 
+	if (tmb.register_tmcb( TMCB_REPLY, acc_onreply, 0 /* empty param */ ) <= 0)
 		return -1;
 	if (tmb.register_tmcb( TMCB_E2EACK, acc_onack, 0 /* empty param */ ) <=0 )
 		return -1;
@@ -179,12 +271,34 @@ static int mod_init( void )
 	return 0;
 }
 
+static int child_init(int rank)
+{
+#ifdef SQL_ACC
+    if (db_url == NULL) {
+        LOG(L_ERR, "acc:init_child(): Use db_url parameter\n");
+		return -1;
+	}
+	db_handle = db_init(db_url);
+	if (!db_handle) {
+        LOG(L_ERR, "acc:init_child(): Unable to connect database\n");
+		return -1;
+	}
+	return 0;
+#endif
+}
+
+static void destroy(void)
+{
+#ifdef SQL_ACC
+    if (db_handle) db_close(db_handle);
+#endif
+}
 
 static void acc_onreq( struct cell* t, struct sip_msg *msg,
 	int code, void *param )
 {
 	/* disable C timer for accounted calls */
-	if (isflagset( msg, acc_flag)==1 || 
+	if (isflagset( msg, acc_flag)==1 ||
 				(t->is_invite && isflagset( msg, missed_flag))) {
 #		ifdef EXTRA_DEBUG
 		DBG("DEBUG: noisy_timer set for accounting\n");
@@ -200,10 +314,10 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 
 	rq = t->uas.request;
 
-	if (t->is_invite 
-			&& missed_flag 
-			&& isflagset( rq, missed_flag)==1 
-			&& code>=300 ) 
+	if (t->is_invite
+			&& missed_flag
+			&& isflagset( rq, missed_flag)==1
+			&& code>=300 )
 	{
 		acc_missed_report( t, reply, code);
 		/* don't come here again on next failed branch */
@@ -212,7 +326,7 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 }
 
 static void acc_onreply( struct cell* t, struct sip_msg *reply,
-	int code, void *param ) 
+	int code, void *param )
 {
 
 	struct sip_msg *rq;
@@ -227,9 +341,9 @@ static void acc_onreply( struct cell* t, struct sip_msg *reply,
 
 	/* if acc enabled for flagged transaction, check if flag matches */
 	if (acc_flag && isflagset( rq, acc_flag )==-1) return;
-	/* early media is reported only if explicitely demanded, 
+	/* early media is reported only if explicitely demanded,
 	   other provisional responses are always dropped  */
-	if (code < 200 && ! (early_media && code==183)) 
+	if (code < 200 && ! (early_media && code==183))
 		return;
 	/* negative transactions reported only if explicitely demanded */
 	if (!failed_transactions && code >=300) return;
