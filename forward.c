@@ -468,14 +468,14 @@ int forward_reply(struct sip_msg* msg)
 		goto error;
 	}
 
+	proto=msg->via2->proto;
 	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
-	send_sock=get_send_socket(to, msg->rcv.proto);
+	send_sock=get_send_socket(to, proto);
 	if (send_sock==0){
 		LOG(L_ERR, "forward_reply: ERROR: no sending socket found\n");
 		goto error;
 	}
 
-	proto=msg->via2->proto;
 	if (proto==PROTO_UDP){
 		if (udp_send(send_sock, new_buf,new_len,  to)==-1)
 		{

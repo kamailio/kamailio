@@ -878,6 +878,7 @@ static void sig_usr(int signo)
 			case SIGINT:
 			case SIGPIPE:
 			case SIGTERM:
+					LOG(L_INFO, "INFO: signal %d received\n", signo);
 					/* print memory stats for non-main too */
 					#ifdef PKG_MALLOC
 					LOG(memlog, "Memory status (pkg):\n");
