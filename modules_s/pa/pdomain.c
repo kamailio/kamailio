@@ -173,6 +173,8 @@ int timer_pdomain(pdomain_t* _d)
 		if (ptr->watchers == 0) {
 			t = ptr;
 			ptr = ptr->next;
+			remove_presentity(_d, t);
+			free_presentity(t);
 		} else {
 			ptr = ptr->next;
 		}

@@ -60,6 +60,7 @@ int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w)
 
 	     /* Copy uri string */
 	ptr->uri.s = (char*)ptr + sizeof(watcher_t);
+	ptr->uri.len = _uri->len;
 	memcpy(ptr->uri.s, _uri->s, _uri->len);
 	
 	ptr->expires = _e; /* Expires value */

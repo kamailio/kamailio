@@ -36,6 +36,7 @@
 #include "paerrno.h"
 #include "notify.h"
 #include "presentity.h"
+#include "ptime.h"
 
 
 /*
@@ -108,6 +109,25 @@ void print_presentity(FILE* _f, presentity_t* _p)
 
 int timer_presentity(presentity_t* _p)
 {
+	watcher_t* ptr, *t;
+
+	ptr = _p->watchers;
+
+	print_presentity(stdout, _p);
+	while(ptr) {
+	        if (ptr->expires <= act_time) {
+		  LOG(L_ERR, "Removing watcher %.*s\n", ptr->uri.len, ptr->uri.s);
+			ptr->expires = 0;
+			send_notify(_p, ptr);
+			t = ptr;
+			ptr = ptr->next;
+			remove_watcher(_p, t);
+			free_watcher(t);
+			continue;
+		}
+		
+		ptr = ptr->next;
+	}
 	return 0;
 }
 
@@ -187,6 +207,7 @@ int find_watcher(struct presentity* _p, str* _uri, watcher_t** _w)
 	while(ptr) {
 		if ((_uri->len == ptr->uri.len) &&
 		    (!memcmp(_uri->s, ptr->uri.s, _uri->len))) {
+
 			*_w = ptr;
 			return 0;
 		}

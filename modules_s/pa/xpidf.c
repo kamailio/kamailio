@@ -91,21 +91,22 @@
 /*
  * Create start of pidf document
  */
-int start_xpidf_doc(str* _b, int* _l)
+int start_xpidf_doc(str* _b, int _l)
 {
-	int len;
-
-	len = XML_VERSION_L + CRLF_L + DOCTYPE_L +
-		CRLF_L + PRESENCE_STAG_L + CRLF_L;
-		
-	if (len > *_l) {
+	if ((XML_VERSION_L + 
+	     CRLF_L +
+	     DOCTYPE_L + 
+	     CRLF_L +
+	     PRESENCE_STAG_L + 
+	     CRLF_L
+	    ) > _l) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "start_xpidf_doc(): Buffer too small\n");
-		*_l = len - *_l;
 		return -1;
 	}
 
-	str_append(_b, XML_VERSION CRLF DOCTYPE CRLF PRESENCE_STAG CRLF, len);
+	str_append(_b, XML_VERSION CRLF DOCTYPE CRLF PRESENCE_STAG CRLF,
+		   XML_VERSION_L + CRLF_L + DOCTYPE_L + CRLF_L + PRESENCE_STAG_L + CRLF_L);
 	return 0;
 }
 
@@ -113,16 +114,11 @@ int start_xpidf_doc(str* _b, int* _l)
 /*
  * Add a presentity information
  */
-int xpidf_add_presentity(str* _b, int* _l, str* _uri)
+int xpidf_add_presentity(str* _b, int _l, str* _uri)
 {
-	int len;
-
-	len = PRESENTITY_START_L + _uri->len + PRESENTITY_END_L + CRLF_L;
-
-	if (*_l < len) {
+	if (_l < PRESENTITY_START_L + _uri->len + PRESENTITY_END_L + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "pidf_add_presentity(): Buffer too small\n");
-		*_l = len - *_l;
 		return -1;
 	}
 
@@ -136,9 +132,9 @@ int xpidf_add_presentity(str* _b, int* _l, str* _uri)
 /*
  * Add a contact address with given status
  */
-int xpidf_add_address(str* _b, int* _l, str* _addr, xpidf_status_t _st)
+int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st)
 {
-	int len = 0, tmp;
+	int len = 0;
 	char* p;
 
 	switch(_st) {
@@ -148,14 +144,22 @@ int xpidf_add_address(str* _b, int* _l, str* _addr, xpidf_status_t _st)
 	default:              p = STATUS_CLOSED; len = STATUS_CLOSED_L; break; /* Makes gcc happy */
 	}
 
-	tmp = ATOM_STAG_L + CRLF_L + ADDRESS_START_L + _addr->len +
-		ADDRESS_END_L + CRLF_L + len + CRLF_L + ADDRESS_ETAG_L +
-		CRLF_L + ATOM_ETAG_L + CRLF_L;
-
-	if (*_l < tmp) {
+	if (_l < (ATOM_STAG_L + 
+		  CRLF_L +
+		  ADDRESS_START_L + 
+		  _addr->len + 
+		  ADDRESS_END_L + 
+		  CRLF_L +
+		  len + 
+		  CRLF_L +
+		  ADDRESS_ETAG_L + 
+		  CRLF_L +
+		  ATOM_ETAG_L + 
+		  CRLF_L
+		 )
+	   ) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "xpidf_add_address(): Buffer too small\n");
-		*_l = tmp - *_l;
 		return -1;
 	}
 
@@ -173,12 +177,11 @@ int xpidf_add_address(str* _b, int* _l, str* _addr, xpidf_status_t _st)
 /*
  * End the document
  */
-int end_xpidf_doc(str* _b, int* _l)
+int end_xpidf_doc(str* _b, int _l)
 {
-	if (*_l < (PRESENCE_ETAG_L + CRLF_L)) {
+	if (_l < (PRESENCE_ETAG_L + CRLF_L)) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "end_xpidf_doc(): Buffer too small\n");
-		*_l = PRESENCE_ETAG_L + CRLF_L - *_l;
 		return -1;
 	}
 

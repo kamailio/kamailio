@@ -41,27 +41,14 @@
 
 MODULE_VERSION
 
-/*
- * Module initialization function
- */
-static int mod_init(void);
 
+static int mod_init(void);  /* Module initialization function */
+static void destroy(void);  /* Module destroy function */
+static int subscribe_fixup(void** param, int param_no); /* domain name -> domain pointer */
+static void timer(unsigned int ticks, void* param); /* Delete timer for all domains */
 
-/*
- * Module destroy function
- */
-static void destroy(void);
-
-
-/*
- * Fixup functions, converts domain name to domain
- * pointer
- */
-static int subscribe_fixup(void** param, int param_no);
-
-
-int default_expires = 3600;
-
+int default_expires = 3600;  /* Default expires value if not present in the message */
+int timer_interval = 10;     /* Expiration timer interval in seconds */
 
 /** TM bind */
 struct tm_binds tmb;
@@ -83,6 +70,7 @@ static cmd_export_t cmds[]={
  */
 static param_export_t params[]={
 	{"default_expires", INT_PARAM, &default_expires},
+	{"timer_interval",  INT_PARAM, &timer_interval },
 	{0, 0, 0}
 };
 
@@ -105,15 +93,19 @@ static int mod_init(void)
 
 	DBG("Presence Agent - initializing\n");
 
-	/* import the TM auto-loading function */
+	     /* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "Can't import tm\n");
 		return -1;
 	}
-	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &tmb )==-1)
+	     /* let the auto-loading function load all TM stuff */
+	if (load_tm( &tmb )==-1) {
 		return -1;
+	}
 	
+	     /* Register cache timer */
+	register_timer(timer, 0, timer_interval);
+
 	return 0;
 }
 
@@ -140,4 +132,15 @@ static int subscribe_fixup(void** param, int param_no)
 		*param = (void*)d;
 	}
 	return 0;
+}
+
+
+/*
+ * Timer handler
+ */
+static void timer(unsigned int ticks, void* param)
+{
+	if (timer_all_pdomains() != 0) {
+		LOG(L_ERR, "timer(): Error while synchronizing domains\n");
+	}
 }

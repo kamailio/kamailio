@@ -86,8 +86,10 @@ void callback(str* _user, int state, void* data)
 
 /*
  * Extract plain uri -- return URI without parameters
+ * The uri will be in form username@domain
+ *
  */
-static inline int extract_plain_uri(str* _uri)
+static int extract_plain_uri(str* _uri)
 {
 	struct sip_uri puri;
 
@@ -97,6 +99,7 @@ static inline int extract_plain_uri(str* _uri)
 		return -1;
 	}
 	
+	_uri->s = puri.user.s;
 	_uri->len = puri.host.s + puri.host.len - _uri->s;
 	return 0;
 }
@@ -105,7 +108,7 @@ static inline int extract_plain_uri(str* _uri)
 /*
  * Get presentity URI, which is stored in R-URI
  */
-static inline int get_pres_uri(struct sip_msg* _m, str* _puri)
+static int get_pres_uri(struct sip_msg* _m, str* _puri)
 {
 	if (_m->new_uri.s) {
 		_puri->s = _m->new_uri.s;
@@ -124,7 +127,7 @@ static inline int get_pres_uri(struct sip_msg* _m, str* _puri)
 }
 
 
-static inline int get_watch_uri(struct sip_msg* _m, str* _wuri)
+static int get_watch_uri(struct sip_msg* _m, str* _wuri)
 {
 	_wuri->s = get_from(_m)->uri.s;
 	_wuri->len = get_from(_m)->uri.len;
@@ -142,7 +145,7 @@ static inline int get_watch_uri(struct sip_msg* _m, str* _wuri)
  * Parse Accept header field body
  * FIXME: This is ugly parser, write something more clean
  */
-static inline int parse_accept(struct hdr_field* _h, doctype_t* _a)
+static int parse_accept(struct hdr_field* _h, doctype_t* _a)
 {
 	char* buffer;
 
@@ -178,7 +181,7 @@ static inline int parse_accept(struct hdr_field* _h, doctype_t* _a)
  * Parse all header fields that will be needed
  * to handle a SUBSCRIBE request
  */
-static inline int parse_hfs(struct sip_msg* _m)
+static int parse_hfs(struct sip_msg* _m)
 {
 	if (parse_headers(_m, HDR_FROM | HDR_EVENT | HDR_EXPIRES | HDR_ACCEPT, 0) == -1) {
 		paerrno = PA_PARSE_ERR;
@@ -223,7 +226,7 @@ static inline int parse_hfs(struct sip_msg* _m)
 /*
  * Check if a message received has been constructed properly
  */
-static inline int check_message(struct sip_msg* _m)
+static int check_message(struct sip_msg* _m)
 {
 	if (_m->event) {
 		if (((event_t*)(_m->event->parsed))->parsed != EVENT_PRESENCE) {
@@ -240,8 +243,8 @@ static inline int check_message(struct sip_msg* _m)
 /*
  * Create a new presentity and corresponding watcher list
  */
-static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-				    struct presentity** _p, struct watcher** _w)
+static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
+			     struct presentity** _p, struct watcher** _w)
 {
 	time_t e;
 	dlg_t* dialog;
@@ -297,8 +300,8 @@ static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str*
 /*
  * Update existing presentity and watcher list
  */
-static inline int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
-				    struct presentity* _p, struct watcher** _w)
+static int update_presentity(struct sip_msg* _m, struct pdomain* _d, 
+			     struct presentity* _p, struct watcher** _w)
 {
 	time_t e;
 	dlg_t* dialog;

@@ -39,15 +39,17 @@ typedef enum lpidf_status {
 	LPIDF_ST_CLOSED,
 } lpidf_status_t;
 
+
 /*
  * Add a presentity information
  */
-int lpidf_add_presentity(str* _b, int* _l, str* _uri);
+int lpidf_add_presentity(str* _b, int _l, str* _uri);
+
 
 /*
  * Add a contact address with given status
  */
-int lpidf_add_address(str* _b, int* _l, str* _addr, lpidf_status_t _st);
+int lpidf_add_address(str* _b, int _l, str* _addr, lpidf_status_t _st);
 
 
 #endif /* LPIDF_H */

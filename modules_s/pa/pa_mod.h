@@ -34,8 +34,9 @@
 #include "../tm/tm_load.h"
 
 extern int default_expires;
+extern int timer_interval;
 
-/** TM bind */
+/* TM bind */
 extern struct tm_binds tmb;
 
 
