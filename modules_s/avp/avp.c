@@ -31,6 +31,7 @@
 #include "../../dset.h"
 #include "../../mod_fix.h"
 #include "../../usr_avp.h"
+#include "../../db/db.h"
 
 #include <string.h>
 #include <assert.h>
@@ -61,6 +62,8 @@ char* attr_column = "attribute";
 char* val_column = "value";
 
 db_con_t* db_handle = 0;
+static db_func_t dbf;
+
 
 /*
  * Exported functions
@@ -112,7 +115,7 @@ static int avp_mod_init(void)
 {
         DBG("avp - initializing\n");
 
-	if (bind_dbmod()) {
+	if (bind_dbmod(avp_db_url, &dbf)) {
 		LOG(L_ERR, "ERROR: avp_mod_init: unable to bind db\n");
 		return -1;
 	}
@@ -124,18 +127,19 @@ static int avp_init_child(int rank)
 {
     DBG("avp - initializing child %i\n",rank);
 
-    assert(db_init);
-    db_handle=db_init(avp_db_url);
-
-    if(!db_handle) {
-		LOG(L_ERR, "ERROR; avp_init_child: "
-		    "could not init db %s\n", 
-		    avp_db_url);
-		return -1;
-    }
-
-    return 0;
+	if (avp_db_url){
+		db_handle=dbf.init(avp_db_url);
+        if (db_handle==0){
+			LOG(L_ERR, "ERROR: avp_db_init: unable to connect to the "
+				"database\n");
+			return -1;
+		}
+		return 0;
+	}
+	LOG(L_CRIT, "BUG: avp_db_init: null db url\n");
+	return -1;
 }
+
 
 static int check_load_param(void** param, int param_no)
 {
