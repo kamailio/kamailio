@@ -35,7 +35,8 @@
 /*
  * This switch-case statement is used in
  * trim_leading and trim_trailing. You can
- * define char that should be skipped here.
+ * define characters that should be skipped 
+ * here.
  */
 #define TRIM_SWITCH(c) switch(c) {     \
                        case ' ':       \
