@@ -103,6 +103,7 @@ BEGIN {
 	ua_scs=0;
 	ua_edgeaccess=0;
 	ua_tkc=0;
+	ua_eyep=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -255,6 +256,10 @@ ua==0 && /User-Agent:.*KPhone/ {
 }
 ua==0 && /User-Agent:.*SCS/ {
 	ua_scs++
+	ua=1
+}
+ua==0 && /User-Agent:.*SIP EyeP Phone/ {
+	ua_eyep++
 	ua=1
 }
 ua==0 && /User-Agent:.*EdgEAccEss/ {
@@ -654,6 +659,7 @@ END {
 	print "Yamaha: " ua_yamaha 
 	print "tkcPhone: " ua_tkc
 	print "EdgeAccess: " ua_edgeaccess
+	print "EyeP: " ua_eyep
 	print "UFO: " ua_xx
 
 	print "## Servers"
