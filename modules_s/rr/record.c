@@ -249,7 +249,7 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 		return -3;
 	}
 	
-	if (build_rr(l, l2, _lr, &user, &from->tag_value, INBOUND) < 0) {
+	if (build_rr(l, l2, _lr, &user, tag, INBOUND) < 0) {
 		LOG(L_ERR, "insert_RR(): Error while insering inbound Record-Route\n");
 		return -4;
 	}
