@@ -42,6 +42,9 @@
 #include "../../data_lump.h"
 
 
+#define MF_HDR "Max-Forwards: "
+#define MF_HDR_LEN (sizeof(MF_HDR) - 1)
+
 
 /* looks for the MAX FORWARDS header
    returns the its value, -1 if is not present or -2 for error */
@@ -79,9 +82,8 @@ int is_maxfwd_present( struct sip_msg* msg , str *foo)
 
 
 
-int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
+int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 {
-	int n;
 	int i;
 
 	/* double check */
@@ -92,9 +94,12 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
 	}
 
 	/*rewriting the max-fwd value in the message (buf and orig)*/
-	n = btostr(mf_val->s,x-1);
-	for( i=n ; i<mf_val->len ; i++ )
-		mf_val->s[i] = ' ';
+	x--;
+	for(i = s->len - 1; x && i >= 0; i--) {
+		s->s[i] = (x % 10) + '0';
+		x /= 10;
+	}
+	while(i >= 0) s->s[i--] = ' ';
 
 	return 1;
 error:
@@ -118,15 +123,15 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	}
 
 	/* constructing the header */
-	len = 14 /*"MAX-FORWARDS: "*/+ CRLF_LEN + 3/*val max on 3 digits*/;
+	len = MF_HDR_LEN /*"MAX-FORWARDS: "*/+ CRLF_LEN + 3/*val max on 3 digits*/;
 
 	buf = (char*)pkg_malloc( len );
 	if (!buf) {
 		LOG(L_ERR, "ERROR : add_maxfwd_header : No memory left\n");
 		return -1;
 	}
-	memcpy( buf , "Max-Forwards: ", 14 );
-	len = 14 ;
+	memcpy( buf , MF_HDR, MF_HDR_LEN );
+	len = MF_HDR_LEN ;
 	len += btostr( buf+len , val );
 	memcpy( buf+len , CRLF , CRLF_LEN );
 	len +=CRLF_LEN;
@@ -152,5 +157,3 @@ error1:
 error:
 	return -1;
 }
-
-
