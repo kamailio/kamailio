@@ -90,15 +90,13 @@ int get_username(str* _s)
 
 
 #define MAX_AOR_LEN 256
-char aor_buf[MAX_AOR_LEN];
-
-
 
 /*
  * Extract Address of Record
  */
 int extract_aor(str* _uri, str* _a)
 {
+	static char aor_buf[MAX_AOR_LEN];
 	str tmp;
 	struct sip_uri puri;
 	int user_len;
@@ -139,8 +137,6 @@ int extract_aor(str* _uri, str* _a)
 	} else {
 		strlower(_a);
 	}
-
-	printf("!!!! %.*s\n", _a->len, _a->s);
 
 	return 0;
 }
