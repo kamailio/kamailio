@@ -1,0 +1,110 @@
+MSILO - offline messages service - SER module
+=============================================
+
+
+1.Description
+-------------
+This module stores received messages for offline users and sends them next time
+when they became online.
+
+The module sores for each message R-URI, if it is a complete address of record
+(user@hostname), To address, From address, incoming time, expiration time
+and body. If R-URI is not AoF (it might be contact address for current SIP
+session), To address will be used as R-URI.
+
+After expiration time, the message will be discarded from database.
+
+When a user registers with SER, the module is looking in database for stored
+messages of that user. All of them will be send to contact address provided in 
+REGISTER message.
+
+
+2.Exported symbols
+------------------
+Methods
+-------
+
+Name: 	m_store
+Params:	mode - the way to save the outgoing URI
+		"0" - start with new_uri then r-uri and then to header
+		"1" - start with r-uri and then to header
+		"2" - look only at to header
+Desc:	store current message (should be called when a user is offline or his UA
+		does not support MESSAGE requests). If the user is registered with a UA
+		which does not support MESSAGE requests you should not use mode="0" if
+		you have changed the request uri with the address from UA contact.
+
+Name: 	m_dump
+Params:	none
+Desc:	dump stored messages of the user (should be called when an user 
+		registers OK)
+
+
+Parameters
+----------
+
+Name:		db_url
+Type:		string
+Default:	sql://root@127.0.0.1/msilo
+Desc:		SQL URL of database - username, password, host, port and database
+			(ex: sql://username:password@hostname.com/database)
+
+
+Name:		db_table
+Type:		string
+Default:	silo
+Desc:		table name
+
+
+Name:		registrar
+Type:		string
+Default:	NULL
+Desc:		ex: sip:registrar@iptel.org
+			the SIP address used to inform users that destination of their
+			message is not online and the message will be delivered next time
+			when the destination goes online. If the parameter is not set, the
+			module will not send info messages.
+
+
+Name:		expire_time
+Type:		int
+Default:	259200 (72 hours = 3 days)
+Desc:		defaultult expire time of the message - seconds
+
+
+Name:		check_time
+Type:		int
+Default:	30
+Desc:		time to check if dumped messages are sent OK - seconds
+
+
+Name:		clean_period
+Type:		int
+Default:	5
+Desc:		number of 'check_time' cycles. This period is used to check if
+			there are expired messages in database.
+
+Name:		use_contact
+Type:		int
+Default:	1 (0 = off, 1 = on)
+Desc:		turns on/off the usage of the Contact address to send feedback 
+            to senders whose messages are stored by MSILO.
+
+
+3.Module dependences
+-------------------
+- MYSQL
+- TM
+
+4.Other information
+-------------------
+- see SQL script for creating databases and a sample of cfg file in './doc/'
+
+Contacts
+--------
+- for any suggestion/bug contact:
+	<serhelp@iptel.org>
+
+Known Limitations
+-----------------
+
