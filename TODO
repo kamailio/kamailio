@@ -2,9 +2,9 @@ $Id$
 
 ( - todo, x - done)
 
-- replace  remaining mallocs/frees at least in msg_translator.c
+x replace  remaining mallocs/frees at least in msg_translator.c
 - add $(INCLUDES) to the Makefiles
-- make ser suncc ready
+x make ser suncc ready
 - fix parse_cseq!!! (it doesnt parse 1234\n INVITE a.s.o)
 x fix 0 parameter module f. call
 x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
@@ -13,6 +13,7 @@ x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
 - fix alignment access problems (warning on Sun)
 x (different way) add request header bitmap field for the modules
 - introduce variables & function in the script language (cfg. file)
+- ? variable number of params functions in script (no longer limited to 2)?
 
 
 High priority:
@@ -46,7 +47,7 @@ x add support for -u user and -g group (not only -u uid, -g uid)
 
 x handle SIGCHLD, SIGHUP
 - use a  standard lex compatible .lex format (instead of flex)
-- try & use native compiler & ld if possible
+x try & use native compiler & ld if possible
 
 x make install
 x init.d scripts (and rc.local? for *BSD or Slackware)
@@ -67,10 +68,22 @@ x freopen stdin, stdout, stderr to /dev/null
  (-DF_MALLOC, -DNO_DBG, ... sip_warning=0, a.s.o)
 - add src_port, dst_port, proto to cfg.{y,lex}
 x generic locking lib
-- convert tm to use new locking lib
-- tcp disable nagle & other socket stuff (close()?)
+x convert tm to use new locking lib
 - force add rport (setflag(rport)???)
 - kill all the fprintf
+
+optimizations:
+- better timer interface with hashes (a la openbsd)
+- atomic ops?
+- assembly for some very common used function
+- getsock* cache
+- fd cache for tcp_send
+- dns cache?
+
+
+tcp stuff:
+x tcp disable nagle 
+- tcp locking/atomic ops review
 
 tm optimizations:
 

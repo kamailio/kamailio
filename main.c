@@ -1072,6 +1072,10 @@ int main(int argc, char** argv)
 	ret=-1;
 	my_argc=argc; my_argv=argv;
 	
+	/*init mallocs (before parsing cfg or cmd line !)*/
+	if (init_mallocs()==-1)
+		goto error;
+
 	/* added by jku: add exit handler */
 	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
@@ -1287,9 +1291,6 @@ try_again:
 	
 	
 
-	/*init mallocs (before parsing cfg !)*/
-	if (init_mallocs()==-1)
-		goto error;
 
 	/*init timer, before parsing the cfg!*/
 	if (init_timer()<0){
