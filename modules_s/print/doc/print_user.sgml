@@ -1,0 +1,130 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>Module description</para>
+	<para>
+	    This is an example module. It implements only one function that prints its string
+	    parameter to stdout (it won't work if ser is started in dameon mode). It also shows how
+	    module parameters can be declared.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>str_param</varname> (string)</title>
+	    <para>
+		Not used, just an example
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is NULL.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>str_param</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("print", "str_param", "foobar")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>int_param</varname> (integer)</title>
+	    <para>
+		Not used, just an example.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>int_param</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("print", "int_param", 42)
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">print(txt)</function>
+	    </title>
+	    <para>
+		Prints string to stdout.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>txt</emphasis> - string to be printed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>print</function> usage</title>
+		<programlisting format="linespecific">
+...
+print("The answer is 42\n");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+    <section>
+	<title>Installation & Running</title>
+	<para>Notes about installation and running.</para>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("print.sgml" "Book" "chapter")
+End:
+-->
