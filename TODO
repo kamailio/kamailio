@@ -3,6 +3,9 @@ $Id$
 ( - todo, x - done)
 
 release:
+- fix CC_VER bug in newer Makefile (move DEFS after CC?)
+- openbsd 3.2 packages -> doc in share/doc (and not in doc)
+- openbsd 3.2 -> add jabber and mysql to the package
 x fix modules makefiles (so that cd modules/foo; make will also link the proper
    libs)
 x fix -march=..., or compile w/ i386 for the release
