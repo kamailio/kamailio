@@ -27,7 +27,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+/*** error and info messages ***/
 #ifndef _XJAB_DMSG_H_
 #define _XJAB_DMSG_H_
 
