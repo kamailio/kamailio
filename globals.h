@@ -32,5 +32,6 @@ extern int check_via;
 extern int received_dns;
 
 extern int cfg_errors;
+extern unsigned int msg_no;
 
 #endif

@@ -21,11 +21,15 @@
 #include "stats.h"
 #endif
 
+unsigned int msg_no=0;
+
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg msg;
+
+	msg_no++;
 #ifdef STATS
-	int skipped = 1;
+	skipped = 1;
 #endif
 
 	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
@@ -33,6 +37,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	msg.buf=buf;
 	msg.len=len;
 	msg.src_ip=src_ip;
+	msg.id=msg_no;
 	/* make a copy of the message */
 	msg.orig=(char*) malloc(len+1);
 	if (msg.orig==0){
@@ -45,14 +50,14 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	if (parse_msg(buf,len, &msg)!=0){
 		goto error;
 	}
-	DBG("Ater parse_msg...\n");
-	
+	DBG("After parse_msg...\n");
 	if (msg.first_line.type==SIP_REQUEST){
 		DBG("msg= request\n");
 		/* sanity checks */
-		if (msg.via1.error!=VIA_PARSE_OK){
+		if ((msg.via1==0) || (msg.via1->error!=VIA_PARSE_OK)){
 			/* no via, send back error ? */
-			goto skip;
+			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
+			goto error;
 		}
 		/* check if neccesarry to add receive?->moved to forward_req */
 		
@@ -70,13 +75,15 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	}else if (msg.first_line.type==SIP_REPLY){
 		DBG("msg= reply\n");
 		/* sanity checks */
-		if (msg.via1.error!=VIA_PARSE_OK){
+		if ((msg.via1==0) || (msg.via1->error!=VIA_PARSE_OK)){
 			/* no via, send back error ? */
-			goto skip;
+			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
+			goto error;
 		}
-		if (msg.via2.error!=VIA_PARSE_OK){
+		if ((msg.via2==0) || (msg.via2->error!=VIA_PARSE_OK)){
 			/* no second via => error? */
-			goto skip;
+			LOG(L_ERR, "ERROR: receive_msg: no 2nd via found in reply\n");
+			goto error;
 		}
 		/* check if via1 == us */
 
@@ -88,15 +95,17 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		/* send the msg */
 		if (forward_reply(&msg)==0){
 			DBG(" reply forwarded to %s:%d\n", 
-						msg.via2.host.s,
-						(unsigned short) msg.via2.port);
+						msg.via2->host.s,
+						(unsigned short) msg.via2->port);
 		}
 	}
 #ifdef STATS
 	skipped = 0;
 #endif
 skip:
+	DBG("skip:...\n");
 	if (msg.new_uri.s) { free(msg.new_uri.s); msg.new_uri.len=0; }
+	if (msg.headers) free_hdr_field_lst(msg.headers);
 	if (msg.add_rm) free_lump_list(msg.add_rm);
 	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
@@ -105,7 +114,9 @@ skip:
 #endif
 	return 0;
 error:
+	DBG("error:...\n");
 	if (msg.new_uri.s) free(msg.new_uri.s);
+	if (msg.headers) free_hdr_field_lst(msg.headers);
 	if (msg.add_rm) free_lump_list(msg.add_rm);
 	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);

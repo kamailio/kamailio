@@ -203,14 +203,13 @@ int field_name(char *s, int l)
 #ifndef OLD_PARSER
 /* returns pointer to next header line, and fill hdr_f ;
  * if at end of header returns pointer to the last crlf  (always buf)*/
-char* get_hdr_field(char* buf, unsigned int len, struct hdr_field* hdr)
+char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 {
-	char* end;
+
 	char* tmp;
 	char *match;
 	struct via_body *vb;
 
-	end=buf+len;
 	if ((*buf)=='\n' || (*buf)=='\r'){
 		/* double crlf or lflf or crcr */
 		DBG("found end of header\n");
@@ -222,44 +221,68 @@ char* get_hdr_field(char* buf, unsigned int len, struct hdr_field* hdr)
 	if (hdr->type==HDR_ERROR){
 		LOG(L_ERR, "ERROR: get_hdr_field: bad header\n");
 		goto error;
-	}else if (hdr->type==HDR_VIA){
-		vb=malloc(sizeof(struct via_body));
-		if (vb==0){
-			LOG(L_ERR, "get_hdr_field: out of memory\n");
-			goto error;
-		}
-		memset(vb,0,sizeof(struct via_body));
-
-		hdr->body.s=tmp;
-		tmp=parse_via(tmp, end, vb);
-		if (vb->error==VIA_PARSE_ERROR){
-			LOG(L_ERR, "ERROR: get_hdr_field: bad via\n");
-			free(vb);
-			goto error;
-		}
-		hdr->parsed=vb;
-		vb->hdr.s=hdr->name.s;
-		vb->hdr.len=hdr->name.len;
-		vb->size=tmp-hdr->name.s;
-		hdr->body.len=tmp-hdr->body.s;
-	}else{
-		/* just skip over it*/
-		hdr->body.s=tmp;
-		/* find lf*/
-		match=q_memchr(tmp, '\n', end-tmp);
-		if (match){
-			/* null terminate*/
-			*match=0;
-			hdr->body.len=match-tmp;
-			match++; /*skip*/
-			tmp=match;
-		}else {
-			tmp=end;
-			LOG(L_ERR, "ERROR: get_hdr_field: bad body for <%s>(%d)\n",
-					hdr->name.s, hdr->type);
-			goto error;
-		}
 	}
+	switch(hdr->type){
+		case HDR_VIA:
+			vb=malloc(sizeof(struct via_body));
+			if (vb==0){
+				LOG(L_ERR, "get_hdr_field: out of memory\n");
+				goto error;
+			}
+			memset(vb,0,sizeof(struct via_body));
+
+			hdr->body.s=tmp;
+			tmp=parse_via(tmp, end, vb);
+			if (vb->error==VIA_PARSE_ERROR){
+				LOG(L_ERR, "ERROR: get_hdr_field: bad via\n");
+				free(vb);
+				goto error;
+			}
+			hdr->parsed=vb;
+			vb->hdr.s=hdr->name.s;
+			vb->hdr.len=hdr->name.len;
+			/*vb->size=tmp-hdr->name.s;*/
+			hdr->body.len=tmp-hdr->body.s;
+			break;
+		case HDR_TO:
+		case HDR_FROM:
+		case HDR_CSEQ:
+		case HDR_CALLID:
+		case HDR_CONTACT:
+		case HDR_OTHER:
+			/* just skip over it */
+			hdr->body.s=tmp;
+			/* find end of header */
+			
+			/* find lf */
+			do{
+				match=q_memchr(tmp, '\n', end-tmp);
+				if (match){
+					match++;
+				#if 0
+					/* null terminate*/
+					*match=0;
+					hdr->body.len=match-tmp;
+					match++; /*skip*/
+					tmp=match;
+				#endif
+				}else {
+					tmp=end;
+					LOG(L_ERR, "ERROR: get_hdr_field: bad body for <%s>(%d)\n",
+							hdr->name.s, hdr->type);
+					goto error;
+				}
+			}while( match<end &&( (*match==' ')||(*match=='\t') ) );
+			*(match-1)=0; /*null terminate*/
+			hdr->body.len=match-hdr->body.s;
+			tmp=match;
+			break;
+		default:
+			LOG(L_CRIT, "BUG: get_hdr_field: unknown header type %d\n",
+					hdr->type);
+			goto error;
+	}
+
 	return tmp;
 error:
 	DBG("get_hdr_field: error exit\n");
@@ -296,7 +319,7 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 		hdr_f->type=HDR_EOH;
 		return tmp;
 	}
-	
+#if 0	
 	tmp=eat_token2_end(buffer, buffer+len, ':');
 	if ((tmp==buffer) || (tmp-buffer==len) ||
 		(is_empty_end(buffer, tmp))|| (*tmp!=':')){
@@ -318,11 +341,20 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 			goto error;
 		}
 	}
+#endif
 
+	tmp=parse_hname(buffer, buffer+len, hdr_f);
+	if (hdr_f->type==HDR_ERROR){
+		LOG(L_ERR, "ERROR: get_hdr_field: bad header\n");
+		goto error;
+	}
+	
+#if 0
 	hdr_f->type=field_name(buffer, l);
 	body= ++tmp;
 	hdr_f->name.s=buffer;
 	hdr_f->name.len=l;
+#endif
 	offset=tmp-buffer;
 	/* get all the lines in this field  body */
 	do{
@@ -338,7 +370,7 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 	}
 	*(tmp-1)=0; /* should be an LF */
 	hdr_f->body.s=body;
-	hdr_f->body.len=tmp-1-body;;
+	hdr_f->body.len=tmp-1-body;
 error:
 	return tmp;
 }
@@ -526,7 +558,7 @@ error:
 }
 
 
-
+#ifdef OLD_PARSER
 /* parses a via body, returns next via (for compact vias) & fills vb,
  * the buffer should be null terminated! */
 char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb)
@@ -674,6 +706,108 @@ error:
 	vb->error=VIA_PARSE_ERROR;
 	return tmp;
 }
+#endif
+
+
+/* parse the headers and adds them to msg->headers and msg->to, from etc.
+ * It stops when all the headers requested in flags were parsed, on error
+ * (bad header) or end of headers */
+int parse_headers(struct sip_msg* msg, int flags)
+{
+	struct hdr_field* hf;
+	char* tmp;
+	char* rest;
+	char* end;
+	
+	end=msg->buf+msg->len;
+	tmp=msg->unparsed;
+	
+	DBG("parse_headers: flags=%d\n", flags);
+	while( tmp<end && (flags & msg->parsed_flag) != flags){
+		hf=malloc(sizeof(struct hdr_field));
+		memset(hf,0, sizeof(struct hdr_field));
+		if (hf==0){
+			LOG(L_ERR, "ERROR:parse_headers: memory allocation error\n");
+			goto error;
+		}
+		hf->type=HDR_ERROR;
+		rest=get_hdr_field(tmp, msg->buf+msg->len, hf);
+		switch (hf->type){
+			case HDR_ERROR:
+				LOG(L_INFO,"ERROR: bad header  field\n");
+				goto  error;
+			case HDR_EOH:
+				msg->eoh=tmp; /* or rest?*/
+				msg->parsed_flag|=HDR_EOH;
+				goto skip;
+			case HDR_OTHER: /*do nothing*/
+				break;
+			case HDR_CALLID:
+				if (msg->callid==0) msg->callid=hf;
+				msg->parsed_flag|=HDR_CALLID;
+				break;
+			case HDR_TO:
+				if (msg->to==0) msg->to=hf;
+				msg->parsed_flag|=HDR_TO;
+				break;
+			case HDR_CSEQ:
+				if (msg->cseq==0) msg->cseq=hf;
+				msg->parsed_flag|=HDR_CSEQ;
+				break;
+			case HDR_FROM:
+				if (msg->from==0) msg->from=hf;
+				msg->parsed_flag|=HDR_FROM;
+				break;
+			case HDR_CONTACT:
+				if (msg->contact==0) msg->contact=hf;
+				msg->parsed_flag|=HDR_CONTACT;
+				break;
+			case HDR_VIA:
+				msg->parsed_flag|=HDR_VIA;
+				DBG("parse_headers: Via1 found, flags=%d\n", flags);
+				if (msg->h_via1==0) {
+					msg->h_via1=hf;
+					msg->via1=hf->parsed;
+					if (msg->via1->next){
+						msg->via2=msg->via1->next;
+						msg->parsed_flag|=HDR_VIA2;
+					}
+				}else if (msg->h_via2==0){
+					msg->h_via2=hf;
+					msg->via2=hf->parsed;
+					msg->parsed_flag|=HDR_VIA2;
+				DBG("parse_headers: Via2 found, flags=%d\n", flags);
+				}
+				break;
+			default:
+				LOG(L_CRIT, "BUG: parse_headers: unknown header type %d\n",
+							hf->type);
+				goto error;
+		}
+		/* add the header to the list*/
+		if (msg->last_header==0){
+			msg->headers=hf;
+			msg->last_header=hf;
+		}else{
+			msg->last_header->next=hf;
+			msg->last_header=hf;
+		}
+	#ifdef DEBUG
+		DBG("header field type %d, name=<%s>, body=<%s>\n",
+			hf->type, hf->name.s, hf->body.s);
+	#endif
+		tmp=rest;
+	}
+skip:
+	msg->unparsed=tmp;
+	return 0;
+	
+error:
+	if (hf) free(hf);
+	return -1;
+}
+
+
 
 
 
@@ -686,9 +820,10 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	char* first_via;
 	char* second_via;
 	struct msg_start *fl;
-	struct hdr_field hf;
+	struct hdr_field* hf;
 	struct via_body *vb1, *vb2;
 	int offset;
+	int flags;
 
 #ifdef OLD_PARSER
 	/* init vb1 & vb2 to the null string */
@@ -700,6 +835,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	vb2->error=VIA_PARSE_ERROR;
 #else
 	vb1=vb2=0;
+	hf=0;
 #endif
 	/* eat crlf from the beginning */
 	for (tmp=buf; (*tmp=='\n' || *tmp=='\r')&&
@@ -719,121 +855,37 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 			DBG(" method:  <%s>\n",fl->u.request.method);
 			DBG(" uri:     <%s>\n",fl->u.request.uri);
 			DBG(" version: <%s>\n",fl->u.request.version);
+			flags=HDR_VIA;
 			break;
 		case SIP_REPLY:
 			DBG("SIP Reply  (status):\n");
 			DBG(" version: <%s>\n",fl->u.reply.version);
 			DBG(" status:  <%s>\n",fl->u.reply.status);
 			DBG(" reason:  <%s>\n",fl->u.reply.reason);
+			flags=HDR_VIA|HDR_VIA2;
 			break;
 		default:
 			DBG("unknown type %d\n",fl->type);
 	}
-	
+	msg->unparsed=tmp;
 	/*find first Via: */
-	hf.type=HDR_ERROR;
 	first_via=0;
 	second_via=0;
-	do{
-		rest=get_hdr_field(tmp, len-offset, &hf);
-		offset+=rest-tmp;
-		switch (hf.type){
-			case HDR_ERROR:
-				LOG(L_INFO,"ERROR: bad header  field\n");
-				goto  error;
-			case HDR_EOH: 
-				goto skip;
-			case HDR_VIA:
-				if (first_via==0){
-					first_via=hf.body.s;
-#ifndef OLD_PARSER
-					vb1=(struct via_body*)hf.parsed;
-#else
-						vb1->hdr.s=hf.name.s;
-						vb1->hdr.len=hf.name.len;
-						/* replace cr/lf with space in first via */
-						for (bar=first_via;(first_via) && (*bar);bar++)
-							if ((*bar=='\r')||(*bar=='\n'))	*bar=' ';
-#endif
-				#ifdef DEBUG
-						DBG("first via: <%s>\n", first_via);
-				#endif
-#ifdef OLD_PARSER
-						bar=parse_via_body(first_via, hf.body.len, vb1);
-						if (vb1->error!=VIA_PARSE_OK){
-							LOG(L_INFO, "ERROR: parsing via body: %s\n",
-									first_via);
-							goto error;
-						}
-						
-						vb1->size=bar-first_via+first_via-vb1->hdr.s; 
-						
-#endif
-						/* compact via */
-						if (vb1->next) {
-							second_via=vb1->next;
-							/* not interested in the rest of the header */
-							goto skip;
-						}else{
-#ifdef OLD_PARSER
-						/*  add 1 (we don't see the trailing lf which
-						 *  was zeroed by get_hfr_field) */
-							vb1->size+=1;
-#endif
-						}
-						if (fl->type!=SIP_REPLY) goto skip; /* we are interested
-															  in the 2nd via 
-															 only in replies */
-				}else if (second_via==0){
-							second_via=hf.body.s;
-#ifndef OLD_PARSER
-							vb2=hf.parsed;
-#else
-							vb2->hdr.s=hf.name.s;
-							vb2->hdr.len=hf.name.len;
-#endif
-							goto skip;
-				}
-				break;
-		}
-	#ifdef DEBUG
-		DBG("header field type %d, name=<%s>, body=<%s>\n",
-			hf.type, hf.name.s, hf.body.s);
-	#endif
-		tmp=rest;
-	}while(hf.type!=HDR_EOH && rest-buf < len);
-
-skip:
-	/* replace cr/lf with space in the second via */
-#ifdef OLD_PARSER
-	for (tmp=second_via;(second_via) && (*tmp);tmp++)
-		if ((*tmp=='\r')||(*tmp=='\n'))	*tmp=' ';
-
-	if (second_via) {
-		tmp=parse_via_body(second_via, hf.body.len, vb2);
-		if (vb2->error!=VIA_PARSE_OK){
-			LOG(L_INFO, "ERROR: parsing via2 body: %s\n", second_via);
-			goto error;
-		}
-		vb2->size=tmp-second_via; 
-		if (vb2->next==0) vb2->size+=1; /* +1 from trailing lf */
-		if (vb2->hdr.s) vb2->size+=second_via-vb2->hdr.s;
-	}
-#endif
-	
+	if (parse_headers(msg, flags)==-1) goto error;
 
 #ifdef DEBUG
 	/* dump parsed data */
-	if (first_via){
+	if (msg->via1){
 		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
-				vb1->name.s, vb1->version.s, vb1->transport.s, vb1->host.s,
-				vb1->port_str, vb1->port);
-		if (vb1->params.s)  DBG(";<%s>", vb1->params.s);
-		if (vb1->comment.s) DBG(" <%s>", vb1->comment.s);
+			msg->via1->name.s, msg->via1->version.s,
+			msg->via1->transport.s, msg->via1->host.s,
+			msg->via1->port_str, msg->via1->port);
+		if (msg->via1->params.s)  DBG(";<%s>", msg->via1->params.s);
+		if (msg->via1->comment.s) DBG(" <%s>", msg->via1->comment.s);
 		DBG ("\n");
 	}
 #ifdef OLD_PARSER
-	if (second_via){
+	if (msg->via2){
 		DBG(" second via: <%s/%s/%s> <%s:%d>",
 				vb2->name.s, vb2->version.s, vb2->transport.s, vb2->host.s,
 				vb2->port);
@@ -845,11 +897,13 @@ skip:
 #endif
 	
 	/* copy data into msg */
+#if 0
 #ifndef OLD_PARSER
 	memcpy(&(msg->via1), vb1, sizeof(struct via_body));
 	if (second_via) memcpy(&(msg->via2), vb2, sizeof(struct via_body));
 	if (vb1) free(vb1);
 	if (vb2) free(vb1);
+#endif
 #endif
 
 #ifdef DEBUG
@@ -859,6 +913,7 @@ skip:
 	return 0;
 	
 error:
+	if (hf) free(hf);
 #ifndef OLD_PARSER
 	if (vb1) free(vb1);
 	if (vb2) free(vb1);
@@ -877,5 +932,50 @@ void free_uri(struct sip_uri* u)
 		if (u->port.s) free(u->port.s);
 		if (u->params.s) free(u->params.s);
 		if (u->headers.s) free(u->headers.s);
+	}
+}
+
+
+
+void free_via_list(struct via_body* vb)
+{
+	struct via_body* foo;
+	while(vb){
+		foo=vb;
+		vb=vb->next;
+		free(foo);
+	}
+}
+
+
+/* frees a hdr_field structure, 
+ * WARNING: it frees only parsed (and not name.s, body.s)*/
+void clean_hdr_field(struct hdr_field* hf)
+{
+	if (hf->parsed){
+		switch(hf->type){
+			case HDR_VIA:
+				free_via_list(hf->parsed);
+				break;
+			default:
+				LOG(L_CRIT, "BUG: clean_hdr_field: unknown header type %d\n",
+						hf->type);
+		}
+	}
+}
+
+
+
+/* frees a hdr_field list,
+ * WARNING: frees only ->parsed and ->next*/
+void free_hdr_field_lst(struct hdr_field* hf)
+{
+	struct hdr_field* foo;
+	
+	while(hf){
+		foo=hf;
+		hf=hf->next;
+		clean_hdr_field(foo);
+		free(foo);
 	}
 }

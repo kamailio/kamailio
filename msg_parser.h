@@ -13,10 +13,21 @@
 #define SIP_INVALID 0
 
 
-enum {	HDR_EOH=-1, HDR_ERROR=0, HDR_OTHER,
-		HDR_VIA, HDR_TO, HDR_FROM, HDR_CSEQ, HDR_CALLID, HDR_CONTACT,
-		HDR_MAXFORWARDS, HDR_ROUTE
-	};
+
+/*header types and flags*/
+#define HDR_EOH           -1
+#define HDR_ERROR          0
+#define HDR_VIA            1
+#define HDR_VIA1           1
+#define HDR_VIA2           2  /*only used as flag*/
+#define HDR_TO             4
+#define HDR_FROM           8
+#define HDR_CSEQ          16
+#define HDR_CALLID        32
+#define HDR_CONTACT       64
+#define HDR_MAXFORWARDS  128
+#define HDR_ROUTE        256
+#define HDR_OTHER       65536 /*unknown header type*/
 
 #define INVITE_LEN	6
 #define ACK_LEN		3
@@ -65,6 +76,7 @@ struct hdr_field{   /* format: name':' body */
 	str name;
 	str body;
 	void* parsed;
+	struct hdr_field* next;
 };
 
 struct via_body{  /* format: name/version/transport host:port;params comment */
@@ -78,14 +90,30 @@ struct via_body{  /* format: name/version/transport host:port;params comment */
 	str port_str;
 	str params;
 	str comment;
-	int size;    /* full size, including hdr */
-	char* next; /* pointer to next via body string if compact via or null */
+	int bsize;    /* body size, not including hdr */
+	struct via_body* next; /* pointer to next via body string if
+							  compact via or null */
 };
 
 struct sip_msg{
+	unsigned int id; /* message id, unique/process*/
 	struct msg_start first_line;
-	struct via_body via1;
-	struct via_body via2;
+	struct via_body* via1;
+	struct via_body* via2;
+	struct hdr_field* headers; /* all the parsed headers*/
+	struct hdr_field* last_header; /* pointer to the last parsed header*/
+	int parsed_flag;
+	/* via, to, cseq, call-id, from, end of header*/
+	struct hdr_field* h_via1;
+	struct hdr_field* h_via2;
+	struct hdr_field* callid;
+	struct hdr_field* to;
+	struct hdr_field* cseq;
+	struct hdr_field* from;
+	struct hdr_field* contact;
+	char* eoh; /* pointer to the end of header (if found) or null */
+
+	char* unparsed; /* here we stopped parsing*/
 
 	unsigned int src_ip;
 	unsigned int dst_ip;
@@ -134,6 +162,10 @@ void free_uri(struct sip_uri* u);
 char* parse_hname(char* buf, char* end, struct hdr_field* hdr);
 char* parse_via(char* buffer, char* end, struct via_body *vb);
 #endif
+
+void free_via_list(struct via_body *vb);
+void clean_hdr_field(struct hdr_field* hf);
+void free_hdr_field_lst(struct hdr_field* hf);
 
 
 #endif

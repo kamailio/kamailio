@@ -192,7 +192,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		
 	
 	/* check if received needs to be added */
-	if (check_address(source_ip, msg->via1.host.s, received_dns)!=0){
+	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
 		received_buf=malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 		if (received_buf==0){
 			LOG(L_ERR, "ERROR: forward_request: out of memory\n");
@@ -214,22 +214,23 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	/* add via header to the list */
 	/* try to add it before msg. 1st via */
 	/*add first via, as an anchor for second via*/
-	anchor=anchor_lump(&(msg->add_rm), msg->via1.hdr.s-buf, 0, HDR_VIA);
+	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
 	if (anchor==0) goto error;
 	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
 		goto error;
 	/* if received needs to be added, add anchor after host and add it */
 	if (received_len){
-		if (msg->via1.params.s){
-				size= msg->via1.params.s-msg->via1.hdr.s-1; /*compensate 
+		if (msg->via1->params.s){
+				size= msg->via1->params.s-msg->via1->hdr.s-1; /*compensate 
 															  for ';' */
 		}else{
-				size= msg->via1.host.s-msg->via1.hdr.s+msg->via1.host.len;
-				if (msg->via1.port!=0){
-					size+=strlen(msg->via1.hdr.s+size+1)+1; /* +1 for ':'*/
+				size= msg->via1->host.s-msg->via1->hdr.s+msg->via1->host.len;
+				if (msg->via1->port!=0){
+					size+=strlen(msg->via1->hdr.s+size+1)+1; /* +1 for ':'*/
 				}
 		}
-		anchor=anchor_lump(&(msg->add_rm),msg->via1.hdr.s-buf+size,0, HDR_VIA);
+		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
+				HDR_VIA);
 		if (anchor==0) goto error;
 		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA) 
 				==0 ) goto error;
@@ -492,25 +493,26 @@ int forward_reply(struct sip_msg* msg)
 	/*check if first via host = us */
 	if (check_via){
 		for (r=0; r<addresses_no; r++)
-			if(strcmp(msg->via1.host.s, names[r])==0) break;
+			if(strcmp(msg->via1->host.s, names[r])==0) break;
 		if (r==addresses_no){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
-					" %s\n", msg->via1.host);
+					" %s\n", msg->via1->host);
 			/* send error msg back? */
 			goto error;
 		}
 	}
 	/* we must remove the first via */
-	via_len=msg->via1.size;
-	size=msg->via1.hdr.s-buf;
+	via_len=msg->via1->bsize;
+	size=msg->via1->hdr.s-buf;
 	DBG("via len: %d, initial size: %d\n", via_len, size);
-	if (msg->via1.next){
-		/* keep hdr =substract hdr size +1 (hdr':') and add
-		 */
-		via_len-=msg->via1.hdr.len+1;
-		size+=msg->via1.hdr.len+1;
+	if (msg->via1->next){
+		/* add hdr size*/
+		size+=msg->via1->hdr.len+1;
 	    DBG(" adjusted via len: %d, initial size: %d\n",
 				via_len, size);
+	}else{
+		/* add hdr size ("Via:")*/
+		via_len+=msg->via1->hdr.len+1;
 	}
 	new_len=len-via_len;
 	
@@ -530,26 +532,28 @@ int forward_reply(struct sip_msg* msg)
 			s_offset, offset, 
 			len-s_offset );
 	DBG("Sending: to %s:%d, \n%s.\n",
-			msg->via2.host.s, 
-			(unsigned short)msg->via2.port,
+			msg->via2->host.s, 
+			(unsigned short)msg->via2->port,
 			new_buf);
 
 #ifdef DNS_IP_HACK
-	to->sin_addr.s_addr=str2ip(msg->via2.host.s, msg->via2.host.len, &err);
+	to->sin_addr.s_addr=str2ip(msg->via2->host.s, msg->via2->host.len, &err);
 	if (err==0){
 		to->sin_family = AF_INET;
-		to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
+		to->sin_port = (msg->via2->port)?htons(msg->via2->port):
+						htons(SIP_PORT);
 	}else{
 #endif
 		/* fork? gethostbyname will probably block... */
-		he=gethostbyname(msg->via2.host.s);
+		he=gethostbyname(msg->via2->host.s);
 		if (he==0){
 			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
-					msg->via2.host.s);
+					msg->via2->host.s);
 			goto error;
 		}
 		to->sin_family = AF_INET;
-		to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
+		to->sin_port = (msg->via2->port)?htons(msg->via2->port):
+						htons(SIP_PORT);
 		to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
 
 #ifdef DNS_IP_HACK
