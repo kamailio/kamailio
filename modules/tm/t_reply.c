@@ -1308,6 +1308,7 @@ int reply_received( struct sip_msg  *p_msg )
 			   attempt to restart retransmission any more
 			*/
 
+			backup_list = set_avp_list( &t->user_avps );
 			if (!avp2timer(&timer, fr_inv_timer_avp)) {
 				DBG("reply_received: FR_INV_TIMER = %d\n", timer);
 				set_timer( & uac->request.fr_timer,
@@ -1316,6 +1317,7 @@ int reply_received( struct sip_msg  *p_msg )
 				set_timer( & uac->request.fr_timer,
 					   FR_INV_TIMER_LIST, 0 );
 			}
+			set_avp_list( backup_list );
 		} else {
 			     /* non-invite: restart retransmissions (slow now) */
 			uac->request.retr_list=RT_T2;
