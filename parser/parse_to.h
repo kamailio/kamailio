@@ -31,6 +31,10 @@
 
 #include "../str.h"
 
+enum {
+	TAG_PARAM = 400, GENERAL_PARAM
+};
+
 struct to_param{
 	int type;              /* Type of parameter */
 	str name;              /* Name of parameter */

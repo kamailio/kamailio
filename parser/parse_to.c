@@ -34,10 +34,6 @@
 #include "../ut.h"
 #include "../mem/mem.h"
 
-enum {
-	TAG_PARAM = 400, GENERAL_PARAM
-};
-
 
 enum {
 	START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN,
