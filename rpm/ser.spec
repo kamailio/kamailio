@@ -1,5 +1,5 @@
 %define name    ser
-%define ver     0.8.7
+%define ver     0.8.8
 %define rel     1
 %define exclude CVS pike radius_acc radius_auth snmp
 
