@@ -25,6 +25,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ *
+ * 2003-03-15: Duplicate algorithm in dig_cred_t removed (janakj)
  */
 
 
@@ -84,7 +89,6 @@ typedef struct dig_cred {
 	str nonce;                  /* Nonce value */
 	str uri;                    /* URI */
 	str response;               /* Response string */
-	str algorithm;              /* Algorithm in string representation */
 	struct algorithm alg;       /* Type of algorithm used */
 	str cnonce;                 /* Cnonce value */
 	str opaque;                 /* Opaque data string */
