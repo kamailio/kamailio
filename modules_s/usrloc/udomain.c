@@ -364,8 +364,8 @@ int timer_udomain(udomain_t* _d)
 	}
 	
 	unlock_udomain(_d);
-	process_del_list(_d->name);
-	process_ins_list(_d->name);
+/*	process_del_list(_d->name); */
+/*	process_ins_list(_d->name); */
 	return 0;
 }
 
