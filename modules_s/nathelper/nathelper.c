@@ -218,6 +218,13 @@ static struct {
 	{NULL, 0, 0}
 };
 
+static str sup_ptypes[] = {
+	{.s = "udp", .len = 3},
+	{.s = "udptl", .len = 5},
+	{.s = "rtp/avp", .len = 7},
+	{.s = NULL, .len = 0}
+};
+
 /*
  * If this parameter is set then the natpinger will ping only contacts
  * that have the NAT flag set in user location database
@@ -901,7 +908,8 @@ static int
 extract_mediaport(str *body, str *mediaport)
 {
 	char *cp, *cp1;
-	int len;
+	int len, i;
+	str ptype;
 
 	cp1 = NULL;
 	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
@@ -914,27 +922,57 @@ extract_mediaport(str *body, str *mediaport)
 		LOG(L_ERR, "ERROR: extract_mediaport: no `m=' in SDP\n");
 		return -1;
 	}
-	mediaport->s = cp1 + 2;
+	mediaport->s = cp1 + 2; /* skip `m=' */
 	mediaport->len = eat_line(mediaport->s, body->s + body->len -
 	  mediaport->s) - mediaport->s;
 	trim_len(mediaport->len, mediaport->s, *mediaport);
 
-	if (mediaport->len > 6 && memcmp(mediaport->s, "audio", 5) == 0 &&
-	    isspace((int)mediaport->s[5])) {
-		mediaport->s += 5;
-		mediaport->len -= 5;
-	} else if (mediaport->len > 12 && memcmp(mediaport->s, "application", 11) == 0 &&
-	    isspace((int)mediaport->s[11])) {
-		mediaport->s += 11;
-		mediaport->len -= 11;
-	} else {
-		LOG(L_ERR, "ERROR: extract_mediaport: can't parse `m=' in SDP\n");
+	/* Skip media supertype and spaces after it */
+	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
+	mediaport->len -= cp - mediaport->s;
+	if (mediaport->len <= 0 || cp == mediaport->s) {
+		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
 		return -1;
 	}
-	cp = eat_space_end(mediaport->s, mediaport->s + mediaport->len);
-	mediaport->len = eat_token_end(cp, mediaport->s + mediaport->len) - cp;
 	mediaport->s = cp;
-	return 1;
+	cp = eat_space_end(mediaport->s, mediaport->s + mediaport->len);
+	mediaport->len -= cp - mediaport->s;
+	if (mediaport->len <= 0 || cp == mediaport->s) {
+		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		return -1;
+	}
+	/* Extract port */
+	mediaport->s = cp;
+	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
+	ptype.len = mediaport->len - (cp - mediaport->s);
+	if (ptype.len <= 0 || cp == mediaport->s) {
+		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		return -1;
+	}
+	ptype.s = cp;
+	mediaport->len = cp - mediaport->s;
+	/* Skip spaces after port */
+	cp = eat_space_end(ptype.s, ptype.s + ptype.len);
+	ptype.len -= cp - ptype.s;
+	if (ptype.len <= 0 || cp == ptype.s) {
+		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
+		return -1;
+	}
+	/* Extract protocol type */
+	ptype.s = cp;
+	cp = eat_space_end(ptype.s, ptype.s + ptype.len);
+	if (cp == ptype.s) {
+		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
+		return -1;
+	}
+	ptype.len = cp - ptype.s;
+
+	for (i = 0; sup_ptypes[i].s != NULL; i++)
+		if (ptype.len == sup_ptypes[i].len &&
+		    strncasecmp(ptype.s, sup_ptypes[i].s, ptype.len) == 0)
+			return 0;
+	/* Unproxyable protocol type. Generally it isn't error. */
+	return -1;
 }
 
 static int
