@@ -894,7 +894,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 		proto=msg->rcv.proto;
 	} else {
 		/*init retrans buffer*/
-		if (update_sock_struct_from_via( &(rb->dst.to),via )==-1) {
+		if (update_sock_struct_from_via( &(rb->dst.to), msg, via )==-1) {
 			LOG(L_ERR, "ERROR: init_rb: cannot lookup reply dst: %.*s\n",
 				via->host.len, via->host.s );
 			ser_error=E_BAD_VIA;
