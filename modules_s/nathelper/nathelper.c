@@ -50,7 +50,7 @@
  *		o Added run-time check for version of command protocol
  *		  supported by the RTP proxy.
  * 2004-01-16   Integrated slightly modified patch from Tristan Colgate,
- *              force_rtp_proxy function with IP as a parameter (janakj)
+ *		force_rtp_proxy function with IP as a parameter (janakj)
  */
 
 #include "nhelpr_funcs.h"
@@ -94,7 +94,7 @@ MODULE_VERSION
 
 
 /* NAT UAC test constants */
-#define CONTACT_1918        "[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
+#define CONTACT_1918		"[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
 #define NAT_UAC_TEST_1918	0x01
 #define NAT_UAC_TEST_RCVD	0x02
 
