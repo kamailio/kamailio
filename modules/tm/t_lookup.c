@@ -48,6 +48,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ----------
+ * 2003-01-23 options for disabling r-uri matching introduced
  */
 
 
@@ -91,6 +95,15 @@
 	)==0 )
 
 #define HF_LEN(_hf) ((_hf)->body.s+(_hf)->body.len-(_hf)->name.s)
+
+/* should be request-uri matching used as a part of pre-3261 
+ * transaction matching, as the standard wants us to do so
+ * (and is reasonable to do so, to be able to distinguish
+ * spirals)? turn only off for better interaction with 
+ * devices that are broken and send different r-uri in
+ * CANCEL/ACK than in original INVITE
+ */
+int ruri_matching=1;
 
 /* presumably matching transaction for an e2e ACK */
 static struct cell *t_ack;
@@ -250,7 +263,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			if (!EQ_LEN(cseq)) continue;
 			if (!EQ_LEN(from)) continue;
 			if (!EQ_LEN(to)) continue;
-			if (!EQ_REQ_URI_LEN) continue;
+			if (ruri_matching && !EQ_REQ_URI_LEN) continue;
 			if (!EQ_VIA_LEN(via1)) continue;
 
 			/* length ok -- move on */
@@ -258,7 +271,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 			if (!EQ_STR(cseq)) continue;
 			if (!EQ_STR(from)) continue;
 			if (!EQ_STR(to)) continue;
-			if (!EQ_REQ_URI_STR) continue;
+			if (ruri_matching && !EQ_REQ_URI_STR) continue;
 			if (!EQ_VIA_STR(via1)) continue;
 
 			/* request matched ! */
@@ -325,9 +338,9 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 				break;
 			}
 			/* its for a >= 300 ... everything must match ! */
-			if (! EQ_REQ_URI_LEN ) continue;
+			if (ruri_matching && ! EQ_REQ_URI_LEN ) continue;
 			if (! EQ_VIA_LEN(via1)) continue;
-			if (!EQ_REQ_URI_STR) continue;
+			if (ruri_matching && !EQ_REQ_URI_STR) continue;
 			if (!EQ_VIA_STR(via1)) continue;
 
 			/* wow -- we survived all the check! we matched! */
@@ -428,7 +441,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 		if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
 			continue;
 #endif
-		if (!EQ_REQ_URI_LEN)
+		if (ruri_matching && !EQ_REQ_URI_LEN)
 			continue;
 		if (!EQ_VIA_LEN(via1))
 			continue;
@@ -449,7 +462,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 					get_to(t_msg)->uri.len)!=0)
 			continue;
 #endif
-		if (!EQ_REQ_URI_STR)
+		if (ruri_matching && !EQ_REQ_URI_STR)
 			continue;
 		if (!EQ_VIA_STR(via1))
 			continue;

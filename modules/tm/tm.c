@@ -218,6 +218,7 @@ struct module_exports exports= {
 
 	/* ------------ exported variables ---------- */
 	(char *[]) { /* Module parameter names */
+		"ruri_matching",
 		"fr_timer",
 		"fr_inv_timer",
 		"wt_timer",
@@ -232,6 +233,7 @@ struct module_exports exports= {
 #endif
 	},
 	(modparam_t[]) { /* variable types */
+		INT_PARAM, /* ruri_matching */
 		INT_PARAM, /* fr_timer */
 		INT_PARAM, /* fr_inv_timer */
 		INT_PARAM, /* wt_timer */
@@ -246,6 +248,7 @@ struct module_exports exports= {
 #endif
 	},
 	(void *[]) { /* variable pointers */
+		&ruri_matching,
 		&(timer_id2timeout[FR_TIMER_LIST]),
 		&(timer_id2timeout[FR_INV_TIMER_LIST]),
 		&(timer_id2timeout[WT_TIMER_LIST]),
@@ -262,7 +265,7 @@ struct module_exports exports= {
 #ifndef DEPRECATE_OLD_STUFF
 	1+
 #endif
-	10,      /* Number of module paramers */
+	11,      /* Number of module paramers */
 
 	mod_init, /* module initialization function */
 	(response_function) t_on_reply,
