@@ -34,6 +34,7 @@
 #  2004-07-27  darwin (mac os x) port  (andrei)
 #  2004-09-12  mips2 & cobalt support introduced (andrei)
 #  2004-09-28  x86_64 support introduced (andrei)
+#  2004-12-14  gcc-3.4 special case added (andrei)
 
 
 # check if already included/exported
@@ -50,7 +51,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   99
-EXTRAVERSION = -dev25
+EXTRAVERSION = -dev26
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -173,8 +174,9 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	#transform gcc version into 2.9x or 3.0
 	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
-				 sed -e 's/2\.9.*/2.9x/' -e 's/3\..\..*/3.0/' -e \
-				 	's/3\../3.0/')
+				 sed -e 's/2\.9.*/2.9x/' -e 's/3\.[0-3]\..*/3.0/' -e \
+				 	's/3\.[0-3]/3.0/' -e 's/3\.[4-9]\..*/3.4/' -e \
+					's/3\.[4-9]/3.4/' )
 endif
 
 ifneq (, $(findstring Sun, $(CC_LONGVER)))
@@ -430,14 +432,20 @@ ifeq	($(ARCH), i386)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall   \
-			#if gcc 3.0
+					-Wall  
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CPU ?= athlon
+					CFLAGS+=-minline-all-stringops -malign-double \
+							-falign-loops \
+							-mtune=$(CPU) 
+else
+			#if gcc 3.0+
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= athlon
 					CFLAGS+=-minline-all-stringops -malign-double \
 							-falign-loops \
-							-mcpu=$(CPU) \
-							#-mcpu=athlon
+							-mcpu=$(CPU) 
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
 $(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc >= 3.1 \
@@ -452,6 +460,7 @@ $(warning			You are using an old and unsupported gcc \
 
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
@@ -474,12 +483,18 @@ ifeq	($(ARCH), x86_64)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall   \
+					-Wall 
+			#if gcc 3.4
+ifeq			($(CC_SHORTVER), 3.4)
+					CPU ?= athlon64
+					CFLAGS+=-minline-all-stringops \
+							-falign-loops 
+else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= athlon64
 					CFLAGS+=-minline-all-stringops \
-							-falign-loops \
+							-falign-loops 
 							#-mcpu=$(CPU) \ # not working on all x86_64 gccs
 							#-mcpu=athlon
 else
@@ -496,6 +511,7 @@ $(warning			You are using an old and unsupported gcc \
 
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
 
 else		# CC_NAME, gcc
 ifeq		($(CC_NAME), icc)
@@ -521,6 +537,12 @@ ifeq		($(CC_NAME), gcc)
 					-Wall\
 					#-Wcast-align \
 					#-Wmissing-prototypes 
+				#if gcc 3.4
+ifeq			($(CC_SHORTVER), 3.4)
+					CPU ?= ultrasparc
+					#use 32bit for now
+					CFLAGS+= -mcpu=ultrasparc -mtune=$(CPU)
+else
 				#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CPU ?= ultrasparc
@@ -557,6 +579,7 @@ endif
 	
 endif			#CC_SHORTVER, 2.9x
 endif			#CC_SHORTVER, 3.0
+endif			#CC_SHORTVER, 3.4
 
 else		#CC_NAME, gcc
 ifeq		($(CC_NAME), suncc)
@@ -576,7 +599,11 @@ ifeq	($(ARCH), arm)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall   \
+					-Wall   
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+= -mcpu=strongarm1100
+else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CFLAGS+= -mcpu=strongarm1100
@@ -594,6 +621,7 @@ $(warning			You are using an old and unsupported gcc \
 	
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -607,7 +635,11 @@ ifeq	($(ARCH), mips)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall   \
+					-Wall 
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+= -mcpu=r3000
+else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CFLAGS+= -mcpu=r3000
@@ -625,6 +657,7 @@ $(warning			You are using an old and unsupported gcc \
 	
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
 	
 else		# CC_NAME, gcc
 				#other compilers
@@ -638,7 +671,11 @@ ifeq	($(ARCH), mips2)
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS= -mips2 -O9 -funroll-loops $(PROFILE) \
-					-Wall   \
+					-Wall 
+			#if gcc 3.4+
+ifeq			($(CC_SHORTVER), 3.4)
+					CFLAGS+=
+else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
 					CFLAGS+=
@@ -654,6 +691,7 @@ $(warning			You are using an old and unsupported gcc \
 	
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
+endif			# CC_SHORTVER, 3.4
 	
 else		# CC_NAME, gcc
 				#other compilers

@@ -34,23 +34,24 @@
  *  2004-05-03  applied pgid patch from janakj
  */
 
-#define _XOPEN_SOURCE   /* needed on linux for the  getpgid prototype */
-#define _XOPEN_SOURCE_EXTENDED /* same as above */
-#define __EXTENSIONS__ /* needed on solaris: if XOPEN_SOURCE is defined
-                          struct timeval defintion from <sys/time.h> won't
-                          be included => workarround define _EXTENSIONS_
-                           -andrei */
 
 #include <sys/types.h>
-#include <unistd.h>
 #include <signal.h>
 #include <syslog.h>
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>      /* setrlimit */
 #include <sys/resource.h> /* setrlimit */
+
+#define _XOPEN_SOURCE   /* needed on linux for the  getpgid prototype */
+#define _XOPEN_SOURCE_EXTENDED /* same as above */
+#define __EXTENSIONS__ /* needed on solaris: if XOPEN_SOURCE is defined
+                          struct timeval defintion from <sys/time.h> won't
+                          be included => workarround define _EXTENSIONS_
+                           -andrei */
+#include <unistd.h>
+#include <sys/time.h>    
 
 #include "daemonize.h"
 #include "globals.h"
