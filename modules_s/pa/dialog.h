@@ -19,7 +19,7 @@
  * Structure representing dialog
  */
 typedef struct dialog {
-	did_t id;             /* Dialog ID */
+	did_t id;             /* Dialog ID - callid, local tag, remote tag */
 	unsigned int lseq;    /* Local sequence number */
 	unsigned int rseq;    /* Remote sequence number */
 	str luri;             /* Local URI */
