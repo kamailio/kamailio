@@ -134,7 +134,6 @@ void timer_routine(unsigned int ticks , void * attr)
 	struct timer_link  *tl, *tmp_tl;
 	int                           id;
 
-	DBG("%d\n", ticks);
 
 	for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
 	{

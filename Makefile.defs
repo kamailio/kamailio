@@ -113,9 +113,20 @@ ifeq ($(mode), release)
 			#-Wmissing-prototypes \
 	
 ifneq (,$(findstring 3.0, $(CC_VER)))
-	CFLAGS+=-minline-all-stringops -malign-double \
-				-march=athlon \
+# gcc 3.0.x specific optimizations
+	ifeq ($(ARCH), i386)
+		CFLAGS+=-minline-all-stringops -malign-double -march=athlon \
 				#-mcpu=athlon
+	endif
+	ifeq ($(ARCH), sparc64)
+		# sparc64 specific options, using 32bit for now
+		CFLAGS+= -mcpu=v9 -mtune=ultrasparc  -m32  \
+				# -mcpu=v9 or ultrasparc? # -mtune implied by -mcpu
+				#-mno-epilogue #try to inline function exit code
+				#-mflat # omit save/restore
+				#-,faster-structs #faster non Sparc ABI structure copy ops
+				
+	endif
 endif
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
