@@ -64,7 +64,6 @@ int add_contact(struct sip_msg* msg , str* user)
 	struct lump_rpl *lump;
 	char *buf, *p;
 	int len;
-	int i;
 
 	len = 9 /*"Contact: "*/ + user->len/*user*/ + 1 /*"@"*/
 		+ domain.len/*host*/ + 6/*"<sip:>"*/ + CRLF_LEN;
