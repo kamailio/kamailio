@@ -32,8 +32,8 @@ struct cell;
 #define MAX_ACK_LEN 1024
 
 
-int tm_startup();
-int tm_shutdown();
+int   tm_startup();
+void tm_shutdown();
 
 
 /* function returns:

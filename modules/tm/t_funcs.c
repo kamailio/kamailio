@@ -46,12 +46,10 @@ int tm_startup()
 
 
 
-int tm_shutdown()
+void tm_shutdown()
 {
     /* destroy the hash table */
     free_hash_table( hash_table );
-
-   return 0;
 }
 
 
