@@ -53,7 +53,6 @@ static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, c
 	db_key_t col[1];
 	db_res_t* res;
 	str result;
-	char* at;
 
 	keys[0] = username_column;
 	keys[1] = domain_column;
@@ -68,26 +67,12 @@ static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, c
 	VAL_STR(vals + 1).s = _realm->s;
 	VAL_STR(vals + 1).len = _realm->len;
 
-	     /* If username contains also domain U */
-	if (_domain->len) {
-		     /* Use that domain instead of realm */
-		VAL_STR(vals + 1).s = _domain->s;
-		VAL_STR(vals + 1).len = _domain->len;		
-		     /*
-		      * If we do not calculate HA1 strings on the fly,
-		      * we must use another column here, because the original
-		      * column contains HA1 hashed without the domain. So we
-		      * use another column which contains HA1 string including
-		      * also the domain
-		      *
-		      * This is not necessarry if we calculate HA1 strings on the
-		      * fly (i.e. plaintext passwords are stored in the database),
-		      * because in this case HA1 will be always calculated correctly
-		      * by the server.
-		      */
-		if (!calc_ha1) {
-			col[0] = pass_column_2;
-		}
+	     /* If there is domain in username, we must use
+	      * another column holding HA1 calculated with the
+	      * domain
+	      */
+	if ((_domain->len) && !calc_ha1) {
+		col[0] = pass_column_2;
 	}
 
 	db_use_table(db_handle, _table);
@@ -98,10 +83,7 @@ static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, c
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
-		    _user->len, _user->s,
-		    (_domain->len) ? (_domain->len) : (_realm->len),
-		    (_domain->len) ? (_domain->s) : (_realm->s)
-		    );
+		    _user->len, _user->s, _realm->len, _realm->s);
 		db_free_query(db_handle, res);
 		return -1;
 	}
@@ -207,6 +189,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		case ERROR:          return 0;
 		case NOT_AUTHORIZED: return -1;
 		case AUTHORIZED:     return 1;
+		default:             return -1; 
 		}
 	}
 
