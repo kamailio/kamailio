@@ -267,8 +267,6 @@ error:
 int checkmodem(struct modem *mdm)
 {
 	char answer[500];
-	int retries=0;
-	int success=0;
 
 	/* Checking if modem needs PIN */
 	put_command(mdm->fd,"AT+CPIN?\r",9,answer,sizeof(answer),50,"+CPIN:");

@@ -239,8 +239,7 @@ int check_memory(struct modem *mdm, int flag)
 		/* if we are here ->  some error happend */
 		if (checkmodem(mdm)!=0) {
 			LOG(L_WARN,"WARNING:sms_check_memory: something happend with the"
-				" modem -> was reinit -> let's retry\n",
-				mdm->retry);
+				" modem -> was reinit -> let's retry\n");
 		} else {
 			LOG(L_ERR,"ERROR:sms_check_memory: modem seems to be ok, but we"
 				"had an error? I give up!\n");

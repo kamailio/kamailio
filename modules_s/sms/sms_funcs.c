@@ -268,7 +268,7 @@ inline unsigned short *split_text(char *text, int text_len, int *nr,int nice)
 
 
 
-inline int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
+int send_as_sms(struct sms_msg *sms_messg, struct modem *mdm)
 {
 	static char  buf[MAX_SMS_LENGTH];
 	unsigned int buf_len;
@@ -354,14 +354,13 @@ void modem_process(struct modem *mdm)
 	struct sms_msg sms_messg;
 	struct incame_sms sms;
 	struct network *net;
-	int i,j,k,len;
+	int i,k,len;
 	int counter;
 	int dont_wait;
 	int empty_pipe;
 	int last_smsc_index;
 	int cpms_unsuported;
 	int max_mem=0, used_mem=0;
-	int have_error=0;
 
 	cpms_unsuported = 0;
 	last_smsc_index = -1;
@@ -443,7 +442,7 @@ void modem_process(struct modem *mdm)
 				used_mem = 10;
 				last_smsc_index = -1;
 			}
-#ifdef gata
+
 		/* if any, let's get them */
 		if (used_mem)
 			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
@@ -456,7 +455,8 @@ void modem_process(struct modem *mdm)
 						sms.date,sms.time,sms.ascii);
 				}
 			}
-#endif
+
+		/* sleep -> if it's needed */
 		if (!dont_wait)
 			sleep(mdm->looping_interval);
 	}/*while*/

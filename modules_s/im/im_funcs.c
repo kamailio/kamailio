@@ -1,11 +1,15 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "im_funcs.h"
-
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../ut.h"
 #include "../../forward.h"
 #include "../../resolve.h"
 #include "../../globals.h"
+#include "../../udp_server.h"
 
 
 
@@ -226,15 +230,17 @@ error:
 
 
 
-inline int set_sock_struct( union sockaddr_union* to, str *to_str)
+int set_sock_struct( union sockaddr_union* to, str *to_str)
 {
-	static host_copy[256];
+	static char host_copy[256];
 	int err;
 	struct hostent* he;
-	unsigned int ip;
 	str host;
 	str port;
 	int port_nr=0;
+#ifdef DNS_IP_HACK
+	unsigned int ip;
+#endif
 
 	/* to_str is expected to be in sip:user@host[:port] format */
 	host.s = to_str->s;
@@ -245,7 +251,7 @@ inline int set_sock_struct( union sockaddr_union* to, str *to_str)
 	}
 	if ( host.len<=1 || host.s==to_str->s) {
 		LOG(L_ERR,"ERROR:set_sock_struct: cannot get host from <%.*s>\n",
-			to_str->len,to_str->len);
+			to_str->len,to_str->s);
 		goto error;
 	}
 	/* swallow '@' */
@@ -268,7 +274,7 @@ inline int set_sock_struct( union sockaddr_union* to, str *to_str)
 			/*get the port as number*/
 			port_nr = str2s(host.s,host.len,&err);
 			if (err) {
-				LOG(L_ERR,"ERROR:set_sock_struct: cannot convert port <*.s>"
+				LOG(L_ERR,"ERROR:set_sock_struct: cannot convert port <%.*s>"
 					"into number\n",port.len,port.s);
 			}
 		} else {
