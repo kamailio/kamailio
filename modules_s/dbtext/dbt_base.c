@@ -194,24 +194,14 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	{
 		lres = dbt_get_refs(_dtp, _c, _nc);
 		if(!lres)
-		{
-			if(lkey)
-				pkg_free(lkey);
 			goto error;
-		}
 	}
 
 	DBG("DBT:db_query: new res with %d cols\n", _nc);
 	_dres = dbt_result_new(_dtp, lres, _nc);
 	
 	if(!_dres)
-	{
-			if(lkey)
-				pkg_free(lkey);
-			if(lres)
-				pkg_free(lres);
-			goto error;
-	}
+		goto error;
 	
 	_drp = _dtp->rows;
 	while(_drp)
@@ -234,26 +224,38 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	
 	DBT_CON_RESULT(_h) = _dres;
 	
-    return get_result(_h, _r);
+	if(lkey)
+		pkg_free(lkey);
+	if(lres)
+		pkg_free(lres);
+
+	return get_result(_h, _r);
 
 error:
 	lock_release(&_tbc->sem);
+	if(lkey)
+		pkg_free(lkey);
+	if(lres)
+		pkg_free(lres);
 	DBG("DBT:db_query: error while quering table!\n");
-    return -1;
+    
+	return -1;
+
 clean:
 	lock_release(&_tbc->sem);
-	DBG("DBT:db_query: make clean\n");
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
 	if(_dres)
 		dbt_result_free(_dres);
-    return -1;
+	DBG("DBT:db_query: make clean\n");
+
+	return -1;
 }
 
 /*
- * Raw SQL query
+ * Raw SQL query -- is not the case to have this method
  */
 int dbt_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
@@ -460,12 +462,16 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	
 	lock_release(&_tbc->sem);
 	
+	if(lkey)
+		pkg_free(lkey);
+	
 	return 0;
 	
 error:
 	lock_release(&_tbc->sem);
 	DBG("DBT:db_delete: error deleting from table!\n");
-    return -1;
+    
+	return -1;
 }
 
 /*
@@ -515,11 +521,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	}
 	lres = dbt_get_refs(_dtp, _uk, _un);
 	if(!lres)
-	{
-		if(lkey)
-			pkg_free(lkey);
 		goto error;
-	}
 	DBG("DBT:dbt_update: ---- \n");
 	_drp = _dtp->rows;
 	while(_drp)
@@ -552,12 +554,23 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 #endif
 	
 	lock_release(&_tbc->sem);
-	
+
+	if(lkey)
+		pkg_free(lkey);
+	if(lres)
+		pkg_free(lres);
+
     return 0;
 
 error:
 	lock_release(&_tbc->sem);
+	if(lkey)
+		pkg_free(lkey);
+	if(lres)
+		pkg_free(lres);
+	
 	DBG("DBT:dbt_update: error while updating table!\n");
-    return -1;
+    
+	return -1;
 }
 

@@ -291,7 +291,7 @@ int get_columns(db_con_t* _h, db_res_t* _r)
 }
 
 /*
- * Convert rows from mysql to db API representation
+ * Convert rows from internal to db API representation
  */
 int convert_rows(db_con_t* _h, db_res_t* _r)
 {
