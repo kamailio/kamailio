@@ -51,12 +51,21 @@ int start_pidf_doc(str* _b, int _l);
  */
 int pidf_add_presentity(str* _b, int _l, str* _uri);
 
+/*
+ * Create start of pidf tuple
+ */
+int start_pidf_tuple(str* _b, int _l);
 
 /*
  * Add a contact address with given status
  */
 int pidf_add_address(str* _b, int _l, str* _addr, pidf_status_t _st, str *_loc);
 
+
+/*
+ * End of pidf tuple
+ */
+int end_pidf_tuple(str* _b, int _l);
 
 /*
  * End the document

@@ -359,6 +359,11 @@ static inline int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		return -3;
 	}
 
+	if (start_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
+		return -4;
+	}
+
 	switch(_p->state) {
 	case PS_ONLINE: st = XPIDF_ST_OPEN; break;
 	default: st = XPIDF_ST_CLOSED; break;
@@ -367,6 +372,11 @@ static inline int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 	if (pidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st, &_p->location) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): pidf_add_address failed\n");
 		return -3;
+	}
+
+	if (end_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
+		return -4;
 	}
 
 	if (end_pidf_doc(&body, BUF_LEN - body.len) < 0) {
