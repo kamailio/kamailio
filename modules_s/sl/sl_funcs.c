@@ -27,6 +27,7 @@
  /*
   * History:
   * -------
+  * 2003-03-06  aligned to request2response use of tag bookmarks (jiri)
   * 2003-02-11  modified sl_send_reply to use the transport independend
   *              msg_send  (andrei)
   * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (it was defined twice

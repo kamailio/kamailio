@@ -29,6 +29,9 @@
  * History:
  * -------
  * 2003-03-11: New module interface (janakj)
+ * 2003-03-06: aligned to change in callback names (jiri)
+ * 2003-03-06: fixed improper sql connection, now from 
+ * 	           child_init (jiri)
  * 2003-03-16: flags export parameter added (janakj)
  */
 

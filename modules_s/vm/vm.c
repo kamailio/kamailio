@@ -28,6 +28,11 @@
  * -------
  * 2003-03-11 New module interface (janakj)
  * 2003-03-16 flags export parameter added (janakj)
+ * 2003-03-06 vm_{start|stop} changed to use a single fifo 
+ *            function; new module parameters introduced;
+ *            db now initialized only on start-up; MULTI_DOMAIN
+ *            support introduced; sprintf removed;
+ *
  */
 
 #include "../../fifo_server.h"

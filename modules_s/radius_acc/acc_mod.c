@@ -28,8 +28,9 @@
  */
 /* History:
  * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ *  2003-03-06  aligned to new callback names (jiri)
  */
 
 
