@@ -247,7 +247,6 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
  */
 void save_rpid(str* _rpid)
 {
-	rpid.s = 0;
 	rpid.len = rpid_is_e164 = 0;
 
 	if (!_rpid) {
