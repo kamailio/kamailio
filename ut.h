@@ -34,6 +34,14 @@
 #define  translate_pointer( _new_buf , _org_buf , _p) \
 	( (_p)?(_new_buf + (_p-_org_buf)):(0) )
 
+#define via_len(_via) \
+	((_via)->bsize-((_via)->name.s-\
+		((_via)->hdr.s+(_via)->hdr.len)))
+
+#define via_s(_via,_p_msg) \
+	translate_pointer((_p_msg)->orig,(_p_msg)->buf,(_via)->name.s)
+
+
 
 
 /* converts a str to an u. short, returns the u. short and sets *err on
