@@ -532,6 +532,32 @@ static int uptime_fifo_cmd( FILE *stream, char *response_file )
 	return 1;
 }
 
+static int which_fifo_cmd(FILE *stream, char *response_file )
+{
+	FILE *reply_pipe;
+	struct fifo_command *c;
+
+	if (response_file==0 || *response_file==0 ) {
+		 LOG(L_ERR, "ERROR: which_fifo_cmd: null file\n");
+		return -1;
+	}
+
+	reply_pipe=open_reply_pipe(response_file);
+	if (reply_pipe==NULL) {
+		LOG(L_ERR, "ERROR: opening reply pipe (%s) failed\n",
+			response_file );
+		return -1;
+	}
+	fputs( "------ Begin of registered FIFO commands -----------\n", reply_pipe);
+	for(c=cmd_list; c; c=c->next) {
+		fprintf( reply_pipe, "%s\n", c->name );
+	}
+	fputs( "------ End of registered FIFO commands -----------\n", reply_pipe);
+
+	fclose(reply_pipe);
+	return 1;
+}
+
 
 int register_core_fifo()
 {
@@ -544,6 +570,10 @@ int register_core_fifo()
 		return -1;
 	}
 	if (register_fifo_cmd(print_version_cmd, FIFO_VERSION, 0)<0) {
+		LOG(L_CRIT, "unable to register 'version' FIFO cmd\n");
+		return -1;
+	}
+	if (register_fifo_cmd(which_fifo_cmd, FIFO_WHICH, 0)<0) {
 		LOG(L_CRIT, "unable to register 'version' FIFO cmd\n");
 		return -1;
 	}

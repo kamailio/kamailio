@@ -14,6 +14,7 @@
 #define FIFO_PRINT "print"
 #define FIFO_UPTIME "uptime"
 #define FIFO_VERSION "version"
+#define FIFO_WHICH "which"
 
 #define MAX_CTIME_LEN 128
 
