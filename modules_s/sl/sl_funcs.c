@@ -1,3 +1,6 @@
+/*
+ * $Id$
+ */
 
 #include <netinet/in.h>
 #include <netdb.h>

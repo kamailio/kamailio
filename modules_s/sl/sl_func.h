@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef _SL_FUNC_H
 #define SL_FUNC_H
 

@@ -1,3 +1,7 @@
+/*
+ * $Id$
+ */
+
 #ifndef _JCPLI_H
 #define _JCPLI_H
 
