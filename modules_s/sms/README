@@ -9,7 +9,25 @@ From: Bogdan Andrei Iancu <iancu@fokus.gmd.de>
 
 1.Description
 
-1.1 Numbering plan
+1.1 About
+
+This module provide a way of comunication between SIP networks (via SIP
+MESSAGE) and GSM networsk (via ShortMessageService). Comunication is possible
+from SIP to SMS and also in the revert direction.
+The module provide facilities like SMS confirmation - the gateway can cofirm to
+the SIP user if his message really reached its destination as a SMS - or
+multipart messages - if a SIP messages is to long it will be split and send as
+multiple SMS.
+
+1.2 Hardware reqirements
+
+The SMS module needs a GSM modem to be able to send/received the SMS messages.
+Usualy, this kind of modems are externals, linked to the machine via serial
+cable. The modem can be a dedicated one (as the ones provided by FALCOM) or can
+be a GSM telephone that has an internal modem (as the latest mobile phones from
+NOKIA and ERICSSON).
+
+1.3 Numbering plan
 
 The gateway accepts and advertises phone numbers in international format, more
 specific like: +(international code)(area code)(number).
@@ -20,7 +38,7 @@ the To header; if RURI misses the username, the To header will be consider.
 Also, the gateway will advertise in this format the username in Contact
 headers (in SIP replies and requests) and in From headers (in SIP requests).
 
-1.2 Address mapping
+1.4 Address mapping
 
 To identify the destination number for the SMS, the gateway expects to have a
 mobile number into username in the SIP destination address
