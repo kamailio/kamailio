@@ -30,20 +30,27 @@
  */
 
 
-#include <stdio.h>
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_to.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_uri.h"
 #include "../../trim.h"
 #include "../../ut.h"
+#include "../../config.h"
 #include "dlg.h"
 
 
 #define NORMAL_ORDER 0  /* Create route set in normal order - UAS */
 #define REVERSE_ORDER 1 /* Create route set in reverse order - UAC */
+
+#define ROUTE_PREFIX "Route: "
+#define ROUTE_PREFIX_LEN (sizeof(ROUTE_PREFIX) - 1)
+
+#define ROUTE_SEPARATOR "," CRLF "       "
+#define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
 
 
 /*
@@ -59,6 +66,50 @@ static inline int str_duplicate(str* _d, str* _s)
 	
 	memcpy(_d->s, _s->s, _s->len);
 	_d->len = _s->len;
+	return 0;
+}
+
+
+/*
+ * Calculate dialog hooks
+ */
+static inline int calculate_hooks(dlg_t* _d)
+{
+	str* uri;
+	struct sip_uri puri;
+	param_hooks_t hooks;
+	param_t* params;
+
+	if (_d->route_set) {
+		uri = &_d->route_set->nameaddr.uri;
+		if (parse_uri(uri->s, uri->len, &puri) < 0) {
+			LOG(L_ERR, "calculate_hooks(): Error while parsing URI\n");
+			return -1;
+		}
+
+		if (parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
+			LOG(L_ERR, "calculate_hooks(): Error while parsing parameters\n");
+			return -2;
+		}
+		free_params(params);
+		
+		if (hooks.uri.lr) {
+			if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
+			else _d->hooks.request_uri = &_d->rem_uri;
+			_d->hooks.next_hop = &_d->route_set->nameaddr.uri;
+			_d->hooks.first_route = _d->route_set;
+		} else {
+			_d->hooks.request_uri = &_d->route_set->nameaddr.uri;
+			_d->hooks.next_hop = _d->hooks.request_uri;
+			_d->hooks.first_route = _d->route_set->next;
+			_d->hooks.last_route = &_d->rem_target;
+		}
+	} else {
+		if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
+		else _d->hooks.request_uri = &_d->rem_uri;
+		_d->hooks.next_hop = _d->hooks.request_uri;
+	}
+
 	return 0;
 }
 
@@ -97,6 +148,13 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 	res->loc_seq.is_set = 1;
 
 	*_d = res;
+
+	if (calculate_hooks(*_d) < 0) {
+		LOG(L_ERR, "new_dlg_uac(): Error while calculating hooks\n");
+		shm_free(res);
+		return -2;
+	}
+
 	return 0;
 }
 
@@ -310,6 +368,11 @@ static inline int dlg_new_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		      */
 		if (response2dlg(_m, _d) < 0) return -1;
 		_d->state = DLG_CONFIRMED;
+
+		if (calculate_hooks(_d) < 0) {
+			LOG(L_ERR, "dlg_new_resp_uac(): Error while calculating hooks\n");
+			return -2;
+		}
 	} else {
 		     /* 
 		      * A negative final response, mark the dialog as destroyed
@@ -345,6 +408,11 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		      */
 		if (response2dlg(_m, _d) < 0) return -1;
 		_d->state = DLG_CONFIRMED;
+
+		if (calculate_hooks(_d) < 0) {
+			LOG(L_ERR, "dlg_early_resp_uac(): Error while calculating hooks\n");
+			return -2;
+		}
 	} else {
 		     /* Else terminate the dialog */
 		_d->state = DLG_DESTROYED;
@@ -633,8 +701,16 @@ int new_dlg_uas(struct sip_msg* _req, int _code, str* _tag, dlg_t** _d)
 			return -5;
 		}
 	}
-
+	
 	*_d = res;
+
+	(*_d)->state = DLG_CONFIRMED;
+	if (calculate_hooks(*_d) < 0) {
+		LOG(L_ERR, "new_dlg_uas(): Error while calculating hooks\n");
+		shm_free(*_d);
+		return -6;
+	}
+
 	return 0;
 }
 
@@ -688,6 +764,81 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 
 
 /*
+ * Calculate length of the route set
+ */
+int calculate_routeset_length(dlg_t* _d)
+{
+	int len;
+	rr_t* ptr;
+
+	len = 0;
+	ptr = _d->hooks.first_route;
+
+	if (ptr) {
+		len = ROUTE_PREFIX_LEN;
+		len += CRLF_LEN;
+	}
+
+	while(ptr) {
+		len += ptr->len;
+		ptr = ptr->next;
+		if (ptr) len += ROUTE_SEPARATOR_LEN;
+	} 
+
+	if (_d->hooks.last_route) {
+		len += ROUTE_SEPARATOR_LEN + 2; /* < > */
+		len += _d->hooks.last_route->len;
+	}
+
+	return len;
+}
+
+
+/*
+ *
+ * Print the route set
+ */
+char* print_routeset(char* buf, dlg_t* _d)
+{
+	rr_t* ptr;
+
+	ptr = _d->hooks.first_route;
+
+	if (ptr) {
+		memcpy(buf, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
+		buf += ROUTE_PREFIX_LEN;
+	}
+
+	while(ptr) {
+		memcpy(buf, ptr->nameaddr.name.s, ptr->len);
+		buf += ptr->len;
+
+		ptr = ptr->next;
+		if (ptr) {
+			memcpy(buf, ROUTE_SEPARATOR, ROUTE_SEPARATOR_LEN);
+			buf += ROUTE_SEPARATOR_LEN;
+		}
+	} 
+
+	if (_d->hooks.last_route) {
+		memcpy(buf, ROUTE_SEPARATOR "<", ROUTE_SEPARATOR_LEN + 1);
+		buf += ROUTE_SEPARATOR_LEN + 1;
+		memcpy(buf, _d->hooks.last_route->s, _d->hooks.last_route->len);
+		buf += _d->hooks.last_route->len;
+		*buf = '>';
+		buf++;
+	}
+
+	if (_d->hooks.first_route) {
+		memcpy(buf, CRLF, CRLF_LEN);
+		buf += CRLF_LEN;
+	}
+
+	return buf;
+}
+
+
+/*
  * Destroy a dialog state
  */
 void free_dlg(dlg_t* _d)
@@ -711,28 +862,36 @@ void free_dlg(dlg_t* _d)
 /*
  * Print a dialog structure, just for debugging
  */
-void print_dlg(dlg_t* _d)
+void print_dlg(FILE* out, dlg_t* _d)
 {
-	printf("====dlg_t===\n");
-	printf("id.call_id    : '%.*s'\n", _d->id.call_id.len, _d->id.call_id.s);
-	printf("id.rem_tag    : '%.*s'\n", _d->id.rem_tag.len, _d->id.rem_tag.s);
-	printf("id.loc_tag    : '%.*s'\n", _d->id.loc_tag.len, _d->id.loc_tag.s);
-	printf("loc_seq.value : %d\n", _d->loc_seq.value);
-	printf("loc_seq.is_set: %s\n", _d->loc_seq.is_set ? "YES" : "NO");
-	printf("rem_seq.value : %d\n", _d->rem_seq.value);
-	printf("rem_seq.is_set: %s\n", _d->rem_seq.is_set ? "YES" : "NO");
-	printf("loc_uri       : '%.*s'\n", _d->loc_uri.len, _d->loc_uri.s);
-	printf("rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
-	printf("rem_target    : '%.*s'\n", _d->rem_target.len, _d->rem_target.s);
-	printf("secure:       : %d\n", _d->secure);
-	printf("state         : ");
+	fprintf(out, "====dlg_t===\n");
+	fprintf(out, "id.call_id    : '%.*s'\n", _d->id.call_id.len, _d->id.call_id.s);
+	fprintf(out, "id.rem_tag    : '%.*s'\n", _d->id.rem_tag.len, _d->id.rem_tag.s);
+	fprintf(out, "id.loc_tag    : '%.*s'\n", _d->id.loc_tag.len, _d->id.loc_tag.s);
+	fprintf(out, "loc_seq.value : %d\n", _d->loc_seq.value);
+	fprintf(out, "loc_seq.is_set: %s\n", _d->loc_seq.is_set ? "YES" : "NO");
+	fprintf(out, "rem_seq.value : %d\n", _d->rem_seq.value);
+	fprintf(out, "rem_seq.is_set: %s\n", _d->rem_seq.is_set ? "YES" : "NO");
+	fprintf(out, "loc_uri       : '%.*s'\n", _d->loc_uri.len, _d->loc_uri.s);
+	fprintf(out, "rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
+	fprintf(out, "rem_target    : '%.*s'\n", _d->rem_target.len, _d->rem_target.s);
+	fprintf(out, "secure:       : %d\n", _d->secure);
+	fprintf(out, "state         : ");
 	switch(_d->state) {
-	case DLG_NEW:       printf("DLG_NEW");       break;
-	case DLG_EARLY:     printf("DLG_EARLY");     break;
-	case DLG_CONFIRMED: printf("DLG_CONFIRMED"); break;
-	case DLG_DESTROYED: printf("DLG_DESTROYED"); break;
+	case DLG_NEW:       fprintf(out, "DLG_NEW\n");       break;
+	case DLG_EARLY:     fprintf(out, "DLG_EARLY\n");     break;
+	case DLG_CONFIRMED: fprintf(out, "DLG_CONFIRMED\n"); break;
+	case DLG_DESTROYED: fprintf(out, "DLG_DESTROYED\n"); break;
 	}
+	print_rr(out, _d->route_set);
+	if (_d->hooks.request_uri) 
+		fprintf(out, "hooks.request_uri: '%.*s'\n", _d->hooks.request_uri->len, _d->hooks.request_uri->s);
+	if (_d->hooks.next_hop) 
+		fprintf(out, "hooks.next_hop   : '%.*s'\n", _d->hooks.next_hop->len, _d->hooks.next_hop->s);
+	if (_d->hooks.first_route) 
+		fprintf(out, "hooks.first_route: '%.*s'\n", _d->hooks.first_route->len, _d->hooks.first_route->nameaddr.name.s);
+	if (_d->hooks.last_route)
+		fprintf(out, "hooks.last_route : '%.*s'\n", _d->hooks.last_route->len, _d->hooks.last_route->s);
 	
-	print_rr(_d->route_set);
-	printf("====dlg_t====\n");
+	fprintf(out, "====dlg_t====\n");
 }

@@ -32,6 +32,7 @@
 #define DLG_H
 
 
+#include <stdio.h>
 #include "../../str.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/msg_parser.h"
@@ -68,6 +69,22 @@ typedef struct dlg_id {
 
 
 /*
+ * It is neccessary to analyze the dialog data to find out
+ * what URI put into the Record-Route, where the message
+ * should be really sent and how to construct the route
+ * set of the message. This structure stores this information
+ * so we don't have to calculate each time we want to send a
+ * message within dialog
+ */
+typedef struct dlg_hooks {
+	str* request_uri;   /* This should be put into Request-URI */
+	str* next_hop;      /* Where the message should be really sent */
+	rr_t* first_route;  /* First route to be printed into the message */
+	str* last_route;    /* If not zero add this as the last route */
+} dlg_hooks_t;
+
+
+/*
  * Structure representing dialog state
  */
 typedef struct dlg {
@@ -80,6 +97,10 @@ typedef struct dlg {
 	unsigned char secure;   /* Secure flag -- currently not used */
 	dlg_state_t state;      /* State of the dialog */
 	rr_t* route_set;        /* Route set */
+	dlg_hooks_t hooks;      /* Various hooks used to store information that
+				 * can be reused when building a message (to
+				 * prevent repeated analysing of the dialog data
+				 */
 } dlg_t;
 
 
@@ -116,7 +137,20 @@ void free_dlg(dlg_t* _d);
 /*
  * Print a dialog structure, just for debugging
  */
-void print_dlg(dlg_t* _d);
+void print_dlg(FILE* out, dlg_t* _d);
+
+
+/*
+ * Calculate length of the route set
+ */
+int calculate_routeset_length(dlg_t* _d);
+
+
+/*
+ *
+ * Print the route set
+ */
+char* print_routeset(char* buf, dlg_t* _d);
 
 
 #endif /* DLG_H */
