@@ -1,0 +1,32 @@
+#
+# $Id$
+#
+# Presence Agent
+#
+
+Module depends on: -
+
+This module implement a presence server, i.e. entity that receives
+SUBSCRIBE messages and sends NOTIFY when presence status of a user
+changes. Currently the presence server can be connected to registar
+and jabber module so SIP users can see presence of jabber users.
+
+This module currently cannot work as a B2BUA, i.e. it cannot subsribe
+to presence of users using SIP. We are currently working on that feature.
+
+Exported Parameters:
+-------------------
+
+Name:    default_expires
+Type:    int
+Default: 3600
+Desc:    Default expires value to be used when the client
+         doesn't supply one.
+
+Exported Functions:
+------------------
+
+Name:   handle_subscription
+Params: domain -- This can be either "registar" or "jabber"
+Desc:   This function processes SUBSCRIBE and generates NOTIFY
+
