@@ -8,6 +8,9 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=cpl-c.so
+
+#DEFS +=-I/usr/include/libxml2
+
 LIBS= -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml
 
 include ../../Makefile.modules

@@ -25,11 +25,44 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef _CPL_DB_H
-#define _CPL_DB_H
+#ifndef _CPL_RUN_H
+#define _CPL_RUN_H
+
+#include "../../str.h"
+#include "../../parser/msg_parser.h"
+
+#define CPL_INCOMING_TYPE   1
+#define CPL_OUTGOING_TYPE   2
+
+#define SCRIPT_END               1
+#define SCRIPT_TO_BE_CONTINUED   2
 
 
-int write_to_db(char *usr, char *bin_s, int bin_len, char *xml_s, int xml_len);
-int get_user_script( db_con_t *db_hdl, str *user, str *script);
+
+struct cpl_interpreter {
+	str script;            /* CPL script */
+	unsigned char *ip;     /* instruction pointer */
+	int recv_time;         /* receiving time stamp */
+	struct sip_msg *msg;
+	unsigned char  type;
+	struct location *loc_set;     /* location set */
+	str *ruri;
+	str *to;
+	str *from;
+	str *subject;
+	str *organization;
+	str *user_angent;
+	str *accepted_langs;
+	str *priority;
+};
+
+struct cpl_interpreter* build_cpl_interpreter( struct sip_msg *msg,
+											str *script, unsigned int type);
+
+void free_cpl_interpreter(struct cpl_interpreter *intr);
+
+int run_cpl_script( struct cpl_interpreter *cpl_intr );
 
 #endif
+
+

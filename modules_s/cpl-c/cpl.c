@@ -34,15 +34,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../../mem/shm_mem.h"
+#include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../str.h"
-#include "../../msg_translator.h"
-#include "../../data_lump_rpl.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../ut.h"
-#include "../../globals.h"
-#include "cpl_parser.h"
+#include "../../parser/parse_uri.h"
+#include "../../parser/parse_from.h"
+#include "../../db/db.h"
+#include "cpl_run.h"
+#include "cpl_db.h"
 
 
 //char           *resp_buf;
@@ -51,30 +53,28 @@
 //unsigned int   resp_len;
 //unsigned int   resp_code;
 
-char *DB_URL       = 0;
-char *DB_TABLE     = 0;
+char *DB_URL       = 0;  /* database url */
+char *DB_TABLE     = 0;  /* */
+static db_con_t* db_hdl   = 0;
 int  cache_timeout = 5;
+cmd_function sl_send_rpl = 0;
 
+MODULE_VERSION
 
 
 
 static int cpl_run_script(struct sip_msg* msg, char* str, char* str2);
-static int cpl_is_response_accept(struct sip_msg* msg, char* str, char* str2);
-static int cpl_is_response_reject(struct sip_msg* msg, char* str, char* str2);
-static int cpl_is_response_redirect(struct sip_msg* msg, char* str, char* str2);
-static int cpl_update_contact(struct sip_msg* msg, char* str, char* str2);
-static int mod_init(void);
+static int fixup_cpl_run_script(void** param, int param_no);
+static int cpl_init(void);
+static int cpl_child_init(int rank);
+static int cpl_exit(void);
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"cpl_run_script",           cpl_run_script,           0, 0, REQUEST_ROUTE},
-	{"cpl_is_response_accept",   cpl_is_response_accept,   0, 0, REQUEST_ROUTE},
-	{"cpl_is_response_reject",   cpl_is_response_reject,   0, 0, REQUEST_ROUTE},
-	{"cpl_is_response_redirect", cpl_is_response_redirect, 0, 0, REQUEST_ROUTE},
-	{"cpl_update_contact",       cpl_update_contact,       0, 0, REQUEST_ROUTE},
+	{"cpl_run_script", cpl_run_script, 1, fixup_cpl_run_script, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -91,104 +91,188 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"cpl_module",
+	"cpl_c",
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */
-	mod_init, /* Module initialization function */
+	cpl_init, /* Module initialization function */
 	(response_function) 0,
-	(destroy_function) 0,
+	(destroy_function) cpl_exit,
 	0,
-	0 /* per-child init function */
+	(child_init_function) cpl_child_init /* per-child init function */
 };
 
 
-static int mod_init(void)
+
+static int fixup_cpl_run_script(void** param, int param_no)
 {
-	fprintf(stderr, "cpl - initializing\n");
+	int type;
+
+	if (param_no==1) {
+		if (!strcasecmp( "incoming", *param))
+			type = CPL_INCOMING_TYPE;
+		else if (!strcasecmp( "outgoing", *param))
+			type = CPL_OUTGOING_TYPE;
+		else {
+			LOG(L_ERR,"ERROR:fixup_cpl_run_script: script directive \"%s\""
+				" unknown!\n",(char*)*param);
+			return E_UNSPEC;
+		}
+		pkg_free(*param);
+		*param=(void*)type;
+		return 0;
+	}
 	return 0;
 }
 
 
+
+static int cpl_init(void)
+{
+	LOG(L_INFO,"CPL - initializing\n");
+
+	/* check the module params */
+	if (DB_URL==0) {
+		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_URL\" "
+			"found empty\n");
+		goto error;
+	}
+	if (DB_TABLE==0) {
+		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_TABLE\" "
+			"found empty\n");
+		goto error;
+	}
+
+	/* bind to the mysql module */
+	if (bind_dbmod()) {
+		LOG(L_CRIT,"ERROR:cpl_init: cannot bind to database module! "
+			"Did you forget to load a database module ?\n");
+		goto error;
+	}
+
+	/* bind the sl_send_reply function */
+	sl_send_rpl = find_export("sl_send_reply", 2, REQUEST_ROUTE);
+	if (sl_send_rpl==0) {
+		LOG(L_CRIT,"ERROR:cpl_init: connot find \"sl_send_reply\" function! "
+			"Did you forget to load the sl module ?\n");
+		goto error;
+	}
+
+	return 0;
+error:
+	return -1;
+}
+
+
+
+static int cpl_child_init(int rank)
+{
+	//int  i, foo;
+
+	/* only the child 1 will execut this
+	if (rank != 1) goto done; */
+
+	if ( (db_hdl=db_init(DB_URL))==0 ) {
+		LOG(L_CRIT,"ERROR:cpl_child_init: cannot initialize database "
+			"connection\n");
+		goto error;
+	}
+	if (db_use_table( db_hdl, DB_TABLE) < 0) {
+		LOG(L_CRIT,"ERROR:cpl_child_init: cannot select table \"%s\"\n",
+			DB_TABLE);
+		goto error;
+	}
+
+	return 0;
+error:
+	if (db_hdl)
+		db_close(db_hdl);
+	return -1;
+}
+
+
+
+static int cpl_exit(void)
+{
+	return 0;
+}
+
+
+
 static int cpl_run_script(struct sip_msg* msg, char* str1, char* str2)
 {
-	return 1;
-}
+	struct cpl_interpreter  *cpl_intr;
+	struct to_body          *from;
+	struct sip_uri          uri;
+	str                     script;
 
+	script.s = 0;
+	cpl_intr = 0;
 
-
-static int cpl_is_response_accept(struct sip_msg* msg, char* str1, char* str2)
-{
-	return 1;
-}
-
-
-static int cpl_is_response_reject(struct sip_msg* msg, char* str1, char* str2)
-{
-	return 1;
-}
-
-
-static int cpl_is_response_redirect(struct sip_msg* msg, char* str1,char* str2)
-{
-	return 1;
-}
-
-
-static int cpl_update_contact(struct sip_msg* msg, char* str1, char* str2)
-{
-#ifdef cucu
-	TRedirectMessage  *redirect;
-	struct lump_rpl *lump;
-	char *buf, *p;
-	int len;
-	int i;
-
-	if (resp_code!=REDIRECT_CALL || !resp_buf || !resp_len)
-		return -1;
-
-	redirect = parseRedirectResponse( resp_buf , resp_len );
-	printRedirectMessage( redirect );
-
-	len = 9 /*"Contact: "*/;
-	/* locations*/
-	for( i=0 ; i<redirect->numberOfLocations; i++)
-		len += 2/*"<>"*/ + redirect->locations[i].urlLength;
-	len += redirect->numberOfLocations -1 /*","*/;
-	len += CRLF_LEN;
-
-	buf = pkg_malloc( len );
-	if(!buf)
-	{
-		LOG(L_ERR,"ERROR:cpl_update_contact: out of memory! \n");
-		return -1;
+	/* get the user_name */
+	if ( (unsigned int)str1==CPL_INCOMING_TYPE ) {
+		/* if it's incoming -> get the user_name from new_uri/RURI/To */
+		DBG("DEBUG:cpl_run_script: tring to get user from new_uri\n");
+		if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
+		|| !uri.user.len )
+		{
+			DBG("DEBUG:cpl_run_script: tring to get user from R_uri\n");
+			if ( parse_uri( msg->first_line.u.request.uri.s,
+			msg->first_line.u.request.uri.len ,&uri)||!uri.user.len )
+			{
+				DBG("DEBUG:cpl_run_script: tring to get user from To\n");
+				if (!msg->to || !get_to(msg) ||
+				parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
+				||!uri.user.len)
+				{
+					LOG(L_ERR,"ERROR:cpl_run_script: unable to extract user"
+					" name from RURI or To header!\n");
+					goto error;
+				}
+			}
+		}
+	} else {
+		/* if it's outgoing -> get the user_name from From */
+		/* parsing from header */
+		if ( parse_from_header( msg )==-1 ) {
+			LOG(L_ERR,"ERROR:cpl_run_script: unable to extract URI "
+				"from FROM header\n");
+			goto error;
+		}
+		from = (struct to_body*)msg->from->parsed;
+		/* parse the extracted uri from From */
+		if (parse_uri( from->uri.s, from->uri.len, &uri)||!uri.user.len) {
+			LOG(L_ERR,"ERROR:cpl_run_script: unable to extract user name "
+				"from URI (From header)\n");
+			goto error;
+		}
 	}
 
-	p = buf;
-	memcpy( p , "Contact: " , 9);
-	p += 9;
-	for( i=0 ; i<redirect->numberOfLocations; i++)
-	{
-		if (i) *(p++)=',';
-		*(p++) = '<';
-		memcpy(p,redirect->locations[i].URL,redirect->locations[i].urlLength);
-		p += redirect->locations[i].urlLength;
-		*(p++) = '>';
-	}
-	memcpy(p,CRLF,CRLF_LEN);
+	/* get the script for this user */
+	if (get_user_script( db_hdl, &uri.user, &script)==-1)
+		goto error;
 
-	lump = build_lump_rpl( buf , len );
-	if(!buf)
-	{
-		LOG(L_ERR,"ERROR:cpl_update_contact: unable to build lump_rpl! \n");
-		pkg_free( buf );
-		return -1;
-	}
-	add_lump_rpl( msg , lump );
+	/* build a new script interpreter */
+	if ( (cpl_intr=build_cpl_interpreter(msg,&script,(unsigned int)str1))==0 )
+		goto error;
 
-	freeRedirectMessage( redirect );
-	pkg_free(buf);
-#endif
+	/* run the script */
+	switch (run_cpl_script( cpl_intr )) {
+		case SCRIPT_END:
+			free_cpl_interpreter( cpl_intr );
+		case SCRIPT_TO_BE_CONTINUED:
+			break;
+		case -1:
+			goto error;
+	}
+
 	return 1;
+error:
+	if (!cpl_intr && script.s)
+		shm_free(script.s);
+	if (cpl_intr)
+		free_cpl_interpreter( cpl_intr );
+	return -1;
 }
+
 
 
