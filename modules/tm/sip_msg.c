@@ -253,7 +253,6 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	struct via_param  *prm;
 	struct to_param   *to_prm,*new_to_prm;
 	struct sip_msg    *new_msg;
-	struct lump       *lump_chain, *lump_tmp, **lump_anchor, **lump_anchor2;
 	struct lump_rpl   *rpl_lump, **rpl_lump_anchor;
 	char              *p,*foo;
 
@@ -340,25 +339,32 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	}/*for all headers*/
 
 	/* length of the data lump structures */
-	lump_chain = org_msg->add_rm;
-	while (lump_chain)
-	{
-		len += lump_len( lump_chain );
-		lump_tmp = lump_chain->before;
-		while ( lump_tmp )
-		{
-			len += lump_len( lump_tmp );
-			lump_tmp = lump_tmp->before;
-		}
-		lump_tmp = lump_chain->after;
-		while ( lump_tmp )
-		{
-			len += lump_len( lump_tmp );
-			lump_tmp = lump_tmp->after;
-		}
-		lump_chain = lump_chain->next;
-	}
+#define LUMP_LIST_LEN(len, list) \
+do { \
+        struct lump* tmp, *chain; \
+	chain = (list); \
+	while (chain) \
+	{ \
+		(len) += lump_len(chain); \
+		tmp = chain->before; \
+		while ( tmp ) \
+		{ \
+			(len) += lump_len( tmp ); \
+			tmp = tmp->before; \
+		} \
+		tmp = chain->after; \
+		while ( tmp ) \
+		{ \
+			(len) += lump_len( tmp ); \
+			tmp = tmp->after; \
+		} \
+		chain = chain->next; \
+	} \
+} while(0);
 
+	LUMP_LIST_LEN(len, org_msg->add_rm);
+	LUMP_LIST_LEN(len, org_msg->body_lumps);
+	
 	/*length of reply lump structures*/
 	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
 			len+=ROUND4(sizeof(struct lump_rpl))+ROUND4(rpl_lump->text.len);
@@ -376,6 +382,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	memcpy( new_msg , org_msg , sizeof(struct sip_msg) );
 	p += ROUND4(sizeof(struct sip_msg));
 	new_msg->add_rm = 0;
+	new_msg->body_lumps = 0;
 	/* new_uri */
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 	{
@@ -630,32 +637,40 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	}
 
 	/* clonning data lump */
-		lump_chain = org_msg->add_rm;
-		lump_anchor = &(new_msg->add_rm);
-	while (lump_chain)
-	{
-		lump_clone( (*lump_anchor) , lump_chain , p );
-		/*before list*/
-		lump_tmp = lump_chain->before;
-		lump_anchor2 = &((*lump_anchor)->before);
-		while ( lump_tmp )
-		{
-			lump_clone( (*lump_anchor2) , lump_tmp , p );
-			lump_anchor2 = &((*lump_anchor2)->before);
-			lump_tmp = lump_tmp->before;
-		}
-		/*after list*/
-		lump_tmp = lump_chain->after;
-		lump_anchor2 = &((*lump_anchor)->after);
-		while ( lump_tmp )
-		{
-			lump_clone( (*lump_anchor2) , lump_tmp , p );
-			lump_anchor2 = &((*lump_anchor2)->after);
-			lump_tmp = lump_tmp->after;
-		}
-		lump_anchor = &((*lump_anchor)->next);
-		lump_chain = lump_chain->next;
-	}
+#define CLONE_LUMP_LIST(anchor, list) \
+do { \
+        struct lump* lump_tmp, *l; \
+        struct lump** lump_anchor2, **a; \
+        a = (anchor); \
+        l = (list); \
+	while (l) \
+	{ \
+		lump_clone( (*a) , l , p ); \
+		/*before list*/ \
+		lump_tmp = l->before; \
+		lump_anchor2 = &((*a)->before); \
+		while ( lump_tmp ) \
+		{ \
+			lump_clone( (*lump_anchor2) , lump_tmp , p ); \
+			lump_anchor2 = &((*lump_anchor2)->before); \
+			lump_tmp = lump_tmp->before; \
+		} \
+		/*after list*/ \
+		lump_tmp = l->after; \
+		lump_anchor2 = &((*a)->after); \
+		while ( lump_tmp ) \
+		{ \
+			lump_clone( (*lump_anchor2) , lump_tmp , p ); \
+			lump_anchor2 = &((*lump_anchor2)->after); \
+			lump_tmp = lump_tmp->after; \
+		} \
+		a = &((*a)->next); \
+		l = l->next; \
+	} \
+} while(0)
+
+        CLONE_LUMP_LIST(&(new_msg->add_rm), org_msg->add_rm);
+        CLONE_LUMP_LIST(&(new_msg->body_lumps), org_msg->body_lumps);
 
 	/*cloning reply lump structures*/
 	rpl_lump_anchor = &(new_msg->reply_lump);

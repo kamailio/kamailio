@@ -27,8 +27,11 @@
  * History:
  * --------
  *  2003-01-19  support for duplication lump lists added (jiri)
- *  2003-03-31  added subst lumps -- they expand in ip addr, port a.s.o (andrei)
+ *  2003-03-31  added subst lumps --they expand in ip addr, port a.s.o (andrei)
  *  2003-04-01  added conditional lump suport functions (andrei)
+ *  2003-10-20  anchor_lump & del_lump will automatically choose the lump list
+ *              based on  msg->eoh comparisons (andrei)
+ *  
  */
 
 
@@ -254,10 +257,15 @@ struct lump* insert_cond_lump_before(	struct lump* before,
 
 
 /* removes an already existing header/data lump */
-struct lump* del_lump(struct lump** list, int offset, int len, int type)
+/* WARNING: thist function adds the lump either to the msg->add_rm or
+ * msg->body_lumps list, depending on the offset being greater than msg->eoh,
+ * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
+ *  might affect the body!! */
+struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type)
 {
 	struct lump* tmp;
 	struct lump* prev, *t;
+	struct lump** list;
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
@@ -270,6 +278,11 @@ struct lump* del_lump(struct lump** list, int offset, int len, int type)
 	tmp->u.offset=offset;
 	tmp->len=len;
 	prev=0;
+	/* check to see whether this might be a body lump */
+	if ((msg->eoh) && (offset> (int)(msg->eoh-msg->buf)))
+		list=&msg->body_lumps;
+	else
+		list=&msg->add_rm;
 	for (t=*list;t; prev=t, t=t->next){
 		/* insert it sorted after offset */
 		if (((t->op==LUMP_DEL)||(t->op==LUMP_NOP))&&(t->u.offset>offset))
@@ -283,12 +296,18 @@ struct lump* del_lump(struct lump** list, int offset, int len, int type)
 
 
 
-/* add an anhor */
-struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
+/* add an anchor
+ * WARNING: thist function adds the lump either to the msg->add_rm or
+ * msg->body_lumps list, depending on the offset being greater than msg->eoh,
+ * so msg->eoh must be parsed (parse with HDR_EOH) if you think your lump
+ *  might affect the body!! */
+struct lump* anchor_lump(struct sip_msg* msg, int offset, int len, int type)
 {
 	struct lump* tmp;
 	struct lump* prev, *t;
+	struct lump** list;
 
+	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
 		ser_error=E_OUT_OF_MEM;
@@ -301,6 +320,12 @@ struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
 	tmp->u.offset=offset;
 	tmp->len=len;
 	prev=0;
+	/* check to see whether this might be a body lump */
+	if ((msg->eoh) && (offset> (int)(msg->eoh-msg->buf)))
+		list=&msg->body_lumps;
+	else
+		list=&msg->add_rm;
+		
 	for (t=*list;t; prev=t, t=t->next){
 		/* insert it sorted after offset */
 		if (((t->op==LUMP_DEL)||(t->op==LUMP_NOP))&&(t->u.offset>offset))

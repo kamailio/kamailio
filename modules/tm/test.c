@@ -36,6 +36,7 @@
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
+#include "../../data_lump.h"
 
 #include "t_hooks.h"
 
@@ -53,8 +54,7 @@ int _test_insert_to_reply( struct sip_msg *msg, char *str )
     }
     memcpy( buf, str, len );
 
-    anchor = anchor_lump(&msg->add_rm,
-        msg->headers->name.s - msg->buf, 0 , 0);
+    anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0 , 0);
     if (anchor == NULL) {
         LOG(L_ERR, "_test_insert_to_reply: anchor_lump failed\n");
         return 0;
