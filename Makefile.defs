@@ -76,6 +76,10 @@ ifeq ($(ARCH), i386)
 	DEFS+= -DFAST_LOCK
 endif
 
+ifeq ($(ARCH), sparc64)
+	DEFS+= -DFAST_LOCK
+endif
+
 
 #PROFILE=  -pg #set this if you want profiling
 #mode = debug

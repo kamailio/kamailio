@@ -28,25 +28,25 @@
 int init_mallocs()
 {
 #ifdef PKG_MALLOC
-        /*init mem*/
+	/*init mem*/
 	#ifdef VQ_MALLOC
-        	mem_block=vqm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
+		mem_block=vqm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	#elif F_MALLOC
 		mem_block=fm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	#else
-        	mem_block=qm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
+		mem_block=qm_malloc_init(mem_pool, PKG_MEM_POOL_SIZE);
 	#endif
-        if (mem_block==0){
-                LOG(L_CRIT, "could not initialize memory pool\n");
+	if (mem_block==0){
+		LOG(L_CRIT, "could not initialize memory pool\n");
 		return -1;
-        }
+	}
 #endif
 
 #ifdef SHM_MEM
-        if (shm_mem_init()<0) {
-                LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
-                return -1;
-        }
+	if (shm_mem_init()<0) {
+		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
+		return -1;
+	}
 #endif
 	return 0;
 

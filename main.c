@@ -647,7 +647,8 @@ int main(int argc, char** argv)
 	
 	if (children_no<=0) children_no=CHILD_NO;
 	else if (children_no >= MAX_PROCESSES ) {
-		fprintf(stderr, "ERROR: too many children processes configured; maximum is %d\n",
+		fprintf(stderr, "ERROR: too many children processes configured;"
+				" maximum is %d\n",
 			MAX_PROCESSES-1 );
 		goto error;
 	}
