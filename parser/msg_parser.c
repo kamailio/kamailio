@@ -66,7 +66,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			memset(vb,0,sizeof(struct via_body));
 			hdr->body.s=tmp;
 			tmp=parse_via(tmp, end, vb);
-			if (vb->error==VIA_PARSE_ERROR){
+			if (vb->error==PARSE_ERROR){
 				LOG(L_ERR, "ERROR: get_hdr_field: bad via\n");
 				pkg_free(vb);
 				goto error;

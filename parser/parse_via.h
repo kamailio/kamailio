@@ -7,9 +7,6 @@
 
 #include "../str.h"
 
-#define VIA_PARSE_OK	1
-#define VIA_PARSE_ERROR -1
-
 /* via param types
  * WARNING: keep in sync w/ FIN_*, GEN_PARAM and PARAM_ERROR from via_parse.c
  */

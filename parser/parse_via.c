@@ -850,7 +850,7 @@ char* parse_via(char* buffer, char* end, struct via_body *vb)
 	struct via_param* param;
 
 parse_again:
-	vb->error=VIA_PARSE_ERROR;
+	vb->error=PARSE_ERROR;
 	/* parse start of via ( SIP/2.0/UDP    )*/
 	state=F_SIP;
 	for(tmp=buffer;tmp<end;tmp++){
@@ -1733,7 +1733,7 @@ endofpacket:
 	*/
 	/*DBG("parse_via: rest=<%s>\n", tmp);*/
 
-	vb->error=VIA_PARSE_OK;
+	vb->error=PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
 		vb->port=str2s((unsigned char*)vb->port_str.s, vb->port_str.len, &err);
@@ -1746,7 +1746,7 @@ endofpacket:
 	return tmp;
 nextvia:
 	DBG("parse_via: next_via\n");
-	vb->error=VIA_PARSE_OK;
+	vb->error=PARSE_OK;
 	vb->bsize=tmp-buffer;
 	if (vb->port_str.s){
 		vb->port=str2s((unsigned char*)vb->port_str.s, vb->port_str.len, &err);
@@ -1776,7 +1776,7 @@ error:
 	}else{
 		LOG(L_ERR, "ERROR: parse_via: via parse error\n");
 	}
-	vb->error=VIA_PARSE_ERROR;
+	vb->error=PARSE_ERROR;
 	return tmp;
 }
 

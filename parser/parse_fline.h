@@ -7,15 +7,14 @@
 
 #include "../str.h"
 
-/* Message is a request */
+/* Message is request */
 #define SIP_REQUEST 1
 
-/* Message is a reply */
+/* Message is reply */
 #define SIP_REPLY   2
 
 /* Invalid message */
 #define SIP_INVALID 0
-
 
 #define SIP_VERSION "SIP/2.0"
 #define SIP_VERSION_LEN 7
@@ -28,6 +27,7 @@
 #define CANCEL_LEN 6
 #define ACK_LEN 3
 #define BYE_LEN 3
+
 
 struct msg_start {
 	int type;                         /* Type of the Message - Request/Response */

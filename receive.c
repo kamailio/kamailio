@@ -64,7 +64,7 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 	DBG("After parse_msg...\n");
 	if (msg->first_line.type==SIP_REQUEST){
 		/* sanity checks */
-		if ((msg->via1==0) || (msg->via1->error!=VIA_PARSE_OK)){
+		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in request\n");
 			goto error;
@@ -97,13 +97,13 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 #endif
 	}else if (msg->first_line.type==SIP_REPLY){
 		/* sanity checks */
-		if ((msg->via1==0) || (msg->via1->error!=VIA_PARSE_OK)){
+		if ((msg->via1==0) || (msg->via1->error!=PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
 			goto error;
 		}
 #if 0
-		if ((msg->via2==0) || (msg->via2->error!=VIA_PARSE_OK)){
+		if ((msg->via2==0) || (msg->via2->error!=PARSE_OK)){
 			/* no second via => error? */
 			LOG(L_ERR, "ERROR: receive_msg: no 2nd via found in reply\n");
 			goto error;

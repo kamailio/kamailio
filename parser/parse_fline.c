@@ -5,13 +5,10 @@
  * 
  */
 
-
-
 #include "../dprint.h"
 #include "msg_parser.h"
 #include "parser_f.h"
 #include "../mem/mem.h"
-
 
 /* grammar:
 	request  =  method SP uri SP version CRLF
