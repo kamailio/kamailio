@@ -257,7 +257,7 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 		/* 100 won't be relayed */
 		else {
 			if (!T->uac[branch].rpl_received) *should_store=1;
-			else *should_store=0;
+				else *should_store=0;
 			if (T_code==0) return branch;
 				else return -1;
 		}

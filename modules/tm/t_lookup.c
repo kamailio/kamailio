@@ -247,12 +247,15 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 	int hash_index   = 0;
 	int entry_label  = 0;
 	int branch_id    = 0;
-	char  *hashi, *syni, *branchi, *p, *n;
-	int hashl, synl, branchl;
+	char  *hashi, *branchi, *p, *n;
+	int hashl, branchl;
 	int scan_space;
 #ifndef USE_SYNONIM
 	char *loopi;
 	int loopl;
+#else
+	char *syni;
+	int synl;
 #endif
 
 	/* split the branch into pieces: loop_detection_check(ignored),
@@ -336,8 +339,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 #ifdef USE_SYNONIM
 		&& (p_cell->label == entry_label )
 #else
-		&& ( p_cell->inbound_request->add_to_branch_len>=32 &&
-		  !memcmp(p_cell->inbound_request->add_to_branch_s,loopi,32))
+		&& ( p_cell->uas.request->add_to_branch_len>=32 &&
+		!memcmp(p_cell->uas.request->add_to_branch_s,loopi,32))
 #endif
 		)
 			/* has the transaction the wanted branch? */

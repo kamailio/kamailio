@@ -38,6 +38,7 @@
    replaced by a subsequent, longer message
 */
 #define REPLY_OVERBUFFER_LEN 160
+#define TAG_OVERBUFFER_LEN 32
 
 /* character which separates individual parts of MPLS-ized branch */
 #ifdef BRUT_HACK

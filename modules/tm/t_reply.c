@@ -238,7 +238,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	sometimes it will result in useless CPU cycles
 	but mostly the assumption holds and allows the
 	work to be done out of criticial lock region */
-	if (msg_status==100)
+	if (msg_status==100 && T->uac[branch].status)
 		buf=0;
 	else {
 		/* buf maybe allo'ed*/
@@ -267,7 +267,11 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	if (save_clone)
 	{
-		T->uac[branch].tag.s = shm_malloc( get_to(p_msg)->tag_value.len );
+		if (T->uac[branch].tag.s)
+			T->uac[branch].tag.s = shm_resize(T->uac[branch].tag.s,
+				get_to(p_msg)->tag_value.len+TAG_OVERBUFFER_LEN);
+		else
+			T->uac[branch].tag.s = shm_malloc( get_to(p_msg)->tag_value.len );
 		if (!T->uac[branch].tag.s)
 		{
 			LOG( L_ERR , "ERROR: t_on_reply: connot alocate memory!\n");
@@ -362,8 +366,8 @@ error1:
 error:
 	T_UNREF( T );
 	/* don't try to relay statelessly on error; on troubles, simply do nothing;
-           that will make the other party to retransmit; hopefuly, we'll then 
-           be better off */
+	   that will make the other party to retransmit; hopefuly, we'll then 
+	   be better off */
 	return 0;
 }
 
