@@ -46,6 +46,9 @@
 
 
 struct node *list = 0;
+static xmlDtdPtr     dtd;   /* DTD file */
+static xmlValidCtxt  cvp;   /* validating context */
+
 
 
 #define FOR_ALL_ATTR(_node,_attr) \
@@ -54,7 +57,8 @@ struct node *list = 0;
 enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 
 
-unsigned char encode_node_name(char *node_name)
+
+static inline unsigned char encode_node_name(char *node_name)
 {
 	switch (node_name[0]) {
 		case 'a':
@@ -332,7 +336,7 @@ error:
 
 
 
-int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
+int encode_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 					unsigned int type, unsigned char *ptr,int *nr_of_attr)
 {
 	xmlAttrPtr     attr;
@@ -343,6 +347,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 	unsigned char  *offset;
 	int            nr_attr;
 	int            foo;
+	str            s;
 
 	nr_attr = 0;
 	p = ptr;
@@ -787,11 +792,12 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 						break;
 					case 'S': case 's':
 						*(p++) = STATUS_ATTR;
-						for(foo=strlen(val);val[foo-1]==' ';val[--foo]=0);
-						foo = strtol(val,&end,10);
-						if (errno||foo<0||foo>1000)
-							goto error;
-						if (*end!=0) {
+						s.s = val;
+						s.len = strlen(val);
+						/* right and left space triming */
+						for(;s.s[s.len-1]==' ';s.s[--s.len]=0);
+						for(;s.s[0]==' ';s.s=s.s+1,s.len--);
+						if (str2int(&s,&foo)==-1) {
 							/*it was a non numeric value */
 							if (!strcasecmp(val,BUSY_STR)) {
 								foo = BUSY_VAL;
@@ -799,9 +805,17 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 								foo = NOTFOUND_VAL;
 							} else if (!strcasecmp(val,ERROR_STR)) {
 								foo = ERROR_VAL;
-							} else foo = REJECT_VAL;
-						} else if (foo/100!=4 && foo/100!=5 && foo/100!=6) {
-							foo = REJECT_VAL;
+							} else if (!strcasecmp(val,REJECT_STR)) {
+								foo = REJECT_VAL;
+							} else {
+								LOG(L_ERR,"ERROR:cpl_c:encode_node_attr: bad "
+									"val in reject node for status <%s>\n",val);
+								goto error;
+							}
+						} else if (foo<400 || foo>700) {
+							LOG(L_ERR,"ERROR:cpl_c:encode_node_attr: bad "
+								"code in reject node for status <%d>\n",foo);
+								goto error;
 						}
 						*((unsigned short*)p) = (unsigned short)foo;
 						p +=2;
@@ -872,7 +886,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 	*nr_of_attr = nr_attr;
 	return (p-ptr);
 error:
-	LOG(L_ERR,"ERROR:cpl:encript_node_attr: error enconding attributes for "
+	LOG(L_ERR,"ERROR:cpl:encode_node_attr: error enconding attributes for "
 		"node %d\n",type);
 	return -1;
 }
@@ -880,7 +894,7 @@ error:
 
 
 
-int encrypt_node( xmlNodePtr node, unsigned char *p)
+int encode_node( xmlNodePtr node, unsigned char *p)
 {
 	xmlNodePtr kid;
 	int sub_tree_size;
@@ -898,7 +912,7 @@ int encrypt_node( xmlNodePtr node, unsigned char *p)
 		NR_OF_KIDS(p)++;
 
 	/* setting the attributes */
-	attr_size = encript_node_attr( node, p, NODE_TYPE(p), ATTR_PTR(p), &nr);
+	attr_size = encode_node_attr( node, p, NODE_TYPE(p), ATTR_PTR(p), &nr);
 	if (attr_size<0) return -1;
 	NR_OF_ATTR(p) = (unsigned char)nr;
 
@@ -907,7 +921,7 @@ int encrypt_node( xmlNodePtr node, unsigned char *p)
 	/* encrypt all the kids */
 	for(kid = node->xmlChildrenNode,foo=0;kid;kid=kid->next,foo++) {
 		KID_OFFSET(p,foo) = sub_tree_size;
-		len = encrypt_node(kid,p+sub_tree_size);
+		len = encode_node(kid,p+sub_tree_size);
 		if (len<=0) return -1;
 		sub_tree_size += len;
 	}
@@ -917,58 +931,42 @@ int encrypt_node( xmlNodePtr node, unsigned char *p)
 
 
 
-
-int encodeXML( str *xml, char* DTD_filename, str *bin)
+int encodeCPL( str *xml, str *bin)
 {
 	static unsigned char buf[2048];
-	xmlValidCtxt  cvp;
 	xmlDocPtr  doc;
 	xmlNodePtr cur;
-	xmlDtdPtr  dtd;
 
 	doc  = 0;
 	list = 0;
-	dtd  = 0;
 
 	/* parse the xml */
 	doc = xmlParseDoc( xml->s );
 	if (!doc) {
-		LOG(L_ERR,"ERROR:cpl:encryptXML:CPL script not parsed successfully\n");
+		LOG(L_ERR,"ERROR:cpl:encodeCPL:CPL script not parsed successfully\n");
 		goto error;
 	}
 
-	/* parse the dtd file - if any! */
-	if (DTD_filename) {
-		dtd = xmlParseDTD( NULL, DTD_filename);
-		if (!dtd) {
-			LOG(L_ERR,"ERROR:cpl:encryptXML: DTD not parsed successfully. \n");
-			goto error;
-		}
-		cvp.userData = (void *) stderr;
-		cvp.error    = (xmlValidityErrorFunc) fprintf;
-		cvp.warning  = (xmlValidityWarningFunc) fprintf;
-		if (xmlValidateDtd(&cvp, doc, dtd)!=1) {
-			LOG(L_ERR,"ERROR:cpl:encryptXML: CPL script do not matche DTD\n");
-			goto error;
-		}
+	/* check the xml against dtd */
+	if (xmlValidateDtd(&cvp, doc, dtd)!=1) {
+		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: CPL script do not matche DTD\n");
+		goto error;
 	}
-
 
 	cur = xmlDocGetRootElement(doc);
 	if (!cur) {
-		LOG(L_ERR,"ERROR:cpl:encryptXML: empty CPL script!\n");
+		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: empty CPL script!\n");
 		goto error;
 	}
 
-	bin->len = encrypt_node( cur, buf);
+	bin->len = encode_node( cur, buf);
 	if (bin->len<0) {
-		LOG(L_ERR,"ERROR:cpl:encryptXML: zero lenght return by encripting"
+		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: zero lenght return by encripting"
 			" function\n");
 		goto error;
 	}
 
-
-	if (doc) xmlFreeDoc(doc);
+	xmlFreeDoc(doc);
 	if (list) delete_list(list);
 	bin->s = buf;
 	return 1;
@@ -976,5 +974,22 @@ error:
 	if (doc) xmlFreeDoc(doc);
 	if (list) delete_list(list);
 	return 0;
+}
+
+
+
+/* loads and parse the dtd file; a validating context is created */
+int init_CPL_parser( char* DTD_filename )
+{
+	dtd = xmlParseDTD( NULL, DTD_filename);
+	if (!dtd) {
+		LOG(L_ERR,"ERROR:cpl-c:init_CPL_parser: DTD not parsed successfully\n");
+		return -1;
+	}
+	cvp.userData = (void *) stderr;
+	cvp.error    = (xmlValidityErrorFunc) fprintf;
+	cvp.warning  = (xmlValidityWarningFunc) fprintf;
+
+	return 1;
 }
 

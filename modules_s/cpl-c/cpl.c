@@ -54,12 +54,15 @@
 #include "cpl_run.h"
 #include "cpl_db.h"
 #include "cpl_loader.h"
+#include "cpl_parser.h"
 #include "cpl_nonsig.h"
 
 
 static char *DB_URL      = 0;  /* database url */
 static char *DB_TABLE    = 0;  /* */
 static pid_t aux_process = 0;  /* pid of the private aux. process */
+static char *dtd_file    = 0;  /* name of the DTD file for CPL parser */
+
 
 int    cache_timeout     = 5;
 char   *log_dir          = 0; /*directory where the user log should be dumped*/
@@ -67,8 +70,8 @@ int    cpl_cmd_pipe[2];
 struct tm_binds cpl_tmb;
 
 /* this vars are used outside only for loading scripts */
-char *dtd_file     = 0;
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
+
 
 
 MODULE_VERSION
@@ -251,6 +254,12 @@ static int cpl_init(void)
 	if ( fcntl(cpl_cmd_pipe[1], F_SETFL, val|O_NONBLOCK) ) {
 		LOG(L_ERR,"ERROR:cpl_init: setting flags to pipe[1] failed: fcntl "
 			"said %s!\n",strerror(errno));
+		goto error;
+	}
+
+	/* init the CPL parser */
+	if (init_CPL_parser( dtd_file )!=1 ) {
+		LOG(L_ERR,"ERROR:cpl_init: init_CPL_parser failed!\n");
 		goto error;
 	}
 

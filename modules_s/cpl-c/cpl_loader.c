@@ -51,7 +51,6 @@
 
 #define MAX_STATIC_BUF 256
 
-extern char *dtd_file;
 extern db_con_t* db_hdl;
 
 
@@ -205,7 +204,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		goto error;
 
 	/* get the binary coding for the XML file */
-	if ( encodeXML( &xml, dtd_file , &bin)!=1)
+	if ( encodeCPL( &xml, &bin)!=1)
 		goto error1;
 
 	/* write both the XML and binary formats into database */

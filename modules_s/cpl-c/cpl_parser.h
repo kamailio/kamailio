@@ -30,7 +30,8 @@
 
 #include "../../str.h"
 
-int encodeXML(str *xml, char* DTD_filename, str *bin);
+int init_CPL_parser( char* DTD_filename );
+int encodeCPL(str *xml, str *bin);
 
 
 #endif
