@@ -1,19 +1,24 @@
 #!/bin/sh 
-
+#
+# $Id$
 # 
-# click-to-dial example using REFER
-#----------------------------------
+# (currently lame) click-to-dial example using REFER
+#----------------------------------------------------
 #
 # it half-way works using FIFO/uac; I tested it with
-# Cisco 7960 reaching Mitel 5055
+# Cisco 7960 reaching Mitel 5055 and vice versa
 #
 # bugs: 
 # -----
 # - to-tag in REFER not ok -- should be gained from initial 
-#   conversation (need to take fifo processing from sc)
+#   conversation (need to take fifo processing from sc) as
+#   well as the whole dialog stuff (awk could be a better hit)
+# - remove user prompt (act on receipt of a reply)
+# - bye is missing after REFER
 # - it would be cleaner to send "hold" in initial invite
 # - in my test setup, initial ACK is for some bizzar reason
 #   not forwarded statelessly by outbound proxy
+# - put this example in serdoc
 
 #URI="sip:113311@192.168.2.16"
 # address of user wishing to initiate conversation
