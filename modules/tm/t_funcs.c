@@ -265,15 +265,15 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch]->buffer   = (char*)sh_malloc( len );
       memcpy( T->outbound_request[branch]->buffer , buf , len );
       free( buf ) ;
+
+      /*sets and starts the FINAL RESPONSE timer */
+      add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
+
+      /* sets and starts the RETRANS timer */
+      T->outbound_request[branch]->timeout_ceiling  = RETR_T2;
+      T->outbound_request[branch]->timeout_value    = RETR_T1;
+      insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
-
-   /*sets and starts the FINAL RESPONSE timer */
-   add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
-
-   /* sets and starts the RETRANS timer */
-   T->outbound_request[branch]->timeout_ceiling  = RETR_T2;
-   T->outbound_request[branch]->timeout_value    = RETR_T1;
-   insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
 
    /* send the request */
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
@@ -478,9 +478,14 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       if ( code>=200 )
          t_put_on_wait( p_msg );
 
-      /* if the code is 3,4,5,6 class for an INVITE -> starts retrans timer*/
+      /* if the code is 3,4,5,6 class for an INVITE -> starts retrans and FR timer*/
       if ( p_msg->first_line.u.request.method_value==METHOD_INVITE && code>=300)
+      {
+         remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+         remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
          insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+         insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+      }
 
       t_retransmit_reply( p_msg );
    }
@@ -776,7 +781,12 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    /* if the code is 3,4,5,6 class for an INVITE-> starts retrans timer*/
    if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE &&
          T->outbound_response[branch]->first_line.u.reply.statusclass>=300)
+         {
+            remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+            remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
             insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+            insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+         }
 
    t_retransmit_reply( p_msg );
 }
