@@ -262,6 +262,11 @@ inline static int un_escape(str *user, str *new_user )
  	int i, j, value;
 	int hi, lo;
 
+	if( new_user==0 || new_user->s==0) {
+		LOG(L_CRIT, "BUG: un_escape: called with invalid param\n");
+		return -1;
+	}
+
 	new_user->len = 0;
 	j = 0;
 
