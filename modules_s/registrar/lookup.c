@@ -102,7 +102,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	     /* Append branches if enabled */
 	if (!append_branches) goto skip;
 
-	ptr = ptr->next;
+	if (ptr) ptr = ptr->next;
 	while(ptr) {
 		if (ptr->expires > act_time) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
