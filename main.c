@@ -633,6 +633,8 @@ int main_loop()
 			 * so we open all first*/
 		}
 #ifdef USE_TCP
+			/* start tcp receivers */
+		if (tcp_init_children()<0) goto error;
 			/* start tcp master proc */
 		process_no++;
 		if ((pid=fork())<0){
@@ -641,7 +643,7 @@ int main_loop()
 		}else if (pid==0){
 			/* child */
 			/* is_main=0; */
-			tcp_main();
+			tcp_main_loop();
 		}else{
 			pt[process_no].pid=pid;
 			strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
@@ -686,7 +688,11 @@ int main_loop()
 		goto error;
 	}
 
-	if (timer_list){
+#ifndef USE_TCP
+	/* if we are using tcp we always need the timer */
+	if (timer_list)
+#endif
+	{
 		/* fork again for the attendant process*/
 		process_no++;
 		if ((pid=fork())<0){

@@ -30,6 +30,7 @@
 #ifndef _tcp_conn_h
 #define _tcp_conn_h
 
+#include "ip_addr.h"
 
 
 #define TCP_BUF_SIZE 65535
@@ -76,8 +77,10 @@ struct tcp_connection{
 	struct tcp_req req; /* request data */
 	int refcnt;
 	int timeout; /* connection timeout, after this it will be removed*/
-	struct tcp_connection* next;
+	struct tcp_connection* next; /* next, prev in hash table, used by "main" */
 	struct tcp_connection* prev;
+	struct tcp_connection* c_next; /* child next prev (use locally) */
+	struct tcp_connection* c_prev;
 };
 
 
@@ -93,7 +96,8 @@ struct tcp_connection{
 
 
 /* add a tcpconn to a list*/
-#define tcpconn_listadd(head, c) \
+/* list head, new element, next member, prev member */
+#define tcpconn_listadd(head, c, next, prev) \
 	do{ \
 		/* add it at the begining of the list*/ \
 		(c)->next=(head); \
@@ -104,7 +108,7 @@ struct tcp_connection{
 
 
 /* remove a tcpconn from a list*/
-#define tcpconn_listrm(head, c) \
+#define tcpconn_listrm(head, c, next, prev) \
 	do{ \
 		if ((head)==(c)) (head)=(c)->next; \
 		if ((c)->next) (c)->next->prev=(c)->prev; \

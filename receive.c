@@ -75,7 +75,7 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 	msg->len=len;
 	/* zero termination (termination of orig message bellow not that
 	   useful as most of the work is done with scrath-pad; -jiri  */
-	buf[len]=0;
+	/* buf[len]=0; */ /* WARNING: zero term removed! */
 	su2ip_addr(&msg->src_ip, src_su);
 	msg->dst_ip=bind_address->address; /* won't work if listening on 0.0.0.0 */
 	msg->id=msg_no;
@@ -86,7 +86,8 @@ int receive_msg(char* buf, unsigned int len, union sockaddr_union* src_su)
 		goto error01;
 	}
 	memcpy(msg->orig, buf, len);
-	msg->orig[len]=0; /* null terminate it,good for using str* functions
+	/* WARNING: zero term removed! */
+	/* msg->orig[len]=0; */ /* null terminate it,good for using str* functions
 						 on it*/
 	
 	if (parse_msg(buf,len, msg)!=0){

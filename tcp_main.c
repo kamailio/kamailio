@@ -50,7 +50,10 @@
 #include "pass_fd.h"
 #include "tcp_conn.h"
 #include "globals.h"
+#include "pt.h"
 #include "mem/mem.h"
+#include "mem/shm_mem.h"
+#include "timer.h"
 
 
 
@@ -77,7 +80,7 @@ struct tcp_child tcp_children[MAX_TCP_CHILDREN];
 
 
 
-struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su)
+struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su, int i)
 {
 	struct tcp_connection *c;
 	
@@ -89,13 +92,14 @@ struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su)
 	}
 	c->s=sock;
 	c->su=*su;
+	c->sock_idx=i;
 	c->refcnt=0;
 	su2ip_addr(&c->ip, su);
 	init_tcp_req(&c->req);
 	c->timeout=get_ticks()+TCP_CON_TIMEOUT;
 
 	/* add it at the begining of the list*/
-	tcpconn_listadd(conn_list, c);
+	tcpconn_listadd(conn_list, c, next, prev);
 	return c;
 	
 error:
@@ -106,7 +110,7 @@ error:
 
 void tcpconn_rm(struct tcp_connection* c)
 {
-	tcpconn_listrm(conn_list, c);
+	tcpconn_listrm(conn_list, c, next, prev);
 	shm_free(c);
 }
 
@@ -115,16 +119,16 @@ void tcpconn_rm(struct tcp_connection* c)
 void tcpconn_timeout()
 {
 	struct tcp_connection *c, *next;
-	int jiffies;;
+	int ticks;;
 	
 	
-	jiffies=get_ticks();
+	ticks=get_ticks();
 	c=conn_list;
 	while(c){
 		next=c->next;
-		if ((c->refcnt==0) && (jiffies<c->timeout)) {
-			DBG("tcpconn_timeout: timeout for %p (%d < %d)\n",
-					c, jiffies, c->timeout);
+		if ((c->refcnt==0) && (ticks>c->timeout)) {
+			DBG("tcpconn_timeout: timeout for %p (%d > %d)\n",
+					c, ticks, c->timeout);
 			tcpconn_rm(c);
 		}
 		c=next;
@@ -179,20 +183,34 @@ error:
 static int send2child(struct tcp_connection* tcpconn)
 {
 	int i;
+	int min_busy;
+	int idx;
 	
+	min_busy=tcp_children[0].busy;
+	idx=0;
 	for (i=0; i<tcp_children_no; i++){
 		if (!tcp_children[i].busy){
-			tcp_children[i].busy=1;
-			tcp_children[i].n_reqs++;
-			tcpconn->refcnt++;
-			DBG("send2child: to child %d, %ld\n", i, (long)tcpconn);
-			send_fd(tcp_children[i].s, &tcpconn, sizeof(tcpconn), tcpconn->s);
+			idx=i;
+			min_busy=0;
+			break;
 			return 0;
+		}else if (min_busy>tcp_children[i].busy){
+			min_busy=tcp_children[i].busy;
+			idx=i;
 		}
 	}
-	if (i==tcp_children_no){
-		return -1;
+	
+	tcp_children[idx].busy++;
+	tcp_children[idx].n_reqs++;
+	tcpconn->refcnt++;
+	if (min_busy){
+		LOG(L_WARN, "WARNING: send2child:no free tcp receiver, "
+				" connection passed to the least busy one (%d)\n",
+				min_busy);
 	}
+	DBG("send2child: to child %d, %ld\n", idx, (long)tcpconn);
+	send_fd(tcp_children[idx].s, &tcpconn, sizeof(tcpconn), tcpconn->s);
+	
 	return 0; /* just to fix a warning*/
 }
 
@@ -236,8 +254,8 @@ void tcp_main_loop()
 	
 	while(1){
 		sel_set=master_set;
-		timeout->tv_sec=TCP_MAIN_SELECT_TIMEOUT;
-		timeout->tv_usec=0;
+		timeout.tv_sec=TCP_MAIN_SELECT_TIMEOUT;
+		timeout.tv_usec=0;
 		n=select(maxfd+1, &sel_set, 0 ,0 , &timeout);
 		if (n<0){
 			if (errno==EINTR) continue; /* just a signal */
@@ -260,7 +278,7 @@ void tcp_main_loop()
 				}
 				
 				/* add socket to list */
-				tcpconn=tcpconn_add(new_sock, &su);
+				tcpconn=tcpconn_add(new_sock, &su, r);
 				DBG("tcp_main_loop: new connection: %p %d\n",
 						tcpconn, tcpconn->s);
 				/* pass it to a child */
@@ -298,10 +316,11 @@ void tcp_main_loop()
 read_again:
 				bytes=read(tcp_children[r].s, response, sizeof(response));
 				if (bytes==0){
-					/* EOF -> bad, chidl has died */
+					/* EOF -> bad, child has died */
 					LOG(L_CRIT, "BUG: tcp_main_loop: dead child %d\n", r);
 					/* terminating everybody */
-					exit(-1);
+					FD_CLR(tcp_children[r].s, &master_set);
+					/*exit(-1)*/;
 				}else if (bytes<0){
 					if (errno==EINTR) goto read_again;
 					else{
@@ -351,7 +370,7 @@ read_again:
 
 
 /* starts the tcp processes */
-int tcp_main()
+int tcp_init_children()
 {
 	int r;
 	int sockfd[2];
@@ -373,6 +392,7 @@ int tcp_main()
 			goto error;
 		}
 		
+		process_no++;
 		pid=fork();
 		if (pid<0){
 			LOG(L_ERR, "ERROR: tcp_main: fork failed: %s\n",
@@ -385,14 +405,15 @@ int tcp_main()
 			tcp_children[r].s=sockfd[0];
 			tcp_children[r].busy=0;
 			tcp_children[r].n_reqs=0;
+			pt[process_no].pid=pid;
+			strncpy(pt[process_no].desc, "tcp receiver", MAX_PT_DESC);
 		}else{
 			/* child */
 			close(sockfd[0]);
 			tcp_receive_loop(sockfd[1]);
 		}
 	}
-	
-	tcp_main_loop();
+	return 0;
 error:
 	return -1;
 }

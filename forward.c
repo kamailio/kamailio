@@ -224,9 +224,10 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 	/* sent requests stats */
 	else STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
+	
 	pkg_free(buf);
 	free(to);
-	/* received_buf & line_buf will be freed in receiv_msg by free_lump_list*/
+	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
 	return 0;
 
 error1:

@@ -16,6 +16,8 @@ x (different way) add request header bitmap field for the modules
 
 
 High priority:
+- parse_uri should not copy anymore the uri members (and it should not 0
+ terminate them anylonger).
 x fix/replace T_REF/T_UNREF
 x review all the tm locking
 x if () {} else {}
@@ -60,5 +62,5 @@ x jku: branch hash computation over canonical values
 - jku: try CRC as opposed to MD5
 
 
-- freopen stdin, stdou to /dev/null
+x freopen stdin, stdout, stderr to /dev/null
 
