@@ -67,7 +67,7 @@ int main (int argc, char** argv)
 	char c;
 	int n,r;
 	char* tmp;
-	char* buf[BUF_SIZE];
+	char buf[BUF_SIZE];
 	struct hostent* he;
 	struct sockaddr_in addr;
 	
