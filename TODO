@@ -24,6 +24,7 @@ x plugin interface
 Low priority:
 - add support for -u user and -g group (not only -u uid, -g uid)
 - change uid/gid after opening the sockets
+- add -t, -w, -u -g equivalents to the config file
 - exec improvments (add format strings to it)
 - command line switch for checking the config file syntax
 - config file version (a la sendmail)
