@@ -1,6 +1,6 @@
 %define name    ser
-%define ver     0.8.11pre29
-%define rel     1
+%define ver     0.8.11
+%define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
 %define MYSQL_MODULES		mysql
@@ -20,6 +20,7 @@ Source2:      ser.init.SuSE
 URL:          http://www.iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
+Conflicts:    ser-mysql < %ver, ser-jabber < %ver, ser-radius < %ver
 BuildPrereq:  make flex bison 
 
 
@@ -176,6 +177,12 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+
+* Wed Aug 27 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.11
+- gen_ha1 isn now left in _sbindir
+- removed harv_ser.sh
+- added Conflicts
 
 * Mon Jun 2 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - added a separate rpm for the radius modules

@@ -10,9 +10,9 @@
 COMMENT= "SIP Express Router"
 
 PORTNAME= ser
-PORTVERSION= 0.8.11pre29
+PORTVERSION= 0.8.11
 CATEGORIES= net
-MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.11pre29/src/
+MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.11/src/
 
 MAINTAINER= pelinescu-onciul@fokus.fraunhofer.de
 
@@ -28,6 +28,17 @@ USE_GMAKE= yes
 DISTNAME= ${PORTNAME}-${PORTVERSION}
 DISTFILES= ${DISTNAME}_src.tar.gz
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
+
+# build by default mysql and jabber
+MAKE_ENV='include_modules="mysql jabber"'
+
+# depends on mysql and libexpat because of the above modules
+BUILD_DEPENDS= :expat-1.*:textproc/expat \
+               :mysql-client-3.23.*:databases/mysql
+LIB_DEPENDS=   expat.2:expat-1.*:textproc/expat \
+               lib/mysql/mysqlclient.10:mysql-client-3.23.*:databases/mysql
+
+
 
 pre-fetch:
 	@echo "DEBUG: distfile=${DISTFILE}, distname=${DISTNAME}, w=${WRKSRC}"

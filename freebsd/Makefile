@@ -9,9 +9,9 @@
 
 
 PORTNAME= ser
-PORTVERSION= 0.8.11pre29
+PORTVERSION= 0.8.11
 CATEGORIES= net
-MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.11pre29/src/
+MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.11/src/
 
 MAINTAINER= pelinescu-onciul@fokus.fraunhofer.de
 
@@ -24,6 +24,15 @@ USE_GMAKE= yes
 # we override the DISTFILE NAME
 DISTNAME= ${PORTNAME}-${PORTVERSION}_src
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
+
+# build by default mysql and jabber
+MAKE_ENV='include_modules="mysql jabber"'
+
+# depends on mysql and libexpat because of the above modules
+BUILD_DEPENDS= ${LOCALBASE}/include/expat.h:${PORTSDIR}/textproc/expat \
+               ${LOCALBASE}/include/mysql/mysql.h:${PORTSDIR}/databases/mysql322-client
+LIB_DEPENDS=   expat:${PORTSDIR}/textproc/expat \
+               mysqlclient.6:${PORTSDIR}/databases/mysql322-client
 
 pre-fetch:
 	@echo "DEBUG: distfile=${DISTFILE}, distname=${DISTNAME}, w=${WRKSRC}"

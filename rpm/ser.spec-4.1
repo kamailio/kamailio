@@ -1,5 +1,5 @@
 %define name    ser
-%define ver     0.8.11pre30
+%define ver     0.8.11
 %define rel     0
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
@@ -114,11 +114,6 @@ install -m755 $RPM_SOURCE_DIR/ser.init \
               $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/ser
 
 
-mkdir -p $RPM_BUILD_ROOT/%{_bindir}
-install -m755 scripts/harv_ser.sh \
-              $RPM_BUILD_ROOT/%{_bindir}/harv_ser.sh
-
-mv $RPM_BUILD_ROOT/%{_sbindir}/gen_ha1 $RPM_BUILD_ROOT/%{_bindir}
 
 
 %clean
@@ -201,8 +196,7 @@ fi
 %{_sbindir}/ser
 %{_sbindir}/serctl
 
-%{_bindir}/harv_ser.sh
-%{_bindir}/gen_ha1
+%{_sbindir}/gen_ha1
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -232,6 +226,11 @@ fi
 
 
 %changelog
+
+* Wed Aug 27 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.11
+- gen_ha1 isn now left in _sbindir
+- removed harv_ser.sh
 
 * Fri Jun 6 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - added Conflicts:, changed vesion to 0.8.11pre30
