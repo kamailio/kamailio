@@ -27,6 +27,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * History:
+ * --------
+ * 2003-10-07  parse_rr() splited and added parse_rr_body()
+ * 2003-10-21  duplicate_rr() duplicate the whole linked list of RR
+ */
 #include <string.h>
 #include "parse_rr.h"
 #include "../mem/mem.h"
@@ -36,27 +42,23 @@
 #include "../ut.h"
 
 /*
- * Parse Route and Record-Route header fields
+ * Parse Route or Record-Route body
  */
-int parse_rr(struct hdr_field* _h)
+static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 {
 	rr_t* r, *last;
 	str s;
 	param_hooks_t hooks;
 
-	if (!_h) {
-		LOG(L_ERR, "parse_rr(): Invalid parameter value\n");
-		return -1;
-	}
-
-	if (_h->parsed) {
-		     /* Already parsed, return */
+	/* Make a temporary copy of the string pointer */
+	if(buf==0 || len<=0)
+	{
+		DBG("parse_rr_body(): No body for record-route\n");
+		*head = 0;
 		return 0;
 	}
-
-	     /* Make a temporary copy of the string pointer */
-	s.s = _h->body.s;
-	s.len = _h->body.len;
+	s.s = buf;
+	s.len = len;
 	trim_leading(&s);
 
 	last = 0;
@@ -118,22 +120,52 @@ int parse_rr(struct hdr_field* _h)
 		}
 
 		     /* Append the structure as last parameter of the linked list */
-		if (!_h->parsed) _h->parsed = (void*)r;
+		if (!*head) *head = r;
 		if (last) last->next = r;
 		last = r;
 	}
 
  error:
 	if (r) pkg_free(r);
-	free_rr((rr_t**)&_h->parsed); /* Free any contacts created so far */
+	free_rr(head); /* Free any contacts created so far */
 	return -1;
 
  ok:
-	if (!_h->parsed) _h->parsed = (void*)r;
+	if (!*head) *head = r;
 	if (last) last->next = r;
 	return 0;
 }
 
+/*
+ * Wrapper to do_parse_rr_body() for external calls
+ */
+int parse_rr_body(char *buf, int len, rr_t **head)
+{
+	return do_parse_rr_body(buf, len, head);
+}
+
+/*
+ * Parse Route and Record-Route header fields
+ */
+int parse_rr(struct hdr_field* _h)
+{
+	rr_t* r = NULL;
+
+	if (!_h) {
+		LOG(L_ERR, "parse_rr(): Invalid parameter value\n");
+		return -1;
+	}
+
+	if (_h->parsed) {
+		     /* Already parsed, return */
+		return 0;
+	}
+
+	if(do_parse_rr_body(_h->body.s, _h->body.len, &r) < 0)
+		return -1;
+	_h->parsed = (void*)r;
+	return 0;
+}
 
 /*
  * Free list of rrs
@@ -226,45 +258,57 @@ static inline void xlate_pointers(rr_t* _orig, rr_t* _r)
 static inline int do_duplicate_rr(rr_t** _new, rr_t* _r, int _shm)
 {
 	int len, ret;
-	rr_t* res;
+	rr_t* res, *prev, *it;
 
 	if (!_new || !_r) {
 		LOG(L_ERR, "duplicate_rr(): Invalid parameter value\n");
 		return -1;
 	}
+	prev  = NULL;
+	*_new = NULL;
+	it    = _r;
+	while(it)
+	{
+		if (it->params) {
+			len = it->params->name.s + it->params->len - it->nameaddr.name.s;
+		} else {
+			len = it->nameaddr.len;
+		}
 
-	if (_r->params) {
-		len = _r->params->name.s + _r->params->len - _r->nameaddr.name.s;
-	} else {
-		len = _r->nameaddr.len;
+		if (_shm) res = shm_malloc(sizeof(rr_t) + len);
+		else res = pkg_malloc(sizeof(rr_t) + len);
+		if (!res) {
+			LOG(L_ERR, "duplicate_rr(): No memory left\n");
+			return -2;
+		}
+		memcpy(res, it, sizeof(rr_t));
+
+		res->nameaddr.name.s = (char*)res + sizeof(rr_t);
+		memcpy(res->nameaddr.name.s, it->nameaddr.name.s, len);
+
+		if (_shm) {
+			ret = shm_duplicate_params(&res->params, it->params);
+		} else {
+			ret = duplicate_params(&res->params, it->params);
+		}
+
+		if (ret < 0) {
+			LOG(L_ERR, "duplicate_rr(): Error while duplicating parameters\n");
+			if (_shm) shm_free(res);
+			else pkg_free(res);
+			return -3;
+		}
+
+		xlate_pointers(it, res);
+
+		res->next=NULL;
+		if(*_new==NULL)
+			*_new = res;
+		if(prev)
+			prev->next = res;
+		prev = res;
+		it = it->next;
 	}
-
-	if (_shm) res = shm_malloc(sizeof(rr_t) + len);
-	else res = pkg_malloc(sizeof(rr_t) + len);
-	if (!res) {
-		LOG(L_ERR, "duplicate_rr(): No memory left\n");
-		return -2;
-	}
-	memcpy(res, _r, sizeof(rr_t));
-
-        res->nameaddr.name.s = (char*)res + sizeof(rr_t);
-	memcpy(res->nameaddr.name.s, _r->nameaddr.name.s, len);
-
-	if (_shm) {
-		ret = shm_duplicate_params(&res->params, _r->params);
-	} else {
-		ret = duplicate_params(&res->params, _r->params);
-	}
-
-	if (ret < 0) {
-		LOG(L_ERR, "Error while duplicating parameters\n");
-		if (_shm) shm_free(res);
-		else pkg_free(res);
-		return -3;
-	}
-
-	xlate_pointers(_r, res);
-	*_new = res;
 	return 0;
 }
 

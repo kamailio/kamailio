@@ -46,7 +46,7 @@ typedef struct rr {
 	param_t* r2;          /* Hook to r2 parameter */
 	param_t* params;      /* Linked list of other parameters */
 	int len;              /* Length of the whole route field */
-        struct rr* next;      /* Next RR in the list */
+	struct rr* next;      /* Next RR in the list */
 } rr_t;
 
 
@@ -55,6 +55,10 @@ typedef struct rr {
  */
 int parse_rr(struct hdr_field* _r);
 
+/*
+ * Parse the body of Route & Record-Route headers
+ */
+int parse_rr_body(char *buf, int len, rr_t **head);
 
 /*
  * Free list of rr
