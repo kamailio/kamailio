@@ -52,19 +52,35 @@ typedef enum cstate {
 } cstate_t;
 
 
+/*
+ * Flags that can be associated with a Contact
+ */
+typedef enum flags {
+	FL_NONE        = 0,          /* No flags set */
+	FL_NAT         = 1 << 0,     /* Contact is behind NAT */
+	FL_INVITE      = 1 << 1,     /* Contact supports INVITE and related methods */
+	FL_N_INVITE    = 1 << 2,     /* Contact doesn't support INVITE and related methods */
+	FL_MESSAGE     = 1 << 3,     /* Contact supports MESSAGE */
+	FL_N_MESSAGE   = 1 << 4,     /* Contact doesn't support MESSAGE */
+	FL_SUBSCRIBE   = 1 << 5,     /* Contact supports SUBSCRIBE and NOTIFY */
+	FL_N_SUBSCRIBE = 1 << 6,     /* Contact doesn't support SUBSCRIBE and NOTIFY */
+	FL_ALL         = 0xFFFFFFFF  /* All flags set */
+} flags_t;
+
+
 typedef struct ucontact {
-	str* domain;           /* Pointer to domain name */
-	str* aor;              /* Pointer to the address of record string in record structure*/
-	str c;                 /* Contact address */
-	time_t expires;        /* expires parameter */
-	float q;               /* q parameter */
-	str callid;            /* Call-ID header field */
-        int cseq;              /* CSeq value */
-	unsigned int replicate;/* replication marker */
-	cstate_t state;        /* State of the contact */
-	unsigned int flags;    /* Various flags (NAT, supported methods etc) */
-	struct ucontact* next; /* Next contact in the linked list */
-	struct ucontact* prev; /* Previous contact in the linked list */
+	str* domain;            /* Pointer to domain name */
+	str* aor;               /* Pointer to the address of record string in record structure*/
+	str c;                  /* Contact address */
+	time_t expires;         /* expires parameter */
+	float q;                /* q parameter */
+	str callid;             /* Call-ID header field */
+        int cseq;               /* CSeq value */
+	unsigned int replicate; /* replication marker */
+	cstate_t state;         /* State of the contact */
+	unsigned int flags;     /* Various flags (NAT, supported methods etc) */
+	struct ucontact* next;  /* Next contact in the linked list */
+	struct ucontact* prev;  /* Previous contact in the linked list */
 } ucontact_t;
 
 
@@ -72,7 +88,7 @@ typedef struct ucontact {
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q, 
-		 str* _callid, int _cseq, int _rep, unsigned int _fl, ucontact_t** _c);
+		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c);
 
 
 /*
@@ -90,8 +106,8 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 /*
  * Update existing contact in memory with new values
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, unsigned int _fl);
-
+int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
+			unsigned int _set, unsigned int _res);
 
 
 /* ===== State transition functions - for write back cache scheme ======== */
@@ -158,12 +174,14 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
-int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, unsigned int _fl);
+int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
+		    unsigned int _set, unsigned int _res);
 
 /*
  * Update ucontact with new values with addtional replication argument
  */
-int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep, unsigned int _fl);
+int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep,
+			unsigned int _set, unsigned int _res);
 
 
 #endif /* UCONTACT_H */

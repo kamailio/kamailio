@@ -73,6 +73,7 @@ char* cseq_col        = "cseq";           /* Name of column containing cseq valu
 char* method_col      = "method";         /* Name of column containing supported method */
 char* replicate_col   = "replicate";      /* Name of column containing replication mark */
 char* state_col       = "state";          /* Name of column containing contact state */
+char* flags_col       = "flags";          /* Name of column containing flags */
 char* db_url          = DEFAULT_DB_URL;   /* Database URL */
 int   timer_interval  = 60;               /* Timer interval in seconds */
 int   db_mode         = 0;                /* Database sync scheme: 0-no db, 1-write through, 2-write back */
@@ -118,6 +119,7 @@ static param_export_t params[] = {
 	{"method_column",     STR_PARAM, &method_col     },
 	{"replicate_column",  STR_PARAM, &replicate_col  },
 	{"state_column",      STR_PARAM, &state_col      },
+	{"flags_column",      STR_PARAM, &flags_col      },
 	{"db_url",            STR_PARAM, &db_url         },
 	{"timer_interval",    INT_PARAM, &timer_interval },
 	{"db_mode",           INT_PARAM, &db_mode        },

@@ -51,12 +51,14 @@ typedef void (*unlock_udomain_t)   (udomain_t* _d);
 
 /* urecord.h interface */
 typedef void (*release_urecord_t)  (urecord_t* _r);
-typedef int  (*insert_ucontact_t)  (urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, struct ucontact** _con);
+typedef int  (*insert_ucontact_t)  (urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs,
+				    unsigned int _flags, struct ucontact** _con);
 typedef int  (*delete_ucontact_t)  (urecord_t* _r, struct ucontact* _c);
 typedef int  (*get_ucontact_t)     (urecord_t* _r, str* _c, struct ucontact** _co);
 
 /* ucontact.h interface */
-typedef int  (*update_ucontact_t)  (ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs);
+typedef int  (*update_ucontact_t)  (ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, 
+				    unsigned int _set, unsigned int _res);
 
 
 struct usrloc_func {

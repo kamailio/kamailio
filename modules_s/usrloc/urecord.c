@@ -118,12 +118,12 @@ void print_urecord(FILE* _f, urecord_t* _r)
  * Contacts are ordered by: 1) q 
  *                          2) descending modification time
  */
-int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, 
-			 str* _cid, int _cs, int _rep, struct ucontact** _con)
+int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, 
+			unsigned int _flags, int _rep, struct ucontact** _con)
 {
 	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _rep, _con) < 0) {
+	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _rep, _con) < 0) {
 		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
@@ -474,9 +474,10 @@ void release_urecord(urecord_t* _r)
  * Create and insert new contact
  * into urecord
  */
-int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, int _rep, struct ucontact** _con)
+int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, 
+			int _cs, unsigned int _flags, int _rep, struct ucontact** _con)
 {
-	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _rep, _con) < 0) {
+	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _rep, _con) < 0) {
 		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -499,9 +500,10 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, 
  * Wrapper around insert_ucontact_rep for compatibility
  * inserts a contact without replication
  */
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, struct ucontact** _con)
+int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, 
+		    int _cs, unsigned int _flags, struct ucontact** _con)
 {
-	return insert_ucontact_rep(_r, _c, _e, _q, _cid, _cs, 0, _con);
+	return insert_ucontact_rep(_r, _c, _e, _q, _cid, _cs, _flags, 0, _con);
 }
 
 /*

@@ -174,13 +174,13 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float 
 	cid.len = FIFO_CALLID_LEN;
 
 	if (c) {
-		if (update_ucontact_rep(c, _e + act_time, _q, &cid, FIFO_CSEQ, _r) < 0) {
+		if (update_ucontact_rep(c, _e + act_time, _q, &cid, FIFO_CSEQ, _r, FL_NONE, FL_NONE) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
 		}
 	} else {
-		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, _r, &c) < 0) {
+		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, FL_NONE, _r, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;

@@ -204,10 +204,11 @@ void print_udomain(FILE* _f, udomain_t* _d)
 int preload_udomain(udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[9];
+	db_key_t columns[10];
 	db_res_t* res;
 	db_row_t* row;
 	int i, cseq, rep, state;
+	unsigned int flags;
 	
 	str user, contact, callid;
 	char* domain;
@@ -225,12 +226,13 @@ int preload_udomain(udomain_t* _d)
 	columns[5] = cseq_col;
 	columns[6] = replicate_col;
 	columns[7] = state_col;
-	columns[8] = domain_col;
+	columns[8] = flags_col;
+	columns[9] = domain_col;
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 	db_use_table(db, b);
-	if (db_query(db, 0, 0, 0, columns, 0, (use_domain) ? (9) : (8), 0, &res) < 0) {
+	if (db_query(db, 0, 0, 0, columns, 0, (use_domain) ? (10) : (9), 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
@@ -257,9 +259,10 @@ int preload_udomain(udomain_t* _d)
 		state       = VAL_INT   (ROW_VALUES(row) + 7);
 		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
 		callid.len  = strlen(callid.s);
+		flags       = VAL_BITMAP(ROW_VALUES(row) + 8);
 
 		if (use_domain) {
-			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 8);
+			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 9);
 			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
 			user.s = b;
 			user.len = strlen(b);
@@ -274,7 +277,7 @@ int preload_udomain(udomain_t* _d)
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, rep, &c) < 0) {
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			db_free_query(db, res);
 			unlock_udomain(_d);

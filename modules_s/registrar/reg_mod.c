@@ -59,6 +59,7 @@ int append_branches = 1;    /* If set to 1, lookup will put all contacts found i
 int use_domain      = 0;    /* If set to 1, domain will username@domain will be used as AOR */
 int case_sensitive  = 0;    /* If set to 1, username in aor will be case sensitive */
 int desc_time_order = 0;    /* By default do not order according to the descending modification time */
+int nat_flag        = 4;    /* SER flag marking contacts behind NAT */
 
 float def_q;                /* default_q converted to float in mod_init */
 
@@ -90,6 +91,7 @@ static param_export_t params[] = {
 	{"use_domain",      INT_PARAM, &use_domain     },
 	{"case_sensitive",  INT_PARAM, &case_sensitive },
 	{"desc_time_order", INT_PARAM, &desc_time_order},
+	{"nat_flag",        INT_PARAM, &nat_flag       },
 	{0,0,0}
 };
 

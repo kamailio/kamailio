@@ -58,6 +58,7 @@ extern char* callid_col;
 extern char* cseq_col;
 extern char* method_col;
 extern char* replicate_col;
+extern char* flags_col;
 extern char* state_col;
 extern char* db_url;
 extern int   timer_interval;

@@ -84,6 +84,9 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	str aor, uri;
 	ucontact_t* ptr;
 	int res;
+	unsigned int nat;
+
+	nat = 0;
 	
 	if (_m->new_uri.s) uri = _m->new_uri;
 	else uri = _m->first_line.u.request.uri;
@@ -120,6 +123,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			ul_unlock_udomain((udomain_t*)_t);
 			return -4;
 		}
+		nat |= ptr->flags & FL_NAT;
 		ptr = ptr->next;
 	} else {
 		     /* All contacts expired */
@@ -137,11 +141,14 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 				ul_unlock_udomain((udomain_t*)_t);
 				return 1; /* Return OK here so the function succeeds */
 			}
+			nat |= ptr->flags & FL_NAT;
 		} 
 		ptr = ptr->next;
 	}
 	
  skip:
 	ul_unlock_udomain((udomain_t*)_t);
+
+	if (nat) setflag(_m, nat_flag);
 	return 1;
 }
