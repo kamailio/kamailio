@@ -802,7 +802,6 @@ static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
 	p = p_orig = ATTR_PTR(node_ptr);
 
 	FOR_ALL_ATTR(node,attr) {
-		(*nr_attr)++;
 		/* get attribute's value */
 		get_attr_val( attr->name , val, error);
 		if ( !strcasecmp(attr->name,"source") ) {
@@ -814,6 +813,7 @@ static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
 				goto error;
 			}
 		} else if ( !strcasecmp(attr->name,"clear") ) {
+			(*nr_attr)++;
 			set_attr_type(p, CLEAR_ATTR, buf_end, error);
 			if ( val.len==3 && !strncasecmp(val.s,"yes",3) )
 				append_short_attr(p, YES_VAL, buf_end, error);
