@@ -61,7 +61,7 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("get_ha1(): no result\n");
+		DBG("get_ha1(): no result for user \'%.*s\'\n", _user->len, _user->s);
 		db_free_query(db_handle, res);
 		return -1;
 	}
@@ -238,8 +238,6 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	      * is necessary for request recalculation
 	      */
         if (get_ha1(&(cred->digest.username), _realm, _table, ha1) == -1) {
-		LOG(L_ERR, "authorize(): Error while obtaining HA1 string for user \'%.*s\'\n", 
-		    cred->digest.username.len, cred->digest.username.s);
 		return -1;
 	}
 
