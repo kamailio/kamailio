@@ -34,12 +34,15 @@
 
 #define XJ_NULL				0
 #define XJ_SEND_MESSAGE		1
-#define XJ_SEND_SUBSCRIBE	2
-#define XJ_SEND_BYE			4
-#define XJ_JOIN_JCONF		8
-#define XJ_EXIT_JCONF		16
-#define XJ_GO_ONLINE		32
-#define XJ_GO_OFFLINE		64
+#define XJ_JOIN_JCONF		2
+#define XJ_EXIT_JCONF		4
+#define XJ_GO_ONLINE		8
+#define XJ_GO_OFFLINE		16
+#define XJ_REG_WATCHER		32
+#define XJ_DEL_WATCHER		64
+
+
+typedef void (*pa_callback_f)(str* _user, int _state, void *p);
 
 /**********             ***/
 
@@ -54,11 +57,12 @@ typedef struct _xj_jkey
 
 typedef struct _xj_sipmsg
 {
-	int type;		// type of message
-	xj_jkey jkey;	// pointer to FROM
-	str to;			// destination
-	str msg;		// message body
-	str callid;		// call id of the message
+	int type;			// type of message
+	xj_jkey jkey;		// pointer to FROM
+	str to;				// destination
+	str msg;			// message body
+	pa_callback_f cbf;	// callback function
+	void *p;			// callback parameter
 } t_xj_sipmsg, *xj_sipmsg;
 
 /**********   LOOK AT IMPLEMENTATION OF FUNCTIONS FOR DESCRIPTION    ***/

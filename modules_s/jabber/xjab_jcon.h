@@ -34,6 +34,7 @@
 #include "xjab_jconf.h"
 #include "xjab_base.h"
 #include "tree234.h"
+#include "xjab_presence.h"
 
 #define XJ_NET_NUL	0
 #define XJ_NET_ALL	0xFFFFFFFF
@@ -61,22 +62,23 @@
 
 typedef struct _xj_jcon
 {
-	int sock;        // communication socket
-	int port;        // port of the server
-	int juid;        // internal id of the Jabber user
-	int seq_nr;      // sequence number
-	char *hostname;  // hosname of the Jabber server
-	char *stream_id; // stream id of the session
+	int sock;			// communication socket
+	int port;			// port of the server
+	int juid;			// internal id of the Jabber user
+	int seq_nr;			// sequence number
+	char *hostname;		// hosname of the Jabber server
+	char *stream_id;	// stream id of the session
 
-	char *resource;  // resource ID
+	char *resource;		// resource ID
 
 	xj_jkey jkey;		// id of connection
-	int expire;		// time when the open connection is expired
-	int allowed;	// allowed IM networks
-	int ready;		// time when the connection is ready for sending messages
+	int expire;			// time when the open connection is expired
+	int allowed;		// allowed IM networks
+	int ready;			// time when the connection is ready for sending messages
 
-	int nrjconf;	// number of open conferences
-	tree234 *jconf; // open conferences
+	int nrjconf;		// number of open conferences
+	tree234 *jconf;		// open conferences
+	xj_pres_list plist;	// presence list
 } t_xj_jcon, *xj_jcon;
 
 /** --- **/
@@ -90,9 +92,11 @@ void xj_jcon_set_juid(xj_jcon, int);
 int  xj_jcon_get_juid(xj_jcon);
 
 int xj_jcon_get_roster(xj_jcon);
+int xj_jcon_set_roster(xj_jcon, char*, char*);
 
 int xj_jcon_user_auth(xj_jcon, char*, char*, char*);
 int xj_jcon_send_presence(xj_jcon, char*, char*, char*, char*);
+int xj_jcon_send_subscribe(xj_jcon, char*, char*, char*);
 
 int xj_jcon_send_msg(xj_jcon, char*, int, char*, int, int);
 int xj_jcon_send_sig_msg(xj_jcon, char*, int, char*, int, char*, int);

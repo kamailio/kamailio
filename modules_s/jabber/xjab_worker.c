@@ -47,6 +47,7 @@
 #include "xjab_jcon.h"
 #include "xjab_dmsg.h"
 #include "xode.h"
+#include "xjab_presence.h"
 
 #include "mdefines.h"
 
@@ -234,6 +235,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 	xj_jconf jcf = NULL;
 	char *p, buff[1024], recv_buff[4096];
 	int flags, nr, ltime = 0;
+	xj_pres_cell prc = NULL;
 	
 	db_key_t keys[] = {"sip_id", "type"};
 	db_val_t vals[] = { {DB_STRING, 0, {.string_val = buff}},
@@ -278,8 +280,8 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		mset = set;
 
 		tmv.tv_sec = (jcp->jmqueue.size == 0)?jwl->sleept:1;
-		DBG("XJAB:xj_worker[%d]:%d: select waiting %ds - queue=%d\n",rank,
-				_xj_pid, (int)tmv.tv_sec, jcp->jmqueue.size);
+		//DBG("XJAB:xj_worker[%d]:%d: select waiting %ds - queue=%d\n",rank,
+		//		_xj_pid, (int)tmv.tv_sec, jcp->jmqueue.size);
 		tmv.tv_usec = 0;
 
 		ret = select(maxfd+1, &mset, NULL, NULL, &tmv);
@@ -395,6 +397,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 					goto step_w;
 				}
 				break;
+			case XJ_REG_WATCHER:
 			case XJ_JOIN_JCONF:
 			case XJ_GO_ONLINE:
 				break;
@@ -414,10 +417,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				if(jbc != NULL)
 					jbc->expire = ltime = -1;
 				goto step_w;
-			case XJ_SEND_SUBSCRIBE:
-			case XJ_SEND_BYE:
+			case XJ_DEL_WATCHER:
 			default:
-				break;
+				goto step_w;
 		}
 		
 		if(jbc != NULL)
@@ -495,7 +497,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		xj_jcon_get_roster(jbc);
 		xj_jcon_send_presence(jbc, NULL, NULL, "Online", "9");
 		
-		/** wait for a while - SER is tired */
+		/** wait for a while - the worker is tired */
 		//sleep(3);
 		
 		if ((res != NULL) && (db_free_query(db_con,res) < 0))
@@ -511,6 +513,56 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			goto step_w;
 		
 step_z:
+		if(jsmsg->type == XJ_REG_WATCHER)
+		{ // register a presence watcher
+			if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
+			{ // is for a conference - ignore?!?!
+				DBG("XJAB:xj_worker:%d: presence request for a conference.\n",
+					_xj_pid);
+				// set as offline
+				(*(jsmsg->cbf))(&jsmsg->to, 0, jsmsg->p);
+				goto step_w;
+			}
+			
+			sto.s = buff; 
+			sto.len = 0;
+
+			if(xj_address_translation(&jsmsg->to, &sto, jwl->aliases, 
+					XJ_ADDRTR_A2B) == 0)
+			{
+				prc = xj_pres_list_check(jbc->plist, &sto);
+				if(!prc)
+				{
+					prc = xj_pres_cell_new();
+					if(!prc)
+					{
+						DBG("XJAB:xj_worker:%d: cannot create a presence"
+							" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+						goto step_w;
+					}
+					if(xj_pres_cell_init(prc, &sto, jsmsg->cbf, jsmsg->p)<0)
+					{
+						xj_pres_cell_free(prc);
+						goto step_w;
+					}
+					if((prc = xj_pres_list_add(jbc->plist, prc))==NULL)
+					{
+						DBG("XJAB:xj_worker:%d: cannot add the presence"
+							" cell for %.*s.\n", _xj_pid, sto.len, sto.s);
+						goto step_w;
+					}
+					sto.s[sto.len] = 0;
+					if(!xj_jcon_send_subscribe(jbc, sto.s, NULL, "subscribe"))
+						prc->status = XJ_PRES_STATUS_WAIT; 
+				}
+				else
+				{
+					xj_pres_cell_update(prc, jsmsg->cbf, jsmsg->p);
+					(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
+				}
+			}
+			goto step_w;
+		}
 		flag = 0;
 		if(!xj_jconf_check_addr(&jsmsg->to, jwl->aliases->dlm))
 		{
@@ -601,8 +653,8 @@ step_z:
 				goto step_w;
 				
 			default:
-				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-						jwl->contact_h, XJ_DMSG_ERR_SENDJMSG, &jbc->jkey->flag);
+				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, jwl->contact_h,
+						XJ_DMSG_ERR_SENDJMSG, &jbc->jkey->flag);
 				goto step_w;
 		}
 
@@ -791,6 +843,7 @@ int xj_manage_jab(char *buf, int len, int *pos,
 	str ts, tf;
 	xode x, y, z;
 	str *sid;
+	xj_pres_cell prc = NULL;
 
 	if(!jbc)
 		return -1;
@@ -912,6 +965,14 @@ int xj_manage_jab(char *buf, int len, int *pos,
 		from = xode_get_attrib(x, "from");
 		if(from == NULL)
 			goto ready;
+		ts.s = from;
+		p = from;
+		while(p<from + strlen(from) && *p != '/')
+					p++;
+		if(*p == '/')
+			ts.len = p - from;
+		else
+			ts.len = strlen(from);
 		if(type!=NULL && !strncasecmp(type, "error", 5))
 		{
 			if((jcf=xj_jcon_check_jconf(jbc, from))!=NULL)
@@ -938,7 +999,30 @@ int xj_manage_jab(char *buf, int len, int *pos,
 			xj_jcon_send_presence(jbc, from, "subscribed", NULL, NULL);
 			goto ready;
 		}
-		if(type == NULL || !strncasecmp(type, "online", 6))
+		if(type!=NULL && !strncasecmp(type, "unavailable", 11))
+		{
+			DBG("XJAB:xj_manage_jab: user <%s> is offline\n", from);
+			prc = xj_pres_list_check(jbc->plist, &ts);
+			if(prc)
+			{
+				prc->state = XJ_PRES_STATE_OFFLINE;
+				// call callback function
+				if(prc->cbf)
+				{
+					tf.s = fbuf;
+					tf.len = 0;
+					if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_B2A)==0)
+					{
+						DBG("XJAB:xj_manage_jab: calling CBF(%.*s,0)\n",
+							tf.len, tf.s);
+						(*(prc->cbf))(&tf, prc->state, prc->cbp);
+					}
+				}
+			}
+			goto ready;
+		}
+		if(type == NULL || !strncasecmp(type, "online", 6)
+			|| !strncasecmp(type, "available", 9))
 		{
 			if(strchr(from, '@') == NULL)
 			{
@@ -968,6 +1052,50 @@ int xj_manage_jab(char *buf, int len, int *pos,
 				jcf->status = XJ_JCONF_READY;
 				DBG("XJAB:xj_manage_jab: %s conference ready\n", from);
 			}
+			else
+			{
+				DBG("XJAB:xj_manage_jab: user <%s> is online\n", from);
+				prc = xj_pres_list_check(jbc->plist, &ts);
+				if(prc)
+				{
+					prc->state = XJ_PRES_STATE_ONLINE;
+					// call callback function
+					if(prc->cbf)
+					{
+						tf.s = fbuf;
+						tf.len = 0;
+						if(xj_address_translation(&ts,&tf,als,XJ_ADDRTR_B2A)
+							==0)
+						{
+							DBG("XJAB:xj_manage_jab: calling CBF(%.*s,1)\n",
+								tf.len, tf.s);
+							(*(prc->cbf))(&tf, prc->state, prc->cbp);
+						}
+					}
+				}
+				else
+				{
+					DBG("XJAB:xj_manage_jab: creating presence"
+						" cell for [%.*s]\n", ts.len, ts.s);
+					prc = xj_pres_cell_new();
+					if(prc == NULL)
+					{
+						DBG("XJAB:xj_manage_jab: cannot create presence"
+							" cell for [%s]\n", from);
+						goto ready;
+					}
+					if(xj_pres_cell_init(prc, &ts, NULL, NULL)<0)
+					{
+						DBG("XJAB:xj_manage_jab: cannot init presence"
+							" cell for [%s]\n", from);
+						xj_pres_cell_free(prc);
+						goto ready;
+					}
+					prc = xj_pres_list_add(jbc->plist, prc);
+					if(prc)
+						prc->state = XJ_PRES_STATE_ONLINE;
+				}
+			}
 
 		}
 		
@@ -987,30 +1115,77 @@ int xj_manage_jab(char *buf, int len, int *pos,
 			while(z)
 			{
 				if(!strncasecmp(xode_get_name(z), "item", 5)
-					&& (type = xode_get_attrib(z, "jid")) != NULL
-					&& strchr(type, '@') == NULL)
+					&& (from = xode_get_attrib(z, "jid")) != NULL)
 				{
-					if(!strncasecmp(type, XJ_AIM_NAME, XJ_AIM_LEN))
-					{
-						jbc->allowed |= XJ_NET_AIM;
-						DBG("XJAB:xj_manage_jab: AIM network available\n");
+					if(strchr(from, '@') == NULL)
+					{ // transports
+						if(!strncasecmp(from, XJ_AIM_NAME, XJ_AIM_LEN))
+						{
+							jbc->allowed |= XJ_NET_AIM;
+							DBG("XJAB:xj_manage_jab:AIM network available\n");
+						}
+						else if(!strncasecmp(from, XJ_ICQ_NAME, XJ_ICQ_LEN))
+						{
+							jbc->allowed |= XJ_NET_ICQ;
+							DBG("XJAB:xj_manage_jab:ICQ network available\n");
+						}
+						else if(!strncasecmp(from, XJ_MSN_NAME, XJ_MSN_LEN))
+						{
+							jbc->allowed |= XJ_NET_MSN;
+							DBG("XJAB:xj_manage_jab:MSN network available\n");
+						}
+						else if(!strncasecmp(from, XJ_YAH_NAME, XJ_YAH_LEN))
+						{
+							jbc->allowed |= XJ_NET_YAH;
+							DBG("XJAB:xj_manage_jab:YAHOO network available\n");
+						} 
 					}
-					else if(!strncasecmp(type, XJ_ICQ_NAME, XJ_ICQ_LEN))
-					{
-						jbc->allowed |= XJ_NET_ICQ;
-						DBG("XJAB:xj_manage_jab: ICQ network available\n");
+					else
+					{ // user item
+						ts.s = from;
+						ts.len = strlen(from);
+						DBG("XJAB:xj_manage_jab:%s is in roster\n", from);
+						if(xj_pres_list_check(jbc->plist, &ts))
+						{
+							DBG("XJAB:xj_manage_jab:%s already in presence"
+								" list\n", from);
+							goto next_sibling;
+						}
+
+						prc = xj_pres_cell_new();
+						if(prc == NULL)
+						{
+							DBG("XJAB:xj_manage_jab: cannot create presence"
+								" cell for %s\n", from);
+							goto next_sibling;
+						}
+						if(xj_pres_cell_init(prc, &ts, NULL, NULL)<0)
+						{
+							DBG("XJAB:xj_manage_jab: cannot init presence"
+								" cell for %s\n", from);
+							xj_pres_cell_free(prc);
+							goto next_sibling;
+						}
+						prc = xj_pres_list_add(jbc->plist, prc);
+						if(prc)
+						{
+							p = xode_get_attrib(z, "subscription");
+							if(p && !strncasecmp(p, "none", 4))
+							{
+								DBG("XJAB:xj_manage_jab: wait for permission"
+									" from %s\n", from);
+								prc->status = XJ_PRES_STATUS_WAIT; 
+							}
+							else
+							{
+								DBG("XJAB:xj_manage_jab: permission granted"
+									" from %s\n", from);
+								prc->status = XJ_PRES_STATUS_SUBS;
+							}
+						}
 					}
-					else if(!strncasecmp(type, XJ_MSN_NAME, XJ_MSN_LEN))
-					{
-						jbc->allowed |= XJ_NET_MSN;
-						DBG("XJAB:xj_manage_jab: MSN network available\n");
-					}
-					else if(!strncasecmp(type, XJ_YAH_NAME, XJ_YAH_LEN))
-					{
-						jbc->allowed |= XJ_NET_YAH;
-						DBG("XJAB:xj_manage_jab: YAHOO network available\n");
-					} 
 				}
+next_sibling:
 				z = xode_get_nextsibling(z);
 			}
 		}

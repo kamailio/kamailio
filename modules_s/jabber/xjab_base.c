@@ -148,8 +148,6 @@ void xj_sipmsg_free(xj_sipmsg jsmsg)
 //		_M_SHM_FREE(jsmsg->from->id->s);
 	if(jsmsg->msg.s != NULL)
 		_M_SHM_FREE(jsmsg->msg.s);
-	if(jsmsg->callid.s != NULL)
-		_M_SHM_FREE(jsmsg->callid.s);
 	_M_SHM_FREE(jsmsg);
 }
 

@@ -666,7 +666,7 @@ void destroy(void)
 /**
  * register a watcher function for a Jabber user' presence
  */
-void xj_register_watcher(str *dom,str *to,str *from,pa_callback_f cbf,void *pp)
+void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 {
 	xj_sipmsg jsmsg = NULL;
 	t_xj_jkey jkey, *jp;
@@ -675,6 +675,8 @@ void xj_register_watcher(str *dom,str *to,str *from,pa_callback_f cbf,void *pp)
 	if(!to || !from || !cbf)
 		return;
 
+	DBG("XJAB:xj_register_watcher: from=[%.*s] to=[%.*s]\n", from->len,
+			from->s, to->len, to->s);
 	jkey.hash = xj_get_hash(from, NULL);
 	jkey.id = from;
 
@@ -690,22 +692,8 @@ void xj_register_watcher(str *dom,str *to,str *from,pa_callback_f cbf,void *pp)
     if(jsmsg == NULL)
     	goto error;
 	
-	if(dom && dom->s && dom->len > 0)
-	{
-		jsmsg->msg.len = dom->len;
-		if((jsmsg->msg.s = (char*)shm_malloc(jsmsg->msg.len+1)) == NULL)
-		{
-			shm_free(jsmsg);
-			goto error;
-		}
-		strncpy(jsmsg->msg.s, dom->s, jsmsg->msg.len);
-	}
-	else
-	{
-		jsmsg->msg.len = 0;
-		jsmsg->msg.s = NULL;
-
-	}
+	jsmsg->msg.len = 0;
+	jsmsg->msg.s = NULL;
 	
 	jsmsg->to.len = to->len;
 	if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1)) == NULL)
@@ -721,7 +709,7 @@ void xj_register_watcher(str *dom,str *to,str *from,pa_callback_f cbf,void *pp)
 	jsmsg->type = XJ_REG_WATCHER;
 	//jsmsg->jkey->hash = jkey.hash;
 	
-	jsmsg->cbf = cbf;
+	jsmsg->cbf = (pa_callback_f)cbf;
 	jsmsg->p = pp;
 
 	DBG("XJAB:xj_register_watcher:%d: sending <%p> to worker through <%d>\n",
@@ -745,7 +733,7 @@ error:
 /**
  * unregister a watcher for a Jabber user' presence
  */
-void xj_unregister_watcher(str *dom, str *to, str *from)
+void xj_unregister_watcher(str *from, str *to, void *cbf, void *pp)
 {
 	if(!to || !from)
 		return;
@@ -757,7 +745,7 @@ void xj_unregister_watcher(str *dom, str *to, str *from)
 void xjab_check_workers(int mpid)
 {
 	int i, n, stat;
-	DBG("XJAB:%d:xjab_check_workers: time=%d\n", mpid, get_ticks());
+	//DBG("XJAB:%d:xjab_check_workers: time=%d\n", mpid, get_ticks());
 	if(!jwl || jwl->len <= 0)
 		return;
 	for(i=0; i < jwl->len; i++)

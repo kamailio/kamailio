@@ -84,7 +84,14 @@ xj_jcon xj_jcon_init(char *hostname, int port)
 	jbc->allowed = jbc->ready = XJ_NET_NUL;
 	jbc->jconf = NULL;
 	jbc->nrjconf = 0;
-
+	jbc->plist = xj_pres_list_init();
+	if(jbc->plist == NULL)
+	{
+		_M_FREE(jbc->hostname);
+		_M_FREE(jbc);
+		return NULL;
+	}
+			
     return jbc;
 }
 
@@ -204,6 +211,9 @@ int xj_jcon_user_auth(xj_jcon jbc, char *username, char *passwd,
 	sprintf(msg_buff, "%08X", jbc->seq_nr);
 	
 	x = xode_new_tag("iq");
+	if(!x)
+		return -1;
+
 	xode_put_attrib(x, "id", msg_buff);
 	xode_put_attrib(x, "type", "get");
 	y = xode_insert_tag(x, "query");
@@ -340,6 +350,51 @@ int xj_jcon_get_roster(xj_jcon jbc)
 }
 
 /**
+ * add a new contact in user's roster
+ */
+int xj_jcon_set_roster(xj_jcon jbc, char* jid, char *type)
+{
+	xode x;
+	char *p;
+	int n;
+	char buff[16];
+	
+	if(!jbc || !jid)
+		return -1;
+	
+	x = xode_new_tag("item");
+	if(!x)
+		return -1;
+	xode_put_attrib(x, "jid", jid);
+	if(type != NULL)
+		xode_put_attrib(x, "subscription", type);
+	
+	x = xode_wrap(x, "query");
+	xode_put_attrib(x, "xmlns", "jabber:iq:roster");
+
+	x = xode_wrap(x, "iq");
+	
+	xode_put_attrib(x, "type", "set");
+	jbc->seq_nr++;
+	sprintf(buff, "%08X", jbc->seq_nr);
+	xode_put_attrib(x, "id", buff);
+
+	p = xode_to_str(x);
+	n = strlen(p);
+	
+	if(send(jbc->sock, p, n, 0) != n)
+	{
+		DBG("XJAB:xj_jcon_set_roster: Error - item not sent\n");
+		goto error;
+	}
+	xode_free(x);
+	return 0;
+error:
+	xode_free(x);
+	return -1;
+}
+
+/**
  * send a message through a JABBER connection
  * params are pairs (buffer, len)
  */
@@ -354,6 +409,8 @@ int xj_jcon_send_msg(xj_jcon jbc, char *to, int tol, char *msg,
 		return -1;
 	
 	x = xode_new_tag("body");
+	if(!x)
+		return -1;
 	
 	xode_insert_cdata(x, msg, msgl);
 	x = xode_wrap(x, "message");
@@ -417,7 +474,10 @@ int xj_jcon_send_presence(xj_jcon jbc, char *sto, char *type, char *status,
 		return -1;
 	DBG("XJAB:xj_jcon_send_presence: -----START-----\n");
 	
-	x= xode_new_tag("presence");
+	x = xode_new_tag("presence");
+	if(!x)
+		return -1;
+	
 	if(sto != NULL)
 		xode_put_attrib(x, "to", sto);
 	if(type != NULL)
@@ -450,6 +510,44 @@ error:
 }
 
 /**
+ * send subscribe for user's presence
+ */
+int xj_jcon_send_subscribe(xj_jcon jbc, char *to, char *from, char *type)
+{
+	char *p;
+	int n;
+	xode x;
+	
+	if(!jbc || !to)
+		return -1;
+	
+	x = xode_new_tag("presence");
+	if(!x)
+		return -1;
+
+	xode_put_attrib(x, "to", to);
+	if(from != NULL)
+		xode_put_attrib(x, "from", from);
+	if(type != NULL)
+		xode_put_attrib(x, "type", type);
+
+	p = xode_to_str(x);
+	n = strlen(p);
+	
+	if(send(jbc->sock, p, n, 0) != n)
+	{
+		DBG("XJAB:xj_jcon_send_subscribe: Error - subscribe not sent\n");
+		goto error;
+	}
+	xode_free(x);
+	return 0;
+
+error:
+	xode_free(x);
+	return -1;
+}
+
+/**
  * free the allocated memory space of a JABBER connection
  */
 int xj_jcon_free(xj_jcon jbc)
@@ -476,6 +574,7 @@ int xj_jcon_free(xj_jcon jbc)
 			xj_jconf_free(jcf);
 		jbc->nrjconf--;
 	}
+	xj_pres_list_free(jbc->plist);
 	_M_FREE(jbc);
 	DBG("XJAB:xj_jcon_free: -----END-----\n");
 	return 0;
