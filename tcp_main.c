@@ -277,21 +277,27 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port)
 	struct tcp_connection *c;
 	unsigned hash;
 	
+#ifdef EXTRA_DEBUG
 	DBG("tcpconn_find: %d ",id ); print_ip(ip); DBG(" %d\n", port);
+#endif
 	if (id){
 		hash=tcp_id_hash(id);
 		for (c=tcpconn_id_hash[hash]; c; c=c->id_next){
+#ifdef EXTRA_DEBUG
 			DBG("c=%p, c->id=%d, ip=",c, c->id);
 			print_ip(&c->rcv.src_ip);
 			DBG(" port=%d\n", c->rcv.src_port);
+#endif
 			if ((id==c->id)&&(!c->bad)) return c;
 		}
 	}else if (ip){
 		hash=tcp_addr_hash(ip, port);
 		for (c=tcpconn_addr_hash[hash]; c; c=c->next){
+#ifdef EXTRA_DEBUG
 			DBG("c=%p, c->id=%d, ip=",c, c->id);
 			print_ip(&c->rcv.src_ip);
 			DBG(" port=%d\n", c->rcv.src_port);
+#endif
 			if ( (!c->bad) && (port==c->rcv.src_port) &&
 					(ip_addr_cmp(ip, &c->rcv.src_ip)) )
 				return c;

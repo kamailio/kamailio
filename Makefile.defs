@@ -21,7 +21,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre15-new_parse_uri
+EXTRAVERSION = pre16
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -211,6 +211,10 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 # debugging symbols in all cases (-g). --andrei
 ifeq ($(mode),)
 	mode = release
+endif
+
+ifeq ($(mode),debug)
+	DEFS+= -DEXTRA_DEBUG
 endif
 
 # platform dependent settings

@@ -30,6 +30,7 @@
  *             introduced (jiri)
  * 2003-04-11  new parse_uri introduced (better, parses also some parameters,
  *              works in one pass) (andrei)
+ * 2003-04-11  ser_error is now set in parse_uri (andrei)
  */
 
 
@@ -902,38 +903,44 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 error_too_short:
 	LOG(L_ERR, "ERROR: parse_uri: uri too short: <%.*s> (%d)\n",
 			len, buf, len);
-	return -1;
+	ser_error=E_BAD_URI;
+	return E_BAD_URI;
 error_bad_char:
 	LOG(L_ERR, "ERROR: parse_uri: bad char '%c' in state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
 			*p, state, (p-buf), buf, (p-buf), len, buf, len);
-	return -1;
+	return E_BAD_URI;
 error_bad_host:
 	LOG(L_ERR, "ERROR: parse_uri: bad host in uri (error at char %c in"
 			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
 			*p, state, (p-buf), buf, (p-buf), len, buf, len);
-	return -1;
+	ser_error=E_BAD_URI;
+	return E_BAD_URI;
 error_bad_port:
 	LOG(L_ERR, "ERROR: parse_uri: bad port in uri (error at char %c in"
 			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
 			*p, state, (p-buf), buf, (p-buf), len, buf, len);
-	return -1;
+	ser_error=E_BAD_URI;
+	return E_BAD_URI;
 error_bad_uri:
 	LOG(L_ERR, "ERROR: parse_uri: bad uri,  state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
 			 state, (p-buf), buf, (p-buf), len, buf, len);
-	return -1;
+	ser_error=E_BAD_URI;
+	return E_BAD_URI;
 error_headers:
 	LOG(L_ERR, "ERROR: parse_uri: bad uri headers: <%.*s>(%d)"
 			" / <%.*s>(%d)\n",
 			uri->headers.len, uri->headers.s, uri->headers.len,
 			len, buf, len);
-	return -1;
+	ser_error=E_BAD_URI;
+	return E_BAD_URI;
 error_bug:
 	LOG(L_CRIT, "BUG: parse_uri: bad  state %d"
 			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
 			 state, (p-buf), buf, (p-buf), len, buf, len);
-	return -1;
+	ser_error=E_BAD_URI;
+	return E_BAD_URI;
 }
 
 #else /* PARSE_URI_OLD */

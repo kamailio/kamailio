@@ -141,6 +141,22 @@ int do_action(struct action* a, struct sip_msg* msg)
 							ret=E_UNSPEC;
 							goto error_fwd_uri;
 				}
+				switch(u->proto){
+					case PROTO_NONE:
+						proto=PROTO_UDP;
+						break;
+					case PROTO_UDP:
+#ifdef USE_TCP
+					case PROTO_TCP:
+#endif
+						proto=u->proto;
+						break;
+					default:
+						LOG(L_ERR,"ERROR: do action: forward: bad uri protocol"
+								" %d\n", u->proto);
+						ret=E_BAD_PROTO;
+						goto error_fwd_uri;
+				}
 				/* create a temporary proxy*/
 				p=mk_proxy(&u->host, port, proto);
 				if (p==0){

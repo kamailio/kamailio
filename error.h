@@ -55,6 +55,8 @@
 #define E_BAD_ADDRESS -478
 /* unparseable URI */
 #define E_BAD_URI 	  -479
+/* bad protocol, like */
+#define E_BAD_PROTO	  -480
 /* misformated request */
 #define E_BAD_REQ	  -400
 

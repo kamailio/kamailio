@@ -84,8 +84,9 @@ again:
 			return -1;
 		}
 	}
+#ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
-	
+#endif
 	r->pos+=bytes_read;
 	return bytes_read;
 }
@@ -93,10 +94,10 @@ again:
 
 
 /* reads all headers (until double crlf), & parses the content-length header
- * (WARNING: highly ineficient, tries to reuse receive_msg but will parse
- *  all the header names twice [once here & once in receive_msg]; a more
- *  speed eficient version will result in either major code duplication or
- *  major changes to the receive code - TODO)
+ * (WARNING: ineficient, tries to reuse receive_msg but will go through
+ * the headers twice [once here looking for Content-Length and for the end
+ * of the headers and once in receive_msg]; a more speed eficient version will
+ * result in either major code duplication or major changes to the receive code)
  * returns number of bytes read & sets r->state & r->body
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
@@ -184,7 +185,6 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 					case '\n':
 						/* found LF LF */
 						r->state=H_BODY;
-						DBG("tcp_read_headers: switching to H_BODY (lflf)\n");
 						if (r->has_content_len){
 							r->body=p+1;
 							r->bytes_to_go=r->content_len;
@@ -209,7 +209,6 @@ int tcp_read_headers(struct tcp_req *r, int fd)
 				if (*p=='\n'){
 					/* found LF CR LF */
 					r->state=H_BODY;
-					DBG("tcp_read_headers: switching to H_BODY (lfcrlf)\n");
 					if (r->has_content_len){
 						r->body=p+1;
 						r->bytes_to_go=r->content_len;
@@ -367,6 +366,7 @@ int tcp_read_req(struct tcp_connection* con)
 again:
 		if(req->complete==0 && req->error==TCP_REQ_OK){
 			bytes=tcp_read_headers(req, s);
+#ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
 					bytes, (int)(req->parsed-req->start), req->state,
@@ -374,6 +374,7 @@ again:
 			DBG("tcp_read_req: last char=%X, parsed msg=\n%.*s\n",
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
+#endif
 			if (bytes==-1){
 				LOG(L_ERR, "ERROR: tcp_read_req: error reading \n");
 				resp=CONN_ERROR;
@@ -397,14 +398,18 @@ again:
 			goto end_req;
 		}
 		if (req->complete){
+#ifdef EXTRA_DEBUG
 			DBG("tcp_read_req: end of header part\n");
 			DBG("- received from: port %d, ip - ", con->rcv.src_port);
 			print_ip(&con->rcv.src_ip); DBG("-\n");
 			DBG("tcp_read_req: headers:\n%.*s.\n",
 					(int)(req->body-req->start), req->start);
+#endif
 			if (req->has_content_len){
 				DBG("tcp_read_req: content-length= %d\n", req->content_len);
+#ifdef EXTRA_DEBUG
 				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);
+#endif
 			}else{
 				req->error=TCP_REQ_BAD_LEN;
 				LOG(L_ERR, "ERROR: tcp_read_req: content length not present or"
@@ -414,10 +419,13 @@ again:
 			}
 			/* if we are here everything is nice and ok*/
 			resp=CONN_RELEASE;
+#ifdef EXTRA_DEBUG
 			DBG("calling receive_msg(%p, %d, )\n",
 					req->start, (int)(req->parsed-req->start));
-			/* just for debugging use sendipv4 as receiving socket  FIXME*/
+#endif
+			/* rcv.bind_address should always be !=0 */
 			bind_address=con->rcv.bind_address;
+			/* just for debugging use sendipv4 as receiving socket  FIXME*/
 			/*
 			if (con->rcv.dst_ip.af==AF_INET6){
 				bind_address=sendipv6_tcp;
@@ -440,8 +448,10 @@ again:
 			/* prepare for next request */
 			size=req->pos-req->parsed;
 			if (size) memmove(req->buf, req->parsed, size);
+#ifdef EXTRA_DEBUG
 			DBG("tcp_read_req: preparing for new request, kept %ld bytes\n",
 					size);
+#endif
 			req->pos=req->buf+size;
 			req->parsed=req->buf;
 			req->start=req->buf;
@@ -520,7 +530,6 @@ void tcp_receive_loop(int unix_sock)
 				continue;
 			}
 			if (FD_ISSET(unix_sock, &sel_set)){
-				DBG("tcp receive: receiving fd from from 'main'\n");
 				nfds--;
 				/* a new conn from "main" */
 				n=receive_fd(unix_sock, &con, sizeof(con), &s);
