@@ -328,6 +328,7 @@ proceed, you need to make sure MySQL is installed on your box.
     - loadmodule "/usr/lib/ser/modules/auth_db.so"
     - modparam("usrloc", "db_mode", 2)
     - modparam("auth", "calculate_ha1", yes)
+    - modparam("auth_db", "password_column", "password")
     - if (!www_authorize("iptel.org", "subscriber")) {
         www_challenge("iptel.org", "0"); 
         break;
