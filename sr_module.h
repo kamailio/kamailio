@@ -66,6 +66,8 @@ typedef enum {
 #define PROC_FIFO     -2  /* FIFO attendant process */
 #define PROC_TCP_MAIN -4  /* TCP main process */
 
+#define MODULE_VERSION char *module_version=VERSION;
+
 struct cmd_export_ {
 	char* name;             /* null terminated command name */
 	cmd_function function;  /* pointer to the corresponding function */

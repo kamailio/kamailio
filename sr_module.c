@@ -31,6 +31,7 @@
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-03-19  Support for flags in find_export (janakj)
  *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
+ *  2003-04-24  module version checking introduced (jiri)
  */
 
 
@@ -147,6 +148,32 @@ error:
 	return ret;
 }
 
+#ifndef DLSYM_PREFIX
+/* define it to null */
+#define DLSYM_PREFIX
+#endif
+
+static inline int version_control(void *handle, char *path)
+{
+	char **m_ver;
+	char* error;
+
+	m_ver=(char **)dlsym(handle, DLSYM_PREFIX "module_version");
+	if ((error=(char *)dlerror())!=0) {
+		LOG(L_WARN, "WARNING: no version info in module <%s>: %s\n",
+			path, error );
+		return 0;
+	}
+	if (!m_ver || !(*m_ver)) {
+		LOG(L_WARN, "WARNING: no version in module <%s>\n", path );
+		return 0;
+	}
+	if (strcmp(VERSION,*m_ver)==0)
+		return 1;
+	LOG(L_WARN, "WARNING: module version mismatch for %s; "
+		"core: %s; module: %s\n", path, VERSION, *m_ver );
+	return 0;
+}
 
 /* returns 0 on success , <0 on error */
 int load_module(char* path)
@@ -159,10 +186,6 @@ int load_module(char* path)
 #ifndef RTLD_NOW
 /* for openbsd */
 #define RTLD_NOW DL_LAZY
-#endif
-#ifndef DLSYM_PREFIX
-/* define it to null */
-#define DLSYM_PREFIX
 #endif
 	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
 	if (handle==0){
@@ -178,6 +201,8 @@ int load_module(char* path)
 			goto skip;
 		}
 	}
+	/* version control */
+	version_control(handle, path);
 	/* launch register */
 	exp = (struct module_exports*)dlsym(handle, DLSYM_PREFIX "exports");
 	if ( (error =(char*)dlerror())!=0 ){

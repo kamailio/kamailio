@@ -94,6 +94,8 @@
 #include "t_lookup.h"
 #include "t_stats.h"
 
+MODULE_VERSION
+
 
 
 inline static int w_t_check(struct sip_msg* msg, char* str, char* str2);
