@@ -84,13 +84,13 @@ PHP_LIB_COLUMN=phplib_id
 
 # acl table
 ACL_TABLE=grp
-ACL_USER_COLUMN=user
+ACL_USER_COLUMN=username
 ACL_GROUP_COLUMN=grp
 ACL_MODIFIED_COLUMN=last_modified
 
 # aliases table
 A_TABLE=aliases
-A_USER_COLUMN=user
+A_USER_COLUMN=username
 A_CONTACT_COLUMN=contact
 A_EXPIRES_COLUMN=expires
 A_Q_COLUMN=q
