@@ -24,6 +24,7 @@ char* via_builder( struct sip_msg *msg ,
 									unsigned int *len );
 
 
+char* via_builder( struct sip_msg *msg , unsigned int *len );
 
 
 #endif

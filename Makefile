@@ -34,8 +34,8 @@ NAME=ser
 #                  extra error checking (trying to free the same pointer
 #                  twice, trying to free a pointer alloc'ed with a different
 #                  malloc etc.)
-DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
-	 -DPKG_MALLOC #-DDBG_QM_MALLOC
+DEFS=-DDNS_IP_HACK  -DSHM_MEM \
+	 -DPKG_MALLOC #-DDBG_QM_MALLOC 
 #-DEXTRA_DEBUG
 # -DUSE_SHM_MEM
 #-DNO_DEBUG 
@@ -43,9 +43,9 @@ DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
 #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
 #-DNO_LOG
 
-PROFILE=  # -pg #set this if you want profiling
-#mode = debug
-mode = release
+PROFILE=  -pg #set this if you want profiling
+mode = debug
+#mode = release
 
 # platform dependent settings
 
@@ -62,8 +62,8 @@ ifeq ($(mode), release)
 	# executable file, because it's always loaded at a fixed address
 	# -andrei
 else
-	CFLAGS=-g -Wcast-align -Winline
-	LDFLAGS=-g -Wl,-E
+	CFLAGS=-g -fPIC -DPIC -Wcast-align -Winline $(PROFILE)
+	LDFLAGS=-g -Wl,-E $(PROFILE)
 endif
 
 LEX=flex

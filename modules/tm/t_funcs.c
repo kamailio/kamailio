@@ -457,10 +457,24 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
 int t_on_reply_received( struct sip_msg  *p_msg )
 {
    unsigned int  branch,len;
+   struct sip_msg *clone;
+   int relay;
 
    global_msg_id = p_msg->id;
 
-   parse_headers( p_msg , HDR_EOH ); /*????*/
+   /* parse_headers( p_msg , HDR_EOH ); */ /*????*/
+   /* this might be good enough -- is not like with
+      generating own responses where I have to 
+      parse all vias to copy them
+
+   /* if a reply received which has not all fields we might want to
+      have for stateul forwarding, give the stateless router
+      a chance for minimum routing
+   */ 
+   if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
+        !p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
+	return 1;
+
    /* we use label-matching to lookup for T */
    t_reply_matching( hash_table , p_msg , &T , &branch  );
 
@@ -468,6 +482,16 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    if ( T<=0 )
       return 1;
    DBG("DEBUG: t_on_reply_received: Original status =%d\n",T->status);
+
+   /* we were not able to process the response due to memory
+      shortage; simply drop it; hopefuly, we will have more
+      memory on the next try
+   */
+   relay = t_should_relay_response( T , p_msg->first_line.u.reply.statuscode );
+   if (relay && !(clone=sip_msg_cloner( p_msg )))
+	return 0;
+
+
 
    /* stop retransmission */
    remove_from_timer( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST );
@@ -490,8 +514,8 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    #endif
 
    /* if the incoming response code is not reliable->drop it*/
-   if ( !t_should_relay_response( T , p_msg->first_line.u.reply.statuscode ) )
-      return 0;
+   if (!relay) 
+	return 0;
 
    /* restart retransmission if provisional response came for a non_INVITE -> retrasmit at RT_T2*/
    if ( p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value!=METHOD_INVITE )
@@ -501,7 +525,15 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    }
 
    /*store the inbound reply*/
-   t_store_incoming_reply( T , branch , p_msg );
+   /* t_store_incoming_reply( T , branch , p_msg ); */
+   /* if there is a previous reply, replace it */
+   if ( T->inbound_response[branch] ) {
+      sip_msg_free( T->inbound_response[branch] ) ;
+      DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
+   }
+   T->inbound_response[branch] = clone;
+   T->status = p_msg->first_line.u.reply.statuscode;
+
    if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
    {
       if ( t_all_final(T) )
@@ -863,17 +895,17 @@ nomatch:
 /* We like this incoming reply, so, let's store it, we'll decide
   * later what to d with that
   */
+
+/*
 int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
 {
    DBG("DEBUG: t_store_incoming_reply: starting [%d]....\n",branch);
-   /* force parsing all the needed headers*/
    if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
         !p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
    {
       LOG( L_ERR , "ERROR: t_store_incoming_reply: unable to parse headers !\n"  );
       return -1;
    }
-   /* if there is a previous reply, replace it */
    if ( Trans->inbound_response[branch] ) {
       sip_msg_free( Trans->inbound_response[branch] ) ;
       DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
@@ -886,6 +918,8 @@ int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_
    DBG("DEBUG: t_store_incoming_reply: reply stored\n");
    return 1;
 }
+
+*/
 
 
 
