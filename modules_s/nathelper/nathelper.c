@@ -79,31 +79,31 @@
 #include <sys/un.h>
 #include <ctype.h>
 #include <errno.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <regex.h>
 
 MODULE_VERSION
 
 #if !defined(AF_LOCAL)
-#define AF_LOCAL AF_UNIX
+#define	AF_LOCAL AF_UNIX
 #endif
 #if !defined(PF_LOCAL)
-#define PF_LOCAL PF_UNIX
+#define	PF_LOCAL PF_UNIX
 #endif
 
 /* NAT UAC test constants */
-#define CONTACT_1918		"[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
-#define SDP_1918		"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
-#define NAT_UAC_TEST_C_1918	0x01
-#define NAT_UAC_TEST_RCVD	0x02
-#define NAT_UAC_TEST_S_1918	0x03
+#define	CONTACT_1918		"[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
+#define	SDP_1918		"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
+#define	NAT_UAC_TEST_C_1918	0x01
+#define	NAT_UAC_TEST_RCVD	0x02
+#define	NAT_UAC_TEST_S_1918	0x03
 
-/* Handy macro */
+/* Handy macros */
 #define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
-#define ISNULLADDR(sx)		((sx).len == 7 && memcmp("0.0.0.0", (sx).s, 7) == 0)
+#define	ISNULLADDR(sx)		((sx).len == 7 && memcmp("0.0.0.0", (sx).s, 7) == 0)
 
 /* Supported version of the RTP proxy command protocol */
 #define	SUP_CPROTOVER	20040107
@@ -123,7 +123,6 @@ static int force_rtp_proxy_from_f(struct sip_msg *, char *, char *);
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
-
 
 static usrloc_api_t ul;
 
@@ -445,12 +444,12 @@ sdp_1918(struct sip_msg* msg)
 	char backup;
 
 	if (extract_body(msg, &body) == -1) {
-		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
+		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
 		return 0;
 	}
 
 	if (extract_mediaip(&body, &ip) == -1) {
-		LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
+		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
 		return 0;
 	}
 	if (ISNULLADDR(ip))
@@ -654,7 +653,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip,
 	struct lump* anchor;
 
 	/* check that updating mediaip is really necessary */
-	if (7 == oldip->len && memcmp("0.0.0.0", oldip->s, 7) == 0)
+	if (ISNULLADDR(*oldip))
 		return 0;
 	if (newip->len == oldip->len &&
 	    memcmp(newip->s, oldip->s, newip->len) == 0)
@@ -893,11 +892,6 @@ do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 			return -1;
 		cp = cp1 + ANORTPPROXY_LEN;
 	}
-	anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
-	if (anchor == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: anchor_lump failed\n");
-		return -1;
-	}
 	if (extract_mediaip(&body, &oldip) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media IP "
 		    "from the message\n");
@@ -943,6 +937,12 @@ do_force_rtp_proxy(struct sip_msg* msg, str* newip)
 	cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
 	if (cp == NULL) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy: out of memory\n");
+		return -1;
+	}
+	anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: anchor_lump failed\n");
+		pkg_free(cp);
 		return -1;
 	}
 	memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
