@@ -35,6 +35,7 @@ include ../../Makefile.sources
 ifeq (,$(filter $(MOD_NAME), $(static_modules)))
 CFLAGS:=$(MOD_CFLAGS)
 LDFLAGS:=$(MOD_LDFLAGS)
+LIBS:=
 endif
 
 include ../../Makefile.rules

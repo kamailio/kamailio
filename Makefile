@@ -50,7 +50,8 @@ exclude_modules?= 			cpl ext extcmd \
 							im \
 							jabber \
 							cpl-c \
-							auth_radius group_radius uri_radius 
+							auth_radius group_radius uri_radius \
+							pa
 # always exclude the CVS dir
 override exclude_modules+= CVS $(skip_modules)
 
@@ -97,7 +98,8 @@ include Makefile.defs
 NAME=$(MAIN_NAME)
 
 #export relevant variables to the sub-makes
-export DEFS PROFILE CC  LD MKDEP MKTAGS CFLAGS LDFLAGS MOD_CFLAGS MOD_LDFLAGS
+export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS MOD_CFLAGS MOD_LDFLAGS 
+export LIBS
 export LEX YACC YACC_FLAGS
 export PREFIX LOCALBASE
 # export relevant variables for recursive calls of this makefile 
