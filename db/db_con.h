@@ -39,7 +39,7 @@
 typedef struct {
 	char* table;           /* Default table to use */
 	int connected;         /* 1 if database is connected */
-	unsigned char tail[1]; /* Variable length tail
+	unsigned long tail[1]; /* Variable length tail
 				* database module specific */    
 } db_con_t;
 
