@@ -310,6 +310,7 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 	}
 
 	memset(_h, 0, sizeof(param_hooks_t));
+	*_p = 0;
 
 	while(1) {
 		t = (param_t*)pkg_malloc(sizeof(param_t));

@@ -85,5 +85,6 @@ void print_nameaddr(FILE* _o, name_addr_t* _a)
 	fprintf(_o, "---name-addr---\n");
 	fprintf(_o, "name: '%.*s'\n", _a->name.len, ZSW(_a->name.s));
 	fprintf(_o, "uri : '%.*s'\n", _a->uri.len, ZSW(_a->uri.s));
+	fprintf(_o, "len : %d\n", _a->len);
 	fprintf(_o, "---/name-addr---\n");
 }

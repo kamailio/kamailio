@@ -147,7 +147,8 @@ static inline void do_free_rr(rr_t** _r, int _shm)
 		ptr = *_r;
 		*_r = (*_r)->next;
 		if (ptr->params) {
-			free_params(ptr->params);
+			if (_shm) shm_free_params(ptr->params);
+			else free_params(ptr->params);
 		}
 		if (_shm) shm_free(ptr);
 		else pkg_free(ptr);
@@ -193,6 +194,7 @@ void print_rr(FILE* _o, rr_t* _r)
 		if (ptr->params) {
 			print_params(_o, ptr->params);
 		}
+		fprintf(_o, "len: %d\n", ptr->len);
 		fprintf(_o, "---/RR---\n");
 		ptr = ptr->next;
 	}
@@ -203,23 +205,23 @@ void print_rr(FILE* _o, rr_t* _r)
  * Translate all pointers in the structure and also
  * in all parameters in the list
  */
-static inline void xlate_pointers(struct sip_msg* _m, rr_t* _r)
+static inline void xlate_pointers(rr_t* _orig, rr_t* _r)
 {
 	param_t* ptr;
-	_r->nameaddr.uri.s = translate_pointer(_r->nameaddr.name.s, _m->buf, _r->nameaddr.uri.s);
+	_r->nameaddr.uri.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, _r->nameaddr.uri.s);
 	
 	ptr = _r->params;
 	while(ptr) {
 		     /*		if (ptr->type == P_R2) _r->r2 = ptr; */
-		ptr->name.s = translate_pointer(_r->nameaddr.name.s, _m->buf, ptr->name.s);
-		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _m->buf, ptr->body.s);		
+		ptr->name.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->name.s);
+		ptr->body.s = translate_pointer(_r->nameaddr.name.s, _orig->nameaddr.name.s, ptr->body.s);		
 		ptr = ptr->next;
 	}
 }
 
 
 /*
- * Duplicate a single rr_t structure using pkg_malloc
+ * Duplicate a single rr_t structure using pkg_malloc or shm_malloc
  */
 static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int _shm)
 {
@@ -243,7 +245,7 @@ static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int
 		LOG(L_ERR, "duplicate_rr(): No memory left\n");
 		return -2;
 	}
-	memset(res, 0, sizeof(rr_t));
+	memcpy(res, _r, sizeof(rr_t));
 
         res->nameaddr.name.s = (char*)res + sizeof(rr_t);
 	memcpy(res->nameaddr.name.s, _r->nameaddr.name.s, len);
@@ -261,7 +263,7 @@ static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int
 		return -3;
 	}
 
-	xlate_pointers(_m, res);
+	xlate_pointers(_r, res);
 	*_new = res;
 	return 0;
 }
