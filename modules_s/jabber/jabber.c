@@ -48,6 +48,7 @@
 #include "../../timer.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_from.h"
 
 #include "../tm/tm_load.h"
 
@@ -402,7 +403,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	struct to_body to, *from;
 	struct sip_uri _uri;
 	int pipe, fl;
-	char   *cp, *buf=0;
+	char   *buf=0;
 	t_xj_jkey jkey, *p;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
