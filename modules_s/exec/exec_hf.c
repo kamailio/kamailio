@@ -485,7 +485,7 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 		if (!append_var(EV_OUSER, oparsed_uri.user.s, 
 					oparsed_uri.user.len, list)) {
 			LOG(L_ERR, "ERROR: append_var OUSER failed\n");
-			goto error1;
+			goto error;
 		}
 	}
 	/* tid, transaction id == via/branch */
@@ -497,7 +497,7 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	}
 	if (!append_var(EV_TID, val,val_len, list)) {
 		LOG(L_ERR, "ERROR: append_var TID failed\n");
-		goto error1;
+		goto error;
 	}
 
 	/* did, dialogue id == To-tag */
@@ -510,15 +510,10 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 	}
 	if (!append_var(EV_DID, val, val_len, list)) {
 		LOG(L_ERR, "ERROR: append_var DID failed\n");
-		goto error1;
+		goto error;
 	}
-	free_uri(&oparsed_uri);
-	free_uri(&parsed_uri);
 	return 1;
-error1:
-	free_uri(&oparsed_uri);
 error:
-	free_uri(&parsed_uri);
 	return 0;
 }
 

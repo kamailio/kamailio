@@ -111,13 +111,13 @@ error01:
 	return ret;
 }
 
-int exec_str(struct sip_msg *msg, char *cmd, char *param) {
+int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 
 	int cmd_len;
 	FILE *pipe;	
 	char *cmd_line;
 	int ret;
-	int l1, l2;
+	int l1;
 	char uri_line[MAX_URI_SIZE+1];
 	int uri_cnt;
 	int uri_len;
@@ -132,7 +132,8 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param) {
 #endif
 	/* pesimist: assume error by default */
 	ret=-1;
-	l1=strlen(cmd);l2=strlen(param);cmd_len=l1+l2+2;
+	
+	l1=strlen(cmd);cmd_len=l1+param_len+2;
 	cmd_line=pkg_malloc(cmd_len);
 	if (cmd_line==0) {
 		ret=ser_error=E_OUT_OF_MEM;
@@ -142,7 +143,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param) {
 
 	/* 'command parameter \0' */
 	memcpy(cmd_line, cmd, l1); cmd_line[l1]=' ';
-	memcpy(cmd_line+l1+1, param, l2);cmd_line[l1+l2+1]=0;
+	memcpy(cmd_line+l1+1, param, param_len);cmd_line[l1+param_len+1]=0;
 	
 	pipe=popen( cmd_line, "r" );
 	if (pipe==NULL) {

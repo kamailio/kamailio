@@ -120,7 +120,7 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	else
 		uri=&msg->first_line.u.request.uri;
 
-	ret=exec_str(msg, cmd, uri->s);
+	ret=exec_str(msg, cmd, uri->s, uri->len);
 	if (setvars) {
 		unset_env(backup);
 	}
@@ -166,11 +166,10 @@ inline static int w_exec_user(struct sip_msg* msg, char* cmd, char* foo)
 	if (!parsed_uri.user.s || !parsed_uri.user.len) {
 		LOG(L_WARN, "WARNING: w_exec_user: "
 			"empty username in '%.*s'\n", uri->len, uri->s );
-		ret=exec_str(msg, cmd, "" );
+		ret=exec_str(msg, cmd, "", 0);
 	} else {
-		ret=exec_str(msg, cmd, parsed_uri.user.s);
+		ret=exec_str(msg, cmd, parsed_uri.user.s, parser_uri.user.len);
 	}
-	free_uri(&parsed_uri);
 	return ret;
 }
 #endif
