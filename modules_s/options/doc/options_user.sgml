@@ -1,0 +1,197 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+		This module provides a function to answer OPTIONS requests which 
+		are directed to the	server itself. This means an OPTIONS request 
+		which has the address of the server in the request URI, and no 
+		username in the URI. The request will be answered with a 200 OK 
+		whith the capabilities of the server.
+	</para>
+	<para>
+		To answer OPTIONS request directed to your server is the easiest
+		way for is-alive-tests on the SIP (application) layer from remote 
+		(similar to	ICMP echo requests, also known as <quote>ping</quote>, 
+		on the network layer).
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>sl</emphasis> -- Stateless replies.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>accept</varname> (string)</title>
+	    <para>
+			This parameter is the content of the Accept header field.
+			Note: it is not clearly written in RFC3261 if a proxy should
+			accept any content (the default <quote>*/*</quote>) because 
+			it does not care about content. Or if it does not accpet 
+			any content, which is <quote></quote>.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>*/*</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>accept</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("options", "accept", "application/*")
+...
+</programlisting>
+	    </example>
+	</section>
+   	<section>
+	    <title><varname>accept_encoding</varname> (string)</title>
+	    <para>
+			This parameter is the content of the Accept-Encoding header field.
+			Please do not change the default value because &ser; 
+			does not support any encodings yet.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote></quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>accept_encoding</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("options", "accept_encoding", "gzip")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>accept_language</varname> (string)</title>
+	    <para>
+			This parameter is the content of the Accept-Language header field.
+			You can set any language code which you prefer for error 
+			descriptions from other devices, but presumably there are not
+			much devices around which support other languages then the 
+			default english.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>en</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>accept_language</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("options", "accept_language", "de")
+...
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>support</varname> (string)</title>
+	    <para>
+			This parameter is the content of the Support header field.
+			Please do not change the default value, because &ser; currently 
+			does not support any of the SIP extensions registered at the IANA.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote></quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>support</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("options", "support", "100rel")
+...
+</programlisting>
+	    </example>
+	</section>
+	</section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">opt_reply()</function>
+	    </title>
+	    <para>
+			This function checks if the request method is OPTIONS and
+			if the request URI does not contain an username. If both
+			is true the request will be answered stateless with 
+			<quote>200 OK</quote> and the capabilities from the modules
+			parameters.
+	    </para>
+		<para>
+			It sends <quote>500 Server Internal Error</quote> for some errors
+			and returns false if it is called for a wrong request.
+		</para>
+		<para>
+			The check for the request method and the missing username is
+			optional because it is also done by the function itself. But
+			you should not call this function outside the myself check
+			because in this case the function could answer OPTIONS requests
+			which are sent to you as outbound proxy but with an other
+			destination then your proxy (this check is currently missing
+			in the function).
+		</para>
+	    <example>
+		<title><function>opt_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (uri==myself) {
+	if ((method==OPTIONS) && (! uri=~"sip:.*[@]+.*")) {
+		opt_reply();
+	}
+}
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("module.sgml" "Book" "chapter")
+End:
+-->
