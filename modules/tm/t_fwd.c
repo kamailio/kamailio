@@ -408,6 +408,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	int success_branch;
 	int try_new;
 	str dst_uri;
+	struct socket_info* si, *backup_si;
 
 	/* make -Wall happy */
 	current_uri.s=0;
@@ -425,6 +426,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	/* backup current uri ... add_uac changes it */
 	backup_uri = p_msg->new_uri;
+	backup_si = p_msg->force_send_socket;
 	/* if no more specific error code is known, use this */
 	lowest_ret=E_BUG;
 	/* branches added */
@@ -445,8 +447,9 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	init_branch_iterator();
-	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len, 0))) {
+	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len, &si))) {
 		try_new++;
+		p_msg->force_send_socket = si;
 		branch_ret=add_uac( t, p_msg, &current_uri, 
 				    (dst_uri.len) ? (&dst_uri) : &current_uri, 
 				    proxy, proto);
@@ -462,6 +465,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* consume processed branches */
 	clear_branches();
 
+	p_msg->force_send_socket = backup_si;
 	/* restore original URI */
 	p_msg->new_uri=backup_uri;
 
