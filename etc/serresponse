@@ -103,10 +103,10 @@ if [ ! -e $LOCKF ] ; then
 	
 	if [ -e $TMP ] ; then
 		$MAILCOMMAND -s "serresponse failed" $NOTIFY < $TMP
+		rm -f $TMP
+		touch $LOCKF
 		for i in $SMSNUMBERS; do
 			$SMSCMD $i "serresponse failed. please check your emails for details"
 		done
-		touch $LOCKF
-		rm -f $TMP
 	fi
 fi
