@@ -4,8 +4,6 @@
 
 /* 
  * TODO: Optimize short variants of headers
- *       Test, Test, Test....
- *       Hardwire into ser core
  */
 
 #include <stdio.h>
