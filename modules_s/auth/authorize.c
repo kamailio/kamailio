@@ -211,7 +211,8 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	     /* ACK must be always authorized, there is
 	      * no way how to challenge ACK
 	      */
-	if (_msg->REQ_METHOD == METHOD_ACK) {
+	if ((_msg->REQ_METHOD == METHOD_ACK) || 
+	    (_msg->REQ_METHOD == METHOD_CANCEL)) {
 	        return 1;
 	}
 #endif
