@@ -224,7 +224,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	memcpy( (char *) srb + sizeof ( struct retrans_buff ), buf, len );
 	free( buf );
 
-	send_ack( T, branch, srb, len );
+	relay_ack( T, branch, srb, len );
 	return 1;
 
 fwd_sl: /* some strange conditions occured; try statelessly */

@@ -418,13 +418,17 @@ int t_on_reply( struct sip_msg  *p_msg )
 {
 	unsigned int branch,len, msg_status, msg_class, save_clone;
 	unsigned int local_cancel;
-	struct sip_msg *clone, *backup;
+	struct sip_msg *clone;
 	int relay;
 	int start_fr;
 	int is_invite;
-	struct retrans_buff *rb;
+	/* retransmission structure of outbound reply and request */
+	struct retrans_buff *orq_rb, *orp_rb, *ack_rb;
 	char *buf;
-	unsigned int buf_len;
+	/* length of outbound reply */
+	unsigned int orp_len;
+	/* buffer length (might be somewhat larger than message size */
+	unsigned int alloc_len;
 
 
 	/* make sure we know the assosociated tranaction ... */
@@ -448,6 +452,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	/* it can take quite long -- better do it now than later 
 	   inside a reply_lock */
+													/* CLONE alloc'ed */
 	if (!(clone=sip_msg_cloner( p_msg ))) {
 		goto error;
 	}
@@ -462,22 +467,25 @@ int t_on_reply( struct sip_msg  *p_msg )
 	work to be done out of criticial lock region */
 	if (msg_status==100) buf=0;
 	else {
-		buf = build_res_buf_from_sip_res ( p_msg, &buf_len);
+												/* buf maybe allo'ed*/
+
+		buf = build_res_buf_from_sip_res ( p_msg, &orp_len);
 		if (!buf) {
 			LOG(L_ERR, "ERROR: t_on_reply_received: "
 			"no mem for outbound reply buffer\n");
-			sip_msg_free( clone );
-			goto error;
+			goto error1;
 		}
 	}
 
 	/* *** stop timers *** */
-	rb=T->outbound_request[branch];
+	orq_rb=T->outbound_request[branch];
 	/* stop retransmission */
-	reset_timer( hash_table, &(rb->retr_timer));
+												/* timers reset */
+
+	reset_timer( hash_table, &(orq_rb->retr_timer));
 	/* stop final response timer only if I got a final response */
 	if ( msg_class>1 )
-		reset_timer( hash_table, &(rb->fr_timer));
+		reset_timer( hash_table, &(orq_rb->fr_timer));
 
 	LOCK_REPLIES( T );
    	/* if a got the first prov. response for an INVITE ->
@@ -487,58 +495,104 @@ int t_on_reply( struct sip_msg  *p_msg )
 	/* *** store and relay message as needed *** */
 	relay = t_should_relay_response( T , msg_status, branch, &save_clone );
 
+	if (relay >= 0 ) {
+		orp_rb= & T->outbound_response;
+		/* if there is no reply yet, initialize the structure */
+		if ( ! orp_rb->retr_buffer ) {
+			/*init retrans buffer*/
+			memset( orp_rb , 0 , sizeof (struct retrans_buff) );
+			if (update_sock_struct_from_via(  &(orp_rb->to), p_msg->via2 )==-1) {
+					UNLOCK_REPLIES( T );
+					start_fr = 1;
+					LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
+						"cannot lookup reply dst: %s\n",
+						p_msg->via2->host.s );
+					save_clone = 0;
+					goto error2;
+			}
+			orp_rb->retr_timer.tg=TG_RT;
+			orp_rb->fr_timer.tg=TG_FR;
+			orp_rb->retr_timer.payload = orp_rb;
+			orp_rb->fr_timer.payload =  orp_rb;
+			orp_rb->to.sin_family = AF_INET;
+			orp_rb->my_T = T;
+			orp_rb->status = p_msg->REPLY_STATUS;
+			/* allocate something more for the first message;
+			   subsequent messages will be longer and buffer
+			   reusing will save us a malloc lock */
+			alloc_len = orp_len + REPLY_OVERBUFFER_LEN ;
+		} else {
+			alloc_len = orp_len;
+		};
+
+		if (! (orp_rb->retr_buffer = (char *) shm_resize( orp_rb->retr_buffer, alloc_len ))) {
+			UNLOCK_REPLIES( T );
+			start_fr = 1;
+			save_clone = 0;
+			LOG(L_ERR, "ERROR: t_on_reply: cannot alloc shmem\n");
+			goto error2;
+		};
+
+		orp_rb->bufflen=orp_len;
+		memcpy( orp_rb->retr_buffer, buf, orp_len );
+	}; /* if relay ... */
+
 	if (save_clone) {
-		/* release previously hold message */
-		backup = T->inbound_response[branch];
-		T->inbound_response[branch] = clone;
+		T->inbound_response[branch]=clone;
 		T->tag=&(get_to(clone)->tag_value);
-	} else {
-		backup = NULL;
-		sip_msg_free( clone );
 	}
 
-	if (relay>=0 &&  
-	push_reply( T, relay , buf, buf_len ) == -1 ) {
-		/* restore original state first */
-		if (save_clone) T->inbound_response[branch] = backup;
-		/* restart FR */
-		start_fr=1;
-		goto cleanup;
+	/* update the status ... */
+	if ((T->status = p_msg->REPLY_STATUS) >=200 &&
+	/* ... and dst for a possible ACK if we are sending final downstream */
+		T->relaied_reply_branch==-1 ) {
+			memcpy( & T->ack_to, & T->outbound_request[ branch ]->to,
+			sizeof( struct sockaddr_in ) );
+   			T->relaied_reply_branch = branch;
 	}
 
+cleanup:
+	UNLOCK_REPLIES( T );
+	if (relay >= 0) {
+		SEND_PR_BUFFER( orp_rb, buf, orp_len );
+		t_update_timers_after_sending_reply( orp_rb );
+	}
 
 	/* *** ACK handling *** */
 	if ( is_invite )
 	{
 		if ( T->outbound_ack[branch] )
 		{   /*retransmit*/
+			/* I don't need any additional syncing here -- after ack
+			   is introduced it's never changed */
 			SEND_BUFFER( T->outbound_ack[branch] );
-		} else if (msg_class>2 ) {   
-			/*on a non-200 reply to INVITE*/
-			DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE:"
-				" send ACK\n");
-			if ( t_build_and_send_ACK( T , branch , p_msg )==-1)
-			{
-				LOG( L_ERR , "ERROR: t_on_reply_received:"
-					" unable to send ACK\n" );
-				/* restart FR */
-				start_fr=1;
-			}
+		} else if (msg_class>2 ) {   /*on a non-200 reply to INVITE*/
+           		DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
+				ack_rb = build_ack( p_msg, T, branch );
+				if (ack_rb) {
+					SEND_BUFFER( ack_rb );
+					/* append to transaction structure */
+					attach_ack( T, branch, ack_rb );
+				} else {
+					/* restart FR */
+					start_fr=1;
+					DBG("ERROR: t_on_reply: build_ack failed\n");
+				}
 		}
-	}
-cleanup:
-	UNLOCK_REPLIES( T );
-	if (backup) sip_msg_free(backup);
-	if (buf) free( buf );
-	t_update_timers_after_sending_reply( rb );
-	if (start_fr) set_timer( hash_table, &(rb->fr_timer), FR_INV_TIMER_LIST );
+	} /* is_invite */
+
    	/* restart retransmission if a provisional response came for 
 	   a non_INVITE -> retrasmit at RT_T2*/
 	if ( msg_class==1 && !is_invite )
 	{
-		rb->retr_list = RT_T2;
-		set_timer( hash_table, &(rb->retr_timer), RT_T2 );
+		orq_rb->retr_list = RT_T2;
+		set_timer( hash_table, &(orq_rb->retr_timer), RT_T2 );
 	}
+error2:
+	if (start_fr) set_timer( hash_table, &(orq_rb->fr_timer), FR_INV_TIMER_LIST );
+	if (buf) free( buf );
+error1:
+	if (!save_clone) sip_msg_free( clone );
 error:
 	T_UNREF( T );
 	/* don't try to relay statelessly on error; on troubles, simply do nothing;

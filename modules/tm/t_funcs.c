@@ -689,7 +689,7 @@ int t_cancel_branch(unsigned int branch)
 
 
 
-
+#ifdef _REALLY_TOO_OLD
 /* Builds an ACK request based on an INVITE request. ACK is send
   * to same address */
 int t_build_and_send_ACK(struct cell *Trans,unsigned int branch,
@@ -821,6 +821,8 @@ error1:
 error:
 	return -1;
 }
+
+#endif /* _REALLY_TOO_OLD */
 
 
 
@@ -1236,3 +1238,146 @@ void delete_handler( void *attr)
 	delete_cell( p_cell );
     DBG("DEBUG: delete_handler : done\n");
 }
+
+#ifndef _REALLY_TOO_OLD
+
+/* Builds an ACK request based on an INVITE request. ACK is send
+  * to same address */
+struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int branch )
+{
+	struct sip_msg      *p_msg , *r_msg;
+	struct hdr_field    *hdr;
+	char                *ack_buf, *p, *via;
+	unsigned int         len, via_len;
+	int                  n;
+	struct retrans_buff *srb;
+
+	ack_buf = 0;
+	via =0;
+	p_msg = trans->inbound_request;
+	r_msg = rpl;
+
+	if ( parse_headers(rpl,HDR_TO)==-1 || !rpl->to )
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
+			"cannot generate a HBH ACK if key HFs in reply missing\n");
+		goto error;
+	}
+
+	len = 0;
+	/*first line's len */
+	len += 4/*reply code and one space*/+
+		p_msg->first_line.u.request.version.len+CRLF_LEN;
+	/*uri's len*/
+	if (p_msg->new_uri.s)
+		len += p_msg->new_uri.len +1;
+	else
+		len += p_msg->first_line.u.request.uri.len +1;
+	/*via*/
+	via = via_builder( p_msg , &via_len );
+	if (!via)
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_ACK: "
+			"no via header got from builder\n");
+		goto error;
+	}
+	len+= via_len;
+	/*headers*/
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+		if (hdr->type==HDR_FROM||hdr->type==HDR_CALLID||hdr->type==HDR_CSEQ)
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
+		else if ( hdr->type==HDR_TO )
+			len += ((r_msg->to->body.s+r_msg->to->body.len ) -
+				r_msg->to->name.s ) + CRLF_LEN ;
+	/* CSEQ method : from INVITE-> ACK */
+	len -= 3  ;
+	/* end of message */
+	len += CRLF_LEN; /*new line*/
+
+	srb=(struct retrans_buff*)sh_malloc(sizeof(struct retrans_buff)+len+1);
+	if (!srb)
+	{
+		LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
+		goto error1;
+	}
+	ack_buf = (char *) srb + sizeof(struct retrans_buff);
+	p = ack_buf;
+
+	/* first line */
+	memcpy( p , "ACK " , 4);
+	p += 4;
+	/* uri */
+	if ( p_msg->new_uri.s )
+	{
+		memcpy(p,p_msg->orig+(p_msg->new_uri.s-p_msg->buf),p_msg->new_uri.len);
+		p +=p_msg->new_uri.len;
+	}else{
+		memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
+			p_msg->first_line.u.request.uri.len );
+		p += p_msg->first_line.u.request.uri.len;
+	}
+	/* SIP version */
+	*(p++) = ' ';
+	memcpy(p,p_msg->orig+(p_msg->first_line.u.request.version.s-p_msg->buf),
+		p_msg->first_line.u.request.version.len );
+	p += p_msg->first_line.u.request.version.len;
+	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
+
+	/* insert our via */
+	memcpy( p , via , via_len );
+	p += via_len;
+
+	/*other headers*/
+	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
+	{
+		if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID  )
+		{
+			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
+				((hdr->body.s+hdr->body.len ) - hdr->name.s ) );
+			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
+			memcpy( p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
+		}
+		else if ( hdr->type==HDR_TO )
+		{
+			memcpy( p , r_msg->orig+(r_msg->to->name.s-r_msg->buf) ,
+				((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s));
+			p+=((r_msg->to->body.s+r_msg->to->body.len)-r_msg->to->name.s);
+			memcpy( p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
+		}
+		else if ( hdr->type==HDR_CSEQ )
+		{
+			memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) ,
+				((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s));
+			p+=((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s);
+			memcpy( p , "ACK" CRLF, 3+CRLF_LEN );
+			p += 3+CRLF_LEN;
+		}
+	}
+
+	/* end of message */
+	memcpy( p , CRLF , CRLF_LEN );
+	p += CRLF_LEN;
+
+	/* fill in the structure */
+	srb->bufflen = p-ack_buf;
+	srb->tolen = sizeof( struct sockaddr_in );
+	srb->my_T = trans;
+	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
+	memcpy( &srb->to, & trans->outbound_request[ branch ]->to, sizeof (struct sockaddr_in));
+
+	pkg_free( via );
+	DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
+	return srb;
+
+error1:
+	pkg_free(via );
+error:
+	return 0;
+}
+
+#endif
+
+

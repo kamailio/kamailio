@@ -277,7 +277,22 @@ void final_response_handler( void *);
 void wait_handler( void *);
 void delete_handler( void *);
 
-inline int static send_ack( struct cell *t, int branch, 
+inline int static attach_ack(  struct cell *t, int branch,
+    struct retrans_buff *srb )
+{
+	LOCK_ACK( t );
+	if (t->outbound_ack[branch]) {
+		UNLOCK_ACK(t);
+		shm_free( srb );
+		LOG(L_WARN, "attach_ack: Warning: ACK already sent out\n");
+		return 0;
+	}
+	t->outbound_ack[branch] = srb;
+	UNLOCK_ACK( t );
+	return 1;
+}
+
+inline int static relay_ack( struct cell *t, int branch, 
 	struct retrans_buff *srb, int len )
 {
 	memset( srb, 0, sizeof( struct retrans_buff ) );
@@ -287,18 +302,10 @@ inline int static send_ack( struct cell *t, int branch,
 	srb->branch = branch;
 	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
 	srb->bufflen = len;
-	LOCK_ACK( t );
-	if (t->outbound_ack[branch]) {
-		UNLOCK_ACK(t);
-		shm_free( srb );	
-		LOG(L_WARN, "send_ack: Warning: ACK already sent out\n");
-		return 0;
-	}
-	t->outbound_ack[branch] = srb;
 	SEND_BUFFER( srb );
-	UNLOCK_ACK( t );
-	return 1;
+	return attach_ack( t, branch, srb );
 }
 
+struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int branch );
 
 #endif
