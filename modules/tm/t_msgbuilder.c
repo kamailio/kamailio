@@ -329,8 +329,3 @@ int t_calc_branch(struct cell *t,
 			b, branch, branch_len );
 }
 
-int t_setbranch( struct cell *t, struct sip_msg *msg, int b )
-{
-	return t_calc_branch( t, b, 
-		msg->add_to_branch_s, &msg->add_to_branch_len );
-}

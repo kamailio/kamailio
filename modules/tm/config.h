@@ -94,8 +94,4 @@
 */
 #undef ACK_FORKING_HACK
 
-/* magic cookie for transaction matching as defined in RFC3261 */
-#define MCOOKIE "z9hG4bK"
-#define MCOOKIE_LEN (sizeof(MCOOKIE)-1)
-
 #endif

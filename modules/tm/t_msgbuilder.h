@@ -80,7 +80,6 @@ char *build_uac_request(  str msg_type, str dst, str from,
 
 int t_calc_branch(struct cell *t,
 	int b, char *branch, int *branch_len);
-int t_setbranch( struct cell *t, struct sip_msg *msg, int b );
 
 
 #endif

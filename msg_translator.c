@@ -786,6 +786,7 @@ int branch_builder( unsigned int hash_index,
 	char *begin;
 	int size;
 
+#ifdef _OBSOLETED
 	/* no hash_id --- whoever called me wants to have
 	   very simple branch_id
 	*/
@@ -794,11 +795,16 @@ int branch_builder( unsigned int hash_index,
 		*len=1;
 		return *len;
 	}
+#endif
 
 	/* hash id provided ... start with it */
 	size=MAX_BRANCH_PARAM_LEN;
 	begin=branch_str;
 	*len=0;
+
+	memcpy(begin, MCOOKIE, MCOOKIE_LEN );
+	size-=MCOOKIE_LEN;begin+=MCOOKIE_LEN;
+
 	if (int2reverse_hex( &begin, &size, hash_index)==-1)
 		return 0;
 

@@ -507,8 +507,20 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 	if (!(p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s))
 		goto nomatch2;
 
+	/* we do RFC 3261 tid matching and want to see first if there is
+	 * magic cookie in branch */
+	if (p_msg->via1->branch->value.len<=MCOOKIE_LEN)
+		goto nomatch2;
+	if (memcmp(p_msg->via1->branch->value.s, MCOOKIE, MCOOKIE_LEN)!=0)
+		goto nomatch2;
+
+	p=p_msg->via1->branch->value.s+MCOOKIE_LEN;
+	scan_space=p_msg->via1->branch->value.len-MCOOKIE_LEN;
+
+#ifdef OBSOLETED
 	p=p_msg->via1->branch->value.s;
 	scan_space=p_msg->via1->branch->value.len;
+#endif
 
 
 	/* hash_id */

@@ -142,4 +142,11 @@
 #define FIFO_REPLY_RETRIES	4
 #define FIFO_REPLY_WAIT		80000
 
+/* magic cookie for transaction matching as defined in RFC3261 */
+#define MCOOKIE "z9hG4bK"
+#define MCOOKIE_LEN (sizeof(MCOOKIE)-1)
+/* Maximum length of values appended to Via-branch parameter */
+#define MAX_BRANCH_PARAM_LEN  (MCOOKIE_LEN+48)
+
+
 #endif

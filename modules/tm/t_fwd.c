@@ -65,7 +65,9 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	shbuf=0;
 
 	/* ... we calculate branch ... */	
-	if (!t_setbranch( t, i_req, branch )) {
+	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
+			&i_req->add_to_branch_len ))
+	{
 		LOG(L_ERR, "ERROR: print_uac_request: branch computation failed\n");
 		goto error01;
 	}
