@@ -177,5 +177,5 @@ static void destroy(void)
 	/* Destroy is called from the main process only,
 	 * there is no need to close database here because
 	 * it is closed in mod_init already
-	 * /
+	 */
 }
