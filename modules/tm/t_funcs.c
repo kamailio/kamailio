@@ -322,7 +322,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch]->my_T =  T;
       T->nr_of_outgoings = 1;
 
-      if (add_branch_label( T, p_msg , branch )==-1) return -1;
+      if ( add_branch_label( T, T->inbound_request , branch )==-1) return -1;
+      if ( add_branch_label( T, p_msg , branch )==-1) return -1;
       if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len))) goto error;
       T->outbound_request[branch]->bufflen = len ;
       if ( !(T->outbound_request[branch]->retr_buffer   = (char*)sh_malloc( len ))) {
@@ -1196,7 +1197,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    /* end of message */
    len += CRLF_LEN; /*new line*/
 
-   ack_buf = (char *)malloc( len +1);
+   ack_buf = (char *)pkg_malloc( len +1);
    if (!ack_buf)
    {
        LOG(L_ERR, "ERROR: t_build_and_send_ACK: cannot allocate memory\n");
@@ -1258,13 +1259,13 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
    DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
 
    /* free mem*/
-   if (ack_buf) free( ack_buf );
-   if (via) free(via );
+   if (ack_buf) pkg_free( ack_buf );
+   if (via) pkg_free(via );
    return 0;
 
 error:
    if (ack_buf) free( ack_buf );
-   if (via) free(via );
+   if (via) pkg_free(via );
    return -1;
 }
 
