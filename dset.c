@@ -85,3 +85,59 @@ int append_branch( struct sip_msg *msg, char *uri, int uri_len )
 	nr_branches++;
 	return 1;
 }
+
+
+
+char *create_dset( struct sip_msg *msg, int *len ) 
+{
+	int cnt;
+	str uri;
+	char *p;
+	int i;
+	static char dset[MAX_REDIRECTION_LEN];
+
+	if (msg->new_uri.s) {
+		cnt=1;
+		*len=msg->new_uri.len;
+	} else {
+		cnt=0;
+		*len=0;
+	}
+
+	init_branch_iterator();
+	while ((uri.s=next_branch(&uri.len))) {
+		cnt++;
+		*len+=uri.len;
+	}
+
+	if (cnt==0) return 0;	
+
+	*len+=CONTACT_LEN+CRLF_LEN+(cnt-1)*CONTACT_DELIM_LEN;
+
+	if (*len+1>MAX_REDIRECTION_LEN) {
+		LOG(L_ERR, "ERROR: redirection buffer length exceed\n");
+		return 0;
+	}
+
+	memcpy(dset, CONTACT, CONTACT_LEN );
+	p=dset+CONTACT_LEN;
+	if (msg->new_uri.s) {
+		memcpy(p, msg->new_uri.s, msg->new_uri.len);
+		p+=msg->new_uri.len;
+		i=1;
+	} else i=0;
+
+	init_branch_iterator();
+	while ((uri.s=next_branch(&uri.len))) {
+		if (i) {
+			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN );
+			p+=2;
+		}
+		memcpy(p, uri.s, uri.len);
+		p+=uri.len;
+		i++;
+	}
+	memcpy(p, CRLF " ", CRLF_LEN+1);
+	return dset;
+}
+

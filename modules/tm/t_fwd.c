@@ -339,7 +339,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 			lowest_ret=branch_ret;
 	}
 
-	init_branch_iterator(p_msg);
+	init_branch_iterator();
 	while((current_uri.s=next_branch( &current_uri.len))) {
 		branch_ret=add_uac( t, p_msg, &current_uri, proxy );
 		/* pick some of the errors in case things go wrong;

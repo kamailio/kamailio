@@ -7,6 +7,13 @@
 
 #include "config.h"
 
+#define CONTACT "Contact: "
+#define CONTACT_LEN 9
+#define CONTACT_DELIM ", "
+#define CONTACT_DELIM_LEN 2
+
+char *create_dset( struct sip_msg *msg, int *len );
+
 struct branch
 {
 	char uri[MAX_URI_SIZE];
