@@ -94,7 +94,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 				/* check the number of attributes */
 				if (NR_OF_ATTR(kid)!=1) {
 					LOG(L_ERR,"ERROR:run_address_switch: incorect nr of attrs "
-						"(%d) in ADDRESS node -> skipping\n",NR_OF_ATTR(kid));
+						"(%d) in ADDRESS node\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
 				/* get the attribute name */
@@ -104,7 +104,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR &&
 				attr_name!=SUBDOMAIN_OF_ATTR) {
 					LOG(L_ERR,"ERROR:run_address_switch: unknown attribut "
-						"(%d) in ADDRESS node ->skipping branch\n",attr_name);
+						"(%d) in ADDRESS node\n",attr_name);
 					goto script_error;
 				}
 				/* get attribute value */
@@ -829,12 +829,101 @@ script_error:
 
 
 
+inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
+{
+	char *c;
+	char *end;
+	str tag = {0,0};
+	str subtag = {0,0};
+
+	c = range->s;
+	end = range->s + range->len;
+
+	while(c<end) {
+		/* eat all spaces to first letter */
+		while(c<end && (*c==' ' || *c=='\t')) c++;
+		if (c==end) goto error;
+		/* init tag and subtag */
+		tag.len = 0;
+		subtag.len = 0;
+		/* get the tag */
+		tag.s = c;
+		if (*c=='*' && (c+1==end||*(c+1)!='-')) {
+			tag.len++;
+			c++;
+		} else while (c<end && ((*c)|0x20)>='a' && ((*c)|0x20)<='z' ) {
+			/*DBG("--- tag ---> <%c>[%d]\n",*c,*c);*/
+			tag.len++;
+			c++;
+		}
+		if (tag.len==0) goto error;
+		if (c<end && *c=='-') {
+			/* go for the subtag */
+			subtag.s = ++c;
+			while (c<end && ((*c)|0x20)>='a' && ((*c)|0x20)<='z' ) {
+				/*DBG("--- subtag ---> <%c>[%d]\n",*c,*c);*/
+				subtag.len++;
+				c++;
+			}
+			if (subtag.len==0) goto error;
+		} else {
+			subtag.s = 0;
+		}
+		if (c<end && *c==';') {
+			/* eat all the params to the ',' */
+			while(c<end && *c!=',') c++;
+			if (c==end) goto no_matche;
+		}
+		while(c<end && (*c==' '||*c=='\t')) c++;
+		if (c==end || *c==',') {
+			/* do compare */
+			DBG("DEBUG:cpl-c:is_lang_tag_matching: testing range [%.*s]-[%.*s]"
+				" against tag [%.*s]-[%.*s]\n",
+				tag.len,tag.s,subtag.len,subtag.s,
+				cpl_tag->len,cpl_tag->s,cpl_subtag->len,cpl_subtag->s);
+			/* language range of "*" matches everything */
+			if (tag.len==1 && *tag.s=='*')
+				return 1;
+			/* does the language tag matches ? */
+			if (tag.len==cpl_tag->len && !memcmp(tag.s,cpl_tag->s,tag.len)) {
+				/* if the cpl_tag is void -> matche */
+				if (cpl_subtag->len==0)
+					return 1;
+				/* the subtags equals -> matche */
+				if (subtag.len==cpl_subtag->len &&
+				!memcmp(subtag.s,cpl_subtag->s,subtag.len) )
+					return 1;
+			}
+			/* if ',' go for the next language range */
+			if (*c==',') c++;
+		} else {
+			goto error;
+		}
+	}
+
+no_matche:
+	return 0;
+error:
+	LOG(L_ERR,"ERROR:cpl-c:is_lang_tag_matching: parse error in Accept-"
+		"Language body <%.*s> at char <%c>[%d] offset %d!\n",
+		range->len,range->s,*c,*c,c-range->s);
+	return -1;
+}
+
+
 
 inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
 {
+	unsigned char  *p;
 	unsigned char  *kid;
 	unsigned char  *not_present_node;
-	int i;
+	unsigned char  attr_name;
+	int nr_attr;
+	int i,j;
+	str attr = {0,0};
+	str msg_val = {0,0};
+	str lang_tag = {0,0};
+	str lang_subtag = {0,0};
 
 	not_present_node = 0;
 
@@ -859,8 +948,77 @@ inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
 				DBG("DEBUG:run_language_switch: matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case LANGUAGE_NODE :
-				LOG(L_ERR,"ERROR:cpl_c:run_language_switch: branch doesn't "
-					"matche\n");
+				/* check the number of attributes */
+				nr_attr = NR_OF_ATTR(kid);
+				if (nr_attr<1 || nr_attr>2) {
+					LOG(L_ERR,"ERROR:run_string_switch: incorect nr of attrs "
+						"(%d) in LANGUAGE node (1 or 2)\n",NR_OF_ATTR(kid));
+					goto script_error;
+				}
+				/* get the attributes */
+				p = ATTR_PTR(kid);
+				for(j=0;j<nr_attr;j++) {
+					/* get the attribute name */
+					check_overflow_by_ptr( p+2, intr, script_error);
+					attr_name = *(p++);
+					/* attribute's value's len */
+					attr.len = *((unsigned short*)(p));
+					check_overflow_by_ptr( p+1+attr.len, intr, script_error);
+					attr.s = ((attr.len)?(p+2):0);
+					p += 2+attr.len;
+					if (attr_name==MATCHES_TAG_ATTR ) {
+						lang_tag = attr;
+						DBG("DEBUG:cpl-c:run_language_string: language-tag is"
+							" [%.*s]\n",attr.len,attr.s);
+					}else if (attr_name==MATCHES_SUBTAG_ATTR) {
+						lang_subtag = attr;
+						DBG("DEBUG:cpl-c:run_language_string: language-subtag"
+							" is [%.*s]\n",attr.len,attr.s);
+					}else {
+						LOG(L_ERR,"ERROR:run_language_switch: unknown attribut"
+						" (%d) in LANGUAGE node\n",attr_name);
+						goto script_error;
+					}
+				}
+				
+				/* get the value from the SIP message -> if not yet, do it now
+				 * and rememer it for the next times */
+				if (!msg_val.s) {
+					if (intr->accept_language==STR_NOT_FOUND)
+						goto not_present;
+					if (!intr->accept_language) {
+						/* get the accept_language header */
+						if (!intr->msg->accept_language) {
+							if (parse_headers(intr->msg,
+							HDR_ACCEPTLANGUAGE,0)==-1) {
+								LOG(L_ERR,"ERROR:run_language_switch: "
+									"bad ACCEPT_LANGUAGE header\n");
+								goto runtime_error;
+							} else if (!intr->msg->accept_language) {
+								/* hdr not present */
+								intr->accept_language = STR_NOT_FOUND;
+								goto not_present;
+							}
+						}
+						intr->subject =
+							&(intr->msg->accept_language->body);
+					}
+				}
+				trim_len( msg_val.len,msg_val.s, *(intr->subject));
+				DBG("DEBUG:run_language_switch: extracted msg string is "
+					"<%.*s>\n",msg_val.len, msg_val.s);
+				
+				/* does the value from script match the one from message? */
+				if (msg_val.len && msg_val.s) {
+					j = is_lang_tag_matching(&msg_val,&lang_tag,&lang_subtag);
+					if (j==1) {
+						DBG("DEBUG:run_language_switch: matching on "
+							"LANGUAGE node\n");
+						return get_first_child(kid);
+					}else if (j==-1) {
+						goto runtime_error;
+					}
+				}
 				break;
 			default:
 				LOG(L_ERR,"ERROR:cpl_c:run_language_switch: unknown output "
@@ -871,6 +1029,21 @@ inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
 	} /* end for for all kids */
 
 	return DEFAULT_ACTION;
+not_present:
+	DBG("DEBUG:run_string_switch: required hdr not present in sip msg\n");
+	if (not_present_node)
+		return get_first_child(not_present_node);
+	/* look for the NOT_PRESENT node */
+	DBG("DEBUG:run_string_switch: searching for NOT_PRESENT sub-node..\n");
+	for(; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
+		if (NODE_TYPE(kid)==NOT_PRESENT_NODE)
+			return get_first_child(kid);
+	}
+	return DEFAULT_ACTION;
+runtime_error:
+	return CPL_RUNTIME_ERROR;
 script_error:
 	return CPL_SCRIPT_ERROR;
 }

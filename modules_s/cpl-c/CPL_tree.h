@@ -91,7 +91,8 @@
 #define  DISPALY_VAL                 3
 
 /* attributs and values for LANGUAGE node */
-#define  MATCHES_ATTR                0
+#define  MATCHES_TAG_ATTR            0
+#define  MATCHES_SUBTAG_ATTR         1
 
 /* attributs and values for TIME-SWITCH node */
 #define  TZID_ATTR                   0
