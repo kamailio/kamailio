@@ -472,7 +472,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 	if ((port)&&(*port==0)){
 		*port=(proto==PROTO_TLS)?SIPS_PORT:SIP_PORT; /* just in case we don't
 														find another */
-		if ((name->len+SRV_PREFIX_LEN+1)>MAX_DNS_NAME){
+		if ((name->len+SRV_MAX_PREFIX_LEN+1)>MAX_DNS_NAME){
 			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
 						" unable to perform SRV lookup\n", name->len);
 		}else{
@@ -490,19 +490,19 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 				case PROTO_NONE: /* no proto specified, use udp */
 					goto skip_srv;
 				case PROTO_UDP:
-					memcpy(tmp, SRV_UDP_PREFIX, SRV_PREFIX_LEN);
-					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_PREFIX_LEN + name->len] = '\0';
+					memcpy(tmp, SRV_UDP_PREFIX, SRV_UDP_PREFIX_LEN);
+					memcpy(tmp+SRV_UDP_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_UDP_PREFIX_LEN + name->len] = '\0';
 					break;
 				case PROTO_TCP:
-					memcpy(tmp, SRV_TCP_PREFIX, SRV_PREFIX_LEN);
-					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_PREFIX_LEN + name->len] = '\0';
+					memcpy(tmp, SRV_TCP_PREFIX, SRV_TCP_PREFIX_LEN);
+					memcpy(tmp+SRV_TCP_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_TCP_PREFIX_LEN + name->len] = '\0';
 					break;
 				case PROTO_TLS:
-					memcpy(tmp, SRV_TLS_PREFIX, SRV_PREFIX_LEN);
-					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
-					tmp[SRV_PREFIX_LEN + name->len] = '\0';
+					memcpy(tmp, SRV_TLS_PREFIX, SRV_TLS_PREFIX_LEN);
+					memcpy(tmp+SRV_TLS_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_TLS_PREFIX_LEN + name->len] = '\0';
 					break;
 				default:
 					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",

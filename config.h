@@ -26,7 +26,8 @@
  *
  * History:
  * --------
- * 2003-04-05 DEFAULT_*_URL introduced (jiri)
+ * 2003-04-05  DEFAULT_*_URL introduced (jiri)
+ * 2003-07-04  fixed SRV lookup prefix for TLS/sips (andrei)
  */
 
 
@@ -106,8 +107,11 @@
 
 #define SRV_UDP_PREFIX "_sip._udp."
 #define SRV_TCP_PREFIX "_sip._tcp."
-#define SRV_TLS_PREFIX "_sip._tls."
-#define SRV_PREFIX_LEN 10
+#define SRV_TLS_PREFIX "_sips._tcp."
+#define SRV_UDP_PREFIX_LEN 10
+#define SRV_TCP_PREFIX_LEN 10
+#define SRV_TLS_PREFIX_LEN 11
+#define SRV_MAX_PREFIX_LEN 11
 
 /*used only if PKG_MALLOC is defined*/
 #define PKG_MEM_POOL_SIZE 1024*1024
