@@ -149,7 +149,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 #-DNO_LOG
 
 #PROFILE=  -pg #set this if you want profiling
-mode = debug
+#mode = debug
 ifeq ($(mode),)
 	mode = release
 endif
