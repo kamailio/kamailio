@@ -275,16 +275,26 @@ no_id:
 			/* create tcp connection */
 			if ((c=tcpconn_connect(to))==0){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
-				return 0;
+				return -1;
 			}
 			c->refcnt++;
+			fd=c->s;
 			
 			/* send the new tcpconn to "tcp main" */
 			response[0]=(long)c;
 			response[1]=CONN_NEW;
 			n=write(unix_tcp_sock, response, sizeof(response));
+			if (n<0){
+				LOG(L_ERR, "BUG: tcp_send: failed write: %s (%d)\n",
+						strerror(errno), errno);
+				goto end;
+			}	
 			n=send_fd(unix_tcp_sock, &c, sizeof(c), c->s);
-			fd=c->s;
+			if (n<0){
+				LOG(L_ERR, "BUG: tcp_send: failed send_fd: %s (%d)\n",
+						strerror(errno), errno);
+				goto end;
+			}
 			goto send_it;
 		}
 get_fd:
@@ -295,8 +305,18 @@ get_fd:
 			response[0]=(long)c;
 			response[1]=CONN_GET_FD;
 			n=write(unix_tcp_sock, response, sizeof(response));
+			if (n<0){
+				LOG(L_ERR, "BUG: tcp_send: failed to get fd(write):%s (%d)\n",
+						strerror(errno), errno);
+				goto release_c;
+			}
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
 			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd);
+			if (n<0){
+				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
+							" %s (%d)\n", strerror(errno), errno);
+				goto release_c;
+			}
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
 		
 	
@@ -305,7 +325,9 @@ send_it:
 	DBG("tcp_send: sending...\n");
 	n=write(fd, buf, len);
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
+end:
 	close(fd);
+release_c:
 	tcpconn_put(c); /* release c (lock; dec refcnt; unlock) */
 	return n;
 }
