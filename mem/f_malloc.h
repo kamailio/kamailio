@@ -1,6 +1,6 @@
 /* $Id$
  *
- * simple, very fast, & dummy malloc library
+ * simple, very fast, malloc library
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *

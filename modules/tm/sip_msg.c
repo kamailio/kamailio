@@ -192,11 +192,21 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 						len+=ROUND4(sizeof(struct via_param ));
 				}
 				break;
-			case HDR_PROXYAUTH:
-				/* we frequently parse this HF but don't use it in TM --
-				   just keep silent about it
-				*/
+			
+			case HDR_CALLID:
+			case HDR_FROM:
+			case HDR_CONTACT:
+			case HDR_MAXFORWARDS:
+			case HDR_ROUTE:
+			case HDR_RECORDROUTE:
+			case HDR_CONTENTTYPE:
+			case HDR_CONTENTLENGTH:
+			case HDR_PROXYREQUIRE:
+			case HDR_UNSUPPORTED:
+			case HDR_ALLOW:
+				/* we ignore them for now even if they have something parsed*/
 				break;
+
 			default:
 				if (hdr->parsed) {
 					LOG(L_WARN, "WARNING: sip_msg_cloner: "
@@ -231,7 +241,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 
 	/*length of reply lump structures*/
 	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
-		len+=rpl_lump->text.len;
+			len+=ROUND4(sizeof(struct lump_rpl))+ROUND4(rpl_lump->text.len);
 
 	p=(char *)shm_malloc(len);foo=p;
 	if (!p)
@@ -504,10 +514,10 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
 	{
 		*(rpl_lump_anchor)=(struct lump_rpl*)p;
-		p+=sizeof( struct lump_rpl );
+		p+=ROUND4(sizeof( struct lump_rpl ));
 		(*rpl_lump_anchor)->text.len = rpl_lump->text.len;
 		(*rpl_lump_anchor)->text.s=p;
-		p+=rpl_lump->text.len;
+		p+=ROUND4(rpl_lump->text.len);
 		memcpy((*rpl_lump_anchor)->text.s,rpl_lump->text.s,rpl_lump->text.len);
 		(*rpl_lump_anchor)->next=0;
 		rpl_lump_anchor = &((*rpl_lump_anchor)->next);
