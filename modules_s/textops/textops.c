@@ -91,9 +91,9 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 	if (pmatch.rm_so!=-1){
 		if ((l=anchor_lump(&msg->add_rm, pmatch.rm_eo, 0, 0))==0)
 			return -1;
+		return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
 	}
-
-	return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
+	return -1;
 }
 
 
@@ -108,8 +108,9 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 		if ((l=del_lump(&msg->add_rm, pmatch.rm_so,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
+		return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
 	}
-	return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
+	return -1;
 }
 
 
@@ -123,7 +124,7 @@ static int fixup_regex(void** param, int param_no)
 	if ((re=malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
 	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
 		free(re);
-		LOG(L_ERR, "ERROR: %s : bad re %s\n",my_exports.name,(char*)(*param));
+		LOG(L_ERR, "ERROR: %s : bad re %s\n", my_exports.name, (char*)*param);
 		return E_BAD_RE;
 	}
 	/* free string */
