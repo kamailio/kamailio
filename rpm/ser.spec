@@ -139,7 +139,7 @@ fi
 
 %changelog
 * Sun Sep 08 2002 Jan Janak <J.Janak@sh.cvut.cz>
-- Created additional package containg mysql connectivity support.
+- Created subpackage containing mysql connectivity support.
 
 * Mon Sep 02 2002 Jan Janak <J.Janak@sh.cvut.cz>
 - gen_ha1 utility added, scripts added.
