@@ -30,8 +30,11 @@
 
 #include <time.h>
 #include <string.h>
+#include <sys/types.h>
+#include <netinet/in.h>
 #include "../../md5global.h"
 #include "../../md5.h"
+#include "../../dprint.h"
 #include "nonce.h"
 #include "rfc2617.h"
 
@@ -45,18 +48,21 @@ static inline void int2hex(char* _d, int _s)
 {
 	int i;
 	unsigned char j;
-	char* s = (char*)&_s;
+	char* s;
+
+	_s = htonl(_s);
+	s = (char*)&_s;
     
 	for (i = 0; i < 4; i++) {
 		
-		j = (s[4 - i - 1] >> 4) & 0xf;
+		j = (s[i] >> 4) & 0xf;
 		if (j <= 9) {
 			_d[i * 2] = (j + '0');
 		} else { 
 			_d[i * 2] = (j + 'a' - 10);
 		}
 
-		j = s[4 - i - 1] & 0xf;
+		j = s[i] & 0xf;
 		if (j <= 9) {
 			_d[i * 2 + 1] = (j + '0');
 		} else {
@@ -109,6 +115,11 @@ inline void calc_nonce(char* _nonce, int _expires, int _retry, str* _secret)
 	MD5Update(&ctx, _secret->s, _secret->len);
 	MD5Final(bin, &ctx);
 	cvt_hex(bin, _nonce + 16);
+
+	DBG("calc_nonce(): _expires=%d, _retry=%d, _secret=%.*s -> "
+	    "nonce=[%s]\n",
+	    _expires, _retry, _secret->len, _secret->s, _nonce);
+
 }
 
 
@@ -153,6 +164,9 @@ int check_nonce(str* _nonce, str* _secret)
 
 	calc_nonce(non, expires, retry, _secret);
 
+	DBG("check_nonce(): comparing [%.*s] and [%.*s]\n",
+	    _nonce->len, _nonce->s, NONCE_LEN, non);
+	
 	if (!memcmp(non, _nonce->s, _nonce->len)) {
 		return 0;
 	}
