@@ -1,0 +1,42 @@
+#
+# $Id$
+#
+
+
+
+This is mostly an example module. It implements text based operation (search,
+replace, append a.s.o).
+
+
+Exported Functions:
+------------------
+
+
+Name:	search(re)
+Params:	re  - regular expression
+Desc:	Searches for the re in the message
+Example:	if ( search("[Ss][Ee][Rr]" ) { /*....*/ }
+
+
+Name:	search_append(re, txt)
+Params:	re  - regular expression
+       	txt - string
+Desc:	Searches for the first match of re and appends txt after it
+Example:	search_append("[Ss]er", " blabla")
+
+
+Name:	replace(re, txt)
+Params:	re  - regular expression
+       	txt - replacement string
+Desc:	replaces the first occurence of re with txt
+Example:	replace("ser", "Sip Express Router")
+
+
+Name:	append_to_reply(txt)
+Params:	txt - string
+Desc:	append txt to the reply?
+
+
+Name:	append_hf(txt)
+Params:	txt - string (usually a new header)
+Desc:	appends txt after the last header field

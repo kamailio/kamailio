@@ -12,6 +12,7 @@
 static int print_f(struct sip_msg*, char*,char*);
 static int mod_init(void);
 
+/* the parameters are not used, they are only meant as an example*/
 char* str_param;
 int int_param;
 

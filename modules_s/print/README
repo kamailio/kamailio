@@ -1,0 +1,35 @@
+#
+# $Id$
+#
+
+
+
+This is an example module. It implements only one function that prints its
+ string parameter to stdout (it won't work if ser is started in dameon mode).
+It also shows how module parameters can be declared.
+
+
+Exported parameters:
+-------------------
+
+
+Name:	str_param
+Type:	string
+Default:null
+Desc:	not used, just an example
+
+
+Name:	int_param
+Type:	int
+Default:0
+Desc:	not used, just an example
+
+
+Exported Functions:
+------------------
+
+
+Name:	print(txt)
+Params:	txt  - string
+Desc:	Prints string to stdout
+Example:	print("The answer is 42")
