@@ -69,6 +69,7 @@
  *             UAC transactions (jiri)
  * 2003-04-07  new transactions inherit on_negative and on_relpy from script
  *             variables on instatntiation (jiri)
+ * 2003-04-30  t_newtran clean up (jiri)
  */
 
 
@@ -919,6 +920,59 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 }
 
 
+static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
+{
+	struct sip_msg *shm_msg;
+
+	shm_msg=new_cell->uas.request;
+	new_cell->from.s=shm_msg->from->name.s;
+	new_cell->from.len=HF_LEN(shm_msg->from);
+	new_cell->to.s=shm_msg->to->name.s;
+	new_cell->to.len=HF_LEN(shm_msg->to);
+	new_cell->callid.s=shm_msg->callid->name.s;
+	new_cell->callid.len=HF_LEN(shm_msg->callid);
+	new_cell->cseq_n.s=shm_msg->cseq->name.s;
+	new_cell->cseq_n.len=get_cseq(shm_msg)->number.s
+		+get_cseq(shm_msg)->number.len
+		-shm_msg->cseq->name.s;
+
+	new_cell->method=new_cell->uas.request->first_line.u.request.method;
+	new_cell->is_invite=p_msg->REQ_METHOD==METHOD_INVITE;
+	new_cell->on_negative=get_on_negative();
+	new_cell->on_reply=get_on_reply();
+}
+
+static inline int new_t(struct sip_msg *p_msg)
+{
+	struct cell *new_cell;
+
+	/* for ACK-dlw-wise matching, we want From-tags */
+	if (p_msg->REQ_METHOD==METHOD_INVITE && parse_from_header(p_msg)<0) {
+			LOG(L_ERR, "ERROR: new_t: no valid From in INVITE\n");
+			return E_BAD_REQ;
+	}
+	/* make sure uri will be parsed before cloning */
+	if (parse_sip_msg_uri(p_msg)<0) {
+		LOG(L_ERR, "ERROR: new_t: uri invalid\n");
+		return E_BAD_REQ;
+	}
+			
+	/* add new transaction */
+	new_cell = build_cell( p_msg ) ;
+	if  ( !new_cell ){
+		LOG(L_ERR, "ERROR: new_t: out of mem:\n");
+		return E_OUT_OF_MEM;
+	} 
+
+	insert_into_hash_table_unsafe( new_cell );
+	set_t(new_cell);
+	INIT_REF_UNSAFE(T);
+	/* init pointers to headers needed to construct local
+	   requests such as CANCEL/ACK
+	*/
+	init_new_t(new_cell, p_msg);
+	return 1;
+}
 
 /* atomic "new_tran" construct; it returns:
 
@@ -936,11 +990,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 int t_newtran( struct sip_msg* p_msg )
 {
 
-	int ret, lret, my_err;
-	struct cell *new_cell;
-	struct sip_msg *shm_msg;
-
-	ret=1;
+	int lret, my_err;
 
 	/* is T still up-to-date ? */
 	DBG("DEBUG: t_addifnew: msg id=%d , global msg id=%d ,"
@@ -954,13 +1004,11 @@ int t_newtran( struct sip_msg* p_msg )
 
 	global_msg_id = p_msg->id;
 	T = T_UNDEFINED;
-	/* first of all, parse everything -- we will store
-	   in shared memory and need to have all headers
-	   ready for generating potential replies later;
-	   parsing later on demand is not an option since
-	   the request will be in shmem and applying 
-	   parse_headers to it would intermix shmem with
-	   pkg_mem
+	/* first of all, parse everything -- we will store in shared memory 
+	   and need to have all headers ready for generating potential replies 
+	   later; parsing later on demand is not an option since the request 
+	   will be in shmem and applying parse_headers to it would intermix 
+	   shmem with pkg_mem
 	*/
 	
 	if (parse_headers(p_msg, HDR_EOH, 0 )) {
@@ -976,117 +1024,80 @@ int t_newtran( struct sip_msg* p_msg )
 	   safe to assume we have from/callid/cseq/to
 	*/ 
 	lret = t_lookup_request( p_msg, 1 /* leave locked if not found */ );
-	/* on error, pass the error in the stack ... */
+
+	/* on error, pass the error in the stack ... nothing is locked yet
+	   if 0 is returned */
 	if (lret==0) return E_BAD_TUPEL;
-	/* transaction not found, it's a new request;
-	   establish a new transaction (unless it is an ACK) */
-	if (lret<0) {
-		new_cell=0;
-		if ( p_msg->REQ_METHOD!=METHOD_ACK ) {
-			/* REVIEW */
-			/* for ACK-dlw-wise matching, we want From-tags */
-			if (p_msg->REQ_METHOD==METHOD_INVITE) {
-				if (parse_from_header(p_msg)<0) {
-					LOG(L_ERR, "ERROR: t_newtran: no valid From\n");
-					my_err=E_BAD_REQ;
-					goto new_err;
-				}
-			}
-			/* REVIEW */
-			/* make sure uri will be parsed before cloning */
-			if (parse_sip_msg_uri(p_msg)<0) {
-				LOG(L_ERR, "ERROR: t_new_tran: uri invalid\n");
-				my_err=E_BAD_REQ;
-				goto new_err;
-			}
-			
-			/* add new transaction */
-			new_cell = build_cell( p_msg ) ;
-			if  ( !new_cell ){
-				LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
-				my_err = E_OUT_OF_MEM;
-				goto new_err;
-			} else {
-				insert_into_hash_table_unsafe( new_cell );
-				set_t(new_cell);
-				INIT_REF_UNSAFE(T);
-				/* init pointers to headers needed to construct local
-				   requests such as CANCEL/ACK
-				*/
 
-				shm_msg=new_cell->uas.request;
-				new_cell->from.s=shm_msg->from->name.s;
-				new_cell->from.len=HF_LEN(shm_msg->from);
-				new_cell->to.s=shm_msg->to->name.s;
-				new_cell->to.len=HF_LEN(shm_msg->to);
-				new_cell->callid.s=shm_msg->callid->name.s;
-				new_cell->callid.len=HF_LEN(shm_msg->callid);
-				new_cell->cseq_n.s=shm_msg->cseq->name.s;
-				new_cell->cseq_n.len=get_cseq(shm_msg)->number.s
-					+get_cseq(shm_msg)->number.len
-					-shm_msg->cseq->name.s;
-
-				new_cell->method=new_cell->uas.request->first_line.u.request.method;
-				new_cell->is_invite=p_msg->REQ_METHOD==METHOD_INVITE;
-				new_cell->on_negative=get_on_negative();
-				new_cell->on_reply=get_on_reply();
-
-			}
-
+	/* transaction found, it's a retransmission  */
+	if (lret>0) {
+		if (p_msg->REQ_METHOD==METHOD_ACK) {
+			t_release_transaction(T);
+		} else {
+			t_retransmit_reply(T);
 		}
+		/* things are done -- return from script */
+		return 0;
+	}
 
-		/* was it an e2e ACK ? if so, trigger a callback */
-		if (lret==-2) {
-				/* no callbacks? complete quickly */
-				if (!callback_array[TMCB_E2EACK_IN]) {
-					UNLOCK_HASH(p_msg->hash_index);
-				} else {
-					REF_UNSAFE(t_ack);
-					UNLOCK_HASH(p_msg->hash_index);
-					/* we don't call from within REPLY_LOCK -- that introduces
-				   	   a race condition; however, it is so unlikely and the
-				   	   impact is so small (callback called multiple times of
-			           multiple ACK/200s received in parallel), that we do not
-				   	    better waste time in locks
-					 */
-					if (unmatched_totag(t_ack, p_msg)) {
-						callback_event( TMCB_E2EACK_IN, t_ack, p_msg, 
-							p_msg->REQ_METHOD );
-					}
-					UNREF(t_ack);
-				}
-		} else { /* not e2e ACK */
+	/* from now on, be careful -- hash table is locked */
+
+	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
+		/* no callbacks? complete quickly */
+		if (!callback_array[TMCB_E2EACK_IN]) {
 			UNLOCK_HASH(p_msg->hash_index);
-			/* now, when the transaction state exists, check if
-		 	   there is a meaningful Via and calculate it; better
-		 	   do it now than later: state is established so that
-		 	   subsequent retransmissions will be absorbed and will
-	 		   not possibly block during Via DNS resolution; doing
-			   it later would only burn more CPU as if there is an
-			   error, we cannot relay later whatever comes out of the
-  			   the transaction 
-			*/
-			if (new_cell && p_msg->REQ_METHOD!=METHOD_ACK) {
-				if (!init_rb( &T->uas.response, p_msg)) {
-					LOG(L_ERR, "ERROR: t_newtran: unresolveable via1\n");
-					put_on_wait( T );
-					t_unref(p_msg);
-					ret=E_BAD_VIA;
-				}
-			}
+			return 1;
+		} 
+		REF_UNSAFE(t_ack);
+		UNLOCK_HASH(p_msg->hash_index);
+		/* we don't call from within REPLY_LOCK -- that introduces
+	   	   a race condition; however, it is so unlikely and the
+	   	   impact is so small (callback called multiple times of
+           multiple ACK/200s received in parallel), that we do not
+	   	    better waste time in locks
+		 */
+		if (unmatched_totag(t_ack, p_msg)) {
+			callback_event( TMCB_E2EACK_IN, t_ack, p_msg, 
+				p_msg->REQ_METHOD );
 		}
-
-		return ret;
+		UNREF(t_ack);
+		return 1;
 	} 
 
-	/* transaction found, it's a retransmission  or hbh ACK */
-	if (p_msg->REQ_METHOD==METHOD_ACK) {
-		t_release_transaction(T);
-	} else {
-		t_retransmit_reply(T);
+
+	/* transaction not found, it's a new request (lret<0, lret!=-2);
+	   establish a new transaction ... */
+	if (p_msg->REQ_METHOD==METHOD_ACK) { /* ... unless it is in ACK */
+		my_err=1;
+		goto new_err;
 	}
-	/* things are done -- return from script */
-	return 0;
+
+	my_err=new_t(p_msg);
+	if (my_err<0) {
+		LOG(L_ERR, "ERROR: t_newtran: new_t failed\n");
+		goto new_err;
+	}
+
+
+	UNLOCK_HASH(p_msg->hash_index);
+	/* now, when the transaction state exists, check if
+ 	   there is a meaningful Via and calculate it; better
+ 	   do it now than later: state is established so that
+ 	   subsequent retransmissions will be absorbed and will
+  	  not possibly block during Via DNS resolution; doing
+	   it later would only burn more CPU as if there is an
+	   error, we cannot relay later whatever comes out of the
+  	   the transaction 
+	*/
+	if (!init_rb( &T->uas.response, p_msg)) {
+		LOG(L_ERR, "ERROR: t_newtran: unresolveable via1\n");
+		put_on_wait( T );
+		t_unref(p_msg);
+		return E_BAD_VIA;
+	}
+
+	return 1;
+
 
 new_err:
 	UNLOCK_HASH(p_msg->hash_index);
