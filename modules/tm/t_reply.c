@@ -300,7 +300,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			DBG("DEBUG: local transaction completed from _reply\n");
 			callback_event( TMCB_LOCAL_COMPLETED, trans, FAKED_REPLY, code );
 			if (trans->completion_cb) 
-				trans->completion_cb( trans, FAKED_REPLY, code, 0 /* empty param */);
+				trans->completion_cb( trans, FAKED_REPLY, code, trans->cbp);
 		} else {
 			callback_event( TMCB_RESPONSE_OUT, trans, FAKED_REPLY, code );
 		}
@@ -1016,7 +1016,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			callback_event( TMCB_LOCAL_COMPLETED, t, winning_msg, 
 				winning_code );
 			if (t->completion_cb) t->completion_cb( t, winning_msg, 
-						winning_code, 0 /* empty param */);
+						winning_code, t->cbp);
 		}
 	}
 	return reply_status;
