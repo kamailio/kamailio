@@ -42,7 +42,7 @@ if [ ! -e $LOCKF ] ; then
 		echo "  $BIN -s $SIPURI" >> $TMP2
 		echo "produced this output:" >> $TMP2
 		$BIN -s $SIPURI >> $TMP2 2>&1
-		if [ $? -ne 0 ] ; then
+		if [ $? -eq 1 ] ; then
 			echo "  $BIN -n -s $SIPURI" >> $TMP3
 			echo "produced this output:" >> $TMP3
 			$BIN -n -s $SIPURI >> $TMP3 2>&1
@@ -53,9 +53,10 @@ if [ ! -e $LOCKF ] ; then
 				echo "" >> $TMP
 				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
 				echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
-				echo "$LOCKF @ $HOSTN (you presumably need to be root to do this)" >> $TMP
+				echo "$LOCKF @ $HOSTN" >> $TMP
+				echo "(you presumably need to be root to do this)" >> $TMP
 				echo "" >> $TMP
-				echo "command output of sipsak with fqdn follows:" >> $TMP
+				echo "Command output of sipsak with fqdn follows:" >> $TMP
 				cat $TMP2 >> $TMP
 			else
 				echo "ser did not responses (fast enough) on requests with fqdn in Via" >> $TMP
@@ -64,13 +65,28 @@ if [ ! -e $LOCKF ] ; then
 				echo "" >> $TMP
 				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
 				echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
-				echo "$LOCKF @ $HOSTN (you presumably need to be root to do this)" >> $TMP
+				echo "$LOCKF @ $HOSTN" >> $TMP
+				echo "(you presumably need to be root to do this)" >> $TMP
 				echo "" >> $TMP
-				echo "first command output with fqdn follows then with IPs:" >> $TMP
+				echo "First command output with fqdn:" >> $TMP
 				cat $TMP2 >> $TMP
+				echo "" >> $TMP
+				echo "Second command output with IPs in Via:" >> $TMP
 				cat $TMP3 >> $TMP
 			fi
 			rm -f $TMP3
+			rm -f $TMP2
+		elif [ $? -eq 2 ] ; then
+			echo "The ser response test failed due to a local error on" >> $TMP
+			echo "host $HOSTN ." >> $TMP
+			echo "" >> $TMP
+			echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
+			echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
+			echo "$LOCKF @ $HOSTN" >> $TMP
+			echo "(you presumably need to be root to do this)" >> $TMP
+			echo "" >> $TMP
+			echo "Command output of sipsak with fqdn follows:" >> $TMP
+			cat $TMP2 >> $TMP
 			rm -f $TMP2
 		else
 			rm -f $TMP2
