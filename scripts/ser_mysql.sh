@@ -154,7 +154,7 @@ CREATE TABLE acc (
   i_uri varchar(128) NOT NULL default '',
   o_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
-  user varchar(64) NOT NULL default '',
+  username varchar(64) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL
 ) $TABLE_TYPE;
@@ -207,7 +207,7 @@ CREATE TABLE aliases (
 
 CREATE TABLE event (
   id int(10) unsigned NOT NULL auto_increment,
-  user varchar(50) NOT NULL default '',
+  username varchar(50) NOT NULL default '',
   uri varchar(255) NOT NULL default '',
   description varchar(255) NOT NULL default '',
   PRIMARY KEY (id)
@@ -267,7 +267,7 @@ CREATE TABLE missed_calls (
   i_uri varchar(128) NOT NULL default '',
   o_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
-  user varchar(64) NOT NULL default '',
+  username varchar(64) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL
 ) $TABLE_TYPE;
@@ -316,7 +316,7 @@ CREATE TABLE pending (
 
 CREATE TABLE phonebook (
   id int(10) unsigned NOT NULL auto_increment,
-  user varchar(50) NOT NULL default '',
+  username varchar(50) NOT NULL default '',
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
   sip_uri varchar(128) NOT NULL default '',
@@ -333,8 +333,8 @@ CREATE TABLE phonebook (
 
 
 CREATE TABLE reserved (
-  user char(100) NOT NULL default '',
-  UNIQUE KEY user2(user)
+  username char(100) NOT NULL default '',
+  UNIQUE KEY user2(username)
 ) $TABLE_TYPE;
 
 
@@ -376,7 +376,7 @@ CREATE TABLE subscriber (
 CREATE TABLE config (
    attribute varchar(32) NOT NULL,
    value varchar(128) NOT NULL,
-   user varchar(100) NOT NULL default '',
+   username varchar(100) NOT NULL default '',
    modified timestamp(14)
 ) $TABLE_TYPE;
 
