@@ -263,6 +263,10 @@ static int cpl_init(void)
 		LOG(L_CRIT,"ERROR:cpl_init: cannot register REMOVE_CPL fifo cmd!\n");
 		goto error;
 	}
+	if (register_fifo_cmd( cpl_get, "GET_CPL", 0)!=1) {
+		LOG(L_CRIT,"ERROR:cpl_init: cannot register GET_CPL fifo cmd!\n");
+		goto error;
+	}
 
 	/* build a pipe for sending commands to aux proccess */
 	if ( pipe(cpl_cmd_pipe)==-1 ) {
@@ -623,8 +627,8 @@ static inline int do_script_download(struct sip_msg *msg)
 {
 	struct lump_rpl *ct_type;
 	struct lump_rpl *body;
-	str  user;
-	str script;
+	str  user  = {0,0};
+	str script = {0,0};
 
 	/* get the destination user name */
 	if (get_dest_user( msg, &user)==-1)
@@ -644,7 +648,7 @@ static inline int do_script_download(struct sip_msg *msg)
 	}
 	add_lump_rpl(  msg, ct_type);
 
-	if (script.len!=0 && script.s!=0) {
+	if (script.s!=0) {
 		/*DBG("script len=%d\n--------\n%.*s\n--------\n",
 			script.len, script.len, script.s);*/
 		/* user has a script -> add a body lump */
@@ -655,6 +659,9 @@ static inline int do_script_download(struct sip_msg *msg)
 			cpl_err = &intern_err;
 			goto error;
 		}
+		/* build_lump_rpl duplicates the added text, so free the original */
+		shm_free( script.s );
+		/* add the lump */
 		if (add_lump_rpl( msg, body)==-1) {
 			LOG(L_CRIT,"BUG:cpl-c:do_script_download: body lump "
 				"already added\n");
@@ -665,6 +672,8 @@ static inline int do_script_download(struct sip_msg *msg)
 
 	return 0;
 error:
+	if (script.s)
+		shm_free(script.s);
 	return -1;
 }
 

@@ -79,10 +79,11 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script, char* key)
 			script->len = res->rows[0].values[0].val.blob_val.len;
 			script->s = shm_malloc( script->len );
 			if (!script->s) {
-				LOG(L_ERR,"ERROR:cpl-c:get_user_script: no more free sh_mem\n");
+				LOG(L_ERR,"ERROR:cpl-c:get_user_script: no free sh_mem\n");
 				goto error;
 			}
-			memcpy(script->s,res->rows[0].values[0].val.blob_val.s,script->len);
+			memcpy( script->s, res->rows[0].values[0].val.blob_val.s,
+				script->len);
 		}
 	}
 

@@ -36,6 +36,7 @@
 
 int cpl_load( FILE *fifo_stream, char *response_file );
 int cpl_remove( FILE *fifo_stream, char *response_file );
+int cpl_get( FILE *fifo_stream, char *response_file );
 
 #endif
 

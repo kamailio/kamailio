@@ -1445,10 +1445,15 @@ error:
 }
 
 
-#define BAD_XML      "CPL script is not a valid XML document"
-#define BAD_XML_LEN  (sizeof(BAD_XML)-1)
-#define BAD_CPL      "CPL script doesn't respect CPL grammar"
-#define BAD_CPL_LEN  (sizeof(BAD_CPL)-1)
+
+#define BAD_XML       "CPL script is not a valid XML document"
+#define BAD_XML_LEN   (sizeof(BAD_XML)-1)
+#define BAD_CPL       "CPL script doesn't respect CPL grammar"
+#define BAD_CPL_LEN   (sizeof(BAD_CPL)-1)
+#define NULL_CPL      "Empty CPL script"
+#define NULL_CPL_LEN  (sizeof(NULL_CPL)-1)
+#define ENC_ERR       "Encoding of the CPL script failed"
+#define ENC_ERR_LEN   (sizeof(ENC_ERR)-1)
 
 int encodeCPL( str *xml, str *bin, str *log)
 {
@@ -1467,27 +1472,28 @@ int encodeCPL( str *xml, str *bin, str *log)
 	doc = xmlParseDoc( (unsigned char*)xml->s );
 	if (!doc) {
 		append_log( 1, ERR BAD_XML LF, ERR_LEN+BAD_XML_LEN+LF_LEN);
-		LOG(L_ERR,"ERROR:cpl:encodeCPL:CPL script not parsed successfully\n");
+		LOG(L_ERR,"ERROR:cpl:encodeCPL:" BAD_XML "\n");
 		goto error;
 	}
 
 	/* check the xml against dtd */
 	if (xmlValidateDtd(&cvp, doc, dtd)!=1) {
 		append_log( 1, ERR BAD_CPL LF, ERR_LEN+BAD_CPL_LEN+LF_LEN);
-		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: CPL script do not matche DTD\n");
+		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: " BAD_CPL "\n");
 		goto error;
 	}
 
 	cur = xmlDocGetRootElement(doc);
 	if (!cur) {
-		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: empty CPL script!\n");
+		append_log( 1, ERR NULL_CPL LF, ERR_LEN+NULL_CPL_LEN+LF_LEN);
+		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: " NULL_CPL "\n");
 		goto error;
 	}
 
 	bin->len = encode_node( cur, buf, buf+ENCONDING_BUFFER_SIZE);
 	if (bin->len<0) {
-		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: zero lenght return by encripting"
-			" function\n");
+		append_log( 1, ERR ENC_ERR LF, ERR_LEN+ENC_ERR_LEN+LF_LEN);
+		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: " ENC_ERR "\n");
 		goto error;
 	}
 
@@ -1496,7 +1502,6 @@ int encodeCPL( str *xml, str *bin, str *log)
 	/* compile the log buffer */
 	compile_logs( log );
 	bin->s = buf;
-	/*write_to_file("cpl.dat", bin);  only for debugging */
 	return 1;
 error:
 	if (doc) xmlFreeDoc(doc);
@@ -1507,7 +1512,7 @@ error:
 }
 
 
-
+#if 0
 static void err_print(void *ctx, const char *msg, ...)
 {
 	va_list ap;
@@ -1522,7 +1527,7 @@ static void err_print(void *ctx, const char *msg, ...)
 	//append_log( 2, ERR, ERR_LEN, msg, strlen(msg) );
 	va_end(ap);
 }
-
+#endif
 
 
 /* loads and parse the dtd file; a validating context is created */

@@ -33,6 +33,7 @@
 
 
 #include <stdio.h>
+#include <sys/uio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -45,6 +46,7 @@
 #include "../../dprint.h"
 #include "../../fifo_server.h"
 #include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "cpl_db.h"
 #include "cpl_parser.h"
 #include "cpl_loader.h"
@@ -56,7 +58,7 @@ extern db_con_t* db_hdl;
 
 
 
-
+#if 0
 /* debug function -> write into a file the content of a str stuct. */
 int write_to_file(char *filename, str *buf)
 {
@@ -83,6 +85,7 @@ int write_to_file(char *filename, str *buf)
 error:
 	return -1;
 }
+#endif
 
 
 
@@ -157,28 +160,32 @@ error:
 
 
 
-/* Writes the cpl log into the given file.
+/* Writes an aray of texts into the given response file.
+ * Accepts also empty texts, case in which it will be created an empty
+ * response file.
  */
-void write_log_to_file( char *response_file, str *log )
+void write_to_file( char *file, str *txt, int n )
 {
 	int fd;
 
 	/* open file for write */
-	fd = open( response_file, O_WRONLY|O_CREAT|O_TRUNC/*|O_NOFOLLOW*/, 0600 );
+	fd = open( file, O_WRONLY|O_CREAT|O_TRUNC/*|O_NOFOLLOW*/, 0600 );
 	if (fd==-1) {
-		LOG(L_ERR,"ERROR:cpl-c:write_logs_to_file: cannot open response file "
-			"<%s>: %s\n", response_file, strerror(errno));
+		LOG(L_ERR,"ERROR:cpl-c:write_to_file: cannot open response file "
+			"<%s>: %s\n", file, strerror(errno));
 		return;
 	}
 
-	/* write the log */
+	/* write the txt, if any */
+	if (n>0) {
 again:
-	if ( write( fd, log->s, log->len)==-1) {
-		if (errno==EINTR) {
-			goto again;
-		} else {
-			LOG(L_ERR,"ERROR:cpl-c:write_logs_to_file: write failed: %s\n",
-				strerror(errno) );
+		if ( writev( fd, (struct iovec*)txt, n)==-1) {
+			if (errno==EINTR) {
+				goto again;
+			} else {
+				LOG(L_ERR,"ERROR:cpl-c:write_logs_to_file: writev failed: "
+					"%s\n", strerror(errno) );
+			}
 		}
 	}
 
@@ -200,6 +207,8 @@ again:
  * For the given user, loads the XML cpl file, compile it into binary format
  * and store both format into database
  */
+#define FILE_LOAD_ERR "Error: Cannot read CPL file.\n"
+#define DB_SAVE_ERR   "Error: Cannot save CPL to database.\n"
 int cpl_load( FILE *fifo_stream, char *response_file )
 {
 	static char user[MAX_STATIC_BUF];
@@ -208,9 +217,17 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	int cpl_file_len;
 	str xml = {0,0};
 	str bin = {0,0};
-	str log = {0,0};
+	str enc_log = {0,0};
+	str logs[2];
 
 	DBG("DEBUG:cpl-c:cpl_load: \"LOAD_CPL\" FIFO commnad received!\n");
+
+	/* check the name of the response file */
+	if (response_file==0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_load: no reply file received from "
+			"FIFO command\n");
+		goto error;
+	}
 
 	/* first line must be the username */
 	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
@@ -234,32 +251,41 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 
 	/* load the xml file - this function will allocted a buff for the loading
 	 * the cpl file and attach it to xml.s -> don't forget to free it! */
-	if (load_file( cpl_file, &xml)!=1)
-		goto error;
-
-	/* get the binary coding for the XML file */
-	if (encodeCPL( &xml, &bin, &log)!=1) {
-		if (log.len && log.s && response_file )
-			write_log_to_file( response_file, &log);
+	if (load_file( cpl_file, &xml)!=1) {
+		logs[1].s = FILE_LOAD_ERR;
+		logs[1].len = strlen( FILE_LOAD_ERR );
 		goto error1;
 	}
 
-	/* write both the XML and binary formats into database */
-	if (write_to_db( db_hdl, user, &xml, &bin)!=1)
+	/* get the binary coding for the XML file */
+	if (encodeCPL( &xml, &bin, &enc_log)!=1) {
+		logs[1] = enc_log;
 		goto error1;
+	}
+	logs[1] = enc_log;
+
+	/* write both the XML and binary formats into database */
+	if (write_to_db( db_hdl, user, &xml, &bin)!=1) {
+		logs[1].s = DB_SAVE_ERR;
+		logs[1].len = strlen( DB_SAVE_ERR );
+		goto error1;
+	}
 
 	/* free the memory used for storing the cpl script in XML format */
 	pkg_free( xml.s );
 
-	/* if any logs were generated -> dump them into response file */
-	if (log.len && log.s && response_file )
-		write_log_to_file( response_file, &log);
-
-	if (log.s) pkg_free ( log.s );
+	/* everything was OK -> dump the logs into response file */
+	logs[0].s = "OK\n";
+	logs[0].len = 3;
+	write_to_file( response_file, logs, 2);
+	if (enc_log.s) pkg_free ( enc_log.s );
 	return 1;
 error1:
-	if (log.s) pkg_free ( log.s );
-	pkg_free ( xml.s );
+	logs[0].s = "ERROR\n";
+	logs[0].len = 6;
+	write_to_file( response_file, logs, 2);
+	if (enc_log.s) pkg_free ( enc_log.s );
+	if (xml.s) pkg_free ( xml.s );
 error:
 	return -1;
 }
@@ -276,12 +302,21 @@ error:
  * For the given user, remove the entire database record
  * (XML cpl and binary cpl); user with empty cpl scripts are not accepted
  */
+#define DB_RMV_ERR   "Error: Database remove failed.\n"
 int cpl_remove( FILE *fifo_stream, char *response_file )
 {
 	static char user[MAX_STATIC_BUF];
 	int user_len;
+	str logs[2];
 
 	DBG("DEBUG:cpl-c:cpl_remove: \"REMOVE_CPL\" FIFO commnad received!\n");
+
+	/* check the name of the response file */
+	if (response_file==0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_remove: no reply file received from "
+			"FIFO command\n");
+		goto error;
+	}
 
 	/* first line must be the username */
 	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
@@ -293,13 +328,72 @@ int cpl_remove( FILE *fifo_stream, char *response_file )
 	user[user_len] = 0;
 	DBG("DEBUG:cpl-c:cpl_remove: user=%.*s\n",user_len,user);
 
-	if (rmv_from_db( db_hdl, user)!=1)
+	if (rmv_from_db( db_hdl, user)!=1) {
+		logs[1].s = DB_RMV_ERR;
+		logs[1].len = sizeof(DB_RMV_ERR);
+		goto error1;
+	}
+
+	logs[0].s = "OK\n";
+	logs[0].len = 3;
+	write_to_file( response_file, logs, 1);
+	return 1;
+error1:
+	logs[0].s = "ERROR\n";
+	logs[0].len = 6;
+	write_to_file( response_file, logs, 2);
+error:
+	return -1;
+}
+
+
+
+/* Triggered by fifo server -> implements GET_CPL command
+ * Command format:
+ * -----------------------
+ *   :GET_CPL:
+ *   username
+ *   <empty line>
+ * -----------------------
+ * For the given user, return the CPL script in XML format
+ */
+int cpl_get( FILE *fifo_stream, char *response_file )
+{
+	static char user_s[MAX_STATIC_BUF];
+	str user = {user_s,0};
+	str script = {0,0};
+
+	/* check the name of the response file */
+	if (response_file==0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_get: no reply file received from "
+			"FIFO command\n");
 		goto error;
+	}
+
+	/* first line must be the username */
+	if (read_line( user.s, MAX_STATIC_BUF-1 , fifo_stream, &user.len )!=1 ||
+	user.len<=0) {
+		LOG(L_ERR,"ERROR:cpl-c:cpl_get: unable to read username from "
+			"FIFO command\n");
+		goto error;
+	}
+	DBG("DEBUG:cpl-c:cpl_get: user=%.*s\n",user.len,user.s);
+
+	/* get the script for this user */
+	if (get_user_script( db_hdl, &user, &script, "cpl_xml")==-1)
+		goto error;
+
+	/* write the response into response file - even if script is null */
+	write_to_file( response_file, &script, !(script.len==0) );
+
+	if (script.s) shm_free( script.s );
 
 	return 1;
 error:
 	return -1;
 }
+
+
 
 #undef MAX_STATIC_BUF
 
