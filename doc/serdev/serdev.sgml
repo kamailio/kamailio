@@ -90,7 +90,7 @@
 	    <title>Installation Of New Signal Handlers</title>
 	    <para>
 		The first step in the initialization process is the installation of new signal handlers. We need
-		our own signal handlers to be able to do gracefull shutdown, print server statistics and so on. There is
+		our own signal handlers to be able to do graceful shutdown, print server statistics and so on. There is
 		only one signal handler function which is function <function moreinfo="none">sig_usr</function> in
 		file <filename moreinfo="none">main.c</filename>.
 	    </para>
@@ -131,7 +131,7 @@
 	<section id="malloc-init">
 	    <title>Malloc Initialization</title>
 	    <para>
-		To make <acronym>SER</acronym> even faster we decided to reimplement memory allocation routines. The new 
+		To make <acronym>SER</acronym> even faster we decided to re-implement memory allocation routines. The new 
 		<function moreinfo="none">malloc</function>
 		better fits our needs and speeds up the server a lot. The memory management subsystem needs
 		to be initialized upon server startup. The initialization mainly creates internal data
@@ -166,7 +166,7 @@
 	    <para>
 		<acronym>SER</acronym> has built-in support for <acronym>FIFO</acronym> control. It means that the 
 		running server can accept
-		commands over a fifo special file (a named pipe). Function <function moreinfo="none">register_core_fifo</function> 
+		commands over a FIFO special file (a named pipe). Function <function moreinfo="none">register_core_fifo</function> 
 		initializes <acronym>FIFO</acronym> subsystem and registers basic commands, that are processed by the core
 		itself. The function can be found in file <filename moreinfo="none">fifo_server.c</filename>.
 	    </para>
@@ -186,10 +186,10 @@
 			parameters are offered by the module.
 		    </para>
 		</footnote>
-		immediatelly with the 
+		immediately with the 
 		core. When the module is compiled in statically, the registration<footnoteref linkend="regfoot"> 
 		must be performed during the server startup. Function 
-		<function moreinfo="none">register_buildin_modules</function> does the job.
+		<function moreinfo="none">register_builtin_modules</function> does the job.
 	    </para>
 	</section> <!-- builtin-mod-reg -->
 
@@ -287,7 +287,7 @@
 			    at the beginning
 			    of the main <quote>route</quote> statement. Additional <quote>route</quote> statements can be 
 			    called from the main
-			    one or another additional <quote>route</quote> statements (It it simmilar to function calling).
+			    one or another additional <quote>route</quote> statements (It it similar to function calling).
 			</para>
 		    </listitem>
 		    <listitem>
@@ -300,7 +300,7 @@
 		    </listitem>
 		    <listitem>
 			<para>
-			    <emphasis>Module Statement</emphasis> - Additional funcionality of the server is 
+			    <emphasis>Module Statement</emphasis> - Additional functionality of the server is 
 			    available through separate
 			    modules. Each module is a shared object that can be loaded at runtime. Modules can
 			    export functions, that can be called from the configuration file and variables, that
@@ -474,7 +474,7 @@ module_stm = "loadmodule" STRING
 			statement in curly braces.
 			The statement will call <function moreinfo="none">load_module</function> function.
 			The function will load the specified filename using <function moreinfo="none">dlopen</function>.
-			If <function moreinfo="none">dlopen</function> was successfull, the server will look for
+			If <function moreinfo="none">dlopen</function> was successful, the server will look for
 			<structname>exports</structname> structure describing the module's interface and register the 
 			module. For more details see <link linkend="module-interface">module section</link>.
 		    </para>
@@ -518,7 +518,7 @@ module_stm = "loadmodule" STRING
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<emphasis>chroot</emphasis> is performed if neccessary. That ensures that the server will have
+			<emphasis>chroot</emphasis> is performed if necessary. That ensures that the server will have
 			access to a particular directory and its subdirectories only.
 		    </para>
 		</listitem>
@@ -592,7 +592,7 @@ module_stm = "loadmodule" STRING
 		append a new header field after the last one. In this case, the function needs to know length 
 		of the string parameter. It could call <function moreinfo="none">strlen</function> every time it is
 		called, but that is not a very good idea because <function moreinfo="none">strlen</function> would
-		be called every time a message is processed and that is not neccessary.
+		be called every time a message is processed and that is not necessary.
 	    </para>
 	    <para>
 		Instead of that the length of the string parameter could be precalculated upon server startup, saved
@@ -641,7 +641,7 @@ module_stm = "loadmodule" STRING
 	    <para>
 		The rest of the initialization process depends on value of <varname>dont_fork</varname> variable. 
 		<varname>dont_fork</varname> is a global variable defined in <filename moreinfo="none">main.c</filename>.
-		We will describe both variants separatelly.
+		We will describe both variants separately.
 	    </para>
 
 	    <section id="dont-fork-set">
@@ -649,7 +649,7 @@ module_stm = "loadmodule" STRING
 		<para>
 		    If <varname>dont_fork</varname> variable is set, the server will be operating in special mode. 
 		    There will be only one process processing incoming requests. This is very slow and was intended mainly 
-		    for debugging purposes. The main process will be proccessing all incoming requests itself.
+		    for debugging purposes. The main process will be processing all incoming requests itself.
 		</para>
 		<para>
 		    The server still needs additional children:
@@ -664,7 +664,7 @@ module_stm = "loadmodule" STRING
 		    <listitem>
 			<para>
 			    <acronym>FIFO</acronym> server will spawn another child if enabled. The child will be 
-			    processing all commands comming through the fifo interface.
+			    processing all commands coming through the fifo interface.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -699,7 +699,7 @@ module_stm = "loadmodule" STRING
 			</para>
 			<para>
 			    If there is anything, that needs to be initialized in every child separately (for example
-			    if each child needs to open its own filedescriptor), it cannot be done in 
+			    if each child needs to open its own file descriptor), it cannot be done in 
 			    <function>mod_init</function>.
 			    To make such initialization possible, a module can export another initialization function
 			    called <function moreinfo="none">init_child</function>. The function will be called in
@@ -732,7 +732,7 @@ module_stm = "loadmodule" STRING
 		<title><varname>dont_fork</varname> is not set (zero)</title>
 		<para>
 		    <varname>dont_fork</varname> is not set. That means that the server will fork children and the children
-		    will be processing incoming requests. How many childrens will be created depends on
+		    will be processing incoming requests. How many children will be created depends on
 		    the configuration (<varname>children</varname> variable). The main process will be sleeping and 
 		    handling signals only.
 		</para>
@@ -744,12 +744,12 @@ module_stm = "loadmodule" STRING
 		</para>
 
 		<para>
-		    Then the main process will perform another fork for the timer attendand. The child will
+		    Then the main process will perform another fork for the timer attendant. The child will
 		    take care of timer lists and execute specified function when a timer hits.
 		</para>
 		<para>
 		    The main process is now completely initialized, it will sleep in <function moreinfo="none">pause</function>
-		    function untill a signal comes and call <function moreinfo="none">handle_sigs</function> when such
+		    function until a signal comes and call <function moreinfo="none">handle_sigs</function> when such
 		    condition occurs.
 		</para>
 		
@@ -761,10 +761,10 @@ module_stm = "loadmodule" STRING
 		    will sequentially call <function moreinfo="none">child_init</function> functions of all loaded modules.
 		</para>
 		<para>
-		    Becuase the function is called in each child separately, it can initialize per-child
+		    Because the function is called in each child separately, it can initialize per-child
 		    specific data. For example if a module needs to communicate with database, it must open
 		    a database connection. If the connection would be opened in <function moreinfo="none">mod_init</function>
-		    function, all the children would share the same connection and locking would be neccessary
+		    function, all the children would share the same connection and locking would be necessary
 		    to avoid conflicts. On the other hand if the connection was opened in
 		    <function moreinfo="none">child_init</function> function, each child will have its own
 		    connection and concurrency conflicts will be handled by the database server.
@@ -843,7 +843,7 @@ module_stm = "loadmodule" STRING
 		    <para>
 			A module may register callbacks. Each callback have associated an event, that
 			will trigger the callback. One such callback is <emphasis>pre-script</emphasis> callback. Such
-			callback will be called immediatelly before the routing part of the config file will be executed. 
+			callback will be called immediately before the routing part of the config file will be executed. 
 			If there are such callbacks registered, they will be executed now.
 		    </para>
 		</listitem>
@@ -851,7 +851,7 @@ module_stm = "loadmodule" STRING
 		    <para>
 			As the next step we will determine type of the message. If the message being processed is a REQUEST
 			then basic sanity checks will be performed (make sure that there is the first Via and parsing was
-			successfull) and the message will be passed to routing engine.
+			successful) and the message will be passed to routing engine.
 			The routing engine is one of the most complicated parts of the server and will be in detail
 			described in chapter <link linkend="routing-engine">The Routing Engine</link>.
 		    </para>
@@ -925,13 +925,13 @@ module_stm = "loadmodule" STRING
 	<para>
 	    When <varname>dont_fork</varname> is set, all the cleanup will be done directly from the signal handler, 
 	    because there is only one process - the main process. This is not so safe as the previous case, but this mode 
-	    should be  used for debugging only and such shortcomming doesn't harm in that case.
+	    should be  used for debugging only and such shortcoming doesn't harm in that case.
 	</para>
 	<para>
 	    Upon receipt of SIGINT, SIGPIPE or SIGTERM <function moreinfo="none">destroy_modules</function> will be called.
 	    Each module may register so-called <function moreinfo="none">destroy</function> function if it needs to do some 
 	    cleanup when the server is terminating (flush of cache to disk  for example). 
-	    <function moreinfo="none">destroy_modules</function> will call destroy funtion of all loaded modules.
+	    <function moreinfo="none">destroy_modules</function> will call destroy function of all loaded modules.
 	</para>
 
 	<para>
@@ -973,8 +973,8 @@ module_stm = "loadmodule" STRING
 	    <para>
 		One of our main goals was to make <acronym>SER</acronym> really fast. There are many functions across
 		the server that need to work with strings. Usually these functions need to know string length. We wanted
-		to avoid using of <function moreinfo="none">strlen</function> becase the function is relatively slow. It
-		must scan the whole string and find the first occurence of zero character. To avoid this, we created
+		to avoid using of <function moreinfo="none">strlen</function> because the function is relatively slow. It
+		must scan the whole string and find the first occurrence of zero character. To avoid this, we created
 		<type>str</type> type. The type has 2 fields, field <structfield>s</structfield> is pointer
 		to the beginning of the string and field <structfield>len</structfield> is length of the string. We then
 		calculate length of the string only once and later reuse saved value.
@@ -1004,7 +1004,7 @@ typedef struct _str str;
 	    <warning>
 		<para>
 		    Because we store string lengths, there is no need to zero terminate them. Some strings in the
-		    server are still zero terminated, some are not. Be carefull when using functions like 
+		    server are still zero terminated, some are not. Be careful when using functions like 
 		    <function moreinfo="none">snprintf</function> that rely on the ending zero. You can print 
 		    variable of type <type>str</type> this way:
 		    <programlisting format="linespecific">printf("%.*s", mystring->len, mystring->s);</programlisting>
@@ -1054,7 +1054,7 @@ struct hdr_field {
 			HDR_UNSUPPORTED, HDR_ALLOW, HDR_EVENT, HDR_OTHER.
 		    </para>
 		    <para>
-			Their meaning is selfexplanatory. HDR_OTHER marks header field not recognized by the parser.
+			Their meaning is self explanatory. HDR_OTHER marks header field not recognized by the parser.
 		    </para>
 		</listitem>
 		<listitem>
@@ -1256,7 +1256,7 @@ struct ip_addr{
     unsigned int af;     /* address family: AF_INET6 or AF_INET */
     unsigned int len;    /* address len, 16 or 4 */
 		
-    /* 64 bits alligned address */
+    /* 64 bits aligned address */
     union {
         unsigned int   addr32[4];
         unsigned short addr16[8];
@@ -1286,7 +1286,7 @@ struct ip_addr{
 	    </para>
 	    <para>
 		The structure will be described in more detail later in chapter
-		SIP Message MOdifications.
+		SIP Message Modifications.
 	    </para>
 	</section> <!-- lump-rpl -->
 
@@ -1407,7 +1407,7 @@ struct sip_msg {
     int parsed_flag;               /* Already parsed header field types */
 
     /* Via, To, CSeq, Call-Id, From, end of header*/
-    /* first occurance of it; subsequent occurances 
+    /* first occurrence of it; subsequent occurrences 
      * saved in 'headers' 
      */
 
@@ -1441,7 +1441,7 @@ struct sip_msg {
     struct ip_addr dst_ip;
 		
     char* orig;       /* original message copy */
-    char* buf;        /* scratch pad, holds a modfied message,
+    char* buf;        /* scratch pad, holds a modified message,
                        *  via, etc. point into it 
 		       */
     unsigned int len; /* message len (orig) */
@@ -1455,7 +1455,7 @@ struct sip_msg {
     struct lump* add_rm;         /* used for all the forwarded 
                                   * requests */
     struct lump* repl_add_rm;    /* used for all the forwarded replies */
-    struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
+    struct lump_rpl *reply_lump; /* only for locally generated replies !!!*/
 
     char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
     int add_to_branch_len;
@@ -1517,7 +1517,7 @@ struct sip_msg {
 	    <para>
 		The following fields are set to zero if the corresponding header field was not found in the
 		message or hasn't been parsed yet. (These fields are called hooks - they always point to the first
-		occurence if there is more than one header field of the same type).
+		occurrence if there is more than one header field of the same type).
 	    </para>
 	    <itemizedlist>
 		<listitem>
@@ -1703,7 +1703,7 @@ struct sip_msg {
 		<listitem>
 		    <para>
 			<structfield>add_rm</structfield> - Linked list describing all modifications that will be made to
-			<emphasis>REQEST</emphasis> before it will be forwarded. The list will be processed when the request
+			<emphasis>REQUEST</emphasis> before it will be forwarded. The list will be processed when the request
 			is being converted to character array (i.e. immediately before the request will be send out).
 		    </para>
 		</listitem>
@@ -1718,7 +1718,7 @@ struct sip_msg {
 		<listitem>
 		    <para>
 			<structfield>reply_lump</structfield> - This is list of data chunks that should be appended to 
-			localy generated reply, i.e. when the server is generating local reply out of the request. A local
+			locally generated reply, i.e. when the server is generating local reply out of the request. A local
 			reply is reply generated by the server. For example, when processing of a request fails for some
 			reason, the server might generate an error reply and send it back to sender.
 		    </para>
@@ -2125,7 +2125,7 @@ struct sip_msg {
 		    </para>
 		    <para>
 			There is an expression associated with the command and one or two linked lists of
-			comands. The expression is a regular expression compiled into binary form
+			commands. The expression is a regular expression compiled into binary form
 			in the fixup when the config file was compiled.
 		    </para>
 		    <para>
@@ -2136,7 +2136,7 @@ struct sip_msg {
 		    </para>
 		    <para>
 			Otherwise, if there is the second list, it will be executed in the same way. The
-			second list represents commads of <function moreinfo="none">else</function>
+			second list represents commands of <function moreinfo="none">else</function>
 			statement.
 		    </para>
 		</listitem>
@@ -2329,7 +2329,7 @@ struct sip_msg {
 		    The parser is 32-bit, it means, that it processes 4 characters of header field name at time. 4
 		    characters of a header field name are converted to an integer and the integer is then compared. This
 		    is much faster than comparing byte by byte. Because the server is compiled on at least 32-bit architectures,
-		    such comparsion will be compiled into one instruction instead of 4 instructions.
+		    such comparison will be compiled into one instruction instead of 4 instructions.
 		</para>
 		<para>
 		    We did some performance measurement and 32-bit parsing is about 3 times faster for a typical 
@@ -2650,7 +2650,7 @@ struct to_body{
 		    </para>
 		    <para>
 			If the main parser finds a From header field, it will not parse the header field body
-			automaticaly. It is up to you to call the 
+			automatically. It is up to you to call the 
 			<function moreinfo="none">parse_from_header</function> when you want to parse a From
 			header field body.
 		    </para>
@@ -2805,7 +2805,7 @@ typedef struct event {
 		    <para>
 			The parser can be found in file <filename moreinfo="none">parse_expires.c</filename> under
 			<filename moreinfo="none">parser</filename> subdirectory. Main function is
-			<function moreinfo="none">parse_expires</function>. The function is not called automaticaly
+			<function moreinfo="none">parse_expires</function>. The function is not called automatically
 			when an Expires header field was found. It is up to you to call the function if you need the body
 			to be parsed.
 		    </para>
@@ -2885,7 +2885,7 @@ typedef struct exp_body {
 		    <title>Contact HF Body Parser</title>
 		    <para>
 			The parser is located under <filename moreinfo="none">parser/contact</filename> subdirectory. The
-			parser is not called automaticaly when the main parser finds a Contact header field. It is your
+			parser is not called automatically when the main parser finds a Contact header field. It is your
 			responsibility to call the parser if you want a Contact header field body to be parsed.
 		    </para>
 		    <para>
@@ -2919,7 +2919,7 @@ typedef struct exp_body {
 		    </para>
 		    <note>
 			<para>
-			    Mind that none of string in the following structures is zero terminated ! Be very carefull
+			    Mind that none of string in the following structures is zero terminated ! Be very careful
 			    when processing the strings with functions that require zero termination (printf for example) !
 			</para>
 		    </note>
@@ -3066,7 +3066,7 @@ typedef struct cparam {
 			can be used for all of them.
 		    </para>
 		    <para>
-			The parser is not called automaticaly when by the main parser. It is your responsibility to call the
+			The parser is not called automatically when by the main parser. It is your responsibility to call the
 			parser when you want a digest response to be parsed.
 		    </para>
 		    <para>
@@ -3086,7 +3086,7 @@ typedef struct cparam {
 		    </para>
 
 		    <para>
-			Description of digest related stuctures follows:
+			Description of digest related structures follows:
 		    </para>
 
 		    <programlisting format="linespecific">			
@@ -3109,7 +3109,7 @@ typedef struct auth_body {
 } auth_body_t;
 </programlisting>
 		    <para>
-			This is the <quote>main</quote> stucture. Pointer to the structure will be stored in
+			This is the <quote>main</quote> structure. Pointer to the structure will be stored in
 			<structfield>parsed</structfield> field of <structname>hdr_field</structname> structure. Detailed
 			description of its fields follows:
 			<itemizedlist>
@@ -3131,13 +3131,13 @@ typedef struct auth_body {
 				    there might be other functions interested in knowing which credentials are authorized.
 				</para>
 				<para>
-				    That is what is this field for. A function that sucessfully authorized credentials
-				    (currenty there is only one such function in the server, it is function 
+				    That is what is this field for. A function that successfully authorized credentials
+				    (currently there is only one such function in the server, it is function 
 				    <function moreinfo="none">authorize</function> in auth module) will put pointer to header
 				    field containing the authorized credentials in this field. Because there might be several
 				    header field containing credentials, the pointer will be put in 
 				    <structfield>authorized</structfield> field in the first header field in the message
-				    containg credentials. That means that it will be either header field whose pointer is
+				    containing credentials. That means that it will be either header field whose pointer is
 				    in <structfield>www_auth</structfield> or <structfield>proxy_auth</structfield> field
 				    of <structname>sip_msg</structname> structure representing the message.
 				</para>
@@ -3295,7 +3295,7 @@ typedef enum qop_type {
 			    </listitem>
 			    <listitem>
 				<para>
-				    <emphasis>QOP_OTHER</emphasis> - Unknow qop parameter value was found in digest response.
+				    <emphasis>QOP_OTHER</emphasis> - Unknown qop parameter value was found in digest response.
 				</para>
 			    </listitem>
 			</itemizedlist>
@@ -3446,7 +3446,7 @@ typedef struct dig_cred {
 			
 			<para>
 			    This function performs some basic sanity check over parsed digest credentials. The following
-			    conditions must be met for the checks to be successfull:
+			    conditions must be met for the checks to be successful:
 			    <itemizedlist>
 				<listitem>
 				    <para>
@@ -3513,7 +3513,7 @@ typedef struct dig_cred {
 			
 			<para>
 			    This is convenience function. The function will retrieve pointer to authorized credentials 
-			    previously saved  using <function moreinfo="none">mark_authoized_cred</function> function.
+			    previously saved  using <function moreinfo="none">mark_authorized_cred</function> function.
 			    If there is no such credentials, 0 will be stored in variable pointed to by the second
 			    parameter. The function returns always zero. For more information see description of
 			    <structfield>authorized</structfield> field in <structname>auth_body</structname> structure.
@@ -3622,7 +3622,7 @@ struct module_exports{
                               * memory locations */
     int par_no;              /* number of registered parameters */
 
-    init_function init_f;         /* Initilization function */
+    init_function init_f;         /* Initialization function */
     response_function response_f; /* function used for responses,
                                    * returns yes or no; can be null 
                                    */
@@ -3674,7 +3674,7 @@ struct module_exports{
 		    </para>
 		    <para>
 			The function should return number &gt; 0 if everything went OK and processing of the message should
-			contine. The function should return 0 if processing of the message should be stopped.
+			continue. The function should return 0 if processing of the message should be stopped.
 			The function should return number &lt; 0 on an error.
 		    </para>
 		</listitem>
@@ -3716,7 +3716,7 @@ struct module_exports{
 			    <structfield>cmd_names</structfield>, <structfield>cmd_pointers</structfield>,
 			    <structfield>param_no</structfield> and <structfield>fixup_pointer</structfield> arrays must
 			    have at least <structfield>cmd_no</structfield> elements ! (It might even kill your cat if you
-			    fail to fullfill this condition).
+			    fail to fulfill this condition).
 			</para>
 		    </important>
 		</listitem>
@@ -3784,7 +3784,7 @@ struct module_exports{
 			</funcprototype>
 		    </funcsynopsis>
 		    <para>
-			The function accepts one parameter which is stucture representing the response currently
+			The function accepts one parameter which is structure representing the response currently
 			being processed.
 		    </para>
 		    <para>
@@ -3918,7 +3918,7 @@ struct module_exports{
 		    </listitem>
 		    <listitem>
 			<para>
-			    <structfield>handle</structfield> field will be set to handle previously retuned by
+			    <structfield>handle</structfield> field will be set to handle previously returned by
 			    <function moreinfo="none">dlopen</function>.
 			</para>
 		    </listitem>
@@ -3971,7 +3971,7 @@ struct module_exports{
 				<emphasis>value</emphasis> - New value of the variable. There are two types of variables:
 				string and integer. If the last parameter (value) of 
 				<function moreinfo="none">modparam</function>
-				function is enclosed in quotes, it is string paramater and server will try to find the
+				function is enclosed in quotes, it is string parameter and server will try to find the
 				corresponding variable among string parameters only.
 			    </para>
 			    <para>
@@ -4035,7 +4035,7 @@ struct module_exports{
 		</para>
 		<para>
 		    The function will search list of all modules until it finds module with given name.
-		    Then it will search throught all module's exported parameters until it finds parameter
+		    Then it will search through all module's exported parameters until it finds parameter
 		    with corresponding name and type. If such parameter was found, pointer to variable holding
 		    the parameter's value will be returned. If the function failed to find either module or
 		    parameter with given name and type then zero will be returned.
@@ -4066,7 +4066,7 @@ struct module_exports{
 		</itemizedlist>
 	    </para>
 	    <para>
-		The function will search throught list of all loaded modules and in each module through
+		The function will search through list of all loaded modules and in each module through
 		array of all exported functions until it finds function with given name and number of
 		parameters. If such exported function was found, <function moreinfo="none">find_exported</function>
 		will return pointer to the function, otherwise zero will be returned.
@@ -4593,7 +4593,7 @@ int n = RES_ROW_N(res);
 		names start with db_ prefix, except <function moreinfo="none">bind_dbmod</function>. 
 		<function moreinfo="none">bind_dbmod</function> is implemented in <filename moreinfo="none">db.c</filename>
 		file, all other functions are implemented in a standalone module.
-		Detaileddescription of functions follows.
+		Detailed description of functions follows.
 	    </para>
 
 	    <section id="bind-dbmod">
@@ -4648,7 +4648,7 @@ int n = RES_ROW_N(res);
 			</listitem>
 			<listitem>
 			    <para>
-				<emphasis>host</emphasis> -  Hosname or IP address of the host 
+				<emphasis>host</emphasis> -  Hostname or IP address of the host 
 				where database server lives (mandatory).
 			    </para>
 			</listitem>
@@ -4762,7 +4762,7 @@ int n = RES_ROW_N(res);
 		    If _c is NULL and _nc is zero, you will get all table columns in the result
 		</para>
 		<para>
-		    _r will point to a dynamically allocated structure, it is neccessary to call
+		    _r will point to a dynamically allocated structure, it is necessary to call
 		    db_free_query function once you are finished with the result.
 		</para>
 		<para>
@@ -4781,7 +4781,7 @@ int n = RES_ROW_N(res);
 		<title><function moreinfo="none">db_free_query</function></title>
 		<para>
 		    This function frees all memory allocated previously in <function moreinfo="none">db_query</function>, 
-		    it is neccessary to call this function for a <type>db_res_t</type> structure if you don't need the
+		    it is necessary to call this function for a <type>db_res_t</type> structure if you don't need the
 		    structure anymore. You must call this function <emphasis>BEFORE</emphasis> you call 
 		    <function moreinfo="none">db_query</function> again !
 		</para>
@@ -5101,7 +5101,7 @@ int n = RES_ROW_N(res);
 			    macro is set in defs.h header file. The column of this name contains
 			    alternate ha1 strings calculated from username containing also
 			    domain, for example username="jan@iptel.org". This hack is 
-			    neccessary for some broken user agents. The parameter has no
+			    necessary for some broken user agents. The parameter has no
 			    meaning if "calculate_ha1" is set to true.
 			</para>
 			<para>
@@ -5282,7 +5282,7 @@ if (!proxy_authorize( "iptel.org", "subscriber" )) {
 			    Challenges a user agent using WWW-Authenticate header
 			    field. The second parameter specifies if qop parameter
 			    (according to rfc2617) should be used or not.
-			    (Turning off is useful primarly to make UAC happy, which
+			    (Turning off is useful primarily to make UAC happy, which
 			    have a broken qop implementation, particularly M$ Messenger 4.6).
 			</para>
 			<para>
@@ -5308,7 +5308,7 @@ if (!proxy_authorize( "iptel.org", "subscriber" )) {
 			    Challenges a user agent using Proxy-Authenticate header
 			    field. The second parameter specifies if qop parameter
 			    (according to rfc2617) should be used or not.
-			    (Turning off is useful primarly to make UAC happy, which
+			    (Turning off is useful primarily to make UAC happy, which
 			    have a broken qop implementation, particularly M$ Messenger 4.6).
 			</para>
 			<para>
@@ -5516,16 +5516,16 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 		    </funcprototype>
 		</funcsynopsis>
 		<para>
-		    If no Max-Forward header is present in the received request, a header will be
+		    If no Max-Forwards header is present in the received request, a header will be
 		    added having the original value equal with "max_value". An OK code is returned
 		    by the function.
 		</para>
 		<para>
-		    If a Max-Forward header is already present, its value will be decremented. If
+		    If a Max-Forwards header is already present, its value will be decremented. If
 		    after this operation its value will be positive non-zero, an OK code will be
 		    returned. Otherwise (for a zero value) an error code will be returned.
 		    Note that an error code will be also returned if the SIP message couldn't
-		    be parsed or if the Max-Forwrd header's body invalid (non numerical string or
+		    be parsed or if the Max-Forwards header's body invalid (non numerical string or
 		    negative numerical value)
 		</para>
 		<para>
@@ -5592,7 +5592,7 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 			<para>
 			    <varname>append_branches</varname> - The parameter controls how lookup function processes 
 			    multiple contacts. If there are multiple contacts for the given username in usrloc and this
-			    parametr is set to 1, Request-URI will be overwritten with the highest-q
+			    parameter is set to 1, Request-URI will be overwritten with the highest-q
 			    rated contact and the rest will be appended to sip_msg structure and can 
 			    be later used by tm for forking. If the parameter is set to 0, only 
 			    Request-URI will be overwritten with the highest-q rated contact and the 
@@ -5772,7 +5772,7 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 			<para>
 			    For the current request, a reply is sent back having the given code and text
 			    reason. The reply is sent stateless, totally independent of the Transaction
-			    module and with no retranssmision for the INVITE's replies.
+			    module and with no retransmission for the INVITE's replies.
 			</para>
 			<para>
 			    <varname>code</varname> - Reply code to be used.
@@ -5842,14 +5842,14 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 		memory and CPU, is some services inherently need state.
 		For example, transaction-based accounting (module acc) needs
 		to process transaction state as opposed to individual messages,
-		and any kinds of forking must be implemented statefuly.
+		and any kinds of forking must be implemented statefully.
 		Other use of stateful processing is it trading CPU caused by 
 		retransmission processing for memory. That makes however only
 		sense if CPU consumption per request is huge. For example,
 		if you want to avoid costly DNS resolution for every retransmission
-		of a request to an unresolveable destination, use stateful mode.
+		of a request to an unresolvable destination, use stateful mode.
 		Then, only the initial message burdens server by DNS queries,
-		subsequent retranmissions will be dropped and will not result in
+		subsequent retransmissions will be dropped and will not result in
 		more processes blocked by DNS resolution. The price is more 
 		memory consumption and higher processing latency.
 	    </para>
@@ -5868,13 +5868,13 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 		time (memcpys, lookups, shmem locks, etc.) Note that non-TM
 		functions operate over the received message in private memory,
 		that means that any core operations will have no effect on
-		statefuly processed messages after creating the transactional
+		statefully processed messages after creating the transactional
 		state. For example, calling addRecordRoute *after* t_relay
 		is pretty useless, as the RR is added to privately held message
 		whereas its TM clone is being forwarded.
 	    </para>
 	    <para>
-		TM is quite big and uneasy to programm -- lot of mutexes, shared
+		TM is quite big and uneasy to program -- lot of mutexes, shared
 		memory access, malloc & free, timers -- you really need to be careful
 		when you do anything. To simplify TM programming, there is the
 		instrument of callbacks. The callback mechanisms allow programmers
@@ -5883,7 +5883,7 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 	    </para>
 	    <para>
 		Other things programmers may want to know is UAC -- it is 
-		a very simplictic code which allows you to generate your own
+		a very simplistic code which allows you to generate your own
 		transactions. Particularly useful for things like NOTIFYs or
 		IM gateways. The UAC takes care of all the transaction
 		machinery: retransmissions , FR timeouts, forking, etc.
@@ -5895,11 +5895,11 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 		<title>External Usage of TM</title>
 		<para>
 		    There are applications which would like to generate SIP
-		    transactions without too big onvolvement in SIP stack, transaction
+		    transactions without too big involvement in SIP stack, transaction
 		    management, etc. An example of such an application
 		    is sending instant messages from a website. To address needs
 		    of such apps, SER accepts requests for new transactions via
-		    fifo pipes too. If you want to enable this feature, statrt
+		    fifo pipes too. If you want to enable this feature, start
 		    FIFO server by configuration option
 		    fifo=<quote>/tmp/filename</quote>
 		    Then, an application can easily launch a new transaction by
@@ -5983,7 +5983,7 @@ end of body
 			    <varname>wt_timer</varname> - Time for which a transaction stays in memory to absorb
 			    delayed messages after it completed; also, when this
 			    timer hits, retransmission of local cancels is stopped
-			    (a puristic but complex behviour would be not to enter
+			    (a puristic but complex behaviour would be not to enter
 			    wait state until local branches are finished by a final
 			    reply or FR timer -- we simplified)
 			</para>
@@ -6067,7 +6067,7 @@ end of body
 			    </funcprototype>
 			</funcsynopsis>
 			<para>
-			    Relay a message statefuly to a fixed destination; this along with
+			    Relay a message statefully to a fixed destination; this along with
 			    t_relay is the function most users want to use -- all other are
 			    mostly for programming; programmers interested in writing TM
 			    logic should review how t_relay is implemented in tm.c and how
@@ -6100,7 +6100,7 @@ if (!t_relay_to("1.2.3.4", "5060")) {
 			    </funcprototype>
 			</funcsynopsis>
 			<para>
-			    Relay a message statefuly to destination indicated in current URI;
+			    Relay a message statefully to destination indicated in current URI;
 			    (if the original URI was rewritten by UsrLoc, RR, strip/prefix,
 			    etc., the new URI will be taken); returns a negative value on
 			    failure -- you may still want to send a negative reply upstream
@@ -6138,13 +6138,13 @@ if (!t_relay()) {
 			<para>
 			    Sets reply routing block, to which control is passed after
 			    a transaction completed with a negative result but before
-			    sending a final reply; In the refered block, you can
+			    sending a final reply; In the referred block, you can
 			    either start a new branch (good for services such as
 			    forward_on_no_reply) or send a final reply on your own
 			    (good for example for message silo, which received 
 			    a negative reply from upstream and wants to tell
 			    upstream "202 I will take care of it"); Note that the
-			    set of command which are useable within reply_routes is
+			    set of command which are usable within reply_routes is
 			    strictly limited to rewriting URI, initiating new branches,
 			    logging, and sending 'unsafe' replies (t_reply_unsafe). Any 
 			    other commands may result in unpredictable behaviour and 
@@ -6246,7 +6246,7 @@ if (t_newtran()) {
 			<para>
 			    Checks if a transaction exists; returns a positive value
 			    if so, negative otherwise; most likely you will not want
-			    to use it, as a typicall application of a looku-up is to
+			    to use it, as a typical application of a look-up is to
 			    introduce a new transaction if none was found; however
 			    this is safely (atomically) done using t_newtran.
 			</para>
@@ -6311,7 +6311,7 @@ if (t_newtran()) {
 			    </funcprototype>
 			</funcsynopsis>
 			<para>
-			    Mainly for internal -- forward a non-ACK request statefuly.
+			    Mainly for internal -- forward a non-ACK request statefully.
 			</para>
 			<para>
 			    <varname>ip</varname> - IP address.
@@ -6440,7 +6440,7 @@ if (t_newtran()) {
 		    <listitem>
 			<para>
 			    Make UAC session-aware (as opposed to just transaction aware) -- needed
-			    for keeing SUB-NOT dialog state, etc. Currently, there are only
+			    for keeping SUB-NOT dialog state, etc. Currently, there are only
 			    place-holders for in in TM.
 			</para>
 		    </listitem>
@@ -6454,7 +6454,7 @@ if (t_newtran()) {
 	<section id="usrloc">
 	    <title>User Location Module</title>
 	    <para>Support for location of users.</para>
-	    <para>Module depends on: Optionaly mysql (if configured for persistence)</para>
+	    <para>Module depends on: Optionally mysql (if configured for persistence)</para>
 
 	    <important>
 		<para>
@@ -6596,7 +6596,7 @@ if (t_newtran()) {
 					0 - This disables database completely. Only memory
 					will be used. Contacts will not survive restart.
 					Use this value if you need a really fast usrloc
-					and contact persistence is not necessarry or is
+					and contact persistence is not necessary or is
 					provided by other means.
 				    </para>
 				</listitem>
@@ -6660,7 +6660,7 @@ if (t_newtran()) {
 			    for table used in registrar. The function is called from fixups
 			    in registrar. It gets name of the domain as a parameter and returns
 			    pointer to a new domain structure. The fixup than 'fixes' the
-			    parametr in registrar so that it will pass the pointer instead of
+			    parameter in registrar so that it will pass the pointer instead of
 			    the name every time save() or lookup() is called. Some usrloc functions
 			    get the pointer as parameter when called. For more details see 
 			    implementation of save function in registrar.
