@@ -36,4 +36,4 @@
 
 void MDStringArray (char *dst, str src[], int size);
 
-#endif
+#endif /* _MD5UTILS_H */

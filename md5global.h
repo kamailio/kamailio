@@ -8,6 +8,10 @@
 The following makes PROTOTYPES default to 0 if it has not already
   been defined with C compiler flags.
  */
+#ifndef MD5GLOBAL_H
+#define MD5GLOBAL_H
+
+
 #ifndef PROTOTYPES
 #define PROTOTYPES 0
 #endif
@@ -31,3 +35,4 @@ If using PROTOTYPES, then PROTO_LIST returns the list, otherwise it
 #define PROTO_LIST(list) ()
 #endif
 
+#endif /* MD5GLOBAL_H */
