@@ -12,6 +12,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 
 #ifdef DNS_IP_HACK
 #include "ut.h"
