@@ -28,12 +28,12 @@
  */
 
 
-#include "nonce.h"
-#include "rfc2617.h"
 #include <time.h>
+#include <string.h>
 #include "../../md5global.h"
 #include "../../md5.h"
-#include <string.h>
+#include "nonce.h"
+#include "rfc2617.h"
 
 
 /*

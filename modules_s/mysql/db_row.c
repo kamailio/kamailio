@@ -27,14 +27,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "../../db/db_row.h"
-#include "defs.h"
 #include <mysql/mysql.h>
+#include "../../db/db_row.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "defs.h"
 #include "con_mysql.h"
 
+
+/*
+ * Convert a row from result into db API representation
+ */
 int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
 	unsigned long* lengths;
@@ -67,6 +70,9 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 }
 
 
+/*
+ * Release memory used by row
+ */
 int free_row(db_row_t* _r)
 {
 #ifndef PARANOID

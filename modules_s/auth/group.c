@@ -29,15 +29,14 @@
  */
 
 
-
-#include "group.h"
 #include <string.h>
 #include "../../dprint.h"
 #include "../../db/db.h"
-#include "auth_mod.h"                   /* Module parameters */
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
 #include "../../parser/hf.h"
 #include "../../parser/parse_from.h"
+#include "group.h"
+#include "auth_mod.h"                   /* Module parameters */
 #include "common.h"
 
 
@@ -109,11 +108,8 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 
-	VAL_STR(vals).s = c->digest.username.s;
-	VAL_STR(vals).len = c->digest.username.len;
-	
-	VAL_STR(vals + 1).s = ((str*)_group)->s;
-	VAL_STR(vals + 1).len = ((str*)_group)->len;
+	VAL_STR(vals) = c->digest.username;
+	VAL_STR(vals + 1) = *((str*)_group);
 	
 	db_use_table(db_handle, grp_table);
 	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {
@@ -149,7 +145,7 @@ static inline int get_request_user(struct sip_msg* _m, str* _s)
 		_s->s = _m->first_line.u.request.uri.s;
 		_s->len = _m->first_line.u.request.uri.len;
 	}
-	if (auth_get_username(_s) < 0) {
+	if (get_username(_s) < 0) {
 		LOG(L_ERR, "get_request_user(): Error while extracting username\n");
 		return -1;
 	}
@@ -174,7 +170,7 @@ static inline int get_to_user(struct sip_msg* _m, str* _s)
 	_s->s = ((struct to_body*)_m->to->parsed)->uri.s;
 	_s->len = ((struct to_body*)_m->to->parsed)->uri.len;
 
-	if (auth_get_username(_s) < 0) {
+	if (get_username(_s) < 0) {
 		LOG(L_ERR, "get_to_user(): Error while extracting username\n");
 		return -3;
 	}
@@ -204,7 +200,7 @@ static inline int get_from_user(struct sip_msg* _m, str* _s)
 	_s->s = ((struct to_body*)_m->from->parsed)->uri.s;
 	_s->len = ((struct to_body*)_m->from->parsed)->uri.len;
 
-	if (auth_get_username(_s) < 0) {
+	if (get_username(_s) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while extracting username\n");
 		return -6;
 	}
@@ -282,12 +278,9 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
-	
-	VAL_STR(vals).s = user.s;
-	VAL_STR(vals).len = user.len;
+	VAL_STR(vals) = user;
 
-	VAL_STR(vals + 1).s = ((str*)_grp)->s;
-	VAL_STR(vals + 1).len = ((str*)_grp)->len;
+	VAL_STR(vals + 1) = *((str*)_grp);
 	
 	db_use_table(db_handle, grp_table);
 	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {

@@ -45,7 +45,7 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
 /*
  * Cut username part of a URL
  */
-int auth_get_username(str* _s);
+int get_username(str* _s);
 
 
 #endif /* COMMON_H */

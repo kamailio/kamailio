@@ -28,20 +28,21 @@
  */
 
 
-#include "auth_mod.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../../sr_module.h"
 #include "../../dprint.h"
-#include "defs.h"
-#include <string.h>
-#include "checks.h"
-#include "group.h"
 #include "../../ut.h"
 #include "../../error.h"
+#include "../../mem/mem.h"
+#include "auth_mod.h"
+#include "defs.h"
+#include "checks.h"
+#include "group.h"
 #include "authorize.h"
 #include "challenge.h"
-#include "../../mem/mem.h"
+
 
 #define RAND_SECRET_LEN 32
 

@@ -28,14 +28,13 @@
  */
 
 
-#include <mysql/mysql.h>
-#include "db_utils.h"
-#include "../../dprint.h"
-#include "defs.h"
-#include "../../mem/mem.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "../../dprint.h"
+#include "../../mem/mem.h"
+#include "db_utils.h"
+#include "defs.h"
 #include "dbase.h"
 #include "con_mysql.h"
 
@@ -134,6 +133,9 @@ static inline int disconnect_db(db_con_t* _h)
 }
 
 
+/*
+ * Send an SQL query to the server
+ */
 static inline int submit_query(db_con_t* _h, const char* _s)
 {	
 #ifdef PARANOID
@@ -152,6 +154,9 @@ static inline int submit_query(db_con_t* _h, const char* _s)
 }
 
 
+/*
+ * Print list of columns separated by comma
+ */
 static inline int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 {
 	int i;
@@ -173,6 +178,9 @@ static inline int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 }
 
 
+/*
+ * Print list of values separated by comma
+ */
 static inline int print_values(char* _b, int _l, db_val_t* _v, int _n)
 {
 	int i, res = 0, l;
@@ -199,6 +207,9 @@ static inline int print_values(char* _b, int _l, db_val_t* _v, int _n)
 }
 
 
+/*
+ * Print where clause of SQL statement
+ */
 static inline int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int i;
@@ -227,6 +238,9 @@ static inline int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_va
 }
 
 
+/*
+ * Print set clause of update SQL statement
+ */
 static inline int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
 {
 	int i;
@@ -308,6 +322,9 @@ void db_close(db_con_t* _h)
 }
 
 
+/*
+ * Retrieve result set
+ */
 int get_result(db_con_t* _h, db_res_t** _r)
 {
 #ifdef PARANOID
@@ -353,6 +370,9 @@ int get_result(db_con_t* _h, db_res_t** _r)
 }
 
 
+/*
+ * Release a result set from memory
+ */
 int db_free_query(db_con_t* _h, db_res_t* _r)
 {
 #ifdef PARANOID
@@ -418,7 +438,7 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 
 
 /*
- * Raw SQL query
+ * Execute a raw SQL query
  */
 int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {

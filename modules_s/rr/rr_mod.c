@@ -28,10 +28,10 @@
  */
 
 
-#include "../../sr_module.h"
 #include <stdio.h>
-#include "../../ut.h"
 #include <stdlib.h>
+#include "../../sr_module.h"
+#include "../../ut.h"
 #include "../../error.h"
 #include "strict.h"
 #include "loose.h"

@@ -29,18 +29,18 @@
 
 
 #include "loose.h"
-#include "../../str.h"
-#include "utils.h"
-#include "../../md5utils.h"
 #include <string.h>
+#include <stdlib.h>
+#include "../../str.h"
+#include "../../md5utils.h"
 #include "../../dprint.h"
 #include "../../parser/hf.h"
-#include "common.h"
 #include "../../data_lump.h"
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
-#include <stdlib.h>
 #include "../../globals.h"
+#include "utils.h"
+#include "common.h"
 
 
 static inline int cmp_fast(str* _uri)

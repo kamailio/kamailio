@@ -28,11 +28,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "common.h"
 #include "../../data_lump_rpl.h"
-#include "auth_mod.h"            /* sl_reply */
 #include "../../ut.h"            /* q_memchr* */
+#include "common.h"
+#include "auth_mod.h"            /* sl_reply */
 
 
 /*
@@ -62,7 +61,7 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
  *        : char _c  : character to find
  * RETURNS: char*    : points to character found, NULL if not found
  */
-static inline char* auth_fnq(str* _b, char _c)
+static inline char* find_not_quoted(str* _b, char _c)
 {
 	int quoted = 0, i;
 	
@@ -83,7 +82,7 @@ static inline char* auth_fnq(str* _b, char _c)
 /*
  * Cut username part of a URL
  */
-int auth_get_username(str* _s)
+int get_username(str* _s)
 {
 	char* at, *dcolon, *dc;
 
@@ -91,7 +90,7 @@ int auth_get_username(str* _s)
 	      * separates schema and the rest of
 	      * URL
 	      */
-	dcolon = auth_fnq(_s, ':');
+	dcolon = find_not_quoted(_s, ':');
 
 	     /* No double colon found means error */
 	if (!dcolon) {

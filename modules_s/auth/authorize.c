@@ -28,23 +28,28 @@
  */
 
 
-#include "authorize.h"
-#include "../../parser/hf.h"            /* HDR_PROXYAUTH & HDR_AUTHORIZATION */
-#include "defs.h"                       /* ACK_CANCEL_HACK */
-#include "../../str.h"
 #include <string.h>                     /* memcmp */
-#include "nonce.h"
+#include "../../parser/hf.h"            /* HDR_PROXYAUTH & HDR_AUTHORIZATION */
+#include "../../str.h"
 #include "../../parser/digest/digest.h" /* dig_cred_t */
-#include "common.h"                     /* send_resp */
-#include "auth_mod.h"
 #include "../../db/db.h"
 #include "../../mem/mem.h"
+#include "authorize.h"
+#include "defs.h"                       /* ACK_CANCEL_HACK */
+#include "nonce.h"
+#include "common.h"                     /* send_resp */
+#include "auth_mod.h"
 #include "rfc2617.h"
 
 
 #define MESSAGE_400 "Bad Request"
 
 
+/*
+ * Get or calculate HA1 string, if calculate_ha1 is set, the function will
+ * simply fetch the string from the database, otherwise it will fetch plaintext
+ * password and will calculate the string
+ */
 static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 {
 	db_key_t keys[] = {user_column, realm_column};
@@ -61,11 +66,8 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	
-	VAL_STR(vals).s = _user->s;
-	VAL_STR(vals).len = _user->len;
-	
-	VAL_STR(vals + 1).s = _realm->s;
-	VAL_STR(vals + 1).len = _realm->len;
+	VAL_STR(vals) = *_user;
+	VAL_STR(vals + 1) = *_realm;
 
 #ifdef USER_DOMAIN_HACK
 	at = memchr(_user->s, '@', _user->len);
@@ -79,7 +81,7 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 #endif
 
 	db_use_table(db_handle, _table);
-	if (db_query(db_handle, keys, 0, vals, col, 2, 1, NULL, &res) < 0) {
+	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
@@ -96,8 +98,8 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
-		calc_HA1(HA_MD5, _user, _realm, &result, NULL, NULL, _ha1);
-		DBG("HA1 string calculated: %s\n", _ha1);
+		calc_HA1(HA_MD5, _user, _realm, &result, 0, 0, _ha1);
+		DBG("get_ha1(): HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
 		_ha1[result.len] = '\0';
@@ -108,10 +110,13 @@ static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
 }
 
 
+/*
+ * Calculate the response and compare with the given response string
+ * Authorization is successfull if this two strings are same
+ */
 static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 {
-	HASHHEX resp;
-	HASHHEX hent;
+	HASHHEX resp, hent;
 
 	if (_cred->response.len != 32) {
 		LOG(L_ERR, "check_response(): Receive response len != 32\n");
@@ -126,19 +131,21 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 	DBG("check_response(): Our result = %s\n", resp);
 	
 	if (!memcmp(resp, _cred->response.s, 32)) {
-		DBG("check_cred(): Authorization is OK\n");
-		return 1;
+		DBG("check_response(): Authorization is OK\n");
+		return 0;
 	} else {
-		DBG("check_cred(): Authorization failed\n");
-		return -1;
+		DBG("check_response(): Authorization failed\n");
+		return 1;
 	}
 }
 
 
+/*
+ * Find credentials with given realm in a SIP message header
+ */
 static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
 {
-	struct hdr_field** hook;
-	struct hdr_field* ptr, *prev;
+	struct hdr_field** hook, *ptr, *prev;
 	int res;
 	str* r;
 
@@ -152,7 +159,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 
 	*_h = 0;
 	
-	if (!(*hook)) {
+	if (*hook == 0) {
 		     /* No credentials parsed yet */
 		if (parse_headers(_m, _hftype, 0) == -1) {
 			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
@@ -167,7 +174,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		if (res < 0) {
 			LOG(L_ERR, "find_credentials(): Error while parsing credentials\n");
 			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
-				LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+				LOG(L_ERR, "find_credentials(): Error while sending 400 reply\n");
 			}
 			return -1;
 		} else if (res == 0) {
@@ -179,7 +186,6 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 					return 0;
 				}
 			}
-			
 		}
 
 		prev = ptr;
@@ -208,8 +214,10 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	auth_body_t* cred;
 
 #ifdef ACK_CANCEL_HACK
-	     /* ACK must be always authorized, there is
-	      * no way how to challenge ACK
+	     /* ACK and CANCEL must be always authorized, there is
+	      * no way how to challenge ACK and CANCEL cannot be
+	      * challenged because it must have the same CSeq as
+	      * the request to be cancelled
 	      */
 	if ((_msg->REQ_METHOD == METHOD_ACK) || 
 	    (_msg->REQ_METHOD == METHOD_CANCEL)) {
@@ -227,7 +235,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	}
 
 	     /*
-	      * No credentials with given realm found, dont' authorize
+	      * No credentials with given realm found, don't authorize
 	      */
 	if (h == 0) {
 		DBG("authorize(): Credentials with given realm not found\n");
@@ -269,14 +277,15 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, char* _table, int
 	     /* Recalculate response, it must be same to authorize sucessfully */
         res = check_response(&(cred->digest), &_msg->first_line.u.request.method, ha1);
 
-	if (res == 1) {  /* response was OK */
+	if (res == 0) {  /* response was OK */
 		if (nonce_is_stale(&(cred->digest.nonce))) {
 			if ((_msg->REQ_METHOD == METHOD_ACK) || 
 			    (_msg->REQ_METHOD == METHOD_CANCEL)) {
 				     /* Method is ACK or CANCEL, we must accept stale
 				      * nonces because there is no way how to challenge
-				      * with new nonce (ACK and CANCEL have no responses
-				      * associated)
+				      * with new nonce (ACK has no response associated 
+				      * and CANCEL must have the same CSeq as the request 
+				      * to be cancelled)
 				      */
 				goto mark;
 			} else {
@@ -322,7 +331,7 @@ int www_authorize(struct sip_msg* _msg, char* _realm, char* _table)
 
 
 /*
- * Remove used credentials
+ * Remove used credentials from a SIP message header
  */
 int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 {

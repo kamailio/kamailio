@@ -138,11 +138,11 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 		}
 
 		     /* Extract raw uri from contact, ie without name part and <> */
-		str_copy(&uri, &_c->uri);
+		uri = _c->uri;
 		get_raw_uri(&uri);
 
 		     /* Get callid of the message */
-		str_copy(&callid, &_m->callid->body);
+		callid = _m->callid->body;	
 		trim(&callid);
 		
 		     /* Get CSeq number of the message */
@@ -202,7 +202,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 			return -1;
 		}
 
-		str_copy(&uri, &_c->uri);
+		uri = _c->uri;
 		get_raw_uri(&uri);
 		
 		if (ul_get_ucontact(_r, &uri, &c) > 0) {
@@ -215,7 +215,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				}
 				
 				     /* Get callid of the message */
-				str_copy(&callid, &_m->callid->body);
+				callid = _m->callid->body;
 				trim(&callid);
 				
 				     /* Get CSeq number of the message */
@@ -246,7 +246,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				}
 				
 				     /* Get callid of the message */
-				str_copy(&callid, &_m->callid->body);
+				callid = _m->callid->body;				
 				trim(&callid);
 				
 				     /* Get CSeq number of the message */
@@ -331,9 +331,9 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	
 	get_act_time();
 	c = get_first_contact(_m);
-	str_copy(&user, &((struct to_body*)_m->to->parsed)->uri);
+	user = ((struct to_body*)_m->to->parsed)->uri;
 
-	if (ul_get_user(&user) < 0) {
+	if (get_username(&user) < 0) {
 		rerrno = R_TO_USER;
 		LOG(L_ERR, "save(): Can't extract username part from To URI, sending 400\n");
 		goto error;

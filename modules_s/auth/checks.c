@@ -28,15 +28,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "checks.h"
+#include <string.h>
 #include "../../str.h"
 #include "../../dprint.h"
-#include <string.h>
-#include "defs.h"
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
-#include "common.h"
 #include "../../ut.h"
+#include "checks.h"
+#include "defs.h"
+#include "common.h"
+
 
 
 /*
@@ -64,7 +64,7 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 	if (!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
-			LOG(L_ERR, "is_user(): No authorized credentials found (error in scripts)\n");
+			LOG(L_ERR, "check_username(): No authorized credentials found (error in scripts)\n");
 			return -1;
 		}
 	}
@@ -74,8 +74,8 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 	user.s = _h->body.s;
 	user.len = _h->body.len;
 
-	if (auth_get_username(&user) < 0) {
-		LOG(L_ERR, "is_user(): Can't extract username\n");
+	if (get_username(&user) < 0) {
+		LOG(L_ERR, "check_username(): Can't extract username\n");
 		return -1;
 	}
 

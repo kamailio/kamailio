@@ -349,16 +349,34 @@ int db_update_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	db_key_t keys1[2] = {user_col, contact_col};
-	db_val_t vals1[2] = {{DB_STR, 0, {.str_val = {_c->aor->s, _c->aor->len}}},
-			     {DB_STR, 0, {.str_val = {_c->c.s, _c->c.len}}}
-	};
+	db_val_t vals1[2];
 
 	db_key_t keys2[4] = {expires_col, q_col, callid_col, cseq_col};
-	db_val_t vals2[4] = {{DB_DATETIME, 0, {.time_val = _c->expires}},
-			     {DB_DOUBLE,   0, {.double_val = _c->q}},
-			     {DB_STR,      0, {.str_val = {_c->callid.s, _c->callid.len}}},
-			     {DB_INT,      0, {.int_val = _c->cseq}}
-	};
+	db_val_t vals2[4];
+
+	vals1[0].type = DB_STR;
+	vals1[0].nul = 0;
+	vals1[0].val.str_val = *_c->aor;
+
+	vals1[1].type = DB_STR;
+	vals1[1].nul = 0;
+	vals1[1].val.str_val = _c->c;
+
+	vals2[0].type = DB_DATETIME;
+	vals2[0].nul = 0;
+	vals2[0].val.time_val = _c->expires;
+
+	vals2[1].type = DB_DOUBLE;
+	vals2[1].nul = 0;
+	vals2[1].val.double_val = _c->q;
+
+	vals2[2].type = DB_STR;
+	vals2[2].nul = 0;
+	vals2[2].val.str_val = _c->callid;
+
+	vals2[3].type = DB_INT;
+	vals2[3].nul = 0;
+	vals2[3].val.int_val = _c->cseq;
 
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
@@ -381,9 +399,15 @@ int db_delete_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	db_key_t keys[2] = {user_col, contact_col};
-	db_val_t vals[2] = {{DB_STR, 0, {.str_val = {_c->aor->s, _c->aor->len}}},
-			    {DB_STR, 0, {.str_val = {_c->c.s, _c->c.len}}}
-	};
+	db_val_t vals[2];
+
+	vals[0].type = DB_STR;
+	vals[0].nul = 0;
+	vals[0].val.str_val = *_c->aor;
+
+	vals[1].type = DB_STR;
+	vals[1].nul = 0;
+	vals[1].val.str_val = _c->c;
 
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);

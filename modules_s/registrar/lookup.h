@@ -34,6 +34,9 @@
 #include "../../parser/msg_parser.h"
 
 
+/*
+ * Lookup a contact in usrloc and rewrite R-URI if found
+ */
 int lookup(struct sip_msg* _m, char* _t, char* _s);
 
 

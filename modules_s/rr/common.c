@@ -28,14 +28,15 @@
  */
 
 #include "common.h"
+#include <string.h>
 #include "../../md5utils.h"
 #include "../../dprint.h"
-#include "utils.h"
 #include "../../mem/mem.h"
-#include <string.h>
 #include "../../action.h"
 #include "../../data_lump.h"
 #include "../../globals.h"
+#include "utils.h"
+
 
 char rr_hash[MD5_LEN];
 char rr_s[256];
@@ -83,7 +84,7 @@ int generate_rr_suffix(void)
 		break;
 		
 	default:
-		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", bind_address->address.af);
+		LOG(L_ERR, "generate_rr_suffix(): Unsupported PF type: %d\n", bind_address->address.af);
 		return -1;
 	}
 	

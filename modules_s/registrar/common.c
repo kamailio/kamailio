@@ -27,17 +27,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
-#include "common.h"
 #include <string.h> 
 #include "../../dprint.h"
 #include "../../ut.h"      /* q_memchr */
+#include "common.h"
 
 
 /*
  * Find a character occurence that is not quoted
  */
-char* ul_fnq(str* _s, char _c)
+char* find_not_quoted(str* _s, char _c)
 {
 	int quoted = 0, i;
 	
@@ -56,10 +55,10 @@ char* ul_fnq(str* _s, char _c)
 /*
  * Extract username part from URI
  */
-int ul_get_user(str* _s)
+int get_username(str* _s)
 {
 	char* at, *dcolon, *dc;
-	dcolon = ul_fnq(_s, ':');
+	dcolon = find_not_quoted(_s, ':');
 
 	if (dcolon == 0) return -1;
 

@@ -48,7 +48,7 @@ void get_raw_uri(str* _s)
 	char* aq;
 	
 	if (_s->s[_s->len - 1] == '>') {
-		aq = ul_fnq(_s, '<');
+		aq = find_not_quoted(_s, '<');
 		_s->len -= aq - _s->s + 2;
 		_s->s = aq + 1;
 	}
