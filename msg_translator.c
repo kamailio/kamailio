@@ -92,7 +92,7 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 char* via_builder( struct sip_msg *msg , unsigned int *len, 
 					struct socket_info* send_sock )
 {
-	unsigned int  via_len, branch_len, extra_len;;
+	unsigned int  via_len, branch_len, extra_len;
 	char               *line_buf;
 
 	line_buf=0;
