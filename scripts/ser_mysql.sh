@@ -284,7 +284,7 @@ CREATE TABLE pending (
   SendNotification varchar(50) NOT NULL default '',
   Greeting varchar(50) NOT NULL default '',
   HA1 varchar(128) NOT NULL default '',
-  REALM varchar(128) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
@@ -331,8 +331,6 @@ CREATE TABLE reserved (
 
 #
 # Table structure for table 'subscriber' -- user database
-# (note: realm is only informational -- it is defined
-# in ser scripts)
 #
 
 
@@ -351,7 +349,7 @@ CREATE TABLE subscriber (
   SendNotification varchar(50) NOT NULL default '',
   Greeting varchar(50) NOT NULL default '',
   HA1 varchar(128) NOT NULL default '',
-  REALM varchar(128) NOT NULL default '',
+  domain varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
@@ -413,7 +411,7 @@ CREATE TABLE uri (
 
 INSERT INTO subscriber (USER_ID, PASSWORD, FIRST_NAME, LAST_NAME, PHONE, 
 	EMAIL_ADDRESS, DATETIME_CREATED, DATETIME_MODIFIED, confirmation, 
-	flag, SendNotification, Greeting, HA1, REALM, ha1b, phplib_id, perms ) 
+	flag, SendNotification, Greeting, HA1, domain, ha1b, phplib_id, perms ) 
 	VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
 	'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00', 
 	'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '', 
