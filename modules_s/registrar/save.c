@@ -158,6 +158,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	str callid;
 	unsigned int flags;
 	str* recv;
+	int_str val;
 
 	if (isflagset(_m, nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
@@ -199,10 +200,11 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 
 		if (_c->received) {
 			recv = &_c->received->body;
+		} else if (search_first_avp(0, rcv_avp, &val)) {
+			recv = val.s;
 		} else {
 			recv = 0;
 		}
-
 
 		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv) < 0) {
 			rerrno = R_UL_INS_C;
@@ -246,6 +248,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	qvalue_t q;
 	unsigned int fl;
 	str* recv;
+	int_str val;
 
 	fl = (isflagset(_m, nat_flag) == 1);
 
@@ -279,6 +282,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				
 				if (_c->received) {
 					recv = &_c->received->body;
+				} else if (search_first_avp(0, rcv_avp, &val)) {
+					recv = val.s;
 				} else {
 					recv = 0;
 				}
@@ -318,6 +323,8 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 				
 				if (_c->received) {
 					recv = &_c->received->body;
+				} else if (search_first_avp(0, rcv_avp, &val)) {
+					recv = val.s;
 				} else {
 					recv = 0;
 				}

@@ -71,6 +71,7 @@ str realm_prefix;
 #define RCV_NAME_LEN (sizeof(RCV_NAME) - 1)
 
 str rcv_param = {RCV_NAME, RCV_NAME_LEN};
+int_str rcv_avp = {.n = 42};
 
 
 /*
@@ -105,6 +106,7 @@ static param_export_t params[] = {
 	{"min_expires",     INT_PARAM, &min_expires    },
 	{"max_expires",     INT_PARAM, &max_expires    },
         {"received_param",  STR_PARAM, &rcv_param      },
+	{"received_avp",    INT_PARAM, &rcv_avp.n      },
 	{0,0,0}
 };
 

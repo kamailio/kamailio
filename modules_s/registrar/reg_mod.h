@@ -33,6 +33,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../qvalue.h"
+#include "../../usr_avp.h"
 #include "../usrloc/usrloc.h"
 
 extern int default_expires;
@@ -43,11 +44,13 @@ extern int desc_time_order;
 extern int nat_flag;
 extern int min_expires;
 extern int max_expires;
+extern int received_avp;
 extern str realm_prefix;
 
 extern float def_q;
 
 extern str rcv_param;
+extern int_str rcv_avp;
 
 usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
 
