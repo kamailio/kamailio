@@ -42,6 +42,7 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../fifo_server.h"
+#include "../../unixsock_server.h"
 #include "../../pt.h"
 
 struct t_stats *tm_stats=0;
@@ -110,6 +111,51 @@ int static fifo_stats( FILE *pipe, char *response_file )
 
 }
 
+int static unixsock_stats(str* cmd)
+{
+	unsigned long total, current, waiting, total_local;
+	int i;
+	int pno;
+
+	unixsock_reply_asciiz( "200 OK\n");
+
+	pno = process_count();
+	for(i = 0, total = 0, waiting = 0, total_local = 0; i < pno; i++) {
+		total += tm_stats->s_transactions[i];
+		waiting += tm_stats->s_waiting[i];
+		total_local += tm_stats->s_client_transactions[i];
+	}
+	current = total - tm_stats->deleted;
+	waiting -= tm_stats->deleted;
+
+	if (unixsock_reply_printf("Current: %lu (%lu waiting) "
+				  "Total: %lu (%lu local) " CLEANUP_EOL,
+				  current, waiting, total, total_local) < 0) goto err;
+
+	if (unixsock_reply_printf("Replied localy: %lu" CLEANUP_EOL ,
+				  tm_stats->replied_localy ) < 0) goto err;
+	if (unixsock_reply_printf("Completion status 6xx: %lu,",
+				  tm_stats->completed_6xx ) < 0) goto err;
+	if (unixsock_reply_printf(" 5xx: %lu,",
+				  tm_stats->completed_5xx ) < 0) goto err;
+	if (unixsock_reply_printf(" 4xx: %lu,",
+				  tm_stats->completed_4xx ) < 0) goto err;
+	if (unixsock_reply_printf(" 3xx: %lu,",
+				  tm_stats->completed_3xx ) < 0) goto err;
+	if (unixsock_reply_printf("2xx: %lu" CLEANUP_EOL ,
+				  tm_stats->completed_2xx ) < 0) goto err;
+	
+	unixsock_reply_send();
+	return 0;
+
+ err:
+	unixsock_reply_reset();
+	unixsock_reply_asciiz("500 Buffer too small\n");
+	unixsock_reply_send();
+	return -1;
+}
+
+
 int init_tm_stats(void)
 {
 	int size;
@@ -144,6 +190,11 @@ int init_tm_stats(void)
 	memset(tm_stats->s_client_transactions, 0, size );
 		 
 	if (register_fifo_cmd(fifo_stats, "t_stats", 0)<0) {
+		LOG(L_CRIT, "cannot register fifo stats\n");
+		goto error4;
+	}
+
+	if (unixsock_register_cmd("t_stats", unixsock_stats) < 0) {
 		LOG(L_CRIT, "cannot register fifo stats\n");
 		goto error4;
 	}
