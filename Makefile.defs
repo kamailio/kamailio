@@ -2,13 +2,18 @@
 #
 # makefile defs (CC, LD,a.s.o)
 #
+# History:
+# --------
+#              created by andrei
+#  2003-02-24  added LOCALBASE, fixed doc-dir for freebsd - patch provided
+#              by Maxim Sobolev <sobomax@FreeBSD.org>
 
 
 #version number
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre6-tcp7-tm
+EXTRAVERSION = pre6-tcp8-tm
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -16,7 +21,8 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
 
  # install location
-PREFIX = /usr/local
+PREFIX ?= /usr/local
+LOCALBASE ?= /usr/local
 prefix = $(PREFIX)
 # install path is $(basedir) $(prefix) 
 # example:
@@ -40,8 +46,13 @@ ifeq ($(OS), linux)
 	doc-dir = share/doc/ser/
 	man-dir = share/man/
 else
+ifeq ($(OS), freebsd)
+	doc-dir = share/doc/ser/
+	man-dir = man/
+else
 	doc-dir=doc/ser/
 	man-dir=man/
+endif
 endif
 ut-prefix = bin/
 # target dirs for various stuff

@@ -5,6 +5,13 @@
 # WARNING: requires gmake (GNU Make)
 #  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 8), OpenBSD (3.2),
 #  limited WinNT (cygwin) support
+#
+#  History:
+#  --------
+#              created by andrei
+#  2003-02-24  make install no longer overwrites ser.cfg  - patch provided
+#               by Maxim Sobolev   <sobomax@FreeBSD.org> and 
+#                  Tomas Björklund <tomas@webservices.se>
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 
@@ -158,8 +165,12 @@ $(man-prefix)/$(man-dir)/man5:
 
 install-cfg: $(cfg-prefix)/$(cfg-dir)
 		sed -e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
-			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg
-		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg
+			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.default
+		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.default
+		if [ ! -e $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
+			cp -p $(cfg-prefix)/$(cfg-dir)ser.cfg.default \
+				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
+		fi
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
 install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1
