@@ -196,7 +196,7 @@ void st_update_ucontact(ucontact_t* _c)
 			  * again. For db mode 1 the db update is allready
 			  * done and we don't have to change the state.
 		      */
-		if (db_mode == 2)
+		if (db_mode == WRITE_BACK)
 			_c->state = CS_DIRTY;
 		break;
 
@@ -220,7 +220,7 @@ void st_update_ucontact(ucontact_t* _c)
 			 * For db mode 2 we turn into DIRTY and let the
 			 * timer do the database update.
 			 */
-		if (db_mode == 1)
+		if (db_mode == WRITE_THROUGH)
 			_c->state = CS_SYNC;
 		else
 			_c->state = CS_DIRTY;
@@ -261,11 +261,11 @@ int st_delete_ucontact(ucontact_t* _c)
 			return 1;
 
 	case CS_SYNC:
-			/* If the contact is marked for replication we
-			 * turn it into zombie state, but because the
-			 * contact is in the DB we can not remove
-			 * it from memory anyway
-			 * because of the state change it is dirty
+			/* Contact is in the database so we can not
+			 * remove it from memory. Instead we turn it
+			 * into a zombie (which should be ignored by 
+			 * normal functions) and let the timer process 
+			 * decide how to proceed.
 			 */
 		_c->state = CS_ZOMBIE_D;
 			/* to synchronyse the state change in db mode 1
