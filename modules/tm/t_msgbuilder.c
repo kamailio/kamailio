@@ -449,10 +449,11 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 	t->callid.len = callid->len;
 	memapp(w, CRLF CALLID, CRLF_LEN + CALLID_LEN);
 	memapp(w, callid->s, callid->len);
-
+	memapp(w, CRLF, CRLF_LEN);
+	
 	     /* Content-Length */
 	if (body) {
-		memapp(w, CRLF CONTENT_LENGTH, CRLF_LEN + CONTENT_LENGTH_LEN);
+		memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
 		memapp(w, content_len, content_len_len);
 		memapp(w, CRLF, CRLF_LEN);
 	}
