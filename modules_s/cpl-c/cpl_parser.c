@@ -35,10 +35,11 @@
 #include <unistd.h>
 #include <gnome-xml/xmlmemory.h>
 #include <gnome-xml/parser.h>
-#include "CPL_tree.h"
-#include "sub_list.h"
+
 #include "../../dprint.h"
 #include "../../str.h"
+#include "CPL_tree.h"
+#include "sub_list.h"
 
 
 
@@ -388,6 +389,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 			FOR_ALL_ATTR(node,attr) {
 				nr_attr++;
 				val = (char*)xmlGetProp(node,attr->name);
+				/* attribute's name */
 				switch(attr->name[0]) {
 					case 'L': case 'l':
 						*(p++) = LESS_ATTR;break;
@@ -397,17 +399,24 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 						*(p++) = EQUAL_ATTR;break;
 					default: goto error;
 				}
-				switch (val[0]) {
-					case 'e': case 'E':
-						*(p++) = EMERGENCY_VAL; break;
-					case 'g': case 'G':
-						*(p++) = URGENT_VAL;break;
-					case 'r': case 'R':
-						*(p++) = NORMAL_VAL;break;
-					case 'n': case 'N':
-						*(p++) = NON_URGENT_VAL;break;
-					default: goto error;
+				/* attribute's encoded value */
+				if ( !strcasecmp(val,EMERGENCY_STR) ) {
+					*(p++) = EMERGENCY_VAL;
+				} else if ( !strcasecmp(val,URGENT_STR) ) {
+					*(p++) = URGENT_VAL;
+				} else if ( !strcasecmp(val,NORMAL_STR) ) {
+					*(p++) = NORMAL_VAL;
+				} else if ( !strcasecmp(val,NON_URGENT_STR) ) {
+					*(p++) = NON_URGENT_VAL;
+				} else {
+					*(p++) = UNKNOWN_PRIO_VAL;
 				}
+				/* attributte's string value */
+				foo = strlen(val);
+				*((unsigned short*)(p)) = (unsigned short)foo;
+				p += 2;
+				memcpy(p,val,foo);
+				p += foo;
 			}
 			break;
 		/* enconding attributes and values for LOCATION node */

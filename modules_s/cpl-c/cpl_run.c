@@ -378,11 +378,11 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 										"msg or missing SUBJECT header\n");
 									goto error;
 								}
-								intr->subject = 
+								intr->subject =
 									&(intr->msg->subject->body);
-								trim_len( msg_val.len,msg_val.s,
-									*(intr->subject));
 							}
+							trim_len( msg_val.len,msg_val.s,
+								*(intr->subject));
 							break;
 						case ORGANIZATION_VAL: /* ORGANIZATION */
 							if (!intr->organization) {
@@ -396,9 +396,9 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 								}
 								intr->organization =
 									&(intr->msg->organization->body);
-								trim_len( msg_val.len,msg_val.s,
-									*(intr->organization));
 							}
+							trim_len( msg_val.len,msg_val.s,
+								*(intr->organization));
 							break;
 						case USER_AGENT_VAL: /* User Agent */
 							if (!intr->user_agent) {
@@ -412,9 +412,9 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 								}
 								intr->user_agent =
 									&(intr->msg->user_agent->body);
-								trim_len( msg_val.len,msg_val.s,
-									*(intr->user_agent));
 							}
+							trim_len( msg_val.len,msg_val.s,
+								*(intr->user_agent));
 							break;
 						default:
 							LOG(L_ERR,"ERROR:run_string_switch: unknown "
@@ -461,6 +461,181 @@ error:
 	return 0;
 }
 
+
+
+
+inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
+{
+	static str default_val={"normal",6};
+	unsigned char *p;
+	unsigned char *kid;
+	unsigned char attr_name;
+	unsigned char attr_val;
+	unsigned char msg_attr_val;
+	unsigned char msg_prio;
+	int i;
+	str cpl_val;
+	str msg_val;
+
+	msg_val.s = 0;
+	msg_val.len = 0;
+
+	DBG(">>>> kids=%d\n",NR_OF_KIDS(intr->ip));
+
+	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
+		kid = intr->ip + KID_OFFSET(intr->ip,i);
+		switch ( NODE_TYPE(kid) ) {
+			case OTHERWISE_NODE :
+				DBG("DEBUG:run_priority_switch: matching on OTHERWISE node\n");
+				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
+			case PRIORITY_NODE :
+				if (NR_OF_ATTR(kid)!=1)
+					goto error;
+				/* get the attribute */
+				p = ATTR_PTR(kid);
+				check_overflow_by_ptr( p+3, intr, error);
+				/* attribute's name */
+				attr_name = (*(p++));
+				if (attr_name!=LESS_ATTR && attr_name!=GREATER_ATTR &&
+				attr_name!=EQUAL_ATTR){
+					LOG(L_ERR,"ERROR:run_priority_switch: unknown attribut "
+						"(%d) in PRIORITY node ->skipping branch\n",attr_name);
+					continue; /* for cycle for all kids */
+				}
+				/* attribute's encoded value */
+				attr_val = (*(p++));
+				if (attr_val!=EMERGENCY_VAL && attr_val!=URGENT_VAL &&
+				attr_val!=NORMAL_VAL && attr_val!=NON_URGENT_VAL &&
+				attr_val!=UNKNOWN_PRIO_VAL) {
+					LOG(L_ERR,"ERROR:run_priority_switch: unknown encoded "
+						"value (%d) for attribute (*d) in PRIORITY node "
+						"-> skipping branch\n",*p);
+					continue; /* for cycle for all kids */
+				}
+				if (attr_val==UNKNOWN_PRIO_VAL && attr_name!=EQUAL_ATTR) {
+					LOG(L_ERR,"ERROR:cpl_c:run_priority_switch: bad PRIORITY "
+						"brach: attr_name=EQUAL doesn't match attr_val=UNKNOWN"
+						" -> skipping branch\n");
+					continue; /* for cycle for all kids */
+				}
+				/* attribute's value */
+				cpl_val.len = *((unsigned short*)(p));
+				check_overflow_by_ptr( p+1+cpl_val.len, intr, error);
+				cpl_val.s = ((cpl_val.len)?(p+2):0);
+
+				DBG("DEBUG:run_priority_switch: testing PRIORITY branch "
+					"(attr=%d,val=%d) [%.*s](%d)..\n",
+					attr_name,attr_val,cpl_val.len,cpl_val.s,cpl_val.len);
+				if (!msg_val.s) {
+					if (!intr->subject) {
+						/* get the PRIORITY header from message */
+						if (!intr->msg->priority &&
+						(parse_headers(intr->msg,HDR_PRIORITY,0)==-1 ||
+						!intr->msg->priority)) {
+							LOG(L_WARN,"WARNING:run_priority_switch: bad "
+								"msg or missing PRIORITY header -> using "
+								"default value \"normal\"!\n");
+							intr->priority = &default_val;
+						} else {
+							intr->priority =
+								&(intr->msg->priority->body);
+						}
+					}
+					trim_len( msg_val.len, msg_val.s, *(intr->priority));
+					/* encode attribute's value from SIP message */
+					if ( msg_val.len==EMERGENCY_STR_LEN &&
+					!strncasecmp(msg_val.s,EMERGENCY_STR,msg_val.len) ) {
+						msg_attr_val = EMERGENCY_VAL;
+					} else if ( msg_val.len==URGENT_STR_LEN &&
+					!strncasecmp(msg_val.s,URGENT_STR,msg_val.len) ) {
+						msg_attr_val = URGENT_VAL;
+					} else if ( msg_val.len==NORMAL_STR_LEN &&
+					!strncasecmp(msg_val.s,NORMAL_STR,msg_val.len) ) {
+						msg_attr_val = NORMAL_VAL;
+					} else if ( msg_val.len==NON_URGENT_STR_LEN &&
+					!strncasecmp(msg_val.s,NON_URGENT_STR,msg_val.len) ) {
+						msg_attr_val = NON_URGENT_VAL;
+					} else {
+						msg_attr_val = UNKNOWN_PRIO_VAL;
+					}
+					DBG("DEBUG:run_priority_switch: extracted msg priority is "
+						"<%.*s> decoded as [%d]\n",
+						msg_val.len,msg_val.s,msg_attr_val);
+				}
+				DBG("DEBUG:run_priority_switch: using msg string <%.*s>\n",
+					msg_val.len, msg_val.s);
+				/* attr_val (from cpl) cannot be UNKNOWN - we already
+				 * check it -> check only for msg_attr_val for non-EQUAL op */
+				if (msg_attr_val==UNKNOWN_PRIO_VAL && attr_name!=EQUAL_ATTR) {
+					LOG(L_NOTICE,"NOTICE:run_priority_switch: UNKNOWN "
+						"value found in sip_msg when tring a LESS/GREATER "
+						"cmp -> force the value to default \"normal\"\n");
+					msg_prio = NORMAL_VAL;
+				} else {
+					msg_prio = msg_attr_val;
+				}
+				/* does the value from script match the one from message? */
+				switch (attr_name) {
+					case LESS_ATTR:
+						switch (attr_val) {
+							case EMERGENCY_VAL:
+								if (msg_prio!=EMERGENCY_VAL) break; /*OK*/
+								else continue; /* for cycle for all kids */
+							case URGENT_VAL:
+								if (msg_prio!=EMERGENCY_VAL &&
+									msg_prio!=URGENT_VAL) break; /* OK */
+								else continue; /* for cycle for all kids */
+							case NORMAL_VAL:
+								if (msg_prio==NON_URGENT_VAL) break; /*OK*/
+								else continue; /* for cycle for all kids */
+							case NON_URGENT_VAL:
+								continue; /* for cycle for all kids */
+						}
+						break;
+					case GREATER_ATTR:
+						switch (attr_val) {
+							case EMERGENCY_VAL:
+								continue; /* for cycle for all kids */
+							case URGENT_VAL:
+								if (msg_prio!=EMERGENCY_VAL) break; /*OK*/
+								else continue; /* for cycle for all kids */
+							case NORMAL_VAL:
+								if (msg_prio!=NON_URGENT_VAL &&
+									msg_prio!=NORMAL_VAL) break; /*OK*/
+								else continue; /* for cycle for all kids */
+							case NON_URGENT_VAL:
+								if (msg_prio!=NON_URGENT_VAL) break; /*OK*/
+								else continue; /* for cycle for all kids */
+						}
+						break;
+					case EQUAL_ATTR:
+						if ( attr_val==msg_prio ) {
+							if (attr_val==UNKNOWN_PRIO_VAL) {
+								if ( msg_val.len==cpl_val.len &&
+								!strncasecmp(msg_val.s,cpl_val.s,msg_val.len)){
+									break; /* OK */
+								}
+							} else {
+								break; /* OK */
+							}
+						}
+						continue; /* for cycle for all kids */
+						break;
+				} /* end switch for attr_name */
+				DBG("DEBUG:run_priority_switch: matching current "
+					"PRIORITY node\n");
+				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:
+					kid+KID_OFFSET(kid,0));
+				break;
+			default:
+				LOG(L_ERR,"ERROR:run_priority_switch: unknown output node type"
+					" (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
+		} /* end switch for NODE_TYPE */
+	} /* end for for all kids */
+
+error:
+	return 0;
+}
 
 
 
@@ -754,6 +929,10 @@ int run_cpl_script( struct cpl_interpreter *intr )
 			case STRING_SWITCH_NODE:
 				DBG("DEBUG:run_cpl_script:processing string-switch node\n");
 				intr->ip = run_string_switch( intr );
+				break;
+			case PRIORITY_SWITCH_NODE:
+				DBG("DEBUG:run_cpl_script:processing priority-switch node\n");
+				intr->ip = run_priority_switch( intr );
 				break;
 			case LOCATION_NODE:
 				DBG("DEBUG:run_cpl_script:processing location node\n");

@@ -120,9 +120,18 @@
 #define  GREATER_ATTR                1
 #define  EQUAL_ATTR                  2
 #define  EMERGENCY_VAL               0
+#define  EMERGENCY_STR               "emergency"
+#define  EMERGENCY_STR_LEN           (sizeof(EMERGENCY_STR)-1)
 #define  URGENT_VAL                  1
+#define  URGENT_STR                  "urgent"
+#define  URGENT_STR_LEN              (sizeof(URGENT_STR)-1)
 #define  NORMAL_VAL                  2
+#define  NORMAL_STR                  "normal"
+#define  NORMAL_STR_LEN              (sizeof(NORMAL_STR)-1)
 #define  NON_URGENT_VAL              3
+#define  NON_URGENT_STR              "non-urgent"
+#define  NON_URGENT_STR_LEN          (sizeof(NON_URGENT_STR)-1)
+#define  UNKNOWN_PRIO_VAL            4
 
 /* attributs and values for LOCATION node */
 #define  URL_ATTR                    0
