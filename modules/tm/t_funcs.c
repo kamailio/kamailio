@@ -106,9 +106,15 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
       /* if the lookup's result is not 0 means that it's a retransmission */
       if ( t_lookup_request( p_msg, foo, bar ) )
       {
-         DBG("DEBUG: t_add_transaction: won't add a retransmission\n");
+         LOG(L_ERR,"ERROR: t_add_transaction: won't add a retransmission\n");
          return -1;
       }
+
+   /* sanity check: ACKs can never establish a transaction */
+   if ( p_msg->first_line.u.request.method_value==METHOD_ACK ) {
+	LOG(L_ERR, "ERROR: add_transaction: ACK can't be used to add transaction\n");
+	return -1;
+   }
 
    /* creates a new transaction */
    new_cell = build_cell( p_msg ) ;
