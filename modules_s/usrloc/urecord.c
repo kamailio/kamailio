@@ -242,7 +242,7 @@ static inline int nodb_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * done during unregister */
 			if (ptr->state == CS_ZOMBIE_N && ptr->replicate == 0) {
-				LOG(L_NOTICE, "removing spare zombie '%.*s','%.*s'\n",
+				LOG(L_NOTICE, "removing spare zombie (nodb) '%.*s','%.*s'\n",
 				    ptr->aor->len, ZSW(ptr->aor->s),
 				    ptr->c.len, ZSW(ptr->c.s));
 				t = ptr;
@@ -313,7 +313,7 @@ static inline int wt_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * allready done during unregister */
 			if (ptr->state == CS_ZOMBIE_S && ptr->replicate == 0) {
-				LOG(L_NOTICE, "removing spare zombie '%.*s','%.*s'\n",
+				LOG(L_NOTICE, "removing spare zombie (wt) '%.*s','%.*s'\n",
 				    ptr->aor->len, ZSW(ptr->aor->s),
 				    ptr->c.len, ZSW(ptr->c.s));
 				t = ptr;
@@ -498,7 +498,7 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _ci
 		return -1;
 	}
 
-	notify_watchers(_r, *_con, PRES_ONLINE);
+	notify_watchers(_r, *_con, (_e > 0) ? PRES_ONLINE : PRES_OFFLINE);
 
 	if (exists_ulcb_type(UL_CONTACT_INSERT))
 		run_ul_callbacks( UL_CONTACT_INSERT, *_con);
@@ -535,6 +535,8 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	if (exists_ulcb_type(UL_CONTACT_DELETE))
 		run_ul_callbacks( UL_CONTACT_DELETE, _c);
 
+	notify_watchers(_r, _c, PRES_OFFLINE);
+
 	if (st_delete_ucontact(_c) > 0) {
 		if (db_mode == WRITE_THROUGH) {
 			if (db_delete_ucontact(_c) < 0) {
@@ -542,7 +544,6 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 							"database\n");
 			}
 		}
-		notify_watchers(_r, _c, PRES_OFFLINE);
 
 		mem_delete_ucontact(_r, _c);
 	}
