@@ -242,6 +242,7 @@ static inline struct hostent* resolvehost(const char* name)
 	static struct hostent* he=0;
 #ifdef __sun
 	int err;
+	static struct hostent* he2=0;
 #endif
 #ifdef DNS_IP_HACK
 	struct ip_addr* ip;
@@ -249,28 +250,27 @@ static inline struct hostent* resolvehost(const char* name)
 	
 	len=strlen(name);
 	/* check if it's an ip address */
-	if ( ((ip=str2ip(name, len))!=0)
+	if ( ((ip=str2ip((unsigned char*)name, len))!=0)
 #ifdef	USE_IPV6
-		  || ((ip=str2ip6(name, len))!=0)
+		  || ((ip=str2ip6((unsigned char*)name, len))!=0)
 #endif
 		){
 		/* we are lucky, this is an ip address */
-		return ip_addr2he(name, len, ip);
+		return ip_addr2he((unsigned char*)name, len, ip);
 	}
 	
 #endif
 	/* ipv4 */
-#ifdef __sun
-	if (he) freehostent(he);
-	he=getipnodebyname(name, AF_INET, 0, &err);
-#else
 	he=gethostbyname(name);
-#endif
 #ifdef USE_IPV6
 	if(he==0){
 		/*try ipv6*/
 	#ifdef __sun
-		he=getipnodebyname(name, AF_INET6, 0, &err);
+		/* on solaris 8 getipnodebyname has a memory leak,
+		 * after some time calls to it will fail with err=3
+		 * solution: patch your solaris 8 installation */
+		if (he2) freehostent(he2);
+		he=he2=getipnodebyname(name, AF_INET6, 0, &err);
 	#else
 		he=gethostbyname2(name, AF_INET6);
 	#endif

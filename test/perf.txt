@@ -32,3 +32,73 @@ ser  gcc-3.2      20             2456  2448     3158  3147       3137  3179
 
 (*) - retransmissions ( 500ms)
 (+) - retransmissions (2000ms)
+------------------------------------------------------------------------------
+
+
+
+date: 23.09.2002
+
+hardware: alioth UltraSparc-IIi (ser) <=fasteth=> mobile34 2*PIII 900 (stress)
+
+version: ser 0.8.7-15-tests (sparc64/SunOS)
+flags: STATS:Off, USE_IPV6, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC,
+FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024, MAX_RECV_BUFFER_SIZE 262144,
+MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040 
+
+ser command: ./ser -f test/test-throughput.cfg -l 192.168.57.33 -n 1 -D -m 256
+ser command: ./ser -f test/th-uri-fast.cfg     -l 192.168.57.33 -n 1 -D -m 256
+
+test calls: 10000 
+
+
+stateless:
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser gcc 3.0        20             666   665      672   673
+                  100             666*  658*     675*  656*
+                  200             671   660*
+
+ser gcc 3.0        20             805   807
+-DDNS_IP_HACK     100             802*  804*
+                  200             783*  775*
+
+tm:
+ser gcc 3.0        20             542   551
+-DDND_IP_HACK     100             550   553*
+                  200             523*  530*
+
+-------------------------------------------------------------------------------
+
+
+
+date: 23.09.2002
+
+hardware: balrog 4*UltraSparc-II 296 Mhz (ser) <=fasteth=> mobile34 2*PIII 900 
+(stress)
+
+version: ser 0.8.7-15-tests (sparc64/SunOS)
+flags: STATS:Off, USE_IPV6, NO_DEBUG, DNS_IP_HACK, SHM_MEM, SHM_MMAP,
+PKG_MALLOC, F_MALLOC, FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024,
+MAX_RECV_BUFFER_SIZE 262144, MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040
+
+ser command: ./ser -f test/test-throughput.cfg -l 192.168.46.35 -D -n 1 -m 256
+ser command: /ser -f test/th-uri-fast.cfg      -l 192.168.46.35    -n 4 -m 256 
+
+test calls: 10000 
+
+
+stateless:
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser gcc3.2         20             924   923      1591  1602      1624  1670
+(DNS_IP_HACK)     100             932*  906*     1486* 1420*     1517  1495
+                  200             939*  917*     1300* 1386*     1157* 1275*
+
+tm:
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser gcc3.2         20             704  725       1137  1202      1460  1575
+(DNS_IP_HACK)     100             703* 683*      1150*           1398* 1451*
+                  200             723* 723*      1207* 1277*     1176* 1369*
+
+stress:
+test calls: 1000000
+                   20          100 procs (cps)
+
