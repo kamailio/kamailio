@@ -2,6 +2,7 @@ $Id$
 
 ( - todo, x - done)
 
+- grep parse_uri & replace with parse_sip_msg_uri (e.g do_action!)
 - WARNING: tm fr_timer fixup is not in HEAD (should it be? is it the
  rigth fix?)
 x update AUTHORS, debian/copyright, ser.8, ser.cfg.5 from stable
@@ -19,8 +20,13 @@ x port receive.c pre_script_cb fix from stable
     something like alias= foo1.bar:5080 foo2.bar foo3.bar:*
 - extend listen and alias to include port numbers and protocol:
        tcp foo.bar:5063, udp foo.bar:5062, foo2.bar
+- add force_via, force_srcip a.s.o (the advertised addresses should be
+ overwritable from the script).
+- ? add force_outbound_socket(ip)? (choose an apropriate socket from the
+ listen list for sending the msg; works on udp only)
 
 release:
+- unlink_timer_lists -- unsafe ???
 x print_cseq_num max. size fix.
 x backport: tcp conn id fix to stable + destroy_tcp 
 x backport: acc mem. leak fixes
@@ -134,6 +140,8 @@ optimizations:
 - getsock* cache
 - fd cache for tcp_send
 - dns cache? (see DNS)
+- make option to use openssl MD5 (HMAC_Init(hmac_ctx, (void*)key, 16, md5_md))
+ [ 0.9.7 version is really fast ]
 
 
 tcp stuff:
@@ -146,6 +154,8 @@ x set TOS to minimize delay
 
 tm optimizations:
 
+- inline/macro/drop for: get_tm_table, set_kr, lock_hash, unlock_hash,
+  set_t, get_t
 - replace snprintfs int build_uac_request, *_dlg
 - fix the huge param no. in this functions (use structs if neccessary):
   build_uac_request, build_uac_request_dlg, t_uac, t_uac_dlg

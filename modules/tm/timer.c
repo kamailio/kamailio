@@ -584,7 +584,7 @@ void print_timer_list( enum lists list_id)
 static void remove_timer_unsafe(  struct timer_link* tl )
 {
 #ifdef EXTRA_DEBUG
-	if (tl && tl->timer_list &&
+	if (tl && is_in_timer_list2(tl) &&
 		tl->timer_list->last_tl.prev_tl==0) {
 		LOG( L_CRIT,
 		"CRITICAL : Oh no, zero link in trailing timer element\n");

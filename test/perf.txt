@@ -219,3 +219,60 @@ hash test results:
 new_hash             17.6        11.3             11.1
 new_hash2_old        16.6        12.6             10.9
 new_hash2            12           7.1              7.2         7.18
+-------------------------------------------------------------------------------
+date: 04.09.2002
+
+hardware: dorian 2*Athlon MP2000 (ser) <=gigabit=> mobile34 2*PIII 900
+
+version: ser 0.8.11 (i386/linux)
+flags: STATS:Off, USE_IPV6, USE_TCP, DISABLE_NAGLE, DNS_IP_HACK, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC, FAST_LOCK-ADAPTIVE_WAIT
+ADAPTIVE_WAIT_LOOPS=1024, MAX_RECV_BUFFER_SIZE 262144, MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 65535
+@(#) $Id$
+main.c compiled on 14:34:25 Sep  4 2003 with gcc 3.3
+
+(standard release flags)
+
+ser command: ./ser -f test/test-throughput.cfg -l 10.0.0.179 -n 2 -m 256
+ser command: ./ser -f test/th-uri-fast.cfg     -l 10.0.0.179 -n 2 -m 256
+
+test calls: 100000
+
+stateless:
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.11        20                           3951  3975
+                 100                           5032* 5057
+                 200                           5306  5360     5291 5321 5319
+statefull (tm):
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.11        20                           
+                 100                                           4155 4429 4510
+                 200                                           4450 4349
+
+
+ w/ NO_DEBUG && CPU=athlon-mp CC_EXTRA_OPTIONS=-march=athlon-mp
+stateless:
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.11        20                           
+                 100                                           5202 5224
+                 200                                           5384 5370
+statefull (tm):
+                  throttle      1 proc (cps)   2 procs (cps)   4 procs (cps) 
+ser 0.8.11        20                           
+                 100                                           4411 4549
+                 200                                           4602 4493
+statefull(tm)
+0.8.11+
+F_MALLOC_OPTIMIZE 12  100                                      4723 4660 4740
+                      200                                      4804 4879 4849
+(4857 cps, 1000000 calls, throttle=200)
+
+as above + std. cfg   100                                      4496 4453
+ (etc/ser.cfg)        200                                      4441 4445
+ (3 ifs, 5 aliases)
+
+ w/ usrloc lookups   100                                       4371 4475
+                     200                                       4381 4390
+
+(*)  - inv. retr
+(!!) - bye retrans?
+
