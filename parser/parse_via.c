@@ -46,6 +46,7 @@
  *  2003-07-02  added support for TLS parsing in via (andrei)
  *  2003-10-27  added support for alias via param parsing [see
  *               draft-ietf-sip-connect-reuse-00.txt.]  (andrei)
+ *  2004-03-31  fixed rport set instead of i bug (andrei)
  */
 
 
@@ -1863,7 +1864,7 @@ parse_again:
 								vb->rport=param;
 								break;
 							case PARAM_I:
-								vb->rport=param;
+								vb->i=param;
 								break;
 							case PARAM_ALIAS:
 								vb->alias=param;

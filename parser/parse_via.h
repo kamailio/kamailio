@@ -43,6 +43,7 @@
 
 /* via param types
  * WARNING: keep in sync with parse_via.c FIN_HIDDEN... 
+ * and with tm/sip_msg.c via_body_cloner
  */
 enum {
 	PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH, 
@@ -66,6 +67,7 @@ struct via_param {
 
 
 /* Format: name/version/transport host:port;params comment */
+ /* WARNING: keep in sync with tm/sip_msg.c via_body_cloner */
 struct via_body { 
 	int error;
 	str hdr;   /* Contains "Via" or "v" */
