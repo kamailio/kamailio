@@ -24,9 +24,11 @@ char           sl_tag[TOTAG_LEN];
 /* from here, the variable prefix begins */
 char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
-   we do not filter
-*/
+   we do not filter */
 unsigned int  *sl_timeout;
+
+
+
 
 int sl_startup()
 {
@@ -61,6 +63,16 @@ int sl_startup()
 	}
 	*(sl_timeout)=get_ticks();
 
+	return 1;
+}
+
+
+
+
+int sl_shutdown()
+{
+	if (sl_timeout)
+		shm_free(sl_timeout);
 	return 1;
 }
 

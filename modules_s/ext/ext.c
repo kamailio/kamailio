@@ -221,6 +221,7 @@ static int ext_rewriteuser(struct sip_msg *msg, char *cmd, char *foo_str )
 		} else {
 			LOG(L_WARN,"WARNING:ext_rewriteuser: fork not supported -> dumping"
 				" uri %d <%.*s>\n",i,new_uri.len,new_uri.s);
+			pkg_free(new_uri.s);
 		}
 
 		i++;
