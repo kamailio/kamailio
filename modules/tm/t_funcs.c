@@ -294,17 +294,21 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack(t, p_msg, proxy, proto);
 	if (ret<=0) {
-		DBG( "SER:ERROR: t_forward \n");
-		reply_ret=kill_transaction( t );
-		if (reply_ret>0) {
-			/* we have taken care of all -- do nothing in
-		  	script */
-			DBG("ERROR: generation of a stateful reply "
-				"on error succeeded\n");
-			ret=0;
-		}  else {
-			DBG("ERROR: generation of a stateful reply "
-				"on error failed\n");
+		DBG( "ERROR:tm:t_relay_to:  t_forward_nonack returned error \n");
+		/* we don't want to pass upstream any reply regarding replicating
+		 * a request; replicated branch must stop at us*/
+		if (!replicate) {
+			reply_ret=kill_transaction( t );
+			if (reply_ret>0) {
+				/* we have taken care of all -- do nothing in
+			  	script */
+				DBG("ERROR: generation of a stateful reply "
+					"on error succeeded\n");
+				ret=0;
+			}  else {
+				DBG("ERROR: generation of a stateful reply "
+					"on error failed\n");
+			}
 		}
 	} else {
 		DBG( "SER: new transaction fwd'ed\n");
