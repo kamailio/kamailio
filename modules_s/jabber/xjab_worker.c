@@ -502,9 +502,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		}
 		
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xj_worker: auth to jabber as: [%s] / [%s]\n",
-			(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val), 
-			(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val));
+		DBG("XJAB:xj_worker: auth to jabber as: [%s] / [xxx]\n",
+			(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val));
+//			(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val));
 #endif		
 		if(xj_jcon_user_auth(jbc,
 			(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val),
