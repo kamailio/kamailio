@@ -1,6 +1,6 @@
 %define name    ser
 %define ver     0.8.11pre29
-%define rel     0
+%define rel     1
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
 %define MYSQL_MODULES		mysql
