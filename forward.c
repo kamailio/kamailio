@@ -41,10 +41,10 @@
 int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len;
-	char* buf=NULL;
-	struct sockaddr_in* to=NULL;
+	char* buf;
+	struct sockaddr_in* to;
 
-
+	to=0;
 	buf = build_req_buf_from_sip_req( msg, &len);
 	if (!buf){
 		LOG(L_ERR, "ERROR: forward_reply: building failed\n");
@@ -58,7 +58,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 
 	 /* send it! */
-	DBG("Sending:", buf);
+	DBG("Sending:\n%s.\n", buf);
 	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
 
 	to->sin_family = AF_INET;
@@ -102,6 +102,7 @@ error:
 int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
 {
 	int err;
+	struct hostent* he;
 
 	to->sin_family = AF_INET;
 	to->sin_port = (via->port)?htons(via->port): htons(SIP_PORT);
@@ -111,7 +112,6 @@ int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
 	if (err)
 #endif
 	{
-		struct hostent* he;
 		/* fork? gethostbyname will probably block... */
 		he=gethostbyname(via->host.s);
 		if (he==0){
@@ -129,9 +129,8 @@ int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
 int forward_reply(struct sip_msg* msg)
 {
 	int  r;
-	char* new_buf=NULL;
-	struct hostent* he=NULL;
-	struct sockaddr_in* to=NULL;
+	char* new_buf;
+	struct sockaddr_in* to;
 	unsigned int new_len;
 	struct sr_module *mod;
 #ifdef DNS_IP_HACK
@@ -140,6 +139,8 @@ int forward_reply(struct sip_msg* msg)
 
 
 
+	to=0;
+	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
 		for (r=0; r<addresses_no; r++)
@@ -162,7 +163,6 @@ int forward_reply(struct sip_msg* msg)
 		}
 	}
 	
-	to=0;
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");

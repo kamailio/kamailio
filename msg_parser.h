@@ -227,20 +227,19 @@ void free_sip_msg(struct sip_msg* msg);
    parsed; return 0 if those HFs can't be found
  */
 
-/*
 #define check_transaction_quadruple(msg ) \
-	(parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ)!=-1 && \
-	 msg->from && msg->to && msg->callid && msg->cseq)
-*/
+	(parse_headers((msg), HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ)!=-1 && \
+	(msg)->from && (msg)->to && (msg)->callid && (msg)->cseq)
 
 /* restored to the original double-check and put macro params
    in parenthesses  -jiri */
-
+/* re-reverted to the shorter version -andrei 
 #define check_transaction_quadruple(msg ) \
    ( ((msg)->from || (parse_headers( (msg), HDR_FROM)!=-1 && (msg)->from)) && 	\
    ((msg)->to|| (parse_headers( (msg), HDR_TO)!=-1 && (msg)->to)) &&		\
    ((msg)->callid|| (parse_headers( (msg), HDR_CALLID)!=-1 && (msg)->callid)) &&\
    ((msg)->cseq|| (parse_headers( (msg), HDR_CSEQ)!=-1 && (msg)->cseq)) && \
    ((msg)->via1|| (parse_headers( (msg), HDR_VIA)!=-1 && (msg)->via1)) ) 
-
+*/
+	
 #endif
