@@ -387,11 +387,10 @@ int daemonize(char*  name)
 	}
 	
 	/* close any open file descriptors */
-	if (log_stderr==0)
-		for (r=0;r<MAX_FD; r++){
+	for (r=0;r<MAX_FD; r++){
 			if ((r==3) && log_stderr)  continue;
 			close(r);
-		}
+	}
 	return  0;
 
 error:
