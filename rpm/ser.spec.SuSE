@@ -32,7 +32,8 @@ Module, Registrar and User Location.
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
+Requires: ser mysql
+BuildPrereq: mysql-devel
 
 %description mysql
 The ser-mysql package contains MySQL database connectivity that you
@@ -149,6 +150,9 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+* Mon Oct 28 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+- Added mysql and mysql-devel to the Req for the ser-mysql rpm.
+
 * Thu Sep 26 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 - Added library path to mysql/Makefile to build on SuSE 8.0
 
