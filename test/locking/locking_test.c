@@ -7,8 +7,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-//#include <sys/types.h>
-//#include <fcntl.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #ifdef FLOCK
 #include <sys/file.h>
