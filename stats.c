@@ -53,11 +53,6 @@ int init_stats(int nr_of_processes)
 	LOG(L_DBG,"init_stats(): initializing stats for %d processes\n", 
 		nr_of_processes);
 
-	if(!stat_file) {
-		LOG(L_ERR, "Invalid stats file\n");
-		return -1;
-	}
-
 
 	global_stats = shm_malloc(nr_of_processes*sizeof(struct stats_s));
 	if(!global_stats) {
