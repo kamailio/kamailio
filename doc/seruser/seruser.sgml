@@ -122,7 +122,8 @@
 		<application moreinfo="none">ser</application> web interface
 		and <application moreinfo="none">SIPSak</application>
 		diagnostic tools are available. Visit our site, 
-		http://www.iptel.org/, for more information on
+		<ulink url="http://www.iptel.org/">http://www.iptel.org/</ulink>
+		, for more information on
 		contributed packages.
 	    </para>
 	</section> 
@@ -198,13 +199,19 @@ to serve call signaling Bay Area population.
 		    </listitem>
 		    <listitem>
 			<para>
-			    Portability. Ser has been written in ANSI C. It has been extensively tested on PC/Linux and 
+			    <emphasis>
+				Portability.
+			    </emphasis>
+			    Ser has been written in ANSI C. It has been extensively tested on PC/Linux and 
 			    Sun/Solaris. 
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			    Interoperability. Ser is based on open SIP standard. It has undergone extensive testing with 
+			    <emphasis>			   
+				Interoperability. 
+			</emphasis>
+			Ser is based on open SIP standard. It has undergone extensive testing with 
 			    products of other vendors. It powers the public iptel.org site 24 hours a day, 356 days a year 
 			    serving numerous SIP implementations using this site.
 			</para>
@@ -335,6 +342,12 @@ to serve call signaling Bay Area population.
 		    </listitem>
 		</itemizedlist>
 	    </para>
+	    <para>
+		List of known bugs is publicly available at
+		<ulink url="http://developer.berlios.de/bugs/?group_id=480">
+		    http://developer.berlios.de/bugs/?group_id=480
+		</ulink>.
+	    </para>
 	</section> <!-- limitations -->
 	<section id="contact">
 	    <title>Contact and Licencing</title>
@@ -355,10 +368,11 @@ to serve call signaling Bay Area population.
 	    <para>
 		Most up-to-date information including latest and most complete version
 		of this documentation is always available at our website,
-		http://www.iptel.org/ser/
+		<ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser/</ulink>
 		For information on how to install ser, read INSTALL.
 		SGML documentation is available in the 'doc' directory.
-		A SIP tutorial (slide set) is available at http://www.iptel.org/sip/ .
+		A SIP tutorial (slide set) is available at 
+		<ulink url="http://www.iptel.org/sip/">http://www.iptel.org/sip/</ulink> .
 	    </para>
 	</section> <!-- info -->
     </chapter> <!-- general -->
@@ -1913,6 +1927,12 @@ if (...) {
 	</section>
 	<section>
 	    <title>Command Line Parameters</title>
+	    <note>
+		<para>
+		    Command-Line parameters may be overriden by configuration
+		    file options which take precedence over them.
+		</para>
+	    </note>
 	    <itemizedlist>
 		<listitem>
 		    <para>
