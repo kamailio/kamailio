@@ -665,6 +665,16 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 		    granted. Be aware that without cryptography, 
 		    security is still weak. Anyone who saw an INVITE can 
 		    generate an acceptable REFER.
+				<note>
+					<para>
+						The wrapper INVITE may or may not be used
+						in future. The internet draft
+						draft-ietf-sipping-service-examples
+						mentiones the click-to-dial application
+						without use of the dummy INVITE. As of
+						today, most telephones do need it.
+					</para>
+				</note>
 		    <example>
 			<title>Call-Flow for Click-To-Dial Using REFER</title>
 
