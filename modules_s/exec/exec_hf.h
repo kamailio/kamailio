@@ -79,7 +79,8 @@
 
 
 
-#ifdef _JUST_FOR_INFO_HERE
+#if 0
+/* _JUST_FOR_INFO_HERE */
 struct hdr_field {
         int type;                /* Header field type */
         str name;                /* Header field name */
