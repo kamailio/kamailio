@@ -224,6 +224,55 @@ modparam("registrar", "desc_time_order", 1)
 	    </example>
 	</section>
 
+	<section>
+	    <title><varname>received_avp</varname> (integer)</title>
+	    <para>
+		Registrar will store the value of the AVP configured by this parameter in the
+		received column in the user location database. It will leave the column empty if the
+		AVP is empty. The AVP should contain a SIP URI consisting of the source IP, port,
+		and protocol of the REGISTER message being processed.
+	    </para>
+	    <note>
+		<para>
+		    The value of this parameter should be the same as the value of corresponding
+		    parameter of nathelper module.
+		</para>
+	    </note>
+	    <para>
+		<emphasis>
+		    Default value is 42.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>received_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "received_avp", 43)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>received_param</varname> (integer)</title>
+	    <para>
+		The name of the parameter that will be appended to Contacts of 200 OK when the
+		received URI was set by nathelper module.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is "received".
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>received_param</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "received_param", "rcv")
+...
+</programlisting>
+	    </example>
+	</section>
     </section>
     <section>
 	<title>Exported Functions</title>
