@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-01-19 support for duplication lump lists added (jiri)
  */
 
 
@@ -42,6 +46,7 @@
 /* WARNING: all lump add/insert operations excpect a pkg_malloc'ed char* 
  * pointer the will be DEALLOCATED when the sip_msg is destroyed! */
 
+enum lump_dir { LD_NEXT, LD_BEFORE, LD_AFTER };
 
 /* adds a header to the end
  * returns  pointer on success, 0 on error */
@@ -248,3 +253,122 @@ void free_lump_list(struct lump* l)
 		pkg_free(crt);
 	}
 }
+
+/* free (shallow-ly) a lump and its after/before lists */
+static void free_shallow_lump( struct lump *l )
+{
+	struct lump *r, *foo;
+
+	r=l->before;
+	while(r){
+		foo=r; r=r->before;
+		pkg_free(foo);
+	}
+	r=l->after;
+	while(r){
+		foo=r; r=r->after;
+		pkg_free(foo);
+	}
+	pkg_free(l);
+}
+
+/* duplicate (shallow-ly) a lump list into pkg memory */
+static struct lump *dup_lump_list_r( struct lump *l, 
+				enum lump_dir dir, int *error)
+{
+	int deep_error;
+	struct lump *new_lump;
+
+	deep_error=0; /* optimist: assume success in recursion */
+	/* if at list end, terminate recursion successfully */
+	if (!l) { *error=0; return 0; }
+	/* otherwise duplicate current element */
+	new_lump=pkg_malloc(sizeof(struct lump));
+	if (!new_lump) { *error=1; return 0; }
+
+	memcpy(new_lump, l, sizeof(struct lump));
+	new_lump->flags=LUMPFLAG_DUPED;
+	new_lump->next=new_lump->before=new_lump->after=0;
+
+	switch(dir) {
+		case LD_NEXT:	
+				new_lump->before=dup_lump_list_r(l->before, 
+								LD_BEFORE, &deep_error);
+				if (deep_error) goto deeperror;
+				new_lump->after=dup_lump_list_r(l->after, 
+								LD_AFTER, &deep_error);
+				if (deep_error) goto deeperror;
+				new_lump->next=dup_lump_list_r(l->next, 
+								LD_NEXT, &deep_error);
+				break;
+		case LD_BEFORE:
+				new_lump->before=dup_lump_list_r(l->before, 
+								LD_BEFORE, &deep_error);
+				break;
+		case LD_AFTER:
+				new_lump->after=dup_lump_list_r(l->after, 
+								LD_AFTER, &deep_error);
+				break;
+		default:
+				LOG(L_CRIT, "BUG: dup_limp_list_r: unknown dir: "
+						"%d\n", dir );
+				deep_error=1;
+	}
+	if (deep_error) goto deeperror;
+
+	*error=0;
+	return new_lump;
+
+deeperror:
+	LOG(L_ERR, "ERROR: dup_lump_list_r: out of mem\n");
+	free_shallow_lump(new_lump);
+	*error=1;
+	return 0;
+}
+
+/* shallow pkg copy of a lump list
+ *
+ * if either original list empty or error occur returns, 0
+ * is returned, pointer to the copy otherwise
+ */
+struct lump* dup_lump_list( struct lump *l )
+{
+	int deep_error;
+
+	deep_error=0;
+	return dup_lump_list_r(l, LD_NEXT, &deep_error);
+}
+
+void free_duped_lump_list(struct lump* l)
+{
+	struct lump *r, *foo,*crt;
+	while(l){
+		crt=l;
+		l=l->next;
+
+		r=crt->before;
+		while(r){
+			foo=r; r=r->before;
+			/* (+): if a new item was introduced to the shallow-ly
+			 * duped list, remove it completely, preserve it
+			 * othewise (it is still refered by original list)
+			 */
+			if (foo->flags!=LUMPFLAG_DUPED) 
+					free_lump(foo);
+			pkg_free(foo);
+		}
+		r=crt->after;
+		while(r){
+			foo=r; r=r->after;
+			if (foo->flags!=LUMPFLAG_DUPED) /* (+) ... see above */
+				free_lump(foo);
+			pkg_free(foo);
+		}
+		
+		/*clean current elem*/
+		if (crt->flags!=LUMPFLAG_DUPED) /* (+) ... see above */
+			free_lump(crt);
+		pkg_free(crt);
+	}
+}
+

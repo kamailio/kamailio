@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-01-19 faked lump list created in on_reply handlers
  */
 
 
@@ -39,6 +43,7 @@
 #include "../../action.h"
 #include "../../dset.h"
 #include "../../tags.h"
+#include "../../data_lump.h"
 
 #include "t_hooks.h"
 #include "t_funcs.h"
@@ -107,6 +112,136 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 }
 
 
+/* create a temporary faked message environment in which a conserved
+ * t->uas.request in shmem is partially duplicated to pkgmem
+ * to allow pkg-based actions to use it; 
+ *
+ * if restore parameter is set, the environment is restored to the
+ * original setting and return value is unsignificant (always 0); 
+ * otherwise  a faked environment if created; if that fails,
+ * false is returned
+ */
+static int faked_env(struct sip_msg *fake, 
+				struct cell *_t,
+				struct sip_msg *shmem_msg,
+				int _restore )
+{
+	static enum route_mode backup_mode;
+	static struct cell *backup_t;
+	static unsigned int backup_msgid;
+
+	if (_restore) goto restore;
+
+	/* 
+     on_negative_reply faked msg now copied from shmem msg (as opposed
+     to zero-ing) -- more "read-only" actions (exec in particular) will 
+     work from reply_route as they will see msg->from, etc.; caution, 
+     rw actions may append some pkg stuff to msg, which will possibly be 
+     never released (shmem is released in a single block)
+    */
+	memcpy( fake, shmem_msg, sizeof(struct sip_msg));
+
+	/* if we set msg_id to something different from current's message
+       id, the first t_fork will properly clean new branch URIs
+	*/
+	fake->id=shmem_msg->id-1;
+	/* set items, which will be duped to pkg_mem, to zero, so that
+	 * "restore" called on error does not free the original items */
+	fake->add_rm=0;
+	fake->new_uri.s=0; fake->new_uri.len=0; 
+
+	/* remember we are back in request processing, but process
+	 * a shmem-ed replica of the request; advertise it in rmode;
+	 * for example t_reply needs to know that
+	 */
+	backup_mode=rmode;
+	rmode=MODE_ONREPLY_REQUEST;
+	/* also, tm actions look in beginning whether tranaction is
+	 * set -- whether we are called from a reply-processing 
+	 * or a timer process, we need to set current transaction;
+	 * otherwise the actions would attempt to look the transaction
+	 * up (unnecessary overhead, refcounting)
+	 */
+	/* backup */
+	backup_t=get_t();
+	backup_msgid=global_msg_id;
+	/* fake transaction and message id */
+	global_msg_id=fake->id;
+	set_t(_t);
+
+	/* environment is set up now, try to fake the message */
+
+	/* new_uri can change -- make a private copy */
+	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
+		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
+		if (!fake->new_uri.s) {
+			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
+			goto restore;
+		}
+		fake->new_uri.len=shmem_msg->new_uri.len;
+		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
+			fake->new_uri.len);
+		fake->new_uri.s[fake->new_uri.len]=0;
+	} 
+
+	/* create a duplicated lump list to which actions can add
+	 * new pkg items 
+	 */
+	if (shmem_msg->add_rm) {
+		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
+		if (!fake->add_rm) { /* non_emty->empty ... failure */
+			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
+			goto restore;
+		}
+	}
+	/* success */
+	return 1;
+
+restore:
+	/* restore original environment and destroy faked message */
+	free_duped_lump_list(fake->add_rm);
+	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
+	set_t(backup_t);
+	global_msg_id=backup_msgid;
+	rmode=backup_mode;
+	return 0;
+}
+
+#ifdef _OBSOLETED
+void on_negative_reply( struct cell* t, struct sip_msg* msg, 
+	int code, void *param )
+{
+	int act_ret;
+	struct sip_msg faked_msg;
+
+	/* nobody cares about a negative transaction -- ok, return */
+	if (!t->on_negative) {
+		DBG("DBG: on_negative_reply: no on_negative\n");
+		return;
+	}
+
+	DBG("DBG: on_negative_reply processed for transaction %p\n", t);
+	if (!faked_env(&faked_msg, t, t->uas.request, 0 /* create fake */ )) {
+		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
+		goto restore;
+	}
+
+	/* run */
+	act_ret=run_actions(reply_rlist[t->on_negative], &faked_msg );
+	if (act_ret<0) {
+		LOG(L_ERR, "ERROR: on_negative_reply: Error in do_action\n");
+	}
+
+
+restore:
+	faked_env(&faked_msg, 0, 0 /* don't need t and shmem_rq */ , 
+					1 /* restore fake */ );
+
+}
+#endif
+
+
+
 
 /* the main code of stateful replying */
 static int _reply( struct cell *t, struct sip_msg* p_msg, unsigned int code,
@@ -128,6 +263,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
 {
 	int b, lowest_b, lowest_s, dummy;
+	struct sip_msg faked_msg, *origin_rq;
+	unsigned int on_neg;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -207,6 +344,30 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		callback_event( TMCB_ON_NEGATIVE, Trans, 
 			lowest_b==branch?reply:Trans->uac[lowest_b].reply, 
 			lowest_s );
+
+		/* here, we create a faked environment, from which we
+		 * return to request processing, if marked to do so */
+		origin_rq=Trans->uas.request;
+		on_neg=Trans->on_negative;
+		if (on_neg) {
+			DBG("DBG: on_negative_reply processed for transaction %p\n", 
+					Trans);
+			if (faked_env(&faked_msg, Trans, Trans->uas.request, 
+									0 /* create fake */ )) 
+			{
+				/* use the faked message later in forwarding */
+				origin_rq=&faked_msg;
+	  		 	/* run a reply_route action if some was marked */
+				if (run_actions(reply_rlist[on_neg], &faked_msg )<0)
+					LOG(L_ERR, "ERROR: on_negative_reply: "
+						"Error in do_action\n");
+			} else { /* faked_env creation error */
+				LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
+				on_neg=0;
+			} 
+		} /* if (on_neg) */
+
+
 		/* look if the callback perhaps replied transaction; it also
 		   covers the case in which a transaction is replied localy
 		   on CANCEL -- then it would make no sense to proceed to
@@ -221,17 +382,19 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			   put it on wait again; perhaps splitting put_on_wait
 			   from send_reply or a new RPS_ code would be healthy
 			*/
+			if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
 			return RPS_COMPLETED;
 		}
 		/* look if the callback introduced new branches ... */
 		init_branch_iterator();
 		if (next_branch(&dummy)) {
-			if (t_forward_nonack(Trans, Trans->uas.request, 
+			if (t_forward_nonack(Trans, origin_rq,
 						(struct proxy_l *) 0 ) <0) {
 				/* error ... behave as if we did not try to
 				   add a new branch */
 				*should_store=0;
 				*should_relay=lowest_b;
+				if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
 				return RPS_COMPLETED;
 			}
 			/* we succeded to launch new branches -- await
@@ -239,11 +402,13 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			*/
 			*should_store=1;
 			*should_relay=-1;
+			if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
 			return RPS_STORE;
 		}
 		/* really no more pending branches -- return lowest code */
 		*should_store=0;
 		*should_relay=lowest_b;
+		if (on_neg) faked_env(&faked_msg, 0, 0, 1 );
 		/* we dont need 'which_cancel' here -- all branches 
 		   known to have completed */
 		/* which_cancel( Trans, cancel_bitmap ); */
@@ -853,106 +1018,4 @@ done:
 	   retransmit; hopefuly, we'll then be better off */
 	return 0;
 }
-
-
-
-void on_negative_reply( struct cell* t, struct sip_msg* msg, 
-	int code, void *param )
-{
-	int act_ret;
-	struct sip_msg faked_msg;
-	enum route_mode backup_mode;
-	struct cell *backup_t;
-	unsigned int backup_msgid;
-
-	/* nobody cares about a negative transaction -- ok, return */
-	if (!t->on_negative) {
-		DBG("DBG: on_negative_reply: no on_negative\n");
-		return;
-	}
-
-	DBG("DBG: on_negative_reply processed for transaction %p\n", t);
-
-	/* create faked environment  -- uri rewriting stuff needs the
-	   original uri
-	*/
-#ifdef _OBSOLETED
-	memset( &faked_msg, 0, sizeof( struct sip_msg ));
-	faked_msg.flags=t->uas.request->flags;	
-	/* original URI doesn't change -- feel free to refer to shmem */
-	faked_msg.first_line.u.request.uri=
-		t->uas.request->first_line.u.request.uri;
-#else
-    /* 
-     on_negative_reply faked msg now copied from shmem msg (as opposed
-     to zero-ing) -- more "read-only" actions (exec in particular) will 
-     work from reply_route as they will see msg->from, etc.; caution, 
-     rw actions may append some pkg stuff to msg, which will possibly be 
-     never released (shmem is released in a single block)
-    */
-	memcpy( &faked_msg, t->uas.request, sizeof(struct sip_msg));
-#endif
-	/* new_uri can change -- make a private copy */
-	if (t->uas.request->new_uri.s!=0 && t->uas.request->new_uri.len!=0) {
-		faked_msg.new_uri.s=pkg_malloc(t->uas.request->new_uri.len+1);
-		if (!faked_msg.new_uri.s) return;
-		faked_msg.new_uri.len=t->uas.request->new_uri.len;
-		memcpy( faked_msg.new_uri.s, t->uas.request->new_uri.s, 
-			faked_msg.new_uri.len);
-		faked_msg.new_uri.s[faked_msg.new_uri.len]=0;
-	} else { faked_msg.new_uri.s=0; faked_msg.new_uri.len=0; }
-	/* if we set msg_id to something different from current's message
-       id, the first t_fork will properly clean new branch URIs
-	*/
-	faked_msg.id=t->uas.request->id-1;
-
-	/* remember we are back in request processing, but process
-	 * a shmem-ed replica of the request; advertise it in rmode;
-	 * for example t_reply needs to know that
-	 */
-	backup_mode=rmode;
-	rmode=MODE_ONREPLY_REQUEST;
-	/* also, tm actions look in beginning whether tranaction is
-	 * set -- whether we are called from a reply-processing 
-	 * or a timer process, we need to set current transaction;
-	 * otherwise the actions would attempt to look the transaction
-	 * up (unnecessary overhead, refcounting)
-	 */
-	/* backup */
-	backup_t=get_t();
-	backup_msgid=global_msg_id;
-	/* fake */
-	global_msg_id=faked_msg.id;
-	set_t(t);
-	/* run */
-	act_ret=run_actions(reply_rlist[t->on_negative], &faked_msg );
-	/* restore */
-	global_msg_id=backup_msgid;
-	rmode=backup_mode;
-
-	if (act_ret<0) {
-		LOG(L_ERR, "on_negative_reply: Error in do_action\n");
-	}
-
-#ifdef _OBSOLETED
-	/* this didn't work becaue URI is a part of shmem "monoblock";
-	   I could split it but it does not seem to be worth the
-	   effor
-	*/
-	/* project changes in faked message back to shmem copy */
-	t->uas.request->flags=faked_msg.flags;
-	if (faked_msg.new_uri.s) {
-		t->uas.request->new_uri.s=shm_resize(t->uas.request->new_uri.s,
-			faked_msg.new_uri.len);
-		if (!t->uas.request->new_uri.s) goto done;
-		memcpy(t->uas.request->new_uri.s, faked_msg.new_uri.s, 
-			faked_msg.new_uri.len );
-		t->uas.request->new_uri.len=faked_msg.new_uri.len;
-	}
-done:
-#endif
-	/* destroy faked environment, new_uri in particular */
-	if (faked_msg.new_uri.s) pkg_free(faked_msg.new_uri.s);
-}
-
 

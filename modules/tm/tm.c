@@ -348,8 +348,10 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");
 		return -1;
 	}
+#ifdef _OBSO
 	register_tmcb( TMCB_ON_NEGATIVE, on_negative_reply, 
 			0 /* empty param */);
+#endif
 	/* register post-script clean-up function */
 	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
 			0 /* empty param */ );

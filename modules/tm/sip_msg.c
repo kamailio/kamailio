@@ -58,6 +58,7 @@
 	{\
 		(_new) = (struct lump*)(_ptr);\
 		memcpy( (_new), (_old), sizeof(struct lump) );\
+		(_new)->flags|=LUMPFLAG_SHMEM; \
 		(_ptr)+=ROUND4(sizeof(struct lump));\
 		if ( (_old)->op==LUMP_ADD) {\
 			(_new)->u.value = (char*)(_ptr);\
