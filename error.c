@@ -26,10 +26,6 @@ int err2reason_phrase(
 	char *error_txt;
 
 	switch( ser_error ) {
-		case E_OUT_OF_MEM:
-			error_txt="Excuse me I ran out of memory";
-			*sip_error=500;
-			break;
 		case E_SEND:
 			error_txt="Unfortunately error on sending to next hop occured";
 			*sip_error=-ser_error;
@@ -62,6 +58,13 @@ int err2reason_phrase(
 			error_txt="Forking capacity exceeded";
 			*sip_error=-E_BAD_SERVER;
 			break;
+		case E_OUT_OF_MEM:
+		/* dont disclose lack of mem in release mode */
+#ifdef DEBUG
+			error_txt="Excuse me I ran out of memory";
+			*sip_error=500;
+			break;
+#endif
 		default:
 			error_txt="I'm terribly sorry, server error occured";
 			*sip_error=500;
