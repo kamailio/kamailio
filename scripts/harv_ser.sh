@@ -47,7 +47,7 @@ BEGIN {
     rpl300=0; rpl302=0; rpl3xx=0;
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
         rpl406=0;rpl407=0;rpl408=0;rpl410=0; rpl415=0;
-        rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
+        rpl476=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
 		rpl488=0;
         rpl4xx=0;
 	rpl479=0;
@@ -91,15 +91,17 @@ BEGIN {
 	ua_vovida=0;
 	ua_jsip=0;
 	ua_nortel=0;
+	ua_leader=0;
 	ua_xx=0;
 
 	server_cisco=0
 	server_ser=0
-	server_xx=0
 	server_intertex=0
 	server_hotsip=0
 	server_3com=0
 	server_epygi=0;
+	server_ims=0;
+	server_xx=0
 
 }
 
@@ -197,6 +199,10 @@ ua==0 && /User-Agent:.*Nortel/ {
 	ua_nortel++
 	ua=1
 }
+ua==0 && /User-Agent:.*LeaderSIP/ {
+	ua_leader++
+	ua=1
+}
 
 
  { comment="hack to deal with old version of ngrep (breaking in columns)"
@@ -237,6 +243,10 @@ server==0 && /Server:.*3Com/ {
 }
 server==0 && /Server:.*EPYGI/ {
 	server_epygi++
+	server=1
+}
+server==0 && /Server:.*IMS/ {
+	server_ims++
 	server=1
 }
 server==0 && /Server:/ {
@@ -378,6 +388,10 @@ reply==0 && request=0 {
     rpl478++
     next
 }
+/SIP\/2\.0 476/ {
+    rpl476++
+    next
+}
 /SIP\/2\.0 481/ {
     rpl481++
     next
@@ -505,6 +519,7 @@ END {
 	print "408 (Request Timeout): " rpl408  
 	print "410 (Gone): " rpl410
 	print "415 (Unsupported Media): " rpl415
+	print "476 (no recursive registrations): " rpl476 
 	print "478 (Unresolveable): " rpl478 
 	print "479 (private IP): " rpl479 
 	print "481 (Call/Transaction does not exist): " rpl481 
@@ -538,11 +553,15 @@ END {
 	print "Hotsip: " ua_hotsip " mxsf: " ua_mxsf " GrandStream: " ua_grandstream
 	print "Tellme: " ua_tellme " PocketSipM: " ua_pocketsipm 
 	print "eStara: " ua_estara " Vovida: " ua_vovida 
-	print "jSIP: " ua_jsip " Nortel: " ua_nortel " UFO: " ua_xx
+	print "jSIP: " ua_jsip " Nortel: " ua_nortel 
+	print "Leader: " ua_leader
+	print "UFO: " ua_xx
 	print "## Servers"
 	print "Cisco: " server_cisco " ser: " server_ser 
 	print "Intertex: " server_intertex " Hotsip: " server_hotsip
-	print "3com: " server_3com " EPYGI: " server_epygi " UFO: " server_xx
+	print "3com: " server_3com " EPYGI: " server_epygi 
+	print "IMS(Nortel): " server_ims
+	print "UFO: " server_xx
 }
 '
 
