@@ -233,8 +233,10 @@ inline int set_sock_struct( union sockaddr_union* to, str *to_str)
 	struct hostent* he;
 	unsigned int ip;
 	str host;
+	str port;
+	int port_nr=0;
 
-	/* to_str is expected to be in user@host format */
+	/* to_str is expected to be in user@host[:port] format */
 	host.s = to_str->s;
 	host.len = to_str->len;
 	while( host.len && *host.s!='@' ) {
@@ -242,12 +244,39 @@ inline int set_sock_struct( union sockaddr_union* to, str *to_str)
 		host.len--;
 	}
 	if ( host.len<=1 || host.s==to_str->s) {
-		LOG(L_ERR,"ERROR:set_sock_struct: cannot get host from <%s>\n",to_str);
+		LOG(L_ERR,"ERROR:set_sock_struct: cannot get host from <%.*s>\n",
+			to_str->len,to_str->len);
 		goto error;
 	}
 	/* swallow '@' */
 	host.len--;
 	host.s++;
+	/*now let's see if there is a port given*/
+	port.s = host.s;
+	port.len = host.len;
+	while(port.len && *port.s!=':') {
+		port.s++;
+		port.len--;
+	}
+	if (port.len) {
+		if (port.len>1 && port.s!=host.s) {
+			/*update host*/
+			host.len =port.s-host.s;
+			/*swallow ':' for port*/
+			port.len--;
+			port.s++;
+			/*get the port as number*/
+			port_nr = str2s(host.s,host.len,&err);
+			if (err) {
+				LOG(L_ERR,"ERROR:set_sock_struct: cannot convert port <*.s>"
+					"into number\n",port.len,port.s);
+			}
+		} else {
+			LOG(L_ERR,"ERROR:set_sock_struct: cannot separate host from "
+				"port in <%.*s>\n",to_str->len,to_str->s);
+			goto error;
+		}
+	}
 
 #ifdef DNS_IP_HACK
 	ip=str2ip((unsigned char*)host.s,host.len,&err);
