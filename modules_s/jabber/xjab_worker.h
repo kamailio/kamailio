@@ -35,7 +35,7 @@
 #include "../../db/db.h"
 #include "../tm/tm_load.h"
 
-#include "xjab_jcon.h"
+#include "xjab_util.h"
 #include "tree234.h"
 #include "lock.h"
 
@@ -97,6 +97,7 @@ int xj_send_sip_msg(str *, str *, str *, str *, int *);
 int xj_send_sip_msgz(str *, str *, str *, char *, int *);
 void xj_tuac_callback(struct cell *, struct sip_msg *,
 			int, void *);
+void xj_worker_check_jcons(xj_wlist, xj_jcon_pool, int, fd_set*);
 
 #endif
 
