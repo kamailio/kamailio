@@ -431,9 +431,11 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				break;
 			case HDR_CONTENTTYPE :
 				new_msg->content_type = new_hdr;
+				new_msg->content_type->parsed = hdr->parsed;
 				break;
 			case HDR_CONTENTLENGTH :
 				new_msg->content_length = new_hdr;
+				new_msg->content_length->parsed = hdr->parsed;
 				break;
 			case HDR_AUTHORIZATION :
 				new_msg->authorization = new_hdr;
