@@ -398,7 +398,7 @@ static void fifo_server(FILE *fifo_stream)
 			goto consume;
 		}
 		if (line_len==0) {
-			LOG(L_INFO, "INFO: fifo_server: command empty\n");
+			LOG(L_DBG, "INFO: fifo_server: command empty\n");
 			continue;
 		}
 		if (line_len<3) {
