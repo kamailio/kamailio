@@ -41,6 +41,11 @@
 #include "../../udp_server.h"
 #include "../../pt.h"
 
+#define CONTACT_PREFIX "Contact: <"
+#define CONTACT_SUFFIX  ">;msilo=yes"CRLF
+#define CONTACT_PREFIX_LEN (sizeof(CONTACT_PREFIX)-1)
+#define CONTACT_SUFFIX_LEN  (sizeof(CONTACT_SUFFIX)-1)
+
 #define EAT_SPACES(_p, _e)	\
 			while((*(_p)) && ((_p) <= (_e)) && (*(_p)==' '\
 					|| *(_p)=='\t')) (_p)++; \
@@ -157,7 +162,8 @@ int m_build_headers(str *buf, str ctype, str contact)
 {
 	char *p;
 	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0 || contact.len < 0
-			|| buf->len < ctype.len+contact.len+23+2*CRLF_LEN)
+			|| buf->len <= ctype.len+contact.len+14 /*Content-Type: */
+				+CRLF_LEN+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN)
 		goto error;
 
 	p = buf->s;
@@ -173,13 +179,12 @@ int m_build_headers(str *buf, str ctype, str contact)
 	}
 	if(contact.len > 0)
 	{
-		strncpy(p, "Contact: ", 9);
-		p += 9;
+		strncpy(p, CONTACT_PREFIX, CONTACT_PREFIX_LEN);
+		p += CONTACT_PREFIX_LEN;
 		strncpy(p, contact.s, contact.len);
 		p += contact.len;
-		strncpy(p, CRLF, CRLF_LEN);
-		p += CRLF_LEN;
-	
+		strncpy(p, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
+		p += CONTACT_SUFFIX_LEN;
 	}
 	buf->len = p - buf->s;	
 	return 0;
@@ -198,7 +203,7 @@ int m_build_body(str *body, time_t date, str msg)
 	char *p;
 	
 	if(!body || !(body->s) || body->len <= 0 ||
-			date < 0 || msg.len < 0 || (45+msg.len > body->len) )
+			date < 0 || msg.len < 0 || (46+msg.len > body->len) )
 		goto error;
 	
 	p = body->s;

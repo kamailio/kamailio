@@ -67,6 +67,13 @@
 
 #include "../tm/tm_load.h"
 
+#define CONTACT_PREFIX "Content-Type: text/plain"CRLF"Contact: <"
+#define CONTACT_SUFFIX  ">;msilo=yes"CRLF
+#define CONTACT_PREFIX_LEN (sizeof(CONTACT_PREFIX)-1)
+#define CONTACT_SUFFIX_LEN  (sizeof(CONTACT_SUFFIX)-1)
+#define OFFLINE_MESSAGE	"] is offline. The message will be delivered when user goes online."
+#define OFFLINE_MESSAGE_LEN	(sizeof(OFFLINE_MESSAGE)-1)
+
 #include "ms_msg_list.h"
 #include "msfuncs.h"
 
@@ -130,7 +137,7 @@ int  ms_check_time=30;
 int  ms_clean_period=5;
 int  ms_use_contact=1;
 
-str msg_type = { "MESSAGE", 7};
+str msg_type = { "MESSAGE", 7 };
 
 str reg_addr;
 
@@ -301,7 +308,8 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	
 	int nr_keys = 0, val, lexpire;
 	t_content_type ctype;
-	char buf[512], buf1[1024];
+	static char buf[512];
+	static char buf1[1024];
 	int mime;
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
@@ -568,30 +576,25 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	}
 	DBG("MSILO:m_store: message stored. T:<%.*s> F:<%.*s>\n",
 		pto->uri.len, pto->uri.s, pfrom->uri.len, pfrom->uri.s);
-	if(reg_addr.len > 0 && reg_addr.len+33+2*CRLF_LEN < 1024)
+	if(reg_addr.len > 0
+		&& reg_addr.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1<1024)
 	{
 		DBG("MSILO:m_store: sending info message.\n");
-		strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
-		str_hdr.len = 24 + CRLF_LEN + 9;
+		strcpy(buf1, CONTACT_PREFIX);
 		strncat(buf1,reg_addr.s,reg_addr.len);
-		str_hdr.len += reg_addr.len;
-		strcat(buf1, CRLF);
-		str_hdr.len += CRLF_LEN;
+		strncat(buf1, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
+		str_hdr.len = CONTACT_PREFIX_LEN+reg_addr.len+CONTACT_SUFFIX_LEN;
 		str_hdr.s = buf1;
-	
+
 		strncpy(buf, "User [", 6);
 		body.len = 6;
-		if(pto->uri.len+75 < 512)
+		if(pto->uri.len+OFFLINE_MESSAGE_LEN+7/*6+1*/ < 512)
 		{
 			strncpy(buf+body.len, pto->uri.s, pto->uri.len);
 			body.len += pto->uri.len;
 		}
-		strncpy(buf+body.len, "] is offline.", 13);
-		body.len += 13;
-		strncpy(buf+body.len, " The message will be delivered", 30);
-		body.len += 30;
-		strncpy(buf+body.len, " when user goes online.", 23);
-		body.len += 23;
+		strncpy(buf+body.len, OFFLINE_MESSAGE, OFFLINE_MESSAGE_LEN);
+		body.len += OFFLINE_MESSAGE_LEN;
 
 		body.s = buf;
 
