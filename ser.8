@@ -1,0 +1,153 @@
+.\" $Id$
+.TH ser 8 14.07.2002 ser "Sip Express Router" 
+.\" Process with
+.\" groff -man -Tascii ser.1 
+.\"
+.SH NAME
+ser \- SIP Express Router, very fast and configurable sip proxy 
+.SH SYNOPSIS
+.B ser
+[
+.B \-hcrRvdDEV
+] [
+.BI \-f " config\-file"
+] [
+.BI \-l " address"
+[ 
+.BI \-p " port"
+] ]...
+] [
+.BI \-n " processes\-no"
+] [
+.BI \-b " max_rcv_buf_size"
+] [
+.BI \-m " shared_mem_size"
+] [
+.BI \-w " working\-dir"
+] [
+.BI \-t " chroot\-dir"
+] [
+.BI \-u " uid"
+] [
+.BI \-g " gid"
+] [
+.BI \-P " pid\-file"
+]
+
+.SH DESCRIPTION
+.B ser 
+or
+.BR Sip
+.BR Express 
+.BR Router 
+is a very fast and configurable SIP proxy. 
+
+.SH OPTIONS
+.TP 12
+.B \-h
+Displays a short usage description, including all available options.
+.TP
+.BI \-c
+Performs loop checks and computes branches.
+.TP
+.BI \-r
+Uses dns to check if it is necessary to add a "received=" field to a via.
+.TP
+.BI \-R
+Same as 
+.B \-r
+but uses reverse dns.
+.TP
+.BI \-v
+Turns on via host checking when forwarding replies.
+.TP
+.BI \-d
+Turns on debugging, multiple
+.B -d
+increase the debug level.
+.TP
+.BI \-D
+Runs ser in the foreground (it doesn't fork into daemon mode).
+.TP
+.BI \-E
+Sends all the log messages to stderr.
+.TP
+.BI \-V
+Displays the version number.
+.TP
+.BI \-f " config\-file"
+Reads the configuration from 
+.B " config\-file" 
+(default
+.I  ./ser.cfg
+).
+.TP
+.BI \-l " address"
+Listens on the specified address. Multiple 
+.B \-l
+mean listening on multiple addresses. The default behaviour is to listen on the address returned by 
+.BR uname(2).
+.TP
+.BI \-p " port"
+Listens on the specified port (default 5060). It applies to the last address specified with
+.B \-l
+and to all the following that do not have a corresponding 
+.B \-p.
+.TP
+.BI \-n " processes\-no"
+Specifies the number of children processes forked per interface (default 8).
+.TP
+.BI \-b " max_rcv_buf_size"
+Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
+.TP
+.BI \-m " shared_mem_size"
+Size of the shared memory which will be allocated (in Megabytes).
+.TP
+.BI \-w " working\-dir" 
+Specifies the working directory. In the very improbable event that 
+.B ser 
+will crash, the core file will be generated here.
+.TP
+.BI \-t " chroot\-dir"
+Forces 
+.B ser 
+to chroot after reading the config file.
+.TP
+.BI \-u " uid"
+Changes the user id under which 
+.B ser
+runs.
+.TP
+.BI \-g " gid"
+Changes the group id under which 
+.B ser 
+runs.
+.TP
+.BI \-P " pid\-file"
+Creates a file containing the pid of the main 
+.B ser 
+process.
+
+
+.SH FILES
+.PD 0
+.B /usr/sbin/ser
+.br
+.B /etc/ser/ser.cfg
+.br
+.B /usr/lib/ser/modules/*
+.PD
+.SH AUTHORS
+This manual page was written by Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>, ...
+.br
+.B ser
+was written by:
+
+.SH SEE ALSO
+.BR ser.cfg(8)
+.PP
+Full documentation on ser, including configuration and FAQs is available at
+http://www.iptel.org/<fill-this-in>.
+.PP 
+Report bugs at http://www.iptel.org/<fill-this-in>
+For help/support, try the <ser> mailing list at <fill-this-in>.
