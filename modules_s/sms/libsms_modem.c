@@ -70,9 +70,10 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 			return 0;
 		}
 	}
-
+#ifdef SHOW_SMS_MODEM_COMMAND
+	DBG("DEBUG: put_command: -<%d>-->[%.*s] \n",cmd_len,cmd_len,cmd);
+#endif
 	/* send the command to the modem */
-	//DBG("DEBUG: put_command: -<%d>-->[%.*s] \n",cmd_len,cmd_len,cmd);
 	write(mdm->fd,cmd,cmd_len);
 	tcdrain(mdm->fd);
 
@@ -175,7 +176,9 @@ int put_command( struct modem *mdm, char* cmd, int cmd_len, char* answer,
 		buf_len = 0;
 	}
 
-	//DBG("DEBUG:put_command: <-[%s] \n",answer);
+#ifdef SHOW_SMS_MODEM_COMMAND
+	DBG("DEBUG:put_command: <-[%s] \n",answer);
+#endif
 	return answer_e-answer_s;
 
 error:

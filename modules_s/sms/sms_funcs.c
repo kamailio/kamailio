@@ -25,6 +25,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*
+ * 2003-01-23 switched from t_uac to t_uac_dlg, adapted to new way of
+ * parsing for Content-Type; by bogdan
+ */
 
 #include <unistd.h>
 #include <errno.h>
@@ -152,29 +156,36 @@ int push_on_network(struct sip_msg *msg, int net)
 	char   *p;
 	int    len;
 
-	/* get th content-type and content-length headers */
-	if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
-	|| !msg->content_type || !msg->content_length) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: fetching content-lenght and "
-			"content_type failed! -> parse error or headers missing!\n");
-		goto error;
-	}
-
-	/* check the content-type value */
-	if ( (int)msg->content_type->parsed!=CONTENT_TYPE_TEXT_PLAIN
-	&& (int)msg->content_type->parsed!=CONTENT_TYPE_MESSAGE_CPIM ) {
-		LOG(L_ERR,"ERROR:extcmd:dump_msg: invalid content-type for a "
-			"message request! type found=%d\n",(int)msg->content_type->parsed);
-		goto error;
-	}
-
-	/* get the message's body */
+	/* get the message's body
+	 * anyhow we have to call this function, so let's do it at the beginning
+	 * to force the parsing of all the headers - like this we avoid separat
+	 * calls of parse_headers function for FROM, CONTENT_LENGTH, TO hdrs  */
 	body.s = get_body( msg );
 	if (body.s==0) {
 		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot extract body from msg!\n");
 		goto error;
 	}
-	body.len = (int)msg->content_length->parsed;
+
+	/* content-length (if present) must be already parsed */
+	if (!msg->content_length) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: no Content-Length header found!\n");
+		goto error;
+	}
+	body.len = get_content_length( msg );
+
+	/* parse the content-type header */
+	if (parse_content_type_hdr(msg)==-1 ) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg:cannot parse Content-Type header\n");
+		goto error;
+	}
+
+	/* check the content-type value */
+	if ( get_content_type(msg)!=CONTENT_TYPE_TEXT_PLAIN
+	&& get_content_type(msg)!=CONTENT_TYPE_MESSAGE_CPIM ) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: invalid content-type for a "
+			"message request! type found=%d\n",get_content_type(msg));
+		goto error;
+	}
 
 	/* we try to get the user name (phone number) first from the RURI 
 	   (in our case means from new_uri or from first_line.u.request.uri);
@@ -323,10 +334,21 @@ int send_sip_msg_request(str *to, str *from_user, str *body)
 		append_str(p,">"CRLF,1+CRLF_LEN);
 	}
 
-	/** sending SIP MSG using IM - deprecated **/
-	/*foo = im_send_message(to, to, &from, &contact, body); */
-	/** sending with TM **/
-	foo = tmb.t_uac( &msg_type, to, &hdrs, body, &from, 0, 0, 0);
+	/* sending the request */
+	foo = tmb.t_uac_dlg( &msg_type,   /* request type */
+			0,                        /* Real destination */
+			to,                       /* Request-URI */
+			to,                       /* To */
+			&from,                    /* From */
+			0,                        /* To tag */
+			0,                        /* From tag */
+			0,                        /* CSeq */
+			0,                        /* Call-ID */
+			&hdrs,                    /* Additional headers including CRLF */
+			body,                     /* Message body */
+			0,                        /* Callback function */
+			0                         /* Callback parameter */
+		);
 	if (from.s) pkg_free(from.s);
 	if (hdrs.s) pkg_free(hdrs.s);
 	return foo;
