@@ -35,41 +35,9 @@
 
 #include "dprint.h"
 #include "mem/mem.h"
-#include "str.h"
-#include "parser/msg_parser.h"
+#include "re.h"
 
 #include <string.h>
-#include <sys/types.h> /* for regex */
-#include <regex.h>
-
-
-enum replace_special { REPLACE_NMATCH, REPLACE_CHAR, REPLACE_URI };
-
-struct replace_with{
-	int offset; /* offset in string */
-	int size;   /* size of replace "anchor" in string */
-	enum replace_special type;
-	union{
-		int nmatch;
-		char c;
-	};
-};
-
-struct subst_expr{
-	regex_t* re;
-	str replacement;
-	int replace_all; 
-	int n_escapes; /* escapes number (replace[] size) */
-	int max_pmatch ; /* highest () referenced */
-	struct replace_with replace[1]; /* 0 does not work on all compilers */
-};
-
-struct replace_lst{
-	int offset;
-	int size;   /* at offset, delete size bytes and replace them with rpl */;
-	str rpl;
-	struct replace_lst *next;
-};
 
 
 
@@ -82,7 +50,7 @@ void subst_expr_free(struct subst_expr* se)
 
 
 
-/* frees the entire least, head (l) too */
+/* frees the entire list, head (l) too */
 void replace_lst_free(struct replace_lst* l)
 {
 	struct replace_lst* t;
@@ -289,6 +257,7 @@ found_repl:
 	se->n_escapes=rw_no;
 	se->max_pmatch=max_pmatch;
 	for (r=0; r<rw_no; r++) se->replace[r]=rw[r];
+	DBG("subst_parser: ok, se is %p\n", se);
 	return se;
 	
 error:
@@ -416,7 +385,7 @@ error:
 
 
 /* WARNING: input must be 0 terminated! */
-struct replace_lst* run_subst(struct subst_expr* se, char* input,
+struct replace_lst* subst_run(struct subst_expr* se, char* input,
 								struct sip_msg* msg)
 {
 	struct replace_lst *head;
@@ -435,21 +404,22 @@ struct replace_lst* run_subst(struct subst_expr* se, char* input,
 	/* no of () referenced + 1 for the whole string: pmatch[0] */
 	pmatch=pkg_malloc(nmatch*sizeof(regmatch_t));
 	if (pmatch==0){
-		LOG(L_ERR, "ERROR: run_subst_ out of mem. (pmatch)\n");
+		LOG(L_ERR, "ERROR: subst_run_ out of mem. (pmatch)\n");
 		goto error;
 	}
 	do{
 		r=regexec(se->re, p, nmatch, pmatch, 0);
+		DBG("subst_run: running. r=%d\n", r);
 		/* subst */
-		if (r){
+		if (r==0){ /* != REG_NOMATCH */
 			*crt=pkg_malloc(sizeof(struct replace_lst));
 			if (*crt==0){
-				LOG(L_ERR, "ERROR: run_subst: out of mem (crt)\n");
+				LOG(L_ERR, "ERROR: subst_run: out of mem (crt)\n");
 				goto error;
 			}
 			memset(*crt, sizeof(struct replace_lst), 0);
 			if (pmatch[0].rm_so==-1){
-				LOG(L_ERR, "ERROR: run_subst: unknown offset?\n");
+				LOG(L_ERR, "ERROR: subst_run: unknown offset?\n");
 				goto error;
 			}
 			(*crt)->offset=pmatch[0].rm_so+(int)(p-input);
@@ -462,7 +432,7 @@ struct replace_lst* run_subst(struct subst_expr* se, char* input,
 			crt=&((*crt)->next);
 			p+=pmatch[0].rm_eo;
 		}
-	}while(r && se->replace_all);
+	}while((r==0) && se->replace_all);
 	pkg_free(pmatch);
 	return head;
 error:
@@ -489,7 +459,7 @@ str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
 	/* compute the len */
 	len=strlen(input);
 	end=input+len;
-	lst=run_subst(se, input, msg);
+	lst=subst_run(se, input, msg);
 	for (l=lst; l; l=l->next)
 		len+=(int)(l->rpl.len)-l->size;
 	res=pkg_malloc(sizeof(str));

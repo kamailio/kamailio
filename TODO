@@ -2,6 +2,7 @@ $Id$
 
 ( - todo, x - done)
 
+- backport tcp conn id fix to stable
 - regex subst on uris?
 - port receive.c pre_script_cb fix from stable
 - extend alias to include port numbers :
