@@ -402,7 +402,7 @@ rpid() {
 				usage
 				exit 1
 			fi
-			QUERY="select $SUBSCRIBER_COLUMN, $RPID_COLUMN FROM $SUB_TABLE $CLAUSE ; "
+			QUERY="select $SUBSCRIBER_COLUMN, $RPID_COLUMN FROM $TABLE $CLAUSE ; "
 			sql_ro_query "$QUERY"
 			;;
 
@@ -435,7 +435,7 @@ rpid() {
 			        RPID_VAL=NULL;
 			fi
 
-			QUERY="UPDATE $SUB_TABLE \
+			QUERY="UPDATE $TABLE \
                 	SET $RPID_COLUMN=$RPID_VAL \
                 	WHERE $SUBSCRIBER_COLUMN='$SIP_USER' AND $REALM_COLUMN='$SIP_DOMAIN';"
 				sql_query "$QUERY"
@@ -444,7 +444,7 @@ rpid() {
 					exit 1
 				fi
 
-			$0 rpid show $SIP_USER@$SIP_DOMAIN
+			$0 rpid show $SIP_USER
 
 			;;
 
