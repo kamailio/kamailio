@@ -44,7 +44,8 @@
 #include "auth_hdr.h"
 
 
-extern tgett_f  uac_get_T;
+extern struct tm_binds uac_tmb;
+
 
 static struct uac_credential *crd_list = 0;
 
@@ -332,7 +333,7 @@ int uac_auth( struct sip_msg *msg)
 	str *new_hdr;
 
 	/* get transaction */
-	t = uac_get_T();
+	t = uac_tmb.t_gett();
 	if (t==T_UNDEFINED || t==T_NULL_CELL)
 	{
 		LOG(LOG_CRIT,"BUG:uac:uac_auth: no current transaction found\n");

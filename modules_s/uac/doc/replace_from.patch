@@ -2,22 +2,22 @@ Index: modules/uac/from.c
 ===================================================================
 diff -u -r1.3 modules/uac/from.c
 --- modules/uac/from.c      26 Feb 2005 18:04:20 -0000      1.3
-+++ modules/uac/from.c      27 Feb 2005 16:29:27 -0000
-@@ -298,6 +298,7 @@
- 		pkg_free(param.s);
- 		goto error;
- 	}
-+	msg->msg_flags |= FL_FROM_ALTERED;
++++ modules/uac/from.c      24 Mar 2005 16:29:27 -0000
+@@ -39,7 +39,6 @@
+ #include "../tm/tm_load.h"
  
- 	return 0;
- error:
+ #include "from.h"
+-#define  FL_FROM_ALTERED  (1<<31)
+ 
+ extern str from_param;
+ extern int from_restore_mode;
 Index: parser/msg_parser.h
 ===================================================================
 RCS file: /cvsroot/ser/sip_router/parser/msg_parser.h,v
-retrieving revision 1.55
-diff -u -r1.55 msg_parser.h
---- parser/msg_parser.h	25 Feb 2005 14:19:57 -0000	1.55
-+++ parser/msg_parser.h	26 Feb 2005 18:03:30 -0000
+retrieving revision 1.56
+diff -u -r1.56 msg_parser.h
+--- parser/msg_parser.h	28 Feb 2005 15:28:24 -0000	1.56
++++ parser/msg_parser.h	24 Mar 2005 22:13:04 -0000
 @@ -73,8 +73,8 @@
  #define FL_FORCE_ACTIVE 2  /* force active SDP */
  #define FL_SDP_IP_AFS 4    /* SDP IP rewritten */
@@ -35,8 +35,8 @@ RCS file: /cvsroot/ser/sip_router/modules/tm/t_msgbuilder.c,v
 retrieving revision 1.41
 diff -u -r1.41 t_msgbuilder.c
 --- modules/tm/t_msgbuilder.c	23 Feb 2005 17:16:06 -0000	1.41
-+++ modules/tm/t_msgbuilder.c	26 Feb 2005 18:03:32 -0000
-@@ -75,6 +75,73 @@
++++ modules/tm/t_msgbuilder.c	24 Mar 2005 22:13:04 -0000
+@@ -75,6 +75,72 @@
  		(_p)+=(_str).len;  \
   	} while(0);
  
@@ -58,7 +58,7 @@ diff -u -r1.41 t_msgbuilder.c
 +			case '\r':
 +				switch (state) {
 +					case 4: state=5;break;
-+					case 5: state=6;break;
++					case 5: case 6: state=6;break;
 +					default : state=2;break;
 +				}
 +				break;
@@ -85,13 +85,12 @@ diff -u -r1.41 t_msgbuilder.c
 +				b = p;
 +				if (p+3<end && LC(p+1)=='r' && LC(p+2)=='o' && LC(p+3)=='m')
 +					p+=3;
-+				DBG("---- f found len=%d\n",p-b);
 +				state = 4; /* "f" or "from" found */
 +				break;
 +			default:
 +				switch (state) {
 +					case 2:case 4: state=1; break;
-+					case 6: goto found;
++					case 6: ;goto found;
 +				}
 +		}
 +		p++;
@@ -110,7 +109,7 @@ diff -u -r1.41 t_msgbuilder.c
  /* Build a local request based on a previous request; main
     customers of this function are local ACK and local CANCEL
   */
-@@ -88,6 +155,7 @@
+@@ -88,6 +154,7 @@
  	int branch_len;
  	str branch_str;
  	struct hostport hp;
@@ -118,11 +117,11 @@ diff -u -r1.41 t_msgbuilder.c
  
  #ifdef _OBSO
  	if ( Trans->uac[branch].last_received<100)
-@@ -98,6 +166,12 @@
+@@ -98,6 +165,12 @@
  	}
  #endif
  
-+	if ( !Trans->uas.request || !(Trans->uas.request->msg_flags&FL_FROM_ALTERED)
++	if (!Trans->uas.request || !(Trans->uas.request->msg_flags&FL_FROM_ALTERED)
 +	|| extract_from( Trans->uac[branch].request.buffer,
 +	Trans->uac[branch].request.buffer_len, &from)!=0) {
 +		from = Trans->from;
@@ -131,7 +130,7 @@ diff -u -r1.41 t_msgbuilder.c
  	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
  	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
  	*len+=Trans->uac[branch].uri.len;
-@@ -119,7 +193,7 @@
+@@ -119,7 +192,7 @@
  	}
  	*len+= via_len;
  	/*headers*/
@@ -140,7 +139,7 @@ diff -u -r1.41 t_msgbuilder.c
  		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
  
  
-@@ -154,7 +228,7 @@
+@@ -154,7 +227,7 @@
  	append_mem_block(p,via,via_len);
  
  	/*other headers*/

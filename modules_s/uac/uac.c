@@ -37,9 +37,9 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../script_cb.h"
 #include "../../mem/mem.h"
 #include "../tm/tm_load.h"
+#include "../tm/t_hooks.h"
 
 #include "from.h"
 #include "auth.h"
@@ -51,11 +51,7 @@ MODULE_VERSION
 static char *from_param_chr = "vsf";
 str from_param;
 int from_restore_mode = FROM_NO_RESTORE;
-tgett_f  uac_get_T = 0;
-
-/* auto restore functions */
-static int process_response(struct sip_msg *rpl);
-static int process_request(struct sip_msg *req, void *param );
+struct tm_binds uac_tmb;
 
 static int w_replace_from1(struct sip_msg* msg, char* str, char* str2);
 static int w_replace_from2(struct sip_msg* msg, char* str, char* str2);
@@ -108,6 +104,8 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
+	load_tm_f  load_tm;
+
 	LOG(L_INFO,"UAC - initializing\n");
 
 	from_param.s = from_param_chr;
@@ -126,23 +124,24 @@ static int mod_init(void)
 			from_restore_mode);
 	}
 
+	/* load the tm functions  */
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0)))
+	{
+		LOG(L_ERR, "ERROR:uac:mod_init: cannot import load_tm\n");
+		goto error;
+	}
+	/* let the auto-loading function load all TM stuff */
+	if (load_tm( &uac_tmb )==-1)
+		goto error;
+
 	if (from_restore_mode==FROM_AUTO_RESTORE)
 	{
-		/* get all replies */
-		exports.response_f = process_response;
-		/* get all incoming requests */
-		if (register_script_cb(process_request,PRE_SCRIPT_CB|REQ_TYPE_CB,0)<0){
-			LOG(L_ERR,"ERROR:uac:mod_init: failed to install PRE_SCRIPT_CB\n");
+		/* get all transactions */
+		if (uac_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, tr_checker, 0)!=1)
+		{
+			LOG(L_ERR,"ERROR:uac:mod_init: failed to install TM callback\n");
 			goto error;
 		}
-	}
-
-	/* load the GET_T tm function  */
-	if (!(uac_get_T=(tgett_f)find_export(T_GETT,NO_SCRIPT,0)))
-	{
-		LOG( L_ERR,"ERROR:uac:mod_init: failed to load '" T_GETT "' tm "
-			"function? no TM loaded?\n");
-		return -1;
 	}
 
 	init_from_replacer();
@@ -158,6 +157,9 @@ static void mod_destroy()
 	destroy_credentials();
 }
 
+
+
+/************************** fixup functions ******************************/
 
 static int fixup_replace_from1(void** param, int param_no)
 {
@@ -238,19 +240,8 @@ static int fixup_replace_from2(void** param, int param_no)
 }
 
 
-static int process_response(struct sip_msg *rpl)
-{
-	restore_from( rpl , 0);
-	return 1;
-}
 
-
-static int process_request(struct sip_msg *req, void *param )
-{
-	restore_from( req , 1);
-	return 1;
-}
-
+/************************** wrapper functions ******************************/
 
 static int w_restore_from(struct sip_msg *msg,  char* foo, char* bar)
 {
@@ -275,3 +266,5 @@ static int w_uac_auth(struct sip_msg* msg, char* str, char* str2)
 {
 	return (uac_auth(msg)==0)?1:-1;
 }
+
+
