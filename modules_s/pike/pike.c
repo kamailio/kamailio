@@ -71,7 +71,7 @@ int timeout   = 120;
 
 /* global variables */
 gen_lock_t*             timer_lock=0;
-struct list_link*       timer;
+struct list_link*       timer = 0;
 
 
 static cmd_export_t cmds[]={
@@ -174,8 +174,10 @@ static int pike_exit(void)
 	}
 
 	/* empty the timer list head */
-	shm_free(timer);
-	timer = 0;
+	if (timer) {
+		shm_free(timer);
+		timer = 0;
+	}
 
 	/* destroy the IP tree */
 	destroy_ip_tree();

@@ -68,7 +68,7 @@ void print_timer_list(struct list_link *head)
 }
 
 
-/*#define _test*/
+#define _test
 int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
 	struct ip_node *node;
