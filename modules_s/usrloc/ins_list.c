@@ -45,7 +45,7 @@ int put_on_ins_list(struct ucontact* _c)
 
 	p = (struct ins_itm*)pkg_malloc(sizeof(struct ins_itm) + _c->callid.len);
 	if (p == 0) {
-		LOG(L_ERR, "put_on_ins_list(): No memory left");
+		LOG(L_ERR, "put_on_ins_list(): No memory left\n");
 		return -1;
 	}
 
