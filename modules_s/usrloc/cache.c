@@ -361,6 +361,7 @@ int cache_update(cache_t* _c, db_con_t* _con, c_elem_t* _el, location_t* _loc)
 		rem_cache_elem(_c, _el);
 		release_lock(lock);
 		free_element(_el);
+		_el = NULL;
 	}
 
 	free_location(_loc);
