@@ -1,0 +1,83 @@
+/* $Id$
+ *
+ * simple, very fast, & dummy malloc library
+ */
+
+#if !defined(f_malloc_h) && !defined(VQ_MALLOC) 
+#define f_malloc_h
+
+
+
+/* defs*/
+
+#define ROUNDTO		8 /* size we round to, must be = 2^n, and
+                      sizeof(fm_frag) must be multiple of ROUNDTO !*/
+#define MIN_FRAG_SIZE	ROUNDTO
+
+
+
+#define F_MALLOC_OPTIMIZE_FACTOR 10 /*used below */
+#define F_MALLOC_OPTIMIZE  (1<<F_MALLOC_OPTIMIZE_FACTOR)
+								/* size to optimize for,
+									(most allocs < this size),
+									must be 2^k */
+
+#define F_HASH_SIZE (F_MALLOC_OPTIMIZE/ROUNDTO + \
+		(32-F_MALLOC_OPTIMIZE_FACTOR)+1)
+
+/* hash structure:
+ * 0 .... F_MALLOC_OPTIMIE/ROUNDTO  - small buckets, size increases with
+ *                            ROUNDTO from bucket to bucket
+ * +1 .... end -  size = 2^k, big buckets */
+
+struct fm_frag{
+	unsigned int size;
+	union{
+		struct fm_frag* nxt_free;
+		int reserved;
+	}u;
+#ifdef DBG_F_MALLOC
+	char* file;
+	char* func;
+	unsigned int line;
+	unsigned int check;
+#endif
+};
+
+
+struct fm_block{
+	unsigned int size; /* total size */
+#ifdef DBG_F_MALLOC
+	unsigned int used; /* alloc'ed size*/
+	unsigned int real_used; /* used+malloc overhead*/
+	unsigned int max_real_used;
+#endif
+	
+	struct fm_frag* first_frag;
+	struct fm_frag* last_frag;
+	
+	struct fm_frag* free_hash[F_HASH_SIZE];
+};
+
+
+
+struct fm_block* fm_malloc_init(char* address, unsigned int size);
+
+#ifdef DBG_F_MALLOC
+void* fm_malloc(struct fm_block*, unsigned int size, char* file, char* func, 
+					unsigned int line);
+#else
+void* fm_malloc(struct fm_block*, unsigned int size);
+#endif
+
+#ifdef DBG_F_MALLOC
+void  fm_free(struct fm_block*, void* p, char* file, char* func, 
+				unsigned int line);
+#else
+void  fm_free(struct fm_block*, void* p);
+#endif
+
+void  fm_status(struct fm_block*);
+
+
+#endif
