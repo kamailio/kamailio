@@ -135,6 +135,7 @@ void build_contact(ucontact_t* _c)
 #define	EI_R_STAR_CONT	"* used in contact and no. of contacts > 1" /* R_STAR_CONT */
 #define	EI_R_OOO	"Out of order request"                      /* R_OOO */
 #define	EI_R_RETRANS	"Retransmission"                            /* R_RETRANS */
+#define EI_R_UNESCAPE   "Error while unescaping username"           /* R_UNESCAPE */
 
 
 str error_info[] = {
@@ -161,7 +162,8 @@ str error_info[] = {
 	{EI_R_STAR_EXP,   sizeof(EI_R_STAR_EXP) - 1},
 	{EI_R_STAR_CONT,  sizeof(EI_R_STAR_CONT) - 1},
 	{EI_R_OOO,        sizeof(EI_R_OOO) - 1},
-	{EI_R_RETRANS,    sizeof(EI_R_RETRANS) - 1}
+	{EI_R_RETRANS,    sizeof(EI_R_RETRANS) - 1},
+	{EI_R_UNESCAPE,   sizeof(EI_R_UNESCAPE) - 1}
 };
 
 int codes[] = {
@@ -188,7 +190,8 @@ int codes[] = {
 	400, /* R_STAR_EXP */
 	400, /* R_STAR_CONT */
 	200, /* R_OOO */
-	200  /* R_RETRANS */
+	200, /* R_RETRANS */
+	400  /* R_UNESCAPE */
 };
 
 
