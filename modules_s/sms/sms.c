@@ -55,6 +55,8 @@
 #include "libsms_modem.h"
 
 
+MODULE_VERSION
+
 
 static int sms_init(void);
 static int sms_exit(void);
