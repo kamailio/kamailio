@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "msg_translator.h"
 #include "mem/mem.h"
@@ -213,15 +214,69 @@ error:
 
 
 
+#ifdef VERY_NOISY_REPLIES
+char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
+{
+	static char buf[MAX_WARNING_LEN];
+	static unsigned int fix_len=0;
+	str *foo;
+	char *p;
+
+	if (!fix_len)
+	{
+		memcpy(buf+fix_len,"Warning: 392 ",13);
+		fix_len +=13;
+		memcpy(buf+fix_len,names[0],names_len[0]);
+		fix_len += names_len[0];
+		//*(buf+fix_len++) = ':';
+		memcpy(buf+fix_len,port_no_str,port_no_str_len);
+		fix_len += port_no_str_len;
+		memcpy(buf+fix_len, " \"Noisy feedback tells: ",24);
+		fix_len += 24;
+	}
+
+	p = buf+fix_len;
+	/* adding pid */
+	if (p-buf+10+2>=MAX_WARNING_LEN)
+		goto done;
+	p += sprintf(p, "pid=%d", pids?pids[process_no]:0 );
+	*(p++)=' ';
+
+	/*adding src_ip*/
+	if (p-buf+26+2>=MAX_WARNING_LEN)
+		goto done;
+	p += sprintf(p,"req_src_ip=%s",q_inet_itoa(msg->src_ip));
+	*(p++)=' ';
+
+	/*adding in_uri*/
+	if(p-buf+7+msg->first_line.u.request.uri.len+2>=MAX_WARNING_LEN)
+		goto done;
+	p += sprintf( p, "in_uri=%.*s",msg->first_line.u.request.uri.len,
+		msg->first_line.u.request.uri.s);
+	*(p++) = ' ';
+
+	/*adding out_uri*/
+	if (msg->new_uri.s)
+		foo=&(msg->new_uri);
+	else
+		foo=&(msg->first_line.u.request.uri);
+	if(p-buf+8+foo->len+2>=MAX_WARNING_LEN)
+		goto done;
+	p += sprintf( p, "out_uri=%.*s", foo->len, foo->s);
+
+done:
+	*(p++) = '\"';
+	*(p) = 0;
+	*returned_len = p-buf;
+	return buf;
+}
+#endif
 
 
 
 
-
-
-
-char * build_req_buf_from_sip_req(	struct sip_msg* msg,
-				unsigned int *returned_len)
+char * build_req_buf_from_sip_req( struct sip_msg* msg,
+								unsigned int *returned_len)
 {
 	unsigned int len, new_len, received_len, uri_len, via_len;
 	char* line_buf;
@@ -548,16 +603,20 @@ error:
 
 
 
-char * build_res_buf_from_sip_req(	unsigned int code ,
-	char *text, char *new_tag, unsigned int new_tag_len,
-	struct sip_msg* msg, unsigned int *returned_len)
+char * build_res_buf_from_sip_req( unsigned int code, char *text,
+					char *new_tag, unsigned int new_tag_len,
+					struct sip_msg* msg, unsigned int *returned_len)
 {
-	char                    *buf, *p;
-	unsigned int       len,foo;
+	char              *buf, *p;
+	unsigned int      len,foo;
 	struct hdr_field  *hdr;
-	struct lump_rpl  *lump;
-	int                       i;
-	str                        *tag_str;
+	struct lump_rpl   *lump;
+	int               i;
+	str               *tag_str;
+#ifdef VERY_NOISY_REPLIES
+	char              *warning;
+	unsigned int      warning_len;
+#endif
 
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
@@ -568,7 +627,8 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/*computes the lenght of the new response buffer*/
 	len = 0;
 	/* first line */
-	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ + strlen(text) + CRLF_LEN/*new line*/;
+	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ +
+		strlen(text) + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
 		switch (hdr->type)
@@ -591,10 +651,14 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
 #ifdef NOISY_REPLIES
-	/*user agent header*/
-	len += USER_AGENT_LEN + CRLF_LEN;
+	/*server header*/
+	len += SERVER_HDR_LEN + CRLF_LEN;
 	/*content length header*/
 	len +=CONTENT_LEN_LEN + CRLF_LEN;
+#endif
+#ifdef VERY_NOISY_REPLIES
+	warning = warning_builder(msg,&warning_len);
+	len += warning_len + CRLF_LEN;
 #endif
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
@@ -662,16 +726,22 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		memcpy(p,lump->text.s,lump->text.len);
 		p += lump->text.len;
 	}
-	/*user agent header*/
 #ifdef NOISY_REPLIES
-	memcpy( p, USER_AGENT , USER_AGENT_LEN );
-	p+=USER_AGENT_LEN;
+	/*server header*/
+	memcpy( p, SERVER_HDR , SERVER_HDR_LEN );
+	p+=SERVER_HDR_LEN;
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	/* content length header*/
 	memcpy( p, CONTENT_LEN , CONTENT_LEN_LEN );
 	p+=CONTENT_LEN_LEN;
 	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
+#endif
+#ifdef VERY_NOISY_REPLIES
+	memcpy( p, warning, warning_len);
+	p+=warning_len;
+	memcpy( p, CRLF, CRLF_LEN);
 	p+=CRLF_LEN;
 #endif
 	/*end of message*/
