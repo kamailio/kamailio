@@ -317,7 +317,7 @@ int forward_reply(struct sip_msg* msg)
 		if (check_self(&msg->via1->host,
 					msg->via1->port?msg->via1->port:SIP_PORT)!=1){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
-					" %.*s:%d\n", msg->via1->host.len, msg->via1->host.s
+					" %.*s:%d\n", msg->via1->host.len, msg->via1->host.s,
 									msg->via1->port);
 			/* send error msg back? */
 			goto error;
