@@ -140,5 +140,7 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'" T_GETT "' not found\n");
 		return -1;
 	}
+
+	tmb->route_mode = &rmode;
 	return 1;
 }
