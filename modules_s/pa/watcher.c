@@ -44,6 +44,9 @@ char *doctype_name[] = {
 	[DOC_XPIDF] = "DOC_XPIDF",
 	[DOC_LPIDF] = "DOC_LPIDF",
 	[DOC_PIDF] = "DOC_PIDF",
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+	[DOC_MSRTC_PIDF] = "DOC_MSRTC_PIDF",
+#endif
 	[DOC_WINFO] = "DOC_WINFO",
 #ifdef DOC_XCAP_CHANGE
 	[DOC_XCAP_CHANGE] = "DOC_XCAP_CHANGE",
@@ -611,6 +614,7 @@ int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
 	add_str(watcher_event_names[watcher->event]);
 	add_string(SID_START, SID_START_L);
 	add_str(watcher->s_id);
+	if (0)
 	if (watcher->display_name.len > 0) {
 	  add_string(DISPLAY_NAME_START, DISPLAY_NAME_START_L);
 	  escape_str(&watcher->display_name);

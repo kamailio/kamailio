@@ -60,7 +60,11 @@ static struct {
 	int event_type;
 	int mimes[MAX_MIMES_NR];
 } event_package_mimetypes[] = {
-	{ EVENT_PRESENCE, { MIMETYPE(APPLICATION,PIDFXML), MIMETYPE(APPLICATION,XPIDFXML), MIMETYPE(APPLICATION,LPIDFXML), 0 } },
+	{ EVENT_PRESENCE, { MIMETYPE(APPLICATION,PIDFXML), 
+#ifdef SUBTYPE_XML_MSRTC_PIDF
+			    MIMETYPE(APPLICATION,XML_MSRTC_PIDF),
+#endif
+			    MIMETYPE(APPLICATION,XPIDFXML), MIMETYPE(APPLICATION,LPIDFXML), 0 } },
 	{ EVENT_PRESENCE_WINFO, { MIMETYPE(APPLICATION,WATCHERINFOXML), 0 }},
 #ifdef EVENT_SIP_PROFILE
 	{ EVENT_SIP_PROFILE, { MIMETYPE(MESSAGE,EXTERNAL_BODY), 0 }},
@@ -185,8 +189,7 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 {
 	if ( (parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F |
 							HDR_ACCEPT_F, 0) == -1) ||
-			(_m->from==0)||(_m->event==0)||(_m->expires==0) ||
-			(_m->accept==0) ) {
+			(_m->from==0)||(_m->event==0)||(_m->expires==0) ) {
 		paerrno = PA_PARSE_ERR;
 		LOG(L_ERR, "parse_hfs(): Error while parsing headers\n");
 		return -1;
@@ -215,6 +218,7 @@ static int parse_hfs(struct sip_msg* _m, int accept_header_required)
 	}
 
 	if (_m->accept) {
+		LOG(L_ERR, "parsing accept header\n");
 		if (parse_accept_hdr(_m) < 0) {
 			paerrno = PA_ACCEPT_PARSE;
 			LOG(L_ERR, "parse_hfs(): Error while parsing Accept header field\n");
@@ -237,23 +241,26 @@ int check_message(struct sip_msg* _m)
 	LOG(L_ERR, "check_message -0- _m=%p\n", _m);
 	if (_m->event) {
 		event_t *parsed_event;
-		int *accepts_mimes = get_accept(_m);
+		int *accepts_mimes = NULL;
 
-		LOG(L_ERR, "check_message -1- accepts_mimes=%p\n", accepts_mimes);
+		LOG(L_ERR, "check_message -1-");
 
-		if (accepts_mimes) {
-			char buf[100];
-			int offset = 0;
-			int *a = accepts_mimes;
-			buf[0] = '0';
-			while (*a) {
-				offset += sprintf(buf+offset, ":%#06x", *a);
-				a++;
+		if (_m->accept) {
+			accepts_mimes = get_accept(_m);
+			if (accepts_mimes) {
+				char buf[100];
+				int offset = 0;
+				int *a = accepts_mimes;
+				buf[0] = '0';
+				while (*a) {
+					offset += sprintf(buf+offset, ":%#06x", *a);
+					a++;
+				}
+				LOG(L_ERR, "pa check_message: accept=%.*s parsed=%s\n",
+				    _m->accept->body.len, _m->accept->body.s, buf);
 			}
-			LOG(L_ERR, "pa check_message: accept=%.*s parsed=%s\n",
-			    _m->accept->body.len, _m->accept->body.s, buf);
 		}
-		LOG(L_ERR, "check_message -2-\n");
+		LOG(L_ERR, "check_message -2- accepts_mimes=%p\n", accepts_mimes);
 
 		if (!_m->event->parsed)
 			parse_event(_m->event);
@@ -261,7 +268,7 @@ int check_message(struct sip_msg* _m)
 		parsed_event = (event_t*)(_m->event->parsed);
 
 		LOG(L_ERR, "check_message -4- parsed_event=%p\n", parsed_event);
-		if (parsed_event) {
+		if (parsed_event && accepts_mimes) {
 			int i = 0;
 			int eventtype = parsed_event->parsed;
 			LOG(L_ERR, "check_message -4- eventtype=%#06x\n", eventtype);
@@ -311,6 +318,28 @@ int check_message(struct sip_msg* _m)
 }
 
 
+int get_preferred_event_mimetype(struct sip_msg *_m, int et)
+{
+	int acc = 0;
+	if (_m->accept) {
+		//LOG(L_ERR, "%s: has accept header\n", __FUNCTION__);
+		int *accepts_mimes = get_accept(_m);
+		acc = accepts_mimes[0];
+	} else {
+		int i = 0;
+		//LOG(L_ERR, "%s: no accept header\n", __FUNCTION__);
+		while (event_package_mimetypes[i].event_type != -1) {
+			if (event_package_mimetypes[i].event_type == et) {
+				acc = event_package_mimetypes[i].mimes[0];
+				LOG(L_ERR, "%s: defaulting to mimetype %x for event_type=%d\n", __FUNCTION__, acc, et);
+				break;
+			}
+			i++;
+		}
+	}
+	return acc;
+}
+
 /*
  * Create a new presentity and corresponding watcher list
  */
@@ -324,15 +353,13 @@ int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 	event_t *event = NULL;
 	int et = 0;
 	int acc = 0;
-	int *accepts_mimes = get_accept(_m);
 	if (_m->event) {
 		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
 	} else {
 		et = EVENT_PRESENCE;
 	}
-	if (accepts_mimes)
-		acc = accepts_mimes[0];
+	acc = get_preferred_event_mimetype(_m, et);
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -402,7 +429,6 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 	event_t *event = NULL;
 	int et = 0;
 	int acc = 0;
-	int *accepts_mimes = get_accept(_m);
 	if (_m->event) {
 		event = (event_t*)(_m->event->parsed);
 		et = event->parsed;
@@ -410,8 +436,7 @@ static int update_presentity(struct sip_msg* _m, struct pdomain* _d,
 		LOG(L_ERR, "update_presentity defaulting to EVENT_PRESENCE\n");
 		et = EVENT_PRESENCE;
 	}
-	if (accepts_mimes)
-		acc = accepts_mimes[0];
+	acc = get_preferred_event_mimetype(_m, et);
 
 	if (_m->expires) {
 		e = ((exp_body_t*)_m->expires->parsed)->val;
@@ -630,7 +655,7 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	get_act_time();
 	paerrno = PA_OK;
 
-	if (parse_hfs(_m, 1) < 0) {
+	if (parse_hfs(_m, 0) < 0) {
 		LOG(L_ERR, "handle_subscription(): Error while parsing message header\n");
 		goto error;
 	}
@@ -649,12 +674,15 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 
 	lock_pdomain(d);
 	
+	LOG(L_ERR, "handle_subscription(): -1-\n");
 	if (find_presentity(d, &p_uri, &p) > 0) {
+		LOG(L_ERR, "handle_subscription(): -2-\n");
 		if (create_presentity(_m, d, &p_uri, &p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while creating new presentity\n");
 			goto error2;
 		}
 	} else {
+		LOG(L_ERR, "handle_subscription(): -3-\n");
 		if (update_presentity(_m, d, p, &w) < 0) {
 			LOG(L_ERR, "handle_subscription(): Error while updating presentity\n");
 			goto error2;
