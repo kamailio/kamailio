@@ -16,7 +16,7 @@ LOCKDIR=/var/lock
 LOCKFILE=serresponse
 LOCK_TIMEOUT=240
 TMP=/tmp/serresponse.$$
-MAILCOMMAND=/usr/bin/mail
+MAILCOMMAND=/bin/mail
 
 ############################
 
