@@ -1,0 +1,207 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>The module contains record routing logic</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>enable_full_lr</varname> (integer)</title>
+	    <para>
+		If set to 1 then ;lr=on instead of just ;lr will be used. This is to overcome
+		problems with broken &ua;s which strip ;lr parameter when generating Route header
+		fields from Record-Route (;lr=on seems to help).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 0 (no).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>enable_full_lr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "enable_full_lr", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>append_fromtag</varname> (integer)</title>
+	    <para>
+		if turned on, request's from-tag is appended to record-route; that's useful for
+		understanding whether subsequent requests (such as BYE) come from caller (route's
+		from-tag==BYE's from-tag) or callee (route's from-tag==BYE's to-tag)
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (yes).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>append_fromtag</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "append_fromtag", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>enable_double_rr</varname> (integer)</title>
+	    <para>
+		There are some situations when the server needs to insert two Record-Route header
+		fields instead of one. For example when using two disconnected networks or doing
+		cross-protocol forwarding from UDP->TCP. This parameter enables inserting of 2
+		Record-Routes. The server will later remove both of them.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 1 (yes).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>enable_double_rr</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("rr", "enable_double_rr", 0)
+...
+</programlisting>
+	    </example>
+	</section>
+
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">loose_route()</function>
+	    </title>
+	    <para>
+		The function performs loose routing as defined in &rfc3261;.
+		See the &rfc3261; for more details.
+	    </para>
+	    <example>
+		<title><function>loose_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+loose_route();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">strict_route()</function> -- deprecated
+	    </title>
+	    <para>
+		If there are any Route <acronym>HFs</acronym> in the message, the function takes the
+		first one, rewrites Request-URI with it's value and removes the first &uri; from
+		Route <acronym>HFs</acronym>.
+	    </para>
+	    <example>
+		<title><function>strict_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+strict_route();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">record_route()</function>
+	    </title>
+	    <para>
+		The function adds a new Record-Route header field. The header field will be inserted
+		in the message before any other Record-Route header fields.
+	    </para>
+	    <example>
+		<title><function>record_route</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">record_route_preset(string)</function>
+	    </title>
+	    <para>
+		This function will put the string into Record-Route, don't use unless you know what
+		you are doing.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>string</emphasis> - String to be inserted into the header field.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>record_route_preset</function> usage</title>
+		<programlisting format="linespecific">
+...
+record_route_preset("1.2.3.4:5090");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("rr.sgml" "Book" "chapter")
+End:
+-->

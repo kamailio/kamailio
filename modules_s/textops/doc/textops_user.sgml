@@ -1,0 +1,256 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This is mostly an example module. It implements text based operation (search, replace,
+	    append a.s.o).
+	</para>
+	<section>
+	    <title>Known Limitations</title>
+	    <para>
+		search ignores folded lines. For example, search(<quote>(From|f):.*@foo.bar</quote>)
+		doesn't match the following From header field:
+	    </para>
+	    <programlisting format="linespecific">
+From: medabeda 
+ &lt;sip:medameda@foo.bar&gt;;tag=1234
+</programlisting>
+	</section>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>No dependencies on other &ser; modules</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">search(re)</function>
+	    </title>
+	    <para>
+		Searches for the re in the message.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>re</emphasis> - Regular expression.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>search</function> usage</title>
+		<programlisting format="linespecific">
+...
+if ( search("[Ss][Ee][Rr]" ) { /*....*/ };
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">search_append(re, txt)</function>
+	    </title>
+	    <para>
+		Searches for the first match of re and appends txt after it.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>re</emphasis> - Regular expression.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>txt</emphasis> - String to be appended.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>search_append</function> usage</title>
+		<programlisting format="linespecific">
+...
+search_append("[Ss]er", " blabla");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">replace(re, txt)</function>
+	    </title>
+	    <para>
+		Replaces the first occurence of re with txt.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>re</emphasis> - Regular expression.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>txt</emphasis> - String.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>replace</function> usage</title>
+		<programlisting format="linespecific">
+...
+replace("ser", "Sip Express Router");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">append_to_reply(txt)</function>
+	    </title>
+	    <para>
+		Append txt to the reply.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>txt</emphasis> - String.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>append_to_reply</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_to_reply("Foo: bar\r\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">append_hf(hf)</function>
+	    </title>
+	    <para>
+		Appends txt after the last header field.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>hf</emphasis> - Header field to be appended.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>append_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_hf("P-hint: VOICEMAIL\r\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">append_urihf(prefix, suffix)</function>
+	    </title>
+	    <para>
+		Append header field name with original <acronym>Request-URI</acronym> in middle.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>prefix</emphasis> - string (usually at least header field name).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>suffix</emphasis> - string (usually at least line terminator).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>append_urihf</function> usage</title>
+		<programlisting format="linespecific">
+...
+append_urihf("CC-Diversion: ", "\r\n");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">is_present_hf(hf_name)</function>
+	    </title>
+	    <para>
+		Return true if a header field is present in message.
+	    </para>
+	    <note>
+		<para>
+		    Takes header field names <quote>as is</quote> and doesn't distinguish compact
+		    names.
+		</para>
+	    </note>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>hf_name</emphasis> - Header field name.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>is_present_hf</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_present_hf("From")) log(1, "From HF Present");
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("textops.sgml" "Book" "chapter")
+End:
+-->
