@@ -74,7 +74,7 @@
 #define STR_IDX_INC_TIME	7
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
-	if (RES_ROWS(_res)[_r].values[_c].nul == 0) \
+	if (RES_ROWS(_res)[_r].values[_c].nul != 0) \
 	{ \
 		switch(RES_ROWS(_res)[_r].values[_c].type) \
 		{ \
@@ -234,6 +234,12 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	if ( !im_extract_body(msg, &body) )
 	{
 		DBG("MSILO: m_store: cannot extract body from sip msg!\n");
+		goto error;
+	}
+	// check if the body of message contains something
+	if(body.len <= 0)
+	{
+		DBG("MSILO: m_store: body of the message is empty!\n");
 		goto error;
 	}
 	
@@ -536,7 +542,8 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			sp = &pto->uri;
 
 			hdr_str.len = 1024;		
-			if(m_build_headers(&hdr_str, str_vals[STR_IDX_CTYPE]) < 0)
+			if(m_build_headers(&hdr_str, str_vals[STR_IDX_CTYPE],
+					str_vals[STR_IDX_FROM]) < 0)
 			{
 				DBG("MSILO: m_dump: headers bulding failed!!!\n");
 				if (db_free_query(db_con, db_res) < 0)

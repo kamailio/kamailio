@@ -237,7 +237,7 @@ error:
  *         - body->s MUST be allocated
  * #return: 0 OK ; -1 error
  * */
-int m_build_headers(str *buf, str ctype)
+int m_build_headers(str *buf, str ctype, str contact)
 {
 	char *p;
 	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0
@@ -251,6 +251,16 @@ int m_build_headers(str *buf, str ctype)
 		p += 14;
 		strncpy(p, ctype.s, ctype.len);
 		p += ctype.len;
+		strncpy(p, CRLF, CRLF_LEN);
+		p += CRLF_LEN;
+	
+	}
+	if(contact.len > 0)
+	{
+		strncpy(p, "Contact: ", 9);
+		p += 9;
+		strncpy(p, contact.s, contact.len);
+		p += contact.len;
 		strncpy(p, CRLF, CRLF_LEN);
 		p += CRLF_LEN;
 	
@@ -279,8 +289,8 @@ int m_build_body(str *body, int date, str msg)
 
 	*p++ = '[';
 	
-	strncpy(p, ctime((const time_t*)(&date)), 25);
-	p += 25;
+	strncpy(p, ctime((const time_t*)(&date)), 24);
+	p += 24;
 
 	/**
 	if(from.len > 0)
@@ -292,10 +302,10 @@ int m_build_body(str *body, int date, str msg)
 	**/
 	
 	*p++ = ']';
-	*p++ = ' ';
 	
 	if(msg.len > 0)
 	{
+		*p++ = ' ';
 		strncpy(p, msg.s, msg.len);
 		p += msg.len;
 	}
