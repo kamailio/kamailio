@@ -31,22 +31,26 @@
 #define _PIKE_TIMER_H
 
 
-
-struct pike_timer_link {
-	int timeout;
-	struct pike_timer_link *next;
-	struct pike_timer_link *prev;
+struct list_link {
+	struct list_link *next;
+	struct list_link *prev;
 };
 
-struct pike_timer_head {
-	struct pike_timer_link *first;
-	struct pike_timer_link *last;
-};
 
-void append_to_timer(struct pike_timer_head*, struct pike_timer_link* );
-void remove_from_timer(struct pike_timer_head*, struct pike_timer_link* );
-int  is_empty(struct pike_timer_head*);
-struct pike_timer_link *check_and_split_timer(struct pike_timer_head*,int);
+#define has_timer_set(_ll) \
+	((_ll)->prev || (_ll)->next)
+
+#define is_list_empty(_head) \
+	((_head)->next == (_head))
+
+
+
+
+void append_to_timer(struct list_link *head, struct list_link *ll );
+void remove_from_timer(struct list_link *head, struct list_link *ll);
+void update_in_timer(struct list_link *head, struct list_link *ll);
+void check_and_split_timer(struct list_link *head, int time,
+								struct list_link *split, unsigned char *mask);
 
 #endif
 

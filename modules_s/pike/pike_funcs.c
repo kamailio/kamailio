@@ -36,134 +36,205 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "../../mem/shm_mem.h"
+#include "../../locking.h"
 #include "../../timer.h"
+#include "../../ip_addr.h"
+#include "../../resolve.h"
+#include "ip_tree.h"
 #include "pike_funcs.h"
+#include "timer.h"
 
 
-int max_value;
 
 
-void print_timer_list(struct pike_timer_head *pth)
+extern gen_lock_t*       timer_lock;
+extern struct list_link* timer;
+extern int               timeout;
+
+
+
+void print_timer_list(struct list_link *head)
 {
-	struct pike_timer_link *tl;
+	struct list_link *ll;
 
-	tl = pth->first;
-	DBG("--->");
-	while (tl) {
-		DBG(" [%x][%d]",((struct ip_node*)tl)->byte, tl->timeout);
-		tl = tl->next;
+	DBG("DEBUG:pike:print_timer_list --->\n");
+	for ( ll=head->next ; ll!=head; ll=ll->next) {
+		DBG("\t %p [byte=%x](expires=%d)\n",
+			ll, ll2ipnode(ll)->byte, ll2ipnode(ll)->expires);
 	}
-	DBG("\n");
 }
 
 
-
+/*#define _test*/
 int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
 	struct ip_node *node;
 	struct ip_node *father;
-	char   flag;
-	int    ret;
+	char flags;
+	struct ip_addr* ip;
 
-	lock_get(tree_lock);
-	node = add_node( tree, msg->rcv.src_ip.u.addr,
-			 msg->rcv.src_ip.len,&father,&flag);
 
-	DBG("DEBUG:pike_check_req: src IP [%.*s]; hit node = [%d][%d] flags=%d\n",
-		(int)msg->rcv.src_ip.len,msg->rcv.src_ip.u.addr,
-		node->hits,node->leaf_hits,flag);
+#ifdef _test
+	/* get the ip address from second via */
+	if (parse_headers(msg, HDR_VIA1, 0)!=0 )
+		return -1;
+	if (msg->via1==0 )
+		return -1;
+	/* convert from string to ip_addr */
+	ip = str2ip( &msg->via1->host );
+	if (ip==0)
+		return -1;
+#else
+	ip = &(msg->rcv.src_ip);
+#endif
 
-	/* do all the job with the timer */
+
+	/* first lock the proper tree branch and mark the IP with one more hit*/
+	lock_tree_branch( ip->u.addr[0] );
+	node = mark_node( ip->u.addr, ip->len, &father, &flags);
+
+	DBG("DEBUG:pike_check_req: src IP [%s]; hits=[%d,%d],[%d,%d] flags=%d\n",
+		ip_addr2a( ip ),
+		node->hits[PREV_POS],node->hits[CURR_POS],
+		node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS], flags);
+
+	/* update the timer */
 	lock_get(timer_lock);
-	if ( flag&NEW_NODE ) {
-		/* put this node into the timer list and remove from list its
-		   father, if this is not a LEAF_NODE */
-		node->tl.timeout =  get_ticks() + timeout;
-		DBG("DEBUG:pike_check_req: new ip node %p(tl=%p[%p,%p])\n",
-			node,&node->tl,node->tl.prev,node->tl.next);
-		append_to_timer(timer,&(node->tl));
-		if ( !father->leaf_hits )
-			remove_from_timer(timer,&(father->tl));
+	if ( flags&NEW_NODE ) {
+		/* put this node into the timer list and remove its
+		   father only if this has one kid and is not a LEAF_NODE*/
+		node->expires =  get_ticks() + timeout;
+		append_to_timer( timer, &(node->timer_ll) );
+		if (father)
+		DBG("DEBUG:pike_check_req: father: leaf_hits=%d kids->next=%p\n",
+			father->leaf_hits[CURR_POS],father->kids->next);
+		if (father && father->leaf_hits[CURR_POS]==0 && father->kids->next==0){
+			assert( has_timer_set(&(father->timer_ll)) ); /* debug */
+			remove_from_timer( timer, &(father->timer_ll) );
+		}
 	} else {
-		/* update the timer */
-		if (node->leaf_hits || !node->children) {
-			/* in timer can be only nodes as IP-leaf(complete address) 
-			 * or tree-leaf */
-			node->tl.timeout = get_ticks() + timeout;
-			append_to_timer(timer,&(node->tl));
-		} else if (node->tl.prev || node->tl.next || timer->first==&node->tl) {
-			/* it's a BUG if we get here! */
-			LOG(L_CRIT,"BUG:pike_check_req: node %p in timer wiht leaf_hits=0"
-				" and children!=0 -> recovering by removing\n",node);
-			remove_from_timer(timer,&(node->tl));
+		/* update the timer -> in timer can be only nodes
+		 * as IP-leaf(complete address) or tree-leaf */
+		if (node->leaf_hits[CURR_POS] || node->kids==0) {
+			/* tree leafs which are not potencial red nodes are not update in
+			 * order to make them to expire */
+			assert( has_timer_set(&(node->timer_ll)) ); /* debug */
+			if ( !(flags&NO_UPDATE) ) {
+				node->expires = get_ticks() + timeout;
+				update_in_timer( timer, &(node->timer_ll) );
+			}
+		} else {
+			assert( !has_timer_set(&(node->timer_ll)) ); /* debug */
+			assert( node->hits[CURR_POS] && node->kids ); /* debug */
 		}
 	}
+	//print_timer_list( timer ); /* debug*/
 	lock_release(timer_lock);
 
-	/*DEBUG - print_timer_list(timer);*/
+	unlock_tree_branch( ip->u.addr[0] );
+	//print_tree( 0 ); /* debug */
 
-	ret = ( (flag&LEAF_NODE)&&(flag&RED_NODE) )?-1:1;
-	lock_release(tree_lock);
-
-	if (ret==-1)
-		LOG(L_WARN,"DEBUG:pike_check_req:---RED ALARM<->TOO MANY HITS---!!\n");
-	return ret;
+	if (flags&RED_NODE) {
+		LOG(L_WARN,"DEBUG:pike_check_req: ALARM - TOO MANY HITS on "
+			"%s !!\n", ip_addr2a( ip ) );
+		return -1;
+	}
+	return 1;
 }
 
 
 
 void clean_routine(unsigned int ticks , void *param)
 {
-	struct pike_timer_link *tl;
-	struct ip_node         *dad;
-	struct ip_node         *node;
+	static unsigned char mask[32];  /* 256 positions mask */
+	struct list_link head;
+	struct list_link *ll;
+	struct ip_node   *dad;
+	struct ip_node   *node;
+	int i;
 
-	if ( !is_empty(timer) ) {
-		/* get the expired elements */
-		lock_get(timer_lock);
-		tl = check_and_split_timer( timer, ticks);
-		lock_release(timer_lock);
-		/* process them */
-		if (tl) {
-				lock_get(tree_lock);
-				for(;tl;) {
-					node = (struct ip_node*)tl;
-					tl = tl->next;
-					DBG("DEBUG:pike:clean_routine: clean node %p (kids=%p;"
-						"leaf=%d)\n", node,node->children,node->leaf_hits);
-					/* if it's a node, leaf for an ipv4 address inside an
-					   ipv6 address -> just remove it from timer*/
-					if (node->leaf_hits) {
-						node->leaf_hits = 0;
-						node->hits = 0;
-						node->tl.timeout = 0;
-						node->tl.prev = node->tl.next = 0;
-					} else {
-						/* we have to put the father into timer list*/
-						/* get the father node */
-						dad = node;
-						while (dad->prev->children!=dad)
-							dad=dad->prev;
-						dad = dad->prev;
-						/* put it in the list 
-						   (only if it isnot the tree root) */
-						if (dad!=tree) {
+	DBG("DEBUG:pike:clean_routine:  entering (%d)\n",ticks);
+	/* before locking check first if the list is not empty and if can
+	 * be at least one element removed */
+	if ( is_list_empty( timer ) || ll2ipnode(timer->next)->expires>ticks )
+		return;
+
+	/* get the expired elements */
+	lock_get( timer_lock );
+	check_and_split_timer( timer, ticks, &head, mask);
+	//print_timer_list(timer); /* debug */
+	lock_release( timer_lock );
+	//print_tree( 0 );
+
+	/* got something back? */
+	if ( is_list_empty(&head) )
+		return;
+
+	/* process what we got -> don't forget to lock the tree!! */
+	for(i=0;i<MAX_IP_BRANCHES;i++) {
+		/* if no element from this branch -> skip it */
+		if ( ((mask[i>>3])&(1<<(i&0x07)))==0 )
+			continue;
+
+		lock_tree_branch( i );
+		for( ll=head.next ; ll!=&head ; ) {
+			node = ll2ipnode( ll );
+			ll = ll->next;
+			/* skip nodes from a different branch */
+			if (node->branch!=i)
+				continue;
+
+			/* unlink the node -> the list will get shorter and it will be
+			 * faster for the next branches to process it */
+			ll->prev->prev->next = ll;
+			ll->prev = ll->prev->prev;
+			node->expires = 0;
+			node->timer_ll.prev = node->timer_ll.next = 0;
+
+			/* process the node */
+			DBG("DEBUG:pike:clean_routine: clean node %p (kids=%p;"
+				"hits=[%d,%d];leaf=[%d,%d])\n", node,node->kids,
+				node->hits[PREV_POS],node->hits[CURR_POS],
+				node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);
+			/* if it's a node, leaf for an ipv4 address inside an
+			 * ipv6 address -> just remove it from timer it will be deleted
+			 * only when all its kids will be deleted also */
+			if (node->kids) {
+				assert( node->leaf_hits[CURR_POS] );
+				node->leaf_hits[CURR_POS] = 0;
+			} else {
+				/* if the node has no prev, means its a top branch node -> just
+				 * removed and destroy it */
+				if (node->prev!=0) {
+					/* if this is the last kid, we have to put the father
+					 * into timer list */
+					if (node->prev->kids==node && node->next==0) {
+						/* this is the last kid node */
+						dad = node->prev;
+						/* put it in the list only if it's not an IP leaf
+						 * (in this case, it's already there) */
+						if (dad->leaf_hits[CURR_POS]==0) {
 							lock_get(timer_lock);
-							dad->tl.timeout = get_ticks() + timeout;
-							append_to_timer(timer,&(dad->tl));
+							dad->expires = get_ticks() + timeout;
+							assert( !has_timer_set(&(dad->timer_ll)) );
+							append_to_timer( timer, &(dad->timer_ll));
 							lock_release(timer_lock);
+						} else {
+							assert( has_timer_set(&(dad->timer_ll)) );
 						}
-						DBG("DEBUG:pike:clean_routine: rmv node %p \n", node);
-						/* del the node */
-						remove_node( tree, node);
 					}
-					/*DEBUG - print_timer_list(timer); */
 				}
-				lock_release(tree_lock);
-		}
-	}
+				DBG("DEBUG:pike:clean_routine: rmv node %p[%d] \n",
+					node,node->byte);
+				/* del the node */
+				remove_node( node);
+			}
+		} /* for all expired elements */
+		unlock_tree_branch( i );
+	} /* for all branches */
 }
 
 
@@ -171,18 +242,13 @@ void clean_routine(unsigned int ticks , void *param)
 
 void refresh_node( struct ip_node *node)
 {
-	struct ip_node *kid;
-
-	if (!node) return;
-	kid = node->children;
-	while(kid) {
-		kid->hits = 0;
-		/* if the node is red, its value will be not reseted!
-		   it has to wait for the timeout */
-		if (kid->leaf_hits<max_value)
-			kid->leaf_hits = 0;
-		refresh_node( kid );
-		kid = kid->next;
+	for( ; node ; node=node->next ) {
+		node->hits[PREV_POS] = node->hits[CURR_POS];
+		node->hits[CURR_POS] = 0;
+		node->leaf_hits[PREV_POS] = node->leaf_hits[CURR_POS];
+		node->leaf_hits[CURR_POS] = 0;
+		if (node->kids)
+			refresh_node( node->kids );
 	}
 }
 
@@ -191,12 +257,18 @@ void refresh_node( struct ip_node *node)
 
 void swap_routine( unsigned int ticks, void *param)
 {
-	lock_get(tree_lock);
+	struct ip_node *node;
+	int i;
 
-	if (tree)
-		refresh_node( tree );
-
-	lock_release(tree_lock);
+	DBG("DEBUG:pike:swap_routine:  entering \n");
+	for(i=0;i<MAX_IP_BRANCHES;i++) {
+		node = get_tree_branch(i);
+		if (node) {
+			lock_tree_branch( i );
+			refresh_node( node );
+			unlock_tree_branch( i );
+		}
+	}
 }
 
 

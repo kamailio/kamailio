@@ -30,36 +30,64 @@
 #ifndef _IP_TREE_H
 #define _IP_TREE_H
 
-#include "../../mem/shm_mem.h"
+
+#include <stdio.h>
+#include "../../locking.h"
 #include "timer.h"
 
-#define ip_malloc shm_malloc
-#define ip_free   shm_free
 
-#define NEW_NODE  1
-#define LEAF_NODE 2
-#define RED_NODE  4
+#define NEW_NODE   (1<<0)
+#define LEAF_NODE  (1<<1)
+#define RED_NODE   (1<<2)
+#define NO_UPDATE  (1<<3)
+
+#define MAX_IP_BRANCHES 256
+
+#define PREV_POS 0
+#define CURR_POS 1
 
 
 struct ip_node
 {
-	struct pike_timer_link  tl;
-	unsigned char           byte;
-	unsigned short          leaf_hits;
-	unsigned short          hits;
-	struct ip_node          *children;
-	struct ip_node          *prev;
-	struct ip_node          *next;
+	unsigned int      expires;
+	unsigned short    leaf_hits[2];
+	unsigned short    hits[2];
+	unsigned char     byte;
+	unsigned char     branch;
+	struct list_link  timer_ll;
+	struct ip_node    *prev;
+	struct ip_node    *next;
+	struct ip_node    *kids;
 };
 
 
-struct ip_node* init_ip_tree(int);
-struct ip_node* add_node(struct ip_node *root, unsigned char *ip,int ip_len,
-										struct ip_node **father,char *flag);
-void            remove_node(struct ip_node* root, struct ip_node *node);
-void            destroy_ip_tree(struct ip_node *root);
+struct ip_tree
+{
+	struct entry {
+		struct ip_node *node;
+		gen_lock_t     *lock;
+	} entries[MAX_IP_BRANCHES];
+	unsigned short max_hits;
+	lock_set_t   *entry_lock_set;
+};
 
 
+#define ll2ipnode(ptr) \
+	((struct ip_node*)((char *)(ptr)-\
+		(unsigned long)(&((struct ip_node*)0)->timer_ll)))
+
+
+int   init_ip_tree(int);
+void  destroy_ip_tree();
+struct ip_node* mark_node( unsigned char *ip, int ip_len,
+		struct ip_node **father, unsigned char *flag);
+void  remove_node(struct ip_node *node);
+
+void print_tree( FILE *f);
+
+void lock_tree_branch(unsigned char b);
+void unlock_tree_branch(unsigned char b);
+struct ip_node* get_tree_branch(unsigned char b);
 
 
 

@@ -28,107 +28,88 @@
 
 #include <assert.h>
 
-#include "timer.h"
 #include "../../dprint.h"
+#include "timer.h"
+#include "ip_tree.h"
 
 
-#define is_in_timer_list(_th,_tl) \
-	(((_tl)->prev || (_tl)->next || (_th)->first==(_tl))?1:0)
 
-#define valid_timer_head(_pth) \
-	( ((_pth)->first&&(_pth)->last) || (!(_pth)->first&&!(_pth)->last) )
-	
 
-void append_to_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
+
+inline void append_to_timer(struct list_link *head, struct list_link *new_ll )
 {
-	DBG("DEBUG:pike:append_to_timer: attempting to insert %p in (%p,%p)\n",
-		pt,pth->first,pth->last);
-	assert( valid_timer_head(pth) );
-	if (is_in_timer_list(pth,pt))
-		remove_from_timer(pth,pt);
-	if (pth->first) {
-		pth->last->next = pt;
-		pt->prev = pth->last;
-	} else {
-		pth->first = pt;
-	}
-	pth->last = pt;
-	assert( valid_timer_head(pth) );
-	DBG("DEBUG:pike:append_to_timer: success to insert %p(%p,%p) in (%p,%p)\n",
-		pt,pt->prev,pt->next,pth->first,pth->last);
+	DBG("DEBUG:pike:append_to_timer:  %p in %p(%p,%p)\n",
+		new_ll, head,head->prev,head->next);
+	assert( !has_timer_set(new_ll) );
+
+	new_ll->prev = head->prev;
+	head->prev->next = new_ll;
+	head->prev = new_ll;
+	new_ll->next = head;
 }
 
 
 
-
-int is_empty(struct pike_timer_head *pth )
+inline void remove_from_timer(struct list_link *head, struct list_link *ll)
 {
-	return ((pth->first==0)?1:0);
+	DBG("DEBUG:pike:remove_from_timer:  %p from %p(%p,%p)\n",
+		ll, head,head->prev,head->next);
+	assert( has_timer_set(ll) );
+
+	ll->next->prev = ll->prev;
+	ll->prev->next = ll->next;
+
+	ll->next = ll->prev = 0;
 }
 
 
-
-
-void remove_from_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
+void update_in_timer(struct list_link *head, struct list_link *ll)
 {
-	DBG("DEBUG:pike:remove_from_timer: attempting to remove %p(%p,%p) in "
-		"(%p,%p)\n",pt,pt->prev,pt->next,pth->first,pth->last);
-	assert( valid_timer_head(pth) );
-	if ( !is_in_timer_list(pth,pt) )
-		return;
-	if (pt->next==0) assert( pth->last==pt );
-	if (pt->prev==0) assert( pth->first==pt );
-	if (pt->next)
-		pt->next->prev = pt->prev;
-	else
-		pth->last = pt->prev;
-	if (pt->prev)
-		pt->prev->next = pt->next;
-	else
-		pth->first = pt->next;
-	pt->next = pt->prev = 0;
-	assert( valid_timer_head(pth) );
-	DBG("DEBUG:pike:remove_from_timer: success to remove %p(%p,%p) in "
-		"(%p,%p)\n", pt,pt->prev,pt->next,pth->first,pth->last);
+	remove_from_timer( head, ll);
+	append_to_timer( head, ll);
 }
 
 
-
-
-struct pike_timer_link *check_and_split_timer(struct pike_timer_head *pth, int t)
+/* "head" list MUST not be empty */
+void check_and_split_timer(struct list_link *head, int time,
+							struct list_link *split, unsigned char *mask)
 {
-	struct pike_timer_link *pt, *ret;
+	struct list_link *ll;
+	unsigned char b;
+	int i;
 
-	assert( valid_timer_head(pth) );
-	pt = pth->first;
-	while( pt && pt->timeout<=t) {
-		DBG("DEBUG:pike:check_and_split_timer: splitting %p(%p,%p) in "
-			"(%p,%p)\n",pt,pt->prev,pt->next,pth->first,pth->last);
-		pt=pt->next;
+	/*  reset the mask */
+	for(i=0;i<32;mask[i++]=0);
+
+	ll = head->next;
+	while( ll!=head && ll2ipnode(ll)->expires<=time) {
+		DBG("DEBUG:pike:check_and_split_timer: splitting %p(%p,%p)node=%p\n",
+			ll,ll->prev,ll->next,ll2ipnode(ll));
+		b = ll2ipnode(ll)->branch;
+		ll=ll->next;
+		/*DBG("DEBUG:pike:check_and_split_timer: b=%d; [%d,%d]\n",
+				b,b>>3,1<<(b&0x07));*/
+		mask[b>>3] |= (1<<(b&0x07));
 	}
 
-	if (!pt) {
-		/* eveything have to be removed */
-		ret = pth->first;
-		pth->first = pth->last = 0;
-	} else if (!pt->prev) {
-		/* nothing to delete found */
-		ret = 0;
+	if (ll==head->next) {
+		/* nothing to return */
+		split->next = split->prev = split;
 	} else {
-		/* we did find timers to be fired! */
 		/* the detached list begins with current beginning */
-		ret = pth->first;
+		split->next = head->next;
+		split->next->prev = split;
 		/* and we mark the end of the split list */
-		pt->prev->next = 0;
+		split->prev = ll->prev;
+		split->prev->next = split;
 		/* the shortened list starts from where we suspended */
-		pth->first = pt;
-		pt->prev = 0;
+		head->next = ll;
+		ll->prev = head;
 	}
 
-	assert( valid_timer_head(pth) );
-	DBG("DEBUG:pike:check_and_split_timer: success to split (%p,%p)\n",
-		pth->first,pth->last);
-	return ret;
+	DBG("DEBUG:pike:check_and_split_timer: succ. to split (h=%p)(p=%p,n=%p)\n",
+		head,head->prev,head->next);
+	return;
 }
 
 
