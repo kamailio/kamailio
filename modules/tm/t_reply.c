@@ -862,6 +862,8 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
 	int act_ret;
 	struct sip_msg faked_msg;
 	enum route_mode backup_mode;
+	struct cell *backup_t;
+	unsigned int backup_msgid;
 
 	/* nobody cares about a negative transaction -- ok, return */
 	if (!t->on_negative) {
@@ -904,9 +906,28 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
 	*/
 	faked_msg.id=t->uas.request->id-1;
 
+	/* remember we are back in request processing, but process
+	 * a shmem-ed replica of the request; advertise it in rmode;
+	 * for example t_reply needs to know that
+	 */
 	backup_mode=rmode;
 	rmode=MODE_ONREPLY_REQUEST;
+	/* also, tm actions look in beginning whether tranaction is
+	 * set -- whether we are called from a reply-processing 
+	 * or a timer process, we need to set current transaction;
+	 * otherwise the actions would attempt to look the transaction
+	 * up (unnecessary overhead, refcounting)
+	 */
+	/* backup */
+	backup_t=get_t();
+	backup_msgid=global_msg_id;
+	/* fake */
+	global_msg_id=faked_msg.id;
+	set_t(t);
+	/* run */
 	act_ret=run_actions(reply_rlist[t->on_negative], &faked_msg );
+	/* restore */
+	global_msg_id=backup_msgid;
 	rmode=backup_mode;
 
 	if (act_ret<0) {

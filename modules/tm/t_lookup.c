@@ -113,7 +113,8 @@ static struct cell *T;
 unsigned int     global_msg_id;
 
 struct cell *get_t() { return T; }
-void init_t() {global_msg_id=0; T=T_UNDEFINED;}
+void set_t(struct cell *t) { T=t; }
+void init_t() {global_msg_id=0; set_t(T_UNDEFINED);}
 
 
 /* transaction matching a-la RFC-3261 using transaction ID in branch
@@ -188,7 +189,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	if (check_transaction_quadruple(p_msg)==0)
 	{
 		LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
-		T=0;
+		set_t(0);	
 		/* stop processing */
 		return 0;
 	}
@@ -211,7 +212,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 	 */
 	if (!p_msg->via1) {
 		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
-		T=0;
+		set_t(0);	
 		return 0;
 	}
 	branch=p_msg->via1->branch;
@@ -334,7 +335,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 
 notfound:
 	/* no transaction found */
-	T = 0;
+	set_t(0);
 	if (!leave_new_locked) {
 		UNLOCK_HASH(p_msg->hash_index);
 	}
@@ -342,7 +343,7 @@ notfound:
 	return ret;
 
 found:
-	T=p_cell;
+	set_t(p_cell);
 	REF_UNSAFE( T );
 	T->kr|=REQ_EXIST;
 	UNLOCK_HASH( p_msg->hash_index );
@@ -376,7 +377,7 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 	 */
 	if (!p_msg->via1) {
 		LOG(L_ERR, "ERROR: t_lookup_request: no via\n");
-		T=0;
+		set_t(0);
 		return 0;
 	}
 	branch=p_msg->via1->branch;
@@ -619,7 +620,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		/* we passed all disqualifying factors .... the transaction has been
 		   matched !
 		*/
-		T=p_cell;
+		set_t(p_cell);
 		*p_branch = branch_id;
 		REF_UNSAFE( T );
 		UNLOCK_HASH(hash_index);
@@ -634,7 +635,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 nomatch2:
 	DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
 	*p_branch = -1;
-	T = 0;
+	set_t(0);
 	return -1;
 }
 
@@ -807,7 +808,7 @@ int t_newtran( struct sip_msg* p_msg )
 				ret = E_OUT_OF_MEM;
 			} else {
 				insert_into_hash_table_unsafe( new_cell );
-				T=new_cell;
+				set_t(new_cell);
 				INIT_REF_UNSAFE(T);
 				/* init pointers to headers needed to construct local
 				   requests such as CANCEL/ACK
@@ -883,7 +884,7 @@ int t_unref( struct sip_msg* p_msg  )
 		t_release_transaction(T);
 	}
 	UNREF( T );
-	T=T_UNDEFINED;
+	set_t(T_UNDEFINED);
 	return 1;
 }
 

@@ -65,6 +65,10 @@ int t_check( struct sip_msg* , int *branch );
 
 struct cell *get_t();
 
+/* use carefully or better not at all -- current transaction is 
+ * primarily set by lookup functions */
+void set_t(struct cell *t);
+
 
 #endif
 
