@@ -173,7 +173,7 @@ char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
 		goto error;
 	}
 
-	len = 0;
+	len = USER_AGENT_LEN + CRLF_LEN;
 	/*first line's len */
 	len += 4/*reply code and one space*/+
 		p_msg->first_line.u.request.version.len+CRLF_LEN;
@@ -269,8 +269,8 @@ char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
 	}
 
 	/* end of message */
-	memcpy( p , CRLF , CRLF_LEN );
-	p += CRLF_LEN;
+	memcpy( p , USER_AGENT CRLF CRLF , USER_AGENT_LEN + CRLF_LEN + CRLF_LEN );
+	p +=  USER_AGENT_LEN + CRLF_LEN + CRLF_LEN;
 
 	pkg_free( via );
 	DBG("DEBUG: t_build_ACK: ACK generated\n");
