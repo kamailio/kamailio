@@ -170,7 +170,7 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 
 	if (regexec((regex_t*) key, begin, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
-		if ((l=anchor_lump(&msg->add_rm, off+pmatch.rm_eo, 0, 0))==0)
+		if ((l=anchor_lump(msg, off+pmatch.rm_eo, 0, 0))==0)
 			return -1;
 		len=strlen(str);
 		s=pkg_malloc(len);
@@ -213,7 +213,7 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str)
 			LOG(L_ERR, "ERROR: replace_all_f: offset unknown\n");
 			return -1;
 		}
-		if ((l=del_lump(&msg->add_rm, pmatch.rm_so+off,
+		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0) {
 			LOG(L_ERR, "ERROR: replace_all_f: del_lump failed\n");
 			return -1;
@@ -251,7 +251,7 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 	off=begin-msg->buf;
 
 	if (pmatch.rm_so!=-1){
-		if ((l=del_lump(&msg->add_rm, pmatch.rm_so+off,
+		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
 		len=strlen(str);
@@ -296,7 +296,7 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 				exports.name, rpl->offset+off,
 				rpl->size, rpl->offset+off+msg->buf,
 				rpl->rpl.len, rpl->rpl.s);
-		if ((l=del_lump(&msg->add_rm, rpl->offset+off, rpl->size, 0))==0)
+		if ((l=del_lump(msg, rpl->offset+off, rpl->size, 0))==0)
 			goto error;
 		/* hack to avoid re-copying rpl, possible because both 
 		 * replace_lst & lumps use pkg_malloc */
@@ -374,7 +374,7 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 			continue;
 		if (strncasecmp(hf->name.s, ((str *)str_hf)->s, hf->name.len)!=0)
 			continue;
-		l=del_lump(&msg->add_rm, hf->name.s-msg->buf, hf->len, 0);
+		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0) {
 			LOG(L_ERR, "ERROR: remove_hf_f: no memory\n");
 			return -1;
@@ -476,7 +476,7 @@ static int append_hf_helper(struct sip_msg* msg, str *str1, str *str2)
 		return -1;
 	}
 
-	anchor = anchor_lump(&msg->add_rm, msg->unparsed - msg->buf, 0, 0);
+	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, 0);
 	if (anchor == 0) {
 		LOG(L_ERR, "append_hf(): Can't get anchor\n");
 		return -1;

@@ -38,6 +38,7 @@
 #include "mf_funcs.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
+#include "../../data_lump.h"
 
 
 
@@ -141,7 +142,7 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	len +=CRLF_LEN;
 
 	/*inserts the header at the begining of the message*/
-	anchor = anchor_lump(&msg->add_rm, msg->headers->name.s - msg->buf, 0 , 0);
+	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0 , 0);
 	if (anchor == 0) {
 		LOG(L_ERR, "ERROR: add_maxfwd_header :"
 		   " Error, can't get anchor\n");

@@ -84,7 +84,7 @@ static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
 		return -1;
 	}
 	
-	anchor = anchor_lump(&_m->add_rm, _m->unparsed - _m->buf, 0, 0);
+	anchor = anchor_lump(_m, _m->unparsed - _m->buf, 0, 0);
 	if (!anchor) {
 		LOG(L_ERR, "append_rpid(): Can't get anchor\n");
 		return -2;

@@ -55,7 +55,7 @@ patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
 	off = oldstr - msg->buf;
 	if (off < 0)
 		return -3;
-	if ((anchor = del_lump (&msg->add_rm, off, oldlen, 0)) == 0)
+	if ((anchor = del_lump (msg, off, oldlen, 0)) == 0)
 	{
 		LOG (L_ERR, "ERROR: patch: error lumping with del_lump\n");
 		return -4;

@@ -242,7 +242,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		uri.port.s = uri.host.s + uri.host.len;
 
 	offset = c->uri.s - msg->buf;
-	anchor = del_lump(&msg->add_rm, offset, c->uri.len, HDR_CONTACT);
+	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT);
 	if (anchor == 0)
 		return -1;
 
@@ -372,8 +372,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & ADD_ADIRECTION) {
-		anchor = anchor_lump(&(msg->body_lumps),
-		    body.s + body.len - msg->buf, 0, 0);
+		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
 			return -1;
@@ -507,8 +506,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 		return 0;
 
 	if (preserve != 0) {
-		anchor = anchor_lump(&(msg->body_lumps),
-		    body->s + body->len - msg->buf, 0, 0);
+		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaip: anchor_lump failed\n");
 			return -1;
@@ -535,7 +533,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 		return -1;
 	}
 	offset = oldip->s - msg->buf;
-	anchor = del_lump(&msg->body_lumps, offset, oldip->len, 0);
+	anchor = del_lump(msg, offset, oldip->len, 0);
 	if (anchor == NULL) {
 		LOG(L_ERR, "ERROR: alter_mediaip: del_lump failed\n");
 		pkg_free(buf);
@@ -563,8 +561,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 		return 0;
 
 	if (preserve != 0) {
-		anchor = anchor_lump(&(msg->body_lumps),
-		    body->s + body->len - msg->buf, 0, 0);
+		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaport: anchor_lump failed\n");
 			return -1;
@@ -591,7 +588,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 		return -1;
 	}
 	offset = oldport->s - msg->buf;
-	anchor = del_lump(&msg->body_lumps, offset, oldport->len, 0);
+	anchor = del_lump(msg, offset, oldport->len, 0);
 	if (anchor == NULL) {
 		LOG(L_ERR, "ERROR: alter_mediaport: del_lump failed\n");
 		pkg_free(buf);
