@@ -70,7 +70,7 @@ static char *DB_TABLE      = 0;  /* */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
 int    proxy_recurse       = 0;
-static char   *log_dir     = 0;  /* dir where the user log should be dumped*/
+char   *log_dir            = 0;  /* dir where the user log should be dumped*/
 
 
 static pid_t aux_process = 0;  /* pid of the private aux. process */
