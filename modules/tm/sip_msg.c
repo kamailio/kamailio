@@ -37,6 +37,7 @@
  *
  * History:
  * --------
+ * 2003-02-25 - auth_body cloner added (janakj)
  * 2003-01-29 - scratchpad removed (jiri)
  * 2003-01-23 - msg_cloner clones msg->from->parsed too (janakj)
  */
