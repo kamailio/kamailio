@@ -22,7 +22,7 @@ Exported Functions:
 
 
 Name:	sdp_mangle_ip
-	--------------
+        --------------
 Params:	pattern - a pair ip/mask used to match ip's located inside 
 				  SDP package in lines c=IN IP4 ip
 				  This lines will only be mangled if located ip 
@@ -40,7 +40,7 @@ Returns: negative on error, or number of replacements + 1
 
 
 Name:	sdp_mangle_port
-	----------------
+        ----------------
 Params:	offset - an strint reprezenting 
                 an integer which will be added/substracted from  the located port.
 Desc:	Changes ports inside SDP package in lines describing
@@ -51,7 +51,7 @@ Returns: negative on error, or number of replacements + 1
 
 
 Name:	encode_contact
-		---------------
+        ---------------
 Params:	encoding_prefix - something to allow us to determine that a contact is encoded
 		publicip - a routable ip,most probably you should put your external ip of your NAT box
 Desc:	This function will encode uri-s inside Contact header in the following manner
@@ -63,10 +63,17 @@ Returns: negative on error, 1 on succes
 
 
 Name:	decode_contact()
-		-----------------
-Params:	separator - a char representing the separator between fields username,password etc.Default encoding uses '*'	
+        -----------------
+Desc:	This function will decode the uri in first line in packets wich come with encoded uri in the following manner
+		sip:enc_pref*username*ip*port*protocol@public_ip goes to sip:username:password@ip:port;transport=protocol
+	It uses the default set parameter for contact encoding separator
+Example:	if (uri =~ "^enc*") {decode_contact();}
+Returns: negative on error, 1 on succes
+
+Name:	decode_contact_header()
+        ------------------------
 Desc:	This function will decode uri-s inside Contact header in the following manner
 		sip:enc_pref*username*ip*port*protocol@public_ip goes to sip:username:password@ip:port;transport=protocol
-		
-Example:	if (uri =~ "^enc*") {decode_contact('*');}
+	It uses the default set parameter for contact encoding separator
+Example:	if (uri =~ "^enc*") {decode_contact_header();}
 Returns: negative on error, 1 on succes

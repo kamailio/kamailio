@@ -160,9 +160,56 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	return 1;
 }
 
-
 int
 decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
+{
+
+	str uri;
+	str newUri;
+	char separator;
+	int res;
+	
+	
+#ifdef DEBUG
+	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
+	fprintf (stdout, "INITIAL.s=[%.*s]\n", uri.len, uri.s);
+#endif
+
+	separator = DEFAULT_SEPARATOR[0];
+	if (contact_flds_separator != NULL)
+		if (strlen(contact_flds_separator)>=1)
+			separator = contact_flds_separator[0];
+		
+	if ((msg->new_uri.s == NULL) || (msg->new_uri.len == 0))
+		{
+		uri = msg->first_line.u.request.uri;
+		if (uri.s == NULL) return -1;
+		}
+	
+		res = decode_uri (uri, separator, &newUri);
+	
+#ifdef DEBUG
+		fprintf (stdout, "newuri.s=[%.*s]\n", newUri.len, newUri.s);
+#endif
+		if (res != 0)
+		{
+			LOG (L_ERR,"ERROR: decode_contact:Failed decoding contact.Code %d\n", res);
+#ifdef STRICT_CHECK
+				return res;
+#endif
+		}
+		else
+		if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
+		{
+			LOG (L_ERR,"ERROR: decode_contact:lumping failed in mangling port \n");
+			return -2;
+		}
+
+	return 1;
+}
+
+int
+decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 {
 
 	contact_body_t *cb;
@@ -171,23 +218,15 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	str newUri;
 	char separator;
 	int res;
-	/*
-	 * I have a list of contacts in contact->parsed which is of type contact_body_t 
-	 * inside i have a contact->parsed->contact which is the head of the list of contacts
-	 * inside it is a 
-	 * str uri;
-	 * struct contact *next;
-	 * I just have to visit each uri and encode each uri according to a scheme
-	 */
 	
 	
 #ifdef DEBUG
-	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
+	fprintf (stdout,"---START--------DECODE CONTACT HEADER-----------------\n");
 #endif
 
 	if ((msg->contact == NULL)||((parse_headers(msg,HDR_CONTACT,0) == -1)))
 		{
-		LOG(L_ERR,"ERROR: decode_contact: no Contact header present\n");
+		LOG(L_ERR,"ERROR: encode_contact: no Contact header present\n");
 		return -1;
 		}
 
@@ -198,6 +237,11 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 
 #ifdef DEBUG
 	fprintf (stdout,"Using separator %c\n",separator);
+	str ruri;
+	ruri = GET_RURI(msg);
+	fprintf (stdout,"[len = %d]New uri is->%*.s\n",ruri.len,ruri.len,ruri.s);
+	ruri = msg->first_line.u.request.uri;
+	fprintf (stdout, "INITIAL.s=[%.*s]\n", ruri.len, ruri.s);
 #endif
 		
 	if (msg->contact->parsed == NULL) parse_contact (msg->contact);
@@ -205,7 +249,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	{
 		cb = (contact_body_t *) msg->contact->parsed;
 		c = cb->contacts;
-		/* we visit each contact */
+		// we visit each contact 
 	 if (c != NULL)
 	  {
 		uri = c->uri;
@@ -248,20 +292,22 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 				LOG (L_ERR,"ERROR: decode_contact:lumping failed in mangling port \n");
 				return -3;
 			}
-		} /* end while */
+		} // end while 
 #endif
-	   } /* if c!= NULL */
-	} /* end if */
-	else /* after parsing still NULL */
+	   } // if c!= NULL 
+	} // end if 
+	else // after parsing still NULL 
 		{
 			LOG(L_ERR,"ERROR: decode_contact: Unable to parse Contact header\n");
 			return -4;
 		}
 #ifdef DEBUG
-	fprintf (stdout,"---END--------DECODE CONTACT-----------------\n");
+	fprintf (stdout,"---END--------DECODE CONTACT HEADER-----------------\n");fflush(stdout);
 #endif
 	return 1;
 }
+
+
 
 
 int

@@ -68,6 +68,7 @@ typedef struct uri_format contact_fields_t;
 
 int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip);
 int decode_contact (struct sip_msg *msg, char *unused1,char *unused2);
+int decode_contact_header (struct sip_msg *msg, char *unused1,char *unused2);
 	
 int encode2format (str uri, struct uri_format *format);
 int decode2format (str uri, char separator, struct uri_format *format);
