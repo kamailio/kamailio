@@ -37,10 +37,11 @@
  *
  * History:
  * --------
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-02-25 - auth_body cloner added (janakj)
- * 2003-01-29 - scratchpad removed (jiri)
- * 2003-01-23 - msg_cloner clones msg->from->parsed too (janakj)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-02-25 - auth_body cloner added (janakj)
+ *  2003-01-29 - scratchpad removed (jiri)
+ *  2003-01-23 - msg_cloner clones msg->from->parsed too (janakj)
+ *  2003-03-31  removed msg->repl_add_rm (andrei)
  */
 
 #include "defs.h"
@@ -299,10 +300,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	}/*for all headers*/
 
 	/* length of the data lump structures */
-	if (org_msg->first_line.type==SIP_REQUEST)
-		lump_chain = org_msg->add_rm;
-	else
-		lump_chain = org_msg->repl_add_rm;
+	lump_chain = org_msg->add_rm;
 	while (lump_chain)
 	{
 		len += lump_len( lump_chain );
@@ -337,7 +335,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	/* sip msg structure */
 	memcpy( new_msg , org_msg , sizeof(struct sip_msg) );
 	p += ROUND4(sizeof(struct sip_msg));
-	new_msg->add_rm = new_msg->repl_add_rm = 0;
+	new_msg->add_rm = 0;
 	/* new_uri */
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 	{
@@ -572,13 +570,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	}
 
 	/* clonning data lump */
-	if (org_msg->first_line.type==SIP_REQUEST) {
 		lump_chain = org_msg->add_rm;
 		lump_anchor = &(new_msg->add_rm);
-	}else{
-		lump_chain = org_msg->repl_add_rm;
-		lump_anchor = &(new_msg->repl_add_rm);
-	}
 	while (lump_chain)
 	{
 		lump_clone( (*lump_anchor) , lump_chain , p );
