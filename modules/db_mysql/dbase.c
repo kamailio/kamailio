@@ -95,18 +95,18 @@ static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 /*
  * Print list of values separated by comma
  */
-static int print_values(char* _b, int _l, db_val_t* _v, int _n)
+static int print_values(MYSQL* _c, char* _b, int _l, db_val_t* _v, int _n)
 {
 	int i, res = 0, l;
 
-	if ((!_b) || (!_l) || (!_v) || (!_n)) {
+	if (!_c || !_b || !_l || !_v || !_n) {
 		LOG(L_ERR, "print_values(): Invalid parameter value\n");
 		return 0;
 	}
 
 	for(i = 0; i < _n; i++) {
 		l = _l - res;
-		if (val2str(_v + i, _b + res, &l) < 0) {
+		if (val2str(_c, _v + i, _b + res, &l) < 0) {
 			LOG(L_ERR, "print_values(): Error while converting value to string\n");
 			return 0;
 		}
@@ -123,13 +123,13 @@ static int print_values(char* _b, int _l, db_val_t* _v, int _n)
 /*
  * Print where clause of SQL statement
  */
-static int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+static int print_where(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int i;
 	int res = 0;
 	int l;
 
-	if ((!_b) || (!_l) || (!_k) || (!_v) || (!_n)) {
+	if (!_c || !_b || !_l || !_k || !_v || !_n) {
 		LOG(L_ERR, "print_where(): Invalid parameter value\n");
 		return 0;
 	}
@@ -141,7 +141,7 @@ static int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v
 			res += snprintf(_b + res, _l - res, "%s=", _k[i]);
 		}
 		l = _l - res;
-		val2str(&(_v[i]), _b + res, &l);
+		val2str(_c, &(_v[i]), _b + res, &l);
 		res += l;
 		if (i != (_n - 1)) {
 			res += snprintf(_b + res, _l - res, " AND ");
@@ -154,13 +154,13 @@ static int print_where(char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v
 /*
  * Print set clause of update SQL statement
  */
-static int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
+static int print_set(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
 {
 	int i;
 	int res = 0;
 	int l;
 
-	if ((!_b) || (!_l) || (!_k) || (!_v) || (!_n)) {
+	if (!_c || !_b || !_l || !_k || !_v || !_n) {
 		LOG(L_ERR, "print_set(): Invalid parameter value\n");
 		return 0;
 	}
@@ -168,7 +168,7 @@ static int print_set(char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
 	for(i = 0; i < _n; i++) {
 		res += snprintf(_b + res, _l - res, "%s=", _k[i]);
 		l = _l - res;
-		val2str(&(_v[i]), _b + res, &l);
+		val2str(_c, &(_v[i]), _b + res, &l);
 		res += l;
 		if (i != (_n - 1)) {
 			if ((_l - res) >= 1) {
@@ -325,7 +325,7 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	}
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _op, _v, _n);
+		off += print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _op, _v, _n);
 	}
 	if (_o) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
@@ -382,7 +382,7 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	off = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
 	off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
 	off += snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	off += print_values(sql_buf + off, SQL_BUF_LEN - off, _v, _n);
+	off += print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
 	*(sql_buf + off++) = ')';
 	*(sql_buf + off) = '\0';
 
@@ -414,7 +414,7 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	off = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		off += print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
 	}
 	if (submit_query(_h, sql_buf) < 0) {
 		LOG(L_ERR, "delete_row(): Error while submitting query\n");
@@ -446,10 +446,10 @@ int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	}
 
 	off = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
-	off += print_set(sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+	off += print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
 	if (_n) {
 		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		off += print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
 		*(sql_buf + off) = '\0';
 	}
 
