@@ -7,6 +7,9 @@
 #include "utils.h"
 #include "defs.h"
 
+#define _XOPEN_SOURCE
+#include <time.h>
+
 /*
  * Convert time_t structure to format accepted by MySQL database
  */

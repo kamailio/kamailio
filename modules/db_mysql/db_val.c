@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "db_utils.h"
 #include "../../dprint.h"
+#include <string.h>
 
 
 static int str2int   (const char* _s, int* _v);
@@ -25,7 +26,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s)
 {
 #ifdef PARANOID
 	if (!_v) {
-		log(L_ERR, "str2val(): Invalid parameter value\n");
+		LOG(L_ERR, "str2val(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -39,7 +40,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s)
 	switch(_t) {
 	case DB_INT:
 		if (str2int(_s, &VAL_INT(_v)) == FALSE) {
-			log(L_ERR, "str2val(): Error while converting integer value from string\n");
+			LOG(L_ERR, "str2val(): Error while converting integer value from string\n");
 			return FALSE;
 		} else {
 			VAL_TYPE(_v) = DB_INT;
@@ -49,7 +50,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s)
 	
 	case DB_DOUBLE:
 		if (str2double(_s, &VAL_DOUBLE(_v)) == FALSE) {
-			log(L_ERR, "str2val(): Error while converting double value from string\n");
+			LOG(L_ERR, "str2val(): Error while converting double value from string\n");
 			return FALSE;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
@@ -64,7 +65,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s)
 
 	case DB_DATETIME:
 		if (str2time(_s, &VAL_TIME(_v)) == FALSE) {
-			log(L_ERR, "str2val(): Error while converting datetime value from string\n");
+			LOG(L_ERR, "str2val(): Error while converting datetime value from string\n");
 			return FALSE;
 		} else {
 			VAL_TYPE(_v) = DB_DATETIME;
@@ -81,7 +82,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	int l;
 #ifdef PARANOID
 	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
-		log(L_ERR, "val2str(): Invalid parameter value\n");
+		LOG(L_ERR, "val2str(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -93,7 +94,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	switch(VAL_TYPE(_v)) {
 	case DB_INT:
 		if (int2str(VAL_INT(_v), _s, _len) == FALSE) {
-			log(L_ERR, "val2str(): Error while converting string to int\n");
+			LOG(L_ERR, "val2str(): Error while converting string to int\n");
 			return FALSE;
 		} else {
 			return TRUE;
@@ -102,7 +103,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_DOUBLE:
 		if (double2str(VAL_DOUBLE(_v), _s, _len) == FALSE) {
-			log(L_ERR, "val2str(): Error while converting string to double\n");
+			LOG(L_ERR, "val2str(): Error while converting string to double\n");
 			return FALSE;
 		} else {
 			return TRUE;
@@ -112,7 +113,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l + 2)) {
-			log(L_ERR, "val2str(): Destination buffer too short\n");
+			LOG(L_ERR, "val2str(): Destination buffer too short\n");
 			return FALSE;
 		} else {
 			*_s++ = '\'';
@@ -126,7 +127,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_DATETIME:
 		if (time2str(VAL_TIME(_v), _s, _len) == FALSE) {
-			log(L_ERR, "val2str(): Error while converting string to time_t\n");
+			LOG(L_ERR, "val2str(): Error while converting string to time_t\n");
 			return FALSE;
 		} else {
 			return TRUE;
@@ -145,7 +146,7 @@ static int str2int(const char* _s, int* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
-		log(L_ERR, "str2int(): Invalid parameter value\n");
+		LOG(L_ERR, "str2int(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -158,7 +159,7 @@ static int str2double(const char* _s, double* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
-		log(L_ERR, "str2double(): Invalid parameter value\n");
+		LOG(L_ERR, "str2double(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -171,7 +172,7 @@ static int str2time(const char* _s, time_t* _v)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_v)) {
-		log(L_ERR, "str2time(): Invalid parameter value\n");
+		LOG(L_ERR, "str2time(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -184,7 +185,7 @@ static int int2str(int _v, char* _s, int* _l)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
-		log(L_ERR, "int2str(): Invalid parameter value\n");
+		LOG(L_ERR, "int2str(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -197,7 +198,7 @@ static int double2str(double _v, char* _s, int* _l)
 {
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (!*_l)) {
-		log(L_ERR, "double2str(): Invalid parameter value\n");
+		LOG(L_ERR, "double2str(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
@@ -211,7 +212,7 @@ static int time2str(time_t _v, char* _s, int* _l)
 	int l;
 #ifdef PARANOID
 	if ((!_s) || (!_l) || (*_l < 2))  {
-		log(L_ERR, "Invalid parameter value\n");
+		LOG(L_ERR, "Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
