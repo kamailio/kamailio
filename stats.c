@@ -304,7 +304,7 @@ int stats_register()
 	f.new_func = (void*) find_export("snmp_new_handler", 1);
 	f.free_func = (void*) find_export("snmp_free_handler", 1);
 	if(!f.reg_func || !f.new_func || !f.free_func) {
-		LOG(L_INFO, "%s: Couldn't find SNMP module\n");
+		LOG(L_INFO, "%s: Couldn't find SNMP module\n", func);
 		LOG(L_INFO, "%s: Not reporting stats through SNMP\n", func);
 		return 0;
 	}
