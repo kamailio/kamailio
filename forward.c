@@ -121,6 +121,7 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 								sock_info[r].address.len)==0)
 							goto error; /* it is actually success */
 						break;
+#if defined(USE_IPV6)
 			case AF_INET6:	
 						if (sock_info[r].address.af!=AF_INET6)
 								continue;
@@ -128,6 +129,7 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 								&from.sin6.sin6_addr, len)==0)
 							goto error;
 						continue;
+#endif
 			default:	LOG(L_ERR, "ERROR: get_out_socket: "
 									"unknown family: %d\n",
 									from.s.sa_family);
