@@ -30,7 +30,7 @@
 
 
 static char id[]="@(#) $Id$";
-static char version[]="sip_router 0.6";
+static char version[]="ser 0.7";
 static char flags[]="NOCR:"
 #ifdef NOCR
 "On"
@@ -46,7 +46,7 @@ static char flags[]="NOCR:"
 ;
 
 static char help_msg[]= "\
-Usage: sip_router -l address [-l address] [options]\n\
+Usage: ser -l address [-l address] [options]\n\
 Options:\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -p port      Listen on the specified port (default: 5060)\n\
@@ -345,6 +345,12 @@ int main(int argc, char** argv)
 	
 	
 	print_rl();
+	/* fix routing lists */
+	if ( (r=fix_rls())!=0){
+		fprintf(stderr, "ERROR: error %x while trying to fix configuration\n",
+						r);
+		goto error;
+	};
 
 	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;

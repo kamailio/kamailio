@@ -10,7 +10,7 @@
 /* default sip port if none specified */
 #define SIP_PORT 5060
 
-#define CFG_FILE "./sip_router.cfg"
+#define CFG_FILE "./ser.cfg"
 
 /* receive buffer size */
 #define BUF_SIZE 65507

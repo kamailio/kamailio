@@ -18,78 +18,17 @@
 #include "route.h"
 #include "dprint.h"
 #include "proxy.h"
+#include "action.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
 
-/* main routing list */
-struct route_elem* rlist[RT_NO];
+/* main routing script table  */
+struct action* rlist[RT_NO];
 
 
-
- void free_re(struct route_elem* r)
-{
-	/*int i;*/
-	if (r){
-		/*
-			regfree(&(r->method));
-			regfree(&(r->uri));
-			
-			if (r->host.h_name)      free(r->host.h_name);
-			if (r->host.h_aliases){
-				for (i=0; r->host.h_aliases[i]; i++)
-					free(r->host.h_aliases[i]);
-				free(r->host.h_aliases);
-			}
-			if (r->host.h_addr_list){
-				for (i=0; r->host.h_addr_list[i]; i++)
-					free(r->host.h_addr_list[i]);
-				free(r->host.h_addr_list);
-			}
-		*/
-			free(r);
-	}
-}
-
-
-
-struct route_elem* init_re()
-{
-	struct route_elem* r;
-	r=(struct route_elem *) malloc(sizeof(struct route_elem));
-	if (r==0) return 0;
-	memset((void*)r, 0, sizeof (struct route_elem));
-	return r;
-}
-
-
-/* adds re list to head; re must be null terminated (last re->next=0))*/
-void push(struct route_elem* re, struct route_elem** head)
-{
-	struct route_elem *t;
-	if (*head==0){
-		*head=re;
-		return;
-	}
-	for (t=*head; t->next;t=t->next);
-	t->next=re;
-}
-
-
-
-void clear_rlist(struct route_elem** rl)
-{
-	struct route_elem *t, *u;
-
-	if (*rl==0) return;
-	u=0;
-	for (t=*rl; t; u=t, t=t->next){
-		if (u) free_re(u);
-	}
-	*rl=0;
-}
-
+static int fix_actions(struct action* a); /*fwd declaration*/
 
 
 /* traverses an expr tree and compiles the REs where necessary) 
@@ -99,6 +38,7 @@ static int fix_expr(struct expr* exp)
 	regex_t* re;
 	int ret;
 	
+	ret=E_BUG;
 	if (exp==0){
 		LOG(L_CRIT, "BUG: fix_expr: null pointer\n");
 		return E_BUG;
@@ -143,6 +83,13 @@ static int fix_expr(struct expr* exp)
 					return E_BUG;
 				}
 			}
+			if (exp->l.operand==ACTION_O){
+				ret=fix_actions((struct action*)exp->r.param);
+				if (ret!=0){
+					LOG(L_CRIT, "ERROR: fix_expr : fix_actions error\n");
+					return ret;
+				}
+			}
 			ret=0;
 	}
 	return ret;
@@ -151,12 +98,18 @@ static int fix_expr(struct expr* exp)
 
 
 /* adds the proxies in the proxy list & resolves the hostnames */
+/* returns 0 if ok, <0 on error */
 static int fix_actions(struct action* a)
 {
 	struct action *t;
 	struct proxy_l* p;
 	char *tmp;
+	int ret;
 	
+	if (a==0){
+		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
+		return E_BUG;
+	}
 	for(t=a; t!=0; t=t->next){
 		switch(t->type){
 			case FORWARD_T:
@@ -187,6 +140,36 @@ static int fix_actions(struct action* a)
 							return E_BUG;
 					}
 					break;
+		case IF_T:
+				if (t->p1_type!=EXPR_ST){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for if (should be expr)\n",
+								t->p1_type);
+					return E_BUG;
+				}else if( (t->p2_type!=ACTIONS_ST)&&(t->p2_type!=NOSUBTYPE) ){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for if() {...} (should be action)\n",
+								t->p2_type);
+					return E_BUG;
+				}else if( (t->p3_type!=ACTIONS_ST)&&(t->p3_type!=NOSUBTYPE) ){
+					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
+								"%d for if() {} else{...}(should be action)\n",
+								t->p3_type);
+					return E_BUG;
+				}
+				if (t->p1.data){
+					if ((ret=fix_expr((struct expr*)t->p1.data))<0)
+						return ret;
+				}
+				if ( (t->p2_type==ACTIONS_ST)&&(t->p2.data) ){
+					if ((ret=fix_actions((struct action*)t->p2.data))<0)
+						return ret;
+				}
+				if ( (t->p3_type==ACTIONS_ST)&&(t->p3.data) ){
+						if ((ret=fix_actions((struct action*)t->p3.data))<0)
+						return ret;
+				}
+				break;
 		}
 	}
 	return 0;
@@ -277,6 +260,7 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 
 	int ret;
+	ret=E_BUG;
 	
 	if (e->type!=ELEM_T){
 		LOG(L_CRIT," BUG: eval_elem: invalid type\n");
@@ -302,8 +286,11 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 		case DSTIP_O:
 				ret=comp_ip(msg->dst_ip, e->r.param, e->op, e->subtype);
 				break;
-		case DEFAULT_O:
-				ret=1;
+		case NUMBER_O:
+				ret=!(!e->r.intval); /* !! to transform it in {0,1} */
+				break;
+		case ACTION_O:
+				ret=(run_actions( (struct action*)e->r.param, msg)>=0)?1:0;
 				break;
 		default:
 				LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",
@@ -316,7 +303,8 @@ error:
 
 
 
-static int eval_expr(struct expr* e, struct sip_msg* msg)
+/* ret= 0/1 (true/false) & -1 on error */
+int eval_expr(struct expr* e, struct sip_msg* msg)
 {
 	static int rec_lev=0;
 	int ret;
@@ -365,53 +353,56 @@ skip:
 }
 
 
-
-
-int add_rule(struct expr* e, struct action* a, struct route_elem** head)
+/* adds an action list to head; a must be null terminated (last a->next=0))*/
+void push(struct action* a, struct action** head)
 {
-	
-	struct route_elem* re;
+	struct action *t;
+	if (*head==0){
+		*head=a;
+		return;
+	}
+	for (t=*head; t->next;t=t->next);
+	t->next=a;
+}
+
+
+
+
+int add_actions(struct action* a, struct action** head)
+{
 	int ret;
 
-	re=init_re();
-	if (re==0) return E_OUT_OF_MEM;
-	LOG(L_DBG, "add_rule: fixing expr...\n");
-	if ((ret=fix_expr(e))!=0) goto error;
-	LOG(L_DBG, "add_rule: fixing actions...\n");
+	LOG(L_DBG, "add_actions: fixing actions...\n");
 	if ((ret=fix_actions(a))!=0) goto error;
-	re->condition=e;
-	re->actions=a;
-	
-	push(re,head);
+	push(a,head);
 	return 0;
 	
 error:
-	free_re(re);
 	return ret;
 }
 
 
 
-struct route_elem* route_match(struct sip_msg* msg, struct route_elem** rl)
+/* fixes all action tables */
+/* returns 0 if ok , <0 on error */
+int fix_rls()
 {
-	struct route_elem* t;
-	if (*rl==0){
-		LOG(L_ERR, "WARNING: route_match: empty routing table\n");
-		return 0;
+	int i,ret;
+	for(i=0;i<RT_NO;i++){
+		if(rlist[i]){
+			if ((ret=fix_actions(rlist[i]))!=0){
+				return ret;
+			}
+		}
 	}
-	for (t=*rl; t; t=t->next){
-		if (eval_expr(t->condition, msg)==1) return t;
-	}
-	/* no match :( */
 	return 0;
 }
-
 
 
 /* debug function, prints main routing table */
 void print_rl()
 {
-	struct route_elem* t;
+	struct action* t;
 	int i,j;
 
 	for(j=0; j<RT_NO; j++){
@@ -421,15 +412,10 @@ void print_rl()
 		}
 		DBG("routing table %d:\n",j);
 		for (t=rlist[j],i=0; t; i++, t=t->next){
-			DBG("%2d.condition: ",i);
-			print_expr(t->condition);
-			DBG("\n  -> ");
-			print_action(t->actions);
-			DBG("\n    Statistics: tx=%d, errors=%d, tx_bytes=%d\n",
-					t->tx, t->errors, t->tx_bytes);
+			print_action(t);
 		}
+		DBG("\n");
 	}
-
 }
 
 

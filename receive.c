@@ -19,7 +19,6 @@
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg msg;
-	struct route_elem *re;
 
 	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
@@ -46,19 +45,10 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 		/* check if neccesarry to add receive? */
 		
-		/* find route */
-		re=route_match( &msg, &rlist[0]);
-		if (re==0){
-			/* no route found, send back error msg? */
-			LOG(L_WARN, "WARNING: receive_msg: no route found!\n");
-			goto skip;
-		}
-		re->tx++;
-		/* send msg */
-		DBG(" found route \n");
-		if (run_actions(re->actions, &msg)<0){
+		/* exec routing script */
+		if (run_actions(rlist[0], &msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
-					"error while trying actions\n");
+					"error while trying script\n");
 			goto error;
 		}
 	}else if (msg.first_line.type==SIP_REPLY){

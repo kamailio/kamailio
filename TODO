@@ -1,19 +1,21 @@
 $Id$
 
+( - todo, x - done)
+
 - better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
  ipv6 addresses ([fec0:aa::01]).
 
 High priority:
-- if () {} else {}
+x if () {} else {}
+- ipv6 support
 - reply ("response line")
-- default route ?
 - drop ACKs for our replies
 - icmp error handling
-- ipv6 support
 - add To-tag (for the replies)
 - add User-Agent (for the replies)
 
 Low priority:
+- command line switch for checking the config file syntax
 - config file version (a la sendmail)
 - loop detection
 - cfg. file reload

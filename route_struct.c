@@ -72,6 +72,21 @@ error:
 }
 
 
+struct action* mk_action3(int type, int p1_type, int p2_type, int p3_type,
+							void* p1, void* p2, void* p3)
+{
+	struct action* a;
+
+	a=mk_action(type, p1_type, p2_type, p1, p2);
+	if (a){
+			a->p3_type=p3_type;
+			a->p3.data=p3;
+	}
+	return a;
+}
+
+
+
 struct action* append_action(struct action* a, struct action* b)
 {
 	struct action *t;
@@ -142,6 +157,11 @@ void print_expr(struct expr* exp)
 			case DSTIP_O:
 				DBG("dstip");
 				break;
+			case NUMBER_O:
+				break;
+			case ACTION_O:
+				print_action((struct action*) exp->r.param);
+				break;
 			default:
 				DBG("UNKNOWN");
 		}
@@ -151,6 +171,8 @@ void print_expr(struct expr* exp)
 				break;
 			case MATCH_OP:
 				DBG("=~");
+				break;
+			case NO_OP:
 				break;
 			default:
 				DBG("<UNKNOWN>");
@@ -167,6 +189,12 @@ void print_expr(struct expr* exp)
 					break;
 			case IP_ST:
 					print_ip(exp->r.intval);
+					break;
+			case ACTIONS_ST:
+					print_action((struct action*)exp->r.param);
+					break;
+			case NUMBER_ST:
+					DBG("%d",exp->r.intval);
 					break;
 			default:
 					DBG("type<%d>", exp->subtype);
@@ -248,6 +276,9 @@ void print_action(struct action* a)
 			case SET_URI_T:
 					DBG("seturi(");
 					break;
+			case IF_T:
+					DBG("if (");
+					break;
 			default:
 					DBG("UNKNOWN(");
 		}
@@ -261,9 +292,16 @@ void print_action(struct action* a)
 			case IP_ST:
 					print_ip(t->p1.number);
 					break;
+			case EXPR_ST:
+					print_expr((struct expr*)t->p1.data);
+					break;
+			case ACTIONS_ST:
+					print_action((struct action*)t->p1.data);
+					break;
 			default:
 					DBG("type<%d>", t->p1_type);
 		}
+		if (t->type==IF_T) DBG(") {");
 		switch(t->p2_type){
 			case NOSUBTYPE:
 					break;
@@ -273,10 +311,36 @@ void print_action(struct action* a)
 			case NUMBER_ST:
 					DBG(", %d",t->p2.number);
 					break;
+			case EXPR_ST:
+					print_expr((struct expr*)t->p2.data);
+					break;
+			case ACTIONS_ST:
+					print_action((struct action*)t->p2.data);
+					break;
 			default:
 					DBG(", type<%d>", t->p2_type);
 		}
-		DBG("); ");
+		if (t->type==IF_T) DBG("} else {");
+		switch(t->p3_type){
+			case NOSUBTYPE:
+					break;
+			case STRING_ST:
+					DBG(", \"%s\"", t->p3.string);
+					break;
+			case NUMBER_ST:
+					DBG(", %d",t->p3.number);
+					break;
+			case EXPR_ST:
+					print_expr((struct expr*)t->p3.data);
+					break;
+			case ACTIONS_ST:
+					print_action((struct action*)t->p3.data);
+					break;
+			default:
+					DBG(", type<%d>", t->p3_type);
+		}
+		if (t->type==IF_T) DBG("}; ");
+		else	DBG("); ");
 	}
 }
 			

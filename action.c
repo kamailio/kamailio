@@ -32,9 +32,9 @@
 int do_action(struct action* a, struct sip_msg* msg)
 {
 	int ret;
+	int v;
 	struct sockaddr_in* to;
 	struct proxy_l* p;
-	struct route_elem* re;
 	char* tmp;
 	char *new_uri, *end, *crt;
 	int len;
@@ -126,14 +126,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_CFG;
 				break;
 			}
-			re=route_match(msg, &rlist[a->p1.number]);
-			if (re==0){
-				LOG(L_INFO, "WARNING: do_action: route(%d): no new route"
-						" found\n", a->p1.number);
-				ret=1;
-				break;
-			}
-			ret=((ret=run_actions(re->actions, msg))<0)?ret:1;
+			ret=((ret=run_actions(rlist[a->p1.number], msg))<0)?ret:1;
 			break;
 		case EXEC_T:
 			if (a->p1_type!=STRING_ST){
@@ -178,7 +171,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 					ret=1;
 					break;
 				}
-
 				if (msg->new_uri) tmp=msg->new_uri;
 				else tmp=msg->first_line.u.request.uri;
 				if (parse_uri(tmp, strlen(tmp), &uri)<0){
@@ -264,7 +256,24 @@ int do_action(struct action* a, struct sip_msg* msg)
 				msg->new_uri=new_uri;
 				ret=1;
 				break;
-
+		case IF_T:
+				/* if null expr => ignore if? */
+				if ((a->p1_type==EXPR_ST)&&a->p1.data){
+					v=eval_expr((struct expr*)a->p1.data, msg);
+					if (v<0){
+						LOG(L_WARN,"WARNING: do_action:"
+									"error in expression\n");
+					}
+					ret=1; /* default is continue */
+					if (v==1){
+						if ((a->p2_type==ACTIONS_ST)&&a->p2.data){
+							ret=run_actions((struct action*)a->p2.data, msg);
+						}
+					}else if ((a->p3_type==ACTIONS_ST)&&a->p3.data){
+							ret=run_actions((struct action*)a->p3.data, msg);
+					}
+				}
+			break;
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
 	}
@@ -278,7 +287,8 @@ error_uri:
 
 
 
-/* returns: 0 on success, -1 on error */
+/* returns: 0, or 1 on success, <0 on error */
+/* (0 if drop or break encountered, 1 if not ) */
 int run_actions(struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
@@ -305,7 +315,7 @@ int run_actions(struct action* a, struct sip_msg* msg)
 	}
 	
 	rec_lev--;
-	return 0;
+	return ret;
 	
 
 error:

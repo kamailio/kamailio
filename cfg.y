@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
 #include "route_struct.h"
 #include "globals.h"
 #include "route.h"
@@ -33,7 +34,6 @@ char* tmp;
 	struct expr* expr;
 	struct action* action;
 	struct net* net;
-	struct route_elem* route_el;
 }
 
 /* terminals */
@@ -53,6 +53,8 @@ char* tmp;
 %token SET_USERPASS
 %token SET_PORT
 %token SET_URI
+%token IF
+%token ELSE
 
 %token METHOD
 %token URI
@@ -100,13 +102,14 @@ char* tmp;
 
 
 /*non-terminals */
-%type <expr> exp, condition,  exp_elem
-%type <action> action, actions, cmd
+%type <expr> exp, exp_elem /*, condition*/
+%type <action> action, actions, cmd, if_cmd, stm
 %type <uval> ipv4
 %type <net> net4
 %type <strval> host
-%type <route_el> rules;
-%type <route_el> rule;
+/*%type <route_el> rules;
+  %type <route_el> rule;
+*/
 
 
 
@@ -145,43 +148,55 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| LISTEN EQUAL ipv4  {
 								if (addresses_no < MAX_LISTEN){
 									tmp=inet_ntoa(*(struct in_addr*)&$3);
-									names[addresses_no]=(char*)malloc(strlen(tmp)+1);
+									names[addresses_no]=
+												(char*)malloc(strlen(tmp)+1);
 									if (names[addresses_no]==0){
-										LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+										LOG(L_CRIT, "ERROR: cfg. parser: "
+														"out of memory.\n");
 									}else{
-										strncpy(names[addresses_no], tmp, strlen(tmp)+1);
+										strncpy(names[addresses_no], tmp,
+												strlen(tmp)+1);
 										addresses_no++;
 									}
 								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser: too many listen addresses"
+									LOG(L_CRIT, "ERROR: cfg. parser:"
+												" too many listen addresses"
 												"(max. %d).\n", MAX_LISTEN);
 								}
 							  }
 		| LISTEN EQUAL ID	 {
 								if (addresses_no < MAX_LISTEN){
-									names[addresses_no]=(char*)malloc(strlen($3)+1);
+									names[addresses_no]=
+												(char*)malloc(strlen($3)+1);
 									if (names[addresses_no]==0){
-										LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+														" out of memory.\n");
 									}else{
-										strncpy(names[addresses_no], $3, strlen($3)+1);
+										strncpy(names[addresses_no], $3,
+													strlen($3)+1);
 										addresses_no++;
 									}
 								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser: too many listen addresses"
+									LOG(L_CRIT, "ERROR: cfg. parser: "
+												"too many listen addresses"
 												"(max. %d).\n", MAX_LISTEN);
 								}
 							  }
 		| LISTEN EQUAL STRING {
 								if (addresses_no < MAX_LISTEN){
-									names[addresses_no]=(char*)malloc(strlen($3)+1);
+									names[addresses_no]=
+										(char*)malloc(strlen($3)+1);
 									if (names[addresses_no]==0){
-										LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+										LOG(L_CRIT, "ERROR: cfg. parser:"
+													" out of memory.\n");
 									}else{
-										strncpy(names[addresses_no], $3, strlen($3)+1);
+										strncpy(names[addresses_no], $3,
+												strlen($3)+1);
 										addresses_no++;
 									}
 								}else{
-									LOG(L_CRIT, "ERROR: cfg. parser: too many listen addresses"
+									LOG(L_CRIT, "ERROR: cfg. parser: "
+												"too many listen addresses"
 												"(max. %d).\n", MAX_LISTEN);
 								}
 							  }
@@ -206,9 +221,9 @@ ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 												}
 	;
 
-route_stm:	ROUTE LBRACE rules RBRACE { push($3, &rlist[DEFAULT_RT]); }
+route_stm:	ROUTE LBRACE actions RBRACE { push($3, &rlist[DEFAULT_RT]); }
 
-		| ROUTE LBRACK NUMBER RBRACK LBRACE rules RBRACE { 
+		| ROUTE LBRACK NUMBER RBRACK LBRACE actions RBRACE { 
 										if (($3<RT_NO) && ($3>=0)){
 											push($6, &rlist[$3]);
 										}else{
@@ -218,7 +233,7 @@ route_stm:	ROUTE LBRACE rules RBRACE { push($3, &rlist[DEFAULT_RT]); }
 										}
 		| ROUTE error { yyerror("invalid  route  statement"); }
 	;
-
+/*
 rules:	rules rule { push($2, &$1); $$=$1; }
 	| rule {$$=$1; }
 	| rules error { $$=0; yyerror("invalid rule"); }
@@ -231,12 +246,12 @@ rule:	condition	actions CR {
 									YYABORT;
 								}
 							  }
-	| CR  /* null rule */		{ $$=0;}
+	| CR		{ $$=0;}
 	| condition error { $$=0; yyerror("bad actions in rule"); }
 	;
 
 condition:	exp {$$=$1;}
-	;
+*/
 
 exp:	exp AND exp 	{ $$=mk_exp(AND_OP, $1, $3); }
 	| exp OR  exp		{ $$=mk_exp(OR_OP, $1, $3);  }
@@ -319,6 +334,8 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| DSTIP MATCH error  { $$=0; yyerror ( "hostname  expected" ); }
 		| DSTIP error { $$=0; 
 						yyerror("invalid operator, == or =~ expected");}
+		| stm				{ $$=mk_elem( NO_OP, ACTIONS_ST, ACTION_O, $1 ); }
+		| NUMBER		{$$=mk_elem( NO_OP, NUMBER_ST, NUMBER_O, (void*)$1 ); }
 	;
 
 net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); } 
@@ -326,7 +343,8 @@ net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); }
 								yyerror("invalid bit number in netmask");
 								$$=0;
 							}else{
-								$$=mk_net($1, htonl( ($3)?~( (1<<32-$3)-1 ):0 ) );
+								$$=mk_net($1, 
+										htonl( ($3)?~( (1<<(32-$3))-1 ):0 ) );
 							}
 						}
 	| ipv4				{ $$=mk_net($1, 0xffffffff); }
@@ -337,8 +355,8 @@ net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); }
 host:	ID				{ $$=$1; }
 	| host DOT ID		{ $$=(char*)malloc(strlen($1)+1+strlen($3)+1);
 						  if ($$==0){
-						  	LOG(L_CRIT, "ERROR: cfg. parser: memory allocation failure"
-						 				" while parsing host\n");
+						  	LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
+										" failure while parsing host\n");
 						  }else{
 						  	memcpy($$, $1, strlen($1));
 						  	$$[strlen($1)]='.';
@@ -351,6 +369,10 @@ host:	ID				{ $$=$1; }
 	;
 
 
+stm:		cmd						{ $$=$1; }
+		|	LBRACE actions RBRACE	{ $$=$2; }
+	;
+
 actions:	actions action	{$$=append_action($1, $2); }
 		| action			{$$=$1;}
 		| actions error { $$=0; yyerror("bad command"); }
@@ -359,6 +381,24 @@ actions:	actions action	{$$=append_action($1, $2); }
 action:		cmd SEMICOLON {$$=$1;}
 		| SEMICOLON /* null action */ {$$=0;}
 		| cmd error { $$=0; yyerror("bad command: missing ';'?"); }
+	;
+
+if_cmd:		IF exp stm				{ $$=mk_action3( IF_T,
+													 EXPR_ST,
+													 ACTIONS_ST,
+													 NOSUBTYPE,
+													 $2,
+													 $3,
+													 0);
+									}
+		|	IF exp stm ELSE stm		{ $$=mk_action3( IF_T,
+													 EXPR_ST,
+													 ACTIONS_ST,
+													 ACTIONS_ST,
+													 $2,
+													 $3,
+													 $5);
+									}
 	;
 
 cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
@@ -472,24 +512,37 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| EXEC LPAREN STRING RPAREN	{ $$=mk_action(	EXEC_T, STRING_ST, 0,
 													$3, 0);
 									}
-		| SET_HOST LPAREN STRING RPAREN { $$=mk_action( SET_HOST_T, STRING_ST, 0, $3, 0); }
+		| SET_HOST LPAREN STRING RPAREN { $$=mk_action(SET_HOST_T, STRING_ST,
+														0, $3, 0); }
 		| SET_HOST error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| SET_HOST LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-		| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action( SET_HOSTPORT_T, STRING_ST, 0, $3, 0); }
+		| SET_HOST LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action( SET_HOSTPORT_T, 
+														STRING_ST, 0, $3, 0); }
 		| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-		| SET_PORT LPAREN STRING RPAREN { $$=mk_action( SET_PORT_T, STRING_ST, 0, $3, 0); }
+		| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument,"
+												" string expected"); }
+		| SET_PORT LPAREN STRING RPAREN { $$=mk_action( SET_PORT_T, STRING_ST,
+														0, $3, 0); }
 		| SET_PORT error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| SET_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-		| SET_USER LPAREN STRING RPAREN { $$=mk_action( SET_USER_T, STRING_ST, 0, $3, 0); }
+		| SET_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| SET_USER LPAREN STRING RPAREN { $$=mk_action( SET_USER_T, STRING_ST,
+														0, $3, 0); }
 		| SET_USER error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| SET_USER LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-		| SET_USERPASS LPAREN STRING RPAREN { $$=mk_action( SET_USERPASS_T, STRING_ST, 0, $3, 0); }
+		| SET_USER LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| SET_USERPASS LPAREN STRING RPAREN { $$=mk_action( SET_USERPASS_T, 
+														STRING_ST, 0, $3, 0); }
 		| SET_USERPASS error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| SET_USERPASS LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
-		| SET_URI LPAREN STRING RPAREN { $$=mk_action( SET_URI_T, STRING_ST, 0, $3, 0); }
+		| SET_USERPASS LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"string expected"); }
+		| SET_URI LPAREN STRING RPAREN { $$=mk_action( SET_URI_T, STRING_ST, 
+														0, $3, 0); }
 		| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+										"string expected"); }
+		| if_cmd		{ $$=$1; }
 	;
 
 

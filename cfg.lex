@@ -40,7 +40,7 @@
 
 /* action keywords */
 FORWARD	forward
-DROP	drop
+DROP	"drop"|"break"
 SEND	send
 LOG		log
 ERROR	error
@@ -52,6 +52,8 @@ SET_USER		"rewriteuser"|"setuser"|"setu"
 SET_USERPASS	"rewriteuserpass"|"setuserpass"|"setup"
 SET_PORT		"rewriteport"|"setport"|"setp"
 SET_URI			"rewriteuri"|"seturi"
+IF				"if"
+ELSE			"else"
 
 
 /* condition keywords */
@@ -127,6 +129,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SET_USERPASS}	{ count(); yylval.strval=yytext; return SET_USERPASS; }
 <INITIAL>{SET_PORT}	{ count(); yylval.strval=yytext; return SET_PORT; }
 <INITIAL>{SET_URI}	{ count(); yylval.strval=yytext; return SET_URI; }
+<INITIAL>{IF}	{ count(); yylval.strval=yytext; return IF; }
+<INITIAL>{ELSE}	{ count(); yylval.strval=yytext; return ELSE; }
 
 <INITIAL>{METHOD}	{ count(); yylval.strval=yytext; return METHOD; }
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }
@@ -166,7 +170,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SLASH}	{ count(); return SLASH; }
 <INITIAL>{DOT}		{ count(); return DOT; }
 <INITIAL>\\{CR}		{count(); } /* eat the escaped CR */
-<INITIAL>{CR}		{ count(); return CR; }
+<INITIAL>{CR}		{ count();/* return CR;*/ }
 
 
 <INITIAL>{QUOTES} { count(); state=STRING_S; BEGIN(STRING1); }
