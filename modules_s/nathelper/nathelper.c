@@ -1,4 +1,4 @@
-/*$Id$
+/* $Id$
  *
  * Ser module, it implements the following commands:
  * fix_nated_contact() - replaces host:port in Contact field with host:port
@@ -33,8 +33,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License 
- * along with this program; if not, write to the Free Software 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * History:
@@ -117,13 +117,13 @@ static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
 static regex_t* key_m1918;
 
 static cmd_export_t cmds[]={
-		{"fix_nated_contact", fix_nated_contact_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"fix_nated_sdp",     fix_nated_sdp_f,     1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"unforce_rtp_proxy", unforce_rtp_proxy_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"force_rtp_proxy",   force_rtp_proxy_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-		{"nat_uac_test",      nat_uac_test_f,      1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-		{0, 0, 0, 0, 0}
-	};
+	{"fix_nated_contact", fix_nated_contact_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"fix_nated_sdp",     fix_nated_sdp_f,     1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"unforce_rtp_proxy", unforce_rtp_proxy_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",   force_rtp_proxy_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"nat_uac_test",      nat_uac_test_f,      1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{0, 0, 0, 0, 0}
+};
 
 static param_export_t params[]={
 	{"natping_interval", INT_PARAM, &natping_interval},
@@ -133,14 +133,14 @@ static param_export_t params[]={
 };
 
 struct module_exports exports={
-		"nathelper",
-		cmds,
-		params,
-		mod_init,
-		0, /* reply processing */
-		0, /* destroy function */
-		0, /* on_break */
-		0  /* child_init */
+	"nathelper",
+	cmds,
+	params,
+	mod_init,
+	0, /* reply processing */
+	0, /* destroy function */
+	0, /* on_break */
+	0  /* child_init */
 };
 
 static int
@@ -163,12 +163,12 @@ mod_init(void)
 	}
 
 	/* compile 1918 address RE */
-	key_m1918=pkg_malloc(sizeof(regex_t));
-	if (!key_m1918) {
+	key_m1918 = pkg_malloc(sizeof(*key_m1918));
+	if (key_m1918 == NULL) {
 		LOG(L_ERR, "ERROR: nathelper: no mem for RE\n");
 		return -1;
 	}
-	if (regcomp(key_m1918, CONTACT_1918, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ) {
+	if (regcomp(key_m1918, CONTACT_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE) ) {
 		pkg_free(key_m1918);
 		LOG(L_ERR, "ERROR: nathelper: failure to compule 1918 RE\n");
 		return -1;
@@ -208,9 +208,6 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 
 	return NULL;
 }
-
- 
-
 
 /*
  * Replaces ip:port pair in the Contact: field with the source address
@@ -297,23 +294,7 @@ fixup_str2int( void** param, int param_no)
 	return 0;
 }
 
-#define	ADD_ADIRECTION	0x01
-#define	FIX_MEDIAIP	0x02
-
-#define ADIRECTION	"a=direction:active\r\n"
-#define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
-
-#define AOLDMEDIAIP	"a=oldmediaip:"
-#define AOLDMEDIAIP_LEN	(sizeof(AOLDMEDIAIP) - 1)
-
-#define AOLDMEDIPRT	"a=oldmediaport:"
-#define AOLDMEDIPRT_LEN	(sizeof(AOLDMEDIPRT) - 1)
-
-#define CLEN_LEN	10
-
-
-
-/* 
+/*
  * test for occurence of RFC1918 IP address in Contact HF
  */
 static int contact_1918(struct sip_msg* msg)
@@ -322,19 +303,19 @@ static int contact_1918(struct sip_msg* msg)
 	int fnd;
 	char backup;
 
-	if ((msg->contact == NULL)&&
-					((parse_headers(msg,HDR_CONTACT,0) == -1))) {
+	if ((msg->contact == NULL) &&
+	    ((parse_headers(msg, HDR_CONTACT, 0) == -1))) {
 		DBG("DEBUG: nathelper/contact1918: Contact not found\n");
 		return 0;
 	}
-	if (msg->contact == NULL || msg->contact->body.s==NULL ) {
+	if (msg->contact == NULL || msg->contact->body.s == NULL ) {
 		DBG("DEBUG: nathelper/contact1918: Contact sanity check failed\n");
 		return 0;
 	}
-	backup=msg->contact->body.s[msg->contact->body.len];
+	backup = msg->contact->body.s[msg->contact->body.len];
 	msg->contact->body.s[msg->contact->body.len] = 0;
-	fnd=regexec( key_m1918, msg->contact->body.s, 1, &pmatch, 0)==0;
-	msg->contact->body.s[msg->contact->body.len]=backup;
+	fnd = regexec(key_m1918, msg->contact->body.s, 1, &pmatch, 0) == 0;
+	msg->contact->body.s[msg->contact->body.len] = backup;
 	return fnd;
 }
 
@@ -343,16 +324,20 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int tests;
 
-	tests = (int)(long) str1;
+	tests = (int)(long)str1;
 
 	/* return true if any of the NAT-UAC tests holds */
-	
-	/* test if source address of signaling is different from
-	 * address advertised in Via */
-	if ((tests & NAT_UAC_TEST_RCVD) && received_test(msg)) 
+
+	/*
+	 * test if source address of signaling is different from
+	 * address advertised in Via
+	 */
+	if ((tests & NAT_UAC_TEST_RCVD) && received_test(msg))
 		return 1;
-	/* test for occurences of RFC1918 addresses in Contact
-	 * header field */
+	/*
+	 * test for occurences of RFC1918 addresses in Contact
+	 * header field
+	 */
 	if ((tests & NAT_UAC_TEST_1918) && contact_1918(msg))
 		return 1;
 
@@ -360,6 +345,18 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	return -1;
 
 }
+
+#define	ADD_ADIRECTION	0x01
+#define	FIX_MEDIAIP	0x02
+
+#define	ADIRECTION	"a=direction:active\r\n"
+#define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
+
+#define	AOLDMEDIAIP	"a=oldmediaip:"
+#define	AOLDMEDIAIP_LEN	(sizeof(AOLDMEDIAIP) - 1)
+
+#define	AOLDMEDIPRT	"a=oldmediaport:"
+#define	AOLDMEDIPRT_LEN	(sizeof(AOLDMEDIPRT) - 1)
 
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
