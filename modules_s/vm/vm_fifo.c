@@ -30,6 +30,7 @@
  */
 
 #include "vm_fifo.h"
+#include "vm.h"
 
 #include "../tm/config.h"
 #include "../tm/tm_load.h"
@@ -63,7 +64,10 @@ int fifo_vm_reply( FILE* stream, char *response_file )
 {
     int ret;
 
+#ifdef _OBSO
     struct sip_msg* msg;
+#endif
+	struct cell *trans;
 
     char code[16];
     char reason[128];
@@ -79,8 +83,9 @@ int fifo_vm_reply( FILE* stream, char *response_file )
 	,sb       /*  body */
 	,sttag;   /*  to-tag */
 
-    load_tm_f        load_tm;
+#ifdef OBSO
     struct tm_binds  tmb;
+#endif
     unsigned int hash_index,label,icode;
 
     sc.s=code;
@@ -95,52 +100,53 @@ int fifo_vm_reply( FILE* stream, char *response_file )
     DBG("DEBUG: fifo_t_reply: ############### begin ##############\n");
 
     if (!read_line(sc.s, 16, stream, &sc.len)||sc.len==0) {
-	LOG(L_ERR, "ERROR: fifo_t_reply: code expected\n");
-	fifo_reply(response_file, "400 fifo_t_reply: code expected");
-	return 1;
+		LOG(L_ERR, "ERROR: fifo_t_reply: code expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: code expected");
+		return 1;
     }
 
     icode = str2s(sc.s,sc.len,&ret);
     if(ret){
-	LOG(L_ERR, "ERROR: fifo_t_reply: code(int) has wrong format\n");
-	fifo_reply(response_file, "400 fifo_t_reply: code(int) has wrong format");
-	return 1;
+		LOG(L_ERR, "ERROR: fifo_t_reply: code(int) has wrong format\n");
+		fifo_reply(response_file, "400 fifo_t_reply: code(int) has wrong format");
+		return 1;
     }
 
     if(!read_line(sr.s, 128, stream, &sr.len)||sr.len==0){
-	LOG(L_ERR, "ERROR: fifo_t_reply: reason expected\n");
-	fifo_reply(response_file, "400 fifo_t_reply: reason expected");
-	return 1;
+		LOG(L_ERR, "ERROR: fifo_t_reply: reason expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: reason expected");
+		return 1;
     }
     sr.s[sr.len]='\0';
 
     if (!read_line(sti.s, 128, stream, &sti.len)||sti.len==0) {
-	LOG(L_ERR, "ERROR: fifo_t_reply: trans_id expected\n");
-	fifo_reply(response_file, "400 fifo_t_reply: trans_id expected");
-	return 1;
+		LOG(L_ERR, "ERROR: fifo_t_reply: trans_id expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: trans_id expected");
+		return 1;
     }
     sti.s[sti.len]='\0';
     DBG("DEBUG: fifo_t_reply: trans_id=%.*s\n",sti.len,sti.s);
     
     if(sscanf(sti.s,"%u:%u", &hash_index, &label) != 2){
-	LOG(L_ERR, "ERROR: fifo_t_reply: invalid trans_id (%s)\n",sti.s);
-	fifo_reply(response_file, "400 fifo_t_reply: invalid trans_id");
-	return 1;
+		LOG(L_ERR, "ERROR: fifo_t_reply: invalid trans_id (%s)\n",sti.s);
+		fifo_reply(response_file, "400 fifo_t_reply: invalid trans_id");
+		return 1;
     }
     DBG("DEBUG: fifo_t_reply: hash_index=%u label=%u\n",hash_index,label);
 
     if( !read_line(sttag.s,64,stream,&sttag.len) || sttag.len==0 ){
-	LOG(L_ERR, "ERROR: fifo_t_reply: to-tag expected\n");
-	goto error01;
+		LOG(L_ERR, "ERROR: fifo_t_reply: to-tag expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: to-ta expected");
+		return 1;
     }
     sttag.s[sttag.len]='\0';
     DBG("DEBUG: fifo_t_reply: to-tag: %.*s\n",sttag.len,sttag.s);
 
     /*  parse the new headers */
     if (!read_line_set(snh.s, MAX_HEADER, stream, &snh.len)/*||snh.len==0*/) {
-	LOG(L_ERR, "ERROR: fifo_t_reply: while reading new headers\n");
-	fifo_reply(response_file, "400 fifo_t_reply: while reading new headers");
-	return 1;
+		LOG(L_ERR, "ERROR: fifo_t_reply: while reading new headers\n");
+		fifo_reply(response_file, "400 fifo_t_reply: while reading new headers");
+		return 1;
     }
     trim_r(snh);
     snh.s[snh.len]='\0';
@@ -149,10 +155,11 @@ int fifo_vm_reply( FILE* stream, char *response_file )
     /*  body can be empty ... */
     read_body(sb.s, MAX_BODY, stream, &sb.len);
     if (sb.len != 0) {
-	DBG("DEBUG: fifo_t_reply: body: %.*s\n", sb.len, sb.s);
+		DBG("DEBUG: fifo_t_reply: body: %.*s\n", sb.len, sb.s);
     }
     sb.s[sb.len]='\0';
     
+#ifdef _OBSO /* load just on start up */
     if (!(load_tm = (load_tm_f)find_export("load_tm",NO_SCRIPT))){
 	LOG(L_ERR,"ERROR: fifo_t_reply: could not load 'load_tm'. module tm should be loaded !\n");
 	goto error01;
@@ -164,21 +171,33 @@ int fifo_vm_reply( FILE* stream, char *response_file )
     }
 
     if( ((*tmb.t_lookup_ident)(&msg,hash_index,label)) != 1 ) {
-	LOG(L_ERR,"ERROR: fifo_t_reply: \n");
-	goto error01;
+#endif
+    if( ((*_tmb.t_lookup_ident)(&trans,hash_index,label)) < 0 ) {
+		LOG(L_ERR,"ERROR: fifo_t_reply: lookup failed\n");
+		fifo_reply(response_file, "481 fifo_t_reply: no such transaction");
+		return 1;
     }
 
+#ifdef _OBSO /* if there is a bug, let's fix it and not hide it :) */
     // Ugly fix to avoid crash at t_lookup:161 (tid_matching)
     if(!msg->via1->transport.s)
 	msg->via1->transport.len = 0;
+#endif
 
-    ret = (*tmb.t_reply_with_body)(msg,icode,reason,body,new_headers,to_tag);
+	/* it's refcounted now, t_reply_with body unrefs for me -- I can 
+	 * continue but may not use T anymore  */
+    ret = (*_tmb.t_reply_with_body)(trans,icode,reason,body,new_headers,to_tag);
+
+	if (ret<0) {
+		LOG(L_ERR, "ERROR: fifo_t_reply: reply failed\n");
+		fifo_reply(response_file, "500 fifo_t_reply: reply failed");
+		return 1;
+	}
+
+	fifo_reply(response_file, "200 fifo_t_reply succeeded\n");
     DBG("DEBUG: fifo_t_reply: ################ end ##############\n");
+    return 1;
 
-    return ret;
-
- error01:
-    return -1;
 }
 
 
@@ -248,8 +267,6 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	int sip_error;
 	char err_buf[MAX_REASON_LEN];
 	int err_ret;
-	load_tm_f        load_tm;
-	struct tm_binds  tmb;
 
 	sm.s=method; sd.s=dst; sr.s=r_uri; st.s=to; stt.s=to_tag; sf.s=from;
 	sft.s=from_tag;	scseq.s=cseq_buf; scid.s=call_id; sh.s=header; sb.s=body;
@@ -379,6 +396,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 		shmem_file=0;
 	}
 
+#ifdef _OBSO
 
     if (!(load_tm = (load_tm_f)find_export("load_tm",NO_SCRIPT))){
 	LOG(L_ERR,"ERROR: fifo_t_reply: could not load 'load_tm'. module tm should be loaded !\n");
@@ -395,6 +413,8 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
        to shmem_file
     */
     ret=(*tmb.t_uac_dlg)(&sm,
+#endif 
+    ret=(*_tmb.t_uac_dlg)(&sm,
 			 sd.len==0 ? 0 : &sd,
 			 PROTO_UDP,
 			 sr.len==0 ? 0 : &sr,

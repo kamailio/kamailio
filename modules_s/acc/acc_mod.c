@@ -267,14 +267,33 @@ static int mod_init( void )
 	if (load_tm( &tmb )==-1) return -1;
 
 	/* register callbacks */
-	if (tmb.register_tmcb( TMCB_REPLY, acc_onreply, 0 /* empty param */ ) <= 0)
+
+	/*  report on completed transactions */
+	if (tmb.register_tmcb( TMCB_RESPONSE_OUT, acc_onreply, 0 /* empty param */ ) <= 0)
 		return -1;
-	if (tmb.register_tmcb( TMCB_E2EACK, acc_onack, 0 /* empty param */ ) <=0 )
+	/* account e2e acks if configured to do so */
+	if (tmb.register_tmcb( TMCB_E2EACK_IN, acc_onack, 0 /* empty param */ ) <=0 )
 		return -1;
-	if (tmb.register_tmcb( TMCB_REQUEST_OUT, acc_onreq, 0 /* empty param */ ) <=0 )
+	/* disable silent c-timer for registered calls */
+	if (tmb.register_tmcb( TMCB_REQUEST_IN, acc_onreq, 0 /* empty param */ ) <=0 )
 		return -1;
-	if (tmb.register_tmcb( TMCB_ON_NEGATIVE, on_missed, 0 /* empty param */ ) <=0 )
+	/* report on missed calls */
+	if (tmb.register_tmcb( TMCB_ON_FAILURE, on_missed, 0 /* empty param */ ) <=0 )
 		return -1;
+
+#ifdef SQL_ACC
+    if (db_url == NULL) {
+        LOG(L_ERR, "ERROR: acc:init_mod(): Use db_url parameter\n");
+		return -1;
+	}
+	db_handle = db_init(db_url);
+	if (!db_handle) {
+        LOG(L_ERR, "acc:init_child(): Unable to connect database\n");
+		return -1;
+	} else {
+		DBG("DEbug: mod_init(acc): db opened \n");
+	}
+#endif
 
 	return 0;
 }
@@ -282,10 +301,8 @@ static int mod_init( void )
 static int child_init(int rank)
 {
 #ifdef SQL_ACC
-    if (db_url == NULL) {
-        LOG(L_ERR, "acc:init_child(): Use db_url parameter\n");
-		return -1;
-	}
+	/* close parent's DB connection */
+	db_close(db_handle);
 	db_handle = db_init(db_url);
 	if (!db_handle) {
         LOG(L_ERR, "acc:init_child(): Unable to connect database\n");
