@@ -48,8 +48,8 @@ struct id_list* lst_tmp;
 %}
 
 %union {
-	int intval;
-	unsigned uval;
+	long intval;
+	unsigned long uval;
 	char* strval;
 	struct expr* expr;
 	struct action* action;

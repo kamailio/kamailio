@@ -536,7 +536,8 @@ ifeq ($(OS), freebsd)
 endif
 
 ifeq ($(OS), openbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"' -DHAVE_GETHOSTBYNAME2 
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"' -DHAVE_GETHOSTBYNAME2 \
+		-DHAVE_UNION_SEMUN
 	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
 	# no sched_yield on openbsd unless linking with c_r (not recommended)

@@ -116,7 +116,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned int size)
 	unsigned int init_overhead;
 	
 	/* make address and size multiple of 8*/
-	start=(char*)ROUNDUP((unsigned int) address);
+	start=(char*)ROUNDUP((unsigned long) address);
 	if (size<start-address) return 0;
 	size-=(start-address);
 	if (size <(MIN_FRAG_SIZE+FRAG_OVERHEAD)) return 0;
@@ -285,12 +285,12 @@ void fm_status(struct fm_block* qm)
 	struct fm_frag* f;
 	int i,j;
 	int h;
-	int size;
+	long size;
 
 	LOG(memlog, "fm_status (%p):\n", qm);
 	if (!qm) return;
 
-	LOG(memlog, " heap size= %d\n", qm->size);
+	LOG(memlog, " heap size= %ld\n", qm->size);
 #ifdef DBG_F_MALLOC
 	LOG(memlog, " used= %d, used+overhead=%d, free=%d\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
@@ -314,7 +314,7 @@ void fm_status(struct fm_block* qm)
 		
 		for (f=qm->free_hash[h],j=0; f; size+=f->size,f=f->u.nxt_free,i++,j++);
 		if (j) LOG(memlog, "hash = %3d fragments no.: %5d,\n\t\t"
-							" bucket size: %9d - %9d (first %9d)\n",
+							" bucket size: %9d - %9d (first %9ld)\n",
 							h, j, UN_HASH(h),
 							((h<F_MALLOC_OPTIMIZE/ROUNDTO)?1:2)*UN_HASH(h),
 							qm->free_hash[h]->size
@@ -332,7 +332,7 @@ void fm_status(struct fm_block* qm)
 		}
 	*/
 	}
-	LOG(memlog, "TOTAL: %6d free fragments = %6d free bytes\n", i, size);
+	LOG(memlog, "TOTAL: %6d free fragments = %6ld free bytes\n", i, size);
 	LOG(memlog, "-----------------------------\n");
 }
 

@@ -97,14 +97,14 @@ inline static int big_hash_idx(int s)
 static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f)
 {
 	if (f->check!=ST_CHECK_PATTERN){
-		LOG(L_CRIT, "BUG: qm_*: fragm. %p beginning overwritten(%x)!\n",
+		LOG(L_CRIT, "BUG: qm_*: fragm. %p beginning overwritten(%lx)!\n",
 				f, f->check);
 		qm_status(qm);
 		abort();
 	};
 	if ((FRAG_END(f)->check1!=END_CHECK_PATTERN1)||
 		(FRAG_END(f)->check2!=END_CHECK_PATTERN2)){
-		LOG(L_CRIT, "BUG: qm_*: fragm. %p end overwritten(%x, %x)!\n",
+		LOG(L_CRIT, "BUG: qm_*: fragm. %p end overwritten(%lx, %lx)!\n",
 				f, FRAG_END(f)->check1, FRAG_END(f)->check2);
 		qm_status(qm);
 		abort();
@@ -112,8 +112,8 @@ static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f)
 	if ((f>qm->first_frag)&&
 			((PREV_FRAG_END(f)->check1!=END_CHECK_PATTERN1) ||
 				(PREV_FRAG_END(f)->check2!=END_CHECK_PATTERN2) ) ){
-		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%x, %x)[%p]!\n",
-				PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f);
+		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%lx, %lx)[%p]!\n"
+				,PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f);
 		qm_status(qm);
 		abort();
 	}
@@ -154,10 +154,10 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	
 	/* make address and size multiple of 8*/
 	start=(char*)ROUNDUP((unsigned long) address);
-	DBG("qm_malloc_init: QM_OPTIMIZE=%d, /ROUNDTO=%d\n",
+	DBG("qm_malloc_init: QM_OPTIMIZE=%ld, /ROUNDTO=%ld\n",
 			QM_MALLOC_OPTIMIZE, QM_MALLOC_OPTIMIZE/ROUNDTO);
-	DBG("qm_malloc_init: QM_HASH_SIZE=%d, qm_block size=%d\n",
-			QM_HASH_SIZE, sizeof(struct qm_block));
+	DBG("qm_malloc_init: QM_HASH_SIZE=%ld, qm_block size=%d\n",
+			QM_HASH_SIZE, (int)sizeof(struct qm_block));
 	DBG("qm_malloc_init(%p, %d), start=%p\n", address, size, start);
 	if (size<start-address) return 0;
 	size-=(start-address);
@@ -166,7 +166,7 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	
 	init_overhead=ROUNDUP(sizeof(struct qm_block))+sizeof(struct qm_frag)+
 		sizeof(struct qm_frag_end);
-	DBG("qm_malloc_init: size= %d, init_overhead=%d\n", size, init_overhead);
+	DBG("qm_malloc_init: size= %d, init_overhead=%ld\n", size, init_overhead);
 	
 	if (size < init_overhead)
 	{
@@ -339,7 +339,7 @@ void qm_free(struct qm_block* qm, void* p)
 	struct qm_frag* f;
 	struct qm_frag* prev;
 	struct qm_frag* next;
-	unsigned int size;
+	unsigned long size;
 
 #ifdef DBG_QM_MALLOC
 	DBG("qm_free(%p, %p), called from %s: %s(%d)\n", qm, p, file, func, line);
@@ -359,11 +359,11 @@ void qm_free(struct qm_block* qm, void* p)
 	qm_debug_frag(qm, f);
 	if (f->u.is_free){
 		LOG(L_CRIT, "BUG: qm_free: freeing already freed pointer,"
-				" first free: %s: %s(%d) - aborting\n",
+				" first free: %s: %s(%ld) - aborting\n",
 				f->file, f->func, f->line);
 		abort();
 	}
-	DBG("qm_free: freeing block alloc'ed from %s: %s(%d)\n", f->file, f->func,
+	DBG("qm_free: freeing block alloc'ed from %s: %s(%ld)\n", f->file, f->func,
 			f->line);
 #endif
 	size=f->size;
@@ -420,22 +420,22 @@ void qm_status(struct qm_block* qm)
 	LOG(memlog, "qm_status (%p):\n", qm);
 	if (!qm) return;
 
-	LOG(memlog, " heap size= %d\n", qm->size);
-	LOG(memlog, " used= %d, used+overhead=%d, free=%d\n",
+	LOG(memlog, " heap size= %ld\n", qm->size);
+	LOG(memlog, " used= %ld, used+overhead=%ld, free=%ld\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG(memlog, " max used (+overhead)= %d\n", qm->max_real_used);
+	LOG(memlog, " max used (+overhead)= %ld\n", qm->max_real_used);
 	
 	LOG(memlog, "dumping all allocked. fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
 		if (! f->u.is_free){
-			LOG(memlog, "    %3d. %c  address=%p  size=%d\n", i, 
+			LOG(memlog, "    %3d. %c  address=%p  size=%ld\n", i, 
 				(f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
 #ifdef DBG_QM_MALLOC
-			LOG(memlog, "            %s from %s: %s(%d)\n",
+			LOG(memlog, "            %s from %s: %s(%ld)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
-			LOG(memlog, "        start check=%x, end check= %x, %x\n",
+			LOG(memlog, "        start check=%lx, end check= %lx, %lx\n",
 				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 #endif
 		}

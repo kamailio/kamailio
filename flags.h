@@ -35,7 +35,7 @@ enum { FL_WHITE=1, FL_YELLOW, FL_GREEN, FL_RED, FL_BLUE, FL_MAGENTA,
 
 typedef unsigned int flag_t;
 
-#define MAX_FLAG  ( sizeof(flag_t) * CHAR_BIT - 1 )
+#define MAX_FLAG  ((unsigned int)( sizeof(flag_t) * CHAR_BIT - 1 ))
 
 struct sip_msg;
 

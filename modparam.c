@@ -58,7 +58,7 @@ int set_mod_param(char* _mod, char* _name, modparam_t _type, void* _val)
 		break;
 
 	case INT_PARAM:
-		*((int*)ptr) = (int)_val;
+		*((int*)ptr) = (int)(long)_val;
 		break;
 	}
 

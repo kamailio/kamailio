@@ -1794,11 +1794,11 @@ nextvia:
 
 error:
 	if (end>buffer){
-		LOG(L_ERR, "ERROR: parse_via on: <%.*s>\n", end-buffer, buffer);
+		LOG(L_ERR, "ERROR: parse_via on: <%.*s>\n", (int)(end-buffer), buffer);
 	}
 	if ((tmp>buffer)&&(tmp<end)){
 		LOG(L_ERR, "ERROR: parse_via parse error, parsed so far:<%.*s>\n",
-				tmp-buffer, buffer );
+				(int)(tmp-buffer), buffer );
 	}else{
 		LOG(L_ERR, "ERROR: parse_via: via parse error\n");
 	}

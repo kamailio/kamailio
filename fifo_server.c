@@ -479,7 +479,7 @@ int open_fifo_server()
 	t=ctime(&up_since);
 	if (strlen(t)+1>=MAX_CTIME_LEN) {
 		LOG(L_ERR, "ERROR: open_fifo_server: "
-			"too long date %d\n", strlen(t));
+			"too long date %d\n", (int)strlen(t));
 		return -1;
 	}
 	memcpy(up_since_ctime,t,strlen(t)+1);
