@@ -30,9 +30,12 @@
  */
 /*
  *
- *
+ *History:
+ *--------
+ *  2002-02-05  created by andrei
  *  2003-01-16  added PPC locking code contributed by Dinos Dorkofikis
  *               <kdor@intranet.gr>
+ *  2004-09-12  added MIPS locking for ISA>=2 (>r3000)  (andrei)
  *
  */
 
@@ -106,6 +109,21 @@ inline static int tsl(fl_lock_t* lock)
 			: "r"(1), "b" (lock) :
 			"memory", "cc"
         );
+#elif defined __CPU_mips2
+	long tmp;
+	
+	asm volatile(
+		".set noreorder\n\t"
+		"1:  ll %1, %2   \n\t"
+		"    li %0, 1 \n\t"
+		"    sc %0, %2  \n\t"
+		"    beqz %0, 1b \n\t"
+		"    nop \n\t"
+		".set reorder\n\t"
+		: "=&r" (tmp), "=&r" (val), "=m" (*lock) 
+		: "0" (tmp), "2" (*lock) 
+		: "cc"
+	);
 #else
 #error "unknown architecture"
 #endif
@@ -168,6 +186,14 @@ inline static void release_lock(fl_lock_t* lock)
 			: "memory"
         );
 	*lock = 0;
+#elif defined __CPU_mips2
+		asm volatile(
+		".set noreorder \n\t"
+		"    sync \n\t"
+		"    sw $0, %0 \n\t"
+		".set reorder \n\t"
+		: /*no output*/  : "m" (*lock) : "memory"
+	);
 #else
 #error "unknown architecture"
 #endif
