@@ -39,6 +39,7 @@
  *  2003-04-25  do it (^) really everywhere (jiri)
  *  2003-04-26  do it (^) really really really everywhere (jiri)
  *  2003-07-07  added get_proto calls when proxy!=0 (andrei)
+ *  2004-02-13  t->is_invite and t->local replaced with flags (bogdan)
  */
 
 
@@ -274,10 +275,9 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 	}
 
 	/* if replication flag is set, mark the transaction as local
-	   so that replies will not be relaied
-	*/
+	   so that replies will not be relaied */
 	t=get_t();
-	t->local=replicate;
+	if (replicate) t->flags|=T_IS_LOCAL_FLAG;
 
 	/* INVITE processing might take long, partcularly because of DNS
 	   look-ups -- let upstream know we're working on it */

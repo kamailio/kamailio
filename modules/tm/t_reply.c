@@ -58,6 +58,7 @@
  *  2003-11-05  flag context updated from failure/reply handlers back
  *              to transaction context (jiri)
  *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
+ *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  */
 
 
@@ -287,7 +288,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	{
 		DBG("DEBUG: t_reply: response building failed\n");
 		/* determine if there are some branches to be cancelled */
-		if (trans->is_invite) {
+		if ( is_invite(trans) ) {
 			if (lock) LOCK_REPLIES( trans );
 			which_cancel(trans, &cancel_bitmap );
 			if (lock) UNLOCK_REPLIES( trans );
@@ -298,7 +299,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 
 	cancel_bitmap=0;
 	if (lock) LOCK_REPLIES( trans );
-	if (trans->is_invite) which_cancel(trans, &cancel_bitmap );
+	if ( is_invite(trans) ) which_cancel(trans, &cancel_bitmap );
 	if (trans->uas.status>=200) {
 		LOG( L_ERR, "ERROR: t_reply: can't generate %d reply"
 			" when a final %d was sent out\n", code, trans->uas.status);
@@ -332,7 +333,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* do UAC cleanup procedures in case we generated
 	   a final answer whereas there are pending UACs */
 	if (code>=200) {
-		if (trans->local) {
+		if ( is_local(trans) ) {
 			DBG("DEBUG: local transaction completed from _reply\n");
 			if ( has_tran_tmcbs(trans, TMCB_LOCAL_COMPLETED) )
 				run_trans_callbacks( TMCB_LOCAL_COMPLETED, trans,
@@ -344,7 +345,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		}
 
 		cleanup_uac_timers( trans );
-		if (trans->is_invite) cancel_uacs( trans, cancel_bitmap );
+		if (is_invite(trans)) cancel_uacs( trans, cancel_bitmap );
 		set_final_timer(  trans );
 	}
 
@@ -370,7 +371,7 @@ error2:
 error:
 	/* do UAC cleanup */
 	cleanup_uac_timers( trans );
-	if (trans->is_invite) cancel_uacs( trans, cancel_bitmap );
+	if ( is_invite(trans) ) cancel_uacs( trans, cancel_bitmap );
 	/* we did not succeed -- put the transaction on wait */
 	put_on_wait(trans);
 	return -1;
@@ -605,7 +606,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	   out
 	*/
 	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
-	inv_through=new_code>=200 && new_code<300 && Trans->is_invite;
+	inv_through=new_code>=200 && new_code<300 && is_invite(Trans);
 	/* if final response sent out, allow only INVITE 2xx  */
 	if ( Trans->uas.status >= 200 ) {
 		if (inv_through) {
@@ -784,7 +785,7 @@ int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 
 void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 {
-	if ( !t->local && t->uas.request->REQ_METHOD==METHOD_INVITE ) {
+	if ( !is_local(t) && t->uas.request->REQ_METHOD==METHOD_INVITE ) {
 		/* crank timers for negative replies */
 		if (t->uas.status>=300) {
 			start_retr(&t->uas.response);
@@ -962,7 +963,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		t->uas.status = relayed_code;
 		t->relaied_reply_branch = relay;
 
-		if (t->is_invite && relayed_msg!=FAKED_REPLY
+		if (is_invite(t) && relayed_msg!=FAKED_REPLY
 		&& relayed_code>=200 && relayed_code < 300
 		&& has_tran_tmcbs( t, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ) {
 			totag_retr=update_totag_set(t, relayed_msg);
@@ -997,10 +998,9 @@ error02:
 error01:
 	t_reply_unsafe( t, t->uas.request, 500, "Reply processing error" );
 	UNLOCK_REPLIES(t);
-	if (t->is_invite) cancel_uacs( t, *cancel_bitmap );
+	if (is_invite(t)) cancel_uacs( t, *cancel_bitmap );
 	/* a serious error occured -- attempt to send an error reply;
-	   it will take care of clean-ups 
-	*/
+	   it will take care of clean-ups  */
 
 	/* failure */
 	return RPS_ERROR;
@@ -1048,7 +1048,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		t->uas.status = winning_code;
 		update_reply_stats( winning_code );
-		if (t->is_invite && winning_msg!=FAKED_REPLY
+		if (is_invite(t) && winning_msg!=FAKED_REPLY
 		&& winning_code>=200 && winning_code <300
 		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )  {
 			totag_retr=update_totag_set(t, winning_msg);
@@ -1113,13 +1113,13 @@ int reply_received( struct sip_msg  *p_msg )
 	DBG("DEBUG: t_on_reply: org. status uas=%d, "
 		"uac[%d]=%d local=%d is_invite=%d)\n",
 		t->uas.status, branch, uac->last_received, 
-		t->local, t->is_invite);
+		is_local(t), is_invite(t));
 
 	/* it's a cancel ... ? */
 	if (get_cseq(p_msg)->method.len==CANCEL_LEN 
 		&& memcmp( get_cseq(p_msg)->method.s, CANCEL, CANCEL_LEN)==0
 		/* .. which is not e2e ? ... */
-		&& t->is_invite ) {
+		&& is_invite(t) ) {
 			/* ... then just stop timers */
 			reset_timer( &uac->local_cancel.retr_timer);
 			if ( msg_status >= 200 )
@@ -1135,12 +1135,10 @@ int reply_received( struct sip_msg  *p_msg )
 	/* stop final response timer only if I got a final response */
 	if ( msg_status >= 200 )
 		reset_timer( &uac->request.fr_timer);
-        
-        /* acknowledge negative INVITE replies (do it before detailed
-           on_reply processing, which may take very long, like if it
-           is attempted to establish a TCP connection to a fail-over dst
-        */
-	if (t->is_invite && (msg_status>=300 || (t->local && msg_status>=200))) {
+		/* acknowledge negative INVITE replies (do it before detailed
+		 * on_reply processing, which may take very long, like if it
+		 * is attempted to establish a TCP connection to a fail-over dst */
+	if (is_invite(t) && (msg_status>=300 || (is_local(t) && msg_status>=200))){
 		ack = build_ack( p_msg, t, branch, &ack_len);
 		if (ack) {
 			SEND_PR_BUFFER( &uac->request, ack, ack_len );
@@ -1161,7 +1159,7 @@ int reply_received( struct sip_msg  *p_msg )
 		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 	}
 	LOCK_REPLIES( t );
-	if (t->local) {
+	if ( is_local(t) ) {
 		reply_status=local_reply( t, p_msg, branch, msg_status, &cancel_bitmap );
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status, 
@@ -1177,14 +1175,14 @@ int reply_received( struct sip_msg  *p_msg )
 		   be still pending branches ...
 		*/
 		cleanup_uac_timers( t );	
-		if (t->is_invite) cancel_uacs( t, cancel_bitmap );
+		if (is_invite(t)) cancel_uacs( t, cancel_bitmap );
 		/* FR for negative INVITES, WAIT anything else */
 		set_final_timer(  t );
 	} 
 
 	/* update FR/RETR timers on provisional replies */
 	if (msg_status<200) { /* provisional now */
-		if (t->is_invite) { 
+		if (is_invite(t)) {
 			/* invite: change FR to longer FR_INV, do not
 			   attempt to restart retransmission any more
 			*/

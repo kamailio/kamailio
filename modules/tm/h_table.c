@@ -37,46 +37,51 @@
  * 2003-12-04  global callbacks replaceed with callbacks per transaction;
  *             completion callback merged into them as LOCAL_COMPETED (bogdan)
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
+ * 2004-02-13  t->is_invite and t->local replaced with flags;
+ *             timer_link.payload removed (bogdan)
  */
 
-#include "defs.h"
-
-
 #include <stdlib.h>
+
+
 #include "../../mem/shm_mem.h"
 #include "../../hash_func.h"
-#include "h_table.h"
 #include "../../dprint.h"
 #include "../../md5utils.h"
-/* bogdan test */
 #include "../../ut.h"
 #include "../../globals.h"
 #include "../../error.h"
 #include "../../fifo_server.h"
+#include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_stats.h"
+#include "h_table.h"
 
 static enum kill_reason kr;
 
 /* pointer to the big table where all the transaction data
-   lives
-*/
-
+   lives */
 static struct s_table*  tm_table;
+
+
 
 void set_kr( enum kill_reason _kr )
 {
 	kr|=_kr;
 }
+
+
 enum kill_reason get_kr() {
 	return kr;
 }
+
 
 void lock_hash(int i) 
 {
 	lock(&tm_table->entrys[i].mutex);
 }
+
 
 void unlock_hash(int i) 
 {
@@ -204,9 +209,6 @@ static void inline init_branches(struct cell *t)
 		uac->request.fr_timer.tg = TG_FR;
 		uac->request.retr_timer.tg = TG_RT;
 #endif
-		uac->request.retr_timer.payload = 
-			uac->request.fr_timer.payload = 
-			&uac->request;
 		uac->local_cancel=uac->request;
 	}
 }
@@ -232,8 +234,6 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.retr_timer.tg=TG_RT;
 	new_cell->uas.response.fr_timer.tg=TG_FR;
 #endif
-	new_cell->uas.response.fr_timer.payload =
-	new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
 	new_cell->uas.response.my_T=new_cell;
 
 	/* enter callback, which may potentially want to parse some stuff,
@@ -250,8 +250,6 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/* UAC */
 	init_branches(new_cell);
 
-	new_cell->wait_tl.payload = new_cell;
-	new_cell->dele_tl.payload = new_cell;
 	new_cell->relaied_reply_branch   = -1;
 	/* new_cell->T_canceled = T_UNDEFINED; */
 #ifdef EXTRA_DEBUG
@@ -359,7 +357,7 @@ void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 	/* update stats */
 	p_entry->cur_entries++;
 	p_entry->acc_entries++;
-	t_stats_new(p_cell->local);
+	t_stats_new( is_local(p_cell) );
 }
 
 
@@ -401,7 +399,7 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	}
 #	endif
 	p_entry->cur_entries--;
-	t_stats_deleted(p_cell->local);
+	t_stats_deleted( is_local(p_cell) );
 
 	/* unlock( &(p_entry->mutex) ); */
 }

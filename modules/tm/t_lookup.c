@@ -75,6 +75,7 @@
  * 2003-12-04  global TM callbacks switched to per transaction callbacks
  *             (bogdan)
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
+ * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  */
 
 #include "defs.h"
@@ -763,7 +764,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			! ((cseq_method.len==req_method.len 
 			&& memcmp( cseq_method.s, req_method.s, cseq_method.len )==0)
 			/* or it is a local cancel */
-			|| (is_cancel && p_cell->is_invite 
+			|| (is_cancel && is_invite(p_cell)
 				/* commented out -- should_cancel_branch set it to
 				   BUSY_BUFFER to avoid collisions with repliesl;
 				   thus, we test here by bbuffer size
@@ -787,17 +788,17 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		 * enabled -- except callback customers, nobody cares about 
 		 * retransmissions of multiple 200/INV or ACK/200s
 		 */
-		if (p_cell->is_invite && p_msg->REPLY_STATUS>=200 
+		if (is_invite(p_cell) && p_msg->REPLY_STATUS>=200 
 		&& p_msg->REPLY_STATUS<300 
-		&& ( (!p_cell->local && 
+		&& ( (!is_local(p_cell) &&
 				has_tran_tmcbs(p_cell,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
-			|| (p_cell->local && has_tran_tmcbs(p_cell,TMCB_LOCAL_COMPLETED))
+			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell,TMCB_LOCAL_COMPLETED))
 		)) {
 			if (parse_headers(p_msg, HDR_TO, 0)==-1) {
 				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
 			}
 		}
-		if (!p_cell->local) {
+		if (!is_local(p_cell)) {
 			run_trans_callbacks( TMCB_RESPONSE_IN, T, T->uas.request, p_msg,
 				p_msg->REPLY_STATUS);
 		}
@@ -950,7 +951,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 		-shm_msg->cseq->name.s;
 
 	new_cell->method=new_cell->uas.request->first_line.u.request.method;
-	new_cell->is_invite=p_msg->REQ_METHOD==METHOD_INVITE;
+	if (p_msg->REQ_METHOD==METHOD_INVITE) new_cell->flags |= T_IS_INVITE_FLAG;
 	new_cell->on_negative=get_on_negative();
 	new_cell->on_reply=get_on_reply();
 }
@@ -1203,7 +1204,7 @@ int t_is_local(struct sip_msg* p_msg)
 	return -1;
     }
     
-    return t->local;
+    return is_local(t);
 }
 
 /* lookup a transaction by callid and cseq, parameters are pure

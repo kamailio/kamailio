@@ -48,6 +48,7 @@
  *  2003-12-03  completion filed removed from transaction and uac callbacks
  *              merged in transaction callbacks as LOCAL_COMPLETED (bogdan)
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
+ *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced (bogdan)
  */
 
 #include <string.h>
@@ -202,11 +203,11 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		goto error2;
 	}
 
-	new_cell->is_invite =
-		method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0;
-	new_cell->local= 1;
+	if (method->len==INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN)==0)
+		new_cell->flags |= T_IS_INVITE_FLAG;
+	new_cell->flags |= T_IS_LOCAL_FLAG;
 	set_kr(REQ_FWDED);
-	
+
 	request = &new_cell->uac[0].request;
 	request->dst.to = to_su;
 	request->dst.send_sock = send_sock;

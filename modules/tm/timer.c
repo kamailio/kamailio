@@ -96,6 +96,8 @@
  * History:
  * --------
  *  2003-06-27  timers are not unlinked if timerlist is 0 (andrei)
+ *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced;
+ *              timer_link.payload removed (bogdan)
  */
 
 #include "defs.h"
@@ -239,10 +241,10 @@ static void fake_reply(struct cell *t, int branch, int code )
 	short do_cancel_branch;
 	enum rps reply_status;
 
-	do_cancel_branch=t->is_invite && should_cancel_branch(t, branch);
+	do_cancel_branch = is_invite(t) && should_cancel_branch(t, branch);
 
 	cancel_bitmap=do_cancel_branch ? 1<<branch : 0;
-	if (t->local) {
+	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
 			code, &cancel_bitmap );
 	} else {
@@ -273,12 +275,12 @@ static void fake_reply(struct cell *t, int branch, int code )
 
 
 
-inline static void retransmission_handler( void *attr)
+inline static void retransmission_handler( struct timer_link *retr_tl )
 {
 	struct retr_buf* r_buf ;
 	enum lists id;
 
-	r_buf = (struct retr_buf*)attr;
+	r_buf = get_retr_timer_payload(retr_tl);
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
@@ -290,7 +292,7 @@ inline static void retransmission_handler( void *attr)
 	/*the transaction is already removed from RETRANSMISSION_LIST by timer*/
 	/* retransmision */
 	if ( r_buf->activ_type==TYPE_LOCAL_CANCEL 
-		|| r_buf->activ_type==0 ) {
+		|| r_buf->activ_type==TYPE_REQUEST ) {
 			DBG("DEBUG: retransmission_handler : "
 				"request resending (t=%p, %.9s ... )\n", 
 				r_buf->my_T, r_buf->buffer);
@@ -309,9 +311,8 @@ inline static void retransmission_handler( void *attr)
 	id = r_buf->retr_list;
 	r_buf->retr_list = id < RT_T2 ? id + 1 : RT_T2;
 	
-	r_buf->retr_timer.timer_list= NULL; /* set to NULL so that set_timer
-										   will work */
-	set_timer(&(r_buf->retr_timer),id < RT_T2 ? id + 1 : RT_T2 );
+	retr_tl->timer_list= NULL; /* set to NULL so that set_timer will work */
+	set_timer( retr_tl, id < RT_T2 ? id + 1 : RT_T2 );
 
 	DBG("DEBUG: retransmission_handler : done\n");
 }
@@ -319,18 +320,18 @@ inline static void retransmission_handler( void *attr)
 
 
 
-inline static void final_response_handler( void *attr)
+inline static void final_response_handler( struct timer_link *fr_tl )
 {
 	int silent;
 	struct retr_buf* r_buf;
 	struct cell *t;
 
-	r_buf = (struct retr_buf*)attr;
-	if (r_buf==0){
+	if (fr_tl==0){
 		/* or BUG?, ignoring it for now */
 		LOG(L_CRIT, "ERROR: final_response_handler(0) called\n");
 		return;
 	}
+	r_buf = get_fr_timer_payload(fr_tl);
 	t=r_buf->my_T;
 
 #	ifdef EXTRA_DEBUG
@@ -374,22 +375,22 @@ inline static void final_response_handler( void *attr)
 	   world */
 	silent=
 		/* not for UACs */
-		!t->local
+		!is_local(t)
 		/* invites only */
-		&& t->is_invite
+		&& is_invite(t)
 		/* parallel forking does not allow silent state discarding */
 		&& t->nr_of_outgoings==1
 		/* on_negativ reply handler not installed -- serial forking 
 		 * could occur otherwise */
 		&& t->on_negative==0
 		/* the same for FAILURE callbacks */
-		&& (t->tmcb_hl.reg_types&(TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE))==0
+		&& !has_tran_tmcbs( t, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE) 
 		/* something received -- we will not be silent on error */
 		&& t->uac[r_buf->branch].last_received>0
 		/* don't go silent if disallowed globally ... */
 		&& noisy_ctimer==0
 		/* ... or for this particular transaction */
-		&& t->noisy_ctimer==0;
+		&& has_noisy_ctimer(t);
 	if (silent) {
 		UNLOCK_REPLIES(t);
 		DBG("DEBUG: FR_handler: transaction silently dropped (%p)\n",t);
@@ -403,6 +404,8 @@ inline static void final_response_handler( void *attr)
 	DBG("DEBUG: final_response_handler : done\n");
 }
 
+
+
 void cleanup_localcancel_timers( struct cell *t )
 {
 	int i;
@@ -413,10 +416,11 @@ void cleanup_localcancel_timers( struct cell *t )
 }
 
 
-inline static void wait_handler( void *attr)
+inline static void wait_handler( struct timer_link *wait_tl )
 {
-	struct cell *p_cell = (struct cell*)attr;
+	struct cell *p_cell;
 
+	p_cell = get_wait_timer_payload( wait_tl );
 #ifdef EXTRA_DEBUG
 	if (p_cell->damocles) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
@@ -427,7 +431,7 @@ inline static void wait_handler( void *attr)
 #endif
 
 	/* stop cancel timers if any running */
-	if (p_cell->is_invite) cleanup_localcancel_timers( p_cell );
+	if ( is_invite(p_cell) ) cleanup_localcancel_timers( p_cell );
 
 	/* the transaction is already removed from WT_LIST by the timer */
 	/* remove the cell from the hash table */
@@ -445,11 +449,11 @@ inline static void wait_handler( void *attr)
 
 
 
-
-inline static void delete_handler( void *attr)
+inline static void delete_handler( struct timer_link *dele_tl )
 {
-	struct cell *p_cell = (struct cell*)attr;
+	struct cell *p_cell;
 
+	p_cell = get_dele_timer_payload( dele_tl );
 	DBG("DEBUG: delete_handler : removing %p \n", p_cell );
 #ifdef EXTRA_DEBUG
 	if (p_cell->damocles==0) {
@@ -498,7 +502,7 @@ void unlink_timer_lists()
 	   (they are no more accessible from enrys) */
 	while (tl!=end) {
 		tmp=tl->next_tl;
-		free_cell((struct cell*)tl->payload);
+		free_cell( get_dele_timer_payload(tl) );
 		tl=tmp;
 	}
 	
@@ -864,7 +868,7 @@ static void unlink_timers( struct cell *t )
 		DBG("DEBUG: timer routine:%d,tl=%p next=%p\n",\
 			id,(_tl),tmp_tl);\
 		if ((_tl)->time_out>TIMER_DELETED) \
-			(_handler)( (_tl)->payload );\
+			(_handler)( _tl );\
 		(_tl) = tmp_tl;\
 	}
 
@@ -876,10 +880,6 @@ void timer_routine(unsigned int ticks , void * attr)
 	/* struct timer_table *tt= (struct timer_table*)attr; */
 	struct timer_link *tl, *tmp_tl;
 	int                id;
-
-#ifdef BOGDAN_TRIFLE
-	DBG(" %d \n",ticks);
-#endif
 
 	for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
 	{

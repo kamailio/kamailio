@@ -41,6 +41,7 @@
  *  2003-04-14  use protocol from uri (jiri)
  *  2003-12-04  global TM callbacks switched to per transaction callbacks
  *              (bogdan)
+ *  2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  */
 
 #include "defs.h"
@@ -146,7 +147,7 @@ int add_blind_uac( /*struct cell *t*/ )
 		return -1;
 	}
 	/* make sure it will be replied */
-	t->noisy_ctimer=1; 
+	t->flags |= T_NOISY_CTIMER_FLAG;
 	t->nr_of_outgoings++;
 	/* start FR timer -- protocol set by default to PROTO_NONE,
        which means retransmission timer will not be started

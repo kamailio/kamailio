@@ -37,6 +37,7 @@
  *             avoid late ACK sending (jiri)
  * 2003-10-02  added via_builder set host/port support (andrei)
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
+ * 2004-02-13: t->is_invite and t->local replaced with flags (bogdan)
  */
 
 #include "defs.h"
@@ -101,7 +102,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		goto error;
 	branch_str.s=branch_buf;
 	branch_str.len=branch_len;
-	set_hostport(&hp, (Trans->local)?0:(Trans->uas.request));
+	set_hostport(&hp, (is_local(Trans))?0:(Trans->uas.request));
 	via=via_builder(&via_len, Trans->uac[branch].request.dst.send_sock,
 		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
 	if (!via)
@@ -117,7 +118,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 
 	/* copy'n'paste Route headers */
-	if (!Trans->local) {
+	if (!is_local(Trans)) {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			 if (hdr->type==HDR_ROUTE)
 				*len+=hdr->len;
@@ -156,7 +157,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_mem_block( p, method, method_len );
 	append_mem_block( p, CRLF, CRLF_LEN );
 
-	if (!Trans->local)  {
+	if (!is_local(Trans))  {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			if(hdr->type==HDR_ROUTE) {
 				append_mem_block(p, hdr->name.s, hdr->len );
