@@ -151,7 +151,7 @@ int uac_init() {
 int uac_child_init( int rank ) 
 {
 	callid_suffix_len=snprintf(callid_suffix,CALLID_SUFFIX_LEN,
-			"%c%d@%*s", CID_SEP, my_pid(), 
+			"%c%d@%.*s", CID_SEP, my_pid(), 
 			sock_info[bind_idx].address_str.len,
 			sock_info[bind_idx].address_str.s );
 	if (callid_suffix_len==-1) {
@@ -219,7 +219,6 @@ int t_uac( str *msg_type, str *dst,
 	DBG("DEBUG: sufix_len = %d\n",callid_suffix_len);
 	DBG("DEBUG: NEW CALLID:%.*s[%d]:\n", callid_s.len, callid_s.s 
 		, callid_s.len);
-
 	new_cell = build_cell( NULL ) ; 
 	if (!new_cell) {
 		ret=E_OUT_OF_MEM;

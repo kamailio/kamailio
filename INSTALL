@@ -22,6 +22,8 @@ Requirements:
 - GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
 - GNU install or BSD install (on Solaris "ginstall") if you want "make
   install", "make bin", "make sunpkg" to work
+- libmysqlclient & libz (zlib) if you want mysql support (the mysql module)
+- libxpat if you want the jabber gateway support (the jabber module)
 
 
 OS Notes:

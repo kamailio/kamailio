@@ -82,7 +82,7 @@
 
 static char id[]="@(#) $Id$";
 static char version[]=  NAME " " VERSION " (" ARCH "/" OS ")" ;
-static char compiled[]= __TIME__ __DATE__ ;
+static char compiled[]= __TIME__ " " __DATE__ ;
 static char flags[]=
 "STATS:"
 #ifdef STATS

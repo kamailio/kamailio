@@ -29,6 +29,9 @@
 #include <dmalloc.h>
 #endif
 
+/* hack to avoid alloca usage in the generated C file (needed for compiler
+ with no built in alloca, like icc*/
+#undef _ALLOCA_H
 
 struct id_list{
 	char* s;
