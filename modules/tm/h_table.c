@@ -13,6 +13,12 @@ int t_all_final( struct cell * );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int push_reply_from_uac_to_uas( struct sip_msg * , unsigned int );
 
+void del_Transaction( struct s_table *hash_table , struct cell * p_cell );
+void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell );
+void start_FR_timer( struct s_table* hash_table, struct cell* p_cell );
+void start_WT_timer( struct s_table* hash_table, struct cell* p_cell );
+
+
 
 
 void free_cell( struct cell* dead_cell )      // TO DO UPDATE
@@ -36,7 +42,7 @@ void free_cell( struct cell* dead_cell )      // TO DO UPDATE
       sh_free( dead_cell->outbound_request[i]->buffer );
       sh_free( dead_cell->outbound_request[i] );
       /* outbound requests*/
-      if ( dead_cell ->outbound_response[i] )
+      if ( dead_cell -> outbound_response[i] )
       {
          sh_free( dead_cell->outbound_response[i]->orig );
          sh_free( dead_cell->outbound_response[i]->buf );
@@ -49,10 +55,12 @@ void free_cell( struct cell* dead_cell )      // TO DO UPDATE
 }
 
 
+
 void free_hash_table( struct s_table *hash_table )
 {
    struct cell* p_cell;
    struct cell* tmp_cell;
+   struct timer_link *tl;
    int   i;
 
    if (hash_table)
@@ -74,20 +82,18 @@ void free_hash_table( struct s_table *hash_table )
          sh_free( hash_table->entrys );
       }
 
- 	if (hash_table->timers ) {
-		/* for each of the timer lists ... */
-		for( i=0; i<NR_OF_TIMER_LISTS ; i++ ) {
-     				/* ... delete all cells on the timer list */
-      				for( p_cell = hash_table->timers[i].first_cell; p_cell; p_cell = tmp_cell )
-      				{
-          				tmp_cell = p_cell->tl[i].timer_next_cell;
-          				remove_timer_from_head( hash_table, p_cell, i );
-          				free_cell( p_cell );
-				}
-				release_timerlist_lock( &(hash_table->timers[i]) );
-      		}
-		sh_free( hash_table->timers );
-	} /* if (hash_table->timers ) */
+      if (hash_table->timers ) {
+       /* for each of the timer lists ... */
+         for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
+           {
+              /* ... delete all cells on the timer list */
+            while( (tl=remove_from_timer_list_from_head( hash_table, i ))!=0 )
+                  /*free_cell( p_cell ) TO DO!! */ ;
+               release_timerlist_lock( &(hash_table->timers[i]) );
+         }
+         sh_free( hash_table->timers );
+      } /* if (hash_table->timers ) */
+
       sh_free( hash_table );
    }
 }
@@ -134,27 +140,11 @@ struct s_table* init_hash_table()
    /* inits the timers*/
     for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
     {
-       hash_table->timers[i].first_cell = 0;
-       hash_table->timers[i].last_cell = 0;
+       hash_table->timers[i].first_tl = 0;
+       hash_table->timers[i].last_tl = 0;
        //init_timerlist_lock( hash_table, (hash_table->timers)+i );
        init_timerlist_lock( hash_table, i );
     }
-
-    /* allocs the retransmission timer's table */
-    hash_table->retr_timers = sh_malloc( NR_OF_RT_LISTS * sizeof (struct timer ) );
-    if ( !hash_table->retr_timers )
-	goto error;
-   /* init the retransmission timers */
-   for ( i=0; i<NR_OF_RT_LISTS; i++)
-   {
-       hash_table->timers[i].first_cell = 0;
-       hash_table->timers[i].last_cell = 0;
-       //init_retr_timer_lock( hash_table, (hash_table->timers)+i );
-       init_retr_timer_lock( hash_table, i );
-   }
-
-
-
 
 #ifdef THREAD
    /* starts the timer thread/ process */
@@ -767,6 +757,93 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
    }
 
 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+*   The cell is inserted at the end of the FINAL RESPONSE timer list.
+*   The expire time is given by the current time plus the FINAL
+    RESPONSE timeout - FR_TIME_OUT
+*/
+void start_FR_timer( struct s_table* hash_table, struct cell* p_cell )
+{
+
+   /* adds the cell int FINAL RESPONSE timer list*/
+   put_in_tail_of_timer_list( hash_table, p_cell, FR_TIMER_LIST, FR_TIME_OUT + hash_table->time );
+
+}
+
+
+/*
+*   The cell is inserted at the end of the WAIT timer list. Before adding to the WT list, it's verify if the cell is
+*   or not in the FR list (normally it should be there). If it is, it's first removed from FR list and after that
+*   added to the WT list.
+*   The expire time is given by the current time plus the WAIT timeout - WT_TIME_OUT
+*/
+
+void start_WT_timer( struct s_table* hash_table, struct cell* p_cell )
+{
+   	struct timer* timers= hash_table->timers;
+
+   	//if is in FR list -> first it must be removed from there
+	remove_timer( hash_table, p_cell, FR_TIMER_LIST );
+
+   	/* adds the cell int WAIT timer list*/
+   	put_in_tail_of_timer_list( hash_table, p_cell, WT_TIMER_LIST, WT_TIME_OUT + hash_table->time );
+}
+
+
+void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell )
+{
+	struct entry*  p_entry  = &(hash_table->entrys[p_cell->hash_index]);
+	lock( p_entry->mutex );
+    	if ( p_cell->prev_cell )
+         	p_cell->prev_cell->next_cell = p_cell->next_cell;
+      	else
+         	p_entry->first_cell = p_cell->next_cell;
+      	if ( p_cell->next_cell )
+         	p_cell->next_cell->prev_cell = p_cell->prev_cell;
+      	else
+         	p_entry->last_cell = p_cell->prev_cell;
+    	unlock( p_entry->mutex );
+}
+
+
+
+/*
+*   prepare for del a transaction ; the transaction is first removed from the hash entry list (oniy the links from
+*   cell to list are deleted in order to make the cell unaccessible from the list and in the same time to keep the
+*   list accessible from the cell for process that are currently reading the cell). If no process is reading the cell
+*   (ref conter is 0) the cell is immediatly deleted. Otherwise it is put in a waitting list (del_hooker list) for
+*   future del. This list is veify by the the timer every sec and the cell that finaly have ref_counter 0 are del.
+*/
+void del_Transaction( struct s_table *hash_table , struct cell * p_cell )
+{
+    int      ref_counter         = 0;
+
+    /* the cell is removed from the list */
+    remove_from_hash_table( hash_table, p_cell );
+
+    /* gets the cell's ref counter*/
+    lock( p_cell->mutex );
+    ref_counter = p_cell->ref_counter;
+    unlock( p_cell->mutex );
+
+    /* if is not refenceted -> is deleted*/
+    if ( ref_counter==0 )
+       free_cell( p_cell );
+     /* else it's added to del hooker list for future del */
+    else put_in_tail_of_timer_list( hash_table, p_cell, DELETE_LIST, 0 );
 }
 
 

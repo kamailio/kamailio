@@ -32,25 +32,6 @@ struct cell;
 
 
 
-/* all you need to put a cell in a timer list:
-   links to neighbours and timer value         */
-typedef struct timer_link
-{
-   struct cell *timer_next_cell, *timer_prev_cell;
-   unsigned int time_out;
-}timer_link_type ;
-
-
-
-/* timer list: includes head, tail and protection semaphore */
-typedef struct  timer
-{
-   struct cell*    first_cell;
-   struct cell*    last_cell;
-   /* int                  sem; */
-   ser_lock_t   mutex;
-} timer_type;
-
 
 
 typedef struct retrans_buff
