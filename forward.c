@@ -70,7 +70,7 @@ struct socket_info* get_send_socket(union sockaddr_union* to)
 	send_sock=0;
 	/* check if we need to change the socket (different address families -
 	 * eg: ipv4 -> ipv6 or ipv6 -> ipv4) */
-	if (to->s.sa_family!=bind_address->address.af){
+	if ((bind_address==0) ||(to->s.sa_family!=bind_address->address.af)){
 		switch(to->s.sa_family){
 			case AF_INET:	send_sock=sendipv4;
 							break;
@@ -87,10 +87,11 @@ struct socket_info* get_send_socket(union sockaddr_union* to)
 
 
 
-/* checks if the host is one of the address we listen on
-* returns 1 if true, 0 if false, -1 on error
+/* checks if the host:port is one of the address we listen on;
+ * if port==0, the  port number is ignored
+ * returns 1 if true, 0 if false, -1 on error
 */
-int check_self(str* host)
+int check_self(str* host, unsigned short port)
 {
 	int r;
 	
@@ -102,6 +103,7 @@ int check_self(str* host)
 					host->len, host->s,
 					sock_info[r].name.len, sock_info[r].name.s
 			);
+		if  ((port)&&(sock_info[r].port_no!=port)) continue;
 		if ( (host->len==sock_info[r].name.len) && 
 	#ifdef USE_IPV6
 			(strncasecmp(host->s, sock_info[r].name.s,
@@ -127,7 +129,7 @@ int check_self(str* host)
 	}
 	if (r==sock_no){
 		/* try to look into the aliases*/
-		if (grep_aliases(host->s, host->len)==0){
+		if (grep_aliases(host->s, host->len, port)==0){
 			DBG("check_self: host != me\n");
 			return 0;
 		}
@@ -312,9 +314,11 @@ int forward_reply(struct sip_msg* msg)
 	new_buf=0;
 	/*check if first via host = us */
 	if (check_via){
-		if (check_self(&(msg->via1->host))!=1){
+		if (check_self(&msg->via1->host,
+					msg->via1->port?msg->via1->port:SIP_PORT)!=1){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
-					" %.*s\n", msg->via1->host.len, msg->via1->host.s);
+					" %.*s:%d\n", msg->via1->host.len, msg->via1->host.s
+									msg->via1->port);
 			/* send error msg back? */
 			goto error;
 		}
@@ -367,7 +371,7 @@ int forward_reply(struct sip_msg* msg)
 #endif
 	}
 
-	DBG(" reply forwarded to %s:%d\n",msg->via2->host.s,
+	DBG(" reply forwarded to %s:%d\n", msg->via2->host.s,
 		(unsigned short) msg->via2->port);
 
 	pkg_free(new_buf);

@@ -71,7 +71,6 @@ int do_action(struct action* a, struct sip_msg* msg)
 	char *new_uri, *end, *crt;
 	int len;
 	int user;
-	int err;
 	struct sip_uri uri;
 	struct sip_uri* u;
 	unsigned short port;
@@ -100,19 +99,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				u=&msg->parsed_uri;
 				switch (a->p2_type){
 					case URIPORT_ST:
-									if (u->port.s){
-									 /*port=strtol(uri.port.s,&end,10);*/
-										port=str2s((unsigned char*)u->port.s,
-													u->port.len, &err);
-										/*if ((end)&&(*end)){*/
-										if (err){
-											LOG(L_ERR, "ERROR: do_action: "
-												"forward: bad port in "
-												"uri: <%s>\n", u->port.s);
-											ret=E_BAD_URI;
-											goto error_fwd_uri;
-										}
-									}else port=0;
+									port=u->port_no;
 									break;
 					case NUMBER_ST:
 									port=a->p2.number;

@@ -266,7 +266,7 @@ int addresses_no=0;                   /* number of names/ips */
 #endif
 struct socket_info sock_info[MAX_LISTEN];/*all addresses we listen/send from*/
 int sock_no=0; /* number of addresses/open sockets*/
-struct socket_info* bind_address; /* pointer to the crt. proc.
+struct socket_info* bind_address=0; /* pointer to the crt. proc.
 									 listening address*/
 int bind_idx; /* same as above but index in the bound[] array */
 struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
@@ -588,7 +588,8 @@ int main_loop()
 			/* create the listening socket (for each address)*/
 			if (udp_init(&sock_info[r])==-1) goto error;
 			/* get first ipv4/ipv6 socket*/
-			if ((sendipv4==0)&&(sock_info[r].address.af==AF_INET))
+			if ((sock_info[r].address.af==AF_INET)&&
+					((sendipv4==0)||(sendipv4->is_lo)))
 				sendipv4=&sock_info[r];
 	#ifdef USE_IPV6
 			if((sendipv6==0)&&(sock_info[r].address.af==AF_INET6))
@@ -803,10 +804,11 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 			continue;
 		}
 		
-		if (if_name==0){ /* ignore down ifs only if listening on all of them*/
-			memcpy(&ifrcopy, ifr, sizeof(ifrcopy));
-			/*get flags*/
-			if (ioctl(s, SIOCGIFFLAGS,  &ifrcopy)!=-1){ /* ignore errors */
+		/*get flags*/
+		memcpy(&ifrcopy, ifr, sizeof(ifrcopy));
+		if (ioctl(s, SIOCGIFFLAGS,  &ifrcopy)!=-1){ /* ignore errors */
+			/* ignore down ifs only if listening on all of them*/
+			if (if_name==0){ 
 				/* if if not up, skip it*/
 				if (!(ifrcopy.ifr_flags & IFF_UP)) continue;
 			}
@@ -832,6 +834,9 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 				strncpy(sock_info[sock_no].name.s, tmp, 
 							sock_info[sock_no].name.len+1);
 				sock_info[sock_no].port_no=port;
+				/* mark if loopback */
+				if (ifrcopy.ifr_flags & IFF_LOOPBACK) 
+					sock_info[sock_no].is_lo=1;
 				sock_no++;
 				ret=0;
 			}else{
@@ -1194,6 +1199,29 @@ int main(int argc, char** argv)
 	printf("Listening on \n");
 #endif
 	for (r=0; r<sock_no;r++){
+		/* fix port number, port_no should be !=0 here */
+		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
+		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
+									(unsigned short) sock_info[r].port_no);
+		if (port_no_str_len<0){
+			fprintf(stderr, "ERROR: bad port number: %d\n", 
+						sock_info[r].port_no);
+			goto error;
+		}
+		/* on some systems snprintf returns really strange things if it does 
+		  not have  enough space */
+		port_no_str_len=
+				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
+		sock_info[r].port_no_str.s=(char*)malloc(strlen(port_no_str)+1);
+		if (sock_info[r].port_no_str.s==0){
+			fprintf(stderr, "Out of memory.\n");
+			goto error;
+		}
+		strncpy(sock_info[r].port_no_str.s, port_no_str,
+					strlen(port_no_str)+1);
+		sock_info[r].port_no_str.len=strlen(port_no_str);
+		
+		/* get "official hostnames", all the aliases etc. */
 		he=resolvehost(sock_info[r].name.s);
 		if (he==0){
 			DPrint("ERROR: could not resolve %s\n", sock_info[r].name.s);
@@ -1201,7 +1229,8 @@ int main(int argc, char** argv)
 		}
 		/* check if we got the official name */
 		if (strcasecmp(he->h_name, sock_info[r].name.s)!=0){
-			if (add_alias(sock_info[r].name.s, sock_info[r].name.len)<0){
+			if (add_alias(sock_info[r].name.s, sock_info[r].name.len,
+							sock_info[r].port_no)<0){
 				LOG(L_ERR, "ERROR: main: add_alias failed\n");
 			}
 			/* change the oficial name */
@@ -1216,7 +1245,7 @@ int main(int argc, char** argv)
 		}
 		/* add the aliases*/
 		for(h=he->h_aliases; h && *h; h++)
-			if (add_alias(*h, strlen(*h))<0){
+			if (add_alias(*h, strlen(*h), sock_info[r].port_no)<0){
 				LOG(L_ERR, "ERROR: main: add_alias failed\n");
 			}
 		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
@@ -1242,36 +1271,17 @@ int main(int argc, char** argv)
 							sock_info[r].name.s);
 				}else{
 					/* add the aliases*/
-					if (add_alias(he->h_name, strlen(he->h_name))<0){
+					if (add_alias(he->h_name, strlen(he->h_name),
+									sock_info[r].port_no)<0){
 						LOG(L_ERR, "ERROR: main: add_alias failed\n");
 					}
 					for(h=he->h_aliases; h && *h; h++)
-						if (add_alias(*h, strlen(*h))<0){
+						if (add_alias(*h,strlen(*h),sock_info[r].port_no)<0){
 							LOG(L_ERR, "ERROR: main: add_alias failed\n");
 						}
 				}
 		}else{ sock_info[r].is_ip=0; };
 			
-		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
-		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, ":%d", 
-									(unsigned short) sock_info[r].port_no);
-		if (port_no_str_len<0){
-			fprintf(stderr, "ERROR: bad port number: %d\n", 
-						sock_info[r].port_no);
-			goto error;
-		}
-		/* on some systems snprintf returns really strange things if it does 
-		  not have  enough space */
-		port_no_str_len=
-				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
-		sock_info[r].port_no_str.s=(char*)malloc(strlen(port_no_str)+1);
-		if (sock_info[r].port_no_str.s==0){
-			fprintf(stderr, "Out of memory.\n");
-			goto error;
-		}
-		strncpy(sock_info[r].port_no_str.s, port_no_str, strlen(port_no_str)+1);
-		sock_info[r].port_no_str.len=strlen(port_no_str);
-		
 #ifdef EXTRA_DEBUG
 		printf("              %.*s [%s]:%s\n", sock_info[r].name.len, 
 				sock_info[r].name.s,
@@ -1298,7 +1308,8 @@ int main(int argc, char** argv)
 						(strncmp(sock_info[t].name.s, sock_info[r].name.s,
 								 sock_info[r].name.len)!=0))
 					)
-					add_alias(sock_info[t].name.s, sock_info[t].name.len);
+					add_alias(sock_info[t].name.s, sock_info[t].name.len,
+								sock_info[t].port_no);
 						
 				/* free space*/
 				free(sock_info[t].name.s);
@@ -1320,7 +1331,11 @@ int main(int argc, char** argv)
 				sock_info[r].address_str.s, sock_info[r].port_no_str.s);
 
 	printf("Aliases: ");
-	for(a=aliases; a; a=a->next) printf("%.*s ", a->alias.len, a->alias.s);
+	for(a=aliases; a; a=a->next) 
+		if (a->port)
+			printf("%.*s:%d ", a->alias.len, a->alias.s, a->port);
+		else
+			printf("%.*s:* ", a->alias.len, a->alias.s);
 	printf("\n");
 	if (sock_no==0){
 		fprintf(stderr, "ERROR: no listening sockets");

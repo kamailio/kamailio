@@ -262,7 +262,7 @@ error:
 
 
 
-/* eval_elem helping function, returns a op param */
+/* eval_elem helping function, returns an op param */
 static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 {
 	struct hostent* he;
@@ -305,7 +305,7 @@ static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 		case MYSELF_ST: /* check if it's one of our addresses*/
 			tmp.s=ip_addr2a(ip);
 			tmp.len=strlen(tmp.s);
-			ret=check_self(&tmp);
+			ret=check_self(&tmp, 0);
 			break;
 		default:
 			LOG(L_CRIT, "BUG: comp_ip: invalid type for "
@@ -338,7 +338,9 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				if(msg->new_uri.s){
 					if (e->subtype==MYSELF_ST){
 						if (parse_sip_msg_uri(msg)<0) ret=-1;
-						else	ret=check_self(&msg->parsed_uri.host);
+						else	ret=check_self(&msg->parsed_uri.host,
+									msg->parsed_uri.port_no?
+									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
 						ret=comp_str(msg->new_uri.s, e->r.param,
 										e->op, e->subtype);
@@ -346,7 +348,9 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				}else{
 					if (e->subtype==MYSELF_ST){
 						if (parse_sip_msg_uri(msg)<0) ret=-1;
-						else	ret=check_self(&msg->parsed_uri.host);
+						else	ret=check_self(&msg->parsed_uri.host,
+									msg->parsed_uri.port_no?
+									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
 						ret=comp_str(msg->first_line.u.request.uri.s,
 										 e->r.param, e->op, e->subtype);

@@ -72,6 +72,7 @@ struct sip_uri {
 	str port;     /* Port number */
 	str params;   /* Parameters */
 	str headers;  
+	unsigned short port_no;
 };
 
 

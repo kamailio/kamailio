@@ -78,6 +78,7 @@ struct socket_info{
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
 	int is_ip; /* 1 if name is an ip address, 0 if not  -- optimization*/
+	int is_lo; /* 1 if is a loopback, 0 if not */
 	union sockaddr_union su; 
 };
 

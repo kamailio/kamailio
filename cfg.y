@@ -315,8 +315,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| LISTEN EQUAL  error { yyerror("ip address or hostname"
 						"expected"); }
 		| ALIAS EQUAL  id_lst { 
-								for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
-									add_alias(lst_tmp->s, strlen(lst_tmp->s));
+							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
+								add_alias(lst_tmp->s, strlen(lst_tmp->s), 0);
 							  }
 		| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
