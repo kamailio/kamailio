@@ -35,7 +35,6 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "parser/parse_hname2.h"
-#include "parser/digest/digest_parser.h"
 
 
 #include "stats.h"
