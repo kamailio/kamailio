@@ -310,7 +310,7 @@ int main(int argc, char** argv)
 					break;
 			case '?':
 					if (isprint(optopt))
-						fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+						fprintf(stderr, "Unknown option `-%c´.\n", optopt);
 					else
 						fprintf(stderr, 
 								"Unknown option character `\\x%x´.\n",
