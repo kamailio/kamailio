@@ -186,18 +186,18 @@ static inline int parse_digest_param(str* _s, dig_cred_t* _c)
 	      * body content will be stored
 	      */
 	switch(t) {
-	case PAR_USERNAME:  ptr = &(_c->username.whole);  break;
-	case PAR_REALM:     ptr = &(_c->realm);           break;
-	case PAR_NONCE:     ptr = &(_c->nonce);           break;
-	case PAR_URI:       ptr = &(_c->uri);             break;
-	case PAR_RESPONSE:  ptr = &(_c->response);        break;
-	case PAR_CNONCE:    ptr = &(_c->cnonce);          break;
-	case PAR_OPAQUE:    ptr = &(_c->opaque);          break;
-	case PAR_QOP:       ptr = &(_c->qop.qop_str);     break;
-	case PAR_NC:        ptr = &(_c->nc);              break;
-	case PAR_ALGORITHM: ptr = &(_c->alg.alg_str);     break;
-	case PAR_OTHER:     ptr = &dummy;                 break;
-	default:            ptr = &dummy;                 break;
+	case PAR_USERNAME:  ptr = &_c->username.whole;  break;
+	case PAR_REALM:     ptr = &_c->realm;           break;
+	case PAR_NONCE:     ptr = &_c->nonce;           break;
+	case PAR_URI:       ptr = &_c->uri;             break;
+	case PAR_RESPONSE:  ptr = &_c->response;        break;
+	case PAR_CNONCE:    ptr = &_c->cnonce;          break;
+	case PAR_OPAQUE:    ptr = &_c->opaque;          break;
+	case PAR_QOP:       ptr = &_c->qop.qop_str;     break;
+	case PAR_NC:        ptr = &_c->nc;              break;
+	case PAR_ALGORITHM: ptr = &_c->alg.alg_str;     break;
+	case PAR_OTHER:     ptr = &dummy;               break;
+	default:            ptr = &dummy;               break;
 	}
 
 	     /* If the first character is qoute, it is
@@ -278,7 +278,7 @@ static inline void parse_username(struct username* _u)
 	d = q_memchr(_u->whole.s, '@', _u->whole.len);
 
 	if (d) {
-		_u->domain.s = d;
+		_u->domain.s = d + 1;
 		_u->domain.len = _u->whole.len - (d - _u->whole.s) - 1;
 		_u->user.len = d - _u->user.s;
 	}
@@ -314,15 +314,17 @@ static inline int parse_digest_params(str* _s, dig_cred_t* _c)
 
 	     /* Parse QOP body if the parameter was present */
 	if (_c->qop.qop_str.s != 0) {
-		parse_qop(&(_c->qop));
+		parse_qop(&_c->qop);
 	}
 
 	     /* Parse algorithm body if the parameter was present */
 	if (_c->alg.alg_str.s != 0) {
-		parse_algorithm(&(_c->alg));
+		parse_algorithm(&_c->alg);
 	}
 
-	parse_username(&_c->username);
+	if (_c->username.whole.s != 0) {
+		parse_username(&_c->username);
+	}
 
 	return 0;
 }
