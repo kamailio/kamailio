@@ -33,7 +33,7 @@
 	<section>
 	    <title>External Libraries or Applications</title>
 	    <para>
-		The next libraries or applications must be installed before running
+		The following libraries or applications must be installed before running
 		&ser; with this module loaded:
 	    	<itemizedlist>
 		    <listitem>
