@@ -960,7 +960,7 @@ extract_mediaport(str *body, str *mediaport)
 	}
 	/* Extract protocol type */
 	ptype.s = cp;
-	cp = eat_space_end(ptype.s, ptype.s + ptype.len);
+	cp = eat_token_end(ptype.s, ptype.s + ptype.len);
 	if (cp == ptype.s) {
 		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
 		return -1;
