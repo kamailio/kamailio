@@ -1286,11 +1286,13 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	if (code>=200) set_kr(REQ_RPLD);
 
 	/* add the lumps for new_header and for body (by bogdan) */
-	hdr_lump = add_lump_rpl( trans->uas.request, new_header,
-		strlen(new_header), LUMP_RPL_HDR );
-	if ( !hdr_lump ) {
-		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add hdr lump\n");
-		goto error;
+	if (new_header && strlen(new_header)) {
+		hdr_lump = add_lump_rpl( trans->uas.request, new_header,
+					 strlen(new_header), LUMP_RPL_HDR );
+		if ( !hdr_lump ) {
+			LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add hdr lump\n");
+			goto error;
+		}
 	}
 	/* body lump */
 	if(body && strlen(body)) {
@@ -1311,8 +1313,10 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 	/* since the msg (trans->uas.request) is a clone into shm memory, to avoid
 	 * memory leak or crashing (lumps are create in private memory) I will
 	 * remove the lumps by myself here (bogdan) */
-	unlink_lump_rpl( trans->uas.request, hdr_lump);
-	free_lump_rpl( hdr_lump );
+	if ( hdr_lump ) {
+		unlink_lump_rpl( trans->uas.request, hdr_lump);
+		free_lump_rpl( hdr_lump );
+	}
 	if( body_lump ) {
 		unlink_lump_rpl( trans->uas.request, body_lump);
 		free_lump_rpl( body_lump );
@@ -1336,8 +1340,10 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 
 	return ret;
 error_1:
-	unlink_lump_rpl( trans->uas.request, hdr_lump);
-	free_lump_rpl( hdr_lump );
+	if ( hdr_lump ) {
+		unlink_lump_rpl( trans->uas.request, hdr_lump);
+		free_lump_rpl( hdr_lump );
+	}
 error:
 	return -1;
 }
@@ -1509,13 +1515,16 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 	     /* mark the transaction as replied */
 	if (code >= 200) set_kr(REQ_RPLD);
 
+	hdr_lump = 0;
+	body_lump = 0;
 	     /* add the lumps for new_header and for body (by bogdan) */
-	hdr_lump = add_lump_rpl(trans->uas.request, headers->s, headers->len, LUMP_RPL_HDR);
-	if (!hdr_lump) {
-		LOG(L_ERR, "send_reply: cannot add hdr lump\n");
-		goto sr_error;
+	if (headers && headers->len) {
+		hdr_lump = add_lump_rpl(trans->uas.request, headers->s, headers->len, LUMP_RPL_HDR);
+		if (!hdr_lump) {
+			LOG(L_ERR, "send_reply: cannot add hdr lump\n");
+			goto sr_error;
+		}
 	}
-
 	     /* body lump */
 	if (body && body->len) {
 		body_lump = add_lump_rpl(trans->uas.request, body->s, body->len, LUMP_RPL_BODY);
@@ -1536,8 +1545,10 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 	     /* since the msg (trans->uas.request) is a clone into shm memory, to avoid
 	      * memory leak or crashing (lumps are create in private memory) I will
 	      * remove the lumps by myself here (bogdan) */
-	unlink_lump_rpl(trans->uas.request, hdr_lump);
-	free_lump_rpl(hdr_lump);
+	if (hdr_lump) {
+		unlink_lump_rpl(trans->uas.request, hdr_lump);
+		free_lump_rpl(hdr_lump);
+	}
 	if (body_lump) {
 		unlink_lump_rpl(trans->uas.request, body_lump);
 		free_lump_rpl(body_lump);
@@ -1556,9 +1567,10 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 	UNREF(trans);
 	return ret;
  sr_error_1:
-
-	unlink_lump_rpl(trans->uas.request, hdr_lump);
-	free_lump_rpl(hdr_lump);
+	if (hdr_lump) {
+		unlink_lump_rpl(trans->uas.request, hdr_lump);
+		free_lump_rpl(hdr_lump);
+	}
  sr_error:
 	return -1;
 }
