@@ -12,7 +12,7 @@ $Id$
   This memo gives you hints how to set up SER quickly. To 
   understand how SER works and how to configure it properly,
   read admin's guide available from SER website. We also
-  urgue you to read latest ISSUES (available from SER website 
+  urge you to read latest ISSUES (available from SER website 
   too) and check for potential problems in this release.
   Users of previous releases are encouraged to read NEWS to
   learn how to move to this new SER version.
@@ -43,9 +43,9 @@ TOC
 1. Supported Architectures and Requirements
 -------------------------------------------
 
-Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
+Supported architectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
 Solaris/sparc64, NetBSD/sparc64
-(for other arhitectures the Makefiles might need to be edited)
+(for other architectures the Makefiles might need to be edited)
 
 There are various configuration options defined in the Makefile.
 
@@ -186,6 +186,31 @@ Install:
 
 make prefix=/usr/local  install
 
+Note: If you use prefix parameter in make install then you also need
+to use this parameter in previous make commands, i.e. make, make modules,
+or make all. If you fail to do this then SER will look for the default
+configuration file in a wrong directory, because the directory of the
+default configuration file is hard coded into ser during compile time. 
+When you use a different prefix parameter when installing then the 
+directory hard coded in ser and the directory in which the file will be 
+installed by make install will not match. (You can specify exact location
+of the configuration file using -f parameter of ser).
+
+For example, if you do the following:
+make all
+make prefix=/ install
+
+Then the installation will put the default configuration file into
+/etc/ser/ser.cfg (because prefix is /), but ser will look for the file
+in /usr/local/etc/ser/ser.cfg (because there was no prefix parameter
+in make all and /usr/local is the default value of prefix).
+
+Workaround is trivial, use the same parameters in all make commands:
+make prefix=/ all
+make prefix=/ install
+
+That applies to other make parameters as well (for example parameters
+"modules" or "excluded_modules").
 
 
 3. Quick-Start Installation Guide
@@ -223,13 +248,13 @@ dependencies on MySQL which is needed for storing user credentials.)
 C) Quick Start
 
 The following step-by step guide gives you instructions how to install the 
-sql-free distribution of ser. If you need persistancy and authentication, 
+sql-free distribution of ser. If you need persistence and authentication, 
 then you have to install additional MySql support -- proceed to section D)
 after you are finished with C).
 
 1) Download an RPM or debian package from our site
     http://www.iptel.org/ser
-If you don't use an rpm or debian based distro, try our tar.gz'ed binaries
+If you don't use an rpm or debian based distribution, try our tar.gz'ed binaries
  (ser-$(version)_$(os)_$(arch).tar.gz, e.g: ser-0.8.8_linux_i386.tar.gz).
 If you use Solaris 8 you can try our solaris package.
 If you use Gentoo Linux you do not have to download a package.
@@ -257,7 +282,7 @@ RPM + gentoo:
     /etc/init.d/ser start
 debian:
     ser is started automatically after the install
-    (in case something fails you can start it wiht /etc/init.d/ser start)
+    (in case something fails you can start it with /etc/init.d/ser start)
 tar.gz:
     the tar.gz does not include an init.d script, you'll have to create one of
     your own or adapt one from the source distribution (debian/init.d,
@@ -285,7 +310,7 @@ Solaris:
    hints for use of iptel.org site at
      http://www.iptel.org/phpBB/viewforum.php?forum=1&8
    For example, users of Windows Messenger need to set
-   in Tools->Options->Accounts the foolowing values:
+   in Tools->Options->Accounts the following values:
      Sign-in Name: <username>@<your_server_address>
      Advanced->Configure Settings (on)
      Advanced->Server: <your_server_address>
@@ -297,7 +322,7 @@ D) ser with Persistent Data Storage
 
 The default configuration is very simple and features many simplifications. 
 In particular, it does not authenticate users and loses User Location database 
-on reboot. To provide persistency, keep user credentials and remember users' 
+on reboot. To provide persistence, keep user credentials and remember users' 
 locations across reboots, ser can be configured to use MySQL. Before you proceed, 
 you need to make sure MySQL is installed on your box. Your MySQL server must be 
 configured to deal with a large number of connection. To increase it, set the 
@@ -327,7 +352,7 @@ following line in [mysqld] section of your configuration file:
 	- otherwise, if this is your very first installation, use
     	/usr/sbin/ser_mysql.sh create
 	  to create SER database structures
-   (you will be promted for password of MySql "root" user)
+   (you will be prompted for password of MySql "root" user)
 4) configure ser to use SQL
     uncomment all lines in configuration file ser.cfg which are related to 
     authentication:
