@@ -28,8 +28,9 @@
  *
  * History:
  * ----------
- * 2003-02-28 scratcpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-02-28 scratcpad compatibility abandoned (jiri)
+ * 2003-03-21  save_noreply added, provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
  */
 
 
@@ -319,7 +320,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 /*
  * Process REGISTER request and save it's contacts
  */
-int save(struct sip_msg* _m, char* _t, char* _s)
+int save_real(struct sip_msg* _m, char* _t, char* _s, int doreply)
 {
 	contact_t* c;
 	int st;
@@ -353,10 +354,28 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 		if (contacts(_m, c, (udomain_t*)_t, &aor) < 0) goto error;
 	}
 
-	if (send_reply(_m) < 0) return -1;
+	if (doreply && (send_reply(_m) < 0)) return -1;
 	else return 1;
 	
  error:
-	send_reply(_m);
+	if (doreply) send_reply(_m);
 	return 0;
+}
+
+
+/*
+ * Process REGISTER request and save it's contacts
+ */
+int save(struct sip_msg* _m, char* _t, char* _s)
+{
+	return save_real(_m, _t, _s, 1);
+}
+
+
+/*
+ * Process REGISTER request and save it's contacts, do not send any replies
+ */
+int save_noreply(struct sip_msg* _m, char* _t, char* _s)
+{
+	return save_real(_m, _t, _s, 0);
 }

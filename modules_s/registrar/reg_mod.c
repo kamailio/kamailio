@@ -31,6 +31,7 @@
  * --------
  *  2003-03-11  updated to the new module exports interface (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2003-03-21  save_noreply added, provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
  */
 
 
@@ -64,8 +65,9 @@ float def_q;                /* default_q converted to float in mod_init */
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 static cmd_export_t cmds[]={
-	{"save",   save,   1,  domain_fixup, REQUEST_ROUTE},
-	{"lookup", lookup, 1,  domain_fixup, REQUEST_ROUTE},
+	{"save",         save,         1, domain_fixup, REQUEST_ROUTE},
+	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE},
+	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
@@ -84,9 +86,8 @@ static param_export_t params[]={
  */
 struct module_exports exports = {
 	"registrar", 
-	cmds,
-	params,
-	
+	cmds,       /* Exported functions */
+	params,     /* Exported parameters */
 	mod_init,   /* module initialization function */
 	0,
 	0,          /* destroy function */
