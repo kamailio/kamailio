@@ -16,7 +16,7 @@
 	<para>
 	    This module implements a presence server, i.e. entity that receives SUBSCRIBE messages
 	    and sends NOTIFY when presence status of a user changes. Currently the presence server
-	    can be connected to registar and jabber module so &sip; users can see presence of jabber
+	    can be connected to registrar and jabber module so &sip; users can see presence of jabber
 	    users.
 	</para>
 	<para>
@@ -88,7 +88,7 @@ modparam("pa", "default_expires", 3600)
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>domain</emphasis> - This can be either <quote>registar</quote> or <quote>jabber</quote>.
+		    <para><emphasis>domain</emphasis> - This can be either <quote>registrar</quote> or <quote>jabber</quote>.
 		    </para>
 		</listitem>
 	    </itemizedlist>

@@ -44,7 +44,7 @@ Chapter 1. User's Guide
    This module implements a presence server, i.e. entity that
    receives SUBSCRIBE messages and sends NOTIFY when presence
    status of a user changes. Currently the presence server can be
-   connected to registar and jabber module so SIP users can see
+   connected to registrar and jabber module so SIP users can see
    presence of jabber users.
 
    This module currently cannot work as a B2BUA, i.e. it cannot
@@ -92,7 +92,7 @@ modparam("pa", "default_expires", 3600)
 
    Meaning of the parameters is as follows:
 
-     * domain - This can be either "registar" or "jabber".
+     * domain - This can be either "registrar" or "jabber".
 
    Example 1-2. handle_subscription usage
 ...
@@ -105,7 +105,7 @@ handle_subscription("jabber");
 
    Meaning of the parameters is as follows:
 
-     * domain - This can be either "registar" or "jabber".
+     * domain - This can be either "registrar" or "jabber".
 
    Example 1-2. handle_subscription usage
 ...
