@@ -146,7 +146,8 @@ Options:\n\
     -w  dir      change the working directory to \"dir\" (default \"/\")\n\
     -t  dir      chroot to \"dir\"\n\
     -u uid       change uid \n\
-    -g gid       change gid \n"
+    -g gid       change gid \n\
+    -P file      create a pid file\n"
 #ifdef STATS
 "    -s file	 File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -237,12 +238,17 @@ extern int yyparse();
 
 static int is_main=0; /* flag = is this the  "main" process? */
 
+char* pid_file = 0;
+
 /* daemon init, return 0 on success, -1 on error */
 int daemonize(char*  name)
 {
+	FILE *pid_stream;
 	pid_t pid;
-	int r;
-	
+	int r, p;
+
+	p=-1;
+
 	if (log_stderr==0)
 		openlog(name, LOG_PID|LOG_CONS, LOG_LOCAL1 /*LOG_DAEMON*/);
 		/* LOG_CONS, LOG_PERRROR ? */
@@ -289,6 +295,34 @@ int daemonize(char*  name)
 	if (pid!=0){
 		/*parent process => exit */
 		exit(0);
+	}
+
+	/* added by noh: create a pid file for the main process */
+	if (pid_file!=0){
+		if ((pid_stream=fopen(pid_file, "r"))!=NULL){
+			fscanf(pid_stream, "%d", &p);
+			fclose(pid_stream);
+			if (p==-1){
+				LOG(L_CRIT, "pid file %s exists, but doesn't contain a valid"
+					" pid number\n", pid_file);
+				goto error;
+			}
+			if (kill((pid_t)p, 0)==0 || errno==EPERM){
+				LOG(L_CRIT, "running process found in the pid file %s\n",
+					pid_file);
+				goto error;
+			}else{
+				LOG(L_WARN, "pid file contains old pid, replacing pid\n");
+			}
+		}
+		pid=getpid();
+		if ((pid_stream=fopen(pid_file, "w"))==NULL){
+			LOG(L_WARN, "unable to create pid file: %s\n", strerror(errno));
+			goto error;
+		}else{
+			fprintf(pid_stream, "%i\n", (int)pid);
+			fclose(pid_stream);
+		}
 	}
 	
 	/* close any open file descriptors */
@@ -449,6 +483,15 @@ static void sig_usr(int signo)
 #endif
 		dprint("Thank you for flying " NAME "\n");
 		exit(0);
+	} else if (signo==SIGTERM) { /* exit gracefully as daemon */
+		DPrint("TERM received, program terminates\n");
+		if (is_main){
+#ifdef STATS
+			dump_all_statistic();
+#endif
+			if (pif_file) unlink(pid_file);
+		}
+		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
 		dump_all_statistic();
@@ -512,6 +555,10 @@ int main(int argc, char** argv)
 		DPrint("ERROR: no SIGCHLD signal handler can be installed\n");
 		goto error;
 	}
+	if (signal(SIGTERM , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGTERM signal handler can be installed\n");
+		goto error;
+	}
 
 	//memtest();
 	//hashtest();
@@ -522,7 +569,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:m:b:l:n:rRvcdDEVhw:t:u:g:";
+	"f:p:m:b:l:n:rRvcdDEVhw:t:u:g:P:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -637,6 +684,9 @@ int main(int argc, char** argv)
 						fprintf(stderr, "bad gid number: -g %s\n", optarg);
 						goto error;
 					}
+					break;
+			case 'P':
+					pid_file=optarg;
 					break;
 			case '?':
 					if (isprint(optopt))
