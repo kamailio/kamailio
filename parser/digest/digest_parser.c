@@ -344,7 +344,7 @@ int parse_digest_cred(str* _s, dig_cred_t* _c)
 
 		     /* And parse digest parameters */
 		if (parse_digest_params(&tmp, _c) < 0) {
-			return -1;
+			return -2; /* We must not return -1 in this function ! */
 		} else {
 			return 0;
 		}
