@@ -58,6 +58,7 @@
  *               t_replicate_{udp, tcp} (andrei)
  *  2003-02-19  added t_rely_{udp, tcp} (andrei)
  *  2003-03-10  module export interface updated to the new format (andrei)
+ *  2003-03-16  flags export parameter added (janakj)
  */
 
 
@@ -128,35 +129,35 @@ static int child_init(int rank);
 
 
 static cmd_export_t cmds[]={
-	{"t_newtran",          w_t_newtran,             0, 0                    },
-	{"t_lookup_request",   w_t_check,               0, 0                    },
-	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply   },
-	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0                    },
-	{"t_release",          w_t_release,             0, 0                    },
-	{T_RELAY_TO,           w_t_relay_to,            2, fixup_hostport2proxy },
-	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy },
-	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy },
-	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy },
-	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy },
-	{"t_replicate_tcp",    w_t_replicate_tcp,       2, fixup_hostport2proxy },
-	{T_RELAY,              w_t_relay,               0, 0                    },
-	{T_RELAY_UDP,          w_t_relay_udp,           0, 0                    },
-	{T_RELAY_TCP,          w_t_relay_tcp,           0, 0                    },
-	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy },
-	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy },
-	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy },
-	{"t_on_negative",      w_t_on_negative,         1, fixup_str2int        },
+	{"t_newtran",          w_t_newtran,             0, 0,                    REQUEST_ROUTE},
+	{"t_lookup_request",   w_t_check,               0, 0,                    REQUEST_ROUTE},
+	{T_REPLY,              w_t_reply,               2, fixup_t_send_reply,   REQUEST_ROUTE},
+	{"t_retransmit_reply", w_t_retransmit_reply,    0, 0,                    REQUEST_ROUTE},
+	{"t_release",          w_t_release,             0, 0,                    REQUEST_ROUTE},
+	{T_RELAY_TO,           w_t_relay_to,            2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_replicate_tcp",    w_t_replicate_tcp,       2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_RELAY,              w_t_relay,               0, 0,                    REQUEST_ROUTE},
+	{T_RELAY_UDP,          w_t_relay_udp,           0, 0,                    REQUEST_ROUTE},
+	{T_RELAY_TCP,          w_t_relay_tcp,           0, 0,                    REQUEST_ROUTE},
+	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_FORWARD_NONACK_UDP, w_t_forward_nonack_udp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{T_FORWARD_NONACK_TCP, w_t_forward_nonack_tcp,  2, fixup_hostport2proxy, REQUEST_ROUTE},
+	{"t_on_negative",      w_t_on_negative,         1, fixup_str2int,        REQUEST_ROUTE},
 	/* not applicable from the script -- ugly hack */
-	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0},
-	{T_UAC_DLG,            (cmd_function)t_uac_dlg,         NO_SCRIPT,     0},
-	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0},
-	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0},
-	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0},
-	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0},
-	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0},
-	{T_ADDBLIND,           (cmd_function)add_blind_uac,     NO_SCRIPT,     0},
-	{"t_newdlg",           (cmd_function)w_t_newdlg,        0,             0},
-	{0,0,0,0}
+	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,     0, 0},
+	{T_UAC_DLG,            (cmd_function)t_uac_dlg,         NO_SCRIPT,     0, 0},
+	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
+	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0, 0},
+	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0, 0},
+	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0, 0},
+	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0, 0},
+	{T_ADDBLIND,           (cmd_function)add_blind_uac,     NO_SCRIPT,     0, 0},
+	{"t_newdlg",           (cmd_function)w_t_newdlg,        0,             0, 0},
+	{0,0,0,0,0}
 };
 
 static param_export_t params[]={
