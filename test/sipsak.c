@@ -64,6 +64,9 @@ bouquets and brickbats to farhan@hotfoon.com
 #define CON_LEN_STR_LEN 16
 #define SIPSAK_MES_STR "USRLOC test message from SIPsak for user "
 #define SIPSAK_MES_STR_LEN 41
+#define EXP_STR "Expires: "
+#define EXP_STR_LEN 9
+#define USRLOC_EXP_DEF 16
 
 int verbose, nameend, namebeg;
 char *username, *domainname;
@@ -188,6 +191,31 @@ void add_via(char *mes, int port)
 		printf("New message with Via-Line:\n%s\n", mes);
 }
 
+/* This function tryes to copy the via lines from the message to the
+   message reply for correct routing of our reply. */
+void cpy_vias(char *reply){
+	char *first_via, *middle_via, *last_via, *backup;
+
+	if ((first_via=strstr(reply, "Via:"))==NULL){
+		printf("error: the received message doesn't contain a Via header\n");
+		exit(1);
+	}
+	last_via=first_via+4;
+	middle_via=last_via;
+	while ((middle_via=strstr(last_via, "Via:"))!=NULL)
+		last_via=middle_via+4;
+	last_via=strchr(last_via, '\n');
+	middle_via=strchr(mes_reply, '\n')+1;
+	backup=malloc(strlen(middle_via)+1);
+	strcpy(backup, middle_via);
+	strncpy(middle_via, first_via, last_via-first_via+1);
+	strcpy(middle_via+(last_via-first_via+1), backup);
+	free(backup);
+#ifdef DEBUG
+	printf("message reply with vias included:\n%s\n", mes_reply);
+#endif
+}
+
 /* This function tries to create a valid sip header out of the given 
    parameters */
 void create_msg(char *buff, int action, int lport){
@@ -203,8 +231,8 @@ void create_msg(char *buff, int action, int lport){
 	c=random();
 	switch (action){
 		case REQ_REG:
-			sprintf(buff, "%s sip:%s:%i%s%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n\r\n", REG_STR, fqdn, lport, SIP20_STR, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, REG_STR);
-			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<im:sipsak@%s:%i>\r\n%s<im:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, username, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, username, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
+			sprintf(buff, "%s sip:%s:%i%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, fqdn, lport, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, USRLOC_EXP_DEF);
+			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
 #ifdef DEBUG
 			printf("message:\n%s\n", message);
 #endif
@@ -304,22 +332,23 @@ at 5 seconds (5000 milliseconds).
 we are detecting the final response without a '1' as the first
 letter.
 */
-void shoot(char *buff, long address, int lport, int rport, int maxforw, int trace, int vbool, int fbool, int usrloc)
+void shoot(char *buff, long address, int lport, int rport, int maxforw, int trace, int vbool, int fbool, int usrloc, int redirects)
 {
-	struct sockaddr_in	addr;
-	struct sockaddr_in	sockname;
-	int ssock;
-	int redirected=1;
-	int retryAfter = 500;
-	int	nretries = 10;
-	int sock, i, len, ret;
+	struct sockaddr_in	addr, sockname;
 	struct timeval	tv;
-	fd_set	fd;
-	char	reply[1600];
-	socklen_t slen;
+	int ssock, redirected, retryAfter, nretries;
+	int sock, i, len, ret, usrlocstep;
 	char	*contact, *crlf, *foo, *bar;
+	char	reply[1600];
+	fd_set	fd;
+	socklen_t slen;
 	regex_t* regexp;
 	regex_t* redexp;
+
+	redirected = 1;
+	nretries = 10;
+	retryAfter = 500;
+	usrlocstep = 0;
 
 	/* create a socket */
 	sock = (int)socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -353,10 +382,12 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	/* should capture: SIP/2.0 100 Trying */
 	/* compile("^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", compiledre, &compiledre[RESIZE], '\0'); */
 	regexp=(regex_t*)malloc(sizeof(regex_t));
-	if (!trace)
-		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
-	else
+	if (trace)
 		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 483 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	else if (usrloc)
+		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 200 ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
+	else
+		regcomp(regexp, "^SIP/[0-9]\\.[0-9] 1[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 	/* catching redirects */
 	redexp=(regex_t*)malloc(sizeof(regex_t));
 	regcomp(redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
@@ -364,8 +395,9 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	get_fqdn();
 
 	if (usrloc){
-		nretries=nameend-namebeg;
+		nretries=3*(nameend-namebeg)+3;
 		create_msg(buff, REQ_REG, lport);
+		retryAfter = 5000;
 	}
 	if (trace & !fbool)
 		create_msg(buff, REQ_OPT, lport);
@@ -380,7 +412,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 		else
 			nretries=255;
 	}
-exit(2);
+
 	while (redirected) {
 
 		redirected=0;
@@ -400,10 +432,24 @@ exit(2);
 
 		for (i = 0; i < nretries; i++)
 		{
-			if (!trace)
-				printf("** request **\n%s\n", buff);
-			else {
+			if (trace) {
 				set_maxforw(buff, i+1);
+			}
+			else if (usrloc && verbose) {
+				switch (usrlocstep) {
+					case 0:
+						printf("registering user %s%i... ", username, namebeg);
+						break;
+					case 1:
+						printf("sending message... ");
+						break;
+					case 2:
+						printf("sending message reply... ");
+						break;
+				}
+			}
+			else {
+				printf("** request **\n%s\n", buff);
 			}
 
 			ret = send(sock, buff, strlen(buff), 0);
@@ -439,8 +485,8 @@ exit(2);
 				perror("select error");
 				exit(2);
 			} /* no timeout, no error ... something has happened :-) */
-   	              else if (FD_ISSET(ssock, &fd)) {
-			 	if (!trace)
+			else if (FD_ISSET(ssock, &fd)) {
+			 	if (!trace && !usrloc)
 					puts ("\nmessage received");
 			} else {
 				puts("\nselect returned succesfuly, nothing received\n");
@@ -453,7 +499,7 @@ exit(2);
 			if(ret > 0)
 			{
 				reply[ret] = 0;
-				if (regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
+				if (redirects && regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
 					printf("** received redirect **\n");
 					/* we'll try to handle 301 and 302 here, other 3xx are to complex */
 					regcomp(redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
@@ -512,18 +558,7 @@ exit(2);
 						exit(2);
 					}
 				}
-				else if (!trace) {
-					printf("** reply **\n%s\n", reply);
-					/* if (step( reply, compiledre )) { */
-					if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-						puts(" provisional received; still waiting for a final response\n ");
-						continue;
-					} else {
-						puts(" final received; congratulations!\n ");
-						exit(0);
-					}
-				}
-				else {
+				else if (trace) {
 					printf("%i: ", i+1);
 					if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
 						printf("* (483) \n");
@@ -541,6 +576,78 @@ exit(2);
 						crlf=strchr(contact,'\n');
 						sprintf(crlf, "\0");
 						printf("   %s\n", contact);
+						exit(0);
+					}
+				}
+				else if (usrloc) {
+					switch (usrlocstep) {
+						case 0:
+							if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+								if (verbose)
+									printf ("OK\n");
+#ifdef DEBUG
+								printf("\n%s\n", reply);
+#endif
+								strcpy(buff, message);
+								usrlocstep=1;
+							}
+							else {
+								if (verbose)
+									printf("received:\n%s\n", reply);
+								printf("error: didn't received '200 OK' on regsiter. aborting\n");
+								exit(1);
+							}
+							break;
+						case 1:
+							if (!strncmp(reply, MES_STR, MES_STR_LEN)) {
+								if (verbose) {
+									crlf=strstr(reply, "\r\n\r\n");
+									crlf=crlf+4;
+									printf("received message\n%s\n", crlf);
+								}
+#ifdef DEBUG
+								printf("\n%s\n", reply);
+#endif
+								cpy_vias(reply);
+								strcpy(buff, mes_reply);
+								usrlocstep=2;
+							}
+							else {
+								if (verbose)
+									printf("received:\n%s", reply);
+								printf("error: didn't received the 'MESSAGE' we sended. aborting\n");
+								exit(1);
+							}
+							break;
+						case 2:
+							if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+								if (verbose)
+									printf("reply received\n");
+								else
+									printf("USRLOC for %s%i completed successful\n");
+								if (namebeg==nameend)
+									exit(0);
+								namebeg++;
+								create_msg(buff, REQ_REG, lport);
+								usrlocstep=0;
+							}
+							else {
+								if (verbose)
+									printf("received:\n%s\n", reply);
+								printf("error: didn't received the '200 OK' that we sended as the reply on the message\n");
+								exit(1);
+							}
+							break;
+					}
+				}
+				else {
+					printf("** reply **\n%s\n", reply);
+					/* if (step( reply, compiledre )) { */
+					if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+						puts(" provisional received; still waiting for a final response\n ");
+						continue;
+					} else {
+						puts(" final received; congratulations!\n ");
 						exit(0);
 					}
 				}
@@ -563,33 +670,37 @@ int main(int argc, char *argv[])
 	long	address;
 	FILE	*pf;
 	char	buff[BUFSIZE];
-	int		length, c, fbool, sbool, tbool, vbool, ubool;
+	int		length, c, fbool, sbool, tbool, vbool, ubool, dbool;
 	int		maxforw, lport, rport;
 	char	*delim, *delim2;
 
 	username=NULL;
-	verbose=namebeg=nameend=0;
+	verbose=0;
+	namebeg=nameend=-1;
 
 	fbool=sbool=tbool=lport=maxforw=ubool=0;
-	vbool=1;
+	vbool=dbool=1;
     rport=5060;
 	memset(buff, 0, BUFSIZE);
 	memset(message, 0, BUFSIZE);
 	memset(mes_reply, 0, BUFSIZE);
 	memset(fqdn, 0, FQDN_SIZE);
 
-	while ((c=getopt(argc,argv,"b:e:f:hil:m:r:s:tuv")) != EOF){
+	while ((c=getopt(argc,argv,"b:de:f:hil:m:r:s:tuv")) != EOF){
 		switch(c){
 			case 'b':
 				namebeg=atoi(optarg);
-				if (!namebeg) {
+				if (namebeg==-1) {
 					puts("error: non-numerical appendix begin for the username");
 					exit(2);
 				}
 				break;
+			case 'd':
+				dbool=0;
+				break;
 			case 'e':
 				nameend=atoi(optarg);
-				if (!nameend) {
+				if (nameend==-1) {
 					puts("error: non-numerical appendix end for the username");
 					exit(2);
 				}
@@ -616,7 +727,8 @@ int main(int argc, char *argv[])
 						" shoot : sipsak -f filename -s sip:uri\n"
 						" trace : sipsak [-f filename] -s sip:uri -t\n"
 						" USRLOC: sipsak [-b number] -e number -s sip:uri -u\n"
-						" additional parameter in every modi: [-i] [-l port] [-m number] [-r port] [-v]\n"
+						" additional parameter in every modus:\n"
+						"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
 						"   -h           displays this help message\n"
 						"   -f filename  the file which contains the SIP message to send\n"
 						"   -s sip:uri   the destination server uri in form sip:[user@]servername[:port]\n"
@@ -628,6 +740,7 @@ int main(int argc, char *argv[])
 						"   -r port      the remote port to use\n"
 						"   -m number    the value for the max-forwards header field\n"
 						"   -i           deactivate the insertion of a Via-Line\n"
+						"   -d           ignore redirects\n"
 						"   -v           be more verbose\n"
 						"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
 						"so don't expect them to work with ugly or malformed messages.\n");
@@ -710,6 +823,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (tbool && ubool) {
+		printf("error: tracing and usrloc together isn't possible\n");
+		exit(2);
+	}
+
 	if (tbool) {
 		if (!sbool) {
 			printf("error: for trace modus a sip:uri is realy needed\n");
@@ -734,20 +852,26 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if (ubool) {
-		if (!username || !sbool || !nameend) {
+		if (!username || !sbool || nameend==-1) {
 			printf("error: for the USRLOC modus you have to give a sip:uri with a "
 					"username and the\n       username appendix end at least\n");
 			exit(2);
 		}
-		if (vbool){
+		if (vbool) {
 			printf("warning: Via-Line is useless for USRLOC. Enableling -i\n");
 			vbool=0;
 		}
+		if (dbool) {
+			printf("warning: redirects are not expected in USRLOC. Enableling -d\n");
+			dbool=0;
+		}
+		if (namebeg==-1)
+			namebeg=0;
 	}
 	else if (!fbool & !sbool)
 		printf("error: you have to give the file to send and the sip:uri at least.\n"
 			"       see 'sipsak -h' for more help.\n");
-	shoot(buff, address, lport, rport, maxforw, tbool, vbool, fbool, ubool);
+	shoot(buff, address, lport, rport, maxforw, tbool, vbool, fbool, ubool, dbool);
 
 	return 0;
 }
