@@ -73,6 +73,12 @@ int init_trusted(void)
 					"load a database support module\n");
 			return -1;
 		}
+
+		if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
+			LOG(L_ERR, "ERROR: permissions: init_trusted: "
+			    "Database module does not implement 'query' function\n");
+			return -1;
+		}
 	}
 
 	hash_table_1 = hash_table_2 = 0;

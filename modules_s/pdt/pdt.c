@@ -257,6 +257,12 @@ static int mod_init(void)
 		goto error1;
 	}
 
+	if (!DB_CAPABILITY(pdt_dbf, DB_CAP_ALL)) {
+		LOG(L_ERR, "PDT: mod_init: Database module does not "
+		    "implement all functions needed by the module\n");
+		goto error1;
+	}
+
 	/* open a connection with the database */
 	db_con = pdt_dbf.init(db_url);
 	if(!db_con)

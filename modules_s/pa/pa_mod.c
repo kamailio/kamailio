@@ -206,6 +206,11 @@ static int pa_mod_init(void)
 			LOG(L_ERR, "pa_mod_init(): Can't bind database module via url %s\n", db_url.s);
 			return -1;
 		}
+
+		if (!DB_CAPABILITY(pa_dbf, DB_CAP_ALL)) {
+			LOG(L_ERR, "pa_mod_init(): Database module does not implement all functions needed by the module\n");
+			return -1;
+		}
 	}
 
 	default_priority = ((double)default_priority_percentage) / 100.0;

@@ -214,12 +214,12 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* check table version */
-	if (msilo_dbf.init==0)
-	{
-		LOG(L_CRIT, "BUG: msilo: mod_init: database not bound\n");
+	if (!DB_CAPABILITY(msilo_dbf, DB_CAP_ALL)) {
+		LOG(L_ERR, "MSILO: ERROR: Database module does not implement "
+		    "all functions needed by the module\n");
 		return -1;
 	}
+
 	db_con = msilo_dbf.init(ms_db_url);
 	if (!db_con)
 	{
@@ -235,7 +235,7 @@ static int mod_init(void)
 				" need v%d\n", ver, ms_db_table, S_TABLE_VERSION);
 		return -1;
 	}
-	if(db_con && msilo_dbf.close)
+	if(db_con)
 		msilo_dbf.close(db_con);
 	db_con = NULL;
 

@@ -243,6 +243,11 @@ static int mod_init(void)
 		}
 	}
 
+	if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
+		LOG(L_ERR, "usrloc:mod_init: Database module does not implement all functions needed by the module\n");
+		return -1;
+	}
+
 	return 0;
 }
 

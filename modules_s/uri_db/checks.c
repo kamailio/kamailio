@@ -280,6 +280,13 @@ int uridb_db_bind(char* db_url)
 				" module\n");
 		return -1;
 	}
+
+	if (!DB_CAPABILITY(uridb_dbf, DB_CAP_QUERY)) {
+		LOG(L_ERR, "ERROR: uridb_db_bind: Database module does not "
+		    "implement 'query' function\n");
+		return -1;
+	}
+
 	return 0;
 }
 
