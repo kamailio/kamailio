@@ -74,8 +74,8 @@
  *             thanks Ed (jiri)
  * 2003-12-04  global TM callbacks switched to per transaction callbacks
  *             (bogdan)
+ * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
-
 
 #include "defs.h"
 
@@ -96,6 +96,8 @@
 #include "sip_msg.h"
 #include "t_hooks.h"
 #include "t_lookup.h"
+#include "dlg.h" /* for t_lookup_callid */
+#include "t_msgbuilder.h" /* for t_lookup_callid */
 
 #define EQ_VIA_LEN(_via)\
 	( (p_msg->via1->bsize-(p_msg->_via->name.s-(p_msg->_via->hdr.s+p_msg->_via->hdr.len)))==\
@@ -975,7 +977,7 @@ static inline int new_t(struct sip_msg *p_msg)
 		return E_OUT_OF_MEM;
 	} 
 
-	insert_into_hash_table_unsafe( new_cell );
+	insert_into_hash_table_unsafe( new_cell, p_msg->hash_index );
 	set_t(new_cell);
 	INIT_REF_UNSAFE(T);
 	/* init pointers to headers needed to construct local
@@ -1203,3 +1205,70 @@ int t_is_local(struct sip_msg* p_msg)
     
     return t->local;
 }
+
+/* lookup a transaction by callid and cseq, parameters are pure
+ * header field content only, e.g. "123@10.0.0.1" and "11"
+ */
+int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
+	struct cell* p_cell;
+	unsigned hash_index;
+
+	/* I use MAX_HEADER, not shure if this is a good choice... */
+	char callid_header[MAX_HEADER];
+	char cseq_header[MAX_HEADER];
+	/* save return value of print_* functions here */
+	char* endpos;
+
+	/* need method, which is always INVITE in our case */
+	/* CANCEL is only useful after INVITE */
+	str invite_method;
+	char* invite_string = INVITE;
+	
+	invite_method.s = invite_string;
+	invite_method.len = INVITE_LEN;
+	
+	/* lookup the hash index where the transaction is stored */
+	hash_index=hash(callid, cseq);
+
+	if(hash_index >= TABLE_ENTRIES){
+		LOG(L_ERR,"ERROR: t_lookup_callid: invalid hash_index=%u\n",hash_index);
+		return -1;
+	}
+
+	/* create header fields the same way tm does itself, then compare headers */
+	endpos = print_callid_mini(callid_header, callid);
+	DBG("created comparable call_id header field: >%.*s<\n", endpos - callid_header, callid_header); 
+
+	endpos = print_cseq_mini(cseq_header, &cseq, &invite_method);
+	DBG("created comparable cseq header field: >%.*s<\n", endpos - cseq_header, cseq_header); 
+
+	LOCK_HASH(hash_index);
+	DBG("just locked hash index %u, looking for transactions there:\n", hash_index);
+
+	/* all the transactions from the entry are compared */
+	for ( p_cell = get_tm_table()->entrys[hash_index].first_cell;
+	  p_cell; p_cell = p_cell->next_cell ) {
+		
+		/* compare complete header fields, casecmp to make shure invite=INVITE */
+		if ( (strncmp(callid_header, p_cell->callid.s, p_cell->callid.len) == 0)
+			&& (strncasecmp(cseq_header, p_cell->cseq_n.s, p_cell->cseq_n.len) == 0) ) {
+			DBG("we have a match: callid=>>%.*s<< cseq=>>%.*s<<\n", p_cell->callid.len, 
+				p_cell->callid.s, p_cell->cseq_n.len, p_cell->cseq_n.s);
+			REF_UNSAFE(p_cell);
+			UNLOCK_HASH(hash_index);
+			set_t(p_cell);
+			*trans=p_cell;
+			DBG("DEBUG: t_lookup_callid: transaction found.\n");
+			return 1;
+		}
+		DBG("NO match: callid=%.*s cseq=%.*s\n", p_cell->callid.len, 
+			p_cell->callid.s, p_cell->cseq_n.len, p_cell->cseq_n.s);
+			
+	}
+
+	UNLOCK_HASH(hash_index);
+	DBG("DEBUG: t_lookup_callid: transaction not found.\n");
+    
+	return -1;
+}
+

@@ -1,5 +1,8 @@
 /*
  * UAC FIFO interface
+ *
+ * $Id$
+ *
  */
 
 #ifndef UAC_FIFO_H

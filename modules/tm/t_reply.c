@@ -55,6 +55,9 @@
  *  2003-12-04  global TM callbacks switched to per transaction callbacks
  *              (bogdan)
  *  2004-02-06: support for user pref. added - destroy_avps (bogdan)
+ *  2003-11-05  flag context updated from failure/reply handlers back
+ *              to transaction context (jiri)
+ *  2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
 
@@ -494,7 +497,6 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 			return 0;
 		}
 	}
-
 	/* same for the body lumps */
 	if (shmem_msg->body_lumps) {
 		fake_req.body_lumps=dup_lump_list(shmem_msg->body_lumps);
@@ -505,7 +507,6 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 			return 0;
 		}
 	}
-
 	/* fake also the env. conforming to the fake msg */
 	faked_env( t, &fake_req);
 	/* DONE with faking ;-) -> run the failure handlers */
@@ -539,7 +540,6 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 	del_nonshm_lump_rpl( &(fake_req.reply_lump) );
 	/* if failure handler changed flag, update transaction context */
 	shmem_msg->flags = fake_req.flags;
-
 	return 1;
 }
 
@@ -1245,7 +1245,7 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 
 	rpl.s = build_res_buf_from_sip_req(
 			code, text, &s_to_tag,
-			trans->uas.request, &rpl.len, &bm);
+			trans->uas.request, (unsigned int*)&rpl.len, &bm);
 
 	/* since the msg (trans->uas.request) is a clone into shm memory, to avoid
 	 * memory leak or crashing (lumps are create in private memory) I will

@@ -34,6 +34,7 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
+#include "../../data_lump.h"
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../data_lump.h"

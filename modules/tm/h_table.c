@@ -36,6 +36,7 @@
  * 2003-09-12  timer_link->tg will be set only if EXTRA_DEBUG (andrei)
  * 2003-12-04  global callbacks replaceed with callbacks per transaction;
  *             completion callback merged into them as LOCAL_COMPETED (bogdan)
+ * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 #include "defs.h"
@@ -158,17 +159,63 @@ void free_cell( struct cell* dead_cell )
 
 
 
+static inline void init_synonym_id( struct cell *t )
+{
+	struct sip_msg *p_msg;
+	int size;
+	char *c;
+	unsigned int myrand;
+
+	if (!syn_branch) {
+		p_msg=t->uas.request;
+		if (p_msg) {
+			/* char value of a proxied transaction is
+			   calculated out of header-fileds forming
+			   transaction key
+			*/
+			char_msg_val( p_msg, t->md5 );
+		} else {
+			/* char value for a UAC transaction is created
+			   randomly -- UAC is an originating stateful element 
+			   which cannot be refreshed, so the value can be
+			   anything
+			*/
+			/* HACK : not long enough */
+			myrand=rand();
+			c=t->md5;
+			size=MD5_LEN;
+			memset(c, '0', size );
+			int2reverse_hex( &c, &size, myrand );
+		}
+	}
+}
+
+static void inline init_branches(struct cell *t)
+{
+	unsigned int i;
+	struct ua_client *uac;
+
+	for(i=0;i<MAX_BRANCHES;i++)
+	{
+		uac=&t->uac[i];
+		uac->request.my_T = t;
+		uac->request.branch = i;
+#ifdef EXTRA_DEBUG
+		uac->request.fr_timer.tg = TG_FR;
+		uac->request.retr_timer.tg = TG_RT;
+#endif
+		uac->request.retr_timer.payload = 
+			uac->request.fr_timer.payload = 
+			&uac->request;
+		uac->local_cancel=uac->request;
+	}
+}
+
+
 struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
-	unsigned int i;
-	unsigned int myrand;
-	int size;
-	char *c;
-	struct ua_client *uac;
 
-	/* avoid 'unitialized var use' warning */
-	myrand=0;
 
 	/* allocs a new cell */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
@@ -200,34 +247,9 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 			goto error;
 	}
 
-	/* new_cell->uas.to_tag = &( get_to(new_cell->uas.request)->tag_value ); */
-	new_cell->uas.response.my_T = new_cell;
-
 	/* UAC */
-	for(i=0;i<MAX_BRANCHES;i++)
-	{
-		uac=&new_cell->uac[i];
-		uac->request.my_T = new_cell;
-		uac->request.branch = i;
-#ifdef EXTRA_DEBUG
-		uac->request.fr_timer.tg = TG_FR;
-		uac->request.retr_timer.tg = TG_RT;
-#endif
-		uac->request.retr_timer.payload = 
-		uac->request.fr_timer.payload = &uac->request;
-		uac->local_cancel=uac->request;
-	}
+	init_branches(new_cell);
 
-	/* global data for transaction */
-	if (p_msg) {
-		new_cell->hash_index = p_msg->hash_index;
-	} else {
-		/* note: unsatisfactory if 
-		   RAND_MAX < TABLE_ENTRIES
-		*/
-		myrand = rand();
-		new_cell->hash_index = myrand % TABLE_ENTRIES ;
-	}
 	new_cell->wait_tl.payload = new_cell;
 	new_cell->dele_tl.payload = new_cell;
 	new_cell->relaied_reply_branch   = -1;
@@ -237,27 +259,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->dele_tl.tg=TG_DEL;
 #endif
 
-	if (!syn_branch) {
-		if (p_msg) {
-			/* char value of a proxied transaction is
-			   calculated out of header-fileds forming
-			   transaction key
-			*/
-			char_msg_val( p_msg, new_cell->md5 );
-		} else {
-			/* char value for a UAC transaction is created
-			   randomly -- UAC is an originating stateful element 
-			   which cannot be refreshed, so the value can be
-			   anything
-			*/
-			/* HACK : not long enough */
-			c=new_cell->md5;
-			size=MD5_LEN;
-			memset(c, '0', size );
-			int2reverse_hex( &c, &size, myrand );
-		}
-	}
-
+	init_synonym_id(new_cell);
 	init_cell_lock(  new_cell );
 	return new_cell;
 
@@ -265,7 +267,6 @@ error:
 	shm_free(new_cell);
 	return NULL;
 }
-
 
 
 
@@ -337,12 +338,14 @@ error0:
 
 /*  Takes an already created cell and links it into hash table on the
  *  appropiate entry. */
-void insert_into_hash_table_unsafe( struct cell * p_cell )
+void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 {
 	struct entry* p_entry;
 
+	p_cell->hash_index=_hash;
+
 	/* locates the apropiate entry */
-	p_entry = &tm_table->entrys[ p_cell->hash_index ];
+	p_entry = &tm_table->entrys[ _hash ];
 
 	p_cell->label = p_entry->next_label++;
 	if ( p_entry->last_cell )
@@ -361,13 +364,14 @@ void insert_into_hash_table_unsafe( struct cell * p_cell )
 
 
 
-
+#ifdef _OBSOLETED
 void insert_into_hash_table( struct cell * p_cell)
 {
 	LOCK_HASH(p_cell->hash_index);
 	insert_into_hash_table_unsafe(  p_cell );
 	UNLOCK_HASH(p_cell->hash_index);
 }
+#endif
 
 
 

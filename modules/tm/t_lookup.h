@@ -29,6 +29,7 @@
  * --------
  *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
  *               nameser_compat.h (andrei)
+ *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 
@@ -90,6 +91,8 @@ typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
 int t_is_local(struct sip_msg*);
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index, unsigned int* label);
 int t_lookup_ident(struct cell** trans, unsigned int hash_index, unsigned int label);
+/* lookup a transaction by callid and cseq */
+int t_lookup_callid(struct cell** trans, str callid, str cseq);
 
 #endif
 

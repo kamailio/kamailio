@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 
@@ -81,5 +85,8 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 int t_calc_branch(struct cell *t,
 	int b, char *branch, int *branch_len);
 
+/* exported minimum functions for use in t_cancel */
+char* print_callid_mini(char* target, str callid);
+char* print_cseq_mini(char* target, str* cseq, str* method);
 
 #endif

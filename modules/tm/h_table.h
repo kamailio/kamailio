@@ -31,6 +31,7 @@
  * 2003-03-01  kr set through a function now (jiri)
  * 2003-12-04  callbacks per transaction added; completion callback
  *             merge into them as LOCAL_COMPETED (bogdan)
+ * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 #include "defs.h"
@@ -280,8 +281,10 @@ void   free_hash_table( );
 void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
 void   remove_from_hash_table_unsafe( struct cell * p_cell);
-void   insert_into_hash_table( struct cell * p_cell);
-void   insert_into_hash_table_unsafe( struct cell * p_cell );
+#ifdef OBSOLETED
+void   insert_into_hash_table( struct cell * p_cell, unsigned int _hash);
+#endif
+void   insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash );
 
 unsigned int transaction_count( void );
 

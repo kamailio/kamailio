@@ -47,6 +47,7 @@
  *  2003-10-24  updated to the new socket_info lists (andrei)
  *  2003-12-03  completion filed removed from transaction and uac callbacks
  *              merged in transaction callbacks as LOCAL_COMPLETED (bogdan)
+ *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 #include <string.h>
@@ -146,6 +147,16 @@ static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 	return 0;
 }
 
+static inline unsigned int dlg2hash( dlg_t* dlg )
+{
+	str cseq_nr;
+	unsigned int hashid;
+
+	cseq_nr.s=int2str(dlg->loc_seq.value, &cseq_nr.len);
+	hashid=hash(dlg->id.call_id, cseq_nr);
+	DBG("DEBUG: dlg2hash: %d\n", hashid);
+	return hashid;
+}
 
 /*
  * Send a request using data from the dialog structure
@@ -201,9 +212,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	request->dst.proto = send_sock->proto;
 	request->dst.proto_reserved1 = 0;
 
-	/* need to put in table to calculate label which is needed for printing */
 	LOCK_HASH(new_cell->hash_index);
-	insert_into_hash_table_unsafe(new_cell);
+	insert_into_hash_table_unsafe(new_cell, dlg2hash(dialog));
 	UNLOCK_HASH(new_cell->hash_index);
 
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell,

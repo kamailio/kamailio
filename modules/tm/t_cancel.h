@@ -24,12 +24,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 
 #ifndef _CANCEL_H
 #define _CANCEL_H
 
+#include <stdio.h> /* just for FILE* for fifo_uac_cancel */
 #include "defs.h"
 
 
@@ -48,6 +53,8 @@
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
 void cancel_uacs( struct cell *t, branch_bm_t cancel_bm );
 void cancel_branch( struct cell *t, int branch );
+
+int fifo_uac_cancel( FILE* stream, char *response_file );
 
 char *build_cancel(struct cell *Trans,unsigned int branch,
 	unsigned int *len );

@@ -36,6 +36,7 @@
  *             is now called before reply status is updated to
  *             avoid late ACK sending (jiri)
  * 2003-10-02  added via_builder set host/port support (andrei)
+ * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 #include "defs.h"
@@ -331,31 +332,44 @@ static inline char* print_from(char* w, dlg_t* dialog, struct cell* t)
 /*
  * Print CSeq header field
  */
+char* print_cseq_mini(char* target, str* cseq, str* method) {
+	memapp(target, CSEQ, CSEQ_LEN);
+	memapp(target, cseq->s, cseq->len);
+	memapp(target, " ", 1);
+	memapp(target, method->s, method->len);
+	return target;
+}
+
 static inline char* print_cseq(char* w, str* cseq, str* method, struct cell* t)
 {
 	t->cseq_n.s = w; 
 	/* don't include method name and CRLF -- subsequent
 	 * local reuqests ACK/CANCEl will add their own */
 	t->cseq_n.len = CSEQ_LEN + cseq->len; 
-
-	memapp(w, CSEQ, CSEQ_LEN);
-	memapp(w, cseq->s, cseq->len);
-	memapp(w, " ", 1);
-	memapp(w, method->s, method->len);
+	w = print_cseq_mini(w, cseq, method);
 	return w;
 }
 
-
 /*
  * Print Call-ID header field
+ * created an extra function for pure header field creation, that is used by t_cancel for 
+ * t_uac_cancel FIFO function.
  */
+char* print_callid_mini(char* target, str callid) {
+	memapp(target, CALLID, CALLID_LEN);
+	memapp(target, callid.s, callid.len);
+	memapp(target, CRLF, CRLF_LEN);
+	return target;
+}
+
 static inline char* print_callid(char* w, dlg_t* dialog, struct cell* t)
 {
-	t->callid.s = w + CRLF_LEN; 
-	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
-	memapp(w, CRLF CALLID, CRLF_LEN + CALLID_LEN);
-	memapp(w, dialog->id.call_id.s, dialog->id.call_id.len);
+	/* begins with CRLF, not included in t->callid, don`t know why...?!? */
 	memapp(w, CRLF, CRLF_LEN);
+	t->callid.s = w;
+	t->callid.len = CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;
+
+	w = print_callid_mini(w, dialog->id.call_id);
 	return w;
 }
 

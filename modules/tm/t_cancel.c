@@ -29,9 +29,11 @@
  * ----------
  * 2003-04-14  checking if a reply sent before cancel is initiated
  *             moved here (jiri)
+ * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  *
  */
 
+#include <stdio.h> /* for FILE* in fifo_uac_cancel */
 
 #include "defs.h"
 
@@ -42,6 +44,8 @@
 #include "t_reply.h"
 #include "t_cancel.h"
 #include "t_msgbuilder.h"
+#include "t_lookup.h" /* for t_lookup_callid in fifo_uac_cancel */
+#include "../../fifo_server.h" /* for read_line() and fifo_reply() */
 
 
 /* determine which branches should be cancelled; do it
@@ -126,4 +130,64 @@ char *build_cancel(struct cell *Trans,unsigned int branch,
 	return build_local( Trans, branch, len,
 		CANCEL, CANCEL_LEN, &Trans->to );
 }
+
+/* fifo command to cancel a pending call (Uli)
+  Syntax:
+
+  ":uac_cancel:[response file]\n
+  callid\n
+ cseq\n
+  \n"
+ */
+
+int fifo_uac_cancel( FILE* stream, char *response_file )
+{
+	struct cell *trans;
+
+	char cseq[128];
+	char callid[128];
+
+	str cseq_s;   /* cseq */
+	str callid_s; /* callid */
+
+	cseq_s.s=cseq;
+	callid_s.s=callid;
+
+	DBG("DEBUG: fifo_uac_cancel: ############### begin ##############\n");
+
+	/* first param callid read */
+	if (!read_line(callid_s.s, 128, stream, &callid_s.len)||callid_s.len==0) {
+		LOG(L_ERR, "ERROR: fifo_uac_cancel: callid expected\n");
+		fifo_reply(response_file, "400 fifo_uac_cancel: callid expected");
+		return -1;
+	}
+	callid_s.s[callid_s.len]='\0';
+	DBG("DEBUG: fifo_uac_cancel: callid=\"%.*s\"\n",callid_s.len, callid_s.s);
+
+	/* second param cseq read */
+	if (!read_line(cseq_s.s, 128, stream, &cseq_s.len)||cseq_s.len==0) {
+		LOG(L_ERR, "ERROR: fifo_uac_cancel: cseq expected\n");
+		fifo_reply(response_file, "400 fifo_uac_cancel: cseq expected");
+		return -1;
+	}
+	cseq_s.s[cseq_s.len]='\0';
+	DBG("DEBUG: fifo_uac_cancel: cseq=\"%.*s\"\n",cseq_s.len, cseq_s.s);
+
+	if( t_lookup_callid(&trans, callid_s, cseq_s) < 0 ) {
+		LOG(L_ERR,"ERROR: fifo_uac_cancel: lookup failed\n");
+		fifo_reply(response_file, "481 fifo_uac_cancel: no such transaction");
+		return -1;
+	}
+	/* tell tm to cancel the call */
+	DBG("DEBUG: fifo_uac_cancel: now calling cancel_uacs\n");
+	(*cancel_uacs)(trans,~0);
+
+	/* t_lookup_callid REF`d the transaction for us, we must UNREF here! */
+	UNREF(trans);
+
+	fifo_reply(response_file, "200 fifo_uac_cancel succeeded\n");
+	DBG("DEBUG: fifo_uac_cancel: ################ end ##############\n");
+	return 1;
+}
+
 

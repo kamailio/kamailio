@@ -69,6 +69,7 @@
  *              removed t_relay_{udp,tcp,tls} (andrei)
  *  2003-09-26  added t_forward_nonack_uri() - same as t_forward_nonack() but
  *              takes no parameters -> forwards to uri (bogdan)
+ *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
 
@@ -101,6 +102,7 @@
 #include "t_lookup.h"
 #include "t_stats.h"
 #include "callid.h"
+#include "t_cancel.h"
 
 MODULE_VERSION
 
@@ -165,8 +167,6 @@ inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 inline static int t_flush_flags(struct sip_msg* msg, char *dir, char *foo);
 static int t_attr_to_uri(struct sip_msg* msg, char *s, char *foo);
-
-
 
 
 static cmd_export_t cmds[]={
@@ -471,6 +471,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (register_fifo_cmd(fifo_uac_cancel, "t_uac_cancel", 0) < 0) {
+		LOG(L_CRIT, "cannot register fifo t_uac_cancel\n");
+		return -1;
+	}
+
 	if (register_fifo_cmd(fifo_hash, "t_hash", 0)<0) {
 		LOG(L_CRIT, "cannot register hash\n");
 		return -1;
@@ -566,7 +571,6 @@ static int t_attr_to_uri(struct sip_msg* msg, char *s, char *foo)
 	msg->new_uri.s = uri;
 	msg->new_uri.len = avp->val.str_val.len;
 	msg->parsed_uri_ok=0;
-
 	return 1;
 }
 
@@ -801,6 +805,7 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 	t_on_reply( (unsigned int )(long) go_to );
 	return 1;
 }
+
 
 
 inline static int _w_t_relay_to( struct sip_msg  *p_msg , 
