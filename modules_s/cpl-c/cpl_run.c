@@ -147,10 +147,10 @@ error:
 void free_cpl_interpreter(struct cpl_interpreter *intr)
 {
 	if (intr) {
+		empty_location_set( &(intr->loc_set) );
 		if (intr->script.s)
 			shm_free( intr->script.s);
-		empty_location_set( &(intr->loc_set) );
-		if (intr->flags&CPL_USER_DUPLICATED)
+		if (intr->user.s)
 			shm_free(intr->user.s);
 		if (intr->flags&CPL_RURI_DUPLICATED)
 			shm_free(intr->ruri);

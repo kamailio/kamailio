@@ -44,14 +44,7 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script, char* key)
 	db_key_t   keys_ret[] = { key };
 	db_val_t   vals[1];
 	db_res_t   *res = 0 ;
-	char       tmp;
 
-	/* it shouldn't be aproblem overwriting a \0 at the end of user name; the
-	 * user name is part of the sip_msg struct received -  that is allocated in
-	 * process private mem - no sync problems; also there is all the time some
-	 * extra characters after the user name - at least the EOH */
-	tmp = user->s[user->len];
-	user->s[user->len] = 0;
 	DBG("DEBUG:get_user_script: fetching script for user <%s>\n",user->s);
 	vals[0].type = DB_STRING;
 	vals[0].nul  = 0;
@@ -60,7 +53,6 @@ int get_user_script( db_con_t *db_hdl, str *user, str *script, char* key)
 		LOG(L_ERR,"ERROR:cpl-c:get_user_script: db_query failed\n");
 		goto error;
 	}
-	user->s[user->len] = tmp;
 
 	if (res->n==0) {
 		DBG("DEBUG:get_user_script: user <%.*s> not found in db -> probably "

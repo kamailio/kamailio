@@ -63,6 +63,7 @@
 
 
 #define MAX_PROXY_RECURSE  10
+#define MAX_USERHOST_LEN    256
 
 
 /* modules param variables */
@@ -419,7 +420,31 @@ static int cpl_exit(void)
 
 
 
-static inline int get_dest_user(struct sip_msg *msg, str *user)
+static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
+{
+	static char buf[MAX_USERHOST_LEN];
+
+	if (flg) {
+		uh->s = (char*)shm_malloc(uri->user.len+1+uri->host.len+1);
+		if (!uh->s) {
+			LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
+			return -1;
+		}
+	} else {
+		uh->s = buf;
+	}
+	memcpy( uh->s, uri->user.s, uri->user.len);
+	uh->len = uri->user.len;
+	uh->s[uh->len++] = '@';
+	memcpy( uh->s+uh->len, uri->host.s, uri->host.len);
+	uh->len += uri->host.len;
+	uh->s[uh->len++] = 0;
+	return 0;
+}
+
+
+
+static inline int get_dest_user(struct sip_msg *msg, str *uh, int flg)
 {
 	struct sip_uri uri;
 
@@ -443,13 +468,12 @@ static inline int get_dest_user(struct sip_msg *msg, str *user)
 			}
 		}
 	}
-	*user = uri.user;
-	return 0;
+	return build_userhost( &uri, uh, flg);
 }
 
 
 
-static inline int get_orig_user(struct sip_msg *msg, str *user)
+static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 {
 	struct to_body *from;
 	struct sip_uri uri;
@@ -469,8 +493,7 @@ static inline int get_orig_user(struct sip_msg *msg, str *user)
 			"from URI (From header)\n");
 		return -1;
 	}
-	*user = uri.user;
-	return 0;
+	return build_userhost( &uri, uh, flg);
 }
 
 
@@ -484,32 +507,33 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	str  loc;
 	str  script;
 
-	script.s = 0;
-	cpl_intr = 0;
+	//script.s = 0;
+	//cpl_intr = 0;
 
 	/* get the user_name */
 	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the destination user name */
-		if (get_dest_user( msg, &user)==-1)
-			goto error;
+		if (get_dest_user( msg, &user, 1)==-1)
+			goto error0;
 	} else {
 		/* if it's outgoing -> get the origin user name */
-		if (get_orig_user( msg, &user)==-1)
-			goto error;
+		if (get_orig_user( msg, &user, 1)==-1)
+			goto error0;
 	}
 
 	/* get the script for this user */
 	if (get_user_script( db_hdl, &user, &script, "cpl_bin")==-1)
-		goto error;
+		goto error1;
 
 	/* has the user a non-empty script? if not, return normaly, allowing ser to
 	 * continue its script */
 	if ( !script.s || !script.len )
+		shm_free(user.s);
 		return 1;
 
 	/* build a new script interpreter */
 	if ( (cpl_intr=new_cpl_interpreter(msg,&script))==0 )
-		goto error;
+		goto error2;
 	/* set the flags */
 	cpl_intr->flags = ((unsigned int)str1);
 	/* attache the user */
@@ -517,17 +541,17 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	/* for OUTGOING we need also the destination user for init. with him
 	 * the location set */
 	if ( ((unsigned int)str1)&CPL_RUN_OUTGOING ) {
-		if (get_dest_user( msg, &loc)==-1)
-			goto error;
+		if (get_dest_user( msg, &loc,0)==-1)
+			goto error3;
 		if (add_location( &(cpl_intr->loc_set), &loc,10/*prio*/,1/*dup*/)==-1)
-			goto error;
+			goto error3;
 	}
 
 	/* since the script interpretation can take some time, it will be better to
 	 * send a 100 back to prevent the UAC to retransmit */
 	if ( cpl_tmb.t_reply( msg, (int)100, "Running cpl script" )!=1 ) {
 		LOG(L_ERR,"ERROR:cpl_invoke_script: unable to send 100 reply!\n");
-		goto error;
+		goto error3;
 	}
 
 	/* run the script */
@@ -541,15 +565,18 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 			return 0; /* break the SER script */
 		case SCRIPT_RUN_ERROR:
 		case SCRIPT_FORMAT_ERROR:
-			goto error;
+			goto error3;
 	}
 
 	return 1;
-error:
-	if (!cpl_intr && script.s)
-		shm_free(script.s);
-	if (cpl_intr)
-		free_cpl_interpreter( cpl_intr );
+error3:
+	free_cpl_interpreter( cpl_intr );
+	return -1;
+error2:
+	shm_free(script.s);
+error1:
+	shm_free(user.s);
+error0:
 	return -1;
 }
 
@@ -588,7 +615,6 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	str  user = {0,0};
 	str  bin  = {0,0};
 	str  log  = {0,0};
-	char foo;
 
 	/* content-length (if present) */
 	if ( (!msg->content_length && parse_headers(msg,HDR_CONTENTLENGTH,0)==-1)
@@ -600,14 +626,8 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	body.len = get_content_length( msg );
 
 	/* get the user name */
-	if (get_dest_user( msg, &user)==-1)
+	if (get_dest_user( msg, &user, 0)==-1)
 		goto error;
-	/* make the user zero terminated -  it's safe - it'a an incomming request,
-	 * so I'm the only process working with it (no sync problems) and user
-	 * points inside the message and all the time it's something after it (no
-	 * buffer overflow)*/
-	foo = user.s[user.len];
-	user.s[user.len] = 0;
 
 	/* we have the script and the user */
 	switch (action) {
@@ -654,11 +674,9 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	}
 
 	if (log.s) pkg_free( log.s );
-	user.s[user.len] = foo;
 	return 0;
 error_1:
 	if (log.s) pkg_free( log.s );
-	user.s[user.len] = foo;
 error:
 	return -1;
 }
@@ -671,7 +689,7 @@ static inline int do_script_download(struct sip_msg *msg)
 	str script = {0,0};
 
 	/* get the destination user name */
-	if (get_dest_user( msg, &user)==-1)
+	if (get_dest_user( msg, &user, 0)==-1)
 		goto error;
 
 	/* get the user's xml script from the database */

@@ -98,7 +98,7 @@ static inline int add_location(struct location **loc_set, str *uri,
 		/* insert after bar, before foo  */
 		loc->next = foo;
 		bar->next = loc;
-	 }
+	}
 
 	return 0;
 }

@@ -379,12 +379,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 	/* if it's the first execution of a proxy node, force parsing of the needed
 	 * headers and duplicate them in shared memory */
 	if (!(intr->flags&CPL_PROXY_DONE)) {
-		/* save the user name - we will need it */
-		if ( (p=(char*)shm_malloc( intr->user.len ))==0)
-			goto mem_error;
-		memcpy( p, intr->user.s, intr->user.len);
-		intr->user.s = p;
-		intr->flags |= CPL_USER_DUPLICATED;
+		/* user name is already in shared memory */
 		/* requested URI - mandatory in SIP msg (cannot be STR_NOT_FOUND) */
 		s = GET_RURI( intr->msg );
 		duplicate_str( s , intr->ruri );

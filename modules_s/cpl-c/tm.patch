@@ -1,5 +1,5 @@
-diff -ruib sip_router/modules/tm/h_table.c sip_router_md/modules/tm/h_table.c
---- sip_router/modules/tm/h_table.c	2003-09-19 21:02:08.000000000 +0200
+diff -ruib sip_router_head/modules/tm/h_table.c sip_router_md/modules/tm/h_table.c
+--- sip_router_head/modules/tm/h_table.c	2003-09-19 21:02:08.000000000 +0200
 +++ sip_router_md/modules/tm/h_table.c	2003-09-26 18:00:19.000000000 +0200
 @@ -106,6 +106,7 @@
  	int i;
@@ -43,8 +43,8 @@ diff -ruib sip_router/modules/tm/h_table.c sip_router_md/modules/tm/h_table.c
  
  	if (p_msg) {
  		new_cell->uas.request = sip_msg_cloner(p_msg);
-diff -ruib sip_router/modules/tm/h_table.h sip_router_md/modules/tm/h_table.h
---- sip_router/modules/tm/h_table.h	2003-04-07 08:36:56.000000000 +0200
+diff -ruib sip_router_head/modules/tm/h_table.h sip_router_md/modules/tm/h_table.h
+--- sip_router_head/modules/tm/h_table.h	2003-04-07 08:36:56.000000000 +0200
 +++ sip_router_md/modules/tm/h_table.h	2003-08-06 17:41:47.000000000 +0200
 @@ -189,6 +189,9 @@
  	   during freeing transaction too
@@ -56,8 +56,8 @@ diff -ruib sip_router/modules/tm/h_table.h sip_router_md/modules/tm/h_table.h
  
  	/* how many processes are currently processing this transaction ;
  	   note that only processes working on a request/reply belonging
-diff -ruib sip_router/modules/tm/t_fwd.c sip_router_md/modules/tm/t_fwd.c
---- sip_router/modules/tm/t_fwd.c	2003-07-08 14:39:13.000000000 +0200
+diff -ruib sip_router_head/modules/tm/t_fwd.c sip_router_md/modules/tm/t_fwd.c
+--- sip_router_head/modules/tm/t_fwd.c	2003-07-08 14:39:13.000000000 +0200
 +++ sip_router_md/modules/tm/t_fwd.c	2003-08-06 16:34:12.000000000 +0200
 @@ -83,8 +83,12 @@
  	/* ... update uri ... */
@@ -72,8 +72,8 @@ diff -ruib sip_router/modules/tm/t_fwd.c sip_router_md/modules/tm/t_fwd.c
  
  	/* ... and build it now */
  	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
-diff -ruib sip_router/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks.c
---- sip_router/modules/tm/t_hooks.c	2003-03-19 19:40:09.000000000 +0100
+diff -ruib sip_router_head/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks.c
+--- sip_router_head/modules/tm/t_hooks.c	2003-03-19 19:40:09.000000000 +0100
 +++ sip_router_md/modules/tm/t_hooks.c	2003-08-19 19:02:47.000000000 +0200
 @@ -38,6 +38,11 @@
  #include "../../error.h"
@@ -166,8 +166,8 @@ diff -ruib sip_router/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks.c
 +}
 +
 +
-diff -ruib sip_router/modules/tm/t_hooks.h sip_router_md/modules/tm/t_hooks.h
---- sip_router/modules/tm/t_hooks.h	2003-07-08 17:24:27.000000000 +0200
+diff -ruib sip_router_head/modules/tm/t_hooks.h sip_router_md/modules/tm/t_hooks.h
+--- sip_router_head/modules/tm/t_hooks.h	2003-07-08 17:24:27.000000000 +0200
 +++ sip_router_md/modules/tm/t_hooks.h	2003-08-06 21:13:41.000000000 +0200
 @@ -36,7 +36,6 @@
  
@@ -204,8 +204,8 @@ diff -ruib sip_router/modules/tm/t_hooks.h sip_router_md/modules/tm/t_hooks.h
 +												struct sip_msg *msg, int code );
  
  #endif
-diff -ruib sip_router/modules/tm/t_lookup.c sip_router_md/modules/tm/t_lookup.c
---- sip_router/modules/tm/t_lookup.c	2003-08-21 21:36:39.000000000 +0200
+diff -ruib sip_router_head/modules/tm/t_lookup.c sip_router_md/modules/tm/t_lookup.c
+--- sip_router_head/modules/tm/t_lookup.c	2003-08-21 21:36:39.000000000 +0200
 +++ sip_router_md/modules/tm/t_lookup.c	2003-09-03 17:52:50.000000000 +0200
 @@ -785,15 +785,29 @@
  		if (p_cell->is_invite && p_msg->REPLY_STATUS>=200 
@@ -268,10 +268,10 @@ diff -ruib sip_router/modules/tm/t_lookup.c sip_router_md/modules/tm/t_lookup.c
  		}
  		UNREF(t_ack);
  		return 1;
-diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
---- sip_router/modules/tm/t_reply.c	2003-10-20 19:10:14.000000000 +0200
-+++ sip_router_md/modules/tm/t_reply.c	2003-10-27 15:16:39.000000000 +0100
-@@ -306,11 +306,17 @@
+diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
+--- sip_router_head/modules/tm/t_reply.c	2003-11-11 20:37:16.000000000 +0100
++++ sip_router_md/modules/tm/t_reply.c	2003-11-13 20:58:33.000000000 +0100
+@@ -309,11 +309,17 @@
  	if (code>=200) {
  		if (trans->local) {
  			DBG("DEBUG: local transaction completed from _reply\n");
@@ -289,7 +289,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  		}
  
  		cleanup_uac_timers( trans );
-@@ -377,45 +383,15 @@
+@@ -380,45 +386,15 @@
  }
  
  
@@ -339,33 +339,91 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  	/* remember we are back in request processing, but process
  	 * a shmem-ed replica of the request; advertise it in rmode;
  	 * for example t_reply needs to know that
-@@ -432,81 +408,90 @@
+@@ -435,90 +411,95 @@
  	backup_t=get_t();
  	backup_msgid=global_msg_id;
  	/* fake transaction and message id */
 -	global_msg_id=fake->id;
 -	set_t(_t);
+-
+-	/* environment is set up now, try to fake the message */
+-
+-	/* new_uri can change -- make a private copy */
+-	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
+-		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
+-		if (!fake->new_uri.s) {
+-			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
+-			goto restore;
+-		}
+-		fake->new_uri.len=shmem_msg->new_uri.len;
+-		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
+-			fake->new_uri.len);
+-		fake->new_uri.s[fake->new_uri.len]=0;
+-	} 
+-
+-	/* create a duplicated lump list to which actions can add
+-	 * new pkg items 
+-	 */
+-	if (shmem_msg->add_rm) {
+-		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
+-		if (!fake->add_rm) { /* non_emty->empty ... failure */
+-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
+-			goto restore;
+-		}
+-	}
+-
+-	if (shmem_msg->body_lumps) {
+-		fake->body_lumps=dup_lump_list(shmem_msg->body_lumps);
+-		if (!fake->body_lumps) { /* non_empty->empty ... failure */
+-			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
+-			goto restore;
+-		}
+-	}
+-	
+-	/* success */
+-	return 1;
+-
+-restore:
+-	/* restore original environment and destroy faked message */
+-	free_duped_lump_list(fake->add_rm);
+-	free_duped_lump_list(fake->body_lumps);
+-	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
 +		global_msg_id=msg->id;
 +		set_t(t);
 +	} else {
 +		/* restore original environment */
-+		set_t(backup_t);
-+		global_msg_id=backup_msgid;
-+		rmode=backup_mode;
+ 	set_t(backup_t);
+ 	global_msg_id=backup_msgid;
+ 	rmode=backup_mode;
+-	/* if failure handler changed flag, update transaction context */
+-	shmem_msg->flags=fake->flags;
+-	return 0;
 +	}
-+}
+ }
  
--	/* environment is set up now, try to fake the message */
 +
-+/* return 1 if a failure_route processes */
+ /* return 1 if a failure_route processes */
+-int failure_route(struct cell *t)
 +static inline int run_failure_route(struct cell *t)
-+{
+ {
+-	struct sip_msg faked_msg;
+-	struct sip_msg *orig_request;
 +	struct sip_msg fake;
 +	struct sip_msg *shmem_msg = t->uas.request;
-+
-+	/* don't do anything if we don't have to */
-+	if (!t->on_negative) return 0;
-+
+ 
+ 	/* don't do anything if we don't have to */
+ 	if (!t->on_negative) return 0;
+-	orig_request=t->uas.request;
+ 	/* failure_route for a local UAC? */
+-	if (!orig_request) {
++	if (!shmem_msg) {
+ 		LOG(L_WARN, "Warning: failure_route: no UAC support\n");
+ 		return 0;
+ 	}
+ 
+-	/* if fake message creation failes, return error too */
+-	if (!faked_env(&faked_msg, t, orig_request, 0 /* create fake */ )) {
+-		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
 +	/* on_negative_reply faked msg now copied from shmem msg (as opposed
 +	 * to zero-ing) -- more "read-only" actions (exec in particular) will
 +	 * work from reply_route as they will see msg->from, etc.; caution,
@@ -376,18 +434,9 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
 +	/* if we set msg_id to something different from current's message
 +	 * id, the first t_fork will properly clean new branch URIs */
 +	fake.id=shmem_msg->id-1;
- 
- 	/* new_uri can change -- make a private copy */
- 	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
--		fake->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
--		if (!fake->new_uri.s) {
--			LOG(L_ERR, "ERROR: faked_env: no uri/pkg mem\n");
--			goto restore;
--		}
--		fake->new_uri.len=shmem_msg->new_uri.len;
--		memcpy( fake->new_uri.s, shmem_msg->new_uri.s, 
--			fake->new_uri.len);
--		fake->new_uri.s[fake->new_uri.len]=0;
++
++	/* new_uri can change -- make a private copy */
++	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
 +		fake.new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
 +		if (!fake.new_uri.s) {
 +			LOG(L_ERR, "ERROR: run_failure_route: no uri/pkg mem\n");
@@ -397,66 +446,30 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
 +		memcpy( fake.new_uri.s, shmem_msg->new_uri.s, 
 +			fake.new_uri.len);
 +		fake.new_uri.s[fake.new_uri.len]=0;
- 	} 
- 
- 	/* create a duplicated lump list to which actions can add
--	 * new pkg items 
--	 */
++	}
++
++	/* create a duplicated lump list to which actions can add
 +	 * new pkg items  */
- 	if (shmem_msg->add_rm) {
--		fake->add_rm=dup_lump_list(shmem_msg->add_rm);
--		if (!fake->add_rm) { /* non_emty->empty ... failure */
--			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
--			goto restore;
++	if (shmem_msg->add_rm) {
 +		fake.add_rm=dup_lump_list(shmem_msg->add_rm);
 +		if (!fake.add_rm) { /* non_emty->empty ... failure */
 +			LOG(L_ERR, "ERROR: run_failure_route: lump dup failed\n");
 +			if (fake.new_uri.s) pkg_free(fake.new_uri.s);
 +			return 0;
- 		}
- 	}
- 
++		}
++	}
++
 +	/* same for the body lumps */
- 	if (shmem_msg->body_lumps) {
--		fake->body_lumps=dup_lump_list(shmem_msg->body_lumps);
--		if (!fake->body_lumps) { /* non_empty->empty ... failure */
++	if (shmem_msg->body_lumps) {
 +		fake.body_lumps=dup_lump_list(shmem_msg->body_lumps);
 +		if (!fake.body_lumps) { /* non_empty->empty ... failure */
- 			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
--			goto restore;
++			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
 +			free_duped_lump_list(fake.add_rm);
 +			if (fake.new_uri.s) pkg_free(fake.new_uri.s);
-+			return 0;
- 		}
+ 		return 0;
  	}
- 	
--	/* success */
--	return 1;
--
--restore:
--	/* restore original environment and destroy faked message */
--	free_duped_lump_list(fake->add_rm);
--	free_duped_lump_list(fake->body_lumps);
--	if (fake->new_uri.s) pkg_free(fake->new_uri.s);
--	set_t(backup_t);
--	global_msg_id=backup_msgid;
--	rmode=backup_mode;
--	return 0;
--}
--
--/* return 1 if a failure_route processes */
--int failure_route(struct cell *t)
--{
--	struct sip_msg faked_msg;
--
--	/* don't do anything if we don't have to */
--	if (!t->on_negative) return 0;
--
--	/* if fake message creation failes, return error too */
--	if (!faked_env(&faked_msg, t, t->uas.request, 0 /* create fake */ )) {
--		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
--		return 0;
--	}
++	}
++
 +	/* fake also the env. conforming to the fake msg */
 +	faked_env( t, &fake);
 +	/* DONE with faking ;-) -> run the route */
@@ -470,7 +483,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
 -		LOG(L_ERR, "ERROR: on_negative_reply: "
 -			"Error in do_action\n");
 -	/* restore original environment */
--	faked_env(&faked_msg, 0, 0, 1 );
+-	faked_env(&faked_msg, 0, orig_request, 1 );
 +	if (run_actions(failure_rlist[t->on_negative], &fake)<0)
 +		LOG(L_ERR, "ERROR: run_failure_route: Error in do_action\n");
 +
@@ -483,7 +496,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  	return 1;
  }
  
-@@ -561,7 +546,6 @@
+@@ -573,7 +554,6 @@
  	int branch , int *should_store, int *should_relay,
  	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
  {
@@ -491,7 +504,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  	int branch_cnt;
  	int picked_branch;
  	int picked_code;
-@@ -619,15 +603,32 @@
+@@ -631,15 +611,32 @@
  
  		/* no more pending branches -- try if that changes after
  		   a callback; save banch count to be able to determine
@@ -529,7 +542,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  
  		/* look if the callback perhaps replied transaction; it also
  		   covers the case in which a transaction is replied localy
-@@ -864,7 +865,10 @@
+@@ -876,7 +873,10 @@
  		   anyway 
          */
  		if (msg_status<300 && branch==relay) {
@@ -540,7 +553,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  		}
  		/* try bulding the outbound reply from either the current
  	       or a stored message */
-@@ -932,8 +936,11 @@
+@@ -944,8 +944,11 @@
  
  		if (t->is_invite && relayed_msg!=FAKED_REPLY
  				&& relayed_code>=200 && relayed_code < 300
@@ -554,7 +567,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  			totag_retr=update_totag_set(t, relayed_msg);
  		}
  	}; /* if relay ... */
-@@ -945,8 +952,12 @@
+@@ -957,8 +960,12 @@
  		SEND_PR_BUFFER( uas_rb, buf, res_len );
  		DBG("DEBUG: reply relayed. buf=%p: %.9s..., shmem=%p: %.9s\n", 
  			buf, buf, uas_rb->buffer, uas_rb->buffer );
@@ -568,7 +581,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  		pkg_free( buf );
  	}
  
-@@ -1017,8 +1028,11 @@
+@@ -1029,8 +1036,11 @@
  		update_reply_stats( winning_code );
  		if (t->is_invite && winning_msg!=FAKED_REPLY 
  				&& winning_code>=200 && winning_code <300
@@ -582,7 +595,7 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  			totag_retr=update_totag_set(t, winning_msg);
  		}
  		
-@@ -1027,8 +1041,12 @@
+@@ -1039,8 +1049,12 @@
  	if (local_winner>=0 && winning_code>=200 ) {
  		DBG("DEBUG: local transaction completed\n");
  		if (!totag_retr) {
@@ -595,10 +608,10 @@ diff -ruib sip_router/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
  			if (t->completion_cb) t->completion_cb( t, winning_msg, 
  						winning_code, t->cbp);
  		}
-diff -ruib sip_router/modules/tm/tm.c sip_router_md/modules/tm/tm.c
---- sip_router/modules/tm/tm.c	2003-09-26 18:23:08.000000000 +0200
-+++ sip_router_md/modules/tm/tm.c	2003-09-26 18:25:32.000000000 +0200
-@@ -195,9 +195,13 @@
+diff -ruib sip_router_head/modules/tm/tm.c sip_router_md/modules/tm/tm.c
+--- sip_router_head/modules/tm/tm.c	2003-10-30 12:56:44.000000000 +0100
++++ sip_router_md/modules/tm/tm.c	2003-11-13 21:00:37.000000000 +0100
+@@ -195,7 +195,10 @@
  	{"t_on_reply",         w_t_on_reply,            1, fixup_str2int,
  			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
  	/* not applicable from the script */
@@ -608,13 +621,10 @@ diff -ruib sip_router/modules/tm/tm.c sip_router_md/modules/tm/tm.c
 +	{"register_req_cb",    (cmd_function)register_req_cb,   NO_SCRIPT,    0, 0},
  	{"load_tm",            (cmd_function)load_tm,           NO_SCRIPT,     0, 0},
  	{T_REPLY_WB,           (cmd_function)t_reply_with_body, NO_SCRIPT,     0, 0},
-+	{T_REPLY_UNSAFE,       (cmd_function)t_reply_unsafe,    NO_SCRIPT,    0, 0},
  	{T_IS_LOCAL,           (cmd_function)t_is_local,        NO_SCRIPT,     0, 0},
- 	{T_GET_TI,             (cmd_function)t_get_trans_ident, NO_SCRIPT,     0, 0},
- 	{T_LOOKUP_IDENT,       (cmd_function)t_lookup_ident,    NO_SCRIPT,     0, 0},
-diff -ruib sip_router/modules/tm/tm_load.c sip_router_md/modules/tm/tm_load.c
---- sip_router/modules/tm/tm_load.c	2003-09-26 18:23:08.000000000 +0200
-+++ sip_router_md/modules/tm/tm_load.c	2003-09-26 18:29:45.000000000 +0200
+diff -ruib sip_router_head/modules/tm/tm_load.c sip_router_md/modules/tm/tm_load.c
+--- sip_router_head/modules/tm/tm_load.c	2003-10-30 12:56:44.000000000 +0100
++++ sip_router_md/modules/tm/tm_load.c	2003-11-13 20:38:25.000000000 +0100
 @@ -40,12 +40,18 @@
  
  int load_tm( struct tm_binds *tmb)
@@ -635,9 +645,9 @@ diff -ruib sip_router/modules/tm/tm_load.c sip_router_md/modules/tm/tm_load.c
  	if (!( tmb->t_relay_to_tcp=find_export(T_RELAY_TO_TCP, 2, 0)) ) {
  		LOG(L_ERR, LOAD_ERROR "'t_relay_to_tcp' not found\n");
  		return -1;
-diff -ruib sip_router/modules/tm/tm_load.h sip_router_md/modules/tm/tm_load.h
---- sip_router/modules/tm/tm_load.h	2003-09-26 18:23:08.000000000 +0200
-+++ sip_router_md/modules/tm/tm_load.h	2003-09-26 18:31:30.000000000 +0200
+diff -ruib sip_router_head/modules/tm/tm_load.h sip_router_md/modules/tm/tm_load.h
+--- sip_router_head/modules/tm/tm_load.h	2003-11-11 16:32:36.000000000 +0100
++++ sip_router_md/modules/tm/tm_load.h	2003-11-13 20:38:25.000000000 +0100
 @@ -56,6 +56,7 @@
  #define T_RELAY              "t_relay"
  #define T_REPLY              "t_reply"
@@ -646,7 +656,7 @@ diff -ruib sip_router/modules/tm/tm_load.h sip_router_md/modules/tm/tm_load.h
  #define T_ADDBLIND           "t_add_blind"
  #define T_REPLY_UNSAFE       "t_reply_unsafe"
  #define T_FORWARD_NONACK     "t_forward_nonack"
-@@ -72,7 +73,10 @@
+@@ -73,7 +74,10 @@
  
  
  struct tm_binds {
