@@ -51,6 +51,7 @@
  *
  * History:
  * ----------
+ * 2003-01-28 scratchpad removed (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-23 options for disabling r-uri matching introduced (jiri)
  */
@@ -75,26 +76,45 @@
 #include "t_hooks.h"
 #include "t_lookup.h"
 
+#define EQ_VIA_LEN(_via)\
+	( (p_msg->via1->bsize-(p_msg->_via->name.s-(p_msg->_via->hdr.s+p_msg->_via->hdr.len)))==\
+	  	(t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len))) )
+
+
 
 #define EQ_LEN(_hf) (t_msg->_hf->body.len==p_msg->_hf->body.len)
+#define EQ_REQ_URI_LEN\
+	(p_msg->first_line.u.request.uri.len==t_msg->first_line.u.request.uri.len)
+
+#ifdef SCRATCH
 #define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s,\
 	translate_pointer(p_msg->orig,p_msg->buf,p_msg->_hf->body.s), \
 	p_msg->_hf->body.len)==0)
-#define EQ_REQ_URI_LEN\
-	(p_msg->first_line.u.request.uri.len==t_msg->first_line.u.request.uri.len)
 #define EQ_REQ_URI_STR\
 	( memcmp( t_msg->first_line.u.request.uri.s,\
 	translate_pointer(p_msg->orig,p_msg->buf,p_msg->first_line.u.request.uri.s),\
 	p_msg->first_line.u.request.uri.len)==0)
-#define EQ_VIA_LEN(_via)\
-	( (p_msg->via1->bsize-(p_msg->_via->name.s-(p_msg->_via->hdr.s+p_msg->_via->hdr.len)))==\
-	(t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len))) )
-
 #define EQ_VIA_STR(_via)\
 	( memcmp( t_msg->_via->name.s,\
 	 translate_pointer(p_msg->orig,p_msg->buf,p_msg->_via->name.s),\
 	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
 	)==0 )
+#else /* SCRATCH */
+#define EQ_STR(_hf) (memcmp(t_msg->_hf->body.s,\
+	p_msg->_hf->body.s, \
+	p_msg->_hf->body.len)==0)
+#define EQ_REQ_URI_STR\
+	( memcmp( t_msg->first_line.u.request.uri.s,\
+	p_msg->first_line.u.request.uri.s,\
+	p_msg->first_line.u.request.uri.len)==0)
+#define EQ_VIA_STR(_via)\
+	( memcmp( t_msg->_via->name.s,\
+	 p_msg->_via->name.s,\
+	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
+	)==0 )
+#endif /* SCRATCH */
+
+
 
 #ifdef PRESERVE_ZT
 #define HF_LEN(_hf) ((_hf)->body.s+(_hf)->body.len-(_hf)->name.s)

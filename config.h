@@ -159,4 +159,8 @@
 #define MAX_BRANCH_PARAM_LEN  (MCOOKIE_LEN+48)
 
 
+/* maximum path length */
+#define PATH_MAX_GUESS	1024
+
+
 #endif

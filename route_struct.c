@@ -25,6 +25,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * 2003-01-29 src_port introduced (jiri)
  */
 
 
@@ -142,6 +144,9 @@ void print_expr(struct expr* exp)
 				break;
 			case SRCIP_O:
 				DBG("srcip");
+				break;
+			case SRCPORT_O:
+				DBG("srcport");
 				break;
 			case DSTIP_O:
 				DBG("dstip");

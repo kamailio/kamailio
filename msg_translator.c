@@ -36,6 +36,7 @@
  *             modified via_builder params (andrei)
  * 2003-01-27 more rport fixes (make use of new via_param->start)  (andrei)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-29 scrathcpad removed (jiri)
  *
  */
 
@@ -69,19 +70,25 @@
 		(_dest) += (_len) ;\
 	}while(0);
 
+#ifdef SCRATCH
 #define append_str_trans(_dest,_src,_len,_msg) \
 	append_str( (_dest), (_msg)->orig+((_src)-(_msg)->buf) , (_len) );
+#else
+#define append_str_trans(_dest,_src,_len,_msg) \
+	append_str( (_dest), (_src), (_len) );
+#endif
 
 extern char version[];
 extern int version_len;
 
 
 
+#ifndef REMOVE_ALL_ZT
 /* checks if ip is in host(name) and ?host(ip)=name?
  * ip must be in network byte order!
  *  resolver = DO_DNS | DO_REV_DNS; if 0 no dns check is made
  * return 0 if equal */
-int check_address(struct ip_addr* ip, char *name, int resolver)
+static int check_address(struct ip_addr* ip, char *name, int resolver)
 {
 	struct hostent* he;
 	int i;
@@ -90,19 +97,22 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 	/* maybe we are lucky and name it's an ip */
 	s=ip_addr2a(ip);
 	if (s){
-		DBG("check_address(%s, %s, %d)\n", s, name, resolver);
+		DBG("check_address(%s, %.*s, %d)\n", 
+			s, name->len, name->s, resolver);
+
 	#ifdef USE_IPV6
 		if ((ip->af==AF_INET6) && (strcasecmp(name, s)==0))
 				return 0;
 		else
 	#endif
-			if (strcmp(name, s)==0)
+
+			if (strcmp(name, s)==0) 
 				return 0;
 	}else{
 		LOG(L_CRIT, "check_address: BUG: could not convert ip address\n");
 		return -1;
 	}
-		
+
 	if (resolver&DO_DNS){
 		DBG("check_address: doing dns lookup\n");
 		/* try all names ips */
@@ -122,6 +132,65 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 			return 0;
 		for (i=0; he && he->h_aliases[i];i++){
 			if (strcmp(he->h_aliases[i],name)==0)
+				return 0;
+		}
+	}
+	return -1;
+}
+#endif
+
+
+
+/* checks if ip is in host(name) and ?host(ip)=name?
+ * ip must be in network byte order!
+ *  resolver = DO_DNS | DO_REV_DNS; if 0 no dns check is made
+ * return 0 if equal */
+static int check_via_address(struct ip_addr* ip, str *name, 
+				unsigned short port, int resolver)
+{
+	struct hostent* he;
+	int i;
+	char* s;
+
+	/* maybe we are lucky and name it's an ip */
+	s=ip_addr2a(ip);
+	if (s){
+		DBG("check_address(%s, %.*s, %d)\n", 
+			s, name->len, name->s, resolver);
+
+	#ifdef USE_IPV6
+		if ((ip->af==AF_INET6) && (strncasecmp(name->s, s, name->len)==0))
+			return 0;
+		else
+	#endif
+
+			if (strncmp(name->s, s, name->len)==0) 
+				return 0;
+	}else{
+		LOG(L_CRIT, "check_address: BUG: could not convert ip address\n");
+		return -1;
+	}
+
+	if (port==0) port=SIP_PORT;
+	if (resolver&DO_DNS){
+		DBG("check_address: doing dns lookup\n");
+		/* try all names ips */
+		he=sip_resolvehost(name, &port);
+		if (he && ip->af==he->h_addrtype){
+			for(i=0;he && he->h_addr_list[i];i++){
+				if ( memcmp(&he->h_addr_list[i], ip->u.addr, ip->len)==0)
+					return 0;
+			}
+		}
+	}
+	if (resolver&DO_REV_DNS){
+		DBG("check_address: doing rev. dns lookup\n");
+		/* try reverse dns */
+		he=rev_resolvehost(ip);
+		if (he && (strncmp(he->h_name, name->s, name->len)==0))
+			return 0;
+		for (i=0; he && he->h_aliases[i];i++){
+			if (strncmp(he->h_aliases[i],name->s, name->len)==0)
 				return 0;
 		}
 	}
@@ -463,9 +532,13 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	char* received_buf;
 	char* rport_buf;
 	char* new_buf;
+#ifdef SCRATCH
 	char* orig;
+#endif
 	char* buf;
+#ifndef REMOVE_ALL_ZT
 	char  backup;
+#endif
 	unsigned int offset, s_offset, size;
 	struct lump* anchor;
 	int r;
@@ -483,7 +556,9 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	extra_params.len=0;
 	extra_params.s=0;
 	uri_len=0;
+#ifdef SCRATCH
 	orig=msg->orig;
+#endif
 	buf=msg->buf;
 	len=msg->len;
 	received_len=0;
@@ -515,10 +590,15 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		goto error00;
 	}
 	/* check if received needs to be added */
+#ifdef REMOVE_ALL_ZT
+	r=check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
+		msg->via1->port, received_dns);
+#else
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
 	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
 	msg->via1->host.s[msg->via1->host.len] = backup;
+#endif
 	if (r!=0){
 		if ((received_buf=received_builder(msg,&received_len))==0){
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
@@ -591,7 +671,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	if (msg->new_uri.s){
 		/* copy message up to uri */
 		size=msg->first_line.u.request.uri.s-buf;
+#ifdef SCRATCH
 		memcpy(new_buf, orig, size);
+#else
+		memcpy(new_buf, buf, size);
+#endif
 		offset+=size;
 		s_offset+=size;
 		/* add our uri */
@@ -600,10 +684,17 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		s_offset+=msg->first_line.u.request.uri.len; /* skip original uri */
 	}
 	new_buf[new_len]=0;
+#ifdef SCRATCH
 	/* copy msg adding/removing lumps */
 	process_lumps(msg->add_rm, new_buf, &offset, orig, &s_offset);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, orig+s_offset, len-s_offset);
+#else
+	/* copy msg adding/removing lumps */
+	process_lumps(msg->add_rm, new_buf, &offset, buf, &s_offset);
+	/* copy the rest of the message */
+	memcpy(new_buf+offset, buf+s_offset, len-s_offset);
+#endif
 	new_buf[new_len]=0;
 
 #ifdef DBG_MSG_QA
@@ -637,11 +728,15 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	unsigned int new_len, via_len;
 	char* new_buf;
 	unsigned offset, s_offset, via_offset;
+#ifdef SCRATCH
 	char* orig;
+#endif
 	char* buf;
 	unsigned int len;
 
+#ifdef SCRATCH
 	orig=msg->orig;
+#endif
 	buf=msg->buf;
 	len=msg->len;
 	new_buf=0;
@@ -685,9 +780,21 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	}
 	new_buf[new_len]=0; /* debug: print the message */
 	offset=s_offset=0;
-	process_lumps(msg->repl_add_rm, new_buf, &offset, orig, &s_offset);
+	process_lumps(msg->repl_add_rm, new_buf, &offset, 
+#ifdef SCRATCH
+		orig, 
+#else
+		buf,
+#endif
+		&s_offset);
 	/* copy the rest of the message */
-	memcpy(new_buf+offset,orig+s_offset, len-s_offset);
+	memcpy(new_buf+offset,
+#ifdef SCRATCH
+		orig+s_offset, 
+#else
+		buf+s_offset, 
+#endif
+		len-s_offset);
 	 /* send it! */
 	DBG(" copied size: orig:%d, new: %d, rest: %d\n",
 			s_offset, offset,
@@ -721,6 +828,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	unsigned int      delete_len;
 	char              *warning;
 	unsigned int      warning_len;
+	unsigned int	  text_len;
 	int r;
 #ifndef PRESERVE_ZT
 	char *after_body;
@@ -736,6 +844,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	/* make -Wall happy */
 	warning=0;
 
+	text_len=strlen(text);
+
 	/* force parsing all headers -- we want to return all
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
@@ -749,7 +859,12 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
+#ifdef REMOVE_ALL_ZT
+	r=check_via_address(&msg->rcv.src_ip, &msg->via1->host, 
+		msg->via1->port, received_dns);
+#else
 	r=check_address(&msg->rcv.src_ip, msg->via1->host.s, received_dns);
+#endif
 	msg->via1->host.s[msg->via1->host.len] = backup;
 	if (r!=0) {
 		if ((received_buf=received_builder(msg,&received_len))==0) {
@@ -772,7 +887,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	len = 0;
 	/* first line */
 	len += SIP_VERSION_LEN + 1/*space*/ + 3/*code*/ + 1/*space*/ +
-		strlen(text) + CRLF_LEN/*new line*/;
+		text_len + CRLF_LEN/*new line*/;
 	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) {
 		if (hdr->type==HDR_TO) {
@@ -843,8 +958,8 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 		*(p+i) = '0' + foo - ( foo/10 )*10;
 	p += 3;
 	*(p++) = ' ' ;
-	memcpy( p , text , strlen(text) );
-	p += strlen(text);
+	memcpy( p , text , text_len );
+	p += text_len;
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
 	/* headers*/

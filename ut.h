@@ -28,6 +28,8 @@
  *
  * History
  * ------
+ * 2003-01-29 pathmax added (jiri)
+ * 2003-01-28 scratchpad removed (jiri)
  * 2003-01-18 un_escape function introduced for convenience of code needing
  *            the complex&slow feature of unescaping
  */
@@ -36,12 +38,14 @@
 #ifndef ut_h
 #define ut_h
 
+#include "comp_defs.h"
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <limits.h>
 #include <unistd.h>
 
-
+#include "config.h"
 #include "dprint.h"
 #include "str.h"
 
@@ -78,8 +82,10 @@ struct sip_msg;
 	((_via)->bsize-((_via)->name.s-\
 		((_via)->hdr.s+(_via)->hdr.len)))
 
+#ifdef SCRATCH
 #define via_s(_via,_p_msg) \
 	translate_pointer((_p_msg)->orig,(_p_msg)->buf,(_via)->name.s)
+#endif
 
 
 /* char to hex conversion table */
@@ -251,6 +257,22 @@ inline static void sleep_us( unsigned int nusecs )
 	tval.tv_sec=nusecs/100000;
 	tval.tv_usec=nusecs%1000000;
 	select(0, NULL, NULL, NULL, &tval );
+}
+
+
+/* portable determination of max_path */
+inline static int pathmax()
+{
+#ifdef PATH_MAX
+	static int pathmax=PATH_MAX;
+#else
+	static int pathmax=0;
+#endif
+	if (pathmax==0) { /* init */
+		pathmax=pathconf("/", _PC_PATH_MAX);
+		pathmax=(pathmax<=0)?PATH_MAX_GUESS:pathmax+1;
+	}
+	return pathmax;
 }
 
 inline static int hex2int(char hex_digit)

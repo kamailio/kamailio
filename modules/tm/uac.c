@@ -44,11 +44,13 @@
  *
  * History:
  * --------
+ * 2003-01-29 scratchpad removed (jiri)
  * 2003-01-27 fifo:t_uac_dlg completed (jiri)
  * 2003-01-23 t_uac_dlg now uses get_out_socket (jiri)
  */
 
 
+#include "../../comp_defs.h"
 #include "defs.h"
 
 
@@ -1051,7 +1053,10 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	/* use SIP parser to look at what is in the FIFO request */
 	memset(&faked_msg, 0, sizeof(struct sip_msg));
 	faked_msg.len=header.len; 
-	faked_msg.buf=faked_msg.orig=faked_msg.unparsed=header_buf;
+	faked_msg.buf=faked_msg.unparsed=header_buf;
+#ifdef SCRATCH
+	faked_msg.orig=faked_msg.buf;
+#endif
 	if (parse_headers(&faked_msg, HDR_EOH, 0)==-1 ) {
 			DBG("DEBUG: fifo_uac: parse_headers failed\n");
 			fifo_uac_error(response_file, 400, "HFs unparseable");

@@ -23,12 +23,15 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * 2003-01-28 removed scratchpad (jiri)
  */
 
 
 #ifndef msg_parser_h
 #define msg_parser_h
 
+#include "../comp_defs.h"
 #include "../str.h"
 #include "../data_lump.h"
 #include "../flags.h"
@@ -119,8 +122,10 @@ struct sip_msg {
 	char* unparsed;   /* here we stopped parsing*/
 	
 	struct receive_info rcv; /* source & dest ip, ports, proto a.s.o*/
-	
+
+#ifdef SCRATCH	
 	char* orig;       /* original message copy */
+#endif
 	char* buf;        /* scratch pad, holds a modfied message,
 					   *  via, etc. point into it */
 	unsigned int len; /* message len (orig) */

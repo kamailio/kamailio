@@ -28,6 +28,7 @@
  *
  * History:
  * ---------
+ * 2003-01-29 src_port added (jiri)
  * 2003-01-23 mhomed added (jiri)
  */
 
@@ -123,6 +124,7 @@ struct id_list* lst_tmp;
 %token METHOD
 %token URI
 %token SRCIP
+%token SRCPORT
 %token DSTIP
 %token MYSELF
 
@@ -524,6 +526,10 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| URI error	{ $$=0; yyerror("invalid operator,"
 				  					" == or =~ expected");
 					}
+		| SRCPORT EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+												SRCPORT_O, (void *) $3 ); }
+		| SRCPORT EQUAL_T error { $$=0; yyerror("number expected"); }
+		| SRCPORT error { $$=0; yyerror("equation operator expected"); }
 		| SRCIP EQUAL_T ipnet	{ $$=mk_elem(	EQUAL_OP, NET_ST,
 												SRCIP_O, $3);
 								}

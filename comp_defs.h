@@ -25,7 +25,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/* compatibility defs for emergency roll-back if things do not work */
+/* compatibility defs for emergency roll-back if things do not work ;
+ * if that happens:
+ * a) define PRESERVE_ZT (affects most of parser)
+ * b) define DONT_REMOVE_ZT (affects first line)
+ * c) define SCRATCH
+ * d) undefine REMOVE_ALL_ZT (affects via)
+ */
 
 
 #ifndef _COMP_DEFS_H
@@ -37,6 +43,15 @@
  */
 #undef PRESERVE_ZT
 
+/* go one step further and remove ZT from first line too */
+#undef DONT_REMOVE_ZT
+
+/* make it all -- move ZT away (Via) */
+#define REMOVE_ALL_ZT
+
+/* don't use scratchpad  anymore */
+#undef SCRATCH
+
 
 /* ------------------------------------------------------ */
 /* don't touch this -- that's helper macros depending on
@@ -45,6 +60,12 @@
 #	define SET_ZT(_ch) (_ch)='\0'
 #else
 #	define SET_ZT(_ch)
+#endif
+
+#ifdef REMOVE_ALL_ZT
+#	define VIA_ZT(_ch)
+#else
+#	define VIA_ZT(ch) (_ch)='\0'
 #endif
 
 #endif

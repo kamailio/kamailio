@@ -26,9 +26,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-28: removed 0-terminators from first line (jiri)
  */
 
 
+#include "../comp_defs.h"
 #include "../dprint.h"
 #include "msg_parser.h"
 #include "parser_f.h"
@@ -56,7 +61,7 @@ enum { START,
 };
 
 
-
+#ifdef _CURRENTLY_UNUSED
 char* parse_fline(char* buffer, char* end, struct msg_start* fl)
 {
 	char* tmp;
@@ -1120,6 +1125,7 @@ char* parse_fline(char* buffer, char* end, struct msg_start* fl)
 		}
 	}
 skip:
+	fl->len=tmp-buf;
 	if (fl->type==SIP_REPLY){
 		fl->u.reply.statuscode=stat;
 		/* fl->u.reply.statusclass=stat/100; */
@@ -1132,7 +1138,7 @@ error:
 	return tmp;
 }
 
-
+#endif /* currently unused */
 
 /* parses the first line, returns pointer to  next line  & fills fl;
    also  modifies buffer (to avoid extra copy ops) */
@@ -1212,7 +1218,9 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	   tmp points at space after; go ahead */
 
 	fl->u.request.method.s=buffer;  /* store ptr to first token */
+#ifdef DONT_REMOVE_ZT
 	(*tmp)=0;			/* mark the 1st token end */
+#endif
 	second=tmp+1;			/* jump to second token */
 	offset=second-buffer;
 
@@ -1229,15 +1237,17 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	if ((third==tmp)||(tmp>=end)){
 		goto error;
 	}
+#ifdef DONT_REMOVE_ZT
 	*tmp=0; /* mark the end of the token */
+#endif
 	fl->u.request.uri.s=second;
 	fl->u.request.uri.len=tmp-second;
 
 	/* jku: parse status code */
 	if (fl->type==SIP_REPLY) {
 		if (fl->u.request.uri.len!=3) {
-			LOG(L_INFO, "ERROR:parse_first_line: len(status code)!=3: %s\n",
-				second );
+			LOG(L_INFO, "ERROR:parse_first_line: len(status code)!=3: %.*s\n",
+				fl->u.request.uri.len, second );
 			goto error;
 		}
 		s1=*second; s2=*(second+1);s3=*(second+2);
@@ -1246,8 +1256,8 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 		    s3>='0' && s3<='9' ) {
 			fl->u.reply.statuscode=(s1-'0')*100+10*(s2-'0')+(s3-'0');
 		} else {
-			LOG(L_INFO, "ERROR:parse_first_line: status_code non-numerical: %s\n",
-				second );
+			LOG(L_INFO, "ERROR:parse_first_line: status_code non-numerical: %.*s\n",
+				fl->u.request.uri.len, second );
 			goto error;
 		}
 	}
@@ -1277,9 +1287,12 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	if (nl>=end){ /* no crlf in packet or only 1 line > invalid */
 		goto error;
 	}
+#ifdef DONT_REMOVE_ZT
 	*tmp=0;
+#endif
 	fl->u.request.version.s=third;
 	fl->u.request.version.len=tmp-third;
+	fl->len=nl-buffer;
 
 	return nl;
 

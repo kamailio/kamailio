@@ -25,6 +25,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * 2003-01-29 s/int/enum ... more convenient for gdb (jiri)
  */
 
 
@@ -32,12 +34,12 @@
 #define data_lump_h
 
 
-enum { LUMP_NOP=0, LUMP_DEL, LUMP_ADD };
-enum { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2 };
+enum lump_op { LUMP_NOP=0, LUMP_DEL, LUMP_ADD };
+enum lump_flag { LUMPFLAG_NONE=0, LUMPFLAG_DUPED=1, LUMPFLAG_SHMEM=2 };
 
 struct lump{
 	int type; /* VIA, OTHER, UNSPEC(=0), ... */
-	int op;   /* DEL, ADD, NOP, UNSPEC(=0) */
+	enum lump_op op;   /* DEL, ADD, NOP, UNSPEC(=0) */
 	
 	union{
 		int offset; /* used for DEL, MODIFY */
@@ -53,7 +55,7 @@ struct lump{
 	
 	struct lump* next;
 
-	int flags; /* additional hints for use from TM's shmem */
+	enum lump_flag flags; /* additional hints for use from TM's shmem */
 };
 
 /*

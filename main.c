@@ -26,6 +26,7 @@
  *
  * History:
  * -------
+ * 2002-01-29 argc/argv globalized via my_{argc|argv} (jiri)
  * 2001-01-23 mhomed added (jiri)
  *
  */
@@ -322,6 +323,10 @@ int cfg_errors=0;
 
 /* shared memory (in MB) */
 unsigned int shm_mem_size=SHM_MEM_SIZE * 1024 * 1024;
+
+/* export command-line to anywhere else */
+int my_argc;
+char **my_argv;
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
 		    (normally it shouldn't  be bigger  than 3) */
@@ -1059,6 +1064,7 @@ int main(int argc, char** argv)
 	/*init*/
 	port_no_str_len=0;
 	ret=-1;
+	my_argc=argc; my_argv=argv;
 	
 	/* added by jku: add exit handler */
 	if (signal(SIGINT, sig_usr) == SIG_ERR ) {

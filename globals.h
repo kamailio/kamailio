@@ -116,4 +116,8 @@ extern int memlog;
 /* looking up outbound interface ? */
 extern int mhomed;
 
+/* command-line arguments */
+extern int my_argc;
+extern char **my_argv;
+
 #endif

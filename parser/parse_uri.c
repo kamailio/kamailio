@@ -163,8 +163,8 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	err=0;
 	if (uri->port.s) uri->port_no=str2s(uri->port.s, uri->port.len, &err);
 	if (err){
-		LOG(L_DBG, "ERROR: parse_uri: bad port number in sip uri: %s\n",
-				uri->port.s);
+		LOG(L_DBG, "ERROR: parse_uri: bad port number in sip uri: %.*s\n",
+				uri->port.len, uri->port.s);
 		ser_error=ret=E_BAD_URI;
 		return ret;
 	}

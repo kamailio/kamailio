@@ -23,6 +23,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * history:
+ * --------
+ * 2003-01-29 tcp buffer size ++-ed to allow for 0-terminator
  */
 
 
@@ -57,7 +62,7 @@ enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE,
 struct tcp_req{
 	struct tcp_req* next;
 	/* sockaddr ? */
-	char buf[TCP_BUF_SIZE]; /* bytes read so far*/
+	char buf[TCP_BUF_SIZE+1]; /* bytes read so far (+0-terminator)*/
 	char* start; /* where the message starts, after alll the empty lines are
 					skipped*/
 	char* pos; /* current position in buf */

@@ -23,10 +23,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-29 removed scratchpad (jiri)
  */
 
 
-
+#include "comp_defs.h"
 
 #include "action.h"
 #include "config.h"
@@ -180,7 +184,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 					/*udp*/
 					send_sock=get_send_socket(to, PROTO_UDP);
 					if (send_sock!=0){
+#ifdef SCRATCH
 						ret=udp_send(send_sock, msg->orig, msg->len, to);
+#else
+						ret=udp_send(send_sock, msg->buf, msg->len, to);
+#endif
 					}else{
 						ret=-1;
 					}
@@ -188,7 +196,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 #ifdef USE_TCP
 					else{
 					/*tcp*/
+#ifdef SCRATCH
 					ret=tcp_send(msg->orig, msg->len, to, 0);
+#else
+					ret=tcp_send(msg->buf, msg->len, to, 0);
+#endif
 				}
 #endif
 			}

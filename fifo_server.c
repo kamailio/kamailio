@@ -50,9 +50,14 @@
  *
  * File test/transaction.fifo illustrates example of use
  * of t_uac command (part of TM module).
+ *
+ * History:
+ * --------
+ * 2003-01-29 new built-in fifo commands: arg and pwd (jiri)
  */
 
 
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -574,10 +579,63 @@ static int print_version_cmd( FILE *stream, char *response_file )
 	if (response_file) {
 		fifo_reply(response_file, "200 ok\n" SERVER_HDR CRLF );
 	} else {
-		LOG(L_ERR, "ERROR: no file for print_version_cmd\n");
+		LOG(L_ERR, "ERROR: no file for %s\n", "print_version_cmd" );
 	}
 	return 1;
 }
+
+static int pwd_cmd( FILE *stream, char *response_file )
+{
+	char *cwd_buf;
+	int max_len;
+
+	if (!response_file) {
+		LOG(L_ERR, "ERROR: no file for %s\n", "pwd_cmd" );
+		return 1;
+	}
+
+	max_len=pathmax();
+	cwd_buf=pkg_malloc(max_len);
+	if (!cwd_buf) {
+		LOG(L_ERR, "ERROR: pwd_cmd: no cwd pkg mem\n");
+		fifo_reply(response_file, "500 no memory\n");
+		return 1;
+	}
+
+	if (getcwd(cwd_buf, max_len)) {
+		fifo_reply(response_file, "200 ok\n%s\n", cwd_buf );
+	} else {
+		fifo_reply(response_file, "500 getcwd failed\n" );
+	}
+
+	pkg_free(cwd_buf);
+	return 1;
+}
+
+static int arg_cmd( FILE *stream, char *response_file )
+{
+	FILE *reply_pipe;
+	int p;
+
+	if (response_file==0 || *response_file==0 ) {
+		 LOG(L_ERR, "ERROR: ps_fifo_cmd: null file\n");
+		return -1;
+	}
+	reply_pipe=open_reply_pipe(response_file);
+	if (reply_pipe==NULL) {
+		LOG(L_ERR, "ERROR: ps_fifo_cmd: opening reply pipe (%s) failed\n",
+			response_file );
+		return -1;
+	}
+
+	fputs( "200 ok\n", reply_pipe);
+	for (p=0; p<my_argc;p++) 
+			fprintf( reply_pipe, "%s\n", my_argv[p] );
+			
+	fclose(reply_pipe);
+	return 1;
+}
+
 	
 
 /* diagnostic and hello-world FIFO command */
@@ -686,6 +744,14 @@ int register_core_fifo()
 	}
 	if (register_fifo_cmd(print_version_cmd, FIFO_VERSION, 0)<0) {
 		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_VERSION);
+		return -1;
+	}
+	if (register_fifo_cmd(pwd_cmd, FIFO_PWD, 0)<0) {
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_PWD);
+		return -1;
+	}
+	if (register_fifo_cmd(arg_cmd, FIFO_ARG, 0)<0) {
+		LOG(L_CRIT, "unable to register '%s' FIFO cmd\n", FIFO_ARG);
 		return -1;
 	}
 	if (register_fifo_cmd(which_fifo_cmd, FIFO_WHICH, 0)<0) {

@@ -25,6 +25,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifdef _OBSOLETED
 
 #include "parse_hostport.h"
 #include <string.h>    /* strlen */
@@ -54,3 +55,5 @@ char* parse_hostport(char* buf, str* host, short int* port)
 
 	return host->s;
 }
+
+#endif

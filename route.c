@@ -26,6 +26,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-01-28 scratchpad removed, src_port introduced (jiri)
  */
 
  
@@ -235,6 +239,64 @@ static int fix_actions(struct action* a)
 }
 
 
+static int comp_port( int port, void *param, int op, int subtype )
+{
+	if (op!=EQUAL_OP) {
+		LOG(L_CRIT, "BUG: comp_port: '=' expected: %d\n", op );
+		return E_BUG;
+	}
+	if (subtype!=NUMBER_ST) {
+		LOG(L_CRIT, "BUG: comp_port: number expected: %d\n", subtype );
+		return E_BUG;
+	}
+	return port==(int)param;
+}
+
+/* eval_elem helping function, returns str op param */
+static int comp_strstr(str* str, void* param, int op, int subtype)
+{
+	int ret;
+	char backup;
+	
+	ret=-1;
+	if (op==EQUAL_OP){
+		if (subtype!=STRING_ST){
+			LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+					"string expected\n", subtype);
+			goto error;
+		}
+		ret=(strncasecmp(str->s, (char*)param, str->len)==0);
+	}else if (op==MATCH_OP){
+		if (subtype!=RE_ST){
+			LOG(L_CRIT, "BUG: comp_str: bad type %d, "
+					" RE expected\n", subtype);
+			goto error;
+		}
+		/* this is really ugly -- we put a temporary zero-terminating
+		 * character in the original string; that's because regexps
+         * take 0-terminated strings and our messages are not
+         * zero-terminated; it should not hurt as long as this function
+		 * is applied to content of pkg mem, which is always the case
+		 * with calls from route{}; the same goes for fline in reply_route{};
+         *
+         * also, the received function should always give us an extra
+         * character, into which we can put the 0-terminator now;
+         * an alternative would be allocating a new piece of memory,
+         * which might be too slow
+         * -jiri
+         */
+		backup=str->s[str->len];str->s[str->len]=0;
+		ret=(regexec((regex_t*)param, str->s, 0, 0, 0)==0);
+		str->s[str->len]=backup;
+	}else{
+		LOG(L_CRIT, "BUG: comp_str: unknown op %d\n", op);
+		goto error;
+	}
+	return ret;
+	
+error:
+	return -1;
+}
 
 /* eval_elem helping function, returns str op param */
 static int comp_str(char* str, void* param, int op, int subtype)
@@ -337,8 +399,13 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	}
 	switch(e->l.operand){
 		case METHOD_O:
+#ifdef DONT_REMOVE_ZT
 				ret=comp_str(msg->first_line.u.request.method.s, e->r.param,
 								e->op, e->subtype);
+#else
+				ret=comp_strstr(&msg->first_line.u.request.method, e->r.param,
+								e->op, e->subtype);
+#endif
 				break;
 		case URI_O:
 				if(msg->new_uri.s){
@@ -348,8 +415,13 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 									msg->parsed_uri.port_no?
 									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
+#ifdef DONT_REMOVE_ZT
 						ret=comp_str(msg->new_uri.s, e->r.param,
 										e->op, e->subtype);
+#else
+						ret=comp_strstr(&msg->new_uri, e->r.param,
+										e->op, e->subtype);
+#endif
 					}
 				}else{
 					if (e->subtype==MYSELF_ST){
@@ -358,8 +430,13 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 									msg->parsed_uri.port_no?
 									msg->parsed_uri.port_no:SIP_PORT);
 					}else{
+#ifdef DONT_REMOVE_ZT
 						ret=comp_str(msg->first_line.u.request.uri.s,
 										 e->r.param, e->op, e->subtype);
+#else
+						ret=comp_strstr(&msg->first_line.u.request.uri,
+										 e->r.param, e->op, e->subtype);
+#endif
 					}
 				}
 				break;
@@ -376,6 +453,12 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				ret=run_actions( (struct action*)e->r.param, msg);
 				if (ret<=0) ret=(ret==0)?EXPR_DROP:0;
 				else ret=1;
+				break;
+		case SRCPORT_O:
+				ret=comp_port(ntohs(msg->rcv.src_port), 
+					e->r.param, /* e.g., 5060 */
+					e->op, /* e.g. == */
+					e->subtype /* 5060 is number */);
 				break;
 		default:
 				LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",

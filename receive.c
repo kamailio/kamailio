@@ -23,6 +23,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-29 transport-independent message zero-termination in
+ *            receive_msg (jiri)
  */
 
 
@@ -76,8 +81,10 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* zero termination (termination of orig message bellow not that
 	   useful as most of the work is done with scrath-pad; -jiri  */
 	/* buf[len]=0; */ /* WARNING: zero term removed! */
+	buf[len]=0; /* transport-independent zero-termination */
 	msg->rcv=*rcv_info;
 	msg->id=msg_no;
+#ifdef SCRATCH
 	/* make a copy of the message */
 	msg->orig=(char*) pkg_malloc(len+1);
 	if (msg->orig==0){
@@ -88,6 +95,7 @@ int receive_msg(char* buf, unsigned int len, struct receive_info* rcv_info)
 	/* WARNING: zero term removed! */
 	/* msg->orig[len]=0; */ /* null terminate it,good for using str* functions
 						 on it*/
+#endif
 	
 	if (parse_msg(buf,len, msg)!=0){
 		LOG(L_ERR, "ERROR: receive_msg: parse_msg failed\n");
@@ -185,7 +193,9 @@ error:
 	exec_post_cb(msg);
 error02:
 	free_sip_msg(msg);
+#ifdef SCRATCH
 error01:
+#endif
 	pkg_free(msg);
 error00:
 	STATS_RX_DROPS;

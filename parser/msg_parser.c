@@ -29,6 +29,7 @@
  *
  * History:
  * ---------
+ * 2003-01-29 scrathcpad removed (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -404,8 +405,10 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 			msg->last_header=hf;
 		}
 #ifdef EXTRA_DEBUG
-		DBG("header field type %d, name=<%s>, body=<%s>\n",
-			hf->type, hf->name.s, hf->body.s);
+		DBG("header field type %d, name=<%.*s>, body=<%.*s>\n",
+			hf->type, 
+			hf->name.len, hf->name.s, 
+			hf->body.len, hf->body.s);
 #endif
 		tmp=rest;
 	}
@@ -454,16 +457,22 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 			break;
 		case SIP_REQUEST:
 			DBG("SIP Request:\n");
-			DBG(" method:  <%s>\n",fl->u.request.method.s);
-			DBG(" uri:     <%s>\n",fl->u.request.uri.s);
-			DBG(" version: <%s>\n",fl->u.request.version.s);
+			DBG(" method:  <%.*s>\n",fl->u.request.method.len,
+				fl->u.request.method.s);
+			DBG(" uri:     <%.*s>\n",fl->u.request.uri.len,
+				fl->u.request.uri.s);
+			DBG(" version: <%.*s>\n",fl->u.request.version.len,
+				fl->u.request.version.s);
 			flags=HDR_VIA;
 			break;
 		case SIP_REPLY:
 			DBG("SIP Reply  (status):\n");
-			DBG(" version: <%s>\n",fl->u.reply.version.s);
-			DBG(" status:  <%s>\n",fl->u.reply.status.s);
-			DBG(" reason:  <%s>\n",fl->u.reply.reason.s);
+			DBG(" version: <%.*s>\n",fl->u.reply.version.len,
+					fl->u.reply.version.s);
+			DBG(" status:  <%.*s>\n", fl->u.reply.status.len,
+					fl->u.reply.status.s);
+			DBG(" reason:  <%.*s>\n", fl->u.reply.reason.len,
+					fl->u.reply.reason.s);
 			/* flags=HDR_VIA | HDR_VIA2; */
 			/* we don't try to parse VIA2 for local messages; -Jiri */
 			flags=HDR_VIA;
@@ -481,21 +490,42 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 #ifdef EXTRA_DEBUG
 	/* dump parsed data */
 	if (msg->via1){
-		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
-			msg->via1->name.s, msg->via1->version.s,
-			msg->via1->transport.s, msg->via1->host.s,
-			msg->via1->port_str.s, msg->via1->port);
-		if (msg->via1->params.s)  DBG(";<%s>", msg->via1->params.s);
-		if (msg->via1->comment.s) DBG(" <%s>", msg->via1->comment.s);
+		DBG(" first  via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
+			msg->via1->name.len, 
+			msg->via1->name.s, 
+			msg->via1->version.len,
+			msg->via1->version.s,
+			msg->via1->transport.len 
+			msg->via1->transport.s, 
+			msg->via1->host.len,
+			msg->via1->host.s,
+			msg->via1->port_str.len, 
+			msg->via1->port_str.s, 
+			msg->via1->port);
+		if (msg->via1->params.s)  DBG(";<%.*s>", 
+				msg->via1->params.len, msg->via1->params.s);
+		if (msg->via1->comment.s) 
+				DBG(" <%.*s>", 
+					msg->via1->comment.len, msg->via1->comment.s);
 		DBG ("\n");
 	}
 	if (msg->via2){
-		DBG(" first  via: <%s/%s/%s> <%s:%s(%d)>",
-			msg->via2->name.s, msg->via2->version.s,
-			msg->via2->transport.s, msg->via2->host.s,
-			msg->via2->port_str.s, msg->via2->port);
-		if (msg->via2->params.s)  DBG(";<%s>", msg->via2->params.s);
-		if (msg->via2->comment.s) DBG(" <%s>", msg->via2->comment.s);
+		DBG(" first  via: <%.*s/%.*s/%.*s> <%.*s:%.*s(%d)>",
+			msg->via2->name.len, 
+			msg->via2->name.s, 
+			msg->via2->version.len,
+			msg->via2->version.s,
+			msg->via2->transport.len, 
+			msg->via2->transport.s, 
+			msg->via2->host.len,
+			msg->via2->host.s,
+			msg->via2->port_str.len, 
+			msg->via2->port_str.s, 
+			msg->via2->port);
+		if (msg->via2->params.s)  DBG(";<%.*s>", 
+				msg->via2->params.len, msg->via2->params.s);
+		if (msg->via2->comment.s) DBG(" <%.*s>", 
+				msg->via2->comment.len, msg->via2->comment.s);
 		DBG ("\n");
 	}
 #endif
@@ -509,7 +539,11 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	
 error:
 	/* more debugging, msg->orig is/should be null terminated*/
+#ifdef SCRATCH
 	LOG(L_ERR, "ERROR: parse_msg: message=<%.*s>\n", (int)msg->len, msg->orig);
+#else
+	LOG(L_ERR, "ERROR: parse_msg: message=<%.*s>\n", (int)msg->len, msg->buf);
+#endif
 	return -1;
 }
 
@@ -535,7 +569,9 @@ void free_sip_msg(struct sip_msg* msg)
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
 	if (msg->reply_lump)   free_reply_lump(msg->reply_lump);
+#ifdef SCRATCH
 	pkg_free(msg->orig);
+#endif
 	/* don't free anymore -- now a pointer to a static buffer */
 #	ifdef DYN_BUF
 	pkg_free(msg->buf); 

@@ -45,6 +45,10 @@
 #define FIFO_WHICH "which"
 /* print server's process table */
 #define FIFO_PS "ps"
+/* print server's command line arguments */
+#define FIFO_ARG "arg"
+/* print server's working directory */
+#define FIFO_PWD "pwd"
 
 #define MAX_CTIME_LEN 128
 

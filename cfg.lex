@@ -28,6 +28,7 @@
  *
  * History:
  * -------
+ * 2001-01-29 src_port added (jiri)
  * 2001-01-23 mhomed added (jiri)
  */
 
@@ -106,6 +107,7 @@ MAX_LEN			"max_len"
 METHOD	method
 URI		uri
 SRCIP	src_ip
+SRCPORT	src_port
 DSTIP	dst_ip
 MYSELF	myself
 /* operators */
@@ -218,6 +220,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{METHOD}	{ count(); yylval.strval=yytext; return METHOD; }
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }
 <INITIAL>{SRCIP}	{ count(); yylval.strval=yytext; return SRCIP; }
+<INITIAL>{SRCPORT}	{ count(); yylval.strval=yytext; return SRCPORT; }
 <INITIAL>{DSTIP}	{ count(); yylval.strval=yytext; return DSTIP; }
 <INITIAL>{MYSELF}	{ count(); yylval.strval=yytext; return MYSELF; }
 
