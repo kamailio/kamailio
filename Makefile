@@ -23,7 +23,7 @@ include Makefile.sources
 
 override exclude_modules:=CVS cpl cpl-c ext extcmd mangler nathelper pdt \
 								postgres snmp  \
-							jabber sms pa  msilo \
+							jabber sms pa  msilo im radius_acc radius_auth \
 							auth_radius group_radius uri_radius \
 							$(exclude_modules)
 
