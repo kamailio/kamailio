@@ -107,7 +107,7 @@ struct s_table* init_hash_table()
    int       i;
 
    /*allocs the table*/
-   hash_table = (struct s_table*)sh_malloc(  sizeof( struct s_table ) );
+   hash_table = (struct s_table*)sh_malloc( sizeof( struct s_table ) );
    if ( !hash_table )
       goto error;
 

@@ -87,7 +87,7 @@ void tm_shutdown()
 
     DBG("DEBUG: tm_shutdown : empting DELETE list\n");
     /*unlink the lists*/
-    for( i=NR_OF_TIMER_LISTS ; i>=0 ; i-- )
+    for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
     {
        //lock( hash_table->timers[i].mutex );
        hash_table->timers[ i ].first_tl = hash_table->timers[ i ].last_tl = 0;

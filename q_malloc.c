@@ -23,7 +23,40 @@
 		((struct qm_frag_end*)((char*)(f)-sizeof(struct qm_frag_end)))->size- \
 			sizeof(struct qm_frag) ) )
 
+#define PREV_FRAG_END(f) \
+		((struct qm_frag_end*)((char*)(f)-sizeof(struct qm_frag_end)))
 
+#ifdef DBG_QM_MALLOC
+#define ST_CHECK_PATTERN   0xf0f0f0f0
+#define END_CHECK_PATTERN1 0xc0c0c0c0
+#define END_CHECK_PATTERN2 0xabcdefed
+
+
+static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f)
+{
+	if (f->check!=ST_CHECK_PATTERN){
+		LOG(L_CRIT, "BUG: qm_*: fragm. %x beginning overwritten(%x)!\n",
+				f, f->check);
+		qm_status(qm);
+		abort();
+	};
+	if ((FRAG_END(f)->check1!=END_CHECK_PATTERN1)||
+		(FRAG_END(f)->check2!=END_CHECK_PATTERN2)){
+		LOG(L_CRIT, "BUG: qm_*: fragm. %x end overwritten(%x, %x)!\n",
+				f, FRAG_END(f)->check1, FRAG_END(f)->check2);
+		qm_status(qm);
+		abort();
+	}
+	if ((f>qm->first_frag)&&
+			((PREV_FRAG_END(f)->check1!=END_CHECK_PATTERN1) ||
+				(PREV_FRAG_END(f)->check2!=END_CHECK_PATTERN2) ) ){
+		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%x, %x)[%x]!\n",
+				PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f);
+		qm_status(qm);
+		abort();
+	}
+}
+#endif
 
 
 
@@ -65,6 +98,11 @@ struct qm_block* qm_malloc_init(char* address, unsigned int size)
 	qm->first_frag->u.nxt_free=&(qm->free_lst);
 	qm->last_frag_end->size=size;
 	qm->last_frag_end->prev_free=&(qm->free_lst);
+#ifdef DBG_QM_MALLOC
+	qm->first_frag->check=ST_CHECK_PATTERN;
+	qm->last_frag_end->check1=END_CHECK_PATTERN1;
+	qm->last_frag_end->check2=END_CHECK_PATTERN2;
+#endif
 	/* init free_lst* */
 	qm->free_lst.u.nxt_free=qm->first_frag;
 	qm->free_lst_end.prev_free=qm->first_frag;
@@ -136,6 +174,9 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 		if (f->size>=size){
 			/* we found it!*/
 			/*detach it from the free list*/
+#ifdef DBG_QM_MALLOC
+			qm_debug_frag(qm, f);
+#endif
 			qm_detach_free(qm, f);
 			/*mark it as "busy"*/
 			f->u.is_free=0;
@@ -153,10 +194,15 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 				FRAG_END(n)->size=n->size;
 				qm->real_used+=overhead;
 #ifdef DBG_QM_MALLOC
+				end->check1=END_CHECK_PATTERN1;
+				end->check2=END_CHECK_PATTERN2;
 				/* frag created by malloc, mark it*/
 				n->file=file;
 				n->func="frag. from qm_malloc";
 				n->line=line;
+				n->check=ST_CHECK_PATTERN;
+/*				FRAG_END(n)->check1=END_CHECK_PATTERN1;
+				FRAG_END(n)->check2=END_CHECK_PATTERN2; */
 #endif
 				/* reinsert n in free list*/
 				qm_insert_free(qm, n);
@@ -171,7 +217,11 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 			f->file=file;
 			f->func=func;
 			f->line=line;
-	DBG("qm_malloc(%x, %d) returns address %x\n", qm, size,(char*)f+sizeof(struct qm_frag) );
+			f->check=ST_CHECK_PATTERN;
+		/*  FRAG_END(f)->check1=END_CHECK_PATTERN1;
+			FRAG_END(f)->check2=END_CHECK_PATTERN2;*/
+	DBG("qm_malloc(%x, %d) returns address %x\n", qm, size,
+			(char*)f+sizeof(struct qm_frag) );
 #endif
 			return (char*)f+sizeof(struct qm_frag);
 		}
@@ -210,6 +260,7 @@ void qm_free(struct qm_block* qm, void* p)
 	prev=next=0;
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
 #ifdef DBG_QM_MALLOC
+	qm_debug_frag(qm, f);
 	if (f->u.is_free){
 		LOG(L_CRIT, "BUG: qm_free: freeing already freed pointer,"
 				" first free: %s: %s(%d) - aborting\n",
@@ -224,6 +275,9 @@ void qm_free(struct qm_block* qm, void* p)
 	size=f->size;
 	qm->used-=size;
 	qm->real_used-=size;
+#ifdef DBG_QM_MALLOC
+	qm_debug_frag(qm, f);
+#endif
 	if (((char*)next < (char*)qm->last_frag_end) &&( next->u.is_free)){
 		/* join */
 		qm_detach_free(qm, next);
@@ -235,6 +289,9 @@ void qm_free(struct qm_block* qm, void* p)
 		prev=FRAG_PREV(f);
 		/*	(struct qm_frag*)((char*)f - (struct qm_frag_end*)((char*)f-
 								sizeof(struct qm_frag_end))->size);*/
+#ifdef DBG_QM_MALLOC
+		qm_debug_frag(qm, f);
+#endif
 		if (prev->u.is_free){
 			/*join*/
 			qm_detach_free(qm, prev);
@@ -275,6 +332,8 @@ void qm_status(struct qm_block* qm)
 #ifdef DBG_QM_MALLOC
 		LOG(L_INFO, "            %s from %s: %s(%d)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
+		LOG(L_INFO, "        start check=%x, end check= %x, %x\n",
+				f->check, FRAG_END(f)->check1, FRAG_END(f)->check2);
 #endif
 	}
 	DBG("dumping free list:\n");

@@ -17,10 +17,15 @@ struct qm_frag{
 	char* file;
 	char* func;
 	unsigned int line;
+	unsigned int check;
 #endif
 };
 
 struct qm_frag_end{
+#ifdef DBG_QM_MALLOC
+	unsigned int check1;
+	unsigned int check2;
+#endif
 	unsigned int size;
 	struct qm_frag* prev_free;
 };

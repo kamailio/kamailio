@@ -345,7 +345,7 @@ static void sig_usr(int signo)
 		if (is_main)
 			shm_mem_destroy();
 #endif
-		DPrint("Thank you for flying " NAME "\n");
+		dprint("Thank you for flying " NAME "\n");
 		exit(0);
 	} else if (signo==SIGUSR1) { /* statistic */
 #ifdef STATS
