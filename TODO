@@ -20,6 +20,7 @@ Low priority:
 - flags for using names or ip adresses in Via ?
 
 - handle SIGCHLD, SIGHUP
+- use a  standard lex compatible .lex format (instead of flex)
 
 - make install
 - init.d scripts (and rc.local? for *BSD or Slackware)
