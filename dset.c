@@ -163,10 +163,10 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, qvalue_t q)
  */
 char* print_dset(struct sip_msg* msg, int* len) 
 {
-	int cnt, i;
+	int cnt, i, qlen;
 	qvalue_t q;
 	str uri;
-	char* p;
+	char* p, *qbuf;
 	static char dset[MAX_REDIRECTION_LEN];
 
 	if (msg->new_uri.s) {
@@ -211,7 +211,10 @@ char* print_dset(struct sip_msg* msg, int* len)
 		if (ruri_q != Q_UNSPECIFIED) {
 			memcpy(p, Q_PARAM, Q_PARAM_LEN);
 			p += Q_PARAM_LEN;
-			p += print_q(p, ruri_q);
+
+			qbuf = q2str(ruri_q, &qlen);
+			memcpy(p, qbuf, qlen);
+			p += qlen;
 		}
 		i = 1;
 	} else {
@@ -234,7 +237,10 @@ char* print_dset(struct sip_msg* msg, int* len)
 		if (q != Q_UNSPECIFIED) {
 			memcpy(p, Q_PARAM, Q_PARAM_LEN);
 			p += Q_PARAM_LEN;
-			p += print_q(p, q);
+
+			qbuf = q2str(q, &qlen);
+			memcpy(p, qbuf, qlen);
+			p += qlen;
 		}
 		i++;
 	}
