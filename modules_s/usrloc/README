@@ -194,6 +194,17 @@ Params: urecord_t* record - Record to be searched for the contact
 Desc:   The function tries to find contact with given Contact URI and returns
         pointer to structure representing the contact
 
+Name:	~ul_get_all_ucontacts
+Params:	void* buf - buffer for returning contacts
+	int len   - length of the buffer
+Desc:	The function retrieves all contacts of all registered users and
+	returns them in the caller-supplied buffer. If the buffer is too
+	small, the function returns positive value indicating how much
+	additional space would be necessary to accomodate all of them.
+	Please note that the positive return value should be used only
+	as a "hint", as there is no gurantee that during the time between
+	two subsequent calls number of registered contacts will remain
+	the same.
 
 Name:   ~ul_update_ucontact
 Params: ucontact_t* contact - Contact to be updated
