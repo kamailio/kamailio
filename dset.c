@@ -13,6 +13,7 @@
 #include "ut.h"
 #include "hash_func.h"
 #include "dset.h"
+#include "error.h"
 
 
 
@@ -57,6 +58,7 @@ int append_branch( struct sip_msg *msg, char *uri, int uri_len )
 	   of branches, don't try new ones */
 	if (nr_branches==MAX_BRANCHES-1) {
 		LOG(L_ERR, "ERROR: append_branch: max nr of branches exceeded\n");
+		ser_error=E_TOO_MANY_BRANCHES;
 		return -1;
 	}
 

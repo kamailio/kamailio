@@ -18,6 +18,10 @@
 #define E_BAD_TUPEL		-9
 /* script programming error */
 #define E_SCRIPT		-10
+/* error in exceution of external tools */
+#define E_EXEC			-11
+/* too many branches demanded */
+#define E_TOO_MANY_BRANCHES -12
 
 #define E_SEND		  -477
 /* unresolveable next-hop address */
@@ -26,6 +30,10 @@
 #define E_BAD_URI 	  -479
 /* misformated request */
 #define E_BAD_REQ	  -400
+
+/* error in server */
+#define E_BAD_SERVER	  -500
+
 
 #define MAX_REASON_LEN	128
 

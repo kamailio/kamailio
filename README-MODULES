@@ -21,6 +21,9 @@ cpl		experimental alpha		Call Processing Language
 ext		experimental alpha		Execution of external URI
 (bia)							processing logic
 
+exec	experimental beta		Execution of external URI
+(jku)							processing logic
+
 im		temporary	 alpha		Stateless instant messaging	
 (bia)							client
 

@@ -50,6 +50,14 @@ int err2reason_phrase(
 			error_txt="Transaction tupel incomplete";
 			*sip_error=-E_BAD_REQ;
 			break;
+		case E_EXEC:
+			error_txt="Error in external logic";
+			*sip_error=-E_BAD_SERVER;
+			break;
+		case E_TOO_MANY_BRANCHES:
+			error_txt="Forking capacity exceeded";
+			*sip_error=-E_BAD_SERVER;
+			break;
 		default:
 			error_txt="I'm terribly sorry, server error occured";
 			*sip_error=500;
