@@ -1,0 +1,133 @@
+#!/usr/local/bin/perl
+#
+# $Id$
+#
+# sc: ser control; tool for maintaining ser's databases
+#
+# History:
+# --------
+# 2003-04-07 initial attempt at file copy script
+#
+# To-DO:
+# -----
+# - generalization for other than mysql databases
+# - front-end to updating administrative mysql password would
+#   be a convenient thing to have
+#
+# quick and dirty script to copy 0.8.10 mysql location and subscription table
+# out and create insert statements for postgres new CVS version table
+# this script only copies 2 tables, location and subscriber.
+# you may need to modify the open(FD,"sdfdsf") line to suite your needs.
+#
+
+$q = <<EOT;
+select
+	user_id, domain, contact, expires, q, callid, cseq,
+	last_modified
+  from
+	location
+EOT
+if(!open(FD,"/usr/local/mysql/bin/mysql --batch ser -e \"$q\"|"))
+{
+	die("can't open mysql process");
+}
+
+print "/* insert location tuples */\n";
+print "delete from location;\n";
+while(<FD>)
+{
+	chop;
+	($user_id,$domain,$contact,$expires,$q,$callid,$cseq, $lastmodified)=
+		split("\t");
+
+	$i = <<EOT;
+	insert
+	  into
+	  	location
+	     (
+	     	username,
+		domain,
+		contact,
+		expires,
+		q,
+		callid,
+		cseq,
+		last_modified,
+		replicate,
+		state
+	     )
+	values
+	     (
+	     	'$user_id',
+		'$domain',
+		'$contact',
+		'$expires',
+		$q,
+		'$callid',
+		$cseq,
+		'$expires',
+		null,
+		null
+	      );
+EOT
+
+	$i =~ s/\n/ /g;
+	$i =~ s/\t+/ /g;
+	$i =~ s/^\s+//;
+	$i =~ s/\s+$//;
+	print "$i\n";
+}
+$q = <<EOT;
+select
+	phplib_id, user_id, password, first_name, last_name, phone,
+	email_address, datetime_created, datetime_modified, confirmation,
+	flag, sendnotification, greeting, ha1, domain, ha1b, perms,
+	allow_find, timezone
+  from
+	subscriber
+EOT
+if(!open(FD,"/usr/local/mysql/bin/mysql --batch ser -e \"$q\"|"))
+{
+	die("can't open mysql process");
+}
+
+print "/* insert subscriber tuples */\n";
+print "delete from subscriber;\n";
+while(<FD>)
+{
+	chop;
+	( $phplib_id, $user_id, $password, $first_name, $last_name,
+	  $phone, $email_address, $datetime_created, $datetime_modified,
+	  $confirmation, $flag, $sendnotification, $greeting, $ha1,
+	  $domain, $ha1b, $perms, $allow_find, $timezone) =
+		split("\t");
+
+	$i = <<EOT;
+	insert
+	  into
+	  	subscriber
+	     (
+		phplib_id, username, password, first_name,
+		last_name, phone, email_address, datetime_created,
+		datetime_modified, confirmation, flag,
+		sendnotification, greeting, ha1, domain,
+		ha1b, perms, allow_find, timezone
+	     )
+	values
+	     (
+		'$phplib_id', '$user_id', '$password', '$first_name',
+		'$last_name', '$phone', '$email_address', '$datetime_created',
+		'$datetime_created', '$confirmation', '$flag',
+		'$sendnotification', '$greeting', '$ha1', '$domain',
+		'$ha1b', '$perms', '$allow_find', '$timezone'
+	      );
+EOT
+
+	$i =~ s/\n/ /g;
+	$i =~ s/\t+/ /g;
+	$i =~ s/^\s+//;
+	$i =~ s/\s+$//;
+	print "$i\n";
+}
+
+exit 0;

@@ -1,0 +1,39 @@
+# $Id$
+#
+# README
+#
+# History:
+# --------
+# 2003-04-07 this is a hack, from serctl, to make work with postgres
+#
+# DISCLAIMER:
+# I have yet to get this software working in my production environment.
+# Everything compiles and runs, but not for long.  It may or may not be a
+# good starting point for the ser postgres driver.
+#
+# I had a hard time with memory while developing this.
+# So, I decided to incorporate some memory routines that
+# I have been using for years.  This didn't fix the problem,
+# but it did make memory management easier.
+#
+# The postgres driver requires that you have postgres installed
+# on your system.  You can download this from: www.postgresql.org.
+# For this I used postgres version 7.3.2, but I imagine almost any
+# recent version should work.
+#
+# You will then need to have a postgres database somewhere, and it
+# needs to have the tables created in it. Currently I am supporting
+# 2 tables, location and subscriber.  The file createtables.txt contains
+# the table definitions and index definitions.
+# 
+# You may wish to load the tables from a 0.8.10 database.  The script
+# copy_to_psql can be modified to open your mysql database and it outputs
+# the necessary commands to populate the tables of the postgres database.
+#
+# To use the postgres module in your ser.cfg file is just like using the
+# mysql module. Ie:
+# loadmodule "/usr/local/lib/ser/modules/postgres.so"
+# 
+# That's it.  Good luck.
+# ---greg
+# Greg Fausak, August.Net Services, greg@august.net
