@@ -164,6 +164,7 @@ fifo_cmd()
 		echo "error opening read fifo $path"
 		exit 1
 	fi
+	chmod a+w $path
 
 	# construct the command now
 	CMD=":$1:$name\n";
