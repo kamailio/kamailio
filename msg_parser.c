@@ -142,6 +142,11 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 	char* body;
 	int offset;
 
+	
+	/* init content to the empty string */
+	hdr_f->name="";
+	hdr_f->body="";
+	
 	if ((*buffer=='\n')||(*buffer=='\r')){
 		/* double crlf */
 		tmp=eat_line(buffer,len);
@@ -169,7 +174,7 @@ char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f)
 	}while( (*tmp==' ' ||  *tmp=='\t') && (offset<len) );
 	if (offset==len){
 		hdr_f->type=HDR_ERROR;
-		LOG(L_INFO, "ERROR: het_hdr_field: field body too  long\n");
+		LOG(L_INFO, "ERROR: get_hdr_field: field body too  long\n");
 		goto error;
 	}
 	*(tmp-1)=0; /* should be an LF */
@@ -354,6 +359,14 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	int offset;
 
 	
+	/* init vb1 & vb2 to the null string */
+	vb1.error=VIA_PARSE_ERROR;
+	vb1.hdr=vb1.name=vb1.version=vb1.transport=vb1.host=0;
+	vb1.params=vb1.comment=0;
+	vb1.next=0;
+	vb1.size=0;
+	memcpy(&vb2, &vb1, sizeof(struct via_body));
+
 	/* eat crlf from the beginning */
 	for (tmp=buf; (*tmp=='\n' || *tmp=='\r')&&
 			tmp-buf < len ; tmp++);
@@ -457,11 +470,13 @@ skip:
 
 #ifdef DEBUG
 	/* dump parsed data */
-	DBG(" first  via: <%s/%s/%s> <%s:%d>",
-			vb1.name, vb1.version, vb1.transport, vb1.host, vb1.port);
-	if (vb1.params)  DBG(";<%s>", vb1.params);
-	if (vb1.comment) DBG(" <%s>", vb1.comment);
-	DBG ("\n");
+	if (first_via){
+		DBG(" first  via: <%s/%s/%s> <%s:%d>",
+				vb1.name, vb1.version, vb1.transport, vb1.host, vb1.port);
+		if (vb1.params)  DBG(";<%s>", vb1.params);
+		if (vb1.comment) DBG(" <%s>", vb1.comment);
+		DBG ("\n");
+	}
 	if (second_via){
 		DBG(" second via: <%s/%s/%s> <%s:%d>",
 				vb2.name, vb2.version, vb2.transport, vb2.host, vb2.port);
