@@ -301,7 +301,7 @@ ua==0 && /User-Agent:.*sipsak/ {
 	ua_sipsak++
 	ua=1
 }
-ua==0 && /User-Agent:.*FXSGW/ {
+ua==0 && /User-Agent:.*FXS_GW/ {
 	ua_fxsgw++
 	ua=1
 }
