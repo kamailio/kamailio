@@ -170,6 +170,8 @@ error:
 	return -1;
 }
 
+
+#ifdef USE_DEPRECATED
 /**
  * send a MESSAGE using IM library - deprecated - used t_uac instead
  */
@@ -226,6 +228,7 @@ int m_send_message(int mid, str *uri, str *to, str *from, str *contact,
 error:
 	return -1;
 }
+#endif
 
 /** build MESSAGE headers 
  *
