@@ -21,6 +21,7 @@
 #include "globals.h"
 
 #include <signal.h>
+#include "stats.h"
 
 
 
@@ -111,6 +112,9 @@ int process_no = 0;
 
 /* cfg parsing */
 int cfg_errors=0;
+
+/* jku: RX/TX statistics -- remember, they are process specific */
+struct stats_s stats;
 
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
@@ -222,6 +226,9 @@ int main_loop()
 static void sig_usr(int signo)
 {
 	DPrint("INT received, program terminates\n");
+	DPrint("ok_rx_rq\t%d\nok_rx_rs\t%d\nok_tx_rq\t%d\nok_tx_rs\t%d\ntotal_rx\t%d\ntotal_tx\t%d\n\n",
+		stats.ok_rx_rq, stats.ok_rx_rs, stats.ok_tx_rq, stats.ok_tx_rs, stats.total_rx, stats.total_tx );
+	DPrint("Thank you for flying ser\n");
 	exit(0);
 }
 	
@@ -370,6 +377,9 @@ int main(int argc, char** argv)
 				strlen(myname.nodename)+1);
 		addresses_no++;
 	}
+
+	/* jku: initialize statistic */
+ 	memset(&stats,0,sizeof(struct stats_s));
 	
 	/* get ips */
 	printf("Listening on ");

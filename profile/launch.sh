@@ -9,9 +9,12 @@ MYFN="eat_line|eat_space|eat_token"
 # set to non-zero if only a report is to be generated
 #REPONLY=tru
 
+CONFIG=profile.cfg
+
 SRD=${HOME}/sip_router
 PRO=${SRD}/profile
 REP=$PRO/$PREF.txt
+EXEC=ser
 
 
 function usage()
@@ -48,15 +51,15 @@ j=`expr $j + 1`
 
 echo "*** Entering cycle $j"
 
-/usr/bin/time --output="$PRO/${PREF}-${i}-time.txt" ${SRD}/sip_router  -l 192.168.99.100 -D -E -d -f ${PRO}/profile.cfg  &
+/usr/bin/time --output="$PRO/${PREF}-${i}-time.txt" ${SRD}/$EXEC -l 192.168.99.100 -D -E -d -f ${PRO}/$CONFIG &
 
 #rsh -l jku benetnash.fokus.gmd.de 'nohup bin/sock -s -u 5060 '
 
 rsh -l jku alioth.fokus.gmd.de 'nohup tmp/sipp/start.sh '
 
-killall -INT sip_router
+killall -INT $EXEC
 
-gprof sip_router > $PRO/${PREF}-${i}.txt
+gprof $EXEC > $PRO/${PREF}-${i}.txt
 
 done
 }

@@ -12,13 +12,18 @@
 #include "forward.h"
 #include "action.h"
 
+
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
 
+#include "stats.h"
+
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg msg;
+
+	stats.total_rx++;	
 
 	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
@@ -52,6 +57,8 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 					"error while trying script\n");
 			goto error;
 		}
+		/* jku -- update statistics  */
+		else stats.ok_rx_rq++;	
 	}else if (msg.first_line.type==SIP_REPLY){
 		/* sanity checks */
 		if (msg.via1.error!=VIA_PARSE_OK){
@@ -63,6 +70,9 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 			goto skip;
 		}
 		/* check if via1 == us */
+
+		/* jku -- update statistics  */
+		stats.ok_rx_rs++;	
 		
 		/* send the msg */
 		if (forward_reply(&msg)==0){
