@@ -149,6 +149,7 @@ struct sip_msg{
 	struct hdr_field* last_header; /* pointer to the last parsed header*/
 	int parsed_flag;
 	/* via, to, cseq, call-id, from, end of header*/
+	/* first occurance of it; subsequent occurances saved in 'headers' */
 	struct hdr_field* h_via1;
 	struct hdr_field* h_via2;
 	struct hdr_field* callid;
