@@ -409,7 +409,7 @@ int parse_tw_append( modparam_t type, param_func_param_t param_val)
 	return 0;
 parse_error:
 	LOG(L_ERR,"ERROR:tm:parse_tw_append: parse error in <%s> around "
-		"position %d\n", param_val.string, s-param_val.string);
+		"position %ld\n", param_val.string, (long)(s-param_val.string));
 error:
 	return -1;
 }
@@ -822,8 +822,8 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	int2reverse_hex(&s, &l, (int)msg->msg_flags);
 	append_chr(s,'\n');
 
-	if ( (s=append2buf( s, APPEND_BUFFER_MAX-(s-append.s), msg,
-	twi->append->elems))==0 )
+	if ( twi->append && ((s=append2buf( s, APPEND_BUFFER_MAX-(s-append.s), msg,
+	twi->append->elems))==0) )
 		goto error;
 
 	/* body separator */
