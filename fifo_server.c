@@ -60,6 +60,7 @@
  *               reply fifo checks -- added fifo_check (andrei)
  *  2003-10-13  addef fifo_dir for reply fifos (andrei)
  *  2003-10-30  DB interface exported via FIFO (bogdan)
+ *  2004-03-09  open_fifo_server split into init_ and start_ (andrei)
  */
 
 
@@ -99,7 +100,7 @@ pid_t fifo_pid;
 /* file descriptors */
 static int fifo_read=0;
 static int fifo_write=0;
-static FILE *fifo_stream;
+static FILE *fifo_stream=0;
 
 /* list of fifo command */
 static struct fifo_command *cmd_list=0;
@@ -534,14 +535,12 @@ consume:
 	}
 }
 
-int open_fifo_server()
+int init_fifo_server()
 {
 	char *t;
 	struct stat filestat;
 	int n;
-#ifdef USE_TCP
-	int sockfd[2];
-#endif
+	long opt;
 
 	if (fifo==NULL) {
 		DBG("DBG: open_fifo_server: no fifo will be opened\n");
@@ -588,6 +587,49 @@ int open_fifo_server()
 		return -1;
 	}
 	memcpy(up_since_ctime,t,strlen(t)+1);
+	/* open it non-blocking or else wait here until someone
+	 * opens it for writting */
+	fifo_read=open(fifo, O_RDONLY|O_NONBLOCK, 0);
+	if (fifo_read<0) {
+		LOG(L_ERR, "ERROR: init_fifo_server: fifo_read did not open: %s\n",
+			strerror(errno));
+		return -1;
+	}
+	fifo_stream=fdopen(fifo_read, "r");
+	if (fifo_stream==NULL) {
+		LOG(L_ERR, "ERROR: init_fifo_server: fdopen failed: %s\n",
+			strerror(errno));
+		return -1;
+	}
+	/* make sure the read fifo will not close */
+	fifo_write=open(fifo, O_WRONLY|O_NONBLOCK, 0);
+	if (fifo_write<0) {
+		LOG(L_ERR, "ERROR: init_fifo_server: fifo_write did not open: %s\n",
+			strerror(errno));
+		return -1;
+	}
+	/* set read fifo blocking mode */
+	if ((opt=fcntl(fifo_read, F_GETFL))==-1){
+		LOG(L_ERR, "ERROR: init_fifo_server: fcntl(F_GETFL) failed: %s [%d]\n",
+				strerror(errno), errno);
+		return -1;
+	}
+	if (fcntl(fifo_read, F_SETFL, opt & (~O_NONBLOCK))==-1){
+		LOG(L_ERR, "ERROR: init_fifo_server: fcntl(F_SETFL) failed: %s [%d]\n",
+				strerror(errno), errno);
+		return -1;
+	}
+	return 0;
+}
+
+
+
+int start_fifo_server()
+{
+#ifdef USE_TCP
+	int sockfd[2];
+#endif
+	if (fifo_stream==0) return 1; /* no error, we just don't start it */
 #ifdef USE_TCP
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
 			LOG(L_ERR, "ERROR: open_fifo_server: socketpair failed: %s\n",
@@ -615,18 +657,6 @@ int open_fifo_server()
 			LOG(L_ERR, "ERROR: open_uac_fifo: init_child failed\n");
 			return -1;
 		}
-		fifo_read=open(fifo, O_RDONLY, 0);
-		if (fifo_read<0) {
-			LOG(L_ERR, "ERROR: open_uac_fifo: fifo_read did not open: %s\n",
-				strerror(errno));
-			return -1;
-		}
-		fifo_stream=fdopen(fifo_read, "r"	);
-		if (fifo_stream==NULL) {
-			LOG(L_ERR, "SER: open_uac_fifo: fdopen failed: %s\n",
-				strerror(errno));
-			return -1;
-		}
 		/* a real server doesn't die if writing to reply fifo fails */
 		signal(SIGPIPE, SIG_IGN);
 		LOG(L_INFO, "SER: open_uac_fifo: fifo server up at %s...\n",
@@ -641,13 +671,6 @@ int open_fifo_server()
 	pt[process_no].unix_sock=sockfd[0];
 	pt[process_no].idx=-1; /* this is not "tcp" process*/
 #endif
-	/* make sure the read fifo will not close */
-	fifo_write=open(fifo, O_WRONLY, 0);
-	if (fifo_write<0) {
-		LOG(L_ERR, "SER: open_uac_fifo: fifo_write did not open: %s\n",
-			strerror(errno));
-		return -1;
-	}
 	return 1;
 }
 

@@ -670,6 +670,18 @@ int main_loop()
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
 		}
+		/* intialize fifo server -- we need to open the fifo before
+		 * do_suid() and start the fifo server after all the socket 
+		 * are initialized, to inherit them*/
+		if (init_fifo_server()<0) {
+			LOG(L_ERR, "initializing fifo server failed\n");
+			goto error;
+		}
+		 /* Initialize Unix domain socket server */
+		if (init_unixsock_socket()<0) {
+			LOG(L_ERR, "Error while creating unix domain sockets\n");
+			goto error;
+		}
 		if (do_suid()==-1) goto error; /* try to drop priviledges */
 		/* process_no now initialized to zero -- increase from now on
 		   as new processes are forked (while skipping 0 reserved for main 
@@ -710,17 +722,14 @@ int main_loop()
 				}
 		}
 
-		/* if configured to do so, start a server for accepting FIFO commands */
-		if (open_fifo_server()<0) {
-			LOG(L_ERR, "opening fifo server failed\n");
+		/* if configured, start a server for accepting FIFO commands,
+		 * we need to do it after all the sockets are intialized, to 
+		 * inherit them*/
+		if (start_fifo_server()<0) {
+			LOG(L_ERR, "starting fifo server failed\n");
 			goto error;
 		}
 
-		     /* Initialize Unix domain socket server */
-		if (init_unixsock_socket()<0) {
-			LOG(L_ERR, "ERror while creating unix domain sockets\n");
-			goto error;
-		}
 		if (init_unixsock_children()<0) {
 			LOG(L_ERR, "Error while initializing Unix domain socket server\n");
 			goto error;
@@ -803,6 +812,14 @@ int main_loop()
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
+		/* intialize fifo server -- we need to open the fifo before
+		 * do_suid() and start the fifo server after all the socket 
+		 * are initialized, to inherit them*/
+		if (init_fifo_server()<0) {
+			LOG(L_ERR, "initializing fifo server failed\n");
+			goto error;
+		}
+		 /* Initialize Unix domain socket server */
 		     /* Create the unix domain sockets */
 		if (init_unixsock_socket()<0) {
 			LOG(L_ERR, "ERROR: Could not create unix domain sockets\n");
@@ -813,6 +830,13 @@ int main_loop()
 			 * so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop priviledges */
 
+		/* if configured, start a server for accepting FIFO commands,
+		 * we need to do it after all the sockets are intialized, to 
+		 * inherit them*/
+		if (start_fifo_server()<0) {
+			LOG(L_ERR, "starting fifo server failed\n");
+			goto error;
+		}
 		     /* Spawn children listening on unix domain socket if and only if
 		      * the unix domain socket server has not been disabled (i == 0)
 		      */
@@ -881,11 +905,6 @@ int main_loop()
 	/*this is the main process*/
 	bind_address=0;				/* main proc -> it shouldn't send anything, */
 	
-	/* if configured to do so, start a server for accepting FIFO commands */
-	if (open_fifo_server()<0) {
-		LOG(L_ERR, "opening fifo server failed\n");
-		goto error;
-	}
 
 #ifdef USE_TCP
 	/* if we are using tcp we always need the timer */

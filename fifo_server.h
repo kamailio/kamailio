@@ -74,7 +74,8 @@ int read_line_set(char *buf, int max_len, FILE *fifo, int *len);
 /* consume a set of EoL-terminated lines terminated by a single dot line */
 int read_body(char *buf, int max_len, FILE *fifo, int *len);
 
-int open_fifo_server();
+int init_fifo_server();
+int start_fifo_server();
 
 /* regsiter core FIFO command set */
 int register_core_fifo();
