@@ -11,10 +11,10 @@ I) MUSTs
 Without MUSTs, I will not like the phone.
 
 - Price - get it bellow $100 (I mean for one phone, not for 10.000 of them)
-- NAT-Traversal support: STUN, symmetric communication
+- NAT-Traversal support: STUN, symmetric communication, comedia
 - DNS fail-over, as required by specification (I'm aware of only one phones
   which is getting it right today, 2003-02)
-- REFER (correctly please)
+- REFER (correctly please, test with CTD)
 - reasonable provisioning
 - the phones must be able to detect loss of Ethernet connectivity,
   display it, and re-REGISTER when reconnected
@@ -47,3 +47,9 @@ KNOWN ERRORs
 ------------
 These are errors we observed frequently to fail in phones: digest/qop, 
 DNS fail-over, REFER, transaction matching, record-routing.
+
+NEAR FUTURE REQUIREMENTS
+------------------------
+Automated phone provisiong is a really big item. It is not thinkable that
+sip site operators configure both user accounts at server and credentials
+at phone manually. that introduces human factor which is bad.
