@@ -321,7 +321,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
       if ( p_msg->first_line.u.reply.statusclass==1 && T->inbound_request->first_line.u.request.method_value!=METHOD_INVITE )
       {
          T->outbound_request[branch]->timeout = RETR_T2;
-         insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , 10/* TO DO !!! */ );
+         insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T2 );
       }
 
 
@@ -489,20 +489,25 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    unsigned int hash_index = 0;
    unsigned int entry_label  = 0;
    unsigned int branch_id    = 0;
+   char  *begin, *end;
+
 
    /* getting the hash_index from the brach param , via header*/
-   // hash_index = get_hash_index( p_msg );   TO DO !!!!
-
+   begin = p_msg->via1->branch->value.s;
+   for(  ; *begin!='.' ; begin++ );
+   hash_index = strtol( ++begin , &end , 10 );
    /*if the hash index is corect */
-   if  ( hash_index>=0 && hash_index<TABLE_ENTRIES-1 )
+   if  ( *end=='.' && hash_index>=0 && hash_index<TABLE_ENTRIES-1 )
    {
       /* getting the entry label value */
-      // entry_label =  get_entry_label( p_msg );   TO DO !!!!
+      begin=end++ ;
+      entry_label = strtol( ++begin , &end , 10 );
       /* if the entry label also is corect */
-      if  ( entry_label>=0 )
+      if  ( *end=='.' && entry_label>=0 )
       {
          /* getting the branch_id value */
-         // entry_label =  get_branch_id( p_msg );   TO DO !!!!
+         begin=end++ ;
+         branch_id = strtol( ++begin , &end , 10 );
          /* if the entry label also is corect */
           if  ( branch_id>=0 )
           {
