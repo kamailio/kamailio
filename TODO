@@ -3,6 +3,10 @@ $Id$
 ( - todo, x - done)
 
 release:
+- fix kill(0, SIGTERM) on startup error (will kill also the launching shell
+ if non-interactive)
+- fix modules destroy (some modules will try to free uninitialized resources
+   if modules_init was not called first)
 x fix CC_VER bug in newer Makefile (move DEFS after CC?)
 x openbsd 3.2 packages -> doc in share/doc (and not in doc)
 - openbsd 3.2 -> add jabber and mysql to the package
