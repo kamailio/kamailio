@@ -71,6 +71,8 @@ d=device (mandatory)- device associated with modem (/dev/ttyS0,/dev/modem,etc)
 p=pin (optional) - SIM's pin - default NULL;
 m=mode (optional) - modem working mode ("ASCII","OLD","DIGICOM","NEW")
    default value is "NEW";
+c=SMS_Center (optional) - SMS center number for that modem; deafult is the
+   SMS center set on the SIM card.
 b=baudrate (optional) - default 19600
 r=retry (optional) - how many time to try to re-send a SMS that reported error
    default is twice
@@ -87,7 +89,6 @@ net_definition = "net_name[list_of_param]"
 list_of_param = list of set_param semi colon separated
 set_param = "X=value"
 NETWORK PARAMETERS:
-c=SMS_Center (mandatory) - SMS center number for that network
 m=msx_sms_per_call (optional) - maximum number of SMS send / received from
    that net in one modem loop. - default = 10 - this param was introduce
    to avoid starvation.
@@ -96,7 +97,7 @@ m=msx_sms_per_call (optional) - maximum number of SMS send / received from
    msg is equal with the sent SMS per same unit of time, the modem will
    never get to send SMS fro the next networks.
 EXAMPLE:
-modparam("sms","networks","D1 [c=491710765000;m=10] ;d2[ c=3456;m=20])
+modparam("sms","networks","D1 [m=10] ;d2[ m=20])
 
 - "links" - string, mandatory - define from which network each modem should
    send SMS.
