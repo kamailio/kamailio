@@ -38,6 +38,7 @@
  * 2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  * 2003-04-12  added force_rport, chroot and wdir (andrei)
  * 2003-04-15  added tcp_children, disable_tcp (andrei)
+ * 2003-04-22  strip_tail added (jiri)
  */
 
 
@@ -116,6 +117,7 @@ int rt;  /* Type of route block for find_export */
 %token SET_HOSTPORT
 %token PREFIX
 %token STRIP
+%token STRIP_TAIL
 %token APPEND_BRANCH
 %token SET_USER
 %token SET_USERPASS
@@ -1056,6 +1058,12 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| PREFIX error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| PREFIX LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 														"string expected"); }
+		| STRIP_TAIL LPAREN NUMBER RPAREN { $$=mk_action(STRIP_TAIL_T, 
+									NUMBER_ST, 0, (void *) $3, 0); }
+		| STRIP_TAIL error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| STRIP_TAIL LPAREN error RPAREN { $$=0; yyerror("bad argument, "
+														"number expected"); }
+
 		| STRIP LPAREN NUMBER RPAREN { $$=mk_action(STRIP_T, NUMBER_ST,
 														0, (void *) $3, 0); }
 		| STRIP error { $$=0; yyerror("missing '(' or ')' ?"); }

@@ -34,6 +34,7 @@
  *  2003-04-01  added dst_port, proto (tcp, udp, tls), af(inet, inet6) (andrei)
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  *  2003-04-12  added force_rport, chdir and wdir (andrei)
+ *  2003-04-22  strip_tail added (jiri)
  */
 
 
@@ -97,6 +98,7 @@ SET_URI			"rewriteuri"|"seturi"
 REVERT_URI		"revert_uri"
 PREFIX			"prefix"
 STRIP			"strip"
+STRIP_TAIL		"strip_tail"
 APPEND_BRANCH	"append_branch"
 IF				"if"
 ELSE			"else"
@@ -232,6 +234,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{REVERT_URI}	{ count(); yylval.strval=yytext; return REVERT_URI; }
 <INITIAL>{PREFIX}	{ count(); yylval.strval=yytext; return PREFIX; }
 <INITIAL>{STRIP}	{ count(); yylval.strval=yytext; return STRIP; }
+<INITIAL>{STRIP_TAIL}	{ count(); yylval.strval=yytext; return STRIP_TAIL; }
 <INITIAL>{APPEND_BRANCH}	{ count(); yylval.strval=yytext; 
 								return APPEND_BRANCH; }
 <INITIAL>{FORCE_RPORT}	{ count(); yylval.strval=yytext; return FORCE_RPORT; }

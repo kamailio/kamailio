@@ -33,6 +33,7 @@
  *              replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-01  Added support for loose routing in forward (janakj)
  *  2003-04-12  FORCE_RPORT_T added (andrei)
+ *  2003-04-22  strip_tail added (jiri)
  */
 
 
@@ -376,8 +377,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case SET_URI_T:
 		case PREFIX_T:
 		case STRIP_T:
+		case STRIP_TAIL_T:
 				user=0;
-				if (a->type==STRIP_T) {
+				if (a->type==STRIP_T || a->type==STRIP_TAIL_T) {
 					if (a->p1_type!=NUMBER_ST) {
 						LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->p1_type);
@@ -462,6 +464,18 @@ int do_action(struct action* a, struct sip_msg* msg)
 						len=0;
 					} else {
 						tmp=uri.user.s + a->p1.number;
+						len=uri.user.len - a->p1.number;
+					}
+				} else if (a->type==STRIP_TAIL_T) {
+					if (a->p1.number>uri.user.len) {
+						LOG(L_WARN, "WARNING: too long strip_tail asked; "
+									" deleting username: %d of <%.*s>\n",
+									a->p1.number, uri.user.len, uri.user.s );
+						len=0;
+					} else if (a->p1.number==uri.user.len) {
+						len=0;
+					} else {
+						tmp=uri.user.s;
 						len=uri.user.len - a->p1.number;
 					}
 				} else {
