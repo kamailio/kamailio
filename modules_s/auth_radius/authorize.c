@@ -125,7 +125,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	un_escape(&(puri.user), &user);
 
 	rpid.s = rpid_buffer;
-	rpid.len = MAX_RPID_LEN;
+	rpid.len = 0;
 
 	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user, &rpid);
 	pkg_free(user.s);

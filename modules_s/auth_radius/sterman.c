@@ -35,6 +35,7 @@
 #include <string.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../auth/api.h"
 #include "ser_radius.h"
 #include "sterman.h"
 #include "authrad_mod.h"
@@ -57,7 +58,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 
 	send = received = 0;
 
-	if (!(_cred && _method && _user)) {
+	if (!(_cred && _method && _user && _rpid)) {
 		LOG(L_ERR, "radius_authorize_sterman(): Invalid parameter value\n");
 		return -1;
 	}
@@ -215,7 +216,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 
 		     /* Make a copy of rpid if available */
 		if ((vp = rc_avpair_get(received, PW_SIP_RPID))) {
-			if (_rpid->len < vp->lvalue) {
+			if (MAX_RPID_LEN < vp->lvalue) {
 				LOG(L_ERR, "radius_authorize_sterman(): rpid buffer too small\n");
 				return -20;
 			}
