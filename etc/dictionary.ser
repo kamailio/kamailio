@@ -26,6 +26,7 @@ ATTRIBUTE Sip-To-Tag                   104  string     # Schulzrinne
 ATTRIBUTE Sip-From-Tag                 105  string     # Schulzrinne
 ATTRIBUTE Sip-Branch-Id                106  string     # Schulzrinne
 ATTRIBUTE Sip-Translated-Req-ID        107  string     # Schulzrinne
+ATTRIBUTE Sip-Translated-Request-URI   107  string     # Proprietary
 ATTRIBUTE Sip-Source-Ip-Address        108  ipaddr     # Schulzrinne
 ATTRIBUTE Sip-Source-Port              109  integer    # Schulzrinne
 VALUE Service-Type Sip-Session          15             # Schulzrinne
