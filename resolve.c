@@ -66,7 +66,7 @@ unsigned char* dns_skipname(unsigned char* p, unsigned char* end)
 		/* normal label */
 		p+=*p+1;
 	}
-	return (p>end)?0:p;
+	return (p>=end)?0:p;
 }
 
 
@@ -98,7 +98,7 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	int len;
 	
 	srv=0;
-	if ((rdata+6)>end) goto error;
+	if ((rdata+6)>=end) goto error;
 	srv=(struct srv_rdata*)local_malloc(sizeof(struct srv_rdata));
 	if (srv==0){
 		LOG(L_ERR, "ERROR: dns_srv_parser: out of memory\n");
@@ -118,6 +118,73 @@ struct srv_rdata* dns_srv_parser( unsigned char* msg, unsigned char* end,
 	return srv;
 error:
 	if (srv) local_free(srv);
+	return 0;
+}
+
+
+/* parses the naptr record into a naptr_rdata structure
+ *   msg   - pointer to the dns message
+ *   end   - pointer to the end of the message
+ *   rdata - pointer  to the rdata part of the naptr answer
+ * returns 0 on error, or a dyn. alloc'ed naptr_rdata structure */
+/* NAPTR rdata format:
+ *            111111
+ *  0123456789012345
+ * +----------------+
+ * |      order     |
+ * |----------------|
+ * |   preference   |
+ * |----------------|
+ * ~     flags      ~
+ * |   (string)     |
+ * |----------------|
+ * ~    services    ~
+ * |   (string)     |
+ * |----------------|
+ * ~    regexp      ~
+ * |   (string)     |
+ * |----------------|
+ * ~  replacement   ~
+   |    (name)      |
+ * +----------------+
+ */
+struct naptr_rdata* dns_naptr_parser( unsigned char* msg, unsigned char* end,
+								  unsigned char* rdata)
+{
+	struct naptr_rdata* naptr;
+	int len;
+	
+	naptr = 0;
+	if ((rdata + 7) >= end) goto error;
+	naptr=(struct naptr_rdata*)local_malloc(sizeof(struct naptr_rdata));
+	if (naptr == 0){
+		LOG(L_ERR, "ERROR: dns_naptr_parser: out of memory\n");
+		goto error;
+	}
+	
+	memcpy((void*)&naptr->order, rdata, 2);
+	naptr->order=ntohs(naptr->order);
+	memcpy((void*)&naptr->pref, rdata + 2, 2);
+	naptr->pref=ntohs(naptr->pref);
+	naptr->flags_len = (int)rdata[4];
+	if ((rdata + 7 +  naptr->flags_len) >= end) goto error;
+	memcpy((void*)&naptr->flags, rdata + 5, naptr->flags_len);
+	naptr->services_len = (int)rdata[5 + naptr->flags_len];
+	if ((rdata + 7 + naptr->flags_len + naptr->services_len) >= end) goto error;
+	memcpy((void*)&naptr->services, rdata + 6 + naptr->flags_len, naptr->services_len);
+	naptr->regexp_len = (int)rdata[6 + naptr->flags_len + naptr->services_len];
+	if ((rdata + 7 + naptr->flags_len + naptr->services_len +
+					naptr->regexp_len) >= end) goto error;
+	memcpy((void*)&naptr->regexp, rdata + 7 + naptr->flags_len +
+				naptr->services_len, naptr->regexp_len);
+	rdata = rdata + 7 + naptr->flags_len + naptr->services_len + 
+			naptr->regexp_len;
+	if ((len=dn_expand(msg, end, rdata, naptr->repl, MAX_DNS_NAME-1)) == -1)
+		goto error;
+	/* add terminating 0 ? (warning: len=compressed name len) */
+	return naptr;
+error:
+	if (naptr) local_free(naptr);
 	return 0;
 }
 
@@ -153,7 +220,7 @@ struct a_rdata* dns_a_parser(unsigned char* rdata, unsigned char* end)
 {
 	struct a_rdata* a;
 	
-	if (rdata+4>end) goto error;
+	if (rdata+4>=end) goto error;
 	a=(struct a_rdata*)local_malloc(sizeof(struct a_rdata));
 	if (a==0){
 		LOG(L_ERR, "ERROR: dns_a_parser: out of memory\n");
@@ -173,7 +240,7 @@ struct aaaa_rdata* dns_aaaa_parser(unsigned char* rdata, unsigned char* end)
 {
 	struct aaaa_rdata* aaaa;
 	
-	if (rdata+16>end) goto error;
+	if (rdata+16>=end) goto error;
 	aaaa=(struct aaaa_rdata*)local_malloc(sizeof(struct aaaa_rdata));
 	if (aaaa==0){
 		LOG(L_ERR, "ERROR: dns_aaaa_parser: out of memory\n");
@@ -224,8 +291,6 @@ struct rdata* get_record(char* name, int type)
 	struct srv_rdata* srv_rd;
 	struct srv_rdata* crt_srv;
 	
-	
-	
 	size=res_search(name, C_IN, type, buff.buff, sizeof(buff));
 	if (size<0) {
 		DBG("get_record: lookup(%s, %d) failed\n", name, type);
@@ -237,7 +302,7 @@ struct rdata* get_record(char* name, int type)
 	
 	p=buff.buff+DNS_HDR_SIZE;
 	end=buff.buff+size;
-	if (p>end) goto error_boundary;
+	if (p>=end) goto error_boundary;
 	qno=ntohs((unsigned short)buff.hdr.qdcount);
 
 	for (r=0; r<qno; r++){
@@ -251,8 +316,8 @@ struct rdata* get_record(char* name, int type)
 		for (;(p<end && (*p)); p++);
 		p+=1+2+2; /* skip the ending  '\0, QCODE and QCLASS */
 	#endif
-		if (p>end) {
-			LOG(L_ERR, "ERROR: get_record: p>end\n");
+		if (p>=end) {
+			LOG(L_ERR, "ERROR: get_record: p>=end\n");
 			goto error;
 		}
 	};
@@ -269,8 +334,8 @@ struct rdata* get_record(char* name, int type)
 		skip=dn_expand(buff.buff, end, p, t, ans_len);
 		p+=skip;
 		*/
-		/* check if enough space is left fot type, class, ttl & size */
-		if ((p+2+2+4+2)>end) goto error_boundary;
+		/* check if enough space is left for type, class, ttl & size */
+		if ((p+2+2+4+2)>=end) goto error_boundary;
 		/* get type */
 		memcpy((void*) &rtype, (void*)p, 2);
 		rtype=ntohs(rtype);
@@ -344,6 +409,12 @@ struct rdata* get_record(char* name, int type)
 				break;
 			case T_CNAME:
 				rd->rdata=(void*) dns_cname_parser(buff.buff, end, p);
+				if(rd->rdata==0) goto error_parse;
+				*last=rd;
+				last=&(rd->next);
+				break;
+			case T_NAPTR:
+				rd->rdata=(void*) dns_naptr_parser(buff.buff, end, p);
 				if(rd->rdata==0) goto error_parse;
 				*last=rd;
 				last=&(rd->next);
