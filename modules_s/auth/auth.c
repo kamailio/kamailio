@@ -53,11 +53,11 @@ static void to_hex(unsigned char* _dst, unsigned char *_src, int _src_len)
  * Nonce value consists of time in seconds since 1.1 1970 and
  * secret phrase
  */
-static inline void calc_nonce(char* _realm, unsigned char* _nonce)
+static inline void calc_nonce(char* _realm, char* _nonce)
 {
 	MD5_CTX ctx;
 	time_t t;
-	unsigned char bin[16];
+	char bin[16];
 	
 	t = time(NULL) / 60;
 	to_hex(_nonce, (unsigned char*)&t, 8);
@@ -216,7 +216,7 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 	HASHHEX resp;
 	HASHHEX hent;
 	char* qop;
-	unsigned char nonce[33];
+	char nonce[33];
 
 
 #ifdef PARANOID
@@ -231,7 +231,7 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 	      * different algorithm and qop, it will simply not
 	      * authorize him
 	      */
-	//	DigestCalcHA1("md5", _cred->username.s, _cred->realm.s, _a1, _cred->nonce.s, _cred->cnonce.s, HA1);
+	/*	DigestCalcHA1("md5", _cred->username.s, _cred->realm.s, _a1, _cred->nonce.s, _cred->cnonce.s, HA1); */
 
         switch(_cred->qop) {
 	case QOP_AUTH:
