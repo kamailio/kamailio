@@ -26,7 +26,7 @@
  */
 
 
-#if !defined(q_malloc) && !(defined VQ_MALLOC) 
+#if !defined(q_malloc) && !(defined VQ_MALLOC)  && (defined F_MALLOC)
 
 #include <string.h>
 
@@ -292,9 +292,9 @@ void fm_status(struct fm_block* qm)
 
 	LOG(memlog, " heap size= %ld\n", qm->size);
 #ifdef DBG_F_MALLOC
-	LOG(memlog, " used= %d, used+overhead=%d, free=%d\n",
+	LOG(memlog, " used= %ld, used+overhead=%ld, free=%ld\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	LOG(memlog, " max used (+overhead)= %d\n", qm->max_real_used);
+	LOG(memlog, " max used (+overhead)= %ld\n", qm->max_real_used);
 #endif
 	/*
 	LOG(memlog, "dumping all fragments:\n");
@@ -314,9 +314,9 @@ void fm_status(struct fm_block* qm)
 		
 		for (f=qm->free_hash[h],j=0; f; size+=f->size,f=f->u.nxt_free,i++,j++);
 		if (j) LOG(memlog, "hash = %3d fragments no.: %5d,\n\t\t"
-							" bucket size: %9d - %9d (first %9ld)\n",
-							h, j, UN_HASH(h),
-							((h<F_MALLOC_OPTIMIZE/ROUNDTO)?1:2)*UN_HASH(h),
+							" bucket size: %9ld - %9ld (first %9ld)\n",
+							h, j, (long)UN_HASH(h),
+						(long)((h<F_MALLOC_OPTIMIZE/ROUNDTO)?1:2)*UN_HASH(h),
 							qm->free_hash[h]->size
 				);
 		/*
