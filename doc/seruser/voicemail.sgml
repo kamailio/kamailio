@@ -84,27 +84,15 @@
         <itemizedlist>
 		<listitem>
 			<para>
-			First, you need to compile Ser with voicemail
-			support. Thatfor, you must edit Ser's
-			Makefile.defs file and uncomment the line with
-			'-DVOICE_MAIL' and '-D_TOTAG'.
-			</para>
-		</listitem>
-		<listitem>
-			<para>
-			Then do 'make all' in Ser's root directory.
-			</para>
-		</listitem>
-		<listitem>
-			<para>
 			Configure Ser to fit your needs. You can
-			report to voicemail example config file to
+			refer to voicemail example config file to
 			know what your configuration file should
 			include. Note that voicemail
-			only needs to know the user database location
-			in order to work. Report to the README file in
-			the vm module directory for description of the
-			functions and variable that are used by
+			uses subsriber database table to determine
+			recepient's email address.
+			Read the README file in
+			the vm module directory for complete description of the
+			functions and variables that are used by
 			voicemail and how they work.
 			</para>
 		</listitem>
