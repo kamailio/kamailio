@@ -768,14 +768,16 @@ void modem_process(struct modem *mdm)
 				/* let's read a sms from pipe */
 				len = read(net->pipe_out, &sms_messg,
 					sizeof(sms_messg));
-				LOG(L_INFO,"INFO:modem_process: read from pipe\n");
 				if (len!=sizeof(sms_messg)) {
 					if (len>=0)
 						LOG(L_ERR,"ERROR:modem_process: truncated message"
 						" read from pipe! -> discarted\n");
-					else if (errno==EAGAIN) {
+					else if (errno==EAGAIN)
 						empty_pipe = 1;
-					}
+					else
+						LOG(L_ERR,"ERROR:modem_process: pipe reding failed: "
+							" : %s\n",strerror(errno));
+					sleep(1);
 					counter++;
 					continue;
 				}
