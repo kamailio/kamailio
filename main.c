@@ -704,7 +704,10 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 	char* tmp;
 	struct ip_addr addr;
 	int ret;
-	
+
+#ifdef __FreeBSD__
+	#define MAX(a,b) ( ((a)>(b))?(a):(b))
+#endif
 	/* ipv4 or ipv6 only*/
 	s=socket(family, SOCK_DGRAM, 0);
 	ret=-1;

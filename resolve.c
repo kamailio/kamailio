@@ -1,7 +1,8 @@
 /* $Id$*/
 
-/* #include <arpa/nameser.h> -- included from resolve.h*/
+#include <sys/types.h>
 #include <netinet/in.h>
+#include <arpa/nameser.h>
 #include <resolv.h>
 #include <string.h>
 
