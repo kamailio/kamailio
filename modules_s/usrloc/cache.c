@@ -459,7 +459,7 @@ static void cache_add_elem(cache_t* _c, c_elem_t* _el)
 		CACHE_FIRST_ELEM(_c) = _el;
 		CACHE_LAST_ELEM(_c) = _el;
 	} else {
-		ELEM_CACHE_PREV(_el) = CACHE_FIRST_ELEM(_c);
+		ELEM_CACHE_PREV(_el) = CACHE_LAST_ELEM(_c);
 		ELEM_CACHE_NEXT(CACHE_LAST_ELEM(_c)) = _el;
 		CACHE_LAST_ELEM(_c) = _el;
 	}
@@ -470,8 +470,6 @@ static void cache_add_elem(cache_t* _c, c_elem_t* _el)
 
 static c_elem_t* cache_rem_elem(cache_t* _c, c_elem_t* _el)
 {
-	c_elem_t* ptr;
-
 	get_lock(&(CACHE_LOCK(_c)));
 
 	if (!CACHE_ELEM_COUNT(_c)) {
@@ -479,31 +477,22 @@ static c_elem_t* cache_rem_elem(cache_t* _c, c_elem_t* _el)
 		return NULL;
 	}
 		
-
-	ptr = CACHE_FIRST_ELEM(_c);
-
-	while(ptr) {
-		if (ptr == _el) {
-			if (ELEM_CACHE_PREV(ptr)) {
-				ELEM_CACHE_NEXT(ELEM_CACHE_PREV(ptr)) = ELEM_CACHE_NEXT(ptr);
-			} else {
-				CACHE_FIRST_ELEM(_c) = ELEM_CACHE_NEXT(ptr);
-			}
-			if (ELEM_CACHE_NEXT(ptr)) {
-				ELEM_CACHE_PREV(ELEM_CACHE_NEXT(ptr)) = ELEM_CACHE_PREV(ptr);
-			} else {
-				CACHE_LAST_ELEM(_c) = ELEM_CACHE_PREV(ptr);
-			}
-			ELEM_CACHE_PREV(ptr) = ELEM_CACHE_NEXT(ptr) = NULL;
-			CACHE_ELEM_COUNT(_c)--;
-			break;
-		}
-		ptr = ELEM_CACHE_NEXT(ptr);
+	if (ELEM_CACHE_PREV(_el)) {
+		ELEM_CACHE_NEXT(ELEM_CACHE_PREV(_el)) = ELEM_CACHE_NEXT(_el);
+	} else {
+		CACHE_FIRST_ELEM(_c) = ELEM_CACHE_NEXT(_el);
 	}
+	if (ELEM_CACHE_NEXT(_el)) {
+		ELEM_CACHE_PREV(ELEM_CACHE_NEXT(_el)) = ELEM_CACHE_PREV(_el);
+	} else {
+		CACHE_LAST_ELEM(_c) = ELEM_CACHE_PREV(_el);
+	}
+	ELEM_CACHE_PREV(_el) = ELEM_CACHE_NEXT(_el) = NULL;
+	CACHE_ELEM_COUNT(_c)--;
 
 	release_lock(&(CACHE_LOCK(_c)));
 
-	return ptr;
+	return _el;
 }
 		
 

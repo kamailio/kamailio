@@ -79,31 +79,23 @@ void slot_add_elem(c_slot_t* _slot, c_elem_t* _el)
  */
 c_elem_t* slot_rem_elem(c_elem_t* _el)
 {
-	c_elem_t* ptr;
 	c_slot_t* slot = ELEM_SLOT(_el);
 
-	ptr = SLOT_FIRST_ELEM(slot);
-
-	while(ptr) {
-		if (ptr == _el) {
-			if (ELEM_SLOT_PREV(ptr)) {
-				ELEM_SLOT_NEXT(ELEM_SLOT_PREV(ptr)) = ELEM_SLOT_NEXT(ptr);
-			} else {
-				SLOT_FIRST_ELEM(slot) = ELEM_SLOT_NEXT(ptr);
-			}
-			if (ELEM_SLOT_NEXT(ptr)) {
-				ELEM_SLOT_PREV(ELEM_SLOT_NEXT(ptr)) = ELEM_SLOT_PREV(ptr);
-			} else {
-				SLOT_LAST_ELEM(slot) = ELEM_SLOT_PREV(ptr);
-			}
-			ELEM_SLOT_PREV(ptr) = ELEM_SLOT_NEXT(ptr) = NULL;
-			ELEM_SLOT(ptr) = NULL;
-			SLOT_ELEM_COUNT(slot)--;
-			break;
-		}
-		ptr = ELEM_SLOT_NEXT(ptr);
+	if (ELEM_SLOT_PREV(_el)) {
+		ELEM_SLOT_NEXT(ELEM_SLOT_PREV(_el)) = ELEM_SLOT_NEXT(_el);
+	} else {
+		SLOT_FIRST_ELEM(slot) = ELEM_SLOT_NEXT(_el);
 	}
-	return ptr;
+	if (ELEM_SLOT_NEXT(_el)) {
+		ELEM_SLOT_PREV(ELEM_SLOT_NEXT(_el)) = ELEM_SLOT_PREV(_el);
+	} else {
+		SLOT_LAST_ELEM(slot) = ELEM_SLOT_PREV(_el);
+	}
+	ELEM_SLOT_PREV(_el) = ELEM_SLOT_NEXT(_el) = NULL;
+	ELEM_SLOT(_el) = NULL;
+	SLOT_ELEM_COUNT(slot)--;
+	
+	return _el;
 }
 
 
