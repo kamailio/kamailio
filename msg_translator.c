@@ -636,7 +636,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 				if (to_tag.s )
 					len+=new_tag_len-to_tag.len;
 				else
-					len+=new_tag_len+TOTAG_LEN/*";tag="*/;
+					len+=new_tag_len+TOTAG_TOKEN_LEN/*";tag="*/;
 			}
 		} else if (hdr->type==HDR_VIA) {
 				if (hdr==msg->h_via1) len += received_len;
@@ -711,7 +711,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 						append_str_trans( p, hdr->name.s ,
 							((hdr->body.s+hdr->body.len )-hdr->name.s ),
 							msg);
-						append_str( p, TOTAG,TOTAG_LEN,msg);
+						append_str( p, TOTAG_TOKEN,TOTAG_TOKEN_LEN,msg);
 						append_str( p, new_tag,new_tag_len,msg);
 						append_str( p, CRLF,CRLF_LEN,msg);
 					}
