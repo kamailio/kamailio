@@ -42,15 +42,6 @@
 #include "uri_mod.h"
 #include "checks.h"
 
-/*
- * If defined, username part of digest credentials can contain also
- * domain, some user agents use this approach because realm parameter
- * is not protected by the digest. If you define
- * USER_CAN_CONTAIN_DOMAIN then the functions will extract the domain
- * part before processing the username.
- */
-#define USER_CAN_CONTAIN_DOMAIN
-
 
 /*
  * Check if the username matches the username in credentials
@@ -75,17 +66,17 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 
 	c = (auth_body_t*)(h->parsed);
 
-	if (!c->digest.username.whole.len) {
+	if (!c->digest.username.user.len) {
 		DBG("is_user(): Username not found in credentials\n");
 		return -1;
 	}
 
-	if (s->len != c->digest.username.whole.len) {
+	if (s->len != c->digest.username.user.len) {
 		DBG("is_user(): Username length does not match\n");
 		return -1;
 	}
 
-	if (!memcmp(s->s, c->digest.username.whole.s, s->len)) {
+	if (!memcmp(s->s, c->digest.username.user.s, s->len)) {
 		DBG("is_user(): Username matches\n");
 		return 1;
 	} else {
@@ -163,10 +154,11 @@ int check_to(struct sip_msg* _m, char* _s1, char* _s2)
  */
 int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	if (!_m->from && ((parse_headers(_m, HDR_FROM, 0) == -1) || (!_m->from))) {
+	if (parse_from_header(_m) < 0) {
 		LOG(L_ERR, "check_from(): Error while parsing From header field\n");
 		return -1;
 	}
+
 	return check_username(_m, &get_from(_m)->uri);
 }
 

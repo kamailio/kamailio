@@ -36,26 +36,18 @@
 #define URI_MOD_H
 
 #include "../../db/db.h"
-#include "../../str.h"
-#include "../../parser/digest/digest.h" /* auth_body_t */
-#include "../../parser/msg_parser.h"    /* struct sip_msg */
-
 
 /*
  * Module parameters variables
  */
 extern char* db_url;                    /* Database URL */
-
 extern char* uri_table;                 /* Name of URI table */
 extern char* uri_domain_column;         /* Name of domain column in URI table */
 extern char* uri_uriuser_column;        /* Name of uri_user column in URI table */
-
 extern char* subscriber_table;          /* Name of subscriber table */
 extern char* subscriber_user_column;    /* Name of user column in subscriber table */
 extern char* subscriber_domain_column;  /* Name of domain column in subscriber table */
-
-extern int use_uri_table ;              /* Whether or not should be uri table used */
-
-extern db_con_t* db_handle;   /* Database connection handle */
+extern int use_uri_table;               /* Whether or not should be uri table used */
+extern db_con_t* db_handle;             /* Database connection handle */
 
 #endif /* URI_MOD_H */
