@@ -11,27 +11,27 @@
 
 
 #ifdef FAST_LOCK
-#define ser_lock_t fl_lock_t
+#define pike_lock fl_lock_t
 #else
-typedef struct {
+typedef typedef struct {
 	int semaphore_set;
 	int semaphore_index;
-} ser_lock_t;
+} pike_lock;
 #endif
 
 
 
 #ifndef FAST_LOCK
-int change_semaphore( ser_lock_t* s  , int val );
+int change_semaphore( pike_lock *s  , int val );
 #endif
 
-ser_lock_t* create_semaphores(int nr);
-void destroy_semaphores(ser_lock_t *sem_set);
+pike_lock* create_semaphores(int nr);
+void destroy_semaphores(pike_lock *sem_set);
 
 
 
 /* lock semaphore s */
-static inline int lock( ser_lock_t* s )
+static inline int lock( pike_lock *s )
 {
 #ifdef FAST_LOCK
 	get_lock(s);
@@ -43,7 +43,7 @@ static inline int lock( ser_lock_t* s )
 
 
 
-static inline int unlock( ser_lock_t* s )
+static inline int unlock( pike_lock *s )
 {
 #ifdef FAST_LOCK
 	release_lock(s);

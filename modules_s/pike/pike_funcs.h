@@ -26,7 +26,7 @@ extern int                     time_unit;
 extern int                     max_value;
 extern int                     timeout;
 extern tree234                 *btrees[IP_TYPES];
-extern ser_lock_t              bt_locks[IP_TYPES];
+extern pike_lock               bt_locks[IP_TYPES];
 extern struct pike_timer_head  timers[IP_TYPES];
 
 

@@ -15,6 +15,7 @@
 #include "../../error.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../mem/mem.h"
 #include "tree234.h"
 #include "pike_funcs.h"
 
@@ -31,8 +32,8 @@ int max_value = 500;
 int timeout   = 60*60;
 
 /* global variables */
-tree234                 *btress[IP_TYPES];
-ser_lock_t              bt_locks[IP_TYPES];
+tree234                 *btrees[IP_TYPES];
+pike_lock               bt_locks[IP_TYPES];
 struct pike_timer_head  timers[IP_TYPES];
 
 
@@ -83,7 +84,7 @@ struct module_exports exports= {
 
 static int pike_init(void)
 {
-	ser_lock_t *pike_locks;
+	pike_lock *pike_locks;
 
 	printf("pike - initializing\n");
 	/* init semaphore */
@@ -94,18 +95,18 @@ static int pike_init(void)
 		/* init the B trees - ipv4 and ipv6 */
 	btrees[IPv4] = newtree234(cmp_ipv4);
 	btrees[IPv6] = newtree234(cmp_ipv6);
-	memcpy((void*)bt_locks,(void*)pike_locks,2*sizeof(ser_lock_t));
+	memcpy((void*)bt_locks,(void*)pike_locks,2*sizeof(pike_lock));
 	/* setting up timers */
 	memset(&timers,0,2*sizeof(struct pike_timer_head));
 	memcpy( (void*)&(timers[IPv4].sem), (void*)(pike_locks+2),
-		sizeof(ser_lock_t));
+		sizeof(pike_lock));
 	memcpy( (void*)&(timers[IPv6].sem), (void*)(pike_locks+3),
-		sizeof(ser_lock_t));
+		sizeof(pike_lock));
 	/* registering timeing functions  */
 	register_timer( clean_routine , 0, 1 );
 	register_timer( swap_routine , 0, time_unit );
 
-	pkg_free(pike_locks);
+	pkg_free((void*)pike_locks);
 	return 0;
 error:
 	return -1;

@@ -46,6 +46,9 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
 	struct ip_v4 *ip4, *old_ip4;
 	//struct ip_v6 *ip6, *old_ip6;
+	int exceed;
+
+	exceed = 0;
 
 	if (msg->src_ip.af==AF_INET) {
 		/* we have an IPV4 address */
@@ -55,28 +58,36 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 			goto error;
 		}
 		ip4->ip = msg->src_ip.u.addr32[0];
+		ip4->counter[0] = 1;
+		DBG("---->before lock\n");
 		lock(&bt_locks[IPv4]);
+		DBG("---->after lock\n");
 		if ((old_ip4=add234(btrees[IPv4],ip4))!=ip4) {
 			/* the src ip already in tree */
-			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d]\n",
-				old_ip4->ip,old_ip4->counter[1],old_ip4->counter[0]);
-			old_ip4->counter[0]++;
-			if (old_ip4->counter[0]>(unsigned short)max_value) {
-				LOG(L_INFO,"INFO: src IP v4 [%x]exceeded!!\n",old_ip4->ip);
-				goto exceed;
-			}
+			exceed=(++old_ip4->counter[0]>=(unsigned short)max_value);
+			sleep(60);
 			unlock(&bt_locks[IPv4]);
+			DBG("----> after unlock 1\n");
+			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d] "
+				"exceed=%d\n",old_ip4->ip,old_ip4->counter[1],
+				old_ip4->counter[0],exceed);
 			shm_free(ip4);
+			if (exceed) {
+				LOG(L_NOTICE,"INFO: src IP v4 [%x]exceeded!!\n",old_ip4->ip);
+				goto overflow;
+			}
 		} else {
 			/* new record */
+			sleep(60);
 			unlock(&bt_locks[IPv4]);
+			DBG("----> after unlovk 2\n");
 			DBG("DEBUG:pike_check_req: new IPv4 src [%X]\n",ip4->ip);
 		}
 	} else {
 	}
 error:
 	return 1;
-exceed:
+overflow:
 	return -1;
 }
 

@@ -5,7 +5,7 @@
 
 
 #ifdef FAST_LOCK
-#include "../../mem/shm_mem.h"
+#include "../../mem/mem.h"
 #endif
 
 
@@ -46,7 +46,7 @@ static int init_semaphore_set( int size )
 
 
 
-int change_semaphore( ser_lock_t* s  , int val )
+int change_semaphore( pike_lock *s  , int val )
 {
 	struct sembuf pbuf;
 	int r;
@@ -76,15 +76,15 @@ tryagain:
 
 /* creats NR locks; return 0 if error
 */
-ser_lock_t* create_semaphores(int nr)
+pike_lock* create_semaphores(int nr)
 {
 	int        i;
-	ser_lock_t *lock_set;
+	pike_lock  *lock_set;
 #ifndef FAST_LOCK
 	int        sem_set;
 #endif
 
-	lock_set = pkg_malloc(nr*sizeof(ser_lock_t));
+	lock_set = (pike_lock*)pkg_malloc(nr*sizeof(pike_lock));
 	if (lock_set==0){
 		LOG(L_CRIT, "ERROR: pike_create_semaphores: out of pkg mem\n");
 		goto error;
@@ -111,7 +111,7 @@ error:
 
 
 
-void destroy_semaphores(ser_lock_t *sem_set)
+void destroy_semaphores(pike_lock *sem_set)
 {
 #ifdef FAST_LOCK
 	/* must check if someone uses them, for now just leave them allocated*/
