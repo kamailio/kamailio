@@ -156,12 +156,14 @@ static inline struct ip_addr* str2ip(str* st)
 				goto error_char;
 		}
 	}
+	if (i<3) goto error_dots;
 	ip.af=AF_INET;
 	ip.len=4;
 	
 	return &ip;
 error_dots:
-	DBG("str2ip: ERROR: too many dots in [%.*s]\n", st->len, st->s);
+	DBG("str2ip: ERROR: too %s dots in [%.*s]\n", (i>3)?"many":"few", 
+			st->len, st->s);
 	return 0;
  error_char:
 	/*
@@ -228,7 +230,6 @@ static inline struct ip_addr* str2ip6(str* st)
 			goto error_char;
 		}
 	}
-	if (no_colons<2) goto error_too_few_colons;
 	if (!double_colon){ /* not ending in ':' */
 		addr[i]=htons(addr[i]);
 		i++; 
@@ -237,6 +238,9 @@ static inline struct ip_addr* str2ip6(str* st)
 	if (addr==addr_end){
 		rest=8-i-idx1;
 		memcpy(addr_start+idx1+rest, addr_end, i*sizeof(unsigned short));
+	}else{
+		/* no double colons inside */
+		if (no_colons<7) goto error_too_few_colons;
 	}
 /*
 	DBG("str2ip6: idx1=%d, rest=%d, no_colons=%d, hex=%x\n",
