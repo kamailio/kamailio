@@ -626,10 +626,8 @@ int t_retransmit_reply( struct sip_msg* p_msg   )
 
 int t_unref( /* struct sip_msg* p_msg */ )
 {
-/*
 	if (T==T_UNDEFINED || T==T_NULL)
 		return -1;
-*/
 	T_UNREF( T );
 	T=T_UNDEFINED;
 	return 1;

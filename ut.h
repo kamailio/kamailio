@@ -28,6 +28,12 @@
 			(_mystr).len--; \
 	})
 
+
+#define  translate_pointer( _new_buf , _org_buf , _p) \
+	( (_p)?(_new_buf + (_p-_org_buf)):(0) )
+
+
+
 /* converts a str to an u. short, returns the u. short and sets *err on
  * error and if err!=null
  * */
