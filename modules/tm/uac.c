@@ -130,7 +130,7 @@ int t_uac( str *msg_type, str *dst,
 	struct proxy_l *proxy;
 	int branch;
 	int ret;
-	int req_len;
+	unsigned int req_len;
 	char *buf;
 	union sockaddr_union to;
 	struct socket_info* send_sock;
@@ -183,10 +183,12 @@ int t_uac( str *msg_type, str *dst,
 	UNLOCK_HASH(new_cell->hash_index);
 
 	if (from) dummy_from=*from; else { dummy_from.s=0; dummy_from.len=0; }
-	buf=build_uac_request(  *msg_type, *dst, dummy_from, *headers, *body, branch,
-		new_cell /* t carries hash_index, label, md5, uac[].send_sock and
-		     other pieces of information needed to print a message*/
-		, &req_len );
+	buf=build_uac_request(  *msg_type, *dst, dummy_from, *headers, *body,
+							branch,
+							new_cell, /* t carries hash_index, label, md5,
+										uac[].send_sock and other pieces of
+										information needed to print a message*/
+							 &req_len );
     if (!buf) {
         ret=E_OUT_OF_MEM;
         LOG(L_ERR, "ERROR: t_uac: short of req shmem\n");

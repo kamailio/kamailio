@@ -58,7 +58,7 @@
 #endif
 
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-	int branch, str *uri, int *len, struct socket_info *send_sock )
+	int branch, str *uri, unsigned int *len, struct socket_info *send_sock )
 {
 	char *buf, *shbuf;
 
@@ -219,7 +219,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 {
 	int ret;
 	char *shbuf;
-	int len;
+	unsigned int len;
 
 	if (t_cancel->uac[branch].request.buffer) {
 		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");

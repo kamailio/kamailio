@@ -71,7 +71,7 @@ void cancel_uacs( struct cell *t, branch_bm_t cancel_bm )
 void cancel_branch( struct cell *t, int branch )
 {
 	char *cancel;
-	int len;
+	unsigned int len;
 	struct retr_buf *crb, *irb;
 
 	crb=&t->uac[branch].local_cancel;
