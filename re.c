@@ -481,11 +481,11 @@ str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
 		goto error;
 	}
 	res->s=pkg_malloc(len+1); /* space for null termination */
-	res->s[len]=0;
 	if (res->s==0){
 		LOG(L_ERR, "ERROR: subst_str: mem. allocation error (res->s)\n");
 		goto error;
 	}
+	res->s[len]=0;
 	res->len=len;
 	
 	/* replace */
