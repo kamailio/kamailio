@@ -134,7 +134,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 	while(ptr) {
 		if (VALID_CONTACT(ptr, act_time)) {
-			if (append_branch(_m, ptr->c.s, ptr->c.len, Q_UNSPECIFIED) == -1) {
+			if (append_branch(_m, ptr->c.s, ptr->c.len, 0, 0, Q_UNSPECIFIED) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				     /* Return 1 here so the function succeeds even if appending of
 				      * a branch failed
