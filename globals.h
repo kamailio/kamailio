@@ -51,7 +51,7 @@ extern int server_signature;
 /*
  * debug & log_stderr moved to dprint.h*/
 
-extern process_bm_t process_bit;
+/* extern process_bm_t process_bit; */
 extern int *pids;
 
 extern int cfg_errors;

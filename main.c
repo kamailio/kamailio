@@ -248,7 +248,7 @@ struct host_alias* aliases=0; /* name aliases list */
 
 /* ipc related globals */
 int process_no = 0;
-process_bm_t process_bit = 0;
+/* process_bm_t process_bit = 0; */
 #ifdef ROUTE_SRV
 #endif
 
@@ -509,7 +509,7 @@ int main_loop()
 				if (pid==0){
 					/* child */
 					/* timer!*/
-					process_bit = 0;
+					/* process_bit = 0; */
 					for(;;){
 						sleep(TIMER_TICK);
 						timer_ticker();
@@ -526,7 +526,7 @@ int main_loop()
 		}
 		/* main process, receive loop */
 		pids[0]=getpid();
-		process_bit = 1;
+		/* process_bit = 1; */
 		process_no=0; /*main process number*/
 		
 		     /* We will call child_init even if we
@@ -575,7 +575,7 @@ int main_loop()
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
 					}
-					process_bit = 1 << (i+r*children_no); /*or process_no-1*/
+					/* process_bit = 1 << (i+r*children_no); */ /*or process_no-1*/
 #ifdef STATS
 					setstats( i+r*children_no );
 #endif
@@ -628,7 +628,7 @@ int main_loop()
 		printf("% 3d   % 5d\n", r, pids[r]);
 	}
 	process_no=0; 
-	process_bit = 0;
+	/* process_bit = 0; */
 	is_main=1;
 	
 	for(;;){
