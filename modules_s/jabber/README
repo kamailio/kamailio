@@ -11,6 +11,7 @@ Linux distributions.
 
 New features
 ------------
+- SIP to Jabber conference support
 - posibility to manage all kinds of Jabber messages (message/presence/iq)
 - aliases - posibility to set host aliases for addresses (see parameter's desc.)
 - gateways detection - ability to see whether an IM gateway is up or down
@@ -50,16 +51,18 @@ Name:		jdomain
 Type:		string
 Default:	none
 Desc:		Format: jabber.sipserver.com
+			If the destination is for Jabber network the URI should be as:
+			userbame%jabber_server@jdomain
 
 Name:		aliases
 Type:		string
 Default:	none
 Desc:		aliases for hostnames. 
 			Format: "N;alias1;...;aliasN;"
-			Jabber module expects destination as userid%server@jdomain,
+			Jabber module expects destination as userid%jabber_server@jdomain,
 			only destination like '*@aliasX' could have other form. If destination
 			does not contains an alias then it will be transformed to
-			userid@server before the message is sent to Jabber server
+			userid@jabber_server before the message is sent to Jabber server
 
 Name:		workers
 Type:		integer
@@ -93,3 +96,26 @@ Name: 	jab_send_message
 Params:	none
 Desc:	converts SIP MESSAGE message to a Jabber message and sends it to Jabber
 		server.
+
+Name: 	jab_join_jconf
+Params:	none
+Desc:	join a Jabber conference - the nickanme, room name and conference server
+		address should be included in to header as:
+		nickname%roomname%conference_server@jdomain . If the nickname is missing,
+		then the SIP username is used.
+
+Name: 	jab_exit_jconf
+Params:	none
+Desc:	leave a Jabber conference - the nickanme, room name and conference server
+		address should be included in to header as:
+		nickname%roomname%conference_server@jdomain .
+
+Name: 	jab_go_online
+Params:	none
+Desc:	register to the Jabber server with associated Jabber ID of the SIP user
+
+Name: 	jab_go_offline
+Params:	none
+Desc:	logoff from Jabber server the associated Jabber ID of the SIP user
+
+
