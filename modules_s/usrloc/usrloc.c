@@ -105,7 +105,7 @@ char* cseq_col = "cseq";
 int flush_interval = 60;
 
 
-/*
+\/*
  * sl_send_reply function pointer
  */
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
@@ -334,7 +334,11 @@ static inline void build_contact_buf(char* _b, int* _len, location_t* _loc)
 			
 			memcpy(_b + l, ptr->c.s, ptr->c.len);
 			l += ptr->c.len;
-			
+	
+			//			memcpy(_b + l, ">", 1);  intel hack
+			//			l += 1;
+
+		
 			memcpy(_b + l, ">;q=", 4);
 			l += 4;
 			
@@ -352,8 +356,12 @@ static inline void build_contact_buf(char* _b, int* _len, location_t* _loc)
 		ptr = ptr->next;
 	}
 
+	//	memcpy(_b + l, "Expires: 3600\r\n", 15);  intel hack
+	//	l += 15;
+
 	*(_b + l) = '\0';
 	*_len = l;
+
 	DBG("Created Contact HF: %s", _b);
 }
 
@@ -518,7 +526,7 @@ static inline int process_loc(struct sip_msg* _msg, cache_t* _c, location_t* _lo
 		return process_star_loc(_msg, _c, _loc);
 	} else {
 		if (IS_EMPTY(_loc)) {
-			DBG("No contacts found in REGISETR message, processing");
+			DBG("No contacts found in REGISTER message, processing");
 			return process_no_contacts(_msg, _c, _loc);
 		} else {
 			DBG("Contacts found in REGISTER message, processing");
