@@ -157,6 +157,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	qvalue_t q;
 	str callid;
 	unsigned int flags;
+	str* recv;
 
 	if (isflagset(_m, nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
@@ -196,7 +197,13 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 			return -4;
 		}
 
-		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua, 0) < 0) {
+		if (_c->received) {
+			recv = &_c->received->body;
+		} else {
+			recv = 0;
+		}
+
+		if (ul.insert_ucontact(r, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
 			ul.delete_urecord(_d, _a);
@@ -237,6 +244,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 	int cseq, e;
 	qvalue_t q;
 	unsigned int fl;
+	str* recv;
 
 	fl = (isflagset(_m, nat_flag) == 1);
 
@@ -268,8 +276,14 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					return -3;
 				}
 				
+				if (_c->received) {
+					recv = &_c->received->body;
+				} else {
+					recv = 0;
+				}
+
 				if (ul.insert_ucontact(_r, &_c->uri, e, q, &callid, cseq,
-						       (fl ? FL_NAT : FL_NONE), &c2, _ua, 0) < 0) {
+						       (fl ? FL_NAT : FL_NONE), &c2, _ua, recv) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -301,9 +315,15 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c, str* 
 					return -7;
 				}
 				
+				if (_c->received) {
+					recv = &_c->received->body;
+				} else {
+					recv = 0;
+				}
+
 				if (ul.update_ucontact(c, e, q, &callid, cseq,
 						       (fl ? FL_NAT : FL_NONE),
-						       (fl ? FL_NONE : FL_NAT), _ua, 0) < 0) {
+						       (fl ? FL_NONE : FL_NAT), _ua, recv) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
