@@ -36,6 +36,7 @@
 
 #define         _statusline(class, dir )       case class: stats->dir##_responses_##class++; break;
 
+/* FIXME: Don't have case for _other (see received_responses_other) */
 #define _update_response( statusclass, dir )		\
         { if (stat_file!=NULL)                          \
                 switch( statusclass ) {                 \
@@ -84,7 +85,7 @@ struct stats_s {
 	received_requests_bye,
 	received_requests_other,
 
-	received_responses_1, 		/* received_requests */
+	received_responses_1, 		/* received_responses */
 	received_responses_2,
 	received_responses_3,
 	received_responses_4,
@@ -92,7 +93,7 @@ struct stats_s {
 	received_responses_6,
 	received_responses_other,
 
-	received_drops, 		/* all messages we received and did not process
+	received_drops,	/* all messages we received and did not process
 					   successfully; reasons include SIP sanity checks 
 					   (missing Vias, neither request nor response, 
 					   failed parsing), ser errors (malloc, action
@@ -115,6 +116,7 @@ struct stats_s {
 	sent_responses_4,
 	sent_responses_5,
 	sent_responses_6,
+	/* FIXME: Don't want sent_responses_other?? */
 
 	processed_requests,
 	processed_responses,
@@ -122,18 +124,17 @@ struct stats_s {
 	acc_res_time,
 
 	failed_on_send;			
-			  
 };
 
-
 extern struct stats_s *stats;
+extern char *stat_file;
 
-void setstats( int child_index );
-void dump_statistic( FILE *fp, struct stats_s *istats );
-int dump_all_statistic();
 int init_stats( int nr_of_processes );
-
-
+void setstats( int child_index );
+int dump_all_statistic();
+int dump_statistic(FILE *fp, struct stats_s *istats, int printheader);
+/* Registers handlers with SNMP module */
+int stats_register(); 
 
 #endif
 #endif
