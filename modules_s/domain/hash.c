@@ -1,4 +1,4 @@
-/* hash.c v 0.1 2002/12/28
+/* hash.c v 0.2 2003/1/19
  *
  * Hash functions for cached domain table
  *
@@ -29,6 +29,7 @@
 
 #include "domain_mod.h"
 #include "../../dprint.h"
+#include "../../mem/shm_mem.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -53,16 +54,18 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 	struct domain_list *np;
 	unsigned int hash_val;
 
-	np = (struct domain_list *) malloc(sizeof(*np));
+	np = (struct domain_list *) shm_malloc(sizeof(*np));
 	if (np == NULL) {
 		LOG(L_CRIT, "hash_install(): Cannot allocate memory for table entry\n");
 		return -1;
 	}
-	np->domain = strdup(domain);
+
+	np->domain = (char *) shm_malloc(strlen(domain) + 1);
 	if (np->domain == NULL) {
 		LOG(L_CRIT, "hash_install(): Cannot allocate memory for domain string\n");
 		return -1;
 	}
+	(void) strcpy(np->domain, domain);
 
 	hash_val = hash(np->domain);
 	np->next = hash_table[hash_val];
@@ -77,7 +80,7 @@ int hash_table_lookup (char *domain, int len)
 {
 	struct domain_list *np;
 
-	for (np = current_hash_table[hash(domain)]; np != NULL; np = np->next)
+	for (np = (*hash_table)[hash(domain)]; np != NULL; np = np->next)
 		if (strncasecmp(domain, np->domain, len) == 0) return 1;
 	return -1;
 
@@ -109,9 +112,9 @@ void hash_table_free (struct domain_list **hash_table)
 	for (i = 0; i < HASH_SIZE; i++) {
 		np = hash_table[i];
 		while (np) {
-			free(np->domain);
+			shm_free(np->domain);
 			next = np->next;
-			free(np);
+			shm_free(np);
 			np = next;
 		}
 		hash_table[i] = NULL;

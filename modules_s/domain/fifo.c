@@ -1,4 +1,4 @@
-/* fifo.c v 0.1 2002/12/28
+/* fifo.c v 0.2 2003/1/19
  *
  * Domain fifo functions
  *
@@ -59,13 +59,13 @@ int reload_domain_table ( void )
 	VAL_TYPE(vals) = DB_STR;
 	VAL_NULL(vals) = 0;
     
-	if (db_query(db_handle, NULL, 0, NULL, cols, 0, 1, 0, &res) < 0) {
+	if (db_query(db_handle, NULL, NULL, cols, 0, 1, 0, &res) < 0) {
 		LOG(L_ERR, "reload_domain_table(): Error while querying database\n");
 		return -1;
 	}
 
 	/* Choose new hash table and free its old contents */
-	if (current_hash_table == hash_table_1) {
+	if (*hash_table == hash_table_1) {
 		hash_table_free(hash_table_2);
 		new_hash_table = hash_table_2;
 	} else {
@@ -96,7 +96,7 @@ int reload_domain_table ( void )
 	}
 	db_free_query(db_handle, res);
 
-	current_hash_table = new_hash_table;
+	*hash_table = new_hash_table;
 	
 	return 1;
 }
@@ -130,7 +130,7 @@ static int domain_dump ( FILE* pipe, char* response_file )
 		return -1;
 	}
 	fputs( "200 OK\n", reply_file );
-	hash_table_print( current_hash_table, reply_file );
+	hash_table_print( *hash_table, reply_file );
 	fclose(reply_file);
 	return 1;
 }

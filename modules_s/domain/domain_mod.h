@@ -1,4 +1,4 @@
-/* domain_mod.h v 0.2 2002/12/27
+/* domain_mod.h v 0.2 2003/1/19
  *
  * Domain module headers
  *
@@ -60,9 +60,9 @@ extern char* domain_domain_col;   /* Domain column name */
  * Other module variables
  */
 extern db_con_t* db_handle; /* Database connection handle */
-extern struct domain_list *hash_table_1[HASH_SIZE]; /* Hash table for domains */
-extern struct domain_list *hash_table_2[HASH_SIZE]; /* Hash table for domains */
-extern struct domain_list **current_hash_table;
+extern struct domain_list **hash_table_1; /* Hash table for domains */
+extern struct domain_list **hash_table_2; /* Hash table for domains */
+extern struct domain_list ***hash_table;  /* Current hash table */
 
 
 #endif /* DOMAIN_MOD_H */

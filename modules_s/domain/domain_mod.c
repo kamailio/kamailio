@@ -1,4 +1,4 @@
-/* domain_mod.c v 0.1 2002/12/27
+/* domain_mod.c v 0.2 2003/1/19
  *
  * Domain module
  *
@@ -29,6 +29,7 @@
 
 #include "domain_mod.h"
 #include <stdio.h>
+#include "../../mem/shm_mem.h"
 #include "../../sr_module.h"
 #include "domain.h"
 #include "fifo.h"
@@ -53,9 +54,9 @@ char* domain_domain_col = "domain";   /* Name of domain column */
  * Other module variables
  */
 db_con_t* db_handle = NULL;                  /* Database connection handle */
-struct domain_list *hash_table_1[HASH_SIZE]; /* Hash table for domains */
-struct domain_list *hash_table_2[HASH_SIZE]; /* Hash table for domains */
-struct domain_list **current_hash_table;
+struct domain_list ***hash_table;            /* Pointer to current hash table pointer */
+struct domain_list **hash_table_1;           /* Pointer to hash table 1 */
+struct domain_list **hash_table_2;           /* Pointer to hash table 2 */
 
 /*
  * Module interface
@@ -86,7 +87,7 @@ static int mod_init(void)
 
 	fprintf(stderr, "domain - initializing\n");
 	
-	/* Check if database module has been laoded */
+	/* Check if database module has been loaded */
 	if (bind_dbmod()) {
 		LOG(L_ERR, "domain:mod_init(): Unable to bind database module\n");
 		return -1;
@@ -104,10 +105,22 @@ static int mod_init(void)
 		(void)init_domain_fifo();
 
 		/* Initializing hash tables and hash table variable */
+		hash_table_1 = (struct domain_list **)shm_malloc(sizeof(struct domain_list *) * HASH_SIZE);
+		if (hash_table_1 == 0) {
+			LOG(L_ERR, "domain: mod_init(): No memory for hash table\n");
+		}
+
+		hash_table_2 = (struct domain_list **)shm_malloc(sizeof(struct domain_list *) * HASH_SIZE);
+		if (hash_table_2 == 0) {
+			LOG(L_ERR, "domain: mod_init(): No memory for hash table\n");
+		}
 		for (i = 0; i < HASH_SIZE; i++) {
 			hash_table_1[i] = hash_table_2[i] = (struct domain_list *)0;
 		}
-		current_hash_table = hash_table_1;
+
+		hash_table = (struct domain_list ***)shm_malloc(sizeof(struct domain_list *));
+		*hash_table = hash_table_1;
+
 		if (reload_domain_table() == -1) {
 			LOG(L_CRIT, "domain:mod_init(): Domain table reload failed\n");
 			return -1;
