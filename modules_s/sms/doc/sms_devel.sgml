@@ -1,0 +1,23 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Developer's Guide</title>
+    <para>
+	Each modem forks its own process for sending /fetching <acronym>SMS</acronym>. Communication
+	and queuing between ser working processes and modem processes is done with pipes.
+    </para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("sms.sgml" "book" "chapter")
+End:
+-->

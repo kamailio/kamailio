@@ -1,0 +1,457 @@
+<!-- Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module provides a way of comunication between &sip; network (via &sip MESSAGE) and
+	    <acronym>GSM</acronym> networks (via ShortMessageService). Comunication is possible from
+	    &sip; to <acronym>SMS</acronym> and vice versa. The module provides facilities like
+	    <acronym>SMS</acronym> confirmation--the gateway can cofirm to the &sip; user if his
+	    message really reached its destination as a <acronym>SMS</acronym>--or multipart
+	    messages--if a &sip; messages is too long it will be split and sent as multiple
+	    <acronym>SMS</acronym>.
+	</para>
+	<para>
+	    Errors occurred because of an invalid number or a too long message or because of an
+	    internal modem malfunction are reported back to the &sip; user via a &sip; message
+	    containing explanations regarding the error.
+	</para>
+	<section>
+	    <title>Hardware Requirements</title>
+	    <para>
+		The <acronym>SMS</acronym> module needs a <acronym>GSM</acronym> modem to be able to
+		send/receive the <acronym>SMS</acronym> messages.  Usualy, this kind of modems are
+		externals, linked to the machine via serial cable. The modem can be a dedicated one
+		(as the ones provided by FALCOM) or can be a <acronym>GSM</acronym> telephone that
+		has an internal modem (as the latest mobile phones from NOKIA and ERICSSON).
+	    </para>
+	</section>
+	<section>
+	    <title>Numbering Plan</title>
+	    <para>
+		The gateway accepts and advertises phone numbers in international format, more
+		specific like: +(international code)(area code)(number). Ex: Germany, D1 = +49 170
+		5678181 Romania, Connex = +40 722 123456 A number in this format is expected to be
+		placed as username into <acronym>RURI</acronym> or in the To header. If
+		<acronym>RURI</acronym> misses the username, the To header will be consider. Also,
+		the gateway will advertise in this format the username in Contact headers (in &sip;
+		replies and requests) and in From headers (in &sip; requests).
+	    </para>
+	</section>
+	<section>
+	    <title>Address Mapping</title>
+	    <para>
+		To identify the destination number of the <acronym>SMS</acronym>, the gateway
+		expects to have a mobile number in username of the &sip; destination address (for
+		example sip:+401704678811@iptel.org). For the reverse direction, because the gateway
+		has only one <acronym>GSM</acronym> number, the destination &sip; address has to be
+		encapsulated into the <acronym>SMS</acronym> body. The gateway expects to find a
+		&sip; address at the beginning of the <acronym>SMS</acronym> body in
+		<quote>sip:user.host</quote> format. Everything before the &sip; address will be
+		discarded, the useful text begins exactly after the address (for example
+		SMS=<quote>For sip:user@host hello world!!</quote> -> SIP=<quote>hello
+		world</quote>) In order to facilitate replying, the gateway sends all the
+		<acronym>SMS</acronym> messages with a header containing the source &sip; address in
+		the following format: <quote>From sip:user@host (if you reply DONOT remove
+		it)&lt;new_line&gt;</quote>. When an <acronym>SMS</acronym>-reply is received having
+		this header (all of it or truncated at the end), the header will be left out (it
+		will not be in the &sip; message).
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<section>
+	    <title>&ser; Modules</title>
+	    <para>
+		The following modules must be loaded before this module:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>tm - Transaction Manager</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+	<section>
+	    <title>External Libraries or Applications</title>
+	    <para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+	    	<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>None</emphasis>.
+			</para>
+		    </listitem>
+	    	</itemizedlist>
+	    </para>
+	</section>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>modems</varname> (string)</title>
+	    <para>
+		Define and configure one or more <acronym>GSM</acronym> modems.
+	    </para>
+	    <programlisting format="linespecific">
+modems_value     = modem_definition *( ";" modem_definition )
+modem_definition = modem_name "[" list_of_params "]"
+list_of_params   = modem_param *( ";" modem_param )
+modem_param      = name "=" value
+</programlisting>
+	    <para>
+		The following parameters can be used:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			d=device (mandatory) - Device associatd with modem (/dev/ttyS0, /dev/modem,
+			etc.).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			p=pin (optional) - <acronym>SIM</acronym> <acronym>PIN</acronym> - default
+			is NULL.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			m=mode (optional) - Modem working mode
+			(<quote>ASCII</quote>,<quote>OLD</quote>,<quote>DIGICOM</quote>,<quote>NEW</quote>). Default
+			value is <quote>NEW</quote>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			c=SMS_Center (optional) - <acronym>SMS</acronym> center number for that
+			modem. Deafult is the <acronym>SMS</acronym> center set on the
+			<acronym>SIM</acronym> card.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			b=baudrate (optional) - Default is 19600.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			r=retry (optional) - How many times to try to re-send a
+			<acronym>SMS</acronym> that reported error. Default is twice.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			l=looping (optional) - Time for modem to wait before performing a new check
+			for incomimg/outgoing <acronym>SMS</acronym>/SIP_MSG. Default is 20.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>
+		<emphasis>
+		    No default value, the parameter is mandatory.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>modems</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "modems", "Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
+modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>networks</varname> (string)</title>
+	    <para>
+		Define and configure used <acronym>GSM</acronym> networks.
+	    </para>
+	    <programlisting format="linespecific">
+networks_value = net_definition *( ";" net_definition )
+net_definition = net_name "[" list_of_params "]"
+list_of_params = set_param *( ";" set_param )
+set_param      = name "=" value
+</programlisting>
+	    <para>
+		The following parameters can be used:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			m=msx_sms_per_call (optional) - Maximum number of <acronym>SMS</acronym>
+			send / received from that net in one modem loop. Default is 10. This
+			parameter was introduced to avoid starvation.
+		    </para>
+		    <para>
+			Example of the starvation--a modem can send <acronym>SMS</acronym> for more
+			than 1 networks. If you have a huge number of <acronym>SMS</acronym> for the
+			first network and the number of incoming &sip; messages is equal to the sent
+			<acronym>SMS</acronym> per same unit of time, the modem will never get to
+			send <acronym>SMS</acronym> for the next networks.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>
+		<emphasis>
+		    No default value, the parameter is mandatory.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>networks</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "networks", "D1 [m=10] ;d2[ m=20]")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>links</varname> (string)</title>
+	    <para>
+		Define from which network each modem should send <acronym>SMS</acronym>.
+	    </para>
+	    <programlisting format="linespecific">
+links_value = modem_assoc *( ";" modem_assoc )
+modem_assoc = modem_name "[" list_of_networks "]"
+list_of_networks = network *( ";" network )
+</programlisting>
+	    <para>
+		<emphasis>
+		    No default value, the parameter is mandatory.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>links</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "links", "NOKIA[D1;d2]")
+...
+</programlisting>
+	    </example>
+	    <para>
+		The modem NOKIA will send <acronym>SMS</acronym> from D1 and D2 net (in this order
+		!). if in a net queue are more then max_sms_per_call <acronym>SMS</acronym> the
+		modem will <emphasis>not sleep</emphasis> before starting the next loop ! Shortly,
+		if messages are waiting to be sent, the modem will not go in sleep.
+	    </para>
+	</section>
+
+	<section>
+	    <title><varname>default_net</varname> (string)</title>
+	    <para>
+		The default network to use. If no one specified, the first defined network is
+		used. This parameter is useful only if the the <quote>sms_send_msg</quote> exported
+		function is used (see <xref linkend="sec-exported-functions">).
+	    </para>
+	    <example>
+		<title>Set <varname>default_net</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "default_net", "D1")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>max_sms_parts</varname> (integer)</title>
+	    <para>
+		Shows in how many parts (<acronym>SMS</acronym> messages) a &sip; message can be
+		split. If exceeded, the &sip; message will be sent truncated and the &sip; user will
+		get back another message containing the unsent part.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is 4.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>max_sms_parts</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "max_sms_parts", 10)
+...
+</programlisting>
+	    </example>
+	</section>	
+
+	<section>
+	    <title><varname>domain_str</varname> (string)</title>
+	    <para>
+		Specify a fake domain name to be used by the gateway. The Contact headers and the
+		From header from request will be construct based on this fake domain name. It's
+		useful when the gateway is transparently hidden behind a proxy/register (located on
+		different machines).
+	    </para>
+	    <para>
+		<emphasis>
+		    Default is the name of the machine the gateway is running on.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>domain_str</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "domain_str", "foo.bar")
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>use_contact</varname> (integer)</title>
+	    <para>
+		If a contact header should be added to the outgoing &sip; messages. Even if the
+		&sip; draft forbids this, some &uas; require it. 
+	    </para>
+	    <para>
+		<emphasis>
+		    Default is 0 (no).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>use_contact</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "use_contact", 1)
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><varname>sms_report_type</varname> (integer)</title>
+	    <para>
+		If the modem should ask for <acronym>SMS</acronym> confirmation from the
+		<acronym>SMS</acronym> Center. If the <acronym>SMSC</acronym> reply with an error
+		code, the gateway will send back to &sip; user a &sip; message containing the text
+		(or part of it) that couldn't be send. Two report mechanisms are implemented:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			1 - the reports are delivered by the <acronym>GSM</acronym> device as
+			<acronym>SMS</acronym> reports (so far supported only by Nokia modems);
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			2 - the reports are delivered as async. <acronym>CDS</acronym> reponses
+			(supported by almost all modems, exepting Ericsson).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <para>
+		<emphasis>
+		    Default is 0 (no report).
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set <varname>sms_report_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("sms", "sms_report_type", 1)
+...
+</programlisting>
+	    </example>
+	</section>	
+
+    </section>
+    <section id="sec-exported-functions">
+	<title>Exported Functions</title>
+	<section>
+	    <title>
+		<function moreinfo="none">sms_send_msg_to_net(network_name)</function>
+	    </title>
+	    <para>
+		Put the &sip; msg in the specified network queue. The function return error if the
+		number encapsulated into &sip; message is malformed, if the content_type is incorrect
+		or because of some internal failures.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>network_name</emphasis> - Name of network.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function>sms_send_msg_to_net</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (sms_send_msg_to_net("D1"))
+{
+    if (!t_reply("202", "yes sir, SMS sent over"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+} else {
+    if (!t_reply("502", "Bad gateway - SMS error"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+    break;
+};
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title>
+		<function moreinfo="none">sms_send_msg()</function>
+	    </title>
+	    <para>
+		The same as the previous one, but use the default network queue.
+	    </para>
+	    <example>
+		<title><function>sms_send_msg</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (sms_send_msg_to_net())
+{
+    if (!t_reply("202", "yes sir, SMS sent over"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+} else {
+    if (!t_reply("502", "Bad gateway - SMS error"))
+    {
+        # if replying failed, retry statelessly
+        sl_reply_error();
+    };
+    break;
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("sms.sgml" "Book" "chapter")
+End:
+-->

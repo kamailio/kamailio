@@ -1,67 +1,153 @@
-# 
-# $Id$
-#
 
-From: Bogdan Andrei Iancu <iancu@fokus.gmd.de>
+sl Module
 
+Bogdan Iancu
 
+   FhG FOKUS
 
-                           StateLess (SL) Module
+Edited by
 
+Bogdan Iancu
 
-1.Description
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
 
-The SL module allows ser to act as a stateless UA server
-and generate replies to SIP requests without keeping state.
-That is beneficial in many scenarios, in which you wish
-not to burden server's memory and scale well.
+   Table of Contents
+   1. User's Guide
 
+        1.1. Overview
+        1.2. Dependencies
 
-2.Module parameters
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
 
-None.
+        1.3. Exported Functions
 
+              1.3.1. sl_send_reply(code, reason)
+              1.3.2. sl_reply_error()
 
-3.Exported functions
+   2. Developer's Guide
+   3. Frequently Asked Questions
 
- - sl_send_reply(code,text_reason)
-For the current request, a reply is sent back having the given code and text
-reason. The reply is sent stateless, totally independent of the Transaction
-module and with no retransmission for the INVITE's replies.
+   List of Examples
+   1-1. sl_send_reply usage
+   1-2. sl_reply_error usage
+     _________________________________________________________
 
- - sl_reply_error()
-Sends back an error reply describing the nature of the last internal error.
-Usually this function should be used after a script function that returned an
-error code.
+Chapter 1. User's Guide
 
+1.1. Overview
 
-4.Modules dependency
+   The SL module allows ser to act as a stateless UA server and
+   generate replies to SIP requests without keeping state. That
+   is beneficial in many scenarios, in which you wish not to
+   burden server's memory and scale well.
 
-None.
+   The SL module needs to filter ACKs sent after a local
+   stateless reply to an INVITE was generated. To recognize such
+   ACKs, ser adds a special "signature" in to-tags. This
+   signature is sought for in incoming ACKs, and if included, the
+   ACKs are absorbed.
 
+   To speed up the filtering process, the module uses a timeout
+   mechanism. When a reply is sent, a timer us set. As time as
+   the timer is valid, The incoming ACK requests will be checked
+   using TO tag value Once the timer expires, all the ACK are let
+   through - a long time passed till it sent a reply, so it does
+   not expect any ACK that have to be blocked.
 
-5.Implementation details
+   The ACK filtering may fail in some rare cases. If you think
+   these matter to you, better use stateful processing (tm
+   module) for INVITE processing. Particularly, the problem
+   happens when a UA sends an INVITE which already has a to-tag
+   in it (e.g., a re-INVITE) and SER want to reply to it. Than,
+   it will keep the current to-tag, which will be mirrored in
+   ACK. SER will not see its signature and forward the ACK
+   downstream. Caused harm is not bad--just a useless ACK is
+   forwarded.
+     _________________________________________________________
 
+1.2. Dependencies
 
-The SL module needs to filter ACKs sent after a local stateless
-reply to an INVITE was generated. To recognize such ACKs, ser
-adds a special "signature" in to-tags. This signature is sought
-for in incoming ACKs, and if included, the ACKs are absorbed.
+1.2.1. SER Modules
 
-TO speed up the filtering process, the module uses a timeout mechanism. When
-a reply is sent, a timer us set. As time as the timer is valid, The incoming
-ACK requests will be checked using TO tag value  Once the timer expires, all
-the ACK are let through - a long time passed till it sent a reply, so it does
-not expect any ACK that have to be blocked.
+   The following modules must be loaded before this module:
 
-6. Known Limitations
+     * No dependencies on other SER modules.
+     _________________________________________________________
 
-The ACK filtering may fail in some rare cases. If you think these
-matter to you, better use stateful processing (tm module) for
-INVITE processing. Particularly, the problem happens when
-a UA sends an INVITE which already has a to-tag in it (e.g.,
-a re-INVITE) and SER want to reply to it. Than, it will
-keep the current to-tag, which will be mirrored in ACK.
-SER will not see its signature and forward the ACK
-downstream. Caused harm is not bad -- just a useless
-ACK is forwarded.
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Functions
+
+1.3.1. sl_send_reply(code, reason)
+
+   For the current request, a reply is sent back having the given
+   code and text reason. The reply is sent stateless, totally
+   independent of the Transaction module and with no
+   retransmission for the INVITE's replies.
+
+   Meaning of the parameters is as follows:
+
+     * code - Return code.
+     * reason - Reason phrase.
+
+   Example 1-1. sl_send_reply usage
+...
+sl_send_reply("404", "Not found");
+...
+     _________________________________________________________
+
+1.3.2. sl_reply_error()
+
+   Sends back an error reply describing the nature of the last
+   internal error. Usually this function should be used after a
+   script function that returned an error code.
+
+   Example 1-2. sl_reply_error usage
+...
+sl_reply_error();
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs
