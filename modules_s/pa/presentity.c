@@ -400,6 +400,13 @@ int db_update_presentity(presentity_t* _p)
 		    query_vals[n_updates].val.time_val = tuple->expires;
 		    n_updates++;
 	       }
+	       if (tuple->prescaps != 0) {
+		    query_cols[n_updates] = "prescaps";
+		    query_vals[n_updates].type = DB_INT;
+		    query_vals[n_updates].nul = 0;
+		    query_vals[n_updates].val.int_val = tuple->prescaps;
+		    n_updates++;
+	       }
 
 	       if (n_updates > (sizeof(query_cols)/sizeof(db_key_t)))
 		    LOG(L_ERR, "too many update values. n_selectors=%d, n_updates=%d "
@@ -448,16 +455,16 @@ int new_presence_tuple(str* _contact, time_t expires, presentity_t *_p, presence
 
      tuple->state = PS_UNKNOWN;
      tuple->contact.s = ((char*)tuple) + sizeof(presence_tuple_t);
-     tuple->status.s = &tuple->status_buf;
+     tuple->status.s = tuple->status_buf;
      strncpy(tuple->contact.s, _contact->s, _contact->len);
      _contact->s[_contact->len] = 0;
      tuple->contact.len = _contact->len;
-     tuple->location.loc.s = &tuple->location.loc_buf;
-     tuple->location.site.s = &tuple->location.site_buf;
-     tuple->location.floor.s = &tuple->location.floor_buf;
-     tuple->location.room.s = &tuple->location.room_buf;
-     tuple->location.packet_loss.s = &tuple->location.packet_loss_buf;
-     tuple->id.s = &tuple->id_buf;
+     tuple->location.loc.s = tuple->location.loc_buf;
+     tuple->location.site.s = tuple->location.site_buf;
+     tuple->location.floor.s = tuple->location.floor_buf;
+     tuple->location.room.s = tuple->location.room_buf;
+     tuple->location.packet_loss.s = tuple->location.packet_loss_buf;
+     tuple->id.s = tuple->id_buf;
      tuple->expires = expires;
      tuple->priority = default_priority;
 

@@ -182,12 +182,13 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      double x=0, y=0, radius=0;
      time_t expires = act_time + default_expires;
      double priority = default_priority;
+     int prescaps = 0;
      int flags = 0;
      int changed = 0;
      int ret = 0;
 
      flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, 
-			&packet_loss, &priority, &expires);
+			&packet_loss, &priority, &expires, &prescaps);
      if (contact.len) {
 	  find_presence_tuple(&contact, presentity, &tuple);
 	  if (!tuple && new_tuple_on_publish) {
@@ -299,6 +300,11 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  if (site.len && floor.len && room.len && changed) {
 	       location_package_location_add_user(_d, &site, &floor, &room, presentity);
 	  }
+     if (flags & PARSE_PIDF_PRESCAPS) {
+       if (tuple->prescaps != prescaps)
+	 changed = 1;
+       tuple->prescaps = prescaps;
+     }
 
      changed = 1;
      if (changed)

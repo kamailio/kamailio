@@ -63,7 +63,8 @@ int pidf_add_contact(str* _b, int _l, str* _addr, pidf_status_t _st, double prio
 /*
  * Add location information
  */
-int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double x, double y, double radius);
+int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double x, double y, double radius, 
+		      enum prescaps prescaps);
 
 /*
  * End of pidf tuple
@@ -76,10 +77,11 @@ int end_pidf_tuple(str* _b, int _l);
 int end_pidf_doc(str* _b, int _l);
 
 /* returns flags indicating which fields were parsed */
-int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str,
-	       str *location_str,
-	       str *site_str, str *floor_str, str *room_str,
-	       double *xp, double *yp, double *radiusp, str *packet_loss, double *priority, time_t *expires);
+int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str, 
+	       str *location_str, str *site_str, str *floor_str, str *room_str,
+	       double *xp, double *yp, double *radiusp,
+	       str *packet_loss_str, double *priorityp, time_t *expiresp,
+	       int *prescapsp);
 #define PARSE_PIDF_CONTACT (1 << 0)
 #define PARSE_PIDF_BASIC (1 << 1)
 #define PARSE_PIDF_STATUS (1 << 2)
@@ -93,6 +95,7 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
 #define PARSE_PIDF_PACKET_LOSS (1 << 10)
 #define PARSE_PIDF_PRIORITY (1 << 11)
 #define PARSE_PIDF_EXPIRES  (1 << 12)
+#define PARSE_PIDF_PRESCAPS  (1 << 13)
 
 #define PARSE_PIDF_LOCATION_MASK 0x3F8
 

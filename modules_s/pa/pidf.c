@@ -35,6 +35,7 @@
 #include "../../dprint.h"
 #include "paerrno.h"
 #include "common.h"
+#include "presentity.h"
 #include "pidf.h"
 #include "ptime.h"
 #include "pa_mod.h"
@@ -150,7 +151,18 @@
 #define RADIUS_ETAG "</radius>"
 #define RADIUS_ETAG_L (sizeof(RADIUS_ETAG) - 1)
 
+#define PRESCAPS_STAG "  <prescaps>"
+#define PRESCAPS_STAG_L (sizeof(PRESCAPS_STAG) - 1)
 
+#define PRESCAPS_ETAG "  </prescaps>"
+#define PRESCAPS_ETAG_L (sizeof(PRESCAPS_ETAG) - 1)
+
+const char *prescap_names[] = {
+     "audio",
+     "video",
+     "text",
+     "application"
+};
 
 /*
  * Create start of pidf document
@@ -248,7 +260,8 @@ int pidf_add_contact(str* _b, int _l, str* _addr, pidf_status_t _st, double prio
 /*
  * Add location information
  */
-int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double _x, double _y, double _radius)
+int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *_room, double _x, double _y, double _radius,
+		      enum prescaps prescaps)
 {
 	str_append(_b, LOCATION_STAG, LOCATION_STAG_L);
 
@@ -296,6 +309,18 @@ int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *
 	}
 
 	str_append(_b, LOCATION_ETAG CRLF, CRLF_L + LOCATION_ETAG_L);
+	if (prescaps) {
+	     int i;
+	     str_append(_b, PRESCAPS_STAG CRLF, PRESCAPS_STAG_L + CRLF_L);
+	     for (i = 0; i < 4; i++) {
+		  const char *prescap_name = prescap_names[i];
+		  char prescap[128];
+		  int prescap_l = sprintf(prescap, "      <%s>%s</%s>%s",
+					  prescap_name, ((prescaps & (1 << i)) ? "true" : "false"), prescap_name, CRLF);
+		  str_append(_b, prescap, prescap_l);
+	     }
+	     str_append(_b, PRESCAPS_ETAG CRLF, PRESCAPS_ETAG_L + CRLF_L);
+	}
 	str_append(_b, STATUS_ETAG CRLF, STATUS_ETAG_L + CRLF_L);
 	return 0;
 }
@@ -432,6 +457,15 @@ xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name, const char *n
 	return NULL;
 }
 
+char *xmlNodeGetNodeContentByName(xmlNodePtr root, const char *name, const char *ns)
+{
+	xmlNodePtr node = xmlNodeGetNodeByName(root, name, ns);
+	if (node)
+		return xmlNodeGetContent(node->children);
+	else
+		return NULL;
+}
+
 xmlNodePtr xmlDocGetNodeByName(xmlDocPtr doc, const char *name, const char *ns)
 {
 	xmlNodePtr cur = doc->children;
@@ -476,11 +510,13 @@ void xmlDocMapByName(xmlDocPtr doc, const char *name, const char *ns,
 int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_str, 
 	       str *location_str, str *site_str, str *floor_str, str *room_str,
 	       double *xp, double *yp, double *radiusp,
-	       str *packet_loss_str, double *priorityp, time_t *expiresp)
+	       str *packet_loss_str, double *priorityp, time_t *expiresp,
+	       int *prescapsp)
 {
      int flags = 0;
      xmlDocPtr doc = NULL;
      xmlNodePtr presenceNode = NULL;
+     xmlNodePtr prescapsNode = NULL;
      char *presence = NULL;
      char *sipuri = NULL;
      char *contact = NULL;
@@ -496,8 +532,12 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
      char *packet_loss = NULL;
      char *priority_str = NULL;
      char *expires_str = NULL;
+     int prescaps = 0;
 
      doc = event_body_parse(pidf_body);
+     if (!doc) {
+	  return flags;
+     }
 
      presenceNode = xmlDocGetNodeByName(doc, "presence", NULL);
      presence = xmlDocGetNodeContentByName(doc, "presence", NULL);
@@ -514,6 +554,7 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
      packet_loss = xmlDocGetNodeContentByName(doc, "packet-loss", NULL);
      priority_str = xmlDocGetNodeContentByName(doc, "priority", NULL);
      expires_str = xmlDocGetNodeContentByName(doc, "expires", NULL);
+     prescapsNode = xmlDocGetNodeByName(doc, "prescaps", NULL);
 		
      if (presenceNode)
 	  sipuri = xmlNodeGetAttrContentByName(presenceNode, "entity");
@@ -586,6 +627,22 @@ int parse_pidf(char *pidf_body, str *contact_str, str *basic_str, str *status_st
      if (priorityp && priority_str) {
 	  *priorityp = strtod(priority_str, NULL);
 	  flags |= PARSE_PIDF_PRIORITY;
+     }
+     if (prescapsNode) {
+	  int i;
+	  for (i = 0; i < 4; i++) {
+	       const char *prescap_name = prescap_names[i];
+	       xmlNodePtr prescap_node = xmlNodeGetNodeByName(prescapsNode, prescap_name, NULL);
+	       const char *prescap_str = xmlNodeGetNodeContentByName(prescapsNode, prescap_name, NULL);
+	       if (prescap_str && (strcasecmp(prescap_str, "true") == 0))
+		    prescaps |= (1 << i);
+	       LOG(L_INFO, "parse_pidf: prescap=%s node=%p value=%s\n", prescap_name, prescap_node, prescap_str);
+	  }
+	  LOG(L_INFO, "parse_pidf: prescaps=%x\n", prescaps);
+     }
+     if (prescapsp) {
+	  *prescapsp = prescaps;
+	  flags |= PARSE_PIDF_PRESCAPS;
      }
      return flags;
 }

@@ -69,6 +69,7 @@ CREATE TABLE presentity_contact (
   priority float(5,2) not null default '0.5';
   contact varchar(128) default NULL,
   tupleid varchar(16) not null,
+  prescaps int(10),
   PRIMARY KEY  (contactid),
   KEY presid_index (presid),
   KEY location_index (location),

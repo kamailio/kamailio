@@ -38,6 +38,7 @@
 #include "pa_mod.h"
 #include "lpidf.h"
 #include "xpidf.h"
+#include "presentity.h"
 #include "pidf.h"
 #include "common.h"
 #include "paerrno.h"
@@ -440,7 +441,8 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		if (pidf_add_location(&body, BUF_LEN - body.len,
 				      &tuple->location.loc,
 				      &tuple->location.site, &tuple->location.floor, &tuple->location.room,
-				      tuple->location.x, tuple->location.y, tuple->location.radius) < 0) {
+				      tuple->location.x, tuple->location.y, tuple->location.radius, 
+				      tuple->prescaps) < 0) {
 			LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
 			return -4;
 		}
