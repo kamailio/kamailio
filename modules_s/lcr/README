@@ -1,0 +1,153 @@
+
+Least Cost Routing Module
+
+Juha Heinanen
+
+Edited by
+
+Juha Heinanen
+
+   Copyright © 2005 Juha Heinanen
+     _________________________________________________________
+
+   Table of Contents
+
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+        1.3. Exported Parameters
+        1.4. Exported Functions
+        1.5. FIFO Commands
+        1.6. Known Limitations
+
+   2. TODO
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   Least cost routing (LCR) module supports sequential forwarding of a
+   request to one or more gateways based on From URI and user part of
+   Request-URI (telephone number).  Gateway patterns matching From URI
+   and telephone number are ordered for forwarding purpose (1)
+   according to longest user part match, (2) according to priority, and
+   (3) randomly.
+
+   Each gateway belongs to a gateway group either alone or among other
+   gateways.  All gateways in a group share the same priority.
+
+   LCR module operates on two database tables gw and lcr.  Table gw
+   contains gw's name, IP address, port, and group id.  Table lcr
+   contains prefix of user part of Request-URI, From URI, gateway group
+   id, and priority.  From URI can contain special characters % and _
+   matching any number of any characters and any one character,
+   respectively.  In addition to gw and lcr tables there is third table
+   gw_grp that is used for administrative purposes only to associate
+   names with gateway group ids.
+     _________________________________________________________
+
+1.2. Dependencies
+
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
+
+     * tm module
+     * mysql module
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+   LCR module exports the following database related parameters that
+   have usual purpose:
+
+     * db_url (default system default)
+     * gw_table (default "gw")
+     * gw_name_column (default "gw_name")
+     * ip_addr_column (default "ip_addr")
+     * port_column (default "port")
+     * grp_id_column (default "grp_id")
+     * lcr_table (default "lcr")
+     * prefix_column (default "prefix")
+     * from_uri_column (default "from_uri")
+     * priority_column (default "priority")
+
+   In addition there are two parameters that can be used to override
+   names of the two AVPs used by LCR module:
+
+     * gw_addr_avp (default "lcr_gw_addr")
+     * gw_port_avp (default "lcr_gw_port")
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. load_gws()
+
+   Loads addresses and ports of gateways matching From URI and user part
+   of Request-URI to gw_addr_avp and gw_port_avp, respectively.  Returns
+   1 or -1 depending on success.
+
+   Example:
+
+   if (!load_gws()) {
+      sl_send_reply("500", "Server Internal Error - Cannot load gateways");
+      break;
+   };
+
+1.4.2. next_gw()
+
+   If called from a route block, replaces host:port part of Request-URI
+   by the first gw_addr_avp and gw_port_avp AVP values and destroys those
+   AVP values.
+
+   If called from a failure route block, appends a new branch to request,
+   where host:port part of Request-URI is replaced by the first
+   gw_addr_avp, and gw_port_avp AVP values and destroys those AVP values.
+
+   Must be preceded by successful load_gws() call.
+
+   Example:
+   
+   if (!next_gw()) {
+      sl_send_reply("503", "Service not available - No more gateways");
+      break;
+    };
+
+1.4.3. from_gw()
+
+   Checks if request came from IP address of a gateway.
+
+   Example:
+   
+   if (from_gw()) {
+      ...
+      break;
+   };
+
+1.5. FIFO Commands
+
+1.5.1. lcr_reload
+
+   Causes lcr module to re-read the contents of gateway table
+   into memory.
+
+1.5.2. lcr_dump
+
+   Causes lcr module to dump the contents of its in-memory gateway
+   table. 
+
+1.6. Known Limitations
+
+   There is an unlikely race condition on lcr reload. If a process uses
+   in memory gw table, which is reloaded at the same time twice through
+   FIFO, the second reload will delete the original table still in use
+   by the process.
+   _________________________________________________________
+
+2.0. TODO
+
+   Function load_gws() currently makes an SQL query for the matching
+   gateways.  In order to avoid the query, also lcr table should be
+   read into memory and the corresponding query should be rewritten in
+   C.
