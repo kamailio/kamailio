@@ -29,6 +29,8 @@
   *  2003-02-18  updated various function prototypes (andrei)
   *  2003-03-10  removed ifdef _OBSO & made redefined all the *UNREF* macros
   *               in a non-gcc specific way (andrei)
+  *  2003-03-13  now send_pr_buffer will be called w/ function/line info
+  *               only when compiling w/ -DEXTRA_DEBUG (andrei)
   */
 
 
@@ -75,14 +77,20 @@ extern int noisy_ctimer;
    for reducing time spend in REPLIES locks
 */
 
-int send_pr_buffer( struct retr_buf *rb,
-	void *buf, int len, char *function, int line );
 
 /* send a buffer -- 'PR' means private, i.e., it is assumed noone
    else can affect the buffer during sending time
 */
+#ifdef EXTRA_DEBUG
+int send_pr_buffer( struct retr_buf *rb,
+	void *buf, int len, char* file, char *function, int line );
 #define SEND_PR_BUFFER(_rb,_bf,_le ) \
-	send_pr_buffer( (_rb), (_bf), (_le),  __FUNCTION__, __LINE__ )
+	send_pr_buffer( (_rb), (_bf), (_le), __FILE__,  __FUNCTION__, __LINE__ )
+#else
+int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
+#define SEND_PR_BUFFER(_rb,_bf,_le ) \
+	send_pr_buffer( (_rb), (_bf), (_le))
+#endif
 
 #define SEND_BUFFER( _rb ) \
 	SEND_PR_BUFFER( (_rb) , (_rb)->buffer , (_rb)->buffer_len )

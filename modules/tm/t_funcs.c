@@ -31,6 +31,8 @@
  * -------
  *  2003-03-01  start_retr changed to retransmit only for UDP
  *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
+ *  2003-03-13  send_pr_buffer is called w/ file/function/line debugging
+ *               info only if compiling w/ -DEXTRA_DEBUG (andrei)
  */
 
 
@@ -52,16 +54,23 @@
 
 
 /* ----------------------------------------------------- */
-
-int send_pr_buffer( struct retr_buf *rb,
-	void *buf, int len, char *function, int line )
+int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
+#ifdef EXTRA_DEBUG
+						, char* file, char *function, int line
+#endif
+					)
 {
 	if (buf && len && rb )
 		return msg_send( rb->dst.send_sock, rb->dst.proto, &rb->dst.to,
 				         rb->dst.proto_reserved1, buf, len);
 	else {
-		LOG(L_CRIT, "ERROR: sending an empty buffer from %s (%d)\n",
-			function, line );
+#ifdef EXTRA_DEBUG
+		LOG(L_CRIT, "ERROR: send_pr_buffer: sending an empty buffer"
+				"from %s: %s (%d)\n", file, function, line );
+#else
+		LOG(L_CRIT, "ERROR: send_pr_buffer: attempt to send an "
+				"empty buffer\n");
+#endif
 		return -1;
 	}
 }

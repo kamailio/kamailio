@@ -280,7 +280,7 @@ inline static void retransmission_handler( void *attr)
 			DBG("DEBUG: retransmission_handler : "
 				"request resending (t=%p, %.9s ... )\n", 
 				r_buf->my_T, r_buf->buffer);
-			if (SEND_BUFFER( r_buf )<=0) {
+			if (SEND_BUFFER( r_buf )==-1) {
 				reset_timer( &r_buf->fr_timer );
 				fake_reply(r_buf->my_T, r_buf->branch, 503 );
 				return;
