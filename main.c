@@ -486,6 +486,10 @@ int main_loop()
 			LOG(L_WARN, "WARNING: using only the first listen address (no fork)\n");
 		}
 
+		/* process_no now initialized to zero -- increase from now on
+		   as new processes are forked (while skipping 0 reserved for main 
+		*/
+
 		/* we need another process to act as the timer*/
 		if (timer_list){
 				process_no++;
@@ -531,6 +535,11 @@ int main_loop()
 		
 		return udp_rcv_loop();
 	}else{
+		/* process_no now initialized to zero -- increase from now on
+		   as new processes are forked (while skipping 0 reserved for main ;
+		   not that with multiple listeners, more children processes will
+		   share the same process_no and the pids array will be rewritten
+		*/
 		for(r=0;r<sock_no;r++){
 			/* create the listening socket (for each address)*/
 			if (udp_init(&sock_info[r])==-1) goto error;
@@ -572,9 +581,10 @@ int main_loop()
 			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
 		}
 	}
+	/* process_no is still at zero ... it was only updated in children */ 
+	process_no=children_no;
+
 	/*this is the main process*/
-	pids[process_no]=getpid();
-	process_bit = 0;
 	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
 	bind_idx=0;					/* if it does it will use the first address */
 	/* if configured to do so, start a server for accepting FIFO commands */
@@ -582,16 +592,16 @@ int main_loop()
 		LOG(L_ERR, "opening fifo server failed\n");
 		goto error;
 	}
-	is_main=1;
 
 	if (timer_list){
 		/* fork again for the attendant process*/
+		process_no++;
 		if ((pid=fork())<0){
 			LOG(L_CRIT, "main_loop: cannot fork timer process\n");
 			goto error;
 		}else if (pid==0){
 			/* child */
-			is_main=0; /* warning: we don't keep this process pid*/
+			/* is_main=0; */ /* warning: we don't keep this process pid*/
 			for(;;){
 				/* debug:  instead of doing something usefull */
 				/* (placeholder for timers, etc.) */
@@ -601,6 +611,11 @@ int main_loop()
 			}
 		}
 	}
+
+	process_no=0; /* main */
+	pids[process_no]=getpid();
+	process_bit = 0;
+	is_main=1;
 	
 	for(;;){
 			pause();

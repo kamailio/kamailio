@@ -393,7 +393,7 @@ int open_fifo_server()
 		/* call per-child module initialization too -- some
 		   FIFO commands may need it
 		*/
-		if (init_child(0) < 0 ) {
+		if (init_child(process_no) < 0 ) {
 			LOG(L_ERR, "ERROR: open_uac_fifo: init_child failed\n");
 			return -1;
 		}
