@@ -1007,8 +1007,8 @@ char* via_builder( unsigned int *len,
 	max_len=MY_VIA_LEN+send_sock->address_str.len /* space in MY_VIA */
 		+2 /* just in case it is a v6 address ... [ ] */
 		+send_sock->port_no_str.len
-		+(branch)?(MY_BRANCH_LEN+branch->len):0
-		+(extra_params)?extra_params->len:0
+		+(branch?(MY_BRANCH_LEN+branch->len):0)
+		+(extra_params?extra_params->len:0)
 		+CRLF_LEN+1;
 	line_buf=pkg_malloc( max_len );
 	if (line_buf==0){
