@@ -60,16 +60,16 @@ VERSION='$Revision$'
 
 # Usr Loc Table
 USRLOC=location
-USER_COLUMN=user
+USER_COLUMN=username
 CALLID_COLUMN=callid
 
 # subscriber table
 TABLE=subscriber
-REALM_COLUMN=realm
+REALM_COLUMN=domain
 HA1_COLUMN=HA1
 HA1B_COLUMN=HA1B
 PASSWORD_COLUMN=password
-SUBSCRIBER_COLUMN='user'
+SUBSCRIBER_COLUMN='username'
 EMAIL_COLUMN=email_address
 SUB_CREATED_COLUMN=datetime_created
 SUB_MODIFIED_COLUMN=datetime_modified
