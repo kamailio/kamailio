@@ -486,7 +486,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 			msg->via1->name.s, 
 			msg->via1->version.len,
 			msg->via1->version.s,
-			msg->via1->transport.len 
+			msg->via1->transport.len,
 			msg->via1->transport.s, 
 			msg->via1->host.len,
 			msg->via1->host.s,
