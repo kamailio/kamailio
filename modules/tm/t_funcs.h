@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include "../../msg_parser.h"
 #include "../../globals.h"
+#include "../../udp_server.h"
 
 struct s_table;
 struct timer;

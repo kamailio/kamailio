@@ -16,7 +16,6 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int push_reply_from_uac_to_uas( struct sip_msg * , unsigned int );
 int t_cancel_branch(unsigned int branch); //TO DO
 
-int send_udp_to( char *buf, unsigned buflen, struct sockaddr_in*  to, unsigned tolen );
 
 void retransmission_handler( void *);
 void final_response_handler( void *);
@@ -39,10 +38,6 @@ int tm_startup()
    hash_table->timers[FR_TIMER_LIST].timeout_handler              = final_response_handler;
    hash_table->timers[WT_TIMER_LIST].timeout_handler             = wait_handler;
    hash_table->timers[DELETE_LIST].timeout_handler                 = delete_handler;
-
-    /* creating socket for forwarding and retransmision*/
-    if ( (sock_fd=socket(AF_INET, SOCK_DGRAM,0))<0 )
-       return -1;
 
    return 0;
 }
@@ -270,7 +265,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    T->outbound_request[0]->max_retrans = (T->inbound_request->first_line.u.request.method_value==METHOD_INVITE) ? MAX_INVITE_RETR : MAX_NON_INVITE_RETR;
    T->outbound_request[0]->timeout         = RETR_T1;
    /* send the request */
-   send_udp_to( T->outbound_request[0]->buffer , T->outbound_request[0]->bufflen , &(T->outbound_request[0]->to) , sizeof(struct sockaddr_in) );
+   send_udp( T->outbound_request[0]->buffer , T->outbound_request[0]->bufflen , &(T->outbound_request[0]->to) , sizeof(struct sockaddr_in) );
 }
 
 
@@ -401,7 +396,7 @@ int t_retransmit_reply( struct sip_msg* p_msg )
    /* if no transaction exists or no reply to be resend -> out */
    if ( T  && T->inbound_response )
    {
-      send_udp_to( T->inbound_response->buffer , T->inbound_response->bufflen , &(T->inbound_response->to) , sizeof(struct sockaddr_in) );
+      send_udp( T->inbound_response->buffer , T->inbound_response->bufflen , &(T->inbound_response->to) , sizeof(struct sockaddr_in) );
       return 0;
    }
 
@@ -760,29 +755,12 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    *(p++) = '\n';
 
    /* sends the ACK message to the same destination as the INVITE */
-   send_udp_to( ack_buf, p-ack_buf, &(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+   send_udp( ack_buf, p-ack_buf, &(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 
    /* free mem*/
    free( ack_buf );
 
    return 0;
-}
-
-
-
-
-/* sends a buffer as a datagram
-  */
-int send_udp_to( char *buf, unsigned buflen, struct sockaddr_in*  to, unsigned tolen )
-{
-   int res;
-
-    do
-    {
-       res = sendto(sock_fd, buf, buflen, 0, to, tolen);
-    }while( res==-1 && errno==EINTR );
-
-   return res;
 }
 
 
