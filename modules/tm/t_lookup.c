@@ -51,6 +51,7 @@
  *
  * History:
  * ----------
+ * 2003-02-27  3261 ACK/200 consumption bug removed (jiri)
  * 2003-01-28  scratchpad removed (jiri)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-23  options for disabling r-uri matching introduced (jiri)

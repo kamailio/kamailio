@@ -44,11 +44,12 @@
  *
  * History:
  * --------
+ * 2003-02-27 FIFO/UAC now dumps reply -- good for CTD (jiri)
+ * 2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
+ *              proto & rb->dst (andrei)
  * 2003-01-29  scratchpad removed (jiri)
  * 2003-01-27  fifo:t_uac_dlg completed (jiri)
  * 2003-01-23  t_uac_dlg now uses get_out_socket (jiri)
- * 2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
- *              proto & rb->dst (andrei)
  */
 
 
@@ -595,7 +596,7 @@ done:
 }
 
 
-static void fifo_callback( struct cell *t, struct sip_msg *msg,
+static void fifo_callback( struct cell *t, struct sip_msg *reply,
 	int code, void *param)
 {
 
@@ -609,14 +610,20 @@ static void fifo_callback( struct cell *t, struct sip_msg *msg,
 	}
 
 	filename=(char *)(t->cbp);
-	get_reply_status(&text,msg,code);
-	if (text.s==0) {
-		LOG(L_ERR, "ERROR: fifo_callback: get_reply_status failed\n");
-		fifo_reply(filename, "500 fifo_callback: get_reply_status failed\n");
-		return;
+	if (reply==FAKED_REPLY) {
+		get_reply_status(&text,reply,code);
+		if (text.s==0) {
+			LOG(L_ERR, "ERROR: fifo_callback: get_reply_status failed\n");
+			fifo_reply(filename, "500 fifo_callback: get_reply_status failed\n");
+			return;
+		}
+		fifo_reply(filename, "%.*s", text.len, text.s );
+		pkg_free(text.s);
+	} else {
+		text.s=reply->first_line.u.reply.status.s;
+		text.len=reply->len-(reply->first_line.u.reply.status.s-reply->buf);
+		fifo_reply(filename, "%.*s", text.len, text.s );
 	}
-	fifo_reply(filename, "%.*s", text.len, text.s );
-	pkg_free(text.s);
 	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
 }	
 

@@ -19,6 +19,7 @@
 <!ENTITY execstep5 SYSTEM "../../examples/exec_s5.cfg">
 <!ENTITY execstep5b SYSTEM "../../examples/exec_s5b.cfg">
 <!ENTITY ccdiversion SYSTEM "../../examples/ccdiversion.cfg">
+<!ENTITY logging SYSTEM "../../examples/logging.cfg">
 <!ENTITY releasenotes SYSTEM "../../NEWS">
 <!ENTITY install SYSTEM "../../INSTALL">
 <!ENTITY voicemail SYSTEM "voicemail.sgml">
@@ -1957,7 +1958,7 @@ route{
 	    </section> <!-- exec example -->
 	    
 	    <section id="replyprocessingsection">
-		<title>Reply Processing (Forward on Unavailable)</title>
+		<title>On-Reply Processing (Forward on Unavailable)</title>
 		<para>
 		    Many services depend on status of messages relayed
 		    downstream: <emphasis>forward on busy</emphasis> and 
@@ -1981,6 +1982,18 @@ route{
 		    any final reply within final response period.
 		</para>
 		<para>
+		    The length of the timer is governed by parameters of the
+		    tm module. <varname>fr_timer</varname> is the length of
+		    timer set for non-INVITE transactions and INVITE transactions
+		    for which no provisional response is received. If a timer
+		    hits, it indicates that a downstream server is unresponsive.
+		    <varname>fr_inv_timer</varname> governs time to wait for 
+		    a final reply for an INVITE. It is typically longer than
+		    <varname>fr_timer</varname> because final reply may take
+		    long time until callee (finds a mobile phone in a pocket and)
+		    answers the call.
+		</para>
+		<para>
 		    In <xref linkend="replyprocessing">, <command moreinfo="none">reply_route[1]</command>
 		    is set to be entered on error using the <command moreinfo="none">t_on_negative(1)</command>
 		    action. Within this reply block, <application moreinfo="none">ser</application>
@@ -1991,7 +2004,7 @@ route{
 		    is entered and a last resort destination (sip:foo@iptel.org) is tried.
 		</para>
 		<example id="replyprocessing">
-		    <title>Reply Processing</title>
+		    <title>On-Reply Processing</title>
 		    <programlisting format="linespecific">
 			<!-- ../../examples/onr.cfg -->
 			&replyexample;
@@ -2005,7 +2018,7 @@ route{
 
     <chapter>
 	<title>Server Operation</title>
-	<section>
+	<section id="operationalpractices">
 	    <title>Recommended Operational Practices</title>
 
 	    <para>
@@ -2296,23 +2309,6 @@ warning: IP extract from warning activated to be more informational
 		    </para>
 		</answer>
 	    </qandaentry>
-		<qandaentry>
-		    <question>
-			<para>
-			    Setting Proper Log Level
-			</para>
-		    </question>
-		    <answer>
-			<para>
-			    If something is going wrong and you are in doubts what causes the
-			    error, increase log level. Additional log messages may help you
-			    to trace the error reason. Be careful though: <application moreinfo="none">
-			    ser</application> is very talkative in higher debugging levels.
-			    Too noisy log files are difficult to read too and server's
-			    operation slows down noticeably.
-			</para>
-		    </answer>
-		</qandaentry>
 	    <qandaentry>
 		<question>
 		    <para>
@@ -2364,25 +2360,103 @@ warning: IP extract from warning activated to be more informational
 				</para>
 			</question>
 			<answer>
-				<para>
-					<application>ser</application> by default logs
-					to <application>syslog</application> facility.
-					It is very useful to watch log messages for
-					abnormal behaviour. Log messages, subject to
-					<application>syslog</application> configuration
-					may be stored at different files, or even at remote
-					systems. A typical location of the log file is
-					<filename>/var/log/messages</filename>.
-				</para>
-				<para>
-					One can also use other <application>syslogd</application>
-					implementation. <application>metalog</application>
-					(<ulink url="http://http://metalog.sourceforge.net//">
-			    	http://metalog.sourceforge.net/
-					</ulink>)
-					features regular expression matching that enables
-					to filter and group log messages.
-				</para>
+			<anchor id="logging">
+			<para>
+			    <application>ser</application> by default logs
+			    to <application>syslog</application> facility.
+			    It is very useful to watch log messages for
+			    abnormal behaviour. Log messages, subject to
+			    <application>syslog</application> configuration
+			    may be stored at different files, or even at remote
+			    systems. A typical location of the log file is
+			    <filename>/var/log/messages</filename>.
+			</para>
+			<note>
+			    <para>
+				One can also use other <application>syslogd</application>
+				implementation. <application>metalog</application>
+				(<ulink url="http://http://metalog.sourceforge.net//">
+				    http://metalog.sourceforge.net/
+				</ulink>)
+				features regular expression matching that enables
+				to filter and group log messages.
+			    </para>
+			</note>
+			<para>
+			    For the purpose of debugging configuration scripts, one may
+			    want to redirect log messages to console not to pollute
+			    syslog files. To do so configure <application moreinfo="none">ser</application>
+			    in the following way:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					Attach ser to console by setting <varname>fork=no</varname>.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Set explicitely at which address 
+					<application moreinfo="none">ser</application>
+					should be listening, e.g., <varname>listen=192.168.2.16</varname>.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Redirect log messages to standard error by setting
+					<varname>log_stderror=yes</varname>
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					Set appropriately high log level. (Be sure that you redirected logging
+					to standard output. Flooding system logs with many detailed messages
+					would make the logs difficult to read and use.) You can set the global
+					logging threshold value with the option <varname>debug=nr</varname>,
+					where the higher <varname>nr</varname> the more detailed output.
+					If you wish to set log level only for some script events, include
+					the desired log level as the first parameter of the
+					<command moreinfo="none">log</command> action in your script.
+					The messages will be then printed if <command moreinfo="none">log</command>'s
+					level is lower than the global threshold, i.e., the lower the more
+					noisy output you get.
+					<example>
+					    <title>Logging Script</title>
+					    <programlisting format="linespecific">
+&logging;
+					    </programlisting>
+					    <para>
+						The following SIP message causes then logging output as shown
+						bellow.
+					    </para>
+					    <programlisting format="linespecific">
+REGISTER sip:192.168.2.16 SIP/2.0
+Via: SIP/2.0/UDP 192.168.2.33:5060
+From: sip:113311@192.168.2.16
+To: sip:113311@192.168.2.16
+Call-ID: 00036bb9-0fd305e2-7daec266-212e5ec9@192.168.2.33
+Date: Thu, 27 Feb 2003 15:10:52 GMT
+CSeq: 101 REGISTER
+User-Agent: CSCO/4
+Contact: sip:113311@192.168.2.33:5060
+Content-Length: 0
+Expires: 600                                 
+					    </programlisting>
+					    <programlisting format="linespecific">
+[jiri@cat sip_router]$ ./ser -f examples/logging.cfg 
+Listening on 
+              192.168.2.16 [192.168.2.16]::5060
+Aliases: cat.iptel.org:5060 cat:5060 
+WARNING: no fork mode 
+ 0(0) INFO: udp_init: SO_RCVBUF is initially 65535
+ 0(0) INFO: udp_init: SO_RCVBUF is finally 131070
+ 0(17379) REGISTER received
+ 0(17379) request for other domain received					
+					    </programlisting>
+					</example>
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
 			</answer>
 		</qandaentry>
 	    <qandaentry>
@@ -2826,12 +2900,13 @@ MySql Password:
 	    </section> <!-- reliability -->
 	    <section>
 		<title>Stateful versus Stateless Forwarding</title>
-			<para>
-			    <application moreinfo="none">ser</application> allows both stateless
-			    and stateful request processing. This memo explains what are pros and cons of
-			    using each method. The rule of thumb is "stateless for scalability,
-			    stateful for services".
-			</para>
+		<para>
+		    <application moreinfo="none">ser</application> allows both stateless
+		    and stateful request processing. This memo explains what are pros and cons of
+		    using each method. The rule of thumb is "stateless for scalability,
+		    stateful for services". If you are unsure which you need, stateful
+		    is a safer choice which supports more usage scenarios.
+		</para>
 			<para>
 			    Stateless forwarding with the
 			    <command moreinfo="none">forward(uri:host, uri:port)</command> action
@@ -2881,6 +2956,36 @@ MySql Password:
 					action must be processed statefuly.
 				    </para>
 				</listitem>
+			<listitem>
+			    <para>
+				<emphasis>
+				    Fail-over.
+				</emphasis>
+				If you wish to try out another destination, after a primary destination
+				failed you need to use stateful processing. With stateless processing
+				you never know with what status a forwarded request completed downstream
+				because you immediately release all processing information after the 
+				request is sent out. 
+
+				<note>
+				    <para>
+					Positive return value of stateless
+					<command moreinfo="none">forward</command> action only indicates that
+					a request was successfuly sent out, and does not gain any knowledge
+					about whether it was successfuly received or replied. Neither does
+					the return value of
+					the stateful <command moreinfo="none">t_relay</command> action family
+					gain you this knowledge. However, these actions store transactional
+					context with which includes original request and allows you to
+					take an action when a negative reply comes back or a timer strikes.
+					See <xref linkend="replyprocessingsection"> for an example script 
+					which launches another
+					branch if the first try fails.
+				    </para>
+				</note>
+
+			    </para>
+			</listitem>
 			    </itemizedlist>
 			</para>
 	    </section> <!-- stateful vs. stateless -->
@@ -3222,7 +3327,9 @@ if (to me):
 	    <title>Troubleshooting</title>
 	    <para>
 		This section gathers practices how to deal with errors
-		known to occur frequently.
+		known to occur frequently. To understand how to watch
+		SIP messages, server logs, and in genereal how to
+		troubleshoot, read also <xref linkend="operationalpractices">. 
 	    </para>
 	    <qandaset>
 		<qandaentry>
@@ -3321,6 +3428,31 @@ if (to me):
 			    encountered, tm attempts to instantiate a transaction.
 			    Doing so twice fails. Make sure that any of this
 			    commands is called only once during script execution.
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
+			    I try to add an alias but 
+			    <command moreinfo="none">serctl</command>
+			    complains that table does not exist.
+			</para>
+		    </question>
+		    <answer>
+			<para>
+			    You need to run <application moreinfo="none">ser</application>
+			    and use the command
+			    <command moreinfo="none">lookup("aliases")</command>
+			    in its routing script. That's because the table 
+			    of aliases is
+			    stored in cache memory for high speed. The cache
+			    memory is only set up when the 
+			    <application moreinfo="none">ser</application>
+			    is running and configured to use it. If that is
+			    not the case, 
+			    <application moreinfo="none">serctl</application>
+			    is not able to manipulate the aliases table.
 			</para>
 		    </answer>
 		</qandaentry>
@@ -3931,6 +4063,185 @@ function write2fifo($fifo_cmd, &$errors, &$status){
 		<application moreinfo="none">ser</application>
 		distribution.
 	    </para>
+	    <section>
+		<title>Advanced Example: Click-To-Dial</title>
+		<para>
+		    A very useful SIP application is phonebook with
+		    "click-to-dial" feature. It allows users to keep their 
+		    phonebooks on the web and dial by clicking on an entry. 
+		    The great advantage is that you can use the phonebook 
+		    alone with any phone you have. If you temporarily use 
+		    another phone, upgrade it permanently with another make, 
+		    or use multiple phones in parallel, your phonebook will 
+		    stay with you on the web. You just need to click an entry 
+		    to initiate a call. Other scenario using "click-to-dial"
+		    feature includes "click to be connected with our
+		    sales representative".
+		</para>
+		<para>
+		    There are basically two ways how to build such a feature:
+		    distributed and centralized. We prefer the distributed
+		    approach since it is very robust and leight-weighted.
+		    The "click-to-dial" application just needs to instruct
+		    the calling user to call a destination and that's it.
+		    (That's done using "REFER" method.)
+		    Then, the calling user takes over whereas the initating
+		    application disappears from signaling and
+		    is no longer involved in subsequent communication. Which
+		    is good because such a simple design scales well. 
+		</para>
+		<para>
+		    The other design alternative is use of a B2BUA 
+		    <footnote>
+			<para>
+			    See <filename moreinfo="none">
+				draft-ietf-sipping-3pcc-02.txt 
+			    </filename>  for more details.
+			</para>
+		    </footnote>
+		    which acts as a "middleman" involved in signaling during the
+		    whole session. It is complex: ringing needs to be achieved
+		    using a media server, it introduces session state,
+		    mangling of SIP payloads, complexity when QoS reservation
+		    is used and possibly other threats which result from 
+		    e2e-unfriendly design. The only benefit
+		    is it works even for poor phones which do not support
+		    REFER -- which should not matter because you do not wish
+		    to buy such.
+		</para>
+		<para>
+		    So how does "distributed click-to-dial" application
+		    work? It is simple. The core piece is sending a REFER
+		    request to the calling party. REFER method is typically
+		    used for call transfer and it means "set up a call 
+		    to someone else". 
+		    </para>
+		<para>
+		    There is an issue -- most phones
+		    don't accept unsolicited REFER. If a malicious
+		    user made your phone to call thirty destinations without
+		    your agreement, you would certainly not appreciate it.
+		    The workaround is that first of all the click-to-dial
+		    application gives you a "wrapper call". If you accept it, 
+		    the application will send a REFER which will be considered
+		    by the phone as a part of approved communication and
+		    granted. Be aware that without cryptography, 
+		    security is still weak. Anyone who saw an INVITE can 
+		    generate an acceptable REFER.
+		    <example>
+			<title>Call-Flow for Click-To-Dial Using REFER</title>
+
+			<programlisting format="linespecific">
+
+        CTD                  Caller               Callee
+            #1 INVITE
+            ----------------->
+                             ...
+                             caller answers
+            #2 200
+            <-----------------
+            #3 ACK
+            ----------------->
+            #4 REFER
+            ----------------->
+            #5 202
+            <-----------------
+            #6 BYE
+            ----------------->
+            #7 200
+            <-----------------
+                                  #8 INVITE
+                                  ------------------>
+                                  #9 180 ringing
+                                  <------------------
+
+
+#1 click-to-dial (CTD) is started and the "wrapper call" is initiated
+INVITE caller
+From: controller
+To: caller
+SDP: on hold
+
+#2 calling user answes
+200 OK
+From: controller
+To: caller
+
+#3 CTD acknowledges
+ACK caller
+From controller
+To: caller
+
+#4 CTD initiates a transfer
+REFER caller
+From: controller
+To: caller
+Refer-To: callee
+Refered-By: controller
+
+#5 caller confirms delivery of REFER
+202 Accepted
+From: controller
+To: caller
+
+#6 CTD terminates the wrapper call -- it is no longer needed
+BYE caller
+From: controller
+To: caller
+
+#7 BYE is confirmed
+200 Ok
+From: controller
+To: caller
+
+#8 caller initates transaction solicited through REFER
+INVITE callee
+From: caller
+To: callee
+Referred-By: controller
+
+#9 that's it -- it is now up to callee to answer the INVITE
+180 ringing
+From: caller
+To: callee
+			</programlisting>
+
+		    </example>
+		</para>
+		<para>
+		    Implementation of this scenario is quite
+		    straight-forward: you initiate INVITE, BYE and
+		    REFER transaction.
+
+
+
+		    The largest amount of code
+		    is spent with getting dialog processing right.
+		    The subsequent BYE and REFER transactions need to
+		    be build using information learned from the reply
+		    to INVITE: Contact header field, To-tag and Route
+		    set. That's what the function 
+		    <function moreinfo="none">filter_fl</function>
+		    is used for. The "main" part just initiates
+		    each of the transactions, waits for its completion
+		    and proceeds to the next one until BYE is over.
+		    Source code of the example written in Bourne shell
+		    is available in source distrubtion, in 
+		    <filename moreinfo="none">examples/ctd.sh</filename>.
+		    A PHP implementation exists as well.
+		</para>
+		<example>
+		    <title>Running the CTD Example</title>
+		    <programlisting format="linespecific">
+[jiri@cat examples]$ ./ctd.sh 
+destination unspecified -- taking default value sip:23@192.168.2.16
+caller unspecified -- taking default value sip:113311@192.168.2.16
+invitation succeeded
+refer succeeded
+bye succeeded
+		    </programlisting>
+		</example>
+	    </section> <!-- click-to-dial -->
 <!-- for some reason, this does not work :-(
 
 		<example>
