@@ -480,12 +480,14 @@ char* parse_hname(char* p, char* end, struct hdr_field* hdr)
 								hdr->type=HDR_OTHER;
 								goto skip;
 							default:
-								/*printf("found unkown header, state=%d\n", 
-											state);*/
-								LOG(L_ERR, "ERROR : bug?: parse_hname:"
-										" on char <%c> state %d\n",
-										*t, state);
-								goto error;
+								/* unknown header, e.g: "c:"*/
+								*t=0;
+								DBG("unknown header found, prev. state=%d\n",
+										state);
+								state=UNKNOWN_HEADER;
+								hdr->name.len=t-hdr->name.s;
+								hdr->type=HDR_OTHER;
+								goto skip;
 						}
 						break;
 						
