@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 #
 # $Id$
 #
@@ -171,8 +171,9 @@ print_stats() {
 
 echo "[cycle #: $3; if constant make sure server lives and fifo is on]"
 
-echo Up Time
 cat > $SER_FIFO <<EOF
+:version:$1
+
 :uptime:$1
 
 EOF
