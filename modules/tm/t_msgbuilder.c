@@ -66,6 +66,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	struct hdr_field    *hdr;
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	int branch_len;
+	str branch_str;
 
 	if ( Trans->uac[branch].last_received<100)
 	{
@@ -82,8 +83,10 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	if (!t_calc_branch(Trans,  branch, 
 		branch_buf, &branch_len ))
 		goto error;
+	branch_str.s=branch_buf;
+	branch_str.len=branch_len;
 	via=via_builder(&via_len, Trans->uac[branch].request.send_sock,
-		branch_buf, branch_len, Trans->uac[branch].request.send_sock->proto );
+		&branch_str, 0, Trans->uac[branch].request.send_sock->proto );
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
@@ -188,6 +191,7 @@ char *build_uac_request(  str msg_type, str dst, str from,
 
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	int branch_len;
+	str branch_str;
 
 	int from_len;
 	char *from_str;
@@ -226,8 +230,11 @@ char *build_uac_request(  str msg_type, str dst, str from,
 		LOG(L_ERR, "ERROR: build_uac_request: branch calculation failed\n");
 		goto error;
 	}
+	branch_str.s=branch_buf;
+	branch_str.len=branch_len;
+	
 	via=via_builder(&via_len, t->uac[branch].request.send_sock,
-		branch_buf, branch_len, t->uac[branch].request.send_sock->proto);
+		&branch_str, 0, t->uac[branch].request.send_sock->proto);
 	
 	if (!via) {
 		LOG(L_ERR, "ERROR: build_uac_request: via building failed\n");
@@ -338,6 +345,7 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 {
 	char *via, *buf, *w, content_len[10], cseq_str[10], branch_buf[MAX_BRANCH_PARAM_LEN];
 	int content_len_len, cseq_str_len, branch_len;
+	str branch_str;
 	unsigned int via_len;
 
 	buf=0;
@@ -369,9 +377,11 @@ char *build_uac_request_dlg(str* msg,           /* Method */
 		LOG(L_ERR, "ERROR: build_uac_request_dlg: branch calculation failed\n");
 		goto error;
 	}
-
+	
+	branch_str.s=branch_buf;
+	branch_str.len=branch_len;
 	via = via_builder(&via_len, send_sock,
-			branch_buf, branch_len, send_sock->proto);
+			&branch_str, 0, send_sock->proto);
 	if (!via) {
 		LOG(L_ERR, "ERROR: build_uac_request_dlg: via building failed\n");
 		goto error;
