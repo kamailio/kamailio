@@ -60,44 +60,6 @@
 	)==0 )
 
 
-static int reverse_hex2int( char *c, int len )
-{
-	char *pc;
-	int r;
-	char mychar;
-
-	r=0;
-	for (pc=c+len-1; len>0; pc--, len--) {
-		r <<= 4 ;
-		mychar=*pc;
-		if ( mychar >='0' && mychar <='9') r+=mychar -'0';
-		else if (mychar >='a' && mychar <='f') r+=mychar -'a'+10;
-		else if (mychar  >='A' && mychar <='F') r+=mychar -'A'+10;
-		else return -1;
-	}
-	return r;
-}
-
-inline static int int2reverse_hex( char **c, int *size, int nr )
-{
-	unsigned short digit;
-
-	if (*size && nr==0) {
-		**c = '0';
-		(*c)++;
-		(*size)--;
-		return 1;
-	}
-
-	while (*size && nr ) {
-		digit = nr & 0xf ;
-		**c= digit >= 10 ? digit + 'a' - 10 : digit + '0';
-		nr >>= 4;
-		(*c)++;
-		(*size)--;
-	}
-	return nr ? -1 /* number not processed; too little space */ : 1;
-}
 
 /* function returns:
  *      -1 - transaction wasn't found

@@ -5,6 +5,8 @@
  */
 
 #include <stdio.h>
+#include "str.h"
+#include "ut.h"
 #include "crc.h"
 
 #define OK 0
@@ -178,6 +180,46 @@ unsigned short int crc_16_tab[] = { /* CRC polynomial 0xA001 */
 0x4400, 0x84C1, 0x8581, 0x4540, 0x8701, 0x47C0, 0x4680, 0x8641,
 0x8201, 0x42C0, 0x4380, 0x8341, 0x4100, 0x81C1, 0x8081, 0x4040,
 };
+
+unsigned short crcitt_string( char *s, int len )
+{
+	register unsigned short ccitt;
+	
+	ccitt = 0xFFFF;
+
+	while( len ) {
+		ccitt = UPDCIT(*s, ccitt);
+		s++; len--;
+	}
+	return ~ccitt;
+}
+
+void crcitt_string_array( char *dst, str src[], int size )
+{
+	register int i;
+	register unsigned short ccitt;
+	register char *c;
+	register int len;
+	int str_len;
+
+	ccitt = 0xFFFF;
+	str_len=CRC16_LEN;
+	for (i=0; i<size; i++ ) {
+		c=src[i].s;
+		len=src[i].len;
+		while(len) {
+			ccitt = UPDCIT( *c, ccitt );
+			c++;len--;
+		}
+	}
+	ccitt = ~ccitt;
+	if (int2reverse_hex( &dst, &str_len, ccitt )==-1) {
+		/* bug ... printed ccitt value longer than CRC32_LEN */
+		LOG(L_CRIT, "ERROR: crcitt_string_array: string conversion incomplete\n");
+	}
+}
+		
+				
 
 int crc32file (char *name)
 {
