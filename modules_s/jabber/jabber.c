@@ -410,8 +410,6 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 {
 	str body, dst, from_uri;
 	xj_sipmsg jsmsg;
-	struct to_body to;
-	struct sip_uri _uri;
 	int pipe, fl;
 	t_xj_jkey jkey, *p;
 
@@ -508,10 +506,10 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		goto prepare_job;
 	
 	// determination of destination
-	// - try to get first new_uri or r-uri, but check them against jdomain
-	// and aliases
+	// - try to get it from new_uri, r-uri or to hdr, but check it against
+	// jdomain and aliases
 	dst.len = 0;
-	if( msg->new_uri.len > 0 )
+	if( msg->new_uri.len > 0)
 	{
 		dst.s = msg->new_uri.s;
 		dst.len = msg->new_uri.len;
@@ -523,76 +521,31 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 #endif
 	}
 	
-	if (dst.len == 0 &&  msg->first_line.u.request.uri.len > 0 )
+	if (dst.len == 0 &&  msg->first_line.u.request.uri.s != NULL
+			&& msg->first_line.u.request.uri.len > 0 )
 	{
+		dst.s = msg->first_line.u.request.uri.s;
+		dst.len = msg->first_line.u.request.uri.len;
+		if(xj_wlist_check_aliases(jwl, &dst))
+			dst.len = 0;
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xjab_manage_sipmsg: parsing URI from first line\n");
+		else
+			DBG("XJAB:xjab_manage_sipmsg: using R-URI for destination\n");
 #endif
-		if(parse_uri(msg->first_line.u.request.uri.s,
-					msg->first_line.u.request.uri.len, &_uri) < 0)
-		{
-			DBG("XJAB:xjab_manage_sipmsg: ERROR parsing URI from first line\n");
-			goto error;
-		}
-		if(_uri.user.len > 0)
-		{
-			dst.s = msg->first_line.u.request.uri.s;
-			dst.len = msg->first_line.u.request.uri.len;
-			if(xj_wlist_check_aliases(jwl, &dst))
-				dst.len = 0;
-#ifdef XJ_EXTRA_DEBUG
-			else
-				DBG("XJAB:xjab_manage_sipmsg: using URI for destination\n");
-#endif
-		}
 	}
 
-	if(dst.len == 0 && msg->to != NULL)
+	if(dst.len == 0 && msg->to->parsed)
 	{
-		if(msg->to->parsed)
-		{
+		dst.s = ((struct to_body*)msg->to->parsed)->uri.s;
+		dst.len = ((struct to_body*)msg->to->parsed)->uri.len;
+		if(dst.s == NULL || xj_wlist_check_aliases(jwl, &dst))
+			dst.len = 0;
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xjab_manage_sipmsg: TO already parsed\n");
-#endif
-			dst.s = ((struct to_body*)msg->to->parsed)->uri.s;
-			dst.len = ((struct to_body*)msg->to->parsed)->uri.len;
-			if(xj_wlist_check_aliases(jwl, &dst))
-				dst.len = 0;
-#ifdef XJ_EXTRA_DEBUG
-			else
-				DBG("XJAB:xjab_manage_sipmsg: using TO for destination\n");
-#endif
-		}
 		else
-		{
-#ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xjab_manage_sipmsg: TO NOT parsed -> parsing ...\n");
+			DBG("XJAB:xjab_manage_sipmsg: using TO-URI for destination\n");
 #endif
-			memset( &to , 0, sizeof(to) );
-			parse_to(msg->to->body.s, msg->to->body.s + msg->to->body.len + 1,
-				&to);
-			if(to.uri.len > 0) // to.error == PARSE_OK)
-			{
-#ifdef XJ_EXTRA_DEBUG
-				DBG("XJAB:xjab_manage_sipmsg: TO parsed OK <%.*s>.\n",
-					to.uri.len, to.uri.s);
-#endif
-				dst.s = to.uri.s;
-				dst.len = to.uri.len;
-				if(xj_wlist_check_aliases(jwl, &dst))
-					dst.len = 0;
-#ifdef XJ_EXTRA_DEBUG
-				else
-					DBG("XJAB:xjab_manage_sipmsg: using TO for destination\n");
-#endif
-			}
-			else
-			{
-				DBG("XJAB:xjab_manage_sipmsg: error parsing TO header.\n");
-				goto error;
-			}
-		}
 	}
+	
 	if(dst.len == 0)
 	{
 		DBG("XJAB:xjab_manage_sipmsg: destination not found in SIP message\n");

@@ -33,6 +33,7 @@
  *
  * History
  * -------
+ * 2003-06-05  previously added macro replaced with 'xj_extract_aor', (dcm)
  * 2003-05-09  added macro for ajusting a SIP address, (dcm)
  */
 
