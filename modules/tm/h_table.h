@@ -28,7 +28,6 @@ struct cell;
 #define TABLE_ENTRIES  256
 #define MAX_FORK           20
 
-
 /* all you need to put a cell in a timer list:
    links to neighbours and timer value         */
 typedef struct timer_link
@@ -51,12 +50,12 @@ typedef struct  timer
 
 typedef struct retrans_buff
 {
-   char                *buffer;
+   char               *buffer;
    int                  bufflen;
    unsigned int dest_ip;
    unsigned int dest_port;
 
-   struct sockaddr *to; 
+   struct sockaddr *to;
    socklen_t tolen;
 
 }retrans_buff_type;
@@ -89,6 +88,7 @@ typedef struct cell
    		struct sip_msg         *inbound_request;
    		struct retrans_buff   *inbound_response;
    		unsigned int             status;
+   		str*                             tag;
    		/* array of outgoing requests and its responses */
    		int                               nr_of_outgoings;
    		struct retrans_buff   *outbound_request[ MAX_FORK ];
@@ -96,7 +96,7 @@ typedef struct cell
 	} transaction;
 	/* retransmission buffer */
 	struct {
-		struct retrans_buffer* retr_buffer;
+		struct retrans_buffer *retr_buffer;
 		/* a message can be linked just to one retransmission list */
 		struct timer_link retransmission_timer_list;
 	} retransmission;
@@ -147,7 +147,7 @@ void free_hash_table( struct s_table* hash_table );
  *      -1 - retransmission
  *      -2 - error
  */
-int                t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
+int  t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
 
 
 /* function returns:
@@ -156,6 +156,19 @@ int                t_add_transaction( struct s_table* hash_table , struct sip_ms
  */
 int  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
 
+
+/* function returns:
+ *       0 - transaction wasn't found
+ *       T - transaction found
+ */
+struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
+
+
+/* function returns:
+ *       0 - forward successfull
+ *      -1 - error during forward
+ */
+int t_forward( struct s_table* hash_table , struct sip_msg* p_msg , unsigned int dst_ip , unsigned int dst_port);
 
 
 

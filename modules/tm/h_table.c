@@ -214,6 +214,9 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
    new_cell->transaction.inbound_request = p_msg;
    /* inbound response is NULL*/
    /* status is 0 */
+   /* tag pointer is NULL */
+   if ( p_msg->tag )
+      new_cell->transaction.tag  =  &(new_cell->transaction.inbound_request->tag->body);
    /* nr of outbound requests is 0 */
    /* all pointers from outbound_request array are NULL */
    /* all pointers from outbound_response array are NULL */
@@ -243,9 +246,10 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
  */
 int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
 {
-   struct cell*  p_cell;
-   struct cell* tmp_cell;
-   int                hash_index=0;
+   struct cell      *p_cell;
+   struct cell      *tmp_cell;
+   unsigned int  hash_index=0;
+   unsigned int  isACK = 0;
 
    /* it's about the same transaction or not?*/
    if ( global_msg_id != p_msg->msg_id )
@@ -264,6 +268,8 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
 
    /* start searching into the table */
    hash_index = hash( p_msg->call_id , p_msg->cseq_nr ) ;
+   if ( p_msg->first_line.u.request.method_value==METHOD_ACK  )
+      isACK = 1;
 
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -273,10 +279,51 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
       /* the transaction is referenceted for reading */
       ref_transaction( p_cell );
 
-      /* is the wanted transaction ? */
-     // if ( p_cell->from_length == from_len && p_cell->to_length == to_len && p_cell->req_tag_length == tag_len && p_cell->call_id_length == call_id_len && p_cell->cseq_nr_length == cseq_nr_len && p_cell->cseq_method_length == cseq_method_len  )
-      //   if ( !strcmp(p_cell->from,from) && !strcmp(p_cell->to,to) && !strncmp(p_cell->req_tag,tag,tag_len) && !strcmp(p_cell->call_id,call_id) && !strcmp(p_cell->cseq_nr,cseq_nr) && !strcmp(p_cell->cseq_method,cseq_method)  )
-       //       return p_cell;
+      /* is it the wanted transaction ? */
+      if ( !isACK )
+      { /* is not an ACK request */
+         /* first only the length are checked */
+         if ( /*from length*/ p_cell->transaction.inbound_request->from->body.len == p_msg->from->body.len )
+            if ( /*to length*/ p_cell->transaction.inbound_request->to->body.len == p_msg->to->body.len )
+                if ( /*tag length*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && p_cell->transaction.inbound_request->tag->body.len == p_msg->tag->body.len) )
+                  if ( /*callid length*/ p_cell->transaction.inbound_request->call_id->body.len == p_msg->call_id->body.len )
+                     if ( /*cseq_nr length*/ p_cell->transaction.inbound_request->cseq_nr->body.len == p_msg->cseq_nr->body.len )
+                         if ( /*cseq_method length*/ p_cell->transaction.inbound_request->cseq_method->body.len == p_msg->cseq_method->body.len )
+                            /* so far the lengths are the same -> let's check the contents */
+                            if ( /*from*/ !memcmp( p_cell->transaction.inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
+                               if ( /*to*/ !memcmp( p_cell->transaction.inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
+                                if ( /*tag*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && !memcmp( p_cell->transaction.inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )) )
+                                     if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->call_id->body.s , p_msg->call_id->body.s , p_msg->call_id->body.len ) )
+                                        if ( /*cseq_nr*/ !memcmp( p_cell->transaction.inbound_request->cseq_nr->body.s , p_msg->cseq_nr->body.s , p_msg->cseq_nr->body.len ) )
+                                           if ( /*cseq_method*/ !memcmp( p_cell->transaction.inbound_request->cseq_method->body.s , p_msg->cseq_method->body.s , p_msg->cseq_method->body.len ) )
+                                              { /* WE FOUND THE GOLDEN EGG !!!! */
+                                                 T = p_cell;
+                                                 unref_transaction ( p_cell );
+                                                 return 1;
+                                              }
+      }
+      else
+      { /* it's a ACK request*/
+         /* first only the length are checked */
+         if ( /*from length*/ p_cell->transaction.inbound_request->from->body.len == p_msg->from->body.len )
+            if ( /*to length*/ p_cell->transaction.inbound_request->to->body.len == p_msg->to->body.len )
+               if ( /*callid length*/ p_cell->transaction.inbound_request->call_id->body.len == p_msg->call_id->body.len )
+                  if ( /*cseq_nr length*/ p_cell->transaction.inbound_request->cseq_nr->body.len == p_msg->cseq_nr->body.len )
+                      if ( /*cseq_method length*/ p_cell->transaction.inbound_request->cseq_method->body.len == 6 /*INVITE*/ )
+                         if ( /*tag length*/ p_cell->transaction.tag &&  p_cell->transaction.tag->len==p_msg->tag->body.len )
+                            /* so far the lengths are the same -> let's check the contents */
+                            if ( /*from*/ !memcmp( p_cell->transaction.inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
+                               if ( /*to*/ !memcmp( p_cell->transaction.inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
+                                  if ( /*tag*/ !memcmp( p_cell->transaction.tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
+                                     if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->call_id->body.s , p_msg->call_id->body.s , p_msg->call_id->body.len ) )
+                                        if ( /*cseq_nr*/ !memcmp( p_cell->transaction.inbound_request->cseq_nr->body.s , p_msg->cseq_nr->body.s , p_msg->cseq_nr->body.len ) )
+                                           if ( /*cseq_method*/ !memcmp( p_cell->transaction.inbound_request->cseq_method->body.s , "INVITE" , 6 ) )
+                                              { /* WE FOUND THE GOLDEN EGG !!!! */
+                                                 T = p_cell;
+                                                 unref_transaction ( p_cell );
+                                                 return 1;
+                                              }
+      } /* end if is ACK or not*/
       /* next transaction */
       tmp_cell = p_cell;
       p_cell = p_cell->next_cell;
@@ -288,3 +335,133 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
    /* no transaction found */
    return 0;
 }
+
+
+
+/* function returns:
+ *       0 - transaction wasn't found
+ *       T - transaction found
+ */
+struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg )
+{
+   struct cell      *p_cell;
+   struct cell      *tmp_cell;
+   unsigned int  hash_index=0;
+
+   /* it's a CANCEL request for sure */
+
+   /* start searching into the table */
+   hash_index = hash( p_msg->call_id , p_msg->cseq_nr ) ;
+
+   /* all the transactions from the entry are compared */
+   p_cell     = hash_table->entrys[hash_index].first_cell;
+   tmp_cell = 0;
+   while( p_cell )
+   {
+      /* the transaction is referenceted for reading */
+      ref_transaction( p_cell );
+
+      /* is it the wanted transaction ? */
+      /* first only the length are checked */
+      if ( /*from length*/ p_cell->transaction.inbound_request->from->body.len == p_msg->from->body.len )
+         if ( /*to length*/ p_cell->transaction.inbound_request->to->body.len == p_msg->to->body.len )
+            if ( /*tag length*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && p_cell->transaction.inbound_request->tag->body.len == p_msg->tag->body.len) )
+               if ( /*callid length*/ p_cell->transaction.inbound_request->call_id->body.len == p_msg->call_id->body.len )
+                  if ( /*cseq_nr length*/ p_cell->transaction.inbound_request->cseq_nr->body.len == p_msg->cseq_nr->body.len )
+                      if ( /*cseq_method length*/ p_cell->transaction.inbound_request->cseq_method->body.len != 6 /*CANCEL*/ )
+                         if ( /*req_uri length*/ p_cell->transaction.inbound_request->first_line.u.request.uri.len == p_msg->first_line.u.request.uri.len )
+                             /* so far the lengths are the same -> let's check the contents */
+                             if ( /*from*/ !memcmp( p_cell->transaction.inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
+                                if ( /*to*/ !memcmp( p_cell->transaction.inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
+                                   if ( /*tag*/ (!p_cell->transaction.inbound_request->tag && !p_msg->tag) || (p_cell->transaction.inbound_request->tag && p_msg->tag && !memcmp( p_cell->transaction.inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )) )
+                                      if ( /*callid*/ !memcmp( p_cell->transaction.inbound_request->call_id->body.s , p_msg->call_id->body.s , p_msg->call_id->body.len ) )
+                                          if ( /*cseq_nr*/ !memcmp( p_cell->transaction.inbound_request->cseq_nr->body.s , p_msg->cseq_nr->body.s , p_msg->cseq_nr->body.len ) )
+                                             if ( /*cseq_method*/ strcmp( p_cell->transaction.inbound_request->cseq_method->body.s , "CANCEL" ) )
+                                                if ( /*req_uri*/ memcmp( p_cell->transaction.inbound_request->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len ) )
+                                                { /* WE FOUND THE GOLDEN EGG !!!! */
+                                                   unref_transaction ( p_cell );
+                                                   return p_cell;
+                                                }
+      /* next transaction */
+      tmp_cell = p_cell;
+      p_cell = p_cell->next_cell;
+
+      /* the transaction is dereferenceted */
+      unref_transaction ( tmp_cell );
+   }
+
+   /* no transaction found */
+   return 0;
+
+
+   return 0;
+}
+
+
+/* function returns:
+ *       0 - forward successfull
+ *      -1 - error during forward
+ */
+int t_forward( struct s_table* hash_table , struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
+{
+   /* it's about the same transaction or not? */
+   if ( global_msg_id != p_msg->msg_id )
+   {
+      T = (struct cell*)-1;
+      global_msg_id = p_msg->msg_id;
+   }
+
+   /* if  T hasn't been previous searched -> search for it */
+   if ( (int)T !=-1 )
+      t_lookup_request( hash_table , p_msg );
+
+   /*if T hasn't been found after all -> return not found (error) */
+   if ( !T )
+      return -1;
+
+   /*if it's an ACK and the status is not final or is final, but error the ACK is not forwarded*/
+   if ( !memcmp(p_msg->first_line.u.request.method.s,"ACK",3) && (T->transaction.status/100)!=2 )
+      return 0;
+
+   /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
+   if ( T->transaction.outbound_request[0]==NULL )
+   {
+      unsigned int dest_ip     = dest_ip_param;
+      unsigned int dest_port  = dest_port_param;
+      unsigned int len;
+     char               *buf;
+
+      /* special case : CANCEL */
+      if ( p_msg->first_line.u.request.method_value==METHOD_CANCEL  )
+      {
+         struct cell  *T2;
+         /* find original cancelled transaction; if found, use its next-hops; otherwise use those passed by script */
+         T2 = t_lookupOriginalT( hash_table , p_msg );
+         /* if found */
+         if (T2)
+         {  /* if in 1xx status, send to the same destination */
+            if ( (T2->transaction.status/100)==1 )
+            {
+               dest_ip    = T2->transaction.outbound_request[0]->dest_ip;
+               dest_port = T2->transaction.outbound_request[0]->dest_port;
+            }
+            else
+               /* transaction exists, but nothing to cancel */
+             return 0;
+         }
+      }/* end special case CANCEL*/
+
+      /* store */
+      T->transaction.outbound_request[0]->dest_ip    = dest_ip;
+      T->transaction.outbound_request[0]->dest_port = dest_port;
+      // buf = build_message( p_mesg , &len );
+      // T->transaction.outbound_request[0]->bufflen     = len ;
+      // memcpy( T->transaction.outbound_request[0]->buffer , buf , len );
+   }/* end for the first time */
+
+   /* send the request */
+   // send ( T->transaction.outbound_request.buffer , T->transaction.outbound_request.dest_ip , T->transaction.outbound_request.dest_ip );
+
+}
+
+
