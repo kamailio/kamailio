@@ -154,6 +154,7 @@ error:
 
 
 
+
 /* same as add_proxy, but it doesn't add the proxy to the list*/
 struct proxy_l* mk_proxy(char* name, unsigned short port)
 {
@@ -164,7 +165,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 	unsigned int ip;
 	int len;
 #endif
-	
+
 	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
 	if (p==0){
 		LOG(L_CRIT, "ERROR: mk_proxy: memory allocation failure\n");
@@ -204,12 +205,12 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 		}
 		memcpy(p->host.h_addr_list[0], (char*)&ip, 4);
 		p->host.h_addr_list[0][4]=0;
-		
+
 		return p;
 	}
 #endif
 	/* fail over to normal lookup */
-	
+
 	he=gethostbyname(name);
 	if (he==0){
 		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
@@ -226,6 +227,44 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 error:
 	return 0;
 }
+
+
+
+/* same as mk_proxy, but get the host as an ip*/
+struct proxy_l* mk_proxy_from_ip(unsigned int ip, unsigned short port)
+{
+	struct proxy_l* p;
+	struct hostent* he;
+	int err;
+
+	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
+	if (p==0){
+		LOG(L_CRIT, "ERROR: mk_proxy_from_ip: memory allocation failure\n");
+		goto error;
+	}
+	memset(p,0,sizeof(struct proxy_l));
+
+	p->port=port;
+	p->host.h_addrtype=AF_INET;
+	p->host.h_length=4;
+	p->host.h_addr_list=malloc(2*sizeof(char*));
+	if (p->host.h_addr_list==0) goto error;
+	p->host.h_addr_list[1]=0;
+	p->host.h_addr_list[0]=malloc(5);
+	if (p->host.h_addr_list[0]==0){
+		free(p->host.h_addr_list);
+		goto error;
+	}
+
+	memcpy(p->host.h_addr_list[0], (char*)&ip, 4);
+	p->host.h_addr_list[0][4]=0;
+
+	return p;
+
+error:
+	return 0;
+}
+
 
 
 

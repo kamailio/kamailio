@@ -18,8 +18,9 @@ struct s_table*  hash_table;
 
 
 
+
 /* determine timer length and put on a correct timer list */
-static inline void set_timer( struct s_table *hash_table, 
+static inline void set_timer( struct s_table *hash_table,
 	struct timer_link *new_tl, enum lists list_id )
 {
 	unsigned int timeout;
@@ -35,7 +36,7 @@ static inline void set_timer( struct s_table *hash_table,
 		return;
 	}
 	timeout = to_table[ list_id ];
-	add_to_tail_of_timer_list( &(hash_table->timers[ list_id ]), 
+	add_to_tail_of_timer_list( &(hash_table->timers[ list_id ]),
 		new_tl,get_ticks()+timeout);
 }
 
@@ -209,14 +210,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		return -1;
 	}
 
-	/*if it's an ACK and the status is not final or is final, but error the 
-     ACK is not forwarded*/
+	/*if it's an ACK and the status is not final or is final, but error the
+	ACK is not forwarded*/
 	if ( p_msg->REQ_METHOD==METHOD_ACK  && (T->status/100)!=2 ) {
 		DBG("DEBUG: t_forward: local ACK; don't forward\n");
 		return 1;
 	}
 
-	/* if it's forwarded for the first time ; else the request is retransmited 
+	/* if it's forwarded for the first time ; else the request is retransmited
 	 * from the transaction buffer
 	 * when forwarding an ACK, this condition will br all the time false because
 	 * the forwarded INVITE is in the retransmission buffer */
@@ -227,7 +228,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
 		{
 			DBG("DEBUG: t_forward: it's CANCEL\n");
-			/* find original cancelled transaction; if found, use its 
+			/* find original cancelled transaction; if found, use its
 			   next-hops; otherwise use those passed by script */
 			if ( T->T_canceled==T_UNDEFINED )
 				T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
@@ -267,7 +268,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		/* allocates a new retrans_buff for the outbound request */
 		DBG("DEBUG: t_forward: building outbound request\n");
 		shm_lock();
-		T->outbound_request[branch] = rb = 
+		T->outbound_request[branch] = rb =
 			(struct retrans_buff*)shm_malloc_unsafe( sizeof(struct retrans_buff)  );
 		if (!rb)
 		{
@@ -277,7 +278,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		}
 		shbuf = (char *) shm_malloc_unsafe( len );
 		if (!shbuf)
-		{ 
+		{
 			LOG(L_ERR, "ERROR: t_forward: out of shmem buffer\n");
 			shm_unlock();
 			goto error;
@@ -305,11 +306,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
 	/* if we are forwarding an ACK*/
 	if (  p_msg->REQ_METHOD==METHOD_ACK &&
-		T->relaied_reply_branch>=0 && 
+		T->relaied_reply_branch>=0 &&
 		T->relaied_reply_branch<=T->nr_of_outgoings)
 	{
 		DBG("DEBUG: t_forward: forwarding ACK [%d]\n",T->relaied_reply_branch);
-		t_build_and_send_ACK( T, branch , 
+		t_build_and_send_ACK( T, branch ,
 			T->inbound_response[T->relaied_reply_branch] );
 		T->inbound_request_isACKed = 1;
 		return 1;
@@ -356,60 +357,13 @@ error:
  */
 int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
 {
-   struct hostent  *nhost;
    unsigned int     ip, port;
-   struct sip_uri    parsed_uri;
-   str                      uri;
-   int                      err;
 
-   /* it's about the same transaction or not? */
-	if (t_check( p_msg  , 0 )==-1) return -1;
-
-   /*if T hasn't been found after all -> return not found (error) */
-   if ( !T )
+   if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
    {
-      DBG("DEBUG: t_forward_uri: no transaction found in order  to forward the request\n");
+      LOG( L_ERR , "ERROR: t_forward_uri: unable to extarct ip and port from uri!\n" );
       return -1;
    }
-
-   /* the original uri has been changed? */
-   if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
-     uri = p_msg->first_line.u.request.uri;
-   else
-     uri = p_msg->new_uri;
-
-   /* parsing the request uri in order to get host and port */
-   if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
-   {
-        LOG(L_ERR, "ERROR: t_forward_uri: unable to parse destination uri\n");
-        return  -1;
-   }
-
-   /* getting host address*/
-   nhost = gethostbyname( parsed_uri.host.s ); 
-
-   if ( !nhost )
-   {
-      LOG(L_ERR, "ERROR: t_forward_uri: cannot resolve host\n");
-      return -1;
-   }
-   memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
-
-   /* getting the port */
-   if ( parsed_uri.port.s==0 || parsed_uri.port.len==0 )
-      port = SIP_PORT;
-   else
-   {
-       port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
-       if ( err<0 )
-       {
-           LOG(L_ERR, "ERROR: t_forward_uri: converting port from str to int failed; using default SIP port\n");
-           port = SIP_PORT;
-       }
-   }
-   port = htons( port );
-
-   free_uri( &parsed_uri );
 
    return t_forward( p_msg , ip , port );
 }
@@ -445,7 +399,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 	/* we were not able to process the response due to memory
 	   shortage; simply drop it; hopefuly, we will have more
-           memory on the next try 
+           memory on the next try
 	*/
 	msg_status=p_msg->REPLY_STATUS;
 	msg_class=REPLY_CLASS(p_msg);
@@ -464,7 +418,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	/* stop final response timer only if I got a final response */
 	if ( msg_class>1 )
 		reset_timer( hash_table, &(rb->fr_timer));
-   	/* if a got the first prov. response for an INVITE -> 
+   	/* if a got the first prov. response for an INVITE ->
 	   change FR_TIME_OUT to INV_FR_TIME_UT */
 	if (!T->inbound_response[branch] && msg_class==1
 	 && T->inbound_request->REQ_METHOD==METHOD_INVITE )
@@ -500,7 +454,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 		return 0;
 	}
 
-   	/* restart retransmission if provisional response came for a non_INVITE -> 
+   	/* restart retransmission if provisional response came for a non_INVITE ->
 		retrasmit at RT_T2*/
 	if ( msg_class==1 && T->inbound_request->REQ_METHOD!=METHOD_INVITE )
 	{
@@ -520,7 +474,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 		if ( t_all_final(T) && relay_lowest_reply_upstream( T , p_msg )==-1 && clone )
 			goto error;
 	} else {
-		if (push_reply_from_uac_to_uas( T , branch )==-1 && clone ) 
+		if (push_reply_from_uac_to_uas( T , branch )==-1 && clone )
 			goto error;
    	}
 
@@ -536,6 +490,87 @@ error:
 	sip_msg_free( clone );
 	/* don't try to relay statelessly on error */
 	return 0;
+}
+
+
+int t_on_request_received( struct sip_msg  *p_msg , unsigned int ip , unsigned int port)
+{
+	if ( t_check( p_msg , 0 ) )
+	{
+		if ( p_msg->first_line.u.request.method_value==METHOD_ACK )
+		{
+			LOG( L_INFO , "SER: ACK received -> t_release\n");
+			if ( !t_forward( p_msg , ip , port ) )
+			{
+				LOG( L_WARN, "SER: WARNING: bad forward\n");
+			}
+			if ( !t_release_transaction( p_msg ) )
+			{
+				LOG( L_WARN ,"SER: WARNING: bad t_release\n");
+			}
+		}
+		else
+		{
+			if ( !t_retransmit_reply( p_msg , 0, 0) )
+			{
+				LOG( L_WARN, "SER: WARNING: bad t_retransmit_reply\n");
+			}
+			LOG( L_INFO, "SER: yet another annoying retranmission\n");
+		}
+		t_unref( p_msg,0,0 );
+	} else {
+		if ( p_msg->first_line.u.request.method_value==METHOD_ACK )
+		{
+			LOG( L_INFO , "SER: forwarding ACK  statelessly\n");
+			/* no established transaction ... forward ACK just statelessly*/
+			forward_request( p_msg , mk_proxy_from_ip(ip,port) );
+		}
+		else
+		{
+			/* establish transaction*/
+			if ( !t_add_transaction(p_msg,0,0) )
+			{
+				LOG( L_ERR , "ERROR in ser: t_add_transaction\n");
+			}
+			/* reply */
+			if ( p_msg->first_line.u.request.method_value==METHOD_CANCEL)
+			{
+				LOG( L_INFO, "SER: new CANCEL\n");
+				if ( !t_send_reply( p_msg , 200, "glad to cancel") )
+				{
+					LOG( L_ERR ,"SER:ERROR: t_send_reply\n");
+				}
+			} else {
+				LOG( L_INFO, "SER: new transaction\n");
+				if ( !t_send_reply( p_msg , 100 , "trying -- your call is important to us") )
+				{
+					LOG( L_ERR, "SER: ERROR: t_send_reply (100)\n");
+				}
+			}
+			if ( !t_forward( p_msg, ip, port ) )
+			{
+				LOG( L_ERR , "SER:ERROR: t_forward \n");
+			}
+			t_unref( p_msg , 0 , 0);
+		}
+	}
+
+}
+
+
+
+
+int t_on_request_received_uri( struct sip_msg  *p_msg )
+{
+   unsigned int     ip, port;
+
+   if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
+   {
+      LOG( L_ERR , "ERROR: t_on_request_received_uri: unable to extract ip and port from uri!\n" );
+      return -1;
+   }
+
+   return t_on_request_received( p_msg , ip , port );
 }
 
 
@@ -577,6 +612,9 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
   /* no transaction found */
    return -1;
 }
+
+
+
 
 int t_unref( struct sip_msg* p_msg, char* foo, char* bar )
 {
@@ -688,7 +726,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 	if ( ! rb->retr_buffer ) {
 		/*init retrans buffer*/
 		memset( rb , 0 , sizeof (struct retrans_buff) );
-		if (update_sock_struct_from_via(  &(rb->to),  
+		if (update_sock_struct_from_via(  &(rb->to),
 			trans->inbound_response[branch]->via2 )==-1) {
 				LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
 					"cannot lookup reply dst: %s\n",
@@ -714,8 +752,7 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 	}
 
 	/* if this is a first reply (?100), longer replies will probably follow;
-       try avoiding shm_resize by higher buffer size
-    */
+	try avoiding shm_resize by higher buffer size */
 	buf_len = rb->retr_buffer ? len : len + REPLY_OVERBUFFER_LEN;
 	if (! (rb->retr_buffer = (char*)shm_resize( rb->retr_buffer, buf_len )))
 	{
@@ -723,22 +760,22 @@ int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 		goto error1;
 	}
 	rb->bufflen = len ;
-   	memcpy( rb->retr_buffer , buf , len );
-   	free( buf ) ;
+	memcpy( rb->retr_buffer , buf , len );
+	free( buf ) ;
 
-   	/* update the status*/
-   	trans->status = trans->inbound_response[branch]->REPLY_STATUS;
-   	if ( trans->inbound_response[branch]->REPLY_STATUS>=200 &&
-         trans->relaied_reply_branch==-1 )
-       		trans->relaied_reply_branch = branch;
+	/* update the status*/
+	trans->status = trans->inbound_response[branch]->REPLY_STATUS;
+	if ( trans->inbound_response[branch]->REPLY_STATUS>=200 &&
+	trans->relaied_reply_branch==-1 )
+		trans->relaied_reply_branch = branch;
 
 	/* start/stops the proper timers*/
 	t_update_timers_after_sending_reply( rb );
 
-   	/*send the reply*/
-   	/* t_retransmit_reply( trans->inbound_response[branch], 0 , 0 ); */
+	/*send the reply*/
+	/* t_retransmit_reply( trans->inbound_response[branch], 0 , 0 ); */
 	SEND_BUFFER( rb );
-   	return 1;
+	return 1;
 
 error1:
 	free( buf );
@@ -763,13 +800,13 @@ int t_all_final( struct cell *Trans )
 {
    unsigned int i;
 
-   for( i=0 ; i<Trans->nr_of_outgoings ; i++  )
-      if (  !Trans->inbound_response[i] ||  
-			Trans->inbound_response[i]->REPLY_STATUS<=200 )
-         return 0;
+	for( i=0 ; i<Trans->nr_of_outgoings ; i++  )
+		if (  !Trans->inbound_response[i] ||
+		Trans->inbound_response[i]->REPLY_STATUS<=200 )
+			return 0;
 
-  DBG("DEBUG: t_all_final: final state!!!!:)) \n");
-  return 1;
+	DBG("DEBUG: t_all_final: final state!!!!:)) \n");
+	return 1;
 }
 
 
@@ -810,7 +847,7 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
 {
 	struct cell *Trans = rb->my_T;
 
-	/* make sure that if we send something final upstream, everything else 
+	/* make sure that if we send something final upstream, everything else
 	   will be cancelled */
 	if (Trans->status>=300 && Trans->inbound_request->REQ_METHOD==METHOD_INVITE )
 	{
@@ -819,13 +856,13 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
 		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
    	} else if ( Trans->inbound_request->REQ_METHOD==METHOD_CANCEL ) {
 		if ( Trans->T_canceled==T_UNDEFINED )
-			Trans->T_canceled = t_lookupOriginalT( hash_table , 
+			Trans->T_canceled = t_lookupOriginalT( hash_table ,
 				Trans->inbound_request );
       		if ( Trans->T_canceled==T_NULL )
             		return 1;
       		Trans->T_canceled->T_canceler = Trans;
      		/* put CANCEL transaction on wait only if canceled transaction already
-        	   is in final status and there is nothing to cancel; 
+        	   is in final status and there is nothing to cancel;
      		*/
      		if ( Trans->T_canceled->status>=200)
             		t_put_on_wait( Trans );
@@ -837,9 +874,9 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
 
 
 
-/* Checks if the new reply (with new_code status) should be sent or not 
+/* Checks if the new reply (with new_code status) should be sent or not
  *  based on the current
-  * transactin status. 
+  * transactin status.
   * Returns 1 - the response can be sent
   *         0 - is not indicated to sent
   */
@@ -859,21 +896,21 @@ int t_should_relay_response( struct cell *Trans , int new_code )
 		if (new_code!=100) { /* all but "100 trying" */
 			DBG("DBG: t_should_relay: !=100 -> relay\n");
 			return 1;
-		} 
+		}
 	}
 	DBG("DBG: t_should_relay: not to be relayed\n");
 	return 0;
 
 
 /*
-   // have we already sent something? 
+   // have we already sent something?
    if ( !Trans->outbound_response.retr_buffer )
    {
       DBG("DEBUG: t_should_relay_response: %d response relayed (no previous response sent)\n",new_code);
       return 1;
    }
 
-   // have we sent a final response? 
+   // have we sent a final response?
    if ( (T_code/100)>1 )
    {  //final response was sent
       if ( new_code==200 && Trans->inbound_request->REQ_METHOD==METHOD_INVITE )
@@ -883,7 +920,7 @@ int t_should_relay_response( struct cell *Trans , int new_code )
       }
    }
    else
-   { // provisional response was sent 
+   { // provisional response was sent
       if ( new_code>T_code )
       {
          DBG("DEBUG: t_should_relay_response: %d response relayed (higher provisional response)\n",new_code);
@@ -1113,6 +1150,66 @@ void delete_cell( struct cell *p_cell )
 		free_cell( p_cell );
 	}
 }
+
+
+/* Returns  -1 = error
+                    0 = OK
+*/
+int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port)
+{
+   struct hostent  *nhost;
+   unsigned int     ip, port;
+   struct sip_uri    parsed_uri;
+   str                      uri;
+   int                      err;
+
+   /* the original uri has been changed? */
+   if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
+     uri = p_msg->first_line.u.request.uri;
+   else
+     uri = p_msg->new_uri;
+
+   /* parsing the request uri in order to get host and port */
+   if (parse_uri( uri.s , uri.len , &parsed_uri )<0)
+   {
+        LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: unable to parse destination uri\n");
+        return  -1;
+   }
+
+   /* getting host address*/
+   nhost = gethostbyname( parsed_uri.host.s );
+
+   if ( !nhost )
+   {
+      LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: cannot resolve host\n");
+      return -1;
+   }
+   memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
+
+   /* getting the port */
+   if ( parsed_uri.port.s==0 || parsed_uri.port.len==0 )
+      port = SIP_PORT;
+   else
+   {
+       port = str2s( parsed_uri.port.s , parsed_uri.port.len , &err );
+       if ( err<0 )
+       {
+           LOG(L_ERR, "ERROR: get_ip_and_port_from_uri: converting port from str to int failed; using default SIP port\n");
+           port = SIP_PORT;
+       }
+   }
+   port = htons( port );
+
+   free_uri( &parsed_uri );
+
+   *param_ip = ip;
+   *param_port = port;
+   return 0;
+}
+
+
+
+
 
 
 /*---------------------TIMEOUT HANDLERS--------------------------*/

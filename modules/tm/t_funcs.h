@@ -13,6 +13,7 @@
 #include "../../globals.h"
 #include "../../udp_server.h"
 #include "../../msg_translator.h"
+#include "../../forward.h"
 #include "../../mem/mem.h"
 
 struct s_table;
@@ -162,6 +163,26 @@ int t_on_reply_received( struct sip_msg  *p_msg ) ;
 
 
 
+/*  This function is called whenever a request for our module is received; we need to register
+  *  this function on module initialization;
+  *  Returns :   0 - core router stops
+  *                    1 - core router relay statelessly
+  */
+int t_on_request_received( struct sip_msg  *p_msg , unsigned int ip, unsigned int port) ;
+
+
+
+
+/*  This function is called whenever a request for our module is received; we need to register
+  *  this function on module initialization;
+  *  Returns :   0 - core router stops
+  *                    1 - core router relay statelessly
+  */
+int t_on_request_received_uri( struct sip_msg  *p_msg ) ;
+
+
+
+
 /* returns 1 if everything was OK or -1 for error
 */
 int t_release_transaction( struct sip_msg* );
@@ -202,6 +223,7 @@ int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
 int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
+int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port);
 
 void retransmission_handler( void *);
 void final_response_handler( void *);

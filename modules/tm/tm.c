@@ -26,9 +26,12 @@ static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2);
 static int w_t_release(struct sip_msg* msg, char* str, char* str2);
+static int w_t_on_request_received(struct sip_msg* msg, char* str, char* str2);
+static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
+//static int fixup_t_on_request_received(void** param, int param_no);
 
 static void w_onbreak(struct sip_msg* msg) { t_unref(msg, NULL, NULL); }
 
@@ -42,7 +45,9 @@ static struct module_exports nm_exports= {
 				"t_send_reply",
 				"t_retransmit_reply",
 				"t_release",
-				"t_unref"
+				"t_unref",
+				"t_on_request_receive_uri",
+				"t_on_request_receive_to"
 			},
 	(cmd_function[]){
 					t_add_transaction,
@@ -53,7 +58,9 @@ static struct module_exports nm_exports= {
 					w_t_send_reply,
 					t_retransmit_reply,
 					w_t_release,
-					t_unref
+					t_unref,
+					w_t_on_request_received_uri,
+					w_t_on_request_received
 					},
 	(int[]){
 				0,
@@ -64,7 +71,9 @@ static struct module_exports nm_exports= {
 				2,
 				0,
 				0,
-				0
+				0,
+				0,
+				2
 			},
 	(fixup_function[]){
 				0,
@@ -76,8 +85,10 @@ static struct module_exports nm_exports= {
 				0,
 				0,
 				0,
+				0,
+				fixup_t_forward
 		},
-	9,
+	11,
 	(response_function) t_on_reply_received,
 	(destroy_function) tm_shutdown,
 	w_onbreak
@@ -237,3 +248,12 @@ static int w_t_release(struct sip_msg* msg, char* str, char* str2)
 	return t_release_transaction(msg);
 }
 
+static int w_t_on_request_received(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_on_request_received(msg, (unsigned int) str, (unsigned int) str2);
+}
+
+static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_on_request_received_uri(msg);
+}
