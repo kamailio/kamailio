@@ -6,6 +6,8 @@
 #define msg_parser_h
 
 
+#include "data_lump.h"
+
 #define SIP_REQUEST 1
 #define SIP_REPLY   2
 #define SIP_INVALID 0
@@ -75,6 +77,9 @@ struct sip_msg{
 
 	/* modifications */
 	char* new_uri; /* changed first line uri*/
+
+	struct lump* add_rm;      /* used for all the forwarded messages */
+	struct lump* repl_add_rm; /* only for localy generated replies !!!*/
 	
 };
 

@@ -19,6 +19,7 @@
 #include "dprint.h"
 #include "udp_server.h"
 #include "globals.h"
+#include "data_lump.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -68,14 +69,16 @@ int check_address(unsigned long ip, char *name, int resolver)
 int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len, new_len, via_len, received_len, uri_len;
-	char line_buf[MAX_VIA_LINE_SIZE];
-	char received_buf[MAX_RECEIVED_SIZE];
+	char* line_buf;
+	char* received_buf;
 	char* new_buf;
 	char* orig;
 	char* buf;
 	unsigned int offset, s_offset, size;
 	struct sockaddr_in* to;
 	unsigned long source_ip;
+	struct lump *t,*r;
+	struct lump* anchor;
 
 	orig=msg->orig;
 	buf=msg->buf;
@@ -83,6 +86,8 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	source_ip=msg->src_ip;
 	received_len=0;
 	new_buf=0;
+	line_buf=0;
+	received_buf=0;
 	to=0;
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
 	if (to==0){
@@ -90,20 +95,102 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		goto error;
 	}
 
+	line_buf=malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
+	if (line_buf==0){
+		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
+		goto error1;
+	}
 	via_len=snprintf(line_buf, MAX_VIA_LINE_SIZE, "Via: SIP/2.0/UDP %s:%d\r\n",
 						names[0], port_no);
 	/* check if received needs to be added */
 	if (check_address(source_ip, msg->via1.host, received_dns)!=0){
+		received_buf=malloc(sizeof(char)*MAX_RECEIVED_SIZE);
+		if (received_buf==0){
+			LOG(L_ERR, "ERROR: forward_request: out of memory\n");
+			goto error1;
+		}
 		received_len=snprintf(received_buf, MAX_RECEIVED_SIZE,
 								";received=%s", 
 								inet_ntoa(*(struct in_addr *)&source_ip));
 	}
 	
-	new_len=len+via_len+received_len;
+	/* add via header to the list */
+	/* try to add it before msg. 1st via */
+	DBG("forward_request: before via\n");
+	/*add first via, as an anchor for second via*/
+	anchor=anchor_lump(&(msg->add_rm), msg->via1.hdr-buf, 0, HDR_VIA);
+	if (anchor==0) goto error;
+	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
+		goto error;
+	/* if received needs to be added, add anchor after host and add it */
+	if (received_len){
+	DBG("forward_request: adding received\n");
+		if (msg->via1.params){
+				size= msg->via1.params-msg->via1.hdr-1; /*compensate for ';' */
+		}else{
+				size= msg->via1.host-msg->via1.hdr+strlen(msg->via1.host);
+				if (msg->via1.port!=0){
+					size+=strlen(msg->via1.hdr+size+1)+1; /* +1 for ':'*/
+				}
+		}
+		anchor=anchor_lump(&(msg->add_rm), msg->via1.hdr-buf+size, 0, HDR_VIA);
+		if (anchor==0) goto error;
+		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA) 
+				==0 ) goto error;
+	}
+	
+	
+	/* compute new msg len*/
+	new_len=len;
+	DBG("forward_request: computing new_len\n");
+	for(t=msg->add_rm;t;t=t->next){
+		DBG("forward_request: in for t.(%x)..\n", t);
+		for(r=t->before;r;r=r->before){
+		DBG("- forward_request: in for r...\n");
+			switch(r->op){
+				case LUMP_ADD:
+					new_len+=r->len;
+					break;
+				default:
+					/* only ADD allowed for before/after */
+					LOG(L_CRIT, "BUG:forward_request: invalid op for"
+								" data lump (%x)\n", r->op);
+			}
+		}
+		switch(t->op){
+			case LUMP_ADD:
+				new_len+=t->len;
+				break;
+			case LUMP_DEL:
+				new_len-=t->len;
+				break;
+			case LUMP_NOP:
+				/* do nothing */
+				break;
+			debug:
+				LOG(L_CRIT,"BUG:forward_request: invalid" 
+							" op for data lump (%x)\n", r->op);
+		}
+		for (r=t->after;r;r=r->after){
+		DBG("- forward_request: in for2 r...\n");
+			switch(r->op){
+				case LUMP_ADD:
+					new_len+=r->len;
+					break;
+				default:
+					/* only ADD allowed for before/after */
+					LOG(L_CRIT, "BUG:forward_request: invalid"
+								" op for data lump (%x)\n", r->op);
+			}
+		}
+	}
+	
+	
 	if (msg->new_uri){ 
 		uri_len=strlen(msg->new_uri); 
 		new_len=new_len-strlen(msg->first_line.u.request.uri)+uri_len;
 	}
+	DBG("forward_request: new_len=%d\n",new_len);
 	new_buf=(char*)malloc(new_len+1);
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
@@ -122,33 +209,71 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		offset+=uri_len;
 		s_offset+=strlen(msg->first_line.u.request.uri); /* skip original uri */
 	}
-/* copy msg till first via */
-	size=msg->via1.hdr-(buf+s_offset);
-	memcpy(new_buf+offset, orig+s_offset, size);
-	offset+=size;
-	s_offset+=size;
- /* add our via */
-	memcpy(new_buf+offset, line_buf, via_len);
-	offset+=via_len;
- /* modify original via if neccesarry (received=...)*/
-	if (received_len){
-		if (msg->via1.params){
-				size= msg->via1.params-msg->via1.hdr-1; /*compensate for ';' */
-		}else{
-				size= msg->via1.host-msg->via1.hdr+strlen(msg->via1.host);
-				if (msg->via1.port!=0){
-					size+=strlen(msg->via1.hdr+size+1)+1; /* +1 for ':'*/
+/* copy msg adding/removing lumps */
+	for (t=msg->add_rm;t;t=t->next){
+		DBG("adding/rming %x, op=%x, offset=%d\n", t, t->op, t->u.offset);
+		switch(t->op){
+			case LUMP_ADD:
+				/* just add it here! */
+				memcpy(new_buf+offset, t->u.value, t->len);
+				offset+=t->len;
+				break;
+			case LUMP_NOP:
+			case LUMP_DEL:
+				/* copy till offset */
+				if (s_offset>t->u.offset){
+					LOG(L_CRIT, "BUG: invalid offset in lump (%d)\n",
+								t->u.offset);
+					goto error;
 				}
+				size=t->u.offset-s_offset;
+				if (size){
+					memcpy(new_buf+offset, orig+s_offset,size);
+					offset+=size;
+					s_offset+=size;
+				}
+				/* process before  */
+				for(r=t->before;r;r=r->before){
+					switch (r->op){
+						case LUMP_ADD:
+							/*just add it here*/
+							memcpy(new_buf+offset, r->u.value, r->len);
+							offset+=r->len;
+							break;
+						defaut:
+							/* only ADD allowed for before/after */
+							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+									" data lump (%x)\n", r->op);
+								
+					}
+				}
+				/* process main (del only) */
+				if (t->op==LUMP_DEL){
+					/* skip len bytes from orig msg */
+					s_offset+=t->len;
+				}
+				/* process after */
+				for(r=t->after;r;r=r->after){
+					switch (r->op){
+						case LUMP_ADD:
+							/*just add it here*/
+							memcpy(new_buf+offset, r->u.value, r->len);
+							offset+=r->len;
+							break;
+						default:
+							/* only ADD allowed for before/after */
+							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+									" data lump (%x)\n", r->op);
+					}
+				}
+				break;
+			default:
+					LOG(L_CRIT, "BUG: forward_request: unknown op (%x)\n",
+							t->op);
 		}
-		memcpy(new_buf+offset, orig+s_offset, 
-								size);
-		offset+=size;
-		s_offset+=size;
-		memcpy(new_buf+offset, received_buf, received_len);
-		offset+=received_len;
 	}
- 	/* copy the rest of the msg */
- 	memcpy(new_buf+offset, orig+s_offset, len-s_offset);
+	/* copy the rest of the message */
+	memcpy(new_buf+offset, orig+s_offset, len-s_offset);
 	new_buf[new_len]=0;
 
 	 /* send it! */
@@ -178,12 +303,15 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 
 	free(new_buf);
 	free(to);
+	/* received_buf & line_buf will be freed in receiv_msg by free_lump_list*/
 	return 0;
+error1:
+	if (line_buf) free(line_buf);
+	if (received_buf) free(received_buf);
 error:
 	if (new_buf) free(new_buf);
 	if (to) free(to);
 	return -1;
-
 }
 
 
@@ -276,7 +404,6 @@ int forward_reply(struct sip_msg* msg)
 	free(new_buf);
 	free(to);
 	return 0;
-
 error:
 	if (new_buf) free(new_buf);
 	if (to) free(to);

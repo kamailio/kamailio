@@ -72,10 +72,14 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	}
 skip:
 	if (msg.new_uri) free(msg.new_uri);
+	if (msg.add_rm) free_lump_list(msg.add_rm);
+	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
 	return 0;
 error:
 	if (msg.new_uri) free(msg.new_uri);
+	if (msg.add_rm) free_lump_list(msg.add_rm);
+	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
 error1:
 	return -1;

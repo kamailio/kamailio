@@ -4,9 +4,11 @@ $Id$
 
 - better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
  ipv6 addresses ([fec0:aa::01]).
+- fix format string vulnerability in log()
 
 High priority:
 x if () {} else {}
+- plugin interface
 - ipv6 support
 - reply ("response line")
 - drop ACKs for our replies
@@ -15,6 +17,7 @@ x if () {} else {}
 - add User-Agent (for the replies)
 
 Low priority:
+- exec improvments (add format strings to it)
 - command line switch for checking the config file syntax
 - config file version (a la sendmail)
 - loop detection
@@ -23,6 +26,7 @@ Low priority:
 
 - handle SIGCHLD, SIGHUP
 - use a  standard lex compatible .lex format (instead of flex)
+- try & use native compiler & ld if possible
 
 - make install
 - init.d scripts (and rc.local? for *BSD or Slackware)
