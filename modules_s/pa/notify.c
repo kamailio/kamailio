@@ -68,7 +68,7 @@
 #define CONT_TYPE_LPIDF "text/lpidf"
 #define CONT_TYPE_LPIDF_L (sizeof(CONT_TYPE_LPIDF) - 1)
 
-#define CONT_TYPE_PIDF "application/cpim-pidf+xml"
+#define CONT_TYPE_PIDF "application/pidf+xml"
 #define CONT_TYPE_PIDF_L (sizeof(CONT_TYPE_PIDF) - 1)
 
 #define CONT_TYPE_WINFO "application/watcherinfo+xml"
@@ -422,36 +422,77 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		return -3;
 	}
 
-	while (tuple) {
-		if (start_pidf_tuple(&body, &tuple->id, BUF_LEN - body.len) < 0) {
+	if (tuple) {
+		while (tuple) {
+			if (pidf_start_tuple(&body, &tuple->id, BUF_LEN - body.len) < 0) {
+				LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
+				return -4;
+			}
+
+			switch(tuple->state) {
+			case PS_ONLINE: st = XPIDF_ST_OPEN; break;
+			default: st = XPIDF_ST_CLOSED; break;
+			}
+
+			if (pidf_add_contact(&body, BUF_LEN - body.len, &tuple->contact, tuple->priority) < 0) {
+				LOG(L_ERR, "send_pidf_notify(): pidf_add_contact failed\n");
+				return -3;
+			}
+
+			if (pidf_start_status(&body, BUF_LEN - body.len, st) < 0) {
+				LOG(L_ERR, "send_pidf_notify(): pidf_start_status failed\n");
+				return -3;
+			}
+
+			if (pidf_add_location(&body, BUF_LEN - body.len,
+					      &tuple->location.loc,
+					      &tuple->location.site, &tuple->location.floor, &tuple->location.room,
+					      tuple->location.x, tuple->location.y, tuple->location.radius, 
+					      tuple->prescaps) < 0) {
+				LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
+				return -4;
+			}
+
+			if (pidf_end_status(&body, BUF_LEN - body.len) < 0) {
+				LOG(L_ERR, "send_pidf_notify(): pidf_end_status failed\n");
+				return -5;
+			}
+
+			if (pidf_end_tuple(&body, BUF_LEN - body.len) < 0) {
+				LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
+				return -5;
+			}
+			tuple = tuple->next;
+		}
+	} else {
+		str id = { "ser", 3 };
+		str contact = { NULL, 0 };
+		float priority = 0.8;
+		st = XPIDF_ST_CLOSED;
+		if (pidf_start_tuple(&body, &id, BUF_LEN - body.len) < 0) {
 			LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
 			return -4;
 		}
 
-		switch(tuple->state) {
-		case PS_ONLINE: st = XPIDF_ST_OPEN; break;
-		default: st = XPIDF_ST_CLOSED; break;
-		}
-
-		if (pidf_add_contact(&body, BUF_LEN - body.len, &tuple->contact, st, tuple->priority) < 0) {
+		if (pidf_add_contact(&body, BUF_LEN - body.len, &contact, priority) < 0) {
 			LOG(L_ERR, "send_pidf_notify(): pidf_add_contact failed\n");
 			return -3;
 		}
 
-		if (pidf_add_location(&body, BUF_LEN - body.len,
-				      &tuple->location.loc,
-				      &tuple->location.site, &tuple->location.floor, &tuple->location.room,
-				      tuple->location.x, tuple->location.y, tuple->location.radius, 
-				      tuple->prescaps) < 0) {
-			LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
-			return -4;
+		if (pidf_start_status(&body, BUF_LEN - body.len, st) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): pidf_start_status failed\n");
+			return -3;
 		}
 
-		if (end_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
+		if (pidf_end_status(&body, BUF_LEN - body.len) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): pidf_end_status failed\n");
+			return -5;
+		}
+
+		if (pidf_end_tuple(&body, BUF_LEN - body.len) < 0) {
 			LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
 			return -5;
 		}
-		tuple = tuple->next;
 	}
 
 	if (end_pidf_doc(&body, BUF_LEN - body.len) < 0) {

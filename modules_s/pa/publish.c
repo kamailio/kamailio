@@ -209,7 +209,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      if (basic.len && basic.s) {
 	  int origstate = tuple->state;
 	  tuple->state =
-	       (strcasecmp(basic.s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
+	       ((strcasecmp(basic.s, "online") == 0) || (strcasecmp(basic.s, "open") == 0)) ? PS_ONLINE : PS_OFFLINE;
 	  if (tuple->state != origstate)
 	       changed = 1;
      }
@@ -421,7 +421,7 @@ int handle_publish(struct sip_msg* _m, char* _domain, char* _s2)
 
 	if (send_reply(_m) < 0) return -1;
 
-	LOG(L_ERR, "handle_publish -8- done\n");
+	LOG(L_ERR, "handle_publish -8- paerrno=%d\n", paerrno);
 	return 1;
 	
  error2:

@@ -46,7 +46,7 @@
 #define PUBLIC_ID "//IETF//DTD RFCxxxx PIDF 1.0//EN"
 #define PUBLIC_ID_L (sizeof(PUBLIC_ID) - 1)
 
-#define MIME_TYPE "application/cpim-pidf+xml"
+#define MIME_TYPE "application/pidf+xml"
 #define MIME_TYPE_L (sizeof(MIME_TYPE) - 1)
 
 #define XML_VERSION "<?xml version=\"1.0\"?>"
@@ -207,7 +207,7 @@ int pidf_add_presentity(str* _b, int _l, str* _uri)
 /*
  * Create start of pidf tuple
  */
-int start_pidf_tuple(str* _b, str *id, int _l)
+int pidf_start_tuple(str* _b, str *id, int _l)
 {
 	if ((TUPLE_START_L + 
 	     id->len +
@@ -228,12 +228,31 @@ int start_pidf_tuple(str* _b, str *id, int _l)
 /*
  * Add a contact address with given status and priority
  */
-int pidf_add_contact(str* _b, int _l, str* _addr, pidf_status_t _st, double priority)
+int pidf_add_contact(str* _b, int _l, str* _addr, double priority)
+{
+	char priority_s[32];
+	int priority_len = 0;
+
+	if (_addr->len) {
+		priority_len = sprintf(priority_s, "%f", priority);
+		str_append(_b, CONTACT_START, CONTACT_START_L);
+		if (pa_pidf_priority) {
+			str_append(_b, PRIORITY_START, PRIORITY_START_L);
+			str_append(_b, priority_s, priority_len);
+			str_append(_b, PRIORITY_END, PRIORITY_END_L);
+		}
+		str_append(_b, CONTACT_END, CONTACT_END_L);
+		str_append(_b, _addr->s, _addr->len);
+		str_append(_b, CONTACT_ETAG CRLF , 
+			   CONTACT_ETAG_L + CRLF_L);
+	}
+	return 0;
+}
+
+int pidf_start_status(str *_b, int _l, pidf_status_t _st)
 {
 	int len = 0;
 	char* basic;
-	char priority_s[32];
-	int priority_len = 0;
 
 	switch(_st) {
 	case PIDF_ST_OPEN:   basic = BASIC_OPEN;   len = BASIC_OPEN_L;   break;
@@ -241,21 +260,17 @@ int pidf_add_contact(str* _b, int _l, str* _addr, pidf_status_t _st, double prio
 	default:              basic = BASIC_CLOSED; len = BASIC_CLOSED_L; break; /* Makes gcc happy */
 	}
 
-	priority_len = sprintf(priority_s, "%f", priority);
-	str_append(_b, CONTACT_START, CONTACT_START_L);
-	if (pa_pidf_priority) {
-	  str_append(_b, PRIORITY_START, PRIORITY_START_L);
-	  str_append(_b, priority_s, priority_len);
-	  str_append(_b, PRIORITY_END, PRIORITY_END_L);
-	}
-	str_append(_b, CONTACT_END, CONTACT_END_L);
-	str_append(_b, _addr->s, _addr->len);
-	str_append(_b, CONTACT_ETAG CRLF , 
-		   CONTACT_ETAG_L + CRLF_L);
 	str_append(_b, STATUS_STAG CRLF, STATUS_STAG_L + CRLF_L);
 	str_append(_b, basic, len);
 	return 0;
 }
+
+int pidf_end_status(str *_b, int _l)
+{
+	str_append(_b, STATUS_ETAG CRLF, STATUS_ETAG_L + CRLF_L);
+	return 0;
+}
+
 
 /*
  * Add location information
@@ -328,13 +343,13 @@ int pidf_add_location(str* _b, int _l, str *_loc, str *_site, str *_floor, str *
 /*
  * Create start of pidf tuple
  */
-int end_pidf_tuple(str* _b, int _l)
+int pidf_end_tuple(str* _b, int _l)
 {
 	if ((TUPLE_ETAG_L + 
 	     CRLF_L
 	    ) > _l) {
 		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "end_pidf_tuple(): Buffer too small\n");
+		LOG(L_ERR, "pidf_end_tuple(): Buffer too small\n");
 		return -1;
 	}
 
