@@ -116,8 +116,6 @@
 #define _ispo_ 0x6f707369   /* "ispo" */
 #define _siti_ 0x69746973   /* "siti" */
 
-#define _serv_ 0x76726573   /* "serv" */
-
 #define _dive_ 0x65766964   /* "dive" */
 #define _rsio_ 0x6f697372   /* "rsio" */
 

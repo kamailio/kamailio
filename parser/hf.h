@@ -73,8 +73,7 @@
 #define HDR_CONTENTDISPOSITION (1 << 27)  /* Content-Disposition hdr field */
 #define HDR_DIVERSION          (1 << 28)  /* Diversion header field */
 #define HDR_RPID               (1 << 29)  /* Remote-Party-ID header field */
-#define HDR_SERVER             (1 << 30)  /* Server header field */
-#define HDR_OTHER              (1 << 31)  /* Some other header field */
+#define HDR_OTHER              (1 << 30)  /* Some other header field */
 
 
 /* returns true if the header links allocated memory on parse field */

@@ -204,7 +204,6 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	        case HDR_ACCEPTDISPOSITION:
 	        case HDR_DIVERSION:
 	        case HDR_RPID:
-	        case HDR_SERVER:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -407,10 +406,6 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 		        case HDR_RPID:
 				if (msg->rpid==0) msg->rpid = hf;
 				msg->parsed_flag|=HDR_RPID;
-				break;
-		        case HDR_SERVER:
-				if (msg->server==0) msg->server = hf;
-				msg->parsed_flag|=HDR_SERVER;
 				break;
 			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;
