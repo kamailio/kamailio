@@ -48,7 +48,7 @@ Desc:    The parameter can be used if and only if USER_DOMAIN_HACK macro
          
 Name:    secret
 Type:    string
-Default: "4e9rhygt90ofw34e8hiof09tg"
+Default: Randomly generated
 Desc:    Nonce secret phrase
 
 
