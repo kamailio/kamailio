@@ -164,7 +164,7 @@ void free_expression(expression *e)
 
 	if (e->next) free_expression(e->next);
 	regfree(e->reg_value);
-	free(e);
+	pkg_free(e);
 }
 
 
