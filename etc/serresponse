@@ -11,8 +11,8 @@ SERHOME=/home/srouter
 SERDIR=$SERHOME/sip_router
 TESTDIR=$SERDIR/test
 BIN=$TESTDIR/sipsak
-MESSAGE=$TESTDIR/sipsak.sip
-SERHOST=sip:iptel.org
+# MESSAGE=$TESTDIR/sipsak.sip
+SIPURI=sip:sipsak@iptel.org
 LOCKFILE=/var/lock/serresponse
 TMP=/tmp/serresponse.$$
 MAILCOMMAND=/usr/bin/mail
@@ -24,9 +24,9 @@ if [ ! -e $LOCKFILE ] ; then
 		echo "serresponse did not find the required sipsak executable $BIN" > $TMP
 	else
 		echo "The execution of this command:" > $TMP
-		echo "  $BIN -f $MESSAGE -s $SERHOST" >> $TMP
+		echo "  $BIN -s $SIPURI" >> $TMP
 		echo "produced this output:" >> $TMP
-		$BIN -f $MESSAGE -s $SERHOST >> $TMP 2>&1
+		$BIN -s $SIPURI >> $TMP 2>&1
 		if [ $? -eq 0 ] ; then
 			rm -f $TMP
 		fi
