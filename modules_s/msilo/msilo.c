@@ -589,9 +589,9 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					};
 	db_res_t* db_res = NULL;
 	int i, db_no_cols = IDX_NO, db_no_keys = 1, *msg_id, mid, n;
-	char hdr_buf[1024], body_buf[1024], *p;
+	char hdr_buf[1024], body_buf[1024];
 
-	str str_vals[IDX_NO], *sp, ctaddr, hdr_str , body_str;
+	str str_vals[IDX_NO], hdr_str , body_str;
 
 	DBG("MSILO:m_dump: ------------ start ------------\n");
 	hdr_str.s=hdr_buf;
@@ -681,8 +681,6 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			SET_STR_VAL(str_vals[STR_IDX_BODY], db_res, i, DUMP_IDX_BODY);
 			SET_STR_VAL(str_vals[STR_IDX_CTYPE], db_res, i, DUMP_IDX_CTYPE);
 			
-			sp = &pto->uri;
-
 			hdr_str.len = 1024;		
 			if(m_build_headers(&hdr_str, str_vals[STR_IDX_CTYPE],
 					str_vals[STR_IDX_FROM]) < 0)
@@ -708,30 +706,9 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			*msg_id = mid;
 			
 			DBG("MSILO:m_dump: msg [%d-%d] for: %.*s\n", i+1, *msg_id,
-					sp->len, sp->s);
+					pto->uri.len, pto->uri.s);
 			
 			/** sending using TM function: t_uac */
-
-			// look for Contact header
-			ctaddr.s = NULL;
-			if(parse_headers(msg,HDR_CONTACT,0)!=-1 && msg->contact 
-				&& msg->contact->body.s && msg->contact->body.len>0)
-			{
-				ctaddr.s = msg->contact->body.s;
-				ctaddr.len = msg->contact->body.len;
-				while((*(ctaddr.s)==' '||*(ctaddr.s)=='\t'||*(ctaddr.s)=='<')
-						&& ctaddr.len>0)
-				{
-					ctaddr.s++;
-					ctaddr.len--;
-				}
-				p = ctaddr.s;
-				while(p<ctaddr.s+ctaddr.len && *p!='>')
-						p++;
-				if(p<ctaddr.s+ctaddr.len)
-					ctaddr.len = p-ctaddr.s;
-				DBG("MSILO:m_dump: contact [%.*s]\n",ctaddr.len,ctaddr.s);
-			}
 
 			body_str.len = 1024;
 			n = m_build_body(&body_str, 
