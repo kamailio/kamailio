@@ -17,6 +17,12 @@ Default: "sql://serro:47serro11@localhost/ser"
 Desc:    Database url string in form "sql://<user>:<pass>@host/database"
 
 
+Name:    subscriber_table
+Type:    string
+Default: "subscriber"
+Desc:    Name of table containing subscribers
+
+
 Name:    user_column
 Type:    string
 Default: "user_id"
@@ -95,8 +101,47 @@ Desc:    This parameter specifies how many times a user is allowed to
          user agents which try to authenticate with incorrect password 
          again and again and again......
          
+Name:	 realm_table
+Type:    string
+Default: "realm"
+Desc:    Name of table containing names of local realms that the proxy
+	 is responsible for. Local users must have in their sip uri a
+	 host part that is equal to one of these realms.
 
+Name:	 realm_realm_column
+Type:	 string
+Default: "realm"
+Desc:	 Name of column containing realms in realm table
 
+Name:	 uri_table
+Type:	 string
+Default: "uri"
+Desc:	 Name of table containing valid sip uri user parts of each
+	 local user.
+
+Name:	 uri_user_column
+Type:	 string
+Default: "user"
+Desc:	 Name of column containing usernames of local users
+
+Name:	 uri_realm_column
+Type:	 string
+Default: "realm"
+Desc:	 Name of column containing realm names of local users
+
+Name:	 uri_uri_user_column
+Type:	 string
+Default: "uri_user"
+Desc:	 Name of column containing valid sip uri user parts for local
+	 users
+
+Name:	 use_uri_table
+Type:	 integer
+Default: 0
+Desc:    This parameter specifies if (value 1) or not (value 0) uri table
+	 is used to check if a uri belongs to local user.  If not,
+	 then a user can have only one uri that is equal to username
+         and realm in the subscriber table.
 
 Exported Functions:
 ------------------
@@ -157,7 +202,9 @@ Desc:   Checks if the user specified in credentials is member of
 Name:   check_to
 Params: -
 Desc:   Checks if the username given in credentials and username in
-        To header field are equal
+        To header field are equal (if use_uri_table = 0) or if the
+	username given in To header matches one of the uri_user names of
+	the user in uri_table (if use_uri_table = 1)
 	Call after *_authorize, otherwise an error will be issued.
 Example: if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 	     if (!check_to) { 
@@ -170,7 +217,9 @@ Example: if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 Name:   check_from
 Params: -
 Desc:   Checks if the username given in credentials and username in
-        From header field are equal
+        From header field are equal (if use_uri_table = 0) or if the
+	username given in From header matches one of the uri_user names
+	of the user in uri_table (if use_uri_table = 1)
 	Call after *_authorize, otherwise an error will be issued.
 
 
@@ -189,6 +238,25 @@ Params: hf - Use username in this header field, the following values
              "credentials" - Use username digest parameter
         group - grooup name
 Desc:   Checks, if the user is in specified table
+
+
+Name:	is_from_local
+Params:	-
+Desc:	Checks based on realm table if host part of From header uri is
+	one of the local realms that the proxy is responsible for
+
+
+Name:	is_uri_host_local
+Params:	-
+Desc:	Checks based on realm table if request uri belongs to one of the
+	local realms
+
+
+Name:	does_uri_exist
+Params:	-
+Desc:	Checks based on uri or subscriber table if request uri belongs
+	to a local user
+
 
 Usage Note
 ----------
