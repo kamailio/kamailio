@@ -38,5 +38,6 @@
  * Module parameter variables
  */
 extern char* radius_config;   /* radiusclient configuration file */
+extern int use_domain;        /* Should we use also domain ? */
 
 #endif /* GROUPRAD_MOD_H */

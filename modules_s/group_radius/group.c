@@ -45,6 +45,7 @@
 #include "../../parser/digest/digest.h"
 #include "group.h"
 #include "ser_radius.h"
+#include "grouprad_mod.h"
 
 
 /*
@@ -114,7 +115,7 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u)
 int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 {
 	str *grp, user_name, user, domain, uri;
-	dig_cred_t* cred;
+	dig_cred_t* cred = 0;
 	int hf_type;
 	UINT4 service;
 	VALUE_PAIR *send, *received;
@@ -174,24 +175,30 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		domain = cred->realm;
 	}
 		
-	user_name.len = user.len + domain.len + 1;
-	user_name.s = (char*)pkg_malloc(user_name.len);
-	if (!user_name.s) {
-		LOG(L_ERR, "radius_is_user_in(): No memory left\n");
-		return -6;
+
+	if (use_domain) {
+		user_name.len = user.len + domain.len + 1;
+		user_name.s = (char*)pkg_malloc(user_name.len);
+		if (!user_name.s) {
+			LOG(L_ERR, "radius_is_user_in(): No memory left\n");
+			return -6;
+		}
+		
+		memcpy(user_name.s, user.s, user.len);
+		user_name.s[user.len] = '@';
+		memcpy(user_name.s + user.len + 1, domain.s, domain.len);
+	} else {
+		user_name = user;
 	}
-	
-	memcpy(user_name.s, user.s, user.len);
-	user_name.s[user.len] = '@';
-	memcpy(user_name.s + user.len + 1, domain.s, domain.len);
-	
+
 	if (!rc_avpair_add(&send, PW_USER_NAME, user_name.s, user_name.len)) {
 		LOG(L_ERR, "radius_is_user_in(): Error adding PW_USER_NAME\n");
 		rc_avpair_free(send);
-		pkg_free(user_name.s);
+		if (use_domain) pkg_free(user_name.s);
 		return -7;
 	}
-	pkg_free(user_name.s);
+
+	if (use_domain) pkg_free(user_name.s);
 
 	if (!rc_avpair_add(&send, PW_SIP_GROUP, grp->s, grp->len)) {
 		LOG(L_ERR, "radius_is_user_in(): Error adding PW_SIP_GROUP\n");

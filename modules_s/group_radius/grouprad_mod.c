@@ -49,6 +49,7 @@ static int hf_fixup(void** param, int param_no); /* Header field fixup */
  * Module parameter variables
  */
 char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+int use_domain = 1;  /* By default we use domain */
 
 
 /*
@@ -65,6 +66,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"radius_config", STR_PARAM, &radius_config},
+	{"use_domain",    INT_PARAM, &use_domain   },
 	{0, 0, 0}
 };
 
