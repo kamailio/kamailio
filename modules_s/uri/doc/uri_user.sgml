@@ -19,16 +19,7 @@
 	<title>Dependencies</title>
 	<section>
 	    <title>&ser; Modules</title>
-	    <para>
-		The following modules must be loaded before this module:
-	    	<itemizedlist>
-		    <listitem>
-			<para>
-			    <emphasis>a &ser; database module</emphasis>.
-			</para>
-		    </listitem>
-	    	</itemizedlist>
-	    </para>
+	    <para>None.</para>
 	</section>
 	<section>
 	    <title>External Libraries or Applications</title>
@@ -47,167 +38,9 @@
     </section>
     <section>
 	<title>Exported Parameters</title>
-
-	<section>
-	    <title><varname>db_url</varname> (string)</title>
-	    <para>
-		&url; of the database to be used.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>db_url</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "db_url", "mysql://username:password@localhost/ser")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>uri_table</varname> (string)</title>
-	    <para>
-		Table containing list of allowed &uri;s for each user.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>uri</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>uri_table</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "uri_table", "uri")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>uri_user_column</varname> (string)</title>
-	    <para>
-		Column holding usernames in the &uri; table.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>username</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>uri_user_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "uri_user_column", "username")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>uri_domain_column</varname> (string)</title>
-	    <para>
-		Column holding domain in the &uri; table.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>domain</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>uri_domain_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "uri_domain_column", "domain")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>uri_uriuser_column</varname> (string)</title>
-	    <para>
-		Column holding &uri; username in the &uri; table.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>uri_user</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>uri_uriuser_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "uri_uriuser_column", "uri_user")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>subscriber_table</varname> (string)</title>
-	    <para>
-		Name of the subscriber table.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>subscriber</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>subscriber_table</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "subscriber_table", "subscriber")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>subscriber_user_column</varname> (string)</title>
-	    <para>
-		Column holding username in subscriber table.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>username</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>subscriber_user_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "subscriber_user_column", "username")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>subscriber_domain_column</varname> (string)</title>
-	    <para>
-		Column hodling domains in the subscriber table.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>domain</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>subscriber_domain_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("module", "subscriber_domain_column", "domain")
-...
-</programlisting>
-	    </example>
-	</section>
-
+	<para>
+	    None.
+	</para>
     </section>
     <section>
 	<title>Exported Functions</title>
@@ -236,59 +69,18 @@ if (is_user("jan")) {
 </programlisting>
 	    </example>
 	</section>
-
 	<section>
 	    <title>
-		<function moreinfo="none">check_to()</function>
+		<function moreinfo="none">has_totag()</function>
 	    </title>
 	    <para>
-		Check To username against &uri; table or digest
-		credentials.
+		Check if To header field uri contains tag parameter.
 	    </para>
 	    <example>
-		<title><function>check_to</function> usage</title>
+		<title><function>has_totag</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (check_to()) {
-    ...
-};
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title>
-		<function moreinfo="none">check_from()</function>
-	    </title>
-	    <para>
-		Check From username against &uri; table or digest
-		credentials.
-	    </para>
-	    <example>
-		<title><function>check_from</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (check_from()) {
-    ...
-};
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title>
-		<function moreinfo="none">does_uri_exist()</function>
-	    </title>
-	    <para>
-		Check if username in the request &uri; belongs to an existing user.
-	    </para>
-	    <example>
-		<title><function>does_uri_exist</function> usage</title>
-		<programlisting format="linespecific">
-...
-if (does_uri_exist()) {
+if (has_totag()) {
     ...
 };
 ...
