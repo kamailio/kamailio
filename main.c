@@ -494,16 +494,16 @@ int main_loop()
 						pids[process_no]=pid; /*should be shared mem anway*/
 				}
 		}
-		/* main process, receive loop */
-		pids[0]=getpid();
-		process_bit = 1;
-		process_no=0; /*main process number*/
 
 		/* if configured to do so, start a server for accepting FIFO commands */
 		if (open_fifo_server()<0) {
 			LOG(L_ERR, "opening fifo server failed\n");
 			goto error;
 		}
+		/* main process, receive loop */
+		pids[0]=getpid();
+		process_bit = 1;
+		process_no=0; /*main process number*/
 		
 		     /* We will call child_init even if we
 		      * do not fork
