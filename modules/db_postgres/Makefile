@@ -7,8 +7,8 @@ auto_gen=
 NAME=postgres.so
 
 # libpq-fe.h locations
-DEFS +=-I/usr/local/pgsql/include -I/usr/include/postgresql
-LIBS=-L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql -L/usr/pkg/lib \
+DEFS +=-I$(LOCALBASE)/include -I/usr/local/pgsql/include -I/usr/include/postgresql
+LIBS=-L$(LOCALBASE)/lib -L$(LOCALBASE)/pgsql/lib -L$(LOCALBASE)/lib/pgsql -L/usr/pkg/lib \
 		-L/usr/pkg/lib/pgsql -lpq
 
 include ../../Makefile.modules
