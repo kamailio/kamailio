@@ -19,7 +19,7 @@ LOCK_TIMEOUT=240
 TMP=/tmp/serresponse.$$
 MAILCOMMAND=/bin/mail
 HOSTN=`hostname`
-RUNHOST=bat.iptel.org
+RUNHOST=iptel.org
 SMSSEND=/home/sms/smstools/bin/putsms
 SMSDEVICE=/dev/ttyS0
 SMSNUMBERS=""
@@ -40,30 +40,33 @@ if [ -e $LOCKF ] ; then
 		echo "The lockfile $LOCKF" >> $TMP
 		echo "was just removed because ist was older then $LOCK_TIMEOUT minutes." >> $TMP
 		echo "But if you receive this mail the cause of this error still exists or respawned." >> $TMP
+		SERR_SUBJECT="serresponse reminder"
 	fi
 fi
 
 if [ ! -e $LOCKF ] ; then
 	if [ ! -x $SIPSAK ] ; then
 		echo "serresponse did not find the required sipsak executable $SIPSAK" >> $TMP
+		SERR_SUBJECT="serresponse config failure"
 	elif [ ! -x $SMSSEND ]; then
 		echo "serresponse did not find the required SMS send executable $SMSSEND" >> $TMP
+		SERR_SUBJECT="serresponse config failure"
 	else
 		date >> $TMP2
 		echo "  $SIPSAKCMD" >> $TMP2
 		echo "produced this output:" >> $TMP2
 		$SIPSAKCMD >> $TMP2 2>&1
 		if [ $? -eq 3 ] ; then
-			grep "Connection refused" $TMP2
+			grep -i "Connection refused" $TMP2
 			if [ $? -eq 0 ] ; then
-				sleep 15
+				sleep 30
 			fi
 			date >> $TMP3
 			echo "  $SIPSAKNCMD" >> $TMP3
 			echo "produced this output:" >> $TMP3
 			$SIPSAKNCMD >> $TMP3 2>&1
 			if [ $? -le 1 ] ; then
-				echo "ser did not responses (fast enough) on the sipsak requests with fqdn in Via" >> $TMP
+				echo "ser did not responsed (fast enough) on the sipsak requests with fqdn in Via" >> $TMP
 				echo "but the test with IPs in Via succeeded." >> $TMP
 				echo "" >> $TMP
 				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
@@ -73,8 +76,9 @@ if [ ! -e $LOCKF ] ; then
 				echo "" >> $TMP
 				echo "Command output of sipsak with fqdn in Via follows:" >> $TMP
 				cat $TMP2 >> $TMP
+				SERR_SUBJECT="serresponse delayed"
 			else
-				echo "ser did not responses (fast enough) on requests with fqdn in Via" >> $TMP
+				echo "ser did not responsed (fast enough) on requests with fqdn in Via" >> $TMP
 				echo "but also requests with IPs in Via failed." >> $TMP
 				echo "" >> $TMP
 				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
@@ -87,6 +91,7 @@ if [ ! -e $LOCKF ] ; then
 				echo "" >> $TMP
 				echo "Second command output with IPs in Via:" >> $TMP
 				cat $TMP3 >> $TMP
+				SERR_SUBJECT="serresponse failed"
 			fi
 			rm -f $TMP3
 			rm -f $TMP2
@@ -102,6 +107,7 @@ if [ ! -e $LOCKF ] ; then
 			echo "Command output of sipsak with fqdn follows:" >> $TMP
 			cat $TMP2 >> $TMP
 			rm -f $TMP2
+			SERR_SUBJECT="serresponse local failure"
 		else
 			rm -f $TMP2
 			rm -f $TMP
@@ -110,7 +116,7 @@ if [ ! -e $LOCKF ] ; then
 	
 	if [ -e $TMP ] ; then
 		if [ $HOSTN = $RUNHOST ] ; then
-			$MAILCOMMAND -s "serresponse failed" $NOTIFY < $TMP
+			$MAILCOMMAND -s "$SER_SUBJECT" $NOTIFY < $TMP
 			rm -f $TMP
 			touch $LOCKF
 			for i in $SMSNUMBERS; do
