@@ -274,7 +274,6 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		if (p_cell) {
 			/* ACK/200 */
 			if (isACK && p_cell->uas.status>=200 && p_cell->uas.status<300) {
-					"considered mismatch\n", p_cell );
 				/* perhaps there are some spirals on the synonym list, but
 				   it makes no sense to iterate the list until bitter end */
 				t_ack=p_cell;
