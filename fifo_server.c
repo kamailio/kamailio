@@ -458,6 +458,9 @@ int open_fifo_server()
 {
 	char *t;
 	struct stat filestat;
+#ifdef USE_TCP
+	int sockfd[2];
+#endif
 
 	if (fifo==NULL) {
 		DBG("TM: open_uac_fifo: no fifo will be opened\n");
@@ -502,6 +505,13 @@ int open_fifo_server()
 		return -1;
 	}
 	memcpy(up_since_ctime,t,strlen(t)+1);
+#ifdef USE_TCP
+	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+			LOG(L_ERR, "ERROR: open_fifo_server: socketpair failed: %s\n",
+				strerror(errno));
+			return -1;
+	}
+#endif
 	process_no++;
 	fifo_pid=fork();
 	if (fifo_pid<0) {
@@ -514,6 +524,10 @@ int open_fifo_server()
 		/* call per-child module initialization too -- some
 		   FIFO commands may need it
 		*/
+#ifdef USE_TCP
+		close(sockfd[0]);
+		unix_tcp_sock=sockfd[1];
+#endif
 		if (init_child(process_no) < 0 ) {
 			LOG(L_ERR, "ERROR: open_uac_fifo: init_child failed\n");
 			return -1;
@@ -539,6 +553,11 @@ int open_fifo_server()
 	/* dad process */
 	pt[process_no].pid=fifo_pid;
 	strncpy(pt[process_no].desc, "fifo server", MAX_PT_DESC );
+#ifdef USE_TCP
+	close(sockfd[1]);
+	pt[process_no].unix_sock=sockfd[0];
+	pt[process_no].idx=-1; /* this is not "tcp" process*/
+#endif
 	/* make sure the read fifo will not close */
 	fifo_write=open(fifo, O_WRONLY, 0);
 	if (fifo_write<0) {

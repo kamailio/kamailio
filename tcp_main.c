@@ -54,6 +54,7 @@
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "timer.h"
+#include "tcp_server.h"
 
 
 
@@ -64,23 +65,23 @@
 
 struct tcp_child{
 	pid_t pid;
-	int s; /* unix socket for comm*/
+	int unix_sock; /* unix sock fd, copied from pt*/
 	int busy;
 	int n_reqs; /* number of requests serviced so far */
 };
 
 
-enum { CONN_OK, CONN_ERROR };
 
-
-
-
-struct tcp_connection* conn_list=0;
+struct tcp_connection** conn_list=0;
 struct tcp_child tcp_children[MAX_TCP_CHILDREN];
+static int connection_id=1; /*  unique for each connection, used for 
+								quickly finding the corresponding connection
+								for a reply */
+int unix_tcp_sock;
 
 
 
-struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su, int i)
+struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su, int i)
 {
 	struct tcp_connection *c;
 	
@@ -91,15 +92,15 @@ struct tcp_connection*  tcpconn_add(int sock, union sockaddr_union* su, int i)
 		goto error;
 	}
 	c->s=sock;
+	c->fd=sock;
 	c->su=*su;
 	c->sock_idx=i;
 	c->refcnt=0;
 	su2ip_addr(&c->ip, su);
+	c->port=su_getport(su);
 	init_tcp_req(&c->req);
 	c->timeout=get_ticks()+TCP_CON_TIMEOUT;
-
-	/* add it at the begining of the list*/
-	tcpconn_listadd(conn_list, c, next, prev);
+	c->id=connection_id++;
 	return c;
 	
 error:
@@ -108,27 +109,158 @@ error:
 
 
 
+struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
+{
+	int s;
+
+	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
+	if (s<0){
+		LOG(L_ERR, "ERROR: tcpconn_connect: socket: (%d) %s\n",
+				errno, strerror(errno));
+		goto error;
+	}
+	if (connect(s, &server->s, sockaddru_len(*server))<0){
+		LOG(L_ERR, "ERROR: tcpconn_connect: connect: (%d) %s\n",
+				errno, strerror(errno));
+		goto error;
+	}
+	return tcpconn_new(s, server, 0); /*FIXME: set sock idx! */
+error:
+	return 0;
+}
+
+
+
+struct tcp_connection*  tcpconn_add(struct tcp_connection *c)
+{
+	TCPCONN_LOCK;
+	/* add it at the begining of the list*/
+	if (c) tcpconn_listadd(*conn_list, c, next, prev);
+	TCPCONN_UNLOCK;
+	return c;
+}
+
+
+
 void tcpconn_rm(struct tcp_connection* c)
 {
-	tcpconn_listrm(conn_list, c, next, prev);
+	TCPCONN_LOCK;
+	tcpconn_listrm(*conn_list, c, next, prev);
+	TCPCONN_UNLOCK;
 	shm_free(c);
 }
 
 
+/* finds a connection, if id=0 uses the ip addr & port */
+struct tcp_connection* tcpconn_find(int id, struct ip_addr* ip, int port)
+{
+
+	struct tcp_connection *c;
+	
+	DBG("tcpconn_find: %d ",id ); print_ip(ip); DBG(" %d\n", port);
+	for (c=*conn_list; c; c=c->next){
+		DBG("c=%p, c->id=%d, ip=",c, c->id);
+		print_ip(&c->ip);
+		DBG(" port=%d\n", c->port);
+		if (id){
+			if (id==c->id) return c;
+		}else if ((port==c->port)&&(ip_addr_cmp(ip, &c->ip))) return c;
+	}
+	return 0;
+}
+
+
+
+struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port)
+{
+	struct tcp_connection* c;
+	TCPCONN_LOCK;
+	c=tcpconn_find(id, ip, port);
+	if (c) c->refcnt++;
+	TCPCONN_UNLOCK;
+	return c;
+}
+
+
+
+void tcpconn_put(struct tcp_connection* c)
+{
+	c->refcnt--; /* FIXME: atomic_dec */
+}
+
+
+
+/* finds a tcpconn & sends on it */
+int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id)
+{
+	struct tcp_connection *c;
+	struct ip_addr ip;
+	int port;
+	long response[2];
+	int n;
+	
+	su2ip_addr(&ip, to);
+	port=su_getport(to);
+	
+	c=tcpconn_get(id, &ip, port); /* lock ;inc refcnt; unlock */
+	if (id){
+		if (c==0) {
+		LOG(L_ERR, "ERROR: tcp_send: id %d not found, dropping\n",
+					id);
+			return -1;
+		}
+	}else{
+		if (c==0){
+			DBG("tcp_send: no open tcp connection found, opening new one\n");
+			/* create tcp connection */
+			if ((c=tcpconn_connect(to))==0){
+				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
+				return 0;
+			}
+			c->refcnt++;
+			
+			/* send the new tcpconn to "tcp main" */
+			response[0]=(long)c;
+			response[1]=CONN_NEW;
+			n=write(unix_tcp_sock, response, sizeof(response));
+			n=send_fd(unix_tcp_sock, &c, sizeof(c), c->s);
+		}else{
+			DBG("tcp_send: tcp connection found, acquiring fd\n");
+			/* get the fd */
+			response[0]=(long)c;
+			response[1]=CONN_GET_FD;
+			n=write(unix_tcp_sock, response, sizeof(response));
+			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &c->fd);
+		}
+	
+	}
+	DBG("tcp_send: sending...\n");
+	n=write(c->fd, buf, len);
+	close(c->fd);
+	tcpconn_put(c); /* release c (lock; dec refcnt; unlock) */
+	return n;
+}
+
+
+
 /* very ineficient for now, use hashtable some day - FIXME*/
-void tcpconn_timeout()
+void tcpconn_timeout(fd_set* set)
 {
 	struct tcp_connection *c, *next;
 	int ticks;;
 	
 	
 	ticks=get_ticks();
-	c=conn_list;
+	c=*conn_list;
 	while(c){
 		next=c->next;
 		if ((c->refcnt==0) && (ticks>c->timeout)) {
 			DBG("tcpconn_timeout: timeout for %p (%d > %d)\n",
 					c, ticks, c->timeout);
+			if (c->s>0) {
+				FD_CLR(c->s, set);
+				close(c->s);
+			}
 			tcpconn_rm(c);
 		}
 		c=next;
@@ -209,7 +341,8 @@ static int send2child(struct tcp_connection* tcpconn)
 				min_busy);
 	}
 	DBG("send2child: to child %d, %ld\n", idx, (long)tcpconn);
-	send_fd(tcp_children[idx].s, &tcpconn, sizeof(tcpconn), tcpconn->s);
+	send_fd(tcp_children[idx].unix_sock, &tcpconn, sizeof(tcpconn),
+			tcpconn->s);
 	
 	return 0; /* just to fix a warning*/
 }
@@ -226,7 +359,7 @@ void tcp_main_loop()
 	union sockaddr_union su;
 	struct tcp_connection* tcpconn;
 	long response[2];
-	int state;
+	int cmd;
 	int bytes;
 	socklen_t su_len;
 	struct timeval timeout;
@@ -242,10 +375,10 @@ void tcp_main_loop()
 		}
 	}
 	/* set all the unix sockets used for child comm */
-	for (r=0; r<tcp_children_no; r++){
-		if (tcp_children[r].s>=0){
-			FD_SET(tcp_children[r].s, &master_set);
-			if (tcp_children[r].s>maxfd) maxfd=tcp_children[r].s;
+	for (r=0; r<process_no; r++){
+		if (pt[r].unix_sock>=0){
+			FD_SET(pt[r].unix_sock, &master_set);
+			if (pt[r].unix_sock>maxfd) maxfd=pt[r].unix_sock;
 		}
 	}
 	
@@ -262,6 +395,7 @@ void tcp_main_loop()
 			/* errors */
 			LOG(L_ERR, "ERROR: tcp_main_loop: select:(%d) %s\n", errno,
 					strerror(errno));
+			n=0;
 		}
 		
 		for (r=0; r<sock_no && n; r++){
@@ -278,21 +412,25 @@ void tcp_main_loop()
 				}
 				
 				/* add socket to list */
-				tcpconn=tcpconn_add(new_sock, &su, r);
-				DBG("tcp_main_loop: new connection: %p %d\n",
+				tcpconn=tcpconn_new(new_sock, &su, r);
+				if (tcpconn){
+					tcpconn_add(tcpconn);
+					DBG("tcp_main_loop: new connection: %p %d\n",
 						tcpconn, tcpconn->s);
-				/* pass it to a child */
-				if(send2child(tcpconn)<0){
-					LOG(L_ERR,"ERROR: tcp_main_loop: no children available\n");
-					close(tcpconn->s);
-					tcpconn_rm(tcpconn);
+					/* pass it to a child */
+					if(send2child(tcpconn)<0){
+						LOG(L_ERR,"ERROR: tcp_main_loop: no children "
+								"available\n");
+						close(tcpconn->s);
+						tcpconn_rm(tcpconn);
+					}
 				}
 			}
 		}
 		
 		/* check all the read fds (from the tcpconn list) */
 		
-		for(tcpconn=conn_list; tcpconn && n; tcpconn=tcpconn->next){
+		for(tcpconn=*conn_list; tcpconn && n; tcpconn=tcpconn->next){
 			if ((tcpconn->refcnt==0)&&(FD_ISSET(tcpconn->s, &sel_set))){
 				/* new data available */
 				n--;
@@ -309,17 +447,18 @@ void tcp_main_loop()
 		}
 		
 		/* check unix sockets & listen | destroy connections */
-		for (r=0; r<tcp_children_no && n; r++){
-			if (FD_ISSET(tcp_children[r].s, &sel_set)){
+		/* start from 1, the "main" process does not transmit anything*/
+		for (r=1; r<process_no && n; r++){
+			if ( (pt[r].unix_sock>=0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
 				n--;
 				/* errno==EINTR !!! TODO*/
 read_again:
-				bytes=read(tcp_children[r].s, response, sizeof(response));
+				bytes=read(pt[r].unix_sock, response, sizeof(response));
 				if (bytes==0){
 					/* EOF -> bad, child has died */
 					LOG(L_CRIT, "BUG: tcp_main_loop: dead child %d\n", r);
-					/* terminating everybody */
-					FD_CLR(tcp_children[r].s, &master_set);
+					/* don't listen on it any more */
+					FD_CLR(pt[r].unix_sock, &master_set);
 					/*exit(-1)*/;
 				}else if (bytes<0){
 					if (errno==EINTR) goto read_again;
@@ -330,41 +469,104 @@ read_again:
 					}
 				}
 					
-				DBG("tcp__main_loop: read response= %lx, %ld\n",
-						response[0], response[1]);
-				tcp_children[r].busy=0;
-				tcpconn=(struct tcp_connection*)response[0];
-				state=response[1];
-				if (tcpconn){
-					tcpconn->refcnt--;
-					if (state>=0){
-						/* listen on this too */
-						if (tcpconn->refcnt==0){
+				DBG("tcp_main_loop: read response= %lx, %ld from %d (%d)\n",
+						response[0], response[1], r, pt[r].pid);
+				cmd=response[1];
+				switch(cmd){
+					case CONN_RELEASE:
+						if (pt[r].idx>=0){
+							tcp_children[pt[r].idx].busy--;
+						}else{
+							LOG(L_CRIT, "BUG: tcp_main_loop: CONN_RELEASE\n");
+						}
+						tcpconn=(struct tcp_connection*)response[0];
+						if (tcpconn){
+							tcpconn->refcnt--;
+							DBG("tcp_main_loop: %p refcnt= %d\n", 
+									tcpconn, tcpconn->refcnt);
+								FD_SET(tcpconn->s, &master_set);
+								if (maxfd<tcpconn->s) maxfd=tcpconn->s;
+								/* update the timeout*/
+								tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
+						}
+						break;
+					case CONN_ERROR:
+					case CONN_DESTROY:
+					case CONN_EOF:
+						if (pt[r].idx>=0){
+							tcp_children[pt[r].idx].busy--;
+						}else{
+							LOG(L_CRIT, "BUG: tcp_main_loop: CONN_RELEASE\n");
+						}
+						tcpconn=(struct tcp_connection*)response[0];
+						if (tcpconn){
+							tcpconn->refcnt--;
+							if (tcpconn->refcnt==0){
+								DBG("tcp_main_loop: destroying connection\n");
+								close(tcpconn->s);
+								tcpconn_rm(tcpconn);
+							}else{
+								DBG("tcp_main_loop: delaying ...\n");
+							}
+						}
+						break;
+					case CONN_GET_FD:
+						/* send the requested FD  */
+						tcpconn=(struct tcp_connection*)response[0];
+						/* WARNING: take care of setting refcnt properly to
+						 * avoid race condition */
+						if (tcpconn){
+							send_fd(pt[r].unix_sock, &tcpconn,
+									sizeof(tcpconn), tcpconn->s);
+						}else{
+							LOG(L_CRIT, "BUG: tcp_main_loop: null pointer\n");
+						}
+						break;
+					case CONN_NEW:
+						/* update the fd in the requested tcpconn*/
+						tcpconn=(struct tcp_connection*)response[0];
+						/* WARNING: take care of setting refcnt properly to
+						 * avoid race condition */
+						if (tcpconn){
+							receive_fd(pt[r].unix_sock, &tcpconn,
+										sizeof(tcpconn), &tcpconn->s);
+							/* add tcpconn to the list*/
+							tcpconn_add(tcpconn);
 							FD_SET(tcpconn->s, &master_set);
 							if (maxfd<tcpconn->s) maxfd=tcpconn->s;
 							/* update the timeout*/
 							tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
-						}
-					}else{
-						/*error, we should destroy it */
-						if (tcpconn->refcnt==0){
-							DBG("tcp_main_loop: destroying connection\n");
-							close(tcpconn->s);
-							tcpconn_rm(tcpconn);
 						}else{
-							DBG("tcp_main_loop: delaying ...\n");
+							LOG(L_CRIT, "BUG: tcp_main_loop: null pointer\n");
 						}
-					}
-				}else{
-					LOG(L_CRIT, "BUG: tcp_main_loop: null tcp conn pointer\n");
+						break;
+					default:
+							LOG(L_CRIT, "BUG: tcp_main_loop: unknown cmd %d\n",
+									cmd);
 				}
 			}
 		}
 		
 		/* remove old connections */
-		tcpconn_timeout();
+		tcpconn_timeout(&master_set);
 	
 	}
+}
+
+
+
+int init_tcp()
+{
+	/* allocate list head*/
+	conn_list=shm_malloc(sizeof(struct tcp_connection*));
+	if (conn_list==0){
+		LOG(L_CRIT, "ERROR: tcp_init: memory allocation failure\n");
+		goto error;
+	}
+	*conn_list=0;
+	return 0;
+error:
+		return -1;
 }
 
 
@@ -402,14 +604,17 @@ int tcp_init_children()
 			/* parent */
 			close(sockfd[1]);
 			tcp_children[r].pid=pid;
-			tcp_children[r].s=sockfd[0];
 			tcp_children[r].busy=0;
 			tcp_children[r].n_reqs=0;
+			tcp_children[r].unix_sock=sockfd[0];
 			pt[process_no].pid=pid;
+			pt[process_no].unix_sock=sockfd[0];
+			pt[process_no].idx=r;
 			strncpy(pt[process_no].desc, "tcp receiver", MAX_PT_DESC);
 		}else{
 			/* child */
 			close(sockfd[0]);
+			unix_tcp_sock=sockfd[1];
 			tcp_receive_loop(sockfd[1]);
 		}
 	}

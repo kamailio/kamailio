@@ -315,12 +315,12 @@ skip:
 int tcp_read_req(struct tcp_connection* con)
 {
 	int bytes;
-	int state;
+	int resp;
 	long size;
 	struct tcp_req* req;
 	int s;
 		
-		state=0;
+		resp=CONN_RELEASE;
 		s=con->fd;
 		req=&con->req;
 		if(req->complete==0 && req->error==TCP_REQ_OK){
@@ -330,12 +330,12 @@ int tcp_read_req(struct tcp_connection* con)
 					bytes, req->parsed-req->buf, req->state, req->error );
 			if (bytes==-1){
 				LOG(L_ERR, "ERROR: tcp_read_req: error reading \n");
-				state=-1;
+				resp=CONN_ERROR;
 				goto end_req;
 			}
 			if (bytes==0){
 				DBG( "tcp_read_req: EOF\n");
-				state=-1;
+				resp=CONN_EOF;
 				goto end_req;
 			}
 		
@@ -343,7 +343,7 @@ int tcp_read_req(struct tcp_connection* con)
 		if (req->error!=TCP_REQ_OK){
 			LOG(L_ERR,"ERROR: tcp_read_req: bad request, state=%d, error=%d\n",
 					req->state, req->error);
-			state=-1;
+			resp=CONN_ERROR;
 			goto end_req;
 		}
 		if (req->complete){
@@ -357,16 +357,19 @@ int tcp_read_req(struct tcp_connection* con)
 				req->error=TCP_REQ_BAD_LEN;
 				LOG(L_ERR, "ERROR: tcp_read_req: content length not present or"
 						" unparsable\n");
-				state=-1;
+				resp=CONN_ERROR;
 				goto end_req;
 			}
 			/* if we are here everything is nice and ok*/
-			state=0;
+			resp=CONN_RELEASE;
 			/* just for debugging use sendipv4 as receiving socket */
 			DBG("calling receive_msg(%p, %d, )\n",
 					req->buf, (int)(req->parsed-req->buf));
 			bind_address=sendipv4; /*&tcp_info[con->sock_idx];*/
-			receive_msg(req->buf, req->parsed-req->buf, &con->su);
+			if (receive_msg(req->buf, req->parsed-req->buf, &con->su)<0){
+				resp=CONN_ERROR;
+				goto end_req;
+			}
 			
 			/* prepare for next request */
 			size=req->pos-req->body;
@@ -385,7 +388,7 @@ int tcp_read_req(struct tcp_connection* con)
 		
 		
 	end_req:
-		return state;
+		return resp;
 }
 
 
@@ -413,7 +416,7 @@ void tcp_receive_loop(int unix_sock)
 	int n;
 	int nfds;
 	int s;
-	long state;
+	long resp;
 	fd_set master_set;
 	fd_set sel_set;
 	int maxfd;
@@ -463,13 +466,13 @@ void tcp_receive_loop(int unix_sock)
 				if (s==-1) {
 					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
 									"no fd read\n");
-					state=-1;
-					release_tcpconn(con, state, unix_sock);
+					resp=CONN_ERROR;
+					release_tcpconn(con, resp, unix_sock);
 				}
 				if (con==0){
 					LOG(L_ERR, "ERROR: tcp_receive_loop: null pointer\n");
-					state=-1;
-					release_tcpconn(con, state, unix_sock);
+					resp=CONN_ERROR;
+					release_tcpconn(con, resp, unix_sock);
 				}
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
 				FD_SET(s, &master_set);
@@ -481,11 +484,11 @@ void tcp_receive_loop(int unix_sock)
 				c_next=con->c_next; /* safe for removing*/
 				if (nfds && FD_ISSET(con->fd, &sel_set)){
 					nfds--;
-					state=tcp_read_req(con);
-					if (state==-1){
+					resp=tcp_read_req(con);
+					if (resp<0){
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);
-						release_tcpconn(con, state, unix_sock);
+						release_tcpconn(con, resp, unix_sock);
 					}else{
 						/* update timeout */
 						con->timeout=ticks+TCP_CHILD_TIMEOUT;
@@ -496,10 +499,10 @@ void tcp_receive_loop(int unix_sock)
 						/* expired, return to "tcp main" */
 						DBG("tcp_receive_loop: %p expired (%d, %d)\n",
 								con, con->timeout, ticks);
-						state=0;
+						resp=CONN_RELEASE;
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);
-						release_tcpconn(con, state, unix_sock);
+						release_tcpconn(con, resp, unix_sock);
 					}
 				}
 			}

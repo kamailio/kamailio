@@ -66,6 +66,10 @@ extern struct socket_info* sendipv4; /* ipv4 socket to use when msg.
 										comes from ipv6*/
 extern struct socket_info* sendipv6; /* same as above for ipv6 */
 
+#ifdef USE_TCP
+extern int unix_tcp_sock; /* socket used for communication with tcp main*/
+#endif
+
 extern unsigned int maxbuffer;
 extern int children_no;
 #ifdef USE_TCP

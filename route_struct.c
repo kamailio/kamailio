@@ -232,8 +232,14 @@ void print_action(struct action* a)
 			case FORWARD_T:
 					DBG("forward(");
 					break;
+			case FORWARD_TCP_T:
+					DBG("forward_tcp(");
+					break;
 			case SEND_T:
 					DBG("send(");
+					break;
+			case SEND_TCP_T:
+					DBG("send_tcp(");
 					break;
 			case DROP_T:
 					DBG("drop(");

@@ -1,10 +1,6 @@
 /*
  * $Id$
  *
- * Process Table
- *
- *
- *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -30,56 +26,21 @@
  */
 
 
-#ifndef _PT_H
-#define _PT_H
-
-#include <sys/types.h>
-#include <unistd.h>
-
-#include "globals.h"
-#include "timer.h"
-
-#define MAX_PT_DESC	128
-
-struct process_table {
-	int pid;
-#ifdef USE_TCP
-	int unix_sock; /* unix socket on which tcp main listens */
-	int idx; /* tcp child index, -1 for other processes */
-#endif
-	char desc[MAX_PT_DESC];
-};
-
-extern struct process_table *pt;
-extern int process_no;
-
-/* get number of process started by main with
-   given configuration
-*/
-inline static int process_count()
-{
-    return 
-		/* receivers and attendant */
-		(dont_fork ? 1 : children_no*sock_no + 1)
-		/* timer process */
-		+ (timer_list ? 1 : 0 )
-		/* fifo server */
-		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
-#ifdef USE_TCP
-		+ 1/* tcp main */ + tcp_children_no + 
-		(timer_list ? 0: 1) /* add the timer proc. if not already taken
-							   into account */
-#endif
-		
-		;
-}
+#ifndef tcp_server_h
+#define tcp_server_h
 
 
-/* retun processes's pid */
-inline static int my_pid()
-{
-	return pt ? pt[process_no].pid : getpid();
-}
+
+
+/* "public" functions*/
+
+struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port);
+void tcpconn_put(struct tcp_connection* c);
+int tcp_send(char* buf, unsigned len, union sockaddr_union* to, int id);
+
+
+
+
 
 
 #endif

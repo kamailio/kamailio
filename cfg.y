@@ -63,7 +63,9 @@ struct id_list* lst_tmp;
 
 /* keywords */
 %token FORWARD
+%token FORWARD_TCP
 %token SEND
+%token SEND_TCP
 %token DROP
 %token LOG_TOK
 %token ERROR
@@ -719,6 +721,45 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 											   }
 		| SEND error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SEND LPAREN error RPAREN { $$=0; yyerror("bad send"
+													"argument"); }
+		| SEND_TCP LPAREN host RPAREN	{ $$=mk_action(	SEND_TCP_T,
+													STRING_ST,
+													NUMBER_ST,
+													$3,
+													0);
+									}
+		| SEND_TCP LPAREN STRING RPAREN { $$=mk_action(	SEND_TCP_T,
+													STRING_ST,
+													NUMBER_ST,
+													$3,
+													0);
+									}
+		| SEND_TCP LPAREN ip RPAREN		{ $$=mk_action(	SEND_TCP_T,
+													IP_ST,
+													NUMBER_ST,
+													(void*)$3,
+													0);
+									}
+		| SEND_TCP LPAREN host COMMA NUMBER RPAREN	{ $$=mk_action(	SEND_TCP_T,
+																STRING_ST,
+																NUMBER_ST,
+																$3,
+																(void*)$5);
+												}
+		| SEND_TCP LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(	SEND_TCP_T,
+																STRING_ST,
+																NUMBER_ST,
+																$3,
+																(void*)$5);
+												}
+		| SEND_TCP LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(	SEND_TCP_T,
+																IP_ST,
+																NUMBER_ST,
+																(void*)$3,
+																(void*)$5);
+											   }
+		| SEND_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SEND_TCP LPAREN error RPAREN { $$=0; yyerror("bad send_tcp"
 													"argument"); }
 		| DROP LPAREN RPAREN	{$$=mk_action(DROP_T,0, 0, 0, 0); }
 		| DROP					{$$=mk_action(DROP_T,0, 0, 0, 0); }

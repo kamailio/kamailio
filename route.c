@@ -145,7 +145,9 @@ static int fix_actions(struct action* a)
 	for(t=a; t!=0; t=t->next){
 		switch(t->type){
 			case FORWARD_T:
+			case FORWARD_TCP_T:
 			case SEND_T:
+			case SEND_TCP_T:
 					switch(t->p1_type){
 						case IP_ST: 
 							tmp=strdup(ip_addr2a(

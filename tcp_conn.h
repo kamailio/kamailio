@@ -50,6 +50,10 @@ enum {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE 
 	};
 
+/* fd communication commands */
+enum { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, CONN_GET_FD,
+	   CONN_NEW };
+
 struct tcp_req{
 	struct tcp_req* next;
 	/* sockaddr ? */
@@ -71,7 +75,10 @@ struct tcp_req{
 struct tcp_connection{
 	int s; /*socket, used by "tcp main" */
 	int fd; /* used only by "children" */
+	int id; /* id (unique!) used to retrieve a specific connection when
+	           reply-ing*/
 	struct ip_addr ip; /* peer ip */
+	int port; /* peer port */
 	int sock_idx; /* receiving socket index in the tcp_info array */
 	union sockaddr_union su;
 	struct tcp_req req; /* request data */
@@ -116,7 +123,10 @@ struct tcp_connection{
 	}while(0)
 
 
-
+#define TCPCONN_LOCK LOG(L_CRIT, "LOCK not implemented yet: %s : %d: %s\n", \
+							__FILE__, __LINE__, __FUNCTION__);
+#define TCPCONN_UNLOCK LOG(L_CRIT, "UNLOCK not implemented yet: %s: %d: %s\n",\
+							__FILE__, __LINE__, __FUNCTION__);
 
 
 

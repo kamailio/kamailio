@@ -43,6 +43,9 @@
 #include "mem/mem.h"
 #include "globals.h"
 #include "dset.h"
+#ifdef USE_TCP
+#include "tcp_server.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -133,6 +136,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}
 			break;
 		case SEND_T:
+		case SEND_TCP_T:
 			if ((a->p1_type!= PROXY_ST)|(a->p2_type!=NUMBER_ST)){
 				LOG(L_CRIT, "BUG: do_action: bad send() types %d, %d\n",
 						a->p1_type, a->p2_type);
@@ -161,12 +165,21 @@ int do_action(struct action* a, struct sip_msg* msg)
 			if (ret==0){
 				p->tx++;
 				p->tx_bytes+=msg->len;
-				send_sock=get_send_socket(to);
-				if (send_sock!=0){
-					ret=udp_send(send_sock, msg->orig, msg->len, to);
-				}else{
-					ret=-1;
+				if (a->type==SEND_T){
+					/*udp*/
+					send_sock=get_send_socket(to);
+					if (send_sock!=0){
+						ret=udp_send(send_sock, msg->orig, msg->len, to);
+					}else{
+						ret=-1;
+					}
 				}
+#ifdef USE_TCP
+					else{
+					/*tcp*/
+					ret=tcp_send(msg->orig, msg->len, to, 0);
+				}
+#endif
 			}
 			free(to);
 			if (ret<0){

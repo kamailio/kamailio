@@ -528,6 +528,9 @@ int main_loop()
 {
 	int r, i;
 	pid_t pid;
+#ifdef USE_TCP
+	int sockfd[2];
+#endif
 #ifdef WITH_SNMP_MOD
 	int (*snmp_start)();
 
@@ -632,31 +635,25 @@ int main_loop()
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
 		}
-#ifdef USE_TCP
-			/* start tcp receivers */
-		if (tcp_init_children()<0) goto error;
-			/* start tcp master proc */
-		process_no++;
-		if ((pid=fork())<0){
-			LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
-			goto error;
-		}else if (pid==0){
-			/* child */
-			/* is_main=0; */
-			tcp_main_loop();
-		}else{
-			pt[process_no].pid=pid;
-			strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
-		}
-#endif
 		for(r=0; r<sock_no;r++){
 			for(i=0;i<children_no;i++){
 				process_no++;
+#ifdef USE_TCP
+		 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+					LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
+						strerror(errno));
+					goto error;
+				}
+#endif
 				if ((pid=fork())<0){
 					LOG(L_CRIT,  "main_loop: Cannot fork\n");
 					goto error;
 				}else if (pid==0){
 					     /* child */
+#ifdef USE_TCP
+					close(sockfd[0]);
+					unix_tcp_sock=sockfd[1];
+#endif
 					bind_address=&sock_info[r]; /* shortcut */
 					bind_idx=r;
 					if (init_child(i) < 0) {
@@ -672,6 +669,11 @@ int main_loop()
 						snprintf(pt[process_no].desc, MAX_PT_DESC,
 							"receiver child=%d sock=%d @ %s:%s", i, r, 	
 							sock_info[r].name.s, sock_info[r].port_no_str.s );
+#ifdef USE_TCP
+						close(sockfd[1]);
+						pt[process_no].unix_sock=sockfd[0];
+						pt[process_no].idx=-1; /* this is not "tcp" process*/
+#endif
 				}
 			}
 			/*parent*/
@@ -682,6 +684,7 @@ int main_loop()
 	/*this is the main process*/
 	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
 	bind_idx=0;					/* if it does it will use the first address */
+	
 	/* if configured to do so, start a server for accepting FIFO commands */
 	if (open_fifo_server()<0) {
 		LOG(L_ERR, "opening fifo server failed\n");
@@ -693,6 +696,13 @@ int main_loop()
 	if (timer_list)
 #endif
 	{
+#ifdef USE_TCP
+ 		if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sockfd)<0){
+			LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
+				strerror(errno));
+			goto error;
+		}
+#endif
 		/* fork again for the attendant process*/
 		process_no++;
 		if ((pid=fork())<0){
@@ -701,6 +711,10 @@ int main_loop()
 		}else if (pid==0){
 			/* child */
 			/* is_main=0; */
+#ifdef USE_TCP
+			close(sockfd[0]);
+			unix_tcp_sock=sockfd[1];
+#endif
 			for(;;){
 				/* debug:  instead of doing something usefull */
 				/* (placeholder for timers, etc.) */
@@ -711,12 +725,41 @@ int main_loop()
 		}else{
 			pt[process_no].pid=pid;
 			strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
+#ifdef USE_TCP
+						close(sockfd[1]);
+						pt[process_no].unix_sock=sockfd[0];
+						pt[process_no].idx=-1; /* this is not a "tcp" process*/
+#endif
 		}
 	}
-
+#ifdef USE_TCP
+			/* start tcp receivers */
+		if (tcp_init_children()<0) goto error;
+			/* start tcp master proc */
+		process_no++;
+		if ((pid=fork())<0){
+			LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
+			goto error;
+		}else if (pid==0){
+			/* child */
+			/* is_main=0; */
+			tcp_main_loop();
+		}else{
+			pt[process_no].pid=pid;
+			strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
+			pt[process_no].unix_sock=-1;
+			pt[process_no].idx=-1; /* this is not a "tcp" process*/
+			unix_tcp_sock=-1;
+		}
+#endif
 	/* main */
 	pt[0].pid=getpid();
 	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
+#ifdef USE_TCP
+	pt[process_no].unix_sock=-1;
+	pt[process_no].idx=-1; /* this is not a "tcp" process*/
+	unix_tcp_sock=-1;
+#endif
 	/*DEBUG- remove it*/
 #ifdef DEBUG
 	printf("\n% 3d processes, % 3d children * % 3d listening addresses + main"
@@ -1177,7 +1220,14 @@ try_again:
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
 		goto error;
 	}
-
+#ifdef USE_TCP
+	/*init tcp*/
+	if (init_tcp()<0){
+		LOG(L_CRIT, "could not initialize tcp, exiting...\n");
+		goto error;
+	}
+#endif
+	
 	/* register a diagnostic FIFO command */
 	if (register_core_fifo()<0) {
 		LOG(L_CRIT, "unable to register core FIFO commands\n");

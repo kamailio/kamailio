@@ -157,6 +157,7 @@ inline static int matchnet(struct ip_addr* ip, struct net* net)
 
 
 
+
 /* inits an ip_addr pointer from a sockaddr structure*/
 static inline void sockaddr2ip_addr(struct ip_addr* ip, struct sockaddr* sa)
 {
@@ -176,6 +177,50 @@ static inline void sockaddr2ip_addr(struct ip_addr* ip, struct sockaddr* sa)
 	default:
 			LOG(L_CRIT, "sockaddr2ip_addr: BUG: unknown address family %d\n",
 					sa->sa_family);
+	}
+}
+
+
+
+/* compare 2 ip_addrs (both args are pointers)*/
+#define ip_addr_cmp(ip1, ip2) \
+	(((ip1)->af==(ip2)->af)&& \
+	 	(memcmp((ip1)->u.addr, (ip2)->u.addr, (ip1)->len)==0))
+
+
+
+/* compare 2 sockaddr_unions */
+static inline int su_cmp(union sockaddr_union* s1, union sockaddr_union* s2)
+{
+	if (s1->s.sa_family!=s2->s.sa_family) return 0;
+	switch(s1->s.sa_family){
+		case AF_INET:
+			return (s1->sin.sin_port==s2->sin.sin_port)&&
+					(memcmp(&s1->sin.sin_addr, &s2->sin.sin_addr, 4)==0);
+		case AF_INET6:
+			return (s1->sin6.sin6_port==s2->sin6.sin6_port)&&
+					(memcmp(&s1->sin6.sin6_addr, &s2->sin6.sin6_addr, 16)==0);
+		default:
+			LOG(L_CRIT,"su_cmp: BUG: unknown address family %d\n",
+						s1->s.sa_family);
+			return 0;
+	}
+}
+
+
+
+/* gets the port number */
+static inline short su_getport(union sockaddr_union* su)
+{
+	switch(su->s.sa_family){
+		case AF_INET:
+			return su->sin.sin_port;
+		case AF_INET6:
+			return su->sin6.sin6_port;
+		default:
+			LOG(L_CRIT,"su_get_port: BUG: unknown address family %d\n",
+						su->s.sa_family);
+			return 0;
 	}
 }
 
