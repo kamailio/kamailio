@@ -12,7 +12,7 @@
 /* default sip port if none specified */
 #define SIP_PORT 5060
 
-#define CFG_FILE "./ser.cfg"
+#define CFG_FILE "/etc/ser/ser.cfg"
 
 
 /* maximum number of addresses on which we will listen */
