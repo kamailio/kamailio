@@ -28,29 +28,88 @@
  */
 
 #include "paerrno.h"
+#include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../mem/shm_mem.h"
 #include "../../trim.h"
 #include "../../ut.h"
 #include "pa_mod.h"
+#include "common.h"
 #include "watcher.h"
+#include "presentity.h"
 
+extern db_con_t* pa_db;
+
+
+char *doctype_name[] = {
+	[DOC_XPIDF] = "DOC_XPIDF",
+	[DOC_LPIDF] = "DOC_LPIDF",
+	[DOC_PIDF] = "DOC_PIDF",
+	[DOC_WINFO] = "DOC_WINFO"
+};
+
+char *package_names[] = {
+	[DOC_XPIDF] = "presence",
+	[DOC_LPIDF] = "presence",
+	[DOC_PIDF] = "presence",
+	[DOC_WINFO] = "presence.winfo"
+};
+
+#define S_ID_LEN 64
+
+/* be sure s!=NULL */
+/* compute a hash value for a string */
+unsigned int compute_hash(unsigned int _h, char* s, int len)
+{
+	#define h_inc h+=v^(v>>3);
+		
+	char* p;
+	register unsigned v;
+	register unsigned h = _h;
+
+	for(p=s; p<=(s+len-4); p+=4)
+	{
+		v=(*p<<24)+(p[1]<<16)+(p[2]<<8)+p[3];
+		h_inc;
+	}
+	
+	v=0;
+	for(;p<(s+len); p++)
+	{
+		v<<=8;
+		v+=*p;
+	}
+	h_inc;
+
+	return h;
+}
+
+static int watcher_assign_statement_id(presentity_t *presentity, watcher_t *watcher)
+{
+	unsigned int h = 0;
+	char *dn = doctype_name[watcher->accept];
+	h = compute_hash(0, presentity->uri.s, presentity->uri.len);
+	h = compute_hash(h, dn, strlen(dn));
+	h = compute_hash(h, watcher->uri.s, watcher->uri.len);
+	watcher->s_id.len = sprintf(watcher->s_id.s, "SID%08x", h);
+	return 0;
+}
 
 /*
  * Create a new watcher structure
  */
-int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w)
+int new_watcher(presentity_t *_p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w)
 {
 	watcher_t* watcher;
 
-	     /* Check parameters */
+	/* Check parameters */
 	if (!_uri && !_dlg && !_w) {
 		LOG(L_ERR, "new_watcher(): Invalid parameter value\n");
 		return -1;
 	}
 
-	     /* Allocate memory buffer for watcher_t structure and uri string */
-	watcher = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len);
+	/* Allocate memory buffer for watcher_t structure and uri string */
+	watcher = (watcher_t*)shm_malloc(sizeof(watcher_t) + _uri->len + S_ID_LEN);
 	if (!watcher) {
 		paerrno = PA_NO_MEMORY;
 	        LOG(L_ERR, "new_watcher(): No memory left\n");
@@ -58,15 +117,116 @@ int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w)
 	}
 	memset(watcher, 0, sizeof(watcher_t));
 
-	     /* Copy uri string */
-	watcher->uri.s = (char*)watcher + sizeof(watcher_t);
+	/* Copy uri string */
+	watcher->uri.s = (char*)watcher + S_ID_LEN + sizeof(watcher_t);
 	watcher->uri.len = _uri->len;
 	memcpy(watcher->uri.s, _uri->s, _uri->len);
 	
+	watcher->s_id.s = (char*)watcher + sizeof(watcher_t);
+	watcher->s_id.len = 0;
+
 	watcher->expires = _e; /* Expires value */
 	watcher->accept = _a;  /* Accepted document type */
 	watcher->dialog = _dlg; /* Dialog handle */
 	*_w = watcher;
+
+	if (use_db) {
+		db_key_t query_cols[5];
+		db_op_t query_ops[5];
+		db_val_t query_vals[5];
+
+		db_key_t result_cols[4];
+		db_res_t *res;
+		int n_query_cols = 2;
+		int n_result_cols = 0;
+		char *package = (watcher->accept == DOC_WINFO ? "presence.winfo" : "presence");
+
+		LOG(L_ERR, "db_update_presentity starting\n");
+		query_cols[0] = "r_uri";
+		query_ops[0] = OP_EQ;
+		query_vals[0].type = DB_STR;
+		query_vals[0].nul = 0;
+		query_vals[0].val.str_val.s = _p->uri.s;
+		query_vals[0].val.str_val.len = _p->uri.len;
+		LOG(L_ERR, "db_new_watcher:  _p->uri=%.*s\n", _p->uri.len, _p->uri.s);
+
+		query_cols[1] = "w_uri";
+		query_ops[1] = OP_EQ;
+		query_vals[1].type = DB_STR;
+		query_vals[1].nul = 0;
+		query_vals[1].val.str_val.s = watcher->uri.s;
+		query_vals[1].val.str_val.len = watcher->uri.len;
+		LOG(L_ERR, "db_new_watcher:  watcher->uri=%.*s\n", watcher->uri.len, watcher->uri.s);
+
+		result_cols[0] = "s_id";
+		result_cols[1] = "status";
+		n_result_cols = 2;
+		
+		db_use_table(pa_db, watcherinfo_table);
+		if (db_query (pa_db, query_cols, query_ops, query_vals,
+			      result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
+			LOG(L_ERR, "db_new_tuple(): Error while querying tuple\n");
+			return -1;
+		}
+		LOG(L_INFO, "new_tuple: getting values: res=%p res->n=%d\n",
+		    res, (res ? res->n : 0));
+		if (res && res->n > 0) {
+			/* fill in tuple structure from database query result */
+			db_row_t *row = &res->rows[0];
+			db_val_t *row_vals = ROW_VALUES(row);
+			str s_id = row_vals[0].val.str_val;
+			str status = row_vals[1].val.str_val;
+			if (strcmp(status.s, "pending") == 0) {
+				watcher->status = WS_PENDING;
+			} else {
+				watcher->status = WS_ACTIVE;
+			}
+			if (s_id.s) {
+				strncpy(watcher->s_id.s, s_id.s, S_ID_LEN);
+				watcher->s_id.len = strlen(s_id.s);
+			}
+		} else {
+
+			watcher_assign_statement_id(_p, watcher);
+
+			query_cols[n_query_cols] = "s_id";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val.s = watcher->s_id.s;
+			query_vals[n_query_cols].val.str_val.len = watcher->s_id.len;
+			n_query_cols++;
+
+			query_cols[n_query_cols] = "status";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val.s = "pending";
+			query_vals[n_query_cols].val.str_val.len = strlen("pending");
+			n_query_cols++;
+
+			query_cols[n_query_cols] = "event";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val.s = "subscribe";
+			query_vals[n_query_cols].val.str_val.len = strlen("subscribe");
+			n_query_cols++;
+
+			query_cols[n_query_cols] = "package";
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val.s = package;
+			query_vals[n_query_cols].val.str_val.len = strlen(package);
+			n_query_cols++;
+
+			/* insert new record into database */
+			LOG(L_INFO, "new_tuple: inserting %d cols into table\n", n_query_cols);
+			if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
+				LOG(L_ERR, "db_new_tuple(): Error while inserting tuple\n");
+				return -1;
+			}
+		}
+
+	}
+
 	return 0;
 }
 
@@ -80,12 +240,6 @@ void free_watcher(watcher_t* _w)
 	shm_free(_w);	
 }
 
-
-static char *doctype_name[] = {
-	[DOC_XPIDF] = "DOC_XPIDF",
-	[DOC_LPIDF] = "DOC_LPIDF",
-	[DOC_PIDF] = "DOC_PIDF"
-};
 
 /*
  * Print contact, for debugging purposes only
@@ -108,5 +262,189 @@ void print_watcher(FILE* _f, watcher_t* _w)
 int update_watcher(watcher_t* _w, time_t _e)
 {
 	_w->expires = _e;
+	return 0;
+}
+
+static str watcher_status_names[] = {
+	{ "pending", 7 },
+	{ "active", 6 }
+};
+
+#define CRLF "\r\n"
+#define CRLF_L (sizeof(CRLF) - 1)
+
+#define PUBLIC_ID "//IETF//DTD RFCxxxx PIDF 1.0//EN"
+#define PUBLIC_ID_L (sizeof(PUBLIC_ID) - 1)
+
+#define XML_VERSION "<?xml version=\"1.0\"?>"
+#define XML_VERSION_L (sizeof(XML_VERSION) - 1)
+
+#define WATCHERINFO_STAG "<watcherinfo xmlns=\"urn:ietf:params:xml:ns:watcherinfo\" version=\"0\" state=\"full\">"
+#define WATCHERINFO_STAG_L (sizeof(WATCHERINFO_STAG) - 1)
+#define WATCHERINFO_ETAG "</watcherinfo>"
+#define WATCHERINFO_ETAG_L (sizeof(WATCHERINFO_ETAG) - 1)
+
+#define WATCHERLIST_START "  <watcher-list resource=\""
+#define WATCHERLIST_START_L (sizeof(WATCHERLIST_START) - 1)
+#define WATCHERLIST_ETAG "  </watcher-list>"
+#define WATCHERLIST_ETAG_L (sizeof(WATCHERLIST_ETAG) - 1)
+
+#define WATCHER_START "<watcher"
+#define WATCHER_START_L (sizeof(WATCHER_START) - 1)
+#define STATUS_START " status=\""
+#define STATUS_START_L (sizeof(STATUS_START) - 1)
+#define EVENT_START "\" event=\""
+#define EVENT_START_L (sizeof(EVENT_START) - 1)
+#define SID_START "\" id=\""
+#define SID_START_L (sizeof(SID_START) - 1)
+#define URI_START "\">"
+#define URI_START_L (sizeof(URI_START) - 1)
+#define WATCHER_ETAG "</watcher>"
+#define WATCHER_ETAG_L (sizeof(WATCHER_ETAG) - 1)
+
+#define PACKAGE_START "\" package=\""
+#define PACKAGE_START_L (sizeof(PACKAGE_START) - 1)
+#define PACKAGE_END "\">"
+#define PACKAGE_END_L (sizeof(PACKAGE_END) - 1)
+
+/*
+ * Add a watcher information
+ */
+int winfo_add_watcher(str* _b, int _l, watcher_t *watcher)
+{
+	str strs[10];
+	int n_strs = 0;
+	int i;
+	int len = 0;
+	int status = watcher->status;
+
+#define add_string(_s, _l) ((strs[n_strs].s = (_s)), (strs[n_strs].len = (_l)), (len += _l), n_strs++)
+#define add_str(_s) (strs[n_strs].s = (_s.s), strs[n_strs].len = (_s.len), len += _s.len, n_strs++)
+#define add_pstr(_s) (strs[n_strs].s = (_s->s), strs[n_strs].len = (_s->len), len += _s->len, n_strs++)
+
+	add_string(WATCHER_START, WATCHER_START_L);
+	add_string(STATUS_START, STATUS_START_L);
+	add_str(watcher_status_names[status]);
+	add_string(EVENT_START, EVENT_START_L);
+	add_string("subscribe", 9);
+	add_string(SID_START, SID_START_L);
+	add_str(watcher->s_id);
+	add_string(URI_START, URI_START_L);
+	add_str(watcher->uri);
+	add_string(WATCHER_ETAG, WATCHER_ETAG_L);
+
+	if (_l < len) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "winfo_add_watcher(): Buffer too small\n");
+		return -1;
+	}
+
+	for (i = 0; i < n_strs; i++)
+		str_append(_b, strs[i].s, strs[i].len);
+
+	return 0;
+}
+
+/*
+ * Create start of winfo document
+ */
+int start_winfo_doc(str* _b, int _l)
+{
+	str strs[10];
+	int n_strs = 0;
+	int i;
+	int len = 0;
+
+	if ((XML_VERSION_L + 
+	     CRLF_L
+	    ) > _l) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "start_pidf_doc(): Buffer too small\n");
+		return -1;
+	}
+
+	add_string(XML_VERSION, XML_VERSION_L);
+	add_string(CRLF, CRLF_L);
+	add_string(WATCHERINFO_STAG, WATCHERINFO_STAG_L);
+	add_string(CRLF, CRLF_L);
+
+	if (_l < len) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "winfo_add_resource(): Buffer too small\n");
+		return -1;
+	}
+
+	for (i = 0; i < n_strs; i++)
+		str_append(_b, strs[i].s, strs[i].len);
+
+	return 0;
+}
+
+/*
+ * Start a resource in a winfo document
+ */
+int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher)
+{
+	str strs[10];
+	int n_strs = 0;
+	int i;
+	int len = 0;
+
+	add_string(WATCHERLIST_START, WATCHERLIST_START_L);
+	add_pstr(_uri);
+	add_string(PACKAGE_START, PACKAGE_START_L);
+	add_string(package_names[watcher->accept], strlen(package_names[watcher->accept]));
+	add_string(PACKAGE_END, PACKAGE_END_L);
+	add_string(CRLF, CRLF_L);
+
+	if (_l < len) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "winfo_add_resource(): Buffer too small\n");
+		return -1;
+	}
+
+	for (i = 0; i < n_strs; i++)
+		str_append(_b, strs[i].s, strs[i].len);
+
+	return 0;
+}
+
+/*
+ * End a resource in a winfo document
+ */
+int winfo_end_resource(str *_b, int _l)
+{
+	str strs[10];
+	int n_strs = 0;
+	int i;
+	int len = 0;
+
+	add_string(WATCHERLIST_ETAG, WATCHERLIST_ETAG_L);
+	add_string(CRLF, CRLF_L);
+
+	if (_l < len) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "winfo_add_resource(): Buffer too small\n");
+		return -1;
+	}
+
+	for (i = 0; i < n_strs; i++)
+		str_append(_b, strs[i].s, strs[i].len);
+
+	return 0;
+}
+
+/*
+ * End a winfo document
+ */
+int end_winfo_doc(str* _b, int _l)
+{
+	if (_l < (WATCHERINFO_ETAG_L + CRLF_L)) {
+		paerrno = PA_SMALL_BUFFER;
+		LOG(L_ERR, "end_pidf_doc(): Buffer too small\n");
+		return -1;
+	}
+
+	str_append(_b, WATCHERINFO_ETAG CRLF, WATCHERINFO_ETAG_L + CRLF_L);
 	return 0;
 }

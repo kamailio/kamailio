@@ -39,9 +39,15 @@
 typedef enum doctype {
 	DOC_XPIDF = 0,
 	DOC_LPIDF,
-	DOC_PIDF
+	DOC_PIDF,
+	DOC_WINFO
 } doctype_t;
 
+
+typedef enum watcher_status {
+	WS_PENDING = 0,
+	WS_ACTIVE
+} watcher_status_t;
 
 /*
  * Structure representing a watcher
@@ -51,6 +57,8 @@ typedef struct watcher {
 	time_t expires;         /* Absolute of the expiration */
 	doctype_t accept;       /* Type of document accepted by the watcher */
 	dlg_t* dialog;          /* Dialog handle */
+	str s_id;               /* id of this watcherinfo statement */
+	watcher_status_t status; /* status of subscription */
 	struct watcher* next;   /* Next watcher in the list */
 } watcher_t;
  
@@ -58,7 +66,8 @@ typedef struct watcher {
 /*
  * Create a new watcher structure
  */
-int new_watcher(str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w);
+struct presentity;
+int new_watcher(struct presentity *_p, str* _uri, time_t _e, doctype_t _a, dlg_t* _dlg, watcher_t** _w);
 
 
 /*
@@ -78,5 +87,28 @@ void print_watcher(FILE* _f, watcher_t* _w);
  */
 int update_watcher(watcher_t* _w, time_t _e);
 
+/*
+ * Add a watcher information to a winfo document
+ */
+int winfo_add_watcher(str* _b, int _l, watcher_t *watcher);
+
+/*
+ * Create start of winfo document
+ */
+int start_winfo_doc(str* _b, int _l);
+
+/*
+ * Start a resource in a winfo document
+ */
+int winfo_start_resource(str* _b, int _l, str* _uri, watcher_t *watcher);
+/*
+ * End a resource in a winfo document
+ */
+int winfo_end_resource(str *_b, int _l);
+
+/*
+ * End a winfo document
+ */
+int end_winfo_doc(str* _b, int _l);
 
 #endif /* WATCHER_H */

@@ -52,6 +52,9 @@
 #define PRESENCE_TEXT "presence"
 #define PRESENCE_TEXT_L (sizeof(PRESENCE_TEXT) - 1)
 
+#define WINFO_TEXT "presence.winfo"
+#define WINFO_TEXT_L (sizeof(WINFO_TEXT) - 1)
+
 #define CONT_TYPE_XPIDF "application/xpidf+xml"
 #define CONT_TYPE_XPIDF_L  (sizeof(CONT_TYPE_XPIDF) - 1)
 
@@ -60,6 +63,9 @@
 
 #define CONT_TYPE_PIDF "application/pidf+xml"
 #define CONT_TYPE_PIDF_L (sizeof(CONT_TYPE_PIDF) - 1)
+
+#define CONT_TYPE_WINFO "application/watcherinfo+xml"
+#define CONT_TYPE_WINFO_L (sizeof(CONT_TYPE_WINFO) - 1)
 
 #define SUBSCRIPTION_STATE "Subscription-State: "
 #define SUBSCRIPTION_STATE_L (sizeof(SUBSCRIPTION_STATE) - 1)
@@ -139,15 +145,27 @@ static str headers = {headers_buf, 0};
 static str body = {buffer, 0};
 
 
-static inline int add_event_hf(str* _h, int _l)
+static inline int add_event_hf(str* _h, int _l, int accept)
 {
-	if (_l < EVENT_L + PRESENCE_TEXT_L + CRLF_L) {
+	int event_l;
+	char *event;
+	if (accept == DOC_WINFO) {
+		event = WINFO_TEXT;
+		event_l = WINFO_TEXT_L;
+	} else {
+		event = PRESENCE_TEXT;
+		event_l = PRESENCE_TEXT_L;
+	}
+
+	if (_l < EVENT_L + event_l + CRLF_L) {
 		paerrno = PA_SMALL_BUFFER;
 		LOG(L_ERR, "add_event_hf(): Buffer too small\n");
 		return -1;
 	}
 
-	str_append(_h, EVENT PRESENCE_TEXT CRLF, EVENT_L + PRESENCE_TEXT_L + CRLF_L);
+	str_append(_h, EVENT, EVENT_L);
+	str_append(_h, event, event_l);
+	str_append(_h, CRLF, CRLF_L);
 	return 0;
 }
 
@@ -184,6 +202,16 @@ static inline int add_cont_type_hf(str* _h, int _l, doctype_t _d)
 		}
 		str_append(_h, CONTENT_TYPE CONT_TYPE_PIDF CRLF,
 			   CONTENT_TYPE_L + CONT_TYPE_PIDF_L + CRLF_L);
+		return 0;
+
+	case DOC_WINFO:
+		if (_l < CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L) {
+			paerrno = PA_SMALL_BUFFER;
+			LOG(L_ERR, "add_cont_type_hf(): Buffer too small\n");
+			return -2;
+		}
+		str_append(_h, CONTENT_TYPE CONT_TYPE_WINFO CRLF,
+			   CONTENT_TYPE_L + CONT_TYPE_WINFO_L + CRLF_L);
 		return 0;
 
 	default:
@@ -237,7 +265,7 @@ static inline int create_headers(struct watcher* _w)
 
 	headers.len = 0;
 	
-	if (add_event_hf(&headers, BUF_LEN) < 0) {
+	if (add_event_hf(&headers, BUF_LEN, _w->accept) < 0) {
 		LOG(L_ERR, "create_headers(): Error while adding Event header field\n");
 		return -1;
 	}
@@ -268,12 +296,13 @@ static inline int create_headers(struct watcher* _w)
 static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	xpidf_status_t st;
+	presence_tuple_t *tuple = _p->tuples;
 
-	     /* Send a notify, saved Contact will be put in
-	      * Request-URI, To will be put in from and new tag
-	      * will be generated, callid will be callid,
-	      * from will be put in to including tag
-	      */
+	/* Send a notify, saved Contact will be put in
+	 * Request-URI, To will be put in from and new tag
+	 * will be generated, callid will be callid,
+	 * from will be put in to including tag
+	 */
 
 	if (start_xpidf_doc(&body, BUF_LEN) < 0) {
 		LOG(L_ERR, "send_xpidf_notify(): start_xpidf_doc failed\n");
@@ -284,17 +313,20 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_presentity failed\n");
 		return -3;
 	}
+	while (tuple) {
 
-	switch(_p->state) {
-	case PS_ONLINE: st = XPIDF_ST_OPEN; break;
-	default: st = XPIDF_ST_CLOSED; break;
+		switch(tuple->state) {
+		case PS_ONLINE: st = XPIDF_ST_OPEN; break;
+		default: st = XPIDF_ST_CLOSED; break;
+		}
+
+		if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+			LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
+			return -3;
+		}
+
+		tuple = tuple->next;
 	}
-
-	if (xpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
-		LOG(L_ERR, "send_xpidf_notify(): xpidf_add_address failed\n");
-		return -3;
-	}
-
 	if (end_xpidf_doc(&body, BUF_LEN - body.len) < 0) {
 		LOG(L_ERR, "send_xpidf_notify(): end_xpidf_doc failed\n");
 		return -5;
@@ -314,20 +346,25 @@ static int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 static int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	lpidf_status_t st;
+	presence_tuple_t *tuple = _p->tuples;
 
 	if (lpidf_add_presentity(&body, BUF_LEN - body.len, &_p->uri) < 0) {
 		LOG(L_ERR, "send_lpidf_notify(): Error in lpidf_add_presentity\n");
 		return -2;
 	}
 
-	switch(_p->state) {
-	case PS_OFFLINE: st = LPIDF_ST_CLOSED; break;
-	default: st = LPIDF_ST_OPEN; break;
-	}
+	while (tuple) {
+		switch(tuple->state) {
+		case PS_OFFLINE: st = LPIDF_ST_CLOSED; break;
+		default: st = LPIDF_ST_OPEN; break;
+		}
 
-	if (lpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
-		LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
-		return -3;
+		if (lpidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
+			LOG(L_ERR, "send_lpidf_notify(): lpidf_add_address failed\n");
+			return -3;
+		}
+
+		tuple = tuple->next;
 	}
 
 	if (create_headers(_w) < 0) {
@@ -342,12 +379,13 @@ static int send_lpidf_notify(struct presentity* _p, struct watcher* _w)
 static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 {
 	xpidf_status_t st;
+	presence_tuple_t *tuple = _p->tuples;
 
-	     /* Send a notify, saved Contact will be put in
-	      * Request-URI, To will be put in from and new tag
-	      * will be generated, callid will be callid,
-	      * from will be put in to including tag
-	      */
+	/* Send a notify, saved Contact will be put in
+	 * Request-URI, To will be put in from and new tag
+	 * will be generated, callid will be callid,
+	 * from will be put in to including tag
+	 */
 
 	if (start_pidf_doc(&body, BUF_LEN) < 0) {
 		LOG(L_ERR, "send_pidf_notify(): start_pidf_doc failed\n");
@@ -359,32 +397,35 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 		return -3;
 	}
 
-	if (start_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
-		return -4;
-	}
+	while (tuple) {
+		if (start_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): start_pidf_tuple failed\n");
+			return -4;
+		}
 
-	switch(_p->state) {
-	case PS_ONLINE: st = XPIDF_ST_OPEN; break;
-	default: st = XPIDF_ST_CLOSED; break;
-	}
+		switch(tuple->state) {
+		case PS_ONLINE: st = XPIDF_ST_OPEN; break;
+		default: st = XPIDF_ST_CLOSED; break;
+		}
 
-	if (pidf_add_address(&body, BUF_LEN - body.len, &_p->uri, st) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): pidf_add_address failed\n");
-		return -3;
-	}
+		if (pidf_add_address(&body, BUF_LEN - body.len, &tuple->contact, st) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): pidf_add_address failed\n");
+			return -3;
+		}
 
-	if (pidf_add_location(&body, BUF_LEN - body.len,
-			      &_p->location.loc,
-			      &_p->location.site, &_p->location.floor, &_p->location.room,
-			      _p->location.x, _p->location.y, _p->location.radius) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
-		return -4;
-	}
+		if (pidf_add_location(&body, BUF_LEN - body.len,
+				      &tuple->location.loc,
+				      &tuple->location.site, &tuple->location.floor, &tuple->location.room,
+				      tuple->location.x, tuple->location.y, tuple->location.radius) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): pidf_add_location failed\n");
+			return -4;
+		}
 
-	if (end_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
-		LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
-		return -5;
+		if (end_pidf_tuple(&body, BUF_LEN - body.len) < 0) {
+			LOG(L_ERR, "send_pidf_notify(): end_pidf_tuple failed\n");
+			return -5;
+		}
+		tuple = tuple->next;
 	}
 
 	if (end_pidf_doc(&body, BUF_LEN - body.len) < 0) {
@@ -401,9 +442,52 @@ static int send_pidf_notify(struct presentity* _p, struct watcher* _w)
 	return 0;
 }
 
+static int send_winfo_notify(struct presentity* _p, struct watcher* _w)
+{
+	watcher_t *watcher = _p->watchers;
+
+	LOG(L_ERR, "send_winfo_notify: watcher=%p winfo_watcher=%p\n", watcher, _w);
+	if (start_winfo_doc(&body, BUF_LEN) < 0) {
+		LOG(L_ERR, "send_winfo_notify(): start_winfo_doc failed\n");
+		return -1;
+	}
+
+	if (winfo_start_resource(&body, BUF_LEN - body.len, &_p->uri, _w) < 0) {
+		LOG(L_ERR, "send_winfo_notify(): winfo_add_resource failed\n");
+		return -3;
+	}
+
+	while (watcher) {
+		if (winfo_add_watcher(&body, BUF_LEN - body.len, watcher) < 0) {
+			LOG(L_ERR, "send_winfo_notify(): winfo_add_watcher failed\n");
+			return -3;
+		}
+
+		watcher = watcher->next;
+	}
+
+	if (winfo_end_resource(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_winfo_notify(): winfo_add_resource failed\n");
+		return -5;
+	}
+
+	if (end_winfo_doc(&body, BUF_LEN - body.len) < 0) {
+		LOG(L_ERR, "send_winfo_notify(): end_xwinfo_doc failed\n");
+		return -6;
+	}
+
+	if (create_headers(_w) < 0) {
+		LOG(L_ERR, "send_winfo_notify(): Error while adding headers\n");
+		return -7;
+	}
+
+	tmb.t_request_within(&method, &headers, &body, _w->dialog, 0, 0);
+	return 0;
+}
 
 int send_notify(struct presentity* _p, struct watcher* _w)
 {
+	int rc;
 	body.len = 0;
 
 	if (_w->uri.s == NULL) {
@@ -415,8 +499,8 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %s accept=%d _p->state=%d\n", 
-	    _w->uri.s, _w->accept, _p->state);
+	LOG(L_ERR, "notifying %.*s accept=%d\n", 
+	    _w->uri.len, _w->uri.s, _w->accept);
 	switch(_w->accept) {
 	case DOC_XPIDF:
 		return send_xpidf_notify(_p, _w);
@@ -429,6 +513,11 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 	case DOC_PIDF:
 		return send_pidf_notify(_p, _w);
 		return 0;
+
+	case DOC_WINFO:
+		rc = send_winfo_notify(_p, _w);
+		LOG(L_ERR, "send_winfo_notify returned %d\n", rc);
+		return rc;
 	}
 
 	return -1;
