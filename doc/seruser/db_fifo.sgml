@@ -1,0 +1,275 @@
+<!-- <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [ ]> -->
+<chapter>
+<title>Database FIFO interface</title>
+
+<section>
+	<title>Introduction</title>
+	<para>
+	<application>SER</application> offers to its module developers a common 
+	DataBase(DB) interface, disregarding the database implementation (mysql, 
+	dbtext or postgres) that lays beneath it.
+	</para>
+	<para>
+	This feature is now extended and offered also to the 
+	<application>SER</application> users/administrators by DataBase
+	<acronym>FIFO</acronym> Interface (or DB FIFO interface). So,
+	DB FIFO interface is an extension of the internal DB interface through the
+	FIFO server. Everybody from outside <application>SER</application> can 
+	operate SER's database (for adding/removing users, for manipulating 
+	aliases, access control wrights, etc) using the same FIFO commands 
+	without caring about the database type that's used by SER.
+	</para>
+</section>
+
+<section>
+	<title>Advantages</title>
+	<para>
+	All external applications that need to work with SER's database (like 
+	<application>serctl</application> or <application>serweb</application>) 
+	can do so via DB FIFO interface without depending of a specific database 
+	driver. No modifications will be required when a new type of database 
+	will be added to <application>SER</application>.
+	</para>
+	<para>
+	Also, this approach, prevents any kind of confusion between the database
+	type used by <application>SER</application> and the one used by these 
+	external applications. They will use automatically the same database as 
+	<application>SER</application> is configure to use.
+	</para>
+</section>
+
+
+<section>
+	<title>Limitations</title>
+	<para>
+	DB FIFO interface is restricted to the limitation of the internal DB
+	interface.
+	</para>
+	<para>
+	Also the size (can fit on only one line) and the the content (\n or \r
+	charecters must be escaped) of a BLOB value is restricted.
+	</para>
+</section>
+
+
+<section>
+	<title>Configuration</title>
+	<para>
+	FIFO server presents is required, so configure in your config file the FIFO
+	file to be used by the <application>SER</application> FIFO server:
+	<programlisting format="linespecific">
+fifo="/tmp/ser_fifo"
+	</programlisting>
+	To enable the DB FIFO interface, it's required to load at least one 
+	database module (available for the moment are mysql, dbtext and postgres).
+	</para>
+	<para>
+	The database module that you want to use and the database configuration are
+	configured via parameter <varname>fifo_db_url</varname>:
+	<programlisting format="linespecific">
+fifo_db_url="mysql:mysql_url"
+fifo_db_url="dbtext:dbtext_url"
+	</programlisting>
+	The format of the database URL depends of the used database implementation
+	(see the documentation for each DB type).
+	</para>
+	<para><emphasis>
+	NOTE: be sure to load the module the is specified into fifo_db_url!
+	</emphasis></para>
+	<para>
+	If no fifo_db_url is specified or no appropriate DB module found, the 
+	DB FIFO interface will be disabled.
+	</para>
+</section>
+
+
+<section>
+	<title>DB FIFO commands</title>
+	<para>
+	From FIFO point of view, all DB FIFO commands are mapped with the 
+	same name: <emphasis>DB</emphasis>. The first line of the command must 
+	contain the name of the DB command. Available are:
+	<itemizedlist>
+		<listitem>
+			<para>SELECT</para>
+		</listitem>
+		<listitem>
+			<para>UPDATE</para>
+		</listitem>
+		<listitem>
+			<para>INSERT</para>
+		</listitem>
+		<listitem>
+			<para>DELETE</para>
+		</listitem>
+		<listitem>
+			<para>RAW_QUERY</para>
+		</listitem>
+		<listitem>
+			<para>EAW_QUERY_RES</para>
+		</listitem>
+	</itemizedlist>
+	The grammar used in the commands definition can be found in next section
+	"DB FIFO grammar". The presence of the <varname>reply_fifo_file</varname> 
+	in the FIFO command is <emphasis>required</emphasis> for all commands.
+
+	<section>
+		<title><function moreinfo="none">SELECT</function> command</title>
+		<para>
+		This function implements SELECT DB directive. Its syntax is:
+		<programlisting format="linespecific">
+:DB:reply_fifo_file
+select
+[COLUMN]*
+.
+TABLE_NAME
+[CVP]
+.
+		</programlisting>
+		If no CVP line is present, the whole table.will be returned. If no 
+		COLUMN line is given, all table columns will be found in the result.
+		</para>
+		<para>
+		The result of the query will be return via reply_fifo_file  in one 
+		raw per line format (only requested columns), the first line being 
+		the head of the table. The <emphasis>NULL</emphasis> values will be
+		printed as "NULL".
+		</para>
+	</section>
+
+	<section>
+		<title><function moreinfo="none">INSERT</function> command</title>
+		<para>
+		This function implements INSERT DB directive - inserts one row in 
+		a table. Its syntax is:
+		<programlisting format="linespecific">
+:DB:reply_fifo_file
+insert
+TABLE_NAME
+[EQUAL_CVP]+
+.
+		</programlisting>
+		</para>
+		<para>
+		Command returns nothing if success or, other way, an error message.
+		</para>
+	</section>
+
+
+	<section>
+		<title><function moreinfo="none">UPDATE</function> command</title>
+		<para>
+		The function implements UPDATE DB directive - it is possible to 
+		modify one or more rows in a table. Its syntax is:
+		<programlisting format="linespecific">
+:DB:reply_fifo_file
+update
+[EQUAL_CVP]+
+.
+TABLE_NAME
+[CVP]*
+.
+		</programlisting>
+		</para>
+		<para>
+		Command returns nothing if success or, other way, an error message.
+		</para>
+	</section>
+
+
+	<section>
+		<title><function moreinfo="none">DELETE</function> command</title>
+		<para>
+		This function implements DELETE DB directive - it is possible to 
+		delete one or more rows from a table. Its syntax is:
+		<programlisting format="linespecific">
+:DB:reply_fifo_file
+delete
+TABLE_NAME
+[CVP]*
+.
+		</programlisting>
+		If CVP list contain <emphasis>no lines, all rows will be
+		deleted</emphasis> (table will be empty).
+		</para>
+		<para>
+		Command returns nothing if success or, other way, an error message.
+		</para>
+	</section>
+
+
+	<section>
+		<title><function moreinfo="none">RAW_QUERY</function> command</title>
+		<para>
+		This function sends a raw query directly to the database driver 
+		without trying to understand the command. This command <emphasis>MUST
+		NOT</emphasis> generate any response.Otherwise, the database driver 
+		can block or desynchronize (depending of the driver).
+		Its syntax is:
+		<programlisting format="linespecific">
+:DB:reply_fifo_file
+raw_query
+(ASCII)+
+		</programlisting>
+		</para>
+		<para>
+		Command returns nothing if success or, other way, an error message.
+		</para>
+	</section>
+
+
+	<section>
+		<title>
+			<function moreinfo="none">RAW_QUERY_RES</function> command
+		</title>
+		<para>
+		This function sends a raw query directly to the database driver without
+		trying to understand the command. This command <emphasis>MUST
+		</emphasis> generate an response (even if an empty one). Otherwise, 
+		the database driver can block or desynchronize (depending of the 
+		driver). Its syntax is:
+		<programlisting format="linespecific">
+:DB:reply_fifo_file
+raw_query_res
+(ASCII)+
+		</programlisting>
+		</para>
+		<para>
+		Command's output format is identical with the one from 
+		<function moreinfo="none">SELECT</function> command.
+		</para>
+	</section>
+</section>
+
+
+<section>
+	<title>DB FIFO grammar</title>
+	<programlisting format="linespecific">
+COLUMN=(alfa-numeric|'_')+
+
+GAP=' '|'\t'
+
+DEF_OP='='|'<'|'>'|'>='|'<='
+UNDEF_OP=(ASCII)+
+CAST_OP="int"|"double"|"string"|"date"|"blob"|"bitmap"
+
+INT_VAL=integer number
+DOUBLE_VAL=float number
+STRING_VAL='"' ASCII* '"'
+DATE_VAL='<' YEAR '-' MONTH '-' DAY ' ' HOUR ':' MINS ':' SECS '>'
+BLOB_VAL=STRING_VAL
+BITMAP_VAL=INT_VAL
+NULL_VAL="null"
+
+VALUE=('['CAST_OP']')?(INT_VAL|DOUBLE_VAL|STRING_VAL|DATE_VAL|
+		BLOB_VAL|BITMAP_VAL|NULL_VAL)
+
+CVP(column-value-pair)=
+		(COLUMN GAP* DEF_OP GAP* VALUE) | (COLUMN GAP+ UNDEF_OP GAP+ VALUE)
+EQUAL-CVP(column-equal-value-pair)=
+		(COLUMN GAP* '=' GAP* VALUE)
+	</programlisting>
+</section>
+
+</chapter>
+

@@ -30,6 +30,7 @@
 <!ENTITY reference SYSTEM "reference.sgml">
 <!ENTITY general SYSTEM "general.sgml">
 <!ENTITY otherapps SYSTEM "otherapps.sgml">
+<!ENTITY dbfifo SYSTEM "db_fifo.sgml">
 
 
 
@@ -113,7 +114,7 @@
 
     <toc></toc>
 
-&general;    
+&general;
 
 &intro;
 
@@ -124,6 +125,8 @@
 &otherapps;
 
 &reference;
+
+&dbfifo;
     
     
     <!-- TODO
