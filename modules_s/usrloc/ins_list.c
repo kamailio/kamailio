@@ -13,7 +13,7 @@ int put_on_ins_list(struct ucontact* _c)
 {
 	struct ins_itm* p;
 
-	p = (struct ins_itm*)pkg_malloc(sizeof(struct ins_itm) + _c->aor->len + _c->c.len + _c->callid.len);
+	p = (struct ins_itm*)pkg_malloc(sizeof(struct ins_itm) + _c->callid.len);
 	if (p == 0) {
 		LOG(L_ERR, "put_on_ins_list(): No memory left");
 		return -1;
@@ -23,13 +23,11 @@ int put_on_ins_list(struct ucontact* _c)
 	p->q = _c->q;
 	p->cseq = _c->cseq;
 
-	p->user_len = _c->aor->len;
-	p->cont_len = _c->c.len;
+	p->user = _c->aor;
+	p->cont = &_c->c;
 	p->cid_len = _c->callid.len;
 
-	memcpy(p->tail, _c->aor->s, p->user_len);
-	memcpy(p->tail + p->user_len, _c->c.s, p->cont_len);
-	memcpy(p->tail + p->user_len + p->cont_len, _c->callid.s, p->cid_len);
+	memcpy(p->callid, _c->callid.s, p->cid_len);
 
 	p->next = ins_root;
 	ins_root = p;
@@ -69,17 +67,17 @@ int process_ins_list(str* _d)
 		p = ins_root;
 		ins_root = ins_root->next;
 
-		VAL_STR(vals).len = p->user_len;
-		VAL_STR(vals).s = p->tail;
+		VAL_STR(vals).len = p->user->len;
+		VAL_STR(vals).s = p->user->s;
 		
-		VAL_STR(vals + 1).len = p->cont_len;
-		VAL_STR(vals + 1).s = p->tail + p->user_len;
+		VAL_STR(vals + 1).len = p->cont->len;
+		VAL_STR(vals + 1).s = p->cont->s;
 
 		VAL_TIME(vals + 2) = p->expires;
 		VAL_DOUBLE(vals + 3) = p->q;
 		
 		VAL_STR(vals + 4).len = p->cid_len;
-		VAL_STR(vals + 4).s = p->tail + p->user_len + p->cont_len;
+		VAL_STR(vals + 4).s = p->callid;
 
 		VAL_INT(vals + 5) = p->cseq;
 

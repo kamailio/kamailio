@@ -10,10 +10,10 @@ struct ins_itm {
 	time_t expires;
 	float q;
 	int cseq;
-	int user_len;
-	int cont_len;
+	str* user;
+	str* cont;
 	int cid_len;
-	char tail[0];
+	char callid[0];
 };
 
 
