@@ -145,6 +145,7 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						LOG( L_ERR , "ERROR: parse_to_param : "
 							"unexpected char [%c] in status %d: <<%.*s>> .\n",
 							*tmp,status, (int)(tmp-buffer), ZSW(buffer));
+						goto error;
 				}
 				break;
 			case '\r':
@@ -459,8 +460,8 @@ static /*inline*/ char* parse_to_param(char *buffer, char *end,
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
 					default:
-						DBG("DEBUG: parse_to_param: "
-						"spitting out [%c] in status %d\n",*tmp,status );
+						LOG(L_ERR, "ERROR: parse_to_param: "
+							"spitting out [%c] in status %d\n",*tmp,status );
 						goto error;
 				}
 		}/*switch*/
@@ -550,6 +551,7 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
 							"in status %d: <<%.*s>> .\n",
 							*tmp,status, (int)(tmp-buffer), ZSW(buffer));
+						goto error;
 				}
 				break;
 			case '\r':

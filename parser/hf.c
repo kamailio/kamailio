@@ -44,6 +44,7 @@
 #include "parse_expires.h"
 #include "parse_rr.h"
 #include "contact/parse_contact.h"
+#include "parse_disposition.h"
 #include "../ut.h"
 
 
@@ -145,6 +146,7 @@ void clean_hdr_field(struct hdr_field* hf)
 			break;
 
 		case HDR_CONTENTDISPOSITION:
+			free_disposition( ((struct disposition**)(&hf->parsed)) );
 			break;
 
 		default:
