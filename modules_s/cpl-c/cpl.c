@@ -33,6 +33,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
@@ -47,14 +51,18 @@
 #include "cpl_run.h"
 #include "cpl_db.h"
 #include "cpl_loader.h"
+#include "cpl_nonsig.h"
 
 
-char *DB_URL       = 0;  /* database url */
-char *DB_TABLE     = 0;  /* */
+static char *DB_URL       = 0;  /* database url */
+static char *DB_TABLE     = 0;  /* */
 char *dtd_file     = 0;
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 int  cache_timeout = 5;
 cmd_function sl_send_rpl = 0;
+static char *log_dir     = 0; /*directory where the user log should be dumped*/
+int   cpl_cmd_pipe[2];
+
 
 MODULE_VERSION
 
@@ -84,6 +92,7 @@ static param_export_t params[] = {
 	{"cpl_table",     STR_PARAM, &DB_TABLE     },
 	{"cpl_dtd_file",  STR_PARAM, &dtd_file     },
 	{"cache_timeout", INT_PARAM, &cache_timeout},
+	{"log_dir",       STR_PARAM, &log_dir      },
 	{0, 0, 0}
 };
 
@@ -126,6 +135,9 @@ static int fixup_cpl_run_script(void** param, int param_no)
 
 static int cpl_init(void)
 {
+	struct stat stat_t;
+	int val;
+
 	LOG(L_INFO,"CPL - initializing\n");
 
 	/* check the module params */
@@ -143,6 +155,44 @@ static int cpl_init(void)
 		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"cpl_dtd_file\" "
 			"found empty\n");
 		goto error;
+	} else {
+		/* check if the dtd file exists */
+		if (stat( dtd_file, &stat_t)==-1) {
+			LOG(L_ERR,"ERROR:cpl_init: checking file \"%s\" status failed;"
+				" stat returned %s\n",dtd_file,strerror(errno));
+			goto error;
+		}
+		if ( !S_ISREG( stat_t.st_mode ) ) {
+			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" is not a regular file!\n",
+				dtd_file);
+			goto error;
+		}
+		if (access( dtd_file, R_OK )==-1) {
+			LOG(L_ERR,"ERROR:cpl_init: checking file \"%s\" for permissions "
+				"failed; access returned %s\n",dtd_file,strerror(errno));
+			goto error;
+		}
+	}
+	if (log_dir==0) {
+		LOG(L_WARN,"WARNING:cpl_init: log_dir param found void -> logging "
+			" disabled!\n");
+	} else {
+		/* check if the dir exists */
+		if (stat( log_dir, &stat_t)==-1) {
+			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" status failed;"
+				" stat returned %s\n",log_dir,strerror(errno));
+			goto error;
+		}
+		if ( !S_ISDIR( stat_t.st_mode ) ) {
+			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" is not a directory!\n",
+				log_dir);
+			goto error;
+		}
+		if (access( log_dir, R_OK|W_OK )==-1) {
+			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" for permissions "
+				"failed; access returned %s\n",log_dir,strerror(errno));
+			goto error;
+		}
 	}
 
 	/* bind to the mysql module */
@@ -166,6 +216,24 @@ static int cpl_init(void)
 		goto error;
 	}
 
+	/* build a pipe for sending commands to aux proccess */
+	if ( pipe(cpl_cmd_pipe)==-1 ) {
+		LOG(L_CRIT,"ERROR:cpl_init: cannot create command pipe: %s!\n",
+			strerror(errno) );
+		goto error;
+	}
+	/* set the writing non blocking */
+	if ( (val=fcntl(cpl_cmd_pipe[1], F_GETFL, 0))<0 ) {
+		LOG(L_ERR,"ERROR:cpl_init: getting flags from pipe[1] failed: fcntl "
+			"said %s!\n",strerror(errno));
+		goto error;
+	}
+	if ( fcntl(cpl_cmd_pipe[1], F_SETFL, val|O_NONBLOCK) ) {
+		LOG(L_ERR,"ERROR:cpl_init: setting flags to pipe[1] failed: fcntl "
+			"said %s!\n",strerror(errno));
+		goto error;
+	}
+
 	return 0;
 error:
 	return -1;
@@ -175,9 +243,24 @@ error:
 
 static int cpl_child_init(int rank)
 {
+	pid_t pid;
+
 	/* don't do anything for main process and TCP manager process */
 	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
+
+	/* only child 1 will fork the aux proccess */
+	if (rank==1) {
+		pid = fork();
+		if (pid==-1) {
+			LOG(L_CRIT,"ERROR:cpl_child_init(%d): cannot fork: %s!\n",
+				rank, strerror(errno));
+			goto error;
+		} else if (pid==0) {
+			/* I'm the child */
+			cpl_aux_process( cpl_cmd_pipe[0], log_dir);
+		}
+	}
 
 	if ( (db_hdl=db_init(DB_URL))==0 ) {
 		LOG(L_CRIT,"ERROR:cpl_child_init: cannot initialize database "

@@ -170,6 +170,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 {
 	xmlAttrPtr    attr;
 	char          *val;
+	char          *end;
 	unsigned char *p;
 	unsigned char *offset;
 	int           nr_attr;
@@ -593,9 +594,22 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 						break;
 					case 'S': case 's':
 						*(p++) = STATUS_ATTR;
-						foo = strtol(val,0,10);
+						for(foo=strlen(val);val[foo-1]==' ';val[--foo]=0);
+						foo = strtol(val,&end,10);
 						if (errno||foo<0||foo>1000)
 							goto error;
+						if (*end!=0) {
+							/*it was a non numeric value */
+							if (!strcasecmp(val,BUSY_STR)) {
+								foo = BUSY_VAL;
+							} else if (!strcasecmp(val,NOTFOUND_STR)) {
+								foo = NOTFOUND_VAL;
+							} else if (!strcasecmp(val,ERROR_STR)) {
+								foo = ERROR_VAL;
+							} else foo = REJECT_VAL;
+						} else if (foo/100!=4 && foo/100!=5 && foo/100!=6) {
+							foo = REJECT_VAL;
+						}
 						*((unsigned short*)p) = (unsigned short)foo;
 						p +=2;
 						break;
@@ -640,7 +654,6 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 		/* enconding attributes and values for SUBACTION node */
 		case SUBACTION_NODE:
 			FOR_ALL_ATTR(node,attr) {
-				nr_attr++;
 				val = (char*)xmlGetProp(node,attr->name);
 				if (strcasecmp("id",attr->name)==0 ) {
 					if ((list = append_to_list(list, node_ptr,val))==0)
@@ -656,6 +669,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 				if (strcasecmp("ref",attr->name)==0 ) {
 					if (( offset = search_the_list(list, val))==0)
 						goto error;
+					*(p++) = REF_ATTR;
 					*((unsigned short*)p) = (unsigned short)(node_ptr-offset);
 					p += 2;
 				} else goto error;
