@@ -1,0 +1,52 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "tm_user.sgml">
+<!ENTITY devel SYSTEM "tm_devel.sgml">
+<!ENTITY faq SYSTEM "tm_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>tm Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+		    <email>jiri@iptel.org</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<address>
+		    <email>jiri@iptel.org</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
