@@ -38,6 +38,7 @@
   * 2003-09-11: sl_tag converted to str to fit to the new
   *               build_res_buf_from_sip_req() interface (bogdan)
   * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
+  * 2004-10-10: use of mhomed disabled for replies (jiri)
   */
 
 
