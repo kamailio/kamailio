@@ -301,15 +301,15 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		    processing on receipt of a negative reply.
 		    (see <xref linkend="replyprocessingsection">). Before
 		    a request is forwarded, it is labeled to be
-		    re-processed in a <command moreinfo="none">reply_route</command>
+		    re-processed in a <command moreinfo="none">failure_route</command>
 		    on receipt of a negative reply -- this is what
-		    <command moreinfo="none">t_on_negative</command> action
+		    <command moreinfo="none">t_on_failure</command> action
 		    is used for. It does not matter what caused the transaction
 		    to fail -- it may be unresponsive downstream server,
 		    server responding with 6xx, or server sending a 487
 		    reply, because an INVITE was cancelled. When any such
 		    circumstances occur (i.e., transaction does not complete
-		    with a 2xx status code), <command moreinfo="none">reply_route</command>
+		    with a 2xx status code), <command moreinfo="none">failure_route</command>
 		    is entered.
 		</para>
 		<para>
@@ -441,7 +441,7 @@ print
 			feature: web applications and other tools can use it
 			to gain users access to the database. They can add new
 			contacts (like permanent gateway destinations), remove
-			and review their whereabouts. The example here utilizes
+			and review users' whereabouts. The example here utilizes
 			FIFO command <command>ul_show_contact</command> to
 			retrieve current whereabouts of user "jiri".
 			<programlisting>
@@ -517,8 +517,8 @@ EOF
 		    The web interface needs to have the ability to upload new user's
 		    contacts to <application moreinfo="none">ser</application>.
 		    This is what the <command moreinfo="none">ul_add</command> FIFO
-		    command is good far. Paremeterized by user's name, table name,
-		    expiration time and wight, it allows external applications to
+		    command is good for. Paremeterized by user's name, table name,
+		    expiration time and weight, it allows external applications to
 		    introduce new contacts to server's in-memory user location table.
 		</para>
 		<para>
@@ -752,20 +752,11 @@ To: callee
 
 
 
-		    The largest amount of code
-		    is spent with getting dialog processing right.
-		    The subsequent BYE and REFER transactions need to
-		    be build using information learned from the reply
-		    to INVITE: Contact header field, To-tag and Route
-		    set. That's what the function 
-		    <function moreinfo="none">filter_fl</function>
-		    is used for. The "main" part just initiates
-		    each of the transactions, waits for its completion
-		    and proceeds to the next one until BYE is over.
 		    Source code of the example written in Bourne shell
 		    is available in source distrubtion, in 
 		    <filename moreinfo="none">examples/ctd.sh</filename>.
-		    A PHP implementation exists as well.
+		    A PHP implementation exists as well as a part of
+			<application>serweb</application>.
 		</para>
 		<example>
 		    <title>Running the CTD Example</title>

@@ -17,10 +17,10 @@
 		The <acronym>SIP</acronym> Express Router enables a flexible plug-in model for new 
 		applications: Third parties can easily link their plug-ins with 
 		the server code and provide thereby advanced and customized services. 
-		In this way, plug-ins such as <acronym>SNMP</acronym> support, RADIUS accounting,
-		or SMS gateway have already been developed and are provided as 
-		advanced features. Other modules are underway: Presence server,
-		firewall control, and more.
+		In this way, plug-ins such as RADIUS accounting,
+		SMS gateway, ENUM queries, or presence agent have already been developed and are provided as 
+		advanced features. Other modules are underway: 
+		firewall control, postgress and LDAP database drivers and more.
 	    </para>
 	    <para>
 		Its performance and robustness allows it to serve millions of users 
@@ -43,8 +43,10 @@
 		used with contributed applications. Currently, 
 		<application moreinfo="none">serweb</application>, a
 		<application moreinfo="none">ser</application> web interface,
-		and <application moreinfo="none">SIPSak</application>
-		diagnostic tool are available. Visit our site, 
+		<application moreinfo="none">SIPSak</application> diagnostic tool 
+		and 
+		<application>SEMS</application> media server
+		are available. Visit our site, 
 		<ulink url="http://www.iptel.org/">http://www.iptel.org/</ulink>, 
                 for more information on contributed packages.
 	    </para>
@@ -53,7 +55,7 @@
 	<section id="aboutiptel">
 	    <title>About iptel.org</title>
 	    <para>
-		iptel.org is a know-how company spun off from Germany's national 
+		iptel.org is a know-how organization spun off from Germany's national 
 		research company FhG Fokus. One of the first <acronym>SIP</acronym> implementations ever, 
 		low-QoS enhancements, interoperability tests and VoIP-capable firewall 
 		control concepts are examples of well-known FhG's work.
@@ -80,13 +82,10 @@
 		support for registrar, proxy and redirect mode. Further it acts as 
 		an application server with support for instant messaging and 
 		presence including a <acronym>2G/SMS</acronym> and Jabber gateway, a call control policy 
-		language, call number translation, private dial plans and accounting, 
+		language, call number translation, private dial plans and accounting, ENUM,
 		authorization and authentication (<acronym>AAA</acronym>) services. <application>SER</application> runs on Sun/Solaris, 
 		PC/Linux, PC/BSD, IPAQ/Linux platforms and supports  both <acronym>IPv4</acronym> and <acronym>IPv6</acronym>. 
 		Hosting multiple domains and database redundancy is supported.
-	    </para>
-	    <para>
-		Other extensions are underway: presence server, firewall control and more.
 	    </para>
 	    <para>
 		<application>ser</application> has been carefully engineered with the following 
@@ -284,7 +283,7 @@
 		</itemizedlist>
 	    </para>
 	    <para>
-		List of known bugs is publicly available at the 
+		List of known problems is publicly available at the 
 		<application>ser</application> webpage at
 		<ulink url="http://www.iptel.org/ser/">
 		    http://www.iptel.org/ser/
@@ -305,17 +304,22 @@
 	</section>
 	<section id="support">
 	    <title>Obtaining Technical Assistance</title>
+		<para>
+			iptel.org offers qualified professional services. We help you to 
+			plan your network, configure your server, set up applications, 
+			integrate SIP components with each other, and set up features
+			such as redundancy or multidomain support. Our customer alert services
+			notifies you on all new features and code fixes. We help you to
+			solve operational troubles in short time and keep you updated on
+			latest operational practices. Ask info@iptel.org for
+			information on enrollment in our support program.
+		</para>
+
 	    <para>
-		We offer best-effort free support for <application>ser</application>.
-		"best-effort" means that we try to solve your problems via email
-		as soon as we can, subject to available manpower. If you need
-		commercial support, contact info@iptel.org.
-	    </para>
-	    <para>
-		To receive feedback to your inquiries, we recommend you to subscribe
-		to the <emphasis>serusers</emphasis> mailing list and post your
-		queries there. This mailing list is set up for mutual help by
-		the community of <application>ser</application> users and developers.
+		Additionaly, help may be obtained from our user forum. The community
+		of <application>SER</application> users is subscribed to the
+		serusers@iptel.org mailing list and discusses issues related to
+		<application>SER</application> operation.
 	    </para>
 	    <itemizedlist>
 		<title>Mailing List Instructions</title>

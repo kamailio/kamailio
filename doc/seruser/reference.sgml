@@ -240,35 +240,33 @@ route[2] {
 		</listitem>
 		<listitem>
 		    <para>
-			<command>reply_route</command> is used to restart request processing
+			<command>failure_route</command> is used to restart request processing
 			when a negative reply for a previously relayed request is received. It is only
 			used along with tm module, which stores the original requests and
 			can return to their processing later. To activate processing
-			of a <command>reply_route</command> block, call the TM action
-			<command>t_on_negative(route_number)</command> before calling
+			of a <command>failure_route</command> block, call the TM action
+			<command>t_on_failure(route_number)</command> before calling
 			<command moreinfo="none">t_relay</command>. When a negative reply
-			comes back, the desired <command moreinfo="none">reply_route</command>
+			comes back, the desired <command moreinfo="none">failure_route</command>
 			will be entered and processing of the original request may
 			continue. 
 			</para>
 		    <para>
 			The set of actions applicable from within
-			<command moreinfo="none">reply_route</command> blocks is limited.
+			<command moreinfo="none">failure_route</command> blocks is limited.
 			Permitted actions are URI-manipulation actions, logging and
 			sending stateful replies using <command moreinfo="none">t_reply</command>.
-			Use of other actions may lead to
-			unpredictable results. (We plan to add syntactical checks in the future
-			so that improper action use will be detected during server start-up.)
 		    </para>
 		    <example>
-			<title>reply_route</title>
+			<title>failure_route</title>
 			<programlisting format="linespecific">
-reply_route[1] {
+failure_route[1] {
     # for some reason, the original forwarding attempt
     # failed, try at another URI
     append_branch("sip:nonsense@iptel.org");
-    # if this new attempt fails too, try another reply_route
-    t_on_negative("2");
+    # if this new attempt fails too, try another failure_route
+    t_on_failure("2");
+	t_relay();
 }
 </programlisting>
 		    </example>
@@ -675,17 +673,35 @@ if (len_gt(1024)) {
 				acc
 			    </emphasis>
 			    -- call accounting using <application moreinfo="none">syslog</application> facility.
+				RADIUS and mysql support can be compiled in.
 			    Depends on tm.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
 			    <emphasis>
-				auth
+				auth, auth_db, auth_radius
 			    </emphasis>
 			    -- digest authentication. Depends on sl and mysql.
 			</para>
 		    </listitem>
+
+			<listitem>
+				<para>
+					<emphasis>domain</emphasis> -- checks URIs whether they belong
+					in a list of served domains or not.
+				</para>
+			</listitem>
+
+
+
+			<listitem>
+				<para>
+					<emphasis>ENUM</emphasis> -- E.164 phone number resolution using ENUM.
+				</para>
+			</listitem>
+
+
 		    <listitem>
 			<para>
 			    <emphasis>
@@ -694,6 +710,16 @@ if (len_gt(1024)) {
 			    -- execution of shell programs.
 			</para>
 		    </listitem>
+
+		    <listitem>
+			<para>
+			    <emphasis>
+				group, group_radius
+			    </emphasis>
+			    -- checks membership of users in groups
+			</para>
+		    </listitem>
+
 		    <listitem>
 			<para>
 			    <emphasis>
@@ -717,6 +743,7 @@ if (len_gt(1024)) {
 			-- message silo. Store for undelivered instant messages. Depends on tm and mysql.
 			    </para>
 		    </listitem>
+
 		    <listitem>
 			<para>
 			    <emphasis>
@@ -725,6 +752,25 @@ if (len_gt(1024)) {
 			    -- mysql database back-end.
 			    </para>
 		    </listitem>
+
+		    <listitem>
+			<para>
+			    <emphasis>
+					nathelper	
+			    </emphasis>
+			    -- facilitates NAT traversal for symmetric SIP phones such as ATA.
+			    </para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <emphasis>
+					pa
+			    </emphasis>
+			    -- presence agent
+			    </para>
+		    </listitem>
+
 		    <listitem>
 			<para>
 			    <emphasis>
@@ -758,14 +804,12 @@ if (len_gt(1024)) {
 			    -- SIMPLE/SMS gateway. Depends on tm. Takes special hardware.
 			</para>
 		    </listitem>
-		    <listitem>
+			<listitem>
 			<para>
-			    <emphasis>
-				textops
-			    </emphasis>
-			    -- textual request operations.
+				<emphasis>textops</emphasis> -- textual database back-end.
 			</para>
-		    </listitem>
+			</listitem>
+				
 		    <listitem>			
 			<para>
 			    <emphasis>
@@ -774,6 +818,16 @@ if (len_gt(1024)) {
 			    -- transaction manager (stateful processing).
 			</para>
 		    </listitem>
+
+		    <listitem>			
+			<para>
+			    <emphasis>
+				uri, uri_radius
+			    </emphasis>
+			    -- checks digest identity against header URIs or a database list
+			</para>
+		    </listitem>
+
 		</itemizedlist>
 	    </para>
 	    <para>
@@ -823,7 +877,7 @@ if (len_gt(1024)) {
 				check_from
 			    </entry>
 			    <entry>
-				auth
+				uri
 			    </entry>
 			    <entry>
 				none
@@ -837,7 +891,7 @@ if (len_gt(1024)) {
 				check_to
 			    </entry>
 			    <entry>
-				auth
+				uri
 			    </entry>
 			    <entry>
 				none
@@ -878,25 +932,10 @@ if (len_gt(1024)) {
 			</row>
 			<row>
 			    <entry>
-				is_in_group
-			    </entry>
-			    <entry>
-				auth
-			    </entry>
-			    <entry>
-				group name
-			    </entry>
-			    <entry>
-				check if a user, as identified by digest credentials, 
-				is a member of a group`
-			    </entry>
-			</row>
-			<row>
-			    <entry>
 				is_user
 			    </entry>
 			    <entry>
-				auth
+				uri
 			    </entry>
 			    <entry>
 				user id
@@ -1011,7 +1050,7 @@ if (len_gt(1024)) {
 				rr
 			    </entry>
 			    <entry>
-				loose routing (1=on, 0=off)
+				none
 			    </entry>
 			    <entry>
 				record-route a request
@@ -1109,16 +1148,16 @@ if (len_gt(1024)) {
 
 			<row>
 			    <entry>
-				t_on_negative
+				t_on_failure
 			    </entry>
 			    <entry>
 				tm
 			    </entry>
 			    <entry>
-				reply_route number
+				failure_route number
 			    </entry>
 			    <entry>
-				set reply_route block which shall be entered if stateful
+				set failure_route block which shall be entered if stateful
 				forwarding fails
 			    </entry>
 			</row>

@@ -134,7 +134,7 @@
     picture of a network with all components in it and routes
     to it, which correlate to a script; after the picture,
 	explanation of each route's specifics should be given
-    (use of auth, aaa, t_on_negative, etc.)
+    (use of auth, aaa, t_on_failure, etc.)
 
     when already doing the pictures, one should make one of the
     state machine for tm programmer's guide too

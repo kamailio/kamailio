@@ -665,10 +665,9 @@ if (method=="REGISTER") {
 	    <para>
 		External applications can be used to rewrite URI too.
 		The "exec" module provides script actions, which start external programs
-		and read new URI value from their output. <command moreinfo="none">exec_uri</command>
-		and <command moreinfo="none">exec_user</command> both call an external program,
-		pass current URI or its user part to it respectively, wait until it completes,
-		and eventually rewrite current URI with its output.
+		and read new URI value from their output. <command moreinfo="none">exec_dset</command>
+		both calls an external program, passes SIP request elements to it, waits until it completes,
+		and eventually rewrites current destination set with its output.
 	    </para>
 	    <para>
 		It is important to realize that <application moreinfo="none">ser</application>
@@ -733,7 +732,8 @@ if (method=="REGISTER") {
 			    <row>
 				<entry>
 				    <command moreinfo="none">rewriteuserpass("alice:pw")</command> replaces the pair
-				    user:password in URI with a new value.
+				    user:password in URI with a new value. Rewriting password in URI is of historical
+					meaning though, since basic password has been replaced with digest authentication.
 				</entry>
 				<entry>
 				    sip:alice:pw@foo.bar:6060
@@ -777,7 +777,7 @@ if (method=="REGISTER") {
 		<example>
 		    <title>URI-rewriting Exercise</title>
 		    <programlisting format="linespecific">
-exec_uri("echo sip:2234@foo.bar; echo > /dev/null");
+exec_dset("echo sip:2234@foo.bar; echo > /dev/null");
 strip(2);
 if (uri=~"^sip:2") {
     prefix("0");
@@ -790,7 +790,7 @@ forward(uri:host, uri:port);
 	    </para>
 	    <para>
 		The correct answer is the resulting URI will be
-		"sip:134@foo.bar". <command moreinfo="none">exec_uri</command>
+		"sip:134@foo.bar". <command moreinfo="none">exec_dset</command>
 		rewrites original URI to "sip:2234@foo.bar", 
 		<command moreinfo="none">strip(2)</command> takes
 		two leading characters from username away resulting
@@ -832,7 +832,7 @@ forward(uri:host, uri:port);
 	    <para>
 		Actions which are currently available for creating the destination
 		set are <command>lookup</command> from usrloc module and 
-		<command>exec_uri/exec_user</command> from exec module.
+		<command>exec_dset</command> from exec module.
 		<command moreinfo="none">lookup</command> fills in the destination
 		set with user contact's registered previously with REGISTER
 		requests. The <command moreinfo="none">exec</command> actions
@@ -872,7 +872,7 @@ forward(uri:host, uri:port);
 		log</command>, for example) or they work only with the default URI.
 		All URI-rewriting functions such as
 		<command moreinfo="none">rewriteuri</command> belong in this
-		category. URI-comparison operands only refers to the first URI
+		category. URI-comparison operands only refer to the first URI
 		(see <xref linkend="operators">). Also, the built-in action
 		for stateless forwarding, <command>forward</command> works only
 		with the default URI and ignores rest of the destination set. The reason 
@@ -881,9 +881,6 @@ forward(uri:host, uri:port);
 		client. This is only achievable with stateful processing.  
 		Forking cannot be used along with stateless <command>forward</command>,
 		which thus only processes one URI out of the whole destination set.
-		Also, the uri comparison operand (see <xref linkend="operators">)
-		refers only to current URI and ignores the rest of destination
-		set.
 	    </para> 
 
 	</section> <!-- Destination Set -->
@@ -1048,7 +1045,7 @@ route{
 forward(192.168.99.100, 5060);
 # module-exported functions enclose all parameters in quotation
 # marks
-t_relay_to("192.168.99.100", "5060");
+t_relay_to_udp("192.168.99.100", "5060");
 			</programlisting>
 		    </example>
 		</para>
@@ -1119,9 +1116,9 @@ route{
 		This section demonstrates simple examples
 		how to configure server's behaviour using the
 		<application moreinfo="none">ser</application>
-		request routing language. All scripts follow the 
+		request routing language. All configuration scripts follow the 
 		<application moreinfo="none">ser</application> language 
-		syntax, which dictates the following block ordering:
+		syntax, which dictates the following section ordering:
 		<itemizedlist>
 		    <listitem>
 			<para>
@@ -1172,23 +1169,14 @@ route{
 			<para>
 			    optionally, if modules supporting reply
 			    processing (currently only TM) are loaded,
-			    one or more <emphasis>reply_route blocks</emphasis> containing
+			    one or more <emphasis>failure_route blocks</emphasis> containing
 			    logic triggered by received replies. Restrictions on use of
-			    actions within <command moreinfo="none">reply_route</command>
+			    actions within <command moreinfo="none">failure_route</command>
 			    blocks apply -- see <xref linkend="builtinref"> for more
 			    information.
 			</para>
 		    </listitem>
 		</itemizedlist>
-	    </para>
-
-	    <para>
-		For more complex examples, see the etc directory in
-		<application>ser</application> source distribution.
-		It contains the 
-		<filename moreinfo="none">iptel.cfg</filename> script which is
-		in production use at iptel.org's public SIP site and exploits most of 
-		<application>ser</application> features.
 	    </para>
 
 	    <section id="defaultscript">
@@ -1209,7 +1197,7 @@ route{
 		    unauthorized contact manipulation.
 		</para>
 		<para>
-		    Non-REGISTER request for served domains are then processed using
+		    Non-REGISTER requests for served domains are then processed using
 		    user location database. If a contact is found for requested URI,
 		    script execution proceeds to stateful forwarding, a negative 404
 		    reply is generated otherwise. Requests outside served domain
@@ -1366,7 +1354,7 @@ route{
 		<title>Executing External Script</title>
 		<para>
 		    Like in the previous example, we show how to
-		    make ser act as a redirect server. The difference is 
+		    make <application>ser</application> act as a redirect server. The difference is 
 		    that we do not use redirection addresses hardwired in
 		    <application moreinfo="none">ser</application> script but
 		    get them from external shell commands. We also use
@@ -1376,19 +1364,19 @@ route{
 		<para>
 		    The new commands introduced in this example are
 		    <command moreinfo="none">exec_msg</command> and
-		    <command moreinfo="none">exec_uri</command>.
+		    <command moreinfo="none">exec_dset</command>.
 		    <command moreinfo="none">exec_msg</command> takes
 		    current requests, starts an external command, and
 		    passes the requests to the command's standard input.
 		    It also passes request's source IP address in
-		    environment variable named <constant>SRC_IP</constant>.
+		    environment variable named <constant>SRCIP</constant>.
 		</para>
 		<para>
-		    <command moreinfo="none">exec_uri</command> serves
+		    <command moreinfo="none">exec_dset</command> serves
 		    for URI rewriting by external applications.  The
-		    <command moreinfo="none">exec_uri</command> action
-		    passes current URI to the called external program as
-		    command-line parameter, and rewrites current destination
+		    <command moreinfo="none">exec_dset</command> action
+		    passes current URI to the called external program, 
+		    and rewrites current destination
 		    set with the program's output. An example use would
 		    be an implementation of a Least-Cost-Router, software which
 		    returns URI of the cheapest PSTN provider for a given
@@ -1433,14 +1421,14 @@ route{
 		    can be completed at discretion of script writer.
 		</para>
 		<para>
-		    The primitives used are <command moreinfo="none">t_on_negative(r)</command>
-		    and <command moreinfo="none">reply_route[r]{}.</command> If
-		    <command>t_on_negative</command> is called before
+		    The primitives used are <command moreinfo="none">t_on_failure(r)</command>
+		    and <command moreinfo="none">failure_route[r]{}.</command> If
+		    <command>t_on_failure</command> is called before
 		    a request is statefuly forwarded and a forwarding failure occurs, 
 		    <application moreinfo="none">ser</application>
-		    will return to request processing in a <command moreinfo="none">reply_route</command>
+		    will return to request processing in a <command moreinfo="none">failure_route</command>
 		    block. Failures include receipt of a SIP error
-		    (status code >= 300 ) from upstream or not receiving
+		    (status code >= 300 ) from downstream or not receiving
 		    any final reply within final response period.
 		</para>
 		<para>
@@ -1456,13 +1444,13 @@ route{
 		    answers the call.
 		</para>
 		<para>
-		    In <xref linkend="replyprocessing">, <command moreinfo="none">reply_route[1]</command>
-		    is set to be entered on error using the <command moreinfo="none">t_on_negative(1)</command>
+		    In <xref linkend="replyprocessing">, <command moreinfo="none">failure_route[1]</command>
+		    is set to be entered on error using the <command moreinfo="none">t_on_failure(1)</command>
 		    action. Within this reply block, <application moreinfo="none">ser</application>
 		    is instructed to initiate a new branch and try to reach called party
 		    at another destination (sip:nonsense@iptel.org). To deal with the case when neither the alternate
-		    destination succeeds, <application moreinfo="none">t_on_negative</application>
-		    is set again. If the case really occurs, <command moreinfo="none">reply_route[2]</command>
+		    destination succeeds, <application moreinfo="none">t_on_failure</application>
+		    is set again. If the case really occurs, <command moreinfo="none">failure_route[2]</command>
 		    is entered and a last resort destination (sip:foo@iptel.org) is tried.
 		</para>
 		<example id="replyprocessing">

@@ -180,7 +180,7 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells: pid=31604 req_src_ip=153.96.1
 		    <para>
 			A nice utility for debugging server chains is
 			<application moreinfo="none">sipsak</application>,
-			Swiss Army Knife, traceroute-like tool for SIP
+			SIP Swiss Army Knife, traceroute-like tool for SIP
 			developed at iptel.org. It allows you to send
 			OPTIONS request with low, increasing Max-Forwards 
 			header-fields and follow how it propagates in
@@ -763,7 +763,7 @@ MySql Password:
 			    may wish to keep track of placed calls. <application moreinfo="none">ser</application>
 			    can be configured to report on completed transactions. Reports are sent
 			    by default to <application moreinfo="none">syslog</application> facility.
-			    Experimental support for RADIUS and mysql accounting exists as well.
+			    Support for RADIUS and mysql accounting exists as well.
 			</para>
 			<para>
 			    Note that <application moreinfo="none">ser</application> is no way 
@@ -837,7 +837,7 @@ MySql Password:
 			    networks with SIP devices supporting this mechanism are
 			    built, alternative mechanisms must be used to force 
 			    clients to use backup servers. Such a mechanism is
-			    disconnecting primary server and replacing him with
+			    disconnecting primary server and replacing it with
 			    a backup server locally.
 			    It unfortunately precludes geographic dispersion and
 			    requires network multihoming to avoid dependency on
@@ -919,7 +919,7 @@ MySql Password:
 				<listitem>
 				    <para>
 					<emphasis>DNS resolution</emphasis>. DNS resolution may be
-					better server with stateful processing. If a request is forwarded
+					better served with stateful processing. If a request is forwarded
 					to a destination whose address takes long time to resolve,
 					a server process is blocked and unresponsive. Subsequent 
 					request retransmissions from client will cause other processes
@@ -934,7 +934,7 @@ MySql Password:
 				    <para>
 					<emphasis>Forwarding Services</emphasis>. All sort of services 
 					with the "forward_on_event" logic, which rely on 
-					<command moreinfo="none">t_on_negative</command> tm
+					<command moreinfo="none">t_on_failure</command> tm
 					action must be processed statefuly.
 				    </para>
 				</listitem>
@@ -999,6 +999,11 @@ MySql Password:
 				
 			    </orderedlist>
 			</para>
+			<para>
+				The latest <application>SER</application> release includes automated
+				multidomain management which greatly automates maintenance of multiple	
+				domains. Ask our technical support for more help.
+			</para>
 	    </section> <!-- multiple domains -->
 	    <section id="missedcalls">
 		<title>Reporting Missed Calls</title>
@@ -1032,11 +1037,11 @@ MySql Password:
 			    duplicated on receipt of retransmissions.
 			    </para>
 			<para>
-			    Secondly, transaction to on-line users are marked
+			    Secondly, transactions to on-line users are marked
 			    to be reported on failure. That is what the 
 			    <command moreinfo="none">setflag(3)</command> action
 			    is responsible for, along with the configuration option
-			    "missed_flag". This option configures <application moreinfo="none">ser</application>
+			    "log_missed_flag". This option configures <application moreinfo="none">ser</application>
 			    to report on all transactions, which were marked
 			    with flag 3.			   
 			    <programlisting format="linespecific">
@@ -1046,7 +1051,7 @@ loadmodule("modules/acc/acc.so");
 # if a call is labeled using setflag(3) and is missed, it will
 # be reported
 ...
-modparam("acc", "missed_flag", 3 );
+modparam("acc", "log_missed_flag", 3 );
 if (!lookup("location")) {
      # call invitations to off-line users are reported using the
      # acc_request action; to avoid duplicate reports on request
@@ -1145,6 +1150,23 @@ if (!lookup("location")) {
 		    ranges configured in phones.		    
 		</para>
 	    </section> <!-- NAT traversal -->
+
+		<section>
+		<title>Using Only Latest User's Contact for Forwarding
+		</title>
+			<para>
+				In some scenarios, it may be beneficial only to use only one
+				registered contact per user. If that is the case, setting
+				registar module's parameter <varname>append_branches</varname>
+				to 1 will eliminate forking and forward all requests only
+				to a single contact. If there are multiple contacts, a contact
+				with highest priority is chosen. This can be changed to
+				the "freshest" contact by setting module parameter's
+				<varname>desc_time_order</varname> to 1.
+			</para>
+
+		</section>
+
 	    <section>
 		<title>Authentication Policy: Prevention of Unauthorized Domain 
 		    Name Use in From and More</title>
@@ -1261,7 +1283,7 @@ if (to me):
 		    in many network settings: it is not clear for whom a call to
 		    voicemail is. If voicemail is identified by a single number,
 		    which is then put in INVITE's URI, there is no easy way to
-		    learn for whom a message should be recorded. PBX voicemail
+		    learn for whom a message should be recorded. PBX voicemails
 		    utilize that PSTN protocols signal the number of originally
 		    called party. If you wish to make the PBX voicemail work,
 		    you need to convey the number in SIP and translate it in
@@ -1406,7 +1428,7 @@ if (to me):
 			    <application moreinfo="none">ser</application> will complain.
 			    Anytime any of <command moreinfo="none">t_newtran</command>,
 			    <command moreinfo="none">t_relay</command> or 
-			    <command moreinfo="none">t_relay_to</command> actions is
+			    <command moreinfo="none">t_relay_to_udp</command> actions is
 			    encountered, tm attempts to instantiate a transaction.
 			    Doing so twice fails. Make sure that any of this
 			    commands is called only once during script execution.
