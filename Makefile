@@ -262,7 +262,7 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		fi
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
 
-install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1
+install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1 utils/serunix/serunix
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
 		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/sc
@@ -272,9 +272,14 @@ install-bin: $(bin-prefix)/$(bin-dir) utils/gen_ha1/gen_ha1
 		$(INSTALL-BIN) scripts/ser_mysql.sh  $(bin-prefix)/$(bin-dir)
 		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/gen_ha1
 		$(INSTALL-BIN) utils/gen_ha1/gen_ha1 $(bin-prefix)/$(bin-dir)
+		$(INSTALL-TOUCH)   $(bin-prefix)/$(bin-dir)/serunix
+		$(INSTALL-BIN) utils/serunix/serunix $(bin-prefix)/$(bin-dir)
 
 utils/gen_ha1/gen_ha1:
 		cd utils/gen_ha1; $(MAKE) all
+
+utils/serunix/serunix:
+		cd utils/serunix; $(MAKE) all
 
 install-modules: modules $(modules-prefix)/$(modules-dir)
 	-@for r in $(modules_full_path) "" ; do \
@@ -322,7 +327,7 @@ install-modules-doc: $(doc-prefix)/$(doc-dir)
 
 install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 	$(INSTALL-TOUCH)  $(man-prefix)/$(man-dir)/man8/ser.8 
-	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8
+	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8/
 	$(INSTALL-TOUCH)  $(man-prefix)/$(man-dir)/man5/ser.cfg.5 
 	$(INSTALL-MAN)  ser.cfg.5 $(man-prefix)/$(man-dir)/man5
 

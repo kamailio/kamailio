@@ -46,7 +46,7 @@ clean:
 			$(MAKE) -C $$r clean ; \
 		fi ; \
 	done
-	@if [ -n "$(modules)" ]; then cd utils/gen_ha1; $(MAKE) clean; fi
+	@if [ -n "$(modules)" ]; then cd utils/gen_ha1; $(MAKE) clean; cd ../serunix; $(MAKE) clean; fi
 
 .PHONY: proper
 .PHONY: distclean
