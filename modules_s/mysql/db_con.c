@@ -18,7 +18,7 @@ int use_table(db_con_t* _h, const char* _t)
 #ifdef PARANOID
 	if ((!_h) || (!_t)) {
 		LOG(L_ERR, "use_table(): Invalid parameter value\n");
-		return -1;
+
 	}
 #endif
 	l = strlen(_t) + 1;
