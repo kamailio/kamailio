@@ -38,7 +38,7 @@
 
 
 extern int use_fast_cmp;
-extern int rr_append_fromtag;
+extern int append_fromtag;
 
 
 #endif /* RR_MOD_H */

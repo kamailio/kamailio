@@ -46,7 +46,7 @@
 #include "../../globals.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
-#include "utils.h"
+#include "../../parser/parser_f.h"
 #include "rr_mod.h"
 
 
@@ -315,7 +315,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		len+=MD5_LEN;
 	} 
 	len+=rr_suffix.len;
-	if (rr_append_fromtag) {
+	if (append_fromtag) {
 		if (parse_from_header(_m)<0) {
 			LOG(L_ERR, "ERROR: build_RR: From parsing failed\n");
 			return 0;
@@ -348,7 +348,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	*p='@';p++;
 
 	memcpy(p, rr_suffix.s, rr_suffix.len);p+=rr_suffix.len;
-	if (rr_append_fromtag && from->tag_value.s) {
+	if (append_fromtag && from->tag_value.s) {
 		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN); p+=RR_FROMTAG_LEN;
 		memcpy(p, from->tag_value.s, from->tag_value.len);
 			p+=from->tag_value.len;
