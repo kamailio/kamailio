@@ -23,7 +23,7 @@ int tm_startup()
 
    /*first msg id*/
    global_msg_id = 0;
-   T = (struct cell*)-1;
+   T = T_UNDEFINED;
 
    return 0;
 }
@@ -54,12 +54,12 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    /* it's about the same transaction or not?*/
    if ( global_msg_id != p_msg->id )
    {
-      T = (struct cell*)-1;
+      T = T_UNDEFINED;
       global_msg_id = p_msg->id;
    }
 
     /* if the transaction is not found yet we are tring to look for it*/
-   if ( (int)T==-1 )
+   if ( T==T_UNDEFINED )
       /* if the lookup's result is not 0 means that it's a retransmission */
       if ( t_lookup_request( p_msg, foo, bar ) )
       {
@@ -95,12 +95,12 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
    /* it's about the same transaction or not?*/
    if ( global_msg_id != p_msg->id )
    {
-      T = (struct cell*)-1;
+      T = T_UNDEFINED;
       global_msg_id = p_msg->id;
    }
 
     /* if  T is previous found -> return found */
-   if ( (int)T !=-1 && T )	{
+   if ( T!=T_UNDEFINED && T )	{
       DBG("DEBUG: t_lookup_request: T already exists\n");
       return 1;
    }
@@ -115,7 +115,7 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
    /* parse all*/
    if (check_transaction_quadruple(p_msg)==0) {
 	   LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
-	   T=0;
+	   T=T_NULL;
 	   return -1;
    }
    /* start searching into the table */
@@ -205,13 +205,13 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    /* it's about the same transaction or not? */
    if ( global_msg_id != p_msg->id )
    {
-      T = (struct cell*)-1;
+      T = T_UNDEFINED;
       global_msg_id = p_msg->id;
    }
 
    DBG("t_forward: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
-   if ( (int)T ==-1 )
+   if ( T == T_UNDEFINED )
       t_lookup_request( p_msg, 0 , 0 );
 
    DBG("t_forward: 2. T=%x\n", T);
@@ -246,8 +246,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
             if ( (T2->status/100)==1 )
             {
                DBG("DEBUG: t_forward: it's CANCEL and I will send to the same place where INVITE went\n");
-               dest_ip    = T2->outbound_request[branch]->dest_ip;
-               dest_port = T2->outbound_request[branch]->dest_port;
+               dest_ip    = T2->outbound_request[branch]->to.sin_addr.s_addr;
+               dest_port = T2->outbound_request[branch]->to.sin_port;
             }
             else
             {
@@ -261,6 +261,10 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       /* allocates a new retrans_buff for the outbound request */
       DBG("DEBUG: t_forward: building outbound request\n");
       T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+      if (!T->outbound_request[branch]) {
+        LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
+        return -1;
+      }
       memset( T->outbound_request[branch] , 0 , sizeof (struct retrans_buff) );
       T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload =  T->outbound_request[branch];
       T->outbound_request[branch]->tl[FR_TIMER_LIST].payload =  T->outbound_request[branch];
@@ -269,17 +273,16 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->nr_of_outgoings = 1;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
-      DBG("DEBUG: XXX: branch_size after call to add_branch_label: %d\n", p_msg->add_to_branch_len );
       buf = build_req_buf_from_sip_req  ( p_msg, &len);
       if (!buf)
          return -1;
       T->outbound_request[branch]->bufflen = len ;
-      if ( !(T->outbound_request[branch]->buffer   = (char*)sh_malloc( len ))) {
+      if ( !(T->outbound_request[branch]->retr_buffer   = (char*)sh_malloc( len ))) {
 	LOG(L_ERR, "ERROR: t_forward: shmem allocation failed\n");
 	free( buf );
 	return -1;
       }
-      memcpy( T->outbound_request[branch]->buffer , buf , len );
+      memcpy( T->outbound_request[branch]->retr_buffer , buf , len );
       free( buf ) ;
 
       DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
@@ -292,15 +295,13 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
-   DBG("DEBUG: t_forward: sending outbund request from buffer (%d bytes):\n%*s\n",
-	T->outbound_request[branch]->bufflen, T->outbound_request[branch]->bufflen,
-	 T->outbound_request[branch]->buffer);
    /* send the request */
-   T->outbound_request[branch]->dest_ip         = dest_ip;
-   T->outbound_request[branch]->dest_port      = dest_port;
+   /* known to be in network order */
    T->outbound_request[branch]->to.sin_port     =  dest_port;
    T->outbound_request[branch]->to.sin_addr.s_addr =  dest_ip;
-   udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
+   T->outbound_request[branch]->to.sin_family = AF_INET;
+
+   udp_send( T->outbound_request[branch]->retr_buffer , T->outbound_request[branch]->bufflen ,
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
    return 1;
 }
@@ -323,13 +324,13 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
    /* it's about the same transaction or not? */
    if ( global_msg_id != p_msg->id )
    {
-      T = (struct cell*)-1;
+      T = T_UNDEFINED;
       global_msg_id = p_msg->id;
    }
 
    DBG("DEBUG: t_forward_uri: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
-   if ( (int)T ==-1 )
+   if ( T==T_UNDEFINED )
       t_lookup_request( p_msg, 0 , 0 );
 
    DBG("DEBUG: t_forward_uri: 2. T=%x\n", T);
@@ -379,7 +380,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    t_reply_matching( hash_table , p_msg , &T , &branch  );
 
    /* if no T found ->tell the core router to forward statelessly */
-   if ( !T )
+   if ( T<=0 )
       return 1;
 
    /* stop retransmission */
@@ -462,7 +463,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
 
    t_check( hash_table , p_msg );
    /* do we have something to release? */
-   if (T==0)
+   if (T==T_NULL)
       return -1;
 
   if ( is_in_timer_list( (&(T->wait_tl)) , WT_TIMER_LIST) )
@@ -474,16 +475,16 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
 
   /**/
   for( i=0 ; i<T->nr_of_outgoings ; i++ )
-      if ( T->outbound_response[i] && T->outbound_response[i]->first_line.u.reply.statusclass==1)
+      if ( T->inbound_response[i] && T->inbound_response[i]->first_line.u.reply.statusclass==1)
           t_cancel_branch(i);
 
    /* make double-sure we have finished everything */
    /* remove from  retranssmision  and  final response   list */
    DBG("DEBUG: t_put_on_wait: remove inboud stuff from lists\n");
-   if ( T->inbound_response )
+   if ( T->outbound_response )
    {
-      remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-      remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+      remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+      remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
    }
    for( i=0 ; i<T->nr_of_outgoings ; i++ )
    {
@@ -500,6 +501,9 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
 
 
 /* Retransmits the last sent inbound reply.
+
+  * input: p_msg==request for which I want to retransmit an associated
+    reply
   * Returns  -1 -error
   *                1 - OK
   */
@@ -508,12 +512,14 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
    t_check( hash_table, p_msg );
 
    /* if no transaction exists or no reply to be resend -> out */
-   if ( T  && T->inbound_response )
+   if ( T  && T->outbound_response )
    {
-      udp_send( T->inbound_response->buffer , T->inbound_response->bufflen , (struct sockaddr*)&(T->inbound_response->to) , sizeof(struct sockaddr_in) );
+      udp_send( T->outbound_response->retr_buffer , T->outbound_response->bufflen , 
+	(struct sockaddr*)&(T->outbound_response->to) , sizeof(struct sockaddr_in) );
       return 1;
    }
 
+  /* no transaction found */
    return -1;
 }
 
@@ -525,85 +531,88 @@ int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
   */
 int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 {
-   t_check( hash_table, p_msg );
+      	unsigned int len;
+      	char * buf = NULL;
+        struct hostent  *nhost;
+        unsigned int      ip, port;
+        char foo;
+	int err;
+        struct retrans_buff* rb = NULL;
 
-   if (T)
-   {
-      unsigned int len;
-      char * buf;
+   	DBG("DEBUG: t_send_reply: entered\n");
+   	t_check( hash_table, p_msg );
 
-      buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
-         DBG("DEBUG: t_send_reply: after build\n");
-      if (!buf)
-      {
-         DBG("DEBUG: t_send_reply: response building failed\n");
-         return -1;
-      }
+   	if (!T) {
+		LOG(L_ERR, "ERROR: cannot send a t_reply to a message for which no T-state has been established\n");
+		return -1;
+   	} ;
 
-     if ( T->inbound_response )
-      {
-         sh_free( T->inbound_response->buffer );
-      }
-      else
-      {
-         struct hostent  *nhost;
-         unsigned int      ip, port;
-         char foo;
+      	buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+        DBG("DEBUG: t_send_reply: after build\n");
+      	if (!buf)
+      	{
+         	DBG("DEBUG: t_send_reply: response building failed\n");
+		goto error;
+      	}
 
-          /*some dirty trick to get the port from via */
-          foo = *((p_msg->via1->host.s)+(p_msg->via1->host.len));
-          *((p_msg->via1->host.s)+(p_msg->via1->host.len)) = 0;
-          nhost = gethostbyname( p_msg->via1->host.s );
-          *((p_msg->via1->host.s)+(p_msg->via1->host.len)) = foo;
-          if ( !nhost )
-          {
-             DBG("ERROR: t_send_reply: resolving host failed\n");
-             free(buf);
-             return -1;
-          }
-          memcpy( &ip , nhost->h_addr_list[0] , sizeof(unsigned int) );
-          /* port */
-          if ( !(port = p_msg->via1->port) )
-             port = SIP_PORT;
+     	if ( T->outbound_response) {
+		if (  T->outbound_response->retr_buffer )
+      		{
+			sh_free( T->outbound_response->retr_buffer );
+			T->outbound_response->retr_buffer = NULL;
+	 	}
+	} else {
+		rb = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+		if (!rb) {
+			LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem\n");
+			goto error;
+		} 
+		T->outbound_response = rb;
+		memset( T->outbound_response , 0 , sizeof (struct retrans_buff) );
+	}
 
-          /* build a retrans_buff and fill it */
-          T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-          memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
-          T->inbound_response->tl[RETRASMISSIONS_LIST].payload = T->inbound_response;
-          T->inbound_response->tl[FR_TIMER_LIST].payload = T->inbound_response;
-          T->inbound_response->to.sin_family = AF_INET;
-          T->inbound_response->my_T = T;
-          T->inbound_response->to.sin_addr.s_addr = ip;
-          T->inbound_response->to.sin_port =  htons(port);
-          T->inbound_response->dest_ip       = ip;
-          T->inbound_response->dest_port    = htons(port);
-      }
-      T->status = code;
-      T->inbound_response->bufflen = len ;
-      T->inbound_response->buffer   = (char*)sh_malloc( len );
-      memcpy( T->inbound_response->buffer , buf , len );
-      free( buf ) ;
+
+	/* initialize retransmission structure */
+	if (update_sock_struct_from_via(  &(T->outbound_response->to),  p_msg->via1 )==-1) {
+		LOG(L_ERR, "ERROR: t_send_reply: cannot lookup reply dst: %s\n",
+                p_msg->via1->host.s );
+		goto error;
+	  }
+
+	T->outbound_response->tl[RETRASMISSIONS_LIST].payload = T->outbound_response;
+      	T->outbound_response->tl[FR_TIMER_LIST].payload = T->outbound_response;
+      	T->outbound_response->my_T = T;
+      	T->status = code;
+      	T->outbound_response->bufflen = len ;
+      	T->outbound_response->retr_buffer   = (char*)sh_malloc( len );
+      	if (!T->outbound_response->retr_buffer) {
+		T->outbound_response->retr_buffer = NULL;
+		LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
+		goto error;
+      	}
+      	memcpy( T->outbound_response->retr_buffer , buf , len );
+      	free( buf ) ;
 
       /* make sure that if we send something final upstream, everything else will be cancelled */
-      if ( code>=200 )
-         if ( p_msg->first_line.u.request.method_value==METHOD_INVITE )
+      if ( code>=300 &&  p_msg->first_line.u.request.method_value==METHOD_INVITE )
          {
-            T->inbound_response->timeout_ceiling  = RETR_T2;
-            T->inbound_response->timeout_value    = RETR_T1;
-            remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-            insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-            remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-            insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+            T->outbound_response->timeout_ceiling  = RETR_T2;
+            T->outbound_response->timeout_value    = RETR_T1;
+            remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+            insert_into_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+            remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+            insert_into_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
          }
-         else
-         {
-            t_put_on_wait( p_msg );
-         }
+      else if (code>=200) t_put_on_wait( p_msg );
 
-      udp_send( T->inbound_response->buffer , T->inbound_response->bufflen , (struct sockaddr*)&(T->inbound_response->to) , sizeof(struct sockaddr_in) );
-   }
+      t_retransmit_reply( p_msg, 0 , 0);
 
-   return 1;
+      return 1;
+
+error:
+	if (rb) { sh_free(rb); T->outbound_response = rb = NULL;}
+	if ( buf ) free ( buf );
+	return -1;
 }
 
 
@@ -712,6 +721,9 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    /* split the branch into pieces: loop_detection_check(ignored),
       hash_table_id, synonym_id, branch_id
    */
+   if (! ( p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s) )
+	goto nomatch;
+
    p=p_msg->via1->branch->value.s;
    scan_space=p_msg->via1->branch->value.len;
 
@@ -803,11 +815,11 @@ nomatch:
 int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
 {
    /* if there is a previous reply, replace it */
-   if ( Trans->outbound_response[branch] )
-      free_sip_msg( Trans->outbound_response[branch] ) ;
+   if ( Trans->inbound_response[branch] )
+      free_sip_msg( Trans->inbound_response[branch] ) ;
    /* force parsing all the needed headers*/
    parse_headers(p_msg, HDR_VIA|HDR_TO|HDR_FROM|HDR_CALLID|HDR_CSEQ );
-   Trans->outbound_response[branch] = sip_msg_cloner( p_msg );
+   Trans->inbound_response[branch] = sip_msg_cloner( p_msg );
 }
 
 
@@ -819,7 +831,7 @@ int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_
 int t_relay_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
 {
    t_store_incoming_reply( Trans , branch, p_msg );
-   push_reply_from_uac_to_uas( p_msg , branch );
+   push_reply_from_uac_to_uas( Trans , branch );
 }
 
 
@@ -834,7 +846,7 @@ int t_check( struct s_table *hash_table , struct sip_msg* p_msg )
    unsigned int branch;
 
    /* is T still up-to-date ? */
-   if ( p_msg->id != global_msg_id || (int)T==-1 )
+   if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
    {
       global_msg_id = p_msg->id;
       /* transaction lookup */
@@ -861,7 +873,7 @@ int t_all_final( struct cell *Trans )
    unsigned int i;
 
    for( i=0 ; i<Trans->nr_of_outgoings ; i++  )
-      if (  !Trans->outbound_response[i] || (Trans->outbound_response[i]) && Trans->outbound_response[i]->first_line.u.reply.statuscode<200 )
+      if (  !Trans->inbound_response[i] || (Trans->inbound_response[i]) && Trans->inbound_response[i]->first_line.u.reply.statuscode<200 )
          return 0;
 
    return 1;
@@ -880,14 +892,16 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
    int                 lowest_v = 999;
 
    for(  ; i<T->nr_of_outgoings ; i++ )
-      if ( T->outbound_response[i] && T->outbound_response[i]->first_line.u.reply.statuscode>=200 && T->outbound_response[i]->first_line.u.reply.statuscode<lowest_v )
+      if ( T->inbound_response[i] && 
+	   T->inbound_response[i]->first_line.u.reply.statuscode>=200 && 
+	   T->inbound_response[i]->first_line.u.reply.statuscode<lowest_v )
       {
          lowest_i =i;
-         lowest_v = T->outbound_response[i]->first_line.u.reply.statuscode;
+         lowest_v = T->inbound_response[i]->first_line.u.reply.statuscode;
       }
 
    if ( lowest_i != -1 )
-      push_reply_from_uac_to_uas( p_msg ,lowest_i );
+      push_reply_from_uac_to_uas( T ,lowest_i );
 
    return lowest_i;
 }
@@ -898,62 +912,65 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
 /* Push a previously stored reply from UA Client to UA Server
   * and send it out
   */
-int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
+int push_reply_from_uac_to_uas( struct cell* trans , unsigned int branch )
 {
    char *buf;
    unsigned int len;
 
    /* if there is a reply, release the buffer (everything else stays same) */
-   if ( T->inbound_response )
+   if ( trans->outbound_response )
    {
-      sh_free( T->inbound_response->buffer );
-      remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+      sh_free( trans->outbound_response->retr_buffer );
+      remove_from_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
    }
    else
    {
       struct hostent  *nhost;
      char foo;
 
-      T->inbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-      memset( T->inbound_response , 0 , sizeof (struct retrans_buff) );
-      T->inbound_response->tl[RETRASMISSIONS_LIST].payload = &(T->inbound_response);
-      /*some dirty trick to get the port and ip of destination */
-      foo = *((p_msg->via2->host.s)+(p_msg->via2->host.len));
-      *((p_msg->via2->host.s)+(p_msg->via2->host.len)) = 0;
-      nhost = gethostbyname( p_msg->via2->host.s );
-      *((p_msg->via2->host.s)+(p_msg->via2->host.len)) = foo;
-      if ( !nhost )
-         return -1;
-      memcpy( &(T->inbound_response->to.sin_addr) , &(nhost->h_addr) , nhost->h_length );
-      T->inbound_response->dest_ip         = htonl(T->inbound_response->to.sin_addr.s_addr);
-      T->inbound_response->dest_port      = ntohl(T->inbound_response->to.sin_port);
-      T->inbound_response->to.sin_family = AF_INET;
+      trans->outbound_response = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+      if (!trans->outbound_response) {
+	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: no more shmem\n");
+	trans->outbound_response = NULL;
+	return -1;
+      }
+      memset( trans->outbound_response , 0 , sizeof (struct retrans_buff) );
+      trans->outbound_response->tl[RETRASMISSIONS_LIST].payload = trans->outbound_response;
+      if (update_sock_struct_from_via(  &(trans->outbound_response->to),  trans->inbound_response[branch]->via2 )==-1) {
+	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: cannot lookup reply dst: %s\n",
+		trans->inbound_response[branch]->via2->host.s );
+	sh_free(  T->outbound_response );
+	T->outbound_response = NULL;
+	return -1;
+      }
    }
 
    /*  */
-   buf = build_res_buf_from_sip_res ( p_msg, &len);
-   if (!buf)
+   buf = build_res_buf_from_sip_res ( trans->inbound_response[branch], &len);
+   if (!buf) {
+	LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: no shmem for outbound reply buffer\n");
         return -1;
-   T->inbound_response->bufflen = len ;
-   T->inbound_response->buffer   = (char*)sh_malloc( len );
-   memcpy( T->inbound_response->buffer , buf , len );
+   }
+   trans->outbound_response->bufflen = len ;
+   trans->outbound_response->retr_buffer   = (char*)sh_malloc( len );
+   memcpy( trans->outbound_response->retr_buffer , buf , len );
    free( buf ) ;
 
    /* make sure that if we send something final upstream, everything else will be cancelled */
-   if (T->outbound_response[branch]->first_line.u.reply.statusclass>=2 )
-      t_put_on_wait( p_msg );
+   if (trans->inbound_response[branch]->first_line.u.reply.statusclass>=2 )
+      t_put_on_wait( trans->inbound_request );
 
    /* if the code is 3,4,5,6 class for an INVITE-> starts retrans timer*/
-   if ( T->inbound_request->first_line.u.request.method_value==METHOD_INVITE &&
-         T->outbound_response[branch]->first_line.u.reply.statusclass>=300)
+   if ( trans->inbound_request->first_line.u.request.method_value==METHOD_INVITE &&
+         trans->inbound_response[branch]->first_line.u.reply.statusclass>=300)
          {
-            remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-            remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
-            insert_into_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
-            insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
+            remove_from_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+            remove_from_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+            insert_into_timer_list( hash_table , &(trans->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
+            insert_into_timer_list( hash_table , &(trans->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
          }
 
-   t_retransmit_reply( p_msg, 0 , 0 );
+   t_retransmit_reply( trans->inbound_request, 0 , 0 );
 }
 
 
@@ -1109,7 +1126,7 @@ void retransmission_handler( void *attr)
 
    /* retransmision */
    DBG("DEBUG: retransmission_handler : resending\n");
-   udp_send( r_buf->buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
+   udp_send( r_buf->retr_buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
 
    /* re-insert into RETRASMISSIONS_LIST */
    insert_into_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , r_buf->timeout_value );

@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 
 #include "udp_server.h"
@@ -200,11 +201,50 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 {
 
 	int n;
+
+/*	struct sockaddr_in a2;*/
+
+#ifndef NO_DEBUG
+#define MAX_IP_LENGTH 18
+	char ip_txt[MAX_IP_LENGTH];
+	char *c;
+	struct sockaddr_in* a;
+	unsigned short p;
+
+	a=(struct sockaddr_in*) to;
+	memset(ip_txt, 0, MAX_IP_LENGTH);
+	c=inet_ntoa(a->sin_addr);
+	strncpy( ip_txt, c, MAX_IP_LENGTH - 1 );
+	p=ntohs(a->sin_port);
+	DBG("DEBUG: udp_send: ");
+
+	if (tolen < sizeof(struct sockaddr_in)) 
+		DBG("DEBUG: tolen small\n");
+	if (a->sin_family && a->sin_family != AF_INET) 
+		DBG("DEBUG: to not INET\n");
+	if (a->sin_port == 0) 
+		DBG("DEBUG: no port\n");
+
+	DBG(" destination: IP=%s, port=%u; packet:\n", ip_txt, p);
+	DBG(" destination (hex): IP=%x, port=%x;\n", a->sin_addr.s_addr, a->sin_port );
+	DBG("%*s\n", len, buf );
+#endif
+/*
+	memset(&a2, 0, sizeof(struct sockaddr_in));
+	a2.sin_family = a->sin_family;
+	a2.sin_port = a->sin_port;
+	a2.sin_addr.s_addr = a->sin_addr.s_addr;
+*/
+
 again:
 	n=sendto(udp_sock, buf, len, 0, to, tolen);
+/*	n=sendto(udp_sock, buf, len, 0, &a2, sizeof(struct sockaddr_in) );*/
 	if (n==-1){
 		LOG(L_ERR, "ERROR: udp_send: sendto: %s\n", strerror(errno));
 		if (errno==EINTR) goto again;
+		if (errno==EINVAL) LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
+			"one possible reason is the server is bound to localhost and\n"
+			"attempts to send to the net\n");
 	}
 	return n;
 }

@@ -8,27 +8,27 @@ void free_cell( struct cell* dead_cell )
 {
    int i;
 
-   /* inbound_request */
+   /* UA Server */ 
    if ( dead_cell->inbound_request )
       sip_msg_free( dead_cell->inbound_request );
-   /* inbound_response */
-   if ( dead_cell->inbound_response )
+   if ( dead_cell->outbound_response )
    {
-      sh_free( dead_cell->inbound_response->buffer );
-      sh_free( dead_cell->inbound_response );
+      sh_free( dead_cell->outbound_response->retr_buffer );
+      sh_free( dead_cell->outbound_response );
    }
 
+  /* UA Clients */
    for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
    {
       /* outbound requests*/
       if ( dead_cell->outbound_request[i] )
       {
-         sh_free( dead_cell->outbound_request[i]->buffer );
+         sh_free( dead_cell->outbound_request[i]->retr_buffer );
          sh_free( dead_cell->outbound_request[i] );
       }
       /* outbound requests*/
-      if ( dead_cell -> outbound_response[i] )
-         sip_msg_free( dead_cell->outbound_response[i] );
+      if ( dead_cell -> inbound_response[i] )
+         sip_msg_free( dead_cell->inbound_response[i] );
    }
    /* mutex */
    release_cell_lock( dead_cell );
@@ -105,10 +105,10 @@ struct s_table* init_hash_table()
    for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
       init_timerlist_lock( hash_table, i );
 
-//#ifdef THREAD
+#ifdef THREAD
    /* starts the timer thread/ process */
    pthread_create( thread, NULL, timer_routine, hash_table );
-//#endif
+#endif
 
    return  hash_table;
 

@@ -45,10 +45,12 @@ typedef struct  timer
 
 typedef struct retrans_buff
 {
-   char               *buffer;
+   char               *retr_buffer;
    int                  bufflen;
+/*
    unsigned int dest_ip;
    unsigned int dest_port;
+*/
 
    struct sockaddr_in to;
    /* changed in favour of Solaris to size_t
@@ -88,15 +90,16 @@ typedef struct cell
    struct timer_link dele_tl;
 
    /* usefull data */
-   /* incoming request and its response*/
+   /* UA Server */
    struct sip_msg         *inbound_request;
-   struct retrans_buff   *inbound_response;
+   struct retrans_buff   *outbound_response;
    unsigned int             status;
    str*                             tag;
    /* array of outgoing requests and its responses */
    int                               nr_of_outgoings;
+   /* UA Clients */
    struct retrans_buff   *outbound_request[ MAX_FORK ];
-   struct sip_msg          *outbound_response[ MAX_FORK ];
+   struct sip_msg          *inbound_response[ MAX_FORK ];
 }cell_type;
 
 

@@ -6,7 +6,7 @@
 
 struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 {
-    struct sip_msg   *new_msg;
+    struct sip_msg   *new_msg=NULL;
     struct hdr_field  *header, *last_hdr, *new_hdr;
 
     /* clones the sip_msg structure */
@@ -126,6 +126,13 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
     new_msg->add_rm  = 0;
     /* repl_add_rm ( struct lump* ) -> have to be changed!!!!!!!  */
     new_msg->repl_add_rm  = 0;
+
+    return new_msg;
+
+error:
+	sip_msg_free( new_msg );
+	sh_free( new_msg );
+	return NULL;
 
 }
 
@@ -310,12 +317,14 @@ void free_hdr_field_lst(struct hdr_field* hf)
 /*only the content*/
 void sip_msg_free(struct sip_msg* msg)
 {
+   if (!msg) return;
+
    if (msg->new_uri.s)
    {
       sh_free(msg->new_uri.s);
       msg->new_uri.len=0;
    }
-   DBG("DEBUG: sip_msg_free : headers\n");
+   LOG(L_ERR, "ERROR: sip_msg_free : headers and via1/via2 freeing still missing\n");
    //if (msg->headers)
     //  free_hdr_field_lst(msg->headers);
    DBG("DEBUG: sip_msg_free : lump\n");
@@ -323,11 +332,7 @@ void sip_msg_free(struct sip_msg* msg)
       free_lump_list(msg->add_rm);
    if (msg->repl_add_rm)
       free_lump_list(msg->repl_add_rm);
-   sh_free( msg->orig );
-   sh_free( msg->buf );
+   if (msg->orig) sh_free( msg->orig );
+   if (msg->buf) sh_free( msg->buf );
+   
 }
-
-
-
-
-

@@ -19,6 +19,9 @@ struct cell;
 #include "lock.h"
 #include "sip_msg.h"
 
+#define T_UNDEFINED 	( (struct cell*) -1 )
+#define T_NULL		( (struct cell*) 0 )
+
 #define sh_malloc( size )     malloc(size)
 #define sh_free( ptr )           free(ptr)
 /* already defined in msg_parser.h
@@ -113,7 +116,7 @@ int t_check( struct s_table* , struct sip_msg*  );
 int t_all_final( struct cell * );
 int t_build_and_send_ACK( struct cell *Trans , unsigned int brach );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
-int push_reply_from_uac_to_uas( struct sip_msg * , unsigned int );
+int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
 int t_cancel_branch(unsigned int branch); //TO DO
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
 

@@ -41,8 +41,8 @@
 int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len;
-	char* buf;
-	struct sockaddr_in* to;
+	char* buf=NULL;
+	struct sockaddr_in* to=NULL;
 
 
 	buf = build_req_buf_from_sip_req( msg, &len);
@@ -53,12 +53,12 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
 	if (to==0){
-		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
+		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
 	}
 
 	 /* send it! */
-	DBG("Sending:\n%s.\n", buf);
+	DBG("Sending:", buf);
 	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
 
 	to->sin_family = AF_INET;
@@ -99,14 +99,39 @@ error:
 }
 
 
+int update_sock_struct_from_via( struct sockaddr_in* to,  struct via_body* via )
+{
+	int err;
+
+	to->sin_family = AF_INET;
+	to->sin_port = (via->port)?htons(via->port): htons(SIP_PORT);
+
+#ifdef DNS_IP_HACK
+	to->sin_addr.s_addr=str2ip(via->host.s, via->host.len, &err);
+	if (err)
+#endif
+	{
+		struct hostent* he;
+		/* fork? gethostbyname will probably block... */
+		he=gethostbyname(via->host.s);
+		if (he==0){
+			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
+					via->host.s);
+			return -1;
+		}
+		to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
+	}
+	return 1;
+}
+
 
 /* removes first via & sends msg to the second */
 int forward_reply(struct sip_msg* msg)
 {
 	int  r;
-	char* new_buf;
-	struct hostent* he;
-	struct sockaddr_in* to;
+	char* new_buf=NULL;
+	struct hostent* he=NULL;
+	struct sockaddr_in* to=NULL;
 	unsigned int new_len;
 	struct sr_module *mod;
 #ifdef DNS_IP_HACK
@@ -151,34 +176,16 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	 /* send it! */
+	/* moved to udp_send; -jiri
+
 	DBG("Sending: to %s:%d, \n%s.\n",
 			msg->via2->host.s,
 			(unsigned short)msg->via2->port,
 			new_buf);
+	*/
 
-#ifdef DNS_IP_HACK
-	to->sin_addr.s_addr=str2ip(msg->via2->host.s, msg->via2->host.len, &err);
-	if (err==0){
-		to->sin_family = AF_INET;
-		to->sin_port = (msg->via2->port)?htons(msg->via2->port):
-						htons(SIP_PORT);
-	}else{
-#endif
-		/* fork? gethostbyname will probably block... */
-		he=gethostbyname(msg->via2->host.s);
-		if (he==0){
-			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
-					msg->via2->host.s);
-			goto error;
-		}
-		to->sin_family = AF_INET;
-		to->sin_port = (msg->via2->port)?htons(msg->via2->port):
-						htons(SIP_PORT);
-		to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
+	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
 
-#ifdef DNS_IP_HACK
-	}
-#endif
 	if (udp_send(new_buf,new_len, (struct sockaddr*) to,
 					sizeof(struct sockaddr_in))==-1)
 	{

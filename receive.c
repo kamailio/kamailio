@@ -111,8 +111,10 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 #ifdef STATS
 	skipped = 0;
 #endif
+/* jku: skip no more used
 skip:
 	DBG("skip:...\n");
+*/
 	free_sip_msg(msg);
 	pkg_free(msg);
 #ifdef STATS

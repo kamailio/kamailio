@@ -515,27 +515,41 @@ error:
 
 
 char * build_res_buf_from_sip_req(	unsigned int code ,
-									char *text ,
-									struct sip_msg* msg,
-									unsigned int *returned_len)
+	char *text , struct sip_msg* msg, unsigned int *returned_len)
 {
 	char                    *buf=0, *p;
 	unsigned int       len,foo;
 	struct hdr_field  *hdr;
-	int                       i;
+	int first_via;
+	int str_len_text;
+	int i;
+
+	str_len_text=strlen(text);
 
 	/*computes the lenght of the new response buffer*/
 	len = 0;
 	/* first line */
-	len += 3/*code*/ + 1/*space*/ + strlen(text) + 1/*new line*/;
-	/*headers that will be copied (TO, FROM, CSEQ,CALLID,VIA)*/
-	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
-				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
-				hdr->type==HDR_CSEQ )
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) ;
+	len += 3/*code*/ + 1/*space*/ + str_len_text + CRLF_LEN/*new line*/;
+
+	/* force parsing all headers -- we want to return all
+           Via's in the reply and they may be scattered down to the
+ 	   end of header (non-block Vias are a really poor property
+	   of SIP :( )
+        */
+	parse_headers( msg, HDR_EOH );
+	/* check if I have those HFs identifying a transaction here */
+	if (!check_transaction_quadruple( msg ))
+		goto error;
+
+	first_via = 1;
+	for ( hdr=msg->headers ; hdr ; hdr=hdr->next ) 
+		if (  hdr->type==HDR_FROM || 
+			(hdr->type==HDR_VIA ?  (first_via ? first_via=0, 0: 1 ) : 0) ||
+			hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
+			hdr->type==HDR_CSEQ )
+			len += hdr->body.len  + hdr->name.len  + MY_HF_SEP_LEN + CRLF_LEN;
 	/* end of message */
-	len += 1; /*new line*/
+	len += CRLF_LEN; /*new line*/
 
 	/*allocating mem*/
 	buf = (char*) malloc( len+1 );
@@ -545,30 +559,51 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory\n");
 		goto error;
 	}
+	p=buf;
 
 	/* filling the buffer*/
 	/* first line */
 	for ( i=2 , foo = code  ;  i>=0  ;  i-- , foo=foo/10 )
-		*(p+i) = '0' + foo - ( foo/10 )*10;
+		*(p+i) = '0' + foo % 10;
 	p += 3;
 	*(p++) = ' ' ;
-	memcpy( p , text , strlen(text) );
-	p += strlen(text);
-	*(p++) = '\n';
+	memcpy( p , text , str_len_text );
+	p += str_len_text;
+	memcpy( p, CRLF, CRLF_LEN );
+	p+=CRLF_LEN;
+	
 	/* headers*/
+	first_via=1;
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
-		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
-		hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		if ( hdr->type==HDR_FROM ||
+				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
+			(hdr->type==HDR_VIA ?  (first_via ? first_via=0, 0: 1 ) : 0) ||
+				hdr->type==HDR_CSEQ )
 		{
-			memcpy( p , msg->orig+(hdr->name.s-msg->buf) ,
-					((hdr->body.s+hdr->body.len ) -
-					hdr->name.s ) );
-			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
-		}
+			char *end; int plen;
 
-	*(p++) = '\n';
+			end = hdr->name.s+hdr->name.len-1;
+			plen= (*end==0) ? hdr->name.len - 1 : hdr->name.len;
+			memcpy( p, hdr->name.s, plen );
+			p+=plen;
+
+			memcpy( p, MY_HF_SEP, MY_HF_SEP_LEN );
+			p+=MY_HF_SEP_LEN;
+
+			end = hdr->body.s+hdr->body.len-1;
+			plen= (*end==0) ? hdr->body.len - 1 : hdr->body.len;
+			memcpy( p, hdr->body.s, plen );
+			p+=plen;
+			memcpy( p, CRLF, CRLF_LEN );
+			p+=CRLF_LEN;
+		}
+	memcpy( p, CRLF, CRLF_LEN );
+        p+=CRLF_LEN;
 	*(p++) = 0;
-	*returned_len=len;
+	
+
+	/* *returned_len=len; */
+	*returned_len=p-buf;
 	return buf;
 error:
 	if (buf) free(buf);
