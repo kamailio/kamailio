@@ -126,6 +126,7 @@ BEGIN {
 	ua_hearme=0;
 	ua_draytek=0;
 	ua_st280;
+	ua_dta=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -382,6 +383,10 @@ ua==0 && /User-Agent:.*DrayTek/ {
 }
 ua==0 && /User-Agent:.*X-Lite/ {
 	ua_xlite++
+	ua=1
+}
+ua==0 && /User-Agent:.*DTA/ {
+	ua_dta++
 	ua=1
 }
 ua==0 && /User-Agent:.*ST280/ {
@@ -882,6 +887,7 @@ END {
 	print "Hearme: " ua_hearme
 	print "DrayTek: " ua_draytek
 	print "ST: " ua_st
+	print "DTA: " ua_dta
 	print "UFO: " ua_xx
 
 	print "## Servers"
