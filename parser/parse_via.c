@@ -75,7 +75,7 @@ enum {
  * output state = L_PARAM or F_PARAM or END_OF_HEADER
  * (and saved_state= last state); everything else => error 
  */
-static inline char* parse_via_param(char* p, char* end, int* pstate, 
+static /*inline*/ char* parse_via_param(char* p, char* end, int* pstate, 
 				    int* psaved_state, struct via_param* param)
 {
 	char* tmp;

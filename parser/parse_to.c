@@ -44,8 +44,9 @@ enum {
 
 
 
-static inline char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
-				   int *returned_status)
+static /*inline*/ char* parse_to_param(char *buffer, char *end,
+					struct to_body *to_b,
+					int *returned_status)
 {
 	struct to_param *param;
 	int status;

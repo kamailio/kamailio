@@ -61,8 +61,13 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 	s=ip_addr2a(ip);
 	if (s){
 		DBG("check_address(%s, %s, %d)\n", ip_addr2a(ip), name, resolver);
-		if (strcmp(name, s)==0)
-			return 0;
+	#ifdef USE_IPV6
+		if ((ip->af==AF_INET6) && (strcasecmp(name, s)==0))
+				return 0;
+		else
+	#endif
+			if (strcmp(name, s)==0)
+				return 0;
 	}else{
 		LOG(L_CRIT, "check_address: BUG: could not convert ip address\n");
 		return -1;

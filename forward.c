@@ -207,8 +207,14 @@ int forward_reply(struct sip_msg* msg)
 					sock_info[r].name.len, sock_info[r].name.s
 				);
 			if ( (msg->via1->host.len==sock_info[r].name.len) && 
+	#ifdef USE_IPV6
+					(strncasecmp(msg->via1->host.s, sock_info[r].name.s,
+								 sock_info[r].name.len)==0) /*slower*/
+	#else
 					(memcmp(msg->via1->host.s, sock_info[r].name.s, 
-										sock_info[r].name.len)==0) )
+										sock_info[r].name.len)==0)
+	#endif
+					)
 				break;
 		}
 		if (r==sock_no){
