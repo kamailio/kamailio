@@ -74,7 +74,7 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	at += _m->parsed_uri.host.len;
 	*at = '\0';
 
-	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, uri, 0, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, uri, -1, 0)) {
 		LOG(L_ERR, "radius_does_uri_exist(): Error adding User-Name\n");
 		rc_avpair_free(send);
 		pkg_free(uri);
@@ -82,7 +82,7 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	service = vals[V_CALL_CHECK].v;
-	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, 0, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
 		LOG(L_ERR, "radius_does_uri_exist(): Error adding service type\n");
 		rc_avpair_free(send);
 		pkg_free(uri);

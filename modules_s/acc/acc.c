@@ -594,24 +594,24 @@ int acc_rad_request( struct sip_msg *rq, struct hdr_field *to,
 	}
 
 	av_type=rad_status(rq, phrase);
-	if (!rc_avpair_add(rh, &send, attrs[A_ACCT_STATUS_TYPE].v, &av_type,0, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_ACCT_STATUS_TYPE].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
 		goto error;
 	}
 	av_type=vals[V_SIP_SESSION].v;
-	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type,0, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add STATUS_TYPE\n");
 		goto error;
 	}
 	av_type=phrase2code(phrase); /* status=integer */
 	/* if (phrase.len<3) c=nullcode;
 	else { memcpy(ccode, phrase.s, 3); ccode[3]=0;c=nullcode;} */
-	if (!rc_avpair_add(rh, &send, attrs[A_SIP_RESPONSE_CODE].v, &av_type,0, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SIP_RESPONSE_CODE].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add RESPONSE_CODE\n");
 		goto error;
 	}
 	av_type=rq->REQ_METHOD;
-	if (!rc_avpair_add(rh, &send, attrs[A_SIP_METHOD].v, &av_type,0, 0)) {
+	if (!rc_avpair_add(rh, &send, attrs[A_SIP_METHOD].v, &av_type, -1, 0)) {
 		LOG(L_ERR, "ERROR: acc_rad_request: add SIP_METHOD\n");
 		goto error;
 	}
