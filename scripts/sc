@@ -138,7 +138,7 @@ parameter usage:
  ps ..... show runnig processes 	stop ..... stop ser
  fifo ... send raw FIFO commands    restart .. restart ser
  ping <uri> .. ping a URI (OPTIONS)
- cisco_restart <uri> .. restart a Cisco phone (NOTIFY(
+ cisco_restart <uri> .. restart a Cisco phone (NOTIFY)
 
 
    Commands labeled with (*) will prompt for a MySQL password.
