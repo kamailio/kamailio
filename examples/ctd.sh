@@ -29,10 +29,11 @@
 # support REFER; dialog parser over-simplified (see inline) but 
 # quite functional (if there is something to be fixed, it is
 # richness of SIP syntax); an awk-only rewrite would be esthetically
-# nicer, imho 
+# nicer, imho. Never tested on solaris.
 #
 # History:
 # --------
+# 2003-03-01 bug_fix: route set reversed
 # 2003-02-27 dialog support completed (jiri)
 
 #--------------------------------
@@ -79,33 +80,41 @@ awk -F ' ' '
 BEGIN { IGNORECASE=1; rri=0; line=0; ret=1;eoh=0 }
 END { # print dialog information a la RFC3261, S. 12.2.1.1
 	# calculate route set 
+	sr=0
 	if (rri>0) { # route set not empty
 		# next-hop loose router?
-		if (match(rr[1], ";lr")) {
+		if (match(rr[rri], ";lr")) {
 			ruri=rcontact
-			nexthop=rr[1]
-			rrb=1 # begin from first
+			nexthop=rr[rri]
+			rre=rri # begin from first
 		} else { # next-hop strict router
-			ruri=rr[1]
-			rrb=2 # skip first
-			rri++
-			rr[rri]=rcontact
+			ruri=rr[rri]
+			rre=rri-1 # skip last
+			sr=1
+			#rri++
+			#rr[rri]=rcontact
 			nexthop="." # t_uac_dlg value for "use ruri"
 		}
 	} else { # no record-routing
 			ruri=rcontact
 			nexthop="."
-			rrb=1 # do not enter the loop
+			rre=0 # do not enter the loop
 	}
 	# print the FIFO request header
 	print ruri
 	print nexthop
 	print to
-	for(i=rrb; i<=rri; i++ ) {
-		if (i==rrb) printf "Route: "; else printf ", "
+	for(i=rre; i>=1; i-- ) { # reverse
+		if (i==rre) printf "Route: "; else printf ", "
 		printf("%s", rr[i])
-		if (i==rri) printf("\n")
-		
+		if (i==1) {
+			printf("\n")
+		}
+	}
+	if (sr==1) { 
+		printf "Route: "
+		printf  rcontact
+		printf "\n" 
 	}
 	exit ret
 }
@@ -113,7 +122,7 @@ END { # print dialog information a la RFC3261, S. 12.2.1.1
 # set true (0) to return value if transaction completed succesfully
 {line++; }
 line==1 && /^2[0-9][0-9] / { ret=0; next; }
-line==1 && /^[3-6][0-9][0-9] / { print; next; }
+line==1 && /^[3-6][0-9][0-9] / { print; print $0 > "/dev/stderr"; next; }
 line==1 { print "reply error"; print; next; } 
 
 # skip body
