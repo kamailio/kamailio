@@ -162,6 +162,12 @@ extern db_func_t dbf;
 
 
 int bind_dbmod(char* mod);
- 
+
+
+/*
+ * Get version of a table
+ */
+int table_version(db_con_t* con, const str* table);
+
 
 #endif /* DB_H */

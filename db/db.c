@@ -27,8 +27,10 @@
 
 
 #include "db.h"
+#include "../dprint.h"
 #include "../sr_module.h"
 #include "../mem/mem.h"
+#include "../str.h"
 
 db_func_t dbf;
 
@@ -89,4 +91,49 @@ int bind_dbmod(char* mod)
  err:
 	if (tmp != mod) pkg_free(tmp);
 	return -1;
+}
+
+
+/*
+ * Get version of a table
+ */
+int table_version(db_con_t* connection, const str* table)
+{
+	db_key_t key[1], col[1];
+	db_val_t val[1];
+	db_res_t* res;
+	int ret;
+
+	if (!connection || !table) {
+		LOG(L_ERR, "table_version(): Invalid parameter value\n");
+		return -1;
+	}
+
+	if (db_use_table(connection, VERSION_TABLE) < 0) {
+		LOG(L_ERR, "table_version(): Error while changing table\n");
+		return -1;
+	}
+
+	key[0] = TABLENAME_COLUMN;
+
+	VAL_TYPE(val) = DB_STR;
+	VAL_NULL(val) = 0;
+	VAL_STR(val) = *table;
+	
+	col[0] = VERSION_COLUMN;
+	
+	if (db_query(connection, key, 0, val, col, 1, 1, 0, &res) < 0) {
+		LOG(L_ERR, "table_version(): Error in db_query\n");
+		return -1;
+	}
+
+	if (RES_ROW_N(res) != 1) {
+		LOG(L_ERR, "table_version(): Invalid number of rows received: %d, %.*s\n", RES_ROW_N(res), table->len, table->s);
+		db_free_query(connection, res);
+		return -1;
+	}
+
+	ret = VAL_INT(ROW_VALUES(RES_ROWS(res)));
+	db_free_query(connection, res);
+	return ret;
 }
