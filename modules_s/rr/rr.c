@@ -160,8 +160,9 @@ int buildRRLine(struct sip_msg* _m, char* _l)
 	memcpy(_l, RR_PREFIX, len);
 	memcpy(_l + len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
 	len += _m->first_line.u.request.uri.len;
-	memcpy(_l + len, ";branch=0>\n",  11);
-	len += 11;
+               /* bogdan :replaced \n with CRLF*/
+	memcpy(_l + len, ";branch=0>" CRLF,  10+CRLF_LEN);
+	len += 10+CRLF_LEN;
 	_l[len] = '\0';
 
 	DBG("buildRRLine: %s", _l);

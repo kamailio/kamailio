@@ -83,10 +83,10 @@ static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
 			LOG(L_ERR, "rewriteFromRoute(): Error while removing the first Route URI\n");
 			return -1;
 		}
-	} else {
-		DBG("rewriteFromRoute(): There is no Route HF\n");
+		return 1;
 	}
-	return 1;
+	DBG("rewriteFromRoute(): There is no Route HF\n");
+	return -1;
 }
 
 
