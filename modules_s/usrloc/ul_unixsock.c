@@ -45,7 +45,7 @@
 #define UNIXSOCK_UA "SIP Express Router UNIXSOCK"
 #define UNIXSOCK_UA_LEN (sizeof(UNIXSOCK_UA)-1)
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _r, int _f)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -84,13 +84,13 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	ua.len = UNIXSOCK_UA_LEN;
 
 	if (c) {
-		if (update_ucontact_rep(c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _r, _f, FL_NONE, &ua, 0, 0) < 0) {
+		if (update_ucontact(c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, FL_NONE, &ua, 0, 0) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
 		}
 	} else {
-		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, _r, &c, &ua, 0, 0) < 0) {
+		if (insert_ucontact(r, _c, _e + act_time, _q, &cid, UNIXSOCK_CSEQ, _f, &c, &ua, 0, 0) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;
@@ -334,7 +334,7 @@ static int ul_add(str* msg)
 {
 	udomain_t* d;
 	qvalue_t qval;
-	int exp_i, rep_i, flags_i;
+	int exp_i, flags_i;
 	char* at;
 	str table, user, contact, expires, q, rep, flags;
 
@@ -376,6 +376,7 @@ static int ul_add(str* msg)
 		goto err;
 	}
 	
+	     /* Kept for backwards compatibility */
 	if (unixsock_read_line(&rep, msg) != 0) {
 		unixsock_reply_asciiz("400 Replicate expected\n");
 		goto err;
@@ -400,11 +401,6 @@ static int ul_add(str* msg)
 			goto err;
 		}
 		
-		if (str2int(&rep, (unsigned int*)&rep_i) < 0) {
-			unixsock_reply_asciiz("400 Invalid replicate format\n");
-			goto err;
-		}
-
 		if (str2int(&flags, (unsigned int*)&flags_i) < 0) {
 			unixsock_reply_asciiz("400 Invalid flags format\n");
 			goto err;
@@ -412,7 +408,7 @@ static int ul_add(str* msg)
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, qval, rep_i, flags_i) < 0) {
+		if (add_contact(d, &user, &contact, exp_i, qval, flags_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
 			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));

@@ -58,44 +58,18 @@
 
 MODULE_VERSION
 
-#define USER_COL "username"
-#define USER_COL_LEN (sizeof(USER_COL) - 1)
-
-#define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
-
-#define CONTACT_COL "contact"
-#define CONTACT_COL_LEN (sizeof(CONTACT_COL) - 1)
-
-#define EXPIRES_COL "expires"
-#define EXPIRES_COL_LEN (sizeof(EXPIRES_COL) - 1)
-
-#define Q_COL "q"
-#define Q_COL_LEN (sizeof(Q_COL) - 1)
-
-#define CALLID_COL "callid"
-#define CALLID_COL_LEN (sizeof(CALLID_COL) - 1)
-
-#define CSEQ_COL "cseq"
-#define CSEQ_COL_LEN (sizeof(CSEQ_COL) - 1)
-
-#define METHOD_COL "method"
-#define METHOD_COL_LEN (sizeof(METHOD_COL) - 1)
-
-#define REPLICATE_COL "replicate"
-#define REPLICATE_COL_LEN (sizeof(REPLICATE_COL) - 1)
-
-#define STATE_COL "state"
-#define STATE_COL_LEN (sizeof(STATE_COL) - 1)
-
-#define FLAGS_COL "flags"
-#define FLAGS_COL_LEN (sizeof(FLAGS_COL) - 1)
-
+#define USER_COL       "username"
+#define DOMAIN_COL     "domain"
+#define CONTACT_COL    "contact"
+#define EXPIRES_COL    "expires"
+#define Q_COL          "q"
+#define CALLID_COL     "callid"
+#define CSEQ_COL       "cseq"
+#define METHOD_COL     "method"
+#define STATE_COL      "state"
+#define FLAGS_COL      "flags"
 #define USER_AGENT_COL "user_agent"
-#define USER_AGENT_COL_LEN (sizeof(USER_AGENT_COL) - 1)
-
-#define RECEIVED_COL "received"
-#define RECEIVED_COL_LEN (sizeof(RECEIVED_COL) - 1)
+#define RECEIVED_COL   "received"
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -107,20 +81,19 @@ extern int bind_usrloc(usrloc_api_t* api);
 /*
  * Module parameters and their default values
  */
-str user_col        = {USER_COL, USER_COL_LEN};             /* Name of column containing usernames */
-str domain_col      = {DOMAIN_COL, DOMAIN_COL_LEN};         /* Name of column containing domains */
-str contact_col     = {CONTACT_COL, CONTACT_COL_LEN};       /* Name of column containing contact addresses */
-str expires_col     = {EXPIRES_COL, EXPIRES_COL_LEN};       /* Name of column containing expires values */
-str q_col           = {Q_COL, Q_COL_LEN};                   /* Name of column containing q values */
-str callid_col      = {CALLID_COL, CALLID_COL_LEN};         /* Name of column containing callid string */
-str cseq_col        = {CSEQ_COL, CSEQ_COL_LEN};             /* Name of column containing cseq values */
-str method_col      = {METHOD_COL, METHOD_COL_LEN};         /* Name of column containing supported method */
-str replicate_col   = {REPLICATE_COL, REPLICATE_COL_LEN};   /* Name of column containing replication mark */
-str state_col       = {STATE_COL, STATE_COL_LEN};           /* Name of column containing contact state */
-str flags_col       = {FLAGS_COL, FLAGS_COL_LEN};           /* Name of column containing flags */
-str user_agent_col  = {USER_AGENT_COL, USER_AGENT_COL_LEN}; /* Name of column containing user agent string */
-str received_col    = {RECEIVED_COL, RECEIVED_COL_LEN};     /* Name of column containing transport info of REGISTER */
-str db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN}; /* Database URL */
+str user_col        = {USER_COL, sizeof(USER_COL) - 1};             /* Name of column containing usernames */
+str domain_col      = {DOMAIN_COL, sizeof(DOMAIN_COL) - 1};         /* Name of column containing domains */
+str contact_col     = {CONTACT_COL, sizeof(CONTACT_COL) - 1};       /* Name of column containing contact addresses */
+str expires_col     = {EXPIRES_COL, sizeof(EXPIRES_COL) - 1};       /* Name of column containing expires values */
+str q_col           = {Q_COL, sizeof(Q_COL) - 1};                   /* Name of column containing q values */
+str callid_col      = {CALLID_COL, sizeof(CALLID_COL) - 1};         /* Name of column containing callid string */
+str cseq_col        = {CSEQ_COL, sizeof(CSEQ_COL) - 1};             /* Name of column containing cseq values */
+str method_col      = {METHOD_COL, sizeof(METHOD_COL) - 1};         /* Name of column containing supported method */
+str state_col       = {STATE_COL, sizeof(STATE_COL) - 1};           /* Name of column containing contact state */
+str flags_col       = {FLAGS_COL, sizeof(FLAGS_COL) - 1};           /* Name of column containing flags */
+str user_agent_col  = {USER_AGENT_COL, sizeof(USER_AGENT_COL) - 1}; /* Name of column containing user agent string */
+str received_col    = {RECEIVED_COL, sizeof(RECEIVED_COL) - 1};     /* Name of column containing transport info of REGISTER */
+str db_url          = {DEFAULT_DB_URL, sizeof(DEFAULT_DB_URL) - 1}; /* Database URL */
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
 int use_domain      = 0;              /* Whether usrloc should use domain part of aor */
@@ -167,8 +140,6 @@ static param_export_t params[] = {
 	{"callid_column",     STR_PARAM, &callid_col.s   },
 	{"cseq_column",       STR_PARAM, &cseq_col.s     },
 	{"method_column",     STR_PARAM, &method_col.s   },
-	{"replicate_column",  STR_PARAM, &replicate_col.s},
-	{"state_column",      STR_PARAM, &state_col.s    },
 	{"flags_column",      STR_PARAM, &flags_col.s    },
 	{"db_url",            STR_PARAM, &db_url.s       },
 	{"timer_interval",    INT_PARAM, &timer_interval },
@@ -209,8 +180,6 @@ static int mod_init(void)
 	callid_col.len = strlen(callid_col.s);
 	cseq_col.len = strlen(cseq_col.s);
 	method_col.len = strlen(method_col.s);
-	replicate_col.len = strlen(replicate_col.s);
-	state_col.len = strlen(state_col.s);
 	flags_col.len = strlen(flags_col.s);
 	user_agent_col.len = strlen(user_agent_col.s);
 	received_col.len = strlen(received_col.s);
@@ -297,13 +266,7 @@ static void destroy(void)
  */
 static void timer(unsigned int ticks, void* param)
 {
-#ifdef EXTRA_DEBUG
-	DBG("Running timer\n");
-#endif
 	if (synchronize_all_udomains() != 0) {
 		LOG(L_ERR, "timer(): Error while synchronizing cache\n");
 	}
-#ifdef EXTRA_DEBUG
-	DBG("Timer done\n");
-#endif
 }

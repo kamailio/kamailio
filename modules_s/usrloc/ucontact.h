@@ -47,12 +47,7 @@
 typedef enum cstate {
 	CS_NEW,        /* New contact - not flushed yet */
 	CS_SYNC,       /* Synchronized contact with the database */
-	CS_DIRTY,      /* Update contact - not flushed yet */
-	/* Attention the sequence of this entries is used in conditions.
-	 * Changes here can break things! */
-	CS_ZOMBIE_N,   /* Removed contact - not flushed yet */
-	CS_ZOMBIE_S,   /* Removed contact - synchronized with db */
-	CS_ZOMBIE_D    /* Removed contact - updated and not flushed yet */
+	CS_DIRTY       /* Update contact - not flushed yet */
 } cstate_t;
 
 
@@ -84,7 +79,6 @@ typedef struct ucontact {
 	qvalue_t q;               /* q parameter */
 	str callid;               /* Call-ID header field */
         int cseq;                 /* CSeq value */
-	unsigned int replicate;   /* replication marker */
 	cstate_t state;           /* State of the contact */
 	unsigned int flags;       /* Various flags (NAT, supported methods etc) */
 	str user_agent;		  /* User-Agent header field */
@@ -94,17 +88,16 @@ typedef struct ucontact {
 
 
 /*
- * Valid contact is a contact that either didn't expire yet or is permanent and
- * also it is not in a zombie state (preserved just for replication)
+ * Valid contact is a contact that either didn't expire yet or is permanent
  */
-#define VALID_CONTACT(c, t) (((c->expires > t) || (c->flags & FL_PERMANENT)) && (c->state < CS_ZOMBIE_N))
+#define VALID_CONTACT(c, t) (((c->expires > t) || (c->flags & FL_PERMANENT)))
 
 
 /*
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q, 
-		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c, 
+		 str* _callid, int _cseq, unsigned int _flags, ucontact_t** _c, 
 		 str* _ua, str* _recv, struct socket_info* sock);
 
 
@@ -198,13 +191,5 @@ typedef int (*update_ucontact_t)(ucontact_t* _c, time_t _e, qvalue_t _q, str* _c
 int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res, str* _ua, str* _recv,
 		    struct socket_info* sock);
-
-/*
- * Update ucontact with new values with additional replication argument
- */
-int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
-			unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-			struct socket_info* sock);
-
 
 #endif /* UCONTACT_H */

@@ -46,8 +46,6 @@
 #include "../../resolve.h"
 #include "../../socket_info.h"
 #include "ul_mod.h"            /* usrloc module parameters */
-#include "del_list.h"
-#include "ins_list.h"
 #include "notify.h"
 
 
@@ -280,10 +278,10 @@ static struct socket_info* find_socket(str* received)
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[12];
+	db_key_t columns[10];
 	db_res_t* res;
 	db_row_t* row;
-	int i, cseq, rep, state;
+	int i, cseq;
 	unsigned int flags;
 	struct socket_info* sock;
 	str user, contact, callid, ua, received;
@@ -301,12 +299,10 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[3] = q_col.s;
 	columns[4] = callid_col.s;
 	columns[5] = cseq_col.s;
-	columns[6] = replicate_col.s;
-	columns[7] = state_col.s;
-	columns[8] = flags_col.s;
-	columns[9] = user_agent_col.s;
-	columns[10] = received_col.s;
-	columns[11] = domain_col.s;
+	columns[6] = flags_col.s;
+	columns[7] = user_agent_col.s;
+	columns[8] = received_col.s;
+	columns[9] = domain_col.s;
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
@@ -316,7 +312,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (12) : (11), 0,
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? 10 : 9, 0,
 				&res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
@@ -334,32 +330,31 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		row = RES_ROWS(res) + i;
 		
 		user.s      = (char*)VAL_STRING(ROW_VALUES(row));
-		if (user.s==0){
+		if (user.s == 0) {
 			LOG(L_CRIT, "preload_udomain: ERROR: bad username "
 							"record in table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
-		}else{
-			user.len    = strlen(user.s);
+		} else {
+			user.len = strlen(user.s);
 		}
-		contact.s   = (char*)VAL_STRING(ROW_VALUES(row) + 1);
-		if (contact.s==0){
+
+		contact.s = (char*)VAL_STRING(ROW_VALUES(row) + 1);
+		if (contact.s == 0) {
 			LOG(L_CRIT, "preload_udomain: ERROR: bad contact "
 							"record in table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s\n",
 							user.len, user.s);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
-		}else{
+		} else {
 			contact.len = strlen(contact.s);
 		}
 		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
 		q           = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
 		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
-		rep         = VAL_INT   (ROW_VALUES(row) + 6);
-		state       = VAL_INT   (ROW_VALUES(row) + 7);
 		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
-		if (callid.s==0){
+		if (callid.s == 0) {
 			LOG(L_CRIT, "preload_udomain: ERROR: bad callid record in"
 							" table %s\n", b);
 			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s,"
@@ -367,20 +362,21 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 							user.len, user.s, contact.len, contact.s);
 			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
-		}else{
+		} else {
 			callid.len  = strlen(callid.s);
 		}
-		flags       = VAL_BITMAP(ROW_VALUES(row) + 8);
 
-		ua.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+		flags  = VAL_BITMAP(ROW_VALUES(row) + 6);
+
+		ua.s  = (char*)VAL_STRING(ROW_VALUES(row) + 7);
 		if (ua.s) {
 			ua.len = strlen(ua.s);
 		} else {
 			ua.len = 0;
 		}
 
-		if (!VAL_NULL(ROW_VALUES(row) + 10)) {
-			received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
+		if (!VAL_NULL(ROW_VALUES(row) + 8)) {
+			received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 8);
 			if (received.s) {
 				received.len = strlen(received.s);
 				rec = &received;
@@ -397,7 +393,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		}
 
 		if (use_domain) {
-			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 11);
+			domain  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
 			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
 			user.s = b;
 			user.len = strlen(b);
@@ -412,7 +408,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c, &ua, rec, sock) < 0) {
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, &c, &ua, rec, sock) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);
@@ -424,10 +420,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			  * we also store zombies in database so we have to restore
 			  * the correct state
 		      */
-		if (state >= CS_ZOMBIE_N)
-			c->state = CS_ZOMBIE_S;
-		else
-			c->state = CS_SYNC;
+		c->state = CS_SYNC;
 	}
 
 	ul_dbf.free_result(_c, res);

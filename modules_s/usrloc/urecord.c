@@ -122,12 +122,12 @@ void print_urecord(FILE* _f, urecord_t* _r)
  *                          2) descending modification time
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-			unsigned int _flags, int _rep, struct ucontact** _con, str* _ua, str* _recv,
+			unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
 			struct socket_info* sock)
 {
 	ucontact_t* ptr, *prev = 0;
 
-	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _rep, _con, _ua, _recv, sock) < 0) {
+	if (new_ucontact(_r->domain, &_r->aor, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock) < 0) {
 		LOG(L_ERR, "mem_insert_ucontact(): Can't create new contact\n");
 		return -1;
 	}
@@ -206,53 +206,28 @@ static inline int nodb_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
-		if ((ptr->expires < act_time) && !(ptr->flags & FL_PERMANENT)) {
+		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for replication\n", 
-				    ptr->aor->len, ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
-
-					/* keep it for replication, but it expired normally
-					 * and was the last contact, so notify */
-				if (!ptr->next && ptr->state == CS_NEW) not=1;
-
-				ptr = ptr->next;
-			}
-			else {
-				LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-				    ptr->aor->len, ZSW(ptr->aor->s),
-				    ptr->c.len, ZSW(ptr->c.s));
-
-				t = ptr;
-				ptr = ptr->next;
-
-					/* it was the last contact and it was in normal
-					 * state, so notify */
-				if (!ptr && t->state == CS_NEW) not=1;
-
-				mem_delete_ucontact(_r, t);
-				_r->slot->d->expired++;
-
-			}
+			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
+			    ptr->aor->len, ZSW(ptr->aor->s),
+			    ptr->c.len, ZSW(ptr->c.s));
+			
+			t = ptr;
+			ptr = ptr->next;
+			
+			     /* it was the last contact and it was in normal
+			      * state, so notify */
+			if (!ptr && t->state == CS_NEW) not=1;
+			
+			mem_delete_ucontact(_r, t);
+			_r->slot->d->expired++;
 		} else {
-				/* the contact was unregistered and is not marked 
-				 * for replication so remove it, but the notify was
-				 * done during unregister */
-			if (ptr->state == CS_ZOMBIE_N && ptr->replicate == 0) {
-				LOG(L_NOTICE, "removing spare zombie (nodb) '%.*s','%.*s'\n",
-				    ptr->aor->len, ZSW(ptr->aor->s),
-				    ptr->c.len, ZSW(ptr->c.s));
-				t = ptr;
-				ptr = ptr->next;
-				mem_delete_ucontact(_r, t);
-			}
-			else
-				ptr = ptr->next;
+			ptr = ptr->next;
 		}
 	}
 
@@ -273,61 +248,36 @@ static inline int wt_timer(urecord_t* _r)
 	ptr = _r->contacts;
 	
 	while(ptr) {
-		if ((ptr->expires < act_time) && !(ptr->flags & FL_PERMANENT)) {
+		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
-			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+			}
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
-					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
-				    ptr->c.len, ZSW(ptr->c.s));
-					
-					/* keep it for replication, but it expired normally
-					 * and was the last contact, so notify */
-				if (!ptr->next && ptr->state == CS_SYNC) not=1;
-
-				ptr = ptr->next;
+			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
+			    ptr->aor->len, ZSW(ptr->aor->s),
+			    ptr->c.len, ZSW(ptr->c.s));
+			
+			t = ptr;
+			ptr = ptr->next;
+			
+			     /* it was the last contact and it was in normal
+			      * state, so notify */
+			if (!ptr && t->state == CS_SYNC) not=1;
+			
+			if (db_delete_ucontact(t) < 0) {
+				LOG(L_ERR, "wt_timer(): Error while deleting contact from "
+				    "database\n");
 			}
-			else {
-				LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-				    ptr->aor->len, ZSW(ptr->aor->s),
-				    ptr->c.len, ZSW(ptr->c.s));
-
-				t = ptr;
-				ptr = ptr->next;
-
-					/* it was the last contact and it was in normal
-					 * state, so notify */
-				if (!ptr && t->state == CS_SYNC) not=1;
-
-				if (db_delete_ucontact(t) < 0) {
-					LOG(L_ERR, "wt_timer(): Error while deleting contact from "
-						"database\n");
-				}
-				mem_delete_ucontact(_r, t);
-				_r->slot->d->expired++;
-			}
+			mem_delete_ucontact(_r, t);
+			_r->slot->d->expired++;
 		} else {
-				/* the contact was unregistered and is not marked 
-				 * for replication so remove it, but the notify was
-				 * already done during unregister */
-			if (ptr->state == CS_ZOMBIE_S && ptr->replicate == 0) {
-				LOG(L_NOTICE, "removing spare zombie (wt) '%.*s','%.*s'\n",
-				    ptr->aor->len, ZSW(ptr->aor->s),
-				    ptr->c.len, ZSW(ptr->c.s));
-				t = ptr;
-				ptr = ptr->next;
-				if (db_delete_ucontact(t) < 0) {
-					LOG(L_ERR, "wt_timer(): Error while deleting contact from "
-						"database\n");
-				}
-				mem_delete_ucontact(_r, t);
-			}
-			else
-				ptr = ptr->next;
+			     /* the contact was unregistered and is not marked 
+			      * for replication so remove it, but the notify was
+			      * already done during unregister */
+			ptr = ptr->next;
 		}
 	}
 	
@@ -348,45 +298,31 @@ static inline int wb_timer(urecord_t* _r)
 	ptr = _r->contacts;
 
 	while(ptr) {
-		if ((ptr->expires < act_time) && !(ptr->flags & FL_PERMANENT)) {
+		if (!VALID_CONTACT(ptr, act_time)) {
 			/* run callbacks for EXPIRE event */
-			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
+			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
+			}
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for "
-					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
-				    ptr->c.len, ZSW(ptr->c.s));
+			LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
+			    ptr->aor->len, ZSW(ptr->aor->s),
+			    ptr->c.len, ZSW(ptr->c.s));
+			if (ptr->next == 0) not=1;
+			_r->slot->d->expired++;
 
-					/* keep it for replication, but it expired normally
-					 * and was the last contact, so notify */
-				if (!ptr->next && ptr->state < CS_ZOMBIE_N) not=1;
-
-				ptr = ptr->next;
-			}
-			else {
-					/* state == ZOMBIE the contact was remove by user */
-				if (ptr->state < CS_ZOMBIE_N) { 
-					LOG(L_NOTICE, "Binding '%.*s','%.*s' has expired\n",
-					    ptr->aor->len, ZSW(ptr->aor->s),
-					    ptr->c.len, ZSW(ptr->c.s));
-					if (ptr->next == 0) not=1;
-					_r->slot->d->expired++;
+			t = ptr;
+			ptr = ptr->next;
+			
+			     /* Should we remove the contact from the database ? */
+			if (st_expired_ucontact(t) == 1) {
+				if (db_delete_ucontact(t) < 0) {
+					LOG(L_ERR, "wb_timer(): Can't delete contact from the database\n");
 				}
-				t = ptr;
-				ptr = ptr->next;
-
-				     /* Should we remove the contact from the database ? */
-				if (st_expired_ucontact(t) == 1) {
-					if (db_delete_ucontact(t) < 0) {
-						LOG(L_ERR, "wb_timer(): Can't delete contact from the database\n");
-					}
-				}
-
-				mem_delete_ucontact(_r, t);
 			}
+			
+			mem_delete_ucontact(_r, t);
 		} else {
 			     /* Determine the operation we have to do */
 			op = st_flush_ucontact(ptr);
@@ -406,13 +342,14 @@ static inline int wb_timer(urecord_t* _r)
 					LOG(L_ERR, "wb_timer(): Error while updating contact in db\n");
 				}
 				break;
-			case 3: /* delete from memory */
-				mem_delete_ucontact(_r, ptr);
-				break;
+
 			case 4: /* delete */
 				if (db_delete_ucontact(ptr) < 0) {
 					LOG(L_ERR, "wb_timer(): Can't delete contact from database\n");
 				}
+				     /* fall through to the next case statement */
+
+			case 3: /* delete from memory */
 				mem_delete_ucontact(_r, ptr);
 				break;
 			}
@@ -497,19 +434,20 @@ void release_urecord(urecord_t* _r)
  * Create and insert new contact
  * into urecord
  */
-int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
-			int _cs, unsigned int _flags, int _rep, struct ucontact** _con, str* _ua, str* _recv,
+int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
+			int _cs, unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
 			struct socket_info* sock)
 {
-	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _rep, _con, _ua, _recv, sock) < 0) {
+	if (mem_insert_ucontact(_r, _c, _e, _q, _cid, _cs, _flags, _con, _ua, _recv, sock) < 0) {
 		LOG(L_ERR, "insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
 
 	notify_watchers(_r, *_con, (_e > 0) ? PRES_ONLINE : PRES_OFFLINE);
 
-	if (exists_ulcb_type(UL_CONTACT_INSERT))
+	if (exists_ulcb_type(UL_CONTACT_INSERT)) {
 		run_ul_callbacks( UL_CONTACT_INSERT, *_con);
+	}
 
 	if (db_mode == WRITE_THROUGH) {
 		if (db_insert_ucontact(*_con) < 0) {
@@ -517,32 +455,21 @@ int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _ci
 			mem_delete_ucontact(_r, *_con);
 			return -2;
 		}
-		(*_con)->state=CS_SYNC;
+		(*_con)->state = CS_SYNC;
 	}
 
 	return 0;
 }
 
-/*
- * Wrapper around insert_ucontact_rep for compatibility
- * inserts a contact without replication
- */
-int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, 
-		    int _cs, unsigned int _flags, struct ucontact** _con, str* _ua, str* _recv,
-		    struct socket_info* sock)
-{
-	return insert_ucontact_rep(_r, _c, _e, _q, _cid, _cs, _flags, 0, _con, _ua, _recv, sock);
-}
 
 /*
  * Delete ucontact from urecord
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
-	struct ucontact* ptr;
-
-	if (exists_ulcb_type(UL_CONTACT_DELETE))
+	if (exists_ulcb_type(UL_CONTACT_DELETE)) {
 		run_ul_callbacks( UL_CONTACT_DELETE, _c);
+	}
 
 	notify_watchers(_r, _c, PRES_OFFLINE);
 
@@ -555,12 +482,6 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 		}
 
 		mem_delete_ucontact(_r, _c);
-	}
-
-	ptr = _r->contacts;
-	while(ptr) {
-		if (ptr->state < CS_ZOMBIE_N) return 0;
-		ptr = ptr->next;
 	}
 
 	return 0;

@@ -88,7 +88,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
  * Add a new contact
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-			unsigned int _flags, int _rep, struct ucontact** _con, str *_ua, str* _recv,
+			unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
 			struct socket_info* sock);
 
 
@@ -135,8 +135,8 @@ void release_urecord(urecord_t* _r);
 typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 				 unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
 				 struct socket_info* sock);
-int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-			unsigned int _flags, int _rep, struct ucontact** _con, str *_ua, str* _recv,
+int insert_ucontact(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
+			unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
 			struct socket_info* sock);
 
 /*
