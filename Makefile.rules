@@ -58,6 +58,6 @@ TAGS:
 	
 
 ifneq (,$(filter-out clean proper distclean realclean mantainer-clean TAGS \
-		tar, $(MAKECMDGOALS)))
+		tar modules, $(MAKECMDGOALS)))
 include $(depends)
 endif

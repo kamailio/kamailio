@@ -251,7 +251,7 @@ int main_loop()
 		/* we need another process to act as the timer*/
 		if (timer_list){
 				if ((pid=fork())<0){
-					LOG(L_CRIT,  "main_loop: Cannot fork\n");
+					LOG(L_CRIT,  "ERRROR: main_loop: Cannot fork\n");
 					goto error;
 				}
 				if (pid==0){
@@ -514,11 +514,16 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef SHM_MEM
-	if (shm_mem_init()==-1) {
+	if (shm_mem_init()<0) {
 		LOG(L_CRIT, "could not initialize shared memory pool, exiting...\n");
 		goto error;
 	}
 #endif
+	/*init timer, before parsing the cfg!*/
+	if (init_timer()<0){
+		LOG(L_CRIT, "could not initialize timer, exiting...\n");
+		goto error;
+	}
 
 	yyin=cfg_stream;
 	if ((yyparse()!=0)||(cfg_errors)){
