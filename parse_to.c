@@ -112,7 +112,7 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
 				}
 				break;
 			case '\r':
@@ -149,7 +149,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -167,7 +168,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						}
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -191,7 +193,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param :"
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -221,7 +224,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param :"
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -253,7 +257,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param :"
-						" unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* " unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -287,7 +292,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -321,7 +327,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -349,7 +356,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to_param : "
-						"unexpected char [%c] in status %d .\n",*tmp,status);
+						"unexpected char [%c] in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "unexpected char [%c] in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -452,7 +460,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 				}
 				break;
 			case '\r':
@@ -475,7 +484,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -493,7 +503,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						}
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -519,7 +530,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -542,7 +554,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -563,7 +576,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
@@ -589,7 +603,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						goto endofheader;
 					default:
 						LOG( L_ERR , "ERROR: parse_to : unexpected char [%c] "
-						"in status %d .\n",*tmp,status);
+						"in status %d: <<%.*s>> .\n",*tmp,status, tmp-buffer, buffer);
+						/* "in status %d .\n",*tmp,status); */
 						goto error;
 				}
 				break;
