@@ -120,9 +120,9 @@ struct module_exports* mod_register()
 	     /*
 	      * Column names of table location
 	      */
-	db_key_t keys1[] = {"user", "contact", "q", "expire", "opaque" };
-	db_key_t keys2[] = {"user", "q"};
-	db_key_t keys3[] = {"user", "contact"};
+	db_key_t keys1[] = {"username", "contact", "q", "expire", "opaque" };
+	db_key_t keys2[] = {"username", "q"};
+	db_key_t keys3[] = {"username", "contact"};
 	db_key_t keys4[] = {"contact", "q"};
 
 	db_val_t vals1[] = { 
