@@ -379,9 +379,11 @@ inline static void final_response_handler( void *attr)
 		&& t->is_invite
 		/* parallel forking does not allow silent state discarding */
 		&& t->nr_of_outgoings==1
-		/* on_no_reply handler not installed -- serial forking could occur 
-		   otherwise */
+		/* on_negativ reply handler not installed -- serial forking 
+		 * could occur otherwise */
 		&& t->on_negative==0
+		/* the same for FAILURE callbacks */
+		&& (t->tmcb_hl.reg_types&(TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE))==0
 		/* something received -- we will not be silent on error */
 		&& t->uac[r_buf->branch].last_received>0
 		/* don't go silent if disallowed globally ... */
