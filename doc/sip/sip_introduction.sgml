@@ -954,6 +954,32 @@ Warning: 392 195.37.77.101:5060 "Noisy feedback tells:
 		    show how the situation changes when the proxy puts a Record-Route header field
 		    into the message.
 		</simpara>
+		<section>
+		    <title>Strict versus Loose Routing</title>
+		    <simpara>
+			The way how record routing works has evolved. Record routing according to
+			&rfc2643; rewrote the Request-URI. That means the Request-URI always
+			contained &uri; of the next hop (which can be either next proxy server which
+			inserted Record-Route header field or destination user agent). Because of
+			that it was necesarry to save the original Request-URI as the last Route
+			header field. This approach is called <emphasis>strict routing</emphasis>.
+		    </simpara>
+		    <simpara>
+			<emphasis>Loose routing</emphasis>, as specified in &rfc3261;, works in a
+			little bit different way. The Request-URI is no more overwritten, it always
+			contains &uri; of the destination user agent. If there are any Route header
+			field in a message, than the message is sent to the &uri; from the topmost
+			Route header field. This is significant change--Request-URI doesn't
+			necessarily contain &uri to which the request will be sent. In fact, loose
+			routing is very similar to IP source routing.
+		    </simpara>
+		    <simpara>
+			Because transit from strict routing to loose routing would break backwards
+			compatibility and older user agents wouldn't work, it is necesarry to make
+			loose routing backwards compatible. The backwards compatibility
+			unfortunately adds a lot of overhead and is often source of major problems.
+		    </simpara>
+		</section>
 	    </section>
 	    <section id="sec-event-subscription-and-notification">
 		<title>Event Subscription And Notification</title>
