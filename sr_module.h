@@ -125,6 +125,7 @@ int register_builtin_modules();
 int register_module(struct module_exports*, char*,  void*);
 int load_module(char* path);
 cmd_function find_export(char* name, int param_no, int flags);
+cmd_function find_mod_export(char* mod, char* name, int param_no, int flags);
 struct sr_module* find_module(void *f, cmd_export_t** cmd);
 void destroy_modules();
 int init_child(int rank);

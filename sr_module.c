@@ -223,9 +223,9 @@ skip:
 
 
 
-/* searches the module list and returns a pointer to the "name" function or
+/* searches the module list and returns pointer to the "name" function or
  * 0 if not found 
- * flags parameter os OR value of all flags that must match
+ * flags parameter is OR value of all flags that must match
  */
 cmd_function find_export(char* name, int param_no, int flags)
 {
@@ -247,6 +247,39 @@ cmd_function find_export(char* name, int param_no, int flags)
 	DBG("find_export: <%s> not found \n", name);
 	return 0;
 }
+
+
+
+/*
+ * searches the module list and returns pointer to "name" function in module "mod"
+ * 0 if not found
+ * flags parameter is OR value of all flags that must match
+ */
+cmd_function find_mod_export(char* mod, char* name, int param_no, int flags)
+{
+	struct sr_module* t;
+	cmd_export_t* cmd;
+
+	for (t = modules; t; t = t->next) {
+		if (strcmp(t->exports->name, mod) == 0) {
+			for (cmd = t->exports->cmds;  cmd && cmd->name; cmd++) {
+				if ((strcmp(name, cmd->name) == 0) &&
+				    (cmd->param_no == param_no) &&
+				    ((cmd->flags & flags) == flags)
+				   ){
+					DBG("find_mod_export: found <%s> in module %s [%s]\n",
+					    name, t->exports->name, t->path);
+					return cmd->function;
+				}
+			}
+		}
+	}
+
+	DBG("find_mod_export: <%s> in module %s not found\n", name, mod);
+	return 0;
+}
+
+
 
 
 void* find_param_export(char* mod, char* name, modparam_t type)
