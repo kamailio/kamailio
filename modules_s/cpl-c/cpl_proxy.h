@@ -466,7 +466,9 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 			} else if (i==0) {
 				LOG(L_ERR,"ERROR:cpl-c:run_proxy: processed INVITE is a "
 					"retransmission!\n");
-				goto runtime_error;
+				/* instead of generating an error is better just to break the
+				 * script by returning EO_SCRIPT */
+				return EO_SCRIPT;
 			}
 		}
 
