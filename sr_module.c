@@ -108,3 +108,13 @@ struct sr_module* find_module(void* f, int *i)
 	}
 	return 0;
 }
+
+
+
+void destroy_modules()
+{
+	struct sr_module* t;
+
+	for(t=modules;t;t=t->next)
+		if  ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
+}

@@ -11,6 +11,7 @@
 typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
 typedef  int (*fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
+typedef void (*destroy_function)();
 
 struct module_exports{
 	char* name; /* null terminated module name */
@@ -22,7 +23,11 @@ struct module_exports{
 	int cmd_no; /* number of registered commands 
 				   (size of cmd_{names,pointers}*/
 	response_function response_f; /* function used for responses,
-											   returns yes or no */
+											   returns yes or no;
+									can be null */
+	destroy_function destroy_f; /*function called when the module should
+								  be "destroyed", e.g: on ser exit;
+								  can be null */
 };
 
 struct sr_module{
@@ -37,6 +42,7 @@ struct sr_module* modules; /* global module list*/
 int load_module(char* path);
 cmd_function find_export(char* name, int param_no);
 struct sr_module* find_module(void *f, int* r);
+void destroy_modules();
 
 
 /* modules function prototypes:

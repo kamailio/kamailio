@@ -28,6 +28,7 @@ static int w_t_put_on_wait(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
+static void tm_destroy_module();
 
 static struct module_exports nm_exports= {
 	"tm_module",
@@ -71,7 +72,8 @@ static struct module_exports nm_exports= {
 				0
 		},
 	8,
-	(response_function) t_on_reply_received
+	(response_function) t_on_reply_received,
+	(destroy_function) tm_destroy_module
 };
 
 
@@ -214,12 +216,15 @@ static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
 	return t_send_reply(msg, (unsigned int) str, str2);
 }
 
+
 static int w_t_put_on_wait(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_put_on_wait(msg);
 }
 
 
-
-
+static void tm_destroy_module()
+{
+	LOG(L_CRIT, "BUG: tm_destroy_module not implemented yet -FIX FIX FIX\n");
+}
 

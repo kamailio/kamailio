@@ -480,7 +480,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
 /*   returns 1 if everything was OK or -1 for error
   */
-int t_put_on_wait(  struct sip_msg  *p_msg  )
+int t_put_on_wait(  struct sip_msg  *p_msg)
 {
    struct timer_link *tl;
    unsigned int i;
@@ -1221,7 +1221,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
 
    /* sends the ACK message to the same destination as the INVITE */
    udp_send( ack_buf, p-ack_buf, (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
-   DBG("DEBUG: t_build_and_send_ACK: ACK sent\n",);
+   DBG("DEBUG: t_build_and_send_ACK: ACK sent\n");
 
    /* free mem*/
    if (ack_buf) free( ack_buf );
