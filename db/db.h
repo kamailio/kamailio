@@ -30,6 +30,7 @@
 #define DB_H
 
 #include "db_key.h"
+#include "db_op.h"
 #include "db_val.h"
 #include "db_con.h"
 #include "db_row.h"
@@ -61,6 +62,7 @@ typedef void (*db_close_f) (db_con_t* _h);
  * Query table for specified rows
  * _h: structure representing database connection
  * _k: key names
+ * _op: conditions
  * _v: values of the keys that must match
  * _c: column names to return
  * _n: nmber of key=values pairs to compare
@@ -70,9 +72,15 @@ typedef void (*db_close_f) (db_con_t* _h);
  *     NULL if there is no result
  */
 typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k, 
-			   db_val_t* _v, db_key_t* _c, 
-			   int _n, int _nc,
+			   db_op_t* _op, db_val_t* _v, 
+			   db_key_t* _c, int _n, int _nc,
 			   db_key_t _o, db_res_t** _r);
+
+
+/*
+ * Raw SQL query, database specific !
+ */
+typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
 
 
 /*
@@ -97,23 +105,25 @@ typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
  * Delete a row from the specified table
  * _h: structure representing database connection
  * _k: key names
+ * _o: operators
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
 
 /*
  * Update some rows in the specified table
  * _h: structure representing database connection
  * _k: key names
+ * _o: operators
  * _v: values of the keys that must match
  * _uk: updated columns
  * _uv: updated values of the columns
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v,
+typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 			    db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 
@@ -123,6 +133,7 @@ typedef struct db_func{
 	db_init_f       init;        /* Initialize dabase connection */
 	db_close_f      close;       /* Close database connection */
 	db_query_f      query;       /* query a table */
+	db_raw_query_f  raw_query;   /* Raw query - SQL */
 	db_free_query_f free_query;  /* Free a query result */
 	db_insert_f     insert;      /* Insert into table */
 	db_delete_f     delete;      /* Delete from table */ 
@@ -143,6 +154,7 @@ extern db_func_t dbf;
 #define db_init       (dbf.init)
 #define db_close      (dbf.close)
 #define db_query      (dbf.query)
+#define db_raw_query  (dbf.raw_query)
 #define db_free_query (dbf.free_query)
 #define db_insert     (dbf.insert)
 #define db_delete     (dbf.delete)

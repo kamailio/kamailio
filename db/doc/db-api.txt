@@ -54,7 +54,7 @@ This type represents a database key. Every time you need to specify a key
 value, this type should be used. In fact, this type is identical to const 
 char*.
 
-1.2.2 Definion
+1.2.2 Definition
    
    typedef const char* db_key_t;
 
@@ -285,6 +285,21 @@ Use this macro if you need to obtain the number of rows in the result
 
 Example: int n = RES_ROW_N(res);
 
+
+1.7 Type db_op_t
+
+1.7.1 Description
+
+This type represents an expression operator. In fact, this type is 
+identical to const char*.
+
+1.7.2 Definition
+   
+   typedef const char* db_op_t;
+
+1.7.3 Macros
+
+There are no macros (It is not needed).
 
 
 2 Functions
