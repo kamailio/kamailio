@@ -1,0 +1,524 @@
+$Id$
+
+Generic Database Interface
+--------------------------
+
+This is a generic database interface for modules that need to utilize a 
+database. The interface should be used by all modules that access database.
+The interface will be independent of the underlying database server.
+
+Notes:
+
+If possible, use predefined macros if you need to access any structure 
+attributes.  
+
+For additional description, see comments in sources of mysql module.
+
+If you want to see more complicated examples of how the API could be used, 
+see sources of dbexample, usrloc or auth modules.
+
+
+1 Data types
+
+There are several new data types. All of them are defined in header file db.h,
+a client must include the header file to be able to use them.
+
+1.1 Type db_con_t
+
+1.1.1 Description
+
+This type represents a database connection, all database functions (described 
+below) use a variable of this type as one argument. In other words, variable 
+of db_con_t type serves as a handle for a particular database connection.
+
+1.1.2 Definition
+
+   typedef struct db_con {
+        char* table;     /* Default table to use */
+        void* con;       /* Database connection */
+        void* res;       /* Result of previous operation */
+        void* row;       /* Internal, not for public use */
+        int connected;   /* TRUE if connection is established */
+   } db_con_t;
+
+1.1.3 Macros
+
+There are no macros for db_con_t type.
+
+
+1.2 Type db_key_t
+
+1.2.1 Description
+
+This type represents a database key. Every time you need to specify a key 
+value, this type should be used. In fact, this type is identical to const 
+char*.
+
+1.2.2 Definion
+   
+   typedef const char* db_key_t;
+
+1.2.3 Macros
+
+There are no macros (It is not needed).
+
+
+1.3 Type db_type_t
+
+1.3.1 Description
+
+Each cell in a database table can be of a different type. To distinguish
+among these types, the db_type_t enumeration is used. Every value of the
+enumeration represents one datatype that is recognized by the database
+API. This enumeration is used in conjunction with db_type_t. For more
+information, see the next section.
+
+1.3.2 Definition
+
+   typedef enum {
+       DB_INT,       /* Integer number */
+       DB_DOUBLE,    /* Decimal number */
+       DB_STRING,    /* String */
+       DB_DATETIME   /* Date and time */
+   } db_type_t;
+
+1.3.3 Macros
+
+There are no macros.
+
+
+1.4 Type db_val_t
+
+1.4.1 Description
+
+This structure represents a value in the database. Several datatypes are
+recognized and converted by the database API:
+
+DB_INT      - Value in the database represents an integer number
+DB_DOUBLE   - Value in the database represents a decimal number
+DB_STRING   - Value in the database represents a string
+DB_DATETIME - Value in the database represents date and time
+
+These datatypes are automaticaly recognized, converted from internal database
+representation and stored in the variable of corresponding type.
+
+1.4.2 Definition
+
+    typedef struct db_val {
+         db_type_t type;              /* Type of the value */
+         int nul;                     /* NULL flag */
+         union {                      
+             int int_val;             /* Integer value */
+             double double_val;       /* Double value */
+             time_t time_val;         /* Unix time_t value */
+             const char* string_val;  /* Zero terminated string */
+         } val;
+    } db_val_t;
+
+1.4.3 Macros
+
+Note: All macros expect reference to db_val_t variable as the parameter.
+
+1.4.3.1 VAL_TYPE(value) Macro
+
+Use this macro if you need to set/get the type of the value
+
+Example: VAL_TYPE(val) = DB_INT;
+         if (VAL_TYPE(val) == DB_FLOAT) ...
+
+1.4.3.2 VAL_NULL(value) Macro
+
+Use this macro if you need to set/get the null flag. Non-zero flag means that 
+the corresponding cell in the database contained no data (NULL value in MySQL
+terminology).
+
+Example: if (VAL_NULL(val) == 1) {
+             printf("The cell is NULL");
+         }
+
+1.4.3.3 VAL_INT(value) Macro
+
+Use this macro if you need to access integer value in the db_val_t structure.
+
+Example: if (VAL_TYPE(val) == DB_INT) {
+             printf("%d", VAL_INT(val));
+         }
+
+1.4.3.4 VAL_DOUBLE(value) Macro 
+
+Use this macro if you need to access double value in the db_val_t structure.
+
+Example: if (VAL_TYPE(val) == DB_DOUBLE) {
+             printf("%f", VAL_DOUBLE(val));
+         }
+
+1.4.3.5 VAL_TIME(value) Macro 
+
+Use this macro if you need to access time_t value in the db_val_t structure.
+
+Example: time_t tim;
+         if (VAL_TYPE(val) == DB_DATETIME) {
+             tim = VAL_TIME(val);
+         }
+
+1.4.3.6 VAL_STRING(value) Macro 
+
+Use this macro if you need to access string value in the db_val_t structure.
+
+Example: if (VAL_TYPE(val) == DB_STRING) {
+             printf("%s", VAL_STRING(val));
+         }
+
+
+1.5 Type db_row_t
+
+1.5.1 Description
+
+This type represents one row in a database table. In other words, the row is an
+array of db_val_t variables, where each db_val_t variable represents exactly 
+one cell in the table.
+
+1.5.2 Definition
+
+   typedef struct db_row {
+       db_val_t* values;    /* Array of values in the row */
+       int n;               /* Number of values in the row */
+   } db_val_t;
+
+1.5.3 Macros
+
+1.5.3.1 ROW_VALUES(row) Macro 
+
+Use this macro to get pointer to the array of db_val_t structures.
+
+Example: db_val_t* v = ROW_VALUES(row);
+         if (VAL_TYPE(v) == DB_INT) ....
+
+1.5.3.2 ROW_N(row) Macro 
+
+Use this macro to get number of cells in the row.
+
+Example: db_val_t* val = ROW_VALUES(row);
+         for(i = 0; i < ROW_N(row); i++) {
+             switch(VAL_TYPE(val + i)) {
+             case DB_INT: ...; break;
+             case DB_DOUBLE: ...; break;
+             ...
+             }
+         }
+
+
+1.6 Type db_res_t
+
+1.6.1 Description
+
+This type represents a result returned by db_query function (see below). The 
+result can consist of zero or more rows (see db_row_t description).
+
+Note: A variable of type db_res_t returned by db_query function uses dynamicaly
+      allocated memory, don't forget to call db_free_query if you don't need 
+      the variable anymore. You will encounter memory leaks if you fail to do 
+      this !
+
+In addition to zero or more rows, each db_res_t object contains also an array 
+of db_key_t objects. The objects represent keys (names of columns).
+
+1.6.2 Definition
+
+   typedef struct db_res {
+       struct {
+           db_key_t* keys;    /* Array of column names */
+           db_type_t* types;  /* Array of column types */
+           int n;             /* Number of columns */
+       } col;
+       struct db_row* rows;   /* Array of rows */
+       int n;                 /* Number of rows */
+   } db_res_t;
+
+1.6.3 Macros
+
+1.6.3.1 RES_NAMES(res) Macro 
+
+Use this macro if you want to obtain pointer to the array of cell names.
+
+Example: db_key_t* column_names = ROW_NAMES(row);
+
+1.6.3.2 RES_COL_N(res) Macro 
+
+Use this macro if you want to get the number of columns in the result.
+
+Example: int ncol = RES_COL_N(res)
+         for(i = 0; i < ncol; i++) {
+             /* do something with the column */
+         }
+
+1.6.3.3 RES_ROWS(res) Macro 
+
+Use this macro if you need to obtain pointer to array of rows.
+
+Example: db_row_t* rows = RES_ROWS(res);
+ 
+1.6.3.4 RES_ROW_N(res) Macro 
+
+Use this macro if you need to obtain the number of rows in the result
+
+Example: int n = RES_ROW_N(res);
+
+
+
+2 Functions
+
+There are several functions that implement the database API logic. All function
+names start with db_ prefix, except bind_dbmod. bind_dbmod function is 
+implemented in db.c file, all other functions are implemented in a standalone 
+database module. You will need to compile and link db.c in your module to be 
+able to use the bind_dbmod function. Detailed function description follows.
+
+
+2.1 Function bind_dbmod
+
+2.1.1 Description
+
+This function is special, it's only purpose is to call find_export function in
+the ser core and find addresses of all other functions (starting with db_
+prefix). This function MUST be called __FIRST__ !
+
+2.1.2 Prototype
+
+   int bind_dbmod(void);
+
+2.1.3 Parameters
+
+The function takes no parameters.
+
+2.1.4 Return Value
+
+The function returns TRUE if it was able to find addresses of all other 
+functions, otherwise FALSE is returned.
+
+
+2.2 Function db_init
+
+2.2.1 Description
+
+Use this function to initialize the database API and open a new database 
+connection. This function must be called after bind_dbmod but before any other 
+function is called.
+
+2.2.2 Prototype
+
+   db_con_t* db_init(const char* _sql_url);
+
+2.2.3 Parameters
+
+The function takes one parameter, the parameter must contain database 
+connection URL. The URL is of the form 
+sql://username:password@host:port/database where:
+
+username: Username to use when logging into database (optional).
+password: password if it was set (optional)
+host:     Hosname or IP address of the host where database server lives 
+          (mandatory)
+port:     Port number of the server if the port differs from default value 
+          (optional)
+database: If the database server supports multiple databases, you must specify 
+          name of the database (optional).
+
+
+2.2.4 Return Value
+
+The function returns pointer to db_con_t* representing the connection if it was
+successful, otherwise NULL is returned.
+
+
+2.3 Function db_close
+
+2.3.1 Description
+
+The function closes previously open connection and frees all previously 
+allocated memory. The function db_close must be the very last function called.
+
+
+2.3.2 Prototype
+
+   void db_close(db_con_t* _h);
+
+2.3.3 Parameters
+
+The function takes one parameter, this parameter is a pointer to db_con_t
+structure representing database connection that should be closed.
+
+2.3.4 Return Value
+
+Function doesn't return anything.
+
+
+2.4 Function db_query
+
+2.4.1 Description
+
+This function implements SELECT SQL directive.
+
+2.4.2 Prototype
+
+   int db_query(db_con_t* _h, db_key_t* _k,
+                db_val_t* _v, db_key_t* _c, 
+	        int _n, int _nc, db_res_t** _r);
+
+2.4.3 Parameters
+
+The function takes 7 parameters:
+_h: Database connection handle
+_k: Array of column names that will be compared and their values must match
+_v: Array of values, columns specified in _k parameter must match these values
+_c: Array of column names that you are interested in
+_n: Number of key-value pairs to match in _k and _v parameters
+_nc: Number of columns in _c parameter
+_r: Address of variable where pointer to the result will be stored
+
+If _k and _v parameters are NULL and _n is zero, you will get the whole table.
+if _c is NULL and _nc is zero, you will get all table columns in the result
+
+_r will point to a dynamically allocated structure, it is neccessary to call
+db_free_query function once you are finished with the result.
+
+Strings in the result are not duplicated, they will be discarded if you call
+db_free_query, make a copy yourself if you need to keep it after db_free_query.
+
+You must call db_free_query _BEFORE_ you can call db_query again !
+
+2.4.4 Return Value
+
+The function returns TRUE if everything is OK, otherwise FALSE is returned.
+
+
+2.5 Function db_free_query
+
+2.5.1 Description
+
+This function frees all memory allocated previously in db_query, it is
+neccessary to call this function on a db_res_t structure if you don't need the
+structure anymore. You must call this function _BEFORE_ you call db_query
+again !
+
+2.5.2 Prototype
+
+   int db_free_query(db_con_t* _h, db_res_t* _r);
+
+2.5.3 Parameters
+
+The function takes 2 parameters:
+_h: Database connection handle
+_r: Pointer to db_res_t structure to destroy
+
+2.5.4 Return Value
+
+The function returns TRUE if everything is OK, otherwise the function returns
+FALSE.
+
+
+2.6 Function db_insert
+
+2.6.1 Description
+
+This function implements INSERT SQL directive, you can insert one or more
+rows in a table using this function.
+
+2.6.2 Prototype
+
+   int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+
+2.6.3 Parameters
+
+The function takes 4 parameters:
+_h: Database connection handle
+_k: Array of keys (column names) 
+_v: Array of values for keys specified in _k parameter
+_n: Number of keys-value pairs int _k and _v parameters
+
+2.6.4 Return Value
+
+The function returns TRUE if everything is OK, otherwise the function returns
+FALSE.
+
+
+2.7 Function db_delete
+
+2.7.1 Description
+
+This function implements DELETE SQL directive, it is possible to delete one or
+more rows from a table.
+
+2.7.2 Prototype
+
+   int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+
+2.7.3 Parameters
+
+The function takes 4 parameters:
+_h: Database connection handle
+_k: Array of keys (column names) that will be matched
+_v: Array of values that the row must match to be deleted
+_n: Number of keys-value parameters in _k and _v parameters
+
+If _k is NULL and _v is NULL and _n is zero, all rows are deleted (table will
+be empty).
+
+2.7.4 Return Value
+
+The function returns TRUE fi everything is OK, otherwise the function returns
+FALSE.
+
+
+2.8 Function db_update
+
+2.8.1 Description
+
+The function implements UPDATE SQL directive. It is possible to modify one
+or more rows in a table using this function.
+
+2.8.2 Prototype
+
+   int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
+	         db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+
+2.8.3 Parameters
+
+The function takes 7 parameters:
+_h: Database connection handle
+_k: Array of keys (column names) that will be matched
+_v: Array of values that the row must match to be modified
+_uk: Array of keys (column names) that will be modified
+_uv: New values for keys specified in _k parameter
+_n: Number of key-value pairs in _k and _v parameters
+_un: Number of key-value pairs in _uk and _uv parameters 
+
+2.8.4 Return Value
+
+The function returns TRUE if everything is OK, otherwise the function returns
+FALSE.
+
+
+2.9 Function db_use_table
+
+2.9.1 Description
+
+The function db_use_table takes a table name and stores it db_con_t structure.
+All subsequent operations (insert, delete, update, query) are performed on
+that table.
+
+2.9.2 Prototype
+
+   int db_use_table_f(db_con_t* _h, const char* _t);
+
+2.9.3 Parameters
+
+The function takes 2 parameters:
+_h: Database connection handle
+_t: Table name
+
+2.9.4 Return Value
+
+The function returns TRUE if everything is OK, otherwise the function returns
+FALSE.
+
