@@ -185,6 +185,7 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_
  */
 auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid)
 {
+	int res = AUTHORIZED;
 	auth_body_t* c;
 
 	c = (auth_body_t*)((_h)->parsed);
@@ -198,22 +199,21 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h, str* _rpid)
 			      * and CANCEL must have the same CSeq as the request 
 			      * to be cancelled)
 			      */
-			goto mark;
 		} else {
 			DBG("post_auth(): Response is OK, but nonce is stale\n");
 			c->stale = 1;
-			return NOT_AUTHORIZED;
+			res = NOT_AUTHORIZED;
 		}
 	}
- mark:
+
 	if (mark_authorized_cred(_m, _h) < 0) {
 		LOG(L_ERR, "post_auth(): Error while marking parsed credentials\n");
 		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
 			LOG(L_ERR, "post_auth(): Error while sending 500 reply\n");
 		}
-		return ERROR;
+		res = ERROR;
 	}
 
 	save_rpid(_rpid);
-	return AUTHORIZED;
+	return res;
 }
