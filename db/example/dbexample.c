@@ -96,7 +96,7 @@ struct module_exports* mod_register()
 	     /*
 	      * Column names of table location
 	      */
-	db_key_t keys1[] = {"user", "contact", "q", "expire" };
+	db_key_t keys1[] = {"user", "contact", "q", "expire", "opaque" };
 	db_key_t keys2[] = {"user", "q"};
 	db_key_t keys3[] = {"user", "contact"};
 	db_key_t keys4[] = {"contact", "q"};
@@ -105,21 +105,24 @@ struct module_exports* mod_register()
 		{ DB_STRING  , 0, { .string_val = "foo@bar.com" }              },
 		{ DB_STR     , 0, { .str_val    = { "real@foo.bar.com", 18 } } },
 		{ DB_DOUBLE  , 0, { .double_val = 1.2 }                        },
-		{ DB_DATETIME, 0, { .time_val   = 439826493 }                  }
+		{ DB_DATETIME, 0, { .time_val   = 439826493 }                  },
+		{ DB_BLOB    , 0, { .blob_val   = { "hdslgkhas\0glksf", 17 } } }
 	};
 
 	db_val_t vals2[] = { 
 		{ DB_STRING  , 0, { .string_val = "foo2@bar2.com" }              },
 		{ DB_STR     , 0, { .str_val    = { "real2@foo.bar2.com", 18 } } },
 		{ DB_DOUBLE  , 0, { .double_val = 1.3 }                          },
-		{ DB_DATETIME, 0, { .time_val   = 12345 }                        }
+		{ DB_DATETIME, 0, { .time_val   = 12345 }                        },
+		{ DB_BLOB    , 0, { .blob_val   = { "\0a\0balkdfj", 10 }       } }
 	};
 
 	db_val_t vals3[] = { 
 		{ DB_STRING  , 0, { .string_val = "foo3@bar3.com" }              },
 		{ DB_STR     , 0, { .str_val    = { "real3@foo.bar3.com", 18 } } },
 		{ DB_DOUBLE  , 0, { .double_val = 1.5 }                          },
-		{ DB_DATETIME, 0, { .time_val   = 123456 }                       }
+		{ DB_DATETIME, 0, { .time_val   = 123456 }                       },
+		{ DB_BLOB    , 0, { .blob_val   = { "halgkasdg\'", 10 }        } }
 	};
 
 	db_val_t vals4[] = {
@@ -181,17 +184,17 @@ struct module_exports* mod_register()
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals1, 4) < 0) {
+	if (db_insert(h, keys1, vals1, 5) < 0) {
 		fprintf(stderr, "Error while inserting line 1\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals2, 4) < 0) {
+	if (db_insert(h, keys1, vals2, 5) < 0) {
 		fprintf(stderr, "Error while inserting line 2\n");
 		return &dbex_exports;
 	}
 
-	if (db_insert(h, keys1, vals3, 4) < 0) {
+	if (db_insert(h, keys1, vals3, 5) < 0) {
 		fprintf(stderr, "Error while inserting line 3\n");
 		return &dbex_exports;
 	}
