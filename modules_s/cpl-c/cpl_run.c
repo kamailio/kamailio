@@ -36,6 +36,7 @@
 #include "../../dprint.h"
 #include "../../parser/msg_parser.h"
 #include "../../data_lump_rpl.h"
+#include "../tm/tm_load.h"
 #include "CPL_tree.h"
 #include "loc_set.h"
 #include "cpl_utils.h"
@@ -76,14 +77,9 @@
 	((NR_OF_KIDS(_node_)==0)?DEFAULT_ACTION:(_node_)+KID_OFFSET(_node_,0))
 
 
-extern int (*sl_send_rpl)(struct sip_msg*, char*, char*);
-extern char *log_dir;
-
-/* include all inline functions for processing the switches */
-#include "cpl_switches.h"
-/* include inline function for running proxy node */
-#include "cpl_proxy.h"
-
+extern int    (*sl_send_rpl)(struct sip_msg*, char*, char*);
+extern char   *log_dir;
+extern struct tm_binds cpl_tmb;
 
 
 
@@ -120,6 +116,7 @@ error:
 
 void free_cpl_interpreter(struct cpl_interpreter *intr)
 {
+	DBG("******** freeing -> intr=%p\n",intr);
 	if (intr) {
 		if (intr->script.s)
 			shm_free( intr->script.s);
@@ -486,7 +483,7 @@ inline unsigned char *run_reject( struct cpl_interpreter *intr )
 		}
 	}
 
-	if (sl_send_rpl( intr->msg, (char*)(int)status, reason_s )<0) {
+	if ( cpl_tmb.t_reply(intr->msg, (int)status, reason_s ) ) {
 		LOG(L_ERR,"ERROR:run_reject: unable to send reject reply!\n");
 		goto runtime_error;
 	}
@@ -581,9 +578,9 @@ inline unsigned char *run_redirect( struct cpl_interpreter *intr )
 
 	/* send the reply */
 	if (permanent)
-		i = sl_send_rpl( intr->msg, (char*)301, "Moved permanently" );
+		i = cpl_tmb.t_reply( intr->msg, (int)301, "Moved permanently" );
 	else
-		i = sl_send_rpl( intr->msg, (char*)302, "Moved temporarily" );
+		i = cpl_tmb.t_reply( intr->msg, (int)302, "Moved temporarily" );
 	if (i<0) {
 		LOG(L_ERR,"ERROR:run_redirect: unable to send redirect reply!\n");
 		goto runtime_error;
@@ -806,13 +803,23 @@ static inline int run_default( struct cpl_interpreter *intr )
 			return SCRIPT_RUN_ERROR;
 		}
 	} else {
-		/* case 4 and 5 -> still cloudy :-( */
-		LOG(L_ERR,"ERROR:cpl_c:run_default: case 4 or 5 reached -"
-			"unimplemented\n");
-		return SCRIPT_RUN_ERROR;
+		/* case 4 : proxy operation previously taken -> return whatever the 
+		 * "best" response is of all accumulated responses to the call to this
+		 * point, according to the rules of the underlying signalling
+		 * protocol. */
+		/* we will let ser to choose and forward one of the replies -> for this
+		 * nothinh must be done */
+		return SCRIPT_END;
 	}
 	return SCRIPT_RUN_ERROR;
 }
+
+
+
+/* include all inline functions for processing the switches */
+#include "cpl_switches.h"
+/* include inline function for running proxy node */
+#include "cpl_proxy.h"
 
 
 

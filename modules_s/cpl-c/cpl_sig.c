@@ -55,7 +55,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* if it's the first time when this sip_msg is proxyed, use the first addr
 	 * in loc_set to rewrite the RURI */
-	if (!flag&CPL_PROXY_DONE) {
+	if (!(flag&CPL_PROXY_DONE)) {
 		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Request-URI with "
 			"<%s>\n",(*locs)->addr.uri.s);
 		/* build a new action for setting the URI */
@@ -76,6 +76,8 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* add the rest of the locations as branches */
 	while(*locs) {
+		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: appending brach "
+			"<%s>\n",(*locs)->addr.uri.s);
 		if(append_branch(msg,(*locs)->addr.uri.s,(*locs)->addr.uri.len-1)==-1){
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: failed when "
 				"appending branch <%s>\n",(*locs)->addr.uri.s);
@@ -87,9 +89,10 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		*locs = foo;
 	}
 
-	/* do t_relay*/
-	if (cpl_tmb.t_relay( msg, 0, 0)==-1) {
-		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_relay failed\n");
+	/* do t_forward */
+	if (cpl_tmb.t_forward_nonack(msg, 0/*no proxy*/)==-1) {
+		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_forward_nonack "
+			"failed !\n");
 		goto error;
 	}
 

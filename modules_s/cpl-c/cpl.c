@@ -61,12 +61,10 @@ static char *DB_URL      = 0;  /* database url */
 static char *DB_TABLE    = 0;  /* */
 static pid_t aux_process = 0;  /* pid of the private aux. process */
 
-int  cache_timeout = 5;
-cmd_function sl_send_rpl = 0;
-char *log_dir     = 0;    /*directory where the user log should be dumped*/
-int   cpl_cmd_pipe[2];
+int    cache_timeout     = 5;
+char   *log_dir          = 0; /*directory where the user log should be dumped*/
+int    cpl_cmd_pipe[2];
 struct tm_binds cpl_tmb;
-
 
 /* this vars are used outside only for loading scripts */
 char *dtd_file     = 0;
@@ -219,13 +217,13 @@ static int cpl_init(void)
 		goto error;
 	}
 
-	/* bind the sl_send_reply function */
+	/* bind the sl_send_reply function
 	sl_send_rpl = find_export("sl_send_reply", 2, REQUEST_ROUTE);
 	if (sl_send_rpl==0) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot find \"sl_send_reply\" function! "
 			"Did you forget to load the sl module ?\n");
 		goto error;
-	}
+	}*/
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
@@ -233,9 +231,8 @@ static int cpl_init(void)
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */
-	if (load_tm( &cpl_tmb )==-1) 
+	if (load_tm( &cpl_tmb )==-1)
 		goto error;
-
 
 	/* register the fifo command */
 	if (register_fifo_cmd( cpl_loader, "LOAD_CPL", 0)!=1) {

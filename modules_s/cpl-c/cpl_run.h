@@ -30,6 +30,7 @@
 
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
+#include "../tm/t_hooks.h"
 
 #define SCRIPT_END               0
 #define SCRIPT_DEFAULT           1
@@ -61,6 +62,10 @@ struct cpl_interpreter {
 	int recv_time;         /* receiving time stamp */
 	struct sip_msg *msg;
 	struct location *loc_set;     /* location set */
+	/* pointers to the string-headers needed for switches; can point directly
+	 * into the sip_msg structure (if no proxy took places) or to private
+	 * buffers into shm_memory (after a proxy happend); if a hdr is copy into a
+	 * private buffer, a corresponding flag will be set (xxxx_DUPLICATED) */
 	str *ruri;
 	str *to;
 	str *from;
@@ -69,6 +74,19 @@ struct cpl_interpreter {
 	str *user_agent;
 	str *accept_language;
 	str *priority;
+	/* grouped date the is needed when doing proxy */
+	struct proxy_st {
+		unsigned short ordering;
+		unsigned short recurse;
+		/* I have to know which will be the last location that will be proxy */
+		struct location *last_to_proxy;
+		/* shortcuts to the subnodes */
+		unsigned char *busy;
+		unsigned char *noanswer;
+		unsigned char *redirect;
+		unsigned char *failure;
+		unsigned char *default_;
+	}proxy;
 };
 
 struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script);

@@ -36,6 +36,7 @@
 #include <gnome-xml/xmlmemory.h>
 #include <gnome-xml/parser.h>
 
+#include "../../parser/parse_uri.h"
 #include "../../dprint.h"
 #include "../../str.h"
 #include "../../ut.h"
@@ -334,13 +335,14 @@ error:
 int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 					unsigned int type, unsigned char *ptr,int *nr_of_attr)
 {
-	xmlAttrPtr    attr;
-	char          *val;
-	char          *end;
-	unsigned char *p;
-	unsigned char *offset;
-	int           nr_attr;
-	int           foo;
+	xmlAttrPtr     attr;
+	struct sip_uri uri;
+	char           *val;
+	char           *end;
+	unsigned char  *p;
+	unsigned char  *offset;
+	int            nr_attr;
+	int            foo;
 
 	nr_attr = 0;
 	p = ptr;
@@ -615,6 +617,13 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 						foo = strlen(val) + 1; /*copy also the \0 */
 						*((unsigned short*)(p)) = (unsigned short)foo;
 						p += 2;
+						/* check if it's a valid SIP URL -> just call
+						 * parse uri function and see if returns error ;-) */
+						if (parse_uri( val, foo-1, &uri)!=0) {
+							LOG(L_ERR,"ERROR:cpl-c:encript_node_attr: <%s> is "
+								"not a valid SIP URL\n",val);
+							goto error;
+						}
 						memcpy(p,val,foo);
 						p += foo;
 						break;
@@ -922,7 +931,6 @@ int encodeXML( str *xml, char* DTD_filename, str *bin)
 	dtd  = 0;
 
 	/* parse the xml */
-	xml->s[xml->len] = 0;
 	doc = xmlParseDoc( xml->s );
 	if (!doc) {
 		LOG(L_ERR,"ERROR:cpl:encryptXML:CPL script not parsed successfully\n");

@@ -48,7 +48,7 @@
 #include "cpl_loader.h"
 
 
-#define MAX_STAIC_BUF 256
+#define MAX_STATIC_BUF 256
 
 extern char *dtd_file;
 extern db_con_t* db_hdl;
@@ -113,7 +113,7 @@ int load_file( char *filename, str *xml)
 	}
 
 	/* get some memory */
-	xml->s = (char*)pkg_malloc( xml->len);
+	xml->s = (char*)pkg_malloc( xml->len+1/*null terminated*/ );
 	if (!xml->s) {
 		LOG(L_ERR,"ERROR:cpl-c:load_file: no more free pkg memory\n");
 		goto error;
@@ -138,6 +138,7 @@ int load_file( char *filename, str *xml)
 		LOG(L_ERR,"ERROR:cpl:load_file: couldn't read all file!\n");
 		goto error;
 	}
+	xml->s[xml->len] = 0;
 
 	return 1;
 error:
@@ -152,8 +153,8 @@ error:
 
 int cpl_loader( FILE *fifo_stream, char *response_file )
 {
-	static char user[MAX_STAIC_BUF];
-	static char cpl_file[MAX_STAIC_BUF];
+	static char user[MAX_STATIC_BUF];
+	static char cpl_file[MAX_STATIC_BUF];
 	int user_len;
 	int cpl_file_len;
 	str xml;
@@ -162,7 +163,7 @@ int cpl_loader( FILE *fifo_stream, char *response_file )
 	DBG("DEBUG:cpl_loader: FIFO commnad received!\n");
 
 	/* first line must be the username */
-	if (read_line( user, MAX_STAIC_BUF-1 , fifo_stream, &user_len )!=1 ||
+	if (read_line( user, MAX_STATIC_BUF-1 , fifo_stream, &user_len )!=1 ||
 	user_len<=0) {
 		LOG(L_ERR,"ERROR:cpl:cpl_loader: unable to read username from "
 			"FIFO command\n");
@@ -172,7 +173,7 @@ int cpl_loader( FILE *fifo_stream, char *response_file )
 	DBG("DEBUG:cpl_loader: user=%.*s\n",user_len,user);
 
 	/* second line must be the cpl file */
-	if (read_line( cpl_file, MAX_STAIC_BUF-1, fifo_stream, &cpl_file_len)!=1 ||
+	if (read_line( cpl_file, MAX_STATIC_BUF-1,fifo_stream,&cpl_file_len)!=1 ||
 	cpl_file_len<=0) {
 		LOG(L_ERR,"ERROR:cpl:cpl_loader: unable to read cpl_file name from "
 			"FIFO command\n");
