@@ -33,6 +33,8 @@ db_con_t* db_con;
 
 int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
+int child_init(int rank);
+
 
 static struct module_exports usrloc_exports= {	"usrloc", 
 						(char*[]) {
@@ -49,7 +51,7 @@ static struct module_exports usrloc_exports= {	"usrloc",
 						0,
 						destroy,
 						0,          /* oncancel function */
-						0
+						child_init
 };
 
 
@@ -88,10 +90,10 @@ struct module_exports* mod_register()
 
 #ifdef USE_DB
 	cache_use_connection(c, db_con);
-	printf("ahoj\n");
 
+	printf("loading cache...");
 	preload_cache(c);
-	printf("choj\n");
+	printf("Done.\n");
 
 #endif
 	return &usrloc_exports;
@@ -101,7 +103,6 @@ struct module_exports* mod_register()
 static int child_init(int rank)
 {
 #ifdef USE_DB
-	printf("bhoj\n");
 	if (rank != 0) {
 		printf("Initializing child %d\n", rank);
 		db_close(db_con);

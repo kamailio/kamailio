@@ -239,6 +239,7 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 	}
 
 	if (RES_ROW_N(res) == 0) {
+		printf("get_ha1(): no result\n");
 		return -1;
 	}
         ha1 = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
@@ -336,7 +337,7 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 	      */
 	print_cred(&cred);
 
-	printf("Before ge_a1\n");
+	printf("Before ge_ha1\n");
 	if (get_ha1(&cred.username, _realm, ha1) == -1) {
 		LOG(L_ERR, "authorize(): Error while getting A1 string for user %s\n", cred.username.s);
 		return -1;
