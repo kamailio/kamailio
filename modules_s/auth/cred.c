@@ -34,23 +34,6 @@
 
 
 /*
- * Unquote a string
- */
-static void unquote(str* _s)
-{
-	if (*(_s->s + _s->len - 1) == '\"') {
-		*(_s->s + _s->len - 1) = '\0';
-		_s->len--;
-	}
-	if (*(_s->s) == '\"') {
-		_s->s++;
-		_s->len--;
-	}
-}
-	
-
-
-/*
  * Unquote selected fields in structure cred
  * It is neccessary for digest calculation
  */
@@ -100,7 +83,6 @@ static int parse_digest_param(char* _s, cred_t* _c)
 	char* ptr;
 	char* name, *body;
 	int id, body_len;
-	char* at;
 
 #ifdef PARANOID
 	if ((!_s) || (!_c)) {
@@ -127,14 +109,8 @@ static int parse_digest_param(char* _s, cred_t* _c)
 
 	switch(id) {
 	case USERNAME_ID:
-		at = memchr(body, '@', body_len);
 		_c->username.s = body;
-		if (at) {
-			*at = '\0';
-			_c->username.len = at - body;
-		} else {
-			_c->username.len = body_len;
-		}
+		_c->username.len = body_len;
 		break;
 
 	case REALM_ID:
@@ -275,61 +251,61 @@ int print_cred(cred_t* _c)
 	}
 #endif
 
-	DBG("===Credentials:\n");
+	DBG("=== Credentials:\n");
 
 	switch(_c->scheme) {
 	case SCHEME_DIGEST:
-		DBG("   scheme=digest\n");
+		DBG("   Scheme = Digest\n");
 		break;
 	case SCHEME_UNKNOWN:
-		DBG("   scheme=unknown\n");
+		DBG("   Scheme = Unknown\n");
 		break;
 	default:
-		DBG("   scheme=%d\n", _c->scheme);
+		DBG("   Scheme = %d\n", _c->scheme);
 		break;
 	}
 
-	DBG("   username=%s\n", _c->username.s);
-	DBG("   realm=%s\n", _c->realm.s);
-	DBG("   nonce=%s\n", _c->nonce.s);
-	DBG("   uri=%s\n", _c->uri.s);
-	DBG("   response=%s\n", _c->response.s);
+	DBG("   username = '%s'\n", _c->username.s);
+	DBG("   realm = '%s'\n", _c->realm.s);
+	DBG("   nonce = '%s'\n", _c->nonce.s);
+	DBG("   uri = '%s'\n", _c->uri.s);
+	DBG("   response = '%s'\n", _c->response.s);
 
 	switch(_c->algorithm) {
 	case ALG_MD5:
-		DBG("   algorithm=MD5\n");
+		DBG("   algorithm = MD5\n");
 		break;
 	case ALG_MD5_SESS:
-		DBG("   algoritm=MD5-Session\n");
+		DBG("   algoritm = MD5-Session\n");
 		break;
 	case ALG_UNKNOWN:
-		DBG("   algorithm=unknown\n");
+		DBG("   algorithm = Unknown\n");
 		break;
 	default:
-		DBG("   algorithm=%d\n", _c->algorithm);
+		DBG("   algorithm = %d\n", _c->algorithm);
 		break;
 	}
 
-	DBG("   cnonce=%s\n", _c->cnonce.s);
-	DBG("   opaque=%s\n", _c->opaque.s);
+	DBG("   cnonce = '%s'\n", _c->cnonce.s);
+	DBG("   opaque = '%s'\n", _c->opaque.s);
 
 	switch(_c->qop) {
 	case QOP_AUTH:
-		DBG("   qop=auth\n");
+		DBG("   qop = auth\n");
 		break;
 	case QOP_AUTH_INT:
-		DBG("   qop=auth-int\n");
+		DBG("   qop = auth-int\n");
 		break;
 	case QOP_UNKNOWN:
-		DBG("   qop=unknown\n");
+		DBG("   qop = unknown\n");
 		break;
 	default:
-		DBG("   qop=%d\n", _c->qop);
+		DBG("   qop = %d\n", _c->qop);
 		break;
 	}
 
-	DBG("   nonce_count=%s\n", _c->nonce_count.s);
-	DBG("===\n");
+	DBG("   nonce_count = '%s'\n", _c->nonce_count.s);
+	DBG("=== /Credentials\n");
 	return 0;
 }
 
@@ -390,9 +366,9 @@ int validate_cred(cred_t* _c)
 		return -1;
 	}
 
-	if (_c->algorithm == ALG_UNSPECIFIED) _c->algorithm = ALG_MD5;
-
-	if (_c->algorithm != ALG_MD5) {
+	if (_c->algorithm == ALG_UNSPECIFIED) {
+		_c->algorithm = ALG_MD5;
+	} else if (_c->algorithm != ALG_MD5) {
 		LOG(L_ERR, "validate_cred(): Unsupported algorithm\n");
 		return -1;
 	}

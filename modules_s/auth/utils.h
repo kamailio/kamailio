@@ -6,6 +6,7 @@
 #define UTILS_H
 
 #include "../../msg_parser.h"
+#include "../../str.h"
 
 #define PARANOID
 
@@ -68,5 +69,14 @@ char* find_not_quoted(char* _b, char c);
  */
 char* eat_name(char* _b);
 
+/*
+ * Convert a string to its hex representation
+ */
+void to_hex(char* _dst, char *_src, int _src_len);
+
+/*
+ * Unquote a string
+ */
+void unquote(str* _s);
 
 #endif

@@ -19,91 +19,50 @@
 #include "../../mem/mem.h"
 #include <string.h>
 #include "auth_mod.h"
+#include "checks.h"
+#include "group.h"
+#include "nonce.h"
+#include "../../ut.h"
 
 
+/*
+ * Temporary buffer
+ */
 static char auth_hf[AUTH_HF_LEN];
 
 
+/*
+ * Database connection handle
+ */
 extern db_con_t* db_handle;
 
-static cred_t cred;
+
+auth_state_t state;
+
 
 extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
 
-static void get_username(str* _s);
-
-
-static void to_hex(char* _dst, char *_src, int _src_len)
-{
-	unsigned short i;
-	unsigned char j;
-    
-	for (i = 0; i < _src_len; i++) {
-		j = (_src[i] >> 4) & 0xf;
-		if (j <= 9)
-			_dst[i*2] = (j + '0');
-		else
-			_dst[i*2] = (j + 'a' - 10);
-		j = _src[i] & 0xf;
-		if (j <= 9)
-			_dst[i*2+1] = (j + '0');
-		else
-			_dst[i*2+1] = (j + 'a' - 10);
-	}
-}
-
 
 /*
- * Calculate nonce value
- * Nonce value consists of time in seconds since 1.1 1970 and
- * secret phrase
+ * Create {WWW,Proxy}-Authenticate header field
  */
-static inline void calc_nonce(char* _realm, char* _nonce)
+static inline void build_auth_hf(char* _realm, char* _buf, int* _len, int _qop, char* _hf_name)
 {
-	MD5_CTX ctx;
-	time_t t;
-	char bin[16];
-	
-	t = time(NULL) / 60;
-	to_hex(_nonce, (char*)&t, 8);
-	
-	MD5Init(&ctx);
-	MD5Update(&ctx, _nonce, 8);
-	MD5Update(&ctx, ":", 1);
-	MD5Update(&ctx, NONCE_SECRET, NONCE_SECRET_LEN);
-	MD5Final(bin, &ctx);
-	CvtHex(bin, _nonce + 8);
+	char nonce[NONCE_LEN + 1];
 
-	DBG("calc_nonce(): nonce=%s\n", _nonce);
-}
+	calc_nonce(nonce, time(NULL) + nonce_expire, state.nonce_retries, &secret);
+	nonce[NONCE_LEN] = '\0';
 
+	*_len = snprintf(_buf, AUTH_HF_LEN,
+			 "%s: Digest realm=\"%s\", nonce=\"%s\"%s%s\r\n", 
+			 _hf_name, 
+			 _realm, 
+			 nonce,
+			 (_qop) ? (", qop=\"auth\"") : (""),
+			 (state.stale) ? (", stale=true") : ("")
+			 );		
 
-/*
- * Create Proxy-Authenticate header field
- */
-static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len, char* _str2)
-{
-	     /* 8 hex chars time value + 32 hex char MD5 + '\0' */
-	char nonce[41];
-	calc_nonce(_realm, nonce);
-	nonce[40] = '\0';
-
-	     /* Currently we support qop=auth only */
-
-	     /*
-	      * FIXME: We prefer not to use qop since some clients claim
-	      *        to support that but they don't
-	      */
-	if (!strcasecmp("qop", _str2)) {
-		*_len = snprintf(_buf, AUTH_HF_LEN,
-				 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",qop=\"auth\",algorithm=MD5\r\n", 
-				 _realm, nonce);		
-	} else {
-		*_len = snprintf(_buf, AUTH_HF_LEN,
-				 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",algorithm=MD5\r\n", 
-				 _realm, nonce);
-	}
-	DBG("build_proxy_auth_hf(): %s\n", _buf);
+	DBG("build_auth_hf(): %s\n", _buf);
 }
 
 
@@ -127,24 +86,7 @@ static int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, i
 }
 
 
-
-/*
- * Challenge a user to send credentials
- */
-int challenge(struct sip_msg* _msg, char* _realm, char* _str2)
-{
-	int auth_hf_len;
-
-	build_proxy_auth_hf(_realm, auth_hf, &auth_hf_len, _str2);
-	if (send_resp(_msg, 407, MESSAGE_407, auth_hf, auth_hf_len) == -1) {
-		LOG(L_ERR, "challenge(): Error while sending response\n");
-		return -1;
-	}
-	return 0;
-}
-
-
-static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c)
+static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c, char* _hf_name)
 {
 	struct hdr_field* ptr;
 	int res;
@@ -157,7 +99,7 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c)
 
 	ptr = _msg->headers;
 	while(ptr) {
-		if (!strcasecmp(AUTH_RESPONSE, ptr->name.s)) {
+		if (!strcasecmp(_hf_name, ptr->name.s)) {
 			res = hf2cred(ptr, _c); 
 			if (res == -1) {
 				LOG(L_ERR, "find_auth_hf(): Error while parsing credentials\n");
@@ -184,25 +126,44 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c)
 }
 
 
-static int get_ha1(str* _user, char* _realm, char* _ha1)
+static int get_ha1(char* _user, char* _realm, char* _table, char* _ha1)
 {
 	db_key_t keys[] = {user_column, realm_column};
-	db_val_t vals[] = {{DB_STRING, 0, {.string_val = _user->s}},
+	db_val_t vals[] = {{DB_STRING, 0, {.string_val = _user}},
 			   {DB_STRING, 0, {.string_val = _realm}}
 	};
-	db_key_t col[] = {ha1_column};
+	db_key_t col[] = {pass_column};
 	db_res_t* res;
 
-	const char* ha1;
+	const char* pass;
+
+#ifdef USER_DOMAIN_HACK
+	char* at;
+	char buffer[256];
+#endif
+
 
 #ifdef PARANOID
-	if ((!_realm) || (!_user) || (!_ha1)) {
+	if ((!_realm) || (!_user) || (!_ha1) || (!_table)) {
 		LOG(L_ERR, "get_ha1(): Invalid parameter value\n");
 		return -1;
 	}
 #endif
-	
-	db_use_table(db_handle, table);
+
+#ifdef USER_DOMAIN_HACK
+	at = memchr(_user, '@', strlen(_user));
+	if (at) {
+		DBG("get_ha1(): @ found in username, removing domain part\n");
+		memcpy(buffer, _user, at - _user);
+		buffer[at - _user] = '\0';
+		VAL_STRING(vals) = buffer;
+		if (!calc_ha1) {
+			col[0] = pass_column_2;
+		}
+	}
+#endif
+
+	db_use_table(db_handle, _table);
 	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) == FALSE) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
@@ -213,8 +174,16 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 		db_free_query(db_handle, res);
 		return -1;
 	}
-        ha1 = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
-	memcpy(_ha1, ha1, strlen(ha1) + 1);
+        pass = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
+
+	if (calc_ha1) {
+		     /* Only plaintext passwords are stored in database,
+		      * we have to calculate HA1 */
+		DigestCalcHA1("md5", _user, _realm, pass, NULL, NULL, _ha1);
+		DBG("HA1 string calculated: %s\n", _ha1);
+	} else {
+		memcpy(_ha1, pass, strlen(pass) + 1);
+	}
 
 	db_free_query(db_handle, res);
 	return 0;
@@ -222,13 +191,11 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 
 
 
-int check_cred(cred_t* _cred, str* _method, char* _ha1)
+int check_response(cred_t* _cred, str* _method, char* _ha1)
 {
 	HASHHEX resp;
 	HASHHEX hent;
 	char* qop;
-	char nonce[33];
-
 
 #ifdef PARANOID
 	if ((!_cred) || (!_ha1) || (!_method)) {
@@ -256,8 +223,7 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 		break;
 	}
 		
-	calc_nonce(_cred->realm.s, nonce);
-	DigestCalcResponse(_ha1, nonce, _cred->nonce_count.s, _cred->cnonce.s, qop, _method->s,
+	DigestCalcResponse(_ha1, _cred->nonce.s, _cred->nonce_count.s, _cred->cnonce.s, qop, _method->s,
 			   _cred->uri.s, hent, resp);
 
 	DBG("check_cred(): Our result = %s\n", resp);
@@ -272,8 +238,7 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 }
 
 
-
-int authorize(struct sip_msg* _msg, char* _realm, char* str2)
+static inline int authorize(struct sip_msg* _msg, char* _realm, char* _table, char* _hf_name)
 {
 	char ha1[256];
 	int res;
@@ -281,11 +246,15 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 	      * since there may be multible authorization header
 	      * fields
 	      */
-	init_cred(&cred);
+	init_cred(&(state.cred));
+	state.stale = 0;
+	state.nonce_retries = 0;
 
+#ifdef ACK_CANCEL_HACK
 	if (!memcmp(_msg->first_line.u.request.method.s, "ACK", 3)) {
 	        return 1;
 	}
+#endif
 
 	if (parse_headers(_msg, HDR_EOH) == -1) {
 		LOG(L_ERR, "authorize(): Error while parsing message header\n");
@@ -295,170 +264,120 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 	     /* Finds the first occurence of authorization header for the
 	      * given realm
 	      */
-	if (find_auth_hf(_msg, _realm, &cred) == -1) {
-		DBG("authorize(): Proxy-Authorization HF not found or malformed\n");
+	if (find_auth_hf(_msg, _realm, &(state.cred), _hf_name) == -1) {
+		DBG("authorize(): Authorization HF not found or malformed\n");
 		return -1;
 	}
-	DBG("authorize(): Proxy-Authorization HF with the given realm found\n");
 
 	     /*
 	      * FIXME: For debugging purposes only
 	      */
-	print_cred(&cred);
+	print_cred(&(state.cred));
 
-	if (get_ha1(&cred.username, _realm, ha1) == -1) {
-		LOG(L_ERR, "authorize(): Error while getting A1 string for user \"%s\"\n", cred.username.s);
-		return -1;
-	}
-	
-	if (validate_cred(&cred) == -1) {
+	/* FIXME: 400s should be sent from routing scripts, but we will need
+	 * variables for that
+	 */
+	if (validate_cred(&(state.cred)) == -1) {
 		if (send_resp(_msg, 400, MESSAGE_400, NULL, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
 		}
 		return 0;
 	}
-	
-        res = check_cred(&cred, &_msg->first_line.u.request.method, ha1);
-	if (res == -1) {
-		LOG(L_ERR, "authorize(): Error while checking credentials\n");
-		return -1;
-	} else return res;
-}
 
-
-
-/*
- * Check if the given username matches username in credentials
- */
-int is_user(struct sip_msg* _msg, char* _user, char* _str2)
-{
-	if (!cred.username.len) {
-		DBG("is_user(): Username not found in credentials\n");
+	if (!check_nonce(state.cred.nonce.s, &secret)) {
+		LOG(L_ERR, "authorize(): Invalid nonce value returned, very suspicious\n");
 		return -1;
 	}
-	if (!memcmp(_user, cred.username.s, cred.username.len)) {
-		DBG("is_user(): Username matches\n");
-		return 1;
-	} else {
-		DBG("is_user(): Username differs\n");
+	state.nonce_retries = get_nonce_retry(state.cred.nonce.s);
+
+
+        if (get_ha1(state.cred.username.s, _realm, _table, ha1) == -1) {
+		LOG(L_ERR, "authorize(): Error while obtaining HA1 string for user \"%s\"\n", state.cred.username.s);
 		return -1;
 	}
-}
-
-
-
-/*
- * Check if the user specified in credentials is a member
- * of given group
- */
-int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
-{
-	db_key_t keys[] = {GRP_USER, GRP_GRP};
-	db_val_t vals[] = {{DB_STRING, 0, {.string_val = cred.username.s}},
-			   {DB_STRING, 0, {.string_val = _group}}
-	};
-	db_key_t col[] = {GRP_GRP};
-	db_res_t* res;
-
-	db_use_table(db_handle, GRP_TABLE);
-	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) == FALSE) {
-		LOG(L_ERR, "is_in_group(): Error while querying database\n");
-		return -1;
-	}
-
-	if (RES_ROW_N(res) == 0) {
-		DBG("is_in_group(): User %s is not in group %s\n", cred.username.s, _group);
-		db_free_query(db_handle, res);
-		return -1;
-	} else {
-		DBG("is_in_group(): User %s is member of group %s\n", cred.username.s, _group);
-		db_free_query(db_handle, res);
-		return 1;
-	}
-}
-
-
-
-static void get_username(str* _s)
-{
-	char* at, *dcolon, *dc;
-	dcolon = find_not_quoted(_s->s, ':');
-
-	if (!dcolon) {
-		_s->len = 0;
-		return;
-	}
-	_s->s = dcolon + 1;
-
-	at = strchr(_s->s, '@');
-	dc = strchr(_s->s, ':');
-	if (at) {
-		if ((dc) && (dc < at)) {
-			_s->len = dc - dcolon - 1;
-			return;
-		}
 		
-		_s->len = at - dcolon - 1;
-		/*	_s->s[_s->len] = '\0'; */
+        res = check_response(&(state.cred), &_msg->first_line.u.request.method, ha1);
+
+	if (res == 1) {  /* response was OK */
+		if (nonce_is_stale(state.cred.nonce.s)) {
+			if (!(memcmp(_msg->first_line.u.request.method.s, "ACK", 3)) &&
+			    (memcmp(_msg->first_line.u.request.method.s, "CANCEL", 6))) {
+				     /* Method is ACK or CANCEL, we must accept stale
+				      * nonces because there is no way how to challenge
+				      * with new nonce (ACK and CANCEL have no responses
+				      * associated)
+				      */
+				return 1;
+			} else {
+				DBG("authorize(): Response is OK, but nonce is stale\n");
+				state.stale = 1;
+				return -1;
+			}
+		} else {
+			DBG("authorize(): Authorization OK\n");
+			return 1;
+		}
 	} else {
-		_s->len = 0;
-	} 
-	return;
-}
-
-
-
-int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
-{
-	str user;
-
-	if (!_msg->to) {
-		LOG(L_ERR, "check_to(): To HF not found\n");
-		return -1;
-	}
-
-	user.s = _msg->to->body.s;
-	user.len = _msg->to->body.len;
-
-	get_username(&user);
-
-	if (!user.len) return -1;
-
-	/* FIXME !! */
-	if (!strncasecmp(user.s, cred.username.s,
-			 (user.len < cred.username.len) ? (cred.username.len) : (user.len))) {
-		DBG("check_to(): auth id and To username are equal\n");
-		return 1;
-	} else {
-		DBG("check_to(): auth id and To username differ\n");
+		DBG("authorize(): Response is different\n");
 		return -1;
 	}
 }
 
 
-int check_from(struct sip_msg* _msg, char* _str1, char* _str2)
+
+static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop, 
+			    int _code, char* _message, char* _challenge_msg)
 {
-	str user;
+	int auth_hf_len;
 
-	if (!_msg->from) {
-		LOG(L_ERR, "check_from(): From HF not found\n");
-		return -1;
-	}
-
-	user.s = _msg->from->body.s;
-	user.len = _msg->from->body.len;
-
-	get_username(&user);
-
-	if (!user.len) return -1;
-
-	/* FIXME !! */
-	if (!strncasecmp(user.s, cred.username.s,
-			(user.len < cred.username.len) ? (cred.username.len) : (user.len))) {
-		DBG("check_from(): auth id and From username are equal\n");
-		return 1;
+	if (state.nonce_retries > retry_count) {
+			DBG("challenge(): Retry count exceeded, sending Forbidden\n");
+			_code = 403;
+			_message = MESSAGE_403;
 	} else {
-		DBG("check_from(): auth id and From username differ\n");
+		if (!state.stale) {
+			state.nonce_retries++;
+		} else {
+			state.nonce_retries = 0;
+		}
+
+		build_auth_hf(_realm, auth_hf, &auth_hf_len, _qop, _challenge_msg);
+	}
+
+	if (send_resp(_msg, _code, _message, auth_hf, auth_hf_len) == -1) {
+		LOG(L_ERR, "www_challenge(): Error while sending response\n");
 		return -1;
 	}
+	return 0;
+
+}
+
+
+/*
+ * Challenge a user to send credentials using WWW-Authorize header field
+ */
+int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
+{
+	return challenge(_msg, _realm, (int)_qop, 401, MESSAGE_401, WWW_AUTH_CHALLENGE);
+}
+
+
+/*
+ * Challenge a user to send credentials using Proxy-Authorize header field
+ */
+int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
+{
+	return challenge(_msg, _realm, (int)_qop, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
+}
+
+
+int proxy_authorize(struct sip_msg* _msg, char* _realm, char* _table)
+{
+	return authorize(_msg, _realm, _table, PROXY_AUTH_RESPONSE);
+}
+
+
+int www_authorize(struct sip_msg* _msg, char* _realm, char* _table)
+{
+	return authorize(_msg, _realm, _table, WWW_AUTH_RESPONSE);
 }

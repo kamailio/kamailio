@@ -177,3 +177,49 @@ char* eat_name(char* _b)
 	return _b;  /* Some error */
 }
 		
+
+/*
+ * Length of dest array must be 2 * length of
+ * src array
+ */
+void to_hex(char* _dst, char *_src, int _src_len)
+{
+	int i;
+	unsigned char j;
+    
+	for (i = 0; i < _src_len; i++) {
+
+		j = (_src[_src_len - i - 1] >> 4) & 0xf;
+		if (j <= 9) {
+			_dst[i*2] = (j + '0');
+		} else {
+			_dst[i*2] = (j + 'a' - 10);
+		}
+
+		j = _src[_src_len - i - 1] & 0xf;
+		if (j <= 9) {
+			_dst[i*2+1] = (j + '0');
+		} else {
+			_dst[i*2+1] = (j + 'a' - 10);
+		}
+	}
+}
+
+
+/*
+ * Unquote a string
+ */
+void unquote(str* _s)
+{
+	if (*(_s->s + _s->len - 1) == '\"') {
+		*(_s->s + _s->len - 1) = '\0';
+		_s->len--;
+	}
+	if (*(_s->s) == '\"') {
+		_s->s++;
+		_s->len--;
+	}
+}
+	
+
+
