@@ -12,7 +12,7 @@ WATCH_PERIOD=2
 
 # SQL config
 SQL_DB=ser
-SQL_HOST=dbhost
+SQL_HOST=localhost
 SQL_USER=ser
 
 # the read-only user for whom password may be stored here

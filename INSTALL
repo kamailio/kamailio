@@ -193,10 +193,12 @@ Solaris:
     
 4) optionally, watch server's health using the
    serctl utility
-    - to do so, first set the environment
-      variable SIP_DOMAIN to your domain 
+    - to do so, first set the environment variable SIP_DOMAIN to your domain 
       name, e.g., in Bourne shell, call
         export SIP_DOMAIN="foo.bar"
+	- if you are using other than 'localhost' mysql server for maintaining
+	  subscriber database, change the variable 'SQL_HOST' to the proper
+	  host name in the serctl script
     - run the serctl utility
         /usr/sbin/serctl moni
       or
