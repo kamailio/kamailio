@@ -44,6 +44,7 @@ static struct flat_con* pool = 0;
 static int pool_pid;
 
 
+
 /*
  * Get a connection from the pool, reuse existing
  * if possible, otherwise create a new one
@@ -133,4 +134,23 @@ void flat_release_connection(struct flat_con* con)
 	}
 
 	flat_free_connection(con);
+}
+
+
+/*
+ * Close and reopen all opened connections
+ */
+int flat_rotate_logs(void)
+{
+	struct flat_con* ptr;
+
+	ptr = pool;
+	while(ptr) {
+		if (flat_reopen_connection(ptr)) {
+			return -1;
+		}
+		ptr = ptr->next;
+	}
+
+	return 0;
 }

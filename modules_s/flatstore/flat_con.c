@@ -39,29 +39,18 @@
 #define FILE_SUFFIX ".log"
 #define FILE_SUFFIX_LEN (sizeof(FILE_SUFFIX) - 1)
 
-struct flat_con* flat_new_connection(struct flat_id* id)
+
+static char* get_name(struct flat_id* id)
 {
-	char buf[PATH_MAX];
+	static char buf[PATH_MAX];
 	char* num, *ptr;
 	int num_len;
 
-	struct flat_con* res;
-
 	if (!id) {
-		LOG(L_ERR, "flat_new_connection: Invalid parameter value\n");
+		LOG(L_ERR, "get_name: Invalid parameter value\n");
 		return 0;
 	}
 
-	res = (struct flat_con*)pkg_malloc(sizeof(struct flat_con));
-	if (!res) {
-		LOG(L_ERR, "flat_new_connection: No memory left\n");
-		return 0;
-	}
-
-	memset(res, 0, sizeof(struct flat_con));
-	res->ref = 1;
-	
-	res->id = id;
 	ptr = buf;
 
 	memcpy(ptr, id->dir.s, id->dir.len);
@@ -81,8 +70,35 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 	ptr += FILE_SUFFIX_LEN;
 
 	*ptr = '\0';
+	return buf;
+}
 
-	res->file = fopen(buf, "w");
+
+struct flat_con* flat_new_connection(struct flat_id* id)
+{
+	char* fn;
+
+	struct flat_con* res;
+
+	if (!id) {
+		LOG(L_ERR, "flat_new_connection: Invalid parameter value\n");
+		return 0;
+	}
+
+	res = (struct flat_con*)pkg_malloc(sizeof(struct flat_con));
+	if (!res) {
+		LOG(L_ERR, "flat_new_connection: No memory left\n");
+		return 0;
+	}
+
+	memset(res, 0, sizeof(struct flat_con));
+	res->ref = 1;
+	
+	res->id = id;
+
+	fn = get_name(id);
+
+	res->file = fopen(fn, "w");
 	if (!res->file) {
 		LOG(L_ERR, "flat_new_connection: %s\n", strerror(errno));
 		pkg_free(res);
@@ -104,4 +120,32 @@ void flat_free_connection(struct flat_con* con)
 		fclose(con->file);
 	}
 	pkg_free(con);
+}
+
+
+/*
+ * Reopen a connection
+ */
+int flat_reopen_connection(struct flat_con* con)
+{
+	char* fn;
+
+	if (!con) {
+		LOG(L_ERR, "flat_reopen_connection: Invalid parameter value\n");
+		return -1;
+	}
+
+	if (con->file) {
+		fclose(con->file);
+
+		fn = get_name(con->id);
+
+		con->file = fopen(fn, "w");
+		if (!con->file) {
+			LOG(L_ERR, "flat_reopen_connection: Invalid parameter value\n");
+			return -1;
+		}
+	}
+
+	return 0;
 }

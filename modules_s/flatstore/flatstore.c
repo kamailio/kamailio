@@ -162,6 +162,11 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 		return -1;
 	}
 
+	if (local_timestamp < *flat_rotate) {
+		flat_rotate_logs();
+		local_timestamp = *flat_rotate;
+	}
+
 	for(i = 0; i < n; i++) {
 		switch(VAL_TYPE(v + i)) {
 		case DB_INT:
