@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "mf_funcs.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
@@ -81,9 +84,8 @@ error:
 
 int decrement_maxfwd( struct sip_msg* msg )
 {
-	char              c;
-	int                 err, n;
-	str                 nr_s;
+	int          err, n;
+	str          nr_s;
 	unsigned int x;
 
 	search_for_mf_hdr( msg , error );
@@ -128,16 +130,16 @@ error:
 
 int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 {
-	unsigned int  len,a,b,c;
-	char               *buf;
-	struct lump* anchor;
+	unsigned int  len;
+	char          *buf;
+	struct lump*  anchor;
 
 	search_for_mf_hdr( msg , error );
 	/*did we found the header after parsing?*/
 	if ( msg->maxforwards )
 	{
 		LOG( L_ERR , "ERROR: add_maxfwd_header :"
-		  " MAX_FORWARDS header already exists (%x) !\n",msg->maxforwards);
+		  " MAX_FORWARDS header already exists (%p) !\n",msg->maxforwards);
 		goto error;
 	}
 

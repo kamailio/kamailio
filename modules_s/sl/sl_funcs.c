@@ -1,6 +1,7 @@
 
 #include <netinet/in.h>
 #include <netdb.h>
+#include "../../forward.h"
 #include "../../dprint.h"
 #include "../../md5utils.h"
 #include "../../msg_translator.h"
@@ -52,8 +53,8 @@ int sl_startup()
 
 int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 {
-	char                        *buf;
-	unsigned int            len;
+	char               *buf;
+	unsigned int       len;
 	struct sockaddr_in to;
 
 	to.sin_family = AF_INET;

@@ -18,6 +18,7 @@
 #include<netinet/in.h>
 #include<netdb.h>
 #include<sys/un.h>
+#include <unistd.h>
 
 #include "jcpli.h"
 
@@ -166,7 +167,7 @@ void processResponseMessage(char* msgBuff, int msgLen, int msgType)
  */
 int executeCPLForSIPMessage(char *msgContent, int msgLength, char *serverAddress, int serverPort, char **pRespBuff, int *pRespLen)
 {
-    int jciSocket, resp, n, tmp, i;
+    int jciSocket, resp, n;
     struct sockaddr_in address;
     struct hostent *he;
 
