@@ -31,6 +31,7 @@
  * --------
  *  2003-03-10  changed module exports interface: added struct cmd_export
  *               and param_export (andrei)
+ *  2003-03-16  Added flags field to cmd_export_ (janakj)
  */
 
 
@@ -55,12 +56,15 @@ typedef enum {
 } modparam_t;       /* Allowed types of parameters */
 
 
+#define REQUEST_ROUTE 1         /* Function can be used in request route blocks */
+
 struct cmd_export_ {
 	char* name;             /* null terminated command name */
 	cmd_function function;  /* pointer to the corresponding function */
 	int param_no;           /* number of parameters used by the function */
 	fixup_function fixup;   /* pointer to the function called to "fix" the
 							   parameters */
+	int flags;              /* Function flags */
 };
 
 
