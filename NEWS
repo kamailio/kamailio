@@ -1,0 +1,78 @@
+XXX content of this file reflects a future release;
+    features described here may or may not be available
+    in the CVS tree
+    
+
+Release notes for SIP Express Router (ser)
+***********************************************
+
+$Id$
+
+***********************************************
+* Changes introduced in 0.8.11
+***********************************************
+
+New features
+=============
+- presence agent [pa module]
+- TCP support [core]
+- loose routing support [rr module]
+- ENUM support [enum module]
+- dynamic domain management -- allows to manipulate 
+  hosting of multiple domains in run-time 
+  [domain module]
+- web accounting -- acc module can report to serweb
+  on placed calls [acc module]
+- improved exec module (header fields passed now
+  as environment variables to scripts) [exec module]
+- improved tm/FIFO (external applications, such as
+  click-to-dial can now better initiate transactions)
+  [tm module]
+
+Changes to use of ser scripts
+=============================
+
+core
+----
+XXX TCP
+
+acc module:
+-----------
+XXX
+
+auth module:
+------------
+XXX is_in_group has been obsoleted by ...
+
+domain module:
+--------------
+XXX
+
+enum module:
+------------
+XXX
+
+exec module:
+------------
+- exec_uri and exec_user have been obsoleted by exec_dset; 
+  exec_dset is identical to exec_uri in capabilities; it 
+  additionaly passes content of request elements (header 
+  fields and URI parts) in environment variables; users of 
+  exec_user can use exec_dset now and use the "URI_USER"  
+  variable to learn user part of URI
+- exec_dset and exec_msg return false, if return value of 
+  script does not euqal zero
+- exec_dset takes an additional parameter, which enables 
+  validation of SIP URIs returned by external application
+  
+pa module:
+----------
+XXX
+
+rr module:
+----------
+XXX
+
+tm module:
+----------
+XXX t_uac/FIFO

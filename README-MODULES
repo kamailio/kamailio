@@ -33,7 +33,14 @@ jabber	experimental beta		SIP2Jabber gateway
 maxfwd	regular		 stable		Max-Forwards check
 (bia)
 
+msilo	experimental beta		Message store
+(dcm)							-tm
+								-mysql
+
 mysql	regular		 stable		supporting MySql interface
+(jja)
+
+pa		experimental alpha		presence agent
 (jja)
 
 pike	experimental alpha		excessive load detection
@@ -41,6 +48,15 @@ pike	experimental alpha		excessive load detection
 
 print	example		 stable		Printing Message to stdout
 (ape)
+
+radius_acc exper.	beta		Reporting to radius server
+(ssi)
+
+radius_auth exper.  beta		Authentication by a radius server
+(ssi)
+
+registrar regular	stable		User Registrar
+(jja)							-mysql, sl
 
 rr		regular		 stable		Record-Routing
 (jja)
@@ -52,13 +68,13 @@ snmp	experimental alpha		SNMP Management
 (rba)
 
 sms		regular		 stable		SMS gateway
-(bia)								-tm
+(bia)							-tm
 
 textops regular		 stable		Message Textual Operations
 (ape)
 
 tm		regular		 beta		Transaction Management
-(ape)
+(jku)
 
 usrloc	regular		 stable		User Location
 (jja)								-sl

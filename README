@@ -9,8 +9,8 @@ $Id$
 I.   About SIP Express Router (ser)
 II.  Feature List
 III. About iptel.org
-IV.  Contact 
-V.   More Information
+IV.  Obtaining Help
+V.   Contact, Licencing and More Information
 
 
  SIP Express Router (SER) is an industrial-strength, free VoIP 
@@ -59,10 +59,14 @@ authorization and authentication (AAA) services. SER runs on Sun/
 Solaris, PC/Linux, IPAQ/Linux platforms and supports  both IPv4 and 
 IPv6.
 
+Most of SER features are implemented as plug-in modules. See
+README-MODULES for a description of modules available in
+ser distribution.
+
 
 III. About iptel.org
 
-iptel.org is a know-how company spun off from Germany's national 
+iptel.org is a know-how organization spun off from Germany's national 
 research company FhG Fokus. One of the first SIP implementations ever, 
 low-QoS enhancements, interoperability tests and VoIP-capable firewall 
 control concepts are examples of well-known FhG's work.
@@ -72,18 +76,39 @@ The access rate of the company's site, a well-known source of
 technological information, is a best proof of interest. Thousands 
 of hits come every day from the whole Internet.
 
+IV. Obtaining Help
 
-IV. Contact & Licensing
+We offer best-effort free support for ser. "best-effort" means 
+that we try to solve your problems via email as soon as we can, 
+subject to available manpower. If you need commercial support, 
+contact info@iptel.org.
+
+To receive feedback to your inquiries, we recommend you to subscribe 
+to the serusers mailing list and post your queries there. This mailing 
+list is set up for mutual help by the community of ser users and developers. 
+To participate in the mailing list, subscribe at the following web address: 
+         http://mail.iptel.org/mailman/listinfo/serusers.
+Send your questions to 
+         serusers@iptel.org. 
+
+If you are concerned about your privacy and do not wish your queries 
+to be posted and archived publicly, you may post to 
+                  serhelp@iptel.org. 
+E-mails to this address are only forwarded to iptel.org's ser development 
+team. However, as the team is quite busy you should not be surprised to 
+get replies with considerable delay. 
+
+V. Contact, Licensing and More Information
 
 For any additional information, send an inquiry to info@iptel.org. 
-Licensing conditions other than GPL are available on request. If
-you need a help with ser, send an email to serhelp@iptel.org.
-Report bugs at 
-https://developer.berlios.de/bugs/?func=addbug&group_id=480
-
-V. More Information
+Licensing conditions other than GPL are available on request. 
 
 Most up-to-date information is always available at our website,
                  http://www.iptel.org/ser/
-For information on how to install ser, read INSTALL.
-SGML documentation is available in the 'doc' directory.
+
+Particularly, it includes:
+- administrator's guide
+- installation guidelines (INSTALL)
+- download links
+- list of known issues (ISSUES)
+- etc.
