@@ -1,5 +1,5 @@
 /*
- * $Id:
+ * $Id$
  */
 
 /* sipsak written by nils ohlmeier (ohlmeier@fokus.gmd.de).
