@@ -26,6 +26,8 @@ modules=$(filter-out $(addprefix modules/, \
 			$(wildcard modules/*))
 modules_names=$(shell echo $(modules)| \
 				sed -e 's/modules\/\([^/ ]*\)\/*/\1.so/g' )
+modules_basenames=$(shell echo $(modules)| \
+				sed -e 's/modules\/\([^/ ]*\)\/*/\1/g' )
 #modules_names=$(patsubst modules/%, %.so, $(modules))
 modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 
@@ -183,6 +185,14 @@ install-doc: $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) INSTALL $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) README-MODULES $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) AUTHORS $(doc-prefix)/$(doc-dir)
+	-@for r in $(modules_basenames) "" ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f modules/"$$r"/README ]; then \
+				$(INSTALL-DOC)  modules/"$$r"/README  \
+									$(doc-prefix)/$(doc-dir)/README."$$r" ; \
+			fi ; \
+		fi ; \
+	done 
 
 install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
 	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8
