@@ -474,13 +474,11 @@ int xj_jcon_free(xj_jcon jbc)
 		_M_FREE(jbc->hostname);
 	if(jbc->stream_id != NULL)
 		_M_FREE(jbc->stream_id);
-	DBG("XJAB:xj_jcon_free: -----STEP A\n");	
 	if(jbc->close != NULL)
 	{
 		_M_SHM_FREE(jbc->close);
 		jbc->close = NULL;
 	}
-	DBG("XJAB:xj_jcon_free: -----STEP B\n");	
 	if(jbc->resource != NULL)
 		_M_FREE(jbc->resource);
 	DBG("XJAB:xj_jcon_free: %d conferences\n", jbc->nrjconf);

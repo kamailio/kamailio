@@ -2,6 +2,17 @@
 eXtended JABber module
 ======================
 
+1. Description
+2.1 New features
+2.2 Features
+3. Exported parameters
+4. Exported functions
+5. Admin guide
+6. User guide
+7. Contacts
+
+1. Description
+-------------
 This is new version of Jabber module that integrates XODE XML parser for
 parsing Jabber messages. That introduces a new module dependence: expat library.
 
@@ -9,21 +20,21 @@ Expat is a common XML library and is the fastest available for Linux/Unix,
 the second over all, after msxml library. It is integrated in most of well known
 Linux distributions.
 
-New features
-------------
+2.1 New features
+----------------
 - SIP to Jabber conference support
 - possibility to manage all kinds of Jabber messages (message/presence/iq)
 - aliases - possibility to set host aliases for addresses (see parameter's desc.)
 - gateways detection - ability to see whether an IM gateway is up or down
 
-Features
---------
+2.2 Features
+------------
 - send received SIP MESSAGE messages to different IM networks (Jabber, ICQ,
 MSN, AIM, Yahoo) using a Jabber server
 - send as SIP MESSAGE messages incoming Jabber instant messages
 
-Exported parameters:
---------------------
+3. Exported parameters
+----------------------
 
 Name:		contact
 Type:		string 
@@ -89,8 +100,8 @@ Type:		integer (seconds)
 Default:	20
 Desc:		time between expired Jabber connections checking
 
-Exported Functions:
--------------------
+4. Exported Functions
+---------------------
 
 Name: 	jab_send_message
 Params:	none
@@ -118,4 +129,99 @@ Name: 	jab_go_offline
 Params:	none
 Desc:	logoff from Jabber server the associated Jabber ID of the SIP user
 
+5. Admin guide
+-------------
+
+The Jabber server setup is not a subject of this guide. Check
+http://www.jabber.org for that.
+
+Useful scripts, for creating Jabber Gateway database, or for managing the
+Jabber accounts form web are located in 'doc' subdirectory of the module.
+
+Main steps of using the Jabber gateway:
+- create the mysql database
+- setup the local Jabber server
+- set the module parameter values in cfg file of SER, load the dependencing
+modules, set up the routing rules for Jabber gateway.
+- run SER
+
+The administrator of SER/Jabber gateway MUST inform the users what are the 
+aliases for Jabber/Other IM networks. Other IMs could be AIM, ICQ, MSN, Yahoo ...
+
+These aliases depends on the server hostname which runs SER and how local Jabber
+server is setup.
+
+Next is presented an usecase.
+Prologue:
+	SER is running on 'server.org'
+	Local Jabber server is running on 'jabsrv.server.org'
+	Jabber network alias is 'jabber.server.org'
+	
+The aliases for other IM networks MUST be the same as JID set in
+Jabber configuration file for each IM transport.
+
+The JIDs of Jabber transports MUST start with the name of the network. For
+AIM, JID must start with 'aim.', for ICQ with 'icq' (that because I use
+icqv7-t), for MSN with 'msn.' and for Yahoo with 'yahoo.'. The gateway needs
+these to find out what transport is working and which not. For our usecase
+these could be like 'aim.server.org', 'icq.server.org', 'msn.server.org',
+'yahoo.server.org'.
+
+It is indicated to have these aliases in DNS, thus the client application can
+resolve the DNS name. Otherwise there must be set the outbound proxy to SER 
+server.
+
+*** Routing rules for Jabber gateway
+First step is to configure SER to recognize messages for Jabber gateway. Look at
+'doc/xjab.cfg' to see a sample. The idea is to look in messages for destination 
+address and if it contains Jabber alias or other IM alias, that means the 
+message is for Jabber gateway. 
+
+Next step is to find out what means that message for Jabber gateway. It could be 
+a special message what triggers the gateway to take an action or is a simple
+message which should be delivered to Jabber network (using the method
+'jab_send_message' ).
+
+The special messages are for: 
+- registering to Jabber server (go online in Jabber network) - here must be 
+called 'jab_go_online' method
+- leaving the Jabber network (go offline in Jabber network) - here must be
+called  'jab_go_offline' method
+- joining a Jabber conference room - here must be called 'jab_join_jconf'
+- leaving a Jabber conference room - here must be called 'jab_exit_jconf'
+
+The destination address MUST follow the next patterns:
+ - for Jabber network: 'username%jabber_server@jabber_alias'
+ - for Jabber conference: 'nickname%room%conference_server@jabber_alias'
+ - for AIM network: 'aim_username@aim_alias'
+ - for ICQ network: 'icq_number@icq_alias'
+ - for MSN network: 'msn_username%msn_server@msn_alias'. msn_server can be
+'msn.com' or 'hotmail.com'
+ - for YAHOO network: 'yahoo_username@yahoo_alias'
+  
+6. User guide
+--------------
+
+The user must activate his Jabber account associated with his SIP id. For each
+other IM network on which he wants to send messages, he must set an account for
+that IM network. The gateway is not able to create new account in foreign
+networks, excepting local Jabber server.
+
+When you want to send a message to someone in other IM network, you must set the
+destination of the message according with the pattern corresponding to that IM
+network (see last part of 'Admin guide' chapter).
+Ex: sending a message to user@jabber.xxx.org which is in Jabber network, the
+	destination must be: user%jabber.xxx.org%jabber_alias .
+
+	For someone who is in Yahoo network the destination must be:
+	user@yahoo_alias
+	
+	NOTE: the SER administrator have to set the Jabber transports for each
+	IM network in order to be able to send messages to those networks.
+	The alias of each IM network can be found out from SER admin.
+
+7. Contacts
+
+http://www.iptel.org/ser
+serhelp@iptel.org
 
