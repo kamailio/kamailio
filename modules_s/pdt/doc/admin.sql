@@ -9,4 +9,10 @@ CREATE TABLE admin(
 	passwd VARCHAR(20) NOT NULL DEFAULT ""
 );
 
+CREATE TABLE authentication (
+	username VARCHAR(50) NOT NULL,
+	domain VARCHAR(50) NOT NULL,
+	passwd_h VARCHAR(32) NOT NULL
+);
+
 INSERT INTO admin VALUES ("admin", "admin");
