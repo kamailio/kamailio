@@ -1036,8 +1036,11 @@ rtpp_test(int isdisabled, int force)
 		    "the RTP proxy\n");
 	} else {
 		rtpp_ver = atoi(cp);
-		if (rtpp_ver == SUP_CPROTOVER)
+		if (rtpp_ver == SUP_CPROTOVER) {
+			LOG(L_INFO, "rtpp_test: RTP proxy found, support for "
+			    "it %senabled\n", force == 0 ? "re-" : "");
 			return 0;
+		}
 		LOG(L_WARN, "WARNING: rtpp_test: unsupported "
 		    "version of RTP proxy found: %d supported, "
 		    "%d present\n", SUP_CPROTOVER, rtpp_ver);
