@@ -19,7 +19,7 @@ Subject: [Sr] sms faq
 1.Description
 
 
-1.1 Numbering plan
+1.1 iptel.org Configuration Example (see sms.cfg in etc)
 
 
 The gateway accepts and advertises phone numbers in international format, more
@@ -30,6 +30,10 @@ A number in this format is expected to be placed as username into RURI or in
 the To header; if RURI misses the username, the To header will be consider.
 Also, the gateway will advertise in this format the username in Contact
 headers (in SIP replies and requests) and in From headers (in SIP requests).
+(Note: currently, the about-to-be-RFCed MESSAGE draft does not allow
+ Contacts in MESSAGEs. However, there are implementations of elder draft
+ outthere which used Contact for its session model. To make them happy
+ we include Contact.)
 
 
 1.2 Address mapping
