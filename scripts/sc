@@ -75,7 +75,8 @@ case $1 in
 		echo 
 		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
 			-e "use $SQL_DB; select count(*) from $TABLE \
-			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" | tail -n1`
+			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" \
+			| tail -n1`
 		if [ $CNT -eq 0 ] ; then
 			echo "No such user exists"
 			exit 1
@@ -117,14 +118,16 @@ case $1 in
 		
 		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
 			-e "use $SQL_DB; select count(*) from $TABLE \
-			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" | tail -n1`
+			where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$DOMAIN';" \
+			| tail -n1`
 		if [ $CNT -ne 0 ] ; then
 			echo "user '$1' already exists"
 			exit 1
 		fi
 		$MYSQL -h $SQL_HOST -u $SQL_USER -p$PW \
 			-e "use $SQL_DB; insert into $TABLE \
-				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN) \
+				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
+				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN) \
 				values ('$1','$DOMAIN','$HA1','$HA1B','$2', '$3');";
 		if [ $? -ne 0 ] ; then
 			echo "introducing a new user to the database failed"
@@ -139,8 +142,23 @@ case $1 in
 			usage
 			exit 1
 		fi
+		read -s -p "MySql Password: " PW
+		echo
+		CNT=`$MYSQL -B -h $SQL_HOST -u $SQL_USER -p$PW \
+			 -e "use $SQL_DB; select count(*) from $USRLOC \
+			where $USRLOC.$USER_COLUMN='$2';" | tail -n1`
+		if [ $CNT -eq 0 ] ; then
+			echo Nothing to delete
+			exit 1
+		fi
 		QUERY="delete from $USRLOC where $USRLOC.$USER_COLUMN='$2'"
-		mysql -h $SQL_HOST -u $SQL_USER "-p" -e "$QUERY ;" $SQL_DB
+		mysql -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$QUERY ;" $SQL_DB
+		if [ $? -ne 0 ] ; then
+			echo "database operation failed"
+		else
+			echo "ok -- but beware, the server caches the usrloc entries"
+			echo "and the changes don't take effect until ser reboot"
+		fi
 		;;
 
 	mail)
@@ -149,8 +167,14 @@ case $1 in
 			exit 1
 		fi
 		shift
-		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  $TABLE.$SUBSCRIBER_COLUMN='$1'"
-		EA=`mysql -B -h $SQL_HOST -u $RO_USER "-p$RO_PW" -e "$QUERY ;" $SQL_DB|tail -1`
+		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
+			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+		EA=`mysql -B -h $SQL_HOST -u $RO_USER "-p$RO_PW" \
+			-e "$QUERY ;" $SQL_DB|tail -n1`
+		if [ $? -ne 0 ] ; then
+			echo "MySql query failed"
+			exit 1
+		fi
 		echo "Write email to $1: $EA now ..."
 		mail -s "Message from $DOMAIN SIP admin" $EA
 		if [ $? -eq 0 ] ; then
