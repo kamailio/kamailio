@@ -9,10 +9,10 @@ Release:      %rel
 Packager:     Jan Janak <J.Janak@sh.cvut.cz>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       ftp://ser.iptel.org/stable/%{name}-%{ver}.tar.gz
+Source:       http://iptel.org/ser/stable/%{name}-%{ver}.tar.gz
 Source2:      ser.init
 URL:          http://ser.iptel.org
-Vendor:       Fhg Fokus
+Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 BuildPrereq:  make flex bison 
 
