@@ -43,6 +43,9 @@ int failed_transactions = 0;
 /* account only flagged transactions -- default==yes */
 int flagged_only = 1;
 
+/* report e2e ACKs too */
+int report_ack = 1;
+
 /* ------------- Callback handlers --------------- */
 
 static void acc_onreply( struct cell* t,  struct sip_msg *msg );
@@ -68,7 +71,8 @@ struct module_exports exports= {
 		"log_level",
 		"early_media",
 		"failed_transactions",
-		"flagged_only"
+		"flagged_only",
+		"report_ack"
 	},
 
 	(modparam_t[]) { /* variable types */
@@ -76,6 +80,7 @@ struct module_exports exports= {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
@@ -90,10 +95,11 @@ struct module_exports exports= {
 		&log_level,
 		&early_media,
 		&failed_transactions,
-		&flagged_only
+		&flagged_only,
+		&report_ack
 	},
 
-	8,			/* number of variables */
+	9,			/* number of variables */
 
 	mod_init, 	/* initialization module */
 	0,			/* response function */
@@ -140,6 +146,7 @@ static void acc_onreply( struct cell* t, struct sip_msg *msg )
 
 static void acc_onack( struct cell* t , struct sip_msg *msg )
 {
+	if (!report_ack) return;
 	acc_report(t, msg);
 }
 
