@@ -333,6 +333,9 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch ,
 	p_cell = hash_table->entrys[hash_index].first_cell;
 	while( p_cell )
 	{
+		DBG(">>>>>> res=[%.*s]  req=[%.*s]\n",get_cseq(p_msg)->method.len,
+			get_cseq(p_msg)->method.s,get_cseq(p_cell->uas.request)->method.len
+			,get_cseq(p_cell->uas.request)->method.s);
 		/* is it the cell with the wanted entry_label? */
 		if ( (get_cseq(p_msg)->method.len ==
 		get_cseq(p_cell->uas.request)->method.len)

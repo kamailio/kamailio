@@ -103,12 +103,10 @@ struct module_exports exports= {
 				0						/* t_clear_forks */
 		},
 	13,
-
 	NULL,   /* Module parameter names */
 	NULL,   /* Module parameter types */
 	NULL,   /* Module parameter variable pointers */
 	0,      /* Number of module paramers */
-
 	mod_init, /* module initialization function */
 	(response_function) t_on_reply,
 	(destroy_function) tm_shutdown,

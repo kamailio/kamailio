@@ -204,7 +204,10 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 	int T_code;
 	int b, lowest_b, lowest_s;
 
-	T_code = Trans->uac[branch].status;
+	if (Trans->uas.request->REQ_METHOD==METHOD_INVITE)
+		T_code = Trans->uac[branch].status;
+	else
+		T_code = Trans->uas.status;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -907,7 +910,7 @@ char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,int *ret_len)
 	if ( trans->uac[branch].uri.s )
 	{
 		memcpy(p,trans->uac[branch].uri.s,trans->uac[branch].uri.len);
-		p +=p_msg->new_uri.len;
+		p +=trans->uac[branch].uri.len;
 	}else{
 		memcpy(p,p_msg->orig+(p_msg->first_line.u.request.uri.s-p_msg->buf),
 			p_msg->first_line.u.request.uri.len );

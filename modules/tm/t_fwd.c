@@ -27,6 +27,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	buf    = 0;
 	shbuf  = 0;
+	nr_forks++;
 	t_forks[0].ip = dest_ip_param;
 	t_forks[0].port = dest_port_param;
 	t_forks[0].uri.s = p_msg->new_uri.s;
@@ -54,28 +55,30 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		/* if found */
 		if ( T->T_canceled!=T_NULL )
 		{
-			/* if in 1xx status, send to the same destination */
-			if ( (T->T_canceled->uas.status/100)==1 )
+			for(nr_forks=0,i=0;i<T->T_canceled->nr_of_outgoings;i++)
 			{
-				DBG("DEBUG: t_forward_nonack: it's CANCEL and I will send "
-					"to the same place where INVITE went\n");
-				nr_forks = T->T_canceled->nr_of_outgoings-1;
-				for(i=0;i<T->T_canceled->nr_of_outgoings;i++)
+				/* if in 1xx status, send to the same destination */
+				if ( (T->T_canceled->uac[i].status/100)==1 )
 				{
-					t_forks[i].ip =
+					DBG("DEBUG: t_forward_nonack: branch %d not finalize"
+						": sending CANCEL for it\n",i);
+					t_forks[nr_forks].ip =
 						T->T_canceled->uac[i].request.to.sin_addr.s_addr;
-					t_forks[i].port =
+					t_forks[nr_forks].port =
 						T->T_canceled->uac[i].request.to.sin_port;
+					t_forks[nr_forks].uri.s = T->T_canceled->uac[i].uri.s;
+					t_forks[nr_forks].uri.len = T->T_canceled->uac[i].uri.len;
+					nr_forks++;
+				}else{
+					/* transaction exists, but nothing to cancel */
+					DBG("DEBUG: t_forward_nonack: branch %d finalized"
+						": no CANCEL sent here\n",i);
 				}
-#ifdef USE_SYNONIM
-				T_source = T->T_canceled;
-				T->label  = T->T_canceled->label;
-#endif
-			} else { /* transaction exists, but nothing to cancel */
-				DBG("DEBUG: t_forward_nonack: it's CANCEL but "
-					"I have nothing to cancel here\n");
-				/* forward CANCEL as a stand-alone transaction */
 			}
+#ifdef USE_SYNONIM
+			T_source = T->T_canceled;
+			T->label  = T->T_canceled->label;
+#endif
 		} else { /* transaction doesnot exists  */
 			DBG("DEBUG: t_forward_nonack: canceled request not found! "
 			"nothing to CANCEL\n");
@@ -83,12 +86,12 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	}/* end special case CANCEL*/
 
 #ifndef USE_SYNONIM
-	if ( add_branch_label( T_source, T->uas.request , branch )==-1)
+	if ( nr_forks && add_branch_label( T_source, T->uas.request , branch )==-1)
 		goto error;
 #endif
 
 	DBG("DEBUG: t_forward_nonack: nr_forks=%d\n",nr_forks);
-	for(branch=0;branch<nr_forks+1;branch++)
+	for(branch=0;branch<nr_forks;branch++)
 	{
 		DBG("DEBUG: t_forward_nonack: branch = %d\n",branch);
 		/*generates branch param*/
