@@ -444,11 +444,11 @@ int timer_udomain(udomain_t* _d)
 		}
 		
 		if (ptr->contacts == 0) {
-			udomain_remove(ptr->slot->d, ptr);
-			slot_rem(ptr->slot, ptr);
-			ptr->domain = 0;
 			t = ptr;
 			ptr = ptr->d_ll.next;
+			udomain_remove(t->slot->d, t);
+			slot_rem(t->slot, t);
+			t->domain = 0;
 			free_urecord(t);
 		} else {
 			ptr = ptr->d_ll.next;

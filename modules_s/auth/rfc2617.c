@@ -110,7 +110,7 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 	MD5Update(&Md5Ctx, _nonce->s, _nonce->len);
 	MD5Update(&Md5Ctx, ":", 1);
 
-	if (*(_qop->s)) {
+	if (_qop->len) {
 		MD5Update(&Md5Ctx, _nc->s, _nc->len);
 		MD5Update(&Md5Ctx, ":", 1);
 		MD5Update(&Md5Ctx, _cnonce->s, _cnonce->len);

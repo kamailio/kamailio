@@ -310,6 +310,7 @@ int save(struct sip_msg* _m, char* _t, char* _s)
 	c = get_first_contact(_m);
 	str_copy(&user, &((struct to_body*)_m->to->parsed)->uri);
 
+	LOG(L_ERR, "user = \'%.*s\'\n", user.len, user.s);
 	if (get_user(&user) < 0) {
 		rerrno = R_TO_USER;
 		LOG(L_ERR, "save(): Can't extract username part from To URI, sending 400\n");

@@ -202,8 +202,9 @@ static void destroy(void)
  */
 static void timer(unsigned int ticks, void* param)
 {
-	DBG("Running timer\n");
+	LOG(L_ERR, "Running timer\n");
 	if (timer_handler() != 0) {
 		LOG(L_ERR, "timer(): Error while running timer\n");
 	}
+	LOG(L_ERR, "Timer done\n");
 }

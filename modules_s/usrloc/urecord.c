@@ -209,6 +209,8 @@ int timer_urecord(urecord_t* _r)
 
 			delete_ucontact(_r, t);
 		} else {
+			LOG(L_NOTICE, "Binding \'%.*s\',\'%.*s\' is fresh: %d\n", ptr->aor->len, ptr->aor->s,
+				ptr->c.len, ptr->c.s, ptr->expires - act_time);
 			ptr = ptr->next;
 		}
 	}

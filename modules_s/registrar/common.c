@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include <string.h> /* memchr */
+#include "../../dprint.h"
 
 
 /*
@@ -35,11 +36,18 @@ int get_user(str* _s)
 	char* at, *dcolon, *dc;
 	dcolon = find_not_quoted(_s, ':');
 
-	if (dcolon == 0) return -1;
+	LOG(L_ERR, "get_user(): %.*s\n", _s->len, _s->s);
+	if (dcolon == 0) {
+		LOG(L_ERR, "No : found\n");
+		abort();
+		return -1;
+	}
 
 	_s->s = dcolon + 1;
 	_s->len -= dcolon - _s->s + 1;
 	
+	LOG(L_ERR, "get_user2(): %.*s\n", _s->len, _s->s);
+
 	at = memchr(_s->s, '@', _s->len);
 	dc = memchr(_s->s, ':', _s->len);
 	if (at) {
