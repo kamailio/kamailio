@@ -447,7 +447,7 @@ void modem_process(struct modem *mdm)
 				used_mem = 10;
 				last_smsc_index = -1;
 			}
-
+#ifdef cuu
 		/* if any, let's get them */
 		if (used_mem)
 			for(i=1,k=1;k<=used_mem && i<=max_mem;i++) {
@@ -460,7 +460,7 @@ void modem_process(struct modem *mdm)
 						sms.date,sms.time,sms.ascii);
 				}
 			}
-
+#endif
 		/* sleep -> if it's needed */
 		if (!dont_wait)
 			sleep(mdm->looping_interval);
