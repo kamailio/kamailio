@@ -228,6 +228,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"t_attr_to_uri",     t_attr_to_uri,            1, fixup_string2str,
 			REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
+	{"t_write_req",       t_write_req,              2, 0,
+			REQUEST_ROUTE | FAILURE_ROUTE },
 
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
@@ -481,6 +483,12 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (register_fifo_cmd(fifo_t_reply, "t_reply", 0)<0) {
+		LOG(L_CRIT, "cannot register t_reply\n");
+		return -1;
+	}
+
+
 	/* building the hash table*/
 	if (!init_hash_table()) {
 		LOG(L_ERR, "ERROR: mod_init: initializing hash_table failed\n");
@@ -520,6 +528,7 @@ static int mod_init(void)
 	}
 
 	tm_init_tags();
+	init_twrite_lines();
 
 	/* register post-script clean-up function */
 	register_script_cb( w_t_unref, POST_SCRIPT_CB, 

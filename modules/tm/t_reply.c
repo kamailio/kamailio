@@ -63,13 +63,9 @@
 
 
 #include <assert.h>
-#include "defs.h"
 
 #include "../../comp_defs.h"
-
 #include "../../hash_func.h"
-#include "t_funcs.h"
-#include "h_table.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
@@ -82,7 +78,10 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
+#include "../../fifo_server.h"
 
+#include "defs.h"
+#include "h_table.h"
 #include "t_hooks.h"
 #include "t_funcs.h"
 #include "t_reply.h"
@@ -1278,4 +1277,130 @@ error_1:
 error:
 	return -1;
 }
+
+
+
+/*
+  Syntax:
+
+  ":vm_reply:[response file]\n
+  code\n
+  reason\n
+  trans_id\n
+  to_tag\n
+  [new headers]\n
+  \n
+  [Body]\n
+  .\n
+  \n"
+ */
+int fifo_t_reply( FILE *stream, char *response_file )
+{
+	int ret;
+	struct cell *trans;
+	char code[16];
+	char reason[128];
+	char trans_id[128];
+	char new_headers[MAX_HEADER];
+	char body[MAX_BODY];
+	char to_tag[128];
+	str sc;       /*  code */
+	str sr;       /*  reason */
+	str sti;      /*  trans_id */
+	str snh;      /*  new_headers */
+	str sb;       /*  body */
+	str sttag;    /*  to-tag */
+	unsigned int hash_index,label,icode;
+
+	sc.s=code;
+	sr.s=reason;
+	sti.s=trans_id;
+	snh.s=new_headers; sb.s=body;
+	sttag.s=to_tag; sttag.len=0;
+
+
+	/*  get the infos from FIFO server */
+
+	DBG("DEBUG: fifo_t_reply: ############### begin ##############\n");
+
+	if (!read_line(sc.s, 16, stream, &sc.len)||sc.len==0) {
+		LOG(L_ERR, "ERROR: fifo_t_reply: code expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: code expected");
+		return -1;
+	}
+
+	icode = str2s(sc.s,sc.len,&ret);
+	if(ret){
+		LOG(L_ERR, "ERROR: fifo_t_reply: code(int) has wrong format\n");
+		fifo_reply(response_file, "400 fifo_t_reply: code(int) has"
+			" wrong format");
+		return -1;
+	}
+
+	if(!read_line(sr.s, 128, stream, &sr.len)||sr.len==0){
+		LOG(L_ERR, "ERROR: fifo_t_reply: reason expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: reason expected");
+		return -1;
+	}
+	sr.s[sr.len]='\0';
+
+	if (!read_line(sti.s, 128, stream, &sti.len)||sti.len==0) {
+		LOG(L_ERR, "ERROR: fifo_t_reply: trans_id expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: trans_id expected");
+		return -1;
+	}
+	sti.s[sti.len]='\0';
+	DBG("DEBUG: fifo_t_reply: trans_id=%.*s\n",sti.len,sti.s);
+
+	if(sscanf(sti.s,"%u:%u", &hash_index, &label) != 2){
+		LOG(L_ERR, "ERROR: fifo_t_reply: invalid trans_id (%s)\n",sti.s);
+		fifo_reply(response_file, "400 fifo_t_reply: invalid trans_id");
+		return -1;
+	}
+	DBG("DEBUG: fifo_t_reply: hash_index=%u label=%u\n",hash_index,label);
+
+	if( !read_line(sttag.s,64,stream,&sttag.len) || sttag.len==0 ){
+		LOG(L_ERR, "ERROR: fifo_t_reply: to-tag expected\n");
+		fifo_reply(response_file, "400 fifo_t_reply: to-ta expected");
+		return -1;
+	}
+	sttag.s[sttag.len]='\0';
+	DBG("DEBUG: fifo_t_reply: to-tag: %.*s\n",sttag.len,sttag.s);
+
+	/* read the new headers */
+	if (!read_line_set(snh.s, MAX_HEADER, stream, &snh.len)) {
+		LOG(L_ERR, "ERROR: fifo_t_reply: while reading new headers\n");
+		fifo_reply(response_file, "400 fifo_t_reply: while reading "
+			"new headers");
+		return -1;
+    }
+	snh.s[snh.len]='\0';
+	DBG("DEBUG: fifo_t_reply: new headers: %.*s\n", snh.len, snh.s);
+
+	/*  body can be empty ... */
+	read_body(sb.s, MAX_BODY, stream, &sb.len);
+	sb.s[sb.len]='\0';
+	DBG("DEBUG: fifo_t_reply: body: <%.*s>\n", sb.len, sb.s);
+
+	if( t_lookup_ident(&trans,hash_index,label)<0 ) {
+		LOG(L_ERR,"ERROR: fifo_t_reply: lookup failed\n");
+		fifo_reply(response_file, "481 fifo_t_reply: no such transaction");
+		return -1;
+	}
+
+	/* it's refcounted now, t_reply_with body unrefs for me -- I can 
+	 * continue but may not use T anymore  */
+	ret = t_reply_with_body(trans,icode,reason,body,new_headers,to_tag);
+
+	if (ret<0) {
+		LOG(L_ERR, "ERROR: fifo_t_reply: reply failed\n");
+		fifo_reply(response_file, "500 fifo_t_reply: reply failed");
+		return -1;
+	}
+
+	fifo_reply(response_file, "200 fifo_t_reply succeeded\n");
+	DBG("DEBUG: fifo_t_reply: ################ end ##############\n");
+	return 1;
+}
+
 
