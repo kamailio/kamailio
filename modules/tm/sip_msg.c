@@ -348,6 +348,10 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 			case HDR_USERAGENT:
 			case HDR_ACCEPTDISPOSITION:
 			case HDR_CONTENTDISPOSITION:
+		        case HDR_DIVERSION:
+		        case HDR_RPID:
+		        case HDR_REFER_TO:
+
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
