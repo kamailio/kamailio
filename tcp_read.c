@@ -403,7 +403,7 @@ int tcp_read_req(struct tcp_connection* con)
 				resp=CONN_ERROR;
 				goto end_req;
 			}
-		if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
 		}
 #endif
 
@@ -630,6 +630,15 @@ skip:
 				DBG("tcp receive: list fd=%d, id=%d, timeout=%d, refcnt=%d\n",
 						con->fd, con->id, con->timeout, con->refcnt);
 #endif
+				if (con->state<0){
+					/* S_CONN_BAD or S_CONN_ERROR, remove it */
+					resp=CONN_ERROR;
+					FD_CLR(con->fd, &master_set);
+					tcpconn_listrm(list, con, c_next, c_prev);
+					con->state=S_CONN_BAD;
+					release_tcpconn(con, resp, unix_sock);
+					continue;
+				}
 				if (nfds && FD_ISSET(con->fd, &sel_set)){
 #ifdef EXTRA_DEBUG
 					DBG("tcp receive: match, fd:isset\n");
