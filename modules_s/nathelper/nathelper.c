@@ -51,6 +51,8 @@
  *		  supported by the RTP proxy.
  * 2004-01-16   Integrated slightly modified patch from Tristan Colgate,
  *		force_rtp_proxy function with IP as a parameter (janakj)
+ * 2004-01-28	nat_uac_test extended to allow testing SDP body (sobomax)
+ *
  */
 
 #include "nhelpr_funcs.h"
@@ -95,8 +97,10 @@ MODULE_VERSION
 
 /* NAT UAC test constants */
 #define CONTACT_1918		"[@:](192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.)"
-#define NAT_UAC_TEST_1918	0x01
+#define SDP_1918		"192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\."
+#define NAT_UAC_TEST_C_1918	0x01
 #define NAT_UAC_TEST_RCVD	0x02
+#define NAT_UAC_TEST_S_1918	0x03
 
 /* Handy macro */
 #define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
@@ -135,7 +139,8 @@ static const char sbuf[4] = {0, 0, 0, 0};
 static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
 static int rtpproxy_disable = 0;
 
-static regex_t* key_m1918;
+static regex_t key_contact_1918;
+static regex_t key_sdp_1918;
 
 static cmd_export_t cmds[]={
 	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -188,14 +193,9 @@ mod_init(void)
 		register_timer(timer, NULL, natping_interval);
 	}
 
-	/* compile 1918 address RE */
-	key_m1918 = pkg_malloc(sizeof(*key_m1918));
-	if (key_m1918 == NULL) {
-		LOG(L_ERR, "ERROR: nathelper: no mem for RE\n");
-		return -1;
-	}
-	if (regcomp(key_m1918, CONTACT_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE) ) {
-		pkg_free(key_m1918);
+	/* compile 1918 address REs */
+	if (regcomp(&key_contact_1918, CONTACT_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE) ||
+	    regcomp(&key_sdp_1918, SDP_1918, REG_EXTENDED | REG_ICASE | REG_NEWLINE)) {
 		LOG(L_ERR, "ERROR: nathelper: failure to compule 1918 RE\n");
 		return -1;
 	}
@@ -410,7 +410,8 @@ fixup_str2int( void** param, int param_no)
 /*
  * test for occurence of RFC1918 IP address in Contact HF
  */
-static int contact_1918(struct sip_msg* msg)
+static int
+contact_1918(struct sip_msg* msg)
 {
 	regmatch_t pmatch;
 	int fnd;
@@ -426,8 +427,35 @@ static int contact_1918(struct sip_msg* msg)
 		return 0;
 	}
 	backup = msg->contact->body.s[msg->contact->body.len];
-	msg->contact->body.s[msg->contact->body.len] = 0;
-	fnd = regexec(key_m1918, msg->contact->body.s, 1, &pmatch, 0) == 0;
+	msg->contact->body.s[msg->contact->body.len] = '\0';
+	fnd = regexec(&key_contact_1918, msg->contact->body.s, 1, &pmatch, 0) == 0;
+	msg->contact->body.s[msg->contact->body.len] = backup;
+	return fnd;
+}
+
+/*
+ * test for occurence of RFC1918 IP address in SDP
+ */
+static int
+sdp_1918(struct sip_msg* msg)
+{
+	str body, ip;
+	regmatch_t pmatch;
+	int fnd;
+	char backup;
+
+	if (extract_body(msg, &body) == -1) {
+		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
+		return 0;
+	}
+
+	if (extract_mediaip(&body, &ip) == -1) {
+		LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
+		return 0;
+	}
+	backup = ip.s[ip.len];
+	ip.s[ip.len] = '\0';
+	fnd = regexec(&key_sdp_1918, ip.s, 1, &pmatch, 0) == 0;
 	msg->contact->body.s[msg->contact->body.len] = backup;
 	return fnd;
 }
@@ -451,7 +479,12 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurences of RFC1918 addresses in Contact
 	 * header field
 	 */
-	if ((tests & NAT_UAC_TEST_1918) && contact_1918(msg))
+	if ((tests & NAT_UAC_TEST_C_1918) && contact_1918(msg))
+		return 1;
+	/*
+	 * test for occurences of RFC1918 addresses in SDP body
+	 */
+	if ((tests & NAT_UAC_TEST_S_1918) && sdp_1918(msg))
 		return 1;
 
 	/* no test succeeded */
