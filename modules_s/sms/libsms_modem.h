@@ -37,6 +37,8 @@ int put_command(int fd,char* command,char* answer,int max,int timeout,
 
 int setmodemparams( struct modem *mdm);
 
+int checkmodem(struct modem *mdm);
+
 int initmodem(struct modem *mdm);
 
 int setsmsc(struct modem *mdm, char *smsc);

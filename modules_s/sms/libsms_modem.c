@@ -150,6 +150,7 @@ int initmodem(struct modem *mdm)
 	}*/
 
 	if (mdm->pin[0]) {
+		LOG(L_INFO,"INFO:initmodem: let's check if modem wants the PIN\n");
 		/* Checking if modem needs PIN */
 		put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
 		if (strstr(answer,"+CPIN: SIM PIN")) {
@@ -172,6 +173,7 @@ int initmodem(struct modem *mdm)
 				}
 			}
 			LOG(L_INFO,"INFO:initmodem: PIN Ready!\n");
+			sleep(5);
 		}
 	}
 
@@ -186,12 +188,18 @@ int initmodem(struct modem *mdm)
 		{
 			retries++;
 			put_command(mdm->fd,"AT+CREG?\r",answer,sizeof(answer),100,0);
-			if (strstr(answer,"1"))
+			if (strchr(answer,'1') )
 			{
 				LOG(L_INFO,"INFO:initmodem: Modem is registered to the"
 					" network\n");
 				success=1;
-			} else if (strstr(answer,"5")) {
+			} else if (strchr(answer,'2')) {
+				// addede by bogdan
+				LOG(L_WARN,"WARNING:initmodem: Modems seems to try to "
+					"reach the network! Let's wait a little bit\n");
+				retries--;
+				sleep(2*mdm->retry);
+			} else if (strchr(answer,'5')) {
 				// added by Thomas Stoeckel
 				LOG(L_INFO,"INFO:initmodem: Modem is registered to a"
 					" roaming partner network\n");
@@ -201,11 +209,11 @@ int initmodem(struct modem *mdm)
 					" not support +CREG command.\n");
 				success=1;
 			} else {
-				LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
+				LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before"
 					" retrying\n",mdm->retry);
-				sleep(mdm->retry);
+				sleep(2*mdm->retry);
 			}
-		}while ((success==0)&&(retries<10));
+		}while ((success==0)&&(retries<20));
 	}
 
 	if (success==0) {
@@ -241,6 +249,39 @@ int initmodem(struct modem *mdm)
 
 	return 0;
 error:
+	return -1;
+}
+
+
+
+
+int checkmodem(struct modem *mdm)
+{
+	char command[100];
+	char answer[500];
+	int retries=0;
+	int success=0;
+
+	/* Checking if modem needs PIN */
+	put_command(mdm->fd,"AT+CPIN?\r",answer,sizeof(answer),50,"+CPIN:");
+	if (!strstr(answer,"+CPIN: READY")) {
+		LOG(L_WARN,"WARNING:sms_checkmodem: modem wants the PIN again!\n");
+		goto reinit;
+	}
+
+	if (mdm->mode!=MODE_DIGICOM) {
+		put_command(mdm->fd,"AT+CREG?\r",answer,sizeof(answer),100,0);
+		if (!strchr(answer,'1') ) {
+			LOG(L_WARN,"WARNING:sms_checkmodem: Modem is not registered to the"
+					" network\n");
+			goto reinit;
+		}
+	}
+
+	return 0;
+reinit:
+	LOG(L_WARN,"WARNING:sms_checkmodem: re -init the modem!!\n");
+	initmodem(mdm);
 	return -1;
 }
 

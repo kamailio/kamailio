@@ -23,6 +23,7 @@
 
 static int sms_init(void);
 static int sms_exit(void);
+static int sms_child_init(int);
 static int w_sms_send_msg(struct sip_msg*, char*, char* );
 static int w_sms_send_msg_to_net(struct sip_msg*, char*, char*);
 static int fixup_sms_send_msg_to_net(void** param, int param_no);
@@ -84,7 +85,7 @@ struct module_exports exports= {
 	(response_function) 0,
 	(destroy_function) sms_exit,   /* module exit function */
 	0,
-	0  /* per-child init function */
+	(child_init_function) sms_child_init  /* per-child init function */
 };
 
 
@@ -277,7 +278,7 @@ int parse_config_lines()
 		modems[nr_of_modems].mode = MODE_NEW;
 		modems[nr_of_modems].retry = 10;
 		modems[nr_of_modems].looping_interval = 20;
-		modems[nr_of_modems].baudrate = B19200;
+		modems[nr_of_modems].baudrate = B9600;
 		memset(modems[nr_of_modems].net_list,0XFF,
 			sizeof(modems[nr_of_modems].net_list) );
 		/*get modem parameters*/
@@ -481,28 +482,34 @@ error:
 
 
 
-int start_device_processes()
+int sms_child_init(int rank)
 {
 	int i, net_pipe[2], foo;
+
+	/* only the child 0 will execut this */
+	if (rank)
+		goto done;
 
 	/* creats pipes for networks */
 	for(i=0;i<nr_of_networks;i++)
 	{
 		/* create the pipe*/
 		if (pipe(net_pipe)==-1) {
-			LOG(L_ERR,"ERROR: sms_init: cannot create pipe!\n");
+			LOG(L_ERR,"ERROR: sms_child_init: cannot create pipe!\n");
 			goto error;
 		}
 		networks[i].pipe_out = net_pipe[0];
 		net_pipes_in[i] = net_pipe[1];
 		/* sets reading from pipe to non blocking */
 		if ((foo=fcntl(net_pipe[0],F_GETFL,0))<0) {
-			LOG(L_ERR,"ERROR: sms_init: cannot get flag for pipe - fcntl\n");
+			LOG(L_ERR,"ERROR: sms_child_init: cannot get flag for pipe"
+				" - fcntl\n");
 			goto error;
 		}
 		foo |= O_NONBLOCK;
 		if (fcntl(net_pipe[0],F_SETFL,foo)<0) {
-			LOG(L_ERR,"ERROR: sms_init: cannot set flag for pipe - fcntl\n");
+			LOG(L_ERR,"ERROR: sms_child_init: cannot set flag for pipe"
+				" - fcntl\n");
 			goto error;
 		}
 	}
@@ -511,15 +518,16 @@ int start_device_processes()
 	for(i=0;i<nr_of_modems;i++)
 	{
 		if ( (foo=fork())<0 ) {
-			LOG(L_ERR,"ERROR: sms_init: cannot fork \n");
+			LOG(L_ERR,"ERROR: sms_child_init: cannot fork \n");
 			goto error;
 		}
 		if (!foo) {
 			modem_process(&(modems[i]));
-			exit(0);
+			goto done;
 		}
 	}
 
+done:
 	return 0;
 error:
 	return-1;
@@ -533,14 +541,8 @@ static int sms_init(void)
 	printf("sms - initializing\n");
 
 	if (parse_config_lines()==-1)
-		goto error;
-
-	if (start_device_processes()==-1)
-		goto error;
-
+		return -1;
 	return 0;
-error:
-	return -1;
 }
 
 

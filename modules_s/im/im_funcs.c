@@ -3,6 +3,10 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../ut.h"
+#include "../../forward.h"
+#include "../../resolve.h"
+#include "../../globals.h"
+
 
 
 
@@ -222,22 +226,107 @@ error:
 
 
 
-int im_get_user(struct sip_msg *msg, str *user, str *host)
+inline int set_sock_struct( union sockaddr_union* to, str *to_str)
 {
-	struct sip_uri uri;
+	static host_copy[256];
+	int err;
+	struct hostent* he;
+	unsigned int ip;
+	str host;
 
-	if (parse_uri(msg->first_line.u.request.uri.s,
-		msg->first_line.u.request.uri.len, &uri) <0 )
-	{
-		LOG(L_ERR,"ERROR: im_get_user:unable to parse uri\n");
-		return -1;
+	/* to_str is expected to be in user@host format */
+	host.s = to_str->s;
+	host.len = to_str->len;
+	while( host.len && *host.s!='@' ) {
+		host.s++;
+		host.len--;
 	}
-	user->s   = uri.user.s;
-	user->len = uri.user.len;
-	host->s   = uri.host.s;
-	host->len = uri.host.len;
-	return 1;
+	if ( host.len<=1 || host.s==to_str->s) {
+		LOG(L_ERR,"ERROR:set_sock_struct: cannot get host from <%s>\n",to_str);
+		goto error;
+	}
+	/* swallow '@' */
+	host.len--;
+	host.s++;
 
+#ifdef DNS_IP_HACK
+	ip=str2ip((unsigned char*)host.s,host.len,&err);
+	if (err==0){
+		to->sin.sin_family=AF_INET;
+		to->sin.sin_port=htons(SIP_PORT);
+		memcpy(&to->sin.sin_addr, (char*)&ip, 4);
+	}else
+#endif
+	{
+		if (host.s[host.len]){
+			memcpy(host_copy, host.s, host.len );
+			host_copy[host.len]=0;
+			he=resolvehost((const char*)host_copy);
+		}else{
+			he=resolvehost(host.s);
+		}
+		if (he==0){
+			LOG(L_NOTICE, "ERROR:set_sock_struct:gethostbyname(%s) failure\n",
+				host.s);
+			goto error;
+		}
+		hostent2su(to, he, 0, htons(SIP_PORT));
+	}
+	return 1;
+error:
+	return -1;
 }
 
+
+
+
+int im_send_message(str *to, str *from, str *contact, str *msg)
+{
+	static char buf[2048];
+	static int call_id = 0x4f8a1b49;
+	static int cseq_nr=1;
+	union sockaddr_union to_addr;
+	struct socket_info* send_sock;
+	int buf_len;
+
+	buf_len = sprintf(buf,
+		"MESSAGE %.*s SIP/2.0%s"
+		"Via: SIP/2.0/UDP %.*s:9%s"
+		"From: %.*s%s"
+		"To: <%.*s>%s"
+		"Call-ID: d2d44f40-e803-40e1-b036-%X@%.*s%s"
+		"CSeq: %d MESSAGE%s"
+		"Contact: %.*s%s"
+		"Content-Type: text/plain; charset=UTF-8%s"
+		"Content-Length: %d%s"
+		"%s"
+		"%.*s", /*msg*/
+		to->len,to->s,CRLF,
+		sock_info[0].name.len,sock_info[0].name.s,CRLF,
+		from->len,from->s,CRLF,
+		to->len,to->s,CRLF,
+		call_id++,sock_info[0].address_str.len,sock_info[0].address_str.s,CRLF,
+		cseq_nr++,CRLF,
+		contact->len,contact->s,CRLF,
+		CRLF,
+		msg->len,CRLF,
+		CRLF,
+		msg->len,msg->s);
+
+	if (buf_len<=0)
+		goto error;
+
+	if (set_sock_struct( &to_addr, to)==-1)
+		goto error;
+
+	send_sock = get_send_socket(&to_addr);
+	if (send_sock==0)
+		goto error;
+
+	udp_send(send_sock,buf,buf_len,&(to_addr),sizeof(union sockaddr_union));
+
+	return 1;
+error:
+	return -1;
+}
 

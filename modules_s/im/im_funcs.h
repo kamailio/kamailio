@@ -4,7 +4,7 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
 
-	int im_extract_body(struct sip_msg * , str *);
-	int im_get_user(struct sip_msg *, str* , str* );
+int im_extract_body(struct sip_msg * , str *);
+int im_send_message(str *to, str *from, str *contact, str *msg);
 
 #endif

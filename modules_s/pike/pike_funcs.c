@@ -116,7 +116,12 @@ void clean_routine(void *param)
 			unlock(timers[i].sem);
 			/* process them */
 			if (pt) {
-				DBG("something to delete!! ;-))\n");
+				DBG("DEBUG:pike:clean_routine: del IP %X,%X%X%X type=%s\n",
+					i==IPv6?((struct ip_v6*)pt)->ip[0]:((struct ip_v4*)pt)->ip,
+					i==IPv6?((struct ip_v6*)pt)->ip[1]:0,
+					i==IPv6?((struct ip_v6*)pt)->ip[2]:0,
+					i==IPv6?((struct ip_v6*)pt)->ip[3]:0,
+					i==IPv4?"IPv4":"IPv6");
 				lock(&locks[i]);
 				for(;pt;pt=pt->next)
 				{

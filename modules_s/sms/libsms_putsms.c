@@ -25,6 +25,10 @@ mailto:s.frings@mail.isis.de
 
 
 
+static char hexa[16] = {
+	'0','1','2','3','4','5','6','7',
+	'8','9','A','B','C','D','E','F'
+	};
 
 
 void swapchars(char* string, int len) /* Swaps every second character */
@@ -45,19 +49,17 @@ void swapchars(char* string, int len) /* Swaps every second character */
 
 /* Work with the complex bit building to generate a 7 bit PDU string
    encapsulated in 8 bit */
-void ascii2pdu(char* ascii,char* pdu, int cs_convert)
+int ascii2pdu(char* ascii, int asciiLength, char* pdu, int cs_convert)
 {
 	static char tmp[500];
-	char octett[10];
 	int pdubitposition=0;
 	int pdubyteposition=0;
-	int asciiLength;
 	int character;
 	int bit;
 	int pdubitnr;
 	char converted;
+	unsigned char foo;
 
-	asciiLength=strlen(ascii);
 	memset(tmp,0,asciiLength);
 	for (character=0;character<asciiLength;character++)
 	{
@@ -77,47 +79,52 @@ void ascii2pdu(char* ascii,char* pdu, int cs_convert)
 		}
 	}
 	tmp[pdubyteposition+1]=0;
-	pdu[0]=0;
 	for (character=0;character<=pdubyteposition; character++)
 	{
-		sprintf(octett,"%02X",(unsigned char) tmp[character]);
-		strcat(pdu,octett);
+		foo = tmp[character] ;
+		pdu[2*character  ] = hexa[foo>>4];
+		pdu[2*character+1] = hexa[foo&0x0f];
 	}
+	pdu[2*(pdubyteposition+1)]=0;
+	return 2*(pdubyteposition+1);
 }
 
 
 
 
 /* Create a HEX Dump */
-void binary2pdu(char* binary, int length, char* pdu)
+int binary2pdu(char* binary, int length, char* pdu)
 {
 	int character;
-	char octett[10];
+	unsigned char foo;
 
-	pdu[0]=0;
 	for (character=0;character<length; character++)
 	{
-		sprintf(octett,"%02X",(unsigned char) binary[character]);
-		strcat(pdu,octett);
+		foo = binary[character];
+		pdu[2*character  ] = hexa[foo>>4];
+		pdu[2*character+1] = hexa[foo&0x0f];
 	}
+	pdu[2*length]=0;
+	return 2*length;
 }
 
 
 
 
 /* make the PDU string. The destination variable pdu has to be big enough. */
-void make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
+int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 {
 	int  coding;
 	int  flags;
-	int  msg_len;
 	char tmp[500];
+	int  pdu_len=0;
 	int  foo;
 
-	msg_len = strlen(msg->text);
-	strcpy(tmp,msg->to);
+	memcpy(tmp,msg->to,msg->to_user_len);
+	foo = msg->to_user_len;
+	tmp[foo] = 0;
 	// terminate the number with F if the length is odd
-	if ( (foo=strlen(tmp))%2 ) {
+	if ( foo%2 ) {
 		tmp[foo]='F';
 		tmp[++foo] = 0;
 	}
@@ -135,18 +142,20 @@ void make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 		flags+=16; // Validity field
 	/* concatenate the first part of the PDU string */
 	if (mdm->mode==MODE_OLD)
-		sprintf(pdu,"%02X00%02X91%s00%02X%02X",flags,strlen(msg->to),tmp,
-			coding,msg_len);
+		pdu_len += sprintf(pdu,"%02X00%02X91%s00%02X%02X",flags,
+			msg->to_user_len,tmp,coding,msg->text_len);
 	else
-		sprintf(pdu,"00%02X00%02X91%s00%02XA7%02X",flags,strlen(msg->to),
-			tmp,coding,msg_len);
+		pdu_len += sprintf(pdu,"00%02X00%02X91%s00%02XA7%02X",flags,
+			msg->to_user_len,tmp,coding,msg->text_len);
 	/* Create the PDU string of the message */
 	if (msg->is_binary)
-		binary2pdu(msg->text,msg_len,tmp);
+		pdu_len += binary2pdu(msg->text,msg->text_len,pdu+pdu_len);
 	else
-		ascii2pdu(msg->text,tmp,msg->cs_convert);
+		pdu_len += ascii2pdu(msg->text,msg->text_len,pdu+pdu_len,
+			msg->cs_convert);
 	/* concatenate the text to the PDU string */
-	strcat(pdu,tmp);
+	//strcat(pdu,tmp);
+	return pdu_len;
 }
 
 
@@ -160,48 +169,53 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 	char answer[500];
 	char pdu[500];
 	int retries;
+	int err_code;
+	int pdu_len;
 
-	make_pdu(sms_messg, mdm, pdu);
+	pdu_len = make_pdu(sms_messg, mdm, pdu);
 	if (mdm->mode==MODE_OLD)
-		sprintf(command,"AT+CMGS=%i\r",strlen(pdu)/2);
+		sprintf(command,"AT+CMGS=%i\r",pdu_len/2);
 	else if (mdm->mode==MODE_ASCII)
-		sprintf(command,"AT+CMGS=\"+%s\"\r",sms_messg->to);
-		// for Siemens M20
-		// sprintf(command,"AT+CMGS=\"%s\",129,\r",to);
+		sprintf(command,"AT+CMGS=\"+%.*s\"\r",sms_messg->to_user_len,
+			sms_messg->to);
 	else
-		sprintf(command,"AT+CMGS=%i\r",strlen(pdu)/2-1);
+		sprintf(command,"AT+CMGS=%i\r",pdu_len/2-1);
 
 	if (mdm->mode==MODE_ASCII)
-		sprintf(command2,"%s\x1A",sms_messg->text);  
+		sprintf(command2,"%.*s\x1A",sms_messg->text_len,sms_messg->text);
 	else
-		sprintf(command2,"%s\x1A",pdu);
+		sprintf(command2,"%.*s\x1A",pdu_len,pdu);
 
-	retries=0;
-	while (1)
+	for(err_code=0,retries=0;err_code<2 && retries<10; retries++)
 	{
-		retries+=1;
-		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
-		put_command(mdm->fd,command2,answer,sizeof(answer),300,0);
-		if (strstr(answer,"ERROR"))
+		if (put_command(mdm->fd,command,answer,sizeof(answer),50,0)
+		&& put_command(mdm->fd,command2,answer,sizeof(answer),300,0)
+		&& !strstr(answer,"ERROR") )
 		{
-			LOG(L_ERR,"ERROR: putsms: Uups, the modem said ERROR.\n");
-			tcsetattr(mdm->fd,TCSANOW,&(mdm->oldtio));
-			if (retries<2)
-			{
-				LOG(L_ERR,"ERROR: putsms: trying again in %i sec.",
-					mdm->retry);
-				sleep(mdm->retry);
-				//the next line is a workaround for an unknown buggy gsm modem
-				put_command(mdm->fd,"\r\x1A\r",answer,sizeof(answer),10,0);
-				sleep(1);
-			} else
-				return -1;
-		} else {
+			/* no error during sending and the modem didn't said error */
 			if (!strstr(answer,"OK"))
 				LOG(L_WARN,"WARNING: putsms: Maybe could not send message,"
-					" modem did not confirm submission.");
-			return 0;
+					" modem did not confirm submission.\n");
+			err_code = 2;
+		} else {
+			/* we have an error */
+			if (checkmodem(mdm)!=0) {
+				err_code = 0;
+				LOG(L_WARN,"WARNING: putsms: resending last sms! \n");
+			} else if (err_code==0) {
+				LOG(L_WARN,"WARNING: putsms :possible corrupted sms."
+					" Let's try again!\n");
+				err_code = 1;
+			}else {
+				LOG(L_ERR,"ERROR: We have a FUBAR sms!! drop it!\n");
+				err_code = 3;
+			}
 		}
 	}
+
+	if (err_code==0)
+		LOG(L_WARN,"WARNNING: something spuky is going on with the modem!"
+			" Re-inited and tried fro 10 times without success!\n");
+	return (err_code==3?-1:1);
 }
 

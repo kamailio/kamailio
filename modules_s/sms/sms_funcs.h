@@ -8,7 +8,7 @@
 #define MAX_MODEMS    5       /* max number of modems */
 #define MAX_NETWORKS  5       /* max number of networks */
 
-#define MAX_CHAR_BUF 64        /* max length of character buffer */
+#define MAX_CHAR_BUF 128        /* max length of character buffer */
 #define MAX_CONFIG_PARAM 1024 /* max length of a config parameter */
 #define MAX_SMS_LENGTH   160
 
@@ -38,10 +38,15 @@ struct modem {
 
 struct sms_msg {
 	char text[MAX_SMS_LENGTH+1];
+	int  text_len;
 	char to[MAX_CHAR_BUF+1];
-	int is_binary;
-	int udh;
-	int cs_convert;
+	int  to_len;
+	int  to_user_len;
+	char from[MAX_CHAR_BUF+1];
+	int  from_len;
+	int  is_binary;
+	int  udh;
+	int  cs_convert;
 };
 
 struct incame_sms {

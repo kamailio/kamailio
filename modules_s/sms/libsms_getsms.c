@@ -194,38 +194,61 @@ int check_memory(struct modem *mdm, int flag)
 	char* posi;
 	int   laenge;
 	int   err,foo;
+	int   j, out;
 
-	put_command(mdm->fd,"AT+CPMS?\r",answer,sizeof(answer),50,0);
-	if ( (posi=strstr(answer,"+CPMS:"))!=0 ) {
-		// Modem supports CPMS command. Read memory size
-		if ( (posi=strchr(posi,','))!=0 ) {
-			posi++;
-			if ( (laenge=strcspn(posi,",\r"))!=0 ) {
-				if (flag==USED_MEM ) {
-					foo = str2s(posi,laenge,&err);
-					if (err) {
-						LOG(L_ERR,"ERROR:sms_check_memory: unable to convert "
-							"into integer used_memory from CPMS response\n");
-						goto error;
-					}
-					DBG("DEBUG:sms_check_memory: Used memory is %i\n",foo);
-					return foo;
-				}
-				posi+=laenge+1;
+	for(out=0,j=0;!out && j<10; j++) 
+	{
+		if (put_command(mdm->fd,"AT+CPMS?\r",answer,sizeof(answer),50,0)
+		&& (posi=strstr(answer,"+CPMS:"))!=0 )
+		{
+			// Modem supports CPMS command. Read memory size
+			if ( (posi=strchr(posi,','))!=0 ) {
+				posi++;
 				if ( (laenge=strcspn(posi,",\r"))!=0 ) {
-					foo = str2s(posi,laenge,&err);
-					if (err) {
-						LOG(L_ERR,"ERROR:sms_check_memory: unable to convert "
-							"into integer max_memory from CPMS response\n");
-						goto error;
+					if (flag==USED_MEM ) {
+						foo = str2s(posi,laenge,&err);
+						if (err) {
+							LOG(L_ERR,"ERROR:sms_check_memory: unable to "
+								"convert into integer used_memory from CPMS"
+								" response\n");
+						} else {
+							DBG("DEBUG:sms_check_memory: Used memory is %i\n",
+								foo);
+							return foo;
+						}
 					}
-					DBG("DEBUG:sms_check_memory: Max memory is %i\n",foo);
-					return foo;
+					posi+=laenge+1;
+					if ( (laenge=strcspn(posi,",\r"))!=0 ) {
+						foo = str2s(posi,laenge,&err);
+						if (err) {
+							LOG(L_ERR,"ERROR:sms_check_memory: unable to"
+								"convert into integer max_memory from CPMS"
+								" response\n");
+						} else {
+							DBG("DEBUG:sms_check_memory: Max memory is %i\n",
+								foo);
+							return foo;
+						}
+					}
 				}
-			}
+			} /* if(strstr) */
+		} /* if(put_command) */
+		/* if we are here ->  some error happend */
+		if (checkmodem(mdm)!=0) {
+			LOG(L_WARN,"WARNING:sms_check_memory: something happend with the"
+				" modem -> was reinit -> let's retry\n",
+				mdm->retry);
+		} else {
+			LOG(L_ERR,"ERROR:sms_check_memory: modem seems to be ok, but we"
+				"had an error? I give up!\n");
+			out = 1;
 		}
-	}
-error:
+	} /* for */
+
+	if (out==0)
+		LOG(L_ERR,"ERROR:sms_check_memory: modem does not respond after 10"
+			"reties! I give up :-(\n");
+
 	return -1;
 }
 
