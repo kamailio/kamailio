@@ -68,6 +68,15 @@ and will not drop it. The questions are now:
 - if so, with what realm
 - how far can you trust the information in Route (actually, not at all)
 
+--
+
+solution space? Well, it is actually about call-state policy. To enforce
+it, we would have to maintain call state. That would be a way ugly and
+we better put the call state somehow in Record-Routes. Doing so would
+be a very useful thing anyway. That would be a useful thing for a dozen
+of other cases too -- Frmo rewriting, or 200/ACK matching at an accounting
+proxy.
+
 
 
 Mike Graff, serusers
