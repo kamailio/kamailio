@@ -1,29 +1,16 @@
-#common
-CC=gcc
-LD=gcc
-CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes
-LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
-LEX=flex
-YACC=bison
-YACC_FLAGS=-d -b cfg
-# on linux and freebsd keep it empty (e.g. LIBS= )
-# on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl -ldl
-
-MKDEP=gcc -M
-
-ALLDEP=Makefile
-
-DEFS=-DFAKED_PARSER
+# $Id$
+#
+# print example module makefile
+#
+# 
+# WARNING: do not run this directly, it should be run by the master Makefile
 
 auto_gen=
-sources= $(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen)
-objs= $(sources:.c=.o)
+sources= $(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen) 
+objs= msg_cloner.o tm.o #$(sources:.c=.o)
 depends= $(sources:.c=.d)
 
-NAME=tm
-
-ALLDEP=Makefile
+NAME=tm.so
 
 LDFLAGS=-O2 -shared
 LIBS=
@@ -50,8 +37,12 @@ all: $(NAME)
 .PHONY: dep
 dep: $(depends)
 
+.PHONY: clean
 clean:
-	rm -f *.o
-	rm -f tm
+	-rm $(objs) $(NAME)
 
+.PHONY: proper
+proper: clean
+	-rm $(depends)
 
+include $(depends)

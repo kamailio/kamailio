@@ -1,4 +1,5 @@
 #include "msg_cloner.h"
+#include "../../dprint.h"
 
 char*   translate_pointer( char* new_buf , char *org_buf , char* p);
 struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_body *org_via);
@@ -54,24 +55,28 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
    }
 
    /* via1 (via_body* type) */
-   new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via1 );
+	if (org_msg->via1)
+		 new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via1 );
+
    /* via2 (via_body* type) */
-   new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via2 );
+	if (org_msg->via2)
+	   new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , org_msg->via2 );
 
     /* all the headers */
-   for( header = org_msg->headers , last_hdr=0  ;  header  ;  last_hdr=header , header=header->next  )
+   new_msg->h_via1=0;
+   new_msg->h_via2=0;
+   for( header = org_msg->headers , last_hdr=0  ;  header;header=header->next)
    {
       switch ( header->type )
       {
          case HDR_VIA1 :
                        new_hdr = header_cloner( new_msg , org_msg , header );
                        new_hdr->parsed  = (void*)new_msg->via1;
-                       new_msg->h_via1 = new_hdr;
-                       break;
-         case HDR_VIA2 :
-                       new_hdr = header_cloner( new_msg , org_msg , header );
-                       new_hdr->parsed  = (void*)new_msg->via2;
-                       new_msg->h_via2 = new_hdr;
+					   if (new_msg->h_via1==0)
+                       		new_msg->h_via1 = new_hdr;
+						else if(new_msg->h_via2==0){
+                       		new_msg->h_via2 = new_hdr;
+					  }
                        break;
          case HDR_CALLID :
                        new_hdr = header_cloner( new_msg , org_msg , header );
@@ -98,10 +103,13 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
                        break;
       }
 
-     if ( last_hdr )
+     if ( last_hdr ){
          last_hdr->next = new_hdr;
-      else
+		 last_hdr=last_hdr->next;
+	 }else{
+		 last_hdr=new_hdr;
          new_msg->headers =new_hdr;
+	 }
    }
 
    last_hdr->next = 0;
@@ -175,7 +183,7 @@ char*   translate_pointer( char* new_buf , char *org_buf , char* p)
     if (!p)
       return 0;
    else
-      return new_buf + (org_buf - p);
+      return new_buf + (p-org_buf);
 }
 
 
