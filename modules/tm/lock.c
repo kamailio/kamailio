@@ -55,7 +55,6 @@ static int
 static int sem_nr;
 /* timer group locks */
 
-ser_lock_t timer_group_lock[TG_NR];
 
 
 /* return -1 if semget failed, -2 if semctl failed */
@@ -118,23 +117,30 @@ tryagain:
 #endif  /* !FAST_LOCK*/
 
 
+static ser_lock_t* timer_group_lock; /* pointer to a TG_NR lock array,
+								    it's safer if we alloc this in shared mem 
+									( required for fast lock ) */
 
 /* intitialize the locks; return 0 on success, -1 otherwise
 */
-#ifdef FAST_LOCK
-int lock_initialize()
-{
-	return 0;
-}
-#else
 int lock_initialize()
 {
 	int i;
+#ifndef FAST_LOCK
 	int probe_run;
+#endif
 
 	/* first try allocating semaphore sets with fixed number of semaphores */
 	DBG("DEBUG: lock_initialize: lock initialization started\n");
 
+	timer_group_lock=shm_malloc(TG_NR*sizeof(ser_lock_t));
+	if (timer_group_lock==0){
+		LOG(L_CRIT, "ERROR: lock_initialize: out of shm mem\n");
+		goto error;
+	}
+#ifdef FAST_LOCK
+	for(i=0;i<TG_NR;i++) init_lock(timer_group_lock[i]);
+#else
 	/* transaction timers */
 	if ((timer_semaphore= init_semaphore_set( TG_NR ) ) < 0) {
 		LOG(L_CRIT, "ERROR: lock_initialize:  "
@@ -234,13 +240,13 @@ again:
 
 	/* return success */
 	LOG(L_INFO, "INFO: semaphore arrays of size %d allocated\n", sem_nr );
+#endif /* FAST_LOCK*/
 	return 0;
 error:
 	lock_cleanup();
 	return -1;
 }
 
-#endif /*FAST_LOCK*/
 
 #ifdef FAST_LOCK
 void lock_cleanup()
@@ -281,7 +287,7 @@ void lock_cleanup()
 #endif /*FAST_LOCK*/
 
 
-/* lock sempahore s */
+/* lock semaphore s */
 #ifdef DBG_LOCK
 inline int _lock( ser_lock_t* s , char *file, char *function, unsigned int line )
 #else
@@ -351,17 +357,13 @@ int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 
 int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
 {
-#ifdef FAST_LOCK
-	init_lock(hash_table->timers[timerlist_id].mutex);
-#else
 	/* each timer list has its own semaphore */
 	/*
 	hash_table->timers[timerlist_id].mutex.semaphore_set=timer_semaphore;
 	hash_table->timers[timerlist_id].mutex.semaphore_index=timer_group[timerlist_id];
 	*/
 
-	hash_table->timers[timerlist_id].mutex=timer_group_lock[ timer_group[timerlist_id] ];
-#endif
+	hash_table->timers[timerlist_id].mutex=&(timer_group_lock[ timer_group[timerlist_id] ]);
 	return 0;
 }
 
