@@ -46,9 +46,15 @@ void dprint (char* format, ...);
 
 #endif
 
+#ifndef NO_DEBUG
+	#undef NO_LOG
+#endif
 
+#ifdef NO_LOG
+	#define LOG(lev, fmt, args...)
+#else
 
-#define LOG(lev, fmt, args...) \
+	#define LOG(lev, fmt, args...) \
 			do { \
 				if (debug>=(lev)){ \
 					if (log_stderr) dprint (fmt, ## args); \
@@ -79,7 +85,13 @@ void dprint (char* format, ...);
 					} \
 				} \
 			}while(0)
+#endif
 
-#define DBG(fmt, args...) LOG(L_DBG, fmt, ## args)
+
+#ifdef NO_DEBUG
+	#define DBG(fmt, args...)
+#else
+	#define DBG(fmt, args...) LOG(L_DBG, fmt, ## args)
+#endif
 
 #endif /* ifndef dprint_h */

@@ -26,7 +26,8 @@ enum{	         F_HOST,    P_HOST,
 				 F_IP6HOST, P_IP6HOST,
 				 F_CRLF,
 				 F_LF,
-				 F_CR
+				 F_CR,
+				 END_OF_HEADER
 	};
 
 /* first via part state */
@@ -37,13 +38,690 @@ enum{	         F_SIP=100,
 		L_PROTO, F_PROTO, P_PROTO
 	};
 
+/* param realated states */
+enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
+		HIDDEN1,   HIDDEN2,   HIDDEN3,   HIDDEN4,   HIDDEN5,
+		TTL1,      TTL2,
+		BRANCH1,   BRANCH2,   BRANCH3,   BRANCH4,   BRANCH5,
+		MADDR1,    MADDR2,    MADDR3,    MADDR4,
+		RECEIVED1, RECEIVED2, RECEIVED3, RECEIVED4, RECEIVED5, RECEIVED6,
+		RECEIVED7,
+		/* fin states (227-...)*/
+		FIN_HIDDEN, FIN_TTL, FIN_BRANCH, FIN_MADDR, FIN_RECEIVED,
+		GEN_PARAM
+	};
+
 #define LOG(lev, fmt, args...) fprintf(stderr, fmt, ## args)
+
+
+/* entry state must be F_PARAM, or saved_state=F_PARAM and 
+ * state=F_{LF,CR,CRLF}!
+ * output state = L_PARAM or F_PARAM or END_OF_HEADER 
+ * (and saved_state= last state); everything else => error */
+__inline char* parse_via_param(char* p, int* pstate, int* psaved_state)
+{
+	char* tmp;
+	register int state;
+	int saved_state;
+	int param_type;
+	char* param_name;
+	char* param_value;
+	
+	state=*pstate;
+	saved_state=*psaved_state;
+	param_name=param_value=0;
+	param_type=0;
+	
+	for (tmp=p;*tmp;tmp++){
+		switch(*tmp){
+			case ' ':
+			case '\t':
+				switch(state){
+					case FIN_HIDDEN:
+						*tmp=0;
+						param_type=state;
+						state=L_PARAM;
+						goto endofparam;
+					case FIN_BRANCH:
+					case FIN_TTL:
+					case FIN_MADDR:
+					case FIN_RECEIVED:
+						*tmp=0;
+						param_type=state;
+						state=L_VALUE;
+						goto find_value;
+					case F_PARAM:
+						break;
+					case F_LF:
+					case F_CR:
+					case F_CRLF:
+						state=saved_state;
+						break;
+					case GEN_PARAM:
+					default:
+						*tmp=0;
+						param_type=GEN_PARAM;
+						state=L_VALUE;
+						goto find_value;
+				}
+				break;
+			/* \n and \r*/
+			case '\n':
+				switch(state){
+					case FIN_HIDDEN:
+						*tmp=0;
+						param_type=state;
+						saved_state=L_PARAM;
+						state=F_LF;
+						goto endofparam;
+					case FIN_BRANCH:
+					case FIN_TTL:
+					case FIN_MADDR:
+					case FIN_RECEIVED:
+						*tmp=0;
+						param_type=state;
+						saved_state=L_VALUE;
+						state=F_LF;
+						goto find_value;
+					case F_PARAM:
+						saved_state=state;
+						state=F_LF;
+						break;
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					case F_CR:
+						state=F_CRLF;
+						break;
+					case GEN_PARAM:
+					default:
+						*tmp=0;
+						param_type=GEN_PARAM;
+						saved_state=L_VALUE;
+						state=F_LF;
+						goto find_value;
+				}
+				break;
+			case '\r':
+				switch(state){
+					case FIN_HIDDEN:
+						*tmp=0;
+						param_type=state;
+						saved_state=L_PARAM;
+						state=F_CR;
+						goto endofparam;
+					case FIN_BRANCH:
+					case FIN_TTL:
+					case FIN_MADDR:
+					case FIN_RECEIVED:
+						*tmp=0;
+						param_type=state;
+						saved_state=L_VALUE;
+						state=F_CR;
+						goto find_value;
+					case F_PARAM:
+						saved_state=state;
+						state=F_CR;
+						break;
+					case F_CR:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					case GEN_PARAM:
+					default:
+						*tmp=0;
+						param_type=GEN_PARAM;
+						saved_state=L_VALUE;
+						state=F_CR;
+						goto find_value;
+				}
+				break;
+
+			case '=':
+				switch(state){
+					case FIN_BRANCH:
+					case FIN_TTL:
+					case FIN_MADDR:
+					case FIN_RECEIVED:
+						*tmp=0;
+						param_type=state;
+						state=F_VALUE;
+						goto find_value;
+					case F_PARAM:
+					case FIN_HIDDEN:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c> in"
+								" state %d\n");
+						goto error;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					case GEN_PARAM:
+					default:
+						*tmp=0;
+						param_type=GEN_PARAM;
+						state=F_VALUE;
+						goto find_value;
+				}
+				break;
+			case ';':
+				switch(state){
+					case FIN_HIDDEN:
+						*tmp=0;
+						param_type=state;
+						state=F_PARAM;
+						goto endofparam;
+					case FIN_BRANCH:
+					case FIN_MADDR:
+					case FIN_TTL:
+					case FIN_RECEIVED:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c> in"
+								" state %d\n");
+						goto error;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					case GEN_PARAM:
+					default:
+						*tmp=0;
+						param_type=GEN_PARAM;
+						state=F_PARAM;
+						goto endofparam;
+				}
+				break;
+				
+				/* param names */
+			case 'h':
+			case 'H':
+				switch(state){
+					case F_PARAM:
+						state=HIDDEN1;
+						param_name=tmp;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'i':
+			case 'I':
+				switch(state){
+					case HIDDEN1:
+						state=HIDDEN2;
+						break;
+					case RECEIVED4:
+						state=RECEIVED5;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'd':
+			case 'D':
+				switch(state){
+					case HIDDEN2:
+						state=HIDDEN3;
+						break;
+					case HIDDEN3:
+						state=HIDDEN4;
+						break;
+					case MADDR2:
+						state=MADDR3;
+						break;
+					case MADDR3:
+						state=MADDR4;
+						break;
+					case RECEIVED7:
+						state=FIN_RECEIVED;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'e':
+			case 'E':
+				switch(state){
+					case HIDDEN4:
+						state=HIDDEN5;
+						break;
+					case RECEIVED1:
+						state=RECEIVED2;
+						break;
+					case RECEIVED3:
+						state=RECEIVED4;
+						break;
+					case RECEIVED6:
+						state=RECEIVED7;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'n':
+			case 'N':
+				switch(state){
+					case HIDDEN5:
+						state=FIN_HIDDEN;
+						break;
+					case BRANCH3:
+						state=BRANCH4;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 't':
+			case 'T':
+				switch(state){
+					case F_PARAM:
+						state=TTL1;
+						param_name=tmp;
+						break;
+					case TTL1:
+						state=TTL2;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'l':
+			case 'L':
+				switch(state){
+					case TTL2:
+						state=FIN_TTL;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'm':
+			case 'M':
+				switch(state){
+					case F_PARAM:
+						state=MADDR1;
+						param_name=tmp;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'a':
+			case 'A':
+				switch(state){
+					case MADDR1:
+						state=MADDR2;
+						break;
+					case BRANCH2:
+						state=BRANCH3;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'r':
+			case 'R':
+				switch(state){
+					case MADDR4:
+						state=FIN_MADDR;
+						break;
+					case F_PARAM:
+						state=RECEIVED1;
+						param_name=tmp;
+						break;
+					case BRANCH1:
+						state=BRANCH2;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'c':
+			case 'C':
+				switch(state){
+					case RECEIVED2:
+						state=RECEIVED3;
+						break;
+					case BRANCH4:
+						state=BRANCH5;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'v':
+			case 'V':
+				switch(state){
+					case RECEIVED5:
+						state=RECEIVED6;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+			case 'b':
+			case 'B':
+				switch(state){
+					case F_PARAM:
+						state=BRANCH1;
+						param_name=tmp;
+						break;
+					case GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+				break;
+
+			default:
+				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param_name=tmp;
+						break;
+					case  GEN_PARAM:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						state=GEN_PARAM;
+				}
+		}
+	}/* for tmp*/
+
+/* end of packet?*/
+saved_state=state;
+param_type=state;
+state=END_OF_HEADER;
+goto end;
+
+find_value:
+	tmp++;
+	for(tmp;*tmp;tmp++){
+		switch(*tmp){
+			case ' ':
+			case '\t':
+				switch(state){
+					case L_VALUE:
+					case F_VALUE: /*eat space*/
+						break; 
+					case P_VALUE:
+						*tmp=0;
+						state=L_PARAM;
+						goto endofvalue;
+					case P_STRING:
+						break;
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=saved_state;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+				break;
+			case '\n':
+				switch(state){
+					case L_VALUE:
+					case F_VALUE: /*eat space*/
+					case P_STRING:
+						saved_state=state;
+						state=F_LF;
+						break; 
+					case P_VALUE:
+						*tmp=0;
+						saved_state=L_PARAM;
+						state=F_LF;
+						goto endofvalue;
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					case F_CR:
+						state=F_CRLF;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+				break;
+			case '\r':
+				switch(state){
+					case L_VALUE:
+					case F_VALUE: /*eat space*/
+					case P_STRING:
+						saved_state=state;
+						state=F_CR;
+						break; 
+					case P_VALUE:
+						*tmp=0;
+						saved_state=L_PARAM;
+						state=F_CR;
+						goto endofvalue;
+					case F_LF:
+					case F_CR:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+				break;
+
+			case '=':
+				switch(state){
+					case L_VALUE:
+						state=F_VALUE;
+						break;
+					case P_STRING:
+						break;
+					case F_LF:
+					case F_CR:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+				break;
+			case ';':
+				switch(state){
+					case P_VALUE:
+						*tmp=0;
+						state=F_PARAM;
+						goto endofvalue;
+					case P_STRING:
+						break; /* what to do? */
+					case F_LF:
+					case F_CR:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+				break;
+			
+			case '"':
+				switch(state){
+					case F_VALUE:
+						state=P_STRING;
+						param_value=tmp+1;
+						break;
+					case P_STRING:
+						*tmp=0;
+						state=L_PARAM;
+						goto endofvalue;
+					case F_LF:
+					case F_CR:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+				break;
+			default:
+				switch(state){
+					case F_VALUE:
+						state=P_VALUE;
+						param_value=tmp;
+						break;
+					case P_VALUE:
+					case P_STRING:
+						break;
+					case F_LF:
+					case F_CR:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
+								" in state %d\n", state);
+						goto error;
+				}
+		}
+	} /* for2 tmp*/
+
+	/* if generic_param => it can have no value */
+	if ((state==L_VALUE)&&(param_type==GEN_PARAM)) state=L_PARAM;
+	saved_state=state;
+	state=END_OF_HEADER;
+	goto end;
+
+endofparam:
+endofvalue:
+	printf("end, tmp=%x, <%c>\n", tmp, *tmp);
+	//tmp++;
+end:
+	*pstate=state;
+	*psaved_state=saved_state;
+	printf("Found param type %d, <%s> = <%s>\n", param_type, param_name,
+			param_value);
+	return tmp;
+
+error:
+	fprintf(stderr,"error: via_parse_param\n");
+	*pstate=state;
+	*psaved_state=saved_state;
+	return tmp;
+}
+
+
+
+
+
 
 int main(int argc, char** argv)
 {
 
 	char* tmp;
-	register int state;
+	int state;
 	int saved_state;
 	int c_nest;
 	int i;
@@ -779,8 +1457,25 @@ main_via:
 						/*check if number?*/
 						break;
 					case F_PARAM:
-						state=P_PARAM;
+						/*state=P_PARAM*/;
 						param=tmp;
+						tmp=parse_via_param(tmp, &state, &saved_state);
+						switch(state){
+							case L_PARAM:
+							case F_PARAM:
+							case F_LF:
+							case F_CR:
+								break;
+							case END_OF_HEADER:
+								state=saved_state;
+								goto endofheader;
+							default:
+								LOG(L_ERR, "ERROR: parse_via after"
+										" parse_via_param: invalid"
+										" char <%c> on state %d\n",
+										*tmp, state);
+								goto error;
+						}
 						break;
 					case P_PARAM:
 						break;
@@ -839,6 +1534,9 @@ endofpacket:
 		case P_PORT:
 		case L_PARAM:
 		case P_PARAM:
+		case P_VALUE:
+		case GEN_PARAM:
+		case FIN_HIDDEN:
 		case L_VIA:
 			break;
 		default:
@@ -848,7 +1546,7 @@ endofpacket:
 	}
 		
 nextvia:
-	if (proto) printf("<SIP/2.0/%s<\n", proto);
+	if (proto) printf("<SIP/2.0/%s>\n", proto);
 	if (host) printf("host= <%s>\n", host);
 	if (port_str) printf("port= <%s>\n", port_str);
 	if (param) printf("params= <%s>\n", param);
