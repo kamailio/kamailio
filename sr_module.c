@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 
-static struct sr_module* modules=0;
+struct sr_module* modules=0;
 
 
 

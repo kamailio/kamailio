@@ -23,6 +23,7 @@
 #include "ut.h"
 #include "mem.h"
 #include "msg_translator.h"
+#include "sr_module.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -107,17 +108,12 @@ int forward_reply(struct sip_msg* msg)
 	struct hostent* he;
 	struct sockaddr_in* to;
 	unsigned int new_len;
+	struct sr_module *mod;
 #ifdef DNS_IP_HACK
 	int err;
 #endif
 
 
-	to=0;
-	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
-	if (to==0){
-		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
-		goto error;
-	}
 
 	/*check if first via host = us */
 	if (check_via){
@@ -132,6 +128,21 @@ int forward_reply(struct sip_msg* msg)
 	}
 
 	/* here will be called the T Module !!!!!!  */
+	/* quick hack, slower for mutliple modules*/
+	for (mod=modules;mod;mod=mod->next){
+		if ((mod->exports) && (mod->exports->response_f)){
+			DBG("forward_reply: found module %s, passing reply to it\n",
+					mod->exports->name);
+			if (mod->exports->response_f(msg)==0) goto skip;
+		}
+	}
+	
+	to=0;
+	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	if (to==0){
+		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
+		goto error;
+	}
 
 	new_buf = build_res_buf_from_sip_res( msg, &new_len);
 	if (!new_buf){
@@ -182,6 +193,7 @@ int forward_reply(struct sip_msg* msg)
 
 	free(new_buf);
 	free(to);
+skip:
 	return 0;
 error:
 	if (new_buf) free(new_buf);

@@ -31,7 +31,8 @@ struct sr_module{
 	struct module_exports* exports;
 	struct sr_module* next;
 };
-
+ 
+struct sr_module* modules; /* global module list*/
 
 int load_module(char* path);
 cmd_function find_export(char* name, int param_no);
