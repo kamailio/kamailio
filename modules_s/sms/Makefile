@@ -7,6 +7,6 @@
 
 auto_gen=
 NAME=sms.so
-LIBS=`pwd`/../im/im.so 
+LIBS=
 
 include ../../Makefile.modules
