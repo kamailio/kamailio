@@ -56,13 +56,13 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	}
 	unlock(&locks[TIMER_LOCK]);
 
-	/*DEBUG*/print_timer_list(timer);
+	/*DEBUG - print_timer_list(timer);*/
 
 	ret = ( (flag&LEAF_NODE)&&(flag&RED_NODE) )?-1:1;
 	unlock( &locks[TREE_LOCK] );
 
 	if (ret==-1)
-		DBG("DEBUG:pike_check_req: ------RED ALARM<->TOO MANY HITS------!!\n");
+		LOG(L_WARN,"DEBUG:pike_check_req:---RED ALARM<->TOO MANY HITS---!!\n");
 	return ret;
 }
 
@@ -110,7 +110,7 @@ void clean_routine(unsigned int ticks , void *param)
 						/* del the node */
 						remove_node( tree, node);
 					}
-					/*DEBUG*/print_timer_list(timer);
+					/*DEBUG - print_timer_list(timer); */
 				}
 				unlock( &locks[TREE_LOCK] );
 		}
@@ -128,7 +128,10 @@ void refresh_node( struct ip_node *node)
 	kid = node->children;
 	while(kid) {
 		kid->hits = 0;
-		kid->leaf_hits = 0;
+		/* if the node is red, its value will be not reseted!
+		   it has to wait for the timeout */
+		if (kid->leaf_hits<max_value)
+			kid->leaf_hits = 0;
 		refresh_node( kid );
 		kid = kid->next;
 	}

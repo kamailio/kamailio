@@ -28,7 +28,6 @@ static int pike_exit(void);
 
 
 /* parameters */
-int time_unit = 20;
 int max_reqs  = 30;
 int timeout   = 120;
 
