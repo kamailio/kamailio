@@ -144,15 +144,20 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 	struct retr_buf *request;
 	char* buf;
 	int buf_len;
+	int ret;
+
+	ret=-1;
 
 	send_sock = uri2sock(dialog->hooks.next_hop, &to_su, PROTO_NONE);
 	if (!send_sock) {
+		ret=ser_error;
 		LOG(L_ERR, "t_uac: no socket found\n");
 		goto error2;
 	}	
 
 	new_cell = build_cell(0); 
 	if (!new_cell) {
+		ret=E_OUT_OF_MEM;
 		LOG(L_ERR, "t_uac: short of cell shmem\n");
 		goto error2;
 	}
@@ -181,6 +186,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell, &buf_len, send_sock);
 	if (!buf) {
 		LOG(L_ERR, "t_uac: Error while building message\n");
+		ret=E_OUT_OF_MEM;
 		goto error1;
 	}
 
@@ -210,7 +216,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
  error2:
 	     /* if we did not install cbp, release it now */
 	if (cbp) shm_free(cbp);
-	return -1;
+	return ret;
 }
 
 
