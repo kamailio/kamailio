@@ -12,8 +12,12 @@ depends= $(sources:.c=.d)
 
 NAME=print.so
 
-LDFLAGS=-Wl,-O2 -shared
+LDFLAGS=-O2 -shared
 LIBS=
+
+ifeq ($(ARCH), SunOS)
+LDFLAGS=-O2 -G
+endif
 
 #implicit rules
 %.o:%.c $(ALLDEP)
