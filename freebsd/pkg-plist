@@ -31,7 +31,6 @@ lib/ser/modules/usrloc.so
 lib/ser/modules/vm.so
 lib/ser/modules/xlog.so
 share/doc/ser/README
-share/doc/ser/README.cfg
 share/doc/ser/INSTALL
 share/doc/ser/README-MODULES
 share/doc/ser/AUTHORS

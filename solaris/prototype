@@ -40,7 +40,6 @@ f none lib/ser/modules/vm.so 0755 bin bin
 d none doc 0755 bin bin
 d none doc/ser 0755 bin bin
 f none doc/ser/README 0644 bin bin
-f none doc/ser/README.cfg 0644 bin bin
 f none doc/ser/INSTALL 0644 bin bin
 f none doc/ser/README-MODULES 0644 bin bin
 f none doc/ser/AUTHORS 0644 bin bin

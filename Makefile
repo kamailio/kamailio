@@ -26,12 +26,18 @@
 #               cfg. -- fixes packages containing ser.cfg.default (andrei)
 #  2003-08-29  install-modules-doc split from install-doc, added 
 #               install-modules-all, removed README.cfg (andrei)
+#              added skip_cfg_install (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 
 #include  source related defs
 include Makefile.sources
+
+# whether or not to install ser.cfg or just ser.cfg.default
+# (ser.cfg will never be overwritten by make install, this is usefull
+#  when creating packages)
+skip_cfg_install?=
 
 #extra modules to exclude
 skip_modules?=
@@ -237,10 +243,11 @@ $(man-prefix)/$(man-dir)/man5:
 # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
 install-cfg: $(cfg-prefix)/$(cfg-dir)
 		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
-			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.default
-		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.default
-		if [ ! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
-			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.default \
+			< etc/ser.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
+		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
+		if [ -z "${skip_cfg_install}" -a \
+				! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
+			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.sample \
 				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
 		fi
 #		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
