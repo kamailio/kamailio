@@ -69,7 +69,8 @@ int t_lookup_request( struct sip_msg* p_msg )
    {
       LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
       T=0;
-      return -1;
+	  /* stop processing */
+      return 0;
    }
 
    /* start searching into the table */

@@ -182,7 +182,12 @@ int forward_reply(struct sip_msg* msg)
 		STATS_TX_DROPS;
 		goto error;
 	}
-	else STATS_TX_RESPONSE(  msg->first_line.u.reply.statusclass );
+	else {
+#ifdef STATS
+		int j = msg->first_line.u.reply.statuscode/100;
+		STATS_TX_RESPONSE(  j );
+#endif
+	}
 	free(new_buf);
 	free(to);
 skip:

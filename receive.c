@@ -106,7 +106,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 
 #ifdef STATS
 		gettimeofday( & tvb, &tz );
-		STATS_RX_RESPONSE ( msg->first_line.u.reply.statusclass );
+		STATS_RX_RESPONSE ( msg->first_line.u.reply.statuscode / 100 );
 #endif
 		
 		/* send the msg */

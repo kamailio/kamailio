@@ -521,7 +521,8 @@ error:
 	t_unref( p_msg, NULL, NULL );
 	T->inbound_response[branch]=NULL;
 	sip_msg_free( clone );
-	return -1;
+	/* don't try to relay statelessly on error */
+	return 0;
 }
 
 
