@@ -36,13 +36,21 @@
 #include "../ut.h"
 #include "parse_content.h"
 
-
+/*
+ * Node of the type's tree; this tree contains all the known types;
+ */
 typedef struct type_node_s {
-	char c;
-	unsigned char final;
-	unsigned char nr_sons;
-	int next;
+	char c;                      /* char contained by this node */
+	unsigned char final;         /* says what to be done if the mached string
+	                              * ends at this node: -1-> dead end (unknown
+	                              * type) or the index of the sub-type that
+	                              * follows (for types) or the  final type (for
+	                              * sub-types)*/
+	unsigned char nr_sons;       /* the number of sub-nodes */
+	int next;                    /* the next sibling node */
 }type_node_t;
+
+
 
 
 char* parse_content_length( char* buffer, char* end, int* length)
@@ -89,7 +97,8 @@ error:
 
 
 
-char* parse_content_type( char* buffer, char* end, int* type)
+
+int parse_content_type_hdr( struct sip_msg *msg )
 {
 	static type_node_t type_tree[] = {
 		{'t',-1,1,4}, {'e',-1,1,-1}, {'x',-1,1,-1}, {'t',0,0,-1},
@@ -109,9 +118,28 @@ char* parse_content_type( char* buffer, char* end, int* type)
 	};
 	int node;
 	int mime;
-	char *p;
+	char *mark;
+	char *p, *end;
 
-	p = buffer;
+	/* is the header already found? */
+	if ( msg->content_type==0 ) {
+		/* if not, found it */
+		if ( parse_headers(msg,HDR_CONTENTTYPE,0)==-1)
+			return -1;
+		if ( msg->content_type==0 ) {
+			LOG(L_ERR,"ERROR:parse_content_type_header: missing Content-Type"
+					"header\n");
+			return -1;
+		}
+	}
+
+	/* maybe the header is already parsed! */
+	if ( get_content_type(msg)!=CONTENT_TYPE_UNPARSED)
+		return get_content_type(msg);
+
+	/* it seams we have to parse it! :-( */
+	p = msg->content_type->body.s;
+	end = p + msg->content_type->body.len;
 	mime = CONTENT_TYPE_UNKNOWN;
 
 	/* search the begining of the type */
@@ -123,6 +151,7 @@ char* parse_content_type( char* buffer, char* end, int* type)
 
 	/* parse the type */
 	node = 0;
+	mark = p;
 	while (p<end && ((*p>='a' && *p<='z') || (*p>='A' && *p<='Z')) ) {
 		while ( node!=-1 && type_tree[node].c!=*p && type_tree[node].c+32!=*p){
 			node = type_tree[node].next;
@@ -131,7 +160,7 @@ char* parse_content_type( char* buffer, char* end, int* type)
 			node++;
 		p++;
 	}
-	if (p==end || node==0)
+	if (p==end || mark==p)
 		goto error;
 	if (node!=-1)
 		node = type_tree[node].final;
@@ -151,6 +180,7 @@ char* parse_content_type( char* buffer, char* end, int* type)
 		goto error;
 
 	/* parse the sub-type */
+	mark = p;
 	while (p<end && ((*p>='a' && *p<='z') || (*p>='A' && *p<='Z')) ) {
 		while(node!=-1&&subtype_tree[node].c!=*p&&subtype_tree[node].c+32!=*p)
 			node = subtype_tree[node].next;
@@ -158,7 +188,7 @@ char* parse_content_type( char* buffer, char* end, int* type)
 			node++;
 		p++;
 	}
-	if (p==end || node==0)
+	if (p==mark)
 		goto error;
 	if (node!=-1)
 		mime = subtype_tree[node].final;
@@ -167,27 +197,18 @@ char* parse_content_type( char* buffer, char* end, int* type)
 	while ( p<end && (*p==' ' || *p=='\t' ||
 	(*p=='\n' && (*(p+1)==' '||*(p+1)=='\t')) ))
 		p++;
-	if (p==end)
+
+	/* is this the end? if there are params, ignore them!! */
+	if ( *p!=';' && p!=end )
 		goto error;
 
-	/* if there are params, eat everything to the end */
-	if (*p==';') {
-		while ( p<end && (*p!='\n' || (*(p+1)==' '||*(p+1)=='\t')) )
-			p++;
-		if (p==end)
-			goto error;
-	}
-
-	/* the header ends proper? */
-	if ( (*(p++)!='\n') && (*(p-1)!='\r' || *(p++)!='\n' ) )
-		goto error;
-
-	*type = mime;
-	return p;
+	mime = ((mime==-1)?CONTENT_TYPE_UNKNOWN:mime);
+	(int)(msg->content_type->parsed) = mime;
+	return mime;
 error:
-	LOG(L_ERR,"ERROR:parse_content_type: parse error near char [%d][%c]\n",
-		*p,*p);
-	return 0;
+	LOG(L_ERR,"ERROR:parse_content_type: parse error near char [%d][%c] "
+		"offset=%d\n",*p,*p,p-msg->content_type->body.s);
+	return -1;
 }
 
 

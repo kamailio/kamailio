@@ -29,13 +29,46 @@
 #ifndef _PARSE_CONTENT_H
 #define _PARSE_CONTENT_H
 
-#define CONTENT_TYPE_UNKNOWN         0
+#include "msg_parser.h"
+
+/*
+ * Types for Content-Type header that are recognize
+ */
+#define CONTENT_TYPE_UNPARSED        0
 #define CONTENT_TYPE_TEXT_PLAIN      1
 #define CONTENT_TYPE_MESSAGE_CPIM    2
 #define CONTENT_TYPE_APPLICATION_SDP 3
+#define CONTENT_TYPE_UNKNOWN         0x7fff
 
 
-char* parse_content_type( char* buffer, char* end, int* type);
+
+/*
+ * returns the content-length value of a sip_msg as an integer
+ */
+#define get_content_length(_msg_)   ((int)((_msg_)->content_length->parsed))
+
+
+/*
+ * returns the content-type value of a sip_msg as an integer
+ */
+#define get_content_type(_msg_)   ((int)((_msg_)->content_type->parsed))
+
+
+
+/*
+ * parse the the body of the Content-Type header. It's value is also converted
+ * as int.
+ * Returns:   n (n>0)  : the found type
+ *           -1        : error (parse error or hdr not found)
+ */
+int parse_content_type_hdr( struct sip_msg *msg);
+
+
+/*
+ *  parse the body of a Content_-Length header. Also tryes to recognize the
+ *  type specified by this header (see th above defines).
+ *  Returns the first chr after the end of the header.
+ */
 char* parse_content_length( char* buffer, char* end, int* len);
 
 #endif
