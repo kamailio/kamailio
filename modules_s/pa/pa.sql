@@ -66,7 +66,7 @@ CREATE TABLE presentity_contact (
   location varchar(128) NOT NULL default '',
   expires datetime not null default '2020-05-28 21:32:15',
   placeid int(10) default NULL,
-  priority float(5,2) not null default '0.5';
+  priority float(5,2) not null default '0.5',
   contact varchar(128) default NULL,
   tupleid varchar(16) not null,
   prescaps int(10),
