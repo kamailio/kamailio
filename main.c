@@ -384,7 +384,7 @@ void handle_sigs()
 			if (sig_flag==SIGINT)
 				DBG("INT received, program terminates\n");
 			else if (sig_flag==SIGPIPE)
-				DBG("SIGPIPE rreceived, program terminates\n");
+				DBG("SIGPIPE received, program terminates\n");
 			else
 				DBG("SIGTERM received, program terminates\n");
 				
@@ -836,8 +836,13 @@ int main(int argc, char** argv)
 	struct utsname myname;
 	char *options;
 	char port_no_str[MAX_PORT_LEN];
-	int port_no_str_len=0;
+	int port_no_str_len;
+	int ret;
 
+	/*init*/
+	port_no_str_len=0;
+	ret=-1;
+	
 	/* added by jku: add exit handler */
 	if (signal(SIGINT, sig_usr) == SIG_ERR ) {
 		DPrint("ERROR: no SIGINT signal handler can be installed\n");
@@ -1280,10 +1285,14 @@ int main(int argc, char** argv)
 	if (init_stats(  dont_fork ? 1 : children_no  )==-1) goto error;
 #endif
 	
-	return main_loop();
-
+	ret=main_loop();
+	/*kill everything*/
+	kill(0, SIGTERM);
+	return ret;
 
 error:
+	/*kill everything*/
+	kill(0, SIGTERM);
 	return -1;
 
 }
