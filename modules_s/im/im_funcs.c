@@ -212,7 +212,7 @@ int im_extract_body(struct sip_msg *msg, str *body )
 
 	body->s = msg->unparsed + CRLF_LEN;
 	body->len = len;
-	DBG("im------------- body =\n|%.*s|\n",body->len,body->s);
+	DBG("DEBUG:im_extract_body:=|%.*s|\n",body->len,body->s);
 
 	return 1;
 error:
