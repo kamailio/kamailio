@@ -1,12 +1,7 @@
 # 
 # $Id$
 #
-
 From: Bogdan Andrei Iancu <iancu@fokus.gmd.de>
-Subject: [Sr] sms faq 
-
-To: sr@iptel.org
-Subject: [Sr] sms faq
 
 
                            SIP <-> SMS GateWay
@@ -117,12 +112,14 @@ Default is used the name of the machine the gateway runs on.
 the outgoing SIP messages. Even if the SIP draft forbids this, some UAS
 requires it. Default is 0 (no).
 
- - use_sms_report - numeric, optional - if the modem should ask for SMS
+ - sms_report_type - numeric, optional - if the modem should ask for SMS
 confirmation from the SMS Center. If the SMSC reply with an error code, the
 gateway will send back to SIP user a SIP message containing the text (or part
-of it) that couldn't be send. At the moment, the confirmation mechanims is
-supported only be NOKIA modems (as tested ) - aditionals mechanisms (for other
-types of modems) are in course of developing. Default is 0 (no).
+of it) that couldn't be send. To report mechanisms are implemented : 1 - the
+reports are delivered by the GSM device as SMS reports (so far supported only
+by Nokia modems); 2 - the reports are delivered as async. CDS reponses 
+(supported by almost all modems, exepting Ericsson).
+Default is 0 (no report).
 
 
 3. Usage and behavior
