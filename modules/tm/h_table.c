@@ -163,8 +163,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    /* all pointers from outbound_response array are NULL */
    /*init the links with the canceled / canceler transaction */
    new_cell->relaied_reply_branch   = -1;
-   new_cell->T_canceled  = T_UNDEFINED;
-   new_cell->T_canceler  = T_UNDEFINED;
+   new_cell->T_canceled = T_UNDEFINED;
 
    /* init_cell_lock(  new_cell ); */
 
@@ -217,12 +216,6 @@ void    insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cel
 void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell )
 {
    struct entry*  p_entry  = &(hash_table->entrys[p_cell->hash_index]);
-
-   /*update the canceler and canceled links*/
-   if ( p_cell->T_canceled!=T_NULL && p_cell->T_canceled!=T_UNDEFINED)
-      p_cell->T_canceled->T_canceler = T_NULL;
-   if ( p_cell->T_canceler!=T_NULL && p_cell->T_canceler!=T_UNDEFINED)
-      p_cell->T_canceler->T_canceled = T_NULL;
 
    /* unlink the cell from entry list */
    lock( p_entry->mutex );

@@ -73,7 +73,6 @@ typedef struct cell
 
 	/*the transaction that is canceled (usefull only for CANCEL req)*/
 	struct cell *T_canceled;
-	struct cell *T_canceler;
 
 	/* useful data */
 	/* UA Server */

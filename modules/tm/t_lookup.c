@@ -240,7 +240,6 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
 int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 {
    struct cell*  p_cell;
-   struct cell* tmp_cell;
    unsigned int hash_index = 0;
    unsigned int entry_label  = 0;
    unsigned int branch_id    = 0;
@@ -312,7 +311,6 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 
    /*all the cells from the entry are scan to detect an entry_label matching */
    p_cell     = hash_table->entrys[hash_index].first_cell;
-   tmp_cell = 0;
    while( p_cell )
    {
       /* is it the cell with the wanted entry_label? */
@@ -321,9 +319,6 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
          if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
          {/* WE FOUND THE GOLDEN EGG !!!! */
              T = p_cell;
-             if ( *(get_cseq(p_msg)->method.s)=='C' && p_cell->T_canceler &&
-                p_cell->inbound_request->first_line.u.request.method_value!=METHOD_CANCEL)
-                T = T->T_canceler ;
              *p_branch = branch_id;
              T_REF( T );
              unlock( hash_table->entrys[hash_index].mutex );
@@ -331,7 +326,6 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
             return 1;
          }
       /* next cell */
-      tmp_cell = p_cell;
       p_cell = p_cell->next_cell;
    } /* while p_cell */
 

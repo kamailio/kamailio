@@ -188,13 +188,13 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
  */
 int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
 {
-	unsigned int dest_ip     = dest_ip_param;
-	unsigned int dest_port  = dest_port_param;
-	int	      branch;
-	unsigned int len;
-	char              *buf, *shbuf;
-	struct retrans_buff *rb;
-               struct cell         *T_source;
+	unsigned int  dest_ip     = dest_ip_param;
+	unsigned int  dest_port  = dest_port_param;
+	int	       branch;
+	unsigned int  len;
+	char                          *buf, *shbuf;
+	struct retrans_buff  *rb;
+	struct cell                *T_tmp;
 
 	buf=NULL;
 	shbuf = NULL;
@@ -217,7 +217,6 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 		return 1;
 	}
 
-               T_source = T;
 	/* if it's forwarded for the first time ; else the request is retransmited
 	 * from the transaction buffer
 	 * when forwarding an ACK, this condition will be all the time false because
@@ -231,14 +230,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 			DBG("DEBUG: t_forward: it's CANCEL\n");
 			/* find original cancelled transaction; if found, use its
 			   next-hops; otherwise use those passed by script */
-			if ( T->T_canceled==T_UNDEFINED )
-				T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
+			T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
 			/* if found */
 			if ( T->T_canceled!=T_NULL )
 			{
-				T->T_canceled->T_canceler = T;
 				/* if in 1xx status, send to the same destination */
-				if ( (T->T_canceled->status/100)==1 )
+				if ( (T_tmp->status/100)==1 )
 				{
 					DBG("DEBUG: t_forward: it's CANCEL and I will send "
 						"to the same place where INVITE went\n");
@@ -246,7 +243,6 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 						to.sin_addr.s_addr;
 					dest_port = T->T_canceled->outbound_request[branch]->
 						to.sin_port;
-					T_source = T->T_canceled;
 				} else { /* transaction exists, but nothing to cancel */
 					DBG("DEBUG: t_forward: it's CANCEL but "
 						"I have nothing to cancel here\n");
@@ -258,9 +254,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 			}
 		}/* end special case CANCEL*/
 
-		if ( add_branch_label( T_source, T->inbound_request , branch )==-1)
+		if ( add_branch_label( T, T->inbound_request , branch )==-1)
 			goto error;
-		if ( add_branch_label( T_source, p_msg , branch )==-1)
+		if ( add_branch_label( T, p_msg , branch )==-1)
 			goto error;
 		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 			goto error;
@@ -319,7 +315,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	{
 		DBG("DEBUG: t_forward: forwarding CANCEL \n");
 		/* if no transaction to CANCEL
-		  or if the canceled transaction has a final status -> drop the CANCEL*/
+		    or if the canceled transaction has a final status -> drop the CANCEL*/
 		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
 		{
 			reset_timer( hash_table, &(rb->fr_timer ));
@@ -844,20 +840,18 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
 		rb->retr_list = RT_T1_TO_1;
 		set_timer( hash_table, &(rb->retr_timer), RT_T1_TO_1 );
 		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
-   	} else if ( Trans->inbound_request->REQ_METHOD==METHOD_CANCEL ) {
+	} else if ( Trans->inbound_request->REQ_METHOD==METHOD_CANCEL ) {
 		if ( Trans->T_canceled==T_UNDEFINED )
 			Trans->T_canceled = t_lookupOriginalT( hash_table ,
 				Trans->inbound_request );
-      		if ( Trans->T_canceled==T_NULL )
-            		return 1;
-      		Trans->T_canceled->T_canceler = Trans;
-     		/* put CANCEL transaction on wait only if canceled transaction already
-        	   is in final status and there is nothing to cancel;
-     		*/
-     		if ( Trans->T_canceled->status>=200)
-            		t_put_on_wait( Trans );
-   	} else if (Trans->status>=200)
-            t_put_on_wait( Trans );
+		if ( Trans->T_canceled==T_NULL )
+			return 1;
+		/* put CANCEL transaction on wait only if canceled transaction already
+		    is in final status and there is nothing to cancel; */
+		if ( Trans->T_canceled->status>=200)
+			t_put_on_wait( Trans );
+	} else if (Trans->status>=200)
+		t_put_on_wait( Trans );
    return 1;
 }
 
