@@ -44,6 +44,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../globals.h"
+#include "../../parser/parse_uri.h"
 
 #include "sip2jabber.h"
 #include "jc_pool.h"
