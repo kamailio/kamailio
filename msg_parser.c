@@ -13,6 +13,7 @@
 #include "ut.h"
 #include "error.h"
 #include "dprint.h"
+#include "mem.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -928,4 +929,3 @@ void free_sip_msg(struct sip_msg* msg)
 
 
 
-}

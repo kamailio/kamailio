@@ -4,6 +4,7 @@
 
 #include "data_lump.h"
 #include "dprint.h"
+#include "mem.h"
 
 #include <stdlib.h>
 
@@ -200,18 +201,18 @@ void free_lump_list(struct lump* l)
 		r=crt->before;
 		while(r){
 			foo=r; r=r->before;
-			pkg_free_lump(foo);
+			free_lump(foo);
 			pkg_free(foo);
 		}
 		r=crt->after;
 		while(r){
 			foo=r; r=r->after;
-			pkg_free_lump(foo);
+			free_lump(foo);
 			pkg_free(foo);
 		}
 		
 		/*clean current elem*/
-		pkg_free_lump(crt);
+		free_lump(crt);
 		pkg_free(crt);
 	}
 }

@@ -11,6 +11,7 @@
 #include "msg_parser.h"
 #include "forward.h"
 #include "action.h"
+#include "mem.h"
 
 
 #ifdef DEBUG_DMALLOC
@@ -27,7 +28,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg* msg;
 
-	msg=pkt_malloc(sizeof(struct sip_msg));
+	msg=pkg_malloc(sizeof(struct sip_msg));
 	if (msg==0) goto error1;
 	msg_no++;
 #ifdef STATS
@@ -41,7 +42,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	msg->src_ip=src_ip;
 	msg->id=msg_no;
 	/* make a copy of the message */
-	msg->orig=(char*) pkt_malloc(len+1);
+	msg->orig=(char*) pkg_malloc(len+1);
 	if (msg->orig==0){
 		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
 		goto error1;
@@ -108,7 +109,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 skip:
 	DBG("skip:...\n");
 	free_sip_msg(msg);
-	pkt_free(msg);
+	pkg_free(msg);
 #ifdef STATS
 	if (skipped) update_received_drops;
 #endif
@@ -116,14 +117,14 @@ skip:
 error:
 	DBG("error:...\n");
 	free_sip_msg(msg);
-	pkt_free(msg);
+	pkg_free(msg);
 #ifdef STATS
 	update_received_drops;
 #endif
 	return -1;
 error1:
-	if (msg) pkt_free(msg);
-	pkt_free(buf);
+	if (msg) pkg_free(msg);
+	pkg_free(buf);
 #ifdef STATS
 	update_received_drops;
 #endif
