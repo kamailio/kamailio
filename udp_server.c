@@ -71,9 +71,10 @@ int udp_init(unsigned long ip, unsigned short port)
 			BUFFER_INCREMENT );
 		ioptval=BUFFER_INCREMENT;
 	} else LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is initially %d\n", ioptval );
-	for (optval=ioptval; optval < MAX_RECV_BUFFER_SIZE ;  ) {
+	for (optval=ioptval; ;  ) {
 		/* increase size; double in initial phase, add linearly later */
 		if (phase==0) optval <<= 1; else optval+=BUFFER_INCREMENT;
+		if (optval > maxbuffer) if (phase==1) break; else { phase=1; optval >>=1; continue; }
 		LOG(L_DBG, "DEBUG: udp_init: trying SO_RCVBUF: %d\n", optval );
         	if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
                              (void*)&optval, sizeof(optval)) ==-1)
