@@ -445,7 +445,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	} else try_new=0;
 
 	init_branch_iterator();
-	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len))) {
+	while((current_uri.s=next_branch( &current_uri.len, &q, &dst_uri.s, &dst_uri.len, 0))) {
 		try_new++;
 		branch_ret=add_uac( t, p_msg, &current_uri, 
 				    (dst_uri.len) ? (&dst_uri) : &current_uri, 

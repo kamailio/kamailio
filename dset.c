@@ -37,6 +37,7 @@
 #include "error.h"
 #include "dset.h"
 #include "mem/mem.h"
+#include "ip_addr.h"
 
 #define CONTACT "Contact: "
 #define CONTACT_LEN (sizeof(CONTACT) - 1)
@@ -58,6 +59,7 @@ struct branch
 
 	int q; /* Preference of the contact among
 		* contact within the array */
+	struct socket_info* force_send_socket;
 };
 
 
@@ -93,7 +95,7 @@ void init_branch_iterator(void)
  * array, 0 is returned if there are no
  * more branches
  */
-char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len)
+char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len, struct socket_info** force_socket)
 {
 	unsigned int i;
 
@@ -106,6 +108,9 @@ char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len)
 			*dst_uri = branches[i].dst_uri;
 			*dst_len = branches[i].dst_uri_len;
 		}
+		if (force_socket) {
+			*force_socket = branches[i].force_send_socket;
+		}
 		return branches[i].uri;
 	} else {
 		*len = 0;
@@ -113,6 +118,9 @@ char* next_branch(int* len, qvalue_t* q, char** dst_uri, int* dst_len)
 		if (dst_uri && dst_len) {
 			*dst_uri = 0;
 			*dst_len = 0;
+		}
+		if (force_socket) {
+			*force_socket = 0;
 		}
 		return 0;
 	}
@@ -132,7 +140,8 @@ void clear_branches(void)
 /* 
  * Add a new branch to current transaction 
  */
-int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, int dst_uri_len, qvalue_t q)
+int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, int dst_uri_len, 
+		  qvalue_t q, struct socket_info* force_socket)
 {
 	     /* if we have already set up the maximum number
 	      * of branches, don't try new ones 
@@ -175,6 +184,8 @@ int append_branch(struct sip_msg* msg, char* uri, int uri_len, char* dst_uri, in
  		branches[nr_branches].dst_uri_len = 0;
 	}
 
+	branches[nr_branches].force_send_socket = force_socket;
+	
 	nr_branches++;
 	return 1;
 }
@@ -205,7 +216,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0))) {
 		cnt++;
 		*len += uri.len;
 		if (q != Q_UNSPECIFIED) {
@@ -246,7 +257,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 	}
 
 	init_branch_iterator();
-	while ((uri.s = next_branch(&uri.len, &q, 0, 0))) {
+	while ((uri.s = next_branch(&uri.len, &q, 0, 0, 0))) {
 		if (i) {
 			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
 			p += CONTACT_DELIM_LEN;
