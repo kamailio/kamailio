@@ -100,6 +100,17 @@ int   nonce_expire   = 300;
 int   retry_count    = 5;
 int   grp_use_domain = 0;
 
+/*
+ * Uri table holds uri username mappings, a single user
+ * can have several aliases
+ */
+char* uri_table       = "uri";       /* Name of URI table */
+char* uri_user_col    = "user";      /* Name of user column in URI table */
+char* uri_domain_col  = "domain";    /* Name of domain column in URI table */
+char* uri_uriuser_col = "uri_user";  /* Name of uri_user column in URI table */
+
+int use_uri_table = 0;               /* Should we use URI table ?, default no */
+
 str secret;
 db_con_t* db_handle;   /* Database connection handle */
 
@@ -165,7 +176,12 @@ struct module_exports exports = {
                                         * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
 		"retry_count",         /* How many times a client is allowed to retry */
-		"group_use_domain"
+		"group_use_domain",
+		"uri_table",           /* Name of URI table */
+		"uri_user_col",        /* Name of user column in URI table */
+		"uri_domain_col",      /* Name of domain column in URI table */
+		"uri_uriuser_col",     /* Name of uri_user column in URI table */
+		"use_uri_table"        /* Should URI table be used ? */
 		
 	},   /* Module parameter names */
 	(modparam_t[]) {
@@ -184,6 +200,11 @@ struct module_exports exports = {
 	        INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
+		INT_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
+		STR_PARAM,
 		INT_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
@@ -202,13 +223,18 @@ struct module_exports exports = {
 		&calc_ha1,
 		&nonce_expire,
 		&retry_count,
-		&grp_use_domain
+		&grp_use_domain,
+		&uri_table,
+		&uri_user_col,
+		&uri_domain_col,
+		&uri_uriuser_col,
+		&use_uri_table
 		
 	},   /* Module parameter variable pointers */
 #ifdef USER_DOMAIN_HACK
-	14,      /* Numberof module parameters */
+	19,      /* Numberof module parameters */
 #else
-	13,      /* Number of module paramers */
+	18,      /* Number of module paramers */
 #endif					     
 	mod_init,   /* module initialization function */
 	NULL,       /* response function */

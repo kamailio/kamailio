@@ -178,46 +178,55 @@ int check_from(struct sip_msg* _m, char* _s1, char* _s2)
  */
 int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2)
 {
-	db_key_t keys[2], cols[1];
+	db_key_t keys[2];
 	db_val_t vals[2];
+	db_key_t cols[1];
 	db_res_t* res;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-		LOG(L_ERR, "does_uri_exist(): Bad URI\n");
+		LOG(L_ERR, "does_uri_exist(): Error while parsing URI\n");
 		return -1;
 	}
 
-	if (db_use_table(db_handle, _table) < 0) {
-		LOG(L_ERR, "does_uri_exist(): Error while trying to use table \'%s\'\n", _table);
-		return -1;
-	}
+	if (use_uri_table) {
 
-	keys[0] = realm_column;
-	keys[1] = user_column;
-	cols[0] = user_column;
+		if (db_use_table(db_handle, uri_table) < 0) {
+			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
+		}
+
+		keys[0] = uri_domain_col;
+		keys[1] = uri_uriuser_col;
+
+		cols[0] = uri_uriuser_col;
+
+	} else {
+
+		if (db_use_table(db_handle, _table) < 0) {
+			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
+		}
+
+		keys[0] = realm_column;
+		keys[1] = user_column;
+
+		cols[0] = user_column;
+	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	VAL_STR(vals) = _msg->parsed_uri.host;
 	VAL_STR(vals + 1) = _msg->parsed_uri.user;
-
+	
 	if (db_query(db_handle, keys, 0, vals, cols, 2, 1, 0, &res) < 0) {
 		LOG(L_ERR, "is_local(): Error while querying database\n");
 		return -1;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
-		DBG("does_uri_exist(): User \'%.*s@%.*s\' doesn't exist\n",
-			_msg->parsed_uri.user.len, _msg->parsed_uri.user.s,
-			_msg->parsed_uri.host.len, _msg->parsed_uri.host.s
-		    );
+		DBG("does_uri_exist(): User in request uri does not exist\n");
 		db_free_query(db_handle, res);
 		return -1;
 	} else {
-		DBG("does_uri_exist(): User \'%.*s@%.*s\' does exist\n",
-			_msg->parsed_uri.user.len, _msg->parsed_uri.user.s,
-			_msg->parsed_uri.host.len, _msg->parsed_uri.host.s
-		    );
+		DBG("does _uri_exit(): User in request uri does not exist\n");
 		db_free_query(db_handle, res);
 		return 1;
 	}
