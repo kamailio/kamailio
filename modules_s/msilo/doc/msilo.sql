@@ -9,10 +9,8 @@ USE msilo;
 -- create table
 CREATE TABLE silo(
 	mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-	iuri VARCHAR(128),
-	ouri VARCHAR(128) NOT NULL,
-	to_h VARCHAR(128),
-	from_h VARCHAR(128),
+	src_addr VARCHAR(128),
+	dst_addr VARCHAR(128),
 	inc_time INTEGER NOT NULL DEFAULT 0,
 	exp_time INTEGER NOT NULL,
 	ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
