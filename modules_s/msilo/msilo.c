@@ -50,6 +50,7 @@
 #include "../../globals.h"
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_content.h"
 
 #include "../tm/t_funcs.h"
 #include "../tm/uac.h"
@@ -130,7 +131,6 @@ int  check_time=30;
 int  clean_period=5;
 
 str msg_type = { "MESSAGE", 7};
-str totag = { NULL, 0 };
 
 str reg_addr;
 
@@ -289,44 +289,65 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
 		
-	// check TO header
-	if(msg->to != NULL && msg->to->body.s != NULL)
+	// extract message body - after that whole SIP MESSAGE is parsed
+	/* get the message's body */
+	body.s = get_body( msg );
+	if (body.s==0) 
 	{
-		if(msg->to->parsed != NULL)
-		{
-			pto = (struct to_body*)msg->to->parsed;
-			DBG("MSILO: m_store: 'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
-		}
-		else
-		{
-			DBG("MSILO: m_store: 'To' header NOT PARSED ->parsing ...\n");
-			memset( &to , 0, sizeof(to) );
-			parse_to(msg->to->body.s,
-					msg->to->body.s + msg->to->body.len + 1, &to);
-			if(to.uri.len > 0) // && to.error == PARSE_OK)
-			{
-				DBG("MSILO: m_store: 'to' parsed OK <%.*s>.\n", 
-					to.uri.len, to.uri.s);
-				pto = &to;
-			}
-			else
-			{
-				DBG("MSILO: m_store: 'to' NOT parsed\n");
-				goto error;
-			}
-		}
+		LOG(L_ERR,"MSILO:m_store: ERROR cannot extract body from msg\n");
+		goto error;
 	}
-	else
+	
+	/* content-length (if present) must be already parsed */
+	if (!msg->content_length) 
+	{
+		LOG(L_ERR,"MSILO:m_store: ERROR no Content-Length header found!\n");
+		goto error;
+	}
+	body.len = get_content_length( msg );
+
+	// check if the body of message contains something
+	if(body.len <= 0)
+	{
+		DBG("MSILO: m_store: body of the message is empty!\n");
+		goto error;
+	}
+	
+	// check TO header
+	if(!msg->to || !msg->to->body.s)
 	{
 		DBG("MSILO: m_store: cannot find 'to' header!\n");
 		goto error;
+	}
+
+	if(msg->to->parsed != NULL)
+	{
+		pto = (struct to_body*)msg->to->parsed;
+		DBG("MSILO:m_store: 'To' header ALREADY PARSED: <%.*s>\n",
+			pto->uri.len, pto->uri.s );	
+	}
+	else
+	{
+		DBG("MSILO:m_store: 'To' header NOT PARSED ->parsing ...\n");
+		memset( &to , 0, sizeof(to) );
+		parse_to(msg->to->body.s, msg->to->body.s+msg->to->body.len+1, &to);
+		if(to.uri.len > 0) // && to.error == PARSE_OK)
+		{
+			DBG("MSILO:m_store: 'To' parsed OK <%.*s>.\n", 
+				to.uri.len, to.uri.s);
+			pto = &to;
+		}
+		else
+		{
+			DBG("MSILO:m_store: ERROR 'To' cannot be parsed\n");
+			goto error;
+		}
 	}
 	
 	if(pto->uri.len == reg_addr.len && 
 			!strncasecmp(pto->uri.s, reg_addr.s, reg_addr.len))
 	{
-		DBG("MSILO: m_store: message to MSILO REGISTRAR!\n");
+		DBG("MSILO:m_store: message to MSILO REGISTRAR!\n");
 		goto error;
 	}
 
@@ -340,36 +361,31 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	nr_keys++;
 
 	// check FROM header
-	if(msg->from != NULL && msg->from->body.s != NULL)
+	if(!msg->from || !msg->from->body.s)
 	{
-		if(msg->from->parsed != NULL)
-		{
-			DBG("MSILO:m_store: 'From' header ALREADY PARSED\n");	
-		}
-		else
-		{
-			DBG("MSILO:m_store: 'From' header NOT PARSED\n");
-			/* parsing from header */
-			if ( parse_from_header( msg )==-1 ) 
-			{
-				DBG("MSILO:m_store: cannot parse FROM header\n");
-				goto error;
-			}
-		}
-		pfrom = (struct to_body*)msg->from->parsed;
-		DBG("MSILO:m_store: 'From' header: <%.*s>\n",
-			pfrom->uri.len, pfrom->uri.s );	
-	}
-	else
-	{
-		DBG("MSILO: m_store: cannot find 'from' header!\n");
+		DBG("MSILO:m_store: ERROR cannot find 'from' header!\n");
 		goto error;
 	}
+
+	if(msg->from->parsed != NULL)
+		DBG("MSILO:m_store: 'From' header ALREADY PARSED\n");	
+	else
+	{
+		DBG("MSILO:m_store: 'From' header NOT PARSED\n");
+		/* parsing from header */
+		if ( parse_from_header( msg )==-1 ) 
+		{
+			DBG("MSILO:m_store: ERROR cannot parse FROM header\n");
+			goto error;
+		}
+	}
+	pfrom = (struct to_body*)msg->from->parsed;
+	DBG("MSILO:m_store: 'From' header: <%.*s>\n",pfrom->uri.len,pfrom->uri.s);	
 	
 	if(reg_addr.s && pfrom->uri.len == reg_addr.len && 
 			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
 	{
-		DBG("MSILO: m_store: message from MSILO REGISTRAR!\n");
+		DBG("MSILO:m_store: message from MSILO REGISTRAR!\n");
 		goto error;
 	}
 
@@ -400,7 +416,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	
 	if(sruri.len == 0 && msg->first_line.u.request.uri.len > 0 )
 	{
-		DBG("MSILO:mstore: R-URI found - check if is AoR!\n");
+		DBG("MSILO:m_store: R-URI found - check if is AoR!\n");
 		p = msg->first_line.u.request.uri.s;
 		while((p < msg->first_line.u.request.uri.s+
 				msg->first_line.u.request.uri.len) && *p!='@')
@@ -430,30 +446,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 
 	nr_keys++;
 
-	// extract message body - after that whole SIP MESSAGE is parsed
-	/* get the message's body */
-	if(parse_headers(msg,HDR_CONTENTLENGTH | HDR_CONTENTTYPE | HDR_EXPIRES,0)
-		==-1 || !msg->content_length || !msg->content_type) 
-	{
-		LOG(L_ERR,"MSILO:m_dump: ERROR fetching content-lenght, content_type"
-			" and expires failed! Parse error or headers missing!\n");
-		goto error;
-	}
-
-	body.s = get_body( msg );
-	if (body.s==0) 
-	{
-		LOG(L_ERR,"MSILO:m_store: ERROR cannot extract body from msg\n");
-		goto error;
-	}
-	body.len = (int)msg->content_length->parsed;
-	
-	// check if the body of message contains something
-	if(body.len <= 0)
-	{
-		DBG("MSILO: m_store: body of the message is empty!\n");
-		goto error;
-	}
+	/* add the message's body in SQL query */
 	
 	db_keys[nr_keys] = DB_KEY_BODY;
 	
@@ -466,13 +459,22 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	
 	lexpire = expire_time;
 	// add 'content-type'
-	if(msg->content_type && msg->content_type->body.len > 0)
+	/* parse the content-type header */
+	if (parse_content_type_hdr(msg)==-1 ) 
+	{
+		LOG(L_ERR,"MSILO:m_store: ERROR cannot parse Content-Type header\n");
+		goto error;
+	}
+
+	/** check the content-type value */
+	if(msg->content_type && msg->content_type->body.len > 0
+		&& get_content_type(msg)!=CONTENT_TYPE_TEXT_PLAIN
+		&& get_content_type(msg)!=CONTENT_TYPE_MESSAGE_CPIM )
 	{
 		if(m_extract_content_type(msg->content_type->body.s, 
-				msg->content_type->body.len, &ctype, CT_TYPE)
-				!= -1)
+				msg->content_type->body.len, &ctype, CT_TYPE) != -1)
 		{
-			DBG("MSILO: m_store: 'content-type' found\n");
+			DBG("MSILO:m_store: 'content-type' found\n");
 			db_keys[nr_keys] = DB_KEY_CTYPE;
 			db_vals[nr_keys].type = DB_STR;
 			db_vals[nr_keys].nul = 0;
@@ -481,10 +483,13 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 			nr_keys++;
 		}
 	}
-	//check 'expires'
+
+	// check 'expires'
+	// no more parseing - already done by get_body()
+	// if(parse_headers(msg, HDR_EXPIRES,0)!=-1)
 	if(msg->expires && msg->expires->body.len > 0)
 	{
-		DBG("MSILO: m_store: 'expires' found\n");
+		DBG("MSILO:m_store: 'expires' found\n");
 		val = atoi(msg->expires->body.s);
 		if(val > 0)
 			lexpire = (expire_time<=val)?expire_time:val;
@@ -568,7 +573,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 				(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
 				&pfrom->uri,      /* To */
 				&reg_addr,        /* From */
-				&totag,           /* To tag */
+				NULL,             /* To tag */
 				NULL,             /* From tag */
 				NULL,             /* CSeq */
 				NULL,             /* Call-ID */
@@ -603,34 +608,33 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			hdr_str  = { hdr_buf, 1024 }, 
 			body_str = { body_buf, 1024 };
 
-	DBG("MSILO: m_dump: ------------ start ------------\n");
+	DBG("MSILO:m_dump: ------------ start ------------\n");
 	
-	// check TO header
-	if(msg->to != NULL && msg->to->body.s != NULL)
+	// check for TO header 
+	if(parse_headers(msg, HDR_TO, 0)==-1 || !msg->to || !msg->to->body.s)
 	{
-		if(msg->to->parsed != NULL)
-		{
-			pto = (struct to_body*)msg->to->parsed;
-			DBG("MSILO: m_dump: 'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
-		}
-		else
-		{
-			memset( &to , 0, sizeof(to) );
-			parse_to(msg->to->body.s,
-				msg->to->body.s + msg->to->body.len + 1, &to);
-			if(to.uri.len <= 0) // || to.error != PARSE_OK)
-			{
-				DBG("MSILO: m_dump: 'To' NOT parsed\n");
-				goto error;
-			}
-			pto = &to;
-		}
+		LOG(L_ERR,"MSILO:m_dump: ERROR cannot find TO HEADER!\n");
+		goto error;
+	}
+
+	// check TO header
+	if(msg->to->parsed != NULL)
+	{
+		pto = (struct to_body*)msg->to->parsed;
+		DBG("MSILO:m_dump: 'To' header ALREADY PARSED: <%.*s>\n",
+			pto->uri.len, pto->uri.s );	
 	}
 	else
 	{
-		DBG("MSILO: m_dump: cannot find 'to' header!\n");
-		goto error;
+		memset( &to , 0, sizeof(to) );
+		parse_to(msg->to->body.s,
+			msg->to->body.s + msg->to->body.len + 1, &to);
+		if(to.uri.len <= 0) // || to.error != PARSE_OK)
+		{
+			DBG("MSILO: m_dump: 'To' header NOT parsed\n");
+			goto error;
+		}
+		pto = &to;
 	}
 
 	/**
@@ -754,10 +758,10 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			
 			tmb.t_uac_dlg(&msg_type,  /* Type of the message */
 					(ctaddr.s)?&ctaddr:0,    /* Real destination */
-					&pto->uri,        /* Request-URI */
+					&pto->uri,               /* Request-URI */
 					&str_vals[STR_IDX_TO],   /* To */
 					&str_vals[STR_IDX_FROM], /* From */
-					&totag,             /* To tag */
+					NULL,             /* To tag */
 					NULL,             /* From tag */
 					NULL,             /* CSeq */
 					NULL,             /* Call-ID */
