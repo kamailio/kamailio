@@ -35,6 +35,7 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "parser/parse_hname2.h"
+#include "parser/digest/digest_parser.h"
 
 
 #include "stats.h"
@@ -834,6 +835,7 @@ int main(int argc, char** argv)
 
 
         init_hfname_parser();
+	init_digest_parser();
 
 	/*init mallocs (before parsing cfg !)*/
 	if (init_mallocs()==-1)
