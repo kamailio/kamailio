@@ -49,6 +49,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
+#include "../../parser/parse_disposition.h"
 #include "../../db/db.h"
 #include "../tm/tm_load.h"
 #include "cpl_run.h"
@@ -79,6 +80,7 @@ str    cpl_orig_tz = {0,0}; /* a copy of the original TZ; keept as a null
 /* this vars are used outside only for loading scripts */
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 
+int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 
 MODULE_VERSION
@@ -246,6 +248,13 @@ static int cpl_init(void)
 	if (load_tm( &cpl_tmb )==-1)
 		goto error;
 
+	/* load the send_reply function from sl module */
+	if ((sl_reply=find_export("sl_send_reply", 2, 0))==0) {
+		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import sl_send_reply; maybe "
+			"you forgot to load the sl module\n");
+		goto error;
+	}
+
 	/* register the fifo commands */
 	if (register_fifo_cmd( cpl_load, "LOAD_CPL", 0)!=1) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot register LOAD_CPL fifo cmd!\n");
@@ -375,60 +384,86 @@ static int cpl_exit(void)
 
 
 
+static inline int get_dest_user(struct sip_msg *msg, str *user)
+{
+	struct sip_uri uri;
+
+	/*  get the user_name from new_uri/RURI/To */
+	DBG("DEBUG:cpl-c:get_dest_user: tring to get user from new_uri\n");
+	if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
+	|| !uri.user.len )
+	{
+		DBG("DEBUG:cpl-c:get_dest_user: tring to get user from R_uri\n");
+		if ( parse_uri( msg->first_line.u.request.uri.s,
+		msg->first_line.u.request.uri.len ,&uri)||!uri.user.len )
+		{
+			DBG("DEBUG:cpl-c:get_dest_user: tring to get user from To\n");
+			if (!msg->to || !get_to(msg) ||
+			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
+			||!uri.user.len)
+			{
+				LOG(L_ERR,"ERROR:cpl-c:get_dest_user: unable to extract user"
+					" name from RURI or To header!\n");
+				return -1;
+			}
+		}
+	}
+	*user = uri.user;
+	return 0;
+}
+
+
+
+static inline int get_orig_user(struct sip_msg *msg, str *user)
+{
+	struct to_body *from;
+	struct sip_uri uri;
+	
+	/* if it's outgoing -> get the user_name from From */
+	/* parsing from header */
+	DBG("DEBUG:cpl-c:get_orig_user: tring to get user from From\n");
+	if ( parse_from_header( msg )==-1 ) {
+		LOG(L_ERR,"ERROR:cpl-c:get_orig_user: unable to extract URI "
+			"from FROM header\n");
+		return -1;
+	}
+	from = (struct to_body*)msg->from->parsed;
+	/* parse the extracted uri from From */
+	if (parse_uri( from->uri.s, from->uri.len, &uri)||!uri.user.len) {
+		LOG(L_ERR,"ERROR:cpl-c:get_orig_user: unable to extract user name "
+			"from URI (From header)\n");
+		return -1;
+	}
+	*user = uri.user;
+	return 0;
+}
+
+
+
 /* Params: str1 - as unsigned int - can be CPL_RUN_INCOMING
  * or CPL_RUN_OUTGOING */
 static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct cpl_interpreter  *cpl_intr;
-	struct to_body          *from;
-	struct sip_uri          uri;
-	str                     script;
+	str  user;
+	str  script;
 
 	script.s = 0;
 	cpl_intr = 0;
 
 	/* get the user_name */
 	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
-		/* if it's incoming -> get the user_name from new_uri/RURI/To */
-		DBG("DEBUG:cpl_invoke_script: tring to get user from new_uri\n");
-		if ( !msg->new_uri.s||parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)
-		|| !uri.user.len )
-		{
-			DBG("DEBUG:cpl_invoke_script: tring to get user from R_uri\n");
-			if ( parse_uri( msg->first_line.u.request.uri.s,
-			msg->first_line.u.request.uri.len ,&uri)||!uri.user.len )
-			{
-				DBG("DEBUG:cpl_invoke_script: tring to get user from To\n");
-				if (!msg->to || !get_to(msg) ||
-				parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)
-				||!uri.user.len)
-				{
-					LOG(L_ERR,"ERROR:cpl_invoke_script: unable to extract user"
-					" name from RURI or To header!\n");
-					goto error;
-				}
-			}
-		}
+		/* if it's incoming -> get the destination user name */
+		if (get_dest_user( msg, &user)==-1)
+			goto error;
 	} else {
-		/* if it's outgoing -> get the user_name from From */
-		/* parsing from header */
-		DBG("DEBUG:cpl_invoke_script: tring to get user from From\n");
-		if ( parse_from_header( msg )==-1 ) {
-			LOG(L_ERR,"ERROR:cpl_invoke_script: unable to extract URI "
-				"from FROM header\n");
+		/* if it's outgoing -> get the origin user name */
+		if (get_orig_user( msg, &user)==-1)
 			goto error;
-		}
-		from = (struct to_body*)msg->from->parsed;
-		/* parse the extracted uri from From */
-		if (parse_uri( from->uri.s, from->uri.len, &uri)||!uri.user.len) {
-			LOG(L_ERR,"ERROR:cpl_invoke_script: unable to extract user name "
-				"from URI (From header)\n");
-			goto error;
-		}
 	}
 
 	/* get the script for this user */
-	if (get_user_script( db_hdl, &uri.user, &script)==-1)
+	if (get_user_script( db_hdl, &user, &script)==-1)
 		goto error;
 
 	/* has the user a non-empty script? if not, return normaly, allowing ser to
@@ -442,7 +477,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	/* set the flags */
 	cpl_intr->flags = (unsigned int)str1;
 	/* attache the user */
-	cpl_intr->user = uri.user;
+	cpl_intr->user = user;
 
 	/* since the script interpretation can take some time, it will be better to
 	 * send a 100 back to prevent the UAC to retransmit */
@@ -475,12 +510,85 @@ error:
 }
 
 
+#define CPL_SCRIPT          "script"
+#define CPL_SCRIPT_LEN      (sizeof(CPL_SCRIPT)-1)
+#define ACTION_PARAM        "action"
+#define ACTION_PARAM_LEN    (sizeof(ACTION_PARAM)-1)
+#define STORE_ACTION        "store"
+#define STORE_ACTION_LEN    (sizeof(STORE_ACTION)-1)
+#define REMOVE_ACTION       "remove"
+#define REMOVE_ACTION_LEN   (sizeof(REMOVE_ACTION)-1)
+
+
+static inline int do_store_script(struct sip_msg *msg)
+{
+	str  body;
+	str  user;
+	str  bin;
+	char foo;
+	int  ret;
+
+	/* get the message's body
+	 * anyhow we have to call this function, so let's do it at the beginning
+	 * to force the parsing of all the headers - like this we avoid separat
+	 * calls of parse_headers function for FROM, CONTENT_LENGTH, etc  */
+	body.s = get_body( msg );
+	if (body.s==0) {
+		LOG(L_ERR,"ERROR:cpl-c:do_store_cpl: cannot extract body from msg!\n");
+		goto error;
+	}
+
+	/* content-length (if present) must be already parsed */
+	if (!msg->content_length) {
+		LOG(L_ERR,"ERROR:cpl-c:do_store_cpl: no Content-Length hdr found!\n");
+		goto error;
+	}
+	body.len = get_content_length( msg );
+	if (body.len==0) {
+		LOG(L_ERR,"ERROR:cpl-c:do_store_cpl: 0 content-len found for store\n");
+		goto error;
+	}
+
+	/* get the user name */
+	if (get_dest_user( msg, &user)==-1)
+		goto error;
+
+	/* we have the script, the user -> compile the script and place it into 
+	 * database */
+
+	/* get the binary coding for the XML file */
+	if ( encodeCPL( &body, &bin)!=1)
+		goto error;
+
+	foo = user.s[user.len];
+	user.s[user.len] = 0;
+	/* write both the XML and binary formats into database */
+	ret = write_to_db( db_hdl, user.s, &body, &bin);
+	user.s[user.len] = foo;
+	if (ret!=1)
+		goto error;
+
+	return 0;
+error:
+	return -1;
+}
+
+
+
+static inline int do_remove_script(struct sip_msg *msg)
+{
+	return 0;
+}
+
+
 
 static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 {
-	int ret;
-	int mime;
-	int *mimes;
+	struct disposition *disp;
+	struct disposition_param *param;
+	int  ret;
+	int  mime;
+	int  *mimes;
 
 	/* make sure that is a REGISTER ??? */
 
@@ -492,14 +600,63 @@ static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 		goto error;
 
 	/* check the mime type */
-	DBG("DEBUG: mime found %u, %u\n",mime>>16, mime&0x00ff);
-	if ( mime && mime==(TYPE_APPLICATION<<16)+SUBTYPE_CPL ) {
+	DBG("DEBUG:cpl_process_register: Content-Type mime found %u, %u\n",
+		mime>>16,mime&0x00ff);
+	if ( mime && mime==(TYPE_APPLICATION<<16)+SUBTYPE_CPLXML ) {
 		/* can be an upload or remove -> check for the content-purpos and
-		 * content- action headers */
-		DBG("DEBUG:cpl_process_register: ");
+		 * content-action headers */
+		DBG("DEBUG:cpl_process_register: carrying CPL -> look at "
+			"Content-Disposition\n");
+		if (parse_content_disposition( msg )!=0) {
+			LOG(L_ERR,"ERROR:cpl_process_register: Content-Disposition missing "
+				"or corruped\n");
+			goto error;
+		}
+		disp = get_content_disposition(msg);
+		print_disposition( disp ); /* just for DEBUG */
+		/* check if the type of dispostion is SCRIPT */
+		if (disp->type.len!=CPL_SCRIPT_LEN ||
+		strncasecmp(disp->type.s,CPL_SCRIPT,CPL_SCRIPT_LEN) ) {
+			LOG(L_ERR,"ERROR:cpl_process_register: bogus message - Content-Type"
+				"says CPL_SCRIPT, but Content-Disposition someting else\n");
+			goto error;
+		}
+		/* disposition type is OK -> look for action parameter */
+		for(param=disp->params;param;param=param->next) {
+			if (param->name.len==ACTION_PARAM_LEN &&
+			!strncasecmp(param->name.s,ACTION_PARAM,ACTION_PARAM_LEN))
+				break;
+		}
+		if (param==0) {
+			LOG(L_ERR,"ERROR:cpl_process_register: bogus message - "
+				"Content-Disposition has no action param\n");
+			goto error;
+		}
+		/* action param found -> check its value: store or remove */
+		if (param->body.len==STORE_ACTION_LEN &&
+		!strncasecmp( param->body.s, STORE_ACTION, STORE_ACTION_LEN)) {
+			/* it's a store action -> get the script from body message and store
+			 * it into database (CPL and BINARY format) */
+			if (do_store_script(msg)==-1)
+				goto error;
+		} else
+		if (param->body.len==REMOVE_ACTION_LEN &&
+		!strncasecmp( param->body.s, REMOVE_ACTION, REMOVE_ACTION_LEN)) {
+			/* it's a remove action -> remove the script from database */
+			if (do_remove_script(msg)==-1)
+				goto error;
+		} else {
+			LOG(L_ERR,"ERROR:cpl_process_register: unknown action <%.*s>\n",
+				param->body.len,param->body.s);
+			goto error;
+		}
+		sl_reply( msg, (char*)200, "OK");
+		/* I send the reply and I don't want to resturn to script execution, so
+		 * I return 0 to do break */
+		return 0;
 	}
 
-	/* is there a ACCEPT hdr ? */
+	/* is there an ACCEPT hdr ? */
 	ret = parse_accept_hdr( msg );
 	if (ret==-1)
 		goto error;
