@@ -44,8 +44,7 @@ typedef struct  timer
 {
    struct cell*    first_cell;
    struct cell*    last_cell;
-   int                  sem;
-   lock_t   mutex;
+   lock_t             mutex;
 } timer_type;
 
 
@@ -121,8 +120,8 @@ void free_cell( struct cell* dead_cell );
 struct s_table* init_hash_table();
 void free_hash_table( struct s_table* hash_table );
 
-int t_add_transaction( struct sip_msg* p_msg );
-
+int                t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
+struct cell*  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
 
 
 
