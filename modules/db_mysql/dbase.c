@@ -351,11 +351,7 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 		return -2;
 	}
 
-	if (_r) {
-		return store_result(_h, _r);
-	} else {
-		return use_result(_h, _r);
-	}
+	return store_result(_h, _r);
 }
 
 
@@ -375,7 +371,7 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 	}
 
 	if(_r)
-	    return get_result(_h, _r);
+	    return store_result(_h, _r);
 	return 0;
 }
 
