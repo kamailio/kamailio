@@ -489,9 +489,14 @@ static void sig_usr(int signo)
 	pid_t	chld;
 	int	chld_status;
 
+	/* XXX Need to doublecheck .... handler fo SIGINT quite different
+	   from SIGTERM handler ... in SIGTERM_h, thinkgs such as
+	   destroy_modules and shm_destroy are missing ... is that really ok?
+	   THX -Jiri
+	*/
 	if (signo==SIGINT || signo==SIGPIPE) {	/* exit gracefuly */
 		DPrint("INT received, program terminates\n");
-#		ifdef STATS
+#		ifdef _OBSOLETED_STATS
 		/* print statistics on exit only for the first process */
 		if (stats->process_index==0 && stat_file )
 			if (dump_all_statistic()==0)
@@ -522,7 +527,7 @@ static void sig_usr(int signo)
 	} else if (signo==SIGTERM) { /* exit gracefully as daemon */
 		DPrint("TERM received, program terminates\n");
 		if (is_main){
-#ifdef STATS
+#ifdef _OBSOLETED_STATS
 			dump_all_statistic();
 #endif
 			if (pid_file) {
