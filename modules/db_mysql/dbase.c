@@ -35,10 +35,10 @@
 #include <mysql/errmsg.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../db/db_pool.h"
 #include "utils.h"
 #include "val.h"
 #include "my_con.h"
-#include "my_pool.h"
 #include "res.h"
 #include "db_mod.h"
 #include "dbase.h"
@@ -85,7 +85,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 	 * value shouldn't be needed, but it doesn't hurt either, since the loop
 	 * will most of the time stop at the second or sometimes at the third
 	 * iteration.
-     */
+	 */
 	for (i=0; i<(auto_reconnect ? 3 : 1); i++) {
 		if (mysql_query(CON_CONNECTION(_h), _s)==0) {
 			return 0;
@@ -243,7 +243,12 @@ static int print_set(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, in
  */
 db_con_t* db_init(const char* _url)
 {
+	struct db_id* id;
+	struct my_con* con;
 	db_con_t* res;
+
+	id = 0;
+	res = 0;
 
 	if (!_url) {
 		LOG(L_ERR, "db_init: Invalid parameter value\n");
@@ -257,15 +262,34 @@ db_con_t* db_init(const char* _url)
 	}
 	memset(res, 0, sizeof(db_con_t) + sizeof(struct my_con*));
 
-	res->tail = (unsigned long)get_connection(_url);
-
-	if (!res->tail) {
-		LOG(L_ERR, "db_init: Could not create a connection\n");
-		pkg_free(res);
-		return 0;
+	id = new_db_id(_url);
+	if (!id) {
+		LOG(L_ERR, "db_init: Cannot parse URL '%s'\n", _url);
+		goto err;
 	}
 
+	     /* Find the connection in the pool */
+	con = (struct my_con*)pool_get(id);
+	if (!con) {
+		DBG("db_init: Connection '%s' not found in pool\n", _url);
+		     /* Not in the pool yet */
+		con = new_connection(id);
+		if (!con) {
+			LOG(L_ERR, "db_init: No memory left\n");
+			goto err;
+		}
+		pool_insert((struct pool_con*)con);
+	} else {
+		DBG("db_init: Connection '%s' found in pool\n", _url);
+	}
+
+	res->tail = (unsigned long)con;
 	return res;
+
+ err:
+	if (id) free_db_id(id);
+	if (res) pkg_free(res);
+	return 0;
 }
 
 
@@ -275,12 +299,18 @@ db_con_t* db_init(const char* _url)
  */
 void db_close(db_con_t* _h)
 {
+	struct pool_con* con;
+
 	if (!_h) {
 		LOG(L_ERR, "db_close: Invalid parameter value\n");
 		return;
 	}
 
-	release_connection((struct my_con*)_h->tail);
+	con = (struct pool_con*)_h->tail;
+	if (pool_remove(con) != 0) {
+		free_connection((struct my_con*)con);
+	}
+
 	pkg_free(_h);
 }
 

@@ -1,7 +1,6 @@
 /* 
  * $Id$
  *
- *
  * Copyright (C) 2001-2004 iptel.org
  *
  * This file is part of ser, a free SIP server.
@@ -26,20 +25,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <string.h>
-#include <time.h>
 #include "my_con.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "utils.h"
+#include <string.h>
+#include <time.h>
 
 
 /*
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
-struct my_con* new_connection(struct my_id* id)
+struct my_con* new_connection(struct db_id* id)
 {
 	struct my_con* ptr;
 
@@ -66,23 +65,23 @@ struct my_con* new_connection(struct my_id* id)
 	mysql_init(ptr->con);
 
 	if (id->port) {
-		DBG("new_connection: Opening MySQL connection: mysql://%.*s:%.*s@%.*s:%d/%.*s\n",
-		    id->username.len, ZSW(id->username.s),
-		    id->password.len, ZSW(id->password.s),
-		    id->host.len, ZSW(id->host.s),
+		DBG("new_connection: Opening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
+		    ZSW(id->username),
+		    ZSW(id->password),
+		    ZSW(id->host),
 		    id->port,
-		    id->database.len, ZSW(id->database.s)
+		    ZSW(id->database)
 		    );
 	} else {
-		DBG("new_connection: Opening MySQL connection: mysql://%.*s:%.*s@%.*s/%.*s\n",
-		    id->username.len, ZSW(id->username.s),
-		    id->password.len, ZSW(id->password.s),
-		    id->host.len, ZSW(id->host.s),
-		    id->database.len, ZSW(id->database.s)
+		DBG("new_connection: Opening MySQL connection: mysql://%s:%s@%s/%s\n",
+		    ZSW(id->username),
+		    ZSW(id->password),
+		    ZSW(id->host),
+		    ZSW(id->database)
 		    );
 	}
 
-	if (!mysql_real_connect(ptr->con, id->host.s, id->username.s, id->password.s, id->database.s, id->port, 0, 0)) {
+	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password, id->database, id->port, 0, 0)) {
 		LOG(L_ERR, "new_connection: %s\n", mysql_error(ptr->con));
 		mysql_close(ptr->con);
 		goto err;
@@ -94,9 +93,7 @@ struct my_con* new_connection(struct my_id* id)
 
 
 	ptr->timestamp = time(0);
-
 	ptr->id = id;
-	
 	return ptr;
 
  err:
@@ -113,7 +110,7 @@ void free_connection(struct my_con* con)
 {
 	if (!con) return;
 	if (con->res) mysql_free_result(con->res);
-	if (con->id) free_my_id(con->id);
+	if (con->id) free_db_id(con->id);
 	if (con->con) {
 		mysql_close(con->con);
 		pkg_free(con->con);
