@@ -249,7 +249,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_FROM:
 		case HDR_CALLID:
 		case HDR_CONTACT:
-	        case HDR_ROUTE:   /* janakj, HDR_ROUTE was missing here */
+		case HDR_ROUTE:   /* janakj, HDR_ROUTE was missing here */
+		case HDR_MAXFORWARDS:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
