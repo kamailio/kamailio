@@ -202,7 +202,7 @@ fixup_str2int( void** param, int param_no)
 	if (param_no == 1) {
 		go_to = str2s(*param, strlen(*param), &err);
 		if (err == 0) {
-			free(*param);
+			pkg_free(*param);
 			*param = (void *)go_to;
 			return 0;
 		} else {
