@@ -572,10 +572,12 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		{
 			case HDR_TO:
 				if (new_tag)
+				{
 					if (get_to(msg)->tag_value.s )
 						len+=new_tag_len-get_to(msg)->tag_value.len;
 					else
 						len+=new_tag_len+5/*";tag="*/;
+				}
 			case HDR_VIA:
 			case HDR_FROM:
 			case HDR_CALLID:
@@ -586,7 +588,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	for(lump=msg->reply_lump;lump;lump=lump->next)
 		len += lump->text.len;
 	/*user agent header*/
-	len += USER_AGENT_LEN ;
+	len += USER_AGENT_LEN + CRLF_LEN;
 	/*content length header*/
 	len +=CONTENT_LEN_LEN + CRLF_LEN;
 	/* end of message */
@@ -639,7 +641,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 						append_str( p, new_tag,new_tag_len,msg);
 						append_str( p, CRLF,CRLF_LEN,msg);
 					}
-				break;
+					break;
 				}
 			case HDR_VIA:
 			case HDR_FROM:
@@ -668,8 +670,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/*end of message*/
 	memcpy( p, CRLF, CRLF_LEN );
 	p+=CRLF_LEN;
-	*(p++) = 0;
-	*returned_len=len;
+	*(p) = 0;
 	return buf;
 error:
 	if (buf) free(buf);
