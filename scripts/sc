@@ -92,8 +92,8 @@ usage:
  $CMD acl grant <user> <group> ........ grant user membership (*)
  $CMD acl revoke <user> [<group>] ..... grant user membership(s) (*)
            < usrloc >
- $CMD dul <table> <name> .............. delete user's UsrLoc entries (*)
- $CMD show [<name>] ................... show online users
+ $CMD dul <table> <name> .............. delete user's UsrLoc entries
+ $CMD show ............................ show online users
  $CMD showdb [<name>] ................. show online users flushed in DB
  $CMD passwd <user> <passwd> .......... change user's password (*)
  $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
@@ -534,6 +534,11 @@ case $1 in
 
 	show)
 		ul_dump
+		exit $?
+		;;
+
+	online)
+		ul_dump grep aor| awk '{print $3}' | sort | sort -mu
 		exit $?
 		;;
 
