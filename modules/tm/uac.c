@@ -184,6 +184,7 @@ int t_uac( str *msg_type, str *dst,
 		ser_error=ret=E_SEND;
 		goto error01;
 	}
+	new_cell->kr=REQ_FWDED;
 	start_retr( request );
 
 	/* success */
