@@ -2,60 +2,79 @@
 
 From: Bogdan-Andrei IANCU <iancu@fokus.gmd.de> 
 
-Module name
-  pike
-
-Description
-  keeps trace of the sip_msg's source ips and blocks the ones that exceeded some limit.
-
-Parameters and functions
-  sampling_time_unit
-  - time period used for sampling (or accuracy ;-) ) -if smaller, than better, but slower. if you
 
 
-
-want to detect peek, use a small one; to limit the access to a gateway for ex, use a bigger one
-  reqs_density_per_unit
-  - how many req should be allowed per sampling_time_unit before blocking any req from that ip. Practically, the blocking limit is between ( let's have x=reqs_density_per_unit) x and 3*x for ipv4 addresses and between x and 8*x for ipv6 addresses.
-  removel_latency
-  - for how long should an ip be kept after last hit.
-
-  pike_check_req()
-   - process the source ip and returns false if the ip is exceeded the time limit.
+                              PIKE module
 
 
-Implementation
-  one single tree (for both ipv4 and ipv6 ips) is used. Each node contains a byte, the ip
+1.Description
+
+The module keeps trace of all (or selected ones) incoming requests's IP source
+and blocks the ones that exceeded some limit. Works simultaneous for IPv4 and
+IPv6 addresses.
 
 
-addresses stretching from root to the leafs.
-  Ex:
-         / 193 - 175 - 132 - 164
-root /                               \ 142
-       \ 195 - 37 -78 - 163
-                         \ 79 - 134
+2.Module's parameters
+
+ - sampling_time_unit
+time period used for sampling (or the sampling accuracy ;-) ). As smaller, as
+better, but slower. If you want to detect peeks, use a small one; to limit the
+access (like total number of requests on a long period of time) to a proxy
+resource (a gateway for ex), use a bigger value for this parameter.
+ - reqs_density_per_unit
+How many requests should be allowed per sampling_time_unit before blocking
+all the incoming request from that ip. Practically, the blocking limit is
+between ( let's have x=reqs_density_per_unit) x and 3*x for ipv4 addresses
+and between x and 8*x for ipv6 addresses.
+ - removel_latency
+For how long the IP address will be kept in memory after the last request from
+that IP address. It's a sord of timeout value.
 
 
-To detect the hole address, step by step, the nodes corespoding to each byet of it is expanded
+3.Exported functions
 
-after soem number of incoming request
+- pike_check_req()
+Process the source IP of the current request and returns false if the IP was
+exceeded the blocking limit.
+
+
+4.Implementation
+
+One single tree (for both ipv4 and ipv6) is used. Each node contains a byte,
+the ip addresses stretching from root to the leafs.
+Ex:
+           / 193 - 175 - 132 - 164
+tree root /                  \ 142
+          \ 195 - 37 - 78 - 163
+                     \ 79 - 134
+
+
+To detect the hole address, step by step, from the root to the leafs, the nodes
+corespoding to each byte of the ip address are expanded. In order to be
+expended a node has to be hit for a given number of times (possible by
+different addresses; in the previous example, the node "37" was expended by
+the 195.37.78.163 and 195.37.79.134 hits).
+
 Ex: for 193.175.132.164 with x= reqs_density_per_unit
  - after first req hits -> the "193" node is build
- - after x more hits , the "175" node is build; the hits of "193" node are split between it and its kid - both of them gone have x/2.
+ - after x more hits , the "175" node is build; the hits of "193" node are
+   splited between itself and its kid - both of them gone have x/2.
  - and so on for node "132" and "164"
- - once "164" build the entire address can be found in the tree. "164" become a leaf. After it will bw hit a s a leaf for x times, it will become "RED" (further req will be blocked)
+ - once "164" build the entire address can be found in the tree. "164" become
+   a leaf. After it will be hit as a leaf for x times, it will become "RED"
+   (further request from this address will be blocked)
 
-So, to build and block this address were needed 3*x hits. Now, if reqs start comming from
-193.175.132.142, the first 3 bytes are alredy in the tree (they are shared with the previous address), so I will need only x hits (to build node "142" and to make it "RED") to make this address also to block.
+So, to build and block this address were needed 3*x hits. Now, if reqs start
+comming from 193.175.132.142, the first 3 bytes are alredy in the tree (they
+are shared with the previous address), so I will need only x hits (to build
+node "142" and to make it "RED") to make this address also to be blocked.
 This is the reason for the variable number of hits necesary to block an ip.
 
-For further info, please send a email; there are to many explenation to write them here ;-)
-Bogdan
+The maximum number of hits to turn an address red are (n is the address's 
+number of bytes):
+ - 1 (first byte) + x (second byte) + (x/2)*(n-2) (for the rest of the bytes) +
+     + (n-1) (to turn the node to red).
+So, for IPv4 (n=4) will be 3x and for IPv6 (n=16) will be 9x.
+The minimum number of hits to turn an address red is x.
 
-PS: I set pike module to allow on sms gateway only between (5,15) messg per minut from each ip.
 
-
-_______________________________________________
-Sr mailing list
-Sr@iptel.org
-http://mail.iptel.org/mailman/listinfo/sr
