@@ -8,7 +8,9 @@
 #        table definitons
 # USAGE: call the command without any parameters for info
 #
-
+# 
+# 2003-01-21 changed SILO table definition, by dcm
+#
 
 #################################################################
 # config vars
@@ -374,15 +376,13 @@ CREATE TABLE config (
 # "instant" message silo
 
 CREATE TABLE silo(
-    mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    iuri VARCHAR(128),
-    ouri VARCHAR(128) NOT NULL,
-    to_h VARCHAR(128),
-    from_h VARCHAR(128),
-    inc_time INTEGER NOT NULL DEFAULT 0,
-    exp_time INTEGER NOT NULL,
-    ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
-    body BLOB NOT NULL
+	mid INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
+	src_addr VARCHAR(128),
+	dst_addr VARCHAR(128),
+	inc_time INTEGER NOT NULL DEFAULT 0,
+	exp_time INTEGER NOT NULL,
+	ctype VARCHAR(32) NOT NULL DEFAULT "text/plain",
+	body BLOB NOT NULL
 ) $TABLE_TYPE ;
 
 
