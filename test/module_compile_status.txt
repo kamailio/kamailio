@@ -1,0 +1,60 @@
+
+
+1 linux-i386/gcc2.96
+2 linux-i386/gcc3.2
+3 linux-i386/icc
+4 freebsd-i386/gcc
+5 openbsd-i386/gcc
+6 netbsd-ultrasparc/gcc
+7 solaris/gcc
+8 solaris/sun cc
+
+W - warnings
+E - errors
+I - could not compile due to missing includes
+L - could not compile due to missing libraries
+l - locking problems
+o - ok
+
+P - possible proto problems (tcp)
+D - dead/not finished
+
+
+
+
+module_name       1  2  3  4  5  6  7  8
+core
+acc                                    o
+auth                                   E
+auth_db                                W
+auth_radius                            I
+cpl             P                      o
+cpl-c           D                      E
+dbtext                                 E
+domain                                 o
+enum                                   o
+exec                                   o
+ext                                    o
+extcmd                                 o
+group                                  o
+jabber                                 o
+maxfwd                                 o
+msilo                                  o
+mysql                                  o
+pa                                     o
+pike                                   o
+print                                  o
+radius_acc                             I
+registrar                              o
+rr                                     o
+sl                                     o
+sms                                    o
+textops                                o
+tm                                     o
+uri                                    o
+usrloc                                 E
+vm                                     o
+
+
+
+
