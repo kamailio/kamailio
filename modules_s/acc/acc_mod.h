@@ -75,6 +75,9 @@ extern char* acc_user_col;
 extern char* acc_time_col;
 extern char* acc_from_uri;
 extern char* acc_to_uri;
+extern char* acc_totag_col;
+extern char* acc_fromtag_col;
+
 
 #endif /* SQL_ACC */
 

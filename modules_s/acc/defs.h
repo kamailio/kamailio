@@ -43,8 +43,8 @@
 #define ALL_LOG_FMT_LEN (sizeof(ALL_LOG_FMT)-1)
 
 #ifdef SQL_ACC
-#	define SQL_ACC_FMT "FTmiofcts0"
-#	define SQL_MC_FMT "FTmiofctsp"
+#	define SQL_ACC_FMT "FTmiofcts0dr"
+#	define SQL_MC_FMT  "FTmiofctspdr"
 #endif
 
 /* caution: keep consistent with definition of rad_attr */

@@ -386,7 +386,7 @@ int acc_db_request( struct sip_msg *rq, struct hdr_field *to,
 		acc_sip_method_col, acc_i_uri_col, 
 		acc_o_uri_col, acc_sip_from_col, acc_sip_callid_col,
    		acc_sip_to_col, acc_sip_status_col, acc_user_col, 
-		acc_time_col};
+		acc_time_col, acc_totag_col, acc_fromtag_col};
 
 	struct tm *tm;
 	time_t timep;
