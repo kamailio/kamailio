@@ -34,8 +34,7 @@
 #include "../../mem/mem.h"
 #include "sub_list.h"
 
-struct node*   append_to_list(struct node *head, unsigned char *offset,
-																char *name)
+struct node*   append_to_list(struct node *head, char *offset, char *name)
 {
 	struct node *new_node;
 
@@ -52,7 +51,7 @@ struct node*   append_to_list(struct node *head, unsigned char *offset,
 
 
 
-unsigned char* search_the_list(struct node *head, char *name)
+char* search_the_list(struct node *head, char *name)
 {
 	struct node *n;
 
