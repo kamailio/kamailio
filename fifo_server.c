@@ -294,7 +294,8 @@ int open_fifo_server()
 				strerror(errno));
 			return -1;
 		}
-		LOG(L_INFO, "SER: open_uac_fifo: fifo server up...\n");
+		LOG(L_INFO, "SER: open_uac_fifo: fifo server up at %s...\n",
+			fifo);
 		fifo_server( fifo_stream ); /* never retruns */
 	}
 	/* dad process */
