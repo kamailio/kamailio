@@ -90,7 +90,14 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 		case FIELD_TYPE_DATETIME:
 			RES_TYPES(_r)[i] = DB_DATETIME;
 			break;
-			
+
+		case FIELD_TYPE_BLOB:
+		case FIELD_TYPE_TINY_BLOB:
+		case FIELD_TYPE_MEDIUM_BLOB:
+		case FIELD_TYPE_LONG_BLOB:
+			RES_TYPES(_r)[i] = DB_BLOB;
+			break;
+
 		default:
 			RES_TYPES(_r)[i] = DB_STRING;
 			break;
