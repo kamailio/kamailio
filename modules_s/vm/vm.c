@@ -80,7 +80,7 @@
 #define SQL_EQUAL      " = "
 #define SQL_EQUAL_LEN  3
 
-#define VM_FIFO_PARAMS 15
+#define VM_FIFO_PARAMS 17
 
 #define VM_INVITE      "invite"
 #define VM_BYE         "bye"
@@ -106,6 +106,8 @@ char* user_column = "username";
 #ifdef MULTI_DOMAIN
 char* domain_column = "domain";
 #endif
+
+#define EXTRA_DEBUG
 
 db_con_t* db_handle = 0;
 
@@ -191,16 +193,128 @@ static int vm_init_child(int rank)
 static int vm_extract_body(struct sip_msg *msg, str *body );
 #endif
 
+static int vm_get_user_info( str* user,   /*[in]*/
+			     str* host,   /*[in]*/
+                             str* email   /*[out]*/)
+{
+        db_res_t*       email_res=0;
+    
+#ifdef _OBSO
+	char*           s=0;
+        str             email_query;
+
+	    email_query.len = SQL_SELECT_LEN
+		+ strlen(email_column)
+		+ SQL_FROM_LEN
+		+ strlen(subscriber_table)
+		+ SQL_WHERE_LEN
+		+ strlen(user_column)
+		+ SQL_EQUAL_LEN
+		+ user->len + 2/* strlen("''") */
+#ifdef MULTI_DOMAIN
+		+ SQL_AND_LEN
+		+ strlen(domain_column)
+		+ SQL_EQUAL_LEN
+		+ host->len + 2/* strlen("''") */
+#endif
+		;
+	    
+	    email_query.s = malloc(email_query.len+1);
+	    if(!email_query.s){
+		LOG(L_ERR,"ERROR: %s: not enough memory\n",
+		    exports.name);
+		goto error;
+	    }
+	    s = email_query.s;
+	    append_str(s,SQL_SELECT,SQL_SELECT_LEN);
+	    append_str(s,email_column,strlen(email_column));
+	    append_str(s,SQL_FROM,SQL_FROM_LEN);
+	    append_str(s,subscriber_table,strlen(subscriber_table));
+	    append_str(s,SQL_WHERE,SQL_WHERE_LEN);
+	    append_str(s,user_column,strlen(user_column));
+	    append_str(s,SQL_EQUAL,SQL_EQUAL_LEN);
+	    *s = '\''; s++;
+	    append_str(s,user->s,user->len);
+	    *s = '\''; s++;
+#ifdef MULTI_DOMAIN
+	    append_str(s,SQL_AND,SQL_AND_LEN);
+	    append_str(s,domain_column,strlen(domain_column));
+	    append_str(s,SQL_EQUAL,SQL_EQUAL_LEN);
+	    *s = '\''; s++;
+	    append_str(s,msg->parsed_uri.host.s,msg->parsed_uri.host.len);
+	    *s = '\''; s++;
+#endif
+	    *s = '\0';
+	    
+	    
+	    (*db_raw_query)(db_handle,email_query.s,&email_res);
+	    free(email_query.s);
+#else
+	    db_key_t keys[2];
+	    db_val_t vals[2];
+	    db_key_t cols[1];
+
+	    keys[0] = user_column;
+	    cols[0] = email_column;
+	    VAL_TYPE(&(vals[0])) = DB_STR;
+	    VAL_NULL(&(vals[0])) = 0;
+	    VAL_STR(&(vals[0]))  = *user;
+
+#ifdef MULTI_DOMAIN
+	    keys[1] = domain_column;
+	    VAL_TYPE(&vals[1]) = DB_STR;
+	    VAL_NULL(&vals[1]) = 0;
+	    VAL_STR(&vals[1])  = *host;
+#endif
+
+	    db_use_table(db_handle,subscriber_table);
+	    if ((*db_query)(db_handle, keys, 0, vals, cols, 
+#ifdef MULTI_DOMAIN
+			    2, 
+#else
+			    1,
+#endif
+			    1, 0, &email_res))
+	    {
+
+		LOG(L_ERR,"ERROR: vm: db_query() failed.");
+		goto error;
+	    }
+#endif
+	    
+	    if( (!email_res) || (email_res->n != 1) ){
+	    
+		if(email_res)
+		    (*db_free_query)(db_handle,email_res);
+		
+		LOG( L_ERR,"ERROR: %s: no email for user '%.*s'",
+		     exports.name,
+		     user->len,user->s);
+		goto error;
+	    }
+	    
+	    email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
+	    email->len = strlen(email->s);
+
+#ifdef MULTI_DOMAIN
+	    domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
+	    domain->s = strlen(domain->s);
+#endif	    
+
+	    return 0;
+error:
+	    return -1;
+}
+
 static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 {
         str             body;
         unsigned int    hash_index;
         unsigned int    label;
         contact_body_t* cb=0;
-        str*            str_uri=0;
-        str             email_query;
+        str             str_uri;
         str             email;
-        db_res_t*       email_res=0;
+	str             domain;
 	contact_t*      c=0;
 	str             lines[VM_FIFO_PARAMS];
 	char            id_buf[IDBUF_LEN];
@@ -209,7 +323,6 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	char*           s;
 	rr_t*           record_route;
 	char            fproxy_lr;
-	//param_t*        route_param;
 	char            route_buffer[ROUTE_BUFFER_MAX];
 	str             route;
 	struct hdr_field* rr_hdr;
@@ -247,6 +360,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
   		goto error;
         }
 
+	str_uri.s = 0; str_uri.len = 0;
         if(msg->contact){
 
 		if(parse_contact(msg->contact) == -1){
@@ -261,7 +375,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 		cb = msg->contact->parsed;
 
 		if(cb && (c=cb->contacts)) {
-		    str_uri = &c->uri;
+		    str_uri = c->uri;
 #ifdef EXTRA_DEBUG
 		    /*print_contacts(c);*/
 		    for(; c; c=c->next)
@@ -275,8 +389,8 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 
 	/* str_uri is taken from caller's contact or from is missing
 	 * for backwards compatibility with pre-3261 */
-        if(!str_uri || !str_uri->len)
-	    str_uri = &(get_from(msg)->uri);
+        if(!str_uri.len)
+	    str_uri = get_from(msg)->uri;
 
 	//if(parse_nameaddr(str* _s, name_addr_t* _a)){
 	//    LOG(L_ERR,"ERROR: parse_nameaddr failed\n");
@@ -286,18 +400,13 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	s = route_buffer;
 
 	rr_hdr = msg->record_route;
-	if(!rr_hdr->parsed && parse_rr(rr_hdr)){
-	  LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
-	  goto error;
+	if(rr_hdr && (!rr_hdr->parsed && parse_rr(rr_hdr))){
+	    LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
+	    goto error;
 	}
 	    
-	DBG("rr_hdr = 0x%X; rr_hdr->parsed = 0x%X\n",(unsigned int)rr_hdr,(unsigned int)rr_hdr->parsed);
 	record_route = rr_hdr ? rr_hdr->parsed : 0;
-	
 	fproxy_lr = 0;
-
-	DBG("vm: ############# record route header ##############\n");
-	DBG("rr_hdr && record_route = %X && %X\n",(unsigned int)rr_hdr,(unsigned int)record_route);
 
 	if(rr_hdr && record_route){
 
@@ -319,7 +428,6 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	  if(rr_hdr->body.len){
 	      
 	    /* Parse all parameters */
-	    DBG("record_route->nameaddr.uri (before parse_params): %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 	    tmp_str = record_route->nameaddr.uri;
 	    if (parse_params(&tmp_str, CLASS_RR, &hooks, &record_route->params) < 0) {
 	      LOG(L_ERR, "vm: Error while parsing record route uri params\n");
@@ -357,45 +465,17 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	  }
 
 	  if(!fproxy_lr){
-	    copy_route(s,route.len,str_uri->s,str_uri->len);
-	    str_uri = &((rr_t*)msg->record_route->parsed)->nameaddr.uri;
+	    copy_route(s,route.len,str_uri.s,str_uri.len);
+	    str_uri = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
 	  }
-
-//  	const char* cur = route.c_str();
-//  	const char* end = cur + route.length();
-
-//  	bool is_uri=false;
-//  	while(cur<end){
-
-//  	    if(*cur == '<')
-//  		is_uri = true;
-//  	    else if(*cur == '>')
-//  		is_uri = false;
-//  	    else if(*cur == ';' && !is_uri) 
-//  		break;
-//  	    cur++;
-//  	}
-
-//  	string first_route(route,0,cur-route.c_str());
-//  	if(first_route.find(";lr") >= first_route.length()) {
-
-//  	    // 1st proxy doesn't support loose-routing
-//  	    route = string(cur+1, route.length() + route.c_str() - (cur+1)) + ";" + ruri;
-//  	    ruri = first_route;
-//  	}
-	  
 	}
 
-	DBG("vm: route: %.*s\n",route.len,route.s);
-	DBG("vm: ############# record route header - end ##############\n");
+	DBG("vm: calculated route: %.*s\n",route.len,route.s);
+	DBG("vm: next r-uri: %.*s\n",str_uri.len,str_uri.s);
 	
-/* 	if(msg->route) */
-/* 	    DBG("DEBUG: vm: route:%.*s\n", */
-/* 		msg->route->body.len,msg->route->body.s); */
-
-
-	email.s = 0; email.len = 0;
-	body.s = 0; body.len = 0;
+	body = empty_param;
+	email = empty_param;
+	domain = empty_param;
 
 	if(!strcmp(action,VM_INVITE)){
 
@@ -405,89 +485,32 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	    }
 
 	    body.len = strlen(body.s);
-
-#ifdef _OBSO
-	    if(vm_extract_body(msg,&body)==-1) {
-		LOG(L_ERR, "ERROR: vm: extract_body failed\n");
+	    
+	    if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,&email) < 0){
+		LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
 		goto error;
 	    }
-#endif
-
-	    email_query.len = SQL_SELECT_LEN
-		+ strlen(email_column)
-		+ SQL_FROM_LEN
-		+ strlen(subscriber_table)
-		+ SQL_WHERE_LEN
-		+ strlen(user_column)
-		+ SQL_EQUAL_LEN
-		+ msg->parsed_uri.user.len + 2/* strlen("''") */
-#ifdef MULTI_DOMAIN
-		+ SQL_AND_LEN
-		+ strlen(domain_column)
-		+ SQL_EQUAL_LEN
-		+ msg->parsed_uri.host.len + 2/* strlen("''") */
-#endif
-		;
-	    
-	    email_query.s = malloc(email_query.len+1);
-	    if(!email_query.s){
-		LOG(L_ERR,"ERROR: %s: not enough memory\n",
-		    exports.name);
-		goto error;
-	    }
-	    s = email_query.s;
-	    append_str(s,SQL_SELECT,SQL_SELECT_LEN);
-	    append_str(s,email_column,strlen(email_column));
-	    append_str(s,SQL_FROM,SQL_FROM_LEN);
-	    append_str(s,subscriber_table,strlen(subscriber_table));
-	    append_str(s,SQL_WHERE,SQL_WHERE_LEN);
-	    append_str(s,user_column,strlen(user_column));
-	    append_str(s,SQL_EQUAL,SQL_EQUAL_LEN);
-	    *s = '\''; s++;
-	    append_str(s,msg->parsed_uri.user.s,msg->parsed_uri.user.len);
-	    *s = '\''; s++;
-#ifdef MULTI_DOMAIN
-	    append_str(s,SQL_AND,SQL_AND_LEN);
-	    append_str(s,domain_column,strlen(domain_column));
-	    append_str(s,SQL_EQUAL,SQL_EQUAL_LEN);
-	    *s = '\''; s++;
-	    append_str(s,msg->parsed_uri.host.s,msg->parsed_uri.host.len);
-	    *s = '\''; s++;
-#endif
-	    *s = '\0';
-	    
-	    
-	    (*db_raw_query)(db_handle,email_query.s,&email_res);
-	    free(email_query.s);
-	    
-	    if( (!email_res) || (email_res->n != 1) ){
-	    
-		if(email_res)
-		    (*db_free_query)(db_handle,email_res);
-		
-		LOG( L_ERR,"ERROR: %s: no email for user '%.*s'",
-		     exports.name,
-		     msg->parsed_uri.user.len,msg->parsed_uri.user.s);
-		goto error;
-	    }
-	    
-	    email.s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
-	    email.len = strlen(email.s);
+	    domain = msg->parsed_uri.host;
 	}
 
-	lines[0].s=action; lines[0].len=strlen(action); 
+	lines[0].s=action; lines[0].len=strlen(action);
+
 	lines[1]=msg->parsed_uri.user;		/* user from r-uri */
 	lines[2]=email;			        /* email address from db */
-	lines[3].s=ip_addr2a(&msg->rcv.dst_ip);	/* dst ip */
-	lines[3].len=strlen(lines[3].s);
-	lines[4]=empty_param/*msg->first_line.u.request.uri*/;   /* r_uri ('Contact:' for next requests) */
-	lines[5]=*str_uri;			/* r_uri for subsequent requests */
-	lines[6]=get_from(msg)->body;		/* from */
-	lines[7]=msg->to->body;			/* to */
-	lines[8]=msg->callid->body;		/* callid */
-	lines[9]=get_from(msg)->tag_value;	/* from tag */
-	lines[10]=get_to(msg)->tag_value;	/* to tag */
-	lines[11]=get_cseq(msg)->number;	/* cseq number */
+	lines[3]=domain;                        /* domain */
+	/*  lines[4].s=ip_addr2a(&msg->rcv.dst_ip); */
+	/*  lines[4].len=strlen(lines[4].s); */
+	lines[4]=msg->rcv.bind_address->address_str; /* dst ip */
+	lines[5]=msg->rcv.bind_address->port_no_str; /* port */
+	lines[6]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
+	/*  lines[6]=empty_param; */
+	lines[7]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
+	lines[8]=get_from(msg)->body;		/* from */
+	lines[9]=msg->to->body;			/* to */
+	lines[10]=msg->callid->body;		/* callid */
+	lines[11]=get_from(msg)->tag_value;	/* from tag */
+	lines[12]=get_to(msg)->tag_value;	/* to tag */
+	lines[13]=get_cseq(msg)->number;	/* cseq number */
 
 	i2s=int2str(hash_index, &l);		/* hash:label */
 	if (l+1>=IDBUF_LEN) {
@@ -501,13 +524,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 		goto error;
 	}
 	memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-	lines[12].s=id_buf;lines[12].len=int_buflen;
+	lines[14].s=id_buf;lines[14].len=int_buflen;
 
-	lines[13]=route.len ? route : empty_param;
-	lines[14].s=body.s; lines[14].len=body.len;
+	lines[15]=route.len ? route : empty_param;
+	lines[16].s=body.s; lines[16].len=body.len;
 
-	if ( write_to_vm_fifo(vm_fifo, &lines[0], 
-			     body.len ? VM_FIFO_PARAMS : VM_FIFO_PARAMS-1)
+	if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
 	     ==-1 ) {
 
 	    LOG(L_ERR, "ERROR: vm_start: write_to_fifo failed\n");
@@ -527,72 +549,6 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 		with 'false' to script processing */
 	return -1;
 }
-
-#ifdef _OBSO
-static int im_get_body_len( struct sip_msg* msg)
-{
-	int x,err;
-	str foo;
-
-	if (!msg->content_length)
-	{
-		LOG(L_ERR,"ERROR: im_get_body_len: Content-Length header absent!\n");
-		goto error;
-	}
-	/* if header is present, trim to get only the string containing numbers */
-	trim_len( foo.len , foo.s , msg->content_length->body );
-	/* convert from string to number */
-	x = str2s( foo.s,foo.len,&err);
-	if (err){
-		LOG(L_ERR, "ERROR: im_get_body_len:"
-			" unable to parse the Content_Length number !\n");
-		goto error;
-	}
-	return x;
-error:
-	return -1;
-}
-
-static int vm_extract_body(struct sip_msg *msg, str *body )
-{
-	int len;
-	int offset;
-
-	if ( parse_headers(msg,HDR_EOH, 0)==-1 )
-	{
-		LOG(L_ERR,"ERROR: vm_extract_body: unable to parse all headers!\n");
-		goto error;
-	}
-
-	/* get the lenght from Content-Lenght header */
-	if ( (len = im_get_body_len(msg))<0 )
-	{
-		LOG(L_ERR,"ERROR: vm_extract_body: cannot get body length\n");
-		goto error;
-	}
-
-	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)==0 )
-		offset = CRLF_LEN;
-	else if (*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' )
-		offset = 1;
-	else{
-		LOG(L_ERR,"ERROR: vm_extract_body: unable to detect the beginning"
-			" of message body!\n ");
-		goto error;
-	}
-
-	body->s = msg->unparsed + offset;
-	body->len = len;
-
-#ifdef _VM_EXTRA_DBG
-	DBG("DEBUG:vm_extract_body:=|%.*s|\n",body->len,body->s);
-#endif
-
-	return 1;
-error:
-	return -1;
-}
-#endif
 
 static int init_tmb()
 {
@@ -647,6 +603,7 @@ static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
     }
 
 	/* write now (unbuffered straight-down write) */
+    DBG("vm: write_to_vm_fifo: <%.*s>\n",len,buf);
     if (write(fd_fifo, buf,len)==-1) {
 		LOG(L_ERR, "ERROR: write_to_vm_fifo: write failed: %s\n",
 					strerror(errno));
