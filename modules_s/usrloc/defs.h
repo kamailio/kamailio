@@ -3,7 +3,7 @@
 
 
 #define TABLE_NAME "location"
-#define DB_URL "sql://csps:47csps11@dbhost/csps107"
+#define DB_URL "sql://janakj:heslo@localhost/ser"
 
 #define MAX_CONTACT_BUFFER 1024
 

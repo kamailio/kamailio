@@ -23,9 +23,9 @@ static int cpl_is_response_accept(struct sip_msg* msg, char* str, char* str2);
 static int cpl_is_response_reject(struct sip_msg* msg, char* str, char* str2);
 static int cpl_is_response_redirect(struct sip_msg* msg, char* str, char* str2);
 static int cpl_update_contact(struct sip_msg* msg, char* str, char* str2);
+static int mod_init(void);
 
-
-static struct module_exports cpl_exports= {
+struct module_exports exports = {
 	"cpl_module",
 	(char*[]){		"cpl_run_script",
 				"cpl_is_response_accept",
@@ -55,6 +55,13 @@ static struct module_exports cpl_exports= {
 				0
 		},
 	5,
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init, /* Module initialization function */
 	(response_function) 0,
 	(destroy_function) 0,
 	0,
@@ -62,10 +69,10 @@ static struct module_exports cpl_exports= {
 };
 
 
-struct module_exports* mod_register()
+static int mod_init(void)
 {
-	fprintf(stderr, "cpl - registering\n");
-	return &cpl_exports;
+	fprintf(stderr, "cpl - initializing\n");
+	return 0;
 }
 
 

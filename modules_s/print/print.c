@@ -10,24 +10,36 @@
 #include <stdio.h>
 
 static int print_f(struct sip_msg*, char*,char*);
+static int mod_init(void);
 
-static struct module_exports print_exports= {	"print_stdout", 
-												(char*[]){"print"},
-												(cmd_function[]){print_f},
-												(int[]){1},
-												(fixup_function[]){0},
-												1, /* number of fucntions*/
-												0, /* response function*/
-												0,  /* destroy function */
-												0,   /* oncancel function */
-												0 /* per-child init function */
-											};
+char* str_param;
+int int_param;
+
+struct module_exports exports = {
+	"print_stdout", 
+	(char*[]){"print"},
+	(cmd_function[]){print_f},
+	(int[]){1},
+	(fixup_function[]){0},
+	1, /* number of functions*/
+
+	(char*[]){"str_param", "int_param"},
+	(modparam_t[]){STR_PARAM, INT_PARAM},
+	(void*[]){&str_param, &int_param},
+	2,
+	
+	mod_init, /* module initialization function */
+	0,        /* response function*/
+	0,        /* destroy function */
+	0,        /* oncancel function */
+	0         /* per-child init function */
+};
 
 
-struct module_exports* mod_register()
+static int mod_init(void)
 {
-	fprintf(stderr, "print - registering...\n");
-	return &print_exports;
+	fprintf(stderr, "print - initializing\n");
+	return 0;
 }
 
 

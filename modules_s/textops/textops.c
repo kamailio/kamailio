@@ -29,8 +29,10 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 
 static int fixup_regex(void**, int);
 
+static int mod_init(void);
 
-static struct module_exports my_exports= {
+
+struct module_exports exports= {
 	"textops",
 	(char*[])	{
 			"search",
@@ -57,6 +59,13 @@ static struct module_exports my_exports= {
 			0
 	},
 	4,
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init, /* module initialization function */
 	0, /* response function */
 	0,  /* destroy function */
 	0, /* on_cancel function */
@@ -64,10 +73,10 @@ static struct module_exports my_exports= {
 };
 
 
-struct module_exports* mod_register()
+static int mod_init(void)
 {
-	fprintf(stderr, "%s - registering...\n", my_exports.name);
-	return &my_exports;
+	fprintf(stderr, "%s - initializing\n", exports.name);
+	return 0;
 }
 
 
@@ -124,7 +133,7 @@ static int fixup_regex(void** param, int param_no)
 	if ((re=malloc(sizeof(regex_t)))==0) return E_OUT_OF_MEM;
 	if (regcomp(re, *param, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
 		free(re);
-		LOG(L_ERR, "ERROR: %s : bad re %s\n", my_exports.name, (char*)*param);
+		LOG(L_ERR, "ERROR: %s : bad re %s\n", exports.name, (char*)*param);
 		return E_BAD_RE;
 	}
 	/* free string */

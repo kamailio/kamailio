@@ -19,9 +19,10 @@
 static int w_sl_filter_ACK(struct sip_msg* msg, char* str, char* str2);
 static int w_sl_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int fixup_sl_send_reply(void** param, int param_no);
+static int mod_init(void);
 
 
-static struct module_exports sl_exports= {
+struct module_exports exports= {
 	"sl_module",
 	(char*[]){
 				"sl_send_reply",
@@ -40,6 +41,13 @@ static struct module_exports sl_exports= {
 				0
 		},
 	2,
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) 0,
 	0,
@@ -47,15 +55,11 @@ static struct module_exports sl_exports= {
 };
 
 
-#ifdef STATIC_STATELESS
-struct module_exports* sl_mod_register()
-#else
-struct module_exports* mod_register()
-#endif
+static int mod_init(void)
 {
-	fprintf(stderr, "stateless - registering\n");
+	fprintf(stderr, "stateless - initializing\n");
 	sl_startup();
-	return &sl_exports;
+	return 0;
 }
 
 

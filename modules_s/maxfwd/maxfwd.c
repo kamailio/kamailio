@@ -23,10 +23,10 @@ static int w_reply_to_maxfwd_zero(struct sip_msg* msg, char* str, char* str2);
 static int fixup_maxfwd_header(void** param, int param_no);
 static int w_is_maxfwd_present(struct sip_msg* msg, char* str, char* str2);
 static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
+static int mod_init(void);
 
 
-
-static struct module_exports mf_exports= {
+struct module_exports exports= {
 	"maxfwd_module",
 	(char*[]){	"mf_decrement_maxfwd",
 				"mf_add_maxfwd_header",
@@ -51,6 +51,7 @@ static struct module_exports mf_exports= {
 				0,
 				1
 			},
+
 	(fixup_function[]){
 				0,
 				fixup_maxfwd_header,
@@ -60,6 +61,13 @@ static struct module_exports mf_exports= {
 				fixup_maxfwd_header
 		},
 	6,
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init,
 	(response_function) 0,
 	(destroy_function) 0,
 	0,
@@ -67,15 +75,11 @@ static struct module_exports mf_exports= {
 };
 
 
-#ifdef STATIC_MAXFWD
-struct module_exports* maxfwd_mod_register()
-#else
-struct module_exports* mod_register()
-#endif
+static int mod_init(void)
 {
-	fprintf(stderr, "maxfwd - registering\n");
+	fprintf(stderr, "maxfwd - initializing\n");
 	mf_startup();
-	return &mf_exports;
+	return 0;
 }
 
 

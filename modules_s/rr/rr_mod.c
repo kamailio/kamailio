@@ -13,6 +13,8 @@
 
 #define MAX_RR_LEN 80
 
+static int mod_init(void);
+
 /*
  * Rewrites request URI from Route HF if any
  */
@@ -24,7 +26,7 @@ static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2);
 static int addRecordRoute(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-static struct module_exports rr_exports= {
+struct module_exports exports= {
 	"rr",
 	(char*[]) {
 		"rewriteFromRoute",
@@ -43,21 +45,24 @@ static struct module_exports rr_exports= {
 		0
 	},
 	2, /* number of functions*/
-	0, /* response function*/
-	0, /* destroy function */
-	0, /* oncancel function */
-	0  /* per-child init function */
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init, /* initialize module */
+	0,        /* response function*/
+	0,        /* destroy function */
+	0,        /* oncancel function */
+	0         /* per-child init function */
 };
 
 
-#ifdef STATIC_RR
-struct module_exports* rr_mod_register()
-#else
-struct module_exports* mod_register()
-#endif
+static int mod_init(void)
 {
-	fprintf(stderr, "rr - registering\n");
-	return &rr_exports;
+	fprintf(stderr, "rr - initializing\n");
+	return 0;
 }
 
 

@@ -96,6 +96,12 @@ static int rwrite(struct sip_msg* _msg, str* _s);
 
 
 /*
+ * Module initialization function 
+ */
+static int mod_init(void);
+
+
+/*
  * Structure that represents database connection
  */
 db_con_t* db_con;
@@ -119,7 +125,7 @@ static int use_db;
 int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-static struct module_exports usrloc_exports= {
+struct module_exports exports = {
 	"usrloc", 
 	(char*[]) {
 		"save_contact",
@@ -132,6 +138,13 @@ static struct module_exports usrloc_exports= {
 	(int[]){1, 1},
 	(fixup_function[]){0, 0},
 	2,
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init,   /* module initialization function */
 	0,
 	destroy,    /* destroy function */
 	0,          /* oncancel function */
@@ -142,9 +155,9 @@ static struct module_exports usrloc_exports= {
 /*
  * Initialize parent
  */
-struct module_exports* mod_register()
+static int mod_init(void)
 {
-	printf( "Registering user location module\n");
+	printf( "Initializing user location module\n");
 
 	     /*
 	      * We will need sl_send_reply from stateless
@@ -153,6 +166,7 @@ struct module_exports* mod_register()
 	sl_reply = find_export("sl_send_reply", 2);
 	if (!sl_reply) {
 		LOG(L_ERR, "mod_register(): This module requires sl module\n");
+		return -1;
 	}
 	
 	     /*
@@ -183,6 +197,7 @@ struct module_exports* mod_register()
  	c = create_cache(512, TABLE_NAME);
 	if (c == NULL) {
 		LOG(L_ERR, "mod_register(): Unable to create cache\n");
+		return -2;
 	}
 
 	     /* 
@@ -200,6 +215,8 @@ struct module_exports* mod_register()
 		db_con = db_init(DB_URL);
 		if (!db_con) {
 			LOG(L_ERR, "usrloc-parent: Error while connecting database\n");
+			free_cache(c);
+			return -3;
 		} else {
 			db_use_table(db_con, TABLE_NAME);
 			LOG(L_ERR, "usrloc: Database connection opened successfuly\n");
@@ -212,7 +229,7 @@ struct module_exports* mod_register()
 		preload_cache(c, db_con);
 	}
 
-	return &usrloc_exports;
+	return 0;
 }
 
 
