@@ -70,7 +70,7 @@
 #define PRESENCE_ETAG "</presence>"
 #define PRESENCE_ETAG_L (sizeof(PRESENCE_ETAG) - 1)
 
-#define TUPLE_START "<tuple id=\"9r28r49\">"
+#define TUPLE_START "<tuple id=\""
 #define TUPLE_START_L (sizeof(TUPLE_START) - 1)
 
 #define TUPLE_END "\">"
