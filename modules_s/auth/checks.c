@@ -55,14 +55,15 @@ int check_to(struct sip_msg* _msg, char* _str1, char* _str2)
 	if (!user.len) return -1;
 
 	/* FIXME !! */
-	if (!strncasecmp(user.s, state.cred.username.s,
-			 (user.len < state.cred.username.len) ? (state.cred.username.len) : (user.len))) {
-		DBG("check_to(): auth id and To username are equal\n");
-		return 1;
-	} else {
-		DBG("check_to(): auth id and To username differ\n");
-		return -1;
+	if (user.len == state.cred.username.len) {
+		if (!strncasecmp(user.s, state.cred.username.s, user.len)) {
+			DBG("check_to(): auth id and To username are equal\n");
+			return 1;
+		}
 	}
+
+	DBG("check_to(): auth id and To username differ\n");
+	return -1;
 }
 
 
@@ -83,12 +84,13 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2)
 	if (!user.len) return -1;
 
 	/* FIXME !! */
-	if (!strncasecmp(user.s, state.cred.username.s,
-			(user.len < state.cred.username.len) ? (state.cred.username.len) : (user.len))) {
-		DBG("check_from(): auth id and From username are equal\n");
-		return 1;
-	} else {
-		DBG("check_from(): auth id and From username differ\n");
-		return -1;
+	if (user.len == state.cred.username.len) {
+		if (!strncasecmp(user.s, state.cred.username.s, user.len)) {
+			DBG("check_from(): auth id and From username are equal\n");
+			return 1;
+		}
 	}
+
+	DBG("check_from(): auth id and From username differ\n");
+	return -1;
 }
