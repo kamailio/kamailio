@@ -9,7 +9,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 6
-EXTRAVERSION = 1
+EXTRAVERSION = 2
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -78,6 +78,9 @@ endif
 
 ifeq ($(ARCH), sparc64)
 	DEFS+= -DFAST_LOCK
+ifeq($(OS), SunOs)
+	CFLAGS+= -mv8 -Wa,-xarch=v8plus
+endif
 endif
 
 
@@ -141,6 +144,7 @@ ifeq  ($(OS), SunOS)
 
 YACC=yacc
 LIBS+=-L/usr/local/lib -lxnet -lrt # or -lnsl -lsocket or -lglibc ?
+# -lrt needed for sched_yield
 
 endif
 ifeq ($(OS), FreeBSD)
