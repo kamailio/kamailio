@@ -19,16 +19,19 @@
 	    <author>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<affiliation><orgname>Voice Sistem</orgname></affiliation>
 		<address>
-		    <email>modroiu@fokus.fraunhofer.de</email>
+		<email>ramona@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
 		</address>
 	    </author>
 	    <editor>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
 		<address>
-		    <email>modroiu@fokus.fraunhofer.de</email>
+		    <email>ramona@voice-system.ro</email>
 		</address>
 	    </editor>
 	</authorgroup>

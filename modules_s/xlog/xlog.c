@@ -126,7 +126,7 @@ static int xlog(struct sip_msg* msg, char* lev, char* frm)
 		return -1;
 
 	log_buf[log_len] = '\0';
-	LOG((int)(long)lev, log_buf);
+	LOG((int)(long)lev, "%.*s", log_len, log_buf);
 
 	return 1;
 }
@@ -143,7 +143,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 		return -1;
 
 	log_buf[log_len] = '\0';
-	DBG(log_buf);
+	DBG("%.*s", log_len, log_buf);
 
 	return 1;
 }

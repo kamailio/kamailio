@@ -128,6 +128,24 @@
 		    %ua : User agent header field
 		</para>
 	    </listitem>
+	    <listitem>
+		<para>
+		    %{name[N]} : print the body of the Nth header identified by 
+			'name'. If [N] is omitted then the body of the first header is
+			printed. The first header is got when N=0, for the second N=1,
+			a.s.o. To print the last header of that type, use -1, no other
+			negative values are supported now. No white spaces are allowed
+			inside the specifier (before }, before or after {, [, ]
+			symbols).
+		</para>
+		<para>
+			The module do not identify compact header names unless they are
+			specified explicitely (to-do in a future realease). It is
+			recommended to use dedicated
+			specifiers for headers (e.g., %ua for user agent header),
+			if they are available -- they are faster.
+		</para>
+	    </listitem>
 	</itemizedlist>
     </section>
     <section>
@@ -246,7 +264,7 @@ modparam("xlog", "buf_size", 8192)
 		<title><function>xlog</function> usage</title>
 		<programlisting format="linespecific">
 ...
-xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru>\n");
+xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru> 2nd via <%{via[1]}>\n");
 ...
 </programlisting>
 	    </example>

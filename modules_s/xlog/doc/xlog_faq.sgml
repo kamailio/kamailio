@@ -43,7 +43,8 @@
 		    regarding development versions or CVS snapshots should be send to &serdevmail;.
 		</para>
 		<para>
-		    If you want to keep the mail private, send it to &serhelpmail;.
+		    If you want to keep the mail private, send it to
+			<email>ramona@voice-system.ro</email>.
 		</para>
 	    </answer>
 	</qandaentry>
@@ -53,7 +54,8 @@
 	    </question>
 	    <answer>
 		<para>
-		    Please follow the guidelines provided at: &serbugslink;
+		    Please follow the guidelines provided at: &serbugslink; and
+			send me a mail with cc to one of the &ser; mailing lists.
 		</para>
 	    </answer>
 	</qandaentry>
