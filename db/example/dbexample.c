@@ -31,7 +31,7 @@
 #include "../../db/db.h"
 
 
-#define DB_URL   "sql://root@localhost/ser"
+#define DB_URL   "mysql://root@localhost/ser"
 #define DB_TABLE "location"
 
 #define TRUE 1
@@ -188,7 +188,7 @@ struct module_exports* mod_register()
 	     /*
 	      * Create a database connection
 	      * DB_URL is database URL of form
-	      * sql://user:password@host:port/database
+	      * mysql://user:password@host:port/database
 	      * The function returns handle, that
 	      * represents a database connection
 	      */

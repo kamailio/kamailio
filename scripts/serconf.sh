@@ -19,7 +19,7 @@
 # SER_GWIP -- IP address of PSTN gateway, e.g. 10.0.0.1
 
 # parameters that are typically not changed
-SER_SQL_URI="sql://ser:heslo@localhost/ser"
+SER_SQL_URI="mysql://ser:heslo@localhost/ser"
 # set LIB_PATH if all modules are installed in a single
 # directory; otherwise, modules are sought in 'modules'
 # subdirectories

@@ -679,7 +679,7 @@ loadmodule "modules/usrloc/usrloc.so"
 # flushed to mysql
 modparam("usrloc", "db_mode",   1)
 # the SQL address:
-modparam("usrloc", "db_url","sql://ser:secret@dbhost/ser")
+modparam("usrloc", "db_url","mysql://ser:secret@dbhost/ser")
 			    </programlisting>
 			</para>
 	    </section> <!-- user aliases -->

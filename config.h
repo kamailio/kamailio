@@ -180,8 +180,8 @@
 /* maximum path length */
 #define PATH_MAX_GUESS	1024
 
-#define DEFAULT_DB_URL "sql://ser:heslo@localhost/ser"
-#define DEFAULT_RODB_URL "sql://serro:47serro11@localhost/ser"
+#define DEFAULT_DB_URL "mysql://ser:heslo@localhost/ser"
+#define DEFAULT_RODB_URL "mysql://serro:47serro11@localhost/ser"
 
 
 #endif

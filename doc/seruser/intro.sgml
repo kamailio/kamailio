@@ -1088,7 +1088,7 @@ loadmodule "modules/auth/auth.so"
 # ------------------ module parameters -------------------------------
 # tell the auth module the access data for SQL database:
 # username, password, hostname and database name
-modparam("auth", "db_url","sql://ser:secret@dbhost/ser")
+modparam("auth", "db_url","mysql://ser:secret@dbhost/ser")
 
 
 # -------------------------  request routing logic -------------------

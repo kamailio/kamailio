@@ -4634,7 +4634,7 @@ int n = RES_ROW_N(res);
 		<para>
 		    The function takes one parameter, the parameter must contain database 
 		    connection <acronym>URL</acronym>. The <acronym>URL</acronym> is of the form 
-		    sql://username:password@host:port/database where:
+		    mysql://username:password@host:port/database where:
 		    <itemizedlist>
 			<listitem>
 			    <para>
@@ -5048,13 +5048,13 @@ int n = RES_ROW_N(res);
 		    <listitem>
 			<para>
 			    <varname>db_url</varname> - Database url string in form
-			    <quote>sql://&lt;user&gt;:&lt;pass&gt;@host/database</quote>.
+			    <quote>mysql://&lt;user&gt;:&lt;pass&gt;@host/database</quote>.
 			</para>
 			<para>
 			    Type: <type>string</type>
 			</para>
 			<para>
-			    Default: <quote>sql://serro:47serro11@localhost/ser</quote>
+			    Default: <quote>mysql://serro:47serro11@localhost/ser</quote>
 			</para>
 		    </listitem>
 
@@ -6561,7 +6561,7 @@ if (t_newtran()) {
 			    Type: <type>string</type>
 			</para>
 			<para>
-			    Default: <quote>sql://ser:heslo@localhost/ser</quote>
+			    Default: <quote>mysql://ser:heslo@localhost/ser</quote>
 			</para>
 		    </listitem>				
 

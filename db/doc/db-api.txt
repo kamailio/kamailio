@@ -360,7 +360,7 @@ function is called.
 
 The function takes one parameter, the parameter must contain database 
 connection URL. The URL is of the form 
-sql://username:password@host:port/database where:
+mysql://username:password@host:port/database where:
 
 username: Username to use when logging into database (optional).
 password: password if it was set (optional)
