@@ -654,12 +654,12 @@ static int init_tmb()
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 {
 	int   fd_fifo,i;
-	str   *lines_eol[2*VM_FIFO_PARAMS];
+	str   lines_eol[2*VM_FIFO_PARAMS];
 	str   eol={"\n",1};
 
 	for (i=0; i<cnt; i++ ) {
 		lines_eol[2*i] = lines[i];
-		lines_eol[2*i+1] = &eol;
+		lines_eol[2*i+1] = eol;
 	}
 
 	/* open FIFO file stream */
@@ -675,13 +675,6 @@ static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 	}
 
 	/* write now (unbuffered straight-down write) */
-#if 0
-	DBG("vm: write_to_vm_fifo: <%.*s>\n",len,buf);
-	if (write(fd_fifo, buf,len)==-1) {
-		LOG(L_ERR, "ERROR: write_to_vm_fifo: write failed: %s\n",
-					strerror(errno));
-	}
-#else
 repeat:
 	if (writev(fd_fifo, (struct iovec*)lines_eol, 2*cnt)<0) {
 		if (errno!=EINTR) {
@@ -693,18 +686,11 @@ repeat:
 			goto repeat;
 		}
 	}
-#endif
 	close(fd_fifo);
 
 	DBG("DEBUG: write_to_vm_fifo: write completed\n");
-#if 0
-	pkg_free(buf);
-#endif
 	return 1; /* OK */
 
 error:
-#if 0
-	pkg_free(buf);
-#endif
 	return -1;
 }
