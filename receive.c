@@ -89,7 +89,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		/* send the msg */
 		if (forward_reply(&msg)==0){
 			DBG(" reply forwarded to %s:%d\n", 
-						msg.via2.host,
+						msg.via2.host.s,
 						(unsigned short) msg.via2.port);
 		}
 	}

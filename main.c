@@ -65,6 +65,9 @@ static char flags[]="NOCR:"
 #ifdef OLD_PARSER
 ", OLD_PARSER"
 #endif
+#ifdef DNS_IP_HACK
+", DNS_IP_HACK"
+#endif
 ;
 
 static char help_msg[]= "\

@@ -20,6 +20,7 @@
 #include "udp_server.h"
 #include "globals.h"
 #include "data_lump.h"
+#include "ut.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -33,10 +34,10 @@
 #endif
 
 
-static char q_inet_itoa_buf[16]; /* 123.567.901.345\0 */
 /* faster than inet_ntoa */
-__inline char* q_inet_itoa(unsigned long ip)
+static inline char* q_inet_itoa(unsigned long ip)
 {
+	static char q_inet_itoa_buf[16]; /* 123.567.901.345\0 */
 	unsigned char* p;
 	unsigned char a,b,c;  /* abc.def.ghi.jkl */
 	int offset;
@@ -472,6 +473,9 @@ int forward_reply(struct sip_msg* msg)
 	char* orig;
 	char* buf;
 	unsigned int len;
+#ifdef DNS_IP_HACK
+	int err;
+#endif
 	
 
 	orig=msg->orig;
@@ -529,19 +533,30 @@ int forward_reply(struct sip_msg* msg)
 			msg->via2.host.s, 
 			(unsigned short)msg->via2.port,
 			new_buf);
-	/* fork? gethostbyname will probably block... */
-	he=gethostbyname(msg->via2.host.s);
-	if (he==0){
-		LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
-				msg->via2.host.s);
-		goto error;
-	}
-	to->sin_family = AF_INET;
-	to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
-	to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
+
+#ifdef DNS_IP_HACK
+	to->sin_addr.s_addr=str2ip(msg->via2.host.s, msg->via2.host.len, &err);
+	if (err==0){
+		to->sin_family = AF_INET;
+		to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
+	}else{
+#endif
+		/* fork? gethostbyname will probably block... */
+		he=gethostbyname(msg->via2.host.s);
+		if (he==0){
+			LOG(L_NOTICE, "ERROR:forward_reply:gethostbyname(%s) failure\n",
+					msg->via2.host.s);
+			goto error;
+		}
+		to->sin_family = AF_INET;
+		to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
+		to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
 
 #ifdef STATS
-	stats.total_tx++;
+		stats.total_tx++;
+#endif
+#ifdef DNS_IP_HACK
+	}
 #endif
 	if (udp_send(new_buf,new_len, (struct sockaddr*) to, 
 					sizeof(struct sockaddr_in))==-1)

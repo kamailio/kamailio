@@ -13,6 +13,7 @@
 #include "udp_server.h"
 #include "route.h"
 #include "msg_parser.h"
+#include "ut.h"
 #include "sr_module.h"
 
 #include <sys/types.h>
@@ -40,6 +41,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	char *new_uri, *end, *crt;
 	int len;
 	int user;
+	int err;
 	struct sip_uri uri;
 	unsigned short port;
 
@@ -67,8 +69,11 @@ int do_action(struct action* a, struct sip_msg* msg)
 				switch (a->p2_type){
 					case URIPORT_ST:
 									if (uri.port.s){
-										port=strtol(uri.port.s,&end,10);
-										if ((end)&&(*end)){
+									 /*port=strtol(uri.port.s,&end,10);*/
+										port=str2s(uri.port.s, uri.port.len,
+													&err);
+										/*if ((end)&&(*end)){*/
+										if (err){
 											LOG(L_ERR, "ERROR: do_action: "
 													"forward: bad port in "
 													"uri: <%s>\n", uri.port);

@@ -27,7 +27,9 @@ NAME=ser
 # NO_LOG completely turns of all the logging (and DBG(...))
 # DEBUG compiles in some extra debugging code
 # OLD_PARSER uses the old and stable parser (from ser 8.3.2)
-DEFS=-DNOCR -DMACROEATER -DSTATS -DOLD_PARSER #-DNO_DEBUG #-DNO_LOG
+# DNS_IP_HACK faster ip address resolver for ip strings (e.g "127.0.0.1")
+DEFS=-DNOCR -DMACROEATER -DSTATS -DOLD_PARSER -DDNS_IP_HACK #-DNO_DEBUG 
+#-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
 
@@ -38,7 +40,7 @@ ARCH = $(shell uname -s)
 #common
 CC=gcc
 LD=gcc
-CFLAGS=-O2 -Wcast-align $(PROFILE)#-Wmissing-prototypes 
+CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
 LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
 LEX=flex
 YACC=bison

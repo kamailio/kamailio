@@ -10,6 +10,7 @@
 
 #include "msg_parser.h"
 #include "parser_f.h"
+#include "ut.h"
 #include "error.h"
 #include "dprint.h"
 
@@ -290,7 +291,7 @@ error:
 char* parse_hostport(char* buf, str* host, short int* port)
 {
 	char *tmp;
-	char *invalid;
+	int err;
 	
 	host->s=buf;
 	for(tmp=buf;(*tmp)&&(*tmp!=':');tmp++);
@@ -299,12 +300,11 @@ char* parse_hostport(char* buf, str* host, short int* port)
 		*port=0;
 	}else{
 		*tmp=0;
-		invalid=0;
-		*port=strtol(tmp+1, &invalid, 10);
-		if ((invalid!=0)&&(*invalid)){
+		*port=str2s(tmp+1, strlen(tmp+1), &err);
+		if (err ){
 			LOG(L_INFO, 
-					"ERROR: hostport: trailing chars in port number: %s(%x)\n",
-					invalid, invalid);
+					"ERROR: hostport: trailing chars in port number: %s\n",
+					tmp+1);
 			/* report error? */
 		}
 	}
