@@ -1,0 +1,1410 @@
+<!-- $Id$ -->
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>&ser; Frequently Asked Questions</title>
+	<authorgroup>
+	    <editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>&fhg;</holder>
+	</copyright>
+	<abstract>
+	    <para>
+		A compilation of questions and answers from serhelp, serusers, and serdev mailing lists.
+	    </para>
+	</abstract>
+    </bookinfo>
+    <toc></toc>
+    
+    <chapter>
+	<title>Frequently Asked Questions</title>
+	<qandaset>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I'd like to know if &ser; supports <acronym>CPL</acronym> and
+			servlets. Where can I find any documentation about this, or any link ?
+		    </simpara>
+		    </question>
+		    <answer>
+		    <simpara>
+			Yes, <acronym>CPL</acronym> is supported through cpl module, the module
+			needs an external <acronym>CPL</acronym> interpreter written in Java. A C
+			version is under development. There is no support for Java servlets. The
+			documentation can be found at <ulink
+			url="http://iptel.org/ser/doc">http://iptel.org/ser/doc</ulink>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I wanted to know whether &lt;PUT_YOUR_FAVOURITE_METHOD_HERE&gt; is supported
+			by &ser;.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Proxy server are indifferent of non-INVITEs methods. &lt;METHOD&gt; works as
+			good as BYE, INFO, and FOOBAR.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I was wondering if &ser; has been tested and is supported on FreeBSD ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Does &ser; support <acronym>TCP</acronym> ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I think I found a bug that should be fixed, what information should I send
+			and where should I send it?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Please send us as much info as possible. We would like see the following:
+		    </simpara>
+		    <itemizedlist>
+			<listitem>
+			    <simpara>&ser; version (ser -V).</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist>
+			<listitem>
+			    <simpara>Configuration file.</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist>
+			<listitem>
+			    <simpara>&sip; message dumps.</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist>
+			<listitem>
+			    <simpara>Coredump (if any, if not please generate it).</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist>
+			<listitem>
+			    <simpara>Anything else you think might help us.</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <itemizedlist>
+			<listitem>
+			    <simpara>The whole compiled source tree.</simpara>
+			</listitem>
+		    </itemizedlist>
+		    <simpara>
+			Please send it to <email>serhelp@iptel.org</email>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How does &ser; scale ?
+		    </simpara>
+		    <simpara>
+			&ser; is able to handle thousands calls per second on a regular
+			<acronym>PC</acronym>.
+		    </simpara>
+		</question>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there <quote>send IM</quote> page for sending instant messages only or
+			dies it accept replies as well (i.e. does it act like a full &ua;) ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			It can send messages only.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I read <quote>Throughput thousands of calls per second
+			    (<acronym>CPS</acronym>) on a dual-<acronym>CPU</acronym>
+			    <acronym>PC</acronym></quote> on your webpage. How fast is it really ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Last time we have  checked ~4900cps on a dual Athlon MP2000.
+		    </simpara>
+		    <simpara>
+			This was ser 0.8.9 running statefully (stateless is should be much faster),
+			with 4 processes and 256 Mb shared mem.  It was compiled with: STATS:Off,
+			USE_IPV6, NO_DEBUG, SHM_MEM, SHM_MMAP, PKG_MALLOC, F_MALLOC,
+			FAST_LOCK-ADAPTIVE_WAIT ADAPTIVE_WAIT_LOOPS=1024, MAX_RECV_BUFFER_SIZE
+			262144, MAX_LISTEN 16, MAX_URI_SIZE 1024, BUF_SIZE 3040
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is the &sername; (&ser;) free ? Or do we need to pay ? Becaure my boss worry
+			about that, please help me.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, it is free. See
+			<ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/COPYING?rev=HEAD&amp;content-type=text/plain">
+			    http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/COPYING?rev=HEAD&amp;content-type=text/plain
+			</ulink>
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Do you think that &ser; is suitable for a commercial environment in your opinion ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Sure.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Do you have any recommendations on additional open source or developer
+			community resources to round out my platform?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			I'm a &ser; believer and think that other servers simply don't compare :) If
+			you wish more detailed propaganda, check our website and if that is not
+			enough I will send you some more.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Do you have any thoughts on how it compares in deployability and features to
+			the Vovida stuff or other options ? Also, are there any issues I should be
+			thinking of that would make a commercial venture with &ser; difficult
+			(licensing, scaling, etc..)
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			&ser; is licensed under &gnu; &gpl;. I would be surprised if any &sip;
+			server available today would scale a bit better--we spent lot of work on
+			performance, achieved thousands of <acronym>CPS</acronym> on a
+			<acronym>PC</acronym>--I guess it will take lot of time until your demand
+			hits this capacity.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I have serweb running. I'm able to connect to <acronym>MySQL</acronym>
+			fine. But it doesn't seem like the form params are getting assigned to
+			variables. Is there something obvious I'm missing?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Please check if <varname>register_globals</varname> is set to On in your
+			<filename>php.ini</filename> file.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Does &ser; have the capability to automatically send an INVITE from one
+			number to another?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes if the phones support REFER. There is an application called
+			Click-To-Dial which can connect two phones.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is it necesarry to have a <acronym>DNS SVR</acronym> Resource Record, as
+			mentioned in the ser-Howto guide for connecting to &ser; ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No. It's nice to have it, but you can work arround it setting a normal A
+			record for your domain. The <acronym>SRV</acronym> lookup will fall back to
+			normal A lookup.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What would you charge to help get us started?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			See <ulink url="http://iptel.org/support">http://iptel.org/support</ulink>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Are you going to provide intergration support from &sip; to H.323 and vice
+			versa ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No, we are not going to provide the integration.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I've gone thru the &ser; Admin's Guide and the module documentation
+			(sip_router/modules/). Is there additional documentation on how to use the
+			modules?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Each module has a doc subdirectory which contains complete documentation of
+			the module in docbook format. <acronym>PS</acronym>, <acronym>PDF</acronym>
+			and <acronym>HTML</acronym> renderings can be obtained through our web page,
+			see <ulink url="http://iptel.org/ser/doc">http://iptel.org/ser/doc</ulink>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What functions would I use in my ser.cfg to log <quote>missed calls</quote>?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Are there some additional requirements for using the acc.so module?  Radius?
+			I want to be able to view dialed calls from serweb.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Do you have any example configs that use nathelper?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Who are the people behind &ser; ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How successful has nathelper been with <acronym>NAT</acronym>/firewall transversal?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			I only know that users reported success with nathelper and ATAs.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Does ser support <acronym>LDAP</acronym> ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is it possible to get access to iptel's working copy of ser.cfg?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			we no longer disclose our operational policy to the public audience. The
+			configuration file is only available to our customers under <acronym>NDA</acronym>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Can you send me detail for me to sign up for the comercial program. I would
+			also like detail on your levels of support you offer (ie...paid support)?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			See <ulink
+			    url="http://iptel.org/support/">http://iptel.org/support/</ulink>. Don't
+			    hesitate to approach us if you have any further questions.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I need a method to determine if a called &uri; has an account on the system.
+			I found a function in the groups module,
+			<function>is_user_in</function>. but haven't yet figured out how to use it.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			The uri module's <function>does_uri_exist</function> is what you are seeking.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			We have a question regarding usrloc: where are the active sessions
+			being stored? We were not able to find any entries in MySQL.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			&ser; has no notion of active session. &ser; is a transaction-stateful proxy,
+			that means it knows about transactions (INVITE transaction, BYE
+			transaction), but it keeps no state if there is no transaction active.
+		    </simpara>
+		    <simpara>
+			That means, it keeps state when an INVITE comes and until a final response
+			to the INVITE is sent. The same for BYE.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Has the timeout for re-registering at the &ua; to be the same as in the tm
+			module mentioned in <filename>ser.cfg</filename> ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How do we deal with aliases? If for example uid=mic is authenticated, he is
+			available with sip address sip:mic@comnect.at. If I would want to be
+			addressable with michael.dosser@comnect.at how is this accomplished with ser
+			?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Aliases are tied to user location. It uses a special table which has the
+			same structure as user location table and includes an entry for each
+			alias. You do not have to do something special for that. You have to create
+			this table and then you can use serctl to add aliases.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I would like to know if &ser; supports <acronym>IPv6</acronym>. If not, do
+			you have any plans for it ? When ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, &ser; supports <acronym>IPv6</acronym>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there any way to change the defaul log file to a special SER.log file ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Try logging to stderr and redirecting it to a file:
+		    </simpara>
+		    <screen format="linespecific">
+ser -E     2>/tmp/ser.log
+</screen>
+		    <simpara>
+			(by default ser logs to syslog)
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Does anybody know anything about the P-Hint Header Field added from &ser;?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			<ulink url="http://www.iptel.org/ser/doc/seruser-html/c638.html#AEN729">
+			    http://www.iptel.org/ser/doc/seruser-html/c638.html#AEN729
+			</ulink>
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			When using the Jabber Gateway, some users get the following error from time to
+			time:
+		    </simpara>
+		    <simpara>
+			ERROR: Connection to Jabber server lost. You have to login to Jabber server
+			again (join again the conferences that you were participating, too).
+		    </simpara>
+		    <simpara>
+			sip_to_jabber_gateway says:
+		    </simpara>
+		    <simpara>
+			INFO: Your are now offline in Jabber network. Thank you for using &sip;-Jabber
+			gateway.
+		    </simpara>
+		    <simpara>
+			Do you know the reason why these messages appear and if it is possible to
+			avoid them?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			that usually occurs because Jabber server crashes or, for some unknown
+			reasons, the <acronym>TCP</acronym> connection with jabber server is
+			down. The second message is to inform the users that they are no more
+			connected to Jabber network.
+		    </simpara>
+		    <simpara>
+			There is no way to disable sending these messages. I may introduce a new
+			parameter to enable/disable them. But I am not sure it is a good idea (users
+			must be informed about the changes of the status).
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I would like know if &ser; support also the trasmission protocol
+			<acronym>TCP</acronym>, or <acronym>TLS</acronym>.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, &ser; supports <acronym>TCP</acronym>. <acronym>TLS</acronym> is work
+			in progress.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I'm trying to rewrite the to domain, as in:
+		    </simpara>
+		    <simpara>
+			To: &lt;sip:19723236598@augustvoice.net&gt; ;user=phone.
+		    </simpara>
+		    <simpara>
+			I can't find any rewrite* function to rewrite the
+			to domain.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			The proxy is not supposed to touch To or From &uri;s. Only Request-&uri; can
+			be changed.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			When the messenger sends a message for the jabber gateway the following
+			error occurs:
+		    </simpara>
+		    <simpara>
+			<quote>ERROR: Your message was not sent. You do not have permision to use the
+			    gateway.</quote>
+		    </simpara>
+		    <simpara>
+			What could be the problem here?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			You have to create the database for SIMPLE2Jabber gateway and after that you
+			have to associate &sip; users with Jabber IDs.
+		    </simpara>
+		    <simpara>
+			<ulink
+			    url="http://www.iptel.org/ser/doc/jabgw/xjab-manual.html#5._Admins_guide">
+			    http://www.iptel.org/ser/doc/jabgw/xjab-manual.html#5._Admins_guide
+			</ulink>
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Authentication doesn't work!!!  Where am I wrong?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Windows Messenger needs same string both realm and SIP_DOMAIN, and it wants
+			to reach this address oh your network.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Can somebody tell me how to configure the serweb? Which directory should I
+			put those files and which file and parameters should I modify. Or maybe this
+			question was asked previously by somebody already, then please provide me a
+			like to those answers.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Dan Austin's howto (see &ser; webpage) is probably the currently most
+			extensive documentation available.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I was wondering whether there is a ser module for
+			<acronym>SIP-CGI</acronym>. Or whether there are attempts at creating one?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			There is no <acronym>SIP-CGI</acronym> module for &ser;. The most similar,
+			though much simpler, functionality is provided by the exec module.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How could I integrate &sip; and H323 together?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			You will need a &sip; to H.323 gateway. &ser; is a &sip; proxy only, it
+			cannot act as H.323 gateway.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How can I contribute code ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Mar 10 16:46:33 ttalksvr /usr/sbin/ser[6592]: connect_db(): Can't connect to
+			local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Make sure your MySQL server is running.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What, if anything, should the &ser; server do with a OPTIONS method?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What should I do to see the detailed debugs?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Set debug=9 in your config script.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is it possible for &ser; to forward a call to another phone if the recipient
+			does not answer?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			This could be achieved with sequential forking (by trying contacts in
+			decreasing q order), but sequential forking is not yet supported in &ser;.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is it possible to configure &ser; so that it only has the latest
+			registration?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			mkdir: cannot create directory `/usr/local/etc/ser': Permission denied
+			make: *** [/usr/local/etc/ser] Error 1
+		    </simpara>
+		    <simpara>
+			what may be the error ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			You have no write permissions to the directory, try it again as root.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Can a proxy terminate a call ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No, proxy cannot do that because it is transaction stateful only.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			i want to know what accounting support is available using MySql. what
+			settings need to be done? are any records generated and placed in the
+			database? how do i access these records?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			It seems that &ser; supports only strict routing. Please tell me if it
+			supports loose routing. if yes, do i have to enable it somehow?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, it does support loose routing as of 0.8.11, you don't have to enable it.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I need to know if currently generated call records can be put into MySql
+			database. if yes, is there any tool available to view these records?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Serweb can do it.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			If I want to use &ser; commercially do I need to purchase any license for
+			the same, as long as I'm not going to charge the customer for the &sip;
+			service but only for the termination of calls.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			&ser; is distributed under the &gpl; so you don't need to purchase any
+			license, you can use it freely.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I get the following error:
+		    </simpara>
+		    <screen format="linespecific">
+ 0(5164) db_init(): Error while trying to connect database
+ 0(5164) mod_init(): Error while connecting database
+ 0(5164) init_modules(): Error while initializing module usrloc
+</screen>
+		    <simpara>
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			usrloc module has variable called db_url which contains username, password,
+			hostname, and name of the database. Make sure the settings are correct. See
+			usrloc module documentation for more information.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there a support for accounting ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, see acc module.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What tool can I use to capture &sip; traffic ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			<ulink url="http://ngrep.sourceforge.net">ngrep</ulink>, <ulink
+			    url="http://www.ethereal.com">ethereal</ulink>, <ulink
+			    url="http:/www.tcpdump.org">tcpdump</ulink>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there ENUM support in &ser; ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, see enum module.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Do you have any experience (or know) where I can get some info on setting up
+			an ENUM testbed with <acronym>DNS</acronym> and Linux?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			if by testbed you mean running your own e164.arpa root, then you simply
+			make your dns server a root for e164.arpa domain by adding line
+		    </simpara>
+		    <programlisting format="linespecific">
+primary         e164.arpa               e164.arpa.db
+</programlisting>
+		    <simpara>
+			into your named.boot file and then by populating file e164.arpa.db with
+			your enum entries.  Below is an example.
+		    </simpara>
+		    <programlisting format="linespecific">
+$ORIGIN .
+$TTL 0  ; 0 seconds
+e164.arpa               IN SOA  foo.fi. hostmaster.foo.fi. (
+                                200204681  ; serial
+				28800      ; refresh (8 hours)
+				7200       ; retry (2 hours)
+				604800     ; expire (1 week)
+				86400      ; minimum (1 day)
+			)
+		        NS      foo.fi.
+$ORIGIN e164.arpa.
+$ORIGIN 8.5.3.e164.arpa.
+$ORIGIN 9.3.8.1.5.6.2.8.5.3.e164.arpa.
+3.1   NAPTR   1 1 <quote>u</quote> <quote>E2U+sip</quote> <quote>!(^.*$)!sip:abc@bar.fi!i</quote> .
+</programlisting>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Will &ser; support <acronym>STUN</acronym> in the future?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			<acronym>STUN</acronym> is a protocol operated separately from &ser;
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there any way to show active calls (dialed number, duration, originating
+			<acronym>IP</acronym>...) with &ser;?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No, ser is not call stateful.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			If I'm working with &rfc2543; compliant phones (such as
+			<acronym>ATA</acronym>) may I use loose routing?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes, loose routing is backwards compatible.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Trying to load the serweb page I get the following error message: Fatal
+			error: Call to undefined function: mysql_pconnect() in
+			/var/www/html/phplib/db_mysql.inc on line 73
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Configure <acronym>PHP</acronym> to load the MySQL extension.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I can open the page and even make changes and save
+			them, but I'm receiving the following warning message:
+			Warning: fopen(?/tmp/ser_fifo?, ?w?) ? Permission
+			denied in /var/www/html/serweb/functions.php on line
+			172
+			Sorry - cannot open fifo
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Make sure that the user under which the web server is running has read
+			and write access to the <acronym>FIFO</acronym>.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How can I configure radiator for digest authentication?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			In case of radiator, you don't need to do anything special in the
+			configuration.  Just install the latest radiator and then make sure your
+			config can handle the service-types you have configured ser to use. For
+			example, you can have
+		    </simpara>
+		    <programlisting format="linespecific">
+&lt;Handler Service-Type=SIP&gt;
+...
+&lt;/AuthBy&gt;
+</programlisting>
+		    <simpara>
+			Or whatever your strategy is.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How can I configure radiator for digest authentication?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			see freeradius-0.8.1/doc/rlm_digest
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Trying to create alias, I am getting the following message:
+		    </simpara>
+		    <simpara>
+			<quote>400 Table 'aliases' Not Found</quote>
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			You must have lookup(<quote>aliases</quote>) somewhere in your script.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there a way to add/edit/view aliases from serweb?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			When new user confirm registration, new numeric alias is created. There is
+			no another way to add or edit aliases from serweb.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I am getting a <quote>Forbidden</quote> reply from the Apache. The Apache is
+			ponting to the +index.php for the serweb. I've only changed the &ip; address
+			of the local host to 127.0.0.1 in the +config.php. Does anyone have any
+			suggestions ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Check if the file/folder has read permission for everybody.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Also how much shared memory does &ser; allocate by default?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			32 Mb.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Does MySQL have to reside on localhost?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How can I identify what ser doesn't like about the config file?
+		    </simpara>
+		</question>
+		<answer>
+		    <programlisting format="linespecific">
+0(612) parse error (81,1-10): syntax error
+0(612) parse error (91,1-6):
+                    ^^^^^^
+</programlisting>
+		    <simpara>
+			These are the line number and the characters. So look in line 81 and 91 of
+			your config file for errors.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <programlisting format="linespecific">
+Warning: 392 216.87.144.203:5060 "Noisy feedback tells:  pid=19604
+req_src_ip=216.87.144.205 req_src_port=5065 in_uri=sip:addaline.com
+out_uri=sip:addaline.com via_cnt==1".
+</programlisting>
+		    <simpara>
+			I want to get rid of these?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Use sip_warning=no
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is &ser; a gatekeeper ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No, &ser; is a &sip; proxy.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is there an example of the session timer with &ser; somewhere?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			That's a theoretical &sip; option today, &ser; is not supporting
+			session-timer.  We gave it a try more than one year ago and gave up due to
+			interop problems.  The specification was developing at that time so quickly
+			that there was not any UA which would work with another one correctly.
+		    </simpara>
+		    <simpara>
+			Once the interoperability gets better, it could be worth implementing. It is
+			in general a nice mechanism for avoiding session state silo in network,
+			which is good for scalability.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Could someone point me where I can read about this www_authorize()
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			The documentation is in sip_router/modules/auth_db/doc
+		    </simpara>
+		    <simpara>
+			The function tries to verify user's credentials. It returns 1 if they are
+			correct and -1 if not.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I'm new to &ser; and would like to set up a test lab with a couple different
+			ip phones / adapters to learn from. Could someone recommend a few devices
+			that we could use for that purpose?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Hardphones: Grandstream, Cisco, ATA, Mitel, Pingtel, Snom
+		    </simpara>
+		    <simpara>
+			Softphones: kphone, Xten, Windows Messenger, Hotsip client.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			how can i configure my ser for multiple domains?
+			For example andrea@foo.bar and andrea@foo2.bar on the same server?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			If you are using 0.8.10, it is a manual process--copy and paste
+			<acronym>SQL</acronym> tables, have a table set for each served domain, and
+			refer to the table names from your scripts. E.g.,
+		    </simpara>
+		    <simpara>
+			if (uri=~"domain1.com") { lookup("domain1"); ...
+		    </simpara>
+		    <simpara>
+			With 0.8.11 you can automate the process quite a lot. Authorization
+			functions with realm set to empty value take domain name from &sip;
+			requests. User location database keeps track of domains as well. The
+			<quote>domain</quote> modules allows you to keep track of maintained domains
+			in a way which does not take changing scripts.
+		    </simpara>
+		    <simpara>
+			It is possible there are some magic options in domain/usrloc/auth_db/
+			registrar/auth modules you need to turn on to enable multidomain
+			operation--I don't remember these by heart, hopefuly some people
+			on the mailing list do.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I get following warnings and error on NetBSD when I call
+			user_interface/index.php:
+		    </simpara>
+		    <simpara>
+			[Wed Jul 16 09:56:53 2003] [error] PHP Warning: Call-time pass-by-reference
+			has been deprecated - argument passed by value; If you would like to pass it
+			by reference, modify the declaration of [runtime function name]().  If you
+			would like to enable call-time pass-by-reference, you can set
+			allow_call_time_pass_reference to true in your INI file.  However, future
+			versions may not support this any longer.  in
+			/usr/pkg/share/httpd/htdocs/iptel/phplib/user.inc on line 72 [Wed Jul 16
+			09:56:53 2003] [error] PHP Fatal error: Call to undefined function:
+			mysql_pconnect() in /usr/pkg/share/httpd/htdocs/iptel/phplib/db_mysql.inc on
+			line 73
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Simply do what the text says: enable allow_call_time_pass_reference in
+			<filename>/usr/pkg/etc/php.ini</filename> and install <acronym>PHP</acronym>
+			MySQL support.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I am testing &ser; version 0.8.11pre29 with two <acronym>MSN</acronym>
+			Messenger(v4.6) clients. I tried to send the following MESSAGE through &ser;
+			with record-route header added by &ser;. However, the receiving
+			<acronym>MSN</acronym> client responded with a 400 Bad Request for that
+			message.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			It's <acronym>MSN</acronym> Messenger's bug--lr parameter is not
+			recognized as specified in &rfc3261;. Use
+		    </simpara>
+		    <simpara>
+			modparam(<quote>rr</quote>, <quote>enable_full_lr</quote>, 1)
+		    </simpara>
+		    <simpara>
+			in ser config file to make it working.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			I have got an H.323 Mediatrix <acronym>FXO</acronym> gateway. It is not &sip;
+			based. May I use it with &ser; ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			No.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			It is posible to process the voicemail request on the same instance I use to
+			forward/register users ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			How can I checkout the sources from the <acronym>CVS</acronym> ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Is ser compatible with MySQL 4.x ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			Yes.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			Are there any binary packages available ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What is symetric signalling ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			What is &sip;, <acronym>SIMPLE</acronym>, &sdp;, Proxy, Registrar, Redirect server ?
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			FIXME.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	    <qandaentry>
+		<question>
+		    <simpara>
+			&ser; starts normally with the default <filename>ser.cfg</filename>. When I
+			uncommented the line load module
+			<quote>/usr/local/lib/ser/modules/mysql.so</quote> to load mysql.so,
+			everything seems normally. But actually, ser stops abnormally.
+		    </simpara>
+		</question>
+		<answer>
+		    <simpara>
+			mysql module is excluded from compilation/installation by default
+			(dependencies issue). You can compile it separately with: make modules
+			modules=modules/mysql. Also, you can add it in the list of the default
+			compiled modules with: make all include_modules=<quote>mysql</quote>.  Then
+			use: make install include_modules=<quote>mysql</quote>. To install only the
+			modules: make install-modules include_modules=<quote>mysql</quote> or only
+			the mysql module: make install-modules modules=modules/mysql.
+		    </simpara>
+		</answer>
+	    </qandaentry>
+	</qandaset>
+    </chapter>
+</book>
