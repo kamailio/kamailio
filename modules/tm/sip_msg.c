@@ -193,7 +193,7 @@ hf_error:
 	sh_free( new_hdr );
 error:
 	sip_msg_free( new_msg );
-	sh_free( new_msg );
+	/* sh_free( new_msg ); */
 	return 0;
 
 }
