@@ -253,7 +253,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		break;
 
 	default:
-		LOG(L_ERR, "buildRRLine(): Unsupported PF type: %d\n", bind_address->address.af);
+		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", bind_address->address.af);
 	}
 	
 	if (_lr && use_fast_cmp) {
@@ -262,18 +262,18 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	len+=rr_suffix.len;
 	if (append_fromtag) {
 		if (parse_from_header(_m)<0) {
-			LOG(L_ERR, "ERROR: build_RR: From parsing failed\n");
+			LOG(L_ERR, "build_RR: From parsing failed\n");
 			return 0;
 		}
-		from=(struct to_body*)_m->from->parsed;
-		if (from->tag_value.s) len+=RR_FROMTAG_LEN+from->tag_value.len;
+		from = (struct to_body*)_m->from->parsed;
+		if (from->tag_value.s) len += RR_FROMTAG_LEN + from->tag_value.len;
 	}
 	len+=_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN;
 
 
 	rr = (char*)pkg_malloc(len);
 	if (!rr) {
-		LOG(L_ERR, "ERROR: build_rr: No memory left\n");
+		LOG(L_ERR, "build_RR: No memory left\n");
 		return 0;
 	}
 
@@ -282,19 +282,23 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	*_l=len;
 	p=rr;
 
-	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);p+=RR_PREFIX_LEN;
+	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);
+	p+=RR_PREFIX_LEN;
 	
 	if (_lr && use_fast_cmp) {
-		memcpy(p, rr_hash, MD5_LEN);p+=MD5_LEN;
+		memcpy(p, rr_hash, MD5_LEN);
+		p+=MD5_LEN;
 	}
 	if (user.len) {
-		memcpy(p, user.s, user.len);p+=user.len;
+		memcpy(p, user.s, user.len);
+		p+=user.len;
 	}
 	*p='@';p++;
 
 	switch(bind_address->address.af) {
 	case AF_INET:
 		memcpy(p, bind_address->address_str.s, bind_address->address_str.len);
+		printf("!!!! '%.*s'\n", bind_address->address_str.len, bind_address->address_str.s);
 		p += bind_address->address_str.len;
 		break;
 
@@ -304,17 +308,21 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		memcpy(p, bind_address->address_str.s, bind_address->address_str.len);
 		p += bind_address->address_str.len;
 		*p = ']';
+		p++;
 		break;
 
 	default:
-		LOG(L_ERR, "buildRRLine(): Unsupported PF type: %d\n", bind_address->address.af);
+		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", bind_address->address.af);
 	}
 
-	memcpy(p, rr_suffix.s, rr_suffix.len);p+=rr_suffix.len;
+	memcpy(p, rr_suffix.s, rr_suffix.len);
+	p += rr_suffix.len;
+	
 	if (append_fromtag && from->tag_value.s) {
-		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN); p+=RR_FROMTAG_LEN;
+		memcpy(p, RR_FROMTAG, RR_FROMTAG_LEN); 
+		p += RR_FROMTAG_LEN;
 		memcpy(p, from->tag_value.s, from->tag_value.len);
-			p+=from->tag_value.len;
+		p += from->tag_value.len;
 	}
 
 	if (_lr) {
@@ -323,7 +331,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		memcpy(p, RR_SR_TERM,  RR_SR_TERM_LEN); p+= RR_SR_TERM_LEN;
 	}
 	
-	DBG("DEBUG: build_RR(): \'%.*s\'", len, rr);
+	DBG("build_RR(): '%.*s'", len, rr);
 	
 	return rr;
 }
