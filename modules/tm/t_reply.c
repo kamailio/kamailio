@@ -466,6 +466,8 @@ restore:
 	set_t(backup_t);
 	global_msg_id=backup_msgid;
 	rmode=backup_mode;
+	/* if failure handler changed flag, update transaction context */
+	shmem_msg->flags=fake->flags;
 	return 0;
 }
 
@@ -473,12 +475,19 @@ restore:
 int failure_route(struct cell *t)
 {
 	struct sip_msg faked_msg;
+	struct sip_msg *orig_request;
 
 	/* don't do anything if we don't have to */
 	if (!t->on_negative) return 0;
+	orig_request=t->uas.request;
+	/* failure_route for a local UAC? */
+	if (!orig_request) {
+		LOG(L_WARN, "Warning: failure_route: no UAC support\n");
+		return 0;
+	}
 
 	/* if fake message creation failes, return error too */
-	if (!faked_env(&faked_msg, t, t->uas.request, 0 /* create fake */ )) {
+	if (!faked_env(&faked_msg, t, orig_request, 0 /* create fake */ )) {
 		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
 		return 0;
 	}
@@ -492,7 +501,7 @@ int failure_route(struct cell *t)
 		LOG(L_ERR, "ERROR: on_negative_reply: "
 			"Error in do_action\n");
 	/* restore original environment */
-	faked_env(&faked_msg, 0, 0, 1 );
+	faked_env(&faked_msg, 0, orig_request, 1 );
 	return 1;
 }
 
@@ -1106,8 +1115,12 @@ int reply_received( struct sip_msg  *p_msg )
 	/* processing of on_reply block */
 	if (t->on_reply) {
 		rmode=MODE_ONREPLY;
+		/* transfer transaction flag to message context */
+		if (t->uas.request) p_msg->flags=t->uas.request->flags;
 	 	if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
+		/* transfer current message context back to t */
+		if (t->uas.request) t->uas.request->flags=p_msg->flags;
 	}
 	LOCK_REPLIES( t );
 	if (t->local) {
