@@ -44,7 +44,7 @@ struct my_id* new_my_id(const char* url)
 	struct my_id* ptr;
 
 	if (!url) {
-		LOG(L_ERR, "new_my_id(): Invalid parameter\n");
+		LOG(L_ERR, "new_my_id: Invalid parameter\n");
 		return 0;
 	}
 
@@ -52,27 +52,27 @@ struct my_id* new_my_id(const char* url)
 	l = strlen(url);
 	buf = (char*)pkg_malloc(l + 1);
 	if (!buf) {
-		LOG(L_ERR, "new_my_id(): Not enough memory\n");
+		LOG(L_ERR, "new_my_id: Not enough memory\n");
 		return 0;
 	}
 	memcpy(buf, url, l + 1);
 
 	ptr = (struct my_id*)pkg_malloc(sizeof(struct my_id));
 	if (!ptr) {
-		LOG(L_ERR, "new_my_id(): No memory left\n");
+		LOG(L_ERR, "new_my_id: No memory left\n");
 		goto err;
 	}
 	memset(ptr, 0, sizeof(struct my_id));
 
 	if (parse_mysql_url(buf, &username, &password, &host, &port, &database) < 0) {
-		LOG(L_ERR, "new_my_id(): Error while parsing mysql URL: %s\n", url);
+		LOG(L_ERR, "new_my_id: Error while parsing mysql URL: %s\n", url);
 		goto err;
 	}
 
 	ptr->username.len = strlen(username);
 	ptr->username.s = (char*)pkg_malloc(ptr->username.len + 1);
 	if (!ptr->username.s) {
-		LOG(L_ERR, "new_connection(): No memory left\n");
+		LOG(L_ERR, "new_my_id: No memory left\n");
 		goto err;
 	}
 	memcpy(ptr->username.s, username, ptr->username.len + 1);
@@ -81,7 +81,7 @@ struct my_id* new_my_id(const char* url)
 		ptr->password.len = strlen(password);
 		ptr->password.s = (char*)pkg_malloc(ptr->password.len + 1);
 		if (!ptr->password.s) {
-			LOG(L_ERR, "new_connection(): No memory left\n");
+			LOG(L_ERR, "new_my_id: No memory left\n");
 			goto err;
 		}
 		memcpy(ptr->password.s, password, ptr->password.len + 1);
@@ -90,7 +90,7 @@ struct my_id* new_my_id(const char* url)
 	ptr->host.len = strlen(host);
 	ptr->host.s = (char*)pkg_malloc(ptr->host.len + 1);
 	if (!ptr->host.s) {
-		LOG(L_ERR, "new_connection(): No memory left\n");
+		LOG(L_ERR, "new_my_id: No memory left\n");
 		goto err;
 	}
 	memcpy(ptr->host.s, host, ptr->host.len + 1);
@@ -104,7 +104,7 @@ struct my_id* new_my_id(const char* url)
 	ptr->database.len = strlen(database);
 	ptr->database.s = (char*)pkg_malloc(ptr->database.len + 1);
 	if (!ptr->database.s) {
-		LOG(L_ERR, "new_connection(): No memory left\n");
+		LOG(L_ERR, "new_my_id: No memory left\n");
 		goto err;
 	}
 	memcpy(ptr->database.s, database, ptr->database.len + 1);
