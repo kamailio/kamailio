@@ -423,26 +423,37 @@ static int cpl_exit(void)
 
 
 
+#define BUILD_UH_SHM      (1<<0)
+#define BUILD_UH_ADDSIP   (1<<1)
+
 static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 {
 	static char buf[MAX_USERHOST_LEN];
+	int len;
 
-	if (flg) {
-		uh->s = (char*)shm_malloc(uri->user.len+1+uri->host.len+1);
+	len = uri->user.len+1+uri->host.len+1+4*((flg&BUILD_UH_ADDSIP)!=0);
+	if (flg&BUILD_UH_SHM) {
+		uh->s = (char*)shm_malloc( len );
 		if (!uh->s) {
 			LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
 			return -1;
 		}
 	} else {
 		uh->s = buf;
-		if (uri->user.len+1+uri->host.len+1>MAX_USERHOST_LEN) {
+		if ( len > MAX_USERHOST_LEN ) {
 			LOG(L_ERR,"ERROR:cpl-c:build_userhost: user+host longer than %d\n",
 				MAX_USERHOST_LEN);
 			return -1;
 		}
 	}
-	memcpy( uh->s, uri->user.s, uri->user.len);
-	uh->len = uri->user.len;
+	if (flg&BUILD_UH_ADDSIP) {
+		memcpy( uh->s, "sip:", 4);
+		uh->len = 4;
+	} else {
+		uh->len = 0;
+	}
+	memcpy( uh->s+uh->len, uri->user.s, uri->user.len);
+	uh->len += uri->user.len;
 	uh->s[uh->len++] = '@';
 	memcpy( uh->s+uh->len, uri->host.s, uri->host.len);
 	uh->len += uri->host.len;
@@ -518,11 +529,11 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	/* get the user_name */
 	if ( ((unsigned int)str1)&CPL_RUN_INCOMING ) {
 		/* if it's incoming -> get the destination user name */
-		if (get_dest_user( msg, &user, 1)==-1)
+		if (get_dest_user( msg, &user, BUILD_UH_SHM)==-1)
 			goto error0;
 	} else {
 		/* if it's outgoing -> get the origin user name */
-		if (get_orig_user( msg, &user, 1)==-1)
+		if (get_orig_user( msg, &user, BUILD_UH_SHM)==-1)
 			goto error0;
 	}
 
@@ -547,7 +558,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	/* for OUTGOING we need also the destination user for init. with him
 	 * the location set */
 	if ( ((unsigned int)str1)&CPL_RUN_OUTGOING ) {
-		if (get_dest_user( msg, &loc,0)==-1)
+		if (get_dest_user( msg, &loc,BUILD_UH_ADDSIP)==-1)
 			goto error3;
 		if (add_location( &(cpl_intr->loc_set), &loc,10,CPL_LOC_DUPL)==-1)
 			goto error3;

@@ -40,7 +40,7 @@
 
 
 #define CPL_LOC_DUPL    (1<<0)
-#define CPL_LOC_NATED   (1<<0)
+#define CPL_LOC_NATED   (1<<1)
 
 
 struct location {

@@ -891,7 +891,7 @@ static inline int run_default( struct cpl_interpreter *intr )
 				 * Proxy the call to the address in the location set.
 				 * With other words, let ser to continue processing the
 				 * request as nothing happened */
-				return SCRIPT_END;
+				return SCRIPT_DEFAULT;
 			}
 		} else {
 			/* case 3 : location modifications performed, no signalling 
