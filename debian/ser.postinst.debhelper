@@ -1,7 +1,0 @@
-# Automatically added by dh_installdocs
-if [ "$1" = "configure" ]; then
-	if [ -d /usr/doc -a ! -e /usr/doc/ser -a -d /usr/share/doc/ser ]; then
-		ln -sf ../share/doc/ser /usr/doc/ser
-	fi
-fi
-# End automatically added section

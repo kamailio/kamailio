@@ -1,3 +1,12 @@
+ser (0.8.11-pre34) unstable; urgency=low
+
+  * minor bugfixes
+
+  * debian packaging changes (debhelper 4.0, init & postinst cleanups, added
+    examples, a.s.o)
+
+ -- Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.fraunhofer.de>  Fri, 27 Jun 2003 15:14:52 +0200
+
 ser (0.8.11-pre30) unstable; urgency=low
 
   * minor bugfixes

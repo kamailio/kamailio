@@ -26,7 +26,6 @@
 #  2003-06-06  moved compiler detection before DEFS (andrei)
 #  2003-06-10  removed -m32 for gcc 3.x/sparc64  -- it will use 
 #              arch. default: -m32 on solaris, -m64 on *bsd (andrei)
-#  2003-06-29  added TLS support: TLS=1 (andrei)
 
 
 # check if already included/exported
@@ -41,7 +40,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   12
-EXTRAVERSION = dev-tls01
+EXTRAVERSION = dev-t02
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")

@@ -8,13 +8,18 @@
 # --------
 #  2003-05-30  updated for the 0.8.11 release, changed modules list and
 #              some ser make options (andrei)
+#  2003-06-27  changed to DH_COMPAT 4 (debian/compat) + other filenames
+#              & small fixes (andrei)
 
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
 # This is the debhelper compatibility version to use.
-export DH_COMPAT=3
+# export DH_COMPAT=4
+#  -- already set in compat
+#  force no striping (always include debug symbols for now)
+export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" package or unstable 
 EXCLUDED_MODULES=	mysql jabber auth_radius group_radius uri_radius \
@@ -126,7 +131,7 @@ binary-common:
 #	dh_installemacsen
 #	dh_installpam
 #	dh_installmime
-	dh_installinit --init-script=ser -- defaults 23
+	dh_installinit  -- defaults 23
 	dh_installcron
 	dh_installman
 	dh_installinfo
@@ -134,7 +139,7 @@ binary-common:
 	dh_installchangelogs 
 	dh_link
 	dh_strip
-	dh_compress
+	dh_compress 
 	dh_fixperms
 #	dh_makeshlibs
 	dh_installdeb

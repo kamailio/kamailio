@@ -40,8 +40,9 @@
  *               after daemonize (so that we won't catch anymore our own
  *               SIGCHLD generated when becoming session leader) (andrei)
  *              changed is_main default value to 1 (andrei)
- *  2003-06-29  preliminary tls support (andrei)
- *              replaced port_no_str snprintf w/ int2str (andrei)
+ *  2003-06-28  kill_all_children is now used instead of kill(0, sig)
+ *                see comment above it for explanations. (andrei)
+ *  2003-06-29  replaced port_no_str snprintf w/ int2str (andrei)
  *
  */
 
@@ -267,6 +268,8 @@ void receive_stdin_loop()
 
 /* global vars */
 
+int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
+					 to use kill(0, sig) */
 char* cfg_file = 0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed durig the
@@ -460,6 +463,8 @@ int daemonize(char*  name)
 	/* become session leader to drop the ctrl. terminal */
 	if (setsid()<0){
 		LOG(L_WARN, "setsid failed: %s\n",strerror(errno));
+	}else{
+		own_pgid=1; /* we have our own process group */
 	}
 	/* fork again to drop group  leadership */
 	if ((pid=fork())<0){
@@ -535,6 +540,29 @@ error:
 
 
 
+/* tries to send a signal to all our processes
+ * if daemonized  is ok to send the signal to all the process group,
+ * however if not daemonized we might end up sending the signal also
+ * to the shell which launched us => most signals will kill it if 
+ * it's not in interactive mode and we don't want this. The non-daemonized 
+ * case can occur when an error is encountered before daemonize is called 
+ * (e.g. when parsing the config file) or when ser is started in "dont-fork"
+ *  mode. Sending the signal to all the processes in pt[] will not work
+ *  for processes forked from modules (which have no correspondent entry in 
+ *  pt), but this can happen only in dont_fork mode (which is only for
+ *  debugging). So in the worst case + "dont-fork" we might leave some
+ *  zombies. -- andrei */
+static void kill_all_children(int signum)
+{
+	int r;
+	if (own_pgid) kill(0, signum);
+	else if (pt)
+		for (r=1; r<process_count(); r++)
+			if (pt[r].pid) kill(pt[r].pid, signum);
+}
+
+
+
 void handle_sigs()
 {
 	pid_t	chld;
@@ -557,7 +585,7 @@ void handle_sigs()
 				DBG("SIGTERM received, program terminates\n");
 				
 			/* first of all, kill the children also */
-			kill(0, SIGTERM);
+			kill_all_children(SIGTERM);
 
 			     /* Wait for all the children to die */
 			while(wait(0) > 0);
@@ -607,7 +635,7 @@ void handle_sigs()
 			LOG(L_INFO, "INFO: terminating due to SIGCHLD\n");
 #endif
 			/* exit */
-			kill(0, SIGTERM);
+			kill_all_children(SIGTERM);
 			while(wait(0) > 0); /* wait for all the children to terminate*/
 			cleanup(1); /* cleanup & show status*/
 			DBG("terminating due to SIGCHLD\n");
@@ -1739,14 +1767,14 @@ try_again:
 	
 	ret=main_loop();
 	/*kill everything*/
-	kill(0, SIGTERM);
+	kill_all_children(SIGTERM);
 	/*clean-up*/
 	cleanup(0);
 	return ret;
 
 error:
 	/*kill everything*/
-	kill(0, SIGTERM);
+	kill_all_children(SIGTERM);
 	/*clean-up*/
 	cleanup(0);
 	return -1;
