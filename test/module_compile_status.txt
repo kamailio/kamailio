@@ -23,37 +23,44 @@ D - dead/not finished
 
 
 module_name       1  2  3  4  5  6  7  8
-core
-acc                                    o
-auth                                   o
-auth_db                                o
-auth_radius                            I
-cpl             P                      o
-cpl-c           D                      E
-dbtext                                 E
-domain                                 o
-enum                                   o
-exec                                   o
-ext                                    o
-extcmd                                 o
-group                                  o
-jabber                                 o
-maxfwd                                 o
-msilo                                  o
-mysql                                  o
-pa                                     o
-pike                                   o
-print                                  o
-radius_acc                             I
-registrar                              o
-rr                                     o
-sl                                     o
-sms                                    o
-textops                                o
-tm                                     o
-uri                                    o
-usrloc                                 E
-vm                                     o
+core                                o
+acc                                 I  o
+auth                                o  o
+auth_db                             o  o
+auth_radius                         I  I
+cpl             P                   o  o
+cpl-c           D                   E  E
+dbtext                              o  E
+domain                              o  o
+enum                                o  o
+exec                                o  o
+ext                                 o  o
+extcmd                              o  o
+group                               o  o
+group_radius                        I
+jabber                              W  o
+mangler                             W
+maxfwd                              o  o
+msilo                               o  o
+mysql                               o  o
+nathelper                           o
+pa                                  o  o
+pdt                                 o
+persmissions                        o
+pike                                o  o
+postgress                           I
+print                               o  o
+registrar                           o  o
+rr                                  o  o
+sl                                  o  o
+sms                                 o  o
+snmp      D                         I
+textops                             o  o
+tm                                  o  o
+uri                                 o  o
+uri_radius                          I
+usrloc                              o  E
+vm                                  o  o
 
 
 
