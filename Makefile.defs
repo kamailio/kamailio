@@ -35,7 +35,8 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
  # install location
-PREFIX ?= /usr/local
+DESTDIR ?= /usr/local
+PREFIX = $(DESTDIR) 
 LOCALBASE ?= /usr/local
 prefix = $(PREFIX)
 # install path is $(basedir) $(prefix) 
