@@ -54,7 +54,7 @@ inline static int tsl(fl_lock_t* lock)
 			: "=r"(val) : "r"(lock):"memory"
 	);
 	
-#elif defined __armv4l
+#elif defined __arm__
 	asm volatile(
 			"# here \n\t"
 			"swpb %0, %1, [%2] \n\t"
@@ -108,7 +108,7 @@ inline static void release_lock(fl_lock_t* lock)
 			: "r" (lock)
 			: "memory"
 	);
-#elif defined __armv4l
+#elif defined __arm__
 	asm volatile(
 		" str %0, [%1] \n\r" 
 		: /*no outputs*/ 

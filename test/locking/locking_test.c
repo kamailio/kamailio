@@ -132,7 +132,7 @@ Options:\n\
 
 int main (int argc, char** argv)
 {
-	char c;
+	int c;
 	int r;
 	char *tmp;
 	
