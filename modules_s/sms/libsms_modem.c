@@ -16,10 +16,10 @@ mailto:s.frings@mail.isis.de
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
 #include <termios.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <sys/ioctl.h>

@@ -35,6 +35,7 @@
 
 #include "enum_mod.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "enum.h"

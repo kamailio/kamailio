@@ -117,7 +117,7 @@ parse_ip_address (char *c, unsigned int *address)	//inet_aton
 				r = p;
 				for (j = 0; j < strlen (p); j++, r++)	/* are all char of the
 									 * byte digits */
-					digit_bol = digit_bol && isdigit (*r);
+					digit_bol = digit_bol && isdigit ((unsigned char)*r);
 				if (digit_bol)
 				{
 					quat = atoi (p);
@@ -141,7 +141,7 @@ parse_ip_address (char *c, unsigned int *address)	//inet_aton
 	{
 		r = p;
 		for (j = 0; j < strlen (p); j++, r++)
-			digit_bol = digit_bol && isdigit (*r);
+			digit_bol = digit_bol && isdigit ((unsigned char)*r);
 		if (digit_bol)
 		{
 			quat = atoi (p);
@@ -173,7 +173,7 @@ is_positive_number (char *str)
 		return 0;
 	for (i = 0; i < strlen (str); i++)
 	{
-		if (isdigit (str[i]) == 0)
+		if (isdigit ((unsigned char)str[i]) == 0)
 			return 0;
 	}
 	return 1;

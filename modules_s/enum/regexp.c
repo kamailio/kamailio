@@ -30,6 +30,7 @@
 
 
 #include <sys/types.h>
+#include <string.h>
 #include <regex.h>
 #include <ctype.h>
 #include "regexp.h"
@@ -48,7 +49,7 @@ int replace(regmatch_t* pmatch, char* string, char* replacement, str* result)
 	for (i = 0; i < len; i++) {
 		if (replacement[i] == '\\') {
 			if (i < len - 1) {
-				if (isdigit(replacement[i+1])) {
+				if (isdigit((unsigned char)replacement[i+1])) {
 					digit = replacement[i+1] - '0';
 					if (pmatch[digit].rm_so != -1) {
 						size = pmatch[digit].rm_eo - pmatch[digit].rm_so;
