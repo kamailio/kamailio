@@ -528,8 +528,7 @@ int failure_route(struct cell *t)
  * -1   ... error
  * -2   ... can't decide yet -- incomplete branches present
  */
-static int pick_branch( int inc_branch, int inc_code, 
-			struct cell *t, int *res_code)
+int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 {
 	int lowest_b, lowest_s, b;
 
@@ -618,7 +617,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->uac[branch].last_received=new_code;
 
 		/* if all_final return lowest */
-		picked_branch=pick_branch(branch,new_code, Trans, &picked_code);
+		picked_branch=t_pick_branch(branch,new_code, Trans, &picked_code);
 		if (picked_branch==-2) { /* branches open yet */
 			*should_store=1;
 			*should_relay=-1;
