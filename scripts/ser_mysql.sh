@@ -247,6 +247,7 @@ CREATE TABLE acc (
   to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   fromtag varchar(128) NOT NULL default '',
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
@@ -300,6 +301,7 @@ CREATE TABLE aliases (
 CREATE TABLE event (
   id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(50) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   uri varchar(255) NOT NULL default '',
   description varchar(255) NOT NULL default '',
   PRIMARY KEY (id)
@@ -364,6 +366,7 @@ CREATE TABLE missed_calls (
   to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
   $USERCOL varchar(64) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   fromtag varchar(128) NOT NULL default '',
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
@@ -382,6 +385,7 @@ CREATE TABLE missed_calls (
 CREATE TABLE pending (
   phplib_id varchar(32) NOT NULL default '',
   $USERCOL varchar(100) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -394,7 +398,6 @@ CREATE TABLE pending (
   sendnotification varchar(50) NOT NULL default '',
   greeting varchar(50) NOT NULL default '',
   ha1 varchar(128) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
@@ -415,6 +418,7 @@ CREATE TABLE pending (
 CREATE TABLE phonebook (
   id int(10) unsigned NOT NULL auto_increment,
   $USERCOL varchar(50) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
   sip_uri varchar(128) NOT NULL default '',
@@ -446,6 +450,7 @@ CREATE TABLE reserved (
 CREATE TABLE subscriber (
   phplib_id varchar(32) NOT NULL default '',
   $USERCOL varchar(100) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -458,7 +463,6 @@ CREATE TABLE subscriber (
   sendnotification varchar(50) NOT NULL default '',
   greeting varchar(50) NOT NULL default '',
   ha1 varchar(128) NOT NULL default '',
-  domain varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
@@ -475,6 +479,7 @@ CREATE TABLE config (
    attribute varchar(32) NOT NULL,
    value varchar(128) NOT NULL,
    $USERCOL varchar(100) NOT NULL default '',
+   domain varchar(100) NOT NULL default '',
    modified timestamp(14)
 ) $TABLE_TYPE;
 
