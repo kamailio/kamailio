@@ -197,6 +197,10 @@ EAT_ABLE	[\ \t\b\r]
 
 <STRING1>\\n		{ count(); yytext[yyleng-2]='\n';yytext[yyleng-1]=0; 
 						yyleng--; addstr(yytext, &str); }
+<STRING1>\\r		{ count(); yytext[yyleng-2]='\r';yytext[yyleng-1]=0; 
+						yyleng--; addstr(yytext, &str); }
+<STRING1>\\g		{ count(); yytext[yyleng-2]='\g';yytext[yyleng-1]=0; 
+						yyleng--; addstr(yytext, &str); }
 <STRING1>\\t		{ count(); yytext[yyleng-2]='\t';yytext[yyleng-1]=0; 
 						yyleng--; addstr(yytext, &str); }
 <STRING1>\\\\		{ count(); yytext[yyleng-2]='\\';yytext[yyleng-1]=0; 

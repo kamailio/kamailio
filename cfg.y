@@ -554,7 +554,21 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, "
 										"string expected"); }
-		| ID LPAREN STRING RPAREN { f_tmp=find_export($1);
+		| ID LPAREN RPAREN			{ f_tmp=find_export($1, 0);
+									   if (f_tmp==0){
+										yyerror("unknown command %s, missing"
+										" loadmodule?\n");
+										$$=0;
+									   }else{
+										$$=mk_action(	MODULE_T,
+														CMDF_ST,
+														0,
+														f_tmp,
+														0
+													);
+									   }
+									}
+		| ID LPAREN STRING RPAREN { f_tmp=find_export($1, 1);
 									if (f_tmp==0){
 										yyerror("unknown command %s, missing"
 										" loadmodule?\n");
@@ -565,6 +579,23 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 														STRING_ST,
 														f_tmp,
 														$3
+													);
+									}
+								  }
+		| ID LPAREN STRING  COMMA STRING RPAREN 
+								  { f_tmp=find_export($1, 2);
+									if (f_tmp==0){
+										yyerror("unknown command %s, missing"
+										" loadmodule?\n");
+										$$=0;
+									}else{
+										$$=mk_action3(	MODULE_T,
+														CMDF_ST,
+														STRING_ST,
+														STRING_ST,
+														f_tmp,
+														$3,
+														$5
 													);
 									}
 								  }

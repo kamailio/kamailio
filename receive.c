@@ -26,12 +26,13 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	msg.len=len;
 	msg.src_ip=src_ip;
 	/* make a copy of the message */
-	msg.orig=(char*) malloc(len);
+	msg.orig=(char*) malloc(len+1);
 	if (msg.orig==0){
 		LOG(L_ERR, "ERROR:receive_msg: memory allocation failure\n");
 		goto error1;
 	}
 	memcpy(msg.orig, buf, len);
+	msg.orig[len]=0; /* null terminate it,good for using str* functions on it*/
 	
 	if (parse_msg(buf,len, &msg)!=0){
 		goto error;

@@ -8,13 +8,17 @@
 
 #include "msg_parser.h" /* for sip_msg */
 
-typedef  int (*cmd_function)(struct sip_msg*, char*);
+typedef  int (*cmd_function)(struct sip_msg*, char*, char*);
+typedef  int (*fixup_function)(void** param, int param_no);
 typedef  int (*response_function)(struct sip_msg*);
 
 struct module_exports{
 	char* name; /* null terminated module name */
-	char** cmd_names;
-	cmd_function* cmd_pointers;
+	char** cmd_names; /* cmd names registered by this modules */
+	cmd_function* cmd_pointers; /* pointers to the corresponding functions */
+	int* param_no; /* number of parameters used by the function */
+	fixup_function* fixup_pointers; /* pointers to functions called to "fix"
+										the params, e.g: precompile a re */
 	int cmd_no; /* number of registered commands 
 				   (size of cmd_{names,pointers}*/
 	response_function response_f; /* function used for responses,
@@ -30,7 +34,9 @@ struct sr_module{
 
 
 int load_module(char* path);
-cmd_function find_export(char* name);
+cmd_function find_export(char* name, int param_no);
+struct sr_module* find_module(void *f, int* r);
+
 
 /* modules function prototypes:
  * struct module_exports* mod_register();

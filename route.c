@@ -19,6 +19,7 @@
 #include "dprint.h"
 #include "proxy.h"
 #include "action.h"
+#include "sr_module.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -104,7 +105,8 @@ static int fix_actions(struct action* a)
 	struct action *t;
 	struct proxy_l* p;
 	char *tmp;
-	int ret;
+	int ret,r;
+	struct sr_module* mod;
 	
 	if (a==0){
 		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
@@ -140,7 +142,7 @@ static int fix_actions(struct action* a)
 							return E_BUG;
 					}
 					break;
-		case IF_T:
+			case IF_T:
 				if (t->p1_type!=EXPR_ST){
 					LOG(L_CRIT, "BUG: fix_actions: invalid subtype"
 								"%d for if (should be expr)\n",
@@ -170,6 +172,22 @@ static int fix_actions(struct action* a)
 						return ret;
 				}
 				break;
+			case MODULE_T:
+				if ((mod=find_module(t->p1.data, &r))!=0){
+					DBG("fixing %s %s\n", mod->path,
+							mod->exports->cmd_names[r]);
+					if (mod->exports->fixup_pointers[r]){
+						if (mod->exports->param_no[r]>0){
+							ret=mod->exports->fixup_pointers[r](&t->p2.data,1);
+							if (ret<0) return ret;
+						}
+						if (mod->exports->param_no[r]>1){
+							ret=mod->exports->fixup_pointers[r](&t->p3.data,2);
+							if (ret<0) return ret;
+						}
+					}
+				}
+			
 		}
 	}
 	return 0;

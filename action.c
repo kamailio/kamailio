@@ -278,7 +278,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case MODULE_T:
 			if ( ((a->p1_type==CMDF_ST)&&a->p1.data)&&
 					((a->p2_type==STRING_ST)&&a->p2.data) ){
-				ret=((cmd_function)(a->p1.data))(msg, (char*)a->p2.data);
+				ret=((cmd_function)(a->p1.data))(msg, (char*)a->p2.data,
+													  (char*)a->p3.data);
 			}else{
 				LOG(L_CRIT,"BUG: do_action: bad module call\n");
 			}

@@ -30,7 +30,7 @@
 
 
 static char id[]="@(#) $Id$";
-static char version[]="ser 0.8.1-plugins";
+static char version[]="ser 0.8.2";
 static char flags[]="NOCR:"
 #ifdef NOCR
 "On"

@@ -138,9 +138,12 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 	
 	
-	/* compute new msg len*/
+	/* compute new msg len and fix overlapping zones*/
 	new_len=len;
+	s_offset=0;
 	for(t=msg->add_rm;t;t=t->next){
+		DBG("t=%x, op=%d, offset=%x, len=%d, s_offset=%x\n",
+				t, t->op, t->u.offset, t->len, s_offset);
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
 				case LUMP_ADD:
@@ -157,9 +160,28 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 				new_len+=t->len;
 				break;
 			case LUMP_DEL:
+				/* fix overlapping deleted zones */
+				if (t->u.offset < s_offset){
+					DBG( "overlapping DEL offsets (%d,%d(%d)), fixing...\n",
+						 s_offset, t->u.offset, t->len);
+					/* change len */
+					if (t->len>s_offset-t->u.offset) 
+							t->len-=s_offset-t->u.offset;
+					else t->len=0;
+					t->u.offset=s_offset;
+					DBG("fixed to %d(%d)\n", t->u.offset, t->len);
+				}
+				s_offset=t->u.offset+t->len;
 				new_len-=t->len;
 				break;
 			case LUMP_NOP:
+				/* fix offset if overlapping on a deleted zone */
+				if (t->u.offset < s_offset){
+					DBG("overlapping zones (%d,%d)\n", s_offset, t->u.offset);
+					t->u.offset=s_offset;
+					DBG("fixed to %d\n", t->u.offset);
+				}else
+					s_offset=t->u.offset;
 				/* do nothing */
 				break;
 			debug:
@@ -204,19 +226,53 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 /* copy msg adding/removing lumps */
 	for (t=msg->add_rm;t;t=t->next){
+		DBG(" t=%x, op=%d, offset=%x, len=%d, s_offset=%x\n",
+				t, t->op, t->u.offset, t->len, s_offset);
 		switch(t->op){
 			case LUMP_ADD:
 				/* just add it here! */
+				/* process before  */
+				for(r=t->before;r;r=r->before){
+					switch (r->op){
+						case LUMP_ADD:
+							/*just add it here*/
+							memcpy(new_buf+offset, r->u.value, r->len);
+							offset+=r->len;
+							break;
+						default:
+							/* only ADD allowed for before/after */
+							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+									" data lump (%x)\n", r->op);
+								
+					}
+				}
+				/* copy "main" part */
 				memcpy(new_buf+offset, t->u.value, t->len);
 				offset+=t->len;
+				/* process after */
+				for(r=t->after;r;r=r->after){
+					switch (r->op){
+						case LUMP_ADD:
+							/*just add it here*/
+							memcpy(new_buf+offset, r->u.value, r->len);
+							offset+=r->len;
+							break;
+						default:
+							/* only ADD allowed for before/after */
+							LOG(L_CRIT, "BUG:forward_request: invalid op for"
+									" data lump (%x)\n", r->op);
+					}
+				}
 				break;
 			case LUMP_NOP:
 			case LUMP_DEL:
 				/* copy till offset */
 				if (s_offset>t->u.offset){
-					LOG(L_CRIT, "BUG: invalid offset in lump (%d)\n",
-								t->u.offset);
-					goto error;
+					DBG("Warning: (%d) overlapped lumps offsets,"
+						" ignoring(%x, %x)\n", t->op, s_offset,t->u.offset);
+					/* this should've been fixed above (when computing len) */
+					/* just ignore it*/
+					break;
 				}
 				size=t->u.offset-s_offset;
 				if (size){
@@ -232,7 +288,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 							memcpy(new_buf+offset, r->u.value, r->len);
 							offset+=r->len;
 							break;
-						defaut:
+						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:forward_request: invalid op for"
 									" data lump (%x)\n", r->op);
