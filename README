@@ -5,5 +5,45 @@ $Id$
 read INSTALL
 compile & sip_router -h
 
-Example configuration files in ./tests/*.cfg
+
+Configuration files:
+
+	Example configuration files in ./tests/*.cfg
+
+	Global parameters:
+		- debug
+		- listen
+		- port
+		- fork
+		- children_no
+		- log_stderror
+		...
+
+	Logical expressions [missing]
+		Operators:
+			==
+			=~
+			and/&
+			or/|
+			not/!
+		Lvalues:
+			- uri
+			- method
+			- src_ip
+			- dst_ip [not working yet]
+		Rvalues:
+			- string
+			- integer
+			- ipv4 address
+			- netv4 address
+			
+	Commands:
+		- forward
+		- send
+		- error [not implemented yet ]
+		- log
+		- exec
+		- route/goto
+		- drop
+
 

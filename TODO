@@ -7,11 +7,11 @@ High priority:
 - if () {} else {}
 - reply ("response line")
 - default route ?
-- add To-tag
-- add User-Agent
 - drop ACKs for our replies
 - icmp error handling
 - ipv6 support
+- add To-tag (for the replies)
+- add User-Agent (for the replies)
 
 Low priority:
 - loop detection
