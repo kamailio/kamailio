@@ -23,6 +23,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2001-01-23 mhomed added (jiri)
+ *
  */
 
 
@@ -263,6 +268,10 @@ int sip_warning = 1;
    be default yes, good for trouble-shooting
 */
 int server_signature=1;
+/* should ser try to locate outbound interface on multihomed
+ * host? by default not -- too expensive
+ */
+int mhomed=0;
 /* use dns and/or rdns or to see if we need to add 
    a ;received=x.x.x.x to via: */
 int received_dns = 0;      

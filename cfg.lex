@@ -2,6 +2,33 @@
  * $Id$
  *
  * scanner for cfg files
+ *
+ * Copyright (C) 2001-2003 Fhg Fokus
+ *
+ * This file is part of ser, a free SIP server.
+ *
+ * ser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2001-01-23 mhomed added (jiri)
  */
 
 
@@ -111,6 +138,7 @@ SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
 USER		"user"|"uid"
 GROUP		"group"|"gid"
+MHOMED		mhomed
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -210,6 +238,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SIP_WARNING}	{ count(); yylval.strval=yytext; return SIP_WARNING; }
 <INITIAL>{USER}		{ count(); yylval.strval=yytext; return USER; }
 <INITIAL>{GROUP}	{ count(); yylval.strval=yytext; return GROUP; }
+<INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }

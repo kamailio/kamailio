@@ -113,4 +113,7 @@ extern int is_main;
 /* debugging level for dumping memory status */
 extern int memlog;
 
+/* looking up outbound interface ? */
+extern int mhomed;
+
 #endif

@@ -23,6 +23,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2001-01-23 support for determination of outbound interface added :
+ *            get_out_socket (jiri)
+ *
  */
 
 
@@ -61,6 +67,75 @@
 #include <dmalloc.h>
 #endif
 
+/* return a socket_info_pointer to the sending socket; as opposed to
+ * get_send_socket, which returns process's default socket, get_out_socket
+ * attempts to determine the outbound interface which will be used;
+ * it creates a temporary connected socket to determine it; it will
+ * be very likely noticeably slower, but it can deal better with
+ * multihomed hosts
+ */
+struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
+{
+	int temp_sock;
+	socklen_t len;
+	int r;
+	union sockaddr_union from; 
+
+	if (proto!=PROTO_UDP) {
+		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
+		return 0;
+	}
+
+	r=-1;
+	temp_sock=socket(to->s.sa_family, SOCK_DGRAM, 0 );
+	if (temp_sock==-1) {
+		LOG(L_ERR, "ERROR: get_out_socket: socket() failed: %s\n",
+				strerror(errno));
+		return 0;
+	}
+	if (connect(temp_sock, &to->s, sockaddru_len(*to))==-1) {
+		LOG(L_ERR, "ERROR: get_out_socket: connect failed: %s\n",
+				strerror(errno));
+		goto error;
+	}
+	len=sockaddru_len(from);
+	if (getsockname(temp_sock, &from.s, &len)==-1) {
+		LOG(L_ERR, "ERROR: get_out_socket: getsockname failed: %s\n",
+				strerror(errno));
+		goto error;
+	}
+	for (r=0; r<sock_no; r++) {
+		switch(from.s.sa_family) {
+			case AF_INET:	
+						if (sock_info[r].address.af!=AF_INET)
+								continue;
+						if (memcmp(&sock_info[r].address.u,
+								&from.sin.sin_addr, 
+								sock_info[r].address.len)==0)
+							goto error; /* it is actually success */
+						break;
+			case AF_INET6:	
+						if (sock_info[r].address.af!=AF_INET6)
+								continue;
+						if (memcmp(&sock_info[r].address.u,
+								&from.sin6.sin6_addr, len)==0)
+							goto error;
+						continue;
+			default:	LOG(L_ERR, "ERROR: get_out_socket: "
+									"unknown family: %d\n",
+									from.s.sa_family);
+						r=-1;
+						goto error;
+		}
+	}
+	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
+	r=-1;
+error:
+	close(temp_sock);
+	DBG("DEBUG: get_out_socket: socket determined: %d\n", r );
+	return r==-1? 0: &sock_info[r];
+}
+
 
 
 /* returns a socket_info pointer to the sending socket or 0 on error
@@ -69,7 +144,9 @@
 struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 {
 	struct socket_info* send_sock;
-	
+
+	if (mhomed && proto==PROTO_UDP) return get_out_socket(to, proto);
+
 	send_sock=0;
 	/* check if we need to change the socket (different address families -
 	 * eg: ipv4 -> ipv6 or ipv6 -> ipv4) */

@@ -3140,6 +3140,28 @@ if (to me):
 		<qandaentry>
 		    <question>
 			<para>
+			    On a multihomed host, forwarded messages carry other 
+			    interface in Via than used for sending, or messages 
+			    are not sent and an error log is issued "invalid 
+			    sendtoparameters one possible reason is the server 
+			    is bound to localhost".
+			</para>
+		    </question>
+		    <answer>
+			<anchor id="mhomed">
+			<para>
+			    Set the configuration option <varname>mhome</varname>
+			    to "1". <application moreinfo="none">ser</application>
+			    will then attempt to calculate the correct interface.
+			    It's not done by default as it degrades performance
+			    on single-homed hosts or multi-homed hosts that are
+			    not set-up as routers.
+			</para>
+		    </answer>
+		</qandaentry>
+		<qandaentry>
+		    <question>
+			<para>
 			    I receive "ERROR: t_newtran: transaction already in process" in my logs.
 			</para>
 		    </question>
@@ -3530,7 +3552,7 @@ SIP_HF_CONTACT=<sip:123.20.128.35:9315>
 		to <filename moreinfo="none">/tmp/</filename> path), to which
 		a reply should be printed. The first request line may be
 		followed by additional lines with command-specific 
-		parameters. For example, the <command moreinfo="none">t_uac</command>
+		parameters. For example, the <command moreinfo="none">t_uac_dlg</command>
 		FIFO command for initiating a transaction allows 
 		to pass additional header fields and message body to
 		a newly created transaction. Each request is terminated by
@@ -3632,7 +3654,7 @@ print
 		(instant message)
 		from a PHP script via the FIFO server. This example
 		uses FIFO command 
-		<command moreinfo="none">t_uac</command>. The command
+		<command moreinfo="none">t_uac_dlg</command>. The command
 		is followed by parameters: header fields and 
 		message body. The same FIFO command can be used from
 		other environments to send instant messages too. The
@@ -3646,18 +3668,24 @@ print
 # call this script to send an instant message; script parameters
 # will be displayed in message body
 #
+# paremeters mean: message type, request-URI, outbound server is
+# left blank ("."), required header fields From and To follow,
+# then optional header fields terminated by dot and optional
+# dot-terminated body
 
 cat &gt; /tmp/ser_fifo &lt;&lt;EOF
-:t_uac_from:hh
+:t_uac_dlg:hh
 NOTIFY
-sip:originator@foo.bar
 sip:receiver@127.0.0.1
+.
+From: sip:originator@foo.bar
+To: sip:receiver@127.0.0.1
 foo: bar_special_header
 x: y
 p_header: p_value
 Contact: &lt;sip:devnull@192.168.0.100:9&gt;
 Content-Type: text/plain; charset=UTF-8
-
+.
 Hello world!!!! $@
 .
 EOF
@@ -4053,8 +4081,11 @@ Domain Registered Expired
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>reply_to_via</varname> - A hint to reply modules whether they should send reply
-			to IP advertised in Via or IP from which a request came.
+			<varname>reply_to_via</varname> - A hint to reply modules
+			whether they should send reply
+			to IP advertised in Via.
+			Turned off by default, which means that replies are
+			sent to IP address from which requests came from. 
 		    </para>
 		</listitem>
 		<listitem>
@@ -4065,6 +4096,13 @@ Domain Registered Expired
 		<listitem>
 		    <para>
 			<varname>group | gid</varname> - gid to be used by the server.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<varname>mhomed</varname> -- enable calculation of 
+			outbound interface; useful on multihomed servers,
+			ser <link linkend="mhomed"></link>.
 		    </para>
 		</listitem>
 		<listitem>
@@ -5094,12 +5132,19 @@ if (len_gt(1024)) {
 			    <entry>print occupation of transaction table (mainly for debugging)</entry>
 			</row>
 			<row>
-			    <entry>t_uac_from</entry>
+			    <entry>t_uac_dlg</entry>
 			    <entry>tm</entry>
-			    <entry>method, sender's URI, destination URI, optional header fields
-			    terminated by empty line, message body terminated by a line with
-			    a single dot</entry>
-			    <entry>initiate a transaction</entry>
+			    <entry>method, request URI, outbound URI (if none, empty line with a single dot),
+					dot-line-terminated header fields, optionaly dot-line terminated message
+					body. 
+				</entry>
+					
+			    <entry>initiate a transaction.
+					From and To header fields must be present in header field list,
+					so does Content-Type if body is present. If CSeq, CallId and From-tag
+					are not present, ephemeral values are generated. Content_length is
+					calculated automatically if body present.
+				</entry>
 			</row>
 			<row>
 			    <entry>ul_stats</entry>
