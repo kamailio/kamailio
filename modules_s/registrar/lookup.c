@@ -29,6 +29,7 @@
  * History:
  * ---------
  * 2003-03-12 added support for zombie state (nils)
+ * 2005-02-25 lookup() forces the socket stored in USRLOC (bogdan)
  */
 
 
@@ -101,6 +102,10 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			}
 		}
 
+		if (ptr->sock) {
+			_m->force_send_socket = ptr->sock;
+		}
+
 		set_ruri_q(ptr->q);
 
 		nat |= ptr->flags & FL_NAT;
@@ -116,7 +121,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 
 	while(ptr) {
 		if (VALID_CONTACT(ptr, act_time)) {
-			if (append_branch(_m, ptr->c.s, ptr->c.len, ptr->received.s, ptr->received.len, ptr->q, 0) == -1) {
+			if (append_branch(_m, ptr->c.s, ptr->c.len, ptr->received.s, ptr->received.len, ptr->q, ptr->sock) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				     /* Return 1 here so the function succeeds even if appending of
 				      * a branch failed
