@@ -44,6 +44,7 @@
  * Structure representing a Contac HF body
  */
 typedef struct contact {
+	str name;               /* Name part */
 	str uri;                /* contact uri */
 	param_t* q;             /* q parameter hook */
 	param_t* expires;       /* expires parameter hook */
