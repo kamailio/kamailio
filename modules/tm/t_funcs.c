@@ -589,10 +589,6 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       T->outbound_response->tl[RETRASMISSIONS_LIST].payload = T->outbound_response;
       T->outbound_response->tl[FR_TIMER_LIST].payload = T->outbound_response;
       T->outbound_response->my_T = T;
-      T->status = code;
-
-
-
    }
 
    buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
@@ -612,6 +608,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    }
    memcpy( T->outbound_response->retr_buffer , buf , len );
    free( buf ) ;
+   T->status = code;
 
    /* make sure that if we send something final upstream, everything else will be cancelled */
    if ( code>=300 &&  p_msg->first_line.u.request.method_value==METHOD_INVITE )
