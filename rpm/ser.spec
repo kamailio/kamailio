@@ -1,6 +1,6 @@
 %define name    ser
 %define ver     0.8.8
-%define rel     1
+%define rel     2
 %define exclude CVS pike radius_acc radius_auth snmp
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
