@@ -261,6 +261,15 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 	return -1;
 }
 
+
+
+/* per style s/regular expression/replacement/flags */
+static int subst_f(struct sip_msg* msg, char* subst_expr)
+{
+}
+
+
+
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {
 	struct hdr_field *hf;
