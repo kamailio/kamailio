@@ -22,6 +22,17 @@ TMP=/tmp/seralert.$$
 
 
 if [ $PROCCNT -ne $ALL ] ; then 
+	# try again first -- it might have been a temporary
+	# failure during 'sr restart'
+
+	# two seconds longer failure is not too bad...UAs will
+	# just retransmit and user are used to longer call
+	# set-up times from GSM...
+	sleep 2 
+	PROCCNT=`ps -C sr --no-headers -o pid | wc -l`
+fi
+
+if [ $PROCCNT -ne $ALL ] ; then 
 
 	cd $SERDIR
 	echo "Alarm: ser restart occured on `date` at $HOSTNAME" > $TMP
