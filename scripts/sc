@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh   
 #
 # $Id$
 #
@@ -7,6 +7,8 @@
 # History:
 # --------
 # 2003-02-23 Thomas's start|stop commands checked in
+# 2003-09-08 multidomain features: usernames can now include domain 
+#              names too (jiri)
 #
 # To-DO:
 # -----
@@ -85,6 +87,7 @@ PHP_LIB_COLUMN=phplib_id
 # acl table
 ACL_TABLE=grp
 ACL_USER_COLUMN=username
+ACL_DOMAIN_COLUMN=domain
 ACL_GROUP_COLUMN=grp
 ACL_MODIFIED_COLUMN=last_modified
 ACL_DOMAIN_COLUMN=domain
@@ -148,6 +151,23 @@ parameter usage:
 
 EOF
 }
+
+# calculate name and domain of current user
+set_user() {
+
+	SERUSER=`echo $1|awk -F @ '{print $1}'`
+	SERDOMAIN=`echo $1|awk -F @ '{print $2}'`
+
+	if [ -z "$SERDOMAIN" ] ; then
+		SERDOMAIN="$SIP_DOMAIN"
+	fi
+
+	if [ -z "$SERDOMAIN" ] ; then
+		echo "domain unknown: use usernames with domain or set default domain in SIP_DOMAIN"
+		exit 1
+	fi
+}
+
 
 # check the parameter if it is a valid SIP URI
 # quite simplified now -- it captures just very basic
@@ -381,12 +401,13 @@ acl() {
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
-				is_user $2
+				set_user $2
+				is_user 
 				if [ $? -ne 0 ] ; then
 					echo non-existent user
 					exit 1;
 				fi
-				CLAUSE=" WHERE $ACL_USER_COLUMN='$2' "
+				CLAUSE=" WHERE $ACL_USER_COLUMN='$SERUSER' AND $ACL_DOMAIN_COLUMN='$SERDOMAIN' "
 			elif [ $# -ne 1 ] ; then
 				usage
 				exit 1
@@ -402,12 +423,12 @@ acl() {
 				exit 1
 			fi
 			prompt_pw
-			is_user $2
+			set_user $2
+			is_user 
 			if [ $? -ne 0 ] ; then
 				echo non-existent user
 				exit 1
 			fi
-			SIP_USER="$2"
 			shift 2
 			while [ $# -gt 0 ] ; do
 
@@ -428,7 +449,7 @@ acl() {
 
         		QUERY="insert into $ACL_TABLE \
                 	($ACL_USER_COLUMN,$ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN, $ACL_DOMAIN_COLUMN ) \
-                	values ('$SIP_USER','$1', now(), '$SIP_DOMAIN' );"
+                	values ('$SERUSER','$1', now(), '$SERDOMAIN' );"
 				sql_query "$QUERY"
 				if [ $? -ne 0 ] ; then
 					echo "SQL Error"
@@ -437,7 +458,7 @@ acl() {
 				shift
 			done
 
-			$0 acl show $SIP_USER
+			$0 acl show $SERUSER@$SERDOMAIN
 
 			;;
 
@@ -449,8 +470,10 @@ acl() {
 				exit 1
 			fi	
 
+			set_user $2
+
 			QUERY="delete from $ACL_TABLE where \
-				$ACL_TABLE.$ACL_USER_COLUMN='$2' $CLAUSE"
+				$ACL_TABLE.$ACL_USER_COLUMN='$SERUSER' AND $ACL_DOMAIN_COLUMN='$SERDOMAIN' $CLAUSE"
 			sql_query "$QUERY"
 
 			$0 acl show $2
@@ -468,7 +491,7 @@ acl() {
 # output: false if exists, true otherwise
 is_user() {
 	QUERY="select count(*) from $TABLE \
-		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
+		where $SUBSCRIBER_COLUMN='$SERUSER' and $REALM_COLUMN='$SERDOMAIN';"
 	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
@@ -483,12 +506,14 @@ is_user() {
 # output: HA1, HA1B
 credentials()
 {
-	HA1=`$GENHA1 $1 $SIP_DOMAIN $2`
+	set_user $1
+
+	HA1=`$GENHA1 $SERUSER $SERDOMAIN $2`
 	if [ $? -ne 0 ] ; then
 		echo "HA1 calculation failed"
 		exit 1
 	fi
-	HA1B=`$GENHA1 "$1@$SIP_DOMAIN" $SIP_DOMAIN $2`
+	HA1B=`$GENHA1 "$SERUSER@$SERDOMAIN" $SERDOMAIN $2`
 	if [ $? -ne 0 ] ; then
 		echo "HA1B calculation failed"
 		exit 1
@@ -496,15 +521,6 @@ credentials()
 }
 
 #================================================================
-
-if [ -z "$SIP_DOMAIN" ] ; then
-	echo
-	echo "You need to set environment variable SIP_DOMAIN (e.g. to 'foobar.com') first"
-	echo
-#	This confuses new users cause its easy to miss the information above
-#	usage
-	exit 1
-fi
 
 # if the script calls itself ...
 export PW
@@ -586,7 +602,7 @@ case $1 in
 		QUERY="update $TABLE \
 			set $HA1_COLUMN='$HA1', $HA1B_COLUMN='$HA1B', $PASSWORD_COLUMN='$2' \
 			, $SUB_MODIFIED_COLUMN=now() \
-			WHERE $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
+			WHERE $SUBSCRIBER_COLUMN='$SERUSER' and $REALM_COLUMN='$SERDOMAIN';"
 		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "password change failed"
@@ -616,7 +632,7 @@ case $1 in
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
 				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN,  \
 				$PHP_LIB_COLUMN ) \
-				values ('$1','$SIP_DOMAIN','$HA1','$HA1B','$2', '$3', now(), '$HA1' );";
+				values ('$SERUSER','$SERDOMAIN','$HA1','$HA1B','$2', '$3', now(), '$HA1' );";
 		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "introducing a new user to the database failed"
@@ -659,8 +675,9 @@ case $1 in
 			exit 1
 		fi
 		shift
+		set_user $1
 		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
-			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+			$TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $TABLE.$REALM_COLUMN='$SERDOMAIN'"
 		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
@@ -700,8 +717,10 @@ case $1 in
 
 		shift
 
+		set_user $1
+
 		QUERY1="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
-			$TABLE.$SUBSCRIBER_COLUMN='$1'"
+			$TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $TABLE.$REALM_COLUMN='$SERDOMAIN' "
 		QUERY2="select $USRLOC.* from $USRLOC where \
 			$USRLOC.$USER_COLUMN='$1' order by expires desc"
 		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN, $USRLOC.$CALLID_COLUMN \
@@ -727,7 +746,8 @@ case $1 in
 		shift 
 		prompt_pw 
 
-        is_user $1
+		set_user $1
+        is_user 
         if [ $? -ne 0 ] ; then
             echo non-existent user
             exit 1
@@ -737,7 +757,7 @@ case $1 in
 		$0 acl revoke $1  > /dev/null 2>&1
 
 		# destroy the user now
-        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
+        QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $TABLE.$REALM_COLUMN='$SERDOMAIN'"
 		sql_query "$QUERY"
 
 		# and also all his contacts
