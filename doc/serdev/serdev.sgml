@@ -102,7 +102,7 @@
 	<section id="parser-init">
 	    <title>Parser Initialization</title>
 	    <para>
-		<acronym>SER</acronym> contains fast 32-bit parser. The parser uses precalculated hash table that needs to be
+		<acronym>SER</acronym> contains a fast 32-bit parser. The parser uses precalculated hash table that needs to be
 		filled in upon startup. The initialization is done here, there are two functions that do the
 		job. Function <function moreinfo="none">init_hfname_parser</function> initializes hash table
 		in header field name parser and function <function moreinfo="none">init_digest_parser</function>
@@ -154,7 +154,7 @@
 	    <para>
 		<acronym>SER</acronym> has built-in support for <acronym>FIFO</acronym> control. It means that the 
 		running server can accept
-		commands over a fifo device. Function <function moreinfo="none">register_core_fifo</function> 
+		commands over a fifo special file (a named pipe). Function <function moreinfo="none">register_core_fifo</function> 
 		initializes <acronym>FIFO</acronym> subsystem and registers basic commands, that are processed by the core
 		itself. The function can be found in file <filename moreinfo="none">fifo_server.c</filename>.
 	    </para>
@@ -205,7 +205,7 @@
 		<para>
 		    Lexical analysis is process of converting the input (the configuration file in this
 		    case) into a stream of tokens. A token is a set of characters that
-		    'belong' together. Program, that can turn the input into stream of tokens is
+		    'belong' together. A program that can turn the input into stream of tokens is
 		    called scanner. For example, when scanner encounters a number in the config
 		    file, it will produce token NUMBER.
 		</para>
