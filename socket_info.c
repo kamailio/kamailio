@@ -112,6 +112,7 @@ static inline struct socket_info* new_sock_info(	char* name,
 	si=(struct socket_info*) pkg_malloc(sizeof(struct socket_info));
 	if (si==0) goto error;
 	memset(si, 0, sizeof(struct socket_info));
+	si->socket=-1;
 	si->name.len=strlen(name);
 	si->name.s=(char*)pkg_malloc(si->name.len+1); /* include \0 */
 	if (si->name.s==0) goto error;

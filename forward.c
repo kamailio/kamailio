@@ -95,6 +95,7 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 	socklen_t len;
 	union sockaddr_union from; 
 	struct socket_info* si;
+	struct ip_addr ip;
 
 	if (proto!=PROTO_UDP) {
 		LOG(L_CRIT, "BUG: get_out_socket can only be called for UDP\n");
@@ -118,39 +119,16 @@ struct socket_info* get_out_socket(union sockaddr_union* to, int proto)
 				strerror(errno));
 		goto error;
 	}
-	for (si=udp_listen; si; si=si->next) {
-		switch(from.s.sa_family) {
-			case AF_INET:	
-						if (si->address.af!=AF_INET)
-								continue;
-						if (memcmp(&si->address.u,
-								&from.sin.sin_addr, 
-								si->address.len)==0)
-							goto found; /*  success */
-						break;
-#if defined(USE_IPV6)
-			case AF_INET6:	
-						if (si->address.af!=AF_INET6)
-								continue;
-						if (memcmp(&si->address.u,
-								&from.sin6.sin6_addr, len)==0)
-							goto found;
-						continue;
-#endif
-			default:	LOG(L_ERR, "ERROR: get_out_socket: "
-									"unknown family: %d\n",
-									from.s.sa_family);
-						goto error;
-		}
-	}
+	su2ip_addr(&ip, &from);
+	si=find_si(&ip, 0, proto);
+	if (si==0) goto error;
+	close(temp_sock);
+	DBG("DEBUG: get_out_socket: socket determined: %p\n", si );
+	return si;
 error:
 	LOG(L_ERR, "ERROR: get_out_socket: no socket found\n");
 	close(temp_sock);
 	return 0;
-found:
-	close(temp_sock);
-	DBG("DEBUG: get_out_socket: socket determined: %p\n", si );
-	return si;
 }
 
 
@@ -174,13 +152,28 @@ struct socket_info* get_send_socket(struct sip_msg *msg,
 											msg->force_send_socket->port_no,
 											proto);
 		}
-		if (msg->force_send_socket) 
+		if (msg->force_send_socket && (msg->force_send_socket->socket!=-1)) 
 			return msg->force_send_socket;
-		else
-			LOG(L_WARN, "WARNING: get_send_socket: protocol/port mismatch\n");
+		else{
+			if (msg->force_send_socket->socket==-1)
+				LOG(L_WARN, "WARNING: get_send_socket: not listening"
+						 " on the requested socket, no fork mode?\n");
+			else
+				LOG(L_WARN, "WARNING: get_send_socket: "
+						"protocol/port mismatch\n");
+		}
 	};
 
-	if (mhomed && proto==PROTO_UDP) return get_out_socket(to, proto);
+	if (mhomed && proto==PROTO_UDP){
+		send_sock=get_out_socket(to, proto);
+		if ((send_sock==0) || (send_sock->socket!=-1))
+			return send_sock; /* found or error*/
+		else if (send_sock->socket==-1){
+			LOG(L_WARN, "WARNING: get_send_socket: not listening on the"
+					" requested socket, no fork mode?\n");
+			/* continue: try to use some socket */
+		}
+	}
 
 	send_sock=0;
 	/* check if we need to change the socket (different address families -
