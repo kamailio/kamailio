@@ -34,6 +34,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "../../mem/mem.h"
 #include "../../str.h"
 #include "../../parser/hf.h"
 #include "../../parser/digest/digest.h"
@@ -54,11 +55,15 @@
 static inline int get_uri(struct sip_msg* _m, str** _uri)
 {
 	if ((REQ_LINE(_m).method.len == 8) && (memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
+		if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || !_m->to)) {
+			LOG(L_ERR, "get_uri(): To header field not found or malformed\n");
+			return -1;
+		}
 		*_uri = &(get_to(_m)->uri);
 	} else {
 		if (parse_from_header(_m) == -1) {
 			LOG(L_ERR, "get_uri(): Error while parsing headers\n");
-			return -1;
+			return -2;
 		}
 		*_uri = &(get_from(_m)->uri);
 	}
@@ -88,10 +93,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	case AUTHORIZED:       return 1;
 	}
 
-
-	     /* Retrieve URI from To (Register) or From (other requests) header */
-	/*
-	if (get_uri(_msg, &uri) == -1) {
+	if (get_uri(_msg, &uri) < 0) {
 		LOG(L_ERR, "authorize(): From/To URI not found\n");
 		return -1;
 	}
@@ -110,19 +112,11 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 		return -1;
 	}
 
-	user.s = malloc(puri.user.len);
+	user.s = (char *)pkg_malloc(puri.user.len);
 	un_escape(&(puri.user), &user);
-
-	*/
-	     /* unescape user */
-	//	user.s = malloc(puri.user.len);
-	//	un_escape(&(puri.user), &user);
-
 	cred = (auth_body_t*)h->parsed;
-
 	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user);
-
-	//free(user.s);
+	pkg_free(user.s);
 
 	if (res == 1) {
 		ret = post_auth_func(_msg, h);
