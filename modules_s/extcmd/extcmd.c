@@ -140,7 +140,7 @@ static int extcmd_init(void)
 		LOG(L_ERR,"ERROR:extcmd_init: cannot solve \"%s\"!!\n",my_address);
 		goto error;
 	}
-	if (hostent2su( &me, he, 0, htons(my_port))==-1)
+	if (hostent2su( &me, he, 0, my_port)==-1)
 		goto error;
 
 	/* create the socket server */
