@@ -326,6 +326,11 @@ inline static void final_response_handler( void *attr)
 	struct cell *t;
 
 	r_buf = (struct retr_buf*)attr;
+	if (r_buf==0){
+		/* or BUG?, ignoring it for now */
+		LOG(L_CRIT, "ERROR: final_response_handler(0) called\n");
+		return;
+	}
 	t=r_buf->my_T;
 
 #	ifdef EXTRA_DEBUG

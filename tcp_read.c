@@ -399,20 +399,11 @@ int tcp_read_req(struct tcp_connection* con)
 		req=&con->req;
 #ifdef USE_TLS
 		if (con->type==PROTO_TLS){
-			if (con->state==S_CONN_ACCEPT){
-				if (tls_accept(con, 0)!=0){
-					resp=CONN_ERROR;
-					goto end_req;
-				}
-				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			if (tls_fix_read_conn(con)!=0){
+				resp=CONN_ERROR;
+				goto end_req;
 			}
-			if(con->state==S_CONN_CONNECT){
-				if (tls_connect(con, 0)!=0){
-					resp=CONN_ERROR;
-					goto end_req;
-				}
-				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
-			}
+			if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
 		}
 #endif
 
@@ -547,7 +538,8 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
 		response[0]=(long)c;
 		response[1]=state;
-		write(unix_sock, response, sizeof(response));
+		if (send_all(unix_sock, response, sizeof(response))<=0)
+			LOG(L_ERR, "ERROR: release_tcpconn: send_all failed\n");
 }
 
 
@@ -625,12 +617,18 @@ void tcp_receive_loop(int unix_sock)
 					release_tcpconn(con, resp, unix_sock);
 					goto skip;
 				}
-#ifdef USE_TLS
-				if (con->type==PROTO_TLS) tls_tcpconn_update_fd(con, s);
-#endif
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
 				FD_SET(s, &master_set);
 				if (maxfd<s) maxfd=s;
+				if (con==list){
+					LOG(L_CRIT, "BUG: tcp_receive_loop: duplicate"
+							" connection recevied: %p, id %d, fd %d, refcnt %d"
+							" state %d (n=%d)\n", con, con->id, con->fd,
+							con->refcnt, con->state, n);
+					resp=CONN_ERROR;
+					release_tcpconn(con, resp, unix_sock);
+					goto skip; /* try to recover */
+				}
 				tcpconn_listadd(list, con, c_next, c_prev);
 			}
 skip:
@@ -641,12 +639,22 @@ skip:
 				DBG("tcp receive: list fd=%d, id=%d, timeout=%d, refcnt=%d\n",
 						con->fd, con->id, con->timeout, con->refcnt);
 #endif
+				if (con->state<0){
+					/* S_CONN_BAD or S_CONN_ERROR, remove it */
+					resp=CONN_ERROR;
+					FD_CLR(con->fd, &master_set);
+					tcpconn_listrm(list, con, c_next, c_prev);
+					con->state=S_CONN_BAD;
+					release_tcpconn(con, resp, unix_sock);
+					continue;
+				}
 				if (nfds && FD_ISSET(con->fd, &sel_set)){
 #ifdef EXTRA_DEBUG
 					DBG("tcp receive: match, fd:isset\n");
 #endif
 					nfds--;
 					resp=tcp_read_req(con);
+					
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);

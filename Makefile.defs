@@ -29,6 +29,7 @@
 #  2003-09-25  added -pthread into LIBS when compiling on FreeBSD/alpha
 #              and other FreeBSD arches for which no fast locking assembly
 #              code exists (sobomax)
+#  2003-11-08  mips1 support introduced (andrei)
 
 
 # check if already included/exported
@@ -43,7 +44,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   12
-EXTRAVERSION = dev-22-tcp_aliases
+EXTRAVERSION = -dev-23-merged
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -51,7 +52,7 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
 
 # TLS support
-TLS ?=
+TLS ?= 
 ifneq ($(TLS),)
 	RELEASE:=$(RELEASE)-tls
 endif
@@ -240,16 +241,16 @@ endif
 # -DUSE_POSIX_SEM
 #		uses posix semaphores for locking (faster than sys v)
 # -DBUSY_WAIT
-#		uses busy waiting on the lock
+#		uses busy waiting on the lock (FAST_LOCK)
 # -DADAPTIVE_WAIT
 #		try busy waiting for a while and if the lock is still held go to
-#		force reschedule
+#		force reschedule (FAST_LOCK)
 # -DADAPTIVE_WAIT_LOOPS=number
 #		number of loops we busy wait, after "number" loops have elapsed we 
-#		force a reschedule
+#		force a reschedule (FAST_LOCK)
 # -DNOSMP
 #		don't use smp compliant locking (faster but won't work on SMP machines)
-#		(not yet enabled)
+#		(not yet enabled) (FAST_LOCK)
 # -DNO_PINGTEL_TAG_HACK
 #		if enabled, To-header-field will be less liberal and will not accept
 #		'tag=' (tag parameter with equal sign and without value); it is called
@@ -273,12 +274,11 @@ DEFS+= $(extra_defs) \
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
 	 -DSHM_MEM  -DSHM_MMAP \
-	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
-	 -DDBG_QM_MALLOC \
+	# -DDBG_QM_MALLOC \
 	# -DF_MALLOC \
 	# -DDBG_F_MALLOC \
 	# -DDBG_QM_MALLOC \
@@ -386,8 +386,13 @@ ifeq ($(ARCH), ppc)
 	use_fast_lock=yes
 endif
 
+ifeq ($(ARCH), mips)
+# mips1 arch. (e.g. R3000) - no hardware locking support
+	use_fast_lock=no
+endif
+
 ifeq ($(use_fast_lock), yes)
-	DEFS+= -DFAST_LOCK
+	DEFS+= -DFAST_LOCK -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 
 	found_lock_method=yes
 endif
 
@@ -519,15 +524,46 @@ else
 				#really old version
 $(warning			You are using an old and unsupported gcc \
 					 version ($(CC_SHORTVER)), compile at your own risk!)
-
+	
 endif			# CC_SHORTVER, 2.9x
 endif			# CC_SHORTVER, 3.0
-
+	
 else		# CC_NAME, gcc
 				#other compilers
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, gcc
-endif	#ARCH, i386
+endif	#ARCH, arm 
+
+	#if  mips (R3000)
+ifeq	($(ARCH), mips)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+				#common stuff
+				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
+					-Wall   \
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+= -mcpu=r3000
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					
+					CFLAGS+=-mcpu=r3000
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+	
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+	
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, mips
 
 
 CFLAGS+= $(CC_EXTRA_OPTS)

@@ -44,8 +44,8 @@
 #define TCP_CON_MAX_ALIASES 4 /* maximum number of port aliases */
 
 #define TCP_BUF_SIZE 65535
-#define TCP_CON_TIMEOUT 60 /* in  seconds */
-#define TCP_CON_SEND_TIMEOUT 30 /* timeout after a send */
+#define TCP_CON_TIMEOUT 120 /* in  seconds */
+#define TCP_CON_SEND_TIMEOUT 120 /* timeout after a send */
 #define TCP_CHILD_TIMEOUT 5 /* after 5 seconds, the child "returns" 
 							 the connection to the tcp master process */
 #define TCP_MAIN_SELECT_TIMEOUT 5 /* how often "tcp main" checks for timeout*/
@@ -73,6 +73,8 @@ enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0,
 /* fd communication commands */
 enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
 					CONN_GET_FD, CONN_NEW };
+/* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
+ * CONN_GET_FD, NEW, ERROR only by writers */
 
 struct tcp_req{
 	struct tcp_req* next;

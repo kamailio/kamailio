@@ -44,6 +44,10 @@
  *  2003-07-09  tls_close called before closing the tcp connection (andrei)
  *  2003-10-24  converted to the new socket_info lists (andrei)
  *  2003-10-27  tcp port aliases support added (andrei)
+ *  2003-11-04  always lock before manipulating refcnt; sendchild
+ *              does not inc refcnt by itself anymore (andrei)
+ *  2003-11-07  different unix sockets are used for fd passing
+ *              to/from readers/writers (andrei)
  */
 
 
@@ -100,7 +104,7 @@
 struct tcp_child{
 	pid_t pid;
 	int proc_no; /* ser proc_no, for debugging */
-	int unix_sock; /* unix sock fd, copied from pt*/
+	int unix_sock; /* unix "read child" sock fd */
 	int busy;
 	int n_reqs; /* number of requests serviced so far */
 };
@@ -242,7 +246,13 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 				strerror(errno), errno);
 		si=0; /* try to go on */
 	}
-	si=find_tcp_si(&my_name);
+#ifdef USE_TLS
+	if (type==PROTO_TLS)
+		si=find_tls_si(&my_name);
+	else
+#endif
+		si=find_tcp_si(&my_name);
+
 	if (si==0){
 		LOG(L_ERR, "ERROR: tcp_connect: could not find coresponding"
 				" listening socket, using default...\n");
@@ -443,9 +453,20 @@ error_sec:
 
 
 
+void tcpconn_ref(struct tcp_connection* c)
+{
+	TCPCONN_LOCK;
+	c->refcnt++; /* FIXME: atomic_dec */
+	TCPCONN_UNLOCK;
+}
+
+
+
 void tcpconn_put(struct tcp_connection* c)
 {
+	TCPCONN_LOCK;
 	c->refcnt--; /* FIXME: atomic_dec */
+	TCPCONN_UNLOCK;
 }
 
 
@@ -455,6 +476,7 @@ int tcp_send(int type, char* buf, unsigned len, union sockaddr_union* to,
 				int id)
 {
 	struct tcp_connection *c;
+	struct tcp_connection *tmp;
 	struct ip_addr ip;
 	int port;
 	int fd;
@@ -494,22 +516,25 @@ no_id:
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}
-			c->refcnt++;
+			c->refcnt++; /* safe to do it w/o locking, it's not yet
+							available to the rest of the world */
 			fd=c->s;
 			
 			/* send the new tcpconn to "tcp main" */
 			response[0]=(long)c;
 			response[1]=CONN_NEW;
-			n=write(unix_tcp_sock, response, sizeof(response));
-			if (n<0){
+			n=send_all(unix_tcp_sock, response, sizeof(response));
+			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed write: %s (%d)\n",
 						strerror(errno), errno);
+				n=-1;
 				goto end;
 			}	
 			n=send_fd(unix_tcp_sock, &c, sizeof(c), c->s);
-			if (n<0){
+			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed send_fd: %s (%d)\n",
 						strerror(errno), errno);
+				n=-1;
 				goto end;
 			}
 			goto send_it;
@@ -517,21 +542,34 @@ no_id:
 get_fd:
 			/* todo: see if this is not the same process holding
 			 *  c  and if so send directly on c->fd */
-			DBG("tcp_send: tcp connection found, acquiring fd\n");
+			DBG("tcp_send: tcp connection found (%p), acquiring fd\n", c);
 			/* get the fd */
 			response[0]=(long)c;
 			response[1]=CONN_GET_FD;
-			n=write(unix_tcp_sock, response, sizeof(response));
-			if (n<0){
+			n=send_all(unix_tcp_sock, response, sizeof(response));
+			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(write):%s (%d)\n",
 						strerror(errno), errno);
+				n=-1;
 				goto release_c;
 			}
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
+			tmp=c;
 			n=receive_fd(unix_tcp_sock, &c, sizeof(c), &fd);
-			if (n<0){
+			if (n<=0){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
 							" %s (%d)\n", strerror(errno), errno);
+				n=-1;
+				goto release_c;
+			}
+			if (c!=tmp){
+				LOG(L_CRIT, "BUG: tcp_send: get_fd: got different connection:"
+						"  %p (id= %d, refcnt=%d state=%d != "
+						"  %p (id= %d, refcnt=%d state=%d (n=%d)\n",
+						  c,   c->id,   c->refcnt,   c->state,
+						  tmp, tmp->id, tmp->refcnt, tmp->state, n
+				   );
+				n=-1; /* fail */
 				goto release_c;
 			}
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
@@ -567,11 +605,12 @@ send_it:
 		/* tell "main" it should drop this (optional it will t/o anyway?)*/
 		response[0]=(long)c;
 		response[1]=CONN_ERROR;
-		n=write(unix_tcp_sock, response, sizeof(response));
-		/* CONN_ERROR wil auto-dec refcnt => we must not call tcpconn_put !!*/
-		if (n<0){
+		n=send_all(unix_tcp_sock, response, sizeof(response));
+		/* CONN_ERROR will auto-dec refcnt => we must not call tcpconn_put !!*/
+		if (n<=0){
 			LOG(L_ERR, "BUG: tcp_send: error return failed (write):%s (%d)\n",
 					strerror(errno), errno);
+			n=-1;
 		}
 		close(fd);
 		return n; /* error return, no tcpconn_put */
@@ -737,19 +776,21 @@ static int send2child(struct tcp_connection* tcpconn)
 	
 	tcp_children[idx].busy++;
 	tcp_children[idx].n_reqs++;
-	tcpconn->refcnt++;
 	if (min_busy){
-		LOG(L_WARN, "WARNING: send2child:no free tcp receiver, "
+		LOG(L_WARN, "WARNING: send2child: no free tcp receiver, "
 				" connection passed to the least busy one (%d)\n",
 				min_busy);
 	}
 	DBG("send2child: to tcp child %d %d(%d), %p\n", idx, 
 					tcp_children[idx].proc_no,
 					tcp_children[idx].pid, tcpconn);
-	send_fd(tcp_children[idx].unix_sock, &tcpconn, sizeof(tcpconn),
-			tcpconn->s);
+	if (send_fd(tcp_children[idx].unix_sock, &tcpconn, sizeof(tcpconn),
+			tcpconn->s)<=0){
+		LOG(L_ERR, "ERROR: send2child: send_fd failed\n");
+		return -1;
+	}
 	
-	return 0; /* just to fix a warning*/
+	return 0;
 }
 
 
@@ -776,6 +817,8 @@ static inline void handle_new_connect(struct socket_info* si,
 		/* add socket to list */
 		tcpconn=tcpconn_new(new_sock, &su, si, si->proto, S_CONN_ACCEPT);
 		if (tcpconn){
+			tcpconn->refcnt++; /* safe, not yet available to the
+								  outside world */
 			tcpconn_add(tcpconn);
 			DBG("tcp_main_loop: new connection: %p %d\n",
 				tcpconn, tcpconn->s);
@@ -784,6 +827,7 @@ static inline void handle_new_connect(struct socket_info* si,
 				LOG(L_ERR,"ERROR: tcp_main_loop: no children "
 						"available\n");
 				TCPCONN_LOCK;
+				tcpconn->refcnt--;
 				if (tcpconn->refcnt==0){
 					close(tcpconn->s);
 					_tcpconn_rm(tcpconn);
@@ -792,6 +836,34 @@ static inline void handle_new_connect(struct socket_info* si,
 			}
 		}
 	}
+}
+
+
+/* used internally by tcp_main_loop() */
+static void tcpconn_destroy(struct tcp_connection* tcpconn)
+{
+	int fd;
+
+	TCPCONN_LOCK; /*avoid races w/ tcp_send*/
+	tcpconn->refcnt--;
+	if (tcpconn->refcnt==0){ 
+		DBG("tcp_main_loop: destroying connection\n");
+		fd=tcpconn->s;
+#ifdef USE_TLS
+		/*FIXME: lock ->writelock ? */
+		if (tcpconn->type==PROTO_TLS)
+			tls_close(tcpconn, fd);
+#endif
+		_tcpconn_rm(tcpconn);
+		close(fd);
+	}else{
+		/* force timeout */
+		tcpconn->timeout=0;
+		tcpconn->state=S_CONN_BAD;
+		DBG("tcp_main_loop: delaying ...\n");
+		
+	}
+	TCPCONN_UNLOCK;
 }
 
 
@@ -843,6 +915,14 @@ void tcp_main_loop()
 			if (pt[r].unix_sock>maxfd) maxfd=pt[r].unix_sock;
 		}
 	}
+	for (r=0; r<tcp_children_no; r++){
+		if (tcp_children[r].unix_sock>0){ /* we can't have 0, 
+											 we never close it!*/
+			FD_SET(tcp_children[r].unix_sock, &master_set);
+			if (tcp_children[r].unix_sock>maxfd)
+				maxfd=tcp_children[r].unix_sock;
+		}
+	}
 	
 	
 	/* main loop*/
@@ -872,6 +952,7 @@ void tcp_main_loop()
 		for (h=0; h<TCP_ID_HASH_SIZE; h++){
 			for(tcpconn=tcpconn_id_hash[h]; tcpconn && n; 
 					tcpconn=tcpconn->id_next){
+				/* FIXME: is refcnt==0 really necessary? */
 				if ((tcpconn->refcnt==0)&&(FD_ISSET(tcpconn->s, &sel_set))){
 					/* new data available */
 					n--;
@@ -879,10 +960,12 @@ void tcp_main_loop()
 					DBG("tcp_main_loop: data available on %p [h:%d] %d\n",
 							tcpconn, h, tcpconn->s);
 					FD_CLR(tcpconn->s, &master_set);
+					tcpconn_ref(tcpconn); /* refcnt ++ */
 					if (send2child(tcpconn)<0){
 						LOG(L_ERR,"ERROR: tcp_main_loop: no "
 									"children available\n");
 						TCPCONN_LOCK;
+						tcpconn->refcnt--;
 						if (tcpconn->refcnt==0){
 							fd=tcpconn->s;
 							_tcpconn_rm(tcpconn);
@@ -894,109 +977,138 @@ void tcp_main_loop()
 			}
 		}
 		/* check unix sockets & listen | destroy connections */
-		/* start from 1, the "main" process does not transmit anything*/
-		for (r=1; r<process_no && n; r++){
-			if ( (pt[r].unix_sock>0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
+		/* tcp_children readers first */
+		for (r=0; r<tcp_children_no && n; r++){
+			if ( (tcp_children[r].unix_sock>0) && 
+					FD_ISSET(tcp_children[r].unix_sock, &sel_set)){
 				/* (we can't have a fd==0, 0 is never closed )*/
 				n--;
-				/* errno==EINTR !!! TODO*/
-read_again:
-				bytes=read(pt[r].unix_sock, response, sizeof(response));
+				/* read until sizeof(response)
+				 * (this is a SOCK_STREAM so read is not atomic */
+				bytes=recv_all(tcp_children[r].unix_sock, response,
+								sizeof(response));
 				if (bytes==0){
 					/* EOF -> bad, child has died */
-					LOG(L_CRIT, "BUG: tcp_main_loop: dead child %d\n", r);
+					LOG(L_CRIT, "BUG: tcp_main_loop: dead tcp child %d\n", r);
 					/* don't listen on it any more */
-					FD_CLR(pt[r].unix_sock, &master_set);
+					FD_CLR(tcp_children[r].unix_sock, &master_set);
 					/*exit(-1);*/
-					continue;
+					continue; /* skip this and try the next one */
 				}else if (bytes<0){
-					if (errno==EINTR) goto read_again;
-					else{
-						LOG(L_CRIT, "ERROR: tcp_main_loop: read from child: "
-								" %s\n", strerror(errno));
-						/* try to continue ? */
-						continue;
-					}
+					LOG(L_CRIT, "ERROR: tcp_main_loop: read from tcp child %d "
+							"%s\n", r, strerror(errno));
+					/* try to ignore ? */
+					continue; /* skip this and try the next one */
 				}
 					
-				DBG("tcp_main_loop: read response= %lx, %ld from %d (%d)\n",
-						response[0], response[1], r, pt[r].pid);
+				DBG("tcp_main_loop: reader response= %lx, %ld from %d \n",
+						response[0], response[1], r);
 				cmd=response[1];
+				tcpconn=(struct tcp_connection*)response[0];
 				switch(cmd){
 					case CONN_RELEASE:
-						if (pt[r].idx>=0){
-							tcp_children[pt[r].idx].busy--;
-						}else{
-							LOG(L_CRIT, "BUG: tcp_main_loop: CONN_RELEASE\n");
-						}
-						tcpconn=(struct tcp_connection*)response[0];
+						tcp_children[r].busy--;
 						if (tcpconn){
-								if (tcpconn->state==S_CONN_BAD) 
-									goto tcpconn_destroy;
+								if (tcpconn->state==S_CONN_BAD){ 
+									tcpconn_destroy(tcpconn);
+									break;
+								}
 								FD_SET(tcpconn->s, &master_set);
 								if (maxfd<tcpconn->s) maxfd=tcpconn->s;
 								/* update the timeout*/
 								tcpconn->timeout=get_ticks()+TCP_CON_TIMEOUT;
 								tcpconn_put(tcpconn);
-								DBG("tcp_main_loop: %p refcnt= %d\n", 
-									tcpconn, tcpconn->refcnt);
+								DBG("tcp_main_loop: CONN_RELEASE  %p"
+										" refcnt= %d\n", 
+										tcpconn, tcpconn->refcnt);
 						}
 						break;
 					case CONN_ERROR:
 					case CONN_DESTROY:
 					case CONN_EOF:
 						/* WARNING: this will auto-dec. refcnt! */
-						if (pt[r].idx>=0){
-							tcp_children[pt[r].idx].busy--;
-						}else{
-							LOG(L_CRIT, "BUG: tcp_main_loop: CONN_RELEASE\n");
-						}
-						tcpconn=(struct tcp_connection*)response[0];
+						tcp_children[pt[r].idx].busy--;
 						if (tcpconn){
 							if (tcpconn->s!=-1)
 								FD_CLR(tcpconn->s, &master_set);
-		tcpconn_destroy:
-							TCPCONN_LOCK; /*avoid races w/ tcp_send*/
-							tcpconn->refcnt--;
-							if (tcpconn->refcnt==0){ 
-								DBG("tcp_main_loop: destroying connection\n");
-								fd=tcpconn->s;
-#ifdef USE_TLS
-								if (tcpconn->type==PROTO_TLS)
-									tls_close(tcpconn, fd);
-#endif
-								_tcpconn_rm(tcpconn);
-								close(fd);
-							}else{
-								/* force timeout */
-								tcpconn->timeout=0;
-								tcpconn->state=S_CONN_BAD;
-								DBG("tcp_main_loop: delaying ...\n");
-								
-							}
-							TCPCONN_UNLOCK;
+							tcpconn_destroy(tcpconn);
+						}
+						break;
+					default:
+							LOG(L_CRIT, "BUG: tcp_main_loop:  unknown cmd %d"
+										" from tcp reader %d\n",
+									cmd, r);
+				}
+			}
+		}
+		/* check "send" unix sockets & listen | destroy connections */
+		/* start from 1, the "main" process does not transmit anything*/
+		for (r=1; r<process_no && n; r++){
+			if ( (pt[r].unix_sock>0) && FD_ISSET(pt[r].unix_sock, &sel_set)){
+				/* (we can't have a fd==0, 0 is never closed )*/
+				n--;
+				/* read until sizeof(response)
+				 * (this is a SOCK_STREAM so read is not atomic */
+				bytes=recv_all(pt[r].unix_sock, response, sizeof(response));
+				if (bytes==0){
+					/* EOF -> bad, child has died */
+					LOG(L_CRIT, "BUG: tcp_main_loop: dead child %d\n", r);
+					/* don't listen on it any more */
+					FD_CLR(pt[r].unix_sock, &master_set);
+					/*exit(-1);*/
+					continue; /* skip this and try the next one */
+				}else if (bytes<0){
+					LOG(L_CRIT, "ERROR: tcp_main_loop: read from child:  %s\n",
+							strerror(errno));
+					/* try to ignore ? */
+					continue; /* skip this and try the next one */
+				}
+					
+				DBG("tcp_main_loop: read response= %lx, %ld from %d (%d)\n",
+						response[0], response[1], r, pt[r].pid);
+				cmd=response[1];
+				tcpconn=(struct tcp_connection*)response[0];
+				switch(cmd){
+					case CONN_ERROR:
+						if (tcpconn){
+							if (tcpconn->s!=-1)
+								FD_CLR(tcpconn->s, &master_set);
+							tcpconn_destroy(tcpconn);
 						}
 						break;
 					case CONN_GET_FD:
 						/* send the requested FD  */
-						tcpconn=(struct tcp_connection*)response[0];
 						/* WARNING: take care of setting refcnt properly to
 						 * avoid race condition */
 						if (tcpconn){
-							send_fd(pt[r].unix_sock, &tcpconn,
-									sizeof(tcpconn), tcpconn->s);
+							if (send_fd(pt[r].unix_sock, &tcpconn,
+										sizeof(tcpconn), tcpconn->s)<=0){
+								LOG(L_ERR, "ERROR: tcp_main_loop:"
+										"send_fd failed\n");
+							}
 						}else{
 							LOG(L_CRIT, "BUG: tcp_main_loop: null pointer\n");
 						}
 						break;
 					case CONN_NEW:
 						/* update the fd in the requested tcpconn*/
-						tcpconn=(struct tcp_connection*)response[0];
 						/* WARNING: take care of setting refcnt properly to
 						 * avoid race condition */
 						if (tcpconn){
-							receive_fd(pt[r].unix_sock, &tcpconn,
-										sizeof(tcpconn), &tcpconn->s);
+							bytes=receive_fd(pt[r].unix_sock, &tcpconn,
+									sizeof(tcpconn), &tcpconn->s);
+								if (bytes<sizeof(tcpconn)){
+									if (bytes<0){
+										LOG(L_CRIT, "BUG: tcp_main_loop:"
+												" CONN_NEW: receive_fd "
+												"failed\n");
+									}else{
+										LOG(L_CRIT, "BUG: tcp_main_loop:"
+												" CONN_NEW: to few bytes "
+												"received (%d)\n", bytes );
+									}
+									break; /* try to ignore */
+								}
 							/* add tcpconn to the list*/
 							tcpconn_add(tcpconn);
 							FD_SET(tcpconn->s, &master_set);
@@ -1012,7 +1124,7 @@ read_again:
 									cmd);
 				}
 			}
-		}
+		} /* for */
 		
 		/* remove old connections */
 		tcpconn_timeout(&master_set);
@@ -1114,6 +1226,7 @@ int tcp_init_children()
 {
 	int r;
 	int sockfd[2];
+	int reader_fd[2]; /* for comm. with the tcp children read  */
 	pid_t pid;
 	
 	
@@ -1123,6 +1236,11 @@ int tcp_init_children()
 	/* fork children & create the socket pairs*/
 	for(r=0; r<tcp_children_no; r++){
 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+			LOG(L_ERR, "ERROR: tcp_main: socketpair failed: %s\n",
+					strerror(errno));
+			goto error;
+		}
+		if (socketpair(AF_UNIX, SOCK_STREAM, 0, reader_fd)<0){
 			LOG(L_ERR, "ERROR: tcp_main: socketpair failed: %s\n",
 					strerror(errno));
 			goto error;
@@ -1137,11 +1255,12 @@ int tcp_init_children()
 		}else if (pid>0){
 			/* parent */
 			close(sockfd[1]);
+			close(reader_fd[1]);
 			tcp_children[r].pid=pid;
 			tcp_children[r].proc_no=process_no;
 			tcp_children[r].busy=0;
 			tcp_children[r].n_reqs=0;
-			tcp_children[r].unix_sock=sockfd[0];
+			tcp_children[r].unix_sock=reader_fd[0];
 			pt[process_no].pid=pid;
 			pt[process_no].unix_sock=sockfd[0];
 			pt[process_no].idx=r;
@@ -1156,7 +1275,7 @@ int tcp_init_children()
 				LOG(L_ERR, "init_children failed\n");
 				goto error;
 			}
-			tcp_receive_loop(sockfd[1]);
+			tcp_receive_loop(reader_fd[1]);
 		}
 	}
 	return 0;

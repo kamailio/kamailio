@@ -29,6 +29,8 @@
   * --------
   *  2002-11-29  created by andrei
   *  2003-02-20  added solaris support (! HAVE_MSGHDR_MSG_CONTROL) (andrei)
+  *  2003-11-03  added send_all, recv_all  and updated send/get_fd
+  *               to handle signals  (andrei)
   */
 
 #ifdef USE_TCP
@@ -37,8 +39,53 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <stdlib.h> /* for NULL definition on openbsd */
+#include <errno.h>
+#include <string.h>
 
 #include "dprint.h"
+
+
+
+/* receive all the data or returns error (handles EINTR etc.)
+ * returns: bytes read or error (<0)
+ * can return < data_len if EOF */
+int recv_all(int socket, void* data, int data_len)
+{
+	int b_read;
+	int n;
+	
+	b_read=0;
+	do{
+		n=recv(socket, data+b_read, data_len-b_read, MSG_WAITALL);
+		if (n<0){
+			/* error */
+			if (errno==EINTR) continue; /* signal, try again */
+			LOG(L_CRIT, "ERROR: recv_all: recv on %d failed: %s\n",
+					socket, strerror(errno));
+			return n;
+		}
+		b_read+=n;
+	}while( (b_read!=data_len) && (n));
+	return b_read;
+}
+
+
+/* sends all data (takes care of signals) (assumes blocking fd)
+ * returns number of bytes sent or < 0 for an error */
+int send_all(int socket, void* data, int data_len)
+{
+	int n;
+	
+again:
+	n=send(socket, data, data_len, 0);
+	if (n<0){
+			/* error */
+		if (errno==EINTR) goto again; /* signal, try again */
+		LOG(L_CRIT, "ERROR: send_all: send on %d failed: %s\n",
+					socket, strerror(errno));
+	}
+	return n;
+}
 
 
 /* at least 1 byte must be sent! */
@@ -76,8 +123,13 @@ int send_fd(int unix_socket, void* data, int data_len, int fd)
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
 	
-	
+again:
 	ret=sendmsg(unix_socket, &msg, 0);
+	if (ret<0){
+		if (errno==EINTR) goto again;
+		LOG(L_CRIT, "ERROR: send_fd: sendmsg failed on %d: %s\n",
+				unix_socket, strerror(errno));
+	}
 	
 	return ret;
 }
@@ -90,6 +142,7 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 	struct iovec iov[1];
 	int new_fd;
 	int ret;
+	int n;
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	struct cmsghdr* cmsg;
 	union{
@@ -112,26 +165,47 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
 	
-	ret=recvmsg(unix_socket, &msg, 0);
-	if (ret<=0) goto error;
+again:
+	ret=recvmsg(unix_socket, &msg, MSG_WAITALL);
+	if (ret<0){
+		if (errno==EINTR) goto again;
+		LOG(L_CRIT, "ERROR: receive_fd: recvmsg on %d failed: %s\n",
+				unix_socket, strerror(errno));
+		goto error;
+	}
+	if (ret==0){
+		/* EOF */
+		LOG(L_CRIT, "ERROR: receive_fd: EOF on %d\n", unix_socket);
+		goto error;
+	}
+	if (ret<data_len){
+		LOG(L_WARN, "WARNING: receive_fd: too few bytes read (%d from %d)"
+				    "trying to fix...\n", ret, data_len);
+		n=recv_all(unix_socket, (char*)data+ret, data_len-ret);
+		if (n>=0) ret+=n;
+		else{
+			ret=n;
+			goto error;
+		}
+	}
 	
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	cmsg=CMSG_FIRSTHDR(&msg);
 	if ((cmsg!=0) && (cmsg->cmsg_len==CMSG_LEN(sizeof(new_fd)))){
 		if (cmsg->cmsg_type!= SCM_RIGHTS){
-			LOG(L_ERR, "receive_fd: msg control type != SCM_RIGHTS\n");
+			LOG(L_ERR, "ERROR: receive_fd: msg control type != SCM_RIGHTS\n");
 			ret=-1;
 			goto error;
 		}
 		if (cmsg->cmsg_level!= SOL_SOCKET){
-			LOG(L_ERR, "receive_fd: msg level != SOL_SOCKET\n");
+			LOG(L_ERR, "ERROR: receive_fd: msg level != SOL_SOCKET\n");
 			ret=-1;
 			goto error;
 		}
 		*fd=*((int*) CMSG_DATA(cmsg));
 	}else{
-		LOG(L_ERR, "receive_fd: no descriptor passed, cmsg=%p, len=%d\n",
-				cmsg, cmsg->cmsg_len);
+		LOG(L_ERR, "ERROR: receive_fd: no descriptor passed, cmsg=%p,"
+				"len=%d\n", cmsg, cmsg->cmsg_len);
 		*fd=-1;
 		/* it's not really an error */
 	}
@@ -139,8 +213,8 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 	if (msg.msg_accrightslen==sizeof(int)){
 		*fd=new_fd;
 	}else{
-		LOG(L_ERR, "receive_fd: no descriptor passed, accrightslen=%d\n",
-				msg.msg_accrightslen);
+		LOG(L_ERR, "ERROR: receive_fd: no descriptor passed,"
+				" accrightslen=%d\n", msg.msg_accrightslen);
 		*fd=-1;
 	}
 #endif
@@ -148,5 +222,4 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd)
 error:
 	return ret;
 }
-
 #endif

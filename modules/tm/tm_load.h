@@ -52,7 +52,7 @@
 #define T_RELAY_TO           "t_relay_to"
 #define T_RELAY_TO_UDP       "t_relay_to_udp"
 #define T_RELAY_TO_TCP       "t_relay_to_tcp"
-#define T_RELAY_TO_TLS       "t_relay_tls"
+#define T_RELAY_TO_TLS       "t_relay_to_tls"
 #define T_RELAY              "t_relay"
 #define T_REPLY              "t_reply"
 #define T_REPLY_WB           "t_reply_with_body"
