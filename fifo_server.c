@@ -59,6 +59,7 @@
  *  2003-10-07  fifo security fixes: permissions, always delete old fifo,
  *               reply fifo checks -- added fifo_check (andrei)
  *  2003-10-13  addef fifo_dir for reply fifos (andrei)
+ *  2003-10-30  DB interface exported via FIFO (bogdan)
  */
 
 
