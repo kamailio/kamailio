@@ -39,8 +39,6 @@ struct sip_msg* sip_msg_cloner_1( struct sip_msg *org_msg )
     new_msg->orig=NULL;
     new_msg->buf=NULL;
 
-
-
     /* the original message - orig ( char*  type) */
     new_msg->orig = (char*)sh_malloc( new_msg->len+1 );
     if (!new_msg->orig) {
@@ -175,6 +173,12 @@ struct sip_msg* sip_msg_cloner_1( struct sip_msg *org_msg )
 		break;
 	    case HDR_CONTACT :
 		new_msg->contact = new_hdr;
+		break;
+	    case HDR_MAXFORWARD :
+		new_msg->maxforward = new_hdr;
+		break;
+	    case HDR_ROUTE :
+		new_msg->route = new_hdr;
 		break;
 	    default :
 		break;
