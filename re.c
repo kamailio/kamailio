@@ -395,6 +395,7 @@ struct replace_lst* subst_run(struct subst_expr* se, char* input,
 	int r;
 	regmatch_t* pmatch;
 	int nmatch;
+	int eflags;
 	
 	
 	/* init */
@@ -408,11 +409,14 @@ struct replace_lst* subst_run(struct subst_expr* se, char* input,
 		LOG(L_ERR, "ERROR: subst_run_ out of mem. (pmatch)\n");
 		goto error;
 	}
+	eflags=0;
 	do{
-		r=regexec(se->re, p, nmatch, pmatch, 0);
+		r=regexec(se->re, p, nmatch, pmatch, eflags);
 		DBG("subst_run: running. r=%d\n", r);
 		/* subst */
 		if (r==0){ /* != REG_NOMATCH */
+			/* change eflags, not to match any more at string start */
+			eflags|=REG_NOTBOL;
 			*crt=pkg_malloc(sizeof(struct replace_lst));
 			if (*crt==0){
 				LOG(L_ERR, "ERROR: subst_run: out of mem (crt)\n");
@@ -425,6 +429,9 @@ struct replace_lst* subst_run(struct subst_expr* se, char* input,
 			}
 			(*crt)->offset=pmatch[0].rm_so+(int)(p-input);
 			(*crt)->size=pmatch[0].rm_eo-pmatch[0].rm_so;
+			DBG("subst_run: matched (%d, %d): [%.*s]\n",
+					(*crt)->offset, (*crt)->size, 
+					(*crt)->size, input+(*crt)->offset);
 			/* create subst. string */
 			/* construct the string from replace[] */
 			if (replace_build(p, nmatch, pmatch, se, msg, &((*crt)->rpl))<0){
