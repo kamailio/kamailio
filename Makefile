@@ -11,7 +11,7 @@ auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
 #include  source related defs
 include Makefile.sources
 
-override exclude_modules:=CVS cpl cpl-c ext radius_acc radius_auth snmp \
+override exclude_modules:=CVS pa cpl cpl-c ext radius_acc radius_auth snmp \
 	$(exclude_modules)
 static_modules=
 static_modules_path=$(addprefix modules/, $(static_modules))
