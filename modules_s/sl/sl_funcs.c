@@ -26,8 +26,6 @@
  */
 
 
-#include <netinet/in.h>
-#include <netdb.h>
 #include "../../globals.h"
 #include "../../forward.h"
 #include "../../dprint.h"
