@@ -51,7 +51,8 @@
 drop table if exists presentity;
 CREATE TABLE presentity (
   presid int(10) unsigned NOT NULL auto_increment,
-  uri varchar(128) NOT NULL default '',
+  uri varchar(128) NOT NULL,
+  pdomain varchar(128) NOT NULL,
   PRIMARY KEY  (presid),
   KEY uri_index (uri)
 ) TYPE=MyISAM;
@@ -87,6 +88,7 @@ create table watcherinfo (
 	status       varchar(32) NOT NULL default 'pending',
 	event        varchar(32),
 	expires      int,
+	accepts      varchar(64),
 	primary key(s_id),
 	index r_uri_index (r_uri),
 	index w_uri_index (w_uri)

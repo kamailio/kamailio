@@ -226,8 +226,10 @@ static int compare_location_placeid_rows(const void *v1, const void *v2)
 {
      const struct location_placeid_row *r1 = v1;
      const struct location_placeid_row *r2 = v2;
-     return strcmp(r1->room_name.s, r2->room_name.s);
+     return str_strcmp(&r1->room_name, &r2->room_name);
 }
+
+static int places_initialized = 0;
 
 int pa_location_init(void)
 {
@@ -293,10 +295,15 @@ int location_lookup_placeid(str *room_name, int *placeid)
 {
      int i;
      LOG(L_ERR, "location_lookup_placeid: room_name=%.*s\n", room_name->len, room_name->s);
+     if (!places_initialized) {
+       pa_location_init();
+       places_initialized = 1;
+     }
+
      if (!use_bsearch) {
 	  for (i = 0; i < location_placeid_n_rows; i++) {
 	       struct location_placeid_row *row = &location_placeid_table[i];
-	       if (strncmp(room_name->s, row->room_name.s, row->room_name.len) == 0) {
+	       if (str_strcmp(room_name, &row->room_name) == 0) {
 		    *placeid = row->placeid;
 		    LOG(L_ERR, "  placeid=%d\n", row->placeid);
 		    return 1;
@@ -306,7 +313,7 @@ int location_lookup_placeid(str *room_name, int *placeid)
 	  return 0;
      } else {
 	  struct location_placeid_row *row = 
-	       bsearch(&room_name->s,
+	       bsearch(room_name,
 		       location_placeid_table, location_placeid_n_rows,
 		       sizeof(struct location_placeid_row),
 		       compare_location_placeid_rows);

@@ -88,7 +88,6 @@ typedef enum pflag {
 
 typedef struct presentity {
 	str uri;                 /* URI of presentity */
-	int event_package;       /* parsed event package */
 	int presid;              /* presid of the record in the presentity table */
 	presence_tuple_t *tuples;
 	location_package_t location_package;
@@ -104,7 +103,7 @@ typedef struct presentity {
 /*
  * Create a new presentity
  */
-int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presentity_t** _p);
+int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p);
 
 
 /*
@@ -145,7 +144,7 @@ void free_presence_tuple(presence_tuple_t * _t);
 /*
  * Add a watcher to the watcher list
  */
-int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_type, doctype_t _a, dlg_t* _dlg, 
+int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
 		str *_dn, struct watcher** _w);
 
 
@@ -169,7 +168,7 @@ int notify_watchers(presentity_t* _p);
 /*
  * Add a watcher to the winfo watcher list
  */
-int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_type, doctype_t _a, dlg_t* _dlg, 
+int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
 		      str *_dn, struct watcher** _w);
 
 
@@ -191,6 +190,16 @@ void print_presentity(FILE* _f, presentity_t* _p);
 
 resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri);
 resource_list_t *resource_list_remove(resource_list_t *list, str *uri);
+
+
+/*
+ * Create a new presentity but no watcher list
+ */
+int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
+			   struct presentity** _p);
+
+struct pdomain;
+int pdomain_load_presentities(struct pdomain *pdomain);
 
 #endif /* PRESENTITY_H */
 

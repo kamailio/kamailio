@@ -36,7 +36,9 @@
 #include "../../ut.h"
 #include "../../parser/parse_event.h"
 #include "paerrno.h"
+#include "dlist.h"
 #include "notify.h"
+#include "pdomain.h"
 #include "presentity.h"
 #include "ptime.h"
 #include "pa_mod.h"
@@ -60,7 +62,7 @@ int basic2status(str basic)
 {
 	int i;
 	for ( i= 0; i < PS_NSTATES; i++ ) {
-		if (strcmp(pstate_name[i].s, basic.s) == 0) {
+		if (str_strcmp(&pstate_name[i], &basic) == 0) {
 			return i;
 		}
 	}
@@ -78,9 +80,9 @@ str str_strdup(str string)
 }
 
 /*
- * Create a new presentity
+ * Create a new presentity but do not update database
  */
-int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presentity_t** _p)
+int new_presentity_no_wb(struct pdomain *pdomain, str* _uri, presentity_t** _p)
 {
      presentity_t* presentity;
      int size = 0;
@@ -95,7 +97,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presen
      presentity = (presentity_t*)shm_malloc(size);
      if (!presentity) {
 	  paerrno = PA_NO_MEMORY;
-	  LOG(L_ERR, "new_presentity(): No memory left\n");
+	  LOG(L_ERR, "new_presentity(): No memory left: size=%d\n", size);
 	  return -1;
      }
      memset(presentity, 0, sizeof(presentity_t));
@@ -106,16 +108,52 @@ int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presen
      presentity->uri.s[_uri->len] = 0;
      presentity->uri.len = _uri->len;
      presentity->pdomain = pdomain;
-     presentity->event_package = event_package;
+
+     *_p = presentity;
+
+     LOG(L_ERR, "new_presentity_no_wb=%p for uri=%.*s\n", 
+	 presentity, presentity->uri.len, presentity->uri.s);
+
+     return 0;
+}
+
+/*
+ * Create a new presentity
+ */
+int new_presentity(struct pdomain *pdomain, str* _uri, presentity_t** _p)
+{
+     presentity_t* presentity;
+     int size = 0;
+
+     if (!_uri || !_p) {
+	  paerrno = PA_INTERNAL_ERROR;
+	  LOG(L_ERR, "new_presentity(): Invalid parameter value\n");
+	  return -1;
+     }
+
+     size = sizeof(presentity_t) + _uri->len + 1;
+     presentity = (presentity_t*)shm_malloc(size);
+     if (!presentity) {
+	  paerrno = PA_NO_MEMORY;
+	  LOG(L_ERR, "new_presentity(): No memory left: size=%d\n", size);
+	  return -1;
+     }
+     memset(presentity, 0, sizeof(presentity_t));
+
+     presentity->uri.s = ((char*)presentity) + sizeof(presentity_t);
+     strncpy(presentity->uri.s, _uri->s, _uri->len);
+     presentity->uri.s[_uri->len] = 0;
+     presentity->uri.len = _uri->len;
+     presentity->pdomain = pdomain;
 
      if (use_db) {
-	  db_key_t query_cols[2];
-	  db_op_t  query_ops[2];
-	  db_val_t query_vals[2];
+	  db_key_t query_cols[4];
+	  db_op_t  query_ops[4];
+	  db_val_t query_vals[4];
 
 	  db_key_t result_cols[4];
 	  db_res_t *res;
-	  int n_query_cols = 1;
+	  int n_query_cols = 0;
 	  int n_result_cols = 0;
 	  int presid_col;
 	  int presid = 0;
@@ -125,6 +163,14 @@ int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presen
 	  query_vals[0].type = DB_STR;
 	  query_vals[0].nul = 0;
 	  query_vals[0].val.str_val = presentity->uri;
+	  n_query_cols++;
+
+	  query_cols[n_query_cols] = "pdomain";
+	  query_ops[n_query_cols] = OP_EQ;
+	  query_vals[n_query_cols].type = DB_STR;
+	  query_vals[n_query_cols].nul = 0;
+	  query_vals[n_query_cols].val.str_val = *presentity->pdomain->name;
+	  n_query_cols++;
 
 	  result_cols[presid_col = n_result_cols++] = "presid";
 
@@ -145,7 +191,7 @@ int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presen
 
 	       } else {
 		    /* insert new record into database */
-		    LOG(L_INFO, "new_tuple: inserting into table\n");
+		    LOG(L_INFO, "new_tuple: inserting %d cols into table\n", n_query_cols);
 		    if (db_insert(pa_db, query_cols, query_vals, n_query_cols) < 0) {
 			 LOG(L_ERR, "db_new_tuple(): Error while inserting tuple\n");
 			 return -1;
@@ -157,7 +203,8 @@ int new_presentity(struct pdomain *pdomain, str* _uri, int event_package, presen
 
      *_p = presentity;
 
-     LOG(L_ERR, "new_presentity=%p for uri=%.*s\n", presentity, presentity->uri.len, presentity->uri.s);
+     LOG(L_ERR, "new_presentity=%p for uri=%.*s\n", 
+	 presentity, presentity->uri.len, presentity->uri.s);
 
      return 0;
 }
@@ -210,8 +257,6 @@ int db_update_presentity(presentity_t* _p)
 	  int n_updates = 2;
 	  int presid = _p->presid;
 
-	  db_use_table(pa_db, presentity_contact_table);
-
 	  for (tuple = _p->tuples; tuple; tuple = tuple->next) {
 
 	       n_selectors = 2;
@@ -230,12 +275,13 @@ int db_update_presentity(presentity_t* _p)
 	       query_vals[1].nul = 0;
 	       query_vals[1].val.str_val.s = tuple->contact.s;
 	       query_vals[1].val.str_val.len = tuple->contact.len;
-	       LOG(L_DBG, "db_update_presentity:  tuple->contact=%.*s len=%d\n basic=%d", 
+	       LOG(L_ERR, "db_update_presentity:  tuple->contact=%.*s len=%d\n basic=%d", 
 		   tuple->contact.len, tuple->contact.s, tuple->contact.len, tuple->state);
 
 	       {
 		    int n_query_cols = 2;
 		    LOG(L_INFO, "db_update_presentity: cleaning contact from table\n");
+		    db_use_table(pa_db, presentity_contact_table);
 		    if (db_delete(pa_db, query_cols, query_ops, query_vals, n_query_cols) < 0) {
 			 LOG(L_ERR, "db_new_tuple(): Error while deleting tuple\n");
 			 return -1;
@@ -327,6 +373,7 @@ int db_update_presentity(presentity_t* _p)
 		    LOG(L_ERR, "too many update values. n_selectors=%d, n_updates=%d dbf.update=%p\n", 
 			n_selectors, n_updates, dbf.update);
 
+	       db_use_table(pa_db, presentity_contact_table);
 	       if (db_insert(pa_db, 
 			     query_cols, query_vals, n_updates) < 0) {
 		    LOG(L_ERR, "db_update_presentity: Error while updating database\n");
@@ -356,7 +403,7 @@ int new_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
      tuple = (presence_tuple_t*)shm_malloc(size);
      if (!tuple) {
 	  paerrno = PA_NO_MEMORY;
-	  LOG(L_ERR, "new_presence_tuple(): No memory left\n");
+	  LOG(L_ERR, "new_presence_tuple(): No memory left: size=%d\n", size);
 	  return -1;
      }
      memset(tuple, 0, sizeof(presence_tuple_t));
@@ -396,7 +443,7 @@ int find_presence_tuple(str* _contact, presentity_t *_p, presence_tuple_t ** _t)
 	tuple = _p->tuples;
 	LOG(L_ERR, "find_presence_tuple: _p=%p _p->tuples=%p\n", _p, _p->tuples);
 	while (tuple) {
-		if (strncmp(tuple->contact.s, _contact->s, _contact->len) == 0) {
+		if (str_strcmp(&tuple->contact, _contact) == 0) {
 			*_t = tuple;
 			return 0;
 		}
@@ -473,11 +520,13 @@ int timer_presentity(presentity_t* _p)
 	watcher_t* ptr, *t;
 
 	if (_p && _p->flags)
-	     LOG(L_ERR, "timer_presentity: _p=%x %s flags=%x\n", _p, _p->uri.s, _p->flags);
+	     LOG(L_ERR, "timer_presentity: _p=%p %s flags=%x watchers=%p\n", _p, _p->uri.s, _p->flags, _p->watchers);
 	if (_p->flags & PFLAG_WATCHERINFO_CHANGED) {
 		watcher_t *w = _p->watchers;
 		while (w) {
-			if (w->flags & WFLAG_SUBSCRIPTION_CHANGED) {
+		     if (w && w->flags)
+			  LOG(L_ERR, "\t w=%p %s flags=%x\n", w, w->uri.s, w->flags);
+		     if (w->flags & WFLAG_SUBSCRIPTION_CHANGED) {
 				if (send_notify(_p, w) < 0) {
 					LOG(L_ERR, "handle_subscription(): Error while sending notify\n");
 					/* FIXME: watcher and presentity should be test for removal here
@@ -543,10 +592,10 @@ int timer_presentity(presentity_t* _p)
 /*
  * Add a new watcher to the list
  */
-int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_type, doctype_t _a, dlg_t* _dlg, 
+int add_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
 		str *_dn, struct watcher** _w)
 {
-	if (new_watcher(_p, _uri, _e, event_type, _a, _dlg, _dn, _w) < 0) {
+	if (new_watcher(_p, _uri, _e, event_package, _a, _dlg, _dn, _w) < 0) {
 		LOG(L_ERR, "add_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}
@@ -592,13 +641,11 @@ int remove_watcher(presentity_t* _p, watcher_t* _w)
  */
 int notify_watchers(presentity_t* _p)
 {
-	struct watcher* ptr;
+	struct watcher* watcher = _p->watchers;
 
-	ptr = _p->watchers;
-
-	while(ptr) {
-		send_notify(_p, ptr);
-		ptr = ptr->next;
+	while(watcher) {
+		send_notify(_p, watcher);
+		watcher = watcher->next;
 	}
 	/* clear the flags */
 	_p->flags &= ~(PFLAG_PRESENCE_CHANGED
@@ -618,7 +665,8 @@ int notify_winfo_watchers(presentity_t* _p)
 
 	watcher = _p->winfo_watchers;
 
-	LOG(L_ERR, "notify_winfo_watchers: presentity=%.*s winfo_watchers=%p\n", _p->uri.len, _p->uri.s, watcher);
+	if (watcher)
+	  LOG(L_ERR, "notify_winfo_watchers: presentity=%.*s winfo_watchers=%p\n", _p->uri.len, _p->uri.s, watcher);
 	while(watcher) {
 		LOG(L_ERR, "notify_winfo_watchers: watcher=%.*s\n", watcher->uri.len, watcher->uri.s);
 		send_notify(_p, watcher);
@@ -633,10 +681,10 @@ int notify_winfo_watchers(presentity_t* _p)
 /*
  * Add a new watcher to the winfo_watcher list
  */
-int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_type, doctype_t _a, dlg_t* _dlg, 
+int add_winfo_watcher(presentity_t* _p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, 
 		      str *_dn, struct watcher** _w)
 {
-	if (new_watcher(_p, _uri, _e, event_type, _a, _dlg, _dn, _w) < 0) {
+	if (new_watcher(_p, _uri, _e, event_package, _a, _dlg, _dn, _w) < 0) {
 		LOG(L_ERR, "add_winfo_watcher(): Error while creating new watcher structure\n");
 		return -1;
 	}
@@ -691,7 +739,7 @@ int find_watcher(struct presentity* _p, str* _uri, int _et, watcher_t** _w)
 		while(watcher) {
 			if ((_uri->len == watcher->uri.len) &&
 			    (!memcmp(_uri->s, watcher->uri.s, _uri->len)) &&
-			    (watcher->event_type == _et)) {
+			    (watcher->event_package == _et)) {
 
 				*_w = watcher;
 				return 0;
@@ -707,7 +755,7 @@ int find_watcher(struct presentity* _p, str* _uri, int _et, watcher_t** _w)
 		while(watcher) {
 			if ((_uri->len == watcher->uri.len) &&
 			    (!memcmp(_uri->s, watcher->uri.s, _uri->len)) &&
-			    (watcher->event_type == _et)) {
+			    (watcher->event_package == _et)) {
 
 				*_w = watcher;
 				return 0;
@@ -726,8 +774,8 @@ resource_list_t *resource_list_append_unique(resource_list_t *list, str *uri)
 	resource_list_t *last = NULL;
 	fprintf(stderr, "resource_lists_append_unique: list=%p uri=%.*s\n", list, uri->len, uri->s);
 	while (list) {
-		if (strncmp(list->uri.s, uri->s, uri->len) == 0)
-			return head;
+		if (str_strcmp(&list->uri, uri) == 0)
+		     return head;
 		last = list;
 		list = list->next;
 	}
@@ -753,7 +801,7 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
 	resource_list_t *last = NULL;
 	resource_list_t *next = NULL;
 	while (list) {
-		if (strncmp(list->uri.s, uri->s, uri->len) == 0)
+		if (str_strcmp(&list->uri, uri) == 0)
 			goto remove;
 		last = list;
 		list = list->next;
@@ -772,4 +820,95 @@ resource_list_t *resource_list_remove(resource_list_t *list, str *uri)
 		return next;
 	else
 		return head;
+}
+
+/*
+ * Create a new presentity but no watcher list
+ */
+int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
+			   struct presentity** _p)
+{
+	event_t *parsed_event;
+	int et = EVENT_PRESENCE;
+
+	if (_m && _m->event) {
+		parsed_event = (event_t *)_m->event->parsed;
+		et = parsed_event->parsed;
+	}
+
+	if (new_presentity(_d, _puri, _p) < 0) {
+		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
+		return -2;
+	}
+
+	add_presentity(_d, *_p);
+
+	return 0;
+}
+
+
+int pdomain_load_presentities(pdomain_t *pdomain)
+{
+     if (use_db) {
+	  db_key_t query_cols[1];
+	  db_op_t  query_ops[1];
+	  db_val_t query_vals[1];
+
+	  db_key_t result_cols[4];
+	  db_res_t *res;
+	  int n_query_cols = 0;
+	  int n_result_cols = 0;
+	  int uri_col;
+	  int presid_col;
+	  int i;
+
+	  query_cols[n_query_cols] = "pdomain";
+	  query_ops[n_query_cols] = OP_EQ;
+	  query_vals[n_query_cols].type = DB_STR;
+	  query_vals[n_query_cols].nul = 0;
+	  query_vals[n_query_cols].val.str_val = *pdomain->name;
+	  n_query_cols++;
+
+	  result_cols[uri_col = n_result_cols++] = "uri";
+	  result_cols[presid_col = n_result_cols++] = "presid";
+
+	  db_use_table(pa_db, presentity_table);
+	  if (db_query (pa_db, query_cols, query_ops, query_vals,
+			result_cols, n_query_cols, n_result_cols, 0, &res) < 0) {
+	       LOG(L_ERR, "db_new_tuple(): Error while querying presentity\n");
+	       return -1;
+	  }
+	  if (res) {
+	       for (i = 0; i < res->n; i++) {
+		    presentity_t *presentity = NULL;
+		    /* fill in tuple structure from database query result */
+		    db_row_t *row = &res->rows[i];
+		    db_val_t *row_vals = ROW_VALUES(row);
+		    int presid = row_vals[presid_col].val.int_val;
+		    str uri;
+		    if (!row_vals[uri_col].nul) {
+			 uri.s = row_vals[uri_col].val.string_val;
+			 uri.len = strlen(uri.s);
+		    }
+
+		    LOG(L_INFO, "pdomain_load_presentities: pdomain=%.*s presentity uri=%.*s presid=%d\n",
+			pdomain->name->len, pdomain->name->s, uri.len, uri.s, presid);
+
+		    new_presentity_no_wb(pdomain, &uri, &presentity);
+		    if (presentity) {
+			 add_presentity(pdomain, presentity);
+			 presentity->presid = presid;
+		    }
+	       }
+	       db_free_query(pa_db, res);
+	  }
+	  
+	  { 
+	       presentity_t *presentity;
+	       for (presentity = pdomain->first; presentity; presentity = presentity->next) {
+		    db_read_watcherinfo(presentity);
+	       }
+	  }
+     }
+     return 0;
 }

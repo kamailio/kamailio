@@ -602,10 +602,10 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		return -2;
 	}
 
-	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_type=%d _w->accept=%d\n", 
-	    _w->uri.len, _w->uri.s, _p->flags, _w->event_type, _w->accept);
+	LOG(L_ERR, "notifying %.*s _p->flags=%x _w->event_package=%d _w->accept=%d\n", 
+	    _w->uri.len, _w->uri.s, _p->flags, _w->event_package, _w->accept);
 	if ((_p->flags & (PFLAG_PRESENCE_CHANGED|PFLAG_WATCHERINFO_CHANGED)) 
-	    && (_w->event_type == EVENT_PRESENCE)) {
+	    && (_w->event_package == EVENT_PRESENCE)) {
 		switch(_w->accept) {
 		case DOC_XPIDF:
 			return send_xpidf_notify(_p, _w);
@@ -625,7 +625,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 
 	}
 	if ((_p->flags & PFLAG_WATCHERINFO_CHANGED) 
-	    && (_w->event_type == EVENT_PRESENCE_WINFO)) {
+	    && (_w->event_package == EVENT_PRESENCE_WINFO)) {
 		switch(_w->accept) {
 		case DOC_WINFO:
 			rc = send_winfo_notify(_p, _w);
@@ -637,7 +637,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		}
 	}
 	if ((_p->flags & PFLAG_XCAP_CHANGED) 
-	    && (_w->event_type == EVENT_XCAP_CHANGE)) {
+	    && (_w->event_package == EVENT_XCAP_CHANGE)) {
 		switch(_w->accept) {
 		case DOC_XCAP_CHANGE:
 		default:
@@ -648,7 +648,7 @@ int send_notify(struct presentity* _p, struct watcher* _w)
 		}
 	}
 	if ((_p->flags & PFLAG_LOCATION_CHANGED) 
-	    && (_w->event_type == EVENT_LOCATION)) {
+	    && (_w->event_package == EVENT_LOCATION)) {
 		switch(_w->accept) {
 		case DOC_LOCATION:
 			rc = send_location_notify(_p, _w);

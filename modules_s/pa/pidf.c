@@ -189,7 +189,7 @@ int start_pidf_tuple(str* _b, int _l)
 	     CRLF_L
 	    ) > _l) {
 		paerrno = PA_SMALL_BUFFER;
-		LOG(L_ERR, "start_pidf_tuple(): Buffer too small\n");
+		LOG(L_ERR, "start_pidf_tuple(): Buffer too small: _l=%d\n", _l);
 		return -1;
 	}
 

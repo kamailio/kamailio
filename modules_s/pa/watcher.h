@@ -62,7 +62,7 @@ typedef struct watcher {
 	str display_name;       /* Display Name of watcher */
 	str uri;                /* Uri of the watcher */
 	time_t expires;         /* Absolute of the expiration */
-	int event_type;         /* event package being watched */
+	int event_package;      /* event package being watched */
 	doctype_t accept;       /* Type of document accepted by the watcher */
 	dlg_t* dialog;          /* Dialog handle */
 	str s_id;               /* id of this watcherinfo statement */
@@ -76,7 +76,7 @@ typedef struct watcher {
  * Create a new watcher structure
  */
 struct presentity;
-int new_watcher(struct presentity *_p, str* _uri, time_t _e, int event_type, doctype_t _a, dlg_t* _dlg, str *display_name, 
+int new_watcher(struct presentity *_p, str* _uri, time_t _e, int event_package, doctype_t _a, dlg_t* _dlg, str *display_name, 
 		watcher_t** _w);
 
 
@@ -96,6 +96,14 @@ void print_watcher(FILE* _f, watcher_t* _w);
  * Update expires value of a watcher
  */
 int update_watcher(watcher_t* _w, time_t _e);
+
+/*
+ * Read watcherinfo table from database for presentity _p
+ */
+struct presentity;
+int db_read_watcherinfo(struct presentity *_p);
+
+
 
 /*
  * Add a watcher information to a winfo document

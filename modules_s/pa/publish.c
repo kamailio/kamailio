@@ -96,46 +96,6 @@ static int parse_hfs(struct sip_msg* _m)
 }
 
 
-/*
- * Create a new presentity but no watcher list
- */
-int create_presentity_only(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
-			   struct presentity** _p)
-{
-	time_t e;
-	event_t *parsed_event;
-	int et = EVENT_OTHER;
-
-	if (_m && _m->expires) {
-		e = ((exp_body_t*)_m->expires->parsed)->val;
-	} else {
-		e = default_expires;
-	}
-	
-	if (e == 0) {
-		*_p = 0;
-		DBG("create_presentity(): expires = 0\n");
-		return 0;
-	}
-
-	     /* Convert to absolute time */
-	e += act_time;
-
-	if (_m && _m->event) {
-		parsed_event = (event_t *)_m->event->parsed;
-		et = parsed_event->parsed;
-	}
-
-	if (new_presentity(_d, _puri, et, _p) < 0) {
-		LOG(L_ERR, "create_presentity_only(): Error while creating presentity\n");
-		return -2;
-	}
-
-	add_presentity(_d, *_p);
-
-	return 0;
-}
-
 int location_package_location_add_user(pdomain_t *pdomain, str *site, str *floor, str *room, presentity_t *presentity)
 {
 	str l_uri;
@@ -222,7 +182,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      flags = parse_pidf(body, &contact, &basic, &status, &location, &site, &floor, &room, &x, &y, &radius, &packet_loss);
      if (contact.len) {
 	  find_presence_tuple(&contact, presentity, &tuple);
-	  if (!tuple) {
+	  if (!tuple && new_tuple_on_publish) {
 	       new_presence_tuple(&contact, presentity, &tuple);
 	       add_presence_tuple(presentity, tuple);
 	  }
@@ -239,12 +199,12 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      if (basic.len && basic.s) {
 	  int origstate = tuple->state;
 	  tuple->state =
-	       (strcmp(basic.s, "online") == 0) ? PS_ONLINE : PS_OFFLINE;
+	       (strncmp(basic.s, "online", basic.len) == 0) ? PS_ONLINE : PS_OFFLINE;
 	  if (tuple->state != origstate)
 	       changed = 1;
      }
      if (status.len && status.s) {
-	  if (tuple->status.len && strcmp(tuple->status.s, status.s) != 0)
+	  if (tuple->status.len && str_strcmp(&tuple->status, &status) != 0)
 	       changed = 1;
 	  tuple->status.len = status.len;
 	  strncpy(tuple->status.s, status.s, status.len);
@@ -252,7 +212,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
      }
      LOG(L_INFO, "publish_presentity: -2-\n");
      if (location.len && location.s) {
-	  if (tuple->location.loc.len && strcmp(tuple->location.loc.s, location.s) != 0)
+	  if (tuple->location.loc.len && str_strcmp(&tuple->location.loc, &location) != 0)
 	       changed = 1;
 	  tuple->location.loc.len = location.len;
 	  strncpy(tuple->location.loc.s, location.s, location.len);
@@ -261,7 +221,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.loc.len = 0;
      }
      if (site.len && site.s) {
-	  if (tuple->location.site.len && strcmp(tuple->location.site.s, site.s) != 0)
+	  if (tuple->location.site.len && str_strcmp(&tuple->location.site, &site) != 0)
 	       changed = 1;
 	  tuple->location.site.len = site.len;
 	  strncpy(tuple->location.site.s, site.s, site.len);
@@ -270,7 +230,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.site.len = 0;
      }
      if (floor.len && floor.s) {
-	  if (tuple->location.floor.len && strcmp(tuple->location.floor.s, floor.s) != 0)
+	  if (tuple->location.floor.len && str_strcmp(&tuple->location.floor, &floor) != 0)
 	       changed = 1;
 	  tuple->location.floor.len = floor.len;
 	  strncpy(tuple->location.floor.s, floor.s, floor.len);
@@ -279,7 +239,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.floor.len = 0;
      }
      if (room.len && room.s) {
-	  if (tuple->location.room.len && strcmp(tuple->location.room.s, room.s) != 0)
+	  if (tuple->location.room.len && str_strcmp(&tuple->location.room, &room) != 0)
 	       changed = 1;
 	  tuple->location.room.len = room.len;
 	  strncpy(tuple->location.room.s, room.s, room.len);
@@ -288,7 +248,7 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  tuple->location.room.len = 0;
      }
      if (packet_loss.len && packet_loss.s) {
-	  if (tuple->location.packet_loss.len && strcmp(tuple->location.packet_loss.s, packet_loss.s) != 0)
+	  if (tuple->location.packet_loss.len && str_strcmp(&tuple->location.packet_loss, &packet_loss) != 0)
 	       changed = 1;
 	  tuple->location.packet_loss.len = packet_loss.len;
 	  strncpy(tuple->location.packet_loss.s, packet_loss.s, packet_loss.len);
@@ -367,14 +327,14 @@ static int publish_presentity_xcap_change(struct sip_msg* _m, struct pdomain* _d
 static int publish_presentity(struct sip_msg* _m, struct pdomain* _d, struct presentity* presentity, int *pchanged)
 {
 	event_t *parsed_event = (event_t *)_m->event->parsed;
-	int event_type = parsed_event->parsed;
-	if (event_type == EVENT_PRESENCE) {
+	int event_package = parsed_event->parsed;
+	if (event_package == EVENT_PRESENCE) {
 		publish_presentity_pidf(_m, _d, presentity, pchanged);
-	} else if (event_type == EVENT_XCAP_CHANGE) {
+	} else if (event_package == EVENT_XCAP_CHANGE) {
 		publish_presentity_xcap_change(_m, _d, presentity, pchanged);
 	}
 
-	LOG(L_INFO, "publish_presentity: event_type=%d -1-\n", event_type);
+	LOG(L_INFO, "publish_presentity: event_package=%d -1-\n", event_package);
 	return 0;
 }
 
@@ -581,7 +541,6 @@ int fifo_pa_location(FILE *fifo, char *response_file)
      }
      location.s = location_s;
 
-#if 1
      register_pdomain(pdomain_s, &pdomain);
      if (!pdomain) {
 	  fifo_reply(response_file, "400 could not register pdomain\n");
@@ -590,13 +549,16 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 	  return 1;
      }
 
+     lock_pdomain(pdomain);
+
      find_presentity(pdomain, &p_uri, &presentity);
      if (!presentity) {
-	  new_presentity(pdomain, &p_uri, EVENT_PRESENCE, &presentity);
+	  new_presentity(pdomain, &p_uri, &presentity);
 	  add_presentity(pdomain, presentity);
 	  changed = 1;
      }
      if (!presentity) {
+	  unlock_pdomain(pdomain);
 	  fifo_reply(response_file, "400 could not find presentity\n");
 	  LOG(L_ERR, "ERROR: pa_location: could not find presentity %.*s\n",
 	      p_uri.len, p_uri.s);
@@ -605,7 +567,7 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 
      changed = 1;
      for (tuple = presentity->tuples; tuple; tuple = tuple->next) {
-	  if (tuple->location.loc.len && strcmp(tuple->location.room.s, location.s) != 0)
+	  if (tuple->location.loc.len && str_strcmp(&tuple->location.room, &location) != 0)
 	       changed = 1;
 
 	  LOG(L_ERR, "Setting room of contact=%.*s to %.*s\n",
@@ -624,7 +586,7 @@ int fifo_pa_location(FILE *fifo, char *response_file)
 
      db_update_presentity(presentity);
 
-#endif
+     unlock_pdomain(pdomain);
 
      fifo_reply(response_file, "200 published\n",
 		"(%.*s %.*s)\n",

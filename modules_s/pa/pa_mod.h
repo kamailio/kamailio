@@ -52,5 +52,12 @@ extern int use_bsearch;
 extern int use_location_package;
 extern int new_watcher_pending;
 extern int callback_update_db;
+extern int callback_lock_pdomain;
+extern int new_tuple_on_publish;
+
+/*
+ * compare two str's
+ */
+int str_strcmp(const str *stra, const str *strb);
 
 #endif /* PA_MOD_H */

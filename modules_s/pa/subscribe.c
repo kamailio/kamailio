@@ -72,16 +72,15 @@ void callback(str* _user, str *_contact, int state, void* data)
      presentity_t *presentity;
 
      presentity = (struct presentity*)data;
-     LOG(L_ERR, "callback: presentity=%p uri=%.*s contact=%.*s\n",
-	 presentity, presentity->uri.len, presentity->uri.s, _contact->len, _contact->s);
 
-     if (callback_update_db) {
+     if (presentity && callback_update_db) {
 	  presence_tuple_t *tuple = NULL;
 	  int orig;
-	  LOG(L_ERR, "callback: contact=%p:%.*s \n",
-	      _contact, (_contact ? _contact->len : 0), (_contact ? _contact->s : ""));
+	  LOG(L_ERR, "callback: uri=%.*s contact=%.*s state=%d\n",
+	      presentity->uri.len, presentity->uri.s, (_contact ? _contact->len : 0), (_contact ? _contact->s : ""), state);
 	  if (_contact) {
-	       // lock_pdomain(presentity->pdomain);
+	       if (callback_lock_pdomain)
+		    lock_pdomain(presentity->pdomain);
 
 	       find_presence_tuple(_contact, presentity, &tuple);
 	       if (!tuple) {
@@ -103,7 +102,8 @@ void callback(str* _user, str *_contact, int state, void* data)
 		    presentity->flags |= PFLAG_PRESENCE_CHANGED;
 	       }
 
-	       // unlock_pdomain(presentity->pdomain);
+	       if (callback_lock_pdomain)
+		    unlock_pdomain(presentity->pdomain);
 	  }
      }
 }
@@ -299,7 +299,7 @@ int check_message(struct sip_msg* _m)
 /*
  * Create a new presentity and corresponding watcher list
  */
-static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
+int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri, 
 			     struct presentity** _p, struct watcher** _w)
 {
 	time_t e;
@@ -336,7 +336,7 @@ static int create_presentity(struct sip_msg* _m, struct pdomain* _d, str* _puri,
 		return -1;
 	}
 
-	if (new_presentity(_d, _puri, et, _p) < 0) {
+	if (new_presentity(_d, _puri, _p) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");
 		return -2;
 	}
@@ -509,56 +509,87 @@ int pa_extract_aor(str* _uri, str* _a)
 
 int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
 {
-	struct pdomain* d = (struct pdomain*)_domain;
-	struct presentity *p;
-	str p_uri;
-	str from;
+     struct pdomain* d = (struct pdomain*)_domain;
+     struct presentity *presentity;
+     str p_uri;
+     str from;
+     int e = 0;
 
-	LOG(L_ERR, "handle_registration() entered\n");
-	paerrno = PA_OK;
 
-	d = (struct pdomain*)_domain;
+     // LOG(L_ERR, "pa_handle_registration() entered\n");
+     paerrno = PA_OK;
 
-	if (parse_hfs(_m, 0) < 0) {
-		paerrno = PA_PARSE_ERR;
-		LOG(L_ERR, "pa_handle_registration(): Error while parsing headers\n");
-		return -1;
-	}
+     d = (struct pdomain*)_domain;
 
-	from = get_from(_m)->uri;
-	if (pa_extract_aor(&from, &p_uri) < 0) {
-		LOG(L_ERR, "pa_handle_registration(): Error while extracting Address Of Record\n");
-		goto error;
-	}
+     if (parse_hfs(_m, 0) < 0) {
+	  paerrno = PA_PARSE_ERR;
+	  LOG(L_ERR, "pa_handle_registration(): Error while parsing headers\n");
+	  return -1;
+     }
 
-	LOG(L_ERR, "pa_handle_registration: from=%.*s p_uri=%.*s\n", 
-	    from.len, from.s, p_uri.len, p_uri.s);
+     from = get_from(_m)->uri;
+     if (pa_extract_aor(&from, &p_uri) < 0) {
+	  LOG(L_ERR, "pa_handle_registration(): Error while extracting Address Of Record\n");
+	  goto error;
+     }
 
-	lock_pdomain(d);
+     if (_m->expires) {
+	  e = ((exp_body_t*)_m->expires->parsed)->val;
+     }
+
+     LOG(L_ERR, "pa_handle_registration: from=%.*s p_uri=%.*s expires=%d\n", 
+	 from.len, from.s, p_uri.len, p_uri.s, e);
+
+     lock_pdomain(d);
 	
-	if (find_presentity(d, &p_uri, &p) > 0) {
-	     LOG(L_ERR, "pa_handle_registration: find_presentity did not find presentity\n");
-		if (create_presentity_only(_m, d, &p_uri, &p) < 0) {
-			LOG(L_ERR, "pa_handle_registration(): Error while creating new presentity\n");
-			goto error2;
-		}
-	}
+     if (find_presentity(d, &p_uri, &presentity) > 0) {
+	  LOG(L_ERR, "pa_handle_registration: find_presentity did not find presentity\n");
+	  if (e > 0) {
+	       if (create_presentity_only(_m, d, &p_uri, &presentity) < 0) {
+		    LOG(L_ERR, "pa_handle_registration(): Error while creating new presentity\n");
+		    goto error2;
+	       }
+	  } 
+#if 0
+	  else {
+	       presence_tuple_t *tuple = NULL;
+	       if (_m->contact) {
+		    struct hdr_field* ptr = _m->contact;
+		    while (ptr) {
+			 if (ptr->type == HDR_CONTACT) {
+			      if (!ptr->parsed && (parse_contact(ptr) < 0)) {
+				   goto next;
+			      }
+			 }
+			 if (find_presence_tuple(contact, presentity, &tuple) == 0) {
+			      tuple->state = PS_OFFLINE;
+			 }
+		    next:
+			 ptr = ptr->next;
+		    }
+	       }
 
-	LOG(L_ERR, "pa_handle_registration about to call d->reg p=%p", p);
-	if (p)
-	     d->reg(&p->uri, &p->uri, (void*)callback, p);
+	       db_update_presentity(presentity);
+	  }
+#endif
+     }
 
-	LOG(L_ERR, "pa_handle_registration about to return 1");
-	unlock_pdomain(d);
-	return 1;
+     if (presentity && e > 0) {
+	  LOG(L_ERR, "pa_handle_registration about to call d->reg p=%p expires=%d", presentity, e);
+	  d->reg(&presentity->uri, &presentity->uri, (void*)callback, presentity);
+     }
+
+     LOG(L_ERR, "pa_handle_registration about to return 1");
+     unlock_pdomain(d);
+     return 1;
 	
  error2:
-	LOG(L_ERR, "pa_handle_registration about to return -1\n");
-	unlock_pdomain(d);
-	return -1;
+     LOG(L_ERR, "pa_handle_registration about to return -1\n");
+     unlock_pdomain(d);
+     return -1;
  error:
-	LOG(L_ERR, "pa_handle_registration about to return -2\n");
-	return -1;
+     LOG(L_ERR, "pa_handle_registration about to return -2\n");
+     return -1;
 }
 
 /*
@@ -611,23 +642,15 @@ int handle_subscription(struct sip_msg* _m, char* _domain, char* _s2)
 	  goto error2;
 	}
 
-	if (p && w) {
-		p->flags |= (PFLAG_WATCHERINFO_CHANGED);
+	if (p) {
+		p->flags |= PFLAG_WATCHERINFO_CHANGED;
+	}
+	if (w) {
 		w->flags |= WFLAG_SUBSCRIPTION_CHANGED;
-	} else {
-		     /* FIXME: We should send a NOTIFY here too. We will end here when the
-		      * subscribe contained expires = 0; Either there is no watcher for the
-		      * presentity yet - in this case p and w will be set to 0 and we have to
-		      * query external module (usrloc, jabber) for presence status or there
-		      * are already another watchers - in this case only w will be set to zero
-		      * and we have to send a notify. To be implemented later when there is 
-		      * full UAS support
-		      */
-		DBG("handle_subscription(): expires==0 but we sent no NOTIFY - not implemented yet\n");
 	}
 
-	LOG(L_ERR, "handle_subscription about to return 1: event_type=%d accept=%d\n",
-	    (w ? w->event_type : -1), (w ? w->accept : -1));
+	LOG(L_ERR, "handle_subscription about to return 1: event_package=%d accept=%d\n",
+	    (w ? w->event_package : -1), (w ? w->accept : -1));
 	unlock_pdomain(d);
 	return 1;
 	

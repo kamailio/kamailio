@@ -74,5 +74,4 @@ void print_all_pdomains(FILE* _f);
  */
 int timer_all_pdomains(void);
 
-
 #endif /* DLIST_H */

@@ -74,7 +74,9 @@ char *place_table = "place";
 int use_bsearch = 0;
 int use_location_package = 0;
 int new_watcher_pending = 0;
-int callback_update_db = 0;
+int callback_update_db = 1;
+int callback_lock_pdomain = 1;
+int new_tuple_on_publish = 0;
 
 /*
  * Exported functions
@@ -107,6 +109,8 @@ static param_export_t params[]={
 	{"place_table",          STR_PARAM, &place_table          },
 	{"new_watcher_pending",  INT_PARAM, &new_watcher_pending  },
 	{"callback_update_db",   INT_PARAM, &callback_update_db   },
+	{"callback_lock_pdomain", INT_PARAM, &callback_lock_pdomain },
+	{"new_tuple_on_publish", INT_PARAM, &new_tuple_on_publish  },
 	{0, 0, 0}
 };
 
@@ -125,7 +129,6 @@ struct module_exports exports = {
 
 void pa_sig_handler(int s) 
 {
-	signal(SIGSEGV, pa_sig_handler);
 	DBG("PA:pa_worker:%d: SIGNAL received=%d\n **************", getpid(), s);
 }
 
@@ -176,9 +179,8 @@ static int pa_mod_init(void)
 	  pa_domain.s = "sip.handhelds.org";
 	LOG(L_CRIT, "pa_domain=%s\n", pa_domain.s);
 	pa_domain.len = strlen(pa_domain.s);
-	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s len=%d db_url=%*.s pa_domain=%*.s\n", use_db, db_url.s, db_url.len, 
-	    db_url.len, db_url.s, 
-	    pa_domain.len, pa_domain.s);
+	LOG(L_CRIT, "pa_mod: use_db=%d db_url.s=%s pa_domain=%s\n", 
+	    use_db, db_url.s, pa_domain.s);
 	if (use_db) {
 		if (!db_url.len) {
 			LOG(L_ERR, "pa_mod_init(): no db_url specified but use_db=1\n");
@@ -199,17 +201,15 @@ static int pa_child_init(int _rank)
 {
  	     /* Shall we use database ? */
 	if (use_db) { /* Yes */
+		pa_db = NULL;
 		pa_db = db_init(db_url.s); /* Initialize a new separate connection */
 		if (!pa_db) {
 			LOG(L_ERR, "pa_child_init(%d): Error while connecting database\n", _rank);
 			return -1;
 		}
-
-		pa_location_init();
-
 	}
 
-	signal(SIGSEGV, pa_sig_handler);
+	// signal(SIGSEGV, pa_sig_handler);
 
 	return 0;
 }
@@ -218,7 +218,7 @@ static void pa_destroy(void)
 {
 	free_all_pdomains();
 	if (use_db) {
-		
+		db_close(pa_db);
 	}
 }
 
@@ -231,6 +231,7 @@ static int subscribe_fixup(void** param, int param_no)
 	pdomain_t* d;
 
 	if (param_no == 1) {
+		LOG(L_ERR, "subscribe_fixup: pdomain name is %s\n", (char*)*param);
 		if (register_pdomain((char*)*param, &d) < 0) {
 			LOG(L_ERR, "subscribe_fixup(): Error while registering domain\n");
 			return E_UNSPEC;
@@ -250,4 +251,27 @@ static void timer(unsigned int ticks, void* param)
 	if (timer_all_pdomains() != 0) {
 		LOG(L_ERR, "timer(): Error while synchronizing domains\n");
 	}
+}
+
+/*
+ * compare two str's
+ */
+int str_strcmp(const str *stra, const str *strb)
+{
+     int i;
+     int alen = stra->len;
+     int blen = strb->len;
+     int minlen = (alen < blen ? alen : blen);
+     for (i = 0; i < minlen; i++) {
+	  const char a = stra->s[i];
+	  const char b = strb->s[i];
+	  if (a < b) return -1;
+	  if (a > b) return 1;
+     }
+     if (alen < blen)
+	  return -1;
+     else if (blen > alen)
+	  return 1;
+     else
+	  return 0;
 }
