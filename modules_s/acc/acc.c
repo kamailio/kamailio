@@ -458,9 +458,16 @@ void acc_db_missed( struct cell* t, struct sip_msg *reply,
 	str acc_text;
 
 	get_reply_status(&acc_text, reply, code);
+	if (acc_text.s==0) {
+		LOG(L_ERR, "ERROR: acc_db_missed_report: "
+						"get_reply_status failed\n" );
+		return;
+	}
 	acc_db_request(t->uas.request, valid_to(t,reply), &acc_text,
 				db_table_mc, SQL_MC_FMT );
+	pkg_free(acc_text.s);
 }
+
 void acc_db_ack(  struct cell* t , struct sip_msg *ack )
 {
 	str code_str;
@@ -665,8 +672,15 @@ void acc_rad_missed( struct cell* t, struct sip_msg *reply,
 	str acc_text;
 
 	get_reply_status(&acc_text, reply, code);
+	if (acc_text.s==0) {
+		LOG(L_ERR, "ERROR: acc_rad_missed_report: "
+						"get_reply_status failed\n" );
+		return;
+	}
 	acc_rad_request(t->uas.request, valid_to(t,reply), &acc_text);
+	pkg_free(acc_text.s);
 }
+
 void acc_rad_ack(  struct cell* t , struct sip_msg *ack )
 {
 	str code_str;
