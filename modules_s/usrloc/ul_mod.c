@@ -53,6 +53,7 @@ static int child_init(int rank);                    /* Per-child init function *
  * Module parameters and their default values
  */
 char* user_col       = "user";                             /* Name of column containing usernames */
+char* domain_col     = "domain";                           /* Name of column containing domains */
 char* contact_col    = "contact";                          /* Name of column containing contact addresses */
 char* expires_col    = "expires";                          /* Name of column containing expires values */
 char* q_col          = "q";                                /* Name of column containing q values */
@@ -118,6 +119,7 @@ struct module_exports exports = {
 
 	(char*[]) {
 		"user_col",
+		"domain_col",
 		"contact_col",
 		"expires_col",
 		"q_col",
@@ -139,6 +141,7 @@ struct module_exports exports = {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		STR_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM
@@ -146,6 +149,7 @@ struct module_exports exports = {
 
 	(void*[]) {
 		&user_col,
+		&domain_col,
 		&contact_col,
 		&expires_col,
 		&q_col,
@@ -157,7 +161,7 @@ struct module_exports exports = {
 		&db_mode,
 		&use_domain
 	},
-	11,          /* Number of parameters */
+	12,          /* Number of parameters */
 
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */

@@ -198,12 +198,13 @@ void print_udomain(FILE* _f, udomain_t* _d)
 int preload_udomain(udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[6] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
+	db_key_t columns[7] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, domain_col};
 	db_res_t* res;
 	db_row_t* row;
 	int i, cseq;
 	
 	str user, contact, callid;
+	char* domain;
 	time_t expires;
 	float q;
 
@@ -213,7 +214,7 @@ int preload_udomain(udomain_t* _d)
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 	db_use_table(db, b);
-	if (db_query(db, 0, 0, 0, columns, 0, 6, 0, &res) < 0) {
+	if (db_query(db, 0, 0, 0, columns, 0, (use_domain) ? (7) : (6), 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
@@ -238,6 +239,13 @@ int preload_udomain(udomain_t* _d)
 		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
 		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
 		callid.len  = strlen(callid.s);
+
+		if (use_domain) {
+			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 6);
+			snprintf(b, 256, "%.*s@%s", user.len, user.s, domain);
+			user.s = b;
+			user.len = strlen(b);
+		}
 
 		if (get_urecord(_d, &user, &r) > 0) {
 			if (mem_insert_urecord(_d, &user, &r) < 0) {

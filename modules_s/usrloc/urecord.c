@@ -34,6 +34,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../fastlock.h"
+#include "../../ut.h"
 #include "ul_mod.h"
 #include "utime.h"
 #include "del_list.h"
@@ -345,21 +346,31 @@ int timer_urecord(urecord_t* _r)
 int db_delete_urecord(urecord_t* _r)
 {
 	char b[256];
-	db_key_t keys[1] = {user_col};
-	db_val_t vals[1];
+	db_key_t keys[2] = {user_col, domain_col};
+	db_val_t vals[2];
+	char* dom;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _r->aor.s;
 	vals[0].val.str_val.len = _r->aor.len;
 
+	if (use_domain) {
+		dom = q_memchr(_r->aor.s, '@', _r->aor.len);
+		vals[0].val.str_val.len = dom - _r->aor.s;
+
+		vals[1].type = DB_STR;
+		vals[1].nul = 0;
+		vals[1].val.str_val.s = dom + 1;
+		vals[1].val.str_val.len = _r->aor.s + _r->aor.len - dom - 1;
+	}
 
 	     /* FIXME */
 	memcpy(b, _r->domain->s, _r->domain->len);
 	b[_r->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_delete(db, keys, 0, vals, 1) < 0) {
+	if (db_delete(db, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
 		LOG(L_ERR, "db_delete_urecord(): Error while deleting from database\n");
 		return -1;
 	}

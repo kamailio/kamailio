@@ -46,6 +46,7 @@
 
 
 extern char* user_col;
+extern char* domain_col;
 extern char* contact_col;
 extern char* expires_col;
 extern char* q_col;
@@ -55,7 +56,7 @@ extern char* method_col;
 extern char* db_url;
 extern int   timer_interval;
 extern int   db_mode;
-extern int   use_mode;
+extern int   use_domain;
 
 extern db_con_t* db;   /* Dabase connection handle */
 

@@ -32,6 +32,7 @@
 #include "ucontact.h"
 #include <string.h>             /* memcpy */
 #include "../../mem/shm_mem.h"
+#include "../../ut.h"
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "ul_mod.h"
@@ -296,9 +297,10 @@ int st_flush_ucontact(ucontact_t* _c)
 int db_insert_ucontact(ucontact_t* _c)
 {
 	char b[256];
-	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col,
-						cseq_col};
-	db_val_t vals[6];
+	char* dom;
+	db_key_t keys[7] = {user_col, contact_col, expires_col, q_col, callid_col,
+			   cseq_col, domain_col};
+	db_val_t vals[7];
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -327,14 +329,23 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[5].nul = 0;
 	vals[5].val.int_val = _c->cseq;
 
+	if (use_domain) {
+		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		vals[0].val.str_val.len = dom - _c->aor->s;
+
+		vals[6].type = DB_STR;
+		vals[6].nul = 0;
+		vals[6].val.str_val.s = dom + 1;
+		vals[6].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+	}
 
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_insert(db, keys, vals, 6) < 0) {
-		LOG(L_ERR, "db_ins_ucontact(): Error while inserting contact\n");
+	if (db_insert(db, keys, vals, (use_domain) ? (7) : (6)) < 0) {
+		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
 
@@ -348,8 +359,9 @@ int db_insert_ucontact(ucontact_t* _c)
 int db_update_ucontact(ucontact_t* _c)
 {
 	char b[256];
-	db_key_t keys1[2] = {user_col, contact_col};
-	db_val_t vals1[2];
+	char* dom;
+	db_key_t keys1[3] = {user_col, contact_col, domain_col};
+	db_val_t vals1[3];
 
 	db_key_t keys2[4] = {expires_col, q_col, callid_col, cseq_col};
 	db_val_t vals2[4];
@@ -378,12 +390,22 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[3].nul = 0;
 	vals2[3].val.int_val = _c->cseq;
 
+	if (use_domain) {
+		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		vals1[0].val.str_val.len = dom - _c->aor->s;
+
+		vals1[2].type = DB_STR;
+		vals1[2].nul = 0;
+		vals1[2].val.str_val.s = dom + 1;
+		vals1[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+	}
+
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_update(db, keys1, 0, vals1, keys2, vals2, 2, 4) < 0) {
+	if (db_update(db, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 4) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
@@ -398,8 +420,9 @@ int db_update_ucontact(ucontact_t* _c)
 int db_delete_ucontact(ucontact_t* _c)
 {
 	char b[256];
-	db_key_t keys[2] = {user_col, contact_col};
-	db_val_t vals[2];
+	char* dom;
+	db_key_t keys[3] = {user_col, contact_col, domain_col};
+	db_val_t vals[3];
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -409,12 +432,22 @@ int db_delete_ucontact(ucontact_t* _c)
 	vals[1].nul = 0;
 	vals[1].val.str_val = _c->c;
 
+	if (use_domain) {
+		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		vals[0].val.str_val.len = dom - _c->aor->s;
+
+		vals[2].type = DB_STR;
+		vals[2].nul = 0;
+		vals[2].val.str_val.s = dom + 1;
+		vals[2].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+	}
+
 	     /* FIXME */
 	memcpy(b, _c->domain->s, _c->domain->len);
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_delete(db, keys, 0, vals, 2) < 0) {
+	if (db_delete(db, keys, 0, vals, (use_domain) ? (3) : (2)) < 0) {
 		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
 		return -1;
 	}
