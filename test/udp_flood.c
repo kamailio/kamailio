@@ -50,6 +50,8 @@ Options:\n\
     -d address    destination address\n\
     -p port       destination port\n\
     -c count      number of packets to be sent\n\
+    -s usec       microseconds to sleep before sending \"throttle\" packets\n\
+    -t throttle   number of packets to send before sleeping\n\
     -v            increase verbosity level\n\
     -V            version number\n\
     -h            this help message\n\
@@ -74,6 +76,9 @@ int main (int argc, char** argv)
 	char *fname;
 	char *dst;
 	int port;
+	long usec;
+	int throttle;
+	int t;
 	
 	/* init */
 	count=0;
@@ -81,9 +86,11 @@ int main (int argc, char** argv)
 	fname=0;
 	dst=0;
 	port=0;
+	usec=0;
+	throttle=0;
 
 	opterr=0;
-	while ((c=getopt(argc,argv, "f:c:d:p:vhV"))!=-1){
+	while ((c=getopt(argc,argv, "f:c:d:p:s:t:vhV"))!=-1){
 		switch(c){
 			case 'f':
 				fname=optarg;
@@ -103,6 +110,20 @@ int main (int argc, char** argv)
 				break;
 			case 'c':
 				count=strtol(optarg, &tmp, 10);
+				if ((tmp==0)||(*tmp)){
+					fprintf(stderr, "bad count: -c %s\n", optarg);
+					goto error;
+				}
+				break;
+			case 's':
+				usec=strtol(optarg, &tmp, 10);
+				if ((tmp==0)||(*tmp)){
+					fprintf(stderr, "bad count: -c %s\n", optarg);
+					goto error;
+				}
+				break;
+			case 't':
+				throttle=strtol(optarg, &tmp, 10);
 				if ((tmp==0)||(*tmp)){
 					fprintf(stderr, "bad count: -c %s\n", optarg);
 					goto error;
@@ -197,11 +218,19 @@ int main (int argc, char** argv)
 
 
 	/* flood loop */
+	t=throttle;
 	for (r=0; r<count; r++){
 		if ((verbose>1)&&(r%1000))  putchar('.');
 		if (send(sock, buf, n, 0)==-1) {
 			fprintf(stderr, "Error: send: %s\n",  strerror(errno));
 			exit(1);
+		}
+		if (usec){
+			t--;
+			if (t==0){
+				usleep(usec);
+				t=throttle;
+			}
 		}
 	}
 	printf("\n%d packets sent, %d bytes each => total %d bytes\n",
