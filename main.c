@@ -1254,6 +1254,15 @@ int main(int argc, char** argv)
 				" the first one)":"");
 	}
 	
+	/* init_daemon? */
+	if (!dont_fork){
+		if ( daemonize(argv[0]) <0 ) goto error;
+	}
+	if (init_modules() != 0) {
+		fprintf(stderr, "ERROR: error while initializing modules\n");
+		goto error;
+	}
+	
 	/*alloc pids*/
 #ifdef SHM_MEM
 	pt=shm_malloc(sizeof(struct process_table)*process_count());
@@ -1265,15 +1274,6 @@ int main(int argc, char** argv)
 		goto error;
 	}
 	memset(pt, 0, sizeof(struct process_table)*process_count());
-	
-	/* init_daemon? */
-	if (!dont_fork){
-		if ( daemonize(argv[0]) <0 ) goto error;
-	}
-	if (init_modules() != 0) {
-		fprintf(stderr, "ERROR: error while initializing modules\n");
-		goto error;
-	}
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
 		fprintf(stderr, "ERROR: error %x while trying to fix configuration\n",
