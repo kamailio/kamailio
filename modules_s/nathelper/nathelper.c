@@ -200,12 +200,12 @@ static int natping_interval = 0;
 
 static struct {
 	const char *cnetaddr;
-	u_int32_t netaddr;
-	u_int32_t mask;
+	uint32_t netaddr;
+	uint32_t mask;
 } nets_1918[] = {
-	{"10.0.0.0",    0, 0xfffffffful << 24},
-	{"172.16.0.0",  0, 0xfffffffful << 20},
-	{"192.168.0.0", 0, 0xfffffffful << 16},
+	{"10.0.0.0",    0, 0xffffffffu << 24},
+	{"172.16.0.0",  0, 0xffffffffu << 20},
+	{"192.168.0.0", 0, 0xffffffffu << 16},
 	{NULL, 0, 0}
 };
 
@@ -585,7 +585,7 @@ static inline int
 is1918addr(str *saddr)
 {
 	struct in_addr addr;
-	u_int32_t netaddr;
+	uint32_t netaddr;
 	int i, rval;
 	char backup;
 
@@ -675,7 +675,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	 * test for occurences of RFC1918 addresses in Contact
 	 * header field
 	 */
-	if ((tests & NAT_UAC_TEST_C_1918) && contact_1918(msg))
+	if ((tests & NAT_UAC_TEST_C_1918) && (contact_1918(msg)>0))
 		return 1;
 	/*
 	 * test for occurences of RFC1918 addresses in SDP body
@@ -1022,7 +1022,7 @@ gencookie()
 {
 	static char cook[34];
 
-	sprintf(cook, "%d_%u ", mypid, myseqn);
+	sprintf(cook, "%d_%u ", (int)mypid, myseqn);
 	myseqn++;
 	return cook;
 }
@@ -1210,11 +1210,17 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	int oidx, pf, pf1, force;
 	char opts[16];
 	char *cp, *cp1;
+	char  *cpend, *next;
 	char **ap, *argv[10];
 	struct lump* anchor;
-	struct iovec v[1 + 6 + 5] = {{NULL, 0}, {opts, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
-						/* 1 */    /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */    /* 10 */  /* 11 */
+	struct iovec v[1 + 6 + 5] = {{NULL, 0}, {NULL, 0}, {" ", 1}, {NULL, 0},
+		{" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0},
+		{" ", 1}, {NULL, 0}};
+						/* 1 */    /* 2 */   /* 3 */    /* 4 */
+		/* 5 */    /* 6 */   /* 7 */    /* 8 */   /* 9 */    /* 10 */
+		/* 11 */
 
+	v[1].iov_base=opts;
 	asymmetric = flookup = force = real = 0;
 	oidx = 1;
 	for (cp = str1; *cp != '\0'; cp++) {
@@ -1355,12 +1361,17 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	argc = 0;
 	memset(argv, 0, sizeof(argv));
-	for (ap = argv; (*ap = strsep(&cp, "\r\n\t ")) != NULL;)
-		if (**ap != '\0') {
+	cpend=cp+strlen(cp);
+	next=eat_token_end(cp, cpend);
+	for (ap = argv; cp<cpend; cp=next+1, next=eat_token_end(cp, cpend)){
+		*next=0;
+		if (*cp != '\0') {
+			*ap=cp;
 			argc++;
-			if (++ap >= &argv[10])
+			if ((char*)++ap >= ((char*)argv+sizeof(argv)))
 				break;
 		}
+	}
 	if (argc < 1)
 		return -1;
 	port = atoi(argv[0]);
@@ -1417,13 +1428,11 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 static int
 force_rtp_proxy1_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	char *cp, *newip;
-	int len;
+	char *cp;
+	char newip[IP_ADDR_MAX_STR_SIZE];
 
 	cp = ip_addr2a(&msg->rcv.dst_ip);
-	len = strlen(cp);
-	newip = alloca(len + 1);
-	memcpy(newip, cp, len + 1);
+	strcpy(newip, cp);
 	return force_rtp_proxy2_f(msg, str1, newip);
 }
 

@@ -42,14 +42,14 @@
 static struct ip_tree*  root = 0;
 
 
-inline struct ip_node* get_tree_branch(unsigned char b)
+static inline struct ip_node* prv_get_tree_branch(unsigned char b)
 {
 	return root->entries[b].node;
 }
 
 
 /* locks a tree branch */
-inline void lock_tree_branch(unsigned char b)
+static inline void prv_lock_tree_branch(unsigned char b)
 {
 	lock_get( root->entries[b].lock);
 }
@@ -57,9 +57,24 @@ inline void lock_tree_branch(unsigned char b)
 
 
 /* unlocks a tree branch */
-inline void unlock_tree_branch(unsigned char b)
+static inline void prv_unlock_tree_branch(unsigned char b)
 {
 	lock_release( root->entries[b].lock);
+}
+
+
+/* wrapper functions */
+struct ip_node* get_tree_branch(unsigned char b)
+{
+	return prv_get_tree_branch(b);
+}
+void lock_tree_branch(unsigned char b)
+{
+	prv_lock_tree_branch(b);
+}
+void unlock_tree_branch(unsigned char b)
+{
+	prv_unlock_tree_branch(b);
 }
 
 
@@ -349,12 +364,12 @@ void print_tree(  FILE *f )
 
 	DBG("DEBUG:pike:print_tree: printing IP tree\n");
 	for(i=0;i<MAX_IP_BRANCHES;i++) {
-		if (get_tree_branch(i)==0)
+		if (prv_get_tree_branch(i)==0)
 			continue;
-		lock_tree_branch(i);
-		if (get_tree_branch(i))
-			print_node( get_tree_branch(i), 0, f);
-		unlock_tree_branch(i);
+		prv_lock_tree_branch(i);
+		if (prv_get_tree_branch(i))
+			print_node( prv_get_tree_branch(i), 0, f);
+		prv_unlock_tree_branch(i);
 	}
 }
 

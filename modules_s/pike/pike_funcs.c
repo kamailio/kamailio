@@ -73,7 +73,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
 	struct ip_node *node;
 	struct ip_node *father;
-	char flags;
+	unsigned char flags;
 	struct ip_addr* ip;
 
 
