@@ -28,7 +28,6 @@
  */
 
 #include <string.h>
-#include <linux/limits.h>
 #include <errno.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -39,15 +38,31 @@
 #define FILE_SUFFIX ".log"
 #define FILE_SUFFIX_LEN (sizeof(FILE_SUFFIX) - 1)
 
-
+/* returns a pkg_malloc'ed file name */
 static char* get_name(struct flat_id* id)
 {
-	static char buf[PATH_MAX];
+	char* buf;
+	int buf_len;
 	char* num, *ptr;
 	int num_len;
+	int total_len;
 
+	buf_len=pathmax();
 	if (!id) {
 		LOG(L_ERR, "get_name: Invalid parameter value\n");
+		return 0;
+	}
+	total_len=id->dir.len+1 /* / */+id->table.len+1 /* _ */+
+				FILE_SUFFIX_LEN+1 /* \0 */; /* without pid*/
+	if (buf_len<total_len){
+		LOG(L_ERR, "get_name: the path is too long (%d and PATHMAX is %d)\n",
+					total_len, buf_len);
+		return 0;
+	}
+	
+	buf=pkg_malloc(buf_len);
+	if (buf==0){
+		LOG(L_ERR, "ERROR: get_name: memory allocation failure\n");
 		return 0;
 	}
 
@@ -63,6 +78,12 @@ static char* get_name(struct flat_id* id)
 	*ptr++ = '_';
 	
 	num = int2str(flat_pid, &num_len);
+	if (buf_len<(total_len+num_len)){
+		LOG(L_ERR, "ERROR:  get_name: the path is too long (%d and PATHMAX is"
+				" %d)\n", total_len+num_len, buf_len);
+		pkg_free(buf);
+		return 0;
+	}
 	memcpy(ptr, num, num_len);
 	ptr += num_len;
 
@@ -97,8 +118,13 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 	res->id = id;
 
 	fn = get_name(id);
+	if (fn==0){
+		LOG(L_ERR, "flat_new_connection: get_name() failed\n");
+		return 0;
+	}
 
 	res->file = fopen(fn, "a");
+	pkg_free(fn); /* we don't need fn anymore */
 	if (!res->file) {
 		LOG(L_ERR, "flat_new_connection: %s\n", strerror(errno));
 		pkg_free(res);
