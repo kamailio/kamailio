@@ -1,0 +1,5 @@
+- Check for old nonce
+- Use stale parameter
+- Put HA1 value into database
+- Write a simple cmd line HA1 generator
+- cnonce, nonce-count
