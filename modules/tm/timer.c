@@ -12,7 +12,7 @@
    set initial timeout
 */
 
-void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell, 
+void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell,
 		  int list_id, unsigned int time_out )
 {
 	struct timer* timer_list = &(hash_table->timers[ list_id ]);
@@ -20,7 +20,7 @@ void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell,
 
 	/* the entire timer list is locked now -- noone else can
            manipulate it */
-	change_sem( timer_list->sem , -1  );
+	lock( timer_list->mutex );
 	tl->time_out = time_out;
 	if (timer_list->last_cell)
 	{
@@ -35,26 +35,23 @@ void put_in_tail_of_timer_list( struct s_table* hash_table, struct cell* p_cell,
       		timer_list->last_cell = p_cell;
    	}
 	/* give the list lock away */
-	change_sem( timer_list->sem , -1  );
+	unlock( timer_list->mutex );
 }
 
 /* remove a cell from a list nr. list_id within a hash_table;
 */
 
-void remove_timer( struct s_table* hash_table, struct cell* p_cell, 
+void remove_timer( struct s_table* hash_table, struct cell* p_cell,
 		  int list_id)
 {
-   struct timer* timers=&(hash_table->timers[ list_id ]); 
+   struct timer* timers=&(hash_table->timers[ list_id ]);
    struct timer_link* tl = &(p_cell->tl[ list_id ]);
 
    if (tl->timer_next_cell || tl->timer_prev_cell ||
 	(!tl->timer_next_cell && !tl->timer_prev_cell &&
 	 p_cell==timers->first_cell) )
    {
-
-	/* jku: shouldn't we decrease the reference counter here ??? */
-	
-      change_sem( timers->sem , -1  );
+      lock( timers->mutex );
       if ( tl->timer_prev_cell )
          tl->timer_prev_cell->tl[list_id].timer_next_cell = tl->timer_next_cell;
       else
@@ -63,7 +60,7 @@ void remove_timer( struct s_table* hash_table, struct cell* p_cell,
          tl->timer_next_cell->tl[list_id].timer_prev_cell = tl->timer_prev_cell;
       else
          timers->last_cell = tl->timer_prev_cell;
-      change_sem( timers[FR_TIMER_LIST].sem , +1  );
+      unlock( timers->mutex );
    }
 }
 
@@ -71,18 +68,18 @@ void remove_timer_from_head( struct s_table* hash_table, struct cell* p_cell, in
 {
 	struct timer* timers=&(hash_table->timers[ list_id ]);
 	struct timer_link* tl = &(p_cell->tl[ list_id ]);
-	change_sem( timers->sem , -1  );
+	lock( timers->mutex  );
 	timers->first_cell = tl->timer_next_cell;
 	if (!timers->first_cell) timers->last_cell=0;
 	else tl->timer_next_cell->tl[list_id].timer_prev_cell = NULL;
-	
+               unlock( timers->mutex );
 }
 
 
-	
+
 /*
 *   The cell is inserted at the end of the FINAL RESPONSE timer list.
-*   The expire time is given by the current time plus the FINAL 
+*   The expire time is given by the current time plus the FINAL
     RESPONSE timeout - FR_TIME_OUT
 */
 void start_FR_timer( struct s_table* hash_table, struct cell* p_cell )
@@ -116,7 +113,7 @@ void start_WT_timer( struct s_table* hash_table, struct cell* p_cell )
 void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell )
 {
 	struct entry*  p_entry  = &(hash_table->entrys[p_cell->hash_index]);
-	change_sem( p_entry->sem , -1  );
+	lock( p_entry->mutex );
     	if ( p_cell->prev_cell )
          	p_cell->prev_cell->next_cell = p_cell->next_cell;
       	else
@@ -125,7 +122,7 @@ void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell )
          	p_cell->next_cell->prev_cell = p_cell->prev_cell;
       	else
          	p_entry->last_cell = p_cell->prev_cell;
-    	change_sem( p_entry->sem , +1  );
+    	unlock( p_entry->mutex );
 }
 
 
@@ -145,9 +142,9 @@ void del_Transaction( struct s_table *hash_table , struct cell * p_cell )
     remove_from_hash_table( hash_table, p_cell );
 
     /* gets the cell's ref counter*/
-    change_sem( p_cell->sem , -1  );
+    lock( p_cell->mutex );
     ref_counter = p_cell->ref_counter;
-    change_sem( p_cell->sem , +1  );
+    unlock( p_cell->mutex );
 
     /* if is not refenceted -> is deleted*/
     if ( ref_counter==0 )
@@ -186,12 +183,12 @@ void * timer_routine(void * attr)
 	{
 		int ref_counter;
 		/*gets the cell's ref counter*/
-         	change_sem( p_cell->sem , -1  );
+         	lock( p_cell->mutex );
          	ref_counter = p_cell->ref_counter;
-         	change_sem( p_cell->sem , +1  );
+         	unlock( p_cell->mutex  );
 
        		tmp_cell = p_cell->tl[DELETE_LIST].timer_next_cell;
-         	/*if the ref counter is 0 (nobody is reading the cell any more) -> 
+         	/*if the ref counter is 0 (nobody is reading the cell any more) ->
 		  remove from list and del*/
         	if (ref_counter==0)
          	{
@@ -202,7 +199,7 @@ void * timer_routine(void * attr)
 
 	for( p_cell = hash_table->timers[FR_TIMER_LIST].first_cell; p_cell; p_cell = tmp_cell )
 	{
-		/* jku: list is time-ordered; if I "get in the future" 
+		/* jku: list is time-ordered; if I "get in the future"
 		   I can stop processing
 		*/
 		if (p_cell->tl[FR_TIMER_LIST].time_out > *time) break;
@@ -219,7 +216,7 @@ void * timer_routine(void * attr)
 	/* wait timer list */
 	for( p_cell = hash_table->timers[WT_TIMER_LIST].first_cell; p_cell; p_cell = tmp_cell )
 	{
-		/* jku: list is time-ordered; if I "get in the future" 
+		/* jku: list is time-ordered; if I "get in the future"
 		   I can stop processing
 		*/
 		if (p_cell->tl[WT_TIMER_LIST].time_out > *time) break;

@@ -118,7 +118,7 @@ struct s_table* init_hash_table()
        hash_table->entrys[i].first_cell = 0;
        hash_table->entrys[i].last_cell = 0;
        hash_table->entrys[i].next_label = 0;
-       init_entry_lock( (hash_table->entrys)+i );
+       init_entry_lock( hash_table , (hash_table->entrys)+i );
     }
 
    /* inits the timers*/
@@ -126,7 +126,7 @@ struct s_table* init_hash_table()
     {
        hash_table->timers[i].first_cell = 0;
        hash_table->timers[i].last_cell = 0;
-       init_timerlist_lock( (hash_table->timers)+i );
+       //init_timerlist_lock( hash_table, (hash_table->timers)+i );
     }
 
 #ifdef THREAD
@@ -140,7 +140,7 @@ struct s_table* init_hash_table()
 
 
 
-int t_add_transaction( struct sip_msg* p_msg )
+int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
 {
    struct cell*    new_cell;
    struct entry* match_entry;
@@ -148,8 +148,8 @@ int t_add_transaction( struct sip_msg* p_msg )
 
 
     /* if the transaction is not found yet we are tring to look for it*/
-   if ( T==-1 )
-      T = t_lookup_request( p_msg );
+   if ( (int)T==-1 )
+      T = t_lookup_request( hash_table , p_msg );
 
    /* if T is not 0 means that it's a retransmission */
    if ( T )
