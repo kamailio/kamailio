@@ -24,6 +24,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * 2002-02-14 : created by bogdan
+ * 2003-09-11 : lump_rpl type added - LUMP_RPL_BODY & LUMP_RPL_HDR (bogdan)
+ * 2003-11-11 : build_lump_rpl merged into add_lump_rpl; type removed;
+ *              flags LUMP_RPL_BODY, LUMP_RPL_NODUP and LUMP_RPL_NOFREE
+ *              added (bogdan)
  */
 
 
@@ -33,19 +40,19 @@
 #include "parser/msg_parser.h"
 
 
-#define LUMP_RPL_HDR   1
-#define LUMP_RPL_BODY  2
+#define LUMP_RPL_HDR     (1<<1)
+#define LUMP_RPL_BODY    (1<<2)
+#define LUMP_RPL_NODUP   (1<<3)
+#define LUMP_RPL_NOFREE  (1<<4)
 
 struct lump_rpl
 {
 	str text;
-	int type;
+	int flags;
 	struct lump_rpl* next;
 };
 
-struct lump_rpl* build_lump_rpl( char* , int , int );
-
-int add_lump_rpl(struct sip_msg * , struct lump_rpl* );
+struct lump_rpl* add_lump_rpl(struct sip_msg *, char *, int , int );
 
 void free_lump_rpl(struct lump_rpl* );
 
