@@ -131,6 +131,9 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'print_dlg' not found\n");
 		return -1;
 	}
-
+	if (!(tmb->t_gett=(tgett_f)find_export(T_GETT,NO_SCRIPT,0))) {
+		LOG( L_ERR, LOAD_ERROR "'" T_GETT "' not found\n");
+		return -1;
+	}
 	return 1;
 }

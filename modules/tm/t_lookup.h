@@ -69,6 +69,7 @@ int t_unref( struct sip_msg *p_msg);
  */
 int t_check( struct sip_msg* , int *branch );
 
+typedef struct cell * (*tgett_f)(void);
 struct cell *get_t();
 
 /* use carefully or better not at all -- current transaction is 
