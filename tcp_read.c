@@ -31,6 +31,7 @@
  * 2003-02-10  zero term before calling receive_msg & undo afterwards (andrei)
  * 2003-05-13  l: (short form of Content-Length) is now recognized (andrei)
  * 2003-07-04  fixed eof for tcp_read_req  (andrei)
+ * 2003-07-09  fix a possible bug in tcp_receive_loop (andrei)
  */
 
 #ifdef USE_TCP
@@ -550,37 +551,37 @@ void tcp_receive_loop(int unix_sock)
 				if (n<0){
 					if (errno == EWOULDBLOCK || errno == EAGAIN ||
 							errno == EINTR){
-						continue;
+						goto skip;
 					}else{
 						LOG(L_CRIT,"BUG: tcp_receive_loop: read_fd: %s\n",
 							strerror(errno));
 						abort(); /* big error*/
 					}
 				}
+				DBG("received n=%d con=%p, fd=%d\n", n, con, s);
 				if (n==0){
 					LOG(L_ERR, "WARNING: tcp_receive_loop: 0 bytes read\n");
-					continue;
+					goto skip;
+				}
+				if (con==0){
+					LOG(L_CRIT, "BUG: tcp_receive_loop: null pointer\n");
+					goto skip;
 				}
 				con->fd=s;
-				DBG("received n=%d con=%p, fd=%d\n", n, con, s);
 				if (s==-1) {
 					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
 									"no fd read\n");
 					resp=CONN_ERROR;
 					con->bad=1;
 					release_tcpconn(con, resp, unix_sock);
-				}
-				if (con==0){
-					LOG(L_ERR, "ERROR: tcp_receive_loop: null pointer\n");
-					resp=CONN_ERROR;
-					con->bad=1;
-					release_tcpconn(con, resp, unix_sock);
+					goto skip;
 				}
 				con->timeout=get_ticks()+TCP_CHILD_TIMEOUT;
 				FD_SET(s, &master_set);
 				if (maxfd<s) maxfd=s;
 				tcpconn_listadd(list, con, c_next, c_prev);
 			}
+skip:
 			ticks=get_ticks();
 			for (con=list; con ; con=c_next){
 				c_next=con->c_next; /* safe for removing*/
