@@ -171,6 +171,7 @@ static inline int init_su( union sockaddr_union* su,
 							struct ip_addr* ip,
 							unsigned short   port ) 
 {
+	memset(su, 0, sizeof(union sockaddr_union));/*needed on freebsd*/
 	su->s.sa_family=ip->af;
 	switch(ip->af){
 #ifdef USE_IPV6
@@ -207,6 +208,7 @@ static inline int hostent2su( union sockaddr_union* su,
 								unsigned int idx,
 								unsigned short   port ) 
 {
+	memset(su, 0, sizeof(union sockaddr_union)); /*needed on freebsd*/
 	su->s.sa_family=he->h_addrtype;
 	switch(he->h_addrtype){
 #ifdef USE_IPV6
