@@ -35,8 +35,22 @@ Name:       auth
 Owner:      janakj
 Use:        regular
 Maturity:   stable
-Depends on: sl mysql
-Purpose:    Digest authentication and related things
+Depends on: sl
+Purpose:    Common functions for digest authentication
+
+Name:       auth_db
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: mysql auth
+Purpose:    Database support for digest authentication
+
+Name:       auth_radius
+Owner:      janakj
+Use:        experimental
+Maturity:   beta
+Depends on: auth
+Purpose:    Radius support for digest authentication
 
 Name:       cpl
 Owner:      bogdan
@@ -44,6 +58,20 @@ Use:        experimental
 Maturity:   alpha
 Depends on: -
 Purpose:    Call Processing Language
+
+Name:       cpl-c
+Owner:      bogdan
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Call Processing Language
+
+Name:       dbtext
+Owner:      dcm
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Database emulation in plaintext files
 
 Name:       domain
 Owner:      jih
@@ -59,13 +87,6 @@ Maturity:   beta
 Depends on: -
 Purpose:    Enum support
 
-Name:       ext
-Owner:      bogdan
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    Execution of external URI processing logic
-
 Name:       exec
 Owner:      jiri
 Use:        experimental
@@ -73,11 +94,39 @@ Maturity:   beta
 Depends on: -
 Purpose:    Execution of external URI processing logic
 
+Name:       ext
+Owner:      bogdan
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Execution of external URI processing logic
+
+Name:       extcmd
+Owner:      jiri
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Execution of external commands
+
+Name:       group
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: database
+Purpose:    Group membership checking using database
+
+Name:       group_radius
+Owner:      janakj
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Group membership checking using Radius
+
 Name:       jabber
 Owner:      dcm
 Use:        experimental
 Maturity:   beta
-Depends on: mysql tm
+Depends on: database tm
 Purpose:    SIMPLE 2 Jabber gateway
 
 Name:       maxfwd
@@ -91,7 +140,7 @@ Name:       msilo
 Owner:      dcm
 Use:        experimental
 Maturity:   beta
-Depends on: mysql tm
+Depends on: database tm
 Purpose:    Message store
 
 Name:       mysql
@@ -99,7 +148,7 @@ Owner:      janakj
 Use:        regular
 Maturity:   stable
 Depends on: -
-Purpose:    supporting MySQL interface
+Purpose:    MySQL database support
 
 Name:       pa
 Owner:      janakj
@@ -129,13 +178,6 @@ Maturity:   beta
 Depends on: tm
 Purpose:    radius accounting
 
-Name:       radius_auth
-Owner:      ssi
-Use:        experimental
-Maturity:   beta
-Depends on: auth
-Purpose:    radius authentication
-
 Name:       registrar
 Owner:      janakj
 Use:        regular
@@ -157,19 +199,19 @@ Maturity:   stable
 Depends on: -
 Purpose:    Stateless replies
 
-Name:       snmp
-Owner:      ric
-Use:        experimental
-Maturity:   alpha
-Depends on: -
-Purpose:    SNMP Management
-
 Name:       sms
 Owner:      bogdan
 Use:        regular
 Maturity:   stable
 Depends on: tm
 Purpose:    SMS gateway
+
+Name:       snmp
+Owner:      ric
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    SNMP Management
 
 Name:       textops
 Owner:      andrei
@@ -185,9 +227,30 @@ Maturity:   beta
 Depends on: -
 Purpose:    Transaction Management
 
+Name:       uri
+Owner:      janakj
+Use:        regular
+Maturity:   stable
+Depends on: database
+Purpose:    Various URI checks
+
+Name:       uri_radius
+Owner:      janakj
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    URI checking using Radius
+
 Name:       usrloc
 Owner:      janakj
 Use:        regular
 Maturity:   stable
-Depends on: mysql sl
+Depends on: database
 Purpose:    User location support
+
+Name:       vm
+Owner:      rco
+Use:        experimental
+Maturity:   alpha
+Depends on: tm
+Purpose:    Voicemail interface
