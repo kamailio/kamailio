@@ -312,6 +312,7 @@ nomatch2:
 
 /* Functions update T (T gets either a valid pointer in it or it equals zero) if no transaction
   * for current message exists;
+  * it returns 1 if found, 0 if not found, -1 on error
   */
 int t_check( struct sip_msg* p_msg , int *param_branch)
 {
@@ -326,10 +327,19 @@ int t_check( struct sip_msg* p_msg , int *param_branch)
          unref_T(T);
       T = T_UNDEFINED;
       /* transaction lookup */
-     if ( p_msg->first_line.type==SIP_REQUEST )
+     if ( p_msg->first_line.type==SIP_REQUEST ) {
+
+   		/* force parsing all the needed headers*/
+   		if (parse_headers(p_msg, HDR_EOH )==-1)
+    		return -1;
          t_lookup_request( p_msg );
-     else
+	 } else {
+		 if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
+        		!p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
+    		return -1;
+
          t_reply_matching( p_msg , ((param_branch!=0)?(param_branch):(&local_branch)) );
+	 }
 #ifdef EXTRA_DEBUG
 	if ( T && T!=T_UNDEFINED && T->damocles) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and called from t_check\n", T);
@@ -346,7 +356,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch)
           DBG("DEBUG: t_check: T previously sought and not found\n");
    }
 
-   return ((T)?1:-1) ;
+   return ((T)?1:0) ;
 }
 
 

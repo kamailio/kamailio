@@ -116,6 +116,11 @@ struct stats_s {
 	sent_responses_5,
 	sent_responses_6,
 
+	processed_requests,
+	processed_responses,
+	acc_req_time,
+	acc_res_time,
+
 	failed_on_send;			
 			  
 };

@@ -152,7 +152,7 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    }
 
    /* it's about the same transaction or not?*/
-   t_check( p_msg , 0 );
+	if (t_check( p_msg , 0 )==-1) return -1;
 
    /* if the lookup's result is not 0 means that it's a retransmission */
    if ( T )
@@ -198,7 +198,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	branch = 0;	/* we don't do any forking right now */
 
 	/* it's about the same transaction or not? */
-	t_check( p_msg  , 0 );
+	if (t_check( p_msg , 0 )==-1) return -1;
 
 	/*if T hasn't been found after all -> return not found (error) */
 	if ( !T )
@@ -355,7 +355,7 @@ int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
    int                      err;
 
    /* it's about the same transaction or not? */
-   t_check( p_msg , 0);
+	if (t_check( p_msg  , 0 )==-1) return -1;
 
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
@@ -428,12 +428,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 	   a chance for minimum routing; parse only what's needed
 	   for MPLS-ize reply matching
 	*/
-	if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
-		!p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
-	return 1;
-
-	/* we use label-matching to lookup for T */
-	t_check( p_msg , &branch );
+	if (t_check( p_msg  , &branch )==-1) return 1;
 
 	/* if no T found ->tell the core router to forward statelessly */
 	if ( T<=0 )
@@ -536,7 +531,7 @@ error:
   */
 int t_release_transaction( struct sip_msg* p_msg)
 {
-   t_check( p_msg , 0 );
+	if (t_check( p_msg  , 0 )==-1) return 1;
 
    if ( T && T!=T_UNDEFINED )
       return t_put_on_wait( T );
@@ -556,7 +551,7 @@ int t_release_transaction( struct sip_msg* p_msg)
   */
 int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
 {
-   t_check( p_msg , 0 );
+	if (t_check( p_msg  , 0 )==-1) return 1;
 
    /* if no transaction exists or no reply to be resend -> out */
    if ( T )
@@ -592,7 +587,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 	char *b;
 
 	DBG("DEBUG: t_send_reply: entered\n");
-	t_check( p_msg , 0 );
+	if (t_check( p_msg , 0 )==-1) return -1;
 
 	if (!T)
 	{

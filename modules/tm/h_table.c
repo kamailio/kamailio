@@ -147,10 +147,6 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    new_cell->wait_tl.payload = new_cell;
    new_cell->dele_tl.payload = new_cell;
 
-   /* inbound request */
-   /* force parsing all the needed headers*/
-   if (parse_headers(p_msg, HDR_EOH )==-1)
-	goto error;
    new_cell->inbound_request =  sip_msg_cloner(p_msg) ;
    DBG("DEBUG: build_cell : clone done\n");
    if (!new_cell->inbound_request)

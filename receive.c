@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "receive.h"
 #include "dprint.h"
@@ -26,6 +27,9 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	struct sip_msg* msg;
 #ifdef STATS
 	int skipped = 1;
+	struct timeval tvb, tve;	
+	struct timezone tz;
+	unsigned int diff;
 #endif
 
 	msg=pkg_malloc(sizeof(struct sip_msg));
@@ -69,13 +73,22 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		
 		/* exec routing script */
 		DBG("preparing to run routing scripts...\n");
+#ifdef  STATS
+		gettimeofday( & tvb, &tz );
+#endif
 		if (run_actions(rlist[0], msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
 			goto error;
 		}
-		DBG("succesfully ran routing scripts...\n");
+#ifdef STATS
+		gettimeofday( & tve, &tz );
+		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
+		stats->processed_requests++;
+		stats->acc_req_time += diff;
+		DBG("succesfully ran routing scripts...(%d usec)\n", diff);
 		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
+#endif
 	}else if (msg->first_line.type==SIP_REPLY){
 		DBG("msg= reply\n");
 		/* sanity checks */
@@ -91,7 +104,10 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 		/* check if via1 == us */
 
+#ifdef STATS
+		gettimeofday( & tvb, &tz );
 		STATS_RX_RESPONSE ( msg->first_line.u.reply.statusclass );
+#endif
 		
 		/* send the msg */
 		if (forward_reply(msg)==0){
@@ -99,6 +115,13 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 						msg->via2->host.s,
 						(unsigned short) msg->via2->port);
 		}
+#ifdef STATS
+		gettimeofday( & tve, &tz );
+		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);
+		stats->processed_responses++;
+		stats->acc_res_time+=diff;
+		DBG("succesfully ran reply processing...(%d usec)\n", diff);
+#endif
 	}
 #ifdef STATS
 	skipped = 0;
