@@ -58,9 +58,8 @@
 	    </abstract>
 	    <para>
 		Each function exported by a module must be described by <structname>cmd_export_t</structname> structure. Structures describing all exported
-		functions are arranged into an array and pointer to the array is then passed to the core. The last element of the array must contain 0 in
-		all it's fields, this element serves as the mark telling the core that this is the very last element of the array and it must stop
-		scanning the array.
+		functions are arranged into an array and pointer to the array is then passed to the core. The last element of the array must contain 0 in all
+		it's fields, this element serves as the mark telling the core that this is the very last element and it must stop scanning the array.
 	    </para>
 	    <para>
 		Each exported function is described by the following structure:
@@ -102,8 +101,8 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 			    have to do type-casting otherwise the compiler will complain and will not compile your module.
 			</simpara>
 			<simpara>
-			    Simply put (cmd_function) just before the function name, for example <varname>(cmd_function)my_function</varname>. Don't use this
-			    unless you know what are you doing ! The server might crash if you pass wrong parameters to the function later !
+			    Simply put (cmd_function) just before the function name, for example <function moreinfo="none">(cmd_function)my_function</function>. 
+			    Don't use this unless you know what are you doing ! The server might crash if you pass wrong parameters to the function later !
 			</simpara>
 		    </note>
 		</listitem>
@@ -139,7 +138,7 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 			Fixup function can be used to convert the string back to integer. Such a conversion should happend only once because the string
 			parameter doesn't change when the server is running. Fixup is therefore ideal place for the conversion, it will be converted upon the
 			server startup before the server starts processing <acronym>SIP</acronym> messages. After the conversion the function will get directly
-			the converted value. See existing modules for an example of such a fixup function.
+			the converted value. See existing modules for example of such a fixup function.
 		    </simpara>
 		</listitem>
 		<listitem>
@@ -169,9 +168,9 @@ typedef int (*cmd_function)(struct sip_msg*, char*, char*);
 	    </abstract>
 	    <simpara>
 		Each parameter exported by a module must be described by <structname>param_export_t</structname> structure. Structures describing all exported
-		parameters are arranged into an array and pointer to the array is then passed to the core. The last element of the array must contain 0 in
-		all it's fields, this element serves as the mark telling the core that this is the very last element of the array and it must stop
-		scanning the array (This is same as in array of exported functions).
+		parameters are arranged into an array and pointer to the array is then passed to the core. The last element of the array must contain 0 in all
+		it's fields, this element serves as the mark telling the core that this is the very last element and it must stop scanning the array (This is
+		same as in array of exported functions).
 	    </simpara>
 	    <simpara>
 		Each exported parameter is described by the following structure:
