@@ -191,20 +191,21 @@ struct rdata* get_record(char* name, int type)
 	unsigned int ttl;
 	struct rdata* head;
 	struct rdata** crt;
+	struct rdata** last;
 	struct rdata* rd;
 	struct srv_rdata* srv_rd;
 	struct srv_rdata* crt_srv;
 	
 	
 	
-	head=rd=0;
-	crt=&head;
 	size=res_search(name, C_IN, type, buff.buff, sizeof(buff));
 	if (size<0) {
-		LOG(L_ERR, "ERROR: get_record: size<0\n");
-		goto error;
+		DBG("get_record: lookup(%s, %d) failed\n", name, type);
+		goto not_found;
 	}
 	else if (size > sizeof(buff)) size=sizeof(buff);
+	head=rd=0;
+	last=crt=&head;
 	
 	p=buff.buff+DNS_HDR_SIZE;
 	end=buff.buff+size;
@@ -284,17 +285,18 @@ struct rdata* get_record(char* name, int type)
 				rd->rdata=(void*)srv_rd;
 				if (srv_rd==0) goto error_parse;
 				
-				/* insert sorted into the list
-				 * crt reused */
+				/* insert sorted into the list */
 				for (crt=&head; *crt; crt= &((*crt)->next)){
 					crt_srv=(struct srv_rdata*)(*crt)->rdata;
 					if ((srv_rd->priority <  crt_srv->priority) ||
 					   ( (srv_rd->priority == crt_srv->priority) && 
 							 (srv_rd->weight > crt_srv->weight) ) ){
 						/* insert here */
-						break;
+						goto skip;
 					}
 				}
+				last=&(rd->next); /*end of for => this will be the last elem*/
+			skip:
 				/* insert here */
 				rd->next=*crt;
 				*crt=rd;
@@ -303,26 +305,26 @@ struct rdata* get_record(char* name, int type)
 			case T_A:
 				rd->rdata=(void*) dns_a_parser(p,end);
 				if (rd->rdata==0) goto error_parse;
-				*crt=rd; /* crt points to the last "next" or the list head*/
-				crt=&(rd->next);
+				*last=rd; /* last points to the last "next" or the list head*/
+				last=&(rd->next);
 				break;
 			case T_AAAA:
 				rd->rdata=(void*) dns_aaaa_parser(p,end);
 				if (rd->rdata==0) goto error_parse;
-				*crt=rd;
-				crt=&(rd->next);
+				*last=rd;
+				last=&(rd->next);
 				break;
 			case T_CNAME:
 				rd->rdata=(void*) dns_cname_parser(buff.buff, end, p);
 				if(rd->rdata==0) goto error_parse;
-				*crt=rd;
-				crt=&(rd->next);
+				*last=rd;
+				last=&(rd->next);
 				break;
 			default:
 				LOG(L_ERR, "WARNING: get_record: unknown type %d\n", rtype);
 				rd->rdata=0;
-				*crt=rd;
-				crt=&(rd->next);
+				*last=rd;
+				last=&(rd->next);
 		}
 		
 		p+=rdlength;
@@ -339,6 +341,7 @@ error_parse:
 error:
 		LOG(L_ERR, "ERROR: get_record \n");
 		if (head) free_rdata_list(head);
+not_found:
 	return 0;
 }
 

@@ -216,7 +216,8 @@ int udp_rcv_loop()
 		if (len==-1){
 			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom:[%d] %s\n",
 						errno, strerror(errno));
-			if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK))
+			if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK)||
+					(errno==ECONNREFUSED))
 				continue; /* goto skip;*/
 			else goto error;
 		}
