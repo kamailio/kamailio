@@ -443,13 +443,79 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	}
 }
 
+static inline int fake_req(struct sip_msg *faked_req, 
+				struct sip_msg *shmem_msg)
+{
+	/* on_negative_reply faked msg now copied from shmem msg (as opposed
+	 * to zero-ing) -- more "read-only" actions (exec in particular) will
+	 * work from reply_route as they will see msg->from, etc.; caution,
+	 * rw actions may append some pkg stuff to msg, which will possibly be
+	 * never released (shmem is released in a single block) */
+	memcpy( faked_req, shmem_msg, sizeof(struct sip_msg));
+
+	/* if we set msg_id to something different from current's message
+	 * id, the first t_fork will properly clean new branch URIs */
+	faked_req->id=shmem_msg->id-1;
+
+	/* new_uri can change -- make a private copy */
+	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
+		faked_req->new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
+		if (!faked_req->new_uri.s) {
+			LOG(L_ERR, "ERROR: run_failure_handlers: no uri/pkg mem\n");
+			goto error00;
+		}
+		faked_req->new_uri.len=shmem_msg->new_uri.len;
+		memcpy( faked_req->new_uri.s, shmem_msg->new_uri.s, 
+			faked_req->new_uri.len);
+		faked_req->new_uri.s[faked_req->new_uri.len]=0;
+	}
+
+	/* create a duplicated lump list to which actions can add
+	 * new pkg items  */
+	if (shmem_msg->add_rm) {
+		faked_req->add_rm=dup_lump_list(shmem_msg->add_rm);
+		if (!faked_req->add_rm) { /* non_emty->empty ... failure */
+			LOG(L_ERR, "ERROR: run_failure_handlers: lump dup failed\n");
+			goto error01;
+		}
+	}
+	/* same for the body lumps */
+	if (shmem_msg->body_lumps) {
+		faked_req->body_lumps=dup_lump_list(shmem_msg->body_lumps);
+		if (!faked_req->body_lumps) { /* non_empty->empty ... failure */
+			LOG(L_ERR, "ERROR: on_negative_handlers: lump dup failed\n");
+			goto error02;
+		}
+	}
+
+	return 1;
+
+error02:
+	free_duped_lump_list(faked_req->add_rm);
+error01:
+	if (faked_req->new_uri.s) pkg_free(faked_req->new_uri.s);
+error00:
+	return 0;
+}
+
+void inline static free_faked_req(struct sip_msg *faked_req)
+{
+	free_duped_lump_list(faked_req->add_rm);
+	free_duped_lump_list(faked_req->body_lumps);
+	faked_req->add_rm = faked_req->body_lumps = 0;
+	if (faked_req->new_uri.s) {
+		pkg_free(faked_req->new_uri.s);
+		faked_req->new_uri.s = 0;
+	}
+	del_nonshm_lump_rpl( &(faked_req->reply_lump) );
+}
 
 
 /* return 1 if a failure_route processes */
 static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 																	int code)
 {
-	static struct sip_msg fake_req;
+	static struct sip_msg faked_req;
 	struct sip_msg *shmem_msg = t->uas.request;
 	int on_failure;
 
@@ -464,56 +530,16 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		return 1;
 	}
 
-	/* on_negative_reply faked msg now copied from shmem msg (as opposed
-	 * to zero-ing) -- more "read-only" actions (exec in particular) will
-	 * work from reply_route as they will see msg->from, etc.; caution,
-	 * rw actions may append some pkg stuff to msg, which will possibly be
-	 * never released (shmem is released in a single block) */
-	memcpy( &fake_req, shmem_msg, sizeof(struct sip_msg));
-
-	/* if we set msg_id to something different from current's message
-	 * id, the first t_fork will properly clean new branch URIs */
-	fake_req.id=shmem_msg->id-1;
-
-	/* new_uri can change -- make a private copy */
-	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
-		fake_req.new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
-		if (!fake_req.new_uri.s) {
-			LOG(L_ERR, "ERROR: run_failure_handlers: no uri/pkg mem\n");
-			return 0;
-		}
-		fake_req.new_uri.len=shmem_msg->new_uri.len;
-		memcpy( fake_req.new_uri.s, shmem_msg->new_uri.s, 
-			fake_req.new_uri.len);
-		fake_req.new_uri.s[fake_req.new_uri.len]=0;
-	}
-
-	/* create a duplicated lump list to which actions can add
-	 * new pkg items  */
-	if (shmem_msg->add_rm) {
-		fake_req.add_rm=dup_lump_list(shmem_msg->add_rm);
-		if (!fake_req.add_rm) { /* non_emty->empty ... failure */
-			LOG(L_ERR, "ERROR: run_failure_handlers: lump dup failed\n");
-			if (fake_req.new_uri.s) pkg_free(fake_req.new_uri.s);
-			return 0;
-		}
-	}
-	/* same for the body lumps */
-	if (shmem_msg->body_lumps) {
-		fake_req.body_lumps=dup_lump_list(shmem_msg->body_lumps);
-		if (!fake_req.body_lumps) { /* non_empty->empty ... failure */
-			LOG(L_ERR, "ERROR: on_negative_handlers: lump dup failed\n");
-			free_duped_lump_list(fake_req.add_rm);
-			if (fake_req.new_uri.s) pkg_free(fake_req.new_uri.s);
-			return 0;
-		}
+	if (!fake_req(&faked_req, shmem_msg)) {
+		LOG(L_ERR, "ERROR: run_failure_handlers: fake_req failed\n");
+		return 0;
 	}
 	/* fake also the env. conforming to the fake msg */
-	faked_env( t, &fake_req);
+	faked_env( t, &faked_req);
 	/* DONE with faking ;-) -> run the failure handlers */
 
 	if ( has_tran_tmcbs( t, TMCB_ON_FAILURE) ) {
-		run_trans_callbacks( TMCB_ON_FAILURE, t, &fake_req, rpl, code);
+		run_trans_callbacks( TMCB_ON_FAILURE, t, &faked_req, rpl, code);
 	}
 	if (t->on_negative) {
 		/* avoid recursion -- if failure_route forwards, and does not 
@@ -522,7 +548,7 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 		on_failure = t->on_negative;
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
-		if (run_actions(failure_rlist[on_failure], &fake_req)<0)
+		if (run_actions(failure_rlist[on_failure], &faked_req)<0)
 			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
 		/* destroy any eventual avps */
 		if (users_avps)
@@ -531,16 +557,10 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 
 	/* restore original environment and free the fake msg */
 	faked_env( t, 0);
-	free_duped_lump_list(fake_req.add_rm);
-	free_duped_lump_list(fake_req.body_lumps);
-	fake_req.add_rm = fake_req.body_lumps = 0;
-	if (fake_req.new_uri.s) {
-		pkg_free(fake_req.new_uri.s);
-		fake_req.new_uri.s = 0;
-	}
-	del_nonshm_lump_rpl( &(fake_req.reply_lump) );
+	free_faked_req(&faked_req);
+
 	/* if failure handler changed flag, update transaction context */
-	shmem_msg->flags = fake_req.flags;
+	shmem_msg->flags = faked_req.flags;
 	return 1;
 }
 
