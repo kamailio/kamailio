@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 #
 # $Id$
 #
@@ -724,11 +724,15 @@ case $1 in
             exit 1
         fi
 
+		# begin with remove all user's privileges
+		$0 acl revoke $1  > /dev/null 2>&1
+
+		# destroy the user now
         QUERY="delete from $TABLE where $TABLE.$SUBSCRIBER_COLUMN='$1'"
 		sql_query "$QUERY"
 
-		$0 acl revoke $1 > /dev/null 2>&1
-		$0 dul $1   > /dev/null 2>&1
+		# and also all his contacts
+		$0 ul rm $1   > /dev/null 2>&1
         ;;
 			
 	ps)
