@@ -181,10 +181,13 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog, transaction_cb cb
 		goto error2;
 	}
 
+	/* better reset avp list now - anyhow, it's useless from
+	 * this point (bogdan) */
+	reset_avps();
+	/* install handlers */
 	new_cell->completion_cb = cb;
 	new_cell->cbp = cbp;
-	
-	     /* cbp is installed -- tell error handling bellow not to free it */
+	/* cbp is installed -- tell error handling bellow not to free it */
 	cbp = 0;
 
 	new_cell->is_invite = method->len == INVITE_LEN && memcmp(method->s, INVITE, INVITE_LEN) == 0;

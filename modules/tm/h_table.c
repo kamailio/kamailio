@@ -271,6 +271,8 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
 error:
 	shm_free(new_cell);
+	/* unlink transaction AVP list and link back the global AVP list (bogdan)*/
+	reset_avps(); 
 	return NULL;
 }
 
