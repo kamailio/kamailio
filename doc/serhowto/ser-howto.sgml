@@ -1,0 +1,1483 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!--Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>&ser; HowTo</title>
+	<authorgroup>
+		<author>
+			<firstname>Dan</firstname>
+			<surname>Austin</surname>
+		</author>
+	</authorgroup>
+	<copyright>
+		<year>2002-2003</year>
+		<holder>NSI Ltd.</holder>
+	</copyright>
+	</bookinfo>
+	<toc></toc>
+
+	<chapter>
+	<title>Introduction</title>
+	<section>
+		<title>Revision</title>
+		<itemizedlist>
+		<listitem>
+		<para>
+         Version 0.1      12/02/2002      Dan Austin
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+         Version 0.2      12/03/2002      Dan Austin
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+         Version 1.0      12/06/2002      Dan Austin
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+         Version 1.1      12/16/2002      Dan Austin
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+         Version 2.0      10/04/2003      NSI Ltd.
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This document is a result of a merge of two documents <ulink url="http://www.fitawi.com/ser-Howto.html"></ulink> and <ulink url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/*checkout*/ser/sip_router/INSTALL?rev=ser_0_8_10&amp;content-type=text/plain"></ulink> with some add-ons, made by NSI team (see text in bold within topics)
+		</para>
+	</section>
+	<section>
+		<title>Why SER</title>
+		<para>
+SER is an open-source project that aims to make available a fully functional and scalable Session Initiated Protocol server.  Call processing is described with a concise scripting language that offers the flexibility of regular expressions and the ability to interface with 3rd party applications for the purposes of call accounting and authorization.
+		</para>
+	</section>
+	<section>
+		<title>Where to get SER</title>
+		<para>
+SER is available for download from <ulink url="ftp://ftp.berlios.de/pub/ser"></ulink>
+		</para>
+		<para>
+The newest release may be found in the folder /latest
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>Installation</title>
+	<section>
+		<title>Installation Notes</title>
+		<para>
+Supported architectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
+Solaris/sparc64
+(For other architectures the Makefiles might need to be edited)
+There are various configuration options defined in the Make file.
+		</para>
+	</section>
+	<section>
+		<title>Requirements</title>
+		<itemizedlist>
+		<listitem>
+		<para>
+gcc or icc : gcc >= 2.9x; 3.[12] recommended (it will work with older version
+but it might require some options tweaking for best performance)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+bison or yacc (Berkley yacc)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+flex
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+GNU make (on Linux this is the standard "make", on FreeBSD and Solaris is
+ called "gmake")
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+sed and tr (used in the make files)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+GNU install or BSD install (on Solaris "ginstall") if you want "make
+  install", "make bin", "make sunpkg" to work
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+?mysql? if you need MySQL support
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+?Apache (httpd)? if you want serweb support
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+?PHP, MySQL-PHP? for serweb support
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+libmysqlclient & libz (zlib) if you want mysql support (the mysql module)
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+libexpat if you want the jabber gateway support (the jabber module)
+		</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+Installing SER on a RedHat Linux distribution for example, is a simple matter of unzipping the downloaded file and using your favorite package manager.
+		</para>
+	</section>
+	<section>
+		<title>Install the package</title>
+		<para>
+Example /root>rpm -i ser-08.10-2.i386.rpm
+		</para>
+		<para>
+Packages for other popular distributions are available, and can be installed using the appropriate package manager for that distribution.
+		</para>
+		<para>
+On many platforms you can start the service with /etc/init.d/ser start.  RedHat systems will use /etc/rc.d/init.d/ser start.
+		</para>
+		<para>
+You now have a functioning SIP server, but what can you do with it?  At this point not very much.  With an SIP client, such as Microsoft MSN Messenger 4.6, you can register with the server, send Instant Messages to other logged on clients of the same server, and even have voice conversations with them.
+		</para>
+		<para>
+That sounds pretty good, but maybe you?d like to add a little more security, or make you server accessible to others.
+		</para>
+	</section>
+	<section>
+		<title>Serctl Utility</title>
+		<para>
+To do so, first set the environment variable SIP_DOMAIN to your domain name, e.g., in Bourne shell, call export SIP_DOMAIN=<quote>foo.bar</quote>
+		</para>
+		<para>
+If you wont the system to created this variable automatically, you need to add the line
+		</para>
+		<para>
+export SIP_DOMAIN=<quote>foo.bar</quote> in the end of file /etc/profile.
+		</para>
+		<para>
+If you are using other than 'localhost' mysql server for maintaining subscriber database, change the variable 'SQL_HOST' to the proper host name in the serctl script.
+		</para>
+		<para>
+Run the serctl utility  /usr/sbin/serctl monitor.
+		</para>
+		<para>
+       /usr/local/sbin/serctl monitor  (if you installed from a tar.gz or Solaris package).
+		</para>
+	</section>
+	<section>
+		<title>DNS SVR Resource Records</title>
+		<para>
+It is important that your SIP clients can connect to your server for purposes of registration and call control.  You might even want to have a redundant server to handle calls if your primary server is unavailable.
+		</para>
+		<para>
+These requirements can be meet by using DNS SVR Resource Records, available in BIND 8.X and up releases.
+		</para>
+		<para>
+The format for a SVR RR is this:
+		</para>
+		<programlisting>
+_service._protocol        SVR Priority Weight     Port hostname
+		</programlisting>
+		<para>
+In this case we want to establish an entry for our primary SIP server, gateway.mydomain.com, that will listen on UDP port 5060.  The entry will look like this:
+		</para>
+		<programlisting>
+_sip._udp         SRV     0  0   5060  gateway.mydomain.com
+		</programlisting>
+		<para>
+Placement of the new resource record is important.  Here is a sample zone file:
+		</para>
+		<para>
+		<programlisting>
+; zone 'mydomain.com'   last serial 1998071308
+$ORIGIN com.
+mydomain  86400           IN      SOA     gateway.mydomain.com. postmaster.mydomain.com. (
+                                        1998111908 ; Serial
+                                        36000 ; Refresh
+                                        900 ; Retry
+                                        36000 ; Expire
+                                        28800 ); Minimum
+                IN      NS              gateway.mydomain.com.
+                IN      NS              ns3.backupdomain.com.
+                IN      MX              1 gateway.mydomain.com.
+                IN      A               192.168.0.1
+
+;If we place the SRV record above the next line it fails to load
+$ORIGIN fitawi.com.
+_sip._udp               SRV  0 0  5060  gateway.mydomain.com.
+gateway         IN      A               192.168.0.1
+www             IN      CNAME           gateway.mydomain.com.
+		</programlisting>
+		</para>
+		<para>
+After reloading your zone file you can verify that the entry is working by using dig.
+		</para>
+		<para>
+        dig -t SRV _sip._udp.mydomain.com
+		</para>
+		<para>
+The results should look something like this:
+		</para>
+		<para>
+		<programlisting>
+; &lt;&lt;>> DiG 9.1.0 &lt;&lt;>> -t SRV _sip._udp.mydomain.com
+;; global options:  printcmd
+;; Got answer:
+;; ->>HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 32654
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 2, ADDITIONAL: 1
+
+;; QUESTION SECTION:
+;_sip._udp.mydomain.com.          IN      SRV
+
+;; ANSWER SECTION:
+_sip._udp.mydomain.com.   86400   IN   SRV   0 0 5060 gateway.mydomain.com.
+
+;; AUTHORITY SECTION:
+mydomain.com.             86400   IN      NS      ns3.elsewhere.com.
+mydomain..com             86400   IN      NS      gateway. mydomain.com.
+
+;; ADDITIONAL SECTION:
+gateway. mydomain.com.     86400   IN      A       192.168.0.150
+
+;; Query time: 6 msec
+;; SERVER: 192.168.0.150#53(192.168.0.150)
+;; WHEN: Tue Dec  3 08:34:17 2002
+;; MSG SIZE  rcvd: 132
+		</programlisting>
+		</para>
+	</section>
+	<section>
+		<title>Adding a database for client information</title>
+		<para>
+By leveraging a MySQL database, we can provide support for user credentials, and keeping track of where the clients are logged on during server restarts.
+		</para>
+	</section>
+	<section>
+		<title>MySQL setup</title>
+		<para>
+To install support for a MySQL database you will need to download the package ser-mysql, which is available from the same download location that you retrieved SER.  This package has scripts to create the required database and establish permissions for the accounts needed.  A recent release of MySQL is recommended.  Earlier versions may have problems with the syntax required to set permissions on the database.
+		</para>
+		<para>
+If you do not already have a copy of MySQL installed, download it from your <ulink url="http://www.mysql.com"></ulink>
+		</para>
+		<para>
+Once you have MySQL installed and started, execute /usr/sbin/ser_mysql.sh.
+		</para>
+		<para>
+You can verify that the database has been created, and correct permissions assigned by using the mysql management tool and these steps:
+		</para>
+		<para>
+		<programlisting>
+Mysql> select * from user;
+| Host               | User  | Password         | Select_priv | Insert_priv | Update_priv | Delete_priv | Create_priv | Drop_priv | Reload_priv | Shutdown_priv | Process_priv | File_priv | Grant_priv | References_priv | Index_priv | Alter_priv |
+| %                  | ser   | 4e633cf914a735a0 | N           | N           | N           | N           | N           | N         | N           | N             | N            | N         | N          | N               | N          | N          |
+| localhost          | ser   | 4e633cf914a735a0 | Y           | Y           | Y           | Y           | Y           | Y         | Y           | Y             | Y            | Y         | N          | Y               | Y          | Y          |
+| %                  | serro | 7cb73a267cb7bd5f | N           | N           | N           | N           | N           | N         | N           | N             | N            | N         | N          | N               | N          | N          |
+| localhost          | serro | 7cb73a267cb7bd5f | Y           | N           | N           | N           | N           | N         | N           | N             | N            | N         | N          | N               | N          | N          |
+		</programlisting>
+		</para>
+		<para>
+The above results show that the two user, ser and serro, have been created and granted the permissions needed to access the database.  Note that in the above example the permissions have been modified to deny access to these accounts from any system(%) other than local host.
+		</para>
+		<para>
+		<programlisting>
+mysql> connect ser;
+Connection id:    294
+Current database: ser
+
+mysql> show tables;
++-----------------+
+| Tables_in_ser   |
++-----------------+
+| acc             |
+| active_sessions |
+| aliases         |
+| config          |
+| event           |
+| grp             |
+| location        |
+| missed_calls    |
+| pending         |
+| phonebook       |
+| reserved        |
+| silo            |
+| subscriber      |
+| version         |
++-----------------+
+14 rows in set (0.00 sec)
+
+mysql> select * from subscriber;
+| phplib_id                        | USER_ID | PASSWORD | FIRST_NAME | LAST_NAME | PHONE        | EMAIL_ADDRESS              | DATETIME_CREATED    | DATETIME_MODIFIED   | confirmation                     | flag | SendNotification | Greeting | HA1                              | REALM      | ha1b                             | perms | allow_find | timezone            |
+| 4cefa7a4d3c8c2dbf6328520bd873a19 | admin     | heslo | first        | admin    | 557-8469     | admin@iptel.org      | 2002-12-02 19:20:41 | 2002-12-02 20:29:46 | 80e0f273b2067d40277b49ff842bb9e3 | o    |                  |          | c79a8f8f08596baa84bb02c88884426d | iptel.org | f322c94b8b2fbe557d43ab3ac9e05b3a | admin | 1          | America/Los_Angeles |
+		</programlisting>
+		</para>
+		<para>
+This last query shows that you have one user account defined and it has administrator privileges.
+		</para>
+		<para>
+We'll need to add another account to be the administrator for your realm, which we will do after the next section.
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>Configuration</title>
+	<section>
+		<title>Modify SER configuration</title>
+		<para>
+Now that we have a working MySQL database, we need to modify the configuration file for ser, located on a RedHat, installed in /etc/ser/ser.cfg.  The following changes need to be made:
+		</para>
+		<para>
+To enable support for the new MySQL database we need to load the appropriate module.  That is accomplished by uncomment this line:
+		</para>
+		<para>
+loadmodule "//usr/lib/ser/modules/mysql.so
+		</para>
+		<para>
+Next we need to set SER to use the database and write changes instead of just caching them in memory.  This is done by means of commenting this line:
+		</para>
+		<para>
+  modparam ("usrloc", "db_mode",  0)
+		</para>
+		<para>
+And uncomment this line:
+		</para>
+		<para>
+  modparam ("usrloc", "db_mode", 2)
+		</para>
+		<para>
+Note on db_modes:
+		</para>
+		<para>
+		<itemizedlist>
+			<listitem>
+			<para>
+Mode 0
+			</para>
+			<para>
+Disables writes to the database.  Contact information will not be preserved if the server is restarted.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+Mode 1
+			</para>
+			<para>
+Writes all changes to the database immediately. Contact information is saved to the database immediately.  This can slow the response to clients as they connect.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+Mode 2
+			</para>
+			<para>
+Periodically writes contact information to the database based in the in memory cache.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+We have the option of storing passwords in our database in plain text.  This allows for password recovery and makes the initial setup and testing easier.  To enable this feature uncomment these lines:
+		</para>
+		<para>
+  modparam (<quote>auth</quote>, <quote>calculate_ha1</quote>, yes)
+		</para>
+		<para>
+  modparam (<quote>auth</quote>, <quote>password_column</quote>, <quote>password</quote>)
+		</para>
+		<para>
+These lines work together.  The first tells SER to generate a hash based on username, password and realm.  The second tells SER where to look for the plain-text password in the database.
+		</para>
+		<para>
+Lastly we need to update the routing section to recognize our realm.
+		</para>
+		<para>
+Change (uri==?myself?) to (uri=~?mydomain.com?)
+		</para>
+		<para>
+Uncomment these lines and change all instances of iptel.org to mydomain.com
+		</para>
+		<para>
+		<programlisting>
+if (!www_authorize("mydomain.com", "subscriber")) {
+        www_challenge("mydomain.com", "0");
+        break;
+};
+		</programlisting>
+		</para>
+		<para>
+We're now ready to restart ser.  On RedHat use /etc/rc.d/init.d/ser restart
+		</para>
+	</section>
+	<section>
+		<title>Adding an admin for your realm</title>
+		<para>
+Now that we have a working database and ser is configured to use it, we need to add some users and at least one of them should have administrator privileges.  The administrator role becomes important if you want to use a web management tool such as serweb.
+		</para>
+		<para>
+Basic account manipulation can be performed with the serctl script, located in /usr/local/sbin.
+		</para>
+		<para>
+To add a user use these commands
+		</para>
+		<para>
+serctl add JoeUser qwerty joe@mydomain.com
+		</para>
+		<para>
+The system notify for <quote>Type MySQL Password</quote>, the default password is <quote>heslo</quote>
+		</para>
+		<para>
+To make JoeUser an administrator, we need to logon to MySQL and modify the database.
+		</para>
+		<para>
+		<programlisting>
+mysql> connect ser;
+
+mysql> update subscriber set perms=?admin? where USER_ID=?JoeUser?;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from subscriber;
+| 4cefa7a4d3c8c2dbf6328520bd873a19 | JoeUser     | qwerty |  |   |   | joe@mydomain.com   | 2002-12-02 19:20:41 | 2002-12-02 20:29:46 | 80e0f273b2067d40277b49ff842bb9e3 | o    |                  |          | c79a8f8f08596baa84bb02c88884426d | mydomain.com | f322c94b8b2fbe557d43ab3ac9e05b3a | admin | 1          | America/Los_Angeles |
+		</programlisting>
+		</para>
+		<para>
+The third from last field shows that Joe has been assigned admin privileges.
+		</para>
+		<para>
+At this point Joe can logon to our server, but since he is the only user, there is not much he can do.  We can now add additional users using the serctl script, or now is a good time to look at installing serweb, which will allow users to subscribe to our service.
+		</para>
+	</section>
+	<section>
+		<title>More on serctl</title>
+		<para>
+The script serctl can be used to manage users, access control lists, in memory contacts, and to monitor server health.  Executing serctl with no arguments will produce this output:
+		</para>
+		<para>
+		<programlisting>
+usage:
+           * subscribers *
+ serctl add &lt;username> &lt;password> &lt;email> .. add a new subscriber (*)
+ serctl passwd &lt;username> &lt;passwd> ......... change user's password (*)
+ serctl rm &lt;username> ...................... delete a user (*)
+ serctl mail &lt;username> .................... send an email to a user
+ serctl alias show [&lt;alias>] ............... show aliases
+ serctl alias rm &lt;alias> ................... remove an alias
+ serctl alias add &lt;alias> &lt;uri> ............ add an aliases
+
+           * access control lists *
+ serctl acl show [&lt;username>] .............. show user membership
+ serctl acl grant &lt;username> &lt;group> ....... grant user membership (*)
+ serctl acl revoke &lt;username> [&lt;group>] .... grant user membership(s) (*)
+
+           * usrloc *
+ serctl ul show [&lt;username>]................ show in-RAM online users
+ serctl ul rm &lt;username> ................... delete user's UsrLoc entries
+ serctl ul add &lt;username> &lt;uri> ............ introduce a permanent UrLoc entry
+ serctl showdb [&lt;username>] ................ show online users flushed in DB
+
+           * server health *
+ serctl monitor ............................ show internal status
+ serctl ps ................................. show runnig processes
+ serctl fifo ............................... send raw commands to FIFO
+
+   Commands labeled with (*) will prompt for a MySQL password.
+   If the variable PW is set, the password will not be prompted.
+
+     ACL privileges are: local ld int voicemail free-pstn
+		</programlisting>
+		</para>
+	</section>
+	<section>
+		<title>Adding and deleting users with serctl</title>
+		<para>
+User account management is performed with these commands:
+		</para>
+		<para>
+serctl add
+		</para>
+		<para>
+serctl password
+		</para>
+		<para>
+serctl rm
+		</para>
+		<para>
+The contents of the in memory cache can be managed with the ul argument.  Care must be taken to with these commands.  For example:
+		</para>
+		<para>
+serctl ul rm joe
+		</para>
+		<para>
+Will remove the current contact information about Joe from memory
+		</para>
+		<para>
+Whereas serctl rm joe will delete joe?s account.
+		</para>
+	</section>
+	<section>
+		<title>Examining in memory cache with serctl</title>
+		<para>
+The command <quote>serctl ul show</quote> will list any currently registered clients.  The output will look like this:
+		</para>
+		<para>
+		<programlisting>
+===Domain list===
+---Domain---
+name : 'location'
+size : 512
+table: 0x402ee6d0
+d_ll {
+    n    : 2
+    first: 0x402f1a74
+    last : 0x402f089c
+}
+lock : 0
+
+...Record(0x402f1a74)...
+domain: 'location'
+aor   : 'test'
+~~~Contact(0x402f708c)~~~
+domain : 'location'
+aor    : 'test'
+Contact: 'sip:test@192.168.0.100:5060'
+Expires: 2501
+q      :       0.00
+Call-ID: '000a8a93-d4660017-4571a6cd-658ac1bf@192.168.0.100'
+CSeq   : 101
+State  : CS_SYNC
+next   : (nil)
+prev   : (nil)
+~~~/Contact~~~~
+.../Record...
+...Record(0x402f089c)...
+domain: 'location'
+aor   : 'joe'
+~~~Contact(0x402f0924)~~~
+domain : 'location'
+aor    : 'joe'
+Contact: 'sip:192.168.0.101:14354'
+Expires: 432
+q      :       0.00
+Call-ID: 'e8d93059-e46e-4fd9-958b-ccb36a1cf245@192.168.0.101'
+CSeq   : 11
+State  : CS_SYNC
+next   : (nil)
+prev   : (nil)
+~~~/Contact~~~~
+.../Record...
+
+---/Domain---
+===/Domain list===
+		</programlisting>
+		</para>
+	</section>
+	<section>
+		<title>Examining server status</title>
+		<para>
+Two commands can be used to check the health of the server.  The first command serctl ps returns a list of all SER related processes, the ip address and the port they are listening on.  For example:
+		</para>
+		<para>
+		<programlisting>
+[root@gateway /root]# serctl ps
+0       31029   attendant
+1       31033   receiver child=0 sock=0 @ 127.0.0.1::5060
+2       31034   receiver child=1 sock=0 @ 127.0.0.1::5060
+3       31035   receiver child=2 sock=0 @ 127.0.0.1::5060
+4       31036   receiver child=3 sock=0 @ 127.0.0.1::5060
+5       31037   receiver child=0 sock=1 @ 192.168.0.1::5060
+6       31038   receiver child=1 sock=1 @ 192.168.0.1::5060
+7       31039   receiver child=2 sock=1 @ 192.168.0.1::5060
+8       31040   receiver child=3 sock=1 @ 192.168.0.1::5060
+9       31049   fifo server
+10      31072   timer
+		</programlisting>
+		</para>
+		<para>
+The second command, serctl monitor, shows the server version, uptime, pending and completed transactions, and the number of major category responses the server has sent.  Another example:
+		</para>
+		<para>
+		<programlisting>
+[cycle #: 1; if constant make sure server lives and fifo is on]
+Server: Sip EXpress router (0.8.10 (i386/linux)
+Now: Wed Dec  4 10:13:02 2002
+Up Since: Mon Dec  2 21:21:11 2002
+Up time: 132711 [sec]
+
+Transaction Statistics
+Current: 0 (2 waiting) Total: 46 (0 local)
+Replied localy: 37
+Completion status 6xx: 0, 5xx: 0, 4xx: 23, 3xx: 0,2xx: 22
+
+Stateless Server Statistics
+200: 101 202: 0 2xx: 0
+300: 0 301: 0 302: 0 3xx: 0
+400: 0 401: 0 403: 0 404: 132 407: 0 408: 0 483: 1 4xx: 0
+500: 0 5xx: 0
+6xx: 0
+xxx: 0
+failures: 0
+
+UsrLoc Stats
+Domain Registered Expired
+'location' 2 2
+		</programlisting>
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>Installing SERweb</title>
+	<para>
+The SERweb package can be downloaded from ftp://ftp.berlios.de/ser/latest/serweb
+	</para>
+	<para>
+The pages associated with SERweb provide a starting point to customize your SIP user account management tools.
+	</para>
+	<section>
+		<title>PHP configuration</title>
+		<para>
+Go to PHP configuration file in /etc/php.ini and change <quote>register_globals = Off</quote> to <quote>On</quote>
+		</para>
+	</section>
+	<section>
+		<title>Installing SERweb default configuration</title>
+		<para>
+If you are installing this package on a server that does not host any other web pages, you can simply extract the files to the document directory of your web server.  This presumes that you have a working Web Server.
+		</para>
+	</section>
+	<section>
+		<title>Installing SERweb custom file locations</title>
+		<para>
+In case your server performs multiple functions, and you want to just add the SERweb tools to an existing web site, we will need to make changes to a number of the php files.  The following examples are from an Apache 2.0 on RedHat.
+		</para>
+		<para>
+Unzip the files into a temporary directory, such as /root/serweb.  The directory will contain these files:
+		</para>
+		<para>
+		<programlisting>
+-rw-rw-r--    1 827      2020        18561 Sep 25 16:31 COPYING
+drwxr-xr-x    2 827      2020         1024 Nov 27 16:43 CVS
+-rw-rw-r--    1 827      2020          529 Sep 25 16:29 README
+drwxr-xr-x    7 827      2020         1024 Nov 27 22:24 html
+drwxr-xr-x    3 827      2020         2048 Sep 26 10:26 phplib
+		</programlisting>
+		</para>
+		<para>
+On the Linux RedHat Version 8 root directory on web server is /var/www/html/
+		</para>
+		<para>
+Move the html directory to the root of your web server:
+		</para>
+		<para>
+mv html /var/www/html/htdocs/serweb
+		</para>
+		<para>
+Move the phplib directory to your web server application directory:
+		</para>
+		<para>
+mv phplib /var/www/html/phplib
+		</para>
+		<para>
+Following files must be updated with this ?new? path to the libraries:
+		</para>
+		<para>
+./admin/prepend.php
+		</para>
+		<para>
+./user_interface/prepend.php
+		</para>
+		<para>
+./user_interface/reg/prepend.php
+		</para>
+		<para>
+For these files the variable: $_PHPLIB[<quote>libdir</quote>]  = <quote>../../phplib/</quote>; becomes $_PHPLIB[<quote>libdir</quote>]  = <quote>../../../phplib/</quote>;
+		</para>
+		<para>
+In the ./admin directory edit the files acl.php, index.php, and users.php will need their path to the forms library updated.  For this example, add ../ to the existing line
+		</para>
+		<para>
+:require <quote>../../../phplib/oohforms.inc</quote>;
+		</para>
+		<para>
+In the ./user_interface directory the following files need the same change:
+		</para>
+		<para>
+accounting.php, find_user.php, index.php, missed_calls.php, my_account.php, phonebook.php, send_im.php, notification_subscription.php
+		</para>
+		<para>
+Next these files in ./user_interface/reg need the same change, with an additional ../:
+		</para>
+		<para>
+Finish.php, get_pass.php, index.php
+		</para>
+		<para>
+The last changes occur in the config.php file to provide the location for graphic files, style sheets and time zone information.  Update the following variables:
+		</para>
+		<para>
+$this->root_path=<quote>/serweb/</quote>;
+		</para>
+		<para>
+$this->fifo_server = <quote>/tmp/ser_fifo</quote>;
+		</para>
+		<para>
+$this->zonetab_file =   <quote>/usr/share/zoneinfo/zone.tab</quote>;
+		</para>
+		<para>
+//TZ zone descriptions file, usually: /usr/share/zoneinfo/zone.tab
+		</para>
+		<para>
+Find two variables: <quote> $this->mail_forgot_pass=</quote>,<quote> $this->mail_register=</quote> and change line http://oook/~iptel/user_interface/reg/confirmation.php?nr=#confirm#\n\n
+		</para>
+		<para>
+with line
+		</para>
+		<para>
+http://<quote>.$_SERVER['HTTP_HOST'].</quote>/htdocs/serweb/user_interface/reg/confirmation.php?nr=#confirm#\n\n
+		</para>
+		<para>
+This will insure sending a registration feedback mail to SIP server using its IP address
+		</para>
+	</section>
+	<section>
+		<title>Modifying SERweb configuration general</title>
+		<para>
+We need to update /usr/local/apache/htdocs/serweb/config.php to represent our realm.  The following variables need to be changed to our domain:
+		</para>
+		<para>
+$this->realm=<quote>mydomain.com</quote>;
+		</para>
+		<para>
+$this->domainname=<quote> mydomain.com</quote>;
+		</para>
+		<para>
+$this->web_contact=<quote>sip:JoeUser@ mydomain.com</quote>;
+		</para>
+		<para>
+//address of pseudo sender
+		</para>
+		<para>
+$this->default_domain=<quote> mydomain.com</quote>;
+		</para>
+		<para>
+$this->mail_header_from=<quote>Registration@ mydomain.com</quote>;
+		</para>
+		<para>
+Additionally we will want to modify the section for Terms and Conditions, either replacing it with appropriate language for our services, or at least replacing iptel.org with our domain information.
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>Issues and Limitation</title>
+	<para>
+Since one of the design goals behind SIP is to decentralize the intelligence in communications handling, a basic tenant is that SIP clients need to be able to communicate directly with each other.  The problem is that many clients find themselves either behind a firewall or in a NAT fronted address space.  When a client registers with the SIP server, it tells the server what it is using for an IP address, and that address may not be accessible to the public.
+	</para>
+	<section>
+		<title>More on NAT</title>
+		<para>
+There are a couple of ways that we can overcome the problem that NAT introduces.  Some SIP client providers are building in options into their products that allow the user to identify the IP address that their phone will appear as to the public.  This is a nice simple approach, but presumes that the person installing the client knows what that IP address is, and that it doesn?t change.  Cisco has built this feature into their 79XX series SIP phones.
+		</para>
+		<para>
+A second solution that is working its way through the standards process is called <quote>Simple Traversal of UDP through NAT</quote>, or STUN.  A STUN equipped client is configured to send a who-am-I packet to a known server on the public network.  That server will respond with the IP address that the client appears to be communicating from, and the client can then use that address to register with the SIP server.  Phones that leverage STUN include:  Snom 100, kphone, and sipc .
+		</para>
+	</section>
+	<section>
+		<title>Firewalls</title>
+		<para>
+SIP clients also present an interesting challenge to configuring a firewall.  During registration the SIP client will be assigned a UDP port in the range of 16384 to 32768.  Our firewall administrators will not happily open up all of those ports to all of the internal systems, on the chance that a SIP connection may be needed.
+		</para>
+		<para>
+This is where the concept of a Firewall Control Protocol, or FCP, comes into play.  The design idea is that when a SIP client registers, a FCP agent, or server if you prefer, will dynamically insert a new rule into the firewall policy to permit that client to participate in SIP conversations.
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>Diagnostics and tools</title>
+	<para>
+Detailed information about the communications between clients and the SIP server is needed to isolate problems.  Two tools that can be used to gather such information are sipsak and ngrep.
+	</para>
+	<section>
+		<title>NGrep</title>
+		<para>
+Ngrep is a capable of listening in on network traffic and filtering it in much the same way as grep can locate patterns in files.  To monitor the communications between a client, joe, and the server the following command would be run on the server:
+		</para>
+		<para>
+ngrep  -n 5060 -d eth0 joe
+		</para>
+		<para>
+Since SIP communications are ASCII based, all events such as REGISTER, INVITE, SUBSCRIBE, etc. are captured.  The output of ngrep can identify problems with SIP addresses, or client identity.
+		</para>
+		<para>
+Ngrep should be part of most modern distributions, or can be downloaded from <ulink url="http://sourceforge.net/projects/ngrep/"></ulink>
+		</para>
+	</section>
+	<section>
+		<title>Sipsak</title>
+		<para>
+Sipsak can be used to determine if your server is responding to requests, and provide information on how your server would route SIP connections.  Sipsak and basic documentation on its use can be downloaded from <ulink url="http://sipsak.berlios.de"></ulink>
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>Client Configuration</title>
+	<section>
+		<title>Microsoft Messenger 4.6</title>
+		<para>
+Microsoft Messenger 4.6 can be configured as a SIP client by selecting Tools\Options\Accounts and selecting Communications Service for the account sign in.  Clear the check boxes for .NET Passport and Exchange Account.  Check the Communications Service account and enter your SIP account name.  Click on Advanced and select Configure settings.  Enter the IP address of your server, or hostname and choose UDP.
+		</para>
+	</section>
+	<section>
+		<title>Cisco 79XX phones</title>
+		<para>
+Cisco has complete documentation on how to convert a 79XX series phone to use SIP.  The basic steps are:
+		</para>
+		<section>
+			<title>Configure a DHCP service that provides</title>
+			<para>
+			<itemizedlist>
+				<listitem>
+				<para>
+				IP address
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				Subnet mask
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				Default gateway
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				DNS server addresses
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				TFTP server address
+				</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>On the TFTP server load these files</title>
+			<para>
+			<itemizedlist>
+				<listitem>
+				<para>
+				OS79XX - Identifies which firmware the phone should load with no extension. Example: P0S3-04-1-00
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				P0S3-04-1-00.bin - The firmware image
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				SIPDefault.cnf - Site wide configuration options
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				SIPmacaddress.cnf - Phone specific settings, including logon name and password.  Example: SIP000A8A93D466.cnf
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+				RINGLIST.DAT, ringer1.pcm, ringer2.pcm - ring tones
+				</para>
+				</listitem>
+			</itemizedlist>
+			</para>
+			<para>
+Each time the phone is powered on it will tftp download OS79XX and determine if it needs a firmware update.  If no update is needed the next step is to download SIPDefault.cnf, SIPmacaddress.cnf, and optionally a dialplan, ringlist and ring tones.
+			</para>
+			<para>
+ Calls can be placed to other registered SIP clients, or to a PSTN number provided there is PSTN gateway identified in the SER configuration file.
+			</para>
+		</section>
+	</section>
+	</chapter>
+	<chapter>
+	<title>PSTN connectivity</title>
+	<para>
+Passing calls that originate from a SIP client to the PSTN is a simple matter of permitting SER to relay the session to an established PSTN gateway.  Calls that start out on the PSTN and need to be directed to a SIP client requires that the PSTN gateway be aware of where to direct the call.
+	</para>
+	<section>
+		<title>Cisco Dial-peer</title>
+		<para>
+The Cisco gateway needs to have a PSTN interface, such as FXO ports or a VXB-2TE1+ card, and depending on the model of Cisco device an upgraded IOS revision.  The dial-peer itself is simple:
+		</para>
+		<para>
+dial-peer voice 999 voip
+		</para>
+		<para>
+destination-pattern 555999.      **  Associate the number range 555-9990 to 9999 with our SIP server
+		</para>
+		<para>
+session protocol sipv2           **  Set this dial-peer to use SIP instead of Cisco protocols
+		</para>
+		<para>
+session target sip-server        **  Send the call to our SIP server.  See SIP-UA below
+		</para>
+		<para>
+codec g711ulaw                   **  Set the default codec to 711-Ulaw (common codec between clients)
+		</para>
+		<para>
+! 
+		</para>
+		<para>
+sip-ua
+		</para>
+		<para>
+sip-server ipv4:192.168.0.1      **  IP address of our SIP server
+		</para>
+	</section>
+	<section>
+		<title>Relaying PSTN in ser.cfg</title>
+		<para>
+The following is an extremely simple sample of how to relay a call from a SIP client to the PSTN
+		</para>
+		<para>
+		<programlisting>
+# attempt handoff to PSTN
+                 if (uri=~<quote>^sip:9[0-9]*@mydomain.com</quote>) {  ##  This assumes that the caller is
+                        log(<quote>Forwarding to PSTN\n</quote>);      ##  registered in our realm
+                        t_relay_to( <quote>192.168.0.2</quote>, <quote>5060</quote>);  ##  Our Cisco router
+                        break;
+                 };
+		</programlisting>
+		</para>
+	</section>
+	</chapter>
+	<chapter>
+	<title>&sip; Status Codes</title>
+	<para>
+The following are the SIP status codes as of RFC3312
+	</para>
+
+	<table>
+	<tgroup cols="2">
+	<tbody>
+	<row>
+		<entry>
+1XX-2XX
+		</entry>
+		<entry>
+Informational
+		</entry>
+	</row>
+	<row>
+		<entry>
+100 
+		</entry>
+		<entry>
+Trying
+		</entry>
+	</row>
+	<row>
+		<entry>
+180 
+		</entry>
+		<entry>
+Ringing
+		</entry>
+	</row>
+	<row>
+		<entry>
+181 
+		</entry>
+		<entry>
+Call Is Being Forwarded
+		</entry>
+	</row>
+	<row>
+		<entry>
+182 
+		</entry>
+		<entry>
+Queued
+		</entry>
+	</row>
+	<row>
+		<entry>
+183 
+		</entry>
+		<entry>
+Session Progress
+		</entry>
+	</row>
+	<row>
+		<entry>
+200 
+		</entry>
+		<entry>
+OK
+		</entry>
+	</row>
+	<row>
+		<entry>
+202 
+		</entry>
+		<entry>
+OK
+		</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+
+	<table>
+	<tgroup cols='2'>
+	<tbody>
+	<row>
+		<entry>
+3XX 
+		</entry>
+		<entry>
+Redirection
+		</entry>
+	</row>
+	<row>
+		<entry>
+300 
+		</entry>
+		<entry>
+Multiple Choices
+		</entry>
+	</row>
+	<row>
+		<entry>
+301 
+		</entry>
+		<entry>
+Moved Permanently
+		</entry>
+	</row>
+	<row>
+		<entry>
+303 
+		</entry>
+		<entry>
+See Other
+		</entry>
+	</row>
+	<row>
+		<entry>
+305 
+		</entry>
+		<entry>
+Use Proxy
+		</entry>
+	</row>
+	<row>
+		<entry>
+380 
+		</entry>
+		<entry>
+Alternative Service
+		</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+
+	<table>
+	<tgroup cols='2'>
+	<tbody>
+	<row>
+		<entry>
+4XX 
+		</entry>
+		<entry>
+Client-Error
+		</entry>
+	</row>
+	<row>
+		<entry>
+400 
+		</entry>
+		<entry>
+Bad Request
+		</entry>
+	</row>
+	<row>
+		<entry>
+401 
+		</entry>
+		<entry>
+Unauthorized
+		</entry>
+	</row>
+	<row>
+		<entry>
+402 
+		</entry>
+		<entry>
+Payment Required
+		</entry>
+	</row>
+	<row>
+		<entry>
+403 
+		</entry>
+		<entry>
+Forbidden
+		</entry>
+	</row>
+	<row>
+		<entry>
+404 
+		</entry>
+		<entry>
+Not Found
+		</entry>
+	</row>
+	<row>
+		<entry>
+405 
+		</entry>
+		<entry>
+Method Not Allowed
+		</entry>
+	</row>
+	<row>
+		<entry>
+406 
+		</entry>
+		<entry>
+Not Acceptable
+		</entry>
+	</row>
+	<row>
+		<entry>
+407 
+		</entry>
+		<entry>
+Proxy Authentication Required
+		</entry>
+	</row>
+	<row>
+		<entry>
+408 
+		</entry>
+		<entry>
+Request Timeout
+		</entry>
+	</row>
+	<row>
+		<entry>
+409 
+		</entry>
+		<entry>
+Conflict
+		</entry>
+	</row>
+	<row>
+		<entry>
+410 
+		</entry>
+		<entry>
+Gone
+		</entry>
+	</row>
+	<row>
+		<entry>
+411 
+		</entry>
+		<entry>
+Length Required
+		</entry>
+	</row>
+	<row>
+		<entry>
+413 
+		</entry>
+		<entry>
+Request Entity Too Large
+		</entry>
+	</row>
+	<row>
+		<entry>
+414 
+		</entry>
+		<entry>
+Request-URI Too Large
+		</entry>
+	</row>
+	<row>
+		<entry>
+415 
+		</entry>
+		<entry>
+Unsupported Media Type
+		</entry>
+	</row>
+	<row>
+		<entry>
+420 
+		</entry>
+		<entry>
+Bad Extension
+		</entry>
+	</row>
+	<row>
+		<entry>
+480 
+		</entry>
+		<entry>
+Temporarily not available
+		</entry>
+	</row>
+	<row>
+		<entry>
+481 
+		</entry>
+		<entry>
+Call Leg/Transaction does not exist
+		</entry>
+	</row>
+	<row>
+		<entry>
+482 
+		</entry>
+		<entry>
+Loop Detected
+		</entry>
+	</row>
+	<row>
+		<entry>
+483 
+		</entry>
+		<entry>
+Too Many Hops
+		</entry>
+	</row>
+	<row>
+		<entry>
+484 
+		</entry>
+		<entry>
+Address Incomplete
+		</entry>
+	</row>
+	<row>
+		<entry>
+485 
+		</entry>
+		<entry>
+Ambiguous
+		</entry>
+	</row>
+	<row>
+		<entry>
+486 
+		</entry>
+		<entry>
+Busy Here
+		</entry>
+	</row>
+	<row>
+		<entry>
+487 
+		</entry>
+		<entry>
+Request Terminated
+		</entry>
+	</row>
+	<row>
+		<entry>
+488 
+		</entry>
+		<entry>
+Not Acceptable Here
+		</entry>
+	</row>
+	<row>
+		<entry>
+489 
+		</entry>
+		<entry>
+Bad Event
+		</entry>
+	</row>
+	<row>
+		<entry>
+491 
+		</entry>
+		<entry>
+Request Pending
+		</entry>
+	</row>
+	<row>
+		<entry>
+493 
+		</entry>
+		<entry>
+Undecipherable
+		</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+
+	<table>
+	<tgroup cols='2'>
+	<tbody>
+	<row>
+		<entry>
+5XX  
+		</entry>
+		<entry>
+Server-Error
+		</entry>
+	</row>
+	<row>
+		<entry>
+500 
+		</entry>
+		<entry>
+Internal Server Error
+		</entry>
+	</row>
+	<row>
+		<entry>
+501 
+		</entry>
+		<entry>
+Not Implemented
+		</entry>
+	</row>
+	<row>
+		<entry>
+502 
+		</entry>
+		<entry>
+Bad Gateway
+		</entry>
+	</row>
+	<row>
+		<entry>
+503 
+		</entry>
+		<entry>
+Service Unavailable
+		</entry>
+	</row>
+	<row>
+		<entry>
+504 
+		</entry>
+		<entry>
+Gateway Time-out
+		</entry>
+	</row>
+	<row>
+		<entry>
+505 
+		</entry>
+		<entry>
+SIP Version not supported
+		</entry>
+	</row>
+	<row>
+		<entry>
+513 
+		</entry>
+		<entry>
+Message Too Large
+		</entry>
+	</row>
+	<row>
+		<entry>
+580 
+		</entry>
+		<entry>
+Precondition Failure
+		</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+
+	<table>
+	<tgroup cols='2'>
+	<tbody>
+	<row>
+		<entry>
+6XX  
+		</entry>
+		<entry>
+Global-Failure
+		</entry>
+	</row>
+	<row>
+		<entry>
+600 
+		</entry>
+		<entry>
+Busy Everywhere
+		</entry>
+	</row>
+	<row>
+		<entry>
+603 
+		</entry>
+		<entry>
+Decline
+		</entry>
+	</row>
+	<row>
+		<entry>
+604 
+		</entry>
+		<entry>
+Does Note Exist Anywhere
+		</entry>
+	</row>
+	<row>
+		<entry>
+606 
+		</entry>
+		<entry>
+Not Acceptable
+		</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	</chapter>
+</book>
