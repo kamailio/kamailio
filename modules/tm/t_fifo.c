@@ -633,8 +633,9 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 						break;
 			}
 			if (hdr) {
+				trim_len( foo.len, foo.s, hdr->body);
 				buf=add2buf( buf, end, ha->title.s, ha->title.len,
-					hdr->body.s , hdr->body.len);
+					foo.s , foo.len);
 				if (!buf)
 					goto overflow_err;
 			}
