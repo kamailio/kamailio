@@ -118,7 +118,7 @@
 	    <para>
 		<application moreinfo="none">ser</application> can be also
 		used with contributed applications. Currently, 
-		<application moreinfo="none">sereb</application>, a
+		<application moreinfo="none">serweb</application>, a
 		<application moreinfo="none">ser</application> web interface
 		and <application moreinfo="none">SIPSak</application>
 		diagnostic tools are available. Visit our site, 
@@ -159,7 +159,7 @@
 		Other extensions are underway: presence server, firewall control and more.
 	    </para>
 	    <para>
-		ser has been carefuly engineered with the following design objectives in mind:
+		ser has been carefully engineered with the following design objectives in mind:
 		<itemizedlist>
 		    <listitem>
 			<para>
@@ -181,7 +181,7 @@ to serve call signaling Bay Area population.
 			    configure numerous parameters and introduce additional logic. For example, 
 			    the scripts can determine for which destinations record routing should be 
 			    performed, who will be authenticated, which transactions should be processed 
-			    statefuly, which requests will be proxied or redirected, etc.
+			    statefully, which requests will be proxied or redirected, etc.
 			</para>
 
 		    </listitem>
@@ -218,7 +218,7 @@ to serve call signaling Bay Area population.
 	    <para>
 		This section illustrates the most frequent uses of SIP. In all these scenarios, 
 		the SIP Express Router (SER) can be easily deployed as the glue connecting all 
-		SIP components together, be it softphones, hardphones, PSTN gateways or any other 
+		SIP components together, be it soft-phones, hard-phones, PSTN gateways or any other 
 		SIP-compliant devices.
 	    </para>
 	    <section>
@@ -418,9 +418,9 @@ to serve call signaling Bay Area population.
 	    <example>
 		<title>Stateless versus stateful forwarding</title>
 		<programlisting format="linespecific">
-# if requests URI is nummerical and starts with
+# if requests URI is numerical and starts with
 # zero, forward statelessly, otherwise forward 
-# statefuly
+# statefully
 
 if (uri=~"^sip:0[0-9]*@iptel.org) {
     # statelessly
@@ -444,7 +444,7 @@ if (uri=~"^sip:0[0-9]*@iptel.org) {
 		<command>rewritehostport</command>, 
 		<command>rewriteuser</command>, 
 		<command>rewriteuserpass</command> and 
-		<command>rewriteport</command>. All these comands
+		<command>rewriteport</command>. All these commands
 		rewrite request URI or a part of it. When later in a ser script
 		a forwarding command is encountered, the command forwards
 		the request to address in the rewritten URI.
@@ -545,7 +545,7 @@ if (method=="REGISTER") {
 		    in conditional expressions. 
 		</para>
 		<para>
-		    Operands, which ser understands are the folowing:
+		    Operands, which ser understands are the following:
 		    <itemizedlist>
 			<listitem>
 			    <para>
@@ -618,7 +618,7 @@ if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 # ...
 
 # and this condition is true if a request came
-# from an IP addres (useful for example for
+# from an IP address (useful for example for
 # authentication by IP address if digest is not
 # supported) AND the request method is INVITE
 
@@ -652,7 +652,7 @@ if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 		Many modules also allow users to change the way how they
 		work using predefined parameters. For example, the
 		transaction management module tm allows administrators
-		to redefine values of retranmission parameters.
+		to redefine values of retransmission parameters.
 	    </para>
 	    <example>
 		<title>Using Modules</title>
@@ -713,7 +713,7 @@ t_relay_to("192.168.99.100", "5060");
 	<section>
 	    <title>Writing Scripts</title>
 	    <para>
-		This section demostrates in easy-to-undestand examples
+		This section demonstrates in easy-to-understand examples
 		how to configure server's behaviour using the embedded
 		request routing language. All scripts follow the ser language 
 		syntax, which dictates the following block ordering:
@@ -742,7 +742,7 @@ t_relay_to("192.168.99.100", "5060");
 		    </listitem>
 		    <listitem>
 			<para>
-			    optionaly, if modules supporting reply
+			    optionally, if modules supporting reply
 			    processing (currently only TM) are loaded,
 			    one or more reply_route blocks containing
 			    logic triggered by received replies
@@ -784,8 +784,8 @@ t_relay_to("192.168.99.100", "5060");
 		</para>
 		<para>
 		    <command moreinfo="none">t_reply</command> generates
-		    a reply for a request. It generates the reply statefuly,
-		    i.e., it is kept for future retranmissions in memory.
+		    a reply for a request. It generates the reply statefully,
+		    i.e., it is kept for future retransmissions in memory.
 		</para>
 		<example>
 		    <title>Stateful UA</title>
@@ -796,7 +796,7 @@ t_relay_to("192.168.99.100", "5060");
 # this example shows usage of ser as user agent
 # server which does some functionality (in this
 # example, 'log' is used to print a notification
-# on a new transaction) and behaves statefuly
+# on a new transaction) and behaves statefully
 # (e.g., it retransmits replies on request
 # retransmissions)
 
@@ -977,7 +977,7 @@ route{
 # $Id$
 #
 # this example shows use of ser as stateless redirect server
-# which rewrites URIs using an exernal utility
+# which rewrites URIs using an external utility
 #
 
 # ----------- global configuration parameters ------------------------
@@ -1044,7 +1044,7 @@ route{
 		    <programlisting format="linespecific">
 #
 # example script showing both types of forking;
-# incoming message is foked in parallel to
+# incoming message is forked in parallel to
 # 'nobody' and 'parallel', if no positive reply
 # appears with final_response timer, nonsense
 # is retried (serial forking); than, destination
@@ -1123,7 +1123,7 @@ reply_route[2] {
 	easy creation of new services. Though the modular architecture
 	with module plug-ins allows third parties to introduce new,
 	independent code to the server, we have been seeking 
-	an easier method. We eventually created an extremelly
+	an easier method. We eventually created an extremely
 	simple and powerful interface which perfectly integrates
 	    with textual <acronym>UN*X</acronym> tools: a FIFO server.	    
 	</para>
@@ -1141,7 +1141,7 @@ reply_route[2] {
 	</para>
 	<para>
 	    Currently, the FIFO is mostly used for querying server's
-	    state by monitoring applications. Additionaly, we
+	    state by monitoring applications. Additionally, we
 	    frequently use TM module's ability to initiate new 
 	    transactions. This is best illustrated in a PHP
 	    example in 
@@ -1155,7 +1155,7 @@ reply_route[2] {
 	</para>
 	<para>
 	    Other application leveraging the FIFO application server
-	    is <application moreinfo="none">sereb</application>,
+	    is <application moreinfo="none">serweb</application>,
 	    <application moreinfo="none">ser</application>'s
 	    web interface. It speaks to the server via FIFO to
 	    query, delete and add user contacts.
@@ -1167,7 +1167,7 @@ reply_route[2] {
 	<title>Operation, Diagnostics and Troubleshooting</title>
 	<para>Diagnostics in distributed open networks is not an easy job.
 	    It is made difficult by amount of load put on a server,
-	    differencies between implementations, lower-layer errors,
+	    differences between implementations, lower-layer errors,
 	    device failures and other factors. We share some of our
 	    practices in this chapter, which turned to be useful during
 	    operation of our public SIP site. The operational guidelines
@@ -1266,7 +1266,7 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells: pid=31604 req_src_ip=153.96.1
 			A request may pass any number of proxy servers on
 			its path to its destination. If an error occurs,
 			it may be quite difficult to learn in which of
-			the servers in the chain it orriginated and what
+			the servers in the chain it originated and what
 			was its cause. <application moreinfo="none">ser
 			</application> does its best and displays extensive
 			diagnostics information in SIP replies. This
@@ -1310,7 +1310,7 @@ Warning: 392 127.0.0.1:5060 "Noisy feedback tells: pid=31604 req_src_ip=153.96.1
 			</ulink>.
 		    </para>
 		    <example>
-			<title>Use of SIPSak for Learing SIP Path</title>
+			<title>Use of SIPSak for Learning SIP Path</title>
 			<programlisting format="linespecific">
 [jiri@bat sipsak]$ ./sipsak -T -s sip:7271@iptel.org
 warning: IP extract from warning activated to be more informational
@@ -1422,7 +1422,7 @@ warning: IP extract from warning activated to be more informational
 			SIP standard leverages DNS. Administrators of
 			<application moreinfo="none">ser</application> should
 			be aware of impact of DNS on server's operation.
-			Server's attempt to resolve an unresolveable address
+			Server's attempt to resolve an unresolvable address
 			may block a server process in terms of seconds. To be
 			safer that the server doesn't stop responding
 			due to being blocked by DNS resolving, we recommend
@@ -1445,7 +1445,7 @@ warning: IP extract from warning activated to be more informational
 			    </listitem>
 			    <listitem>
 				<para>
-				    Process transactions statefuly if memory
+				    Process transactions statefully if memory
 				    allows. That helps to absorb retransmissions
 				    without having to resolve DNS for each of
 				    them.
@@ -1628,7 +1628,7 @@ P-hint: OUTBOUND.			    </programlisting>
 		</listitem>
 		<listitem>
 		    <para>
-			<varname>server_signature</varname> - Should localy-generated messages include server's signature?
+			<varname>server_signature</varname> - Should locally-generated messages include server's signature?
 			By default yes, it is good for trouble-shooting.
 		    </para>
 		</listitem>
@@ -2021,7 +2021,7 @@ if (...) {
 		</listitem>
 		<listitem>
 		    <para>
-			<emphasis>-i fifo-path</emphasis> - Creates a fifo, usefull for monitoring ser status.
+			<emphasis>-i fifo-path</emphasis> - Creates a fifo, useful for monitoring ser status.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -2062,7 +2062,7 @@ sc perm &lt;user&gt; &lt;uri&gt; ............... introduce a permanent UrLoc ent
 
 &lt; server health &gt;
 sc monitor ......................... show internal status
-sc ps .............................. show runnig processes 
+sc ps .............................. show running processes 
 sc fifo ............................ send raw commands to FIFO
 
 commands labeled with (*) will prompt for a MySQL password
@@ -2078,7 +2078,7 @@ ACL privileges are: local ld int voicemail free-pstn
 
 		Prior to using the utility, you have to first 
 		set the environment variable <constant>SIP_DOMAIN</constant>
-		to localy appropriate value (e.g., "foo.com"). It is
+		to locally appropriate value (e.g., "foo.com"). It is
 		needed for calculation of user credentials, which depend
 		on SIP digest realm.
 	        </para>
@@ -2150,7 +2150,7 @@ Domain Registered Expired
 			    <emphasis>
 				exec
 			    </emphasis>
-			    -- execution of shell programms
+			    -- execution of shell programs
 			</para>
 		    </listitem>
 		    <listitem>
