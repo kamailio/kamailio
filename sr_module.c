@@ -133,7 +133,7 @@ int load_module(char* path)
 	struct module_exports* exp;
 	struct sr_module* t;
 	
-	handle=dlopen(path, RTLD_NOW | RTLD_GLOBAL); /* resolve all symbols now */
+	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
 	if (handle==0){
 		LOG(L_ERR, "ERROR: load_module: could not open module <%s>: %s\n",
 					path, dlerror() );
