@@ -61,11 +61,6 @@ char* trim_trailing(char* _s);
 char* trim(char* _s);
 
 
-/*
- * Eat linear white space
- */
-char* eat_lws(char* _b);
-
 
 /*
  * Substitute \r or \n with spaces
