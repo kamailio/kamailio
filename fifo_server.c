@@ -295,7 +295,7 @@ void fifo_reply( char *reply_fifo, char *reply_fmt, ... )
 	file_handle=open_reply_pipe(reply_fifo);
 	if (file_handle==0) {
 		LOG(L_ERR, "ERROR: fifo_reply: no reply pipe %s\n",
-			fifo);
+			reply_fifo);
 		return;
 	}
 retry:
