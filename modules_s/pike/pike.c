@@ -16,7 +16,8 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../mem/shm_mem.h"
-#include "tree234.h"
+#include "../../timer.h"
+#include "ip_tree.h"
 #include "pike_funcs.h"
 
 
@@ -27,14 +28,14 @@ static int pike_exit(void);
 
 
 /* parameters */
-int time_unit = 60;
-int max_value = 500;
-int timeout   = 2*60;
+int time_unit = 20;
+int max_reqs  = 30;
+int timeout   = 120;
 
 /* global variables */
-tree234                 *btrees[IP_TYPES];
+struct ip_node          *tree;
 pike_lock               *locks;
-struct pike_timer_head  *timers;
+struct pike_timer_head  *timer;
 
 
 
@@ -56,9 +57,9 @@ struct module_exports exports= {
 	1,
 
 	(char*[]) {   /* Module parameter names */
-		"time_unit",
-		"max_value",
-		"timeout"
+		"sampling_time_unit",
+		"reqs_density_per_unit",
+		"removel_latency"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		INT_PARAM,
@@ -67,7 +68,7 @@ struct module_exports exports= {
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&time_unit,
-		&max_value,
+		&max_reqs,
 		&timeout
 	},
 	3,      /* Number of module paramers */
@@ -90,22 +91,25 @@ static int pike_init(void)
 		LOG(L_ERR,"ERROR:pike_init: create sem failed!\n");
 		goto error;
 	}
-	/* init the B trees - ipv4 and ipv6 */
-	btrees[IPv4] = newtree234(cmp_ipv4);
-	btrees[IPv6] = newtree234(cmp_ipv6);
+	/* init the IP tree */
+	tree = init_ip_tree(max_reqs);
+	if (!tree) {
+		LOG(L_ERR,"ERROR:pike_init: ip_tree creation failed!\n");
+		goto error;
+	}
 	/* setting up timers */
-	timers = (struct pike_timer_head*)shm_malloc(IP_TYPES
-		*sizeof(struct pike_timer_head));
-	if (!timers) {
+	timer = (struct pike_timer_head*)
+		shm_malloc(sizeof(struct pike_timer_head));
+	if (!timer) {
 		LOG(L_ERR,"ERROR:pike_init: no free shm mem\n");
 		goto error;
 	}
-	memset(timers,0,IP_TYPES*sizeof(struct pike_timer_head));
-	timers[IPv4].sem = locks+2;
-	timers[IPv6].sem = locks+3;
+	memset(timer,0,sizeof(struct pike_timer_head));
+	timer->sem = &(locks[TIMER_LOCK]);
 	/* registering timeing functions  */
 	register_timer( clean_routine , 0, 1 );
 	register_timer( swap_routine , 0, time_unit );
+
 
 	return 0;
 error:
@@ -119,13 +123,11 @@ error:
 static int pike_exit(void)
 {
 	/* empty the timer list*/
-	lock( timers[IPv4].sem );
-	lock( timers[IPv6].sem );
-	/* destroy the B trees - ipv4 and ipv6 */
-	lock( &locks[IPv4] );
-	lock( &locks[IPv6] );
-	freetree234(btrees[IPv4],free_elem);
-	freetree234(btrees[IPv6],free_elem);
+	lock( timer->sem );
+	// empty here the list
+	/* destroy the IP tree */
+	lock( &locks[TREE_LOCK] );
+	destroy_ip_tree(tree);
 	/* destroy semaphore */
 	destroy_semaphores(locks);
 	return 0;

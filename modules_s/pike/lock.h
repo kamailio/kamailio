@@ -13,7 +13,7 @@
 #ifdef FAST_LOCK
 #define pike_lock fl_lock_t
 #else
-typedef typedef struct {
+typedef struct {
 	int semaphore_set;
 	int semaphore_index;
 } pike_lock;

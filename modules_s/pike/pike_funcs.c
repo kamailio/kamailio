@@ -4,132 +4,115 @@
 #include <stdlib.h>
 
 #include "../../mem/shm_mem.h"
+#include "../../timer.h"
 #include "pike_funcs.h"
 
 
 
 
-void free_elem(void *elem)
+void print_timer_list(struct pike_timer_head *pth)
 {
-	if (elem)
-		shm_free(elem);
+	struct pike_timer_link *tl;
+
+	tl = pth->first;
+	DBG("--->");
+	while (tl) {
+		DBG(" [%x][%d]",((struct ip_node*)tl)->byte, tl->timeout);
+		tl = tl->next;
+	}
+	DBG("\n");
 }
-
-
-
-
-int cmp_ipv4(void* ip41, void *ip42)
-{
-	if (!ip41 || !ip42)
-		return 0;
-	if (((struct ip_v4*)ip41)->ip==((struct ip_v4*)ip42)->ip)
-		return 0;
-	else if (((struct ip_v4*)ip41)->ip>((struct ip_v4*)ip42)->ip)
-		return 1;
-	return -1;
-}
-
-
-
-
-int cmp_ipv6(void* ip61, void *ip62)
-{
-	if (!ip61 || !ip62)
-		return 0;
-	return  (memcmp( ((struct ip_v6*)ip61)->ip, ((struct ip_v6*)ip62)->ip, 4));
-}
-
 
 
 
 int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 {
-	struct ip_v4 *ip4, *old_ip4;
-	//struct ip_v6 *ip6, *old_ip6;
-	int exceed;
+	struct ip_node *node;
+	struct ip_node *father;
+	char   flag;
+	int    ret;
 
-	exceed = 0;
+	lock( &locks[TREE_LOCK] );
+	node = add_node( tree, msg->src_ip.u.addr,msg->src_ip.len,&father,&flag);
 
-	if (msg->src_ip.af==AF_INET) {
-		/* we have an IPV4 address */
-		ip4 = (struct ip_v4*)shm_malloc(sizeof(struct ip_v4));
-		if (!ip4) {
-			LOG(L_ERR,"ERROR:pike_check_req: cannot allocated sh mem!\n");
-			goto error;
-		}
-		memset(ip4,0,sizeof(struct ip_v4));
-		ip4->ip = msg->src_ip.u.addr32[0];
-		ip4->counter[0] = 1;
-		lock(&locks[IPv4]);
-		if ((old_ip4=add234(btrees[IPv4],ip4))!=ip4) {
-			/* the src ip already in tree */
-			exceed=(++old_ip4->counter[0]>=(unsigned short)max_value);
-			unlock(&locks[IPv4]);
-			/* update the time out */
-			lock(timers[IPv4].sem);
-			remove_from_timer(&timers[IPv4],&(old_ip4->timer));
-			old_ip4->timer.timeout = get_ticks() + timeout;
-			append_to_timer(&timers[IPv4],&(old_ip4->timer));
-			unlock(timers[IPv4].sem);
-			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d] "
-				"exceed=%d\n",old_ip4->ip,old_ip4->counter[1],
-				old_ip4->counter[0],exceed);
-			shm_free(ip4);
-			if (exceed) {
-				LOG(L_NOTICE,"INFO: src IP v4 [%x]exceeded!!\n",old_ip4->ip);
-				goto overflow;
-			}
-		} else {
-			/* new record */
-			unlock(&locks[IPv4]);
-			/* put it in the timer list */
-			lock(timers[IPv4].sem);
-			old_ip4->timer.timeout = get_ticks() + timeout;
-			append_to_timer(&timers[IPv4],&(old_ip4->timer));
-			unlock(timers[IPv4].sem);
-			DBG("DEBUG:pike_check_req: new IPv4 src [%X]\n",ip4->ip);
-		}
+	DBG("DEBUG:pike_check_req: src IP [%.*s]; hit node = [%d][%d] flags=%d\n",
+		msg->src_ip.len,msg->src_ip.u.addr,
+		node->hits,node->leaf_hits,flag);
+
+	/* do all the job with the timer */
+	lock( &locks[TIMER_LOCK]);
+	if ( flag&NEW_NODE ) {
+		/* put this node into the timer list and remove from list its
+		   father, if this is not a LEAF_NODE */
+		node->tl.timeout =  get_ticks() + timeout;
+		append_to_timer(timer,&(node->tl));
+		if (father->leaf_hits<=0)
+			remove_from_timer(timer,&(father->tl));
 	} else {
+		/* update the timer */
+		//remove_from_timer(timer,&(node->tl));
+		node->tl.timeout = get_ticks() + timeout;
+		append_to_timer(timer,&(node->tl));
 	}
+	unlock(&locks[TIMER_LOCK]);
 
-error:
-	return 1;
-overflow:
-	return -1;
+	/*DEBUG*/print_timer_list(timer);
+
+	ret = ( (flag&LEAF_NODE)&&(flag&RED_NODE) )?-1:1;
+	unlock( &locks[TREE_LOCK] );
+
+	if (ret==-1)
+		DBG("DEBUG:pike_check_req: ------RED ALARM<->TOO MANY HITS------!!\n");
+	return ret;
 }
 
 
 
-
-void clean_routine(void *param)
+void clean_routine(unsigned int ticks , void *param)
 {
-	struct pike_timer *pt;
-	struct ip_v4      *ip4;
-	struct ip_v6      *ip6;
-	int i;
+	struct pike_timer_link *tl;
+	struct ip_node         *dad;
+	struct ip_node         *node;
 
-	for(i=0;i<IP_TYPES;i++) {
-		if ( !is_empty(&timers[i]) ) {
-			/* get the expired elements */
-			lock(timers[i].sem);
-			pt = check_and_split_timer(&timers[i],get_ticks());
-			unlock(timers[i].sem);
-			/* process them */
-			if (pt) {
-				DBG("DEBUG:pike:clean_routine: del IP %X,%X%X%X type=%s\n",
-					i==IPv6?((struct ip_v6*)pt)->ip[0]:((struct ip_v4*)pt)->ip,
-					i==IPv6?((struct ip_v6*)pt)->ip[1]:0,
-					i==IPv6?((struct ip_v6*)pt)->ip[2]:0,
-					i==IPv6?((struct ip_v6*)pt)->ip[3]:0,
-					i==IPv4?"IPv4":"IPv6");
-				lock(&locks[i]);
-				for(;pt;pt=pt->next)
-				{
-					ip4 = (struct ip_v4*)del234( btrees[i], pt);
-					if (ip4) shm_free( ip4 );
+	if ( !is_empty(timer) ) {
+		/* get the expired elements */
+		lock( &locks[TIMER_LOCK] );
+		tl = check_and_split_timer( timer, ticks);
+		unlock( &locks[TIMER_LOCK] );
+		/* process them */
+		if (tl) {
+				lock( &locks[TREE_LOCK] );
+				for(;tl;tl=tl->next) {
+					node = (struct ip_node*)tl;
+					DBG("DEBUG:pike:clean_routine: del node [%X] \n",
+						node->byte);
+					/* if it's a node, leaf for an ipv4 address inside an
+					   ipv6 address -> just remove it from timer*/
+					if (node->children) {
+						node->leaf_hits = 0;
+						node->tl.timeout = 0;
+						node->tl.prev = node->tl.next = 0;
+					} else {
+						/* we have to put the father into timer list*/
+						/* get the father node */
+						dad = node;
+						while (dad->prev->children!=dad)
+							dad=dad->prev;
+						dad = dad->prev;
+						/* put it in the list 
+						   (only if it isnot the tree root) */
+						if (dad!=tree) {
+							lock(&locks[TIMER_LOCK]);
+							dad->tl.timeout = get_ticks() + timeout;
+							append_to_timer(timer,&(dad->tl));
+							unlock(&locks[TIMER_LOCK]);
+						}
+						/* del the node */
+						remove_node( tree, node);
+					}
+					/*DEBUG*/print_timer_list(timer);
 				}
-				unlock(&locks[i]);
-			}
+				unlock( &locks[TREE_LOCK] );
 		}
 	}
 }
@@ -137,8 +120,31 @@ void clean_routine(void *param)
 
 
 
-void swap_routine(void *param)
+void refresh_node( struct ip_node *node)
 {
+	struct ip_node *kid;
+
+	if (!node) return;
+	kid = node->children;
+	while(kid) {
+		kid->hits = 0;
+		kid->leaf_hits = 0;
+		refresh_node( kid );
+		kid = kid->next;
+	}
+}
+
+
+
+
+void swap_routine( unsigned int ticks, void *param)
+{
+	lock( &locks[TREE_LOCK] );
+
+	if (tree)
+		refresh_node( tree );
+
+	unlock( &locks[TREE_LOCK] );
 }
 
 

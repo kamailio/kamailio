@@ -2,9 +2,15 @@
 #include "../../dprint.h"
 
 
+#define is_in_timer_list(_th,_tl) \
+	(((_tl)->prev || (_tl)->next || (_th)->first==(_tl))?1:0)
 
-void append_to_timer(struct pike_timer_head *pth, struct pike_timer *pt)
+
+void append_to_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 {
+	if (is_in_timer_list(pth,pt))
+		remove_from_timer(pth,pt);
+	DBG("APPEND APPEND APPEND !!!\n");
 	if (pth->first) {
 		pth->last->next = pt;
 		pt->prev = pth->last;
@@ -25,8 +31,11 @@ int is_empty(struct pike_timer_head *pth )
 
 
 
-void remove_from_timer(struct pike_timer_head *pth, struct pike_timer *pt)
+void remove_from_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 {
+	if ( !is_in_timer_list(pth,pt) )
+		return;
+	DBG("REMOVE REMOVE REMOVE !!!\n");
 	if (pt->next)
 		pt->next->prev = pt->prev;
 	else
@@ -41,9 +50,9 @@ void remove_from_timer(struct pike_timer_head *pth, struct pike_timer *pt)
 
 
 
-struct pike_timer *check_and_split_timer(struct pike_timer_head *pth, int t)
+struct pike_timer_link *check_and_split_timer(struct pike_timer_head *pth, int t)
 {
-	struct pike_timer *pt, *ret;
+	struct pike_timer_link *pt, *ret;
 
 	pt = pth->first;
 	while( pt && pt->timeout<=t)
@@ -69,6 +78,7 @@ struct pike_timer *check_and_split_timer(struct pike_timer_head *pth, int t)
 
 	return ret;
 }
+
 
 
 
