@@ -31,13 +31,16 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
 
-#define SCRIPT_END               1
+#define SCRIPT_END               0
+#define SCRIPT_DEFAULT           1
 #define SCRIPT_TO_BE_CONTINUED   2
+#define SCRIPT_RUN_ERROR         -1
+#define SCRIPT_FORMAT_ERROR      -2
 
 #define CPL_RUN_OUTGOING        (1<<0)
 #define CPL_RUN_INCOMING        (1<<1)
 #define CPL_LOC_SET_MODIFIED    (1<<2)
-#define CPL_PROXT_DONE          (1<<3)
+#define CPL_PROXY_DONE          (1<<3)
 
 
 struct cpl_interpreter {
@@ -47,7 +50,6 @@ struct cpl_interpreter {
 	unsigned char *ip;     /* instruction pointer */
 	int recv_time;         /* receiving time stamp */
 	struct sip_msg *msg;
-//	unsigned char  type;
 	struct location *loc_set;     /* location set */
 	str *ruri;
 	str *to;

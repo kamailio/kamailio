@@ -588,7 +588,7 @@ int encript_node_attr( xmlNodePtr node, unsigned char *node_ptr,
 				switch(attr->name[0]) {
 					case 'U': case 'u':
 						*(p++) = URL_ATTR;
-						foo = strlen(val);
+						foo = strlen(val) + 1; /*copy also the \0 */
 						*((unsigned short*)(p)) = (unsigned short)foo;
 						p += 2;
 						memcpy(p,val,foo);

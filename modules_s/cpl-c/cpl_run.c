@@ -40,6 +40,7 @@
 #include "loc_set.h"
 #include "cpl_utils.h"
 #include "cpl_nonsig.h"
+#include "cpl_sig.h"
 #include "cpl_run.h"
 
 
@@ -220,6 +221,8 @@ inline unsigned char *run_location( struct cpl_interpreter *intr )
 		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
 		goto runtime_error;
 	}
+	/* set the flag for modifing the location set */
+	intr->flags |= CPL_LOC_SET_MODIFIED;
 
 	return get_first_child(intr->ip);
 runtime_error:
@@ -238,6 +241,10 @@ inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
 
 	url.s = (char*)UNDEF_CHAR;
 
+	/* dirty hack to speed things up in when loc set is already empty */
+	if (intr->loc_set==0)
+		goto done;
+
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		switch (*p) {
 			case LOCATION_ATTR:
@@ -255,12 +262,15 @@ inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
 	}
 
 	if (url.s==(char*)UNDEF_CHAR || url.len==0) {
-		DBG("DEBUG:run_remove_location: remove al llocs from loc_set\n");
+		DBG("DEBUG:run_remove_location: remove all locs from loc_set\n");
 		empty_location_set( &(intr->loc_set) );
 	} else {
 		remove_location( &(intr->loc_set), url.s, url.len );
 	}
+	/* set the flag for modifing the location set */
+	intr->flags |= CPL_LOC_SET_MODIFIED;
 
+done:
 	return get_first_child(intr->ip);
 script_error:
 	return CPL_SCRIPT_ERROR;
@@ -667,6 +677,43 @@ script_error:
 
 
 
+static inline int run_default( struct cpl_interpreter *intr )
+{
+	if (!intr->flags&CPL_PROXY_DONE) {
+		/* no signalling operations */
+		if ( !intr->flags&CPL_LOC_SET_MODIFIED ) {
+			/*  no location modifications */
+			if (intr->loc_set==0 ) {
+				/* case 1 : no location modifications or signalling operations
+				 * performed, location set empty ->
+				 * Look up the user's location through whatever mechanism the
+				 * server would use if no CPL script were in effect */
+				return SCRIPT_DEFAULT;
+			} else {
+				/* case 2 : no location modifications or signalling operations
+				 * performed, location set non-empty: (This can only happen 
+				 * for outgoing calls.) ->
+				 * Proxy the call to the addresses in the location set */
+				LOG(L_ERR,"ERROR:cpl_c:run_default: case 2 reached -"
+					"unimplemented\n");
+				return SCRIPT_RUN_ERROR;
+			}
+		} else {
+			/* case 3 : location modifications performed, no signalling 
+			 * operations ->
+			 * Proxy the call to the addresses in the location set */
+			return cpl_proxy_to_loc_set( intr );
+		}
+	} else {
+		/* case 4 and 5 -> still cloudy :-( */
+		LOG(L_ERR,"ERROR:cpl_c:run_default: case 4 or 5 reached -"
+			"unimplemented\n");
+		return SCRIPT_RUN_ERROR;
+	}
+	return SCRIPT_RUN_ERROR;
+}
+
+
 
 int run_cpl_script( struct cpl_interpreter *intr )
 {
@@ -729,13 +776,13 @@ int run_cpl_script( struct cpl_interpreter *intr )
 
 		if (intr->ip==CPL_RUNTIME_ERROR) {
 			LOG(L_ERR,"ERROR:cpl_c:run_cpl_script: runtime error\n");
-			goto error;
+			return SCRIPT_RUN_ERROR;
 		} else if (intr->ip==CPL_SCRIPT_ERROR) {
 			LOG(L_ERR,"ERROR:cpl_c:run_cpl_script: script error\n");
-			goto error;
+			return SCRIPT_FORMAT_ERROR;
 		} else if (intr->ip==DEFAULT_ACTION) {
 			DBG("DEBUG:cpl_c:run_cpl_script: running default action\n");
-			return SCRIPT_END; /* TO DO */
+			return run_default(intr);
 		} else if (intr->ip==EO_SCRIPT) {
 			DBG("DEBUG:cpl_c:run_cpl_script: script interpretation done!\n");
 			return SCRIPT_END;
@@ -743,5 +790,5 @@ int run_cpl_script( struct cpl_interpreter *intr )
 	}while(1);
 
 error:
-	return -1;
+	return SCRIPT_FORMAT_ERROR;
 }
