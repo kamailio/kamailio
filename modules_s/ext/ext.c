@@ -20,6 +20,7 @@
 static int ext_child_init(int);
 static int ext_rewriteuser(struct sip_msg*, char*, char* );
 static int ext_rewriteuri(struct sip_msg*, char*, char* );
+static int fixup_ext_rewrite(void** param, int param_no);
 
 
 struct module_exports exports= {
@@ -37,8 +38,8 @@ struct module_exports exports= {
 				1
 			},
 	(fixup_function[]){
-				0,
-				0
+				fixup_ext_rewrite,
+				fixup_ext_rewrite
 		},
 	2,
 
@@ -60,6 +61,25 @@ struct module_exports exports= {
 static int ext_child_init(int child)
 {
 	return init_ext();
+}
+
+
+
+
+static int fixup_ext_rewrite(void** param, int param_no)
+{
+	int fd;
+
+	if (param_no==1) {
+		fd = open(*param,O_RDONLY);
+		if (fd==-1) {
+			LOG(L_ERR,"ERROR:fixup_ext_rewrite: [%s] -> %s\n",
+				(char*)*param,strerror(errno));
+			return E_UNSPEC;
+		}
+		close(fd);
+	}
+	return 0;
 }
 
 
