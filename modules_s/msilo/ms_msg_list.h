@@ -24,11 +24,17 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  major locking changes, now it uses locking.h (andrei)
+ */
 
 #ifndef _MS_MSG_LIST_H_
 #define _MS_MSG_LIST_H_
 
-#include "lock.h"
+
+#include "../../locking.h"
 
 #define MS_MSG_NULL	0
 #define MS_MSG_SENT	1
@@ -56,7 +62,8 @@ typedef struct _msg_list
 	int nrdone;
 	msg_list_el lsent;
 	msg_list_el ldone;
-	smart_lock *sems;
+	gen_lock_t  sem_sent;
+	gen_lock_t  sem_done;
 } t_msg_list, *msg_list;
 
 msg_list_el msg_list_el_new();

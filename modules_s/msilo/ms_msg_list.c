@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  major locking changes: not it uses locking.h (andrei)
+ */
 
 #include <string.h>
 #include <unistd.h>
@@ -95,8 +100,16 @@ msg_list msg_list_init()
 	ml = (msg_list)shm_malloc(sizeof(t_msg_list));
 	if(ml == NULL)
 		return NULL;
-	if((ml->sems = create_semaphores(2)) == NULL)
+	/* init locks */
+	if (lock_init(&ml->sem_sent)==0){
+		LOG(L_CRIT, "msilo: could not intialize a lock\n");
 		goto clean;
+	};
+	if (lock_init(&ml->sem_done)==0){
+		LOG(L_CRIT, "msilo: could not intialize a lock\n");
+		lock_destroy(&ml->sem_sent);
+		goto clean;
+	};
 	ml->nrsent = 0;
 	ml->nrdone = 0;
 	ml->lsent = NULL;
@@ -119,8 +132,8 @@ void msg_list_free(msg_list ml)
 	if(!ml)
 		return;
 
-	if(ml->sems != NULL)
-		destroy_semaphores(ml->sems);
+	lock_destroy(&ml->sem_sent);
+	lock_destroy(&ml->sem_done);
 
 	if(ml->nrsent>0 && ml->lsent)
 	{ // free sent list
@@ -163,7 +176,7 @@ int msg_list_check_msg(msg_list ml, int mid)
 
 	DBG("MSILO:msg_list_check_msg: checking msgid=%d\n", mid);
 	
-	s_lock_at(ml->sems, MS_SEM_SENT);
+	lock_get(&ml->sem_sent);
 
 	p0 = p1 = ml->lsent;
 	while(p0)
@@ -194,15 +207,15 @@ int msg_list_check_msg(msg_list ml, int mid)
 		
 done:
 	ml->nrsent++;
-	s_unlock_at(ml->sems, MS_SEM_SENT);
+	lock_release(&ml->sem_sent);
 	DBG("MSILO:msg_list_check_msg: msg added to sent list.\n");
 	return MSG_LIST_OK;
 exist:
-	s_unlock_at(ml->sems, MS_SEM_SENT);
+	lock_release(&ml->sem_sent);
 	DBG("MSILO:msg_list_check_msg: msg already in sent list.\n");
 	return MSG_LIST_EXIST;	
 error:
-	s_unlock_at(ml->sems, MS_SEM_SENT);
+	lock_release(&ml->sem_sent);
 errorx:
 	return MSG_LIST_ERR;
 }
@@ -217,7 +230,7 @@ int msg_list_set_flag(msg_list ml, int mid, int fl)
 	if(!ml || mid==0)
 		goto errorx;
 	
-	s_lock_at(ml->sems, MS_SEM_SENT);
+	lock_get(&ml->sem_sent);
 
 	p0 = ml->lsent;
 	while(p0)
@@ -232,7 +245,7 @@ int msg_list_set_flag(msg_list ml, int mid, int fl)
 	}
 
 done:
-	s_unlock_at(ml->sems, MS_SEM_SENT);
+	lock_release(&ml->sem_sent);
 	return MSG_LIST_OK;
 errorx:
 	return MSG_LIST_ERR;
@@ -248,11 +261,11 @@ int msg_list_check(msg_list ml)
 	if(!ml)
 		goto errorx;
 	
-	s_lock_at(ml->sems, MS_SEM_SENT);
+	lock_get(&ml->sem_sent);
 	if(ml->nrsent<=0)
 		goto done;
 	
-	s_lock_at(ml->sems, MS_SEM_DONE);
+	lock_get(&ml->sem_done);
 	
 	p0 = ml->lsent;
 	while(p0)
@@ -282,10 +295,10 @@ int msg_list_check(msg_list ml)
 		p0 = p0->next;
 	}
 
-	s_unlock_at(ml->sems, MS_SEM_DONE);
+	lock_release(&ml->sem_done);
 
 done:
-	s_unlock_at(ml->sems, MS_SEM_SENT);
+	lock_release(&ml->sem_sent);
 	return MSG_LIST_OK;
 errorx:
 	return MSG_LIST_ERR;
@@ -302,11 +315,11 @@ msg_list_el msg_list_reset(msg_list ml)
 	if(!ml)
 		return NULL;
 	
-	s_lock_at(ml->sems, MS_SEM_DONE);
+	lock_get(&ml->sem_done);
 	p0 = ml->ldone;
 	ml->ldone = NULL;
 	ml->nrdone = 0;
-	s_unlock_at(ml->sems, MS_SEM_DONE);
+	lock_release(&ml->sem_done);
 	
 	return p0;
 }
