@@ -463,7 +463,6 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 				goto done;
 			}
 			set_ruri_q(q);
-			LOG(L_ERR, "enum_query(): R-URI <%.*s>, q <%d>\n", result.len, result.s, q);
 			first = 0;
 			curr_prio = ((naptr->order) << 16) + naptr->pref;
 		} else {
@@ -475,7 +474,6 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 			if (append_branch(_msg, result.s, result.len, q) == -1) {
 				goto done;
 			}
-			LOG(L_ERR, "enum_query(): Branch <%.*s>, q <%d>\n", result.len, result.s, q);
 		}
 	}
 
