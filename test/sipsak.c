@@ -47,6 +47,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #define REQ_INV 1
 #define REQ_REG 2
 #define REQ_OPT 3
+#define REQ_FLOOD 4
 #define VIA_STR "Via: SIP/2.0/UDP "
 #define VIA_STR_LEN 17
 #define MAX_FRW_STR "Max-Forwards: "
@@ -80,8 +81,12 @@ bouquets and brickbats to farhan@hotfoon.com
 #define EXP_STR "Expires: "
 #define EXP_STR_LEN 9
 #define USRLOC_EXP_DEF 15
+#define FLOOD_METH "OPTIONS"
 
-int verbose, nameend, namebeg, expires_t;
+long address;
+int verbose, nameend, namebeg, expires_t, flood;
+int	maxforw, lport, rport;
+int file_b, uri_b, trace, via_ins, usrloc, redirects;
 char *username, *domainname;
 char fqdn[FQDN_SIZE];
 char message[BUFSIZE], mes_reply[BUFSIZE];
@@ -178,13 +183,13 @@ void get_fqdn(){
 
 /* add a Via Header Field in the message.
 */
-void add_via(char *mes, int port)
+void add_via(char *mes)
 {
 	char *via_line, *via, *backup; 
 
 	/* first build our own Via-header-line */
 	via_line = malloc(VIA_STR_LEN+strlen(fqdn)+9);
-	sprintf(via_line, "%s%s:%i\r\n", VIA_STR, fqdn, port);
+	sprintf(via_line, "%s%s:%i\r\n", VIA_STR, fqdn, lport);
 #ifdef DEBUG
 	printf("our Via-Line: %s\n", via_line);
 #endif
@@ -240,13 +245,10 @@ void cpy_vias(char *reply){
 }
 
 /* create a valid sip header out of the given parameters */
-void create_msg(char *buff, int action, int lport){
+void create_msg(char *buff, int action){
 	unsigned int c;
 	char *usern;
 
-	/* this is not a cryptographic random number generator,
-	   but hey this is only a test-tool => should be satisfying*/
-	srand(time(0));
 	c=rand();
 	switch (action){
 		case REQ_REG:
@@ -270,6 +272,9 @@ void create_msg(char *buff, int action, int lport){
 		case REQ_OPT:
 			sprintf(buff, "%s sip:%s@%s%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:sipsak@%s:%i>\r\n\r\n", OPT_STR, username, domainname, SIP20_STR, FROM_STR, fqdn, lport, TO_STR, username, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, OPT_STR, CONT_STR, fqdn, lport);
 			break;
+		case REQ_FLOOD:
+			sprintf(buff, "%s sip:%s%s%s%s:9\r\n%s<sip:sipsak@%s:9>\r\n%s<sip:%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sipsak@%s:9>\r\n\r\n", FLOOD_METH, domainname, SIP20_STR, VIA_STR, fqdn, FROM_STR, fqdn, TO_STR, domainname, CALL_STR, c, fqdn, CSEQ_STR, namebeg, FLOOD_METH, CONT_STR, fqdn);
+			break;
 		default:
 			printf("error: unknown request type to create\n");
 			exit(2);
@@ -282,7 +287,7 @@ void create_msg(char *buff, int action, int lport){
 
 /* check for the existence of a Max-Forwards header field. if its 
    present it sets it to the given value, if not it will be inserted.*/
-void set_maxforw(char *mes, int maxfw){
+void set_maxforw(char *mes){
 	char *max, *backup, *crlf;
 
 	if ((max=strstr(mes,"Max-Forwards"))==NULL){
@@ -291,32 +296,32 @@ void set_maxforw(char *mes, int maxfw){
 		max++;
 		backup=malloc(strlen(max)+1);
 		strncpy(backup, max, strlen(max)+1);
-		sprintf(max, "%s%i\r\n", MAX_FRW_STR, maxfw);
+		sprintf(max, "%s%i\r\n", MAX_FRW_STR, maxforw);
 		max=strchr(max,'\n');
 		max++;
 		strncpy(max, backup, strlen(backup)+1);
 		free(backup);
 		if (verbose)
-			printf("Max-Forwards %i inserted into header\n", maxfw);
+			printf("Max-Forwards %i inserted into header\n", maxforw);
 #ifdef DEBUG
 		printf("New message with inserted Max-Forwards:\n%s\n", mes);
 #endif
 	}
 	else{
-		/* found max-forwards => overwrite the value with maxfw*/
+		/* found max-forwards => overwrite the value with maxforw*/
 		crlf=strchr(max,'\n');
 		crlf++;
 		backup=malloc(strlen(crlf)+1);
 		strncpy(backup, crlf, strlen(crlf)+1);
 		crlf=max + MAX_FRW_STR_LEN;
-		sprintf(crlf, "%i\r\n", maxfw);
+		sprintf(crlf, "%i\r\n", maxforw);
 		crlf=strchr(max,'\n');
 		crlf++;
 		strncpy(crlf, backup, strlen(backup)+1);
 		crlf=crlf+strlen(backup);
 		free(backup);
 		if (verbose)
-			printf("Max-Forwards set to %i\n", maxfw);
+			printf("Max-Forwards set to %i\n", maxforw);
 #ifdef DEBUG
 		printf("New message with changed Max-Forwards:\n%s\n", mes);
 #endif
@@ -356,15 +361,15 @@ starting from half a second, times-out on replies and
 keeps retrying with exponential back-off that flattens out
 at 5 seconds (5000 milliseconds).
 */
-void shoot(char *buff, long address, int lport, int rport, int maxforw, int trace, int vbool, int fbool, int usrloc, int redirects)
+void shoot(char *buff)
 {
 	struct sockaddr_in	addr, sockname;
 	struct timeval	tv;
 	struct pollfd sockerr;
 	int ssock, redirected, retryAfter, nretries;
 	int sock, i, len, ret, usrlocstep;
-	char	*contact, *crlf, *foo, *bar;
-	char	reply[BUFSIZE];
+	char *contact, *crlf, *foo, *bar;
+	char reply[BUFSIZE];
 	fd_set	fd;
 	socklen_t slen;
 	regex_t* regexp;
@@ -398,7 +403,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	}
 
 	/* for the via line we need our listening port number */
-	if ((vbool||usrloc) && lport==0){
+	if ((via_ins||usrloc) && lport==0){
 		memset(&sockname, 0, sizeof(sockname));
 		slen=sizeof(sockname);
 		getsockname(ssock, (struct sockaddr *)&sockname, &slen);
@@ -417,26 +422,31 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	redexp=(regex_t*)malloc(sizeof(regex_t));
 	regcomp(redexp, "^SIP/[0-9]\\.[0-9] 3[0-9][0-9] ", REG_EXTENDED|REG_NOSUB|REG_ICASE); 
 
-	/* determine our hostname */
-	get_fqdn();
-
 	if (usrloc){
 		nretries=3*(nameend-namebeg)+3;
-		create_msg(buff, REQ_REG, lport);
+		create_msg(buff, REQ_REG);
 		retryAfter = 5000;
-	}else if (trace){
+	}
+	else if (trace){
 		if (maxforw!=-1)
 			nretries=maxforw;
 		else
 			nretries=255;
 		namebeg=1;
-		create_msg(buff, REQ_OPT, lport);
-		add_via(buff, lport);
-	} else {
+		create_msg(buff, REQ_OPT);
+		add_via(buff);
+	}
+	else if (flood){
+		if (namebeg==-1) namebeg=65535;
+		nretries=namebeg;
+		namebeg=1;
+		create_msg(buff, REQ_FLOOD);
+	}
+	else {
 		if(maxforw!=-1)
-			set_maxforw(buff, maxforw);
-		if(vbool)
-			add_via(buff, lport);
+			set_maxforw(buff);
+		if(via_ins)
+			add_via(buff);
 	}
 
 	/* if we got a redirect this loop ensures sending to the 
@@ -460,7 +470,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 		for (i = 0; i <= nretries; i++)
 		{
 			if (trace) {
-				set_maxforw(buff, i);
+				set_maxforw(buff);
 			}
 			else if (usrloc && verbose) {
 				switch (usrlocstep) {
@@ -475,7 +485,10 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 						break;
 				}
 			}
-			else if (!trace && !usrloc){
+			else if (flood && verbose) {
+				printf("flood %i\n", i+1);
+			}
+			else if (!trace && !usrloc && !flood){
 				printf("** request **\n%s\n", buff);
 			}
 
@@ -484,244 +497,252 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 				perror("send failure");
 				exit( 1 );
 			}
-		
 
-			tv.tv_sec = retryAfter/1000;
-			tv.tv_usec = (retryAfter % 1000) * 1000;
+			if (!flood) {
+				tv.tv_sec = retryAfter/1000;
+				tv.tv_usec = (retryAfter % 1000) * 1000;
 
-			FD_ZERO(&fd);
-			FD_SET(ssock, &fd); 
+				FD_ZERO(&fd);
+				FD_SET(ssock, &fd); 
 
-			//ret = select(6, &fd, NULL, NULL, &tv);
-			ret = select(FD_SETSIZE, &fd, NULL, NULL, &tv);
-			if (ret == 0)
-			{
-				sockerr.fd=sock;
-				sockerr.events=POLLERR;
-				if ((poll(&sockerr, 1, 10))==1) {
-					if (sockerr.revents && POLLERR) {
-						printf("send failure: ");
-						recv(sock, reply, strlen(reply), 0);
-						perror("");
-						exit(1);
+				ret = select(FD_SETSIZE, &fd, NULL, NULL, &tv);
+				if (ret == 0)
+				{
+					sockerr.fd=sock;
+					sockerr.events=POLLERR;
+					if ((poll(&sockerr, 1, 10))==1) {
+						if (sockerr.revents && POLLERR) {
+							printf("send failure: ");
+							recv(sock, reply, strlen(reply), 0);
+							perror("");
+							exit(1);
+						}
 					}
+					printf("** timeout **\n");
+					retryAfter = retryAfter * 2;
+					if (retryAfter > 5000)
+						retryAfter = 5000;
+					/* we should have retrieved the error code and displayed
+					we are not doing that because there is a great variation
+					in the process of retrieveing error codes between
+					micro$oft and *nix world*/
+					continue;
+				} else if ( ret == -1 ) {
+					perror("select error");
+					exit(2);
+				} /* no timeout, no error ... something has happened :-) */
+				else if (FD_ISSET(ssock, &fd)) {
+				 	if (!trace && !usrloc)
+						printf ("\nmessage received\n");
+				} else {
+					puts("\nselect returned succesfuly, nothing received\n");
+					continue;
 				}
-				printf("** timeout **\n");
-				retryAfter = retryAfter * 2;
-				if (retryAfter > 5000)
-					retryAfter = 5000;
-				/* we should have retrieved the error code and displayed
-				we are not doing that because there is a great variation
-				in the process of retrieveing error codes between
-				micro$oft and *nix world*/
-				continue;
-			} else if ( ret == -1 ) {
-				perror("select error");
-				exit(2);
-			} /* no timeout, no error ... something has happened :-) */
-			else if (FD_ISSET(ssock, &fd)) {
-			 	if (!trace && !usrloc)
-					puts ("\nmessage received");
-			} else {
-				puts("\nselect returned succesfuly, nothing received\n");
-				continue;
-			}
 
-			/* we are retrieving only the extend of a decent MSS = 1500 bytes */
-			len = sizeof(addr);
-			ret = recv(ssock, reply, BUFSIZE, 0);
-			if(ret > 0)
-			{
-				reply[ret] = 0;
-				if (redirects && regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
-					printf("** received redirect **\n");
-					/* we'll try to handle 301 and 302 here, other 3xx are to complex */
-					regcomp(redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
-					if (regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
-						/* try to find the contact in the redirect */
-						if ((foo=strstr(reply, "Contact"))==NULL) {
-							printf("error: cannot find Contact in this redirect:\n%s\n", reply);
-							exit(2);
-						}
-						crlf=strchr(foo, '\n');
-						if ((contact=strchr(foo, '\r'))!=NULL && contact<crlf)
-							crlf=contact;
-						bar=malloc(crlf-foo+1);
-						strncpy(bar, foo, crlf-foo);
-						sprintf(bar+(crlf-foo), "\0");
-						if ((contact=strstr(bar, "sip"))==NULL) {
-							printf("error: cannot find sip in the Contact of this redirect:\n%s\n", reply);
-							exit(2);
-						}
-						if ((foo=strchr(contact, ';'))!=NULL)
-							*foo='\0';
-						if ((foo=strchr(contact, '>'))!=NULL)
-							*foo='\0';
-						if ((crlf=strchr(contact,':'))!=NULL){
-							crlf++;
-							/* extract the needed information*/
-							if ((foo=strchr(crlf,':'))!=NULL){
+				/* we are retrieving only the extend of a decent MSS = 1500 bytes */
+				len = sizeof(addr);
+				ret = recv(ssock, reply, BUFSIZE, 0);
+				if(ret > 0)
+				{
+					reply[ret] = 0;
+					if (redirects && regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
+						printf("** received redirect **\n");
+						/* we'll try to handle 301 and 302 here, other 3xx are to complex */
+						regcomp(redexp, "^SIP/[0-9]\\.[0-9] 30[1-2] ", REG_EXTENDED|REG_NOSUB|REG_ICASE);
+						if (regexec((regex_t*)redexp, reply, 0, 0, 0)==0) {
+							/* try to find the contact in the redirect */
+							if ((foo=strstr(reply, "Contact"))==NULL) {
+								printf("error: cannot find Contact in this redirect:\n%s\n", reply);
+								exit(2);
+							}
+							crlf=strchr(foo, '\n');
+							if ((contact=strchr(foo, '\r'))!=NULL && contact<crlf)
+								crlf=contact;
+							bar=malloc(crlf-foo+1);
+							strncpy(bar, foo, crlf-foo);
+							sprintf(bar+(crlf-foo), "\0");
+							if ((contact=strstr(bar, "sip"))==NULL) {
+								printf("error: cannot find sip in the Contact of this redirect:\n%s\n", reply);
+								exit(2);
+							}
+							if ((foo=strchr(contact, ';'))!=NULL)
 								*foo='\0';
-								foo++;
-								rport = atoi(foo);
-								if (!rport) {
-									printf("error: cannot handle the port in the uri in Contact:\n%s\n", reply);
+							if ((foo=strchr(contact, '>'))!=NULL)
+								*foo='\0';
+							if ((crlf=strchr(contact,':'))!=NULL){
+								crlf++;
+								/* extract the needed information*/
+								if ((foo=strchr(crlf,':'))!=NULL){
+									*foo='\0';
+									foo++;
+									rport = atoi(foo);
+									if (!rport) {
+										printf("error: cannot handle the port in the uri in Contact:\n%s\n", reply);
+										exit(2);
+									}
+								}
+								/* correct our request */
+								uri_replace(buff, contact);
+								if ((foo=strchr(contact,'@'))!=NULL){
+									foo++;
+									crlf=foo;
+								}
+								/* get the new destination IP*/
+								address = getaddress(crlf);
+								if (!address){
+									printf("error: cannot determine host address from Contact of redirect:\%s\n", reply);
 									exit(2);
 								}
 							}
-							/* correct our request */
-							uri_replace(buff, contact);
-							if ((foo=strchr(contact,'@'))!=NULL){
-								foo++;
-								crlf=foo;
-							}
-							/* get the new destination IP*/
-							address = getaddress(crlf);
-							if (!address){
-								printf("error: cannot determine host address from Contact of redirect:\%s\n", reply);
+							else{
+								printf("error: missing : in Contact of this redirect:\n%s\n", reply);
 								exit(2);
 							}
-						}
-						else{
-							printf("error: missing : in Contact of this redirect:\n%s\n", reply);
-							exit(2);
-						}
-						free(bar);
-						memset(&addr, 0, sizeof(addr));
-						redirected=1;
-						i=nretries;
-					}
-					else {
-						printf("error: cannot handle this redirect:\n%s\n", reply);
-						exit(2);
-					}
-				}
-				else if (trace) {
-					/* in trace we only look for 483, anything else is 
-					   treated as the final reply*/
-					printf("%i: ", i);
-					if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-						printf("* (483) \n");
-#ifdef DEBUG
-						printf("%s\n", reply);
-#endif
-						namebeg++;
-						create_msg(buff, REQ_OPT, lport);
-						add_via(buff, lport);
-						continue;
-					}
-					else {
-						crlf=strchr(reply,'\n');
-						sprintf(crlf, "\0");
-//						printf("%s\n", reply);
-						crlf++;
-						contact=strstr(crlf, "Contact");
-						if (contact){
-						crlf=strchr(contact,'\n');
-						sprintf(crlf, "\0");
-						printf("   %s\n", contact);
+							free(bar);
+							memset(&addr, 0, sizeof(addr));
+							redirected=1;
+							i=nretries;
 						}
 						else {
-							printf("received reply without contact: %s\n"
-								, reply);
+							printf("error: cannot handle this redirect:\n%s\n", reply);
+							exit(2);
 						}
-						exit(0);
 					}
-				}
-				else if (usrloc) {
-					switch (usrlocstep) {
-						case 0:
-							/* at first we have sended a register a look at the 
-							   response now*/
-							if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-								if (verbose)
-									printf ("  OK\n");
+					else if (trace) {
+						/* in trace we only look for 483, anything else is 
+						   treated as the final reply*/
+						printf("%i: ", i);
+						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+							printf("* (483) \n");
 #ifdef DEBUG
-								printf("\n%s\n", reply);
+							printf("%s\n", reply);
 #endif
-								strcpy(buff, message);
-								usrlocstep=1;
+							namebeg++;
+							create_msg(buff, REQ_OPT);
+							add_via(buff);
+							continue;
+						}
+						else {
+							crlf=strchr(reply,'\n');
+							sprintf(crlf, "\0");
+//						printf("%s\n", reply);
+							crlf++;
+							contact=strstr(crlf, "Contact");
+							if (contact){
+								crlf=strchr(contact,'\n');
+								sprintf(crlf, "\0");
+								printf("   %s\n", contact);
 							}
 							else {
-								if (verbose)
-									printf("received:\n%s\n", reply);
-								printf("error: didn't received '200 OK' on regsiter. aborting\n");
-								exit(1);
+								printf("received reply without contact: %s\n"
+									, reply);
 							}
-							break;
-						case 1:
-							/* now we sended the message and look if its 
-							   forwarded to us*/
-							if (!strncmp(reply, MES_STR, MES_STR_LEN)) {
-								if (verbose) {
-									crlf=strstr(reply, "\r\n\r\n");
-									crlf=crlf+4;
-									printf("         received message\n  '%s'\n", crlf);
-								}
+							exit(0);
+						}
+					}
+					else if (usrloc) {
+						switch (usrlocstep) {
+							case 0:
+								/* at first we have sended a register a look at the 
+								   response now*/
+								if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+									if (verbose)
+										printf ("  OK\n");
 #ifdef DEBUG
-								printf("\n%s\n", reply);
+									printf("\n%s\n", reply);
 #endif
-								cpy_vias(reply);
-								strcpy(buff, mes_reply);
-								usrlocstep=2;
-							}
-							else {
-								if (verbose)
-									printf("\nreceived:\n%s", reply);
-								printf("error: didn't received the 'MESSAGE' we sended. aborting\n");
-								exit(1);
-							}
-							break;
-						case 2:
-							/* finnaly we sended our reply on the message and 
-							   look if this is also forwarded to us*/
-							if (!strncmp(reply, MES_STR, MES_STR_LEN)){
-								printf("warning: received another 'MESSAGE'. retransmission?!\n");
-								ret = recv(ssock, reply, BUFSIZE, 0);
-							}
-							if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-								if (verbose)
-									printf("   reply received\n\n");
-								else
-									printf("USRLOC for %s%i completed successful\n", username, namebeg);
-								if (namebeg==nameend) {
-									printf("All USRLOC tests completed successful.\n");
-									exit(0);
+									strcpy(buff, message);
+									usrlocstep=1;
 								}
-								namebeg++;
-								create_msg(buff, REQ_REG, lport);
-								usrlocstep=0;
-							}
-							else {
-								if (verbose)
-									printf("\nreceived:\n%s\n", reply);
-								printf("error: didn't received the '200 OK' that we sended as the reply on the message\n");
-								exit(1);
-							}
+								else {
+									if (verbose)
+										printf("received:\n%s\n", reply);
+									printf("error: didn't received '200 OK' on regsiter. aborting\n");
+									exit(1);
+								}
+								break;
+							case 1:
+								/* now we sended the message and look if its 
+								   forwarded to us*/
+								if (!strncmp(reply, MES_STR, MES_STR_LEN)) {
+									if (verbose) {
+										crlf=strstr(reply, "\r\n\r\n");
+										crlf=crlf+4;
+										printf("         received message\n  '%s'\n", crlf);
+									}
+#ifdef DEBUG
+									printf("\n%s\n", reply);
+#endif
+									cpy_vias(reply);
+									strcpy(buff, mes_reply);
+									usrlocstep=2;
+								}
+								else {
+									if (verbose)
+										printf("\nreceived:\n%s", reply);
+									printf("error: didn't received the 'MESSAGE' we sended. aborting\n");
+									exit(1);
+								}
+								break;
+							case 2:
+								/* finnaly we sended our reply on the message and 
+								   look if this is also forwarded to us*/
+								if (!strncmp(reply, MES_STR, MES_STR_LEN)){
+									printf("warning: received another 'MESSAGE'. retransmission?!\n");
+									ret = recv(ssock, reply, BUFSIZE, 0);
+								}
+								if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+									if (verbose)
+										printf("   reply received\n\n");
+									else
+										printf("USRLOC for %s%i completed successful\n", username, namebeg);
+									if (namebeg==nameend) {
+										printf("All USRLOC tests completed successful.\n");
+										exit(0);
+									}
+									namebeg++;
+									create_msg(buff, REQ_REG);
+									usrlocstep=0;
+								}
+								else {
+									if (verbose)
+										printf("\nreceived:\n%s\n", reply);
+									printf("error: didn't received the '200 OK' that we sended as the reply on the message\n");
+									exit(1);
+								}
 							break;
+						}
 					}
-				}
-				else {
-					/* in the normal send and reply case anything other then 
-					   1xx will be treated as final response*/
-					printf("** reply **\n%s\n", reply);
-					if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
-						puts(" provisional received; still waiting for a final response\n ");
-						continue;
-					} else {
-						puts(" final received; congratulations!\n ");
-						exit(0);
+					else {
+						/* in the normal send and reply case anything other then 
+						   1xx will be treated as final response*/
+						printf("** reply **\n%s\n", reply);
+						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
+							puts(" provisional received; still waiting for a final response\n ");
+							continue;
+						} else {
+							puts(" final received; congratulations!\n ");
+							exit(0);
+						}
 					}
-				}
 		
-			} 
+				} 
+				else {
+					perror("recv error");
+					exit(2);
+				}
+			} /* !flood */
 			else {
-				perror("recv error");
-				exit(2);
+				if (namebeg==nretries) {
+					printf("flood end reached\n");
+					exit(0);
+				}
+				namebeg++;
+				create_msg(buff, REQ_FLOOD);
 			}
-		}
+		} /* for nretries */
 
-	}
+	} /* while redirected */
 	/* after all the retries, nothing has come back :-( */
 	puts("** I give up retransmission....");
 	exit(1);
@@ -735,7 +756,8 @@ void print_help() {
 	printf("\n\n"
 		" shoot : sipsak -f filename -s sip:uri\n"
 		" trace : sipsak -t [-f filename] -s sip:uri\n"
-		" USRLOC: sipsak -u [-b number] -e number [-E number] -s sip:uri\n\n"
+		" USRLOC: sipsak -u [-b number] -e number [-E number] -s sip:uri\n"
+		" flood : sipsak -F [-c number] -s sip:uri\n\n"
 		" additional parameter in every modus:\n"
 		"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
 		"   -h           displays this help message\n"
@@ -748,6 +770,8 @@ void print_help() {
 		"   -e number    the ending numer of the appendix to the user name in USRLOC\n"
 		"                modus\n"
 		"   -E number    the expires header field value (default: 15)\n"
+		"   -F           activates the flood modus\n"
+		"   -c number    the maximum CSeq number for flood modus\n"
 		"   -l port      the local port to use (default: any)\n"
 		"   -r port      the remote port to use (default: 5060)\n"
 		"   -m number    the value for the max-forwards header field\n"
@@ -761,22 +785,19 @@ void print_help() {
 
 int main(int argc, char *argv[])
 {
-	long	address;
 	FILE	*pf;
 	char	buff[BUFSIZE];
-	int		length, c, fbool, sbool, tbool, vbool, ubool, dbool;
-	int		maxforw, lport, rport;
+	int		length, c;
 	char	*delim, *delim2;
 
 	/* some initialisation to be shure */
-	username=NULL;
-	verbose=0;
-	namebeg=nameend=maxforw=-1;
-
-	fbool=sbool=tbool=lport=ubool=0;
-	vbool=dbool=1;
-    rport=5060;
-	expires_t=USRLOC_EXP_DEF;
+	file_b=uri_b=trace=lport=usrloc=flood=verbose = 0;
+	namebeg=nameend=maxforw = -1;
+	via_ins=redirects = 1;
+	username = NULL;
+	address = 0;
+    rport = 5060;
+	expires_t = USRLOC_EXP_DEF;
 	memset(buff, 0, BUFSIZE);
 	memset(message, 0, BUFSIZE);
 	memset(mes_reply, 0, BUFSIZE);
@@ -785,27 +806,36 @@ int main(int argc, char *argv[])
 	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
-	while ((c=getopt(argc,argv,"b:dE:e:f:hil:m:r:s:tuv")) != EOF){
+	while ((c=getopt(argc,argv,"b:c:dE:e:Ff:hil:m:r:s:tuv")) != EOF){
 		switch(c){
 			case 'b':
-				namebeg=atoi(optarg);
-				if (namebeg==-1) {
-					puts("error: non-numerical appendix begin for the username");
+				//namebeg=atoi(optarg);
+				if ((namebeg=atoi(optarg))==-1) {
+					printf("error: non-numerical appendix begin for the username\n");
+					exit(2);
+				}
+				break;
+			case 'c':
+				if ((namebeg=atoi(optarg))==-1) {
+					printf("error: non-numerical CSeq maximum\n");
 					exit(2);
 				}
 				break;
 			case 'd':
-				dbool=0;
+				redirects=0;
 				break;
 			case 'E':
 				expires_t=atoi(optarg);
 				break;
 			case 'e':
-				nameend=atoi(optarg);
-				if (nameend==-1) {
-					puts("error: non-numerical appendix end for the username");
+				//nameend=atoi(optarg);
+				if ((nameend=atoi(optarg))==-1) {
+					printf("error: non-numerical appendix end for the username\n");
 					exit(2);
 				}
+				break;
+			case 'F':
+				flood=1;
 				break;
 			case 'f':
 				/* file is opened in binary mode so that the cr-lf is preserved */
@@ -817,18 +847,18 @@ int main(int argc, char *argv[])
 				length  = fread(buff, 1, sizeof(buff), pf);
 				if (length >= sizeof(buff)){
 					printf("error:the file is too big. try files of less than %i bytes.\n", BUFSIZE);
-					puts("      or recompile the program with bigger BUFSIZE defined.");
+					printf("      or recompile the program with bigger BUFSIZE defined.\n");
 					exit(2);
 				}
 				fclose(pf);
 				buff[length] = '\0';
-				fbool=1;
+				file_b=1;
 				break;
 			case 'h':
 				print_help();
 				break;
 			case 'i':
-				vbool=0;
+				via_ins=0;
 				break;
 			case 'l':
 				lport=atoi(optarg);
@@ -840,14 +870,14 @@ int main(int argc, char *argv[])
 			case 'm':
 				maxforw=atoi(optarg);
 				if (maxforw==-1) {
-					puts("error: non-numerical number of max-forwards");
+					printf("error: non-numerical number of max-forwards\n");
 					exit(2);
 				}
 				break;
 			case 'r':
 				rport=atoi(optarg);
 				if (!rport) {
-					puts("error: non-numerical remote port number");
+					printf("error: non-numerical remote port number\n");
 					exit(2);
 				}
 				break;
@@ -866,7 +896,7 @@ int main(int argc, char *argv[])
 							delim2++;
 							rport = atoi(delim2);
 							if (!rport) {
-								puts("error: non-numerical remote port number");
+								printf("error: non-numerical remote port number\n");
 								exit(2);
 							}
 						}
@@ -874,26 +904,26 @@ int main(int argc, char *argv[])
 						strncpy(domainname, delim, strlen(delim));
 						address = getaddress(delim);
 						if (!address){
-							puts("error:unable to determine the remote host address.");
+							printf("error:unable to determine the remote host address\n");
 							exit(2);
 						}
 					}
 					else{
-						puts("error: sip:uri doesn't contain a : ?!");
+						printf("error: sip:uri doesn't contain a : ?!\n");
 						exit(2);
 					}
 				}
 				else{
-					puts("error: sip:uri doesn't not begin with sip");
+					printf("error: sip:uri doesn't not begin with sip\n");
 					exit(2);
 				}
-				sbool=1;
+				uri_b=1;
 				break;			break;
 			case 't':
-				tbool=1;
+				trace=1;
 				break;
 			case 'u':
-				ubool=1;
+				usrloc=1;
 				break;
 			case 'v':
 				verbose=1;
@@ -906,56 +936,71 @@ int main(int argc, char *argv[])
 	}
 
 	/* lots of conditions to check */
-	if (tbool && ubool) {
-		printf("error: tracing and usrloc together isn't possible\n");
-		exit(2);
-	}
-
-	if (tbool) {
-		if (!sbool) {
+	if (trace) {
+		if (usrloc || flood) {
+			printf("error: trace can't be combined with usrloc or flood\n");
+			exit(2);
+		}
+		if (!uri_b) {
 			printf("error: for trace modus a sip:uri is realy needed\n");
 			exit(2);
 		}
-		if (fbool) {
-/*			if (strncmp(buff, "OPTIONS", 7)){
-				printf("error: tracerouting only possible with an OPTIONS request.\n"
-					"       Give another request file or convert it to an OPTIONS request.\n");
-				exit(2);
-			} */
+		if (file_b) {
 			printf("warning: file will be ignored for tracing.");
 		}
 		if (!username) {
 			printf("error: for trace modus without a file the sip:uir have to contain a username\n");
 			exit(2);
 		}
-		if (!vbool){
+		if (!via_ins){
 			printf("warning: Via-Line is needed for tracing. Ignoring -i\n");
-			vbool=1;
+			via_ins=1;
 		}
 		if (maxforw==-1) maxforw=0;
 	}
-	else if (ubool) {
-		if (!username || !sbool || nameend==-1) {
+	else if (usrloc) {
+		if (trace || flood) {
+			printf("error: usrloc can't be combined with trace or flood\n");
+			exit(2);
+		}
+		if (!username || !uri_b || nameend==-1) {
 			printf("error: for the USRLOC modus you have to give a sip:uri with a "
 					"username and the\n       username appendix end at least\n");
 			exit(2);
 		}
-		if (vbool) {
-			vbool=0;
+		if (via_ins) {
+			via_ins=0;
 		}
-		if (dbool) {
-			printf("warning: redirects are not expected in USRLOC. Enableling -d\n");
-			dbool=0;
+		if (redirects) {
+			printf("warning: redirects are not expected in USRLOC. Disableing\n");
+			redirects=0;
 		}
 		if (namebeg==-1)
 			namebeg=0;
 	}
-	else if (!(fbool && sbool)) {
+	else if (flood) {
+		if (trace || usrloc) {
+			printf("error: flood can't be combined with trace or usrloc\n");
+			exit(2);
+		}
+		if (!uri_b) {
+			printf("error: we need at least a sip uri for flood\n");
+			exit(2);
+		}
+	}
+	else if (!(file_b && uri_b)) {
 		printf("error: you have to give the file to send and the sip:uri at least.\n\n");
 		print_help();
 	}
+	/* determine our hostname */
+	get_fqdn();
+	
+	/* this is not a cryptographic random number generator,
+	   but hey this is only a test-tool => should be satisfying*/
+	srand(time(0));
+
 	/* here we go...*/
-	shoot(buff, address, lport, rport, maxforw, tbool, vbool, fbool, ubool, dbool);
+	shoot(buff);
 
 	/* normaly we won't come back here, but to satisfy the compiler */
 	return 0;
