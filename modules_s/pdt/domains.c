@@ -207,7 +207,6 @@ void free_hash(h_entry_t* hash, unsigned int hash_size, int do_cell)
 			/* retains the next cell */
 	    	tmp = it->n;
 			free_entry(it, do_cell);
-	    	
 			/* the iterator points up to the next cell */
 			it = tmp;
 		}

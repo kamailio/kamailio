@@ -62,7 +62,7 @@ MODULE_VERSION
 int hs_two_pow = 1;
 
 /** structure containing the both hashes */
-double_hash_t *hash;
+double_hash_t *hash = NULL;
 
 /** next code to be allocated */
 code_t *next_code = NULL;
@@ -240,7 +240,7 @@ static int mod_init(void)
 
 
 	/* binding to mysql module */
-	if(bind_dbmod())
+	if(bind_dbmod(db_url))
 	{
 		LOG(L_ERR, "PDT: mod_init: Database module not found\n");
 		goto error1;
@@ -513,11 +513,14 @@ int update_new_uri(struct sip_msg *msg, int code_len, char* host_port)
 
 static void mod_destroy(void)
 {
-    DBG("PDT: mod_destroy : Cleaning up\n");
-    free_double_hash(hash);
-    db_close(db_con);
-    shm_free(next_code);
-    lock_destroy(&l);
+	DBG("PDT: mod_destroy : Cleaning up\n");
+	if (hash)
+		free_double_hash(hash);
+	if (db_con)
+		db_close(db_con);
+	if (next_code)
+		shm_free(next_code);
+	lock_destroy(&l);
 }
 
 
