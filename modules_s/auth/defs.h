@@ -26,4 +26,7 @@
 #define USER_DOMAIN_HACK
 #define ACK_CANCEL_HACK
 
+/* print algorithm name in challenge explicitely */
+#define PRINT_MD5
+
 #endif
