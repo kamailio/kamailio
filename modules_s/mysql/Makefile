@@ -16,6 +16,7 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
 LIBS=-L/usr/lib/mysql -L$(LOCALBASE)/lib -L$(LOCALBASE)/lib/mysql \
 		-L$(LOCALBASE)/mysql/lib/mysql/ -L/usr/pkg/lib/mysql \
 		-L$(LOCALBASE)/mysql/lib \
+		-L/usr/lib64/mysql \
 		-lmysqlclient -lz
 
 include ../../Makefile.modules
