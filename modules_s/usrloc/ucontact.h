@@ -64,6 +64,7 @@ typedef enum flags {
 	FL_N_MESSAGE   = 1 << 4,     /* Contact doesn't support MESSAGE */
 	FL_SUBSCRIBE   = 1 << 5,     /* Contact supports SUBSCRIBE and NOTIFY */
 	FL_N_SUBSCRIBE = 1 << 6,     /* Contact doesn't support SUBSCRIBE and NOTIFY */
+	FL_PERMANENT   = 1 << 7,     /* Permanent contact (does not expire) */
 	FL_ALL         = 0xFFFFFFFF  /* All flags set */
 } flags_t;
 
@@ -82,6 +83,13 @@ typedef struct ucontact {
 	struct ucontact* next;  /* Next contact in the linked list */
 	struct ucontact* prev;  /* Previous contact in the linked list */
 } ucontact_t;
+
+
+/*
+ * Valid contact is a contact that either didn't expire yet or is permanent and
+ * also it is not in a zombie state (preserved just for replication)
+ */
+#define VALID_CONTACT(c, t) (((c->expires > t) || (c->flags & FL_PERMANENT)) && (c->state < CS_ZOMBIE_N))
 
 
 /*

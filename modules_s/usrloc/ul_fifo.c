@@ -47,6 +47,7 @@
 #define MAX_EXPIRES 20
 #define MAX_Q 20
 #define MAX_REPLICATE 12
+#define MAX_FLAGS 12
 
 
 /*
@@ -138,7 +139,7 @@ static inline void fifo_find_domain(str* _name, udomain_t** _d)
 }
 
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float _q, int _r)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float _q, int _r, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -174,13 +175,13 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float 
 	cid.len = FIFO_CALLID_LEN;
 
 	if (c) {
-		if (update_ucontact_rep(c, _e + act_time, _q, &cid, FIFO_CSEQ, _r, FL_NONE, FL_NONE) < 0) {
+		if (update_ucontact_rep(c, _e + act_time, _q, &cid, FIFO_CSEQ, _r, _f, FL_NONE) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
 		}
 	} else {
-		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, FL_NONE, _r, &c) < 0) {
+		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, _f, _r, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;
@@ -200,12 +201,13 @@ static int ul_add(FILE* pipe, char* response_file)
 	char expires_s[MAX_EXPIRES];
 	char q_s[MAX_Q];
 	char rep_s[MAX_REPLICATE];
+	char flags_s[MAX_FLAGS];
 	udomain_t* d;
 	float q_f;
-	int exp_i, rep_i;
+	int exp_i, rep_i, flags_i;
 	char* at;
 
-	str table, user, contact, expires, q, rep;
+	str table, user, contact, expires, q, rep, flags;
 
 	if (!read_line(table_s, MAX_TABLE, pipe, &table.len) || table.len == 0) {
 		fifo_reply(response_file,
@@ -263,6 +265,13 @@ static int ul_add(FILE* pipe, char* response_file)
 		LOG(L_ERR, "ERROR: ul_add: replicate expected\n");
 		return 1;
 	}
+
+	if (!read_line(flags_s, MAX_FLAGS, pipe, &flags.len) || flags.len == 0) {
+		fifo_reply(response_file,
+			   "400 ul_add: flags expected\n");
+		LOG(L_ERR, "ERROR: ul_add: flags expected\n");
+		return 1;
+	}
 	
 	table.s = table_s;
 	user.s = user_s;
@@ -272,6 +281,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	expires.s = expires_s;
 	q.s = q_s;
 	rep.s = rep_s;
+	flags.s = flags_s;
 	
 	fifo_find_domain(&table, &d);
 	
@@ -290,10 +300,15 @@ static int ul_add(FILE* pipe, char* response_file)
 			fifo_reply(response_file, "400 Invalid replicate format\n");
 			return 1;
 		}
+
+		if (str2int(&flags, (unsigned int*)&flags_i) < 0) {
+			fifo_reply(response_file, "400 Invalid flags format\n");
+			return 1;
+		}
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, q_f, rep_i) < 0) {
+		if (add_contact(d, &user, &contact, exp_i, q_f, rep_i, flags_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
 			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
@@ -499,7 +514,7 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 	int cnt = 0;
 
 	while(_c) {
-		if ((_c->expires > act_time) && (_c->state < CS_ZOMBIE_N)) {
+		if (VALID_CONTACT(_c, act_time)) {
 			cnt++;
 			if (cnt==1) {
 				fputs( "200 OK\n", _o);
