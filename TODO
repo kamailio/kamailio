@@ -6,10 +6,11 @@ $Id$
  ipv6 addresses ([fec0:aa::01]).
 - fix format string vulnerability in log()
 - fix alignement access problems (warning on Sun)
+- add request header bitmap field for the modules
 
 High priority:
 x if () {} else {}
-- plugin interface
+x plugin interface
 - ipv6 support
 - reply ("response line")
 - drop ACKs for our replies

@@ -22,8 +22,11 @@ enum{	         F_HOST,    P_HOST,
 		L_PARAM, F_PARAM,   P_PARAM,
 		L_VIA,   F_VIA,
 		         F_COMMENT, P_COMMENT,
+				 F_IP6HOST, P_IP6HOST,
 				 F_CRLF,
 				 F_LF
+	};
+enum{
 	};
 
 #define LOG(lev, fmt, args...) fprintf(stderr, fmt, ## args)
@@ -51,12 +54,123 @@ int main(int argc, char** argv)
 			exit(-1);
 	}
 	
-	
-	c_nest=0;
-	state=F_HOST;
+	/* parse start of via ( SIP/2.0/UDP    )*/
+	state=F_SIP;
 	for(tmp=argv[1];*tmp;tmp++){
 		switch(*tmp){
 			case ' ':
+			case'\t':
+				switch(state){
+					case L_SIP: /*eat space*/
+					case L_SLASH1:
+					case L_SLASH2:
+					case L_VER:
+					case L_PROTO:
+					case F_SIP:
+					case F_VER:
+					case F_PROTO:
+						break;
+					case P_PROTO:
+						*tmp=0;
+						state=F_HOST;
+						break;
+					case F_LF:
+					case F_CRLF:
+					case F_CR:
+						state=saved_state;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case '\n':
+				switch(state){
+					case L_SIP:
+					case L_SLASH1:
+					case L_SLASH2:
+					case L_VER:
+					case F_SIP:
+					case F_VER:
+					case F_PROTO:
+						saved_state=state;
+						state=F_LF;
+						break;
+					case P_PROTO:
+						*tmp=0;
+						state=F_LF;
+						saved_state=;
+						break;
+					case F_CR:
+						state=F_CRLF;
+						break;
+					case F_LF:
+					case F_CRLF:
+						state=saved_state;
+						goto endofheader;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			case '\r':
+				switch(state){
+					case L_SIP:
+					case L_SLASH1:
+					case L_SLASH2:
+					case L_VER:
+					case F_SIP:
+					case F_VER:
+					case F_PROTO:
+						saved_state=state;
+						state=F_CR;
+						break;
+					case P_PROTO:
+						*tmp=0;
+						state=F_CR;
+						saved_state=;
+						break;
+					case F_LF: /*end of line ?next header?*/
+					case F_CR:
+					case F_CRLF:
+						state=saved_state;
+						goto endofheader;
+					default:
+						LOG(L_ERR, "ERROR: parse_via: bad char <%c> on"
+								" state %d\n", *tmp, state);
+						goto error;
+				}
+				break;
+			
+			case '\\':
+				switch(state){
+					case L_VER:
+						*tmp=0;
+						state=F_VER;
+						break;
+					case L_PROTO:
+						*tmp=0;
+						state=F_PROTO;
+						break;
+					case L_
+
+
+						
+				
+								
+								
+
+			
+	}
+
+	c_nest=0;
+	state=F_HOST;
+	for(;*tmp;tmp++){
+		switch(*tmp){
+			case ' ':
+			case '\t':
 				switch(state){
 					case F_HOST:/*eat the spaces*/
 						break;
@@ -84,14 +198,21 @@ int main(int argc, char** argv)
 					case F_COMMENT:
 					case P_COMMENT:
 						break;
+					case F_IP6HOST: /*eat the spaces*/
+						break;
+					case P_IP6HOST:
+						*tmp=0; /*mark end of host*/
+						state=L_PORT; 
+						break;
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now =' '*/
 						state=saved_state;
 						break;
 					default:
 						LOG(L_CRIT,"BUG: parse_via"
-							" on <%c>\n",*tmp);
+							" on <%c>, state=%d\n",*tmp, state);
 						goto  error;
 				}
 			break;
@@ -106,6 +227,8 @@ int main(int argc, char** argv)
 					case L_VIA:
 					case F_COMMENT:
 					case P_COMMENT:
+					case F_IP6HOST:
+					case P_IP6HOST:
 						saved_state=state;
 						state=F_LF;
 						break;
@@ -124,17 +247,71 @@ int main(int argc, char** argv)
 						saved_state=L_PARAM;
 						state=F_LF;
 						break;
+					case F_CR:
+						state=F_CRLF;
+						break;
+					case F_CRLF:
+					case F_LF:
+						state=saved_state;
+						goto endofheader;
 					default:
 						LOG(L_CRIT,"BUG: parse_via"
 							" on <%c>\n",*tmp);
 						goto  error;
 				}
 			break;
+		case '\r':
+				switch(state){
+					case F_HOST:/*eat the spaces*/
+					case L_PORT: /*eat the spaces*/
+					case F_PORT:
+					case L_PARAM: /* eat the space */
+					case F_PARAM:
+					case F_VIA: /* eat the space */
+					case L_VIA:
+					case F_COMMENT:
+					case P_COMMENT:
+					case F_IP6HOST:
+					case P_IP6HOST:
+						saved_state=state;
+						state=F_CR;
+						break;
+					case P_HOST:
+						 *tmp=0;/*mark end of host*/
+						 saved_state=L_PORT;
+						 state=F_CR;
+						 break;
+					case P_PORT:
+						*tmp=0; /*end of port */
+						saved_state=L_PARAM;
+						state=F_CR;
+						break;
+					case P_PARAM:
+					/*	*tmp=0;*/ /*!?end of param*/
+						saved_state=L_PARAM;
+						state=F_CR;
+						break;
+					case F_CRLF:
+					case F_CR:
+					case F_LF:
+						state=saved_state;
+						goto endofheader;
+					default:
+						LOG(L_CRIT,"BUG: parse_via"
+							" on <%c>\n",*tmp);
+						goto  error;
+				}
+			break;
+			
 			case ':':
 				switch(state){
 					case F_HOST:
+					case F_IP6HOST:
 						LOG(L_ERR,"ERROR:parse_via:"
 							" no host found\n");
+						goto error;
+					case P_IP6HOST:
+						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
 						*tmp=0; /*mark  end of host*/
@@ -163,8 +340,12 @@ int main(int argc, char** argv)
 						goto error;
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
+					case F_COMMENT:
+					case P_COMMENT: /*everything is allowed in a comment*/
+						break;
 					default:
 						LOG(L_CRIT,"BUG: parse_via"
 							" on <%c> state %d\n",
@@ -175,8 +356,12 @@ int main(int argc, char** argv)
 			case ';':
 				switch(state){
 					case F_HOST:
+					case F_IP6HOST:
 						LOG(L_ERR,"ERROR:parse_via:"
 							" no host found\n");
+						goto error;
+					case P_IP6HOST:
+						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
 					case P_PORT:
@@ -208,8 +393,12 @@ int main(int argc, char** argv)
 						goto error;
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
+					case F_COMMENT:
+					case P_COMMENT: /*everything is allowed in a comment*/
+						break;
 					
 					default:
 						LOG(L_CRIT,"BUG: parse_via"
@@ -221,8 +410,12 @@ int main(int argc, char** argv)
 			case ',':
 				switch(state){
 					case F_HOST:
+					case F_IP6HOST:
 						LOG(L_ERR,"ERROR:parse_via:"
 							" no host found\n");
+						goto error;
+					case P_IP6HOST:
+						LOG(L_ERR, "ERROR:parse_via: bad ipv6 reference\n");
 						goto error;
 					case P_HOST:
 					case P_PORT:
@@ -246,8 +439,12 @@ int main(int argc, char** argv)
 						break;	
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
+					case F_COMMENT:
+					case P_COMMENT: /*everything is allowed in a comment*/
+						break;
 					default:
 						LOG(L_CRIT,"BUG: parse_via"
 							" on <%c> state %d\n",
@@ -261,6 +458,8 @@ int main(int argc, char** argv)
 					case F_PORT:
 					case F_PARAM:
 					case F_VIA:
+					case F_IP6HOST:
+					case P_IP6HOST: /*must be terminated in ']'*/
 						LOG(_ERR,"ERROR:parse_via"
 							" on <%c> state %d\n",
 							*tmp, state);
@@ -284,6 +483,7 @@ int main(int argc, char** argv)
 						break;
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
 					default:
@@ -324,12 +524,15 @@ int main(int argc, char** argv)
 					case L_PORT:
 					case L_PARAM:
 					case L_VIA:
+					case F_IP6HOST:
+					case P_IP6HOST:
 						LOG(L_ERR,"ERROR:parse_via"
 							" on <%c> state %d\n",
 							*tmp, state);
 						goto  error;
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
 					default:
@@ -339,6 +542,45 @@ int main(int argc, char** argv)
 						goto  error;
 				}
 				break;
+			case '[':
+				switch(state){
+					case F_HOST:
+						state=F_IP6HOST;
+						break;
+					case F_COMMENT:
+					case P_COMMENT:
+						break;
+					case F_CRLF:
+					case F_LF:
+					case F_CR:
+						/*previous=crlf and now !=' '*/
+						goto endofheader;
+					default:
+						LOG(L_ERR,"ERROR:parse_via"
+							" on <%c> state %d\n",
+							*tmp, state);
+						goto  error;
+				}
+				break;
+			case ']':
+				switch(state){
+					case P_IP6HOST:
+						*tmp=0; /*mark the end*/
+						state=L_PORT;
+						break;
+					case F_CRLF:
+					case F_LF:
+					case F_CR:
+						/*previous=crlf and now !=' '*/
+						goto endofheader;
+					default:
+						LOG(L_ERR,"ERROR:parse_via"
+							" on <%c> state %d\n",
+							*tmp, state);
+						goto  error;
+				}
+				break;
+						
 			default:
 				switch(state){
 					case F_HOST:
@@ -378,8 +620,15 @@ int main(int argc, char** argv)
 						break;
 					case P_COMMENT:
 						break;
+					case F_IP6HOST:
+						state=P_IP6HOST;
+						host=tmp;
+						break;
+					case P_IP6HOST:
+						break;
 					case F_CRLF:
 					case F_LF:
+					case F_CR:
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
 					default:
