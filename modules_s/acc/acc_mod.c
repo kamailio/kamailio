@@ -162,6 +162,7 @@ static param_export_t params[] = {
 	{"radius_config",		STR_PARAM, &radius_config		},
 	{"radius_flag",				INT_PARAM, &radius_flag			},
 	{"radius_missed_flag",		INT_PARAM, &radius_missed_flag		},
+	{"service_type", 		INT_PARAM, &service_type },
 #endif
 	/* db-specific */
 #ifdef SQL_ACC

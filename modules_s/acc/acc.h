@@ -92,6 +92,9 @@
 #define A_EOL_LEN (sizeof(A_EOL)-1)
 
 
+#ifdef RAD_ACC
+extern int service_type;
+#endif
 
 
 int acc_log_request( struct sip_msg *rq, struct hdr_field *to,
