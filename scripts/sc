@@ -112,39 +112,33 @@ if [ "0$VERIFY_ACL" -eq 1 ] ; then
 fi
 cat <<EOF
 $0 $VERSION
-usage: 
+parameter usage: 
            * subscribers *
- $CMD add <username> <password> <email> .. add a new subscriber (*)
- $CMD passwd <username> <passwd> ......... change user's password (*)
- $CMD rm <username> ...................... delete a user (*)
- $CMD mail <username> .................... send an email to a user
- $CMD alias show [<alias>] ............... show aliases
- $CMD alias rm <alias> ................... remove an alias
- $CMD alias add <alias> <uri> ............ add an aliases 
+ add <username> <password> <email> .. add a new subscriber (*)
+ passwd <username> <passwd> ......... change user's password (*)
+ rm <username> ...................... delete a user (*)
+ mail <username> .................... send an email to a user
+ alias show [<alias>] ............... show aliases
+ alias rm <alias> ................... remove an alias
+ alias add <alias> <uri> ............ add an aliases 
 
            * access control lists *
- $CMD acl show [<username>] .............. show user membership
- $CMD acl grant <username> <group> ....... grant user membership (*)
- $CMD acl revoke <username> [<group>] .... grant user membership(s) (*)
+ acl show [<username>] .............. show user membership
+ acl grant <username> <group> ....... grant user membership (*)
+ acl revoke <username> [<group>] .... grant user membership(s) (*)
 
            * usrloc *
- $CMD ul show [<username>]................ show in-RAM online users
- $CMD ul rm <username> ................... delete user's UsrLoc entries
- $CMD ul add <username> <uri> ............ introduce a permanent UrLoc entry
- $CMD showdb [<username>] ................ show online users flushed in DB
+ ul show [<username>]................ show in-RAM online users
+ ul rm <username> ................... delete user's UsrLoc entries
+ ul add <username> <uri> ............ introduce a permanent UrLoc entry
+ showdb [<username>] ................ show online users flushed in DB
 
-           * server health *
- $CMD monitor ............................ show internal status
- $CMD ps ................................. show runnig processes 
- $CMD fifo ............................... send raw commands to FIFO
-
-           * server control *
- $CMD start .............................. start ser
- $CMD stop ............................... stop ser
- $CMD restart ............................ restart ser
-
-           * miscellaneous *
- $CMD cisco_restart <uri> ................ restart a Cisco phone
+           * control and diagnostics *
+ moni ... show internal status      start .... start ser
+ ps ..... show runnig processes 	stop ..... stop ser
+ fifo ... send raw FIFO commands    restart .. restart ser
+ ping <uri> .. ping a URI (OPTIONS)
+ cisco_restart <uri> .. restart a Cisco phone (NOTIFY(
 
 
    Commands labeled with (*) will prompt for a MySQL password.
@@ -753,6 +747,16 @@ case $1 in
 	fifo)
 		shift
 		fifo_cmd "$@"
+		;;
+
+	ping)
+		if [ "$#" -ne 2 ] ; then	
+			usage
+			exit 1
+		fi
+		fifo_cmd t_uac_dlg OPTIONS "$2" "." "From: sip:daemon@$SIP_DOMAIN" \
+			"To: <$2>" "Contact: <sip:daemon@!!>" "." "." |
+			head -1
 		;;
 
 	cisco_restart)
