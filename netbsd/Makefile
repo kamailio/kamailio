@@ -18,7 +18,7 @@ MAINTAINER= pelinescu-onciul@fokus.fraunhofer.de
 
 MAN8=ser.8
 MAN5=ser.cfg.5
-MANCOMPRESSED= no
+# MANCOMPRESSED must not be specified (if defined is assumed to be yes)
 
 
 USE_GMAKE= yes
@@ -28,7 +28,7 @@ DISTFILES= ${DISTNAME}_src.tar.gz
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
 
 # build by default mysql and jabber
-MAKE_ENV='include_modules="mysql jabber"'
+MAKE_ENV= include_modules="mysql jabber"
 
 # depends on expat and mysqlclient because of the above modules
 DEPENDS= expat-[0-9]*:../../textproc/expat \
@@ -37,7 +37,6 @@ DEPENDS= expat-[0-9]*:../../textproc/expat \
 #.include "/usr/pkgsrc/mk/bsd.prefs.mk"
 
 pre-fetch:
-	@echo "DEBUG: distfile=${DISTFILE}, distname=${DISTNAME}, w=${WRKSRC}"
 
 .include "../../mk/bsd.pkg.mk"
 

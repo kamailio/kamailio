@@ -70,6 +70,7 @@ f none doc/ser/README.tm 0644 bin bin
 f none doc/ser/README.uri 0644 bin bin
 f none doc/ser/README.usrloc 0644 bin bin
 f none doc/ser/README.vm 0644 bin bin
+f none doc/ser/README.xlog 0644 bin bin
 d none man 0755 bin bin
 d none man/man8 0755 bin bin
 f none man/man8/ser.8 0644 bin bin
