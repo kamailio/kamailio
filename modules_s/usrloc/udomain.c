@@ -34,6 +34,7 @@
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "del_list.h"
 #include "ins_list.h"
+#include "notify.h"
 
 
 /*
@@ -411,8 +412,7 @@ int delete_urecord(udomain_t* _d, str* _aor)
 		return 0;
 	}
 	
-	     /* Save record pointer, watchers will be notified from post-script callback */
-	notify_record = r;
+	notify_watchers(r);
 
 	switch(db_mode) {
 	case WRITE_THROUGH:

@@ -8,9 +8,6 @@
 #include "udomain.h"
 
 
-struct urecord* notify_record = 0;
-
-
 void notify_watchers(struct urecord* _r)
 {
 	notify_cb_t* n;
@@ -118,15 +115,3 @@ int unregister_watcher(str* _d, str* _a, notcb_t _c, void* _data)
 	return 0;
 }
 
-
-int post_script(struct sip_msg* _m, void* param)
-{
-	DBG("usrloc: Post-script callback called\n");
-
-	if (notify_record) {
-		notify_watchers(notify_record);
-		notify_record = 0;
-	}
-
-	return 0;
-}

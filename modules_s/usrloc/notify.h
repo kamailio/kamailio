@@ -16,8 +16,6 @@
 
 struct urecord;
 
-extern struct urecord* notify_record;
-
 typedef enum pres_state {
 	PRES_OFFLINE = 0,
 	PRES_ONLINE

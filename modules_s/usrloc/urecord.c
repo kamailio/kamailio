@@ -125,8 +125,6 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 		return -1;
 	}
 	
-	notify_record = _r;
-	
 	ptr = _r->contacts;
 	while(ptr) {
 		if (ptr->q < _q) break;
@@ -151,6 +149,9 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 	} else {
 		_r->contacts = *_con;
 	}
+
+	     /* FIXME: Watchers should be notify only if this is the first contact */
+	notify_watchers(_r);
 
 	return 0;
 }
@@ -419,7 +420,7 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
-	notify_record = _r;
+	notify_watchers(_r);
 
 	switch(db_mode) {
 	case NO_DB:
