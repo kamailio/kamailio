@@ -200,9 +200,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	        case HDR_PRIORITY:
 	        case HDR_SUBJECT:
 	        case HDR_USERAGENT:
-	        case HDR_CONTENTPURPOSE:
-	        case HDR_CONTENTACTION:
 	        case HDR_CONTENTDISPOSITION:
+	        case HDR_ACCEPTDISPOSITION:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -390,17 +389,13 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 				if (msg->user_agent==0) msg->user_agent = hf;
 				msg->parsed_flag|=HDR_USERAGENT;
 				break;
-		        case HDR_CONTENTPURPOSE:
-				if (msg->content_purpose==0) msg->content_purpose = hf;
-				msg->parsed_flag|=HDR_CONTENTPURPOSE;
-				break;
-		        case HDR_CONTENTACTION:
-				if (msg->content_action==0) msg->content_action = hf;
-				msg->parsed_flag|=HDR_CONTENTACTION;
-				break;
 		        case HDR_CONTENTDISPOSITION:
 				if (msg->content_disposition==0) msg->content_disposition = hf;
 				msg->parsed_flag|=HDR_CONTENTDISPOSITION;
+				break;
+		        case HDR_ACCEPTDISPOSITION:
+				if (msg->accept_disposition==0) msg->accept_disposition = hf;
+				msg->parsed_flag|=HDR_ACCEPTDISPOSITION;
 				break;
 			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;

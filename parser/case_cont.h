@@ -1,8 +1,8 @@
 /* 
  * $Id$ 
  *
- * Contact, Content-Type, Content-Length, Content-Purpose,
- * Content-Action, Content-Disposition  Header Field Name Parsing Macros
+ * Contact, Content-Type, Content-Length, Content-Disposition
+ * Header Field Name Parsing Macros
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -57,33 +57,6 @@
         }
 
 
-#define PURP_CASE                               \
-        switch(LOWER_DWORD(val)) {              \
-        case _ose1_:                            \
-	        hdr->type = HDR_CONTENTPURPOSE; \
-	        hdr->name.len = 15;             \
-	        return (p + 4);                 \
-                                                \
-        case _ose2_:                            \
-                hdr->type = HDR_CONTENTPURPOSE; \
-                p += 4;                         \
-	        goto dc_end;                    \
-        }
-
-
-#define ACTION_CASE                                \
-    p += 4;                                        \
-    if (LOWER_BYTE(*p) == 'o') {                   \
-            p++;                                   \
-            if (LOWER_BYTE(*p) == 'n') {           \
-                    hdr->type = HDR_CONTENTACTION; \
-                    p++;                           \
-                    goto dc_end;                   \
-            }                                      \
-    }                                              \
-    goto other;
-
-
 #define ion_CASE                                    \
         switch(LOWER_DWORD(val)) {                  \
         case _ion1_:                                \
@@ -120,18 +93,6 @@
                 hdr->type = HDR_CONTENTTYPE; \
                 p += 4;                      \
                 goto dc_end;                 \
-                                             \
-        case _purp_:                         \
-		p += 4;                      \
-		val = READ(p);               \
-		PURP_CASE;                   \
-		goto other;                  \
-                                             \
-        case _acti_:                         \
-                p += 4;                      \
-                val = READ(p);               \
-                ACTION_CASE;                 \
-                goto other;                  \
                                              \
         case _disp_:                         \
                 p += 4;                      \

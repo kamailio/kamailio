@@ -55,20 +55,57 @@
 	}
 
 
-#define ptl_CASE                   \
+#define on_CASE                                            \
+        if (LOWER_BYTE(*p) == 'o') {                       \
+                p++;                                       \
+                if (LOWER_BYTE(*p) == 'n') {               \
+                        hdr->type = HDR_ACCEPTDISPOSITION; \
+                        p++;                               \
+                        goto dc_end;                       \
+                }                                          \
+        }
+
+
+#define siti_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _siti_:               \
+                p += 4;            \
+                val = READ(p);     \
+                on_CASE;           \
+                goto other;        \
+        }
+
+
+#define ispo_CASE                  \
+        switch(LOWER_DWORD(val)) { \
+        case _ispo_:               \
+                p += 4;            \
+                val = READ(p);     \
+                siti_CASE;         \
+                goto other;        \
+        }
+
+
+#define ptld_CASE                  \
         switch(LOWER_DWORD(val)) { \
         case _pt_l_:               \
 		p += 4;            \
 		val = READ(p);     \
 		angu_CASE;         \
 		goto other;        \
+                                   \
+        case _pt_d_:               \
+                p += 4;            \
+                val = READ(p);     \
+                ispo_CASE;         \
+                goto other;        \
 	}
 
 
 #define acce_CASE                           \
     p += 4;                                 \
     val = READ(p);                          \
-    ptl_CASE;                               \
+    ptld_CASE;                              \
                                             \
     if (LOWER_BYTE(*p) == 'p') {            \
             p++;                            \

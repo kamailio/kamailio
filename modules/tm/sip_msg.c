@@ -272,9 +272,16 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 		len += ROUND4(sizeof( struct hdr_field));
 		switch (hdr->type)
 		{
-			case HDR_CSEQ:
-				len+=ROUND4(sizeof(struct cseq_body));
+			case HDR_VIA:
+				for (via=(struct via_body*)hdr->parsed;via;via=via->next)
+				{
+					len+=ROUND4(sizeof(struct via_body));
+					/*via param*/
+					for(prm=via->param_lst;prm;prm=prm->next)
+						len+=ROUND4(sizeof(struct via_param ));
+				}
 				break;
+
 		        case HDR_TO:
 		        case HDR_FROM:
 				     /* From header might be unparsed */
@@ -286,15 +293,11 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 						len+=ROUND4(sizeof(struct to_param ));
 				}
 				break;				
-			case HDR_VIA:
-				for (via=(struct via_body*)hdr->parsed;via;via=via->next)
-				{
-					len+=ROUND4(sizeof(struct via_body));
-					/*via param*/
-					for(prm=via->param_lst;prm;prm=prm->next)
-						len+=ROUND4(sizeof(struct via_param ));
-				}
+
+			case HDR_CSEQ:
+				len+=ROUND4(sizeof(struct cseq_body));
 				break;
+
 
 		        case HDR_AUTHORIZATION:
 		        case HDR_PROXYAUTH:
@@ -310,9 +313,20 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 			case HDR_RECORDROUTE:
 			case HDR_CONTENTTYPE:
 			case HDR_CONTENTLENGTH:
+		        case HDR_EXPIRES:
+		        case HDR_SUPPORTED:
 			case HDR_PROXYREQUIRE:
 			case HDR_UNSUPPORTED:
 			case HDR_ALLOW:
+		        case HDR_EVENT:
+		        case HDR_ACCEPT:
+		        case HDR_ACCEPTLANGUAGE:
+		        case HDR_ORGANIZATION:
+		        case HDR_PRIORITY:
+		        case HDR_SUBJECT:
+		        case HDR_USERAGENT:
+		        case HDR_ACCEPTDISPOSITION:
+		        case HDR_CONTENTDISPOSITION:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -573,8 +587,35 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				new_msg->unsupported = new_hdr;
 				break;
 			case HDR_ALLOW :
-				new_msg->unsupported = new_hdr;	
+				new_msg->allow = new_hdr;	
 				break;
+		        case HDR_EVENT:
+				new_msg->event = new_hdr;
+				break;
+		        case HDR_ACCEPT:
+				new_msg->accept = new_hdr;
+				break;
+		        case HDR_ACCEPTLANGUAGE:
+				new_msg->accept_language = new_hdr;
+				break;
+		        case HDR_ORGANIZATION:
+				new_msg->organization = new_hdr;
+				break;
+		        case HDR_PRIORITY:
+			        new_msg->priority = new_hdr;
+			        break;
+		        case HDR_SUBJECT:
+			        new_msg->subject = new_hdr;
+			        break;
+		        case HDR_USERAGENT:
+			        new_msg->user_agent = new_hdr;
+			        break;
+		        case HDR_ACCEPTDISPOSITION:
+			        new_msg->accept_disposition = new_hdr;
+			        break;
+		        case HDR_CONTENTDISPOSITION:
+		 	        new_msg->content_disposition = new_hdr;
+			        break;
 		}/*switch*/
 
 		if ( last_hdr )
