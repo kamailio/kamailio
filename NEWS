@@ -42,7 +42,6 @@ New features
 	- nathelper utility for Cisco/ATA NAT traversal [nathelper]
 	- another NAT traversal utility [mangler]
 	- postgress support [postgress]
-	- fcp module [fcp]
 	- pdt module (prefix2domain) [pdt]
 
 Changes to use of ser scripts
