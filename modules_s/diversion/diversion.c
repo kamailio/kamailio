@@ -137,7 +137,7 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 		anchor = 0;
 	}
 	
-	if (!msg->diversion && parse_headers(msg, HDR_DIVERSION, 0) == -1) {
+	if (!msg->diversion && parse_headers(msg, HDR_DIVERSION_F, 0) == -1) {
 		LOG(L_ERR, "add_diversion_helper: Header parsing failed\n");
 		return -1;
 	}

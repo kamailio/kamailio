@@ -56,7 +56,7 @@ int has_totag(struct sip_msg* _m, char* _foo, char* _bar)
 {
 	str tag;
 
-	if (!_m->to && parse_headers(_m, HDR_TO,0)==-1) {
+	if (!_m->to && parse_headers(_m, HDR_TO_F,0)==-1) {
 		LOG(L_ERR, "ERROR: has_totag: To parsing failed\n");
 		return -1;
 	}

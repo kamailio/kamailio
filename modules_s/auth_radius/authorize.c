@@ -55,7 +55,7 @@
 static inline int get_uri(struct sip_msg* _m, str** _uri)
 {
 	if ((REQ_LINE(_m).method.len == 8) && (memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
-		if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || !_m->to)) {
+		if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || !_m->to)) {
 			LOG(L_ERR, "get_uri(): To header field not found or malformed\n");
 			return -1;
 		}
@@ -74,7 +74,8 @@ static inline int get_uri(struct sip_msg* _m, str** _uri)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
+static inline int authorize(struct sip_msg* _msg, str* _realm,
+							hdr_types_t _hftype)
 {
 	int res;
 	auth_result_t ret;
@@ -136,7 +137,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
 	/* realm parameter is converted to str* in str_fixup */
-	return authorize(_msg, (str*)_realm, HDR_PROXYAUTH);
+	return authorize(_msg, (str*)_realm, HDR_PROXYAUTH_T);
 }
 
 
@@ -145,6 +146,6 @@ int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
  */
 int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	return authorize(_msg, (str*)_realm, HDR_AUTHORIZATION);
+	return authorize(_msg, (str*)_realm, HDR_AUTHORIZATION_T);
 }
 

@@ -49,7 +49,7 @@
 		if (!(_intr_)->_field_) {\
 			if (!(_intr_)->msg->_field_) { \
 				if (parse_headers((_intr_)->msg,_name_,0)==-1) {\
-					LOG(L_ERR,"ERROR:run_proxy: bad %u hdr\n",_name_);\
+					LOG(L_ERR,"ERROR:run_proxy: bad %llx hdr\n",_name_);\
 					goto runtime_error;\
 				} else if ( !(_intr_)->msg->_field_) {\
 					(_intr_)->_field_ = STR_NOT_FOUND;\
@@ -103,7 +103,7 @@ static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 	/* we need to have the contact header */
 	if (msg->contact==0) {
 		/* find and parse the Contact header */
-		if ((parse_headers(msg, HDR_CONTACT, 0)==-1) || (msg->contact==0) ) {
+		if ((parse_headers(msg, HDR_CONTACT_F, 0)==-1) || (msg->contact==0) ) {
 			LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: error parsing or "
 				"no Contact hdr found!\n");
 			goto error;
@@ -410,7 +410,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		/* TO header - mandatory in SIP msg (cannot be STR_NOT_FOUND) */
 		if (!intr->to) {
 			if (!intr->msg->to &&
-			(parse_headers(intr->msg,HDR_TO,0)==-1 || !intr->msg->to)) {
+			(parse_headers(intr->msg,HDR_TO_F,0)==-1 || !intr->msg->to)) {
 				LOG(L_ERR,"ERROR:run_proxy: bad msg or missing TO header\n");
 				goto runtime_error;
 			}
@@ -432,19 +432,19 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		intr->flags |= CPL_FROM_DUPLICATED;
 		/* SUBJECT header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if (intr->subject!=STR_NOT_FOUND) {
-			search_and_duplicate_hdr(intr,subject,HDR_SUBJECT,s);
+			search_and_duplicate_hdr(intr,subject,HDR_SUBJECT_F,s);
 			if (intr->subject!=STR_NOT_FOUND)
 				intr->flags |= CPL_SUBJECT_DUPLICATED;
 		}
 		/* ORGANIZATION header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if ( intr->organization!=STR_NOT_FOUND) {
-			search_and_duplicate_hdr(intr,organization,HDR_ORGANIZATION,s);
+			search_and_duplicate_hdr(intr,organization,HDR_ORGANIZATION_F,s);
 			if ( intr->organization!=STR_NOT_FOUND)
 				intr->flags |= CPL_ORGANIZATION_DUPLICATED;
 		}
 		/* USER_AGENT header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if (intr->user_agent!=STR_NOT_FOUND) {
-			search_and_duplicate_hdr(intr,user_agent,HDR_USERAGENT,s);
+			search_and_duplicate_hdr(intr,user_agent,HDR_USERAGENT_F,s);
 			if (intr->user_agent!=STR_NOT_FOUND)
 				intr->flags |= CPL_USERAGENT_DUPLICATED;
 		}
@@ -452,13 +452,13 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		 * (can be STR_NOT_FOUND) */
 		if (intr->accept_language!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,accept_language,
-				HDR_ACCEPTLANGUAGE,s);
+				HDR_ACCEPTLANGUAGE_F,s);
 			if (intr->accept_language!=STR_NOT_FOUND)
 				intr->flags |= CPL_ACCEPTLANG_DUPLICATED;
 		}
 		/* PRIORITY header - optional in SIP msg (can be STR_NOT_FOUND) */
 		if (intr->priority!=STR_NOT_FOUND) {
-			search_and_duplicate_hdr(intr,priority,HDR_PRIORITY,s);
+			search_and_duplicate_hdr(intr,priority,HDR_PRIORITY_F,s);
 			if (intr->priority!=STR_NOT_FOUND)
 				intr->flags |= CPL_PRIORITY_DUPLICATED;
 		}

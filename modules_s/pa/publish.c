@@ -65,7 +65,8 @@ extern str str_strdup(str string);
  */
 static int parse_hfs(struct sip_msg* _m)
 {
-	if (parse_headers(_m, HDR_FROM | HDR_EVENT | HDR_EXPIRES | HDR_ACCEPT, 0) == -1) {
+	if (parse_headers(_m, HDR_FROM_F | HDR_EVENT_F | HDR_EXPIRES_F |
+							HDR_ACCEPT_F, 0) == -1) {
 		paerrno = PA_PARSE_ERR;
 		LOG(L_ERR, "parse_hfs(): Error while parsing headers\n");
 		return -1;

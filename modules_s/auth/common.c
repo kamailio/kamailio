@@ -47,15 +47,15 @@
 /* 
  * Return parsed To or From, host part of the parsed uri is realm
  */
-int get_realm(struct sip_msg* _m, int _hftype, struct sip_uri* _u)
+int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri* _u)
 {
 	str uri;
 
 	if ((REQ_LINE(_m).method.len == 8) 
 	    && !memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) 
-	    && (_hftype == HDR_AUTHORIZATION)
+	    && (_hftype == HDR_AUTHORIZATION_T)
 	   ) {
-		if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
+		if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
 			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
 			return -1;
 		}

@@ -61,9 +61,11 @@ void strip_realm(str* _realm)
 /*
  * Find credentials with given realm in a SIP message header
  */
-static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
+static inline int find_credentials(struct sip_msg* _m, str* _realm,
+									hdr_types_t _hftype, struct hdr_field** _h)
 {
 	struct hdr_field** hook, *ptr, *prev;
+	hdr_flags_t hdr_flags;
 	int res;
 	str* r;
 
@@ -73,9 +75,18 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 	      * is set in www_authorize and proxy_authorize
 	      */
 	switch(_hftype) {
-	case HDR_AUTHORIZATION: hook = &(_m->authorization); break;
-	case HDR_PROXYAUTH:     hook = &(_m->proxy_auth);    break;
-	default:                hook = &(_m->authorization); break;
+	case HDR_AUTHORIZATION_T: 
+							hook = &(_m->authorization);
+							hdr_flags=HDR_AUTHORIZATION_F;
+							break;
+	case HDR_PROXYAUTH_T:
+							hook = &(_m->proxy_auth);
+							hdr_flags=HDR_PROXYAUTH_F;
+							break;
+	default:				
+							hook = &(_m->authorization);
+							hdr_flags=HDR_T2F(_hftype);
+							break;
 	}
 
 	     /*
@@ -83,7 +94,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 	      */
 	if (*hook == 0) {
 		     /* No credentials parsed yet */
-		if (parse_headers(_m, _hftype, 0) == -1) {
+		if (parse_headers(_m, hdr_flags, 0) == -1) {
 			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
 			return -1;
 		}
@@ -112,7 +123,7 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		}
 
 		prev = ptr;
-		if (parse_headers(_m, _hftype, 1) == -1) {
+		if (parse_headers(_m, hdr_flags, 1) == -1) {
 			LOG(L_ERR, "find_credentials(): Error while parsing headers\n");
 			return -4;
 		} else {
@@ -136,7 +147,8 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
  */
-auth_result_t pre_auth(struct sip_msg* _m, str* _realm, int _hftype, struct hdr_field** _h)
+auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
+						struct hdr_field** _h)
 {
 	int ret;
 	auth_body_t* c;

@@ -66,7 +66,7 @@ static int is_preloaded(struct sip_msg* msg)
 {
 	str tag;
 
-	if (!msg->to && parse_headers(msg, HDR_TO, 0) == -1) {
+	if (!msg->to && parse_headers(msg, HDR_TO_F, 0) == -1) {
 		LOG(L_ERR, "is_preloaded: Cannot parse To header field\n");
 		return -1;
 	}
@@ -95,7 +95,7 @@ static int is_preloaded(struct sip_msg* msg)
  */
 static inline int find_first_route(struct sip_msg* _m)
 {
-	if (parse_headers(_m, HDR_ROUTE, 0) == -1) {
+	if (parse_headers(_m, HDR_ROUTE_F, 0) == -1) {
 		LOG(L_ERR, "find_first_route: Error while parsing headers\n");
 		return -1;
 	} else {
@@ -233,19 +233,19 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 
 	     /* Try to find already parsed Route headers */
 	while(ptr) {
-		if (ptr->type == HDR_ROUTE) goto found;
+		if (ptr->type == HDR_ROUTE_T) goto found;
 		ptr = ptr->next;
 	}
 
 	     /* There are no already parsed Route headers, try to find next
 	      * occurrence of Route header
 	      */
-	if (parse_headers(_m, HDR_ROUTE, 1) == -1) {
+	if (parse_headers(_m, HDR_ROUTE_F, 1) == -1) {
 		LOG(L_ERR, "find_next_route: Error while parsing headers\n");
 		return -1;
 	}
 
-	if ((_m->last_header->type != HDR_ROUTE) || (_m->last_header == *_hdr)) {
+	if ((_m->last_header->type != HDR_ROUTE_T) || (_m->last_header == *_hdr)) {
 		DBG("find_next_route: No next Route HF found\n");
 		return 1;
 	}
@@ -362,7 +362,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	      * because Request-URI must be saved in last
 	      * Route HF in the message
 	      */
-	if (parse_headers(_m, HDR_EOH, 0) == -1) {
+	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "save_ruri: Error while parsing message\n");
 		return -1;
 	}
@@ -451,7 +451,7 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 {
 	struct hdr_field* ptr, *last;
 
-	if (parse_headers(_m, HDR_EOH, 0) == -1) {
+	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "find_rem_target: Error while parsing message header\n");
 		return -1;
 	}
@@ -460,7 +460,7 @@ static inline int find_rem_target(struct sip_msg* _m, struct hdr_field** _h, rr_
 	last = 0;
 
 	while(ptr) {
-		if (ptr->type == HDR_ROUTE) last = ptr;
+		if (ptr->type == HDR_ROUTE_T) last = ptr;
 		ptr = ptr->next;
 	}
 

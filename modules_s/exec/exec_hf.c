@@ -81,7 +81,7 @@ static int insert_hf( struct hf_wrapper **list, struct hdr_field *hf )
 	for(i=*list; i; i=i->next_other) {
 		if (i->var_type==W_HF && i->u.hf->type==hf->type) {
 			/* if it is OTHER, check name too */
-			if (hf->type==HDR_OTHER && (hf->name.len!=i->u.hf->name.len
+			if (hf->type==HDR_OTHER_T && (hf->name.len!=i->u.hf->name.len
 					|| strncasecmp(i->u.hf->name.s, hf->name.s, 
 					   hf->name.len)!=0))
 				continue;
@@ -122,44 +122,44 @@ static void release_hf_struct( struct hf_wrapper *list )
 /* if that is some of well-known header fields which have compact
  * form, return canonical form ... returns 1 and sets params;
  * 0 is returned otherwise */
-static int compacthdr_type2str(int type, char **hname, int *hlen )
+static int compacthdr_type2str(hdr_types_t type, char **hname, int *hlen )
 {
 	switch(type) {
 		/* HDR_CONTENT_ENCODING: 'e' -- unsupported by parser */
 		/* HDR_SUBJECT: 's' -- unsupported by parser */
-		case HDR_VIA /* v */ : 
+		case HDR_VIA_T /* v */ : 
 			*hname=VAR_VIA;
 			*hlen=VAR_VIA_LEN;
 			break;
-		case HDR_CONTENTTYPE /* c */ : 
+		case HDR_CONTENTTYPE_T /* c */ : 
 			*hname=VAR_CTYPE;
 			*hlen=VAR_CTYPE_LEN;
 			break;
-		case HDR_FROM /* f */: 
+		case HDR_FROM_T /* f */: 
 			*hname=VAR_FROM;
 			*hlen=VAR_FROM_LEN;
 			break;
-		case HDR_CALLID /* i */: 
+		case HDR_CALLID_T /* i */: 
 			*hname=VAR_CALLID;
 			*hlen=VAR_CALLID_LEN;
 			break;
-		case HDR_SUPPORTED /* k */: 
+		case HDR_SUPPORTED_T /* k */: 
 			*hname=VAR_SUPPORTED;
 			*hlen=VAR_SUPPORTED_LEN;
 			break;
-		case HDR_CONTENTLENGTH /* l */: 
+		case HDR_CONTENTLENGTH_T /* l */: 
 			*hname=VAR_CLEN;
 			*hlen=VAR_CLEN_LEN;
 			break;
-		case HDR_CONTACT /* m */: 
+		case HDR_CONTACT_T /* m */: 
 			*hname=VAR_CONTACT;
 			*hlen=VAR_CONTACT_LEN;
 			break;
-		case HDR_TO /* t */: 
+		case HDR_TO_T /* t */: 
 			*hname=VAR_TO;
 			*hlen=VAR_TO_LEN;
 			break;
-		case HDR_EVENT /* o */: 
+		case HDR_EVENT_T /* o */: 
 			*hname=VAR_EVENT;
 			*hlen=VAR_EVENT_LEN;
 			break;
@@ -518,7 +518,7 @@ environment_t *set_env(struct sip_msg *msg)
 	environment_t *backup_env;
 
 	/* parse all so that we can pass all header fields to script */
-	if (parse_headers(msg, HDR_EOH, 0)==-1) {
+	if (parse_headers(msg, HDR_EOH_F, 0)==-1) {
 		LOG(L_ERR, "ERROR: set_env: parsing failed\n");
 		return 0;
 	}

@@ -495,7 +495,7 @@ static inline int save_real(struct sip_msg* _m, udomain_t* _t, char* _s, int dor
 	}
 
 	ua.len = 0;
-	if (parse_headers(_m, HDR_USERAGENT, 0) != -1 && _m->user_agent &&
+	if (parse_headers(_m, HDR_USERAGENT_F, 0) != -1 && _m->user_agent &&
 	    _m->user_agent->body.len > 0) {
 		ua.len = _m->user_agent->body.len;
 		ua.s = _m->user_agent->body.s;

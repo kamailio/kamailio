@@ -442,7 +442,7 @@ static Bool
 getCallId(struct sip_msg* msg, str *cid)
 {
     if (msg->callid == NULL) {
-        if (parse_headers(msg, HDR_CALLID, 0) == -1) {
+        if (parse_headers(msg, HDR_CALLID_F, 0) == -1) {
             return False;
         }
         if (msg->callid == NULL) {
@@ -643,7 +643,7 @@ getUserAgent(struct sip_msg* msg)
     str block, server;
     char *ptr;
 
-    if ((parse_headers(msg, HDR_USERAGENT, 0)!=-1) && msg->user_agent &&
+    if ((parse_headers(msg, HDR_USERAGENT_F, 0)!=-1) && msg->user_agent &&
         msg->user_agent->body.len>0) {
         return msg->user_agent->body;
     }
@@ -676,7 +676,7 @@ static Bool
 getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
 {
 
-    if ((parse_headers(msg, HDR_CONTACT, 0) == -1) || !msg->contact)
+    if ((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
         return False;
 
     if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {

@@ -271,7 +271,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 	}
 	
 	/* looking for FROM HF */
-        if ((!msg->from) && (parse_headers(msg, HDR_FROM, 0) == -1)) {
+        if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
                 LOG(L_ERR, "check_routing(): Error while parsing message\n");
                 return -1;
         }
@@ -546,7 +546,7 @@ static int check_register(struct sip_msg* msg, int idx)
 	      * of them causes reject then we don't look at others, this could improve performance
 	      * a little bit in some situations
 	      */
-	if (parse_headers(msg, HDR_TO | HDR_CONTACT, 0) == -1) {
+	if (parse_headers(msg, HDR_TO_F | HDR_CONTACT_F, 0) == -1) {
 		LOG(L_ERR, "check_register(): Error while parsing headers\n");
 		return -1;
 	}
@@ -653,7 +653,7 @@ static int check_refer_to(struct sip_msg* msg, int idx)
 	}
 	
 	/* looking for FROM HF */
-        if ((!msg->from) && (parse_headers(msg, HDR_FROM, 0) == -1)) {
+        if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
                 LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
                 return -1;
         }
@@ -679,7 +679,7 @@ static int check_refer_to(struct sip_msg* msg, int idx)
 	from_str[len] = '\0';
 	
 	/* looking for REFER-TO HF */
-        if ((!msg->refer_to) && (parse_headers(msg, HDR_REFER_TO, 0) == -1)) {
+        if ((!msg->refer_to) && (parse_headers(msg, HDR_REFER_TO_F, 0) == -1)){
                 LOG(L_ERR, "check_refer_to(): Error while parsing message\n");
                 return -1;
         }

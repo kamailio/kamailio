@@ -451,7 +451,7 @@ int ds_hash_callid(struct sip_msg *msg, unsigned int *hash)
 		return -1;
 	}
 	
-	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID, 0)==-1) ||
+	if(msg->callid==NULL && ((parse_headers(msg, HDR_CALLID_F, 0)==-1) ||
 				(msg->callid==NULL)) )
 	{
 		LOG(L_ERR, "DISPATCHER:ds_hash_callid:ERROR cannot parse Call-Id\n");

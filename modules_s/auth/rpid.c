@@ -77,7 +77,7 @@ static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
 {
 	struct lump* anchor;
 	
-	if (parse_headers(_m, HDR_EOH, 0) == -1) {
+	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		LOG(L_ERR, "append_rpid(): Error while parsing message\n");
 		return -1;
 	}

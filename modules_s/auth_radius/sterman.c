@@ -105,7 +105,7 @@ static int add_cisco_vsa(VALUE_PAIR** send, struct sip_msg* msg)
 {
 	str callid;
 
-	if (!msg->callid && parse_headers(msg, HDR_CALLID, 0) == -1) {
+	if (!msg->callid && parse_headers(msg, HDR_CALLID_F, 0) == -1) {
 		LOG(L_ERR, "add_cisco_vsa: Cannot parse Call-ID header field\n");
 		return -1;
 	}

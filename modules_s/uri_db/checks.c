@@ -161,7 +161,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
  */
 int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
+	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
 		LOG(L_ERR, "check_to(): Error while parsing To header field\n");
 		return -1;
 	}
