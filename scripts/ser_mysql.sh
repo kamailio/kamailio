@@ -265,7 +265,8 @@ CREATE TABLE acc (
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL,
-  INDEX acc_user ($USERCOL, domain)
+  INDEX acc_user ($USERCOL, domain),
+  KEY sip_callid (sip_callid)
 ) $TABLE_TYPE;
 
 
