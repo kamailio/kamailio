@@ -818,6 +818,7 @@ case $1 in
 			echo "error opening read fifo $path"
 			exit 1
 		fi
+		chmod a+w $path
 		trap "rm $path;  clear; echo sc monitor ^C-ed; exit 1" 2
 		attempt=0
 		if [ "$2" == "" ]; then
