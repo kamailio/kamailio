@@ -110,6 +110,8 @@
  *
  * 2004-03-22	Fix get_body position (should be called before get_callid)
  * 				(andrei)
+ * 2004-03-24	Fix newport for null ip address case (e.g onhold re-INVITE)
+* 				(andrei)
  * 
  *
  */
@@ -1206,7 +1208,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	str callid, from_tag, to_tag, tmp;
 	int create, port, len, asymmetric, flookup, argc, proxied, real;
 	int oidx, pf, pf1, force;
-	char buf[16], opts[16];
+	char opts[16];
 	char *cp, *cp1;
 	char **ap, *argv[10];
 	struct lump* anchor;
@@ -1376,12 +1378,11 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			newip.len = 7;
 		}
 	} else {
-		newport.s = buf;
-		newport.len = sprintf(buf, "%d", port);
 		newip.s = (argc < 2) ? str2 : argv[1];
 		newip.len = strlen(newip.s);
 	}
-
+	newport.s=int2str(port, &newport.len); /* beware static buffer */
+	
 	if (alter_mediaip(msg, &body, &oldip, pf, &newip, pf1, 0) == -1)
 		return -1;
 	if (oldip1.len > 0 &&
