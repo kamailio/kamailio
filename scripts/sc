@@ -73,7 +73,7 @@ USER_COLUMN=username
 CALLID_COLUMN=callid
 
 # subscriber table
-if [ -z "SUB_TABLE" ] ; then
+if [ -z "$SUB_TABLE" ] ; then
 	SUB_TABLE=subscriber
 fi
 REALM_COLUMN=domain
