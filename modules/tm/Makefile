@@ -7,7 +7,7 @@
 
 auto_gen=
 sources= $(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen) 
-objs= msg_cloner.o tm.o #$(sources:.c=.o)
+objs= $(sources:.c=.o)
 depends= $(sources:.c=.d)
 
 NAME=tm.so
