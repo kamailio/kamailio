@@ -1,0 +1,52 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "postgres_user.sgml">
+<!ENTITY devel SYSTEM "postgres_devel.sgml">
+<!ENTITY faq SYSTEM "postgres_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>postgres Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Greg</firstname>
+		<surname>Fausak</surname>
+		<affiliation><orgname>August.net</orgname></affiliation>
+		<address>
+		    <email>greg@august.net</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Greg</firstname>
+		<surname>Fausak</surname>
+		<address>
+		    <email>greg@august.net</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>Greg Fausak</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>
