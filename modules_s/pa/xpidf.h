@@ -43,23 +43,25 @@ typedef enum xpidf_status {
 /*
  * Create start of pidf document
  */
-int start_xpidf_doc(str* _b, int* _l);
+int start_xpidf_doc(str* _b, int _l);
+
 
 /*
  * Add a presentity information
  */
-int xpidf_add_presentity(str* _b, int* _l, str* _uri);
+int xpidf_add_presentity(str* _b, int _l, str* _uri);
+
 
 /*
  * Add a contact address with given status
  */
-int xpidf_add_address(str* _b, int* _l, str* _addr, xpidf_status_t _st);
+int xpidf_add_address(str* _b, int _l, str* _addr, xpidf_status_t _st);
 
 
 /*
  * End the document
  */
-int end_xpidf_doc(str* _b, int* _l);
+int end_xpidf_doc(str* _b, int _l);
 
 
 #endif /* XPIDF_H */

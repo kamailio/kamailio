@@ -47,7 +47,7 @@ typedef enum doctype {
  */
 typedef struct watcher {
 	str uri;                /* Uri of the watcher */
-	time_t expires;         /* Absolute expiry time */
+	time_t expires;         /* Absolute of the expiration */
 	doctype_t accept;       /* Type of document accepted by the watcher */
 	dlg_t* dialog;          /* Dialog handle */
 	struct watcher* next;   /* Next watcher in the list */
