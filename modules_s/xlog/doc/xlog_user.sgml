@@ -139,11 +139,11 @@
 			symbols).
 		</para>
 		<para>
-			The module do not identify compact header names unless they are
-			specified explicitely (to-do in a future realease). It is
-			recommended to use dedicated
-			specifiers for headers (e.g., %ua for user agent header),
-			if they are available -- they are faster.
+			The module should identify most of compact header names (the ones
+			recognized by ser which should be all at this moment), if not,
+			the compact form has to be specified explicitely. It is
+			recommended to use dedicated specifiers for headers (e.g., %ua
+			for user agent header), if they are available -- they are faster.
 		</para>
 	    </listitem>
 	</itemizedlist>

@@ -46,6 +46,7 @@
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_hname2.h"
 
 #include "xl_lib.h"
 
@@ -452,7 +453,7 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 	if(msg==NULL || res==NULL)
 		return -1;
 
-	if(hp==NULL || hp->s==NULL || hp->len<=0)
+	if(hp==NULL || hp->len==0)
 		return xl_get_null(msg, res, hp, hi);
 	
 	hf0 = NULL;
@@ -461,10 +462,16 @@ static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 	parse_headers(msg, HDR_EOH, 0);
 	for (hf=msg->headers; hf; hf=hf->next)
 	{
-		if (hf->name.len!=hp->len)
-			continue;
-		if (strncasecmp(hf->name.s, hp->s, hf->name.len)!=0)
-			continue;
+		if(hp->s==NULL)
+		{
+			if (hp->len!=hf->type)
+				continue;
+		} else {
+			if (hf->name.len!=hp->len)
+				continue;
+			if (strncasecmp(hf->name.s, hp->s, hf->name.len)!=0)
+				continue;
+		}
 		
 		hf0 = hf;
 		if(hi==0)
@@ -484,9 +491,10 @@ done:
 
 int xl_parse_format(char *s, xl_elog_p *el)
 {
-	char *p;
+	char *p, c;
 	int n = 0;
 	xl_elog_p e, e0;
+	struct hdr_field  hdr;
 	
 	if(s==NULL || el==NULL)
 		return -1;
@@ -714,10 +722,35 @@ int xl_parse_format(char *s, xl_elog_p *el)
 						(int)(e->hparam.s-s));
 					goto error;
 				}
-				e->itf = xl_get_header;
-
+				
 				DBG("xlog: xl_parse_format: header name [%.*s] index [%d]\n",
 						e->hparam.len, e->hparam.s, e->hindex);
+				
+				/* optimize for known headers -- fake header name */
+				c = e->hparam.s[e->hparam.len];
+				e->hparam.s[e->hparam.len] = ':';
+				e->hparam.len++;
+				/* ugly hack for compact header names -- !!fake length!!
+				 * -- parse_hname2 expects name buffer length >= 4
+				 */
+				if (parse_hname2(e->hparam.s,
+						e->hparam.s + ((e->hparam.len<4)?4:e->hparam.len),
+						&hdr)==0)
+				{
+					LOG(L_ERR,"xlog: xl_parse_format: strange error\n");
+					goto error;
+				}
+				e->hparam.len--;
+				e->hparam.s[e->hparam.len] = c;
+				if (hdr.type!=HDR_OTHER && hdr.type!=HDR_ERROR)
+				{
+					LOG(L_INFO,"INFO:xlog: xl_parse_format: using "
+						"hdr type (%d) instead of <%.*s>\n",
+						hdr.type, e->hparam.len, e->hparam.s);
+					e->hparam.len = hdr.type;
+					e->hparam.s = NULL;
+				}
+				e->itf = xl_get_header;
 			break;
 			case '%':
 				e->itf = xl_get_percent;
