@@ -166,6 +166,63 @@ static inline int unify(int key)
      }                                 \
      break
 
+
+/* added by Bogdan - for Content-Type and -Length headers */
+#define Ent__CASE \
+	p += 4;\
+	val = READ(p);\
+	switch(val) {\
+	case xType:\
+		hdr->type = HDR_CONTENTTYPE;\
+		p += 4;\
+		goto dc_end;\
+	case Leng:\
+		p += 4;\
+		val = READ(p);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}\
+		val = unify(val);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}else\
+			goto other;\
+	}\
+	val = unify(val);\
+	switch(val) {\
+	case xType:\
+		hdr->type = HDR_CONTENTTYPE;\
+		p += 4;\
+		goto dc_end;\
+	case Leng:\
+		p += 4;\
+		val = READ(p);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}\
+		val = unify(val);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}else\
+			goto other;\
+	default:\
+		goto other;\
+	}\
+	break
+
+
 #define Cont_CASE                     \
      p += 4;                          \
      val = READ(p);                   \
@@ -181,6 +238,8 @@ static inline int unify(int key)
 	     p += 4;                  \
 	     goto dc_end;             \
 	                              \
+     case ent_:                   \
+	     Ent__CASE;               \
      }                                \
                                       \
      val = unify(val);                \
@@ -196,6 +255,9 @@ static inline int unify(int key)
 	     p += 4;                  \
 	     goto dc_end;             \
                                       \
+     case ent_:                   \
+	     Ent__CASE;               \
+	                                  \
      default: goto other;             \
      }                                \
      break
