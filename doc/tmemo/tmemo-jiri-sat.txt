@@ -229,6 +229,9 @@ with NATs, fortunately) a workable option.
   not need to worry about rewriting replies (UAC does not care they
   have a different From URI) or subsequent requests (UAC does not 
   care UAS's To-URI != UAC's From URI).
+    (See In RFC 3261 in section 12.2.1.1: "...Usage of the URI in To
+     and From...for backwards compatibility..mandatory reflection...
+     will be deprecated.)
 
   Again -- this simplification would only be doable if there were no
   backwards-compatibility concerns. It would be probably more confusing 
