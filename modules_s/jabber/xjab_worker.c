@@ -27,10 +27,16 @@
  */
 
 /***
+ * ---
+ *
+ * History
+ * -------
+ * 2003-02-28 send NOTIFYs even the connection is closed by user, (dcm)
  * 2003-01-20 xj_worker_precess function cleaning - some part of it moved to
- * xj_worker_check_jcons function, by dcm
+ * xj_worker_check_jcons function, (dcm)
  *
  */
+
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>

@@ -26,6 +26,15 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * ---
+ *
+ * History
+ * -------
+ * 2003-02-28 connection management with ihttp implemented (dcm)
+ * 2003-02-24 first version of callback functions for ihttp (dcm)
+ * 2003-02-13 lot of comments enclosed in #ifdef XJ_EXTRA_DEBUG (dcm)
+ *
  */
 
 
@@ -842,7 +851,8 @@ void xj_unregister_watcher(str *from, str *to, void *cbf, void *pp)
 }
 
 /**
- *
+ * check if all SER2Jab workers are still alive
+ * - if not, try to launch new ones
  */
 void xjab_check_workers(int mpid)
 {
@@ -894,6 +904,10 @@ void xjab_check_workers(int mpid)
 }
 
 #ifdef HAVE_IHTTP
+/**
+ * Module's information retrieval - function to use with iHttp module
+ *
+ */ 
 int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
 		char *_hb, int *_hl)
 {
@@ -937,6 +951,11 @@ int xjab_mod_info(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 	return 0;
 }
 
+/**
+ * SER2Jab connection management - function to use with iHttp module
+ * - be aware of who is able to use the ihttp because he can close any 
+ *   open connection between SER and Jabber server
+ */ 
 int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl, 
 		char *_hb, int *_hl)
 {
