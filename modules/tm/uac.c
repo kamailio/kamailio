@@ -241,6 +241,7 @@ static void fifo_callback( struct cell *t, struct sip_msg *msg,
 	}
 }	
 
+/* to be obsoleted in favor of fifo_uac_from */
 int fifo_uac( FILE *stream, char *response_file ) 
 {
 	char method[MAX_METHOD];
@@ -310,3 +311,92 @@ int fifo_uac( FILE *stream, char *response_file )
 	}
 }
 
+/* syntax:
+
+	:t_uac_from:[file] EOL
+	method EOL
+	[from] EOL (if none, server's default from is taken)
+	dst EOL (put in r-uri and To)
+	[CR-LF separated HFs]* EOL
+	EOL
+	[body] EOL
+	EOL
+
+*/
+
+int fifo_uac_from( FILE *stream, char *response_file ) 
+{
+	char method[MAX_METHOD];
+	char header[MAX_HEADER];
+	char body[MAX_BODY];
+	char dst[MAX_DST];
+	char from[MAX_FROM];
+	str sm, sh, sb, sd, sf;
+	char *shmem_file;
+	int fn_len;
+
+	sm.s=method; sh.s=header; sb.s=body; sd.s=dst;sf.s=from;
+	while(1) {
+		if (!read_line(method, MAX_METHOD, stream,&sm.len)||sm.len==0) {
+			/* line breaking must have failed -- consume the rest
+			   and proceed to a new request
+			*/
+			LOG(L_ERR, "ERROR: fifo_uac: method expected\n");
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: method expected");
+			return -1;
+		}
+		DBG("DEBUG: fifo_uac: method: %.*s\n", sm.len, method );
+		if (!read_line(from, MAX_FROM, stream, &sf.len)) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: from expected\n");
+			LOG(L_ERR, "ERROR: fifo_uac: from expected\n");
+			return -1;
+		}
+		DBG("DEBUG: fifo_uac:  from: %.*s\n", sf.len, from);
+		if (!read_line(dst, MAX_DST, stream, &sd.len)||sd.len==0) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: destination expected\n");
+			LOG(L_ERR, "ERROR: fifo_uac: destination expected\n");
+			return -1;
+		}
+		DBG("DEBUG: fifo_uac:  dst: %.*s\n", sd.len, dst );
+		/* now read header fields line by line */
+		if (!read_line_set(header, MAX_HEADER, stream, &sh.len)) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: HFs expected\n");
+			LOG(L_ERR, "ERROR: fifo_uac: header fields expected\n");
+			return -1;
+		}
+		DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
+		/* and eventually body */
+		if (!read_body(body, MAX_BODY, stream, &sb.len)) {
+			fifo_reply(response_file, 
+				"ERROR: fifo_uac: body expected\n");
+			LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
+			return -1;
+		}
+		DBG("DEBUG: fifo_uac: body: %.*s\n", sb.len, body );
+		DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
+		/* we got it all, initiate transaction now! */
+		if (response_file) {
+			fn_len=strlen(response_file)+1;
+			shmem_file=shm_malloc(fn_len);
+			if (shmem_file==0) {
+				LOG(L_ERR, "ERROR: fifo_uac: no shmem\n");
+				return -1;
+			}
+			memcpy(shmem_file, response_file, fn_len );
+		} else {
+			shmem_file=0;
+		}
+		/* HACK: there is yet a shortcoming -- if t_uac fails, callback
+		   will not be triggered and no feedback will be printed
+		   to shmem_file
+		*/
+		t_uac(&sm,&sd,&sh,&sb, sf.len==0 ? 0 : &sf /* default from */,
+			fifo_callback,shmem_file,0 /* no dialog */);
+		return 1;
+
+	}
+}

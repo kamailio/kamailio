@@ -55,4 +55,5 @@ int t_uac(
 	struct dialog *dlg );
 
 int fifo_uac( FILE *stream, char *response_file );
+int fifo_uac_from( FILE *stream, char *response_file );
 #endif

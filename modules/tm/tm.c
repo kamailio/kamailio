@@ -237,6 +237,10 @@ static int mod_init(void)
 		LOG(L_CRIT, "cannot register fifo uac\n");
 		return -1;
 	}
+	if (register_fifo_cmd(fifo_uac_from, "t_uac_from", 0)<0) {
+		LOG(L_CRIT, "cannot register fifo uac\n");
+		return -1;
+	}
 	
 	if (init_tm_stats()<0) {
 		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
