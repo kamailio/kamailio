@@ -933,7 +933,7 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	*/
 	backup_mhomed=mhomed;
 	mhomed=0;
-	send_sock=get_send_socket(&rb->dst.to, proto);
+	send_sock=get_send_socket(msg, &rb->dst.to, proto);
 	mhomed=backup_mhomed;
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d, proto %d "

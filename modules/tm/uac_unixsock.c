@@ -294,7 +294,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto)
 					if (!new_str(begin, frag_len, &last, &total_len)) goto error;
 					     /* substitute */
 					if (!sock_name) {
-						send_sock = uri2sock(uri, &to_su, proto);
+						send_sock = uri2sock(0, uri, &to_su, proto);
 						if (!send_sock) {
 							LOG(L_ERR, "ERROR: get_hfblock: send_sock failed\n");
 							goto error;

@@ -36,6 +36,7 @@
  *  2003-04-11  updated the  sip_uri structure (lots of fields added) (andrei)
  *  2003-04-12  added msg_flags to sip_msg (andrei)
  *  2003-11-02  added diversion header field to sip_msg (jh)
+ *  2004-11-08  added force_send_socket (andrei)
  */
 
 
@@ -237,6 +238,8 @@ struct sip_msg {
 	flag_t flags;	
 	str set_global_address;
 	str set_global_port;
+	struct socket_info* force_send_socket; /* force sending on this socket,
+											  if ser */
 };
 
 /* pointer to a fakes message which was never received ;

@@ -45,6 +45,7 @@
  *  2003-10-21  check_self updated to handle proto (andrei)
  *  2003-10-24  converted to the new socket_info lists (andrei)
  *  2004-10-10  modified check_self to use grep_sock_info (andrei)
+ *  2004-11-08  added force_send_socket support in get_send_socket (andrei)
  */
 
 
@@ -78,6 +79,8 @@
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
+
+
 
 /* return a socket_info_pointer to the sending socket; as opposed to
  * get_send_socket, which returns process's default socket, get_out_socket
@@ -153,11 +156,29 @@ found:
 
 
 /* returns a socket_info pointer to the sending socket or 0 on error
- * params: destination socket_union pointer
+ * params: sip msg (can be null), destination socket_union pointer, protocol
+ * if msg!=null and msg->force_send_socket, the force_send_socket will be
+ * used
  */
-struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
+struct socket_info* get_send_socket(struct sip_msg *msg, 
+										union sockaddr_union* to, int proto)
 {
 	struct socket_info* send_sock;
+	
+	/* check if send interface is not forced */
+	if (msg && msg->force_send_socket){
+		if (msg->force_send_socket->proto!=proto){
+			DBG("get_send_socket: force_send_socket of different proto"
+					" (%d)!\n", proto);
+			msg->force_send_socket=find_si(&(msg->force_send_socket->address),
+											msg->force_send_socket->port_no,
+											proto);
+		}
+		if (msg->force_send_socket) 
+			return msg->force_send_socket;
+		else
+			LOG(L_WARN, "WARNING: get_send_socket: protocol/port mismatch\n");
+	};
 
 	if (mhomed && proto==PROTO_UDP) return get_out_socket(to, proto);
 
@@ -278,7 +299,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	p->tx_bytes+=len;
 	
 
-	send_sock=get_send_socket(to, proto);
+	send_sock=get_send_socket(msg, to, proto);
 	if (send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
 				"no corresponding listening socket\n", to->s.sa_family, proto);

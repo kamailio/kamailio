@@ -309,7 +309,8 @@ static char *build_local_ack(struct sip_msg* rpl, struct cell *trans, int branch
       * The function is used to send a localy generated ACK to INVITE
       * (tm generates the ACK on behalf of application using UAC
       */
-static int send_local_ack(str* next_hop, char* ack, int ack_len)
+static int send_local_ack(struct sip_msg* msg, str* next_hop,
+							char* ack, int ack_len)
 {
 	struct socket_info* send_sock;
 	union sockaddr_union to_su;
@@ -319,7 +320,7 @@ static int send_local_ack(str* next_hop, char* ack, int ack_len)
 		return -1;
 	}
 	
-	send_sock = uri2sock(next_hop, &to_su, PROTO_NONE);
+	send_sock = uri2sock(msg, next_hop, &to_su, PROTO_NONE);
 	if (!send_sock) {
 		LOG(L_ERR, "send_local_ack: no socket found\n");
 		return -1;
@@ -480,6 +481,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 	static struct cell *backup_t;
 	static unsigned int backup_msgid;
 	static struct usr_avp **backup_list;
+	static struct socket_info* backup_si;
 
 	if (msg) {
 		/* remember we are back in request processing, but process
@@ -502,6 +504,9 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		set_t(t);
 		/* make available the avp list from transaction */
 		backup_list = set_avp_list( &t->user_avps );
+		/* set default send address to the saved value */
+		backup_si=bind_address;
+		bind_address=t->uac[0].request.dst.send_sock;
 	} else {
 		/* restore original environment */
 		set_t(backup_t);
@@ -509,6 +514,7 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 		rmode=backup_mode;
 		/* restore original avp list */
 		set_avp_list( backup_list );
+		bind_address=backup_si;
 	}
 }
 
@@ -1255,7 +1261,7 @@ int reply_received( struct sip_msg  *p_msg )
 		} else if ((t->flags & T_IS_LOCAL_FLAG) && msg_status >= 200) {
 			ack = build_local_ack(p_msg, t, branch, &ack_len, &next_hop);
 			if (ack) {
-				if (send_local_ack(&next_hop, ack, ack_len) < 0) {
+				if (send_local_ack(p_msg, &next_hop, ack, ack_len) < 0) {
 					LOG(L_ERR, "Error while sending local ACK\n");
 				}
 				shm_free(ack);

@@ -408,7 +408,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans, unsigned int branch
 	
 	
 	     /* via */
-	send_sock = uri2sock(next_hop, &to_su, PROTO_NONE);
+	send_sock = uri2sock(rpl, next_hop, &to_su, PROTO_NONE);
 	if (!send_sock) {
 		LOG(L_ERR, "build_dlg_ack: no socket found\n");
 		goto error;

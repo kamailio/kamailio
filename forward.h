@@ -53,7 +53,9 @@
 #endif
 
 
-struct socket_info* get_send_socket(union sockaddr_union* su, int proto);
+
+struct socket_info* get_send_socket(struct sip_msg* msg,
+									union sockaddr_union* su, int proto);
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto);
 int check_self(str* host, unsigned short port, unsigned short proto);
 int forward_request( struct sip_msg* msg,  struct proxy_l* p, int proto);
@@ -87,7 +89,7 @@ static inline int msg_send(	struct socket_info* send_sock, int proto,
 {
 	
 	if (proto==PROTO_UDP){
-		if (send_sock==0) send_sock=get_send_socket(to, proto);
+		if (send_sock==0) send_sock=get_send_socket(0, to, proto);
 		if (send_sock==0){
 			LOG(L_ERR, "msg_send: ERROR: no sending socket found\n");
 			goto error;

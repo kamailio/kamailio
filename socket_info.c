@@ -33,6 +33,7 @@
  * --------
  *  2003-10-22  created by andrei
  *  2004-10-10  added grep_sock_info (andrei)
+ *  2004-11-08  added find_si (andrei)
  */
 
 
@@ -205,7 +206,6 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 #ifdef USE_IPV6
 	struct ip_addr* ip6;
 #endif
-
 	h_len=host->len;
 	hname=host->s;
 #ifdef USE_IPV6
@@ -268,6 +268,53 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 				(memcmp(hname, si->address_str.s, 
 									si->address_str.len)==0)
 				)
+				goto found;
+		}
+	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
+not_found:
+	return 0;
+found:
+	return si;
+}
+
+
+
+/* checks if the proto: ip:port is one of the address we listen on
+ * and returns the corresponding socket_info structure.
+ * (same as grep_socket_info, but use ip addr instead)
+ * if port==0, the  port number is ignored
+ * if proto==0 (PROTO_NONE) the protocol is ignored
+ * returns  0 if not found
+ * WARNING: uses str2ip6 so it will overwrite any previous
+ *  unsaved result of this function (static buffer)
+ */
+struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
+												unsigned short proto)
+{
+	struct socket_info* si;
+	struct socket_info** list;
+	unsigned short c_proto;
+	
+	c_proto=proto?proto:PROTO_UDP;
+	do{
+		/* get the proper sock_list */
+		if (c_proto==PROTO_NONE)
+			list=&udp_listen;
+		else
+			list=get_sock_info_list(c_proto);
+	
+		if (list==0){
+			LOG(L_WARN, "WARNING: grep_sock_info: "
+						"unknown proto %d\n", c_proto);
+			goto not_found; /* false */
+		}
+		for (si=*list; si; si=si->next){
+			if (port) {
+				if (si->port_no!=port) {
+					continue;
+				}
+			}
+			if (ip_addr_cmp(ip, &si->address))
 				goto found;
 		}
 	}while( (proto==0) && (c_proto=next_proto(c_proto)) );

@@ -185,7 +185,8 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
-	send_sock = uri2sock(dialog->hooks.next_hop, &to_su, PROTO_NONE);
+	/* it's a new message, so we will take the default socket */
+	send_sock = uri2sock(0, dialog->hooks.next_hop, &to_su, PROTO_NONE);
 	if (!send_sock) {
 		ret=ser_error;
 		LOG(L_ERR, "t_uac: no socket found\n");

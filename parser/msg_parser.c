@@ -91,7 +91,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	}
 
 	/* eliminate leading whitespace */
-	tmp=eat_lws_end(tmp, end);
+	/* tmp=eat_lws_end(tmp, end); not allowed anyway --andrei */
 	if (tmp>=end) {
 		LOG(L_ERR, "ERROR: get_hdr_field: HF empty\n");
 		goto error;

@@ -241,7 +241,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				p->tx_bytes+=msg->len;
 				if (a->type==SEND_T){
 					/*udp*/
-					send_sock=get_send_socket(to, PROTO_UDP);
+					send_sock=get_send_socket(msg, to, PROTO_UDP);
 					if (send_sock!=0){
 						ret=udp_send(send_sock, msg->buf, msg->len, to);
 					}else{

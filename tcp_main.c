@@ -51,6 +51,7 @@
  *  2003-11-17  handle_new_connect & tcp_connect will close the 
  *              new socket if tcpconn_new return 0 (e.g. out of mem) (andrei)
  *  2003-11-28  tcp_blocking_write & tcp_blocking_connect added (andrei)
+ *  2004-11-08  dropped find_tcp_si and replaced with find_si (andrei)
  */
 
 
@@ -368,22 +369,6 @@ error:
 
 
 
-
-struct socket_info* find_tcp_si(union sockaddr_union* s)
-{
-	struct ip_addr ip;
-	struct socket_info* si;
-	
-	su2ip_addr(&ip, s);
-	for (si=tcp_listen; si; si=si->next)
-		if (ip_addr_cmp(&ip, &si->address)){
-			/* found it, we use first match */
-			return si;
-		}
-	return 0; /* no match */
-}
-
-
 struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 {
 	int s;
@@ -391,6 +376,7 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 	union sockaddr_union my_name;
 	socklen_t my_name_len;
 	struct tcp_connection* con;
+	struct ip_addr ip;
 
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if (s==-1){
@@ -412,12 +398,13 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 				strerror(errno), errno);
 		si=0; /* try to go on */
 	}
+	su2ip_addr(&ip, &my_name);
 #ifdef USE_TLS
 	if (type==PROTO_TLS)
-		si=find_tls_si(&my_name);
+		si=find_si(&ip, 0, PROTO_TLS);
 	else
 #endif
-		si=find_tcp_si(&my_name);
+		si=find_si(&ip, 0, PROTO_TCP);
 
 	if (si==0){
 		LOG(L_ERR, "ERROR: tcp_connect: could not find corresponding"
