@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-09: Based on digest.c from radius_auth module (janakj)
  */
 
 
@@ -43,7 +47,7 @@
  * which can be be used as a check item in the request.  Service type of
  * the request is Authenticate-Only.
  */
-int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user) 
+int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user) 
 {
 	static char msg[4096];
 	VALUE_PAIR *send, *received, *vp;
@@ -52,7 +56,7 @@ int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user)
 
 	send = received = 0;
 
-	if (!(cred && _method && _user)) {
+	if (!(_cred && _method && _user)) {
 		LOG(L_ERR, "radius_authorize_sterman(): Invalid parameter value\n");
 		return -1;
 	}
@@ -64,21 +68,22 @@ int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user)
 	 * Add all the user digest parameters according to the qop defined.
 	 * Most devices tested only offer support for the simplest digest.
 	 */
-	if (cred->username.domain.len) {
-		if (!rc_avpair_add(&send, PW_USER_NAME, cred->username.whole.s, cred->username.whole.len)) {
+
+	if (_cred->username.domain.len) {
+		if (!rc_avpair_add(&send, PW_USER_NAME, _cred->username.whole.s, _cred->username.whole.len)) {
 			rc_avpair_free(send);
 			return -2;
 		}
 	} else {
-		user_name.len = cred->username.user.len + cred->realm.len + 1;
+		user_name.len = _cred->username.user.len + _cred->realm.len + 1;
 		user_name.s = pkg_malloc(user_name.len);
 		if (!user_name.s) {
 			LOG(L_ERR, "radius_authorize_sterman(): No memory left\n");
 			return -3;
 		}
-		memcpy(user_name.s, cred->username.whole.s, cred->username.whole.len);
-		user_name.s[cred->username.whole.len] = '@';
-		memcpy(user_name.s + cred->username.whole.len + 1, cred->realm.s, cred->realm.len);
+		memcpy(user_name.s, _cred->username.whole.s, _cred->username.whole.len);
+		user_name.s[_cred->username.whole.len] = '@';
+		memcpy(user_name.s + _cred->username.whole.len + 1, _cred->realm.s, _cred->realm.len);
 		if (!rc_avpair_add(&send, PW_USER_NAME, user_name.s, user_name.len)) {
 			pkg_free(user_name.s);
 			rc_avpair_free(send);
@@ -87,21 +92,21 @@ int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user)
 		pkg_free(user_name.s);
 	}
 
-	if (!rc_avpair_add(&send, PW_DIGEST_USER_NAME, cred->username.whole.s, cred->username.whole.len)) {
+	if (!rc_avpair_add(&send, PW_DIGEST_USER_NAME, _cred->username.whole.s, _cred->username.whole.len)) {
 		rc_avpair_free(send);
 		return -5;
 	}
 
-	if (!rc_avpair_add(&send, PW_DIGEST_REALM, cred->realm.s, cred->realm.len)) {
+	if (!rc_avpair_add(&send, PW_DIGEST_REALM, _cred->realm.s, _cred->realm.len)) {
 		rc_avpair_free(send);
 		return -6;
 	}
-	if (!rc_avpair_add(&send, PW_DIGEST_NONCE, cred->nonce.s, cred->nonce.len)) {
+	if (!rc_avpair_add(&send, PW_DIGEST_NONCE, _cred->nonce.s, _cred->nonce.len)) {
 		rc_avpair_free(send);
 		return -7;
 	}
 	
-	if (!rc_avpair_add(&send, PW_DIGEST_URI, cred->uri.s, cred->uri.len)) {
+	if (!rc_avpair_add(&send, PW_DIGEST_URI, _cred->uri.s, _cred->uri.len)) {
 		rc_avpair_free(send);
 		return -8;
 	}
@@ -113,33 +118,33 @@ int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user)
 	/* 
 	 * Add the additional authentication fields according to the QOP.
 	 */
-	if (cred->qop.qop_parsed == QOP_AUTH) {
+	if (_cred->qop.qop_parsed == QOP_AUTH) {
 		if (!rc_avpair_add(&send, PW_DIGEST_QOP, "auth", 4)) {
 			rc_avpair_free(send);
 			return -10;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, cred->nc.s, cred->nc.len)) {
+		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, _cred->nc.s, _cred->nc.len)) {
 			rc_avpair_free(send);
 			return -11;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, cred->cnonce.s, cred->cnonce.len)) {
+		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, _cred->cnonce.s, _cred->cnonce.len)) {
 			rc_avpair_free(send);
 			return -12;
 		}
-	} else if (cred->qop.qop_parsed == QOP_AUTHINT) {
+	} else if (_cred->qop.qop_parsed == QOP_AUTHINT) {
 		if (!rc_avpair_add(&send, PW_DIGEST_QOP, "auth-int", 8)) {
 			rc_avpair_free(send);
 			return -13;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, cred->nc.s, cred->nc.len)) {
+		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, _cred->nc.s, _cred->nc.len)) {
 			rc_avpair_free(send);
 			return -14;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, cred->cnonce.s, cred->cnonce.len)) {
+		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, _cred->cnonce.s, _cred->cnonce.len)) {
 			rc_avpair_free(send);
 			return -15;
 		}
-		if (!rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, cred->opaque.s, cred->opaque.len)) {
+		if (!rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, _cred->opaque.s, _cred->opaque.len)) {
 			rc_avpair_free(send);
 			return -16;
 		}
@@ -184,7 +189,7 @@ int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user)
 	}
 
 	/* Add the response... What to calculate against... */
-	if (!rc_avpair_add(&send, PW_DIGEST_RESPONSE, cred->response.s, cred->response.len)) {
+	if (!rc_avpair_add(&send, PW_DIGEST_RESPONSE, _cred->response.s, _cred->response.len)) {
 		rc_avpair_free(send);
 		return -17;
 	}
@@ -192,28 +197,26 @@ int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user)
 	/* Indicate the service type, Authenticate only in our case */
 	service = PW_AUTHENTICATE_ONLY;
 	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0)) {
-		LOG(L_ERR, "radius_authorize_sterman(): Error adding service type\n");
 		rc_avpair_free(send);
-	 	return -17;
+	 	return -18;
 	}
 
 	/* Add SIP URI as a check item */
 	if (!rc_avpair_add(&send, PW_SIP_URI_USER, user.s, user.len)) {
-		DBG("radius_authorize_sterman(): Error adding SIP URI\n");
 		rc_avpair_free(send);
-	 	return -18;  	
+	 	return -19;  	
 	}
        
 	/* Send request */
 	if (rc_auth(SIP_PORT, send, &received, msg) == OK_RC) {
-		DBG("radius_authorize_sterman(): Success\n");
+		printf("radius_authorize_sterman(): Success\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		DBG("radius_authorize_sterman(): Failure\n");
+		printf("radius_authorize_sterman(): Failure\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
-		return -19;
+		return -20;
 	}
 }

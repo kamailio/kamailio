@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Digest authentication - Radius support
+ * Digest Authentication - Radius support
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -25,12 +25,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-09: Based on authorize.h from radius_auth (janakj)
  */
-
 
 #ifndef AUTHORIZE_H
 #define AUTHORIZE_H
-
 
 #include "../../parser/msg_parser.h"
 
@@ -45,5 +47,6 @@ int radius_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
  * Authorize using WWW-Authorization header field
  */
 int radius_www_authorize(struct sip_msg* _msg, char* _realm, char* _s2);
+
 
 #endif /* AUTHORIZE_H */

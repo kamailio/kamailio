@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-09: Based on authorize.c from radius_auth (janakj)
  */
 
 
@@ -34,11 +38,32 @@
 #include "../../parser/hf.h"
 #include "../../parser/digest/digest.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../auth/api.h"
 #include "authorize.h"
 #include "sterman.h"
+#include "authrad_mod.h"
+
+
+/* 
+ * Extract URI depending on the request from To or From header 
+ */
+static inline int get_uri(struct sip_msg* _m, str** _uri)
+{
+	if ((REQ_LINE(_m).method.len == 8) && (memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
+		*_uri = &(get_to(_m)->uri);
+	} else {
+		if (parse_from_header(_m) == -1) {
+			LOG(L_ERR, "get_uri(): Error while parsing headers\n");
+			return -1;
+		}
+		*_uri = &(get_from(_m)->uri);
+	}
+	return 0;
+}
 
 
 /*
@@ -52,7 +77,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	auth_body_t* cred;
 	str* uri;
 	struct sip_uri puri;
-	str user;
+	str user = {"jan", 3};
 
 	ret = pre_auth_func(_msg, &_realm, _hftype, &h);
 	
@@ -63,14 +88,41 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	case AUTHORIZED:       return 1;
 	}
 
-	     /* unescape user */
+
+	     /* Retrieve URI from To (Register) or From (other requests) header */
+	/*
+	if (get_uri(_msg, &uri) == -1) {
+		LOG(L_ERR, "authorize(): From/To URI not found\n");
+		return -1;
+	}
+	
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		LOG(L_ERR, "authorize(): Error while parsing From/To URI\n");
+		return -1;
+	}
+
+	if (puri.host.len != cred->digest.realm.len) {
+		DBG("authorize(): Credentials realm and URI host do not match\n");   
+		return -1;
+	}
+	if (strncasecmp(puri.host.s, cred->digest.realm.s, puri.host.len) != 0) {
+		DBG("authorize(): Credentials realm and URI host do not match\n");
+		return -1;
+	}
+
 	user.s = malloc(puri.user.len);
 	un_escape(&(puri.user), &user);
 
-	if (radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user) == 1) res = 1;
-	else res = -1;
+	*/
+	     /* unescape user */
+	//	user.s = malloc(puri.user.len);
+	//	un_escape(&(puri.user), &user);
 
-	free(user.s);
+	cred = (auth_body_t*)h->parsed;
+
+	res = radius_authorize_sterman(&cred->digest, &_msg->first_line.u.request.method, &user);
+
+	//free(user.s);
 
 	if (res == 1) {
 		ret = post_auth_func(_msg, h);
