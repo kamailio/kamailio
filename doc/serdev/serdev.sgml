@@ -1,0 +1,5083 @@
+<!DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd">
+
+<book label="serdev" id="serdev" lang="EN">
+    <title>SIP Express Router</title>
+    <subtitle>The Developer's Guide</subtitle>
+    <bookinfo>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>J.Janak@sh.cvut.cz</email>
+	    </author>
+	</authorgroup>
+	
+	<copyright>
+	    <year>2001</year>
+	    <year>2002</year>
+	    <holder>FhG Fokus</holder>
+	</copyright>
+	<legalnotice>
+	    <para>
+		This documentation is free software; you can redistribute
+		it and/or modify it under the terms of the GNU General Public
+ 		License as published by the Free Software Foundation; either
+		version 2 of the License, or (at your option) any later
+		version.
+	    </para>
+	    
+	    <para>
+		This program is distributed in the hope that it will be
+		useful, but WITHOUT ANY WARRANTY; without even the implied
+		warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+		See the GNU General Public License for more details.
+	    </para>
+	    
+	    <para>
+		You should have received a copy of the GNU General Public
+		License along with this program; if not, write to the Free
+		Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+		MA 02111-1307 USA
+	    </para>
+	    
+	    <para>
+		For more details see the file COPYING in the source
+		distribution of SER.
+	    </para>	    
+	</legalnotice>
+
+	<abstract>
+	    <para>
+		The document describes the SIP Express Router internals and algorithms. It describes
+		overall server architecture, request processing, configuration, memory management,
+		interprocess locking, module interface and selected modules in detail.
+	    </para>
+
+	    <para>
+		The document is intended mainly for module developers wishing to implement
+		a new module for the server. Other people like developers of SIP related
+		software or students might be interested too.
+	    </para>
+	</abstract>
+
+    </bookinfo>
+    
+    <toc></toc>
+    
+    <chapter id="server-startup">
+	<title>The Server Startup</title>
+	<para>
+	    The <function moreinfo="none">main</function> function in file <filename moreinfo="none">main.c</filename>
+	    is the first function called when the server is started. It's purpose is to initialize the server and
+	    enter main loop. The server initialization will be described in the following sections.
+	</para>
+	
+	<para>
+	    The particular initialization steps are describe in order in which they appear in the 
+	    <function>main</function> function.
+	</para>
+	
+	<section id="signal-installation">
+	    <title>Installation Of New Signal Handlers</title>
+	    <para>
+		The first step in the initialization process is the installation of new signal handlers. We need
+		our own signal handlers to be able to do gracefull shutdown, print statistics and so on. There is
+		only one signal handler function which is function <function moreinfo="none">sig_usr</function> in
+		file <filename moreinfo="none">main.c</filename>.
+	    </para>
+	    <para>
+		The following signals are handled by the function: SIGINT, SIGPIPE, SIGUSR1, SIGCHLD, SIGTERM, SIGHUP and
+		SIGUSR2.
+	    </para>
+	</section> <!-- signal-installation -->
+	
+	<section id="cmd-line-params">
+	    <title>Processing Command Line Parameters</title>
+	    <para>
+		<acronym>SER</acronym> utilizes <acronym>GNU</acronym><function moreinfo="none">getopt</function>function to 
+		parse command line parameters.
+		The function is extensively described in the man pages.
+	    </para>
+	</section> <!-- cmd-line-params -->
+	
+	<section id="parser-init">
+	    <title>Parser Initialization</title>
+	    <para>
+		<acronym>SER</acronym> contains fast 32-bit parser. The parser uses precalculated hash table that needs to be
+		filled in upon startup. The initialization is done here, there are two functions that do the
+		job. Function <function moreinfo="none">init_hfname_parser</function> initializes hash table
+		in header field name parser and function <function moreinfo="none">init_digest_parser</function>
+		initializes hash table in digest authentication parser. The parsers' internals will be described
+		later.
+	    </para>
+	</section> <!-- parser-init -->
+	
+	<section id="hash-init">
+	    <title>Hash Table Initialization</title>
+	    <para>TBD.</para>
+	</section> <!-- hash-init -->
+	
+	<section id="malloc-init">
+	    <title>Malloc Initialization</title>
+	    <para>
+		To make <acronym>SER</acronym> even faster we decided to reimplement memory allocation routines. The new 
+		<function moreinfo="none">malloc</function>
+		better fits our needs and speeds up the server a lot. The memory management subsystem needs
+		to be initialized upon server startup. The initialization mainly creates internal data
+		structures and allocates memory region to be partitioned.
+	    </para>
+	    
+	    <important>
+		<para>
+		    The memory allocation code must be initialized <emphasis>BEFORE</emphasis> any of its function is called !
+		</para>
+	    </important>
+	</section> <!-- malloc-init -->
+	
+	<section id="timer-init">
+	    <title>Timer Initialization</title>
+	    <para>
+		Various subsystems of the server must be called periodically regardless of the incoming
+		requests. That's what timer is for. Function <function moreinfo="none">init_timer</function>
+		initializes the timer subsystems. The function is called from <filename moreinfo="none">main.c</filename>
+		and can be found in <filename moreinfo="none">timer.c</filename> The timer subsystem will
+		be described later.
+	    </para>
+	    <warning>
+		<para>
+		    Timer subsystem must be initialize before config file is parsed !
+		</para>
+	    </warning>
+	</section> <!-- timer-init -->
+
+	<section id="fifo-init">
+	    <title><acronym>FIFO</acronym> initialization</title>
+	    <para>
+		<acronym>SER</acronym> has built-in support for <acronym>FIFO</acronym> control. It means that the 
+		running server can accept
+		commands over a fifo device. Function <function moreinfo="none">register_core_fifo</function> 
+		initializes <acronym>FIFO</acronym> subsystem and registers basic commands, that are processed by the core
+		itself. The function can be found in file <filename moreinfo="none">fifo_server.c</filename>.
+	    </para>
+	    <para>
+		The <acronym>FIFO</acronym> server will be described later.
+	    </para>
+	</section> <!-- fifo-init -->
+	
+	<section id="builtin-mod-reg">
+	    <title>Builtin Module Initialization</title>
+	    <para>
+		Modules can be either loaded dynamically at runtime or compiled in statically. When a module
+		is loaded at runtime, it is registered
+		<footnote id="regfoot">
+		    <para>
+			Module registration is a process when the core tries to find what functions and
+			parameters are offered by the module.
+		    </para>
+		</footnote>
+		immediatelly with the 
+		core. When the module is compiled in statically, the registration<footnoteref linkend="regfoot"> 
+		must be performed upon server startup. Function 
+		<function moreinfo="none">register_buildin_modules</function> does the job.
+	    </para>
+	</section> <!-- builtin-mod-reg -->
+
+	<section id="ser-config">
+	    <title>Server Configuration</title>
+	    <para>
+		The server is configured using a configuration file. The configuration file
+		is C-Shell like script which defines how incoming requests should be processed.
+		
+		The file cannot be interpreted directly because that would be very slow. Instead
+		of that the file is translated into an internal binary representation. The process
+		is called compilation and will be described in the following sections.
+	    </para>
+	    <note>
+		<para>
+		    The following sections only describe how the internal binary representation is
+		    being constructed from the config file. The way how the binary representation is used
+		    upon a request arrival will be described later.
+		</para>
+	    </note>
+	    <para>The compilation can be divided in several steps:</para>
+	    
+	    <section id="lex-analysis">
+		<title>Lexical Analysis</title>
+		<para>
+		    Lexical analysis is a process of converting the input (the configuration file in this
+		    case) into a stream of tokens. A token is a set of characters that
+		    'belong' together. Program, that can turn the input into stream of tokens is
+		    called scanner. For example, when scanner encounters a number in the config
+		    file, it will produce token NUMBER.
+		</para>
+		<para>
+		    There is no need to implement the scanner from scratch, it can be done automatically.
+		    There is a utility called flex. Flex accepts a configuration file and generates
+		    scanner according to the configuration file. The configuration file for flex consists
+		    of several lines - each line describing one token. The tokens are described using
+		    regular expressions. For more details, see flex manual page or info documentation.
+		</para>
+		<para>
+		    The input file for the <acronym>SER</acronym> config file is in file 
+		    <filename moreinfo="none">cfg.lex</filename>. The file is processed by flex when the
+		    server is being compiled and the result is written in file 
+		    <filename moreinfo="none">lex.yy.c</filename>. The output file contains the scanner
+		    implemented in C language.
+		</para>
+	    </section> <!-- lex-analysis -->
+	    
+	    <section id="syntax-analysis">
+		<title>Syntactical Analysis</title>
+		<para>
+		    The second stage of configuration file processing is called syntactical analysis. Purpose
+		    of syntactical analysis is to check if the configuration file has been well formed, doesn't
+		    contain syntactical errors and perform various actions at various stages of the analysis.
+		    Program performing syntactical analysis is called parser.
+		</para>
+		<para>
+		    Structure of the configuration file is described using grammar. Grammar is a set of rules
+		    describing valid 'order' or 'combination' of tokens. If the file doesn't conform with it's
+		    grammar, it is syntactically invalid and cannot be further processed. In that case an error
+		    will be issued.
+		</para>
+		<para>
+		    There is a utility called Bison. Input of the utility is a file containing the grammar of
+		    the configuration file, in addition to the grammar, you can describe what action the parser
+		    should do at various stages of parsing. For example, you can instruct the parser to create a
+		    structure describing an IP address every time it finds the IP address in the configuration
+		    file and convert the address to binary representation.
+		</para>
+		<para>For more information see Bison documentation.</para>
+		<para>
+		    Bison creates the parser when the server is being compiled from the sources.
+		    Input file for bison is <filename moreinfo="none">cfg.y</filename>. The file contains grammar
+		    of the config file along with actions that create the binary representation of the file.
+		    Bison will write its result into file <filename moreinfo="none">cfg.tab.c</filename>. The
+		    file contains function <function moreinfo="none">yyparse</function> which will parse the whole
+		    configuration file and construct the binary representation. For more information about the
+		    bison input file syntax see bison documentation.
+		</para>
+	    </section> <!-- syntax-analysis -->
+
+	    <section id="config-file-struct">
+		<title>Config File Structure</title>
+		<para>
+		    The configuration file consist of three sections, each of the sections will be
+		    described separately.
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>Route Statement</emphasis> - The statement describes how incoming requests 
+			    will be processed.
+			    When a request is received, commands in one or more route sections will be executed
+			    in turn. The config file must always contain one main route statement and may contain
+			    several additional route statemens. Request processing always starts at the beginning
+			    of the main route statement. Additional route statements can be called from the main
+			    one or another additional route statements (It it simmilar to function calling).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Assign Statement</emphasis> - There are many configuration variables across 
+			    the server and this
+			    statement makes it possible to change their value. Generally it is a list of assignments,
+			    each assignment on a separate line.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>Module Statement</emphasis> - Additional funcionality of the server is 
+			    available through separate
+			    modules. Each module is a shared object that can be loaded at runtime. Modules can
+			    export functions, that can be called from the configuration file and variables, that
+			    can be configured from the config file. The module statement makes it possible to load
+			    modules and configure them. There are two commands in the statement - 
+			    <function moreinfo="none">loadmodule</function> and <function moreinfo="none">loadparam</function>. 
+			    The first can load a module. The second one can configure module's internal
+			    variables.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+		    In the following sections we will describe in detail how the three sections are being processed 
+		    upon server startup.
+		</para>
+
+		<section id="route-stm">
+		    <title>Route Statement</title>
+		    <para>The following grammar snippet describes how the route statement is constructed</para>
+		    <programlisting format="linespecific">
+route_stm = "route" "{" actions "}"  { $$ = push($3, &amp;rlist[DEFAULT_RT]); ) }
+			
+actions   = actions action           { $$ = append_action($1, $2}; }
+	  | action                   { $$ = $1; }
+
+action    = cmd SEMICOLON            { $$ = $1; }
+	  | SEMICOLON                { $$ = 0; }
+
+cmd       = "forward" "(" host ")"   { $$ = mk_action(FORWARD_T, STRING_ST, NUMBER_ST, $3, 0);
+	  | ...
+</programlisting>
+
+		    <para>
+			A config file can contain one or more "route" statements. "route" statement without
+			number will be executed first and is called the main route statement. There can be
+			additional route statements identified by number, these additional route statements
+			can be called from the main route statement or another additional route statements.
+		    </para>
+		    <para>
+			Each route statement consists of a set of actions. Actions in the route statement are
+			executed step by step in the same order they appear in the config file. Actions in the 
+			route statement are delimited by semicolon.
+		    </para>
+		    <para>
+			Each action consists of one and only one command (cmd in the grammar). There are many types
+			of commands defined. We don't list all of them here because the list would be too long and all the
+			commands are processed in the same way. Therefore we show only one example (forward) and
+			interested readers might look in <filename moreinfo="none">cfg.y</filename> file for
+			full list of available commands.
+		    </para>
+		    <para>
+			Each rule in the grammar contains a section enclosed in curly braces. The section is C code
+			snippet that will be executed every time the parser recognizes that rule in the config file.
+		    </para>
+		    <para>
+			For example, when the parser finds <function moreinfo="none">forward</function> command, 
+			<function moreinfo="none">mk_action</function> function (as specified in the
+			grammar snippet above) will be called. The function creates a new structure of type FORWARD_T
+			representing the command. Pointer to the structure will be returned as the return value of the
+			rule.
+		    </para>
+		    <para>
+			The pointer propagates through action rule to actions rule. Actions rule will create linked
+			list of all commands. The linked list will be then inserted into route table.
+			(Function <function moreinfo="none">push</function> in rule route_stm).
+			Each element of the table represents one route statement of the config file.
+		    </para>
+		    <para>
+			Each route statement of the configuration file will be represented by a linked list of all
+			actions in the statement. Pointers to all the lists will be stored in rlist array. Additional
+			route statements are identified by number. The number also serves as index to the table.
+		    </para>
+		    <para>
+			When the core is about to execute route statement with number n, it will look in the table
+			at position n. If the element at position n is not null then there is a linked list of
+			commands and the commands will be executed in sequence.
+		    </para>
+		    <para>
+			Reply-Route statement is translated in the same way. Main differences are:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    Reply-Route statement is executed when a <emphasis>REPLY</emphasis> comes 
+				    (not <emphasis>REQUEST</emphasis>).
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    Only subset of commands is allowed in the reply-route statement.
+				    (See file <filename moreinfo="none">cfg.y</filename> for more details).
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>Reply-route statement has it's own array of linked-lists.</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>		    
+		</section> <!-- route-stm -->
+		
+		<section id="assign-stm">
+		    <title>Assign Statement</title>
+		    <para>
+			The server contains many configuration variables. There is a section of the
+			config file in which the variables can be assigned new value. The section
+			is called The Assign Statement. The following grammar snippet describes how the section
+			is constructed (only one example will be shown):
+		    </para>
+		    <programlisting format="linespecific">
+assign_stm = "children" '=' NUMBER { children_no=$3; }
+	   | "children" '=' error  { yyerror("number expected"); } 
+...
+</programlisting>
+		    <para>
+			The number in the config file is assigned to <varname>children_no</varname> variable. 
+			The second statement will be executed if the parameter is not number or is in invalid 
+			format and will issue a warning.
+		    </para>
+		</section> <!-- assign-stm -->
+		
+		<section id="module-stm">
+		    <title>Module Statement</title>
+		    <para>
+			The module statement allows module loading and configuration. There are two commands:
+		    </para>
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>loadmodule</emphasis> - load the specified module in form of shared object. 
+				The shared object will be loaded using <function moreinfo="none">dlopen</function>.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>modparam</emphasis> - It is possible to configure a module using this 
+				command. The command accepts 3 parameters: module name, variable name and variable value.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		    <para>The following grammar snippet describes the module statement:</para>
+		    <programlisting format="linespecific">
+module_stm = "loadmodule" STRING { DBG("loading module %s\n", $2);
+                                   if (load_module($2)!=0) {
+                                       yyerror("failed to load module");
+                                   }
+                                 }
+	   | "loadmodule" error	 { yyerror("string expected");  }
+	   | "modparam" "(" STRING "," STRING "," STRING ")" 
+			{
+			    if (set_mod_param($3, $5, STR_PARAM, $7) != 0) {
+			        yyerror("Can't set module parameter");
+			    }
+			}
+	   | "modparam" "(" STRING "," STRING "," NUMBER ")" 
+			{
+			    if (set_mod_param($3, $5, INT_PARAM, (void*)$7) != 0) {
+			        yyerror("Can't set module parameter");
+			    }
+			}
+	   | MODPARAM error { yyerror("Invalid arguments"); }
+</programlisting>
+		    <para>
+			When the parser finds <function moreinfo="none">loadmodule</function> command, it will execute 
+			statement in curly braces.
+			The statemen will call <function moreinfo="none">load_module</function> function.
+			The function will load the specified filename using <function moreinfo="none">dlopen</function>.
+			If <function moreinfo="none">dlopen</function> was successfull, the server will look for
+			<structname>exports</structname> structure describing the module interface and register the 
+			module. For more details see module section.
+		    </para>
+		    <para>
+			If the parser finds <function moreinfo="none">modparam</function> command, it will try to configure 
+			the specified variable in the
+			specified module. The module must be loaded using <function moreinfo="none">loadmodule</function>
+			before <function moreinfo="none">modparam</function> for the module can be used !
+			Function <function moreinfo="none">set_mod_param</function> will be called and will
+			configure the variable in the specified module.
+		    </para>
+		</section> <!-- module-stm -->
+	    </section> <!-- config-file-struct -->
+	</section> <!-- ser-config -->
+	
+	<section id="iface-config">
+	    <title>Interface Configuration</title>
+	    <para>
+		The server will try to obtain list of all configured interfaces of the host it is running on. If it
+		fails the server tries to convert hostname to IP address and will use interface with the IP address
+		only.
+	    </para>
+	    <para>
+		Function <function moreinfo="none">add_interfaces</function> will add all configured interfaces to the
+		array.
+	    </para>
+	    <para>
+		Try to convert all interface names to IP addresses, remove duplicates...
+	    </para>
+	</section> <!-- iface-config -->
+	
+	<section id="daemon">
+	    <title>Turning into a Daemon</title>
+	    <para>
+		When configured so, ser becomes a daemon during startup. A process is called daemon
+		when it hasn't associated controlling terminal. See function 
+		<function moreinfo="none">daemonize</function> in file 
+		<filename moreinfo="none">main.c</filename> for more details.
+		The function does the following:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>chroot</emphasis> is performed if neccessary. That ensures that the server will have
+			access to a particular directory and subdirectories only.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Server's working directory is changed if the new working directory was
+			specified.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If command line parameter -g was used, the server's group ID is changed
+			to that value.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If command line parameter -u was used, the server's user ID is changed
+			to that value.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Perform <emphasis>fork</emphasis>, let the parent process exit. This ensures that we 
+			are not a group leader.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Perform <emphasis>setsid</emphasis> to become a session leader and drop the controlling 
+			terminal.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Fork again to drop group leadership.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>Create a pid file.</para>
+		</listitem>
+		<listitem>
+		    <para>Close all opened file descriptors.</para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- daemon -->
+	
+	<section id="module-init">
+	    <title>Module Initialization</title>
+	    <para>
+		The whole config file was parsed, all modules were loaded already and can
+		be initialized now. A module can tell the core that it needs to be initialized
+		by exporting <function moreinfo="none">mod_init</function> function.
+		<function moreinfo="none">mod_init</function> function of all loaded modules
+		will be called now.
+	    </para>
+	</section> <!-- module-init -->
+
+	<section id="rt-list-fix">
+	    <title>Routing List Fixing</title>
+	    <para>
+		After the whole routing list was parsed, there might be still places that can be
+		further processed to speed-up the server. For example, several commands accept
+		regular expression as one of their parameters. The regular expression can be compiled
+		too and processing of compiled expression will be much faster.
+	    </para>
+	    <para>
+		Another example might be string as parameter of a function. For example if you call
+		<function moreinfo="none">append_hf("Server: SIP Express Router\r\n")</function> from the routing 
+		script, the function will 
+		append a new header field after the last one. In this case, the function needs to know length 
+		of the string parameter. It could call <function moreinfo="none">strlen</function> every time it is
+		called, but that is not a very good idea because <function moreinfo="none">strlen</function> would
+		be called every time a message is processed and that is not neccessary.
+	    </para>
+	    <para>
+		Instead of that the length of the string parameter could be precalculated upon server startup, saved
+		and reused later. The processing of the request will be faster because 
+		<function moreinfo="none">append_hf</function> doesn't need
+		to call <function moreinfo="none">strlen</function> every time, I can just reuse the saved value.
+	    </para>
+	    <para>
+		This can be used also for string to int conversions, hostname lookups, expression evaluation and so on.
+	    </para>
+	    <para>
+		This process is called Routing List Fixing and will be done as one of last steps of the server startup.
+	    </para>
+	    <para>
+		Every loaded module can export one or more functions. Each such function can have associated a fixup
+		function, which should do fixing as described in this section. All such fixups of all loaded modules
+		will be called here. That makes it possible for module functions to fix their parameters too.
+	    </para>
+	</section> <!-- rt-list-fix -->
+
+	<section id="stat-init">
+	    <title>Statistics Initialization</title>
+	    <para>
+		If compiled-in, the core can produce some statistics about itself and traffic processed. The statistics
+		subsystem gets initialized here, see function <function moreinfo="none">init_stats</function>.
+	    </para>
+	</section> <!-- stat-init -->
+
+	<section id="socket-init">
+	    <title>Socket Initialization</title>
+	    <para>
+		UDP socket initialization depends on <varname>dont_fork</varname> variable. If this variable is set 
+		(only one process will
+		be processing requests) and there are multiple listen interfaces, only the first one will be used. This
+		mode is mainly for debugging.
+	    </para>
+	    <para>
+		If the variable is not set, then sockets for all configured interfaces will be created and initialized.
+		See function <function moreinfo="none">udp_init</function> in file
+		<filename moreinfo="none">udp_server.c</filename> for more details.
+	    </para>
+	</section> <!-- socke-init -->
+	
+	<section id="forking">
+	    <title>Forking</title>
+	    <para>
+		The rest of the initialization process depends on value of <varname>dont_fork</varname> variable. 
+		We will describe both variants separatelly.
+	    </para>
+
+	    <section id="dont-fork-set">
+		<title><varname>dont_fork</varname> is set (not zero)</title>
+		<para>
+		    If <varname>dont_fork</varname> variable is set, the server will be operating in special mode. 
+		    There will be only one process processing incoming requests. This is very slow and was intended mainly 
+		    for debugging purposes. The main process will be proccessing all incoming requests itself.
+		</para>
+		<para>
+		    The server still needs additional children:
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    One child is for the timer subsystem, the child will be processing timers independently of 
+			    the main process.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <acronym>FIFO</acronym> server will spawn another child if enabled. The child will be 
+			    processing all commands comming through the fifo interface.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>If <acronym>SNMP</acronym> support was enabled, another child will be created.</para>
+		    </listitem>
+		</itemizedlist>
+		
+		<para>
+		    The following initialization will be performed in dont fork mode.
+		    (look into function <function moreinfo="none">main_loop</function> in file 
+		    <filename moreinfo="none">main.c</filename>.
+		</para>
+
+		<itemizedlist>
+		    <listitem>
+			<para>Another child will be forked for the timer subsystem.</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Initialize the <acronym>FIFO</acronym> server if enabled, this will fork another child.
+			    For more info about the <acronym>FIFO</acronym> server, 
+			    see section <acronym>FIFO</acronym> server.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Call <function moreinfo="none">init_child(0).</function>
+			    The function performs per-child specific initialization of all loaded modules.
+			    A module can be initialized though <function moreinfo="none">mod_init</function> function.
+			    The function is called <emphasis>BEFORE</emphasis> the server forks and thus is common for all 
+			    children.
+			</para>
+			<para>
+			    If there is anything, that needs to be initialized in every child separately (for example
+			    if each child needs to open its own filedescriptor), it cannot be done in 
+			    <function>mod_init</function>.
+			    To make such initialization possible, a module can export another initialization function
+			    called <function moreinfo="none">init_child</function>. The function will be called in
+			    all children <emphasis>AFTER</emphasis> fork of the server.
+			</para>
+			<para>
+			    And since we are in dont fork mode and there will no children processing requests (remember
+			    the main process will be processing all requests), the 
+			    <function moreinfo="none">init_child</function> wouldn't be called.
+			</para>
+			<para>
+			    That would be bad, because <function moreinfo="none">child_init</function> might do some
+			    initialization that must be done otherwise modules might not work properly.
+			</para>
+			<para>
+			    To make sure that module initialization is complete we will call 
+			    <function moreinfo="none">init_child</function> here for the main process even if we
+			    are not going to fork.
+			</para>
+		    </listitem>
+		</itemizedlist>
+		<para>
+		    That's it. Everything has been initialized properly and as the last step we will call
+		    <function moreinfo="none">udp_rcv_loop</function> which is the main loop function. The function
+		    will be described later.
+		</para>
+	    </section> <!-- dont-fork-set -->
+
+	    <section id="dont-fork-not-set">
+		<title><varname>dont_fork</varname> is not set (zero)</title>
+		<para>
+		    <varname>dont_fork</varname> is not set. That means that the server will fork children and the children
+		    will be processing incoming requests. How many childrens will be created depends on
+		    the configuration (<varname>children</varname> variable). The main process will be sleeping and 
+		    handling signals only.
+		</para>
+
+		<para>
+		    The main process will then initialize <acronym>FIFO</acronym> server. The <acronym>FIFO</acronym> server 
+		    needs another child to handle communication over <acronym>FIFO</acronym> and thus another child will be 
+		    created. The <acronym>FIFO</acronym> server will be described in more detail later.
+		</para>
+
+		<para>
+		    Then the main process will perform another fork for the timer attendand. The child will
+		    take care of timer lists and execute specified function when a timer hits.
+		</para>
+		<para>
+		    The main process is now completely initialized, it will sleep in <function moreinfo="none">pause</function>
+		    function untill a signal comes and call <function moreinfo="none">handle_sigs</function> when such
+		    condition occurs.
+		</para>
+		
+		<para>
+		    The following initialization will be performed by each child separately:
+		</para>
+		<para>
+		    Each child executes <function moreinfo="none">init_child</function> function. The function
+		    will in turn call <function moreinfo="none">child_init</function> functions of all loaded modules.
+		</para>
+		<para>
+		    Becuase the function is called in each child separately, it can initialize per-child
+		    specific data. For example if a module needs to communicate with database, it must open
+		    a database connection. If the connection would be opened in <function moreinfo="none">mod_init</function>
+		    function, all the children would share the same connection and locking would be neccessary
+		    to avoid conflicts. In contrast if the connection was opened in
+		    <function moreinfo="none">child_init</function> function, each child will have its own
+		    connection and concurrency conflicts will be handled by the database server.
+		</para>
+		<para>
+		    And last, but not least, each child executes <function moreinfo="none">udp_rcv_loop</function> function
+		    which contains the main loop logic.
+		</para>
+		
+	    </section> <!-- dont-fork-not-set -->
+	</section> <!-- forking -->
+    </chapter> <!-- server-startup -->
+    
+    <chapter id="main-loop">
+	<title>Main Loop</title>
+	<para>
+	    Upon startup, all children execute <function moreinfo="none">recvfrom</function> function. The process will
+	    enter the kernel mode. When there is no data to be processed at the moment, the kernel will put the process on
+	    list of processes waiting for data and the process will be put asleep. 
+	</para>
+	<para>
+	    When data to be processed was received, the first process on the list will be removed from the list and woken
+	    up. After the process finished processing of the data, it will call <function moreinfo="none">recvfrom</function>
+	    again and will be put by the kernel at the end of the list.
+	</para>
+	<para>
+	    When next data arrives, the first process on the list will be removed, processes the data and will be put on the
+	    end of the list again. And so on...
+	</para>
+
+	<para>
+	    The main loop logic can be found in function <function moreinfo="none">udp_rcv_loop</function> in file
+	    <filename moreinfo="none">udp_server.c</filename>.
+	</para>
+	<para>
+	    The message is received using <function moreinfo="none">recvfrom</function> function. The received data is
+	    stored in buffer and null terminated. 
+	</para>
+	<para>
+	    If configured so, basic sanity checks over the received message will be performed.
+	</para>
+	<para>
+	    The message is then processed by <function moreinfo="none">receive_msg</function> function and 
+	    <function moreinfo="none">recvfrom</function> is called again.
+	</para>
+	
+	<section id="recv-message">
+	    <title><function moreinfo="none">receive_msg</function> Function</title>
+	    <para>
+		The function can be found in <filename moreinfo="none">receive.c</filename> file.
+	    </para>
+	    
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			In the server, a request or response is represented by <structname>sip_msg</structname>
+			structure. The structure is allocated in this function. The original message is stored in buf 
+			attribute of the structure and is zero terminated. Then, another copy of the received message will be
+			created and the copy will be stored in orig attribute. The original copy will be not
+			modified during the server operation. All changes will be made to the copy in buf
+			attribute. The second copy of the message will be removed in the future.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			The message will be parsed (function <function moreinfo="none">parse_msg</function>). We don't
+			need the whole message header to be parsed at this stage. Only the first line and first Via
+			header need to be parsed. The server needs to know if the message is request or response - hence
+			the first line. The server also needs the first Via to be able to send a response back - hence
+			the first Via. Nothing else will be parsed at the moment - this saves time. (Message parser
+			as well as <structname>sip_msg</structname> structure will be described later).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			A module may register callbacks. Each callback have associated an event, that
+			will trigger the callback. One such callback is <emphasis>pre-script</emphasis> callback. Such 
+			callback will be called immediatelly before the routing part of the config file will be run. 
+			If there are such callbacks registered, they will be executed now.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			As the next step we will determine the message type. If the message being processed is a REQUEST
+			then basic sanity checks will be performed (make sure that there is the first Via and parsing was
+			successfull) and the message will be passed to routing engine.
+			The routing engine is one of the most complicated parts of the server and will be in detail
+			described in section ...
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			If the message is a RESPONSE, it will be simply forwarded to its destination.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			After all, <emphasis>post-script</emphasis> callbacks will be executed if any and the 
+			structure representing the message will be released.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			Processing of the message is done now and the process is ready for another 
+			<acronym>SIP</acronym> message.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- recv-message -->
+    </chapter> <!-- main-loop -->
+
+    <chapter id="server-shutdown">
+	<title>Server Shutdown</title>
+	<para>
+	    Server shutdown can be triggered by sending a signal to the server. The server will behave differently upon 
+	    receiving various types of signals, here is a brief summary:
+	</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>SIGINT, SIGPIPE, SIGTERM, SIGCHLD</emphasis> will terminate the server.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>SIGUSR1</emphasis> will print statistics and let the server continue.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    <emphasis>SIGHUP, SIGUSR2</emphasis> will be ignored.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	
+	<para>
+	    There is only one common signal handler for all signals - function <function moreinfo="none">sig_usr</function>
+	    in file <filename moreinfo="none">main.c</filename>.
+	</para>
+
+	<para>
+	    In normal mode of operation (<varname>dont_fork</varname> is not set), the main server is not processing any 
+	    requests, it calls <function moreinfo="none">pause</function> function and will be waiting for signals only. What
+	    happens when a signal arrives is shown in the previous paragraph.
+	</para>
+	<para>
+	    When in normal mode (<varname>dont_fork</varname> is not set), the signal handler of the main process will 
+	    only store number of the signal received.
+	    All the processing logic will be executed by the main process outside the signal handler (function
+	    <function moreinfo="none">handle_sigs</function>) The function will be called immediately after the signal
+	    handler finish. The main
+	    process usually does some cleanup and running such things outside the signal handler is much
+	    more safe than doing it from the handler itself. Children only print statistics and exit
+	    or ignore the signal completely, that is quite safe and can be done directly from the signal handler of
+	    children.
+	</para>
+	<para>
+	    When <varname>dont_fork</varname> is set, all the cleanup will be done directly from the signal handler, 
+	    because there is only one process - the main process. This is not so safe as the previous case, but this mode 
+	    should be  used for debugging only and such shortcomming doesn't harm in that case.
+	</para>
+	<para>
+	    Upon receipt of SIGINT, SIGPIPE or SIGTERM <function moreinfo="none">destroy_modules</function> will be called.
+	    Each module may register so-called destroy function if it needs to do some cleanup when the server is
+	    terminating (flush of cache to disk  for example). <function moreinfo="none">destroy_modules</function> will
+	    call destroy funtion of all loaded modules.
+	</para>
+
+	<para>
+	    If you need to terminate the server and all of its children, the best way how to do it is to send SIGTERM
+	    to the main process, the main process will in turn send the same signal to its children.
+	</para>
+
+	<para>
+	    The main process and its children are in the same process group. Therefore the main process can kill all
+	    its children simply by sending a signal to pid 0, sending to pid 0 will send the signal to all processes
+	    in the same process group as the sending process. This is how the main process will terminate all children 
+	    when it is going to shut down.
+	</para>
+
+	<para>
+	    If one child exited during normal operation, the whole server will be shut down. This is better than let
+	    the server continue - a dead child might hold a lock and that could block the whole server, such situation
+	    cannot be avoided easily. Instead of that it is better to shutdown the whole server and have it restarted.
+	</para>
+    </chapter> <!-- server-shutdown -->
+
+    <chapter id="internal-data-struct">
+	<title>Internal Data Structures</title>
+	<para>
+	    There are some data structures that are important and widely used in the server. We will describe them
+	    in this section.
+	</para>
+	
+	<note>
+	    <para>
+		There are many more structures and types defined across the server and modules. We will describe
+		only the most important and common data structure here. The rest will be described in other sections
+		where it will be needed.
+	    </para>
+	</note>
+
+	<section id="str">
+	    <title>Type <type>str</type></title>
+	    <para>
+		One of our main goals was to make <acronym>SER</acronym> really fast. There are many functions across
+		the server that need to work with strings. Usually these functions need to know string length. We wanted
+		to avoid using of <function moreinfo="none">strlen</function> becase the function is relatively slow. It
+		must scan the whole string and find the first occurence of zero character. To avoid this, we created
+		<type>str</type> type. The type has 2 fields, field <structfield>s</structfield> is pointer
+		to the beginning of the string and field <structfield>len</structfield> is length of the string. We then
+		calculate length of the string only once and later reuse saved value.
+	    </para>
+	    <note>
+		<para>
+		    <type>str</type> structure is quite important because it is widely used in
+		    <acronym>SER</acronym> (most functions accept <type>str</type> instead of <type>char*</type>).
+		</para>
+	    </note>
+
+	    <para><emphasis><type>str</type> Type Declaration</emphasis></para>
+	    <programlisting format="linespecific">
+struct _str{
+    char* s;
+    int len;
+};
+
+typedef struct _str str;		    
+</programlisting>
+
+	    <para>
+		The declaration can be found in header file <filename moreinfo="none">str.h</filename>.
+	    </para>
+
+	    <warning>
+		<para>
+		    Because we store string lengths, there is no need to zero terminate them. Some strings in the
+		    server are still zero terminated, some are not. Be carefull when using functions like 
+		    <function moreinfo="none">snprintf</function> that rely on the ending zero. You can print 
+		    variable of type <type>str</type> this way:
+		    <programlisting format="linespecific">
+printf("%.*s", mystring->len, mystring->s);
+</programlisting>
+		    That ensures that the string will be printed correctly even if there is no zero character at
+		    the end.
+		</para>
+	    </warning>
+	</section> <!-- str -->
+	
+	<section id="hdr-field">
+	    <title>Structure <structname>hdr_field</structname></title>
+	    <para>
+		The structure represents a header field of a <acronym>SIP</acronym> message. A header field
+		consist of <emphasis>name</emphasis> and <emphasis>body</emphasis> separated by a double colon.
+		For example: <quote>Server: SIP Express Router\r\n</quote> is one header field. <quote>Server</quote> 
+		is header field name and <quote>SIP Express Router\r\n</quote> is header field body.
+	    </para>
+	    <para>
+		The structure is defined in file <filename moreinfo="none">hf.h</filename> under
+		<filename moreinfo="none">parser</filename> subdirectory.
+	    </para>
+	    <para>
+		<emphasis>Structure Declaration</emphasis>
+	    </para>
+	    <programlisting format="linespecific">
+struct hdr_field {   
+    int type;                /* Header field type */
+    str name;                /* Header field name */
+    str body;                /* Header field body */
+    void* parsed;            /* Parsed data structures */
+    struct hdr_field* next;  /* Next header field in the list */
+};
+</programlisting>
+	    <para>
+		<emphasis>Field Description:</emphasis>
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>type</structfield> - Type of the header field, the following header field
+			types are defined (and recognized by the parser): 
+		    </para>
+		    <para>
+			HDR_VIA1, HDR_VIA2, HDR_TO, HDR_FROM,
+			HDR_CSEQ, HDR_CALLID, HDR_CONTACT, HDR_MAXFORWARDS, HDR_ROUTE, HDR_RECORDROUTE, HDR_CONTENTTYPE,
+			HDR_CONTENTLENGTH, HDR_AUTHORIZATION, HDR_EXPIRES, HDR_PROXYAUTH, HDR_WWWAUTH, HDR_SUPPORTED,
+			HDR_REQUIRE, HDR_PROXYREQUIRE, HDR_UNSUPPORTED, HDR_ALLOW, HDR_EVENT, HDR_OTHER.
+		    </para>
+		    <para>
+			Their meaning is selfexplanatory. HDR_OTHER marks header field not recognized by the parser.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>name</structfield> - Name of the header field (part before doublecolon)
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>body</structfield> - body of the header field (part after doublecolon)
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>parsed</structfield> - Each header field body can be further parsed. The field
+			contains pointer to parsed structure if the header field was parsed already. The pointer is
+			of type void* because it can point to different types of structure depending on the header
+			field type.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>next</structfield> - Pointer to the next header field in linked list.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- hdr-field -->
+
+	<section id="sip-uri"> 
+	    <title>Structure <structname>sip_uri</structname></title>
+	    <para>This structure represents parsed <acronym>SIP</acronym> <acronym>URI</acronym>.</para>
+	    <programlisting format="linespecific">
+struct sip_uri {
+    str user;     /* Username */
+    str passwd;   /* Password */
+    str host;     /* Host name */
+    str port;     /* Port number */
+    str params;   /* Parameters */
+    str headers;  
+};
+</programlisting>
+	    <para><emphasis>Field Description:</emphasis></para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>user</structfield> - Username if found in the <acronym>URI</acronym>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>passwd</structfield> - Password if found in the <acronym>URI</acronym>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>host</structfield> - Hostname of the <acronym>URI</acronym>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>params</structfield> - Parameters of the <acronym>URI</acronym> if any.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>headers</structfield> - See the <acronym>SIP</acronym> <acronym>RFC</acronym>.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- sip-uri -->
+	
+	<section id="via-body">
+	    <title>Structure <structname>via_body</structname></title>
+	    <para>
+		The structure represents parsed Via header field. See file <filename moreinfo="none">parse_via.h</filename>
+		under <filename moreinfo="none">parser</filename> subdirectory for more details.
+	    </para>
+	    <programlisting format="linespecific">
+struct via_body { 
+    int error;
+    str hdr;                      /* Contains "Via" or "v" */
+    str name;
+    str version;   
+    str transport;
+    str host;
+    int port;
+    str port_str;
+    str params;
+    str comment;
+    int bsize;                    /* body size, not including hdr */
+    struct via_param* param_lst;  /* list of parameters*/
+    struct via_param* last_param; /*last via parameter, internal use*/
+
+    /* shortcuts to "important" params*/
+    struct via_param* branch;
+    struct via_param* received;
+
+    struct via_body* next;        /* pointer to next via body string if
+    compact via or null */
+};
+</programlisting>
+	    <para><emphasis>Field Description:</emphasis></para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>error</structfield> - The field contains error code when the parser was unable
+			to parse the header field
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>hdr</structfield>- Header field name, it can be <quote>Via</quote> or <quote>v</quote>
+			in this case
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>name</structfield> - Protocol name (<quote>SIP</quote> in this case).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>version</structfield> - Protocol version (for example <quote>2.0</quote>).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>transport</structfield> - Transport protocol name (<quote>TCP</quote>, <quote>UDP</quote>
+			and so on).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>host</structfield> - Hostname or IP address contained in the Via header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>port</structfield> - Port number as integer.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>port_str</structfield> - Port number as string.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>params</structfield> - Unparsed parameters (as one string containing all the parameters).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>comment</structfield> - Comment.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>bsize</structfield> - Size of the body (not including hdr).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>param_lst</structfield> - Linked list of all parameters.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>last_param</structfield> - Last parameter in the list.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>branch</structfield> - Branch parameter.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>received</structfield> - Received parameter.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>next</structfield> - If the via is in compact form (more Vias in the same header
+			field), this field contains pointer to the next via.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- via-body -->
+
+	<section id="ip-addr">
+	    <title>Structure <structname>ip_addr</structname></title>
+	    <para>
+		The structure represents <acronym>IPv4</acronym> or <acronym>IPv6</acronym> address. It is defined in 
+		<filename moreinfo="none">ip_addr.h</filename>.
+	    </para>
+	    <programlisting format="linespecific">
+struct ip_addr{
+    unsigned int af;     /* address family: AF_INET6 or AF_INET */
+    unsigned int len;    /* address len, 16 or 4 */
+		
+    /* 64 bits alligned address */
+    union {
+        unsigned int   addr32[4];
+        unsigned short addr16[8];
+	unsigned char  addr[16];
+    }u;
+};
+</programlisting>
+	</section> <!-- ip-addr -->
+
+	<section id="lump">
+	    <title>Structure <structname>lump</structname></title>
+	    <para>
+		The structure describes modifications that should be made to the message before
+		the message will be sent. 
+	    </para>
+	    <para>
+		The structure will be described in more detail later.
+	    </para>
+	</section> <!-- lump -->
+	
+	<section id="lump-rpl">
+	    <title>Structure <structname>lump_rpl</structname></title>
+	    <para>
+		The structure represents text that should be added to reply. List of such data is
+		kept in the request and processed when the request is being turned into reply. 
+	    </para>
+	    <para>
+		The structure will be described in more detail later.
+	    </para>
+	</section> <!-- lump-rpl -->
+
+	<section id="msg-start">
+	    <title>Structure <structname>msg_start</structname></title>
+	    <para>
+		The structure represents the first line of a <acronym>SIP</acronym> request or response. 
+	    </para>
+	    <para>
+		The structure is defined in file <filename moreinfo="none">parse_fline.h</filename> under 
+		<filename moreinfo="none">parser</filename> subdirectory.
+	    </para>
+
+	    <para>
+		<emphasis>Structure Declaration</emphasis>
+	    </para>
+	    <programlisting format="linespecific">
+struct msg_start {
+    int type;                        /* Type of the Message - Request/Response */
+    union {
+        struct {
+	    str method;              /* Method string */
+	    str uri;                 /* Request URI */
+	    str version;             /* SIP version */
+	    int method_value;        /* Parsed method */
+        } request;
+	struct {
+	    str version;             /* SIP version */
+	    str status;              /* Reply status */
+	    str reason;              /* Reply reason phrase */
+	    unsigned int statuscode; /* Status code */
+        } reply;
+    }u;
+};
+</programlisting>
+	    
+	    <para>
+		<emphasis>Description of Request Related Fields:</emphasis>
+	    </para>
+
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>type</structfield> - Type of the message - REQUEST or RESPONSE.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>method</structfield> - Name of method (same as in the message).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>uri</structfield> - Request <acronym>URI</acronym>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>version</structfield> - Version string.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>method_value</structfield> - Parsed method. Field method which is of
+			type str will be converted to integer and stored here. This is good for comparison,
+			integer comparison is much faster then string comparison.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+
+	    <para>
+		<emphasis>Description of Response Related Fields:</emphasis>
+	    </para>
+
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>version</structfield> - Version string.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>status</structfield> - Response status code as string.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>reason</structfield> - Response reason string as in the message.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>statuscode</structfield> - Response status code converted to integer.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+
+	</section> <!-- msg-start -->
+
+	<section id="sip-msg">
+	    <title>Structure <structname>sip_msg</structname></title>
+	    <para>
+		This is the most important structure in the whole server. This structure represents
+		a <acronym>SIP</acronym> message. When a message is received, it is immediately converted
+		into this structure and all operations are performed over the structure. After the server
+		finished processing, this structure is converted back to character array
+		buffer and the buffer is sent out.
+	    </para>
+	    <para><emphasis>Structure Declaration:</emphasis></para>
+	    <programlisting format="linespecific">
+struct sip_msg {
+    unsigned int id;               /* message id, unique/process*/
+    struct msg_start first_line;   /* Message first line */
+    struct via_body* via1;         /* The first via */
+    struct via_body* via2;         /* The second via */
+    struct hdr_field* headers;     /* All the parsed headers*/
+    struct hdr_field* last_header; /* Pointer to the last parsed header*/
+    int parsed_flag;               /* Already parsed header field types */
+
+    /* Via, To, CSeq, Call-Id, From, end of header*/
+    /* first occurance of it; subsequent occurances saved in 'headers' */
+
+    struct hdr_field* h_via1;
+    struct hdr_field* h_via2;
+    struct hdr_field* callid;
+    struct hdr_field* to;
+    struct hdr_field* cseq;
+    struct hdr_field* from;
+    struct hdr_field* contact;
+    struct hdr_field* maxforwards;
+    struct hdr_field* route;
+    struct hdr_field* record_route;
+    struct hdr_field* content_type;
+    struct hdr_field* content_length;
+    struct hdr_field* authorization;
+    struct hdr_field* expires;
+    struct hdr_field* proxy_auth;
+    struct hdr_field* www_auth;
+    struct hdr_field* supported;
+    struct hdr_field* require;
+    struct hdr_field* proxy_require;
+    struct hdr_field* unsupported;
+    struct hdr_field* allow;
+    struct hdr_field* event;
+
+    char* eoh;        /* pointer to the end of header (if found) or null */
+    char* unparsed;   /* here we stopped parsing*/
+
+    struct ip_addr src_ip;
+    struct ip_addr dst_ip;
+		
+    char* orig;       /* original message copy */
+    char* buf;        /* scratch pad, holds a modfied message,
+                       *  via, etc. point into it 
+		       */
+    unsigned int len; /* message len (orig) */
+
+    /* modifications */
+		
+    str new_uri;               /* changed first line uri*/
+    int parsed_uri_ok;         /* 1 if parsed_uri is valid, 0 if not */
+    struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
+		
+    struct lump* add_rm;         /* used for all the forwarded requests */
+    struct lump* repl_add_rm;    /* used for all the forwarded replies */
+    struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/
+
+    char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
+    int add_to_branch_len;
+		
+    /* index to TM hash table; stored in core to avoid unnecessary calcs */
+    unsigned int  hash_index;
+		
+    /* allows to set various flags on the message; may be used for 
+     * simple inter-module communication or remembering processing state
+     * reached 
+     */
+    flag_t flags;	
+};
+</programlisting>
+	    <para>
+		<emphasis>Field Description:</emphasis>
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>id</structfield> - Unique ID of the message within a process context.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>first_line</structfield> - Parsed first line of the message.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>via1</structfield> - The first Via - parsed.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>via2</structfield> - The second Via - parsed.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>headers</structfield> - Linked list of all parsed headers.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>last_header</structfield> - Pointer to the last parsed header (parsing is incremental,
+			that means that the parser will stop if all requested headers were found and next time it will
+			continue at the place where it stopped previously. Therefore this field will not point to the
+			last header of the message if the whole message hasn't been parsed yet).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>parsed_flag</structfield> - Already parsed header field types (bitwise OR).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+
+	    <para>
+		The following fields are set to zero if the corresponding header field was not found in the
+		message or hasn't been parsed yet. (These fields are called hooks - they always point to the first
+		occurence if there is more than one header field of the same type).
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>h_via1</structfield> - Pointer to the first Via header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>h_via2</structfield> - Pointer to the second Via header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>callid</structfield> - Pointer to the first Call-ID header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>to</structfield> - Pointer to the first To header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>cseq</structfield> - Pointer to the first CSeq header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>from</structfield> - Pointer to the first From header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>contact</structfield> - Pointer to the first Contact header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>maxforwards</structfield> - Pointer to the first Max-Forwards header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>route</structfield> - Pointer to the first Route header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>record_route</structfield> - Pointer to the first Record-Route header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>content_type</structfield> - Pointer to the first Content-Type header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>content_length</structfield> - Pointer to the first Content-Length header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>authorization</structfield> - Pointer to the first Authorization header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>expires</structfield> - Pointer to the first Expires header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>proxy_auth</structfield> - Pointer to the first Proxy-Authorize header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>www_auth</structfield> - Pointer to the first WWW-Authorize header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>supported</structfield> - Pointer to the first Supported header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>require</structfield> - Pointer to the first Require header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>proxy_require</structfield> - Pointer to the first Proxy-Require header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>unsupported</structfield> - Pointer to the first Unsupported header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>allow</structfield> - Pointer to the first Allow header field.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>event</structfield> - Pointer to the first Event header field.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+
+	    <para>
+		The following fields are mostly used internally by the server and should be modified through dedicated
+		functions only.
+	    </para>
+
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>eoh</structfield> - Pointer to the End of Header or null if not found yet (the field
+			will be set if and only if the whole message was parsed already).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>unparsed</structfield> - Pointer to the first unparsed character in the message.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>src_ip</structfield> - Sender's <acronym>IP</acronym> address.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>dst_ip</structfield> - Destination <acronym>IP</acronym> address.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>orig</structfield> - Original (unmodified) message copy, this field will hold
+			unmodified copy of the message during the whole message lifetime.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>buf</structfield> - Message scratch-pad (modified copy of the message) - All modifications
+			made to the message will be done here.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>len</structfield> - Length of the message (unmodified).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>new_uri</structfield> - New Request-URI to be used when forwarding the message.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>parsed_uri_ok</structfield> - 1 if <structfield>parsed_uri</structfield> is 
+			valid, 0 if not.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>parsed_uri</structfield> - The original parsed Request <acronym>URI</acronym>, sometimes 
+			it might be necessary to revert changes made to the Request <acronym>URI</acronym> and therefore we
+			store the original <acronym>URI</acronym> here.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>add_rm</structfield> - Linked list describing all modifications that will be made to
+			<emphasis>REQEST</emphasis> before it will be forwarded. The list will be processed when the request
+			is being converted to character array (i.e. immediately before the request will be send out).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>repl_add_rm</structfield> - Linked list describing all modifications 
+			that will be made to
+			<emphasis>REPLY</emphasis> before it will be forwarded. the list will be processed when the reply
+			is being converted to character array (i.e. immediately before the request will be send out).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>reply_lump</structfield> - This is list of data chunks that should be appended to 
+			localy generated reply, i.e. when the server is generating local reply out of the request. A local
+			reply is reply generated by the server. For example, when processing of a request fails for some
+			reason, the server might generate an error reply and send it back to sender.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>add_to_branch_s</structfield> - String to be appended to branch parameter.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>add_to_branch_len</structfield> - Length of the string.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>hash_index</structfield> - Index to a hash table in TM module.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>flags</structfield> - Allows to set various flags on the message. May be used 
+			for simple inter-module communication or remembering processing state reached.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- sip_msg -->
+    </chapter> <!-- internal-data-struct -->
+	
+    <chapter id="routing-engine">
+	<title>The Routing Engine</title>
+	<para>
+	    In a previous section we discussed how routing part of a config file gets translated into binary
+	    representation. In this section, we will discuss how the binary representation is used during
+	    message processing.
+	</para>
+	<para>
+	    Upon a <acronym>SIP</acronym> message receipt, the server performs some basic sanity checks and converts
+	    the message into <structname>sip_msg</structname> structure. After that the Routing Engine will start
+	    processing the message.
+	</para>
+	<para>
+	    The routing engine can be found in file <filename moreinfo="none">action.c</filename>.
+	</para>
+	<para>
+	    The main function is <function moreinfo="none">run_actions.</function> The 
+	    function accepts two parameters. The first parameter is list of actions to
+	    be processed (Remember, the config file gets translated into array of linked
+	    lists. Each linked list in the array represents one "route" part of the config
+	    file). The second parameter is <structname>sip_msg</structname> structure
+	    representing the message to be routed.
+	</para>
+	<para>
+	    Upon a receipt of a request, the linked list representing the main route
+	    part will be processed so the first parameter will be rlist[0]. (The linked
+	    list of main route part is always at index 0).
+	</para>
+	<para>
+	    The function will then sequentially call 
+	    <function moreinfo="none">do_action</function> function for each element
+	    of the linked list. Return value of the function is important. If the function
+	    returns 0, processing of the list will be stopped. By returning 0 a command
+	    can indicate that processing of the message should be stopped.
+	</para>
+	<para>
+	    Modules may export so-called <emphasis>on_break handlers</emphasis>.
+	    <emphasis>on_break</emphasis> handler is a function, that will be called when
+	    processing of the linked-list is interrupted (ret == 0). All such handlers
+	    will be called when processing of the linked-list is finished and ret == 0.
+	</para>
+	<section id="do-action">
+	    <title><function moreinfo="none">do_action</function> Function</title>
+	    <para>
+		<function moreinfo="none">do_action</function> function is core of the
+		routing engine. There is a big <function moreinfo="none">switch</function>
+		statement. Each case of the statements is one command handled by the
+		server core itself.
+	    </para>
+	    <para>
+		The following commands are handled by the <acronym>SER</acronym> core
+		itself: 
+		<function moreinfo="none">drop</function>,
+		<function moreinfo="none">forward</function>,
+		<function moreinfo="none">send</function>,
+		<function moreinfo="none">log</function>,
+		<function moreinfo="none">append_branch</function>,
+		<function moreinfo="none">len_gt</function>,
+		<function moreinfo="none">setflag</function>,
+		<function moreinfo="none">resetflag</function>,
+		<function moreinfo="none">isflagset</function>,
+		<function moreinfo="none">error</function>,
+		<function moreinfo="none">route</function>,
+		<function moreinfo="none">exec</function>,
+		<function moreinfo="none">revert_uri</function>,
+		<function moreinfo="none">set_host</function>,
+		<function moreinfo="none">set_hostport</function>,
+		<function moreinfo="none">set_user</function>,
+		<function moreinfo="none">set_userpass</function>,
+		<function moreinfo="none">set_port</function>,
+		<function moreinfo="none">set_uri</function>,
+		<function moreinfo="none">prefix</function>,
+		<function moreinfo="none">strip</function>,
+		<function moreinfo="none">if</function>,
+		<function moreinfo="none">module</function>,
+	    </para>
+	    <para>
+		Each of the commands is represented by a case statement in the switch.
+		(For example, if you are interested in implementation of 
+		<function>drop</function> command,
+		look at <quote>case DROP_T:</quote> statement in the function.
+	    </para>
+	    <para>
+		The respective commands will be described now.
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<function moreinfo="none">drop</function> - This command is very
+			simple, it simply returns 0 which will result in abortion of
+			processing of the request. No other commands after
+			<function moreinfo="none">drop</function> will be executed.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">forward</function> - The function will
+			forward the message further. The message will be either forwarded
+			to the request <acronym>URI</acronym> of the message or to 
+			<acronym>IP</acronym> or host given as parameter.
+		    </para>
+		    <para>
+			In the first case, host in the Request <acronym>URI</acronym>
+			must be converted into corresponding <acronym>IP</acronym> address.
+			Function <function moreinfo="none">mk_proxy</function> converts
+			hostname to corresponding <acronym>IP</acronym> address.
+			The message is then sent out using 
+			<function moreinfo="none">forward_request</function> function.
+		    </para>
+		    <para>
+			In the second case, hostname was converted to <acronym>IP</acronym>
+			address in fixup i.e. immediately after the config file was compiled
+			into its binary representation. The first parameter is pointer to
+			<structname>proxy</structname> structure created in the fixup and
+			therefore we only need to call 
+			<function moreinfo="none">forward_request</function> here to
+			forward the message further.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">send</function> - This functions sends
+			the message to a third-party host. The message will be sent out
+			as is - i.e. without Request <acronym>URI</acronym> and Via
+			processing.
+		    </para>
+		    <para>
+			Hostname or <acronym>IP</acronym> address of the third-party host
+			is specified as a parameter of the function.
+		    </para>
+		    <para>
+			The message will be sent out using 
+			<function moreinfo="none">udp_send</function> directly.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">log</function> - The message given as
+			a parameter will be logged using system logger. It can be either
+			syslog or stderr (depends on configuration). The message is logged
+			using <function moreinfo="none">LOG</function> which is a macro
+			defined in <filename moreinfo="none">dprint.h</filename> header
+			file.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">append_branch</function> - Append a new
+			<acronym>URI</acronym> for forking.
+		    </para>
+		    <para>
+			More than one destinations may be associated with a single
+			<acronym>SIP</acronym> request. If the server was configured so,
+			it will use all the destination and fork the request. 
+		    </para>
+		    <para>
+			The server keeps a array of all destinations, that should be
+			used when forking. The array and related functions can be found
+			in file <filename moreinfo="none">dset.c</filename>. There is
+			function append_branch which adds a new destination to the set.
+		    </para>
+		    <para>
+			This command simply calls 
+			<function moreinfo="none">append_branch</function> function and
+			adds a new destination to the destination set.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">len_gt</function> - The command accepts
+			one number as a parameter. It then compares the number with length
+			of the message. If the message length is greater or equal then
+			the number - 1 will be returned otherwise the function returns -1.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">setflag</function> - Sets a flag in the
+			message. The command simply 
+			calls <function moreinfo="none">setflags</function> function that
+			will set the flag. Fore more information see file
+			<filename moreinfo="none">flag.c</filename> or chapter regarding
+			to flags.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">resetflag</function> - Same as command
+			<function moreinfo="none">setflag</function> - only resetflag
+			will be called instead of setflag.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">isflagset</function> - Test if the flag
+			is set or not.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">error</function> - Log a message with
+			NOTICE log level.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">route</function> - Execute another
+			route statement.
+		    </para>
+		    <para>
+			As we mentioned previously, there can be more that one route
+			statement in the config file. One of them is main (without
+			number), the other are additional. This commands makes it possible
+			to execute an additional route statement.
+		    </para>
+		    <para>
+			The command accepts one parameter which is route statement number.
+			First sanity checks over the parameter will be performed. If
+			the checks passed, function 
+			<function moreinfo="none">run_actions</function> will be called.
+			The function accepts two parameters. The first one is linked list
+			to execute, the second one is <structname>sip_msg</structname>
+			structure representing the message to be routed.
+		    </para>
+		    <para>
+			As you might remember, each route statement was compiled into
+			linked list of commands to be executed and head of the linked
+			list was stored in rlist array. For example, head of linked list
+			representing route statement with number 4 will be stored at
+			position 4 in the array (position 0 is reserved for the main
+			route statement).
+		    </para>
+		    <para>
+			So the command will simply call 
+			<function moreinfo="none">run_actions(rlist[a->p1.number], msg)</function>
+			and that will execute route statement with number given as parameter.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">exec</function> - Execute a shell command.
+		    </para>
+		    <para>
+			The command accepts one parameter of type string. The string given as
+			parameter will be passed to <function moreinfo="none">system</function>
+			function which will in turn execute
+			<function moreinfo="none">/bin/sh -c string</function>.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">revert_uri</function> - Revert changes made to
+			the Request <acronym>URI</acronym>.
+		    </para>
+		    <para>
+			If there is a new <acronym>URI</acronym> stored in 
+			<structfield>new_uri</structfield> of <structname>sip_msg</structname> structure,
+			it will be freed. The original Request <acronym>URI</acronym> will be used
+			when forwarding the message.
+		    </para>
+		    <para>
+			If there is a valid <acronym>URI</acronym> in 
+			<structfield>parsed_uri</structfield> field of <structname>sip_msg</structname>
+			structure (indicated by <structfield>parsed_uri_ok</structfield> field), it
+			will be freed too.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">set_host</function> - Change hostname of Request
+			<acronym>URI</acronym> to value given as parameter.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">set_hostport</function> - change hostname and port
+			of Request <acronym>URI</acronym> to value given as string parameter.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>			
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">set_user</function> - Set username part of Request
+			<acronym>URI</acronym> to string given as parameter.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">set_userpass</function> - Set username and password
+			part of Request <acronym>URI</acronym> to string given as parameter.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>			
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">set_port</function> - Set port of Request
+			<acronym>URI</acronym> to value given as parameter.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>			
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">set_uri</function> - Set a new Request
+			<acronym>URI</acronym>.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield> field,
+			it will be freed. If there is a valid <acronym>URI</acronym> in 
+			<structfield>parsed_uri</structfield> field, it will be freed.
+		    </para>
+		    <para>
+			Then, <acronym>URI</acronym> given as parameter will be stored in 
+			<structfield>new_uri</structfield> field. (If <structfield>new_uri</structfield>
+			contains a <acronym>URI</acronym> it will be used instead of Request
+			<acronym>URI</acronym> when forwarding the message).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">prefix</function> - Set the parameter as username
+			prefix.
+		    </para>
+		    <para>
+			The string will be put immediately after <quote>sip:</quote> part of the 
+			Request <acronym>URI</acronym>.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>			
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">strip</function> - Remove first n characters of
+			username in Request <acronym>URI</acronym>.
+		    </para>
+		    <para>
+			If there is a <acronym>URI</acronym> in <structfield>new_uri</structfield>
+			field, it will be modified, otherwise the original Request
+			<acronym>URI</acronym> will be modified.
+		    </para>			
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">if</function> - if Statement.
+		    </para>
+		    <para>
+			There is an expression associated with the command and one or two linked lists of
+			comands. The expression is a regular expression compiled into binary form
+			in the fixup when the config file was compiled.
+		    </para>
+		    <para>
+			The expression will be evaluated now. If the result is &gt; 0, the first linked
+			list will be executed using <function moreinfo="none">run_action</function>
+			function. The linked list represents command enclosed in curly braces of 
+			<function moreinfo="none">if</function> command.
+		    </para>
+		    <para>
+			Otherwise, if there is second list, it will be executed in the same way. The
+			second list represents commads of <function moreinfo="none">else</function>
+			statement.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">module</function> - Execute a function exported by
+			a module.
+		    </para>
+		    <para>
+			When a command in a route statement is not recognized by the core itself
+			(i.e. it is not one of commands handled by the core itself), list of exported
+			functions of all loaded modules will be searched for a function with corresponding
+			name and corresponding number of parameters.
+		    </para>
+		    <para>
+			If the function was found, <function moreinfo="none">module</function> command
+			(this one) will be created and pointer to the function will be stored in 
+			<structfield>p1.data</structfield> field.
+		    </para>
+		    <para>
+			So, this command will simply call function whose pointer is in
+			<structfield>p1.data</structfield> field and will pass 2 parameters to the
+			function. If one or both of the parameters were not used, 0 will be passed
+			instead. 
+		    </para>
+		    <para>
+			Return value of the function will be returned as return value of
+			<function moreinfo="none">module</function> command.
+		    </para>
+		    <para>
+			This command makes <acronym>SER</acronym> pretty extensible while the core
+			itself is still reasonably small and clean. Additional functionality is put
+			in modules and loaded only when needed.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- do-action -->
+    </chapter> <!-- routing-engine -->
+    
+    <chapter id="memory-management">
+	<title>Memory Management</title>
+	<para>
+	    This section should be written by somebody who really knows how it works. Any volunteers ?
+	    TBD by Andrei or Jiri.
+	</para>
+    </chapter> <!-- memory-management -->
+
+    <chapter id="msg-parser">
+	<title>The Message Parser</title>
+	<para>
+	    In this section we will discuss internals of the <acronym>SIP</acronym> message header
+	    parser implemented in the server. Message parsing is very important and one of the most
+	    time consuming operations of a <acronym>SIP</acronym> server. We have been trying to
+	    make the parser as fast as possible.
+	</para>
+	
+	<para>
+	    A header field parser can be either in the server core or in a module. By convention,
+	    parser that is needed by the core itself or is needed by at least two modules will be
+	    in the core. Parsers contained in modules will be not described in this section.
+	</para>
+	<para>
+	    There is a <filename moreinfo="none">parser</filename> subdirectory that contains all
+	    the parsers and related stuff.
+	</para>
+	<para>
+	    The following parsers can be found under <filename moreinfo="none">parser</filename>
+	    subdirectory:
+	</para>
+
+	<section id="sip-msg-structure">
+	    <title>Structure of a <acronym>SIP</acronym> Message</title>
+	    <para>
+		a <acronym>SIP</acronym> message consists of message header and optional message body. 
+		The header is separated from the body with a empty line (containing CRLF only).
+	    </para>
+	    <para>
+		Message header consists of the first line and one or more header fields. The first line
+		determines type of the message. Header fields provide additional information that is
+		needed by clients and server to be able to process the message.
+	    </para>
+	    <para>
+		Each header field consists of header field name and header field body. Header field name
+		is delimited from header field body by a colon (<quote>:</quote>). For example,
+		<quote>Server: SIP Express Router</quote> - in this case <quote>Server</quote> is 
+		header field name and <quote>SIP Express Router</quote> is header field body.
+	    </para>
+	</section> <!-- sip-msg-structure -->
+	
+	<section>
+	    <title>TBD</title>
+	    <itemizedlist>
+		<listitem>
+		    <para>First Line Parser - Parses the first line of a <acronym>SIP</acronym> message.</para>
+		</listitem>
+		<listitem>
+		    <para>Header Name Parser- Parsers Name part of a header field (part before colon).</para>
+		</listitem>		
+		<listitem>
+		    <para>To Header Parser - Parses body of To header field.</para>
+		</listitem>
+		<listitem>
+		    <para>From Header Parser - Parses body of From header field.</para>
+		</listitem>
+		<listitem>
+		    <para>CSeq Header Parser - Parses body of CSeq header field.</para>
+		</listitem>
+		<listitem>
+		<para>Event Header Parser - Parses body of Event header field.</para>
+		</listitem>
+		<listitem>
+		    <para>Expires Header Parser - Parses body of Expires header field.</para>
+		</listitem>
+		<listitem>
+		    <para>Via Header Parser - Parses body of Via header field.</para>
+		</listitem>
+		<listitem>
+		    <para>Contact Header Parser - Parses body of Contact header field.</para>
+		</listitem>
+		<listitem>
+		    <para>Digest Parser - Parses digest response.</para>
+		</listitem>
+	    </itemizedlist>
+	    
+	    <para>
+		The server implements what we call <emphasis>incremental parsing</emphasis>. It means that
+		a header field will be not parsed unless it is really needed. There is a minimal set of
+		header that will be parsed every time. The set includes:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    The first line - the server must know if the message is request or response
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Via header field - Via will be needed for sure. We must add ourself to Via
+			    list when forwarding the message.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section>
+	
+	<section id="parser-organization">
+	    <title>The Parser Organization</title>
+	    <section id="fline-parser">
+		<title>The First Line Parser</title>
+		<para>
+		    Purpose of the parser is to parse the first line of a <acronym>SIP</acronym>
+		    message. The first line is represented by <structname>msg_start</structname>
+		    structure define in file <filename moreinfo="none">parse_fline.h</filename>
+		    under <filename moreinfo="none">parser</filename> subdirectory.
+		</para>
+		<para>
+		    The main function of the first line parser is 
+		    <function moreinfo="none">parse_first_line</function>, the function will fill in
+		    <structname>msg_start</structname> structure.
+		</para>
+		<para>
+		    Follow inline comments in the function if you want to add support for a new
+		    message type.
+		</para>
+	    </section> <!-- fline-parser -->
+	    <section id="hfname-parser">
+		<title>The Header Field Name Parser</title>
+		<para>
+		    The purpose of the header field type parser is to recognize type of a header field.
+		    The following types of header field will be recognized:
+		</para>
+		<para>
+		    Via, To, From, CSeq, Call-ID, Contact, Max-Forwards, Route, Record-Route,
+		    Content-Type, Content-Length, Authorization, Expires, Proxy-Authorization,
+		    WWW-Authorization, supported, Require, Proxy-Require, Unsupported, Allow, Event.
+		</para>
+		<para>
+		    All other header field types will be marked as HDR_OTHER.
+		</para>
+		<para>
+		    Main function of header name parser is <function moreinfo="none">parse_hname2</function>. The
+		    function can be found in file <filename moreinfo="none">parse_hname.c</filename>. The function
+		    accepts pointers to begin and end of a header field and fills in <structname>hdf_field</structname>
+		    structure. <structfield>name</structfield> field will point to the header field name,
+		    <structfield>body</structfield> field will point to the header field body and 
+		    <structfield>type</structfield> field will contain type of the header field if known and HDR_OTHER
+		    if unknown.
+		</para>
+		<para>
+		    The parser is 32-bit, it means, that it processes 4 characters of header field name at time. 4
+		    characters of a header field name are converted to an integer and the integer is then compared. This
+		    is much faster than comparing byte by byte. Because the server is compiled on at least 32-bit architectures,
+		    such comparsion will be compiled into one instruction instead of 4 instructions.
+		</para>
+		<para>
+		    We did some performance measurement and 32-bit parsing is about 3 times faster for a typical 
+		    <acronym>SIP</acronym> message than corresponding automaton comparing byte by byte. Performance may vary
+		    depending on the message size, parsed header fields and header fields type. Test showed that it was always
+		    as fast as corresponding 1-byte comparing automaton.
+		</para>
+		<para>
+		    Since comparison must be case insensitive in case of header field names, it is necessary to convert it
+		    to lower case first and then compare. Since converting byte by byte would slow down the parser a lot, we
+		    have implemented a hash table, that can again convert 4 bytes at once. Since set of keys that need to be
+		    converted to lowercase is known (the set consists of all possible 4-byte parts of all recognized header
+		    field names) we can precalculate size of the hash table to be synonym-less. That will simplify (and speed
+		    up) the lookup a lot. The hash table must be initialized upon the server startup (function
+		    <function moreinfo="none">init_hfname_parser</function>).
+		</para>
+		<para>
+		    The header name parser consists of several files, all of them are under 
+		    <filename moreinfo="none">parser</filename> subdirectory. Main file is 
+		    <filename moreinfo="none">parse_hname2.c</filename> - this files contains the parser itself and functions
+		    used to initialize and lookup the hash table. File <filename moreinfo="none">keys.h</filename> contains
+		    automatically generated set of macros. Each macro is a group of 4 bytes converted to integer. The macros
+		    are used for comparison and the hash table initialization. For example, for Max-Forwards header field
+		    name, the following macros are defined in the file: 
+		</para>
+		<programlisting>
+#define _max__ 0x2d78616d   /* "max-" */
+#define _maX__ 0x2d58616d   /* "maX-" */
+#define _mAx__ 0x2d78416d   /* "mAx-" */
+#define _mAX__ 0x2d58416d   /* "mAX-" */
+#define _Max__ 0x2d78614d   /* "Max-" */
+#define _MaX__ 0x2d58614d   /* "MaX-" */
+#define _MAx__ 0x2d78414d   /* "MAx-" */
+#define _MAX__ 0x2d58414d   /* "MAX-" */
+
+#define _forw_ 0x77726f66   /* "forw" */
+#define _forW_ 0x57726f66   /* "forW" */
+#define _foRw_ 0x77526f66   /* "foRw" */
+#define _foRW_ 0x57526f66   /* "foRW" */
+#define _fOrw_ 0x77724f66   /* "fOrw" */
+#define _fOrW_ 0x57724f66   /* "fOrW" */
+#define _fORw_ 0x77524f66   /* "fORw" */
+#define _fORW_ 0x57524f66   /* "fORW" */
+#define _Forw_ 0x77726f46   /* "Forw" */
+#define _ForW_ 0x57726f46   /* "ForW" */
+#define _FoRw_ 0x77526f46   /* "FoRw" */
+#define _FoRW_ 0x57526f46   /* "FoRW" */
+#define _FOrw_ 0x77724f46   /* "FOrw" */
+#define _FOrW_ 0x57724f46   /* "FOrW" */
+#define _FORw_ 0x77524f46   /* "FORw" */
+#define _FORW_ 0x57524f46   /* "FORW" */
+
+#define _ards_ 0x73647261   /* "ards" */
+#define _ardS_ 0x53647261   /* "ardS" */
+#define _arDs_ 0x73447261   /* "arDs" */
+#define _arDS_ 0x53447261   /* "arDS" */
+#define _aRds_ 0x73645261   /* "aRds" */
+#define _aRdS_ 0x53645261   /* "aRdS" */
+#define _aRDs_ 0x73445261   /* "aRDs" */
+#define _aRDS_ 0x53445261   /* "aRDS" */
+#define _Ards_ 0x73647241   /* "Ards" */
+#define _ArdS_ 0x53647241   /* "ArdS" */
+#define _ArDs_ 0x73447241   /* "ArDs" */
+#define _ArDS_ 0x53447241   /* "ArDS" */
+#define _ARds_ 0x73645241   /* "ARds" */
+#define _ARdS_ 0x53645241   /* "ARdS" */
+#define _ARDs_ 0x73445241   /* "ARDs" */
+#define _ARDS_ 0x53445241   /* "ARDS" */
+</programlisting>
+		<para>
+		    As you can see, Max-Forwards name was divided into three 4-byte chunks: Max-, Forw, ards. The file
+		    contains macros for every possible lower and upper case character combination of the chunks. Because
+		    the name (and therefore chunks) can contain colon (<quote>:</quote>), minus or space and these 
+		    characters are not allowed in macro name, they must be substituted. Colon is substituted by 
+		    <quote>1</quote>, minus is substituted by underscore (<quote>_</quote>) and space is substituted
+		    by <quote>2</quote>.
+		</para>
+
+		<para>
+		    When initializing the hash table, all these macros will be used as keys to the hash table. One of
+		    each upper and lower case combinations will be used as value. Which one ?
+		</para>
+		<para>
+		    There is a convention that each word of a header field name starts with a upper case character. For
+		    example, most of user agents will send <quote>Max-Forwards</quote>, messages containing some other 
+		    combination of upper and lower case characters (for example: <quote>max-forwards</quote>,
+		    <quote>MAX-FORWARDS</quote>, <quote>mAX-fORWARDS</quote>) are very rare (but it is possible).
+		</para>
+		<para>
+		    Considering the previous paragraph, we optimized the parser for the most common case. When all header
+		    fields have upper and lower case characters according to the convention, there is no need to do hash
+		    table lookups, which is another speed up.
+		</para>
+		<para>
+		    For example suppose we are trying to figure out if the header field name is Max-Forwards and the
+		    header field name is formed according to the convention (i.e. <quote>Max-Forwards</quote>):
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				Get the first 4 bytes of the header field name (<quote>Max-</quote>), convert it to an 
+				integer and compare to <quote>_Max__</quote> macro. Comparison succeeded, continue
+				with the next step.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				Get next 4 bytes of the header field name (<quote>Forw</quote>), convert it to an
+				integer and compare to <quote>_Forw_</quote> macro. Comparison succeeded, continue
+				with the next step.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				Get next 4 bytes of the header field name (<quote>ards</quote>), convert it to an
+				integer and compare to <quote>_ards_</quote> macro. Comparison succeeded, continue
+				with the next step.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				If the following characters are spaces and tabs followed by a colon (or colon directly
+				without spaces and tabs), we found Max-Forwards header field name and can set
+				<structfield>type</structfield> field to HDR_MAXFORWARDS. Otherwise (other characters
+				than colon, spaces and tabs) it is some other header field and set 
+				<structfield>type</structfield> field to HDR_OTHER.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    As you can see, there is no need to do hash table lookups if the header field was formed according
+		    to the convention and the comparison was very fast (only 3 comparisons needed !).
+		</para>
+		<para>
+		    Now lets consider another example, the header field was not formed according to the convention, for
+		    example <quote>MAX-forwards</quote>:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				Get the first 4 bytes of the header field name (<quote>MAX-</quote>), convert it to an
+				integer and compare to <quote>_Max__</quote> macro.
+			    </para>
+			    <para>
+				Comparison failed, try to lookup <quote>MAX-</quote> converted to integer in the hash
+				table. It was found, result is <quote>Max-</quote> converted to integer.
+			    </para>
+			    <para>
+				Try to compare the result from the hash table to <quote>_Max__</quote> macro. Comparison
+				succeeded, continue with the next step.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				Compare next 4 bytes of the header field name (<quote>forw</quote>), convert it to an
+				integer and compare to <quote>_Max__</quote> macro.
+			    </para>
+			    <para>
+				Comparison failed, try to lookup <quote>forw</quote> converted to integer in the hash
+				table. It was found, result is <quote>Forw</quote> converted to integer.
+			    </para>
+			    <para>
+				Try to compare the result from the hash table to <quote>Forw</quote> macro. Comparison
+				succeeded, continue with the next step.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				Compare next 4 bytes of the header field name (<quote>ards</quote>), convert it to
+				integer and compare to <quote>ards</quote> macro. Comparison succeeded, continue
+				with the next step.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				If the following characters are spaces and tabs followed by a colon (or colon directly
+				without spaces and tabs), we found Max-Forwards header field name and can set
+				<structfield>type</structfield> field to HDR_MAXFORWARDS. Otherwise (other characters
+				than colon, spaces and tabs) it is some other header field and set 
+				<structfield>type</structfield> field to HDR_OTHER.				    
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    In this example, we had to do 2 hash table lookups and 2 more comparisons. Even this variant is still
+		    very fast, because the hash table lookup is synonym-less, lookups are very fast.
+		</para>
+	    </section> <!-- hfname-parser -->
+
+	    <section id="body-parsers">
+		<title>The Header Field Body Parsers</title>
+		<section id="to-parser">
+		    <title>To HF Body Parser</title>
+		    <para>
+			Purpose of this parser is to parse body of To header field. The parser can be found in file
+			<filename moreinfo="none">parse_to.c</filename> under <filename moreinfo="none">parser</filename>
+			subdirectory.
+		    </para>
+		    <para>
+			Main function is <function moreinfo="none">parse_to</function> but there is no need to call the
+			function explicitly. Every time the parser finds a To header field, this function will be called
+			automatically. Result of the parser is <structname>to_body</structname> structure. Pointer to the
+			structure will be stored in <structfield>parsed</structfield> field of 
+			<structname>hdr_field</structname> structure. Since the pointer is <type>void*</type>, there is a
+			convenience macro <function moreinfo="none">get_to</function> in file 
+			<filename moreinfo="none">parse_to.h</filename> that will do the necessary type-casting and will
+			return pointer to <structname>to_body</structname> structure.
+		    </para>
+		    <para>
+			The parser itself is a finite state machine that will parse To body according to the grammar defined
+			in <acronym>RFC3261</acronym> and store result in <structname>to_body</structname> structure.
+		    </para>
+		    <para>
+			The parser gets called automatically from function <function moreinfo="none">get_hdr_field</function>
+			in file <filename moreinfo="none">msg_parser.c</filename>. The function first creates and initializes 
+			an instance of <structname>to_body</structname> structure, then calls 
+			<function moreinfo="none">parse_to</function> function with the structure as a parameter and if
+			everything went OK, puts the pointer to the structure in <structfield>parsed</structfield> field of
+			<structname>hdr_field</structname> structure representing the parsed To header field.
+		    </para>
+		    <para>
+			The newly created structure will be freed when the message is being destroyed, see function
+			<function moreinfo="none">clean_hdr_field</function> in file <filename moreinfo="none">hf.c</filename>
+			for more details.
+		    </para>
+		    
+		    <section id="to-body-struct">
+			<title>Structure <structname>to_body</structname></title>
+			<para>
+			    The structure represents parsed To body. The structure is declared in 
+			    <filename moreinfo="none">parse_to.h</filename> file.
+			</para>
+			<para><emphasis>Structure Declaration:</emphasis></para>
+			<programlisting format="linespecific">
+			    struct to_param{
+			    int type;              /* Type of parameter */
+			    str name;              /* Name of parameter */
+			    str value;             /* Parameter value */
+			    struct to_param* next; /* Next parameter in the list */
+			    };
+
+
+			    struct to_body{
+			    int error;                    /* Error code */
+			    str body;                     /* The whole header field body */
+			    str uri;                      /* URI */
+			    str tag_value;                /* Value of tag */
+			    struct to_param *param_lst;   /* Linked list of parameters */
+			    struct to_param *last_param;  /* Last parameter in the list */
+			    };
+			</programlisting>
+			<para>
+			    Structure <structname>to_param</structname> is a temporary structure representing
+			    a To <acronym>URI</acronym> parameter. Right now only TAG parameter will be marked
+			    in <structfield>type</structfield> field. All other parameters will have the same
+			    type.
+			</para>
+			<para><emphasis>Field Description:</emphasis></para>
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>error</structfield> - Error code will be put here when parsing of To
+				    body fails.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>body</structfield> - The whole header field body.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>uri</structfield> - <acronym>URI</acronym> of the To header field.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>tag_value</structfield> - Value of tag parameter if present.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>param_lst</structfield> - Linked list of all parameters.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>last_param</structfield> - Pointer to the last parameter in the linked list.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </section> <!-- to-body-struct -->
+		    
+		</section> <!-- to-parser -->
+
+		<section id="from-parser"> 
+		    <title>From HF Body Parser</title>
+		    <para>
+			This parser is only a wrapper to the To header field parser. Since bodies of both header fields
+			are identical, From parser only calls To parser.
+		    </para>
+		    <para>
+			The wrapper can be found in file <filename moreinfo="none">parse_from.c</filename> under
+			<filename moreinfo="none">parser</filename> subdirectory. There is only one function called
+			<function moreinfo="none">parse_from_header</function>. The function accepts one parameter which
+			is pointer to structure representing the From header field to be parsed. The function creates an
+			instance of <structname>to_body</structname> structure and initializes it. It then calls
+			<function moreinfo="none">parse_to</function> function and if everything went OK, the pointer to
+			the newly created structure will be put in <structfield>parsed</structfield> field of the structure
+			representing the parsed header field.
+		    </para>
+		    <para>
+			The newly created structure will be freed when the whole message is being destroyed. 
+			(See To header field parser description for more details).
+		    </para>
+		    <para>
+			From parser <emphasis>must be called explicitly</emphasis> !
+		    </para>
+		    <para>
+			If the main parser finds a From header field, it will not parse the header field body
+			automaticaly. It is up to you to call the 
+			<function moreinfo="none">parse_from_header</function> when you want to parse a From
+			header field body.
+		    </para>
+		</section> <!-- from-parser -->
+
+		<section id="cseq-parser">
+		    <title>CSeq HF Body Parser</title>
+		    <para>
+			Purpose of this parser is to parse body of CSeq header field. The parser can be found in file
+			<filename moreinfo="none">parse_cseq.c</filename> under <filename moreinfo="none">parser</filename>
+			subdirectory.
+		    </para>
+		    <para>
+			Main function is <function moreinfo="none">parse_cseq</function> but there is no need to call the
+			function explicitly. Every time the parser finds a CSeq header field, this function will be called
+			automatically. Result of the parser is <structname>cseq_body</structname> structure. Pointer to the
+			structure will be stored in <structfield>parsed</structfield> field of 
+			<structname>hdr_field</structname> structure. Since the pointer is <type>void*</type>, there is a
+			convenience macro <function moreinfo="none">get_cseq</function> in file 
+			<filename moreinfo="none">parse_cseq.h</filename> that will do the necessary type-casting and will
+			return pointer to <structname>cseq_body</structname> structure.
+		    </para>
+		    <para>
+			The parser will parse CSeq body according to the grammar defined in <acronym>RFC3261</acronym> and 
+			store result in <structname>cseq_body</structname> structure.
+		    </para>
+		    <para>
+			The parser gets called automatically from function <function moreinfo="none">get_hdr_field</function>
+			in file <filename moreinfo="none">msg_parser.c</filename>. The function first creates and initializes 
+			an instance of <structname>cseq_body</structname> structure, then calls 
+			<function moreinfo="none">parse_cseq</function> function with the structure as a parameter and if
+			everything went OK, puts the pointer to the structure in <structfield>parsed</structfield> field of
+			<structname>hdr_field</structname> structure representing the parsed CSeq header field.
+		    </para>
+		    <para>
+			The newly created structure will be freed when the message is being destroyed, see function
+			<function moreinfo="none">clean_hdr_field</function> in file <filename moreinfo="none">hf.c</filename>
+			for more details.
+		    </para>
+		    
+		    <section id="cseq-body-struct">
+			<title>Structure <structname>cseq_body</structname></title>
+			<para>
+			    The structure represents parsed CSeq body. The structure is declared in 
+			    <filename moreinfo="none">parse_cseq.h</filename> file.
+			</para>
+			<para><emphasis>Structure Declaration:</emphasis></para>
+			<programlisting format="linespecific">
+struct cseq_body{
+    int error;  /* Error code */
+    str number; /* CSeq number */
+    str method; /* Associated method */
+};
+</programlisting>
+			<para><emphasis>Field Description:</emphasis></para>
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>error</structfield> - Error code will be put here when parsing of CSeq
+				    body fails.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>number</structfield> - CSeq number as string.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>method</structfield> - CSeq method.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </section> <!-- cseq-body-struct -->
+		</section> <!-- cseq-parser -->
+
+		<section id="event-parser">
+		    <title>Event HF Body Parser</title>
+		    <para>
+			Purpose of this parser is to parse body of an Event Header field. The parser can be found in
+			file <filename moreinfo="none">parse_event.c</filename> under
+			<filename moreinfo="none">parser</filename> subdirectory.
+		    </para>
+		    <note>
+			<para>
+			    This is <emphasis>NOT</emphasis> fully featured Event body parser ! The parser was written
+			    for Presence Agent module only and thus can recognize Presence package only. No subpackages
+			    will be recognized. All other packages will be marked as <quote>OTHER</quote>.
+			</para>
+			<para>
+			    The parser should be replace by a more generic parser if subpackages or parameters should be
+			    parsed too.
+			</para>
+		    </note>
+		    <para>
+			Main function is <function moreinfo="none">parse_event</function> in file 
+			<filename moreinfo="none">parse_event.c</filename>. The function will create an instance of
+			<structname>event_t</structname> structure and call the parser. If everything went OK, pointer
+			to the newly created structure will be stored in <structfield>parsed</structfield> field of 
+			<structname>hdr_field</structname> structure representing the parsed header field.
+		    </para>
+		    <para>
+			As usually, the newly created structure will be freed when the whole message is being destroyed.
+			See function <function moreinfo="none">clean_hdr_field</function> in file 
+			<filename moreinfo="none">hf.c</filename>.
+		    </para>
+		    <para>
+			The parser will be not called automatically when the main parser finds an Event header field.
+			It is up to you to call the parser when you really need the body of the header field to be
+			parsed (call <function moreinfo="none">parse_event</function> function).
+		    </para>
+
+		    <section id="event-struct">
+			<title>Structure <structname>event_t</structname></title>
+			<para>
+			    The structure represents parsed Event body. The structure is declared in 
+			    <filename moreinfo="none">parse_event.h</filename> file.
+			</para>
+			<para><emphasis>Structure Declaration:</emphasis></para>
+			<programlisting format="linespecific">
+#define EVENT_OTHER    0
+#define EVENT_PRESENCE 1
+
+typedef struct event {
+    str text;   /* Original string representation */
+    int parsed; /* Parsed variant */
+} event_t;
+</programlisting>
+			<para><emphasis>Field Description:</emphasis></para>
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>text</structfield> - Package name as text.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>parsed</structfield> - Package name as integer. It will be EVENT_PRESENCE
+				    for presence package and EVENT_OTHER for rest.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </section> <!-- event-struct -->			
+		</section> <!-- event-parser -->
+		<section id="expires-parser"> 
+		    <title>Expires HF Body Parser</title>
+		    <para>
+			The parser parses body of Expires header field. The body is very simple, it consists of number only.
+			so the parser only removes any leading tabs and spaces and converts the number from string to
+			integer. That's it.
+		    </para>
+		    <para>
+			The parser can be found in file <filename moreinfo="none">parse_expires.c</filename> under
+			<filename moreinfo="none">parser</filename> subdirectory. Main function is
+			<function moreinfo="none">parse_expires</function>. The function is not called automaticaly
+			when an Expires header field was found. It is up to you to call the function if you need the body
+			to be parsed.
+		    </para>
+		    <para>
+			The function creates a new instance of <structname>exp_body_t</structname> structure and calls the
+			parser. If everything went OK, pointer to the newly created structure will be saved in
+			<structfield>parsed</structfield> field of the <structname>hdr_field</structname> structure representing
+			the parsed header field.
+		    </para>
+		    <section id="exp-body-struct">
+			<title>Structure <structname>exp_body_t</structname></title>
+			<para>
+			    The structure represents parsed Expires body. The structure is declared in 
+			    <filename moreinfo="none">parse_expires.h</filename> file.
+			</para>
+			<para><emphasis>Structure Declaration:</emphasis></para>
+			<programlisting format="linespecific">
+typedef struct exp_body {
+    str text;   /* Original text representation */
+    int val;    /* Parsed value */
+} exp_body_t;
+</programlisting>
+			<para><emphasis>Field Description:</emphasis></para>
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>text</structfield> - Expires value as text.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>val</structfield> - Expires value as integer.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </section> <!-- exp-body-struct -->	
+		</section> <!-- expires-parser -->
+
+		<section id="via-parser">
+		    <title>Via HF Body Parser</title>
+		    <para>
+			Purpose of this parser is to parse body of Via header field. The parser can be found in file
+			<filename moreinfo="none">parse_via.c</filename> under <filename moreinfo="none">parser</filename>
+			subdirectory.
+		    </para>
+		    <para>
+			Main function is <function moreinfo="none">parse_via</function> but there is no need to call the
+			function explicitly. Every time the parser finds a Via header field, this function will be called
+			automatically. Result of the parser is <structname>via_body</structname> structure. Pointer to the
+			structure will be stored in <structfield>parsed</structfield> field of 
+			<structname>hdr_field</structname> structure representing the parsed header field.
+		    </para>
+		    <para>
+			The parser itself is a finite state machine that will parse Via body according to the grammar defined
+			in <acronym>RFC3261</acronym> and store result in <structname>via_body</structname> structure.
+		    </para>
+		    <para>
+			The parser gets called automatically from function <function moreinfo="none">get_hdr_field</function>
+			in file <filename moreinfo="none">msg_parser.c</filename>. The function first creates and initializes 
+			an instance of <structname>via_body</structname> structure, then calls 
+			<function moreinfo="none">parse_via</function> function with the structure as a parameter and if
+			everything went OK, puts the pointer to the structure in <structfield>parsed</structfield> field of
+			<structname>hdr_field</structname> structure representing the parsed Via header field.
+		    </para>
+		    <para>
+			The newly created structure will be freed when the message is being destroyed, see function
+			<function moreinfo="none">clean_hdr_field</function> in file <filename moreinfo="none">hf.c</filename>
+			for more details.
+		    </para>
+		    <para>
+			Structure <structname>via_body</structname> is described in section 
+			<link linkend="via-body">Structure <structname>via_body</structname></link>.
+		    </para>
+		</section> <!-- via-parser -->
+
+		<section id="contact-parser">
+		    <title>Contact HF Body Parser</title>
+		    <para>
+			The parser is located under <filename moreinfo="none">parser/contact</filename> subdirectory. The
+			parser is not called automaticaly when the main parser finds a Contact header field. It is your
+			responsibility to call the parser if you want a Contact header field body to be parsed.
+		    </para>
+		    <para>
+			Main function is <function moreinfo="none">parse_contact</function> in file
+			<filename moreinfo="none">parse_contact.c</filename>. The function accepts one parameter which
+			is structure <structname>hdr_field</structname> representing the header field to be parsed. A single
+			Contact header field may contain multiple contacts, the parser will parse all of them and will create
+			linked list of all such contacts.
+		    </para>
+		    <para>
+			The function creates and initializes an instance of <structname>contact_body</structname> structure.
+			Then function <function moreinfo="none">contact_parser</function> will be called. If everything went
+			OK, pointer to the newly created structure will be stored in <structfield>parsed</structfield> field
+			of the <structname>hdr_field</structname> structure representing the parsed header field.
+		    </para>
+		    <para>
+			Function <function moreinfo="none">contact_parser</function> will then check if the contact is star, if
+			not it will call <function moreinfo="none">parse_contacts</function> function that will parse all 
+			contacts of the header field.
+		    </para>
+		    <para>
+			Function <function moreinfo="none">parse_contacts</function> can be found in file
+			<filename moreinfo="none">contact.c</filename>. It extracts <acronym>URI</acronym> and parses all
+			contact parameters.
+		    </para>
+		    <para>
+			The Contact parameter parser can be found in file <filename moreinfo="none">cparam.c</filename>.
+		    </para>
+		    <para>
+			The following structures will be created during parsing:
+		    </para>
+		    <note>
+			<para>
+			    Mind that none of string in the following structures is zero terminated ! Be very carefull
+			    when processing the strings with functions that require zero termination (printf for example) !
+			</para>
+		    </note>
+		    <programlisting format="linespecific">
+typedef struct contact_body {
+    unsigned char star;    /* Star contact */
+    contact_t* contacts;   /* List of contacts */
+} contact_body_t;
+</programlisting>
+		    <para>
+			This is the main structure. Pointer to instance of this structure will be stored in 
+			<structfield>parsed</structfield> field of structure representing the header field to be parsed.
+			The structure contains two field:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>star</structfield> field - This field will contain 1 if the Contact
+				    was star (see <acronym>RFC3261</acronym> for more details).
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>contacts</structfield> field - This field contains pointer to linked
+				    list of all contacts found in the Contact header field.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+
+		    <programlisting format="linespecific">
+typedef struct contact {
+    str uri;              /* contact uri */
+    cparam_t* q;          /* q parameter hook */
+    cparam_t* expires;    /* expires parameter hook */
+    cparam_t* method;     /* method parameter hook */
+    cparam_t* params;     /* List of all parameters */
+    struct contact* next; /* Next contact in the list */
+} contact_t;
+</programlisting>
+		    <para>
+			This structure represents one Contact (Mind that there might be several contacts in one Contact
+			header field delimited by a comma). Its fields have the following meaning:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>uri</structfield> - This field contains pointer to begin of 
+				    <acronym>URI</acronym> and its length.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>q</structfield> - This is a hook to structure representing q parameter.
+				    If there is no such parameter, the hook contains 0.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>expires</structfield> - This is a hook to structure representing expires
+				    parameter. If there is no such parameter, the hook contains 0.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>method</structfield> - This is a hook to structure representing method
+				    parameter. If there is no such parameter, the hook contains 0.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>params</structfield> - Linked list of all parameters.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>next</structfield> - Pointer to the next contact that was in the same
+				    header field.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		    <programlisting format="linespecific">
+typedef enum cptype {
+    CP_OTHER = 0,  /* Unknown parameter */
+    CP_Q,          /* Q parameter */
+    CP_EXPIRES,    /* Expires parameter */
+    CP_METHOD      /* Method parameter */
+} cptype_t;
+</programlisting>
+		    <para>
+			This is an enum of recognized types of contact parameters. Q parameter will have type set to
+			CP_Q, Expires parameter will have type set to CP_EXPIRES and Method parameter will have type set
+			to CP_METHOD. All other parameters will have type set to CP_OTHER.
+		    </para>
+
+		    <programlisting format="linespecific">
+/*
+ * Structure representing a contact
+ */
+typedef struct cparam {
+    cptype_t type;       /* Type of the parameter */
+    str name;            /* Parameter name */
+    str body;            /* Parameter body */
+    struct cparam* next; /* Next parameter in the list */
+} cparam_t;
+</programlisting>
+
+		    <para>
+			This structure represents a contact parameter. Field description follows:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>type</structfield> - Type of the parameter, see <structname>cptype</structname>
+				    enum for more details.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>name</structfield> - Name of the parameter (i.e. the part before 
+				    <quote>=</quote>).
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>body</structfield> - Body of the parameter (i.e. the part after
+				    <quote>=</quote>).
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>next</structfield> - Next parameter in the linked list.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		</section> <!-- contact-parser -->
+
+		<section id="digest-parser">
+		    <title>Digest Body Parser</title>
+		    <para>
+			Purpose of this parser is to parse digest response. The parser can be found under
+			<filename moreinfo="none">parser/digest</filename> subdirectory. There might be several header
+			fields containing digest response, for example Proxy-Authorization or WWW-Authorization. The parser
+			can be used for all of them.
+		    </para>
+		    <para>
+			The parser is not called automaticaly when by the main parser. It is your responsibility to call the
+			parser when you want a digest response to be parsed.
+		    </para>
+		    <para>
+			Main function is <function moreinfo="none">parse_credentials</function> defined in
+			<filename moreinfo="none">digest.c</filename>. The function accepts one parameter which is header
+			field to be parsed. As result the function will create an instance of 
+			<structname>auth_body_t</structname> structure which will represent the parsed digest credentials.
+			Pointer to the structure will be put in <structfield>parsed</structfield> field of the
+			<structname>hdr_field</structname> structure representing the parsed header field. It will be freed
+			when the whole message is being destroyed.
+		    </para>
+
+		    <para>
+			The digest parser contains 32-bit digest parameter parser. The parser was in detail described in
+			section <link linkend="hfname-parser">Header Field Name Parser</link>. See that section for more
+			details about the digest parameter parser algorithm, they work in the same way.
+		    </para>
+
+		    <para>
+			Description of digest related stuctures follows:
+		    </para>
+
+		    <programlisting format="linespecific">			
+typedef struct auth_body {
+    /* This is pointer to header field containing
+     * parsed authorized digest credentials. This
+     * pointer is set in sip_msg->{authorization,proxy_auth}
+     * hooks.
+     *
+     * This is necessary for functions called after
+     * {www,proxy}_authorize, these functions need to know
+     * which credentials are authorized and they will simply
+     * look into 
+     * sip_msg->{authorization,proxy_auth}->parsed->authorized
+     */
+    struct hdr_field* authorized;
+    dig_cred_t digest;           /* Parsed digest credentials */
+    unsigned char stale;         /* Flag is set if nonce is stale */
+    int nonce_retries;           /* How many times the nonce was used */
+} auth_body_t;
+</programlisting>
+		    <para>
+			This is the <quote>main</quote> stucture. Pointer to the structure will be stored in
+			<structfield>parsed</structfield> field of <structname>hdr_field</structname> structure. Detailed
+			description of its fields follows:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>authorized</structfield> - This is a hook to header field containing
+				    authorized credentials.
+				</para>
+				<para>
+				    A <acronym>SIP</acronym> message may contain several credentials. They are distinguished
+				    using realm parameter. When the server is trying to authorize the message, it must first
+				    find credentials with corresponding realm and than authorize the credentials. To authorize
+				    credentials server calculates response string and if the string matches to response string
+				    contained in the credentials, credentials are authorized (in fact it means that the user
+				    specified in the credentials knows password, nothing more, nothing less).
+				</para>
+				<para>
+				    It would be good idea to remember which credentials contained in the message are authorized,
+				    there might be other functions interested in knowing which credentials are authorized.
+				</para>
+				<para>
+				    That is what is this field for. A function that sucessfully authorized credentials
+				    (currenty there is only one such function in the server, it is function 
+				    <function moreinfo="none">authorize</function> in auth module) will put pointer to header
+				    field containing the authorized credentials in this field. Because there might be several
+				    header field containing credentials, the pointer will be put in 
+				    <structfield>authorized</structfield> field in the first header field in the message
+				    containg credentials. That means that it will be either header field whose pointer is
+				    in <structfield>www_auth</structfield> or <structfield>proxy_auth</structfield> field
+				    of <structname>sip_msg</structname> structure representing the message.
+				</para>
+				<para>
+				    When a function wants to find authorized credentials, it will simply look in 
+				    <structfield>msg->www_auth->parsed->authorized</structfield> or
+				    <structfield>msg->proxy_auth->parsed->authorized</structfield>, 
+				    where <structfield>msg</structfield> is variable containing pointer to 
+				    <structname>sip_msg</structname> structure.
+				</para>
+				<para>
+				    To simplify the task of saving and retrieving pointer to authorized credentials, there
+				    are two convenience functions defined in <filename moreinfo="none">digest.c</filename> file.
+				    They will be described later.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>digest</structfield> - Structure containing parsed digest credentials. The
+				    structure will be described in detail later.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>stale</structfield> - This field will be set to 1 if the server received
+				    a stale nonce. Next time when the server will be sending another challenge, it will use
+				    <quote>stale=true</quote> parameter. <quote>stale=true</quote> indicates to the client
+				    that username and password used to calculate response were correct, but nonce was stale.
+				    The client should recalculate response with the same username and password (without
+				    disturbing user) and new nonce. For more details see <acronym>RFC2617</acronym>.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>nonce_retries</structfield> - This fields indicates number of authorization
+				    attempts with same nonce.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		    <programlisting format="linespecific">
+/*
+ * Errors returned by check_dig_cred
+ */
+typedef enum dig_err {
+    E_DIG_OK = 0,        /* Everything is OK */
+    E_DIG_USERNAME  = 1, /* Username missing */
+    E_DIG_REALM = 2,     /* Realm missing */
+    E_DIG_NONCE = 4,     /* Nonce value missing */
+    E_DIG_URI = 8,       /* URI missing */
+    E_DIG_RESPONSE = 16, /* Response missing */
+    E_DIG_CNONCE = 32,   /* CNONCE missing */
+    E_DIG_NC = 64,       /* Nonce-count missing */
+} dig_err_t;			
+</programlisting>
+		    <para>
+			This is enum of all possible errors returned by <function moreinfo="none">check_dig_cred</function>
+			function.
+			<itemizedlist>
+			    <listitem>
+				<para><emphasis>E_DIG_OK</emphasis> - No error found.</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>E_DIG_USERNAME</emphasis> - Username parameter missing in digest response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para><emphasis>E_DIG_REALM</emphasis> - Realm parameter missing in digest response.</para>
+			    </listitem>
+			    <listitem>
+				<para><emphasis>E_DIG_NONCE</emphasis> - Nonce parameter missing in digest response.</para>
+			    </listitem>
+			    <listitem>
+				<para><emphasis>E_DIG_URI</emphasis> - Uri parameter missing in digest response.</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>E_DIG_RESPONSE</emphasis> - Response parameter missing in digest response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para><emphasis>E_DIG_CNONCE</emphasis> - Cnonce parameter missing in digest response.</para>
+			    </listitem>
+			    <listitem>
+				<para><emphasis>E_DIG_NC</emphasis> - Nc parameter missing in digest response.</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		    <programlisting format="linespecific">
+/* Type of algorithm used */
+typedef enum alg {
+    ALG_UNSPEC = 0,   /* Algorithm parameter not specified */
+    ALG_MD5 = 1,      /* MD5 - default value*/
+    ALG_MD5SESS = 2,  /* MD5-Session */
+    ALG_OTHER = 4     /* Unknown */
+} alg_t;
+</programlisting>
+		    <para>
+			This is enum of recognized algorithm types. (See description of <structname>algorithm</structname>
+			structure for more details).
+			<itemizedlist>
+			    <listitem>
+				<para><emphasis>ALG_UNSPEC</emphasis> - Algorithm was not specified in digest response.</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>ALG_MD5</emphasis> - <quote>algorithm=MD5</quote> was found in digest response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>ALG_MD5SESS</emphasis> - <quote>algorithm=MD5-Session</quote> was found in
+				    digest response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>ALG_OTHER</emphasis> - Unknown algorithm parameter value was found in
+				    digest response.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		    <programlisting format="linespecific">
+/* Quality Of Protection used */
+typedef enum qop_type { 
+    QOP_UNSPEC = 0,   /* QOP parameter not present in response */
+    QOP_AUTH = 1,     /* Authentication only */
+    QOP_AUTHINT = 2,  /* Authentication with integrity checks */
+    QOP_OTHER = 4     /* Unknown */
+} qop_type_t;
+</programlisting>
+		    <para>
+			This enum lists all recognized qop parameter values.
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <emphasis>QOP_UNSPEC</emphasis> - qop parameter was not found in digest response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>QOP_AUTH</emphasis> - <quote>qop=auth</quote> was found in digest response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>QOP_AUTHINT</emphasis> - <quote>qop=auth-int</quote> was found in digest
+				    response.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>QOP_OTHER</emphasis> - Unknow qop parameter value was found in digest response.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+
+		    <programlisting format="linespecific">
+/* Algorithm structure */
+struct algorithm {
+    str alg_str;       /* The original string representation */
+    alg_t alg_parsed;  /* Parsed value */
+};
+</programlisting>
+		    <para>
+			The structure represents <quote>algorithm</quote> parameter of digest response. Description of fields
+			follows:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>alg_str</structfield> - Algorithm parameter value as string.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>alg_parsed</structfield> - Parsed algorithm parameter value.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+
+		    <programlisting format="linespecific">
+/* QOP structure */
+struct qp {
+    str qop_str;           /* The original string representation */
+    qop_type_t qop_parsed; /* Parsed value */
+};
+</programlisting>
+		    <para>
+			This structure represents <quote>qop</quote> parameter of digest response. Description of fields
+			follows:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>qop_str</structfield> - Qop parameter value as string.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>qop_parsed</structfield> - Parsed <quote>qop</quote> parameter value.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		    <programlisting format="linespecific">
+/*
+ * Parsed digest credentials
+ */
+typedef struct dig_cred {
+    str username;         /* Username */
+    str realm;            /* Realm */
+    str nonce;            /* Nonce value */
+    str uri;              /* URI */
+    str response;         /* Response string */
+    str algorithm;        /* Algorithm in string representation */
+    struct algorithm alg; /* Type of algorithm used */
+    str cnonce;           /* Cnonce value */
+    str opaque;           /* Opaque data string */
+    struct qp qop;        /* Quality Of Protection */
+    str nc;               /* Nonce count parameter */
+} dig_cred_t;
+</programlisting>
+		    <para>
+			This structure represents set of digest credentials parameters. Description of field follows:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <structfield>username</structfield> - Value of <quote>username</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>realm</structfield> - Value of <quote>realm</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>nonce</structfield> - Value of <quote>nonce</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>uri</structfield> - Value of <quote>uri</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>response</structfield> - Value of <quote>response</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>algorithm</structfield> - Value of <quote>algorithm</quote> parameter
+				    as string.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>alg</structfield> - Parsed value of <quote>algorithm</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>cnonce</structfield> - Value of <quote>cnonce</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>opaque</structfield> - Value of <quote>opaque</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>qop</structfield> - Value of <quote>qop</quote> parameter.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <structfield>nc</structfield> - Value of <quote>nc</quote> parameter.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		    
+		    <section id="other-funcs">
+			<title>Other Functions Of the Digest Body Parser</title>
+			<para>
+			    There are some other mainly convenience functions defined in the parser. The function will be
+			    in detail described in this section. All the functions are defined in 
+			    <filename moreinfo="none">digest.c</filename> file.
+			</para>
+			
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>dig_err_t <function moreinfo="none">check_dig_cred</function></funcdef>
+				<paramdef>dig_cred_t* <parameter moreinfo="none">_c</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			
+			<para>
+			    This function performs some basic sanity check over parsed digest credentials. The following
+			    conditions must be met for the checks to be successfull:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					There must be non-empty <quote>username</quote> parameter in the credentials.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					There must be non-empty <quote>realm</quote> parameter in the credentials.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					There must be non-empty <quote>nonce</quote> parameter in the credentials.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					There must be non-empty <quote>uri</quote> parameter in the credentials.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					There must be non-empty <quote>response</quote> parameter in the credentials.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					If qop parameter is set to QOP_AUTH or QOP_AUTHINT, then there must be also
+					non-empty <quote>cnonce</quote> and <quote>nc</quote> parameters in the digest.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+			<note>
+			    <para>
+				It is recommended to call <function moreinfo="none">check_dig_cred</function> before you
+				try to authorize the credentials. If the function fails, there is no need to try to authorize
+				the credentials because the authorization will fail for sure.
+			    </para>
+			</note>
+
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">mark_authorized_cred</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">_m</parameter></paramdef>
+				<paramdef>struct hdr_field* <parameter moreinfo="none">_h</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+
+			<para>
+			    This is convenience function. The function saves pointer to the authorized credentials. For
+			    more info see description of <structfield>authorized</structfield> field in
+			    <structname>auth_body</structname> structure.
+			</para>
+
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">get_authorized_cred</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">_m</parameter></paramdef>
+				<paramdef>struct hdr_field** <parameter moreinfo="none">_h</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			
+			<para>
+			    This is convenience function. The function will retrieve pointer to authorized credentials 
+			    previously saved  using <function moreinfo="none">mark_authoized_cred</function> function.
+			    If there is no such credentials, 0 will be stored in variable pointed to by the second
+			    parameter. The function returns always zero. For more information see description of
+			    <structfield>authorized</structfield> field in <structname>auth_body</structname> structure.
+			</para>
+		    </section> <!-- other-funcs -->
+		</section> <!-- digest-parser -->
+	    </section> <!-- body-parsers -->
+	</section> <!-- parser-organization -->
+    </chapter> <!-- msg-parser -->
+
+    <chapter id="module-interface">
+	<title>Module Interface</title>
+	<para>
+	    The server can load additional functionality through modules. Module loading related functions and module
+	    interface will be described in this section.
+	</para>
+	<para>
+	    All the data structures and functions mentioned in this section can be found in files
+	    <filename moreinfo="none">sr_module.h</filename> and <function moreinfo="none">sr_module.c</function>.
+	</para>
+
+	<section id="sr-module-struct">
+	    <title>Structure <structname>sr_module</structname></title>
+	    <para>
+		Each loaded module is represented by an instance of <structname>sr_module</structname> structure. All
+		the instances are linked. There is a global variable <varname>modules</varname> defined in file
+		<filename moreinfo="none">sr_module.c</filename> which is head of linked-list of all loaded modules.
+	    </para>
+	    <para>
+		Detailed description of the structure follows:
+	    </para>
+	    <programlisting format="linespecific">
+struct sr_module{
+    char* path;
+    void* handle;
+    struct module_exports* exports;
+    struct sr_module* next;
+};
+</programlisting>
+	    <para>
+		Field and their description:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <structfield>path</structfield> - Path to the module. This is the path you pass as parameter
+			    to <function moreinfo="none">loadmodule</function> function in the config file.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <structfield>handle</structfield> - Handle returned by <function moreinfo="none">dlopen</function>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <structfield>exports</structfield> - Pointer to structure describing interface of the module (will
+			    be described later).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <structfield>next</structfield> - Pointer to the next <structname>sr_module</structname> structure
+			    in the linked list.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section> <!-- sr-module-struct -->
+
+	<section id="module-exports-struct">
+	    <title>Structure <structname>module_exports</structname></title>
+	    <para>
+		This structure describes interface that must be exported by each module. Every module must have a global
+		variable named <varname>exports</varname> which is of type <structname>struct module_exports</structname>.
+	    </para>
+	    <para>
+		Immediately after <function moreinfo="none">dlopen</function> the server will try to find symbol named
+		<varname>exports</varname> in the module to be loaded. This symbol is a structure describing interface
+		of the module. Pointer to the symbol will be then put in <structfield>exports</structfield> field of 
+		<structname>sr_module</structname> structure representing the module in the server.
+	    </para>
+	    <para>
+		Detailed description of the structure follows:
+	    </para>
+	    <programlisting format="linespecific">
+struct module_exports{
+    char* name;                     /* null terminated module name */
+    char** cmd_names;               /* cmd names registered by this modules */
+    cmd_function* cmd_pointers;     /* pointers to the corresponding functions */
+    int* param_no;                  /* number of parameters used by the function */
+    fixup_function* fixup_pointers; /* pointers to functions called to "fix"
+	                             * the params, e.g: precompile a re 
+		                     */
+    int cmd_no;                     /* number of registered commands
+		                     * (size of cmd_{names,pointers} 
+		                     */
+
+    char** param_names;      /* parameter names registered by this modules */
+    modparam_t* param_types; /* Type of parameters */
+    void** param_pointers;   /* Pointers to the corresponding memory locations */
+    int par_no;              /* number of registered parameters */
+
+    init_function init_f;         /* Initilization function */
+    response_function response_f; /* function used for responses,
+		                   * returns yes or no; can be null 
+		                   */
+    destroy_function destroy_f;   /* function called when the module should
+		                   * be "destroyed", e.g: on ser exit;
+		                   * can be null 
+		                   */
+    onbreak_function onbreak_f;
+    child_init_function init_child_f;  /* function called by all processes after the fork */
+};
+</programlisting>
+	    <para>
+		Fields and their description:
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<structfield>name</structfield> - Name of the module.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>cmd_names</structfield> - Array of names of exported commands.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>cmd_pointers</structfield> - Array of pointers to functions implementing
+			commands specified in <structfield>cmd_names</structfield> array.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>int <function moreinfo="none">cmd_function</function></funcdef>
+			    <paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+			    <paramdef>char* <parameter moreinfo="none">param1</parameter></paramdef>
+			    <paramdef>char* <parameter moreinfo="none">param2</parameter></paramdef>
+			</funcprototype>
+		    </funcsynopsis>
+		    <para>
+			The first parameter is <structname>sip_msg</structname> currently being processed.
+			Remaining parameters are parameters from the config file. If the function accepts only
+			one parameter, <parameter moreinfo="none">param2</parameter> will be set to zero, if the 
+			function accepts no parameters, <parameter moreinfo="none">param1</parameter> and
+			<parameter moreinfo="none">param2</parameter> will be set to zero.
+		    </para>
+		    <para>
+			The function should return number &gt; 0 if everything went OK and processing of the message should
+			contine. The function should return 0 if processing of the message should be stopped.
+			The function should return number &lt; 0 on an error.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>param_no</structfield> - Array of number of parameters of exported commands.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>fixup_pointer</structfield> - Array of pointers to fixup functions, each fixup
+			function for one exported command. If there is no fixup function for a particular exported
+			function, corresponding field in the array will contain zero.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>int <function moreinfo="none">fixup_function</function></funcdef>
+			    <paramdef>void** <parameter moreinfo="none">param</parameter></paramdef>
+			    <paramdef>int <parameter moreinfo="none">param_no</parameter></paramdef>
+			</funcprototype>
+		    </funcsynopsis>
+		    <para>
+			The first parameter is pointing to variable to be fixed. The second parameter
+			is order of the variable.
+		    </para>
+		    <para>
+			The function should return 0 if everything went OK and number &lt; 0 on an error.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>cmd_no</structfield> - Number of exported commands.
+		    </para>
+		    <important>
+			<para>
+			    <structfield>cmd_names</structfield>, <structfield>cmd_pointers</structfield>,
+			    <structfield>param_no</structfield> and <structfield>fixup_pointer</structfield> arrays must
+			    have at least <structfield>cmd_no</structfield> elements ! (It might even kill your cat if you
+			    fail to fullfill this condition).
+			</para>
+		    </important>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>param_names</structfield> - Array of names of exported parameters.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>param_types</structfield> - Array of types of parameters, each field of the array
+			can be either STR_PARAM or INT_PARAM (currently only two parameter types are defined).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>param_pointers</structfield> - Array of pointers to variables, that hold values of the
+			parameters.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>param_no</structfield> - Number of exported parameters.
+		    </para>
+		    <important>
+			<para>
+			    <structfield>param_names</structfield>, <structfield>param_types</structfield> and
+			    <structfield>param_pointers</structfield> arrays must have at least
+			    <structfield>param_no</structfield> elements ! (Remember the previous note about your cat ? The
+			    same might happen to your dog if you fail to fulfill the condition second time !).
+			</para>
+		    </important>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>init_f</structfield> - Pointer to module's initialization function, 0 if the module
+			doesn't need initialization function.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>int <function moreinfo="none">init_function</function></funcdef>
+			    <void>
+			</funcprototype>
+		    </funcsynopsis>
+		    <para>
+			The function should return 0 if everything went OK and number &lt; 0 on an error;
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>response_f</structfield> - If a module is interested in seeing responses, it will provide
+			pointer to a function here. The function will be called when a response comes. The field will contain
+			0 if the module doesn't want to see responses.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>int <function moreinfo="none">response_function</function></funcdef>
+			    <paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+			</funcprototype>
+		    </funcsynopsis>
+		    <para>
+			The function accepts one parameter which is stucture representing the response currently
+			being processed.
+		    </para>
+		    <para>
+			The function should return 0 if the response should be dropped. 
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>destroy_f</structfield> - Destroy function. The function will be called when the server
+			is shutting down. Can be 0 if the module doesn't need destroy function.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>void <function moreinfo="none">destroy_function</function></funcdef>
+			    <void>
+			</funcprototype>
+		    </funcsynopsis>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>onbreak_f</structfield> - On break function. The function will be called when processing
+			of a route statement was aborted. Can be 0 if module doesn't need this function.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>void <function moreinfo="none">onbreak_function</function></funcdef>
+			    <paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+			</funcprototype>
+		    </funcsynopsis>
+		    <para>
+			The function accepts one parameter which is message currently being processed.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<structfield>init_child_f</structfield> - Child init function. This is an additonal initialization
+			function. <structfield>init_f</structfield> will be called from the main process 
+			<emphasis>BEFORE</emphasis> the main process forks children. <structfield>init_child_f</structfield>
+			will be called from all children <emphasis>AFTER</emphasis> the fork.
+		    </para>
+		    <para>
+			Per-child specific initialization can be done here. For example, each child can open its own database
+			connection in the function, and so on.
+		    </para>
+		    <para>
+			Function Prototype:
+		    </para>
+		    <funcsynopsis>
+			<funcprototype>
+			    <funcdef>int <function moreinfo="none">child_init_function</function></funcdef>
+			    <paramdef>int <parameter moreinfo="none">rank</parameter></paramdef>
+			</funcprototype>
+		    </funcsynopsis>
+		    <para>
+			The function accepts one parameter, which is rank (starting from 0) of child executing the function.
+		    </para>
+		    <para>
+			The function should return 0 if everything went OK and number &lt; 0 on an error.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- module-exports-struct -->
+	
+	<section id="module-loading">
+	    <title>Module Loading</title>
+	    <para>
+		Modules are compiled and stored as shared objects. Shared objects have usually appendix <quote>.so</quote>.
+		Shared objects can be loaded at runtime.
+	    </para>
+	    <para>
+		When you instruct the server to load a module using <function moreinfo="none">loadmodule</function> command
+		in the config file, it will call function <function moreinfo="none">load_module</function>. The function
+		will do the following:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    It will try to open specified file using <function moreinfo="none">dlopen</function>. For example
+			    if you write loadmodule "/usr/lib/ser/modules/auth.so" in the config file, the server will try
+			    to open file <quote>/usr/lib/ser/modules/auth.so</quote> using 
+			    <function moreinfo="none">dlopen</function> function.
+			</para>
+			<para>
+			    If <function moreinfo="none">dlopen</function> failed, the server will issue an error and abort.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    As the next step, list of all previously loaded modules will be searched for the same module.
+			    If such module is found, it means, that user is trying to load the same module twice. In such
+			    case an warning will be issued and server will abort.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    The server will try to find pointer to <quote>exports</quote> symbol using 
+			    <function moreinfo="none">dlsym</function> in the module. If that fails, server will issue an 
+			    error and abort.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    And as the last step, function <function moreinfo="none">register_module</function> will register
+			    the module with the server core and loading of the module is complete.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		Function <function moreinfo="none">register_module</function> registers a module with the server core. By
+		registration we mean the following set of steps (see function 
+		<function moreinfo="none">register_module</function> in file <filename moreinfo="none">sr_module.c</filename>
+		for more details):
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    The function creates and initializes new instance of <structname>sr_module</structname>
+			    structure.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <structfield>path</structfield> field will be set to path of the module.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <structfield>handle</structfield> field will be set to handle previously retuned by
+			    <function moreinfo="none">dlopen</function>.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <structfield>exports</structfield> field will be set to pointer to module's
+			    <varname>exports</varname> structure previously obtained through 
+			    <function moreinfo="none">dlsym</function> in <function moreinfo="none">load_module</function>
+			    function.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    As the last step, the newly created structure will be inserted into linked list of all 
+			    loaded modules and registration is complete.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	</section> <!-- module-loading -->
+
+	<section id="module-config">
+	    <title>Module Configuration</title>
+	    <para>
+		In addition to set of functions each module can export set of configuration variables.
+		Value of a module's configuration variable can be changed in the config file using
+		<function moreinfo="none">modparam</function> function. Module configuration will be described in this
+		section.
+	    </para>
+	    <section id="modparam-func">
+		<title>Function <function moreinfo="none">modparam</function></title>
+		<para>
+		    <function moreinfo="none">modparam</function> function accepts three parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>module name</emphasis> - Name of module as exported in <structfield>name</structfield>
+				field of <varname>exports</varname> global variable.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>variable name</emphasis> - Name of variable to be set - it must be one of names
+				specified in <structfield>param_names</structfield> field of <varname>exports</varname>
+				variable of the module.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>value</emphasis> - New value of the variable. There are two types of variables:
+				string and integer. If the last parameter (value) of 
+				<function moreinfo="none">modparam</function>
+				function is enclosed in quotes, it is string paramater and server will try to find the
+				corresponding variable among string parameters only.
+			    </para>
+			    <para>
+				Otherwise it is integer parameter and server will try to find corresponding variable among
+				integer parameters only.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+	    </section> <!-- modparam-func -->
+
+	    <section id="set-mod-param-func">
+		<title>Function <function moreinfo="none">set_mod_param</function></title>
+		<para>
+		    When the server finds <function moreinfo="none">modparam</function> function in the config file, it
+		    will call <function moreinfo="none">set_mod_param</function> function. The function can be found
+		    in <filename moreinfo="none">modparam.c</filename> file. The function will do the following:
+		</para>
+		
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    It tries to find corresponding variable using <function moreinfo="none">find_param_export</function>
+			    function.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    If it is string parameter, a new copy of the string will be obtained using 
+			    <function moreinfo="none">strdup</function> function and pointer to the copy will be stored in the
+			    variable.
+			</para>
+			<para>
+			    If it is integer parameter, its value will be simply copied in the variable.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section> <!-- set-mod-param-func -->
+
+	    <section id="find-param-export-func">
+		<title>Function <function moreinfo="none">find_param_export</function></title>
+		<para>
+		    This function accepts 3 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>module</emphasis> - Name of module.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>parameter</emphasis> - Name of parameter to be found.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>type</emphasis> - Type of the parameter.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    The function will search list of all modules until it find module with given name.
+		    Then it will search throught all module's exported parameters until it finds parameter
+		    with corresponding name and type. If such parameter was found, pointer to variable holding
+		    the parameter's value will be returned. If the function failed to find either module or
+		    parameter with given name and type then zero will be returned.
+		</para>
+	    </section> <!-- find-param-export-func -->
+	</section> <!-- module-config -->
+
+	<section id="finding-exported">
+	    <title>Finding an Exported Function</title>
+	    <para>This section describes how to find an exported function.</para>
+
+	    <para>
+		If you need to find exported function with given name and number parameters, 
+		<function moreinfo="none">find_export</function> function is what you need. The function
+		is defined in <filename moreinfo="none">sr_module.c</filename> file.
+		The function accepts two parameters:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>name</emphasis> - Name of function to be found.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>param_no</emphasis> - Number of parameters of the function.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <para>
+		The function will search throught list of all loaded modules and in each module through
+		array of all exported functions until it find function with given name and number of
+		parameter. If such exported function was found, <function moreinfo="none">find_exported</function>
+		will return pointer to the function, otherwise zero will be returned.
+	    </para>
+	</section> <!--finding-exported -->
+
+	<section id="additional-functions">
+	    <title>Additional Functions</title>
+	    <para>
+		There are several additional functions defined in file <filename moreinfo="none">sr_module.c</filename>.
+		There functions are mostly internal and shouldn't be used directly by user. We will shortly describe
+		them here.
+	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<function moreinfo="none">register_builtin_modules</function> - Some modules might be linked
+			statically with main executable, this is handy for debugging. This function will register all
+			such modules upon server startup.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">init_child</function> - This function will call child-initialization
+			function of all loaded modules. The function will be called by the server core immediately after
+			the fork.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">find_module</function> - The function accepts pointer to an exported
+			function and number of parameters as parameters and returns pointer to corresponding module that
+			exported the function.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">destroy_modules</function> - The function will call destroy function
+			of all loaded modules. This function will be called by the server core upon shut down.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<function moreinfo="none">init_modules</function> - The function will call initialization function
+			of all loaded modules. The function will be called by the server before the fork.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section> <!-- additional-functions -->
+    </chapter> <!-- module-interface -->
+	
+
+    <chapter id="db-interface">
+	<title>The Database Interface</title>
+	<para>
+	    This is a generic database interface for modules that need to utilize a 
+	    database. The interface should be used by all modules that access database.
+	    The interface will be independent of the underlying database server.
+	</para>
+	<note>
+	    <para>
+		If possible, use predefined macros if you need to access any structure 
+		attributes.  
+	    </para>
+	    <para>
+		For additional description, see comments in sources of mysql module.
+	    </para>
+	    <para>
+		If you want to see more complicated examples of how the API could be used, 
+		see sources of dbexample, usrloc or auth modules.
+	    </para>
+	</note>
+	
+	<section id="data-types">
+	    <title>Data types</title>
+	    <para>
+		There are several new data types. All of them are defined in header file db.h,
+		a client must include the header file to be able to use them.
+	    </para>
+	    <section id="type-db-con">
+		<title>Type <type>db_con_t</type></title>
+		<para>
+		    This type represents a database connection, all database functions (described 
+		    below) use a variable of this type as one argument. In other words, variable 
+		    of db_con_t type serves as a handle for a particular database connection.
+		</para>
+		<programlisting format="linespecific">
+typedef struct db_con {
+    char* table;     /* Default table to use */
+    void* con;       /* Database connection */
+    void* res;       /* Result of previous operation */
+    void* row;       /* Internal, not for public use */
+    int connected;   /* 1 if connection is established */
+} db_con_t;
+</programlisting>
+		<para>
+		    There are no macros defined for <type>db_con_t</type> type.
+		</para>
+	    </section> <!-- type-db-con -->
+
+	    <section id="type-db-key">
+		<title>Type <type>db_key_t</type></title>
+		<para>
+		    This type represents a database key. Every time you need to specify a key 
+		    value, this type should be used. In fact, this type is identical to const 
+		    char*.
+		</para>
+		<programlisting format="linespecific">
+		    typedef const char* db_key_t;
+		</programlisting>
+		<para>
+		    There are no macros defined (they are not needed).
+		</para>
+	    </section> <!-- type-db-key -->
+
+	    <section id="type-db-type">
+		<title>Type <type>db_type_t</type></title>
+		<para>
+		    Each cell in a database table can be of a different type. To distinguish
+		    among these types, the <type>db_type_t</type> enumeration is used. Every 
+		    value of the enumeration represents one datatype that is recognized by the 
+		    database <acronym>API</acronym>. This enumeration is used in conjunction 
+		    with <type>db_type_t</type>. For more information, see the next section.
+		</para>
+		<programlisting format="linespecific">
+typedef enum {
+    DB_INT,       /* Integer number */
+    DB_DOUBLE,    /* Decimal number */
+    DB_STRING,    /* String */
+    DB_STR,       /* str structure */
+    DB_DATETIME   /* Date and time */
+    DB_BLOB       /* Binary large object */
+} db_type_t;
+</programlisting>
+		<para>
+		    There are no macros defined.
+		</para>
+	    </section> <!-- type-db-type -->
+
+	    <section id="type-db-val">
+		<title>Type <type>db_val_t</type></title>
+		<para>
+		    This structure represents a value in the database. Several datatypes are
+		    recognized and converted by the database <acronym>API</acronym>:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>DB_INT</emphasis> - Value in the database represents an integer number.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>DB_DOUBLE</emphasis> - Value in the database represents a decimal number.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>DB_STRING</emphasis> - Value in the database represents a string.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>DB_STR</emphasis> - Value in the database represents a string.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>DB_DATETIME</emphasis> - Value in the database represents date and time.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>DB_BLOB</emphasis> - Value in the database represents binary large object.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		    These datatypes are automaticaly recognized, converted from internal database
+		    representation and stored in the variable of corresponding type.
+		</para>
+		<programlisting format="linespecific">
+typedef struct db_val {
+    db_type_t type;              /* Type of the value */
+    int nul;                     /* NULL flag */
+    union {                      
+        int int_val;             /* Integer value */
+        double double_val;       /* Double value */
+	time_t time_val;         /* Unix time_t value */
+	const char* string_val;  /* Zero terminated string */
+	str str_val;             /* str structure */
+	str blob_val;            /* Structure describing blob */
+    } val;
+} db_val_t;
+</programlisting>
+		<note>
+		    <para>
+			All macros expect reference to <type>db_val_t</type> variable as a parameter.
+		    </para>
+		</note>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_TYPE(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to set/get the type of the value
+			</para>
+			<example>
+			    <title>VAL_TYPE Macro Example</title>
+			    <programlisting format="linespecific">
+...
+VAL_TYPE(val) = DB_INT;
+if (VAL_TYPE(val) == DB_FLOAT)
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_NULL(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to set/get the null flag. Non-zero flag means that 
+			    the corresponding cell in the database contained no data (NULL value in <acronym>MySQL</acronym>
+			    terminology).
+			</para>
+			<example>
+			    <title>VAL_NULL Macro Example</title>
+			    <programlisting format="linespecific">
+...
+if (VAL_NULL(val) == 1) {
+    printf("The cell is NULL");
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_INT(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to access integer value in the <type>db_val_t</type> structure.
+			</para>
+			<example>
+			    <title>VAL_INT Macro Example</title>
+			    <programlisting format="linespecific">
+...
+if (VAL_TYPE(val) == DB_INT) {
+    printf("%d", VAL_INT(val));
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_DOUBLE(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to access double value in the <type>db_val_t</type> structure.
+			</para>
+			<example>
+			    <title>VAL_DOUBLE Macro Example</title>
+			    <programlisting format="linespecific">
+...
+if (VAL_TYPE(val) == DB_DOUBLE) {
+    printf("%f", VAL_DOUBLE(val));
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_TIME(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to access <type>time_t</type> value ind <type>b_val_t</type> structure.
+			</para>
+			<example>
+			    <title>VAL_TIME Macro Example</title>
+			    <programlisting format="linespecific">
+...
+time_t tim;
+if (VAL_TYPE(val) == DB_DATETIME) {
+    tim = VAL_TIME(val);
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_STRING(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to access string value in <type>db_val_t</type> structure.
+			</para>
+			<example>
+			    <title>VAL_STRING Macro Example</title>
+			    <programlisting format="linespecific">
+...
+if (VAL_TYPE(val) == DB_STRING) {
+    printf("%s", VAL_STRING(val));
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_STR(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to access <type>str</type> structure in <type>db_val_t</type> structure.
+			</para>
+			<example>
+			    <title>VAL_STR Macro Example</title>
+			    <programlisting format="linespecific">
+...
+if (VAL_TYPE(val) == DB_STR) {
+    printf("%.*s", VAL_STR(val).len, VAL_STR(val).s);
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">VAL_BLOB(value)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to access blob value in <type>db_val_t</type> structure.
+			</para>
+			<example>
+			    <title>VAL_STR Macro Example</title>
+			    <programlisting format="linespecific">
+...
+if (VAL_TYPE(val) == DB_BLOB) {
+    printf("%.*s", VAL_BLOB(val).len, VAL_BLOB(val).s);
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+		</itemizedlist>
+	    </section> <!-- type-db-val -->
+
+	    <section id="type-db-row">
+		<title>Type <type>db_row_t</type></title>
+		<para>
+		    This type represents one row in a database table. In other words, the row is an
+		    array of <type>db_val_t</type> variables, where each <type>db_val_t</type> variable 
+		    represents exactly one cell in the table.
+		</para>
+		<programlisting format="linespecific">
+typedef struct db_row {
+    db_val_t* values;    /* Array of values in the row */
+    int n;               /* Number of values in the row */
+} db_val_t;
+</programlisting>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <function moreinfo="none">ROW_VALUES(row)</function> Macro.
+			</para>
+			<para>
+			    Use this macro to get pointer to array of <type>db_val_t</type> structures.
+			</para>
+			<example>
+			    <title>ROW_VALUES Macro Example</title>
+			    <programlisting format="linespecific">
+...
+db_val_t* v = ROW_VALUES(row);
+if (VAL_TYPE(v) == DB_INT)
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">ROW_N(row)</function> Macro.
+			</para>
+			<para>
+			    Use this macro to get number of cells in a row.
+			</para>
+			<example>
+			    <title>ROW_N Macro Example</title>
+			    <programlisting format="linespecific">
+...
+db_val_t* val = ROW_VALUES(row);
+for(i = 0; i < ROW_N(row); i++) {
+    switch(VAL_TYPE(val + i)) {
+        case DB_INT: ...; break;
+        case DB_DOUBLE: ...; break;
+        ...
+    }
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+		</itemizedlist>
+	    </section> <!-- type-db-row -->
+
+	    <section id="type-db-res">
+		<title>Type <type>db_res_t</type></title>
+		<para>
+		    This type represents a result returned by <function moreinfo="none">db_query</function>
+		    function (see below). The  result can consist of zero or more rows 
+		    (see <type>db_row_t</type> description).
+		</para>
+		<note>
+		    <para>
+			A variable of type <type>db_res_t</type> returned by <function moreinfo="none">db_query</function>
+			function uses dynamically allocated memory, don't forget to call 
+			<function moreinfo="none">db_free_query</function> if you don't need  the variable anymore. 
+			You will encounter memory leaks if you fail to do this !
+		    </para>
+		</note>
+		<para>
+		    In addition to zero or more rows, each <type>db_res_t</type> object contains also an array 
+		    of <type>db_key_t</type> objects. The objects represent keys (names of columns).
+		</para>
+		<programlisting format="linespecific">
+typedef struct db_res {
+    struct {
+        db_key_t* keys;    /* Array of column names */
+	db_type_t* types;  /* Array of column types */
+	int n;             /* Number of columns */
+    } col;
+    struct db_row* rows;   /* Array of rows */
+    int n;                 /* Number of rows */
+} db_res_t;
+</programlisting>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <function moreinfo="none">RES_NAMES(res)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you want to obtain pointer to an array of cell names.
+			</para>
+			<example>
+			    <title>RES_NAMES Macro Example</title>
+			    <programlisting format="linespecific">
+...
+db_key_t* column_names = ROW_NAMES(row);
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">RES_COL_N(res)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you want to get the number of columns in the result.
+			</para>
+			<example>
+			    <title>RES_COL_N Macro Example</title>
+			    <programlisting format="linespecific">
+...
+int ncol = RES_COL_N(res)
+for(i = 0; i < ncol; i++) {
+    /* do something with the column */
+}
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">RES_ROWS(res)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to obtain pointer to array of rows.
+			</para>
+			<example>
+			    <title>RES_ROWS Macro Example</title>
+			    <programlisting format="linespecific">
+...
+db_row_t* rows = RES_ROWS(res);
+...
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <function moreinfo="none">RES_ROW_N(res)</function> Macro.
+			</para>
+			<para>
+			    Use this macro if you need to obtain the number of rows in the result.
+			</para>
+			<example>
+			    <title>RES_ROW_N Macro Example</title>
+			    <programlisting format="linespecific">
+...
+int n = RES_ROW_N(res);
+...
+</programlisting>
+			</example>
+		    </listitem>
+		</itemizedlist>
+	    </section> <!-- type-db-res -->
+	</section> <!-- data-types -->
+
+	<section id="db-functions">
+	    <title>Functions</title>
+	    <para>
+		There are several functions that implement the database <acronym>API</acronym> logic. All function
+		names start with db_ prefix, except <function moreinfo="none">bind_dbmod</function>. 
+		<function moreinfo="none">bind_dbmod</function>is implemented in <filename moreinfo="none">db.c</filename>
+		file, all other functions are implemented in a standalone module.
+		Detaileddescription of functions follows.
+	    </para>
+
+	    <section id="bind-dbmod">
+		<title><function moreinfo="none">bind_dbmod</function></title>
+		<para>
+		    This function is special, it's only purpose is to call <function moreinfo="none">find_export</function>
+		    function in the <acronym>SER</acronym> core and find addresses of all other functions (starting with db_
+		    prefix). This function <emphasis>MUST</emphasis> be called <emphasis>FIRST</emphasis> !
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">bind_dbmod</function></funcdef>
+			<void>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes no parameters.
+		</para>
+		<para>
+		    The function returns 0 if it was able to find addresses of all other 
+		    functions, otherwise value &lt; 0 is returned.
+		</para>
+	    </section> <!-- bin-dbmod -->
+
+	    <section id="db-init">
+		<title><function moreinfo="none">db_init</function></title>
+		<para>
+		    Use this function to initialize the database <acronym>API</acronym> and open a new database 
+		    connection. This function must be called after <function moreinfo="none">bind_dbmod</function>
+		    but before any other function is called.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>db_con_t* <function moreinfo="none">db_init</function></funcdef>
+			<paramdef>const char* <parameter moreinfo="none">_sql_url</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes one parameter, the parameter must contain database 
+		    connection <acronym>URL</acronym>. The <acronym>URL</acronym> is of the form 
+		    sql://username:password@host:port/database where:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>username</emphasis> - Username to use when logging into database (optional).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>password</emphasis> - Password if it was set (optional).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>host</emphasis> -  Hosname or IP address of the host 
+				where database server lives (mandatory).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>port</emphasis> - Port number of the server if the port 
+				differs from default value (optional).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>database</emphasis> - If the database server supports 
+				multiple databases, you must specify name of the database (optional).
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    The function returns pointer to <type>db_con_t</type>* representing the connection if it was
+		    successful, otherwise 0 is returned.
+		</para>
+	    </section> <!-- db-init -->
+
+	    <section id="db-close">
+		<title><function moreinfo="none">db_close</function></title>
+		<para>
+		    The function closes previously open connection and frees all previously 
+		    allocated memory. The function <function moreinfo="none">db_close</function> must be the very last 
+		    function called.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>void <function moreinfo="none">db_close</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes one parameter, this parameter is a pointer to <type>db_con_t</type>
+		    structure representing database connection that should be closed.
+		</para>
+		<para>
+		    Function doesn't return anything.
+		</para>
+	    </section> <!-- db-close -->
+
+	    <section id="db-query">
+		<title><function moreinfo="none">db_query</function></title>
+		<para>
+		    This function implements SELECT SQL directive.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">db_query</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_k</parameter></paramdef>
+			<paramdef>db_val_t* <parameter moreinfo="none">_v</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_c</parameter></paramdef>
+			<paramdef>int <parameter moreinfo="none">_n</parameter></paramdef>
+			<paramdef>int <parameter moreinfo="none">_nc</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_o</parameter></paramdef>
+			<paramdef>db_res_t** <parameter moreinfo="none">_r</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes 8 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<emphasis>_h</emphasis> - Database connection handle.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_k</emphasis> - Array of column names that will be compared and 
+				their values must match.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_v</emphasis> - Array of values, columns specified in _k parameter must match 
+				these values.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_c</emphasis> - Array of column names that you are interested in.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_n</emphasis> - Number of key-value pairs to match in _k and _v parameters.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_nc</emphasis> - Number of columns in _c parameter.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_o</emphasis> - Order by.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<emphasis>_r</emphasis> - Address of variable where pointer to the result will be stored.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		    If _k and _v parameters are NULL and _n is zero, you will get the whole table.
+		    if _c is NULL and _nc is zero, you will get all table columns in the result
+		</para>
+		<para>
+		    _r will point to a dynamically allocated structure, it is neccessary to call
+		    db_free_query function once you are finished with the result.
+		</para>
+		<para>
+		    Strings in the result are not duplicated, they will be discarded if you call
+		    db_free_query, make a copy yourself if you need to keep it after db_free_query.
+		</para>
+		<para>
+		    You must call db_free_query <emphasis>BEFORE</emphasis> you can call db_query again !
+		</para>
+		<para>
+		    The function returns 0 if everything is OK, otherwise value &lt; 0 is returned.
+		</para>
+	    </section> <!-- db-query -->
+
+	    <section id="db-free-query">
+		<title><function moreinfo="none">db_free_query</function></title>
+		<para>
+		    This function frees all memory allocated previously in <function moreinfo="none">db_query</function>, 
+		    it is neccessary to call this function on a db_res_t structure if you don't need the
+		    structure anymore. You must call this function <emphasis>BEFORE</emphasis> you call 
+		    <function moreinfo="none">db_query</function> again !
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">db_free_query</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+			<paramdef>db_res_t* <parameter moreinfo="none">_r</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes 2 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_h</parameter> - Database connection handle.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_r</parameter> - Pointer to db_res_t structure to destroy.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    The function returns 0 if everything is OK, otherwise the function returns
+		    value &lt; 0.
+		</para>
+	    </section> <!-- db-free-query -->
+
+	    <section id="db-insert">
+		<title><function moreinfo="none">db_insert</function></title>
+		<para>
+		    This function implements INSERT SQL directive, you can insert one or more
+		    rows in a table using this function.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">db_insert</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_k</parameter></paramdef>
+			<paramdef>db_val_t* <parameter moreinfo="none">_v</parameter></paramdef>
+			<paramdef>int <parameter moreinfo="none">_n</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes 4 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_h</parameter> - Database connection handle.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_k</parameter> - Array of keys (column names).
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_v</parameter> - Array of values for keys specified in _k parameter.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_n</parameter> - Number of keys-value pairs int _k and _v parameters.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    The function returns 0 if everything is OK, otherwise the function returns
+		    value &lt; 0.
+		</para>
+	    </section> <!-- db-insert -->
+
+	    <section id="db-delete">
+		<title><function moreinfo="none">db_delete</function></title>
+		<para>
+		    This function implements DELETE SQL directive, it is possible to delete one or
+		    more rows from a table.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">db_delete</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_k</parameter></paramdef>
+			<paramdef>db_val_t* <parameter moreinfo="none">_v</parameter></paramdef>
+			<paramdef>int <parameter moreinfo="none">_n</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes 4 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_h</parameter> - Database connection handle.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_k</parameter> - Array of keys (column names) that will be matched.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_v</parameter> - Array of values that the row must match 
+				to be deleted.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_n</parameter> - Number of keys-value parameters in _k and _v 
+				parameters.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		    If _k is NULL and _v is NULL and _n is zero, all rows are deleted (table will
+		    be empty).
+		</para>
+		<para>
+		    The function returns 0 if everything is OK, otherwise the function returns
+		    value &lt; 0.
+		</para>
+	    </section> <!-- db-delete -->
+
+	    <section id="db-update">
+		<title><function moreinfo="none">db_update</function></title>
+		<para>
+		    The function implements UPDATE SQL directive. It is possible to modify one
+		    or more rows in a table using this function.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">db_update</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_k</parameter></paramdef>
+			<paramdef>db_val_t* <parameter moreinfo="none">_v</parameter></paramdef>
+			<paramdef>db_key_t* <parameter moreinfo="none">_uk</parameter></paramdef>
+			<paramdef>db_val_t* <parameter moreinfo="none">_uv</parameter></paramdef>
+			<paramdef>int <parameter moreinfo="none">_n</parameter></paramdef>
+			<paramdef>int <parameter moreinfo="none">_un</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes 7 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_h</parameter> - Database connection handle.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_k</parameter> - Array of keys (column names) that will be matched.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_v</parameter> - Array of values that the row must match 
+				to be modified.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_uk</parameter> - Array of keys (column names) that will be modified.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_uv</parameter> - New values for keys specified in _k parameter.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_n</parameter> - Number of key-value pairs in _k and _v parameters.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_un</parameter> - Number of key-value pairs 
+				in _uk and _uv parameters.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    The function returns 0 if everything is OK, otherwise the function returns
+		    value &lt; 0.
+		</para>
+	    </section> <!-- db-update -->
+
+	    <section id="db-use-table">
+		<title><function moreinfo="none">db_use_table</function></title>
+		<para>
+		    The function db_use_table takes a table name and stores it db_con_t structure.
+		    All subsequent operations (insert, delete, update, query) are performed on
+		    that table.
+		</para>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">db_use-table</function></funcdef>
+			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
+			<paramdef>cons char* <parameter moreinfo="none">_t</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    The function takes 2 parameters:
+		    <itemizedlist>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_h</parameter> - Database connection handle.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<parameter moreinfo="none">_t</parameter> - Table name.
+			    </para>
+			</listitem>
+		    </itemizedlist>
+		</para>
+		<para>
+		    The function returns 0 if everything is OK, otherwise the function returns
+		    value &lt; 0.
+		</para>
+	    </section> <!-- db-use-table -->
+	</section> <!-- db-functions -->
+    </chapter> <!-- db-interface -->
+
+    <chapter id="fifo-server">
+	<title>FIFO Server</title>
+	<para>
+	    TBD by Jiri.
+	</para>
+    </chapter> <!-- fifo-server -->
+    
+    <chapter id="basic-modules">
+	<title>Basic Modules</title>
+	<section id="auth">
+	    <title>Digest Authentication</title>
+	    <para></para>
+	</section> <!-- auth -->
+	<section id="max-fwd">
+	    <title>Max Forwards</title>
+	    <para></para>
+	</section> <!-- max-fwd -->
+	<section id="mysql">
+	    <title>MySQL</title>
+	    <para></para>
+	</section> <!-- mysql -->
+	<section id="registrar">
+	    <title>Registrar</title>
+	    <para></para>
+	</section> <!-- registrar -->
+	<section id="rr">
+	    <title>Record-Routing</title>
+	    <para></para>
+	</section> <!-- rr -->
+	<section id="sl">
+	    <title>Stateless Replies</title>
+	    <para></para>
+	</section> <!-- sl -->
+	<section id="tm">
+	    <title>Transaction Module</title>
+	    <para>
+		TBD by Jiri.
+	    </para>
+	</section> <!-- tm -->
+	<section id="usrloc">
+	    <title>User Location Module</title>
+	    <para></para>
+	</section> <!-- usrloc -->
+	<section id="sms">
+	    <title>SMS Module</title>
+	    <para>
+		TBD by Bogdan.
+	    </para>
+	</section> <!-- sms -->
+	<section id="jabber">
+	    <title>Jabber Module</title>
+	    <para>
+		TBD by Daniel.
+	    </para>
+	</section> <!-- jabber -->
+	<section id="im">
+	    <title>Instant Messaging Module</title>
+	    <para>
+		TBD by Bogdan.
+	    </para>
+	</section> <!-- im -->
+	<section id="ext">
+	    <title>External Module</title>
+	    <para>
+		    TBD by Bogdan or Jiri.
+	    </para>
+	</section> <!-- ext -->
+    </chapter> <!-- basic-modules -->
+
+    <chapter id="message-modif">
+	<title><acronym>SIP</acronym> Message Modifications</title>
+	<para>TBD by Andrei or Jan.</para>
+    </chapter> <!-- message-modif -->
+
+    <chapter id="tips">
+	<title>Tips And Tricks</title>
+	<para>
+	    jak se prochazi vsechny hlavicky daneho typu
+	    Jak vlozit header na konec hlavicky
+	    jak vlozit prvni header
+	    jak neco vymazat
+	    jak vlozit header do odpovedi
+	    jak postupne prochazet headery stejneho typu dokud
+	    nenaleznu ten pravy
+	    jak spravne parsovat !!!
+	    jak se vola destroy, z jakeho procesu, kolikrat
+	    proc se init modules vola tam, kde se vola
+	    fix_rls se vola az po ini_modules - proc
+	    mod_init je vzdycky prvni zavolana funkce modulu !
+	    nelze destroy data z potomku
+	    builtin core commands -description
+	    popsat system proxy
+	    vsechno spravne prolinkovat
+	    Opravit dokumentaci k append_branch - pravdepodobne
+	    je tam spatne popis
+	    Popsat flagy
+	    Dopsat nekam poznamku ze vetsina field pri parsovani nejsou ukoncena
+	    0 a ze jsou to pouze pointery a delky do buf bufferu zpravy
+	    Adding a new header field body parser
+	    How to parse a header field body
+	    Jak udelat funkce, ktere nepujdou volat ze skriptu, ale jenom z ostatnich
+	    modulu.
+	    FAQ
+	</para>
+    </chapter> <!-- tips -->
+</book>
