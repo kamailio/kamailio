@@ -40,8 +40,9 @@
  *  2003-01-27  modified parse_via to set new via_param->start member and
  *               via->params.s (andrei)
  *  2003-01-28  zero-terminations replaced with VIA_ZT (jiri)
- *  2003-02-28 scratchpad compatibility abandoned (jiri)
- *  2003-04-26 ZSW (jiri)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-04-26  ZSW (jiri)
+ *  2003-06-23  fixed  parse_via_param [op].* param. parsing bug (andrei)
  */
 
 
@@ -646,6 +647,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case 'p':
 			case 'P':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case RECEIVED1:
 						state=RPORT1;
 						break;
@@ -661,6 +666,10 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case 'o':
 			case 'O':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case RPORT1:
 						state=RPORT2;
 						break;

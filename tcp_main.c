@@ -118,7 +118,6 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 {
 	struct tcp_connection *c;
 	
-
 	c=(struct tcp_connection*)shm_malloc(sizeof(struct tcp_connection));
 	if (c==0){
 		LOG(L_ERR, "ERROR: tcpconn_add: mem. allocation failure\n");
