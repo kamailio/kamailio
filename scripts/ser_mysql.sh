@@ -117,10 +117,10 @@ INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '1');
 INSERT INTO version VALUES ( 'missed_calls', '1');
-INSERT INTO version VALUES ( 'location', '1');
-INSERT INTO version VALUES ( 'grp', '1');
+INSERT INTO version VALUES ( 'location', '2');
+INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'event', '1');
-INSERT INTO version VALUES ( 'aliases', '1');
+INSERT INTO version VALUES ( 'aliases', '2');
 INSERT INTO version VALUES ( 'active_sessions', '1');
 INSERT INTO version VALUES ( 'acc', '1');
 INSERT INTO version VALUES ( 'config', '1');
@@ -174,13 +174,14 @@ CREATE TABLE active_sessions (
 
 CREATE TABLE aliases (
   user varchar(50) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
   q float(10,2) default NULL,
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  KEY user (user, contact)
+  KEY user (user, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -212,6 +213,7 @@ CREATE TABLE event (
 
 CREATE TABLE grp (
   user varchar(50) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00'
 ) $TABLE_TYPE;
@@ -226,13 +228,14 @@ CREATE TABLE grp (
 
 CREATE TABLE location (
   user varchar(50) NOT NULL default '',
+  domain varchar(100) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
   q float(10,2) default NULL,
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  KEY user (user, contact)
+  KEY user (user, domain, contact)
 ) $TABLE_TYPE;
 
 
