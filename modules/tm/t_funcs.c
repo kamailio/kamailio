@@ -367,7 +367,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    return 1;
 
 error:
-	if (T->outbound_request[branch]) free(T->outbound_request[branch]);
+	if (T->outbound_request[branch]) sh_free(T->outbound_request[branch]);
 	if (buf) free( buf );
 
 	return -1;
