@@ -49,13 +49,6 @@
 #include "authrad_mod.h"
 
 
-/*
- * Buffer to store rpid retrieved from the radius server
- */
-static char rpid_buffer[MAX_RPID_LEN];
-static str rpid = {rpid_buffer, 0};
-
-
 /* 
  * Extract URI depending on the request from To or From header 
  */
@@ -92,7 +85,7 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	str user, domain;
 
 	domain = *_realm;
-	ret = pre_auth_func(_msg, &domain, _hftype, &h);
+	ret = auth_api.pre_auth(_msg, &domain, _hftype, &h);
 	
 	switch(ret) {
 	case ERROR:            return 0;
@@ -123,16 +116,17 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	}
 
 	user.s = (char *)pkg_malloc(puri.user.len);
+	if (user.s == NULL) {
+		LOG(L_ERR, "authorize: No memory left\n");
+		return -1;
+	}
 	un_escape(&(puri.user), &user);
 
-	     /* Clear the rpid buffer from previous value */
-	rpid.len = 0;
-
-	res = radius_authorize_sterman(_msg, &cred->digest, &_msg->first_line.u.request.method, &user, &rpid);
+	res = radius_authorize_sterman(_msg, &cred->digest, &_msg->first_line.u.request.method, &user);
 	pkg_free(user.s);
 
 	if (res == 1) {
-		ret = post_auth_func(_msg, h, &rpid);
+		ret = auth_api.post_auth(_msg, h);
 		switch(ret) {
 		case ERROR:          return 0;
 		case NOT_AUTHORIZED: return -1;

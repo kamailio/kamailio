@@ -41,7 +41,6 @@ extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;
 
-extern pre_auth_f pre_auth_func;
-extern post_auth_f post_auth_func;
+extern auth_api_t auth_api;
 
 #endif /* AUTHRAD_MOD_H */

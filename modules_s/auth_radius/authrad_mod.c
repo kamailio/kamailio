@@ -49,12 +49,11 @@
 
 MODULE_VERSION
 
-pre_auth_f pre_auth_func = 0;   /* Pre authorization function from auth module */
-post_auth_f post_auth_func = 0; /* Post authorization function from auth module */
-
 struct attr attrs[A_MAX];
 struct val vals[V_MAX];
 void *rh;
+
+auth_api_t auth_api;
 
 static int mod_init(void);                        /* Module initialization function */
 static int str_fixup(void** param, int param_no); /* char* -> str* */
@@ -81,8 +80,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config", STR_PARAM, &radius_config},
-	{"service_type",  INT_PARAM, &service_type },
+	{"radius_config",    STR_PARAM, &radius_config   },
+	{"service_type",     INT_PARAM, &service_type    },
 	{0, 0, 0}
 };
 
@@ -108,13 +107,13 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	DICT_VENDOR *vend;
+	bind_auth_t bind_auth;
 
 	DBG("auth_radius - Initializing\n");
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(attrs, 0, sizeof(vals));
 	attrs[A_SERVICE_TYPE].n			= "Service-Type";
-	attrs[A_SIP_RPID].n			= "Sip-RPId";
 	attrs[A_SIP_URI_USER].n			= "Sip-URI-User";
 	attrs[A_DIGEST_RESPONSE].n		= "Digest-Response";
 	attrs[A_DIGEST_ALGORITHM].n		= "Digest-Algorithm";
@@ -129,6 +128,7 @@ static int mod_init(void)
 	attrs[A_DIGEST_USER_NAME].n		= "Digest-User-Name";
 	attrs[A_USER_NAME].n			= "User-Name";
 	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
+	attrs[A_SIP_AVP].n	                = "SIP-AVP";
 	vals[V_SIP_SESSION].n			= "Sip-Session";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
@@ -148,18 +148,22 @@ static int mod_init(void)
 		attrs[A_CISCO_AVPAIR].n = NULL;
 	}
 
-	pre_auth_func = (pre_auth_f)find_export("pre_auth", 0, 0);
-	post_auth_func = (post_auth_f)find_export("post_auth", 0, 0);
+        bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
+        if (!bind_auth) {
+		LOG(L_ERR, "auth_radius: Unable to find bind_auth function\n");
+	        return -1;
+	}
 
-	if (!(pre_auth_func && post_auth_func)) {
-		LOG(L_ERR, "auth_radius: This module requires auth module\n");
+	if (bind_auth(&auth_api) < 0) {
+		LOG(L_ERR, "auth_radius: Cannot bind to auth module\n");
 		return -4;
 	}
 
 	INIT_AV(rh, attrs, vals, "auth_radius", -5, -6);
 
-	if (service_type != -1)
+	if (service_type != -1) {
 		vals[V_SIP_SESSION].v = service_type;
+	}
 
 	return 0;
 }
