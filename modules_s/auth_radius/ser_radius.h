@@ -32,9 +32,11 @@
  * 2003-03-09: Based on ser_radius.h from radius_auth (janakj)
  */
 
+#ifndef SER_RADIUS_H
+#define SER_RADIUS_H
+
 /* Service types */
 #define PW_CALL_CHECK                   10
-#define PW_GROUP_CHECK                  12
 #define PW_EMERGENCY_CALL               13
 
 /* Attributes*/
@@ -44,7 +46,6 @@
 #define PW_SIP_URI_USER                 208     /* string */
 #define PW_SIP_METHOD                   209     /* int */
 #define PW_SIP_REQ_URI                  210     /* string */
-#define PW_SIP_GROUP                    211     /* string */
 #define PW_SIP_CC                       212     /* string */
 
 #define PW_DIGEST_REALM		        1063	/* string */
@@ -57,3 +58,6 @@
 #define	PW_DIGEST_CNONCE	        1070	/* string */
 #define	PW_DIGEST_NONCE_COUNT	        1071	/* string */
 #define	PW_DIGEST_USER_NAME	        1072	/* string */
+
+
+#endif /* SER_RADIUS_H */
