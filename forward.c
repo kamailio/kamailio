@@ -238,11 +238,9 @@ error:
 int update_sock_struct_from_ip( union sockaddr_union* to,
 	struct sip_msg *msg )
 {
-	to->sin.sin_port=(msg->via1->port)
-		?htons(msg->via1->port): htons(SIP_PORT);
-	to->sin.sin_family=msg->src_ip.af;
-	memcpy(&to->sin.sin_addr, &msg->src_ip.u, msg->src_ip.len);
 
+	init_su(to, &msg->src_ip, 
+		(msg->via1->port)?htons(msg->via1->port): htons(SIP_PORT) );
 	return 1;
 }
 
