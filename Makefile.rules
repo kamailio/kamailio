@@ -1,0 +1,63 @@
+#
+# $Id$
+#
+#
+# common Makefile rules, included by main Makefile & the  modules
+#
+
+#
+# Uses: NAME, ALLDEP, CC, CFLAGS, DEFS, LIBS, MKDEP, auto_gen, depends, objs
+# (all this must  be defined previously!,  see Makefile.defs & Makefile)
+#
+
+
+
+#implicit rules
+%.o:%.c $(ALLDEP)
+	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
+
+%.d: %.c $(ALLDEP)
+	@set -e; $(MKDEP) $< \
+	|  sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
+	[ -s $@ ] || rm -f $@
+
+
+# normal rules
+$(NAME): $(objs)
+	$(LD) $(LDFLAGS) $(objs) $(LIBS) -o $(NAME) 
+
+
+.PHONY: all
+all: $(NAME) modules
+
+.PHONY: dep
+dep: $(depends)
+
+.PHONY: clean
+clean:
+	-@rm $(objs) $(NAME) 2>/dev/null
+	-@for r in $(modules); do $(MAKE) -C $$r clean ; done
+
+
+
+.PHONY: proper
+.PHONY: distclean
+.PHONY: realclean
+proper realclean distclean: clean 
+	-@rm $(depends) 2>/dev/null
+	-@for r in $(modules); do $(MAKE) -C $$r proper ; done
+
+.PHONY: mantainer-cleaan
+mantainer-clean: distclean
+	-rm $(auto_gen) TAGS tags *.dbg .*.swp
+	-@for r in $(modules); do $(MAKE) -C $$r mantainer-clean ; done
+
+.PHONY: TAGS
+TAGS:
+	$(MKTAGS) 
+	
+
+ifneq (,$(filter-out clean proper distclean realclean mantainer-clean TAGS \
+		tar, $(MAKECMDGOALS)))
+include $(depends)
+endif

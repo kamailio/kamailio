@@ -1,0 +1,17 @@
+#
+# $Id$
+#
+# common Makefile variables 
+# (source files, objs, etc)
+
+
+#
+# expects: auto_gen defined
+#
+# defines: sources, objs, depends
+#
+
+sources=$(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen)
+objs=$(sources:.c=.o)
+depends=$(sources:.c=.d)
+modules=

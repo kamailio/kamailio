@@ -1,0 +1,114 @@
+#
+# $Id$
+#
+# makefile defs (CC, LD,a.s.o)
+#
+
+
+#version number
+VERSION = 0
+PATCHLEVEL = 8
+SUBLEVEL = 4
+EXTRAVERSION =
+
+RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
+ARCH = $(shell uname -s)
+
+# compile-time options
+# 
+# -DSTATS	
+#		allows to print out number of packets processed on CTRL-C; 
+# 		implementation still nasty and reports per-process
+# -DNO_DEBUG 	
+#		turns off some of the debug messages (DBG(...)).
+# -DNO_LOG 	
+#		completely turns of all the logging (and DBG(...))
+# -DEXTRA_DEBUG	
+#		compiles in some extra debugging code
+# -DDNS_IP_HACK	
+#		faster ip address resolver for ip strings (e.g "127.0.0.1")
+# -DSHM_MEM	
+#		compiles in shared mem. support, needed by some modules and
+#		by USE_SHM_MEM
+# -DPKG_MALLOC	
+#		uses a faster malloc (exclusive w/ USE_SHM_MEM)
+# -DUSE_SHM_MEM	
+#		all pkg_malloc => shm_malloc (most mallocs use a common sh. 
+#		mem. segment); don't define PKG_MALLOC if you want this!
+# -DDBG_QM_MALLOC
+#		qm_malloc debug code, will cause pkg_malloc and shm_malloc
+#		to keep and display lot of debuging information: file name,
+#		function, line number of malloc/free call for each block,
+#		extra error checking (trying to free the same pointer
+#		twice, trying to free a pointer alloc'ed with a different
+#		malloc etc.)
+DEFS= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
+	 -DDNS_IP_HACK  -DSHM_MEM \
+	 -DPKG_MALLOC -DDBG_QM_MALLOC -DNODEBUG
+#-DEXTRA_DEBUG
+# -DUSE_SHM_MEM
+#-DNO_DEBUG 
+#-DPKG_MALLOC
+#-DNO_DEBUG#-DSTATS -DNO_DEBUG 
+#-DNO_LOG
+
+PROFILE=  #-pg #set this if you want profiling
+#mode = debug
+mode = release
+
+# platform dependent settings
+
+
+#common
+CC=gcc
+LD=gcc
+MKDEP=gcc -MM $(DEFS)
+MKTAGS=ctags-exuberant -R .
+
+ifeq ($(mode), release)
+	CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
+	LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
+	# we need -fPIC -DPIC only for shared objects, we don't need them for
+	# the executable file, because it's always loaded at a fixed address
+	# -andrei
+else
+	CFLAGS=-g -Wcast-align -Winline $(PROFILE)
+	LDFLAGS=-g -Wl,-E $(PROFILE)
+endif
+
+#*FLAGS used for compiling the modules
+MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
+MOD_LDFLAGS=-O2 -shared
+
+LEX=flex
+YACC=bison
+YACC_FLAGS=-d -b cfg
+# on linux and freebsd keep it empty (e.g. LIBS= )
+# on solaris add -lxnet (e.g. LIBS= -lxnet)
+LIBS=-lfl -ldl
+
+
+#arch specific stuff
+ifeq ($(ARCH), Linux)
+
+endif
+ifeq  ($(ARCH), SunOS)
+
+YACC=yacc
+LDFLAGS=-O2 $(PROFILE)
+MOD_LDFLAGS=-O2 -G
+LIBS+=-L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
+
+endif
+ifeq ($(ARCH), FreeBSD)
+
+YACC=yacc
+LIBS= -lfl  #dlopen is in libc
+
+endif
+ifneq (,$(findstring CYGWIN, $(ARCH)))
+
+#cygwin is the same as common
+
+endif
+

@@ -24,9 +24,49 @@ Arhitecture Notes:
 	(>=0.12). 
 	
 
+
+
+Howto:
+(NOTE: if make doesn't work try gmake  instead)
+
+- compile with default options:
+
+make   #builds only ser core, equivalent to make ser
+make modules
+
+or make all #builds everything
+
+- compile with profiling
+
+make PROFILE=-pg all
+
+-compile debug mode version
+
+make mode=debug all
+
+-compile debug version with profiling
+
+make mode=debug PROFILE=-pg all
+
+-compile only the print module
+
+make modules=modules/print modules
+
+-compile all the modules except textops
+
+make exclude_modules="CVS textops" modules
+
+
+
+Make targets:
+
 Clean:
+
 make clean   (clean the modules too)
 make proper  (clean also the dependencies)
+make distclean (the same as proper)
+make mantainer-clean (clean everything, including auto generated files,
+ tags, *.dbg a.s.o)
 
 Compile:
 
@@ -35,6 +75,16 @@ make
 (or gmake on non-Linux systems)
 make modules 
 or make modules exclude_modules="CVS print" etc.
+
+Make tags:
+
+make TAGS
+
+Create a tar.gz with the sources:
+
+make tar
+
+
 
 Install(not done yet):
 

@@ -1,0 +1,31 @@
+#
+# $Id$
+#
+# module Makefile
+#(to be included from each module)
+#
+
+
+ALLDEP=Makefile ../../Makefile.sources ../../Makefile.rules \
+ ../../Makefile.modules
+
+ifeq ($(MAKELEVEL), 0)
+# make called directly in the module dir!
+
+$(warning "you should run make from the main ser directory")
+include ../../Makefile.defs
+ALLDEP+=../../Makefile.defs
+
+else
+# called by the main Makefile
+
+ALLDEP+=../../Makefile
+
+endif
+
+include ../../Makefile.sources
+
+CFLAGS:=$(MOD_CFLAGS)
+LDFLAGS:=$(MOD_LDFLAGS)
+
+include ../../Makefile.rules

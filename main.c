@@ -41,9 +41,9 @@
 #include <dmalloc.h>
 #endif
 
-
 static char id[]="@(#) $Id$";
-static char version[]="ser 0.8.3.9";
+static char version[]=  NAME " " VERSION " (" ARCH ")" ;
+static char compiled[]= __TIME__ __DATE__ ;
 static char flags[]=
 "STATS:"
 #ifdef STATS
@@ -81,7 +81,7 @@ static char flags[]=
 ;
 
 static char help_msg[]= "\
-Usage: ser -l address [-l address] [options]\n\
+Usage: " NAME " -l address [-l address] [options]\n\
 Options:\n\
     -c		 Perform loop checks and compute branches\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
@@ -357,7 +357,7 @@ static void sig_usr(int signo)
 #endif
 	}
 bye:
-	DPrint("Thank you for flying ser\n");
+	DPrint("Thank you for flying " NAME "\n");
 	exit(0);
 }
 
