@@ -36,8 +36,9 @@ static int w_t_add_fork(struct sip_msg* msg, char* str, char* str2);
 static int w_t_clear_forks(struct sip_msg* msg, char* str, char* str2);
 static void w_onbreak(struct sip_msg* msg) { t_unref(); }
 
+static int mod_init(void);
 
-static struct module_exports nm_exports= {
+struct module_exports exports= {
 	"tm_module",
 	(char*[]){			
 				"t_add_transaction",
@@ -96,6 +97,13 @@ static struct module_exports nm_exports= {
 				0						/* t_clear_forks */
 		},
 	12,
+
+	NULL,   /* Module parameter names */
+	NULL,   /* Module parameter types */
+	NULL,   /* Module parameter variable pointers */
+	0,      /* Number of module paramers */
+
+	mod_init, /* module initialization function */
 	(response_function) t_on_reply,
 	(destroy_function) tm_shutdown,
 	w_onbreak,
@@ -104,16 +112,12 @@ static struct module_exports nm_exports= {
 
 
 
-#ifdef STATIC_TM
-struct module_exports* tm_mod_register()
-#else
-struct module_exports* mod_register()
-#endif
+static int mod_init(void)
 {
 
-	DBG( "TM - registering...\n");
-	if (tm_startup()==-1) return 0;
-	return &nm_exports;
+	DBG( "TM - initializing...\n");
+	if (tm_startup()==-1) return -1;
+	return 0;
 }
 
 
