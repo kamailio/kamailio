@@ -3,7 +3,7 @@
  *
  * destination set
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2004 FhG FOKUS
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,143 +27,236 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #include <string.h>
-
 #include "dprint.h"
 #include "config.h"
 #include "parser/parser_f.h"
 #include "parser/msg_parser.h"
 #include "ut.h"
 #include "hash_func.h"
-#include "dset.h"
 #include "error.h"
+#include "dset.h"
+
+#define CONTACT "Contact: "
+#define CONTACT_LEN (sizeof(CONTACT) - 1)
+
+#define CONTACT_DELIM ", "
+#define CONTACT_DELIM_LEN (sizeof(CONTACT_DELIM) - 1)
+
+#define Q_PARAM ">;q="
+#define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
+
+struct branch
+{
+	char uri[MAX_URI_SIZE];
+	unsigned int len;
+	int q; /* Preference of the contact among
+		* contact within the array */
+};
 
 
+/* 
+ * Where we store URIs of additional transaction branches
+ * (-1 because of the default branch, #0)
+ */
+static struct branch branches[MAX_BRANCHES - 1];
 
-/* where we store URIs of additional transaction branches
-  (-1 because of the default branch, #0)
-*/
-static struct branch branches[ MAX_BRANCHES - 1 ];
 /* how many of them we have */
-static unsigned int nr_branches=0;
-/* branch iterator */
-static int branch_iterator=0;
+static unsigned int nr_branches = 0;
 
+/* branch iterator */
+static int branch_iterator = 0;
+
+/* The q parameter of the Request-URI */
+static qvalue_t ruri_q = Q_UNSPECIFIED; 
+
+
+/*
+ * Intialize the branch iterator, the next
+ * call to next_branch will return the first
+ * contact from the dset array
+ */
 void init_branch_iterator(void)
 {
-	branch_iterator=0;
+	branch_iterator = 0;
 }
 
-char *next_branch( int *len )
+
+/*
+ * Return the next branch from the dset
+ * array, 0 is returned if there are no
+ * more branches
+ */
+char* next_branch(int* len, qvalue_t* q)
 {
 	unsigned int i;
 
-	i=branch_iterator;
-	if (i<nr_branches) {
+	i = branch_iterator;
+	if (i < nr_branches) {
 		branch_iterator++;
-		*len=branches[i].len;
+		*len = branches[i].len;
+		*q = branches[i].q;
 		return branches[i].uri;
 	} else {
-		*len=0;
+		*len = 0;
+		*q = Q_UNSPECIFIED;
 		return 0;
 	}
 }
 
-void clear_branches()
+
+/*
+ * Empty the dset array
+ */
+void clear_branches(void)
 {
-	nr_branches=0;
+	nr_branches = 0;
+	ruri_q = Q_UNSPECIFIED;
 }
 
-/* add a new branch to current transaction */
-int append_branch( struct sip_msg *msg, char *uri, int uri_len )
+
+/* 
+ * Add a new branch to current transaction 
+ */
+int append_branch(struct sip_msg* msg, char* uri, int uri_len, qvalue_t q)
 {
-	/* if we have already set up the maximum number
-	   of branches, don't try new ones */
-	if (nr_branches==MAX_BRANCHES-1) {
+	     /* if we have already set up the maximum number
+	      * of branches, don't try new ones 
+	      */
+	if (nr_branches == MAX_BRANCHES - 1) {
 		LOG(L_ERR, "ERROR: append_branch: max nr of branches exceeded\n");
-		ser_error=E_TOO_MANY_BRANCHES;
+		ser_error = E_TOO_MANY_BRANCHES;
 		return -1;
 	}
 
-	if (uri_len>MAX_URI_SIZE-1) {
+	if (uri_len > MAX_URI_SIZE - 1) {
 		LOG(L_ERR, "ERROR: append_branch: too long uri: %.*s\n",
-			uri_len, uri );
+		    uri_len, uri);
 		return -1;
 	}
 
-	/* if not parameterized, take current uri */
-	if (uri==0) {
+	     /* if not parameterized, take current uri */
+	if (uri == 0) {
 		if (msg->new_uri.s) { 
-			uri=msg->new_uri.s;
-			uri_len=msg->new_uri.len;
+			uri = msg->new_uri.s;
+			uri_len = msg->new_uri.len;
 		} else {
-			uri=msg->first_line.u.request.uri.s;
-			uri_len=msg->first_line.u.request.uri.len;
+			uri = msg->first_line.u.request.uri.s;
+			uri_len = msg->first_line.u.request.uri.len;
 		}
 	}
 	
-	memcpy( branches[nr_branches].uri, uri, uri_len );
-	/* be safe -- add zero termination */
-	branches[nr_branches].uri[uri_len]=0;
-	branches[nr_branches].len=uri_len;
+	memcpy(branches[nr_branches].uri, uri, uri_len);
+	     /* be safe -- add zero termination */
+	branches[nr_branches].uri[uri_len] = 0;
+	branches[nr_branches].len = uri_len;
+	branches[nr_branches].q = q;
 	
 	nr_branches++;
 	return 1;
 }
 
 
-
-char *print_dset( struct sip_msg *msg, int *len ) 
+/*
+ * Create a Contact header field from the dset
+ * array
+ */
+char* print_dset(struct sip_msg* msg, int* len) 
 {
-	int cnt;
+	int cnt, i;
+	qvalue_t q;
 	str uri;
-	char *p;
-	int i;
+	char* p;
 	static char dset[MAX_REDIRECTION_LEN];
 
 	if (msg->new_uri.s) {
-		cnt=1;
-		*len=msg->new_uri.len;
+		cnt = 1;
+		*len = msg->new_uri.len;
+		if (ruri_q != Q_UNSPECIFIED) {
+			*len += 1 + Q_PARAM_LEN + len_q(ruri_q);
+		}
 	} else {
-		cnt=0;
-		*len=0;
+		cnt = 0;
+		*len = 0;
 	}
 
 	init_branch_iterator();
-	while ((uri.s=next_branch(&uri.len))) {
+	while ((uri.s = next_branch(&uri.len, &q))) {
 		cnt++;
-		*len+=uri.len;
+		*len += uri.len;
+		if (q != Q_UNSPECIFIED) {
+			*len += 1 + Q_PARAM_LEN + len_q(q);
+		}
 	}
 
-	if (cnt==0) return 0;	
+	if (cnt == 0) return 0;	
 
-	*len+=CONTACT_LEN+CRLF_LEN+(cnt-1)*CONTACT_DELIM_LEN;
+	*len += CONTACT_LEN + CRLF_LEN + (cnt - 1) * CONTACT_DELIM_LEN;
 
-	if (*len+1>MAX_REDIRECTION_LEN) {
+	if (*len + 1 > MAX_REDIRECTION_LEN) {
 		LOG(L_ERR, "ERROR: redirection buffer length exceed\n");
 		return 0;
 	}
 
-	memcpy(dset, CONTACT, CONTACT_LEN );
-	p=dset+CONTACT_LEN;
+	memcpy(dset, CONTACT, CONTACT_LEN);
+	p = dset + CONTACT_LEN;
 	if (msg->new_uri.s) {
+		if (ruri_q != Q_UNSPECIFIED) {
+			*p++ = '<';
+		}
+
 		memcpy(p, msg->new_uri.s, msg->new_uri.len);
-		p+=msg->new_uri.len;
-		i=1;
-	} else i=0;
+		p += msg->new_uri.len;
+
+		if (ruri_q != Q_UNSPECIFIED) {
+			memcpy(p, Q_PARAM, Q_PARAM_LEN);
+			p += Q_PARAM_LEN;
+			p += print_q(p, q);
+		}
+		i = 1;
+	} else {
+		i = 0;
+	}
 
 	init_branch_iterator();
-	while ((uri.s=next_branch(&uri.len))) {
+	while ((uri.s = next_branch(&uri.len, &q))) {
 		if (i) {
-			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN );
-			p+=2;
+			memcpy(p, CONTACT_DELIM, CONTACT_DELIM_LEN);
+			p += CONTACT_DELIM_LEN;
 		}
+
+		if (q != Q_UNSPECIFIED) {
+			*p++ = '<';
+		}
+
 		memcpy(p, uri.s, uri.len);
-		p+=uri.len;
+		p += uri.len;
+		if (q != Q_UNSPECIFIED) {
+			memcpy(p, Q_PARAM, Q_PARAM_LEN);
+			p += Q_PARAM_LEN;
+			p += print_q(p, q);
+		}
 		i++;
 	}
-	memcpy(p, CRLF " ", CRLF_LEN+1);
+
+	memcpy(p, CRLF " ", CRLF_LEN + 1);
 	return dset;
 }
 
+
+/*
+ * Sets the q parameter of the Request-URI
+ */
+void set_ruri_q(qvalue_t q)
+{
+	ruri_q = q;
+}
+
+
+/*
+ * Return the q value of the Request-URI
+ */
+qvalue_t get_ruri_q(void)
+{
+	return ruri_q;
+}
