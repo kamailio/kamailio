@@ -284,6 +284,7 @@ CREATE TABLE pending (
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
+  timezone varchar(128) default NULL,
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID),
   UNIQUE KEY phplib_id (phplib_id)
@@ -350,6 +351,7 @@ CREATE TABLE subscriber (
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
+  timezone varchar(128) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID)
