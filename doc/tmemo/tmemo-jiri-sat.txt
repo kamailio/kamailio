@@ -215,3 +215,27 @@ Also, one needs to establish aliases that make the rewritten address
 routable. Otherwise, attempts to use the translated address in From
 header field for subsequent communication would fail. That is (unlike
 with NATs, fortunately) a workable option.
+
+
+  Note: with RFC3261, rewriting of From/To could be perhaps less
+  voluminous. The major reason for rewriting consistency as explained
+  above is the need to keep consistency for transaction and dialog
+  matching. Pre-3261 implementations use header these fields to
+  identify dialogs and transactions. It has been later recognized 
+  that such dialog/transaction matching is bloated and it has been
+  simplified in 3261. Transactions are identified by sentby/branch in 
+  topmost Via, and dialogs by {callid,from-tag,to-tag}. If URI in From
+  is then changed, dialog/transaction is not affected and one does
+  not need to worry about rewriting replies (UAC does not care they
+  have a different From URI) or subsequent requests (UAC does not 
+  care UAS's To-URI != UAC's From URI).
+
+  Again -- this simplification would only be doable if there were no
+  backwards-compatibility concerns. It would be probably more confusing 
+  than "consistent rewriting" as described above. On the other hand,
+  things would be simpler, and neither stateful processing nor 
+  record-routing would be required.
+
+  A guess is that NAI will work before pre-3261 implementions disappear.
+  That means, that now the fully consistent rewriting needs to be applied
+  and later, rewriting will be (hopefuly) replaced with NAI.
