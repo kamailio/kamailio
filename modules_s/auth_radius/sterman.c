@@ -73,6 +73,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 
 	if (_cred->username.domain.len) {
 		if (!rc_avpair_add(&send, PW_USER_NAME, _cred->username.whole.s, _cred->username.whole.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_USER_NAME attribute\n");
 			rc_avpair_free(send);
 			return -2;
 		}
@@ -87,6 +88,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 		user_name.s[_cred->username.whole.len] = '@';
 		memcpy(user_name.s + _cred->username.whole.len + 1, _cred->realm.s, _cred->realm.len);
 		if (!rc_avpair_add(&send, PW_USER_NAME, user_name.s, user_name.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_USER_NAME attribute\n");
 			pkg_free(user_name.s);
 			rc_avpair_free(send);
 			return -4;
@@ -95,24 +97,29 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	}
 
 	if (!rc_avpair_add(&send, PW_DIGEST_USER_NAME, _cred->username.whole.s, _cred->username.whole.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_USER_NAME attribute\n");
 		rc_avpair_free(send);
 		return -5;
 	}
 
 	if (!rc_avpair_add(&send, PW_DIGEST_REALM, _cred->realm.s, _cred->realm.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_REALM attribute\n");
 		rc_avpair_free(send);
 		return -6;
 	}
 	if (!rc_avpair_add(&send, PW_DIGEST_NONCE, _cred->nonce.s, _cred->nonce.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_NONCE attribute\n");
 		rc_avpair_free(send);
 		return -7;
 	}
 	
 	if (!rc_avpair_add(&send, PW_DIGEST_URI, _cred->uri.s, _cred->uri.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_URI attribute\n");
 		rc_avpair_free(send);
 		return -8;
 	}
 	if (!rc_avpair_add(&send, PW_DIGEST_METHOD, method.s, method.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_METHOD attribute\n");
 		rc_avpair_free(send);
 		return -9;
 	}
@@ -122,31 +129,38 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	 */
 	if (_cred->qop.qop_parsed == QOP_AUTH) {
 		if (!rc_avpair_add(&send, PW_DIGEST_QOP, "auth", 4)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_QOP attribute\n");
 			rc_avpair_free(send);
 			return -10;
 		}
 		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, _cred->nc.s, _cred->nc.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_NONCE_COUNT attribute\n");
 			rc_avpair_free(send);
 			return -11;
 		}
 		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, _cred->cnonce.s, _cred->cnonce.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_CNONCE attribute\n");
 			rc_avpair_free(send);
 			return -12;
 		}
 	} else if (_cred->qop.qop_parsed == QOP_AUTHINT) {
 		if (!rc_avpair_add(&send, PW_DIGEST_QOP, "auth-int", 8)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_QOP attribute\n");
 			rc_avpair_free(send);
 			return -13;
 		}
 		if (!rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, _cred->nc.s, _cred->nc.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_NONCE_COUNT attribute\n");
 			rc_avpair_free(send);
 			return -14;
 		}
 		if (!rc_avpair_add(&send, PW_DIGEST_CNONCE, _cred->cnonce.s, _cred->cnonce.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_CNONCE attribute\n");
 			rc_avpair_free(send);
 			return -15;
 		}
 		if (!rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, _cred->opaque.s, _cred->opaque.len)) {
+			LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_BODY_DIGEST attribute\n");
 			rc_avpair_free(send);
 			return -16;
 		}
@@ -192,6 +206,7 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 
 	/* Add the response... What to calculate against... */
 	if (!rc_avpair_add(&send, PW_DIGEST_RESPONSE, _cred->response.s, _cred->response.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_DIGEST_RESPONSE attribute\n");
 		rc_avpair_free(send);
 		return -17;
 	}
@@ -199,12 +214,14 @@ int radius_authorize_sterman(dig_cred_t* _cred, str* _method, str* _user, str* _
 	/* Indicate the service type, Authenticate only in our case */
 	service = service_type;
 	if (!rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_SERVICE_TYPE attribute\n");
 		rc_avpair_free(send);
 	 	return -18;
 	}
 
 	/* Add SIP URI as a check item */
 	if (!rc_avpair_add(&send, PW_SIP_URI_USER, user.s, user.len)) {
+		LOG(L_ERR, "sterman(): Unable to add PW_SIP_URI_USER attribute\n");
 		rc_avpair_free(send);
 	 	return -19;  	
 	}
