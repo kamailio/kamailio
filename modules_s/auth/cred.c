@@ -382,6 +382,8 @@ int validate_cred(cred_t* _c)
 		return -1;
 	}
 
+	if (_c->algorithm == ALG_UNSPECIFIED) _c->algorithm = ALG_MD5;
+
 	if (_c->algorithm != ALG_MD5) {
 		LOG(L_ERR, "validate_cred(): Unsupported algorithm\n");
 		return -1;

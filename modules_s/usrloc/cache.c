@@ -380,7 +380,6 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 	time_t expires;
 	c_elem_t* ptr;
 	c_slot_t* slot;
-	time_t t;
 	str s;
 
 
@@ -403,7 +402,6 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 	}
 
     
-	t = time(NULL);
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		row = RES_ROWS(res) + i;
 		cur_user = ROW_VALUES(row)[0].val.string_val;
@@ -427,13 +425,13 @@ int preload_cache(cache_t* _c, db_con_t* _con)
 		}
 		
 		contact = ROW_VALUES(row)[1].val.string_val;
-		expires = ROW_VALUES(row)[2].val.time_val - time(NULL);
+		expires = ROW_VALUES(row)[2].val.time_val;
 		q = ROW_VALUES(row)[3].val.double_val;
 		callid = ROW_VALUES(row)[4].val.string_val;
 		cseq = ROW_VALUES(row)[5].val.int_val;
 		
-		DBG("    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, (int)expires, q, callid, cseq);
-		add_contact(loc, contact, expires + t, q, callid, cseq);
+		DBG("    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, (unsigned int)expires, q, callid, cseq);
+		add_contact(loc, contact, expires, q, callid, cseq);
 	}
 
 	if (loc) {

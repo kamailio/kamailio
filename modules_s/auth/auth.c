@@ -1,4 +1,4 @@
- /*
+/*
  * $Id$
  */
 
@@ -175,11 +175,11 @@ static int find_auth_hf(struct sip_msg* _msg, char* _realm, cred_t* _c)
 
 static int get_ha1(str* _user, char* _realm, char* _ha1)
 {
-	db_key_t keys[] = {"user", "realm"};
+	db_key_t keys[] = {SUBS_USER_COL, SUBS_REALM_COL};
 	db_val_t vals[] = {{DB_STRING, 0, {.string_val = _user->s}},
 			   {DB_STRING, 0, {.string_val = _realm}}
 	};
-	db_key_t col[] = {"ha1"};
+	db_key_t col[] = {SUBS_HA1_COL};
 	db_res_t* res;
 
 	const char* ha1;
@@ -304,7 +304,7 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 		if (send_resp(_msg, 400, MESSAGE_400, NULL, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
 		}
-		return -1;
+		return 0;
 	}
 	
         res = check_cred(&cred, &_msg->first_line.u.request.method, ha1);
