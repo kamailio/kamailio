@@ -666,8 +666,8 @@ int main(int argc, char** argv)
 		goto error;
 	}
 
-	/*init builtin  modules*/
-	init_builtin_modules();
+	/*register builtin  modules*/
+	register_builtin_modules();
 
 	yyin=cfg_stream;
 	if ((yyparse()!=0)||(cfg_errors)){
@@ -675,7 +675,11 @@ int main(int argc, char** argv)
 		goto error;
 	}
 	
-	
+	if (init_modules() != 0) {
+		fprintf(stderr, "ERROR: error while initializing modules\n");
+		goto error;
+	}
+
 	print_rl();
 	/* fix routing lists */
 	if ( (r=fix_rls())!=0){
