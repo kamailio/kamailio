@@ -102,6 +102,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		ptr = ptr->next;
 	} else {
 		     /* All contacts expired */
+		ul_unlock_udomain((udomain_t*)_t);
 		return -7;
 	}
 	
