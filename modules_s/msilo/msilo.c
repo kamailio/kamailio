@@ -44,19 +44,14 @@
 #include <time.h>
 
 #include "../../sr_module.h"
-#include "../../error.h"
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../mem/shm_mem.h"
-#include "../../mem/mem.h"
-#include "../../globals.h"
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_content.h"
 
-#include "../tm/t_funcs.h"
-#include "../tm/uac.h"
 #include "../tm/tm_load.h"
 
 #include "ms_msg_list.h"
