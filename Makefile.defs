@@ -73,14 +73,12 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/ )
 #       to become non-optional if stable
 # -DNEW_HNAME
 #		32-bit header name parsing; turn off for lower speed ;-) or debugging; to become non-optional if fast and stable
-# -DSRL Shortened Reply Lock -- moves more code, esp. "send" out
-#  of locks for greater speed; to become non-optional if fast and stable
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"'\
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
 	 -DF_MALLOC  -DUSE_SYNONIM\
-	 -DWAIT -DNEW_HNAME -DNOISY_REPLIES -DSRL -DBOGDAN_TRIFLE \
+	 -DWAIT -DNEW_HNAME -DNOISY_REPLIES -DBOGDAN_TRIFLE \
 	 #-DNO_DEBUG \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \

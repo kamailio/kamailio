@@ -180,36 +180,32 @@ int t_forward_uri( struct sip_msg* p_msg  );
 
 
 
-/*  This function is called whenever a reply for our module is received; we need to register
-  *  this function on module initialization;
-  *  Returns :   0 - core router stops
-  *                    1 - core router relay statelessly
-  */
+/* This function is called whenever a reply for our module is received;
+ * we need to register this function on module initialization;
+ * Returns :   0 - core router stops
+ *             1 - core router relay statelessly
+ */
 
-#ifdef SRL
 int t_on_reply( struct sip_msg  *p_msg ) ;
-#else
-int t_on_reply_received( struct sip_msg  *p_msg ) ;
-#endif
 
 
 
 
-/*  This function is called whenever a request for our module is received; we need to register
-  *  this function on module initialization;
-  *  Returns :   0 - core router stops
-  *                    1 - core router relay statelessly
-  */
+/* This function is called whenever a request for our module is received;
+ * we need to register this function on module initialization;
+ * Returns :   0 - core router stops
+ *             1 - core router relay statelessly
+ */
 int t_on_request_received( struct sip_msg  *p_msg , unsigned int ip, unsigned int port) ;
 
 
 
 
-/*  This function is called whenever a request for our module is received; we need to register
-  *  this function on module initialization;
-  *  Returns :   0 - core router stops
-  *                    1 - core router relay statelessly
-  */
+/* This function is called whenever a request for our module is received;
+ * we need to register this function on module initialization;
+ * Returns :   0 - core router stops
+ *             1 - core router relay statelessly
+ */
 int t_on_request_received_uri( struct sip_msg  *p_msg ) ;
 
 
@@ -223,9 +219,9 @@ int t_release_transaction( struct sip_msg* );
 
 
 /* Retransmits the last sent inbound reply.
-  * Returns  -1 -error
-  *                1 - OK
-  */
+ * Returns  -1 - error
+ *           1 - OK
+ */
 int t_retransmit_reply( /* struct sip_msg * */  );
 
 
@@ -237,45 +233,43 @@ int t_retransmit_reply( /* struct sip_msg * */  );
 int t_send_reply( struct sip_msg * , unsigned int , char *  );
 
 
+
+
 /* releases T-context */
 int t_unref( /* struct sip_msg* p_msg */ );
 
+
+
+
 int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
-    unsigned int dest_port_param );
+	unsigned int dest_port_param );
 int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
-    unsigned int dest_port_param );
-
-
-
-
-struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
+	unsigned int dest_port_param );
+struct cell* t_lookupOriginalT(  struct s_table* hash_table,
+	struct sip_msg* p_msg );
 int t_reply_matching( struct sip_msg* , unsigned int* , unsigned int* );
 int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
-int  t_lookup_request( struct sip_msg* p_msg , int leave_new_locked );
+int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked );
 int t_all_final( struct cell * );
-int t_build_and_send_ACK( struct cell *Trans , unsigned int brach , struct sip_msg* rpl);
+int t_build_and_send_ACK( struct cell *Trans , unsigned int brach ,
+	struct sip_msg* rpl);
 int t_cancel_branch(unsigned int branch); //TO DO
-int t_should_relay_response( struct cell *Trans, int new_code, int branch, int *should_store );
+int t_should_relay_response( struct cell *Trans, int new_code, int branch,
+	int *should_store );
 int t_update_timers_after_sending_reply( struct retrans_buff *rb );
 int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
-
-#ifdef SRL
-static int push_reply( struct cell* trans , unsigned int branch , 
-    char *buf, unsigned int len);
-#else
-static int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
-#endif
-
+static int push_reply( struct cell* trans , unsigned int branch ,
+	char *buf, unsigned int len);
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
-int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port);
-
+int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip,
+	unsigned int *param_port);
+struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans,
+	int branch );
 enum addifnew_status t_addifnew( struct sip_msg* p_msg );
 
-void retransmission_handler( void *);
-void final_response_handler( void *);
-void wait_handler( void *);
-void delete_handler( void *);
+
+
 
 inline int static attach_ack(  struct cell *t, int branch,
     struct retrans_buff *srb )
@@ -292,6 +286,9 @@ inline int static attach_ack(  struct cell *t, int branch,
 	return 1;
 }
 
+
+
+
 inline int static relay_ack( struct cell *t, int branch, 
 	struct retrans_buff *srb, int len )
 {
@@ -306,6 +303,5 @@ inline int static relay_ack( struct cell *t, int branch,
 	return attach_ack( t, branch, srb );
 }
 
-struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int branch );
 
 #endif

@@ -187,7 +187,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	p=(char *)sh_malloc(len);foo=p;
 	if (!p)
 	{
-		LOG(L_ERR , "ERROR: sip_msg_cloner_2: cannot allocate memory\n" );
+		LOG(L_ERR , "ERROR: sip_msg_cloner: cannot allocate memory\n" );
 		return 0;
 	}
 

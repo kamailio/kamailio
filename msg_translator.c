@@ -438,8 +438,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 						default:
 							/* only ADD allowed for before/after */
 							LOG(L_CRIT, "BUG:build_req_buf_from_sip_req: "
-									"invalid op for data lump (%x)\n", r->op);
-
+									"invalid op for data lump (%x)\n",r->op);
 					}
 				}
 				/* process main (del only) */

@@ -297,7 +297,6 @@ int t_should_relay_response( struct cell *Trans , int new_code,
 			return -1;
 		}
 	} else { /* no final response sent yet */
-
 		/* negative replies subject to fork picking */
 		if (new_code >=300 ) {
 			*should_store=1;

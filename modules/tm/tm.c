@@ -88,11 +88,7 @@ static struct module_exports nm_exports= {
 				fixup_t_forward 		/* t_forward_ack */
 		},
 	10,
-#ifdef SRL
 	(response_function) t_on_reply,
-#else
-	(response_function) t_on_reply_received,
-#endif
 	(destroy_function) tm_shutdown,
 	w_onbreak,
 	0  /* per-child init function */
@@ -308,17 +304,14 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 		case AIN_ERROR:		/*  fatal error (e.g, parsing) occured */
 			ret = 0;
 			break;
-
 		case AIN_RETR:		/* it's a retransmission */
 			if ( !t_retransmit_reply( p_msg ) )
-			{
 				DBG( "SER: WARNING: bad t_retransmit_reply\n");
-			}
 			ret = 1;
 			break;
-
 		case AIN_NEW:		/* it's a new request */
-			if ( !t_forward_nonack( p_msg, (unsigned int) str_ip, (unsigned int) str_port ))
+			if (!t_forward_nonack(p_msg,(unsigned int)str_ip,
+			(unsigned int) str_port ))
 			{
 				DBG( "SER:ERROR: t_forward \n");
 				ret = 0;
@@ -330,36 +323,32 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 						DBG( "SER:ERROR: t_send_reply\n");
 				} else {
 					DBG( "SER: new transaction\n");
-					if (!t_send_reply( p_msg , 100 , "trying -- your call is important to us"))
-					{
+					if (!t_send_reply( p_msg , 100 , 
+					"trying -- your call is important to us"))
 						DBG( "SER: ERROR: t_send_reply (100)\n");
-					}
 				}
 				ret = 1;
 			}
 			break;
-
 		case AIN_NEWACK:	/* it's an ACK for which no transaction exists */
 			DBG( "SER: forwarding ACK  statelessly\n");
 			forward_request( p_msg , mk_proxy_from_ip(
 				(unsigned int )str_ip, (unsigned int)str_port) ) ;
 			ret=1;
 			break;
-
 		case AIN_OLDACK:	/* it's an ACK for an existing transaction */
 			DBG( "SER: ACK received -> t_release\n");
 			if ( !t_release_transaction( p_msg ) )
 			{
 				DBG( "SER: WARNING: bad t_release\n");
 			}
-			/* t_forward decides whether to forward (2xx) or not (anything else) */
-			if ( !t_forward_ack( p_msg , (unsigned int) str_ip , (unsigned int) str_port ) )
-			{
+			/* t_forward decides whether to forward (2xx) 
+			   or not (anything else) */
+			if ( !t_forward_ack( p_msg , (unsigned int) str_ip ,
+			(unsigned int) str_port ) )
 				DBG( "SER: WARNING: bad ACK forward\n");
-			}
 			ret = 1;
 			break;
-
 		default:
 			LOG(L_CRIT, "ERROR: unexpected addifnew return value: %d\n", ret);
 			abort();
@@ -375,66 +364,15 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 
 static int t_relay( struct sip_msg  *p_msg , char* foo, char* bar)
 {
-   unsigned int     ip, port;
+	unsigned int     ip, port;
 
-   if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
-   {
-      LOG( L_ERR , "ERROR: t_on_request_received_uri: unable to extract ip and port from uri!\n" );
-      return -1;
-   }
-
-   return t_relay_to( p_msg , ( char *) ip , (char *) port );
-}
-
-
-
-static int t_relay_no_forward( struct sip_msg  *p_msg )
-{
-
-	enum addifnew_status status;
-	int ret;
-
-	status = t_addifnew( p_msg );
-
-	switch( status ) {
-		case AIN_ERROR:		/*  fatal error (e.g, parsing) occured */
-			ret = 0;
-			break;
-
-		case AIN_RETR:		/* it's a retransmission */
-			if ( !t_retransmit_reply( p_msg ) )
-			{
-				DBG( "SER: WARNING: bad t_retransmit_reply\n");
-			}
-			ret = 1;
-			break;
-
-		case AIN_NEW:		/* it's a new request */
-			ret = 1;
-			break;
-
-		case AIN_NEWACK:	/* it's an ACK for which no transaction exists */
-			ret=1;
-			break;
-
-		case AIN_OLDACK:	/* it's an ACK for an existing transaction */
-			DBG( "SER: ACK received -> t_release\n");
-			if ( !t_release_transaction( p_msg ) )
-			{
-				DBG( "SER: WARNING: bad t_release\n");
-			}
-			ret = 1;
-			break;
-
-		default:
-			LOG(L_CRIT, "ERROR: unexpected addifnew return value: %d\n", ret);
-			abort();
-	};
-	if (T) {
-		T_UNREF( T );
+	if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
+	{
+		LOG( L_ERR , "ERROR: t_on_request_received_uri: unable"
+			" to extract ip and port from uri!\n" );
+		return -1;
 	}
-	return ret;
+	return t_relay_to( p_msg , ( char *) ip , (char *) port );
 }
-
 
 
