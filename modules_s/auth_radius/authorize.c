@@ -86,7 +86,6 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 
 	domain = *_realm;
 	ret = pre_auth_func(_msg, &domain, _hftype, &h);
-	cred = (auth_body_t*)h->parsed;
 	
 	switch(ret) {
 	case ERROR:            return 0;
@@ -94,6 +93,8 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	case DO_AUTHORIZATION: break;
 	case AUTHORIZED:       return 1;
 	}
+
+	cred = (auth_body_t*)h->parsed;
 
 	if (get_uri(_msg, &uri) < 0) {
 		LOG(L_ERR, "authorize(): From/To URI not found\n");
