@@ -126,13 +126,13 @@ INSERT INTO version VALUES ( 'subscriber', '2');
 INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '2');
-INSERT INTO version VALUES ( 'missed_calls', '1');
+INSERT INTO version VALUES ( 'missed_calls', '2');
 INSERT INTO version VALUES ( 'location', '3');
 INSERT INTO version VALUES ( 'grp', '2');
 INSERT INTO version VALUES ( 'event', '1');
-INSERT INTO version VALUES ( 'aliases', '2');
+INSERT INTO version VALUES ( 'aliases', '3');
 INSERT INTO version VALUES ( 'active_sessions', '1');
-INSERT INTO version VALUES ( 'acc', '1');
+INSERT INTO version VALUES ( 'acc', '2');
 INSERT INTO version VALUES ( 'config', '1');
 INSERT INTO version VALUES ( 'silo', '2');
 INSERT INTO version VALUES ( 'realm', '1');
@@ -154,6 +154,8 @@ CREATE TABLE acc (
   sip_method varchar(16) NOT NULL default '',
   i_uri varchar(128) NOT NULL default '',
   o_uri varchar(128) NOT NULL default '',
+  from_uri varchar(128) NOT NULL default '',
+  to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
   username varchar(64) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
@@ -184,7 +186,6 @@ CREATE TABLE active_sessions (
 # Table structure for table 'aliases' -- location-like table
 #
 
-
 CREATE TABLE aliases (
   username varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
@@ -194,10 +195,10 @@ CREATE TABLE aliases (
   callid varchar(255) default NULL,
   cseq int(11) default NULL,
   last_modified timestamp(14) NOT NULL,
-  PRIMARY KEY usr (username, domain, contact)
+  replicate int(10) unsigned default NULL,
+  state tinyint(1) unsigned default NULL,
+  PRIMARY KEY(username, domain, contact)
 ) $TABLE_TYPE;
-
-
 
 
 #
@@ -269,6 +270,8 @@ CREATE TABLE missed_calls (
   sip_method varchar(16) NOT NULL default '',
   i_uri varchar(128) NOT NULL default '',
   o_uri varchar(128) NOT NULL default '',
+  from_uri varchar(128) NOT NULL default '',
+  to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
   username varchar(64) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
@@ -495,7 +498,32 @@ EOF
 
 
 case $1 in
+	renew)
+		# backup, drop, restore (experimental)
+		tmp_file=/tmp/ser_mysql.$$
+		ser_backup $DBNAME $SQL_USER > $tmp_file
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			rm $tmp_file
+			exit $ret
+		fi
+		ser_drop $DBNAME $SQL_USER
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			exit $ret
+		fi
+		ser_create $DBNAME $SQL_USER
+		ret=$?
+		if [ "$ret" -ne 0 ]; then
+			exit $ret
+		fi
+		ser_restore $DBNAME $SQL_USER $tmp_file
+		ret=$?
+		rm $tmp_file
+		exit $ret
+		;;
 	copy)
+		# copy database to some other name
 		shift
 		if [ $# -ne 1 ]; then
 			usage
@@ -520,10 +548,12 @@ case $1 in
 		exit $ret
 		;;
 	backup)
+		# backup current database
 		ser_backup $DBNAME $SQL_USER
 		exit $?
 		;;
 	restore)
+		# restore database from a backup
 		shift
 		if [ $# -ne 1 ]; then
 			usage
@@ -533,6 +563,7 @@ case $1 in
 		exit $?
 		;;
 	create)
+		# create new database structures
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
@@ -541,10 +572,12 @@ case $1 in
 		exit $?
 		;;
 	drop)
+		# delete ser database
 		ser_drop $DBNAME $SQL_USER
 		exit $?
 		;;
 	reinit)
+		# delete database and create a new one
 		ser_drop $DBNAME $SQL_USER
 		ret=$?
 		if [ "$ret" -ne 0 ]; then

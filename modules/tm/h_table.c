@@ -26,11 +26,13 @@
  *
  * History
  * -------
- * 2003-03-30  set_kr for requests only (jiri)
- * 2003-03-16  removed _TOTAG (jiri)
  * 2003-03-06  200/INV to-tag list deallocation added;
  *             setting "kill_reason" moved in here -- it is moved
  *             from transaction state to a static var(jiri)
+ * 2003-03-16  removed _TOTAG (jiri)
+ * 2003-03-30  set_kr for requests only (jiri)
+ * 2003-04-04  bug_fix: REQ_IN callback not called for local 
+ *             UAC transactions (jiri)
  */
 
 #include "defs.h"
@@ -182,8 +184,11 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	/*fprintf(stderr,"before clone VIA |%.*s|\n",via_len(p_msg->via1),
 		via_s(p_msg->via1,p_msg));*/
 
-	callback_event(TMCB_REQUEST_IN, new_cell, p_msg, 
-			p_msg ? p_msg->REQ_METHOD : METHOD_UNDEF );
+	/* enter callback, which may potentially want to parse some stuff,
+	   before the request is shmem-ized
+	*/ 
+    if (p_msg) callback_event(TMCB_REQUEST_IN, new_cell, p_msg,
+            p_msg->REQ_METHOD );
 
 	if (p_msg) {
 		new_cell->uas.request = sip_msg_cloner(p_msg);

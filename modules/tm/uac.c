@@ -471,7 +471,7 @@ static void fifo_callback( struct cell *t, struct sip_msg *reply,
 			fifo_reply(filename, "500 fifo_callback: get_reply_status failed\n");
 			return;
 		}
-		fifo_reply(filename, "%.*s", text.len, text.s );
+		fifo_reply(filename, "%.*s\n", text.len, text.s );
 		pkg_free(text.s);
 	} else {
 		text.s=reply->first_line.u.reply.status.s;

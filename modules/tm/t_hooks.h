@@ -73,7 +73,10 @@ typedef enum {
  * lives in pkg mem -- your last chance to mangle it before
  * it gets shmem-ized (then, it's read-only); it's called from
  * HASH_LOCK, so be careful. It is guaranteed not to be
- * a retransmission.
+ * a retransmission. The transactional context is mostly
+ * incomplete -- this callback is called in very early stage
+ * before the message is shmem-ized (so that you can work
+ * with it).
  *
  * TMCB_RESPONSE_IN -- a brand-new reply was received which matches
  * an existing transaction. It may or may not be a retranmisssion.

@@ -32,6 +32,7 @@
  *  2003-01-28  removed scratchpad (jiri)
  *  2003-03-31  removed sip_msg->repl_add_rm (andrei)
  *  2003-04-01  2 macros added: GET_NEXT_HOP and GET_RURI (janakj)
+ *  2003-04-04  structure for parsed inbound uri added (jiri)
  */
 
 
@@ -161,8 +162,12 @@ struct sip_msg {
 
 	str dst_uri; /* Destination URI, must be forwarded to this URI if len != 0 */
 
+	/* current uri */
 	int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not */
 	struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
+	/* the same for original uri */
+	int parsed_orig_ruri_ok;
+	struct sip_uri parsed_orig_ruri;
 	
 	struct lump* add_rm;       /* used for all the forwarded requests/replies */
 	struct lump_rpl *reply_lump; /* only for localy generated replies !!!*/

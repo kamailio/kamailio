@@ -23,6 +23,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-04-04  convenience inbound-uri parser parse_orig_ruri
+ *             introduced (jiri)
  */
 
 
@@ -173,28 +178,50 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 }
 
 
+static inline int _parse_ruri(str *uri,
+	int *status, struct sip_uri *parsed_uri)
+{
+	if (*status) return 1;
+
+	if (parse_uri(uri->s, uri->len, parsed_uri)<0) {
+		LOG(L_ERR, "ERROR: _parse_ruri: bad uri <%.*s>\n", 
+				uri->len, uri->s);
+		*status=0;
+		return -1;
+	}
+	*status=1;
+	return 1;
+}
 
 int parse_sip_msg_uri(struct sip_msg* msg)
 {
 	char* tmp;
 	int tmp_len;
 	if (msg->parsed_uri_ok) return 1;
-	else{
-		if (msg->new_uri.s){
-			tmp=msg->new_uri.s;
-			tmp_len=msg->new_uri.len;
-		}else{
-			tmp=msg->first_line.u.request.uri.s;
-			tmp_len=msg->first_line.u.request.uri.len;
-		}
-		if (parse_uri(tmp, tmp_len, &msg->parsed_uri)<0){
-			LOG(L_ERR, "ERROR: parse_sip_msg_uri: bad uri <%.*s>\n",
-						tmp_len, tmp);
-			msg->parsed_uri_ok=0;
-			return -1;
-		}
-		msg->parsed_uri_ok=1;
-		return 1;
+
+	if (msg->new_uri.s){
+		tmp=msg->new_uri.s;
+		tmp_len=msg->new_uri.len;
+	}else{
+		tmp=msg->first_line.u.request.uri.s;
+		tmp_len=msg->first_line.u.request.uri.len;
 	}
+	if (parse_uri(tmp, tmp_len, &msg->parsed_uri)<0){
+		LOG(L_ERR, "ERROR: parse_sip_msg_uri: bad uri <%.*s>\n",
+					tmp_len, tmp);
+		msg->parsed_uri_ok=0;
+		return -1;
+	}
+	msg->parsed_uri_ok=1;
+	return 1;
 }
 
+int parse_orig_ruri(struct sip_msg* msg)
+{
+	int ret;
+
+	ret=_parse_ruri(&REQ_LINE(msg).uri,
+		&msg->parsed_orig_ruri_ok, &msg->parsed_orig_ruri);
+	if (ret<0) LOG(L_ERR, "ERROR: parse_orig_ruri failed\n");
+	return ret;
+}

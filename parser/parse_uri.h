@@ -45,5 +45,6 @@
  */
 int parse_uri(char *buf, int len, struct sip_uri* uri);
 int parse_sip_msg_uri(struct sip_msg* msg);
+int parse_orig_ruri(struct sip_msg* msg);
 
 #endif /* PARSE_URI_H */

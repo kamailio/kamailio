@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * --------
+ * 2003-04-04 phrase length corrected not to include trailer 0 (jiri)
  */
 
 
@@ -185,8 +189,8 @@ void get_reply_status( str *status, struct sip_msg *reply, int code )
 	} else {
 		phrase=reply->first_line.u.reply.reason;
 	}
-	status->len=phrase.len+3/*code*/+1/*space*/+1/*ZT*/;
-	status->s=pkg_malloc(status->len);
+	status->len=phrase.len+3/*code*/+1/*space*/; 
+	status->s=pkg_malloc(status->len+1/*ZT */);
 	if (!status->s) {
 		LOG(L_ERR, "ERROR: get_reply_status: no mem\n");
 		return;
@@ -196,5 +200,5 @@ void get_reply_status( str *status, struct sip_msg *reply, int code )
 	status->s[1]='0'+code% 10; code=code/10;
 	status->s[0]='0'+code % 10;
 	memcpy(&status->s[4], phrase.s, phrase.len);
-	status->s[status->len-1]=0;
+	status->s[status->len]=0;
 }

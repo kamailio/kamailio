@@ -51,20 +51,22 @@
  *
  * History:
  * ----------
- * 2003-03-30  set_kr for requests only (jiri)
- * 2003-03-29  optimization: e2e ACK matching only if callback installed
- *             (jiri)
- * 2003-03-06  dialog matching introduced for ACKs -- that's important for 
- *             INVITE UAS (like INVITE) and 200/ACK proxy matching (jiri)
- * 2003-03-01  kr set through a function now (jiri)
- * 2003-02-28 scratchpad compatibility abandoned (jiri)
- * 2003-02-27  3261 ACK/200 consumption bug removed (jiri)
- * 2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
- * 2003-02-13  init_rb() is proto indep. & it uses struct dest_info (andrei)
- * 2003-01-28  scratchpad removed (jiri)
- * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-23  options for disabling r-uri matching introduced (jiri)
  *              nameser_compat.h (andrei)
+ * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-28  scratchpad removed (jiri)
+ * 2003-02-13  init_rb() is proto indep. & it uses struct dest_info (andrei)
+ * 2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
+ * 2003-02-27  3261 ACK/200 consumption bug removed (jiri)
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
+ * 2003-03-01  kr set through a function now (jiri)
+ * 2003-03-06  dialog matching introduced for ACKs -- that's important for 
+ *             INVITE UAS (like INVITE) and 200/ACK proxy matching (jiri)
+ * 2003-03-29  optimization: e2e ACK matching only if callback installed
+ *             (jiri)
+ * 2003-03-30  set_kr for requests only (jiri)
+ * 2003-04-04  bug_fix: RESPONSE_IN callback not called for local
+ *             UAC transactions (jiri)
  */
 
 
@@ -781,7 +783,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 				LOG(L_ERR, "ERROR: t_reply_matching: to parsing failed\n");
 			}
 		}
-		callback_event(TMCB_RESPONSE_IN, T, p_msg, p_msg->REPLY_STATUS);
+		if (!p_cell->local) 
+			callback_event(TMCB_RESPONSE_IN, T, p_msg, p_msg->REPLY_STATUS);
 		return 1;
 	} /* for cycle */
 

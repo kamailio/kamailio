@@ -37,11 +37,12 @@
  *
  * History:
  * --------
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
- *  2003-02-25 - auth_body cloner added (janakj)
- *  2003-01-29 - scratchpad removed (jiri)
  *  2003-01-23 - msg_cloner clones msg->from->parsed too (janakj)
+ *  2003-01-29 - scratchpad removed (jiri)
+ *  2003-02-25 - auth_body cloner added (janakj)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-03-31  removed msg->repl_add_rm (andrei)
+ *  2003-04-04  parsed uris are recalculated on cloning (jiri)
  */
 
 #include "defs.h"
@@ -155,6 +156,16 @@ inline struct via_body* via_body_cloner( char* new_buf,
 	}while(org_via);
 
 	return first_via;
+}
+
+static void uri_trans(char *new_buf, char *org_buf, struct sip_uri *uri)
+{
+	uri->user.s=translate_pointer(new_buf,org_buf,uri->user.s);
+	uri->passwd.s=translate_pointer(new_buf,org_buf,uri->passwd.s);
+	uri->host.s=translate_pointer(new_buf,org_buf,uri->host.s);
+	uri->port.s=translate_pointer(new_buf,org_buf,uri->port.s);
+	uri->params.s=translate_pointer(new_buf,org_buf,uri->params.s);
+	uri->headers.s=translate_pointer(new_buf,org_buf,uri->headers.s);
 }
 
 
@@ -365,6 +376,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 		new_msg->first_line.u.request.version.s =
 			translate_pointer( new_msg->buf , org_msg->buf ,
 			org_msg->first_line.u.request.version.s );
+		uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_orig_ruri);
+		uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_uri);
 	}
 	else if ( org_msg->first_line.type==SIP_REPLY )
 	{
