@@ -67,7 +67,6 @@ static int mod_init(void);
 static int challenge_fixup(void** param, int param_no);
 static int str_fixup(void** param, int param_no);
 static int hf_fixup(void** param, int param_no);
-static inline int generate_random_secret(void);
 
 
 /*
@@ -227,6 +226,35 @@ static int child_init(int rank)
 }
 
 
+/*
+ * Secret parameter was not used so we generate
+ * a random value here
+ */
+static inline int generate_random_secret(void)
+{
+	int i;
+
+	sec = (char*)pkg_malloc(RAND_SECRET_LEN);
+	if (!sec) {
+		LOG(L_ERR, "generate_random_secret(): No memory left\n");		
+		return -1;
+	}
+
+	srandom(time(0));
+
+	for(i = 0; i < RAND_SECRET_LEN; i++) {
+		sec[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+	}
+
+	secret.s = sec;
+	secret.len = RAND_SECRET_LEN;
+
+	     /*	DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
+
+	return 0;
+}
+
+
 static int mod_init(void)
 {
 	printf("auth module - initializing\n");
@@ -356,31 +384,3 @@ static int hf_fixup(void** param, int param_no)
 	return 0;
 }
 
-
-/*
- * Secret parameter was not used so we generate
- * a random value here
- */
-static inline int generate_random_secret(void)
-{
-	int i;
-
-	sec = (char*)pkg_malloc(RAND_SECRET_LEN);
-	if (!sec) {
-		LOG(L_ERR, "generate_random_secret(): No memory left\n");		
-		return -1;
-	}
-
-	srandom(time(0));
-
-	for(i = 0; i < RAND_SECRET_LEN; i++) {
-		sec[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
-	}
-
-	secret.s = sec;
-	secret.len = RAND_SECRET_LEN;
-
-	     /*	DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
-
-	return 0;
-}
