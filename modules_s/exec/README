@@ -33,7 +33,7 @@ Desc:	executes an external command; user part of current uri is passed
 		to the command as parameter; output of the command
 		is considered URI set (separated by lines)
 
-Name:	exec_cmd
+Name:	exec_msg
 Params: command -- command to be executed
 Desc:	executes an external command; the whole message is passed to
 		it in input, no command-line parameters are added, output of
