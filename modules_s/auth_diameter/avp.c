@@ -24,7 +24,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <netinet/in.h>
+
 
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
@@ -370,8 +372,8 @@ char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 			break;
 		case AAA_AVP_INTEGER32_TYPE:
 			l+=snprintf(dest+l,destLen-l,"Int32: <%u>(%x)",
-				htonl(*((unsigned int*)avp->data.s)),
-				htonl(*((unsigned int*)avp->data.s)));
+				(unsigned int)htonl(*((unsigned int*)avp->data.s)),
+				(unsigned int)htonl(*((unsigned int*)avp->data.s)));
 			break;
 		case AAA_AVP_ADDRESS_TYPE:
 			i = 1;
