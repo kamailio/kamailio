@@ -13,14 +13,23 @@
 void free_cell( struct cell* dead_cell )
 {
    int i;
+   struct retrans_buff* rb;
+   char *b;
+
 
    /* UA Server */ 
    if ( dead_cell->inbound_request )
       sip_msg_free( dead_cell->inbound_request );
    if ( dead_cell->outbound_response )
    {
-      sh_free( dead_cell->outbound_response->retr_buffer );
-      sh_free( dead_cell->outbound_response );
+      b = dead_cell->outbound_response->retr_buffer ;
+      dead_cell->outbound_response->retr_buffer = NULL;
+      sh_free( b );
+
+      rb = dead_cell->outbound_response; 
+      dead_cell->outbound_response = NULL;
+      sh_free( rb );
+      
    }
 
   /* UA Clients */
@@ -29,8 +38,13 @@ void free_cell( struct cell* dead_cell )
       /* outbound requests*/
       if ( dead_cell->outbound_request[i] )
       {
-         sh_free( dead_cell->outbound_request[i]->retr_buffer );
-         sh_free( dead_cell->outbound_request[i] );
+	 b = dead_cell->outbound_request[i]->retr_buffer;
+         dead_cell->outbound_request[i]->retr_buffer = NULL;
+         sh_free( b );
+
+	 rb = dead_cell->outbound_request[i];
+	 dead_cell->outbound_request[i] = NULL;
+         sh_free( rb );
       }
       /* outbound requests*/
       if ( dead_cell -> inbound_response[i] )

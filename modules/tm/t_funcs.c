@@ -571,6 +571,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    char foo;
    int err;
    struct retrans_buff* rb = NULL;
+   char *b;
 
    DBG("DEBUG: t_send_reply: entered\n");
    t_check( hash_table, p_msg );
@@ -589,8 +590,10 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    {
       if (  T->outbound_response->retr_buffer )
        {
-          sh_free( T->outbound_response->retr_buffer );
+	  b = T->outbound_response->retr_buffer;
           T->outbound_response->retr_buffer = NULL;
+          sh_free( b );
+	  rb = NULL;
        }
    }
    else
