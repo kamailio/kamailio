@@ -64,8 +64,11 @@ int process_del_list(str* _d)
 {
 	struct del_itm* p;
 	char b[256];
-	db_key_t keys[2] = {user_col, contact_col};
+	db_key_t keys[2];
 	db_val_t vals[2];
+
+	keys[0] = user_col;
+	keys[1] = contact_col;
 	
 	if (del_root) {
 	     /* FIXME */

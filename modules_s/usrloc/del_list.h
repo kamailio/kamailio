@@ -38,7 +38,7 @@ struct del_itm {
 	struct del_itm* next;
 	int user_len;
 	int cont_len;
-	char tail[0];
+	char tail[1];
 };
 
 

@@ -48,12 +48,16 @@
 
 static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, char* _ha1)
 {
-	db_key_t keys[] = {username_column, domain_column};
+	db_key_t keys[2];
 	db_val_t vals[2];
-	db_key_t col[] = {pass_column};
+	db_key_t col[1];
 	db_res_t* res;
 	str result;
 	char* at;
+
+	keys[0] = username_column;
+	keys[1] = domain_column;
+	col[0] = pass_column;	
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
