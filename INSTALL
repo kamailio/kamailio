@@ -1,5 +1,16 @@
 $Id$
 
+
+TODO
+--we'll probably go for mysql dependancy,
+  then INSTALL needs to be completely
+  changed
+--see TROUBLES -- on some hosts, like mine (Jiri)
+  ser binds to 127.0.0.1 -- not really good for
+  quick-start
+
+
+
 Installation Notes
 
 Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, Solaris/sparc64,
@@ -99,4 +110,139 @@ make tar
 Install(not done yet):
 
 make prefix=/usr/local  install
+
+
+
+Quick-Start Installation Guide
+----------------------------------------------
+
+This guide give you instructions on how to
+set up the SIP Express Router (ser) on your
+box quickly. In case the default configuration
+does not fly, check documentation at ser site
+  http://www.iptel.org/ser
+If the documentation does not resolve your 
+problem you may try contacting us by E-mail at
+  serhelp@iptel.org
+ 
+Note well the default configuration is very simple
+in order to be easily installable and provides
+minimum features. Particularly, authentication
+is disabled, which means anyone can register using
+any name with the server. (This is on purpose to
+avoid installation dependencies on MySQL which is
+needed for storing user credentials.)
+
+
+A) Quick Start
+----------------------------------------------
+
+1) Download an RPM package from our site
+	http://www.iptel.org/ser/
+2) install the package
+	rpm -i <pachage_name>
+3) start the server
+	/etc/init.d/ser start
+4) optionally, watch server's health using the
+   serctl utility
+	- to do so, first set the environment
+	  variable SIP_DOMAIN to your domain 
+	  name, e.g., in Bourne shell, call
+	    export SIP_DOMAIN="foo.bar"
+	- run the serctl utility
+	    /usr/sbin/serctl moni
+5) Register with the server using your favorite
+   SIP User Agent. You may want to look at configuration
+   hints for use of iptel.org site at
+     http://www.iptel.org/phpBB/viewforum.php?forum=1&8
+   For example, users of Windows Messenger need to set
+   in Tools->Options->Accounts the foolowing values:
+     Sign-in Name: <username>@<your_server_address>
+     Advanced->Configure Settings (on)
+     Advanced->Server: <your_server_address>
+     Connect Using: UDP
+
+
+
+B) ser with Persistent Data Storage
+----------------------------------------------
+The default configuration is very simple and
+features many simplifications. In particular,
+it does not authenticate users and loses 
+User Location database on reboot. To provide
+persistency, keep user credentials and remember
+users' locations across reboots, ser can be
+configured to use MySQL. Before you proceed,
+you need to make sure MySQL is installed on
+your box.
+
+
+1) Download an RPM *source* package from our site
+	http://www.iptel.org/ser/
+2) install the package
+	rpm -i <pachage_name>
+3) compile the package
+4) install the package
+5) create MySQL tables
+    /usr/sbin/ser_mysql.sh create
+6) configure ser to use SQL
+    uncomment all lines which are related to 
+    authentication:
+    - loadmodule "/usr/lib/ser/modules/mysql.so"
+    - loadmodule "/usr/lib/ser/modules/auth.so"
+    - modparam("usrloc", "db_mode", 2)
+    - modparam("auth", "secret", "alsdkhglaksdhfkloiwr")
+    - modparam("auth", "calculate_ha1", yes)
+    - if (!www_authorize("iptel.org", "subscriber")) {
+        www_challenge("iptel.org", "0"); 
+        break;
+      };
+7) restart the server
+	/etc/init.d/ser start
+
+
+
+C) Troubleshooting
+----------------------------------------------
+
+
+
+TROUBLES
+
+In the following config, ser bound itself to /dev/lo -- not
+good for quick start.
+
+/etc/ser/ser.cfg
+/etc/init.d/ser restart
+listen
+aliases
+
+[root@cat log]# uname -a
+Linux cat 2.4.18-3 #1 Thu Apr 18 07:37:53 EDT 2002 i686 unknown
+
+/etc/hosts
+
+# Do not remove the following line, or various programs
+# that require network functionality will fail.
+127.0.0.1       cat     localhost.localdomain   localhost
+
+
+[root@cat log]# /sbin/ifconfig 
+eth0      Link encap:Ethernet  HWaddr 00:08:02:38:D9:A0  
+          inet addr:192.168.0.16  Bcast:192.168.0.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING PROMISC MULTICAST  MTU:1500  Metric:1
+          RX packets:152917 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:87759 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:35 txqueuelen:100 
+          RX bytes:216441566 (206.4 Mb)  TX bytes:5542812 (5.2 Mb)
+          Interrupt:5 Base address:0x7000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:162 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:162 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:10568 (10.3 Kb)  TX bytes:10568 (10.3 Kb)
+
 
