@@ -294,7 +294,7 @@ int check_via =  0;
 /* shall use stateful synonym branches? faster but not reboot-safe */
 int syn_branch = 1;
 /* debugging level for memory stats */
-int memlog = L_INFO;
+int memlog = L_DBG;
 /* should replies include extensive warnings? by default yes,
    good for trouble-shooting
 */
