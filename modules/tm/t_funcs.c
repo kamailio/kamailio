@@ -829,7 +829,7 @@ inline void final_response_handler( void *attr)
 	/* send a 408 */
 	if ( r_buf->my_T->status<200
 #ifdef SILENT_FR
-	&& printf("shit ma' man!!!\n") && (0)
+	&& (0)
 	/*should be fork==yes, but we don't have forking yet - bogdan */
 #endif
 	)
