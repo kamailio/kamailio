@@ -38,6 +38,8 @@
 #include "parser/digest/digest_parser.h"
 #include "fifo_server.h"
 #include "name_alias.h"
+#include "hash_func.h"
+#include "hash_func.h"
 
 
 #include "stats.h"
@@ -872,6 +874,12 @@ int main(int argc, char** argv)
 
         init_hfname_parser();
 	init_digest_parser();
+
+	/* init hash fucntion */
+	if (init_hash()<0) {
+		LOG(L_ERR, "ERROR: init_hash failed\n");
+		goto error;
+	}
 
 	/*init mallocs (before parsing cfg !)*/
 	if (init_mallocs()==-1)

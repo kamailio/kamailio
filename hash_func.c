@@ -20,6 +20,7 @@ extern unsigned short int crc_16_tab[];
 #include "crc.h"
 #include "ut.h"
 
+#ifdef _OBSOLETED
 int old_hash( str  call_id, str cseq_nr )
 {
    int  hash_code = 0;
@@ -69,8 +70,13 @@ int old_hash( str  call_id, str cseq_nr )
     if ( cseq_nr.len>0 )
       for( i=0 ; i<cseq_nr.len ; hash_code+=cseq_nr.s[i++] );
 #endif
+	/* this is a buggy line, see bellow hot to fix it -- as this
+	   code is obsoleted I dont care anymore
+	*/
    return hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
 }
+
+#endif
 
 int new_hash( str call_id, str cseq_nr )
 {
@@ -105,7 +111,11 @@ int new_hash( str call_id, str cseq_nr )
 		//hash_code+=crc_32_tab[(cseq_nr.s[i]+hash_code)%243];
 		hash_code+=ccitt_tab[*(cs+i)+123];
 
+#ifdef _BUG
 	hash_code &= (TABLE_ENTRIES-1); /* TABLE_ENTRIES = 2^k */
+#endif
+	/* hash_code conditioning */
+	hash_code=hash_code%(TABLE_ENTRIES-1)+1;
    	return hash_code;
 }
 
@@ -128,10 +138,21 @@ void hashtest_cycle( int hits[TABLE_ENTRIES], char *ip )
 					call_id.len=sprintf( buf1, "%d-%d-%d@%s",(int)i,(int)j,
 						(int)k, ip );
 					cseq.len=sprintf( buf2, "%d", (int)l );
-					printf("%s\t%s\n", buf1, buf2 );
+					/* printf("%s\t%s\n", buf1, buf2 ); */
 					hashv=hash( call_id, cseq );
 					hits[ hashv ]++;
 				}
+}
+
+int init_hash()
+{
+	if (TABLE_ENTRIES != (1<<10)) {
+		LOG(L_WARN, "WARNING: hash function optimized for %d entries\n",
+			1<<10);
+		LOG(L_WARN, "WARNING: use of %d entries may lead "
+			"to unflat distribution\n", TABLE_ENTRIES );
+	}
+	return 1;
 }
 
 void hashtest()
