@@ -6,6 +6,7 @@ $Id$
 ***********************************************
 * Changes/fixes introduced in 0.8.14-1
 ***********************************************
+- experimental x86_64 support
 - experimental mips2/cobalt support
 - some avp memory fixes
 

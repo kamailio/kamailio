@@ -65,7 +65,7 @@ inline static int tsl(fl_lock_t* lock)
 {
 	int val;
 
-#ifdef __CPU_i386
+#if defined(__CPU_i386) || defined(__CPU_x86_64)
 
 #ifdef NOSMP
 	val=0;
@@ -154,7 +154,7 @@ inline static void get_lock(fl_lock_t* lock)
 
 inline static void release_lock(fl_lock_t* lock)
 {
-#ifdef __CPU_i386
+#if defined(__CPU_i386) || defined(__CPU_x86_64)
 	char val;
 	val=0;
 	asm volatile(

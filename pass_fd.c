@@ -205,7 +205,7 @@ again:
 		*fd=*((int*) CMSG_DATA(cmsg));
 	}else{
 		LOG(L_ERR, "ERROR: receive_fd: no descriptor passed, cmsg=%p,"
-				"len=%d\n", cmsg, cmsg->cmsg_len);
+				"len=%d\n", cmsg, (unsigned)cmsg->cmsg_len);
 		*fd=-1;
 		/* it's not really an error */
 	}
