@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -72,39 +76,33 @@ int    rpl_pipe[2];
 int    req_pipe[2];
 
 
+/*
+ * Exported functions
+ */
+
+static cmd_export_t cmds[] = {
+	{"extcmd_dump_req", dump_request, 0, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"listen_address", STR_PARAM, &my_address},
+	{"listen_port",    INT_PARAM, &my_port   },
+	{0, 0, 0}
+};
+
+
 struct module_exports exports= {
 	"extcmd",
-	(char*[]){
-				"extcmd_dump_req"
-			},
-	(cmd_function[]){
-					dump_request
-					},
-	(int[]){
-				0
-			},
-	(fixup_function[]){
-				0
-		},
-	1,
-
-	(char*[]) {   /* Module parameter names */
-		"listen_address",
-		"listen_port"
-	},
-	(modparam_t[]) {   /* Module parameter types */
-		STR_PARAM,
-		INT_PARAM
-	},
-	(void*[]) {   /* Module parameter variable pointers */
-		&my_address,
-		&my_port
-	},
-	2,      /* Number of module paramers */
-
-	extcmd_init,   /* module initialization function */
-	(response_function) 0,
-	(destroy_function)  0,   /* module exit function */
+	cmds,                    /* Exported functions */
+	params,                  /* Exported parameters */
+	extcmd_init,             /* module initialization function */
+	0,
+	0,   /* module exit function */
 	0,
 	(child_init_function) extcmd_child_init  /* per-child init function */
 };
