@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int request_received(  table hash_table, char* incoming_req_uri, char *from, char* to, char* tag, char* call_id, char* cseq_nr ,char* cseq_method, char* outgoing_req_uri)
+#include "tm.h"
+
+int request_received( struct s_table* hash_table, 
+		char* incoming_req_uri, char *from, char* to, char* tag, 
+		char* call_id, char* cseq_nr ,char* cseq_method, char* outgoing_req_uri)
 {
    struct cell*  matched_trans = 0;
    struct cell*  new_trans         = 0;
@@ -102,7 +106,9 @@ int request_received(  table hash_table, char* incoming_req_uri, char *from, cha
 
 
 
-int response_received(  table hash_table, char* reply_code, char* incoming_url , char* via, char* label , char* from , char* to , char* tag , char* call_id , char* cseq_nr ,char* cseq_method )
+int response_received(  struct s_table* hash_table, char* reply_code, char* incoming_url , 
+	char* via, char* label , char* from , char* to , char* tag , 
+	char* call_id , char* cseq_nr ,char* cseq_method )
 {
    struct cell*  matched_trans = 0;
    char* p;
@@ -234,7 +240,7 @@ int response_received(  table hash_table, char* reply_code, char* incoming_url ,
 
 int main()
 {
-   table  hash_table;
+   struct s_table*  hash_table;
     struct cell* cell1,*cell2 , *cell3 ,*cell4;
 
    hash_table = init_hash_table();
