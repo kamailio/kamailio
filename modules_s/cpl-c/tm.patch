@@ -74,7 +74,7 @@ diff -ruib sip_router_head/modules/tm/t_fwd.c sip_router_md/modules/tm/t_fwd.c
  	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
 diff -ruib sip_router_head/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks.c
 --- sip_router_head/modules/tm/t_hooks.c	2003-03-19 19:40:09.000000000 +0100
-+++ sip_router_md/modules/tm/t_hooks.c	2003-08-19 19:02:47.000000000 +0200
++++ sip_router_md/modules/tm/t_hooks.c	2003-11-24 14:13:47.000000000 +0100
 @@ -38,6 +38,11 @@
  #include "../../error.h"
  #include "../../mem/mem.h"
@@ -168,7 +168,7 @@ diff -ruib sip_router_head/modules/tm/t_hooks.c sip_router_md/modules/tm/t_hooks
 +
 diff -ruib sip_router_head/modules/tm/t_hooks.h sip_router_md/modules/tm/t_hooks.h
 --- sip_router_head/modules/tm/t_hooks.h	2003-07-08 17:24:27.000000000 +0200
-+++ sip_router_md/modules/tm/t_hooks.h	2003-08-06 21:13:41.000000000 +0200
++++ sip_router_md/modules/tm/t_hooks.h	2003-11-24 14:24:44.000000000 +0100
 @@ -36,7 +36,6 @@
  
  #include "defs.h"
@@ -270,7 +270,7 @@ diff -ruib sip_router_head/modules/tm/t_lookup.c sip_router_md/modules/tm/t_look
  		return 1;
 diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply.c
 --- sip_router_head/modules/tm/t_reply.c	2003-11-11 20:37:16.000000000 +0100
-+++ sip_router_md/modules/tm/t_reply.c	2003-11-13 20:58:33.000000000 +0100
++++ sip_router_md/modules/tm/t_reply.c	2003-11-24 17:29:20.000000000 +0100
 @@ -309,11 +309,17 @@
  	if (code>=200) {
  		if (trans->local) {
@@ -339,7 +339,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  	/* remember we are back in request processing, but process
  	 * a shmem-ed replica of the request; advertise it in rmode;
  	 * for example t_reply needs to know that
-@@ -435,90 +411,95 @@
+@@ -435,90 +411,116 @@
  	backup_t=get_t();
  	backup_msgid=global_msg_id;
  	/* fake transaction and message id */
@@ -404,7 +404,8 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 +
  /* return 1 if a failure_route processes */
 -int failure_route(struct cell *t)
-+static inline int run_failure_route(struct cell *t)
++static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
++																	int code)
  {
 -	struct sip_msg faked_msg;
 -	struct sip_msg *orig_request;
@@ -412,18 +413,23 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 +	struct sip_msg *shmem_msg = t->uas.request;
  
  	/* don't do anything if we don't have to */
- 	if (!t->on_negative) return 0;
+-	if (!t->on_negative) return 0;
 -	orig_request=t->uas.request;
++	if ( !t->cb_array[ TMCB_ON_FAILURE ] && !t->on_negative
++#ifndef OLD_TMCB_OBSOLETE
++		&& !callback_array[ TMCB_ON_FAILURE ]
++#endif
++	) {
++		return 0;
++	}
  	/* failure_route for a local UAC? */
 -	if (!orig_request) {
+-		LOG(L_WARN, "Warning: failure_route: no UAC support\n");
 +	if (!shmem_msg) {
- 		LOG(L_WARN, "Warning: failure_route: no UAC support\n");
- 		return 0;
- 	}
- 
--	/* if fake message creation failes, return error too */
--	if (!faked_env(&faked_msg, t, orig_request, 0 /* create fake */ )) {
--		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
++		LOG(L_WARN, "Warning: run_failure_handlers: no UAC support\n");
++		return 0;
++	}
++
 +	/* on_negative_reply faked msg now copied from shmem msg (as opposed
 +	 * to zero-ing) -- more "read-only" actions (exec in particular) will
 +	 * work from reply_route as they will see msg->from, etc.; caution,
@@ -439,7 +445,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 +	if (shmem_msg->new_uri.s!=0 && shmem_msg->new_uri.len!=0) {
 +		fake.new_uri.s=pkg_malloc(shmem_msg->new_uri.len+1);
 +		if (!fake.new_uri.s) {
-+			LOG(L_ERR, "ERROR: run_failure_route: no uri/pkg mem\n");
++			LOG(L_ERR, "ERROR: run_failure_handlers: no uri/pkg mem\n");
 +			return 0;
 +		}
 +		fake.new_uri.len=shmem_msg->new_uri.len;
@@ -453,17 +459,20 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 +	if (shmem_msg->add_rm) {
 +		fake.add_rm=dup_lump_list(shmem_msg->add_rm);
 +		if (!fake.add_rm) { /* non_emty->empty ... failure */
-+			LOG(L_ERR, "ERROR: run_failure_route: lump dup failed\n");
++			LOG(L_ERR, "ERROR: run_failure_handlers: lump dup failed\n");
 +			if (fake.new_uri.s) pkg_free(fake.new_uri.s);
-+			return 0;
-+		}
+ 		return 0;
+ 	}
 +	}
-+
+ 
+-	/* if fake message creation failes, return error too */
+-	if (!faked_env(&faked_msg, t, orig_request, 0 /* create fake */ )) {
+-		LOG(L_ERR, "ERROR: on_negative_reply: faked_env failed\n");
 +	/* same for the body lumps */
 +	if (shmem_msg->body_lumps) {
 +		fake.body_lumps=dup_lump_list(shmem_msg->body_lumps);
 +		if (!fake.body_lumps) { /* non_empty->empty ... failure */
-+			LOG(L_ERR, "ERROR: on_negative_reply: lump dup failed\n");
++			LOG(L_ERR, "ERROR: on_negative_handlers: lump dup failed\n");
 +			free_duped_lump_list(fake.add_rm);
 +			if (fake.new_uri.s) pkg_free(fake.new_uri.s);
  		return 0;
@@ -472,8 +481,9 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 +
 +	/* fake also the env. conforming to the fake msg */
 +	faked_env( t, &fake);
-+	/* DONE with faking ;-) -> run the route */
++	/* DONE with faking ;-) -> run the handlers */
  
++	if (t->on_negative) {
  	/* avoid recursion -- if failure_route forwards, and does not 
  	 * set next failure route, failure_route will not be rentered
  	 * on failure */
@@ -484,8 +494,21 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 -			"Error in do_action\n");
 -	/* restore original environment */
 -	faked_env(&faked_msg, 0, orig_request, 1 );
-+	if (run_actions(failure_rlist[t->on_negative], &fake)<0)
-+		LOG(L_ERR, "ERROR: run_failure_route: Error in do_action\n");
++		if (run_actions(failure_rlist[t->on_negative], &fake)<0)
++			LOG(L_ERR, "ERROR: run_failure_handlers: Error in do_action\n");
++	}
++#ifndef OLD_TMCB_OBSOLETE
++	if ( callback_array[ TMCB_ON_FAILURE ] ) {
++		t->uas.request = &fake;
++		callback_event( TMCB_ON_FAILURE, t, rpl, code);
++		t->uas.request = shmem_msg;
++	}
++#endif
++	if ( t->cb_array[ TMCB_ON_FAILURE ] ) {
++		t->uas.request = &fake;
++		run_trans_callbacks( TMCB_ON_FAILURE, t, rpl, code);
++		t->uas.request = shmem_msg;
++	}
 +
 +	/* restore original environment and free the fake msg */
 +	faked_env( t, 0);
@@ -496,7 +519,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  	return 1;
  }
  
-@@ -573,7 +554,6 @@
+@@ -573,7 +575,6 @@
  	int branch , int *should_store, int *should_relay,
  	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
  {
@@ -504,7 +527,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  	int branch_cnt;
  	int picked_branch;
  	int picked_code;
-@@ -631,15 +611,32 @@
+@@ -631,15 +632,13 @@
  
  		/* no more pending branches -- try if that changes after
  		   a callback; save banch count to be able to determine
@@ -512,37 +535,19 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
 -		*/
 +		   later if new branches were initiated */
  		branch_cnt=Trans->nr_of_outgoings;
+-		callback_event( TMCB_ON_FAILURE, Trans, 
 +
-+		/* run ON_FAILURE callbacks, if any */
-+		if (Trans->cb_array[ TMCB_ON_FAILURE ]
-+#ifndef OLD_TMCB_OBSOLETE
-+		|| callback_array[ TMCB_ON_FAILURE ]
-+#endif
-+		) {
-+#ifndef OLD_TMCB_OBSOLETE
-+			/* fake the enviroment according to the orig. req. msg. - is better
-+			 * to use the req. instead of rpl. because all exported TM functions
-+			 * take as param a sip_msg that usually is a req. */
-+			faked_env(Trans,Trans->uas.request);
- 		callback_event( TMCB_ON_FAILURE, Trans, 
++		/* run ON_FAILURE handlers ( route and callbacks) */
++		run_failure_handlers( Trans,
  			picked_branch==branch?reply:Trans->uac[picked_branch].reply, 
  			picked_code);
 -		/* here, we create a faked environment, from which we
 -		 * return to request processing, if marked to do so */
 -		failure_route(Trans);
-+#endif
-+			run_trans_callbacks( TMCB_ON_FAILURE, Trans,
-+				picked_branch==branch?reply:Trans->uac[picked_branch].reply,
-+				picked_code);
-+			/* restore the env */
-+			faked_env(Trans,0);
-+		}
-+		/* run failure script route, if any */
-+		run_failure_route(Trans);
  
  		/* look if the callback perhaps replied transaction; it also
  		   covers the case in which a transaction is replied localy
-@@ -876,7 +873,10 @@
+@@ -876,7 +875,10 @@
  		   anyway 
          */
  		if (msg_status<300 && branch==relay) {
@@ -553,7 +558,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  		}
  		/* try bulding the outbound reply from either the current
  	       or a stored message */
-@@ -944,8 +944,11 @@
+@@ -944,8 +946,11 @@
  
  		if (t->is_invite && relayed_msg!=FAKED_REPLY
  				&& relayed_code>=200 && relayed_code < 300
@@ -567,7 +572,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  			totag_retr=update_totag_set(t, relayed_msg);
  		}
  	}; /* if relay ... */
-@@ -957,8 +960,12 @@
+@@ -957,8 +962,12 @@
  		SEND_PR_BUFFER( uas_rb, buf, res_len );
  		DBG("DEBUG: reply relayed. buf=%p: %.9s..., shmem=%p: %.9s\n", 
  			buf, buf, uas_rb->buffer, uas_rb->buffer );
@@ -581,7 +586,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  		pkg_free( buf );
  	}
  
-@@ -1029,8 +1036,11 @@
+@@ -1029,8 +1038,11 @@
  		update_reply_stats( winning_code );
  		if (t->is_invite && winning_msg!=FAKED_REPLY 
  				&& winning_code>=200 && winning_code <300
@@ -595,7 +600,7 @@ diff -ruib sip_router_head/modules/tm/t_reply.c sip_router_md/modules/tm/t_reply
  			totag_retr=update_totag_set(t, winning_msg);
  		}
  		
-@@ -1039,8 +1049,12 @@
+@@ -1039,8 +1051,12 @@
  	if (local_winner>=0 && winning_code>=200 ) {
  		DBG("DEBUG: local transaction completed\n");
  		if (!totag_retr) {
