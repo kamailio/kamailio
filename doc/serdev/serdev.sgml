@@ -1264,7 +1264,7 @@ struct ip_addr{
 	    </para>
 	    <para>
 		The structure will be described in more detail later in chapter 
-		<link linkend="sip-msg-modif">SIP Message Modifications</link>.
+		SIP Message Modifications.
 	    </para>
 	</section> <!-- lump -->
 	
