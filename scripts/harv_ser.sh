@@ -46,7 +46,7 @@ BEGIN {
     rpl200=0; rpl202=0; rpl2xx=0;
     rpl300=0; rpl302=0; rpl3xx=0;
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
-        rpl406=0;rpl407=0;rpl408=0;rpl410=0;
+        rpl406=0;rpl407=0;rpl408=0;rpl410=0; rpl415=0;
         rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
 		rpl488=0;
         rpl4xx=0;
@@ -84,6 +84,13 @@ BEGIN {
 	ua_insipid=0;
 	ua_hostip=0;
 	ua_mxsf=0;
+	ua_grandstream=0;
+	ua_tellme=0;
+	ua_pocketsipm=0;
+	ua_estara=0;
+	ua_vovida=0;
+	ua_jsip=0;
+	ua_nortel=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -92,6 +99,7 @@ BEGIN {
 	server_intertex=0
 	server_hotsip=0
 	server_3com=0
+	server_epygi=0;
 
 }
 
@@ -161,6 +169,35 @@ ua==0 && /User-Agent:.*Hotsip/ {
 	ua_hotsip++
 	ua=1
 }
+ua==0 && /User-Agent:.*GrandStream/ {
+	ua_grandstream++
+	ua=1
+}
+ua==0 && /User-Agent:.*Tellme/ {
+	ua_tellme++
+	ua=1
+}
+ua==0 && /User-Agent:.*PocketSipM/ {
+	ua_pocketsipm++
+	ua=1
+}
+ua==0 && /User-Agent:.*eStara/ {
+	ua_estara++
+	ua=1
+}
+ua==0 && /User-Agent:.*vovida/ {
+	ua_vovida++
+	ua=1
+}
+ua==0 && /User-Agent:.*jSIP/ {
+	ua_jsip++
+	ua=1
+}
+ua==0 && /User-Agent:.*Nortel/ {
+	ua_nortel++
+	ua=1
+}
+
 
  { comment="hack to deal with old version of ngrep (breaking in columns)"
 		 c="skip lines which words which frequently appeared on broken "
@@ -196,6 +233,10 @@ server==0 && /Server:.*HotSip/ {
 }
 server==0 && /Server:.*3Com/ {
 	server_3com++
+	server=1
+}
+server==0 && /Server:.*EPYGI/ {
+	server_epygi++
 	server=1
 }
 server==0 && /Server:/ {
@@ -329,6 +370,10 @@ reply==0 && request=0 {
     rpl410++
     next
 }
+/SIP\/2\.0 415/ {
+    rpl415++
+    next
+}
 /SIP\/2\.0 478/ {
     rpl478++
     next
@@ -459,6 +504,7 @@ END {
 	print "407 (Proxy Authentication Required):" rpl407 
 	print "408 (Request Timeout): " rpl408  
 	print "410 (Gone): " rpl410
+	print "415 (Unsupported Media): " rpl415
 	print "478 (Unresolveable): " rpl478 
 	print "479 (private IP): " rpl479 
 	print "481 (Call/Transaction does not exist): " rpl481 
@@ -489,11 +535,14 @@ END {
 	print "linphone: " ua_linphone " ubiquity: " ua_ubiquity
 	print "3com: " ua_3com " IPDialog: " ua_ipdialog " Epygi: " ua_epygi
 	print "Jasomi: " ua_jasomi " Cisco: " ua_cisco " insipid: " ua_insipid
-	print "Hotsip: " ua_hotsip " mxsf: " ua_mxsf " UFO: " ua_xx
+	print "Hotsip: " ua_hotsip " mxsf: " ua_mxsf " GrandStream: " ua_grandstream
+	print "Tellme: " ua_tellme " PocketSipM: " ua_pocketsipm 
+	print "eStara: " ua_estara " Vovida: " ua_vovida 
+	print "jSIP: " ua_jsip " Nortel: " ua_nortel " UFO: " ua_xx
 	print "## Servers"
 	print "Cisco: " server_cisco " ser: " server_ser 
 	print "Intertex: " server_intertex " Hotsip: " server_hotsip
-	print "3com: " server_3com " UFO: " server_xx
+	print "3com: " server_3com " EPYGI: " server_epygi " UFO: " server_xx
 }
 '
 
