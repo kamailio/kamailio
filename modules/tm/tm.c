@@ -25,10 +25,10 @@ static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
-static int fixup_t_forward_def(void** param, int param_no);
+//static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
 static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar );
-static w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  );
+static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo, char* bar );
 static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar );
 
 static int t_relay_to( struct sip_msg  *p_msg ,  char *str_ip , char *str_port  );
@@ -151,7 +151,7 @@ static int fixup_t_forward(void** param, int param_no)
 			return 0;
 		}else{
 			LOG(L_ERR, "TM module:fixup_t_forward: bad port number <%s>\n",
-					*param);
+					(char*)(*param));
 			return E_UNSPEC;
 		}
 	}
@@ -159,7 +159,7 @@ static int fixup_t_forward(void** param, int param_no)
 }
 
 
-
+/*
 static int fixup_t_forward_def(void** param, int param_no)
 {
 	char* name;
@@ -180,7 +180,7 @@ static int fixup_t_forward_def(void** param, int param_no)
 			goto copy;
 		}
 #endif
-		/* fail over to normal lookup */
+		/ fail over to normal lookup /
 		he=gethostbyname(name);
 		if (he==0){
 			LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
@@ -195,7 +195,7 @@ static int fixup_t_forward_def(void** param, int param_no)
 	}
 	return 0;
 }
-
+*/
 
 
 static int fixup_t_send_reply(void** param, int param_no)
@@ -211,7 +211,7 @@ static int fixup_t_send_reply(void** param, int param_no)
 			return 0;
 		}else{
 			LOG(L_ERR, "TM module:fixup_t_send_reply: bad  number <%s>\n",
-					*param);
+					(char*)(*param));
 			return E_UNSPEC;
 		}
 	}
@@ -274,11 +274,15 @@ static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar )
     return t_unref( /* p_msg */ );
 }
 
-static w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
+static int w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar)
 {
-	if (t_check( p_msg  , 0 , 0 )==-1) return 1;
-	if (T) return t_retransmit_reply( p_msg );
-	else return -1;
+	if (t_check( p_msg  , 0 , 0 )==-1) 
+		return 1;
+	if (T)
+		return t_retransmit_reply( p_msg );
+	else 
+		return -1;
+	return 1;
 }
 
 static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
@@ -294,9 +298,9 @@ static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
 
 static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 {
-
+	struct proxy_l *proxy;
 	enum addifnew_status status;
-	int ret;
+	int ret=0;
 
 	status = t_addifnew( p_msg );
 
@@ -332,8 +336,10 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 			break;
 		case AIN_NEWACK:	/* it's an ACK for which no transaction exists */
 			DBG( "SER: forwarding ACK  statelessly\n");
-			forward_request( p_msg , mk_proxy_from_ip(
-				(unsigned int )str_ip, (unsigned int)str_port) ) ;
+			proxy=mk_proxy_from_ip((unsigned int)str_ip,(unsigned int)str_port);
+			forward_request( p_msg , proxy ) ;
+			free_proxy(proxy);
+			free(proxy);
 			ret=1;
 			break;
 		case AIN_OLDACK:	/* it's an ACK for an existing transaction */

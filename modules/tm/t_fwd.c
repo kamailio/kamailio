@@ -18,13 +18,13 @@
 int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param )
 {
-	unsigned int dest_ip     = dest_ip_param;
-	unsigned int dest_port  = dest_port_param;
-	int	branch;
-	unsigned int len;
-	char               *buf, *shbuf;
-	struct retrans_buff *rb;
-	struct cell      *T_source = T;
+	unsigned int        dest_ip = dest_ip_param;
+	unsigned int        dest_port = dest_port_param;
+	int                  branch;
+	unsigned int         len;
+	char                *buf, *shbuf;
+	struct retrans_buff *rb = 0;
+	struct cell         *T_source = T;
 
 
 	buf=NULL;
@@ -161,15 +161,16 @@ error:
 }
 
 int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
-	unsigned int dest_port_param )
+										unsigned int dest_port_param )
 {
-
 	int branch;
 	int len;
 	char *buf;
-	struct sockaddr_in to_sock;
-	struct retrans_buff *rb;
 	struct retrans_buff *srb;
+#ifdef _DONT_USE
+	struct sockaddr_in to_sock;
+#endif
+
 
 
 	/* drop local ACKs */
@@ -227,6 +228,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	relay_ack( T, branch, srb, len );
 	return 1;
 
+#ifdef _DON_USE
 fwd_sl: /* some strange conditions occured; try statelessly */
 	LOG(L_ERR, "ERROR: fwd-ing a 2xx ACK with T-state failed; "
 		"trying statelessly\n");
@@ -238,4 +240,5 @@ fwd_sl: /* some strange conditions occured; try statelessly */
 		sizeof(struct sockaddr_in) );
 	free( buf );
 	return 1;
+#endif
 }

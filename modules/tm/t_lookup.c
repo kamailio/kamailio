@@ -221,7 +221,7 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 					&& EQ_STR(from) )
 					{ /* WE FOUND THE GOLDEN EGG !!!! */
 						DBG("DEBUG: t_lookupOriginalT: canceled transaction"
-							" found (%x)! \n",p_cell );
+							" found (%p)! \n",p_cell );
 						return p_cell;
 					}
 		/* next transaction */
@@ -244,13 +244,16 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch ,
 												unsigned int *local_cancel)
 {
 	struct cell*  p_cell;
-	unsigned int loop_code    = 0;
 	unsigned int hash_index   = 0;
 	unsigned int entry_label  = 0;
 	unsigned int branch_id    = 0;
-	char  *loopi,*hashi, *syni, *branchi, *p, *n;
-	int loopl,hashl, synl, branchl;
+	char  *hashi, *syni, *branchi, *p, *n;
+	int hashl, synl, branchl;
 	int scan_space;
+#ifndef USE_SYNONIM
+	char *loopi;
+	int loopl;
+#endif
 
 	/* split the branch into pieces: loop_detection_check(ignored),
 	 hash_table_id, synonym_id, branch_id */
@@ -356,8 +359,6 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch ,
 	/* nothing found */
 	DBG("DEBUG: t_reply_matching: no matching transaction exists\n");
 
-nomatch:
-	unlock(&(hash_table->entrys[hash_index].mutex));
 nomatch2:
 	DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
 	*p_branch = -1;
@@ -425,10 +426,8 @@ int t_check( struct sip_msg* p_msg , int *param_branch, int *param_cancel)
 */
 int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 {
-	char *c;
-
 	char *begin;
-	unsigned int size, orig_size, n;
+	unsigned int size, orig_size;
 
 	begin=p_msg->add_to_branch_s+p_msg->add_to_branch_len;
 	orig_size = size=MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len;
@@ -446,7 +445,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	if (int2reverse_hex( &begin, &size, branch)==-1) return -1;
 
 	p_msg->add_to_branch_len+=(orig_size-size);
-	DBG("DEBUG: XXX branch label created now: %.*s (%d)\n",
+	DBG("DEBUG: XXX branch label created now: %.*s\n",
 		p_msg->add_to_branch_len, p_msg->add_to_branch_s );
 	return 0;
 

@@ -9,7 +9,7 @@
 #include "../../config.h"
 #include "../../parser_f.h"
 #include "../../ut.h"
-#include "../../timer.h"
+//#include "../../timer.h"
 
 
 
@@ -29,83 +29,6 @@ unsigned int     global_msg_id;
 struct s_table*  hash_table;
 
 void timer_routine(unsigned int, void*);
-
-
-
-
-
-/* remove from timer list */
-inline void reset_timer( struct s_table *hash_table, struct timer_link* tl )
-{
-	/* lock(timer_group_lock[ tl->tg ]); */
-	/* hack to work arround this timer group thing*/
-	lock(hash_table->timers[timer_group[tl->tg]].mutex);
-	remove_timer_unsafe( tl );
-	unlock(hash_table->timers[timer_group[tl->tg]].mutex);
-	/*unlock(timer_group_lock[ tl->tg ]);*/
-}
-
-
-
-
-/* determine timer length and put on a correct timer list */
-inline void set_timer( struct s_table *hash_table, struct timer_link *new_tl,
-														enum lists list_id )
-{
-	unsigned int timeout;
-	struct timer* list;
-	static enum lists to_table[NR_OF_TIMER_LISTS] = {
-		FR_TIME_OUT, INV_FR_TIME_OUT, WT_TIME_OUT, DEL_TIME_OUT,
-		RETR_T1, RETR_T1 << 1, RETR_T1 << 2, RETR_T2 };
-
-	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
-		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
-#ifdef EXTRA_DEBUG
-		abort();
-#endif
-		return;
-	}
-	timeout = to_table[ list_id ];
-	list= &(hash_table->timers[ list_id ]);
-
-	lock(list->mutex);
-	/* make sure I'm not already on a list */
-	remove_timer_unsafe( new_tl );
-	add_timer_unsafe( list, new_tl, get_ticks()+timeout);
-	unlock(list->mutex);
-}
-
-
-
-
-static inline void reset_retr_timers( struct s_table *h_table,
-													struct cell *p_cell )
-{
-	int ijk;
-	struct retrans_buff *rb;
-
-	/* lock the first timer list of the FR group -- all other
-	   lists share the same lock*/
-	lock(hash_table->timers[RT_T1_TO_1].mutex);
-	remove_timer_unsafe( & p_cell->outbound_response.retr_timer );
-	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-		if ( rb = p_cell->outbound_request[ijk] ) {
-			remove_timer_unsafe( & rb->retr_timer );
-		}
-	}
-	unlock(hash_table->timers[RT_T1_TO_1].mutex);
-
-	lock(hash_table->timers[FR_TIMER_LIST].mutex);
-	remove_timer_unsafe( & p_cell->outbound_response.fr_timer );
-	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-		if ( rb = p_cell->outbound_request[ijk] ) {
-			remove_timer_unsafe( & rb->fr_timer );
-		}
-	}
-	unlock(hash_table->timers[FR_TIMER_LIST].mutex);
-	DBG("DEBUG:stop_RETR_and_FR_timers : timers stopped\n");
-}
-
 
 
 
@@ -344,9 +267,8 @@ int t_should_relay_response( struct cell *Trans , int new_code,
   */
 int t_put_on_wait(  struct cell  *Trans  )
 {
-	struct timer_link *tl;
 	unsigned int i;
-	struct retrans_buff* rb;
+	//struct retrans_buff* rb;
 
 #ifndef WAIT
 	if (is_in_timer_list2( &(Trans->wait_tl)))
@@ -414,6 +336,7 @@ int t_put_on_wait(  struct cell  *Trans  )
 int t_cancel_branch(unsigned int branch)
 {
 	LOG(L_ERR, "ERROR: t_cancel_branch: NOT IMPLEMENTED YET\n");
+	return 1;
 }
 
 
@@ -565,7 +488,6 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	struct hdr_field    *hdr;
 	char                *cancel_buf, *p, *via;
 	unsigned int         len, via_len;
-	int                  n;
 	struct retrans_buff *srb;
 
 	if (Trans->outbound_cancel[branch]!=NO_CANCEL)
@@ -846,7 +768,7 @@ inline void retransmission_handler( void *attr)
 {
 	struct retrans_buff* r_buf ;
 	enum lists id;
-	DBG("DEBUG: entering retransmisson with attr = %x\n",attr);
+	DBG("DEBUG: entering retransmisson with attr = %p\n",attr);
 	r_buf = (struct retrans_buff*)attr;
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) {
@@ -991,7 +913,6 @@ inline void delete_handler( void *attr)
 void timer_routine(unsigned int ticks , void * attr)
 {
 	struct s_table    *hash_table = (struct s_table *)attr;
-	struct timer*      timers= hash_table->timers;
 	struct timer_link *tl, *tmp_tl;
 	int                id;
 
@@ -1043,7 +964,6 @@ struct retrans_buff *build_ack( struct sip_msg* rpl, struct cell *trans, int bra
 	struct hdr_field    *hdr;
 	char                *ack_buf, *p, *via;
 	unsigned int         len, via_len;
-	int                  n;
 	struct retrans_buff *srb;
 
 	ack_buf = 0;

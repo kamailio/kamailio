@@ -75,7 +75,6 @@ int new_hash( str call_id, str cseq_nr )
 	int hash_code = 0;
 	int i,j, k, third;
 	int ci_len, cs_len;
-	char c;
 	char *ci, *cs;
 
 	/* trim EoLs */
@@ -96,8 +95,8 @@ int new_hash( str call_id, str cseq_nr )
 	third=(ci_len-1)/3;
 	for ( i=ci_len-1, j=2*third, k=third;
 		k>0 ; i--, j--, k-- ) {
-		hash_code+=crc_16_tab[*(ci+i) /*+7*/ ]+
-			ccitt_tab[*(ci+k)+63]+	
+		hash_code+=crc_16_tab[(unsigned char)(*(ci+i)) /*+7*/ ]+
+			ccitt_tab[*(ci+k)+63]+
 			ccitt_tab[*(ci+j)+13];
 	}
 	for( i=0 ; i<cs_len ; i++ )
@@ -111,7 +110,7 @@ int new_hash( str call_id, str cseq_nr )
 void hashtest_cycle( int hits[TABLE_ENTRIES], char *ip )
 {
 	long int i,j,k, l;
-	int len1, len2, hashv;
+	int  hashv;
 	static char buf1[1024];
 	static char buf2[1024];
 	str call_id; 
@@ -124,8 +123,9 @@ void hashtest_cycle( int hits[TABLE_ENTRIES], char *ip )
 		for (j=85296341;j<85296341+10;j++)
 			for (k=987654;k<=987654+10;k++)
 				for (l=101;l<201;l++) {
-					call_id.len=sprintf( buf1, "%d-%d-%d@%s", i,j,k, ip );
-					cseq.len=sprintf( buf2, "%d", l );
+					call_id.len=sprintf( buf1, "%d-%d-%d@%s",(int)i,(int)j,
+						(int)k, ip );
+					cseq.len=sprintf( buf2, "%d", (int)l );
 					printf("%s\t%s\n", buf1, buf2 );
 					hashv=hash( call_id, cseq );
 					hits[ hashv ]++;

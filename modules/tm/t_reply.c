@@ -51,7 +51,7 @@ int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 {
 	unsigned int len, buf_len;
-	char * buf, *shbuf;
+	char * buf;
 	struct retrans_buff *rb;
 
 	buf = build_res_buf_from_sip_req(code,text,T->tag->s,T->tag->len,
@@ -192,15 +192,15 @@ error:
   */
 int t_on_reply( struct sip_msg  *p_msg )
 {
-	unsigned int branch,len, msg_status, msg_class, save_clone;
+	unsigned int branch, msg_status, msg_class, save_clone;
 	unsigned int local_cancel;
-	struct sip_msg *clone, *backup;
+	struct sip_msg *clone=0, *backup=0;
 	int relay;
 	int start_fr = 0;
 	int is_invite;
 	/* retransmission structure of outbound reply and request */
-	struct retrans_buff *orq_rb, *orp_rb, *ack_rb;
-	char *buf;
+	struct retrans_buff *orq_rb=0, *orp_rb=0, *ack_rb=0;
+	char *buf=0;
 	/* length of outbound reply */
 	unsigned int orp_len;
 	/* buffer length (might be somewhat larger than message size */
@@ -342,8 +342,6 @@ int t_on_reply( struct sip_msg  *p_msg )
 		T->tag=&(get_to(clone)->tag_value);
 	}
 
-
-cleanup:
 	UNLOCK_REPLIES( T );
 	if (relay >= 0) {
 		SEND_PR_BUFFER( orp_rb, buf, orp_len );

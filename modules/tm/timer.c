@@ -7,6 +7,7 @@
 #include "h_table.h"
 #include "timer.h"
 #include "../../dprint.h"
+#include "lock.h"
 
 int timer_group[NR_OF_TIMER_LISTS] = 
 {
@@ -117,7 +118,7 @@ void add_timer_unsafe( struct timer *timer_list, struct timer_link *tl,
 struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 																int time )
 {
-	struct timer_link *tl , *tmp , *end, *ret;
+	struct timer_link *tl , *end, *ret;
 
 	/* quick check whether it is worth entering the lock */
 	if (timer_list->first_tl.next_tl==&timer_list->last_tl ||

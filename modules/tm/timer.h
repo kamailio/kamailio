@@ -5,7 +5,6 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
-#include "lock.h"
 
 
 
@@ -29,6 +28,7 @@ enum lists
 extern int timer_group[NR_OF_TIMER_LISTS];
 struct timer;
 
+#include "lock.h"
 
 
 /* all you need to put a cell in a timer list

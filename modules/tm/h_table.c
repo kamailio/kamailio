@@ -8,8 +8,7 @@
 #include "sh_malloc.h"
 #include "../../md5utils.h"
 
-/*   Frees the all the containes of a cell and the cell's body itself
-  */
+/* containes of a cell and the cell's body itself */
 void free_cell( struct cell* dead_cell )
 {
 	int i;
@@ -21,24 +20,24 @@ void free_cell( struct cell* dead_cell )
 	shm_lock();
 	if ( dead_cell->inbound_request )
 		sip_msg_free_unsafe( dead_cell->inbound_request );
-	if (b=dead_cell->outbound_response.retr_buffer)
+	if ((b=dead_cell->outbound_response.retr_buffer))
 		shm_free_unsafe( b );
 
 	/* UA Clients */
 	for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
 	{
 		/* outbound requests*/
-		if ( rb=dead_cell->outbound_request[i] )
+		if ( (rb=dead_cell->outbound_request[i]) )
 		{
 			if (rb->retr_buffer) shm_free_unsafe( rb->retr_buffer );
 			dead_cell->outbound_request[i] = NULL;
 			shm_free_unsafe( rb );
 		}
 		/* outbound ACKs, if any */
-		if (rb=dead_cell->outbound_ack[i] )
+		if ( (rb=dead_cell->outbound_ack[i]) )
 			shm_free_unsafe( rb );
 		/* local cancel , if any */
-		if (rb=dead_cell->outbound_cancel[i] )
+		if ( (rb=dead_cell->outbound_cancel[i]) )
 			shm_free_unsafe( rb );
 		/* inbound response */
 		if ( dead_cell -> inbound_response[i] )
@@ -93,7 +92,6 @@ void free_hash_table( struct s_table *hash_table )
 struct s_table* init_hash_table()
 {
    struct s_table*  hash_table;
-   pthread_t  thread;
    int       i;
 
    /*allocs the table*/
@@ -130,55 +128,54 @@ error:
 
 struct cell*  build_cell( struct sip_msg* p_msg )
 {
-   struct cell*  new_cell;
-   str                src[5];
-   int                i;
-
-    /* do we have the source for the build process? */
-   if (!p_msg)
-      return NULL;
-
-   /* allocs a new cell */
-   new_cell = (struct cell*)sh_malloc( sizeof( struct cell ) );
-   if  ( !new_cell )
-      return NULL;
-
-   /* filling with 0 */
-   memset( new_cell, 0, sizeof( struct cell ) );
-
-   new_cell->outbound_response.retr_timer.tg=TG_RT;
-   new_cell->outbound_response.fr_timer.tg=TG_FR;
-   new_cell->wait_tl.tg=TG_WT;
-   new_cell->dele_tl.tg=TG_DEL;
-
-   /* hash index of the entry */
-   /* new_cell->hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ); */
-	new_cell->hash_index = p_msg->hash_index;
-   /* mutex */
-   /* ref counter is 0 */
-   /* all pointers from timers list tl are NULL */
-   new_cell->wait_tl.payload = new_cell;
-   new_cell->dele_tl.payload = new_cell;
-
-   new_cell->inbound_request =  sip_msg_cloner(p_msg) ;
-   if (!new_cell->inbound_request)
-	goto error;
-   new_cell->relaied_reply_branch   = -1;
-   new_cell->T_canceled = T_UNDEFINED;
-   new_cell->tag=&(get_to(new_cell->inbound_request)->tag_value);
+	struct cell* new_cell;
 #ifndef USE_SYNONIM
-   src[0]= p_msg->from->body;
-   src[1]= p_msg->to->body;
-   src[2]= p_msg->callid->body;
-   src[3]= p_msg->first_line.u.request.uri;
-   src[4]= get_cseq( p_msg )->number;
-   MDStringArray ( new_cell->md5, src, 5 );
-
+	str          src[5];
 #endif
 
-    init_cell_lock(  new_cell );
+	/* do we have the source for the build process? */
+	if (!p_msg)
+		return NULL;
 
-   return new_cell;
+	/* allocs a new cell */
+	new_cell = (struct cell*)sh_malloc( sizeof( struct cell ) );
+	if  ( !new_cell )
+		return NULL;
+
+	/* filling with 0 */
+	memset( new_cell, 0, sizeof( struct cell ) );
+
+	new_cell->outbound_response.retr_timer.tg=TG_RT;
+	new_cell->outbound_response.fr_timer.tg=TG_FR;
+	new_cell->wait_tl.tg=TG_WT;
+	new_cell->dele_tl.tg=TG_DEL;
+
+	/* hash index of the entry */
+	new_cell->hash_index = p_msg->hash_index;
+	/* mutex */
+	/* ref counter is 0 */
+	/* all pointers from timers list tl are NULL */
+	new_cell->wait_tl.payload = new_cell;
+	new_cell->dele_tl.payload = new_cell;
+
+	new_cell->inbound_request =  sip_msg_cloner(p_msg) ;
+	if (!new_cell->inbound_request)
+		goto error;
+	new_cell->relaied_reply_branch   = -1;
+	new_cell->T_canceled = T_UNDEFINED;
+	new_cell->tag=&(get_to(new_cell->inbound_request)->tag_value);
+#ifndef USE_SYNONIM
+	src[0]= p_msg->from->body;
+	src[1]= p_msg->to->body;
+	src[2]= p_msg->callid->body;
+	src[3]= p_msg->first_line.u.request.uri;
+	src[4]= get_cseq( p_msg )->number;
+	MDStringArray ( new_cell->md5, src, 5 );
+#endif
+
+	init_cell_lock(  new_cell );
+
+	return new_cell;
 
 error:
 	sh_free(new_cell);
