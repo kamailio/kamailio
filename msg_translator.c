@@ -679,7 +679,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text,
 	Via's in the reply and they may be scattered down to the
 	end of header (non-block Vias are a really poor property
 	of SIP :( ) */
-	parse_headers( msg, HDR_EOH );
+	parse_headers( msg, HDR_EOH, 0 );
 
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];

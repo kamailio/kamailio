@@ -117,7 +117,7 @@ struct sip_msg {
 
 int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 
-int parse_headers(struct sip_msg* msg, int flags);
+int parse_headers(struct sip_msg* msg, int flags, int next);
 
 void free_sip_msg(struct sip_msg* msg);
 
@@ -126,18 +126,18 @@ void free_sip_msg(struct sip_msg* msg);
  */
 
 #define check_transaction_quadruple(msg ) \
-	(parse_headers((msg), HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ)!=-1 && \
+	(parse_headers((msg), HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ, 0)!=-1 && \
 	(msg)->from && (msg)->to && (msg)->callid && (msg)->cseq)
 
 /* restored to the original double-check and put macro params
    in parenthesses  -jiri */
 /* re-reverted to the shorter version -andrei 
 #define check_transaction_quadruple(msg ) \
-   ( ((msg)->from || (parse_headers( (msg), HDR_FROM)!=-1 && (msg)->from)) && 	\
-   ((msg)->to|| (parse_headers( (msg), HDR_TO)!=-1 && (msg)->to)) &&		\
-   ((msg)->callid|| (parse_headers( (msg), HDR_CALLID)!=-1 && (msg)->callid)) &&\
-   ((msg)->cseq|| (parse_headers( (msg), HDR_CSEQ)!=-1 && (msg)->cseq)) && \
-   ((msg)->via1|| (parse_headers( (msg), HDR_VIA)!=-1 && (msg)->via1)) ) 
+   ( ((msg)->from || (parse_headers( (msg), HDR_FROM, 0)!=-1 && (msg)->from)) && 	\
+   ((msg)->to|| (parse_headers( (msg), HDR_TO, 0)!=-1 && (msg)->to)) &&		\
+   ((msg)->callid|| (parse_headers( (msg), HDR_CALLID, 0)!=-1 && (msg)->callid)) &&\
+   ((msg)->cseq|| (parse_headers( (msg), HDR_CSEQ, 0)!=-1 && (msg)->cseq)) && \
+   ((msg)->via1|| (parse_headers( (msg), HDR_VIA, 0)!=-1 && (msg)->via1)) ) 
 */
 	
 #endif

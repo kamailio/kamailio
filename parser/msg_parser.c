@@ -177,15 +177,21 @@ error:
    give you the first occurance of a header you are interested in,
    look at check_transaction_quadruple
 */
-int parse_headers(struct sip_msg* msg, int flags)
+int parse_headers(struct sip_msg* msg, int flags, int next)
 {
 	struct hdr_field* hf;
 	char* tmp;
 	char* rest;
 	char* end;
+	int orig_flag;
 
 	end=msg->buf+msg->len;
 	tmp=msg->unparsed;
+
+	if (next) {
+		orig_flag = msg->parsed_flag;
+		msg->parsed_flag &= ~flags;
+	}
 
 	DBG("parse_headers: flags=%d\n", flags);
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
@@ -329,6 +335,7 @@ skip:
 error:
 	ser_error=E_BAD_REQ;
 	if (hf) pkg_free(hf);
+	if (next) msg->parsed_flag |= orig_flag;
 	return -1;
 }
 
@@ -386,7 +393,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	/*find first Via: */
 	first_via=0;
 	second_via=0;
-	if (parse_headers(msg, flags)==-1) goto error;
+	if (parse_headers(msg, flags, 0)==-1) goto error;
 
 #ifdef EXTRA_DEBUG
 	/* dump parsed data */
@@ -461,13 +468,13 @@ void free_sip_msg(struct sip_msg* msg)
 int check_transaction_quadruple( struct sip_msg* msg )
 {
    return 
-	(parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ)!=-1 &&
+	(parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ, 0)!=-1 &&
 	 msg->from && msg->to && msg->callid && msg->cseq);
   /* replaced by me ( :) andrei)
-   ( (msg->from || (parse_headers( msg, HDR_FROM)!=-1 && msg->from)) &&
-   (msg->to|| (parse_headers( msg, HDR_TO)!=-1 && msg->to)) &&
-   (msg->callid|| (parse_headers( msg, HDR_CALLID)!=-1 && msg->callid)) &&
-   (msg->cseq|| (parse_headers( msg, HDR_CSEQ)!=-1 && msg->cseq)) ) ? 1 : 0;
+   ( (msg->from || (parse_headers( msg, HDR_FROM, 0)!=-1 && msg->from)) &&
+   (msg->to|| (parse_headers( msg, HDR_TO, 0)!=-1 && msg->to)) &&
+   (msg->callid|| (parse_headers( msg, HDR_CALLID, 0)!=-1 && msg->callid)) &&
+   (msg->cseq|| (parse_headers( msg, HDR_CSEQ, 0)!=-1 && msg->cseq)) ) ? 1 : 0;
   */
 
 }

@@ -627,11 +627,11 @@ int t_check( struct sip_msg* p_msg , int *param_branch, int *param_cancel)
 		/* transaction lookup */
 		if ( p_msg->first_line.type==SIP_REQUEST ) {
 			/* force parsing all the needed headers*/
-			if (parse_headers(p_msg, HDR_EOH )==-1)
+			if (parse_headers(p_msg, HDR_EOH, 0 )==-1)
 				return -1;
 			t_lookup_request( p_msg , 0 /* unlock before returning */ );
 		} else {
-			if ( parse_headers(p_msg, HDR_VIA1|HDR_TO|HDR_CSEQ )==-1
+			if ( parse_headers(p_msg, HDR_VIA1|HDR_TO|HDR_CSEQ, 0 )==-1
 			|| !p_msg->via1 || !p_msg->to || !p_msg->cseq )
 				return -1;
 			t_reply_matching( p_msg ,
@@ -746,7 +746,7 @@ int t_newtran( struct sip_msg* p_msg )
 	T = T_UNDEFINED;
 	/* transaction lookup */
 	/* force parsing all the needed headers*/
-	if (parse_headers(p_msg, HDR_EOH )==-1)
+	if (parse_headers(p_msg, HDR_EOH, 0 )==-1)
 		return 0;
 	lret = t_lookup_request( p_msg, 1 /* leave locked */ );
 	/* on error, pass the error in the stack ... */
