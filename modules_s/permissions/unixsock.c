@@ -99,7 +99,7 @@ static int trusted_dump(str* msg)
 /*
  * Register domain fifo functions
  */
-int init_trusted_unxisock(void) 
+int init_trusted_unixsock(void) 
 {
 	if (unixsock_register_cmd("trusted_reload", trusted_reload) < 0) {
 		LOG(L_CRIT, "init_trusted_unixsock: Cannot register trusted_reload\n");
