@@ -50,7 +50,6 @@ inline int set_uri(struct sip_msg* _msg, char* uri, int len)
 	}
 	if (_msg->parsed_uri_ok) {
 		_msg->parsed_uri_ok = 0;
-		free_uri(&_msg->parsed_uri);
 	}
 	_msg->new_uri.s = pkg_malloc(len + 1);
 	if (_msg->new_uri.s == 0) {
@@ -101,7 +100,7 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	if (!(_msg->from->parsed)) {
-		if (parse_from_header(_msg->from) == -1) {
+		if (parse_from_header(_msg) == -1) {
 			LOG(L_ERR, "is_from_user_e164(): Can't parse from header\n");
 			return -1;
 		}
