@@ -26,7 +26,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+/***
+ * 2003-01-20 xj_worker_precess function cleaning - some part of it moved to
+ * xj_worker_check_jcons function, by dcm
+ *
+ */
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -556,10 +560,9 @@ step_z:
 						prc->status = XJ_PRES_STATUS_WAIT; 
 				}
 				else
-				{
 					xj_pres_cell_update(prc, jsmsg->cbf, jsmsg->p);
-					(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
-				}
+				// send presence info to SIP subscriber
+				(*(prc->cbf))(&jsmsg->to, prc->state, prc->cbp);
 			}
 			goto step_w;
 		}
@@ -784,45 +787,7 @@ step_xx:
 			ltime = get_ticks();
 			DBG("XJAB:xj_worker:%d: scanning for expired connection\n",
 				_xj_pid);
-			for(i = 0; i < jcp->len && main_loop; i++)
-			{
-				if(jcp->ojc[i] == NULL)
-					continue;
-				if(jcp->ojc[i]->jkey->flag==0 &&
-					jcp->ojc[i]->expire > ltime)
-					continue;
-				
-				DBG("XJAB:xj_worker:%d: connection expired for"
-					" <%.*s> \n", _xj_pid, jcp->ojc[i]->jkey->id->len,
-					jcp->ojc[i]->jkey->id->s);
-
-				xj_send_sip_msgz(jcp->ojc[i]->jkey->id,  &jab_gw_name,
-					jwl->contact_h, XJ_DMSG_INF_JOFFLINE, NULL);
-
-				DBG("XJAB:xj_worker:%d: connection's close flag =%d\n",
-						_xj_pid, jcp->ojc[i]->jkey->flag);
-				// CLEAN JAB_WLIST
-				xj_wlist_del(jwl, jcp->ojc[i]->jkey, _xj_pid);
-
-				// looking for open conference rooms
-				DBG("XJAB:xj_worker:%d: having %d open"
-					" conferences\n", _xj_pid, jcp->ojc[i]->nrjconf);
-				while(jcp->ojc[i]->nrjconf > 0)
-				{
-					if((jcf=delpos234(jcp->ojc[i]->jconf,0))!=NULL)
-					{
-						// get out of room
-						xj_jcon_jconf_presence(jcp->ojc[i],jcf,
-								"unavailable", NULL);
-						xj_jconf_free(jcf);
-					}
-					jcp->ojc[i]->nrjconf--;
-				}
-				FD_CLR(jcp->ojc[i]->sock, &set);
-				xj_jcon_disconnect(jcp->ojc[i]);
-				xj_jcon_free(jcp->ojc[i]);
-				jcp->ojc[i] = NULL;
-			}
+			xj_worker_check_jcons(jwl, jcp, ltime, &set);
 		}
 	} // END while
 
@@ -1075,8 +1040,8 @@ int xj_manage_jab(char *buf, int len, int *pos,
 				}
 				else
 				{
-					DBG("XJAB:xj_manage_jab: creating presence"
-						" cell for [%.*s]\n", ts.len, ts.s);
+					DBG("XJAB:xj_manage_jab: user state received - creating"
+						" presence cell for [%.*s]\n", ts.len, ts.s);
 					prc = xj_pres_cell_new();
 					if(prc == NULL)
 					{
@@ -1138,9 +1103,10 @@ int xj_manage_jab(char *buf, int len, int *pos,
 						{
 							jbc->allowed |= XJ_NET_YAH;
 							DBG("XJAB:xj_manage_jab:YAHOO network available\n");
-						} 
+						}
+						goto next_sibling;
 					}
-					else
+					/*** else
 					{ // user item
 						ts.s = from;
 						ts.len = strlen(from);
@@ -1183,7 +1149,8 @@ int xj_manage_jab(char *buf, int len, int *pos,
 								prc->status = XJ_PRES_STATUS_SUBS;
 							}
 						}
-					}
+					} 
+					***/
 				}
 next_sibling:
 				z = xode_get_nextsibling(z);
@@ -1359,6 +1326,63 @@ void xj_tuac_callback( struct cell *t, struct sip_msg *msg,
 		DBG("XJAB: xj_tuac_callback: no 2XX return code - connection set"
 			" as expired \n");
 		*(*((int**)t->cbp)) = 1;	
+	}
+}
+
+/**
+ *
+ */
+void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *pset)
+{
+	int i;
+	xj_jconf jcf;
+	
+	for(i = 0; i < jcp->len && main_loop; i++)
+	{
+		if(jcp->ojc[i] == NULL)
+			continue;
+		if(jcp->ojc[i]->jkey->flag==0 &&
+			jcp->ojc[i]->expire > ltime)
+			continue;
+			
+		DBG("XJAB:xj_worker:%d: connection expired for"
+			" <%.*s> \n", _xj_pid, jcp->ojc[i]->jkey->id->len,
+			jcp->ojc[i]->jkey->id->s);
+
+		xj_send_sip_msgz(jcp->ojc[i]->jkey->id,  &jab_gw_name,
+			jwl->contact_h, XJ_DMSG_INF_JOFFLINE, NULL);
+		DBG("XJAB:xj_worker:%d: connection's close flag =%d\n",
+			_xj_pid, jcp->ojc[i]->jkey->flag);
+		// CLEAN JAB_WLIST
+		xj_wlist_del(jwl, jcp->ojc[i]->jkey, _xj_pid);
+
+		// looking for open conference rooms
+		DBG("XJAB:xj_worker:%d: having %d open"
+			" conferences\n", _xj_pid, jcp->ojc[i]->nrjconf);
+		while(jcp->ojc[i]->nrjconf > 0)
+		{
+			if((jcf=delpos234(jcp->ojc[i]->jconf,0))!=NULL)
+			{
+				// get out of room
+				xj_jcon_jconf_presence(jcp->ojc[i],jcf,
+						"unavailable", NULL);
+				xj_jconf_free(jcf);
+			}
+			jcp->ojc[i]->nrjconf--;
+		}
+
+		// send offline presence to all subscribers
+		if(jcp->ojc[i]->expire > 0 && jcp->ojc[i]->plist)
+		{
+			DBG("XJAB:xj_worker:%d: sending offline status to SIP subscriber\n",
+					_xj_pid);
+			xj_pres_list_notifyall(jcp->ojc[i]->plist,
+					XJ_PRES_STATE_OFFLINE);
+		}
+		FD_CLR(jcp->ojc[i]->sock, pset);
+		xj_jcon_disconnect(jcp->ojc[i]);
+		xj_jcon_free(jcp->ojc[i]);
+		jcp->ojc[i] = NULL;
 	}
 }
 
