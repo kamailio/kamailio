@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-17  converted to locking.h (andrei)
+ */
 
 #include "defs.h"
 
@@ -31,24 +36,18 @@
 #ifndef __lock_h
 #define __lock_h
 
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
 #include "../../dprint.h"
+#include "../../locking.h"
 
 
 
-#ifdef  FAST_LOCK
-#include "../../fastlock.h"
-#endif
-
-#ifdef FAST_LOCK
-#define ser_lock_t fl_lock_t
+#ifdef GEN_LOCK_T_PREFERED
+#define ser_lock_t gen_lock_t
 #else
 /* typedef to structure we use for mutexing;
    currently, index to a semaphore set identifier now */
 typedef struct {
-	int semaphore_set;
+	lock_set_t* semaphore_set;
 	int semaphore_index;
 } ser_lock_t;
 #endif
@@ -75,11 +74,6 @@ enum timer_groups {
 
 int lock_initialize();
 void lock_cleanup();
-/*
-#ifndef FAST_LOCK
-static int init_semaphore_set( int size );
-#endif
-*/
 
 #ifdef DBG_LOCK
 #define lock(_s) _lock( (_s), __FILE__, __FUNCTION__, __LINE__ )
@@ -99,47 +93,41 @@ int release_entry_lock( struct entry *entry );
 int release_timerlist_lock( struct timer *timerlist );
 
 
-#ifndef FAST_LOCK
-int change_semaphore( ser_lock_t* s  , int val );
-#endif
-
 
 /* lock semaphore s */
 #ifdef DBG_LOCK
-static inline int _lock( ser_lock_t* s , char *file, char *function,
+static inline void _lock( ser_lock_t* s , char *file, char *function,
 							unsigned int line )
 #else
-static inline int _lock( ser_lock_t* s )
+static inline void _lock( ser_lock_t* s )
 #endif
 {
 #ifdef DBG_LOCK
 	DBG("DEBUG: lock : entered from %s , %s(%d)\n", function, file, line );
 #endif
-#ifdef FAST_LOCK
-	get_lock(s);
-	return 0;
+#ifdef GEN_LOCK_T_PREFERED 
+	lock_get(s);
 #else
-	return change_semaphore( s, -1 );
+	lock_set_get(s->semaphore_set, s->semaphore_index);
 #endif
 }
 
 
 
 #ifdef DBG_LOCK
-static inline int _unlock( ser_lock_t* s, char *file, char *function,
+static inline void _unlock( ser_lock_t* s, char *file, char *function,
 		unsigned int line )
 #else
-static inline int _unlock( ser_lock_t* s )
+static inline void _unlock( ser_lock_t* s )
 #endif
 {
 #ifdef DBG_LOCK
 	DBG("DEBUG: unlock : entered from %s, %s:%d\n", file, function, line );
 #endif
-#ifdef FAST_LOCK
-	release_lock(s);
-	return 0;
+#ifdef GEN_LOCK_T_PREFERED
+	lock_release(s);
 #else
-	return change_semaphore( s, +1 );
+	lock_set_release( s->semaphore_set, s->semaphore_index );
 #endif
 }
 
