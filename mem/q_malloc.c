@@ -34,6 +34,7 @@
  *               memory blocks (64 bits machine & size>=2^32) (andrei)
  *              GET_HASH s/</<=/ (avoids waste of 1 hash cell) (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
+ *  2005-03-02  added qm_info() (andrei)
  */
 
 
@@ -683,6 +684,27 @@ void qm_status(struct qm_block* qm)
 	LOG(memlog, "-----------------------------\n");
 }
 
+
+/* fills a malloc info structure with info about the block
+ * if a parameter is not supported, it will be filled with 0 */
+void qm_info(struct qm_block* qm, struct meminfo* info)
+{
+	int r;
+	long total_frags;
+	
+	total_frags=0;
+	memset(info,0, sizeof(*info));
+	info->total_size=qm->size;
+	info->min_frag=MIN_FRAG_SIZE;
+	info->free=qm->size-qm->real_used;
+	info->used=qm->used;
+	info->real_used=qm->real_used;
+	info->max_used=qm->max_real_used;
+	for(r=0;r<QM_HASH_SIZE; r++){
+		total_frags+=qm->free_hash[r].no;
+	}
+	info->total_frags=total_frags;
+}
 
 
 

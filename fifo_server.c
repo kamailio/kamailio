@@ -64,6 +64,7 @@
  *  2004-04-29  added chown(sock_user, sock_group)  (andrei)
  *  2004-06-06  updated to the new DB interface  & init_db_fifo (andrei)
  *  2004-09-19  fifo is deleted on exit (destroy_fifo)  (andrei)
+ *  2005-03-02  meminfo fifo cmd added (andrei)
  */
 
 
@@ -90,6 +91,7 @@
 #include "globals.h"
 #include "fifo_server.h"
 #include "mem/mem.h"
+#include "mem/shm_mem.h" /* shm_info() */
 #include "sr_module.h"
 #include "pt.h"
 #include "db/db_fifo.h"
@@ -868,6 +870,35 @@ static int ps_fifo_cmd(FILE *stream, char *response_file )
 }
 
 
+
+static int meminfo_fifo_cmd( FILE *stream, char *response_file )
+{
+	struct meminfo mi;
+	
+	if (response_file==0 || *response_file==0 ) { 
+		LOG(L_ERR, "ERROR: meminfo_fifo_cmd: null file\n");
+		return -1;
+	}
+	
+#ifdef SHM_MEM
+	shm_info(&mi);
+	fifo_reply( response_file, "200 ok\n"
+					"total:%ld\n"
+					"free:%ld\n"
+					"used:%ld\n"
+					"max used:%ld\n"
+					"fragments:%ld\n",
+					mi.total_size, mi.free, mi.real_used,
+					mi.max_used, mi.total_frags);
+#else
+	fifo_reply( response_file, "400 No shared memory support\n");
+#endif
+
+	return 1;
+}
+
+
+
 int register_core_fifo()
 {
 	if (register_fifo_cmd(print_fifo_cmd, FIFO_PRINT, 0)<0) {
@@ -900,6 +931,10 @@ int register_core_fifo()
 	}
 	if (register_fifo_cmd(kill_fifo_cmd, FIFO_KILL, 0)<0) {
 		LOG(L_CRIT, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_KILL);
+		return -1;
+	}
+	if (register_fifo_cmd(meminfo_fifo_cmd, FIFO_MEMINFO, 0)<0) {
+		LOG(L_CRIT, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_MEMINFO);
 		return -1;
 	}
 	if (fifo_db_url==0) {

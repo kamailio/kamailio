@@ -51,6 +51,7 @@
 #define FIFO_PWD "pwd"
 /* kill the server */
 #define FIFO_KILL "kill"
+#define FIFO_MEMINFO "meminfo"
 
 #define MAX_CTIME_LEN 128
 

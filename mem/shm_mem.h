@@ -31,6 +31,7 @@
  *  2003-06-29  added shm_realloc & replaced shm_resize (andrei)
  *  2003-11-19  reverted shm_resize to the old version, using
  *               realloc causes terrible fragmentation  (andrei)
+ * 2005-03-02   added shm_info() & re-eneabled locking on shm_status (andrei)
  */
 
 
@@ -74,6 +75,7 @@
 #	define MY_FREE fm_free
 #	define MY_REALLOC fm_realloc
 #	define MY_STATUS fm_status
+#	define MY_MEMINFO	fm_info
 #	define  shm_malloc_init fm_malloc_init
 #else
 #	include "q_malloc.h"
@@ -82,6 +84,7 @@
 #	define MY_FREE qm_free
 #	define MY_REALLOC qm_realloc
 #	define MY_STATUS qm_status
+#	define MY_MEMINFO	qm_info
 #	define  shm_malloc_init qm_malloc_init
 #endif
 
@@ -224,12 +227,18 @@ void* _shm_resize(void* ptr, unsigned int size);
 
 #define shm_status() \
 do { \
-		/*shm_lock();*/ \
+		shm_lock(); \
 		MY_STATUS(shm_block); \
-		/*shm_unlock();*/ \
+		shm_unlock(); \
 }while(0)
 
 
+#define shm_info(mi) \
+do{\
+	shm_lock(); \
+	MY_MEMINFO(shm_block, mi); \
+	shm_unlock(); \
+}while(0)
 
 
 #endif

@@ -33,6 +33,7 @@
  *               memory blocks (64 bits machine & size >=2^32) 
  *              GET_HASH s/</<=/ (avoids waste of 1 hash cell)   (andrei)
  *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
+ *  2005-03-02  added fm_info() (andrei)
  */
 
 
@@ -161,8 +162,10 @@ void fm_split_frag(struct fm_block* qm, struct fm_frag* frag,
 		n=FRAG_NEXT(frag);
 		n->size=rest-FRAG_OVERHEAD;
 		FRAG_CLEAR_USED(n); /* never used */
-#ifdef DBG_F_MALLOC
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 		qm->real_used+=FRAG_OVERHEAD;
+#endif
+#ifdef DBG_F_MALLOC
 		/* frag created by malloc, mark it*/
 		n->file=file;
 		n->func="frag. from fm_malloc";
@@ -206,7 +209,7 @@ struct fm_block* fm_malloc_init(char* address, unsigned long size)
 	memset(qm, 0, sizeof(struct fm_block));
 	size-=init_overhead;
 	qm->size=size;
-#ifdef DBG_F_MALLOC
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	qm->real_used=init_overhead;
 	qm->max_real_used=qm->real_used;
 #endif
@@ -275,11 +278,6 @@ found:
 	
 #ifdef DBG_F_MALLOC
 	fm_split_frag(qm, frag, size, file, func, line);
-	qm->real_used+=frag->size;
-	qm->used+=frag->size;
-
-	if (qm->max_real_used<qm->real_used)
-		qm->max_real_used=qm->real_used;
 
 	frag->file=file;
 	frag->func=func;
@@ -289,6 +287,12 @@ found:
 		(char*)frag+sizeof(struct fm_frag));
 #else
 	fm_split_frag(qm, frag, size);
+#endif
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
+	qm->real_used+=frag->size;
+	qm->used+=frag->size;
+	if (qm->max_real_used<qm->real_used)
+		qm->max_real_used=qm->real_used;
 #endif
 	FRAG_MARK_USED(frag); /* mark it as used */
 	return (char*)frag+sizeof(struct fm_frag);
@@ -324,10 +328,11 @@ void fm_free(struct fm_block* qm, void* p)
 			f->line);
 #endif
 	size=f->size;
-
-#ifdef DBG_F_MALLOC
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	qm->used-=size;
 	qm->real_used-=size;
+#endif
+#ifdef DBG_F_MALLOC
 	f->file=file;
 	f->func=func;
 	f->line=line;
@@ -387,10 +392,12 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 #ifdef DBG_F_MALLOC
 		DBG("fm_realloc: shrinking from %lu to %lu\n", f->size, size);
 		fm_split_frag(qm, f, size, file, "frag. from fm_realloc", line);
-		qm->real_used-=(orig_size-f->size);
-		qm->used-=(orig_size-f->size);
 #else
 		fm_split_frag(qm, f, size);
+#endif
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
+		qm->real_used-=(orig_size-f->size);
+		qm->used-=(orig_size-f->size);
 #endif
 	}else if (f->size<size){
 		/* grow */
@@ -418,7 +425,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 			qm->free_hash[hash].no--;
 			/* join */
 			f->size+=n->size+FRAG_OVERHEAD;
-		#ifdef DBG_F_MALLOC
+		#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 			qm->real_used-=FRAG_OVERHEAD;
 		#endif
 			/* split it if necessary */
@@ -430,7 +437,7 @@ void* fm_realloc(struct fm_block* qm, void* p, unsigned long size)
 				fm_split_frag(qm, f, size);
 		#endif
 			}
-		#ifdef DBG_F_MALLOC
+		#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 			qm->real_used+=(f->size-orig_size);
 			qm->used+=(f->size-orig_size);
 		#endif
@@ -478,7 +485,7 @@ void fm_status(struct fm_block* qm)
 	if (!qm) return;
 
 	LOG(memlog, " heap size= %ld\n", qm->size);
-#ifdef DBG_F_MALLOC
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
 	LOG(memlog, " used= %lu, used+overhead=%lu, free=%lu\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
 	LOG(memlog, " max used (+overhead)= %lu\n", qm->max_real_used);
@@ -539,6 +546,47 @@ void fm_status(struct fm_block* qm)
 }
 
 
+
+/* fills a malloc info structure with info about the block
+ * if a parameter is not supported, it will be filled with 0 */
+void fm_info(struct fm_block* qm, struct meminfo* info)
+{
+	int r;
+	long total_frags;
+#if !defined(DBG_F_MALLOC) && !defined(MALLOC_STATS)
+	struct fm_frag* f;
+#endif
+	
+	memset(info,0, sizeof(*info));
+	total_frags=0;
+	info->total_size=qm->size;
+	info->min_frag=MIN_FRAG_SIZE;
+#if defined(DBG_F_MALLOC) || defined(MALLOC_STATS)
+	info->free=qm->size-qm->real_used;
+	info->used=qm->used;
+	info->real_used=qm->real_used;
+	info->max_used=qm->max_real_used;
+	for(r=0;r<F_HASH_SIZE; r++){
+		total_frags+=qm->free_hash[r].no;
+	}
+#else
+	/* we'll have to compute it all */
+	for (r=0; r<=F_MALLOC_OPTIMIZE/ROUNDTO; r++){
+		info->free+=qm->free_hash[r].no*UN_HASH(r);
+		total_frags+=qm->free_hash[r].no;
+	}
+	for(;r<F_HASH_SIZE; r++){
+		total_frags+=qm->free_hash[r].no;
+		for(f=qm->free_hash[r].first;f;f=f->u.nxt_free){
+			info->free+=f->size;
+		}
+	}
+	info->real_used=info->total_size-info->free;
+	info->used=0; /* we don't really now */
+	info->max_used=0; /* we don't really now */
+#endif
+	info->total_frags=total_frags;
+}
 
 
 #endif
