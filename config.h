@@ -50,5 +50,8 @@
 /*used is SH_MEM is defined*/
 #define SHM_MEM_SIZE 1024*1024
 
+#define TIMER_TICK 1
+#define LONG_SLEEP	3600
+
 
 #endif

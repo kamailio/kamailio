@@ -55,10 +55,13 @@ CC=gcc
 LD=gcc
 
 ifeq ($(mode), release)
-	CFLAGS=-O2 -fPIC -DPIC -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
+	CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
 	LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
+	# we need -fPIC -DPIC only for shared objects, we don't need them for the 
+	# executable file, because it's always loaded at a fixed address
+	# -andrei
 else
-	CFLAGS=-g -fPIC -DPIC -Wcast-align -Winline
+	CFLAGS=-g -Wcast-align -Winline
 	LDFLAGS=-g -Wl,-E
 endif
 
