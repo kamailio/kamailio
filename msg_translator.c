@@ -321,7 +321,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* check if received needs to be added */
 	backup = msg->via1->host.s[msg->via1->host.len];
 	msg->via1->host.s[msg->via1->host.len] = 0;
-	DBG("!!!!!!!!-> len=%d backup=%d[%c]\n",msg->via1->host.len,backup,backup);
 	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
 		if ((received_buf=received_builder(msg,&received_len))==0)
 			goto error;
