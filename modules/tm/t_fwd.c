@@ -15,16 +15,17 @@
  *       1 - forward successfull
  *      -1 - error during forward
  */
-int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param , 
+int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param )
 {
 	unsigned int dest_ip     = dest_ip_param;
 	unsigned int dest_port  = dest_port_param;
 	int	branch;
 	unsigned int len;
-   	char               *buf, *shbuf;
+	char               *buf, *shbuf;
 	struct retrans_buff *rb;
-	
+	struct cell      *T_source = T;
+
 
 	buf=NULL;
 	shbuf = NULL;
@@ -33,7 +34,6 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	if ( T->outbound_request[branch]==NULL )
 	{
 		DBG("DEBUG: t_forward: first time forwarding\n");
-
 		/* special case : CANCEL */
 		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
 		{
@@ -45,7 +45,6 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			/* if found */
 			if ( T->T_canceled!=T_NULL )
 			{
-		
 				/* if in 1xx status, send to the same destination */
 				if ( (T->T_canceled->status/100)==1 )
 				{
@@ -55,24 +54,26 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 						to.sin_addr.s_addr;
 					dest_port = T->T_canceled->outbound_request[branch]->
 						to.sin_port;
+#ifdef USE_SYNONIM
+					T_source = T->T_canceled;
+					T->label  = T->T_canceled->label;
+#endif
 				} else { /* transaction exists, but nothing to cancel */
-               				DBG("DEBUG: t_forward: it's CANCEL but "
+					DBG("DEBUG: t_forward: it's CANCEL but "
 						"I have nothing to cancel here\n");
 					/* forward CANCEL as a stand-alone transaction */
-					/*	return 1; */
 				}
- 			} else { /* transaction doesnot exists  */
-            			DBG("DEBUG: t_forward: canceled request not found! "
+			} else { /* transaction doesnot exists  */
+				DBG("DEBUG: t_forward: canceled request not found! "
 				"nothing to CANCEL\n");
-            			return 1;
-         		}
-      	}/* end special case CANCEL*/
+			}
+		}/* end special case CANCEL*/
 
-		if ( add_branch_label( T, T->inbound_request , branch )==-1) 
+		if ( add_branch_label( T_source, T->inbound_request , branch )==-1)
 			goto error;
-		if ( add_branch_label( T, p_msg , branch )==-1) 
+		if ( add_branch_label( T_source, p_msg , branch )==-1)
 			goto error;
-		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len))) 
+		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 			goto error;
 
 		/* allocates a new retrans_buff for the outbound request */
@@ -104,7 +105,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		rb->bufflen = len ;
 		memcpy( rb->retr_buffer , buf , len );
 		/* send the request */
-   		/* known to be in network order */
+		/* known to be in network order */
 		rb->to.sin_port     =  dest_port;
 		rb->to.sin_addr.s_addr =  dest_ip;
 		rb->to.sin_family = AF_INET;
@@ -133,17 +134,15 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	{
 		DBG("DEBUG: t_forward: forwarding CANCEL\n");
 		/* if no transaction to CANCEL */
-      /* or if the canceled transaction has a final status -> drop the CANCEL*/
-		if ( T->T_canceled==T_NULL || T->T_canceled->status>=200)
+		/* or if the canceled transaction has a final status -> drop the CANCEL*/
+		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
 		{
 			reset_timer( hash_table, &(rb->fr_timer ));
 			reset_timer( hash_table, &(rb->retr_timer ));
-           		return 1;
-       		}
-   	}
-
-
-   return 1;
+			return 1;
+		}
+	}
+	return 1;
 
 error:
 	if (shbuf) shm_free(shbuf);
@@ -157,7 +156,7 @@ error:
 
 }
 
-int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param , 
+int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param )
 {
 
@@ -178,11 +177,11 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	branch=T->relaied_reply_branch;
 	/* double-check for odd relaying */
 	if ( branch <0 || branch>=T->nr_of_outgoings ) {
-		DBG("DEBUG: t_forward_ack: strange relaied_reply_branch: %d out of %d\n", 
+		DBG("DEBUG: t_forward_ack: strange relaied_reply_branch: %d out of %d\n",
 			branch, T->nr_of_outgoings );
 		return -1;
 	}
-	
+
 	DBG("DEBUG: t_forward: forwarding ACK [%d]\n",branch);
 	/* not able to build branch -- then better give up */
 	if ( add_branch_label( T, p_msg , branch )==-1) {

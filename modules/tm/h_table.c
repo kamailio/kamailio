@@ -110,7 +110,10 @@ struct s_table* init_hash_table()
 
    /* inits the entrys */
    for(  i=0 ; i<TABLE_ENTRIES; i++ )
+   {
       init_entry_lock( hash_table , (hash_table->entrys)+i );
+      hash_table->entrys[i].next_label = rand();
+   }
 
    /* inits the timers*/
    for(  i=0 ; i<NR_OF_TIMER_LISTS ; i++ )

@@ -137,8 +137,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
                          //if ( /*to length*/ p_cell->inbound_request->to->body.len == p_msg->to->body.len )
                             //if ( /*tag length*/ p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len )
                             /* so far the lengths are the same -> let's check the contents */
-                                if ( /*callid*/ !memcmp( t_msg->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
-                                   if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
+                                if ( /*callid*/ !memcmp( t_msg->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) && printf("$$$$$$$$$$$$$$$ callid str\n"))
+                                   if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) && printf("$$$$$$$$$$$$$$$ cseqnr str\n"))
                                       if (/*URI len*/ EQ_REQ_URI_STR )
                                          if (/*VIA1*/ EQ_VIA_STR(via1) )
                                             if ( /*from*/ EQ_STR(from) )
@@ -199,18 +199,18 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
       /* is it the wanted transaction ? */
       /* first only the length are checked */
       if ( p_cell->inbound_request->REQ_METHOD!=METHOD_CANCEL )
-         if ( /*callid length*/ EQ_LEN(callid) )
+         if ( /*callid length*/ EQ_LEN(callid)  )
             if ( get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len )
                if ( EQ_REQ_URI_LEN )
                    if ( EQ_VIA_LEN(via1) )
-                  if ( EQ_LEN(from) && EQ_LEN(to) )
+                      if ( EQ_LEN(from) && EQ_LEN(to) )
                         //if ( /*tag length*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && p_cell->inbound_request->tag->body.len == p_msg->tag->body.len) )
                            /* so far the lengths are the same -> let's check the contents */
                             if ( /*callid*/ EQ_STR(callid) )
-                               if ( /*cseq_nr*/ memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len )==0 )
+                               if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                   if ( EQ_REQ_URI_STR )
-                                  if ( EQ_VIA_STR(via1) )
-                                  if ( EQ_STR(from) && EQ_STR(to) )
+                                     if ( EQ_VIA_STR(via1) )
+                                        if ( EQ_STR(from) )
                                             //if ( /*tag*/ (!p_cell->inbound_request->tag && !p_msg->tag) || (p_cell->inbound_request->tag && p_msg->tag && memcmp( p_cell->inbound_request->tag->body.s , p_msg->tag->body.s , p_msg->tag->body.len )==0) )
                                               { /* WE FOUND THE GOLDEN EGG !!!! */
                                                 DBG("DEBUG: t_lookupOriginalT: canceled transaction found (%x)! \n",p_cell );
@@ -234,106 +234,119 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
   */
 int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch )
 {
-   struct cell*  p_cell;
-   unsigned int hash_index = 0;
-   unsigned int entry_label  = 0;
-   unsigned int branch_id    = 0;
-   char  *hashi, *syni, *branchi, *p, *n;
-   int hashl, synl, branchl;
-   int scan_space;
+	struct cell*  p_cell;
+	unsigned int loop_code    = 0;
+	unsigned int hash_index = 0;
+	unsigned int entry_label  = 0;
+	unsigned int branch_id    = 0;
+	char  *loopi,*hashi, *syni, *branchi, *p, *n;
+	int loopl,hashl, synl, branchl;
+	int scan_space;
 
-   /* split the branch into pieces: loop_detection_check(ignored),
-      hash_table_id, synonym_id, branch_id*/
+	/* split the branch into pieces: loop_detection_check(ignored),
+	     hash_table_id, synonym_id, branch_id*/
 
-   if (! ( p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s) )
-	goto nomatch2;
+	if (!( p_msg->via1 && p_msg->via1->branch && p_msg->via1->branch->value.s) )
+		goto nomatch2;
 
-   p=p_msg->via1->branch->value.s;
-   scan_space=p_msg->via1->branch->value.len;
+	p=p_msg->via1->branch->value.s;
+	scan_space=p_msg->via1->branch->value.len;
 
-   /* loop detection ... ignore */
-   n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
-   scan_space-=n-p;
-   if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
-   p=n+1; scan_space--;
+	/* loop detection ... ignore */
+	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR );
+	loopl = n-p;
+	scan_space-= loopl;
+	if (n==p || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
+	loopi=p;
+	p=n+1; scan_space--;
 
-   /* hash_id */
-   n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
-   hashl=n-p;
-   scan_space-=hashl;
-   if (!hashl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
-   hashi=p;
-   p=n+1;scan_space--;
+	/* hash_id */
+	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
+	hashl=n-p;
+	scan_space-=hashl;
+	if (!hashl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
+	hashi=p;
+	p=n+1;scan_space--;
 
+#ifdef USE_SYNONIM
+	/* sequence id */
+	n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
+	synl=n-p;
+	scan_space-=synl;
+	if (!synl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
+	syni=p;
+	p=n+1;scan_space--;
+#endif
 
-   /* sequence id */
-   n=eat_token2_end( p, p+scan_space, BRANCH_SEPARATOR);
-   synl=n-p;
-   scan_space-=synl;
-   if (!synl || scan_space<2 || *n!=BRANCH_SEPARATOR) goto nomatch2;
-   syni=p;
-   p=n+1;scan_space--;
+	/* branch id  -  should exceed the scan_space */
+	n=eat_token_end( p, p+scan_space );
+	branchl=n-p;
+	if (!branchl ) goto nomatch2;
+	branchi=p;
 
-   /* branch id */  /*  should exceed the scan_space */
-   n=eat_token_end( p, p+scan_space );
-   branchl=n-p;
-   if (!branchl ) goto nomatch2;
-   branchi=p;
-
-
-   hash_index=reverse_hex2int(hashi, hashl);
-   entry_label=reverse_hex2int(syni, synl);
-   branch_id=reverse_hex2int(branchi, branchl);
-	if (hash_index==-1 || entry_label==-1 || branch_id==-1) {
+	/* sanity check */
+	if ( (hash_index=reverse_hex2int(hashi, hashl))<0 || hash_index >=TABLE_ENTRIES
+	  || (branch_id=reverse_hex2int(branchi, branchl))<0 || branch_id>=MAX_FORK
+#ifdef USE_SYNONIM
+	  || (entry_label=reverse_hex2int(syni, synl))<0
+#else
+	  || loopl!=32
+#endif
+	   ) {
 		DBG("DEBUG: t_reply_matching: poor reply lables %d label %d branch %d\n",
 			hash_index, entry_label, branch_id );
 		goto nomatch2;
 	}
 
 
-   DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n",
-	hash_index, entry_label, branch_id );
+	DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n",
+	   hash_index, entry_label, branch_id );
 
-   /* sanity check */
-   if (hash_index<0 || hash_index >=TABLE_ENTRIES ||
-    entry_label<0 || branch_id<0 || branch_id>=MAX_FORK ) {
-          DBG("DBG: t_reply_matching: snaity check failed\n");
-         goto nomatch2;
-   }
+	/* lock the hole entry*/
+	lock( hash_table->entrys[hash_index].mutex );
 
-   /* lock the hole entry*/
-   lock( hash_table->entrys[hash_index].mutex );
+	/*all the cells from the entry are scan to detect an entry_label matching */
+	p_cell     = hash_table->entrys[hash_index].first_cell;
+	while( p_cell )
+	{
+		/* is it the cell with the wanted entry_label? */
+		if ( (get_cseq(p_msg)->method.len ==
+		  get_cseq(p_cell->inbound_request)->method.len)
+		&& (get_cseq(p_msg)->method.s[0] ==
+		  get_cseq(p_cell->inbound_request)->method.s[0])
+#ifdef USE_SYNONIM
+		&& (p_cell->label == entry_label )
+#else
+		&& ( p_cell->inbound_request->add_to_branch_len>=32 &&
+		  !memcmp(p_cell->inbound_request->add_to_branch_s,loopi,32))
+#endif
+		)
+			/* has the transaction the wantedbranch? */
+			if ( p_cell->nr_of_outgoings>branch_id &&
+			p_cell->outbound_request[branch_id] )
+ 			{/* WE FOUND THE GOLDEN EGG !!!! */
+				T = p_cell;
+				*p_branch = branch_id;
+				T_REF( T );
+				unlock( hash_table->entrys[hash_index].mutex );
+				DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching:"
+				  " reply matched (T=%p,ref=%x)!\n",T,T->ref_bitmap);
+				return 1;
+			}
+		/* next cell */
+		p_cell = p_cell->next_cell;
+	} /* while p_cell */
 
-   /*all the cells from the entry are scan to detect an entry_label matching */
-   p_cell     = hash_table->entrys[hash_index].first_cell;
-   while( p_cell )
-   {
-      /* is it the cell with the wanted entry_label? */
-      if ( p_cell->label == entry_label )
-         /* has the transaction the wanted branch? */
-         if ( p_cell->nr_of_outgoings>branch_id && p_cell->outbound_request[branch_id] )
-         {/* WE FOUND THE GOLDEN EGG !!!! */
-             T = p_cell;
-             *p_branch = branch_id;
-             T_REF( T );
-             unlock( hash_table->entrys[hash_index].mutex );
-             DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching: reply matched (T=%p, ref=%x)!\n",T,T->ref_bitmap);
-            return 1;
-         }
-      /* next cell */
-      p_cell = p_cell->next_cell;
-   } /* while p_cell */
-
-   /* nothing found */
-   DBG("DEBUG: t_reply_matching: no matching transaction exists\n");
+	/* nothing found */
+	DBG("DEBUG: t_reply_matching: no matching transaction exists\n");
 
 nomatch:
-   unlock( hash_table->entrys[hash_index].mutex );
+	unlock( hash_table->entrys[hash_index].mutex );
 nomatch2:
-   DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
-   *p_branch = -1;
-   T = 0;
-   return -1;
+	DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
+	*p_branch = -1;
+	T = 0;
+	return -1;
 }
 
 
@@ -403,8 +416,10 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 
 	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 	if (int2reverse_hex( &begin, &size, trans->hash_index)==-1) return -1;
+#ifdef USE_SYNONIM
 	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 	if (int2reverse_hex( &begin, &size, trans->label)==-1) return -1;
+#endif
 	if (size) { *begin=BRANCH_SEPARATOR; begin++; size--; } else return -1;
 	if (int2reverse_hex( &begin, &size, branch)==-1) return -1;
 

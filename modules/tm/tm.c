@@ -379,13 +379,13 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 	enum addifnew_status status;
 	int ret;
 
-	status = t_addifnew( p_msg );	
+	status = t_addifnew( p_msg );
 
 	switch( status ) {
 		case AIN_ERROR:		/*  fatal error (e.g, parsing) occured */
 			ret = 0;
 			break;
-			
+
 		case AIN_RETR:		/* it's a retransmission */
 			if ( !t_retransmit_reply( p_msg ) )
 			{
@@ -395,7 +395,7 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 			break;
 
 		case AIN_NEW:		/* it's a new request */
-			if ( !t_forward_nonack( p_msg, (unsigned int) str_ip, (unsigned int) str_port )) 
+			if ( !t_forward_nonack( p_msg, (unsigned int) str_ip, (unsigned int) str_port ))
 			{
 				DBG( "SER:ERROR: t_forward \n");
 				ret = 0;
@@ -418,7 +418,7 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 
 		case AIN_NEWACK:	/* it's an ACK for which no transaction exists */
 			DBG( "SER: forwarding ACK  statelessly\n");
-			forward_request( p_msg , mk_proxy_from_ip( 
+			forward_request( p_msg , mk_proxy_from_ip(
 				(unsigned int )str_ip, (unsigned int)str_port) ) ;
 			ret=1;
 			break;
@@ -447,7 +447,7 @@ static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
 	return ret;
 }
 
-	
+
 
 
 static int t_relay( struct sip_msg  *p_msg , char* foo, char* bar)
@@ -462,4 +462,56 @@ static int t_relay( struct sip_msg  *p_msg , char* foo, char* bar)
 
    return t_relay_to( p_msg , ( char *) ip , (char *) port );
 }
+
+
+
+static int t_relay_no_forward( struct sip_msg  *p_msg )
+{
+
+	enum addifnew_status status;
+	int ret;
+
+	status = t_addifnew( p_msg );
+
+	switch( status ) {
+		case AIN_ERROR:		/*  fatal error (e.g, parsing) occured */
+			ret = 0;
+			break;
+
+		case AIN_RETR:		/* it's a retransmission */
+			if ( !t_retransmit_reply( p_msg ) )
+			{
+				DBG( "SER: WARNING: bad t_retransmit_reply\n");
+			}
+			ret = 1;
+			break;
+
+		case AIN_NEW:		/* it's a new request */
+			ret = 1;
+			break;
+
+		case AIN_NEWACK:	/* it's an ACK for which no transaction exists */
+			ret=1;
+			break;
+
+		case AIN_OLDACK:	/* it's an ACK for an existing transaction */
+			DBG( "SER: ACK received -> t_release\n");
+			if ( !t_release_transaction( p_msg ) )
+			{
+				DBG( "SER: WARNING: bad t_release\n");
+			}
+			ret = 1;
+			break;
+
+		default:
+			LOG(L_CRIT, "ERROR: unexpected addifnew return value: %d\n", ret);
+			abort();
+	};
+	if (T) {
+		T_UNREF( T );
+	}
+	return ret;
+}
+
+
 

@@ -214,10 +214,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 {
 	unsigned int  dest_ip     = dest_ip_param;
 	unsigned int  dest_port  = dest_port_param;
-	int	       branch;
+	int                  branch;
 	unsigned int  len;
-	char                          *buf, *shbuf;
+	char               *buf, *shbuf;
 	struct retrans_buff  *rb;
+	struct cell      *T_source = T;
 
 	buf=NULL;
 	shbuf = NULL;
@@ -247,7 +248,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	 * when forwarding an ACK, this condition will be all the time false because
 	 * the forwarded INVITE is in the retransmission buffer */
 	if ( T->outbound_request[branch]==NULL )
-{
+	{
 		DBG("DEBUG: t_forward: first time forwarding\n");
 		/* special case : CANCEL */
 		if ( p_msg->REQ_METHOD==METHOD_CANCEL  )
@@ -269,6 +270,10 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 						to.sin_addr.s_addr;
 					dest_port = T->T_canceled->outbound_request[branch]->
 						to.sin_port;
+#ifdef USE_SYNONIM
+					T_source = T->T_canceled;
+					T->label  = T->T_canceled->label;
+#endif
 				} else { /* transaction exists, but nothing to cancel */
 					DBG("DEBUG: t_forward: it's CANCEL but "
 						"I have nothing to cancel here\n");
@@ -280,9 +285,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 			}
 		}/* end special case CANCEL*/
 
-		if ( add_branch_label( T, T->inbound_request , branch )==-1)
+		if ( add_branch_label( T_source, T->inbound_request , branch )==-1)
 			goto error;
-		if ( add_branch_label( T, p_msg , branch )==-1)
+		if ( add_branch_label( T_source, p_msg , branch )==-1)
 			goto error;
 		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 			goto error;
