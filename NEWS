@@ -35,6 +35,9 @@ New features
 - improved tm/FIFO (external applications, such as
   click-to-dial can now better initiate transactions)
   [tm module]
+- powerpc fast locking support
+- netbsd support
+- 64 bits arch. support (e.g. netbsd/sparc64).
 
 Changes to use of ser scripts
 =============================

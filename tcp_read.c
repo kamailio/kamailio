@@ -418,7 +418,8 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 {
 	long response[2];
 	
-		DBG( "releasing con %p, state %ld\n", c, state );
+		DBG( "releasing con %p, state %ld, fd=%d, id=%d\n",
+				c, state, c->fd, c->id);
 		/* release req & signal the parent */
 		if (c->fd!=-1) close(c->fd);
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
@@ -457,6 +458,14 @@ void tcp_receive_loop(int unix_sock)
 			timeout.tv_usec=0;
 			sel_set=master_set;
 			nfds=select(maxfd+1, &sel_set, 0 , 0 , &timeout);
+			DBG("tcp receive: out of select: nfds=%d, errno=%d (%s),"
+					         " timeout=%d, master_set=%x, sel_set=%x\n",
+					nfds, errno, strerror(errno), timeout.tv_sec, master_set, 
+					sel_set);
+			for (n=0; n<maxfd; n++){
+				if (FD_ISSET(n, &sel_set)) 
+					DBG("tcp receive: FD %d is set\n", n);
+			}
 			if (nfds<0){
 				if (errno==EINTR) continue; /* just a signal */
 				/* errors */
@@ -465,6 +474,7 @@ void tcp_receive_loop(int unix_sock)
 				continue;
 			}
 			if (FD_ISSET(unix_sock, &sel_set)){
+				DBG("tcp receive: receiving fd from from 'main'\n");
 				nfds--;
 				/* a new conn from "main" */
 				n=receive_fd(unix_sock, &con, sizeof(con), &s);
@@ -503,11 +513,16 @@ void tcp_receive_loop(int unix_sock)
 			ticks=get_ticks();
 			for (con=list; con ; con=c_next){
 				c_next=con->c_next; /* safe for removing*/
+				DBG("tcp receive: list fd=%d, id=%d, timeout=%d, refcnt=%d\n",
+						con->fd, con->id, con->timeout, con->refcnt);
 				if (nfds && FD_ISSET(con->fd, &sel_set)){
+					DBG("tcp receive: match, fd:isset\n");
 					nfds--;
 					resp=tcp_read_req(con);
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
+						DBG("tcp receive: FD_CLR %d, id=%d\n",
+								con->fd,	con->id);
 						tcpconn_listrm(list, con, c_next, c_prev);
 						release_tcpconn(con, resp, unix_sock);
 					}else{
@@ -522,6 +537,8 @@ void tcp_receive_loop(int unix_sock)
 								con, con->timeout, ticks);
 						resp=CONN_RELEASE;
 						FD_CLR(con->fd, &master_set);
+						DBG("tcp receive: FD_CLR %d, id=%d\n",
+								con->fd,	con->id);
 						tcpconn_listrm(list, con, c_next, c_prev);
 						release_tcpconn(con, resp, unix_sock);
 					}
