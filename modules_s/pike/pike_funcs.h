@@ -1,6 +1,7 @@
 #ifndef _PIKE_FUNCS_H
 #define PIKE_FUNCS_H
 
+#include "../../parser/msg_parser.h"
 #include "tree234.h"
 #include "lock.h"
 
@@ -20,10 +21,12 @@ enum pike_locks{BT4_INDEX_LOCK,BT6_INDEX_LOCK,PTL_INDEX_LOCK,PIKE_NR_LOCKS};
 
 struct ip_v4 {
 	int ip;
+	unsigned short counter[2];
 	// timer list linker
 };
 struct ip_v6 {
 	int ip[4];
+	unsigned short counter[2];
 	// timer list linker
 };
 
@@ -31,6 +34,7 @@ int cmp_ipv4(void*,void*);
 int cmp_ipv6(void*,void*);
 void free_elem(void *elem);
 
+int pike_check_req(struct sip_msg *msg, char *foo, char *bar);
 
 
 #endif

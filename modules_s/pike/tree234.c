@@ -33,7 +33,7 @@
 #include "tree234.h"
 
 #define smalloc shm_malloc
-#define sfree free
+#define sfree shm_free
 
 #define mknew(typ) ( (typ *) smalloc (sizeof (typ)) )
 

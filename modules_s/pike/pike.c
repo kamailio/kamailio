@@ -22,14 +22,13 @@
 
 static int pike_init(void);
 static int pike_exit(void);
-static int w_pike_check_req(struct sip_msg*, char*, char* );
 
 
 
 /* parameters */
-int time_unit;
-int max_value;
-int timeout;
+int time_unit = 60*10;
+int max_value = 500;
+int timeout   = 60*60;
 
 /* global variables */
 tree234     *ipv4_bt;
@@ -44,7 +43,7 @@ struct module_exports exports= {
 				"pike_check_req"
 			},
 	(cmd_function[]){
-				0
+				pike_check_req
 			},
 	(int[]){
 				0
@@ -117,14 +116,5 @@ static int pike_exit(void)
 	destroy_semaphores(pike_locks);
 	return 0;
 }
-
-
-
-
-static int w_pike_check_req(struct sip_msg *msg, char *foo, char *bar)
-{
-	return 0;
-}
-
 
 

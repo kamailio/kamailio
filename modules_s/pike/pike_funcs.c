@@ -38,3 +38,45 @@ int cmp_ipv6(void* ip61, void *ip62)
 		return 0;
 	return  (memcmp( ((struct ip_v6*)ip61)->ip, ((struct ip_v6*)ip62)->ip, 4));
 }
+
+
+
+
+int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
+{
+	struct ip_v4 *ip4, *old_ip4;
+	//struct ip_v6 *ip6, *old_ip6;
+
+	if (msg->src_ip.af==AF_INET) {
+		/* we have an IPV4 address */
+		ip4 = (struct ip_v4*)shm_malloc(sizeof(struct ip_v4));
+		if (!ip4) {
+			LOG(L_ERR,"ERROR:pike_check_req: cannot allocated sh mem!\n");
+			goto error;
+		}
+		ip4->ip = msg->src_ip.u.addr32[0];
+		lock(BT4_lock);
+		if ((old_ip4=add234(ipv4_bt,ip4))!=ip4) {
+			/* the src ip already in tree */
+			DBG("DEBUG:pike_check_req: IPv4 src found [%X] with [%d][%d]\n",
+				old_ip4->ip,old_ip4->counter[1],old_ip4->counter[0]);
+			old_ip4->counter[0]++;
+			if (old_ip4->counter[0]>(unsigned short)max_value) {
+				LOG(L_INFO,"INFO: src IP v4 [%x]exceeded!!\n",old_ip4->ip);
+				goto exceed;
+			}
+			unlock(BT4_lock);
+			shm_free(ip4);
+		} else {
+			/* new record */
+			unlock(BT4_lock);
+			DBG("DEBUG:pike_check_req: new IPv4 src [%X]\n",ip4->ip);
+		}
+	} else {
+	}
+error:
+	return 1;
+exceed:
+	return -1;
+}
+
