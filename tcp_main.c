@@ -282,7 +282,7 @@ void _tcpconn_rm(struct tcp_connection* c)
 	tcpconn_listrm(tcpconn_id_hash[c->id_hash], c, id_next, id_prev);
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
-	if ((c->type==PROTO_TLS)&&(c->extra_data)) tls_tcpconn_clean(c);
+	if (c->type==PROTO_TLS) tls_tcpconn_clean(c);
 #endif
 	shm_free(c);
 }
@@ -505,7 +505,8 @@ void tcpconn_timeout(fd_set* set)
 {
 	struct tcp_connection *c, *next;
 	int ticks;
-	unsigned h;;
+	unsigned h;
+	int fd;
 	
 	
 	ticks=get_ticks();
@@ -517,11 +518,12 @@ void tcpconn_timeout(fd_set* set)
 			if ((c->refcnt==0) && (ticks>c->timeout)) {
 				DBG("tcpconn_timeout: timeout for hash=%d - %p (%d > %d)\n",
 						h, c, ticks, c->timeout);
-				if (c->s>0) {
-					FD_CLR(c->s, set);
-					close(c->s);
-				}
+				fd=c->s;
 				_tcpconn_rm(c);
+				if (fd>0) {
+					FD_CLR(fd, set);
+					close(fd);
+				}
 			}
 			c=next;
 		}
@@ -717,6 +719,7 @@ void tcp_main_loop()
 	int cmd;
 	int bytes;
 	struct timeval timeout;
+	int fd;
 
 	/*init */
 	maxfd=0;
@@ -783,8 +786,9 @@ void tcp_main_loop()
 									"children available\n");
 						TCPCONN_LOCK;
 						if (tcpconn->refcnt==0){
-							close(tcpconn->s);
+							fd=tcpconn->s;
 							_tcpconn_rm(tcpconn);
+							close(fd);
 						}else tcpconn->timeout=0; /* force expire*/
 						TCPCONN_UNLOCK;
 					}
@@ -855,8 +859,9 @@ read_again:
 							tcpconn->refcnt--;
 							if (tcpconn->refcnt==0){ 
 								DBG("tcp_main_loop: destroying connection\n");
-								close(tcpconn->s);
+								fd=tcpconn->s;
 								_tcpconn_rm(tcpconn);
+								close(fd);
 							}else{
 								/* force timeout */
 								tcpconn->timeout=0;
