@@ -112,8 +112,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 
 	ptr = r->contacts;
-	while ((ptr) && ((ptr->expires <= act_time) || 
-			(ptr->state >= CS_ZOMBIE_N)))
+	while ((ptr) && !VALID_CONTACT(ptr, act_time))
 		ptr = ptr->next;
 	
 	if (ptr) {
@@ -134,7 +133,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (!append_branches) goto skip;
 
 	while(ptr) {
-		if (ptr->expires > act_time && (ptr->state < CS_ZOMBIE_N)) {
+		if (VALID_CONTACT(ptr, act_time)) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				     /* Return 1 here so the function succeeds even if appending of
