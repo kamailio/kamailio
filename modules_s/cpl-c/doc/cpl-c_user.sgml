@@ -41,6 +41,14 @@
 				</emphasis>
 			</para>
 			</listitem>
+			<listitem>
+			<para>
+				<emphasis>USRLOC (User Location) module - used for implementing
+				lookup("registation") tag (adding into location set of the
+				users's contact)
+				</emphasis>
+			</para>
+			</listitem>
 			</itemizedlist>
 			</para>
 		</section>
@@ -54,7 +62,8 @@
 				<para>
 					<emphasis>libxml2 and libxml2-devel - on some SO, these to 
 					packages are merged into libxml2. This library contains an 
-					engine for XML parsing, DTD validation and DOM manipulation.
+					engine for XML parsing, DTD validation and
+					DOM manipulation.
 					</emphasis>
 				</para>
 				</listitem>
@@ -178,6 +187,69 @@ modparam("cpl_c","proxy_recurse",2)
 				</programlisting>
 			</example>
 		</section>
+		<section>
+			<title><varname>proxy_route</varname> (int)</title>
+			<para>
+				Before doing proxy (forward), a script route can be executed.
+				All modifications made by that route will be reflected only for
+				the current branch.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0 (none).
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","proxy_route",1)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>nat_flag</varname> (int)</title>
+			<para>
+				Sets the flag used for marking calls via NAT. Used by lookup
+				tag when retriving a contact behind a NAT (this flag will be 
+				set).
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 6.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","nat_flag",4)
+...
+				</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><varname>lookup_domain</varname> (int)</title>
+			<para>
+				Tells if the lookup tag should use or not the domain part when
+				doing user_location search. Set it to a non zero value to force
+				also domain matching.
+			</para>
+			<para>
+				<emphasis>
+					Default value of this parameter is 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>proxy_recurse</varname> parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("cpl_c","lookup_domain",1)
+...
+				</programlisting>
+			</example>
+		</section>
 	</section>
 
 
@@ -185,17 +257,16 @@ modparam("cpl_c","proxy_recurse",2)
 		<title>Exported Functions</title>
 		<section>
 			<title>
-				<function moreinfo="none">cpl_run_script(type)</function>
+				<function moreinfo="none">cpl_run_script(type,mode)</function>
 			</title>
 			<para>
 				Starts the execution of the CPL script. The user name is 
 				fetched from new_uri or requested uri or from To header -in 
 				this order- (for incoming execution) or from FROM header (for 
-				outgoing execution). 
-				As the function use TM module for several internal operation, 
-				it's a MUST to call prior it the t_newtran() to create a 
-				transaction for the current INVITE - also it's recommended for 
-				retransmission detection. 
+				outgoing execution).
+				Regarding the stateful/stateless message processing, the
+				function  is very flexibile, being able to run in different 
+				modes (see below the"mode" parameter).
 				Normally this function will end script execution.  There is no 
 				guaranty that the CPL script interpretation ended when ser 
 				script ended also (for the same INVITE ;-)) - this can happen 
@@ -204,9 +275,8 @@ modparam("cpl_c","proxy_recurse",2)
 				received (this can happen in a different process of SER). 
 				If the function returns to script, the SIP server should 
 				continue with the normal behavior as if no script existed.
-				If error is returned (internally the function haven't sent any 
-				SIP error reply), the script should use a TM replying function 
-				for sending back to UAC the error reply.
+				When some error is returned, the function itself haven't sent 
+				any SIP error reply (this can be done from script).
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>
@@ -218,12 +288,57 @@ modparam("cpl_c","proxy_recurse",2)
 				user is generating an INVITE - call).
 				</para>
 			</listitem>
+			<listitem>
+				<para><emphasis>mode</emphasis> - sets the interpreter mode as
+				stateless/stateful behaviour. The follwoing modes are accepted:
+				</para>
+				<itemizedlist>
+				<listitem>
+					<para>
+					<emphasis>IS_STATELESS<emphasis> - the current INVITE has 
+					no transaction created yet. All replys (redirection or 
+					deny) will be done is a stateless way. The execution will 
+					switch to statefull only whena proxy is done. So, if the 
+					function returns, will be in stateless mode.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+					<emphasis>IS_STATEFUL<emphasis> - the current INVITE has 
+					already a transaction associated. All signalling operations
+					(replys or proxy) will be done in stateful way.So, if
+					the function returns, will be in stateful mode.
+					</para>
+				</listitem>
+				<listitem>
+					<para>
+					<emphasis>FORCE_STATEFUL<emphasis> - the current INVITE 
+					has no transaction created yet. All signalling operations
+					will be done is a stateful way (on signalling, the
+					transaction will be created from within the interpreter).
+					So, if the function returns, will be in stateless mode.
+					</para>
+				</listitem>
+				</itemizedlist>
+				<para>
+				<emphasis>HINT</emphasis>: is_statefull is vary 
+				difficult to manage from the routing script (script processing
+				can continue in statefull mode); is_stateless is the fastes and
+				less resources consumer (transaction is created only if
+				proxying is done), but there is minimal protection against
+				retransmisions (since replies are send stateless);
+				force_statefull is a good compromise - all signalling is done
+				statefull (retransmission protection) and in the same time, if
+				returning to script, it will be in stateless mode (easy to
+				continue the routing script execution)
+				</para>
+			</listitem>
 			</itemizedlist>
 			<example>
 				<title><function>cpl_run_script</function> usage</title>
 				<programlisting format="linespecific">
 ...
-cpl_run_script("incoming");
+cpl_run_script("incoming","force_statefull");
 ...
 				</programlisting>
 			</example>

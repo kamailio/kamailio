@@ -28,10 +28,13 @@ Bogdan-Andrei Iancu
               1.3.3. cpl_dtd_file (string)
               1.3.4. log_dir (string)
               1.3.5. proxy_recurse (int)
+              1.3.6. proxy_route (int)
+              1.3.7. nat_flag (int)
+              1.3.8. lookup_domain (int)
 
         1.4. Exported Functions
 
-              1.4.1. cpl_run_script(type)
+              1.4.1. cpl_run_script(type,mode)
               1.4.2. cpl_process_register()
 
         1.5. Installation & Running
@@ -45,7 +48,10 @@ Bogdan-Andrei Iancu
    1-3. Set cpl_dtd_file parameter
    1-4. Set log_dir parameter
    1-5. Set proxy_recurse parameter
-   1-6. cpl_run_script usage
+   1-6. Set proxy_recurse parameter
+   1-7. Set proxy_recurse parameter
+   1-8. Set proxy_recurse parameter
+   1-9. cpl_run_script usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -68,6 +74,9 @@ Chapter 1. User's Guide
      * SL (StateLess) module - used for sending stateless reply
        when responding to REGISTER request or for sending back
        error responses 
+     * USRLOC (User Location) module - used for implementing
+       lookup("registation") tag (adding into location set of the
+       users's contact) 
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -93,7 +102,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set cpl_db parameter
 ...
-modparam("cpl_c","cpl_db","sql://user:passwd@host/database")
+modparam("cpl_c","cpl_db","mysql://user:passwd@host/database")
 ...
      _________________________________________________________
 
@@ -159,17 +168,58 @@ modparam("cpl_c","proxy_recurse",2)
 ...
      _________________________________________________________
 
+1.3.6. proxy_route (int)
+
+   Before doing proxy (forward), a script route can be executed.
+   All modifications made by that route will be reflected only
+   for the current branch.
+
+   Default value of this parameter is 0 (none). 
+
+   Example 1-6. Set proxy_recurse parameter
+...
+modparam("cpl_c","proxy_route",1)
+...
+     _________________________________________________________
+
+1.3.7. nat_flag (int)
+
+   Sets the flag used for marking calls via NAT. Used by lookup
+   tag when retriving a contact behind a NAT (this flag will be
+   set).
+
+   Default value of this parameter is 6. 
+
+   Example 1-7. Set proxy_recurse parameter
+...
+modparam("cpl_c","nat_flag",4)
+...
+     _________________________________________________________
+
+1.3.8. lookup_domain (int)
+
+   Tells if the lookup tag should use or not the domain part when
+   doing user_location search. Set it to a non zero value to
+   force also domain matching.
+
+   Default value of this parameter is 0. 
+
+   Example 1-8. Set proxy_recurse parameter
+...
+modparam("cpl_c","lookup_domain",1)
+...
+     _________________________________________________________
+
 1.4. Exported Functions
 
-1.4.1. cpl_run_script(type)
+1.4.1. cpl_run_script(type,mode)
 
    Starts the execution of the CPL script. The user name is
    fetched from new_uri or requested uri or from To header -in
    this order- (for incoming execution) or from FROM header (for
-   outgoing execution). As the function use TM module for several
-   internal operation, it's a MUST to call prior it the
-   t_newtran() to create a transaction for the current INVITE -
-   also it's recommended for retransmission detection. Normally
+   outgoing execution). Regarding the stateful/stateless message
+   processing, the function is very flexibile, being able to run
+   in different modes (see below the"mode" parameter). Normally
    this function will end script execution. There is no guaranty
    that the CPL script interpretation ended when ser script ended
    also (for the same INVITE ;-)) - this can happen when the CPL
@@ -177,10 +227,9 @@ modparam("cpl_c","proxy_recurse",2)
    proxying and it will be resume when some reply is received
    (this can happen in a different process of SER). If the
    function returns to script, the SIP server should continue
-   with the normal behavior as if no script existed. If error is
-   returned (internally the function haven't sent any SIP error
-   reply), the script should use a TM replying function for
-   sending back to UAC the error reply.
+   with the normal behavior as if no script existed. When some
+   error is returned, the function itself haven't sent any SIP
+   error reply (this can be done from script).
 
    Meaning of the parameters is as follows:
 
@@ -189,10 +238,37 @@ modparam("cpl_c","proxy_recurse",2)
        (when an INVITE is received) or to "outgoing" for running
        the outgoing part of script (when a user is generating an
        INVITE - call).
+     * mode - sets the interpreter mode as stateless/stateful
+       behaviour. The follwoing modes are accepted:
+          + IS_STATELESS - the current INVITE has no transaction
+            created yet. All replys (redirection or deny) will be
+            done is a stateless way. The execution will switch to
+            statefull only whena proxy is done. So, if the
+            function returns, will be in stateless mode. 
+          + IS_STATEFUL - the current INVITE has already a
+            transaction associated. All signalling operations
+            (replys or proxy) will be done in stateful way.So, if
+            the function returns, will be in stateful mode. 
+          + FORCE_STATEFUL - the current INVITE has no
+            transaction created yet. All signalling operations
+            will be done is a stateful way (on signalling, the
+            transaction will be created from within the
+            interpreter). So, if the function returns, will be in
+            stateless mode. 
+       HINT: is_statefull is vary difficult to manage from the
+       routing script (script processing can continue in
+       statefull mode); is_stateless is the fastes and less
+       resources consumer (transaction is created only if
+       proxying is done), but there is minimal protection against
+       retransmisions (since replies are send stateless);
+       force_statefull is a good compromise - all signalling is
+       done statefull (retransmission protection) and in the same
+       time, if returning to script, it will be in stateless mode
+       (easy to continue the routing script execution)
 
-   Example 1-6. cpl_run_script usage
+   Example 1-9. cpl_run_script usage
 ...
-cpl_run_script("incoming");
+cpl_run_script("incoming","force_statefull");
 ...
      _________________________________________________________
 
