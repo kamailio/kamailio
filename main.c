@@ -110,7 +110,11 @@ Options:\n\
     -V           Version number\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                 auto-probing procedure even if  OS allows\n"
+                 auto-probing procedure even if  OS allows\n\
+    -w  dir      change the working directory to \"dir\" (default \"/\")\n\
+    -t  dir      chroot to \"dir\"\n\
+    -u uid       change uid \n\
+    -g gid       change gid \n"
 #ifdef STATS
 "    -s file	 File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -159,6 +163,10 @@ int check_via =  0;        /* check if reply first via host==us */
 int loop_checks = 0;	/* calculate branches and check for loops/spirals */
 int received_dns = 0;      /* use dns and/or rdns or to see if we need to 
                               add a ;received=x.x.x.x to via: */
+char* working_dir = 0;
+char* chroot_dir = 0;
+int uid = 0;
+int gid = 0;
 
 char* names[MAX_LISTEN];               /* our names */
 int names_len[MAX_LISTEN];    /* lengths of the names*/
@@ -194,11 +202,27 @@ int daemonize(char*  name)
 		openlog(name, LOG_PID|LOG_CONS, LOG_LOCAL1 /*LOG_DAEMON*/);
 		/* LOG_CONS, LOG_PERRROR ? */
 
-	if (chdir("/")<0){
-		LOG(L_CRIT,"cannot chroot:%s\n", strerror(errno));
+
+	if (chroot_dir&&(chroot(chroot_dir)<0)){
+		LOG(L_CRIT, "Cannot chroot to %s: %s\n", chroot_dir, strerror(errno));
 		goto error;
 	}
 	
+	if (chdir(working_dir)<0){
+		LOG(L_CRIT,"cannot chdir to %s: %s\n", working_dir, strerror(errno));
+		goto error;
+	}
+
+	if (gid&&(setgid(gid)<0)){
+		LOG(L_CRIT, "cannot change gid to %d: %s\n", gid, strerror(errno));
+		goto error;
+	}
+	
+	if(uid&&(setuid(uid)<0)){
+		LOG(L_CRIT, "cannot change uid to %d: %s\n", uid, strerror(errno));
+		goto error;
+	}
+
 	/* fork to become!= group leader*/
 	if ((pid=fork())<0){
 		LOG(L_CRIT, "Cannot fork:%s\n", strerror(errno));
@@ -437,7 +461,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:b:l:n:rRvcdDEVh";
+	"f:p:b:l:n:rRvcdDEVhw:t:u:g:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -521,6 +545,27 @@ int main(int argc, char** argv)
 					printf("%s",help_msg);
 					exit(0);
 					break;
+			case 'w':
+					working_dir=optarg;
+					break;
+			case 't':
+					chroot_dir=optarg;
+					break;
+			case 'u':
+					uid=strtol(optarg, &tmp, 10);
+					if ((tmp==0) ||(*tmp)){
+						fprintf(stderr, "bad uid number: -u %s\n", optarg);
+						goto error;
+					}
+					/* test if string?*/
+					break;
+			case 'g':
+					gid=strtol(optarg, &tmp, 10);
+					if ((tmp==0) ||(*tmp)){
+						fprintf(stderr, "bad gid number: -g %s\n", optarg);
+						goto error;
+					}
+					break;
 			case '?':
 					if (isprint(optopt))
 						fprintf(stderr, "Unknown option `-%c´.\n", optopt);
@@ -598,6 +643,8 @@ int main(int argc, char** argv)
 			MAX_PROCESSES-1 );
 		goto error;
 	}
+	
+	if (working_dir==0) working_dir="/";
 	/*alloc pids*/
 #ifdef SHM_MEM
 	pids=shm_malloc(sizeof(int)*children_no);

@@ -2,6 +2,7 @@ $Id$
 
 ( - todo, x - done)
 
+
 - fix parse_cseq!!! (it doesnt parse 1234\n INVITE a.s.o)
 x fix 0 parameter module f. call
 x better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
@@ -21,6 +22,8 @@ x plugin interface
 - add User-Agent (for the replies)
 
 Low priority:
+- add support for -u user and -g group (not only -u uid, -g uid)
+- change uid/gid after opening the sockets
 - exec improvments (add format strings to it)
 - command line switch for checking the config file syntax
 - config file version (a la sendmail)
