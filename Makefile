@@ -3,10 +3,10 @@
 # sip_router makefile
 #
 # WARNING: requires gmake (GNU Make)
-#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 6), WinNT
+#  Arch supported: Linux, FreeBSD, SunOS (tested on Solaris 6), WinNT (cygwin)
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
-exclude_modules=CVS
+exclude_modules=CVS usrloc
 sources=$(filter-out $(auto_gen), $(wildcard *.c)) $(auto_gen)
 objs=$(sources:.c=.o)
 depends=$(sources:.c=.d)
@@ -99,7 +99,7 @@ ifneq (,$(findstring CYGWIN, $(ARCH)))
 endif
 
 
-MKDEP=gcc -M $(DEFS)
+MKDEP=gcc -MM $(DEFS)
 
 ALLDEP=Makefile
 
@@ -110,8 +110,10 @@ export #export all variables for the sub-makes
 %.o:%.c $(ALLDEP)
 	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 
-%.d: %.c
-	$(MKDEP) $< >$@
+%.d: %.c $(ALLDEP)
+	set -e; $(MKDEP) $< \
+	|  sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
+	[ -s $@ ] || rm -f $@
 
 
 # normal rules
@@ -134,19 +136,21 @@ dep: $(depends)
 
 .PHONY: clean
 clean:
-	-rm $(objs) $(NAME)
+	-rm $(objs) $(NAME) 2>/dev/null
 	-for r in $(modules); do $(MAKE) -C $$r clean ; done
 
 .PHONY: modules
 modules:
 	-for r in $(modules); do \
+		echo  "" ; \
+		echo  "" ; \
 		$(MAKE) -C $$r ; \
 	done
 
 
 .PHONY: proper
 proper: clean 
-	-rm $(depends)
+	-rm $(depends) 2>/dev/null
 	-for r in $(modules); do $(MAKE) -C $$r proper ; done
 
 include $(depends)

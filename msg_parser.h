@@ -41,7 +41,7 @@ enum{
 };
 
 /* casting macro for accessing CSEQ body */
-#define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
+#define get_cseq( p_msg)    ((struct cseq_body*)(p_msg)->cseq->parsed)
 
 
 

@@ -6,34 +6,54 @@
 #include "../../timer.h"
 
 #define stop_RETR_and_FR_timers(h_table,p_cell)    \
-           { int ijk; \
-           if ( p_cell->outbound_response )  {  \
-               remove_from_timer_list( h_table , (&(p_cell->outbound_response->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST ); \
-               remove_from_timer_list( h_table , (&(p_cell->outbound_response->tl[FR_TIMER_LIST])) , FR_TIMER_LIST ); } \
-           for( ijk=0 ; ijk<p_cell->nr_of_outgoings ; ijk++ )  { \
-               remove_from_timer_list( h_table , (&(p_cell->outbound_request[ijk]->tl[RETRASMISSIONS_LIST])) , RETRASMISSIONS_LIST ); \
-               remove_from_timer_list( h_table , (&(p_cell->outbound_request[ijk]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST ); } \
-           }
+	do{ int ijk; \
+		if ( (p_cell)->outbound_response )  {  \
+			remove_from_timer_list( \
+				(h_table) , \
+				(&((p_cell)->outbound_response->tl[RETRASMISSIONS_LIST])), \
+				RETRASMISSIONS_LIST\
+			); \
+			remove_from_timer_list( (h_table), \
+					(&((p_cell)->outbound_response->tl[FR_TIMER_LIST])), \
+					FR_TIMER_LIST );\
+		} \
+		for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  { \
+			remove_from_timer_list( \
+				(h_table) , \
+				(&((p_cell)->outbound_request[ijk]->tl[RETRASMISSIONS_LIST])),\
+				RETRASMISSIONS_LIST \
+			); \
+			remove_from_timer_list( (h_table) , \
+				(&((p_cell)->outbound_request[ijk]->tl[FR_TIMER_LIST])), \
+				FR_TIMER_LIST ); \
+		} \
+	}while(0)
+
 
 #define insert_into_timer(hash_table,new_tl,list_id,time_out) \
-             {\
-                if ( is_in_timer_list(new_tl,list_id)  )\
-                   remove_from_timer_list( hash_table , new_tl , list_id);\
-                insert_into_timer_list(hash_table,new_tl,list_id,get_ticks()+time_out);\
-             }
+	do{\
+		if ( is_in_timer_list((new_tl),(list_id))  )\
+			remove_from_timer_list( (hash_table) , (new_tl) ,\
+								(list_id));\
+			insert_into_timer_list((hash_table), (new_tl), (list_id),\
+								get_ticks()+(time_out));\
+	}while(0)
+
 
 #define add_to_tail_of_timer(hash_table,new_tl,list_id,time_out) \
-             {\
-                if ( is_in_timer_list(new_tl,list_id)  )\
-                   remove_from_timer_list( hash_table , new_tl , list_id);\
-                add_to_tail_of_timer_list(hash_table,new_tl,list_id,get_ticks()+time_out);\
-             }
+	 do{\
+		if ( is_in_timer_list((new_tl), (list_id))  )\
+			remove_from_timer_list((hash_table), (new_tl), (list_id));\
+			add_to_tail_of_timer_list((hash_table), (new_tl), \
+								(list_id), get_ticks()+(time_out));\
+	}while(0)
+
 
 #define remove_from_timer(hash_table,tl,list_id) \
-             {\
-                if ( !is_in_timer_list(tl,list_id)  )\
-                   remove_from_timer_list( hash_table , tl , list_id);\
-             }
+	 do{\
+		if ( !is_in_timer_list((tl), (list_id))  )\
+			remove_from_timer_list( (hash_table), (tl), (list_id));\
+	}while(0)
 
 
 
