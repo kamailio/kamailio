@@ -30,6 +30,8 @@
  * --------
  *  2003-05-21  on sparc64 roundto 8 even in debugging mode (so malloc'ed
  *               long longs will be 64 bit aligned) (andrei)
+ *  2004-07-19  support for 64 bit (2^64 mem. block) and more info
+ *               for the future de-fragmentation support (andrei)
  */
 
 
@@ -62,11 +64,11 @@
 #define QM_MALLOC_OPTIMIZE_FACTOR 11 /*used below */
 #define QM_MALLOC_OPTIMIZE  ((unsigned long)(1<<QM_MALLOC_OPTIMIZE_FACTOR))
 								/* size to optimize for,
-									(most allocs < this size),
+									(most allocs <= this size),
 									must be 2^k */
 
 #define QM_HASH_SIZE ((unsigned long)(QM_MALLOC_OPTIMIZE/ROUNDTO + \
-		(32-QM_MALLOC_OPTIMIZE_FACTOR)+1))
+		(sizeof(long)-QM_MALLOC_OPTIMIZE_FACTOR)+1))
 
 /* hash structure:
  * 0 .... QM_MALLOC_OPTIMIE/ROUNDTO  - small buckets, size increases with
@@ -100,9 +102,10 @@ struct qm_frag_end{
 
 
 
-struct qm_frag_full{
+struct qm_frag_lnk{
 	struct qm_frag head;
 	struct qm_frag_end tail;
+	unsigned long no;
 };
 
 
@@ -115,7 +118,7 @@ struct qm_block{
 	struct qm_frag* first_frag;
 	struct qm_frag_end* last_frag_end;
 	
-	struct qm_frag_full free_hash[QM_HASH_SIZE];
+	struct qm_frag_lnk free_hash[QM_HASH_SIZE];
 	/*struct qm_frag_end free_lst_end;*/
 };
 

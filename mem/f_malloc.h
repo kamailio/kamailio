@@ -30,6 +30,8 @@
  * --------
  *  2003-05-21  on sparc64 roundto 8 even in debugging mode (so malloc'ed
  *               long longs will be 64 bit aligned) (andrei)
+ *  2004-07-19  support for 64 bit (2^64 mem. block) and more info
+ *               for the future de-fragmentation support (andrei)
  */
 
 
@@ -60,14 +62,14 @@
 #define F_MALLOC_OPTIMIZE_FACTOR 11 /*used below */
 #define F_MALLOC_OPTIMIZE  (1<<F_MALLOC_OPTIMIZE_FACTOR)
 								/* size to optimize for,
-									(most allocs < this size),
+									(most allocs <= this size),
 									must be 2^k */
 
 #define F_HASH_SIZE (F_MALLOC_OPTIMIZE/ROUNDTO + \
-		(32-F_MALLOC_OPTIMIZE_FACTOR)+1)
+		(sizeof(long)*8-F_MALLOC_OPTIMIZE_FACTOR)+1)
 
 /* hash structure:
- * 0 .... F_MALLOC_OPTIMIE/ROUNDTO  - small buckets, size increases with
+ * 0 .... F_MALLOC_OPTIMIZE/ROUNDTO  - small buckets, size increases with
  *                            ROUNDTO from bucket to bucket
  * +1 .... end -  size = 2^k, big buckets */
 
@@ -85,6 +87,10 @@ struct fm_frag{
 #endif
 };
 
+struct fm_frag_lnk{
+	struct fm_frag* first;
+	unsigned long no;
+};
 
 struct fm_block{
 	unsigned long size; /* total size */
@@ -97,7 +103,7 @@ struct fm_block{
 	struct fm_frag* first_frag;
 	struct fm_frag* last_frag;
 	
-	struct fm_frag* free_hash[F_HASH_SIZE];
+	struct fm_frag_lnk free_hash[F_HASH_SIZE];
 };
 
 

@@ -45,7 +45,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   13
-EXTRAVERSION = -dev-35
+EXTRAVERSION = -dev-36-malloc
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -282,8 +282,8 @@ DEFS+= $(extra_defs) \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
 	 -DF_MALLOC \
-	# -DDBG_F_MALLOC \
 	# -DDBG_QM_MALLOC \
+	# -DDBG_F_MALLOC \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DNO_LOG
