@@ -10,7 +10,7 @@
 #include "../../ut.h"
 
 
-#define ROUND4(s) ((s)%4)?((s)+4)/4*4:(s)
+#define ROUND4(s) (((s)%4)?((s)+4)/4*4:(s))
 
 #define  lump_len( _lump)  (ROUND4(sizeof(struct lump)) + \
                ROUND4( ((_lump)->op==LUMP_ADD)?(_lump)->len:0 ))
@@ -36,7 +36,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    struct to_param   *to_prm,*new_to_prm;
    struct sip_msg     *new_msg;
    struct lump          *lump_chain, *lump_tmp, **lump_anchor, **lump_anchor2;
-   char                       *p;
+   char                       *p,*foo;
 
 
    /*computing the length of entire sip_msg structure*/
@@ -74,7 +74,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
                    break;
       }
    }
-   /* length of the data lump structures
+   /* length of the data lump structures */
    if (org_msg->first_line.type==SIP_REQUEST)
       lump_chain = org_msg->add_rm;
    else
@@ -95,9 +95,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
          lump_tmp = lump_tmp->after;
       }
       lump_chain = lump_chain->next;
-   }  */
+   }
 
-   p=(char *)sh_malloc(len);
+   p=(char *)sh_malloc(len);foo=p;
    if (!p)
    {
       LOG(L_ERR , "ERROR: sip_msg_cloner_2: cannot allocate memory\n" );
@@ -123,9 +123,9 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    p += ROUND4(new_msg->len);
    /*unparsed and eoh pointer*/
    new_msg->unparsed = translate_pointer( new_msg->buf ,
-							org_msg->buf , org_msg->unparsed );
+	org_msg->buf , org_msg->unparsed );
    new_msg->eoh = translate_pointer( new_msg->buf ,
-							org_msg->buf , org_msg->eoh );
+	org_msg->buf , org_msg->eoh );
    /* first line, updating the pointers*/
    if ( org_msg->first_line.type==SIP_REQUEST )
    {
@@ -255,7 +255,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 
    }
 
-   /* clonning data lump
+   /* clonning data lump*/
    if (org_msg->first_line.type==SIP_REQUEST) {
       lump_chain = org_msg->add_rm;
       lump_anchor = &(new_msg->add_rm);
@@ -266,7 +266,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
    while (lump_chain)
    {
       lump_clone( (*lump_anchor) , lump_chain , p );
-      /*before list/
+      /*before list*/
       lump_tmp = lump_chain->before;
       lump_anchor2 = &((*lump_anchor)->before);
       while ( lump_tmp )
@@ -275,7 +275,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
          lump_anchor2 = &((*lump_anchor2)->before);
          lump_tmp = lump_tmp->before;
       }
-      /*after list/
+      /*after list*/
       lump_tmp = lump_chain->after;
       lump_anchor2 = &((*lump_anchor)->after);
       while ( lump_tmp )
@@ -286,8 +286,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
       }
       lump_anchor = &((*lump_anchor)->next);
       lump_chain = lump_chain->next;
-   }           */
-
+   }
+   DBG("-----------> len=%d <---> written=%d\n",len,p-foo);
    return new_msg;
 }
 

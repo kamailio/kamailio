@@ -53,7 +53,7 @@ ARCH = $(shell uname -s)
 
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
-	 -DUSE_SYNONIM \
+	 -DUSE_SYNONIM -DVQ_MALLOC\
 	 #-DFAST_LOCK -Di386
 	 #-DBRUT_HACK #-DEXTRA_DEBUG #-DSTATIC_TM
 	#-DEXTRA_DEBUG -DBRUT_HACK \
@@ -68,8 +68,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DNO_LOG
 
 PROFILE=  -pg #set this if you want profiling
-mode = debug
-#mode = release
+#mode = debug
+mode = release
 
 # platform dependent settings
 
