@@ -64,8 +64,10 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 			msg->via1->host.s );
 		goto error;
 	}
-	/* to:tag is added only for INVITE in order to be able to capture the ACK*/
-	if ( msg->first_line.u.request.method_value==METHOD_INVITE)
+	/* to:tag is added only for INVITEs without To tag in order
+	to be able to capture the ACK*/
+	if ( msg->first_line.u.request.method_value==METHOD_INVITE
+	&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) )
 		buf = build_res_buf_from_sip_req(code,text,sl_tag,32,msg ,&len);
 	else
 		buf = build_res_buf_from_sip_req(code,text,0,0,msg ,&len);
