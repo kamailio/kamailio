@@ -426,6 +426,13 @@ void handle_sigs()
 								" signal %d\n", chld,
 								 WSTOPSIG(chld_status));
 			}
+#ifndef STOP_JIRIS_CHANGES
+			if (dont_fork) {
+				LOG(L_INFO, "INFO: dont_fork turned on, living on\n");
+				break;
+			} 
+			LOG(L_INFO, "INFO: terminating due to SIGCHLD\n");
+#endif
 			/* exit */
 			kill(0, SIGTERM);
 			DBG("terminating due to SIGCHLD\n");
@@ -631,7 +638,12 @@ static void sig_usr(int signo)
 			case SIGHUP:
 					break;
 			case SIGCHLD:
+#ifndef 			STOP_JIRIS_CHANGES
+					LOG(L_INFO, "INFO: SIGCHLD received: "
+						"we do not worry about grand-children\n");
+#else
 					exit(0); /* terminate if one child died */
+#endif
 		}
 	}
 }
