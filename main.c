@@ -495,7 +495,7 @@ int main(int argc, char** argv)
                                         }
                                         break;
 			case 'l':
-					/* add a new addr. to out address list */
+					/* add a new addr. to our address list */
 					if (addresses_no < MAX_LISTEN){
 						names[addresses_no]=(char*)malloc(strlen(optarg)+1);
 						if (names[addresses_no]==0){

@@ -107,7 +107,7 @@ int udp_init(unsigned long ip, unsigned short port)
 	int optval, optvallen;
 
 
-	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 	if (addr==0){
 		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
 		goto error;

@@ -45,7 +45,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 		goto error;
 	}
 
-	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
@@ -153,7 +153,7 @@ int forward_reply(struct sip_msg* msg)
 		}
 	}
 	
-	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;
