@@ -74,11 +74,11 @@ static inline unsigned short str2s(unsigned char* str, unsigned int len,
 	return ret;
 
 error_digits:
-	DBG("str2s: ERROR: too many letters in [%.*s]\n", len, init);
+	DBG("str2s: ERROR: too many letters in [%.*s]\n", (int)len, init);
 	if (err) *err=1;
 	return 0;
 error_char:
-	DBG("str2s: ERROR: unexpected char %c in %.*s\n", *str, len, init);
+	DBG("str2s: ERROR: unexpected char %c in %.*s\n", *str, (int)len, init);
 	if (err) *err=1;
 	return 0;
 }
@@ -117,11 +117,11 @@ static inline unsigned int str2ip(unsigned char* str, unsigned int len,
 	return ret;
 
 error_dots:
-	DBG("str2ip: ERROR: too many dots in [%.*s]\n", len, init);
+	DBG("str2ip: ERROR: too many dots in [%.*s]\n", (int)len, init);
 	if (err) *err=1;
 	return 0;
 error_char:
-	DBG("str2ip: WARNING: unexpected char %c in %.*s\n", *str, len, init);
+	DBG("str2ip: WARNING: unexpected char %c in %.*s\n", *str,(int)len, init);
 	if (err) *err=1;
 	return 0;
 }
