@@ -282,6 +282,8 @@ install-doc: $(doc-prefix)/$(doc-dir)
 	$(INSTALL-DOC) README-MODULES $(doc-prefix)/$(doc-dir)
 	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/AUTHORS 
 	$(INSTALL-DOC) AUTHORS $(doc-prefix)/$(doc-dir)
+	$(INSTALL-TOUCH) $(doc-prefix)/$(doc-dir)/NEWS
+	$(INSTALL-DOC) NEWS $(doc-prefix)/$(doc-dir)
 	-@for r in $(modules_basenames) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f modules/"$$r"/README ]; then \
