@@ -1,0 +1,15 @@
+To Start SER at boot
+
+1. copy directory SER to /Library/StartupItems/
+
+   cp -r SER /Library/StartupItems/
+
+2. To start SER at boot time edit /etc/hostconfig and add a line with:
+
+   SER=-YES-
+
+To manualy start/stop/restart SER try either:
+
+/Library/StartupItems/SER/SER start 
+/Library/StartupItems/SER/SER stop
+/Library/StartupItems/SER/SER restart

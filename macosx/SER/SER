@@ -1,0 +1,53 @@
+#!/bin/sh
+
+##### adigeo
+# SIP Express Router
+##### adigeo
+
+. /etc/rc.common
+
+# Add SER=-YES- 
+# to /etc/hostconfig to start SER at boot time
+
+PIDFILE=/var/run/ser.pid
+DAEMON=/usr/local/sbin/ser
+DESC="SIP Express Router"
+PARAMS="-P $PIDFILE "
+#PARAMS="-P $PIDFILE -u ser -g ser -m 256"
+
+StartService ()
+{
+    if [ "${SER:=-NO-}" = "-YES-" ]; then
+        ConsoleMessage "Starting $DESC"
+        $DAEMON $PARAMS
+    fi
+}
+
+StopService ()
+{
+    ConsoleMessage "Stopping $DESC"
+
+    PIDS=`ps ax | grep ser | grep $PIDFILE | grep -v grep | awk '{print $1}'`
+
+    for pid in $PIDS; do
+        kill -KILL $pid
+    done
+}
+
+RestartService ()
+{
+    out=`($DAEMON -c >/dev/null || true) 2>&1`
+    line1=`echo $out | head -1`
+    if [ "$line1" != 'config file ok, exiting...' ]; then
+        echo -e "\nThere are errors in the configuration file. Please fix them first"
+        echo -e "\n$out\n"
+        exit 0
+    fi
+    echo "Restarting $DESC:"
+
+    StopService
+    sleep 3
+    StartService
+}
+
+RunService "$1"

@@ -1,0 +1,11 @@
+{
+  Description     = "SIP Express Router";
+  Provides        = ("SER");
+  Requires        = ("Network");
+  OrderPreference = "Late";
+  Messages =
+  {
+    start = "Starting SIP Express Router";
+    stop  = "Stopping SIP Express Router";
+  };
+}
