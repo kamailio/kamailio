@@ -1604,7 +1604,7 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 	/* lumps length */
 	for(lump=msg->reply_lump;lump;lump=lump->next) {
 		len += lump->text.len;
-		if (lump->type==LUMP_RPL_BODY && lump->text.s && lump->text.len)
+		if (lump->type==LUMP_RPL_BODY)
 			body = lump;
 	}
 	/* server header */
@@ -1617,11 +1617,11 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		else LOG(L_WARN, "WARNING: warning skipped -- too big\n");
 	}
 	/* content length hdr */
-	len += CONTENT_LENGTH_LEN + 1/*0*/ + CRLF_LEN;
-	/* body */
 	if (body) {
 		content_len.s = int2str(body->text.len, &content_len.len);
-		len += content_len.len - 1 + body->text.len;
+		len += CONTENT_LENGTH_LEN + content_len.len + CRLF_LEN;
+	} else {
+		len += CONTENT_LENGTH_LEN + 1/*0*/ + CRLF_LEN;
 	}
 	/* end of message */
 	len += CRLF_LEN; /*new line*/
@@ -1744,16 +1744,13 @@ char * build_res_buf_from_sip_req( unsigned int code, char *text ,str *new_tag,
 		p+=CRLF_LEN;
 	}
 	/* content_length hdr */
-	memcpy(p, CONTENT_LENGTH, CONTENT_LENGTH_LEN );
-	p+=CONTENT_LENGTH_LEN;
 	if (content_len.len) {
-		memcpy( p, content_len.s, content_len.len );
-		p+=content_len.len;
+		append_str( p, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+		append_str( p, content_len.s, content_len.len );
+		append_str( p, CRLF, CRLF_LEN );
 	} else {
-		*(p++) = '0';
+		append_str( p, CONTENT_LENGTH"0"CRLF,CONTENT_LENGTH_LEN+1+CRLF_LEN);
 	}
-	memcpy( p, CRLF, CRLF_LEN );
-	p+=CRLF_LEN;
 	/* warning header */
 	if (warning.s) {
 		memcpy( p, warning.s, warning.len);
