@@ -48,6 +48,9 @@
 #define RR_LR_TERM ";lr>"
 #define RR_LR_TERM_LEN (sizeof(RR_LR_TERM)-1)
 
+#define RR_LR_FULL_TERM ";lr=on>"
+#define RR_LR_FULL_TERM_LEN (sizeof(RR_LR_FULL_TERM)-1)
+
 #define RR_SR_TERM ">"
 #define RR_SR_TERM_LEN (sizeof(RR_SR_TERM)-1)
 
@@ -104,7 +107,11 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 
 	prefix_len = RR_PREFIX_LEN + (user->len ? (user->len + 1) : 0);
 	prefix = pkg_malloc(prefix_len);
-	suffix_len = (_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN) + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
+	if (enable_full_lr) {
+		suffix_len = (_lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN) + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
+	} else {
+		suffix_len = (_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN) + (tag->len ? (RR_FROMTAG_LEN + tag->len) : 0);
+	}
 	suffix = pkg_malloc(suffix_len);
 	
 	crlf = pkg_malloc(2);
@@ -129,9 +136,17 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	if (tag->len) {
 		memcpy(suffix, RR_FROMTAG, RR_FROMTAG_LEN);
 		memcpy(suffix + RR_FROMTAG_LEN, tag->s, tag->len);
-		memcpy(suffix + RR_FROMTAG_LEN + tag->len, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+		if (enable_full_lr) {
+			memcpy(suffix + RR_FROMTAG_LEN + tag->len, _lr ? RR_LR_FULL_TERM : RR_SR_TERM, _lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN);
+		} else {
+			memcpy(suffix + RR_FROMTAG_LEN + tag->len, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+		}
 	} else {
-		memcpy(suffix, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+		if (enable_full_lr) {
+			memcpy(suffix, _lr ? RR_LR_FULL_TERM : RR_SR_TERM, _lr ? RR_LR_FULL_TERM_LEN : RR_SR_TERM_LEN);
+		} else {
+			memcpy(suffix, _lr ? RR_LR_TERM : RR_SR_TERM, _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN);
+		}
 	}
 	
 	memcpy(crlf, CRLF, 2);
@@ -300,7 +315,11 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		hdr_len += RR_FROMTAG_LEN + from->tag_value.len;
 	}
 	
-	hdr_len += RR_LR_TERM_LEN;
+	if (enable_full_lr) {
+		hdr_len += RR_LR_FULL_TERM_LEN;
+	} else {
+		hdr_len += RR_LR_TERM_LEN;
+	}
 
 	hdr_len += 2; /* CRLF */
 
@@ -329,8 +348,13 @@ int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)
 		p += from->tag_value.len;
 	}
 
-	memcpy(p, RR_LR_TERM, RR_LR_TERM_LEN);
-	p += RR_LR_TERM_LEN;
+	if (enable_full_lr) {
+		memcpy(p, RR_LR_FULL_TERM, RR_LR_FULL_TERM_LEN);
+		p += RR_LR_FULL_TERM_LEN;
+	} else {
+		memcpy(p, RR_LR_TERM, RR_LR_TERM_LEN);
+		p += RR_LR_TERM_LEN;
+	}
 
 	memcpy(p, CRLF, 2);
 

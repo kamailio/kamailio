@@ -39,6 +39,7 @@
 
 extern int append_fromtag;
 extern int enable_double_rr;
+extern int enable_full_lr;
 
 
 #endif /* RR_MOD_H */

@@ -32,6 +32,7 @@
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-01  Added record_route with ip address parameter (janakj)
+ *  2003-04-14  enable_full_lr parameter introduced (janakj)
  */
 
 
@@ -46,6 +47,7 @@
 
 int append_fromtag = 1;
 int enable_double_rr = 1; /* Enable using of 2 RR by default */
+int enable_full_lr = 0;   /* Disabled by default */
 
 static int mod_init(void);
 static int str_fixup(void** param, int param_no);
@@ -76,7 +78,8 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] ={ 
 	{"append_fromtag",   INT_PARAM, &append_fromtag  },
 	{"enable_double_rr", INT_PARAM, &enable_double_rr},
-	{0, 0,0 }
+	{"enable_full_lr",   INT_PARAM, &enable_full_lr  },
+	{0, 0, 0 }
 };
 
 
