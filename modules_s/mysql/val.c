@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../../dprint.h"
-#include <mysql/mysql.h>
 #include "utils.h"
 #include "val.h"
 
@@ -210,12 +209,12 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int val2str(db_val_t* _v, char* _s, int* _len)
+int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 {
 	int l;
 	char* old_s;
 
-	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
+	if (!_c || !_v || !_s || !_len || !*_len) {
 		LOG(L_ERR, "val2str(): Invalid parameter value\n");
 		return -1;
 	}
@@ -255,30 +254,32 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
-		if (*_len < (l + 3)) {
+		if (*_len < (l * 2 + 3)) {
 			LOG(L_ERR, "val2str(): Destination buffer too short\n");
 			return -5;
 		} else {
+			old_s = _s;
 			*_s++ = '\'';
-			memcpy(_s, VAL_STRING(_v), l);
-			*(_s + l) = '\'';
-			*(_s + l + 1) = '\0'; /* FIXME */
-			*_len = l + 2;
+			_s += mysql_real_escape_string(_c, _s, VAL_STRING(_v), l);
+			*_s++ = '\'';
+			*_s = '\0'; /* FIXME */
+			*_len = _s - old_s;
 			return 0;
 		}
 		break;
 
 	case DB_STR:
 		l = VAL_STR(_v).len;
-		if (*_len < (l + 3)) {
+		if (*_len < (l * 2 + 3)) {
 			LOG(L_ERR, "val2str(): Destination buffer too short\n");
 			return -6;
 		} else {
+			old_s = _s;
 			*_s++ = '\'';
-			memcpy(_s, VAL_STR(_v).s, l);
-			*(_s + l) = '\'';
-			*(_s + l + 1) = '\0';
-			*_len = l + 2;
+			_s += mysql_real_escape_string(_c, _s, VAL_STR(_v).s, l);
+			*_s++ = '\'';
+			*_s = '\0';
+			*_len = _s - old_s;
 			return 0;
 		}
 		break;
