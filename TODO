@@ -2,6 +2,9 @@ $Id$
 
 ( - todo, x - done)
 
+- forward port fixes from testing
+- use recvmsg to get the dst ip address in udp_rcv_loop
+ (it won't work on solaris, but...)
 - nathelper: extract_body broken-> uses content_length value form the 
  message instead of recalculating it + duplicate code for get_body()
 - fix check_sel_op -- add proto for uri proto checks
