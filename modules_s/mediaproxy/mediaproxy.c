@@ -29,34 +29,34 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
-#include "../../data_lump.h"
+#include "../../str.h"
 #include "../../error.h"
+#include "../../data_lump.h"
 #include "../../forward.h"
 #include "../../mem/mem.h"
-#include "../../parser/parse_from.h"
-#include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
-#include "../../parser/parser_f.h"
 #include "../../resolve.h"
 #include "../../timer.h"
 #include "../../ut.h"
-#include "../registrar/sip_msg.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
+#include "../../parser/parse_uri.h"
 #include "../../msg_translator.h"
+#include "../registrar/sip_msg.h"
 #include "../usrloc/usrloc.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <regex.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <regex.h>
 
 
 MODULE_VERSION
@@ -402,7 +402,7 @@ getStrTokens(str *string, str *tokens, int limit)
 
 /* Functions to extract the info we need from the SIP/SDP message */
 
-/* Extract Call-ID value */
+/* Extract Call-ID value. */
 static Bool
 getCallId(struct sip_msg* msg, str *cid)
 {
@@ -527,7 +527,8 @@ getUserAgent(struct sip_msg* msg)
     return server;
 }
 
-/* Extract URI from the Contact header field */
+// Get URI from the Contact: field.
+// Derived from get_contact_uri() from the nathelper module.
 static Bool
 getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
 {
@@ -911,6 +912,8 @@ rfc1918address(str *address)
 #define isPublicAddress(x)  (rfc1918address(x)==0 ? 1 : 0)
 
 
+// This function is a copy (with minor modifications) of the timer()
+// function from the nathleper module. proper credits should go there.
 static void
 pingClients(unsigned int ticks, void *param)
 {
@@ -1225,6 +1228,9 @@ ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
 
 // Replace IP:Port in Contact field with the source address of the packet.
 // Preserve port for SIP asymmetric clients
+//
+// Function was originally based on fix_nated_contact_f from the nathelper
+// module (added more features since). proper credits should go there.
 static int
 FixContact(struct sip_msg* msg, char* str1, char* str2)
 {
