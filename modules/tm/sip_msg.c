@@ -127,9 +127,6 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
     /* repl_add_rm ( struct lump* ) -> have to be changed!!!!!!!  */
     new_msg->repl_add_rm  = 0;
 
-    /* append branch parameter */
-    new_msg->add_to_branch.s = (char *) sh_malloc( org_msg->add_to_branch.len );
-    memcpy( new_msg->add_to_branch.s, org_msg->add_to_branch.s, org_msg->add_to_branch.len );
 }
 
 

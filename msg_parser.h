@@ -29,6 +29,9 @@
 #define HDR_ROUTE        256
 #define HDR_OTHER       65536 /*unknown header type*/
 
+/* maximum length of values appended to Via-branch parameter */
+#define	MAX_BRANCH_PARAM_LEN	32
+
 /* via param types
  * WARNING: keep in sync w/ FIN_*, GEN_PARAM and PARAM_ERROR from via_parse.c*/
 enum{
@@ -36,6 +39,9 @@ enum{
 		GEN_PARAM,
 		PARAM_ERROR
 };
+
+/* casting macro for accessing CSEQ body */
+#define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
 
 
 
@@ -169,6 +175,9 @@ struct sip_msg{
 	struct lump* repl_add_rm; /* only for localy generated replies !!!*/
 
 	str add_to_branch; /* whatever whoever want to append to branch comes here */
+	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
+	short add_to_branch_len;
+
 	
 };
 
@@ -212,6 +221,8 @@ void free_via_list(struct via_body *vb);
 void clean_hdr_field(struct hdr_field* hf);
 void free_hdr_field_lst(struct hdr_field* hf);
 void free_sip_msg(struct sip_msg* msg);
+
+int check_transaction_quadruple( struct sip_msg* msg );
 
 
 #endif

@@ -41,4 +41,6 @@ Low priority:
 - the same for FreeBSD and Slackware
 
 
-
+- jku: branch hash computation over canonical values
+- jku: loop checking
+- jku: try CRC as opposed to MD5

@@ -164,11 +164,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 		/* loop checks ? */
 		if (loop_checks) {
 
-			if (	(msg->from || (parse_headers( msg, HDR_FROM)!=-1 && msg->from)) &&
-				(msg->to|| (parse_headers( msg, HDR_TO)!=-1 && msg->to)) &&
-				(msg->callid|| (parse_headers( msg, HDR_CALLID)!=-1 && msg->callid)) &&
-				(msg->cseq|| (parse_headers( msg, HDR_CSEQ)!=-1 && msg->cseq)) ) {
-
+			if (check_transaction_quadruple( msg )) {
 				str src[5];
 				int r;
 			
@@ -176,7 +172,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 				src[1]= msg->to->body; 
 				src[2]= msg->callid->body; 
 				src[3]= msg->first_line.u.request.uri; 
-				src[4]= ((struct cseq_body *)(msg->cseq->parsed))->number;
+				src[4]= get_cseq( msg )->number;
 
 				MDStringArray ( line_buf+via_len-1, src, 5 );
 				DBG("DEBUG: build_req_buf_from_sip_req: branch loop detection: %s, %s, %s, %s, %s -> %s32\n",
@@ -184,6 +180,7 @@ char * build_req_buf_from_sip_req(struct sip_msg* msg, unsigned int *returned_le
 					msg->first_line.u.request.uri.s,
 					((struct cseq_body *)(msg->cseq->parsed))->number.s,
 					line_buf+via_len-1 );
+				DBG("WARNING: build_req_buf_from_sip_req: branch computation NOT over canonical values\n");
 				via_len+=MD5_LEN - 1;
 				
 			} else DBG("DEBUG: build_req_buf_from_sip_req: required HFs for loop checking missing\n");

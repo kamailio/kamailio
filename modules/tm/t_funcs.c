@@ -1,12 +1,10 @@
 #include "t_funcs.h"
 #include "../../dprint.h"
+#include "../../config.h"
 
 struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
-
-
-
 
 
 int tm_startup()
@@ -802,6 +800,24 @@ int t_cancel_branch(unsigned int branch)
 }
 
 
+/* copy a header field to an output buffer if space allows */
+int copy_hf( char **dst, struct hdr_field* hf, char *bumper )
+{
+   int n;
+   n=hf->body.len+2+hf->name.len+CRLF_LEN;
+   if (*dst+n >= bumper ) return -1;
+   memcpy(*dst, hf->name.s, hf->name.len );
+   *dst+= hf->name.len ;
+   **dst = ':'; (*dst)++;
+   **dst = ' '; (*dst)++;
+   memcpy(*dst, hf->body.s, hf->body.len);
+   *dst+= hf->body.len;
+   memcpy( *dst, CRLF, CRLF_LEN );
+   *dst+=CRLF_LEN;
+   return 0;
+}
+  
+
 
 
 /* Builds an ACK request based on an INVITE request. ACK is send
@@ -812,103 +828,101 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
     struct sip_msg* p_msg = T->inbound_request;
     struct via_body *via;
     struct hdr_field *hdr;
-   char *ack_buf, *p;
+    char *ack_buf=NULL, *p;
     unsigned int len;
+    int n;
 
-   ack_buf = (char *)malloc( 1024 * 10 );
+   /* enough place for first line and Via ? */
+   if ( 4 + p_msg->first_line.u.request.uri.len + 1 + p_msg->first_line.u.request.version.len +
+	CRLF_LEN + MY_VIA_LEN + names_len[0] + 1 + port_no_str_len + MY_BRANCH_LEN  < MAX_ACK_LEN ) {
+		LOG( L_ERR, "ERROR: t_build_and_send_ACK: no place for FL/Via\n");
+		goto error;
+   }
+
+   ack_buf = (char *)malloc( MAX_ACK_LEN );
    p = ack_buf;
 
    /* first line */
    memcpy( p , "ACK " , 4);
    p += 4;
+
    memcpy( p , p_msg->first_line.u.request.uri.s , p_msg->first_line.u.request.uri.len );
-   p += p_msg->first_line.u.request.uri.len+1;
-   *(p++)=' ';
+   p += p_msg->first_line.u.request.uri.len;
+
+   *(p++) = ' ';
+
    memcpy( p , p_msg->first_line.u.request.version.s , p_msg->first_line.u.request.version.len );
    p += p_msg->first_line.u.request.version.len;
-   *(p++) = '\n';
+
+   memcpy( p, CRLF, CRLF_LEN );
+   p+=CRLF_LEN;
 
    /* insert our via */
-   memcpy( p , "Via: SIP/2.0/UDP " , 17);
-   p += 17;
+   memcpy( p , MY_VIA , MY_VIA_LEN );
+   p += MY_VIA_LEN;
+
    memcpy( p , names[0] , names_len[0] );
    p += names_len[0];
+
    *(p++) = ':';
+
    memcpy( p , port_no_str , port_no_str_len );
    p += port_no_str_len;
 
-   /* VIA (first we have to find the header) */
-   for( hdr=p_msg->headers ; hdr ; hdr=hdr->next  )
-      if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM || hdr->type==HDR_CALLID )
-      {
-         len = (hdr->body.s+hdr->body.len) - hdr->name.s;
-         memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) , len );
-         p += len;
-         *(p++) = '\n';
-      }
-      else if ( hdr->type==HDR_CSEQ )
-      {
-         len = (get_cseq(p_msg)->number.s+get_cseq(p_msg)->number.len) - hdr->name.s;
-         memcpy( p , p_msg->orig+(hdr->name.s-p_msg->buf) , len );
-         p += len;
-         memcpy( p , " ACK\n" , 5);
-         p += 5;
-      }
-      if ( hdr->type==HDR_TO )
-      {
-         len = (T->outbound_response[branch]->to->body.s+T->outbound_response[branch]->to->body.len) - T->outbound_response[branch]->to->name.s;
-         memcpy( p , T->outbound_response[branch]->orig+(T->outbound_response[branch]->to->name.s-T->outbound_response[branch]->buf) , len );
-         p += len;
-         *(p++) = '\n';
-      }
+   memcpy( p, MY_BRANCH, MY_BRANCH_LEN );
+   p+=MY_BRANCH_LEN;
 
-   /* end of message*/
-   *(p++) = '\n';
+   n=snprintf( p, ack_buf + MAX_ACK_LEN - p, 
+                 ".%h.%h.%h%s",
+                 Trans->hash_index, Trans->label, branch, CRLF );
+   if (n==-1) {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: not enough memory for branch\n");
+	goto error;
+   }
+   p+=n;
+
+   if (!check_transaction_quadruple( p_msg )) {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: can't generate a HBH ACK if key HFs in INVITE missing\n");
+	goto error;
+   }
+
+   /* To */
+   if (copy_hf( &p, p_msg->to , ack_buf + MAX_ACK_LEN )==-1) {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for To\n");
+	goto error;
+   }
+   /* From */
+   if (copy_hf( &p, p_msg->from, ack_buf + MAX_ACK_LEN )==-1) {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for From\n");
+	goto error;
+   }
+   /* CallId */
+   if (copy_hf( &p, p_msg->callid, ack_buf + MAX_ACK_LEN )==-1) {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no place for callid\n");
+	goto error;
+   }
+   /* CSeq, EoH */
+   n=snprintf( p, ack_buf + MAX_ACK_LEN - p, 
+                 "Cseq: %*s ACK%s%s", get_cseq(p_msg)->number.len, 
+		get_cseq(p_msg)->number.s, CRLF, CRLF );
+   if (n==-1) {
+	LOG(L_ERR, "ERROR: t_build_and_send_ACK: no enough memory for Cseq\n");
+	goto error;
+   }
+   p+=n;
+
 
    /* sends the ACK message to the same destination as the INVITE */
    udp_send( ack_buf, p-ack_buf, (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 
    /* free mem*/
-   free( ack_buf );
-
+   if (ack_buf) free( ack_buf );
    return 0;
+
+error:
+   	if (ack_buf) free( ack_buf );
+	return -1;
 }
-
-
-
-
-/* append appropriate branch labels for fast reply-transaction matching
-   to outgoing requests
-*/
-int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
-{
-	char *c;
-
-
-	/* check size now */
-/*
-	if (p_msg->add_to_branch.len+ .... > MAX_BRANCH_PARAM_LEN ) {
-		LOG(L_ERR, "ERROR: add_branch_label: too small branch buffer\n");
-		return -1;
-	}
-*/
-
-	/* check if there already was something else -- if not, allocate */
-
-/*
- = (char*)sh_malloc( MAX_BRANCH_PARAM_LEN );
-
-
-
-	trans->label;
-	trans->hash_index;
-	p_msg->add_to_branch;
-	branch;
-*/
-}
-
-
-
 
 
 
@@ -976,6 +990,20 @@ void delete_handler( void *attr)
        add_to_tail_of_timer_list( hash_table, &(p_cell->dele_tl), DELETE_LIST, DEL_TIME_OUT );
 }
 
+/* append appropriate branch labels for fast reply-transaction matching
+   to outgoing requests
+*/
+int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
+{
+	char *c;
+	short n;
 
-
-
+	n=snprintf( p_msg->add_to_branch_s+p_msg->add_to_branch_len, 
+		  MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len,
+		 ".%h.%h.%h",
+		 trans->hash_index, trans->label, branch );
+	if (n==-1) {
+		LOG(L_ERR, "ERROR: add_branch_label: too small branch buffer\n");
+		return -1;
+	} else return 0;
+}

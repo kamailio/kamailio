@@ -21,7 +21,9 @@ struct timer;
 
 #define sh_malloc( size )     malloc(size)
 #define sh_free( ptr )           free(ptr)
+/* defined in msg_parser.h
 #define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
+*/
 
 
 /* always use a power of 2 for hash table size */

@@ -670,6 +670,12 @@ error:
 /* parse the headers and adds them to msg->headers and msg->to, from etc.
  * It stops when all the headers requested in flags were parsed, on error
  * (bad header) or end of headers */
+/* note: it continues where it previously stopped and goes ahead until
+   end is encountered or desired HFs are found; if you call it twice
+   for the same HF which is present only once, it will fail the second
+   time; if you want to use a dumbie convenience function which will
+   give you the header you are interested in, look at check_transaction_quadruple
+*/
 int parse_headers(struct sip_msg* msg, int flags)
 {
 	struct hdr_field* hf;
@@ -942,4 +948,16 @@ void free_sip_msg(struct sip_msg* msg)
 }
 
 
+/* make sure all HFs needed for transaction identification have been
+   parsed; return 0 if those HFs can't be found
+*/
+int check_transaction_quadruple( struct sip_msg* msg )
+{
+   return 
+   ( (msg->from || (parse_headers( msg, HDR_FROM)!=-1 && msg->from)) &&
+   (msg->to|| (parse_headers( msg, HDR_TO)!=-1 && msg->to)) &&
+   (msg->callid|| (parse_headers( msg, HDR_CALLID)!=-1 && msg->callid)) &&
+   (msg->cseq|| (parse_headers( msg, HDR_CSEQ)!=-1 && msg->cseq)) ) ? 1 : 0;
+
+}
 

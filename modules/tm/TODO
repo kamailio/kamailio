@@ -23,3 +23,5 @@ Things we have omitted for now:
 To improve:
 - too many memcpies
 - faster syncing
+
+Double-check: revire the T-state-machine

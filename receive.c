@@ -64,6 +64,11 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 			goto error;
 		}
 		/* check if neccesarry to add receive?->moved to forward_req */
+
+		/* loop checks */
+		if (loop_checks) {
+			DBG("WARNING: receive_msg: Placeholder for loop check. NOT implemented yet.\n");
+		}
 		
 		/* exec routing script */
 		DBG("preparing to run routing scripts...\n");
