@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -13
+EXTRAVERSION = -13-1
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -177,6 +177,32 @@ $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, sun cc, intel icc )
 endif
 
+# find ldname (gnu or solaris)
+ifeq ($(ARCH), sparc64)
+ifeq ($(CC_NAME), gcc)
+		LDGCC=$(shell $(CC) -v 2>&1 | grep with-ld| \
+				   sed -e 's/.*--with-ld=\([^ ][^ ]*\).*/\1/' )
+		LDPATH=$(shell  if [ -z "$(LDGCC)" ] ; then echo "ld" ;\
+						else \
+						if $(LDGCC) -V 2>/dev/null 1>/dev/null; then \
+							echo $(LDGCC); \
+						else echo "ld" ; \
+						fi\
+						fi)
+						
+		LDTYPE=$(shell if $(LDPATH) -V 1>/dev/null  2>/dev/null; then \
+							if $(LDPATH) -V 2>&1|grep GNU >/dev/null; \
+							then echo gnu; \
+							else \
+							if $(LDPATH) -V 2>&1|grep Solaris >/dev/null;\
+							then echo solaris; \
+							else \
+								echo unknown ; \
+							fi \
+							fi \
+						fi)
+endif
+endif
 
 # arh. specific definitions
 ifeq ($(ARCH), i386)
@@ -322,15 +348,30 @@ endif	#ARCH, i386
 
 # setting LDFLAGS
 ifeq	($(CC_NAME), gcc)
-	#gcc and maybe others
-	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+ifeq		($(ARCH), sparc64)
+ifeq			($(LDTYPE), solaris)
+					# solaris ld
+					LDFLAGS+=-O2 $(PROFILE)
+					MOD_LDFLAGS=-G $(LDFLAGS)
+else			
+					#gcc and maybe others, on solaris, with gnu ld
+					LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+					MOD_LDFLAGS=-shared $(LDFLAGS)
+endif
+else
+			#gcc and maybe others
+			LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+			MOD_LDFLAGS=-shared $(LDFLAGS)
+endif
 endif
 ifeq	($(CC_NAME), icc)
 	#gcc and maybe others
 	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
+	MOD_LDFLAGS=-shared $(LDFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
 	LDFLAGS+=-xO5 $(PROFILE)
+	MOD_LDFLAGS=-G $(LDFLAGS)
 endif
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
@@ -338,15 +379,28 @@ endif
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
 		CFLAGS=-g -Wcast-align -Winline $(PROFILE)
-		LDFLAGS+=-g -Wl,-E $(PROFILE)
+ifeq		($(ARCH), sparc64)
+			CFLAGS+= -mcpu=ultrasparc 
+endif
+ifeq		($(LDTYPE), solaris)
+			#solaris ld
+			LDFLAGS+=-g $(PROFILE)
+			MOD_LDFLAGS=-G $(LDFLAGS)
+else
+			#gnu or other ld type
+			LDFLAGS+=-g -Wl,-E $(PROFILE)
+			MOD_LDFLAGS=-shared $(LDFLAGS)
+endif
 endif
 ifeq	($(CC_NAME), icc)
 		CFLAGS=-g  $(PROFILE)
 		LDFLAGS+=-g -Wl,-E $(PROFILE)
+		MOD_LDFLAGS=-shared $(LDFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
 		CFLAGS= -g $(PROFILE)
 		LDFLAGS+=-g $(PROFILE)
+		MOD_LDFLAGS=-G $(LDFLAGS)
 endif
 
 endif #mode=release
@@ -355,15 +409,12 @@ endif #mode=release
 #*FLAGS used for compiling the modules
 ifeq	($(CC_NAME), gcc)
 MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
-MOD_LDFLAGS=-shared $(LDFLAGS)
 endif
 ifeq	($(CC_NAME), icc)
 MOD_CFLAGS=-Kpic $(CFLAGS)
-MOD_LDFLAGS=-shared $(LDFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
 MOD_CFLAGS=-Kpic  $(CFLAGS)
-MOD_LDFLAGS=-G $(LDFLAGS)
 endif
 
 LEX=flex
@@ -394,7 +445,7 @@ ifeq  ($(OS), SunOS)
 ifeq ($(CC_NAME), suncc)
 	LIBS=-lfast
 endif
-	LIBS+=-ldl -L/usr/local/lib -L/usr/lib/mysql -lfl -lxnet -lrt
+	LIBS+=-ldl -L/usr/local/lib -L/usr/lib/mysql -lfl -lxnet -lrt -lnsl
 	# -lrt needed for sched_yield
 endif
 
