@@ -191,7 +191,6 @@ int msg_list_check_msg(msg_list ml, int mid)
 	}
 	
 	ml->lsent = p0;
-	goto done;
 		
 done:
 	ml->nrsent++;
@@ -244,7 +243,7 @@ errorx:
  */
 int msg_list_check(msg_list ml)
 {
-	msg_list_el p0, p1;	
+	msg_list_el p0;	
 	
 	if(!ml)
 		goto errorx;
@@ -258,30 +257,29 @@ int msg_list_check(msg_list ml)
 	p0 = ml->lsent;
 	while(p0)
 	{
-		p1 = p0->next;
 		if(p0->flag & MS_MSG_DONE)
 		{
 			DBG("MSILO: msg_list_check: mid:%d is done\n", p0->msgid);
 			if(p0->prev)
-				p0->prev->next = p1;
+				(p0->prev)->next = p0->next;
+			else
+			    ml->lsent = p0->next;
 			if(p0->next)
-				p0->next->prev = p0->prev;
+				(p0->next)->prev = p0->prev;
 			ml->nrsent--;
 			if(!ml->nrsent)
 				ml->lsent = NULL;
 
 			if(ml->ldone)
-			{
-				ml->ldone->prev = p0;
-				p0->next = ml->ldone;
-			}
-			else
-				p0->next = p0->prev = NULL;
+				(ml->ldone)->prev = p0;
+			p0->next = ml->ldone;
+			
+			p0->prev = NULL;
 
 			ml->ldone = p0;
 			ml->nrdone++;
 		}
-		p0 = p1;
+		p0 = p0->next;
 	}
 
 	s_unlock_at(ml->sems, MS_SEM_DONE);
