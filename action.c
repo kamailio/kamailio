@@ -38,6 +38,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	char* tmp;
 	char *new_uri, *end, *crt;
 	int len;
+	int user;
 	struct sip_uri uri;
 
 	ret=E_BUG;
@@ -155,6 +156,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case SET_USERPASS_T:
 		case SET_PORT_T:
 		case SET_URI_T:
+				user=0;
 				if (a->p1_type!=STRING_ST){
 					LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
 							a->p1_type);
@@ -166,7 +168,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 					len=strlen(a->p1.string);
 					msg->new_uri=malloc(len+1);
 					if (msg->new_uri==0){
-						LOG(L_ERR, "ERROR: do_action: memory allocation failure\n");
+						LOG(L_ERR, "ERROR: do_action: memory allocation"
+								" failure\n");
 						ret=E_OUT_OF_MEM;
 						break;
 					}
@@ -179,14 +182,16 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if (msg->new_uri) tmp=msg->new_uri;
 				else tmp=msg->first_line.u.request.uri;
 				if (parse_uri(tmp, strlen(tmp), &uri)<0){
-					LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping packet\n", tmp);
+					LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
+								" packet\n", tmp);
 					ret=E_UNSPEC;
 					break;
 				}
 				
 				new_uri=malloc(MAX_URI_SIZE);
 				if (new_uri==0){
-					LOG(L_ERR, "ERROR: do_action: memory allocation failure\n");
+					LOG(L_ERR, "ERROR: do_action: memory allocation "
+								" failure\n");
 					ret=E_OUT_OF_MEM;
 					break;
 				}
@@ -196,11 +201,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 				len=strlen("sip:"); if(crt+len>end) goto error_uri;
 				memcpy(crt,"sip:",len);crt+=len;
 				/* user */
-				if ((a->type==SET_USER_T)||(a->type==SET_USERPASS_T)) tmp=a->p1.string;
-				else tmp=uri.user;
+				if ((a->type==SET_USER_T)||(a->type==SET_USERPASS_T))
+					tmp=a->p1.string;
+				else 
+					tmp=uri.user;
 				if (tmp){
 					len=strlen(tmp); if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
+					user=1; /* we have an user field so mark it */
 				}
 				if (a->type==SET_USERPASS_T) tmp=0;
 				else tmp=uri.passwd;
@@ -212,10 +220,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* host */
-				len=strlen("@"); if(crt+len>end) goto error_uri;
-				memcpy(crt,"@",len);crt+=len;
-				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T)) tmp=a->p1.string;
-				else tmp=uri.host;
+				if (user || tmp){ /* add @ */
+					len=strlen("@"); if(crt+len>end) goto error_uri;
+					memcpy(crt,"@",len);crt+=len;
+				}
+				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T))
+					tmp=a->p1.string;
+				else
+					tmp=uri.host;
 				if (tmp){
 					len=strlen(tmp); if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;

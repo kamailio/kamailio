@@ -14,9 +14,12 @@ High priority:
 - add User-Agent (for the replies)
 
 Low priority:
+- config file version (a la sendmail)
 - loop detection
 - cfg. file reload
 - flags for using names or ip adresses in Via ?
+
+- handle SIGCHLD, SIGHUP
 
 - make install
 - init.d scripts (and rc.local? for *BSD or Slackware)

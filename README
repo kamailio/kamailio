@@ -2,8 +2,15 @@ $Id$
 
 [ under construction :) ]
 
-read INSTALL
-compile & sip_router -h
+Sources:
+
+ - set your tab stop to 4 (in vi: set ts=4).
+
+
+Compile & Install:
+
+- read INSTALL
+- compile & sip_router -h
 
 
 Configuration files:
