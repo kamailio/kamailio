@@ -35,6 +35,7 @@
 #include "../../ut.h"
 #include "../../resolve.h"
 #include "../../mem/mem.h"
+#include "enum_mod.h"
 #include "regexp.h"
 
 
@@ -237,7 +238,8 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 		j = j + 2;
 	}
 
-	strcpy(&(name[j]), "e164.arpa.");
+	memcpy(name + j, suffix.s, suffix.len + 1);
+/*	strcpy(&(name[j]), "e164.arpa."); */
 
 	head = get_record(name, T_NAPTR);
 
