@@ -82,9 +82,10 @@ static inline int authorize(struct sip_msg* _msg, str* _realm, int _hftype)
 	auth_body_t* cred;
 	str* uri;
 	struct sip_uri puri;
-	str user;
+	str user, domain;
 
-	ret = pre_auth_func(_msg, &_realm, _hftype, &h);
+	domain = *_realm;
+	ret = pre_auth_func(_msg, &domain, _hftype, &h);
 	cred = (auth_body_t*)h->parsed;
 	
 	switch(ret) {
