@@ -545,6 +545,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	contact_t* c;
 	struct lump* anchor;
 	struct sip_uri uri;
+	str hostport;
 
 	if (get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
@@ -555,29 +556,31 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		    "check your config!\n");
 		return -1;
 	}
-	if (uri.port.len == 0)
-		uri.port.s = uri.host.s + uri.host.len;
 
 	offset = c->uri.s - msg->buf;
 	anchor = del_lump(msg, offset, c->uri.len, HDR_CONTACT);
 	if (anchor == 0)
 		return -1;
 
+	hostport = uri.host;
+	if (uri.port.len > 0)
+		hostport.len = uri.port.s + uri.port.len - uri.host.s;
+
 	cp = ip_addr2a(&msg->rcv.src_ip);
-	len = c->uri.len + strlen(cp) + 6 /* :port */ - (uri.port.s + uri.port.len - uri.host.s) + 1;
+	len = c->uri.len + strlen(cp) + 6 /* :port */ - hostport.len + 1;
 	buf = pkg_malloc(len);
 	if (buf == NULL) {
 		LOG(L_ERR, "ERROR: fix_nated_contact: out of memory\n");
 		return -1;
 	}
-	temp[0] = uri.host.s[0];
+	temp[0] = hostport.s[0];
 	temp[1] = c->uri.s[c->uri.len];
-	c->uri.s[c->uri.len] = uri.host.s[0] = '\0';
+	c->uri.s[c->uri.len] = hostport.s[0] = '\0';
 	len1 = snprintf(buf, len, "%s%s:%d%s", c->uri.s, cp, msg->rcv.src_port,
-	    uri.port.s + uri.port.len);
+	    hostport.s + hostport.len);
 	if (len1 < len)
 		len = len1;
-	uri.host.s[0] = temp[0];
+	hostport.s[0] = temp[0];
 	c->uri.s[c->uri.len] = temp[1];
 	if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
 		pkg_free(buf);
@@ -595,7 +598,7 @@ fixup_str2int( void** param, int param_no)
 	unsigned long go_to;
 	int err;
 
-	if (param_no == 1) {
+	if (param_no == 1 || param_no == 2) {
 		go_to = str2s(*param, strlen(*param), &err);
 		if (err == 0) {
 			pkg_free(*param);
