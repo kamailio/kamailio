@@ -11,6 +11,8 @@
 #include "../../route_struct.h"
 #include <string.h>
 #include "../../mem/mem.h"
+#include "../../action.h"
+#include <stdio.h>
 
 #define RR_PREFIX "Record-Route: <"
 #define RR_PREFIX_LEN 15
@@ -56,18 +58,13 @@ int findRouteHF(struct sip_msg* _m)
  * header field in a message
  * Returns pointer to next URI in next
  */
-int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
+int parseRouteHF(struct sip_msg* _m, str* _s, char** _next)
 {
 	char* uri, *uri_end;
 	struct hdr_field* r;
-	char c;
 #ifdef PARANOID
-	if (!_m) {
+	if ((!_m)  || (!_s)) {
 		LOG(L_ERR, "parseRouteHF(): Invalid parameter _m");
-		return FALSE;
-	}
-	if (!_s) {
-		LOG(L_ERR, "parseRouteHF(): Invalid parameter _s");
 		return FALSE;
 	}
 #endif
@@ -86,7 +83,8 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 		if (!uri_end) {
 			uri_end = r->body.s + r->body.len;
 			*_next = uri_end;
-			*_s = uri;
+			_s->s = uri;
+			_s->len = uri_end - uri;
 			return TRUE;
 		}
 	}
@@ -95,7 +93,7 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 	if (uri) {
 		uri++; /* We will skip < character */
 	} else {
-		LOG(L_ERR, "parseRouteHF(): Malformed Route HF (no begining found)\n");
+		LOG(L_ERR, "parseRouteHF(): Malformed Route HF (no beginning found)\n");
 		return FALSE;
 	}
 	uri_end = find_not_quoted(uri, '>');
@@ -106,9 +104,9 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 		return FALSE;
 	}
 
-	*uri_end = '\0';  /* Replace > with 0 */
-	*_next = ++uri_end;
-	*_s = uri;
+	_s->s = uri;
+	_s->len = uri_end - uri;
+	*_next = uri_end + 1;
 
 	return TRUE;
 }
@@ -118,9 +116,10 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 /*
  * Rewrites Request URI from Route HF
  */
-int rewriteReqURI(struct sip_msg* _m, char* _s)
+int rewriteReqURI(struct sip_msg* _m, str* _s)
 {
-	struct action act;
+       struct action act;
+       char* buffer;
 			
 #ifdef PARANOID
 	if (!_m) {
@@ -128,15 +127,27 @@ int rewriteReqURI(struct sip_msg* _m, char* _s)
 		return FALSE;
 	}
 #endif
+	buffer = (char*)pkg_malloc(_s->len + 1);
+	if (!buffer) {
+	        LOG(L_ERR, "rewriteReqURI(): No memory left\n");
+	        return FALSE;
+	}
+
+	memcpy(buffer, _s->s, _s->len);
+	buffer[_s->len] = '\0';
+
 	act.type = SET_URI_T;
 	act.p1_type = STRING_ST;
-	act.p1.string = _s;
+	act.p1.string = buffer;
 	act.next = NULL;
 
 	if (do_action(&act, _m) < 0) {
 		LOG(L_ERR, "rewriteReqUIR(): Error in do_action\n");
+		pkg_free(buffer);
 		return FALSE;
 	}
+
+	pkg_free(buffer);
 
 	return TRUE;
 }
@@ -149,8 +160,6 @@ int rewriteReqURI(struct sip_msg* _m, char* _s)
  */
 int remFirstRoute(struct sip_msg* _m, char* _next)
 {
-	struct hdr_field* r;
-	struct lump* dl;
 	int offset, len;
 #ifdef PARANOID
 	if (!_m) {
@@ -188,31 +197,26 @@ int remFirstRoute(struct sip_msg* _m, char* _next)
 /*
  * Builds Record-Route line
  */
-int buildRRLine(struct sip_msg* _m, char* _l)
+int buildRRLine(struct sip_msg* _m, str* _l)
 {
-	int len;
 #ifdef PARANOID
-	if (!_m) {
-		LOG(L_ERR, "buildRRLine(): Invalid parameter value\n");
-		return FALSE;
-	}
-	if (!_l) {
+	if ((!_m) || (!_l)) {
 		LOG(L_ERR, "buildRRLine(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif
-	len = RR_PREFIX_LEN;
-	memcpy(_l, RR_PREFIX, len);
-	memcpy(_l + len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-	len += _m->first_line.u.request.uri.len;
+	_l->len = RR_PREFIX_LEN;
+	memcpy(_l->s, RR_PREFIX, _l->len);
+	memcpy(_l->s + _l->len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
+	_l->len += _m->first_line.u.request.uri.len;
+	if (port_no != 5060) {
+	     _l->len +=  sprintf(_l->s + _l->len, ":%d", port_no);
+	}
                /* bogdan :replaced \n with CRLF*/
-#ifdef LOOSE_ROUTER
-	memcpy(_l + len, ";branch=0>;lr" CRLF, 13 + CRLF_LEN + 1);
-#else
-	memcpy(_l + len, ";branch=0>" CRLF,  10 + CRLF_LEN + 1);
-#endif
+	memcpy(_l->s + _l->len, ";branch=0>" CRLF,  10 + CRLF_LEN + 1);
+	_l->len += 10 + CRLF_LEN;
 
-	DBG("buildRRLine: %s", _l);
+	DBG("buildRRLine(): %s", _l->s);
 
 	return TRUE;
 }
@@ -222,7 +226,7 @@ int buildRRLine(struct sip_msg* _m, char* _l)
 /*
  * Add a new Record-Route line in SIP message
  */
-int addRRLine(struct sip_msg* _m, char* _l)
+int addRRLine(struct sip_msg* _m, str* _l)
 {
 	struct lump* anchor;
 #ifdef PARANOID
@@ -237,28 +241,9 @@ int addRRLine(struct sip_msg* _m, char* _l)
 		return FALSE;
 	}
 
-	if (insert_new_lump_before(anchor, _l, strlen(_l), 0) == 0) {
+	if (insert_new_lump_before(anchor, _l->s, _l->len, 0) == 0) {
 		LOG(L_ERR, "addRRLine(): Error, can't insert Record-Route\n");
 		return FALSE;
 	}
 	return TRUE;
-}
-
-
-
-
-/*
- * ------------ Loose router functions -----------------------------
- */
-int calc_rr_id(struct sip_msg* _m, unsigned char* _hex)
-{
-	char buffer [8];
-	buffer[0] = _m->dst_ip;
-	buffer[4] = port_no;
-
-	conv_hex(_hex, buffer, 6);
-
-	printf("calc_rr_id(): %s\n", _hex);
-
-	return 0;
 }

@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
+#include "rr.h"
 
 #define MAX_RR_LEN 80
 
@@ -66,7 +67,7 @@ struct module_exports* mod_register()
 
 static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	char* first_uri;
+	str first_uri;
 	char* next_uri;
 #ifdef PARANOID
 	if (!_m) {
@@ -80,7 +81,7 @@ static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
 			LOG(L_ERR, "rewriteFromRoute(): Error while parsing Route HF\n");
 			return -1;
 		}
-		if (rewriteReqURI(_m, first_uri) == FALSE) {
+		if (rewriteReqURI(_m, &first_uri) == FALSE) {
 			LOG(L_ERR, "rewriteFromRoute(): Error while rewriting request URI\n");
 			return -1;
 		}
@@ -100,28 +101,28 @@ static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
  */
 static int addRecordRoute(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	char* b;
+	str b;
 #ifdef PARANOID
 	if (!_m) {
 		LOG(L_ERR, "addRecordRoute(): Invalid parameter _m\n");
 		return -2;
 	}
 #endif
-	b = (char*)pkg_malloc(MAX_RR_LEN);
-	if (!b) {
+	b.s = (char*)pkg_malloc(MAX_RR_LEN);
+	if (!b.s) {
 		LOG(L_ERR, "addRecordRoute(): No memory left\n");
 		return -1;
 	}
 
-	if (buildRRLine(_m, b) == FALSE) {
+	if (buildRRLine(_m, &b) == FALSE) {
 		LOG(L_ERR, "addRecordRoute(): Error while building Record-Route line\n");
-		pkg_free(b);
+		pkg_free(b.s);
 		return -1;
 	}
 
-	if (addRRLine(_m, b) == FALSE) {
+	if (addRRLine(_m, &b) == FALSE) {
 		LOG(L_ERR, "addRecordRoute(): Error while adding Record-Route line\n");
-		pkg_free(b);
+		pkg_free(b.s);
 		return -1;
 	}
 	return 1;

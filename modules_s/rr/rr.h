@@ -8,7 +8,7 @@
 #define __RR_H__
 
 #include "../../msg_parser.h"
-
+#include "../../str.h"
 
 /*
  * Finds Route header field in a SIP message
@@ -20,13 +20,13 @@ int findRouteHF(struct sip_msg* _m);
  * Gets the first URI from the first Route
  * header field in a message
  */
-int parseRouteHF(struct sip_msg* _m, char** _s, char** _next);
+int parseRouteHF(struct sip_msg* _m, str* _s, char** _next);
 
 
 /*
  * Rewrites Request URI from Route HF
  */
-int rewriteReqURI(struct sip_msg* _m, char* _s);
+int rewriteReqURI(struct sip_msg* _m, str* _s);
 
 
 /*
@@ -40,13 +40,13 @@ int remFirstRoute(struct sip_msg* _m, char* _next);
 /*
  * Builds Record-Route line
  */
-int buildRRLine(struct sip_msg* _m, char* _l);
+int buildRRLine(struct sip_msg* _m, str* _l);
 
 
 /*
  * Add a new Record-Route line in SIP message
  */
-int addRRLine(struct sip_msg* _m, char* _l);
+int addRRLine(struct sip_msg* _m, str* _l);
 
 
 
