@@ -7,8 +7,13 @@
 
 
 #define READ(val) \
-(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
-
+	(*(val + 0) + (*(val + 1) << 8) + (*(val + 2) << 16) + (*(val + 3) << 24))
+#define advance(_ptr,_n,_str,_error) \
+	do{\
+		if ((_ptr)+(_n)>(_str).s+(_str).len)\
+			goto _error;\
+		(_ptr) = (_ptr) + (_n);\
+	}while(0);
 
 
 
@@ -81,46 +86,81 @@ int inline im_check_content_type(struct sip_msg *msg)
 	{
 		LOG(L_WARN,"WARNING: im_get_body_len: Content-TYPE header absent!"
 			"let's assume the content is text/plain ;-)\n");
-		goto done;
+		return 1;
 	}
 
-	trim_len(msg->content_type->body.len,msg->content_type->body.s,str_type);
+	trim_len(str_type.len,str_type.s,msg->content_type->body);
 	p = str_type.s;
-	x = READ(p);
-	p = p + 4;
+	advance(p,4,str_type,error_1);
+	x = READ(p-4);
 	if (x==text[0]) {
 		mime = 1 ;
-		goto slash;
 	} else if (x==mess[0]) {
 		mime = 2;
 		
-	}
-	if (x==text[15]||x==text[1]||x==text[2]||x==text[3]||x==text[4]||
-		x==text[5]||x==text[6]||x==text[7]||x==text[8]||x==text[9]||
+	} else
+	if (x==text[15]||x==text[8]||x==text[2]||x==text[3]||x==text[4]||
+		x==text[5]||x==text[6]||x==text[7]||x==text[1]||x==text[9]||
 		x==text[10]||x==text[11]||x==text[12]||x==text[13]||x==text[14]) {
 		mime =1;
-		goto slash;
-	}else if (x==mess[15]) {
+	}else if (x==mess[15]||x==mess[8]||x==mess[2]||x==mess[3]||x==mess[4]||
+		x==mess[5]||x==mess[6]||x==mess[7]||x==mess[1]||x==mess[9]||
+		x==mess[10]||x==mess[11]||x==mess[12]||x==mess[13]||x==mess[14]) {
 		mime = 2;
+	} else {
+		goto other;
 	}
-
-slash:
+	
 	/* skip spaces and tabs if any */
-	while ((*p==' ' || *p=='\t') && p+1<str_type.s+str_type.len)
-		p++;
+	while (*p==' ' || *p=='\t')
+		advance(p,1,str_type,error_1);
 	if (*p!='/')
 	{
 		LOG(L_ERR, "ERROR:im_check_content_type: parse error:"
 			"no / found after primary type\n");
 		goto error;
 	}
+	advance(p,1,str_type,error_1);
+	while ((*p==' ' || *p=='\t') && p+1<str_type.s+str_type.len)
+		advance(p,1,str_type,error_1);
 
+	advance(p,4,str_type,error_1);
+	x = READ(p-4);
+	switch (mime) {
+		case 1:
+			if (x==plai[0]||x==plai[15]||x==plai[8]||x==plai[1]||x==plai[2]||
+				x==plai[3]||x==plai[4]||x==plai[5]||x==plai[6]||x==plai[7]||
+				x==plai[9]||x==plai[10]||x==plai[11]||x==plai[12]||x==plai[13]
+				||x==plai[14]) {
+				advance(p,1,str_type,error_1);
+				if (*(p-1)=='n' || *(p-1)=='N')
+					goto s_end;
+				}
+			goto other;
+		case 2:
+			if (x==cpim[0]||x==cpim[15]||x==cpim[8]||x==cpim[1]||x==cpim[2]||
+				x==cpim[3]||x==cpim[4]||x==cpim[5]||x==cpim[6]||x==cpim[7]||
+				x==cpim[9]||x==cpim[10]||x==cpim[11]||x==cpim[12]||x==cpim[13]
+				||x==cpim[14]) {
+				goto s_end;
+				}
+			goto other;
+	}
 
-
+error_1:
+	LOG(L_ERR,"ERROR:im_check_content_type: parse error: body ended :-(!\n");
 error:
 	return -1;
-done:
-	return 1;
+other:
+	LOG(L_ERR,"ERROR:im_check_content_type: invlaid type for a message\n");
+	return -1;
+s_end:
+	if (*p==';'||*p==' '||*p=='\t'||*p=='\n'||*p=='\r'||*p==0)
+		return 1;
+	else {
+		LOG(L_ERR,"ERROR:im_check_content_type: bad end for type %d!\n",*p);
+		return -1;
+	}
 }
 
 
@@ -137,7 +177,7 @@ int im_extract_body(struct sip_msg *msg, str *body )
 	}
 
 	/*is the content type corect?*/
-	if (!im_check_content_type(msg))
+	if (im_check_content_type(msg)==-1)
 	{
 		LOG(L_ERR,"ERROR: im_extract_body: content type mismatching\n");
 		goto error;
