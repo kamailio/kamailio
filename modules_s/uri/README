@@ -26,6 +26,8 @@ Jan Janak
 
               1.4.1. is_user(username)
               1.4.2. has_totag()
+              1.4.3. uri_param()
+              1.4.4. add_uri_param()
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -33,13 +35,16 @@ Jan Janak
    List of Examples
    1-1. is_user usage
    1-2. has_totag usage
+   1-3. uri_param usage
+   1-4. add_uri_param usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   Various checks related to SIP URI.
+   Various checks related to SIP URI plus Request URI manipulation
+   function.
      _________________________________________________________
 
 1.2. Dependencies
@@ -91,6 +96,29 @@ if (has_totag()) {
     ...
 };
 ...
+     _________________________________________________________
+
+1.4.3. uri_param(name[, value])
+
+    Check if Request URI has a given paramater with no value or has a
+    given paramater with matching value.
+
+    Example 1-3. uri_pram usage
+...
+if (uri_param("user", "phone") && uri_param("pstn")) {
+    ...
+};
+     _________________________________________________________
+
+1.4.4. add_uri_param(param)
+
+    Add a new paramater to Request URI.
+
+    Example 1-4. add_uri_param usage
+
+add_uri_param("user=phone");
+add_uri_param("npdi");
+
      _________________________________________________________
 
 Chapter 2. Developer's Guide

@@ -33,6 +33,7 @@
  *  2003-03-19  replaces all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-05: default_uri #define used (jiri)
  *  2004-03-20: has_totag introduced (jiri)
+ *  2004-04-14: uri_param and add_uri_param introduced (jih)
  */
 
 
@@ -51,6 +52,7 @@ MODULE_VERSION
 
 
 static int str_fixup(void** param, int param_no);
+static int uri_fixup(void** param, int param_no);
 
 
 /*
@@ -59,6 +61,9 @@ static int str_fixup(void** param, int param_no);
 static cmd_export_t cmds[] = {
 	{"is_user",        is_user,        1, str_fixup, REQUEST_ROUTE},
 	{"has_totag", 	   has_totag,      0, 0,         REQUEST_ROUTE},
+	{"uri_param",      uri_param_1,    1, str_fixup, REQUEST_ROUTE},
+	{"uri_param",      uri_param_2,    2, uri_fixup, REQUEST_ROUTE},
+	{"add_uri_param",  add_uri_param,  1, str_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -106,4 +111,18 @@ static int str_fixup(void** param, int param_no)
 	}
 	
 	return 0;
+}
+
+
+/*
+ * Convert both uri_param parameters to str* representation
+ */
+static int uri_fixup(void** param, int param_no)
+{
+       if (param_no == 1) {
+               return str_fixup(param, 1);
+       } else if (param_no == 2) {
+               return str_fixup(param, 1);
+       }
+       return 0;
 }
