@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -77,7 +78,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 										if (err){
 											LOG(L_ERR, "ERROR: do_action: "
 													"forward: bad port in "
-													"uri: <%s>\n", uri.port);
+													"uri: <%s>\n", uri.port.s);
 											ret=E_UNSPEC;
 											goto error_fwd_uri;
 										}
@@ -369,7 +370,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
 	}
-skip:
+/*skip:*/
 	return ret;
 	
 error_uri:
@@ -389,7 +390,7 @@ error_fwd_uri:
 int run_actions(struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
-	int ret;
+	int ret=E_UNSPEC;
 	static int rec_lev=0;
 	struct sr_module *mod;
 

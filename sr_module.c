@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 #include <strings.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 struct sr_module* modules=0;
@@ -32,24 +33,34 @@ struct sr_module* modules=0;
 /* initializes statically built (compiled in) modules*/
 int init_builtin_modules()
 {
+	int ret;
+
+	ret=0;
 	#ifdef STATIC_TM
-		register_module(tm_mod_register,"built-in", 0);
+		ret=register_module(tm_mod_register,"built-in", 0);
+		if (ret<0) return ret;
 	#endif
 	#ifdef STATIC_MAXFWD
-		register_module(maxfwd_mod_register, "built-in", 0);
+		ret=register_module(maxfwd_mod_register, "built-in", 0);
+		if (ret<0) return ret;
 	#endif
 
 #ifdef STATIC_AUTH
-		register_module(tm_mod_register, "built-in", 0);
+		ret=register_module(tm_mod_register, "built-in", 0);
+		if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_RR
-		register_module(rr_mod_register, "built-in", 0);
+		ret=register_module(rr_mod_register, "built-in", 0);
+		if (ret<0) return ret;
 #endif
 
 #ifdef STATIC_USRLOC
-		register_module(usrloc_mod_register, "built-in", 0);
+		ret=register_module(usrloc_mod_register, "built-in", 0);
+		if (ret<0) return ret;
 #endif
+	
+	return ret;
 }
 
 
@@ -60,7 +71,7 @@ int register_module(module_register register_f, char* path, void* handle)
 {
 	int ret;
 	struct module_exports* e;
-	struct sr_module* t, *mod;
+	struct sr_module* mod;
 	
 	ret=-1;
 	e=(*register_f)();
@@ -95,7 +106,8 @@ int init_child(int rank)
 	for(t = modules; t; t = t->next) {
 		if (t->exports->init_child_f) {
 			if ((t->exports->init_child_f(rank)) < 0) {
-				LOG(L_ERR, "init_child(): Initialization of child with rank %d failed\n");
+				LOG(L_ERR, "init_child(): Initialization of child %d failed\n",
+						rank);
 				return -1;
 			}
 		}

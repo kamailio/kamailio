@@ -24,6 +24,7 @@
 #include <dmalloc.h>
 #endif
 
+extern int yylex();
 void yyerror(char* s);
 char* tmp;
 void* f_tmp;

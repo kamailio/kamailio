@@ -82,12 +82,12 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 	/* sent requests stats */
 	else STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
-	free(buf);
+	pkg_free(buf);
 	free(to);
 	/* received_buf & line_buf will be freed in receiv_msg by free_lump_list*/
 	return 0;
 error:
-	if (buf) free(buf);
+	if (buf) pkg_free(buf);
 	if (to) free(to);
 	return -1;
 }
@@ -131,12 +131,7 @@ int forward_reply(struct sip_msg* msg)
 	struct sockaddr_in* to;
 	unsigned int new_len;
 	struct sr_module *mod;
-#ifdef DNS_IP_HACK
-	int err;
-#endif
-
-
-
+	
 	to=0;
 	new_buf=0;
 	/*check if first via host = us */
@@ -145,7 +140,7 @@ int forward_reply(struct sip_msg* msg)
 			if(strcmp(msg->via1->host.s, names[r])==0) break;
 		if (r==addresses_no){
 			LOG(L_NOTICE, "ERROR: forward_reply: host in first via!=me :"
-					" %s\n", msg->via1->host);
+					" %s\n", msg->via1->host.s);
 			/* send error msg back? */
 			goto error;
 		}
@@ -198,12 +193,12 @@ int forward_reply(struct sip_msg* msg)
 	DBG(" reply forwarded to %s:%d\n",msg->via2->host.s,
 		(unsigned short) msg->via2->port);
 
-	free(new_buf);
+	pkg_free(new_buf);
 	free(to);
 skip:
 	return 0;
 error:
-	if (new_buf) free(new_buf);
+	if (new_buf) pkg_free(new_buf);
 	if (to) free(to);
 	return -1;
 }

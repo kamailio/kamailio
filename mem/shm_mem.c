@@ -82,7 +82,7 @@ void* _shm_resize( void* p, unsigned int s, char* file, char* func, unsigned int
 void* _shm_resize( void* p , unsigned int s)
 #endif
 {
-	char *c;
+	
 #ifdef VQ_MALLOC
 	struct vqm_frag *f;
 #else
@@ -125,13 +125,14 @@ void* _shm_resize( void* p , unsigned int s)
 int shm_mem_init()
 {
 
+#ifndef FAST_LOCK
 	union semun su;
+#endif
 #ifdef SHM_MMAP
 	int fd;
 #else
 	struct shmid_ds shm_info;
 #endif
-	int ret;
 
 #ifdef SHM_MMAP
 	if (shm_mempool && (shm_mempool!=(void*)-1)){

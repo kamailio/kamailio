@@ -7,6 +7,7 @@
 #include "mem/mem.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>

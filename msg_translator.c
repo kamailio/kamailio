@@ -4,6 +4,8 @@
 
 
 #include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
 
 #include "msg_translator.h"
 #include "mem/mem.h"
@@ -11,12 +13,15 @@
 #include "config.h"
 #include "md5utils.h"
 #include "data_lump_rpl.h"
-#include <netdb.h>
 
 
 
 #define MAX_VIA_LINE_SIZE      240
 #define MAX_RECEIVED_SIZE  57
+
+/* mallocs for local stuff (not needed to be shared mem?)*/
+#define local_malloc pkg_malloc
+#define local_free   pkg_free
 
 
 #define append_str(_dest,_src,_len,_msg) \
@@ -114,7 +119,6 @@ int check_address(unsigned long ip, char *name, int resolver)
 	}
 	if (resolver&DO_REV_DNS){
 		DBG("check_address: doing rev. dns lookup\n");
-		print_ip(ip);
 		/* try reverse dns */
 		he=gethostbyaddr((char*)&ip, sizeof(ip), AF_INET);
 		if (he && (strcmp(he->h_name, name)==0))
@@ -232,6 +236,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 	struct lump *t,*r;
 	struct lump* anchor;
 
+	uri_len=0;
 	orig=msg->orig;
 	buf=msg->buf;
 	len=msg->len;
@@ -332,7 +337,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 					s_offset=t->u.offset;
 				/* do nothing */
 				break;
-			debug:
+			default:
 				LOG(L_CRIT,"BUG:build_req_buf_from_sip_req: invalid"
 							" op for data lump (%x)\n", r->op);
 		}
@@ -354,7 +359,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 		uri_len=msg->new_uri.len;
 		new_len=new_len-msg->first_line.u.request.uri.len+uri_len;
 	}
-	new_buf=(char*)malloc(new_len+1);
+	new_buf=(char*)local_malloc(new_len+1);
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
 		goto error;
@@ -477,7 +482,7 @@ error1:
 	if (received_buf) pkg_free(received_buf);
 	if (line_buf) pkg_free(line_buf);
 error:
-	if (new_buf) free(new_buf);
+	if (new_buf) local_free(new_buf);
 	*returned_len=0;
 	return 0;
 }
@@ -488,10 +493,9 @@ error:
 char * build_res_buf_from_sip_res( struct sip_msg* msg,
 				unsigned int *returned_len)
 {
-	unsigned int new_len, via_len,r;
+	unsigned int new_len, via_len;
 	char* new_buf;
 	unsigned offset, s_offset, size;
-	struct hostent* he;
 	char* orig;
 	char* buf;
 	unsigned int len;
@@ -516,7 +520,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	new_len=len-via_len;
 
 	DBG(" old size: %d, new size: %d\n", len, new_len);
-	new_buf=(char*)malloc(new_len+1);/* +1 is for debugging
+	new_buf=(char*)local_malloc(new_len+1);/* +1 is for debugging
 											(\0 to print it )*/
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_res: out of memory\n");
@@ -535,7 +539,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	*returned_len=new_len;
 	return new_buf;
 error:
-	if (new_buf) free(new_buf);
+	if (new_buf) local_free(new_buf);
 	*returned_len=0;
 	return 0;
 }
@@ -596,7 +600,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	len += CRLF_LEN; /*new line*/
 	/*allocating mem*/
 	buf = 0;
-	buf = (char*) malloc( len+1 );
+	buf = (char*) local_malloc( len+1 );
 	if (!buf)
 	{
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory "
@@ -677,7 +681,7 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	*returned_len = len;
 	return buf;
 error:
-	if (buf) free(buf);
+	if (buf) local_free(buf);
 	*returned_len=0;
 	return 0;
 }

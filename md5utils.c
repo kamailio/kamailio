@@ -32,7 +32,7 @@ jku: added support to deal with vectors
 #include "ut.h"
 
 
-static void MDString PROTO_LIST ((char *));
+/*static void MDString PROTO_LIST ((char *));*/
 
 #define MD_CTX MD5_CTX
 #define MDInit MD5Init

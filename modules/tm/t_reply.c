@@ -106,7 +106,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 
 	SEND_PR_BUFFER( rb, buf, len );
 
-	free( buf ) ;
+	pkg_free( buf ) ;
 	/* start/stops the proper timers*/
 
 	DBG("DEBUG: t_send_reply: finished\n");
@@ -114,7 +114,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 	return 1;
 
 error2:
-	free ( buf );
+	pkg_free ( buf );
 error:
 	return -1;
 }
@@ -385,7 +385,7 @@ cleanup:
 error2:
 	if (start_fr) 
 		set_timer( hash_table, &(orq_rb->fr_timer), FR_INV_TIMER_LIST );
-	if (buf) free( buf );
+	if (buf) pkg_free( buf );
 error1:
 	if (!save_clone) sip_msg_free( clone );
 error:

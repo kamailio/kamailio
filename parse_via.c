@@ -18,6 +18,7 @@
 
 
 #include <stdlib.h>
+#include <string.h>
 #include "dprint.h"
 #include "msg_parser.h"
 #include "ut.h"
@@ -208,7 +209,7 @@ char* parse_via_param(	char* p, char* end, int* pstate,
 					case F_PARAM:
 					case FIN_HIDDEN:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c> in"
-								" state %d\n");
+								" state %d\n", *tmp, state);
 						goto error;
 					case F_CR:
 					case F_LF:
@@ -237,7 +238,7 @@ char* parse_via_param(	char* p, char* end, int* pstate,
 					case FIN_TTL:
 					case FIN_RECEIVED:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c> in"
-								" state %d\n");
+								" state %d\n", *tmp, state);
 						goto error;
 					case F_CR:
 					case F_LF:
@@ -585,7 +586,7 @@ goto error;
 
 find_value:
 	tmp++;
-	for(tmp;*tmp;tmp++){
+	for(;*tmp;tmp++){
 		switch(*tmp){
 			case ' ':
 			case '\t':
@@ -607,7 +608,7 @@ find_value:
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break;
@@ -634,7 +635,7 @@ find_value:
 						break;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break;
@@ -659,7 +660,7 @@ find_value:
 						goto end_via;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break;
@@ -678,7 +679,7 @@ find_value:
 						goto end_via;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break;
@@ -698,7 +699,7 @@ find_value:
 						goto end_via;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break;
@@ -717,7 +718,7 @@ find_value:
 						goto end_via;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break; /* what to do? */
@@ -739,7 +740,7 @@ find_value:
 						goto end_via;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 				break;
@@ -759,7 +760,7 @@ find_value:
 						goto end_via;
 					default:
 						LOG(L_ERR, "ERROR: parse_via: invalid char <%c>"
-								" in state %d\n", state);
+								" in state %d\n", *tmp, state);
 						goto error;
 				}
 		}
@@ -805,10 +806,8 @@ char* parse_via(char* buffer, char* end, struct via_body *vb)
 	int state;
 	int saved_state;
 	int c_nest;
-	int i;
 	int err;
 
-	char* tmp_param;
 	struct via_param* param;
 
 parse_again:

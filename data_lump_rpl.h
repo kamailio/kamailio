@@ -17,8 +17,8 @@ struct lump_rpl
 
 struct lump_rpl* build_lump_rpl( char* , int );
 
-int add_lump_rpl(struct sip_msg * , struct lump_rpl* );
+void add_lump_rpl(struct sip_msg * , struct lump_rpl* );
 
-int free_lump_rpl(struct lump_rpl* );
+void free_lump_rpl(struct lump_rpl* );
 
 #endif

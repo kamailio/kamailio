@@ -273,8 +273,6 @@ static int comp_ip(unsigned a, void* param, int op, int subtype)
 	}
 	return ret;
 	
-error:
-	return -1;
 }
 
 

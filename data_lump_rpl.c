@@ -1,5 +1,5 @@
 
-
+#include <string.h>
 #include "dprint.h"
 #include "mem/mem.h"
 #include "data_lump_rpl.h"
@@ -36,7 +36,7 @@ error:
 
 
 
-int add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
+void add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 {
 	struct lump_rpl *foo;
 
@@ -51,7 +51,7 @@ int add_lump_rpl(struct sip_msg * msg, struct lump_rpl* lump)
 
 
 
-int free_lump_rpl(struct lump_rpl* lump)
+void free_lump_rpl(struct lump_rpl* lump)
 {
 	if (lump && lump->text.s)  pkg_free(lump->text.s);
 	if (lump) pkg_free(lump);

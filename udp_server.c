@@ -25,14 +25,13 @@ int udp_sock;
 
 int probe_max_receive_buffer( int udp_sock )
 {
-	int optval, optvallen;
+	int optval;
 	int ioptval;
 	unsigned int ioptvallen;
 	int foptval;
 	unsigned int foptvallen;
 	int voptval;
 	unsigned int voptvallen;
-	int i;
 	int phase=0;
 
 	/* jku: try to increase buffer size as much as we can */
@@ -52,20 +51,21 @@ int probe_max_receive_buffer( int udp_sock )
 	for (optval=ioptval; ;  ) {
 		/* increase size; double in initial phase, add linearly later */
 		if (phase==0) optval <<= 1; else optval+=BUFFER_INCREMENT;
-		if (optval > maxbuffer) if (phase==1) break; else { phase=1; optval >>=1; continue; }
+		if (optval > maxbuffer){
+			if (phase==1) break; 
+		} else { phase=1; optval >>=1; continue; }
 		LOG(L_DBG, "DEBUG: udp_init: trying SO_RCVBUF: %d\n", optval );
-        	if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
-                             (void*)&optval, sizeof(optval)) ==-1)
-        	{
+		if (setsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF,
+			(void*)&optval, sizeof(optval)) ==-1){
 			/* Solaris returns -1 if asked size too big; Linux ignores */
-			LOG(L_DBG, "DEBUG: udp_init: SOL_SOCKET failed for %d, phase %d: %s\n",
-			    optval,  phase, strerror(errno) );
+			LOG(L_DBG, "DEBUG: udp_init: SOL_SOCKET failed"
+					" for %d, phase %d: %s\n", optval, phase, strerror(errno));
 			/* if setting buffer size failed and still in the aggressive
 			   phase, try less agressively; otherwise give up 
 			*/
 			if (phase==0) { phase=1; optval >>=1 ; continue; } 
 			else break;
-        	} 
+		} 
 		/* verify if change has taken effect */
 		/* Linux note -- otherwise I would never know that; funny thing: Linux
 		   doubles size for which we asked in setsockopt
@@ -82,13 +82,13 @@ int probe_max_receive_buffer( int udp_sock )
 			if (voptval<optval) {
 				LOG(L_DBG, "DEBUG: setting SO_RCVBUF has no effect\n");
 				/* if setting buffer size failed and still in the aggressive
-			   	phase, try less agressively; otherwise give up 
+				phase, try less agressively; otherwise give up 
 				*/
-                        	if (phase==0) { phase=1; optval >>=1 ; continue; } 
-                        	else break;
+				if (phase==0) { phase=1; optval >>=1 ; continue; } 
+				else break;
 			} 
 		}
-
+	
 	} /* for ... */
 	foptvallen=sizeof(foptval);
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &foptval,
@@ -97,7 +97,7 @@ int probe_max_receive_buffer( int udp_sock )
 		LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
 		return -1;
 	}
- 	LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is finally %d\n", foptval );
+	LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is finally %d\n", foptval );
 
 	return 0;
 
@@ -107,7 +107,7 @@ int probe_max_receive_buffer( int udp_sock )
 int udp_init(unsigned long ip, unsigned short port)
 {
 	struct sockaddr_in* addr;
-	int optval, optvallen;
+	int optval;
 
 
 	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
@@ -261,7 +261,7 @@ again:
 	n=sendto(udp_sock, buf, len, 0, to, tolen);
 /*	n=sendto(udp_sock, buf, len, 0, &a2, sizeof(struct sockaddr_in) );*/
 	if (n==-1){
-		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%x,%d,0,%x,%d): %s(%d)\n",
+		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%p,%d,0,%p,%d): %s(%d)\n",
 				buf,len,to,tolen,
 				strerror(errno),errno);
 		if (errno==EINTR) goto again;

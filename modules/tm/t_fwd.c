@@ -112,7 +112,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		T->outbound_request[branch] = rb;
 		SEND_BUFFER( rb );
 		/* link the retransmission buffer to our structures when the job is done */
-		free( buf ) ; buf=NULL;
+		pkg_free( buf ) ; buf=NULL;
 
 		DBG("DEBUG: t_forward_nonack: starting timers (retrans and FR) %d\n",get_ticks() );
 		/*sets and starts the FINAL RESPONSE timer */
@@ -154,7 +154,7 @@ error:
 		shm_free(rb);
 		T->outbound_request[branch]=NULL;
 	}
-	if (buf) free( buf );
+	if (buf) pkg_free( buf );
 
 	return -1;
 
@@ -222,7 +222,7 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	shm_unlock();
 
 	memcpy( (char *) srb + sizeof ( struct retrans_buff ), buf, len );
-	free( buf );
+	pkg_free( buf );
 
 	relay_ack( T, branch, srb, len );
 	return 1;

@@ -39,7 +39,7 @@ static: $(objs)
 
 .PHONY: clean
 clean:
-	-@rm -f $(objs) $(NAME) 2>/dev/null
+	-@rm -f $(objs) $(NAME) $(objs:.o=.il) 2>/dev/null
 	-@for r in $(modules) $(static_modules_path) "" ; do \
 		if [ -n "$$r" ]; then \
 			echo "module $$r" ; \

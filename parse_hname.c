@@ -50,7 +50,6 @@ char* parse_hname1(char* p, char* end, struct hdr_field* hdr)
 
 	char* t;
 	register int state;
-	int i;
 	int err;
 	err=0;
 

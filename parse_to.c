@@ -1,6 +1,7 @@
 
 
 #include <stdlib.h>
+#include <string.h>
 #include "dprint.h"
 #include "msg_parser.h"
 #include "ut.h"
@@ -35,10 +36,14 @@ enum{ S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, TAG3
 char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 								int *returned_status)
 {
-	struct to_param *param=0;
-	int status =PARA_START;
+	struct to_param *param;
+	int status;
 	int saved_status;
 	char  *tmp;
+
+	param=0;
+	status=PARA_START;
+	saved_status=PARA_START;
 
 	for( tmp=buffer; tmp<end; tmp++)
 	{
@@ -389,10 +394,12 @@ error:
 
 char* parse_to(char* buffer, char *end, struct to_body *to_b)
 {
-	struct to_param *param=0;
-	int status = START_TO;
+	int status;
 	int saved_status;
 	char  *tmp,*foo;
+
+	status=START_TO;
+	foo=0;
 
 	for( tmp=buffer; tmp<end; tmp++)
 	{

@@ -7,11 +7,15 @@
 #include "mem.h"
 
 #ifdef PKG_MALLOC
-#	ifdef VQ_MALLOC
-#		include "vq_malloc.h"
-#	else
-#		include "q_malloc.h"
-#	endif
+	#ifdef VQ_MALLOC
+		#include "vq_malloc.h"
+	#else
+		#include "q_malloc.h"
+	#endif
+#endif
+
+#ifdef SHM_MEM
+#include "shm_mem.h"
 #endif
 
 #ifdef PKG_MALLOC
