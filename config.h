@@ -15,4 +15,10 @@
 /* receive buffer size */
 #define BUF_SIZE 65507
 
+/* maximum number of addresses on which we will listen */
+#define MAX_LISTEN 16
+
+/* default number of child processes started */
+#define CHILD_NO    8
+
 #endif
