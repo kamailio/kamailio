@@ -36,7 +36,7 @@ char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl)
 	/* int l; */
 	char* end;
 	char s1,s2,s3;
-	
+
 	/* grammar:
 		request  =  method SP uri SP version CRLF
 		response =  version SP status  SP reason  CRLF
@@ -262,8 +262,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			}
 			hdr->parsed=to_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("get_hdr_field: to <%s>: <%s> %c [%d]\n",
-				hdr->name.s, to_b->body.s,*tmp,hdr->body.len);
+			DBG("get_hdr_field: to <%s>: <%s>=[%d] %c [%d]\n",
+				hdr->name.s, to_b->body.s,to_b->body.len,*tmp,hdr->body.len);
 			break;
 		case HDR_FROM:
 		case HDR_CALLID:

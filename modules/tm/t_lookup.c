@@ -80,94 +80,105 @@ inline static int int2reverse_hex( char **c, int *size, int nr )
  */
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 {
-   struct cell      *p_cell;
-   struct cell      *tmp_cell;
-   /* unsigned int  hash_index=0; */
-   unsigned int  isACK;
-   struct sip_msg	*t_msg;
+	struct cell         *p_cell;
+	struct cell         *tmp_cell;
+	unsigned int       isACK;
+	struct sip_msg  *t_msg;
 
-   /* parse all*/
-   if (check_transaction_quadruple(p_msg)==0)
-   {
-      LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
-      T=0;
-      /* stop processing */
-      return 0;
-   }
-   /* start searching into the table */
-   p_msg->hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
-   isACK = p_msg->REQ_METHOD==METHOD_ACK;
-   DBG("t_lookup_request: start searching:  hash=%d, isACK=%d\n",p_msg->hash_index,isACK);
+	/* parse all*/
+	if (check_transaction_quadruple(p_msg)==0)
+	{
+		LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
+		T=0;
+		/* stop processing */
+		return 0;
+	}
 
-   /* lock the hole entry*/
-   lock( hash_table->entrys[p_msg->hash_index].mutex );
+	/* start searching into the table */
+	p_msg->hash_index=hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
+	isACK = p_msg->REQ_METHOD==METHOD_ACK;
+	DBG("t_lookup_request: start searching: hash=%d, isACK=%d\n",
+		p_msg->hash_index,isACK);
 
-   /* all the transactions from the entry are compared */
-   p_cell     = hash_table->entrys[p_msg->hash_index].first_cell;
-   tmp_cell = 0;
-   while( p_cell )
-   {
-     t_msg = p_cell->inbound_request;
+	/* lock the hole entry*/
+	lock( hash_table->entrys[p_msg->hash_index].mutex );
 
-      /* is it the wanted transaction ? */
-      if ( !isACK )
-      { /* is not an ACK request */
-         /* first only the length are checked */
-         if ( EQ_LEN(callid) && EQ_LEN(cseq) )
-            if ( EQ_REQ_URI_LEN )
-                if ( EQ_VIA_LEN(via1) )
-                   if ( EQ_LEN(from) && EQ_LEN(to)  )
-                     /* so far the lengths are the same
-                     -> let's check the contents */
-                     if ( EQ_STR(callid) && EQ_STR(cseq) )
-                        if ( EQ_REQ_URI_STR )
-                           if ( EQ_VIA_STR(via1) )
-                              if ( EQ_STR(from) && EQ_STR(to) )
-                               { /* WE FOUND THE GOLDEN EGG !!!! */
-                                  goto found;
-                               }
-      }
-      else
-      { /* it's a ACK request*/
-         /* first only the length are checked */
-         if ( t_msg->first_line.u.request.method_value==METHOD_INVITE)
-            if ( /*callid length*/ EQ_LEN(callid) )
-               if ( get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len )
-                  if ( EQ_REQ_URI_LEN )
-                     if (/*VIA1 len*/ EQ_VIA_LEN(via1) )
-                       if ( /*from length*/ EQ_LEN(from) )
-                         if (get_to(t_msg)->body.len==get_to(p_msg)->body.len)
-                            if (p_cell->tag->len==get_to(p_msg)->tag_value.len )
-                            /* so far the lengths are the same -> let's check the contents */
-                                if ( /*callid*/ !memcmp( t_msg->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
-                                   if ( /*cseq_nr*/ !memcmp( get_cseq(t_msg)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
-                                      if (/*URI len*/ EQ_REQ_URI_STR )
-                                         if (/*VIA1*/ EQ_VIA_STR(via1) )
-                                            if ( /*from*/ EQ_STR(from) )
-                                               if (!memcmp(get_to(t_msg)->body.s,get_to(p_msg)->body.s,get_to(t_msg)->body.len))
-                                                 if (!memcmp(p_cell->tag->s,get_to(p_msg)->tag_value.s , p_cell->tag->len))
-                                              { /* WE FOUND THE GOLDEN EGG !!!! */
-                                                 goto found;
-                                              }
-      }
-      /* next transaction */
-      tmp_cell = p_cell;
-      p_cell = p_cell->next_cell;
-   } /* synonym loop */
+	/* all the transactions from the entry are compared */
+	p_cell     = hash_table->entrys[p_msg->hash_index].first_cell;
+	tmp_cell = 0;
+	while( p_cell )
+	{
+		t_msg = p_cell->inbound_request;
 
-   /* no transaction found */
-   T = 0;
-   if (!leave_new_locked) unlock( hash_table->entrys[p_msg->hash_index].mutex );
-   DBG("DEBUG: t_lookup_request: no transaction found\n");
-   return -1;
+		/* is it the wanted transaction ? */
+		if ( !isACK )
+		{ /* is not an ACK request */
+			/* first only the length are checked */
+			if ( /*callied*/EQ_LEN(callid) && /*cseq*/EQ_LEN(cseq)
+			&& /*req URI*/EQ_REQ_URI_LEN && /*VIA*/EQ_VIA_LEN(via1)
+			&& /*from*/EQ_LEN(from) && /*to*/EQ_LEN(to)  )
+				/* so far the lengths are the same
+				-> let's check the contents */
+				if ( /*callid*/EQ_STR(callid) && /*cseq*/EQ_STR(cseq)
+				&& /*req URI*/EQ_REQ_URI_STR && /*VIA*/EQ_VIA_STR(via1)
+				&& /*from*/EQ_STR(from) && /*to*/EQ_STR(to) )
+					{ /* WE FOUND THE GOLDEN EGG !!!! */
+						goto found;
+					}
+		}
+		else
+		{ /* it's a ACK request*/
+			/* first only the length are checked */
+			if ( t_msg->first_line.u.request.method_value==METHOD_INVITE
+			&& /*callid length*/ EQ_LEN(callid)
+			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
+			&& /*from length*/ EQ_LEN(from)
+			&& /*to body*/get_to(t_msg)->body.len==get_to(p_msg)->body.len
+			&& printf("------>0.4   %d (%d,%d)\n",p_cell->status,p_cell->tag->len,get_to(p_msg)->tag_value.len)
+			&& /*to tag*/p_cell->tag->len==get_to(p_msg)->tag_value.len
+			&& printf("------>0.5   %d\n",p_cell->status)
+			&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_LEN )
+			&& printf("------>0.6   %d\n",p_cell->status)
+			&& /*VIA*/(p_cell->status==200 || EQ_VIA_LEN(via1))
+			&& printf("------>2   %d\n",p_cell->status)  )
+				/* so far the lengths are the same
+				-> let's check the contents */
+				if (/*callid*/!memcmp( t_msg->callid->body.s,
+					p_msg->callid->body.s,p_msg->callid->body.len)
+				&& /*cseq nr*/!memcmp(get_cseq(t_msg)->number.s,
+					get_cseq(p_msg)->number.s,get_cseq(p_msg)->number.len)
+				&& /*from*/EQ_STR(from)
+				&& /*to body*/!memcmp(get_to(t_msg)->body.s,
+					get_to(p_msg)->body.s,get_to(t_msg)->body.len)
+				&& /*to tag*/!memcmp(p_cell->tag->s,
+					get_to(p_msg)->tag_value.s,p_cell->tag->len)
+				&& /*req URI*/(p_cell->status==200 || EQ_REQ_URI_STR||
+					printf("------>1   %d\n",p_cell->status) )
+				&& /*VAI*/(p_cell->status==200 ||EQ_VIA_STR(via1) ||
+						printf("------>2   %d\n",p_cell->status) ) )
+					{ /* WE FOUND THE GOLDEN EGG !!!! */
+						goto found;
+					}
+		}
+		/* next transaction */
+		tmp_cell = p_cell;
+		p_cell = p_cell->next_cell;
+	} /* synonym loop */
+
+	/* no transaction found */
+	T = 0;
+	if (!leave_new_locked)
+		unlock( hash_table->entrys[p_msg->hash_index].mutex );
+	DBG("DEBUG: t_lookup_request: no transaction found\n");
+	return -1;
 
 found:
-   T=p_cell;
-   T_REF( T );
-   DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: "
-                   "transaction found ( T=%p , ref=%x)\n",T,T->ref_bitmap);
-   unlock( hash_table->entrys[p_msg->hash_index].mutex );
-   return 1;
+	T=p_cell;
+	T_REF( T );
+	DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: "
+		"transaction found ( T=%p , ref=%x)\n",T,T->ref_bitmap);
+	unlock( hash_table->entrys[p_msg->hash_index].mutex );
+	return 1;
 }
 
 

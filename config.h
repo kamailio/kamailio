@@ -33,6 +33,9 @@
 #define MY_VIA "Via: SIP/2.0/UDP "
 #define MY_VIA_LEN 17
 
+#define CONTENT_LEN "Content-Length: 0"
+#define CONTENT_LEN_LEN 17
+
 #define MY_BRANCH ";branch=0"
 #define MY_BRANCH_LEN 9
 
