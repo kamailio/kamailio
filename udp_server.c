@@ -240,7 +240,9 @@ again:
 	n=sendto(udp_sock, buf, len, 0, to, tolen);
 /*	n=sendto(udp_sock, buf, len, 0, &a2, sizeof(struct sockaddr_in) );*/
 	if (n==-1){
-		LOG(L_ERR, "ERROR: udp_send: sendto: %s\n", strerror(errno));
+		LOG(L_ERR, "ERROR: udp_send: sendto(sock,%x,%d,0,%x,%d): %s(%d)\n",
+				buf,len,to,tolen,
+				strerror(errno),errno);
 		if (errno==EINTR) goto again;
 		if (errno==EINVAL) LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
 			"one possible reason is the server is bound to localhost and\n"

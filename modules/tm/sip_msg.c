@@ -62,9 +62,12 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
     }
 
     /* new_uri  ( str type )*/
-    if (!(new_msg->new_uri.s = (char*)sh_malloc( org_msg->new_uri.len )))
-	goto error;
-    memcpy( new_msg->new_uri.s , org_msg->new_uri.s , org_msg->new_uri.len );
+	if (org_msg->new_uri.s){ 
+		if (!(new_msg->new_uri.s = (char*)sh_malloc( org_msg->new_uri.len )))
+			goto error;
+		memcpy( new_msg->new_uri.s , org_msg->new_uri.s ,
+				org_msg->new_uri.len );
+	}
 
     /* add_rm ( struct lump* )  -> have to be changed!!!!!!! */
     new_msg->add_rm  = 0;

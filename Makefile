@@ -35,7 +35,7 @@ NAME=ser
 #                  twice, trying to free a pointer alloc'ed with a different
 #                  malloc etc.)
 DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
-	 -DPKG_MALLOC -DDBG_QM_MALLOC 
+	 -DPKG_MALLOC -DNO_DEBUG -DDBG_QM_MALLOC 
 #-DEXTRA_DEBUG
 # -DUSE_SHM_MEM
 #-DNO_DEBUG 

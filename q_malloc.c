@@ -258,19 +258,20 @@ void qm_status(struct qm_block* qm)
 	struct qm_frag* f;
 	int i;
 
-	DBG("qm_status (%x):\n", qm);
-	DBG(" heap size= %d\n", qm->size);
-	DBG(" used= %d, used+overhead=%d, free=%d\n",
+	LOG(L_INFO, "qm_status (%x):\n", qm);
+	LOG(L_INFO, " heap size= %d\n", qm->size);
+	LOG(L_INFO, " used= %d, used+overhead=%d, free=%d\n",
 			qm->used, qm->real_used, qm->size-qm->real_used);
-	DBG(" max used (+overhead)= %d\n", qm->max_real_used);
+	LOG(L_INFO, " max used (+overhead)= %d\n", qm->max_real_used);
 	
-	DBG("dumping all fragments:\n");
+	LOG(L_INFO, "dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
-		DBG("    %3d. %c  address=%x  size=%d\n", i, (f->u.is_free)?'a':'N',
+		LOG(L_INFO, "    %3d. %c  address=%x  size=%d\n", i, 
+				(f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
 #ifdef DBG_QM_MALLOC
-		DBG("            %s from %s: %s(%d)\n",
+		LOG(L_INFO, "            %s from %s: %s(%d)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 	}
@@ -284,7 +285,7 @@ void qm_status(struct qm_block* qm)
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 	}
-	DBG("-----------------------------\n");
+	LOG(L_INFO, "-----------------------------\n");
 }
 
 
