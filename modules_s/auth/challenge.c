@@ -215,7 +215,7 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) { 
 			if (_m->REQ_METHOD!=METHOD_ACK 
-					&& _m->REQ_METHOD==METHOD_CANCEL) {
+					&& _m->REQ_METHOD!=METHOD_CANCEL) {
 				LOG(L_ERR, "consume_credentials(): No authorized "
 					"credentials found (error in scripts)\n");
 			}
