@@ -1,3 +1,5 @@
+#include <sys/socket.h>
+
 #include "msg_translator.h"
 #include "mem.h"
 #include "dprint.h"
