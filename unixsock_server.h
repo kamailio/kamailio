@@ -49,7 +49,13 @@ struct unixsock_cmd {
 /*
  * Initialize Unix domain socket server
  */
-int init_unixsock_server(void);
+int init_unixsock_socket(void);
+
+
+/*
+ * Initialize Unix domain socket server
+ */
+int init_unixsock_children(void);
 
 
 /*

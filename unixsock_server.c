@@ -295,55 +295,56 @@ static int register_core_commands(void)
 /*
  * Create and bind local socket
  */
-static int create_unix_socket(char* name)
+int init_unixsock_socket(void)
 {
 	struct sockaddr_un addr;
 	int len, flags;
 
-	if (name == 0) {
-		DBG("create_unix_socket: No unix domain socket"
+	if (unixsock_name == 0) {
+		DBG("init_unixsock_socket: No unix domain socket"
 		    " will be opened\n");
 		return 1;
 	}
 
-	len = strlen(name);
+	len = strlen(unixsock_name);
 	if (len == 0) {
-		DBG("create_unix_socket: Unix domain socket server disabled\n");
+		DBG("init_unixsock_socket: Unix domain socket server disabled\n");
 		return 1;
 	} else if (len > 107) {
-		LOG(L_ERR, "create_unix_socket: Socket name too long\n");
+		LOG(L_ERR, "init_unixsock_socket: Socket name too long\n");
 		return -1;
 	}
 
-	DBG("create_unix_socket: Initializing Unix domain socket server\n");
+	DBG("init_unixsock_socket: Initializing Unix domain socket server @ %s\n", 
+	    unixsock_name);
 
-	if (unlink(name) == -1) {
+	if (unlink(unixsock_name) == -1) {
 		if (errno != ENOENT) {
-			LOG(L_ERR, "create_unix_socket: Error while unlinking "
-			    "old socket (%s): %s\n", name, strerror(errno));
+			LOG(L_ERR, "init_unixsock_socket: Error while unlinking "
+			    "old socket (%s): %s\n", unixsock_name, strerror(errno));
 			return -1;
 		}
 	}
 
 	rx_sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
 	if (rx_sock == -1) {
-		LOG(L_ERR, "create_unix_socket: Cannot create RX socket: %s\n", 
+		LOG(L_ERR, "init_unixsock_socket: Cannot create RX socket: %s\n", 
 		    strerror(errno));
 		return -1;
 	}
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = PF_LOCAL;
-	memcpy(addr.sun_path, name, len);
+	memcpy(addr.sun_path, unixsock_name, len);
 
 	if (bind(rx_sock, (struct sockaddr*)&addr, SUN_LEN(&addr)) == -1) {
-		LOG(L_ERR, "create_unix_socket: bind: %s\n", strerror(errno));
+		LOG(L_ERR, "init_unixsock_socket: bind: %s\n", strerror(errno));
 		goto err_rx;
 	}
 
 	tx_sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
 	if (tx_sock == -1) {
-		LOG(L_ERR, "create_unix_socket: Cannot create TX socket: %s\n",
+		LOG(L_ERR, "init_unixsock_socket: Cannot create TX socket: %s\n",
 		    strerror(errno));
 		goto err_rx;
 	}
@@ -351,18 +352,18 @@ static int create_unix_socket(char* name)
 	     /* Turn non-blocking mode on */
 	flags = fcntl(tx_sock, F_GETFL);
 	if (flags == -1){
-		LOG(L_ERR, "create_unix_socket: fcntl failed: %s\n",
+		LOG(L_ERR, "init_unixsock_socket: fcntl failed: %s\n",
 		    strerror(errno));
 		goto err_both;
 	}
 		
 	if (fcntl(tx_sock, F_SETFL, flags | O_NONBLOCK) == -1) {
-		LOG(L_ERR, "create_unix_socket: fcntl: set non-blocking failed:"
+		LOG(L_ERR, "init_unixsock_socket: fcntl: set non-blocking failed:"
 		    " %s\n", strerror(errno));
 		goto err_both;
 	}
 	
-	return 0;
+	return 1;
  err_both:
 	close(tx_sock);
  err_rx:
@@ -518,30 +519,24 @@ static int get_uptime(void)
 
 
 /*
- * Initialize Unix domain socket server
+ * Spawn listeners
  */
-int init_unixsock_server(void)
+int init_unixsock_children(void)
 {
-	int ret, i;
+	int i;
 	pid_t pid;
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
-	
-	
-	ret = create_unix_socket(unixsock_name);
-	if (ret < 0) {
-		LOG(L_ERR, "init_unixsock_server: Error while creating "
-		    "local socket\n");
-		return -1;
-	} else if (ret > 0) {
+
+	if (!unixsock_name || *unixsock_name == '\0') {
 		return 1;
 	}
 
 	if (get_uptime() < 0) {
 		return -1;
 	}
-
+	
         if (register_core_commands() < 0) {
 		close(rx_sock);
 		close(tx_sock);
@@ -599,6 +594,8 @@ int init_unixsock_server(void)
 
 	}
 
+	DBG("init_unixsock_server: Unix domain socket server sucessfully initialized @ %s\n",
+	    unixsock_name);
 	return 1;
 }
 
