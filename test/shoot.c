@@ -3,7 +3,8 @@ shot written by ashhar farhan, is not bound by any licensing at all.
 you are free to use this code as you deem fit. just dont blame the author
 for any problems you may have using it.
 bouquets and brickbats to farhan@hotfoon.com
-*/
+ */
+
 
 /* changes by jiri@iptel.org; now messages can be really received;
    status code returned is 2 for some local errors , 0 for success
