@@ -1,6 +1,9 @@
 # $Id$
 
-Use tells how deployable a module is. Regular indicates
+'Owner' field contains a developers CVS username, see file
+AUTHORS for more details.
+
+'Use' tells how deployable a module is. Regular indicates
 we deploy and use this feature in our infrastructure.
 Experimental tells we are still gaining operation experience.
 Temporary labels modules which momentarily fix some
@@ -8,14 +11,15 @@ bugs/lacks and will disappear later. Example modules
 are primarily useful as educational source code for
 ser programmers.
 
-Maturity is label as stable if a module has been deployed
+'Maturity' is label as stable if a module has been deployed
 for longer time, alpha if it is still being developed and
 beta if it is under test.
 
-Modules underway include presence server functionality,
-firewall control, message store and more. If you are
-interested in any of these or other modules, write us
-to info@iptel.org.
+'Depends on' field tells which modules the module needs. 
+
+Modules underway include firewall control, and more. 
+If you are interested in any of these or other modules, 
+write us to info@iptel.org.
 
 List of currently available ser modules:
 
