@@ -1,0 +1,23 @@
+MSILO - offline messages service - SER module
+=============================================
+
+1.Description
+-------------
+This module stores received messages of offline users and sends them next time
+when they became online.
+
+2.Exported symbols
+------------------
+Methods:
+- m_store: store current message
+- m_dump: dump stored messages of current user
+Parameters:
+- db_url: database URL - including username, password, hostname, port
+				database name, ex: 'sql://user:passwd@hostname.org:port/dbname'
+- db_table: table name
+- expiration: default expiration time of the message - in seconds
+
+3.Module dependeces
+- IM
+- MYSQL
+- TM
