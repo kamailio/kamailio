@@ -41,6 +41,7 @@
  * ---------
  * 2003-10-09	nat_uac_test introduced (jiri)
  * 2003-11-06   nat_uac_test permitted from onreply_route (jiri)
+ * 2003-12-01   unforce_rtp_proxy introduced (sobomax)
  */
 
 #include "nhelpr_funcs.h"
@@ -92,6 +93,7 @@ static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, str *, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *send_rtpp_command(str *, char, int);
+static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
 
 static void timer(unsigned int, void *);
@@ -117,6 +119,7 @@ static regex_t* key_m1918;
 static cmd_export_t cmds[]={
 		{"fix_nated_contact", fix_nated_contact_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 		{"fix_nated_sdp",     fix_nated_sdp_f,     1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE },
+		{"unforce_rtp_proxy", unforce_rtp_proxy_f, 0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 		{"force_rtp_proxy",   force_rtp_proxy_f,   0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 		{"nat_uac_test",      nat_uac_test_f,      1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
 		{0, 0, 0, 0, 0}
@@ -665,6 +668,19 @@ send_rtpp_command(str *callid, char command, int getreply)
 }
 
 static int
+unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
+{
+
+	if (msg->callid == NULL || msg->callid->body.len <= 0) {
+		LOG(L_ERR, "ERROR: unforce_rtp_proxy: no Call-ID field\n");
+		return -1;
+	}
+	send_rtpp_command(&(msg->callid->body), 'D', 0);
+
+	return 1;
+}
+
+static int
 force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, oldip1, newport, newip;
@@ -681,7 +697,7 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 	if (msg->callid == NULL || msg->callid->body.len <= 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: no Call-Id field\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy: no Call-ID field\n");
 		return -1;
 	}
 	if (extract_body(msg, &body) == -1 ) {
