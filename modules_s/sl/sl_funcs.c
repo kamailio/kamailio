@@ -130,6 +130,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	to.sin_family = AF_INET; */
 
 	if (reply_to_via) {
+		/* FIXME */
 		if (update_sock_struct_from_via(  &(to),  msg->via1 )==-1)
 		{
 			LOG(L_ERR, "ERROR: sl_send_reply: "
