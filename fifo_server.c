@@ -99,9 +99,21 @@ int register_fifo_cmd(fifo_cmd f, char *cmd_name, void *param)
 int read_line( char *b, int max, FILE *stream, int *read )
 {
 	int len;
+	int retry_cnt;
+
+	retry_cnt=0;
+
+retry:
 	if (fgets(b, max, stream)==NULL) {
 		LOG(L_ERR, "ERROR: fifo_server fgets failed: %s\n",
 			strerror(errno));
+		/* on Linux, fgets sometimes returns ESPIPE -- give
+		   it few more chances
+		*/
+		if (errno==ESPIPE) {
+			retry_cnt++;
+			if (retry_cnt<4) goto retry;
+		}
 		kill(0, SIGTERM);
 	}
 	/* if we did not read whole line, our buffer is too small
