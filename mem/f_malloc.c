@@ -16,8 +16,15 @@
 #define FRAG_OVERHEAD	(sizeof(struct fm_frag))
 
 
-#define ROUNDUP(s)		(((s)%ROUNDTO)?((s)+ROUNDTO)/ROUNDTO*ROUNDTO:(s))
-#define ROUNDDOWN(s)	(((s)%ROUNDTO)?((s)-ROUNDTO)/ROUNDTO*ROUNDTO:(s))
+/* ROUNDTO= 2^k so the following works */
+#define ROUNDTO_MASK	(~((unsigned long)ROUNDTO-1))
+#define ROUNDUP(s)		(((s)+(ROUNDTO-1))&ROUNDTO_MASK)
+#define ROUNDDOWN(s)	((s)&ROUNDTO_MASK)
+
+/*
+ #define ROUNDUP(s)		(((s)%ROUNDTO)?((s)+ROUNDTO)/ROUNDTO*ROUNDTO:(s))
+ #define ROUNDDOWN(s)	(((s)%ROUNDTO)?((s)-ROUNDTO)/ROUNDTO*ROUNDTO:(s))
+*/
 
 
 

@@ -2,6 +2,7 @@ $Id$
 
 ( - todo, x - done)
 
+- replace  remaining mallocs/frees at least in msg_translator.c
 - add $(INCLUDES) to the Makefiles
 - make ser suncc ready
 - fix parse_cseq!!! (it doesnt parse 1234\n INVITE a.s.o)
