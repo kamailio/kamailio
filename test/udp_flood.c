@@ -173,7 +173,10 @@ int main (int argc, char** argv)
 	/* flood loop */
 	for (r=0; r<count; r++){
 		if ((verbose>1)&&(r%1000))  putchar('.');
-		send(sock, buf, n, 0);
+		if (send(sock, buf, n, 0)==-1) {
+			fprintf(stderr, "Error: send: %s\n",  strerror(errno));
+			exit(1);
+		}
 	}
 	printf("\n%d packets sent, %d bytes each => total %d bytes\n",
 			count, n, n*count);
