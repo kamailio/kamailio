@@ -238,6 +238,7 @@ int buildRRLine(struct sip_msg* _m, str* _l)
 	_l->len = RR_PREFIX_LEN;
 	memcpy(_l->s, RR_PREFIX, _l->len);
 
+#ifdef _I_THINK_WE_PUT_HERE_BETTER_ALWAYS_INBOUND_URI_JIRI
 	if (_m->new_uri.s) {
 		user.s = _m->new_uri.s;
 		user.len = _m->new_uri.len;
@@ -245,6 +246,10 @@ int buildRRLine(struct sip_msg* _m, str* _l)
 		user.s = _m->first_line.u.request.uri.s;
 		user.len = _m->first_line.u.request.uri.len;
 	}
+#else
+	user.s = _m->first_line.u.request.uri.s;
+	user.len = _m->first_line.u.request.uri.len;
+#endif
 
 	get_username(&user);
 	if (user.len) {
