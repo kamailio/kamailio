@@ -165,6 +165,10 @@ int extract_body(struct sip_msg *msg, str *body )
 		goto error;
 	}
 	body->len = msg->len -(int)(body->s-msg->buf);
+	if (body->len==0) {
+		LOG(L_ERR, "ERROR: extract_body: message body has lenght zero\n");
+		goto error;
+	}
 	
 	/* no need for parse_headers(msg, EOH), get_body will 
 	 * parse everything */
