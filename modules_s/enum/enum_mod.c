@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -38,21 +42,30 @@ static int mod_init(void);
 
 
 /*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"enum_query",        enum_query,        0, 0},
+	{"is_from_user_e164", is_from_user_e164, 0, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{0, 0, 0}
+};
+
+
+/*
  * Module parameter variables
  */
-
 struct module_exports exports = {
 	"enum", 
-	(char*[]) {"enum_query", "is_from_user_e164"},
-	(cmd_function[]) {enum_query, is_from_user_e164},
-	(int[]) {0, 0},
-	(fixup_function[]) {0, 0},
-	2, /* number of functions*/
-	(char*[]){},
-	(modparam_t[]){},
-	(void*[]){},
-	0,
-	
+	cmds,     /* Exported functions */
+	params,   /* Exported parameters */
 	mod_init, /* module initialization function */
 	0,        /* response function*/
 	0,        /* destroy function */
