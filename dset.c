@@ -211,7 +211,7 @@ char* print_dset(struct sip_msg* msg, int* len)
 		if (ruri_q != Q_UNSPECIFIED) {
 			memcpy(p, Q_PARAM, Q_PARAM_LEN);
 			p += Q_PARAM_LEN;
-			p += print_q(p, q);
+			p += print_q(p, ruri_q);
 		}
 		i = 1;
 	} else {
