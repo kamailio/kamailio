@@ -47,14 +47,10 @@ typedef struct _content_type
 } t_content_type;
 
 /** apostrophes escape - useful for MySQL strings */
-int apo_escape(char*, int, char*, int);
+int m_apo_escape(char*, int, char*, int);
 
 /** extract content-type value */
-int extract_content_type(char*, int, t_content_type*, int);
-
-/** sends IM using IM library */
-int m_send_message(int mid, str *uri, str *to, str *from, str *contact,
-				str *ctype, str *msg);
+int m_extract_content_type(char*, int, t_content_type*, int);
 
 /** build MESSAGE headers */
 int m_build_headers(str *buf, str ctype, str contact);

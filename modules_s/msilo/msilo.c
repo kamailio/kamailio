@@ -413,7 +413,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	// add 'content-type'
 	if(msg->content_type && msg->content_type->body.len > 0)
 	{
-		if(extract_content_type(msg->content_type->body.s, 
+		if(m_extract_content_type(msg->content_type->body.s, 
 				msg->content_type->body.len, &ctype, CT_TYPE)
 				!= -1)
 		{
