@@ -576,7 +576,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	memcpy(cp,CRLF,CRLF_LEN);
 
 	/* add the lump to the reply */
-	lump = build_lump_rpl( lump_str.s , lump_str.len );
+	lump = build_lump_rpl( lump_str.s , lump_str.len , LUMP_RPL_HDR);
 	if(!lump) {
 		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to build lump_rpl! \n");
 		pkg_free( lump_str.s );

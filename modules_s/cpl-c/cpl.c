@@ -604,6 +604,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 	int  ret;
 	int  mime;
 	int  *mimes;
+	str  user;
 
 	/* make sure that is a REGISTER ??? */
 
@@ -669,23 +670,43 @@ static int cpl_process_register(struct sip_msg* msg, char* str, char* str2)
 		sl_reply( msg, (char*)200, "OK");
 		/* I send the reply and I don't want to resturn to script execution, so
 		 * I return 0 to do break */
-		return 0;
+		goto stop_script;
 	}
 
 	/* is there an ACCEPT hdr ? */
 	ret = parse_accept_hdr( msg );
 	if (ret==-1)
 		goto error;
-	if (ret!=0) {
-		/* accept header present */
-		mimes = get_accept( msg );
-		while (mimes && *mimes) {
-			DBG("DEBUG: accept mime found %u, %u\n",
-				(*mimes)>>16,(*mimes)&0x00ff);
-			mimes++;
-		}
-	}
+	if (ret==0 || (mimes=get_accept(msg))==0 )
+		/* accept header not present or no mimes found */
+		goto resume_script;
 
+	/* looks if the REGISTER accepts cpl-xml or * */
+	while (*mimes) {
+		DBG("DEBUG: accept mime found %u, %u\n",
+			(*mimes)>>16,(*mimes)&0x00ff);
+		if (*mimes==(TYPE_ALL<<16)+SUBTYPE_ALL ||
+		*mimes==(TYPE_APPLICATION<<16)+SUBTYPE_CPLXML )
+			break;
+		mimes++;
+	}
+	if (*mimes==0)
+		/* no accept mime that mached cpl */
+		goto resume_script;
+
+	/* get the destination user name */
+	if (get_dest_user( msg, &user)==-1)
+		goto error;
+
+	/* get the user's script from the database */
+
+	/* send a 200 OK reply back */
+	sl_reply( msg, (char*)200, "OK");
+
+stop_script:
+	return 0;
+resume_script:
+	return 1;
 error:
 	return -1;
 }
