@@ -280,8 +280,8 @@ static inline int send_xpidf_notify(struct presentity* _p, struct watcher* _w)
 	}
 
 	switch(_p->state) {
-	case PS_OFFLINE: st = XPIDF_ST_CLOSED; break;
-	default: st = XPIDF_ST_OPEN; break;
+	case PS_ONLINE: st = XPIDF_ST_OPEN; break;
+	default: st = XPIDF_ST_CLOSED; break;
 	}
 
 	if (xpidf_add_address(&body, BUF_LEN - body.len, &parsed.uri, st) < 0) {
