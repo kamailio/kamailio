@@ -43,6 +43,16 @@
 #include "checks.h"
 
 /*
+ * If defined, username part of digest credentials can contain also
+ * domain, some user agents use this approach because realm parameter
+ * is not protected by the digest. If you define
+ * USER_CAN_CONTAIN_DOMAIN then the functions will extract the domain
+ * part before processing the username.
+ */
+#define USER_CAN_CONTAIN_DOMAIN
+
+
+/*
  * Check if the username matches the username in credentials
  */
 int is_user(struct sip_msg* _m, char* _user, char* _str2)
@@ -94,7 +104,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 	auth_body_t* c;
 	struct sip_uri puri;
 
-#ifdef USER_DOMAIN_HACK
+#ifdef USER_CAN_CONTAIN_DOMAIN
 	char* ptr;
 #endif
 
@@ -125,7 +135,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 
 	len = c->digest.username.len;
 
-#ifdef USER_DOMAIN_HACK
+#ifdef USER_CAN_CONTAIN_DOMAIN
 	ptr = q_memchr(c->digest.username.s, '@', len);
 	if (ptr) {
 		len = ptr - c->digest.username.s;
@@ -186,7 +196,6 @@ int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2)
 	}
 
 	if (use_uri_table) {
-
 		if (db_use_table(db_handle, table) < 0) {
 			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
 		}

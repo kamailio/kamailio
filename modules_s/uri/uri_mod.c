@@ -63,17 +63,15 @@ static int str_fixup(void** param, int param_no);
 /*
  * Module parameter variables
  */
-char* db_url         = "sql://serro:47serro11@localhost/ser";
-char* table          = "uri";       /* Name of URI table */
-char* user_column    = "user";      /* Name of user column in URI table */
-char* domain_column  = "domain";    /* Name of domain column in URI table */
-char* uriuser_column = "uri_user";  /* Name of uri_user column in URI table */
-
-char* subscriber_table = "subscriber";
-char* subscriber_user_column = "user";
-char* subscriber_domain_column = "domain";
-
-int use_uri_table = 0;              /* Should we use URI table ?, default no */
+char* db_url                   = "sql://serro:47serro11@localhost/ser";
+char* table                    = "uri";        /* Name of URI table */
+char* user_column              = "user";       /* Name of user column in URI table */
+char* domain_column            = "domain";     /* Name of domain column in URI table */
+char* uriuser_column           = "uri_user";   /* Name of uri_user column in URI table */
+char* subscriber_table         = "subscriber"; /* Name of subscriber table */
+char* subscriber_user_column   = "user";       /* Name of user column in subscriber table */
+char* subscriber_domain_column = "domain";     /* Name of domain column in subscriber table */
+int   use_uri_table            = 0;            /* Should we use URI table ?, default no */
 
 db_con_t* db_handle = 0;   /* Database connection handle */
 
@@ -102,15 +100,15 @@ struct module_exports exports = {
 	4,
 	
 	(char*[]) {
-		"db_url",           /* Database URL */
-		"table",            /* Name of URI table */
-		"user_column",      /* Name of user column in URI table */
-		"domain_column",    /* Name of domain column in URI table */
-		"uriuser_column",   /* Name of uri_user column in URI table */
-		"subscriber_table",
-		"subscriber_user_column",
-		"subscriber_domain_column",
-		"use_uri_table"     /* Should URI table be used ? */
+		"db_url",                   /* Database URL */
+		"table",                    /* Name of URI table */
+		"user_column",              /* Name of user column in URI table */
+		"domain_column",            /* Name of domain column in URI table */
+		"uriuser_column",           /* Name of uri_user column in URI table */
+		"subscriber_table",         /* Name of subscriber table */
+		"subscriber_user_column",   /* Name of user column in subscriber table */
+		"subscriber_domain_column", /* Name of domain column in subscriber table */
+		"use_uri_table"             /* Should URI table be used ? */
 		
 	},   /* Module parameter names */
 	(modparam_t[]) {
@@ -145,6 +143,9 @@ struct module_exports exports = {
 };
 
 
+/*
+ * Module initialization function calle in each child separately
+ */
 static int child_init(int rank)
 {
 	if (db_url == 0) {
@@ -161,6 +162,9 @@ static int child_init(int rank)
 }
 
 
+/*
+ * Module initialization function that is called before the main process forks
+ */
 static int mod_init(void)
 {
 	printf("uri module - initializing\n");
