@@ -36,6 +36,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 /* given an ip and a mask it provides network address */

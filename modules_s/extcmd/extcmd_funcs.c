@@ -578,7 +578,7 @@ static int get_cmd( int fd, str *cmd)
 
 
 
-
+#if 0
 static int send_void_command( int sock_fd )
 {
 	char buf[HEADER_SIZE];
@@ -595,6 +595,7 @@ static int send_void_command( int sock_fd )
 	}
 	return 1;
 }
+#endif
 
 
 
