@@ -941,6 +941,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch)
    n=snprintf( p, ack_buf + MAX_ACK_LEN - p, 
                  ".%h.%h.%h%s",
                  Trans->hash_index, Trans->label, branch, CRLF );
+
    if (n==-1) {
 	LOG(L_ERR, "ERROR: t_build_and_send_ACK: not enough memory for branch\n");
 	goto error;

@@ -155,7 +155,7 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 
 	/* jku: if we compute branches using MD5 it will take 32 bytes */
 	branch_len= (loop_checks ? MY_BRANCH_LEN : MY_BRANCH_LEN -1 + MD5_LEN)+
-					msg->add_to_branch.len;
+					msg->add_to_branch_len;
 
 	if ((via_len+port_no_str_len+branch_len+CRLF_LEN)<MAX_VIA_LINE_SIZE){
 		memcpy(line_buf, MY_VIA, MY_VIA_LEN);
@@ -196,9 +196,9 @@ char * build_req_buf_from_sip_req(	struct sip_msg* msg,
 					"loop checking missing\n");
 		}
 		/* someone wants me to add something to branch here ? */
-		memcpy(line_buf+via_len, msg->add_to_branch.s,
-				msg->add_to_branch.len );
-		via_len+=msg->add_to_branch.len;
+		memcpy(line_buf+via_len, msg->add_to_branch_s,
+				msg->add_to_branch_len );
+		via_len+=msg->add_to_branch_len;
 
 		memcpy(line_buf+via_len, CRLF, CRLF_LEN);
 		via_len+=CRLF_LEN;
