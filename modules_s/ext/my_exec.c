@@ -86,14 +86,16 @@ static void sig_chld(int signo)
 
 
 
-int init_ext()
+int init_ext(int rank)
 {
-	if (signal(SIGCHLD,sig_chld)==SIG_ERR)
-		return -1;
-
-	_private_prog.pid = 0;
-	_private_prog.stat = 0;
-	return 1;
+	if (rank > 0) {
+		if (signal(SIGCHLD,sig_chld)==SIG_ERR)
+			return -1;
+		
+		_private_prog.pid = 0;
+		_private_prog.stat = 0;
+	}
+       return 1;
 }
 
 

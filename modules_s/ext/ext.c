@@ -93,7 +93,7 @@ struct module_exports exports = {
 
 static int ext_child_init(int child)
 {
-	return init_ext();
+	return init_ext(child);
 }
 
 

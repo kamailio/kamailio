@@ -36,7 +36,7 @@
  * 2003-02-13 lot of comments enclosed in #ifdef XJ_EXTRA_DEBUG (dcm)
  * 2003-03-11 New module interface (janakj)
  * 2003-03-16 flags export parameter added (janakj)
- *
+ * 2003-04-06 rank 0 changed to 1 in child_init (janakj)
  */
 
 
@@ -297,7 +297,8 @@ static int child_init(int rank)
 	int i, j, mpid, cpid;
 	
 	DBG("XJAB:child_init: initializing child <%d>\n", rank);
-	if(rank == 0)
+	     /* Rank 0 is main process now - 1 is the first child (janakj) */
+	if(rank == 1)
 	{
 #ifdef HAVE_IHTTP
 		/** register iHTTP callbacks -- go forward in any case*/

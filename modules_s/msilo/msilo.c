@@ -33,6 +33,7 @@
  *             removed non-constant intializers to some strs (andrei)
  * 2003-03-16  flags parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
+ * 2003-04-06: db_init removed from mod_init, will be called from child_init now (janakj)
  */
 
 #include <stdio.h>
@@ -211,18 +212,6 @@ static int mod_init(void)
 		return -1;
 	}
 	register_timer( m_clean_silo, 0, check_time);
-
-	db_con = db_init(db_url);
-	if (!db_con)
-	{
-		LOG(L_ERR,"MSILO: mod_init: Error while connecting database\n");
-		return -1;
-	}
-	else
-	{
-		db_use_table(db_con, db_table);
-		DBG("MSILO: mod_init: Database connection opened successfully\n");
-	}
 
 	reg_addr.s = registrar;
 	reg_addr.len = (registrar)?strlen(registrar):0;

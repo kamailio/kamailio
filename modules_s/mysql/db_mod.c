@@ -76,6 +76,6 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	fprintf(stderr, "mysql - initializing\n");
+	DBG("mysql - initializing\n");
 	return 0;
 }

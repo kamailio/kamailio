@@ -44,7 +44,7 @@ struct program
 };
 
 
-int init_ext();
+int init_ext(int rank);
 int start_prog( char *cmd );
 int kill_prog();
 

@@ -21,6 +21,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-04-06: db connection closed in mod_init (janakj)
  */
 
 /*
@@ -258,7 +262,6 @@ static int mod_init(void)
 		db_use_table(db_con, db_table);
 		DBG("PDT: mod_init: Database connection opened successfully\n");
 	}
-
 	
 	/* init hashes */
 	if( (dhash = init_hash(hash_size)) == NULL )
@@ -328,6 +331,7 @@ static int mod_init(void)
 		goto error;
 	}
 
+	db_close(db_con); /* janakj - close the connection */
 	/* success code */
 	return 0;
 

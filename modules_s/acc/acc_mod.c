@@ -34,6 +34,7 @@
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-04-04  grand acc cleanup (jiri)
+ * 2003-04-06: Opens database connection in child_init only (janakj)
  */
 
 
@@ -273,23 +274,11 @@ static int mod_init( void )
 		return -1;
 
 #ifdef SQL_ACC
-    if (db_url == NULL) {
-        LOG(L_ERR, "ERROR: acc:init_mod(): Use db_url parameter\n");
-		return -1;
-	}
-
 	if (bind_dbmod()) {
 		LOG(L_ERR, "ERROR: acc: init_child bind_db failed..."
 				"did you load a database module?\n");
 		return -1;
 	}
-	db_handle = db_init(db_url);
-	if (!db_handle) {
-        LOG(L_ERR, "ERROR: acc:init_child(): "
-				"Unable to connect database\n");
-		return -1;
-	} 
-	DBG("DEbug: mod_init(acc): db opened \n");
 #endif
 
 #ifdef RAD_ACC
@@ -314,8 +303,6 @@ static int mod_init( void )
 static int child_init(int rank)
 {
 #ifdef SQL_ACC
-	/* close parent's DB connection */
-	db_close(db_handle);
 	db_handle = db_init(db_url);
 	if (!db_handle) {
         LOG(L_ERR, "acc:init_child(): Unable to connect database\n");

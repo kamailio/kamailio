@@ -174,11 +174,6 @@ static int vm_init_child(int rank)
 {
     LOG(L_INFO,"voicemail - initializing child %i\n",rank);
 
-    if( !db_init && bind_dbmod() ){
-		LOG(L_CRIT, "cannot bind db_mod\n");
-		return -1;
-    }
-
     assert(db_init);
 
     db_handle=db_init(vm_db_url);

@@ -32,6 +32,7 @@
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
+ *  2003-04-06  Only child 1 will execute child init (janakj)
  */
 
 
@@ -600,9 +601,8 @@ int sms_child_init(int rank)
 {
 	int  i, foo;
 
-	/* only the child 0 will execut this */
-	if (rank)
-		goto done;
+	/* only the child 1 will execut this */
+	if (rank != 1) goto done;
 
 	/* creats processes for each modem */
 	for(i=0;i<nr_of_modems;i++)

@@ -31,6 +31,7 @@
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
+ * 2003-04-06: db connection closed in mod_init (janakj)
  */
 
 
@@ -107,7 +108,7 @@ static int mod_init(void)
 {
 	int i;
 
-	fprintf(stderr, "domain - initializing\n");
+	DBG("domain - initializing\n");
 	
 	/* Check if database module has been loaded */
 	if (bind_dbmod()) {
@@ -147,6 +148,8 @@ static int mod_init(void)
 			LOG(L_CRIT, "domain:mod_init(): Domain table reload failed\n");
 			return -1;
 		}
+			
+		db_close(db_handle);
 	}
 
 	return 0;
@@ -157,11 +160,6 @@ static int child_init(int rank)
 {
 	/* Check if database is needed by child */
 	if (db_mode == 0) {
-		if (db_url == NULL) {
-			LOG(L_ERR, "domain:child_init(): Use db_url parameter\n");
-			return -1;
-		}
-
 		db_handle = db_init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "domain:child_init(): Unable to connect database\n");
@@ -170,7 +168,6 @@ static int child_init(int rank)
 	}
 
 	return 0;
-
 }
 
 
