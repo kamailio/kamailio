@@ -471,7 +471,7 @@ static inline int build_userhost(struct sip_uri *uri, str *uh, int flg)
 	uh->s[uh->len++] = '@';
 	memcpy( uh->s+uh->len, uri->host.s, uri->host.len);
 	uh->len += uri->host.len;
-	uh->s[uh->len++] = 0;
+	uh->s[uh->len] = 0;
 	return 0;
 }
 
