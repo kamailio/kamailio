@@ -26,6 +26,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
 
 #include "timer.h"
 #include "../../dprint.h"
@@ -34,9 +35,15 @@
 #define is_in_timer_list(_th,_tl) \
 	(((_tl)->prev || (_tl)->next || (_th)->first==(_tl))?1:0)
 
+#define valid_timer_head(_pth) \
+	( ((_pth)->first&&(_pth)->last) || (!(_pth)->first&&!(_pth)->last) )
+	
 
 void append_to_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 {
+	DBG("DEBUG:pike:append_to_timer: attempting to insert %p in (%p,%p)\n",
+		pt,pth->first,pth->last);
+	assert( valid_timer_head(pth) );
 	if (is_in_timer_list(pth,pt))
 		remove_from_timer(pth,pt);
 	if (pth->first) {
@@ -46,6 +53,9 @@ void append_to_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 		pth->first = pt;
 	}
 	pth->last = pt;
+	assert( valid_timer_head(pth) );
+	DBG("DEBUG:pike:append_to_timer: success to insert %p(%p,%p) in (%p,%p)\n",
+		pt,pt->prev,pt->next,pth->first,pth->last);
 }
 
 
@@ -61,8 +71,13 @@ int is_empty(struct pike_timer_head *pth )
 
 void remove_from_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 {
+	DBG("DEBUG:pike:remove_from_timer: attempting to remove %p(%p,%p) in "
+		"(%p,%p)\n",pt,pt->prev,pt->next,pth->first,pth->last);
+	assert( valid_timer_head(pth) );
 	if ( !is_in_timer_list(pth,pt) )
 		return;
+	if (pt->next==0) assert( pth->last==pt );
+	if (pt->prev==0) assert( pth->first==pt );
 	if (pt->next)
 		pt->next->prev = pt->prev;
 	else
@@ -72,6 +87,9 @@ void remove_from_timer(struct pike_timer_head *pth, struct pike_timer_link *pt)
 	else
 		pth->first = pt->next;
 	pt->next = pt->prev = 0;
+	assert( valid_timer_head(pth) );
+	DBG("DEBUG:pike:remove_from_timer: success to remove %p(%p,%p) in "
+		"(%p,%p)\n", pt,pt->prev,pt->next,pth->first,pth->last);
 }
 
 
@@ -81,9 +99,13 @@ struct pike_timer_link *check_and_split_timer(struct pike_timer_head *pth, int t
 {
 	struct pike_timer_link *pt, *ret;
 
+	assert( valid_timer_head(pth) );
 	pt = pth->first;
-	while( pt && pt->timeout<=t)
+	while( pt && pt->timeout<=t) {
+		DBG("DEBUG:pike:check_and_split_timer: splitting %p(%p,%p) in "
+			"(%p,%p)\n",pt,pt->prev,pt->next,pth->first,pth->last);
 		pt=pt->next;
+	}
 
 	if (!pt) {
 		/* eveything have to be removed */
@@ -103,6 +125,9 @@ struct pike_timer_link *check_and_split_timer(struct pike_timer_head *pth, int t
 		pt->prev = 0;
 	}
 
+	assert( valid_timer_head(pth) );
+	DBG("DEBUG:pike:check_and_split_timer: success to split (%p,%p)\n",
+		pth->first,pth->last);
 	return ret;
 }
 

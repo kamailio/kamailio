@@ -81,14 +81,24 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		/* put this node into the timer list and remove from list its
 		   father, if this is not a LEAF_NODE */
 		node->tl.timeout =  get_ticks() + timeout;
+		DBG("DEBUG:pike_check_req: new ip node %p(tl=%p[%p,%p])\n",
+			node,&node->tl,node->tl.prev,node->tl.next);
 		append_to_timer(timer,&(node->tl));
-		if (father->leaf_hits<=0)
+		if ( !father->leaf_hits )
 			remove_from_timer(timer,&(father->tl));
 	} else {
 		/* update the timer */
-		//remove_from_timer(timer,&(node->tl));
-		node->tl.timeout = get_ticks() + timeout;
-		append_to_timer(timer,&(node->tl));
+		if (node->leaf_hits || !node->children) {
+			/* in timer can be only nodes as IP-leaf(complete address) 
+			 * or tree-leaf */
+			node->tl.timeout = get_ticks() + timeout;
+			append_to_timer(timer,&(node->tl));
+		} else if (node->tl.prev || node->tl.next || timer->first==&node->tl) {
+			/* it's a BUG if we get here! */
+			LOG(L_CRIT,"BUG:pike_check_req: node %p in timer wiht leaf_hits=0"
+				" and children!=0 -> recovering by removing\n",node);
+			remove_from_timer(timer,&(node->tl));
+		}
 	}
 	lock_release(timer_lock);
 
@@ -118,14 +128,16 @@ void clean_routine(unsigned int ticks , void *param)
 		/* process them */
 		if (tl) {
 				lock_get(tree_lock);
-				for(;tl;tl=tl->next) {
+				for(;tl;) {
 					node = (struct ip_node*)tl;
-					DBG("DEBUG:pike:clean_routine: del node [%X] \n",
-						node->byte);
+					tl = tl->next;
+					DBG("DEBUG:pike:clean_routine: clean node %p (kids=%p;"
+						"leaf=%d)\n", node,node->children,node->leaf_hits);
 					/* if it's a node, leaf for an ipv4 address inside an
 					   ipv6 address -> just remove it from timer*/
-					if (node->children) {
+					if (node->leaf_hits) {
 						node->leaf_hits = 0;
+						node->hits = 0;
 						node->tl.timeout = 0;
 						node->tl.prev = node->tl.next = 0;
 					} else {
@@ -143,6 +155,7 @@ void clean_routine(unsigned int ticks , void *param)
 							append_to_timer(timer,&(dad->tl));
 							lock_release(timer_lock);
 						}
+						DBG("DEBUG:pike:clean_routine: rmv node %p \n", node);
 						/* del the node */
 						remove_node( tree, node);
 					}

@@ -120,7 +120,7 @@ struct ip_node* add_node(struct ip_node *root,unsigned char *ip,int ip_len,
 			exit = 1;
 		}
 	}
-	DBG("Only first %d were mached!\n",byte_pos);
+	DBG("DEBUG:pike:add_node: Only first %d were mached!\n",byte_pos);
 	if (byte_pos==ip_len) {
 		/* we found the entire address */
 		if (node->leaf_hits<max_hits) node->leaf_hits++;
@@ -133,7 +133,8 @@ struct ip_node* add_node(struct ip_node *root,unsigned char *ip,int ip_len,
 		if ( node==root || node->hits>=max_hits) {
 			/* we have to split the node */
 			if (flag) *flag = NEW_NODE ;
-			DBG("Splitting node %p [%x]\n",node,node->byte);
+			DBG("DEBUG:pike:add_node: splitting node %p [%x]\n",
+				node,node->byte);
 			if (father) *father = node;
 			return split_node(node,ip[byte_pos]);
 		} else {
