@@ -72,9 +72,9 @@ static int submit_query(db_con_t* _h, const char* _s)
 		CON_TIMESTAMP(_h) = t;
 	}
 
-	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)*/
-	  DBG("submit_query(): %s\n", _s);
-	/**/
+	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)
+	 * DBG("submit_query(): %s\n", _s);
+	 */
 
 	/* When a server connection is lost and a query is attempted, most of
 	 * the time the query will return a CR_SERVER_LOST, then at the second
@@ -475,7 +475,6 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	*(sql_buf + off++) = ')';
 	*(sql_buf + off) = '\0';
 
-	DBG("---> <%s>\n",sql_buf);
 	if (submit_query(_h, sql_buf) < 0) {
 	        LOG(L_ERR, "db_insert: Error while submitting query\n");
 		return -2;
