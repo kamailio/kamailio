@@ -574,7 +574,6 @@ int t_newtran( struct sip_msg* p_msg )
 	int ret, lret;
 	struct cell *new_cell;
 	struct sip_msg *shm_msg;
-	int a,b,c;
 
 	ret=1;
 
