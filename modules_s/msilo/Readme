@@ -17,7 +17,17 @@ Parameters:
 - db_table: table name
 - expiration: default expiration time of the message - in seconds
 
-3.Module dependeces
+3.Module dependences
+-------------------
 - IM
 - MYSQL
 - TM
+
+4.Other information
+-------------------
+- see SQL script for creating databases and a sample of cfg file in './doc/'
+
+Contacts
+--------
+- for any suggestion/bug contact:
+	Daniel MIERLA <mierla@fokus.gmd.de>
