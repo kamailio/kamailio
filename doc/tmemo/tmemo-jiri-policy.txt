@@ -23,6 +23,14 @@ domains. The question then is what realm should we use? We don't know
 it any longer, and we don't want to keep sessions. Keeping it with
 record-routing might be an option.
 
+Juha:
+yes, the proxy would not know the realm unless it keeps dialog state.
+more that authentication, i'm worried about accounting.  if my policy is
+to account dialogs (calls) that are initiated by my own users, how do i
+know when i see a bye, if it terminates such a call or a call initiated
+by non-local party?
+
+
 Mike Graff, serusers
 --------------------
 I implemented something much like this:
