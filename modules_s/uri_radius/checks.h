@@ -1,6 +1,6 @@
 /* domain.h v 0.1 2003/1/20
  *
- * Header file for readius based checks
+ * Header file for radius based checks
  *
  * Copyright (C) 2002-2003 Juha Heinanen
  *

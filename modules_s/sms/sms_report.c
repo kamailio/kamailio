@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -57,7 +57,7 @@ get_time_func  *get_time;
 /*-------------- Function to set time - from ser or system ------------------*/
 /*
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -205,7 +205,7 @@ int  relay_report_to_queue(int id, char *phone, int status, int *old_status)
 	if (status>=0 && status<32) {
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d confirmed with code %d\n",
 			id, status);
-		ret_code = 2; /* sucess */
+		ret_code = 2; /* success */
 	} else if (status<64) {
 		/* provisional report */
 		DBG("DEBUG:sms:relay_report_to_queue:sms %d received prov. report with"

@@ -4,7 +4,7 @@
  * eXtended JABber module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -52,7 +52,7 @@
 
 #define XJ_DMSG_ERR_NEWJCONF "ERROR:Cannot create a new conference session."
 
-#define XJ_DMSG_ERR_SENDJMSG "ERROR: Your message was not sent. Something wrong during transmition to Jabber network."
+#define XJ_DMSG_ERR_SENDJMSG "ERROR: Your message was not sent. Something wrong during transmitting to Jabber network."
 
 #define XJ_DMSG_ERR_STOREJMSG "ERROR: Your message was not sent. Something wrong while trying to transmit it to Jabber network."
 

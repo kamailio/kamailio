@@ -3,7 +3,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -60,7 +60,7 @@ int exec_msg(struct sip_msg *msg, char *cmd )
 	int exit_status;
 	int ret;
 
-	ret=-1; /* pesimist: assume error */
+	ret=-1; /* pessimist: assume error */
 	pipe=popen( cmd, "w" );
 	if (pipe==NULL) {
 		LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %s\n",
@@ -110,7 +110,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	int uri_len;
 	int exit_status;
 
-	/* pesimist: assume error by default */
+	/* pessimist: assume error by default */
 	ret=-1;
 	
 	l1=strlen(cmd);cmd_len=l1+param_len+2;

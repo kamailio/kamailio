@@ -47,7 +47,7 @@ Chapter 1. User's Guide
 1.1. Overview
 
    The module keeps trace of all (or selected ones) incoming
-   requests's IP source and blocks the ones that exceeded some
+   request's IP source and blocks the ones that exceeded some
    limit. Works simultaneous for IPv4 and IPv6 addresses.
      _________________________________________________________
 
@@ -105,7 +105,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 1.3.3. remove_latency (integer)
 
    For how long the IP address will be kept in memory after the
-   last request from that IP address. It's a sord of timeout
+   last request from that IP address. It's a sort of timeout
    value.
 
    Default value is 120. 
@@ -144,7 +144,7 @@ tree root /                  \ 142
            \ 79 - 134
 
    To detect the whole address, step by step, from the root to
-   the leafs, the nodes corespoding to each byte of the ip
+   the leafs, the nodes corresponding to each byte of the ip
    address are expanded. In order to be expended a node has to be
    hit for a given number of times (possible by different
    addresses; in the previous example, the node "37" was expended
@@ -154,8 +154,8 @@ tree root /                  \ 142
 
      * After first req hits -> the "193" node is built.
      * After x more hits, the "175" node is build; the hits of
-       "193" node are splited between itself and its child--both
-       of them gone have x/2.
+       "193" node are split between itself and its child--both of
+       them gone have x/2.
      * And so on for node "132" and "164".
      * Once "164" build the entire address can be found in the
        tree. "164" becomes a leaf. After it will be hit as a leaf
@@ -163,12 +163,12 @@ tree root /                  \ 142
        this address will be blocked).
 
    So, to build and block this address were needed 3*x hits. Now,
-   if reqs start comming from 193.175.132.142, the first 3 bytes
-   are alredy in the tree (they are shared with the previous
+   if reqs start coming from 193.175.132.142, the first 3 bytes
+   are already in the tree (they are shared with the previous
    address), so I will need only x hits (to build node "142" and
    to make it "RED") to make this address also to be blocked.
-   This is the reason for the variable number of hits necesary to
-   block an IP.
+   This is the reason for the variable number of hits necessary
+   to block an IP.
 
    The maximum number of hits to turn an address red are (n is
    the address's number of bytes):

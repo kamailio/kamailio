@@ -30,9 +30,10 @@ Jan Janak
               1.3.5. callid_column (string)
               1.3.6. cseq_column (string)
               1.3.7. method_column (string)
-              1.3.8. db_url (string)
-              1.3.9. timer_interval (integer)
-              1.3.10. db_mode (integer)
+              1.3.8. user_agent_column (string)
+              1.3.9. db_url (string)
+              1.3.10. timer_interval (integer)
+              1.3.11. db_mode (integer)
 
         1.4. Exported Functions
 
@@ -48,15 +49,20 @@ Jan Janak
               2.1.6. ul_unlock_udomain(domain)
               2.1.7. ul_release_urecord(record)
               2.1.8. ul_insert_ucontact(record, contact, expires,
-                      q, callid, cseq, cont)
+                      q, callid, cseq, flags, cont, ua)
 
               2.1.9. ul_delete_ucontact(record, contact)
               2.1.10. ul_get_ucontact(record, contact)
-              2.1.11. ul_get_all_ucontacts(buf, len)
+              2.1.11. ul_get_all_ucontacts(buf, len, flags)
               2.1.12. ul_update_ucontact(contact, expires, q,
-                      callid, cseq)
+                      callid, cseq, set, res, ua)
+
+        2.2. Contact states
 
    3. Frequently Asked Questions
+
+   List of Figures
+   2-1. States of a ucontact
 
    List of Examples
    1-1. Set user_column parameter
@@ -66,9 +72,10 @@ Jan Janak
    1-5. Set callid_column parameter
    1-6. Set cseq_column parameter
    1-7. Set method_column parameter
-   1-8. Set db_url parameter
-   1-9. Set timer_interval parameter
-   1-10. Set db_mode parameter
+   1-8. Set user_agent_column parameter
+   1-9. Set db_url parameter
+   1-10. Set timer_interval parameter
+   1-11. Set db_mode parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -183,19 +190,31 @@ modparam("usrloc", "method_column", "method")
 ...
      _________________________________________________________
 
-1.3.8. db_url (string)
+1.3.8. user_agent_column (string)
 
-   URL of the database that should be used.
+   Name of column containing user-agent values.
 
-   Default value is "sql://ser:heslo@localhost/ser". 
+   Default value is "user_agent". 
 
-   Example 1-8. Set db_url parameter
+   Example 1-8. Set user_agent_column parameter
 ...
-modparam("usrloc", "db_url", "sql://username:password@localhost/ser")
+modparam("usrloc", "user_agent_column", "user_agent")
 ...
      _________________________________________________________
 
-1.3.9. timer_interval (integer)
+1.3.9. db_url (string)
+
+   URL of the database that should be used.
+
+   Default value is "mysql://ser:heslo@localhost/ser". 
+
+   Example 1-9. Set db_url parameter
+...
+modparam("usrloc", "db_url", "mysql://username:password@localhost/ser")
+...
+     _________________________________________________________
+
+1.3.10. timer_interval (integer)
 
    Number of seconds between two timer runs. The module uses
    timer to delete expired contacts, synchronize with database
@@ -203,24 +222,24 @@ modparam("usrloc", "db_url", "sql://username:password@localhost/ser")
 
    Default value is 60. 
 
-   Example 1-9. Set timer_interval parameter
+   Example 1-10. Set timer_interval parameter
 ...
 modparam("usrloc", "timer_interval", 120)
 ...
      _________________________________________________________
 
-1.3.10. db_mode (integer)
+1.3.11. db_mode (integer)
 
    The usrloc module can utilize database for persistent contact
    storage. If you use database, your contacts will survive
-   machine restarts or sw crashes. The disadvantage is that
+   machine restarts or SW crashes. The disadvantage is that
    accessing database can be very time consuming. Therefore,
    usrloc module implements three database accessing modes:
 
      * 0 - This disables database completely. Only memory will be
        used. Contacts will not survive restart. Use this value if
        you need a really fast usrloc and contact persistence is
-       not necessarry or is provided by other means.
+       not necessary or is provided by other means.
      * 1 - Write-Through scheme. All changes to usrloc are
        immediately reflected in database too. This is very slow,
        but very reliable. Use this scheme if speed is not your
@@ -245,7 +264,7 @@ modparam("usrloc", "timer_interval", 120)
 
    Default value is 0. 
 
-   Example 1-10. Set db_mode parameter
+   Example 1-11. Set db_mode parameter
 ...
 modparam("usrloc", "db_mode", 2)
 ...
@@ -266,7 +285,7 @@ Chapter 2. Developer's Guide
    name for table used in registrar. The function is called from
    fixups in registrar. It gets name of the domain as a parameter
    and returns pointer to a new domain structure. The fixup than
-   'fixes' the parametr in registrar so that it will pass the
+   'fixes' the parameter in registrar so that it will pass the
    pointer instead of the name every time save() or lookup() is
    called. Some usrloc functions get the pointer as parameter
    when called. For more details see implementation of save
@@ -357,7 +376,7 @@ Chapter 2. Developer's Guide
      _________________________________________________________
 
 2.1.8. ul_insert_ucontact(record, contact, expires, q, callid, cseq,
-cont)
+flags, cont, ua)
 
    The function inserts a new contact in the given record with
    specified parameters.
@@ -371,7 +390,7 @@ cont)
 
      * time_t expires - Expires of the contact in absolute value.
 
-     * qvalue_t q - q value of the contact.
+     * float q - q value of the contact.
 
      * str* callid - Call-ID of the REGISTER message that
        contained the contact.
@@ -379,7 +398,12 @@ cont)
      * int cseq - CSeq of the REGISTER message that contained the
        contact.
 
+     * unsigned int flags - Flags to be set.
+
      * ucontact_t* cont - Pointer to newly created structure.
+
+     * str* ua - User-Agent of the REGISTER message that
+       contained the contact.
      _________________________________________________________
 
 2.1.9. ul_delete_ucontact(record, contact)
@@ -406,25 +430,32 @@ cont)
      * str_t* contact - URI of the request contact.
      _________________________________________________________
 
-2.1.11. ul_get_all_ucontacts(buf, len)
+2.1.11. ul_get_all_ucontacts(buf, len, flags)
 
    The function retrieves all contacts of all registered users
    and returns them in the caller-supplied buffer. If the buffer
    is too small, the function returns positive value indicating
-   how much additional space would be necessary to accomodate all
-   of them. Please note that the positive return value should be
-   used only as a "hint", as there is no gurantee that during the
-   time between two subsequent calls number of registered
+   how much additional space would be necessary to accommodate
+   all of them. Please note that the positive return value should
+   be used only as a "hint", as there is no guarantee that during
+   the time between two subsequent calls number of registered
    contacts will remain the same.
+
+   If flag parameter is set to non-zero value then only contacts
+   that have the specified flags set will be returned. It is, for
+   example, possible to list only contacts that are behind NAT.
 
    Meaning of the parameters is as follows:
 
      * void* buf - Buffer for returning contacts.
 
      * int len - Length of the buffer.
+
+     * unsigned int flags - Flags that must be set.
      _________________________________________________________
 
-2.1.12. ul_update_ucontact(contact, expires, q, callid, cseq)
+2.1.12. ul_update_ucontact(contact, expires, q, callid, cseq, set,
+res, ua)
 
    The function updates contact with new values.
 
@@ -434,13 +465,34 @@ cont)
 
      * time_t expires - Expires of the contact in absolute value.
 
-     * qvalue_t q - q value of the contact.
+     * float q - q value of the contact.
 
      * str* callid - Call-ID of the REGISTER message that
        contained the contact.
 
      * int cseq - CSeq of the REGISTER message that contained the
        contact.
+
+     * unsigned int set - OR value of flags to be set.
+
+     * unsigned int res - OR value of flags to be reset.
+
+     * str* ua - User-Agent of the REGISTER message that
+       contained the contact.
+     _________________________________________________________
+
+2.2. Contact states
+
+   Figure 2-1. States of a ucontact
+
+   [usrloc_states_w_zombie.png]
+
+   Contacts in one of the zombie states should be ignored by any
+   function which interacts with an external user. Contacts are
+   only kept in a zombie state to store the informations for
+   replication. Contacts can also appear in a zombie state even
+   if no replication is used, but in this case the contacts
+   should be removed by the next timer event automatically.
      _________________________________________________________
 
 Chapter 3. Frequently Asked Questions

@@ -62,13 +62,14 @@ Chapter 1. User's Guide
 
 1.1. Overview
 
-   This module provides a way of comunication between SIP network
-   (via SIP MESSAGE) and GSM networks (via ShortMessageService).
-   Comunication is possible from SIP to SMS and vice versa. The
-   module provides facilities like SMS confirmation--the gateway
-   can cofirm to the SIP user if his message really reached its
-   destination as a SMS--or multipart messages--if a SIP messages
-   is too long it will be split and sent as multiple SMS.
+   This module provides a way of communication between SIP
+   network (via SIP MESSAGE) and GSM networks (via
+   ShortMessageService). Communication is possible from SIP to
+   SMS and vice versa. The module provides facilities like SMS
+   confirmation--the gateway can confirm to the SIP user if his
+   message really reached its destination as a SMS--or multi-part
+   messages--if a SIP messages is too long it will be split and
+   sent as multiple SMS.
 
    Errors occurred because of an invalid number or a too long
    message or because of an internal modem malfunction are
@@ -79,7 +80,7 @@ Chapter 1. User's Guide
 1.1.1. Hardware Requirements
 
    The SMS module needs a GSM modem to be able to send/receive
-   the SMS messages. Usualy, this kind of modems are externals,
+   the SMS messages. Usually, this kind of modems are externals,
    linked to the machine via serial cable. The modem can be a
    dedicated one (as the ones provided by FALCOM) or can be a GSM
    telephone that has an internal modem (as the latest mobile
@@ -148,13 +149,13 @@ modem_param      = name "=" value
 
    The following parameters can be used:
 
-     * d=device (mandatory) - Device associatd with modem
+     * d=device (mandatory) - Device associated with modem
        (/dev/ttyS0, /dev/modem, etc.).
      * p=pin (optional) - SIM PIN - default is NULL.
      * m=mode (optional) - Modem working mode
        ("ASCII","OLD","DIGICOM","NEW"). Default value is "NEW".
      * c=SMS_Center (optional) - SMS center number for that
-       modem. Deafult is the SMS center set on the SIM card.
+       modem. Default is the SMS center set on the SIM card.
      * b=baudrate (optional) - Default is 19600.
      * r=retry (optional) - How many times to try to re-send a
        SMS that reported error. Default is twice.
@@ -287,8 +288,8 @@ modparam("sms", "use_contact", 1)
 
      * 1 - the reports are delivered by the GSM device as SMS
        reports (so far supported only by Nokia modems);
-     * 2 - the reports are delivered as async. CDS reponses
-       (supported by almost all modems, exepting Ericsson).
+     * 2 - the reports are delivered as async. CDS responses
+       (supported by almost all modems, except Ericsson).
 
    Default is 0 (no report). 
 

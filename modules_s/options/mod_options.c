@@ -3,7 +3,7 @@
  *
  * Options Reply Module
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -70,7 +70,7 @@ static param_export_t params[] = {
 };
 
 /*
- * Module describtion
+ * Module description
  */
 struct module_exports exports = {
 	"options",       /* Module name */
@@ -144,7 +144,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 		LOG(L_ERR, "options_reply(): called for non-OPTIONS request\n");
 		return -1;
 	}
-	/* FIXME: should we additionaly check if ruri == server addresses ?! */
+	/* FIXME: should we additionally check if ruri == server addresses ?! */
 	if (_msg->parsed_uri.user.len != 0) {
 		LOG(L_ERR, "options_reply(): ruri contains username\n");
 		return -1;

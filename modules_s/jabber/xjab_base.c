@@ -4,7 +4,7 @@
  * eXtended JABber module - Jabber connections pool
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -138,7 +138,7 @@ void xj_jkey_free_p(void *p)
 
 /**
  * free a pointer to a t_jab_sipmsg structure
- * > element where points 'from' MUST be eliberated separated
+ * > element where points 'from' MUST be deliberated separated
  */
 void xj_sipmsg_free(xj_sipmsg jsmsg)
 {

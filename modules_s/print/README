@@ -49,7 +49,7 @@ Chapter 1. User's Guide
 
    This is an example module. It implements only one function
    that prints its string parameter to stdout (it won't work if
-   ser is started in dameon mode). It also shows how module
+   ser is started in daemon mode). It also shows how module
    parameters can be declared.
      _________________________________________________________
 

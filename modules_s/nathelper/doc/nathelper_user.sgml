@@ -199,7 +199,7 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
 			The parameter determines what heuristics is used. If flag 
 			1 is set, the "received" test is used -- address in Via is 
 			compared against source IP address of signaling. If flag
-			2 is set, Contact header field is searched for occurence
+			2 is set, Contact header field is searched for occurrence
 			of RFC1918 addresses. Both flags can be bitwise combined,
 			the test returns true if any of the tests identified a NAT.
 		</para>

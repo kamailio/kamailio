@@ -3,7 +3,7 @@
  *
  * Digest Authentication - Database support
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -45,7 +45,7 @@ extern str user_column;     /* 'username' column name */
 extern str domain_column;   /* 'domain' column name */
 extern str rpid_column;     /* 'rpid' column name */
 extern str pass_column;     /* 'password' column name */
-extern str pass_column_2;   /* Column containg HA1 string constructed
+extern str pass_column_2;   /* Column containing HA1 string constructed
 			     * of user@domain username
 			     */
 

@@ -20,7 +20,7 @@
 	    users.
 	</para>
 	<para>
-	    This module currently cannot work as a <acronym>B2BUA</acronym>, i.e. it cannot subsribe
+	    This module currently cannot work as a <acronym>B2BUA</acronym>, i.e. it cannot subscribe
 	    to presence of users using &sip;. We are currently working on that feature.
 	</para>
     </section>

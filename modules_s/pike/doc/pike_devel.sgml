@@ -24,7 +24,7 @@ tree root /                  \ 142
 </programlisting>
 	</example>
     <para>
-	To detect the whole address, step by step, from the root to the leafs, the nodes corespoding
+	To detect the whole address, step by step, from the root to the leafs, the nodes corresponding
 	to each byte of the ip address are expanded. In order to be expended a node has to be hit
 	for a given number of times (possible by different addresses; in the previous example, the
 	node <quote>37</quote> was expended by the 195.37.78.163 and 195.37.79.134 hits).
@@ -41,7 +41,7 @@ tree root /                  \ 142
 	<listitem>
 	    <para>
 		After x more hits, the <quote>175</quote> node is build; the hits of
-		<quote>193</quote> node are splited between itself and its child--both of them gone
+		<quote>193</quote> node are split between itself and its child--both of them gone
 		have x/2.
 	    </para>
 	</listitem>
@@ -60,11 +60,11 @@ tree root /                  \ 142
 	</listitem>
     </itemizedlist>
     <para>
-	So, to build and block this address were needed 3*x hits. Now, if reqs start comming from
-	193.175.132.142, the first 3 bytes are alredy in the tree (they are shared with the previous
+	So, to build and block this address were needed 3*x hits. Now, if reqs start coming from
+	193.175.132.142, the first 3 bytes are already in the tree (they are shared with the previous
 	address), so I will need only x hits (to build node <quote>142</quote> and to make it
 	<quote>RED</quote>) to make this address also to be blocked.  This is the reason for the
-	variable number of hits necesary to block an &ip;.
+	variable number of hits necessary to block an &ip;.
     </para>
     <para>
 	The maximum number of hits to turn an address red are (n is the address's number of bytes):

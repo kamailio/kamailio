@@ -3,7 +3,7 @@
  *
  * Process REGISTER request and send reply
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -29,7 +29,7 @@
  * History:
  * ----------
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-02-28 scratcpad compatibility abandoned (jiri)
+ * 2003-02-28 scrathcpad compatibility abandoned (jiri)
  * 2003-03-21  save_noreply added, patch provided by Maxim Sobolev <sobomax@portaone.com> (janakj)
  */
 
@@ -220,7 +220,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 
 
 /*
- * Message contained some contacts and apropriate
+ * Message contained some contacts and appropriate
  * record was found, so we have to walk through
  * all contacts and do the following:
  * 1) If contact in usrloc doesn't exists and

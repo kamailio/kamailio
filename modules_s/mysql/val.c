@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -310,7 +310,7 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 		break;
 
 	default:
-		DBG("val2str(): Unknow data type\n");
+		DBG("val2str(): Unknown data type\n");
 		return -9;
 	}
 	/*return -8; --not reached*/

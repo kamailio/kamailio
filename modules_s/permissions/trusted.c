@@ -69,7 +69,7 @@ int init_trusted(void)
 		return 0;
 	} else {
 		if (bind_dbmod(db_url, &perm_dbf) < 0) {
-			LOG(L_ERR, "ERROR: persmissions: init_trusted: "
+			LOG(L_ERR, "ERROR: permissions: init_trusted: "
 					"load a database support module\n");
 			return -1;
 		}
@@ -239,7 +239,7 @@ static inline int match_proto(char *proto_string, int proto_int)
 }
 
 /*
- * Matches from uri againts patterns returned from database.  Returns 1 when
+ * Matches from uri against patterns returned from database.  Returns 1 when
  * first pattern matches and 0 if none of the patterns match.
  */
 static int match_res(struct sip_msg* msg, db_res_t* _r)
@@ -367,7 +367,7 @@ int reload_trusted_table(void)
 	}
 
 	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
-		LOG(L_ERR, "ERROR: permsissions: reload_trusted_table():"
+		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
 				" Error while querying database\n");
 		return -1;
 	}

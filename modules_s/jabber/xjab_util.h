@@ -4,7 +4,7 @@
  * eXtended JABber module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -41,7 +41,7 @@
 typedef struct _xj_jmsg_queue
 {
 	int len;		// maximum size of the queue
-	int size;		// numebr of elements in the queue
+	int size;		// number of elements in the queue
 	int cache;		// cache time (seconds)
 	int *expire;	// expire time of the queued message
 	xj_sipmsg *jsm;	// pointer to the message

@@ -167,7 +167,7 @@ sha_hash(int *data, int *hash)
 
 /*
   Takes a pointer to a 160 bit block of data (five 32 bit ints) and
-  intializes it to the start constants of the SHA1 algorithm.  This
+  initializes it to the start constants of the SHA1 algorithm.  This
   must be called before using hash in the call to sha_hash
 */
 int 

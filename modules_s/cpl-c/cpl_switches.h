@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -62,7 +62,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 		switch (attr_name) {
 			case FIELD_ATTR:
 				if (field!=UNDEF_CHAR) {
-					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: mutiple FIELD "
+					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: multiple FIELD "
 						"attrs found\n");
 					goto script_error;
 				}
@@ -70,7 +70,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 				break;
 			case SUBFIELD_ATTR:
 				if (subfield!=UNDEF_CHAR) {
-					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: mutiple SUBFIELD"
+					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: multiple SUBFIELD"
 						" attrs found\n");
 					goto script_error;
 				}
@@ -108,7 +108,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 			case ADDRESS_NODE :
 				/* check the number of attributes */
 				if (NR_OF_ATTR(kid)!=1) {
-					LOG(L_ERR,"ERROR:run_address_switch: incorect nr of attrs "
+					LOG(L_ERR,"ERROR:run_address_switch: incorrect nr of attrs "
 						"(%d) in ADDRESS node\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
@@ -117,7 +117,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 				get_basic_attr( p, attr_name, cpl_val.len, intr, script_error);
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR &&
 				attr_name!=SUBDOMAIN_OF_ATTR) {
-					LOG(L_ERR,"ERROR:run_address_switch: unknown attribut "
+					LOG(L_ERR,"ERROR:run_address_switch: unknown attribute "
 						"(%d) in ADDRESS node\n",attr_name);
 					goto script_error;
 				}
@@ -217,8 +217,8 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 						break;
 					case CONTAINS_ATTR:
 						if (subfield!=DISPLAY_VAL) {
-							LOG(L_WARN,"WARNING:run_addres_switch: operator "
-							"CONTAINS applys only to DISPLAY -> ignored\n");
+							LOG(L_WARN,"WARNING:run_address_switch: operator "
+							"CONTAINS applies only to DISPLAY -> ignored\n");
 						} else {
 							if ( msg_val && cpl_val.len<=msg_val->len &&
 							strcasestr_str(msg_val, &cpl_val)!=0 ) {
@@ -250,8 +250,8 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 								}
 								break;
 							default:
-								LOG(L_WARN,"WARNING:run_addres_switch: operator"
-									" SUBDOMAIN_OF applys only to HOST or TEL "
+								LOG(L_WARN,"WARNING:run_address_switch: operator"
+									" SUBDOMAIN_OF applies only to HOST or TEL "
 									"-> ignored\n");
 						}
 						break;
@@ -264,7 +264,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 		}
 	}
 
-	/* none of the branches of ADDRESS_SWITCH mached -> go for default */
+	/* none of the branches of ADDRESS_SWITCH matched -> go for default */
 	return DEFAULT_ACTION;
 runtime_error:
 	return CPL_RUNTIME_ERROR;
@@ -328,7 +328,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 			case STRING_NODE :
 				/* check the number of attributes */
 				if (NR_OF_ATTR(kid)!=1) {
-					LOG(L_ERR,"ERROR:run_string_switch: incorect nr of attrs "
+					LOG(L_ERR,"ERROR:run_string_switch: incorrect nr of attrs "
 						"(%d) in STRING node (expected 1)\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
@@ -336,7 +336,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 				p = ATTR_PTR(kid);
 				get_basic_attr( p, attr_name, cpl_val.len, intr, script_error);
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR ) {
-					LOG(L_ERR,"ERROR:run_string_switch: unknown attribut "
+					LOG(L_ERR,"ERROR:run_string_switch: unknown attribute "
 						"(%d) in STRING node\n",attr_name);
 					goto script_error;
 				}
@@ -452,7 +452,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 		}
 	}
 
-	/* none of the branches of STRING_SWITCH mached -> go for default */
+	/* none of the branches of STRING_SWITCH matched -> go for default */
 	return DEFAULT_ACTION;
 not_present:
 	DBG("DEBUG:run_string_switch: required hdr not present in sip msg\n");
@@ -523,7 +523,7 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 				get_basic_attr( p, attr_name, attr_val, intr, script_error);
 				if (attr_name!=LESS_ATTR && attr_name!=GREATER_ATTR &&
 				attr_name!=EQUAL_ATTR){
-					LOG(L_ERR,"ERROR:run_priority_switch: unknown attribut "
+					LOG(L_ERR,"ERROR:run_priority_switch: unknown attribute "
 						"(%d) in PRIORITY node\n",attr_name);
 					goto script_error;
 				}
@@ -603,7 +603,7 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 				 * check it -> check only for msg_attr_val for non-EQUAL op */
 				if (msg_attr_val==UNKNOWN_PRIO_VAL && attr_name!=EQUAL_ATTR) {
 					LOG(L_NOTICE,"NOTICE:run_priority_switch: UNKNOWN "
-						"value found in sip_msg when tring a LESS/GREATER "
+						"value found in sip_msg when string a LESS/GREATER "
 						"cmp -> force the value to default \"normal\"\n");
 					msg_prio = NORMAL_VAL;
 				} else {
@@ -668,7 +668,7 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 		} /* end switch for NODE_TYPE */
 	} /* end for for all kids */
 
-	/* none of the branches of PRIORITY_SWITCH mached -> go for default */
+	/* none of the branches of PRIORITY_SWITCH matched -> go for default */
 	return DEFAULT_ACTION;
 runtime_error:
 	return CPL_RUNTIME_ERROR;
@@ -866,7 +866,7 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	} /* end for for all kids */
 
 
-	/* none of the branches of TIME_SWITCH mached -> go for default */
+	/* none of the branches of TIME_SWITCH matched -> go for default */
 	ac_tm_free( &att );
 	tmrec_free( &trt );
 	return DEFAULT_ACTION;
@@ -1015,7 +1015,7 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 				/* check the number of attributes */
 				nr_attr = NR_OF_ATTR(kid);
 				if (nr_attr<1 || nr_attr>2) {
-					LOG(L_ERR,"ERROR:run_string_switch: incorect nr of attrs "
+					LOG(L_ERR,"ERROR:run_string_switch: incorrect nr of attrs "
 						"(%d) in LANGUAGE node (1 or 2)\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
@@ -1035,14 +1035,14 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 						DBG("DEBUG:cpl-c:run_language_string: language-subtag"
 							" is [%.*s]\n",attr.len,attr.s);
 					}else {
-						LOG(L_ERR,"ERROR:run_language_switch: unknown attribut"
+						LOG(L_ERR,"ERROR:run_language_switch: unknown attribute"
 						" (%d) in LANGUAGE node\n",attr_name);
 						goto script_error;
 					}
 				}
 				
 				/* get the value from the SIP message -> if not yet, do it now
-				 * and rememer it for the next times */
+				 * and remember it for the next times */
 				if (!msg_val.s) {
 					if (intr->accept_language==STR_NOT_FOUND)
 						goto not_present;

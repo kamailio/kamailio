@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,7 +27,7 @@
  /*
   * History:
   * -------
-  * 2003-02-11  modified sl_send_reply to use the transport independend
+  * 2003-02-11  modified sl_send_reply to use the transport independent
   *              msg_send  (andrei)
   * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (it was defined twice
   *              w/ different values!)  (andrei)

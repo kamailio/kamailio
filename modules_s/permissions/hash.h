@@ -64,7 +64,7 @@ void destroy_hash_table(struct trusted_list** table);
 
 
 /* 
- * Add <src_ip, proto, pattern> into hash table, where proto is integrer
+ * Add <src_ip, proto, pattern> into hash table, where proto is integer
  * representation of string argument proto.
  */
 int hash_table_insert(struct trusted_list** hash_table, char* src_ip, char* proto, char* pattern);

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -31,7 +31,7 @@
 #include "../../db/db.h"
 
 /*
- * dtabase URL - the path to the directory where the tables are located
+ * database URL - the path to the directory where the tables are located
  */
 #define DB_URL   "/tmp/dbtext"
 
@@ -45,7 +45,7 @@
 
 
 /*
- * Dabase module client example
+ * Database module client example
  */
 
 static int mod_init();
@@ -64,7 +64,7 @@ struct module_exports exports= {
 	0,   /* Module parameter names */
 	0,   /* Module parameter types */
 	0,   /* Module parameter variable pointers */
-	0,   /* Number of module paramers */
+	0,   /* Number of module parameters */
 
 	mod_init, /* module initialization function */
 	0,        /* response function*/

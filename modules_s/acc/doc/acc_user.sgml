@@ -71,7 +71,7 @@
 		<listitem>
 		    <para>
 			A single INVITE may produce multiple accounting reports -- that's
-			due to SIP's forking feature
+			due to SIP forking feature
 		    </para>
 		</listitem>
 		<listitem>
@@ -86,7 +86,7 @@
 		    <para>
 			There is no session accounting -- ser maintains no sessions. If one needs to
 			correlate INVITEs with BYEs for example for purpose of billing, then it is
-			better done in the entity which collects accounting infromation. Otherwise,
+			better done in the entity which collects accounting information. Otherwise,
 			SIP server would have to become sessions-stateful, which would very badly
 			impact its scalability.
 		    </para>
@@ -118,7 +118,7 @@
 	<para>
 	    Both mysql and radius libraries must be dynamically linkable. You need to configure your
 	    OS so that SER, when started, will find them. Typically, you do so by manipulating
-	    LD_LIBRARY_PATH environment variable or condiguring ld.so.
+	    LD_LIBRARY_PATH environment variable or configuring ld.so.
 	</para>
 	<section>
 	    <title>General Example</title>
@@ -291,7 +291,7 @@ modparam("acc", "report_ack", 0)
 	    <para>
 		By default, CANCEL reporting is disabled -- most accounting
 		applications are happy to see INVITE's cancellation status.
-		Turn on if you explicitely want to account CANCEL transactions.
+		Turn on if you explicitly want to account CANCEL transactions.
 	    </para>
 	    <para>
 		Default value is 0 (no).
@@ -482,7 +482,7 @@ modparam("acc", "diameter_client_port", 3000)
 	    <para>
 		<function moreinfo="none">acc_request</function> reports on a request, for example,
 		it can be used to report on missed calls to off-line users who are replied 404. To
-		avoid multiple reports on UDP request retranmission, you would need to embed the
+		avoid multiple reports on UDP request retransmission, you would need to embed the
 		action in stateful processing.
 	    </para> 
 	    <para>
@@ -534,7 +534,7 @@ acc_log_request("Some comment", "Some table");
 	    <title><function moreinfo="none">acc_rad_request(comment)</function></title>
 	    <para>
 		Like <function moreinfo="none">acc_log_request</function>, 
-		<function moreinfo="none">acc_rad_requst</function> reports on a request. It
+		<function moreinfo="none">acc_rad_request</function> reports on a request. It
 		reports to radius server as configured in <quote>radius_config</quote>.
 	    </para> 
 	    <para>
@@ -558,7 +558,7 @@ acc_rad_request("Some comment");
 	    <title><function moreinfo="none">acc_diam_request(comment)</function></title>
 	    <para>
 		Like <function moreinfo="none">acc_log_request</function>, 
-		<function moreinfo="none">acc_diam_requst</function> reports on a request. It
+		<function moreinfo="none">acc_diam_request</function> reports on a request. It
 		reports to Diameter server.
 	    </para> 
 	    <para>

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -35,7 +35,7 @@
 
 /* FIXME: Possible race condition - a record pointer will be put in notify_record, domain lock
  * will be released, meanwhile pa module unregisters the callback and contacts will be removed
- * too, then the record will be removed and notify_record will point to an non-existend structure
+ * too, then the record will be removed and notify_record will point to an non-existent structure
  */
 
 struct urecord;

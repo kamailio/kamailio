@@ -3,7 +3,7 @@
  *
  * Usrloc record structure
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -216,7 +216,7 @@ static inline int nodb_timer(urecord_t* _r)
 				LOG(L_NOTICE, "Keeping binding '%.*s','%.*s' for replication\n", 
 				    ptr->aor->len, ZSW(ptr->aor->s), ptr->c.len, ZSW(ptr->c.s));
 
-					/* keep it for replication, but it expired normaly
+					/* keep it for replication, but it expired normally
 					 * and was the last contact, so notify */
 				if (!ptr->next && ptr->state == CS_NEW) not=1;
 
@@ -284,7 +284,7 @@ static inline int wt_timer(urecord_t* _r)
 					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
 				    ptr->c.len, ZSW(ptr->c.s));
 					
-					/* keep it for replication, but it expired normaly
+					/* keep it for replication, but it expired normally
 					 * and was the last contact, so notify */
 				if (!ptr->next && ptr->state == CS_SYNC) not=1;
 
@@ -312,7 +312,7 @@ static inline int wt_timer(urecord_t* _r)
 		} else {
 				/* the contact was unregistered and is not marked 
 				 * for replication so remove it, but the notify was
-				 * allready done during unregister */
+				 * already done during unregister */
 			if (ptr->state == CS_ZOMBIE_S && ptr->replicate == 0) {
 				LOG(L_NOTICE, "removing spare zombie (wt) '%.*s','%.*s'\n",
 				    ptr->aor->len, ZSW(ptr->aor->s),
@@ -359,7 +359,7 @@ static inline int wb_timer(urecord_t* _r)
 					"replication\n", ptr->aor->len, ZSW(ptr->aor->s),
 				    ptr->c.len, ZSW(ptr->c.s));
 
-					/* keep it for replication, but it expired normaly
+					/* keep it for replication, but it expired normally
 					 * and was the last contact, so notify */
 				if (!ptr->next && ptr->state < CS_ZOMBIE_N) not=1;
 

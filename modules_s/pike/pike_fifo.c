@@ -4,7 +4,7 @@
  * PIKE module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -50,7 +50,7 @@ int fifo_print_ip_tree( FILE *fifo_stream, char *response_file )
 {
 	FILE * rpl;
 
-	/* open the repy fifo */
+	/* open the reply fifo */
 	rpl = open_reply_pipe( response_file );
 	if (rpl==0) {
 		LOG(L_ERR,"ERROR:pike:fifo_print_ip_tree: failed to open response "
@@ -73,7 +73,7 @@ int fifo_print_timer_list( FILE *fifo_stream, char *response_file )
 	struct list_link *ll;
 	FILE * rpl;
 
-	/* open the repy fifo */
+	/* open the reply fifo */
 	rpl = open_reply_pipe( response_file );
 	if (rpl==0) {
 		LOG(L_ERR,"ERROR:pike:fifo_print_timer_list: failed to open "

@@ -1,10 +1,10 @@
 /*
  * $Id$
  *
- * eXtended JABber module - worker implemetation
+ * eXtended JABber module - worker implementation
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -88,7 +88,7 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	};
 	/* init the locks*/
 	if (lock_set_init(jwl->sems)==0){
-		LOG(L_CRIT, "jabber: failed to intialize the locks\n");
+		LOG(L_CRIT, "jabber: failed to initialize the locks\n");
 		goto clean;
 	};
 	jwl->workers = (xj_worker)_M_SHM_MALLOC(size*sizeof(t_xj_worker));
@@ -112,7 +112,7 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	return jwl;
 
 clean:
-	DBG("XJAB:xj_wlist_init: error ocurred -> cleaning\n");
+	DBG("XJAB:xj_wlist_init: error occurred -> cleaning\n");
 	if(jwl->sems != NULL)
 		lock_set_dealloc(jwl->sems);
 	if(jwl->workers != NULL)
@@ -202,10 +202,10 @@ void xj_wlist_free(xj_wlist jwl)
 
 /**
  * return communication pipe with the worker that will process the message for
- * 		the id 'sid' only if it exsists, or -1 if error
+ * 		the id 'sid' only if it exists, or -1 if error
  * - jwl : pointer to the workers list
  * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM
- *   header of the incomming SIP message)
+ *   header of the incoming SIP message)
  * - p : will point to the SHM location of the 'sid' in jwl
  */
 int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
@@ -250,7 +250,7 @@ int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
  * 		the id 'sid', or -1 if error
  * - jwl : pointer to the workers list
  * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM
- *   header of the incomming SIP message)
+ *   header of the incoming SIP message)
  * - p : will point to the SHM location of the 'sid' in jwl
  */
 int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
@@ -417,7 +417,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 	
 	jwl->aliases->jdm = NULL;
 	jwl->aliases->proxy = NULL;
-	jwl->aliases->dlm = XJ_DEF_JDELIM; // default user part delimitator
+	jwl->aliases->dlm = XJ_DEF_JDELIM; // default user part delimiter
 	jwl->aliases->size = 0;
 	jwl->aliases->a = NULL;
 	jwl->aliases->d = NULL;
@@ -584,7 +584,7 @@ clean3:
 
 
 /**
- * check if the adr contains jdomain or an alias
+ * check if the addr contains jdomain or an alias
  * - jwl : pointer to the workers list
  * - addr: the address to check against jdomain and aliases
  * #returns 0 - if contains or !=0 if not
@@ -632,7 +632,7 @@ int  xj_wlist_check_aliases(xj_wlist jwl, str *addr)
  * delete an entity from working list of a worker
  * - jwl : pointer to the workers list
  * - sid : id of the entity (connection to Jabber - usually SHOULD be FROM
- *   header of the incomming SIP message
+ *   header of the incoming SIP message
  * - _pid : process id of the worker
  */
 void xj_wlist_del(xj_wlist jwl, xj_jkey jkey, int _pid)

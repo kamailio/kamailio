@@ -18,7 +18,7 @@
 		are directed to the	server itself. This means an OPTIONS request 
 		which has the address of the server in the request URI, and no 
 		username in the URI. The request will be answered with a 200 OK 
-		whith the capabilities of the server.
+		which the capabilities of the server.
 	</para>
 	<para>
 		To answer OPTIONS request directed to your server is the easiest
@@ -65,7 +65,7 @@
 			This parameter is the content of the Accept header field.
 			Note: it is not clearly written in RFC3261 if a proxy should
 			accept any content (the default <quote>*/*</quote>) because 
-			it does not care about content. Or if it does not accpet 
+			it does not care about content. Or if it does not accept 
 			any content, which is <quote></quote>.
 	    </para>
 	    <para>
@@ -110,7 +110,7 @@ modparam("options", "accept_encoding", "gzip")
 			You can set any language code which you prefer for error 
 			descriptions from other devices, but presumably there are not
 			much devices around which support other languages then the 
-			default english.
+			default English.
 	    </para>
 	    <para>
 		<emphasis>

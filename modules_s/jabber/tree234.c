@@ -710,8 +710,8 @@ static void *delpos234_internal(tree234 *t, int index) {
 		} else {
 		    /*
 		     * Case 3b. ki has only one element, and has no
-		     * neighbour with more than one. So pick a
-		     * neighbour and merge it with ki, taking an
+		     * neighbor with more than one. So pick a
+		     * neighbor and merge it with ki, taking an
 		     * element down from n to go in the middle.
 		     *
 		     *      . B .                .

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -66,7 +66,7 @@ static inline char* trim(char* _s)
 	     /* Null pointer, there is nothing to do */
 	if (!_s) return _s;
 
-	     /* Remove spaces and tabs from the begining of string */
+	     /* Remove spaces and tabs from the beginning of string */
 	while ((*_s == ' ') || (*_s == '\t')) _s++;
 
 	len = strlen(_s);
@@ -236,7 +236,7 @@ ac_maxval_p ac_get_maxval(ac_tm_p _atp)
 	if(!_amp)
 		return NULL;
 	
-	// the number of the days in theyear
+	// the number of the days in the year
 	_amp->yday = 365 + is_leap_year(_atp->t.tm_year+1900);
 
 	// the number of the days in the month
@@ -255,7 +255,7 @@ ac_maxval_p ac_get_maxval(ac_tm_p _atp)
 			_amp->mday = 31;
 	}
 	
-	// maximum ocurrences of a week day in the year
+	// maximum occurrences of a week day in the year
 	memset(&_tm, 0, sizeof(struct tm));
 	_tm.tm_year = _atp->t.tm_year;
 	_tm.tm_mon = 11;
@@ -521,7 +521,7 @@ int tr_print(tmrec_p _trp)
 		printf("\n(null)\n");
 		return -1;
 	}
-	printf("\nRecurence definition\n-- start time ---\n");
+	printf("\Recurrence definition\n-- start time ---\n");
 	printf("Sys time: %d\n", (int)_trp->dtstart);
 	printf("Time: %02d:%02d:%02d\n", _trp->ts.tm_hour, 
 				_trp->ts.tm_min, _trp->ts.tm_sec);
@@ -968,7 +968,7 @@ int check_tmrec(tmrec_p _trp, ac_tm_p _atp, tr_res_p _tsw)
 	if(_atp->time < _trp->dtstart)
 		return REC_NOMATCH;
 	
-	// compute the duration of the reccurence interval
+	// compute the duration of the recurrence interval
 	if(!_IS_SET(_trp->duration))
 		_trp->duration = _trp->dtend - _trp->dtstart;
 	
@@ -994,7 +994,7 @@ int check_tmrec(tmrec_p _trp, ac_tm_p _atp, tr_res_p _tsw)
 	if(_IS_SET(_trp->until) && _atp->time >= _trp->until + _trp->duration)
 		return REC_NOMATCH;
 	
-	// check if the instance of recurence matches the 'interval'
+	// check if the instance of recurrence matches the 'interval'
 	if(check_freq_interval(_trp, _atp)!=REC_MATCH)
 		return REC_NOMATCH;
 

@@ -1,10 +1,10 @@
 /*
  * $Id$
  *
- * eXtended JABber module - worker implemetation
+ * eXtended JABber module - worker implementation
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -96,7 +96,7 @@ extern char *registrar;
 static str jab_gw_name = {"jabber_gateway@127.0.0.1", 24};
 
 /**
- * address corection
+ * address correction
  * alias A~B: flag == 0 => A->B, otherwise B->A
  */
 int xj_address_translation(str *src, str *dst, xj_jalias als, int flag)
@@ -554,7 +554,7 @@ step_z:
 				DBG("XJAB:xj_worker:%d: SENDING the message to Jabber"
 					" network ...\n", _xj_pid);
 #endif
-				/*** address corection ***/
+				/*** address correction ***/
 				sto.s = buff; 
 				sto.len = 0;
 				flag |= XJ_ADDRTR_S2J;
@@ -819,12 +819,12 @@ int xj_manage_jab(char *buf, int len, int *pos, xj_jalias als, xj_jcon jbc)
 					strcat(lbuf, " - ");
 				}
 				strcat(lbuf, emsg);
-				strcat(lbuf, ") when trying to send following messge}");
+				strcat(lbuf, ") when trying to send following message}");
 			}
 
 		}
 
-		// is from a conferece?!?!
+		// is from a conference?!?!
 		if((jcf=xj_jcon_check_jconf(jbc, from))!=NULL)
 		{
 			if(lbuf[0] == 0)
@@ -1293,7 +1293,7 @@ void xj_tuac_callback( struct cell *t, int type, struct tmcb_params *ps)
 }
 
 /**
- * check for expired conections
+ * check for expired connections
  */
 void xj_worker_check_jcons(xj_wlist jwl, xj_jcon_pool jcp, int ltime, fd_set *pset)
 {
@@ -1414,7 +1414,7 @@ void xj_worker_check_qmsg(xj_wlist jwl, xj_jcon_pool jcp)
 				jcp->jmqueue.jsm[i]->to.len, jwl->aliases->dlm))
 			continue;
 		
-		/*** address corection ***/
+		/*** address correction ***/
 		flag = XJ_ADDRTR_S2J;
 		if(!xj_jconf_check_addr(&jcp->jmqueue.jsm[i]->to,jwl->aliases->dlm))
 		flag |= XJ_ADDRTR_CON;

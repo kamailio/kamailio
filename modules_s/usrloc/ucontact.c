@@ -3,7 +3,7 @@
  *
  * Usrloc contact structure
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -208,7 +208,7 @@ int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _
 
 
 /*
- * Update state of the contat
+ * Update state of the contact
  */
 void st_update_ucontact(ucontact_t* _c)
 {
@@ -224,7 +224,7 @@ void st_update_ucontact(ucontact_t* _c)
 		     /* For db mode 2 a modified contact needs to be 
 			  * updated also in the database, so transit into 
 			  * CS_DIRTY and let the timer to do the update 
-			  * again. For db mode 1 the db update is allready
+			  * again. For db mode 1 the db update is already
 			  * done and we don't have to change the state.
 		      */
 		if (db_mode == WRITE_BACK)
@@ -239,15 +239,15 @@ void st_update_ucontact(ucontact_t* _c)
 	case CS_ZOMBIE_N:
 			/* A ZOMBIE_N is only in memory so we turn it
 			 * into a new contact and let the timer do the
-			 * database synchronisation if needed.
+			 * database synchronization if needed.
 			 */
 		_c->state = CS_NEW;
 		break;
 	case CS_ZOMBIE_S:
 			/* A ZOMBIE_S has the same entry in memory and
-			 * in database. The memory is allready updated.
+			 * in database. The memory is already updated.
 			 * If we are in db mode 1 the database is also
-			 * allready updated, so we turn it into SYNC.
+			 * already updated, so we turn it into SYNC.
 			 * For db mode 2 we turn into DIRTY and let the
 			 * timer do the database update.
 			 */
@@ -271,7 +271,7 @@ void st_update_ucontact(ucontact_t* _c)
 /*
  * Update state of the contact
  * Returns 1 if the contact should be
- * delete from memory immediatelly,
+ * delete from memory immediately,
  * 0 otherwise
  */
 int st_delete_ucontact(ucontact_t* _c)
@@ -299,7 +299,7 @@ int st_delete_ucontact(ucontact_t* _c)
 			 * decide how to proceed.
 			 */
 		_c->state = CS_ZOMBIE_D;
-			/* to synchronyse the state change in db mode 1
+			/* to synchronize the state change in db mode 1
 			 * we need to update the db too
 			 */
 		if (db_mode == WRITE_THROUGH) {
@@ -331,7 +331,7 @@ int st_delete_ucontact(ucontact_t* _c)
 			return 1;
 	case CS_ZOMBIE_S:
 	case CS_ZOMBIE_D:
-			/* This allready removed contact is in the
+			/* This already removed contact is in the
 			 * DB so we can not remove it from memory
 			 */
 		return 0;
@@ -366,7 +366,7 @@ int st_expired_ucontact(ucontact_t* _c)
 		     /* Remove from database here */
 		return 1;
 	case CS_ZOMBIE_N:
-			/* Allthough these are zombie it applys
+			/* Although these are zombie it applies
 			 * the same rules as above
 			 */
 		return 0;
@@ -696,7 +696,7 @@ int db_delete_ucontact(ucontact_t* _c)
 /*
  * Wrapper around update_ucontact which overwrites
  * the replication mark.
- * FIXME: i'm not sure if we need this...
+ * FIXME: I'm not sure if we need this...
  */
 int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
 			unsigned int _set, unsigned int _res, str* _ua)

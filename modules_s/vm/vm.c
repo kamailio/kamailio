@@ -2,7 +2,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -202,7 +202,7 @@ static int vm_mod_init(void)
 	}
 
 	if (init_tmb()==-1) {
-		LOG(L_ERR, "Error: vm_mod_init: cann't load tm\n");
+		LOG(L_ERR, "Error: vm_mod_init: can't load tm\n");
 		return -1;
 	}
 
@@ -847,7 +847,7 @@ static int write_to_vm_fifo(char *fifo, int cnt )
 	if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
 		switch(errno){
 			case ENXIO:
-				LOG(L_ERR,"ERROR: %s: ans_machine deamon is not running !\n",
+				LOG(L_ERR,"ERROR: %s: ans_machine daemon is not running !\n",
 								exports.name);
 			default:
 				LOG(L_ERR,"ERROR: %s: %s\n",exports.name,strerror(errno));

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -51,8 +51,8 @@ int write_to_db( char *usr, str *xml, str *bin);
 int get_user_script(str *user, str *script, const char *key);
 
 
-/* delete from database the entiry record for a given user - if a user has no
- * script, he will be removed complitly from db; users without script are not
+/* delete from database the entire record for a given user - if a user has no
+ * script, he will be removed completely from db; users without script are not
  * allowed into db ;-)
  * Returns:  1 - success
  *          -1 - error

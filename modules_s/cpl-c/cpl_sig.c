@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -35,10 +35,10 @@
 
 
 /* forwards the msg to the given location set; if flags has set the
- * CPL_PROXY_DONE, all locations will be added as braches, otherwise, the first
+ * CPL_PROXY_DONE, all locations will be added as branches, otherwise, the first
  * one will set as RURI (this is ha case when this is the first proxy of the
  * message)
- * The given list of location will be freed, returning 0 insted.
+ * The given list of location will be freed, returning 0 instead.
  * Returns:  0 - OK
  *          -1 - error */
 int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
@@ -52,7 +52,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		goto error;
 	}
 
-	/* if it's the first time when this sip_msg is proxyed, use the first addr
+	/* if it's the first time when this sip_msg is proxied, use the first addr
 	 * in loc_set to rewrite the RURI */
 	if (!(flag&CPL_PROXY_DONE)) {
 		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Request-URI with "
@@ -77,7 +77,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* add the rest of the locations as branches */
 	while(*locs) {
-		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: appending brach "
+		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: appending branch "
 			"<%.*s>\n",(*locs)->addr.uri.len,(*locs)->addr.uri.s);
 		if(append_branch(msg,(*locs)->addr.uri.s,(*locs)->addr.uri.len,0)==-1){
 			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: failed when "

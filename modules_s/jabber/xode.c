@@ -225,7 +225,7 @@ static xode_spool _xode_tospool(xode node)
  *
  *  returns
  *      a pointer to the tag node
- *      or NULL if it was unsuccessfull
+ *      or NULL if it was unsuccessful
  */
 xode xode_new(const char* name)
 {
@@ -249,7 +249,7 @@ xode xode_new_tag(const char* name)
  *
  *  returns
  *      a pointer to the tag node
- *      or NULL if it was unsuccessfull
+ *      or NULL if it was unsuccessful
  */
 xode xode_new_frompool(xode_pool p, const char* name)
 {
@@ -266,7 +266,7 @@ xode xode_new_frompool(xode_pool p, const char* name)
  *
  *  returns
  *      a pointer to the child tag node
- *      or NULL if it was unsuccessfull
+ *      or NULL if it was unsuccessful
  */
 xode xode_insert_tag(xode parent, const char* name)
 {
@@ -287,7 +287,7 @@ xode xode_insert_tag(xode parent, const char* name)
  *
  *  returns
  *      a pointer to the child CDATA node
- *      or NULL if it was unsuccessfull
+ *      or NULL if it was unsuccessful
  */
 xode xode_insert_cdata(xode parent, const char* CDATA, unsigned int size)
 {
@@ -334,7 +334,7 @@ xode xode_insert_cdata(xode parent, const char* CDATA, unsigned int size)
  *
  *  results
  *      a pointer to the tag matching search criteria
- *      or NULL if search was unsuccessfull
+ *      or NULL if search was unsuccessful
  */
 xode xode_get_tag(xode parent, const char* name)
 {
@@ -427,7 +427,7 @@ void xode_put_attrib(xode owner, const char* name, const char* value)
 
     if(owner == NULL || name == NULL || value == NULL) return;
 
-    /* If there are no existing attributs, allocate a new one to start
+    /* If there are no existing attributes, allocate a new one to start
     the list */
     if (owner->firstattrib == NULL)
     {
@@ -658,7 +658,7 @@ void xode_hide_attrib(xode parent, const char *name)
  *
  *  results
  *      a pointer to the created string
- *      or NULL if it was unsuccessfull
+ *      or NULL if it was unsuccessful
  */
 char *xode_to_str(xode node)
 {

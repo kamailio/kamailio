@@ -1,0 +1,206 @@
+
+Options Module
+
+Nils Ohlmeier
+
+   FhG Fokus
+
+Edited by
+
+Nils Ohlmeier
+
+   Copyright © 2003 FhG Fokus
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. accept (string)
+              1.3.2. accept_encoding (string)
+              1.3.3. accept_language (string)
+              1.3.4. support (string)
+
+        1.4. Exported Functions
+
+              1.4.1. options_reply()
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set accept parameter
+   1-2. Set accept_encoding parameter
+   1-3. Set accept_language parameter
+   1-4. Set support parameter
+   1-5. options_reply usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module provides a function to answer OPTIONS requests
+   which are directed to the server itself. This means an OPTIONS
+   request which has the address of the server in the request
+   URI, and no username in the URI. The request will be answered
+   with a 200 OK which the capabilities of the server.
+
+   To answer OPTIONS request directed to your server is the
+   easiest way for is-alive-tests on the SIP (application) layer
+   from remote (similar to ICMP echo requests, also known as
+   "ping", on the network layer).
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * sl -- Stateless replies.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * None.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. accept (string)
+
+   This parameter is the content of the Accept header field.
+   Note: it is not clearly written in RFC3261 if a proxy should
+   accept any content (the default "*/*") because it does not
+   care about content. Or if it does not accept any content,
+   which is "".
+
+   Default value is "*/*". 
+
+   Example 1-1. Set accept parameter
+...
+modparam("options", "accept", "application/*")
+...
+     _________________________________________________________
+
+1.3.2. accept_encoding (string)
+
+   This parameter is the content of the Accept-Encoding header
+   field. Please do not change the default value because SER does
+   not support any encodings yet.
+
+   Default value is "". 
+
+   Example 1-2. Set accept_encoding parameter
+...
+modparam("options", "accept_encoding", "gzip")
+...
+     _________________________________________________________
+
+1.3.3. accept_language (string)
+
+   This parameter is the content of the Accept-Language header
+   field. You can set any language code which you prefer for
+   error descriptions from other devices, but presumably there
+   are not much devices around which support other languages then
+   the default English.
+
+   Default value is "en". 
+
+   Example 1-3. Set accept_language parameter
+...
+modparam("options", "accept_language", "de")
+...
+     _________________________________________________________
+
+1.3.4. support (string)
+
+   This parameter is the content of the Support header field.
+   Please do not change the default value, because SER currently
+   does not support any of the SIP extensions registered at the
+   IANA.
+
+   Default value is "". 
+
+   Example 1-4. Set support parameter
+...
+modparam("options", "support", "100rel")
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. options_reply()
+
+   This function checks if the request method is OPTIONS and if
+   the request URI does not contain an username. If both is true
+   the request will be answered stateless with "200 OK" and the
+   capabilities from the modules parameters.
+
+   It sends "500 Server Internal Error" for some errors and
+   returns false if it is called for a wrong request.
+
+   The check for the request method and the missing username is
+   optional because it is also done by the function itself. But
+   you should not call this function outside the myself check
+   because in this case the function could answer OPTIONS
+   requests which are sent to you as outbound proxy but with an
+   other destination then your proxy (this check is currently
+   missing in the function).
+
+   Example 1-5. options_reply usage
+...
+if (uri==myself) {
+        if ((method==OPTIONS) && (! uri=~"sip:.*[@]+.*")) {
+                options_reply();
+        }
+}
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs

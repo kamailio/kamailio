@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -85,7 +85,7 @@ struct cpl_enviroment    cpl_env = {
 		6, /* nat flag */
 		0, /* user part is not case sensitive */
 		{0,0},   /* no domain prefix to be ignored */
-		{-1,-1}, /* comunication pipe to aux_process */
+		{-1,-1}, /* communication pipe to aux_process */
 		{0,0},   /* original TZ \0 terminated "TZ=value" format */
 		0, /* udomain */
 		0, /* no branches on lookup */
@@ -209,7 +209,7 @@ static int cpl_init(void)
 
 	if (cpl_env.proxy_recurse>MAX_PROXY_RECURSE) {
 		LOG(L_CRIT,"ERROR:cpl_init: value of proxy_recurse param (%d) exceeds "
-			"the maximum safty value (%d)\n",
+			"the maximum safety value (%d)\n",
 			cpl_env.proxy_recurse,MAX_PROXY_RECURSE);
 		goto error;
 	}
@@ -323,7 +323,7 @@ static int cpl_init(void)
 		goto error;
 	}
 
-	/* build a pipe for sending commands to aux proccess */
+	/* build a pipe for sending commands to aux process */
 	if ( pipe( cpl_env.cmd_pipe )==-1 ) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot create command pipe: %s!\n",
 			strerror(errno) );
@@ -380,7 +380,7 @@ static int cpl_child_init(int rank)
 	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 
-	/* only child 1 will fork the aux proccess */
+	/* only child 1 will fork the aux process */
 	if (rank==1) {
 		pid = fork();
 		if (pid==-1) {
@@ -411,7 +411,7 @@ static int cpl_exit(void)
 	if (cpl_env.orig_tz.s)
 		shm_free(cpl_env.orig_tz.s);
 
-	/* if still runnigng, stop the aux process */
+	/* if still running, stop the aux process */
 	if (!aux_process) {
 		LOG(L_INFO,"INFO:cpl_c:cpl_exit: aux process hasn't been created -> "
 			"nothing to kill :-(\n");
@@ -510,15 +510,15 @@ static inline int get_dest_user(struct sip_msg *msg, str *uh, int flg)
 	struct sip_uri uri;
 
 	/*  get the user_name from new_uri/RURI/To */
-	DBG("DEBUG:cpl-c:get_dest_user: tring to get user from new_uri\n");
+	DBG("DEBUG:cpl-c:get_dest_user: trying to get user from new_uri\n");
 	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)==-1
 	|| !uri.user.len )
 	{
-		DBG("DEBUG:cpl-c:get_dest_user: tring to get user from R_uri\n");
+		DBG("DEBUG:cpl-c:get_dest_user: trying to get user from R_uri\n");
 		if ( parse_uri( msg->first_line.u.request.uri.s,
 		msg->first_line.u.request.uri.len ,&uri)==-1 || !uri.user.len )
 		{
-			DBG("DEBUG:cpl-c:get_dest_user: tring to get user from To\n");
+			DBG("DEBUG:cpl-c:get_dest_user: trying to get user from To\n");
 			if ( (!msg->to&&( (parse_headers(msg,HDR_TO,0)==-1) || !msg->to))||
 			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)==-1
 			|| !uri.user.len)
@@ -541,7 +541,7 @@ static inline int get_orig_user(struct sip_msg *msg, str *uh, int flg)
 	
 	/* if it's outgoing -> get the user_name from From */
 	/* parsing from header */
-	DBG("DEBUG:cpl-c:get_orig_user: tring to get user from From\n");
+	DBG("DEBUG:cpl-c:get_orig_user: trying to get user from From\n");
 	if ( parse_from_header( msg )==-1 ) {
 		LOG(L_ERR,"ERROR:cpl-c:get_orig_user: unable to extract URI "
 			"from FROM header\n");
@@ -585,7 +585,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	if (get_user_script(&user, &script, "cpl_bin")==-1)
 		goto error1;
 
-	/* has the user a non-empty script? if not, return normaly, allowing ser to
+	/* has the user a non-empty script? if not, return normally, allowing ser to
 	 * continue its script */
 	if ( !script.s || !script.len ) {
 		shm_free(user.s);
@@ -810,22 +810,22 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 	DBG("DEBUG:cpl_process_register: Content-Type mime found %u, %u\n",
 		mime>>16,mime&0x00ff);
 	if ( mime && mime==(TYPE_APPLICATION<<16)+SUBTYPE_CPLXML ) {
-		/* can be an upload or remove -> check for the content-purpos and
+		/* can be an upload or remove -> check for the content-purpose and
 		 * content-action headers */
 		DBG("DEBUG:cpl_process_register: carrying CPL -> look at "
 			"Content-Disposition\n");
 		if (parse_content_disposition( msg )!=0) {
 			LOG(L_ERR,"ERROR:cpl_process_register: Content-Disposition missing "
-				"or corruped\n");
+				"or corrupted\n");
 			goto error;
 		}
 		disp = get_content_disposition(msg);
 		print_disposition( disp ); /* just for DEBUG */
-		/* check if the type of dispostion is SCRIPT */
+		/* check if the type of disposition is SCRIPT */
 		if (disp->type.len!=CPL_SCRIPT_LEN ||
 		strncasecmp(disp->type.s,CPL_SCRIPT,CPL_SCRIPT_LEN) ) {
 			LOG(L_ERR,"ERROR:cpl_process_register: bogus message - Content-Type"
-				"says CPL_SCRIPT, but Content-Disposition someting else\n");
+				"says CPL_SCRIPT, but Content-Disposition something else\n");
 			goto error;
 		}
 		/* disposition type is OK -> look for action parameter */
@@ -859,7 +859,7 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 		}
 		/* send a 200 OK reply back */
 		cpl_fct.sl_reply( msg, (char*)200, "OK");
-		/* I send the reply and I don't want to resturn to script execution, so
+		/* I send the reply and I don't want to return to script execution, so
 		 * I return 0 to do break */
 		goto stop_script;
 	}
@@ -881,10 +881,10 @@ static int cpl_process_register(struct sip_msg* msg, char* str1, char* str2)
 		mimes++;
 	}
 	if (*mimes==0)
-		/* no accept mime that mached cpl */
+		/* no accept mime that matched cpl */
 		goto resume_script;
 
-	/* get the user name from msg, retrive the script from db
+	/* get the user name from msg, retrieve the script from db
 	 * and appended to reply */
 	if (do_script_download( msg )==-1)
 		goto error;
@@ -899,7 +899,7 @@ resume_script:
 error:
 	/* send a error reply back */
 	cpl_fct.sl_reply( msg, (char*)cpl_err->err_code, cpl_err->err_msg);
-	/* I don't want to resturn to script execution, so I return 0 to do break */
+	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }
 

@@ -3,7 +3,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -90,7 +90,7 @@ char *contact_flds_separator = DEFAULT_SEPARATOR;
 static param_export_t params[] = { 
 								{"contact_flds_separator",STR_PARAM,&contact_flds_separator},
 								{0, 0, 0} 
-								};	/*no params exported,perhaps I should add precompiled expressions */
+								};	/*no params exported,perhaps I should add pre-compiled expressions */
 
 
 
@@ -167,7 +167,7 @@ int
 prepare ()
 {
 
-	/* using precompiled expressions to speed things up*/
+	/* using pre-compiled expressions to speed things up*/
 	compile_expresions(PORT_REGEX,IP_REGEX);
 	
 #ifdef DEMO
@@ -211,7 +211,7 @@ destroy (void)
 	/*free some compiled regex expressions */
 	free_compiled_expresions();	
 #ifdef DEMO
-	fprintf(stdout,"Freeing precompiled expressions\n");
+	fprintf(stdout,"Freeing pre-compiled expressions\n");
 #endif
 
 	return;

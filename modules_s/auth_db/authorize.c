@@ -3,7 +3,7 @@
  *
  * Digest Authentication - Database support
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -122,7 +122,7 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 
 /*
  * Calculate the response and compare with the given response string
- * Authorization is successfull if this two strings are same
+ * Authorization is successful if this two strings are same
  */
 static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 {
@@ -202,7 +202,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		return -1;
 	}
 
-	     /* Recalculate response, it must be same to authorize sucessfully */
+	     /* Recalculate response, it must be same to authorize successfully */
         if (!check_response(&(cred->digest), &_m->first_line.u.request.method, ha1)) {
 		ret = post_auth_func(_m, h, &rpid);
 		switch(ret) {

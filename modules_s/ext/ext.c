@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -30,7 +30,7 @@
  * 2003-03-11: New module interface (janakj)
  * 2003-03-16: flags export parameter added (janakj)
  * 2004-06-02: applied patch from Maxim, rewriteuri and rewriteuser merged,
- *             braching support added, "check_new_uri","max_branches" params
+ *             branching support added, "check_new_uri","max_branches" params
  *             added (bogdan)
  */
 
@@ -267,7 +267,7 @@ static int ext_rewrite(struct sip_msg *msg, char *cmd, int type )
 		/* drop it if no username found */
 		if (!parsed_uri.user.s && !parsed_uri.user.len) {
 			LOG(L_INFO,"INFO:ext_rewrite: username not present in RURI->"
-				" exitting without error\n");
+				" exiting without error\n");
 			goto done;
 		}
 		/*  run the external program */

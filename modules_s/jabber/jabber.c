@@ -4,7 +4,7 @@
  * XJAB module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -265,12 +265,12 @@ static int mod_init(void)
 				LOG(L_ERR, "XJAB:mod_init: Error in use_table\n");
 				return -1;
 			}
-			DBG("XJAB:mod_init: Database connection opened successfuly\n");
+			DBG("XJAB:mod_init: Database connection opened successfully\n");
 		}
 	}
 
 	
-	/** creating the pipees */
+	/** creating the pipes */
 	
 	for(i=0;i<nrw;i++)
 	{
@@ -301,7 +301,7 @@ static int mod_init(void)
 }
 
 /*
- * Initialize childs
+ * Initialize children
  */
 static int child_init(int rank)
 {
@@ -634,7 +634,7 @@ prepare_job:
 	fl = write(pipe, &jsmsg, sizeof(jsmsg));
 	if(fl != sizeof(jsmsg))
 	{
-		DBG("XJAB:xjab_manage_sipmsg: error when writting to worker pipe!\n");
+		DBG("XJAB:xjab_manage_sipmsg: error when writing to worker pipe!\n");
 		if(type == XJ_SEND_MESSAGE)
 			shm_free(jsmsg->msg.s);
 		shm_free(jsmsg->to.s);
@@ -763,7 +763,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	fl = write(pipe, &jsmsg, sizeof(jsmsg));
 	if(fl != sizeof(jsmsg))
 	{
-		DBG("XJAB:xj_register_watcher: error when writting to worker pipe!\n");
+		DBG("XJAB:xj_register_watcher: error when writing to worker pipe!\n");
 		if(jsmsg->msg.s)
 			shm_free(jsmsg->msg.s);
 		shm_free(jsmsg->to.s);

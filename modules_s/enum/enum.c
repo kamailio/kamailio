@@ -152,7 +152,7 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 
 
 /* Parse NAPTR regexp field of the form !pattern!replacement! and return its
- * components in pattern and replacement paraneters.  Regexp field starts at
+ * components in pattern and replacement parameters.  Regexp field starts at
  * address first and is len characters long.
  */
 inline int parse_naptr_regexp(char* first, int len, str* pattern, str* replacement)

@@ -3,7 +3,7 @@
  *
  * $Id$
  * 
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -463,7 +463,7 @@ static inline int should_acc_reply(struct cell *t, int code)
 		return 0;
 	}
 
-	/* negative transactions reported otherwise only if explicitely 
+	/* negative transactions reported otherwise only if explicitly 
 	 * demanded */
 	if (!failed_transactions && code >=300) return 0;
 	if (!is_acc_on(r))
@@ -545,7 +545,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *reply,
 		 * forwarding attempt fails; we do not wish to
 		 * report on every attempt; so we clear the flags; 
 		 * we do it after all reporting is over to be sure
-		 * that all reporting functios got a fair chance
+		 * that all reporting functions got a fair chance
 		 */
 		if (reset_lmf) resetflag(t->uas.request, log_missed_flag);
 #ifdef SQL_ACC

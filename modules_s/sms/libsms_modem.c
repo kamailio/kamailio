@@ -264,7 +264,7 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 					" network\n");
 				success=1;
 			} else if (strchr(answer,'2')) {
-				// addede by bogdan
+				// added by bogdan
 				LOG(L_WARN,"WARNING:initmodem: Modems seems to try to "
 					"reach the network! Let's wait a little bit\n");
 				retries--;
@@ -317,7 +317,7 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 		success=0;
 		do {
 			retries++;
-			/*quering the modem*/
+			/*querying the modem*/
 			put_command(mdm,command,clen,answer,sizeof(answer),100,0);
 			/*dealing with the answer*/
 			if (strstr(answer,"ERROR")) {
@@ -327,7 +327,7 @@ int initmodem(struct modem *mdm, cds_report cds_report_f)
 			} else
 				success=1;
 		}while ((success==0)&&(retries<3));
-		/* have we succeded? */
+		/* have we succeeded? */
 		if (success==0) {
 			LOG(L_ERR,"ERROR:initmodem: cmd [%.*s] returned ERROR\n",
 				clen-1,command);

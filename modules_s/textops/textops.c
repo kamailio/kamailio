@@ -9,7 +9,7 @@
  *
  * 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -80,7 +80,7 @@
 MODULE_VERSION
 
 
-/* RFC822-conformant dates format:
+/* RFC822-conforming dates format:
 
    %a -- abbreviated week of day name (locale), %d day of month
    as decimal number, %b abbreviated month name (locale), %Y
@@ -364,7 +364,7 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 		tmp=msg->first_line.u.request.uri.s;
 		len	=msg->first_line.u.request.uri.len;
 	};
-	/* ugly hack: 0 s[len], and restore it afterwards
+	/* ugly hack: 0 s[len], and restore it afterward
 	 * (our re functions require 0 term strings), we can do this
 	 * because we always alloc len+1 (new_uri) and for first_line, the
 	 * message will always be > uri.len */
@@ -515,7 +515,7 @@ static int fixup_substre(void** param, int param_no)
 	}
 	/* free string */
 	pkg_free(*param);
-	/* replace it withj the compiled subst. re */
+	/* replace it with the compiled subst. re */
 	*param=se;
 	return 0;
 }

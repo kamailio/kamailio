@@ -1,7 +1,7 @@
 /**
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -369,7 +369,7 @@ static int mod_child_init(int r)
 			LOG(L_ERR, "PDT:child %d: Error in use_table\n", r);
 			return -1;
 		}
-		DBG("PDT:child %d: Database connection opened successfuly\n",r);
+		DBG("PDT:child %d: Database connection opened successfully\n",r);
 	}
 	return 0;
 }

@@ -3,7 +3,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -28,7 +28,7 @@
  *
  * history
  * -------
- *  2003-02-28 scratchapd compatibility abandoned
+ *  2003-02-28 scratchpad compatibility abandoned
  *  2003-01-29 scratchpad removed
  *  2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
@@ -36,7 +36,7 @@
 
 /* functions for creating environment variables out of a request's
  * header; known compact header field names are translated to
- * canonical form; multiple header field occurences are merged
+ * canonical form; multiple header field occurrences are merged
  * into a single variable
  *
  * known limitations: 
@@ -125,8 +125,8 @@ static void release_hf_struct( struct hf_wrapper *list )
 static int compacthdr_type2str(int type, char **hname, int *hlen )
 {
 	switch(type) {
-		/* HDR_CONTENT_ENCODING: 'e' -- unusupported by parser */
-		/* HDR_SUBJECT: 's' -- unusupported by parser */
+		/* HDR_CONTENT_ENCODING: 'e' -- unsupported by parser */
+		/* HDR_SUBJECT: 's' -- unsupported by parser */
 		case HDR_VIA /* v */ : 
 			*hname=VAR_VIA;
 			*hlen=VAR_VIA_LEN;
@@ -224,7 +224,7 @@ static int print_av_var(struct hf_wrapper *w)
 	return 1;
 }
 
-/* creates a malloc-ed string with environment variable; returns 1 on sucess,
+/* creates a malloc-ed string with environment variable; returns 1 on success,
  * 0 on failure  */
 static int print_hf_var(struct hf_wrapper *w, int offset)
 {
@@ -240,14 +240,14 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	hname=0;hlen=0;envvar=0;
 
 	/* Make sure header names with possible compact forms
-	 * will be printed cannonically
+	 * will be printed canonically
 	 */
 	canonical=compacthdr_type2str(w->u.hf->type, &hname, &hlen);
 	/* header field has not been made canonical using a table;
 	 * do it now by uppercasing header-field name */
 	if (!canonical) {
 		if (!canonize_headername(&w->u.hf->name, &hname, &hlen)) {
-			LOG(L_ERR, "ERROR: print_hf_var: canonnize_hn error\n");
+			LOG(L_ERR, "ERROR: print_hf_var: canonize_hn error\n");
 			return 0;
 		}
 	} 

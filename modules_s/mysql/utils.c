@@ -3,7 +3,7 @@
  *
  * MySQL module utilities
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -64,7 +64,7 @@ time_t mysql2time(const char* _str)
 {
 	struct tm time;
 	
-	     /* It is neccessary to zero tm structure first */
+	     /* It is necessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	strptime(_str, "%Y-%m-%d %H:%M:%S", &time);
 
@@ -82,7 +82,7 @@ time_t mysql2time(const char* _str)
  * Parse a mysql database URL of form 
  * mysql://[username[:password]@]hostname[:port]/database
  *
- * Returns 0 if parsing was sucessful and -1 otherwise
+ * Returns 0 if parsing was successful and -1 otherwise
  */
 int parse_mysql_url(char* _url, char** _user, char** _pass,
 		    char** _host, char** _port, char** _db)

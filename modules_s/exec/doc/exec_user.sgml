@@ -16,16 +16,16 @@
 	<para>
 	    Exec module allows to start an external command from a ser script. The commands may
 	    be any valid shell commands--the command string is passed to shell using <quote>popen</quote>
-	    command. ser passes additionaly lot of information about request in environment
+	    command. ser passes additionally lot of information about request in environment
 	    variables:
 	</para>
 	<itemizedlist>
 	    <listitem>
 		<para>
 		    SIP_HF_&lt;hf_name&gt; contains value of each header field in request. If a
-	            header field occured multiple times, values are concatenated and
+	            header field occurred multiple times, values are concatenated and
 	            comma-separated. &lt;hf_name&gt; is in capital letters. Ff a header-field name
-	            occured in compact form, &lt;hf_name&gt; is canonical.
+	            occurred in compact form, &lt;hf_name&gt; is canonical.
 		</para>
 	    </listitem>
 	    <listitem>

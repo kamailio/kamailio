@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -27,7 +27,7 @@
  * History:
  * -------
  * 2003-07-29: file created (bogdan)
- * 2004-06-14: flag CPL_IS_STATEFUL is set now imediatly after the 
+ * 2004-06-14: flag CPL_IS_STATEFUL is set now immediately after the 
  *             transaction is created (bogdan)
  */
 
@@ -215,8 +215,8 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		}
 	}
 
-	/* the current proxing failed -> do I have another location to try ?
-	 * This applyes only for SERIAL forking or if RECURSE is set */
+	/* the current proxying failed -> do I have another location to try ?
+	 * This applies only for SERIAL forking or if RECURSE is set */
 	if (intr->proxy.last_to_proxy) {
 		/* continue proxying */
 		DBG("DEBUG:cpl-c:failed_reply: resuming proxying....\n");
@@ -228,7 +228,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 				cpl_proxy_to_loc_set(intr->msg,&(intr->loc_set),intr->flags );
 				break;
 			case SEQUENTIAL_VAL:
-				/* place a new brach to the next location from loc. set*/
+				/* place a new branch to the next location from loc. set*/
 				loc = remove_first_location( &(intr->loc_set) );
 				/*print_location_set(intr->loc_set);*/
 				/* update (if necessary) the last_to_proxy location  */
@@ -284,14 +284,14 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			case SCRIPT_FORMAT_ERROR:
 				goto exit;
 			default:
-				LOG(L_CRIT,"BUG:cpl-c:failed_reply: improper rezult %d\n",
+				LOG(L_CRIT,"BUG:cpl-c:failed_reply: improper result %d\n",
 					rez);
 				goto exit;
 		}
 	}
 
 exit:
-	/* in case of error the default response choosed by ser at the last
+	/* in case of error the default response chosen by ser at the last
 	 * proxying will be forwarded to the UAC */
 	free_cpl_interpreter( intr );
 	/* set to zero the param callback*/
@@ -314,7 +314,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 	intr->proxy.ordering = PARALLEL_VAL;
 	intr->proxy.recurse = (unsigned short)cpl_env.proxy_recurse;
 
-	/* indentify the attributes */
+	/* identify the attributes */
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
 		get_basic_attr( p, attr_name, n, intr, script_error);
 		switch (attr_name) {
@@ -353,7 +353,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 	intr->proxy.busy = intr->proxy.noanswer = 0;
 	intr->proxy.redirect = intr->proxy.failure = intr->proxy.default_ = 0;
 
-	/* this is quite an "expensiv" node to run, so let's make some checkings
+	/* this is quite an "expensive" node to run, so let's make some checking
 	 * before getting deeply into it */
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
@@ -441,7 +441,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 			if (intr->user_agent!=STR_NOT_FOUND)
 				intr->flags |= CPL_USERAGENT_DUPLICATED;
 		}
-		/* ACCEPT_LANGUAG header - optional in SIP msg
+		/* ACCEPT_LANGUAGE header - optional in SIP msg
 		 * (can be STR_NOT_FOUND) */
 		if (intr->accept_language!=STR_NOT_FOUND) {
 			search_and_duplicate_hdr(intr,accept_language,

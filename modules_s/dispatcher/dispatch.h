@@ -3,7 +3,7 @@
  *
  * dispatcher module
  * 
- * Copyright (C) 2004-2006 Fhg Fokus
+ * Copyright (C) 2004-2006 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *

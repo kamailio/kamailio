@@ -3,7 +3,7 @@
  *
  * Route & Record-Route module
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -195,7 +195,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 /*
  * Insert a new Record-Route header field
  * And also 2nd one if it is enabled and realm changed so
- * the 2nd record-route header will be necessarry
+ * the 2nd record-route header will be necessary
  */
 static inline int insert_RR(struct sip_msg* _m, int _lr)
 {
@@ -252,7 +252,7 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 	}
 	
 	if (build_rr(l, l2, _lr, &user, tag, INBOUND) < 0) {
-		LOG(L_ERR, "insert_RR(): Error while insering inbound Record-Route\n");
+		LOG(L_ERR, "insert_RR(): Error while inserting inbound Record-Route\n");
 		return -4;
 	}
 
@@ -293,7 +293,7 @@ int record_route(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * Insert manualy created Record-Route header, no checks, no restrictions,
+ * Insert manually created Record-Route header, no checks, no restrictions,
  * always adds lr parameter, only fromtag is added automatically when requested
  */
 int record_route_preset(struct sip_msg* _m, char* _data, char* _s2)

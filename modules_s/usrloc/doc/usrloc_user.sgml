@@ -257,7 +257,7 @@ modparam("usrloc", "timer_interval", 120)
 	    <title><varname>db_mode</varname> (integer)</title>
 	    <para>
 		The usrloc module can utilize database for persistent contact storage. If you use
-		database, your contacts will survive machine restarts or sw crashes. The
+		database, your contacts will survive machine restarts or SW crashes. The
 		disadvantage is that accessing database can be very time consuming. Therefore,
 		usrloc module implements three database accessing modes:
 	    </para>
@@ -266,7 +266,7 @@ modparam("usrloc", "timer_interval", 120)
 		    <para>
 			0 - This disables database completely. Only memory will be used. Contacts
 			will not survive restart. Use this value if you need a really fast usrloc
-			and contact persistence is not necessarry or is provided by other means.
+			and contact persistence is not necessary or is provided by other means.
 		    </para>
 		</listitem>
 		<listitem>

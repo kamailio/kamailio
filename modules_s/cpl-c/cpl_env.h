@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -39,11 +39,11 @@ struct cpl_enviroment {
 	char  *log_dir;         /* dir where the user log should be dumped */
 	int    proxy_recurse;   /* numbers of proxy redirection accepted */
 	int    proxy_route;     /* script route to be run before proxy */
-	int    nat_flag;        /* flag for marking lookuped contact as NAT */
+	int    nat_flag;        /* flag for marking looked up contact as NAT */
 	int    case_sensitive;  /* is user part case sensitive ? */
 	str    realm_prefix;    /* domain prefix to be ignored */
-	int    cmd_pipe[2];     /* comunication pipe with aux. process */
-	str    orig_tz;         /* a copy of the original TZ; keept as a null
+	int    cmd_pipe[2];     /* communication pipe with aux. process */
+	str    orig_tz;         /* a copy of the original TZ; kept as a null
                              * terminated string in "TZ=value" format;
                              * used only by run_time_switch */
 	udomain_t*  lu_domain;  /* domain used for lookup */

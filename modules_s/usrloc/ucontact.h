@@ -3,7 +3,7 @@
  *
  * Usrloc contact structure
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -134,7 +134,7 @@ void st_update_ucontact(ucontact_t* _c);
  * Update state of the contact if we
  * are using write-back scheme
  * Returns 1 if the contact should be
- * deleted from memory immediatelly,
+ * deleted from memory immediately,
  * 0 otherwise
  */
 int st_delete_ucontact(ucontact_t* _c);
@@ -190,7 +190,7 @@ int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res, str* _ua);
 
 /*
- * Update ucontact with new values with addtional replication argument
+ * Update ucontact with new values with additional replication argument
  */
 int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
 			unsigned int _set, unsigned int _res, str* _ua);

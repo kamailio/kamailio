@@ -4,7 +4,7 @@
  * eXtended JABber module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -52,10 +52,10 @@ typedef struct _xj_jalias
 {
 	int size;	// number of aliases
 	str *jdm;	// Jabber domain
-	char dlm;	// user part delimitator
+	char dlm;	// user part delimiter
 	str *proxy; // outbound proxy
 	str *a;		// aliases
-	char *d;	// user part delimitator for aliases
+	char *d;	// user part delimiter for aliases
 } t_xj_jalias, *xj_jalias;
 
 typedef struct _xj_worker
@@ -75,7 +75,7 @@ typedef struct _xj_wlist
 	int delayt;
 	int sleept;
 	gen_lock_set_t	 *sems;	 // semaphores
-	xj_jalias	aliases; // addess aliases
+	xj_jalias	aliases; // added aliases
 	xj_worker	workers; // the list of workers
 } t_xj_wlist, *xj_wlist;
 

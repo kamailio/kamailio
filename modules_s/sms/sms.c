@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -76,7 +76,7 @@ char *links_config    = 0;
 char *default_net_str = 0;
 char *domain_str      = 0;
 
-/*global vaiables*/
+/*global variables*/
 int    default_net    = 0;
 int    max_sms_parts  = MAX_SMS_PARTS;
 str    domain;
@@ -237,7 +237,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			mdm->baudrate = foo;
 			break;
 		default:
-			LOG(L_ERR,"ERROR:set_modem_arg: unknow param name [%c]\n",*arg);
+			LOG(L_ERR,"ERROR:set_modem_arg: unknown param name [%c]\n",*arg);
 			goto error;
 	}
 
@@ -269,7 +269,7 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 			net->max_sms_per_call = foo;
 			break;
 		default:
-			LOG(L_ERR,"ERROR:set_network_arg: unknow param name [%c]\n",*arg);
+			LOG(L_ERR,"ERROR:set_network_arg: unknown param name [%c]\n",*arg);
 			goto error;
 	}
 
@@ -492,7 +492,7 @@ int parse_config_lines()
 		}
 	}
 
-	/* resloving default setwork name - if any*/
+	/* resolving default network name - if any*/
 	if (default_net_str) {
 		for(net_nr=-1,i=0;i<nr_of_networks&&net_nr==-1;i++)
 			if (!strcasecmp(networks[i].name,default_net_str))
@@ -508,7 +508,7 @@ int parse_config_lines()
 	return 0;
 parse_error:
 	LOG(L_ERR,"ERROR: SMS %s config: parse error before  chr %d [%.*s]\n",
-		(step==1)?"modems":(step==2?"netwoks":"links"),
+		(step==1)?"modems":(step==2?"networks":"links"),
 		(int)(p - ((step==1)?modems_config:
 				   (step==2?networks_config:links_config))),
 		(*p==0)?4:1,(*p==0)?"NULL":p );
@@ -535,7 +535,7 @@ int global_init()
 	if (load_tm( &tmb )==-1) 
 		goto error;
 
-	/*fix domain lenght*/
+	/*fix domain length*/
 	if (domain_str) {
 		domain.s = domain_str;
 		domain.len = strlen(domain_str);
@@ -563,7 +563,7 @@ int global_init()
 		}
 	}
 
-	/* creats pipes for networks */
+	/* creates pipes for networks */
 	for(i=0;i<nr_of_networks;i++)
 	{
 		/* create the pipe*/
@@ -613,10 +613,10 @@ int sms_child_init(int rank)
 {
 	int  i, foo;
 
-	/* only the child 1 will execut this */
+	/* only the child 1 will execute this */
 	if (rank != 1) goto done;
 
-	/* creats processes for each modem */
+	/* creates processes for each modem */
 	for(i=0;i<nr_of_modems;i++)
 	{
 		if ( (foo=fork())<0 ) {

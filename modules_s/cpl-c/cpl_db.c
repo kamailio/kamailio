@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -165,7 +165,7 @@ int write_to_db(char *usr, str *xml, str *bin)
 		goto error;
 	}
 	if (res->n>1) {
-		LOG(L_ERR,"ERROR:cpl:write_to_db: Incosistent CPL database:"
+		LOG(L_ERR,"ERROR:cpl:write_to_db: Inconsistent CPL database:"
 			" %d records for user %s\n",res->n,usr);
 		goto error;
 	}
@@ -186,7 +186,7 @@ int write_to_db(char *usr, str *xml, str *bin)
 	vals[2].val.blob_val.len = bin->len;
 	/* insert or update ? */
 	if (res->n==0) {
-		DBG("DEBUG:cpl:write_to_db:No user %s in CPL databse->insert\n",usr);
+		DBG("DEBUG:cpl:write_to_db:No user %s in CPL database->insert\n",usr);
 		if (cpl_dbf.insert(db_hdl, keys, vals, 3) < 0) {
 			LOG(L_ERR,"ERROR:cpl:write_to_db: insert failed !\n");
 			goto error;
@@ -195,7 +195,7 @@ int write_to_db(char *usr, str *xml, str *bin)
 		DBG("DEBUG:cpl:write_to_db:User %s already in CPL database ->"
 			" update\n",usr);
 		if (cpl_dbf.update(db_hdl, keys, 0, vals, keys+1, vals+1, 1, 2) < 0) {
-			LOG(L_ERR,"ERROR:cpl:write_to_db: updare failed !\n");
+			LOG(L_ERR,"ERROR:cpl:write_to_db: update failed !\n");
 			goto error;
 		}
 	}
@@ -207,8 +207,8 @@ error:
 
 
 
-/* delete from database the entiry record for a given user - if a user has no
- * script, he will be removed complitly from db; users without script are not
+/* delete from database the entity record for a given user - if a user has no
+ * script, he will be removed completely from db; users without script are not
  * allowed into db ;-)
  * Returns:  1 - success
  *          -1 - error

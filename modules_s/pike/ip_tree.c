@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -84,7 +84,7 @@ int init_ip_tree(int maximum_hits)
 {
 	int i;
 
-	/* create thr root */
+	/* create the root */
 	root = (struct ip_tree*)shm_malloc(sizeof(struct ip_tree));
 	if (root==0) {
 		LOG(L_ERR,"ERROR:pike:init_ip_tree: shm malloc failed\n");
@@ -140,7 +140,7 @@ static inline void destroy_ip_node(struct ip_node *node)
 
 
 
-/* destrtroy and free the IP tree */
+/* destroy and free the IP tree */
 void destroy_ip_tree()
 {
 	int i;
@@ -189,7 +189,7 @@ struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 {
 	struct ip_node *new_node;
 
-	/* creat a new node */
+	/* create a new node */
 	if ( (new_node=new_ip_node(byte))==0 )
 		return 0;
 	/* the child node inherits a part of his father hits */
@@ -197,7 +197,7 @@ struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 		new_node->hits[CURR_POS] = (dad->hits[CURR_POS])-1;
 	if (dad->leaf_hits[CURR_POS]>=1)
 		new_node->leaf_hits[PREV_POS] = (dad->leaf_hits[PREV_POS])-1;
-	/* link the child into father's kids list -> insert it at the begining,
+	/* link the child into father's kids list -> insert it at the beginning,
 	 * is much faster */
 	if (dad->kids) {
 		dad->kids->prev = new_node;
@@ -255,7 +255,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 		}
 	}
 
-	DBG("DEBUG:pike:mark_node: Only first %d were mached!\n",byte_pos);
+	DBG("DEBUG:pike:mark_node: Only first %d were matched!\n",byte_pos);
 	*flag = 0;
 	*father = 0;
 
@@ -263,7 +263,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 	if (byte_pos==ip_len) {
 		/* we found the entire address */
 		*flag = LEAF_NODE;
-		/* increment it, but be carefull not to overflow the value */
+		/* increment it, but be careful not to overflow the value */
 		if(node->leaf_hits[CURR_POS]<MAX_TYPE_VAL(node->leaf_hits[CURR_POS])-1)
 			node->leaf_hits[CURR_POS]++;
 		if ( is_hot_leaf(node) )
@@ -292,7 +292,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 			node = split_node(node,ip[byte_pos]);
 		} else {
 			/* to reduce memory usage, force to expire non-leaf nodes if they
-			 * have just a few hits -> basiclly, don't update the timer for
+			 * have just a few hits -> basically, don't update the timer for
 			 * them the nr of hits is small */
 			if ( !is_warm_leaf(node) )
 				*flag = NO_UPDATE;
@@ -307,7 +307,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 /* remove and destroy a IP node along with its subtree */
 void remove_node(struct ip_node *node)
 {
-	DBG("DEBUG:pike:remove_node: destroing node %p\n",node);
+	DBG("DEBUG:pike:remove_node: destroying node %p\n",node);
 	/* is it a branch root node? (these nodes have no prev (father)) */
 	if (node->prev==0) {
 		assert(root->entries[node->byte].node==node);

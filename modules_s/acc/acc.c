@@ -2,7 +2,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -142,7 +142,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 		struct hdr_field *to, 
 		str *phrase, 
 		int *total_len, /* total length of accounted values */
-		int *attr_len,  /* total length of accounted attribtue names */
+		int *attr_len,  /* total length of accounted attribute names */
 		str **val_arr, /* that's the output -- must have MAX_ACC_COLUMNS */
 		str *atr_arr)
 {
@@ -294,7 +294,7 @@ static int fmt2strar( char *fmt, /* what would you like to account ? */
 				ATR(RURI_DOMAIN);
 				break;
 			default:
-				LOG(L_CRIT, "BUG: acc_log_request: uknown char: %c\n",
+				LOG(L_CRIT, "BUG: acc_log_request: unknown char: %c\n",
 					*fmt);
 				return 0;
 		} /* switch (*fmt) */
@@ -873,7 +873,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 	
 	if ( (send=AAAInMessage(ACCOUNTING_REQUEST, AAA_APP_NASREQ))==NULL)
 	{
-		LOG(L_ERR, "ERROR: acc_diam_reqest: new AAA message not created\n");
+		LOG(L_ERR, "ERROR: acc_diam_request: new AAA message not created\n");
 		return -1;
 	}
 
@@ -1102,7 +1102,7 @@ int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
 		goto error;
 	}
 
-	if(ret != ACC_SUCCESS) /* a transmission error occured */
+	if(ret != ACC_SUCCESS) /* a transmission error occurred */
 	{
 		LOG(L_ERR, M_NAME":acc_diam_request: message sending to the" 
 					" DIAMETER backend authorization server failed\n");

@@ -5,7 +5,7 @@ Jiri Kuthan
 
    iptel.org
 
-   Copyright © 2002, 2003 by FhG FOKUS
+   Copyright © 2002, 2003 FhG FOKUS
      _________________________________________________________
 
    Table of Contents
@@ -48,27 +48,53 @@ Jiri Kuthan
 
    2. Developer's Guide
    3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Setting secret module parameter
+   1-2. log_level example
+   1-3. log_fmt example
+   1-4. early_media example
+   1-5. failed_transactions example
+   1-6. log_flag example
+   1-7. log_missed_flag example
+   1-8. report_ack example
+   1-9. report_cancels example
+   1-10. radius_config example
+   1-11. service_type example
+   1-12. radius_flag example
+   1-13. radius_missed_flag example
+   1-14. db_url example
+   1-15. db_flag example
+   1-16. db_missed_flag example
+   1-17. diameter_flag example
+   1-18. diameter_missed_flag example
+   1-19. diameter_client_host example
+   1-20. diameter_client_host example
+   1-21. acc_log_request usage
+   1-22. acc_db_request usage
+   1-23. acc_rad_request usage
+   1-24. acc_diam_request usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   acc  module  is  used to report on transactions to syslog, SQL
+   acc module is used to report on transactions to syslog, SQL
    and RADIUS.
 
    To report on a transaction using syslog, use "setflag" to mark
-   a  transaction  you  are  interested  in  with  a  flag,  load
-   accounting  module  and  set  its  "log_flag" to the same flag
-   number.   The   acc  module  will  then  report  on  completed
-   transaction  to syslog. A typical usage of the module takes no
-   acc-specific   script   command  --  the  functionality  binds
-   invisibly  through transaction processing. Script writers just
-   need  to  mark  the  transaction  for  accounting  with proper
+   a transaction you are interested in with a flag, load
+   accounting module and set its "log_flag" to the same flag
+   number. The acc module will then report on completed
+   transaction to syslog. A typical usage of the module takes no
+   acc-specific script command -- the functionality binds
+   invisibly through transaction processing. Script writers just
+   need to mark the transaction for accounting with proper
    setflag.
 
-   What  is printed depends on module's "log_fmt" parameter. It's
-   a  string  with  characters  specifying which parts of request
+   What is printed depends on module's "log_fmt" parameter. It's
+   a string with characters specifying which parts of request
    should be printed:
 
      * c = Call-Id
@@ -83,50 +109,53 @@ Chapter 1. User's Guide
      * u = digest Username
      * p = username Part of inbound Request-URI
 
-   If  a  value  is  not  present  in request, "n/a" is accounted
+   If a value is not present in request, "n/a" is accounted
    instead.
 
    Note that:
 
      * A single INVITE may produce multiple accounting reports --
-       that's due to SIP's forking feature
-     * Subsequent  ACKs  and other requests do not hit the server
-       and  can't be accounted unless record-routing is enforced.
-       The  ACKs assert very little useful information anyway and
-       reporting  on INVITE's 200 makes most accounting scenarios
+       that's due to SIP forking feature
+     * Subsequent ACKs and other requests do not hit the server
+       and can't be accounted unless record-routing is enforced.
+       The ACKs assert very little useful information anyway and
+       reporting on INVITE's 200 makes most accounting scenarios
        happy.
-     * There  is  no  session  accounting  --  ser  maintains  no
-       sessions.  If one needs to correlate INVITEs with BYEs for
-       example  for purpose of billing, then it is better done in
-       the   entity   which   collects   accounting  infromation.
-       Otherwise,    SIP    server    would    have   to   become
-       sessions-stateful,  which  would  very  badly  impact  its
+     * There is no session accounting -- ser maintains no
+       sessions. If one needs to correlate INVITEs with BYEs for
+       example for purpose of billing, then it is better done in
+       the entity which collects accounting information.
+       Otherwise, SIP server would have to become
+       sessions-stateful, which would very badly impact its
        scalability.
-     * If  a  UA  fails  in  middle of conversation, a proxy will
-       never  learn  it.  In  general,  a  better  practice is to
-       account  from  an end-device (such as PSTN gateway), which
-       best  knows  about call status (including media status and
+     * If a UA fails in middle of conversation, a proxy will
+       never learn it. In general, a better practice is to
+       account from an end-device (such as PSTN gateway), which
+       best knows about call status (including media status and
        PSTN status in case of the gateway).
 
-   Support  for  SQL  and  RADIUS  works analogously. You need to
+   Support for SQL and RADIUS works analogously. You need to
    enable it by recompiling the module with properly set defines.
-   Uncomment     the     SQL_ACC    and    RAD_ACC    lines    in
+   Uncomment the SQL_ACC and RAD_ACC lines in
    modules/acc/Makefile. To compile SQL support, you need to have
    mysqlclient package on your system. To compile RADIUS support,
-   you  need  to  have  radiusclient  installed  on  your  system
-   (http://www.mcs-cityline.net/~lf/radius/).  The  radius client
-   needs to be configured properly. To do so, use the template at
-   etc/radiusclient.conf    and    make    sure   that   module's
-   radius_config parameter points to its location. In particular,
-   accounting  secret  must  match that one configured in server.
-   Uses  along  with  FreeRadius (http://www.freeradius.org/) and
-   Radiator  (http://www.open.com.au/radiator/) servers have been
-   reported to us.
+   you need to have radiusclient installed on your system
+   (version 0.4.1 or higher is required) which is available from
+   http://developer.berlios.de/projects/radiusclient-ng/. The
+   radius client needs to be configured properly. To do so, use
+   the template at etc/radiusclient.conf and make sure that
+   module's radius_config parameter points to its location. In
+   particular, accounting secret must match that one configured
+   in server and proper dictionary is used (one is available at
+   etc/sip_dictionary). Uses along with FreeRadius
+   (http://www.freeradius.org/) and Radiator
+   (http://www.open.com.au/radiator/) servers have been reported
+   to us.
 
-   Both  mysql and radius libraries must be dynamically linkable.
-   You  need to configure your OS so that SER, when started, will
-   find    them.   Typically,   you   do   so   by   manipulating
-   LD_LIBRARY_PATH environment variable or condiguring ld.so.
+   Both mysql and radius libraries must be dynamically linkable.
+   You need to configure your OS so that SER, when started, will
+   find them. Typically, you do so by manipulating
+   LD_LIBRARY_PATH environment variable or configuring ld.so.
      _________________________________________________________
 
 1.1.1. General Example
@@ -155,7 +184,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
 
 1.2. Dependencies
 
-   The  module  depends  on  the  following modules (in the other
+   The module depends on the following modules (in the other
    words the listed modules must be loaded before this module):
 
      * tm -- Transaction Manager
@@ -169,7 +198,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is randomly generated string.
 
    Example 1-1. Setting secret module parameter
-   modparam("auth", "secret", "johndoessecretphrase")
+modparam("auth", "secret", "johndoessecretphrase")
      _________________________________________________________
 
 1.3.2. log_level (integer)
@@ -179,7 +208,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is L_NOTICE.
 
    Example 1-2. log_level example
-   modparam("acc", "log_level", 2)   # Set log_level to 2
+modparam("acc", "log_level", 2)   # Set log_level to 2
      _________________________________________________________
 
 1.3.3. log_fmt (string)
@@ -190,7 +219,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is "miocfs".
 
    Example 1-3. log_fmt example
-   modparam("acc", "log_fmt", "mfs")
+modparam("acc", "log_fmt", "mfs")
      _________________________________________________________
 
 1.3.4. early_media (integer)
@@ -200,7 +229,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is 0 (no).
 
    Example 1-4. early_media example
-   modparam("acc", "early_media", 1)
+modparam("acc", "early_media", 1)
      _________________________________________________________
 
 1.3.5. failed_transactions (integer)
@@ -210,7 +239,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is 0 (no).
 
    Example 1-5. failed_transactions example
-   modparam("acc", "failed_transactions", 1)
+modparam("acc", "failed_transactions", 1)
      _________________________________________________________
 
 1.3.6. log_flag (integer)
@@ -220,7 +249,7 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is 1.
 
    Example 1-6. log_flag example
-   modparam("acc", "log_flag", 2)
+modparam("acc", "log_flag", 2)
      _________________________________________________________
 
 1.3.7. log_missed_flag (integer)
@@ -230,42 +259,41 @@ if (uri=~"sip:+49") /* calls to Germany */ {
    Default value is 2.
 
    Example 1-7. log_missed_flag example
-   modparam("acc", "log_missed_flag", 3)
+modparam("acc", "log_missed_flag", 3)
      _________________________________________________________
 
 1.3.8. report_ack (integer)
 
-   Shall  acc attempt to account e2e ACKs too ? Note that this is
-   really  only an attempt, as e2e ACKs may take a different path
+   Shall acc attempt to account e2e ACKs too ? Note that this is
+   really only an attempt, as e2e ACKs may take a different path
    (unless RR enabled) and mismatch original INVITE (e2e ACKs are
    a separate transaction).
 
    Default value is 1 (yes).
 
    Example 1-8. report_ack example
-   modparam("acc", "report_ack", 0)
+modparam("acc", "report_ack", 0)
      _________________________________________________________
 
 1.3.9. report_cancels (integer)
 
-   By  default,  CANCEL  reporting is disabled -- most accounting
-   applications  are  happy  to see INVITE's cancellation status.
-   Turn   on   if   you   explicitely   want  to  account  CANCEL
-   transactions.
+   By default, CANCEL reporting is disabled -- most accounting
+   applications are happy to see INVITE's cancellation status.
+   Turn on if you explicitly want to account CANCEL transactions.
 
    Default value is 0 (no).
 
    Example 1-9. report_cancels example
-   modparam("acc", "report_cancels", 1)
+modparam("acc", "report_cancels", 1)
      _________________________________________________________
 
 1.3.10. radius_config (string)
 
-   This  parameter  is  radius  specific.  Path  to radius client
+   This parameter is radius specific. Path to radius client
    configuration file, set the referred config file correctly and
-   specify  there  address of server, shared secret (should equal
-   that  in  /usr/local/etc/raddb/clients for freeRadius servers)
-   and  dictionary,  see  etc  for  an example of config file and
+   specify there address of server, shared secret (should equal
+   that in /usr/local/etc/raddb/clients for freeRadius servers)
+   and dictionary, see etc for an example of config file and
    dictionary.
 
    Default value is
@@ -282,7 +310,7 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is 15 (SIP).
 
    Example 1-11. service_type example
-   modparam("acc", "service_type", 16)
+modparam("acc", "service_type", 16)
      _________________________________________________________
 
 1.3.12. radius_flag (integer)
@@ -293,18 +321,18 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is 1.
 
    Example 1-12. radius_flag example
-   modparam("acc", "radius_flag", 2)
+modparam("acc", "radius_flag", 2)
      _________________________________________________________
 
 1.3.13. radius_missed_flag (integer)
 
-   Request  flag which needs to be set to account missed calls --
+   Request flag which needs to be set to account missed calls --
    RADIUS specific.
 
    Default value is 2.
 
    Example 1-13. radius_missed_flag example
-   modparam("acc", "radius_missed_flag", 3)
+modparam("acc", "radius_missed_flag", 3)
      _________________________________________________________
 
 1.3.14. db_url (string)
@@ -314,7 +342,7 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is "mysql://ser:heslo@localhost/ser"
 
    Example 1-14. db_url example
-   modparam("acc", "db_url", "mysql://user:password@localhost/ser")
+modparam("acc", "db_url", "mysql://user:password@localhost/ser")
      _________________________________________________________
 
 1.3.15. db_flag (integer)
@@ -325,18 +353,18 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is 1.
 
    Example 1-15. db_flag example
-   modparam("acc", "db_flag", 2)
+modparam("acc", "db_flag", 2)
      _________________________________________________________
 
 1.3.16. db_missed_flag (integer)
 
-   Request  flag which needs to be set to account missed calls --
+   Request flag which needs to be set to account missed calls --
    database specific.
 
    Default value is 2.
 
    Example 1-16. db_missed_flag example
-   modparam("acc", "db_missed_flag", 3)
+modparam("acc", "db_missed_flag", 3)
      _________________________________________________________
 
 1.3.17. diameter_flag (integer)
@@ -347,29 +375,29 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is 1.
 
    Example 1-17. diameter_flag example
-   modparam("acc", "diameter_flag", 2)
+modparam("acc", "diameter_flag", 2)
      _________________________________________________________
 
 1.3.18. diameter_missed_flag (integer)
 
-   Request  flag which needs to be set to account missed calls --
+   Request flag which needs to be set to account missed calls --
    DIAMETER specific.
 
    Default value is 2.
 
    Example 1-18. diameter_missed_flag example
-   modparam("acc", "diameter_missed_flag", 3)
+modparam("acc", "diameter_missed_flag", 3)
      _________________________________________________________
 
 1.3.19. diameter_client_host (string)
 
-   Hostname  of  the machine where the DIAMETER Client is running
+   Hostname of the machine where the DIAMETER Client is running
    -- DIAMETER specific.
 
    Default value is "localhost".
 
    Example 1-19. diameter_client_host example
-   modparam("acc", "diameter_client_host", "iptel.org")
+modparam("acc", "diameter_client_host", "iptel.org")
      _________________________________________________________
 
 1.3.20. diameter_client_port (int)
@@ -380,16 +408,16 @@ modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
    Default value is 3000.
 
    Example 1-20. diameter_client_host example
-   modparam("acc", "diameter_client_port", 3000)
+modparam("acc", "diameter_client_port", 3000)
      _________________________________________________________
 
 1.4. Exported Functions
 
 1.4.1. acc_log_request(comment)
 
-   acc_request  reports on a request, for example, it can be used
-   to  report  on  missed calls to off-line users who are replied
-   404.  To  avoid multiple reports on UDP request retranmission,
+   acc_request reports on a request, for example, it can be used
+   to report on missed calls to off-line users who are replied
+   404. To avoid multiple reports on UDP request retransmission,
    you would need to embed the action in stateful processing.
 
    Meaning of the parameters is as follows:
@@ -405,7 +433,7 @@ acc_log_request("Some comment");
 1.4.2. acc_db_request(comment, table)
 
    Like acc_log_request, acc_db_request reports on a request. The
-   report  is sent to database at "db_url", in the table referred
+   report is sent to database at "db_url", in the table referred
    to in the second action parameter
 
    Meaning of the parameters is as follows:
@@ -421,7 +449,7 @@ acc_log_request("Some comment", "Some table");
 
 1.4.3. acc_rad_request(comment)
 
-   Like  acc_log_request, acc_rad_requst reports on a request. It
+   Like acc_log_request, acc_rad_request reports on a request. It
    reports to radius server as configured in "radius_config".
 
    Meaning of the parameters is as follows:
@@ -436,8 +464,8 @@ acc_rad_request("Some comment");
 
 1.4.4. acc_diam_request(comment)
 
-   Like acc_log_request, acc_diam_requst reports on a request. It
-   reports to Diameter server.
+   Like acc_log_request, acc_diam_request reports on a request.
+   It reports to Diameter server.
 
    Meaning of the parameters is as follows:
 
@@ -456,8 +484,8 @@ Chapter 2. Developer's Guide
 
 Chapter 3. Frequently Asked Questions
 
-   Q: What is the meaning of life ?
+   3.1. What is the meaning of life ?
 
-   Q: What is the meaning of life ?
+   3.1. What is the meaning of life ?
 
-   A: 42
+   42

@@ -3,7 +3,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -187,7 +187,7 @@ int timer_pdomain(pdomain_t* _d)
 }
 
 
-static int in_pdomain = 0; /* this only works with single or multiprocess execution model, but not multithreaded */
+static int in_pdomain = 0; /* this only works with single or multiprocess execution model, but not multi-threaded */
 
 /*
  * Get lock if this process does not already have it

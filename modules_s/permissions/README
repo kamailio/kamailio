@@ -14,6 +14,10 @@ Miklos Tirpak
    1. User's Guide
 
         1.1. Overview
+
+              1.1.1. Call Routing
+              1.1.2. Registration Permissions
+
         1.2. Dependencies
 
               1.2.1. SER Modules
@@ -21,55 +25,105 @@ Miklos Tirpak
 
         1.3. Exported Parameters
 
-              1.3.1. allow_file (string)
-              1.3.2. deny_file (string)
+              1.3.1. default_allow_file (string)
+              1.3.2. default_deny_file (string)
+              1.3.3. check_all_branches (integer)
+              1.3.4. allow_suffix (string)
+              1.3.5. deny_suffix (string)
 
         1.4. Exported Functions
 
               1.4.1. allow_routing()
+              1.4.2. allow_routing(basename)
+              1.4.3. allow_routing(allow_file, deny_file)
+              1.4.4. allow_register(basename)
+              1.4.5. allow_register(allow_file, deny_file)
 
    2. Developer's Guide
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set allow_file parameter
-   1-2. Set deny_file parameter
-   1-3. allow_routing usage
+   1-1. Set default_allow_file parameter
+   1-2. Set default_deny_file parameter
+   1-3. Set check_all_branches parameter
+   1-4. Set allow_suffix parameter
+   1-5. Set deny_suffix parameter
+   1-6. allow_routing usage
+   1-7. allow_routing(basename) usage
+   1-8. allow_routing(allow_file, deny_file) usage
+   1-9. allow_register(basename) usage
+   1-10. allow_register(allow_file, deny_file) usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   Permissions module is used to determinate if a call has
-   appropriate permission to be established. Permissions can be
-   menaged in configuraton files simular to hosts.allow and
-   hosts.deny:
+1.1.1. Call Routing
 
-   The search stops at the first match:
+   The module can be used to determine if a call has appropriate
+   permission to be established. Permission rules are stored in
+   plaintext configuration files similar to hosts.allow and
+   hosts.deny files used by tcpd.
 
-     * Routing will be allowed when a (FROM, Request URI) pair
-       matches an entry in the
-       /usr/local/etc/ser/permissions.allow file.
-     * Otherwise, routing will be denied when a (FROM, Request
-       URI) pair matches an entry in the
-       /usr/local/etc/ser/permissions.deny file.
+   When allow_routing function is called it tries to find a rule
+   that matches selected fields of the message.
+
+   SER is a forking proxy and therefore a single message can be
+   sent to different destinations simultaneously. When checking
+   permissions all the destinations must be checked and if one of
+   them fails, the forwarding will fail.
+
+   The matching algorithm is as follows, first match wins:
+
+     * Create a set of pairs of form (From, R-URI of branch 1),
+       (From, R-URI of branch 2), etc.
+     * Routing will be allowed when all pairs match an entry in
+       the allow file.
+     * Otherwise routing will be denied when one of pairs matches
+       an entry in the deny file.
      * Otherwise, routing will be allowed.
 
    A non-existing permission control file is treated as if it
    were an empty file. Thus, permission control can be turned off
    by providing no permission control files.
 
-   FROM header and Request URI are always compared with regular
-   expressions! For the syntax see the sample file:
-   config/permissions.allow
+   From header field and Request-URIs are always compared with
+   regular expressions! For the syntax see the sample file:
+   config/permissions.allow.
+     _________________________________________________________
 
-   Note
+1.1.2. Registration Permissions
 
-   Create your own configuration files
-   /usr/local/etc/ser/permissions.allow and
-   /usr/local/etc/ser/permissions.deny! Samples can be found in
-   the config directory.
+   In addition to call routing it is also possible to check
+   REGISTER messages and decide--based on the configuration
+   files--whether the message should be allowed and the
+   registration accepted or not.
+
+   Main purpose of the function is to prevent registration of
+   "prohibited" IP addresses. One example, when a malicious user
+   registers a contact containing IP address of a PSTN gateway,
+   he might be able to bypass authorization checks performed by
+   the SIP proxy. That is undesirable and therefore attempts to
+   register IP address of a PSTN gateway should be rejected.
+   Files config/register.allow and config/register.deny contain
+   an example configuration.
+
+   Function for registration checking is called allow_register
+   and the algorithm is very similar to the algorithm described
+   in Section 1.1.1. The only difference is in the way how pairs
+   are created.
+
+   Instead of From header field the function uses To header field
+   because To header field in REGISTER messages contains the URI
+   of the person being registered. Instead of the Request-URI of
+   branches the function uses Contact header field.
+
+   Thus, pairs used in matching will look like this: (To, Contact
+   1), (To, Contact 2), (To, Contact 3), and so on..
+
+   The algorithm of matching is same as described in Section
+   1.1.1.
      _________________________________________________________
 
 1.2. Dependencies
@@ -91,27 +145,87 @@ Chapter 1. User's Guide
 
 1.3. Exported Parameters
 
-1.3.1. allow_file (string)
+1.3.1. default_allow_file (string)
 
-   File for the allow rules.
+   Default allow file used by functions without parameters. If
+   you don't specify full pathname then the directory in which is
+   the main config file is located will be used.
 
-   Default value is "/usr/local/etc/ser/permissions.allow". 
+   Default value is "permissions.allow". 
 
-   Example 1-1. Set allow_file parameter
+   Example 1-1. Set default_allow_file parameter
 ...
-modparam("permissions", "allow_file", "/etc/permissions.allow")
+modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 ...
      _________________________________________________________
 
-1.3.2. deny_file (string)
+1.3.2. default_deny_file (string)
 
-   File for the deny rules.
+   Default file containing deny rules. The file is used by
+   functions without parameters. If you don't specify full
+   pathname then the directory in which the main config file is
+   located will be used.
 
-   Default value is "/usr/local/etc/ser/permissions.deny". 
+   Default value is "permissions.deny". 
 
-   Example 1-2. Set deny_file parameter
+   Example 1-2. Set default_deny_file parameter
 ...
-modparam("permissions", "deny_file", "/etc/permissions.deny")
+modparam("permissions", "default_deny_file", "/etc/permissions.deny")
+...
+     _________________________________________________________
+
+1.3.3. check_all_branches (integer)
+
+   If set then allow_routing functions will check Request-URI of
+   all branches (default). If disabled then only Request-URI of
+   the first branch will be checked.
+
+   Warning
+
+   Do not disable this parameter unless you really know what you
+   are doing.
+
+   Default value is 1. 
+
+   Example 1-3. Set check_all_branches parameter
+...
+modparam("permissions", "check_all_branches", 0)
+...
+     _________________________________________________________
+
+1.3.4. allow_suffix (string)
+
+   Suffix to be appended to basename to create filename of the
+   allow file when version with one parameter of either
+   allow_routing or allow_register is used.
+
+   Note
+
+   Including leading dot.
+
+   Default value is ".allow". 
+
+   Example 1-4. Set allow_suffix parameter
+...
+modparam("permissions", "allow_suffix", ".allow")
+...
+     _________________________________________________________
+
+1.3.5. deny_suffix (string)
+
+   Suffix to be appended to basename to create filename of the
+   deny file when version with one parameter of either
+   allow_routing or allow_register is used.
+
+   Note
+
+   Including leading dot.
+
+   Default value is ".deny". 
+
+   Example 1-5. Set deny_suffix parameter
+...
+modparam("permissions", "deny_suffix", ".deny")
 ...
      _________________________________________________________
 
@@ -119,14 +233,121 @@ modparam("permissions", "deny_file", "/etc/permissions.deny")
 
 1.4.1. allow_routing()
 
-   Returns true if the (FROM, Request URI) pair in the received
-   sip message has appropriate permission according to the
-   configuration files.
+   Returns true if all pairs constructed as described in Section
+   1.1.1 have appropriate permissions according to the
+   configuration files. This function uses default configuration
+   files specified in default_allow_file and default_deny_file.
 
-   Example 1-3. allow_routing usage
+   Example 1-6. allow_routing usage
 ...
 if (allow_routing()) {
     t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.2. allow_routing(basename)
+
+   Returns true if all pairs constructed as described in Section
+   1.1.1 have appropriate permissions according to the
+   configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-7. allow_routing(basename) usage
+...
+if (allow_routing("basename")) {
+    t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.3. allow_routing(allow_file, deny_file)
+
+   Returns true if all pairs constructed as described in Section
+   1.1.1 have appropriate permissions according to the
+   configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-8. allow_routing(allow_file, deny_file) usage
+...
+if (allow_routing("rules.allow", "rules.deny")) {
+    t_relay();
+};
+...
+     _________________________________________________________
+
+1.4.4. allow_register(basename)
+
+   The function returns true if all pairs constructed as
+   described in Section 1.1.2 have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-9. allow_register(basename) usage
+...
+if (method=="REGISTER") {
+    if (allow_register("register")) {
+        save("location");
+        break;
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
+};
+...
+     _________________________________________________________
+
+1.4.5. allow_register(allow_file, deny_file)
+
+   The function returns true if all pairs constructed as
+   described in Section 1.1.2 have appropriate permissions
+   according to the configuration files given as parameters.
+
+   Meaning of the parameters is as follows:
+
+     * allow_file - File containing allow rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+     * deny_file - File containing deny rules.
+       If the parameter doesn't contain full pathname then the
+       function expects the file to be located in the same
+       directory as the main configuration file of the server.
+
+   Example 1-10. allow_register(allow_file, deny_file) usage
+...
+if (method=="REGISTER") {
+    if (allow_register("register.allow", "register.deny")) {
+        save("location");
+        break;
+    } else {
+        sl_send_reply("403", "Forbidden");
+    };
 };
 ...
      _________________________________________________________

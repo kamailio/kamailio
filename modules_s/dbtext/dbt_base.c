@@ -3,7 +3,7 @@
  *
  * DBText module core functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -172,7 +172,7 @@ int dbt_free_query(db_con_t* _h, db_res_t* _r)
  * _op: operators
  * _v: values of the keys that must match
  * _c: column names to return
- * _n: nmber of key=values pairs to compare
+ * _n: number of key=values pairs to compare
  * _nc: number of columns to return
  * _o: order by the specified column
  */
@@ -270,7 +270,7 @@ error:
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
-	DBG("DBT:dbt_query: error while quering table!\n");
+	DBG("DBT:dbt_query: error while querying table!\n");
     
 	return -1;
 
@@ -439,7 +439,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
-		DBG("DBT:dbt_delelte: error loading table <%s>!\n", CON_TABLE(_h));
+		DBG("DBT:dbt_delete: error loading table <%s>!\n", CON_TABLE(_h));
 		return -1;
 	}
 

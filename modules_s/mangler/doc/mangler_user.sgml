@@ -60,7 +60,7 @@
 	    <warning>
 		<para>
 		    First char of this field must be set to a value which is not used inside
-		    username,password or other fields of contact.Otherwise it is posible for the
+		    username,password or other fields of contact.Otherwise it is possible for the
 		    decoding step to fail/produce wrong results.
 		</para>
 	    </warning>
@@ -137,7 +137,7 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 	    <itemizedlist>
 		<listitem>
 		    <para><emphasis>offset</emphasis> - A string representing an integer which will
-			be added/substracted from the located port.
+			be added/subtracted from the located port.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -161,7 +161,7 @@ sdp_mangle_port("-12000");
 		sip:enc_pref*username*ip*port*protocol@public_ip * is the default separator.
 	    </para>
 	    <para>
-		The function returns negative on error, 1 on succes.
+		The function returns negative on error, 1 on success.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -187,13 +187,13 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 		<function moreinfo="none">decode_contact()</function>
 	    </title>
 	    <para>
-		This function will decode the &uri; in first line in packets wich come with encoded
+		This function will decode the &uri; in first line in packets which come with encoded
 		&uri; in the following manner sip:enc_pref*username*ip*port*protocol@public_ip goes to
 		sip:username:password@ip:port;transport=protocol It uses the default set parameter
 		for contact encoding separator.
 	    </para>
 	    <para>
-		The function returns negative on error, 1 on succes.
+		The function returns negative on error, 1 on success.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <example>
@@ -217,7 +217,7 @@ if (uri =~ "^enc*") { decode_contact(); }
 		for contact encoding separator.
 	    </para>
 	    <para>
-		The function returns negative on error, 1 on succes.
+		The function returns negative on error, 1 on success.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <example>

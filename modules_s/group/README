@@ -51,7 +51,7 @@ Chapter 1. User's Guide
 
 1.1. Overview
 
-   This module export functions necesarry for group membership
+   This module export functions necessary for group membership
    checking. There is a database table that contains list of
    users and groups they belong to. The table is used by
    functions of this module.
@@ -68,8 +68,8 @@ Chapter 1. User's Guide
 
 1.2.2. External Libraries or Applications
 
-   The next libraries or applications must be installed before
-   running SER with this module loaded:
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
 
      * None.
      _________________________________________________________
@@ -80,11 +80,11 @@ Chapter 1. User's Guide
 
    URL of the database table to be used.
 
-   Default value is "sql://serro:47serro11@localhost/ser". 
+   Default value is "mysql://serro:47serro11@localhost/ser". 
 
    Example 1-1. Set db_url parameter
 ...
-modparam("group", "db_url", "sql://username:password@dbhost/ser")
+modparam("group", "db_url", "mysql://username:password@dbhost/ser")
 ...
      _________________________________________________________
 

@@ -44,8 +44,8 @@
 			<listitem>
 			<para>
 				<emphasis>USRLOC (User Location) module - used for implementing
-				lookup("registation") tag (adding into location set of the
-				users's contact)
+				lookup("registration") tag (adding into location set of the
+				users' contact)
 				</emphasis>
 			</para>
 			</listitem>
@@ -212,7 +212,7 @@ modparam("cpl_c","proxy_route",1)
 			<title><varname>nat_flag</varname> (int)</title>
 			<para>
 				Sets the flag used for marking calls via NAT. Used by lookup
-				tag when retriving a contact behind a NAT (this flag will be 
+				tag when retrieving a contact behind a NAT (this flag will be 
 				set).
 			</para>
 			<para>
@@ -265,7 +265,7 @@ modparam("cpl_c","lookup_domain",1)
 				this order- (for incoming execution) or from FROM header (for 
 				outgoing execution).
 				Regarding the stateful/stateless message processing, the
-				function  is very flexibile, being able to run in different 
+				function  is very flexible, being able to run in different 
 				modes (see below the"mode" parameter).
 				Normally this function will end script execution.  There is no 
 				guaranty that the CPL script interpretation ended when ser 
@@ -290,45 +290,45 @@ modparam("cpl_c","lookup_domain",1)
 			</listitem>
 			<listitem>
 				<para><emphasis>mode</emphasis> - sets the interpreter mode as
-				stateless/stateful behaviour. The follwoing modes are accepted:
+				stateless/stateful behavior. The following modes are accepted:
 				</para>
 				<itemizedlist>
 				<listitem>
 					<para>
 					<emphasis>IS_STATELESS<emphasis> - the current INVITE has 
-					no transaction created yet. All replys (redirection or 
+					no transaction created yet. All replies (redirection or 
 					deny) will be done is a stateless way. The execution will 
-					switch to statefull only whena proxy is done. So, if the 
+					switch to stateful only when proxy is done. So, if the 
 					function returns, will be in stateless mode.
 					</para>
 				</listitem>
 				<listitem>
 					<para>
 					<emphasis>IS_STATEFUL<emphasis> - the current INVITE has 
-					already a transaction associated. All signalling operations
-					(replys or proxy) will be done in stateful way.So, if
+					already a transaction associated. All signaling operations
+					(replies or proxy) will be done in stateful way.So, if
 					the function returns, will be in stateful mode.
 					</para>
 				</listitem>
 				<listitem>
 					<para>
 					<emphasis>FORCE_STATEFUL<emphasis> - the current INVITE 
-					has no transaction created yet. All signalling operations
-					will be done is a stateful way (on signalling, the
+					has no transaction created yet. All signaling operations
+					will be done is a stateful way (on signaling, the
 					transaction will be created from within the interpreter).
 					So, if the function returns, will be in stateless mode.
 					</para>
 				</listitem>
 				</itemizedlist>
 				<para>
-				<emphasis>HINT</emphasis>: is_statefull is vary 
+				<emphasis>HINT</emphasis>: is_stateful is vary 
 				difficult to manage from the routing script (script processing
-				can continue in statefull mode); is_stateless is the fastes and
+				can continue in stateful mode); is_stateless is the fastest and
 				less resources consumer (transaction is created only if
 				proxying is done), but there is minimal protection against
-				retransmisions (since replies are send stateless);
-				force_statefull is a good compromise - all signalling is done
-				statefull (retransmission protection) and in the same time, if
+				retransmissions (since replies are send stateless);
+				force_stateful is a good compromise - all signaling is done
+				stateful (retransmission protection) and in the same time, if
 				returning to script, it will be in stateless mode (easy to
 				continue the routing script execution)
 				</para>
@@ -338,7 +338,7 @@ modparam("cpl_c","lookup_domain",1)
 				<title><function>cpl_run_script</function> usage</title>
 				<programlisting format="linespecific">
 ...
-cpl_run_script("incoming","force_statefull");
+cpl_run_script("incoming","force_stateful");
 ...
 				</programlisting>
 			</example>

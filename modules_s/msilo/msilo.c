@@ -3,7 +3,7 @@
  *
  * MSILO module
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -34,7 +34,7 @@
  * 2003-01-23: switched from t_uac to t_uac_dlg (dcm)
  * 2003-02-28: protocolization of t_uac_dlg completed (jiri)
  * 2003-03-11: updated to the new module interface (andrei)
- *             removed non-constant intializers to some strs (andrei)
+ *             removed non-constant initializers to some strs (andrei)
  * 2003-03-16: flags parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
  * 2003-04-06: db_init removed from mod_init, will be called from child_init
@@ -184,7 +184,7 @@ struct module_exports exports= {
 	
 	mod_init,   /* module initialization function */
 	(response_function) 0,       /* response handler */
-	(destroy_function) destroy,  /* module destry function */
+	(destroy_function) destroy,  /* module destroy function */
 	0,
 	child_init  /* per-child init function */
 };
@@ -256,7 +256,7 @@ static int mod_init(void)
 }
 
 /**
- * Initialize childs
+ * Initialize children
  */
 static int child_init(int rank)
 {
@@ -715,7 +715,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	}
 	else
 	{
-		DBG("MSILO:m_dump: 'exprires' threw error at parsing\n");
+		DBG("MSILO:m_dump: 'expires' threw error at parsing\n");
 		goto error;
 	}
 
@@ -778,7 +778,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
 				str_vals[0]/*from*/) < 0)
 		{
-			DBG("MSILO:m_dump: headers bulding failed!!!\n");
+			DBG("MSILO:m_dump: headers building failed!!!\n");
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
 				DBG("MSILO:m_dump: Error while freeing result of"
 					" query\n");

@@ -16,13 +16,13 @@
 	<para>
 	    This is a generic module that itself doesn't provide all functions necessary for
 	    authentication but provides functions that are needed by all other authentication
-	    related modules (so called authenticatio backends). 
+	    related modules (so called authentication backends). 
 	</para>
 	<para>
 	    We decided to break the authentication code into several modules because there are
 	    now more than one backends (currently database authentication and radius are
 	    supported). This allows us to create separate packages so uses can install and load
-	    only required functionality. This also allows us to avoid unecessary dependencies in
+	    only required functionality. This also allows us to avoid unnecessary dependencies in
 	    the binary packages.
 	</para>
     </section>
@@ -77,7 +77,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 	<section>
 	    <title><varname>rpid_prefix</varname> (string)</title>
 	    <para>
-		Prefix to be added to Remote-Party-ID header field just before the &uri; returned
+		Prefix to be added to Remote-Party-ID header field just before the URI returned
 		from either radius or database.
 	    </para>
 	    <para>
@@ -93,7 +93,7 @@ modparam("auth", "rpid_prefix", "Whatever <")
 	<section>
 	    <title><varname>rpid_suffix</varname> (string)</title>
 	    <para>
-		Suffix to be added to Remote-Party-ID header field after the &uri; returned from
+		Suffix to be added to Remote-Party-ID header field after the URI returned from
 		either radius or database.
 	    </para>
 	    <para>
@@ -124,12 +124,12 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
 		<listitem>
 		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
 		    should present to the user so he can decide what username and password to
-		    use. Usualy this is domain of the host the server is running on.
+		    use. Usually this is domain of the host the server is running on.
 		    </para>
 		    <para>
 			If an empty string <quote></quote> is used then the server will generate it
 			from the request. In case of REGISTER requests To header field domain will
-			be used (beucase this header field represents a user being registered), for
+			be used (because this header field represents a user being registered), for
 			all other messages From header field domain will be used.
 		    </para>
 		</listitem>
@@ -138,7 +138,7 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
 			<quote>1</quote> or <quote>0</quote>. When set to 1 then the server will put
 			qop parameter in the challenge. When set to 0 then the server will not put
 			qop parameter in the challenge. It is strongly recommended to use qop
-			parameter, hovewere there are still some user agents that cannot handle qop
+			parameter, however there are still some user agents that cannot handle qop
 			parameter properly so we made this optional. On the other hand there are
 			still some user agents that cannot handle request without qop parameter too.
 		    </para>
@@ -170,7 +170,7 @@ if (www_authorize("iptel.org", "subscriber")) {
 		<listitem>
 		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
 		    should present to the user so he can decide what username and password to
-		    use. Usualy this is domain of the host the server is running on.
+		    use. Usually this is domain of the host the server is running on.
 		    </para>
 		    <para>
 			If an empty string <quote></quote> is used then the server will generate it
@@ -182,12 +182,12 @@ if (www_authorize("iptel.org", "subscriber")) {
 			<quote>1</quote> or <quote>0</quote>. When set to 1 then the server will put
 			qop parameter in the challenge. When set to 0 then the server will not put
 			qop parameter in the challenge. It is strongly recommended to use qop
-			parameter, hovewere there are still some user agents that cannot handle qop
+			parameter, however there are still some user agents that cannot handle qop
 			parameter properly so we made this optional. On the other hand there are
 			still some user agents that cannot handle request without qop parameter too.
 		    </para>
 		</listitem>
-	    </itemizedlis>
+	    </itemizedlist>
 	    <example>
 		<title>proxy_challenge usage</title>
 		<programlisting format="linespecific">
@@ -241,7 +241,7 @@ if (is_rpid_user_e164()) {
 </programlisting>
 	    </example>
 	</section>
-	<section id="append_rpid_hf_no_params">
+	<section id="append-rpid-hf-no-params">
 	    <title><function moreinfo="none">append_rpid_hf()</function></title>
 	    <para>
 		Appends to the message a Remote-Party-ID header that contains header
@@ -258,10 +258,10 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 </programlisting>
 	    </example>
 	</section>
-	<section id="append_rpid_hf_params">
+	<section id="append-rpid-hf-params">
 	    <title><function moreinfo="none">append_rpid_hf(prefix, suffix)</function></title>
 	    <para>
-		This function is the same as <xref linkend="append_rpid">. The only difference is
+		This function is the same as <xref linkend="append-rpid-hf-no-params">. The only difference is
 		that it accepts two parameters--prefix and suffix to be added to Remote-Party-ID
 		header field. This function ignores rpid_prefix and rpid_suffix parameters, instead
 		of that allows to set them in every call.

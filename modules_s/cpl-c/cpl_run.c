@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -30,7 +30,7 @@
  * 2003-09-11 : build_lump_rpl() merged into add_lump_rpl() (bogdan)
  * 2004-06-14 : all global variables merged into cpl_env and cpl_fct;
  *              append_branches param added to lookup node (bogdan)
- * 2004-06-14 : flag CPL_IS_STATEFUL is set now imediatly after the 
+ * 2004-06-14 : flag CPL_IS_STATEFUL is set now immediately after the 
  *              transaction is created (bogdan)
 */
 
@@ -131,7 +131,7 @@ struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
 	intr->ip = script->s;
 	intr->msg = msg;
 
-	/* check the begining of the script */
+	/* check the beginning of the script */
 	if ( NODE_TYPE(intr->ip)!=CPL_NODE ) {
 		LOG(L_ERR,"ERROR:build_cpl_interpreter: first node is not CPL!!\n");
 		goto error;
@@ -310,7 +310,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 					}
 					contact = contact->next;
 				}while( contact && cpl_env.lu_append_branches);
-				/* set the flag for modifing the location set */
+				/* set the flag for modifying the location set */
 				intr->flags |= CPL_LOC_SET_MODIFIED;
 				/* we found a valid contact */
 				kid = success_kid;
@@ -398,7 +398,7 @@ static inline char *run_location( struct cpl_interpreter *intr )
 		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
 		goto runtime_error;
 	}
-	/* set the flag for modifing the location set */
+	/* set the flag for modifying the location set */
 	intr->flags |= CPL_LOC_SET_MODIFIED;
 
 	return get_first_child(intr->ip);
@@ -454,7 +454,7 @@ static inline char *run_remove_location( struct cpl_interpreter *intr )
 	} else {
 		remove_location( &(intr->loc_set), url.s, url.len );
 	}
-	/* set the flag for modifing the location set */
+	/* set the flag for modifying the location set */
 	intr->flags |= CPL_LOC_SET_MODIFIED;
 
 done:
@@ -511,7 +511,7 @@ static inline char *run_sub( struct cpl_interpreter *intr )
 		goto script_error;
 	}
 	if ( NR_OF_ATTR(p)!=0 ) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: inavlid subaction node reached "
+		LOG(L_ERR,"ERROR:cpl_c:run_sub: invalid subaction node reached "
 		"(attrs=%d); expected (0)!\n",NR_OF_ATTR(p));
 		goto script_error;
 	}
@@ -747,7 +747,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 
 	/* msg which I'm working on can be in private memory or is a clone into
 	 * shared memory (if I'm after a failed proxy); So, it's better to removed
-	 * by myself the lump that I added previosly */
+	 * by myself the lump that I added previously */
 	unlink_lump_rpl( intr->msg, lump);
 	free_lump_rpl( lump );
 
@@ -785,7 +785,7 @@ static inline char *run_log( struct cpl_interpreter *intr )
 		goto script_error;
 	}
 
-	/* is loging enabled? */
+	/* is logging enabled? */
 	if ( cpl_env.log_dir==0 )
 		goto done;
 
@@ -940,17 +940,17 @@ script_error:
 static inline int run_default( struct cpl_interpreter *intr )
 {
 	if (!(intr->flags&CPL_PROXY_DONE)) {
-		/* no signalling operations */
+		/* no signaling operations */
 		if ( !(intr->flags&CPL_LOC_SET_MODIFIED) ) {
 			/*  no location modifications */
 			if (intr->loc_set==0 ) {
-				/* case 1 : no location modifications or signalling operations
+				/* case 1 : no location modifications or signaling operations
 				 * performed, location set empty ->
 				 * Look up the user's location through whatever mechanism the
 				 * server would use if no CPL script were in effect */
 				return SCRIPT_DEFAULT;
 			} else {
-				/* case 2 : no location modifications or signalling operations
+				/* case 2 : no location modifications or signaling operations
 				 * performed, location set non-empty: (This can only happen 
 				 * for outgoing calls.) ->
 				 * Proxy the call to the address in the location set.
@@ -959,7 +959,7 @@ static inline int run_default( struct cpl_interpreter *intr )
 				return SCRIPT_DEFAULT;
 			}
 		} else {
-			/* case 3 : location modifications performed, no signalling 
+			/* case 3 : location modifications performed, no signaling 
 			 * operations ->
 			 * Proxy the call to the addresses in the location set */
 			if (!cpl_proxy_to_loc_set(intr->msg,&(intr->loc_set),intr->flags))
@@ -969,10 +969,10 @@ static inline int run_default( struct cpl_interpreter *intr )
 	} else {
 		/* case 4 : proxy operation previously taken -> return whatever the 
 		 * "best" response is of all accumulated responses to the call to this
-		 * point, according to the rules of the underlying signalling
+		 * point, according to the rules of the underlying signaling
 		 * protocol. */
 		/* we will let ser to choose and forward one of the replies -> for this
-		 * nothinh must be done */
+		 * nothing must be done */
 		return SCRIPT_END;
 	}
 	/*return SCRIPT_RUN_ERROR;*/

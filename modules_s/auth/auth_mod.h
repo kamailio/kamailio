@@ -3,7 +3,7 @@
  *
  * Digest Authentication Module
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -45,7 +45,7 @@ extern str secret;            /* secret phrase used to generate nonce */
 extern int nonce_expire;      /* nonce expire interval */
 extern str rpid_prefix;       /* Remote-Party-ID prefix */
 extern str rpid_suffix;       /* Remote-Party-ID suffix */
-extern str realm_prefix;      /* stripp off auto-generated realm */
+extern str realm_prefix;      /* strip off auto-generated realm */
 
 
 /* Stateless reply function pointer */

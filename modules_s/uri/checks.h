@@ -3,7 +3,7 @@
  *
  * Various URI checks
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -52,13 +52,13 @@ int has_totag(struct sip_msg* _m, char* _foo, char* _bar);
 
 
 /*
- * Find if Request URI has a given paramater with no value
+ * Find if Request URI has a given parameter with no value
  */
 int uri_param_1(struct sip_msg* _msg, char* _param, char* _str2);
 
 
 /*
- * Find if Request URI has a given paramater with matching value
+ * Find if Request URI has a given parameter with matching value
  */
 int uri_param_2(struct sip_msg* _msg, char* _param, char* _value);
 

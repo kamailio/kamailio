@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -128,7 +128,7 @@ static int extcmd_init(void)
 	if (load_tm( &tmb )==-1) 
 		goto error;
 
-	/* check the parametre */
+	/* check the parameter */
 	if ( !my_address) {
 		LOG(L_ERR,"ERROR:extcmd_init: no address specified for listening!!\n");
 		goto error;
@@ -185,12 +185,12 @@ int extcmd_child_init(int rank)
 
 	/* only the child 1 will fork */
 	if (rank==1) {
-		/* creats a process that listen for connetions */
+		/* creates a process that listen for connections */
 		if ( (foo=fork())<0 ) {
 			LOG(L_ERR,"ERROR: extcmd_child_init: cannot fork \n");
 			goto error;
 		}
-		/* the child will run the listening rutine ;-) */
+		/* the child will run the listening routine ;-) */
 		if (!foo) {
 			close( rpl_pipe[1] );
 			close( req_pipe[1] );

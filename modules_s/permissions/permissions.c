@@ -135,7 +135,7 @@ struct module_exports exports = {
 
 
 /*
- * Extract path (the begining of the string
+ * Extract path (the beginning of the string
  * up to the last / character
  * Returns length of the path
  */
@@ -152,7 +152,7 @@ static int get_path(char* pathname)
 
 
 /*
- * Prepend path if necesarry
+ * Prepend path if necessary
  */
 static char* get_pathname(char* name)
 {
@@ -245,7 +245,7 @@ static char* get_plain_uri(const str* uri)
 
 
 /*
- * determinates the permission of the call
+ * determines the permission of the call
  * return values:
  * -1:	deny
  * 1:	allow
@@ -313,13 +313,13 @@ static int check_routing(struct sip_msg* msg, int idx)
 	     /* rule exists in allow file */
 	if (search_rule(allow[idx].rules, from_str, ruri_str)) {
 		if (check_all_branches) goto check_branches;
-    		DBG("check_routing(): allow roule found => routing is allowed\n");
+    		DBG("check_routing(): allow rule found => routing is allowed\n");
 		return 1;
 	}
 	
 	/* rule exists in deny file */
 	if (search_rule(deny[idx].rules, from_str, ruri_str)) {
-		DBG("check_routing(): deny roule found => routing is denied\n");
+		DBG("check_routing(): deny rule found => routing is denied\n");
 		return -1;
 	}
 
@@ -372,7 +372,7 @@ static int load_fixup(void** param, int param_no)
 	idx = find_index(table, pathname);
 
 	if (idx == -1) {
-		     /* Not opened yet, opent the file and parse it */
+		     /* Not opened yet, open the file and parse it */
 		table[rules_num].filename = pathname;
 		table[rules_num].rules = parse_config_file(pathname);
 		if (table[rules_num].rules) {
@@ -435,7 +435,7 @@ static int single_fixup(void** param, int param_no)
 
 /*
  * Contact header field iterator, returns next contact if any, it doesn't
- * parse message header if not absolutely necesarry
+ * parse message header if not absolutely necessary
  */
 static contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
 {
@@ -674,7 +674,7 @@ static int check_register(struct sip_msg* msg, int idx)
 	
 		     /* rule exists in deny file */
 		if (search_rule(deny[idx].rules, to_str, contact_str)) {
-			DBG("check_register(): Deny roule found => Register denied\n");
+			DBG("check_register(): Deny rule found => Register denied\n");
 			return -1;
 		}
 

@@ -1,9 +1,9 @@
 /*
  * $Id$
  *
- * Usrlocation module interface
+ * User location module interface
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -69,7 +69,7 @@ extern int db_mode;
 extern int use_domain;
 extern int desc_time_order;
 
-extern db_con_t* ul_dbh;   /* Dabase connection handle */
+extern db_con_t* ul_dbh;   /* Database connection handle */
 extern db_func_t ul_dbf;
 
 

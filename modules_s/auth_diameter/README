@@ -9,7 +9,7 @@ Edited by
 
 Elena-Ramona Modroiu
 
-   Copyright © 2003, 2004 by FhG FOKUS
+   Copyright © 2003, 2004 FhG FOKUS
      _________________________________________________________
 
    Table of Contents
@@ -37,16 +37,25 @@ Elena-Ramona Modroiu
 
    2. Developer's Guide
    3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Digest Authentication
+   1-2. Set diameter_client_host parameter
+   1-3. Set diameter_client_port parameter
+   1-4. Set use_domain parameter
+   1-5. diameter_www_authorize usage
+   1-6. diameter_proxy_authorize usage
+   1-7. diameter_is_user_in usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   This  module  implements  SIP authentication and authorization
+   This module implements SIP authentication and authorization
    with DIAMETER server, namely DIameter Server Client (DISC).
 
-   The  digest  authentication  mechanism  is  presented  in next
+   The digest authentication mechanism is presented in next
    figure.
 
    Example 1-1. Digest Authentication
@@ -90,7 +99,7 @@ Chapter 1. User's Guide
 
 1.2.2. External Libraries or Applications
 
-   The  following  libraries  or  applications  must be installed
+   The following libraries or applications must be installed
    before running SER with this module loaded:
 
      * None.
@@ -124,7 +133,7 @@ modparam("auth_diameter", "diameter_client_port", 3000)
 
 1.3.3. use_domain (int)
 
-   Specifies  whether  the  domain  name part of URI is used when
+   Specifies whether the domain name part of URI is used when
    checking the user's privileges.
 
    Default value is "0 (0==false and 1==true )". 
@@ -139,15 +148,15 @@ modparam("auth_diameter", "use_domain", 1)
 
 1.4.1. diameter_www_authorize(realm)
 
-   SIP  Server  checks for authorization having a DIAMETER server
-   in  backend.  If  no  credentials  are provided inside the SIP
-   request  then  a  challenge  is  sent  back  to  UAC.  If  the
-   credentials  don't  match  the ones computed by DISC then "403
+   SIP Server checks for authorization having a DIAMETER server
+   in backend. If no credentials are provided inside the SIP
+   request then a challenge is sent back to UAC. If the
+   credentials don't match the ones computed by DISC then "403
    Forbidden" is sent back.
 
    Meaning of the parameters is as follows:
 
-     * realm  -  the  realm  to  be  use  for  authentication and
+     * realm - the realm to be use for authentication and
        authorization.
 
    Example 1-5. diameter_www_authorize usage
@@ -164,12 +173,12 @@ if(!diameter_www_authorize("iptel.org"))
    SIP Proxy checks for authorization having a DIAMETER server in
    backend. If no credentials are provided inside the SIP request
    then a challenge is sent back to UAC. If the credentials don't
-   match  the  ones computed by DISC then "403 Forbidden" is sent
+   match the ones computed by DISC then "403 Forbidden" is sent
    back.
 
    Meaning of the parameters is as follows:
 
-     * realm  -  the  realm  to  be  use  for  authentication and
+     * realm - the realm to be use for authentication and
        authorization.
 
    Example 1-6. diameter_proxy_authorize usage
@@ -187,10 +196,10 @@ if(!diameter_proxy_authorize("iptel.org"))
 
    Meaning of the parameters is as follows:
 
-     * who  -  what  header to be used to get the SIP URI that is
-       wanted  to  be checked being member in a certain group. It
+     * who - what header to be used to get the SIP URI that is
+       wanted to be checked being member in a certain group. It
        can be: "Request-URI", "From", "To" or "Credentials".
-     * group  - the group name where to check if the user is part
+     * group - the group name where to check if the user is part
        of.
 
    Example 1-7. diameter_is_user_in usage
@@ -209,7 +218,7 @@ if(!diameter_is_user_in("From", "voicemail"))
 
 Chapter 2. Developer's Guide
 
-   The  module  does  not provide any sort of API to use in other
+   The module does not provide any sort of API to use in other
    SER modules.
      _________________________________________________________
 
@@ -225,20 +234,20 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First  at  all  check if your question was already answered on
+   First at all check if your question was already answered on
    one of our mailing lists:
 
      * http://mail.iptel.org/mailman/listinfo/serusers
      * http://mail.iptel.org/mailman/listinfo/serdev
 
-   E-mails  regarding  any  stable  version  should  be  sent  to
+   E-mails regarding any stable version should be sent to
    <serusers@iptel.org> and e-mail regarding development versions
    or CVS snapshots should be send to <serdev@iptel.org>.
 
-   If   you   want   to   keep  the  mail  private,  send  it  to
+   If you want to keep the mail private, send it to
    <serhelp@iptel.org>.
 
    3.3. How can I report a bug?
 
-   Please      follow     the     guidelines     provided     at:
+   Please follow the guidelines provided at:
    http://iptel.org/ser/bugs

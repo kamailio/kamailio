@@ -2,7 +2,7 @@
  * $Id$
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -156,7 +156,7 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 
 	/* get the message's body
 	 * anyhow we have to call this function, so let's do it at the beginning
-	 * to force the parsing of all the headers - like this we avoid separat
+	 * to force the parsing of all the headers - like this we avoid separate
 	 * calls of parse_headers function for FROM, CONTENT_LENGTH, TO hdrs  */
 	body.s = get_body( msg );
 	if (body.s==0) {
@@ -255,7 +255,7 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	anchor.fd = 0;
 	anchor.cmd.s = cmd;
 	anchor.cmd.len = cmd_len;
-	/* send the anchor throught pipe to the extcmd server process */
+	/* send the anchor through pipe to the extcmd server process */
 	DBG("DEBUG:extcmd:dump_msg: posting request in pipe!\n");
 	if (write( req_pipe[1], &anchor, sizeof(anchor))!=sizeof(anchor) ) {
 		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot write to request pipe"
@@ -278,7 +278,7 @@ static int push_reply_to_client(int code, char* reason_s, int reason_l,
 	str reply;
 	char *p;
 
-	/* compose the reply commnad theat will be sent back to the client */
+	/* compose the reply commnad that will be sent back to the client */
 	reply.len = 1/*type*/+4/*cmd_size*/+4/*rpl_code*/+4/*rpl_reason_size*/+
 		reason_l/*rpl_reason_string*/;
 	reply.s = (char*) shm_malloc( reply.len );
@@ -555,7 +555,7 @@ static int get_cmd( int fd, str *cmd)
 	len = read_n( fd, HEADER_SIZE , buffer);
 	if (len<HEADER_SIZE) {
 		LOG(L_ERR,"ERROR:extcmd:get_cmd: cannot read command's header: %s \n",
-			len<0?strerror(len):"incomplet string");
+			len<0?strerror(len):"incomplete string");
 		return NO_CMD;
 	}
 
@@ -568,7 +568,7 @@ static int get_cmd( int fd, str *cmd)
 	len = read_n( fd, cmd_len , buffer);
 	if (len<cmd_len) {
 		LOG(L_ERR,"ERROR:extcmd:get_cmd: cannot read command's body: %s \n",
-			len<0?strerror(len):"incomplet string");
+			len<0?strerror(len):"incomplete string");
 		return NO_CMD;
 	}
 	DBG("DEBUG:extcmd:get_cmd: command = [%.*s]\n",cmd_len,buffer);
@@ -646,7 +646,7 @@ void extcmd_server_process( int server_sock )
 	int fd = -1;
 	int index;
 
-	/* set SIG_PIPE to be ignored by this proccess */
+	/* set SIG_PIPE to be ignored by this process */
 	if (signal( SIGPIPE, SIG_IGN)==SIG_ERR) {
 		LOG(L_ERR,"ERROR:extcmd_server_process: cannot set SIGPIPE to be "
 			"ignored! \n");
@@ -674,9 +674,9 @@ void extcmd_server_process( int server_sock )
 		if (clients_is_full())
 			FD_CLR_AND_MAX( &read_set, server_sock, &max_fd);
 		/* wait for read something */
-		DBG("DEBUG:extcmd_server_process: waitting to read!\n");
+		DBG("DEBUG:extcmd_server_process: waiting to read!\n");
 		if (select( max_fd+1, &read_set, 0, 0, 0)==-1) {
-			LOG(L_ERR,"ERROR:extcmd_server_process: select faild : %s\n",
+			LOG(L_ERR,"ERROR:extcmd_server_process: select failed : %s\n",
 				strerror(errno) );
 			sleep(1);
 			continue;
@@ -687,10 +687,10 @@ void extcmd_server_process( int server_sock )
 		if ( FD_ISSET(server_sock, &read_set) ) {
 			fd=accept(server_sock,(struct sockaddr*)&sau,(socklen_t*)&sau_len);
 			if (fd==-1) {
-				LOG(L_ERR,"ERROR: extcmd_server_process: accept faild : %s\n",
+				LOG(L_ERR,"ERROR: extcmd_server_process: accept failed : %s\n",
 					strerror(errno) );
 			} else {
-				DBG("DEBUG:extcmd_server_process: connextion accepted \n");
+				DBG("DEBUG:extcmd_server_process: connection accepted \n");
 				add_client(fd);
 				/* add this socket to wait_sock to read from it */
 				FD_SET_AND_MAX( &wait_set, fd, &max_fd);
@@ -722,7 +722,7 @@ void extcmd_server_process( int server_sock )
 				/* BYE command - used by the client to end the connection */
 				case BYE_CMD:
 					DBG("DEBUG:extcmd_server_process: BYE received->close\n");
-					/* remove clinet's fd from wait_sock set */
+					/* remove client's fd from wait_sock set */
 					FD_CLR_AND_MAX( &wait_set, fd, &max_fd);
 					/* remove client */
 					del_client(index);

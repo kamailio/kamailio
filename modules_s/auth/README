@@ -25,7 +25,8 @@ Jan Janak
 
               1.3.1. secret (string)
               1.3.2. nonce_expire (integer)
-              1.3.3. rpid_suffix (string)
+              1.3.3. rpid_prefix (string)
+              1.3.4. rpid_suffix (string)
 
         1.4. Exported Functions
 
@@ -33,7 +34,8 @@ Jan Janak
               1.4.2. proxy_challenge(realm, qop)
               1.4.3. consume_credentials()
               1.4.4. is_rpid_user_e164()
-              1.4.5. append_rpid_hf
+              1.4.5. append_rpid_hf()
+              1.4.6. append_rpid_hf(prefix, suffix)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -41,12 +43,14 @@ Jan Janak
    List of Examples
    1-1. Setting secret module parameter
    1-2. nonce_expire example
-   1-3. rpid_suffix
-   1-4. www_challenge usage
-   1-5. proxy_challenge usage
-   1-6. consume_credentials example
-   1-7. is_rpid_user_e164 usage
-   1-8. append_rpid_hf
+   1-3. rpid_prefix
+   1-4. rpid_suffix
+   1-5. www_challenge usage
+   1-6. proxy_challenge usage
+   1-7. consume_credentials example
+   1-8. is_rpid_user_e164 usage
+   1-9. append_rpid_hf
+   1-10. append_rpid_hf(prefix, suffix)
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -56,14 +60,14 @@ Chapter 1. User's Guide
    This is a generic module that itself doesn't provide all
    functions necessary for authentication but provides functions
    that are needed by all other authentication related modules
-   (so called authenticatio backends).
+   (so called authentication backends).
 
    We decided to break the authentication code into several
    modules because there are now more than one backends
    (currently database authentication and radius are supported).
    This allows us to create separate packages so uses can install
    and load only required functionality. This also allows us to
-   avoid unecessary dependencies in the binary packages.
+   avoid unnecessary dependencies in the binary packages.
      _________________________________________________________
 
 1.2. Dependencies
@@ -101,7 +105,18 @@ modparam("auth", "secret", "johndoessecretphrase")
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
      _________________________________________________________
 
-1.3.3. rpid_suffix (string)
+1.3.3. rpid_prefix (string)
+
+   Prefix to be added to Remote-Party-ID header field just before
+   the URI returned from either radius or database.
+
+   Default value is "".
+
+   Example 1-3. rpid_prefix
+modparam("auth", "rpid_prefix", "Whatever <")
+     _________________________________________________________
+
+1.3.4. rpid_suffix (string)
 
    Suffix to be added to Remote-Party-ID header field after the
    URI returned from either radius or database.
@@ -109,8 +124,8 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
    Default value is
    ";party=calling;id-type=subscriber;screen=yes".
 
-   Example 1-3. rpid_suffix
-modparam("auth", "rpid_suffix", "whatever")
+   Example 1-4. rpid_suffix
+modparam("auth", "rpid_suffix", "@1.2.3.4>")
      _________________________________________________________
 
 1.4. Exported Functions
@@ -129,24 +144,24 @@ modparam("auth", "rpid_suffix", "whatever")
 
      * realm - Realm is a opaque string that the user agent
        should present to the user so he can decide what username
-       and password to use. Usualy this is domain of the host the
-       server is running on.
+       and password to use. Usually this is domain of the host
+       the server is running on.
        If an empty string "" is used then the server will
        generate it from the request. In case of REGISTER requests
-       To header field domain will be used (beucase this header
+       To header field domain will be used (because this header
        field represents a user being registered), for all other
        messages From header field domain will be used.
      * qop - Value of this parameter can be either "1" or "0".
        When set to 1 then the server will put qop parameter in
        the challenge. When set to 0 then the server will not put
        qop parameter in the challenge. It is strongly recommended
-       to use qop parameter, hovewere there are still some user
+       to use qop parameter, however there are still some user
        agents that cannot handle qop parameter properly so we
        made this optional. On the other hand there are still some
        user agents that cannot handle request without qop
        parameter too.
 
-   Example 1-4. www_challenge usage
+   Example 1-5. www_challenge usage
 ...
 if (www_authorize("iptel.org", "subscriber")) {
     www_challenge("iptel.org", "1");
@@ -168,8 +183,8 @@ if (www_authorize("iptel.org", "subscriber")) {
 
      * realm - Realm is a opaque string that the user agent
        should present to the user so he can decide what username
-       and password to use. Usualy this is domain of the host the
-       server is running on.
+       and password to use. Usually this is domain of the host
+       the server is running on.
        If an empty string "" is used then the server will
        generate it from the request. From header field domain
        will be used as realm.
@@ -177,13 +192,13 @@ if (www_authorize("iptel.org", "subscriber")) {
        When set to 1 then the server will put qop parameter in
        the challenge. When set to 0 then the server will not put
        qop parameter in the challenge. It is strongly recommended
-       to use qop parameter, hovewere there are still some user
+       to use qop parameter, however there are still some user
        agents that cannot handle qop parameter properly so we
        made this optional. On the other hand there are still some
        user agents that cannot handle request without qop
        parameter too.
 
-   Example 1-5. proxy_challenge usage
+   Example 1-6. proxy_challenge usage
 ...
 if (!proxy_authorize("", "subscriber)) {
     proxy_challenge("", "1");  # Realm will be autogenerated
@@ -202,7 +217,7 @@ if (!proxy_authorize("", "subscriber)) {
    The function must be called after www_authorize or
    proxy_authorize.
 
-   Example 1-6. consume_credentials example
+   Example 1-7. consume_credentials example
 ...
 if (www_authorize("", "subscriber)) {
     consume_credentials();
@@ -219,7 +234,7 @@ if (www_authorize("", "subscriber)) {
    fails, if no such SIP URI exists (i.e. radius server or
    database didn't provide this information).
 
-   Example 1-7. is_rpid_user_e164 usage
+   Example 1-8. is_rpid_user_e164 usage
 ...
 if (is_rpid_user_e164()) {
                     # do something here
@@ -227,7 +242,7 @@ if (is_rpid_user_e164()) {
 ...
      _________________________________________________________
 
-1.4.5. append_rpid_hf
+1.4.5. append_rpid_hf()
 
    Appends to the message a Remote-Party-ID header that contains
    header 'Remote-Party-ID: ' followed by the saved value of the
@@ -235,9 +250,33 @@ if (is_rpid_user_e164()) {
    by the value of module parameter radius_rpid_suffix. The
    function does nothing if no saved SIP URI exists.
 
-   Example 1-8. append_rpid_hf
+   Example 1-9. append_rpid_hf
 ...
 append_rpid_hf();  # Append Remote-Party-ID header field
+...
+     _________________________________________________________
+
+1.4.6. append_rpid_hf(prefix, suffix)
+
+   This function is the same as Section 1.4.5. The only
+   difference is that it accepts two parameters--prefix and
+   suffix to be added to Remote-Party-ID header field. This
+   function ignores rpid_prefix and rpid_suffix parameters,
+   instead of that allows to set them in every call.
+
+   Meaning of the parameters is as follows:
+
+     * prefix - Prefix of the Remote-Party-ID URI. The string
+       will be added at the begining of body of the header field,
+       just before the URI.
+     * suffix - Suffix of the Remote-Party-ID header field. The
+       string will be appended at the end of the header field. It
+       can be used to set various URI parameters, for example.
+
+   Example 1-10. append_rpid_hf(prefix, suffix)
+...
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");  #
+Append Remote-Party-ID header field
 ...
      _________________________________________________________
 

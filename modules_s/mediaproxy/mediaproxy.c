@@ -1017,7 +1017,7 @@ sendMediaproxyCommand(char *command)
 }
 
 
-// Miscelaneous helper functions
+// Miscellaneous helper functions
 
 /* Test if IP in `address' belongs to a RFC1918 network */
 static inline int
@@ -1157,7 +1157,7 @@ checkAsymmetricFile(AsymmetricClients *aptr)
 
 
 //
-// This is a hack. Until a I find a better way to allow all childs to update
+// This is a hack. Until a I find a better way to allow all children to update
 // the asymmetric client list when the files change on disk, it stays as it is
 // A timer registered from mod_init() only runs in one of the ser processes
 // and the others will always see the file that was read at startup.
@@ -1555,7 +1555,7 @@ mod_init(void)
     checkAsymmetricFile(&sipAsymmetrics);
     checkAsymmetricFile(&rtpAsymmetrics);
 
-    // childs won't benefit from this. figure another way
+    // children won't benefit from this. figure another way
     //register_timer(checkAsymmetricFiles, NULL, 5);
 
     return 0;

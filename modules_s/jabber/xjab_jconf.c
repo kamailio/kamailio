@@ -4,7 +4,7 @@
  * eXtended JABber module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -147,7 +147,7 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 
 	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jconf_init_sip: conferece id=%d\n", jcf->jcid);
+	DBG("XJAB:xj_jconf_init_sip: conference id=%d\n", jcf->jcid);
 #endif	
 	return 0;
 	
@@ -189,7 +189,7 @@ int xj_jconf_init_jab(xj_jconf jcf)
 	}
 	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jconf_init_jab: conferece id=%d\n", jcf->jcid);
+	DBG("XJAB:xj_jconf_init_jab: conference id=%d\n", jcf->jcid);
 #endif
 	return 0;
 	

@@ -84,7 +84,7 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 }
 
 
-/* Check if domain exsist in hash table */
+/* Check if domain exists in hash table */
 int hash_table_lookup (str *domain)
 {
 	struct domain_list *np;

@@ -3,7 +3,7 @@
  *
  * Common stuff
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -90,7 +90,7 @@ int extract_aor(str* _uri, str* _a)
 		 memcpy(aor_buf + _a->len + 1, puri.host.s, puri.host.len);
 		 _a->len += 1 + puri.host.len;
 	}
-	/* end of stripptig patch */
+	/* end of stripping patch */
 
 	if (case_sensitive) {
 		tmp.s = _a->s + user_len + 1;

@@ -75,8 +75,8 @@ Chapter 1. User's Guide
        when responding to REGISTER request or for sending back
        error responses 
      * USRLOC (User Location) module - used for implementing
-       lookup("registation") tag (adding into location set of the
-       users's contact) 
+       lookup("registration") tag (adding into location set of
+       the users' contact) 
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -185,7 +185,7 @@ modparam("cpl_c","proxy_route",1)
 1.3.7. nat_flag (int)
 
    Sets the flag used for marking calls via NAT. Used by lookup
-   tag when retriving a contact behind a NAT (this flag will be
+   tag when retrieving a contact behind a NAT (this flag will be
    set).
 
    Default value of this parameter is 6. 
@@ -218,7 +218,7 @@ modparam("cpl_c","lookup_domain",1)
    fetched from new_uri or requested uri or from To header -in
    this order- (for incoming execution) or from FROM header (for
    outgoing execution). Regarding the stateful/stateless message
-   processing, the function is very flexibile, being able to run
+   processing, the function is very flexible, being able to run
    in different modes (see below the"mode" parameter). Normally
    this function will end script execution. There is no guaranty
    that the CPL script interpretation ended when ser script ended
@@ -239,36 +239,36 @@ modparam("cpl_c","lookup_domain",1)
        the outgoing part of script (when a user is generating an
        INVITE - call).
      * mode - sets the interpreter mode as stateless/stateful
-       behaviour. The follwoing modes are accepted:
+       behavior. The following modes are accepted:
           + IS_STATELESS - the current INVITE has no transaction
-            created yet. All replys (redirection or deny) will be
-            done is a stateless way. The execution will switch to
-            statefull only whena proxy is done. So, if the
+            created yet. All replies (redirection or deny) will
+            be done is a stateless way. The execution will switch
+            to stateful only when proxy is done. So, if the
             function returns, will be in stateless mode. 
           + IS_STATEFUL - the current INVITE has already a
-            transaction associated. All signalling operations
-            (replys or proxy) will be done in stateful way.So, if
-            the function returns, will be in stateful mode. 
+            transaction associated. All signaling operations
+            (replies or proxy) will be done in stateful way.So,
+            if the function returns, will be in stateful mode. 
           + FORCE_STATEFUL - the current INVITE has no
-            transaction created yet. All signalling operations
-            will be done is a stateful way (on signalling, the
+            transaction created yet. All signaling operations
+            will be done is a stateful way (on signaling, the
             transaction will be created from within the
             interpreter). So, if the function returns, will be in
             stateless mode. 
-       HINT: is_statefull is vary difficult to manage from the
-       routing script (script processing can continue in
-       statefull mode); is_stateless is the fastes and less
-       resources consumer (transaction is created only if
-       proxying is done), but there is minimal protection against
-       retransmisions (since replies are send stateless);
-       force_statefull is a good compromise - all signalling is
-       done statefull (retransmission protection) and in the same
+       HINT: is_stateful is vary difficult to manage from the
+       routing script (script processing can continue in stateful
+       mode); is_stateless is the fastest and less resources
+       consumer (transaction is created only if proxying is
+       done), but there is minimal protection against
+       retransmissions (since replies are send stateless);
+       force_stateful is a good compromise - all signaling is
+       done stateful (retransmission protection) and in the same
        time, if returning to script, it will be in stateless mode
        (easy to continue the routing script execution)
 
    Example 1-9. cpl_run_script usage
 ...
-cpl_run_script("incoming","force_statefull");
+cpl_run_script("incoming","force_stateful");
 ...
      _________________________________________________________
 

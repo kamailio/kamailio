@@ -3,7 +3,7 @@
  *
  * Various URI related functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -140,7 +140,7 @@ struct module_exports exports = {
 
 
 /*
- * Module initialization function calle in each child separately
+ * Module initialization function callee in each child separately
  */
 static int child_init(int rank)
 {

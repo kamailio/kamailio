@@ -3,7 +3,7 @@
  *
  * Digest Authentication - Diameter support
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -285,7 +285,7 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 	LOG(L_ERR, M_NAME": too many old messages received\n");
 	return AAA_TIMEOUT;
 next:
-	/* endlich die richtige Antworte */
+	/* Finally die correct answer */
 	avp = AAAFindMatchingAVP(msg, NULL, AVP_Service_Type,
 							vendorID, AAA_FORWARD_SEARCH);
 	if(!avp)

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -34,7 +34,7 @@
 #ifndef _ACC_H
 #define _ACC_H
 
-/* what is printed if value unknonw */
+/* what is printed if value unknown */
 #define NA "n/a"
 #define NA_LEN (sizeof(NA)-1)
 /* syslog prefix */

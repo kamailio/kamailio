@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -91,7 +91,7 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
 		goto error;
 	}
 
-	/*rewritting the max-fwd value in the message (buf and orig)*/
+	/*rewriting the max-fwd value in the message (buf and orig)*/
 	n = btostr(mf_val->s,x-1);
 	for( i=n ; i<mf_val->len ; i++ )
 		mf_val->s[i] = ' ';
@@ -131,7 +131,7 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	memcpy( buf+len , CRLF , CRLF_LEN );
 	len +=CRLF_LEN;
 
-	/*inserts the header at the begining of the message*/
+	/*inserts the header at the beginning of the message*/
 	anchor = anchor_lump(msg, msg->headers->name.s - msg->buf, 0 , 0);
 	if (anchor == 0) {
 		LOG(L_ERR, "ERROR: add_maxfwd_header :"

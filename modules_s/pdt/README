@@ -111,9 +111,9 @@ domain[3330]=iptel.org
 1.3.1. db_url (string)
 
    SQL URL of database--username, password, host, port and
-   database (ex: sql://username:password@hostname.com/database)
+   database (ex: mysql://username:password@hostname.com/database)
 
-   Default value is "sql://root@127.0.0.1/pdt". 
+   Default value is "mysql://root@127.0.0.1/pdt". 
 
    Example 1-2. Set db_url parameter
 ...

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -61,7 +61,7 @@
 			if((_p)+(_pos) > (_e)) goto error
 
 /**
- * apostrphes escaping
+ * apostrophes escaping
  * - src: source buffer
  * - slen: length of source buffer
  * - dst: destination buffer
@@ -102,7 +102,7 @@ int m_apo_escape(char* src, int slen, char* dst, int dlen)
 }
 
 /**
- * etract the value of Content-Type header
+ * extract the value of Content-Type header
  * - src: pointer to C-T content
  * - len: length of src
  * - ctype: parsed C-T

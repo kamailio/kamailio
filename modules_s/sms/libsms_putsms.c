@@ -132,7 +132,7 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 	}
 	// Swap every second character
 	swapchars(tmp,foo);
-	flags = 0x01;   /* SMS-Sumbit MS to SMSC */
+	flags = 0x01;   /* SMS-Submit MS to SMSC */
 	if (sms_report_type!=NO_REPORT)
 		flags |= 0x20 ; /* status report request */
 	coding=240+1; // Dummy + Class 1
@@ -244,7 +244,7 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 	}
 
 	if (err_code==0)
-		LOG(L_WARN,"WARNNING: something spuky is going on with the modem!"
+		LOG(L_WARN,"WARNING: something spooky is going on with the modem!"
 			" Re-inited and re-tried for %d times without success!\n",
 			mdm->retry);
 	return (err_code==0?-2:(err_code==2?sms_id:-1));

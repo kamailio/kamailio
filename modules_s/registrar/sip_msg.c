@@ -3,7 +3,7 @@
  *
  * SIP message related functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -67,7 +67,7 @@ static inline int get_expires_hf(struct sip_msg* _m)
 
 
 /*
- * Parse the whole messsage and bodies of all header fieds
+ * Parse the whole message and bodies of all header fields
  * that will be needed by registrar
  */
 int parse_message(struct sip_msg* _m)

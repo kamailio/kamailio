@@ -140,7 +140,7 @@ modparam("registrar", "default_q", 100)
 	    <title><varname>append_branches</varname> (integer)</title>
 	    <para>
 		The parameter controls how lookup function processes multiple contacts.  If there
-		are multiple contacts for the given username in usrloc and this parametr is set to
+		are multiple contacts for the given username in usrloc and this parameter is set to
 		1, Request-URI will be overwritten with the highest-q rated contact and the rest
 		will be appended to sip_msg structure and can be later used by tm for forking. If
 		the parameter is set to 0, only Request-URI will be overwritten with the highest-q
@@ -241,7 +241,7 @@ modparam("registrar", "desc_time_order", 1)
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			<emphasis>domain</emphasis> - Logical domain within registrar. If dababase
+			<emphasis>domain</emphasis> - Logical domain within registrar. If database
 			is used then this must be name of the table which stores the contacts.
 		    </para>
 		</listitem>

@@ -351,7 +351,7 @@ int val2str(db_val_t* _v, char* _s, int* _len)
 		break;
 
 	default:
-		DBG("val2str(): Unknow data type\n");
+		DBG("val2str(): Unknown data type\n");
 		return -7;
 	}
 	return -8;

@@ -20,7 +20,7 @@
 		The function registers a new domain. Domain is just another name for table used in
 		registrar. The function is called from fixups in registrar. It gets name of the
 		domain as a parameter and returns pointer to a new domain structure. The fixup than
-		'fixes' the parametr in registrar so that it will pass the pointer instead of the
+		'fixes' the parameter in registrar so that it will pass the pointer instead of the
 		name every time save() or lookup() is called. Some usrloc functions get the pointer
 		as parameter when called. For more details see implementation of save function in
 		registrar.
@@ -281,9 +281,9 @@
 	    <para>
 		The function retrieves all contacts of all registered users and returns them in the
 		caller-supplied buffer. If the buffer is too small, the function returns positive
-		value indicating how much additional space would be necessary to accomodate all of
+		value indicating how much additional space would be necessary to accommodate all of
 		them. Please note that the positive return value should be used only as a
-		<quote>hint</quote>, as there is no gurantee that during the time between two
+		<quote>hint</quote>, as there is no guarantee that during the time between two
 		subsequent calls number of registered contacts will remain the same.
 	    </para>
 	    <para>
@@ -376,7 +376,7 @@
     </section>
 	<section>
 	<title>Contact states</title>
-		<figure id="ucontact_states" float="0">
+		<figure id="ucontact-states" float="0">
 			<title>States of a ucontact</title>
 			<mediaobject>
 				<imageobject>
@@ -388,9 +388,9 @@
 		Contacts in one of the zombie states should be ignored by any function
 		which interacts with an external user. Contacts are only kept in a
 		zombie state to store the informations for replication. Contacts can
-		also apear in a zombie state even if no replication is used, but in
-		this case the contacts should be reomved by the next timer event 
-		automaticly.
+		also appear in a zombie state even if no replication is used, but in
+		this case the contacts should be removed by the next timer event 
+		automatically.
 		</para>
 	</section>
 </chapter>

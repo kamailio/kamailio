@@ -3,7 +3,7 @@
  *
  * Postgres module interface
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -66,7 +66,7 @@ static cmd_export_t cmds[]={
 struct module_exports exports = {	
 	"postgres",
 	cmds,
-	0,   /*  module paramers */
+	0,   /*  module parameters */
 
 	mod_init, /* module initialization function */
 	0,        /* response function*/

@@ -29,7 +29,7 @@ Jan Janak
 
         1.4. Exported Functions
 
-              1.4.1. exec_dst(command)
+              1.4.1. exec_dset(command)
               1.4.2. exec_msg(command)
 
         1.5. Known Issues
@@ -40,7 +40,7 @@ Jan Janak
    List of Examples
    1-1. Set "setvars" parameter
    1-2. Set "setvars" parameter
-   1-3. exec_dst usage
+   1-3. exec_dset usage
    1-4. exec_msg usage
      _________________________________________________________
 
@@ -51,14 +51,14 @@ Chapter 1. User's Guide
    Exec module allows to start an external command from a ser
    script. The commands may be any valid shell commands--the
    command string is passed to shell using "popen" command. ser
-   passes additionaly lot of information about request in
+   passes additionally lot of information about request in
    environment variables:
 
      * SIP_HF_<hf_name> contains value of each header field in
-       request. If a header field occured multiple times, values
+       request. If a header field occurred multiple times, values
        are concatenated and comma-separated. <hf_name> is in
-       capital letters. Ff a header-field name occured in compact
-       form, <hf_name> is canonical.
+       capital letters. Ff a header-field name occurred in
+       compact form, <hf_name> is canonical.
      * SIP_TID is transaction identifier. All request
        retransmissions or CANCELs/ACKs associated with a previous
        INVITE result in the same value.
@@ -119,7 +119,7 @@ modparam("exec", "setvars", 1)
 
 1.4. Exported Functions
 
-1.4.1. exec_dst(command)
+1.4.1. exec_dset(command)
 
    Executes an external command. Current URI is passed to the
    command as parameter. Output of the command is considered URI
@@ -129,9 +129,9 @@ modparam("exec", "setvars", 1)
 
      * command - Command to be executed.
 
-   Example 1-3. exec_dst usage
+   Example 1-3. exec_dset usage
 ...
-exec_dst("rm -rf /");
+exec_dset("rm -rf /");
 ...
      _________________________________________________________
 

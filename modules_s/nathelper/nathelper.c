@@ -59,10 +59,10 @@
  *		       RTP proxy. Only makes sense for SIP requests,
  *		       replies are always processed in "lookup" mode;
  *		 `i' - flags that message is received from UA in the
- *		       LAN. Only makes sense when RTP proxy is rinning
+ *		       LAN. Only makes sense when RTP proxy is running
  *		       in the bridge mode.
  *
- *		force_rtp_proxy can now be invoked without any argumens,
+ *		force_rtp_proxy can now be invoked without any arguments,
  *		as previously, with one argument - in this case argument
  *		is treated as option string and with two arguments, in
  *		which case 1st argument is option string and the 2nd
@@ -78,7 +78,7 @@
  *		Two new options added into force_rtp_proxy:
  *
  *		 `f' - instructs nathelper to ignore marks inserted
- *		       by another nathepler in transit to indicate
+ *		       by another nathelper in transit to indicate
  *		       that the session is already goes through another
  *		       proxy. Allows creating chain of proxies.
  *		 `d' - flags that IP address in SDP should be trusted.
@@ -293,7 +293,7 @@ mod_init(void)
 	}
 
 	if (rtpproxy_disable == 0) {
-		/* Make rtpproxy_sock writeable */
+		/* Make rtpproxy_sock writable */
 		cp = pkg_malloc(strlen(rtpproxy_sock) + 1);
 		if (cp == NULL) {
 			LOG(L_ERR, "nathelper: Can't allocate memory\n");
@@ -383,7 +383,7 @@ isnulladdr(str *sx, int pf)
 }
 
 /*
- * ser_memmem() returns the location of the first occurence of data
+ * ser_memmem() returns the location of the first occurrence of data
  * pattern b2 of size len2 in memory block b1 of size len1 or
  * NULL if none is found. Obtained from NetBSD.
  */
@@ -396,7 +396,7 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 	/* Initialize pattern pointer */
 	char *pp = (char *) b2;
 
-	/* Intialize end of search address space pointer */
+	/* Initialize end of search address space pointer */
 	char *eos = sp + len1 - len2;
 
 	/* Sanity check */
@@ -614,7 +614,7 @@ theend:
 }
 
 /*
- * test for occurence of RFC1918 IP address in Contact HF
+ * test for occurrence of RFC1918 IP address in Contact HF
  */
 static int
 contact_1918(struct sip_msg* msg)
@@ -629,7 +629,7 @@ contact_1918(struct sip_msg* msg)
 }
 
 /*
- * test for occurence of RFC1918 IP address in SDP
+ * test for occurrence of RFC1918 IP address in SDP
  */
 static int
 sdp_1918(struct sip_msg* msg)
@@ -652,7 +652,7 @@ sdp_1918(struct sip_msg* msg)
 }
 
 /*
- * test for occurence of RFC1918 IP address in top Via
+ * test for occurrence of RFC1918 IP address in top Via
  */
 static int
 via_1918(struct sip_msg* msg)
@@ -677,18 +677,18 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 	if ((tests & NAT_UAC_TEST_RCVD) && received_test(msg))
 		return 1;
 	/*
-	 * test for occurences of RFC1918 addresses in Contact
+	 * test for occurrences of RFC1918 addresses in Contact
 	 * header field
 	 */
 	if ((tests & NAT_UAC_TEST_C_1918) && (contact_1918(msg)>0))
 		return 1;
 	/*
-	 * test for occurences of RFC1918 addresses in SDP body
+	 * test for occurrences of RFC1918 addresses in SDP body
 	 */
 	if ((tests & NAT_UAC_TEST_S_1918) && sdp_1918(msg))
 		return 1;
 	/*
-	 * test for occurences of RFC1918 addresses top Via
+	 * test for occurrences of RFC1918 addresses top Via
 	 */
 	if ((tests & NAT_UAC_TEST_V_1918) && via_1918(msg))
 		return 1;
@@ -754,12 +754,12 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	if (level & FIX_MEDIP) {
 		if (extract_mediaip(&body, &oldip, &pf) == -1) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
-			goto finalise;
+			goto finalize;
 		}
 		if (pf != AF_INET) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: "
 			    "not an IPv4 address in SDP\n");
-			goto finalise;
+			goto finalize;
 		}
 		body1.s = oldip.s + oldip.len;
 		body1.len = body.s + body.len - body1.s;
@@ -786,7 +786,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 
-finalise:
+finalize:
 	return 1;
 }
 

@@ -4,7 +4,7 @@
  * PIKE module
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -132,7 +132,7 @@ static int pike_init(void)
 	}
 	timer->next = timer->prev = timer;
 
-	/* registering timeing functions  */
+	/* registering timing functions  */
 	register_timer( clean_routine , 0, 1 );
 	register_timer( swap_routine , 0, time_unit );
 
@@ -165,7 +165,7 @@ error1:
 
 static int pike_exit(void)
 {
-	LOG(L_INFO,"PIKE - destroing module\n");
+	LOG(L_INFO,"PIKE - destroying module\n");
 
 	/* destroy semaphore */
 	if (timer_lock) {

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -42,11 +42,11 @@
 #define MAX_CONFIG_PARAM 1024   /* max length of a config parameter */
 #define MAX_SMS_LENGTH   160
 #define MAX_SMS_PARTS    4      /* maximum number of parts for a sms */
-#define MAX_QUEUED_MESSAGES 100 /* maximum nr of messges waitting to send */
+#define MAX_QUEUED_MESSAGES 100 /* maximum nr of messages waiting to send */
 
 #define SMS_HDR_BF_ADDR      "From "
 #define SMS_HDR_BF_ADDR_LEN  (sizeof(SMS_HDR_BF_ADDR)-1)
-#define SMS_HDR_AF_ADDR      " (if you reply DONOT remove it)\r\n\r\n"
+#define SMS_HDR_AF_ADDR      " (if you reply DO NOT remove it)\r\n\r\n"
 #define SMS_HDR_AF_ADDR_LEN  (sizeof(SMS_HDR_AF_ADDR)-1)
 #define SMS_FOOTER           "\r\n\r\n[IPTEL.ORG]"
 #define SMS_FOOTER_LEN       (sizeof(SMS_FOOTER)-1)

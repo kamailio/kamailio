@@ -80,7 +80,7 @@ Chapter 1. User's Guide
 
    First char of this field must be set to a value which is not
    used inside username,password or other fields of
-   contact.Otherwise it is posible for the decoding step to
+   contact.Otherwise it is possible for the decoding step to
    fail/produce wrong results.
 
    Default value is "*". 
@@ -132,7 +132,7 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
    Meaning of the parameters is as follows:
 
      * offset - A string representing an integer which will be
-       added/substracted from the located port.
+       added/subtracted from the located port.
 
    Example 1-3. sdp_mangle_port usage
 ...
@@ -148,7 +148,7 @@ sdp_mangle_port("-12000");
    sip:enc_pref*username*ip*port*protocol@public_ip * is the
    default separator.
 
-   The function returns negative on error, 1 on succes.
+   The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
 
@@ -166,12 +166,12 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
 1.4.4. decode_contact()
 
    This function will decode the URI in first line in packets
-   wich come with encoded URI in the following manner
+   which come with encoded URI in the following manner
    sip:enc_pref*username*ip*port*protocol@public_ip goes to
    sip:username:password@ip:port;transport=protocol It uses the
    default set parameter for contact encoding separator.
 
-   The function returns negative on error, 1 on succes.
+   The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
 
@@ -189,7 +189,7 @@ if (uri =~ "^enc*") { decode_contact(); }
    sip:username:password@ip:port;transport=protocol. It uses the
    default set parameter for contact encoding separator.
 
-   The function returns negative on error, 1 on succes.
+   The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
 

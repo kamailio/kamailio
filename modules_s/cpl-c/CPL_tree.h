@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -66,7 +66,7 @@
 
 
 
-/* attributs and values fro ADDRESS-SWITCH node */
+/* attributes and values fro ADDRESS-SWITCH node */
 #define  FIELD_ATTR                  0       /*shared with STRING_SWITCH*/
 #define  SUBFIELD_ATTR               1
 #define  ORIGIN_VAL                  0
@@ -79,26 +79,26 @@
 #define  TEL_VAL                     4
 #define  DISPLAY_VAL                 5
 
-/* attributs and values for ADDRESS node */
+/* attributes and values for ADDRESS node */
 #define  IS_ATTR                     0    /*shared with STRING*/
 #define  CONTAINS_ATTR               1    /*shared with STRING*/
 #define  SUBDOMAIN_OF_ATTR           2
 
-/* attributs and values for STRING-SWITCH node */
+/* attributes and values for STRING-SWITCH node */
 #define  SUBJECT_VAL                 0
 #define  ORGANIZATION_VAL            1
 #define  USER_AGENT_VAL              2
 #define  DISPALY_VAL                 3
 
-/* attributs and values for LANGUAGE node */
+/* attributes and values for LANGUAGE node */
 #define  MATCHES_TAG_ATTR            0
 #define  MATCHES_SUBTAG_ATTR         1
 
-/* attributs and values for TIME-SWITCH node */
+/* attributes and values for TIME-SWITCH node */
 #define  TZID_ATTR                   0
 #define  TZURL_ATTR                  1
 
-/* attributs and values for TIME node */
+/* attributes and values for TIME node */
 #define  DTSTART_ATTR                0
 #define  DTEND_ATTR                  1
 #define  DURATION_ATTR               2
@@ -117,7 +117,7 @@
 #define  WKST_ATTR                  15
 #define  BYSETPOS_ATTR              16
 
-/* attributs and values for PRIORITY node */
+/* attributes and values for PRIORITY node */
 #define  LESS_ATTR                   0
 #define  GREATER_ATTR                1
 #define  EQUAL_ATTR                  2
@@ -136,35 +136,35 @@
 #define  NON_URGENT_STR_LEN          (sizeof(NON_URGENT_STR)-1)
 #define  UNKNOWN_PRIO_VAL            4
 
-/* attributs and values for LOCATION node */
+/* attributes and values for LOCATION node */
 #define  URL_ATTR                    0
 #define  PRIORITY_ATTR               1
 #define  CLEAR_ATTR                  2    /*shared with LOOKUP node*/
 #define  NO_VAL                      0    /*shared with LOOKUP node*/
 #define  YES_VAL                     1    /*shared with LOOKUP node*/
 
-/* attributs and values for LOOKUP node */
+/* attributes and values for LOOKUP node */
 #define  SOURCE_ATTR                 0
 #define  TIMEOUT_ATTR                1    /*shared with PROXY node*/
 #define  SOURCE_REG_STR              "registration"
 #define  SOURCE_REG_STR_LEN          (sizeof("registration")-1)
 
-/* attributs and values for REMOVE_LOCATION node */
+/* attributes and values for REMOVE_LOCATION node */
 #define  LOCATION_ATTR               0
 #define  PARAM_ATTR                  1
 #define  VALUE_ATTR                  2
 
-/* attributs and values for PROXY node */
+/* attributes and values for PROXY node */
 #define  RECURSE_ATTR                2
 #define  ORDERING_ATTR               3
 #define  PARALLEL_VAL                0
 #define  SEQUENTIAL_VAL              1
 #define  FIRSTONLY_VAL               2
 
-/* attributs and values for REDIRECT node */
+/* attributes and values for REDIRECT node */
 #define  PERMANENT_ATTR              0
 
-/* attributs and values for REJECT node */
+/* attributes and values for REJECT node */
 #define  STATUS_ATTR                 0
 #define  REASON_ATTR                 1
 #define  BUSY_VAL                    486
@@ -180,7 +180,7 @@
 #define  ERROR_STR                   "error"
 #define  ERROR_STR_LEN               (sizeof(ERROR_STR)-1)
 
-/* attributs and values for LOG node */
+/* attributes and values for LOG node */
 #define  NAME_ATTR                   0
 #define  MAX_NAME_SIZE               32
 #define  COMMENT_ATTR                1
@@ -197,7 +197,7 @@
 #define  URL_MAILTO_STR              "mailto:"
 #define  URL_MAILTO_LEN              (sizeof(URL_MAILTO_STR)-1)
 
-/* attributs and values for SUB node */
+/* attributes and values for SUB node */
 #define  REF_ATTR                    0
 
 

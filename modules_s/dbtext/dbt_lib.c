@@ -3,7 +3,7 @@
  *
  * DBText library
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -66,7 +66,7 @@ int dbt_init_cache()
 		}
 		if (lock_init(_cachesem)==0)
 		{
-			LOG(L_CRIT,"dbtext:dbt_init_cache: could not intialize a lock\n");
+			LOG(L_CRIT,"dbtext:dbt_init_cache: could not initialize a lock\n");
 			lock_dealloc(_cachesem);
 			return -1;
 		}

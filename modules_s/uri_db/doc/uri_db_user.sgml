@@ -191,7 +191,7 @@ modparam("module", "subscriber_user_column", "username")
 	<section>
 	    <title><varname>subscriber_domain_column</varname> (string)</title>
 	    <para>
-		Column hodling domains in the subscriber table.
+		Column holding domains in the subscriber table.
 	    </para>
 	    <para>
 		<emphasis>

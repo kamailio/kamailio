@@ -40,7 +40,7 @@
 #define separator ","
 
 typedef enum auth_result {
-	ERROR = -2 ,		/* Error occured, a reply has been 
+	ERROR = -2 ,		/* Error occurred, a reply has been 
 						   sent out -> return 0 to the ser core */
 	NO_CREDENTIALS,     /* Credentials missing   */
 	DO_AUTHORIZATION,   /* Credentials included  */

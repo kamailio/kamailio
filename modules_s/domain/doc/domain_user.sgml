@@ -73,7 +73,7 @@ modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 	    <example>
 		<title>nonce_expire example</title>
 		<programlisting format="linespecific">
-modparam("domain", "db_mode", 1)   # Use chaching
+modparam("domain", "db_mode", 1)   # Use caching
 </programlisting>
 	    </example>
 	</section>

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -62,7 +62,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 #define FOR_ALL_ATTR(_node,_attr) \
 	for( (_attr)=(_node)->properties ; (_attr) ; (_attr)=(_attr)->next)
 
-/* right and left space triming */
+/* right and left space trimming */
 #define trimlr(_s_) \
 	do{\
 		for(;(_s_).s[(_s_).len-1]==' ';(_s_).s[--(_s_).len]=0);\
@@ -263,7 +263,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 						if (*len==URL_MAILTO_LEN &&
 						!strncasecmp(p-(*len),URL_MAILTO_STR,(*len))) {
 							DBG("DEBUG:cpl_c:decode_mail_url: MAILTO: found at"
-								" the begining of TO -> removed\n");
+								" the beginning of TO -> removed\n");
 							p -= (*len);
 							*len = 0;
 						}
@@ -442,7 +442,7 @@ static inline int encode_lang_attr(xmlNodePtr  node, char *node_ptr, char *buf_e
 		val.s = val_bk = (char*)xmlGetProp(node,attr->name);
 		/* parse the language-tag */
 		for(end=val.s,val.len=0;;end++) {
-			/* trim all spaces from the begining of the tag */
+			/* trim all spaces from the beginning of the tag */
 			if (!val.len && (*end==' ' || *end=='\t')) continue;
 			/* we cannot have more than 2 attrs - LANG_TAG and LANG_SUBTAG */
 			if ((*nr_attr)>=2) goto lang_error;
@@ -871,7 +871,7 @@ static inline int encode_location_attr(xmlNodePtr  node, char *node_ptr,
 				/* check if it's a valid SIP URL -> just call
 				 * parse uri function and see if returns error ;-) */
 				if (parse_uri( val.s, val.len, &uri)!=0) {
-					LOG(L_ERR,"ERROR:cpl-c:encript_location_attr: <%s> is "
+					LOG(L_ERR,"ERROR:cpl-c:encrypt_location_attr: <%s> is "
 						"not a valid SIP URL\n",val.s);
 					goto error;
 				}
@@ -939,7 +939,7 @@ static inline int encode_rmvloc_attr(xmlNodePtr  node, char *node_ptr, char *buf
 				/* check if it's a valid SIP URL -> just call
 				 * parse uri function and see if returns error ;-) */
 				if (parse_uri( val.s, val.len, &uri)!=0) {
-					LOG(L_ERR,"ERROR:cpl-c:encript_rmvloc_attr: <%s> is "
+					LOG(L_ERR,"ERROR:cpl-c:encrypt_rmvloc_attr: <%s> is "
 						"not a valid SIP URL\n",val.s);
 					goto error;
 				}
@@ -948,7 +948,7 @@ static inline int encode_rmvloc_attr(xmlNodePtr  node, char *node_ptr, char *buf
 				break;
 			case 'P': case 'p':
 			case 'V': case 'v':
-				/* as the interpreter ignors PARAM and VALUE attributes, we will
+				/* as the interpreter ignores PARAM and VALUE attributes, we will
 				 * do the same ;-) */
 				break;
 			default:

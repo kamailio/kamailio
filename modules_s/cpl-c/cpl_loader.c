@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -60,7 +60,7 @@ extern db_con_t* db_hdl;
 
 
 #if 0
-/* debug function -> write into a file the content of a str stuct. */
+/* debug function -> write into a file the content of a str struct. */
 int write_to_file(char *filename, str *buf)
 {
 	int fd;
@@ -90,7 +90,7 @@ error:
 
 
 
-/* Loads a file into a buffer; first the file lenght will be determined for
+/* Loads a file into a buffer; first the file length will be determined for
  * allocated an exact buffer len for storing the file content into.
  * Returns:  1 - success
  *          -1 - error
@@ -120,7 +120,7 @@ int load_file( char *filename, str *xml)
 	}
 	DBG("DEBUG:cpl-c:load_file: file size = %d\n",xml->len);
 	if ( lseek(fd,0,SEEK_SET)==-1 ) {
-		LOG(L_ERR,"ERROR:cpl-c:load_file: cannot go to begining (lseek):"
+		LOG(L_ERR,"ERROR:cpl-c:load_file: cannot go to beginning (lseek):"
 			" %s\n",strerror(errno));
 		goto error;
 	}
@@ -161,7 +161,7 @@ error:
 
 
 
-/* Writes an aray of texts into the given response file.
+/* Writes an array of texts into the given response file.
  * Accepts also empty texts, case in which it will be created an empty
  * response file.
  */
@@ -256,7 +256,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 	str enc_log = {0,0};
 	str logs[2];
 
-	DBG("DEBUG:cpl-c:cpl_load: \"LOAD_CPL\" FIFO commnad received!\n");
+	DBG("DEBUG:cpl-c:cpl_load: \"LOAD_CPL\" FIFO command received!\n");
 
 	/* check the name of the response file */
 	if (response_file==0) {
@@ -294,7 +294,7 @@ int cpl_load( FILE *fifo_stream, char *response_file )
 		goto error1;
 	}
 
-	/* load the xml file - this function will allocted a buff for the loading
+	/* load the xml file - this function will allocated a buff for the loading
 	 * the cpl file and attach it to xml.s -> don't forget to free it! */
 	if (load_file( cpl_file, &xml)!=1) {
 		logs[1].s = FILE_LOAD_ERR;
@@ -354,7 +354,7 @@ int cpl_remove( FILE *fifo_stream, char *response_file )
 	int user_len;
 	str logs[2];
 
-	DBG("DEBUG:cpl-c:cpl_remove: \"REMOVE_CPL\" FIFO commnad received!\n");
+	DBG("DEBUG:cpl-c:cpl_remove: \"REMOVE_CPL\" FIFO command received!\n");
 
 	/* check the name of the response file */
 	if (response_file==0) {

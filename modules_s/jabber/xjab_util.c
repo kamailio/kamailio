@@ -4,7 +4,7 @@
  * eXtended JABber module - Jabber connections pool
  *
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -48,7 +48,7 @@
 /**
  * init a jc_pool structure
  * - size : maximum number of the open connection to Jabber
- * - jlen : maximun size of messages queue
+ * - jlen : maximum size of messages queue
  * #return : pointer to the structure or NULL on error
  */
 xj_jcon_pool xj_jcon_pool_init(int size, int jlen, int ch)

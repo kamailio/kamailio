@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -258,20 +258,20 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		
 		user.s      = (char*)VAL_STRING(ROW_VALUES(row));
 		if (user.s==0){
-			LOG(L_CRIT, "preload_udomain: ERRROR: bad username "
+			LOG(L_CRIT, "preload_udomain: ERROR: bad username "
 							"record in table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERRROR: skipping...\n");
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}else{
 			user.len    = strlen(user.s);
 		}
 		contact.s   = (char*)VAL_STRING(ROW_VALUES(row) + 1);
 		if (contact.s==0){
-			LOG(L_CRIT, "preload_udomain: ERRROR: bad contact "
+			LOG(L_CRIT, "preload_udomain: ERROR: bad contact "
 							"record in table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERRROR: for username %.*s\n",
+			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s\n",
 							user.len, user.s);
-			LOG(L_CRIT, "preload_udomain: ERRROR: skipping...\n");
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}else{
 			contact.len = strlen(contact.s);
@@ -283,12 +283,12 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		state       = VAL_INT   (ROW_VALUES(row) + 7);
 		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
 		if (callid.s==0){
-			LOG(L_CRIT, "preload_udomain: ERRROR: bad callid record in"
+			LOG(L_CRIT, "preload_udomain: ERROR: bad callid record in"
 							" table %s\n", b);
-			LOG(L_CRIT, "preload_udomain: ERRROR: for username %.*s,"
+			LOG(L_CRIT, "preload_udomain: ERROR: for username %.*s,"
 							" contact %.*s\n",
 							user.len, user.s, contact.len, contact.s);
-			LOG(L_CRIT, "preload_udomain: ERRROR: skipping...\n");
+			LOG(L_CRIT, "preload_udomain: ERROR: skipping...\n");
 			continue;
 		}else{
 			callid.len  = strlen(callid.s);

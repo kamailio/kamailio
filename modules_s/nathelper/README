@@ -24,7 +24,7 @@ Maxim Sobolev
         1.3. Exported Parameters
 
               1.3.1. natping_interval (integer)
-              1.3.2. rtpproxy_sock (string)
+              1.3.2. ping_nated_only (integer)
 
         1.4. Exported Functions
 
@@ -34,15 +34,19 @@ Maxim Sobolev
 
               1.5.1. fix_nated_sdp(mode)
               1.5.2. force_rtp_proxy()
+              1.5.3. force_rtp_proxy(ip_address)
+              1.5.4. nat_uac_test(mode)
 
    2. Developer's Guide
    3. Frequently Asked Questions
 
    List of Examples
    1-1. Set natping_interval parameter
-   1-2. fix_nated_contact usage
-   1-3. fix_nated_sdp usage
-   1-4. force_rtp_proxy usage
+   1-2. Set ping_nated_only parameter
+   1-3. fix_nated_contact usage
+   1-4. fix_nated_sdp usage
+   1-5. force_rtp_proxy usage
+   1-6. force_rtp_proxy usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -93,20 +97,21 @@ Chapter 1. User's Guide
 
    Example 1-1. Set natping_interval parameter
 ...
-modparam("module", "natping_interval", 10)
+modparam("nathelper", "natping_interval", 10)
 ...
      _________________________________________________________
 
-1.3.2. rtpproxy_sock (string)
+1.3.2. ping_nated_only (integer)
 
-   Path to the unix domain socket, through which SER communicates
-   with RTP proxy.
+   If this variable is set then only contacts that have
+   "behind_NAT" flag in user location database set set will get
+   ping.
 
-   Default value is "/var/run/rtpproxy.sock". 
+   Default value is 0. 
 
-   Example 1-2. Set rtpproxy_sock parameter
+   Example 1-2. Set ping_nated_only parameter
 ...
-modparam("module", "rtpproxy_sock", "/tmp/rtpproxy.sock")
+modparam("nathelper", "ping_nated_only", 1)
 ...
      _________________________________________________________
 
@@ -135,7 +140,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 
    Example 1-4. fix_nated_sdp usage
 ...
-if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp(3);};
+if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
      _________________________________________________________
 
@@ -146,8 +151,34 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp(3);};
 
    Example 1-5. force_rtp_proxy usage
 ...
-if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy(3);};
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 ...
+     _________________________________________________________
+
+1.5.3. force_rtp_proxy(ip_address)
+
+   Rewrites SDP body with given IP address to ensure that media
+   is passed through an RTP proxy.
+
+   Meaning of the parameters is as follows:
+
+     * ip_address - new SDP IP address.
+
+   Example 1-6. force_rtp_proxy usage
+...
+if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("1.2.3.4");};
+...
+     _________________________________________________________
+
+1.5.4. nat_uac_test(mode)
+
+   Tries to guess if client's request originated behind a nat.
+   The parameter determines what heuristics is used. If flag 1 is
+   set, the "received" test is used -- address in Via is compared
+   against source IP address of signaling. If flag 2 is set,
+   Contact header field is searched for occurrence of RFC1918
+   addresses. Both flags can be bitwise combined, the test
+   returns true if any of the tests identified a NAT.
      _________________________________________________________
 
 Chapter 2. Developer's Guide

@@ -14,7 +14,7 @@
     <section>
 	<title>Overview</title>
 	<para>
-	    The module keeps trace of all (or selected ones) incoming requests's &ip; source
+	    The module keeps trace of all (or selected ones) incoming request's &ip; source
 	    and blocks the ones that exceeded some limit. Works simultaneous for IPv4 and
 	    IPv6 addresses.
 	</para>
@@ -99,7 +99,7 @@ modparam("pike", "reqs_density_per_unit", 30)
 	    <title><varname>remove_latency</varname> (integer)</title>
 	    <para>
 		For how long the &ip; address will be kept in memory after the last request from
-		that &ip; address. It's a sord of timeout value.
+		that &ip; address. It's a sort of timeout value.
 	    </para>
 	    <para>
 		<emphasis>

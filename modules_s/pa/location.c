@@ -3,7 +3,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2003-2004 Hewlett-Packard Company
  *
  * This file is part of ser, a free SIP server.

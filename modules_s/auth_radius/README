@@ -109,8 +109,8 @@ modparam("auth_radius", "service_type", 15)
 
 1.4.1. radius_www_authorize(realm)
 
-   The function verifies credencials according to RFC2617. If the
-   credentials are verified sucessfully then the function will
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
    succeed and mark the credentials as authorized (marked
    credentials can be later used by some other functions). If the
    function was unable to verify the credentials for some reason
@@ -126,8 +126,8 @@ modparam("auth_radius", "service_type", 15)
 
      * realm - Realm is a opaque string that the user agent
        should present to the user so he can decide what username
-       and password to use. Usualy this is domain of the host the
-       server is running on.
+       and password to use. Usually this is domain of the host
+       the server is running on.
        If an empty string "" is used then the server will
        generate it from the request. In case of REGISTER requests
        To header field domain will be used (because this header
@@ -144,8 +144,8 @@ if (!radius_www_authorize("iptel.org")) {
 
 1.4.2. radius_proxy_authorize(realm)
 
-   The function verifies credencials according to RFC2617. If the
-   credentials are verified sucessfully then the function will
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
    succeed and mark the credentials as authorized (marked
    credentials can be later used by some other functions). If the
    function was unable to verify the credentials for some reason
@@ -161,8 +161,8 @@ if (!radius_www_authorize("iptel.org")) {
 
      * realm - Realm is a opaque string that the user agent
        should present to the user so he can decide what username
-       and password to use. Usualy this is domain of the host the
-       server is running on.
+       and password to use. Usually this is domain of the host
+       the server is running on.
        If an empty string "" is used then the server will
        generate it from the request. From header field domain
        will be used as realm.

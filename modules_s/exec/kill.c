@@ -14,7 +14,7 @@
  * and last but not least -- we don't know the child pid (we use popen)
  * so we cannot close anyway
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -77,7 +77,7 @@ static void timer_routine(unsigned int ticks , void * attr)
 	struct timer_link *tl, *tmp_tl, *end, *ret;
 	int killr;
 
-	/* check if it wirth entering the lock */
+	/* check if it worth entering the lock */
 	if (kill_list.first_tl.next_tl==&kill_list.last_tl 
 			|| kill_list.first_tl.next_tl->time_out > ticks )
 		return;

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -69,7 +69,7 @@ dc_t* new_cell(char* domain, code_t code)
 
 	cell->dhash = compute_hash(domain);
     
-	/* return the newly alocated in share memory cell */
+	/* return the newly allocated in share memory cell */
 	return cell;
 }
 
@@ -101,7 +101,7 @@ entry_t* new_entry(dc_t* cell)
     e->p = NULL;
     e->n = NULL;
 
-    /* return the newly alocated in share memory entry */
+    /* return the newly allocated in share memory entry */
     return e;
 }
 
@@ -190,12 +190,12 @@ double_hash_t* init_double_hash(int hs_two_pow)
 void free_hash(h_entry_t* hash, unsigned int hash_size, int do_cell)
 {
     int   i;   /* index for hash entries */
-    entry_t *tmp, /* just a temporar variable */
+    entry_t *tmp, /* just a temporary variable */
 			*it;  /* iterator through cells of a has entry */
     if(!hash || hash_size<=0)
 		return;
     
-	/* free memory ocupied by all hash entries */
+	/* free memory occupied by all hash entries */
 	for(i=0; i<hash_size; i++)
 	{
 		/* iterator through the i-th entry of the hash */

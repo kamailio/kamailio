@@ -3,7 +3,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -56,7 +56,7 @@ same_net (unsigned int ip, unsigned int address, unsigned int mask)
 }
 
 
-/* Small help func takes ip-adress-integer and returns string
+/* Small help func takes ip-address-integer and returns string
    representation */
 void
 ip2str (unsigned int address, char **rr)
@@ -77,9 +77,9 @@ ip2str (unsigned int address, char **rr)
 	*rr = hlp;
 }
 
-/* Small help func takes ip-adress-string, determines its validity
-   and write the integer represantation at address.
-   Returns 1 if succesfull converted, 0 if the dotted isn't valid.
+/* Small help func takes ip-address-string, determines its validity
+   and write the integer representation at address.
+   Returns 1 if successful converted, 0 if the dotted isn't valid.
    If you want to parse IP/netmask pairs, call parse_ip_netmask
    first - it will remove the netmask, then use this func */
 int
@@ -189,16 +189,16 @@ make_mask (unsigned int length)
 		return -1;	/* invalid value for mask */
 	/* fill it with 1 */
 	res = 0xFFFFFFFF;
-	/* shift it to right with 32-length pozitions */
+	/* shift it to right with 32-length positions */
 	res = htonl (res << (32 - length));
 	return res;
 }
 
-/* Small help func takes ip-adress-string, determines if a valid
+/* Small help func takes ip-address-string, determines if a valid
    netmask is specified and inserts the netmask into mask.
    Cuts of the netmask of the string, if it founds a netmask !!!
-   Returns 0 if no netmaks found, -1 if netmaks isn't valid, and
-   1 if sucsessful.  
+   Returns 0 if no netmask found, -1 if netmask isn't valid, and
+   1 if successful.  
 	According to this function a mask is in form of 255.255.192.0
 	so an ip/mask looks like 10.0.0.0/255.255.192.0
 	we will extend it to 10.0.0.0/18 which will be also valid

@@ -3,7 +3,7 @@
  *
  * $Id$
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -45,7 +45,7 @@
 /* With STRICT_CHECK off:
 If you define a port like 41231311 and BEST_EFFORT is defined it will 
 consider a port the first 5 digits
-Similary an ip like 12.31.12.313131132131 will be mangled with only 3 digits
+Similarly an ip like 12.31.12.313131132131 will be mangled with only 3 digits
 from the last group 
 */
 
@@ -75,7 +75,7 @@ regex_t *ipExpression;
 
 
 
-/* replaces all apearences of a port in lines like m=audio port with
+/* replaces all appearances of a port in lines like m=audio port with
 	a new value for port which is oldvalue+offset 
 	@param msg a pointer to a sip message
 	@param offset value of an offset.Must be a numeric format like "-12345"
@@ -84,7 +84,7 @@ regex_t *ipExpression;
 */
 int sdp_mangle_port (struct sip_msg *msg, char *offset, char *unused);
 
-/* may replace all apearences of an ip in lines like c=IN IP4 ip with
+/* may replace all appearances of an ip in lines like c=IN IP4 ip with
 	a new value for ip if the found ip matches the filter
 	@param msg a pointer to a sip message
 	@param oldip an filter for ip's in form ip/mask.Example

@@ -14,7 +14,7 @@
     <section>
 	<title>Overview</title>
 	<para>
-	    This module export functions necesarry for group membership checking. There is a
+	    This module export functions necessary for group membership checking. There is a
 	    database table that contains list of users and groups they belong to. The table is used
 	    by functions of this module.
 	</para>

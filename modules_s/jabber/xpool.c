@@ -185,7 +185,7 @@ void *xode_pool_malloco(xode_pool p, int size)
     return block;
 }  
 
-/* XXX efficient: move this to const char * and then loop throug the existing heaps to see if src is within a block in this pool */
+/* XXX efficient: move this to const char * and then loop through the existing heaps to see if src is within a block in this pool */
 char *xode_pool_strdup(xode_pool p, const char *src)
 {
     char *ret;

@@ -14,11 +14,11 @@
     <section>
 	<title>Overview</title>
 	<para>
-	    This module provides a way of comunication between &sip; network (via &sip MESSAGE) and
-	    <acronym>GSM</acronym> networks (via ShortMessageService). Comunication is possible from
+	    This module provides a way of communication between &sip; network (via &sip MESSAGE) and
+	    <acronym>GSM</acronym> networks (via ShortMessageService). Communication is possible from
 	    &sip; to <acronym>SMS</acronym> and vice versa. The module provides facilities like
-	    <acronym>SMS</acronym> confirmation--the gateway can cofirm to the &sip; user if his
-	    message really reached its destination as a <acronym>SMS</acronym>--or multipart
+	    <acronym>SMS</acronym> confirmation--the gateway can confirm to the &sip; user if his
+	    message really reached its destination as a <acronym>SMS</acronym>--or multi-part
 	    messages--if a &sip; messages is too long it will be split and sent as multiple
 	    <acronym>SMS</acronym>.
 	</para>
@@ -31,7 +31,7 @@
 	    <title>Hardware Requirements</title>
 	    <para>
 		The <acronym>SMS</acronym> module needs a <acronym>GSM</acronym> modem to be able to
-		send/receive the <acronym>SMS</acronym> messages.  Usualy, this kind of modems are
+		send/receive the <acronym>SMS</acronym> messages.  Usually, this kind of modems are
 		externals, linked to the machine via serial cable. The modem can be a dedicated one
 		(as the ones provided by FALCOM) or can be a <acronym>GSM</acronym> telephone that
 		has an internal modem (as the latest mobile phones from NOKIA and ERICSSON).
@@ -119,7 +119,7 @@ modem_param      = name "=" value
 	    <itemizedlist>
 		<listitem>
 		    <para>
-			d=device (mandatory) - Device associatd with modem (/dev/ttyS0, /dev/modem,
+			d=device (mandatory) - Device associated with modem (/dev/ttyS0, /dev/modem,
 			etc.).
 		    </para>
 		</listitem>
@@ -139,7 +139,7 @@ modem_param      = name "=" value
 		<listitem>
 		    <para>
 			c=SMS_Center (optional) - <acronym>SMS</acronym> center number for that
-			modem. Deafult is the <acronym>SMS</acronym> center set on the
+			modem. Default is the <acronym>SMS</acronym> center set on the
 			<acronym>SIM</acronym> card.
 		    </para>
 		</listitem>
@@ -353,8 +353,8 @@ modparam("sms", "use_contact", 1)
 		</listitem>
 		<listitem>
 		    <para>
-			2 - the reports are delivered as async. <acronym>CDS</acronym> reponses
-			(supported by almost all modems, exepting Ericsson).
+			2 - the reports are delivered as async. <acronym>CDS</acronym> responses
+			(supported by almost all modems, except Ericsson).
 		    </para>
 		</listitem>
 	    </itemizedlist>

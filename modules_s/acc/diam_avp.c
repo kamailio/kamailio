@@ -5,7 +5,7 @@
  * 2003-03-12 converted to shm_malloc/free (andrei)
  *
  *
- * Copyright (C) 2002-2003 Fhg Fokus
+ * Copyright (C) 2002-2003 FhG Fokus
  *
  * This file is part of disc, a free diameter server/client.
  *
@@ -169,7 +169,7 @@ AAAReturnCode  AAAAddAVPToMessage(
 	}
 
 	if (!position) {
-		/* insert at the begining */
+		/* insert at the beginning */
 		avp->next = msg->avpList.head;
 		avp->prev = 0;
 		msg->avpList.head = avp;

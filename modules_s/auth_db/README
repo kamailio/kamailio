@@ -5,6 +5,8 @@ Jan Janak
 
    FhG Fokus
 
+Jakob Schlyter
+
 Edited by
 
 Jan Janak
@@ -23,8 +25,10 @@ Jan Janak
               1.3.2. user_column (string)
               1.3.3. domain_column (string)
               1.3.4. password_column (string)
-              1.3.5. calculate_ha1 (integer)
-              1.3.6. password_column_2 (string)
+              1.3.5. rpid_column (string)
+              1.3.6. calculate_ha1 (integer)
+              1.3.7. password_column_2 (string)
+              1.3.8. use_rpid (integer)
 
         1.4. Exported Functions
 
@@ -39,10 +43,12 @@ Jan Janak
    1-2. user_column usage
    1-3. domain_column usage
    1-4. password_column usage
-   1-5. calculate_ha1usage
-   1-6. password_column_2 usage
-   1-7. www_authorize usage
-   1-8. proxy_authorize usage
+   1-5. rpid_column usage
+   1-6. calculate_ha1usage
+   1-7. password_column_2 usage
+   1-8. use_rpidusage
+   1-9. www_authorize usage
+   1-10. proxy_authorize usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -75,14 +81,14 @@ Chapter 1. User's Guide
    This is URL of the database to be used. Value of the parameter
    depends on the database module used. For example for mysql and
    postgres modules this is something like
-   sql://username:password@host:port/database. For dbtext module
-   (which stores data in plaintex files) it is directory in which
-   the database resides.
+   mysql://username:password@host:port/database. For dbtext
+   module (which stores data in plaintext files) it is directory
+   in which the database resides.
 
-   Default value is "sql://serro:47serro11@localhost/ser".
+   Default value is "mysql://serro:47serro11@localhost/ser".
 
    Example 1-1. db_url parameter usage
-modparam("auth_db", "db_url", "sql://foo:bar@foobar.org/ser")
+modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/ser")
      _________________________________________________________
 
 1.3.2. user_column (string)
@@ -124,7 +130,19 @@ modparam("auth_db", "domain_column", "domain")
 modparam("auth_db", "password_column", "password")
      _________________________________________________________
 
-1.3.5. calculate_ha1 (integer)
+1.3.5. rpid_column (string)
+
+   This is the name of the column holding information for the
+   Remote-Party-ID header field. Default value is fine for most
+   people. Use the parameter if you really need to change it.
+
+   Default value is "rpid".
+
+   Example 1-5. rpid_column usage
+modparam("auth_db", "rpid_column", "remote_party_id")
+     _________________________________________________________
+
+1.3.6. calculate_ha1 (integer)
 
    This parameter tells server whether it should expect plaintext
    passwords in the database or HA1 string. If the parameter is
@@ -149,11 +167,11 @@ modparam("auth_db", "password_column", "password")
 
    Default value of this parameter is 0.
 
-   Example 1-5. calculate_ha1usage
+   Example 1-6. calculate_ha1usage
 modparam("auth_db", "calculate_ha1", 1)
      _________________________________________________________
 
-1.3.6. password_column_2 (string)
+1.3.7. password_column_2 (string)
 
    As described in the previous section this parameter contains
    name of column holding pre-calculated HA1 string that were
@@ -164,16 +182,31 @@ modparam("auth_db", "calculate_ha1", 1)
 
    Default value of the parameter is ha1b.
 
-   Example 1-6. password_column_2 usage
+   Example 1-7. password_column_2 usage
 modparam("auth_db", "password_column_2", "ha1_2")
+     _________________________________________________________
+
+1.3.8. use_rpid (integer)
+
+   This parameter specifies whether the server should fetch a
+   value for the Remote-Party-ID header field from the database.
+
+   If the parameter is set to 1 the server expects to find a
+   value for this header in the column specified by the
+   rpid_column parameter.
+
+   Default value of this parameter is 0.
+
+   Example 1-8. use_rpidusage
+modparam("auth_db", "use_rpid", 1)
      _________________________________________________________
 
 1.4. Exported Functions
 
 1.4.1. www_authorize(realm, table)
 
-   The function verifies credencials according to RFC2617. If the
-   credentials are verified sucessfully then the function will
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
    succeed and mark the credentials as authorized (marked
    credentials can be later used by some other functions). If the
    function was unable to verify the credentials for some reason
@@ -184,17 +217,17 @@ modparam("auth_db", "password_column_2", "ha1_2")
 
      * realm - Realm is a opaque string that the user agent
        should present to the user so he can decide what username
-       and password to use. Usualy this is domain of the host the
-       server is running on.
+       and password to use. Usually this is domain of the host
+       the server is running on.
        If an empty string "" is used then the server will
        generate it from the request. In case of REGISTER requests
        To header field domain will be used (because this header
        field represents a user being registered), for all other
        messages From header field domain will be used.
      * table - Table to be used to lookup usernames and passwords
-       (usualy subscribers table).
+       (usually subscribers table).
 
-   Example 1-7. www_authorize usage
+   Example 1-9. www_authorize usage
 ...
 if (www_authorize("iptel.org", "subscriber")) {
     www_challenge("iptel.org", "1");
@@ -204,8 +237,8 @@ if (www_authorize("iptel.org", "subscriber")) {
 
 1.4.2. proxy_authorize(realm, table)
 
-   The function verifies credencials according to RFC2617. If the
-   credentials are verified sucessfully then the function will
+   The function verifies credentials according to RFC2617. If the
+   credentials are verified successfully then the function will
    succeed and mark the credentials as authorized (marked
    credentials can be later used by some other functions). If the
    function was unable to verify the credentials for some reason
@@ -216,15 +249,15 @@ if (www_authorize("iptel.org", "subscriber")) {
 
      * realm - Realm is a opaque string that the user agent
        should present to the user so he can decide what username
-       and password to use. Usualy this is domain of the host the
-       server is running on.
+       and password to use. Usually this is domain of the host
+       the server is running on.
        If an empty string "" is used then the server will
        generate it from the request. From header field domain
        will be used as realm.
      * table - Table to be used to lookup usernames and passwords
-       (usualy subscribers table).
+       (usually subscribers table).
 
-   Example 1-8. proxy_authorize usage
+   Example 1-10. proxy_authorize usage
 ...
 if (!proxy_authorize("", "subscriber)) {
     proxy_challenge("", "1");  # Realm will be autogenerated

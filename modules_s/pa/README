@@ -48,7 +48,7 @@ Chapter 1. User's Guide
    presence of jabber users.
 
    This module currently cannot work as a B2BUA, i.e. it cannot
-   subsribe to presence of users using SIP. We are currently
+   subscribe to presence of users using SIP. We are currently
    working on that feature.
      _________________________________________________________
 
@@ -98,20 +98,6 @@ modparam("pa", "default_expires", 3600)
 ...
 handle_subscription("jabber");
 ...
-
-1.4.2. handle_publish(domain)
-
-   This function processes PUBLISH and generates NOTIFY.
-
-   Meaning of the parameters is as follows:
-
-     * domain - This can be either "registrar" or "jabber".
-
-   Example 1-2. handle_subscription usage
-...
-handle_publish("jabber");
-...
-
      _________________________________________________________
 
 Chapter 2. Developer's Guide

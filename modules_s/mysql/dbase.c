@@ -3,7 +3,7 @@
  *
  * MySQL module core functions
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of ser, a free SIP server.
  *
@@ -316,7 +316,7 @@ int db_free_result(db_con_t* _h, db_res_t* _r)
  * _op: operators
  * _v: values of the keys that must match
  * _c: column names to return
- * _n: nmber of key=values pairs to compare
+ * _n: number of key=values pairs to compare
  * _nc: number of columns to return
  * _o: order by the specified column
  */

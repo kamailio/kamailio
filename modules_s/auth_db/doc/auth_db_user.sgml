@@ -45,7 +45,7 @@
 		This is URL of the database to be used. Value of the parameter depends on the
 		database module used. For example for mysql and postgres modules this is something
 		like mysql://username:password@host:port/database. For dbtext module (which stores
-		data in plaintex files) it is directory in which the database resides.
+		data in plaintext files) it is directory in which the database resides.
 	    </para>
 	    <para>
 		Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
@@ -198,8 +198,8 @@ modparam("auth_db", "use_rpid", 1)
 	<section>
 	    <title><function moreinfo="none">www_authorize(realm, table)</function></title>
 	    <para>
-		The function verifies credencials according to RFC2617. If the credentials are
-		verified sucessfully then the function will succeed and mark the credentials as
+		The function verifies credentials according to RFC2617. If the credentials are
+		verified successfully then the function will succeed and mark the credentials as
 		authorized (marked credentials can be later used by some other functions). If the
 		function was unable to verify the credentials for some reason then it will fail and
 		the script should call <function moreinfo="none">www_challenge</function> which will
@@ -210,7 +210,7 @@ modparam("auth_db", "use_rpid", 1)
 		<listitem>
 		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
 		    should present to the user so he can decide what username and password to
-		    use. Usualy this is domain of the host the server is running on.
+		    use. Usually this is domain of the host the server is running on.
 		    </para>
 		    <para>
 			If an empty string <quote></quote> is used then the server will generate it
@@ -221,7 +221,7 @@ modparam("auth_db", "use_rpid", 1)
 		</listitem>
 		<listitem>
 		    <para><emphasis>table</emphasis> - Table to be used to lookup usernames and
-			passwords (usualy subscribers table).
+			passwords (usually subscribers table).
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -240,8 +240,8 @@ if (www_authorize("iptel.org", "subscriber")) {
 	<section>
 	    <title><function moreinfo="none">proxy_authorize(realm, table)</function></title>
 	    <para>
-		The function verifies credencials according to RFC2617. If the credentials are
-		verified sucessfully then the function will succeed and mark the credentials as
+		The function verifies credentials according to RFC2617. If the credentials are
+		verified successfully then the function will succeed and mark the credentials as
 		authorized (marked credentials can be later used by some other functions). If the
 		function was unable to verify the credentials for some reason then it will fail and
 		the script should call <function moreinfo="none">proxy_challenge</function> which will
@@ -252,7 +252,7 @@ if (www_authorize("iptel.org", "subscriber")) {
 		<listitem>
 		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
 		    should present to the user so he can decide what username and password to
-		    use. Usualy this is domain of the host the server is running on.
+		    use. Usually this is domain of the host the server is running on.
 		    </para>
 		    <para>
 			If an empty string <quote></quote> is used then the server will generate it
@@ -261,7 +261,7 @@ if (www_authorize("iptel.org", "subscriber")) {
 		</listitem>
 		<listitem>
 		    <para><emphasis>table</emphasis> - Table to be used to lookup usernames and
-			passwords (usualy subscribers table).
+			passwords (usually subscribers table).
 		    </para>
 		</listitem>
 	    </itemizedlist>

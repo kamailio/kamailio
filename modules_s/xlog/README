@@ -9,44 +9,48 @@ Edited by
 
 Elena-Ramona Modroiu
 
-   Copyright © 2003 by FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      _________________________________________________________
 
    Table of Contents
-   User's Guide
+   1. User's Guide
 
-        Overview
-        Implemented Specifiers
-        Dependencies
+        1.1. Overview
+        1.2. Implemented Specifiers
+        1.3. Dependencies
 
-              SER Modules
-              External Libraries or Applications
+              1.3.1. SER Modules
+              1.3.2. External Libraries or Applications
 
-        Exported Parameters
+        1.4. Exported Parameters
 
-              buf_size (integer)
+              1.4.1. buf_size (integer)
 
-        Exported Functions
+        1.5. Exported Functions
 
-              xlog(level, format)
-              xdbg(format)
+              1.5.1. xlog(level, format)
+              1.5.2. xdbg(format)
 
-   Developer's Guide
-   Frequently Asked Questions
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set buf_size parameter
+   1-2. xlog usage
+   1-3. xdbg usage
      _________________________________________________________
 
-User's Guide
+Chapter 1. User's Guide
 
-Overview
+1.1. Overview
 
-   This  module  provides the possibility to print user formatted
-   log  or  debug  messages  from  SER scripts, similar to printf
-   function  but  now  a specifier is replaced with a part of the
-   SIP  request.  the Section called Implemented Specifiers shows
-   what can be printed out.
+   This module provides the possibility to print user formatted
+   log or debug messages from SER scripts, similar to printf
+   function but now a specifier is replaced with a part of the
+   SIP request. Section 1.2 shows what can be printed out.
      _________________________________________________________
 
-Implemented Specifiers
+1.2. Implemented Specifiers
 
      * %% : '%'
      * %ci : call-id
@@ -71,46 +75,46 @@ Implemented Specifiers
      * %ua : User agent header field
      _________________________________________________________
 
-Dependencies
+1.3. Dependencies
 
-SER Modules
+1.3.1. SER Modules
 
    The following modules must be loaded before this module:
 
      * No dependencies on other SER modules.
      _________________________________________________________
 
-External Libraries or Applications
+1.3.2. External Libraries or Applications
 
-   The  following  libraries  or  applications  must be installed
+   The following libraries or applications must be installed
    before running SER with this module loaded:
 
      * None.
      _________________________________________________________
 
-Exported Parameters
+1.4. Exported Parameters
 
-buf_size (integer)
+1.4.1. buf_size (integer)
 
    Maximum size of the log message.
 
    Default value is 4096. 
 
-   Example 1. Set buf_size parameter
+   Example 1-1. Set buf_size parameter
 ...
 modparam("xlog", "buf_size", 8192)
 ...
      _________________________________________________________
 
-Exported Functions
+1.5. Exported Functions
 
-xlog(level, format)
+1.5.1. xlog(level, format)
 
    Print a formated message using LOG function.
 
    Meaning of the parameters is as follows:
 
-     * level  -  The  level that will be used in LOG function. It
+     * level - The level that will be used in LOG function. It
        can be:
           + L_ALERT
           + L_CRIT
@@ -122,13 +126,13 @@ xlog(level, format)
        What really matters is the third letter of the value.
      * format - The formatted string to be printed.
 
-   Example 2. xlog usage
+   Example 1-2. xlog usage
 ...
 xlog("L_ERR", "time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
      _________________________________________________________
 
-xdbg(format)
+1.5.2. xdbg(format)
 
    Print a formatted message using DBG function.
 
@@ -136,44 +140,44 @@ xdbg(format)
 
      * format - The formatted string to be printed.
 
-   Example 3. xdbg usage
+   Example 1-3. xdbg usage
 ...
 xdbg("time [%Tf] method <%rm> r-uri <%ru>\n");
 ...
      _________________________________________________________
 
-Developer's Guide
+Chapter 2. Developer's Guide
 
-   The  module  does  not provide any sort of API to use in other
+   The module does not provide any sort of API to use in other
    SER modules.
      _________________________________________________________
 
-Frequently Asked Questions
+Chapter 3. Frequently Asked Questions
 
-   1. Where can I find more about SER?
-   2. Where can I post a question about this module?
-   3. How can I report a bug?
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
 
-   1. Where can I find more about SER?
+   3.1. Where can I find more about SER?
 
    Take a look at http://iptel.org/ser.
 
-   2. Where can I post a question about this module?
+   3.2. Where can I post a question about this module?
 
-   First  at  all  check if your question was already answered on
+   First at all check if your question was already answered on
    one of our mailing lists:
 
      * http://mail.iptel.org/mailman/listinfo/serusers
      * http://mail.iptel.org/mailman/listinfo/serdev
 
-   E-mails  regarding  any  stable  version  should  be  sent  to
+   E-mails regarding any stable version should be sent to
    <serusers@iptel.org> and e-mail regarding development versions
    or CVS snapshots should be send to <serdev@iptel.org>.
 
-   If   you   want   to   keep  the  mail  private,  send  it  to
+   If you want to keep the mail private, send it to
    <serhelp@iptel.org>.
 
-   3. How can I report a bug?
+   3.3. How can I report a bug?
 
-   Please      follow     the     guidelines     provided     at:
+   Please follow the guidelines provided at:
    http://iptel.org/ser/bugs
