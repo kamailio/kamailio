@@ -46,7 +46,7 @@ typedef enum ptype {
 	P_OTHER = 0, /* Unknown parameter */
 	P_Q,         /* Contact: q parameter */
 	P_EXPIRES,   /* Contact: expires parameter */
-	P_METHOD,    /* Contact: method parameter */
+	P_METHODS,   /* Contact: method parameter */
 	P_TRANSPORT, /* URI: transport parameter */
 	P_LR,        /* URI: lr parameter */
 	P_R2,        /* URI: r2 parameter (ser specific) */
