@@ -48,7 +48,7 @@ BEGIN {
     rpl300=0; rpl302=0; rpl3xx=0;
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
         rpl406=0;rpl407=0;rpl408=0;rpl410=0; rpl415=0;
-        rpl476=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
+        rpl476=0;rpl480=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
 		rpl488=0;rpl489=0;
         rpl4xx=0;
 	rpl479=0;
@@ -114,6 +114,7 @@ BEGIN {
 	ua_fxsgw=0;
 	ua_sxdesign=0;
 	ua_dlink=0;
+	ua_gphone=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -318,6 +319,10 @@ ua==0 && /User-Agent:.*SIPimp\.org/ {
 }
 ua==0 && /User-Agent:.*D-Link/ {
 	ua_dlink++
+	ua=1
+}
+ua==0 && /User-Agent:.*Gphone/ {
+	ua_gphone++
 	ua=1
 }
 
@@ -553,6 +558,10 @@ reply==0 && request=0 {
     rpl476++
     next
 }
+/SIP\/2\.0 480/ {
+    rpl480++
+    next
+}
 /SIP\/2\.0 481/ {
     rpl481++
     next
@@ -687,6 +696,7 @@ END {
 	print "476 (no recursive registrations): " rpl476 
 	print "478 (Unresolveable): " rpl478 
 	print "479 (private IP): " rpl479 
+	print "480 (Unavailable): " rpl480 
 	print "481 (Call/Transaction does not exist): " rpl481 
 	print "483 (Too Many Hops): " rpl483 
 	print "486 (Busy Here): " rpl486 
@@ -740,6 +750,7 @@ END {
 	print "FXSGW: " ua_fxsgw
 	print "SXDesing: " ua_sxdesign
 	print "D-link: " ua_dlink
+	print "gphone: " ua_gphone
 	print "UFO: " ua_xx
 
 	print "## Servers"
