@@ -55,7 +55,7 @@ if (readfile( $mypath )==-1) {
 	exit("Sorry -- fifo reading error");
 }
 unlink($mypath);
-echo "Thank you for using IM<p>";
+echo "<p>Thank you for using IM<p>";
 
 ?>
 
