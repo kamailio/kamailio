@@ -147,7 +147,7 @@ int init_domain_fifo( void )
 	}
 
 	if (register_fifo_cmd(domain_dump, DOMAIN_DUMP, 0) < 0) {
-		LOG(L_CRIT, "Cannot register domain_dump");
+		LOG(L_CRIT, "Cannot register domain_dump\n");
 		return -1;
 	}
 
