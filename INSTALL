@@ -193,11 +193,9 @@ your box.
 	http://www.iptel.org/ser/
 2) install the package
 	rpm -i <pachage_name>
-3) compile the package
-4) install the package
-5) create MySQL tables
+3) create MySQL tables
     /usr/sbin/ser_mysql.sh create
-6) configure ser to use SQL
+4) configure ser to use SQL
     uncomment all lines which are related to 
     authentication:
     - loadmodule "/usr/lib/ser/modules/mysql.so"
@@ -209,8 +207,17 @@ your box.
         www_challenge("iptel.org", "0"); 
         break;
       };
-7) restart the server
+5) start the server
 	/etc/init.d/ser start
+6) you can now start  managing the server using
+   the serctl utility; you need to first set the
+   environment variable SIP_DOMAIN to your local
+   SIP realm, e.g.,
+       export SIP_DOMAIN="foo.bar"
+   a) watch the server status using 'serctl moni'
+   b) try to login as user 'admin' with password 'heslo'
+   c) try adding new users using 
+       'serctl add <name> <password> <email>'
 
 
 
