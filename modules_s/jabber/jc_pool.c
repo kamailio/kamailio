@@ -391,7 +391,7 @@ int jab_send_sip_msg(str *to, str *from, str *contact, str *msg)
 	}
 	str_hdr.s = buf1;
 
-	return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom, 0 );
+	return tmb.t_uac( &msg_type, to, &str_hdr , msg, &tfrom, 0 , 0, 0);
 }
 
 /**

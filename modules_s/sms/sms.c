@@ -534,7 +534,7 @@ int global_init()
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
-		LOG(L_ERR, "ERROR: acc: mod_init: can't import load_tm\n");
+		LOG(L_ERR, "ERROR: sms: global_init: can't import load_tm\n");
 		goto error;
 	}
 	/* let the auto-loading function load all TM stuff */

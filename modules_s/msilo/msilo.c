@@ -46,6 +46,7 @@
 #include "../../db/db.h"
 #include "../tm/t_funcs.h"
 #include "../tm/uac.h"
+#include "../tm/tm_load.h"
 
 #include "msfuncs.h"
 
@@ -96,8 +97,10 @@
 	}
 
 /** database connection */
-
 db_con_t *db_con = NULL;
+
+/** TM bind */
+struct tm_binds tmb;
 
 /** parameters */
 
@@ -170,29 +173,26 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	load_tm_f  load_tm;
+
 	DBG("MSILO: initializing ...\n");
-	
+
+	/* binding to mysql module  */
 	if (bind_dbmod())
 	{
 		DBG("MSILO: ERROR: Database module not found\n");
 		return -1;
 	}
 
-	/**
-	db_con = db_init(db_url);
-	if (!db_con)
-	{
-		DBG("MSILO: Error while connecting database\n");
-		return -3;
+	/* import the TM auto-loading function */
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+		LOG(L_ERR, "ERROR: msilo: mod_init: can't import load_tm\n");
+		return -1;
 	}
-	else
-	{
-		db_use_table(db_con, db_table);
-		DBG("MSILO: Database connection opened successfuly\n");
-	}
-	*/
-	
-	DBG("MSILO: initialized ...\n");	
+	/* let the auto-loading function load all TM stuff */
+	if (load_tm( &tmb )==-1)
+		return -1;
+
 	return 0;
 }
 
@@ -575,7 +575,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					str_vals[STR_IDX_BODY] ) < 0)
 			{
 				DBG("MSILO: m_dump: sending simple body\n");
-				t_uac(&msg_type, &pto->uri, &hdr_str,
+				tmb.t_uac(&msg_type, &pto->uri, &hdr_str,
 					&str_vals[STR_IDX_BODY], &str_vals[STR_IDX_FROM],
 					m_tm_callback, (void*)msg_id, 0
 				);
@@ -583,7 +583,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			else
 			{
 				DBG("MSILO: m_dump: sending composed body\n");
-				t_uac(&msg_type, &pto->uri, &hdr_str,
+				tmb.t_uac(&msg_type, &pto->uri, &hdr_str,
 					&body_str, &str_vals[STR_IDX_FROM],
 					m_tm_callback, (void*)msg_id, 0
 				);
