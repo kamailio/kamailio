@@ -70,7 +70,7 @@ int init_avp_child( int rank )
 			LOG(L_ERR,"ERROR:init_avp_child: unable to connect to database\n");
 			return -1;
 		}
-		if (avp_dbf.use_table( avp_db_con, AVP_DB_TABLE )<0) {
+		if (avp_dbf.use_table( avp_db_con, AVP_DB_TABLE ) < 0) {
 			/* table selection failed */
 			LOG(L_ERR,"ERROR:init_avp_child: unable to select db table\n");
 			return -1;

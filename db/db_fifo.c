@@ -708,7 +708,11 @@ int db_fifo( FILE *fifo, char *response_file )
 
 	/* select the correct table */
 	line.s[line.len] = 0; /* make it null terminated */
-	fifo_dbf.use_table( fifo_db_con, line.s);
+
+	if (fifo_dbf.use_table( fifo_db_con, line.s) < 0) {
+		double_log("use_table function failed");
+		goto error1;
+	}
 
 	/*read 'where' avps */
 	if (get_avps( fifo , keys2, ops2, vals2, &nr2, MAX_ARRAY)!=0 )
