@@ -142,7 +142,7 @@ BEGIN {
 
 {ua=0; request=0;reply=0;server=0}
 
-ua==0 && /User-Agent:.*Windows RTC/ {
+ua==0 && /User-Agent:.*RTC\// {
 	ua_msn++
 	ua=1
 }
