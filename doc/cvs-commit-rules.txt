@@ -1,0 +1,25 @@
+# $Id$
+#
+# SER cvs commit rules
+
+
+1. Changing other people code:
+ - send a patch to the code/module mantainer and/or serdev (don't commit changes to code you don't own if you don't have the mantainer's approval)
+Exceptions:
+ a. compilation (this includes warning) fixes
+ b. bug fixes
+ c. small changes due to a new release in the very near future (allowed only for the release manager)
+
+
+2. Code requirements
+2.1 Unstable branch:
+ - the code must compile (at least on one arhitecture). If the code does not compile, but you still want to commit it, comment it out (#if 0 ... #endif)
+ - the code should compile without warnings (with -Wall) (exceptions: very difficult to avoid warnings)
+ - follow ser coding style
+
+2.2. Stable branch (everything for unstable branch +)
+ - the code must compile on all the arhitectures (this currently includes
+   linux, freebsd, netbsd, openbsd, solaris >= 8; x86, ultrasparc, strongarm;
+    gcc 2.95, 3.x, icc, sun cc >=5.3).
+ - the code must be tested or the change trivial enough
+ - the code must compile without warnings on all the arhitectures (with some exceptions)
