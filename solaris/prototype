@@ -40,10 +40,10 @@ f none lib/ser/modules/vm.so 0755 bin bin
 d none doc 0755 bin bin
 d none doc/ser 0755 bin bin
 f none doc/ser/README 0644 bin bin
-f none doc/ser/README.cfg 0644 bin bin
 f none doc/ser/INSTALL 0644 bin bin
 f none doc/ser/README-MODULES 0644 bin bin
 f none doc/ser/AUTHORS 0644 bin bin
+f none doc/ser/NEWS    0644 bin bin
 f none doc/ser/README.acc 0644 bin bin
 f none doc/ser/README.auth 0644 bin bin
 f none doc/ser/README.auth_db 0644 bin bin
@@ -69,6 +69,7 @@ f none doc/ser/README.tm 0644 bin bin
 f none doc/ser/README.uri 0644 bin bin
 f none doc/ser/README.usrloc 0644 bin bin
 f none doc/ser/README.vm 0644 bin bin
+f none doc/ser/README.xlog 0644 bin bin
 d none man 0755 bin bin
 d none man/man8 0755 bin bin
 f none man/man8/ser.8 0644 bin bin
