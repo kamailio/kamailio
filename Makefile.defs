@@ -73,7 +73,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 
 # arh. specific definitions
 ifeq ($(ARCH), i386)
-	DEFS+= -DFAST_LOCK
+#	DEFS+= -DFAST_LOCK
 endif
 
 ifeq ($(ARCH), sparc64)
