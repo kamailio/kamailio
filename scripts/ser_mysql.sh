@@ -237,7 +237,7 @@ CREATE TABLE pending (
 
 
 CREATE TABLE phonebook (
-  id int(10) unsigned NOT NULL default '0',
+  id int(10) unsigned NOT NULL increment,
   user varchar(50) NOT NULL default '',
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
