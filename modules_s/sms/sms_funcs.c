@@ -14,17 +14,15 @@ struct network networks[MAX_NETWORKS];
 int net_pipes_in[MAX_NETWORKS];
 int nr_of_networks;
 int nr_of_modems;
-int looping_interval = 30;
-int max_sms_per_call = 10;
-int default_net      = 0;
 
 
 
 
 int push_on_network(struct sip_msg *msg, int net)
 {
-	static str body,user,host;
-	static struct sms_msg sms_messg;
+	str body,user,host;
+	struct sms_msg sms_messg;
+	struct to_body from_parsed;
 	int foo;
 
 	if ( im_extract_body(msg,&body)==-1 )
@@ -46,7 +44,21 @@ int push_on_network(struct sip_msg *msg, int net)
 			"truncated!\n",MAX_SMS_LENGTH);
 		foo = MAX_SMS_LENGTH;
 	}
-	strncpy(sms_messg.text, body.s, foo);
+	memcpy(sms_messg.text, body.s, foo);
+	if (msg->from) {
+		parse_to(msg->from->body.s,msg->from->body.s+msg->from->body.len+1,
+			&from_parsed);
+		if (from_parsed.error!=PARSE_OK && foo+SMS_FROM_LEN+
+		from_parsed.body.len>MAX_SMS_LENGTH) {
+			LOG(L_WARN,"WARNING:sms_push_on_net: cannot apend FROM tag!!"
+				"maximum length (%d) exceded!\n",MAX_SMS_LENGTH);
+		} else {
+			memcpy(sms_messg.text+foo,SMS_FROM,SMS_FROM_LEN);
+			foo += SMS_FROM_LEN;
+			memcpy(sms_messg.text+foo,from_parsed.body.s,from_parsed.body.len);
+			foo += from_parsed.body.len;
+		}
+	}
 	sms_messg.text[foo] = 0;
 
 	if (user.len>MAX_CHAR_BUF) {
@@ -59,7 +71,7 @@ int push_on_network(struct sip_msg *msg, int net)
 
 	sms_messg.is_binary = 0;
 	sms_messg.udh = 1;
-	sms_messg.cs_convert = 0;
+	sms_messg.cs_convert = 1;
 
 	if (write(net_pipes_in[net], &sms_messg, sizeof(sms_messg))!=
 	sizeof(sms_messg) )
@@ -79,14 +91,12 @@ error:
 void modem_process(struct modem *mdm)
 {
 	struct sms_msg sms_messg;
-	int i,net,len;
+	struct network *net;
+	int i,len;
 	int counter;
 	int dont_wait;
 	int empty_pipe;
 	int modem_open;
-
-	mdm->baudrate = 14;
-	mdm->mode = MODE_NEW;
 
 	sleep(1);
 
@@ -98,14 +108,14 @@ void modem_process(struct modem *mdm)
 			counter = 0;
 			empty_pipe = 0;
 			modem_open = 0;
-			net = mdm->net_list[i];
+			net = &(networks[mdm->net_list[i]]);
 			DBG("DEBUG:modem_process: %s processing sms for net %s \n",
-				mdm->device, networks[net].name);
+				mdm->device, net->name);
 			/*getting msgs from pipe*/
-			while( counter<max_sms_per_call && !empty_pipe )
+			while( counter<net->max_sms_per_call && !empty_pipe )
 			{
 				/* let's read a sms from pipe */
-				len = read(networks[net].pipe_out, &sms_messg,
+				len = read(net->pipe_out, &sms_messg,
 					sizeof(sms_messg));
 				if (len!=sizeof(sms_messg)) {
 					if (len>=0)
@@ -128,7 +138,7 @@ void modem_process(struct modem *mdm)
 						exit(0);
 					}
 					setmodemparams(mdm);
-					initmodem(mdm,0/*smsc*/);
+					initmodem(mdm,net->smsc);
 					modem_open = 1;
 				}
 
@@ -139,7 +149,7 @@ void modem_process(struct modem *mdm)
 
 				counter++;
 				/* if I reached the limit -> set not to wait */
-				if (counter==max_sms_per_call)
+				if (counter==net->max_sms_per_call)
 					dont_wait = 1;
 			}/*while*/
 			/* if the modem is open -> close it!*/
@@ -149,9 +159,10 @@ void modem_process(struct modem *mdm)
 			}
 		}/*for*/
 		if (!dont_wait)
-			sleep(looping_interval);
+			sleep(mdm->looping_interval);
 	}/*while*/
 }
+
 
 
 

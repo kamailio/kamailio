@@ -23,18 +23,7 @@ mailto:s.frings@mail.isis.de
 #define MODE_ASCII    3
 #define MODE_NEW      4
 
-#define ERROR_SLEEP_TIME 10
 
-//int modem;
-//int baudrate;
-//int errorsleeptime;
-//char device[100];
-//char initstring[100];
-//char modemname[100];
-//char smsc[100];
-//char pin[16];
-//char mode[10];
-//struct termios oldtio;
 
 // put_command
 // Sends a command to the modem and waits max timout*0.1 seconds for an answer.

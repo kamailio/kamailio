@@ -14,8 +14,10 @@
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 #include "../im/im_funcs.h"
 #include "sms_funcs.h"
+#include "libsms_modem.h"
 
 
 
@@ -23,14 +25,18 @@ static int sms_init(void);
 static int sms_exit(void);
 static int w_sms_send_msg(struct sip_msg*, char*, char* );
 static int w_sms_send_msg_to_net(struct sip_msg*, char*, char*);
+static int fixup_sms_send_msg_to_net(void** param, int param_no);
 
 
 
 /* parameters */
-char *networks_config;
-char *modems_config;
-int  looping_interval;
-int  max_sms_per_call;
+char *networks_config = 0;
+char *modems_config   = 0;
+char *links_config    = 0;
+char *default_net_str = 0;
+
+/*global vaiables*/
+int default_net=0;
 
 
 
@@ -49,7 +55,7 @@ struct module_exports exports= {
 				0
 			},
 	(fixup_function[]){
-				0,
+				fixup_sms_send_msg_to_net,
 				0
 		},
 	2,
@@ -57,25 +63,22 @@ struct module_exports exports= {
 	(char*[]) {   /* Module parameter names */
 		"networks",
 		"modems",
-		"looping_interval",
-		"max_sms_per_call",
+		"links",
 		"default_net"
 	},
 	(modparam_t[]) {   /* Module parameter types */
 		STR_PARAM,
 		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
+		STR_PARAM,
+		STR_PARAM
 	},
 	(void*[]) {   /* Module parameter variable pointers */
 		&networks_config,
 		&modems_config,
-		&looping_interval,
-		&max_sms_per_call,
-		&default_net
+		&links_config,
+		&default_net_str
 	},
-	5,      /* Number of module paramers */
+	4,      /* Number of module paramers */
 
 	sms_init,   /* module initialization function */
 	(response_function) 0,
@@ -86,9 +89,159 @@ struct module_exports exports= {
 
 
 
+
+static int fixup_sms_send_msg_to_net(void** param, int param_no)
+{
+	int net_nr,i;
+
+	if (param_no==1) {
+		for(net_nr=-1,i=0;i<nr_of_networks&&net_nr==-1;i++)
+			if (!strcasecmp(networks[i].name,*param))
+				net_nr = i;
+		if (net_nr==-1) {
+			LOG(L_ERR,"ERROR:fixup_sms_send_msg_to_net: network \"%s\""
+				" not found in net list!\n",(char*)*param);
+			return E_UNSPEC;
+		} else {
+			free(*param);
+			*param=(void*)net_nr;
+			return 0;
+		}
+	}
+	return 0;
+}
+
+
+
+
+
 #define eat_spaces(_p) \
 	while( *(_p)==' ' || *(_p)=='\t' ){\
 	(_p)++;}
+
+
+
+
+int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
+{
+	int err, foo;
+
+	if (*(arg+1)!='=') {
+		LOG(L_ERR,"ERROR: invalid parameter syntax near [=]\n");
+		goto error;
+	}
+	switch (*arg)
+	{
+		case 'd':  /* device */
+			memcpy(mdm->device,arg+2,arg_end-arg-2);
+			mdm->device[arg_end-arg-2] = 0;
+			break;
+		case 'p':  /* pin */
+			memcpy(mdm->pin,arg+2,arg_end-arg-2);
+			mdm->pin[arg_end-arg-2] = 0;
+			break;
+		case 'm':  /* mode */
+			if (!strncasecmp(arg+2,"OLD",3)
+			&& arg_end-arg-2==3) {
+				mdm->mode = MODE_OLD;
+			} else if (!strncasecmp(arg+2,"DIGICOM",7)
+			&& arg_end-arg-2==7) {
+				mdm->mode = MODE_DIGICOM;
+			} else if (!strncasecmp(arg+2,"ASCII",5)
+			&& arg_end-arg-2==5) {
+				mdm->mode = MODE_ASCII;
+			} else if (!strncasecmp(arg+2,"NEW",3)
+			&& arg_end-arg-2==3) {
+				mdm->mode = MODE_NEW;
+			} else {
+				LOG(L_ERR,"ERROR: invalid value \"%.*s\" for param [m]\n",
+					arg_end-arg-2,arg+2);
+				goto error;
+			}
+			break;
+		case 'r':  /* retry time */
+			foo=str2s(arg+2,arg_end-arg-2,&err);
+			if (err) {
+				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [r] arg to"
+					" integer!\n");
+				goto error;
+			}
+			mdm->retry = foo;
+			break;
+		case 'l':  /* looping interval */
+			foo=str2s(arg+2,arg_end-arg-2,&err);
+			if (err) {
+				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [l] arg to"
+					" integer!\n");
+				goto error;
+			}
+			mdm->looping_interval = foo;
+			break;
+		case 'b':  /* baudrate */
+			foo=str2s(arg+2,arg_end-arg-2,&err);
+			if (err) {
+				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [b] arg to"
+					" integer!\n");
+				goto error;
+			}
+			switch (foo) {
+				case   300: foo=B300; break;
+				case  1200: foo=B1200; break;
+				case  2400: foo=B2400; break;
+				case  9600: foo=B9600; break;
+				case 19200: foo=B19200; break;
+				case 38400: foo=B38400; break;
+				default:
+					LOG(L_ERR,"ERROR:set_modem_arg: unsupported value %d "
+						"for [b] arg!\n",foo);
+					goto error;
+			}
+			mdm->baudrate = foo;
+			break;
+		default:
+			LOG(L_ERR,"ERROR:set_modem_arg: unknow param name [%c]\n",*arg);
+	}
+
+	return 1;
+error:
+	return -1;
+}
+
+
+
+
+int set_network_arg(struct network *net, char *arg, char *arg_end)
+{
+	int err,foo;
+
+	if (*(arg+1)!='=') {
+		LOG(L_ERR,"ERROR:set_network_arg:invalid parameter syntax near [=]\n");
+		goto error;
+	}
+	switch (*arg)
+	{
+		case 'c':  /* sms center number */
+			memcpy(net->smsc,arg+2,arg_end-arg-2);
+			net->smsc[arg_end-arg-2] = 0;
+			break;
+		case 'm':  /* maximum sms per one call */
+			foo=str2s(arg+2,arg_end-arg-2,&err);
+			if (err) {
+				LOG(L_ERR,"ERROR:set_network_arg: cannot convert [m] arg to"
+					" integer!\n");
+				goto error;
+			}
+			net->max_sms_per_call = foo;
+			break;
+		default:
+			LOG(L_ERR,"ERROR:set_network_arg: unknow param name [%c]\n",*arg);
+	}
+
+	return 1;
+error:
+	return -1;
+}
+
 
 
 
@@ -96,105 +249,54 @@ int parse_config_lines()
 {
 	char *p,*start;
 	int  i, k, step = 1;
+	int  mdm_nr, net_nr;
 
 	nr_of_networks = 0;
 	nr_of_modems = 0;
 
-	/* parsing networks configuration string */
-	p = networks_config;
-	while (*p)
-	{
-		eat_spaces(p);
-		/*get network name*/
-		start = p;
-		while (*p!=' ' && *p!='\t' && *p!='[' && *p!=0)
-			p++;
-		if ( p==start || *p==0 )
-			goto parse_error;
-		memcpy(networks[nr_of_networks].name, start, p-start);
-		networks[nr_of_networks].name[p-start] = 0;
-		/*get the sms center number*/
-		eat_spaces(p);
-		if (*p!='[')
-			goto parse_error;
-		p++;
-		eat_spaces(p);
-		start = p;
-		while(*p!=' ' && *p!='\t' && *p!=']' && *p!=0)
-			p++;
-		if ( p==start || *p==0 )
-			goto parse_error;
-		memcpy(networks[nr_of_networks].smsc, start, p-start);
-		networks[nr_of_networks].smsc[p-start] = 0;
-		DBG("DEBUG: sms startup: network found <%s> smsc=<%s>\n",
-			networks[nr_of_networks].name, networks[nr_of_networks].smsc);
-		eat_spaces(p);
-		if (*p!=']')
-			goto parse_error;
-		p++;
-		/* end of element */
-		nr_of_networks++;
-		eat_spaces(p);
-		if (*p==';')
-			p++;
-		eat_spaces(p);
-	}
-	if (nr_of_networks==0)
-	{
-		LOG(L_ERR,"ERROR:SMS parse config networks - no network found!\n");
+	step = 0;
+	/* parsing modems configuration string */
+	if ( (p = modems_config)==0) {
+		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"modems\" not"
+			" found\n");
 		goto error;
 	}
-
-	step++;
-	/* parsing modems configuration string */
-	p = modems_config;
 	while (*p)
 	{
 		eat_spaces(p);
-		/*get modem's device*/
+		/*get modem's name*/
 		start = p;
 		while (*p!=' ' && *p!='\t' && *p!='[' && *p!=0)
 			p++;
 		if ( p==start || *p==0 )
 			goto parse_error;
-		memcpy(modems[nr_of_modems].device, start, p-start);
-		modems[nr_of_modems].device[p-start] = 0;
+		memcpy(modems[nr_of_modems].name, start, p-start);
+		modems[nr_of_modems].name[p-start] = 0;
+		modems[nr_of_modems].device[0] = 0;
+		modems[nr_of_modems].pin[0] = 0;
+		modems[nr_of_modems].mode = MODE_NEW;
+		modems[nr_of_modems].retry = 10;
+		modems[nr_of_modems].looping_interval = 20;
+		modems[nr_of_modems].baudrate = B19200;
 		memset(modems[nr_of_modems].net_list,0XFF,
 			sizeof(modems[nr_of_modems].net_list) );
-		DBG("DEBUG: sms startup: modem on <%.*s> found \n",p-start,start);
-		/*get associated networks list*/
+		/*get modem parameters*/
 		eat_spaces(p);
 		if (*p!='[')
 			goto parse_error;
 		p++;
-		k=0;
 		while (*p!=']')
 		{
 			eat_spaces(p);
 			start = p;
-			while(*p!=' ' && *p!='\t' && *p!=']' && *p!=',' && *p!=0)
+			while(*p!=' ' && *p!='\t' && *p!=']' && *p!=';' && *p!=0)
 				p++;
 			if ( p==start || *p==0 )
 				goto parse_error;
-			DBG("DEBUG:sms startup: associated net found <%.*s>\n",
-				p-start,start);
-			/* lookup for the network -> get its index */
-			for(i=0;i<nr_of_networks;i++) {
-				if (!strncasecmp(networks[i].name,start,p-start)
-				&& networks[i].name[p-start]==0)
-				{
-					modems[nr_of_modems].net_list[k++]=i;
-					i = -1;
-					break;
-				}
-			}
-			if (i!=-1) {
-				LOG(L_ERR,"ERROR:SMS parse modem config - associated"
-					" net <%.*s> not found in net list\n",p-start,start);
+			if (set_modem_arg( &(modems[nr_of_modems]), start, p)==-1)
 				goto error;
-			}
 			eat_spaces(p);
-			if (*p==',') {
+			if (*p==';') {
 				p++;
 				eat_spaces(p);
 			}
@@ -203,6 +305,11 @@ int parse_config_lines()
 			goto parse_error;
 		p++;
 		/* end of element */
+		if (modems[nr_of_modems].device[0]==0) {
+			LOG(L_ERR,"ERROR:SMS parse config modems: modem %s has no device"
+				" associated\n",modems[nr_of_modems].name);
+			goto error;
+		}
 		nr_of_modems++;
 		eat_spaces(p);
 		if (*p==';') {
@@ -216,11 +323,156 @@ int parse_config_lines()
 		goto error;
 	}
 
+	step++;
+	/* parsing networks configuration string */
+	if ( (p = networks_config)==0) {
+		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"networks\" not "
+			"found\n");
+		goto error;
+	}
+	while (*p)
+	{
+		eat_spaces(p);
+		/*get network name*/
+		start = p;
+		while (*p!=' ' && *p!='\t' && *p!='[' && *p!=0)
+			p++;
+		if ( p==start || *p==0 )
+			goto parse_error;
+		memcpy(networks[nr_of_networks].name, start, p-start);
+		networks[nr_of_networks].name[p-start] = 0;
+		networks[nr_of_networks].smsc[0] = 0;
+		networks[nr_of_networks].max_sms_per_call = 10;
+		/*get network parameters*/
+		eat_spaces(p);
+		if (*p!='[')
+			goto parse_error;
+		p++;
+		while (*p!=']')
+		{
+			eat_spaces(p);
+			start = p;
+			while(*p!=' ' && *p!='\t' && *p!=']' && *p!=';' && *p!=0)
+				p++;
+			if ( p==start || *p==0 )
+				goto parse_error;
+			if (set_network_arg( &(networks[nr_of_networks]), start, p)==-1)
+				goto error;
+			eat_spaces(p);
+			if (*p==';') {
+				p++;
+				eat_spaces(p);
+			}
+		}
+		if (*p!=']')
+			goto parse_error;
+		p++;
+		/* end of element */
+		if (networks[nr_of_networks].smsc[0]==0) {
+			LOG(L_ERR,"ERROR:SMS parse config networks: network %s has no sms"
+				" center associated\n",networks[nr_of_networks].name);
+			goto error;
+		}
+		nr_of_networks++;
+		eat_spaces(p);
+		if (*p==';')
+			p++;
+		eat_spaces(p);
+	}
+	if (nr_of_networks==0)
+	{
+		LOG(L_ERR,"ERROR:SMS parse config networks - no network found!\n");
+		goto error;
+	}
+
+	step++;
+	/* parsing links configuration string */
+	if ( (p = links_config)==0) {
+		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"links\" not "
+			"found\n");
+		goto error;
+	}
+	while (*p)
+	{
+		eat_spaces(p);
+		/*get modem's device*/
+		start = p;
+		while (*p!=' ' && *p!='\t' && *p!='[' && *p!=0)
+			p++;
+		if ( p==start || *p==0 )
+			goto parse_error;
+		/*looks for modem index*/
+		for(mdm_nr=-1,i=0;i<nr_of_modems && mdm_nr==-1;i++)
+			if (!strncasecmp(modems[i].name,start,p-start)&&
+			modems[i].name[p-start]==0)
+				mdm_nr = i;
+		if (mdm_nr==-1) {
+			LOG(L_ERR,"ERROR:sms_parse_conf_line: unknown modem %.*s \n,",
+				p-start, start);
+			goto error;
+		}
+		/*get associated networks list*/
+		eat_spaces(p);
+		if (*p!='[')
+			goto parse_error;
+		p++;
+		k=0;
+		while (*p!=']')
+		{
+			eat_spaces(p);
+			start = p;
+			while(*p!=' ' && *p!='\t' && *p!=']' && *p!=';' && *p!=0)
+				p++;
+			if ( p==start || *p==0 )
+				goto parse_error;
+			/* lookup for the network -> get its index */
+			for(net_nr=-1,i=0;i<nr_of_networks&&net_nr==-1;i++)
+				if (!strncasecmp(networks[i].name,start,p-start)
+				&& networks[i].name[p-start]==0)
+					net_nr = i;
+			if (net_nr==-1) {
+				LOG(L_ERR,"ERROR:SMS parse modem config - associated"
+					" net <%.*s> not found in net list\n",p-start,start);
+				goto error;
+			}
+			DBG("DEBUG:sms startup: linking net \"%s\" to modem \"%s\" on "
+				"pos %d.\n",networks[net_nr].name,modems[mdm_nr].name,k);
+			modems[mdm_nr].net_list[k++]=net_nr;
+			eat_spaces(p);
+			if (*p==';') {
+				p++;
+				eat_spaces(p);
+			}
+		}
+		if (*p!=']')
+			goto parse_error;
+		p++;
+		/* end of element */
+		eat_spaces(p);
+		if (*p==';') {
+			p++;
+			eat_spaces(p);
+		}
+	}
+
+	/* resloving default setwork name - if any*/
+	if (default_net_str) {
+		for(net_nr=-1,i=0;i<nr_of_networks&&net_nr==-1;i++)
+			if (!strcasecmp(networks[i].name,default_net_str))
+				net_nr = i;
+		if (net_nr==-1) {
+			LOG(L_ERR,"ERROR:SMS setting default net: network \"%s\""
+				" not found in net list!\n",default_net_str);
+			goto error;
+		}
+		default_net = net_nr;
+	}
+
 	return 0;
 parse_error:
 	LOG(L_ERR,"ERROR: SMS %s config: parse error before  chr %d [%.*s]\n",
-		(step==1)?"networks":"modems",
-		p - ((step==1)?networks_config:modems_config),
+		(step==1)?"modems":(step==2?"netwoks":"links"),
+		p - ((step==1)?modems_config:(step==2?networks_config:links_config)),
 		(*p==0)?4:1,(*p==0)?"NULL":p );
 error:
 	return -1;

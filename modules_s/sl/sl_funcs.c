@@ -126,7 +126,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	send_sock=get_send_socket(&to);
 	if (send_sock!=0)
 	{
-		udp_send(/* v6; -bogdan (struct socket_info*) */ send_sock,
+		udp_send( send_sock,
 			buf, len,
 			/* v6; -jiri (struct sockaddr*) */ &(to),
 			sizeof(struct sockaddr_in));

@@ -12,12 +12,14 @@
 #define MAX_CONFIG_PARAM 1024 /* max length of a config parameter */
 #define MAX_SMS_LENGTH   160
 
-
+#define SMS_FROM      "\n\rFrom "
+#define SMS_FROM_LEN  7
 
 
 struct network {
 	char name[MAX_CHAR_BUF+1];
 	char smsc[MAX_CHAR_BUF+1];
+	int  max_sms_per_call;
 	int  pipe_out;
 };
 
@@ -28,7 +30,8 @@ struct modem {
 	int  net_list[MAX_NETWORKS];
 	struct termios oldtio;
 	int  mode;
-	int  report;
+	int  retry;
+	int  looping_interval;
 	int  fd;
 	int  baudrate;
 };
@@ -48,9 +51,6 @@ extern struct network networks[MAX_NETWORKS];
 extern int net_pipes_in[MAX_NETWORKS];
 extern int nr_of_networks;
 extern int nr_of_modems;
-extern int looping_interval;
-extern int max_sms_per_call;
-extern int default_net;
 
 
 void modem_process(struct modem*);

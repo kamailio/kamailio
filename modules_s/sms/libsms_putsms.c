@@ -23,163 +23,6 @@ mailto:s.frings@mail.isis.de
 #include "libsms_charset.h"
 #include "libsms_modem.h"
 
-/*
-char message[500];
-int is_binary;  // 1 is binary file
-int udh;        // disable UDH bit
-int messagelen; // length of message
-char filename[500];
-char logfile[256]={0};
-int loglevel=9;
-char to[50];
-int cs_convert;
-int report;
-*/
-
-
-void cut_ctrl(char* message) /* removes all ctrl chars */
-{
-  char tmp[500];
-  int posdest=0;
-  int possource;
-  int count;
-  count=strlen(message);
-  for (possource=0; possource<=count; possource++)
-  {
-    if ((message[possource]>=' ') || (message[possource]==0))
-      tmp[posdest++]=message[possource];
-  }
-  strcpy(message,tmp);
-}
-
-#ifdef old
-void parsearguments(int argc,char** argv)
-{
-  int result;
-  char tmp[500];
-  
-  /* set default values */
-  strcpy(device,"/dev/ttyS0");
-  strcpy(mode,"new");
-  pin[0]=0;
-  filename[0]=0;
-  smsc[0]=0;
-  message[0]=0;
-  to[0]=0;
-  cs_convert=0;
-  baudrate=19200;
-  is_binary=0;
-  initstring[0]=0;
-  report=0;
-  errorsleeptime=10;
-  modemname[0]=0;
-  smsc[0]=0;
-  udh=1;
-  /* parse arguments */
-  do
-  {
-    result=getopt(argc,argv,"n:b:l:L:ce:rhi:d:p:m:s:f:F:V:u");
-    switch (result)
-    {
-      case 'h': help();
-                break;
-      case 'b': baudrate=atoi(optarg);
-                break;
-      case 'c': cs_convert=1;
-                break;
-      case 'e': errorsleeptime=atoi(optarg);
-      		break;
-      case 'r': report=1;
-    		break;
-      case 'u': udh=0;
-    		break;
-      case 'd': strcpy(device,optarg);
-                break;
-      case 'p': strcpy(pin,optarg);
-                break;
-      case 'l': strcpy(logfile,optarg);
-                break;
-      case 'L': loglevel=atoi(optarg);
-                break;
-      case 'm': strcpy(mode,optarg);
-                break;
-      case 'n': strcpy(modemname,optarg);
-                break;
-      case 's': strcpy(smsc,optarg);
-                break;
-      case 'f': strcpy(filename,optarg);
-    		is_binary=0;
-                break;
-      case 'i': strcpy(initstring,optarg);
-      	        strcat(initstring,"\r");
-		break;
-      case 'F': strcpy(filename,optarg);
-    		is_binary=1;
-		break;
-      case 'V': printf("Version %s, Copyright (c) 2000-2002 by Stefan Frings, s.frings@mail.isis.de\n",putsms_version);
-                exit(0);
-    }
-  }
-  while (result>0);
-  
-  switch (baudrate)
-  {
-    case 300:    baudrate=B300; break;
-    case 1200:   baudrate=B1200; break;
-    case 2400:   baudrate=B2400; break;
-    case 9600:   baudrate=B9600; break;
-    case 19200:  baudrate=B19200; break;
-    case 38400:  baudrate=B38400; break;
-#ifdef B57600    
-    case 57600:  baudrate=B57600; break;
-#endif
-#ifdef B115200
-    case 115200: baudrate=B115200; break;
-#endif
-#ifdef B230400
-    case 230400: baudrate=B230400; break;
-#endif
-    default: writelogfile(LOG_ERR,"Baudrate not supported"); exit(1);
-  }    
-  
-  if (modemname[0]==0)
-    strcpy(modemname,device);
-
-  /* parse number and text  */
-  if (optind==(argc-2)) /* number and text as arguments defined */
-  {
-    if (filename[0])
-    {
-      fprintf(stderr,"Message as file AND as argument specified.\n");
-      exit(5);
-    }
-    strcpy(message,argv[optind+1]);
-    strcpy(to,argv[optind]);
-  }
-  else if (optind==(argc-1)) /* Only number as text defined */
-    strcpy(to,argv[optind]);
-
-  loadmessagefile();
-
-  /* Check number and text*/
-  if (message[0]==0)
-  {
-    writelogfile(LOG_ERR,"You did not specify a message or a message file");
-    exit(5);
-  }
-  if (to[0]==0)
-  {
-    writelogfile(LOG_ERR,"You did not specify a destination or a message file");
-    exit(5);
-  }
-  /* Check if binary file allowed */
-  if (is_binary && (strcmp(mode,"ascii")==0))
-  {
-    writelogfile(LOG_ERR,"Binary files are not allowd in ascii mode");
-    exit(5);
-  }
-}
-#endif
 
 
 
@@ -287,10 +130,8 @@ void make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 		if (msg->udh)
 			flags+=64; // User Data Header
 	}
-	if (mdm->mode==MODE_OLD)
+	if (mdm->mode!=MODE_OLD)
 		flags+=16; // Validity field
-	if (mdm->report)
-		flags+=32; /* Request Status Report */
 	/* concatenate the first part of the PDU string */
 	if (mdm->mode==MODE_OLD)
 		sprintf(pdu,"%02X00%02X91%s00%02X%02X",flags,strlen(msg->to),tmp,
@@ -347,8 +188,8 @@ int putsms( struct sms_msg *sms_messg, struct modem *mdm)
 			if (retries<2)
 			{
 				LOG(L_ERR,"ERROR: putsms: trying again in %i sec.",
-					ERROR_SLEEP_TIME);
-				sleep(ERROR_SLEEP_TIME);
+					mdm->retry);
+				sleep(mdm->retry);
 				//the next line is a workaround for an unknown buggy gsm modem
 				put_command(mdm->fd,"\r\x1A\r",answer,sizeof(answer),10,0);
 				sleep(1);

@@ -142,7 +142,6 @@ int initmodem(struct modem *mdm, char *smsc)
 	char answer[500];
 	int retries=0;
 	int success=0;
-	int errorsleeptime=ERROR_SLEEP_TIME;
 
 	/*if (initstring[0])
 	{
@@ -203,8 +202,8 @@ int initmodem(struct modem *mdm, char *smsc)
 				success=1;
 			} else {
 				LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
-					" retrying\n",errorsleeptime);
-				sleep(errorsleeptime);
+					" retrying\n",mdm->retry);
+				sleep(mdm->retry);
 			}
 		}while ((success==0)&&(retries<10));
 	}
@@ -229,8 +228,8 @@ int initmodem(struct modem *mdm, char *smsc)
 		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
 		if (strstr(answer,"ERROR")) {
 			LOG(L_NOTICE,"NOTICE:initmodem: Waiting %i sec. before to"
-				" retrying\n",errorsleeptime);
-			sleep(errorsleeptime);
+				" retrying\n",mdm->retry);
+			sleep(mdm->retry);
 		} else
 			success=1;
 	}while ((success==0)&&(retries<3));
