@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# chkconfig: 2345 20 80
+# description: controls execution of SIP sniffer
+# processname: ng
+
+NAME=ng
+OPTIONS="-L -t port 5060"
+BIN=/usr/local/bin/$NAME
+ROTATE=/usr/sbin/rotatelogs
+
+RETVAL=0
+
+
+# See how we were called.
+case "$1" in
+  start)
+  	killall $NAME
+	echo -n "Starting SIP sniffer: "
+	$BIN $OPTIONS 2>&1 | $ROTATE /var/log/sip/sip 86400 &
+	RETVAL=$?
+	echo "ngrep."
+	;;
+  stop)
+	echo -n "Stopping SIP ngrep: "
+	killall $NAME
+	RETVAL=$?
+        echo "done."
+	;;
+  restart)
+	#$0 stop
+	$0 start
+	RETVAL=$?
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $RETVAL
+
