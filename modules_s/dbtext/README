@@ -29,6 +29,8 @@ Daniel-Constantin Mierla
         1.4. Exported Functions
         1.5. Installation & Running
 
+              1.5.1. Using dbtext with basic SER configuration
+
    2. Developer's Guide
    3. Frequently Asked Questions
 
@@ -37,6 +39,10 @@ Daniel-Constantin Mierla
    1-2. Minimal SER location dbtext table definition
    1-3. Minimal SER subscriber dbtext table example
    1-4. Load the dbtext module
+   1-5. Definition of 'subscriber' table (one line)
+   1-6. Definition of 'location' and 'aliases' tables (one line)
+   1-7. Definition of 'version' table and sample records
+   1-8. Configuration file
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -166,6 +172,188 @@ suser:supasswd:xxx:iptel.org:xxx
 loadmodule "/path/to/ser/modules/dbtext.so"
 ...
 modparam("module_name", "database_URL", "/path/to/dbtext/database")
+...
+     _________________________________________________________
+
+1.5.1. Using dbtext with basic SER configuration
+
+   Here are the definitions for most important table as well as a
+   basic configuration file to use dbtext with SER. The table
+   structures may change in time and you will have to adjust next
+   examples. These are know to work with upcoming SER v0.9.0
+
+   You have to populate the table 'subscriber' by hand with user
+   profiles in order to have authentication. To use with the
+   given configuration file, the table files must be placed in
+   the '/tmp/serdb' directory.
+
+   Example 1-5. Definition of 'subscriber' table (one line)
+...
+username(str) domn(str) password(str) first_name(str) last_name(str) ph
+one(str) email_address(str) datetime_created(int) datetime_modified(int
+) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1(s
+tr) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,nu
+ll) uuid(str,null)
+...
+
+   Example 1-6. Definition of 'location' and 'aliases' tables
+   (one line)
+...
+username(str) domain(str,null) contact(str,null) expires(int,null) q(do
+uble,null) callid(str,null) cseq(int,null) last_modified(str) replicate
+(int,null) state(int,null) flags(int) user_agent(str) received(str)
+...
+
+   Example 1-7. Definition of 'version' table and sample records
+...
+table_name(str) table_version(int)
+subscriber:3
+location:6
+aliases:6
+...
+
+   Example 1-8. Configuration file
+...
+#
+# $Id$
+#
+# simple quick-start config script with dbtext
+#
+
+# ----------- global configuration parameters ------------------------
+
+#debug=9         # debug level (cmd line: -dddddddddd)
+#fork=yes
+#log_stderror=no        # (cmd line: -E)
+
+check_via=no    # (cmd. line: -v)
+dns=no          # (cmd. line: -r)
+rev_dns=no      # (cmd. line: -R)
+children=4
+
+listen=10.100.100.1
+port=5060
+
+fifo="/tmp/ser_fifo"
+
+alias=alpha.org
+
+# ------------------ module loading ----------------------------------
+
+# use dbtext database
+loadmodule "../sip_router/modules/dbtext/dbtext.so"
+
+loadmodule "../sip_router/modules/sl/sl.so"
+loadmodule "../sip_router/modules/tm/tm.so"
+loadmodule "../sip_router/modules/rr/rr.so"
+loadmodule "../sip_router/modules/maxfwd/maxfwd.so"
+loadmodule "../sip_router/modules/usrloc/usrloc.so"
+loadmodule "../sip_router/modules/registrar/registrar.so"
+loadmodule "../sip_router/modules/textops/textops.so"
+
+# modules for digest authentication
+loadmodule "../sip_router/modules/auth/auth.so"
+loadmodule "../sip_router/modules/auth_db/auth_db.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+# -- usrloc params --
+
+# use dbtext database for persistent storage
+modparam("usrloc", "db_mode", 2)
+modparam("usrloc|auth_db", "db_url", "dbtext:///tmp/serdb")
+
+# -- auth params --
+#
+modparam("auth_db", "calculate_ha1", 1)
+modparam("auth_db", "password_column", "password")
+modparam("auth_db", "user_column", "username")
+modparam("auth_db", "domain_column", "domain")
+
+# -- rr params --
+# add value to ;lr param to make some broken UAs happy
+modparam("rr", "enable_full_lr", 1)
+
+# -------------------------  request routing logic -------------------
+
+# main routing logic
+
+route{
+    # initial sanity checks -- messages with
+    # max_forwards==0, or excessively long requests
+    if (!mf_process_maxfwd_header("10")) {
+        sl_send_reply("483","Too Many Hops");
+        break;
+    };
+    if (msg:len >=  max_len ) {
+        sl_send_reply("513", "Message too big");
+        break;
+    };
+
+    # we record-route all messages -- to make sure that
+    # subsequent messages will go through our proxy; that's
+    # particularly good if upstream and downstream entities
+    # use different transport protocol
+    if (!method=="REGISTER") record_route();
+
+    # subsequent messages withing a dialog should take the
+    # path determined by record-routing
+    if (loose_route()) {
+        # mark routing logic in request
+        append_hf("P-hint: rr-enforced\r\n");
+        route(1);
+        break;
+    };
+
+    if (!uri==myself) {
+        # mark routing logic in request
+        append_hf("P-hint: outbound\r\n");
+        route(1);
+        break;
+    };
+
+    # if the request is for other domain use UsrLoc
+    # (in case, it does not work, use the following command
+    # with proper names and addresses in it)
+    if (uri==myself) {
+        if (method=="REGISTER") {
+            # digest authentication
+            if (!www_authorize("", "subscriber")) {
+                www_challenge("", "0");
+                break;
+            };
+
+            save("location");
+            break;
+        };
+
+        lookup("aliases");
+        if (!uri==myself) {
+            append_hf("P-hint: outbound alias\r\n");
+            route(1);
+            break;
+        };
+
+        # native SIP destinations are handled using our USRLOC DB
+        if (!lookup("location")) {
+            sl_send_reply("404", "Not Found");
+            break;
+        };
+    };
+    append_hf("P-hint: usrloc applied\r\n");
+    route(1);
+}
+
+route[1]
+{
+    # send it out now; use stateful forwarding as it works reliably
+    # even for UDP2TCP
+    if (!t_relay()) {
+        sl_reply_error();
+    };
+}
+
+
 ...
      _________________________________________________________
 
