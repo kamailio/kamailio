@@ -109,15 +109,45 @@ error:
 
 int parse_avp_db(char *s, struct db_param *dbp)
 {
+	struct fis_param *ap;
 	unsigned long ul;
-	str tmp;
+	str   tmp;
+	char  c;
 
-	/* parse the attribute name */
-	if ( (s=parse_avp_attr( s, &(dbp->a), '/'))==0 )
-		goto error;
-	if (*s!=0 && *s!='/') {
-		LOG(L_ERR,"ERROR:avpops:parse_avp_db: parse error arround <%s>\n",s);
-		goto error;
+	/* parse the attribute name - check first if it's not an alias */
+	if ( *s=='$')
+	{
+		tmp.s = ++s;
+		/* is an avp alias -> see where it ends */
+		if ( (s=strchr(tmp.s, '/'))!=0 )
+		{
+			c = *s;
+			*s = 0;
+		} else {
+			c = 0;
+		}
+		if (strlen(tmp.s)==0)
+		{
+			LOG(L_ERR,"ERROR:avpops:parse_avp_db: empty alias in <%s>\n", s);
+			goto error;
+		}
+		/* search the alias */
+		if ( (ap=lookup_avp_alias(tmp.s))==0 )
+		{
+			LOG(L_ERR,"ERROR:avpops:parse_avp_db: unknow alias"
+				"\"%s\"\n", tmp.s);
+			goto error;
+		}
+		dbp->a = *ap;
+	} else {
+		if ( (s=parse_avp_attr( s, &(dbp->a), '/'))==0 )
+			goto error;
+		if (*s!=0 && *s!='/')
+		{
+			LOG(L_ERR,"ERROR:avpops:parse_avp_db: parse error arround "
+				"<%s>\n",s);
+			goto error;
+		}
 	}
 	dbp->a.flags |= AVPOPS_VAL_AVP;
 
@@ -132,7 +162,8 @@ int parse_avp_db(char *s, struct db_param *dbp)
 			ul = (unsigned long)dbp->a.val.n;
 			tmp.s = int2str( ul, &(tmp.len) );
 			dbp->sa.s = (char*)pkg_malloc( tmp.len + 1 );
-			if (dbp->sa.s==0) {
+			if (dbp->sa.s==0)
+			{
 				LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
 				goto error;
 			}
