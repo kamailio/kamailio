@@ -159,7 +159,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	/* Check if database is needed by child */
-	if (db_mode == 0) {
+	if (((db_mode == 0) && (rank > 0)) || ((db_mode == 1) && (rank == PROC_FIFO))) {
 		db_handle = db_init(db_url);
 		if (!db_handle) {
 			LOG(L_ERR, "domain:child_init(): Unable to connect database\n");
