@@ -372,6 +372,10 @@ int open_fifo_server()
 		/* everything is ok, we just do not want to start */
 		return 1;
 	}
+	if (strlen(fifo)==0) {
+		DBG("TM: open_uac_fifo: fifo disabled\n");
+		return 1;
+	}
 	DBG("TM: open_uac_fifo: opening fifo...\n");
 	if ((mkfifo(fifo, fifo_mode)<0) && (errno!=EEXIST)) {
 		LOG(L_ERR, "ERROR: open_fifo_server; can't create FIFO: "
