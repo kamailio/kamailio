@@ -36,6 +36,7 @@
 #  2004-09-28  x86_64 support introduced (andrei)
 #  2004-12-14  gcc-3.4 special case added (andrei)
 #  2004-12-15  HAVE_ALLOCA_H added (andrei)
+#  2004-12-19  amd64 transformed in x86_64 (andrei)
 
 
 # check if already included/exported
@@ -57,7 +58,8 @@ EXTRAVERSION = -dev0
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
-			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" -e "s/cobalt/mips2/" )
+			-e s/armv4l/arm/ -e "s/Power Macintosh/ppc/" -e "s/cobalt/mips2/" \
+			-e s/amd64/x86_64/ )
 OSREL = $(shell uname -r)
 
 # TLS support
