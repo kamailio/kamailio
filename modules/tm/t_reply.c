@@ -608,12 +608,19 @@ static inline int run_failure_handlers(struct cell *t, struct sip_msg *rpl,
 
 	/* failure_route for a local UAC? */
 	if (!shmem_msg) {
-		LOG(L_WARN, "Warning: run_failure_handlers: no UAC support\n");
-		return 0;
-	}
+		LOG(L_WARN, 
+			"Warning: run_failure_handlers: no UAC support (%d, %d) \n",
+			t->on_negative, 
+			t->tmcb_hl.reg_types);
+                return 0;
+        }
 
 	/* don't start faking anything if we don't have to */
 	if ( !has_tran_tmcbs( t, TMCB_ON_FAILURE) && !t->on_negative ) {
+		LOG(L_WARN, 
+			"Warning: run_failure_handlers: no negative handler (%d, %d)\n",
+			t->on_negative, 
+			t->tmcb_hl.reg_types);
 		return 1;
 	}
 
