@@ -134,7 +134,7 @@ static int vm_start(struct sip_msg* msg, char* str1, char* str2)
     char query_buf[256];
     char email_buf[256];
     db_res_t* email_res=0;
-    contact_t* c;
+	contact_t* c;
 
     db_handle = db_init(vm_db_url);
 
