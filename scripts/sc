@@ -428,6 +428,7 @@ case $1 in
 			echo "error opening read fifo $path"
 			exit 1
 		fi
+		trap "rm $path; echo sc monitor ^C-ed; exit 1" 2
 		attempt=0
 		clear
 		while [ 1 -eq 1 ]; do
