@@ -909,7 +909,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			   structure
 			*/
 			if (branch!=relay) {
-				free_via_lump(&relayed_msg->add_rm);
+				free_via_clen_lump(&relayed_msg->add_rm);
 			}
 		}
 		update_reply_stats( relayed_code );

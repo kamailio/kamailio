@@ -30,6 +30,13 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * Histoy:
+ * -------
+ *  2003-11-24  changed free_via_lump to free_via_clen_lump and make it
+ *              handle CONTENTLENGTH lumps also (andrei)
+ */
+
 
 
 #ifndef _FIX_LUMPS_H
@@ -47,14 +54,17 @@
    the other case when I want to delete them is when a message
    is stored in shmem for branch picking, forwarded lated and
    Via removal is applied to the shmem-ed message
+
+   the same thing for Content-Length lumps (FIXME: this
+   should be done in a nicer way)
 */
-inline static void free_via_lump( struct lump **list )
+inline static void free_via_clen_lump( struct lump **list )
 {
 	struct lump *prev_lump, *lump, *a, *foo;
 
 	prev_lump=0;
 	for(lump=*list;lump;lump=lump->next) {
-		if (lump->type==HDR_VIA) {
+		if (lump->type==HDR_VIA||lump->type==HDR_CONTENTLENGTH) {
 			a=lump->before;
 			while(a) {
 				foo=a; a=a->before;
