@@ -45,6 +45,7 @@
 #include "xjab_worker.h"
 #include "xjab_util.h"
 #include "xjab_jcon.h"
+#include "xjab_dmsg.h"
 #include "xode.h"
 
 #include "mdefines.h"
@@ -83,9 +84,7 @@ int xj_wlist_send_info(xj_wlist jwl, int idx)
 	{
 		DBG("XJAB:xj_wlist_send_info: sending disconnect message to <%.*s>\n",
 			p->id->len, p->id->s);
-		xj_send_sip_msgz(p->id, &jab_gw_name, NULL,"ERROR:Connection to"
-			" Jabber server lost. You have to login to Jabber server again"
-			" (join the conferences again that you were participating, too)",
+		xj_send_sip_msgz(p->id, &jab_gw_name, NULL, XJ_DMSG_INF_DISCONNECTED,
 			NULL);
 	}
 	s_unlock_at(jwl->sems, idx);
@@ -295,8 +294,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 					jcp->jmqueue.jsm[i]->to.s);
 				xj_send_sip_msgz(jcp->jmqueue.jsm[i]->jkey->id, 
 						&jcp->jmqueue.jsm[i]->to, jwl->contact_h, 
-						"ERROR: Your message was not sent. Conection to IM"
-						" network failed.", &jcp->jmqueue.ojc[i]->jkey->flag);
+						XJ_DMSG_ERR_SENDIM, &jcp->jmqueue.ojc[i]->jkey->flag);
 				if(jcp->jmqueue.jsm[i]!=NULL)
 				{
 					xj_sipmsg_free(jcp->jmqueue.jsm[i]);
@@ -382,10 +380,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 					(!jbc || !xj_jcon_get_jconf(jbc, &jsmsg->to) ) )
 				{
 					xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-						jwl->contact_h, "ERROR: Your message was not"
-						" sent. You are not joined in the conference."
-						" Please join the room before sending messages.",
-						NULL);
+						jwl->contact_h, XJ_DMSG_ERR_NOTJCONF, NULL);
 					goto step_w;
 				}
 				break;
@@ -401,8 +396,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				if(!xj_jconf_check_addr(&jsmsg->to))
 					xj_jcon_del_jconf(jbc, &jsmsg->to, XJ_JCMD_UNSUBSCRIBE);
 				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-					jwl->contact_h, "INFO: Your have just left"
-					" the conference.", NULL);
+					jwl->contact_h, XJ_DMSG_INF_JCONFEXIT, NULL);
 				goto step_w;
 			case XJ_GO_OFFLINE:
 				if(jbc != NULL)
@@ -431,9 +425,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		{
 			DBG("XJAB:xj_worker:%d: no database result\n", _xj_pid);
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
-				jwl->contact_h, "ERROR: Your message was not"
-				" sent. You do not have permision to use the"
-				" gateway.", NULL);
+				jwl->contact_h, XJ_DMSG_ERR_JGWFORB, NULL);
 			
 			goto step_v;
 		}
@@ -445,9 +437,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			DBG("XJAB:xj_worker:%d: Cannot connect"
 				" to the Jabber server ...\n", _xj_pid);
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
-				jwl->contact_h, "ERROR: Your message was"
-				" not sent. Cannot connect to the Jabber"
-				" server.", &jbc->jkey->flag);
+				jwl->contact_h, XJ_DMSG_ERR_NOJSRV, &jbc->jkey->flag);
 
 			goto step_v;
 		}
@@ -466,9 +456,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 			xj_jcon_disconnect(jbc);
 			
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-				jwl->contact_h, "ERROR: Your message"
-				" was not sent. Authentication to the"
-				" Jabber server failed.", &jbc->jkey->flag);
+				jwl->contact_h, XJ_DMSG_ERR_JAUTH, &jbc->jkey->flag);
 			
 			xj_jcon_free(jbc);
 			goto step_v;
@@ -481,8 +469,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 				" failed! Not enough memory ...\n", _xj_pid);
 			xj_jcon_disconnect(jbc);
 			xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, jwl->contact_h,	
-				"ERROR:Your message was	not sent. SIP-2-JABBER"
-				" gateway is full.", &jbc->jkey->flag);
+				XJ_DMSG_ERR_JGWFULL, &jbc->jkey->flag);
 			xj_jcon_free(jbc);
 			goto step_v;
 		}
@@ -528,8 +515,8 @@ step_z:
 						// unable to join the conference 
 						// --- send back to SIP user a msg
 						xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
-							jwl->contact_h,"ERROR:Cannot join the"
-							" conference room.", &jbc->jkey->flag);
+							jwl->contact_h, XJ_DMSG_ERR_JOINJCONF,
+							&jbc->jkey->flag);
 						goto step_w;
 					}
 				}
@@ -540,8 +527,7 @@ step_z:
 				// unable to get the conference 
 				// --- send back to SIP user a msg
 				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to, 
-					jwl->contact_h,"ERROR:Cannot create a new"
-					" conference session.", &jbc->jkey->flag);
+					jwl->contact_h, XJ_DMSG_ERR_NEWJCONF, &jbc->jkey->flag);
 				goto step_w;
 			}
 		}
@@ -566,9 +552,8 @@ step_z:
 						(flag&XJ_ADDRTR_CON)?XJ_JMSG_GROUPCHAT:XJ_JMSG_CHAT)<0)
 							
 						xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-							jwl->contact_h, "ERROR: Your message was not"
-							" sent. Something wrong during transmition to"
-							" Jabber.", &jbc->jkey->flag);
+							jwl->contact_h, XJ_DMSG_ERR_SENDJMSG,
+							&jbc->jkey->flag);
 				}
 				else
 					DBG("XJAB:xj_worker:%d: ERROR SENDING AS JABBER"
@@ -584,9 +569,8 @@ step_z:
 					DBG("XJAB:xj_worker:%d: SCHEDULING THE"
 						" MESSAGE FAILED. Message was droped.\n",_xj_pid);
 					xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-						jwl->contact_h, "ERROR: Your message was not"
-						" sent. Something wrong during transmition to"
-						" Jabber!", &jbc->jkey->flag);
+						jwl->contact_h, XJ_DMSG_ERR_STOREJMSG,
+						&jbc->jkey->flag);
 					goto step_w;
 				}
 				else // skip freeing the SIP message - now is in queue
@@ -594,23 +578,18 @@ step_z:
 	
 			case 2:
 				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-						jwl->contact_h, "ERROR: Your message was not"
-						" sent. You are not registered with this transport.",
+						jwl->contact_h, XJ_DMSG_ERR_NOREGIM,
 						&jbc->jkey->flag);
 				goto step_w;
-			case 3:
+			case 3: // not joined to Jabber conference
 				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-						jwl->contact_h, "ERROR: Your message was not"
-						" sent. You are not joined in the conference."
-						" Please join the room before sending messages.",
+						jwl->contact_h, XJ_DMSG_ERR_NOTJCONF,
 						&jbc->jkey->flag);
 				goto step_w;
 				
 			default:
 				xj_send_sip_msgz(jsmsg->jkey->id, &jsmsg->to,
-						jwl->contact_h, "ERROR: Your message was not"
-						" sent. Something wrong during transmition to"
-						" Jabber.", &jbc->jkey->flag);
+						jwl->contact_h, XJ_DMSG_ERR_SENDJMSG, &jbc->jkey->flag);
 				goto step_w;
 		}
 
@@ -675,10 +654,8 @@ step_y:
 						" connection to jabber lost on socket <%d> ...\n",
 						_xj_pid, jcp->ojc[i]->sock);
 					xj_send_sip_msgz(jcp->ojc[i]->jkey->id, &jab_gw_name, 
-						jwl->contact_h,"ERROR: Connection to Jabber server"
-						" lost. You have to login to Jabber server again"
-						" (join the conferences again that you were"
-						" participating, too)", &jbc->jkey->flag);
+						jwl->contact_h, XJ_DMSG_ERR_DISCONNECTED,
+						&jbc->jkey->flag);
 					// make sure that will ckeck expired connections
 					ltime = jcp->ojc[i]->expire = -1;
 					FD_CLR(jcp->ojc[i]->sock, &set);
@@ -750,8 +727,7 @@ step_xx:
 					jcp->ojc[i]->jkey->id->s);
 
 				xj_send_sip_msgz(jcp->ojc[i]->jkey->id,  &jab_gw_name,
-					jwl->contact_h, "INFO: Your are now offline in"
-					" Jabber network.", NULL);
+					jwl->contact_h, XJ_DMSG_INF_JOFFLINE, NULL);
 
 				DBG("XJAB:xj_worker:%d: connection's close flag =%d\n",
 						_xj_pid, jcp->ojc[i]->jkey->flag);
@@ -929,13 +905,12 @@ int xj_manage_jab(char *buf, int len, int *pos,
 				if ((p = xode_get_attrib(y, "code")) != NULL
 						&& atoi(p) == 409)
 				{
-					xj_send_sip_msgz(sid, &tf, sct, "ERROR: Your nickname"
-					" already exists in the room. Please choose a new one.",
+					xj_send_sip_msgz(sid, &tf, sct, XJ_DMSG_ERR_JCONFNICK,
 					&jbc->jkey->flag);
 					goto ready;
 				}
-				xj_send_sip_msgz(sid, &tf, sct, "ERROR: Your participation"
-					" to the conference room was refused.", &jbc->jkey->flag);
+				xj_send_sip_msgz(sid, &tf, sct, XJ_DMSG_ERR_JCONFREFUSED,
+						&jbc->jkey->flag);
 			}
 
 			goto ready;
