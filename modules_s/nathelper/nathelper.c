@@ -2044,9 +2044,8 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	src_ip.len = strlen(src_ip.s);
 	src_port.s = int2str(m->rcv.src_port, &src_port.len);
 
-	dst_ip.s = ip_addr2a(&m->rcv.dst_ip);
-	dst_ip.len = strlen(dst_ip.s);
-	dst_port.s = int2str(m->rcv.dst_port, &dst_port.len);
+	dst_ip = m->rcv.bind_address->address_str;
+	dst_port = m->rcv.bind_address->port_no_str;
 
 	switch(m->rcv.proto) {
 	case PROTO_NONE:
