@@ -183,6 +183,9 @@ struct sip_msg{
 	char add_to_branch_s[MAX_BRANCH_PARAM_LEN];
 	int add_to_branch_len;
 
+	/* index to TM hash table; stored in core to avoid unnecessary calcs */
+	unsigned int  hash_index;
+
 	
 };
 

@@ -77,11 +77,11 @@ inline static int int2reverse_hex( char **c, int *size, int nr )
  *      -1 - transaction wasn't found
  *       1  - transaction found
  */
-int t_lookup_request( struct sip_msg* p_msg )
+int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 {
    struct cell      *p_cell;
    struct cell      *tmp_cell;
-   unsigned int  hash_index=0;
+   /* unsigned int  hash_index=0; */
    unsigned int  isACK;
    struct sip_msg	*t_msg;
 
@@ -94,15 +94,15 @@ int t_lookup_request( struct sip_msg* p_msg )
       return 0;
    }
    /* start searching into the table */
-   hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
+   p_msg->hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
    isACK = p_msg->REQ_METHOD==METHOD_ACK;
-   DBG("t_lookup_request: start searching:  hash=%d, isACK=%d\n",hash_index,isACK);
+   DBG("t_lookup_request: start searching:  hash=%d, isACK=%d\n",p_msg->hash_index,isACK);
 
    /* lock the hole entry*/
-   lock( hash_table->entrys[hash_index].mutex );
+   lock( hash_table->entrys[p_msg->hash_index].mutex );
 
    /* all the transactions from the entry are compared */
-   p_cell     = hash_table->entrys[hash_index].first_cell;
+   p_cell     = hash_table->entrys[p_msg->hash_index].first_cell;
    tmp_cell = 0;
    while( p_cell )
    {
@@ -155,7 +155,7 @@ int t_lookup_request( struct sip_msg* p_msg )
 
    /* no transaction found */
    T = 0;
-   unlock( hash_table->entrys[hash_index].mutex );
+   if (!leave_new_locked) unlock( hash_table->entrys[p_msg->hash_index].mutex );
    DBG("DEBUG: t_lookup_request: no transaction found\n");
    return -1;
 
@@ -164,7 +164,7 @@ found:
    T_REF( T );
    DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: "
                    "transaction found ( T=%p , ref=%x)\n",T,T->ref_bitmap);
-   unlock( hash_table->entrys[hash_index].mutex );
+   unlock( hash_table->entrys[p_msg->hash_index].mutex );
    return 1;
 }
 
@@ -185,7 +185,8 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_
    /* it's a CANCEL request for sure */
 
    /* start searching into the table */
-   hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number  ) ;
+   /* hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number  ) ; */
+	hash_index = p_msg->hash_index;
    DBG("DEBUG: t_lookupOriginalT: searching on hash entry %d\n",hash_index );
 
    /* all the transactions from the entry are compared */
@@ -359,12 +360,12 @@ int t_check( struct sip_msg* p_msg , int *param_branch)
 			/* force parsing all the needed headers*/
 			if (parse_headers(p_msg, HDR_EOH )==-1)
 				return -1;
-		t_lookup_request( p_msg );
+		t_lookup_request( p_msg , 0 /* unlock before returning */ );
 	 	} else {
 		 	if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
 			!p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
-			return -1;
-		t_reply_matching( p_msg , ((param_branch!=0)?(param_branch):(&local_branch)) );
+				return -1;
+			t_reply_matching( p_msg , ((param_branch!=0)?(param_branch):(&local_branch)) );
 		}
 #		ifdef EXTRA_DEBUG
 		if ( T && T!=T_UNDEFINED && T->damocles) {
@@ -413,4 +414,67 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 	return 0;
 
 }
+
+/* atomic "add_if_new" construct; it returns:
+	AIN_ERROR	if a fatal error (e.g, parsing) occured
+	AIN_RETR	it's a retransmission
+	AIN_NEW		it's a new request
+	AIN_NEWACK	it's an ACK for which no transaction exists
+	AIN_OLDACK	it's an ACK for an existing transaction
+*/
+enum addifnew_status t_addifnew( struct sip_msg* p_msg )
+{
+
+	int ret, lret;
+	struct cell *new_cell;
+
+	/* is T still up-to-date ? */
+	DBG("DEBUG: t_check_new_request: msg id=%d , global msg id=%d , T on entrance=%p\n", 
+		p_msg->id,global_msg_id,T);
+	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
+	{
+		global_msg_id = p_msg->id;
+		T = T_UNDEFINED;
+		/* transaction lookup */
+		/* force parsing all the needed headers*/
+		if (parse_headers(p_msg, HDR_EOH )==-1)
+			return AIN_ERROR;
+		lret = t_lookup_request( p_msg, 1 /* leave locked */ );
+		if (lret==0) return AIN_ERROR;	
+		if (lret==-1) {
+			/* transaction not found, it's a new request */
+			if ( p_msg->REQ_METHOD==METHOD_ACK ) {
+				ret=AIN_NEWACK;
+			} else {
+				/* add new transaction */
+ 				new_cell = build_cell( p_msg ) ;
+   				if  ( !new_cell ){
+       					LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
+					ret = AIN_ERROR;
+    				} else {
+ 					insert_into_hash_table_unsafe( hash_table , new_cell );
+					ret = AIN_NEW;
+					T=new_cell;
+					T_REF(T);
+				}
+			}
+			unlock( hash_table->entrys[p_msg->hash_index].mutex );
+			return ret;
+		} else {
+			/* tramsaction found, it's a retransmission  or ACK */
+			return p_msg->REQ_METHOD==METHOD_ACK ? AIN_OLDACK : AIN_RETR;
+		}
+	} else {
+		if (T)
+			LOG(L_ERR, "ERROR: t_check_new_request: already "
+			"processing this message, T found!\n");
+		else
+			LOG(L_ERR, "ERROR: t_check_new_request: already "
+			"processing this message, T not found!\n");
+		return AIN_ERROR;
+	}
+
+}
+
+
 

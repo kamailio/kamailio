@@ -23,71 +23,112 @@
 /*static int test_f(struct sip_msg*, char*,char*);*/
 static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
+#ifdef _OBSOLETED_TM
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2);
-static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2);
-static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int w_t_on_request_received(struct sip_msg* msg, char* str, char* str2);
 static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str2);
+int w_t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  );
+//static int fixup_t_on_request_received(void** param, int param_no);
+static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2);
+#endif
+static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
-static void w_onbreak(struct sip_msg* msg) { t_unref(msg, NULL, NULL); }
+static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar );
+static w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  );
+static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar );
 
+static int t_relay_to( struct sip_msg  *p_msg ,  char *str_ip , char *str_port  );
+static int t_relay( struct sip_msg  *p_msg ,  char* foo, char* bar  );
+static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2);
+static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2);
+static void w_onbreak(struct sip_msg* msg) { t_unref(); }
 
 static struct module_exports nm_exports= {
 	"tm_module",
-	(char*[]){			"t_add_transaction",
-				"t_lookup_request",
+	(char*[]){			
+#ifdef _OBSOLETED_TM
 				"t_forward",
 				"t_forward_def",
 				"t_forward_uri",
+				"t_on_request_receive_uri",
+				"t_on_request_receive_to",
+#endif
+				"t_add_transaction",
+				"t_lookup_request",
 				"t_send_reply",
 				"t_retransmit_reply",
 				"t_release",
 				"t_unref",
-				"t_on_request_receive_uri",
-				"t_on_request_receive_to"
+				"t_relay_to",
+				"t_relay",
+				"t_forward_nonack",
+				"t_forward_ack"
 			},
 	(cmd_function[]){
-					t_add_transaction,
-					w_t_check,
+#ifdef _OBSOLETED_TM
 					w_t_forward,
 					w_t_forward_def,
-					t_forward_uri,
-					w_t_send_reply,
-					t_retransmit_reply,
-					w_t_release,
-					t_unref,
+					w_t_forward_uri,
 					w_t_on_request_received_uri,
-					w_t_on_request_received
+					w_t_on_request_received,
+#endif
+
+					w_t_add_transaction,
+					w_t_check,
+					w_t_send_reply,
+					w_t_retransmit_reply,
+					w_t_release,
+					w_t_unref,
+					t_relay_to,
+					t_relay,
+					w_t_forward_nonack,
+					w_t_forward_ack
 					},
 	(int[]){
-				0,
-				0,
-				2,
-				1,
-				0,
-				2,
-				0,
-				0,
-				0,
-				0,
-				2
+#ifdef _OBSOLETED_TM
+				2, /* t_forward */
+				1, /* t_forward_def */
+				0, /* t_forward_uri */
+				0, /* t_on_request_receive_uri */
+				2, /* t_on_request_receive_to */
+#endif
+				0, /* t_add_transaction */
+				0, /* t_lookup_request */
+				2, /* t_send_reply */
+				0, /* t_retransmit_reply */
+				0, /* t_release */
+				0, /* t_unref */
+				2, /* t_relay_to */
+				0, /* t_relay */
+				2, /* t_forward_nonack */
+				2  /* t_forward_ack */
 			},
 	(fixup_function[]){
-				0,
-				0,
-				fixup_t_forward,
-				fixup_t_forward_def,
-				0,
-				fixup_t_send_reply,
-				0,
-				0,
-				0,
-				0,
-				fixup_t_forward
+#ifdef _OBSOLETED_TM
+				fixup_t_forward,		/* t_forward */ 
+				fixup_t_forward_def,	/* t_forward_def */
+				0,						/* t_forward_uri */
+				0,						/* t_on_request_receive_uri */
+				fixup_t_forward,		/* t_on_request_receive_to */
+#endif
+				0,						/* t_add_transaction */
+				0,						/* t_lookup_request */
+				fixup_t_send_reply,		/* t_send_reply */
+				0,						/* t_retransmit_reply */
+				0,						/* t_release */
+				0,						/* t_unref */
+				fixup_t_forward,		/* t_relay_to */
+				0,						/* t_relay */
+				fixup_t_forward, 		/* t_forward_nonack */
+				fixup_t_forward 		/* t_forward_ack */
 		},
-	11,
+#ifdef _OBSOLETED_TM
+	15,
+#else
+	10,
+#endif
 	(response_function) t_on_reply_received,
 	(destroy_function) tm_shutdown,
 	w_onbreak
@@ -225,28 +266,34 @@ static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 	return t_check( msg , 0 ) ? 1 : -1;
 }
 
+#ifdef _OBSOLETED_TM
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2)
 {
+	if (t_check( msg , 0 )==-1) return -1;
+	if (!T) {
+		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
+		return -1;
+	}
 	return t_forward(msg, (unsigned int) str, (unsigned int) str2);
 }
-
-
 static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2)
 {
+	if (t_check( msg , 0 )==-1) return -1;
+	if (!T) {
+		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
+		return -1;
+	}
 	return t_forward(msg, (unsigned int) str, 5060 );
 }
 
-
-static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
-{
-	return t_send_reply(msg, (unsigned int) str, str2);
+int w_t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  ) {
+	if (t_check( p_msg , 0 )==-1) return -1;
+	if (!T) {
+		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
+		return -1;
+	}
+	return t_forward_uri(p_msg  );
 }
-
-static int w_t_release(struct sip_msg* msg, char* str, char* str2)
-{
-	return t_release_transaction(msg);
-}
-
 static int w_t_on_request_received(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_on_request_received(msg, (unsigned int) str, (unsigned int) str2);
@@ -256,3 +303,161 @@ static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str
 {
 	return t_on_request_received_uri(msg);
 }
+
+
+#endif
+
+static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2)
+{
+	if (t_check( msg , 0 )==-1) return -1;
+	if (!T) {
+		DBG("DEBUG: t_forward_ack: no transaction found for request forwarding\n");
+		return -1;
+	}
+	return t_forward_ack(msg, (unsigned int) str, (unsigned int) str2);
+}
+static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* str2)
+{
+	if (t_check( msg , 0 )==-1) return -1;
+	if (!T) {
+		DBG("DEBUG: t_forward_nonack: no transaction found for request forwarding\n");
+		return -1;
+	}
+	return t_forward_nonack(msg, (unsigned int) str, (unsigned int) str2);
+}
+
+
+
+static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
+{
+	if (t_check( msg , 0 )==-1) return -1;
+	if (!T) {
+		LOG(L_ERR, "ERROR: t_send_reply: cannot send a t_reply to a message "
+			"for which no T-state has been established\n");
+		return -1;
+	}
+	return t_send_reply(msg, (unsigned int) str, str2);
+}
+
+static int w_t_release(struct sip_msg* msg, char* str, char* str2)
+{
+	if (t_check( msg  , 0 )==-1) return 1;
+	if ( T && T!=T_UNDEFINED ) 
+		return t_put_on_wait( T );
+	return 1;
+}
+
+
+static int w_t_unref( struct sip_msg* p_msg, char* foo, char* bar )
+{
+	if (T==T_UNDEFINED || T==T_NULL)
+		return -1;
+    return t_unref( /* p_msg */ );
+}
+
+static w_t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
+{
+	if (t_check( p_msg  , 0 )==-1) return 1;
+	if (T) return t_retransmit_reply( p_msg );
+	else return -1;
+}
+
+static int w_t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar ) {
+	if (t_check( p_msg , 0 )==-1) return -1;
+	if (T) {
+		LOG(L_ERR,"ERROR: t_add_transaction: won't add a retransmission\n");
+		return -1;
+	}
+	return t_add_transaction( p_msg );
+}
+
+
+
+static int t_relay_to( struct sip_msg  *p_msg , char *str_ip , char *str_port)
+{
+
+	enum addifnew_status status;
+	int ret;
+
+	status = t_addifnew( p_msg );	
+
+	switch( status ) {
+		case AIN_ERROR:		/*  fatal error (e.g, parsing) occured */
+			ret = 0;
+			break;
+			
+		case AIN_RETR:		/* it's a retransmission */
+			if ( !t_retransmit_reply( p_msg ) )
+			{
+				DBG( "SER: WARNING: bad t_retransmit_reply\n");
+			}
+			ret = 1;
+			break;
+
+		case AIN_NEW:		/* it's a new request */
+			if ( !t_forward_nonack( p_msg, (unsigned int) str_ip, (unsigned int) str_port )) 
+			{
+				DBG( "SER:ERROR: t_forward \n");
+				ret = 0;
+			} else { /* let upstream know, I forwarded downstream */
+				if ( p_msg->REQ_METHOD==METHOD_CANCEL)
+				{
+					DBG( "SER: new CANCEL\n");
+					if ( !t_send_reply( p_msg , 200, "glad to cancel") )
+						DBG( "SER:ERROR: t_send_reply\n");
+				} else {
+					DBG( "SER: new transaction\n");
+					if (!t_send_reply( p_msg , 100 , "trying -- your call is important to us"))
+					{
+						DBG( "SER: ERROR: t_send_reply (100)\n");
+					}
+				}
+				ret = 1;
+			}
+			break;
+
+		case AIN_NEWACK:	/* it's an ACK for which no transaction exists */
+			DBG( "SER: forwarding ACK  statelessly\n");
+			forward_request( p_msg , mk_proxy_from_ip( 
+				(unsigned int )str_ip, (unsigned int)str_port) ) ;
+			ret=1;
+			break;
+
+		case AIN_OLDACK:	/* it's an ACK for an existing transaction */
+			DBG( "SER: ACK received -> t_release\n");
+			if ( !t_release_transaction( p_msg ) )
+			{
+				DBG( "SER: WARNING: bad t_release\n");
+			}
+			/* t_forward decides whether to forward (2xx) or not (anything else) */
+			if ( !t_forward_ack( p_msg , (unsigned int) str_ip , (unsigned int) str_port ) )
+			{
+				DBG( "SER: WARNING: bad ACK forward\n");
+			}
+			ret = 1;
+			break;
+
+		default:
+			LOG(L_CRIT, "ERROR: unexpected addifnew return value: %d\n", ret);
+			abort();
+	};
+	T_UNREF( T );
+	return ret;
+}
+
+	
+
+
+static int t_relay( struct sip_msg  *p_msg , char* foo, char* bar)
+{
+   unsigned int     ip, port;
+
+   if ( get_ip_and_port_from_uri( p_msg , &ip, &port)<0 )
+   {
+      LOG( L_ERR , "ERROR: t_on_request_received_uri: unable to extract ip and port from uri!\n" );
+      return -1;
+   }
+
+   return t_relay_to( p_msg , ( char *) ip , (char *) port );
+}
+

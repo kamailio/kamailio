@@ -232,6 +232,17 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 	if (a->sin_port == 0)
 		DBG("DEBUG: no port\n");
 
+#ifdef EXTRA_DEBUG
+	if ( tolen < sizeof(struct sockaddr_in) || a->sin_family && a->sin_family != AF_INET
+		|| a->sin_port == 0 )
+		abort();
+	/* every message must be terminated by CRLF */
+	if (memcmp(buf+len-CRLF_LEN, CRLF, CRLF_LEN)!=0) {
+		LOG(L_CRIT, "ERROR: this is ugly -- we are sending a packet not terminated by CRLF\n");
+		abort();
+	}
+#endif
+
 	DBG(" destination: IP=%s, port=%u; packet:\n", ip_txt, p);
 	DBG(" destination (hex): IP=%x, port=%x;\n", a->sin_addr.s_addr, a->sin_port );
 	/* DBG(" packet: {%*s...}\n", 24, buf ); */
@@ -252,9 +263,14 @@ again:
 				buf,len,to,tolen,
 				strerror(errno),errno);
 		if (errno==EINTR) goto again;
-		if (errno==EINVAL) LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
+		if (errno==EINVAL) {
+			LOG(L_CRIT,"CRITICAL: invalid sendtoparameters\n"
 			"one possible reason is the server is bound to localhost and\n"
 			"attempts to send to the net\n");
+#			ifdef EXTRA_DEBUG
+			abort();
+#			endif
+		}
 	}
 	return n;
 }

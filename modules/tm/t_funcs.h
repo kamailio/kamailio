@@ -33,6 +33,11 @@ extern struct s_table*  hash_table;
 #include "sip_msg.h"
 
 
+#define LOCK_REPLIES(_t) lock((_t)->reply_mutex )
+#define UNLOCK_REPLIES(_t) unlock((_t)->reply_mutex )
+#define LOCK_ACK(_t) lock((_t)->ack_mutex )
+#define UNLOCK_ACK(_t) unlock((_t)->ack_mutex )
+
 
 /* convenience short-cut macros */
 #define REQ_METHOD first_line.u.request.method_value
@@ -112,6 +117,8 @@ extern struct s_table*  hash_table;
 		DBG_REF("ref", (_T_cell));	})
 #endif
 
+enum addifnew_status { AIN_ERROR, AIN_RETR, AIN_NEW, AIN_NEWACK, AIN_OLDACK } ;
+
 
 int   tm_startup();
 void tm_shutdown();
@@ -121,7 +128,7 @@ void tm_shutdown();
  *       1 - a new transaction was created
  *      -1 - error, including retransmission
  */
-int  t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar  );
+int  t_add_transaction( struct sip_msg* p_msg  );
 
 
 
@@ -149,7 +156,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
  *       1 - forward successfull
  *      -1 - error during forward
  */
-int t_forward_uri( struct sip_msg* p_msg , char* foo, char* bar );
+int t_forward_uri( struct sip_msg* p_msg  );
 
 
 
@@ -194,7 +201,7 @@ int t_release_transaction( struct sip_msg* );
   * Returns  -1 -error
   *                1 - OK
   */
-int t_retransmit_reply( struct sip_msg *, char* , char* );
+int t_retransmit_reply( struct sip_msg *  );
 
 
 
@@ -206,31 +213,59 @@ int t_send_reply( struct sip_msg * , unsigned int , char *  );
 
 
 /* releases T-context */
-int t_unref( struct sip_msg* p_msg, char* foo, char* bar );
+int t_unref( /* struct sip_msg* p_msg */ );
+
+int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
+    unsigned int dest_port_param );
+int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
+    unsigned int dest_port_param );
+
 
 
 
 struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
 int t_reply_matching( struct sip_msg* , unsigned int*  );
 int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
-int  t_lookup_request( struct sip_msg* p_msg );
+int  t_lookup_request( struct sip_msg* p_msg , int leave_new_locked );
 int t_all_final( struct cell * );
 int t_build_and_send_ACK( struct cell *Trans , unsigned int brach , struct sip_msg* rpl);
 int t_cancel_branch(unsigned int branch); //TO DO
-int t_should_relay_response( struct cell *Trans, int new_code );
+int t_should_relay_response( struct cell *Trans, int new_code, int branch, int *should_store );
 int t_update_timers_after_sending_reply( struct retrans_buff *rb );
 int t_put_on_wait(  struct cell  *Trans  );
 int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
-int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
+static int push_reply_from_uac_to_uas( struct cell* Trans , unsigned int );
 int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
 int get_ip_and_port_from_uri( struct sip_msg* p_msg , unsigned int *param_ip, unsigned int *param_port);
+
+enum addifnew_status t_addifnew( struct sip_msg* p_msg );
 
 void retransmission_handler( void *);
 void final_response_handler( void *);
 void wait_handler( void *);
 void delete_handler( void *);
 
-
+inline int static send_ack( struct cell *t, int branch, 
+	struct retrans_buff *srb, int len )
+{
+	memset( srb, 0, sizeof( struct retrans_buff ) );
+	memcpy( & srb->to, & t->ack_to, sizeof (struct sockaddr_in));
+	srb->tolen = sizeof (struct sockaddr_in);
+	srb->my_T = t;
+	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
+	srb->bufflen = len;
+	LOCK_ACK( t );
+	if (t->outbound_ack[branch]) {
+		UNLOCK_ACK(t);
+		shm_free( srb );	
+		LOG(L_WARN, "send_ack: Warning: ACK already sent out\n");
+		return 0;
+	}
+	t->outbound_ack[branch] = srb;
+	SEND_BUFFER( srb );
+	UNLOCK_ACK( t );
+	return 1;
+}
 
 
 #endif

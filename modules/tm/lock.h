@@ -18,6 +18,16 @@ typedef struct {
 	int semaphore_index;
 } ser_lock_t;
 
+enum timer_groups {
+	TG_FR,
+	TG_WT,
+	TG_DEL,
+	TG_RT,
+	TG_NR
+};
+
+extern ser_lock_t timer_group_lock[TG_NR];
+
 
 #include "h_table.h"
 #include "timer.h"
@@ -27,7 +37,7 @@ typedef struct {
 
 
 int lock_initialize();
-int init_semaphore_set( int size );
+static int init_semaphore_set( int size );
 void lock_cleanup();
 
 
@@ -43,12 +53,10 @@ int _unlock( ser_lock_t s );
 #	define unlock(_s) _unlock( (_s) )
 #endif
 
-int change_semaphore( ser_lock_t s  , int val );
+static int change_semaphore( ser_lock_t s  , int val );
 
 int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* hash_table, struct entry *entry );
-// int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id);
-//int init_retr_timer_lock( struct s_table* hash_table, enum retransmission_lists list_id );
 
 int release_cell_lock( struct cell *cell );
 int release_entry_lock( struct entry *entry );

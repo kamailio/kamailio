@@ -34,20 +34,22 @@ struct timer;
 
 typedef struct retrans_buff
 {
-   char               *retr_buffer;
-   int                  bufflen;
+	char               *retr_buffer;
+	int                  bufflen;
 
-   struct sockaddr_in to;
-   size_t tolen;
+	struct sockaddr_in to;
+	size_t tolen;
 
-   /* a message can be linked just to retransmission and FR list */
-   struct timer_link retr_timer;
-   struct timer_link fr_timer;
+	/* a message can be linked just to retransmission and FR list */
+	struct timer_link retr_timer;
+	struct timer_link fr_timer;
 
-   /*the cell that containes this retrans_buff*/
-   struct cell* my_T;
+	/*the cell that containes this retrans_buff*/
+	struct cell* my_T;
 
 	enum lists retr_list;
+	/* set to status code if the buffer is a reply, 0 if request */
+	int reply;
 
 }retrans_buff_type;
 
@@ -76,17 +78,28 @@ typedef struct cell
 
 	/* useful data */
 	/* UA Server */
-	struct sip_msg         *inbound_request;
-	struct retrans_buff   outbound_response;
-	unsigned int             status;
-	str*                             tag;
-	unsigned int             inbound_request_isACKed;
-	int                              relaied_reply_branch;
-	int                               nr_of_outgoings;
+	struct sip_msg 		*inbound_request;
+	struct retrans_buff	outbound_response;
+	unsigned int		status;
+	str*				tag;
+	unsigned int		inbound_request_isACKed;
+	int					relaied_reply_branch;
+	int					nr_of_outgoings;
 	/* UA Clients */
-	struct retrans_buff   *outbound_request[ MAX_FORK ];
-	struct sip_msg          *inbound_response[ MAX_FORK ];
-	unsigned int             outbound_request_isACKed[MAX_FORK];
+	struct retrans_buff	*outbound_request[ MAX_FORK ];
+	struct sip_msg		*inbound_response[ MAX_FORK ];
+	/* unsigned int		outbound_request_isACKed[MAX_FORK]; */
+	struct retrans_buff	*outbound_ack[ MAX_FORK ];
+
+	/* protection against concurrent reply processing */
+	ser_lock_t	reply_mutex;
+	/* protection against concurrent ACK processing */
+	ser_lock_t	ack_mutex;
+
+	/* this is where destination is stored for picked branch;
+	   good if a need to forward ACK later on
+	*/
+	struct sockaddr_in ack_to;
 
 #ifdef	EXTRA_DEBUG
 	/* scheduled for deletion ? */
@@ -125,5 +138,6 @@ void free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
 void remove_from_hash_table( struct s_table *hash_table, struct cell * p_cell );
 void insert_into_hash_table( struct s_table *hash_table, struct cell * p_cell );
+void insert_into_hash_table_unsafe( struct s_table *hash_table, struct cell * p_cell );
 
 #endif

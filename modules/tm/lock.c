@@ -39,9 +39,17 @@
 */
 
 /* keep the semaphore here */
-int entry_semaphore=0, transaction_timer_semaphore=0, retrasmission_timer_semaphore=0;
-/* and the number of semaphores in the entry_semaphore set */
-int sem_nr;
+static int
+	entry_semaphore=0, 
+	timer_semaphore=0, 
+	reply_semaphore=0,
+	ack_semaphore=0;
+/* and the maximum number of semaphores in the entry_semaphore set */
+static int sem_nr;
+/* timer group locks */
+
+ser_lock_t timer_group_lock[TG_NR];
+
 
 
 /* intitialize the locks; return 0 on success, -1 otherwise
@@ -57,16 +65,16 @@ int lock_initialize()
 	DBG("DEBUG: lock_initialize: lock initialization started\n");
 
 	/* transaction timers */
-	if ((transaction_timer_semaphore=init_semaphore_set( NR_OF_TIMER_LISTS) ) < 0) {
-                LOG(L_ERR, "ERROR: lock_initialize:  transaction timer semaphore initialization failure\n");
+	if ((timer_semaphore= init_semaphore_set( TG_NR ) ) < 0) {
+                LOG(L_ERR, "ERROR: lock_initialize:  "
+			"transaction timer semaphore initialization failure\n");
 		goto error;
 	}
 
-	/* message retransmission timers
-        if ((retrasmission_timer_semaphore=init_semaphore_set( NR_OF_RT_LISTS) ) < 0) {
-                LOG(L_ERR, "ERROR: lock_initialize:  retransmission timer semaphore initialization failure\n");
-                goto error;
-        } */
+	for (i=0; i<TG_NR; i++) {
+		timer_group_lock[i].semaphore_set = timer_semaphore;
+		timer_group_lock[i].semaphore_index = timer_group[ i ];	
+	}
 
 
 	i=SEM_MIN;
@@ -106,10 +114,14 @@ int lock_initialize()
 			}
 		}
 	} while(1);
-
 	sem_nr=i;	
+
+	reply_semaphore=init_semaphore_set( sem_nr );
+	ack_semaphore=init_semaphore_set(sem_nr);
+
+
 	/* return success */
-	printf("INFO: %d entry semaphores allocated\n", sem_nr );
+	LOG(L_INFO, "INFO: semaphore arrays of size %d allocated\n", sem_nr );
 	return 0;
 error:
 	lock_cleanup();
@@ -117,7 +129,7 @@ error:
 }
 
 /* return -1 if semget failed, -2 if semctl failed */
-int init_semaphore_set( int size )
+static int init_semaphore_set( int size )
 {
 	int new_semaphore, i;
 
@@ -160,14 +172,17 @@ void lock_cleanup()
 	if (entry_semaphore > 0 && 
 	    semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
 		LOG(L_ERR, "ERROR: lock_cleanup, entry_semaphore cleanup failed\n");
-	if (transaction_timer_semaphore > 0 && 
-	    semctl( transaction_timer_semaphore, 0 , IPC_RMID , 0 )==-1)
-		LOG(L_ERR, "ERROR: lock_cleanup, transaction_timer_semaphore cleanup failed\n");
-	if (retrasmission_timer_semaphore > 0 &&
-	    semctl( retrasmission_timer_semaphore, 0 , IPC_RMID , 0 )==-1)
-		LOG(L_ERR, "ERROR: lock_cleanup, retrasmission_timer_semaphore cleanup failed\n");
+	if (timer_semaphore > 0 && 
+	    semctl( timer_semaphore, 0 , IPC_RMID , 0 )==-1)
+		LOG(L_ERR, "ERROR: lock_cleanup, timer_semaphore cleanup failed\n");
+	if (reply_semaphore > 0 &&
+	    semctl( reply_semaphore, 0 , IPC_RMID , 0 )==-1)
+		LOG(L_ERR, "ERROR: lock_cleanup, reply_semaphore cleanup failed\n");
+	if (ack_semaphore > 0 &&
+	    semctl( ack_semaphore, 0 , IPC_RMID , 0 )==-1)
+		LOG(L_ERR, "ERROR: lock_cleanup, ack_semaphore cleanup failed\n");
 
-	entry_semaphore = transaction_timer_semaphore = retrasmission_timer_semaphore = 0;
+	entry_semaphore = timer_semaphore = reply_semaphore = ack_semaphore = 0;
 
 }
 
@@ -199,8 +214,7 @@ inline int _unlock( ser_lock_t s )
 	return change_semaphore( s, +1 );
 }
 
-
-int change_semaphore( ser_lock_t s  , int val )
+static int change_semaphore( ser_lock_t s  , int val )
 {
 	struct sembuf pbuf;
 	int r;
@@ -217,27 +231,18 @@ tryagain:
 			DBG("signal received in a semaphore\n");
 			goto tryagain;
 		} else LOG(L_ERR, "ERROR: change_semaphore: %s\n", strerror(errno));
-    }
-   return r;
+	}
+	return r;
 }
 
 
-/*
 int init_cell_lock( struct cell *cell )
 {
-*/
-	/* just advice which of the available semaphores to use;
-		shared with the lock belonging to the next hash entry lock
-            (so that there are no collisions if one wants to try to
-             lock on a cell as well as its list)
-
-        */
-/*
-	cell->mutex.semaphore_set=entry_semaphore,
-	cell->mutex.semaphore_index=(cell->hash_index % sem_nr + 1)%sem_nr;
-
+	cell->reply_mutex.semaphore_set=reply_semaphore;
+	cell->reply_mutex.semaphore_index = cell->hash_index % sem_nr;
+	cell->ack_mutex.semaphore_set=ack_semaphore;
+	cell->ack_mutex.semaphore_index = cell->hash_index % sem_nr;
 }
-*/
 
 int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 {
@@ -254,28 +259,21 @@ int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
 {
 	/* each timer list has its own semaphore */
-	hash_table->timers[timerlist_id].mutex.semaphore_set=transaction_timer_semaphore;
-	hash_table->timers[timerlist_id].mutex.semaphore_index=timerlist_id;
-}
-/*
-int init_retr_timer_lock( struct s_table* hash_table, enum retransmission_lists list_id )
-{
-	hash_table->retr_timers[list_id].mutex.semaphore_set=retrasmission_timer_semaphore;
- 	hash_table->retr_timers[list_id].mutex.semaphore_index=list_id;
-}
-*/
+	/*
+	hash_table->timers[timerlist_id].mutex.semaphore_set=timer_semaphore;
+	hash_table->timers[timerlist_id].mutex.semaphore_index=timer_group[timerlist_id];
+	*/
 
-/*
+	hash_table->timers[timerlist_id].mutex=timer_group_lock[ timer_group[timerlist_id] ];
+}
+
 int release_cell_lock( struct cell *cell )
 {
-*/
 	/* don't do anything here -- the init_*_lock procedures
 	   just advised on usage of shared semaphores but did not
 	   generate them
 	*/
-/*
 }
-*/
 
 int release_entry_lock( struct entry *entry )
 {
@@ -286,8 +284,3 @@ release_timerlist_lock( struct timer *timerlist )
 {
 	/* the same as above */
 }
-/*
-int release_retr_timer_lock( struct timer *timerlist )
-{
-
-} */

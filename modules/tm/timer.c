@@ -8,6 +8,13 @@
 #include "timer.h"
 #include "../../dprint.h"
 
+int timer_group[NR_OF_TIMER_LISTS] = { 
+	TG_FR, TG_FR,
+	TG_WT,
+	TG_DEL,
+	TG_RT, TG_RT, TG_RT, TG_RT
+};
+
 void reset_timer_list( struct s_table* hash_table, enum lists list_id)
 {
 	hash_table->timers[ list_id ].first_tl.next_tl = & (hash_table->timers[ list_id ].last_tl );
@@ -36,60 +43,43 @@ void print_timer_list(struct s_table* hash_table, enum lists list_id)
    }
 }
 
-static void remove_from_timer_list_dummy(  struct timer_link* tl )
+/* static void remove_from_timer_list_dummy(  struct timer_link* tl ) */
+void remove_timer_unsafe(  struct timer_link* tl )
 {
-	DBG("DEBUG: remove_from_timer[%d]: %p \n",tl->list->id,tl);
-	tl->prev_tl->next_tl = tl->next_tl;
-	tl->next_tl->prev_tl = tl->prev_tl;
-    tl->next_tl = 0;
-    tl->prev_tl = 0;
-	tl->list = NULL;
+	if (is_in_timer_list2( tl )) {
+		tl->prev_tl->next_tl = tl->next_tl;
+		tl->next_tl->prev_tl = tl->prev_tl;
+		tl->next_tl = 0;
+		tl->prev_tl = 0;
+		tl->timer_list = NULL;
+	}
 }
 
 /* put a new cell into a list nr. list_id within a hash_table;
   * set initial timeout
   */
-void add_to_tail_of_timer_list( struct timer *timer_list, 
+void add_timer_unsafe( struct timer *timer_list,
 	struct timer_link *tl, unsigned int time_out )
 {
-	remove_from_timer_list( tl );
+	/*	remove_from_timer_list( tl ); */
 	/* the entire timer list is locked now -- noone else can manipulate it */
-	lock( timer_list->mutex );
+	/* lock( timer_list->mutex ); */
 	tl->time_out = time_out;
 	tl->prev_tl = timer_list->last_tl.prev_tl;
 	tl->next_tl = & timer_list->last_tl;
 	timer_list->last_tl.prev_tl = tl;
 	tl->prev_tl->next_tl = tl;
-	tl->list = timer_list;
-	//print_timer_list(hash_table, list_id);
+	tl->timer_list = timer_list;
+#	ifdef EXTRA_DEBUG
+		if ( tl->tg != timer_group[ timer_list->id ] ) {
+			LOG( L_CRIT, "CRITICAL error: changing timer group\n");
+			abort();
+		}
+#	endif
 	/* give the list lock away */
-	unlock( timer_list->mutex );
+	/* unlock( timer_list->mutex ); */
 	DBG("DEBUG: add_to_tail_of_timer[%d]: %p\n",timer_list->id,tl);
 }
-
-
-
-
-
-/* remove a cell from a list nr. list_id within a hash_table;
-*/
-void remove_from_timer_list( struct timer_link* tl)
-{
-	ser_lock_t	m;
-
-	if (is_in_timer_list2( tl )) {
-		m=tl->list->mutex;
-		/* the entire timer list is locked now -- noone else can manipulate it */
-		lock( m );
-		if ( is_in_timer_list2( tl )  ) remove_from_timer_list_dummy( tl );
-		//print_timer_list(hash_table, list_id);
-		/* give the list lock away */
-		unlock( m );
-	}
-}
-
-
-
 
 /*
 	detach items passed by the time from timer list
@@ -98,8 +88,6 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
 
 {
 	struct timer_link *tl , *tmp , *end, *ret;
-
-	//DBG("DEBUG : check_and_split_time_list: start\n");
 
 	/* quick check whether it is worth entering the lock */
 	if (timer_list->first_tl.next_tl==&timer_list->last_tl ||
@@ -111,7 +99,10 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
 
 	end = &timer_list->last_tl;
 	tl = timer_list->first_tl.next_tl;
-	while( tl!=end && tl->time_out <= time) tl=tl->next_tl;
+	while( tl!=end && tl->time_out <= time) {
+		tl->timer_list = NULL;
+		tl=tl->next_tl;
+	}
 
 	/* nothing to delete found */
 	if (tl->prev_tl==&(timer_list->first_tl)) {
@@ -129,8 +120,6 @@ struct timer_link  *check_and_split_time_list( struct timer *timer_list, int tim
    /* give the list lock away */
    unlock( timer_list->mutex );
 
-   //DBG("DEBUG : check_and_split_time_list: done, returns %p\n",tl);
-   //print_timer_list(hash_table, list_id);
    return ret;
 }
 
@@ -160,7 +149,6 @@ void timer_routine(unsigned int ticks , void * attr)
 			/* reset the timer list linkage */
 			tmp_tl = tl->next_tl;
 			tl->next_tl = tl->prev_tl =0 ; 
-			tl->list = NULL;
 			DBG("DEBUG: timer routine: timer[%d] , tl=%p next=%p\n",id,tl,tmp_tl);
 			timers[id].timeout_handler( tl->payload );
 			tl = tmp_tl;
@@ -170,50 +158,3 @@ void timer_routine(unsigned int ticks , void * attr)
 
 
 
-/* deprecated -- too CPU expensive 
-  */
-/*
-void insert_into_timer_list( struct s_table* hash_table , 
-	struct timer_link* new_tl, enum lists list_id , unsigned int time_out )
-{
-   struct timer          *timer_list = &(hash_table->timers[ list_id ]);
-   struct timer_link  *tl;
-
-   // the entire timer list is locked now -- noone else can manipulate it 
-   lock( timer_list->mutex );
-
-   // if the element is already in list->first remove it 
-   if ( is_in_timer_list( new_tl,list_id)  )
-      remove_from_timer_list_dummy( hash_table , new_tl , list_id);
-
-   new_tl->time_out = time_out ;
-   DBG("DEBUG: insert_into_timer[%d]:%d, %p\n",list_id,new_tl->time_out,new_tl);
-    // seeks the position for insertion 
-   for( tl=timer_list->first_tl ; tl && tl->time_out<new_tl->time_out ; tl=tl->next_tl );
-
-   // link it into list
-    if ( tl )
-    {  // insert before tl
-       new_tl->prev_tl = tl->prev_tl;
-       tl->prev_tl = new_tl;
-    }
-   else
-    {  // at the end or empty list 
-       new_tl->prev_tl = timer_list->last_tl;
-       timer_list->last_tl = new_tl;
-    }
-    if (new_tl->prev_tl )
-       new_tl->prev_tl->next_tl = new_tl;
-    else
-       timer_list->first_tl = new_tl;
-    new_tl->next_tl = tl;
-	tl->list_id = list_id;
-
-   //print_timer_list(hash_table, list_id);
-    // give the list lock away 
-
-    unlock( timer_list->mutex );
-}
-
-
-*/

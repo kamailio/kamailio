@@ -9,15 +9,20 @@
 
 /* identifiers of timer lists; 
 */
-enum lists {	FR_TIMER_LIST, FR_INV_TIMER_LIST,
-				WT_TIMER_LIST, DELETE_LIST, 
-				/* fixed-timer retransmission lists (benefit: fixed timer
-				   length allows for appending new items to the list as
-					opposed to inserting them which is costly */
-				RT_T1_TO_1, RT_T1_TO_2, RT_T1_TO_3, RT_T2, 
-				NR_OF_TIMER_LISTS };
+enum lists {
+	FR_TIMER_LIST, FR_INV_TIMER_LIST,
+	WT_TIMER_LIST, 
+	DELETE_LIST, 
+	/* fixed-timer retransmission lists (benefit: fixed timer
+	   length allows for appending new items to the list as
+		opposed to inserting them which is costly */
+	RT_T1_TO_1, RT_T1_TO_2, RT_T1_TO_3, RT_T2, 
+	NR_OF_TIMER_LISTS };
 
-#define is_in_timer_list2(_tl) ( (_tl)->list )
+
+extern int timer_group[NR_OF_TIMER_LISTS];
+
+#define is_in_timer_list2(_tl) ( (_tl)->timer_list )
 
 
 struct timer;
@@ -30,7 +35,9 @@ typedef struct timer_link
 	struct timer_link 	*prev_tl;
 	unsigned int       	time_out;
 	void				*payload;
-	struct timer		*list;
+	struct timer		*timer_list;
+	/* ser_lock_t			*mutex; */
+	enum timer_groups	tg;
 }timer_link_type ;
 
 
@@ -47,10 +54,17 @@ typedef struct  timer
 void init_timer_list( struct s_table* hash_table, enum lists list_id);
 void reset_timer_list( struct s_table* hash_table, enum lists list_id);
 
+/*
 void add_to_tail_of_timer_list( struct timer *timer_list, 
 	struct timer_link *tl, unsigned int time_out );
 void remove_from_timer_list( struct timer_link *tl);
+*/
 void timer_routine(unsigned int, void *);
+
+void remove_timer_unsafe(  struct timer_link* tl ) ;
+void add_timer_unsafe( struct timer *timer_list,
+	struct timer_link *tl, unsigned int time_out );
+
 
 
 /* deprecated -- too expensive -- use appending instead 

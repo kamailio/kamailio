@@ -7,7 +7,6 @@
 #include "../../dprint.h"
 #include "sh_malloc.h"
 
-
 /*   Frees the all the containes of a cell and the cell's body itself
   */
 void free_cell( struct cell* dead_cell )
@@ -19,6 +18,7 @@ void free_cell( struct cell* dead_cell )
 	DBG("DEBUG: free_cell: start\n");
 	/* UA Server */
 	DBG("DEBUG: free_cell: inbound request %p\n",dead_cell->inbound_request);
+	release_cell_lock( dead_cell );
 	shm_lock();
 	if ( dead_cell->inbound_request )
 		sip_msg_free_unsafe( dead_cell->inbound_request );
@@ -36,6 +36,9 @@ void free_cell( struct cell* dead_cell )
 	 		dead_cell->outbound_request[i] = NULL;
          		shm_free_unsafe( rb );
    		}
+		/* outbound ACKs, if any */
+		if (rb=dead_cell->outbound_ack[i] )
+			shm_free_unsafe( rb );
    		/* outbound requests*/
    		DBG("DEBUG: free_cell: inbound_response[%d] %p\n",i,dead_cell->inbound_response[i]);
    		if ( dead_cell -> inbound_response[i] )
@@ -141,8 +144,15 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 
    /* filling with 0 */
    memset( new_cell, 0, sizeof( struct cell ) );
+
+	new_cell->outbound_response.retr_timer.tg=TG_RT;
+	new_cell->outbound_response.fr_timer.tg=TG_FR;
+	new_cell->wait_tl.tg=TG_WT;
+	new_cell->dele_tl.tg=TG_DEL;
+
    /* hash index of the entry */
-   new_cell->hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number );
+   /* new_cell->hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ); */
+	new_cell->hash_index = p_msg->hash_index;
    /* mutex */
    /* ref counter is 0 */
    /* all pointers from timers list tl are NULL */
@@ -153,19 +163,10 @@ struct cell*  build_cell( struct sip_msg* p_msg )
    DBG("DEBUG: build_cell : clone done\n");
    if (!new_cell->inbound_request)
 	goto error;
-   /* inbound response is NULL*/
-   /* status is 0 */
-   /* tag pointer is NULL */
-   //if ( p_msg->tag )      TO DO !!!!!!!!!!!!!!!!!!!!!!
-   //   new_cell->tag  =  &(new_cell->inbound_request->tag->body);
-   /* nr of outbound requests is 0 */
-   /* all pointers from outbound_request array are NULL */
-   /* all pointers from outbound_response array are NULL */
-   /*init the links with the canceled / canceler transaction */
    new_cell->relaied_reply_branch   = -1;
    new_cell->T_canceled = T_UNDEFINED;
 
-   /* init_cell_lock(  new_cell ); */
+    init_cell_lock(  new_cell ); 
 
    DBG("DEBUG: build_cell : done\n");
    return new_cell;
@@ -181,31 +182,28 @@ error:
 /*  Takes an already created cell and links it into hash table on the
   *  appropiate entry.
   */
-void    insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cell )
+void    insert_into_hash_table_unsafe( struct s_table *hash_table,  struct cell * p_cell )
 {
-   struct entry* p_entry;
+	struct entry* p_entry;
 
-   /* do we have or not something to insert? */
-   if (!p_cell)
-      return;
+	/* locates the apropiate entry */
+	p_entry = &hash_table->entrys[ p_cell->hash_index ];
 
-   /* locates the apropiate entry */
-   p_entry = &hash_table->entrys[ p_cell->hash_index ];
+	p_cell->label = p_entry->next_label++;
+	if ( p_entry->last_cell )
+	{
+		p_entry->last_cell->next_cell = p_cell;
+		p_cell->prev_cell = p_entry->last_cell;
+	} else p_entry->first_cell = p_cell;
+	
+	p_entry->last_cell = p_cell;
+}
 
-   /* critical region - inserting the cell at the end of the list */
-   lock( p_entry->mutex );
-
-   p_cell->label = p_entry->next_label++;
-   if ( p_entry->last_cell )
-   {
-      p_entry->last_cell->next_cell = p_cell;
-      p_cell->prev_cell = p_entry->last_cell;
-   }
-   else
-      p_entry->first_cell = p_cell;
-   p_entry->last_cell = p_cell;
-
-   unlock( p_entry->mutex );
+void insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cell )
+{
+	lock( hash_table->entrys[ p_cell->hash_index ].mutex );
+	insert_into_hash_table_unsafe( hash_table,  p_cell );
+	unlock( hash_table->entrys[ p_cell->hash_index ].mutex );
 }
 
 
