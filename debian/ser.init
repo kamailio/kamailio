@@ -55,6 +55,13 @@ case "$1" in
 	#	option to the "reload" entry above. If not, "force-reload" is
 	#	just the same as "restart".
 	#
+	# Check if ser configuration is valid before restarting the server
+	out=`($DAEMON -c >/dev/null || true) 2>&1`
+	if [ "$out" != 'config file ok, exiting...' ]; then
+	    echo -e "\nThere are errors in the configuration file. Please fix them first"
+	    echo -e "\n$out\n"
+	    exit 0
+	fi
 	echo -n "Restarting $DESC: $NAME"
 	start-stop-daemon --oknodo --stop --quiet --pidfile \
 		$PIDFILE --exec $DAEMON
