@@ -33,6 +33,7 @@
 #include <dprint.h>
 #include "../../parser/parse_expires.h"  
 #include "../../ut.h"
+#include "../../qvalue.h"
 #include "reg_mod.h"                     /* Module parameters */
 #include "regtime.h"                     /* act_time */
 #include "rerrno.h"
@@ -242,14 +243,14 @@ int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 /*
  * Calculate contact q value as follows:
  * 1) If q parameter exists, use it
- * 2) If the parameter doesn't exist, use default value
+ * 2) If the parameter doesn't exist, use the default value
  */
-int calc_contact_q(param_t* _q, float* _r)
+int calc_contact_q(param_t* _q, qvalue_t* _r)
 {
 	if (!_q || (_q->body.len == 0)) {
-		*_r = def_q;
+		*_r = default_q;
 	} else {
-		if (str2float(&_q->body, _r) < 0) {
+		if (str2q(_r, _q->body.s, _q->body.len) < 0) {
 			rerrno = R_INV_Q; /* Invalid q parameter */
 			LOG(L_ERR, "calc_contact_q(): Invalid q parameter\n");
 			return -1;

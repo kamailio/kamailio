@@ -35,17 +35,18 @@
 #include "../../fifo_server.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../qvalue.h"
 #include "ul_fifo.h"
 #include "dlist.h"
 #include "udomain.h"
 #include "utime.h"
 #include "ul_mod.h"
 
-#define MAX_CONTACT 128
-#define MAX_EXPIRES 20
-#define MAX_Q 20
-#define MAX_REPLICATE 12
-#define MAX_FLAGS 12
+#define MAX_CONTACT_LEN 128
+#define MAX_EXPIRES_LEN 20
+#define MAX_Q_LEN 20
+#define MAX_REPLICATE_LEN 12
+#define MAX_FLAGS_LEN 12
 
 
 /*
@@ -137,7 +138,7 @@ static inline void fifo_find_domain(str* _name, udomain_t** _d)
 }
 
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float _q, int _r, int _f)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _r, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -195,15 +196,15 @@ static int ul_add(FILE* pipe, char* response_file)
 {
 	char table_s[MAX_TABLE];
 	char user_s[MAX_USER];
-	char contact_s[MAX_CONTACT];
-	char expires_s[MAX_EXPIRES];
-	char q_s[MAX_Q];
-	char rep_s[MAX_REPLICATE];
-	char flags_s[MAX_FLAGS];
+	char contact_s[MAX_CONTACT_LEN];
+	char expires_s[MAX_EXPIRES_LEN];
+	char q_s[MAX_Q_LEN];
+	char rep_s[MAX_REPLICATE_LEN];
+	char flags_s[MAX_FLAGS_LEN];
 	udomain_t* d;
-	float q_f;
 	int exp_i, rep_i, flags_i;
 	char* at;
+	qvalue_t qval;
 
 	str table, user, contact, expires, q, rep, flags;
 
@@ -236,14 +237,14 @@ static int ul_add(FILE* pipe, char* response_file)
 		}
 	}
 
-	if (!read_line(contact_s, MAX_CONTACT, pipe, &contact.len) || contact.len == 0) {
+	if (!read_line(contact_s, MAX_CONTACT_LEN, pipe, &contact.len) || contact.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_add: contact expected\n");
 		LOG(L_ERR, "ERROR: ul_add: contact expected\n");
 		return 1;
 	}
 	
-	if (!read_line(expires_s, MAX_EXPIRES, pipe, &expires.len) || expires.len == 0) {
+	if (!read_line(expires_s, MAX_EXPIRES_LEN, pipe, &expires.len) || expires.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_add: expires expected\n");
 		LOG(L_ERR, "ERROR: ul_add: expires expected\n");
@@ -257,14 +258,14 @@ static int ul_add(FILE* pipe, char* response_file)
 		return 1;
 	}
 	
-	if (!read_line(rep_s, MAX_REPLICATE, pipe, &rep.len) || rep.len == 0) {
+	if (!read_line(rep_s, MAX_REPLICATE_LEN, pipe, &rep.len) || rep.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_add: replicate expected\n");
 		LOG(L_ERR, "ERROR: ul_add: replicate expected\n");
 		return 1;
 	}
 
-	if (!read_line(flags_s, MAX_FLAGS, pipe, &flags.len) || flags.len == 0) {
+	if (!read_line(flags_s, MAX_FLAGS_LEN, pipe, &flags.len) || flags.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_add: flags expected\n");
 		LOG(L_ERR, "ERROR: ul_add: flags expected\n");
@@ -288,9 +289,9 @@ static int ul_add(FILE* pipe, char* response_file)
 			fifo_reply(response_file, "400 Invalid expires format\n");
 			return 1;
 		}
-		
-		if (str2float(&q, &q_f) < 0) {
-			fifo_reply(response_file, "400 Invalid q format\n");
+
+		if (str2q(&qval, q.s, q.len) < 0) {
+			fifo_reply(response_file, "400 Invalid q value\n");
 			return 1;
 		}
 
@@ -306,7 +307,7 @@ static int ul_add(FILE* pipe, char* response_file)
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, q_f, rep_i, flags_i) < 0) {
+		if (add_contact(d, &user, &contact, exp_i, qval, rep_i, flags_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
 			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
@@ -398,7 +399,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 {
 	char table[MAX_TABLE];
 	char user[MAX_USER];
-	char contact[MAX_CONTACT];
+	char contact[MAX_CONTACT_LEN];
 	udomain_t* d;
 	urecord_t* r;
 	ucontact_t* con;
@@ -435,7 +436,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 	}
 
 
-	if (!read_line(contact, MAX_CONTACT, pipe, &c.len) || c.len == 0) {
+	if (!read_line(contact, MAX_CONTACT_LEN, pipe, &c.len) || c.len == 0) {
 		fifo_reply(response_file,
 			   "400 ul_rm_contact: contact expected\n");
 		LOG(L_ERR, "ERROR: ul_rm_contact: contact expected\n");
@@ -517,9 +518,9 @@ static inline int print_contacts(FILE* _o, ucontact_t* _c)
 			if (cnt==1) {
 				fputs( "200 OK\n", _o);
 			}
-			fprintf(_o, "<%.*s>;q=%-3.2f;expires=%d\n",
+			fprintf(_o, "<%.*s>;q=%s;expires=%d\n",
 				_c->c.len, ZSW(_c->c.s),
-				_c->q, (int)(_c->expires - act_time));
+				q2str(_c->q, 0), (int)(_c->expires - act_time));
 		}
 
 		_c = _c->next;

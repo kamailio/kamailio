@@ -29,6 +29,7 @@
 #include "../../unixsock_server.h"
 #include "../../ut.h"
 #include "../../str.h"
+#include "../../qvalue.h"
 #include "dlist.h"
 #include "ul_mod.h"
 #include "ul_fifo.h"
@@ -43,7 +44,7 @@
 #define UNIXSOCK_CSEQ 42
 
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float _q, int _r, int _f)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _r, int _f)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -328,7 +329,7 @@ static int ul_dump(str* msg)
 static int ul_add(str* msg)
 {
 	udomain_t* d;
-	float q_f;
+	qvalue_t qval;
 	int exp_i, rep_i, flags_i;
 	char* at;
 	str table, user, contact, expires, q, rep, flags;
@@ -390,11 +391,11 @@ static int ul_add(str* msg)
 			goto err;
 		}
 		
-		if (str2float(&q, &q_f) < 0) {
-			unixsock_reply_asciiz("400 Invalid q format\n");
+		if (str2q(&qval, q.s, q.len) < 0) {
+			unixsock_reply_asciiz("400 invalid q value\n");
 			goto err;
 		}
-
+		
 		if (str2int(&rep, (unsigned int*)&rep_i) < 0) {
 			unixsock_reply_asciiz("400 Invalid replicate format\n");
 			goto err;
@@ -407,7 +408,7 @@ static int ul_add(str* msg)
 		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, q_f, rep_i, flags_i) < 0) {
+		if (add_contact(d, &user, &contact, exp_i, qval, rep_i, flags_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
 			    user.len, ZSW(user.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));
@@ -448,9 +449,9 @@ static inline int print_contacts(ucontact_t* _c)
 			if (cnt == 1) {
 				unixsock_reply_asciiz("200 OK\n");
 			}
-			if (unixsock_reply_printf("<%.*s>;q=%-3.2f;expires=%d\n",
+			if (unixsock_reply_printf("<%.*s>;q=%s;expires=%d\n",
 						  _c->c.len, ZSW(_c->c.s),
-						  _c->q, (int)(_c->expires - act_time)) < 0) {
+						  q2str(_c->q, 0), (int)(_c->expires - act_time)) < 0) {
 				return -1;
 			}
 		}

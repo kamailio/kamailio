@@ -41,6 +41,7 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../usrloc/usrloc.h"
+#include "../../qvalue.h"
 #include "common.h"
 #include "sip_msg.h"
 #include "rerrno.h"
@@ -153,7 +154,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	urecord_t* r = 0;
 	ucontact_t* c;
 	int e, cseq;
-	float q;
+	qvalue_t q;
 	str callid;
 	unsigned int flags;
 
@@ -234,7 +235,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 	ucontact_t* c, *c2;
 	str callid;
 	int cseq, e;
-	float q;
+	qvalue_t q;
 	unsigned int fl;
 
 	fl = (isflagset(_m, nat_flag) == 1);

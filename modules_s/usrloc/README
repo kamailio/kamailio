@@ -371,7 +371,7 @@ cont)
 
      * time_t expires - Expires of the contact in absolute value.
 
-     * float q - q value of the contact.
+     * qvalue_t q - q value of the contact.
 
      * str* callid - Call-ID of the REGISTER message that
        contained the contact.
@@ -434,7 +434,7 @@ cont)
 
      * time_t expires - Expires of the contact in absolute value.
 
-     * float q - q value of the contact.
+     * qvalue_t q - q value of the contact.
 
      * str* callid - Call-ID of the REGISTER message that
        contained the contact.

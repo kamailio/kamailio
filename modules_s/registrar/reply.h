@@ -32,7 +32,7 @@
 #define REPLY_H
 
 #include "../../parser/msg_parser.h"
-
+#include "ucontact.h"
 
 /*
  * Send a reply
@@ -43,7 +43,13 @@ int send_reply(struct sip_msg* _m);
 /*
  * Build Contact HF for reply
  */
-void build_contact(ucontact_t* _c);
+int build_contact(ucontact_t* c);
+
+
+/*
+ * Release contact buffer if any
+ */
+void free_contact_buf(void);
 
 
 #endif /* REPLY_H */

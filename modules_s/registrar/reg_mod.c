@@ -41,6 +41,7 @@
 #include "../../error.h"
 #include "save.h"
 #include "lookup.h"
+#include "reply.h"
 #include "reg_mod.h"
 
 
@@ -49,19 +50,18 @@ MODULE_VERSION
 
 static int mod_init(void);                           /* Module init function */
 static int domain_fixup(void** param, int param_no); /* Fixup that converts domain name */
+static void mod_destroy(void);
 
 usrloc_api_t ul;            /* Structure containing pointers to usrloc functions */
 
-int default_expires = 3600; /* Default expires value in seconds */
-int default_q       = 0;    /* Default q value multiplied by 1000 */
-int append_branches = 1;    /* If set to 1, lookup will put all contacts found in msg structure */
-int case_sensitive  = 0;    /* If set to 1, username in aor will be case sensitive */
-int desc_time_order = 0;    /* By default do not order according to the descending modification time */
-int nat_flag        = 4;    /* SER flag marking contacts behind NAT */
-int min_expires     = 60;   /* Minimum expires the phones are allowed to use in seconds,
-			     * use 0 to switch expires checking off */
-
-float def_q;                /* default_q converted to float in mod_init */
+int default_expires = 3600;           /* Default expires value in seconds */
+qvalue_t default_q  = Q_UNSPECIFIED;  /* Default q value multiplied by 1000 */
+int append_branches = 1;              /* If set to 1, lookup will put all contacts found in msg structure */
+int case_sensitive  = 0;              /* If set to 1, username in aor will be case sensitive */
+int desc_time_order = 0;              /* By default do not order according to the descending modification time */
+int nat_flag        = 4;              /* SER flag marking contacts behind NAT */
+int min_expires     = 60;             /* Minimum expires the phones are allowed to use in seconds,
+			               * use 0 to switch expires checking off */
 
 
 /*
@@ -102,13 +102,13 @@ static param_export_t params[] = {
  */
 struct module_exports exports = {
 	"registrar", 
-	cmds,       /* Exported functions */
-	params,     /* Exported parameters */
-	mod_init,   /* module initialization function */
+	cmds,        /* Exported functions */
+	params,      /* Exported parameters */
+	mod_init,    /* module initialization function */
 	0,
-	0,          /* destroy function */
-	0,          /* oncancel function */
-	0           /* Per-child init function */
+	mod_destroy, /* destroy function */
+	0,           /* oncancel function */
+	0            /* Per-child init function */
 };
 
 
@@ -137,11 +137,21 @@ static int mod_init(void)
 		return -1;
 	}
 
+	     /* Normalize default_q parameter */
+	if (default_q != Q_UNSPECIFIED) {
+		if (default_q > MAX_Q) {
+			DBG("registrar: default_q = %d, lowering to MAX_Q: %d\n", default_q, MAX_Q);
+			default_q = MAX_Q;
+		} else if (default_q < MIN_Q) {
+			DBG("registrar: default_q = %d, raising to MIN_Q: %d\n", default_q, MIN_Q);
+			default_q = MIN_Q;
+		}
+	}
+	
+
 	if (bind_usrloc(&ul) < 0) {
 		return -1;
 	}
-
-	def_q = (float)default_q / (float)1000;
 
 	return 0;
 }
@@ -163,4 +173,10 @@ static int domain_fixup(void** param, int param_no)
 		*param = (void*)d;
 	}
 	return 0;
+}
+
+
+static void mod_destroy(void)
+{
+	free_contact_buf();
 }

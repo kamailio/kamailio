@@ -213,7 +213,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	str user, contact, callid;
 	char* domain;
 	time_t expires;
-	float q;
+	qvalue_t q;
 
 	urecord_t* r;
 	ucontact_t* c;
@@ -253,7 +253,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		contact.s   = (char*)VAL_STRING(ROW_VALUES(row) + 1);
 		contact.len = strlen(contact.s);
 		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
-		q           = VAL_DOUBLE(ROW_VALUES(row) + 3);
+		q           = double2q(VAL_DOUBLE(ROW_VALUES(row) + 3));
 		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
 		rep         = VAL_INT   (ROW_VALUES(row) + 6);
 		state       = VAL_INT   (ROW_VALUES(row) + 7);

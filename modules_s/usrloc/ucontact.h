@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include "../../qvalue.h"
 #include "../../str.h"
 
 typedef enum cstate {
@@ -74,7 +75,7 @@ typedef struct ucontact {
 	str* aor;               /* Pointer to the address of record string in record structure*/
 	str c;                  /* Contact address */
 	time_t expires;         /* expires parameter */
-	float q;                /* q parameter */
+	qvalue_t q;             /* q parameter */
 	str callid;             /* Call-ID header field */
         int cseq;               /* CSeq value */
 	unsigned int replicate; /* replication marker */
@@ -95,7 +96,7 @@ typedef struct ucontact {
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q, 
+int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q, 
 		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c);
 
 
@@ -114,7 +115,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c);
 /*
  * Update existing contact in memory with new values
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
+int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 			unsigned int _set, unsigned int _res);
 
 
@@ -182,15 +183,15 @@ int db_delete_ucontact(ucontact_t* _c);
 /*
  * Update ucontact with new values without replication
  */
-typedef int (*update_ucontact_t)(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, 
+typedef int (*update_ucontact_t)(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 				 unsigned int _set, unsigned int _res);
-int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
+int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res);
 
 /*
  * Update ucontact with new values with addtional replication argument
  */
-int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep,
+int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
 			unsigned int _set, unsigned int _res);
 
 

@@ -36,13 +36,14 @@
 #define INS_LIST_H
 
 #include "ucontact.h"
+#include "../../qvalue.h"
 #include "../../str.h"
 
 
 struct ins_itm {
 	struct ins_itm* next;
 	time_t expires;
-	float q;
+	qvalue_t q;
 	int cseq;
 	int replicate;
 	cstate_t state;

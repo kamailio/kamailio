@@ -47,7 +47,7 @@
 /*
  * Create a new contact structure
  */
-int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q,
+int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
 		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
@@ -130,7 +130,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 		fprintf(_f, "Expires: -%u\n", (unsigned int)(t - _c->expires));
 	else
 		fprintf(_f, "Expires: %u\n", (unsigned int)(_c->expires - t));
-	fprintf(_f, "q      : %10.2f\n", _c->q);
+	fprintf(_f, "q      : %s\n", q2str(_c->q, 0));
 	fprintf(_f, "Call-ID: '%.*s'\n", _c->callid.len, ZSW(_c->callid.s));
 	fprintf(_f, "CSeq   : %d\n", _c->cseq);
 	fprintf(_f, "replic : %u\n", _c->replicate);
@@ -145,7 +145,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 /*
  * Update ucontact structure in memory
  */
-int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
+int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 			unsigned int _set, unsigned int _res)
 {
 	char* ptr;
@@ -460,7 +460,7 @@ int db_insert_ucontact(ucontact_t* _c)
 
 	vals[3].type = DB_DOUBLE;
 	vals[3].nul = 0;
-	vals[3].val.double_val = _c->q;
+	vals[3].val.double_val = q2double(_c->q);
 
 	vals[4].type = DB_STR;
 	vals[4].nul = 0;
@@ -549,7 +549,7 @@ int db_update_ucontact(ucontact_t* _c)
 
 	vals2[1].type = DB_DOUBLE;
 	vals2[1].nul = 0;
-	vals2[1].val.double_val = _c->q;
+	vals2[1].val.double_val = q2double(_c->q);
 
 	vals2[2].type = DB_STR;
 	vals2[2].nul = 0;
@@ -649,7 +649,7 @@ int db_delete_ucontact(ucontact_t* _c)
  * the replication mark.
  * FIXME: i'm not sure if we need this...
  */
-int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep,
+int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
 			unsigned int _set, unsigned int _res)
 {
 	_c->replicate = _rep;
@@ -659,7 +659,7 @@ int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
 /*
  * Update ucontact with new values
  */
-int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs,
+int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 		    unsigned int _set, unsigned int _res)
 {
 	/* run callbacks for UPDATE event */

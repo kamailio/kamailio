@@ -50,74 +50,125 @@
 #define E_INFO "P-Registrar-Error: "
 #define E_INFO_LEN (sizeof(E_INFO) - 1)
 
+#define CONTACT_BEGIN "Contact: "
+#define CONTACT_BEGIN_LEN (sizeof(CONTACT_BEGIN) - 1)
 
-static char b[MAX_CONTACT_BUFFER];
-static int l;
+#define Q_PARAM ">;q="
+#define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
+
+#define EXPIRES_PARAM ";expires="
+#define EXPIRES_PARAM_LEN (sizeof(EXPIRES_PARAM) - 1)
+
+#define CONTACT_SEP ", "
+#define CONTACT_SEP_LEN (sizeof(CONTACT_SEP) - 1)
 
 
 /*
- * Build Contact HF for reply
+ * Buffer for Contact header field
  */
-void build_contact(ucontact_t* _c)
+static struct {
+	char* buf;
+	int buf_len;
+	int data_len;
+} contact = {0, 0, 0};
+
+
+/*
+ * Calculate the length of buffer needed to
+ * print contacts
+ */
+static inline unsigned int calc_buf_len(ucontact_t* c)
 {
-	char *lastgoodend;
-	int nummissed;
-	
-	l = 0;
-	lastgoodend = b;
-	while(_c) {
-		if (VALID_CONTACT(_c, act_time)) {
-			if (l + 10 >= MAX_CONTACT_BUFFER)
-				break;
-			memcpy(b + l, "Contact: <", 10);
-			l += 10;
-			
-			if (l + _c->c.len >= MAX_CONTACT_BUFFER)
-				break;
-			memcpy(b + l, _c->c.s, _c->c.len);
-			l += _c->c.len;
-			
-			if (l + 4 >= MAX_CONTACT_BUFFER)
-				break;
-			memcpy(b + l, ">;q=", 4);
-			l += 4;
-			
-			l += snprintf(b + l, MAX_CONTACT_BUFFER - l, "%-3.2f", _c->q);
-			if (l >= MAX_CONTACT_BUFFER)
-				break;
-			
-			if (l + 9 >= MAX_CONTACT_BUFFER)
-				break;
-			memcpy(b + l, ";expires=", 9);
-			l += 9;
-			
-			l += snprintf(b + l, MAX_CONTACT_BUFFER - l, "%d", (int)(_c->expires - act_time));
-			if (l >= MAX_CONTACT_BUFFER)
-				break;
+	unsigned int len;
+	int qlen;
 
-			if (l + 2 >= MAX_CONTACT_BUFFER)
-				break;
-			*(b + l++) = '\r';
-			*(b + l++) = '\n';
-			lastgoodend = b + l;
+	len = 0;
+	while(c) {
+		if (VALID_CONTACT(c, act_time)) {
+			if (len) len += CONTACT_SEP_LEN;
+			len += 2 /* < > */ + c->c.len;
+			qlen = len_q(c->q);
+			if (qlen) len += Q_PARAM_LEN + qlen;
+			len += EXPIRES_PARAM_LEN + INT2STR_MAX_LEN;
 		}
-
-		_c = _c->next;
-	}
-	if (lastgoodend - b != l) {
-		l = lastgoodend - b;
-		for(nummissed = 0; _c; _c = _c->next)
-			nummissed++;
-		LOG(L_ERR, "build_contact(): Contact list buffer exhaused, %d contact(s) ignored\n", nummissed);
+		c = c->next;
 	}
 
-	if (_c) {
-		DBG("build_contact(): Created Contact HF: %.*s\n", l, /*ZSW*/(b));
-		/*b can never be 0; ZSW commented out to get rid of an icc warning
-		 * --andrei */
-	}
+	if (len) len += CONTACT_BEGIN_LEN + CRLF_LEN;
+	return len;
 }
 
+
+/*
+ * Allocate a memory buffer and print Contact
+ * header fields into it
+ */
+int build_contact(ucontact_t* c)
+{
+	char* p;
+	int fl, len;
+
+	contact.data_len = calc_buf_len(c);
+	if (!contact.data_len) return 0;
+
+	if (!contact.buf || (contact.buf_len < contact.data_len)) {
+		if (contact.buf) pkg_free(contact.buf);
+		contact.buf = (char*)pkg_malloc(contact.data_len);
+		if (!contact.buf) {
+			contact.data_len = 0;
+			contact.buf_len = 0;
+			LOG(L_ERR, "build_contact(): No memory left\n");
+			return -1;
+		} else {
+			contact.buf_len = contact.data_len;
+		}
+	}
+
+	p = contact.buf;
+	
+	memcpy(p, CONTACT_BEGIN, CONTACT_BEGIN_LEN);
+	p += CONTACT_BEGIN_LEN;
+
+	fl = 0;
+	while(c) {
+		if (VALID_CONTACT(c, act_time)) {
+			if (fl) {
+				memcpy(p, CONTACT_SEP, CONTACT_SEP_LEN);
+				p += CONTACT_SEP_LEN;
+			} else {
+				fl = 1;
+			}
+
+			*p++ = '<';
+			memcpy(p, c->c.s, c->c.len);
+			p += c->c.len;
+			*p++ = '<';
+
+			len = len_q(c->q);
+			if (len) {
+				memcpy(p, Q_PARAM, Q_PARAM_LEN);
+				p += Q_PARAM_LEN;
+				memcpy(p, q2str(c->q, 0), len);
+				p += len;
+			}
+
+			memcpy(p, EXPIRES_PARAM, EXPIRES_PARAM_LEN);
+			p += EXPIRES_PARAM_LEN;
+			memcpy(p, int2str((int)(c->expires - act_time), &len), len);
+			p += len;
+		}
+
+		c = c->next;
+	}
+
+	memcpy(p, CRLF, CRLF_LEN);
+	p += CRLF_LEN;
+
+	contact.data_len = p - contact.buf;
+
+	DBG("build_contact(): Created Contact HF: %.*s\n", contact.data_len, contact.buf);
+	return 0;
+}
 
 
 #define MSG_200 "OK"
@@ -217,9 +268,9 @@ int send_reply(struct sip_msg* _m)
 	char* msg = MSG_200; /* makes gcc shut up */
 	char* buf;
 
-	if (l > 0) {
-		add_lump_rpl( _m, b, l, LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
-		l = 0;
+	if (contact.data_len > 0) {
+		add_lump_rpl( _m, contact.buf, contact.data_len, LUMP_RPL_HDR|LUMP_RPL_NODUP|LUMP_RPL_NOFREE);
+		contact.data_len = 0;
 	}
 
 	code = codes[rerrno];
@@ -246,4 +297,18 @@ int send_reply(struct sip_msg* _m)
 		LOG(L_ERR, "send_reply(): Error while sending %ld %s\n", code, msg);
 		return -1;
 	} else return 0;	
+}
+
+
+/*
+ * Release contact buffer if any
+ */
+void free_contact_buf(void)
+{
+	if (contact.buf) {
+		pkg_free(contact.buf);
+		contact.buf = 0;
+		contact.buf_len = 0;
+		contact.data_len = 0;
+	}
 }
