@@ -39,6 +39,8 @@
 #include "../../sr_module.h"
 #include <stdio.h>
 
+MODULE_VERSION
+
 static int print_f(struct sip_msg*, char*,char*);
 static int mod_init(void);
 
