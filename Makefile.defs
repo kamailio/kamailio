@@ -225,6 +225,7 @@ endif
 
 ifeq  ($(OS), SunOS)
 	ifeq ($(mode), release)
+		#use these only if you're using gcc with Solaris ld
 		#LDFLAGS=-O2 $(PROFILE)
 		#MOD_LDFLAGS=-O2 -G
 	else
