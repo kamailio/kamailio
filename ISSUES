@@ -1,0 +1,35 @@
+#
+# $Id$
+#
+
+This is a collection of issues which have shown up
+since the version 0.8.8 was released.
+
+---------------------------------------------------------------
+Desc: in default configuration, SER prints '127.0.0.1' in
+      Warning header field of all replies
+BugId: 372
+Workaround: use listen=<ip_address> in your configuration file;
+      that will make SER listen only on one interface (and not
+      on '127.0.0.1' in parallel) and advertise correct IP
+      address
+Bug reason: multiple listening address ignored in message
+      translator
+CVS status: fixed
+---------------------------------------------------------------
+Desc: serctl add ... returns "user exists"
+BugId: 374
+Workaround: either use serweb for addding new users or update
+      the serctl utility from CVS; the fixed version is at
+      http://www.iptel.org/ser/issues/374/
+Bug reason: phplib_id ignored in sc
+CVS Status: fixed
+---------------------------------------------------------------
+Desc: SMS module fails to load because of unresolved dependency
+      on im.so
+BugId: 375
+Workaround: ? use source distribution, change modules/sms/Makefile
+      line with LIBS to "LIBS=" and recompile using make modules ?
+Bug reason: ? historical left-over in sms/Makefile?
+CVS status: not fixed yet
+---------------------------------------------------------------
