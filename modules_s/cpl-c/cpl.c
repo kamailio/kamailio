@@ -239,7 +239,7 @@ static int cpl_init(void)
 	}
 
 	/* bind to the mysql module */
-	if (bind_dbmod()) {
+	if (bind_dbmod( DB_URL )) {
 		LOG(L_CRIT,"ERROR:cpl_init: cannot bind to database module! "
 			"Did you forget to load a database module ?\n");
 		goto error;
