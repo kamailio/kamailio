@@ -116,9 +116,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 		DBG("DEBUG: t_forward_nonack: starting timers (retrans and FR) %d\n",get_ticks() );
 		/*sets and starts the FINAL RESPONSE timer */
-#ifdef FR
 		set_timer( hash_table, &(rb->fr_timer), FR_TIMER_LIST );
-#endif
 
 		/* sets and starts the RETRANS timer */
 		rb->retr_list = RT_T1_TO_1;
@@ -139,9 +137,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		/* or if the canceled transaction has a final status -> drop the CANCEL*/
 		if ( T->T_canceled!=T_NULL && T->T_canceled->status>=200)
 		{
-#ifdef FR
 			reset_timer( hash_table, &(rb->fr_timer ));
-#endif
 			reset_timer( hash_table, &(rb->retr_timer ));
 			return 1;
 		}

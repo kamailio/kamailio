@@ -490,13 +490,21 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	unsigned int         len, via_len;
 	struct retrans_buff *srb;
 
+
+	if ( !Trans->inbound_response[branch] )
+	{
+		DBG("DEBUG: t_build_and_send_CANCEL: no response ever received"
+			" : dropping local cancel! \n");
+		return 1;
+	}
+
 	if (Trans->outbound_cancel[branch]!=NO_CANCEL)
 	{
 		DBG("DEBUG: t_build_and_send_CANCEL: this branch was already canceled"
 			" : dropping local cancel! \n");
 		return 1;
 	}
-	
+
 	cancel_buf = 0;
 	via = 0;
 	p_msg = Trans->inbound_request;

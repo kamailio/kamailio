@@ -361,18 +361,20 @@ static inline void reset_retr_timers( struct s_table *h_table,
 	lock(hash_table->timers[RT_T1_TO_1].mutex);
 	remove_timer_unsafe( & p_cell->outbound_response.retr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-		if ( (rb = p_cell->outbound_request[ijk]) ) {
+		if ( (rb = p_cell->outbound_request[ijk]) )
 			remove_timer_unsafe( & rb->retr_timer );
-		}
+		if ( (rb = p_cell->outbound_cancel[ijk]) )
+			remove_timer_unsafe( & rb->retr_timer );
 	}
 	unlock(hash_table->timers[RT_T1_TO_1].mutex);
 
 	lock(hash_table->timers[FR_TIMER_LIST].mutex);
 	remove_timer_unsafe( & p_cell->outbound_response.fr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-		if ( (rb = p_cell->outbound_request[ijk]) ) {
+		if ( (rb = p_cell->outbound_request[ijk]) )
 			remove_timer_unsafe( & rb->fr_timer );
-		}
+		if ( (rb = p_cell->outbound_cancel[ijk]) )
+			remove_timer_unsafe( & rb->fr_timer );
 	}
 	unlock(hash_table->timers[FR_TIMER_LIST].mutex);
 	DBG("DEBUG:stop_RETR_and_FR_timers : timers stopped\n");
