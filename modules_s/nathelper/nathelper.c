@@ -42,6 +42,13 @@
  * 2003-10-09	nat_uac_test introduced (jiri)
  * 2003-11-06   nat_uac_test permitted from onreply_route (jiri)
  * 2003-12-01   unforce_rtp_proxy introduced (sobomax)
+ * 2004-01-07	o RTP proxy support updated to support new version of the
+ *		  RTP proxy (20040107).
+ *		o force_rtp_proxy() now inserts a special flag
+ *		  into the SDP body to indicate that this session already
+ *		  proxied and ignores sessions with such flag.
+ *		o Added run-time check for version of command protocol
+ *		  supported by the RTP proxy.
  */
 
 #include "nhelpr_funcs.h"
@@ -52,10 +59,13 @@
 #include "../../error.h"
 #include "../../forward.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_from.h"
+#include "../../parser/parse_to.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
 #include "../../resolve.h"
 #include "../../timer.h"
+#include "../../trim.h"
 #include "../../ut.h"
 #include "../registrar/sip_msg.h"
 #include "../../msg_translator.h"
@@ -63,6 +73,7 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/un.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +96,12 @@ MODULE_VERSION
 #define NAT_UAC_TEST_1918	0x01
 #define NAT_UAC_TEST_RCVD	0x02
 
+/* Handy macro */
+#define	STR2IOVEC(sx, ix)	{(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;}
+
+/* Supported version of the RTP proxy command protocol */
+#define	SUP_CPROTOVER	20040107
+
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
@@ -92,7 +109,7 @@ static int extract_mediaip(str *, str *);
 static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, str *, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
-static char *send_rtpp_command(str *, char, int);
+static char *send_rtpp_command(const struct iovec *, int, int);
 static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
 
@@ -113,6 +130,7 @@ static int natping_interval = 0;
 static int ping_nated_only = 0;
 static const char sbuf[4] = {0, 0, 0, 0};
 static const char *rtpproxy_sock = "/var/run/rtpproxy.sock";
+static int rtpproxy_disable = 0;
 
 static regex_t* key_m1918;
 
@@ -126,9 +144,10 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"natping_interval", INT_PARAM, &natping_interval},
-	{"ping_nated_only",  INT_PARAM, &ping_nated_only },
-	{"rtpproxy_sock",    STR_PARAM, &rtpproxy_sock},
+	{"natping_interval", INT_PARAM, &natping_interval },
+	{"ping_nated_only",  INT_PARAM, &ping_nated_only  },
+	{"rtpproxy_sock",    STR_PARAM, &rtpproxy_sock    },
+	{"rtpproxy_disable", INT_PARAM, &rtpproxy_disable },
 	{0, 0, 0}
 };
 
@@ -146,7 +165,10 @@ struct module_exports exports={
 static int
 mod_init(void)
 {
+	int rtpp_ver;
+	char *cp;
 	bind_usrloc_t bind_usrloc;
+	struct iovec v[1] = {{"V", 1}};
 
 	if (natping_interval > 0) {
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
@@ -172,6 +194,26 @@ mod_init(void)
 		pkg_free(key_m1918);
 		LOG(L_ERR, "ERROR: nathelper: failure to compule 1918 RE\n");
 		return -1;
+	}
+
+	if (rtpproxy_disable == 0) {
+		cp = send_rtpp_command(v, 1, 1);
+		if (cp == NULL) {
+			LOG(L_WARN,"WARNING: nathelper: can't get version of "
+			    "the RTP proxy\n");
+			rtpproxy_disable = 1;
+		} else {
+			rtpp_ver = atoi(cp);
+			if (rtpp_ver != SUP_CPROTOVER) {
+				LOG(L_WARN, "WARNING: nathelper: unsupported "
+				    "version of RTP proxy found: %d supported, "
+				    "%d present\n", SUP_CPROTOVER, rtpp_ver);
+				rtpproxy_disable = 1;
+			}
+		}
+		if (rtpproxy_disable != 0)
+			LOG(L_WARN, "WARNING: nathelper: support for RTP proxy"
+			    "has been disabled\n");
 	}
 
 	return 0;
@@ -210,8 +252,75 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 }
 
 /*
+ * Some helper functions taken verbatim from tm module.
+ */
+
+/*
+ * Extract tag from To header field of a response
+ */
+static inline int
+get_to_tag(struct sip_msg* _m, str* _tag)
+{
+
+	if (!_m->to) {
+		LOG(L_ERR, "get_to_tag(): To header field missing\n");
+		return -1;
+	}
+
+	if (get_to(_m)->tag_value.len) {
+		_tag->s = get_to(_m)->tag_value.s;
+		_tag->len = get_to(_m)->tag_value.len;
+	} else {
+		_tag->len = 0;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Extract tag from From header field of a request
+ */
+static inline int
+get_from_tag(struct sip_msg* _m, str* _tag)
+{
+
+	if (parse_from_header(_m) == -1) {
+		LOG(L_ERR, "get_from_tag(): Error while parsing From header\n");
+		return -1;
+	}
+
+	if (get_from(_m)->tag_value.len) {
+		_tag->s = get_from(_m)->tag_value.s;
+		_tag->len = get_from(_m)->tag_value.len;
+	} else {
+		_tag->len = 0;
+	}
+
+	return 0;
+}
+
+/*
+ * Extract Call-ID value
+ */
+static inline int
+get_callid(struct sip_msg* _m, str* _cid)
+{
+
+	if (_m->callid == 0) {
+		LOG(L_ERR, "get_callid(): Call-ID not found\n");
+		return -1;
+	}
+
+	_cid->s = _m->callid->body.s;
+	_cid->len = _m->callid->body.len;
+	trim(_cid);
+	return 0;
+}
+
+/*
  * Replaces ip:port pair in the Contact: field with the source address
- * of the packet.
+ * of the packet and/or adds direction=active option to the SDP.
  */
 static int
 fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
@@ -238,7 +347,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	}
 	if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
-		return 0;
+		return -1;
 	if (uri.port.len == 0)
 		uri.port.s = uri.host.s + uri.host.len;
 
@@ -358,6 +467,9 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	AOLDMEDIPRT	"a=oldmediaport:"
 #define	AOLDMEDIPRT_LEN	(sizeof(AOLDMEDIPRT) - 1)
 
+#define	ANORTPPROXY	"a=nortpproxy:yes\r\n"
+#define	ANORTPPROXY_LEN	(sizeof(ANORTPPROXY) - 1)
+
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
@@ -368,7 +480,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 
 	level = (int)(long)str1;
 
-	if (extract_body(msg, &body) == -1 ) {
+	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
 		return -1;
 	}
@@ -434,6 +546,7 @@ extract_mediaip(str *body, str *mediaip)
 		cp = cp1 + 2;
 	}
 	if (cp1 == NULL) {
+		LOG(L_DBG, "ERROR: extract_mediaip: no `c=' in SDP\n");
 		return -1;
 	}
 	mediaip->s = cp1 + 2;
@@ -494,7 +607,8 @@ extract_mediaport(str *body, str *mediaport)
 }
 
 static int
-alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preserve)
+alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip,
+  int preserve)
 {
 	char *buf;
 	int offset;
@@ -551,7 +665,8 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, str *newip, int preser
 }
 
 static int
-alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int preserve)
+alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
+  int preserve)
 {
 	char *buf;
 	int offset;
@@ -606,13 +721,11 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport, int 
 }
 
 static char *
-send_rtpp_command(str *callid, char command, int getreply)
+send_rtpp_command(const struct iovec *v, int vcnt, int getreply)
 {
 	struct sockaddr_un addr;
 	int fd, len;
-	struct iovec v[3];
 	static char buf[16];
-	char cmd[2] = {' ', ' '};
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_LOCAL;
@@ -633,15 +746,8 @@ send_rtpp_command(str *callid, char command, int getreply)
 		return NULL;
 	}
 
-	cmd[0] = command;
-	v[0].iov_base = cmd;
-	v[0].iov_len = 2;
-	v[1].iov_base = callid->s;
-	v[1].iov_len = callid->len;
-	v[2].iov_base = "\n";
-	v[2].iov_len = 1;
 	do {
-		len = writev(fd, v, 3);
+		len = writev(fd, v, vcnt);
 	} while (len == -1 && errno == EINTR);
 	if (len <= 0) {
 		close(fd);
@@ -653,13 +759,14 @@ send_rtpp_command(str *callid, char command, int getreply)
 		do {
 			len = read(fd, buf, sizeof(buf) - 1);
 		} while (len == -1 && errno == EINTR);
-		close(fd);
 		if (len <= 0) {
+			close(fd);
 			LOG(L_ERR, "ERROR: send_rtpp_command: can't read reply from a RTP proxy\n");
 			return NULL;
 		}
 		buf[len] = '\0';
 	}
+	close(fd);
 
 	return buf;
 }
@@ -667,12 +774,31 @@ send_rtpp_command(str *callid, char command, int getreply)
 static int
 unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
+	str callid, from_tag, to_tag;
+	struct iovec v[4 + 3] = {{"D", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+				 /* 0 */   /* 1 */   /* 2 */    /* 3 */   /* 4 */    /* 5 */   /* 6 */
 
-	if (msg->callid == NULL || msg->callid->body.len <= 0) {
-		LOG(L_ERR, "ERROR: unforce_rtp_proxy: no Call-ID field\n");
+	if (rtpproxy_disable != 0) {
+		LOG(L_ERR, "ERROR: unforce_rtp_proxy: support for RTP proxy "
+		    "is disabled\n");
 		return -1;
 	}
-	send_rtpp_command(&(msg->callid->body), 'D', 0);
+	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
+		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get Call-Id field\n");
+		return -1;
+	}
+	if (get_to_tag(msg, &to_tag) == -1) {
+		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get To tag\n");
+		return -1;
+	}
+	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
+		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get From tag\n");
+		return -1;
+	}
+	STR2IOVEC(callid, v[2]);
+	STR2IOVEC(from_tag, v[4]);
+	STR2IOVEC(to_tag, v[6]);
+	send_rtpp_command(v, (to_tag.len > 0) ? 7 : 5, 0);
 
 	return 1;
 }
@@ -681,10 +807,19 @@ static int
 force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	str body, body1, oldport, oldip, oldip1, newport, newip;
-	int create, port;
+	str callid, from_tag, to_tag;
+	int create, port, len;
 	char buf[16];
-	char *cp;
+	char *cp, *cp1;
+	struct lump* anchor;
+	struct iovec v[6 + 5] = {{"U", 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 7}, {" ", 1}, {NULL, 1}, {" ", 1}, {NULL, 0}, {" ", 1}, {NULL, 0}};
+				 /* 0 */   /* 1 */   /* 2 */    /* 3 */   /* 4 */    /* 5 */   /* 6 */    /* 7 */   /* 8 */    /* 9 */   /* 10 */
 
+	if (rtpproxy_disable != 0) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: support for RTP proxy "
+		    "is disabled\n");
+		return -1;
+	}
 	if (msg->first_line.type == SIP_REQUEST &&
 	    msg->first_line.u.request.method_value == METHOD_INVITE) {
 		create = 1;
@@ -693,18 +828,39 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	} else {
 		return -1;
 	}
-	if (msg->callid == NULL || msg->callid->body.len <= 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: no Call-ID field\n");
+	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: can't get Call-Id field\n");
 		return -1;
 	}
-	if (extract_body(msg, &body) == -1 ) {
+	if (get_to_tag(msg, &to_tag) == -1) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: can't get To tag\n");
+		return -1;
+	}
+	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: can't get From tag\n");
+		return -1;
+	}
+	if (extract_body(msg, &body) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract body "
-			"from the message\n");
+		    "from the message\n");
+		return -1;
+	}
+	for (cp = body.s; (len = body.s + body.len - cp) >= ANORTPPROXY_LEN;) {
+		cp1 = ser_memmem(cp, ANORTPPROXY, len, ANORTPPROXY_LEN);
+		if (cp1 == NULL)
+			break;
+		if (cp1[-1] == '\n' || cp1[-1] == '\r')
+			return -1;
+		cp = cp1 + ANORTPPROXY_LEN;
+	}
+	anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: anchor_lump failed\n");
 		return -1;
 	}
 	if (extract_mediaip(&body, &oldip) == -1) {
 		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media IP "
-			"from the message\n");
+		    "from the message\n");
 		return -1;
 	}
 	body1.s = oldip.s + oldip.len;
@@ -713,10 +869,20 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		oldip1.len = 0;
 	}
 	if (extract_mediaport(&body, &oldport) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media port from the message\n");
+		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media port "
+		    "from the message\n");
 		return -1;
 	}
-	cp = send_rtpp_command(&(msg->callid->body), create ? 'U' : 'L', 1);
+	newip.s = ip_addr2a(&msg->rcv.src_ip);
+	newip.len = strlen(newip.s);
+	if (create == 0)
+		v[0].iov_base = "L";
+	STR2IOVEC(callid, v[2]);
+	STR2IOVEC(newip, v[4]);
+	STR2IOVEC(oldport, v[6]);
+	STR2IOVEC(from_tag, v[8]);
+	STR2IOVEC(to_tag, v[10]);
+	cp = send_rtpp_command(v, (to_tag.len > 0) ? 11 : 9, 1);
 	if (cp == NULL)
 		return -1;
 	port = atoi(cp);
@@ -735,6 +901,18 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 	if (alter_mediaport(msg, &body, &oldport, &newport, 0) == -1)
 		return -1;
+
+	cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+	if (cp == NULL) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: out of memory\n");
+		return -1;
+	}
+	memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
+	if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN, 0) == NULL) {
+		LOG(L_ERR, "ERROR: force_rtp_proxy: insert_new_lump_after failed\n");
+		pkg_free(cp);
+		return -1;
+	}
 
 	return 1;
 }
