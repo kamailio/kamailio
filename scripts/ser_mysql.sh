@@ -282,6 +282,7 @@ CREATE TABLE pending (
   REALM varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
+  allow_find char(1) NOT NULL default '0',
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID),
   UNIQUE KEY phplib_id (phplib_id)
@@ -347,10 +348,14 @@ CREATE TABLE subscriber (
   REALM varchar(128) NOT NULL default '',
   ha1b varchar(128) NOT NULL default '',
   perms varchar(32) default NULL,
+  allow_find char(1) NOT NULL default '0',
   UNIQUE KEY phplib_id (phplib_id),
   UNIQUE KEY USER_ID (USER_ID),
   KEY USER_ID_2 (USER_ID)
 ) $TABLE_TYPE;
+
+# hook-table for all posssible future config values
+# (currently unused)
 
 CREATE TABLE config (
    attribute varchar(32) NOT NULL,
