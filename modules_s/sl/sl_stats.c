@@ -63,31 +63,31 @@ static int print_sl_stats(FILE *reply_file)
 		for (p=0; p<children_no; p++) 
 			add_sl_stats(&total, &sl_stats[b*children_no+p]);
 
-	fprintf(reply_file, "200: %d 202: %d 2xx: %d" CLEANUP_EOL,
+	fprintf(reply_file, "200: %ld 202: %ld 2xx: %ld" CLEANUP_EOL,
 		total.err[RT_200], total.err[RT_202], total.err[RT_2xx]);
 
-	fprintf(reply_file, "300: %d 301: %d 302: %d"
-		" 3xx: %d" CLEANUP_EOL,
+	fprintf(reply_file, "300: %ld 301: %ld 302: %ld"
+		" 3xx: %ld" CLEANUP_EOL,
 		total.err[RT_300], total.err[RT_301], total.err[RT_302], 
 		total.err[RT_3xx] );
 
-	fprintf(reply_file, "400: %d 401: %d 403: %d"
-		" 404: %d 407: %d 408: %d"
-		" 483: %d 4xx: %d" CLEANUP_EOL,
+	fprintf(reply_file, "400: %ld 401: %ld 403: %ld"
+		" 404: %ld 407: %ld 408: %ld"
+		" 483: %ld 4xx: %ld" CLEANUP_EOL,
 		total.err[RT_400], total.err[RT_401], total.err[RT_403], 
 		total.err[RT_404], total.err[RT_407], total.err[RT_408],
 		total.err[RT_483], total.err[RT_4xx]);
 
-	fprintf(reply_file, "500: %d 5xx: %d" CLEANUP_EOL,
+	fprintf(reply_file, "500: %ld 5xx: %ld" CLEANUP_EOL,
 		total.err[RT_500], total.err[RT_5xx] );
 
-	fprintf(reply_file, "6xx: %d" CLEANUP_EOL,
+	fprintf(reply_file, "6xx: %ld" CLEANUP_EOL,
 		total.err[RT_6xx] );
 
-	fprintf(reply_file, "xxx: %d" CLEANUP_EOL,
+	fprintf(reply_file, "xxx: %ld" CLEANUP_EOL,
 		total.err[RT_xxx] );
 
-	fprintf(reply_file, "failures: %d" CLEANUP_EOL,
+	fprintf(reply_file, "failures: %ld" CLEANUP_EOL,
 		total.failures );
 
 	return 1;

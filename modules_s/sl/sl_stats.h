@@ -43,8 +43,8 @@ enum reply_type { RT_200, RT_202, RT_2xx,
 
 
 struct sl_stats {
-	unsigned int err[RT_END];
-	unsigned int failures;
+	unsigned long err[RT_END];
+	unsigned long failures;
 };
 
 int init_sl_stats(void);
