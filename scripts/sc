@@ -65,10 +65,6 @@ LAST_LINE='tail -1'
 VERIFY_ACL=1
 ACL_GROUPS="local ld int voicemail free-pstn prepaid"
 
-# expiration time for alias table
-FOREVER='2020-05-28 21:32:15'
-FOREVER_REL=1003741823
-
 VERSION='$Revision$'
 #### SQL names
 
@@ -444,7 +440,7 @@ usrloc() {
 
 			check_alias "$SERUSER@$SERDOMAIN"
 
-			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "$FOREVER_REL" "1.00" "0"
+			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "1"
 			exit $?
 			;;
 		rm)
