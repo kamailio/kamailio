@@ -45,12 +45,10 @@ if [ ! -e $LOCKF ] ; then
 		echo "  $SIPSAKCMD" >> $TMP2
 		echo "produced this output:" >> $TMP2
 		$SIPSAKCMD >> $TMP2 2>&1
-		echo "$SIPSAKCMD = $?"
 		if [ $? -eq 3 ] ; then
 			echo "  $SIPSAKNCMD" >> $TMP3
 			echo "produced this output:" >> $TMP3
 			$SIPSAKNCMD >> $TMP3 2>&1
-			echo "$SIPSAKNCMD = $?"
 			if [ $? -le 1 ] ; then
 				echo "ser did not responses (fast enough) on the sipsak requests with fqdn in Via" >> $TMP
 				echo "but the test with IPs in Via succeeded." >> $TMP
