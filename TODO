@@ -5,6 +5,7 @@ $Id$
 - better Via parsing (handle ' ' in uri, eg: foo.bar : 1234 ; received=) and
  ipv6 addresses ([fec0:aa::01]).
 - fix format string vulnerability in log()
+- fix alignement access problems (warning on Sun)
 
 High priority:
 x if () {} else {}
