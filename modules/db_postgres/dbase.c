@@ -240,8 +240,10 @@ db_con_t *db_init(const char* _sqlurl)
 	/*
 	** this is the root memory for this database connection.
 	*/
-	res = aug_alloc(sizeof(db_con_t) + sizeof(struct con_postgres), NULL);
-	memset(res, 0, sizeof(db_con_t) + sizeof(struct con_postgres));
+	res = aug_alloc(sizeof(db_con_t), 0);
+	memset(res, 0, sizeof(db_con_t));
+	(struct con_postgres*)res->tail = aug_alloc(sizeof(struct con_postgres), (char*)res);
+	memset((struct con_postgres*)res->tail, 0, sizeof(struct con_postgres));
 
 	if (connect_db(res, _sqlurl) < 0)
 	{
