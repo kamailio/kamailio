@@ -38,21 +38,22 @@ int tm_shutdown();
  *      -1 - retransmission
  *      -2 - error
  */
-int  t_add_transaction( struct sip_msg* p_msg );
+int  t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar  );
 
 
 /* function returns:
  *       0 - transaction wasn't found
  *       1 - transaction found
  */
-int  t_lookup_request( struct sip_msg* p_msg );
+int  t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  );
 
 
 /* function returns:
  *       0 - forward successfull
  *      -1 - error during forward
  */
-int t_forward( struct sip_msg* p_msg , unsigned int dst_ip , unsigned int dst_port);
+int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
+				unsigned int dst_port);
 
 
 
@@ -75,7 +76,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  );
 
 /* Retransmits the last sent inbound reply.
   */
-int t_retransmit_reply( struct sip_msg *  );
+int t_retransmit_reply( struct sip_msg *, char* , char* );
 
 
 

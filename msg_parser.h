@@ -222,7 +222,12 @@ void clean_hdr_field(struct hdr_field* hf);
 void free_hdr_field_lst(struct hdr_field* hf);
 void free_sip_msg(struct sip_msg* msg);
 
-int check_transaction_quadruple( struct sip_msg* msg );
+/* make sure all HFs needed for transaction identification have been
+   parsed; return 0 if those HFs can't be found
+ */
+#define check_transaction_quadruple(msg ) \
+	(parse_headers(msg, HDR_FROM|HDR_TO|HDR_CALLID|HDR_CSEQ)!=-1 && \
+	 msg->from && msg->to && msg->callid && msg->cseq)
 
 
 #endif

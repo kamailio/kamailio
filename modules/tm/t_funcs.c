@@ -23,7 +23,7 @@ int tm_startup()
 
    /*first msg id*/
    global_msg_id = 0;
-   T = 0;
+   T = (struct cell*)-1;
 
    return 0;
 }
@@ -47,7 +47,7 @@ int tm_shutdown()
  *      -1 - retransmission
  *      -2 - error
  */
-int t_add_transaction( struct sip_msg* p_msg )
+int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
 {
    struct cell*    new_cell;
 
@@ -61,7 +61,7 @@ int t_add_transaction( struct sip_msg* p_msg )
     /* if the transaction is not found yet we are tring to look for it*/
    if ( (int)T==-1 )
       /* if the lookup's result is not 0 means that it's a retransmission */
-      if ( t_lookup_request( p_msg ) )	{
+      if ( t_lookup_request( p_msg, foo, bar ) )	{
 	 DBG("DEBUG: t_add_transaction: won't add a retransmission\n");
          return -1;
       }
@@ -84,7 +84,7 @@ int t_add_transaction( struct sip_msg* p_msg )
  *       0 - transaction wasn't found
  *       1 - transaction found
  */
-int t_lookup_request( struct sip_msg* p_msg )
+int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
 {
    struct cell      *p_cell;
    struct cell      *tmp_cell;
@@ -110,10 +110,19 @@ int t_lookup_request( struct sip_msg* p_msg )
       return 0;
    }
 
+   DBG("t_lookup_request: start searching\n");
+   /* parse all*/
+   if (check_transaction_quadruple(p_msg)==0) {
+	   LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
+	   T=0;
+	   return -1;
+   }
    /* start searching into the table */
-   hash_index = hash( p_msg->callid , get_cseq(p_msg)->number ) ;
+   hash_index = hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
+   DBG("hash_index=%d\n", hash_index);
    if ( p_msg->first_line.u.request.method_value==METHOD_ACK  )
       isACK = 1;
+   DBG("t_lookup_request: 1.continue searching\n");
 
    /* all the transactions from the entry are compared */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -195,11 +204,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T = (struct cell*)-1;
       global_msg_id = p_msg->id;
    }
-
+	DBG("t_forward: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
-   if ( (int)T !=-1 )
-      t_lookup_request( p_msg );
+   if ( (int)T ==-1 )
+      t_lookup_request( p_msg, 0 , 0 );
 
+	DBG("t_forward: 2. T=%x\n", T);
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
       return -1;
@@ -253,8 +263,8 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch]->dest_ip         = dest_ip;
       T->outbound_request[branch]->dest_port      = dest_port;
       T->outbound_request[branch]->to.sin_family = AF_INET;
-      T->outbound_request[branch]->to.sin_port     = htonl( dest_port ) ;
-      T->outbound_request[branch]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
+      T->outbound_request[branch]->to.sin_port     =  dest_port;
+      T->outbound_request[branch]->to.sin_addr.s_addr =  dest_ip;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
       buf = build_req_buf_from_sip_req  ( p_msg, &len);
@@ -408,7 +418,7 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
   * Returns  -1 -error
   *                0 - OK
   */
-int t_retransmit_reply( struct sip_msg* p_msg )
+int t_retransmit_reply( struct sip_msg* p_msg, char* foo, char* bar  )
 {
    t_check( hash_table, p_msg );
 
@@ -486,7 +496,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
          insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
       }
 
-      t_retransmit_reply( p_msg );
+      t_retransmit_reply( p_msg, 0 , 0);
    }
 }
 
@@ -723,7 +733,7 @@ int t_check( struct s_table *hash_table , struct sip_msg* p_msg )
       global_msg_id = p_msg->id;
       /* transaction lookup */
      if ( p_msg->first_line.type=SIP_REQUEST )
-         t_lookup_request( p_msg );
+         t_lookup_request( p_msg, 0, 0 );
       else
          t_reply_matching( hash_table , p_msg , &T , &branch );
 
@@ -837,7 +847,7 @@ int push_reply_from_uac_to_uas( struct sip_msg *p_msg , unsigned int branch )
             insert_into_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
          }
 
-   t_retransmit_reply( p_msg );
+   t_retransmit_reply( p_msg, 0 , 0 );
 }
 
 

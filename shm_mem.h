@@ -30,7 +30,7 @@ void shm_mem_destroy();
 
 
 
-inline static void sh_lock()
+inline static void shm_lock()
 {
 	struct sembuf sop;
 	
@@ -55,7 +55,7 @@ again:
 
 
 
-inline static void sh_unlock()
+inline static void shm_unlock()
 {
 	struct sembuf sop;
 	
@@ -80,14 +80,14 @@ again:
 }
 
 
-inline static void* sh_malloc(unsigned int size)
+inline static void* shm_malloc(unsigned int size)
 {
 	void *p;
 	
-	/*if (sh_lock()==0){*/
-		sh_lock();
+	/*if (shm_lock()==0){*/
+		shm_lock();
 		p=qm_malloc(shm_block, size);
-		sh_unlock();
+		shm_unlock();
 	/*
 	}else{
 		p=0;
@@ -97,20 +97,20 @@ inline static void* sh_malloc(unsigned int size)
 
 
 
-#define sh_free(p) \
+#define shm_free(p) \
 do { \
-		sh_lock(); \
+		shm_lock(); \
 		qm_free(shm_block, p); \
-		sh_unlock(); \
+		shm_unlock(); \
 }while(0)
 
 
 
-#define sh_status() \
+#define shm_status() \
 do { \
-		sh_lock(); \
+		shm_lock(); \
 		qm_status(shm_block); \
-		sh_unlock(); \
+		shm_unlock(); \
 }while(0)
 
 

@@ -300,7 +300,7 @@ static void sig_usr(int signo)
 		pkg_status();
 #endif
 #ifdef SHM_MEM
-		sh_status();
+		shm_status();
 #endif
 		DPrint("INT received, program terminates\n");
 		DPrint("Thank you for flying ser\n");
@@ -317,7 +317,7 @@ static void sig_usr(int signo)
 		pkg_status();
 #endif
 #ifdef SHM_MEM
-		sh_status();
+		shm_status();
 #endif
 	}
 }
