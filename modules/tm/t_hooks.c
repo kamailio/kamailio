@@ -35,13 +35,14 @@ int register_tmcb( tmcb_type cbt, transaction_cb f )
 	return callback_id;
 }
 
-void callback_event( tmcb_type cbt , struct sip_msg *msg )
+void callback_event( tmcb_type cbt , struct cell *trans,
+	struct sip_msg *msg )
 {
 	struct tm_callback_s *cbs;
 
 	DBG("DBG: callback type %d entered\n", cbt );
 	for (cbs=callback_array[ cbt ]; cbs; cbs=cbs->next)  {
 		DBG("DBG: callback id %d entered\n", cbs->id );
-		cbs->callback( T, msg );
+		cbs->callback( trans, msg );
 	}
 }

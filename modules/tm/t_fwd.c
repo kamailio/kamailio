@@ -185,7 +185,7 @@ int t_forward_nonack( struct sip_msg* p_msg ,
 		}
 		T->uac[branch].request.send_sock=send_sock;
 		
-		callback_event( TMCB_REQUEST_OUT, p_msg );	
+		callback_event( TMCB_REQUEST_OUT, T, p_msg );	
 		/* _test_insert_to_reply(p_msg, "Foo: Bar\r\n");*/
 		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len, send_sock ))) {
 			ser_error=ret=E_OUT_OF_MEM;
@@ -276,71 +276,6 @@ error:
 	t_clear_forks();
 	return ret;
 }
-
-
-#ifdef _YOU_DONT_REALLY_WANT_THIS
-
-int t_forward_ack( struct sip_msg* p_msg  )
-{
-	int branch;
-	unsigned int len;
-	char *buf, *ack;
-
-	/* drop local ACKs */
-	if (T->uas.status/100!=2 ) {
-		DBG("DEBUG: t_forward_ACK:  local ACK dropped\n");
-		return 1;
-	}
-
-	branch=T->relaied_reply_branch;
-	/* double-check for odd relaying */
-	if ( branch <0 || branch>=T->nr_of_outgoings ) {
-		DBG("DEBUG: t_forward_ack: strange relaied_reply_branch:"
-			" %d out of %d\n",branch, T->nr_of_outgoings );
-		return -1;
-	}
-
-	DBG("DEBUG: t_forward_ack: forwarding ACK [%d]\n",branch);
-	/* not able to build branch -- then better give up */
-	if ( add_branch_label( T, p_msg , branch )==-1) {
-		LOG( L_ERR, "ERROR: t_forward_ack failed to add branch label\n" );
-		return 0;
-	}
-	/* not able to build outbound request -- then better give up */
-	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))  {
-		LOG(L_ERR,"ERROR: t_forward_ack failed to generate outbound ACK\n");
-		return 0;
-	};
-
-#ifdef _DONT_USE
-	/* strange conditions -- no INVITE before me ?!?! */
-	if ( (rb=T->outbound_request[branch])==NULL ) {
-		/* better stateless than nothing */
-		goto fwd_sl;
-	}
-#endif
-
-	/* we relay an ACK for second time, hmmm -- noticable; anyway,
-	   keep relaying; it may be for example spiraled ACK mistakenly
-	   matching the first transaction in second cycle (there is
-	   no way to distinguish) */
-	if  (T->uas.isACKed ) {
-		LOG(L_WARN,"Warning: ACK received when there's one; check upstream\n");
-		/* return 1; */
-	}
-	ack = shm_malloc( len );
-	memcpy(ack , buf , len);
-	pkg_free( buf );
-
-	T->uas.isACKed = 1;
-	SEND_PR_BUFFER( &(T->uac[branch].request), ack, len );
-	callback_event( TMCB_E2EACK, p_msg );
-	return attach_ack( T, branch, ack , len );
-}
-
-#endif
-
-
 
 
 int forward_serial_branch(struct cell* Trans,int branch)

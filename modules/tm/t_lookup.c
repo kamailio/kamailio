@@ -60,6 +60,9 @@
 	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
 	)==0 )
 
+/* presumably matching transaction for an e2e ACK */
+static struct cell *t_ack;
+
 
 /* function returns:
  *      negative - transaction wasn't found
@@ -166,6 +169,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 					"considered mismatch\n", p_cell );
 				/* perhaps there are some spirals on the synonym list, but
 				   it makes no sense to iterate the list until bitter end */
+				t_ack=p_cell;
 				ret=-2;
 				break;
 			}
@@ -700,84 +704,6 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 }
 
 
-#ifdef _YOU_DONT_REALLY_WANT_THIS
-
-/* atomic "add_if_new" construct; it returns:
-	AIN_ERROR	if a fatal error (e.g, parsing) occured
-	AIN_RETR	it's a retransmission
-	AIN_NEW		it's a new request
-	AIN_NEWACK	it's an ACK for which no transaction exists
-	AIN_OLDACK	it's an ACK for an existing transaction
-*/
-enum addifnew_status t_addifnew( struct sip_msg* p_msg )
-{
-
-	int ret, lret;
-	struct cell *new_cell;
-
-	/* is T still up-to-date ? */
-	DBG("DEBUG: t_addifnew: msg id=%d , global msg id=%d ,"
-		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
-	if ( p_msg->id != global_msg_id || T==T_UNDEFINED 
-		/* if someone tried to do something previously by mistake with
-		   a transaction which did not exist yet, try to look-up
-		   the transacion too */
-		|| T==T_NULL)
-	{
-		global_msg_id = p_msg->id;
-		T = T_UNDEFINED;
-		/* transaction lookup */
-		/* force parsing all the needed headers*/
-		if (parse_headers(p_msg, HDR_EOH )==-1)
-			return AIN_ERROR;
-		lret = t_lookup_request( p_msg, 1 /* leave locked */ );
-		if (lret==0) return AIN_ERROR;
-		if (lret==-1) {
-			/* transaction not found, it's a new request */
-			if ( p_msg->REQ_METHOD==METHOD_ACK ) {
-				ret=AIN_NEWACK;
-			} else {
-				/* add new transaction */
-				new_cell = build_cell( p_msg ) ;
-				if  ( !new_cell ){
-					LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
-					ret = AIN_ERROR;
-				} else {
-					insert_into_hash_table_unsafe( hash_table , new_cell );
-					ret = AIN_NEW;
-					T=new_cell;
-					T_REF(T);
-				}
-			}
-			unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
-			return ret;
-		} else {
-			/* tramsaction found, it's a retransmission  or ACK */
-			if (p_msg->REQ_METHOD!=METHOD_ACK)
-				return AIN_RETR;
-			else {
-				if (T->uas.isACKed)
-					return AIN_RTRACK;
-				else
-					return AIN_OLDACK;
-				}
-			//return p_msg->REQ_METHOD==METHOD_ACK ? AIN_OLDACK : AIN_RETR;
-		}
-	} else {
-		if (T)
-			LOG(L_ERR, "ERROR: t_addifnew: already "
-			"processing this message, T found!\n");
-		else
-			LOG(L_ERR, "ERROR: t_check_new_request: already "
-			"processing this message, T not found!\n");
-		return AIN_ERROR;
-	}
-}
-
-
-#endif
-
-
 /* atomic "new_tran" construct; it returns:
 
 	-1	if	a request matched a transaction
@@ -841,9 +767,17 @@ int t_newtran( struct sip_msg* p_msg )
 				T_REF(T);
 			}
 		}
-		unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
-		/* it that was a presumable e2e ACK, run a callback */
-		if (lret==-2) callback_event( TMCB_E2EACK, p_msg );
+
+		/* was it an e2e ACK ? if so, trigger a callback */
+		if (lret==-2) {
+				T_REF(t_ack);
+				unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
+				callback_event( TMCB_E2EACK, t_ack, p_msg );
+				T_UNREF(t_ack);
+		} else { /* not e2e ACK */
+			unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
+		}
+
 		return ret;
 	} else {
 		/* transaction found, it's a retransmission  or ACK */

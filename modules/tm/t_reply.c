@@ -337,7 +337,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 				"no mem for outbound reply buffer\n");
 			goto error1;
 		}
-		callback_event( TMCB_REPLY_IN, p_msg );
+		callback_event( TMCB_REPLY_IN, T, p_msg );
 
 		if (relay!=branch)
 		{
@@ -403,7 +403,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	if (relay >= 0) {
 		SEND_PR_BUFFER( rb, buf, res_len );
 		t_update_timers_after_sending_reply( rb );
-		callback_event( TMCB_REPLY, p_msg );
+		callback_event( TMCB_REPLY, T, p_msg );
 	}
 
 	/* *** ACK handling *** */
