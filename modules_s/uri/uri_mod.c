@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2003-03-11: New module interface (janakj)
  */
 
 
@@ -79,61 +83,40 @@ db_con_t* db_handle = 0;   /* Database connection handle */
 
 
 /*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"is_user",        is_user,        1, str_fixup},
+	{"check_to",       check_to,       0, 0        },
+	{"check_from",     check_from,     0, 0        },
+	{"does_uri_exist", does_uri_exist, 0, 0        },
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{"db_url",                   STR_PARAM, &db_url                  },
+	{"uri_table",                STR_PARAM, &uri_table               },
+	{"uri_domain_column",        STR_PARAM, &uri_domain_column       },
+	{"uri_uriuser_column",       STR_PARAM, &uri_uriuser_column      },
+	{"subscriber_table",         STR_PARAM, &subscriber_table        },
+	{"subscriber_user_column",   STR_PARAM, &subscriber_user_column  },
+	{"subscriber_domain_column", STR_PARAM, &subscriber_domain_column},
+	{"use_uri_table",            INT_PARAM, &use_uri_table           },
+	{0, 0, 0}
+};
+
+
+/*
  * Module interface
  */
 struct module_exports exports = {
 	"uri", 
-	(char*[]) { 
-		"is_user",
-		"check_to",
-		"check_from",
-		"does_uri_exist"
-	},
-	(cmd_function[]) {
-		is_user,
-		check_to,
-		check_from,
-		does_uri_exist
-	},
-	(int[]) {1, 0, 0, 0, 0},
-	(fixup_function[]) { 
-		str_fixup, 0, 0, 0
-	},
-	4,
-	
-	(char*[]) {
-		"db_url",                   /* Database URL */
-		"uri_table",                /* Name of URI table */
-		"uri_domain_column",        /* Name of domain column in URI table */
-		"uri_uriuser_column",       /* Name of uri_user column in URI table */
-		"subscriber_table",         /* Name of subscriber table */
-		"subscriber_user_column",   /* Name of user column in subscriber table */
-		"subscriber_domain_column", /* Name of domain column in subscriber table */
-		"use_uri_table"
-		
-	},   /* Module parameter names */
-	(modparam_t[]) {
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM
-	},   /* Module parameter types */
-	(void*[]) {
-		&db_url,
-		&uri_table,
-		&uri_domain_column,
-		&uri_uriuser_column,
-		&subscriber_table,
-		&subscriber_user_column,
-		&subscriber_domain_column,
-		&use_uri_table
-		
-	},         /* Module parameter variable pointers */
-	8,         /* Number of module paramers */
+	cmds,      /* Exported functions */
+	params,    /* Exported parameters */
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
