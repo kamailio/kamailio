@@ -75,7 +75,7 @@ int process_ins_list(str* _d)
 {
 	struct ins_itm* p;
 	char b[256];
-	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, replicate_col, state_col};
+	db_key_t keys[8];
 	db_val_t vals[8];
 
 	keys[0] = user_col;

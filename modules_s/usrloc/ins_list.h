@@ -49,7 +49,7 @@ struct ins_itm {
 	str* user;
 	str* cont;
 	int cid_len;
-	char callid[0];
+	char callid[1];
 };
 
 

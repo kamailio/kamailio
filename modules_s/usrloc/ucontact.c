@@ -423,9 +423,18 @@ int db_insert_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	char* dom;
-	db_key_t keys[9] = {user_col, contact_col, expires_col, q_col, callid_col,
-			   cseq_col, replicate_col, state_col, domain_col};
+	db_key_t keys[9];
 	db_val_t vals[9];
+
+	keys[0] = user_col;
+	keys[1] = contact_col;
+	keys[2] = expires_col;
+	keys[3] = q_col;
+	keys[4] = callid_col;
+	keys[5] = cseq_col;
+	keys[6] = replicate_col;
+	keys[7] = state_col;
+	keys[8] = domain_col;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -496,12 +505,23 @@ int db_update_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	char* dom;
-	db_key_t keys1[3] = {user_col, contact_col, domain_col};
+	db_key_t keys1[3];
 	db_val_t vals1[3];
 
-	db_key_t keys2[6] = {expires_col, q_col, callid_col, cseq_col, replicate_col, state_col};
+	db_key_t keys2[6];
 	db_val_t vals2[6];
 
+
+	keys1[0] = user_col;
+	keys1[1] = contact_col;
+	keys1[2] = domain_col;
+	keys2[0] = expires_col;
+	keys2[1] = q_col;
+	keys2[2] = callid_col;
+	keys2[3] = cseq_col;
+	keys2[4] = replicate_col;
+	keys2[5] = state_col;
+	
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
 	vals1[0].val.str_val = *_c->aor;
@@ -568,8 +588,12 @@ int db_delete_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	char* dom;
-	db_key_t keys[3] = {user_col, contact_col, domain_col};
+	db_key_t keys[3];
 	db_val_t vals[3];
+
+	keys[0] = user_col;
+	keys[1] = contact_col;
+	keys[2] = domain_col;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;

@@ -37,7 +37,6 @@
 #include <string.h>
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
-#include "../../fastlock.h"
 #include "../../ut.h"
 #include "ul_mod.h"
 #include "utime.h"
@@ -202,9 +201,8 @@ static inline int nodb_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding '\%.*s\',\'%.*s\' for "
-					"replication\n", ptr->aor->len, ptr->aor->s,
-				    ptr->c.len, ptr->c.s);
+				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for REPLication\n", 
+				    ptr->aor->len, ptr->aor->s, ptr->c.len, ptr->c.s);
 
 					/* keep it for replication, but it expired normaly
 					 * and was the last contact, so notify */
@@ -213,7 +211,7 @@ static inline int nodb_timer(urecord_t* _r)
 				ptr = ptr->next;
 			}
 			else {
-				LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
+				LOG(L_NOTICE, "Binding '%.*s\',\'%.*s\' has expired\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 
@@ -235,7 +233,7 @@ static inline int nodb_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * done during unregister */
 			if (ptr->state == CS_ZOMBIE_N && ptr->replicate == 0) {
-				LOG(L_NOTICE, "Zombie '\%.*s\',\'%.*s\' removed\n",
+				LOG(L_NOTICE, "Zombie \'%.*s\',\'%.*s\' removed\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 				t = ptr;
@@ -266,7 +264,7 @@ static inline int wt_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding '\%.*s\',\'%.*s\' for "
+				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for "
 					"replication\n", ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 					
@@ -277,7 +275,7 @@ static inline int wt_timer(urecord_t* _r)
 				ptr = ptr->next;
 			}
 			else {
-				LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
+				LOG(L_NOTICE, "Binding \'%.*s\',\'%.*s\' has expired\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 
@@ -301,7 +299,7 @@ static inline int wt_timer(urecord_t* _r)
 				 * for replication so remove it, but the notify was
 				 * allready done during unregister */
 			if (ptr->state == CS_ZOMBIE_S && ptr->replicate == 0) {
-				LOG(L_NOTICE, "Zombie '\%.*s\',\'%.*s\' removed\n",
+				LOG(L_NOTICE, "Zombie \'%.*s\',\'%.*s\' removed\n",
 				    ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 				t = ptr;
@@ -336,7 +334,7 @@ static inline int wb_timer(urecord_t* _r)
 	while(ptr) {
 		if (ptr->expires < act_time) {
 			if (ptr->replicate != 0) {
-				LOG(L_NOTICE, "Keeping binding '\%.*s\',\'%.*s\' for "
+				LOG(L_NOTICE, "Keeping binding \'%.*s\',\'%.*s\' for "
 					"replication\n", ptr->aor->len, ptr->aor->s,
 				    ptr->c.len, ptr->c.s);
 
@@ -349,7 +347,7 @@ static inline int wb_timer(urecord_t* _r)
 			else {
 					/* state == ZOMBIE the contact was remove by user */
 				if (ptr->state < CS_ZOMBIE_N) { 
-					LOG(L_NOTICE, "Binding '\%.*s\',\'%.*s\' has expired\n",
+					LOG(L_NOTICE, "Binding \'%.*s\',\'%.*s\' has expired\n",
 					    ptr->aor->len, ptr->aor->s,
 					    ptr->c.len, ptr->c.s);
 					if (ptr->next == 0) not=1;
@@ -423,10 +421,12 @@ int timer_urecord(urecord_t* _r)
 int db_delete_urecord(urecord_t* _r)
 {
 	char b[256];
-	db_key_t keys[2] = {user_col, domain_col};
+	db_key_t keys[2];
 	db_val_t vals[2];
 	char* dom;
 
+	keys[0] = user_col;
+	keys[1] = domain_col;
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
 	vals[0].val.str_val.s = _r->aor.s;
