@@ -49,7 +49,7 @@
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
-		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c, str* _ua)
+		 str* _callid, int _cseq, unsigned int _flags, int _rep, ucontact_t** _c, str* _ua, str* _recv)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!(*_c)) {
@@ -94,6 +94,23 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
 	memcpy((*_c)->user_agent.s, _ua->s, _ua->len);
 	(*_c)->user_agent.len = _ua->len;
 
+	if (_recv) {
+		(*_c)->received.s = (char*)shm_malloc(_recv->len);
+		if ((*_c)->received.s == 0) {
+			LOG(L_ERR, "new_ucontact(): No memory left\n");
+			shm_free((*_c)->callid.s);
+			shm_free((*_c)->c.s);
+			shm_free((*_c)->user_agent.s);
+			shm_free(*_c);
+			return -8;
+		}
+		memcpy((*_c)->received.s, _recv->s, _recv->len);
+		(*_c)->received.len = _recv->len;
+	} else {
+		(*_c)->received.s = 0;
+		(*_c)->received.len = 0;
+	}
+
 	(*_c)->cseq = _cseq;
 	(*_c)->replicate = _rep;
 	(*_c)->next = 0;
@@ -110,6 +127,7 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
  */
 void free_ucontact(ucontact_t* _c)
 {
+	if (_c->received.s) shm_free(_c->received.s);
 	shm_free(_c->user_agent.s);
 	shm_free(_c->callid.s);
 	shm_free(_c->c.s);
@@ -148,6 +166,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "CSeq      : %d\n", _c->cseq);
 	fprintf(_f, "replic    : %u\n", _c->replicate);
 	fprintf(_f, "User-Agent: '%.*s'\n", _c->user_agent.len, ZSW(_c->user_agent.s));
+	fprintf(_f, "received  : '%.*s'\n", _c->received.len, ZSW(_c->received.s));
 	fprintf(_f, "State     : %s\n", st);
 	fprintf(_f, "Flags     : %u\n", _c->flags);
 	fprintf(_f, "next      : %p\n", _c->next);
@@ -160,7 +179,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
  * Update ucontact structure in memory
  */
 int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
-			unsigned int _set, unsigned int _res, str* _ua)
+			unsigned int _set, unsigned int _res, str* _ua, str* _recv)
 {
 	char* ptr;
 	
@@ -193,6 +212,27 @@ int mem_update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _
 		memcpy(_c->user_agent.s, _ua->s, _ua->len);
 	}
 	_c->user_agent.len = _ua->len;
+
+	if (_recv) {
+		if (_c->received.len < _recv->len) {
+			ptr = (char*)shm_malloc(_recv->len);
+			if (ptr == 0) {
+				LOG(L_ERR, "update_ucontact(): No memory left\n");
+				return -1;
+			}
+			
+			memcpy(ptr, _recv->s, _recv->len);
+			shm_free(_c->received.s);
+			_c->received.s = ptr;
+		} else {
+			memcpy(_c->received.s, _recv->s, _recv->len);
+		}
+		_c->received.len = _recv->len;
+	} else {
+		if (_c->received.s) shm_free(_c->received.s);
+		_c->received.s = 0;
+		_c->received.len = 0;
+	}
 
 	_c->expires = _e;
 	_c->q = _q;
@@ -459,8 +499,8 @@ int db_insert_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	char* dom;
-	db_key_t keys[11];
-	db_val_t vals[11];
+	db_key_t keys[12];
+	db_val_t vals[12];
 
 	keys[0] = user_col.s;
 	keys[1] = contact_col.s;
@@ -472,7 +512,8 @@ int db_insert_ucontact(ucontact_t* _c)
 	keys[7] = flags_col.s;
 	keys[8] = state_col.s;
 	keys[9] = user_agent_col.s;
-	keys[10] = domain_col.s;
+	keys[10] = received_col.s;
+	keys[11] = domain_col.s;
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -521,14 +562,24 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[9].val.str_val.s = _c->user_agent.s;
 	vals[9].val.str_val.len = _c->user_agent.len;
 
+	vals[10].type = DB_STR;
+
+	if (_c->received.s == 0) {
+		vals[10].nul = 1;
+	} else {
+		vals[10].nul = 0;
+		vals[10].val.str_val.s = _c->received.s;
+		vals[10].val.str_val.len = _c->received.len;
+	}
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals[0].val.str_val.len = dom - _c->aor->s;
 
-		vals[10].type = DB_STR;
-		vals[10].nul = 0;
-		vals[10].val.str_val.s = dom + 1;
-		vals[10].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		vals[11].type = DB_STR;
+		vals[11].nul = 0;
+		vals[11].val.str_val.s = dom + 1;
+		vals[11].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	     /* FIXME */
@@ -539,7 +590,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (11) : (10)) < 0) {
+	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (12) : (11)) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -558,8 +609,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[3];
 	db_val_t vals1[3];
 
-	db_key_t keys2[8];
-	db_val_t vals2[8];
+	db_key_t keys2[9];
+	db_val_t vals2[9];
 
 
 	keys1[0] = user_col.s;
@@ -573,6 +624,7 @@ int db_update_ucontact(ucontact_t* _c)
 	keys2[5] = state_col.s;
 	keys2[6] = flags_col.s;
 	keys2[7] = user_agent_col.s;
+	keys2[8] = received_col.s;
 	
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -618,6 +670,14 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[7].nul = 0;
 	vals2[7].val.str_val = _c->user_agent;
 
+	vals2[8].type = DB_STR;
+	if (_c->received.s == 0) {
+		vals2[8].nul = 1;
+	} else {
+		vals2[8].nul = 0;
+		vals2[8].val.str_val = _c->received;
+	}
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals1[0].val.str_val.len = dom - _c->aor->s;
@@ -636,7 +696,7 @@ int db_update_ucontact(ucontact_t* _c)
 		return -1;
 	}
 
-	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 8) < 0) {
+	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 9) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
@@ -699,17 +759,17 @@ int db_delete_ucontact(ucontact_t* _c)
  * FIXME: I'm not sure if we need this...
  */
 int update_ucontact_rep(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, int _rep,
-			unsigned int _set, unsigned int _res, str* _ua)
+			unsigned int _set, unsigned int _res, str* _ua, str* _recv)
 {
 	_c->replicate = _rep;
-	return mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua);
+	return mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua, _recv);
 }
 
 /*
  * Update ucontact with new values
  */
 int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
-		    unsigned int _set, unsigned int _res, str* _ua)
+		    unsigned int _set, unsigned int _res, str* _ua, str* _recv)
 {
 	/* run callbacks for UPDATE event */
 	if (exists_ulcb_type(UL_CONTACT_UPDATE))
@@ -717,7 +777,7 @@ int update_ucontact(ucontact_t* _c, time_t _e, qvalue_t _q, str* _cid, int _cs,
 
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
-	if (mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua) < 0) {
+	if (mem_update_ucontact(_c, _e, _q, _cid, _cs, _set, _res, _ua, _recv) < 0) {
 		LOG(L_ERR, "update_ucontact(): Error while updating\n");
 		return -1;
 	}

@@ -49,7 +49,7 @@
 #define WRITE_THROUGH 1
 #define WRITE_BACK    2
 
-#define TABLE_VERSION 5
+#define TABLE_VERSION 6
 
 extern str user_col;
 extern str domain_col;
@@ -63,6 +63,7 @@ extern str replicate_col;
 extern str flags_col;
 extern str state_col;
 extern str user_agent_col;
+extern str received_col;
 extern str db_url;
 extern int timer_interval;
 extern int db_mode;

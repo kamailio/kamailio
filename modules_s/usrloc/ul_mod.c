@@ -93,6 +93,8 @@ MODULE_VERSION
 #define USER_AGENT_COL "user_agent"
 #define USER_AGENT_COL_LEN (sizeof(USER_AGENT_COL) - 1)
 
+#define RECEIVED_COL "received"
+#define RECEIVED_COL_LEN (sizeof(RECEIVED_COL) - 1)
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -116,6 +118,7 @@ str replicate_col   = {REPLICATE_COL, REPLICATE_COL_LEN};   /* Name of column co
 str state_col       = {STATE_COL, STATE_COL_LEN};           /* Name of column containing contact state */
 str flags_col       = {FLAGS_COL, FLAGS_COL_LEN};           /* Name of column containing flags */
 str user_agent_col  = {USER_AGENT_COL, USER_AGENT_COL_LEN}; /* Name of column containing user agent string */
+str received_col    = {RECEIVED_COL, RECEIVED_COL_LEN};     /* Name of column containing transport info of REGISTER */
 str db_url          = {DEFAULT_DB_URL, DEFAULT_DB_URL_LEN}; /* Database URL */
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
@@ -172,6 +175,7 @@ static param_export_t params[] = {
 	{"use_domain",        INT_PARAM, &use_domain     },
 	{"desc_time_order",   INT_PARAM, &desc_time_order},
 	{"user_agent_column", STR_PARAM, &user_agent_col },
+	{"received_column",   STR_PARAM, &received_col   },
 	{0, 0, 0}
 };
 
@@ -207,6 +211,8 @@ static int mod_init(void)
 	replicate_col.len = strlen(replicate_col.s);
 	state_col.len = strlen(state_col.s);
 	flags_col.len = strlen(flags_col.s);
+	user_agent_col.len = strlen(user_agent_col.s);
+	received_col.len = strlen(received_col.s);
 	db_url.len = strlen(db_url.s);
 
 	     /* Register cache timer */

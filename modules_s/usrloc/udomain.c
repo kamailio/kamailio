@@ -205,13 +205,14 @@ void print_udomain(FILE* _f, udomain_t* _d)
 int preload_udomain(db_con_t* _c, udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[11];
+	db_key_t columns[12];
 	db_res_t* res;
 	db_row_t* row;
 	int i, cseq, rep, state;
 	unsigned int flags;
 
-	str user, contact, callid, ua;
+	str user, contact, callid, ua, received;
+	str* rec;
 	char* domain;
 	time_t expires;
 	qvalue_t q;
@@ -229,7 +230,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[7] = state_col.s;
 	columns[8] = flags_col.s;
 	columns[9] = user_agent_col.s;
-	columns[10] = domain_col.s;
+	columns[10] = received_col.s;
+	columns[11] = domain_col.s;
 	
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
@@ -239,7 +241,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 		return -1;
 	}
 
-	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (11) : (10), 0,
+	if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain) ? (12) : (11), 0,
 				&res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
@@ -294,11 +296,28 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			callid.len  = strlen(callid.s);
 		}
 		flags       = VAL_BITMAP(ROW_VALUES(row) + 8);
-		ua.s        = (char*)VAL_STRING(ROW_VALUES(row) + 9);
-		ua.len      = strlen(ua.s);
+
+		ua.s  = (char*)VAL_STRING(ROW_VALUES(row) + 9);
+		if (ua.s) {
+			ua.len = strlen(ua.s);
+		} else {
+			ua.len = 0;
+		}
+
+		if (!VAL_NULL(ROW_VALUES(row) + 10)) {
+			received.s  = (char*)VAL_STRING(ROW_VALUES(row) + 10);
+			if (received.s) {
+				received.len = strlen(received.s);
+			} else {
+				received.len = 0;
+			}
+			rec = &received;
+		} else {
+			rec = 0;
+		}
 
 		if (use_domain) {
-			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 10);
+			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 11);
 			snprintf(b, 256, "%.*s@%s", user.len, ZSW(user.s), domain);
 			user.s = b;
 			user.len = strlen(b);
@@ -313,7 +332,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c, &ua) < 0) {
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, flags, rep, &c, &ua, rec) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			ul_dbf.free_result(_c, res);
 			unlock_udomain(_d);
