@@ -1,4 +1,5 @@
-<!DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd">
+<!-- $Id$ -->
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
 
 <book label="serdev" id="serdev" lang="EN">
     <title>SIP Express Router</title>
@@ -93,8 +94,8 @@
 	<section id="cmd-line-params">
 	    <title>Processing Command Line Parameters</title>
 	    <para>
-		<acronym>SER</acronym> utilizes <acronym>GNU</acronym><function moreinfo="none">getopt</function>function to 
-		parse command line parameters.
+		<acronym>SER</acronym> utilizes the <function moreinfo="none">getopt
+		</function>function to parse command line parameters.
 		The function is extensively described in the man pages.
 	    </para>
 	</section> <!-- cmd-line-params -->
@@ -242,18 +243,18 @@
 		    will be issued and the server will be aborted.
 		</para>
 		<para>
-		    There is a utility called Bison. Input of the utility is a file containing the grammar of
+		    There is a utility called yacc. Input of the utility is a file containing the grammar of
 		    the configuration file, in addition to the grammar, you can describe what action the parser
 		    should do at various stages of parsing. For example, you can instruct the parser to create a
 		    structure describing an <acronym>IP</acronym> address every time it finds an <acronym>IP</acronym> 
 		    address in the configuration file and convert the address to its binary representation.
 		</para>
-		<para>For more information see Bison documentation.</para>
+		<para>For more information see yacc documentation.</para>
 		<para>
-		    Bison creates the parser when the server is being compiled from the sources.
-		    Input file for bison is <filename moreinfo="none">cfg.y</filename>. The file contains grammar
+		    yacc creates the parser when the server is being compiled from the sources.
+		    Input file for yacc is <filename moreinfo="none">cfg.y</filename>. The file contains grammar
 		    of the config file along with actions that create the binary representation of the file.
-		    Bison will write its result into file <filename moreinfo="none">cfg.tab.c</filename>. The
+		    Yacc will write its result into file <filename moreinfo="none">cfg.tab.c</filename>. The
 		    file contains function <function moreinfo="none">yyparse</function> which will parse the whole
 		    configuration file and construct the binary representation. For more information about the
 		    bison input file syntax see bison documentation.

@@ -76,7 +76,7 @@
 #include "pt.h"
 
 /* FIFO server vars */
-char *fifo="/tmp/ser_fifo"; /* FIFO name */
+char *fifo=0; /* FIFO name */
 int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | 
 	S_IWGRP | S_IROTH | S_IWOTH;
 pid_t fifo_pid;

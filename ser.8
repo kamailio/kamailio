@@ -32,6 +32,8 @@ ser \- very fast and configurable sip proxy
 .BI \-g " gid"
 ] [
 .BI \-P " pid\-file"
+] [
+.BI \-i " fifo\-path"
 ]
 
 .SH DESCRIPTION
@@ -126,6 +128,11 @@ runs.
 Creates a file containing the pid of the main 
 .B ser 
 process.
+.TP
+.BI \-i " fifo\-path"
+Creates a fifo, usefull for monitoring
+.B ser
+status.
 
 
 .SH FILES
