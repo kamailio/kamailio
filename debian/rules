@@ -3,6 +3,11 @@
 # GNU copyright 1997 to 1999 by Joey Hess.
 #
 # $Id$
+#
+# History:
+# --------
+#  2003-05-30  updated for the 0.8.11 release, changed modules list and
+#              some ser make options (andrei)
 
 
 # Uncomment this to turn on verbose mode.
@@ -10,6 +15,24 @@
 
 # This is the debhelper compatibility version to use.
 export DH_COMPAT=3
+
+# modules not in the "main" package or unstable 
+EXCLUDED_MODULES=	mysql jabber auth_radius group_radius uri_radius \
+					postgress snmp cpl cpl-c ext extcmd mangler pdt
+
+# modules depending on mysql
+MYSQL_MODULES=mysql
+#jabber related modules
+JABBER_MODULES=jabber
+#module depending on radiusclient
+RADIUS_MODULES=auth_radius group_radius uri_radius
+
+# the same but with path prepended (needed for modules="...")
+MYSQL_MOD_PATH=$(addprefix modules/, $(MYSQL_MODULES))
+JABBER_MOD_PATH=$(addprefix modules/, $(JABBER_MODULES))
+RADIUS_MOD_PATH=$(addprefix modules/, $(RADIUS_MODULES))
+
+
 
 
 
@@ -34,9 +57,10 @@ build-stamp: configure-stamp
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE) all  exclude_modules="mysql jabber" cfg-target=/etc/ser/
-	$(MAKE) modules modules=modules/mysql cfg-target=/etc/ser/
-	$(MAKE) modules modules=modules/jabber cfg-target=/etc/ser/
+	$(MAKE) all  skip_modules="$(EXCLUDED_MODULES)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(MYSQL_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/ser/
+	$(MAKE) modules modules="$(RADIUS_MOD_PATH)" cfg-target=/etc/ser/
 	#/usr/bin/docbook-to-man debian/ser.sgml > ser.1
 
 	touch build-stamp
@@ -47,7 +71,9 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) clean
+	-$(MAKE) \
+		include_modules="$(MYSQL_MODULES) $(JABBER_MODULES) $(RADIUS_MODULES)"\
+		 clean
 
 	dh_clean
 
@@ -58,22 +84,28 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/ser
-	$(MAKE) install  exclude_modules="mysql jabber" \
+	$(MAKE) install  skip_modules="$(EXCLUDED_MODULES)" \
 		basedir=$(CURDIR)/debian/ser \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser \
 		cfg-target=/etc/ser/
 	# install only the mysql module
-	$(MAKE) install-modules modules=modules/mysql  \
+	$(MAKE) install-modules modules="$(MYSQL_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/ser-mysql-module \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-mysql-module \
 		cfg-target=/etc/ser/
 	#install only the jabber module
-	$(MAKE) install-modules modules=modules/jabber  \
+	$(MAKE) install-modules modules="$(JABBER_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/ser-jabber-module \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-jabber-module \
+		cfg-target=/etc/ser/
+	#install only the radius modules
+	$(MAKE) install-modules modules="$(RADIUS_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/ser-radius-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
 		cfg-target=/etc/ser/
 	#dh_movefiles
 

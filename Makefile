@@ -16,6 +16,9 @@
 #  2003-04-07  hacked to work with solaris install (andrei)
 #  2003-04-17  exclude modules overwritable from env. or cmd. line,
 #               added include_modules and skip_modules (andrei)
+#  2003-05-30  added extra_defs & EXTRA_DEFS
+#               Makefile.defs force-included to allow recursive make
+#               calls -- see comment (andrei)
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -49,7 +52,10 @@ extra_objs=$(extra_sources:.c=.o)
 
 static_defs= $(foreach  mod, $(static_modules), \
 		-DSTATIC_$(shell echo $(mod) | tr [:lower:] [:upper:]) )
-DEFS=$(static_defs)
+
+override extra_defs+=$(static_defs) $(EXTRA_DEFS)
+export extra_defs
+
 modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(wildcard modules/*))
@@ -67,12 +73,26 @@ NAME=ser
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
 
 #include general defs (like CC, CFLAGS  a.s.o)
+# hack to force makefile.defs re-inclusion (needed when make calls itself with
+# other options -- e.g. make bin)
+makefile_defs=0
+DEFS:=
 include Makefile.defs
 
 #export relevant variables to the sub-makes
 export DEFS PROFILE CC  LD MKDEP MKTAGS CFLAGS LDFLAGS MOD_CFLAGS MOD_LDFLAGS
 export LEX YACC YACC_FLAGS
 export PREFIX LOCALBASE
+# export relevant variables for recursive calls of this makefile 
+# (e.g. make deb)
+#export LIBS
+#export TAR 
+#export NAME RELEASE OS ARCH 
+#export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
+#export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
+#export cfg-target modules-target
+#export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
+#export INSTALL-TOUCH
 
 
 # include the common rules
@@ -122,10 +142,10 @@ dbg: ser
 .PHONY: tar
 tar: mantainer-clean 
 	$(TAR) -C .. \
-		--exclude=$(notdir $(CURDIR))/test \
-		--exclude=$(notdir $(CURDIR))/tmp \
-		--exclude=$(notdir $(CURDIR))/debian/ser \
-		--exclude=$(notdir $(CURDIR))/debian/ser-mysql-module \
+		--exclude=$(notdir $(CURDIR))/test* \
+		--exclude=$(notdir $(CURDIR))/tmp* \
+		--exclude=$(notdir $(CURDIR))/debian/ser* \
+		--exclude=CVS* \
 		 -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
 
 # binary dist. tar.gz

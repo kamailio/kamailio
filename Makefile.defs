@@ -7,6 +7,7 @@
 #   INSTALL, TAR , CC, LEX, YACC,
 #   CPU, CC_EXTRA_OPTS,
 #   exclude_modules, skip_modules, include_modules
+#   extra_defs
 #
 # History:
 # --------
@@ -21,6 +22,7 @@
 #               for, used only with gcc-3.x) (andrei)
 #  2003-05-23  check if this makefile was already included (andrei)
 #              removed -DDIGEST_DOMAIN (andrei)
+#  2003-05-30  added extra_defs (andrei)
 
 
 # check if already included/exported
@@ -35,7 +37,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre28
+EXTRAVERSION = pre29
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -185,7 +187,8 @@ YACC := $(shell echo "$${YACC}")
 #		disable the tcp Nagle algorithm (lower delay)
 
 
-DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
+DEFS+= $(extra_defs) \
+	 -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DCFG_DIR='"$(cfg-target)"'\
 	 -DPKG_MALLOC \
