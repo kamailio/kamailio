@@ -252,6 +252,39 @@ endif		#CC_NAME, suncc
 endif		#CC_NAME, gcc
 endif	#ARCH, sparc64
 
+	#if ipaq/netwinder
+ifeq	($(ARCH), armv4l)
+		# if gcc 
+ifeq		($(CC_NAME), gcc)
+				#common stuff
+				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
+					-Wall   \
+			#if gcc 3.0
+ifeq			($(CC_SHORTVER), 3.0)
+					CFLAGS+= -mcpu=strongarm1100
+							#-mcpu=athlon
+else
+ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
+$(warning 			Old gcc detected ($(CC_SHORTVER)), use  gcc 3.0.x \
+					for better results)
+					
+					CFLAGS+=
+else
+				#really old version
+$(warning			You are using an old and unsupported gcc \
+					 version ($(CC_SHORTVER)), compile at your own risk!)
+
+endif			# CC_SHORTVER, 2.9x
+endif			# CC_SHORTVER, 3.0
+
+else		# CC_NAME, gcc
+				#other compilers
+$(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
+endif		#CC_NAME, gcc
+endif	#ARCH, i386
+
+
+	
 
 
 # setting LDFLAGS
