@@ -147,29 +147,3 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 	}
 	return ret;
 }
-
-#ifdef _OBSOLETED
-inline static int w_exec_user(struct sip_msg* msg, char* cmd, char* foo)
-{
-	str *uri;
-	struct sip_uri parsed_uri;
-	int ret;
-
-	if (msg->new_uri.s && msg->new_uri.len)
-		uri=&msg->new_uri;
-	else
-		uri=&msg->first_line.u.request.uri;
-	if (parse_uri(uri->s, uri->len, &parsed_uri )<0) {
-		LOG(L_ERR, "ERROR: invalid URI passed to w_exec_user\n");
-		return -1;
-	}
-	if (!parsed_uri.user.s || !parsed_uri.user.len) {
-		LOG(L_WARN, "WARNING: w_exec_user: "
-			"empty username in '%.*s'\n", uri->len, uri->s );
-		ret=exec_str(msg, cmd, "", 0);
-	} else {
-		ret=exec_str(msg, cmd, parsed_uri.user.s, parser_uri.user.len);
-	}
-	return ret;
-}
-#endif

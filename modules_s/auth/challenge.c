@@ -56,11 +56,6 @@
 #define WWW_AUTH_CHALLENGE   "WWW-Authenticate"
 #define PROXY_AUTH_CHALLENGE "Proxy-Authenticate"
 
-#ifdef _OBSO
-#define AUTH_HF_LEN 512
-static char auth_hf[AUTH_HF_LEN];
-#endif
-
 #define QOP_PARAM	  ", qop=\"auth\""
 #define QOP_PARAM_LEN	  (sizeof(QOP_PARAM)-1)
 #define STALE_PARAM	  ", stale=true"

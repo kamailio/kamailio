@@ -28,6 +28,7 @@
  *
  * History:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -436,12 +437,7 @@ static inline int route_after_strict(struct sip_msg* _m)
 		if (uri.s[0] == '<') {
 			     /* Remove the whole header here */
 			offset = hdr->name.s - _m->buf;
-#ifdef PRESERVE_ZT
-			len = hdr->name.len + hdr->body.len + 2;
-			if (hdr->body.s[hdr->body.len] != '\0') len++;  /* FIXME: Is this necessary ? */
-#else
 			len = hdr->len;
-#endif
 
 		} else if (uri.s[0] == ',') {
 			     /* Remove just the last URI, keep header field */

@@ -35,6 +35,7 @@
  *
  * History:
  * -------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-29: - rewriting actions (replace, search_append) now begin
  *               at the second line -- previously, they could affect
  *               first line too, which resulted in wrong calculation of
@@ -135,11 +136,7 @@ static int mod_init(void)
 
 static char *get_header(struct sip_msg *msg)
 {
-#ifdef SCRATCH
-	return msg->orig+msg->first_line.len;
-#else
 	return msg->buf+msg->first_line.len;
-#endif
 }
 
 
@@ -149,11 +146,7 @@ static int search_f(struct sip_msg* msg, char* key, char* str2)
 	/*we registered only 1 param, so we ignore str2*/
 	regmatch_t pmatch;
 
-#ifdef SCRATCH
-	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
-#else
 	if (regexec((regex_t*) key, msg->buf, 1, &pmatch, 0)!=0) return -1;
-#endif
 	return 1;
 }
 

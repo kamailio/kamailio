@@ -28,6 +28,7 @@
  *
  * history
  * -------
+ * 2003-02-28 scratchapd compatibility abandoned
  * 2003-01-29 scratchpad removed
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
@@ -116,17 +117,6 @@ static void release_hf_struct( struct hf_wrapper *list )
 		i=nexto;
 	}
 }
-
-#ifdef PRESERVE_ZT
-static void trim(str *dst, str *src)
-{
-	dst->s=src->s;dst->len=src->len;
-	while(dst->len && (*(dst->s)==' ' || *(dst->s)=='\t')) {
-		dst->s++;
-		dst->len--;
-	}
-}
-#endif
 
 /* if that is some of well-known header fields which have compact
  * form, return canonical form ... returns 1 and sets params;
@@ -243,9 +233,6 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	char *envvar;
 	int envvar_len;
 	struct hf_wrapper *wi;
-#ifdef PRESERVE_ZT
-	str hfval;
-#endif
 	char *c;
 
 	/* make -Wall happy */
@@ -264,19 +251,9 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 		}
 	} 
 	/* now we have a header name, let us generate the var */
-#ifdef PRESERVE_ZT
-	trim(&hfval, &w->u.hf->body );
-	envvar_len=hfval.len; /* the first header field value */
-#else
 	envvar_len=w->u.hf->body.len;
-#endif
 	for(wi=w->next_same; wi; wi=wi->next_same) { /* other values, separated */
-#ifdef PRESERVE_ZT
-		trim(&hfval, &wi->u.hf->body );
-		envvar_len+=1/*separator*/ + hfval.len; 
-#else
 		envvar_len+=1 /* separator */ + wi->u.hf->body.len;
-#endif
 	}
 	envvar=malloc(w->prefix_len+hlen+1/*assignment*/+envvar_len+1/*ZT*/);
 	if (!envvar) {
@@ -286,24 +263,12 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	memcpy(envvar, w->prefix, w->prefix_len); c=envvar+w->prefix_len;
 	memcpy(c, hname, hlen ); c+=hlen;
 	*c=EV_ASSIGN;c++;
-#ifdef PRESERVE_ZT
-	trim(&hfval, &w->u.hf->body);
-	memcpy(c, hfval.s+offset, hfval.len );
-	c+=hfval.len;
-#else
 	memcpy(c, w->u.hf->body.s+offset, w->u.hf->body.len );
 	c+=w->u.hf->body.len;
-#endif
 	for (wi=w->next_same; wi; wi=wi->next_same) {
 		*c=HF_SEPARATOR;c++;
-#ifdef PRESERVE_ZT
-		trim(&hfval, &wi->u.hf->body);
-		memcpy(c, hfval.s+offset , hfval.len );
-		c+=hfval.len;
-#else
 		memcpy(c, wi->u.hf->body.s+offset, wi->u.hf->body.len );
 		c+=wi->u.hf->body.len;
-#endif
 	}
 	*c=0; /* zero termination */
 	DBG("DEBUG: print_var: %s\n", envvar );
@@ -569,11 +534,7 @@ environment_t *set_env(struct sip_msg *msg)
 		goto error01;
 	}
 	/* create now the strings for environment variables */
-#ifdef SCRATCH
-	if (!create_vars(hf_list, msg->orig-msg->buf)) {
-#else
 	if (!create_vars(hf_list, 0)) {
-#endif
 		LOG(L_ERR, "ERROR: set_env: create_vars failed\n");
 		goto error00;
 	}

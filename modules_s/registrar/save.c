@@ -28,6 +28,7 @@
  *
  * History:
  * ----------
+ * 2003-02-28 scratcpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -148,11 +149,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 
 		     /* Get callid of the message */
 		callid = _m->callid->body;	
-#ifdef PRESERVE_ZT
-		trim(&callid);
-#else
 		trim_trailing(&callid);
-#endif
 		
 		     /* Get CSeq number of the message */
 		if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
@@ -225,11 +222,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				
 				     /* Get callid of the message */
 				callid = _m->callid->body;
-#ifdef PRESERVE_ZT
-				trim(&callid);
-#else
 				trim_trailing(&callid);
-#endif
 				
 				     /* Get CSeq number of the message */
 				if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
@@ -260,11 +253,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				
 				     /* Get callid of the message */
 				callid = _m->callid->body;				
-#ifdef PRESERVE_ZT
-				trim(&callid);
-#else
 				trim_trailing(&callid);
-#endif
 				
 				     /* Get CSeq number of the message */
 				if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {

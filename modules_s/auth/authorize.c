@@ -28,6 +28,7 @@
  *
  * history:
  * ---------
+ * 2003-02-28 scratchpad compatibility abandoned
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
@@ -437,12 +438,7 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 		}
 	}
 
-#ifdef PRESERVE_ZT
-	if (h->next) len = h->next->name.s - h->name.s;
-	else len = _m->unparsed - h->name.s;
-#else
 	len=h->len;
-#endif
 
 	if (del_lump(&_m->add_rm, h->name.s - _m->buf, len, 0) == 0) {
 		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");

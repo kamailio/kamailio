@@ -26,6 +26,7 @@
  * 
  * History:
  * ----------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2002-01-28 scratchpad removed (jiri)
  */
 
@@ -97,11 +98,6 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *mf_val)
 	n = btostr(mf_val->s,x-1);
 	if ( n<mf_val->len )
 		mf_val->s[n] = ' ';
-#ifdef SCRATCH
-	n = btostr(translate_pointer(msg->orig,msg->buf,mf_val->s),x-1);
-	if ( n<mf_val->len )
-		*(translate_pointer(msg->orig,msg->buf,mf_val->s+n)) = ' ';
-#endif
 	return 1;
 
 error:

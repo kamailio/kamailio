@@ -92,16 +92,6 @@ int rewrite_RURI(struct sip_msg* _m, str* _s);
 int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri);
 
 
-#ifdef _OBSOL /* static now */
-/*
- * Builds Record-Route line
- * Returns 0 on success, negative number on a failure
- * if _lr is set to 1, ;lr parameter will be used
- */
-int build_RR(struct sip_msg* _m, str* _l, int _lr);
-#endif
-
-
 /*
  * Insert a new Record-Route Header Field
  * into a SIP message

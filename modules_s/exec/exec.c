@@ -28,6 +28,7 @@
  *
  * History
  * --------
+ * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28 scratchpad removed
  */
 
@@ -49,37 +50,12 @@
 #include "../../dset.h"
 #include "config.h"
 
-#ifdef _OBSOLETED
-static int set_environment(struct sip_msg *msg)
-{
-
-	static char srcip[64];
-
-	if (snprintf(srcip, 64, SRCIP "=%s", ip_addr2a(&msg->rcv.src_ip))==-1) {
-		LOG(L_ERR, "ERROR: set_environment: spritnf failed\n");
-		return 0;
-	}
-	if (putenv(srcip)==-1) {
-		LOG(L_ERR, "ERROR: set_environment: putenv failed\n");
-		return 0;
-	}
-	DBG("DEBUG: environment variable set: %s\n", srcip );
-	return 1;
-}
-#endif
-
 int exec_msg(struct sip_msg *msg, char *cmd )
 {
 	FILE *pipe;
 	int exit_status;
 	int ret;
 
-#ifdef _OBSOLETED
-	if (set_environment(msg)==0) {
-		LOG(L_ERR, "ERROR: exec_msg: set_environment failed\n");
-		return -1;
-	}
-#endif
 	ret=-1; /* pesimist: assume error */
 	pipe=popen( cmd, "w" );
 	if (pipe==NULL) {
@@ -89,11 +65,7 @@ int exec_msg(struct sip_msg *msg, char *cmd )
 		return -1;
 	}
 
-#ifdef SCRATCH
-	if (fwrite(msg->orig, 1, msg->len, pipe)!=msg->len) {
-#else
 	if (fwrite(msg->buf, 1, msg->len, pipe)!=msg->len) {
-#endif
 		LOG(L_ERR, "ERROR: exec_msg: error writing to pipe\n");
 		ser_error=E_EXEC;
 		goto error01;
@@ -134,12 +106,6 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	char *new_uri;
 	int exit_status;
 
-#ifdef _OBSOLETED
-	if (set_environment(msg)==0) {
-		LOG(L_ERR, "ERROR: exec_str: set_environment failed\n");
-		return -1;
-	}
-#endif
 	/* pesimist: assume error by default */
 	ret=-1;
 	
