@@ -1,0 +1,4 @@
+#!/bin/sh
+HA1=`/home/janakj/sip_router/utils/gen_ha1/gen_ha1 $1 $2 $3`
+mysql -e "use ser; insert into auth (user,realm,ha1) values ('$1','$2','$HA1');";
+
