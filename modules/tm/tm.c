@@ -51,6 +51,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-02-18  added t_forward_nonack_{udp, tcp}, t_relay_to_{udp,tcp},
+ *               t_replicate_{udp, tcp} (andrei)
+ */
 
 
 #include "defs.h"
@@ -94,10 +100,22 @@ inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_newdlg( struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
 inline static int w_t_relay_to( struct sip_msg  *p_msg , char *proxy, char *);
+inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy, 
+									char *);
+inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
+									char *);
 inline static int w_t_replicate( struct sip_msg  *p_msg , 
-	char *proxy, /* struct proxy_l *proxy expected */
-	char *_foo       /* nothing expected */ );
+							char *proxy, /* struct proxy_l *proxy expected */
+							char *_foo       /* nothing expected */ );
+inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
+							char *proxy, /* struct proxy_l *proxy expected */
+							char *_foo       /* nothing expected */ );
+inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
+							char *proxy, /* struct proxy_l *proxy expected */
+							char *_foo       /* nothing expected */ );
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
+inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
+inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
 inline static int fixup_hostport2proxy(void** param, int param_no);
 inline static int w_t_on_negative( struct sip_msg* msg, char *go_to, char *foo );
 
@@ -124,9 +142,15 @@ struct module_exports exports= {
 				"t_retransmit_reply",
 				"t_release",
 				T_RELAY_TO,
+				T_RELAY_TO_UDP,
+				T_RELAY_TO_TCP,
 				"t_replicate",
+				"t_replicate_udp",
+				"t_replicate_tcp",
 				T_RELAY,
 				T_FORWARD_NONACK,
+				T_FORWARD_NONACK_UDP,
+				T_FORWARD_NONACK_TCP,
 				"t_on_negative",
 
 				/* not applicable from script ... */
@@ -155,9 +179,15 @@ struct module_exports exports= {
 					w_t_retransmit_reply,
 					w_t_release,
 					w_t_relay_to,
+					w_t_relay_to_udp,
+					w_t_relay_to_tcp,
 					w_t_replicate,
+					w_t_replicate_udp,
+					w_t_replicate_tcp,
 					w_t_relay,
 					w_t_forward_nonack,
+					w_t_forward_nonack_udp,
+					w_t_forward_nonack_tcp,
 					w_t_on_negative,
 
 					(cmd_function) register_tmcb,
@@ -184,9 +214,15 @@ struct module_exports exports= {
 				0, /* t_retransmit_reply */
 				0, /* t_release */
 				2, /* t_relay_to */
+				2, /* t_relay_to_udp */
+				2, /* t_relay_to_tcp */
 				2, /* t_replicate */
+				2, /* t_replicate_udp */
+				2, /* t_replicate_tcp */
 				0, /* t_relay */
 				2, /* t_forward_nonack */
+				2, /* t_forward_nonack_udp */
+				2, /* t_forward_nonack_tcp */
 				1, /* t_on_negative */
 				NO_SCRIPT /* register_tmcb */,
 #ifndef DEPRECATE_OLD_STUFF
@@ -212,9 +248,15 @@ struct module_exports exports= {
 				0,						/* t_retransmit_reply */
 				0,						/* t_release */
 				fixup_hostport2proxy,	/* t_relay_to */
+				fixup_hostport2proxy,	/* t_relay_to_udp */
+				fixup_hostport2proxy,	/* t_relay_to_tcp */
 				fixup_hostport2proxy,	/* t_replicate */
+				fixup_hostport2proxy,	/* t_replicate_udp */
+				fixup_hostport2proxy,	/* t_replicate_tcp */
 				0,						/* t_relay */
 				fixup_hostport2proxy,	/* t_forward_nonack */
+				fixup_hostport2proxy,	/* t_forward_nonack_udp */
+				fixup_hostport2proxy,	/* t_forward_nonack_tcp */
 				fixup_str2int,			/* t_on_negative */
 				0,						/* register_tmcb */
 #ifndef DEPRECATE_OLD_STUFF
@@ -240,7 +282,7 @@ struct module_exports exports= {
 #ifdef VOICE_MAIL
 	4+
 #endif
-	14,
+	14 + 6 /* *_(UDP|TCP) */,
 
 	/* ------------ exported variables ---------- */
 	(char *[]) { /* Module parameter names */
@@ -455,7 +497,7 @@ inline static int fixup_hostport2proxy(void** param, int param_no)
 		}
 		s.s = host;
 		s.len = strlen(host);
-		proxy=mk_proxy(&s, port);
+		proxy=mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
 		if (proxy==0) {
 			LOG(L_ERR, "ERROR: fixup_t_forwardv6: bad host name in URI <%s>\n",
 				host );
@@ -506,7 +548,8 @@ inline static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 
 
 
-inline static int w_t_forward_nonack(struct sip_msg* msg, char* proxy, char* _foo)
+inline static int _w_t_forward_nonack(struct sip_msg* msg, char* proxy,
+									 char* _foo, int proto)
 {
 	struct cell *t;
 	if (t_check( msg , 0 )==-1) return -1;
@@ -516,12 +559,31 @@ inline static int w_t_forward_nonack(struct sip_msg* msg, char* proxy, char* _fo
 			LOG(L_WARN,"WARNING: you don't really want to fwd hbh ACK\n");
 			return -1;
 		}
-		return t_forward_nonack(t, msg, ( struct proxy_l *) proxy );
+		return t_forward_nonack(t, msg, ( struct proxy_l *) proxy, proto );
 	} else {
 		DBG("DEBUG: t_forward_nonack: no transaction found\n");
 		return -1;
 	}
 }
+
+
+inline static int w_t_forward_nonack( struct sip_msg* msg, char* proxy,
+										char* foo)
+{
+	return _w_t_forward_nonack(msg, proxy, foo, msg->rcv.proto);
+};
+
+inline static int w_t_forward_nonack_udp( struct sip_msg* msg, char* proxy,
+										char* foo)
+{
+	return _w_t_forward_nonack(msg, proxy, foo, PROTO_UDP);
+};
+
+inline static int w_t_forward_nonack_tcp( struct sip_msg* msg, char* proxy,
+										char* foo)
+{
+	return _w_t_forward_nonack(msg, proxy, foo, PROTO_TCP);
+};
 
 
 
@@ -632,22 +694,56 @@ inline static int w_t_relay_to( struct sip_msg  *p_msg ,
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_relay_to( p_msg, ( struct proxy_l *) proxy,
+	return t_relay_to( p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto,
 	0 /* no replication */ );
 }
+
+inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , 
+	char *proxy, /* struct proxy_l *proxy expected */
+	char *_foo       /* nothing expected */ )
+{
+	return t_relay_to( p_msg, ( struct proxy_l *) proxy, PROTO_UDP,
+	0 /* no replication */ );
+}
+
+inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , 
+	char *proxy, /* struct proxy_l *proxy expected */
+	char *_foo       /* nothing expected */ )
+{
+	return t_relay_to( p_msg, ( struct proxy_l *) proxy, PROTO_TCP,
+	0 /* no replication */ );
+}
+
+
 
 inline static int w_t_replicate( struct sip_msg  *p_msg , 
 	char *proxy, /* struct proxy_l *proxy expected */
 	char *_foo       /* nothing expected */ )
 {
-	return t_replicate(p_msg, ( struct proxy_l *) proxy );
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, p_msg->rcv.proto );
 }
+
+inline static int w_t_replicate_udp( struct sip_msg  *p_msg , 
+	char *proxy, /* struct proxy_l *proxy expected */
+	char *_foo       /* nothing expected */ )
+{
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_UDP );
+}
+
+inline static int w_t_replicate_tcp( struct sip_msg  *p_msg , 
+	char *proxy, /* struct proxy_l *proxy expected */
+	char *_foo       /* nothing expected */ )
+{
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_TCP );
+}
+
+
 
 inline static int w_t_relay( struct sip_msg  *p_msg , 
 						char *_foo, char *_bar)
 {
 	return t_relay_to( p_msg, 
-		(struct proxy_l *) 0 /* no proxy */,
+		(struct proxy_l *) 0 /* no proxy */, p_msg->rcv.proto,
 		0 /* no replication */ );
 }
 

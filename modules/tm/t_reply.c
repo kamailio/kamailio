@@ -27,8 +27,11 @@
  *
  * History:
  * --------
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-19 faked lump list created in on_reply handlers
+ * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-19  faked lump list created in on_reply handlers
+ * 2003-02-13  updated to use rb->dst (andrei)
+ * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (TOTAG_LEN was defined
+ *             twice with different values!)  (andrei)
  */
 
 #include "defs.h"
@@ -62,7 +65,7 @@
 enum route_mode rmode=MODE_REQUEST;
 
 /* private place where we create to-tags for replies */
-static char tm_tags[TOTAG_LEN];
+static char tm_tags[TOTAG_VALUE_LEN];
 static char *tm_tag_suffix;
 
 /* where to go if there is no positive reply */
@@ -397,7 +400,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		init_branch_iterator();
 		if (next_branch(&dummy)) {
 			if (t_forward_nonack(Trans, origin_rq,
-						(struct proxy_l *) 0 ) <0) {
+						(struct proxy_l *) 0,
+						Trans->uas.response.dst.proto)<0) {
 				/* error ... behave as if we did not try to
 				   add a new branch */
 				*should_store=0;
@@ -456,7 +460,7 @@ int t_retransmit_reply( struct cell *t )
 	/* first check if we managed to resolve topmost Via -- if
 	   not yet, don't try to retransmit
 	*/
-	if (!t->uas.response.send_sock) {
+	if (!t->uas.response.dst.send_sock) {
 		LOG(L_WARN, "WARNING: t_retransmit_reply: "
 			"no resolved dst to retransmit\n");
 		return -1;
@@ -550,12 +554,12 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 			    || get_to(p_msg)->tag_value.len==0)) {
 		calc_crc_suffix( p_msg, tm_tag_suffix );
 		buf = build_res_buf_from_sip_req(code,text, 
-				tm_tags, TOTAG_LEN, 
+				tm_tags, TOTAG_VALUE_LEN, 
 				p_msg,&len);
 #ifdef VOICE_MAIL
 
 		return _reply_light(trans,buf,len,code,text,
-				    tm_tags, TOTAG_LEN,
+				    tm_tags, TOTAG_VALUE_LEN,
 				    lock);
 #endif
 	} else {
@@ -654,7 +658,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 	/* first check if we managed to resolve topmost Via -- if
 	   not yet, don't try to retransmit
 	*/
-	if (!trans->uas.response.send_sock) {
+	if (!trans->uas.response.dst.send_sock) {
 		LOG(L_ERR, "ERROR: _reply: no resolved dst to send reply to\n");
 	} else {
 		SEND_PR_BUFFER( rb, buf, len );
@@ -797,7 +801,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				buf = build_res_buf_from_sip_req(
 						relayed_code,
 						error_text(relayed_code),
-						tm_tags, TOTAG_LEN, 
+						tm_tags, TOTAG_VALUE_LEN, 
 						t->uas.request, &res_len );
 			} else {
 				buf = build_res_buf_from_sip_req( relayed_code,

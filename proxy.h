@@ -25,6 +25,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /*
+  * History:
+  * -------
+  *  2003-02-13  added proto to struct proxy_l & to *_proxy fucntions (andrei)
+  */
 
 
 #ifndef proxy_h
@@ -40,6 +45,7 @@ struct proxy_l{
 	struct hostent host; /* addresses */
 	unsigned short port;
 	unsigned short reserved; /*align*/
+	int proto;
 	
 	/* socket ? */
 
@@ -53,9 +59,10 @@ struct proxy_l{
 
 extern struct proxy_l* proxies;
 
-struct proxy_l* add_proxy(str* name, unsigned short port);
-struct proxy_l* mk_proxy(str* name, unsigned short port);
-struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port);
+struct proxy_l* add_proxy(str* name, unsigned short port, int proto);
+struct proxy_l* mk_proxy(str* name, unsigned short port, int proto);
+struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
+									int proto);
 void free_proxy(struct proxy_l* p);
 
 

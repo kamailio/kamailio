@@ -375,7 +375,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 	    sip_resolvehost now accepts str -janakj
 	*/
 	DBG("update_sock_struct_from_via: trying SRV lookup\n");
-	he=sip_resolvehost(name, &port);
+	he=sip_resolvehost(name, &port, via->proto);
 	
 	if (he==0){
 		LOG(L_NOTICE, "ERROR:forward_reply:resolve_host(%.*s) failure\n",

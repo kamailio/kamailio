@@ -51,9 +51,10 @@
  *
  * History:
  * ----------
- * 2003-01-28 scratchpad removed (jiri)
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
- * 2003-01-23 options for disabling r-uri matching introduced (jiri)
+ * 2003-01-28  scratchpad removed (jiri)
+ * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-23  options for disabling r-uri matching introduced (jiri)
+ * 2003-02-13  init_rb() is proto indep. & it uses struct dest_info (andrei)
  */
 
 
@@ -750,31 +751,37 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 	return ((T)?1:0) ;
 }
 
-int init_rb( struct retr_buf *rb, struct sip_msg *msg )
+int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 {
 	struct socket_info* send_sock;
 	struct via_body* via;
+	int proto;
 
+	via=msg->via1;
 	if (!reply_to_via) {
-		update_sock_struct_from_ip( &rb->to, msg );
+		update_sock_struct_from_ip( &rb->dst.to, msg );
+		proto=msg->rcv.proto;
 	} else {
-		via=msg->via1;
 		/*init retrans buffer*/
-		if (update_sock_struct_from_via( &(rb->to),via )==-1) {
+		if (update_sock_struct_from_via( &(rb->dst.to),via )==-1) {
 			LOG(L_ERR, "ERROR: init_rb: cannot lookup reply dst: %.*s\n",
 				via->host.len, via->host.s );
 			ser_error=E_BAD_VIA;
 			return 0;
 		}
+		proto=via->proto;
 	}
-	send_sock=get_send_socket(&rb->to, msg->rcv.proto);
+	rb->dst.proto=proto;
+	rb->dst.proto_reserved1=msg->rcv.proto_reserved1;
+	send_sock=get_send_socket(&rb->dst.to, proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d "
-			"no socket\n", rb->to.s.sa_family);
+			"no socket\n", rb->dst.to.s.sa_family);
 		ser_error=E_BAD_VIA;
 		return 0;
 	}
-	rb->send_sock=send_sock;
+	rb->dst.send_sock=send_sock;
+	
     return 1;
 }
 

@@ -27,6 +27,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /*
+  * History:
+  * -------
+  *  2003-02-13  all *proxy fucntions are now proto aware (andrei)
+  */
 
 
 
@@ -55,13 +60,17 @@ struct proxy_l* proxies=0;
 
 
 
-/* searches for the proxy named 'name', on port 'port'
+/* searches for the proxy named 'name', on port 'port' with 
+   proto 'proto'; if proto==0 => proto wildcard (will match any proto)
    returns: pointer to proxy_l on success or 0 if not found */ 
-static struct proxy_l* find_proxy(str *name, unsigned short port)
+static struct proxy_l* find_proxy(str *name, unsigned short port, int proto)
 {
 	struct proxy_l* t;
 	for(t=proxies; t; t=t->next)
-		if (((t->name.len == name->len) && (strncasecmp(t->name.s, name->s, name->len)==0)) && (t->port==port))
+		if (((t->name.len == name->len) &&
+			 ((proto==PROTO_NONE)||(t->proto==proto))&&
+			(strncasecmp(t->name.s, name->s, name->len)==0)) &&
+				(t->port==port))
 			break;
 	return t;
 }
@@ -169,12 +178,12 @@ void free_hostent(struct hostent *dst)
 
 
 
-struct proxy_l* add_proxy(str* name, unsigned short port)
+struct proxy_l* add_proxy(str* name, unsigned short port, int proto)
 {
 	struct proxy_l* p;
 	
-	if ((p=find_proxy(name, port))!=0) return p;
-	if ((p=mk_proxy(name, port))==0) goto error;
+	if ((p=find_proxy(name, port, proto))!=0) return p;
+	if ((p=mk_proxy(name, port, proto))==0) goto error;
 	/* add p to the proxy list */
 	p->next=proxies;
 	proxies=p;
@@ -188,9 +197,9 @@ error:
 
 
 /* same as add_proxy, but it doesn't add the proxy to the list
- * uses also SRV if possible (quick hack) */
+ * uses also SRV if possible & port==0 (quick hack) */
 
-struct proxy_l* mk_proxy(str* name, unsigned short port)
+struct proxy_l* mk_proxy(str* name, unsigned short port, int proto)
 {
 	struct proxy_l* p;
 	struct hostent* he;
@@ -204,9 +213,10 @@ struct proxy_l* mk_proxy(str* name, unsigned short port)
 	memset(p,0,sizeof(struct proxy_l));
 	p->name=*name;
 	p->port=port;
+	p->proto=proto;
 
 	DBG("DEBUG: mk_proxy: doing DNS lookup...\n");
-	he=sip_resolvehost(name, &(p->port));
+	he=sip_resolvehost(name, &(p->port), proto);
 	if (he==0){
 		ser_error=E_BAD_ADDRESS;
 		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
@@ -227,7 +237,8 @@ error:
 
 
 /* same as mk_proxy, but get the host as an ip*/
-struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port)
+struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
+									int proto)
 {
 	struct proxy_l* p;
 
@@ -239,6 +250,7 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port)
 	memset(p,0,sizeof(struct proxy_l));
 
 	p->port=port;
+	p->proto=proto;
 	p->host.h_addrtype=ip->af;
 	p->host.h_length=ip->len;
 	p->host.h_addr_list=malloc(2*sizeof(char*));

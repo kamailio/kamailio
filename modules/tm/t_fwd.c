@@ -25,6 +25,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * -------
+ *  2003-02-13  proto support added (andrei)
+ */
 
 #include "defs.h"
 
@@ -127,10 +132,10 @@ error01:
 
 /* introduce a new uac to transaction; returns its branch id (>=0)
    or error (<0); it doesn't send a message yet -- a reply to it
-   might itnerfere with the processes of adding multiple branches
+   might interfere with the processes of adding multiple branches
 */
 int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
-	struct proxy_l *proxy )
+	struct proxy_l *proxy, int proto )
 {
 
 	int ret;
@@ -157,7 +162,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 	/* check DNS resolution */
 	if (proxy) temp_proxy=0; else {
-		proxy=uri2proxy( uri );
+		proxy=uri2proxy( uri, proto );
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
 			goto error;
@@ -175,7 +180,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 	hostent2su( &to, &proxy->host, proxy->addr_idx, 
 		proxy->port ? htons(proxy->port):htons(SIP_PORT));
 
-	send_sock=get_send_socket( &to , request->rcv.proto);
+	send_sock=get_send_socket( &to , proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d "
 			" (no corresponding listening socket)\n",
@@ -193,8 +198,10 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 	}
 
 	/* things went well, move ahead and install new buffer! */
-	t->uac[branch].request.to=to;
-	t->uac[branch].request.send_sock=send_sock;
+	t->uac[branch].request.dst.to=to;
+	t->uac[branch].request.dst.send_sock=send_sock;
+	t->uac[branch].request.dst.proto=proto;
+	t->uac[branch].request.dst.proto_reserved1=0;
 	t->uac[branch].request.buffer=shbuf;
 	t->uac[branch].request.buffer_len=len;
 	t->uac[branch].uri.s=t->uac[branch].request.buffer+
@@ -238,7 +245,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	/* print */
 	shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
 		&t_invite->uac[branch].uri, &len, 
-		t_invite->uac[branch].request.send_sock);
+		t_invite->uac[branch].request.dst.send_sock);
 	if (!shbuf) {
 		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
 		ret=ser_error=E_OUT_OF_MEM;
@@ -246,8 +253,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	}
 	
 	/* install buffer */
-	t_cancel->uac[branch].request.to=t_invite->uac[branch].request.to;
-	t_cancel->uac[branch].request.send_sock=t_invite->uac[branch].request.send_sock;
+	t_cancel->uac[branch].request.dst=t_invite->uac[branch].request.dst;
 	t_cancel->uac[branch].request.buffer=shbuf;
 	t_cancel->uac[branch].request.buffer_len=len;
 	t_cancel->uac[branch].uri.s=t_cancel->uac[branch].request.buffer+
@@ -344,7 +350,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
  *      -1 - error during forward
  */
 int t_forward_nonack( struct cell *t, struct sip_msg* p_msg , 
-	struct proxy_l * proxy )
+	struct proxy_l * proxy, int proto)
 {
 	str          backup_uri;
 	int branch_ret, lowest_ret;
@@ -384,7 +390,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		branch_ret=add_uac( t, p_msg, 
 			p_msg->new_uri.s ? &p_msg->new_uri :  
 				&p_msg->first_line.u.request.uri,
-			proxy );
+				proxy, proto );
 		if (branch_ret>=0) 
 			added_branches |= 1<<branch_ret;
 		else
@@ -393,7 +399,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	init_branch_iterator();
 	while((current_uri.s=next_branch( &current_uri.len))) {
-		branch_ret=add_uac( t, p_msg, &current_uri, proxy );
+		branch_ret=add_uac( t, p_msg, &current_uri, proxy, proto);
 		/* pick some of the errors in case things go wrong;
 		   note that picking lowest error is just as good as
 		   any other algorithm which picks any other negative
@@ -431,7 +437,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	return 1;
 }	
 
-int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy )
+int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
 {
 	/* this is a quite horrible hack -- we just take the message
 	   as is, including Route-s, Record-route-s, and Vias ,
@@ -444,5 +450,5 @@ int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy )
 		if we want later to make it thoroughly, we need to
 		introduce delete lumps for all the header fields above
 	*/
-	return t_relay_to(p_msg, proxy, 1 /* replicate */);
+	return t_relay_to(p_msg, proxy, proto, 1 /* replicate */);
 }

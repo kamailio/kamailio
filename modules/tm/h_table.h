@@ -82,9 +82,8 @@ typedef struct retr_buf
 
 	char *buffer;
 	int   buffer_len;
-
-	union sockaddr_union to;
-	struct socket_info* send_sock;
+	
+	struct dest_info dst;
 
 	/* a message can be linked just to retransmission and FR list */
 	struct timer_link retr_timer;

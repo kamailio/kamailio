@@ -72,3 +72,10 @@ x generic locking lib
 - force add rport (setflag(rport)???)
 - kill all the fprintf
 
+tm optimizations:
+
+- replace snprintfs int build_uac_request, *_dlg
+- fix the huge param no. in this functions (use structs if neccessary):
+  build_uac_request, build_uac_request_dlg, t_uac, t_uac_dlg
+  
+

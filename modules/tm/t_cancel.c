@@ -94,8 +94,7 @@ void cancel_branch( struct cell *t, int branch )
 	/* install cancel now */
 	crb->buffer=cancel;
 	crb->buffer_len=len;
-	crb->to=irb->to;
-	crb->send_sock=irb->send_sock;
+	crb->dst=irb->dst;
 	crb->branch=branch;
 #ifdef _OBSOLETED
 	crb->fr_timer.tg=TG_FR;

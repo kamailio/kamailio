@@ -161,7 +161,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	new_cell->uas.response.retr_timer.tg=TG_RT;
 	new_cell->uas.response.fr_timer.tg=TG_FR;
 	new_cell->uas.response.fr_timer.payload =
-		new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
+	new_cell->uas.response.retr_timer.payload = &(new_cell->uas.response);
 	new_cell->uas.response.my_T=new_cell;
 
 	/* bogdan - debug */
@@ -186,8 +186,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 		uac->request.fr_timer.tg = TG_FR;
 		uac->request.retr_timer.tg = TG_RT;
 		uac->request.retr_timer.payload = 
-			uac->request.fr_timer.payload =
-			&uac->request;
+		uac->request.fr_timer.payload = &uac->request;
 		uac->local_cancel=uac->request;
 	}
 

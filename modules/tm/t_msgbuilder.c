@@ -29,7 +29,8 @@
  *
  * History:
  * ----------
- * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-02-13  build_uac_request uses proto (andrei)
  */
 
 #include "defs.h"
@@ -91,8 +92,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		goto error;
 	branch_str.s=branch_buf;
 	branch_str.len=branch_len;
-	via=via_builder(&via_len, Trans->uac[branch].request.send_sock,
-		&branch_str, 0, Trans->uac[branch].request.send_sock->proto );
+	via=via_builder(&via_len, Trans->uac[branch].request.dst.send_sock,
+		&branch_str, 0, Trans->uac[branch].request.dst.proto );
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: t_build_and_send_CANCEL: "
@@ -260,7 +261,7 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	branch_str.len=branch_len;
 	
 	via=via_builder(&via_len, t->uac[branch].request.send_sock,
-		&branch_str, 0, t->uac[branch].request.send_sock->proto);
+		&branch_str, 0, t->uac[branch].request.dst.proto);
 	
 	if (!via) {
 		LOG(L_ERR, "ERROR: build_uac_request: via building failed\n");

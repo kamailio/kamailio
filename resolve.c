@@ -24,6 +24,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * -------
+ *  2003-02-13  added proto to sip_resolvehost, for SRV lookups (andrei)
+ */ 
 
 
 #include <sys/types.h>
@@ -448,10 +453,12 @@ not_found:
 
 /* resolves a host name trying SRV lookup if *port==0 or normal A/AAAA lookup
  * if *port!=0.
+ * when performing SRV lookup (*port==0) it will use proto to look for
+ * tcp or udp hosts, otherwise proto is unused; if proto==0 => no SRV lookup
  * returns: hostent struct & *port filled with the port from the SRV record;
  *  0 on error
  */
-struct hostent* sip_resolvehost(str* name, unsigned short* port)
+struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto)
 {
 	struct hostent* he;
 	struct rdata* head;
@@ -477,9 +484,24 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port)
 				return ip_addr2he(name,ip);
 			}
 			
-			memcpy(tmp, SRV_PREFIX, SRV_PREFIX_LEN);
-			memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
-			tmp[SRV_PREFIX_LEN + name->len] = '\0';
+			switch(proto){
+				case PROTO_NONE: /* no proto specified, use udp */
+					goto skip_srv;
+				case PROTO_UDP:
+					memcpy(tmp, SRV_UDP_PREFIX, SRV_PREFIX_LEN);
+					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_PREFIX_LEN + name->len] = '\0';
+					break;
+				case PROTO_TCP:
+					memcpy(tmp, SRV_TCP_PREFIX, SRV_PREFIX_LEN);
+					memcpy(tmp+SRV_PREFIX_LEN, name->s, name->len);
+					tmp[SRV_PREFIX_LEN + name->len] = '\0';
+					break;
+				default:
+					LOG(L_CRIT, "BUG: sip_resolvehost: unknown proto %d\n",
+							proto);
+					return 0;
+			}
 
 			head=get_record(tmp, T_SRV);
 			for(l=head; l; l=l->next){
@@ -504,7 +526,7 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port)
 					" trying 'normal' lookup...\n", name->len, name->s);
 		}
 	}
-
+skip_srv:
 	if (name->len >= MAX_DNS_NAME) {
 		LOG(L_ERR, "sip_resolvehost: domain name too long\n");
 		return 0;

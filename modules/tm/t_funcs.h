@@ -24,6 +24,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+ /* History:
+  * --------
+  *  2003-02-18  updated various function prototypes (andrei)
+  */
 
 
 
@@ -127,7 +131,7 @@ void start_retr( struct retr_buf *rb );
 void cleanup_localcancel_timers( struct cell *t );
 
 int t_relay_to( struct sip_msg  *p_msg ,
-	struct proxy_l *proxy, int replicate ) ;
+	struct proxy_l *proxy, int proto, int replicate ) ;
 
 
 #endif

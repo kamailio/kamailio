@@ -129,7 +129,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 							goto error_fwd_uri;
 				}
 				/* create a temporary proxy*/
-				p=mk_proxy(&u->host, port);
+				p=mk_proxy(&u->host, port, proto);
 				if (p==0){
 					LOG(L_ERR, "ERROR:  bad host name in uri,"
 							" dropping packet\n");

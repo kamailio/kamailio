@@ -45,6 +45,8 @@
 #define NO_SCRIPT	-1
 
 #define T_RELAY_TO "t_relay_to"
+#define T_RELAY_TO_UDP "t_relay_to_udp"
+#define T_RELAY_TO_TCP "t_relay_to_tcp"
 #define T_RELAY "t_relay"
 #ifndef DEPRECATE_OLD_STUFF
 #	define T_UAC "t_uac"
@@ -56,6 +58,8 @@
 #endif
 #define T_REPLY_UNSAFE "t_reply_unsafe"
 #define T_FORWARD_NONACK "t_forward_nonack"
+#define T_FORWARD_NONACK_UDP "t_forward_nonack_udp"
+#define T_FORWARD_NONACK_TCP "t_forward_nonack_tcp"
 
 
 

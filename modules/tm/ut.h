@@ -27,6 +27,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * -------
+ *  2003-02-13  added proto to uri2proxy (andrei)
+*/
 
 
 #ifndef _TM_UT_H
@@ -41,7 +46,7 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h"
 
-inline static struct proxy_l *uri2proxy( str *uri )
+inline static struct proxy_l *uri2proxy( str *uri, int proto )
 {
 	struct sip_uri parsed_uri;
 	unsigned int  port; 
@@ -63,7 +68,7 @@ inline static struct proxy_l *uri2proxy( str *uri )
 	/* fixed use of SRV resolver
 	} else port=SIP_PORT; */
 	} else port=0;
-	p=mk_proxy(&(parsed_uri.host), port);
+	p=mk_proxy(&(parsed_uri.host), port, proto);
 	if (p==0) {
 		LOG(L_ERR, "ERROR: t_relay: bad host name in URI <%.*s>\n",
 			uri->len, uri->s);

@@ -68,7 +68,7 @@ int load_tm( struct tm_binds *tmb)
 	        LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_is_local=(tget_ti_f)find_export(T_IS_LOCAL, NO_SCRIPT)) ) {
+	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL, NO_SCRIPT)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}

@@ -44,9 +44,11 @@
  *
  * History:
  * --------
- * 2003-01-29 scratchpad removed (jiri)
- * 2003-01-27 fifo:t_uac_dlg completed (jiri)
- * 2003-01-23 t_uac_dlg now uses get_out_socket (jiri)
+ * 2003-01-29  scratchpad removed (jiri)
+ * 2003-01-27  fifo:t_uac_dlg completed (jiri)
+ * 2003-01-23  t_uac_dlg now uses get_out_socket (jiri)
+ * 2003-02-13  t_uac, t _uac_dlg, gethfblock, uri2proxy changed to use 
+ *              proto & rb->dst (andrei)
  */
 
 
@@ -207,7 +209,7 @@ int uac_child_init( int rank )
 }
 
 #ifndef DEPRECATE_OLD_STUFF
-int t_uac( str *msg_type, str *dst, 
+int t_uac( str *msg_type, str *dst, int proto, 
 	str *headers, str *body, str *from, 
 	transaction_cb completion_cb, void *cbp, 
 	dlg_t dlg)
@@ -230,7 +232,7 @@ int t_uac( str *msg_type, str *dst,
 	/* make -Wall shut up */
 	ret=0;
 
-	proxy=uri2proxy( dst );
+	proxy=uri2proxy( dst, proto );
 	if (proxy==0) {
 		ser_error=ret=E_BAD_ADDRESS;
 		LOG(L_ERR, "ERROR: t_uac: can't create a dst proxy\n");
@@ -242,7 +244,7 @@ int t_uac( str *msg_type, str *dst,
 	hostent2su(&to, &proxy->host, proxy->addr_idx, 
 		(proxy->port)?htons(proxy->port):htons(SIP_PORT));
 	/* send_sock=get_send_socket( &to, PROTO_UDP ); */
-	send_sock=get_out_socket( &to, PROTO_UDP );
+	send_sock=get_out_socket( &to, proto );
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: t_uac: no corresponding listening socket "
 			"for af %d\n", to.s.sa_family );
@@ -282,8 +284,10 @@ int t_uac( str *msg_type, str *dst,
 
 
 	request=&new_cell->uac[branch].request;
-	request->to=to;
-	request->send_sock=send_sock;
+	request->dst.to=to;
+	request->dst.send_sock=send_sock;
+	request->dst.proto=proto;
+	request->dst.proto_reserved1=0; /* no special connection required */
 
 	/* need to put in table to calculate label which is needed for printing */
 	LOCK_HASH(new_cell->hash_index);
@@ -344,12 +348,13 @@ done:
 }
 #endif
 
-static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su )
+static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su,
+									 int proto )
 {
 	struct proxy_l *proxy;
 	struct socket_info* send_sock;
 
-	proxy = uri2proxy(uri);
+	proxy = uri2proxy(uri, proto);
 	if (proxy == 0) {
 		ser_error = E_BAD_ADDRESS;
 		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
@@ -358,7 +363,7 @@ static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su )
 
 	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
 			(proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
-	send_sock=get_out_socket(to_su, PROTO_UDP);
+	send_sock=get_out_socket(to_su, proto);
 	if (send_sock == 0) {
 		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
 						to_su->s.sa_family );
@@ -428,6 +433,7 @@ static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su )
  */
 int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OPTIONS etc. */
 	      str* dst,                     /* Real destination (can be different than R-URI) */
+		  int proto,
 	      str* ruri,                    /* Request-URI */
 	      str* to,                      /* To - w/o tag*/
 	      str* from,                    /* From - w/o tag*/
@@ -464,7 +470,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 		goto done;
 	}
 
-	send_sock=uri2sock( dst? dst: ruri, &to_su );
+	send_sock=uri2sock( dst? dst: ruri, &to_su, proto );
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: t_uac_dlg: no socket found\n");
 		goto error00;
@@ -504,8 +510,10 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	new_cell->kr = REQ_FWDED;
 
 	request = &new_cell->uac[branch].request;
-	request->to = to_su;
-	request->send_sock = send_sock;
+	request->dst.to = to_su;
+	request->dst.send_sock = send_sock;
+	request->dst.proto = proto;
+	request->dst.proto_reserved1 = 0;
 
 	/* need to put in table to calculate label which is needed for printing */
 	LOCK_HASH(new_cell->hash_index);
@@ -677,7 +685,7 @@ int fifo_uac( FILE *stream, char *response_file )
 	} else {
 		shmem_file=0;
 	}
-	ret=t_uac(&sm,&sd,&sh,&sb, 0 /* default from */,
+	ret=t_uac(&sm,&sd, PROTO_UDP,&sh,&sb, 0 /* default from */,
 		fifo_callback,shmem_file,0 /* no dialog */);
 	if (ret>0) {
 		if (err2reason_phrase(ret, &sip_error, err_buf,
@@ -782,7 +790,7 @@ int fifo_uac_from( FILE *stream, char *response_file )
 	   will not be triggered and no feedback will be printed
 	   to shmem_file
 	*/
-	ret=t_uac(&sm,&sd,&sh,&sb, sf.len==0 ? 0 : &sf /* default from */,
+	ret=t_uac(&sm,&sd, PROTO_UDP, &sh,&sb, sf.len==0 ? 0: &sf/*default from*/,
 		fifo_callback,shmem_file,0 /* no dialog */);
 	if (ret<=0) {
 		err_ret=err2reason_phrase(ret, &sip_error, err_buf,
@@ -821,7 +829,7 @@ static struct str_list *new_str(char *s, int len, struct str_list **last, int *t
 }
 
 
-static char *get_hfblock(str *uri, struct hdr_field *hf, int *l) 
+static char *get_hfblock(str *uri, struct hdr_field *hf, int *l, int proto) 
 {
 	struct str_list sl, *last, *new, *i, *foo;
 	int hf_avail, frag_len, total_len;
@@ -859,7 +867,7 @@ static char *get_hfblock(str *uri, struct hdr_field *hf, int *l)
 						if (!new) goto error;
 						/* substitute */
 						if (!sock_name) {
-							send_sock=uri2sock( uri, &to_su );
+							send_sock=uri2sock( uri, &to_su, proto );
 							if (!send_sock) {
 								LOG(L_ERR, "ERROR: get_hf_block: send_sock failed\n");
 								goto error;
@@ -1117,7 +1125,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	}
 
 	hfb.s=get_hfblock(outbound.len ? &outbound : &ruri, 
-					faked_msg.headers, &hfb.len);
+					faked_msg.headers, &hfb.len, PROTO_UDP);
 	if (!hfb.s) {
 		fifo_uac_error(response_file, 500, "no mem for hf block");
 		goto error;
@@ -1144,6 +1152,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	dummy_empty.s=0; dummy_empty.len=0;
 	ret=t_uac_dlg( &method, 
 		outbound.len ? &outbound: 0,
+		PROTO_UDP,
 		&ruri, 
 		&faked_msg.to->body,	/* possibly w/to-tag in it */
 		&faked_msg.from->body,

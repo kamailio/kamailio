@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * -------
+ *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
+ */
 
 
 #include "defs.h"
@@ -51,7 +56,8 @@ int send_pr_buffer( struct retr_buf *rb,
 	void *buf, int len, char *function, int line )
 {
 	if (buf && len && rb )
-		return udp_send( rb->send_sock, buf, len, &rb->to) ;
+		return msg_send( rb->dst.send_sock, rb->dst.proto, &rb->dst.to,
+				         rb->dst.proto_reserved1, buf, len);
 	else {
 		LOG(L_CRIT, "ERROR: sending an empty buffer from %s (%d)\n",
 			function, line );
@@ -177,8 +183,8 @@ static int kill_transaction( struct cell *trans )
 
 
 
-int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy,
-	int replicate)
+int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
+				int replicate)
 {
 	int ret;
 	int new_tran;
@@ -219,12 +225,12 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy,
 			uri=(p_msg->new_uri.s==0 || p_msg->new_uri.len==0) ?
 				&p_msg->first_line.u.request.uri :
 				&p_msg->new_uri;
-			proxy=uri2proxy( uri );
+			proxy=uri2proxy( uri, proto );
 			if (proxy==0) {
 					ret=E_BAD_ADDRESS;
 					goto done;
 			}
-			ret=forward_request( p_msg , proxy, p_msg->rcv.proto) ;
+			ret=forward_request( p_msg , proxy, proto) ;
 			free_proxy( proxy );	
 			free( proxy );
 #ifdef ACK_FORKING_HACK
@@ -232,22 +238,22 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy,
 			init_branch_iterator();
 			while((ack_uri.s=next_branch(&ack_uri.len))) {
 				p_msg->new_uri=ack_uri;
-				proxy=uri2proxy(ack_uri);
+				proxy=uri2proxy(ack_uri, proto);
 				if (proxy==0) continue;
-				forward_request(p_msg, proxy);
+				forward_request(p_msg, proxy, proto);
 				free_proxy( proxy );	
 				free( proxy );
 			}
 			p_msg->new_uri=backup_uri;
 #endif
 		} else {
-			ret=forward_request( p_msg , proxy, p_msg->rcv.proto ) ;
+			ret=forward_request( p_msg , proxy, proto ) ;
 #ifdef ACK_FORKING_HACK
 			backup_uri=p_msg->new_uri;
 			init_branch_iterator();
 			while((ack_uri.s=next_branch(&ack_uri.len))) {
 				p_msg->new_uri=ack_uri;
-				forward_request(p_msg, proxy);
+				forward_request(p_msg, proxy, proto);
 			}
 			p_msg->new_uri=backup_uri;
 #endif
@@ -272,7 +278,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy,
 	} 
 
 	/* now go ahead and forward ... */
-	ret=t_forward_nonack(t, p_msg, proxy);
+	ret=t_forward_nonack(t, p_msg, proxy, proto);
 	if (ret<=0) {
 		DBG( "SER:ERROR: t_forward \n");
 		reply_ret=kill_transaction( t );

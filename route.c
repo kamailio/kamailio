@@ -169,7 +169,7 @@ static int fix_actions(struct action* a)
 						case STRING_ST:
 							s.s = t->p1.string;
 							s.len = strlen(s.s);
-							p=add_proxy(&s, t->p2.number);
+							p=add_proxy(&s, t->p2.number, 0); /* FIXME proto*/
 							if (p==0) return E_BAD_ADDRESS;
 							t->p1.data=p;
 							t->p1_type=PROXY_ST;

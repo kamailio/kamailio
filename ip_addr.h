@@ -25,7 +25,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+/*
+ * History:
+ * --------
+ *  2003-02-13  added struct dest_info (andrei)
+ */
 
 #ifndef ip_addr_h
 #define ip_addr_h
@@ -40,7 +44,7 @@
 
 #include "dprint.h"
 
-enum sip_protos { PROTO_UDP, PROTO_TCP, PROTO_TLS };
+enum sip_protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_TLS };
 
 
 struct ip_addr{
@@ -99,6 +103,15 @@ struct receive_info{
 									  the msg was received*/
 	/* no need for dst_su yet */
 };
+
+
+struct dest_info{
+	int proto;
+	int proto_reserved1; /* tcp stores the connection id here */ 
+	union sockaddr_union to;
+	struct socket_info* send_sock;
+};
+
 
 
 /* len of the sockaddr */

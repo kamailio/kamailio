@@ -260,7 +260,7 @@ error_char:
 
 
 
-struct hostent* sip_resolvehost(str* name, unsigned short* port);
+struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto);
 
 
 
