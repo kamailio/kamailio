@@ -746,9 +746,9 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id )
 		   afford updating wait statistics; I admit its not nice
 		   but it greatly utilizes existing lock 
 		*/
-		cur_stats->waiting++;acc_stats->waiting++;
 	}
 	unlock(list->mutex);
+	t_stats_wait();
 }
 
 

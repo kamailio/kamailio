@@ -39,6 +39,7 @@
 #include "t_fwd.h"
 #include "t_lookup.h"
 #include "config.h"
+#include "t_stats.h"
 
 
 /* ----------------------------------------------------- */
@@ -79,6 +80,7 @@ void tm_shutdown()
 	free_timer_table();
 	DBG("DEBUG: tm_shutdown : removing semaphores\n");
 	lock_cleanup();
+	free_tm_stats();
 	DBG("DEBUG: tm_shutdown : done\n");
 }
 

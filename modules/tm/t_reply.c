@@ -74,20 +74,6 @@ unsigned int get_on_negative()
 	return goto_on_negative;
 }
 
-static void update_reply_stats( int code ) {
-	if (code>=600) {
-		acc_stats->completed_6xx++;
-	} else if (code>=500) {
-		acc_stats->completed_5xx++;
-	} else if (code>=400) {
-		acc_stats->completed_4xx++;
-	} else if (code>=300) {
-		acc_stats->completed_3xx++;
-	} else if (code>=200) {
-		acc_stats->completed_2xx++;
-	}
-}
-
 static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	unsigned int *ret_len)
 {
@@ -390,7 +376,7 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	   on current transactions status */
 	/* t_update_timers_after_sending_reply( rb ); */
 	update_reply_stats( code );
-	acc_stats->replied_localy++;
+	tm_stats->replied_localy++;
 	if (lock) UNLOCK_REPLIES( trans );
 	
 	/* do UAC cleanup procedures in case we generated
@@ -544,6 +530,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	       or a stored message */
 		relayed_msg = branch==relay ? p_msg :  t->uac[relay].reply;
 		if (relayed_msg ==FAKED_REPLY) {
+			tm_stats->replied_localy++;
 			relayed_code = branch==relay
 				? msg_status : t->uac[relay].last_received;
 			buf = build_res_buf_from_sip_req( relayed_code,
@@ -674,6 +661,7 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		winning_msg= branch==local_winner 
 			? p_msg :  t->uac[local_winner].reply;
 		if (winning_msg==FAKED_REPLY) {
+			tm_stats->replied_localy++;
 			winning_code = branch==local_winner
 				? msg_status : t->uac[local_winner].last_received;
 		} else {

@@ -31,22 +31,60 @@
 #ifndef _T_STATS_H
 #define _T_STATS_H
 
+#include "../../pt.h"
 
-extern struct t_stats *cur_stats, *acc_stats;
+
+extern struct t_stats *tm_stats;
 
 struct t_stats {
-	/* number of server transactions */
-	unsigned long transactions;
-	/* number of UAC transactions (part of transactions) */
-	unsigned long client_transactions;
 	/* number of transactions in wait state */
-	unsigned long waiting;
+	unsigned long *s_waiting;
+	/* number of server transactions */
+	unsigned long *s_transactions;
+	/* number of UAC transactions (part of transactions) */
+	unsigned long *s_client_transactions;
 	/* number of transactions which completed with this status */
 	unsigned long completed_3xx, completed_4xx, completed_5xx, 
 		completed_6xx, completed_2xx;
 	unsigned long replied_localy;
+	unsigned long deleted;
 };
 
+inline void static t_stats_new(int local)
+{
+	/* keep it in process's piece of shmem */
+	tm_stats->s_transactions[process_no]++;
+	if(local) tm_stats->s_client_transactions[process_no]++;
+}
+
+inline void static t_stats_wait()
+{
+	/* keep it in process's piece of shmem */
+	tm_stats->s_waiting[process_no]++;
+}
+
+inline void static t_stats_deleted( int local )
+{
+	/* no locking needed here -- only timer process deletes */
+	tm_stats->deleted++;
+}
+
+static void update_reply_stats( int code ) {
+	if (code>=600) {
+		tm_stats->completed_6xx++;
+	} else if (code>=500) {
+		tm_stats->completed_5xx++;
+	} else if (code>=400) {
+		tm_stats->completed_4xx++;
+	} else if (code>=300) {
+		tm_stats->completed_3xx++;
+	} else if (code>=200) {
+		tm_stats->completed_2xx++;
+	}
+}
+
+
 int init_tm_stats(void);
+void free_tm_stats();
 
 #endif

@@ -35,8 +35,9 @@
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../fifo_server.h"
+#include "../../pt.h"
 
-struct t_stats *cur_stats, *acc_stats;
+struct t_stats *tm_stats;
 
 
 /* we don't worry about locking data during reads (unlike
@@ -44,34 +45,37 @@ struct t_stats *cur_stats, *acc_stats;
   
 int print_stats(  FILE *f )
 {
-	fprintf(f, "Current:\n");
-	fprintf(f, "# of transactions: %10lu, ", 
-		cur_stats->transactions );
-	fprintf(f, "local: %10lu, ",
-		cur_stats->client_transactions );
-	fprintf(f, "waiting: %10lu" CLEANUP_EOL ,
-		cur_stats->waiting );
+	unsigned long total, current, waiting, total_local;
+	int i;
+	int pno;
 
-	fprintf(f, "Total:\n");
-	fprintf(f, "# of transactions: %10lu,",
-		acc_stats->transactions );
-	fprintf(f, " local: %10lu,",
-		acc_stats->client_transactions );
-	fprintf(f, " waiting: %10lu" CLEANUP_EOL ,
-		acc_stats->waiting );
+	pno=process_count();
+	for(i=0, total=0, waiting=0, total_local=0; i<pno;i++) {
+		total+=tm_stats->s_transactions[i];
+		waiting+=tm_stats->s_waiting[i];
+		total_local+=tm_stats->s_client_transactions[i];
+	}
+	current=total-tm_stats->deleted;
+	waiting-=tm_stats->deleted;
 
-	fprintf(f, "Replied localy: %10lu" CLEANUP_EOL ,
-		acc_stats->replied_localy );
-	fprintf(f, "Completion status 6xx: %10lu,",
-		acc_stats->completed_6xx );
-	fprintf(f, " 5xx: %10lu,",
-		acc_stats->completed_5xx );
-	fprintf(f, " 4xx: %10lu,",
-		acc_stats->completed_4xx );
-	fprintf(f, " 3xx: %10lu,",
-		acc_stats->completed_3xx );
-	fprintf(f, "2xx: %10lu" CLEANUP_EOL ,
-		acc_stats->completed_2xx );
+	
+
+	fprintf(f, "Current: %lu (%lu waiting) "
+		"Total: %lu (%lu local) " CLEANUP_EOL,
+		current, waiting, total, total_local);
+
+	fprintf(f, "Replied localy: %lu" CLEANUP_EOL ,
+		tm_stats->replied_localy );
+	fprintf(f, "Completion status 6xx: %lu,",
+		tm_stats->completed_6xx );
+	fprintf(f, " 5xx: %lu,",
+		tm_stats->completed_5xx );
+	fprintf(f, " 4xx: %lu,",
+		tm_stats->completed_4xx );
+	fprintf(f, " 3xx: %lu,",
+		tm_stats->completed_3xx );
+	fprintf(f, "2xx: %lu" CLEANUP_EOL ,
+		tm_stats->completed_2xx );
 	
 	return 1;
 }
@@ -101,24 +105,60 @@ int static fifo_stats( FILE *pipe, char *response_file )
 
 int init_tm_stats(void)
 {
-	cur_stats=shm_malloc(sizeof(struct t_stats));
-	if (cur_stats==0) {
-		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
-		return -1;
-	}
-	acc_stats=shm_malloc(sizeof(struct t_stats));
-	if (acc_stats==0) {
-		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
-		shm_free(cur_stats);
-		return -1;
-	}
+	int size;
 
+	tm_stats=shm_malloc(sizeof(struct t_stats));
+	if (tm_stats==0) {
+		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		goto error0;
+	}
+	memset(tm_stats, 0, sizeof(struct t_stats) );
+
+	size=sizeof(int)*process_count();
+	tm_stats->s_waiting=shm_malloc(size);
+	if (tm_stats->s_waiting==0) {
+		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		goto error1;
+	}
+	memset(tm_stats->s_waiting, 0, size );
+
+	tm_stats->s_transactions=shm_malloc(size);
+	if (tm_stats->s_transactions==0) {
+		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		goto error2;
+	}
+	memset(tm_stats->s_transactions, 0, size );
+
+	tm_stats->s_client_transactions=shm_malloc(size);
+	if (tm_stats->s_client_transactions==0) {
+		LOG(L_ERR, "ERROR: init_stats: no mem for stats\n");
+		goto error3;
+	}
+	memset(tm_stats->s_client_transactions, 0, size );
+		 
 	if (register_fifo_cmd(fifo_stats, "t_stats", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo stats\n");
-		return -1;
+		goto error4;
 	}
 
-	memset(cur_stats, 0, sizeof(struct t_stats) );
-	memset(acc_stats, 0, sizeof(struct t_stats) );
 	return 1;
+
+error4:
+	shm_free(tm_stats->s_client_transactions);
+error3:
+	shm_free(tm_stats->s_transactions);
+error2:
+	shm_free(tm_stats->s_waiting);
+error1:
+	shm_free(tm_stats);
+error0:
+	return -1;
+}
+
+void free_tm_stats()
+{
+	shm_free(tm_stats->s_client_transactions);
+	shm_free(tm_stats->s_transactions);
+	shm_free(tm_stats->s_waiting);
+	shm_free(tm_stats);
 }

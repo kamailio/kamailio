@@ -254,7 +254,7 @@ void free_hash_table(  )
 				free_cell( p_cell );
 			}
 		}
-
+		shm_free(tm_table);
 	}
 }
 
@@ -323,12 +323,7 @@ void insert_into_hash_table_unsafe( struct cell * p_cell )
 	/* update stats */
 	p_entry->cur_entries++;
 	p_entry->acc_entries++;
-	cur_stats->transactions++;
-	acc_stats->transactions++;
-	if (p_cell->local) {
-		cur_stats->client_transactions++;
-		acc_stats->client_transactions++;
-	}
+	t_stats_new(p_cell->local);
 }
 
 
@@ -369,15 +364,7 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 	}
 #	endif
 	p_entry->cur_entries--;
-#	ifdef EXTRA_DEBUG
-	if (cur_stats->transactions==0) {
-		LOG(L_CRIT, "BUG: bad things happened: cur->transactions=0\n");
-		abort();
-	}
-#	endif
-	cur_stats->transactions--;
-	if (p_cell->local) cur_stats->client_transactions--;
-	cur_stats->waiting--;
+	t_stats_deleted(p_cell->local);
 
 	/* unlock( &(p_entry->mutex) ); */
 }

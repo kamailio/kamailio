@@ -310,6 +310,7 @@ error:
 void lock_cleanup()
 {
 	/* must check if someone uses them, for now just leave them allocated*/
+	if (timer_group_lock) shm_free(timer_group_lock);
 }
 
 #else
@@ -354,6 +355,7 @@ void lock_cleanup()
 	wait_semaphore = 0;
 #endif
 
+	if (timer_group_lock) shm_free(timer_group_lock);
 
 }
 #endif /*FAST_LOCK*/
