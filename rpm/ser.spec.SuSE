@@ -58,7 +58,7 @@ The ser-jabber package contains a sip to jabber message translator.
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
 Requires: ser
-BuildPrereq:  radiusclient-devel
+BuildPrereq:  radiusclient
 
 %description radius
 The ser-radius package contains modules for radius authentication, group
