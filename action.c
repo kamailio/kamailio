@@ -548,7 +548,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 	
 error_uri:
 	LOG(L_ERR, "ERROR: do_action: set*: uri too long\n");
-	if (new_uri) free(new_uri);
+	if (new_uri) pkg_free(new_uri);
 	return E_UNSPEC;
 error_fwd_uri:
 	/*free_uri(&uri); -- not needed anymore, using msg->parsed_uri*/
