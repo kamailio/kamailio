@@ -310,9 +310,9 @@ usrloc() {
 		exit 1
 	fi
 	if [ "$1" = "alias" ] ; then
-		TABLE="$A_TABLE"
+		UL_TABLE="$A_TABLE"
 	elif [ "$1" = "ul" ] ; then
-		TABLE="$USRLOC"
+		UL_TABLE="$USRLOC"
 	else
 		echo "usrloc: unknown table name"
 		exit 1
@@ -322,7 +322,7 @@ usrloc() {
 	case $1 in 
 		show)
 			if [ $# -eq 2 ] ; then
-				fifo_cmd ul_show_contact $TABLE $2
+				fifo_cmd ul_show_contact $UL_TABLE $2
 			elif [ $# -eq 1 ] ; then
 				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] "
 				read answer
@@ -348,7 +348,7 @@ usrloc() {
 				exit 1
 			fi
 
-			fifo_cmd ul_add "$TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
+			fifo_cmd ul_add "$UL_TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
 			exit $?
 			;;
 		rm)
@@ -357,7 +357,7 @@ usrloc() {
                 exit 1
             fi
 			shift
-			fifo_cmd ul_rm $TABLE $1
+			fifo_cmd ul_rm $UL_TABLE $1
 
             ;;
 
