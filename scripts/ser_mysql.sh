@@ -33,6 +33,8 @@ CMD="mysql -h $DBHOST -p -u "
 BACKUP_CMD="mysqldump -h $DBHOST -p -c -t -u "
 TABLE_TYPE="TYPE=MyISAM"
 SQL_USER="root"
+# user name column
+USERCOL="username"
 
 #################################################################
 
@@ -85,14 +87,29 @@ drop database $1;
 EOF
 } #ser_drop
 
-ser_create () # pars: <database name> <sql_user>
+ser_create () # pars: <database name> <sql_user> [<no_init_user>]
 {
 
 #test
 #cat > /tmp/sss <<EOF
 
-if [ $# -ne 2 ] ; then
-	echo "ser_create function takes two params"
+if [ $# -eq 2 ] ; then
+	# by default we create initial user
+	INITIAL_USER="INSERT INTO subscriber 
+		($USERCOL, password, first_name, last_name, phone, 
+		email_address, datetime_created, datetime_modified, confirmation, 
+		flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms ) 
+		VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
+		'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00', 
+		'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '', 
+		'0239482f19d262f3953186a725a6f53b', 'iptel.org', 
+		'a84e8abaa7e83d1b45c75ab15b90c320', 
+		'65e397cda0aa8e3202ea22cbd350e4e9', 'admin' );"
+elif [ $# -eq 3 ] ; then
+	# if 3rd param set, don't create any initial user
+	INITIAL_USER=""
+else
+	echo "ser_create function takes two or three params"
 	exit 1
 fi
 
@@ -157,7 +174,9 @@ CREATE TABLE acc (
   from_uri varchar(128) NOT NULL default '',
   to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
-  username varchar(64) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  fromtag varchar(128) NOT NULL default '',
+  totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL
 ) $TABLE_TYPE;
@@ -181,13 +200,12 @@ CREATE TABLE active_sessions (
 
 
 
-
 #
 # Table structure for table 'aliases' -- location-like table
 #
 
 CREATE TABLE aliases (
-  username varchar(50) NOT NULL default '',
+  $USERCOL varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
@@ -197,7 +215,7 @@ CREATE TABLE aliases (
   last_modified timestamp(14) NOT NULL,
   replicate int(10) unsigned default NULL,
   state tinyint(1) unsigned default NULL,
-  PRIMARY KEY(username, domain, contact)
+  PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -209,7 +227,7 @@ CREATE TABLE aliases (
 
 CREATE TABLE event (
   id int(10) unsigned NOT NULL auto_increment,
-  username varchar(50) NOT NULL default '',
+  $USERCOL varchar(50) NOT NULL default '',
   uri varchar(255) NOT NULL default '',
   description varchar(255) NOT NULL default '',
   PRIMARY KEY (id)
@@ -225,11 +243,11 @@ CREATE TABLE event (
 
 
 CREATE TABLE grp (
-  username varchar(50) NOT NULL default '',
+  $USERCOL varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   grp varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY(username, domain, grp)
+  PRIMARY KEY($USERCOL, domain, grp)
 ) $TABLE_TYPE;
 
 
@@ -241,7 +259,7 @@ CREATE TABLE grp (
 
 
 CREATE TABLE location (
-  username varchar(50) NOT NULL default '',
+  $USERCOL varchar(50) NOT NULL default '',
   domain varchar(100) NOT NULL default '',
   contact varchar(255) NOT NULL default '',
   expires datetime default NULL,
@@ -251,7 +269,7 @@ CREATE TABLE location (
   last_modified timestamp(14) NOT NULL,
   replicate int(10) unsigned default NULL,
   state tinyint(1) unsigned default NULL,
-  PRIMARY KEY(username, domain, contact)
+  PRIMARY KEY($USERCOL, domain, contact)
 ) $TABLE_TYPE;
 
 
@@ -273,7 +291,9 @@ CREATE TABLE missed_calls (
   from_uri varchar(128) NOT NULL default '',
   to_uri varchar(128) NOT NULL default '',
   sip_callid varchar(128) NOT NULL default '',
-  username varchar(64) NOT NULL default '',
+  $USERCOL varchar(64) NOT NULL default '',
+  fromtag varchar(128) NOT NULL default '',
+  totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL
 ) $TABLE_TYPE;
@@ -289,7 +309,7 @@ CREATE TABLE missed_calls (
 
 CREATE TABLE pending (
   phplib_id varchar(32) NOT NULL default '',
-  username varchar(100) NOT NULL default '',
+  $USERCOL varchar(100) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -307,8 +327,8 @@ CREATE TABLE pending (
   perms varchar(32) default NULL,
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
-  PRIMARY KEY (username, domain),
-  KEY user_2 (username),
+  PRIMARY KEY ($USERCOL, domain),
+  KEY user_2 ($USERCOL),
   UNIQUE KEY phplib_id (phplib_id)
 ) $TABLE_TYPE;
 
@@ -322,7 +342,7 @@ CREATE TABLE pending (
 
 CREATE TABLE phonebook (
   id int(10) unsigned NOT NULL auto_increment,
-  username varchar(50) NOT NULL default '',
+  $USERCOL varchar(50) NOT NULL default '',
   fname varchar(32) NOT NULL default '',
   lname varchar(32) NOT NULL default '',
   sip_uri varchar(128) NOT NULL default '',
@@ -339,7 +359,7 @@ CREATE TABLE phonebook (
 
 
 CREATE TABLE reserved (
-  username char(100) NOT NULL default '',
+  $USERCOL char(100) NOT NULL default '',
   UNIQUE KEY user2(username)
 ) $TABLE_TYPE;
 
@@ -353,7 +373,7 @@ CREATE TABLE reserved (
 
 CREATE TABLE subscriber (
   phplib_id varchar(32) NOT NULL default '',
-  username varchar(100) NOT NULL default '',
+  $USERCOL varchar(100) NOT NULL default '',
   password varchar(25) NOT NULL default '',
   first_name varchar(25) NOT NULL default '',
   last_name varchar(45) NOT NULL default '',
@@ -372,8 +392,8 @@ CREATE TABLE subscriber (
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
-  PRIMARY KEY (username, domain),
-  KEY user_2 (username)
+  PRIMARY KEY ($USERCOL, domain),
+  KEY user_2 ($USERCOL)
 ) $TABLE_TYPE;
 
 # hook-table for all posssible future config values
@@ -382,7 +402,7 @@ CREATE TABLE subscriber (
 CREATE TABLE config (
    attribute varchar(32) NOT NULL,
    value varchar(128) NOT NULL,
-   username varchar(100) NOT NULL default '',
+   $USERCOL varchar(100) NOT NULL default '',
    modified timestamp(14)
 ) $TABLE_TYPE;
 
@@ -415,11 +435,11 @@ CREATE TABLE domain (
 # Table structure for table 'uri' -- uri user parts users are allowed to use
 #
 CREATE TABLE uri (
-  username varchar(50) NOT NULL default '',
+  $USERCOL varchar(50) NOT NULL default '',
   domain varchar(50) NOT NULL default '',
   uri_user varchar(50) NOT NULL default '',
   last_modified datetime NOT NULL default '0000-00-00 00:00:00',
-  PRIMARY KEY (username, domain, uri_user)
+  PRIMARY KEY ($USERCOL, domain, uri_user)
 ) $TABLE_TYPE;
 
 #
@@ -482,14 +502,8 @@ CREATE TABLE server_monitoring_ul (
 # add an admin user "admin" with password==heslo, 
 # so that one can try it out on quick start
 
-INSERT INTO subscriber (username, password, first_name, last_name, phone, 
-	email_address, datetime_created, datetime_modified, confirmation, 
-	flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id, perms ) 
-	VALUES ( 'admin', 'heslo', 'Initial', 'Admin', '123', 
-	'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00', 
-	'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '', 
-	'0239482f19d262f3953186a725a6f53b', 'iptel.org', 
-	'a84e8abaa7e83d1b45c75ab15b90c320', '65e397cda0aa8e3202ea22cbd350e4e9', 'admin' );
+$INITIAL_USER
+
 
 
 EOF
@@ -499,7 +513,10 @@ EOF
 
 case $1 in
 	renew)
-		# backup, drop, restore (experimental)
+		# backup, drop, restore -- experimental; thought to
+		# deal with upgrade to new structures which include
+		# new tables or columns (troubles can appear if columns
+		# renamed); not tested too much yet
 		tmp_file=/tmp/ser_mysql.$$
 		ser_backup $DBNAME $SQL_USER > $tmp_file
 		ret=$?
@@ -512,7 +529,7 @@ case $1 in
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		ser_create $DBNAME $SQL_USER
+		ser_create $DBNAME $SQL_USER no_init_user
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
@@ -536,7 +553,7 @@ case $1 in
 			rm $tmp_file
 			exit $ret
 		fi
-		ser_create $1 $SQL_USER
+		ser_create $1 $SQL_USER no_init_user
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			rm $tmp_file
