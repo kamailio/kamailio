@@ -72,7 +72,7 @@ db_con_t *db_con = NULL;
 
 
 /** parameters */
-char *db_url = "sql://root@127.0.0.1/pdt";
+char *db_url = "mysql://root@127.0.0.1/pdt";
 char *db_table = "domains";
 
 /** pstn prefix */

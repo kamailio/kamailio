@@ -98,7 +98,7 @@ db_con_t** db_con;
 
 /** parameters */
 
-char *db_url   = "sql://root@127.0.0.1/sip_jab";
+char *db_url   = "mysql://root@127.0.0.1/sip_jab";
 char *db_table = "jusers";
 char *registrar=NULL; //"sip:registrar@iptel.org";
 

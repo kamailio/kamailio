@@ -323,14 +323,14 @@
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>sql://root@127.0.0.1/sip_jab</quote>.
+		    Default value is <quote>mysql://root@127.0.0.1/sip_jab</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("jabber", "db_url", "sql://username:password@host/sip_jab")
+modparam("jabber", "db_url", "mysql://username:password@host/sip_jab")
 ...
 </programlisting>
 	    </example>

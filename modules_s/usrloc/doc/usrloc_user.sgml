@@ -198,14 +198,14 @@ modparam("usrloc", "method_column", "method")
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>sql://ser:heslo@localhost/ser</quote>.
+		    Default value is <quote>mysql://ser:heslo@localhost/ser</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("usrloc", "db_url", "sql://username:password@localhost/ser")
+modparam("usrloc", "db_url", "mysql://username:password@localhost/ser")
 ...
 </programlisting>
 	    </example>

@@ -44,16 +44,16 @@
 	    <para>
 		This is URL of the database to be used. Value of the parameter depends on the
 		database module used. For example for mysql and postgres modules this is something
-		like sql://username:password@host:port/database. For dbtext module (which stores
+		like mysql://username:password@host:port/database. For dbtext module (which stores
 		data in plaintex files) it is directory in which the database resides.
 	    </para>
 	    <para>
-		Default value is <quote>sql://serro:47serro11@localhost/ser</quote>.
+		Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
 	    </para>
 	    <example>
 		<title><varname>db_url</varname> parameter usage</title>
 		<programlisting format="linespecific">
-modparam("auth_db", "db_url", "sql://foo:bar@foobar.org/ser")
+modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/ser")
 </programlisting>
 	    </example>
 	</section>

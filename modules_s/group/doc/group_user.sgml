@@ -58,14 +58,14 @@
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>sql://serro:47serro11@localhost/ser</quote>.
+		    Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "db_url", "sql://username:password@dbhost/ser")
+modparam("group", "db_url", "mysql://username:password@dbhost/ser")
 ...
 </programlisting>
 	    </example>

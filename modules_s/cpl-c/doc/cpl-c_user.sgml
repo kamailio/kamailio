@@ -83,7 +83,7 @@
 				<title>Set <varname>cpl_db</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl_c","cpl_db","sql://user:passwd@host/database")
+modparam("cpl_c","cpl_db","mysql://user:passwd@host/database")
 ...
 				</programlisting>
 			</example>

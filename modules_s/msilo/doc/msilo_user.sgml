@@ -87,14 +87,14 @@
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>sql://root@localhost/msilo</quote>.
+		    Default value is <quote>mysql://root@localhost/msilo</quote>.
 		</emphasis>
 	    </para>
 	    <example>
 		<title>Set the <quote>db_url</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("msilo", "db_url", "sql://user:passwd@host.com/dbname")
+modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
 </programlisting>
 	    </example>

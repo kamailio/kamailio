@@ -100,11 +100,11 @@ domain[3330]=iptel.org
 	    <title><varname>db_url</varname> (string)</title>
 	    <para>
 		<acronym>SQL</acronym> &url; of database--username, password, host, port and
-		database (ex: sql://username:password@hostname.com/database)
+		database (ex: mysql://username:password@hostname.com/database)
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>sql://root@127.0.0.1/pdt</quote>.
+		    Default value is <quote>mysql://root@127.0.0.1/pdt</quote>.
 		</emphasis>
 	    </para>
 	    <example>

@@ -53,12 +53,12 @@
 		This is <acronym>URL</acronym> of the database to be used.
 	    </para>
 	    <para>
-		Default value is <quote>sql://serro:47serro11@localhost/ser</quote>
+		Default value is <quote>mysql://serro:47serro11@localhost/ser</quote>
 	    </para>
 	    <example>
 		<title>Setting db_url parameter</title>
 		<programlisting format="linespecific">
-modparam("domain", "db_url", "sql://ser:pass@db_host/ser")
+modparam("domain", "db_url", "mysql://ser:pass@db_host/ser")
 </programlisting>
 	    </example>
 	</section>

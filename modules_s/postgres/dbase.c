@@ -115,7 +115,7 @@ static int connect_db(db_con_t* _h, const char* _db_url)
 
 	/*
 	** get the connection parameters parsed from the db_url string
-	** it looks like: sql://username:userpass@dbhost:dbport/dbname
+	** it looks like: postgres://username:userpass@dbhost:dbport/dbname
 	** username/userpass : name and password for the database
 	** dbhost :            the host name or ip address hosting the database
 	** dbport :            the port to connect to database on

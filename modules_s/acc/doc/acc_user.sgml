@@ -371,12 +371,12 @@ modparam("acc", "radius_missed_flag", 3)
 		SQL address -- database specific.
 	    </para>
 	    <para>
-		Default value is <quote>sql://ser:heslo@localhost/ser</quote>
+		Default value is <quote>mysql://ser:heslo@localhost/ser</quote>
 	    </para>
 	    <example>
 		<title>db_url example</title>
 		<programlisting format="linespecific">
-modparam("acc", "db_url", "sql://user:password@localhost/ser")
+modparam("acc", "db_url", "mysql://user:password@localhost/ser")
 </programlisting>
 	    </example>
 	</section>
