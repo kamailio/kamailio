@@ -603,7 +603,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 		while(dst_ptr) {
 			if (cmp_contact(dst_ptr, src_ptr) == TRUE) {
 				if (check_request_order(dst_ptr, src_ptr) == TRUE) {  /* FIXME */
-					DBG("update_location(): Order OK, updating\n");
+					printf("update_location(): Order OK, updating\n");
 					if (src_ptr->expires == 0) {
 #ifdef USE_DB
 						if (db_remove_contact(_c, dst_ptr) == FALSE) {
@@ -612,6 +612,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 						}
 #endif
 						     /* FIXME */
+						printf("up: remove contact\n");
 						if (remove_contact(_dst, dst_ptr->c.s) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while removing from cache\n");
 							return FALSE;
@@ -623,6 +624,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 							return FALSE;
 						}
 #endif
+						printf("up: update contact\n");
 						if (update_contact(dst_ptr, src_ptr) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while updating cache\n");
 							return FALSE;
@@ -646,6 +648,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 				return FALSE;
 			}
 #endif
+			printf("ud: add contact\n");
 			if (add_contact(_dst, src_ptr->c. s, src_ptr->expires, src_ptr->q, src_ptr->callid, src_ptr->cseq) == FALSE) {
 				LOG(L_ERR, "update_location(): Error while adding contact\n");
 				return FALSE;

@@ -2,7 +2,7 @@
 #define DEFS_H
 
 /* Define this if you want to use mysql */
-#define USE_DB
+/* #define USE_DB */
 
 
 #endif

@@ -331,7 +331,9 @@ int cache_update(cache_t* _c, c_elem_t* _el, location_t* _loc)
 		return FALSE;
 	}
 #endif
+#ifdef USE_DB
 	cache_use_table(_c);
+#endif
 	if (update_location(_c->db_con, _el->loc, _loc) == FALSE) {
 		LOG(L_ERR, "cache_update(): Error while updating location\n");
 		return FALSE;
