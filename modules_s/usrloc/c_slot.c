@@ -23,12 +23,12 @@ int init_slot(cache_t* _c, c_slot_t* _slot)
 		return FALSE;
 	}
 #endif
-	_slot->ll.count = 0;
-	_slot->ll.first = NULL;
-	_slot->ll.last = NULL;
-	_slot->cache = _c;
+	SLOT_ELEM_COUNT(_slot) = 0;
+	SLOT_FIRST_ELEM(_slot) = NULL;
+	SLOT_LAST_ELEM(_slot) = NULL;
+	SLOT_CACHE(_slot) = _c;
 
-	init_lock(_slot->lock);
+	init_lock(SLOT_LOCK(_slot));
 	return TRUE;
 }
 
@@ -45,14 +45,65 @@ void deinit_slot(c_slot_t* _slot)
 		return;
 	}
 #endif
-	while(_slot->ll.first) {
-		ptr = _slot->ll.first;
-		_slot->ll.first = ptr->ll.next;
+	while(SLOT_FIRST_ELEM(_slot)) {
+		ptr = SLOT_FIRST_ELEM(_slot);
+		SLOT_FIRST_ELEM(_slot) = ELEM_SLOT_NEXT(ptr);
 
 		free_element(ptr);
 	}
-	_slot->ll.count = 0;
-	_slot->ll.last = NULL;
-	_slot->cache = NULL;
+	SLOT_ELEM_COUNT(_slot) = 0;
+	SLOT_LAST_ELEM(_slot) = NULL;
+	SLOT_CACHE(_slot) = NULL;
 }
+
+
+/*
+ * Add an element to an slot's linked list
+ */
+void slot_add_elem(c_slot_t* _slot, c_elem_t* _el)
+{
+	if (!SLOT_ELEM_COUNT(_slot)++) {
+		SLOT_FIRST_ELEM(_slot) = SLOT_LAST_ELEM(_slot) = _el;
+	} else {
+		ELEM_SLOT_PREV(_el) = SLOT_LAST_ELEM(_slot);
+		ELEM_SLOT_NEXT(SLOT_LAST_ELEM(_slot)) = _el;
+		SLOT_LAST_ELEM(_slot) = _el;
+	}
+	
+	ELEM_SLOT(_el) = _slot;
+}
+
+
+/*
+ * Remove an element from slot linked list
+ */
+c_elem_t* slot_rem_elem(c_elem_t* _el)
+{
+	c_elem_t* ptr;
+	c_slot_t* slot = ELEM_SLOT(_el);
+
+	ptr = SLOT_FIRST_ELEM(slot);
+
+	while(ptr) {
+		if (ptr == _el) {
+			if (ELEM_SLOT_PREV(ptr)) {
+				ELEM_SLOT_NEXT(ELEM_SLOT_PREV(ptr)) = ELEM_SLOT_NEXT(ptr);
+			} else {
+				SLOT_FIRST_ELEM(slot) = ELEM_SLOT_NEXT(ptr);
+			}
+			if (ELEM_SLOT_NEXT(ptr)) {
+				ELEM_SLOT_PREV(ELEM_SLOT_NEXT(ptr)) = ELEM_SLOT_PREV(ptr);
+			} else {
+				SLOT_LAST_ELEM(slot) = ELEM_SLOT_PREV(ptr);
+			}
+			ELEM_SLOT_PREV(ptr) = ELEM_SLOT_NEXT(ptr) = NULL;
+			ELEM_SLOT(ptr) = NULL;
+			SLOT_ELEM_COUNT(slot)--;
+			break;
+		}
+		ptr = ELEM_SLOT_NEXT(ptr);
+	}
+	return ptr;
+}
+
 

@@ -33,14 +33,17 @@ typedef struct cache {
 } cache_t;
 
 
+/* Cache hash table size */
+#define CACHE_SIZE(cache) ((cache)->size)
+
+/* Get database table name associated with this cache */
+#define CACHE_DB_TABLE(cache) ((cache)->db_table)
+
 /* Get first element in the hash table */
 #define CACHE_FIRST_ELEM(cache) ((cache)->c_ll.first)
 
 /* Get number of elements in the hash table */
 #define CACHE_ELEM_COUNT(cache) ((cache)->c_ll.count)
-
-/* Get next element in the hash table */
-#define CACHE_NEXT_ELEM(elem)  ((elem)->c_ll.next)
 
 /* Get last elements in the hash table */
 #define CACHE_LAST_ELEM(cache) ((cache)->c_ll.last)
@@ -51,6 +54,8 @@ typedef struct cache {
 /* Get cache lock */
 #define CACHE_LOCK(cache) ((cache)->lock)
 
+/* Get cache hash table */
+#define CACHE_HTABLE(cache) ((cache)->table)
 
 /*
  * Create a new cache structure
@@ -66,9 +71,9 @@ void free_cache(cache_t* _c);
 
 
 /*
- * Put an element into cache
+ * Insert a new location into cache
  */
-int cache_put(cache_t* _c, db_con_t* _con, location_t* _l);
+int cache_insert(cache_t* _c, db_con_t* _con, location_t* _l);
 
 
 /*
@@ -78,15 +83,13 @@ struct c_elem* cache_get(cache_t* _c, str* _aor);
 
 
 /*
- * Update cache element
+ * Update a location in cache
  */
-int cache_update(cache_t* _c, db_con_t* _con, struct c_elem** _el, location_t* _loc);
+int cache_update(cache_t* _c, db_con_t* _con, struct c_elem** _el, location_t* _loc, int* _sr);
 
 
 /*
- * Remove one or more bindings from cache
- * If you want to remove all bindings for given
- * to, set the last parameter to NULL
+ * Remove a location from cache
  */
 int cache_remove(cache_t* _c, db_con_t* _con, str* _aor);
 
@@ -110,6 +113,9 @@ void print_cache(cache_t* _c);
 int preload_cache(cache_t* _c, db_con_t* _con);
 
 
+/*
+ * Remove expired bindings from cache
+ */
 int clean_cache(cache_t* _c, db_con_t* _con);
 
 

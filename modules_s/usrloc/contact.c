@@ -11,6 +11,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "defs.h"
+#include "sh_malloc.h"
 
 /*
  * Print contact, for debugging purposes only
@@ -42,17 +43,17 @@ int create_contact(contact_t** _con, str* _aor, const char* _c, time_t _expires,
 	}
 #endif
 
-	*_con = (contact_t*)pkg_malloc(sizeof(contact_t));
+	*_con = (contact_t*)sh_malloc(sizeof(contact_t));
 	if (!(*_con)) {
 	        LOG(L_ERR, "create_contact(): No memory left\n");
 		return FALSE;
 	}
 
 	len = strlen(_c);
-	(*_con)->c.s = (char *)pkg_malloc(len + 1);
+	(*_con)->c.s = (char *)sh_malloc(len + 1);
 	if (!((*_con)->c.s)) {
 		LOG(L_ERR, "create_contact(): No memory left\n");
-		pkg_free(*_con);
+		sh_free(*_con);
 		return FALSE;
 	}
 
@@ -65,11 +66,11 @@ int create_contact(contact_t** _con, str* _aor, const char* _c, time_t _expires,
 	(*_con)->q = _q;
 
 	len = strlen(_callid);
-	(*_con)->callid = (char*)pkg_malloc(len + 1);
+	(*_con)->callid = (char*)sh_malloc(len + 1);
 	if (!((*_con)->callid)) {
 		LOG(L_ERR, "create_contact(): No memory left\n");
-		pkg_free(*_con);
-		pkg_free(((*_con)->callid));
+		sh_free(*_con);
+		sh_free((*_con)->c.s);
 		return FALSE;
 	}
 	memcpy((*_con)->callid, _callid, len + 1);
@@ -86,9 +87,9 @@ int create_contact(contact_t** _con, str* _aor, const char* _c, time_t _expires,
 void free_contact(contact_t* _c)
 {
 	if (_c) {
-		pkg_free(_c->callid);
-		pkg_free(_c->c.s);
-		pkg_free(_c);
+		sh_free(_c->callid);
+		sh_free(_c->c.s);
+		sh_free(_c);
 	}
 }
 
@@ -110,14 +111,14 @@ int update_contact(contact_t* _dst, contact_t* _src)
 #endif
 
 	len = strlen(_src->callid);
-	ptr = (char*)pkg_malloc(len + 1);
+	ptr = (char*)sh_malloc(len + 1);
 	if (!ptr) {
 		LOG(L_ERR, "update_contact(): No memory left\n");
 		return FALSE;
 	}
 	memcpy(ptr, _src->callid, len + 1);
 
-	pkg_free(_dst->callid);
+	sh_free(_dst->callid);
 	_dst->callid = ptr;
 
 	_dst->expires = _src->expires;
@@ -145,7 +146,7 @@ int cmp_contact(contact_t* _c1, contact_t* _c2)
 
 int db_remove_contact(db_con_t* _c, contact_t* _con)
 {
-	db_key_t keys[2] = {"user", "contact"};
+	db_key_t keys[2] = {USER_COLUMN, CONTACT_COLUMN};
 	db_val_t vals[2] = {{DB_STRING, 0, {.string_val = NULL}},
 			    {DB_STRING, 0, {.string_val = NULL}}
 	};
@@ -172,12 +173,12 @@ int db_remove_contact(db_con_t* _c, contact_t* _con)
 
 int db_update_contact(db_con_t* _c, contact_t* _con)
 {
-	db_key_t keys1[2] = {"user", "contact"};
+	db_key_t keys1[2] = {USER_COLUMN, CONTACT_COLUMN};
 	db_val_t vals1[2] = {{DB_STRING, 0, {.string_val = NULL}},
 			    {DB_STRING, 0, {.string_val = NULL}}
 	};
 
-	db_key_t keys2[4] = {"expires", "q", "callid", "cseq"};
+	db_key_t keys2[4] = {EXPIRES_COLUMN, Q_COLUMN, CALLID_COLUMN, CSEQ_COLUMN};
 	db_val_t vals2[4] = {{DB_DATETIME, 0, {.time_val = 0}},
 			     {DB_DOUBLE, 0, {.double_val = 0}},
 			     {DB_STRING, 0, {.string_val = NULL}},
@@ -211,7 +212,7 @@ int db_update_contact(db_con_t* _c, contact_t* _con)
 
 int db_insert_contact(db_con_t* _c, contact_t* _con)
 {
-	db_key_t keys[] = { "user", "contact", "expires", "q", "callid", "cseq"};
+	db_key_t keys[] = {USER_COLUMN, CONTACT_COLUMN, EXPIRES_COLUMN, Q_COLUMN, CALLID_COLUMN, CSEQ_COLUMN};
 	db_val_t vals[] = {{DB_STRING,   0, {.string_val = NULL}},
 			  {DB_STRING,   0, {.string_val = NULL}},
 			  {DB_DATETIME, 0, {.time_val = 0}},

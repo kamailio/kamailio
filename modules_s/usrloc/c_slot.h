@@ -30,11 +30,14 @@ typedef struct c_slot {
 /* Number of elements in the collision slot */
 #define SLOT_ELEM_COUNT(slot) ((slot)->ll.count)
 
-/* Next element in the collision slot */
-#define SLOT_ELEM_NEXT(elem) ((elem)->ll.next)
-
 /* Last element in the collision slot */
-#define SLOT_ELEM_LAST(slot) ((slot)->ll.last)
+#define SLOT_LAST_ELEM(slot) ((slot)->ll.last)
+
+/* Cache we belong to */
+#define SLOT_CACHE(slot) ((slot)->cache)
+
+/* Collision slot lock */
+#define SLOT_LOCK(slot) ((slot)->lock)
 
 
 /*
@@ -50,9 +53,15 @@ void deinit_slot(c_slot_t* _ent);
 
 
 /*
- * Find an element in slot linked list
+ * Add an element to slot linked list
  */
-//struct c_elem* find_elem(c_slot_t* _sl, const char* _str);
+void slot_add_elem(c_slot_t* _slot, struct c_elem* _el);
+
+
+/*
+ * Remove an element from slot linked list
+ */
+struct c_elem* slot_rem_elem(struct c_elem* _el);
 
 
 #endif

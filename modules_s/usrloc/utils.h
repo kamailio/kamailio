@@ -68,5 +68,4 @@ char* find_not_quoted(char* _b, char c);
  */
 char* eat_name(char* _b);
 
-
 #endif

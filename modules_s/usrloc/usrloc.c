@@ -1,6 +1,6 @@
 /* $Id$
  *
- * User location support
+ * User location support module
  *
  */
 
@@ -17,40 +17,127 @@
 #include "../../data_lump_rpl.h"
 #include "../../timer.h"
 
-static int  save_contact   (struct sip_msg*, char*, char*);
-static int  lookup_contact (struct sip_msg*, char*, char*);
-static int  rwrite         (struct sip_msg* _msg, str* _c);
-static int  child_init     (int rank);
-       int  (*sl_reply)    (struct sip_msg* _msg, char* _str1, char* _str2);
-       int  child_init     (int rank);
-       void destroy        (void);
-static void tr          (unsigned int ticks, void* param);
 
+/*
+ * Per-child init function
+ */
+static int child_init(int rank);
+
+
+/*
+ * Timer handler
+ */
+static void tr(unsigned int ticks, void* param);
+
+
+/*
+ * Module's destroy function
+ */
+void destroy(void);
+
+
+/*
+ * Build Contact HF for 200 responses
+ */
+static inline void build_contact_buf(char* _b, int* _len, location_t* _loc);
+
+
+/*
+ * Send 200 OK response with properly
+ * created Contact HF
+ */
+static inline int send_200(struct sip_msg* _msg, location_t* _loc);
+
+
+/*
+ * Process request that contained a star, in that case, we will remove
+ * all bindings with the given username from the database and memory
+ * cache and return 200 OK response
+ */
+static inline int process_star_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc);
+
+
+/*
+ * This function will process requests that contained no contacts, that means
+ * we will return a list of all contacts currently present in the database in
+ * 200 OK response
+ */
+static inline int process_no_contacts(struct sip_msg* _msg, cache_t* _c, location_t* _loc);
+
+
+/* 
+ * This function will process request that contained some contacts
+ */
+static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t* _loc);
+
+
+/*
+ * Process REGISTER requests
+ */
+static inline int process_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc, int star);
+
+
+/*
+ * Parse REGISTER request and process it's contacts
+ */
+static int save_contact(struct sip_msg* _msg, char* _table, char* _str2);
+
+
+/*
+ * Lookup contact in the database and rewrite Request-URI
+ */
+static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2);
+
+
+/*
+ * Rewrite Request-URI
+ */
+static int rwrite(struct sip_msg* _msg, str* _s);
+
+
+/*
+ * Structure that represents database connection
+ */
 db_con_t* db_con;
+
+
+/*
+ * In-memory case of contacts
+ */
 static cache_t* c;
+
+
+/*
+ * Flag if we are using a database or not
+ */
 static int use_db;
 
 
-static struct module_exports usrloc_exports= {	"usrloc", 
-						(char*[]) {
-							"save_contact",
-							"lookup_contact"
-						},
-						(cmd_function[]) {
-							save_contact, 
-							lookup_contact
-						},
-						(int[]){1, 1},
-						(fixup_function[]){0, 0},
-						2,
-						0,
-						destroy,
-						0,          /* oncancel function */
-						child_init
+/*
+ * sl_send_reply function pointer
+ */
+int (*sl_reply)(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+static struct module_exports usrloc_exports= {
+	"usrloc", 
+	(char*[]) {
+		"save_contact",
+		"lookup_contact"
+	},
+	(cmd_function[]) {
+		save_contact, 
+		lookup_contact
+	},
+	(int[]){1, 1},
+	(fixup_function[]){0, 0},
+	2,
+	0,
+	destroy,    /* destroy function */
+	0,          /* oncancel function */
+	child_init  /* Per-child init function */
 };
 
-
-char* pokus;
 
 /*
  * Initialize parent
@@ -59,11 +146,22 @@ struct module_exports* mod_register()
 {
 	printf( "Registering user location module\n");
 
+	     /*
+	      * We will need sl_send_reply from stateless
+	      * module for sending replies
+	      */
 	sl_reply = find_export("sl_send_reply", 2);
 	if (!sl_reply) {
 		LOG(L_ERR, "mod_register(): This module requires sl module\n");
 	}
 	
+	     /*
+	      * Try to find some database module, if
+	      * there is no database module, we will
+	      * use memory cache only, in this case
+	      * bindings will be not persistent and
+	      * will not survive server restarts
+	      */
 	if (bind_dbmod()) {
 		LOG(L_ERR, "usrloc: Database module not found, using memory cache only\n");
 		db_con = NULL;
@@ -73,13 +171,30 @@ struct module_exports* mod_register()
 		use_db = 1;
 	}
 
+	     /*
+	      * Create a user location cache
+	      * that will speed up database
+	      * writes and lookups, database
+	      * is used for purpose of data
+	      * persistence across restarts
+	      * only, all reads and writes
+	      * are memory-cached
+	      */
  	c = create_cache(512, TABLE_NAME);
 	if (c == NULL) {
 		LOG(L_ERR, "mod_register(): Unable to create cache\n");
 	}
 
+	     /* 
+	      * Register a clean up timer, that
+	      * that fires every 60 seconds
+	      */
 	register_timer(tr, NULL, 60);
 
+	     /* 
+	      * If database module was found, preload cache
+	      * with contacts from database
+	      */
 	if (use_db) {
 		LOG(L_ERR, "usrloc: Opening database connection for parent\n");
 		db_con = db_init(DB_URL);
@@ -90,9 +205,12 @@ struct module_exports* mod_register()
 			LOG(L_ERR, "usrloc: Database connection opened successfuly\n");
 		}
 
+		     /*
+		      * We will use database, so preload memory
+		      * cache with contacts from the database
+		      */
 		preload_cache(c, db_con);
 	}
-
 
 	return &usrloc_exports;
 }
@@ -103,15 +221,24 @@ struct module_exports* mod_register()
  */
 static int child_init(int rank)
 {
+	     /*
+	      * If we found a database module, open
+	      * a new database connection for each
+	      * child processs and let the database
+	      * do locking and synchronization burden
+	      * otherwise we would have to lock every
+	      * time we use database connection file
+	      * descriptor
+	      */
 	if (use_db) {
 		LOG(L_ERR, "usrloc: Opening database connection for child %d\n", rank);
 		db_con = db_init(DB_URL);
 		if (!db_con) {
-			LOG(L_ERR, "usrloc-rank %d: Error while connecting database\n", rank);
+			LOG(L_ERR, "usrloc: child %d: Error while connecting database\n", rank);
 			return -1;
 		} else {
 			db_use_table(db_con, TABLE_NAME);
-			LOG(L_ERR, "usrloc-rank %d: Database connection opened successfuly\n", rank);
+			LOG(L_ERR, "usrloc: rank %d: Database connection opened successfuly\n", rank);
 		}
 	}
 
@@ -119,9 +246,14 @@ static int child_init(int rank)
 }
 
 
+/*
+ * Timer handler, every 60 seconds clean up of
+ * cache and database is performed, i. e. expired
+ * entries are purged.
+ */
 static void tr(unsigned int ticks, void* param)
 {
-	LOG(L_ERR, "timer(): Running timer\n");
+	LOG(L_ERR, "timer(): Starting timer\n");
 	clean_cache(c, db_con);
 	LOG(L_ERR, "timer(): Timer finished\n");
 }
@@ -137,52 +269,60 @@ void destroy(void)
 }
 
 
+
 /*
- * FIXME: Don't use snprintf
+ * FIXME: Replace sprintf, check if there is still enough
+ *        place in the buffer
+ *        Check what happens if all contacts expired already
+ *        and the function will return zero length
  */
-void build_contact_buf(char* _buf, int* _len, location_t* _loc)
+static inline void build_contact_buf(char* _b, int* _len, location_t* _loc)
 {
+	time_t t;
 	int l;
 	contact_t* ptr;
-	time_t t;
 
 	t = time(NULL);
-	
-	memcpy(_buf, "Contact: ", 9);
-	l = 9;
+	l = 0;
 
-	ptr = _loc->contacts;
+	ptr = LOC_CONTACTS_FIRST(_loc);
+
 	while(ptr) {
-		*(_buf + l++) = '<';
-		memcpy(_buf + l, ptr->c.s, ptr->c.len);
-		l += ptr->c.len;
-		memcpy(_buf + l, ">;q=", 4);
-		l += 4;
-		l += sprintf(_buf + l, "%-3.2f", ptr->q);
-		memcpy(_buf + l, ";expires=", 9);
-		l += 9;
-		     /* FIXME: %d signed ? */
-		l += sprintf(_buf + l, "%d", (int)(ptr->expires - t));
+		if (ptr->expires >= t) {
+			memcpy(_b + l, "Contact: <", 10);
+			l += 10;
+			
+			memcpy(_b + l, ptr->c.s, ptr->c.len);
+			l += ptr->c.len;
+			
+			memcpy(_b + l, ">;q=", 4);
+			l += 4;
+			
+			l += sprintf(_b + l, "%-3.2f", ptr->q);
+			
+			memcpy(_b + l, ";expires=", 9);
+			l += 9;
+			
+			l += sprintf(_b + l, "%d", (int)(ptr->expires - t));
+			
+			*(_b + l++) = '\r';
+			*(_b + l++) = '\n';
+		}
 
 		ptr = ptr->next;
-		if (ptr) {
-			memcpy(_buf + l, ",\r\n         ", 12);
-			l += 12;
-		} else {
-			memcpy(_buf + l, "\r\n", 2);
-			l += 2;
-		}
-		
 	}
 
-	*(_buf + l) = '\0';
-	LOG(L_ERR, "build_contact_buf(): %s\n", _buf);
-
+	*(_b + l) = '\0';
 	*_len = l;
+	LOG(L_ERR, "build_contact_buf(): %s\n", _b);
 }
 
 
-static int send_200(struct sip_msg* _msg, location_t* _loc)
+/*
+ * Send 200 OK response using stateless module
+ * Contact HF will be cenostructed if _loc != NULL
+ */
+static inline int send_200(struct sip_msg* _msg, location_t* _loc)
 {
 	struct lump_rpl* ptr;
 	char buffer[MAX_CONTACT_BUFFER];
@@ -199,18 +339,25 @@ static int send_200(struct sip_msg* _msg, location_t* _loc)
 }
 
 
+/*
+ * Process request that contained a star, in that case, we will remove
+ * all bindings with the given username from the database and memory
+ * cache and return 200 OK response
+ */
 static inline int process_star_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc)
 {
-	     /* Remove all bindings with the same address
-	      * of record
-	      */
 	LOG(L_ERR, "process_star_loc(): Removing all bindings from cache\n");
+	     /* Remove all contacts for the given username from
+	      * the database
+	      */
 	if (cache_remove(_c, db_con, &(_loc->user)) == FALSE) {
 		LOG(L_ERR, "process_star_loc(): Error while removing cache entry\n");
 		return FALSE;
 	}
 	
 	LOG(L_ERR, "process_star_loc(): All bindings removed, sending 200 OK\n");
+
+	     /* Send 200 OK response with no Contact HF */
 	if (send_200(_msg, NULL) == FALSE) {
 		LOG(L_ERR, "process_star_loc(): Error while sending 200 response\n");
 		return FALSE;
@@ -220,58 +367,90 @@ static inline int process_star_loc(struct sip_msg* _msg, cache_t* _c, location_t
 }
 
 
+/*
+ * This function will process requests that contained no contacts, that means
+ * we will return a list of all contacts currently present in the database in
+ * 200 OK response
+ */
 static inline int process_no_contacts(struct sip_msg* _msg, cache_t* _c, location_t* _loc)
 {
 	c_elem_t* el;
 
+	     /* Lookup the database and try to find
+	      * any contacts for the given username
+	      */
 	el = cache_get(c, &(_loc->user));
-	if (!el) {
+	if (!el) {    /* There are no such contacts */
 		LOG(L_ERR, "process_no_contacts(): No bindings found, sending 200 OK\n");
+		     /* Send 200 OK response without Contact HF */
 		if (send_200(_msg, NULL) == FALSE) {
 			LOG(L_ERR, "process_no_contacts(): Error while sending 200 OK\n");
 			return FALSE;
 		}
 		return TRUE;
-	} else {
+	} else {  /* Some contacts were found */
 		LOG(L_ERR, "process_no_contacts(): Bindings found, sending 200 OK with bindings\n");
-		if (send_200(_msg, el->loc) == FALSE) {
+		     /* Send 200 OK and list all contacts currently
+		      * present in the database
+		      */
+		if (send_200(_msg, ELEM_LOC(el)) == FALSE) {
 			LOG(L_ERR, "process_no_contact(): Error while sending 200 response\n");
 			cache_release_elem(el);
 			return FALSE;
 		}
+		     /* Release the cache mutex */
 		cache_release_elem(el);
 		return TRUE;
 	}
 }
 
 
+/* 
+ * This function will process request that contained some contacts
+ */
 static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t* _loc)
 {
 	c_elem_t* el;
+	int send_rep;
 
+	     /* Try to find contacts with the same 
+	      * address of record in the database
+	      */
 	el = cache_get(_c, &(_loc->user));
-	if (el) {
+	if (el) {  /* Some contacts were found */
 		LOG(L_ERR, "process_contacts(): Location found in cache, updating\n");
-		if (cache_update(_c, db_con, &el, _loc) == FALSE) {
+
+		     /* Update location structure in the database with new values
+		      * present in _loc parameter
+		      */
+		if (cache_update(_c, db_con, &el, _loc, &send_rep) == FALSE) {
 			LOG(L_ERR, "process_contacts(): Error while updating bindings in cache\n");
 			cache_release_elem(el);
 			return FALSE;
 		}
 		
-		LOG(L_ERR, "process_contacts(): Sending 200 OK\n");
-		if (send_200(_msg, (el) ? ((el)->loc) : (NULL)) == FALSE) {
-			LOG(L_ERR, "process_contacts(): Error while sending 200 response\n");
-			if (el) cache_release_elem(el);
-			return FALSE;
+		if (send_rep) {
+			LOG(L_ERR, "process_contacts(): Sending 200 OK\n");
+
+			     /* Send 200 OK response with actual list of contacts
+			      * in the database if there are any
+			      */
+			if (send_200(_msg, (el) ? (ELEM_LOC(el)) : (NULL)) == FALSE) {
+				LOG(L_ERR, "process_contacts(): Error while sending 200 response\n");
+				if (el) cache_release_elem(el);
+				return FALSE;
+			}
 		}
 		
 		if (el) cache_release_elem(el);
 		return TRUE;
-	} else {
+	} else {  /* No contacts in the database were found */
 		LOG(L_ERR, "process_contacts(): Location not found in cache, inserting\n");
+
+		     /* Remove all contacts that have expires set to zero */
 		remove_zero_expires(_loc);
-		if (_loc->contacts) {
-			if (cache_put(_c, db_con, _loc) == FALSE) {
+		if (!IS_EMPTY(_loc)) { /* And insert the rest into database */
+			if (cache_insert(_c, db_con, _loc) == FALSE) {
 				LOG(L_ERR, "process_contacts(): Error while inserting location\n");
 				return FALSE;
 			}
@@ -286,14 +465,16 @@ static inline int process_contacts(struct sip_msg* _msg, cache_t* _c, location_t
 }
 
 
-
-static int process_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc, int star)
+/*
+ * Process REGISTER requests
+ */
+static inline int process_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc, int star)
 {
 	if (star == 1) {
 		LOG(L_ERR, "process_loc(): star = 1, processing\n");
 		return process_star_loc(_msg, _c, _loc);
 	} else {
-		if (!_loc->contacts) {
+		if (IS_EMPTY(_loc)) {
 			LOG(L_ERR, "process_loc(): No contacts found\n");
 			return process_no_contacts(_msg, _c, _loc);
 		} else {
@@ -304,17 +485,20 @@ static int process_loc(struct sip_msg* _msg, cache_t* _c, location_t* _loc, int 
 }
 
 
-
+/*
+ * Process REGISTER request and save it's contacts
+ */
 static int save_contact(struct sip_msg* _msg, char* _table, char* _str2)
 {
 	location_t* loc;
 	int star, expires, valid;
 
-	if (msg2loc(_msg, &loc, &star, &expires) == FALSE) {
-		LOG(L_ERR, "save_contact(): Unable to convert SIP message to location_t\n");
+	if (sip_to_loc(_msg, &loc, &star, &expires) == FALSE) {
+		LOG(L_ERR, "save_contact(): Unable to convert SIP message to location structure\n");
 		return -1;
 	}
 
+	     /* Check, if the request is sane */
 	LOG(L_ERR, "save_contact(): Validating request\n");
 	if (validate_location(loc, expires, star, &valid) == FALSE) {
 		LOG(L_ERR, "save_contact(): Error while validating request\n");
@@ -322,7 +506,7 @@ static int save_contact(struct sip_msg* _msg, char* _table, char* _str2)
 		return -1;
 	}
 
-	if (!valid) {
+	if (!valid) { /* Request is invalid, send 400 Bad Request */
 		LOG(L_ERR, "save_contact(): Request not validated, sending 400\n");
 		free_location(loc);
 		if (sl_reply(_msg, (char*)400, "Bad Request") == -1) {
@@ -338,15 +522,12 @@ static int save_contact(struct sip_msg* _msg, char* _table, char* _str2)
 		return -1;
 	}
 
-	print_cache(c);
-
 	return 1;
 }
 
 
-
 /*
- * FIXME: Pouzit uz parsovanou To hlavicku
+ * Lookup contact in the database and rewrite Request-URI
  */
 static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 {
@@ -384,12 +565,12 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 	t = time(NULL);
 	el = cache_get(c, &user);
 	if (el) { 
-		ptr = el->loc->contacts;
-		while ((ptr) && (ptr->expires < t)) ptr = ptr->next;
+		ptr = LOC_CONTACTS_FIRST(ELEM_LOC(el));
+		while ((ptr) && (CONTACT_EXPIRES(ptr) < t)) ptr = CONTACT_NEXT(ptr);
 		
 		if (ptr) {
 			LOG(L_ERR, "lookup_contact(): Binding find, rewriting Request-URI\n");
-			if (rwrite(_msg, &(ptr->c)) == FALSE) {
+			if (rwrite(_msg, &(CONTACT_CON(ptr))) == FALSE) {
 				LOG(L_ERR, "lookup_contact(): Unable to rewrite request URI\n");
 				cache_release_elem(el);
 				return -1;
@@ -408,7 +589,9 @@ static int lookup_contact(struct sip_msg* _msg, char* _table, char* _str2)
 }
 
 
-
+/*
+ * Rewrite Request-URI
+ */
 static int rwrite(struct sip_msg* _msg, str* _s)
 {
 	char buffer[256];

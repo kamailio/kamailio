@@ -2,8 +2,8 @@
  * $Id$ 
  */
 
-#ifndef __LOCATION_H__
-#define __LOCATION_H__
+#ifndef LOCATION_H
+#define LOCATION_H
 
 #include <time.h>
 #include "contact.h"
@@ -20,10 +20,30 @@ typedef struct location {
 	contact_t* contacts;  /* One or more contact fields */
 } location_t;
 
+
+/* Address of record */
+#define LOC_AOR(loc) ((loc)->user)
+
+/* Address of record string */
+#define LOC_AOR_STR(loc) ((loc)->user.s)
+
+/* Address of record length */
+#define LOC_AOR_LEN(loc) ((loc)->user.len)
+
+/* First contact in the linked list */
+#define LOC_CONTACTS_FIRST(loc) ((loc)->contacts)
+
+/* Next contact in the linked list */
+#define LOC_CONTACTS_NEXT(con) ((con)->next)
+
+/* Contacts == NULL */
+#define IS_EMPTY(loc) (((loc)->contacts) == NULL)
+
+
 /*
  * Convert REGISTER SIP message into location
  */
-int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires);
+int sip_to_loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires);
 
 /*
  * Create a new location structure
@@ -63,12 +83,10 @@ int cmp_location(location_t* _loc, const char* _aor);
 int validate_location(location_t* _loc, int _expires, int _star, int* _result);
 
 
-int remove_zero_expires(location_t* _loc);
-
-
 /*
- * ============================ DB related functions ====================
+ * Remove all contacts, that have expired already
  */
+int remove_zero_expires(location_t* _loc);
 
 
 /*
@@ -86,7 +104,7 @@ int db_remove_location(db_con_t* _c, location_t* _loc);
 /*
  * Update bindings that belong to location
  */
-int update_location(db_con_t* _c, location_t* _dest, location_t* _src);
+int update_location(db_con_t* _c, location_t* _dest, location_t* _src, int* _sr);
 
 
 /*
