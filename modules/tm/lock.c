@@ -161,8 +161,9 @@ void lock_cleanup()
 		LOG(L_ERR, "ERROR: lock_cleanup, transaction_timer_semaphore cleanup failed\n");
 	if (retrasmission_timer_semaphore > 0 &&
 	    semctl( retrasmission_timer_semaphore, 0 , IPC_RMID , 0 )==-1)
-		DBG("ERROR: retrasmission_timer_semaphore cleanup failed\n"); 
 		LOG(L_ERR, "ERROR: lock_cleanup, retrasmission_timer_semaphore cleanup failed\n");
+
+	entry_semaphore = transaction_timer_semaphore = retrasmission_timer_semaphore = 0;
 	
 }
 

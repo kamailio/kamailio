@@ -568,16 +568,16 @@ int str_unsigned_hex_2_int( char *c, int len )
 	int r=0;
 	int i;
 	int d;
-	
+
 	for (i=0; i<len; i++ ) {
 		if (c[i]>='0' && c[i]<='9') d=c[i]-'0'; else
 		if (c[i]>='a' && c[i]<='f') d=c[i]-'a'+10; else
 		if (c[i]>='A' && c[i]<='F') d=c[i]-'A'+10; else
 		return -1;
-		r = r<<4 +d;
+		r = (r<<4) + d;
 	}
+	return r;
 }
-
 
 /* Returns 0 - nothing found
   *              1  - T found
@@ -613,6 +613,7 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    hashi=p;
    p=n+1;scan_space--;
 
+
    /* sequence id */
    n=eat_token2_end( p, p+scan_space, '.');
    synl=n-p;
@@ -627,12 +628,20 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    if (!branchl ) goto nomatch; 
    branchi=p;
 
-   if ((hash_index=str_unsigned_hex_2_int(hashi, hashl))==0 ||
-        hash_index>=TABLE_ENTRIES ||
-       (entry_label=str_unsigned_hex_2_int(syni, synl))==0 ||
-       (branch_id=str_unsigned_hex_2_int(branchi, branchl))==0 ||
+
+   hash_index=str_unsigned_hex_2_int(hashi, hashl);
+   entry_label=str_unsigned_hex_2_int(syni, synl);
+   branch_id=str_unsigned_hex_2_int(branchi, branchl);
+
+   DBG("DEBUG: t_reply_matching: hash %d label %d branch %d\n", 
+	hash_index, entry_label, branch_id );
+
+   /* sanity check */
+   if (hash_index==-1 || hash_index >=TABLE_ENTRIES ||
+       entry_label==-1 || branch_id==-1 ||
 	branch_id>=MAX_FORK )
-	goto nomatch;
+		goto nomatch;
+
 
    /*all the cells from the entry are scan to detect an entry_label matching */
    p_cell     = hash_table->entrys[hash_index].first_cell;
@@ -660,7 +669,10 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    } /* while p_cell */
 
    /* nothing found */
+   DBG("DEBUG: t_reply_matching: no matching transaction exists\n");
+
 nomatch:
+   DBG("DEBUG: t_reply_matching: failure to match a transaction\n");
    *p_branch = -1;
    *p_Trans = NULL;
    return 0;

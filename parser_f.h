@@ -18,35 +18,35 @@ int is_empty(char* buffer, unsigned int len);
 
 
 #define eat_space_end(buffer,pend)                                       \
-  ( {   char *p;                                                 	\
-	char *pe=(pend);						\
-        for(p=(buffer);(p<pe)&& (*p==' ' || *p=='\t') ;p++);		\
-        p;                                                              \
+  ( {   char *_p;                                                 	\
+	char *_pe=(pend);						\
+        for(_p=(buffer);(_p<_pe)&& (*_p==' ' || *_p=='\t') ;_p++);		\
+        _p;                                                              \
   } )
 
 #define eat_token_end(buffer,pend)					\
-  ( { char *p       ;							\
-      char *pe=(pend);						\
-      for (p=(buffer);(p<pe)&&					\
-                        (*p!=' ')&&(*p!='\t')&&(*p!='\n')&&(*p!='\r');	\
-                p++);							\
-      p;								\
+  ( { char *_p       ;							\
+      char *_pe=(pend);						\
+      for (_p=(buffer);(_p<_pe)&&					\
+                        (*_p!=' ')&&(*_p!='\t')&&(*_p!='\n')&&(*_p!='\r');	\
+                _p++);							\
+      _p;								\
   } )
 
 #define eat_token2_end(buffer,pend,delim)					\
-  ( { char *p       ;							\
-      char *pe=(pend);						\
-      for (p=(buffer);(p<pe)&&					\
-                        (*p!=(delim))&&(*p!='\n')&&(*p!='\r');		\
-                p++);							\
-      p;								\
+  ( { char *_p       ;							\
+      char *_pe=(pend);						\
+      for (_p=(buffer);(_p<_pe)&&					\
+                        (*_p!=(delim))&&(*_p!='\n')&&(*_p!='\r');		\
+                _p++);							\
+      _p;								\
   } )
 
 #define is_empty_end(buffer, pend )					\
-  ( { char *p;								\
-      char *pe=(pend);						\
-      p=eat_space_end( buffer, pe );					\
-      ((p<pend ) && (*p=='\r' || *p=='\n')) ? 1 : 0;			\
+  ( { char *_p;								\
+      char *_pe=(pend);						\
+      _p=eat_space_end( buffer, _pe );					\
+      ((_p<(pend )) && (*_p=='\r' || *_p=='\n')) ? 1 : 0;			\
   } )
 
 

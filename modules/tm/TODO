@@ -25,3 +25,4 @@ To improve:
 - faster syncing
 
 Double-check: revire the T-state-machine
+To-do: semaphore clean-up on exit (even better: w/sibling check)
