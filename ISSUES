@@ -6,6 +6,13 @@ This is a collection of issues which have shown up
 since the version 0.8.8 was released.
 
 ---------------------------------------------------------------
+Desc: full ipv6 addresses (w/o ::) are converted to 0:0:0:0:0:0:0
+      (ser will listen on :: instead of the specified address)
+BugId: n/a
+Workaround: use ipv6 addresses w/ :: or compile ser without -DDNS_IP_HACK 
+            (Makefile.defs).
+CVS status: fixed
+---------------------------------------------------------------
 Desc: in default configuration, SER prints '127.0.0.1' in
       Warning header field of all replies
 BugId: 372
