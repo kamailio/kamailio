@@ -143,6 +143,9 @@ usage:
  $CMD stop ............................... stop ser
  $CMD restart ............................ restart ser
 
+           * miscellaneous *
+ $CMD cisco_restart <uri> ................ restart a Cisco phone
+
 
    Commands labeled with (*) will prompt for a MySQL password.
    If the variable PW is set, the password will not be prompted.
@@ -750,6 +753,16 @@ case $1 in
 	fifo)
 		shift
 		fifo_cmd "$@"
+		;;
+
+	cisco_restart)
+		if [ "$#" -ne 2 ] ; then	
+			usage
+			exit 1
+		fi
+		fifo_cmd t_uac_dlg NOTIFY "$2" "." "From: sip:daemon@$SIP_DOMAIN" \
+			"To: <$2>" "Event: check-sync" "Contact: <sip:daemon@!!>" "." "." |
+			head -1
 		;;
 
 	version)
