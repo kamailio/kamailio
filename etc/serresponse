@@ -11,19 +11,32 @@ SERHOME=/home/srouter
 SERDIR=$SERHOME/sip_router
 TESTDIR=$SERDIR/test
 BIN=$TESTDIR/sipsak
-# MESSAGE=$TESTDIR/sipsak.sip
 SIPURI=sip:sipsak@iptel.org
-LOCKFILE=/var/lock/serresponse
+LOCKDIR=/var/lock
+LOCKFILE=serresponse
+LOCK_TIMEOUT=240
 TMP=/tmp/serresponse.$$
 MAILCOMMAND=/usr/bin/mail
 
-if [ ! -e $LOCKFILE ] ; then
+############################
+
+LOCKF=$LOCKDIR/$LOCKFILE
+
+if [ -e $LOCKF ] ; then
+	find $LOCKDIR -name $LOCKFILE -amin +$LOCK_TIMEOUT -exec rm {} ';'
+	if [ ! -e $LOCKF ] ; then
+		echo "This is a reminder !!!" > $TMP
+		echo "The lockfile $LOCKF" >> $TMP
+		echo "was just removed because ist was older then $LOCK_TIMEOUT minutes." >> $TMP
+		echo "But if you receive this mail the cause of this error still exists or respawned." >> $TMP
+	fi
+fi
+
+if [ ! -e $LOCKF ] ; then
 	if [ ! -x $BIN ] ; then
-		echo "serresponse did not find the required sipsak executable $BIN" > $TMP
-	#elif [ ! -f $MESSAGE ] ; then
-	#	echo "serresponse did not find the required message $MESSAGE" > $TMP
+		echo "serresponse did not find the required sipsak executable $BIN" >> $TMP
 	else
-		echo "The execution of this command:" > $TMP
+		echo "The execution of this command:" >> $TMP
 		echo "  $BIN -s $SIPURI" >> $TMP
 		echo "produced this output:" >> $TMP
 		$BIN -s $SIPURI >> $TMP 2>&1
@@ -34,7 +47,7 @@ if [ ! -e $LOCKFILE ] ; then
 	
 	if [ -e $TMP ] ; then
 		$MAILCOMMAND -s "serresponse failed" $NOTIFY < $TMP
-		touch $LOCKFILE
+		touch $LOCKF
 		rm -f $TMP
 	fi
 fi
