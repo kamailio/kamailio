@@ -254,6 +254,36 @@ char* parse_via_param(	char* p, char* end, int* pstate,
 						goto endofparam;
 				}
 				break;
+			case ',':
+				switch(state){
+					case FIN_HIDDEN:
+						*tmp=0;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
+						state=F_VIA;
+						goto endofvalue;
+					case FIN_BRANCH:
+					case FIN_MADDR:
+					case FIN_TTL:
+					case FIN_RECEIVED:
+						LOG(L_ERR, "ERROR: parse_via_param: new via found" 
+								"(',') when '=' expected (state %d=)\n",
+								state);
+						goto error; /* or we could ignore this bad param*/
+					case F_CR:
+					case F_LF:
+					case F_CRLF:
+						state=END_OF_HEADER;
+						goto end_via;
+					case GEN_PARAM:
+					default:
+						*tmp=0;
+						param->type=GEN_PARAM;
+						param->name.len=tmp-param->name.s;
+						state=F_VIA;
+						goto endofvalue;
+				}
+				break; 
 
 				/* param names */
 			case 'h':
