@@ -6,6 +6,25 @@ This is a collection of issues which have shown up
 since the version 0.8.8 was released.
 
 ---------------------------------------------------------------
+Desc: Solaris resolver memory leak
+	  (getipnodebyname on Solaris has a memory leak. unpatched
+	  solaris 8 installations will fail after processing 
+	  ~ 360000 requests)
+BugId: n/a
+CVS status: n/a
+Workaround: patch your Solaris OS
+---------------------------------------------------------------
+Desc: local domain mismatch resulting in infinite loops
+      (With default configuration and domain names in a request
+      URI's, ser may not match "owned domain" in the
+      script's uri==myself condition, consider the request to
+	  be for outside domain, and forward it to itself, resulting
+	  in an infinite loop and "482" returned back to UAC.)
+BugId: n/a
+Reason: aliases do not support reverse DNS lookups yet
+Workaround: Start ser with "alias=hostname" in config file
+CVS status: not fixed
+---------------------------------------------------------------
 Desc: sendto problems on FreeBSD
       (when using tm sendto fails because of bad sockaddr len passed
         to it)
