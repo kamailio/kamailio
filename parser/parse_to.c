@@ -692,7 +692,6 @@ endofheader:
 					"end of header in state %d\n", status);
 			goto error;
 	}
-	DBG("TO_PARSE done: char = [%c]\n",*tmp);
 	return tmp;
 
 error:
