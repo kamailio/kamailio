@@ -60,7 +60,7 @@ typedef int (*tuac_f)(str *msg_type, str *dst, str *headers,str *body,
 	struct dialog *dlg );
 
 typedef int (*tuacdlg_f)(str* msg_type, str* dst, str* ruri, str* to,
-			 str* from, str* totag, str* fromtag, int cseq,
+			 str* from, str* totag, str* fromtag, int* cseq,
 			 str* callid, str* headers, str* body,
 			 transaction_cb completion_cb, void* cbp
 			 );
