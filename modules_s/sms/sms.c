@@ -33,6 +33,7 @@
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
  *  2003-04-06  Only child 1 will execute child init (janakj)
+ *  2003-10-24  updated to the new socket_info lists (andrei)
  */
 
 
@@ -49,6 +50,7 @@
 #include "../../globals.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../socket_info.h"
 #include "../tm/tm_load.h"
 #include "sms_funcs.h"
 #include "sms_report.h"
@@ -522,6 +524,7 @@ int global_init()
 	load_tm_f  load_tm;
 	int        i, net_pipe[2], foo;
 	char       *p;
+	struct socket_info* si;
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
@@ -537,21 +540,26 @@ int global_init()
 		domain.s = domain_str;
 		domain.len = strlen(domain_str);
 	} else {
+		si=get_first_socket();
+		if (si==0){
+			LOG(L_CRIT, "BUG: sms_init_child: null listen socket list\n");
+			goto error;
+		}
 		/*do I have to add port?*/
-		i = (sock_info[0].port_no_str.len && sock_info[0].port_no!=5060);
-		domain.len = sock_info[0].name.len + i*(sock_info[0].port_no_str.len+1);
+		i = (si->port_no_str.len && si->port_no!=5060);
+		domain.len = si->name.len + i*(si->port_no_str.len+1);
 		domain.s = (char*)pkg_malloc(domain.len);
 		if (!domain.s) {
 			LOG(L_ERR,"ERROR:sms_init_child: no free pkg memory!\n");
 			goto error;
 		}
 		p = domain.s;
-		memcpy(p,sock_info[0].name.s,sock_info[0].name.len);
-		p += sock_info[0].name.len;
+		memcpy(p,si->name.s,si->name.len);
+		p += si->name.len;
 		if (i) {
 			*p=':'; p++;
-			memcpy(p,sock_info[0].port_no_str.s,sock_info[0].port_no_str.len);
-			p += sock_info[0].port_no_str.len;
+			memcpy(p,si->port_no_str.s, si->port_no_str.len);
+			p += si->port_no_str.len;
 		}
 	}
 
