@@ -109,7 +109,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		*len += USER_AGENT_LEN + CRLF_LEN;
 	}
 	/* Content Length, EoM */
-	*len+=CONTENT_LEN_LEN + CRLF_LEN + CRLF_LEN;
+	*len+=CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN;
 
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
@@ -153,8 +153,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		append_mem_block(p,USER_AGENT CRLF, USER_AGENT_LEN+CRLF_LEN );
 	}
 	/* Content Length, EoM */
-	append_mem_block(p, CONTENT_LEN CRLF CRLF ,
-		CONTENT_LEN_LEN + CRLF_LEN + CRLF_LEN);
+	append_mem_block(p, CONTENT_LENGTH "0" CRLF CRLF ,
+		CONTENT_LENGTH_LEN+1 + CRLF_LEN + CRLF_LEN);
 	*p=0;
 
 	pkg_free(via);
@@ -168,16 +168,21 @@ error:
 
 
 char *build_uac_request(  str msg_type, str dst, str from,
-    	str headers, str body, int branch, 
-		struct cell *t, unsigned int *len)
+	str fromtag, int cseq, str callid, str headers, 
+	str body, int branch, 
+	struct cell *t, unsigned int *len)
 {
 	char *via;
 	unsigned int via_len;
 	char content_len[10];
 	int content_len_len;
+	char cseq_str[10];
+	int cseq_str_len;
 	char *buf;
 	char *w;
+#ifdef _OBSOLETED
 	int dummy;
+#endif
 
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	int branch_len;
@@ -186,6 +191,23 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	char *from_str;
 
 	buf=0;
+
+	/* print content length */
+	content_len_len=snprintf(
+		content_len, sizeof(content_len), 
+		"%d", body.len );
+	if (content_len_len==-1) {
+		LOG(L_ERR, "ERROR: uac: content_len too big\n");
+		return 0;
+	}
+	/* print cseq */
+	cseq_str_len=snprintf( 
+		cseq_str, sizeof(cseq_str),
+		"%d", cseq );
+	if (cseq_str_len==-1) {
+		LOG(L_ERR, "ERROR: uac: cseq too big\n");
+		return 0;
+	}
 
 	if (from.len) {
 		from_len=from.len;
@@ -210,9 +232,6 @@ char *build_uac_request(  str msg_type, str dst, str from,
 		goto error;
 	}
 	*len+=via_len;
-	/* content length */
-	content_len_len=snprintf(
-		content_len, sizeof(content_len), "%d", body.len );
 	/* header names and separators */
 	*len+=
 		+CSEQ_LEN+CRLF_LEN
@@ -223,10 +242,10 @@ char *build_uac_request(  str msg_type, str dst, str from,
 		+FROM_LEN+CRLF_LEN
 		+CRLF_LEN; /* EoM */
 	/* header field value and body length */
-	*len+= msg_type.len+1+UAC_CSEQNR_LEN /* CSeq: method, delimitor, number  */
+	*len+= msg_type.len+1+cseq_str_len /* CSeq: method, delimitor, number  */
 		+ dst.len /* To */
-		+ RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN /* call-id */
-		+ from_len+FROMTAG_LEN+MD5_LEN+
+		+ callid.len /* call-id */
+		+ from_len+FROMTAG_LEN+fromtag.len
 		+ content_len_len
 		+ headers.len
 		+ body.len;
@@ -243,17 +262,22 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	memapp( w, dst.s, dst.len ); 
 	memapp( w, " " SIP_VERSION CRLF, 1+SIP_VERSION_LEN+CRLF_LEN );
 	memapp( w, via, via_len );
-	t->cseq_n.s=w; t->cseq_n.len=CSEQ_LEN+UAC_CSEQNR_LEN;
-	memapp( w, CSEQ UAC_CSEQNR " ", CSEQ_LEN + UAC_CSEQNR_LEN+ 1 );
+
+	/* CSeq */
+	t->cseq_n.s=w; 
+	t->cseq_n.len=CSEQ_LEN+cseq_str_len;
+	memapp(w, CSEQ, CSEQ_LEN );
+	memapp(w, cseq_str, cseq_str_len );
+	memapp(w, " ", 1 );
+
 	memapp( w, msg_type.s, msg_type.len );
 	t->to.s=w+CRLF_LEN; t->to.len=TO_LEN+dst.len;
 	memapp( w, CRLF TO, CRLF_LEN + TO_LEN  );
 	memapp( w, dst.s, dst.len );
-	t->callid.s=w+CRLF_LEN; t->callid.len=CALLID_LEN+RAND_DIGITS+1+
-		MAX_PID_LEN+1+MAX_SEQ_LEN;
+	t->callid.s=w+CRLF_LEN; t->callid.len=callid.len;
 	memapp( w, CRLF CALLID, CRLF_LEN + CALLID_LEN  );
-	memapp( w, call_id, RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN );
-	memapp( w, CRLF CONTENT_LEN, CRLF_LEN + CONTENT_LEN_LEN);
+	memapp( w, callid.s, callid.len );
+	memapp( w, CRLF CONTENT_LENGTH, CRLF_LEN + CONTENT_LENGTH_LEN);
 	memapp( w, content_len, content_len_len );
 	if (server_signature) {
 		memapp( w, CRLF USER_AGENT CRLF FROM, 
@@ -262,10 +286,11 @@ char *build_uac_request(  str msg_type, str dst, str from,
 		memapp( w, CRLF  FROM, 
 			CRLF_LEN+FROM_LEN);
 	}
-	t->from.s=w-FROM_LEN; t->from.len=FROM_LEN+from_len+FROMTAG_LEN+MD5_LEN;
+	t->from.s=w-FROM_LEN; 
+	t->from.len=FROM_LEN+from_len+FROMTAG_LEN+fromtag.len;
 	memapp( w, from_str, from_len );
 	memapp( w, FROMTAG, FROMTAG_LEN );
-	memapp( w, from_tag, MD5_LEN );
+	memapp( w, fromtag.s, fromtag.len );
 	memapp( w, CRLF, CRLF_LEN );
 
 	memapp( w, headers.s, headers.len );
@@ -274,9 +299,11 @@ char *build_uac_request(  str msg_type, str dst, str from,
 	if ( body.s ) {
 		memapp( w, body.s, body.len );
 	}
+#ifdef _OBSOLETED
 	/* ugly HACK -- debugging has shown len shorter by one */
 	dummy=*len+1;
 	*len=dummy;
+#endif
 #	ifdef EXTRA_DEBUG
 	if (w-buf != *len ) abort();
 #	endif

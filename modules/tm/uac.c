@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <limits.h>
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../hash_func.h"
@@ -48,6 +49,8 @@
 #include "../../mem/mem.h"
 #include "../../fifo_server.h"
 #include "../../error.h"
+#include "../../pt.h"
+#include "../../crc.h"
 #include "t_funcs.h"
 #include "config.h"
 #include "sip_msg.h"
@@ -55,70 +58,110 @@
 #include "t_msgbuilder.h"
 #include "uac.h"
 
-/* Call-ID has the following form: call_id_rand-pid-seq */
+/* Call-ID has the following form: <callid_nr>-<pid>@<ip>
+ * callid_nr is initialized as a random number and continually
+ * increases; -<pid>@<ip> is kept in callid_suffix
+ */
 
-char call_id[RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN+1];
-static unsigned long callid_seq;
+#define CALLID_SUFFIX_LEN (1 /* - */ + 5 /* pid */ \
+	+ 42 /* embedded v4inv6 address can be looong '128.' */ \
+	+ 2 /* parenthessis [] */ + 1 /* ZT 0 */ \
+	+ 16 /* one never knows ;-) */ )
+#define CALLID_NR_LEN 20
+
+/* the character which separates random from constant part */
+#define CID_SEP	'-'
+
+/* length of FROM tags */
+#define FROM_TAG_LEN (MD5_LEN +1 /* - */ + CRC16_LEN)
+
+static unsigned long callid_nr;
+static char *callid_suffix;
+static int callid_suffix_len;
+static int rand_len;	/* number of chars to display max rand */
+static char callid[CALLID_NR_LEN+CALLID_SUFFIX_LEN];
 
 char *uac_from="\"UAC Account\" <sip:uac@dev.null:9>";
 
-char from_tag[ MD5_LEN +1];
+static char from_tag[ FROM_TAG_LEN+1 ];
 
-void uac_init() {
-	unsigned long init_nr;
-	char *c;
-	int len;
 
+
+int uac_init() {
+
+	int i; 
+	unsigned long uli;
+	int rand_len_bits;
+	int rand_cnt; /* number of rands() to be long enough */
+	int rand_bits; /* length of rands() in bits */
 	str src[3];
 
-	init_nr=random() % (1<<(RAND_DIGITS*4));
-	c=call_id;
-	len=RAND_DIGITS;
-	int2reverse_hex( &c, &len, init_nr );
-	while (len) { *c='z'; len--; c++; }
-	*c='-';
+	if (RAND_MAX<TABLE_ENTRIES) {
+		LOG(L_WARN, "Warning: uac does not spread "
+			"accross the whole hash table\n");
+	}
+
+	/* calculate the initial call-id */
+
+	/* how many bits and chars do we need to display the 
+	 * whole ULONG number */
+	for (rand_len_bits=0,uli=ULONG_MAX;uli;
+			uli>>=1, rand_len_bits++ );
+	rand_len=rand_len_bits/4;
+	if (rand_len>CALLID_NR_LEN) {
+		LOG(L_ERR, "ERROR: Too small callid buffer\n");
+		return -1;
+	}
+
+	/* how long are the rand()s ? */
+	for (rand_bits=0,i=RAND_MAX;i;i>>=1,rand_bits++);
+	/* how many rands() fit in the ULONG ? */
+	rand_cnt=rand_len_bits / rand_bits;
+
+	/* now fill in the callid with as many random
+	 * numbers as you can + 1 */
+	callid_nr=rand(); /* this is the + 1 */
+	while(rand_cnt) {
+		rand_cnt--;
+		callid_nr<<=rand_bits;
+		callid_nr|=rand();
+	}
+	callid_suffix=callid+rand_len;
+	DBG("CALLID initialization: %lx (len=%d)\n", 
+			callid_nr, rand_len );
+	DBG("CALLID0=%0*lx\n", rand_len, callid_nr );
+
+
+	/* calculate the initial From tag */
 
 	src[0].s="Long live SER server";
 	src[0].len=strlen(src[0].s);
-	src[1].s=sock_info[0].address_str.s;
+	src[1].s=sock_info[bind_idx].address_str.s;
 	src[1].len=strlen(src[1].s);
-	src[2].s=sock_info[0].port_no_str.s;
+	src[2].s=sock_info[bind_idx].port_no_str.s;
 	src[2].len=strlen(src[2].s);
 
 	MDStringArray( from_tag, src, 3 );
-	from_tag[MD5_LEN]=0;
+	from_tag[MD5_LEN]=CID_SEP;
+
+	return 1;
 }
 
 
-void uac_child_init( int rank ) {
-	int pid_nr;
-	char *c;
-	int len;
-
-	pid_nr=getpid() % (1<<(MAX_PID_LEN*4));
-	c=call_id+RAND_DIGITS+1;
-	len=MAX_PID_LEN;
-	int2reverse_hex( &c, &len, pid_nr );
-	while (len) { *c='z'; len--; c++; }
-	*c='-';
-
-	callid_seq=random() % TABLE_ENTRIES;
-
+int uac_child_init( int rank ) 
+{
+	callid_suffix_len=snprintf(callid_suffix,CALLID_SUFFIX_LEN,
+			"%c%d@%*s", CID_SEP, my_pid(), 
+			sock_info[bind_idx].address_str.len,
+			sock_info[bind_idx].address_str.s );
+	if (callid_suffix_len==-1) {
+		LOG(L_ERR, "ERROR: uac_child_init: 
+			buffer too small\n");
+		return -1;
+	}
+	DBG("DEBUG: callid_suffix: %s\n", callid_suffix );
+	return 1;
 }
-
-void generate_callid() {
-	char *c;
-	int len;
-
-	/* HACK: not long enough */
-	callid_seq = (callid_seq+1) % TABLE_ENTRIES;
-	c=call_id+RAND_DIGITS+1+MAX_PID_LEN+1;
-	len=MAX_SEQ_LEN;
-	int2reverse_hex( &c, &len, callid_seq );
-	while (len) { *c='z'; len--; c++; }
-}
-
-
 
 int t_uac( str *msg_type, str *dst, 
 	str *headers, str *body, str *from, 
@@ -126,6 +169,7 @@ int t_uac( str *msg_type, str *dst,
 	dlg_t dlg)
 {
 
+	int r;
 	struct cell *new_cell;
 	struct proxy_l *proxy;
 	int branch;
@@ -136,6 +180,11 @@ int t_uac( str *msg_type, str *dst,
 	struct socket_info* send_sock;
 	struct retr_buf *request;
 	str dummy_from;
+	str callid_s;
+	str fromtag;
+
+	/* make -Wall shut up */
+	ret=0;
 
 	proxy=uri2proxy( dst );
 	if (proxy==0) {
@@ -155,7 +204,20 @@ int t_uac( str *msg_type, str *dst,
 		ret=E_NO_SOCKET;
 		goto error00;
 	}
-	generate_callid();
+
+	/* update callid */
+	/* generate_callid(); */
+	callid_nr++;
+	r=snprintf(callid, rand_len+1, "%0*lx", rand_len, callid_nr );
+	if (r==-1) {
+		LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
+		goto error00;
+	}
+	/* fix the ZT 0 */
+	callid[rand_len]=CID_SEP;
+	callid_s.s=callid;
+	callid_s.len=rand_len+callid_suffix_len;
+	DBG("DEBUG: NEW CALLID:%*s\n", callid_s.len, callid_s.s );
 
 	new_cell = build_cell( NULL ) ; 
 	if (!new_cell) {
@@ -183,17 +245,22 @@ int t_uac( str *msg_type, str *dst,
 	UNLOCK_HASH(new_cell->hash_index);
 
 	if (from) dummy_from=*from; else { dummy_from.s=0; dummy_from.len=0; }
-	buf=build_uac_request(  *msg_type, *dst, dummy_from, *headers, *body,
-							branch,
-							new_cell, /* t carries hash_index, label, md5,
-										uac[].send_sock and other pieces of
-										information needed to print a message*/
-							 &req_len );
-    if (!buf) {
-        ret=E_OUT_OF_MEM;
-        LOG(L_ERR, "ERROR: t_uac: short of req shmem\n");
-        goto error01;
-    }      
+	/* calculate from tag from callid */
+	crcitt_string_array(&from_tag[MD5_LEN+1], &callid_s, 1 );
+	fromtag.s=from_tag; fromtag.len=FROM_TAG_LEN;
+	buf=build_uac_request(  *msg_type, *dst, 
+			dummy_from, fromtag,
+			DEFAULT_CSEQ, callid_s, 
+			*headers, *body, branch,
+			new_cell, /* t carries hash_index, label, md5,
+				uac[].send_sock and other pieces of
+				information needed to print a message*/
+		&req_len );
+	if (!buf) {
+		ret=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: t_uac: short of req shmem\n");
+		goto error01;
+	}      
 	new_cell->method.s=buf;new_cell->method.len=msg_type->len;
 
 

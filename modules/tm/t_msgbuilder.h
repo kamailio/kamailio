@@ -31,23 +31,23 @@
 #define _MSGBUILDER_H
 
 #define CSEQ "CSeq: "
-#define CSEQ_LEN 6
+#define CSEQ_LEN (sizeof(CSEQ)-1)
 #define TO "To: "
-#define TO_LEN 4
+#define TO_LEN (sizeof(TO)-1)
 #define CALLID "Call-ID: "
-#define CALLID_LEN 9
-#define CONTENT_LENGTH "Content-Length: "
-#define CONTENT_LENGTH_LEN 16
+#define CALLID_LEN (sizeof(CALLID)-1)
 #define FROM "From: "
-#define FROM_LEN 6
+#define FROM_LEN (sizeof(FROM)-1)
 #define FROMTAG ";tag="
-#define FROMTAG_LEN 5
+#define FROMTAG_LEN (sizeof(FROMTAG)-1)
 
+#ifdef _OBSOLETED
 #define UAC_CSEQNR "1"
 #define UAC_CSEQNR_LEN 1
+#define CONTENT_LENGTH "Content-Length: "
+#define CONTENT_LENGTH_LEN (sizeof(CONTENT_LENGTH)-1)
+#endif
 
-#define UAC_CSEQNR "1"
-#define UAC_CSEQNR_LEN 1
 
 /* convenience macros */
 #define memapp(_d,_s,_len) \
@@ -74,7 +74,8 @@ char *build_local(struct cell *Trans, unsigned int branch,
 	unsigned int *len, char *method, int method_len, str *to);
 
 char *build_uac_request(  str msg_type, str dst, str from,
-	str headers, str body, int branch,
+	str fromtag, int cseq, str callid, str headers, 
+	str body, int branch,
 	struct cell *t, unsigned int *len);
 
 int t_calc_branch(struct cell *t,

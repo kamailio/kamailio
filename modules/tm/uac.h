@@ -34,23 +34,26 @@
 #include "config.h"
 #include "t_dlg.h"
 
+#ifdef _DEPRECATED
 /* number of random digits in beginning of a string --
    please multiples of 2 */
 #define RAND_DIGITS	6
-/* maximum size of pid in hex characters */
-#define MAX_PID_LEN	4
 /* maximum seq size in hex chars */
 #define MAX_SEQ_LEN (T_TABLE_POWER*2)
+/* maximum size of pid in hex characters */
+#define MAX_PID_LEN	4
+extern char call_id[RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN+1];
+void generate_callid();
+#endif
+
+#define DEFAULT_CSEQ	10
 
 extern char *uac_from;
 extern char *fifo;
 extern int fifo_mode;
-extern char call_id[RAND_DIGITS+1+MAX_PID_LEN+1+MAX_SEQ_LEN+1];
-extern char from_tag[ MD5_LEN +1];
 
-void uac_init();
-void uac_child_init( int rank );
-void generate_callid();
+int uac_init();
+int uac_child_init( int rank );
 
 typedef int (*tuac_f)(str *msg_type, str *dst, str *headers,str *body,
 	str *from, transaction_cb completion_cb, void *cbp,

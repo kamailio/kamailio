@@ -35,19 +35,20 @@
 
 
 extern struct t_stats *tm_stats;
+typedef unsigned long stat_counter;
 
 struct t_stats {
 	/* number of transactions in wait state */
-	unsigned long *s_waiting;
+	stat_counter *s_waiting;
 	/* number of server transactions */
-	unsigned long *s_transactions;
+	stat_counter *s_transactions;
 	/* number of UAC transactions (part of transactions) */
-	unsigned long *s_client_transactions;
+	stat_counter *s_client_transactions;
 	/* number of transactions which completed with this status */
-	unsigned long completed_3xx, completed_4xx, completed_5xx, 
+	stat_counter completed_3xx, completed_4xx, completed_5xx, 
 		completed_6xx, completed_2xx;
-	unsigned long replied_localy;
-	unsigned long deleted;
+	stat_counter replied_localy;
+	stat_counter deleted;
 };
 
 inline void static t_stats_new(int local)

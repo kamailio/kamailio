@@ -25,7 +25,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+#include <stdlib.h>
 #include "../../mem/shm_mem.h"
 #include "../../hash_func.h"
 #include "h_table.h"
@@ -136,13 +136,13 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
 	unsigned int i;
-	unsigned int rand;
+	unsigned int myrand;
 	int size;
 	char *c;
 	struct ua_client *uac;
 
 	/* avoid 'unitialized var use' warning */
-	rand=0;
+	myrand=0;
 
 	/* allocs a new cell */
 	new_cell = (struct cell*)shm_malloc( sizeof( struct cell ) );
@@ -192,8 +192,11 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 	if (p_msg) {
 		new_cell->hash_index = p_msg->hash_index;
 	} else {
-		rand = random();
-		new_cell->hash_index = rand % TABLE_ENTRIES ;
+		/* note: unsatisfactory if 
+		   RAND_MAX < TABLE_ENTRIES
+		*/
+		myrand = rand();
+		new_cell->hash_index = myrand % TABLE_ENTRIES ;
 	}
 	new_cell->wait_tl.payload = new_cell;
 	new_cell->dele_tl.payload = new_cell;
@@ -219,7 +222,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
 			c=new_cell->md5;
 			size=MD5_LEN;
 			memset(c, '0', size );
-			int2reverse_hex( &c, &size, rand );
+			int2reverse_hex( &c, &size, myrand );
 		}
 	}
 

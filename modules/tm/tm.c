@@ -281,6 +281,8 @@ static int mod_init(void)
 			MAX_BRANCHES );
 		return -1;
 	}
+
+
 	if (register_fifo_cmd(fifo_uac, "t_uac", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo uac\n");
 		return -1;
@@ -293,39 +295,57 @@ static int mod_init(void)
 		LOG(L_CRIT, "cannot register hash\n");
 		return -1;
 	}
-	
+
+	if (!init_hash_table()) {
+		LOG(L_ERR, "ERROR: mod_init: initializing hash_table failed\n");
+		return -1;
+	}
+
+
+	/* init static hidden values */
+	init_t();
+
+	if (!tm_init_timers()) {
+		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
+		return -1;
+	}
+	/* register the timer function */
+	register_timer( timer_routine , 0 /* empty attr */, 1 );
+
+	/* init_tm_stats calls process_count, which should
+	 * NOT be called from mod_init, because one does not
+	 * now, if a timer is used and thus how many processes
+	 * will be started; however we started already our
+	 * timers, so we know and process_count should not
+	 * change any more
+	 */	
 	if (init_tm_stats()<0) {
 		LOG(L_CRIT, "ERROR: mod_init: failed to init stats\n");
 		return -1;
 	}
 
 	/* building the hash table*/
-	if (!init_hash_table()) {
-		LOG(L_ERR, "ERROR: mod_init: initializing hash_table failed\n");
+
+	if (uac_init()==-1) {
+		LOG(L_ERR, "ERROR: mod_init: uac_init failed\n");
 		return -1;
 	}
-
-	if (!tm_init_timers()) {
-		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
-		return -1;
-	}
-
-	/* init static hidden values */
-	init_t();
-
-	uac_init();
-	register_tmcb( TMCB_ON_NEGATIVE, on_negative_reply, 0 /* empty param */);
-    /* register the timer function */
-    register_timer( timer_routine , 0 /* empty attr */, 1 );
-    /* register post-script clean-up function */
-    register_script_cb( w_t_unref, POST_SCRIPT_CB, 0 /* empty param */ );
-    register_script_cb( script_init, PRE_SCRIPT_CB , 0 /* empty param */ );
+	register_tmcb( TMCB_ON_NEGATIVE, on_negative_reply, 
+			0 /* empty param */);
+	/* register post-script clean-up function */
+	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
+			0 /* empty param */ );
+	register_script_cb( script_init, PRE_SCRIPT_CB , 
+			0 /* empty param */ );
 
 	return 0;
 }
 
 static int child_init(int rank) {
-	uac_child_init(rank);
+	if (uac_child_init(rank)==-1) {
+		LOG(L_ERR, "ERROR: child_init: uac_child_init error\n");
+		return -1;
+	}
 	return 1;
 }
 
