@@ -16,12 +16,28 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 
     /* clones the sip_msg structure */
     new_msg = (struct sip_msg*)sh_malloc( sizeof( struct sip_msg) );
-    if (!new_msg) return NULL;
+    if (!new_msg) {
+	DBG("DEBUG: sip_msg_cloner: sip_msg allocation failed\n");
+	return NULL;
+    }
     memcpy( new_msg , org_msg , sizeof( struct sip_msg) );
+
+    /* if something bad happens during the allocation process,
+       don't try to release pointers which were cloned
+    */
+    new_msg->new_uri.s=NULL;
+    new_msg->headers=NULL;
+    new_msg->add_rm=NULL;
+    new_msg->repl_add_rm=NULL;
+    new_msg->orig=NULL;
+    new_msg->buf=NULL;
+
+
 
     /* the original message - orig ( char*  type) */
     new_msg->orig = (char*)sh_malloc( new_msg->len+1 );
     if (!new_msg->orig) {
+	DBG("DEBUG: sip_msg_cloner: new_msg->orig allocation failed\n");
 	goto error;
     }
     memcpy( new_msg->orig , org_msg->orig, new_msg->len );
@@ -30,6 +46,7 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
     /* the scratch pad - buf ( char* type) */
     new_msg->buf = (char*)sh_malloc( new_msg->len+1 );
     if (!new_msg->buf) {
+	DBG("DEBUG: sip_msg_cloner:  new_msg->buf allocation failed\n");
 	goto error;
     }
     memcpy( new_msg->buf , org_msg->buf, new_msg->len );
@@ -64,7 +81,10 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
     /* new_uri  ( str type )*/
 	if (org_msg->new_uri.s){ 
 		if (!(new_msg->new_uri.s = (char*)sh_malloc( org_msg->new_uri.len )))
+		{
+			DBG("DEBUG: sip_msg_cloner: new_msg->new_uri.s allocation failed\n");
 			goto error;
+		}
 		memcpy( new_msg->new_uri.s , org_msg->new_uri.s ,
 				org_msg->new_uri.len );
 	}
@@ -80,8 +100,10 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
     for( header = org_msg->headers , last_hdr=0  ;  header ; header=header->next)
     {
 	new_hdr = header_cloner( new_msg , org_msg , header );
-	if (!new_hdr) 
+	if (!new_hdr) {
+		DBG("DEBUG: sip_msg_cloner: new_hdr allocation failed\n");
 		goto error;
+	}
 	switch ( header->type )
 	{
 	    case HDR_VIA :
@@ -89,7 +111,10 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		{
 		    new_msg->h_via1 = new_hdr;
 		    new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
-		    if (!new_msg->via1) goto hf_error;
+		    if (!new_msg->via1) {
+			DBG("DEBUG: sip_msg_cloner:  new_msg->via1 allocation failed\n");
+			goto hf_error;
+		    }
 		    
 		    new_hdr->parsed  = (void*)new_msg->via1;
 		     if ( new_msg->via1->next )
@@ -102,14 +127,20 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		        new_hdr->parsed = (void*)new_msg->via1->next;
 		     else{
 		        new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
-			if (!new_msg->via2) goto hf_error;
+			if (!new_msg->via2) {
+				DBG("DEBUG: sip_msg_cloner:  new_msg->via2 allocation failed\n");
+				goto hf_error;
+			}
 		        new_hdr->parsed  = (void*)new_msg->via2;
 		     }
 		}
 		else if ( new_msg->via2 && new_msg->via1 )
 		{
 		    new_hdr->parsed  = new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
-		    if (!new_hdr->parsed) goto hf_error;
+		    if (!new_hdr->parsed) {
+				DBG("DEBUG: sip_msg_cloner:  new_hdr->parsed  via1 allocation failed\n");
+				goto hf_error;
+		    }
 		}
 		break;
 	    case HDR_FROM :
@@ -122,7 +153,10 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		if (header->parsed)
 		{
 		  new_hdr->parsed = (void*)sh_malloc( sizeof(struct cseq_body) );
-		  if (!new_hdr->parsed) goto hf_error;
+		  if (!new_hdr->parsed) {
+			DBG("DEBUG: sip_msg_cloner:  new_hdr->parsed  cseq allocation failed\n");
+			goto hf_error;
+		  }
 		  memcpy( new_hdr->parsed , header->parsed , sizeof(struct cseq_body) );
 		  ((struct cseq_body*)new_hdr->parsed)->number.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->number.s );
 		  ((struct cseq_body*)new_hdr->parsed)->method.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->method.s );
