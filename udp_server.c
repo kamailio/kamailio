@@ -21,11 +21,8 @@
 
 int udp_sock;
 
-
-
-int udp_init(unsigned long ip, unsigned short port)
+int probe_max_receive_buffer( int udp_sock )
 {
-	struct sockaddr_in* addr;
 	int optval, optvallen;
 	int ioptval, ioptvallen;
 	int foptval, foptvallen;
@@ -33,37 +30,13 @@ int udp_init(unsigned long ip, unsigned short port)
 	int i;
 	int phase=0;
 
-
-	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
-	if (addr==0){
-		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
-		goto error;
-	}
-	addr->sin_family=AF_INET;
-	addr->sin_port=htons(port);
-	addr->sin_addr.s_addr=ip;
-
-	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
-	if (udp_sock==-1){
-		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
-		goto error;
-	}
-	/* set sock opts? */
-	optval=1;
-	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
-					(void*)&optval, sizeof(optval)) ==-1)
-	{
-		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
-		goto error;
-	}
-
 	/* jku: try to increase buffer size as much as we can */
 	ioptvallen=sizeof(ioptval);
 	if (getsockopt( udp_sock, SOL_SOCKET, SO_RCVBUF, (void*) &ioptval,
 		    &ioptvallen) == -1 )
 	{
 		LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
-		goto error;
+		return -1;
 	}
 	if ( ioptval==0 ) 
 	{
@@ -97,7 +70,7 @@ int udp_init(unsigned long ip, unsigned short port)
 		    &voptvallen) == -1 )
 		{
 			LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
-			goto error;
+			return -1;
 		} else {
 			LOG(L_DBG, "DEBUG: setting SO_RCVBUF; set=%d,verify=%d\n", 
 				optval, voptval);
@@ -108,7 +81,7 @@ int udp_init(unsigned long ip, unsigned short port)
 				*/
                         	if (phase==0) { phase=1; optval >>=1 ; continue; } 
                         	else break;
-			}
+			} 
 		}
 
 	} /* for ... */
@@ -117,12 +90,46 @@ int udp_init(unsigned long ip, unsigned short port)
 		    &foptvallen) == -1 )
 	{
 		LOG(L_ERR, "ERROR: udp_init: getsockopt: %s\n", strerror(errno));
-		goto error;
+		return -1;
 	}
  	LOG(L_INFO, "INFO: udp_init: SO_RCVBUF is finally %d\n", foptval );
 
+	return 0;
 
 	/* EoJKU */
+}
+
+int udp_init(unsigned long ip, unsigned short port)
+{
+	struct sockaddr_in* addr;
+	int optval, optvallen;
+
+
+	addr=(struct sockaddr_in*)malloc(sizeof(struct sockaddr));
+	if (addr==0){
+		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
+		goto error;
+	}
+	addr->sin_family=AF_INET;
+	addr->sin_port=htons(port);
+	addr->sin_addr.s_addr=ip;
+
+	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
+	if (udp_sock==-1){
+		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
+		goto error;
+	}
+	/* set sock opts? */
+	optval=1;
+	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
+					(void*)&optval, sizeof(optval)) ==-1)
+	{
+		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
+		goto error;
+	}
+
+	if ( probe_max_receive_buffer(udp_sock)==-1) goto error;
+
 
 	if (bind(udp_sock, (struct sockaddr*) addr, sizeof(struct sockaddr))==-1){
 		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror(errno));
