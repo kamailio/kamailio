@@ -5,8 +5,8 @@
 #include "db_res.h"
 #include "defs.h"
 #include <stdlib.h>
-#include "../../mem.h"
 #include "../../dprint.h"
+#include "../../mem/mem.h"
 
 
 static int get_columns  (db_con_t* _h, db_res_t* _r);

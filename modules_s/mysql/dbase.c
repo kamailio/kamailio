@@ -3,11 +3,11 @@
  */
 
 #include "dbase.h"
-#include "../../mem.h"
-#include "../../dprint.h"
 #include <mysql/mysql.h>
 #include "db_utils.h"
+#include "../../dprint.h"
 #include "defs.h"
+#include "../../mem/mem.h"
 #include <string.h>
 
 
@@ -253,7 +253,7 @@ int db_free_query(db_con_t* _h, db_res_t* _r)
  */
 int db_query(db_con_t* _h, db_key_t* _k, 
 	     db_val_t* _v, db_key_t* _c, int _n, int _nc,
-	     db_res_t** _r)
+	     db_key_t _o, db_res_t** _r)
 {
 	int off;
 #ifdef PARANOID
@@ -273,6 +273,10 @@ int db_query(db_con_t* _h, db_key_t* _k,
 		off += snprintf(query_buf + off, SQL_BUF_LEN - off, "where ");
 		off += print_where(query_buf + off, SQL_BUF_LEN - off, _k, _v, _n);
 	}
+	if (_o) {
+		off += snprintf(query_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
+	}
+
 	if (submit_query(_h, query_buf) == FALSE) {
 		log(L_ERR, "query_table(): Error while submitting query\n");
 		return FALSE;

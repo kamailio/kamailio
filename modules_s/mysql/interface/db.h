@@ -170,7 +170,7 @@ typedef void (*db_close_f) (db_con_t* _h);
 typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k, 
 			   db_val_t* _v, db_key_t* _c, 
 			   int _n, int _nc,
-			   db_res_t** _r);
+			   db_key_t _o, db_res_t** _r);
 
 
 /*
