@@ -194,20 +194,20 @@ static int mod_init(void)
 	DBG("XJAB:mod_init: initializing ...\n");
 	if(!jdomain)
 	{
-		DBG("XJAB:mod_init: ERROR jdomain is NULL\n");
+		LOG(L_ERR, "XJAB:mod_init: ERROR jdomain is NULL\n");
 		return -1;
 	}
 
 	/* import mysql functions */
 	if (bind_dbmod())
 	{
-		DBG("XJAB:mod_init: error - database module not found\n");
+		LOG(L_ERR, "XJAB:mod_init: error - database module not found\n");
 		return -1;
 	}
 	db_con = (db_con_t**)shm_malloc(nrw*sizeof(db_con_t*));
 	if (db_con == NULL)
 	{
-		DBG("XJAB:mod_init: Error while allocating db_con's\n");
+		LOG(L_ERR, "XJAB:mod_init: Error while allocating db_con's\n");
 		return -1;
 	}
 
@@ -234,7 +234,7 @@ static int mod_init(void)
 	pipes = (int**)pkg_malloc(nrw*sizeof(int*));
 	if (pipes == NULL)
 	{
-		DBG("XJAB:mod_init:Error while allocating pipes\n");
+		LOG(L_ERR, "XJAB:mod_init:Error while allocating pipes\n");
 		return -1;
 	}
 	
@@ -243,7 +243,7 @@ static int mod_init(void)
 		pipes[i] = (int*)pkg_malloc(2*sizeof(int));
 		if (!pipes[i])
 		{
-			DBG("XJAB:mod_init: Error while allocating pipes\n");
+			LOG(L_ERR, "XJAB:mod_init: Error while allocating pipes\n");
 			return -1;
 		}
 	}
@@ -253,7 +253,7 @@ static int mod_init(void)
 		db_con[i] = db_init(db_url);
 		if (!db_con[i])
 		{
-			DBG("XJAB:mod_init: Error while connecting database\n");
+			LOG(L_ERR, "XJAB:mod_init: Error while connecting database\n");
 			return -1;
 		}
 		else
@@ -270,7 +270,7 @@ static int mod_init(void)
 	{
 		/* create the pipe*/
 		if (pipe(pipes[i])==-1) {
-			DBG("XJAB:mod_init: error - cannot create pipe!\n");
+			LOG(L_ERR, "XJAB:mod_init: error - cannot create pipe!\n");
 			return -1;
 		}
 		DBG("XJAB:mod_init: pipe[%d] = <%d>-<%d>\n", i, pipes[i][0],
@@ -280,13 +280,13 @@ static int mod_init(void)
 	if((jwl = xj_wlist_init(pipes,nrw,max_jobs,cache_time,sleep_time,
 				delay_time)) == NULL)
 	{
-		DBG("XJAB:mod_init: error initializing workers list\n");
+		LOG(L_ERR, "XJAB:mod_init: error initializing workers list\n");
 		return -1;
 	}
 	
 	if(xj_wlist_set_aliases(jwl, jaliases, jdomain, proxy) < 0)
 	{
-		DBG("XJAB:mod_init: error setting aliases and outbound proxy\n");
+		LOG(L_ERR, "XJAB:mod_init: error setting aliases and outbound proxy\n");
 		return -1;
 	}
 
@@ -314,8 +314,9 @@ static int child_init(int rank)
 #endif
 		if((mpid=fork())<0 )
 		{
-			DBG("XJAB:child_init: error - cannot launch worker's manager\n");
-				return -1;
+			LOG(L_ERR, "XJAB:child_init:error - cannot launch worker's"
+					" manager\n");
+			return -1;
 		}
 		if(mpid == 0)
 		{
@@ -324,7 +325,7 @@ static int child_init(int rank)
 			{
 				if ( (cpid=fork())<0 )
 				{
-					DBG("XJAB:child_init: error - cannot launch worker\n");
+					LOG(L_ERR,"XJAB:child_init:error - cannot launch worker\n");
 					return -1;
 				}
 				if (cpid == 0)
@@ -334,7 +335,8 @@ static int child_init(int rank)
 					close(pipes[i][1]);
 					if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
 					{
-						DBG("XJAB:child_init: error setting worker's pid\n");
+						LOG(L_ERR, "XJAB:child_init:error setting worker's"
+										" pid\n");
 						return -1;
 					}
 					xj_worker_process(jwl,jaddress,jport,i,db_con[i]);
