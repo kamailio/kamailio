@@ -1,4 +1,4 @@
-/* enum.c v 0.2 2002/12/27
+/* enum.c v 0.3 2003/1/19
  *
  * Enum and E164 related functions
  *
@@ -33,10 +33,28 @@
 #include "../../resolve.h"
 #include "../../mem/mem.h"
 
+
+/*
+ * Check that From header is properly parsed and if so,
+ * return pointer to parsed From header.  Otherwise return NULL.
+ */
+inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
+{
+	if (!(_msg->from)) {
+		LOG(L_ERR, "get_parsed_from(): Request does not have a From header\n");
+		return NULL;
+	}
+	if (!(_msg->from->parsed) || ((struct to_body *)_msg->from->parsed)->error != PARSE_OK) {
+		LOG(L_ERR, "get_parsed_from(): From header is not properly parsed\n");
+		return NULL;
+	}
+	return (struct to_body *)(_msg->from->parsed);
+}
+
+
 /* Replaces message uri with the uri given as argument.  Returns 1
  * if replacement succeeds and -1 otherwise.
  */
-
 inline int set_uri(struct sip_msg* _msg, char* uri, int len)
 {
 	if (len > MAX_URI_SIZE - 1) {
@@ -50,6 +68,7 @@ inline int set_uri(struct sip_msg* _msg, char* uri, int len)
 	}
 	if (_msg->parsed_uri_ok) {
 		_msg->parsed_uri_ok = 0;
+		free_uri(&_msg->parsed_uri);
 	}
 	_msg->new_uri.s = pkg_malloc(len + 1);
 	if (_msg->new_uri.s == 0) {
@@ -87,31 +106,20 @@ inline int is_e164(str* _user)
  */
 int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 {
+	struct to_body* body;
 	struct sip_uri uri;
 	int result;
 
-	if (!_msg->from && (parse_headers(_msg, HDR_FROM, 0) == -1)) {
-		LOG(L_ERR, "is_from_user_e164(): Error while parsing message\n");
-		return -1;
-	}
-	if (!_msg->from) {
-		LOG(L_ERR, "is_from_user_e164(): From HF not found\n");
-		return -1;
-	}
+	body = get_parsed_from_body(_msg);
+	if (!body) return -1;
 
-	if (!(_msg->from->parsed)) {
-		if (parse_from_header(_msg) == -1) {
-			LOG(L_ERR, "is_from_user_e164(): Can't parse from header\n");
-			return -1;
-		}
-	}
-
-	if (parse_uri(get_from(_msg)->uri.s, get_from(_msg)->uri.len, &uri) < 0) {
+	if (parse_uri(body->uri.s, body->uri.len, &uri) < 0) {
 		LOG(L_ERR, "is_from_user_e164(): Error while parsing From uri\n");
 		return -1;
 	}
 
 	result = is_e164(&(uri.user));
+	free_uri(&uri);
 	return result;
 }
 
