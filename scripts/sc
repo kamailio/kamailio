@@ -684,7 +684,7 @@ case $1 in
 			exit 1
 		fi
 		echo "Write email to $1: $EA now ..."
-		mail -s "Message from $SIP_DOMAIN SIP admin" $EA
+		mail -s "Message from $SERDOMAIN SIP admin" $EA
 		if [ $? -eq 0 ] ; then
 			echo message sent
 		else
@@ -787,7 +787,7 @@ case $1 in
 			exit 1
 		fi
 		RET=`fifo_cmd t_uac_dlg OPTIONS "$2" "." \
-			"From: sip:daemon@$SIP_DOMAIN" \
+			"From: sip:daemon@!!" \
 			"To: <$2>" "Contact: <sip:daemon@!!>" "." "." \
 			| head -1 ` 
 		print_status $RET
@@ -799,7 +799,7 @@ case $1 in
 			exit 1
 		fi
 		RET=`fifo_cmd t_uac_dlg NOTIFY "$2" "." \
-			"From: sip:daemon@$SIP_DOMAIN" \
+			"From: sip:daemon@!!" \
 			"To: <$2>" "Event: check-sync" \
 			"Contact: <sip:daemon@!!>" "." "." |
 			head -1 `
