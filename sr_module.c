@@ -137,26 +137,6 @@ error:
 	return ret;
 }
 
-/*
- * per-child initialization
- */
-int init_child(int rank)
-{
-	struct sr_module* t;
-
-	for(t = modules; t; t = t->next) {
-		if (t->exports->init_child_f) {
-			if ((t->exports->init_child_f(rank)) < 0) {
-				LOG(L_ERR, "init_child(): Initialization of child %d failed\n",
-						rank);
-				return -1;
-			}
-		}
-	}
-	return 0;
-}
-
-
 
 /* returns 0 on success , <0 on error */
 int load_module(char* path)
@@ -278,6 +258,7 @@ void destroy_modules()
 		if  ((t->exports)&&(t->exports->destroy_f)) t->exports->destroy_f();
 }
 
+#ifdef NO_REVERSE_INIT
 
 /*
  * Initialize all loaded modules, the initialization
@@ -297,3 +278,110 @@ int init_modules(void)
 	}
 	return 0;
 }
+
+/*
+ * per-child initialization
+ */
+int init_child(int rank)
+{
+	struct sr_module* t;
+
+	for(t = modules; t; t = t->next) {
+		if (t->exports->init_child_f) {
+			if ((t->exports->init_child_f(rank)) < 0) {
+				LOG(L_ERR, "init_child(): Initialization of child %d failed\n",
+						rank);
+				return -1;
+			}
+		}
+	}
+	return 0;
+}
+
+#else
+
+
+/* recursive module child initialization; (recursion is used to
+   process the module linear list in the same order in
+   which modules are loaded in config file
+*/
+
+static int init_mod_child( struct sr_module* m, int rank )
+{
+	if (m) {
+		/* iterate through the list; if error occurs,
+		   propagate it up the stack
+		 */
+		if (init_mod_child(m->next, rank)!=0) return -1;
+		if (m->exports && m->exports->init_child_f) {
+			DBG("DEBUG: init_mod_child (%d): %s\n", 
+					rank, m->exports->name);
+			if (m->exports->init_child_f(rank)<0) {
+				LOG(L_ERR, "init_mod_child(): Error while initializing"
+							" module %s\n", m->exports->name);
+				return -1;
+			} else {
+				/* module correctly initialized */
+				return 0;
+			}
+		}
+		/* no init function -- proceed with success */
+		return 0;
+	} else {
+		/* end of list */
+		return 0;
+	}
+}
+
+
+/*
+ * per-child initialization
+ */
+int init_child(int rank)
+{
+	return init_mod_child(modules, rank);
+}
+
+
+
+/* recursive module initialization; (recursion is used to
+   process the module linear list in the same order in
+   which modules are loaded in config file
+*/
+
+static int init_mod( struct sr_module* m )
+{
+	if (m) {
+		/* iterate through the list; if error occurs,
+		   propagate it up the stack
+		 */
+		if (init_mod(m->next)!=0) return -1;
+		if (m->exports && m->exports->init_f) {
+			DBG("DEBUG: init_mod: %s\n", m->exports->name);
+			if (m->exports->init_f()!=0) {
+				LOG(L_ERR, "init_mod(): Error while initializing"
+							" module %s\n", m->exports->name);
+				return -1;
+			} else {
+				/* module correctly initialized */
+				return 0;
+			}
+		}
+		/* no init function -- proceed with success */
+		return 0;
+	} else {
+		/* end of list */
+		return 0;
+	}
+}
+
+/*
+ * Initialize all loaded modules, the initialization
+ * is done *AFTER* the configuration file is parsed
+ */
+int init_modules(void)
+{
+	return init_mod(modules);
+}
+
+#endif
