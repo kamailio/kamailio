@@ -33,7 +33,10 @@
 			<listitem>
 			    <para>
 				a database is represented by a directory in the local file
-				system.
+				system. NOTE: when you use <emphasis>dbtext</emphasis> in &ser;
+				the	database URL for modules must be the path to the directory
+				where the table-files are located, e.g., 
+				<quote>/var/dbtext/ser</quote>.
 				</para>
 			</listitem>
 			<listitem>
@@ -216,11 +219,19 @@ suser:supasswd:xxx:iptel.org:xxx
 		<para>
 		Compile the module and load it instead of mysql or other DB modules.
 		</para>
+		<para>
+		REMINDER: when you use <emphasis>dbtext</emphasis> in &ser;
+		the	database URL for modules must be the path to the directory
+		where the table-files are located, e.g., 
+		<quote>/var/dbtext/ser</quote>.
+		</para>
 		<example>
 		<title>Load the dbtext module</title>
 <programlisting format="linespecific">
 ...
 loadmodule "/path/to/ser/modules/dbtext.so"
+...
+modparam("module_name", "database_URL", "/path/to/dbtext/database")
 ...
 </programlisting>
 		</example>

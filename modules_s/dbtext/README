@@ -54,7 +54,9 @@ Chapter 1. User's Guide
    The dbtext database system architecture:
 
      * a database is represented by a directory in the local file
-       system.
+       system.  NOTE: when you use dbtext in SER the database URL
+       for  modules  must  be the path to the directory where the
+       table-files are located, e.g., "/var/dbtext/ser".
      * a  table  is  represented  by  a text file inside database
        directory.
      _________________________________________________________
@@ -138,9 +140,15 @@ suser:supasswd:xxx:iptel.org:xxx
    Compile  the  module  and load it instead of mysql or other DB
    modules.
 
+   REMINDER:  when  you  use  dbtext  in SER the database URL for
+   modules   must   be  the  path  to  the  directory  where  the
+   table-files are located, e.g., "/var/dbtext/ser".
+
    Example 1-4. Load the dbtext module
 ...
 loadmodule "/path/to/ser/modules/dbtext.so"
+...
+modparam("module_name", "database_URL", "/path/to/dbtext/database")
 ...
      _________________________________________________________
 
