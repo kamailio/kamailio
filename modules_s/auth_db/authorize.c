@@ -43,86 +43,73 @@
 #include "rfc2617.h"
 
 
-
 #define MESSAGE_500 "Server Internal Error"
 
 
-/*
- * Get or calculate HA1 string, if calculate_ha1 is set, the function will
- * simply fetch the string from the database, otherwise it will fetch plaintext
- * password and will calculate the string
- */
-static inline int get_ha1(str* _user, str* _realm, char* _table, char* _ha1)
+static inline int get_ha1(str* _user, str* _domain, str* _realm, char* _table, char* _ha1)
 {
 	db_key_t keys[] = {username_column, domain_column};
 	db_val_t vals[2];
 	db_key_t col[] = {pass_column};
 	db_res_t* res;
-
 	str result;
-
 	char* at;
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
 	
-	VAL_STR(vals) = *_user;
-	VAL_STR(vals + 1) = *_realm;
+	VAL_STR(vals).s = _user->s;
+	VAL_STR(vals).len = _user->len;
+	
+	VAL_STR(vals + 1).s = _realm->s;
+	VAL_STR(vals + 1).len = _realm->len;
 
-	     /*
-	      * Some user agents put domain in the username, since we
-	      * have only usernames in database, remove domain part
-	      * if the server uses HA1 precalculated strings in the
-	      * database, then switch over to another column, which
-	      * contains HA1 strings calculated also with domain, the
-	      * original column contains HA1 strings calculated without
-	      * the domain part
-	      */
-	at = memchr(_user->s, '@', _user->len);
-	if (at) {
-		DBG("get_ha1(): @ found in username, removing domain part\n");
-		VAL_STR(vals).len = at - _user->s;
+	     /* If username contains also domain U */
+	if (_domain->len) {
+		     /* Use that domain instead of realm */
+		VAL_STR(vals + 1).s = _domain->s;
+		VAL_STR(vals + 1).len = _domain->len;		
+		     /*
+		      * If we do not calculate HA1 strings on the fly,
+		      * we must use another column here, because the original
+		      * column contains HA1 hashed without the domain. So we
+		      * use another column which contains HA1 string including
+		      * also the domain
+		      *
+		      * This is not necessarry if we calculate HA1 strings on the
+		      * fly (i.e. plaintext passwords are stored in the database),
+		      * because in this case HA1 will be always calculated correctly
+		      * by the server.
+		      */
 		if (!calc_ha1) {
 			col[0] = pass_column_2;
 		}
 	}
 
-	     /* 
-	      * Query the database either for HA1 string or plaintext password,
-	      * it depends on calculate_ha1 variable value
-	      */
 	db_use_table(db_handle, _table);
 	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
 
-	     /*
-	      * There is no such username in the database, return 1
-	      */
 	if (RES_ROW_N(res) == 0) {
-		DBG("get_ha1(): no result for user \'%.*s\'\n", _user->len, _user->s);
+		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
+		    _user->len, _user->s,
+		    (_domain->len) ? (_domain->len) : (_realm->len),
+		    (_domain->len) ? (_domain->s) : (_realm->s)
+		    );
 		db_free_query(db_handle, res);
-		return 1;
+		return -1;
 	}
 
         result.s = (char*)ROW_VALUES(RES_ROWS(res))[0].val.string_val;
 	result.len = strlen(result.s);
 
-	     /*
-	      * If calculate_ha1 variable is set to true, calculate HA1 
-	      * string on the fly from username, realm and plaintext 
-	      * password obtained from the database and return the 
-	      * calculated HA1 string
-	      *
-	      * If calculate_ha1 is not set, we have the HA1 already,
-	      * just return it
-	      */
 	if (calc_ha1) {
 		     /* Only plaintext passwords are stored in database,
 		      * we have to calculate HA1 */
 		calc_HA1(HA_MD5, _user, _realm, &result, 0, 0, _ha1);
-		DBG("get_ha1(): HA1 string calculated: \'%s\'\n", _ha1);
+		DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
 		_ha1[result.len] = '\0';
@@ -197,7 +184,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username.whole, _realm, _table, ha1);
+	res = get_ha1(&cred->digest.username.user, &cred->digest.username.domain, _realm, _table, ha1);
         if (res < 0) {
 		     /* Error while accessing the database */
 		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
@@ -212,7 +199,11 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	     /* Recalculate response, it must be same to authorize sucessfully */
         if (!check_response(&(cred->digest), &_m->first_line.u.request.method, ha1)) {
 		ret = post_auth_func(_m, h);
-		if (ret == AUTHORIZED) return 1;
+		switch(ret) {
+		case ERROR:          return 0;
+		case NOT_AUTHORIZED: return -1;
+		case AUTHORIZED:     return 1;
+		}
 	}
 
 	return -1;
