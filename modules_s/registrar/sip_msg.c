@@ -219,7 +219,7 @@ contact_t* get_next_contact(contact_t* _c)
  * 3) If the message contained no expires header field, use
  *    the default value
  */
-int calc_contact_expires(struct sip_msg* _m, cparam_t* _ep, int* _e)
+int calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 {
 	if (!_ep || (_ep->body.len == 0)) {
 		*_e = get_expires_hf(_m);
@@ -244,7 +244,7 @@ int calc_contact_expires(struct sip_msg* _m, cparam_t* _ep, int* _e)
  * 1) If q parameter exists, use it
  * 2) If the parameter doesn't exist, use default value
  */
-int calc_contact_q(cparam_t* _q, float* _r)
+int calc_contact_q(param_t* _q, float* _r)
 {
 	if (!_q || (_q->body.len == 0)) {
 		*_r = def_q;
