@@ -319,7 +319,7 @@ int udp_rcv_loop()
 			else goto error;
 		}
 		/* we must 0-term the messages, receive_msg expects it */
-		buf[len+1]=0; /* no need to save the previous char */
+		buf[len]=0; /* no need to save the previous char */
 
 #ifndef NO_ZERO_CHECKS
 		if (len==0) {

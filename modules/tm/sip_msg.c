@@ -54,7 +54,7 @@
 
 
 /* rounds to the first 4 byte multiple on 32 bit archs 
- * and to the first 8 byte mutlipe on 64 bit archs */
+ * and to the first 8 byte multipe on 64 bit archs */
 #define ROUND4(s) \
 	(((s)+(sizeof(char*)-1))&(~(sizeof(char*)-1)))
 
