@@ -17,13 +17,17 @@
 #include <dmalloc.h>
 #endif
 
+#ifdef STATS
 #include "stats.h"
+#endif
 
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg msg;
 
+#ifdef STATS
 	stats.total_rx++;	
+#endif
 
 	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
@@ -57,8 +61,10 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 					"error while trying script\n");
 			goto error;
 		}
+#ifdef STATS
 		/* jku -- update statistics  */
 		else stats.ok_rx_rq++;	
+#endif
 	}else if (msg.first_line.type==SIP_REPLY){
 		/* sanity checks */
 		if (msg.via1.error!=VIA_PARSE_OK){
@@ -71,8 +77,10 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 		/* check if via1 == us */
 
+#ifdef STATS
 		/* jku -- update statistics  */
 		stats.ok_rx_rs++;	
+#endif
 		
 		/* send the msg */
 		if (forward_reply(&msg)==0){

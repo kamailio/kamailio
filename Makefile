@@ -21,7 +21,9 @@ NAME=ser
 # MACROEATER replaces frequently called parser helper functions
 # with macros
 # recommanded: on (speed-up)
-DEFS=-DNOCR -DMACROEATER
+# STATS allows to print out number of packets processed on CTRL-C; implementation
+#  still nasty and reports per-process
+DEFS=-DNOCR -DMACROEATER -DSTATS
 
 # platform dependent settings
 

@@ -28,7 +28,9 @@
 #define MAX_VIA_LINE_SIZE      240
 #define MAX_RECEIVED_SIZE  57
 
+#ifdef STATS
 #include "stats.h"
+#endif
 
 /* checks if ip is in host(name) and ?host(ip)=name? 
  * ip must be in network byte order!
@@ -333,14 +335,19 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 
 	p->tx++;
 	p->tx_bytes+=new_len;
+#ifdef STATS
 	stats.total_tx++;
+#endif
 
 	if (udp_send(new_buf, new_len, (struct sockaddr*) to,
 				sizeof(struct sockaddr_in))==-1){
 			p->errors++;
 			p->ok=0;
 			goto error;
-	} else stats.ok_tx_rq++;
+	} 
+#ifdef STATS
+	else stats.ok_tx_rq++;
+#endif
 
 	free(new_buf);
 	free(to);
@@ -445,11 +452,15 @@ int forward_reply(struct sip_msg* msg)
 
 
 	
+#ifdef STATS
 	stats.total_tx++;
+#endif
 	if (udp_send(new_buf,new_len, (struct sockaddr*) to, 
 					sizeof(struct sockaddr_in))==-1)
 		goto error;
+#ifdef STATS
 	else stats.ok_tx_rs++;
+#endif
 	
 	free(new_buf);
 	free(to);

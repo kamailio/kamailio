@@ -1,6 +1,8 @@
 #ifndef stats_h
 #define stats_h
 
+#ifdef STATS
+
 struct stats_s {
 
 	/* total/valid, received/sent, request/response */
@@ -14,5 +16,7 @@ struct stats_s {
 
 
 extern struct stats_s stats;
+
+#endif
 
 #endif
