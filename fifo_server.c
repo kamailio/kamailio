@@ -94,6 +94,8 @@ int register_fifo_cmd(fifo_cmd f, char *cmd_name, void *param)
 
 	new_cmd->next=cmd_list;
 	cmd_list=new_cmd;
+	
+	DBG("DEBUG: register_fifo_cmd: new command (%s) registered\n", cmd_name );
 
 	return 1;
 }
