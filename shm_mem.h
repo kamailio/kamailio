@@ -80,30 +80,62 @@ again:
 }
 
 
-inline static void* shm_malloc(unsigned int size)
-{
-	void *p;
-	
-	/*if (shm_lock()==0){*/
-		shm_lock();
-		p=qm_malloc(shm_block, size);
-		shm_unlock();
-	/*
-	}else{
-		p=0;
-	}*/
-	return p;
-}
+
+#ifdef DBG_QM_MALLOC
+#define shm_malloc(size) \
+({\
+	void *p;\
+	\
+	/*if (shm_lock()==0){*/\
+		shm_lock();\
+		p=qm_malloc(shm_block, (size), __FILE__, __FUNCTION__, __LINE__);\
+		shm_unlock();\
+	/* \
+	}else{ \
+		p=0;\
+	}*/ \
+	 p; \
+})
 
 
 
 #define shm_free(p) \
 do { \
 		shm_lock(); \
-		qm_free(shm_block, p); \
+		qm_free(shm_block, (p), __FILE__, __FUNCTION__, __LINE__); \
 		shm_unlock(); \
 }while(0)
 
+
+#else
+
+
+#define shm_malloc(size) \
+({\
+	void *p;\
+	\
+	/*if (shm_lock()==0){*/\
+		shm_lock();\
+		p=qm_malloc(shm_block, (size));\
+		shm_unlock();\
+	/* \
+	}else{ \
+		p=0;\
+	}*/ \
+	 p; \
+})
+
+
+
+#define shm_free(p) \
+do { \
+		shm_lock(); \
+		qm_free(shm_block, (p)); \
+		shm_unlock(); \
+}while(0)
+
+
+#endif
 
 
 #define shm_status() \

@@ -33,8 +33,14 @@ NAME=ser
 # PKG_MALLOC uses a faster malloc (exclusive w/ USE_SHM_MEM)
 # USE_SHM_MEM all pkg_malloc => shm_malloc (most mallocs use a common sh. mem.
 #           segment); don't define PKG_MALLOC if you want this!
+#  DBG_QM_MALLOC - qm_malloc debug code, will cause pkg_malloc and shm_malloc
+#                  to keep and display lot of debuging information: file name,
+#                  function, line number of malloc/free call for each block,
+#                  extra error checking (trying to free the same pointer
+#                  twice, trying to free a pointer alloc'ed with a different
+#                  malloc etc.)
 DEFS=-DTHREAD -DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM \
-	 -DPKG_MALLOC #-DNO_DEBUG
+	 -DPKG_MALLOC -DDBG_QM_MALLOC#-DNO_DEBUG
 # -DUSE_SHM_MEM
 #-DNO_DEBUG 
 #-DPKG_MALLOC

@@ -13,6 +13,11 @@ struct qm_frag{
 		struct qm_frag* nxt_free;
 		int is_free;
 	}u;
+#ifdef DBG_QM_MALLOC
+	char* file;
+	char* func;
+	unsigned int line;
+#endif
 };
 
 struct qm_frag_end{
@@ -37,8 +42,21 @@ struct qm_block{
 
 
 struct qm_block* qm_malloc_init(char* address, unsigned int size);
+
+#ifdef DBG_QM_MALLOC
+void* qm_malloc(struct qm_block*, unsigned int size, char* file, char* func, 
+					unsigned int line);
+#else
 void* qm_malloc(struct qm_block*, unsigned int size);
+#endif
+
+#ifdef DBG_QM_MALLOC
+void  qm_free(struct qm_block*, void* p, char* file, char* func, 
+				unsigned int line);
+#else
 void  qm_free(struct qm_block*, void* p);
+#endif
+
 void  qm_status(struct qm_block*);
 
 

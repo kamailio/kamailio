@@ -109,7 +109,12 @@ static inline void qm_detach_free(struct qm_block* qm, struct qm_frag* frag)
 
 
 
+#ifdef DBG_QM_MALLOC
+void* qm_malloc(struct qm_block* qm, unsigned int size, char* file, char* func,
+					unsigned int line)
+#else
 void* qm_malloc(struct qm_block* qm, unsigned int size)
+#endif
 {
 	struct qm_frag* f;
 	struct qm_frag_end* end;
@@ -117,6 +122,10 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 	unsigned int rest;
 	unsigned int overhead;
 	
+#ifdef DBG_QM_MALLOC
+	DBG("qm_malloc(%x, %d) called from %s: %s(%d)\n", qm, size, file, func,
+			line);
+#endif
 	/*size must be a multiple of 8*/
 	size=(size%8)?(size+8)/8*8:size;
 	if (size>(qm->size-qm->real_used)) return 0;
@@ -142,6 +151,12 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 				n->size=rest-overhead;
 				FRAG_END(n)->size=n->size;
 				qm->real_used+=overhead;
+#ifdef DBG_QM_MALLOC
+				/* frag created by malloc, mark it*/
+				n->file=file;
+				n->func="frag. from qm_malloc";
+				n->line=line;
+#endif
 				/* reinsert n in free list*/
 				qm_insert_free(qm, n);
 			}else{
@@ -151,6 +166,11 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 			qm->used+=f->size;
 			if (qm->max_real_used<qm->real_used)
 				qm->max_real_used=qm->real_used;
+#ifdef DBG_QM_MALLOC
+			f->file=file;
+			f->func=func;
+			f->line=line;
+#endif
 			return (char*)f+sizeof(struct qm_frag);
 		}
 	}
@@ -159,7 +179,12 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 
 
 
+#ifdef DBG_QM_MALLOC
+void qm_free(struct qm_block* qm, void* p, char* file, char* func, 
+				unsigned int line)
+#else
 void qm_free(struct qm_block* qm, void* p)
+#endif
 {
 	struct qm_frag* f;
 	struct qm_frag* prev;
@@ -168,12 +193,29 @@ void qm_free(struct qm_block* qm, void* p)
 	unsigned int overhead;
 	unsigned int size;
 
+#ifdef DBG_QM_MALLOC
+	DBG("qm_free(%x, %x), called from %s: %s(%d)\n", qm, p, file, func, line);
+	if (p>(void*)qm->last_frag_end || p<(void*)qm->first_frag){
+		DBG("qm_free: ERROR!!!: bad pointer %x (out of memory block!) - "
+				"aborting\n", p);
+		abort();
+	}
+#endif
 	if (p==0) {
 		DBG("WARNING:qm_free: free(0) called\n");
 		return;
 	}
 	prev=next=0;
 	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
+#ifdef DBG_QM_MALLOC
+	if (f->u.is_free){
+		DBG("qm_free: ERROR!!!: freeing already freed pointer, first free:"
+				" %s: %s(%d) - aborting\n", f->file, f->func, f->line);
+		abort();
+	}
+	DBG("qm_free: freeing block alloc'ed from %s: %s(%d)\n", f->file, f->func,
+			f->line);
+#endif
 	overhead=sizeof(struct qm_frag)+sizeof(struct qm_frag_end);
 	next=FRAG_NEXT(f);
 	size=f->size;
@@ -200,6 +242,11 @@ void qm_free(struct qm_block* qm, void* p)
 	}
 	f->size=size;
 	FRAG_END(f)->size=f->size;
+#ifdef DBG_QM_MALLOC
+	f->file=file;
+	f->func=func;
+	f->line=line;
+#endif
 	qm_insert_free(qm, f);
 }
 
@@ -218,14 +265,24 @@ void qm_status(struct qm_block* qm)
 	
 	DBG("dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
-			,i++)
+			,i++){
 		DBG("    %3d. %c  address=%x  size=%d\n", i, (f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
+#ifdef DBG_QM_MALLOC
+		DBG("            %s from %s: %s(%d)\n",
+				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
+#endif
+	}
 	DBG("dumping free list:\n");
 	for (f=qm->free_lst.u.nxt_free,i=0; f!=&(qm->free_lst); f=f->u.nxt_free,
-			i++)
+			i++){
 		DBG("    %3d. %c  address=%x  size=%d\n", i, (f->u.is_free)?'a':'N',
 				(char*)f+sizeof(struct qm_frag), f->size);
+#ifdef DBG_QM_MALLOC
+		DBG("            %s from %s: %s(%d)\n", 
+				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
+#endif
+	}
 	DBG("-----------------------------\n");
 }
 
