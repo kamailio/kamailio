@@ -58,18 +58,21 @@
 #	define MY_MALLOC vqm_malloc
 #	define MY_FREE vqm_free
 #	define MY_STATUS vqm_status
+#	define  shm_malloc_init vqm_malloc_init
 #elif defined F_MALLOC
 #	include "f_malloc.h"
 	extern struct fm_block* shm_block;
 #	define MY_MALLOC fm_malloc
 #	define MY_FREE fm_free
 #	define MY_STATUS fm_status
+#	define  shm_malloc_init fm_malloc_init
 #else
 #	include "q_malloc.h"
 	extern struct qm_block* shm_block;
 #	define MY_MALLOC qm_malloc
 #	define MY_FREE qm_free
 #	define MY_STATUS qm_status
+#	define  shm_malloc_init qm_malloc_init
 #endif
 
 	
