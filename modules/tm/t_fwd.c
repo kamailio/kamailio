@@ -25,7 +25,6 @@
 
 
 
-
 /* function returns:
  *       1 - forward successfull
  *      -1 - error during forward
@@ -159,8 +158,6 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			(p_msg->first_line.u.request.uri.s - p_msg->buf);
 		T->uac[branch].uri.len=t_forks[branch].uri.s?(t_forks[branch].uri.len)
 			:(p_msg->first_line.u.request.uri.len);
-		DBG("DEBUG: uri= |%.*s| \n",T->uac[branch].uri.len,
-			T->uac[branch].uri.s);
 		/* send the request */
 		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch].ip;
 		T->uac[branch].request.to.sin_port = t_forks[branch].port;
@@ -174,7 +171,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			get_ticks() );
 		/*sets and starts the FINAL RESPONSE timer */
 		set_timer( hash_table, &(T->uac[branch].request.fr_timer),
-			/* p_msg->REQ_METHOD==METHOD_INVITE ? FR_INV_TIMER_LIST : FR_TIMER_LIST ); */
+		/*p_msg->REQ_METHOD==METHOD_INVITE?FR_INV_TIMER_LIST:FR_TIMER_LIST);*/
 			FR_TIMER_LIST ); 
 		/* sets and starts the RETRANS timer */
 		T->uac[branch].request.retr_list = RT_T1_TO_1;
@@ -182,7 +179,8 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 			RT_T1_TO_1 );
 		end_loop:
 		T->nr_of_outgoings++ ;
-		DBG("DEBUG: branch %d done\n",branch);
+		DBG("DEBUG: branch %d done; outgoing uri=|%.*s|\n",branch,
+			T->uac[branch].uri.len,T->uac[branch].uri.s);
 	}
 
 	/* if we have a branch spec. for NO_RESPONSE_RECEIVED, we have to 
@@ -197,7 +195,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	}
 	p_msg->new_uri.s = backup_uri.s;
 	p_msg->new_uri.len = backup_uri.len;
-	t_clear_forks();
+	//t_clear_forks();
 	return 1;
 
 error:
@@ -304,7 +302,6 @@ int forward_serial_branch(struct cell* Trans,int branch)
 	backup_uri.s = p_msg->new_uri.s;
 	backup_uri.len = p_msg->new_uri.len;
 
-	DBG("DEBUG: t_forward_serial_branch: branch = %d\n",branch);
 	/*generates branch param*/
 	if ( add_branch_label( Trans, p_msg , branch )==-1)
 		goto error;
@@ -321,16 +318,17 @@ int forward_serial_branch(struct cell* Trans,int branch)
 			shm_free_lump(b);
 		}
 
+	DBG("DEBUG: t_forward_serial_branch: building req for branch"
+		"%d; uri=|%.*s|.\n", branch, Trans->uac[branch].uri.len,
+		Trans->uac[branch].uri.s);
 	/* updates the new uri*/
 	p_msg->new_uri.s = Trans->uac[branch].uri.s;
 	p_msg->new_uri.len = Trans->uac[branch].uri.len;
 	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 		goto error;
-	pkg_free(Trans->uac[branch].uri.s);
+	shm_free(Trans->uac[branch].uri.s);
 
 	/* allocates a new retrans_buff for the outbound request */
-	DBG("DEBUG: t_forward_serial_branch: building outbound request"
-		" for branch %d.\n",branch);
 	shbuf = (char *) shm_malloc( len );
 	if (!shbuf)
 	{
@@ -345,8 +343,6 @@ int forward_serial_branch(struct cell* Trans,int branch)
 		(p_msg->first_line.u.request.uri.s - p_msg->buf);
 	Trans->uac[branch].uri.len=p_msg->new_uri.len?(p_msg->new_uri.len)
 		:(p_msg->first_line.u.request.uri.len);
-	DBG("DEBUG: uri= |%.*s| \n",Trans->uac[branch].uri.len,
-		Trans->uac[branch].uri.s);
 	Trans->nr_of_outgoings++ ;
 	/* send the request */
 	Trans->uac[branch].request.to.sin_family = AF_INET;
