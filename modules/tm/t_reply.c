@@ -715,6 +715,22 @@ enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		   a callback
 		*/
 		callback_event( TMCB_ON_NEGATIVE, Trans, 0, lowest_s );
+		/* look if the callback perhaps replied transaction; it also
+		   covers the case in which a transaction is replied localy
+		   on CANCEL -- then it would make no sense to proceed to
+		   new branches bellow
+		*/
+		if (Trans->uas.status >= 200) {
+			*should_store=0;
+			*should_relay=-1;
+			/* this might deserve an improvement -- if something
+			   was already replied, it was put on wait and then,
+			   returning RPS_COMPLETED will make t_on_reply
+			   put it on wait again; perhaps splitting put_on_wait
+			   from send_reply or a new RPS_ code would be healthy
+			*/
+			return RPS_COMPLETED;
+		}
 		/* look if the callback introduced new branches ... */
 		init_branch_iterator();
 		if (next_branch(&dummy)) {
@@ -732,18 +748,6 @@ enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			*should_store=1;
 			*should_relay=-1;
 			return RPS_STORE;
-		}
-		/* look if the callback perhaps replied transaction */
-		if (Trans->uas.status >= 200) {
-			*should_store=0;
-			*should_relay=-1;
-			/* this might deserve an improvement -- if something
-			   was already replied, it was put on wait and then,
-			   returning RPS_COMPLETED will make t_on_reply
-			   put it on wait again; perhaps splitting put_on_wait
-			   from send_reply or a new RPS_ code would be healthy
-			*/
-			return RPS_COMPLETED;
 		}
 		/* really no more pending branches -- return lowest code */
 		*should_store=0;
