@@ -251,7 +251,8 @@ CREATE TABLE acc (
   fromtag varchar(128) NOT NULL default '',
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL
+  timestamp timestamp(14) NOT NULL,
+  INDEX acc_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
@@ -370,7 +371,8 @@ CREATE TABLE missed_calls (
   fromtag varchar(128) NOT NULL default '',
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
-  timestamp timestamp(14) NOT NULL
+  timestamp timestamp(14) NOT NULL,
+  INDEX mc_user ($USERCOL, domain)
 ) $TABLE_TYPE;
 
 
