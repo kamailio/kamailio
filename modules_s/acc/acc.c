@@ -59,7 +59,7 @@ static str na={NA, NA_LEN};
 #ifdef RAD_ACC
 /* caution: keep these aligned to RAD_ACC_FMT !! */
 static int rad_attr[] = { PW_CALLING_STATION_ID, PW_CALLED_STATION_ID,
-	PW_SIP_TRANSLATED_REQ_URI, PW_ACCT_SESSION_ID, PW_SIP_TO_TAG, 
+	PW_SIP_TRANSLATED_REQ_ID, PW_ACCT_SESSION_ID, PW_SIP_TO_TAG, 
 	PW_SIP_FROM_TAG, PW_SIP_CSEQ };
 #endif
 

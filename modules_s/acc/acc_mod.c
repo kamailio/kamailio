@@ -95,7 +95,7 @@ char *log_fmt=DEFAULT_LOG_FMT;
 char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 int radius_flag = 0;
 int radius_missed_flag = 0;
-int service_type = PW_SIP;
+int service_type = PW_SIP_SESSION;
 #endif
 
 
