@@ -67,3 +67,10 @@ void timer_ticker()
 		}
 	}
 }
+
+
+
+unsigned int get_ticks()
+{
+	return jiffies;
+}

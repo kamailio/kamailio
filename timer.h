@@ -32,6 +32,7 @@ extern struct sr_timer* timer_list;
 /*register a periodic timer;
  * ret: <0 on errror*/
 int register_timer(timer_function f, void* param, unsigned int interval);
+unsigned int get_ticks();
 void timer_ticker();
 
 #endif
