@@ -38,13 +38,13 @@ extern char *cpl_orig_tz; /* pointer to the original TZ env. var. */
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
+static inline char *run_address_switch( struct cpl_interpreter *intr )
 {
 	static str def_port_str = {"5060",4};
 	unsigned short field, subfield;
-	unsigned char  *p;
-	unsigned char  *kid;
-	unsigned char  attr_name;
+	char  *p;
+	char  *kid;
+	unsigned short  attr_name;
 	unsigned short n;
 	int i;
 	int k;
@@ -277,13 +277,13 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
+static inline char *run_string_switch( struct cpl_interpreter *intr )
 {
 	unsigned short field;
-	unsigned char *p;
-	unsigned char *kid;
-	unsigned char *not_present_node;
-	unsigned char attr_name;
+	char *p;
+	char *kid;
+	char *not_present_node;
+	unsigned short attr_name;
 	int i;
 	str cpl_val;
 	str msg_val;
@@ -478,17 +478,17 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
+static inline char *run_priority_switch( struct cpl_interpreter *intr )
 {
 	static str default_val={"normal",6};
 	unsigned short n;
-	unsigned char *p;
-	unsigned char *kid;
-	unsigned char *not_present_node;
-	unsigned char attr_name;
-	unsigned char attr_val;
-	unsigned char msg_attr_val;
-	unsigned char msg_prio;
+	char *p;
+	char *kid;
+	char *not_present_node;
+	unsigned short attr_name;
+	unsigned short attr_val;
+	unsigned short msg_attr_val;
+	unsigned short msg_prio;
 	int i;
 	str cpl_val = {0,0};
 	str msg_val = {0,0};
@@ -699,13 +699,13 @@ inline static int set_TZ(char *tz_name)
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
+static inline char *run_time_switch( struct cpl_interpreter *intr )
 {
-	unsigned char  *p;
-	unsigned char  *kid;
+	char  *p;
+	char  *kid;
+	char  *attr_str;
 	unsigned short attr_name;
 	unsigned short attr_len;
-	unsigned char  *attr_str;
 	unsigned char  flags = 0;
 	int nr_attrs;
 	int i,j;
@@ -981,12 +981,12 @@ error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
+static inline char *run_language_switch( struct cpl_interpreter *intr )
 {
-	unsigned char  *p;
-	unsigned char  *kid;
-	unsigned char  *not_present_node;
-	unsigned char  attr_name;
+	char  *p;
+	char  *kid;
+	char  *not_present_node;
+	unsigned short attr_name;
 	int nr_attr;
 	int i,j;
 	str attr = {0,0};

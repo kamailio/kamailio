@@ -175,12 +175,12 @@ static void final_reply( struct cell* t, struct sip_msg* msg, int code,
 
 
 
-inline unsigned char *run_proxy( struct cpl_interpreter *intr )
+static inline char *run_proxy( struct cpl_interpreter *intr )
 {
 	unsigned short attr_name;
 	unsigned short n;
-	unsigned char *kid;
-	unsigned char *p;
+	char *kid;
+	char *p;
 	int i;
 	str *s;
 	struct location *loc;

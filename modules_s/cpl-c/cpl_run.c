@@ -45,11 +45,11 @@
 #include "cpl_run.h"
 
 
-#define EO_SCRIPT            ((unsigned char*)0xffffffff)
-#define DEFAULT_ACTION       ((unsigned char*)0xfffffffe)
-#define CPL_SCRIPT_ERROR     ((unsigned char*)0xfffffffd)
-#define CPL_RUNTIME_ERROR    ((unsigned char*)0xfffffffc)
-#define CPL_TO_CONTINUE      ((unsigned char*)0xfffffffb)
+#define EO_SCRIPT            ((char*)0xffffffff)
+#define DEFAULT_ACTION       ((char*)0xfffffffe)
+#define CPL_SCRIPT_ERROR     ((char*)0xfffffffd)
+#define CPL_RUNTIME_ERROR    ((char*)0xfffffffc)
+#define CPL_TO_CONTINUE      ((char*)0xfffffffb)
 
 #define HDR_NOT_FOUND        ((char*)0xffffffff)
 #define UNDEF_CHAR           (0xff)
@@ -169,9 +169,9 @@ void free_cpl_interpreter(struct cpl_interpreter *intr)
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_cpl_node( struct cpl_interpreter *intr )
+static inline char *run_cpl_node( struct cpl_interpreter *intr )
 {
-	unsigned char *kid;
+	char *kid;
 	unsigned char start;
 	int i;
 
@@ -203,10 +203,10 @@ inline unsigned char *run_cpl_node( struct cpl_interpreter *intr )
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_lookup( struct cpl_interpreter *intr )
+static inline char *run_lookup( struct cpl_interpreter *intr )
 {
-	unsigned char *kid;
-	unsigned char *failure_kid = 0;
+	char *kid;
+	char *failure_kid = 0;
 	int i;
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
@@ -239,11 +239,11 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_location( struct cpl_interpreter *intr )
+static inline char *run_location( struct cpl_interpreter *intr )
 {
 	unsigned short attr_name;
 	unsigned short n;
-	unsigned char  *p;
+	char  *p;
 	unsigned char  prio;
 	unsigned char  clear;
 	str url;
@@ -315,11 +315,11 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_remove_location( struct cpl_interpreter *intr )
+static inline char *run_remove_location( struct cpl_interpreter *intr )
 {
 	unsigned short attr_name;
 	unsigned short n;
-	unsigned char *p;
+	char *p;
 	str url;
 	int i;
 
@@ -370,9 +370,9 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_sub( struct cpl_interpreter *intr )
+static inline char *run_sub( struct cpl_interpreter *intr )
 {
-	unsigned char  *p;
+	char  *p;
 	unsigned short offset;
 	unsigned short attr_name;
 	int i;
@@ -428,13 +428,13 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_reject( struct cpl_interpreter *intr )
+static inline char *run_reject( struct cpl_interpreter *intr )
 {
-	unsigned char *p;
 	unsigned short attr_name;
 	unsigned short status;
 	unsigned short n;
 	char *reason_s;
+	char *p;
 	int i;
 
 	reason_s = (char*)UNDEF_CHAR;
@@ -504,14 +504,14 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_redirect( struct cpl_interpreter *intr )
+static inline char *run_redirect( struct cpl_interpreter *intr )
 {
 	struct location *loc;
 	struct lump_rpl *lump;
 	unsigned short attr_name;
 	unsigned short permanent;
 	unsigned short n;
-	unsigned char *p;
+	char *p;
 	str lump_str;
 	char *cp;
 	int i;
@@ -605,9 +605,9 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_log( struct cpl_interpreter *intr )
+static inline char *run_log( struct cpl_interpreter *intr )
 {
-	unsigned char  *p;
+	char  *p;
 	unsigned short attr_name;
 	unsigned short n;
 	str name    = {0,0};
@@ -687,11 +687,11 @@ script_error:
 
 /* UPDATED + CHECKED
  */
-inline unsigned char *run_mail( struct cpl_interpreter *intr )
+static inline char *run_mail( struct cpl_interpreter *intr )
 {
 	unsigned short attr_name;
 	unsigned short n;
-	unsigned char  *p;
+	char  *p;
 	str subject = {0,0};
 	str body    = {0,0};
 	str to      = {0,0};

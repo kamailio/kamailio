@@ -58,7 +58,7 @@ struct cpl_interpreter {
 	unsigned int flags;
 	str user;              /* user */
 	str script;            /* CPL script */
-	unsigned char *ip;     /* instruction pointer */
+	char *ip;              /* instruction pointer */
 	int recv_time;         /* receiving time stamp */
 	struct sip_msg *msg;
 	struct location *loc_set;     /* location set */
@@ -81,11 +81,11 @@ struct cpl_interpreter {
 		/* I have to know which will be the last location that will be proxy */
 		struct location *last_to_proxy;
 		/* shortcuts to the subnodes */
-		unsigned char *busy;
-		unsigned char *noanswer;
-		unsigned char *redirect;
-		unsigned char *failure;
-		unsigned char *default_;
+		char *busy;
+		char *noanswer;
+		char *redirect;
+		char *failure;
+		char *default_;
 	}proxy;
 };
 
