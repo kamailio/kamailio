@@ -25,7 +25,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-
+/*
+ * History:
+ * --------
+ *  2003-11-06  body len is computed using the message len (it's
+ *               not taken any more from the msg. content-length) (andrei)
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +45,7 @@
 #include "../../globals.h"
 #include "../../udp_server.h"
 #include "../../pt.h"
+#include "../../parser/msg_parser.h"
 
 
 
@@ -59,34 +65,6 @@
 #define one_of_8( _x , _t ) \
 	(_x==_t[0]||_x==_t[7]||_x==_t[1]||_x==_t[2]||_x==_t[3]||_x==_t[4]\
 	||_x==_t[5]||_x==_t[6])
-
-
-
-
-int get_body_len( struct sip_msg* msg)
-{
-	int x,err;
-	str foo;
-
-	if (!msg->content_length)
-	{
-		LOG(L_ERR,"ERROR: get_body_len: Content-Length header absent!\n");
-		goto error;
-	}
-	/* if header is present, trim to get only the string containing numbers */
-	trim_len( foo.len , foo.s , msg->content_length->body );
-	/* convert from string to number */
-	x = str2s(foo.s,foo.len,&err);
-	if (err){
-		LOG(L_ERR, "ERROR: get_body_len:"
-			" unable to parse the Content_Length number !\n");
-		goto error;
-	}
-	return x;
-error:
-	return -1;
-}
-
 
 
 
@@ -120,7 +98,7 @@ int check_content_type(struct sip_msg *msg)
 
 	if (!msg->content_type)
 	{
-		LOG(L_WARN,"WARNING: get_body_len: Content-TYPE header absent!"
+		LOG(L_WARN,"WARNING: check_content_type: Content-TYPE header absent!"
 			"let's assume the content is text/plain ;-)\n");
 		return 1;
 	}
@@ -178,44 +156,25 @@ other:
 
 
 
-
 int extract_body(struct sip_msg *msg, str *body )
 {
-	int len;
-	int offset;
-
-	if ( parse_headers(msg,HDR_EOH, 0)==-1 )
-	{
-		LOG(L_ERR,"ERROR: extract_body:unable to parse all headers!\n");
+	
+	body->s = get_body(msg);
+	if (body->s==0) {
+		LOG(L_ERR, "ERROR: extract_body: failed to get the message body\n");
 		goto error;
 	}
-
+	body->len = msg->len -(int)(body->s-msg->buf);
+	
+	/* no need for parse_headers(msg, EOH), get_body will 
+	 * parse everything */
 	/*is the content type corect?*/
 	if (check_content_type(msg)==-1)
 	{
 		LOG(L_ERR,"ERROR: extract_body: content type mismatching\n");
 		goto error;
 	}
-
-	/* get the lenght from COntent-Lenght header */
-	if ( (len = get_body_len(msg))<0 )
-	{
-		LOG(L_ERR,"ERROR: extract_body: cannot get body length\n");
-		goto error;
-	}
-
-	if ( strncmp(CRLF,msg->unparsed,CRLF_LEN)==0 )
-		offset = CRLF_LEN;
-	else if (*(msg->unparsed)=='\n' || *(msg->unparsed)=='\r' )
-		offset = 1;
-	else{
-		LOG(L_ERR,"ERROR: extract_body:unable to detect the beginning"
-			" of message body!\n ");
-		goto error;
-	}
-
-	body->s = msg->unparsed + offset;
-	body->len = len;
+	
 	DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);
 
 	return 1;
