@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include "../hf.h"
 #include "../../str.h"
+#include "../msg_parser.h"
 #include "contact.h"
 
 
@@ -63,6 +64,14 @@ void free_contact(contact_body_t** _c);
  * Print structure, for debugging only
  */
 void print_contact(FILE* _o, contact_body_t* _c);
+
+
+/*
+ * Contact header field iterator, returns next contact if any, it doesn't
+ * parse message header if not absolutely necessary
+ */
+contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev);
+
 
 
 #endif /* PARSE_CONTACT_H */

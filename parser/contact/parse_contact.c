@@ -121,3 +121,78 @@ void print_contact(FILE* _o, contact_body_t* _c)
 	print_contacts(_o, _c->contacts);
 	fprintf(_o, "===/Contact body===\n");
 }
+
+
+/*
+ * Contact header field iterator, returns next contact if any, it doesn't
+ * parse message header if not absolutely necessary
+ */
+contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
+{
+	static struct hdr_field* hdr = 0;
+	struct hdr_field* last;
+	contact_body_t* cb;
+
+	if (!msg) return 0;
+
+	if (!prev) {
+		     /* No pointer to previous contact given, find topmost
+		      * contact and return pointer to the first contact
+		      * inside that header field
+		      */
+		hdr = msg->contact;
+		cb = (contact_body_t*)hdr->parsed;
+		return cb->contacts;
+	} else {
+		     /* Check if there is another contact in the
+		      * same header field and if so then return it
+		      */
+		if (prev->next) return prev->next;
+
+		     /* Try to find and parse another Contact
+		      * header field
+		      */
+		last = hdr;
+		hdr = hdr->next;
+
+		     /* Search another already parsed Contact
+		      * header field
+		      */
+		while(hdr && hdr->type != HDR_CONTACT) {
+			hdr = hdr->next;
+		}
+
+		if (!hdr) {
+			     /* Look for another Contact HF in unparsed
+			      * part of the message header
+			      */
+			if (parse_headers(msg, HDR_CONTACT, 1) == -1) {
+				LOG(L_ERR, "contact_iterator: Error while parsing message header\n");
+				return 0;
+			}
+			
+			     /* Check if last found header field is Contact
+			      * and if it is not the same header field as the
+			      * previous Contact HF (that indicates that the previous 
+			      * one was the last header field in the header)
+			      */
+			if ((msg->last_header->type == HDR_CONTACT) &&
+			    (msg->last_header != last)) {
+				hdr = msg->last_header;
+			} else {
+				return 0;
+			}
+		}
+		
+		if (parse_contact(hdr) < 0) {
+			LOG(L_ERR, "contact_iterator: Error while parsing Contact HF body\n");
+			return 0;
+		}
+		
+		     /* And return first contact within that
+		      * header field
+		      */
+		cb = (contact_body_t*)hdr->parsed;
+		return cb->contacts;
+	}
+}
