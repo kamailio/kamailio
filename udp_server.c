@@ -154,12 +154,6 @@ int udp_rcv_loop()
 	struct sockaddr* from;
 	int fromlen;
 
-	buf=pkg_malloc(BUF_SIZE+1);
-	if (buf==0){
-		LOG(L_ERR, "ERROR: udp_rcv_loop: could not allocate receive"
-				 " buffer\n");
-		goto error;
-	}
 	from=(struct sockaddr*) malloc(sizeof(struct sockaddr));
 	if (from==0){
 		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
@@ -167,6 +161,12 @@ int udp_rcv_loop()
 	}
 
 	for(;;){
+		buf=pkg_malloc(BUF_SIZE+1);
+		if (buf==0){
+			LOG(L_ERR, "ERROR: udp_rcv_loop: could not allocate receive"
+					 " buffer\n");
+			goto error;
+		}
 		fromlen=sizeof(struct sockaddr);
 		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, from, &fromlen);
 		if (len==-1){

@@ -920,11 +920,11 @@ void free_hdr_field_lst(struct hdr_field* hf)
 void free_sip_msg(struct sip_msg* msg)
 {
 	if (msg->new_uri.s) { pkg_free(msg->new_uri.s); msg->new_uri.len=0; }
-	if (msg->headers) 	  free_hdr_field_lst(msg->headers);
+	if (msg->headers)     free_hdr_field_lst(msg->headers);
 	if (msg->add_rm)      free_lump_list(msg->add_rm);
 	if (msg->repl_add_rm) free_lump_list(msg->repl_add_rm);
-	free(msg->orig);
-	free(msg->buf);
+	pkg_free(msg->orig);
+	pkg_free(msg->buf);
 }
 
 

@@ -7,6 +7,7 @@
 
 #ifndef mem_h
 #define mem_h
+#include "dprint.h"
 
 #ifdef PKG_MALLOC
 #include "q_malloc.h"
@@ -21,8 +22,11 @@ extern struct qm_block* mem_block;
 #else
 #include <stdlib.h>
 
-#define pkg_malloc(s) malloc(s)
-#define pkg_free(p)  free(p)
+#define pkg_malloc(s) \
+	(  { void *v; v=malloc(s); \
+	   DBG("malloc %x size %d end %x\n", v, s, (unsigned int)v+s);\
+	   v; } )
+#define pkg_free(p)  do{ DBG("free %x\n", p); free(p); }while(0);
 #define pkg_status()
 
 #endif
