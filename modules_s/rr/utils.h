@@ -38,4 +38,10 @@
  */
 char* find_not_quoted(str* _s, char _c);
 
+
+/*
+ * Extract username part from URI
+ */
+int get_username(str* _s);
+
 #endif
