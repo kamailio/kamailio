@@ -147,26 +147,42 @@ error:
 
 
 
-static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
-																void *param )
+static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 {
-	struct cpl_interpreter *intr = (struct cpl_interpreter*)param;
+	struct cpl_interpreter *intr = (struct cpl_interpreter*)(ps->param);
 	struct location        *loc  = 0;
 	int rez;
 
+	if (type&TMCB_RESPONSE_OUT) {
+		/* the purpose of the final reply is to trash down the interpreter
+		 * structure! it's the safest place to do that, since this callback
+		 * it's called only once per transaction for final codes (>=200) ;-) */
+		if (ps->code>=200) {
+			DBG("DEBUG:cpl-c:final_reply: code=%d  -------------->\n"
+				" --------------------------> final reply received\n",
+			ps->code);
+			/* CPL interpretation done, call established -> destroy */
+			free_cpl_interpreter( intr );
+		}
+		return;
+	} else if (!type&TMCB_ON_FAILURE) {
+		LOG(L_ERR,"BUG:cpl-c:reply_callback: unknown type %d\n",type);
+		goto error;
+	}
+
 	DBG("DEBUG:cpl-c:negativ_reply: ------------------------------>\n"
-		" ---------------> negativ reply from proxy was sent\n");
+		" ---------------------------------> negativ reply received\n");
 
 	intr->flags |= CPL_PROXY_DONE;
-	intr->msg = cpl_tmb.t_get_fake_req();
+	intr->msg = ps->req;
 
 	/* if it's a redirect-> do I have to added to the location set ? */
-	if (intr->proxy.recurse && code/100==3) {
+	if (intr->proxy.recurse && (ps->code)/100==3) {
 		DBG("DEBUG:cpl-c:negativ_reply: recurse level %d processing..\n",
 				intr->proxy.recurse);
 		intr->proxy.recurse--;
 		/* get the locations from the Contact */
-		add_contacts_to_loc_set( msg, &(intr->loc_set));
+		add_contacts_to_loc_set( ps->rpl, &(intr->loc_set));
 		switch (intr->proxy.ordering) {
 			case SEQUENTIAL_VAL:
 				/* update the last_to_proxy to last location from set */
@@ -179,7 +195,7 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 					intr->proxy.last_to_proxy = intr->loc_set;
 				}
 				while(intr->proxy.last_to_proxy->next)
-					intr->proxy.last_to_proxy = intr->proxy.last_to_proxy->next;
+					intr->proxy.last_to_proxy=intr->proxy.last_to_proxy->next;
 				break;
 			case PARALLEL_VAL:
 				/* push the whole new location set to be proxy */
@@ -219,18 +235,18 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 		}
 	} else {
 		/* done with proxying.... -> process the final response */
-		DBG("DEBUG:cpl-c:failed_reply:final_reply: got a final %d\n",code);
+		DBG("DEBUG:cpl-c:failed_reply:final_reply: got a final %d\n",ps->code);
 		intr->ip = 0;
-		if (code==486 || code==600) {
+		if (ps->code==486 || ps->code==600) {
 			/* busy response */
 			intr->ip = intr->proxy.busy;
-		} else if (code==408) {
+		} else if (ps->code==408) {
 			/* request timeout -> no response */
 			intr->ip = intr->proxy.noanswer;
-		} else if ((code/100)==3) {
+		} else if (((ps->code)/100)==3) {
 			/* redirection */
 			/* add to the location list all the addresses from Contact */
-			add_contacts_to_loc_set( msg, &(intr->loc_set));
+			add_contacts_to_loc_set( ps->rpl, &(intr->loc_set));
 			print_location_set( intr->loc_set );
 			intr->ip = intr->proxy.redirect;
 		} else {
@@ -265,22 +281,8 @@ static void failed_reply( struct cell* t, struct sip_msg* msg, int code,
 error:
 	/* in case of error the default response choosed by ser at the last
 	 * proxying will be forwarded to the UAC */
+	free_cpl_interpreter( intr );
 	return;
-}
-
-
-
-/* the purpose of the final reply is to trash down the interpreter structure!
- * it's the safest place to do that, since this callback it's called only once
- * per transaction for final codes (>=200) ;-) */
-static void final_reply( struct cell* t, struct sip_msg* msg, int code,
-																void *param )
-{
-	DBG("DEBUG:cpl-c:final_reply: code=%d  -------------->\n"
-		" ---------------> final reply from proxy received\n",code);
-
-	if (code>=200)
-		free_cpl_interpreter( (struct cpl_interpreter*)param );
 }
 
 
@@ -442,16 +444,10 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 
 		/* as I am interested in getting the responses back - I need to install
 		 * some callback functions for replies  */
-		if (cpl_tmb.register_req_cb( intr->msg, TMCB_RESPONSE_OUT, final_reply,
-		intr) <= 0 ) {
+		if (cpl_tmb.register_tmcb(intr->msg,TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,
+		reply_callback, (void*)intr) <= 0 ) {
 			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
 				"TMCB_RESPONSE_OUT callback\n");
-			goto runtime_error;
-		}
-		if (cpl_tmb.register_req_cb( intr->msg, TMCB_ON_FAILURE, failed_reply,
-		intr) <= 0 ) {
-			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
-				"TMCB_ON_FAILURE callback\n");
 			goto runtime_error;
 		}
 	}

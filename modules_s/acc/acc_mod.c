@@ -37,6 +37,8 @@
  * 2003-04-06: Opens database connection in child_init only (janakj)
  * 2003-04-24  parameter validation (0 t->uas.request) added (jiri)
  * 2003-11-04  multidomain support for mysql introduced (jiri)
+ * 2003-12-04  global TM callbacks switched to per transaction callbacks
+ *             (bogdan)
  */
 
 #include <stdio.h>
@@ -245,16 +247,8 @@ struct module_exports exports= {
 
 /* ------------- Callback handlers --------------- */
 
-static void acc_onreply( struct cell* t,  struct sip_msg *msg,
-	int code, void *param );
-static void acc_onack( struct cell* t,  struct sip_msg *msg,
-	int code, void *param );
-static void acc_onreq( struct cell* t, struct sip_msg *msg,
-	int code, void *param ) ;
-static void on_missed(struct cell *t, struct sip_msg *reply,
-	int code, void *param );
-static void acc_onreply_in(struct cell *t, struct sip_msg *reply,
-	int code, void *param);
+static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps );
+static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps );
 
 /* --------------- function definitions -------------*/
 
@@ -284,10 +278,10 @@ static int verify_fmt(char *fmt) {
 	return 1;
 }
 
+
 static int mod_init( void )
 {
-
-	load_tm_f	load_tm;
+	load_tm_f load_tm;
 
 	fprintf( stderr, "acc - initializing\n");
 
@@ -301,27 +295,17 @@ static int mod_init( void )
 
 	if (verify_fmt(log_fmt)==-1) return -1;
 
-	/* register callbacks */
-
-	/*  report on completed transactions */
-	if (tmb.register_tmcb( TMCB_RESPONSE_OUT, acc_onreply, 0 /* empty param */ ) <= 0)
+	/* register callbacks*/
+	/* listen for all incoming requests  */
+	if ( tmb.register_tmcb( 0, TMCB_REQUEST_IN, acc_onreq, 0 ) <=0 ) {
+		LOG(L_ERR,"ERROR:acc:mod_init: cannot register TMCB_REQUEST_IN "
+			"callback\n");
 		return -1;
-	/* account e2e acks if configured to do so */
-	if (tmb.register_tmcb( TMCB_E2EACK_IN, acc_onack, 0 /* empty param */ ) <=0 )
-		return -1;
-	/* disable silent c-timer for registered calls */
-	if (tmb.register_tmcb( TMCB_REQUEST_IN, acc_onreq, 0 /* empty param */ ) <=0 )
-		return -1;
-	/* report on missed calls */
-	if (tmb.register_tmcb( TMCB_ON_FAILURE, on_missed, 0 /* empty param */ ) <=0 )
-		return -1;
-	/* get incoming replies ready for processing */
-	if (tmb.register_tmcb( TMCB_RESPONSE_IN, acc_onreply_in, 0 /* empty param */)<=0)
-		return -1;
+	}
 
 #ifdef SQL_ACC
 	if (bind_dbmod(db_url)) {
-		LOG(L_ERR, "ERROR: acc: init_child bind_db failed..."
+		LOG(L_ERR, "ERROR:acc:mod_init: bind_db failed..."
 				"did you load a database module?\n");
 		return -1;
 	}
@@ -406,14 +390,32 @@ static inline void acc_preparse_req(struct sip_msg *rq)
 	parse_orig_ruri(rq);
 }
 
+
 /* prepare message and transaction context for later accounting */
-static void acc_onreq( struct cell* t, struct sip_msg *msg,
-	int code, void *param )
+static void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 {
-	if (is_acc_on(msg) || is_mc_on(msg)) {
-		acc_preparse_req(msg);
+	int tmcb_types;
+
+	if (is_acc_on(ps->req) || is_mc_on(ps->req)) {
+		/* install addaitional handlers */
+		tmcb_types =
+			/* report on completed transactions */
+			TMCB_RESPONSE_OUT |
+			/* account e2e acks if configured to do so */
+			TMCB_E2EACK_IN |
+			/* report on missed calls */
+			TMCB_ON_FAILURE_RO |
+			/* get incoming replies ready for processing */
+			TMCB_RESPONSE_IN;
+		if (tmb.register_tmcb( ps->req, tmcb_types, tmcb_func, 0 )<=0) {
+			LOG(L_ERR,"ERROR:acc:acc_onreq: cannot register additional "
+				"callbacks\n");
+			return;
+		}
+		/* do some parsing in advance */
+		acc_preparse_req(ps->req);
 		/* also, if that is INVITE, disallow silent t-drop */
-		if (msg->REQ_METHOD==METHOD_INVITE) {
+		if (ps->req->REQ_METHOD==METHOD_INVITE) {
 			DBG("DEBUG: noisy_timer set for accounting\n");
 			t->noisy_ctimer=1;
 		}
@@ -421,7 +423,7 @@ static void acc_onreq( struct cell* t, struct sip_msg *msg,
 }
 
 /* is this reply of interest for accounting ? */
-static int should_acc_reply(struct cell *t, int code)
+static inline int should_acc_reply(struct cell *t, int code)
 {
 	struct sip_msg *r;
 
@@ -447,7 +449,7 @@ static int should_acc_reply(struct cell *t, int code)
 }
 
 /* parse incoming replies before cloning */
-static void acc_onreply_in(struct cell *t, struct sip_msg *reply,
+static inline void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 	int code, void *param)
 {
 	/* validation */
@@ -466,7 +468,7 @@ static void acc_onreply_in(struct cell *t, struct sip_msg *reply,
 }
 
 /* initiate a report if we previously enabled MC accounting for this t */
-static void on_missed(struct cell *t, struct sip_msg *reply,
+static inline void on_missed(struct cell *t, struct sip_msg *reply,
 	int code, void *param )
 {
 	int reset_lmf; 
@@ -533,7 +535,7 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 
 
 /* initiate a report if we previously enabled accounting for this t */
-static void acc_onreply( struct cell* t, struct sip_msg *reply,
+static inline void acc_onreply( struct cell* t, struct sip_msg *reply,
 	int code, void *param )
 {
 	/* validation */
@@ -569,7 +571,7 @@ static void acc_onreply( struct cell* t, struct sip_msg *reply,
 
 
 
-static void acc_onack( struct cell* t , struct sip_msg *ack,
+static inline void acc_onack( struct cell* t , struct sip_msg *ack,
 	int code, void *param )
 {
 	/* only for those guys who insist on seeing ACKs as well */
@@ -601,6 +603,21 @@ static void acc_onack( struct cell* t , struct sip_msg *ack,
 	
 }
 
+
+static void tmcb_func( struct cell* t, int type, struct tmcb_params *ps )
+{
+	if (type&TMCB_RESPONSE_OUT) {
+		acc_onreply( t, ps->rpl, ps->code, ps->param );
+	} else if (type&TMCB_E2EACK_IN) {
+		acc_onack( t, ps->req, ps->code, ps->param );
+	} else if (type&TMCB_ON_FAILURE_RO) {
+		on_missed( t, ps->rpl, ps->code, ps->param );
+	} else if (type&TMCB_RESPONSE_IN) {
+		acc_onreply_in( t, ps->rpl, ps->code, ps->param);
+	}
+}
+
+
 /* these wrappers parse all what may be needed; they don't care about
  * the result -- accounting functions just display "unavailable" if there
  * is nothing meaningful
@@ -616,6 +633,8 @@ static int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 	acc_preparse_req(rq);
 	return acc_log_request(rq, rq->to, &txt, &phrase);
 }
+
+
 #ifdef SQL_ACC
 static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 {
@@ -627,6 +646,8 @@ static int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 	return acc_db_request(rq, rq->to,&phrase,table, SQL_MC_FMT );
 }
 #endif
+
+
 #ifdef RAD_ACC
 static int w_acc_rad_request(struct sip_msg *rq, char *comment, 
 				char *foo)
@@ -639,6 +660,8 @@ static int w_acc_rad_request(struct sip_msg *rq, char *comment,
 	return acc_rad_request(rq, rq->to,&phrase);
 }
 #endif
+
+
 /* DIAMETER */
 #ifdef DIAM_ACC
 static int w_acc_diam_request(struct sip_msg *rq, char *comment, 
@@ -652,3 +675,4 @@ static int w_acc_diam_request(struct sip_msg *rq, char *comment,
 	return acc_diam_request(rq, rq->to,&phrase);
 }
 #endif
+
