@@ -39,6 +39,7 @@
  *              the locking.h<->shm_mem.h interdependency) (andrei)
  *  2003-03-10  lock set support added also for PTHREAD_MUTEX & POSIX_SEM
  *               (andrei)
+ *  2003-03-17  possible signal interruptions treated for sysv (andrei)
  *
 Implements:
 
@@ -164,7 +165,16 @@ inline static void lock_get(gen_lock_t* lock)
 	sop.sem_num=0;
 	sop.sem_op=-1; /* down */
 	sop.sem_flg=0; 
-	semop(*lock, &sop, 1);
+tryagain:
+	if (semop(*lock, &sop, 1)==-1){
+		if (errno==EINTR){
+			DBG("lock_get: signal received while waiting for on a mutex\n");
+			goto tryagain;
+		}else{
+			LOG(L_CRIT, "ERROR: lock_get sysv: %s (%d)\n", strerror(errno),
+						errno);
+		}
+	}
 }
 
 inline static void lock_release(gen_lock_t* lock)
@@ -174,7 +184,17 @@ inline static void lock_release(gen_lock_t* lock)
 	sop.sem_num=0;
 	sop.sem_op=1; /* up */
 	sop.sem_flg=0; 
-	semop(*lock, &sop, 1);
+tryagain:
+	if (semop(*lock, &sop, 1)==-1){
+		if (errno==EINTR){
+			/* very improbable*/
+			DBG("lock_release: signal received while releasing a mutex\n");
+			goto tryagain;
+		}else{
+			LOG(L_CRIT, "ERROR: lock_release sysv: %s (%d)\n",
+					strerror(errno), errno);
+		}
+	}
 }
 
 
@@ -250,7 +270,16 @@ inline static void lock_set_get(lock_set_t* s, int n)
 	sop.sem_num=n;
 	sop.sem_op=-1; /* down */
 	sop.sem_flg=0;
-	semop(s->semid, &sop, 1);
+tryagain:
+	if (semop(s->semid, &sop, 1)==-1){
+		if (errno==EINTR){
+			DBG("lock_set_get: signal received while waiting on a mutex\n");
+			goto tryagain;
+		}else{
+			LOG(L_CRIT, "ERROR: lock_set_get sysv: %s (%d)\n",
+					strerror(errno), errno);
+		}
+	}
 }
 
 inline static void lock_set_release(lock_set_t* s, int n)
@@ -259,7 +288,17 @@ inline static void lock_set_release(lock_set_t* s, int n)
 	sop.sem_num=n;
 	sop.sem_op=1; /* up */
 	sop.sem_flg=0;
-	semop(s->semid, &sop, 1);
+tryagain:
+	if (semop(s->semid, &sop, 1)==-1){
+		if (errno==EINTR){
+			/* very improbable */
+			DBG("lock_set_release: signal received while releasing mutex\n");
+			goto tryagain;
+		}else{
+			LOG(L_CRIT, "ERROR: lock_set_release sysv: %s (%d)\n",
+					strerror(errno), errno);
+		}
+	}
 }
 #else 
 #error "no lock set method selected"
