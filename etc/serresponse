@@ -18,10 +18,10 @@ TMP=/tmp/serresponse.$$
 MAILCOMMAND=/usr/bin/mail
 
 if [ ! -e $LOCKFILE ] ; then
-	if [ ! -f $MESSAGE ] ; then
-		echo "serresponse did not find the required message $MESSAGE" > $TMP
-	elif [ ! -x $BIN ] ; then
+	if [ ! -x $BIN ] ; then
 		echo "serresponse did not find the required sipsak executable $BIN" > $TMP
+	#elif [ ! -f $MESSAGE ] ; then
+	#	echo "serresponse did not find the required message $MESSAGE" > $TMP
 	else
 		echo "The execution of this command:" > $TMP
 		echo "  $BIN -s $SIPURI" >> $TMP
