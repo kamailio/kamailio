@@ -236,7 +236,7 @@ inline int set_sock_struct( union sockaddr_union* to, str *to_str)
 	str port;
 	int port_nr=0;
 
-	/* to_str is expected to be in user@host[:port] format */
+	/* to_str is expected to be in sip:user@host[:port] format */
 	host.s = to_str->s;
 	host.len = to_str->len;
 	while( host.len && *host.s!='@' ) {
@@ -313,7 +313,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 {
 	static char buf[2048];
 	static int call_id = 0x4f8a1b49;
-	static int cseq_nr=1;
+	//static int cseq_nr=1;
 	union sockaddr_union to_addr;
 	struct socket_info* send_sock;
 	int buf_len;
@@ -323,7 +323,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		"Via: SIP/2.0/UDP %.*s:9%s"
 		"From: %.*s%s"
 		"To: <%.*s>%s"
-		"Call-ID: d2d44f40-e803-40e1-b036-%X@%.*s%s"
+		"Call-ID: d2d4%4d-e803-%8X-b036-%X@%.*s%s"
 		"CSeq: %d MESSAGE%s"
 		"Contact: %.*s%s"
 		"Content-Type: text/plain; charset=UTF-8%s"
@@ -334,8 +334,9 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		sock_info[0].name.len,sock_info[0].name.s,CRLF,
 		from->len,from->s,CRLF,
 		to->len,to->s,CRLF,
-		call_id++,sock_info[0].address_str.len,sock_info[0].address_str.s,CRLF,
-		cseq_nr++,CRLF,
+		getpid(),rand(),call_id++,
+			sock_info[0].address_str.len,sock_info[0].address_str.s,CRLF,
+		1/*cseq_nr++*/,CRLF,
 		contact->len,contact->s,CRLF,
 		CRLF,
 		msg->len,CRLF,
