@@ -1276,7 +1276,7 @@ struct ip_addr{
 	    </para>
 	    <para>
 		The structure will be described in more detail later in chapter
-		<SIP Message MOdifications.
+		SIP Message MOdifications.
 	    </para>
 	</section> <!-- lump-rpl -->
 
