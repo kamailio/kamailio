@@ -27,42 +27,81 @@
 
 /*
  *   ser locking library
+ *   WARNING: don't include this directly include instead locking.h!
  *
- *  2002-12-16  created by andrei
- *  2003-02-20  s/gen_lock_t/gen_lock_t/ to avoid a type conflict 
- *               on solaris  (andrei)
- *  2003-03-05  lock set support added for FAST_LOCK & SYSV (andrei)
- *  2003-03-06  splited in two: lock_ops.h & lock_alloc.h, to avoid
- *               shm_mem.h<->locking.h interdependency (andrei)
+ *  2002-03-06  created by andrei (contains parts of the original locking.h)
  *
-Implements (in lock_ops.h & lock_alloc.h):
+Implements: (see also locking.h)
 
 	simple locks:
 	-------------
 	gen_lock_t* lock_alloc();                - allocates a lock in shared mem.
-	gen_lock_t* lock_init(gen_lock_t* lock); - inits the lock
-	void    lock_destroy(gen_lock_t* lock);  - removes the lock (e.g sysv rmid)
 	void    lock_dealloc(gen_lock_t* lock);  - deallocates the lock's shared m.
-	void    lock_get(gen_lock_t* lock);      - lock (mutex down)
-	void    lock_release(gen_lock_t* lock);  - unlock (mutex up)
 	
 	lock sets: [implemented only for FL & SYSV so far]
 	----------
 	lock_set_t* lock_set_alloc(no)               - allocs a lock set in shm.
-	lock_set_t* lock_set_init(lock_set_t* set);  - inits the lock set
-	void lock_set_destroy(lock_set_t* s);        - removes the lock set
 	void lock_set_dealloc(lock_set_t* s);        - deallocs the lock set shm.
-	void lock_set_get(lock_set_t* s, int i);     - locks sem i from the set
-	void lock_set_release(lock_set_t* s, int i)  - unlocks sem i from the set
 
-WARNING: signals are not treated! (some locks are "awakened" by the signals)
 */
 
-#ifndef _locking_h
-#define _locking_h
+#ifndef _lock_alloc_h
+#define _lock_alloc_h
 
-/* the order is important */
-#include "lock_ops.h"
-#include "lock_alloc.h" 
+/*shm_{malloc, free}*/
+#include "mem/mem.h"
+#ifdef SHM_MEM
+#include "mem/shm_mem.h"
+#else
+#error "locking requires shared memroy support"
+#endif
+
+#if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
+/* simple locks*/
+#define lock_alloc() shm_malloc(sizeof(gen_lock_t))
+#define lock_dealloc(lock) shm_free(lock)
+/* lock sets */
+
+inline static lock_set_t* lock_set_alloc(int n)
+{
+	lock_set_t* ls;
+	ls=(lock_set_t*)shm_malloc(sizeof(lock_set_t)+n*sizeof(gen_lock_t));
+	if (ls==0){
+		LOG(L_CRIT, "ERROR: lock_set_alloc (FL): could not allocate lock_set\n");
+	}else{
+		ls->locks=(gen_lock_t*)((char*)ls+sizeof(lock_set_t));
+		ls->size=n;
+	}
+	return ls;
+}
+
+#define lock_set_dealloc(lock_set) shm_free(lock_set)
+
+#elif defined USE_SYSV_SEM
+
+/*simple locks*/
+#define lock_alloc() shm_malloc(sizeof(gen_lock_t))
+#define lock_dealloc(lock) shm_free(lock)
+/* lock sets */
+
+inline static lock_set_t* lock_set_alloc(int n)
+{
+	lock_set_t* ls;
+	ls=(lock_set_t*)shm_malloc(sizeof(lock_set_t));
+	if (ls){
+		ls->size=n;
+		ls->semid=-1;
+	};
+	return ls;
+}
+
+
+#define lock_set_dealloc(lock_set) shm_free(lock_set)
+
+
+#else
+#error "no locking method selected"
+#endif
+
 
 #endif

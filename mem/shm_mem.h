@@ -50,7 +50,7 @@
 
 
 #include "../dprint.h"
-#include "../locking.h"
+#include "../lock_ops.h" /* we don't include locking.h on purpose */
 
 #ifdef VQ_MALLOC
 #	include "vq_malloc.h"
