@@ -265,6 +265,8 @@ INSERT INTO version VALUES ( 'speed_dial', '1');
 
 
 CREATE TABLE acc (
+  caller_UUID varchar(64) NOT NULL default '',
+  callee_UUID varchar(64) NOT NULL default '',
   sip_from varchar(128) NOT NULL default '',
   sip_to varchar(128) NOT NULL default '',
   sip_status varchar(128) NOT NULL default '',
@@ -280,6 +282,8 @@ CREATE TABLE acc (
   totag varchar(128) NOT NULL default '',
   time datetime NOT NULL default '0000-00-00 00:00:00',
   timestamp timestamp(14) NOT NULL,
+  caller_deleted char(1) NOT NULL default '0',
+  callee_deleted char(1) NOT NULL default '0',
   INDEX acc_user ($USERCOL, domain),
   KEY sip_callid (sip_callid)
 ) $TABLE_TYPE;
