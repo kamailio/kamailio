@@ -51,6 +51,19 @@
 #include <radiusclient.h>
 #endif
 
+#ifdef DIAM_ACC
+#include "diam_dict.h"
+#include "diam_message.h"
+#include "diam_tcp.h"
+
+#define AA_REQUEST 265
+#define AA_ANSWER  265
+
+#define ACCOUNTING_REQUEST 271
+#define ACCOUNTING_ANSWER  271
+
+#define M_NAME	"acc"
+#endif
 
 #define ATR(atr)  atr_arr[cnt].s=A_##atr;\
 				atr_arr[cnt].len=A_##atr##_LEN;
@@ -64,6 +77,14 @@ static int rad_attr[] = { PW_CALLING_STATION_ID, PW_CALLED_STATION_ID,
 	PW_SIP_FROM_TAG, PW_SIP_CSEQ };
 #endif
 
+#ifdef DIAM_ACC
+extern char *diameter_client_host;
+extern int diameter_client_port;
+
+/* caution: keep these aligned to DIAM_ACC_FMT !! */
+static int diam_attr[] = { AVP_SIP_FROM_URI, AVP_SIP_TO_URI, AVP_SIP_OURI, 
+	AVP_SIP_CALLID, AVP_SIP_TO_TAG, AVP_SIP_FROM_TAG, AVP_SIP_CSEQ };
+#endif
 
 static inline struct hdr_field *valid_to( struct cell *t, 
 				struct sip_msg *reply)
@@ -716,3 +737,349 @@ void acc_rad_reply(  struct cell* t , struct sip_msg *reply,
 }
 #endif
 
+/**************** DIAMETER Support *************************/
+#ifdef DIAM_ACC
+#ifndef RAD_ACC
+inline static unsigned long phrase2code(str *phrase)
+{
+	unsigned long code;
+	int i;
+
+	if (phrase->len<3) return 0;
+	code=0;
+	for (i=0;i<3;i++) {
+		if (!(phrase->s[i]>='0' && phrase->s[i]<'9'))
+				return 0;
+		code=code*10+phrase->s[i]-'0';
+	}
+	return code;
+}
+#endif
+
+inline unsigned long diam_status(struct sip_msg *rq, str *phrase)
+{
+	int code;
+
+	code=phrase2code(phrase);
+	if (code==0)
+		return -1;
+
+	if ((rq->REQ_METHOD==METHOD_INVITE || rq->REQ_METHOD==METHOD_ACK)
+				&& code>=200 && code<300) 
+		return AAA_ACCT_START;
+	
+	if ((rq->REQ_METHOD==METHOD_BYE 
+					|| rq->REQ_METHOD==METHOD_CANCEL)) 
+		return AAA_ACCT_STOP;
+	
+	if (rq->REQ_METHOD==METHOD_OTHER/*MESSAGE */ && code>=200 && code <=300)  
+		return AAA_ACCT_EVENT;
+	
+	return -1;
+}
+
+int acc_diam_request( struct sip_msg *rq, struct hdr_field *to, str *phrase )
+{
+	str* val_arr[ALL_LOG_FMT_LEN+1];
+	str atr_arr[ALL_LOG_FMT_LEN+1];
+	int attr_cnt;
+	AAAMessage *send = NULL;
+	AAA_AVP *avp;
+	int i;
+	int dummy_len;
+	str* user;
+	str* realm;
+	str user_name;
+	str value;
+	str *uri;
+	struct sip_uri puri;
+	struct to_body* from;
+	int ret, free_user_name;
+	int status;
+	char tmp[2];
+	unsigned int mid;
+
+
+	if (skip_cancel(rq)) return 1;
+
+	attr_cnt=fmt2strar( DIAM_ACC_FMT, rq, to, phrase, 
+					&dummy_len, &dummy_len, val_arr, atr_arr);
+	
+	if (attr_cnt!=(sizeof(DIAM_ACC_FMT)-1)) 
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: fmt2strar failed\n");
+		return -1;
+	}
+	
+	if ( (send=AAAInMessage(ACCOUNTING_REQUEST, AAA_APP_NASREQ))==NULL)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_reqest: new AAA message not created\n");
+		return -1;
+	}
+
+
+	/* AVP_ACCOUNTIG_RECORD_TYPE */
+	if( (status = diam_status(rq, phrase))<0)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: status unknown\n");
+		goto error;
+	}
+	tmp[0] = status+'0';
+	tmp[1] = 0;
+	if( (avp=AAACreateAVP(AVP_Accounting_Record_Type, 0, 0, tmp, 
+						1, AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
+		goto error;
+	}
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+	/* SIP_MSGID AVP */
+	DBG("**ACC***** m_id=%d\n", rq->id);
+	mid = rq->id;
+	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&mid), 
+				sizeof(mid), AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+		goto error;
+	}
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+
+	/* SIP Service AVP */
+	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_ACCOUNTING, 
+				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
+		goto error;
+	}
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+
+	/* SIP_STATUS avp */
+	if( (avp=AAACreateAVP(AVP_SIP_STATUS, 0, 0, phrase->s, 
+						phrase->len, AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
+		goto error;
+	}
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+
+	/* SIP_METHOD avp */
+	value = rq->first_line.u.request.method;
+	if( (avp=AAACreateAVP(AVP_SIP_METHOD, 0, 0, value.s, 
+						value.len, AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
+		goto error;
+	}
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+
+	/* Handle AVP_USER_NAME as a special case */
+	free_user_name = 0;
+	user=cred_user(rq);  /* try to take it from credentials */
+	if (user) 
+	{
+		realm = cred_realm(rq);
+		if (realm) 
+		{
+			user_name.len = user->len+1+realm->len;
+			user_name.s = pkg_malloc(user_name.len);
+			if (!user_name.s) 
+			{
+				LOG(L_ERR, "ERROR: acc_diam_request: no memory\n");
+				goto error;
+			}
+			memcpy(user_name.s, user->s, user->len);
+			user_name.s[user->len] = '@';
+			memcpy(user_name.s+user->len+1, realm->s, realm->len);
+			free_user_name = 1;
+		} 
+		else 
+		{
+			user_name.len = user->len;
+			user_name.s = user->s;
+		}
+	} 
+	else 
+	{  /* from from uri */
+		if (rq->from && (from=get_from(rq)) && from->uri.len) 
+		{
+			if (parse_uri(from->uri.s, from->uri.len, &puri) < 0 ) 
+			{
+				LOG(L_ERR, "ERROR: acc_diam_request: Bad From URI\n");
+				goto error;
+			}
+			user_name.len = puri.user.len+1+puri.host.len;
+			user_name.s = pkg_malloc(user_name.len);
+			if (!user_name.s) {
+				LOG(L_ERR, "ERROR: acc_diam_request: no memory\n");
+				goto error;
+			}
+			memcpy(user_name.s, puri.user.s, puri.user.len);
+			user_name.s[puri.user.len] = '@';
+			memcpy(user_name.s+puri.user.len+1, puri.host.s, puri.host.len);
+			free_user_name = 1;
+		} 
+		else 
+		{
+			user_name.len = na.len;
+			user_name.s = na.s;
+		}
+	}
+
+	if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s, user_name.len, 
+					free_user_name?AVP_FREE_DATA:AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
+		if(free_user_name)
+			pkg_free(user_name.s);
+		goto error;
+	}
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+
+	
+    /* Remaining attributes from diam_attr vector */
+	for(i=0; i<attr_cnt; i++) 
+	{
+		if((avp=AAACreateAVP(diam_attr[i], 0,0, val_arr[i]->s, val_arr[i]->len, 
+					AVP_DUPLICATE_DATA)) == 0)
+		{
+			LOG(L_ERR,"ERROR: acc_diam_request: no more free memory!\n");
+			goto error;
+		}
+		if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+		{
+			LOG(L_ERR, "ERROR: acc_diam_request: avp not added \n");
+			AAAFreeAVP(&avp);
+			goto error;
+		}
+	}
+		
+	if (get_uri(rq, &uri) < 0) 
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: From/To URI not found\n");
+		goto error;
+	}
+	
+	if (parse_uri(uri->s, uri->len, &puri) < 0) 
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: Error parsing From/To URI\n");
+		goto error;
+	}
+
+	
+	/* Destination-Realm AVP */
+	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
+						puri.host.len, AVP_DUPLICATE_DATA)) == 0)
+	{
+		LOG(L_ERR,"acc_diam_request: no more free memory!\n");
+		goto error;
+	}
+
+	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "acc_diam_request: avp not added \n");
+		AAAFreeAVP(&avp);
+		goto error;
+	}
+
+
+	/* prepare the message to be sent over the network */
+	if(AAABuildMsgBuffer(send) != AAA_ERR_SUCCESS)
+	{
+		LOG(L_ERR, "ERROR: acc_diam_request: message buffer not created\n");
+		goto error;
+	}
+
+	if(sockfd==AAA_NO_CONNECTION)
+	{
+		sockfd = init_mytcp(diameter_client_host, diameter_client_port);
+		if(sockfd==AAA_NO_CONNECTION)
+		{
+			LOG(L_ERR, M_NAME":acc_diam_request: failed to reconnect"
+								" to Diameter client\n");
+			goto error;
+		}
+	}
+		
+	/* send the message to the DIAMETER client */
+	ret = tcp_send_recv(sockfd, send->buf.s, send->buf.len, rb, rq->id);
+
+	if(ret == AAA_CONN_CLOSED)
+	{
+		LOG(L_NOTICE, M_NAME":acc_diam_request: connection to Diameter"
+					" client closed.It will be reopened by the next request\n");
+		close(sockfd);
+		sockfd = AAA_NO_CONNECTION;
+		goto error;
+	}
+
+	if(ret != ACC_SUCCESS) /* a transmission error occured */
+	{
+		LOG(L_ERR, M_NAME":acc_diam_request: message sending to the" 
+					" DIAMETER backend authorization server failed\n");
+		goto error;
+	}
+
+	AAAFreeMessage(&send);
+	return 1;
+
+error:
+	AAAFreeMessage(&send);
+	return -1;
+}
+
+
+void acc_diam_missed( struct cell* t, struct sip_msg *reply, unsigned int code )
+{
+	str acc_text;
+
+	get_reply_status(&acc_text, reply, code);
+	acc_diam_request(t->uas.request, valid_to(t,reply), &acc_text);
+}
+void acc_diam_ack( struct cell* t, struct sip_msg *ack )
+{
+	str code_str;
+
+	code_str.s=int2str(t->uas.status, &code_str.len);
+	acc_diam_request(ack, ack->to ? ack->to : t->uas.request->to,
+			&code_str);
+}
+
+void acc_diam_reply( struct cell* t , struct sip_msg *reply, unsigned int code )
+{
+	str code_str;
+
+	code_str.s=int2str(code, &code_str.len);
+	acc_diam_request(t->uas.request, valid_to(t, reply), &code_str);
+}
+
+#endif

@@ -11,10 +11,14 @@ NAME=acc.so
 LIBS=
 
 # uncomment the next line if you wish to enable SQL accounting
-#DEFS+=-DSQL_ACC
+DEFS+=-DSQL_ACC
 
 # uncomment the next two lines if you wish to enable RADIUS accounting
-#DEFS+=-DRAD_ACC
-#LIBS=-L$(LOCALBASE)/lib -lradiusclient
+DEFS+=-DRAD_ACC
+
+# uncomment the next two lines if you wish to enable DIAMETER accounting
+#DEFS+=-DDIAM_ACC
+
+LIBS=-L$(LOCALBASE)/lib -lradiusclient
 
 include ../../Makefile.modules

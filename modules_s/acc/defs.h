@@ -55,5 +55,16 @@
 #	define RAD_ACC_FMT "FTocdrn"
 #endif
 
+#ifdef DIAM_ACC
+#	define DIAM_ACC_FMT "FTocdrn"
+/* information needed for reading messages from tcp connection */
+typedef struct rd_buf
+{
+	unsigned int first_4bytes;
+	unsigned int buf_len;
+	unsigned char *buf;
+} rd_buf_t;
+#endif
+
 
 #endif

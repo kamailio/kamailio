@@ -2,7 +2,7 @@
  * Accounting module
  *
  * $Id$
- *
+ * 
  * Copyright (C) 2001-2003 Fhg Fokus
  *
  * This file is part of ser, a free SIP server.
@@ -39,7 +39,6 @@
  * 2003-11-04  multidomain support for mysql introduced (jiri)
  */
 
-
 #include <stdio.h>
 
 #include "../../sr_module.h"
@@ -60,6 +59,14 @@
 #include "dict.h"
 #endif
 
+#ifdef DIAM_ACC
+#include "diam_dict.h"
+#include "dict.h"
+#include "diam_tcp.h"
+
+#define M_NAME	"acc"
+#endif
+
 MODULE_VERSION
 
 struct tm_binds tmb;
@@ -70,6 +77,11 @@ static int child_init(int rank);
 
 #ifdef SQL_ACC
 db_con_t* db_handle;   /* Database connection handle */
+#endif
+
+/* buffer used to read from TCP connection*/
+#ifdef DIAM_ACC
+rd_buf_t *rb;
 #endif
 
 /* ----- Parameter variables ----------- */
@@ -99,6 +111,13 @@ int radius_missed_flag = 0;
 int service_type = PW_SIP_SESSION;
 #endif
 
+/* DIAMETER */
+#ifdef DIAM_ACC
+int diameter_flag = 1;
+int diameter_missed_flag = 2;
+char* diameter_client_host="localhost";
+int diameter_client_port=3000;
+#endif
 
 #ifdef SQL_ACC
 char *db_url=DEFAULT_DB_URL; /* Database url */
@@ -143,6 +162,11 @@ static int w_acc_db_request(struct sip_msg *rq, char *comment, char *foo);
 static int w_acc_rad_request(struct sip_msg *rq, char *comment, char *foo);
 #endif
 
+/* DIAMETER */
+#ifdef DIAM_ACC
+static int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo);
+#endif
+
 static cmd_export_t cmds[] = {
 	{"acc_log_request", w_acc_log_request, 1, 0, REQUEST_ROUTE},
 #ifdef SQL_ACC
@@ -150,6 +174,10 @@ static cmd_export_t cmds[] = {
 #endif
 #ifdef RAD_ACC
 	{"acc_rad_request", w_acc_rad_request, 1, 0, REQUEST_ROUTE},
+#endif
+/* DIAMETER */
+#ifdef DIAM_ACC
+	{"acc_diam_request", w_acc_diam_request, 1, 0, REQUEST_ROUTE},
 #endif
 	{0, 0, 0, 0, 0}
 };
@@ -169,6 +197,13 @@ static param_export_t params[] = {
 	{"radius_flag",				INT_PARAM, &radius_flag			},
 	{"radius_missed_flag",		INT_PARAM, &radius_missed_flag		},
 	{"service_type", 		INT_PARAM, &service_type },
+#endif
+/* DIAMETER	*/
+#ifdef DIAM_ACC
+	{"diameter_flag",		INT_PARAM, &diameter_flag		},
+	{"diameter_missed_flag",INT_PARAM, &diameter_missed_flag},
+	{"diameter_client_host",STR_PARAM, &diameter_client_host},
+	{"diameter_client_port",INT_PARAM, &diameter_client_port},
 #endif
 	/* db-specific */
 #ifdef SQL_ACC
@@ -320,6 +355,32 @@ static int child_init(int rank)
 		return -1;
 	}
 #endif
+
+/* DIAMETER */
+#ifdef DIAM_ACC
+	/* open TCP connection */
+	DBG(M_NAME": Initializing TCP connection\n");
+
+	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
+	if(sockfd==-1) 
+	{
+		DBG(M_NAME": TCP connection not established\n");
+		return -1;
+	}
+
+	DBG(M_NAME": TCP connection established on sockfd=%d\n", sockfd);
+
+	/* every child with its buffer */
+	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
+	if(!rb)
+	{
+		DBG("acc: mod_child_init: no more free memory\n");
+		return -1;
+	}
+	rb->buf = 0;
+
+#endif
+
 	return 0;
 }
 
@@ -327,6 +388,9 @@ static void destroy(void)
 {
 #ifdef SQL_ACC
     if (db_handle) db_close(db_handle);
+#endif
+#ifdef DIAM_ACC
+	close_tcp_connection(sockfd);
 #endif
 }
 
@@ -412,6 +476,10 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 #ifdef RAD_ACC
 	int reset_rmf;
 #endif
+/* DIAMETER */
+#ifdef DIAM_ACC
+	int reset_dimf;
+#endif
 
 	/* validation */
 	if (t->uas.request==0) {
@@ -436,6 +504,13 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 			reset_rmf=1;
 		} else reset_rmf=0;
 #endif
+/* DIAMETER */
+#ifdef DIAM_ACC
+		if (is_diam_mc_on(t->uas.request)) {
+			acc_diam_missed(t, reply, code );
+			reset_dimf=1;
+		} else reset_dimf=0;
+#endif
 		/* we report on missed calls when the first
 		 * forwarding attempt fails; we do not wish to
 		 * report on every attempt; so we clear the flags; 
@@ -448,6 +523,10 @@ static void on_missed(struct cell *t, struct sip_msg *reply,
 #endif
 #ifdef RAD_ACC
 		if (reset_rmf) resetflag(t->uas.request, radius_missed_flag);
+#endif
+/* DIAMETER */	
+#ifdef DIAM_ACC
+		if (reset_dimf) resetflag(t->uas.request, diameter_missed_flag);
 #endif
 	}
 }
@@ -480,6 +559,11 @@ static void acc_onreply( struct cell* t, struct sip_msg *reply,
 	if (is_rad_acc_on(t->uas.request))
 		acc_rad_reply(t, reply, code);
 #endif
+/* DIAMETER */
+#ifdef DIAM_ACC
+	if (is_diam_acc_on(t->uas.request))
+		acc_diam_reply(t, reply, code);
+#endif
 }
 
 
@@ -505,6 +589,13 @@ static void acc_onack( struct cell* t , struct sip_msg *ack,
 	if (is_rad_acc_on(t->uas.request)) {
 		acc_preparse_req(ack);
 		acc_rad_ack(t,ack);
+	}
+#endif
+/* DIAMETER */
+#ifdef DIAM_ACC
+	if (is_diam_acc_on(t->uas.request)) {
+		acc_preparse_req(ack);
+		acc_diam_ack(t,ack);
 	}
 #endif
 	
@@ -546,5 +637,18 @@ static int w_acc_rad_request(struct sip_msg *rq, char *comment,
 	phrase.len=strlen(comment);	/* fix_param would be faster! */
 	acc_preparse_req(rq);
 	return acc_rad_request(rq, rq->to,&phrase);
+}
+#endif
+/* DIAMETER */
+#ifdef DIAM_ACC
+static int w_acc_diam_request(struct sip_msg *rq, char *comment, 
+				char *foo)
+{
+	str phrase;
+
+	phrase.s=comment;
+	phrase.len=strlen(comment);	/* fix_param would be faster! */
+	acc_preparse_req(rq);
+	return acc_diam_request(rq, rq->to,&phrase);
 }
 #endif
