@@ -163,7 +163,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 		VAL_STR(vals + 2) = puri.host;
 	} else {
 		VAL_STR(vals) = c->digest.username.user;
-		VAL_STR(vals + 2) = (c->digest.username.domain.len) ? (c->digest.username.domain) : (c->digest.realm);
+		VAL_STR(vals + 2) = c->digest.realm;
 	}
 	
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
