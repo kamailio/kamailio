@@ -40,7 +40,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <arpa/inet.h>
 #include <sys/poll.h>
 
-#define SIPSAK_VERSION "v0.4"
+#define SIPSAK_VERSION "v0.5"
 #define RESIZE		1024
 #define BUFSIZE		4096
 #define FQDN_SIZE   200
@@ -621,7 +621,6 @@ void shoot(char *buff)
 					sockerr.events=POLLERR;
 					if ((poll(&sockerr, 1, 10))==1) {
 						if (sockerr.revents && POLLERR) {
-//							printf("send failure: ");
 							recv(sock, reply, strlen(reply), 0);
 							perror("send failure: ");
 							if (randtrash) 
@@ -629,7 +628,8 @@ void shoot(char *buff)
 							exit(1);
 						}
 					}
-					if (verbose) printf("** timeout **\n");
+					if (trace) printf("%i: timeout after %i ms\n", i, retryAfter);
+					else if (verbose) printf("** timeout after %i ms**\n", retryAfter);
 					if (i==0) memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
 					if (randtrash) {
 						printf("did not get a response on this request:\n%s\n", buff);
@@ -757,14 +757,16 @@ void shoot(char *buff)
 							sprintf(crlf, "0");
 							crlf++;
 							contact=strstr(crlf, "Contact");
+							printf("received reply from ");
+							warning_extract(reply);
+							printf(" after %.3f ms", deltaT(&sendtime, &recvtime));
 							if (contact){
 								crlf=strchr(contact,'\n');
 								sprintf(crlf, "0");
-								printf("   %s\n", contact);
+								printf(":\n     %s\n", contact);
 							}
 							else {
-								printf("received reply without contact: %s\n"
-									, reply);
+								printf(" without contact:\n     %s\n", reply);
 							}
 							exit(0);
 						}
