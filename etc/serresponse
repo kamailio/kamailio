@@ -46,13 +46,16 @@ if [ ! -e $LOCKF ] ; then
 		echo "produced this output:" >> $TMP2
 		$SIPSAKCMD >> $TMP2 2>&1
 		if [ $? -eq 3 ] ; then
+			grep "Connection refused" $TMP2
+			if [ $? -eq 0 ] ; then
+				sleep 15
+			fi
 			echo "  $SIPSAKNCMD" >> $TMP3
 			echo "produced this output:" >> $TMP3
 			$SIPSAKNCMD >> $TMP3 2>&1
 			if [ $? -le 1 ] ; then
 				echo "ser did not responses (fast enough) on the sipsak requests with fqdn in Via" >> $TMP
 				echo "but the test with IPs in Via succeeded." >> $TMP
-				echo "  => DNS PROBLEM !?!" >> $TMP
 				echo "" >> $TMP
 				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
 				echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
@@ -64,7 +67,6 @@ if [ ! -e $LOCKF ] ; then
 			else
 				echo "ser did not responses (fast enough) on requests with fqdn in Via" >> $TMP
 				echo "but also requests with IPs in Via failed." >> $TMP
-				echo "  => DNS IS NOT THE PROBLEM !!" >> $TMP
 				echo "" >> $TMP
 				echo "Sending this alert is stopped for $LOCK_TIMEOUT minutes." >>$TMP
 				echo "If you want to re-enable alerts sooner, please remove the lock file" >> $TMP
