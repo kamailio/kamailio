@@ -323,8 +323,7 @@ qa_passed:
 #endif
 
 /* which socket to use? main socket or new one? */
-int udp_send(struct socket_info *source, char *buf, unsigned len,
-				union sockaddr_union*  to)
+int udp_send(struct socket_info *source, char *buf, unsigned len, union sockaddr_union*  to)
 {
 
 	int n;
