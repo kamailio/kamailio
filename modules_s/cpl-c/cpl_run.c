@@ -811,7 +811,7 @@ static inline int run_default( struct cpl_interpreter *intr )
 		 * nothinh must be done */
 		return SCRIPT_END;
 	}
-	return SCRIPT_RUN_ERROR;
+	/*return SCRIPT_RUN_ERROR;*/
 }
 
 
