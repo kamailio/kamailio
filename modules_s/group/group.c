@@ -110,10 +110,10 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	struct hdr_field* h;
 	struct auth_body* c = 0; /* Makes gcc happy */
 
-	keys[0]=user_column;
-	keys[1]=group_column;
-	keys[2]=domain_column;
-	col[0]=group_column;
+	keys[0] = user_column;
+	keys[1] = group_column;
+	keys[2] = domain_column;
+	col[0] = group_column;
 	
 	hf_type = (int)_hf;
 

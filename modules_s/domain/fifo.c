@@ -51,7 +51,8 @@ int reload_domain_table ( void )
 	struct domain_list **new_hash_table;
 	int i;
 
-	cols[0]=domain_domain_col;
+	cols[0] = domain_domain_col;
+
 	if (db_use_table(db_handle, domain_table) < 0) {
 		LOG(L_ERR, "reload_domain_table(): Error while trying to use domain table\n");
 		return -1;
