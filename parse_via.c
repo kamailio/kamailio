@@ -813,7 +813,11 @@ endofvalue:
 end_via:
 	/* if we are here we found an "unexpected" end of via
 	 *  (cr/lf). This is valid only if the param type is GEN_PARAM*/
-	if (param->type==GEN_PARAM) goto endofparam;
+	if (param->type==GEN_PARAM){
+		saved_state=L_PARAM; /* change the saved_state, we have an unknown
+		                        param. w/o a value */
+		goto endofparam;
+	}
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Error on  param type %d, <%s>, state=%d, saved_state=%d\n",
