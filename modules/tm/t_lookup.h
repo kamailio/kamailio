@@ -24,6 +24,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
+ *               nameser_compat.h (andrei)
+ */
 
 
 
@@ -37,7 +43,7 @@
 #include "t_funcs.h"
 
 #define T_UNDEFINED  ( (struct cell*) -1 )
-#define T_NULL       ( (struct cell*) 0 )
+#define T_NULL_CELL       ( (struct cell*) 0 )
 
 #ifdef _OBSOLETED
 extern struct cell      *T;

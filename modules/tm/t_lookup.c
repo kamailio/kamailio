@@ -55,6 +55,8 @@
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-23  options for disabling r-uri matching introduced (jiri)
  * 2003-02-13  init_rb() is proto indep. & it uses struct dest_info (andrei)
+ * 2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
+ *              nameser_compat.h (andrei)
  */
 
 
@@ -925,7 +927,7 @@ int t_newtran( struct sip_msg* p_msg )
 
 int t_unref( struct sip_msg* p_msg  )
 {
-	if (T==T_UNDEFINED || T==T_NULL)
+	if (T==T_UNDEFINED || T==T_NULL_CELL)
 		return -1;
 	if (T->kr==0 
 		||(p_msg->REQ_METHOD==METHOD_ACK && !(T->kr & REQ_RLSD))) {
