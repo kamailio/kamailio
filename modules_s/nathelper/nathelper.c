@@ -909,11 +909,21 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	 * messages that have been altered and check it when
 	 * another request comes.
 	 */
+#if 0
+	/* disabled: 
+	 *  - alter_mediaip is called twice if 2 c= lines are present
+	 *    in the sdp (and we want to allow it)
+	 *  - the message flags are propagated in the on_reply_route
+	 *  => if we set the flags for the request they will be seen for the
+	 *    reply too, but we don't want that
+	 *  --andrei
+	 */
 	if (msg->msg_flags & FL_SDP_IP_AFS) {
 		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
 		  "SDP twice, check your config!\n");
 		return -1;
 	}
+#endif
 
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
@@ -979,7 +989,9 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		return -1;
 	}
 
+#if 0
 	msg->msg_flags |= FL_SDP_IP_AFS;
+#endif
 
 	if (insert_new_lump_after(anchor, nip.s, nip.len, 0) == 0) {
 		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
@@ -1008,11 +1020,15 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	 * messages that have been altered and check it when
 	 * another request comes.
 	 */
+#if 0
+	/* disabled: - it propagates to the reply and we don't want this
+	 *  -- andrei */
 	if (msg->msg_flags & FL_SDP_PORT_AFS) {
 		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
 		  "SDP twice, check your config!\n");
 		return -1;
 	}
+#endif
 
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
@@ -1055,7 +1071,9 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 		return -1;
 	}
 
+#if 0
 	msg->msg_flags |= FL_SDP_PORT_AFS;
+#endif
 	return 0;
 }
 
