@@ -25,6 +25,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ *
+ * 2003-01-23 switched from t_uac to t_uac_dlg, by dcm
+ * 
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -53,35 +58,35 @@
 #include "ms_msg_list.h"
 #include "msfuncs.h"
 
-#define MS_OFFLINE_MSG	"User [%.*s] is offline. The message will be delivered when user goes online."
-
 #define MAX_DEL_KEYS	1	
-#define NR_KEYS	6
+#define NR_KEYS			7
 
 #define DB_KEY_MID		"mid"
 #define DB_KEY_FROM		"src_addr"
 #define DB_KEY_TO		"dst_addr"
+#define DB_KEY_RURI		"r_uri"
 #define DB_KEY_BODY		"body"
 #define DB_KEY_CTYPE	"ctype"
 #define DB_KEY_EXP_TIME	"exp_time"
 #define DB_KEY_INC_TIME	"inc_time"
 
-#define STR_IDX_NO			6
+#define IDX_NO				6
 
 #define STR_IDX_FROM		0
 #define STR_IDX_TO			1
-#define STR_IDX_BODY		2
-#define STR_IDX_CTYPE		3
-#define STR_IDX_INC_TIME	4
-#define STR_IDX_EXP_TIME	5
+#define STR_IDX_RURI		2
+#define STR_IDX_BODY		3
+#define STR_IDX_CTYPE		4
+#define STR_IDX_INC_TIME	5
 
-#define DUMP_IDX_NO			5
+#define STR_IDX_EXP_TIME	6
 
 #define DUMP_IDX_MID		0
 #define DUMP_IDX_FROM		1
-#define DUMP_IDX_BODY		2
-#define DUMP_IDX_CTYPE		3
-#define DUMP_IDX_INC_TIME	4
+#define DUMP_IDX_TO			2
+#define DUMP_IDX_BODY		3
+#define DUMP_IDX_CTYPE		4
+#define DUMP_IDX_INC_TIME	5
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
 	if (RES_ROWS(_res)[_r].values[_c].nul != 0) \
@@ -119,12 +124,14 @@ struct tm_binds tmb;
 
 char *db_url="sql://root@127.0.0.1/msilo";
 char *db_table="silo";
-char *registrar="sip:registrar@iptel.org";
+char *registrar=NULL; //"sip:registrar@iptel.org";
 int  expire_time=259200;
 int  check_time=30;
 int  clean_period=5;
 
 str msg_type = { "MESSAGE", 7};
+str totag = { NULL, 0 };
+
 str reg_addr;
 
 /** module functions */
@@ -242,7 +249,7 @@ static int mod_init(void)
 	}
 
 	reg_addr.s = registrar;
-	reg_addr.len = strlen(registrar);
+	reg_addr.len = (registrar)?strlen(registrar):0;
 
 	return 0;
 }
@@ -272,13 +279,13 @@ static int child_init(int rank)
  */
 static int m_store(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body, str_hdr;
+	str body, str_hdr, sruri, ctaddr;
 	struct to_body to, *pto, *pfrom;
 	db_key_t db_keys[NR_KEYS];
 	db_val_t db_vals[NR_KEYS];
 	int nr_keys = 0, val, lexpire;
 	t_content_type ctype;
-	char buf[512], buf1[1024];
+	char buf[512], buf1[1024], *p;
 
 	DBG("MSILO: m_store: ------------ start ------------\n");
 		
@@ -359,7 +366,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
 	
-	if(pfrom->uri.len == reg_addr.len && 
+	if(reg_addr.s && pfrom->uri.len == reg_addr.len && 
 			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
 	{
 		DBG("MSILO: m_store: message from MSILO REGISTRAR!\n");
@@ -372,6 +379,54 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = pfrom->uri.s;
 	db_vals[nr_keys].val.str_val.len = pfrom->uri.len;
+
+	nr_keys++;
+
+	// chech for RURI
+	sruri.len = 0;
+	if(msg->new_uri.len > 0)
+	{
+		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
+		p = msg->new_uri.s;
+		while((p < msg->new_uri.s+msg->new_uri.len) && *p!='@')
+			p++;
+		if(p < msg->new_uri.s+msg->new_uri.len && p > msg->new_uri.s)
+		{
+			DBG("MSILO:m_store: NEW R-URI used\n");
+			sruri.s = msg->new_uri.s;
+			sruri.len = msg->new_uri.len;
+		}
+	}
+	
+	if(sruri.len == 0 && msg->first_line.u.request.uri.len > 0 )
+	{
+		DBG("MSILO:mstore: R-URI found - check if is AoR!\n");
+		p = msg->first_line.u.request.uri.s;
+		while((p < msg->first_line.u.request.uri.s+
+				msg->first_line.u.request.uri.len) && *p!='@')
+			p++;
+		if(p<msg->first_line.u.request.uri.s+msg->first_line.u.request.uri.len
+			&& p > msg->first_line.u.request.uri.s)
+		{
+			DBG("MSILO:m_store: R-URI used\n");
+			sruri.s = msg->first_line.u.request.uri.s;
+			sruri.len = msg->first_line.u.request.uri.len;
+		}
+	}
+	
+	if (sruri.len == 0)
+	{
+		DBG("MSILO:m_store: TO used as R-URI\n");
+		sruri.s = pto->uri.s;
+		sruri.len = pto->uri.len;
+	}
+	
+	db_keys[nr_keys] = DB_KEY_RURI;
+	
+	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val.s = sruri.s;
+	db_vals[nr_keys].val.str_val.len = sruri.len;
 
 	nr_keys++;
 
@@ -454,25 +509,75 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 
 	if(db_insert(db_con, db_keys, db_vals, nr_keys) < 0)
 	{
-		LOG(L_ERR, "MSILO: m_store: error storing message\n");
+		LOG(L_ERR, "MSILO:m_store: error storing message\n");
 		goto error;
 	}
-	DBG("MSILO: m_store: message stored. T:<%.*s> F:<%.*s>\n",
+	DBG("MSILO:m_store: message stored. T:<%.*s> F:<%.*s>\n",
 		pto->uri.len, pto->uri.s, pfrom->uri.len, pfrom->uri.s);
+	if(reg_addr.len > 0 && reg_addr.len+33+2*CRLF_LEN < 1024)
+	{
+		DBG("MSILO:m_store: sending info message.\n");
+		strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
+		str_hdr.len = 24 + CRLF_LEN + 9;
+		strncat(buf1,reg_addr.s,reg_addr.len);
+		str_hdr.len += reg_addr.len;
+		strcat(buf1, CRLF);
+		str_hdr.len += CRLF_LEN;
+		str_hdr.s = buf1;
 	
-	strcpy(buf1,"Content-Type: text/plain"CRLF"Contact: ");
-	str_hdr.len = 24 + CRLF_LEN + 9;
-	strncat(buf1,reg_addr.s,reg_addr.len);
-	str_hdr.len += reg_addr.len;
-	strcat(buf1, CRLF);
-	str_hdr.len += CRLF_LEN;
-	str_hdr.s = buf1;
+		strncpy(buf, "User [", 6);
+		body.len = 6;
+		if(pto->uri.len+75 < 512)
+		{
+			strncpy(buf+body.len, pto->uri.s, pto->uri.len);
+			body.len += pto->uri.len;
+		}
+		strncpy(buf+body.len, " is offline.", 12);
+		body.len += 12;
+		strncpy(buf+body.len, " The message will be delivered", 30);
+		body.len += 30;
+		strncpy(buf+body.len, " when user goes online.", 23);
+		body.len += 23;
 
-	sprintf(buf, MS_OFFLINE_MSG, pto->uri.len, pto->uri.s);
-	body.s = buf;
-	body.len = strlen(buf);
+		body.s = buf;
 
-	tmb.t_uac(&msg_type, &pfrom->uri, &str_hdr , &body, &reg_addr, 0 , 0, 0);
+		// look for Contact header
+		ctaddr.s = NULL;
+		if(parse_headers(msg,HDR_CONTACT,0)!=-1 && msg->contact 
+				&& msg->contact->body.s && msg->contact->body.len>0)
+		{
+			ctaddr.s = msg->contact->body.s;
+			ctaddr.len = msg->contact->body.len;
+			while((*(ctaddr.s)==' ' || *(ctaddr.s)=='\t' || *(ctaddr.s)=='<')
+					&& ctaddr.len>0)
+			{
+				ctaddr.s++;
+				ctaddr.len--;
+			}
+			p = ctaddr.s;
+			while(p<ctaddr.s+ctaddr.len && *p!='>')
+					p++;
+			if(p<ctaddr.s+ctaddr.len)
+				ctaddr.len = p-ctaddr.s;
+			DBG("MSILO:m_store: contact [%.*s]\n",ctaddr.len,ctaddr.s);
+		}
+		
+		// tmb.t_uac(&msg_type,&pfrom->uri,&str_hdr,&body,&reg_addr,0,0,0);
+		tmb.t_uac_dlg(&msg_type,  /* Type of the message */
+				(ctaddr.s)?&ctaddr:0,              /* Real destination */
+				(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
+				&pfrom->uri,      /* To */
+				&reg_addr,        /* From */
+				&totag,           /* To tag */
+				NULL,             /* From tag */
+				NULL,             /* CSeq */
+				NULL,             /* Call-ID */
+				&str_hdr,         /* Optional headers including CRLF */
+				&body,            /* Message body */
+				NULL,             /* Callback function */
+				NULL              /* Callback parameter */
+			);
+	}
 	
 	return 1;
 error:
@@ -485,16 +590,16 @@ error:
 static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct to_body to, *pto;
-	db_key_t db_keys[1] = { DB_KEY_TO };
+	db_key_t db_keys[1] = { DB_KEY_RURI };
 	db_val_t db_vals[1];
-	db_key_t db_cols[] = {	DB_KEY_MID, DB_KEY_FROM, DB_KEY_BODY,
+	db_key_t db_cols[] = {	DB_KEY_MID, DB_KEY_FROM, DB_KEY_TO, DB_KEY_BODY,
 							DB_KEY_CTYPE, DB_KEY_INC_TIME 
 					};
 	db_res_t* db_res = NULL;
-	int i, db_no_cols = DUMP_IDX_NO, db_no_keys = 1, *msg_id, mid;
-	char hdr_buf[1024], body_buf[1024];
+	int i, db_no_cols = IDX_NO, db_no_keys = 1, *msg_id, mid, n;
+	char hdr_buf[1024], body_buf[1024], *p;
 
-	str str_vals[STR_IDX_NO], *sp, 
+	str str_vals[IDX_NO], *sp, ctaddr, 
 			hdr_str  = { hdr_buf, 1024 }, 
 			body_str = { body_buf, 1024 };
 
@@ -516,7 +621,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 				msg->to->body.s + msg->to->body.len + 1, &to);
 			if(to.uri.len <= 0) // || to.error != PARSE_OK)
 			{
-				DBG("MSILO: m_dump: 'to' NOT parsed\n");
+				DBG("MSILO: m_dump: 'To' NOT parsed\n");
 				goto error;
 			}
 			pto = &to;
@@ -560,7 +665,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	db_vals[0].val.str_val.len = pto->uri.len;
 
 
-	memset(str_vals, 0, STR_IDX_NO*sizeof(str));
+	memset(str_vals, 0, IDX_NO*sizeof(str));
 	
 	if((db_query(db_con,db_keys,NULL,db_vals,db_cols,db_no_keys,db_no_cols,
 			NULL,&db_res)==0) && (RES_ROW_N(db_res) > 0))
@@ -570,7 +675,6 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 
 		for(i = 0; i < RES_ROW_N(db_res); i++) 
 		{
-		//RES_ROWS(db_res)[i].values[0].val.string_val;
 			mid =  RES_ROWS(db_res)[i].values[DUMP_IDX_MID].val.int_val;
 			if(msg_list_check_msg(ml, mid))
 			{
@@ -580,6 +684,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			}
 			
 			SET_STR_VAL(str_vals[STR_IDX_FROM], db_res, i, DUMP_IDX_FROM);
+			SET_STR_VAL(str_vals[STR_IDX_TO], db_res, i, DUMP_IDX_TO);
 			SET_STR_VAL(str_vals[STR_IDX_BODY], db_res, i, DUMP_IDX_BODY);
 			SET_STR_VAL(str_vals[STR_IDX_CTYPE], db_res, i, DUMP_IDX_CTYPE);
 			
@@ -612,25 +717,55 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			
 			/** sending using TM function: t_uac */
 
+			// look for Contact header
+			ctaddr.s = NULL;
+			if(parse_headers(msg,HDR_CONTACT,0)!=-1 && msg->contact 
+				&& msg->contact->body.s && msg->contact->body.len>0)
+			{
+				ctaddr.s = msg->contact->body.s;
+				ctaddr.len = msg->contact->body.len;
+				while((*(ctaddr.s)==' '||*(ctaddr.s)=='\t'||*(ctaddr.s)=='<')
+						&& ctaddr.len>0)
+				{
+					ctaddr.s++;
+					ctaddr.len--;
+				}
+				p = ctaddr.s;
+				while(p<ctaddr.s+ctaddr.len && *p!='>')
+						p++;
+				if(p<ctaddr.s+ctaddr.len)
+					ctaddr.len = p-ctaddr.s;
+				DBG("MSILO:m_dump: contact [%.*s]\n",ctaddr.len,ctaddr.s);
+			}
+
 			body_str.len = 1024;
-			if(m_build_body(&body_str, 
+			n = m_build_body(&body_str, 
 					RES_ROWS(db_res)[i].values[DUMP_IDX_INC_TIME].val.int_val,
-					str_vals[STR_IDX_BODY] ) < 0)
-			{
+					str_vals[STR_IDX_BODY] );
+			if(n<0)
 				DBG("MSILO: m_dump: sending simple body\n");
-				tmb.t_uac(&msg_type, &pto->uri, &hdr_str,
-					&str_vals[STR_IDX_BODY], &str_vals[STR_IDX_FROM],
-					m_tm_callback, (void*)msg_id, 0
-				);
-			}
 			else
-			{
 				DBG("MSILO: m_dump: sending composed body\n");
-				tmb.t_uac(&msg_type, &pto->uri, &hdr_str,
-					&body_str, &str_vals[STR_IDX_FROM],
-					m_tm_callback, (void*)msg_id, 0
+			
+			//tmb.t_uac(&msg_type, &pto->uri, &hdr_str,
+			//	&body_str, &str_vals[STR_IDX_FROM],
+			//	m_tm_callback, (void*)msg_id, 0
+			//);
+			
+			tmb.t_uac_dlg(&msg_type,  /* Type of the message */
+					(ctaddr.s)?&ctaddr:0,    /* Real destination */
+					&pto->uri,        /* Request-URI */
+					&str_vals[STR_IDX_TO],   /* To */
+					&str_vals[STR_IDX_FROM], /* From */
+					&totag,             /* To tag */
+					NULL,             /* From tag */
+					NULL,             /* CSeq */
+					NULL,             /* Call-ID */
+					&hdr_str,         /* Optional headers including CRLF */
+					(n<0)?&str_vals[STR_IDX_BODY]:&body_str, /* Message body */
+					m_tm_callback,    /* Callback function */
+					(void*)msg_id     /* Callback parameter */
 				);
-			}
 		}
 	}
 	else

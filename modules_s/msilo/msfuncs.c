@@ -156,8 +156,8 @@ error:
 int m_build_headers(str *buf, str ctype, str contact)
 {
 	char *p;
-	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0
-			|| buf->len < ctype.len+14+CRLF_LEN)
+	if(!buf || !buf->s || buf->len <= 0 || ctype.len < 0 || contact.len < 0
+			|| buf->len < ctype.len+contact.len+23+2*CRLF_LEN)
 		goto error;
 
 	p = buf->s;
@@ -198,7 +198,7 @@ int m_build_body(str *body, int date, str msg)
 	char *p;
 	
 	if(!body || !(body->s) || body->len <= 0 ||
-			date < 0 || msg.len < 0 || (28+msg.len > body->len) )
+			date < 0 || msg.len < 0 || (45+msg.len > body->len) )
 		goto error;
 	
 	p = body->s;
