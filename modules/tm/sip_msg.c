@@ -7,6 +7,8 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 
+#define ROUND4(s) ((s)%4)?((s)+4)/4*4:(s)
+
 char*   translate_pointer( char* new_buf , char *org_buf , char* p);
 struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_body *org_via);
 struct hdr_field* header_cloner( struct sip_msg *new_msg , struct sip_msg *org_msg, struct hdr_field *hdr);
@@ -484,29 +486,29 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
 
 
    /*computing the length of entire sip_msg structure*/
-   len = sizeof( struct sip_msg );
+   len = ROUND4(sizeof( struct sip_msg ));
    /*we will keep only the original msg*/
-   len += org_msg->len;
+   len += ROUND4(org_msg->len);
    /*the new uri (if any)*/
    if (org_msg->new_uri.s && org_msg->new_uri.len)
-      len+= org_msg->new_uri.len;
+      len+= ROUND4(org_msg->new_uri.len);
    /*all the headers*/
    for( hdr=org_msg->headers ; hdr ; hdr=hdr->next )
    {
-      /*sze of header struct*/
-      len += sizeof( struct hdr_field);
+      /*size of header struct*/
+      len += ROUND4(sizeof( struct hdr_field));
       switch (hdr->type)
       {
          case HDR_CSEQ:
-                   len+=sizeof(struct cseq_body);
+                   len+=ROUND4(sizeof(struct cseq_body));
                    break;
          case HDR_VIA:
                    for (via=(struct via_body*)hdr->parsed;via;via=via->next)
                    {
-                      len+=sizeof(struct via_body);
+                      len+=ROUND4(sizeof(struct via_body));
                       /*via param*/
                       for(prm=via->param_lst;prm;prm=prm->next)
-                         len+=sizeof(struct via_param );
+                         len+=ROUND4(sizeof(struct via_param ));
                    }
                    break;
       }
@@ -524,22 +526,24 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
    new_msg = (struct sip_msg*)p;
    /*sip msg structure*/
    memcpy( new_msg , org_msg , sizeof(struct sip_msg) );
-   p += sizeof(struct sip_msg);
+   p += ROUND4(sizeof(struct sip_msg));
    new_msg->add_rm = new_msg->repl_add_rm = 0;
    /*new_uri*/
    if (org_msg->new_uri.s && org_msg->new_uri.len)
    {
       new_msg->new_uri.s = p;
       memcpy( p , org_msg->new_uri.s , org_msg->new_uri.len);
-      p += org_msg->new_uri.len;
+      p += ROUND4(org_msg->new_uri.len);
    }
    /*message buffers(org and scratch pad)*/
    memcpy( p , org_msg->orig , org_msg->len);
    new_msg->orig = new_msg->buf = p;
-   p += new_msg->len;
+   p += ROUND4(new_msg->len);
    /*unparsed and eoh pointer*/
-   new_msg->unparsed = translate_pointer( new_msg->buf , org_msg->buf , org_msg->unparsed );
-   new_msg->eoh = translate_pointer( new_msg->buf , org_msg->buf , org_msg->eoh );
+   new_msg->unparsed = translate_pointer( new_msg->buf , 
+							org_msg->buf , org_msg->unparsed );
+   new_msg->eoh = translate_pointer( new_msg->buf ,
+							org_msg->buf , org_msg->eoh );
    /* first line, updating the pointers*/
    if ( org_msg->first_line.type==SIP_REQUEST )
    {
@@ -561,7 +565,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
    {
       new_hdr = (struct hdr_field*)p;
       memcpy(new_hdr, hdr, sizeof(struct hdr_field) );
-      p += sizeof( struct hdr_field);
+      p += ROUND4(sizeof( struct hdr_field));
       new_hdr->name.s =  translate_pointer( new_msg->buf , org_msg->buf , hdr->name.s );
       new_hdr->body.s =  translate_pointer( new_msg->buf , org_msg->buf , hdr->body.s );
 
@@ -593,7 +597,7 @@ struct sip_msg*  sip_msg_cloner_2( struct sip_msg *org_msg )
                    break;
          case HDR_CSEQ:
                    new_hdr->parsed = p;
-                   p +=sizeof(struct cseq_body);
+                   p +=ROUND4(sizeof(struct cseq_body));
                    memcpy( new_hdr->parsed , hdr->parsed , sizeof(struct cseq_body) );
                    ((struct cseq_body*)new_hdr->parsed)->number.s =  translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)hdr->parsed)->number.s );
                    ((struct cseq_body*)new_hdr->parsed)->method.s =  translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)hdr->parsed)->method.s );
@@ -641,7 +645,7 @@ struct via_body* via_body_cloner_2( char* new_buf , char *org_buf , struct via_b
     /* clones the via_body structure */
     new_via = (struct via_body*)(*p);
     memcpy( new_via , org_via , sizeof( struct via_body) );
-    (*p) += sizeof( struct via_body );
+    (*p) += ROUND4(sizeof( struct via_body ));
 
     /* hdr (str type) */
     new_via->hdr.s = translate_pointer( new_buf , org_buf , org_via->hdr.s );
@@ -668,7 +672,7 @@ struct via_body* via_body_cloner_2( char* new_buf , char *org_buf , struct via_b
        {
            new_vp = (struct via_param*)(*p);
            memcpy( new_vp , vp , sizeof(struct via_param));
-           (*p) += sizeof(struct via_param);
+           (*p) += ROUND4(sizeof(struct via_param));
            new_vp->name.s = translate_pointer( new_buf , org_buf , vp->name.s );
            new_vp->value.s = translate_pointer( new_buf , org_buf , vp->value.s );
 
