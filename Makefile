@@ -29,7 +29,7 @@ ARCH = $(shell uname -s)
 ifeq ($(ARCH), Linux)
 
 CC=gcc
-CFLAGS=-O2 -pg -Wcast-align #-Wmissing-prototypes  -Wall
+CFLAGS=-O2 -Wcast-align #-Wmissing-prototypes  -Wall
 LEX=flex
 YACC=bison
 YACC_FLAGS=-d -b cfg
@@ -57,6 +57,19 @@ CFLAGS=-O2 -Wcast-align
 LEX=flex
 YACC=yacc
 YACC_FLAGS=-d -b cfg
+LIBS=-lfl
+
+endif
+
+ifeq ($(ARCH), CYGWIN_NT-4.0)
+
+CC=gcc
+CFLAGS=-O2 -Wcast-align #-Wmissing-prototypes  -Wall
+LEX=flex
+YACC=bison
+YACC_FLAGS=-d -b cfg
+# on linux and freebsd keep it empty (e.g. LIBS= )
+# on solaris add -lxnet (e.g. LIBS= -lxnet)
 LIBS=-lfl
 
 endif
