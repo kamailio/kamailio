@@ -25,12 +25,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
 
 #include "loose.h"
 #include <string.h>
 #include <stdlib.h>
+#include "../../comp_defs.h"
 #include "../../str.h"
 #include "../../md5utils.h"
 #include "../../dprint.h"
@@ -431,8 +436,13 @@ static inline int route_after_strict(struct sip_msg* _m)
 		if (uri.s[0] == '<') {
 			     /* Remove the whole header here */
 			offset = hdr->name.s - _m->buf;
+#ifdef PRESERVE_ZT
 			len = hdr->name.len + hdr->body.len + 2;
 			if (hdr->body.s[hdr->body.len] != '\0') len++;  /* FIXME: Is this necessary ? */
+#else
+			len = hdr->len;
+#endif
+
 		} else if (uri.s[0] == ',') {
 			     /* Remove just the last URI, keep header field */
 			offset = uri.s - _m->buf;

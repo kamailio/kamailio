@@ -25,8 +25,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
+#include "../../comp_defs.h"
 #include "subscribe.h"
 #include "../../dprint.h"
 #include "paerrno.h"
@@ -78,7 +83,11 @@ static inline void parse_accept(struct sip_msg* _m, doctype_t* _a)
 			if (!strncasecmp("Accept", ptr->name.s, 6)) {
 				b.s = ptr->body.s;
 				b.len = ptr->body.len;
+#ifdef PRESERVE_ZT
 				trim(&b);
+#else
+				trim_trailing(&b);
+#endif
 
 				memcpy(buffer, b.s, b.len);
 				buffer[b.len] = '\0';
@@ -215,8 +224,13 @@ static inline int create_presentity(struct sip_msg* _m, struct pdomain* _d, str*
 
 	cid = _m->callid->body;
 	to = _m->to->body;
+#ifdef PRESERVE_ZT
 	trim(&to);
 	trim(&cid);
+#else
+	trim_trailing(&to);
+	trim_trailing(&cid);
+#endif
 	
 	if (add_watcher(*_p, &(get_from(_m)->uri), c, e, acc, &cid, &(get_from(_m)->tag_value), &to, _w) < 0) {
 		LOG(L_ERR, "create_presentity(): Error while creating presentity\n");

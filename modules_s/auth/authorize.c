@@ -25,10 +25,15 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * history:
+ * ---------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
 
 #include <string.h>                     /* memcmp */
+#include "../../comp_defs.h"
 #include "../../parser/hf.h"            /* HDR_PROXYAUTH & HDR_AUTHORIZATION */
 #include "../../str.h"
 #include "../../parser/digest/digest.h" /* dig_cred_t */
@@ -432,8 +437,12 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 		}
 	}
 
+#ifdef PRESERVE_ZT
 	if (h->next) len = h->next->name.s - h->name.s;
 	else len = _m->unparsed - h->name.s;
+#else
+	len=h->len;
+#endif
 
 	if (del_lump(&_m->add_rm, h->name.s - _m->buf, len, 0) == 0) {
 		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");

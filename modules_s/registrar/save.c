@@ -25,9 +25,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ----------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
 
+#include "../../comp_defs.h"
 #include "save.h"
 #include "../../str.h"
 #include "../../parser/parse_to.h"
@@ -143,7 +148,11 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 
 		     /* Get callid of the message */
 		callid = _m->callid->body;	
+#ifdef PRESERVE_ZT
 		trim(&callid);
+#else
+		trim_trailing(&callid);
+#endif
 		
 		     /* Get CSeq number of the message */
 		if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
@@ -216,7 +225,11 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				
 				     /* Get callid of the message */
 				callid = _m->callid->body;
+#ifdef PRESERVE_ZT
 				trim(&callid);
+#else
+				trim_trailing(&callid);
+#endif
 				
 				     /* Get CSeq number of the message */
 				if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {
@@ -247,7 +260,11 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 				
 				     /* Get callid of the message */
 				callid = _m->callid->body;				
+#ifdef PRESERVE_ZT
 				trim(&callid);
+#else
+				trim_trailing(&callid);
+#endif
 				
 				     /* Get CSeq number of the message */
 				if (atoi(&(((struct cseq_body*)_m->cseq->parsed)->number), &cseq) < 0) {

@@ -28,6 +28,7 @@
  *
  * History:
  * --------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-19 - verification against double record-routing added, 
  *            - option for putting from-tag in record-route added 
  *            - buffer overflow eliminated (jiri)
@@ -35,6 +36,7 @@
 
 #include "common.h"
 #include <string.h>
+#include "../../comp_defs.h"
 #include "../../md5utils.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
@@ -231,9 +233,14 @@ int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri)
 		}
 
 		DBG("remove_TMRoute(): next URI found: \'%.*s\'\n", rest.len - (next - rest.s), next);
+#ifdef	PRESERVE_ZT
 		     /* FIXME: 1 to be remove when spaces at the beginning are skipped */
 		offset = _route->body.s - _m->buf + 1; /* + 1 - keep the first white char */
 		len = next - _route->body.s - 1;
+#else
+		offset = _route->body.s - _m->buf;
+		len = next - _route->body.s;
+#endif
 		
 		     /* Extract next URI */
 		_uri->s = next + 1;
@@ -251,8 +258,12 @@ int remove_TMRoute(struct sip_msg* _m, struct hdr_field* _route, str* _uri)
 	} else {
 		DBG("remove_TMRoute(): No next URI in the same Route found\n");
 		offset = _route->name.s - _m->buf;
+#ifdef PRESERVE_ZT
 		if (_route->next) len = _route->next->name.s -_route->name.s;
 		else len = _m->unparsed - _route->name.s;
+#else
+		len = _route->len;
+#endif
 
 		_uri->s = 0;
 		_uri->len = 0;
