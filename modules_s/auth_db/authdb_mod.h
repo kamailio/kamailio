@@ -49,6 +49,7 @@ extern char* pass_column_2;   /* Column containg HA1 string constructed
 			       */
 
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
+extern int use_domain;        /* If set to 1 then the domain will be used when selecting a row */
 extern db_con_t* db_handle;   /* Database connection handle */
 
 extern pre_auth_f pre_auth_func;

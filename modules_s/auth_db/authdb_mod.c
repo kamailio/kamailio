@@ -86,6 +86,7 @@ char* domain_column    = "domain";
 char* pass_column      = "ha1";
 char* pass_column_2    = "ha1b";
 int   calc_ha1         = 0;
+int   use_domain       = 1;    /* Use also domain when looking up a table row */
 
 db_con_t* db_handle;   /* Database connection handle */
 
@@ -110,6 +111,7 @@ static param_export_t params[] = {
 	{"password_column",   STR_PARAM, &pass_column  },
 	{"password_column_2", STR_PARAM, &pass_column_2},
 	{"calculate_ha1",     INT_PARAM, &calc_ha1     },
+	{"use_domain",        INT_PARAM, &use_domain   },
 	{0, 0, 0}
 };
 

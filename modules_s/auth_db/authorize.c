@@ -69,14 +69,14 @@ static inline int get_ha1(str* _user, str* _domain, int use_ha1b, char* _table, 
 	VAL_STR(vals + 1).len = _domain->len;
 
 	db_use_table(db_handle, _table);
-	if (db_query(db_handle, keys, 0, vals, col, 2, 1, 0, &res) < 0) {
+	if (db_query(db_handle, keys, 0, vals, col, (use_domain ? 2 : 1), 1, 0, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n", 
-		    _user->len, ZSW(_user->s), _domain->len, ZSW(_domain->s));
+		    _user->len, ZSW(_user->s), (use_domain ? (_domain->len) : 0), ZSW(_domain->s));
 		db_free_query(db_handle, res);
 		return 1;
 	}
