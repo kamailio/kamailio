@@ -29,10 +29,12 @@
  *
  * History:
  * --------
- *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-01-28  scratchpad removed, src_port introduced (jiri)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
  *  2003-03-10  updated to the new module exports format (andrei)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-01  added dst_port, proto, af; renamed comp_port to comp_no,
+ *               inlined all the comp_* functions (andrei)
  */
 
  
@@ -238,21 +240,21 @@ static int fix_actions(struct action* a)
 }
 
 
-static int comp_port( int port, void *param, int op, int subtype )
+inline static int comp_no( int port, void *param, int op, int subtype )
 {
 	if (op!=EQUAL_OP) {
-		LOG(L_CRIT, "BUG: comp_port: '=' expected: %d\n", op );
+		LOG(L_CRIT, "BUG: comp_no: '=' expected: %d\n", op );
 		return E_BUG;
 	}
 	if (subtype!=NUMBER_ST) {
-		LOG(L_CRIT, "BUG: comp_port: number expected: %d\n", subtype );
+		LOG(L_CRIT, "BUG: comp_no: number expected: %d\n", subtype );
 		return E_BUG;
 	}
 	return port==(long)param;
 }
 
 /* eval_elem helping function, returns str op param */
-static int comp_strstr(str* str, void* param, int op, int subtype)
+inline static int comp_strstr(str* str, void* param, int op, int subtype)
 {
 	int ret;
 	char backup;
@@ -298,7 +300,7 @@ error:
 }
 
 /* eval_elem helping function, returns str op param */
-static int comp_str(char* str, void* param, int op, int subtype)
+inline static int comp_str(char* str, void* param, int op, int subtype)
 {
 	int ret;
 	
@@ -330,7 +332,7 @@ error:
 
 
 /* eval_elem helping function, returns an op param */
-static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
+inline static int comp_ip(struct ip_addr* ip, void* param, int op, int subtype)
 {
 	struct hostent* he;
 	char ** h;
@@ -439,10 +441,20 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 				else ret=1;
 				break;
 		case SRCPORT_O:
-				ret=comp_port(ntohs(msg->rcv.src_port), 
+				ret=comp_no(ntohs(msg->rcv.src_port), 
 					e->r.param, /* e.g., 5060 */
 					e->op, /* e.g. == */
 					e->subtype /* 5060 is number */);
+				break;
+		case DSTPORT_O:
+				ret=comp_no(ntohs(msg->rcv.dst_port), e->r.param, e->op, 
+							e->subtype);
+				break;
+		case PROTO_O:
+				ret=comp_no(msg->rcv.proto, e->r.param, e->op, e->subtype);
+				break;
+		case AF_O:
+				ret=comp_no(msg->rcv.src_ip.af, e->r.param, e->op, e->subtype);
 				break;
 		default:
 				LOG(L_CRIT, "BUG: eval_elem: invalid operand %d\n",

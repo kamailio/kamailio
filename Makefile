@@ -60,10 +60,10 @@ include Makefile.rules
 
 $(NAME): static_modules
 
-lex.yy.c: cfg.lex $(ALLDEP)
+lex.yy.c: cfg.lex cfg.tab.h $(ALLDEP)
 	$(LEX) $<
 
-cfg.tab.c: cfg.y  $(ALLDEP)
+cfg.tab.c cfg.tab.h: cfg.y  $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
 .PHONY: all

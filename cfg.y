@@ -25,7 +25,8 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
+ */
+ /*
  * History:
  * ---------
  * 2003-01-29  src_port added (jiri)
@@ -33,6 +34,7 @@
  * 2003-03-19  replaced all mallocs/frees with pkg_malloc/pkg_free (andrei)
  * 2003-03-19  Added support for route type in find_export (janakj)
  * 2003-03-20  Regex support in modparam (janakj)
+ * 2003-04-01  added dst_port, proto , af (andrei)
  */
 
 
@@ -130,6 +132,9 @@ int rt;  /* Type of route block for find_export */
 %token SRCIP
 %token SRCPORT
 %token DSTIP
+%token DSTPORT
+%token PROTO
+%token AF
 %token MYSELF
 
 /* config vars. */
@@ -535,7 +540,19 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 		| SRCPORT EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
 												SRCPORT_O, (void *) $3 ); }
 		| SRCPORT EQUAL_T error { $$=0; yyerror("number expected"); }
-		| SRCPORT error { $$=0; yyerror("equation operator expected"); }
+		| SRCPORT error { $$=0; yyerror("equal operator expected"); }
+		| DSTPORT EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+												DSTPORT_O, (void *) $3 ); }
+		| DSTPORT EQUAL_T error { $$=0; yyerror("number expected"); }
+		| DSTPORT error { $$=0; yyerror("equal operator expected"); }
+		| PROTO EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+												PROTO_O, (void *) $3 ); }
+		| PROTO EQUAL_T error { $$=0; yyerror("number expected"); }
+		| PROTO error { $$=0; yyerror("equal operator expected"); }
+		| AF EQUAL_T NUMBER	{ $$=mk_elem(	EQUAL_OP, NUMBER_ST,
+												AF_O, (void *) $3 ); }
+		| AF EQUAL_T error { $$=0; yyerror("number expected"); }
+		| AF error { $$=0; yyerror("equal operator expected"); }
 		| SRCIP EQUAL_T ipnet	{ $$=mk_elem(	EQUAL_OP, NET_ST,
 												SRCIP_O, $3);
 								}

@@ -31,6 +31,7 @@
  *  2003-01-29  src_port added (jiri)
  *  2003-01-23  mhomed added (jiri)
  *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-04-01  added dst_port, proto (tcp, udp, tls), af(inet, inet6) (andrei)
  */
 
 
@@ -41,6 +42,7 @@
 	#include "mem/mem.h"
 	#include <string.h>
 	#include <stdlib.h>
+	#include "ip_addr.h"
 
 
 	/* states */
@@ -108,6 +110,9 @@ URI		uri
 SRCIP	src_ip
 SRCPORT	src_port
 DSTIP	dst_ip
+DSTPORT	dst_port
+PROTO	proto
+AF		af
 MYSELF	myself
 /* operators */
 EQUAL	=
@@ -147,6 +152,11 @@ MODPARAM        modparam
 /* values */
 YES			"yes"|"true"|"on"|"enable"
 NO			"no"|"false"|"off"|"disable"
+UDP			"udp"
+TCP			"tcp"
+TLS			"tls"
+INET		"inet"
+INET6		"inet6"
 
 LETTER		[a-zA-Z]
 DIGIT		[0-9]
@@ -221,6 +231,9 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{SRCIP}	{ count(); yylval.strval=yytext; return SRCIP; }
 <INITIAL>{SRCPORT}	{ count(); yylval.strval=yytext; return SRCPORT; }
 <INITIAL>{DSTIP}	{ count(); yylval.strval=yytext; return DSTIP; }
+<INITIAL>{DSTPORT}	{ count(); yylval.strval=yytext; return DSTPORT; }
+<INITIAL>{PROTO}	{ count(); yylval.strval=yytext; return PROTO; }
+<INITIAL>{AF}	{ count(); yylval.strval=yytext; return AF; }
 <INITIAL>{MYSELF}	{ count(); yylval.strval=yytext; return MYSELF; }
 
 <INITIAL>{DEBUG}	{ count(); yylval.strval=yytext; return DEBUG; }
@@ -261,6 +274,17 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{NUMBER}		{ count(); yylval.intval=atoi(yytext);return NUMBER; }
 <INITIAL>{YES}			{ count(); yylval.intval=1; return NUMBER; }
 <INITIAL>{NO}			{ count(); yylval.intval=0; return NUMBER; }
+<INITIAL>{TCP}			{ count(); yylval.intval=PROTO_TCP; return NUMBER; }
+<INITIAL>{UDP}			{ count(); yylval.intval=PROTO_UDP; return NUMBER; }
+<INITIAL>{TLS}			{ count(); yylval.intval=PROTO_TLS; return NUMBER; }
+<INITIAL>{INET}			{ count(); yylval.intval=AF_INET; return NUMBER; }
+<INITIAL>{INET6}		{ count();
+						#ifdef USE_IPV6
+						  yylval.intval=AF_INET6;
+						#else
+						  yylval.intval=-1; /* no match*/
+						#endif
+						  return NUMBER; }
 
 <INITIAL>{COMMA}		{ count(); return COMMA; }
 <INITIAL>{SEMICOLON}	{ count(); return SEMICOLON; }
