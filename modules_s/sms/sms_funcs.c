@@ -96,7 +96,18 @@ void modem_process(struct modem *mdm)
 	int counter;
 	int dont_wait;
 	int empty_pipe;
-	int modem_open;
+	int last_smsc_index;
+
+	/* let's open/init the modem */
+	DBG("DEBUG:modem_process: openning modem\n");
+	if (openmodem(mdm)==-1) {
+		LOG(L_ERR,"ERROR:modem_process: cannot open modem %s!"
+			" %s \n",mdm->name,strerror(errno));
+		return;
+	}
+	setmodemparams(mdm);
+	initmodem(mdm);
+	last_smsc_index = -1;
 
 	sleep(1);
 
@@ -107,7 +118,6 @@ void modem_process(struct modem *mdm)
 		{
 			counter = 0;
 			empty_pipe = 0;
-			modem_open = 0;
 			net = &(networks[mdm->net_list[i]]);
 			DBG("DEBUG:modem_process: %s processing sms for net %s \n",
 				mdm->device, net->name);
@@ -129,17 +139,10 @@ void modem_process(struct modem *mdm)
 					continue;
 				}
 
-				/* do I have to open/init the modem? */
-				if (!modem_open) {
-					DBG("DEBUG:modem_process: openning modem\n");
-					if (openmodem(mdm)==-1) {
-						LOG(L_ERR,"ERROR:modem_process: cannot open modem!"
-							" %s \n",strerror(errno));
-						exit(0);
-					}
-					setmodemparams(mdm);
-					initmodem(mdm,net->smsc);
-					modem_open = 1;
+				/*sets the apropriat sms center*/
+				if (last_smsc_index!=mdm->net_list[i]) {
+					setsmsc(mdm,net->smsc);
+					last_smsc_index = mdm->net_list[i];
 				}
 
 				/* compute and send the sms */
@@ -152,11 +155,6 @@ void modem_process(struct modem *mdm)
 				if (counter==net->max_sms_per_call)
 					dont_wait = 1;
 			}/*while*/
-			/* if the modem is open -> close it!*/
-			if (modem_open) {
-				DBG("DEBUG:modem_process: closing modem\n");
-				closemodem(mdm);
-			}
 		}/*for*/
 		if (!dont_wait)
 			sleep(mdm->looping_interval);

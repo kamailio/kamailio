@@ -136,7 +136,7 @@ int setmodemparams( struct modem *mdm )
 
 
 
-int initmodem(struct modem *mdm, char *smsc)
+int initmodem(struct modem *mdm)
 {
 	char command[100];
 	char answer[500];
@@ -239,15 +239,25 @@ int initmodem(struct modem *mdm, char *smsc)
 		goto error;
 	}
 
+	return 0;
+error:
+	return -1;
+}
+
+
+
+
+int setsmsc(struct modem *mdm, char *smsc)
+{
+	char command[100];
+	char answer[50];
+
 	if (smsc && smsc[0]) {
 		DBG("DEBUG:initmodem: Changing SMSC\n");
 		sprintf(command,"AT+CSCA=\"+%s\"\r",smsc);
 		put_command(mdm->fd,command,answer,sizeof(answer),50,0);
 	}
-
 	return 0;
-error:
-	return -1;
 }
 
 
