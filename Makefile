@@ -28,7 +28,7 @@ NAME=ser
 # DEBUG compiles in some extra debugging code
 # OLD_PARSER uses the old and stable parser (from ser 8.3.2)
 # DNS_IP_HACK faster ip address resolver for ip strings (e.g "127.0.0.1")
-DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
+DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK -DSTATS #-DNO_DEBUG#-DSTATS -DNO_DEBUG 
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling

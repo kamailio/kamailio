@@ -27,13 +27,13 @@ unsigned int msg_no=0;
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
 	struct sip_msg* msg;
+#ifdef STATS
+	int skipped = 1;
+#endif
 
 	msg=pkg_malloc(sizeof(struct sip_msg));
 	if (msg==0) goto error1;
 	msg_no++;
-#ifdef STATS
-	skipped = 1;
-#endif
 
 	memset(msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
