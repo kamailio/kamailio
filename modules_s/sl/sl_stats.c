@@ -8,6 +8,7 @@
 #include "../../globals.h"
 #include "../../fifo_server.h"
 #include "../../config.h"
+#include "../../pt.h"
 #include "sl_stats.h"
 #include <strings.h>
 #include <stdio.h>
@@ -91,7 +92,7 @@ int init_sl_stats( void )
 {
 	int len;
 
-	len=sizeof(struct sl_stats)*(1+(dont_fork ? 1 : children_no*sock_no));
+	len=sizeof(struct sl_stats)*process_count();
 	sl_stats=shm_malloc(len);
 	if (sl_stats==0) {
 		LOG(L_ERR, "ERROR: init_sl_stats: no shmem\n");
@@ -107,10 +108,7 @@ int init_sl_stats( void )
 
 void update_sl_failures( void )
 {
-	struct sl_stats *my_stats;
-
-	my_stats=&sl_stats[ bind_idx * children_no + process_no ];
-	my_stats->failures++;
+	sl_stats[ process_no ].failures++;
 }
 
 void update_sl_stats( int code ) 
@@ -118,7 +116,7 @@ void update_sl_stats( int code )
 
 	struct sl_stats *my_stats;
 
-	my_stats=&sl_stats[ bind_idx * children_no + process_no ];
+	my_stats=&sl_stats[ process_no ];
 
 	if (code >=700 || code <200 ) {
 		my_stats->err[RT_xxx]++;

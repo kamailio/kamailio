@@ -1,3 +1,8 @@
+/*
+ * $Id$
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -10,6 +15,7 @@
 #include "../../resolve.h"
 #include "../../globals.h"
 #include "../../udp_server.h"
+#include "../../pt.h"
 
 
 
@@ -341,7 +347,7 @@ int im_send_message(str *uri, str *to, str *from, str *contact, str *msg)
 		sock_info[0].name.len,sock_info[0].name.s,CRLF,
 		from->len,from->s,CRLF,
 		to->len,to->s,CRLF,
-		pids?pids[process_no]:0,rand(),call_id++,
+		my_pid(),rand(),call_id++,
 			sock_info[0].address_str.len,sock_info[0].address_str.s,CRLF,
 		1/*cseq_nr++*/,CRLF,
 		contact->s?"Contact: ":"",contact->len,contact->s,contact->s?CRLF:"",
