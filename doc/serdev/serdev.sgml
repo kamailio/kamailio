@@ -5066,7 +5066,7 @@ int n = RES_ROW_N(res);
 			    Type: <type>string</type>
 			</para>
 			<para>
-			    Default: <quote>user_id</quote>
+			    Default: <quote>user</quote>
 			</para>
 		    </listitem>
 
