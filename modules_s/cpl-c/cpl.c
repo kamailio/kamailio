@@ -57,6 +57,7 @@
 #include "cpl_loader.h"
 #include "cpl_parser.h"
 #include "cpl_nonsig.h"
+#include "loc_set.h"
 
 
 #define MAX_PROXY_RECURSE  10
@@ -449,6 +450,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 {
 	struct cpl_interpreter  *cpl_intr;
 	str  user;
+	str  loc;
 	str  script;
 
 	script.s = 0;
@@ -481,6 +483,14 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	cpl_intr->flags = (unsigned int)str1;
 	/* attache the user */
 	cpl_intr->user = user;
+	/* for OUTGOING we need also the destination user for init. with him
+	 * the location set */
+	if ( ((unsigned int)str1)&CPL_RUN_OUTGOING ) {
+		if (get_dest_user( msg, &loc)==-1)
+			goto error;
+		if (add_location( &(cpl_intr->loc_set), &loc,10/*prio*/,1/*dup*/)==-1)
+			goto error;
+	}
 
 	/* since the script interpretation can take some time, it will be better to
 	 * send a 100 back to prevent the UAC to retransmit */
