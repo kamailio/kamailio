@@ -12,6 +12,8 @@
 #include "../../timer.h"
 
 
+
+
 #define  append_mem_block(_d,_s,_len) \
 		do{\
 			memcpy((_d),(_s),(_len));\
@@ -26,17 +28,35 @@ struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
 
+void timer_routine(unsigned int, void*);
+
+
+
+
+
+/* remove from timer list */
+inline void reset_timer( struct s_table *hash_table, struct timer_link* tl )
+{
+	/* lock(timer_group_lock[ tl->tg ]); */
+	/* hack to work arround this timer group thing*/
+	lock(hash_table->timers[timer_group[tl->tg]].mutex);
+	remove_timer_unsafe( tl );
+	unlock(hash_table->timers[timer_group[tl->tg]].mutex);
+	/*unlock(timer_group_lock[ tl->tg ]);*/
+}
+
+
 
 
 /* determine timer length and put on a correct timer list */
-inline void set_timer( struct s_table *hash_table,
-	struct timer_link *new_tl, enum lists list_id )
+inline void set_timer( struct s_table *hash_table, struct timer_link *new_tl,
+														enum lists list_id )
 {
 	unsigned int timeout;
 	struct timer* list;
-	static enum lists to_table[NR_OF_TIMER_LISTS] =
-		{	FR_TIME_OUT, INV_FR_TIME_OUT, WT_TIME_OUT, DEL_TIME_OUT,
-			RETR_T1, RETR_T1 << 1, 	RETR_T1 << 2, RETR_T2 };
+	static enum lists to_table[NR_OF_TIMER_LISTS] = {
+		FR_TIME_OUT, INV_FR_TIME_OUT, WT_TIME_OUT, DEL_TIME_OUT,
+		RETR_T1, RETR_T1 << 1, RETR_T1 << 2, RETR_T2 };
 
 	if (list_id<FR_TIMER_LIST || list_id>=NR_OF_TIMER_LISTS) {
 		LOG(L_CRIT, "ERROR: set_timer: unkown list: %d\n", list_id);
@@ -47,10 +67,7 @@ inline void set_timer( struct s_table *hash_table,
 	}
 	timeout = to_table[ list_id ];
 	list= &(hash_table->timers[ list_id ]);
-/*
-	add_to_tail_of_timer_list( &(hash_table->timers[ list_id ]),
-		new_tl,get_ticks()+timeout);
-*/
+
 	lock(list->mutex);
 	/* make sure I'm not already on a list */
 	remove_timer_unsafe( new_tl );
@@ -58,20 +75,11 @@ inline void set_timer( struct s_table *hash_table,
 	unlock(list->mutex);
 }
 
-/* remove from timer list */
-inline void reset_timer( struct s_table *hash_table,
-	struct timer_link* tl )
-{
-	/* lock(timer_group_lock[ tl->tg ]); */
-	/* hack to work arround this timer group thing*/
-	lock(hash_table->timers[timer_group[tl->tg]].mutex);
-	remove_timer_unsafe( tl );
-	unlock(hash_table->timers[timer_group[tl->tg]].mutex);
-	/*unlock(timer_group_lock[ tl->tg ]);*/
-}
+
+
 
 static inline void reset_retr_timers( struct s_table *h_table,
-	struct cell *p_cell )
+													struct cell *p_cell )
 {
 	int ijk;
 	struct retrans_buff *rb;
@@ -81,51 +89,51 @@ static inline void reset_retr_timers( struct s_table *h_table,
 	lock(hash_table->timers[RT_T1_TO_1].mutex);
 	remove_timer_unsafe( & p_cell->outbound_response.retr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-			if ( rb = p_cell->outbound_request[ijk] ) {
-				remove_timer_unsafe( & rb->retr_timer );
-			}
+		if ( rb = p_cell->outbound_request[ijk] ) {
+			remove_timer_unsafe( & rb->retr_timer );
 		}
+	}
 	unlock(hash_table->timers[RT_T1_TO_1].mutex);
 
 	lock(hash_table->timers[FR_TIMER_LIST].mutex);
 	remove_timer_unsafe( & p_cell->outbound_response.fr_timer );
 	for( ijk=0 ; ijk<(p_cell)->nr_of_outgoings ; ijk++ )  {
-			if ( rb = p_cell->outbound_request[ijk] ) {
-				remove_timer_unsafe( & rb->fr_timer );
-			}
+		if ( rb = p_cell->outbound_request[ijk] ) {
+			remove_timer_unsafe( & rb->fr_timer );
 		}
+	}
 	unlock(hash_table->timers[FR_TIMER_LIST].mutex);
 	DBG("DEBUG:stop_RETR_and_FR_timers : timers stopped\n");
 }
 
+
+
+
 int tm_startup()
 {
-   /* building the hash table*/
-   hash_table = init_hash_table();
-   if (!hash_table)
-      return -1;
+	/* building the hash table*/
+	hash_table = init_hash_table();
+	if (!hash_table)
+		return -1;
 
-#define init_timer(_id,_handler) \
-	hash_table->timers[(_id)].timeout_handler=(_handler); \
-	hash_table->timers[(_id)].id=(_id);
+	/* init. timer lists */
+	hash_table->timers[RT_T1_TO_1].id = RT_T1_TO_1;
+	hash_table->timers[RT_T1_TO_2].id = RT_T1_TO_2;
+	hash_table->timers[RT_T1_TO_3].id = RT_T1_TO_3;
+	hash_table->timers[RT_T2].id      = RT_T2;
+	hash_table->timers[FR_TIMER_LIST].id     = FR_TIMER_LIST;
+	hash_table->timers[FR_INV_TIMER_LIST].id = FR_INV_TIMER_LIST;
+	hash_table->timers[WT_TIMER_LIST].id     = WT_TIMER_LIST;
+	hash_table->timers[DELETE_LIST].id       = DELETE_LIST;
 
-   init_timer( RT_T1_TO_1, retransmission_handler );
-   init_timer( RT_T1_TO_2, retransmission_handler );
-   init_timer( RT_T1_TO_3, retransmission_handler );
-   init_timer( RT_T2, retransmission_handler );
-   init_timer( FR_TIMER_LIST, final_response_handler );
-   init_timer( FR_INV_TIMER_LIST, final_response_handler );
-   init_timer( WT_TIMER_LIST, wait_handler );
-   init_timer( DELETE_LIST, delete_handler );
+	/* register the timer function */
+	register_timer( timer_routine , hash_table , 1 );
 
-   /* register the timer function */
-   register_timer( timer_routine , hash_table , 1 );
+	/*first msg id*/
+	global_msg_id = 0;
+	T = T_UNDEFINED;
 
-   /*first msg id*/
-   global_msg_id = 0;
-   T = T_UNDEFINED;
-
-   return 0;
+	return 0;
 }
 
 
@@ -150,7 +158,7 @@ void tm_shutdown()
 	while (tl!=end) {
 		tmp=tl->next_tl;
 		free_cell((struct cell*)tl->payload);
-		 tl=tmp;
+		tl=tmp;
 	}
 
 	/* destroy the hash table */
@@ -173,7 +181,6 @@ int t_add_transaction( struct sip_msg* p_msg )
 	struct cell*    new_cell;
 
 	DBG("DEBUG: t_add_transaction: adding......\n");
-
 	/* sanity check: ACKs can never establish a transaction */
 	if ( p_msg->REQ_METHOD==METHOD_ACK )
 	{
@@ -830,10 +837,13 @@ error:
 
 
 
-/*---------------------TIMEOUT HANDLERS--------------------------*/
+/*---------------------------TIMERS FUNCTIONS-------------------------------*/
 
 
-void retransmission_handler( void *attr)
+
+
+
+inline void retransmission_handler( void *attr)
 {
 	struct retrans_buff* r_buf ;
 	enum lists id;
@@ -847,9 +857,7 @@ void retransmission_handler( void *attr)
 	}	
 #endif
 
-
 	/*the transaction is already removed from RETRANSMISSION_LIST by timer*/
-
 	/* retransmision */
 	DBG("DEBUG: retransmission_handler : resending (t=%p)\n", r_buf->my_T);
 	if (r_buf->status!=STATUS_LOCAL_CANCEL && r_buf->status!=STATUS_REQUEST){
@@ -870,7 +878,7 @@ void retransmission_handler( void *attr)
 
 
 
-void final_response_handler( void *attr)
+inline void final_response_handler( void *attr)
 {
 	struct retrans_buff* r_buf = (struct retrans_buff*)attr;
 
@@ -917,7 +925,7 @@ void final_response_handler( void *attr)
 
 
 
-void wait_handler( void *attr)
+inline void wait_handler( void *attr)
 {
 	struct cell *p_cell = (struct cell*)attr;
 
@@ -945,7 +953,9 @@ void wait_handler( void *attr)
 }
 
 
-void delete_handler( void *attr)
+
+
+inline void delete_handler( void *attr)
 {
 	struct cell *p_cell = (struct cell*)attr;
 
@@ -960,6 +970,69 @@ void delete_handler( void *attr)
 	delete_cell( p_cell );
     DBG("DEBUG: delete_handler : done\n");
 }
+
+
+
+
+#define run_handler_for_each( _tl , _handler ) \
+	while ((_tl))\
+	{\
+		/* reset the timer list linkage */\
+		tmp_tl = (_tl)->next_tl;\
+		(_tl)->next_tl = (_tl)->prev_tl = 0;\
+		DBG("DEBUG: timer routine:%d,tl=%p next=%p\n",\
+			id,(_tl),tmp_tl);\
+		(_handler)( (_tl)->payload );\
+		(_tl) = tmp_tl;\
+	}
+
+
+
+
+void timer_routine(unsigned int ticks , void * attr)
+{
+	struct s_table    *hash_table = (struct s_table *)attr;
+	struct timer*      timers= hash_table->timers;
+	struct timer_link *tl, *tmp_tl;
+	int                id;
+
+#ifdef BOGDAN_TRIFLE
+	DBG(" %d \n",ticks);
+#endif
+
+	for( id=0 ; id<NR_OF_TIMER_LISTS ; id++ )
+	{
+		/* to waste as little time in lock as possible, detach list
+		   with expired items and process them after leaving the lock */
+		tl=check_and_split_time_list( &(hash_table->timers[ id ]), ticks);
+		/* process items now */
+		switch (id)
+		{
+			case FR_TIMER_LIST:
+			case FR_INV_TIMER_LIST:
+				run_handler_for_each(tl,final_response_handler);
+				break;
+			case RT_T1_TO_1:
+			case RT_T1_TO_2:
+			case RT_T1_TO_3:
+			case RT_T2:
+				run_handler_for_each(tl,retransmission_handler);
+				break;
+			case WT_TIMER_LIST:
+				run_handler_for_each(tl,wait_handler);
+				break;
+			case DELETE_LIST:
+				run_handler_for_each(tl,delete_handler);
+				break;
+		}
+	}
+}
+
+
+
+
+
+
 
 #ifndef _REALLY_TOO_OLD
 

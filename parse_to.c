@@ -7,8 +7,10 @@
 #include "mem/mem.h"
 
 
-enum{ START_TO, QUOTED, ENCLOSED, BODY
-	, F_CR, F_LF, F_CRLF
+enum{ START_TO, DISPLAY_QUOTED, E_DISPLAY_QUOTED, DISPLAY_TOKEN
+	, S_URI_ENCLOSED, URI_ENCLOSED, E_URI_ENCLOSED
+	, URI_OR_TOKEN, MAYBE_URI_END
+	, END, F_CR, F_LF, F_CRLF
 	};
 
 enum{ S_PARA_NAME=20, PARA_NAME, S_EQUAL, S_PARA_VALUE, TAG1, TAG2, TAG3
@@ -192,7 +194,8 @@ char* parse_to_param(char *buffer, char *end, struct to_body *to_b,
 					case PARA_START:
 						*tmp=0;
 					case E_PARA_VALUE:
-						param = (struct to_param*)pkg_malloc(sizeof(struct to_param));
+						param = (struct to_param*)
+							pkg_malloc(sizeof(struct to_param));
 						if (!param){
 							LOG( L_ERR , "ERROR: parse_to_param"
 							" - out of memory\n" );
@@ -389,9 +392,8 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	struct to_param *param=0;
 	int status = START_TO;
 	int saved_status;
-	char  *tmp,*posible_end;
+	char  *tmp,*foo;
 
-	posible_end = 0;
 	for( tmp=buffer; tmp<end; tmp++)
 	{
 		switch(*tmp)
@@ -406,12 +408,27 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 						/*previous=crlf and now =' '*/
 						status=saved_status;
 						break;
+					case URI_ENCLOSED:
+						to_b->body.len = tmp - to_b->body.s;
+						*tmp = 0;
+						status = E_URI_ENCLOSED;
+						break;
+					case URI_OR_TOKEN:
+						foo = tmp;
+						status = MAYBE_URI_END;
+						break;
 				}
 				break;
 			case '\n':
 				switch (status)
 				{
-					case BODY:
+					case URI_OR_TOKEN:
+						foo = tmp;
+						status = MAYBE_URI_END;
+					case MAYBE_URI_END:
+					case DISPLAY_TOKEN:
+					case E_DISPLAY_QUOTED:
+					case END:
 						saved_status=status;
 						status=F_LF;
 						break;
@@ -430,7 +447,13 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 			case '\r':
 				switch (status)
 				{
-					case BODY:
+					case URI_OR_TOKEN:
+						foo = tmp;
+						status = MAYBE_URI_END;
+					case MAYBE_URI_END:
+					case DISPLAY_TOKEN:
+					case E_DISPLAY_QUOTED:
+					case END:
 						saved_status=status;
 						status=F_CR;
 						break;
@@ -446,10 +469,9 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 				}
 				break;
 			case '\\':
-				posible_end = 0;
 				switch (status)
 				{
-					case QUOTED:
+					case DISPLAY_QUOTED:
 						switch (*(tmp+1))
 						{
 							case '\n':
@@ -465,15 +487,18 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 				}
 				break;
 			case '<':
-				posible_end = 0;
 				switch (status)
 				{
-					case QUOTED:
-						break;
 					case START_TO:
-						to_b->body.s = tmp;
-					case BODY:
-						status = ENCLOSED;
+						status = S_URI_ENCLOSED;
+						break;
+					case DISPLAY_QUOTED:
+						break;
+					case E_DISPLAY_QUOTED:
+					case URI_OR_TOKEN:
+					case DISPLAY_TOKEN: 
+					case MAYBE_URI_END:
+						status = S_URI_ENCLOSED;
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -489,12 +514,14 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 			case '>':
 				switch (status)
 				{
-					case QUOTED:
-						posible_end = tmp;
+					case DISPLAY_QUOTED:
 						break;
-					case ENCLOSED:
-						posible_end = tmp;
-						status = BODY;
+					case URI_ENCLOSED:
+						*tmp = 0;
+					case E_URI_ENCLOSED:
+						to_b->body.len = tmp - to_b->body.s;
+						status = END;
+						foo = 0;
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -508,16 +535,13 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 				}
 				break;
 			case '"':
-				posible_end = 0;
 				switch (status)
 				{
 					case START_TO:
-						to_b->body.s = tmp;
-					case BODY:
-						status = QUOTED;
+						status = DISPLAY_QUOTED;
 						break;
-					case QUOTED:
-						status = BODY;
+					case DISPLAY_QUOTED:
+						status = E_DISPLAY_QUOTED;
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -533,17 +557,20 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 			case ';' :
 				switch (status)
 				{
-					case QUOTED:
-					case ENCLOSED:
-						posible_end = 0;
+					case DISPLAY_QUOTED:
+					case URI_ENCLOSED:
 						break;
-					case BODY:
+					case URI_OR_TOKEN:
+						foo = tmp;
+					case MAYBE_URI_END:
+						to_b->body.len = foo - to_b->body.s;
+					case END:
 						tmp = parse_to_param(tmp,end,to_b,&saved_status);
+						if (foo) *foo=0;
 						goto endofheader;
 					case F_CRLF:
 					case F_LF:
 					case F_CR:
-						posible_end = 0;
 						/*previous=crlf and now !=' '*/
 						goto endofheader;
 					default:
@@ -557,13 +584,18 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 				{
 					case START_TO:
 						to_b->body.s=tmp;
-						posible_end = tmp;
-						status = BODY;
+						status = URI_OR_TOKEN;;
 						break;
-					case QUOTED:
-					case ENCLOSED:
-					case BODY:
-						posible_end = tmp;
+					case S_URI_ENCLOSED:
+						to_b->body.s=tmp;
+						status=URI_ENCLOSED;
+						break;
+					case MAYBE_URI_END:
+						status = DISPLAY_TOKEN;
+					case DISPLAY_QUOTED:
+					case DISPLAY_TOKEN:
+					case URI_ENCLOSED:
+					case URI_OR_TOKEN:
 						break;
 					case F_CRLF:
 					case F_LF:
@@ -579,20 +611,17 @@ char* parse_to(char* buffer, char *end, struct to_body *to_b)
 	}/*for*/
 
 endofheader:
+	DBG("DEBUG: status = %d \n",status);
 	status=saved_status;
 	DBG("end of header reached, state=%d\n", status);
 	/* check if error*/
 	switch(status){
-		case BODY:
+		case MAYBE_URI_END:
+			*foo=0;
+			to_b->body.len = foo - to_b->body.s;
+		case END:
 		case E_PARA_VALUE:
-			if (posible_end){
-				*(posible_end+1) = 0;
-				to_b->body.len=(posible_end+1)-to_b->body.s;
-			}else{
-				LOG(L_ERR, "ERROR: parse_to: invalid To - unexpected "
-					"end of header in %d status\n", status);
-				goto error;
-			}
+			*(tmp-1)=0;
 			break;
 		default:
 			LOG(L_ERR, "ERROR: parse_to: invalid To -  unexpected "
