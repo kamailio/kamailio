@@ -1,0 +1,47 @@
+$Id$
+
+jiri's SIP phone shopping list
+------------------------------
+
+This is Jiri's list of wishes for SIP "hardphones". When there is such
+a phone, I will be glad to test it, promote it, and praise the vendor.
+
+I) MUSTs
+
+Without MUSTs, I will not like the phone.
+
+- Price - get it bellow $100 (I mean for one phone, not for 10.000 of them)
+- NAT-Traversal support: STUN, symmetric communication
+- DNS fail-over, as required by specification (I'm aware of only one phones
+  which is getting it right today, 2003-02)
+- REFER (correctly please)
+- reasonable provisioning
+
+II) RECOMMENDED
+
+With RECOMMENDED, I will do like the phone.
+
+- multiple lines 
+- multiple calls
+- DTMF
+
+III) SHOULD
+
+With SHOULDs, I will fall in love with it.
+
+- GIPS codec is good
+- power-Ethernet
+- desktop features: deny incoming call, DnD, 3-rd party conferencing,
+  auto-repeat of failed call attempts
+- well-readable display, at best backlit
+- solid robust design, like with the PBX phones from well-established
+  PBX vendors 
+
+Note there are other lists too -- Henry Sinnreich's draft provides a great
+dictate to phone vendors.
+http://www.iptel.org/ietf/configuration/#draft-sinnreich-sipdev-req
+
+KNOWN ERRORs
+------------
+These are errors we observed frequently to fail in phones: digest/qop, 
+DNS fail-over, REFER, transaction matching, record-routing.
