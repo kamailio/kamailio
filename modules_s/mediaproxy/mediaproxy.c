@@ -2,30 +2,6 @@
  *
  * Copyright (C) 2004 Dan Pascu
  *
- * Functions that were taken from other places have a comment above them
- * marking their origin. They are copyrighted by their respective authors.
- *
- * The mediaproxy module shares it's working principle with the nathelper
- * module. It also uses a similar interface for communicating with SER
- * (exported functions perform similar actions).
- * Credits should go to Porta Software Ltd. for all their original ideas that
- * are also present in mediaproxy, as well as for the SER interface which they
- * have originally designed.
- *
- * The difference between mediaproxy and nathelper is that mediaproxy tries
- * to implement the same ideas using a semantically different approach.
- * Unlike the nathelper module which makes all it's decisions by calling
- * it's functions with various parameters which change the behavior,
- * mediaproxy uses parameterless functions and moves the decision logic
- * into external configuration files (as for detecting asymmetric clients),
- * or the proxy server / proxy dispatcher engines.
- * This offers greater flexibility, as it allows changing the behavior more
- * easily without any need to modify the ser.cfg configuration file.
- * Other advantages are that the ser.cfg file remains simple and that
- * changing the behavior can occur in realtime without restarting SER.
- * Changes are simply done by editing some files or by adding some SRV records
- * in DNS and SER will catch with them on the fly without the need to restart.
- *
  * This file is part of ser, a free SIP server.
  *
  * ser is free software; you can redistribute it and/or modify
@@ -158,6 +134,8 @@ static int EndMediaSession(struct sip_msg *msg, char *str1, char *str2);
 static int mod_init(void);
 static int fixstring2int(void **param, int param_count);
 
+extern void pingClients(unsigned int ticks, void *param);
+
 static Bool testPrivateContact(struct sip_msg* msg);
 static Bool testSourceAddress(struct sip_msg* msg);
 static Bool testPrivateVia(struct sip_msg* msg);
@@ -165,9 +143,10 @@ static Bool testPrivateVia(struct sip_msg* msg);
 
 /* Local global variables */
 static char *mediaproxySocket = "/var/run/proxydispatcher.sock";
-static int natpingInterval  = 20; // 20 seconds
 
-static usrloc_api_t userLocation;
+static int natpingInterval = 20; // 20 seconds
+
+usrloc_api_t mpUserLocation;
 
 static AsymmetricClients sipAsymmetrics = {
     "/etc/ser/sip-asymmetric-clients",
@@ -552,8 +531,6 @@ getUserAgent(struct sip_msg* msg)
 }
 
 // Get URI from the Contact: field.
-// Derived from get_contact_uri() from the nathelper module.
-// (c) goes to the nathelper module authors.
 static Bool
 getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
 {
@@ -937,80 +914,6 @@ rfc1918address(str *address)
 #define isPublicAddress(x)  (rfc1918address(x)==0 ? 1 : 0)
 
 
-// This function is a copy (with minor modifications) of the timer()
-// function from the nathleper module.
-// (c) go to the nathelper authors.
-static void
-pingClients(unsigned int ticks, void *param)
-{
-    static char pingbuf[4] = "\0\0\0\0";
-    static int length = 256;
-    struct socket_info* sock;
-    struct hostent* hostent;
-    union sockaddr_union to;
-    struct sip_uri uri;
-    void *buf, *ptr;
-    str contact;
-    int needed;
-
-    buf = pkg_malloc(length);
-    if (buf == NULL) {
-        LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
-        return;
-    }
-    needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
-    if (needed > 0) {
-        // make sure we alloc more than actually we were told is missing
-        // (some clients may register while we are making these calls)
-        length = (length + needed) * 2;
-        ptr = pkg_realloc(buf, length);
-        if (ptr == NULL) {
-            LOG(L_ERR, "error: mediaproxy/pingClients(): out of memory\n");
-            pkg_free(buf);
-            return;
-        } else {
-            buf = ptr;
-        }
-        // try again. we may fail again if _many_ clients register in between
-        needed = userLocation.get_all_ucontacts(buf, length, FL_NAT);
-        if (needed != 0) {
-            pkg_free(buf);
-            return;
-        }
-    }
-
-    ptr = buf;
-    while (1) {
-        memcpy(&(contact.len), ptr, sizeof(contact.len));
-        if (contact.len == 0)
-            break;
-        contact.s = (char*)ptr + sizeof(contact.len);
-        ptr = contact.s + contact.len;
-        if (parse_uri(contact.s, contact.len, &uri) < 0) {
-            LOG(L_ERR, "error: mediaproxy/pingClients(): can't parse contact uri\n");
-            continue;
-        }
-        if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
-            continue;
-        if (uri.port_no == 0)
-            uri.port_no = SIP_PORT;
-        hostent = sip_resolvehost(&uri.host, &uri.port_no, PROTO_UDP);
-        if (hostent == NULL){
-            LOG(L_ERR, "error: mediaproxy/pingClients(): can't resolve host\n");
-            continue;
-        }
-        hostent2su(&to, hostent, 0, uri.port_no);
-        sock = get_send_socket(&to, PROTO_UDP);
-        if (sock == NULL) {
-            LOG(L_ERR, "error: mediaproxy/pingClients(): can't get sending socket\n");
-            continue;
-        }
-        udp_send(sock, pingbuf, sizeof(pingbuf), &to);
-    }
-    pkg_free(buf);
-}
-
-
 // Check if the requested asymmetrics file has changed and reload it if needed
 static void
 checkAsymmetricFile(AsymmetricClients *aptr)
@@ -1254,19 +1157,16 @@ ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
 
 // Replace IP:Port in Contact field with the source address of the packet.
 // Preserve port for SIP asymmetric clients
-//
-// Function was originally based on fix_nated_contact_f from the nathelper
-// module (added more features since). (c) shared with the nathelper authors.
 static int
 FixContact(struct sip_msg* msg, char* str1, char* str2)
 {
-    str beforeHost, after, agent;
     contact_t* contact;
     struct lump* anchor;
     struct sip_uri uri;
     char *newip, *buf;
     int len, offset;
     Bool asymmetric;
+    str agent;
 
     if (!getContactURI(msg, &uri, &contact))
         return -1;
@@ -1277,54 +1177,43 @@ FixContact(struct sip_msg* msg, char* str1, char* str2)
     if (uri.port.len == 0)
         uri.port.s = uri.host.s + uri.host.len;
 
-    offset = contact->uri.s - msg->buf;
-    anchor = del_lump(msg, offset, contact->uri.len, HDR_CONTACT);
-
-    if (!anchor)
-        return -1;
-
-    agent = getUserAgent(msg);
-
-    asymmetric = isSIPAsymmetric(agent);
-
-    beforeHost.s   = contact->uri.s;
-    beforeHost.len = uri.host.s - contact->uri.s;
-    if (asymmetric) {
-        // for asymmetrics we preserve the original port
-        after.s   = uri.port.s;
-        after.len = contact->uri.s + contact->uri.len - after.s;
-    } else {
-        after.s   = uri.port.s + uri.port.len;
-        after.len = contact->uri.s + contact->uri.len - after.s;
-    }
-
     newip = ip_addr2a(&msg->rcv.src_ip);
 
-    len = beforeHost.len + strlen(newip) + after.len + 20;
-
-    buf = pkg_malloc(len);
+    // first try to alloc mem. if we fail we don't want to have the lump
+    // deleted and not replaced. at least this way we keep the original.
+    buf = pkg_malloc(strlen(newip) + 20);
     if (buf == NULL) {
         LOG(L_ERR, "error: fix_contact(): out of memory\n");
         return -1;
     }
-    if (asymmetric && uri.port.len==0) {
-        len = sprintf(buf, "%.*s%s%.*s", beforeHost.len, beforeHost.s,
-                      newip, after.len, after.s);
-    } else if (asymmetric) {
-        len = sprintf(buf, "%.*s%s:%.*s", beforeHost.len, beforeHost.s,
-                      newip, after.len, after.s);
-    } else {
-        len = sprintf(buf, "%.*s%s:%d%.*s", beforeHost.len, beforeHost.s,
-                      newip, msg->rcv.src_port, after.len, after.s);
-    }
 
-    if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
+    agent = getUserAgent(msg);
+    asymmetric = isSIPAsymmetric(agent);
+
+    offset = uri.host.s - msg->buf;
+    if (asymmetric)
+        len = uri.host.len;
+    else
+        len = uri.port.s + uri.port.len - uri.host.s;
+
+    anchor = del_lump(msg, offset, len, HDR_CONTACT);
+
+    if (!anchor) {
         pkg_free(buf);
         return -1;
     }
 
-    contact->uri.s   = buf;
-    contact->uri.len = len;
+    if (asymmetric) {
+        len = sprintf(buf, "%s", newip);
+    } else {
+        len = sprintf(buf, "%s:%d", newip, msg->rcv.src_port);
+    }
+
+    if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT) == 0) {
+        LOG(L_ERR, "error: fix_contact(): failed to fix contact\n");
+        pkg_free(buf);
+        return -1;
+    }
 
     if (asymmetric) {
         LOG(L_INFO, "info: fix_contact(): preserved port for SIP "
@@ -1333,6 +1222,7 @@ FixContact(struct sip_msg* msg, char* str1, char* str2)
 
     return 1;
 }
+
 
 static int
 EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
@@ -1496,7 +1386,7 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
             success = replaceElement(msg, &(streams[i].ip), &tokens[0]);
             if (!success) {
                 LOG(L_ERR, "error: use_media_proxy(): failed to replace "
-                    "IP address in mdia stream nr. %d\n", i+1);
+                    "IP address in media stream nr. %d\n", i+1);
                 return -1;
             }
         }
@@ -1524,11 +1414,13 @@ mod_init(void)
     if (natpingInterval > 0) {
         ul_bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
         if (!ul_bind_usrloc) {
-            LOG(L_ERR, "error: mediaproxy/mod_init(): can't find usrloc module\n");
+            LOG(L_ERR, "error: mediaproxy/mod_init(): can't find the usrloc "
+                "module. Check if usrloc.so is loaded.\n");
             return -1;
         }
 
-        if (ul_bind_usrloc(&userLocation) < 0) {
+        if (ul_bind_usrloc(&mpUserLocation) < 0) {
+            LOG(L_ERR, "error: mediaproxy/mod_init(): can't access the usrloc module.\n");
             return -1;
         }
 
