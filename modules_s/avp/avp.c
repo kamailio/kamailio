@@ -27,11 +27,21 @@
 
 #include "../../sr_module.h"
 #include "../../error.h"
-#include "../../db/db.h"
 #include "../../dset.h"
 #include "../../mod_fix.h"
 #include "../../usr_avp.h"
+
+#ifdef WITH_DB_SUPPORT
 #include "../../db/db.h"
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT
+#include <radiusclient.h>
+#include "../acc/dict.h"
+#include "../../parser/digest/digest_parser.h"
+#include "../../parser/digest/digest.h"
+#include "../../parser/parse_uri.h"
+#endif
 
 #include <string.h>
 #include <assert.h>
@@ -41,17 +51,22 @@ MODULE_VERSION
 
 /* #define EXTRA_DEBUG */
 
+#ifdef WITH_DB_SUPPORT
 static int load_avp(struct sip_msg* msg, char* attr, char*);
+#endif
+#ifdef WITH_RADIUS_SUPPORT
+static int load_avp_radius(struct sip_msg* msg, char* attr, char*);
+#endif
 static int set_iattr(struct sip_msg* msg, char* attr, char *val);
 static int set_sattr(struct sip_msg* msg, char* attr, char *val);
 static int print_sattr(struct sip_msg* msg, char *attr, char *val);
 static int uri2attr(struct sip_msg* msg, char* attr, char*);
 static int attr2uri(struct sip_msg* msg, char* attr, char*);
 
-
 static int avp_mod_init(void);
 static int avp_init_child(int rank);
 static int check_load_param(void** param, int param_no);
+#ifdef WITH_DB_SUPPORT
 static int avp_query_db(str* key);
 
 char* avp_db_url = "mysql://ser:heslo@localhost/ser";    /* Database URL */
@@ -63,13 +78,28 @@ char* val_column = "value";
 
 db_con_t* db_handle = 0;
 static db_func_t dbf;
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT
+static char *radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
+static int caller_service_type = -1;
+static int callee_service_type = -1;
+void *rh;
+struct attr attrs[A_MAX];
+struct val vals[V_MAX];
+#endif
 
 
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
+#ifdef WITH_DB_SUPPORT
 	{"avp_load", load_avp, 1, check_load_param, REQUEST_ROUTE | FAILURE_ROUTE },
+#endif
+#ifdef WITH_RADIUS_SUPPORT
+	{"avp_load_radius", load_avp_radius, 1, check_load_param, REQUEST_ROUTE | FAILURE_ROUTE },
+#endif
 	{"set_iattr", set_iattr, 2, str_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"set_sattr", set_sattr, 2, str_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"uri2attr", uri2attr, 1, 0, REQUEST_ROUTE | FAILURE_ROUTE },
@@ -83,11 +113,18 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
+#ifdef WITH_DB_SUPPORT
 	{"db_url",  STR_PARAM, &avp_db_url  },
 	{"pref_table",   STR_PARAM, &avp_table   },
 	{"key_column",  STR_PARAM, &key_column  },
 	{"attr_column", STR_PARAM, &attr_column },
 	{"val_column",  INT_PARAM, &val_column  },
+#endif
+#ifdef WITH_RADIUS_SUPPORT
+	{"radius_config",    STR_PARAM, &radius_config   },
+	{"caller_service_type",     INT_PARAM, &caller_service_type    },
+	{"callee_service_type",     INT_PARAM, &callee_service_type    },
+#endif
 	{0, 0, 0}
 };
 
@@ -106,8 +143,14 @@ struct module_exports exports = {
 
 /** Load parameter lookup */
 char* load_param_lookup[] = {
+#ifdef WITH_DB_SUPPORT
     "caller_uuid",
     "callee_uuid",
+#endif
+#ifdef WITH_RADIUS_SUPPORT
+    "caller",
+    "callee",
+#endif
     NULL
 };
 
@@ -115,10 +158,43 @@ static int avp_mod_init(void)
 {
         DBG("avp - initializing\n");
 
+#ifdef WITH_DB_SUPPORT
 	if (bind_dbmod(avp_db_url, &dbf)) {
 		LOG(L_ERR, "ERROR: avp_mod_init: unable to bind db\n");
 		return -1;
 	}
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT
+	memset(attrs, 0, sizeof(attrs));
+	memset(attrs, 0, sizeof(vals));
+	attrs[A_SERVICE_TYPE].n			= "Service-Type";
+	attrs[A_USER_NAME].n	                = "User-Name";
+	attrs[A_SIP_AVP].n			= "SIP-AVP";
+	vals[V_SIP_CALLER_AVPS].n		= "SIP-Caller-AVPs";
+	vals[V_SIP_CALLEE_AVPS].n		= "SIP-Callee-AVPs";
+
+	/* open log */
+	rc_openlog("ser");
+	/* read config */
+	if ((rh = rc_read_config(radius_config)) == NULL) {
+		LOG(L_ERR, "ERROR: avp: error opening radius config file: %s\n", 
+			radius_config );
+		return -1;
+	}
+	/* read dictionary */
+	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary"))!=0) {
+		LOG(L_ERR, "ERROR: avp: error reading radius dictionary\n");
+		return -1;
+	}
+
+	INIT_AV(rh, attrs, vals, "avp", -1, -1);
+
+	if (caller_service_type != -1)
+		vals[V_SIP_CALLER_AVPS].v = caller_service_type;
+	if (callee_service_type != -1)
+		vals[V_SIP_CALLEE_AVPS].v = callee_service_type;
+#endif
     
         return 0;
 }
@@ -127,17 +203,24 @@ static int avp_init_child(int rank)
 {
     DBG("avp - initializing child %i\n",rank);
 
-	if (avp_db_url){
-		db_handle=dbf.init(avp_db_url);
+#ifdef WITH_DB_SUPPORT
+    if (avp_db_url){
+	db_handle=dbf.init(avp_db_url);
         if (db_handle==0){
-			LOG(L_ERR, "ERROR: avp_db_init: unable to connect to the "
-				"database\n");
-			return -1;
-		}
-		return 0;
+	    LOG(L_ERR, "ERROR: avp_db_init: unable to connect to the "
+		"database\n");
+	    return -1;
 	}
-	LOG(L_CRIT, "BUG: avp_db_init: null db url\n");
-	return -1;
+	return 0;
+    }
+    LOG(L_CRIT, "BUG: avp_db_init: null db url\n");
+    return -1;
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT    
+    return 0;
+#endif
+
 }
 
 
@@ -159,7 +242,9 @@ static int check_load_param(void** param, int param_no)
     }
     return 0;
 }
+	
 
+#ifdef WITH_DB_SUPPORT
 static int load_avp(struct sip_msg* msg, char* attr, char* _dummy)
 {
     struct usr_avp *uuid=0;
@@ -257,6 +342,121 @@ static int avp_query_db(str* key)
     dbf.free_result(db_handle,res);
     return err;
 }
+#endif
+
+#ifdef WITH_RADIUS_SUPPORT
+static inline void attr_name_value(VALUE_PAIR *vp, str *name, str *value)
+{
+    int i;
+    for (i = 0; i < vp->lvalue; i++) {
+	if (*(vp->strvalue + i) == ':') {
+	    name->s = vp->strvalue;
+	    name->len = i;
+	    if (i == (vp->lvalue - 1)) {
+		value->s = (char *)0;
+		value->len = 0;
+	    } else {
+		value->s = vp->strvalue + i + 1;
+		value->len = vp->lvalue - i - 1;
+	    }
+	    return;
+	}
+    }
+    name->len = value->len = 0;
+    name->s = value->s = (char *)0;
+}
+		
+static int load_avp_radius(struct sip_msg* _msg, char* _attr, char* _dummy)
+{
+    static char msg[4096];
+
+    str attr_str;
+    struct hdr_field* h;
+    dig_cred_t* cred = 0;
+    str user_name, user, domain;
+    int_str name, val;
+    str name_str, val_str;
+
+    attr_str.s = _attr;
+    attr_str.len = strlen(_attr);
+
+    VALUE_PAIR *send, *received, *vp;
+    UINT4 service;
+
+    send = received = 0;
+
+    if (attr_str.s[5] == 'r') {
+	/* If "caller", take Radius username from authorized credentials */
+	get_authorized_cred(_msg->proxy_auth, &h);
+	if (!h) {
+	    LOG(L_ERR, "load_avp_radius(): No authoried credentials\n");
+	    return -1;
+	}
+	cred = &((auth_body_t*)(h->parsed))->digest;
+	user = cred->username.user;
+	domain = cred->realm;
+	service = vals[V_SIP_CALLER_AVPS].v;
+    } else {
+	/* If "callee", take Radius username from Request-URI */
+	if (parse_sip_msg_uri(_msg) < 0) {
+	    LOG(L_ERR, "load_avp_radius(): Error while parsing Request-URI\n");
+	    return -1;
+	}
+	if (_msg->parsed_uri.user.len == 0) {	
+	    LOG(L_ERR, "load_avp_radius(): Request-URI user is missing\n");
+	    return -1;
+	}
+	user =_msg->parsed_uri.user; 
+	domain = _msg->parsed_uri.host;
+	service = vals[V_SIP_CALLEE_AVPS].v;
+    }
+    user_name.len = user.len + domain.len + 1;
+    user_name.s = (char*)pkg_malloc(user_name.len);
+    if (!user_name.s) {
+	LOG(L_ERR, "avp_load_radius(): No memory left\n");
+	return -1;
+    }
+    memcpy(user_name.s, user.s, user.len);
+    user_name.s[user.len] = '@';
+    memcpy(user_name.s + user.len + 1, domain.s, domain.len);
+    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
+		       user_name.s, user_name.len, 0)) {
+	LOG(L_ERR, "avp_load_radius(): Error adding PW_USER_NAME\n");
+	rc_avpair_free(send);
+	pkg_free(user_name.s);
+	return -1;
+    }
+    if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
+	LOG(L_ERR, "avp_load_radius(): Error adding PW_SERVICE_TYPE\n");
+	rc_avpair_free(send);
+	pkg_free(user_name.s);
+	return -1;
+    }
+    if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
+	DBG("avp_load_radius(): Success\n");
+	rc_avpair_free(send);
+	pkg_free(user_name.s);
+	vp = received;
+	while ((vp = rc_avpair_get(vp, attrs[A_SIP_AVP].v, 0))) {
+	    name.s = &name_str;
+	    val.s = &val_str;
+	    attr_name_value(vp, &name_str, &val_str);
+	    add_avp(AVP_NAME_STR|AVP_VAL_STR, name, val);
+	    DBG("avp_load_radius: AVP '%.*s'/'%.*s' has been added\n",
+		name_str.len, name_str.s, val_str.len, val_str.s);
+	    vp = vp->next;
+	}
+	rc_avpair_free(received);
+	return 1;
+    } else {
+	DBG("avp_load_radius(): Failure\n");
+	rc_avpair_free(send);
+	rc_avpair_free(received);
+	pkg_free(user_name.s);
+	return -1;
+    }
+}
+#endif
 
 
 static int set_sattr(struct sip_msg* msg, char* attr, char *val) 
