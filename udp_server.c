@@ -168,7 +168,7 @@ int udp_init(struct socket_info* sock_info)
 	if (bind(sock_info->socket,  &addr->s, sock_len)==-1){
 		LOG(L_ERR, "ERROR: udp_init: bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
-				sizeof(union sockaddr_union),
+				sock_len,
 				sock_info->address_str.s,
 				strerror(errno));
 	#ifdef USE_IPV6
