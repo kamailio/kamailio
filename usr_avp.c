@@ -157,6 +157,10 @@ inline static str* get_avp_name(struct usr_avp *avp)
 			/* avp type str, str value */
 			return &((struct str_str_data*)&avp->data)->name;
 	}
+
+	LOG(L_ERR,"BUG:avp:get_avp_name: unknown avp type (name&val) %d\n",
+		avp->flags&(AVP_NAME_STR|AVP_VAL_STR));
+	return 0;
 }
 
 
