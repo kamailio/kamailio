@@ -287,7 +287,8 @@ int create_location(location_t** _loc, str* _user)
 		return FALSE;
 	}
 
-	memcpy((*_loc)->user.s, _user->s, _user->len + 1);
+	memcpy((*_loc)->user.s, _user->s, _user->len);
+	(*_loc)->user.s[_user->len] = '\0';
 
 	     /* We are case insensitive */
 	strlower((*_loc)->user.s, _user->len);

@@ -26,7 +26,7 @@ void get_to_username(str* _s)
 	at = strchr(_s->s, '@');
 	if (at) {
 			_s->len = at - dcolon - 1;
-			_s->s[_s->len] = '\0';
+			/*	_s->s[_s->len] = '\0'; */
 	} else {
 		_s->len = 0;
 	} 
