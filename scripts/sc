@@ -9,6 +9,7 @@
 # 2003-02-23 Thomas's start|stop commands checked in
 # 2003-09-08 multidomain features: usernames can now include domain 
 #              names too (jiri)
+# 2003-09-15 multidomain support completed (jiri)
 #
 # To-DO:
 # -----
@@ -102,6 +103,9 @@ A_CALLID_COLUMN=callid
 A_CSEQ_COLUMN=cseq
 A_LAST_MODIFIED_COLUMN=last_modified
 
+# domain table
+DOMAIN_TABLE=domain
+
 FIFO_DBG=0
 
 EGREP="egrep"
@@ -136,19 +140,22 @@ parameter usage:
  ul add <username> <uri> ............ introduce a permanent UrLoc entry
  showdb [<username>] ................ show online users flushed in DB
 
+           * domains *
+ domain show ........................ show list of served domains
+ domain add <domainname> ............ add a new served domain
+ domain rm <domainname> ............. remove a served domain
+
            * control and diagnostics *
  moni ... show internal status      start .... start ser
- ps ..... show runnig processes 	stop ..... stop ser
+ ps ..... show runnig processes     stop ..... stop ser
  fifo ... send raw FIFO commands    restart .. restart ser
  ping <uri> .. ping a URI (OPTIONS)
  cisco_restart <uri> .. restart a Cisco phone (NOTIFY)
-
 
    Commands labeled with (*) will prompt for a MySQL password.
    If the variable PW is set, the password will not be prompted.
 
      $EXTRA_TEXT
-
 EOF
 }
 
@@ -351,7 +358,8 @@ usrloc() {
 	case $1 in 
 		show)
 			if [ $# -eq 2 ] ; then
-				fifo_cmd ul_show_contact $UL_TABLE $2
+				set_user $2
+				fifo_cmd ul_show_contact $UL_TABLE "$SERUSER@$SERDOMAIN"
 			elif [ $# -eq 1 ] ; then
 				printf "Dumping all contacts may take long: are you sure you want to proceed? [Y|N] " > /dev/stderr
 				read answer
@@ -372,12 +380,13 @@ usrloc() {
 			fi
 			shift
 			check_uri "$2"
+			set_user $1
 			if [ "$?" -ne "0" ] ; then
 				echo "$2 is not a valid URI"
 				exit 1
 			fi
 
-			fifo_cmd ul_add "$UL_TABLE" "$1" "$2" "$FOREVER_REL" "1.00" "0"
+			fifo_cmd ul_add "$UL_TABLE" "$SERUSER@$SERDOMAIN" "$2" "$FOREVER_REL" "1.00" "0"
 			exit $?
 			;;
 		rm)
@@ -386,7 +395,8 @@ usrloc() {
                 exit 1
             fi
 			shift
-			fifo_cmd ul_rm $UL_TABLE $1
+			set_user $1
+			fifo_cmd ul_rm $UL_TABLE "$SERUSER@$SERDOMAIN"
 
             ;;
 
@@ -394,6 +404,49 @@ usrloc() {
 			usage
 			exit 1
 			;;
+	esac
+}
+
+domain() {
+	case $1 in
+		show)
+			# QUERY="select * FROM $DOMAIN_TABLE ; "
+			# sql_ro_query "$QUERY"
+			fifo_cmd domain_dump
+			;;
+		add)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing domain to be added
+				exit 1
+			fi
+			prompt_pw
+       		QUERY="insert into $DOMAIN_TABLE (domain) VALUES ('$1');"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd domain_reload
+			;;
+		rm)
+			shift
+			if [ $# -ne 1 ] ; then
+				echo missing domain to be removed
+				exit 1
+			fi
+			prompt_pw
+       		QUERY="delete from $DOMAIN_TABLE where domain='$1';"
+			sql_query "$QUERY"
+			if [ $? -ne 0 ] ; then
+				echo "SQL Error"
+				exit 1
+			fi
+			fifo_cmd domain_reload
+			;;
+		*)
+			usage
+			exit 1
 	esac
 }
 
@@ -771,6 +824,11 @@ case $1 in
 	acl)
 		shift
 		acl "$@"
+		;;
+
+	domain)
+		shift
+		domain "$@"
 		;;
 
 	fifo)
