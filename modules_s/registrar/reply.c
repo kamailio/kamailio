@@ -121,7 +121,7 @@ void build_contact(ucontact_t* _c)
 
 #define MSG_200 "OK"
 #define MSG_400 "Bad Request"
-#define MSG_500 "Internal Server Error"
+#define MSG_500 "Server Internal Error"
 
 #define EI_R_FINE       "No problem"                                /* R_FINE */
 #define EI_R_UL_DEL_R   "usrloc_record_delete failed"               /* R_UL_DEL_R */
@@ -143,8 +143,8 @@ void build_contact(ucontact_t* _c)
 #define	EI_R_CS_MISS    "CSeq header not found"                     /* R_CS_MISS */ 
 #define	EI_R_PARSE_EXP	"Expires parse error"                       /* R_PARSE_EXP */
 #define	EI_R_PARSE_CONT	"Contact parse error"                       /* R_PARSE_CONT */
-#define	EI_R_STAR_EXP	"* used in contact and expires != 0"        /* R_STAR__EXP */
-#define	EI_R_STAR_CONT	"* used in contact and no. of contacts > 1" /* R_STAR_CONT */
+#define	EI_R_STAR_EXP	"* used in contact and expires is not zero" /* R_STAR__EXP */
+#define	EI_R_STAR_CONT	"* used in contact and more than 1 contact" /* R_STAR_CONT */
 #define	EI_R_OOO	"Out of order request"                      /* R_OOO */
 #define	EI_R_RETRANS	"Retransmission"                            /* R_RETRANS */
 #define EI_R_UNESCAPE   "Error while unescaping username"           /* R_UNESCAPE */
