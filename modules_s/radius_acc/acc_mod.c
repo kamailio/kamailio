@@ -26,6 +26,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-11  updated to the new module exports interface (andrei)
+ */
 
 
 #include <stdio.h>
@@ -94,58 +98,33 @@ static void rad_acc_onreq( struct cell* t, struct sip_msg *msg,
 								int code, void *param ) ;
 
 
+static  cmd_exports_t cmds[]={
+	{"rad_acc_request", rad_acc_request, 1, 0 },
+	{0,0,0,0}
+};
+
+static param_exports_t params[]={
+	{"use_database",        INT_PARAM,   &use_db      },
+	{"db_table",            STR_PARAM,   &db_table    },
+	{"db_url",              STR_PARAM,   &db_url      },
+	{"uid_column",          STR_PARAM,   &uid_column  },
+	{"log_level",           INT_PARAM,   &log_level   },
+	{"early_media",         INT_PARAM,   &early_media },
+	{"failed_transactions", INT_PARAM,   &failed_transactions },
+	{"acc_flag",            INT_PARAM,   &acc_flag    },
+	{"report_ack",          INT_PARAM,   &report_ack  },
+	{"missed_flag",         INT_PARAM,   &missed_flag },
+	{0,0,0}
+};
+
+
 struct module_exports exports= {
 	"radius_acc",
-
-	/* exported functions */
-	( char*[] ) { "rad_acc_request" },
-	( cmd_function[] ) { rad_acc_request },
-	( int[] ) { 1 /* acc_missed */},
-	( fixup_function[]) { 0 /* acc_missed */},
-	1, /* number of exported functions */
-
+	
+	cmds,
 	/* exported variables */
-	(char *[]) { /* variable names */
-		"use_database",
-		"db_table",
-		"db_url",
-		"uid_column",
-		"log_level",
-		"early_media",
-		"failed_transactions",
-		"acc_flag",
-		"report_ack",
-		"missed_flag"
-	},
-
-	(modparam_t[]) { /* variable types */
-		INT_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-
-	(void *[]) { /* variable pointers */
-		&use_db,
-		&db_table,
-		&db_url,
-		&uid_column,
-		&log_level,
-		&early_media,
-		&failed_transactions,
-		&acc_flag,
-		&report_ack,
-		&missed_flag
-	},
-
-	10,			/* number of variables */
-
+	params,
+	
 	mod_init, 	/* initialization module */
 	0,			/* response function */
 	0,			/* destroy function */
