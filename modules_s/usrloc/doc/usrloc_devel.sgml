@@ -167,7 +167,7 @@
 	<section>
 	    <title>
 		<function moreinfo="none">ul_insert_ucontact(record, contact, expires, q, callid,
-		cseq, cont)</function>
+		cseq, flags, cont)</function>
 	    </title>
 	    <para>
 		The function inserts a new contact in the given record with specified parameters.
@@ -207,6 +207,11 @@
 		<listitem>
 		    <para><emphasis>int cseq</emphasis> - CSeq of the REGISTER message that contained the contact.
 		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>unsigned int flags</emphasis></para> - Flags to be set.
 		</listitem>
 	    </itemizedlist>
 	    <itemizedlist>
@@ -264,7 +269,7 @@
 
 	<section>
 	    <title>
-		<function moreinfo="none">ul_get_all_ucontacts(buf, len)</function>
+		<function moreinfo="none">ul_get_all_ucontacts(buf, len, flags)</function>
 	    </title>
 	    <para>
 		The function retrieves all contacts of all registered users and returns them in the
@@ -273,6 +278,11 @@
 		them. Please note that the positive return value should be used only as a
 		<quote>hint</quote>, as there is no gurantee that during the time between two
 		subsequent calls number of registered contacts will remain the same.
+	    </para>
+	    <para>
+		If flag parameter is set to non-zero value then only contacts that have the
+		specified flags set will be returned. It is, for example, possible to list only
+		contacts that are behind NAT.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -287,12 +297,18 @@
 		    </para>
 		</listitem>
 	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>unsigned int flags</emphasis> - Flags that must be set.
+		    </para>
+		</listitem>
+	    </itemizedlist>
 	</section>
 
 	<section>
 	    <title>
 		<function moreinfo="none">ul_update_ucontact(contact, expires, q, callid,
-		cseq)</function>
+		cseq, set, res)</function>
 	    </title>
 	    <para>
 		The function updates contact with new values.
@@ -325,6 +341,20 @@
 	    <itemizedlist>
 		<listitem>
 		    <para><emphasis>int cseq</emphasis> - CSeq of the REGISTER message that contained the contact.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>unsigned int set</emphasis> - OR value of flags to be set.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>unsigned int res</emphasis> - OR value of flags to be reset.
 		    </para>
 		</listitem>
 	    </itemizedlist>
