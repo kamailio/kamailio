@@ -575,9 +575,8 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	first_via=1;
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
 		if ( hdr->type==HDR_FROM ||
-				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
-			(hdr->type==HDR_VIA ?  (first_via ? first_via=0, 0: 1 ) : 0) ||
-				hdr->type==HDR_CSEQ )
+			hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
+			(hdr->type==HDR_VIA || hdr->type==HDR_CSEQ )
 		{
 			char *end; int plen;
 
@@ -597,11 +596,11 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 			p+=CRLF_LEN;
 		}
 	memcpy( p, CRLF, CRLF_LEN );
-        p+=CRLF_LEN;
+	p+=CRLF_LEN;
 	*(p++) = 0;
-	
 
-	/* *returned_len=len; */
+
+	/* returned_len=len; */
 	*returned_len=p-buf;
 	return buf;
 error:

@@ -558,13 +558,6 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
      return -1;
    }
 
-   buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
-   DBG("DEBUG: t_send_reply: after build\n");
-   if (!buf)
-   {
-      DBG("DEBUG: t_send_reply: response building failed\n");
-     goto error;
-   }
 
    if ( T->outbound_response)
    {
@@ -584,49 +577,63 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       }
       T->outbound_response = rb;
       memset( T->outbound_response , 0 , sizeof (struct retrans_buff) );
+
+      /* initialize retransmission structure */
+     if (update_sock_struct_from_via(  &(T->outbound_response->to),  p_msg->via1 )==-1)
+      {
+         LOG(L_ERR, "ERROR: t_send_reply: cannot lookup reply dst: %s\n",
+                  p_msg->via1->host.s );
+        goto error;
+      }
+
+      T->outbound_response->tl[RETRASMISSIONS_LIST].payload = T->outbound_response;
+      T->outbound_response->tl[FR_TIMER_LIST].payload = T->outbound_response;
+      T->outbound_response->my_T = T;
+      T->status = code;
+
+
+
    }
 
-	/* initialize retransmission structure */
-	if (update_sock_struct_from_via(  &(T->outbound_response->to),  p_msg->via1 )==-1) {
-		LOG(L_ERR, "ERROR: t_send_reply: cannot lookup reply dst: %s\n",
-                p_msg->via1->host.s );
-		goto error;
-	  }
+   buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+   if (!buf)
+   {
+      DBG("DEBUG: t_send_reply: response building failed\n");
+     goto error;
+   }
 
-	T->outbound_response->tl[RETRASMISSIONS_LIST].payload = T->outbound_response;
-      	T->outbound_response->tl[FR_TIMER_LIST].payload = T->outbound_response;
-      	T->outbound_response->my_T = T;
-      	T->status = code;
-      	T->outbound_response->bufflen = len ;
-      	T->outbound_response->retr_buffer   = (char*)sh_malloc( len );
-      	if (!T->outbound_response->retr_buffer) {
-		T->outbound_response->retr_buffer = NULL;
-		LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
-		goto error;
-      	}
-      	memcpy( T->outbound_response->retr_buffer , buf , len );
-      	free( buf ) ;
+   T->outbound_response->bufflen = len ;
+   T->outbound_response->retr_buffer   = (char*)sh_malloc( len );
+   if (!T->outbound_response->retr_buffer)
+   {
+      T->outbound_response->retr_buffer = NULL;
+      LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
+     goto error;
+   }
+   memcpy( T->outbound_response->retr_buffer , buf , len );
+   free( buf ) ;
 
-      /* make sure that if we send something final upstream, everything else will be cancelled */
-      if ( code>=300 &&  p_msg->first_line.u.request.method_value==METHOD_INVITE )
-         {
+   /* make sure that if we send something final upstream, everything else will be cancelled */
+   if ( code>=300 &&  p_msg->first_line.u.request.method_value==METHOD_INVITE )
+   {
             T->outbound_response->timeout_ceiling  = RETR_T2;
             T->outbound_response->timeout_value    = RETR_T1;
             remove_from_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
             insert_into_timer_list( hash_table , &(T->outbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , RETR_T1 );
             remove_from_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
             insert_into_timer_list( hash_table , &(T->outbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST , FR_TIME_OUT );
-         }
-      else if (code>=200) t_put_on_wait( p_msg );
+   }
+   else if (code>=200)
+            t_put_on_wait( p_msg );
 
-      t_retransmit_reply( p_msg, 0 , 0);
+   t_retransmit_reply( p_msg, 0 , 0);
 
-      return 1;
+   return 1;
 
 error:
-	if (rb) { sh_free(rb); T->outbound_response = rb = NULL;}
-	if ( buf ) free ( buf );
-	return -1;
+   if (rb) { sh_free(rb); T->outbound_response = rb = NULL;}
+   if ( buf ) free ( buf );
+   return -1;
 }
 
 
