@@ -131,7 +131,7 @@ void release_urecord(urecord_t* _r);
  * Create and insert new contact
  * into urecord with additional replication argument
  */
-typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, 
+typedef int (*insert_ucontact_t)(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 				 unsigned int _flags, struct ucontact** _con);
 int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, int _rep, struct ucontact** _con);

@@ -98,9 +98,9 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, qvalue_t _q,
  */
 void free_ucontact(ucontact_t* _c)
 {
-		shm_free(_c->callid.s);
-		shm_free(_c->c.s);
-		shm_free(_c);
+	shm_free(_c->callid.s);
+	shm_free(_c->c.s);
+	shm_free(_c);
 }
 
 
