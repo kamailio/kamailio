@@ -199,6 +199,8 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token FIFO_DIR
 %token FIFO_MODE
 %token FIFO_DB_URL
+%token UNIX_SOCK
+%token UNIX_SOCK_CHILDREN
 %token AVP_DB_URL
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
@@ -408,6 +410,10 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| FIFO_MODE EQUAL error { yyerror("int value expected"); }
 		| FIFO_DB_URL EQUAL STRING { fifo_db_url=$3; }
 		| FIFO_DB_URL EQUAL error  { yyerror("string value expected"); }
+                | UNIX_SOCK EQUAL STRING { unixsock_name=$3; }
+                | UNIX_SOCK EQUAL error { yyerror("string value expected"); }
+                | UNIX_SOCK_CHILDREN EQUAL NUMBER { unixsock_children=$3; }
+                | UNIX_SOCK_CHILDREN EQUAL error { yyerror("int value expected\n"); }
 		| AVP_DB_URL EQUAL STRING { avp_db_url=$3; }
 		| AVP_DB_URL EQUAL error  { yyerror("string value expected"); }
 		| USER EQUAL STRING     { user=$3; }

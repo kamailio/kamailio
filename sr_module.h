@@ -65,6 +65,7 @@ typedef enum {
 #define PROC_TIMER    -1  /* Timer attendant process */
 #define PROC_FIFO     -2  /* FIFO attendant process */
 #define PROC_TCP_MAIN -4  /* TCP main process */
+#define PROC_UNIXSOCK -5  /* Unix domain socket server processes */
 
 #define MODULE_VERSION char *module_version=VERSION;
 

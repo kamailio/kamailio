@@ -174,6 +174,8 @@ FIFO fifo
 FIFO_DIR  fifo_dir
 FIFO_MODE fifo_mode
 FIFO_DB_URL fifo_db_url
+UNIX_SOCK unix_sock
+UNIX_SOCK_CHILDREN unix_sock_children
 AVP_DB_URL  avp_db_url
 SERVER_SIGNATURE server_signature
 REPLY_TO_VIA reply_to_via
@@ -366,6 +368,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FIFO_DIR}	{ count(); yylval.strval=yytext; return FIFO_DIR; }
 <INITIAL>{FIFO_DB_URL}	{ count(); yylval.strval=yytext; return FIFO_DB_URL; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
+<INITIAL>{UNIX_SOCK} { count(); yylval.strval=yytext; return UNIX_SOCK; }
+<INITIAL>{UNIX_SOCK_CHILDREN} { count(); yylval.strval=yytext; return UNIX_SOCK_CHILDREN; }
 <INITIAL>{AVP_DB_URL}	{ count(); yylval.strval=yytext; return AVP_DB_URL; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }

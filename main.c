@@ -94,6 +94,7 @@
 #include "parser/parse_hname2.h"
 #include "parser/digest/digest_parser.h"
 #include "fifo_server.h"
+#include "unixsock_server.h"
 #include "usr_avp.h"
 #include "name_alias.h"
 #include "hash_func.h"
@@ -231,7 +232,8 @@ Options:\n\
     -u uid       Change uid \n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
-    -i fifo_path Create a fifo (usefull for monitoring " NAME ") \n"
+    -i fifo_path Create a fifo (usefull for monitoring " NAME ") \n\
+    -x socket    Create a unix domain socket \n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -404,6 +406,7 @@ void cleanup(show_status)
 	destroy_tls();
 #endif
 	destroy_timer();
+	close_unixsock_server();
 	destroy_fifo();
 	destroy_script_cb();
 #ifdef PKG_MALLOC
@@ -830,6 +833,13 @@ int main_loop()
 			LOG(L_ERR, "opening fifo server failed\n");
 			goto error;
 		}
+
+		     /* Initialize Unix domain socket server */
+		if (init_unixsock_server()<0) {
+			LOG(L_ERR, "Error while initializing Unix domain socket server\n");
+			goto error;
+		}
+
 		/* main process, receive loop */
 		process_no=0; /*main process number*/
 		pt[process_no].pid=getpid();
@@ -970,6 +980,12 @@ int main_loop()
 	/* if configured to do so, start a server for accepting FIFO commands */
 	if (open_fifo_server()<0) {
 		LOG(L_ERR, "opening fifo server failed\n");
+		goto error;
+	}
+
+	     /* Initialize Unix domain socket server */
+	if (init_unixsock_server()<0) {
+		LOG(L_ERR, "Error while initializing Unix domain socket server\n");
 		goto error;
 	}
 
@@ -1130,7 +1146,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:";
+	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:x";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1255,6 +1271,9 @@ int main(int argc, char** argv)
 					break;
 			case 'i':
 					fifo=optarg;
+					break;
+		        case 'x':
+				        unixsock_name=optarg;
 					break;
 			case '?':
 					if (isprint(optopt))

@@ -107,6 +107,10 @@ extern int fifo_mode;
 char extern *fifo_dir; /* dir. where  reply fifos are allowed */
 extern char *fifo_db_url;  /* db url used by db_fifo interface */
 
+/* UNIX domain socket configuration */
+extern char *unixsock_name;   /* The name of the socket */
+extern int unixsock_children; /* The number of listening children */
+
 /* AVP configuration */
 extern char *avp_db_url;  /* db url used by user preferences (AVPs) */
 
