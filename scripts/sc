@@ -31,6 +31,7 @@ ACL_GROUPS="local ld int"
 # Usr Loc Table
 USRLOC=location
 USER_COLUMN=user
+CALLID_COLUMN=callid
 
 # subscriber table
 TABLE=subscriber
@@ -411,7 +412,7 @@ case $1 in
 			$TABLE.$SUBSCRIBER_COLUMN='$1'"
 		QUERY2="select $USRLOC.* from $USRLOC where \
 			$USRLOC.$USER_COLUMN='$1' order by expires desc"
-		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN \
+		QUERY3="select $USRLOC.$USER_COLUMN, $TABLE.$EMAIL_COLUMN, $USRLOC.$CALLID_COLUMN \
 			from $TABLE, $USRLOC where  \
 			$TABLE.$SUBSCRIBER_COLUMN=$USRLOC.$USER_COLUMN" 
 
