@@ -55,7 +55,7 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 		}
 	}
 
-	DBG("DEBUG: put_command: -<%d>-->[%.*s] \n",clen,clen,command);
+	//DBG("DEBUG: put_command: -<%d>-->[%.*s] \n",clen,clen,command);
 	write(fd,command,clen);
 	tcdrain(fd);
 
@@ -105,7 +105,7 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 	// repeat until timout
 	}while (timeoutcounter<timeout);
 
-	DBG("DEBUG:put_command: <-[%s] \n",answer);
+	//DBG("DEBUG:put_command: <-[%s] \n",answer);
 	return count;
 }
 
