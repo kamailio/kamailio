@@ -1,5 +1,5 @@
 #
-# README of enum module -- Juha Heinanen March 9, 2003
+# README of enum module -- Juha Heinanen May 4, 2003
 #
 
 Enum module implements enum_query function that makes an enum query
@@ -20,21 +20,19 @@ is "", then "e2u+sip" is looked for.  If no such record is found,
 enum_query returns -1.
 
 If such a record is found, enum_query checks if its regexp field is of
-the form !xxx!yyy!. If yes, enum_query replaces the current request uri
-with yyy, which it assumes to contain a sip or sips type uri, and
-returns value 1.  In order for this to yield the desired result, the
-regular expression in xxx must be greedy, e.g., "^.*$", that matches the
-whole of any string.  The current version of enum_query does not check
-that.
+the form !pattern!replacement!. If yes, enum_query replaces the current
+request uri with replacement, which it assumes to contain a sip or sips
+type uri, and returns value 1.
 
-If the regexp field is not of the form !xxx!yyy!, enum_query returns -1.
+If the regexp field is not of the form !pattern!replacement!, enum_query
+returns -1.
 
 In addition to enum_query, enum module implements is_from_user_e164
 function that checks if the user part of from URI is an E164 number.
 
-TODO: In enum_query, more checks and proper implementation of the NAPTR
-record selection algorithm could be implemented by taking into account
-the order and preference fields (see draft-ietf-sipping-e164-02).
+TODO: In enum_query, proper implementation of the NAPTR record selection
+algorithm could be implemented by taking into account the order and
+preference fields (see draft-ietf-sipping-e164-02).
 
 Exported parameters:
 -------------------
@@ -61,4 +59,4 @@ Desc:   Replaces the current request uri with the result of a successful
 Name:	is_from_user_e164()
 Params:	-
 Desc:	Checks if the user part of from URI an E164 number of the form
-	+up-to-15-decimal-digits.  Returns 1 if yes and -1 if not.
+	+[0-9]{2,15}.  Returns 1 if yes and -1 if not.

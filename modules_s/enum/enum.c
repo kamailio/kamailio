@@ -35,6 +35,7 @@
 #include "../../ut.h"
 #include "../../resolve.h"
 #include "../../mem/mem.h"
+#include "regexp.h"
 
 
 /* Checks if NAPTR record has flag u and its services field
@@ -46,7 +47,8 @@ inline int sip_match( struct naptr_rdata* naptr, str* service)
     return (naptr->flags_len == 1) &&
       ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
       (naptr->services_len == 7) &&
-      (strncasecmp(naptr->services, "e2u+sip", 7) == 0);
+      ((strncasecmp(naptr->services, "e2u+sip", 7) == 0) ||
+       (strncasecmp(naptr->services, "sip+e2u", 7) == 0));
   } else {
     return (naptr->flags_len == 1) &&
       ((naptr->flags[0] == 'u') || (naptr->flags[0] == 'U')) &&
@@ -146,6 +148,49 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 	return result;
 }
 
+/* Parse NAPTR regexp field of the form !pattern!replacement! and return its
+ * components in pattern and replacement paraneters.  Regexp field starts at
+ * address first and is len characters long.
+ */
+inline int parse_naptr_regexp(char* first, int len, str* pattern, str* replacement)
+{
+	char *second, *third;
+
+	if (len > 0) {
+		if (*first == '!') {
+			second = (char *)memchr((void *)(first + 1), '!', len - 1);
+			if (second) {
+				len = len - (second - first + 1);
+				if (len > 0) {
+					third = memchr(second + 1, '!', len);
+					if (third) {
+						pattern->len = second - first - 1;
+						pattern->s = first + 1;
+						replacement->len = third - second - 1;
+						replacement->s = second + 1;
+						return 1;
+					} else {
+						LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+						return -1;
+					}
+				} else {
+					LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+					return -2;
+				}
+			} else {
+				LOG(LOG_ERR, "parse_regexp(): second ! missing from regexp\n");
+				return -3;
+			}
+		} else {
+			LOG(LOG_ERR, "parse_regexp(): first ! missing from regexp\n");
+			return -4;
+		}
+	} else {
+		LOG(LOG_ERR, "parse_regexp(): regexp missing\n");
+		return -5;
+	}
+}
+
 
 /*
  * Makes enum query on user part of current request uri, which must
@@ -157,13 +202,17 @@ int is_from_user_e164(struct sip_msg* _msg, char* _s1, char* _s2)
 
 int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 {
-	char *s, *first, *second, *third;
-	int len, i, j, result;
+	char *user_s;
+	int user_len, i, j, retval;
 	char name[MAX_DOMAIN_SIZE];
+	char uri[MAX_URI_SIZE];
 
 	struct rdata* head;
 	struct rdata* l;
 	struct naptr_rdata* naptr;
+
+	str pattern, replacement, result;
+	char string[17];
 
 	str* service;
 	service = (str*)_service;
@@ -175,15 +224,15 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 
 	if (is_e164(&(_msg->parsed_uri.user)) == -1) {
 		LOG(L_ERR, "enum_query(): uri user is not an E164 number\n");
-		return -1;
+		return -2;
 	}
 
-	s = _msg->parsed_uri.user.s;
-	len = _msg->parsed_uri.user.len;
+	user_s = _msg->parsed_uri.user.s;
+	user_len = _msg->parsed_uri.user.len;
 
 	j = 0;
-	for (i = len - 1; i > 0; i--) {
-		name[j] = s[i];
+	for (i = user_len - 1; i > 0; i--) {
+		name[j] = user_s[i];
 		name[j + 1] = '.';
 		j = j + 2;
 	}
@@ -194,54 +243,66 @@ int enum_query(struct sip_msg* _msg, char* _service, char* _s2)
 
 	if (head == 0) {
 		DBG("enum_query(): No NAPTR record found for %s.\n", name);
-		return -1;
+		return -3;
 	}
 
 	for (l = head; l; l = l->next) {
+
 		if (l->type != T_NAPTR) continue; /*should never happen*/
 		naptr = (struct naptr_rdata*)l->rdata;
 		if (naptr == 0) {
 			LOG(L_CRIT, "enum_query: BUG: null rdata\n");
 			free_rdata_list(head);
-			return -1;
+			return -4;
 		}
+
 		DBG("enum_query(): order %u, pref %u, flen %u, flags '%.*s', slen %u, "
 		    "services '%.*s', rlen %u, regexp '%.*s'\n", naptr->order, naptr->pref,
 		    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags), naptr->services_len,
 		    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
 		    (int)(naptr->regexp_len), ZSW(naptr->regexp));
+
 		if (sip_match(naptr, service) != 0) {
-			len = naptr->regexp_len;
-			if (len > 0) {
-				first = &(naptr->regexp[0]);
-				if (*first == '!') {
-					second = (char *)memchr((void *)(first + 1), '!', len - 1);
-					if (second) {
-						len = len - (second - first + 1);
-						if (len > 0) {
-							third = memchr(second + 1, '!', len);
-							if (third) {
-								DBG("enum_query(): resulted in uri: '%.*s'\n", third - second - 1, ZSW(second + 1));
-								result = set_uri(_msg, second + 1, third - second - 1);
-								free_rdata_list(head); /*clean up*/
-								return result;
-							} else {
-								LOG(LOG_ERR, "enum_query(): third ! missing from regexp\n");
-							}
-						} else {
-							LOG(LOG_ERR, "enum_query(): third ! missing from regexp\n");
-						}
-					} else {
-						LOG(LOG_ERR, "enum_query(): second ! missing from regexp\n");
-					}
-				} else {
-					LOG(LOG_ERR, "enum_query(): first ! missing from regexp\n");
-				}
-			} else {
-				LOG(LOG_ERR, "enum_query(): regexp missing\n");
+			if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
+					 &pattern, &replacement) < 0) {
+				free_rdata_list(head); /*clean up*/
+				LOG(L_ERR, "enum_query(): parsing of NAPTR regexp failed\n");
+				return -5;
 			}
+			if ((pattern.len == 4) && (strncmp(pattern.s, "^.*$", 4) == 0)) {
+				DBG("enum_query(): resulted in replacement: '%.*s'\n",
+				    replacement.len, ZSW(replacement.s));				
+				retval = set_uri(_msg, replacement.s, replacement.len);
+				free_rdata_list(head); /*clean up*/
+				return retval;
+			}
+			result.s = &(uri[0]);
+			result.len = MAX_URI_SIZE;
+			/* Avoid making copies of pattern and replacement */
+			pattern.s[pattern.len] = (char)0;
+			replacement.s[replacement.len] = (char)0;
+			/* We have already checked the size of
+			   _msg->parsed_uri.user.s */ 
+			memcpy(&(string[0]), user_s, user_len);
+			string[user_len] = (char)0;
+			if (reg_replace(pattern.s, replacement.s, &(string[0]),
+					&result) < 0) {
+				pattern.s[pattern.len] = '!';
+				replacement.s[replacement.len] = '!';
+				LOG(L_ERR, "enum_query(): regexp replace failed\n");
+				free_rdata_list(head); /*clean up*/
+				return -6;
+			}
+			DBG("enum_query(): resulted in replacement: '%.*s'\n",
+			    result.len, ZSW(result.s));
+			retval = set_uri(_msg, result.s, result.len);
+			pattern.s[pattern.len] = '!';
+			replacement.s[replacement.len] = '!';
+			free_rdata_list(head); /*clean up*/
+			return retval;
 		}
 	}
+
 	free_rdata_list(head); /*clean up*/
 	return -1;
 }
