@@ -29,12 +29,11 @@ mailto:s.frings@mail.isis.de
 int put_command(int fd, char* command, int clen, char* answer, int max,
 													int timeout,char* expect)
 {
-	int count=0;
+	int count;
 	int readcount;
 	int toread;
-	char tmp[100];
 	int timeoutcounter=0;
-	int found=0;
+	int found;
 	int available;
 	int status;
 
@@ -59,7 +58,8 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 	write(fd,command,clen);
 	tcdrain(fd);
 
-	answer[0]=0;
+	count = 0;
+	found = 0;
 	do
 	{
 		// try to read some bytes.
@@ -75,24 +75,18 @@ int put_command(int fd, char* command, int clen, char* answer, int max,
 		if (available>0)
 		{
 			/* How many bytes do I wan t to read maximum? 
-			Not more than tmp buffer size. */
+			Not more than answer buffer size. */
 			toread=max-count-1;
-			if (toread>sizeof(tmp)-1)
-				toread=sizeof(tmp)-1;
-			// And how many bytes are available?
+			/* And how many bytes are available? */
 			if (available<toread)
 				toread=available;
 			//DBG("available=%d , reading %d bytes!\n",available,toread);
-			// read data
-			readcount=read(fd,tmp,toread);
-			if (readcount<0)
-				readcount=0;
-			tmp[readcount]=0;
+			/* read data */
+			readcount=read(fd,answer+count,toread);
 			//DBG("read [%s]\n",tmp);
-			// add read bytes to the output buffer
-			if (readcount) {
-				strcat(answer,tmp);
+			if (readcount>0) {
 				count+=readcount;
+				answer[count] = 0;
 				/* if we have more time to read, check if we got already
 				the expected string */
 				if ((timeoutcounter<timeout) && (found==0)) {
@@ -245,9 +239,9 @@ int initmodem(struct modem *mdm)
 	}
 
 	/* added for probing */
-	put_command(mdm->fd,"AT+CSMP=49,167,0,242\r",21,answer,
+	put_command(mdm->fd,"AT+CSMP=49,167,0,241\r",21,answer,
 		sizeof(answer),50,0);
-	put_command(mdm->fd,"AT+CNMI=1,1,0,1,0\r",18,answer,sizeof(answer),50,0);
+	put_command(mdm->fd,"AT+CNMI?\r",9,answer,sizeof(answer),50,0);
 
 	return 0;
 error:

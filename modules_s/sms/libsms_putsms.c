@@ -151,7 +151,7 @@ int make_pdu(struct sms_msg *msg, struct modem *mdm, char* pdu)
 		pdu_len += sprintf(pdu,"00%02X00%02X91%s00%02XA7%02X",flags,
 			msg->to.len,tmp,coding,msg->text.len);
 	/* Create the PDU string of the message */
-	//pdu_len += binary2pdu(msg->text.s,msg->text.len,pdu+pdu_len);
+	/* pdu_len += binary2pdu(msg->text.s,msg->text.len,pdu+pdu_len); */
 	pdu_len += ascii2pdu(msg->text.s,msg->text.len,pdu+pdu_len,1/*convert*/);
 	/* concatenate the text to the PDU string */
 	return pdu_len;
