@@ -16,7 +16,8 @@ media server is to bind voice to SIP applications with optional
 support of other tools (SIP SUB/NOT, mysql, TTS, etc.) It has
 to be configurable in such a way it can act in different component
 roles: click-to-dial server, voicemail server, conferencing server, 
-text-to-speech anouncement server, etc.
+text-to-speech anouncement server, etc. (see [ccframework] for
+a longer listing of related applications)
 
 TOC
 ---
@@ -31,6 +32,11 @@ SIP components without a need for a B2BUA, a technology we consider
 suboptimal.  (This network architecture puts only very little addition
 requirements on the media server.)
 
+Note that this section tends to focus on specific design choices.
+A nice review of the whole spolution space for composing services
+is provided by Mahy at al in [ccframework]. This document is 
+referred to many times throughout this memo -- it is a really
+nice piece of work. 
 
 Section 2, Media Server Requirements, explains basic requirements
 a media server needs to fulful to make a good job in the component
@@ -39,8 +45,6 @@ script, are explained in section 3.
 
 Related work, references and example scripts are attached in
 appendices.
-
-
 
 1) Targeted Scenarios and Component Model
 --------------------------------------
@@ -71,15 +75,17 @@ On success, the controller can then hand-off the call to a PSTN gateway.
 This architecture is extremelly good in that it introduces distributed 
 components. Decomposition, an imporant design principle, is performed 
 in a fair, peer-2-peer manner that allows linking SIP devices in
-a very flexible way.
+a very flexible way. No additional mechanisms (except perhaps HTTP
+reporting) like CTI are needed -- SIP is the service glue.
 
 The biggest shortcoming of this architecture is imho its central piece, 
 the controller. It is simply too central. A B2BUA design  inherently causes 
 many concerns: security, scalability, and reliability ones. B2BUA solutions 
 proposed in 3pcc draft [3pcc] by Rosenberg have several signaling drawbacks 
 too: tricky media matching (flow III), backwards compatibility
-(flow IV), etc. There is also the economical aspect: a B2BUA
-costs money or development effort.
+(flow IV), etc. There is also the economical aspect, which is possibly
+the biggest one: a B2BUA costs money or development effort, and the
+aforementioned issues cost more operational overhead too.
 
 We believe it is beneficial to avoid such B2BUA constructs. The mechanism
 we are advocating is distributing the service state machine accross 
@@ -128,7 +134,8 @@ eliminates a need for the "HTTP reporting hack" in jdr's architecture.
 Session status is reported in SIP URIs. Cooperating components just 
 need to agree on a scheme for URI usage. That should be easy for SIP 
 servers as URI processing is a primary SIP ability.
-(A similar proposal for such use of URIs was stated in [msuri].)
+(A similar proposal for such use of URIs was stated in [msuri]
+ and [ccframework].)
 
 A simple application of this more distributed approach is REFER-based 
 "click-to-dial" service. In this scenario, a media component gets somehow 
@@ -141,10 +148,26 @@ The "pre-paid verification component" referred to in this section is another
 example use of this model. It establishes a call with caller, looks at 
 desired destination, processes PIN in media stream, and makes a decision 
 to hand-over to a gateway. It than disappears from the conversation.
+(See the [b2bua] tmemo for how to implement call cut-off, a feature
+ esential to operation of prepaid scenarios. the memo explains how
+ to achieve cut-off without a B2BUA.)
 
 Note that the application call-control framework [ccframework] by Mahy et al. 
 explicitely mentions a more peer-2-peer oriented approach based on REFER as 
-a good alternative to a centralized B2BUA approach. 
+a good alternative to a centralized B2BUA approach and gives some more
+details.
+
+  Quicknote: this multi-stage conversation model based on REFER use has
+  some appeals for charging too -- in case separate stages need to be
+  charged in a different manner (like initial anouncement "this
+  800 number is free only from US" for free, and then the real
+  IVR for whatever charges apply). It clearly separates these
+  stages in terms of calls and transactions. We think that is a clean
+  way of doing things as opposed to breaking transaction model
+  by some 18x provisional "half-talk"  constructs. (Which raise
+  unclarity like "is the call established or not", "how long does
+  a proxy server need to keep provisional transactional state",
+  "when should I charge for 18x", and whatsoever.)
 
 
 
@@ -181,6 +204,11 @@ speech software  [cmuspeech] (!!!) including Sphinx, festvox,
 openvxi are examples of other pieces of work worth intergrating
 with.
 
+Another important example of what should be achievable with
+the externsibility framework is updating SUB/NOT state. Whatever
+the udpate mechanism is, it must be doable to allow things such as 
+message waiting indication [mwi].
+
 3) On Scripting Language
 ---------------------
 
@@ -200,8 +228,9 @@ abstraction and simplicity are the key for application programming.
 
 The primary living space of the media server programming language
 should be calls. Scripts should be able to deal with calls:
-initiate, terminate and transfer them. ([ccframework] coins
-"replace", "join", "fork").
+initiate, terminate and transfer them. [ccframework] coins
+additional ones: "replace", "join", "fork". It also well explains
+how to compose some well-known services using these features.
 
 An important lower-level escape way should be the ability to initiate
 in-call (in-dialogue) transaction. That is what allows the server
@@ -223,29 +252,93 @@ The sources include but are not limited to SIP messsages, timers
 recording), external events from local apps (perhaps via FIFO), 
 media events (DTMF), SIP notifications.
 
-There was a proposal too, to introduce notion of SUB/NOT and presence
-to the language. Examples of use are "initiate a conference call when all 
-invited  users are on-line", "repeat a call when called party is
-no longer busy" [dialogpackage], "query participant list in a multi-party
-conversation", etc. We haven't discussed yet whether, and if so
-how such scenarios should be reflected in the language.
+The SIP notifications should be easy to map to the the event
+system. Scripts can subscribe to event, and when they occur,
+SIP NOTIFIes are translates to the script's event system.
+It can be used for implementing things such as "retry
+when a user is no longer busy" [dialogpackage], or keep
+updated on list of participants in a conversation.
+
+I think a great simplification of event processing is to guarantee their 
+processing in series. It avoids all sorts of nasty issues which pop up 
+when events related to a call are processed in parallel. The synchronization 
+issues will reduce to event queue maintenance and execution logic will be 
+easier to understand. I think we can happily trade it for some - probably 
+marginal - performance decrease.
+
+That would imply an event queue associated with each call. Its filled in from 
+all sort of event sources (Web, FIFO, media, timers, etc.). Events are picked 
+up from the queue in order of arrival. On call termination, the queue is 
+destroyed, empty or not.
+
+A question is how to deal with some long jobs -- such as recording or playing
+media. Waiting until they complete may take infinitely, and result in blocking
+such event like incoming BYE, which should actually stop a recording.
+
+I suggest that well-known long jobs, such as playing or recording
+are simply sent to background and then script processing continues.
+The question is what qualifies as "long job" -- I think quite few
+things which may potentially take infinite time. Recording and playing
+are important examples, call set-up (time until callee answers) or
+NOTIFY during call transfer other ones. When such background
+"infinite" jobs complete, user can be notified via the event system.
+
+  An alternative would be to introduce a background operator
+  like & in shells. However I suspect that unwise users could
+  forget to use it and cause infinite blocks. Defining in a 
+  case-by-case way that certain operations are blocking seems
+  safer to me.
+
+
+Most other jobs are transaction-related and are short enough,
+so that processing of other events can wait until they complete.
+BYE/REFERR, whateverver, takes in the worst case of an error
+time until final response timer hits -- delay which should be 
+tolerable to any other signaling. If I for example initate
+an INFO transaction and BYE arrives in the meantime, it is
+imho not so bad to let the BYE wait until INFO completes.
+
 
 requriement summary)
 
 So far, we have identified the following requirements:
-    - programming effectivity (easy and intutitive to use)
+    - programming effectivity (easy and intutitive to use); abstraction
+	  from protocol details, focusing on calls and primitives about
+	  them (initiate, terminate, transfer, perhaps join, fork
+	  and replace too); some simple in-dialog transaction processing
+	  should be an escape for other signaling things
     - parallelism (mutltiple scripts processed at the same time, 
       multiple calls refered from a single script)     
     - variables (refering to multiple calls)
-    - event processing
+    - event processing -- ability to map a variety of events
+	  to the event system (SIP NOTIFIes, FIFO requests, 
+	  call-related SIP requests such as INVITE/BYE, timers,
+	  media events, etc.); events processed in series
+    - services described in [ccframework] should be verified
+      to be doable with the language
     - ability to change script without rebooting the server
+	- uri processing is an absolute must to be able to implement
+	  the component model as described above
+	- textual processing -- one should be able to compose new
+	  transactions out of parts of existing requests (there should 
+	  be some automated request->var casting, e.g., $Request.from) and
+	  dialog state. 
+           ret=$call.new_transaction("INFO", 
+               "headerfield: value\n\hf2: ".$Request.from."\n", "two USD");
     - extensibility (i.e., the ability of the environment to link 
-      external binary libs and refer to them from scripts)
+      external binary libs and refer to them from scripts); particular
+      items of interest are mysql support, http support, tts,
+	  support for updating SUB/NOT status (such as for [mwi])
 
 Some design options mentioned so far (nice but not required)
     - have some casting from input to variables (e.g, $request.header.callid)
     - use OO -- there are many people for whom OO is easier
     - exceptions to group error processing
+	- variable scope and context -- it would be imho nice if
+	  all variables related to a call would be tightened to
+	  it, so that they are accessible whenever another
+	  call-related event occurs, and they are not accessible
+	  from anywhere else
 
 main-loop language)
 
@@ -263,16 +356,23 @@ the scripting languages with code libraries. Other cons are
 bigger image size and dependency on third-party software.
 However, risks of bugs and unability to tweak things are rather 
 low with well-established open-source software like python.
-Possibly, syntax of an own language might better capture
-semantics of the media server.
+
+Also, a new language would have the benefit of making the
+syntax more visibly tied to the semantics model.
 
 As said, no determination has been made yet. Author of this
-memo is little a bit uncomfortable with current amount of
-development work put on ser team and hopes that use of an
-off-the-shelve language would save work cycles. (Hopefuly,
-this hope will not be broken by tremendous effort spent
-in integration with supporting libraries.)
+memo changes his opinion on this issue in hourly intervals.
+The amount of work to be done with a new language is
+scaring and may become an overkill. On the other hand
+making sure that the language well expresses the
+nature of the server is appealing. Perhaps one could
+reuse some API for linking external libraries like 
+those used in PHP or python, so than getting access to
+the libraries would be easy.
 
+BEFORE ANY DECISION IS MADE, WE SHOULD BEST GO THROUGH
+FEW MORE EXAMPLES ([ccframework]) AND SHOW HOW THEY CAN
+BE ACHIEVED USING THE DESIGNED ENVIRONMENT.
 
 see more )
 
@@ -307,6 +407,7 @@ B) References
 [festival] http://www.cstr.ed.ac.uk/projects/festival
 [mscml] http://www.iptel.org/ietf/callprocessing/apps/#draft-vandyke-mscml
 [msuri] http://www.iptel.org/info/players/ietf/allsipdir/draft-burger-sipping-msuri-01.txt
+[mwi] http://www.iptel.org/info/players/ietf/callprocessing/#draft-ietf-sipping-mwi
 [kpml] http://www.iptel.org/ietf/callprocessing/apps/#draft-burger-sipping-kpml
 [nv] http://www.naturalvoices.att.com/
 [refer] http://www.iptel.org/ietf/callprocessing/refer/#draft-ietf-sip-refer

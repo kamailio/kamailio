@@ -1,7 +1,7 @@
 $Id$
 
-Building Prepaid Scenarios Using SIP/SER
-========================================
+Draft Design Options for Building Prepaid Scenarios Using SIP/SER
+==================================================================
 
 Jiri Kuthan, iptel.org, January 2003
 
@@ -67,12 +67,15 @@ end-devices.
 The behaviour of the session-timer-based construct is as follows:
 a caller intiates a call through a proxy server. The proxy server
 determines maximum acceptable call length and inidiacates it using
-the session timer mechanisms. The timer is then propagates to
+the session timer mechanisms. The timer is then propagated to
 the end-device using SIP. If it actually hits, the terminating 
 gateway will try to revitalize the session using a re-INVITE. 
 The proxy server then can recalculate available credit, and if too 
 low, deny the re-invitation. The end-device is then supposed 
 to terminate the call using a BYE.
+
+  Note: a similar technique can be used to keep firewall
+  pinholes alive.
 
 We have never experimented with the session-timer-based solution.
 We do not know if some session timer negotiation troubles can
@@ -82,13 +85,45 @@ effort for session-timer will result in some changes and when
 it will complete. Nevertheless, we think it is worth trying.
 Its appeal is it leaves call-termination, a call-stateful
 feature, down in the end-devices and does not pose too big
-burden on server developers and especially operators.
+burden on server developers and especially operators. The
+scenario is mentioned in [ccframework], section 7.2.12.
 
 WE THUS ENCOURAGE VOLUNTEERS TO EXPERIMENT WITH THIS OPTION.
 TAKE THE GATEWAY YOU HAVE, LOOK AT IT IF IT SUPPORTS ST,
 ADD ST TO SER PROXY AND CHECK IF THINGS WORK.
 
+If end-devices do not make the job of call cut-off well, someone
+else, a third-party, will have to. That is where B2BUA comes
+in. It is a singaling entity that terminates signaling dialog
+with both call parties and keeps dialog state during the whole
+conversation time. Acting as a UA allows it to generate SIP
+messages on its own (as opposed to just realying someone 
+else's messages, as proxy do). Because it appears as a simple
+UA to each party in the call, it works with any phone without
+need for support for any extensions. Problems with use of
+B2BUA are described in the next section.
 
+One could perhaps make the cut-off component easier to
+implement than a whole B2BUA. Well, as long as the implementation
+is expected to be 100% conform, there is no way around it.
+The BYE initiator needs to be aware of current dialog state,
+it will not be able to do its job otherwise. Obvisouly,
+it needs to remember initial constant information such as
+call-id. However, it needs to keep information that changes
+too. Particularly, it must know current CSeq -- Cseq gets
+updated with in-dialog transactions and failure to send
+a proper CSeq would result in denied BYE. An implementer
+wishing to make his life easier and avoid the B2BUA
+machinery could feel tempted just to "spoof" dialog state
+in a proxy, (i.e., not to translate one into another one) and
+if it decides to cut-off, send a BYE using the current
+status. That introduced race conditions, however, as
+another transaction may show up in middle of the cut-off
+process, increase remote party's CSeq and disqualify the
+delayed cut-off BYE.
+
+So design choices are either B2BUA, or a "dialog spoofer"
+with a risk of race conditions.
 
 2. What Are B2BUA limitations?
 ------------------------------
@@ -112,7 +147,9 @@ c) e2e security does not work -- implementations willing to
    SIP message bodies. B2BUA breaks the e2e security if
    it needs to change the body.
 d) economical aspects: it is simply yet another piece of
-   software you need to purchase or develop
+   non-trivial software you need to purchase or develop and
+   operate. that's maybe the strongest argument: it is
+   expensive.
 
 Lot of this conversation has taken place on IETF SIP
 and SIPPING mailing lists. Few messages from these
@@ -122,138 +159,24 @@ discussions are referred from
 3. How to Implement a B2BUA Using ser
 -------------------------------------
 
+One of the design decisions is whether to make B2BUA work
+as a module or an external application bound to ser via some
+of its interfaces. 
 
+You will have to keep dialog table keyed by callid and tags,
+update it on INVITE complition, remove on BYE, updated on
+e.g. INFO changing dialog state.
 
-At 10:00 AM 1/6/2003, chang hui wrote:
->Jiri,
->
->Thanks for your explanation, and let me know the architecture drawback of the B2BUA.
-
-
-I've already done so in my previous email. If something was not clear
-enough, let me know.
-
-
->Since we have no way to choose other means to implement pre-paid, we have to go along with B2BUA in a short term.
->Could you give me any advise how to implement B2BUA based on SER and estimate the work we should do?
->Could you give me a performance estimate?
-
-
-A hand-waving guestimate is performance degrades by 50%.
-(We currently achieve up to 3-5 kCPS on a PC -- fair capacity
- to slice off from.).
-
-
-a B2BUA does a lot of things:
-- first, it keeps dialog state -- it rememembers cseq,  callid, 
-  route set, etc. for the whole time of a call (i.e., it eats 
-  memory). All this information is needed when you later wish 
-  to initiate correct BYEs.
-- it translates UAC to UAS transactions and vice versa
-- you probably want to save the dialog state on some persistence
-  storage (mysql) -- signaling would not work on reboot otherwise
-
-
-That would take quite some development work. I think the amount
-of work can be somewhat lowered if normal (record-routed) proxy 
-processing is used, as opposed to a full B2BUA which terminats
-all UAS transactions and translates them to UAC transactions.
-You then still need to do the following:
-- keeping a dialog table (keyed by callid and local/remote tags)
-- updating the dialog table (new items on INVITE completion, remove 
-  dialogs on BYE, update dialog state, such as CSeq, on any other 
-  request).
-- starting a timer on beginning of a dialog that -- when expired,
-  subject to balance and charging plans --  sends BYEs to all call  
-  parties using dialog context.
-
-
-That could be implemented as a new ser module, which registers
-TM-module callbacks to be updated on transactions completions.
-One could also move the dialog maintenance out of ser to some
-shell scripts to make programming easier. That would however
-very likely degrade performance noticeably.
-
+The cut-off timer needs to be started too.
 
 Also note, that these scenarios are based only on signaling -- there
 are no PSTN-prepaid-style anouncement "you can call 5 minutes"
 and "your call will be cut off in 20 seconds". It is doable too,
-but it is probably more meaningful to start with the signaling
-part.
+but it is probably more meaningful to start with the signaling.
+See [tmemo_media] for more on that.
+
+Appendix: References
+--------------------
+[ccframework] http://www.iptel.org/ietf/callprocessing/#draft-ietf-sipping-cc-framework
 
 
--Jiri
-
-
-
->Best Regards and Thanks.
->
->
->Chang Hui
->-----Original Message-----
->From: Jiri Kuthan [mailto:jiri@iptel.org]
->Sent: Saturday, January 04, 2003 8:29 PM
->To: chang hui; serusers@iptel.org
->Subject: RE: [Serusers] About B2BUA
->
->Hello,
->
->I see -- prepaid scenarios are indeed difficult without a B2BUA.
->There has been a proposal few times to use session timer (a proxy
->looks at ballance and attaches a hint to SIP requests indicating
->when a call should terminate), but the work has not been pursued.
->
->You may find a discussion of B2BUA architectural drawbacks on the
->SIP mailing list, selected postings are at http://www.iptel.org/info/trends/#b2bua.
->imho, the most compelling issue is that of robustness and scalability.
->A b2bua needs to keep track of all current calls. A broken b2bua affects
->signaling for all existing calls.
->
->Basically, a B2BUA is simply two UAs glued together. It accepts
->transactions as a server, and initiates client transactions
->based on them. It keeps dialog state (callid, cseqs, etc.) and
->may initiate in-dialog transactions on its own (like the BYE
->transaction in which you are interested).
->
->It is doable to implement a B2BUA on top of ser, but it would
->cost quite some development effort. Particularly, it would take
->dialog maintenance (better with persistency so that signaling
->does not get broken on reboot). We  can provide guidanance to
->volunteers willing to go through this exercise.
->
->-Jiri
->
->At 02:28 AM 1/4/2003, chang hui wrote:
->>Jiri,
->>
->>Thanks for your prompt response.
->>We want to implement a pre-paid system in which once subscriber's balance is depleted, the dialog could be torn in time. However other Proxy or other elements could not take part in the call, they could not send a BYE to caller directly. It's the why we consider B2BUA.
->>We project to build a B2BUA to support voice/video/IM at first stage, and support other SIP based services as they emerged.
->>However, I just noticed the definition of B2BUA in 2543-bis04 in several sentences,  there has no other analysis on performance, reliability, limitations and how to implement it. So, I hope to get help from the society.
->>Thanks for your help again.
->>
->>Koalas
->>
->>-----Original Message-----
->>From: Jiri Kuthan [mailto:jiri@iptel.org]
->>Sent: Friday, January 03, 2003 11:06 PM
->>To: chang hui; serusers@iptel.org
->>Subject: Re: [Serusers] About B2BUA
->>
->>Hello,
->>
->>ser is not a B2BUA -- it can act as proxy, redirect, transactional UAS
->>or registrar. These modes make a vast majority of network scenarios
->>happy without a need to use a B2BUA. Which is good, because B2BUAs
->>inherently have certain scalability, reliability and security limitations.
->>
->>Is there a particular reason why you would like to use a B2BUA?
->>
->>-Jiri
->>
->>At 08:00 AM 1/3/2003, chang hui wrote:
->>>Hi All,
->>>
->>>I am newbie of this field, thanks everyone help me.
->>>I am interesting in B2BUA, however, except some brief defination in 3261, I could not find any further defination or how to implement about B2BUA, I noticed that SER could be implemented as a B2BUA, where can I find some implementation? or where can I get any description?
->>>
