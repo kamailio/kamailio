@@ -80,6 +80,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../usr_avp.h"
 #include "../../fifo_server.h"
+#include "../../unixsock_server.h"
 
 #include "defs.h"
 #include "h_table.h"
@@ -1436,7 +1437,7 @@ int fifo_t_reply( FILE *stream, char *response_file )
 		fifo_reply(response_file, "400 fifo_t_reply: while reading "
 			"new headers");
 		return -1;
-    }
+	}
 	snh.s[snh.len]='\0';
 	DBG("DEBUG: fifo_t_reply: new headers: %.*s\n", snh.len, snh.s);
 
@@ -1467,3 +1468,182 @@ int fifo_t_reply( FILE *stream, char *response_file )
 }
 
 
+static int parse_transid(str* s, unsigned int* index, unsigned int* label)
+{
+	char* buf;
+
+	if (!s || !index || !label) {
+		LOG(L_ERR, "parse_transid: Invalid parameter value\n");
+		return -1;
+	}
+
+	buf = (char*)pkg_malloc(s->len + 1);
+	if (!buf) {
+		LOG(L_ERR, "parse_transid: No memory left\n");
+		return -1;
+	}
+
+	memcpy(buf, s->s, s->len + 1);
+	buf[s->len] = '\0';
+	
+	if (sscanf(buf, "%u:%u", index, label) != 2) {
+		LOG(L_ERR, "parse_transid: Invalid trans_id (%s)\n", buf);
+		pkg_free(buf);
+		return -1;
+	}
+
+	DBG("parse_transid: hash_index=%u label=%u\n", *index, *label);
+	pkg_free(buf);
+	return 0;
+}
+
+
+
+static int send_reply(struct cell *trans, unsigned int code, str* text, str* body, str* headers, str* to_tag)
+{
+	struct lump_rpl *hdr_lump, *body_lump;
+	str rpl;
+	int ret;
+	struct bookmark bm;
+
+	     /* mark the transaction as replied */
+	if (code >= 200) set_kr(REQ_RPLD);
+
+	     /* add the lumps for new_header and for body (by bogdan) */
+	hdr_lump = add_lump_rpl(trans->uas.request, headers->s, headers->len, LUMP_RPL_HDR);
+	if (!hdr_lump) {
+		LOG(L_ERR, "send_reply: cannot add hdr lump\n");
+		goto sr_error;
+	}
+
+	     /* body lump */
+	if (body && body->len) {
+		body_lump = add_lump_rpl(trans->uas.request, body->s, body->len, LUMP_RPL_BODY);
+		if (body_lump == 0) {
+			LOG(L_ERR,"send_reply: cannot add body lump\n");
+			goto sr_error_1;
+		}
+	} else {
+		body_lump = 0;
+	}
+
+	     /* We can safely zero-terminate the text here, because it is followed
+	      * by next line in the received message
+	      */
+	text->s[text->len] = '\0';
+	rpl.s = build_res_buf_from_sip_req(code, text->s, to_tag, trans->uas.request, (unsigned int*)&rpl.len, &bm);
+
+	     /* since the msg (trans->uas.request) is a clone into shm memory, to avoid
+	      * memory leak or crashing (lumps are create in private memory) I will
+	      * remove the lumps by myself here (bogdan) */
+	unlink_lump_rpl(trans->uas.request, hdr_lump);
+	free_lump_rpl(hdr_lump);
+	if (body_lump) {
+		unlink_lump_rpl(trans->uas.request, body_lump);
+		free_lump_rpl(body_lump);
+	}
+
+	if (rpl.s == 0) {
+		LOG(L_ERR,"send_reply: failed in build_res_buf_from_sip_req\n");
+		goto sr_error;
+	}
+
+	ret = _reply_light(trans, rpl.s, rpl.len, code, text->s,  to_tag->s, to_tag->len, 1 /* lock replies */, &bm);
+	     /* this is ugly hack -- the function caller may wish to continue with
+	      * transction and I unref; however, there is now only one use from
+	      * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
+	      */
+	UNREF(trans);
+	return ret;
+ sr_error_1:
+
+	unlink_lump_rpl(trans->uas.request, hdr_lump);
+	free_lump_rpl(hdr_lump);
+ sr_error:
+	return -1;
+}
+
+
+
+int unixsock_t_reply(str* msg)
+{
+	int ret;
+	struct cell *trans;
+	static char new_headers[MAX_HEADER];
+	str code, reason, transid, headers, body, to_tag;
+	unsigned int hash_index, label, icode;
+
+	headers.s = new_headers;
+	headers.len = MAX_HEADER;
+
+	if (unixsock_read_line(&code, msg) != 0) {
+		unixsock_reply_asciiz("400 Reason code expected\n");
+		goto err;
+	}
+
+	icode = str2s(code.s, code.len, &ret);
+	if (ret) {
+		unixsock_reply_printf("400 Reason code has wrong format\n");
+		goto err;
+	}
+
+	if (unixsock_read_line(&reason, msg) != 0) {
+		unixsock_reply_asciiz("400 Reason phrase expected\n");
+		goto err;
+	}
+
+	if (unixsock_read_line(&transid, msg) != 0) {
+		unixsock_reply_asciiz("400 Transaction ID expected\n");
+		goto err;
+	}
+
+	if (parse_transid(&transid, &hash_index, &label) < 0) {
+		unixsock_reply_asciiz("400 Error while parsing transaction ID\n");
+		goto err;
+	}
+
+	if (unixsock_read_line(&to_tag, msg) != 0) {
+		unixsock_reply_asciiz("400 To tag expected\n");
+		goto err;
+	}
+
+	     /* read the new headers */
+	if (unixsock_read_lineset(&headers, msg) < 0) {
+		unixsock_reply_asciiz("400 Error while reading new headers\n");
+		goto err;
+	}
+
+	DBG("lineset: %.*s\n", headers.len, headers.s);
+	     
+	/*  body can be empty ... */
+	if (unixsock_read_body(&body, msg) < 0) {
+		unixsock_reply_asciiz("400 Error while reading body\n");
+		goto err;
+	}
+
+	DBG("body: %.*s\n", body.len, body.s);
+	
+	if (t_lookup_ident(&trans, hash_index, label) < 0) {
+		LOG(L_ERR,"unixsock_t_reply: lookup failed\n");
+		unixsock_reply_asciiz("481 No such transaction\n");
+		goto err;
+	}
+
+	     /* it's refcounted now, t_reply_with body unrefs for me -- I can 
+	      * continue but may not use T anymore  
+	      */
+	ret = send_reply(trans, icode, &reason, &body, &headers, &to_tag);
+	if (ret < 0) {
+		LOG(L_ERR, "unixsock_t_reply: reply failed\n");
+		unixsock_reply_asciiz("500 Reply failed\n");
+		goto err;
+	}
+
+	unixsock_reply_asciiz("200 Succeeded\n");
+	unixsock_reply_send();
+	return 1;
+
+ err:
+	unixsock_reply_send();
+	return -1;
+}

@@ -99,6 +99,7 @@
 #include "t_reply.h"
 #include "uac.h"
 #include "uac_fifo.h"
+#include "uac_unixsock.h"
 #include "t_fwd.h"
 #include "t_lookup.h"
 #include "t_stats.h"
@@ -494,6 +495,16 @@ static int mod_init(void)
 
 	if (unixsock_register_cmd("t_uac_cancel", unixsock_uac_cancel) < 0) {
 		LOG(L_CRIT, "cannot register t_uac_cancel with the unix server\n");
+		return -1;
+	}
+
+	if (unixsock_register_cmd("t_uac", unixsock_uac) < 0) {
+		LOG(L_CRIT, "cannot register t_uac with the unix server\n");
+		return -1;
+	}
+
+	if (unixsock_register_cmd("t_reply", unixsock_t_reply) < 0) {
+		LOG(L_CRIT, "cannot register t_reply with the unix server\n");
 		return -1;
 	}
 

@@ -143,5 +143,7 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code);
 
 int fifo_t_reply( FILE *stream, char *response_file );
 
+int unixsock_t_reply(str* msg);
+
 #endif
 
