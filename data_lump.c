@@ -285,7 +285,7 @@ struct lump* del_lump(struct sip_msg* msg, int offset, int len, int type)
 	
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
-		LOG(L_ERR, "ERROR: insert_new_lump_before: out of memory\n");
+		LOG(L_ERR, "ERROR: del_lump: out of memory\n");
 		return 0;
 	}
 	memset(tmp,0,sizeof(struct lump));
