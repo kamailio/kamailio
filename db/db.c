@@ -135,7 +135,7 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 		dbf.cap |= DB_CAP_UPDATE;
 	}
 
-	dbf.replace = (db_update_f)find_mod_export(tmp, "db_replace", 2, 0);
+	dbf.replace = (db_replace_f)find_mod_export(tmp, "db_replace", 2, 0);
 	if (dbf.replace) {
 		dbf.cap |= DB_CAP_REPLACE;
 	}
