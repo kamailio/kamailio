@@ -65,7 +65,7 @@
 		"(" VERSION " (" ARCH "/" OS"))"
 #define USER_AGENT_LEN (sizeof(USER_AGENT)-1)
 
-#define SERVER_HDR "Server: Sip EXpress router"\
+#define SERVER_HDR "Server: Sip EXpress router "\
 		"(" VERSION " (" ARCH "/" OS"))"
 #define SERVER_HDR_LEN (sizeof(SERVER_HDR)-1)
 
