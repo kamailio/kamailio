@@ -1,0 +1,45 @@
+# $Id$
+
+List of currently available ser modules
+----------------------------------------------------------
+Name	Use		 	 Maturity	Purpose/Depends on
+----------------------------------------------------------
+acc		regular		 stable		transaction accounting
+		/example				(the module servers also
+							    as example of how to bind
+								to transaction management)
+								-tm
+auth	regular		 stable		digest authentication
+								-sl
+								-mysql
+cpl		experimental alpha		Call Processing Language
+ext		experimental alpha		Execution of external URI
+								processing logic
+im		temporary	 alpha		Stateless instant messaging	
+								client
+jabber	experimental beta		SIP2Jabber gateway
+maxfwd	regular		 stable		Max-Forwards check
+mysql	regular		 stable		supporting MySql interface
+print	example		 stable		Printing Message to stdout
+rr		regular		 stable		Record-Routing
+sl		regular		 stable		Stateless Replies
+sms		regular		 stable		SMS gateway
+								-tm
+textops regular		 stable		Message Textual Operations
+tm		regular		 beta		Transaction Management
+usrloc	regular		 stable		User Location
+								-sl
+								-mysql (optionally)
+
+
+Use tells how deployable a module is. Regular indicates
+we deploy and use this feature in our infrastructure.
+Experimental tells we are still gaining operation experience.
+Temporary labels modules which momentarily fix some
+bugs/lacks and will disappear later. Example modules
+are primarily useful as educational source code for
+ser programmers.
+
+Maturity is label as stable if a module has been deployed
+for longer time, alpha if it is still being developed and
+beta if it is under test.
