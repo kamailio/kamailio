@@ -1,0 +1,78 @@
+/**
+ * eXtended JABber module
+ *
+ *
+ * Copyright (C) 2001-2003 Fhg Fokus
+ *
+ * This file is part of ser, a free SIP server.
+ *
+ * ser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * For a license to use the ser software under conditions
+ * other than those described here, or to purchase support for this
+ * software, please contact iptel.org by e-mail at the following addresses:
+ *    info@iptel.org
+ *
+ * ser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */ 
+
+
+#ifndef _XJAB_BASE_H_
+#define _XJAB_BASE_H_
+
+#include "../../str.h"
+
+#define XJ_NULL				0
+#define XJ_SEND_MESSAGE		1
+#define XJ_SEND_SUBSCRIBE	2
+#define XJ_SEND_BYE			4
+#define XJ_JOIN_JCONF		8
+#define XJ_EXIT_JCONF		16
+#define XJ_GO_ONLINE		32
+#define XJ_GO_OFFLINE		64
+
+/**********             ***/
+
+typedef struct _xj_jkey
+{
+	int hash;
+	str *id;
+} t_xj_jkey, *xj_jkey;
+
+/**********             ***/
+
+typedef struct _xj_sipmsg
+{
+	int type;		// type of message
+	xj_jkey jkey;	// pointer to FROM
+	str to;			// destination
+	str msg;		// message body
+} t_xj_sipmsg, *xj_sipmsg;
+
+/**********   LOOK AT IMPLEMENTATION OF FUNCTIONS FOR DESCRIPTION    ***/
+
+void xj_sipmsg_free(xj_sipmsg);
+
+/**********             ***/
+
+int xj_jkey_cmp(void*, void*);
+void xj_jkey_free_p(void*);
+void xj_jkey_free(xj_jkey);
+
+/**********             ***/
+
+int xj_get_hash(str*, str*);
+char *shahash(const char *);
+
+#endif
+
