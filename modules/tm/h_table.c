@@ -121,7 +121,8 @@ error:
 
 struct cell*  build_cell( struct s_table* hash_table , struct sip_msg* p_msg )
 {
-   struct cell*    new_cell;
+   struct cell*  new_cell;
+   int                i;
 
     /* do we have the source for the build process? */
    if (!p_msg)
@@ -140,6 +141,8 @@ struct cell*  build_cell( struct s_table* hash_table , struct sip_msg* p_msg )
    init_cell_lock(  new_cell );
    /* ref counter is 0 */
    /* all pointers from timers list tl are NULL */
+   for( i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
+      new_cell->tl->payload = new_cell;
 
    /* inbound request */
    new_cell->inbound_request =  sip_msg_cloner(p_msg) ;

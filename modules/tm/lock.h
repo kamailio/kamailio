@@ -14,6 +14,7 @@ typedef struct {
 	int semaphore_index;
 } ser_lock_t;
 
+
 #include "h_table.h"
 
 /* Uni*x permissions for IPC */

@@ -30,7 +30,6 @@ typedef struct timer_link
    void                      *payload;
 }timer_link_type ;
 
-
 #include "lock.h"
 
 /* timer list: includes head, tail and protection semaphore */
