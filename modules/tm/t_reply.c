@@ -1293,7 +1293,10 @@ int t_reply_with_body( struct cell *trans, unsigned int code,
 			LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add hdr lump\n");
 			goto error;
 		}
+	} else {
+		hdr_lump = 0;
 	}
+
 	/* body lump */
 	if(body && strlen(body)) {
 		body_lump = add_lump_rpl( trans->uas.request, body, strlen(body),
@@ -1515,8 +1518,6 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 	     /* mark the transaction as replied */
 	if (code >= 200) set_kr(REQ_RPLD);
 
-	hdr_lump = 0;
-	body_lump = 0;
 	     /* add the lumps for new_header and for body (by bogdan) */
 	if (headers && headers->len) {
 		hdr_lump = add_lump_rpl(trans->uas.request, headers->s, headers->len, LUMP_RPL_HDR);
@@ -1524,7 +1525,10 @@ static int send_reply(struct cell *trans, unsigned int code, str* text, str* bod
 			LOG(L_ERR, "send_reply: cannot add hdr lump\n");
 			goto sr_error;
 		}
+	} else {
+		hdr_lump = 0;
 	}
+
 	     /* body lump */
 	if (body && body->len) {
 		body_lump = add_lump_rpl(trans->uas.request, body->s, body->len, LUMP_RPL_BODY);
