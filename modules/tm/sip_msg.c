@@ -474,10 +474,6 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 						via_body_cloner( new_msg->buf , org_msg->buf ,
 						(struct via_body*)hdr->parsed , &p);
 				}
-                /*fprintf(stderr," via1 is |%.*s|\n",
-                	via_len(new_msg->via1),
-                	via_s(new_msg->via1,new_msg));*/
-  
 				break;
 			case HDR_CSEQ:
 				new_hdr->parsed = p;
@@ -492,14 +488,13 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 				new_msg->cseq = new_hdr;
 				break;
 			case HDR_TO:
-		        case HDR_FROM:
+			case HDR_FROM:
 				if (hdr->type == HDR_TO) {
 					new_msg->to = new_hdr;
 				} else {
 					new_msg->from = new_hdr;
 				}
-
-				     /* From header might be unparsed */
+				/* From header might be unparsed */
 				if (!hdr->parsed) break;
 				new_hdr->parsed = p;
 				p +=ROUND4(sizeof(struct to_body));
@@ -565,7 +560,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 			case HDR_AUTHORIZATION :
 				new_msg->authorization = new_hdr;
 				if (hdr->parsed) {
-					new_hdr->parsed = auth_body_cloner(new_msg->buf , org_msg->buf , (struct auth_body*)hdr->parsed , &p);
+					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
+						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
 			case HDR_EXPIRES :
@@ -574,7 +570,8 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 			case HDR_PROXYAUTH :
 				new_msg->proxy_auth = new_hdr;
 				if (hdr->parsed) {
-					new_hdr->parsed = auth_body_cloner(new_msg->buf , org_msg->buf , (struct auth_body*)hdr->parsed , &p);
+					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
+						org_msg->buf , (struct auth_body*)hdr->parsed , &p);
 				}
 				break;
 			case HDR_SUPPORTED :
@@ -589,33 +586,33 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 			case HDR_ALLOW :
 				new_msg->allow = new_hdr;	
 				break;
-		        case HDR_EVENT:
+			case HDR_EVENT:
 				new_msg->event = new_hdr;
 				break;
-		        case HDR_ACCEPT:
+			case HDR_ACCEPT:
 				new_msg->accept = new_hdr;
 				break;
-		        case HDR_ACCEPTLANGUAGE:
+			case HDR_ACCEPTLANGUAGE:
 				new_msg->accept_language = new_hdr;
 				break;
-		        case HDR_ORGANIZATION:
+			case HDR_ORGANIZATION:
 				new_msg->organization = new_hdr;
 				break;
-		        case HDR_PRIORITY:
-			        new_msg->priority = new_hdr;
-			        break;
-		        case HDR_SUBJECT:
-			        new_msg->subject = new_hdr;
-			        break;
-		        case HDR_USERAGENT:
-			        new_msg->user_agent = new_hdr;
-			        break;
-		        case HDR_ACCEPTDISPOSITION:
-			        new_msg->accept_disposition = new_hdr;
-			        break;
-		        case HDR_CONTENTDISPOSITION:
-		 	        new_msg->content_disposition = new_hdr;
-			        break;
+			case HDR_PRIORITY:
+				new_msg->priority = new_hdr;
+				break;
+			case HDR_SUBJECT:
+				new_msg->subject = new_hdr;
+				break;
+			case HDR_USERAGENT:
+				new_msg->user_agent = new_hdr;
+				break;
+			case HDR_ACCEPTDISPOSITION:
+				new_msg->accept_disposition = new_hdr;
+				break;
+			case HDR_CONTENTDISPOSITION:
+				new_msg->content_disposition = new_hdr;
+				break;
 		}/*switch*/
 
 		if ( last_hdr )
@@ -666,6 +663,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	{
 		*(rpl_lump_anchor)=(struct lump_rpl*)p;
 		p+=ROUND4(sizeof( struct lump_rpl ));
+		(*rpl_lump_anchor)->type = rpl_lump->type;
 		(*rpl_lump_anchor)->text.len = rpl_lump->text.len;
 		(*rpl_lump_anchor)->text.s=p;
 		p+=ROUND4(rpl_lump->text.len);
@@ -675,7 +673,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg )
 	}
 
 	clone_authorized_hooks(new_msg, org_msg);
-	
+
 	return new_msg;
 }
 
