@@ -50,7 +50,8 @@
 #define RPID_HF_NAME_LEN (sizeof(RPID_HF_NAME)-1)
 
 
-static str rpid;                /* rpid, stored in a backend authentication module */
+static char rpid_buffer[MAX_RPID_LEN];
+static str rpid = {.s = rpid_buffer, .len = 0};                /* rpid, stored in a backend authentication module */
 static int rpid_is_e164;        /* 1 - yes, 0 - unknown, -1 - no */
 
 
@@ -239,7 +240,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	return -1;
 }
 
-	
+
 /*
  * Process rpid
  * Will be alway called upon an authentication attempt
@@ -252,8 +253,8 @@ void save_rpid(str* _rpid)
 	if (!_rpid) {
 		return;
 	}
-	
-	rpid.s = _rpid->s;
+
+	memcpy(rpid.s, _rpid->s, _rpid->len);
 	rpid.len = _rpid->len;
 	DBG("save_rpid(): rpid value is '%.*s'\n", _rpid->len, ZSW(_rpid->s));
 }
