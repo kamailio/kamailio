@@ -197,7 +197,7 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 	if ( (tmp=ip_addr2a(source_ip))==0)
 		return 0; /* error*/
 	tmp_len=strlen(tmp);
-	len=RECEIVED_LEN+tmp_len+1; /* space for  null termination */
+	len=RECEIVED_LEN+tmp_len;
 	if(source_ip->af==AF_INET6){
 		len+=2;
 		buf[RECEIVED_LEN]='[';
@@ -206,7 +206,7 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 	}
 	
 	memcpy(buf+RECEIVED_LEN+extra_len, tmp, tmp_len);
-	buf[len]=0; /*null terminate it */
+	buf[len+1]=0; /*null terminate it */
 
 	*received_len = len;
 	return buf;
