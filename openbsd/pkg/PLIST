@@ -30,8 +30,6 @@ lib/ser/modules/uri.so
 lib/ser/modules/usrloc.so
 lib/ser/modules/vm.so
 lib/ser/modules/xlog.so
-man/man8/ser.8
-man/man5/ser.cfg.5
 share/doc/ser/README
 share/doc/ser/README.cfg
 share/doc/ser/INSTALL
@@ -46,6 +44,7 @@ share/doc/ser/README.dbtext
 share/doc/ser/README.enum
 share/doc/ser/README.exec
 share/doc/ser/README.group
+share/doc/ser/README.jabber
 share/doc/ser/README.maxfwd
 share/doc/ser/README.msilo
 share/doc/ser/README.nathelper
@@ -62,6 +61,7 @@ share/doc/ser/README.tm
 share/doc/ser/README.uri
 share/doc/ser/README.usrloc
 share/doc/ser/README.vm
+share/doc/ser/README.xlog
 @dirrm share/doc/ser
 @dirrm etc/ser
 @dirrm lib/ser/modules

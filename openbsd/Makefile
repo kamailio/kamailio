@@ -16,6 +16,10 @@ MASTER_SITES= ftp://ftp.berlios.de/pub/ser/0.8.11/src/
 
 MAINTAINER= pelinescu-onciul@fokus.fraunhofer.de
 
+MAN8=ser.8
+MAN5=ser.cfg.5
+# MANCOMPRESSED must not be defined in openbsd (defined==yes)
+
 # GPL
 PERMIT_PACKAGE_CDROM=	Yes
 PERMIT_PACKAGE_FTP=	Yes
@@ -30,7 +34,7 @@ DISTFILES= ${DISTNAME}_src.tar.gz
 WRKSRC= ${WRKDIR}/${PORTNAME}-${PORTVERSION}
 
 # build by default mysql and jabber
-MAKE_ENV='include_modules="mysql jabber"'
+MAKE_ENV= include_modules="mysql jabber"
 
 # depends on mysql and libexpat because of the above modules
 BUILD_DEPENDS= :expat-1.*:textproc/expat \
@@ -41,7 +45,6 @@ LIB_DEPENDS=   expat.2:expat-1.*:textproc/expat \
 
 
 pre-fetch:
-	@echo "DEBUG: distfile=${DISTFILE}, distname=${DISTNAME}, w=${WRKSRC}"
 
 
 .include <bsd.port.mk>
