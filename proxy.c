@@ -166,11 +166,6 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 {
 	struct proxy_l* p;
 	struct hostent* he;
-#ifdef DNS_IP_HACK
-	int len;
-	int err;
-	unsigned int ip;
-#endif
 
 	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
 	if (p==0){
@@ -181,47 +176,6 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 	memset(p,0,sizeof(struct proxy_l));
 	p->name=name;
 	p->port=port;
-#ifdef DNS_IP_HACK
-	/* fast ipv4 string to address conversion*/
-	len=strlen(name);
-	ip=str2ip((unsigned char*)name, len, &err);
-	if (err==0){
-		p->host.h_name=malloc(len+1);
-		if (p->host.h_name==0) goto error;
-		memcpy(p->host.h_name, name, len);
-		p->host.h_aliases=malloc(sizeof(char*));
-		if (p->host.h_aliases==0) {
-			ser_error=E_OUT_OF_MEM;
-			free(p->host.h_name);
-			goto error;
-		}
-		p->host.h_aliases[0]=0;
-		p->host.h_addrtype=AF_INET;
-		p->host.h_length=4;
-		p->host.h_addr_list=malloc(2*sizeof(char*));
-		if (p->host.h_addr_list==0){
-			ser_error=E_OUT_OF_MEM;
-			free(p->host.h_name);
-			free(p->host.h_aliases);
-			goto error;
-		}
-		p->host.h_addr_list[1]=0;
-		p->host.h_addr_list[0]=malloc(5);
-		if (p->host.h_addr_list[0]==0){
-			ser_error=E_OUT_OF_MEM;
-			free(p->host.h_name);
-			free(p->host.h_aliases);
-			free(p->host.h_addr_list);
-			goto error;
-		}
-		memcpy(p->host.h_addr_list[0], (char*)&ip, 4);
-		p->host.h_addr_list[0][4]=0;
-		if (p->port==0) p->port=SIP_PORT;
-
-		return p;
-	}
-#endif
-	/* fail over to normal lookup */
 
 	DBG("DEBUG: mk_proxy: doing DNS lookup...\n");
 	he=sip_resolvehost(name, &(p->port));

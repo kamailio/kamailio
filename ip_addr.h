@@ -341,6 +341,29 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 
 
 
-
-
+/* converts an ip_addr structure to a hostent, returns pointer to internal
+ * statical structure */
+static inline struct hostent* ip_addr2he(char* name, int len,
+											struct ip_addr* ip)
+{
+	static struct hostent he;
+	static char hostname[256];
+	static char* p_aliases[1];
+	static char* p_addr[2];
+	static char address[16];
+	
+	p_aliases[0]=0; /* no aliases*/
+	p_addr[1]=0; /* only one address*/
+	p_addr[0]=address;
+	strncpy(hostname, name, (len<256)?len:256);
+	if (ip->len>16) return 0;
+	memcpy(address, ip->u.addr, ip->len);
+	
+	he.h_addrtype=ip->af;
+	he.h_length=ip->len;
+	he.h_addr_list=p_addr;
+	he.h_aliases=p_aliases;
+	he.h_name=hostname;
+	return &he;
+}
 #endif

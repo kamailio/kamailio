@@ -8,6 +8,7 @@
 #include "resolve.h"
 #include "dprint.h"
 #include "mem/mem.h"
+#include "ip_addr.h"
 
 
 
@@ -358,6 +359,7 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port)
 	struct rdata* head;
 	struct rdata* l;
 	struct srv_rdata* srv;
+	struct ip_addr* ip;
 	static char tmp[MAX_DNS_NAME]; /* tmp. buff. for SRV lookups */
 	int len;
 
@@ -369,6 +371,16 @@ struct hostent* sip_resolvehost(char* name, unsigned short* port)
 			LOG(L_WARN, "WARNING: sip_resolvehost: domain name too long (%d),"
 						" unable to perform SRV lookup\n", len);
 		}else{
+			/* check if it's an ip address */
+			if ( ((ip=str2ip(name, len))!=0)
+#ifdef	USE_IPV6
+				  || ((ip=str2ip6(name, len))!=0)
+#endif
+				){
+				/* we are lucky, this is an ip address */
+				return ip_addr2he(name,len,ip);
+			}
+			
 			memcpy(tmp, SRV_PREFIX, SRV_PREFIX_LEN);
 			memcpy(tmp+SRV_PREFIX_LEN, name, len+1); /*include the ending 0*/
 			
