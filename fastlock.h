@@ -89,6 +89,18 @@ inline static int tsl(fl_lock_t* lock)
 			: "r"(1), "r" (lock) : "memory"
 	);
 	
+#elif defined __CPU_ppc
+	asm volatile(
+			"1: lwarx  %0, 0, %2\n\t"
+			"   cmpwi  %0, 0\n\t"
+			"   bne    0f\n\t"
+			"   stwcx. %1, 0, %2\n\t"
+			"   bne-   1b\n\t"
+			"0:\n\t"
+			: "=r" (val)
+			: "r"(1), "b" (lock) :
+			"memory", "cc"
+        );
 #else
 #error "unknown arhitecture"
 #endif
@@ -142,6 +154,15 @@ inline static void release_lock(fl_lock_t* lock)
 		: "r"(0), "r"(lock)
 		: "memory"
 	);
+#elif defined __CPU_ppc
+	asm volatile(
+			"sync\n\t"
+			"stw %0, 0(%1)\n\t"
+			: /* no output */
+			: "r"(0), "b" (lock)
+			: "memory"
+        );
+	*lock = 0;
 #else
 #error "unknown arhitecture"
 #endif
