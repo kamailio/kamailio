@@ -32,11 +32,15 @@
 #include <stdio.h>
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h" /* cred_body_t get_authorized_cred*/
+#include "defs.h"
+#ifdef REALM_HACK
+#include "../../parser/parse_uri.h"
+#endif
+#include "../../str.h"
 #include "challenge.h"
 #include "nonce.h"                      /* calc_nonce */
 #include "common.h"                     /* send_resp */
 #include "auth_mod.h"                   /* Module parameters */
-#include "defs.h"                       /* PRINT_MD5 */
 
 
 #define MESSAGE_407 "Proxy Authentication Required"
@@ -54,7 +58,7 @@ static char auth_hf[AUTH_HF_LEN];
 /*
  * Create {WWW,Proxy}-Authenticate header field
  */
-static inline void build_auth_hf(int _retries, int _stale, char* _realm, char* _buf, 
+static inline void build_auth_hf(int _retries, int _stale, str* _realm, char* _buf, 
 				 int* _len, int _qop, char* _hf_name)
 {
 	char nonce[NONCE_LEN + 1];
@@ -63,13 +67,13 @@ static inline void build_auth_hf(int _retries, int _stale, char* _realm, char* _
 	nonce[NONCE_LEN] = '\0';
 	
 	*_len = snprintf(_buf, AUTH_HF_LEN,
-			 "%s: Digest realm=\"%s\", nonce=\"%s\"%s%s"
+			 "%s: Digest realm=\"%.*s\", nonce=\"%s\"%s%s"
 #ifdef PRINT_MD5
 			 ", algorithm=MD5"
 #endif
 			 "\r\n", 
 			 _hf_name, 
-			 _realm, 
+			 _realm->len, _realm->s, 
 			 nonce,
 			 (_qop) ? (", qop=\"auth\"") : (""),
 			 (_stale) ? (", stale=true") : ("")
@@ -82,12 +86,15 @@ static inline void build_auth_hf(int _retries, int _stale, char* _realm, char* _
 /*
  * Create and send a challenge
  */
-static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop, 
+static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop, 
 			    int _code, char* _message, char* _challenge_msg)
 {
 	int auth_hf_len;
 	struct hdr_field* h;
 	auth_body_t* cred = 0;
+#ifdef REALM_HACK
+	struct sip_uri uri;
+#endif
 
 	switch(_code) {
 	case 401: get_authorized_cred(_msg->authorization, &h); break;
@@ -95,6 +102,21 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
 	}
 
 	if (h) cred = (auth_body_t*)(h->parsed);
+
+#ifdef REALM_HACK
+	if (_realm->len == 0) {
+		if (get_realm(_msg, &uri) < 0) {
+			LOG(L_ERR, "challenge(): Error while extracting URI\n");
+			if (send_resp(_msg, 400, MESSAGE_400, 0, 0) == -1) {
+				LOG(L_ERR, "challenge(): Error while sending response\n");
+				return -1;
+			}
+			return 0;
+		}
+
+		_realm = &uri.host;
+	}
+#endif
 
 	if (cred != 0) {
 		if (cred->nonce_retries > retry_count) {
@@ -117,6 +139,12 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
 		build_auth_hf(0, 0, _realm, auth_hf, &auth_hf_len, _qop, _challenge_msg);
 	}
 	
+#ifdef REALM_HACK
+	if (_realm == &uri.host) {
+		free_uri(&uri);
+	}
+#endif
+
 	if (send_resp(_msg, _code, _message, auth_hf, auth_hf_len) == -1) {
 		LOG(L_ERR, "challenge(): Error while sending response\n");
 		return -1;
@@ -130,7 +158,7 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
  */
 int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, _realm, (int)_qop, 401, MESSAGE_401, WWW_AUTH_CHALLENGE);
+	return challenge(_msg, (str*)_realm, (int)_qop, 401, MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
 
@@ -139,5 +167,5 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
  */
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, _realm, (int)_qop, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
+	return challenge(_msg, (str*)_realm, (int)_qop, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }

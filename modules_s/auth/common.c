@@ -29,9 +29,11 @@
  */
 
 #include "../../data_lump_rpl.h"
-#include "../../ut.h"            /* q_memchr* */
+#include "../../ut.h"                /* q_memchr* */
+#include "../../parser/parse_from.h" /* parse_from_header */
+#include "../../parser/parse_uri.h"  /* parse_uri */
 #include "common.h"
-#include "auth_mod.h"            /* sl_reply */
+#include "auth_mod.h"                /* sl_reply */
 
 
 /*
@@ -127,3 +129,40 @@ int get_username(str* _s)
 	_s->len = 0;
 	return -2;
 }
+
+
+#ifdef REALM_HACK
+
+/* 
+ * Return parsed To or From, host part of the parsed uri is realm
+ */
+int get_realm(struct sip_msg* _m, struct sip_uri* _u)
+{
+	str uri;
+
+	if ((REQ_LINE(_m).method.len == 8) && (strncmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
+		if (!_m->to && ((parse_headers(_m, HDR_TO, 0) == -1) || (!_m->to))) {
+			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+			return -1;
+		}
+
+		     /* Body of To header field is parsed automatically */
+		uri = get_to(_m)->uri; 
+	} else {
+		if (parse_from_header(_m) < 0) {
+			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+			return -2;
+		}
+
+		uri = get_from(_m)->uri;
+	}
+
+	if (parse_uri(uri.s, uri.len, _u) < 0) {
+		LOG(L_ERR, "get_realm(): Error while parsing URI\n");
+		return -3;
+	}
+
+	return 0;
+}
+
+#endif

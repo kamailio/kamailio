@@ -55,5 +55,11 @@
  */
 #define PRINT_MD5
 
+/*
+ * If defined, realm parameter can be omitted and will
+ * be extracted from SIP message
+ */
+#define REALM_HACK
+
 
 #endif /* DEFS_H */

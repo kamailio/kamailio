@@ -34,6 +34,10 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
+#include "defs.h"
+
+
+#define MESSAGE_400 "Bad Request"
 
 
 /*
@@ -47,5 +51,14 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
  */
 int get_username(str* _s);
 
+
+#ifdef REALM_HACK
+
+/* 
+ * Return parsed To or From, host part of the parsed uri is realm
+ */
+int get_realm(struct sip_msg* _m, struct sip_uri* _u);
+
+#endif
 
 #endif /* COMMON_H */

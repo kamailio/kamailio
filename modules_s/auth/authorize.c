@@ -36,13 +36,13 @@
 #include "../../mem/mem.h"              /* Memory subsystem */
 #include "authorize.h"
 #include "defs.h"                       /* ACK_CANCEL_HACK */
+#include "../../parser/parse_uri.h"
 #include "nonce.h"                      /* Nonce related functions */
 #include "common.h"                     /* send_resp */
 #include "auth_mod.h"
 #include "rfc2617.h"
 
 
-#define MESSAGE_400 "Bad Request"
 #define MESSAGE_500 "Server Internal Error"
 
 
@@ -256,9 +256,12 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _hftype)
 {
 	char ha1[256];
-	int res;
+	int res, ret;
 	struct hdr_field* h;
 	auth_body_t* cred;
+	struct sip_uri uri;
+
+	ret = -1;
 
 #ifdef ACK_CANCEL_HACK
 	     /* ACK and CANCEL must be always authorized, there is
@@ -272,6 +275,22 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	}
 #endif
 
+#ifdef REALM_HACK
+	if (_realm->len == 0) {
+		if (get_realm(_m, &uri) < 0) {
+			LOG(L_ERR, "authorize(): Error while extracting realm\n");
+			if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
+				LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
+				return -1;
+			}
+			return 0;
+		}
+		
+		_realm = &uri.host;
+	}
+#endif
+
+
 	     /* Try to find credentials with corresponding realm
 	      * in the message, parse them and return pointer to
 	      * parsed structure
@@ -281,12 +300,13 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		LOG(L_ERR, "authorize(): Error while looking for credentials\n");
 		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
-			return -1;
+			goto err;
 		}
-		return 0;
+		ret = 0;
+		goto err;
 	} else if (res > 0) {
 		DBG("authorize(): Credentials with given realm not found\n");
-		return -1;
+		goto err;
 	}
 
 	     /* Pointer to the parsed credentials */
@@ -297,14 +317,15 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		LOG(L_ERR, "authorize(): Credentials received are not filled properly\n");
 		if (send_resp(_m, 400, MESSAGE_400, 0, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 400 reply\n");
-			return -1;
+			goto err;
 		}
-		return 0;
+		ret = 0;
+		goto err;
 	}
 
 	if (check_nonce(&(cred->digest.nonce), &secret) != 0) {
 		LOG(L_ALERT, "authorize(): Invalid nonce value received, very suspicious !\n");
-		return -1;
+		goto err;
 	}
 
 	     /* Retrieve number of retries with the received nonce and
@@ -320,12 +341,13 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		     /* Error while accessing the database */
 		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
-			return -1;
+			goto err;
 		}
-		return 0;
+		ret = 0;
+		goto err;
 	} else if (res > 0) {
 		     /* Username not found */
-		return -1;
+		goto err;
 	}
 
 	     /* Recalculate response, it must be same to authorize sucessfully */
@@ -345,7 +367,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 			} else {
 				DBG("authorize(): Response is OK, but nonce is stale\n");
 				cred->stale = 1;
-				return -1;
+				goto err;
 			}
 		} else {
 			DBG("authorize(): Authorization OK\n");
@@ -353,7 +375,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		}
 	} else {
 		DBG("authorize(): Recalculated response is different\n");
-		return -1;
+		goto err;
 	}
 
  mark:
@@ -361,11 +383,20 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		LOG(L_ERR, "authorize(): Error while marking parsed credentials\n");
 		if (send_resp(_m, 500, MESSAGE_500, 0, 0) == -1) {
 			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
-			return -1;
+			goto err;
 		}
-		return 0;
+		ret = 0;
+	} else {
+		ret = 1;
 	}
-	return 1;
+
+ err:
+#ifdef REALM_HACK
+	if (_realm == &uri.host) {
+		free_uri(&uri);
+	}
+#endif
+	return ret;
 }
 
 

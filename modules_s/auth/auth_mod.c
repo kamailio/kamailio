@@ -313,9 +313,11 @@ static int challenge_fixup(void** param, int param_no)
 	unsigned int qop;
 	int err;
 	
-	if (param_no == 2) {
+	if (param_no == 1) {
+		return str_fixup(param, param_no);
+	} else if (param_no == 2) {
 		qop = str2s(*param, strlen(*param), &err);
-
+		
 		if (err == 0) {
 			free(*param);
 			*param=(void*)qop;
@@ -340,7 +342,7 @@ static int str_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		s = (str*)malloc(sizeof(str));
 		if (!s) {
-			LOG(L_ERR, "authorize_fixup(): No memory left\n");
+			LOG(L_ERR, "str_fixup(): No memory left\n");
 			return E_UNSPEC;
 		}
 
