@@ -1,0 +1,5 @@
+Issues
+- currently, each process keeps a T with properly
+  increased ref_count -> it can never be deleted
+  by the delete timer
+  Action: none, we don't mind
