@@ -24,9 +24,9 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2);
 
 
 /*
- * Check if user specified in credentials is in a table
+ * Check if username in specified header field is in a table
  */
-int is_user_in(struct sip_msg* _msg, char* _table, char* _s);
+int is_user_in(struct sip_msg* _msg, char* _hf, char* table);
 
 
 #endif /* GROUP_H */

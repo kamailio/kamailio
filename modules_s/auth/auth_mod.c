@@ -5,6 +5,7 @@
  */
 
 #include "auth_mod.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -38,6 +39,7 @@ static int mod_init(void);
 
 static int challenge_fixup(void** param, int param_no);
 static int str_fixup(void** param, int param_no);
+static int hf_fixup(void** param, int param_no);
 
 
 /*
@@ -101,16 +103,16 @@ struct module_exports exports = {
 		check_to,
 		check_from,
 		consume_credentials,
-		is_user_in,
+		is_user_in
 	},
-	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 1},
+	(int[]) {2, 2, 2, 2, 1, 1, 0, 0, 0, 2},
 	(fixup_function[]) {
 		str_fixup, str_fixup, 
 		challenge_fixup, challenge_fixup, 
 		str_fixup, str_fixup, 0, 0,
-		0, str_fixup
+		0, hf_fixup
 	},
-	9,
+	10,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */
@@ -238,7 +240,6 @@ static int challenge_fixup(void** param, int param_no)
 		if (err == 0) {
 			free(*param);
 			*param=(void*)qop;
-			return 0;
 		} else {
 			LOG(L_ERR, "challenge_fixup(): Bad number <%s>\n",
 			    (char*)(*param));
@@ -267,6 +268,39 @@ static int str_fixup(void** param, int param_no)
 		s->s = (char*)*param;
 		s->len = strlen(s->s);
 		*param = (void*)s;
+	}
+
+	return 0;
+}
+
+
+/*
+ * Convert HF description string to hdr_field pointer
+ *
+ * Supported strings: 
+ * "Request-URI", "To", "From", "Credentials"
+ */
+static int hf_fixup(void** param, int param_no)
+{
+	void* ptr;
+
+	if (param_no == 1) {
+		ptr = *param;
+
+		if (!strcasecmp((char*)*param, "Request-URI")) {
+			*param = (void*)1;
+		} else if (!strcasecmp((char*)*param, "To")) {
+			*param = (void*)2;
+		} else if (!strcasecmp((char*)*param, "From")) {
+			*param = (void*)3;
+		} else if (!strcasecmp((char*)*param, "Credentials")) {
+			*param = (void*)4;
+		} else {
+			LOG(L_ERR, "hf_fixup(): Unsupported Header Field identifier\n");
+			return E_UNSPEC;
+		}
+
+		free(ptr);
 	}
 
 	return 0;

@@ -11,81 +11,8 @@
 #include <string.h>
 #include "defs.h"
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
-
-
-/*
- * Finds specified character, that is not quoted 
- * If there is no such character, returns NULL
- *
- * PARAMS : char* _b : input buffer
- *        : char _c  : character to find
- * RETURNS: char*    : points to character found, NULL if not found
- */
-static inline char* find_not_quoted(str* _b, char _c)
-{
-	int quoted = 0, i;
-	
-	if (_b->s == 0) return NULL;
-
-	for(i = 0; i < _b->len; i++) {
-		if (!quoted) {
-			if (_b->s[i] == '\"') quoted = 1;
-			else if (_b->s[i] == _c) return _b->s + i;
-		} else {
-			if ((_b->s[i] == '\"') && (_b->s[i - 1] != '\\')) quoted = 0;
-		}
-	}
-	return NULL;
-}
-
-
-/*
- * Cut username part of a URL
- */
-static inline void get_username(str* _s)
-{
-	char* at, *dcolon, *dc;
-
-	     /* Find double colon, double colon
-	      * separates schema and the rest of
-	      * URL
-	      */
-	dcolon = find_not_quoted(_s, ':');
-
-	     /* No double colon found means error */
-	if (!dcolon) {
-		_s->len = 0;
-		return;
-	}
-
-	     /* Skip the double colon */
-	_s->len -= dcolon + 1 - _s->s;
-	_s->s = dcolon + 1;
-
-	     /* Try to find @ or another doublecolon
-	      * if the URL contains also pasword, username
-	      * and password will be delimited by double
-	      * colon, if there is no password, @ delimites
-	      * username from the rest of the URL, if there
-	      * is no @, there is no username in the URL
-	      */
-	at = memchr(_s->s, '@', _s->len); /* FIXME: one pass */
-	dc = memchr(_s->s, ':', _s->len);
-	if (at) {
-		     /* The double colon must be before
-		      * @ to delimit username, otherwise
-		      * it delimits hostname from port number
-		      */
-		if ((dc) && (dc < at)) {
-			_s->len = dc - dcolon - 1;
-			return;
-		}
-		
-		_s->len = at - dcolon - 1;
-	} else {
-		_s->len = 0;
-	} 
-}
+#include "common.h"
+#include "../../ut.h"
 
 
 /*
@@ -123,14 +50,17 @@ static inline int check_username(struct sip_msg* _m, struct hdr_field* _h)
 	user.s = _h->body.s;
 	user.len = _h->body.len;
 
-	get_username(&user);
+	if (auth_get_username(&user) < 0) {
+		LOG(L_ERR, "is_user(): Can't extract username\n");
+		return -1;
+	}
 
 	if (!user.len) return -1;
 
 	len = c->digest.username.len;
 
 #ifdef USER_DOMAIN_HACK
-	ptr = memchr(c->digest.username.s, '@', len);
+	ptr = q_memchr(c->digest.username.s, '@', len);
 	if (ptr) {
 		len = ptr - c->digest.username.s;
 	}

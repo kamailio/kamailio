@@ -12,6 +12,9 @@
 #include "../../db/db.h"
 #include "auth_mod.h"                   /* Module parameters */
 #include "../../parser/digest/digest.h" /* get_authorized_cred */
+#include "../../parser/hf.h"
+#include "../../parser/parse_from.h"
+#include "common.h"
 
 
 /*
@@ -89,17 +92,19 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
 	VAL_STR(vals + 1).len = ((str*)_group)->len;
 	
 	db_use_table(db_handle, grp_table);
-	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) < 0) {
+	if (db_query(db_handle, keys, vals, col, 2, 1, 0, &res) < 0) {
 		LOG(L_ERR, "is_in_group(): Error while querying database\n");
 		return -1;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
-		DBG("is_in_group(): User %s is not in group %s\n", c->digest.username.s, _group);
+		DBG("is_in_group(): User \'%.*s\' is not in group %s\n", 
+		    c->digest.username.len, c->digest.username.s, _group);
 		db_free_query(db_handle, res);
 		return -1;
 	} else {
-		DBG("is_in_group(): User %s is member of group %s\n", c->digest.username.s, _group);
+		DBG("is_in_group(): User \'%.*s\' is member of group %s\n", 
+		    c->digest.username.len, c->digest.username.s, _group);
 		db_free_query(db_handle, res);
 		return 1;
 	}
@@ -107,45 +112,166 @@ int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
 
 
 /*
- * Check if user specified in credentials is in a table
+ * Extract username from Request-URI
  */
-int is_user_in(struct sip_msg* _msg, char* _table, char* _s)
+static inline int get_request_user(struct sip_msg* _m, str* _s)
 {
-	db_key_t key = grp_user_col;
-	db_val_t val;
-	db_key_t col = grp_user_col;
-	db_res_t* res;
+	if (_m->new_uri.s) {
+		_s->s = _m->new_uri.s;
+		_s->len = _m->new_uri.len;
+	} else {
+		_s->s = _m->first_line.u.request.uri.s;
+		_s->len = _m->first_line.u.request.uri.len;
+	}
+	if (auth_get_username(_s) < 0) {
+		LOG(L_ERR, "get_request_user(): Error while extracting username\n");
+		return -1;
+	}
+	return 0;
+}
 
-	struct hdr_field* h;
-	auth_body_t* c;
 
-	get_authorized_cred(_msg->authorization, &h);
-	if (!h) {
-		get_authorized_cred(_msg->proxy_auth, &h);
-		if (!h) {
-			LOG(L_ERR, "is_user_in(): No authorized credentials found (error in scripts)\n");
-			return -1;
-		}
+/*
+ * Extract username from To header field
+ */
+static inline int get_to_user(struct sip_msg* _m, str* _s)
+{
+	if (!_m->to && (parse_headers(_m, HDR_TO, 0) == -1)) {
+		LOG(L_ERR, "is_user_in(): Error while parsing message\n");
+		return -1;
+	}
+	if (!_m->to) {
+		LOG(L_ERR, "is_user_in(): To HF not found\n");
+		return -2;
+	}
+	
+	_s->s = ((struct to_body*)_m->to->parsed)->uri.s;
+	_s->len = ((struct to_body*)_m->to->parsed)->uri.len;
+
+	if (auth_get_username(_s) < 0) {
+		LOG(L_ERR, "get_to_user(): Error while extracting username\n");
+		return -3;
+	}
+	return 0;
+}
+
+
+/*
+ * Extract username from From header field
+ */
+static inline int get_from_user(struct sip_msg* _m, str* _s)
+{
+	if (!_m->from && (parse_headers(_m, HDR_FROM, 0) == -1)) {
+		LOG(L_ERR, "is_user_in(): Error while parsing message\n");
+		return -3;
+	}
+	if (!_m->from) {
+		LOG(L_ERR, "is_user_in(): From HF not found\n");
+		return -4;
+	}
+	
+	if (parse_from_header(_m->from) < 0) {
+		LOG(L_ERR, "is_user_in(): Error while parsing From body\n");
+		return -5;
+	}
+	
+	_s->s = ((struct to_body*)_m->from->parsed)->uri.s;
+	_s->len = ((struct to_body*)_m->from->parsed)->uri.len;
+
+	if (auth_get_username(_s) < 0) {
+		LOG(L_ERR, "is_user_in(): Error while extracting username\n");
+		return -6;
 	}
 
-	c = (auth_body_t*)(h->parsed);	
+	return 0;
+}
 
-	VAL_TYPE(&val) = DB_STR;
-	VAL_NULL(&val) = 0;
-	VAL_STR(&val).s = ((str*)_table)->s;
-	VAL_STR(&val).len = ((str*)_table)->len;
 
-	db_use_table(db_handle, grp_table);
+/*
+ * Extract username from digest credentials
+ */
+static inline int get_cred_user(struct sip_msg* _m, str* _s)
+{
+	struct hdr_field* h;
+	auth_body_t* c;
+	
+	get_authorized_cred(_m->authorization, &h);
+	if (!h) {
+		get_authorized_cred(_m->proxy_auth, &h);
+		if (!h) {
+			LOG(L_ERR, "is_user_in(): No authorized credentials found (error in scripts)\n");
+			return -6;
+		}
+	}
+	
+	c = (auth_body_t*)(h->parsed);
 
-	if (db_query(db_handle, &key, &val, &col, 1, 1, NULL, &res) < 0) {
+	_s->s = c->digest.username.s;
+	_s->len = c->digest.username.len;
+
+	return 0;
+}
+
+
+/*
+ * Check if username in specified header field is in a table
+ */
+int is_user_in(struct sip_msg* _msg, char* _hf, char* _table)
+{
+	db_key_t key[1] = {grp_user_col};
+	db_val_t val[1];
+	db_key_t col[1] = {grp_user_col};
+	db_res_t* res;
+	str user;
+
+	switch((int)_hf) {
+	case 1: /* Request-URI */
+		if (get_request_user(_msg, &user) < 0) {
+			LOG(L_ERR, "is_user_in(): Error while obtaining username from Request-URI\n");
+			return -1;
+		}
+		break;
+
+	case 2: /* To */
+		if (get_to_user(_msg, &user) < 0) {
+			LOG(L_ERR, "is_user_in(): Error while extracting To username\n");
+			return -2;
+		}
+		break;
+
+	case 3: /* From */
+		if (get_from_user(_msg, &user) < 0) {
+			LOG(L_ERR, "is_user_in(): Error while extracting From username\n");
+			return -3;
+		}
+		break;
+
+	case 4: /* Credentials */
+		if (get_cred_user(_msg, &user) < 0) {
+			LOG(L_ERR, "is_user_in(): Error while extracting digest username\n");
+			return -4;
+		}
+		break;
+	}
+
+	VAL_TYPE(val) = DB_STR;
+	VAL_NULL(val) = 0;
+	
+	VAL_STR(val).s = user.s;
+	VAL_STR(val).len = user.len;
+	
+	db_use_table(db_handle, _table);
+	if (db_query(db_handle, key, val, col, 1, 1, 0, &res) < 0) {
 		LOG(L_ERR, "is_user_in(): Error while querying database\n");
-		return -1;
+		return -5;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
+		DBG("is_user_in(): User \'%.*s\' is not in table %s\n", user.len, user.s, _table);
 		db_free_query(db_handle, res);
-		return -1;
+		return -6;
 	} else {
+		DBG("is_user(): User \'%.*s\' is in table %s\n", user.len, user.s, _table);
 		db_free_query(db_handle, res);
 		return 1;
 	}
