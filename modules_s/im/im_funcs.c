@@ -329,7 +329,7 @@ int im_send_message(str *to, str *from, str *contact, str *msg)
 		"Via: SIP/2.0/UDP %.*s:9%s"
 		"From: %.*s%s"
 		"To: <%.*s>%s"
-		"Call-ID: d2d4%4d-e803-%8X-b036-%X@%.*s%s"
+		"Call-ID: d2d4%04d-e803-%08X-b036-%X@%.*s%s"
 		"CSeq: %d MESSAGE%s"
 		"Contact: %.*s%s"
 		"Content-Type: text/plain; charset=UTF-8%s"
