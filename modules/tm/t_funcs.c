@@ -214,7 +214,12 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 {
    unsigned int dest_ip     = dest_ip_param;
    unsigned int dest_port  = dest_port_param;
-   int	branch = 0;	/* we don't do any forking right now */
+   int	branch;
+   unsigned int len;
+   char               *buf;
+
+   buf=NULL;
+   branch = 0;	/* we don't do any forking right now */
 
    /* it's about the same transaction or not? */
    if ( global_msg_id != p_msg->id )
@@ -240,10 +245,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    /* if it's forwarded for the first time ; else the request is retransmited from the transaction buffer */
    if ( T->outbound_request[branch]==NULL )
    {
-      unsigned int len;
-      char               *buf;
 
       DBG("DEBUG: t_forward: first time forwarding\n");
+
 
       /* special case : CANCEL */
       if ( p_msg->first_line.u.request.method_value==METHOD_CANCEL  )
@@ -283,7 +287,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
       if (!T->outbound_request[branch]) {
         LOG(L_ERR, "ERROR: t_forward: out of shmem\n");
-        return -1;
+	goto error;
       }
       memset( T->outbound_request[branch] , 0 , sizeof (struct retrans_buff) );
       T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload =  T->outbound_request[branch];
@@ -293,17 +297,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->nr_of_outgoings = 1;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
-      buf = build_req_buf_from_sip_req  ( p_msg, &len);
-      if (!buf)
-         return -1;
+      if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len))) goto error;
       T->outbound_request[branch]->bufflen = len ;
       if ( !(T->outbound_request[branch]->retr_buffer   = (char*)sh_malloc( len ))) {
 	LOG(L_ERR, "ERROR: t_forward: shmem allocation failed\n");
-	free( buf );
-	return -1;
+	goto error;
       }
       memcpy( T->outbound_request[branch]->retr_buffer , buf , len );
-      free( buf ) ;
+      free( buf ) ; buf=NULL;
 
       DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
       /*sets and starts the FINAL RESPONSE timer */
@@ -338,6 +339,13 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 
    return 1;
+
+error:
+	if (T->outbound_request[branch]) free(T->outbound_request[branch]);
+	if (buf) free( buf );
+
+	return -1;
+
 }
 
 
@@ -564,7 +572,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       rb = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
      if (!rb)
       {
-        LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem\n");
+        LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem for retransmission buffer\n");
        goto error;
       }
       T->outbound_response = rb;
@@ -858,7 +866,7 @@ int t_check( struct s_table *hash_table , struct sip_msg* p_msg )
    unsigned int branch;
 
    /* is T still up-to-date ? */
-   DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T=%x\n", p_msg->id,global_msg_id,T);
+   DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T=%p\n", p_msg->id,global_msg_id,T);
    if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
    {
       global_msg_id = p_msg->id;
