@@ -5,7 +5,7 @@
 #include "group.h"
 #include <string.h>
 #include "../../dprint.h"
-#include "db.h"
+#include "../../db/db.h"
 #include "auth.h"
 #include "auth_mod.h"
 #include "utils.h"

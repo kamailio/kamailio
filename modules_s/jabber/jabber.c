@@ -23,7 +23,7 @@
 
 #include "sip2jabber.h"
 #include "jc_pool.h"
-#include "db.h"
+#include "../../db/db.h"
 
 jab_wlist jwl = NULL;
 

@@ -17,7 +17,7 @@
 #include "sip2jabber.h"
 #include "tree234.h"
 #include "../../str.h"
-#include "db.h"
+#include "../../db/db.h"
 #include "lock.h"
 
 /**********             ***/

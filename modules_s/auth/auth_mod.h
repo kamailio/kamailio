@@ -5,7 +5,7 @@
 #ifndef auth_mod_h
 #define auth_mod_h
 
-#include "db.h"
+#include "../../db/db.h"
 #include "defs.h"
 #include "../../str.h"
 

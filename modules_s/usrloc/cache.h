@@ -8,7 +8,7 @@
 #include "c_slot.h"
 #include "c_elem.h"
 #include "location.h"
-#include "db.h"
+#include "../../db/db.h"
 #include "../../fastlock.h"
 #include "../../str.h"
 

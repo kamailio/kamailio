@@ -10,7 +10,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../data_lump_rpl.h"
 #include "cred.h"
-#include "db.h"
+#include "../../db/db.h"
 #include "calc.h"
 #include "../../md5global.h"
 #include "../../md5.h"
