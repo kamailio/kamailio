@@ -15,9 +15,9 @@ LIBS=
 
 # uncomment the next two lines if you wish to enable RADIUS accounting
 #DEFS+=-DRAD_ACC -I$(LOCALBASE)/include
+#LIBS=-L$(LOCALBASE)/lib -lradiusclient
 
 # uncomment the next two lines if you wish to enable DIAMETER accounting
 #DEFS+=-DDIAM_ACC
-#LIBS=-L$(LOCALBASE)/lib -lradiusclient
 
 include ../../Makefile.modules
