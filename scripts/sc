@@ -50,6 +50,7 @@ SUBSCRIBER_COLUMN='user_id'
 EMAIL_COLUMN=email_address
 SUB_CREATED_COLUMN=datetime_created
 SUB_MODIFIED_COLUMN=datetime_modified
+PHP_LIB_COLUMN=phplib_id
 
 # acl table
 ACL_TABLE=grp
@@ -467,8 +468,9 @@ case $1 in
 
 		QUERY="insert into $TABLE \
 				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$HA1_COLUMN,\
-				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN) \
-				values ('$1','$SIP_DOMAIN','$HA1','$HA1B','$2', '$3', now() );";
+				$HA1B_COLUMN,$PASSWORD_COLUMN,$EMAIL_COLUMN, $SUB_CREATED_COLUMN,  \
+				$PHP_LIB_COLUMN ) \
+				values ('$1','$SIP_DOMAIN','$HA1','$HA1B','$2', '$3', now(), '$HA1' );";
 		sql_query "$QUERY"
 		if [ $? -ne 0 ] ; then
 			echo "introducing a new user to the database failed"
