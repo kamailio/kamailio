@@ -12,7 +12,7 @@ Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
 Version:      %ver
 Release:      %rel
-Packager:     Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+Packager:     Nils Ohlmeier <nils@iptel.org>
 Copyright:    GPL
 Group:        Networking/Daemons
 Source:       http://iptel.org/ser/stable/%{name}-%{ver}_src.tar.gz
@@ -20,7 +20,7 @@ Source2:      ser.init.SuSE
 URL:          http://www.iptel.org/ser
 Vendor:       FhG Fokus
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
-Conflicts:    ser-mysql < %ver, ser-jabber < %ver, ser-radius < %ver
+Conflicts:    ser < %ver, ser-mysql < %ver, ser-jabber < %ver, ser-radius < %ver
 BuildPrereq:  make flex bison 
 
 
@@ -38,8 +38,9 @@ transaction module, registrar and user location.
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser mysql
-BuildPrereq: mysql-devel
+Requires: ser
+Conflicts:   ser < %ver, ser-mysql < %ver
+BuildPrereq: mysql-devel zlib-devel
 
 %description mysql
 The ser-mysql package contains MySQL database connectivity that you
@@ -50,7 +51,8 @@ entries.
 Summary:  sip jabber message translation support for the SIP Express Router.
 Group:    System Environment/Daemons
 Requires: ser
-BuildPrereq:  expat
+Conflicts:   ser < %ver, ser-jabber < %ver
+BuildPrereq: expat
 
 %description jabber
 The ser-jabber package contains a sip to jabber message translator.
@@ -59,6 +61,7 @@ The ser-jabber package contains a sip to jabber message translator.
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
 Requires: ser
+Conflicts:    ser < %ver, ser-radius < %ver
 BuildPrereq:  radiusclient
 
 %description radius
@@ -177,6 +180,10 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+
+* Wed Aug 27 2003 Nils Ohlmeier <nils@iptel.org>
+- fixed module dependencys
+- added Conflicts for modules
 
 * Wed Aug 27 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - changed vesion to 0.8.11
