@@ -46,6 +46,7 @@
  * Postgres specific connection data
  */
 struct con_postgres {
+	int connected;
 	char *sqlurl;	/* the url we are connected to, all connection memory
 			   parents from this */
 	PGconn *con;	/* this is the postgres connection */
@@ -60,6 +61,7 @@ struct con_postgres {
 #define CON_CONNECTION(db_con) (((struct con_postgres*)((db_con)->tail))->con)
 #define CON_FP(db_con)        (((struct con_postgres*)((db_con)->tail))->fp)
 #define CON_PID(db_con)       (((struct con_postgres*)((db_con)->tail))->tpid)
+#define CON_CONNECTED(db_con) (((struct con_postgres*)((db_con)->tail))->connected)
 
 #define PLOG(f,s) LOG(L_ERR, "PG[%d] %s %s\n",__LINE__,f,s)
 #define DLOG(f,s) LOG(L_INFO, "PG[%d] %s %s\n",__LINE__,f,s)

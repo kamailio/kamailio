@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include "../../sr_module.h"
+#include "db_con.h"
 #include "dbase.h"
 
 MODULE_VERSION
