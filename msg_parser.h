@@ -29,6 +29,16 @@
 #define HDR_ROUTE        256
 #define HDR_OTHER       65536 /*unknown header type*/
 
+/* via param types
+ * WARNING: keep in sync w/ FIN_*, GEN_PARAM and PARAM_ERROR from via_parse.c*/
+enum{
+		PARAM_HIDDEN=230, PARAM_TTL, PARAM_BRANCH, PARAM_MADDR, PARAM_RECEIVED,
+		GEN_PARAM,
+		PARAM_ERROR
+};
+
+
+
 #define INVITE_LEN	6
 #define ACK_LEN		3
 #define CANCEL_LEN	6
@@ -81,6 +91,16 @@ struct hdr_field{   /* format: name':' body */
 	struct hdr_field* next;
 };
 
+
+
+struct via_param{
+	int type;
+	str name;
+	str value;
+	int size; /* total size*/
+	struct via_param* next;
+};
+
 struct via_body{  /* format: name/version/transport host:port;params comment */
 	int error;
 	str hdr;   /* contains "Via" or "v" */
@@ -92,10 +112,14 @@ struct via_body{  /* format: name/version/transport host:port;params comment */
 	str port_str;
 	str params;
 	str comment;
+	struct via_param* param_lst; /* list of parameters*/
+	struct via_param* last_param; /*last via parameter, internal use*/
 	int bsize;    /* body size, not including hdr */
 	struct via_body* next; /* pointer to next via body string if
 							  compact via or null */
 };
+
+
 
 
 

@@ -47,7 +47,9 @@ enum{	         F_SIP=100,
 		L_PROTO, F_PROTO, P_PROTO
 	};
 
-/* param realated states */
+/* param related states
+ * WARNING: keep the FIN*, GEN_PARAM & PARAM_ERROR in sync w/ PARAM_* from
+ * msg_parser.h !*/
 enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
 		HIDDEN1,   HIDDEN2,   HIDDEN3,   HIDDEN4,   HIDDEN5,
 		TTL1,      TTL2,
@@ -56,8 +58,9 @@ enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
 		RECEIVED1, RECEIVED2, RECEIVED3, RECEIVED4, RECEIVED5, RECEIVED6,
 		RECEIVED7,
 		/* fin states (227-...)*/
-		FIN_HIDDEN, FIN_TTL, FIN_BRANCH, FIN_MADDR, FIN_RECEIVED,
-		GEN_PARAM
+		FIN_HIDDEN=230, FIN_TTL, FIN_BRANCH, FIN_MADDR, FIN_RECEIVED,
+		/*GEN_PARAM,
+		PARAM_ERROR*/ /* declared in msg_parser.h*/
 	};
 
 
@@ -67,19 +70,15 @@ enum{	L_VALUE=200,   F_VALUE, P_VALUE, P_STRING,
  * output state = L_PARAM or F_PARAM or END_OF_HEADER 
  * (and saved_state= last state); everything else => error */
 __inline char* parse_via_param(	char* p, char* end, int* pstate, 
-								int* psaved_state)
+								int* psaved_state, struct via_param* param)
 {
 	char* tmp;
 	register int state;
 	int saved_state;
-	int param_type;
-	char* param_name;
-	char* param_value;
 	
 	state=*pstate;
 	saved_state=*psaved_state;
-	param_name=param_value=0;
-	param_type=0;
+	param->type=PARAM_ERROR;
 	
 	for (tmp=p;tmp<end;tmp++){
 		switch(*tmp){
@@ -88,7 +87,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case FIN_HIDDEN:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						state=L_PARAM;
 						goto endofparam;
 					case FIN_BRANCH:
@@ -96,7 +96,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case FIN_MADDR:
 					case FIN_RECEIVED:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						state=L_VALUE;
 						goto find_value;
 					case F_PARAM:
@@ -109,7 +110,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case GEN_PARAM:
 					default:
 						*tmp=0;
-						param_type=GEN_PARAM;
+						param->type=GEN_PARAM;
+						param->name.len=tmp-param->name.s;
 						state=L_VALUE;
 						goto find_value;
 				}
@@ -119,7 +121,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case FIN_HIDDEN:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						saved_state=L_PARAM;
 						state=F_LF;
 						goto endofparam;
@@ -128,7 +131,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case FIN_MADDR:
 					case FIN_RECEIVED:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						saved_state=L_VALUE;
 						state=F_LF;
 						goto find_value;
@@ -146,8 +150,9 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case GEN_PARAM:
 					default:
 						*tmp=0;
-						param_type=GEN_PARAM;
+						param->type=GEN_PARAM;
 						saved_state=L_VALUE;
+						param->name.len=tmp-param->name.s;
 						state=F_LF;
 						goto find_value;
 				}
@@ -156,7 +161,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case FIN_HIDDEN:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						saved_state=L_PARAM;
 						state=F_CR;
 						goto endofparam;
@@ -165,7 +171,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case FIN_MADDR:
 					case FIN_RECEIVED:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						saved_state=L_VALUE;
 						state=F_CR;
 						goto find_value;
@@ -180,7 +187,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case GEN_PARAM:
 					default:
 						*tmp=0;
-						param_type=GEN_PARAM;
+						param->type=GEN_PARAM;
+						param->name.len=tmp-param->name.s;
 						saved_state=L_VALUE;
 						state=F_CR;
 						goto find_value;
@@ -194,7 +202,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case FIN_MADDR:
 					case FIN_RECEIVED:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						state=F_VALUE;
 						goto find_value;
 					case F_PARAM:
@@ -210,7 +219,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case GEN_PARAM:
 					default:
 						*tmp=0;
-						param_type=GEN_PARAM;
+						param->type=GEN_PARAM;
+						param->name.len=tmp-param->name.s;
 						state=F_VALUE;
 						goto find_value;
 				}
@@ -219,7 +229,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case FIN_HIDDEN:
 						*tmp=0;
-						param_type=state;
+						param->type=state;
+						param->name.len=tmp-param->name.s;
 						state=F_PARAM;
 						goto endofparam;
 					case FIN_BRANCH:
@@ -237,7 +248,8 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 					case GEN_PARAM:
 					default:
 						*tmp=0;
-						param_type=GEN_PARAM;
+						param->type=GEN_PARAM;
+						param->name.len=tmp-param->name.s;
 						state=F_PARAM;
 						goto endofparam;
 				}
@@ -249,7 +261,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case F_PARAM:
 						state=HIDDEN1;
-						param_name=tmp;
+						param->name.s=tmp;
 						break;
 					case GEN_PARAM:
 						break;
@@ -265,6 +277,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'i':
 			case 'I':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case HIDDEN1:
 						state=HIDDEN2;
 						break;
@@ -285,6 +301,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'd':
 			case 'D':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case HIDDEN2:
 						state=HIDDEN3;
 						break;
@@ -314,6 +334,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'e':
 			case 'E':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case HIDDEN4:
 						state=HIDDEN5;
 						break;
@@ -340,6 +364,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'n':
 			case 'N':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case HIDDEN5:
 						state=FIN_HIDDEN;
 						break;
@@ -362,7 +390,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case F_PARAM:
 						state=TTL1;
-						param_name=tmp;
+						param->name.s=tmp;
 						break;
 					case TTL1:
 						state=TTL2;
@@ -381,6 +409,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'l':
 			case 'L':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case TTL2:
 						state=FIN_TTL;
 						break;
@@ -400,7 +432,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case F_PARAM:
 						state=MADDR1;
-						param_name=tmp;
+						param->name.s=tmp;
 						break;
 					case GEN_PARAM:
 						break;
@@ -416,6 +448,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'a':
 			case 'A':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case MADDR1:
 						state=MADDR2;
 						break;
@@ -441,7 +477,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 						break;
 					case F_PARAM:
 						state=RECEIVED1;
-						param_name=tmp;
+						param->name.s=tmp;
 						break;
 					case BRANCH1:
 						state=BRANCH2;
@@ -460,6 +496,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'c':
 			case 'C':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case RECEIVED2:
 						state=RECEIVED3;
 						break;
@@ -480,6 +520,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 			case 'v':
 			case 'V':
 				switch(state){
+					case F_PARAM:
+						state=GEN_PARAM;
+						param->name.s=tmp;
+						break;
 					case RECEIVED5:
 						state=RECEIVED6;
 						break;
@@ -499,7 +543,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case F_PARAM:
 						state=BRANCH1;
-						param_name=tmp;
+						param->name.s=tmp;
 						break;
 					case GEN_PARAM:
 						break;
@@ -517,7 +561,7 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 				switch(state){
 					case F_PARAM:
 						state=GEN_PARAM;
-						param_name=tmp;
+						param->name.s=tmp;
 						break;
 					case  GEN_PARAM:
 						break;
@@ -532,11 +576,10 @@ __inline char* parse_via_param(	char* p, char* end, int* pstate,
 		}
 	}/* for tmp*/
 
-/* end of packet?*/
+/* end of packet? => error, no cr/lf,',' found!!!*/
 saved_state=state;
-param_type=state;
 state=END_OF_HEADER;
-goto end_via;
+goto error;
 
 find_value:
 	tmp++;
@@ -551,6 +594,7 @@ find_value:
 					case P_VALUE:
 						*tmp=0;
 						state=L_PARAM;
+						param->value.len=tmp-param->value.s;
 						goto endofvalue;
 					case P_STRING:
 						break;
@@ -577,6 +621,7 @@ find_value:
 						*tmp=0;
 						saved_state=L_PARAM;
 						state=F_LF;
+						param->value.len=tmp-param->value.s;
 						goto endofvalue;
 					case F_LF:
 					case F_CRLF:
@@ -601,6 +646,7 @@ find_value:
 						break; 
 					case P_VALUE:
 						*tmp=0;
+						param->value.len=tmp-param->value.s;
 						saved_state=L_PARAM;
 						state=F_CR;
 						goto endofvalue;
@@ -638,6 +684,7 @@ find_value:
 				switch(state){
 					case P_VALUE:
 						*tmp=0;
+						param->value.len=tmp-param->value.s;
 						state=F_PARAM;
 						goto endofvalue;
 					case P_STRING:
@@ -658,11 +705,12 @@ find_value:
 				switch(state){
 					case F_VALUE:
 						state=P_STRING;
-						param_value=tmp+1;
+						param->value.s=tmp+1;
 						break;
 					case P_STRING:
 						*tmp=0;
 						state=L_PARAM;
+						param->value.len=tmp-param->value.s;
 						goto endofvalue;
 					case F_LF:
 					case F_CR:
@@ -679,7 +727,7 @@ find_value:
 				switch(state){
 					case F_VALUE:
 						state=P_VALUE;
-						param_value=tmp;
+						param->value.s=tmp;
 						break;
 					case P_VALUE:
 					case P_STRING:
@@ -697,31 +745,36 @@ find_value:
 		}
 	} /* for2 tmp*/
 
-	/* if generic_param => it can have no value */
-	if ((state==L_VALUE)&&(param_type==GEN_PARAM)) state=L_PARAM;
-	saved_state=state;
-	state=END_OF_HEADER;
-	goto end_via;
+	/* end of buff and no CR/LF =>error*/
+saved_state=state;
+state=END_OF_HEADER;
+goto error;
 
 endofparam:
 endofvalue:
-
-end_via:
+	param->size=tmp-p;
 	*pstate=state;
 	*psaved_state=saved_state;
-	DBG("Found param type %d, <%s> = <%s>\n", param_type, param_name,
-			param_value);
+	DBG("Found param type %d, <%s> = <%s>; state=%d\n", param->type, 
+			param->name, param->value, state);
 	return tmp;
+	
+end_via:
+	/* if we are here we found an "unexpected" end of via
+	 *  (cr/lf). This is valid only if the param type is GEN_PARAM*/
+	if (param->type==GEN_PARAM) goto endofparam;
+	*pstate=state;
+	*psaved_state=saved_state;
+	DBG("Error on  param type %d, <%s>, state=%d, saved_state=%d\n", 
+		param->type, param->name.s, state, saved_state);
 
 error:
-	LOG(L_ERR, "error: via_parse_param\n");
-	*pstate=state;
-	*psaved_state=saved_state;
+	LOG(L_ERR, "error: parse_via_param\n");
+	param->type=PARAM_ERROR;
+	*pstate=PARAM_ERROR;
+	*psaved_state=state;
 	return tmp;
 }
-
-
-
 
 
 
@@ -736,6 +789,7 @@ char* parse_via(char* buffer, char* end, struct via_body *vb)
 	int err;
 
 	char* tmp_param;
+	struct via_param* param;
 
 
 parse_again:
@@ -1505,7 +1559,20 @@ main_via:
 					case F_PARAM:
 						/*state=P_PARAM*/;
 						if(vb->params.s==0) vb->params.s=tmp;
-						tmp=parse_via_param(tmp, end, &state, &saved_state);
+						param=pkg_malloc(sizeof(struct via_param));
+						if (param==0){
+							LOG(L_ERR, "ERROR:parse_via: mem. allocation"
+									" error\n");
+							goto error;
+						}
+						memset(param,0, sizeof(struct via_param));
+						tmp=parse_via_param(tmp, end, &state, &saved_state,
+											param);
+						/*add param to the list*/
+						if (vb->last_param)	vb->last_param->next=param;
+						else				vb->param_lst=param;
+						vb->last_param=param;
+						
 						switch(state){
 							case L_PARAM:
 							case F_PARAM:
@@ -1520,6 +1587,8 @@ main_via:
 								vb->params.len=tmp-vb->params.s;
 								state=saved_state;
 								goto endofheader;
+							case PARAM_ERROR:
+								goto error;
 							default:
 								LOG(L_ERR, "ERROR: parse_via after"
 										" parse_via_param: invalid"
