@@ -109,6 +109,18 @@ Desc:		aliases for IM networks.
 			'msn.x.com' must be the same as the JID associated with MSN
 			transport in Jabber configuration file (usually is 'jabberd.xml'))
 
+Name:		proxy
+Type:		string
+Default:	none
+Desc:		outbound proxy address
+			Format: ip_address:port
+					hostname:port
+			ex: 10.0.0.1:5060
+				sipserver.com:5060
+			- all SIP messages genereated by gateway will be sent to that
+			address. If is missing, the message will be delivered to the
+			hostname of the destination address
+
 Name:		workers
 Type:		integer
 Default:	2
