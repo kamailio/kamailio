@@ -27,12 +27,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
+#include <dprint.h>
+#include <mem.h>
 #include <mysql/mysql.h>
-#include "../../db/db_row.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "defs.h"
+#include "val.h"
 #include "con_mysql.h"
+#include "row.h"
 
 
 /*
@@ -43,8 +44,8 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	unsigned long* lengths;
 	int i;
 #ifndef PARANOID
-	if ((!_h) || (!_r) || (!_n)) {
-		log(L_ERR, "convert_row(): Invalid parameter value\n");
+	if ((!_h) || (!_res) || (!_r)) {
+		LOG(L_ERR, "convert_row(): Invalid parameter value\n");
 		return -1;
 	}
 #endif

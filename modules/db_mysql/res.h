@@ -1,7 +1,7 @@
 /* 
  * $Id$ 
  *
- * Database connection related functions
+ * MySQL module result related functions
  *
  * Copyright (C) 2001-2003 Fhg Fokus
  *
@@ -27,37 +27,29 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef RES_H
+#define RES_H
 
-#include <string.h>
-#include "../../db/db.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
-#include "defs.h"
+#include <db_res.h>
+#include <db_con.h>
 
 
 /*
- * Store name of table that will be used by
- * subsequent database functions
+ * Create a new result structure and initialize it
  */
-int use_table(db_con_t* _h, const char* _t)
-{
-	char* ptr;
-	int l;
-#ifdef PARANOID
-	if ((!_h) || (!_t)) {
-		LOG(L_ERR, "use_table(): Invalid parameter value\n");
-		return -1;
-	}
-#endif
-	l = strlen(_t) + 1;
-	ptr = (char*)pkg_malloc(l);
-	if (!ptr) {
-		LOG(L_ERR, "use_table(): No memory left\n");
-		return -2;
-	}
-	memcpy(ptr, _t, l);
+db_res_t* new_result(void);
 
-	if (CON_TABLE(_h)) pkg_free(CON_TABLE(_h));
-	CON_TABLE(_h) = ptr;
-	return 0;
-}
+
+/*
+ * Fill the structure with data from database
+ */
+int convert_result(db_con_t* _h, db_res_t* _r);
+
+
+/*
+ * Release memory used by a result structure
+ */
+int free_result(db_res_t* _r);
+
+
+#endif /* RES_H */
