@@ -63,6 +63,13 @@
 
 MODULE_VERSION
 
+#if !defined(AF_LOCAL)
+#define AF_LOCAL AF_UNIX
+#endif
+#if !defined(PF_LOCAL)
+#define PF_LOCAL PF_UNIX
+#endif
+
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int update_clen(struct sip_msg *, int);
@@ -561,7 +568,7 @@ get_rtpp_port(str *callid, int create)
 	addr.sun_family = AF_LOCAL;
 	strncpy(addr.sun_path, "/var/run/rtpproxy.sock",
 	    sizeof(addr.sun_path) - 1);
-#if !defined(__linux__)
+#if !defined(__linux__) && !defined(__solaris__)
 	addr.sun_len = strlen(addr.sun_path);
 #endif
 
