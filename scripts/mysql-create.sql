@@ -15,7 +15,8 @@ create table location (
 
 create table auth (
 	realm varchar(255) not null,
-	user varchar(255) not null,
+	user varchar(50) not null,
 	ha1 varchar(33) not null,
-	last_modified timestamp(14)
+	last_modified timestamp(14),
+	key(user,realm)
 );
