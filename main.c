@@ -700,6 +700,10 @@ int main(int argc, char** argv)
 		DPrint("ERROR: no SIGUSR2 signal handler can be installed\n");
 		goto error;
 	}
+#ifdef DBG_MSG_QA
+	fprintf(stderr, "WARNING: ser startup: "
+		"DBG_MSG_QA enabled, ser may exit abruptly\n");
+#endif
 
 
 
