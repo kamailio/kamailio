@@ -45,10 +45,12 @@ int mf_startup()
 
 
 
-int decrement_maxfed( struct sip_msg* msg )
+int decrement_maxfwd( struct sip_msg* msg )
 {
-	char    c;
-	str mf_s;
+	char              c;
+	str                 mf_s;
+	int                 err;
+	unsigned int x;
 
 	search_for_mf_hdr( msg , error );
 	/*did we found the header after parsing?*/
@@ -59,8 +61,9 @@ int decrement_maxfed( struct sip_msg* msg )
 		goto error;
 	}
 
-	mf_s.s    = msg->maxforwards.s;
-	mf_s.len = msg->maxforwards.len;
+	mf_s.s    = msg->maxforwards->body.s;
+	mf_s.len = msg->maxforwards->body.len;
+	DBG("DEBUG: before DECREMENT ************************************\n");
 	/*left trimming*/
 	while( mf_s.len && ( (c=mf_s.s[0])==0||c==' '||c=='\n'||c=='\r'||c=='\t') )
 	{
@@ -70,8 +73,8 @@ int decrement_maxfed( struct sip_msg* msg )
 	/*right trimming*/
 	while( mf_s.len && ( (c=mf_s.s[mf_s.len-1])==0||c==' '||c=='\n'||c=='\r'||c=='\t') )
 		mf_s.len--;
-	
-
+	x = str2s( mf_s.s,mf_s.len ,&err);
+	DBG("DEBUG: DECREMENT : val = %d , err=%d\n",x,err);
 	return 1;
 error:
 	return -1;

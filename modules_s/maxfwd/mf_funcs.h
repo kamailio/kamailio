@@ -8,7 +8,7 @@
 
 
 int mf_startup();
-int decrement_maxfed( struct sip_msg* msg );
+int decrement_maxfwd( struct sip_msg* msg );
 int add_maxfwd_header( struct sip_msg* msg , unsigned int val );
 int is_maxfwd_zero( struct sip_msg* msg );
 int reply_to_maxfwd_zero( struct sip_msg* msg );

@@ -91,7 +91,7 @@ static int fixup_add_maxfwd_header(void** param, int param_no)
 
 static int w_decrement_maxfwd(struct sip_msg* msg, char* str, char* str2)
 {
-	return decrement_maxfed( msg );
+	return decrement_maxfwd( msg );
 }
 
 static int w_add_maxfwd_header(struct sip_msg* msg, char* str, char* str2)
