@@ -285,6 +285,9 @@ int openmodem( struct modem *mdm)
 	return 0;
 }
 
+
+
+
 int closemodem(struct modem *mdm)
 {
 	tcsetattr(mdm->fd,TCSANOW,&(mdm->oldtio));

@@ -42,5 +42,7 @@ mailto:s.frings@mail.isis.de
 
 int openmodem(struct modem *mdm);
 
+int closemodem(struct modem *mdm);
+
 
 #endif
