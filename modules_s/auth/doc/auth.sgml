@@ -1,0 +1,51 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+<!ENTITY ser "SIP Express Router">
+<!ENTITY user SYSTEM "user.sgml">
+<!ENTITY devel SYSTEM "devel.sgml">
+<!ENTITY faq SYSTEM "faq.sgml">
+
+]>
+
+<book>
+    <bookinfo>
+	<title>Auth Module</title>
+	<productname class="trade">&ser;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG Fokus</orgname></affiliation>
+		<email>jan@iptel.org</email>
+	    </author>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>Song Networks</orgname></affiliation>
+		<email>jh@lohi.eng.song.fi</email>
+	    </author>
+	    <editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<email>jan@iptel.org</email>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2002</year>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+
+</book>
