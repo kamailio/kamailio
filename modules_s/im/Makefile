@@ -6,7 +6,7 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 auto_gen=
-NAME=sms.so
-LIBS=`pwd`/../im/im.so 
+NAME=im.so
+LIBS= 
 
 include ../../Makefile.modules
