@@ -1,0 +1,41 @@
+$Id$
+
+Recollection of Messages on Policy
+==================================
+
+Jiri & Juha: sipping, private exchange:
+(2003-02-24)
+---------------------------------------
+
+> for example, when someone calls me at sip:jh@sip.song.fi, the to header
+> may include any local way to make a call to a phone number, for example,
+> sip:0333983900@foo.bar;user=phone.  enum will then return for that
+> number sip:jh@sip.song.fi.  in this case, neither to or from header is
+> my sip uri.
+
+
+Why do we need to authenticate? My understanding was that you would like
+to challenge in case someone was claiming your domain in From and trying
+to get it rubberstamped by your domain's proxy. Do we need to worry about
+a BYE from 0123@foo to 0321@foo? Well, I think so, to avoid relaying
+(spam). That could be accomplished by challenging any requests to outside 
+domains. The question then is what realm should we use? We don't know
+it any longer, and we don't want to keep sessions. Keeping it with
+record-routing might be an option.
+
+Mike Graff, serusers
+--------------------
+I implemented something much like this:
+
+if (to me):
+        if register
+                www_authorize or fail if not a valid register
+                done
+        if claiming to be "From" one of the domains I accept
+        registrations for
+                proxy_authorize
+                done
+if not to me (I'm relaying for a local phone to an external address)
+        proxy_authorize (once again, based on from address)
+        done
+
