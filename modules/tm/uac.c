@@ -44,6 +44,7 @@
  *
  * History:
  * --------
+ * 2003-01-27 fifo:t_uac_dlg completed (jiri)
  * 2003-01-23 t_uac_dlg now uses get_out_socket (jiri)
  */
 
@@ -80,6 +81,12 @@
 #include "t_msgbuilder.h"
 #include "uac.h"
 
+/* header fields which are explicitely processed and are not copied
+ * from FIFO line-by-line
+ */
+#define skip_hf(_hf) (((_hf)->type==HDR_FROM) || ((_hf)->type==HDR_TO) \
+	|| ((_hf)->type==HDR_CALLID) || ((_hf)->type==HDR_CSEQ))
+
 /* Call-ID has the following form: <callid_nr>-<pid>@<ip>
  * callid_nr is initialized as a random number and continually
  * increases; -<pid>@<ip> is kept in callid_suffix
@@ -96,6 +103,11 @@
 
 /* length of FROM tags */
 #define FROM_TAG_LEN (MD5_LEN +1 /* - */ + CRC16_LEN)
+
+struct str_list {
+	str s;
+	struct str_list *next;
+};
 
 static unsigned long callid_nr;
 static char *callid_suffix;
@@ -330,6 +342,34 @@ done:
 }
 #endif
 
+static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su )
+{
+	struct proxy_l *proxy;
+	struct socket_info* send_sock;
+
+	proxy = uri2proxy(uri);
+	if (proxy == 0) {
+		ser_error = E_BAD_ADDRESS;
+		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
+		return 0;
+	}
+
+	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
+			(proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
+	send_sock=get_out_socket(to_su, PROTO_UDP);
+	if (send_sock == 0) {
+		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
+						to_su->s.sa_family );
+		ser_error = E_NO_SOCKET;
+	}
+
+
+	free_proxy(proxy);
+	free(proxy);
+	return send_sock;
+}
+	
+
 
 /*
  * Send a request within a dialog
@@ -404,11 +444,10 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	unsigned int req_len;
 	char *buf;
 	struct cell *new_cell;
-	struct proxy_l *proxy;
-	union sockaddr_union to_su;
 	struct socket_info* send_sock;
 	struct retr_buf *request;
 	str callid_s, ftag, tmp;
+	union sockaddr_union to_su;
 
 	/* make -Wall shut up */
 	ret=0;
@@ -423,22 +462,13 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 		goto done;
 	}
 
-	proxy = uri2proxy((dst) ? (dst) : ruri);
-	if (proxy == 0) {
-		ser_error = ret = E_BAD_ADDRESS;
-		LOG(L_ERR, "ERROR: t_uac_dlg: Can't create a dst proxy\n");
-		goto done;
+	send_sock=uri2sock( dst? dst: ruri, &to_su );
+	if (send_sock==0) {
+		LOG(L_ERR, "ERROR: t_uac_dlg: no socket found\n");
+		goto error00;
 	}
 
 	branch=0;
-	hostent2su(&to_su, &proxy->host, proxy->addr_idx, (proxy->port) ? htons(proxy->port) : htons(SIP_PORT));
-	send_sock=get_out_socket(&to_su, PROTO_UDP);
-	if (send_sock == 0) {
-		LOG(L_ERR, "ERROR: t_uac_dlg: no corresponding listening socket for af %d\n", to_su.s.sa_family );
-		ret = E_NO_SOCKET;
-		goto error00;
-	}
-	
 	     /* No Call-ID given, calculate it */
 	if (cid == 0) {
 		callid_nr++;
@@ -513,8 +543,10 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	request->buffer_len = req_len;
 	new_cell->nr_of_outgoings++;
 
+/*
 	proxy->tx++;
 	proxy->tx_bytes += req_len;
+*/
 
 	if (SEND_BUFFER(request) == -1) {
 		if (dst) {
@@ -523,8 +555,10 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 			tmp = *ruri;
 		}
 		LOG(L_ERR, "ERROR: t_uac: UAC sending to \'%.*s\' failed\n", tmp.len, tmp.s);
+/*
 		proxy->errors++;
 		proxy->ok = 0;
+*/
 	}
 	
 	start_retr(request);
@@ -539,8 +573,10 @@ error01:
 	free_cell(new_cell);
 
 error00:
+/*
 	free_proxy(proxy);
 	free(proxy);
+*/
 
 done: 
 	/* if we did not install cbp, release it now */
@@ -574,14 +610,16 @@ static void fifo_callback( struct cell *t, struct sip_msg *msg,
 	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
 }	
 
+#ifndef DEPRECATE_OLD_STUFF
+
 /* to be obsoleted in favor of fifo_uac_from */
 int fifo_uac( FILE *stream, char *response_file ) 
 {
-	char method[MAX_METHOD];
+	str sm, sh, sb, sd; /* method, header, body, dst(outbound) */
+	char method[MAX_METHOD]; /* read buffers for these ... */
 	char header[MAX_HEADER];
 	char body[MAX_BODY];
 	char dst[MAX_DST];
-	str sm, sh, sb, sd;
 	char *shmem_file;
 	int fn_len;
 	int ret;
@@ -652,7 +690,6 @@ int fifo_uac( FILE *stream, char *response_file )
 	return 1;
 }
 
-#ifndef DEPRECATE_OLD_STUFF
 
 /* syntax:
 
@@ -762,6 +799,123 @@ int fifo_uac_from( FILE *stream, char *response_file )
 
 #endif
 
+static struct str_list *new_str(char *s, int len, struct str_list **last, int *total)
+{
+	struct str_list *new;
+	new=pkg_malloc(sizeof(struct str_list));
+	if (!new) {
+		LOG(L_ERR, "ERROR: get_hfblock: not enough mem\n");
+		return 0;
+	}
+	new->s.s=s;
+	new->s.len=len;
+	new->next=0;
+
+	(*last)->next=new;
+	*last=new;
+	*total+=len;
+
+	return new;
+}
+
+
+static char *get_hfblock(str *uri, struct hdr_field *hf, int *l) 
+{
+	struct str_list sl, *last, *new, *i, *foo;
+	int hf_avail, frag_len, total_len;
+	char *begin, *needle, *dst, *ret, *d;
+	str *sock_name, *portname;
+	union sockaddr_union to_su;
+	struct socket_info* send_sock;
+
+	ret=0; /* pesimist: assume failure */
+	total_len=0;
+	last=&sl;
+	last->next=0;
+	portname=sock_name=0;
+
+	for (; hf; hf=hf->next) {
+		if (skip_hf(hf)) continue;
+
+		begin=needle=hf->name.s; 
+		hf_avail=hf->len;
+
+		/* substitution loop */
+		while(hf_avail) {
+			d=memchr(needle, SUBST_CHAR, hf_avail);
+			if (!d || d+1>=needle+hf_avail) { /* nothing to substitute */
+				new=new_str(begin, hf_avail, &last, &total_len); 
+				if (!new) goto error;
+				break;
+			} else {
+				frag_len=d-begin;
+				d++; /* d not at the second substitution char */
+				switch(*d) {
+					case SUBST_CHAR:	/* double SUBST_CHAR: IP */
+						/* string before substitute */
+						new=new_str(begin, frag_len, &last, &total_len); 
+						if (!new) goto error;
+						/* substitute */
+						if (!sock_name) {
+							send_sock=uri2sock( uri, &to_su );
+							if (!send_sock) {
+								LOG(L_ERR, "ERROR: get_hf_block: send_sock failed\n");
+								goto error;
+							}
+							sock_name=&send_sock->address_str;
+							portname=&send_sock->port_no_str;
+						}
+						new=new_str(sock_name->s, sock_name->len,
+								&last, &total_len );
+						if (!new) goto error;
+						new=new_str(portname->s, portname->len,
+								&last, &total_len );
+						if (!new) goto error;
+						/* keep going ... */
+						begin=needle=d+1;hf_avail-=frag_len+2;
+						continue;
+					default:
+						/* no valid substitution char -- keep going */
+						hf_avail-=frag_len+1;
+						needle=d;
+				}
+			} /* possible substitute */
+		} /* substitution loop */
+		/* proceed to next header */
+		/* new=new_str(CRLF, CRLF_LEN, &last, &total_len );
+		if (!new) goto error; */
+		DBG("DEBUG: get_hf_block: one more hf processed\n");
+	} /* header loop */
+
+
+	/* construct a single header block now */
+	ret=pkg_malloc(total_len);
+	if (!ret) {
+		LOG(L_ERR, "ERROR: get_hf_block no pkg mem for hf block\n");
+		goto error;
+	}
+	i=sl.next;
+	dst=ret;
+	while(i) {
+		foo=i;
+		i=i->next;
+		memcpy(dst, foo->s.s, foo->s.len);
+		dst+=foo->s.len;
+		pkg_free(foo);
+	}
+	*l=total_len;
+	return ret;
+
+error:
+	i=sl.next;
+	while(i) {
+		foo=i;
+		i=i->next;
+		pkg_free(foo);
+	}
+	*l=0;
+	return 0;
+}
 
 static void fifo_uac_error(char *reply_fifo, int code, char *msg)
 {
@@ -784,6 +938,37 @@ static void fifo_uac_error(char *reply_fifo, int code, char *msg)
 	[body] 
 	.EOL
 
+
+	there is also the possibility to have server placed its
+    hostname:portnumber in header fields -- just put double
+	exclamation mark in any of the optional header fields
+	(i.e., any but From/To/CallID,CSeq), they will be 
+	substituted hn:pn
+
+Example:
+
+sc fifo t_uac_dlg MESSAGE sip:joe@192.168.2.1 \
+	. \ # no outbound proxy
+	'From:sender@iptel.org;tagd=123'  \ # no to-tag -> ephemeral
+	'To:sender@iptel.org' \
+	'Foo: sip:user@!! '  \ # expansion here
+	'CSEQ: 11 MESSAGE   ' \
+	. \ # EoH
+	.	# empty body
+---
+U 192.168.2.16:5060 -> 192.168.2.1:5060
+MESSAGE sip:joe@192.168.2.1 SIP/2.0..
+Via: SIP/2.0/UDP 192.168.2.16;branch=z9hG4bK760c.922ea6a1.0..
+To: sender@iptel.org..
+From: sender@iptel.org;tagd=123;tag=5405e669bc2980663aed2624dc31396f-fa77..
+CSeq: 11 MESSAGE..
+Call-ID: e863bf56-22255@192.168.2.16..
+Content-Length: 0..
+User-Agent: Sip EXpress router (0.8.11pre4-tcp1-locking (i386/linux))..
+Foo: sip:user@192.168.2.16:5060..
+..
+
+
 */
 
 int fifo_uac_dlg( FILE *stream, char *response_file ) 
@@ -794,6 +979,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 	char header_buf[MAX_HEADER]; 
 	char body_buf[MAX_BODY]; 
 	str method, ruri, outbound, header, body;
+	str hfb; /* header field block */
 	struct sip_uri parsed_ruri, parsed_outbound;
 	str dummy_empty;
 	int fromtag;
@@ -925,7 +1111,12 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 		}
 	}
 
-
+	hfb.s=get_hfblock(outbound.len ? &outbound : &ruri, 
+					faked_msg.headers, &hfb.len);
+	if (!hfb.s) {
+		fifo_uac_error(response_file, 500, "no mem for hf block");
+		goto error;
+	}
 
 
 	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
@@ -935,7 +1126,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 		shmem_file=shm_malloc(fn_len);
 		if (shmem_file==0) {
 			fifo_uac_error(response_file, 500, "no shmem");
-			goto error;
+			goto error01;
 		}
 		memcpy(shmem_file, response_file, fn_len );
 	} else {
@@ -959,7 +1150,7 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 		faked_msg.callid ?
 			&faked_msg.callid->body:
 			0,
-		0, 						/* headers -- TBD */
+		&hfb, 						/* headers -- TBD */
 		&body,
 		fifo_callback, shmem_file );
 
@@ -979,6 +1170,9 @@ int fifo_uac_dlg( FILE *stream, char *response_file )
 #endif
 		}
 	}
+
+error01:
+	pkg_free(hfb.s);
 
 error:
 	/* free_sip_msg(&faked_msg); */

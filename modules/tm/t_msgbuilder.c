@@ -25,11 +25,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *
+ * History:
+ * ----------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
 #include "defs.h"
 
 
+#include "../../comp_defs.h"
 #include "../../hash_func.h"
 #include "../../globals.h"
 #include "t_funcs.h"
@@ -95,18 +101,28 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	}
 	*len+= via_len;
 	/*headers*/
+#ifdef PRESERVE_ZT
 	*len+=Trans->from.len+CRLF_LEN
 		+Trans->callid.len+CRLF_LEN
 		+to->len+CRLF_LEN
 		/* CSeq: 101 CANCEL */
 		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
+#else
+	*len+=Trans->from.len+Trans->callid.len+to->len+
+		+Trans->cseq_n.len+1+method_len+CRLF_LEN; 
+#endif
+
 
 	/* copy'n'paste Route headers */
 	if (!Trans->local) {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			 if (hdr->type==HDR_ROUTE)
+#ifdef PRESERVE_ZT
 				*len+=((hdr->body.s+hdr->body.len ) - hdr->name.s ) + 
 					CRLF_LEN ;
+#else
+				*len+=hdr->len;
+#endif
 	}
 
 	/* User Agent */
@@ -133,12 +149,18 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_mem_block(p,via,via_len);
 
 	/*other headers*/
+#ifdef PRESERVE_ZT
 	append_str( p, Trans->from );
 	append_mem_block( p, CRLF, CRLF_LEN );
 	append_str( p, Trans->callid );
 	append_mem_block( p, CRLF, CRLF_LEN );
 	append_str( p, *to );
 	append_mem_block( p, CRLF, CRLF_LEN );
+#else
+	append_str( p, Trans->from );
+	append_str( p, Trans->callid );
+	append_str( p, *to );
+#endif
 	append_str( p, Trans->cseq_n );
 	append_mem_block( p, " ", 1 );
 	append_mem_block( p, method, method_len );
@@ -147,9 +169,13 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	if (!Trans->local)  {
 		for ( hdr=Trans->uas.request->headers ; hdr ; hdr=hdr->next )
 			if(hdr->type==HDR_ROUTE) {
+#ifdef PRESERVE_ZT
 				append_mem_block(p, hdr->name.s,
 					hdr->body.s+hdr->body.len-hdr->name.s );
 				append_mem_block(p, CRLF, CRLF_LEN );
+#else
+				append_mem_block(p, hdr->name.s, hdr->len );
+#endif
 			}
 	}
 

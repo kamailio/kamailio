@@ -25,19 +25,23 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
 
 #ifndef CASE_UNSU_H
 #define CASE_UNSU_H
 
+#include "../comp_defs.h"
 
 #define TED_CASE                             \
         switch(LOWER_DWORD(val)) {           \
         case _ted1_:                         \
                 hdr->type = HDR_UNSUPPORTED; \
                 hdr->name.len = 11;          \
-                *(p + 3) = '\0';             \
+                SET_ZT(*(p + 3));            \
 	        return (p + 4);              \
                                              \
         case _ted2_:                         \

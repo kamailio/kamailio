@@ -37,6 +37,8 @@
 #include "config.h"
 #include "t_dlg.h"
 
+/* substitution character for FIFO UAC */
+#define SUBST_CHAR '!'
 #ifdef _DEPRECATED
 /* number of random digits in beginning of a string --
    please multiples of 2 */

@@ -51,7 +51,8 @@
  *
  * History:
  * ----------
- * 2003-01-23 options for disabling r-uri matching introduced
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-01-23 options for disabling r-uri matching introduced (jiri)
  */
 
 
@@ -59,6 +60,7 @@
 
 
 #include <assert.h>
+#include "../../comp_defs.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
@@ -94,7 +96,11 @@
 	 (t_msg->via1->bsize-(t_msg->_via->name.s-(t_msg->_via->hdr.s+t_msg->_via->hdr.len)))\
 	)==0 )
 
+#ifdef PRESERVE_ZT
 #define HF_LEN(_hf) ((_hf)->body.s+(_hf)->body.len-(_hf)->name.s)
+#else
+#define HF_LEN(_hf) ((_hf)->len)
+#endif
 
 /* should be request-uri matching used as a part of pre-3261 
  * transaction matching, as the standard wants us to do so

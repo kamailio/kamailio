@@ -31,13 +31,13 @@
 #ifndef CASE_VIA_H
 #define CASE_VIA_H
 
+#include "../comp_defs.h"
 
 #define via1_CASE            \
         hdr->type = HDR_VIA; \
         hdr->name.len = 3;   \
-        *(p + 3) = '\0';     \
+        SET_ZT(*(p + 3));     \
         return (p + 4)        
-
 
 #define via2_CASE            \
         hdr->type = HDR_VIA; \

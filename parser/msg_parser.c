@@ -26,12 +26,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  */
 
 
 #include <string.h>
 #include <stdlib.h>
 
+#include "../comp_defs.h"
 #include "msg_parser.h"
 #include "parser_f.h"
 #include "../ut.h"
@@ -79,6 +84,22 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		LOG(L_ERR, "ERROR: get_hdr_field: bad header\n");
 		goto error;
 	}
+
+#ifndef PRESERVE_ZT
+	/* eliminate leading whitespace */
+	tmp=eat_lws_end(tmp, end);
+	if (tmp>=end) {
+		LOG(L_ERR, "ERROR: get_hdr_field: HF empty\n");
+		goto error;
+	}
+#else
+	;
+#endif
+
+	/* if header-field well-known, parse it, find its end otherwise ;
+	 * after leaving the hdr->type switch, tmp should be set to the
+	 * next header field
+	 */
 	switch(hdr->type){
 		case HDR_VIA:
 			/* keep number of vias parsed -- we want to report it in
@@ -118,8 +139,10 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			}
 			hdr->parsed=cseq_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("get_hdr_field: cseq <%s>: <%s> <%s>\n",
-					hdr->name.s, cseq_b->number.s, cseq_b->method.s);
+			DBG("get_hdr_field: cseq <%.*s>: <%.*s> <%.*s>\n",
+					hdr->name.len, hdr->name.s, 
+					cseq_b->number.len, cseq_b->number.s, 
+					cseq_b->method.len, cseq_b->method.s);
 			break;
 		case HDR_TO:
 			to_b=pkg_malloc(sizeof(struct to_body));
@@ -137,8 +160,9 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			}
 			hdr->parsed=to_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("DEBUG: get_hdr_field: <%s> [%d]; uri=[%.*s] \n",
-				hdr->name.s, hdr->body.len, to_b->uri.len,to_b->uri.s);
+			DBG("DEBUG: get_hdr_field: <%.*s> [%d]; uri=[%.*s] \n",
+				hdr->name.len, hdr->name.s, 
+				hdr->body.len, to_b->uri.len,to_b->uri.s);
 			DBG("DEBUG: to body [%.*s]\n",to_b->body.len,to_b->body.s);
 			break;
 		case HDR_CONTENTLENGTH:
@@ -188,7 +212,11 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				}
 				tmp=match;
 			}while( match<end &&( (*match==' ')||(*match=='\t') ) );
+#ifdef PRESERVE_ZT
 			*(match-1)=0; /*null terminate*/
+#else
+			tmp=match;
+#endif
 			hdr->body.len=match-hdr->body.s;
 			break;
 		default:
@@ -198,10 +226,16 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 	}
 	/* jku: if \r covered by current length, shrink it */
 	trim_r( hdr->body );
+#ifndef PRESERVE_ZT
+	hdr->len=tmp-hdr->name.s;
+#endif
 	return tmp;
 error:
 	DBG("get_hdr_field: error exit\n");
 	hdr->type=HDR_ERROR;
+#ifndef PRESERVE_ZT
+	hdr->len=tmp-hdr->name.s;
+#endif
 	return tmp;
 }
 

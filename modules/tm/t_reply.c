@@ -27,11 +27,13 @@
  *
  * History:
  * --------
+ * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-19 faked lump list created in on_reply handlers
  */
 
 #include "defs.h"
 
+#include "../../comp_defs.h"
 
 #include "../../hash_func.h"
 #include "t_funcs.h"
@@ -106,8 +108,13 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
             "cannot generate a HBH ACK if key HFs in reply missing\n");
         return NULL;
     }
+#ifdef PRESERVE_ZT
 	to.len=rpl->to->body.s+rpl->to->body.len-rpl->to->name.s;
 	to.s=rpl->orig+(rpl->to->name.s-rpl->buf);
+#else
+	to.s=rpl->to->name.s;
+	to.len=rpl->to->len;
+#endif
     return build_local( trans, branch, ret_len,
         ACK, ACK_LEN, &to );
 }

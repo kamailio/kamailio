@@ -265,7 +265,7 @@ struct module_exports exports= {
 #ifndef DEPRECATE_OLD_STUFF
 	1+
 #endif
-	11,      /* Number of module paramers */
+	10,      /* Number of module paramers */
 
 	mod_init, /* module initialization function */
 	(response_function) t_on_reply,

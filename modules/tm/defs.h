@@ -24,12 +24,16 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-01-27 t_uac deprecated (jiri)
  */
 
 
 #ifndef _TM_DEFS_H
 #define _TM_DEFS_H
 
-#undef DEPRECATE_OLD_STUFF
+#define DEPRECATE_OLD_STUFF
 
 #endif

@@ -29,16 +29,32 @@
 #ifndef parser_f_h
 #define parser_f_h
 
+#include "../comp_defs.h"
+
 char* eat_line(char* buffer, unsigned int len);
 
 /* turn the most frequently called functions into inline functions */
-
 
 inline static char* eat_space_end(char* p, char* pend)
 {
 	for(;(p<pend)&&(*p==' ' || *p=='\t') ;p++);
 	return p;
 }
+#ifndef PRESERVE_ZT
+#define SP(_c) ((_c)=='\t' || (_c)==' ')
+inline static char* eat_lws_end(char* p, char* pend)
+{
+	while(p<pend) {
+		if (SP(*p)) p++;
+		/* btw--I really dislike line folding; -jiri */
+		else if (*p=='\n' && p+1<pend && SP(*(p+1))) p+=2;
+		else if (*p=='\r' && p+2<pend && *(p+1)=='\n' 
+					&& SP(*(p+2))) p+=3;
+		else break; /* no whitespace encountered */
+	}
+	return p;
+}
+#endif
 
 
 
