@@ -33,7 +33,7 @@
 #include "../../dprint.h"
 #include "../../parser/digest/digest.h" /* cred_body_t get_authorized_cred*/
 #include "defs.h"
-#ifdef REALM_HACK
+#ifdef AUTO_REALM
 #include "../../parser/parse_uri.h"
 #endif
 #include "../../str.h"
@@ -92,7 +92,7 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 	int auth_hf_len;
 	struct hdr_field* h;
 	auth_body_t* cred = 0;
-#ifdef REALM_HACK
+#ifdef AUTO_REALM
 	struct sip_uri uri;
 #endif
 
@@ -103,7 +103,7 @@ static inline int challenge(struct sip_msg* _msg, str* _realm, int _qop,
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
-#ifdef REALM_HACK
+#ifdef AUTO_REALM
 	if (_realm->len == 0) {
 		if (get_realm(_msg, &uri) < 0) {
 			LOG(L_ERR, "challenge(): Error while extracting URI\n");

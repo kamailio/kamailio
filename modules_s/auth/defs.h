@@ -59,7 +59,7 @@
  * If defined, realm parameter can be omitted and will
  * be extracted from SIP message
  */
-#define REALM_HACK
+#define AUTO_REALM
 
 
 #endif /* DEFS_H */

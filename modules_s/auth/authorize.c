@@ -275,7 +275,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 	}
 #endif
 
-#ifdef REALM_HACK
+#ifdef AUTO_REALM
 	if (_realm->len == 0) {
 		if (get_realm(_m, &uri) < 0) {
 			LOG(L_ERR, "authorize(): Error while extracting realm\n");

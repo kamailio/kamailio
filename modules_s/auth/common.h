@@ -52,7 +52,7 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
 int get_username(str* _s);
 
 
-#ifdef REALM_HACK
+#ifdef AUTO_REALM
 
 /* 
  * Return parsed To or From, host part of the parsed uri is realm

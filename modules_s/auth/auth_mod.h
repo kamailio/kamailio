@@ -61,7 +61,6 @@ extern char* grp_grp_col;     /* "group' column name in group table */
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int nonce_expire;      /* nonce expire interval */
 extern int retry_count;       /* How many time a client can retry */
-extern char* realm_realm_col; /* Realm column in table of local realms */
 extern int grp_use_domain;    /* Use domain in is_user_in */
 
 extern db_con_t* db_handle;   /* Database connection handle */

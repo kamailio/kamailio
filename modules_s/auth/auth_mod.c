@@ -98,7 +98,6 @@ char* grp_grp_col    = "grp";
 int   calc_ha1       = 0;
 int   nonce_expire   = 300;
 int   retry_count    = 5;
-char* realm_realm_col = "realm";
 int   grp_use_domain = 0;
 
 str secret;
@@ -124,8 +123,6 @@ struct module_exports exports = {
 		"check_from",
 		"consume_credentials",
 		"is_user_in",
-		"is_from_local",
-		"is_uri_host_local",
 		"does_uri_exist"
 	},
 	(cmd_function[]) {
@@ -138,18 +135,16 @@ struct module_exports exports = {
 		check_from,
 		consume_credentials,
 		is_user_in,
-		is_from_local,
-		is_uri_host_local,
 		does_uri_exist
 	},
-	(int[]) {2, 2, 2, 2, 1, 0, 0, 0, 2, 1, 1, 1},
+	(int[]) {2, 2, 2, 2, 1, 0, 0, 0, 2, 1},
 	(fixup_function[]) {
 		str_fixup, str_fixup, 
 		challenge_fixup, challenge_fixup, 
 		str_fixup, 0, 0,
-		0, hf_fixup, 0, 0, 0
+		0, hf_fixup, 0
 	},
-	12,
+	10,
 	
 	(char*[]) {
 		"db_url",              /* Database URL */
@@ -170,7 +165,6 @@ struct module_exports exports = {
                                         * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
 		"retry_count",         /* How many times a client is allowed to retry */
-		"realm_realm_col",     /* Realm column in table of local realms */
 		"group_use_domain"
 		
 	},   /* Module parameter names */
@@ -190,7 +184,6 @@ struct module_exports exports = {
 	        INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
-		STR_PARAM,
 		INT_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
@@ -209,14 +202,13 @@ struct module_exports exports = {
 		&calc_ha1,
 		&nonce_expire,
 		&retry_count,
-		&realm_realm_col,
 		&grp_use_domain
 		
 	},   /* Module parameter variable pointers */
 #ifdef USER_DOMAIN_HACK
-	15,      /* Numberof module parameters */
+	14,      /* Numberof module parameters */
 #else
-	14,      /* Number of module paramers */
+	13,      /* Number of module paramers */
 #endif					     
 	mod_init,   /* module initialization function */
 	NULL,       /* response function */

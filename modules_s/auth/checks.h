@@ -56,18 +56,6 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
 
 
 /*
- * Check if host in From uri is local
- */
-int is_from_local(struct sip_msg* _msg, char* _table, char* _s2);
-
-
-/*
- * Check if host in Request URI is local
- */
-int is_uri_host_local(struct sip_msg* _msg, char* _table, char* _s2);
-
-
-/*
  * Check if uri belongs to a local user
  */
 int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2);
