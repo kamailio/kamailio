@@ -1,3 +1,4 @@
+
 /*
  * Route & Record-Route module
  *
@@ -15,7 +16,20 @@
 #define RR_PREFIX_LEN 15
 
 
+/*
+ * Define this if you want ser become a loose router
+ * if not defined, ser will be just old and
+ * weak strict router :-)
+ */
+#define LOOSE_ROUTER
+
+
+/*
+ * This will allow malformed Route headers too,
+ * some hard phones need this
+ */
 #define ALLOW_MALFORMED_ROUTE
+
 
 /*
  * Returns TRUE if there is a Route header
@@ -23,20 +37,14 @@
  */
 int findRouteHF(struct sip_msg* _m)
 {
-	struct hdr_field* rh;
 	if (parse_headers(_m, HDR_ROUTE) == -1) {
-		LOG(L_ERR, "DEBUG : findRouteHF(): Error while parsing headers\n");
+		LOG(L_ERR, "findRouteHF(): Error while parsing headers\n");
 		return FALSE;
 	} else {
 		if (_m->route) {
-			rh = _m->route;
-			if (rh->type != HDR_ROUTE) {
-				DBG("DEBUG : findRouteHF(): No Route header fields found\n");
-				return FALSE;
-			}
 			return TRUE;
 		} else {
-			LOG(L_ERR, "ERROR : findRouteHF(): msg->route = NULL\n");
+			LOG(L_ERR, "findRouteHF(): msg->route = NULL\n");
 			return FALSE;
 		}
 	}
@@ -198,9 +206,11 @@ int buildRRLine(struct sip_msg* _m, char* _l)
 	memcpy(_l + len, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
 	len += _m->first_line.u.request.uri.len;
                /* bogdan :replaced \n with CRLF*/
-	memcpy(_l + len, ";branch=0>" CRLF,  10+CRLF_LEN);
-	len += 10+CRLF_LEN;
-	_l[len] = '\0';
+#ifdef LOOSE_ROUTER
+	memcpy(_l + len, ";branch=0>;lr" CRLF, 13 + CRLF_LEN + 1);
+#else
+	memcpy(_l + len, ";branch=0>" CRLF,  10 + CRLF_LEN + 1);
+#endif
 
 	DBG("buildRRLine: %s", _l);
 
@@ -234,3 +244,21 @@ int addRRLine(struct sip_msg* _m, char* _l)
 	return TRUE;
 }
 
+
+
+
+/*
+ * ------------ Loose router functions -----------------------------
+ */
+int calc_rr_id(struct sip_msg* _m, unsigned char* _hex)
+{
+	char buffer [8];
+	buffer[0] = _m->dst_ip;
+	buffer[4] = port_no;
+
+	conv_hex(_hex, buffer, 6);
+
+	printf("calc_rr_id(): %s\n", _hex);
+
+	return 0;
+}

@@ -1,9 +1,9 @@
-/*
+/* 
  * $Id$ 
  */
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#ifndef UTILS_H
+#define UTILS_H
 
 #include "../../msg_parser.h"
 
@@ -11,27 +11,68 @@
 
 
 #ifndef TRUE
-#define TRUE 0
+#define TRUE 1
 #endif
 
 #ifndef FALSE
-#define FALSE 1
+#define FALSE 0
 #endif
 
-#define SUCCESS 0
-#define FAILURE 1
+#define SUCCESS 1
+#define FAILURE 0
 
+/*
+ * Remove any leading white chars
+ */
+char* trim_leading(char* _s);
 
+/*
+ * Remove any trailing white chars
+ */
+char* trim_trailing(char* _s);
+
+/*
+ * Remove all leading and trailing white chars
+ */
 char* trim(char* _s);
+
+
+/*
+ * Eat linear white space
+ */
 char* eat_lws(char* _b);
+
+
+/*
+ * Substitute \r or \n with spaces
+ */
 struct hdr_field* remove_crlf(struct hdr_field* _hf);
 
+/*
+ * Convert string to lower case
+ */
 char* strlower(char* _s, int len);
+
+/*
+ * Convert string to upper case
+ */
 char* strupper(char* _s, int len);
 
-char* parse_to_char(char* _to);
-
+/*
+ * Find a character that is not quoted
+ */
 char* find_not_quoted(char* _b, char c);
+
+/*
+ * Skip the name part of a URL if any
+ */
 char* eat_name(char* _b);
+
+
+/*
+ * Converts binary array into its hex representation
+ * Size of _hex must be _blen * 2
+ */
+void bin2hex(unsigned char* _hex, unsigned char* _bin, int _blen);
 
 #endif

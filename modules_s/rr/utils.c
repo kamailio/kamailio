@@ -1,4 +1,4 @@
-/*
+/* 
  * $Id$ 
  */
 
@@ -6,6 +6,12 @@
 #include "utils.h"
 #include <string.h>
 #include "../../dprint.h"
+
+
+/*
+ * Miscelaneous utilities
+ */
+
 
 /*
  * Finds specified character, that is not quoted 
@@ -35,20 +41,30 @@ char* find_not_quoted(char* _b, char _c)
 
 
 /*
- * Remove any tabs and spaces from the begining and the end of
- * a string
+ * Remove any leading spaces and tabs
  */
-char* trim(char* _s)
+inline char* trim_leading(char* _s)
+{
+#ifdef PARANOID
+	if (!_s) return NULL;
+#endif
+	     /* Remove spaces and tabs from the begining of string */
+	while ((*_s == ' ') || (*_s == '\t')) _s++;
+	return _s;
+}
+
+
+/*
+ * Remove any trailing spaces and tabs
+ */
+inline char* trim_trailing(char* _s)
 {
 	int len;
 	char* end;
 
-	     /* Null pointer, there is nothing to do */
-	if (!_s) return _s;
-
-	     /* Remove spaces and tabs from the begining of string */
-	while ((*_s == ' ') || (*_s == '\t')) _s++;
-
+#ifdef PARANOID
+	if (!_s) return NULL;
+#endif
 	len = strlen(_s);
 
         end = _s + len - 1;
@@ -58,8 +74,18 @@ char* trim(char* _s)
 	if (end != (_s + len - 1)) {
 		*(end+1) = '\0';
 	}
-
 	return _s;
+}
+
+
+/*
+ * Remove any tabs and spaces from the begining and the end of
+ * a string
+ */
+char* trim(char* _s)
+{
+	_s = trim_leading(_s);
+	return trim_trailing(_s);
 }
 
 
@@ -89,7 +115,6 @@ struct hdr_field* remove_crlf(struct hdr_field* _hf)
 }
 
 
-
 char* strlower(char* _s, int _len)
 {
 	int i;
@@ -101,17 +126,18 @@ char* strlower(char* _s, int _len)
 }
 
 
-
 char* strupper(char* _s, int _len)
 {
 	int i;
 
 	for(i = 0; i < _len; i++) {
-		_s[i] = tolower(_s[i]);
+		_s[i] = toupper(_s[i]);
 	}
 
 	return _s;
 }
+
+
 
 
 /*
@@ -129,8 +155,6 @@ char* eat_name(char* _b)
 
 	if (!_b) return NULL;
 
-	_b = eat_lws(_b);
-	
 	     /* < means start of URI, : is URI scheme
 	      * separator, these two characters cannot
 	      * occur in non-quoted name string
@@ -152,39 +176,25 @@ char* eat_name(char* _b)
 
 	return _b;  /* Some error */
 }
-
-
-/* Finds URL without name part and parameters
- * Given string will be modified
- */
-char* parse_to_char(char* _to)
-{
-	char* ptr, *end;
-#ifdef PARANOID
-	if (!_to) return NULL;
-#endif
-
-	ptr = eat_name(_to);
-
-	if (ptr != _to) {    /* Name was found, test if previous char was < (in this case we look for >) */
-		if (*(ptr - 1) == '<') {
-			end = find_not_quoted(ptr, '>');
-			if (end) {
-				*end = '\0';
-				return ptr;
-			} else {
-				LOG(L_ERR, "parse_to_char(): Error while parsing, > is missing\n");
-				return NULL;
-			}
-		} else {  /* Otherwise <> was not use, so try to find the first parameter delimited by a semicolon */
-			end = strchr(ptr, ';');
-			if (end) {     /* There are no parameters */
-				*end = '\0';
-			}
-			return ptr;
-		}
-	}
-
-	return ptr;
-}
 		
+
+
+void bin2hex(unsigned char* _hex, unsigned char* _bin, int _blen)
+{
+	unsigned short i;
+	unsigned char j;
+    
+	for (i = 0; i < _blen; i++) {
+		j = (_bin[i] >> 4) & 0xf;
+		if (j <= 9)
+			_hex[i * 2] = (j + '0');
+		else
+			_hex[i * 2] = (j + 'a' - 10);
+		j = _bin[i] & 0xf;
+		if (j <= 9)
+			_hex[i * 2 + 1] = (j + '0');
+		else
+			_hex[i * 2 + 1] = (j + 'a' - 10);
+	};
+	_hex[_blen * 2] = '\0';
+}

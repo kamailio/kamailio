@@ -233,6 +233,9 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 		return -1;
 	}
 
+	if (RES_ROW_N(res) == 0) {
+		return -1;
+	}
         ha1 = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
 	memcpy(_ha1, ha1, strlen(ha1) + 1);
 
