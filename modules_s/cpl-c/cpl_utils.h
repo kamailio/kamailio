@@ -45,7 +45,7 @@ static inline char *strcasestr_str(str *s1, str *s2)
 	for(i=0;i<s1->len-s2->len;i++) {
 		for(j=0;j<s2->len;j++) {
 			if ( !((s1->s[i+j]==s2->s[j]) ||
-			( isalpha(s1->s[i+j]) && ((s1->s[i+j])^(s2->s[j]))==0x20 )) )
+			( isalpha((int)s1->s[i+j]) && ((s1->s[i+j])^(s2->s[j]))==0x20 )) )
 				break;
 		}
 		if (j==s2->len)

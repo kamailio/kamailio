@@ -33,8 +33,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
-#include <gnome-xml/xmlmemory.h>
-#include <gnome-xml/parser.h>
+//#include <gnome-xml/xmlmemory.h>
+//#include <gnome-xml/parser.h>
+
+
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"

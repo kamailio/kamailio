@@ -681,7 +681,12 @@ script_error:
 
 inline static int set_TZ(char *tz_name)
 {
-	if (setenv( "TZ", tz_name, 1/*overwrite*/)==-1) {
+	static char buf[256];
+
+	memcpy( buf, "TZ=",3);
+	strcpy( buf+3, tz_name );
+
+	if (putenv( buf )==-1) {
 		LOG(L_ERR,"ERROR:cpl-c:set_TZ: setenv failed -> unable to "
 			"switch to \"%s\"TimeZone\n",tz_name);
 		return -1;
