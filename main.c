@@ -204,6 +204,7 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 int children_no = 0;			/* number of children processing requests */
 int *pids=0;					/*array with childrens pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
+int sig_flag = 0;              /* last signal received */
 int debug = 0;
 int dont_fork = 0;
 int log_stderr = 0;
@@ -355,6 +356,92 @@ error:
 
 
 
+void handle_sigs()
+{
+	pid_t	chld;
+	int	chld_status;
+
+	switch(sig_flag){
+		case 0: break; /* do nothing*/
+		case SIGINT:
+		case SIGPIPE:
+		case SIGTERM:
+			/* we end the program in all these cases */
+			if (sig_flag==SIGINT)
+				DBG("INT received, program terminates\n");
+			else if (sig_flag==SIGPIPE)
+				DBG("SIGPIPE rreceived, program terminates\n");
+			else
+				DBG("SIGTERM received, program terminates\n");
+				
+			destroy_modules();
+#ifdef PKG_MALLOC
+			LOG(L_INFO, "Memory status (pkg):\n");
+			pkg_status();
+#endif
+#ifdef SHM_MEM
+			LOG(L_INFO, "Memory status (shm):\n");
+			shm_status();
+			/* zero all shmem alloc vars that we still use */
+			pids=0;
+			shm_mem_destroy();
+#endif
+			if (pid_file) unlink(pid_file);
+			/* kill children also*/
+			kill(0, SIGTERM);
+			dprint("Thank you for flying " NAME "\n");
+			exit(0);
+			break;
+			
+		case SIGUSR1:
+#ifdef STATS
+			dump_all_statistic();
+#endif
+#ifdef PKG_MALLOC
+			LOG(L_INFO, "Memory status (pkg):\n");
+			pkg_status();
+#endif
+#ifdef SHM_MEM
+			LOG(L_INFO, "Memory status (shm):\n");
+			shm_status();
+#endif
+			break;
+			
+		case SIGCHLD:
+			while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
+				if (WIFEXITED(chld_status)) 
+					LOG(L_INFO, "child process %d exited normally,"
+							" status=%d\n", chld, 
+							WEXITSTATUS(chld_status));
+				else if (WIFSIGNALED(chld_status)) {
+					LOG(L_INFO, "child process %d exited by a signal"
+							" %d\n", chld, WTERMSIG(chld_status));
+#ifdef WCOREDUMP
+					LOG(L_INFO, "core was %sgenerated\n",
+							 WCOREDUMP(chld_status) ?  "" : "not" );
+#endif
+				}else if (WIFSTOPPED(chld_status)) 
+					LOG(L_INFO, "child process %d stopped by a"
+								" signal %d\n", chld,
+								 WSTOPSIG(chld_status));
+			}
+			/* exit */
+			kill(0, SIGTERM);
+			DBG("terminating due to SIGCHLD\n");
+			exit(0);
+			break;
+		
+		case SIGHUP: /* ignoring it*/
+					DBG("SIGHUP received, ignoring it\n");
+					break;
+		default:
+			LOG(L_CRIT, "WARNING: unhandled signal %d\n", sig_flag);
+	}
+	sig_flag=0;
+}
+
+
+
 /* main loop */
 int main_loop()
 {
@@ -458,20 +545,32 @@ int main_loop()
 	pids[process_no]=getpid();
 	process_bit = 0;
 	is_main=1;
-	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, if it does */
-	bind_idx=0;					/*   it will use the first address */
+	bind_address=&sock_info[0]; /* main proc -> it shoudln't send anything, */
+	bind_idx=0;					/* if it does it will use the first address */
 
 	if (timer_list){
-		for(;;){
-			/* debug:  instead of doing something usefull */
-			/* (placeholder for timers, etc.) */
-			sleep(TIMER_TICK);
-			/* if we received a signal => TIMER_TICK may have not elapsed*/
-			timer_ticker();
+		/* fork again for the attendant process*/
+		if ((pid=fork())<0){
+			LOG(L_CRIT, "main_loop: cannot fork timer process\n");
+			goto error;
+		}else if (pid==0){
+			/* child */
+			is_main=0; /* warning: we don't keep this process pid*/
+			for(;;){
+				/* debug:  instead of doing something usefull */
+				/* (placeholder for timers, etc.) */
+				sleep(TIMER_TICK);
+				/* if we received a signal => TIMER_TICK may have not elapsed*/
+				timer_ticker();
+			}
 		}
-	}else{
-		for(;;) pause(); 
 	}
+	
+	for(;;){
+			pause();
+			handle_sigs();
+	}
+	
 	
 	/*return 0; */
  error:
@@ -483,92 +582,39 @@ int main_loop()
 /* added by jku; allows for regular exit on a specific signal;
    good for profiling which only works if exited regularly and
    not by default signal handlers
+    - modified by andrei: moved most of the stuff to handle_sigs, 
+       made it safer for the "fork" case
 */
 static void sig_usr(int signo)
 {
-	pid_t	chld;
-	int	chld_status;
 
-	/* XXX Need to doublecheck .... handler fo SIGINT quite different
-	   from SIGTERM handler ... in SIGTERM_h, thinkgs such as
-	   destroy_modules and shm_destroy are missing ... is that really ok?
-	   THX -Jiri
-	*/
-	if (signo==SIGINT || signo==SIGPIPE) {	/* exit gracefuly */
-		DPrint("INT received, program terminates\n");
-#		ifdef _OBSOLETED_STATS
-		/* print statistics on exit only for the first process */
-		if (stats->process_index==0 && stat_file )
-			if (dump_all_statistic()==0)
-				printf("statistic dumped to %s\n", stat_file );
-			else
-				printf("statistics dump to %s failed\n", stat_file );
-#		endif
-		/* WARNING: very dangerous, might be unsafe*/
-		if (is_main)
-			destroy_modules();
-#ifdef PKG_MALLOC
-		LOG(L_INFO, "Memory status (pkg):\n");
-		pkg_status();
-#		endif
-#ifdef SHM_MEM
-		if (is_main){
-			LOG(L_INFO, "Memory status (shm):\n");
-			shm_status();
-			/*zero all shmem  alloc vars, that will still use*/
-			pids=0;
-			shm_mem_destroy();
+	if (is_main){
+		if (sig_flag==0) sig_flag=signo;
+		else /*  previous sig. not processed yet, ignoring? */
+			return; ;
+		if (dont_fork) 
+				/* only one proc, dooing everything from the sig handler,
+				unsafe, but this is only for debugging mode*/
+			handle_sigs();
+	}else{
+		/* process the important signals */
+		switch(signo){
+			case SIGINT:
+			case SIGPIPE:
+			case SIGTERM:
+					exit(0);
+					break;
+			case SIGUSR1:
+				/* statistics, do nothing, printed only from the main proc */
+					break;
+				/* ignored*/
+			case SIGUSR2:
+			case SIGHUP:
+					break;
 		}
-#endif
-		dprint("Thank you for flying " NAME "\n");
-		/* kill children also*/
-		kill(0, SIGTERM);
-		exit(0);
-	} else if (signo==SIGTERM) { /* exit gracefully as daemon */
-		DPrint("TERM received, program terminates\n");
-		if (is_main){
-#ifdef _OBSOLETED_STATS
-			dump_all_statistic();
-#endif
-			if (pid_file) {
-				unlink(pid_file);
-			}
-		}
-		kill(0, SIGTERM);
-		exit(0);
-	} else if (signo==SIGUSR1) { /* statistic */
-#ifdef STATS
-		dump_all_statistic();
-#endif
-#ifdef PKG_MALLOC
-		LOG(L_INFO, "Memory status (pkg):\n");
-		pkg_status();
-#endif
-#ifdef SHM_MEM
-		LOG(L_INFO, "Memory status (shm):\n");
-		shm_status();
-#endif
-	} else if (signo==SIGCHLD) {
-		while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
-			if (WIFEXITED(chld_status)) 
-				LOG(L_INFO, "child process %d exited normally, status=%d\n",
-					chld, WEXITSTATUS(chld_status));
-			else if (WIFSIGNALED(chld_status)) {
-				LOG(L_INFO, "child process %d exited by a signal %d\n",
-					chld, WTERMSIG(chld_status));
-#				ifdef WCOREDUMP
-				LOG(L_INFO, "core was %sgenerated\n", WCOREDUMP(chld_status) ?
-					"" : "not" );
-#				endif
-			} else if (WIFSTOPPED(chld_status)) 
-				LOG(L_INFO, "child process %d stopped by a signal %d\n",
-					chld, WSTOPSIG(chld_status));
-		}
-		/* exit */
-		kill(0, SIGTERM);
-		exit(0);
 	}
 }
+
 
 
 void test();
@@ -608,6 +654,16 @@ int main(int argc, char** argv)
 		DPrint("ERROR: no SIGTERM signal handler can be installed\n");
 		goto error;
 	}
+	if (signal(SIGHUP , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGHUP signal handler can be installed\n");
+		goto error;
+	}
+	if (signal(SIGUSR2 , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGUSR2 signal handler can be installed\n");
+		goto error;
+	}
+
+
 
 	/* process command line (get port no, cfg. file path etc) */
 	opterr=0;
@@ -873,8 +929,8 @@ int main(int argc, char** argv)
 						sock_info[r].port_no);
 			goto error;
 		}
-		/* on some system snprintf return really strange things if it does not 
-			have  enough space */
+		/* on some systems snprintf returns really strange things if it does 
+		  not have  enough space */
 		port_no_str_len=
 				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
 		sock_info[r].port_no_str.s=(char*)malloc(strlen(port_no_str)+1);
