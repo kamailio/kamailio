@@ -79,15 +79,26 @@ int sl_shutdown()
 	return 1;
 }
 
+static void calc_crc_suffix( struct sip_msg *msg )
+{
+	int ss_nr;
+	str suffix_source[3];
+
+	ss_nr=2;
+	suffix_source[0]=msg->via1->host;
+	suffix_source[1]=msg->via1->port_str;
+	if (msg->via1->branch) 
+		suffix_source[ss_nr++]=msg->via1->branch->value;
+	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
+}
+
 
 int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 {
 	char               *buf;
 	unsigned int       len;
 	union sockaddr_union to;
-	str suffix_source[3];
 	struct socket_info* send_sock;
-	int ss_nr;
 	char *dset;
 	struct lump_rpl *dset_lump;
 	int dset_len;
@@ -141,12 +152,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 #endif
 	{
-		ss_nr=2;
-		suffix_source[0]=msg->via1->host;
-		suffix_source[1]=msg->via1->port_str;
-		if (msg->via1->branch) 
-			suffix_source[ss_nr++]=msg->via1->branch->value;
-		crcitt_string_array( tag_suffix, suffix_source, ss_nr );
+		calc_crc_suffix( msg );
 		buf = build_res_buf_from_sip_req(code,text,sl_tag,TOTAG_LEN,msg ,&len);
 	} else {
 		buf = build_res_buf_from_sip_req(code,text,0,0,msg ,&len);
@@ -206,8 +212,6 @@ int sl_reply_error(struct sip_msg *msg )
 int sl_filter_ACK(struct sip_msg *msg )
 {
 	str *tag_str;
-	str suffix_source[3];
-	int ss_nr;
 
 	if (msg->first_line.u.request.method_value!=METHOD_ACK)
 		goto pass_it;
@@ -230,13 +234,7 @@ int sl_filter_ACK(struct sip_msg *msg )
 	if ( tag_str->len==TOTAG_LEN )
 	{
 		/* calculate the variable part of to-tag */	
-		ss_nr=2;
-		suffix_source[0]=msg->via1->host;
-		suffix_source[1]=msg->via1->port_str;
-		if (msg->via1->branch)
-			suffix_source[ss_nr++]=msg->via1->branch->value;
-		crcitt_string_array( tag_suffix, suffix_source, ss_nr );
-
+		calc_crc_suffix(msg);
 		/* test whether to-tag equal now */
 		if (memcmp(tag_str->s,sl_tag,TOTAG_LEN)==0) {
 			DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
