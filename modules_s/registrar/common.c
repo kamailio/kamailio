@@ -87,16 +87,6 @@ int get_username(str* _s)
 char aor_buf[MAX_AOR_LEN];
 
 
-static inline void strlower(str* _s)
-{
-	int i;
-
-	for(i = 0; i < _s->len; i++) {
-		_s->s[i] = tolower(_s->s[i]);
-	}
-}
-
-
 /*
  * Extract Address Of Record
  */
