@@ -1,0 +1,155 @@
+#!/bin/bash
+
+############ ==== #############
+#  SIP2JABBER gateway script  #
+############ ==== #############
+
+# User "dcm" is used if is the script is run by root
+
+# JABBER
+JDIR="/home/dcm/jabber-1.4.2"
+JABBERD="${JDIR}/jabberd/jabberd"
+JICQEXT="${JDIR}/icqv7ext.sh"
+CONF="${JDIR}/conf/single.xml"
+JUID="dcm"
+JPID="${JDIR}/spool/jabbers.pid"
+JOUT="${JDIR}/spool/jabberd.log"
+
+# SER
+BIN=sip2jab
+HM=/home/dcm/sip_router
+ETC=$HM/etc/use_jabs.cfg
+USR="dcm"
+GRP="dcm"
+MYDIR=$HM/core
+CORE=$MYDIR/core
+
+RETVAL=0
+
+############ ==== #############
+
+# Test if Jabber exists
+test -f ${JABBERD} -a -f ${CONF} || exit 0
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Get config.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ "${NETWORKING}" = "no" ] && exit 0
+
+# Current user
+CRT_USER=`whoami`
+
+### Stop Jabber server
+stop_jab() {
+	echo "Stopping ICQ transport - external component ..."
+	killproc ${JICQEXT}
+	# echo
+	echo "Stopping Jabber ..."
+	killproc ${JABBERD}
+	# echo
+	# kill `cat ${JPID}`
+	# echo " OK."
+}
+
+### Start Jabber server
+start_jab() {
+	if [ -f ${JPID} ]
+	then
+		echo "Cleaning Jabber from a previous dirty crash ..."
+		stop_jab
+		sleep 1
+		rm -f ${JPID}
+	fi
+
+	if [ `id -u` = 0 ]
+	then
+		#### Run by root
+		echo "Starting Jabber server ..."
+		su - ${JUID} -B -c "cd ${JDIR}; ${JABBERD} -c ${CONF}"  > /dev/null 2>&1
+		# echo
+		sleep 1
+		echo "Starting ICQ transport - external component ..."
+		su - ${JUID} -c "cd ${JDIR}; ${JICQEXT} > /dev/null 2>&1 &"  > /dev/null 2>&1
+		# echo
+	else
+		### Run by other users
+		echo "Starting Jabber ..."
+		cd ${JDIR}
+		${JABBERD} -B -c ${CONF}
+		# echo
+		sleep 1
+		echo "Starting ICQ transport - external component ..."
+		${JICQEXT} > /dev/null 2>&1 &
+		# echo
+	fi
+}
+
+### Stop SER
+stop_ser() {
+	echo -n "Stopping SIP router ..."
+	killproc ${BIN}
+	echo
+	# killall ser
+	# echo " [ OK ]"
+}
+
+### Start SER
+start_ser() {
+	echo "Starting SIP router ..."
+	if [ `id -u` = 0 ]
+	then
+		#### Run by root
+		su - ${USR} -c "cd ${HM}; ${HM}/${BIN} -f ${ETC} -w ${MYDIR}"  > /dev/null 2>&1
+	else
+		#### Run by other users
+		#cd $MYDIR
+
+		# core timestamping moved to sercheck; -jiri
+		#	if [ -f $CORE ] ; then
+		#		chmod a+r $CORE
+		#		DATE=`date "+%Y-%m-%d--%H-%M"`
+		#		mv $CORE $CORE.$DATE
+		#		( cd ../sip_router; tar cf - . ) | gzip > ser.$DATE.tgz
+		#	fi
+
+		cd ${HM}
+		${HM}/${BIN} -f ${ETC} -w ${MYDIR}
+
+		# man setuid: If uid is different from the old effective uid,
+		# the process will be forbidden from eaving core dumps.
+		# -> don't set uid, we want to collect core dumps
+		# -u $USR -g $GRP
+	fi
+	echo
+}
+
+case "$1" in
+	start)
+		start_jab
+		start_ser
+	;;
+	stop)
+		stop_ser
+		stop_jab
+	;;
+	restart)
+		echo -n "Restarting SIP2Jabber ..."
+		stop_ser
+		stop_jab
+		sleep 1
+		echo
+		start_jab
+		start_ser
+	;;
+	*)
+		N=$0
+		echo "Usage: $N {start|stop|restart}" >&2
+		exit 1
+	;;
+esac
+echo
+exit $?
