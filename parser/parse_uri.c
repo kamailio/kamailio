@@ -31,7 +31,7 @@
  * 2003-04-11  new parse_uri introduced (better, parses also some parameters,
  *              works in one pass) (andrei)
  * 2003-04-11  ser_error is now set in parse_uri (andrei)
- * 2003-04-26 ZSW (jiri)
+ * 2003-04-26  ZSW (jiri)
  */
 
 
@@ -873,6 +873,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			goto error_bug;
 	}
 	
+#if EXTRA_DEBUG
 	/* do stuff */
 	DBG("parsed uri:\n user=<%.*s>(%d)\n passwd=<%.*s>(%d)\n host=<%.*s>(%d)\n"
 			" port=<%.*s>(%d): %d\n params=<%.*s>(%d)\n headers=<%.*s>(%d)\n",
@@ -899,6 +900,7 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			uri->maddr.len, ZSW(uri->maddr.s), 
 			uri->maddr_val.len, ZSW(uri->maddr_val.s));
 	DBG("   lr=<%.*s>\n", uri->lr.len, ZSW(uri->lr.s)); 
+#endif
 	return 0;
 	
 error_too_short:
