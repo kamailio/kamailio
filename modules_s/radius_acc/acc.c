@@ -24,11 +24,14 @@
 #include "../tm/t_hooks.h"
 #include "../tm/tm_load.h"
 #include "../../config.h"
-
+#include <ctype.h> 								/*isdigit */
+#include "acc_mod.h"	
+#include "../../parser/digest/digest.h" 		/*digest parser*/
+#include "../../parser/digest/digest_parser.h"  /*digest struct*/
+#include "../../parser/parse_from.h"			/*from parser*/
+#include "utils.h"								/*auth_get_username*/
 #define SIP_SERVICE_TYPE 15
 #define TMP_SIZE		 256
-#define TEST		
-char* cleanbody(str body); 
 
 
 /******************************************************************************
@@ -48,21 +51,18 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
   	int len, ret;							/* parse uri variables */
 	char *tmp;								/* Temporary buffer */
 	char *buf;								/* ibid */
-  	int stop = 0;                         	/* Acount status STOP flag */
+	int stop = 0;                         	/* Acount status STOP flag */
  	struct to_body *to;						/* Structs containing tags */
   	struct sip_msg *rq;					  	/* Reply structure */
 	struct to_body *from;
+	struct cseq_body *cseq;					/* Cseq body--for Numeric */
+	auth_body_t *cred;						/* Digital Credentials*/
+	str	username;							/* Username string */
 	
 	DBG("**************radius_log_reply() CALLED \n");
   	rq =  t->uas.request;	
 
-   	/* Add session ID */
-	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, rc_mksid(), 0) == NULL) {
-    	DBG("radius_log_reply(): ERROR:PW_ACCT_SESSION_ID, \n");
-		return(ERROR_RC);	
-  	}	
-
-  	/* 
+	/* 
    	 * Add status type, Accounting START in our case 
    	 *                   1: START
    	 *                   2: STOP
@@ -183,13 +183,21 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
 		return(ERROR_RC);
   	}
 							
-  	/* Add sip-cseq string*/
-	tmp = cleanbody(rq->cseq->body);
+	/* Parse the cseq numeric part */
+  	cseq = get_cseq(rq);
+	tmp = cleanbody(cseq->number);
   	if (rc_avpair_add(&send,PW_SIP_CSEQ , tmp, 0) == NULL) {
 		DBG("radius_log_reply(): ERROR:PW_SIP_CSEQ \n");
 		return(ERROR_RC);
   	}
 
+	/* Add Reply Status... The method of the original request... */
+	av_type = rq->REPLY_STATUS;
+   	if (rc_avpair_add(&send, PW_SIP_RESPONSE_CODE, &av_type, 0) == NULL) {
+   		DBG("radius_log_ack(): ERROR:PW_SIP_RESPONSE_CODE \n");
+		return(ERROR_RC);
+	}
+	
 	/*
 	 * Parse uri structure...
 	 */
@@ -207,15 +215,62 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
     	return(ERROR_RC);
   	}
 
-  	/* Add user name */
-  	if (rc_avpair_add(&send, PW_USER_NAME, uri.user.s, 0) == NULL) {
+	/*
+	 * If available, take user-name from digest else extract the FROM field.
+	 */
+
+	if (!(rq->authorization)) {
+		     /* No credentials parsed yet */
+		if (parse_headers(rq, HDR_AUTHORIZATION, 0) == -1) {
+			LOG(L_ERR, "radis_log_reply: Error while parsing auth headers\n");
+			return -2;
+		}
+	}
+	
+	/* Parse only if there's something there... */
+	if (rq->authorization) {
+		if (parse_credentials(rq->authorization) != -1) {
+			cred = (auth_body_t*)(rq->authorization->parsed);
+			if (check_dig_cred(&(cred->digest)) != E_DIG_OK) {
+				LOG(L_ERR, "radius_log_reply: Credentials missing\n");
+				return(ERROR_RC);
+			} else {
+				/* Extract username from uri */
+				username.s = from->uri.s;
+				username.len = from->uri.len;
+				if (auth_get_username(&username) < 0) {
+            	    LOG(L_ERR, "radius_log_reply: "
+									"Error while extracting username\n");
+        	        return(ERROR_RC);
+		        }
+				tmp = cleanbody(username);
+			}
+		}
+	} else {
+		/* Extract username from uri */
+		username.s = from->uri.s;
+		username.len = from->uri.len;
+		if (auth_get_username(&username) < 0) {
+        	LOG(L_ERR, "radius_log_reply: "
+							"Error while extracting username\n");
+       	    return(ERROR_RC);
+		}
+		tmp = cleanbody(username);
+	}
+		
+	if (rc_avpair_add(&send, PW_USER_NAME, tmp, 0) == NULL) {
     	DBG("radius_log_reply(): ERROR: \n");
 		return(ERROR_RC);
-  	}
-
+	}
+	
   	/* Add sip-translated-request-uri string*/
+	if (msg->new_uri.s) 
+		tmp = cleanbody(rq->new_uri);     
+    else
+    	tmp = cleanbody(rq->first_line.u.request.uri);
+
   	if (rc_avpair_add(&send, PW_SIP_TRANSLATED_REQ_URI, 
-						uri.host.s, 0) == NULL) {
+						tmp, 0) == NULL) {
   		DBG("radius_log_reply(): ERROR:PW_SIP_TRANSLATED_REQ_URI \n");
 		return(ERROR_RC);
   	}
@@ -225,8 +280,7 @@ int radius_log_reply(struct cell* t, struct sip_msg* msg)
      * start and stop must have the same callid...
      */
 	tmp = cleanbody(rq->callid->body);
-	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, 
-					tmp, 0) == NULL) {
+	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, tmp, 0) == NULL) {
 		DBG("radius_log_reply(): ERROR:PW_ACCT_SESSION_ID \n");
 		return(ERROR_RC); 
   	}
@@ -324,7 +378,7 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	rq =  t->uas.request;	
  	
 	/* Add session ID */
-	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, rc_mksid(), 0) == NULL) {
+	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, msg->callid, 0) == NULL) {
     	DBG("radius_log_ack(): ERROR:PW_ACCT_SESSION_ID, \n");
 		return(ERROR_RC);	
   	}	
@@ -474,8 +528,15 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	}
   	
 	/* Add sip-translated-request-uri string*/
+	if (msg->new_uri.s) {
+		tmp = cleanbody(msg->new_uri);     
+	}
+    else
+    	tmp = cleanbody(msg->first_line.u.request.uri);
+
+	tmp = cleanbody(msg->new_uri);
   	if (rc_avpair_add(&send, PW_SIP_TRANSLATED_REQ_URI, 
-							uri.host.s, 0) == NULL) {
+							tmp, 0) == NULL) {
   		DBG("radius_log_ack(): ERROR:PW_SIP_TRANSLATED_REQ_URI \n");
 		return(ERROR_RC);
   	}
@@ -484,13 +545,13 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
 	 * ADD ACCT-SESSION ID ---> CALL-ID 
      * start and stop must have the same callid...
      */
+	/*
 	tmp = cleanbody(msg->callid->body);
-
 	if (rc_avpair_add(&send, PW_ACCT_SESSION_ID, 
 					&msg->callid->body.s[0], 0) == NULL) {
 		DBG("radius_log_ack(): ERROR:PW_ACCT_SESSION_ID \n");
 		return(ERROR_RC); 
-  	}	 
+  	}*/	 
 
   	/*FIXME: Dorgham and Jiri said that we don't need this
    	 * Acct-session-time
@@ -558,23 +619,77 @@ int radius_log_ack(struct cell* t, struct sip_msg* msg)
   	return result;
 }
 
-/*
- * This method simply cleans off the trailing character of the string body.
- * params: str body
- * returns: the new char* or NULL on failure
- */
-char * cleanbody(str body) 
-{	
-	char* tmp;
-	/*
-	 * This works because when the structure is created it is memset to 0
-	 */
-	if (body.s == NULL)
-		return NULL;
-		
-	tmp = &body.s[0];
-	tmp[body.len] = '\0';
-
-	return tmp;
-}
   	
+
+/*
+ *
+ *
+ */
+int rad_acc_request( struct sip_msg *rq, char * comment, char  *foo)
+{
+	int comment_len;
+
+	comment_len = strlen(comment);
+
+	printf("rad_acc_request(): ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ CALLED!!!\n");
+
+	/* we can parse here even if we do not knwo whether the
+	   request is an incmoing pkg_mem message or stoed  shmem_msg;
+	   thats because acc_missed_report operating over shmem never
+	   enters acc_missed if the header fields are not parsed
+	   and entering the function from script gives pkg_mem,
+	   which can be parsed
+	*/
+	   
+	if ( parse_headers(rq, HDR_FROM | HDR_CALLID, 0)==-1 
+				|| !(rq->from && rq->callid) ) {
+		LOG(L_ERR, "ERROR: acc_missed: From not dounf\n");
+		return -1;
+	}
+	LOG( log_level,
+		"ACC: call missed: "
+		"i-uri=%.*s, o-uri=%.*s, call_id=%.*s, "
+		"from=%.*s, reason=%.*s\n",
+        rq->first_line.u.request.uri.len,
+        rq->first_line.u.request.uri.s,
+		rq->new_uri.len, rq->new_uri.s,
+		rq->callid->body.len, rq->callid->body.s,
+		rq->from->body.len, rq->from->body.s,
+        comment_len, comment);
+	return 1;
+}
+
+/*
+ *
+ *
+ */
+void rad_acc_missed_report( struct cell* t, struct sip_msg *reply,
+	unsigned int code )
+{
+	struct sip_msg *rq;
+	str acc_text;
+
+	rq =  t->uas.request;
+	/* it is coming from TM -- it must be already parsed ! */
+	if (! rq->from ) {
+		LOG(L_ERR, "ERROR: TM request for accounting not parsed\n");
+		return;
+	}
+
+	get_reply_status(&acc_text, reply, code);
+	if (acc_text.s==0) {
+		LOG(L_ERR, "ERROR: acc_missed_report: get_reply_status failed\n" );
+		return;
+	}
+
+	rad_acc_request(rq, acc_text.s , 0 /* foo */);
+	pkg_free(acc_text.s);
+
+	/* zdravime vsechny cechy -- jestli jste se dostali se ctenim 
+	   kodu az sem a rozumite mu, jste na tom lip, nez autor!
+	   prijmete uprimne blahoprani
+	*/
+}
+
+
+

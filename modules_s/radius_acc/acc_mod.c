@@ -11,6 +11,7 @@
 #include "../../mem/mem.h"
 #include "../tm/t_hooks.h"
 #include "../tm/tm_load.h"
+#include "../tm/h_table.h"
 #include "../../parser/msg_parser.h"
 
 #include "acc_mod.h"
@@ -19,7 +20,6 @@
 #include <radiusclient.h>
 
 /* Defines for radiusclient library */
-#define RADLOG           "/home/ssi/work/client/radtest.txt"
 #define CONFIG_FILE 	 "/home/ssi/work/client/radiusclient.conf"
 
 struct tm_binds tmb;
@@ -28,7 +28,7 @@ static int mod_init( void );
 
 /* ----- Parameter variables ----------- */
 
-/* Flag if we are using a database or log facilities, default is log */       
+/* Flag if we are using a database or log facilities, default is log */
 int use_db = 0;
 
 /* Database url */
@@ -52,24 +52,33 @@ int failed_transactions = 0;
 /* flag which is needed for reporting: 0=any, 1 .. MAX_FLAG flag number */
 int acc_flag = 1;
 
+/* flag which is needed for reporting missed calls */
+int missed_flag = 2;
+
 /* report e2e ACKs too */
 int report_ack = 1;
 
 /* ------------- Callback handlers --------------- */
 
-static void rad_acc_onreply( struct cell* t,  struct sip_msg *msg );
-static void rad_acc_onack( struct cell* t,  struct sip_msg *msg );
+static void rad_acc_onreply( struct cell* t,  struct sip_msg *msg,
+								int code, void *param );
+
+static void rad_acc_onack( struct cell* t,  struct sip_msg *msg,
+								int code, void *param );
+
+static void rad_acc_onreq( struct cell* t, struct sip_msg *msg,
+								int code, void *param ) ;
 
 
 struct module_exports exports= {
 	"radius_acc",
 
 	/* exported functions */
-	( char*[] ) { },
-	( cmd_function[] ) { },
-	( int[] ) { },
-	( fixup_function[]) { },
-	0, /* number of exported functions */
+	( char*[] ) { "rad_acc_request" },
+	( cmd_function[] ) { rad_acc_request },
+	( int[] ) { 1 /* acc_missed */},
+	( fixup_function[]) { 0 /* acc_missed */},
+	1, /* number of exported functions */
 
 	/* exported variables */
 	(char *[]) { /* variable names */
@@ -81,7 +90,8 @@ struct module_exports exports= {
 		"early_media",
 		"failed_transactions",
 		"acc_flag",
-		"report_ack"
+		"report_ack",
+		"missed_flag"
 	},
 
 	(modparam_t[]) { /* variable types */
@@ -89,6 +99,7 @@ struct module_exports exports= {
 		STR_PARAM,
 		STR_PARAM,
 		STR_PARAM,
+		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
 		INT_PARAM,
@@ -105,17 +116,18 @@ struct module_exports exports= {
 		&early_media,
 		&failed_transactions,
 		&acc_flag,
-		&report_ack
+		&report_ack,
+		&missed_flag
 	},
 
-	9,			/* number of variables */
-	mod_init, 	        /* initialization module */
+	10,			/* number of variables */
+
+	mod_init, 	/* initialization module */
 	0,			/* response function */
 	0,			/* destroy function */
 	0,			/* oncancel function */
 	0			/* per-child init function */
 };
-
 
 
 /*
@@ -128,24 +140,30 @@ static int mod_init( void )
 
 	load_tm_f	load_tm;
 
-	printf("Radius Accounting Init\n");
+	fprintf( stderr, "radius_acc - initializing\n");
+
 	/* import the TM auto-loading function */
-	if ( !(load_tm=(load_tm_f)find_export("load_tm", 1))) {
-		LOG(L_ERR, "ERROR: acc: mod_init: can't import load_tm\n");
+	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT))) {
+		LOG(L_ERR, "ERROR: radius_acc: mod_init: can't import load_tm\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) return -1;
 
 	/* register callbacks */
-	if (tmb.register_tmcb( TMCB_REPLY, rad_acc_onreply ) <= 0) 
+	if (tmb.register_tmcb( TMCB_REPLY, rad_acc_onreply, 
+								0 /* empty param */ ) <= 0) 
 		return -1;
-	if (tmb.register_tmcb( TMCB_E2EACK, rad_acc_onack ) <=0 )
+	if (tmb.register_tmcb( TMCB_E2EACK, rad_acc_onack, 
+								0 /* empty param */ ) <=0 )
+		return -1;
+	if (tmb.register_tmcb( TMCB_REQUEST_OUT, rad_acc_onreq, 
+								0 /* empty param */ ) <=0 )
 		return -1;
 
 	/* Read the configuration file */
   	if (rc_read_config(CONFIG_FILE) != 0) {
-    	DBG("Error: acc: mod_init: opening configuration file \n");
+    	LOG(L_ERR,"Error:radius_acc: mod_init: opening configuration file \n");
     	return(-1);
   	}
   
@@ -154,44 +172,58 @@ static int mod_init( void )
     	DBG("Error: acc: mod_init: opening dictionary file \n");
     	return(-1);
   	}
-
-	/* Open log file */
-  	rc_openlog(RADLOG);
-
+	
 	return 0;
 }
 
 
+
+static void rad_acc_onreq( struct cell* t, struct sip_msg *msg, int code, 
+								void *param )
+{
+	/* disable C timer for accounted calls */
+	if (isflagset( msg, acc_flag) == 1 || 
+				(t->is_invite && isflagset( msg, missed_flag))) {
+#		ifdef EXTRA_DEBUG
+		DBG("DEBUG: noisy_timer set for accounting\n");
+#		endif
+		t->noisy_ctimer = 1;
+	}
+}
+
+
 /*
  * Function that gets called on reply
  * params: struct cell* t The callback structure
  *         struct sip_msg *msg The sip message.
+ *         int code The status code
+ *         void* param Passed parameter
  * returns: nothing
  */
-static void rad_acc_onreply( struct cell* t, struct sip_msg *msg ) 
+static void rad_acc_onreply( struct cell* t, struct sip_msg *reply, int code, 
+								void *param ) 
 {
 
-	unsigned int status_code;
 	struct sip_msg *rq;
-	int result;
-	
-	status_code =  msg->REPLY_STATUS;
+
 	rq = t->uas.request;
-	result = 0;
-	
+
+	if (t->is_invite && missed_flag && isflagset( rq, missed_flag)==1
+			&& ((code>=400 && code<500) || code>=600))
+				rad_acc_missed_report( t, reply, code);
+
+
 	/* if acc enabled for flagged transaction, check if flag matches */
-	if (acc_flag && isflagset( rq, acc_flag ) == -1) return;
+	if (acc_flag && isflagset( rq, acc_flag )==-1) return;
 	/* early media is reported only if explicitely demanded, 
 	   other provisional responses are always dropped  */
-	
-	if (status_code < 200 && ! (early_media && status_code== 183)) 
+	if (code < 200 && ! (early_media && code==183)) 
 		return;
-
 	/* negative transactions reported only if explicitely demanded */
-	if (!failed_transactions && msg->REPLY_STATUS >=300) return;
+	if (!failed_transactions && code >=300) return;
 
 	/* anything else, i.e., 2xx, always reported */
-	result = radius_log_reply(t, msg);
+	radius_log_reply(t, reply);
 
 }
 
@@ -199,9 +231,12 @@ static void rad_acc_onreply( struct cell* t, struct sip_msg *msg )
  * Function that gets called on reply
  * params: struct cell* t The callback structure
  *         struct sip_msg *msg The sip message.
+ *         int code The status code
+ *         void* param Passed parameter
  * returns: nothing
  */
-static void rad_acc_onack( struct cell* t , struct sip_msg *msg )
+static void rad_acc_onack( struct cell* t , struct sip_msg *ack, int code, 
+								void *param )
 {
   	struct sip_msg *rq;
 	rq = t->uas.request;
@@ -210,7 +245,7 @@ static void rad_acc_onack( struct cell* t , struct sip_msg *msg )
 	/* if acc enabled for flagged transaction, check if flag matches */
 	if (acc_flag && isflagset( rq, acc_flag )==-1) return;
 
-	radius_log_ack(t, msg);
+	radius_log_ack(t, ack);
 }
 
 
