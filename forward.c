@@ -227,7 +227,7 @@ int forward_reply(char * orig, char* buf,
 	to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
 	to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
 	
-	if (udp_send(new_buf,new_len, &to, sizeof(to))==-1)
+	if (udp_send(new_buf,new_len, &to, sizeof(struct sockaddr))==-1)
 		goto error;
 	
 	free(new_buf);

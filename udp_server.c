@@ -74,7 +74,7 @@ int udp_rcv_loop()
 	}
 
 	for(;;){
-		fromlen=sizeof(*from);
+		fromlen=sizeof(struct sockaddr);
 		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, from, &fromlen);
 		if (len==-1){
 			DPrint("ERROR: udp_rcv_loop:recvfrom: %s\n", strerror());
