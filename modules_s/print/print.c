@@ -16,8 +16,9 @@ static struct module_exports print_exports= {	"print_stdout",
 												(cmd_function[]){print_f},
 												(int[]){1},
 												(fixup_function[]){0},
-												1,
-												0
+												1, /* number of fucntions*/
+												0, /* response function*/
+												0  /* destroy function */
 											};
 
 
