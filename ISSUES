@@ -6,6 +6,14 @@ This is a collection of issues which have shown up
 since the version 0.8.8 was released.
 
 ---------------------------------------------------------------
+Desc:  ser 0.8.9 won't log to stderr or syslog unless dontfork is set
+        (introduced when trying to fix bug 376)
+BugId:  n/a
+Ser version: =0.8.9 (0.8.8 is ok)
+Patch: http://www.mobile-ip.de/~andrei/ser/0.8.9/ser-0.8.9_log.patch
+Workaround: update from cvs or apply the patch.
+CVS status: fixed
+---------------------------------------------------------------
 Desc: Solaris resolver memory leak
 	  (getipnodebyname on Solaris has a memory leak. unpatched
 	  solaris 8 installations will fail after processing 
@@ -30,7 +38,7 @@ Desc: sendto problems on FreeBSD
         to it)
 BugId: n/a
 Workaround:  update from cvs or  apply the following patch: 
-      http://www.mobile-ip.de/~andrei/ser/update_sock_struct_from_ip.patch
+   http://www.mobile-ip.de/~andrei/ser/0.8.9/update_sock_struct_from_ip.patch
 CVS status:  fixed
 ---------------------------------------------------------------
 Desc: full ipv6 addresses (w/o ::) are converted to 0:0:0:0:0:0:0
@@ -39,6 +47,9 @@ BugId: n/a
 Workaround: use ipv6 addresses w/ :: or compile ser without -DDNS_IP_HACK 
             (Makefile.defs).
 CVS status: fixed
+----------------------------------------------------------------
+ser 0.8.9 released, all the issues below this are fixed in ser 0.8.9, all the
+issues above are not :-)
 ---------------------------------------------------------------
 Desc: in default configuration, SER prints '127.0.0.1' in
       Warning header field of all replies
