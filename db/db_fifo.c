@@ -686,7 +686,6 @@ int db_fifo( FILE *fifo, char *response_file )
 
 	switch (db_cmd) {
 		case SELECT_CMD:
-			if (line.len==1 && line.s[0]=='.')
 			/* push the query */
 			n = db_query( fifo_db_con, nr2?keys2:0, nr2?ops2:0, nr2?vals2:0,
 				nr1?keys1:0, nr2, nr1, 0, &select_res );
