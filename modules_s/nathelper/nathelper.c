@@ -136,6 +136,7 @@
 #include "../registrar/sip_msg.h"
 #include "../../msg_translator.h"
 #include "../usrloc/usrloc.h"
+#include "../../usr_avp.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -192,6 +193,8 @@ static int unforce_rtp_proxy_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
+static int fix_nated_register_f(struct sip_msg *, char *, char *);
+static int add_rcv_param_f(struct sip_msg *, char *, char *);
 
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
@@ -229,15 +232,18 @@ static int umode = 0;
 static int controlfd;
 static pid_t mypid;
 static unsigned int myseqn = 0;
+static int_str rcv_avp = {.n = 42};
 
 static cmd_export_t cmds[] = {
-	{"fix_nated_contact", fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"fix_nated_sdp",     fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"unforce_rtp_proxy", unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"force_rtp_proxy",   force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
-	{"nat_uac_test",      nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"fix_nated_contact",  fix_nated_contact_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"fix_nated_sdp",      fix_nated_sdp_f,        1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"unforce_rtp_proxy",  unforce_rtp_proxy_f,    0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"force_rtp_proxy",    force_rtp_proxy0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",    force_rtp_proxy1_f,     1, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"force_rtp_proxy",    force_rtp_proxy2_f,     2, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"nat_uac_test",       nat_uac_test_f,         1, fixup_str2int, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE },
+	{"fix_nated_register", fix_nated_register_f,   0, 0,             REQUEST_ROUTE },
+	{"add_rcv_param",      add_rcv_param_f,        0, 0,             REQUEST_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -249,6 +255,7 @@ static param_export_t params[] = {
 	{"rtpproxy_disable_tout", INT_PARAM, &rtpproxy_disable_tout },
 	{"rtpproxy_retr",         INT_PARAM, &rtpproxy_retr         },
 	{"rtpproxy_tout",         INT_PARAM, &rtpproxy_tout         },
+	{"received_avp",          INT_PARAM, &rcv_avp               },
 	{0, 0, 0}
 };
 
@@ -1549,4 +1556,119 @@ timer(unsigned int ticks, void *param)
 		udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to);
 	}
 	pkg_free(buf);
+}
+
+
+/*
+ * Create received SIP uri that will be either
+ * passed to registrar in an AVP or apended
+ * to Contact header field as a parameter
+ */
+static int
+create_rcv_uri(str* uri, struct sip_msg* m)
+{
+	static char buf[MAX_URI_SIZE];
+	str ip, port;
+
+	if (!uri || !m) {
+		LOG(L_ERR, "create_rcv_uri: Invalid parameter value\n");
+		return -1;
+	}
+
+	ip.s = ip_addr2a(&m->rcv.src_ip);
+	ip.len = strlen(ip.s);
+
+	port.s = int2str(m->rcv.src_port, &port.len);
+
+	if (4 + ip.len + 1 + port.len > MAX_URI_SIZE) {
+		LOG(L_ERR, "create_rcv_uri: Buffer too small\n");
+		return -1;
+	}
+
+	memcpy(buf, "sip:", 4);
+	memcpy(buf + 4, ip.s, ip.len);
+	buf[4 + ip.len] = ':';
+	memcpy(buf + 4 + ip.len + 1, port.s, port.len);
+
+	uri->s = buf;
+	uri->len = 4 + ip.len + 1 + port.len;
+
+	return 0;
+}
+
+
+/*
+ * Add received parameter to Contacts for further
+ * forwarding of the REGISTER requuest
+ */
+static int
+add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	contact_t* c;
+	struct lump* anchor;
+	char* param;
+	str uri;
+
+	if (create_rcv_uri(&uri, msg) < 0) {
+		return -1;
+	}
+
+	if (contact_iterator(&c, msg, 0) < 0) {
+		return -1;
+	}
+
+	while(c) {
+		param = (char*)pkg_malloc(RECEIVED_LEN + uri.len);
+		if (!param) {
+			LOG(L_ERR, "add_rcv_param: No memory left\n");
+			return -1;
+		}
+		memcpy(param, RECEIVED, RECEIVED_LEN);
+		param[RECEIVED_LEN] = '\"';
+		memcpy(param + RECEIVED_LEN + 1, uri.s, uri.len);
+		param[RECEIVED_LEN + 1 + uri.len] = '\"';
+
+		anchor = anchor_lump(msg, c->name.s + c->len - msg->buf, 0, 0);
+		if (anchor == NULL) {
+			LOG(L_ERR, "add_rcv_param: anchor_lump failed\n");
+			return -1;
+		}		
+
+		if (insert_new_lump_after(anchor, param, RECEIVED_LEN + 1 + uri.len + 1, 0) == 0) {
+			LOG(L_ERR, "add_rcv_param: insert_new_lump_after failed\n");
+			pkg_free(param);
+			return -1;
+		}
+
+		if (contact_iterator(&c, msg, c) < 0) {
+			return -1;
+		}
+	}
+
+	return 1;
+}
+
+
+/*
+ * Create an AVP to be used by registrar with the source IP and port
+ * of the REGISTER
+ */
+static int
+fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
+{
+	str uri;
+	int_str val;
+
+	if (create_rcv_uri(&uri, msg) < 0) {
+		return -1;
+	}
+
+	val.s = &uri;
+
+	if (add_avp(AVP_VAL_STR, rcv_avp, val) < 0) {
+		LOG(L_ERR, "fix_nated_register: Error while creating AVP\n");
+		return -1;
+	}
+
+	return 1;
 }
