@@ -357,13 +357,13 @@ tryagain:
 	if ( (flags=fcntl(fifofd, F_GETFL, 0))<0) {
 		LOG(L_ERR, "ERROR: open_reply_pipe (%s): getfl failed: %s\n",
 			pipe_name, strerror(errno));
-		return 0;
+		goto error;
 	}
 	flags&=~O_NONBLOCK;
 	if (fcntl(fifofd, F_SETFL, flags)<0) {
 		LOG(L_ERR, "ERROR: open_reply_pipe (%s): setfl cntl failed: %s\n",
 			pipe_name, strerror(errno));
-		return 0;
+		goto error;
 	}
 
 	/* create an I/O stream */	
@@ -371,9 +371,12 @@ tryagain:
 	if (file_handle==NULL) {
 		LOG(L_ERR, "ERROR: open_reply_pipe: open error (%s): %s\n",
 			pipe_name, strerror(errno));
-		return 0;
+		goto error;
 	}
 	return file_handle;
+error:
+	close(fifofd);
+	return 0;
 }
 
 static void fifo_server(FILE *fifo_stream)
