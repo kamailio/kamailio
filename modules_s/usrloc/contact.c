@@ -26,7 +26,7 @@ void print_contact(contact_t* _c)
 #endif
 	t = ctime(&(_c->expires));
 	t[strlen(t) - 1] = '\0';
-	printf("    Contact=\"%s\" expires=\"%s\" q=%-3.2f, Call-ID=%s CSeq=%d\n",
+	DBG("    Contact=\"%s\" expires=\"%s\" q=%-3.2f, Call-ID=%s CSeq=%d\n",
 	       _c->c.s, t, _c->q, _c->callid, _c->cseq);
 }
 
@@ -146,7 +146,6 @@ int cmp_contact(contact_t* _c1, contact_t* _c2)
 
 
 
-#ifdef USE_DB
 int db_remove_contact(db_con_t* _c, contact_t* _con)
 {
 	db_key_t keys[2] = {"user", "contact"};
@@ -171,9 +170,9 @@ int db_remove_contact(db_con_t* _c, contact_t* _con)
 
 	return TRUE;
 }
-#endif
 
-#ifdef USE_DB
+
+
 int db_update_contact(db_con_t* _c, contact_t* _con)
 {
 	db_key_t keys1[2] = {"user", "contact"};
@@ -209,9 +208,10 @@ int db_update_contact(db_con_t* _c, contact_t* _con)
 
 	return TRUE;
 }
-#endif
 
-#ifdef USE_DB
+
+
+
 int db_insert_contact(db_con_t* _c, contact_t* _con)
 {
 	db_key_t keys[] = { "user", "contact", "expires", "q", "callid", "cseq"};
@@ -244,4 +244,4 @@ int db_insert_contact(db_con_t* _c, contact_t* _con)
 
 	return TRUE;
 }
-#endif
+

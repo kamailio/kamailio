@@ -2,23 +2,26 @@
  * $Id$ 
  */
 
-#ifndef __CACHE_H__
-#define __CACHE_H__
+#ifndef CACHE_H
+#define CACHE_H
 
 #include "c_slot.h"
 #include "c_elem.h"
 #include "location.h"
 #include "db.h"
+#include "../../fastlock.h"
+#include "../../str.h"
+
 
 struct c_slot;
 struct c_elem;
+
 
 /*
  * Hash table
  */
 typedef struct cache {
 	int size;                     /* Hash table size */
-	db_con_t* db_con;             /* Database connection */
 	char* db_table;               /* Table in database */
 	struct c_slot* table;         /* Hash table */
 	struct {                      /* Linked list of all elements in the cache */
@@ -26,6 +29,7 @@ typedef struct cache {
 		struct c_elem* first; /* First element in the list */
 		struct c_elem* last;  /* Last element in the list */
 	} c_ll;
+	fl_lock_t lock;               /* cache lock */
 } cache_t;
 
 
@@ -44,17 +48,14 @@ typedef struct cache {
 /* Get a collision slot in hash table */
 #define CACHE_GET_SLOT(cache,id) (&((cache)->table[id]))
 
+/* Get cache lock */
+#define CACHE_LOCK(cache) ((cache)->lock)
+
 
 /*
  * Create a new cache structure
  */
 cache_t* create_cache(int _size, const char* _table);
-
-
-/*
- * Associate connection with a cache
- */
-int cache_use_connection(cache_t* _c, db_con_t* _con);
 
 
 /*
@@ -67,19 +68,19 @@ void free_cache(cache_t* _c);
 /*
  * Put an element into cache
  */
-int cache_put(cache_t* _c, location_t* _l);
+int cache_put(cache_t* _c, db_con_t* _con, location_t* _l);
 
 
 /*
  * Get an element from cache
  */
-struct c_elem* cache_get(cache_t* _c, const char* _aor);
+struct c_elem* cache_get(cache_t* _c, str* _aor);
 
 
 /*
  * Update cache element
  */
-int cache_update(cache_t* _c, struct c_elem* _el, location_t* _loc);
+int cache_update(cache_t* _c, db_con_t* _con, struct c_elem* _el, location_t* _loc);
 
 
 /*
@@ -87,14 +88,14 @@ int cache_update(cache_t* _c, struct c_elem* _el, location_t* _loc);
  * If you want to remove all bindings for given
  * to, set the last parameter to NULL
  */
-int cache_remove(cache_t* _c, const char* _aor);
+int cache_remove(cache_t* _c, db_con_t* _con, str* _aor);
 
 
 /*
  * Mark element as released (can be modified
  * if neccessary)
  */
-int cache_release_elem(struct c_elem* _el);
+void cache_release_elem(struct c_elem* _el);
 
 /*
  * Print cache content (for debugging
@@ -106,6 +107,10 @@ void print_cache(cache_t* _c);
 /*
  * Preload cache content from database
  */
-int preload_cache(cache_t* _c);
+int preload_cache(cache_t* _c, db_con_t* _con);
+
+
+int clean_cache(cache_t* _c, db_con_t* _con);
+
 
 #endif

@@ -15,6 +15,7 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "defs.h"
+#include "contact_parser.h"
 
 /*
  * Function prototypes
@@ -185,7 +186,6 @@ static inline int get_CSeq(struct sip_msg* _msg, int* _cseq)
 
 static inline int get_CallID(struct sip_msg* _msg, char** _callid)
 {
-	char* ptr;
 	int len;
 #ifdef PARANOID
 	if ((!_msg) || (!_callid)) {
@@ -210,9 +210,9 @@ static inline int get_CallID(struct sip_msg* _msg, char** _callid)
  */
 int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 {
-	char* to_user, *callid;
-	struct hdr_field* ptr;
+	char* callid;
 	int cseq;
+	str to;
 	
 #ifdef PARANOID
 	if ((!_msg) || (!_loc) || (!_star) || (!_expires)) {
@@ -227,15 +227,17 @@ int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 	}
 
 	     /* Extract username from To URI */
-	to_user = get_to_username(_msg->to->body.s, _msg->to->body.len);
+	to.s = _msg->to->body.s;
+	to.len = _msg->to->body.len;
+	get_to_username(&to);
 	     /* Not needed anymore */
 	    
-	if (!to_user) {
+	if (!to.len) {
 		LOG(L_ERR, "msg2loc(): Error while parsing To header field \n");
 		return FALSE;
 	}
 
-	if (create_location(_loc, to_user) == FALSE) {
+	if (create_location(_loc, &to) == FALSE) {
 		LOG(L_ERR, "msg2loc(): Unable to create location structure\n");
 		return FALSE;
 	}
@@ -265,9 +267,8 @@ int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires)
 /*
  * Create a new location structure
  */
-int create_location(location_t** _loc, const char* _user)
+int create_location(location_t** _loc, str* _user)
 {
-	int len;
 #ifdef PARANOID
 	if ((!_loc) || (!_user)) {
 		LOG(L_ERR, "create_location(): Invalid parameter value\n");
@@ -280,19 +281,17 @@ int create_location(location_t** _loc, const char* _user)
 		return FALSE;
 	}
 
-	len = strlen(_user);
-
-	(*_loc)->user.s = (char*)pkg_malloc(len + 1);
+	(*_loc)->user.s = (char*)pkg_malloc(_user->len + 1);
 	if (!((*_loc)->user.s)) {
 		LOG(L_ERR, "create_location(): No memory left\n");
 		return FALSE;
 	}
 
-	memcpy((*_loc)->user.s, _user, len + 1);
+	memcpy((*_loc)->user.s, _user->s, _user->len + 1);
 
 	     /* We are case insensitive */
-	strlower((*_loc)->user.s, len);
-	(*_loc)->user.len = len;
+	strlower((*_loc)->user.s, _user->len);
+	(*_loc)->user.len = _user->len;
 
 	(*_loc)->contacts = NULL;  /* We have no contacts yet */
 	return TRUE;
@@ -416,11 +415,11 @@ void print_location(const location_t* _loc)
 {
 	contact_t* ptr = _loc->contacts;
 
-	printf("Address of record = \"%s\"\n", _loc->user.s);
+	DBG("Address of record = \"%s\"\n", _loc->user.s);
 	if (ptr) {
-		printf("    Contacts:\n");
+		DBG("    Contacts:\n");
 	} else {
-		printf("    No contacts.\n");
+		DBG("    No contacts.\n");
 		return;
 	}
 
@@ -429,7 +428,7 @@ void print_location(const location_t* _loc)
 		ptr = ptr->next;
 	}
 
-	printf("\n");
+	DBG("\n");
 }
 
 
@@ -463,11 +462,10 @@ int validate_location(location_t* _loc, int _expires, int _star, int* _result)
 			*_result = FALSE;
 			return TRUE;
 		}
-	} else {
-		     /* Anything is valid */
-		*_result = TRUE;
-		return TRUE;
-	}
+	}	
+	     /* Anything is valid */
+	*_result = TRUE;
+	return TRUE;
 }
 
 
@@ -502,19 +500,9 @@ int remove_zero_expires(location_t* _loc)
  * =============== Database related functions
  */
 
-#ifdef USE_DB
 int db_insert_location(db_con_t* _c, location_t* _loc)
 {
-	contact_t* ptr;
-	db_key_t keys[] = { "user", "contact", "expires", "q", "callid", "cseq"};
-	db_val_t vals[] = {{DB_STRING,   0, {.string_val = NULL}},
-			  {DB_STRING,   0, {.string_val = NULL}},
-			  {DB_DATETIME, 0, {.time_val = 0}},
-			  {DB_DOUBLE,   0, {.double_val = 0}},
-			  {DB_STRING,   0, {.string_val = NULL}},
-			  {DB_INT,      0, {.int_val = 0}}
-	};
-
+	contact_t* ptr, *p;
 #ifdef PARANOID
 	if (!_loc) {
 		LOG(L_ERR, "db_insert_location(): Invalid parameter value\n");
@@ -526,7 +514,14 @@ int db_insert_location(db_con_t* _c, location_t* _loc)
 
 	while(ptr) {
 		if (db_insert_contact(_c, ptr) == FALSE) {
-			LOG(L_ERR, "db_insert_contact(): Error while inserting contact\n");
+
+			p = _loc->contacts;
+			while(p != ptr) {
+				db_remove_contact(_c, p);
+				p = p->next;
+			}
+
+			LOG(L_ERR, "db_insert_contact(): Error while inserting location\n");
 			return FALSE;
 		}
 		ptr = ptr->next;
@@ -534,13 +529,12 @@ int db_insert_location(db_con_t* _c, location_t* _loc)
 
 	return TRUE;
 }
-#endif
+
 
 /*
  * Removes all bindings associated with the given
  * address of record
  */
-#ifdef USE_DB
 int db_remove_location(db_con_t* _c, location_t* _loc)
 {
 	db_key_t key[1] = {"user"};
@@ -562,7 +556,6 @@ int db_remove_location(db_con_t* _c, location_t* _loc)
 
 	return TRUE;
 }
-#endif
 
 
 static int check_request_order(contact_t* _old, contact_t* _new)
@@ -584,7 +577,6 @@ static int check_request_order(contact_t* _old, contact_t* _new)
 
 int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 {
-	int res;
 	contact_t* src_ptr, *dst_ptr, *dst_ptr_prev, *src_ptr_prev;
 #ifdef PARANOID
 	if ((!_dst) || (!_src)) {
@@ -593,7 +585,7 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 	}
 #endif
 	if (!_src->contacts) return TRUE;
-
+	
 	src_ptr = _src->contacts;
 	src_ptr_prev = NULL;
 	while(src_ptr) {
@@ -603,33 +595,30 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 		while(dst_ptr) {
 			if (cmp_contact(dst_ptr, src_ptr) == TRUE) {
 				if (check_request_order(dst_ptr, src_ptr) == TRUE) {  /* FIXME */
-					printf("update_location(): Order OK, updating\n");
+					DBG("update_location(): Order OK, updating\n");
 					if (src_ptr->expires == 0) {
-#ifdef USE_DB
-						if (db_remove_contact(_c, dst_ptr) == FALSE) {
-							LOG(L_ERR, "update_location(): Error while removing binding\n");
-							return FALSE;
+						if (_c) {
+							if (db_remove_contact(_c, dst_ptr) == FALSE) {
+								LOG(L_ERR, "update_location(): Error while removing binding\n");
+								return FALSE;
+							}
 						}
-#endif
 						     /* FIXME */
-						printf("up: remove contact\n");
 						if (remove_contact(_dst, dst_ptr->c.s) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while removing from cache\n");
 							return FALSE;
 						}
 					} else {
-#ifdef USE_DB
-						if (db_update_contact(_c, src_ptr) == FALSE) {
-							LOG(L_ERR, "update_location(): Error while updating database\n");
-							return FALSE;
+						if (_c) {
+							if (db_update_contact(_c, src_ptr) == FALSE) {
+								LOG(L_ERR, "update_location(): Error while updating database\n");
+								return FALSE;
+							}
 						}
-#endif
-						printf("up: update contact\n");
 						if (update_contact(dst_ptr, src_ptr) == FALSE) {
 							LOG(L_ERR, "update_location(): Error while updating cache\n");
 							return FALSE;
 						}
-						     // Update binding
 					}
 					return TRUE;
 				} else {
@@ -642,13 +631,12 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 			dst_ptr = dst_ptr->next;
 		}
 		if (src_ptr->expires != 0) {
-#ifdef USE_DB
-			if (db_insert_contact(_c, src_ptr) == FALSE) {
-				LOG(L_ERR, "update_location(): Error inserting into database\n");
-				return FALSE;
+			if (_c) {
+				if (db_insert_contact(_c, src_ptr) == FALSE) {
+					LOG(L_ERR, "update_location(): Error inserting into database\n");
+					return FALSE;
+				}
 			}
-#endif
-			printf("ud: add contact\n");
 			if (add_contact(_dst, src_ptr->c. s, src_ptr->expires, src_ptr->q, src_ptr->callid, src_ptr->cseq) == FALSE) {
 				LOG(L_ERR, "update_location(): Error while adding contact\n");
 				return FALSE;
@@ -657,6 +645,44 @@ int update_location(db_con_t* _c, location_t* _dst, location_t* _src)
 	skip:
 		src_ptr_prev = src_ptr;
 		src_ptr = src_ptr->next;
+	}
+	return TRUE;
+}
+
+
+
+
+int clean_location(location_t* _l, db_con_t* _c, time_t _t)
+{
+	contact_t* ptr, *prev;
+#ifdef PARANOID
+	if (!_l) {
+		LOG(L_ERR, "clean_location(): Invalid parameter value\n");
+		return FALSE;
+	}
+#endif
+
+	ptr = _l->contacts;
+	prev = NULL;
+
+	while(ptr) {
+		if (ptr->expires < _t) {
+			DBG("clean_location(): Contact %s,%s expired, removing\n", ptr->aor->s, ptr->c.s);
+			if (_c) {
+				if (db_remove_contact(_c, ptr) == FALSE) {
+					LOG(L_ERR, "clean_location(): Error while removing contact from db\n");
+					return FALSE;
+				}
+			}
+			if (prev) {
+				prev->next = ptr->next;
+			} else {
+				_l->contacts = ptr->next;
+			}
+			free_contact(ptr);
+		}		
+		ptr = ptr->next;
+		prev = ptr;
 	}
 	return TRUE;
 }

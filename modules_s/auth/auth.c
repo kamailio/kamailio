@@ -5,49 +5,27 @@
 #include "auth.h"
 #include "utils.h"
 #include "defs.h"
-#include <netinet/in.h>
-#include <netdb.h>
 #include "../../forward.h"
 #include "../../dprint.h"
-#include "../../udp_server.h"
 #include "../../mem/shm_mem.h"
 #include "../../data_lump_rpl.h"
-#include "../../msg_translator.h"
 #include "cred.h"
 #include "db.h"
 #include "calc.h"
 #include "../../md5global.h"
 #include "../../md5.h"
+#include "../../md5utils.h"
+#include <stdio.h>
+#include "../../mem/mem.h"
 
-static char tag[32];
 static char auth_hf[AUTH_HF_LEN];
 
 
 extern db_con_t* db_handle;
 
+static cred_t cred;
 
-void auth_init(void)
-{
-	str  src[5];
-	
-	     /*some fix string*/
-	src[0].s="one two three four -> testing!";
-	src[0].len=30;
-	     /*some fix string*/
-	src[1].s="Sip Express router - sex" ;
-	src[1].len=24;
-	     /*some fix string*/
-	src[2].s="I love you men!!!! (Jiri's idea :))";
-	src[2].len=35;
-	     /*proxy's IP*/
-	src[3].s=(char*)addresses;
-	src[3].len=4;
-	     /*proxy's port*/
-	src[4].s=port_no_str;
-	src[4].len=port_no_str_len;
-	
-	MDStringArray(tag, src, 5);
-}
+extern int (*sl_reply)(struct sip_msg* _m, char* _str1, char* _str2);
 
 
 static void to_hex(unsigned char* _dst, unsigned char *_src, int _src_len)
@@ -80,7 +58,6 @@ static inline void calc_nonce(char* _realm, unsigned char* _nonce)
 	MD5_CTX ctx;
 	time_t t;
 	unsigned char bin[16];
-	HASHHEX hash;
 	
 	t = time(NULL) / 60;
 	to_hex(_nonce, (unsigned char*)&t, 8);
@@ -91,6 +68,8 @@ static inline void calc_nonce(char* _realm, unsigned char* _nonce)
 	MD5Update(&ctx, NONCE_SECRET, NONCE_SECRET_LEN);
 	MD5Final(bin, &ctx);
 	CvtHex(bin, _nonce + 8);
+
+	DBG("calc_nonce(): nonce=%s\n", _nonce);
 }
 
 
@@ -113,6 +92,7 @@ static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
 	*_len = snprintf(_buf, AUTH_HF_LEN,
 			 "Proxy-Authenticate: Digest realm=\"%s\", nonce=\"%s\",algorithm=MD5\r\n", 
 			 _realm, nonce);
+	DBG("build_proxy_auth_hf(): %s\n", _buf);
 }
 
 
@@ -120,19 +100,10 @@ static inline void build_proxy_auth_hf(char* _realm, char* _buf, int* _len)
  * Create a response with given code and reason phrase
  * Optionaly add new headers specified in _hdr
  */
-static int send_resp(struct sip_msg* _m, int code, char* _reason, char* _hdr, int _hdr_len)
+/* FIXME: navratova hodnota */
+static int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr_len)
 {
-	char* buf;
-	struct sockaddr_in to;
 	struct lump_rpl* ptr;
-	unsigned int len;
-
-	to.sin_family = AF_INET;
-	if (update_sock_struct_from_via(&to, _m->via1) == -1) {
-		LOG(L_ERR, "send_resp(): Cannot lookup reply dst: %s\n",
-		    _m->via1->host.s);
-		return -1;
-	}
 
 	/* Add new headers if there are any */
 	if (_hdr) {
@@ -140,14 +111,7 @@ static int send_resp(struct sip_msg* _m, int code, char* _reason, char* _hdr, in
 		add_lump_rpl(_m, ptr);
 	}
 
-	buf = build_res_buf_from_sip_req(code, _reason, tag, 32, _m ,&len);
-	if (!buf) {
-		LOG(L_ERR, "send_resp(): Build of response failed\n");
-		return -1;
-	}
-
-	udp_send(buf, len, (struct sockaddr*)&to, sizeof(struct sockaddr_in));
-	pkg_free(buf);
+	sl_reply(_m, (char*)_code, _reason);
 	return 1;
 }
 
@@ -158,13 +122,7 @@ static int send_resp(struct sip_msg* _m, int code, char* _reason, char* _hdr, in
  */
 int challenge(struct sip_msg* _msg, char* _realm, char* _str2)
 {
-	char* buf;
-	unsigned int len;
-	struct sockaddr_in to;
-	struct lump_rpl* ptr;
 	int auth_hf_len;
-
-	printf("challenge(): Entering\n");
 
 	build_proxy_auth_hf(_realm, auth_hf, &auth_hf_len);
 	if (send_resp(_msg, 407, MESSAGE_407, auth_hf, auth_hf_len) == -1) {
@@ -240,7 +198,8 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		printf("get_ha1(): no result\n");
+		DBG("get_ha1(): no result\n");
+		db_free_query(db_handle, res);
 		return -1;
 	}
         ha1 = ROW_VALUES(RES_ROWS(res))[0].val.string_val;
@@ -255,7 +214,6 @@ static int get_ha1(str* _user, char* _realm, char* _ha1)
 int check_cred(cred_t* _cred, str* _method, char* _ha1)
 {
 	HASHHEX resp;
-	HASHHEX HA1;
 	HASHHEX hent;
 	char* qop;
 	unsigned char nonce[33];
@@ -287,20 +245,17 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 		break;
 	}
 		
-	printf("before calc\n");
 	calc_nonce(_cred->realm.s, nonce);
-	printf("after calc\n");
 	DigestCalcResponse(_ha1, nonce, _cred->nonce_count.s, _cred->cnonce.s, qop, _method->s,
 			   _cred->uri.s, hent, resp);
-	printf("after digest\n");
 
 	DBG("check_cred(): Our result = %s\n", resp);
 
 	if (!memcmp(resp, _cred->response.s, 32)) {
-		printf("check_cred(): Authorization is OK\n");
+		DBG("check_cred(): Authorization is OK\n");
 		return 1;
 	} else {
-		printf("check_cred(): Authorization failed\n");
+		DBG("check_cred(): Authorization failed\n");
 		return -1;
 	}
 }
@@ -310,14 +265,16 @@ int check_cred(cred_t* _cred, str* _method, char* _ha1)
 int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 {
 	char ha1[256];
-	cred_t cred;
 	int res;
-	struct hdr_field* auth_hf;
 	     /* We will have to parse the whole message header
 	      * since there may be multible authorization header
 	      * fields
 	      */
 	init_cred(&cred);
+
+	if (!memcmp(_msg->first_line.u.request.method.s, "ACK", 3)) {
+	        return 1;
+	}
 
 	if (parse_headers(_msg, HDR_EOH) == -1) {
 		LOG(L_ERR, "authorize(): Error while parsing message header\n");
@@ -338,7 +295,6 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 	      */
 	print_cred(&cred);
 
-	printf("Before ge_ha1\n");
 	if (get_ha1(&cred.username, _realm, ha1) == -1) {
 		LOG(L_ERR, "authorize(): Error while getting A1 string for user %s\n", cred.username.s);
 		return -1;
@@ -351,10 +307,61 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 		return -1;
 	}
 	
-	printf("Before check_cred\n");
         res = check_cred(&cred, &_msg->first_line.u.request.method, ha1);
 	if (res == -1) {
 		LOG(L_ERR, "authorize(): Error while checking credentials\n");
 		return -1;
 	} else return res;
+}
+
+
+
+/*
+ * Check if the given username matches username in credentials
+ */
+int is_user(struct sip_msg* _msg, char* _user, char* _str2)
+{
+	if (!cred.username.len) {
+		DBG("is_user(): Username not found in credentials\n");
+		return -1;
+	}
+	if (!memcmp(_user, cred.username.s, cred.username.len)) {
+		DBG("is_user(): Username matches\n");
+		return 1;
+	} else {
+		DBG("is_user(): Username differs\n");
+		return -1;
+	}
+}
+
+
+
+/*
+ * Check if the user specified in credentials is a member
+ * of given group
+ */
+int is_in_group(struct sip_msg* _msg, char* _group, char* _str2)
+{
+	db_key_t keys[] = {GRP_USER, GRP_GRP};
+	db_val_t vals[] = {{DB_STRING, 0, {.string_val = cred.username.s}},
+			   {DB_STRING, 0, {.string_val = _group}}
+	};
+	db_key_t col[] = {GRP_GRP};
+	db_res_t* res;
+
+	db_use_table(db_handle, GRP_TABLE);
+	if (db_query(db_handle, keys, vals, col, 2, 1, NULL, &res) == FALSE) {
+		LOG(L_ERR, "is_in_group(): Error while querying database\n");
+		return -1;
+	}
+
+	if (RES_ROW_N(res) == 0) {
+		DBG("is_in_group(): User %s is not in group %s\n", cred.username.s, _group);
+		db_free_query(db_handle, res);
+		return -1;
+	} else {
+		DBG("is_in_group(): User %s is member of group %s\n", cred.username.s, _group);
+		db_free_query(db_handle, res);
+		return 1;
+	}
 }

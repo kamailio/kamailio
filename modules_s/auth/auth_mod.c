@@ -12,25 +12,31 @@
 
 
 void destroy(void);
-
-
 int child_init(int rank);
+
+int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 
 static struct module_exports auth_exports = {"auth", 
 					     (char*[]) { 
 						     "authorize",
-						     "challenge"
+						     "challenge",
+						     "is_user",
+						     "is_in_group"
 					     },
 					     (cmd_function[]) {
 						     authorize, 
-						     challenge
+						     challenge,
+						     is_user,
+						     is_in_group
 					     },
-					     (int[]) {1, 1},
+					     (int[]) {1, 1, 1, 1},
 					     (fixup_function[]) {
 						     NULL, 
+						     NULL,
+						     NULL,
 						     NULL
 					     },
-					     3,
+					     4,
 					     NULL, /* response function */
 					     destroy, /* destroy function */
 					     NULL,  /* oncancel function */
@@ -59,13 +65,17 @@ struct module_exports* auth_mod_register()
 struct module_exports* mod_register()
 #endif
 {
-	auth_init();
-
 	LOG(L_ERR, "auth module - registering\n");
 	
 	     /* Find a database module */
 	if (bind_dbmod()) {
 		LOG(L_ERR, "mod_register(): Unable to bind database module\n");
+	}
+
+	sl_reply = find_export("sl_send_reply", 2);
+
+	if (!sl_reply) {
+		LOG(L_ERR, "auth:mod_register(): This module requires sl module\n");
 	}
 
 	return &auth_exports;

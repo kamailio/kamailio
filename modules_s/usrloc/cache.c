@@ -10,11 +10,14 @@
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "defs.h"
+#include <time.h>
 
-#define DEFAULT_CACHE_SIZE 512
 
-
-static inline void cache_use_table(cache_t* _c);
+static void      add_slot_elem (c_slot_t* _slot, c_elem_t* _el);
+static c_elem_t* rem_slot_elem (c_slot_t* _slot, c_elem_t* _el);
+static void      add_cache_elem(cache_t* _c, c_elem_t* _el);
+static c_elem_t* rem_cache_elem(cache_t* _c, c_elem_t* _el);
+static int       hash_func     (cache_t* _c, char* _s, int _len);
 
 
 /*
@@ -70,20 +73,9 @@ cache_t* create_cache(int _size, const char* _table)
 	c->c_ll.last = NULL;
 	c->c_ll.count = 0;
 
+	init_lock(c->lock);
+
 	return c;
-}
-
-
-int cache_use_connection(cache_t* _c, db_con_t* _con)
-{
-#ifdef PARANOID
-	if ((!_c) || (!_con)) {
-		LOG(L_ERR, "cache_use_connection(): Invalid parameter value\n");
-		return FALSE;
-	}
-#endif
-	_c->db_con = _con;
-	return TRUE;
 }
 
 
@@ -94,9 +86,7 @@ void free_cache(cache_t* _c)
 {
 	int i;
 
-#ifdef PARANOID
-	if (!_c) return;
-#endif
+	get_lock(&(_c->lock));
 	if (_c->table) {
 		for(i = 0; i < _c->size; i++) {
 			deinit_slot(&(_c->table[i]));
@@ -104,8 +94,9 @@ void free_cache(cache_t* _c)
 		pkg_free(_c->table);
 		pkg_free(_c->db_table);
 	}
-
+	release_lock(&(_c->lock));
 	pkg_free(_c);
+	
 }
 
 
@@ -115,20 +106,21 @@ void free_cache(cache_t* _c)
  *        better hash function generating flat
  *        distribution
  */
-int hash_func(cache_t* _c, const char* _str)
+static int hash_func(cache_t* _c, char* _s, int _len)
 {
 	int res = 0;
+	int i;
 
 #ifdef PARANOID
-	if ((!_str) || (!_c)) {
+	if ((!_s) || (!_c)) {
 		LOG(L_ERR, "hash_func(): Invalid parameter value\n");
 		return -1;
 	}
 
 #endif
 
-	while(*_str != '\0') {
-		res += *_str++;
+	for(i = 0; i < _len; i++) {
+		res += _s[i];
 	}
 
 	return res % _c->size;
@@ -138,58 +130,43 @@ int hash_func(cache_t* _c, const char* _str)
 /*
  * Put an element into cache
  */
-int cache_put(cache_t* _c, location_t* _l)
+int cache_put(cache_t* _c, db_con_t* _con, location_t* _l)
 {
-	c_elem_t* ptr, *el;
+	c_elem_t* ptr;
 	c_slot_t* slot;
 	int slot_num;
 
-#ifdef PARANOID
-	if ((!_c) || (!_l)) {
-		LOG(L_ERR, "cache_put(): Invalid parameter value\n");
-		return FALSE;
-	}
-#endif
-
 	ptr = create_element(_l);
-
 	if (!ptr) {
 		LOG(L_ERR, "cache_put(): No memory left\n");
 		return FALSE;
 	}
 
-	slot_num = hash_func(_c, _l->user.s);
+	slot_num = hash_func(_c, _l->user.s, _l->user.len);
 
 	if (slot_num == -1) {
-		LOG(L_ERR, "cache_put(): Errro while hashing slot\n");
+		LOG(L_ERR, "cache_put(): Error while hashing slot\n");
 		free_element(ptr);
 		return FALSE;
 	}
 
 	slot = CACHE_GET_SLOT(_c, slot_num);
+	get_lock(&(slot->lock));
 
-#ifdef USE_DB
-	cache_use_table(_c);
-	if (db_insert_location(_c->db_con, _l) == FALSE) {
-		LOG(L_ERR, "cache_put(): Error while inserting bindings into database\n");
-		free_element(ptr);
-		return FALSE;
-	}
-#endif
-
-	if (add_slot_elem(slot, ptr) != TRUE) {
-		LOG(L_ERR, "cache_put(): Error while adding element to collision slot list\n");
-		free_element(ptr);
-		return FALSE;
+	     /* Synchronize with database if we are using database */
+	if (_con) {
+		if (db_insert_location(_con, _l) == FALSE) {
+			LOG(L_ERR, "cache_put(): Error while inserting bindings into database\n");
+			free_element(ptr);
+			release_lock(&(slot->lock));
+			return FALSE;
+		}
 	}
 
-	if (add_cache_elem(_c, ptr) != TRUE) {
-		LOG(L_ERR, "cache_put(): Errow while adding element to hash table list\n");
-		rem_slot_elem(slot, ptr);
-		free_element(ptr);
-		return FALSE;
-	}
+	add_slot_elem(slot, ptr);
+	add_cache_elem(_c, ptr);
 
+	release_lock(&(slot->lock));
 	return TRUE;
 }
 
@@ -199,48 +176,62 @@ int cache_put(cache_t* _c, location_t* _l)
  * It is neccessary to call cache_release_el when you don't need element
  * returned by this function anymore
  */
-c_elem_t* cache_get(cache_t* _c, const char* _aor)
+c_elem_t* cache_get(cache_t* _c, str* _aor)
 {
 	int slot_num, count, i;
 	c_slot_t* slot;
 	c_elem_t* el;
 	char *p;
 
-#ifdef PARANOID
-	if ((!_c) || (!_aor)) {
-		LOG(L_ERR, "cache_get(): Invalid _c parameter value\n");
+	p = (char*)pkg_malloc(_aor->len + 1);
+	if (!p) {
+		LOG(L_ERR, "cache_get(): No memory left\n");
 		return NULL;
 	}
-#endif
-	p = strdup(_aor);               //FIXME
-	p = strlower(p, strlen(p));
-	slot_num = hash_func(_c, p);
+
+	memcpy(p, _aor->s, _aor->len);
+	p[_aor->len] = '\0';
+	strlower(p, _aor->len);
+
+	printf("p=%s\n", p);
+
+	slot_num = hash_func(_c, p, _aor->len);
 	if (slot_num == -1) {
 		LOG(L_ERR, "cache_get(): Error while generating hash\n");
-		free(p);
+		pkg_free(p);
 		return NULL;
 	}
 
 	slot = CACHE_GET_SLOT(_c, slot_num);
+	     /* FIXME: Tady by se mel zamykat jenom element */
+	DBG("Before lock\n");
+	get_lock(&(slot->lock));
+	DBG("After lock\n");
 
 	count = SLOT_ELEM_COUNT(slot);
 	el = SLOT_FIRST_ELEM(slot);
 
 	for(i = 0; i < count; i++) {
 		if (!cmp_location(el->loc, p)) {
+			pkg_free(p);
 			return el;
 		}
 		el = SLOT_ELEM_NEXT(el);
 	}
 
+	DBG("Before release\n");
+	release_lock(&(slot->lock));
+	DBG("After release\n");
+	pkg_free(p);
 	return NULL;
 }
 
 
 
-int cache_release_elem(c_elem_t* _el)
+void cache_release_elem(c_elem_t* _el)
 {
-	return TRUE;
+	     /* FIXME: Tady by se mel uvolnovat lock elementu */
+	release_lock(&(_el->ht_slot->lock));
 }
 
 
@@ -248,130 +239,149 @@ int cache_release_elem(c_elem_t* _el)
 void print_cache(cache_t* _c)
 {
 	c_elem_t* el;
-#ifdef PARANOID
-	if (!_c) return;
-#endif
 
 	el = CACHE_FIRST_ELEM(_c);
 
-	printf("=== Cache content:\n");
+	DBG("=== Cache content:\n");
 
 	while(el) {
 		print_element(el);
 		el = CACHE_NEXT_ELEM(el);
 	}
 
-	printf("=== End of cache content\n");
+	DBG("=== End of cache content\n");
 }
 
 
 
+int clean_cache(cache_t* _c, db_con_t* _con)
+{
+	c_elem_t* el, *ptr;
+	time_t t;
+	fl_lock_t* l;
+
+	el = CACHE_FIRST_ELEM(_c);
+	t = time(NULL);
+
+	while(el) {
+		get_lock(&(el->ht_slot->lock));
+		if (clean_location(el->loc, _con,  t) == FALSE) {
+			LOG(L_ERR, "Error while cleaning cache\n");
+			release_lock(&(el->ht_slot->lock));
+			return FALSE;
+		}
+		ptr = CACHE_NEXT_ELEM(el);
+		if (!(el->loc->contacts)) {
+			l = &(el->ht_slot->lock);
+			rem_slot_elem(el->ht_slot, el);
+			rem_cache_elem(_c, el);
+			release_lock(l);
+			free_element(el);
+		} else {
+			release_lock(&(el->ht_slot->lock));
+		}
+		el = ptr;
+	}
+	return TRUE;
+}
+
+
 /*
- * Remove one or more bindings from cache
+ * Remove location from cache
  * If you want to remove all bindings for given
- * to, set the last parameter to NULL
  */
-int cache_remove(cache_t* _c, const char* _aor)
+int cache_remove(cache_t* _c, db_con_t* _con, str* _aor)
 {
 	int slot_num, count, i;
 	c_slot_t* slot;
 	c_elem_t* el;
 	char *p;
 
-#ifdef PARANOID
-	if ((!_c) || (!_aor)) {
-		LOG(L_ERR, "cache_remove(): Invalid parameter value\n");
+	p = (char*)pkg_malloc(_aor->len + 1);
+	if (!p) {
+		LOG(L_ERR, "cache_remove(): No memory left\n");
 		return FALSE;
 	}
-#endif
-	p = strdup(_aor);               //FIXME
-	p = strlower(p, strlen(p));
-	slot_num = hash_func(_c, p);
+
+	memcpy(p, _aor->s, _aor->len);
+	p[_aor->len] = '0';
+	strlower(p, _aor->len);	
+
+	slot_num = hash_func(_c, p, _aor->len);
 	if (slot_num == -1) {
 		LOG(L_ERR, "cache_remove(): Error while generating hash\n");
-		free(p);
+		pkg_free(p);
 		return FALSE;
 	}
 
 	slot = CACHE_GET_SLOT(_c, slot_num);
 
+	get_lock(&(slot->lock));
 	count = SLOT_ELEM_COUNT(slot);
 	el = SLOT_FIRST_ELEM(slot);
 
 	for(i = 0; i < count; i++) {
 		if (!cmp_location(el->loc, p)) {
-#ifdef USE_DB
-			cache_use_table(_c);
-			if (db_remove_location(_c->db_con, el->loc) == FALSE) {
-				LOG(L_ERR, "cache_remove(): Error while removing bindings from database\n");
-				free_element(el);
-				free(p);
-				return FALSE;
+			if (_con) {
+				if (db_remove_location(_con, el->loc) == FALSE) {
+					LOG(L_ERR, "cache_remove(): Error while removing bindings from database\n");
+					pkg_free(p);
+					release_lock(&(slot->lock));
+					return FALSE;
+				}
 			}
-#endif
+
 			rem_slot_elem(slot, el);
 			rem_cache_elem(_c, el);
+			release_lock(&(slot->lock));
 			free_element(el);
-			free(p);
+			pkg_free(p);
 			return TRUE;
 		}
 		el = SLOT_ELEM_NEXT(el);
 	}
-	free(p);
+	release_lock(&(slot->lock));
+	pkg_free(p);
 	return TRUE;
 }
 
 
 
-int cache_update(cache_t* _c, c_elem_t* _el, location_t* _loc)
+int cache_update(cache_t* _c, db_con_t* _con, c_elem_t* _el, location_t* _loc)
 {
-#ifdef PARANOID
-	if ((!_c) || (!_el) || (!_loc)) {
-		LOG(L_ERR, "cache_update(): Invalid parameter value\n");
-		return FALSE;
-	}
-#endif
-#ifdef USE_DB
-	cache_use_table(_c);
-#endif
-	if (update_location(_c->db_con, _el->loc, _loc) == FALSE) {
+        fl_lock_t* lock;
+	if (update_location(_con, _el->loc, _loc) == FALSE) {
 		LOG(L_ERR, "cache_update(): Error while updating location\n");
 		return FALSE;
 	}
 
 	if (!(_el->loc->contacts)) {
+	        lock = &(_el->ht_slot->lock);
 		rem_slot_elem(_el->ht_slot, _el);
 		rem_cache_elem(_c, _el);
+		release_lock(lock);
 		free_element(_el);
 	}
 
 	free_location(_loc);
-	
 	return TRUE;
 }
 
 
-
-static inline void cache_use_table(cache_t* _c)
-{
-	db_use_table(_c->db_con, _c->db_table);
-}
-
-
-
-int preload_cache(cache_t* _c)
+int preload_cache(cache_t* _c, db_con_t* _con)
 {
 	db_key_t columns[6] = { "user", "contact", "expires", "q", "callid", "cseq" };
 	db_res_t* res;
 	int i, cseq, slot_num;
 	location_t* loc = NULL;
-	const char* cur_user, *user, *contact, *callid;
+	const char* cur_user, *user = NULL, *contact, *callid;
 	db_row_t* row;
         double q;
 	time_t expires;
 	c_elem_t* ptr;
 	c_slot_t* slot;
 	time_t t;
+	str s;
 
 
 #ifdef PARANOID
@@ -381,16 +391,14 @@ int preload_cache(cache_t* _c)
 	}
 #endif
 
-	cache_use_table(_c);
-
-	if (db_query(_c->db_con, NULL, NULL, columns, 0, 6, "user", &res) == FALSE) {
+	if (db_query(_con, NULL, NULL, columns, 0, 6, "user", &res) == FALSE) {
 		LOG(L_ERR, "preload_cache(): Error while doing db_query\n");
 		return FALSE;
 	}
 
 	if (RES_ROW_N(res) == 0) {
 		DBG("preload_cache(): Table is empty\n");
-		db_free_query(_c->db_con, res);
+		db_free_query(_con, res);
 		return TRUE;
 	}
 
@@ -407,13 +415,15 @@ int preload_cache(cache_t* _c)
 			if (loc) {
 				     //cache_put(_c, loc);
 				ptr = create_element(loc);
-				slot_num = hash_func(_c, loc->user.s);
+				slot_num = hash_func(_c, loc->user.s, loc->user.len);
 				slot = CACHE_GET_SLOT(_c, slot_num);
 				add_slot_elem(slot, ptr);
 				add_cache_elem(_c, ptr);
 			}
 
-			create_location(&loc, cur_user);
+			s.s = (char*)cur_user;
+			s.len = strlen(cur_user);
+			create_location(&loc, &s);
 		}
 		
 		contact = ROW_VALUES(row)[1].val.string_val;
@@ -422,19 +432,130 @@ int preload_cache(cache_t* _c)
 		callid = ROW_VALUES(row)[4].val.string_val;
 		cseq = ROW_VALUES(row)[5].val.int_val;
 		
-		DBG("    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, expires, q, callid, cseq);
+		DBG("    contact=%s expires=%d q=%3.2f callid=%s cseq=%d\n", contact, (int)expires, q, callid, cseq);
 		add_contact(loc, contact, expires + t, q, callid, cseq);
 	}
 
 	if (loc) {
 		//		cache_put(_c, loc);
 		ptr = create_element(loc);
-		slot_num = hash_func(_c, loc->user.s);
+		slot_num = hash_func(_c, loc->user.s, loc->user.len);
 		slot = CACHE_GET_SLOT(_c, slot_num);
 		add_slot_elem(slot, ptr);
 		add_cache_elem(_c, ptr);
 	}
 
-	db_free_query(_c->db_con, res);
+	db_free_query(_con, res);
 	return TRUE;
 }
+
+
+
+
+
+/*
+ * Add an element to an slot's linked list
+ */
+static void add_slot_elem(c_slot_t* _slot, c_elem_t* _el)
+{
+	if (!_slot->ll.count++) {
+		_slot->ll.first = _slot->ll.last = _el;
+	} else {
+		_el->ll.prev = _slot->ll.last;
+		_slot->ll.last->ll.next = _el;
+		_slot->ll.last = _el;
+	}
+	
+	_el->ht_slot = _slot;
+}
+
+
+
+static c_elem_t* rem_slot_elem(c_slot_t* _slot, c_elem_t* _el)
+{
+	c_elem_t* ptr;
+
+	if (!_slot->ll.count) return NULL;
+
+	ptr = _slot->ll.first;
+
+	while(ptr) {
+		if (ptr == _el) {
+			if (ptr->ll.prev) {
+				ptr->ll.prev->ll.next = ptr->ll.next;
+			} else {
+				_slot->ll.first = ptr->ll.next;
+			}
+			if (ptr->ll.next) {
+				ptr->ll.next->ll.prev = ptr->ll.prev;
+			} else {
+				_slot->ll.last = ptr->ll.prev;
+			}
+			ptr->ll.prev = ptr->ll.next = NULL;
+			ptr->ht_slot = NULL;
+			_slot->ll.count--;
+			break;
+		}
+		ptr = ptr->ll.next;
+	}
+	return ptr;
+}
+
+
+/*
+ * Add an element to linked list of all elements in hash table
+ */
+static void add_cache_elem(cache_t* _c, c_elem_t* _el)
+{
+	get_lock(&(_c->lock));
+	if (!_c->c_ll.count++) {
+		_c->c_ll.first = _c->c_ll.last = _el;
+	} else {
+		_el->c_ll.prev = _c->c_ll.last;
+		_c->c_ll.last->c_ll.next = _el;
+		_c->c_ll.last = _el;
+	}
+	release_lock(&(_c->lock));
+}
+
+
+
+static c_elem_t* rem_cache_elem(cache_t* _c, c_elem_t* _el)
+{
+	c_elem_t* ptr;
+
+	get_lock(&(_c->lock));
+
+	if (!_c->c_ll.count) {
+		release_lock(&(_c->lock));
+		return NULL;
+	}
+		
+
+	ptr = _c->c_ll.first;
+
+	while(ptr) {
+		if (ptr == _el) {
+			if (ptr->c_ll.prev) {
+				ptr->c_ll.prev->c_ll.next = ptr->c_ll.next;
+			} else {
+				_c->c_ll.first = ptr->c_ll.next;
+			}
+			if (ptr->c_ll.next) {
+				ptr->c_ll.next->c_ll.prev = ptr->c_ll.prev;
+			} else {
+				_c->c_ll.last = ptr->c_ll.prev;
+			}
+			ptr->c_ll.prev = ptr->c_ll.next = NULL;
+			_c->c_ll.count--;
+			break;
+		}
+		ptr = ptr->c_ll.next;
+	}
+
+	release_lock(&(_c->lock));
+
+	return ptr;
+}
+		
+

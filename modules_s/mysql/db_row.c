@@ -22,13 +22,13 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
         ROW_VALUES(_r) = (db_val_t*)pkg_malloc(sizeof(db_val_t) * RES_COL_N(_res));
 	ROW_N(_r) = RES_COL_N(_res);
 	if (!ROW_VALUES(_r)) {
-		log(L_ERR, "convert_row(): No memory left\n");
+		LOG(L_ERR, "convert_row(): No memory left\n");
 		return FALSE;
 	}
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), CON_ROW(_h)[i]) == FALSE) {
-			log(L_ERR, "convert_row(): Error while converting value\n");
+			LOG(L_ERR, "convert_row(): Error while converting value\n");
 			free_row(_r);
 			return FALSE;
 		}
@@ -41,7 +41,7 @@ int free_row(db_row_t* _r)
 {
 #ifndef PARANOID
 	if (!_r) {
-		log(L_ERR, "free_row(): Invalid parameter value\n");
+		LOG(L_ERR, "free_row(): Invalid parameter value\n");
 		return FALSE;
 	}
 #endif

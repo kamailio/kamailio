@@ -7,6 +7,7 @@
 
 #include "c_elem.h"
 #include "cache.h"
+#include "../../fastlock.h"
 
 struct cache;
 struct c_elem;
@@ -19,6 +20,7 @@ typedef struct c_slot {
 	} ll;
 
 	struct cache* cache;           /* Cache we belong to */
+	fl_lock_t lock;                /* Cache slot lock */
 } c_slot_t;
 
 

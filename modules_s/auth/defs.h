@@ -12,12 +12,15 @@
 #define AUTH_HF_LEN 512
 
 
-#define DB_URL "sql://janakj:heslo@localhost/ser"
+#define DB_URL "sql://csps:47csps11@dbhost/csps107"
 #define DB_TABLE "auth"
-
 
 #define NONCE_SECRET "4e9rhygt90ofw34e8hiof09tg"
 #define NONCE_SECRET_LEN 25
+
+#define GRP_TABLE "grp"
+#define GRP_USER "user"
+#define GRP_GRP "grp"
 
 
 /*

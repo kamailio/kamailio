@@ -8,6 +8,7 @@
 #include <time.h>
 #include "../../str.h"
 #include "db.h"
+#include "defs.h"
 
 
 typedef struct contact {
@@ -51,20 +52,20 @@ int cmp_contact(contact_t* _c1, contact_t* _c2);
 /*
  * Remove particular contact from database
  */
-#ifdef USE_DB
+
 int db_remove_contact(db_con_t* _c, contact_t* _con);
-#endif
+
 
 /*
  * Update particular contact in database
  */
-#ifdef USE_DB
-int db_update_contact(db_con_t* _c, contact_t* _con);
-#endif
 
-#ifdef USE_DB
+int db_update_contact(db_con_t* _c, contact_t* _con);
+
+
+
 int db_insert_contact(db_con_t* _c, contact_t* _con);
-#endif
+
 
 
 #endif

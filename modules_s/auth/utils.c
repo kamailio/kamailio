@@ -151,7 +151,7 @@ char* eat_name(char* _b)
 {
 	int quoted = 0;
 	char* b = _b;
-	char* last_ws;
+	char* last_ws = _b;
 
 	if (!_b) return NULL;
 

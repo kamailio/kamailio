@@ -267,61 +267,61 @@ int print_cred(cred_t* _c)
 	}
 #endif
 
-	printf("===Credentials:\n");
+	DBG("===Credentials:\n");
 
 	switch(_c->scheme) {
 	case SCHEME_DIGEST:
-		printf("   scheme=digest\n");
+		DBG("   scheme=digest\n");
 		break;
 	case SCHEME_UNKNOWN:
-		printf("   scheme=unknown\n");
+		DBG("   scheme=unknown\n");
 		break;
 	default:
-		printf("   scheme=%d\n", _c->scheme);
+		DBG("   scheme=%d\n", _c->scheme);
 		break;
 	}
 
-	printf("   username=%s\n", _c->username.s);
-	printf("   realm=%s\n", _c->realm.s);
-	printf("   nonce=%s\n", _c->nonce.s);
-	printf("   uri=%s\n", _c->uri.s);
-	printf("   response=%s\n", _c->response.s);
+	DBG("   username=%s\n", _c->username.s);
+	DBG("   realm=%s\n", _c->realm.s);
+	DBG("   nonce=%s\n", _c->nonce.s);
+	DBG("   uri=%s\n", _c->uri.s);
+	DBG("   response=%s\n", _c->response.s);
 
 	switch(_c->algorithm) {
 	case ALG_MD5:
-		printf("   algorithm=MD5\n");
+		DBG("   algorithm=MD5\n");
 		break;
 	case ALG_MD5_SESS:
-		printf("   algoritm=MD5-Session\n");
+		DBG("   algoritm=MD5-Session\n");
 		break;
 	case ALG_UNKNOWN:
-		printf("   algorithm=unknown\n");
+		DBG("   algorithm=unknown\n");
 		break;
 	default:
-		printf("   algorithm=%d\n", _c->algorithm);
+		DBG("   algorithm=%d\n", _c->algorithm);
 		break;
 	}
 
-	printf("   cnonce=%s\n", _c->cnonce.s);
-	printf("   opaque=%s\n", _c->opaque.s);
+	DBG("   cnonce=%s\n", _c->cnonce.s);
+	DBG("   opaque=%s\n", _c->opaque.s);
 
 	switch(_c->qop) {
 	case QOP_AUTH:
-		printf("   qop=auth\n");
+		DBG("   qop=auth\n");
 		break;
 	case QOP_AUTH_INT:
-		printf("   qop=auth-int\n");
+		DBG("   qop=auth-int\n");
 		break;
 	case QOP_UNKNOWN:
-		printf("   qop=unknown\n");
+		DBG("   qop=unknown\n");
 		break;
 	default:
-		printf("   qop=%d\n", _c->qop);
+		DBG("   qop=%d\n", _c->qop);
 		break;
 	}
 
-	printf("   nonce_count=%s\n", _c->nonce_count);
-	printf("===\n");
+	DBG("   nonce_count=%s\n", _c->nonce_count.s);
+	DBG("===\n");
 	return 0;
 }
 

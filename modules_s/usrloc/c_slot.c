@@ -27,6 +27,8 @@ int init_slot(cache_t* _c, c_slot_t* _slot)
 	_slot->ll.first = NULL;
 	_slot->ll.last = NULL;
 	_slot->cache = _c;
+
+	init_lock(_slot->lock);
 	return TRUE;
 }
 

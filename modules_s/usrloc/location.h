@@ -28,7 +28,7 @@ int msg2loc(struct sip_msg* _msg, location_t** _loc, int* _star, int* _expires);
 /*
  * Create a new location structure
  */
-int create_location(location_t** _loc, const char* _user);
+int create_location(location_t** _loc, str* _user);
 
 /*
  * Add a contact into existing location structure
@@ -77,9 +77,22 @@ int remove_zero_expires(location_t* _loc);
 int db_insert_location(db_con_t* _c, location_t* _loc);
 
 
+/*
+ * Remove location from database
+ */
 int db_remove_location(db_con_t* _c, location_t* _loc);
 
 
+/*
+ * Update bindings that belong to location
+ */
 int update_location(db_con_t* _c, location_t* _dest, location_t* _src);
+
+
+/*
+ * Remove expired bindings
+ */
+int clean_location(location_t* _l, db_con_t* _c, time_t _t);
+
 
 #endif
