@@ -154,7 +154,7 @@ struct sip_uri{
 };
 
 
-
+char* parse_fline(char* buffer, char* end, struct msg_start* fl);
 char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl);
 #ifdef OLD_PARSER 
 char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f);

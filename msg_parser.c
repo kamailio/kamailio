@@ -21,8 +21,6 @@
 
 
 
-#define DEBUG
-
 
 
 /* parses the first line, returns pointer to  next line  & fills fl;
@@ -789,6 +787,9 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	offset=tmp-buf;
 	fl=&(msg->first_line);
 	rest=parse_first_line(tmp, len-offset, fl);
+#if 0
+	rest=parse_fline(tmp, buf+len, fl);
+#endif
 	offset+=rest-tmp;
 	tmp=rest;
 	switch(fl->type){
