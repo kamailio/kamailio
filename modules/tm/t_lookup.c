@@ -989,9 +989,8 @@ static inline int new_t(struct sip_msg *p_msg)
 */
 int t_newtran( struct sip_msg* p_msg )
 {
-	int lret, my_err, ret;
+	int lret, my_err;
 
-	ret=1;
 
 	/* is T still up-to-date ? */
 	DBG("DEBUG: t_addifnew: msg id=%d , global msg id=%d ,"
