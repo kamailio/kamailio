@@ -18,6 +18,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	struct sip_msg msg;
 	struct route_elem *re;
 
+	memset(&msg,0, sizeof(struct sip_msg)); /* init everything to 0 */
 	/* fill in msg */
 	msg.buf=buf;
 	msg.len=len;

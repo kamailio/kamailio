@@ -8,11 +8,16 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "route_struct.h"
 #include "globals.h"
 #include "route.h"
+#include "dprint.h"
 
 void yyerror(char* s);
+char* tmp;
 
 %}
 
@@ -33,10 +38,16 @@ void yyerror(char* s);
 %token FORWARD
 %token SEND
 %token DROP
-%token LOG
+%token LOG_TOK
 %token ERROR
 %token ROUTE
 %token EXEC
+%token SET_HOST
+%token SET_HOSTPORT
+%token SET_USER
+%token SET_USERPASS
+%token SET_PORT
+%token SET_URI
 
 %token METHOD
 %token URI
@@ -50,6 +61,10 @@ void yyerror(char* s);
 %token LISTEN
 %token DNS
 %token REV_DNS
+%token PORT
+%token CHILDREN
+%token CHECK_VIA
+
 
 
 /* operators */
@@ -101,24 +116,70 @@ statements:	statements statement {}
 		| statements error { yyerror(""); YYABORT;}
 	;
 
-statement:	assign_stm CR
-		| route_stm CR
+statement:	assign_stm 
+		| route_stm 
 		| CR	/* null statement*/
 	;
 
-assign_stm:	DEBUG EQUAL NUMBER 
+assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| DEBUG EQUAL error  { yyerror("number  expected"); }
-		| FORK  EQUAL NUMBER
+		| FORK  EQUAL NUMBER { dont_fork= ! $3; }
 		| FORK  EQUAL error  { yyerror("boolean value expected"); }
-		| LOGSTDERROR EQUAL NUMBER 
+		| LOGSTDERROR EQUAL NUMBER { log_stderr=$3; }
 		| LOGSTDERROR EQUAL error { yyerror("boolean value expected"); }
-		| DNS EQUAL NUMBER
+		| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }
 		| DNS EQUAL error { yyerror("boolean value expected"); }
-		| REV_DNS EQUAL NUMBER 
+		| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 		| REV_DNS EQUAL error { yyerror("boolean value expected"); }
-		| LISTEN EQUAL ipv4 
-		| LISTEN EQUAL ID 
-		| LISTEN EQUAL STRING
+		| PORT EQUAL NUMBER   { port_no=$3; }
+		| PORT EQUAL error    { yyerror("number expected"); } 
+		| CHILDREN EQUAL NUMBER { children_no=$3; }
+		| CHILDREN EQUAL error { yyerror("number expected"); } 
+		| CHECK_VIA EQUAL NUMBER { check_via=$3; }
+		| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
+		| LISTEN EQUAL ipv4  {
+								if (addresses_no < MAX_LISTEN){
+									tmp=inet_ntoa(*(struct in_addr*)&$3);
+									names[addresses_no]=(char*)malloc(strlen(tmp)+1);
+									if (names[addresses_no]==0){
+										LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+									}else{
+										strncpy(names[addresses_no], tmp, strlen(tmp)+1);
+										addresses_no++;
+									}
+								}else{
+									LOG(L_CRIT, "ERROR: cfg. parser: too many listen addresses"
+												"(max. %d).\n", MAX_LISTEN);
+								}
+							  }
+		| LISTEN EQUAL ID	 {
+								if (addresses_no < MAX_LISTEN){
+									names[addresses_no]=(char*)malloc(strlen($3)+1);
+									if (names[addresses_no]==0){
+										LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+									}else{
+										strncpy(names[addresses_no], $3, strlen($3)+1);
+										addresses_no++;
+									}
+								}else{
+									LOG(L_CRIT, "ERROR: cfg. parser: too many listen addresses"
+												"(max. %d).\n", MAX_LISTEN);
+								}
+							  }
+		| LISTEN EQUAL STRING {
+								if (addresses_no < MAX_LISTEN){
+									names[addresses_no]=(char*)malloc(strlen($3)+1);
+									if (names[addresses_no]==0){
+										LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
+									}else{
+										strncpy(names[addresses_no], $3, strlen($3)+1);
+										addresses_no++;
+									}
+								}else{
+									LOG(L_CRIT, "ERROR: cfg. parser: too many listen addresses"
+												"(max. %d).\n", MAX_LISTEN);
+								}
+							  }
 		| LISTEN EQUAL  error { yyerror("ip address or hostname"
 						"expected"); }
 		| error EQUAL { yyerror("unknown config variable"); }
@@ -153,26 +214,19 @@ route_stm:	ROUTE LBRACE rules RBRACE { push($3, &rlist[DEFAULT_RT]); }
 		| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 
-rules:	rules rule { push($2, &$1); $$=$1; 
-						printf(": rules->rules(%x) rule(%x)\n", $1,$2);}
-	| rule {$$=$1; printf(": rules->rule (%x)\n",$1); }
+rules:	rules rule { push($2, &$1); $$=$1; }
+	| rule {$$=$1; }
 	| rules error { $$=0; yyerror("invalid rule"); }
 	 ;
 
 rule:	condition	actions CR {
-								printf("Got a new rule!\n");
-								printf("expr: "); print_expr($1);
-								printf("\n  -> actions: ");
-								print_action($2); printf("\n");
-
 								$$=0;
 								if (add_rule($1, $2, &$$)<0) {
 									yyerror("error calling add_rule");
 									YYABORT;
 								}
-								printf(": rule -> condition actions CR\n");
 							  }
-	| CR  /* null rule */		{ $$=0; printf(": rule-> CR!\n"); }
+	| CR  /* null rule */		{ $$=0;}
 	| condition error { $$=0; yyerror("bad actions in rule"); }
 	;
 
@@ -201,7 +255,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 				 			}
 		| METHOD MATCH error { $$=0; yyerror("string expected"); }
 		| METHOD error	{ $$=0; yyerror("invalid operator,"
-										"== or ~= expected");
+										"== or =~ expected");
 						}
 		| URI EQUAL_T STRING 	{$$ = mk_elem(	EQUAL_OP, STRING_ST,
 												URI_O, $3); 
@@ -218,7 +272,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 							}
 		| URI MATCH error {  $$=0; yyerror("string expected"); }
 		| URI error	{ $$=0; yyerror("invalid operator,"
-				  					" == or ~= expected");
+				  					" == or =~ expected");
 					}
 		| SRCIP EQUAL_T net4	{ $$=mk_elem(	EQUAL_OP, NET_ST,
 												SRCIP_O, $3);
@@ -239,7 +293,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 								}
 		| SRCIP MATCH error  { $$=0; yyerror( "hostname expected"); }
 		| SRCIP error  { $$=0; 
-						 yyerror("invalid operator, == or ~= expected");}
+						 yyerror("invalid operator, == or =~ expected");}
 		| DSTIP EQUAL_T net4	{ $$=mk_elem(	EQUAL_OP, NET_ST,
 												DSTIP_O, $3);
 								}
@@ -259,7 +313,7 @@ exp_elem:	METHOD EQUAL_T STRING	{$$= mk_elem(	EQUAL_OP, STRING_ST,
 							}
 		| DSTIP MATCH error  { $$=0; yyerror ( "hostname  expected" ); }
 		| DSTIP error { $$=0; 
-						yyerror("invalid operator, == or ~= expected");}
+						yyerror("invalid operator, == or =~ expected");}
 	;
 
 net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); } 
@@ -278,7 +332,7 @@ net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); }
 host:	ID				{ $$=$1; }
 	| host DOT ID		{ $$=(char*)malloc(strlen($1)+1+strlen($3)+1);
 						  if ($$==0){
-						  	fprintf(stderr, "memory allocation failure"
+						  	LOG(L_CRIT, "ERROR: cfg. parser: memory allocation failure"
 						 				" while parsing host\n");
 						  }else{
 						  	memcpy($$, $1, strlen($1));
@@ -382,17 +436,17 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 													"argument"); }
 		| DROP LPAREN RPAREN	{$$=mk_action(DROP_T,0, 0, 0, 0); }
 		| DROP					{$$=mk_action(DROP_T,0, 0, 0, 0); }
-		| LOG LPAREN STRING RPAREN	{$$=mk_action(	LOG_T, NUMBER_ST, 
+		| LOG_TOK LPAREN STRING RPAREN	{$$=mk_action(	LOG_T, NUMBER_ST, 
 													STRING_ST,(void*)4,$3);
 									}
-		| LOG LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(	LOG_T,
+		| LOG_TOK LPAREN NUMBER COMMA STRING RPAREN	{$$=mk_action(	LOG_T,
 																NUMBER_ST, 
 																STRING_ST,
 																(void*)$3,
 																$5);
 												}
-		| LOG error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| LOG LPAREN error RPAREN { $$=0; yyerror("bad log"
+		| LOG_TOK error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| LOG_TOK LPAREN error RPAREN { $$=0; yyerror("bad log"
 									"argument"); }
 		| ERROR LPAREN STRING COMMA STRING RPAREN {$$=mk_action(ERROR_T,
 																STRING_ST, 
@@ -413,6 +467,24 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| EXEC LPAREN STRING RPAREN	{ $$=mk_action(	EXEC_T, STRING_ST, 0,
 													$3, 0);
 									}
+		| SET_HOST LPAREN STRING RPAREN { $$=mk_action( SET_HOST_T, STRING_ST, 0, $3, 0); }
+		| SET_HOST error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_HOST LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+		| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action( SET_HOSTPORT_T, STRING_ST, 0, $3, 0); }
+		| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+		| SET_PORT LPAREN STRING RPAREN { $$=mk_action( SET_PORT_T, STRING_ST, 0, $3, 0); }
+		| SET_PORT error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+		| SET_USER LPAREN STRING RPAREN { $$=mk_action( SET_USER_T, STRING_ST, 0, $3, 0); }
+		| SET_USER error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_USER LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+		| SET_USERPASS LPAREN STRING RPAREN { $$=mk_action( SET_USERPASS_T, STRING_ST, 0, $3, 0); }
+		| SET_USERPASS error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_USERPASS LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+		| SET_URI LPAREN STRING RPAREN { $$=mk_action( SET_URI_T, STRING_ST, 0, $3, 0); }
+		| SET_URI error { $$=0; yyerror("missing '(' or ')' ?"); }
+		| SET_URI LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
 	;
 
 
@@ -423,7 +495,7 @@ extern int column;
 extern int startcolumn;
 void yyerror(char* s)
 {
-	fprintf(stderr, "parse error (%d,%d-%d): %s\n", line, startcolumn, 
+	LOG(L_CRIT, "parse error (%d,%d-%d): %s\n", line, startcolumn, 
 			column, s);
 	cfg_errors++;
 }

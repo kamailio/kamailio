@@ -12,6 +12,7 @@
 #include "forward.h"
 #include "udp_server.h"
 #include "route.h"
+#include "msg_parser.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -21,14 +22,19 @@
 #include <arpa/inet.h>
 
 
-/* ret= 0 if action -> end of lis t(e.g DROP), >0
-   and >0 on error */
+/* ret= 0! if action -> end of list(e.g DROP), 
+      > 0 to continue processing next actions
+   and <0 on error */
 int do_action(struct action* a, struct sip_msg* msg)
 {
 	int ret;
 	struct sockaddr_in* to;
 	struct proxy_l* p;
 	struct route_elem* re;
+	char* tmp;
+	char *new_uri, *end, *crt;
+	int len;
+	struct sip_uri uri;
 
 	ret=E_BUG;
 	switch (a->type){
@@ -139,10 +145,119 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}
 			ret=1;
 			break;
+		case SET_HOST_T:
+		case SET_HOSTPORT_T:
+		case SET_USER_T:
+		case SET_USERPASS_T:
+		case SET_PORT_T:
+		case SET_URI_T:
+				if (a->p1_type!=STRING_ST){
+					LOG(L_CRIT, "BUG: do_action: bad set*() type %d\n",
+							a->p1_type);
+					ret=E_BUG;
+					break;
+				}
+				if (a->type==SET_URI_T){
+					if (msg->new_uri) free(msg->new_uri);
+					len=strlen(a->p1.string);
+					msg->new_uri=malloc(len+1);
+					if (msg->new_uri==0){
+						LOG(L_ERR, "ERROR: do_action: memory allocation failure\n");
+						ret=E_OUT_OF_MEM;
+						break;
+					}
+					memcpy(msg->new_uri, a->p1.string, len);
+					msg->new_uri[len]=0;
+					ret=1;
+					break;
+				}
+
+				if (msg->new_uri) tmp=msg->new_uri;
+				else tmp=msg->first_line.u.request.uri;
+				if (parse_uri(tmp, strlen(tmp), &uri)<0){
+					LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping packet\n", tmp);
+					ret=E_UNSPEC;
+					break;
+				}
+				
+				new_uri=malloc(MAX_URI_SIZE);
+				if (new_uri==0){
+					LOG(L_ERR, "ERROR: do_action: memory allocation failure\n");
+					ret=E_OUT_OF_MEM;
+					break;
+				}
+				end=new_uri+MAX_URI_SIZE;
+				crt=new_uri;
+				/* begin copying */
+				len=strlen("sip:"); if(crt+len>end) goto error_uri;
+				memcpy(crt,"sip:",len);crt+=len;
+				/* user */
+				if ((a->type==SET_USER_T)||(a->type==SET_USERPASS_T)) tmp=a->p1.string;
+				else tmp=uri.user;
+				if (tmp){
+					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
+				if (a->type==SET_USERPASS_T) tmp=0;
+				else tmp=uri.passwd;
+				/* passwd */
+				if (tmp){
+					len=strlen(":"); if(crt+len>end) goto error_uri;
+					memcpy(crt,":",len);crt+=len;
+					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
+				/* host */
+				len=strlen("@"); if(crt+len>end) goto error_uri;
+				memcpy(crt,"@",len);crt+=len;
+				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T)) tmp=a->p1.string;
+				else tmp=uri.host;
+				if (tmp){
+					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
+				/* port */
+				if (a->type==SET_HOSTPORT_T) tmp=0;
+				else if (a->type==SET_PORT_T) tmp=a->p1.string;
+				else tmp=uri.port;
+				if (tmp){
+					len=strlen(":"); if(crt+len>end) goto error_uri;
+					memcpy(crt,":",len);crt+=len;
+					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
+				/* params */
+				tmp=uri.params;
+				if (tmp){
+					len=strlen(";"); if(crt+len>end) goto error_uri;
+					memcpy(crt,";",len);crt+=len;
+					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
+				/* headers */
+				tmp=uri.headers;
+				if (tmp){
+					len=strlen("?"); if(crt+len>end) goto error_uri;
+					memcpy(crt,"?",len);crt+=len;
+					len=strlen(tmp); if(crt+len>end) goto error_uri;
+					memcpy(crt,tmp,len);crt+=len;
+				}
+				*crt=0; /* null terminate the thing */
+				/* copy it to the msg */
+				if (msg->new_uri) free(msg->new_uri);
+				msg->new_uri=new_uri;
+				ret=1;
+				break;
+
 		default:
 			LOG(L_CRIT, "BUG: do_action: unknown type %d\n", a->type);
 	}
 	return ret;
+	
+error_uri:
+	LOG(L_ERR, "ERROR: do_action: set*: uri too long\n");
+	if (new_uri) free(new_uri);
+	return E_UNSPEC;
 }
 
 

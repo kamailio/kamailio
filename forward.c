@@ -63,7 +63,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
-	unsigned int len, new_len, via_len, received_len;
+	unsigned int len, new_len, via_len, received_len, uri_len;
 	char line_buf[MAX_VIA_LINE_SIZE];
 	char received_buf[MAX_RECEIVED_SIZE];
 	char* new_buf;
@@ -96,15 +96,31 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	}
 	
 	new_len=len+via_len+received_len;
+	if (msg->new_uri){ 
+		uri_len=strlen(msg->new_uri); 
+		new_len=new_len-strlen(msg->first_line.u.request.uri)+uri_len;
+	}
 	new_buf=(char*)malloc(new_len+1);
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
 	}
-/* copy msg till first via */
+
 	offset=s_offset=0;
-	size=msg->via1.hdr-buf;
-	memcpy(new_buf, orig, size);
+	if (msg->new_uri){
+		/* copy message up to uri */
+		size=msg->first_line.u.request.uri-buf;
+		memcpy(new_buf, orig, size);
+		offset+=size;
+		s_offset+=size;
+		/* add our uri */
+		memcpy(new_buf+offset, msg->new_uri, uri_len);
+		offset+=uri_len;
+		s_offset+=strlen(msg->first_line.u.request.uri); /* skip original uri */
+	}
+/* copy msg till first via */
+	size=msg->via1.hdr-(buf+s_offset);
+	memcpy(new_buf+offset, orig+s_offset, size);
 	offset+=size;
 	s_offset+=size;
  /* add our via */

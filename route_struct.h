@@ -11,13 +11,14 @@ enum { AND_OP=1, OR_OP, NOT_OP };
 enum { EQUAL_OP=10, MATCH_OP };
 enum { METHOD_O=1, URI_O, SRCIP_O, DSTIP_O, DEFAULT_O };
 
-enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T};
+enum { FORWARD_T=1, SEND_T, DROP_T, LOG_T, ERROR_T, ROUTE_T, EXEC_T, SET_HOST_T, SET_HOSTPORT_T, SET_USER_T, 
+		SET_USERPASS_T, SET_PORT_T, SET_URI_T};
 enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST };
 
 	
 struct expr{
 	int type; /* exp, exp_elem */
-	int op; /* and, or, not | ==,  ~= */
+	int op; /* and, or, not | ==,  =~ */
 	int  subtype;
 	union {
 		struct expr* expr;

@@ -19,7 +19,7 @@ extern unsigned short port_no;
 extern char * names[];
 extern unsigned long addresses[];
 extern int addresses_no;
-extern int child_no;
+extern int children_no;
 extern int debug;
 extern int dont_fork;
 extern int log_stderr;

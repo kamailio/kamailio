@@ -28,4 +28,6 @@
 #define ROUTE_MAX_REC_LEV 10 /* maximum number of recursive calls
 							   for route()*/
 
+#define MAX_URI_SIZE 1024	/* used when rewriting URIs */
+
 #endif

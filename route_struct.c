@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#include "dprint.h"
+
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 {
 	struct expr * e;
@@ -23,7 +25,7 @@ struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 	e->r.expr=right;
 	return e;
 error:
-	fprintf(stderr, "ERROR: mk_exp: memory allocation failure\n");
+	LOG(L_CRIT, "ERROR: mk_exp: memory allocation failure\n");
 	return 0;
 }
 
@@ -40,7 +42,7 @@ struct expr* mk_elem(int op, int subtype, int operand, void* param)
 	e->r.param=param;
 	return e;
 error:
-	fprintf(stderr, "ERROR: mk_elem: memory allocation failure\n");
+	LOG(L_CRIT, "ERROR: mk_elem: memory allocation failure\n");
 	return 0;
 }
 
@@ -60,7 +62,7 @@ struct action* mk_action(int type, int p1_type, int p2_type, void* p1, void* p2)
 	return a;
 	
 error:
-	fprintf(stderr, "ERROR: mk_action: memory allocation failure\n");
+	LOG(L_CRIT, "ERROR: mk_action: memory allocation failure\n");
 	return 0;
 
 }
@@ -89,7 +91,7 @@ struct net* mk_net(unsigned long ip, unsigned long mask)
 	n->mask=mask;
 	return n;
 error:
-	fprintf(stderr, "ERROR: mk_net_mask: memory allocation failure\n");
+	LOG(L_CRIT, "ERROR: mk_net_mask: memory allocation failure\n");
 	return 0;
 }
 
@@ -98,7 +100,7 @@ error:
 
 void print_ip(unsigned ip)
 {
-	printf("%d.%d.%d.%d", ((unsigned char*)&ip)[0],
+	DBG("%d.%d.%d.%d", ((unsigned char*)&ip)[0],
 						  ((unsigned char*)&ip)[1],
 						  ((unsigned char*)&ip)[2],
 						  ((unsigned char*)&ip)[3]);
@@ -108,10 +110,10 @@ void print_ip(unsigned ip)
 void print_net(struct net* net)
 {
 	if (net==0){
-		fprintf(stderr, "ERROR: print net: null pointer\n");
+		LOG(L_WARN, "ERROR: print net: null pointer\n");
 		return;
 	}
-	print_ip(net->ip); printf("/"); print_ip(net->mask);
+	print_ip(net->ip); DBG("/"); print_ip(net->mask);
 }
 
 
@@ -119,42 +121,42 @@ void print_net(struct net* net)
 void print_expr(struct expr* exp)
 {
 	if (exp==0){
-		fprintf(stderr, "ERROR: print_expr: null expression!\n");
+		LOG(L_CRIT, "ERROR: print_expr: null expression!\n");
 		return;
 	}
 	if (exp->type==ELEM_T){
 		switch(exp->l.operand){
 			case METHOD_O:
-				printf("method");
+				DBG("method");
 				break;
 			case URI_O:
-				printf("uri");
+				DBG("uri");
 				break;
 			case SRCIP_O:
-				printf("srcip");
+				DBG("srcip");
 				break;
 			case DSTIP_O:
-				printf("dstip");
+				DBG("dstip");
 				break;
 			default:
-				printf("UNKNOWN");
+				DBG("UNKNOWN");
 		}
 		switch(exp->op){
 			case EQUAL_OP:
-				printf("==");
+				DBG("==");
 				break;
 			case MATCH_OP:
-				printf("~=");
+				DBG("=~");
 				break;
 			default:
-				printf("<UNKNOWN>");
+				DBG("<UNKNOWN>");
 		}
 		switch(exp->subtype){
 			case NOSUBTYPE: 
-					printf("N/A");
+					DBG("N/A");
 					break;
 			case STRING_ST:
-					printf("\"%s\"", (char*)exp->r.param);
+					DBG("\"%s\"", (char*)exp->r.param);
 					break;
 			case NET_ST:
 					print_net((struct net*)exp->r.param);
@@ -163,35 +165,35 @@ void print_expr(struct expr* exp)
 					print_ip(exp->r.intval);
 					break;
 			default:
-					printf("type<%d>", exp->subtype);
+					DBG("type<%d>", exp->subtype);
 		}
 	}else if (exp->type==EXP_T){
 		switch(exp->op){
 			case AND_OP:
-					printf("AND( ");
+					DBG("AND( ");
 					print_expr(exp->l.expr);
-					printf(", ");
+					DBG(", ");
 					print_expr(exp->r.expr);
-					printf(" )");
+					DBG(" )");
 					break;
 			case OR_OP:
-					printf("OR( ");
+					DBG("OR( ");
 					print_expr(exp->l.expr);
-					printf(", ");
+					DBG(", ");
 					print_expr(exp->r.expr);
-					printf(" )");
+					DBG(" )");
 					break;
 			case NOT_OP:	
-					printf("NOT( ");
+					DBG("NOT( ");
 					print_expr(exp->l.expr);
-					printf(" )");
+					DBG(" )");
 					break;
 			default:
-					printf("UNKNOWN_EXP ");
+					DBG("UNKNOWN_EXP ");
 		}
 					
 	}else{
-		printf("ERROR:print_expr: unknown type\n");
+		DBG("ERROR:print_expr: unknown type\n");
 	}
 }
 					
@@ -204,55 +206,73 @@ void print_action(struct action* a)
 	for(t=a; t!=0;t=t->next){
 		switch(t->type){
 			case FORWARD_T:
-					printf("forward(");
+					DBG("forward(");
 					break;
 			case SEND_T:
-					printf("send(");
+					DBG("send(");
 					break;
 			case DROP_T:
-					printf("drop(");
+					DBG("drop(");
 					break;
 			case LOG_T:
-					printf("log(");
+					DBG("log(");
 					break;
 			case ERROR_T:
-					printf("error(");
+					DBG("error(");
 					break;
 			case ROUTE_T:
-					printf("route(");
+					DBG("route(");
 					break;
 			case EXEC_T:
-					printf("exec(");
+					DBG("exec(");
+					break;
+			case SET_HOST_T:
+					DBG("sethost(");
+					break;
+			case SET_HOSTPORT_T:
+					DBG("sethostport(");
+					break;
+			case SET_USER_T:
+					DBG("setuser(");
+					break;
+			case SET_USERPASS_T:
+					DBG("setuserpass(");
+					break;
+			case SET_PORT_T:
+					DBG("setport(");
+					break;
+			case SET_URI_T:
+					DBG("seturi(");
 					break;
 			default:
-					printf("UNKNOWN(");
+					DBG("UNKNOWN(");
 		}
 		switch(t->p1_type){
 			case STRING_ST:
-					printf("\"%s\"", t->p1.string);
+					DBG("\"%s\"", t->p1.string);
 					break;
 			case NUMBER_ST:
-					printf("%d",t->p1.number);
+					DBG("%d",t->p1.number);
 					break;
 			case IP_ST:
 					print_ip(t->p1.number);
 					break;
 			default:
-					printf("type<%d>", t->p1_type);
+					DBG("type<%d>", t->p1_type);
 		}
 		switch(t->p2_type){
 			case NOSUBTYPE:
 					break;
 			case STRING_ST:
-					printf(", \"%s\"", t->p2.string);
+					DBG(", \"%s\"", t->p2.string);
 					break;
 			case NUMBER_ST:
-					printf(", %d",t->p2.number);
+					DBG(", %d",t->p2.number);
 					break;
 			default:
-					printf(", type<%d>", t->p2_type);
+					DBG(", type<%d>", t->p2_type);
 		}
-		printf("); ");
+		DBG("); ");
 	}
 }
 			

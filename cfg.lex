@@ -7,6 +7,7 @@
 
 %{
 	#include "cfg.tab.h"
+	#include "dprint.h"
 	#include <string.h>
 
 	/* states */
@@ -40,6 +41,14 @@ LOG		log
 ERROR	error
 ROUTE	route
 EXEC	exec
+SET_HOST		"rewritehost"|"sethost"|"seth"
+SET_HOSTPORT	"rewritehostport"|"sethostport"|"sethp"
+SET_USER		"rewriteuser"|"setuser"|"setu"
+SET_USERPASS	"rewriteuserpass"|"setuserpass"|"setup"
+SET_PORT		"rewriteport"|"setport"|"setp"
+SET_URI			"rewriteuri"|"seturi"
+
+
 /* condition keywords */
 METHOD	method
 URI		uri
@@ -48,7 +57,7 @@ DSTIP	dst_ip
 /* operators */
 EQUAL	=
 EQUAL_T	==
-MATCH	~=
+MATCH	=~
 NOT		!|"not"
 AND		"and"|"&&"|"&"
 OR		"or"|"||"|"|"
@@ -60,6 +69,9 @@ LOGSTDERROR	log_stderror
 LISTEN		listen
 DNS		 dns
 REV_DNS	 rev_dns
+PORT	port
+CHILDREN children
+CHECK_VIA	check_via
 
 /* values */
 YES			"yes"|"true"|"on"|"enable"
@@ -100,10 +112,16 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORWARD}	{count(); yylval.strval=yytext; return FORWARD; }
 <INITIAL>{DROP}	{ count(); yylval.strval=yytext; return DROP; }
 <INITIAL>{SEND}	{ count(); yylval.strval=yytext; return SEND; }
-<INITIAL>{LOG}	{ count(); yylval.strval=yytext; return LOG; }
+<INITIAL>{LOG}	{ count(); yylval.strval=yytext; return LOG_TOK; }
 <INITIAL>{ERROR}	{ count(); yylval.strval=yytext; return ERROR; }
 <INITIAL>{ROUTE}	{ count(); yylval.strval=yytext; return ROUTE; }
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
+<INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
+<INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
+<INITIAL>{SET_USER}	{ count(); yylval.strval=yytext; return SET_USER; }
+<INITIAL>{SET_USERPASS}	{ count(); yylval.strval=yytext; return SET_USERPASS; }
+<INITIAL>{SET_PORT}	{ count(); yylval.strval=yytext; return SET_PORT; }
+<INITIAL>{SET_URI}	{ count(); yylval.strval=yytext; return SET_URI; }
 
 <INITIAL>{METHOD}	{ count(); yylval.strval=yytext; return METHOD; }
 <INITIAL>{URI}	{ count(); yylval.strval=yytext; return URI; }
@@ -116,6 +134,9 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{LISTEN}	{ count(); yylval.strval=yytext; return LISTEN; }
 <INITIAL>{DNS}	{ count(); yylval.strval=yytext; return DNS; }
 <INITIAL>{REV_DNS}	{ count(); yylval.strval=yytext; return REV_DNS; }
+<INITIAL>{PORT}	{ count(); yylval.strval=yytext; return PORT; }
+<INITIAL>{CHILDREN}	{ count(); yylval.strval=yytext; return CHILDREN; }
+<INITIAL>{CHECK_VIA}	{ count(); yylval.strval=yytext; return CHECK_VIA; }
 
 <INITIAL>{EQUAL}	{ count(); return EQUAL; }
 <INITIAL>{EQUAL_T}	{ count(); return EQUAL_T; }
@@ -150,17 +171,11 @@ EAT_ABLE	[\ \t\b\r]
 <STRING1>{QUOTES} { count(); state=INITIAL_S; BEGIN(INITIAL); 
 						yytext[yyleng-1]=0; yyleng--;
 						addstr(yytext, &str);
-						if (str){
-							printf("Found string1 <%s>\n", str);
-						}else{
-							printf("WARNING: empty string\n");
-						}
 						yylval.strval=str; str=0;
 						return STRING;
 					}
 <STRING2>{TICK}  { count(); state=INITIAL_S; BEGIN(INITIAL); 
 						yytext[yyleng-1]=0; yyleng--;
-						printf("Found string1 <%s>\n", yytext);
 						addstr(yytext, &str);
 						yylval.strval=str;
 						str=0;
@@ -196,14 +211,17 @@ EAT_ABLE	[\ \t\b\r]
 <<EOF>>							{
 									switch(state){
 										case STRING_S: 
-											printf("Unexpected EOF: closed string\n");
+											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
+														" unclosed string\n");
 											if (str) {free(str); str=0;}
 											break;
 										case COMMENT_S:
-											printf("Unexpected EOF:%d comments open\n", comment_nest);
+											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF:"
+														" %d comments open\n", comment_nest);
 											break;
 										case COMMENT_LN_S:
-											printf("Unexpected EOF: comment line open\n");
+											LOG(L_CRIT, "ERROR: unexpected EOF:"
+														"comment line open\n");
 											break;
 									}
 									return 0;
@@ -231,7 +249,7 @@ static char* addstr(char * src, char ** dest)
 	}
 	return *dest;
 error:
-	fprintf(stderr, "lex:addstr: memory allocation error\n");
+	LOG(L_CRIT, "ERROR:lex:addstr: memory allocation error\n");
 	return 0;
 }
 

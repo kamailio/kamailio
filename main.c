@@ -22,7 +22,7 @@
 
 
 static char id[]="@(#) $Id$";
-static char version[]="sip_router 0.5";
+static char version[]="sip_router 0.6";
 static char help_msg[]= "\
 Usage: sip_router -l address [-l address] [options]\n\
 Options:\n\
@@ -289,6 +289,25 @@ int main(int argc, char** argv)
 	
 	/* fill missing arguments with the default values*/
 	if (cfg_file==0) cfg_file=CFG_FILE;
+
+	/* load config file or die */
+	cfg_stream=fopen (cfg_file, "r");
+	if (cfg_stream==0){
+		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
+				strerror(errno));
+		goto error;
+	}
+	
+	yyin=cfg_stream;
+	if ((yyparse()!=0)||(cfg_errors)){
+		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
+		goto error;
+	}
+	
+	
+	print_rl();
+
+	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;
 	if (children_no<=0) children_no=CHILD_NO;
 	if (addresses_no==0) {
@@ -320,26 +339,6 @@ int main(int argc, char** argv)
 				inet_ntoa(*(struct in_addr*)&addresses[r]),
 				(unsigned short)port_no);
 	}
-	
-	
-
-	/* load config file or die */
-	cfg_stream=fopen (cfg_file, "r");
-	if (cfg_stream==0){
-		fprintf(stderr, "ERROR: loading config file(%s): %s\n", cfg_file,
-				strerror(errno));
-		goto error;
-	}
-	
-	yyin=cfg_stream;
-	if ((yyparse()!=0)||(cfg_errors)){
-		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
-		goto error;
-	}
-	
-	
-	print_rl();
-
 
 	/* init_daemon? */
 	if (!dont_fork){
