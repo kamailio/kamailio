@@ -408,12 +408,11 @@ static int xj_go_offline(struct sip_msg *msg, char* foo1, char * foo2)
  */
 int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 {
-	str body, dst;
+	str body, dst, from_uri;
 	xj_sipmsg jsmsg;
-	struct to_body to, *from;
+	struct to_body to;
 	struct sip_uri _uri;
 	int pipe, fl;
-	char   *pc=0;
 	t_xj_jkey jkey, *p;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
@@ -463,15 +462,21 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	}
 	
 	/* parsing from header */
-	if ( parse_from_header( msg )==-1 ) 
+	if ( parse_from_header( msg )==-1 || msg->from->parsed==NULL) 
 	{
 		DBG("ERROR:xjab_manage_sipmsg: cannot get FROM header\n");
 		goto error;
 	}
-	from = (struct to_body*)msg->from->parsed;
+	from_uri.s = ((struct to_body*)msg->from->parsed)->uri.s;
+	from_uri.len = ((struct to_body*)msg->from->parsed)->uri.len;
+	if(xj_extract_aor(&from_uri, 0))
+	{
+		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR from FROM header\n");
+		goto error;
+	}
 
-	jkey.hash = xj_get_hash(&from->uri, NULL);
-	jkey.id = &from->uri;
+	jkey.hash = xj_get_hash(&from_uri, NULL);
+	jkey.id = &from_uri;
 	// get the communication pipe with the worker
 	switch(type)
 	{
@@ -489,7 +494,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			if((pipe = xj_wlist_check(jwl, &jkey, &p)) < 0)
 			{
 				DBG("XJAB:xjab_manage_sipmsg: no open Jabber session for"
-						" <%.*s>!\n", from->uri.len, from->uri.s);
+						" <%.*s>!\n", from_uri.len, from_uri.s);
 				goto error;
 			}
 		break;
@@ -595,7 +600,11 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	}
 	
 	/** skip 'sip:' and parameters in destination address */
-	_XJ_ADJUST_SIPADDR(dst.s,dst.len,pc, fl);
+	if(xj_extract_aor(&dst, 1))
+	{
+		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR for destination\n");
+		goto error;
+	}
 #ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xjab_manage_sipmsg: DESTINATION after correction [%.*s].\n",
 				dst.len, dst.s);
@@ -715,8 +724,9 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 {
 	xj_sipmsg jsmsg = NULL;
 	t_xj_jkey jkey, *jp;
-	int pipe, fl, f;
-	char *p, *p0;
+	int pipe, fl;
+	str from_uri, to_uri;
+
 	if(!to || !from || !cbf)
 		return;
 
@@ -724,8 +734,16 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	DBG("XJAB:xj_register_watcher: from=[%.*s] to=[%.*s]\n", from->len,
 			from->s, to->len, to->s);
 #endif
-	jkey.hash = xj_get_hash(from, NULL);
-	jkey.id = from;
+	from_uri.s = from->s;
+	from_uri.len = from->len;
+	if(xj_extract_aor(&from_uri, 0))
+	{
+		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR from FROM header\n");
+		goto error;
+	}
+
+	jkey.hash = xj_get_hash(&from_uri, NULL);
+	jkey.id = &from_uri;
 
 	if((pipe = xj_wlist_get(jwl, &jkey, &jp)) < 0)
 	{
@@ -742,16 +760,20 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	jsmsg->msg.len = 0;
 	jsmsg->msg.s = NULL;
 	
-	p = to->s;
-	fl = to->len;
+	to_uri.s = to->s;
+	to_uri.len = to->len;
 	/** skip 'sip:' and parameters in destination address */
-	_XJ_ADJUST_SIPADDR(p, fl, p0, f);
+	if(xj_extract_aor(&to_uri, 1))
+	{
+		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR for destination\n");
+		goto error;
+	}
 #ifdef XJ_EXTRA_DEBUG
 	DBG("XJAB:xj_register_watcher: DESTINATION after correction [%.*s].\n",
-				fl, p);
+				to_uri.len, to_uri.s);
 #endif
 
-	jsmsg->to.len = fl;
+	jsmsg->to.len = to_uri.len;
 	if((jsmsg->to.s = (char*)shm_malloc(jsmsg->to.len+1)) == NULL)
 	{
 		if(jsmsg->msg.s)
@@ -759,7 +781,8 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 		shm_free(jsmsg);
 		goto error;
 	}
-	strncpy(jsmsg->to.s, p, jsmsg->to.len);
+	strncpy(jsmsg->to.s, to_uri.s, jsmsg->to.len);
+	jsmsg->to.s[jsmsg->to.len] = '\0';
 
 	jsmsg->jkey = jp;
 	jsmsg->type = XJ_REG_WATCHER;

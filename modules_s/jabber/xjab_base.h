@@ -54,31 +54,6 @@
 #define XJ_FLAG_OPEN		0
 #define XJ_FLAG_CLOSE		1
 
-/** skip 'sip:' and parameters in a SIP address */
-#define _XJ_ADJUST_SIPADDR(_s, _l, _p, _f) \
-	if((_s)[0]=='s' && (_s)[1]=='i' && (_s)[2]=='p') \
-	{ \
-		(_s) += 3; \
-		(_l) -= 3; \
-		(_f) = 1; \
-		while(*(_s)==' ' || *(_s)=='\t' || *(_s)==':') \
-		{ \
-			(_s)++; \
-			(_l)--; \
-			(_f)=0; \
-		} \
-		if((_f)) \
-		{ \
-			(_s) -= 3; \
-			(_l) += 3; \
-		} \
-	} \
-	(_p) = (_s); \
-	while((_p)<(_s)+(_l) && *(_p)!=';' && *(_p)!=' ') \
-		(_p)++; \
-	if((_p) < (_s)+(_l)) \
-		(_l) = (_p) - (_s);
-
 typedef void (*pa_callback_f)(str* _user, int _state, void *p);
 
 /**********             ***/
@@ -116,6 +91,8 @@ void xj_jkey_free(xj_jkey);
 
 int xj_get_hash(str*, str*);
 char *shahash(const char *);
+
+int xj_extract_aor(str*, int);
 
 #endif
 
