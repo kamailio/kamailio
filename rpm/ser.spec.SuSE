@@ -1,8 +1,8 @@
 %define name    ser
-%define ver     0.8.11
+%define ver     0.8.12
 %define rel     0
 
-%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd 
 %define MYSQL_MODULES		mysql
 %define JABBER_MODULES		jabber
 %define RADIUS_MODULES		auth_radius group_radius uri_radius
@@ -141,15 +141,18 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.acc
 %doc %{_docdir}/ser/README.auth
 %doc %{_docdir}/ser/README.auth_db
+%doc %{_docdir}/ser/README.auth_diameter
 %doc %{_docdir}/ser/README.dbtext
 %doc %{_docdir}/ser/README.domain
 %doc %{_docdir}/ser/README.enum
 %doc %{_docdir}/ser/README.exec
 %doc %{_docdir}/ser/README.group
+%doc %{_docdir}/ser/README.mangler
 %doc %{_docdir}/ser/README.maxfwd
 %doc %{_docdir}/ser/README.msilo
 %doc %{_docdir}/ser/README.nathelper
 %doc %{_docdir}/ser/README.pa
+%doc %{_docdir}/ser/README.pdt
 %doc %{_docdir}/ser/README.permissions
 %doc %{_docdir}/ser/README.pike
 %doc %{_docdir}/ser/README.print
@@ -173,15 +176,18 @@ sbin/insserv etc/init.d/
 %{_libdir}/ser/modules/acc.so
 %{_libdir}/ser/modules/auth.so
 %{_libdir}/ser/modules/auth_db.so
+%{_libdir}/ser/modules/auth_diameter.so
 %{_libdir}/ser/modules/dbtext.so
 %{_libdir}/ser/modules/domain.so
 %{_libdir}/ser/modules/enum.so
 %{_libdir}/ser/modules/exec.so
 %{_libdir}/ser/modules/group.so
+%{_libdir}/ser/modules/mangler.so
 %{_libdir}/ser/modules/maxfwd.so
 %{_libdir}/ser/modules/msilo.so
 %{_libdir}/ser/modules/nathelper.so
 %{_libdir}/ser/modules/pa.so
+%{_libdir}/ser/modules/pdt.so
 %{_libdir}/ser/modules/permissions.so
 %{_libdir}/ser/modules/pike.so
 %{_libdir}/ser/modules/print.so
@@ -226,6 +232,10 @@ sbin/insserv etc/init.d/
 
 
 %changelog
+
+* Fri Nov 14 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
+- changed vesion to 0.8.12 (new upstream release)
+- added auth_diameter, pdt & mangler to the modules list
 
 * Wed Aug 28 2003 Nils Ohlmeier <nils@iptel.org>
 - replaced modules Conflicts with required Ser version

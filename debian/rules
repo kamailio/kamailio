@@ -25,7 +25,7 @@ export DEB_BUILD_OPTIONS:="$(DEB_BUILD_OPTIONS) nostrip"
 
 # modules not in the "main" package or unstable 
 EXCLUDED_MODULES=	mysql jabber auth_radius group_radius uri_radius \
-					postgress snmp cpl cpl-c ext extcmd mangler pdt
+					postgress snmp cpl cpl-c ext extcmd 
 
 # modules depending on mysql
 MYSQL_MODULES=mysql
