@@ -415,7 +415,12 @@ static Bool
 getCallId(struct sip_msg* msg, str *cid)
 {
     if (msg->callid == NULL) {
-        return False;
+        if (parse_headers(msg, HDR_CALLID, 0) == -1) {
+            return False;
+        }
+        if (msg->callid == NULL) {
+            return False;
+        }
     }
 
     *cid = msg->callid->body;
