@@ -980,7 +980,6 @@ static inline void process_lumps(	struct sip_msg* msg,
 				if ((t->op==LUMP_ADD_OPT) &&
 						(!lump_check_opt(t->u.cond, msg, send_sock))) 
 					continue;
-				break;
 				/* just add it here! */
 				/* process before  */
 				for(r=t->before;r;r=r->before){

@@ -118,7 +118,7 @@ int parse_rr(struct hdr_field* _h)
 		}
 
 		     /* Append the structure as last parameter of the linked list */
-		if (!_h->parsed) (rr_t*)_h->parsed = r;
+		if (!_h->parsed) _h->parsed = (void*)r;
 		if (last) last->next = r;
 		last = r;
 	}
@@ -129,7 +129,7 @@ int parse_rr(struct hdr_field* _h)
 	return -1;
 
  ok:
-	if (!_h->parsed) (rr_t*)_h->parsed = r;
+	if (!_h->parsed) _h->parsed = (void*)r;
 	if (last) last->next = r;
 	return 0;
 }
