@@ -29,6 +29,7 @@
  * --------
  *  ????-??-??  created by andrei
  *  2003-04-14  more debugging added in DBG_QM_MALLOC mode (andrei)
+ *  2003-06-29  added qm_realloc (andrei)
  */
 
 
@@ -266,6 +267,49 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
 }
 
 
+/* returns 0 on success, -1 on error;
+ * new_size < size & rounduped already!*/
+static inline
+#ifdef DBG_QM_MALLOC
+int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned int new_size,
+				char* file, char* func, unsigned int line)
+#else
+int split_frag(struct qm_block* qm, struct qm_frag* f, unsigned int new_size)
+#endif
+{
+	unsigned int rest;
+	struct qm_frag* n;
+	struct qm_frag_end* end;
+	
+	rest=f->size-new_size;
+	if (rest>(FRAG_OVERHEAD+MIN_FRAG_SIZE)){
+		f->size=new_size;
+		/*split the fragment*/
+		end=FRAG_END(f);
+		end->size=new_size;
+		n=(struct qm_frag*)((char*)end+sizeof(struct qm_frag_end));
+		n->size=rest-FRAG_OVERHEAD;
+		FRAG_END(n)->size=n->size;
+		qm->real_used+=FRAG_OVERHEAD;
+#ifdef DBG_QM_MALLOC
+		end->check1=END_CHECK_PATTERN1;
+		end->check2=END_CHECK_PATTERN2;
+		/* frag created by malloc, mark it*/
+		n->file=file;
+		n->func=func;
+		n->line=line;
+		n->check=ST_CHECK_PATTERN;
+#endif
+		/* reinsert n in free list*/
+		qm_insert_free(qm, n);
+		return 0;
+	}else{
+			/* we cannot split this fragment any more */
+		return -1;
+	}
+}
+
+
 
 #ifdef DBG_QM_MALLOC
 void* qm_malloc(struct qm_block* qm, unsigned int size, char* file, char* func,
@@ -275,9 +319,6 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 #endif
 {
 	struct qm_frag* f;
-	struct qm_frag_end* end;
-	struct qm_frag* n;
-	unsigned int rest;
 	
 #ifdef DBG_QM_MALLOC
 	unsigned int list_cntr;
@@ -304,34 +345,12 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 		qm_detach_free(qm, f);
 		/*mark it as "busy"*/
 		f->u.is_free=0;
-		
-		/*see if we'll use full frag, or we'll split it in 2*/
-		rest=f->size-size;
-		if (rest>(FRAG_OVERHEAD+MIN_FRAG_SIZE)){
-			f->size=size;
-			/*split the fragment*/
-			end=FRAG_END(f);
-			end->size=size;
-			n=(struct qm_frag*)((char*)end+sizeof(struct qm_frag_end));
-			n->size=rest-FRAG_OVERHEAD;
-			FRAG_END(n)->size=n->size;
-			qm->real_used+=FRAG_OVERHEAD;
+		/* we ignore split return */
 #ifdef DBG_QM_MALLOC
-			end->check1=END_CHECK_PATTERN1;
-			end->check2=END_CHECK_PATTERN2;
-			/* frag created by malloc, mark it*/
-			n->file=file;
-			n->func="frag. from qm_malloc";
-			n->line=line;
-			n->check=ST_CHECK_PATTERN;
-/*			FRAG_END(n)->check1=END_CHECK_PATTERN1;
-			FRAG_END(n)->check2=END_CHECK_PATTERN2; */
+		split_frag(qm, f, size, file, "fragm. from qm_malloc", line);
+#else
+		split_frag(qm, f, size);
 #endif
-			/* reinsert n in free list*/
-			qm_insert_free(qm, n);
-		}else{
-			/* we cannot split this fragment any more => alloc all of it*/
-		}
 		qm->real_used+=f->size;
 		qm->used+=f->size;
 		if (qm->max_real_used<qm->real_used)
@@ -394,9 +413,6 @@ void qm_free(struct qm_block* qm, void* p)
 	size=f->size;
 	qm->used-=size;
 	qm->real_used-=size;
-#ifdef DBG_QM_MALLOC
-	qm_debug_frag(qm, f);
-#endif
 
 #ifdef QM_JOIN_FREE
 	/* join packets if possible*/
@@ -433,6 +449,131 @@ void qm_free(struct qm_block* qm, void* p)
 #endif
 	qm_insert_free(qm, f);
 }
+
+
+
+#ifdef DBG_QM_MALLOC
+void* qm_realloc(struct qm_block* qm, void* p, unsigned int size,
+					char* file, char* func, unsigned int line)
+#else
+void* qm_realloc(struct qm_block* qm, void* p, unsigned int size)
+#endif
+{
+	struct qm_frag* f;
+	unsigned int diff;
+	unsigned int orig_size;
+	struct qm_frag* n;
+	void* ptr;
+	
+	
+#ifdef DBG_QM_MALLOC
+	DBG("qm_realloc(%p, %p, %d) called from %s: %s(%d)\n", qm, p, size,
+			file, func, line);
+	if (p>(void*)qm->last_frag_end || p<(void*)qm->first_frag){
+		LOG(L_CRIT, "BUG: qm_free: bad pointer %p (out of memory block!) - "
+				"aborting\n", p);
+		abort();
+	}
+#endif
+	
+	if (size==0) {
+		if (p)
+#ifdef DBG_QM_MALLOC
+			qm_free(qm, p, file, func, line);
+#else
+			qm_free(qm, p);
+#endif
+		return 0;
+	}
+	if (p==0)
+#ifdef DBG_QM_MALLOC
+		return qm_malloc(qm, size, file, func, line);
+#else
+		return qm_malloc(qm, size);
+#endif
+	f=(struct qm_frag*) ((char*)p-sizeof(struct qm_frag));
+#ifdef DBG_QM_MALLOC
+	qm_debug_frag(qm, f);
+	DBG("qm_realloc: realloc'ing frag %p alloc'ed from %s: %s(%ld)\n",
+			f, f->file, f->func, f->line);
+	if (f->u.is_free){
+		LOG(L_CRIT, "BUG:qm_realloc: trying to realloc an already freed "
+				"pointer %p , fragment %p -- aborting\n", p, f);
+		abort();
+	}
+#endif
+	/* find first acceptable size */
+	size=ROUNDUP(size);
+	if (f->size > size){
+		/* shrink */
+#ifdef DBG_QM_MALLOC
+		DBG("qm_realloc: shrinking from %ld to %d\n", f->size, size);
+		if(split_frag(qm, f, size, file, "fragm. from qm_realloc", line)!=0){
+		DBG("qm_realloc : shrinked succesfull\n");
+#else
+		if(split_frag(qm, f, size)!=0){
+#endif
+			/* update used sizes */
+			qm->real_used-=(f->size-size);
+			qm->used-=(f->size-size);
+		}
+		
+	}else if (f->size < size){
+		/* grow */
+#ifdef DBG_QM_MALLOC
+		DBG("qm_realloc: growing from %ld to %d\n", f->size, size);
+#endif
+			orig_size=f->size;
+			diff=size-f->size;
+			n=FRAG_NEXT(f);
+			if (((char*)n < (char*)qm->last_frag_end) && 
+					(n->u.is_free)&&((n->size+FRAG_OVERHEAD)>=diff)){
+				/* join  */
+				qm_detach_free(qm, n);
+				f->size+=n->size+FRAG_OVERHEAD;
+				qm->real_used-=FRAG_OVERHEAD;
+				FRAG_END(f)->size=f->size;
+				/* end checks should be ok */
+				/* split it if necessary */
+				if (f->size > size ){
+	#ifdef DBG_QM_MALLOC
+					split_frag(qm, f, size, file, "fragm. from qm_realloc",
+										line);
+	#else
+					split_frag(qm, f, size);
+	#endif
+				}
+				qm->real_used+=(f->size-orig_size);
+				qm->used+=(f->size-orig_size);
+			}else{
+				/* could not join => realloc */
+	#ifdef DBG_QM_MALLOC
+				ptr=qm_malloc(qm, size, file, func, line);
+	#else
+				ptr=qm_malloc(qm, size);
+	#endif
+				if (ptr)
+					/* copy, need by libssl */
+					memcpy(ptr, p, orig_size);
+	#ifdef DBG_QM_MALLOC
+					qm_free(qm, p, file, func, line);
+	#else
+					qm_free(qm, p);
+	#endif
+				p=ptr;
+			}
+	}else{
+		/* do nothing */
+#ifdef DBG_QM_MALLOC
+		DBG("qm_realloc: doing nothing, same size: %ld - %d\n", f->size, size);
+#endif
+	}
+#ifdef DBG_QM_MALLOC
+	DBG("qm_realloc: returning %p\n", p);
+#endif
+	return p;
+}
+
 
 
 

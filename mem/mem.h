@@ -74,6 +74,8 @@
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s),__FILE__, \
 				__FUNCTION__, __LINE__)
+#			define pkg_realloc(p, s) qm_realloc(mem_block, (p), (s),__FILE__, \
+				__FUNCTION__, __LINE__)
 #			define pkg_free(p)   qm_free(mem_block, (p), __FILE__,  \
 				__FUNCTION__, __LINE__)
 #		endif
@@ -86,6 +88,7 @@
 #			define pkg_free(p)   fm_free(mem_block, (p))
 #		else
 #			define pkg_malloc(s) qm_malloc(mem_block, (s))
+#			define pkg_realloc(p, s) qm_realloc(mem_block, (p), (s))
 #			define pkg_free(p)   qm_free(mem_block, (p))
 #		endif
 #	endif

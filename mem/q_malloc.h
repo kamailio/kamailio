@@ -136,6 +136,12 @@ void  qm_free(struct qm_block*, void* p, char* file, char* func,
 #else
 void  qm_free(struct qm_block*, void* p);
 #endif
+#ifdef DBG_QM_MALLOC
+void* qm_realloc(struct qm_block*, void* p, unsigned int size,
+				char* file, char* func, unsigned int line);
+#else
+void* qm_realloc(struct qm_block*, void* p, unsigned int size);
+#endif
 
 void  qm_status(struct qm_block*);
 

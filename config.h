@@ -38,9 +38,14 @@
 #include "types.h"
 
 /* default sip port if none specified */
-#define SIP_PORT 5060
+#define SIP_PORT  5060
+#define SIPS_PORT 5061
 
 #define CFG_FILE CFG_DIR "ser.cfg"
+
+#define TLS_PKEY_FILE CFG_DIR "cert.pem" 
+#define TLS_CERT_FILE CFG_DIR "cert.pem"
+#define TLS_CA_FILE 0 /* no CA list file by default */
 
 
 /* maximum number of addresses on which we will listen */

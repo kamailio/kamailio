@@ -40,6 +40,8 @@
  *               after daemonize (so that we won't catch anymore our own
  *               SIGCHLD generated when becoming session leader) (andrei)
  *              changed is_main default value to 1 (andrei)
+ *  2003-06-29  preliminary tls support (andrei)
+ *              replaced port_no_str snprintf w/ int2str (andrei)
  *
  */
 
@@ -92,9 +94,14 @@
 #include "hash_func.h"
 #include "pt.h"
 #include "script_cb.h"
+#include "ut.h"
 #ifdef USE_TCP
 #include "tcp_init.h"
+#ifdef USE_TLS
+#include "tls_init.h"
 #endif
+#endif
+
 
 
 #include "stats.h"
@@ -118,6 +125,9 @@ static char flags[]=
 #endif
 #ifdef USE_TCP
 ", USE_TCP"
+#endif
+#ifdef USE_TLS
+", USE_TLS"
 #endif
 #ifdef DISABLE_NAGLE
 ", DISABLE_NAGLE"
@@ -267,6 +277,9 @@ int children_no = 0;			/* number of children processing requests */
 int tcp_children_no = 0;
 int tcp_disable = 0; /* 1 if tcp is disabled */
 #endif
+#ifdef USE_TLS
+int tls_disable = 0; /* 1 if tls is disabled */
+#endif
 struct process_table *pt=0;		/*array with childrens pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
 int sig_flag = 0;              /* last signal received */
@@ -315,6 +328,9 @@ struct socket_info sock_info[MAX_LISTEN];/*all addresses we listen/send from*/
 #ifdef USE_TCP
 struct socket_info tcp_info[MAX_LISTEN];/*all tcp addresses we listen on*/
 #endif
+#ifdef USE_TLS
+struct socket_info tls_info[MAX_LISTEN]; /* all tls addresses we listen on*/
+#endif
 int sock_no=0; /* number of addresses/open sockets*/
 struct socket_info* bind_address=0; /* pointer to the crt. proc.
 									 listening address*/
@@ -325,8 +341,15 @@ struct socket_info* sendipv6; /* same as above for ipv6 */
 struct socket_info* sendipv4_tcp; 
 struct socket_info* sendipv6_tcp; 
 #endif
+#ifdef USE_TLS
+struct socket_info* sendipv4_tls;
+struct socket_info* sendipv6_tls;
+#endif
 
 unsigned short port_no=0; /* default port*/
+#ifdef USE_TLS
+unsigned short tls_port_no=0; /* default port */
+#endif
 
 struct host_alias* aliases=0; /* name aliases list */
 
@@ -367,6 +390,9 @@ void cleanup(show_status)
 	destroy_modules();
 #ifdef USE_TCP
 	destroy_tcp();
+#endif
+#ifdef USE_TLS
+	destroy_tls();
 #endif
 	destroy_timer();
 	destroy_fifo();
@@ -702,6 +728,10 @@ int main_loop()
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
+#ifdef USE_TLS
+	char* tmp;
+	int len;
+#endif
 		
 
 	/* one "main" process and n children handling i/o */
@@ -818,7 +848,36 @@ int main_loop()
 					sendipv6_tcp=&tcp_info[r];
 		#endif
 			}
-#endif
+#ifdef USE_TLS
+			if (!tls_disable){
+				tls_info[r]=sock_info[r]; /* copy the sockets */
+				/* fix the port number -- there is no way so far to set-up
+				 * individual tls port numbers */
+				tls_info[r].port_no=tls_port_no; /* FIXME: */
+				tmp=int2str(tls_info[r].port_no, &len);
+				/* we don't need to free the previous content, is uesd
+				 * by tcp & udp! */
+				tls_info[r].port_no_str.s=(char*)pkg_malloc(len+1);
+				if (tls_info[r].port_no_str.s==0){
+					LOG(L_CRIT, "memory allocation failure\n");
+					goto error;
+				}
+				strncpy(tls_info[r].port_no_str.s, tmp, len+1);
+				tls_info[r].port_no_str.len=len;
+				
+				/* same as for tcp*/
+				if (tls_init(&tls_info[r])==-1)  goto error;
+				/* get first ipv4/ipv6 socket*/
+				if ((tls_info[r].address.af==AF_INET)&&
+						((sendipv4_tls==0)||(sendipv4_tls->is_lo)))
+					sendipv4_tls=&tls_info[r];
+		#ifdef USE_IPV6
+				if((sendipv6_tls==0)&&(tls_info[r].address.af==AF_INET6))
+					sendipv6_tls=&tls_info[r];
+		#endif
+			}
+#endif /* USE_TLS */
+#endif /* USE_TCP */
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
 		}
@@ -942,9 +1001,9 @@ int main_loop()
 	}
 #ifdef USE_TCP
 		if (!tcp_disable){
-				/* start tcp receivers */
+				/* start tcp  & tls receivers */
 			if (tcp_init_children()<0) goto error;
-				/* start tcp master proc */
+				/* start tcp+tls master proc */
 			process_no++;
 			if ((pid=fork())<0){
 				LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
@@ -1147,8 +1206,7 @@ int main(int argc, char** argv)
 	struct host_alias* a;
 	struct utsname myname;
 	char *options;
-	char port_no_str[MAX_PORT_LEN];
-	int port_no_str_len;
+	int len;
 	int ret;
 	struct passwd *pw_entry;
 	struct group  *gr_entry;
@@ -1156,7 +1214,6 @@ int main(int argc, char** argv)
 	int rfd;
 
 	/*init*/
-	port_no_str_len=0;
 	ret=-1;
 	my_argc=argc; my_argv=argv;
 	
@@ -1402,6 +1459,9 @@ try_again:
 	
 	/* fix parameters */
 	if (port_no<=0) port_no=SIP_PORT;
+#ifdef USE_TLS
+	if (tls_port_no<=0) tls_port_no=SIPS_PORT;
+#endif
 	
 	
 	if (children_no<=0) children_no=CHILD_NO;
@@ -1483,31 +1543,19 @@ try_again:
 	for (r=0; r<sock_no;r++){
 		/* fix port number, port_no should be !=0 here */
 		if (sock_info[r].port_no==0) sock_info[r].port_no=port_no;
-		port_no_str_len=snprintf(port_no_str, MAX_PORT_LEN, "%d", 
-									(unsigned short) sock_info[r].port_no);
-		/* if buffer too small, snprintf may return per C99 estimated size
-		   of needed space; there is no guarantee how many characters 
-		   have been written to the buffer and we can be happy if
-		   the snprintf implementation zero-terminates whatever it wrote
-		   -jku
-		*/
-		if (port_no_str_len<0 || port_no_str_len>=MAX_PORT_LEN){
+		tmp=int2str(sock_info[r].port_no, &len);
+		if (len>=MAX_PORT_LEN){
 			fprintf(stderr, "ERROR: bad port number: %d\n", 
 						sock_info[r].port_no);
 			goto error;
 		}
-		/* on some systems snprintf returns really strange things if it does 
-		  not have  enough space */
-		port_no_str_len=
-				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
-		sock_info[r].port_no_str.s=(char*)pkg_malloc(strlen(port_no_str)+1);
+		sock_info[r].port_no_str.s=(char*)pkg_malloc(len+1);
 		if (sock_info[r].port_no_str.s==0){
 			fprintf(stderr, "Out of memory.\n");
 			goto error;
 		}
-		strncpy(sock_info[r].port_no_str.s, port_no_str,
-					strlen(port_no_str)+1);
-		sock_info[r].port_no_str.len=strlen(port_no_str);
+		strncpy(sock_info[r].port_no_str.s, tmp, len+1);
+		sock_info[r].port_no_str.len=len;
 		
 		/* get "official hostnames", all the aliases etc. */
 		he=resolvehost(sock_info[r].name.s);
@@ -1643,7 +1691,16 @@ try_again:
 			goto error;
 		}
 	}
-#endif
+#ifdef USE_TLS
+	if (!tls_disable){
+		/* init tls*/
+		if (init_tls()<0){
+			LOG(L_CRIT, "could not initialize tls, exiting...\n");
+			goto error;
+		}
+	}
+#endif /* USE_TLS */
+#endif /* USE_TCP */
 	/* init_daemon? */
 	if (!dont_fork){
 		if ( daemonize(argv[0]) <0 ) goto error;

@@ -26,6 +26,7 @@
 #  2003-06-06  moved compiler detection before DEFS (andrei)
 #  2003-06-10  removed -m32 for gcc 3.x/sparc64  -- it will use 
 #              arch. default: -m32 on solaris, -m64 on *bsd (andrei)
+#  2003-06-29  added TLS support: TLS=1 (andrei)
 
 
 # check if already included/exported
@@ -39,14 +40,16 @@ export makefile_defs
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL =   11
-EXTRAVERSION = dev34
+SUBLEVEL =   12
+EXTRAVERSION = dev-tls01
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
 
+# TLS support
+TLS ?=
 # extra CC command line options (e.g  -march=athlon-mp)
 CC_EXTRA_OPTS ?=
  # install location
@@ -251,10 +254,12 @@ endif
 #  		forking (done at the top of main_loop). Needed if you want
 #  		to use the snmp module.
 # -DUSE_TCP
-#		compiles in tcp support (highly experimental for now, it will probably
-#		not work, use it only if you really now what you are doing)
+#		compiles in tcp support
 # -DDISABLE_NAGLE
 #		disable the tcp Nagle algorithm (lower delay)
+# -DUSE_TLS
+#		compiles in tls support, requires -DUSE_TCP. Please use
+#		make TLS=1 instead. (tls support is highly experimental for now)
 
 
 DEFS+= $(extra_defs) \
@@ -289,6 +294,11 @@ DEFS+= $(extra_defs) \
 # WARNING: do not add mode=debug or mode=release anymore in the Makefile,
 # use make mode=debug all instead. Anyway no by default ser is  compiled w/ 
 # debugging symbols in all cases (-g). --andrei
+
+ifneq ($(TLS),)
+	DEFS+= -DUSE_TLS
+endif
+
 ifeq ($(mode),)
 	mode = release
 endif
@@ -673,6 +683,11 @@ ifneq (,$(findstring CYGWIN, $(OS)))
 		DEFS+= -DUSE_SYSV_SEM  # try sys v sems
 		found_lock_method=yes
 	endif
+endif
+
+#add libssl if needed
+ifneq ($(TLS),)
+LIBS+= -lssl
 endif
 
 ifneq ($(found_lock_method), yes)
