@@ -35,13 +35,18 @@
 
 
 
+/* UPDATED + CHECKED
+ */
 inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 {
-	unsigned char field, subfield;
-	unsigned char *p;
-	unsigned char *kid;
-	unsigned char attr_name;
+	static str def_port_str = {"5060",4};
+	unsigned short field, subfield;
+	unsigned char  *p;
+	unsigned char  *kid;
+	unsigned char  attr_name;
+	unsigned short n;
 	int i;
+	int k;
 	str cpl_val;
 	str *msg_val;
 	str *uri;
@@ -50,21 +55,31 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 	field = subfield = UNDEF_CHAR;
 	msg_val = 0;
 
-	i=NR_OF_ATTR(intr->ip);
 	p=ATTR_PTR(intr->ip);
-	check_overflow_by_ptr( p+2*i, intr, script_error);
 	/* parse the attributes */
-	for( ; i>0 ; i-- ) {
-		if (*p==FIELD_ATTR)
-			field = *(p+1);
-		else if (*p==SUBFIELD_ATTR)
-			subfield = *(p+1);
-		else {
-			LOG(L_ERR,"ERROR:cpl_c:run_address_switch: unknown attribute (%d) "
-				"in ADDRESS_SWITCH node\n",*p);
-			goto script_error;
+	for( i=NR_OF_ATTR(intr->ip) ; i>0 ; i-- ) {
+		get_basic_attr( p, attr_name, n, intr, script_error);
+		switch (attr_name) {
+			case FIELD_ATTR:
+				if (field!=UNDEF_CHAR) {
+					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: mutiple FIELD "
+						"attrs found\n");
+					goto script_error;
+				}
+				field = n;
+				break;
+			case SUBFIELD_ATTR:
+				if (subfield!=UNDEF_CHAR) {
+					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: mutiple SUBFIELD"
+						" attrs found\n");
+					goto script_error;
+				}
+				subfield = n; break;
+			default:
+				LOG(L_ERR,"ERROR:cpl_c:run_address_switch: unknown attribute "
+					"(%d) in ADDRESS_SWITCH node\n",*p);
+				goto script_error;
 		}
-		p += 2;
 	}
 
 	if (field==UNDEF_CHAR) {
@@ -99,8 +114,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 				}
 				/* get the attribute name */
 				p = ATTR_PTR(kid);
-				check_overflow_by_ptr( p+2, intr, script_error);
-				attr_name = *(p++);
+				get_basic_attr( p, attr_name, cpl_val.len, intr, script_error);
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR &&
 				attr_name!=SUBDOMAIN_OF_ATTR) {
 					LOG(L_ERR,"ERROR:run_address_switch: unknown attribut "
@@ -108,9 +122,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 					goto script_error;
 				}
 				/* get attribute value */
-				cpl_val.len = *((unsigned short*)p);
-				check_overflow_by_ptr( p+1+cpl_val.len, intr, script_error);
-				cpl_val.s = ((cpl_val.len)?(p+2):0);
+				get_str_attr( p, cpl_val.s, cpl_val.len, intr, script_error,1);
 				DBG("DEBUG:run_address_switch: testing ADDRESS branch "
 					" attr_name=%d attr_val=[%.*s](%d)..\n",
 					attr_name,cpl_val.len,cpl_val.s,cpl_val.len);
@@ -169,13 +181,16 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 						case PORT_VAL:
 							if (parse_uri( uri->s, uri->len, &parsed_uri)<0)
 								goto runtime_error;
-							msg_val = &(parsed_uri.port);
+							if (parsed_uri.port.len!=0)
+								msg_val = &(parsed_uri.port);
+							else
+								msg_val = &def_port_str;
 							break;
 						case TEL_VAL:
 							if (parse_uri( uri->s, uri->len, &parsed_uri)<0)
 								goto runtime_error;
-							if (parsed_uri.user_param.len==5 &&
-							memcmp(parsed_uri.user_param.s,"phone",5)==0)
+							if (parsed_uri.user_param_val.len==5 &&
+							memcmp(parsed_uri.user_param_val.s,"phone",5)==0)
 								msg_val = &(parsed_uri.user);
 							break;
 						case ADDRESS_TYPE_VAL:
@@ -187,7 +202,7 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 							goto script_error;
 					}
 					DBG("DEBUG:run_address_switch: extracted val. is <%.*s>\n",
-						(msg_val->len==0)?0:msg_val->len, msg_val->s);
+						(msg_val==0)?0:msg_val->len, (msg_val==0)?0:msg_val->s);
 				}
 				/* does the value from script match the one from message? */
 				switch (attr_name) {
@@ -214,19 +229,30 @@ inline unsigned char *run_address_switch( struct cpl_interpreter *intr )
 						}
 						break;
 					case SUBDOMAIN_OF_ATTR:
-						if (subfield!=HOST_VAL && subfield!=TEL_VAL) {
-							LOG(L_WARN,"WARNING:run_addres_switch: operator "
-								"SUBDOMAIN_OF applys only to HOST or TEL ->"
-								" ignored\n");
-						} else {
-							if (msg_val && msg_val->len>=cpl_val.len &&
-							strncasecmp( cpl_val.s, msg_val->s+(msg_val->len-
-							cpl_val.len), cpl_val.len)==0 && msg_val->s[1+
-							msg_val->len-cpl_val.len]=='.') {
-								DBG("DEBUG:run_address_switch: matching on "
-									"ADDRESS node (SUBDOMAIN_OF)\n");
-								return get_first_child(kid);
-							}
+						switch (subfield) {
+							case HOST_VAL:
+								k = msg_val->len - cpl_val.len;
+								if (k>=0 && (k==0 || msg_val->s[k-1]=='.') &&
+								!strncasecmp(cpl_val.s,msg_val->s+k,cpl_val.len)
+								) {
+									DBG("DEBUG:run_address_switch: matching on "
+										"ADDRESS node (SUBDOMAIN_OF)\n");
+									return get_first_child(kid);
+								}
+								break;
+							case TEL_VAL:
+								if (msg_val==0) break;
+								if (msg_val->len>=cpl_val.len && !strncasecmp(
+								cpl_val.s,msg_val->s,cpl_val.len)) {
+									DBG("DEBUG:run_address_switch: matching on "
+										"ADDRESS node (SUBDOMAIN_OF)\n");
+									return get_first_child(kid);
+								}
+								break;
+							default:
+								LOG(L_WARN,"WARNING:run_addres_switch: operator"
+									" SUBDOMAIN_OF applys only to HOST or TEL "
+									"-> ignored\n");
 						}
 						break;
 				}
@@ -248,9 +274,11 @@ script_error:
 
 
 
+/* UPDATED + CHECKED
+ */
 inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 {
-	unsigned char field;
+	unsigned short field;
 	unsigned char *p;
 	unsigned char *kid;
 	unsigned char *not_present_node;
@@ -260,28 +288,20 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 	str msg_val;
 
 	not_present_node = 0;
-	field = UNDEF_CHAR;
 	msg_val.s = 0;
 	msg_val.len = 0;
 
-	i=NR_OF_ATTR(intr->ip);
-	p=ATTR_PTR(intr->ip);
-	check_overflow_by_ptr( p+2*i, intr, script_error);
-	/* parse the attributes */
-	for( ; i>0 ; i-- ) {
-		if (*p==FIELD_ATTR)
-			field = *(p+1);
-		else {
-			LOG(L_ERR,"ERROR:cpl_c:run_string_switch: unknown param type (%d)"
-				" for STRING_SWITCH node\n",*p);
-			goto script_error;
-		}
-		p += 2;
+	/* parse the attribute */
+	if (NR_OF_ATTR(intr->ip)!=1) {
+		LOG(L_ERR,"ERROR:cpl_c:run_string_switch: node should have 1 attr, not"
+			" (%d)\n",NR_OF_ATTR(intr->ip));
+		goto script_error;
 	}
-
-	if (field==UNDEF_CHAR) {
-		LOG(L_ERR,"ERROR:cpl_c:run_string_switch: mandatory param FIELD "
-			"no found\n");
+	p=ATTR_PTR(intr->ip);
+	get_basic_attr( p, attr_name, field, intr, script_error);
+	if (attr_name!=FIELD_ATTR) {
+		LOG(L_ERR,"ERROR:cpl_c:run_string_switch: unknown param type (%d)"
+			" for STRING_SWITCH node\n",*p);
 		goto script_error;
 	}
 
@@ -309,22 +329,19 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 				/* check the number of attributes */
 				if (NR_OF_ATTR(kid)!=1) {
 					LOG(L_ERR,"ERROR:run_string_switch: incorect nr of attrs "
-						"(%d) in STRING node -> skipping\n",NR_OF_ATTR(kid));
+						"(%d) in STRING node (expected 1)\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
 				/* get the attribute name */
 				p = ATTR_PTR(kid);
-				check_overflow_by_ptr( p+2, intr, script_error);
-				attr_name = *(p++);
+				get_basic_attr( p, attr_name, cpl_val.len, intr, script_error);
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR ) {
 					LOG(L_ERR,"ERROR:run_string_switch: unknown attribut "
-						"(%d) in STRING node ->skipping branch\n",attr_name);
+						"(%d) in STRING node\n",attr_name);
 					goto script_error;
 				}
 				/* get attribute value */
-				cpl_val.len = *((unsigned short*)p);
-				check_overflow_by_ptr( p+1+cpl_val.len, intr, script_error);
-				cpl_val.s = ((cpl_val.len)?(p+2):0);
+				get_str_attr( p, cpl_val.s, cpl_val.len, intr, script_error,1);
 				DBG("DEBUG:run_string_switch: testing STRING branch "
 					"attr_name=%d attr_val=[%.*s](%d)..\n",
 					attr_name,cpl_val.len,cpl_val.s,cpl_val.len);
@@ -419,7 +436,7 @@ inline unsigned char *run_string_switch( struct cpl_interpreter *intr )
 						}
 						break;
 					case CONTAINS_ATTR:
-						if (cpl_val.len<=msg_val.len && 
+						if (cpl_val.len<=msg_val.len &&
 						strcasestr_str(&msg_val, &cpl_val)!=0 ) {
 							DBG("DEBUG:run_string_switch: matching on "
 								"STRING node (CONTAINS)\n");
@@ -458,10 +475,12 @@ script_error:
 
 
 
-
+/* UPDATED + CHECKED
+ */
 inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 {
 	static str default_val={"normal",6};
+	unsigned short n;
 	unsigned char *p;
 	unsigned char *kid;
 	unsigned char *not_present_node;
@@ -470,12 +489,10 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 	unsigned char msg_attr_val;
 	unsigned char msg_prio;
 	int i;
-	str cpl_val;
-	str msg_val;
+	str cpl_val = {0,0};
+	str msg_val = {0,0};
 
 	not_present_node = 0;
-	msg_val.s = 0;
-	msg_val.len = 0;
 	msg_attr_val = NORMAL_VAL;
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
@@ -497,41 +514,42 @@ inline unsigned char *run_priority_switch( struct cpl_interpreter *intr )
 					goto script_error;
 				}
 				DBG("DEBUG:run_priority_switch: matching on OTHERWISE node\n");
-				return ((NR_OF_KIDS(kid)==0)?EO_SCRIPT:kid+KID_OFFSET(kid,0));
+				return get_first_child(kid);
 			case PRIORITY_NODE :
 				if (NR_OF_ATTR(kid)!=1)
 					goto script_error;
 				/* get the attribute */
 				p = ATTR_PTR(kid);
-				check_overflow_by_ptr( p+3, intr, script_error);
-				/* attribute's name */
-				attr_name = (*(p++));
+				get_basic_attr( p, attr_name, attr_val, intr, script_error);
 				if (attr_name!=LESS_ATTR && attr_name!=GREATER_ATTR &&
 				attr_name!=EQUAL_ATTR){
 					LOG(L_ERR,"ERROR:run_priority_switch: unknown attribut "
-						"(%d) in PRIORITY node ->skipping branch\n",attr_name);
+						"(%d) in PRIORITY node\n",attr_name);
 					goto script_error;
 				}
 				/* attribute's encoded value */
-				attr_val = (*(p++));
 				if (attr_val!=EMERGENCY_VAL && attr_val!=URGENT_VAL &&
 				attr_val!=NORMAL_VAL && attr_val!=NON_URGENT_VAL &&
 				attr_val!=UNKNOWN_PRIO_VAL) {
 					LOG(L_ERR,"ERROR:run_priority_switch: unknown encoded "
-						"value (%d) for attribute (*d) in PRIORITY node "
-						"-> skipping branch\n",*p);
+						"value (%d) for attribute (*d) in PRIORITY node\n",*p);
 					goto script_error;
 				}
-				if (attr_val==UNKNOWN_PRIO_VAL && attr_name!=EQUAL_ATTR) {
-					LOG(L_ERR,"ERROR:cpl_c:run_priority_switch: bad PRIORITY "
-						"brach: attr_name=EQUAL doesn't match attr_val=UNKNOWN"
-						" -> skipping branch\n");
-					goto script_error;
+				if (attr_val==UNKNOWN_PRIO_VAL) {
+					if (attr_name!=EQUAL_ATTR) {
+						LOG(L_ERR,"ERROR:cpl_c:run_priority_switch:bad PRIORITY"
+							" branch: attr=EQUAL doesn't match val=UNKNOWN\n");
+						goto script_error;
+					}
+					/* if the attr is UNKNOWN, its string value is present  */
+					get_basic_attr(p, n,cpl_val.len, intr, script_error);
+					if (n!=PRIOSTR_ATTR) {
+						LOG(L_ERR,"ERROR:run_priority_switch: expected PRIOSTR"
+							"(%d) attr, found (%d)\n",PRIOSTR_ATTR,n);
+						goto script_error;
+					}
+					get_str_attr(p, cpl_val.s, cpl_val.len,intr,script_error,1);
 				}
-				/* attribute's value */
-				cpl_val.len = *((unsigned short*)(p));
-				check_overflow_by_ptr( p+1+cpl_val.len, intr, script_error);
-				cpl_val.s = ((cpl_val.len)?(p+2):0);
 
 				DBG("DEBUG:run_priority_switch: testing PRIORITY branch "
 					"(attr=%d,val=%d) [%.*s](%d)..\n",
@@ -660,6 +678,8 @@ script_error:
 
 
 
+/* UPDATED + CHECKED
+ */
 inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 {
 	unsigned char  *p;
@@ -706,14 +726,9 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 				p = ATTR_PTR(kid);
 				flags = 0;
 				for(j=0;j<nr_attrs;j++) {
-					check_overflow_by_ptr( p+2, intr, script_error);
-					/* attribute's name */
-					attr_name = (*(p++));
-					/* attribute's value's len */
-					attr_len = *((unsigned short*)(p));
-					check_overflow_by_ptr( p+1+attr_len, intr, script_error);
-					attr_str = ((attr_len)?(p+2):0);
-					p += 2+attr_len;
+					/* get the attribute */
+					get_basic_attr( p, attr_name, attr_len, intr, script_error);
+					get_str_attr( p, attr_str, attr_len, intr, script_error,1);
 					/* process the attribute */
 					DBG("DEBUG:cpl_c:run_time_node: attribute [%d] found :"
 						"[%s]\n",attr_name, attr_str);
@@ -881,18 +896,20 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 				" against tag [%.*s]-[%.*s]\n",
 				tag.len,tag.s,subtag.len,subtag.s,
 				cpl_tag->len,cpl_tag->s,cpl_subtag->len,cpl_subtag->s);
-			/* language range of "*" matches everything */
-			if (tag.len==1 && *tag.s=='*')
-				return 1;
-			/* does the language tag matches ? */
-			if (tag.len==cpl_tag->len && !memcmp(tag.s,cpl_tag->s,tag.len)) {
-				/* if the cpl_tag is void -> matche */
-				if (cpl_subtag->len==0)
-					return 1;
-				/* the subtags equals -> matche */
-				if (subtag.len==cpl_subtag->len &&
-				!memcmp(subtag.s,cpl_subtag->s,subtag.len) )
-					return 1;
+			/* language range of "*" is ignored for the purpose of matching*/
+			if ( !(tag.len==1 && *tag.s=='*') ) {
+				/* does the language tag matches ? */
+				if (tag.len==cpl_tag->len && !strncasecmp(tag.s,cpl_tag->s,
+				tag.len)) {
+					DBG("cucu bau \n");
+					/* if the subtag of the range is void -> matche */
+					if (subtag.len==0)
+						return 1;
+					/* the subtags equals -> matche */
+					if (subtag.len==cpl_subtag->len &&
+					!strncasecmp(subtag.s,cpl_subtag->s,subtag.len) )
+						return 1;
+				}
 			}
 			/* if ',' go for the next language range */
 			if (*c==',') c++;
@@ -912,6 +929,8 @@ error:
 
 
 
+/* UPDATED + CHECKED
+ */
 inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
 {
 	unsigned char  *p;
@@ -957,15 +976,11 @@ inline unsigned char *run_language_switch( struct cpl_interpreter *intr )
 				}
 				/* get the attributes */
 				p = ATTR_PTR(kid);
+				lang_tag.s = lang_subtag.s = 0;
+				lang_tag.len = lang_subtag.len = 0;
 				for(j=0;j<nr_attr;j++) {
-					/* get the attribute name */
-					check_overflow_by_ptr( p+2, intr, script_error);
-					attr_name = *(p++);
-					/* attribute's value's len */
-					attr.len = *((unsigned short*)(p));
-					check_overflow_by_ptr( p+1+attr.len, intr, script_error);
-					attr.s = ((attr.len)?(p+2):0);
-					p += 2+attr.len;
+					get_basic_attr( p, attr_name, attr.len, intr, script_error);
+					get_str_attr( p, attr.s, attr.len, intr, script_error,0);
 					if (attr_name==MATCHES_TAG_ATTR ) {
 						lang_tag = attr;
 						DBG("DEBUG:cpl-c:run_language_string: language-tag is"

@@ -177,9 +177,10 @@ static void final_reply( struct cell* t, struct sip_msg* msg, int code,
 
 inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 {
+	unsigned short attr_name;
+	unsigned short n;
 	unsigned char *kid;
 	unsigned char *p;
-	unsigned char attr;
 	int i;
 	str *s;
 	struct location *loc;
@@ -189,38 +190,30 @@ inline unsigned char *run_proxy( struct cpl_interpreter *intr )
 
 	/* indentify the attributes */
 	for( i=NR_OF_ATTR(intr->ip),p=ATTR_PTR(intr->ip) ; i>0 ; i-- ) {
-		switch (*p) {
+		get_basic_attr( p, attr_name, n, intr, script_error);
+		switch (attr_name) {
 			case TIMEOUT_ATTR:
-				check_overflow_by_ptr( p+2, intr, script_error);
-				attr = *((unsigned short*)(p+1));
-				p += 3;
+				/* useless param */
 				break;
 			case RECURSE_ATTR:
-				check_overflow_by_ptr( p+1, intr, script_error);
-				attr = (unsigned char)(*(p+1));
-				if ( attr!=NO_VAL && attr!=YES_VAL ) {
+				if ( n!=NO_VAL && n!=YES_VAL ) {
 					LOG(L_ERR,"ERROR:run_proxy: invalid value (%u) found"
-						" for attr. RECURSE in PROXY node!\n",attr);
+						" for attr. RECURSE in PROXY node!\n",n);
 					goto script_error;
 				}
-				intr->proxy.recurse = attr;
-				p += 2;
+				intr->proxy.recurse = n;
 				break;
 			case ORDERING_ATTR:
-				check_overflow_by_ptr( p+1, intr, script_error);
-				attr = (unsigned char)(*(p+1));
-				if (attr!=PARALLEL_VAL && attr!=SEQUENTIAL_VAL &&
-				attr!=FIRSTONLY_VAL){
+				if (n!=PARALLEL_VAL && n!=SEQUENTIAL_VAL && n!=FIRSTONLY_VAL){
 					LOG(L_ERR,"ERROR:run_proxy: invalid value (%u) found"
-						" for attr. ORDERING in PROXY node!\n",attr);
+						" for attr. ORDERING in PROXY node!\n",n);
 					goto script_error;
 				}
-				intr->proxy.ordering = attr;
-				p += 2;
+				intr->proxy.ordering = n;
 				break;
 			default:
 				LOG(L_ERR,"ERROR:run_proxy: unknown attribute (%d) in"
-					"PROXY node\n",*p);
+					"PROXY node\n",attr_name);
 				goto script_error;
 		}
 	}

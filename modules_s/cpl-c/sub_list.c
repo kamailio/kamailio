@@ -37,7 +37,6 @@
 struct node*   append_to_list(struct node *head, unsigned char *offset,
 																char *name)
 {
-	struct node *n;
 	struct node *new_node;
 
 	new_node = pkg_malloc(sizeof(struct node));
@@ -45,13 +44,7 @@ struct node*   append_to_list(struct node *head, unsigned char *offset,
 		return 0;
 	new_node->offset = offset;
 	new_node->name = name;
-	new_node->next = 0;
-	if (head) {
-		n = head;
-		while (n->next)
-			n = n->next;
-		n->next = new_node;
-	}
+	new_node->next = head;
 
 	return new_node;
 }

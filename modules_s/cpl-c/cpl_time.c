@@ -982,16 +982,23 @@ int check_byxxx(tmrec_p, ac_tm_p);
  */
 int check_tmrec(tmrec_p _trp, ac_tm_p _atp, tr_res_p _tsw)
 {
+	DBG("1\n****** time=%d  start=%d  duration=%d\n",_atp->time,_trp->dtstart,
+			_trp->duration);
+
 	if(!_trp || !_atp || (!_IS_SET(_trp->duration) && !_IS_SET(_trp->dtend)))
 		return REC_ERR;
+	DBG("2\n");
+	DBG("****** time=%d  start=%d\n",_atp->time,_trp->dtstart);
 
 	// it is before start date
 	if(_atp->time < _trp->dtstart)
 		return REC_NOMATCH;
+	DBG("3\n");
 	// compute the duration of the reccurence interval
 	if(!_IS_SET(_trp->duration))
 		_trp->duration = _trp->dtend - _trp->dtstart;
-	
+	DBG("****** time=%d  start=%d  duration=%d\n",_atp->time,_trp->dtstart,
+		_trp->duration);
 	if(_atp->time <= _trp->dtstart+_trp->duration)
 	{
 		if(_tsw)

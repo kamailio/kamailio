@@ -147,14 +147,16 @@ static inline void send_mail( struct cpl_cmd *cmd)
 	/* even if I haven't fork yet, I push the date on the pipe juat to get
 	 * rid of one more malloc + copy */
 	if (cmd->s3.len && cmd->s3.s) {
-		if ( (i=write( pfd[1], cmd->s3.s, cmd->s3.len ))!=cmd->s3.len )
+		if ( (i=write( pfd[1], cmd->s3.s, cmd->s3.len ))!=cmd->s3.len ) {
 			LOG(L_ERR,"ERROR:cpl_c:send_mail: write returned error %s\n",
 				strerror(errno));
+			goto error;
+		}
 	}
 
 	if ( (pid = fork()) < 0) {
 		LOG(L_ERR,"ERROR:cpl_c:send_mail: fork failed: %s\n",strerror(errno));
-		return;
+		goto error;
 	} else if (pid==0) {
 		/* child -> close all descriptors excepting pfd[0] */
 		for (i=3; i < MAX_FD; i++)
@@ -202,6 +204,9 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		DBG("DEBUG:cpl_c:send_mail: new forked process created -> "
 			"doing execv..\n");
 		execv("/usr/bin/mail",argv);
+		/* if we got here means execv exit with error :-( */
+		LOG(L_ERR,"ERROR:cpl_c:send_mail: execv failed! (%s)\n",
+			strerror(errno));
 child_exit:
 		_exit(127);
 	}
@@ -209,6 +214,12 @@ child_exit:
 	/* parent -> close both ends of pipe */
 	close(pfd[0]);
 	close(pfd[1]);
+	return;
+error:
+	shm_free( cmd->s1.s );
+	close(pfd[0]);
+	close(pfd[1]);
+	return;
 }
 
 
