@@ -12,9 +12,9 @@ int decrement_maxfed( struct sip_msg* msg )
 int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 {
 	unsigned int len, val_len, foo;
-	char               *buf, *bar, *bar1;
+	char               *buf, *bar;
 	struct lump* anchor;
-
+               int                   i;
 
 	/* is there another MAX_FORWARD header? */
 	if  ( parse_headers( msg , HDR_MAXFORWARDS )==-1 )
@@ -45,9 +45,10 @@ int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 	}
 	bar = buf;
 	memcpy( bar , "Max-Forwards: ", 14 );
+               DBG("DEBUG: MAX_FORWARD: len=%d\n",val_len);
 	bar += 14 ;
-	for(foo=val,bar1=bar+val_len-1;foo>0; foo=foo/10, bar1-- )
-		*(bar1) = '0' + foo - 10*(foo/10);
+	for(foo=val,i=0;i<val_len; foo=foo/10,i++  )
+		*(bar+val_len-i-1) = '0' + foo - 10*(foo/10);
 	bar += val_len;
 	memcpy( bar , CRLF , CRLF_LEN );
 
