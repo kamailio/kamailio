@@ -47,6 +47,7 @@
  * 2003-04-02  added more subst lumps: SUBST_{SND,RCV}_ALL  
  *              => ip:port;transport=proto (andrei)
  * 2003-04-12  added FL_FORCE_RPORT support (andrei)
+ * 2003-04-13  updated warning builder -- fixed (andrei)
  *
  */
 /* Via special params:
@@ -197,22 +198,28 @@ static int check_via_address(struct ip_addr* ip, str *name,
 static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 {
 	static char buf[MAX_WARNING_LEN];
-	static unsigned int fix_len=0;
 	str *foo;
 	int print_len, l;
 	int clen;
 	char* t;
 
-#define str_pair_print(string, string2, string2_len) \
+#define str_print(string, string_len) \
 		do{ \
-			l=strlen((string)); \
-		if ((clen+(string2_len)+l)>MAX_WARNING_LEN) \
-			goto error_overflow; \
-		memcpy(buf+clen, (string), l); \
-		clen+=l; \
-		memcpy(buf+clen, (string2), (string2_len)); \
-		clen+=(string2_len); }while(0)
-		
+			l=(string_len); \
+			if ((clen+l)>MAX_WARNING_LEN) \
+				goto error_overflow; \
+			memcpy(buf+clen, (string), l); \
+			clen+=l; \
+		}while(0)
+	
+#define str_lenpair_print(string, string_len, string2, string2_len) \
+		do{ \
+			str_print(string, string_len); \
+			str_print(string2, string2_len);\
+		}while(0)
+	
+#define str_pair_print( string, string2, string2_len) \
+		str_lenpair_print((string), strlen((string)), (string2), (string2_len))
 		
 #define str_int_print(string, intval)\
 		do{\
@@ -227,47 +234,39 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 			str_pair_print(string, t, print_len);\
 		} while(0)
 	
-	if (!fix_len)
-	{
-		memcpy(buf+fix_len,WARNING, WARNING_LEN);
-		fix_len +=WARNING_LEN;
-		memcpy(buf+fix_len, bind_address->name.s,bind_address->name.len);
-		fix_len += bind_address->name.len;
-		*(buf+fix_len) = ':'; fix_len++;
-		memcpy(buf+fix_len,bind_address->port_no_str.s,
-			bind_address->port_no_str.len);
-		fix_len += bind_address->port_no_str.len;
-		memcpy(buf+fix_len, WARNING_PHRASE,WARNING_PHRASE_LEN);
-		fix_len += WARNING_PHRASE_LEN;
-	}
+	clen=0;
+	str_lenpair_print(WARNING, WARNING_LEN,
+						msg->rcv.bind_address->name.s,
+						msg->rcv.bind_address->name.len);
+	str_lenpair_print(":", 1, msg->rcv.bind_address->port_no_str.s,
+						msg->rcv.bind_address->port_no_str.len);
+	str_print(WARNING_PHRASE, WARNING_PHRASE_LEN);
 	
 	/*adding out_uri*/
 	if (msg->new_uri.s)
 		foo=&(msg->new_uri);
 	else
 		foo=&(msg->first_line.u.request.uri);
-		clen=fix_len;
-		
-		/* pid= */
-		str_int_print("pid=", my_pid());
-		/* req_src_ip= */
-		str_ipaddr_print(" req_src_ip=", &msg->rcv.src_ip);
-		str_int_print(" req_src_port=", msg->rcv.src_port);
-		str_pair_print(" in_uri=", msg->first_line.u.request.uri.s,
-									msg->first_line.u.request.uri.len);
-		str_pair_print(" out_uri=", foo->s, foo->len);
-		str_pair_print(" via_cnt", msg->parsed_flag & HDR_EOH ? "=" : ">", 1);
-		str_int_print("=", via_cnt);
-		if (clen<MAX_WARNING_LEN){ buf[clen]='"'; clen++; }
-		else goto error_overflow;
+	/* pid= */
+	str_int_print(" pid=", my_pid());
+	/* req_src_ip= */
+	str_ipaddr_print(" req_src_ip=", &msg->rcv.src_ip);
+	str_int_print(" req_src_port=", msg->rcv.src_port);
+	str_pair_print(" in_uri=", msg->first_line.u.request.uri.s,
+								msg->first_line.u.request.uri.len);
+	str_pair_print(" out_uri=", foo->s, foo->len);
+	str_pair_print(" via_cnt", msg->parsed_flag & HDR_EOH ? "=" : ">", 1);
+	str_int_print("=", via_cnt);
+	if (clen<MAX_WARNING_LEN){ buf[clen]='"'; clen++; }
+	else goto error_overflow;
 		
 		
-		*returned_len=clen;
-		return buf;
+	*returned_len=clen;
+	return buf;
 error_overflow:
-		LOG(L_ERR, "ERROR: warning_builder: buffer size exceeded\n");
-		*returned_len=0;
-		return 0;
+	LOG(L_ERR, "ERROR: warning_builder: buffer size exceeded\n");
+	*returned_len=0;
+	return 0;
 }
 
 
