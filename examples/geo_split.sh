@@ -7,6 +7,13 @@
 # experimental unavailable feature)
 # 
 
+
+DB_HOST=dbhost
+DB_USER=ser
+DB_PW=heslo
+
+# ---
+
 TMP=/tmp/geo_split.$$
 
 stats()
@@ -22,7 +29,7 @@ stats()
 	mv $TMP.2 $TMP
 }
 
-mysql -h dbhost --batch -u ser -pheslo ser -e "select location from netgeo_cache" |
+mysql -h $DB_HOST --batch -u $DB_USER -p$DB_PW ser -e "select location from netgeo_cache" |
 awk -F '/' '
 	BEGIN { line=0 }
 	{ line++ }
