@@ -475,15 +475,15 @@ int open_fifo_server()
 #endif
 
 	if (fifo==NULL) {
-		DBG("TM: open_uac_fifo: no fifo will be opened\n");
+		DBG("DBG: open_fifo_server: no fifo will be opened\n");
 		/* everything is ok, we just do not want to start */
 		return 1;
 	}
 	if (strlen(fifo)==0) {
-		DBG("TM: open_uac_fifo: fifo disabled\n");
+		DBG("DBG: open_fifo_server: fifo disabled\n");
 		return 1;
 	}
-	DBG("TM: open_uac_fifo: opening fifo...\n");
+	DBG("DBG: open_uac_fifo: opening fifo...\n");
 	if (stat(fifo, &filestat)==-1) { /* FIFO doesn't exist yet ... */
 		LOG(L_DBG, "DEBUG: open_fifo_server: FIFO stat failed: %s\n",
 			strerror(errno));
