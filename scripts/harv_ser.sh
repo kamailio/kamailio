@@ -46,10 +46,10 @@ BEGIN {
     rpl200=0; rpl202=0; rpl2xx=0;
     rpl300=0; rpl302=0; rpl3xx=0;
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
-        rpl407=0;rpl408=0;rpl410=0;
-        rpl481=0;rpl486=0;rpl487=0;
+        rpl406=0;rpl407=0;rpl408=0;rpl410=0;
+        rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
         rpl4xx=0;
-    rpl500=0;rpl501=0;rpl5xx=0;
+    rpl500=0;rpl501=0;rpl502=0;rpl503=0;rpl5xx=0;
     rpl603=0;rpl6xx=0;
 
 	hint_imgw=0;
@@ -83,10 +83,14 @@ BEGIN {
 	ua_hostip=0;
 	ua_xx=0;
 
-	ua=0;
+	server_cisco=0
+	server_ser=0
+	server_xx=0
+	server_intertex=0
+
 }
 
-{ua=0}
+{ua=0; request=0;reply=0;server=0}
 
 ua==0 && /User-Agent:.*snom/ {
 	ua_snom++
@@ -165,6 +169,24 @@ ua==0 && /User-Agent:/ {
 }
 
 
+server==0 && /Server:.*Cisco/ {
+	server_cisco++
+	server=1
+}
+server==0 && /Server:.*Sip EXpress/ {
+	server_ser++
+	server=1
+}
+server==0 && /Server:.*Intertex/ {
+	server_intertex++
+	server=1
+}
+server==0 && /Server:/ {
+	server_xx++
+	print
+}
+
+
 
 /P-hint: IMGW/ {
 	hint_imgw++
@@ -189,6 +211,21 @@ ua==0 && /User-Agent:/ {
 }
 /P-hint: OFFLINE-VOICEMAIL/ {
 	hint_off_voicemail++
+}
+
+
+
+/SIP\/2\.0 [0-9][0-9][0-9]/ {
+	reply=1
+}
+
+/[A-Z]* sip.* SIP\/2\.0/ {
+	request=1
+}
+
+reply==0 && request=0 {
+	comment="optimization--skip now"
+	next
 }
 
 
@@ -259,6 +296,10 @@ ua==0 && /User-Agent:/ {
     rpl405++
     next
 }
+/SIP\/2\.0 406/ {
+    rpl406++
+    next
+}
 /SIP\/2\.0 407/ {
     rpl407++
     next
@@ -271,8 +312,16 @@ ua==0 && /User-Agent:/ {
     rpl410++
     next
 }
+/SIP\/2\.0 478/ {
+    rpl478++
+    next
+}
 /SIP\/2\.0 481/ {
     rpl481++
+    next
+}
+/SIP\/2\.0 483/ {
+    rpl483++
     next
 }
 /SIP\/2\.0 486/ {
@@ -296,6 +345,14 @@ ua==0 && /User-Agent:/ {
 }
 /SIP\/2\.0 501/ {
     rpl501++
+    next
+}
+/SIP\/2\.0 502/ {
+    rpl502++
+    next
+}
+/SIP\/2\.0 503/ {
+    rpl503++
     next
 }
 /SIP\/2\.0 5[0-9][0-9]/ {
@@ -354,16 +411,38 @@ ua==0 && /User-Agent:/ {
 
 END {
 	print "## Reply Codes"
-    print "100: " rpl100 " 180: " rpl180 " 183: " rpl183 " 1xx: " rpl1xx
-    print "200: " rpl200 " 202: " rpl202 " 2xx: " rpl2xx
-    print "300: " rpl300 " 302: " rpl302 " 3xx: " rpl3xx
-    print "400: " rpl400 " 401: " rpl401 " 403: " rpl403 
-		" 404: " rpl404 " 405: " rpl405
-        " 407: " rpl407 " 408: " rpl408  " 410: " rpl410
-        " 481: " rpl481 " 486: " rpl486 " 487: " rpl487
-        " 4xx: " rpl4xx  " 3xx: " rpl3xx
-    print "500: " rpl500 " 501: " rpl501 " 5xx: " rpl5xx
-    print "603: " rpl603 " 6xx: " rpl6xx
+    print "100 (trying): " rpl100 
+	print "180 (ringing): " rpl180 
+	print "183: (early media)" rpl183 
+	print "1xx: " rpl1xx
+    print "200 (ok): " rpl200 
+	print "202 (accepted): " rpl202 
+	print "2xx: " rpl2xx
+    print "300 (Multiple Choices): " rpl300 
+	print "302 (Moved Temporartily): " rpl302 
+	print "3xx: " rpl3xx
+    print "400 (Bad Request): " rpl400 
+	print "401 (Unauthorized): " rpl401 
+	print "403 (Forbidden): " rpl403 
+	print "404 (Not Found):" rpl404 
+	print "405 (Method not allowed): " rpl405 
+	print "406 (Not Acceptable): " rpl406
+	print "407 (Proxy Authentication Required):" rpl407 
+	print "408 (Request Timeout): " rpl408  
+	print "410 (Gone): " rpl410
+	print "478 (Unresolveable): " rpl478 
+	print "481 (Call/Transaction does not exist): " rpl481 
+	print "483 (Too Many Hops): " rpl483 
+	print "486 (Busy Here): " rpl486 
+	print "487 (Request Terminated): " rpl487
+	print "4xx: " rpl4xx  
+    print "500 (Server Internal Error): " rpl500 
+	print "501 (Not Implemented): " rpl501 
+	print "502 (Bad Gateway): " rpl502 
+	print "503 (Service Unavailabl): " rpl503 
+	print "5xx: " rpl5xx
+    print "603 (Decline): " rpl603 
+	print "6xx: " rpl6xx
 	print "## Request Methods"
     print "INVITE: " invite " CANCEL: " cancel " ACK: " ack
     print "BYE: " bye " OPTIONS: " options " INFO: " info
@@ -380,6 +459,9 @@ END {
 	print "3com: " ua_3com " IPDialog: " ua_ipdialog " Epygi: " ua_epygi
 	print "Jasomi: " ua_jasomi " Cisco: " ua_cisco " insipid: " ua_insipid
 	print "Hotsip: " ua_hotsip " UFO: " ua_xx
+	print "## Servers"
+	print "Cisco: " server_cisco " ser: " server_ser 
+	print "Intertex: " server_intertex " UFO: " server_xx
 }
 '
 
