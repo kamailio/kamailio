@@ -137,6 +137,7 @@ char *registrar=NULL; //"sip:registrar@iptel.org";
 int  expire_time=259200;
 int  check_time=30;
 int  clean_period=5;
+int  use_contact=1;
 
 str msg_type = { "MESSAGE", 7};
 
@@ -171,6 +172,7 @@ static param_export_t params[]={
 	{"expire_time",  INT_PARAM, &expire_time},
 	{"check_time",   INT_PARAM, &check_time},
 	{"clean_period", INT_PARAM, &clean_period},
+	{"use_contact",  INT_PARAM, &use_contact},
 	{0,0,0}
 };
 
@@ -521,7 +523,7 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 			strncpy(buf+body.len, pto->uri.s, pto->uri.len);
 			body.len += pto->uri.len;
 		}
-		strncpy(buf+body.len, " is offline.", 12);
+		strncpy(buf+body.len, "] is offline.", 13);
 		body.len += 12;
 		strncpy(buf+body.len, " The message will be delivered", 30);
 		body.len += 30;
@@ -532,23 +534,29 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 
 		// look for Contact header
 		ctaddr.s = NULL;
-		if(parse_headers(msg,HDR_CONTACT,0)!=-1 && msg->contact 
+		if(use_contact && parse_headers(msg,HDR_CONTACT,0)!=-1 && msg->contact
 				&& msg->contact->body.s && msg->contact->body.len>0)
 		{
 			ctaddr.s = msg->contact->body.s;
 			ctaddr.len = msg->contact->body.len;
-			while((*(ctaddr.s)==' ' || *(ctaddr.s)=='\t' || *(ctaddr.s)=='<')
-					&& ctaddr.len>0)
-			{
-				ctaddr.s++;
-				ctaddr.len--;
-			}
 			p = ctaddr.s;
-			while(p<ctaddr.s+ctaddr.len && *p!='>')
-					p++;
-			if(p<ctaddr.s+ctaddr.len)
-				ctaddr.len = p-ctaddr.s;
-			DBG("MSILO:m_store: contact [%.*s]\n",ctaddr.len,ctaddr.s);
+			while(p<ctaddr.s+ctaddr.len && *p!='<')
+				p++;
+			if(*p == '<')
+			{
+				p++;
+				ctaddr.s = p;
+				while(p<ctaddr.s+ctaddr.len && *p!='>')
+						p++;
+				if(p<ctaddr.s+ctaddr.len)
+					ctaddr.len = p-ctaddr.s;
+			}
+			if(!ctaddr.s || ctaddr.len < 6 || strncmp(ctaddr.s, "sip:", 4)
+				|| ctaddr.s[4]==' ')
+				ctaddr.s = NULL;
+			else
+				DBG("MSILO:m_store: feedback contact [%.*s]\n",
+							ctaddr.len,ctaddr.s);
 		}
 		
 		// tmb.t_uac(&msg_type,&pfrom->uri,&str_hdr,&body,&reg_addr,0,0,0);
@@ -573,7 +581,7 @@ error:
  */
 static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 {
-	struct to_body to, *pto;
+	struct to_body to, *pto = NULL;
 	db_key_t db_keys[1] = { DB_KEY_RURI };
 	db_val_t db_vals[1];
 	db_key_t db_cols[] = {	DB_KEY_MID, DB_KEY_FROM, DB_KEY_TO, DB_KEY_BODY,

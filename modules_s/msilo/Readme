@@ -84,6 +84,12 @@ Default:	5
 Desc:		number of 'check_time' cycles. This period is used to check if
 			there are expired messages in database.
 
+Name:		use_contact
+Type:		int
+Default:	1 (0 = off, 1 = on)
+Desc:		turns on/off the usage of the Contact address to send feedback 
+            to senders whose messages are stored by MSILO.
+
 
 3.Module dependences
 -------------------
