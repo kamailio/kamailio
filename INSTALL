@@ -205,6 +205,10 @@ your box.
 C) Troubleshooting
 ----------------------------------------------
 
+/etc/ser/ser.cfg
+/etc/init.d/ser restart
+listen
+aliases
 
 
 TROUBLES
@@ -212,10 +216,13 @@ TROUBLES
 In the following config, ser bound itself to /dev/lo -- not
 good for quick start.
 
-/etc/ser/ser.cfg
-/etc/init.d/ser restart
-listen
-aliases
+
+[jiri@cat jiri]$ hostname -a
+localhost.localdomain localhost 
+[jiri@cat jiri]$ hostname
+cat
+[jiri@cat jiri]$ 
+
 
 [root@cat log]# uname -a
 Linux cat 2.4.18-3 #1 Thu Apr 18 07:37:53 EDT 2002 i686 unknown
