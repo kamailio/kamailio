@@ -93,7 +93,7 @@ static int init_semaphore_set( int size )
 
 
 
-static int change_semaphore( ser_lock_t* s  , int val )
+int change_semaphore( ser_lock_t* s  , int val )
 {
 	struct sembuf pbuf;
 	int r;

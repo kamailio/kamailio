@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -5-unstable
+EXTRAVERSION = -6-unstable
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -80,8 +80,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DF_MALLOC  -DUSE_SYNONIM\
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
-	 -DWAIT -DNEW_HNAME  -DNOISY_REPLIES -DBOGDAN_TRIFLE \
-	 #-DNO_DEBUG \
+	 -DNO_DEBUG \
+	 -DWAIT -DNEW_HNAME   # -DNOISY_REPLIES -DBOGDAN_TRIFLE \
 	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
 	 #-DNOSMP \
 	 #-DEXTRA_DEBUG 
@@ -91,21 +91,11 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 #-DSTATS 
 #-DNO_LOG
 
-# arh. specific definitions
-ifeq ($(ARCH), i386)
-	DEFS+= -DFAST_LOCK
-endif
-
-ifeq ($(ARCH), sparc64)
-ifeq 	($(CC_NAME), gcc)
-		DEFS+= -DFAST_LOCK
-endif
-endif
 
 
 #PROFILE=  -pg #set this if you want profiling
-mode = debug
-#mode = release
+#mode = debug
+mode = release
 
 # platform dependent settings
 
@@ -159,6 +149,18 @@ ifeq (,$(CC_NAME))
 	MKDEP=gcc -MM $(DEFS)
 $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, sun cc, intel icc )
+endif
+
+
+# arh. specific definitions
+ifeq ($(ARCH), i386)
+	DEFS+= -DFAST_LOCK
+endif
+
+ifeq ($(ARCH), sparc64)
+ifeq 	($(CC_NAME), gcc)
+		DEFS+= -DFAST_LOCK
+endif
 endif
 
 

@@ -76,7 +76,7 @@ int release_timerlist_lock( struct timer *timerlist );
 
 
 #ifndef FAST_LOCK
-static int change_semaphore( ser_lock_t s  , int val );
+int change_semaphore( ser_lock_t* s  , int val );
 #endif
 
 
