@@ -1,9 +1,8 @@
-/*
- * $Id: 
- * Common function needed by authorize
- * and challenge related functions
+/* utils.h v 0.2 2003/1/14
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Header file for utility functions
+ *
+ * Copyright (C) 2003 Juha Heinanen
  *
  * This file is part of ser, a free SIP server.
  *
@@ -30,13 +29,14 @@
 
 #ifndef UTILS_H
 #define UTILS_H
+
 #include "../../str.h"
-#include "../../parser/msg_parser.h"
+
 
 /*
- * remove unwanted chars of the body
+ * Un-escape a URI user
  */
-char* cleanbody(str body); 
+void un_escape(str* user, str* new_user);
 
 
 #endif /* UTILS_H */

@@ -1,11 +1,8 @@
-/* $Id: utils.c
+/* utils.c v 0.2 2003/1/14
  *
- * Set of utils to extract the user-name from the FROM field
- * borrowed from the auth module.
- * @author Stelios Sidiroglou-Douskos <ssi@fokus.gmd.de>
- * $Id$
+ * Utility function to un-escape a URI user
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2003 Juha Heinanen
  *
  * This file is part of ser, a free SIP server.
  *
@@ -29,26 +26,39 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
 #include "utils.h"
-#include "../../ut.h"
+#include "../../dprint.h"
 
-/*
- * This method simply cleans off the trailing character of the string body.
- * params: str body
- * returns: the new char* or NULL on failure
- */
-char * cleanbody(str body) 
-{	
-	char* tmp;
-	/*
-	 * This works because when the structure is created it is memset to 0
-	 */
-	if (body.s == NULL)
-		return NULL;
-		
-	tmp = &body.s[0];
-	tmp[body.len] = '\0';
-
-	return tmp;
+/* Convert a hex char to decimal */
+inline int hex_to_dec(char c)
+{
+	if (c >= '0' && c <= '9') return c - '0';
+	if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+	if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+	return 0;
 }
 
+
+/* Un-escape URI user */
+void un_escape(str *user, str *new_user ) 
+{
+	int i, j, value;
+
+	new_user->len = 0;
+	j = 0;
+
+	for (i = 0; i < user->len; i++) {
+		if (user->s[i] == '%') {
+			if (i + 2 >= user->len) return;
+			value = hex_to_dec(user->s[i + 1]) * 16 + hex_to_dec(user->s[i + 2]);
+			if (value < 32 || value > 126) return;
+			new_user->s[j] = value;
+			i = i + 2;
+		} else {
+			new_user->s[j] = user->s[i];
+		}
+		j++;
+	}
+	new_user->len = j;
+}

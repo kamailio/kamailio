@@ -62,7 +62,7 @@ int send_resp(struct sip_msg* _m, int _code, char* _reason, char* _hdr, int _hdr
  *        : char _c  : character to find
  * RETURNS: char*    : points to character found, NULL if not found
  */
-static inline char* auth_fnq(str* _b, char _c)
+char* auth_fnq(str* _b, char _c)
 {
 	int quoted = 0, i;
 	
@@ -128,4 +128,40 @@ int auth_get_username(str* _s)
 
 	_s->len = 0;
 	return -2;
+}
+
+
+/*
+ * Check that To header is properly parsed and if so,
+ * return pointer to parsed To header.  Otherwise return NULL.
+ */
+inline struct to_body *get_parsed_to_body(struct sip_msg *_msg)
+{
+	if (!(_msg->to)) {
+		LOG(L_ERR, "get_parsed_to(): Request does not have a To header\n");
+		return NULL;
+	}
+	if (!(_msg->to->parsed) || ((struct to_body *)_msg->to->parsed)->error != PARSE_OK) {
+		LOG(L_ERR, "get_parsed_to(): To header is not properly parsed\n");
+		return NULL;
+	}
+	return (struct to_body *)(_msg->to->parsed);
+}
+
+
+/*
+ * Check that From header is properly parsed and if so,
+ * return pointer to parsed From header.  Otherwise return NULL.
+ */
+inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
+{
+	if (!(_msg->from)) {
+		LOG(L_ERR, "get_parsed_from(): Request does not have a From header\n");
+		return NULL;
+	}
+	if (!(_msg->from->parsed) || ((struct to_body *)_msg->from->parsed)->error != PARSE_OK) {
+		LOG(L_ERR, "get_parsed_from(): From header is not properly parsed\n");
+		return NULL;
+	}
+	return (struct to_body *)(_msg->from->parsed);
 }

@@ -50,10 +50,7 @@
 #define ACK_CANCEL_HACK
 
 
-/* 
- * Send algorithm=MD5 in challenge
- */
-#define PRINT_MD5
+#define REALM_HACK
 
 
 #endif /* DEFS_H */

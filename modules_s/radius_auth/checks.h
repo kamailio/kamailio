@@ -1,10 +1,8 @@
-/*
- * $Id$
+/* domain.h v 0.1 2003/1/20
  *
- * Check if to and from contain the same username as
- * in digest credentials
+ * Header file for readius based checks
  *
- * Copyright (C) 2001-2003 Fhg Fokus
+ * Copyright (C) 2002-2003 Juha Heinanen
  *
  * This file is part of ser, a free SIP server.
  *
@@ -32,21 +30,20 @@
 #ifndef CHECKS_H
 #define CHECKS_H
 
+
 #include "../../parser/msg_parser.h"
 
 
 /*
- * Check if To header field contains the same username
- * as digest credentials
+ * Check from radius if Request URI exists
  */
-int check_to(struct sip_msg* _msg, char* _str1, char* _str2);
+int radius_does_uri_exist(struct sip_msg* _msg,  char* _str1, char* _str2);
 
 
 /*
- * Check if From header field contains the same username
- * as digest credentials
+ * Check from radius if digest user belongs to a give group
  */
-int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
+int radius_is_in_group(struct sip_msg* _msg,  char* _group, char* _str2);
 
 
 #endif /* CHECKS_H */

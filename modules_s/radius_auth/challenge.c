@@ -37,7 +37,10 @@
 #include "../../parser/digest/digest.h" /* cred_body_t get_authorized_cred*/
 #include "auth_mod.h"                   /* Module parameters */
 #include "defs.h"                       /* PRINT_MD5 */
-
+#ifdef REALM_HACK
+#include "../../trim.h"
+#include "../../parser/parse_from.h"
+#endif
 
 #define MESSAGE_407 "Proxy Authentication Required"
 #define MESSAGE_401 "Unauthorized"
@@ -79,6 +82,67 @@ static inline void build_auth_hf(int _retries, int _stale, char* _realm, char* _
 }
 
 
+#ifdef REALM_HACK
+
+/* Extract hostname from To or From */
+static void get_realm(struct sip_msg* _m, char* _r)
+{
+	str uri;
+	char* at, *p;
+
+	if ((REQ_LINE(_m).method.len == 8) && (strncmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
+		uri = get_to(_m)->uri;
+	} else {
+		if (!(_m->from->parsed)) {
+			if (parse_from_header(_m->from) == -1) {
+				LOG(L_ERR, "get_realms(): Error while parsing headers\n");
+				*_r = 0;
+				return;
+			}
+		}
+		uri = get_from(_m)->uri;
+	}
+
+	at = auth_fnq(&uri, '@');
+	if (!at) {
+		LOG(L_ERR, "get_realm(): Can't find @\n");
+		*_r = 0;
+		return;
+	}
+
+	at++;
+
+	uri.len -= at - uri.s;
+	uri.s = at;
+
+	p = auth_fnq(&uri, ':');
+	if (p) {
+		memcpy(_r, at, p - at);
+		_r[p - at] = '\0';
+		return;
+	}
+
+	p = auth_fnq(&uri, ';');
+	if (p) {
+		memcpy(_r, at, p - at);
+		_r[p - at] = '\0';
+		return;
+	}
+
+
+	memcpy(_r, at, uri.len);
+	_r[uri.len] = '\0';
+
+	uri.s = _r;
+	uri.len = strlen(_r);
+	
+	trim_trailing(&uri);
+	_r[uri.len] = 0;
+}
+
+#endif
+
+
 /*
  * Create and send a challenge
  */
@@ -88,6 +152,9 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
 	int auth_hf_len;
 	struct hdr_field* h;
 	auth_body_t* cred = 0;
+#ifdef REALM_HACK
+	char re[256];
+#endif
 
 	switch(_code) {
 	case 401: get_authorized_cred(_msg->authorization, &h); break;
@@ -108,13 +175,36 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
 			} else {
 				cred->nonce_retries = 0;
 			}
-			
+
+#ifdef REALM_HACK
+			if (*_realm == 0) {
+				get_realm(_msg, re);
+				build_auth_hf(cred->nonce_retries, cred->stale, 
+					      re, auth_hf, &auth_hf_len,
+					      _qop, _challenge_msg);
+			} else {
+				build_auth_hf(cred->nonce_retries, cred->stale, 
+					      _realm, auth_hf, &auth_hf_len,
+					      _qop, _challenge_msg);
+			}
+
+#else			
 			build_auth_hf(cred->nonce_retries, cred->stale, 
 				      _realm, auth_hf, &auth_hf_len,
 				      _qop, _challenge_msg);
+#endif
 		}
 	} else {
+#ifdef REALM_HACK
+		if (*_realm == 0) {
+			get_realm(_msg, re);
+			build_auth_hf(0, 0, re, auth_hf, &auth_hf_len, _qop, _challenge_msg);
+		} else {
+			build_auth_hf(0, 0, _realm, auth_hf, &auth_hf_len, _qop, _challenge_msg);
+		}
+#else
 		build_auth_hf(0, 0, _realm, auth_hf, &auth_hf_len, _qop, _challenge_msg);
+#endif
 	}
 	
 	if (send_resp(_msg, _code, _message, auth_hf, auth_hf_len) == -1) {
@@ -128,7 +218,7 @@ static inline int challenge(struct sip_msg* _msg, char* _realm, int _qop,
 /*
  * Challenge a user to send credentials using WWW-Authorize header field
  */
-int radius_www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
+int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
 	return challenge(_msg, _realm, (int)_qop, 401, MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
@@ -137,7 +227,7 @@ int radius_www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 /*
  * Challenge a user to send credentials using Proxy-Authorize header field
  */
-int radius_proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
+int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
 	return challenge(_msg, _realm, (int)_qop, 407, MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }

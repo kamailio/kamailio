@@ -28,195 +28,127 @@
  */
 
 
-
 #include <radiusclient.h>
+#include "ser_radius.h"
+#include <stdlib.h>
+#include "../../config.h"
 #include "digest.h"
 #include "../../str.h"
 #include "../../parser/digest/digest_parser.h"
+#include "../../ut.h"
 #include <string.h>
 #include "../../dprint.h"
-#include "utils.h"
+
 /*
- * Sends the the digest information to the radius server so that
- * the radius server which holds the only unknown, the password
- * can reconstruct the response and see if it matches the message.
- *
- * params: cred_t*	cred 	Pointer to the credential structure which
- * 							holds neccessary digest information.
- * 		   str*		method 	String representation of the SIP method.
- *
- * returns -1 on failure, 
- * 			0 on success
+ * This function creates and submits radius authentication request as per
+ * draft-sterman-aaa-sip-00.txt.  In addition, _user parameter is included
+ * in the request as value of a SER specific attribute type SIP-URI-User,
+ * which can be be used as a check item in the request.  Service type of
+ * the request is Authenticate-Only.
  */
-int radius_authorize(dig_cred_t * cred, str* _method) 
+int radius_authorize_sterman(dig_cred_t * cred, str* _method, str* _user) 
 {
-	int             result;
-    char            msg[4096];
-    VALUE_PAIR      *send, *received;
-    UINT4           service;
-    str 			method; 
+	char            msg[4096];
+	VALUE_PAIR      *send, *received;
+	UINT4           service;
+	VALUE_PAIR 	*vp;    
+	str		method, user, user_name;
+
 	send = NULL;
+	received = NULL;
 
 	method.s = _method->s;
 	method.len = _method->len;
-	/*
-	 * Add all the user digest parameters according to the qop defined.
-	 * Most devices tested only offer support for the simplest digest.
-	 */
-	if (rc_avpair_add(&send, PW_USER_NAME, 
-						cleanbody(cred->username), 0) == NULL)
-    	return(ERROR_RC);
 
-	if (rc_avpair_add(&send, PW_SIP_USER_ID, 
-						cleanbody(cred->username), 0) == NULL)
-    	return (ERROR_RC);
-
-	if (rc_avpair_add(&send, PW_SIP_USER_REALM, 
-						cleanbody(cred->realm), 0) == NULL)
-        return (ERROR_RC);
- 
-	if (rc_avpair_add(&send, PW_SIP_NONCE, 
-						cleanbody(cred->nonce), 0) == NULL)
-        return (ERROR_RC);
- 
-	if (rc_avpair_add(&send, PW_SIP_NONCE_COUNT, 
-						cleanbody(cred->nc), 0) == NULL)
-        return (ERROR_RC);
-
-	if (rc_avpair_add(&send, PW_SIP_USER_DIGEST_URI, 
-						cleanbody(cred->uri), 0) == NULL)
-        return (ERROR_RC);
-	
-	if (rc_avpair_add(&send, PW_SIP_USER_METHOD, 
-						cleanbody(method), 0) == NULL)
-        return (ERROR_RC);
-
-	/*
-	if (cred->qop == QOP_AUTH) {
-		if (rc_avpair_add(&send, PW_SIP_QOP, "auth", 0) == NULL)
-        	return (ERROR_RC);
-	} else if (cred->qop == QOP_AUTH_INT) {
-		if (rc_avpair_add(&send, PW_SIP_QOP, "auth-int", 0) == NULL)
-        	return (ERROR_RC);
-	} else  {
-		if (rc_avpair_add(&send, PW_SIP_QOP, "", 0) == NULL)
-        	return (ERROR_RC);
-	}
-	*/
-
-	if (rc_avpair_add(&send, PW_SIP_USER_RESPONSE, cred->response.s, 0) == NULL)
-        return (ERROR_RC);
-
-	
-	/* Indicate the service type, Authenticate only in our case */
-       service = PW_AUTHENTICATE_ONLY;
-	if (rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0) == NULL) {
-		DBG("radius_authorize() Error adding service type \n");
-	 	return (ERROR_RC);  	
-	}
-       
-    result = rc_auth(0, send, &received, msg);
-       
-    if (result == OK_RC) {
-    	DBG("RADIUS AUTHENTICATION SUCCESS \n");
-	}
-    else {
-		DBG("RADIUS AUTHENTICATION FAILURE \n");
-	}
-    return result;
-}
-
-
-/*
- * This is an alternative version that works with the implementation
- * provided by freeradius. The difference here is that all the parameters
- * are placed into one Attribute (DIGEST_ATTRIBUTES) so that to economize
- * on name-mapping on the radius servers. I have kept the code structure
- * similar to the previous example and have adjusted to DIGEST_ATTRIBUTES
- * prior to sending the msg for code simplicity.
- */
-int radius_authorize_freeradius(dig_cred_t * cred, str* _method) 
-{
-	int             result;
-    char            msg[4096];
-    VALUE_PAIR      *send, *received;
-    UINT4           service;
-    VALUE_PAIR 		*vp;    
-	str				method;
-	send = NULL;
-
-	method.s = _method->s;
-	method.len = _method->len;
+	user.s = _user->s;
+	user.len = _user->len;
 
 	/*
 	 * Add all the user digest parameters according to the qop defined.
 	 * Most devices tested only offer support for the simplest digest.
 	 */
-	if (rc_avpair_add(&send, PW_USER_NAME, 
-						cleanbody(cred->username), 0) == NULL)
-    	return(ERROR_RC);
 
-	if (rc_avpair_add(&send, PW_DIGEST_USER_NAME, 
-						cleanbody(cred->username), 0) == NULL)
-    	return (ERROR_RC);
+	if (q_memchr(cred->username.s, '@', cred->username.len)) {
+		if (rc_avpair_add(&send, PW_USER_NAME, cred->username.s, cred->username.len) == NULL)
+			rc_avpair_free(send);
+			return -1;
+	} else {
+		user_name.len = cred->username.len + cred->realm.len + 1;
+		user_name.s = malloc(user_name.len);
+		if (!user_name.s) {
+			return -1;
+		}
+		strncpy(user_name.s, cred->username.s, cred->username.len);
+		user_name.s[cred->username.len] = '@';
+		strncpy(user_name.s + cred->username.len + 1, cred->realm.s, cred->realm.len);
+		if (rc_avpair_add(&send, PW_USER_NAME, user_name.s, user_name.len) == NULL) {
+			free(user_name.s);
+			rc_avpair_free(send);
+			return -1;
+		}
+		free(user_name.s);
+	}
 
-	if (rc_avpair_add(&send, PW_DIGEST_REALM, 
-						cleanbody(cred->realm), 0) == NULL)
-        return (ERROR_RC);
- 
-	if (rc_avpair_add(&send, PW_DIGEST_NONCE, 
-						cleanbody(cred->nonce), 0) == NULL)
-        return (ERROR_RC);
- 
-	if (rc_avpair_add(&send, PW_DIGEST_URI, 
-						cleanbody(cred->uri), 0) == NULL)
-        return (ERROR_RC);
+	if (rc_avpair_add(&send, PW_DIGEST_USER_NAME, cred->username.s, cred->username.len) == NULL) {
+		rc_avpair_free(send);
+		return -1;
+	}
+
+	if (rc_avpair_add(&send, PW_DIGEST_REALM, cred->realm.s, cred->realm.len) == NULL) {
+		rc_avpair_free(send);
+		return -1;
+	}
+	if (rc_avpair_add(&send, PW_DIGEST_NONCE, cred->nonce.s, cred->nonce.len) == NULL) {
+		rc_avpair_free(send);
+		return -1;
+	}
 	
-	if (rc_avpair_add(&send, PW_DIGEST_METHOD, 
-						cleanbody(method), 0) == NULL)
-        return (ERROR_RC);
+	if (rc_avpair_add(&send, PW_DIGEST_URI, cred->uri.s, cred->uri.len) == NULL) {
+		rc_avpair_free(send);
+		return -1;
+	}
+	if (rc_avpair_add(&send, PW_DIGEST_METHOD, method.s, method.len) == NULL) {
+		rc_avpair_free(send);
+		return -1;
+	}
 	
 	/* 
 	 * Add the additional authentication fields according to the QOP.
 	 */
 	if (cred->qop.qop_parsed == QOP_AUTH) {
-		if (rc_avpair_add(&send, PW_DIGEST_QOP, "auth", 0) == NULL) {
-        	return (ERROR_RC);
+		if (rc_avpair_add(&send, PW_DIGEST_QOP, "auth", 4) == NULL) {
+			rc_avpair_free(send);
+			return -1;
 		}
-		
-		if (rc_avpair_add(&send, PW_DIGEST_NONCE, 
-							cleanbody(cred->nc), 0) == NULL)
-        return (ERROR_RC);
-		
-		if (rc_avpair_add(&send, PW_DIGEST_CNONCE, 
-							cleanbody(cred->cnonce), 0) == NULL) {
-        	return (ERROR_RC);
+		if (rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, cred->nc.s, cred->nc.len) == NULL) {
+			rc_avpair_free(send);
+			return -1;
 		}
-		
+		if (rc_avpair_add(&send, PW_DIGEST_CNONCE, cred->cnonce.s, cred->cnonce.len) == NULL) {
+			rc_avpair_free(send);
+			return -1;
+		}
 	} else if (cred->qop.qop_parsed == QOP_AUTHINT) {
-		if (rc_avpair_add(&send, PW_DIGEST_QOP, "auth-int", 0) == NULL)
-        	return (ERROR_RC);
-
-		if (rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, 
-							cleanbody(cred->nc), 0) == NULL) {
-			return (ERROR_RC);
+		if (rc_avpair_add(&send, PW_DIGEST_QOP, "auth-int", 8) == NULL) {
+			rc_avpair_free(send);
+			return -1;
 		}
-		
-		if (rc_avpair_add(&send, PW_DIGEST_CNONCE, 
-							cleanbody(cred->cnonce), 0) == NULL) {
-        	return (ERROR_RC);
+		if (rc_avpair_add(&send, PW_DIGEST_NONCE_COUNT, cred->nc.s, cred->nc.len) == NULL) {
+			rc_avpair_free(send);
+			return -1;
 		}
-
-		if (rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, 
-							cleanbody(cred->opaque), 0) == NULL) {
-        	return (ERROR_RC);
+		if (rc_avpair_add(&send, PW_DIGEST_CNONCE, cred->cnonce.s, cred->cnonce.len) == NULL) {
+			rc_avpair_free(send);
+			return -1;
+		}
+		if (rc_avpair_add(&send, PW_DIGEST_BODY_DIGEST, cred->opaque.s, cred->opaque.len) == NULL) {
+			rc_avpair_free(send);
+			return -1;
 		}
 		
 	} else  {
 		/* send nothing for qop == "" */
 	}
-	
-	
 
 	/*
 	 * Now put everything place all the previous attributes into the
@@ -228,20 +160,20 @@ int radius_authorize_freeradius(dig_cred_t * cred, str* _method)
 	 */
 	for (vp = send; vp != NULL; vp = vp->next) {
 		switch (vp->attribute) {
-	  		default:
-	    	break;
+  		default:
+			break;
 
 			/* Fall thru the know values */
-			case PW_DIGEST_REALM:
-			case PW_DIGEST_NONCE:
-			case PW_DIGEST_METHOD:
-			case PW_DIGEST_URI:
-			case PW_DIGEST_QOP:
-			case PW_DIGEST_ALGORITHM:
-			case PW_DIGEST_BODY_DIGEST:
-			case PW_DIGEST_CNONCE:
-			case PW_DIGEST_NONCE_COUNT:
-			case PW_DIGEST_USER_NAME:
+		case PW_DIGEST_REALM:
+		case PW_DIGEST_NONCE:
+		case PW_DIGEST_METHOD:
+		case PW_DIGEST_URI:
+		case PW_DIGEST_QOP:
+		case PW_DIGEST_ALGORITHM:
+		case PW_DIGEST_BODY_DIGEST:
+		case PW_DIGEST_CNONCE:
+		case PW_DIGEST_NONCE_COUNT:
+		case PW_DIGEST_USER_NAME:
 	
 			/* overlapping! */
 			memmove(&vp->strvalue[2], &vp->strvalue[0], vp->lvalue);
@@ -254,29 +186,36 @@ int radius_authorize_freeradius(dig_cred_t * cred, str* _method)
 	}
 
 	/* Add the response... What to calculate against... */
-	if (rc_avpair_add(&send, PW_DIGEST_RESPONSE, 
-						cleanbody(cred->response), 0) == NULL)
-        return (ERROR_RC);
+	if (rc_avpair_add(&send, PW_DIGEST_RESPONSE, cred->response.s, cred->response.len) == NULL) {
+		rc_avpair_free(send);
+		return -1;
+	}
 
 	/* Indicate the service type, Authenticate only in our case */
-       service = PW_AUTHENTICATE_ONLY;
+	service = PW_AUTHENTICATE_ONLY;
 	if (rc_avpair_add(&send, PW_SERVICE_TYPE, &service, 0) == NULL) {
-		DBG("radius_authorize() Error adding service type \n");
-	 	return (ERROR_RC);  	
+		DBG("radius_authorize() Error adding service type\n");
+		rc_avpair_free(send);
+	 	return -1;
+	}
+
+	/* Add SIP URI as a check item */
+	if (rc_avpair_add(&send, PW_SIP_URI_USER, user.s, user.len) == NULL) {
+		DBG("radius_authorize() Error adding SIP URI\n");
+		rc_avpair_free(send);
+	 	return -1;  	
 	}
        
-    result = rc_auth(0, send, &received, msg);
-       
-    if (result == OK_RC) {
-    	DBG("RADIUS AUTHENTICATION SUCCESS \n");
-		/*TODO:vp_printlist*/
-		if (msg != NULL) 
-			DBG("You belong to group: %s \n", msg);
+	/* Send request */
+	if (rc_auth(SIP_PORT, send, &received, msg) == OK_RC) {
+		DBG("radius_authorize_sterman(): Success\n");
+		rc_avpair_free(send);
+		rc_avpair_free(received);
+		return 1;
+	} else {
+		DBG("radius_authorize_sterman(): Failure\n");
+		rc_avpair_free(send);
+		rc_avpair_free(received);
+		return -1;
 	}
-    else {
-		DBG("RADIUS AUTHENTICATION FAILURE \n");
-	}
-    return result;
 }
-
-

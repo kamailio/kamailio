@@ -36,14 +36,14 @@
 #include "defs.h"
 #include <string.h>
 #include "checks.h"
-#include "group.h"
 #include "../../ut.h"
 #include "../../error.h"
 #include "authorize.h"
 #include "challenge.h"
+#include "../../mem/mem.h"
 #include <radiusclient.h>
 
-#define CONFIG "etc/radiusclient.conf"
+#define RAND_SECRET_LEN 32
 
 /*
  * Module destroy function prototype
@@ -77,141 +77,118 @@ int (*sl_reply)(struct sip_msg* _msg, char* _str1, char* _str2);
 /*
  * Module parameter variables
  */
-char* db_url       = "sql://janakj:heslo@localhost/ser";
-char* user_column  = "user";
-char* realm_column = "realm";
-char* pass_column  = "ha1";
+char* radius_config = "/usr/local/etc/radiusclient/radiusclient.conf";
 
-#ifdef USER_DOMAIN_HACK
-char* pass_column_2 = "ha1b";
-#endif
-
-char* sec          = "4e9rhygt90ofw34e8hiof09tg"; /* Secret phrase used to generate nonce value */
-char* grp_table    = "grp";                       /* Table name where group definitions are stored */
-char* grp_user_col = "user";
-char* grp_grp_col  = "grp";
-int   calc_ha1     = 0;
-int   nonce_expire = 300;
-int   retry_count  = 5;
+char* sec            = 0;      /* If the parameter was not used, the secret phrase
+				* will be auto-generated
+				*/
+int   calc_ha1       = 0;
+int   nonce_expire   = 300;
+int   retry_count    = 5;
 
 str secret;
-db_con_t* db_handle;   /* Database connection handle */
 
 
 /*
  * Module interface
  */
+#ifdef STATIC_AUTH
+struct module_exports auth_exports = {
+#else
 struct module_exports exports = {
+#endif
 	"radius_auth", 
 	(char*[]) { 
 		"radius_www_authorize",
 		"radius_proxy_authorize",
-		"radius_www_challenge",
-		"radius_proxy_challenge",
-		"is_user",
-		"is_in_group",
-		"radius_is_in_group",
-		"check_to",
-		"check_from",
+		"www_challenge",
+		"proxy_challenge",
 		"consume_credentials",
-		"is_user_in"
+		"radius_does_uri_exist",
+		"radius_is_in_group"
 	},
 	(cmd_function[]) {
 		radius_www_authorize,
 		radius_proxy_authorize,
-		radius_www_challenge,
-		radius_proxy_challenge,
-		is_user,
-		is_in_group,
-		radius_is_in_group,
-		check_to,
-		check_from,
+		www_challenge,
+		proxy_challenge,
 		consume_credentials,
-		is_user_in
+		radius_does_uri_exist,
+		radius_is_in_group
 	},
-	(int[]) {2, 2, 2, 2, 1, 1, 1, 0, 0, 0, 2},
+	(int[]) {1, 1, 2, 2, 0, 0, 1},
 	(fixup_function[]) {
-		str_fixup, str_fixup, 
+		str_fixup, str_fixup,
 		challenge_fixup, challenge_fixup, 
-		str_fixup, str_fixup, 0, 0,
-		0, hf_fixup
+		0, 0, str_fixup
 	},
-	11,
-	
+	7,
 	(char*[]) {
-		"db_url",              /* Database URL */
-		"user_column",         /* User column name */
-		"realm_column",        /* Realm column name */
-		"password_column",     /* HA1/password column name */
-#ifdef USER_DOMAIN_HACK
-		"password_column_2",
-#endif
-
+		"radius_config",       /* Radius client config file */
 		"secret",              /* Secret phrase used to generate nonce */
-		"group_table",         /* Group table name */
-		"group_user_column",   /* Group table user column name */
-		"group_group_column",  /* Group table group column name */
-		"calculate_ha1",       /* If set to yes, instead of ha1 value auth module will
-                                        * fetch plaintext password from database and calculate
-                                        * ha1 value itself */
 		"nonce_expire",        /* After how many seconds nonce expires */
 		"retry_count"          /* How many times a client is allowed to retry */
-		
-		
 	},   /* Module parameter names */
 	(modparam_t[]) {
 		STR_PARAM,
 		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-#ifdef USER_DOMAIN_HACK
-		STR_PARAM,
-#endif
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
 	        INT_PARAM,
-		INT_PARAM,
 		INT_PARAM
 	},   /* Module parameter types */
 	(void*[]) {
-		&db_url,
-		&user_column,
-		&realm_column,
-		&pass_column,
-#ifdef USER_DOMAIN_HACK
-		&pass_column_2,
-#endif
+		&radius_config,
 		&sec,
-		&grp_table,
-		&grp_user_col,
-		&grp_grp_col,
-		&calc_ha1,
 		&nonce_expire,
 		&retry_count
-		
 	},   /* Module parameter variable pointers */
-#ifdef USER_DOMAIN_HACK
-	12,      /* Numberof module parameters */
-#else
-	11,      /* Number of module paramers */
-#endif					     
+	4,   /* Number of module paramers */
 	mod_init,   /* module initialization function */
 	NULL,       /* response function */
-	NULL,    /* destroy function */
+	destroy,    /* destroy function */
 	NULL,       /* oncancel function */
-	NULL		/* Child Init */
+	child_init  /* child initialization function */
 };
 
 
+static int child_init(int rank)
+{
+	return 0;
+}
+
+
+/*
+ * Secret parameter was not used so we generate
+ * a random value here
+ */
+static inline int generate_random_secret(void)
+{
+	int i;
+
+	sec = (char*)pkg_malloc(RAND_SECRET_LEN);
+	if (!sec) {
+		LOG(L_ERR, "generate_random_secret(): No memory left\n");		
+		return -1;
+	}
+
+	srandom(time(0));
+
+	for(i = 0; i < RAND_SECRET_LEN; i++) {
+		sec[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+	}
+
+	secret.s = sec;
+	secret.len = RAND_SECRET_LEN;
+
+	     /*	DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
+
+	return 0;
+}
 
 
 static int mod_init(void)
 {
 	printf("auth module - initializing\n");
 
-    
 	sl_reply = find_export("sl_send_reply", 2);
 
 	if (!sl_reply) {
@@ -219,22 +196,37 @@ static int mod_init(void)
 		return -2;
 	}
 
-	     /* Precalculate secret string length */
-	secret.s = sec;
-	secret.len = strlen(secret.s);
-
-	if (rc_read_config(CONFIG) != 0) {
-    	DBG("radius_authorize(): Error opening configuration file \n");
-        return(-1);
-    }
+	/* If the parameter was not used */
+	if (sec == 0) {
+		/* Generate secret using random generator */
+		if (generate_random_secret() < 0) {
+			LOG(L_ERR, "mod_init(): Error while generating random secret\n");
+			return -3;
+		}
+	} else {
+		/* Otherwise use the parameter's value */
+		secret.s = sec;
+		secret.len = strlen(secret.s);
+	}
+	
+	if (rc_read_config(radius_config) != 0) {
+		DBG("radius_authorize(): Error opening configuration file \n");
+		return(-1);
+	}
     
 	if (rc_read_dictionary(rc_conf_str("dictionary")) != 0) {
-    	DBG("Error opening dictionary file \n");
-        return(-1);
-    }
-
+		DBG("Error opening dictionary file \n");
+		return(-1);
+	}
 	return 0;
 }
+
+
+static void destroy(void)
+{
+	return;
+}
+
 
 static int challenge_fixup(void** param, int param_no)
 {
@@ -268,7 +260,7 @@ static int str_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		s = (str*)malloc(sizeof(str));
 		if (!s) {
-			LOG(L_ERR, "authorize_fixup(): No memory left\n");
+			LOG(L_ERR, "radius_auth: str_fixup(): No memory left\n");
 			return E_UNSPEC;
 		}
 

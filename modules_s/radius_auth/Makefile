@@ -7,7 +7,6 @@
 
 auto_gen=
 NAME=radius_auth.so
-DEFS += -I$(LOCALBASE)/include
-LIBS=-L$(LOCALBASE)/lib -lradiusclient
+LIBS=-L/usr/local/lib -lradiusclient
 
 include ../../Makefile.modules
