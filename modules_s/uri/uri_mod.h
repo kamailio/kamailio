@@ -54,6 +54,8 @@ extern char* subscriber_table;          /* Name of subscriber table */
 extern char* subscriber_user_column;    /* Name of user column in subscriber table */
 extern char* subscriber_domain_column;  /* Name of domain column in subscriber table */
 
+extern int use_uri_table ;              /* Whether or not should be uri table used */
+
 extern db_con_t* db_handle;   /* Database connection handle */
 
 #endif /* URI_MOD_H */

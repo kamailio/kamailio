@@ -145,7 +145,7 @@ static inline int check_username(struct sip_msg* _m, str* _uri)
 #endif
 
 	if (puri.user.len == len) {
-		if (!memcmp(puri.user.s, c->digest.username.s, len)) {
+		if (!strncasecmp(puri.user.s, c->digest.username.s, len)) {
 			DBG("check_username(): Username is same\n");
 			return 1;
 		}
@@ -197,14 +197,21 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -1;
 	}
 
-	if (db_use_table(db_handle, subscriber_table) < 0) {
-		LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
+	if (use_uri_table) {
+		if (db_use_table(db_handle, uri_table) < 0) {
+			LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
+		}
+		keys[0] = uri_domain_column;
+		keys[1] = uri_uriuser_column;
+		cols[0] = uri_uriuser_column;
+	} else {
+		if (db_use_table(db_handle, subscriber_table) < 0) {
+			LOG(L_ERR, "does_uri_exist(): Error while trying to use subscriber table\n");
+		}
+		keys[0] = subscriber_domain_column;
+		keys[1] = subscriber_user_column;
+		cols[0] = subscriber_user_column;
 	}
-	
-	keys[0] = subscriber_domain_column;
-	keys[1] = subscriber_user_column;
-	
-	cols[0] = subscriber_user_column;
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
@@ -216,32 +223,13 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		return -1;
 	}
 	
-	if (RES_ROW_N(res) != 0) goto found;
-
-	db_free_query(db_handle, res);
-
-	if (db_use_table(db_handle, uri_table) < 0) {
-		LOG(L_ERR, "does_uri_exist(): Error while trying to use uri table\n");
-	}
-
-	keys[0] = uri_domain_column;
-	keys[1] = uri_uriuser_column;
-	cols[0] = uri_uriuser_column;
-
-	if (db_query(db_handle, keys, 0, vals, cols, 2, 1, 0, &res) < 0) {
-		LOG(L_ERR, "does_uri_existl(): Error while querying database\n");
+	if (RES_ROW_N(res) == 0) {
+		DBG("does_uri_exit(): User in request uri does not exist\n");
+		db_free_query(db_handle, res);
 		return -1;
+	} else {
+		DBG("does_uri_exit(): User in request uri does exist\n");
+		db_free_query(db_handle, res);
+		return 1;
 	}
-
-	if (RES_ROW_N(res) == 0) goto notfound;
-
- found:
-	DBG("does _uri_exit(): User in request uri does exist\n");
-	db_free_query(db_handle, res);
-	return 1;
-
- notfound:
-	DBG("does _uri_exit(): User in request uri does not exist\n");
-	db_free_query(db_handle, res);
-	return -1;
 }
