@@ -914,10 +914,13 @@ static int write_to_unixsock(char* sockname, int cnt)
 		LOG(L_ERR, "write_to_unixsock: Socket name too long\n");
 		return -1;
 	}
-	
+
 	memset(&dest, 0, sizeof(dest));
 	dest.sun_family = PF_LOCAL;
 	memcpy(dest.sun_path, sockname, len);
+#ifdef HAVE_SOCKADDR_SA_LEN
+	dest.sun_len = len;
+#endif
 	
 	if (connect(sock, (struct sockaddr*)&dest, SUN_LEN(&dest)) == -1) {
 		LOG(L_ERR, "write_to_unixsock: Error in connect: %s\n", strerror(errno));
