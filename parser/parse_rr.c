@@ -78,8 +78,8 @@ int parse_rr(struct hdr_field* _h)
 		}
 		
 		     /* Shift just behind the closing > */
-		s.s = r->nameaddr.uri.s + r->nameaddr.uri.len + 1; /* Point just behind > */
-		s.len -= r->nameaddr.name.len + r->nameaddr.uri.len + 2;
+		s.s = r->nameaddr.name.s + r->nameaddr.len;  /* Point just behind > */
+		s.len -= r->nameaddr.len;
 
 		     /* Nothing left, finish */
 		if (s.len == 0) goto ok;
