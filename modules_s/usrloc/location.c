@@ -37,29 +37,16 @@ static inline int get_CallID(struct sip_msg* _msg, char** _callid);
  */
 static inline int get_expires(struct sip_msg* _msg)
 {
-	struct hdr_field* ptr;
 	int expires;
 
-
-	     /* Find the first Expires HF */
-	ptr = _msg->headers;
-	while(ptr) {
-		if (ptr->type == HDR_OTHER) {
-			if (!strcasecmp(ptr->name.s, "expires")) {
-				     /* Convert string value to an integer */
-				expires = atoi(ptr->body.s);
-				     /* If the value is 0, we are probably dealing
-				      * with a STAR contact, otherwise convert the
-				      * value to absolute time
-				      */
-				if (expires != 0) expires += time(NULL);
-				return expires;
-			}
-		}
-		ptr = ptr->next;
+	if (_msg->expires) {
+		expires = atoi(_msg->expires->body.s);
+		if (expires != 0) expires += time(NULL);
+		return expires;
+	} else {
+		     /* No Expires HF found, use default value */
+		return time(NULL) + DEFAULT_EXPIRES;
 	}
-	     /* No Expires HF found, use default value */
-	return time(NULL) + DEFAULT_EXPIRES;
 }
 
 
