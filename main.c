@@ -237,6 +237,7 @@ Options:\n\
     -u uid       Change uid \n\
     -g gid       Change gid \n\
     -P file      Create a pid file\n\
+    -G file      Create a pgid file\n\
     -i fifo_path Create a fifo (usefull for monitoring " NAME ") \n\
     -x socket    Create a unix domain socket \n"
 #ifdef STATS
@@ -405,7 +406,7 @@ extern int yyparse();
 int is_main=1; /* flag = is this the  "main" process? */
 
 char* pid_file = 0; /* filename as asked by use */
-
+char* pgid_file = 0;
 
 
 /* callit before exiting; if show_status==1, mem status is displayed */
@@ -440,6 +441,7 @@ void cleanup(show_status)
 	shm_mem_destroy();
 #endif
 	if (pid_file) unlink(pid_file);
+	if (pgid_file) unlink(pgid_file);
 }
 
 
@@ -1125,7 +1127,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:x:";
+	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:G:i:x:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1248,6 +1250,9 @@ int main(int argc, char** argv)
 			case 'P':
 					pid_file=optarg;
 					break;
+		        case 'G':
+				        pgid_file=optarg;
+				        break;
 			case 'i':
 					fifo=optarg;
 					break;

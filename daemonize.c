@@ -31,7 +31,11 @@
  *  2004-02-20  removed from ser main.c into its own file (andrei)
  *  2004-03-04  moved setuid/setgid in do_suid() (andrei)
  *  2004-03-25  added increase_open_fds & set_core_dump (andrei)
+ *  2004-04-04  applied pgid patch from janakj
  */
+
+#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE_EXTENDED
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -121,6 +125,27 @@ int daemonize(char*  name)
 		if ((pid_stream=fopen(pid_file, "w"))==NULL){
 			LOG(L_WARN, "unable to create pid file %s: %s\n", 
 				pid_file, strerror(errno));
+			goto error;
+		}else{
+			fprintf(pid_stream, "%i\n", (int)pid);
+			fclose(pid_stream);
+		}
+	}
+
+	if (pgid_file!=0){
+		if ((pid_stream=fopen(pgid_file, "r"))!=NULL){
+			fscanf(pid_stream, "%d", &p);
+			fclose(pid_stream);
+			if (p==-1){
+				LOG(L_CRIT, "pgid file %s exists, but doesn't contain a valid"
+				    " pgid number\n", pgid_file);
+				goto error;
+			}
+		}
+		pid=getpgid(0);
+		if ((pid_stream=fopen(pgid_file, "w"))==NULL){
+			LOG(L_WARN, "unable to create pgid file %s: %s\n",
+			    pgid_file, strerror(errno));
 			goto error;
 		}else{
 			fprintf(pid_stream, "%i\n", (int)pid);

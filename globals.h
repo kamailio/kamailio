@@ -51,6 +51,7 @@ extern unsigned short port_no;
 extern int uid;
 extern int gid;
 char* pid_file;
+char* pgid_file;
 extern int own_pgid; /* whether or not we have our own pgid (and it's ok
 >--->--->--->--->--->--->--->--->--->--->--- to use kill(0, sig) */
 
