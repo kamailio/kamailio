@@ -257,11 +257,10 @@ void fm_status(struct fm_block* qm)
 			qm->used, qm->real_used, qm->size-qm->real_used);
 	LOG(L_INFO, " max used (+overhead)= %d\n", qm->max_real_used);
 #endif
-	
+	/*
 	LOG(L_INFO, "dumping all fragments:\n");
 	for (f=qm->first_frag, i=0;((char*)f<(char*)qm->last_frag) && (i<10);
-			f=FRAG_NEXT(f)
-			,i++){
+			f=FRAG_NEXT(f), i++){
 		LOG(L_INFO, "    %3d. %c  address=%x  size=%d\n", i, 
 				(f->u.reserved)?'a':'N',
 				(char*)f+sizeof(struct fm_frag), f->size);
@@ -270,10 +269,14 @@ void fm_status(struct fm_block* qm)
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 	}
+*/
 	LOG(L_INFO, "dumping free list:\n");
 	for(h=0,i=0;h<F_HASH_SIZE;h++){
 		
-		for (f=qm->free_hash[h],j=0; f; f=f->u.nxt_free, i++, j++){
+		for (f=qm->free_hash[h],j=0; f; f=f->u.nxt_free, i++, j++)
+			if (j) LOG(L_INFO, "hash= %3d. fragments no.: %5d\n", h, j);
+		/*
+		{
 			LOG(L_INFO, "   %5d.[%3d:%3d] %c  address=%x  size=%d(%x)\n",
 					i, h, j,
 					(f->u.reserved)?'a':'N',
@@ -283,7 +286,9 @@ void fm_status(struct fm_block* qm)
 				(f->u.reserved)?"freed":"alloc'd", f->file, f->func, f->line);
 #endif
 		}
+	*/
 	}
+	LOG(L_INFO, "	Total: %6d fragments\n", i);
 	LOG(L_INFO, "-----------------------------\n");
 }
 

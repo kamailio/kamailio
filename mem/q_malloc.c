@@ -417,7 +417,7 @@ void qm_status(struct qm_block* qm)
 		
 		for (f=qm->free_hash[h].head.u.nxt_free,j=0; 
 				f!=&(qm->free_hash[h].head); f=f->u.nxt_free, i++, j++);
-		if (j) LOG(L_INFO, "hash= %3d. fragments no.: %5d\n", h, j);
+			if (j) LOG(L_INFO, "hash= %3d. fragments no.: %5d\n", h, j);
 	}
 	LOG(L_INFO, "-----------------------------\n");
 }

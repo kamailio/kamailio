@@ -94,7 +94,7 @@ static char flags[]=
 static char help_msg[]= "\
 Usage: " NAME " -l address [-l address] [options]\n\
 Options:\n\
-    -c		 Perform loop checks and compute branches\n\
+    -c           Perform loop checks and compute branches\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -p port      Listen on the specified port (default: 5060)\n\
     -l address   Listen on the specified address (multiple -l mean\n\

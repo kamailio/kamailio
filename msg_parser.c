@@ -254,19 +254,18 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				goto error;
 			}
 			memset(to_b, 0, sizeof(struct to_body));
-			/*
 			hdr->body.s=tmp;
 			tmp=parse_to(tmp, end,to_b);
 			if (to_b->error==PARSE_ERROR){
 				LOG(L_ERR, "ERROR: get_hdr_field: bad to header\n");
 				pkg_free(to_b);
 				goto error;
-			}*/
-			hdr->parsed=to_b;/*
+			}
+			hdr->parsed=to_b;
 			hdr->body.len=tmp-hdr->body.s;
 			DBG("get_hdr_field: to <%s>: <%s>=[%d] <%c> [%d]\n",
 				hdr->name.s, to_b->body.s,to_b->body.len,*tmp,hdr->body.len);
-			break;*/
+			break;
 		case HDR_FROM:
 		case HDR_CALLID:
 		case HDR_CONTACT:
