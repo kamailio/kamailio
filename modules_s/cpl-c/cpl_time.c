@@ -394,7 +394,7 @@ int tr_parse_dtstart(tmrec_p _trp, char *_in)
 	if(!_trp || !_in)
 		return -1;
 	_trp->dtstart = ic_parse_datetime(_in, &(_trp->ts));
-	DBG("----->dtstart = %d | %s\n",_trp->dtstart,ctime(&(_trp->dtstart)));
+	DBG("----->dtstart = %ld | %s\n",_trp->dtstart,ctime(&(_trp->dtstart)));
 	return (_trp->dtstart==0)?-1:0;
 }
 
@@ -404,7 +404,7 @@ int tr_parse_dtend(tmrec_p _trp, char *_in)
 	if(!_trp || !_in)
 		return -1;
 	_trp->dtend = ic_parse_datetime(_in,&_tm);
-	DBG("----->dtend = %d | %s\n",_trp->dtend,ctime(&(_trp->dtend)));
+	DBG("----->dtend = %ld | %s\n",_trp->dtend,ctime(&(_trp->dtend)));
 	return (_trp->dtend==0)?-1:0;
 }
 
