@@ -76,7 +76,6 @@ static inline void reset_retr_timers( struct s_table *h_table,
 	int ijk;
 	struct retrans_buff *rb;
 
-	DBG("DEBUG:stop_RETR_and_FR_timers : start \n");
 	/* lock the first timer list of the FR group -- all other
 	   lists share the same lock*/
 	lock(hash_table->timers[RT_T1_TO_1].mutex);
@@ -96,7 +95,7 @@ static inline void reset_retr_timers( struct s_table *h_table,
 			}
 		}
 	unlock(hash_table->timers[FR_TIMER_LIST].mutex);
-	DBG("DEBUG:stop_RETR_and_FR_timers : stop\n");
+	DBG("DEBUG:stop_RETR_and_FR_timers : timers stopped\n");
 }
 
 int tm_startup()
@@ -376,7 +375,7 @@ int t_put_on_wait(  struct cell  *Trans  )
 	for( i=0 ; i<Trans->nr_of_outgoings ; i++ )
 		if ( Trans->inbound_response[i] && 
 		REPLY_CLASS(Trans->inbound_response[i])==1)
-		t_cancel_branch(i);
+			t_cancel_branch(i);
 
 
 	/* we don't need outbound requests anymore -- let's save
@@ -662,6 +661,7 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 		sizeof (struct sockaddr_in));
 	srb->tolen = sizeof (struct sockaddr_in);
 	srb->my_T = Trans;
+	srb->fr_timer.payload = srb->retr_timer.payload = srb;
 	srb->branch = branch;
 	srb->status = STATUS_LOCAL_CANCEL;
 	srb->retr_buffer = (char *) srb + sizeof( struct retrans_buff );
@@ -837,7 +837,7 @@ void retransmission_handler( void *attr)
 {
 	struct retrans_buff* r_buf ;
 	enum lists id;
-
+	DBG("DEBUG: entering retransmisson with attr = %x\n",attr);
 	r_buf = (struct retrans_buff*)attr;
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) {
@@ -886,18 +886,16 @@ void final_response_handler( void *attr)
 	/* the transaction is already removed from FR_LIST by the timer */
 	if (r_buf->status==STATUS_LOCAL_CANCEL)
 	{
-		DBG("DEBUG: final_response_handler: stop retransmission for"
-			"Local Cancel\n");
+		DBG("DEBUG: FR_handler: stop retransmission for Local Cancel\n");
 		reset_timer( hash_table , &(r_buf->retr_timer) );
 		return;
 	}
 	/* send a 408 */
 	if ( r_buf->my_T->status<200)
 	{
-		DBG("DEBUG: final_response_handler:stop retransmission and"
-			" send 408 (t=%p)\n", r_buf->my_T);
+		DBG("DEBUG: FR_handler:stop retr. and send CANCEL (%p)\n",r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
-		//t_build_and_send_CANCEL( r_buf->my_T ,r_buf->branch);
+		t_build_and_send_CANCEL( r_buf->my_T ,r_buf->branch);
 		/* dirty hack:t_send_reply would increase ref_count which would indeed
 		result in refcount++ which would not -- until timer processe's
 		T changes again; currently only on next call to t_send_reply from
@@ -905,7 +903,7 @@ void final_response_handler( void *attr)
 		and refcount++ JKU */
 		T=r_buf->my_T;
 		global_msg_id=T->inbound_request->id;
-
+		DBG("DEBUG: FR_handler: send 408 (%p)\n", r_buf->my_T);
 		t_send_reply( r_buf->my_T->inbound_request,408,"Request Timeout" );
 	}else{
 		/* put it on WT_LIST - transaction is over */

@@ -173,7 +173,7 @@ int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 
 
 /* Force a new response into inbound response buffer.
-  * returns 1 if everything was OK or -1 for erro
+  * returns 1 if everything was OK or -1 for error
   */
 int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 {
@@ -181,7 +181,8 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
 	char * buf, *shbuf;
 	struct retrans_buff *rb;
 
-	buf = build_res_buf_from_sip_req(code,text,0,0,T->inbound_request,&len);
+	buf = build_res_buf_from_sip_req(code,text,T->tag->s,T->tag->len,
+		T->inbound_request,&len);
 	DBG("DEBUG: t_send_reply: buffer computed\n");
 	if (!buf)
 	{
@@ -422,7 +423,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	unsigned int local_cancel;
 	struct sip_msg *clone, *backup;
 	int relay;
-	int start_fr;
+	int start_fr = 0;
 	int is_invite;
 	/* retransmission structure of outbound reply and request */
 	struct retrans_buff *orq_rb, *orp_rb, *ack_rb;
@@ -434,7 +435,8 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 
 	/* make sure we know the assosociated tranaction ... */
-	if (t_check( p_msg  , &branch , &local_cancel)==-1) return 1;
+	if (t_check( p_msg  , &branch , &local_cancel)==-1)
+		return 1;
 	/* ... if there is no such, tell the core router to forward statelessly */
 	if ( T<=0 ) return 1;
 
@@ -443,23 +445,30 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	backup = 0;
 
-	DBG("DEBUG: t_on_reply_received: Original status=%d (%d,%d)\n",
+	DBG("DEBUG: t_on_reply: Original status=%d (%d,%d)\n",
 		T->status,branch,local_cancel);
 
 	/* special cases (local cancel reply and another 100 reply!)*/
 	if (p_msg->REPLY_STATUS==100 && T->status==100)
-		return 0;
+		goto error;
 	if (local_cancel==1)
 	{
 		reset_timer( hash_table, &(T->outbound_cancel[branch]->retr_timer));
 		if ( p_msg->REPLY_STATUS>=200 )
 			reset_timer( hash_table, &(T->outbound_cancel[branch]->fr_timer));
-		return 0;
+		goto error;
 	}
 
-	/* it can take quite long -- better do it now than later 
-	   inside a reply_lock */
-													/* CLONE alloc'ed */
+	/* do we have via2 ? - maybe we'll need it for forwarding -bogdan*/
+	if ((p_msg->via2==0) || (p_msg->via2->error!=VIA_PARSE_OK)){
+		/* no second via => error */
+		LOG(L_ERR, "ERROR: t_on_reply: no 2nd via found in reply\n");
+		goto error2;
+	}
+
+	/* it can take quite long - better do it now than later
+	inside a reply_lock */
+	/* CLONE alloc'ed */
 	if (!(clone=sip_msg_cloner( p_msg ))) {
 		goto error;
 	}
@@ -472,10 +481,10 @@ int t_on_reply( struct sip_msg  *p_msg )
 	sometimes it will result in useless CPU cycles
 	but mostly the assumption holds and allows the
 	work to be done out of criticial lock region */
-	if (msg_status==100) buf=0;
+	if (msg_status==100)
+		buf=0;
 	else {
-												/* buf maybe allo'ed*/
-
+		/* buf maybe allo'ed*/
 		buf = build_res_buf_from_sip_res ( p_msg, &orp_len);
 		if (!buf) {
 			LOG(L_ERR, "ERROR: t_on_reply_received: "
@@ -487,15 +496,13 @@ int t_on_reply( struct sip_msg  *p_msg )
 	/* *** stop timers *** */
 	orq_rb=T->outbound_request[branch];
 	/* stop retransmission */
-												/* timers reset */
-
 	reset_timer( hash_table, &(orq_rb->retr_timer));
 	/* stop final response timer only if I got a final response */
 	if ( msg_class>1 )
 		reset_timer( hash_table, &(orq_rb->fr_timer));
 
 	LOCK_REPLIES( T );
-   	/* if a got the first prov. response for an INVITE ->
+	/* if a got the first prov. response for an INVITE ->
 	   change FR_TIME_OUT to INV_FR_TIME_UT */
 	start_fr = !T->inbound_response[branch] && msg_class==1 && is_invite;
 
@@ -508,14 +515,14 @@ int t_on_reply( struct sip_msg  *p_msg )
 		if ( ! orp_rb->retr_buffer ) {
 			/*init retrans buffer*/
 			memset( orp_rb , 0 , sizeof (struct retrans_buff) );
-			if (update_sock_struct_from_via(  &(orp_rb->to), p_msg->via2 )==-1) {
-					UNLOCK_REPLIES( T );
-					start_fr = 1;
-					LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
-						"cannot lookup reply dst: %s\n",
-						p_msg->via2->host.s );
-					save_clone = 0;
-					goto error2;
+			if (update_sock_struct_from_via( &(orp_rb->to),p_msg->via2 )==-1) {
+				UNLOCK_REPLIES( T );
+				start_fr = 1;
+				LOG(L_ERR, "ERROR: push_reply_from_uac_to_uas: "
+					"cannot lookup reply dst: %s\n",
+				p_msg->via2->host.s );
+				save_clone = 0;
+				goto error2;
 			}
 			orp_rb->retr_timer.tg=TG_RT;
 			orp_rb->fr_timer.tg=TG_FR;
@@ -530,9 +537,10 @@ int t_on_reply( struct sip_msg  *p_msg )
 			alloc_len = orp_len + REPLY_OVERBUFFER_LEN ;
 		} else {
 			alloc_len = orp_len;
-		};
+		}
 
-		if (! (orp_rb->retr_buffer = (char *) shm_resize( orp_rb->retr_buffer, alloc_len ))) {
+		if (! (orp_rb->retr_buffer = (char *)
+		shm_resize( orp_rb->retr_buffer, alloc_len ))) {
 			UNLOCK_REPLIES( T );
 			start_fr = 1;
 			save_clone = 0;
@@ -570,29 +578,30 @@ cleanup:
 	}
 
 	/* *** ACK handling *** */
-	if ( is_invite )
-	{
+	if ( is_invite ) {
 		if ( T->outbound_ack[branch] )
 		{   /*retransmit*/
 			/* I don't need any additional syncing here -- after ack
 			   is introduced it's never changed */
 			SEND_BUFFER( T->outbound_ack[branch] );
-		} else if (msg_class>2 ) {   /*on a non-200 reply to INVITE*/
-           		DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE: send ACK\n");
-				ack_rb = build_ack( p_msg, T, branch );
-				if (ack_rb) {
-					SEND_BUFFER( ack_rb );
-					/* append to transaction structure */
-					attach_ack( T, branch, ack_rb );
-				} else {
-					/* restart FR */
-					start_fr=1;
-					DBG("ERROR: t_on_reply: build_ack failed\n");
-				}
+		} else if (msg_class>2 ) {
+			/*on a non-200 reply to INVITE*/
+			DBG("DEBUG: t_on_reply_received: >=3xx reply to INVITE:"
+				"send ACK\n");
+			ack_rb = build_ack( p_msg, T, branch );
+			if (ack_rb) {
+				SEND_BUFFER( ack_rb );
+				/* append to transaction structure */
+				attach_ack( T, branch, ack_rb );
+			} else {
+				/* restart FR */
+				start_fr=1;
+				DBG("ERROR: t_on_reply: build_ack failed\n");
+			}
 		}
 	} /* is_invite */
 
-   	/* restart retransmission if a provisional response came for 
+	/* restart retransmission if a provisional response came for 
 	   a non_INVITE -> retrasmit at RT_T2*/
 	if ( msg_class==1 && !is_invite )
 	{
@@ -601,7 +610,8 @@ cleanup:
 	}
 	if (backup) sip_msg_free( backup );
 error2:
-	if (start_fr) set_timer( hash_table, &(orq_rb->fr_timer), FR_INV_TIMER_LIST );
+	if (start_fr) 
+		set_timer( hash_table, &(orq_rb->fr_timer), FR_INV_TIMER_LIST );
 	if (buf) free( buf );
 error1:
 	if (!save_clone) sip_msg_free( clone );

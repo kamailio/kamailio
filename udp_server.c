@@ -223,30 +223,27 @@ int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 	c=inet_ntoa(a->sin_addr);
 	strncpy( ip_txt, c, MAX_IP_LENGTH - 1 );
 	p=ntohs(a->sin_port);
-	DBG("DEBUG: udp_send: ");
 
 	if (tolen < sizeof(struct sockaddr_in))
-		DBG("DEBUG: tolen small\n");
+		DBG("DEBUG: udp_send: tolen small\n");
 	if (a->sin_family && a->sin_family != AF_INET)
-		DBG("DEBUG: to not INET\n");
+		DBG("DEBUG: udp_send: to not INET\n");
 	if (a->sin_port == 0)
-		DBG("DEBUG: no port\n");
+		DBG("DEBUG: udp_send: no port\n");
 
 #ifdef EXTRA_DEBUG
-	if ( tolen < sizeof(struct sockaddr_in) || a->sin_family && a->sin_family != AF_INET
-		|| a->sin_port == 0 )
+	if ( tolen < sizeof(struct sockaddr_in) ||
+	a->sin_family && a->sin_family != AF_INET || a->sin_port == 0 )
 		abort();
 	/* every message must be terminated by CRLF */
 	if (memcmp(buf+len-CRLF_LEN, CRLF, CRLF_LEN)!=0) {
-		LOG(L_CRIT, "ERROR: this is ugly -- we are sending a packet not terminated by CRLF\n");
+		LOG(L_CRIT, "ERROR: this is ugly -- we are sending a packet"
+			" not terminated by CRLF\n");
 		abort();
 	}
 #endif
 
-	DBG(" destination: IP=%s, port=%u; packet:\n", ip_txt, p);
-	DBG(" destination (hex): IP=%x, port=%x;\n", a->sin_addr.s_addr, a->sin_port );
-	/* DBG(" packet: {%.*s...}\n", 24, buf ); */
-	/* DBG("%.*s\n", len, buf ); */
+	DBG("DEBUG: udp_send destination: IP=%s, port=%u;\n", ip_txt, p);
 #endif
 /*
 	memset(&a2, 0, sizeof(struct sockaddr_in));

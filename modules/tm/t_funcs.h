@@ -106,8 +106,8 @@ extern struct s_table*  hash_table;
 	( { \
 		DBG_REF("ref", (_T_cell));	 \
 		if (T_IS_REFED_BYSELF(_T_cell)) { \
-			DBG("ERROR: refering already refered transaction %p from %s , %s : %d\n", \
-				(_T_cell), __FUNCTION__, __FILE__, __LINE__ ); \
+			DBG("ERROR: refering already refered transaction %p from %s,%s :"\
+				" %d\n",(_T_cell), __FUNCTION__, __FILE__, __LINE__ ); \
 			abort(); \
 		} \
 		(_T_cell)->ref_bitmap |= process_bit; \

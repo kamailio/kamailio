@@ -153,6 +153,14 @@ int forward_reply(struct sip_msg* msg)
 		}
 	}
 	
+	/* we have to forward the reply stateless, so we need second via -bogdan*/
+	if ((msg->via2==0) || (msg->via2->error!=VIA_PARSE_OK))
+	{
+		/* no second via => error */
+		LOG(L_ERR, "ERROR: forward_msg: no 2nd via found in reply\n");
+		goto error;
+	}
+
 	to=(struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
@@ -165,15 +173,6 @@ int forward_reply(struct sip_msg* msg)
 		goto error;
 	}
 
-	 /* send it! */
-	/* moved to udp_send; -jiri
-
-	DBG("Sending: to %s:%d, \n%s.\n",
-			msg->via2->host.s,
-			(unsigned short)msg->via2->port,
-			new_buf);
-	*/
-
 	if (update_sock_struct_from_via( to, msg->via2 )==-1) goto error;
 
 	if (udp_send(new_buf,new_len, (struct sockaddr*) to,
@@ -181,13 +180,16 @@ int forward_reply(struct sip_msg* msg)
 	{
 		STATS_TX_DROPS;
 		goto error;
-	}
-	else {
+	} else {
 #ifdef STATS
 		int j = msg->first_line.u.reply.statuscode/100;
 		STATS_TX_RESPONSE(  j );
 #endif
 	}
+
+	DBG(" reply forwarded to %s:%d\n",msg->via2->host.s,
+		(unsigned short) msg->via2->port);
+
 	free(new_buf);
 	free(to);
 skip:

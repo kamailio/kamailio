@@ -340,8 +340,6 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	register char* p;
 	register int val;
 
-	DBG("DEBUG: parse_hname2 entered\n");
-
 	p = begin;
 	val = READ(p);
 	hdr->name.s = begin;
@@ -355,10 +353,10 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	case Via1: Via1_CASE;
 	case From: From_CASE;
 	case To12: To12_CASE;
-	case CSeq: CSeq_CASE;                                                             
+	case CSeq: CSeq_CASE;
 	case Call: Call_CASE;
-        case Cont: Cont_CASE;
-	case Rout: Rout_CASE;                                                             
+	case Cont: Cont_CASE;
+	case Rout: Rout_CASE;
 	case Max_: Max_CASE;
 	case Reco: Reco_CASE;
         case Via2: Via2_CASE;

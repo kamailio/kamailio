@@ -57,7 +57,6 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	}
 	DBG("After parse_msg...\n");
 	if (msg->first_line.type==SIP_REQUEST){
-		DBG("msg= request\n");
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=VIA_PARSE_OK)){
 			/* no via, send back error ? */
@@ -68,7 +67,8 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 
 		/* loop checks */
 		if (loop_checks) {
-			DBG("WARNING: receive_msg: Placeholder for loop check. NOT implemented yet.\n");
+			DBG("WARNING: receive_msg: Placeholder for loop check."
+				" NOT implemented yet.\n");
 		}
 		
 		/* exec routing script */
@@ -90,18 +90,18 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		STATS_RX_REQUEST( msg->first_line.u.request.method_value );
 #endif
 	}else if (msg->first_line.type==SIP_REPLY){
-		DBG("msg= reply\n");
 		/* sanity checks */
 		if ((msg->via1==0) || (msg->via1->error!=VIA_PARSE_OK)){
 			/* no via, send back error ? */
 			LOG(L_ERR, "ERROR: receive_msg: no via found in reply\n");
 			goto error;
 		}
+		/*
 		if ((msg->via2==0) || (msg->via2->error!=VIA_PARSE_OK)){
-			/* no second via => error? */
+			/* no second via => error? /
 			LOG(L_ERR, "ERROR: receive_msg: no 2nd via found in reply\n");
 			goto error;
-		}
+		}*/
 		/* check if via1 == us */
 
 #ifdef STATS
@@ -110,11 +110,8 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 #endif
 		
 		/* send the msg */
-		if (forward_reply(msg)==0){
-			DBG(" reply forwarded to %s:%d\n", 
-						msg->via2->host.s,
-						(unsigned short) msg->via2->port);
-		}
+		forward_reply(msg);
+
 #ifdef STATS
 		gettimeofday( & tve, &tz );
 		diff = (tve.tv_sec-tvb.tv_sec)*1000000+(tve.tv_usec-tvb.tv_usec);

@@ -263,8 +263,8 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 			}
 			hdr->parsed=to_b;
 			hdr->body.len=tmp-hdr->body.s;
-			DBG("get_hdr_field: to <%s>: <%s>=[%d] <%c> [%d]\n",
-				hdr->name.s, to_b->body.s,to_b->body.len,*tmp,hdr->body.len);
+			DBG("get_hdr_field: <%s> [%d]; <%s>.len = %d \n",
+				hdr->name.s, hdr->body.len, to_b->body.s,to_b->body.len);
 			break;
 		case HDR_FROM:
 		case HDR_CALLID:
@@ -353,7 +353,6 @@ char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
 	m_end=eat_token_end(m, end);
 	*t=0; /*null terminate it*/
 	cb->number.len=t-cb->number.s;
-	DBG("parse_cseq: found number %s\n", cb->number.s);
 
 	if (m_end>=end) goto error;
 	if (m_end==m){
@@ -366,7 +365,6 @@ char * parse_cseq(char *buf, char* end, struct cseq_body* cb)
 	c=*t;
 	*t=0; /*null terminate it*/
 	cb->method.len=t-cb->method.s;
-	DBG("parse_cseq: found method %s\n", cb->method.s);
 	t++;
 	/*check if the header ends here*/
 	if (c=='\n') goto check_continue;
@@ -714,7 +712,7 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 			DBG(" version: <%s>\n",fl->u.reply.version.s);
 			DBG(" status:  <%s>\n",fl->u.reply.status.s);
 			DBG(" reason:  <%s>\n",fl->u.reply.reason.s);
-			flags=HDR_VIA|HDR_VIA2;
+			flags=HDR_VIA | HDR_VIA2;
 			break;
 		default:
 			DBG("unknown type %d\n",fl->type);

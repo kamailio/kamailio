@@ -169,8 +169,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 found:
 	T=p_cell;
 	T_REF( T );
-	DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_lookup_request: "
-		"transaction found ( T=%p , ref=%x)\n",T,T->ref_bitmap);
+	DBG("DEBUG: t_lookup_request: transaction found (T=%p , ref=%x)\n",
+		T,T->ref_bitmap);
 	unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
 	return 1;
 }
@@ -326,7 +326,7 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch ,
 		&& ((get_cseq(p_msg)->method.s[0] ==
 		get_cseq(p_cell->inbound_request)->method.s[0] && (*local_cancel=0)==0)
 		|| (get_cseq(p_cell->inbound_request)->method.s[0]=='I' &&
-		get_cseq(p_msg)->method.s[0]=='C' 
+		get_cseq(p_msg)->method.s[0]=='C'
 		&& p_cell->outbound_cancel[branch_id]!=NO_CANCEL
 		&& p_cell->outbound_cancel[branch_id]!=EXTERNAL_CANCEL
 		&& (*local_cancel=1)==1))
@@ -345,8 +345,8 @@ int t_reply_matching( struct sip_msg *p_msg , unsigned int *p_branch ,
 				*p_branch = branch_id;
 				T_REF( T );
 				unlock(&(hash_table->entrys[hash_index].mutex));
-				DBG("DEBUG:XXXXXXXXXXXXXXXXXXXXX t_reply_matching:"
-					" reply matched (T=%p,ref=%x)!\n",T,T->ref_bitmap);
+				DBG("DEBUG: t_reply_matching: reply matched (T=%p,ref=%x)!\n",
+					T,T->ref_bitmap);
 				return 1;
 			}
 		/* next cell */
@@ -378,7 +378,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch, int *param_cancel)
 	int local_cancel;
 
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T on entrance=%p\n", 
+	DBG("DEBUG: t_check: msg id=%d global id=%d T start=%p\n", 
 		p_msg->id,global_msg_id,T);
 	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
 	{
@@ -391,8 +391,8 @@ int t_check( struct sip_msg* p_msg , int *param_branch, int *param_cancel)
 				return -1;
 			t_lookup_request( p_msg , 0 /* unlock before returning */ );
 		} else {
-			if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1
-			|| !p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
+			if ( parse_headers(p_msg, HDR_VIA1|HDR_TO|HDR_CSEQ )==-1
+			|| !p_msg->via1 || !p_msg->to || !p_msg->cseq )
 				return -1;
 			t_reply_matching( p_msg ,
 				((param_branch!=0)?(param_branch):(&local_branch)),
@@ -406,7 +406,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch, int *param_cancel)
 			abort();
 		}
 #endif
-		DBG("DEBUG: t_check : msg id=%d , global msg id=%d , T on finish=%p\n",
+		DBG("DEBUG: t_check: msg id=%d global id=%d T end=%p\n",
 			p_msg->id,global_msg_id,T);
 	} else {
 		if (T)
@@ -452,6 +452,9 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 
 }
 
+
+
+
 /* atomic "add_if_new" construct; it returns:
 	AIN_ERROR	if a fatal error (e.g, parsing) occured
 	AIN_RETR	it's a retransmission
@@ -466,8 +469,8 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 	struct cell *new_cell;
 
 	/* is T still up-to-date ? */
-	DBG("DEBUG: t_check_new_request: msg id=%d , global msg id=%d , T on entrance=%p\n", 
-		p_msg->id,global_msg_id,T);
+	DBG("DEBUG: t_check_new_request: msg id=%d , global msg id=%d ,"
+		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
 	if ( p_msg->id != global_msg_id || T==T_UNDEFINED )
 	{
 		global_msg_id = p_msg->id;
@@ -484,12 +487,12 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 				ret=AIN_NEWACK;
 			} else {
 				/* add new transaction */
- 				new_cell = build_cell( p_msg ) ;
-   				if  ( !new_cell ){
-       					LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
+				new_cell = build_cell( p_msg ) ;
+				if  ( !new_cell ){
+					LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
 					ret = AIN_ERROR;
-    				} else {
- 					insert_into_hash_table_unsafe( hash_table , new_cell );
+				} else {
+					insert_into_hash_table_unsafe( hash_table , new_cell );
 					ret = AIN_NEW;
 					T=new_cell;
 					T_REF(T);
@@ -510,7 +513,6 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 			"processing this message, T not found!\n");
 		return AIN_ERROR;
 	}
-
 }
 
 
