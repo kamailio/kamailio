@@ -6,14 +6,15 @@
 # --------
 #              created by andrei
 #  2003-02-24  added LOCALBASE, fixed doc-dir for freebsd - patch provided
-#              by Maxim Sobolev <sobomax@FreeBSD.org>
+#               by Maxim Sobolev <sobomax@FreeBSD.org>
+#  2003-02-25  added -DDISABLE_NAGLE
 
 
 #version number
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   11
-EXTRAVERSION = pre6-tcp8-tm
+EXTRAVERSION = pre6-tcp9-tm
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -152,6 +153,8 @@ YACC := $(shell echo "$${YACC}")
 # -DUSE_TCP
 #		compiles in tcp support (highly experimental for now, it will probably
 #		not work, use it only if you really now what you are doing)
+# -DDISABLE_NAGLE
+#		disable the tcp Nagle algorithm (lower delay)
 # -DVOICE_MAIL
 #               enables voicemail support in ser core and in tm module
 #               voicemail needs also -D_TOTAG
@@ -167,6 +170,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DVOICE_MAIL \
 	 -D_TOTAG \
 	 -DUSE_TCP \
+	 -DDISABLE_NAGLE \
+	 -DDBG_QM_MALLOC \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DNO_LOG

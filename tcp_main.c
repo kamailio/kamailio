@@ -24,6 +24,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2002-11-29  created by andrei
+ *  2002-12-11  added tcp_send (andrei)
+ *  2003-01-20  locking fixes, hashtables (andrei)
+ *  2003-02-20  s/lock_t/gen_lock_t/ to avoid a conflict on solaris (andrei)
+ *  2003-02-25  Nagle is disabled if -DDISABLE_NAGLE (andrei)
+ */
 
 
 #ifdef USE_TCP
@@ -38,7 +47,9 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <sys/uio.h>  /* writev*/
+#include <netdb.h>
 
 #include <unistd.h>
 
@@ -88,6 +99,7 @@ static int connection_id=1; /*  unique for each connection, used for
 								for a reply */
 int unix_tcp_sock;
 
+int tcp_proto_no=-1; /* tcp protocol number as returned by getprotobyname */
 
 
 struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
@@ -136,6 +148,9 @@ error:
 struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 {
 	int s;
+#ifdef DISABLE_NAGLE
+	int flag;
+#endif
 
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if (s<0){
@@ -143,6 +158,15 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server)
 				errno, strerror(errno));
 		goto error;
 	}
+#ifdef DISABLE_NAGLE
+	flag=1;
+	if ( (tcp_proto_no!=-1) && 
+		  (setsockopt(sock_info->socket, tcp_proto_no , TCP_NODELAY,
+					&flag, sizeof(flag))<0) ){
+		LOG(L_ERR, "ERROR: tcp_connect: could not disable Nagle: %s\n",
+				strerror(errno));
+	}
+#endif
 	if (connect(s, &server->s, sockaddru_len(*server))<0){
 		LOG(L_ERR, "ERROR: tcpconn_connect: connect: (%d) %s\n",
 				errno, strerror(errno));
@@ -417,6 +441,18 @@ void tcpconn_timeout(fd_set* set)
 int tcp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
+#ifdef DISABLE_NAGLE
+	int flag;
+	struct protoent* pe;
+	
+	pe=getprotobyname("tcp");
+	if (pe==0){
+		LOG(L_ERR, "ERROR: tcp_init: could not get TCP protocol number\n");
+		tcp_proto_no=-1;
+	}else{
+		tcp_proto_no=pe->p_proto;
+	}
+#endif
 	
 	addr=&sock_info->su;
 	sock_info->proto=PROTO_TCP;
@@ -429,6 +465,15 @@ int tcp_init(struct socket_info* sock_info)
 		LOG(L_ERR, "ERROR: tcp_init: socket: %s\n", strerror(errno));
 		goto error;
 	}
+#ifdef DISABLE_NAGLE
+	flag=1;
+	if ( (tcp_proto_no!=-1) &&
+		 (setsockopt(sock_info->socket, tcp_proto_no , TCP_NODELAY,
+					 &flag, sizeof(flag))<0) ){
+		LOG(L_ERR, "ERROR: tcp_init: could not disable Nagle: %s\n",
+				strerror(errno));
+	}
+#endif
 	if (bind(sock_info->socket, &addr->s, sockaddru_len(*addr))==-1){
 		LOG(L_ERR, "ERROR: tcp_init: bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 

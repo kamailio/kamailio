@@ -106,6 +106,9 @@ static char flags[]=
 #ifdef USE_TCP
 ", USE_TCP"
 #endif
+#ifdef DISABLE_NAGLE
+", DISABLE_NAGLE"
+#endif
 #ifdef NO_DEBUG
 ", NO_DEBUG"
 #endif
