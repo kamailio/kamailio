@@ -16,7 +16,7 @@ BugId: n/a
 Ser version: 0.8.8, 0.8.9, 0.8.10
 Patch: http://www.iptel.org/ser/security/secalert-002-0_8_10.patch
 Workaround: apply the patch to 0.8.10 sources
-CVS status: not fixed yet
+CVS status: fixed 
 ---------------------------------------------------------------
 Desc:  ser 0.8.10 won't compile with bison 1.75
 BugId:  n/a
