@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh  
 #
 # $Id$
 #
@@ -74,29 +74,38 @@ A_LAST_MODIFIED_COLUMN=last_modified
 
 
 usage() {
-	echo "usage: "
-	echo -n " `basename $0` add <name> <password> <email> "
-	echo "... add a new subscriber (*)"
-	echo " `basename $0` dul <name> - delete user's UsrLoc entries (*)"
-	echo " `basename $0` show [<name>] - show online users"
-	echo " `basename $0` mail <name> - send an email to a user"
-	echo " `basename $0` rm <name> - delete a user (*)"
-	echo " `basename $0` passwd <user> <passwd> - change user's password (*)"
-	echo " `basename $0` stat - show runnig processes + $0 show"
-	echo " `basename $0` acl show [<user>] - show user membership"
-	echo " `basename $0` acl grant <user> <group>... - grant user membership (*)"
-	echo " `basename $0` acl revoke <user> [<group>] - grant user membership(s) (*)"
-	echo " `basename $0` alias show [<alias>] - show aliases"
-	echo " `basename $0` alias rm <alias> - remove an alias"
-	echo " `basename $0` alias add <alias> <uri> - show aliases"
-	echo 
-	echo "   commands labeled with (*) will prompt for a MySQL password"
-	echo "   if the variable PW is set, the password will not be prompted"
+CMD=`basename $0`
+if [ "0$VERIFY_ACL" -eq 1 ] ; then
+	EXTRA_TEXT="ACL privileges are: $ACL_GROUPS"
+fi
+cat <<EOF
+usage: 
+           < subscribers >
+ $CMD add <name> <password> <email> ... add a new subscriber (*)
+ $CMD mail <name> ..................... send an email to a user
+ $CMD rm <name> ....................... delete a user (*)
+ $CMD alias show [<alias>] ............ show aliases
+ $CMD alias rm <alias> ................ remove an alias
+ $CMD alias add <alias> <uri> ......... show aliases
+           < access control lists >
+ $CMD acl show [<user>] ............... show user membership
+ $CMD acl grant <user> <group> ........ grant user membership (*)
+ $CMD acl revoke <user> [<group>] ..... grant user membership(s) (*)
+           < usrloc >
+ $CMD dul <name> ...................... delete user's UsrLoc entries (*)
+ $CMD show [<name>] ................... show online users
+ $CMD passwd <user> <passwd> .......... change user's password (*)
+ $CMD perm <user> <uri> ............... introduce a permanent UrLoc entry
+           < server health >
+ $CMD stat ............................ show runnig processes + $0 show
+ $CMD monitor ......................... show internal status
 
-	if [ "0$VERIFY_ACL" -eq 1 ] ; then
-		echo "   ACL privileges are: $ACL_GROUPS"
-	fi
-	echo
+   commands labeled with (*) will prompt for a MySQL password
+   if the variable PW is set, the password will not be prompted"
+
+     $EXTRA_TEXT
+
+EOF
 }
 
 #params: none
@@ -170,11 +179,6 @@ ser_alias() {
 	case $1 in 
 		show)
 			if [ $# -eq 2 ] ; then
-				is_user $2
-				if [ $? -ne 0 ] ; then
-					echo non-existent user
-					exit 1;
-				fi
 				CLAUSE=" WHERE $A_USER_COLUMN='$2' "
 			elif [ $# -ne 1 ] ; then
 				usage
@@ -396,6 +400,29 @@ case $1 in
 		fi
 
 		;;
+
+	# add a permanent UsrLoc entry
+	perm)
+		if [ $# -ne 3 ] ; then
+			usage
+			exit 1
+		fi
+		prompt_pw
+		is_user $2
+		if [ $? -ne 0 ] ; then
+			echo non-existent user
+			exit 1;
+		fi
+		QUERY="insert into $USRLOC \
+			($A_USER_COLUMN, $A_CONTACT_COLUMN, $A_EXPIRES_COLUMN, \
+			$A_Q_COLUMN, $A_CALLID_COLUMN, $A_CSEQ_COLUMN, \
+			$A_LAST_MODIFIED_COLUMN) \
+			values ( '$2', '$3', '$FOREVER', \
+			'1.00', 'call-id-for-ever', '1',
+			now() );"
+			sql_query "$QUERY"
+		;;
+
 
 	dul)
 		if [ $# -ne 2 ] ; then
