@@ -228,4 +228,60 @@
 #define OUTe 0x6554554f   /* "OUTe" */
 #define OUTE 0x4554554f   /* "OUTE" */
 
+
+#define ent_ 0x2d746e65   /* "ent-" */
+#define enT_ 0x2d546e65   /* "enT-" */
+#define eNt_ 0x2d744e65   /* "eNt-" */
+#define eNT_ 0x2d544e65   /* "eNT-" */
+#define Ent_ 0x2d746e45   /* "Ent-" */
+#define EnT_ 0x2d546e45   /* "EnT-" */
+#define ENt_ 0x2d744e45   /* "ENt-" */
+#define ENT_ 0x2d544e45   /* "ENT-" */
+
+#define xtype 0x65707974   /* "type" */
+#define xtypE 0x45707974   /* "typE" */
+#define xtyPe 0x65507974   /* "tyPe" */
+#define xtyPE 0x45507974   /* "tyPE" */
+#define xtYpe 0x65705974   /* "tYpe" */
+#define xtYpE 0x45705974   /* "tYpE" */
+#define xtYPe 0x65505974   /* "tYPe" */
+#define xtYPE 0x45505974   /* "tYPE" */
+#define xType 0x65707954   /* "Type" */
+#define xTypE 0x45707954   /* "TypE" */
+#define xTyPe 0x65507954   /* "TyPe" */
+#define xTyPE 0x45507954   /* "TyPE" */
+#define xTYpe 0x65705954   /* "TYpe" */
+#define xTYpE 0x45705954   /* "TYpE" */
+#define xTYPe 0x65505954   /* "TYPe" */
+#define xTYPE 0x45505954   /* "TYPE" */
+
+#define leng 0x676e656c   /* "leng" */
+#define lenG 0x476e656c   /* "lenG" */
+#define leNg 0x674e656c   /* "leNg" */
+#define leNG 0x474e656c   /* "leNG" */
+#define lEng 0x676e456c   /* "lEng" */
+#define lEnG 0x476e456c   /* "lEnG" */
+#define lENg 0x674e456c   /* "lENg" */
+#define lENG 0x474e456c   /* "lENG" */
+#define Leng 0x676e654c   /* "Leng" */
+#define LenG 0x476e654c   /* "LenG" */
+#define LeNg 0x674e654c   /* "LeNg" */
+#define LeNG 0x474e654c   /* "LeNG" */
+#define LEng 0x676e454c   /* "LEng" */
+#define LEnG 0x476e454c   /* "LEnG" */
+#define LENg 0x674e454c   /* "LENg" */
+#define LENG 0x474e454c   /* "LENG" */
+
+#define th12 0x203a6874   /* "th: " */
+#define tH12 0x203a4874   /* "tH: " */
+#define Th12 0x203a6854   /* "Th: " */
+#define TH12 0x203a4854   /* "TH: " */
+
+#define th21 0x3a206874   /* "th :" */
+#define tH21 0x3a204874   /* "tH :" */
+#define Th21 0x3a206854   /* "Th :" */
+#define TH21 0x3a204854   /* "TH :" */
+
+
 #endif
+

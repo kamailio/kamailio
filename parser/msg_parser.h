@@ -16,20 +16,22 @@
 
 
 /*header types and flags*/
-#define HDR_EOH           -1
-#define HDR_ERROR          0
-#define HDR_VIA            1
-#define HDR_VIA1           1
-#define HDR_VIA2           2  /*only used as flag*/
-#define HDR_TO             4
-#define HDR_FROM           8
-#define HDR_CSEQ          16
-#define HDR_CALLID        32
-#define HDR_CONTACT       64
-#define HDR_MAXFORWARDS  128
-#define HDR_ROUTE        256
-#define HDR_RECORDROUTE  512
-#define HDR_OTHER       65536 /*unknown header type*/
+#define HDR_EOH             -1
+#define HDR_ERROR            0
+#define HDR_VIA              1
+#define HDR_VIA1             1
+#define HDR_VIA2             2  /*only used as flag*/
+#define HDR_TO               4
+#define HDR_FROM             8
+#define HDR_CSEQ            16
+#define HDR_CALLID          32
+#define HDR_CONTACT         64
+#define HDR_MAXFORWARDS    128
+#define HDR_ROUTE          256
+#define HDR_RECORDROUTE    512
+#define HDR_CONTENTTYPE   1024
+#define HDR_CONTENTLENGTH 2048
+#define HDR_OTHER        65536 /*unknown header type*/
 
 
 /* maximum length of values appended to Via-branch parameter */
@@ -192,6 +194,8 @@ struct sip_msg{
 	struct hdr_field* maxforwards;
 	struct hdr_field* route;
 	struct hdr_field* record_route;
+	struct hdr_field* content_type;
+	struct hdr_field* content_length;
 	char* eoh; /* pointer to the end of header (if found) or null */
 	char* unparsed; /* here we stopped parsing*/
 

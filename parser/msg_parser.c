@@ -227,7 +227,6 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				goto error;
 			}
 			memset(vb,0,sizeof(struct via_body));
-
 			hdr->body.s=tmp;
 			tmp=parse_via(tmp, end, vb);
 			if (vb->error==VIA_PARSE_ERROR){
@@ -279,17 +278,18 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 				hdr->name.s, hdr->body.len, to_b->uri.len,to_b->uri.s);
 			DBG("DEBUG: to body [%.*s]\n",to_b->body.len,to_b->body.s);
 			break;
+		case HDR_CONTENTTYPE:
+		case HDR_CONTENTLENGTH:
 		case HDR_FROM:
 		case HDR_CALLID:
 		case HDR_CONTACT:
 		case HDR_ROUTE:   /* janakj, HDR_ROUTE was missing here */
-	        case HDR_RECORDROUTE:
+		case HDR_RECORDROUTE:
 		case HDR_MAXFORWARDS:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
 			/* find end of header */
-
 			/* find lf */
 			do{
 				match=q_memchr(tmp, '\n', end-tmp);
@@ -312,7 +312,6 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 					hdr->type);
 			goto error;
 	}
-
 	/* jku: if \r covered by current length, shrink it */
 	trim_r( hdr->body );
 	return tmp;
@@ -635,6 +634,14 @@ int parse_headers(struct sip_msg* msg, int flags)
 			case HDR_RECORDROUTE:
 				if (msg->record_route==0) msg->record_route = hf;
 				msg->parsed_flag|=HDR_RECORDROUTE;
+				break;
+			case HDR_CONTENTTYPE:
+				if (msg->content_type==0) msg->content_type = hf;
+				msg->parsed_flag|=HDR_CONTENTTYPE;
+				break;
+			case HDR_CONTENTLENGTH:
+				if (msg->content_length==0) msg->content_length = hf;
+				msg->parsed_flag|=HDR_CONTENTLENGTH;
 				break;
 			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;

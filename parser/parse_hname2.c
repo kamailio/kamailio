@@ -139,8 +139,8 @@ static inline int unify(int key)
 #define From_CASE          \
      hdr->type = HDR_FROM; \
      p += 4;               \
-     goto dc_end          
-                                                             
+     goto dc_end
+
 
 #define To12_CASE        \
      hdr->type = HDR_TO; \
@@ -189,6 +189,62 @@ static inline int unify(int key)
      break
 
 
+/* added by Bogdan - for Content-Type and -Length headers */
+#define Ent__CASE \
+	p += 4;\
+	val = READ(p);\
+	switch(val) {\
+	case xType:\
+		hdr->type = HDR_CONTENTTYPE;\
+		p += 4;\
+		goto dc_end;\
+	case Leng:\
+		p += 4;\
+		val = READ(p);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}\
+		val = unify(val);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}else\
+			goto other;\
+	}\
+	val = unify(val);\
+	switch(val) {\
+	case xType:\
+		hdr->type = HDR_CONTENTTYPE;\
+		p += 4;\
+		goto dc_end;\
+	case Leng:\
+		p += 4;\
+		val = READ(p);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}\
+		val = unify(val);\
+		if (val==th12){\
+			hdr->type = HDR_CONTENTLENGTH;\
+			hdr->name.len = 14;\
+			*(p + 2) = '\0';\
+			return (p + 3);\
+		}else\
+			goto other;\
+	default:\
+		goto other;\
+	}\
+	break
+
+
 #define Cont_CASE                     \
      p += 4;                          \
      val = READ(p);                   \
@@ -203,6 +259,9 @@ static inline int unify(int key)
 	     hdr->type = HDR_CONTACT; \
 	     p += 4;                  \
 	     goto dc_end;             \
+	                              \
+     case ent_:                   \
+	     Ent__CASE;               \
      }                                \
                                       \
      val = unify(val);                \
@@ -217,7 +276,8 @@ static inline int unify(int key)
 	     hdr->type = HDR_CONTACT; \
 	     p += 4;                  \
 	     goto dc_end;             \
-                                      \
+                                  \
+                                  \
      default: goto other;             \
      }                                \
      break
@@ -363,7 +423,7 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 	case Rout: Rout_CASE;
 	case Max_: Max_CASE;
 	case Reco: Reco_CASE;
-        case Via2: Via2_CASE;
+	case Via2: Via2_CASE;
 
 	default:
 		switch(*p) {
@@ -447,6 +507,38 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 				return (p + 2);
 			}
 			break;
+
+        case 'C':
+		case 'c':
+			switch(*(p + 1)) {
+			case ' ':
+				hdr->type = HDR_CONTENTTYPE;
+				p += 2;
+				goto dc_end;
+				
+			case ':':
+				hdr->type = HDR_CONTENTTYPE;
+				hdr->name.len = 1;
+				*(p + 1) = '\0';
+				return (p + 2);
+			}
+			break;
+
+        case 'L':
+		case 'l':
+			switch(*(p + 1)) {
+			case ' ':
+				hdr->type = HDR_CONTENTLENGTH;
+				p += 2;
+				goto dc_end;
+				
+			case ':':
+				hdr->type = HDR_CONTENTLENGTH;
+				hdr->name.len = 1;
+				*(p + 1) = '\0';
+				return (p + 2);
+			}
+			break;
 		}
 		
 		val = unify(val);
@@ -454,10 +546,10 @@ char* parse_hname2(char* begin, char* end, struct hdr_field* hdr)
 		case Via1: Via1_CASE;
 		case From: From_CASE;
 		case To12: To12_CASE;
-		case CSeq: CSeq_CASE;                                                             
+		case CSeq: CSeq_CASE;
 		case Call: Call_CASE;
 		case Cont: Cont_CASE;
-		case Rout: Rout_CASE;                                                             
+		case Rout: Rout_CASE;
 		case Max_: Max_CASE;
 		case Reco: Reco_CASE;
 		case Via2: Via2_CASE;
@@ -512,16 +604,16 @@ void init_htable(void)
 		set_entry(HASH_EMPTY, HASH_EMPTY);
 	}
 
-        set_entry(via1, Via1);
+	set_entry(via1, Via1);
 	set_entry(viA1, Via1);
 	set_entry(vIa1, Via1);
-        set_entry(vIA1, Via1);
-        set_entry(Via1, Via1);
-        set_entry(ViA1, Via1);
+	set_entry(vIA1, Via1);
+	set_entry(Via1, Via1);
+	set_entry(ViA1, Via1);
 	set_entry(VIa1, Via1);
 	set_entry(VIA1, Via1);
 	
-        set_entry(via2, Via2);
+	set_entry(via2, Via2);
 	set_entry(viA2, Via2);
 	set_entry(vIa2, Via2);
 	set_entry(vIA2, Via2);
@@ -738,6 +830,61 @@ void init_htable(void)
 	set_entry(OUtE, oute);
 	set_entry(OUTe, oute);
 	set_entry(OUTE, oute);
+
+	set_entry(ent_, ent_);
+    set_entry(enT_, ent_);
+	set_entry(eNt_, ent_);
+	set_entry(eNT_, ent_);
+	set_entry(Ent_, ent_);
+	set_entry(EnT_, ent_);
+	set_entry(ENt_, ent_);
+	set_entry(ENT_, ent_);
+
+	set_entry(xtype, xType);
+	set_entry(xtypE, xType);
+	set_entry(xtyPe, xType);
+	set_entry(xtyPE, xType);
+	set_entry(xtYpe, xType);
+	set_entry(xtYpE, xType);
+	set_entry(xtYPe, xType);
+	set_entry(xtYPE, xType);
+	set_entry(xType, xType);
+	set_entry(xTypE, xType);
+	set_entry(xTyPe, xType);
+	set_entry(xTyPE, xType);
+	set_entry(xTYpe, xType);
+	set_entry(xTYpE, xType);
+	set_entry(xTYPe, xType);
+	set_entry(xTYPE, xType);
+
+
+	set_entry(leng, Leng);
+	set_entry(lenG, Leng);
+	set_entry(leNg, Leng);
+	set_entry(leNG, Leng);
+	set_entry(lEng, Leng);
+	set_entry(lEnG, Leng);
+	set_entry(lENg, Leng);
+	set_entry(lENG, Leng);
+	set_entry(Leng, Leng);
+	set_entry(LenG, Leng);
+	set_entry(LeNg, Leng);
+	set_entry(LeNG, Leng);
+	set_entry(LEng, Leng);
+	set_entry(LEnG, Leng);
+	set_entry(LENg, Leng);
+	set_entry(LENG, Leng);
+
+	set_entry(th12, th12);
+	set_entry(tH12, th12);
+	set_entry(Th12, th12);
+	set_entry(TH12, th12);
+
+	set_entry(th21, th21);
+	set_entry(tH21, th21);
+	set_entry(Th21, th21);
+	set_entry(TH21, th21);
+	
 }
 
 
