@@ -17,7 +17,7 @@ extra_sources=$(wildcard $(addsuffix /*.c, $(static_modules_path)))
 extra_objs=$(extra_sources:.c=.o)
 
 static_defs= $(foreach  mod, $(static_modules), \
-		-DSTATIC_$(shell echo $(mod) | tr a-z A-Z) )
+		-DSTATIC_$(shell echo $(mod) | tr [:lower:] [:upper:]) )
 DEFS+=$(static_defs)
 modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
