@@ -62,10 +62,11 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	int    ret;
 
 	lock( &locks[TREE_LOCK] );
-	node = add_node( tree, msg->src_ip.u.addr,msg->src_ip.len,&father,&flag);
+	node = add_node( tree, msg->rcv.src_ip.u.addr,
+			 msg->rcv.src_ip.len,&father,&flag);
 
 	DBG("DEBUG:pike_check_req: src IP [%.*s]; hit node = [%d][%d] flags=%d\n",
-		(int)msg->src_ip.len,msg->src_ip.u.addr,
+		(int)msg->rcv.src_ip.len,msg->rcv.src_ip.u.addr,
 		node->hits,node->leaf_hits,flag);
 
 	/* do all the job with the timer */

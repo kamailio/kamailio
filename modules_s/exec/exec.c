@@ -44,7 +44,7 @@ static int set_environment(struct sip_msg *msg)
 {
 	static char srcip[64];
 
-	if (snprintf(srcip, 64, SRCIP "=%s", ip_addr2a(&msg->src_ip))==-1) {
+	if (snprintf(srcip, 64, SRCIP "=%s", ip_addr2a(&msg->rcv.src_ip))==-1) {
 		LOG(L_ERR, "ERROR: set_environment: spritnf failed\n");
 		return 0;
 	}
