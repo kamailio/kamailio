@@ -193,6 +193,14 @@ if (search("(f|From): .*@mydomain.com)) {
 				<emphasis>src_ip</emphasis>, which refers to IP address from 
 				which a request came.
 			    </para>
+				<warning>
+					<para>
+						Note that comparison of src_ip to an IP address may cause DNS
+						lookups and delay request processing. To avoid DNS lookups, don't
+						enclose IP addresses in quotes. Otherwise, reverse DNS lookup can be
+						performed to compare to host aliases.
+					</para>
+				</warning>
 			</listitem>
 			<listitem>
 			    <para>
