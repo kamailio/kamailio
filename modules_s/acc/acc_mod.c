@@ -217,7 +217,7 @@ static param_export_t params[] = {
 	{"db_table_acc",          STR_PARAM, &db_table_acc         }, 
 	{"db_table_missed_calls", STR_PARAM, &db_table_mc },
 	{"db_url",                STR_PARAM, &db_url               },
-	{"db_local_time", 	      INT_PARAM, &db_local_time},
+	{"db_localtime", 	  INT_PARAM, &db_localtime},
 	{"acc_sip_from_column",   STR_PARAM, &acc_sip_from_col  },
 	{"acc_sip_to_column",     STR_PARAM, &acc_sip_status_col},
 	{"acc_sip_status_column", STR_PARAM, &acc_sip_status_col},
