@@ -11,6 +11,7 @@
 
 #include "msg_translator.h"
 #include "globals.h"
+#include "error.h"
 #include "mem/mem.h"
 #include "dprint.h"
 #include "config.h"
@@ -84,12 +85,6 @@ int check_address(struct ip_addr* ip, char *name, int resolver)
 }
 
 
-
-
-
-
-
-
 char* via_builder( struct sip_msg *msg , unsigned int *len, 
 					struct socket_info* send_sock )
 {
@@ -101,6 +96,7 @@ char* via_builder( struct sip_msg *msg , unsigned int *len,
 
 	line_buf=pkg_malloc(sizeof(char)*MAX_VIA_LINE_SIZE);
 	if (line_buf==0){
+		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: via_builder: out of memory\n");
 		goto error;
 	}
@@ -162,6 +158,7 @@ char* via_builder( struct sip_msg *msg , unsigned int *len,
 	}else{
 		LOG(L_ERR, " ERROR: via_builder: via too long (%d)\n",
 				via_len);
+		ser_error=E_BUG;
 		goto error;
 	}
 
@@ -278,6 +275,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	if (check_address(source_ip, msg->via1->host.s, received_dns)!=0){
 		received_buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
 		if (received_buf==0){
+			ser_error=E_OUT_OF_MEM;
 			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
 			goto error1;
 		}
@@ -390,6 +388,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	}
 	new_buf=(char*)local_malloc(new_len+1);
 	if (new_buf==0){
+		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
 		goto error;
 	}

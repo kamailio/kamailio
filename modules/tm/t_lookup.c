@@ -37,6 +37,7 @@
 #include "t_funcs.h"
 #include "config.h"
 #include "sip_msg.h"
+#include "t_hooks.h"
 
 
 #define EQ_LEN(_hf) (t_msg->_hf->body.len==p_msg->_hf->body.len)
@@ -60,6 +61,144 @@
 	)==0 )
 
 
+/* function returns:
+ *      negative - transaction wasn't found
+ *			(-2 = possibly e2e ACK matched )
+ *      positive - transaction found
+ */
+
+int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
+{
+	struct cell         *p_cell;
+	unsigned int       isACK;
+	struct sip_msg  *t_msg;
+	int ret;
+
+	/* parse all*/
+	if (check_transaction_quadruple(p_msg)==0)
+	{
+		LOG(L_ERR, "ERROR: TM module: t_lookup_request: too few headers\n");
+		T=0;
+		/* stop processing */
+		return 0;
+	}
+
+	/* start searching into the table */
+	p_msg->hash_index=hash( p_msg->callid->body , get_cseq(p_msg)->number ) ;
+	isACK = p_msg->REQ_METHOD==METHOD_ACK;
+	DBG("t_lookup_request: start searching: hash=%d, isACK=%d\n",
+		p_msg->hash_index,isACK);
+
+	/* asume not found */
+	ret=-1;
+
+	/* lock the hole entry*/
+	lock(&(hash_table->entrys[p_msg->hash_index].mutex));
+
+	/* all the transactions from the entry are compared */
+	for ( p_cell = hash_table->entrys[p_msg->hash_index].first_cell;
+		  p_cell; p_cell = p_cell->next_cell ) 
+	{
+		t_msg = p_cell->uas.request;
+
+		if (!isACK) {	
+			/* compare lengths first */ 
+			if (!EQ_LEN(callid)) continue;
+			if (!EQ_LEN(cseq)) continue;
+			if (!EQ_LEN(from)) continue;
+			if (!EQ_LEN(to)) continue;
+			if (!EQ_REQ_URI_LEN) continue;
+			if (!EQ_VIA_LEN(via1)) continue;
+
+			/* length ok -- move on */
+			if (!EQ_STR(callid)) continue;
+			if (!EQ_STR(cseq)) continue;
+			if (!EQ_STR(from)) continue;
+			if (!EQ_STR(to)) continue;
+			if (!EQ_REQ_URI_STR) continue;
+			if (!EQ_VIA_STR(via1)) continue;
+
+			/* request matched ! */
+			DBG("DEBUG: non-ACK matched\n");
+			goto found;
+		} else { /* it's an ACK request*/
+			/* ACK's relate only to INVITEs */
+			if (t_msg->REQ_METHOD!=METHOD_INVITE) continue;
+
+			/* compare lengths now */
+			if (!EQ_LEN(callid)) continue;
+			/* CSeq only the number without method ! */
+			if (get_cseq(t_msg)->number.len!=get_cseq(p_msg)->number.len)
+				continue;
+			if (! EQ_LEN(from)) continue;
+			/* To only the uri and ... */
+			if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
+				continue;
+			/* ... its to-tag compared to reply's tag */
+			if (p_cell->uas.tag->len!=get_to(p_msg)->tag_value.len)
+				continue;
+
+			/* we first skip r-uri and Via and proceed with
+			   content of other header-fields */
+
+			if ( memcmp(t_msg->callid->body.s, p_msg->callid->body.s,
+				p_msg->callid->body.len)!=0) continue;
+			if ( memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
+				get_cseq(p_msg)->number.len)!=0) continue;
+			if (!EQ_STR(from)) continue;
+			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
+				get_to(t_msg)->uri.len)!=0) continue;
+			if (memcmp(p_cell->uas.tag->s, get_to(p_msg)->tag_value.s,
+				p_cell->uas.tag->len)!=0) continue;
+	
+			/* ok, now only r-uri or via can mismatch; they must match
+			   for non-2xx; if it is a 2xx, we don't try to match
+			   (we might have checked that earlier to speed-up, but
+			   we still want to see a diagnosti message telling
+			   "this ACK presumably belongs to this 2xx transaction";
+			   might change in future); the reason is 2xx ACKs are
+			   a separate transaction which may carry different
+			   r-uri/via1 and is thus also impossible to match it
+			   uniquely to a spiraled transaction;
+			*/
+			if (p_cell->uas.status>=200 && p_cell->uas.status<300) {
+				DBG("DEBUG: an ACK hit a 2xx transaction (T=%p); "
+					"considered mismatch\n", p_cell );
+				/* perhaps there are some spirals on the synonym list, but
+				   it makes no sense to iterate the list until bitter end */
+				ret=-2;
+				break;
+			}
+			/* its for a >= 300 ... everything must match ! */
+			if (! EQ_REQ_URI_LEN ) continue;
+			if (! EQ_VIA_LEN(via1)) continue;
+			if (!EQ_REQ_URI_STR) continue;
+			if (!EQ_VIA_STR(via1)) continue;
+
+			/* wow -- we survived all the check! we matched! */
+			DBG("DEBUG: non-2xx ACK matched\n");
+			goto found;
+		} /* ACK */
+	} /* synonym loop */
+
+	/* no transaction found */
+	T = 0;
+	if (!leave_new_locked)
+		unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
+	DBG("DEBUG: t_lookup_request: no transaction found\n");
+	return ret;
+
+found:
+	T=p_cell;
+	T_REF( T );
+	DBG("DEBUG: t_lookup_request: transaction found (T=%p , ref=%x)\n",
+		T,T->ref_bitmap);
+	unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
+	return 1;
+}
+
+
+#ifdef __YOU_DONT_WANT_TO_DO_THIS
 
 /* function returns:
  *      -1 - transaction wasn't found
@@ -213,6 +352,7 @@ found:
 	return 1;
 }
 
+#endif
 
 
 
@@ -560,7 +700,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 }
 
 
-
+#ifdef _YOU_DONT_REALLY_WANT_THIS
 
 /* atomic "add_if_new" construct; it returns:
 	AIN_ERROR	if a fatal error (e.g, parsing) occured
@@ -631,6 +771,83 @@ enum addifnew_status t_addifnew( struct sip_msg* p_msg )
 			LOG(L_ERR, "ERROR: t_check_new_request: already "
 			"processing this message, T not found!\n");
 		return AIN_ERROR;
+	}
+}
+
+
+#endif
+
+
+/* atomic "new_tran" construct; it returns:
+
+	-1	if	a request matched a transaction
+		- if that was an ack, the calling function
+		  shall reset timers
+		- otherwise the calling function shall 
+		  attempt to retransmit
+
+	+1	if a request did not match a transaction
+		- it that was an ack, the calling function
+		  shall forward statelessy
+		- otherwise it means, a new transaction was
+		  introduced and the calling function
+		  shall reply/relay/whatever_appropriate
+
+	0 on error
+*/
+int t_newtran( struct sip_msg* p_msg )
+{
+
+	int ret, lret;
+	struct cell *new_cell;
+
+	/* is T still up-to-date ? */
+	DBG("DEBUG: t_addifnew: msg id=%d , global msg id=%d ,"
+		" T on entrance=%p\n",p_msg->id,global_msg_id,T);
+
+	if ( !(p_msg->id != global_msg_id || T==T_UNDEFINED 
+		/* if someone tried to do something previously by mistake with
+		   a transaction which did not exist yet, try to look-up
+		   the transacion too */
+		|| T==T_NULL)) 
+	{
+		LOG(L_ERR, "ERROR: t_newtran: alreaddy processing this message"
+			", T %s found\n", T ? "" : "not" );
+		return 0;
+	}
+
+	global_msg_id = p_msg->id;
+	T = T_UNDEFINED;
+	/* transaction lookup */
+	/* force parsing all the needed headers*/
+	if (parse_headers(p_msg, HDR_EOH )==-1)
+		return 0;
+	lret = t_lookup_request( p_msg, 1 /* leave locked */ );
+	/* on error, pass the error in the stack ... */
+	if (lret==0) return 0;
+	if (lret<0) {
+		/* transaction not found, it's a new request;
+		   establish a new transaction (unless it is an ACK) */
+		ret=1;
+		if ( p_msg->REQ_METHOD!=METHOD_ACK ) {
+			/* add new transaction */
+			new_cell = build_cell( p_msg ) ;
+			if  ( !new_cell ){
+				LOG(L_ERR, "ERROR: t_addifnew: out of mem:\n");
+				ret = 0;
+			} else {
+				insert_into_hash_table_unsafe( hash_table , new_cell );
+				T=new_cell;
+				T_REF(T);
+			}
+		}
+		unlock(&(hash_table->entrys[p_msg->hash_index].mutex));
+		/* it that was a presumable e2e ACK, run a callback */
+		if (lret==-2) callback_event( TMCB_E2EACK, p_msg );
+		return ret;
+	} else {
+		/* transaction found, it's a retransmission  or ACK */
+			return -1;
 	}
 }
 

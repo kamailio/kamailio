@@ -19,7 +19,7 @@
 
 inline int check_for_no_response( struct cell *Trans ,int code, int relay)
 {
-	if ( code/100>3 && Trans->uac[Trans->nr_of_outgoings].uri.s )
+	if ( code/100>=3 && Trans->uac[Trans->nr_of_outgoings].uri.s )
 	{
 		forward_serial_branch( Trans , Trans->nr_of_outgoings );
 		return -1;
@@ -59,16 +59,17 @@ int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 /* Force a new response into inbound response buffer.
   * returns 1 if everything was OK or -1 for error
   */
-int t_send_reply( struct sip_msg* p_msg, unsigned int code, char * text,
-														unsigned int branch)
+int t_send_reply( struct sip_msg* p_msg, unsigned int code, 
+	char * text, unsigned int branch)
 {
 	unsigned int len, buf_len=0;
 	char * buf;
 	struct retr_buf *rb;
 	int relay, save_clone;
+	struct socket_info* send_sock;
 
-	buf = build_res_buf_from_sip_req(code,text,T->uas.tag->s,T->uas.tag->len,
-		T->uas.request,&len);
+	buf = build_res_buf_from_sip_req(code,text,T->uas.tag->s,
+		T->uas.tag->len, T->uas.request,&len);
 	DBG("DEBUG: t_send_reply: buffer computed\n");
 	if (!buf)
 	{
@@ -96,7 +97,15 @@ int t_send_reply( struct sip_msg* p_msg, unsigned int code, char * text,
 					p_msg->via1->host.s );
 				goto error2;
 			}
-			rb->to.sin_family = AF_INET;
+			send_sock=get_send_socket(&rb->to);
+			if (send_sock==0) {
+				LOG(L_ERR, "ERROR: t_send_reply: cannot fwd to af %d "
+					"no socket\n", rb->to.s.sa_family);
+				ser_error=E_NO_SOCKET;
+				goto error2;
+			}
+			rb->send_sock=send_sock;
+			/* rb->to.sin_family = AF_INET; */
 			rb->activ_type = code;
 			buf_len = len + REPLY_OVERBUFFER_LEN;
 		}else{
@@ -195,7 +204,6 @@ error:
 #endif
 
 
-
 /*  This function is called whenever a reply for our module is received; 
   * we need to register  this function on module initialization;
   *  Returns :   0 - core router stops
@@ -216,6 +224,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	/* buffer length (might be somewhat larger than message size */
 	unsigned int alloc_len;
 	str *str_foo;
+	struct socket_info* send_sock;
 
 
 	/* make sure we know the assosociated tranaction ... */
@@ -247,7 +256,8 @@ int t_on_reply( struct sip_msg  *p_msg )
 	msg_class=REPLY_CLASS(p_msg);
 	is_invite= T->uas.request->REQ_METHOD==METHOD_INVITE;
 
-	/*  generate the retrans buffer, make a simplified
+#ifdef _DONT_DO_IT_MAN
+/*  generate the retrans buffer, make a simplified
 	assumption everything but 100 will be fwd-ed;
 	sometimes it will result in useless CPU cycles
 	but mostly the assumption holds and allows the
@@ -263,6 +273,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 			goto error;
 		}
 	}
+#endif
 
 	/* *** stop timers *** */
 	/* stop retransmission */
@@ -317,6 +328,17 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	rb = & T->uas.response;
 	if (relay >= 0  && (relay=check_for_no_response(T,msg_status,relay))>=0 ) {
+
+		buf = build_res_buf_from_sip_res ( p_msg, &res_len);
+		if (!buf) {
+			UNLOCK_REPLIES( T );
+			start_fr = 1;
+			LOG(L_ERR, "ERROR: t_on_reply_received: "
+				"no mem for outbound reply buffer\n");
+			goto error1;
+		}
+		callback_event( TMCB_REPLY_IN, p_msg );
+
 		if (relay!=branch)
 		{
 			str_foo = &(T->uac[relay].rpl_buffer);
@@ -342,7 +364,16 @@ int t_on_reply( struct sip_msg  *p_msg )
 					p_msg->via2->host.s );
 				goto error1;
 			}
-			rb->to.sin_family = AF_INET;
+			send_sock=get_send_socket(&rb->to);
+			if (send_sock==0) {
+				UNLOCK_REPLIES( T );
+				LOG(L_ERR, "ERROR: t_on_reply: cannot fwd to af %d "
+					"no socket\n", rb->to.s.sa_family);
+				start_fr=1;
+				goto error1;
+			}
+			/* rb->to.sin_family = AF_INET; */
+			rb->send_sock=send_sock;
 			rb->activ_type = p_msg->REPLY_STATUS;
 			/* allocate something more for the first message;
 			   subsequent messages will be longer and buffer
@@ -417,5 +448,90 @@ error:
 	   that will make the other party to retransmit; hopefuly, we'll then 
 	   be better off */
 	return 0;
+}
+
+
+/* Checks if the new reply (with new_code status) should be sent or not
+ *  based on the current
+ * transactin status.
+ * Returns 	- branch number (0,1,...) which should be relayed
+ *         -1 if nothing to be relayed
+ */
+int t_should_relay_response( struct cell *Trans , int new_code,
+									int branch , int *should_store )
+{
+	//int T_code;
+	int b, lowest_b, lowest_s;
+
+	//if (Trans->uas.request->REQ_METHOD==METHOD_INVITE)
+	//	T_code = Trans->uac[branch].status;
+	//else
+	//T_code = Trans->uas.status;
+
+	/* note: this code never lets replies to CANCEL go through;
+	   we generate always a local 200 for CANCEL; 200s are
+	   not relayed because it's not an INVITE transaction;
+	   >= 300 are not relayed because 200 was already sent
+	   out
+	*/
+	DBG("->>>>>>>>> T_code=%d, new_code=%d\n",Trans->uas.status,new_code);
+	/* if final response sent out, allow only INVITE 2xx  */
+	if ( Trans->uas.status >= 200 ) {
+		if (new_code>=200 && new_code < 300  && 
+			Trans->uas.request->REQ_METHOD==METHOD_INVITE) {
+			DBG("DBG: t_should_relay: 200 INV after final sent\n");
+			*should_store=1;
+			return branch;
+		} else {
+			*should_store=0;
+			return -1;
+		}
+	} else { /* no final response sent yet */
+		/* negative replies subject to fork picking */
+		if (new_code >=300 ) {
+			/* dirty hack by Jiri -- subject to clean up as all the
+			   reply_processing crap; if there are no branches at
+			   all, I guess TM wants to reply itself and allow that
+			*/
+			if (Trans->nr_of_outgoings==0)
+				return 0;
+			*should_store=1;
+			/* if all_final return lowest */
+			lowest_b=-1; lowest_s=999;
+			for ( b=0; b<Trans->nr_of_outgoings ; b++ ) {
+				/* "fake" for the currently processed branch */
+				if (b==branch) {
+					if (new_code<lowest_s) {
+						lowest_b=b;
+						lowest_s=new_code;
+					}
+					continue;
+				}
+				/* there is still an unfinished UAC transaction; wait now! */
+				if ( Trans->uac[b].status<200 )
+					return -1;
+				if ( Trans->uac[b].status<lowest_s )
+				{
+					lowest_b =b;
+					lowest_s = T->uac[b].status;
+				}
+			}
+			return lowest_b;
+		/* 1xx except 100 and 2xx will be relayed */
+		} else if (new_code>100) {
+			*should_store=1;
+			return branch;
+		}
+		/* 100 won't be relayed */
+		else {
+			if (!T->uac[branch].rpl_received) *should_store=1;
+				else *should_store=0;
+			if (Trans->uas.status==0) return branch;
+				else return -1;
+		}
+	}
+
+	LOG(L_CRIT, "ERROR: Oh my gooosh! We don't know whether to relay\n");
+	abort();
 }
 

@@ -3,13 +3,14 @@
  *
  */
 
-#include "hash_func.h"
-#include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../parser/parser_f.h"
 #include "../../ut.h"
 #include "../../timer.h"
+#include "hash_func.h"
+#include "t_funcs.h"
+#include "t_fork.h"
 
 #include "t_hooks.h"
 
@@ -29,8 +30,11 @@
  *       1 - forward successfull
  *      -1 - error during forward
  */
-int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
+int t_forward_nonack( struct sip_msg* p_msg , 
+					  struct proxy_l * p )
+/* v6; -jiri									unsigned int dest_ip_param ,
 												unsigned int dest_port_param )
+*/
 {
 	int          branch;
 	unsigned int len;
@@ -38,20 +42,18 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	struct cell  *T_source = T;
 	struct lump  *a,*b,*b1,*c;
 	str          backup_uri;
+	int			 ret;
+	struct socket_info* send_sock;
+	union sockaddr_union to;
 
 
+	/* default error value == -1; be more specific if you want to */
+	ret=-1;
 	buf    = 0;
 	shbuf  = 0;
 	backup_uri.s = p_msg->new_uri.s;
 	backup_uri.len = p_msg->new_uri.len;
 
-	/* sets as first fork the default outgoing */
-	nr_forks++;
-	t_forks[0].ip = dest_ip_param;
-	t_forks[0].port = dest_port_param;
-	t_forks[0].uri.len = p_msg->new_uri.len;
-	t_forks[0].uri.s =  p_msg->new_uri.s;
-	t_forks[0].free_flag = 0;
 
 
 	/* are we forwarding for the first time? */
@@ -61,8 +63,31 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		   somewhere else */
 		LOG( L_CRIT, "ERROR: t_forward_nonack: attempt to rewrite"
 			" request structures\n");
+		ser_error=E_BUG;
 		return 0;
 	}
+
+	/* v6; -jiri ... copynpasted from forward_request */
+	/* if error try next ip address if possible */
+	if (p->ok==0){
+		if (p->host.h_addr_list[p->addr_idx+1])
+			p->addr_idx++;
+		else p->addr_idx=0;
+		p->ok=1;
+	}
+	hostent2su(&to, &p->host, p->addr_idx,
+    	(p->port)?htons(p->port):htons(SIP_PORT));
+
+	/* sets as first fork the default outgoing */
+	nr_forks++;
+	/* v6; -jiri
+	t_forks[0].ip = dest_ip_param;
+	t_forks[0].port = dest_port_param;
+	*/
+	t_forks[0].to=to;
+	t_forks[0].uri.len = p_msg->new_uri.len;
+	t_forks[0].uri.s =  p_msg->new_uri.s;
+	t_forks[0].free_flag = 0;
 
 	DBG("DEBUG: t_forward_nonack: first time forwarding\n");
 	/* special case : CANCEL */
@@ -83,10 +108,14 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 				{
 					DBG("DEBUG: t_forward_nonack: branch %d not finalize"
 						": sending CANCEL for it\n",nr_forks);
+					/* v6; -jiri
 					t_forks[nr_forks].ip =
-					  T->T_canceled->uac[nr_forks].request.to.sin_addr.s_addr;
+					  T->T_canceled->uac[nr_forks].request.to.sin_addr.s_addr; 
 					t_forks[nr_forks].port =
 					  T->T_canceled->uac[nr_forks].request.to.sin_port;
+					*/
+					t_forks[nr_forks].to = T->T_canceled->uac[nr_forks].request.to;
+
 					t_forks[nr_forks].uri.len =
 					  T->T_canceled->uac[nr_forks].uri.len;
 					t_forks[nr_forks].uri.s =
@@ -96,7 +125,10 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 					/* transaction exists, but nothing to cancel */
 					DBG("DEBUG: t_forward_nonack: branch %d finalized"
 						": no CANCEL sent here\n",nr_forks);
+					/* -v6; -jiri
 					t_forks[nr_forks].ip = 0;
+					*/
+					t_forks[nr_forks].inactive= 1;
 				}
 			}
 #ifdef USE_SYNONIM
@@ -110,14 +142,16 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	}/* end special case CANCEL*/
 
 #ifndef USE_SYNONIM
-	if ( nr_forks && add_branch_label( T_source, T->uas.request , 0 )==-1)
+	branch=0;
+	if ( nr_forks && add_branch_label( T_source, T->uas.request , branch )==-1)
 		goto error;
 #endif
 
 	DBG("DEBUG: t_forward_nonack: nr_forks=%d\n",nr_forks);
 	for(branch=0;branch<nr_forks;branch++)
 	{
-		if (!t_forks[branch].ip)
+		/* -v6; -jiri if (!t_forks[branch].ip) */
+		if (t_forks[branch].inactive)
 			goto end_loop;
 		DBG("DEBUG: t_forward_nonack: branch = %d\n",branch);
 		/*generates branch param*/
@@ -139,8 +173,24 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		/* updates the new uri*/
 		p_msg->new_uri.s = t_forks[branch].uri.s;
 		p_msg->new_uri.len = t_forks[branch].uri.len;
-		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
+
+		T->uac[branch].request.to = t_forks[branch].to;
+		send_sock=get_send_socket( & T->uac[branch].request.to );
+		if (send_sock==0) {
+			LOG(L_ERR, "ERROR: t_forward_nonack: can't fwd to af %d "
+				"no corresponding listening socket\n", 
+				T->uac[branch].request.to.s.sa_family);
+			ser_error=E_NO_SOCKET;
 			goto error;
+		}
+		T->uac[branch].request.send_sock=send_sock;
+		
+		callback_event( TMCB_REQUEST_OUT, p_msg );	
+		/* _test_insert_to_reply(p_msg, "Foo: Bar\r\n");*/
+		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len, send_sock ))) {
+			ser_error=ret=E_OUT_OF_MEM;
+			goto error;
+		}
 		/* allocates a new retrans_buff for the outbound request */
 		DBG("DEBUG: t_forward_nonack: building outbound request"
 			" for branch %d.\n",branch);
@@ -148,6 +198,7 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		if (!shbuf)
 		{
 			LOG(L_ERR, "ERROR: t_forward_nonack: out of shmem buffer\n");
+			ser_error=ret=E_OUT_OF_MEM;
 			goto error;
 		}
 		T->uac[branch].request.buffer = shbuf;
@@ -159,10 +210,22 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 		T->uac[branch].uri.len=t_forks[branch].uri.s?(t_forks[branch].uri.len)
 			:(p_msg->first_line.u.request.uri.len);
 		/* send the request */
+		/* v6; -jiri
 		T->uac[branch].request.to.sin_addr.s_addr = t_forks[branch].ip;
 		T->uac[branch].request.to.sin_port = t_forks[branch].port;
 		T->uac[branch].request.to.sin_family = AF_INET;
-		SEND_BUFFER( &(T->uac[branch].request) );
+		*/
+		T->uac[branch].request.to = t_forks[branch].to;
+		p->tx++;
+		p->tx_bytes+=len;
+		if (SEND_BUFFER( &(T->uac[branch].request) )==-1) {
+			p->errors++;
+			p->ok=0;
+			ser_error=ret=E_SEND;
+			goto error;
+		}
+		/* should have p->errors++; p->ok=0; on error here... */
+
 
 		pkg_free( buf ) ;
 		buf=NULL;
@@ -185,11 +248,17 @@ int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 
 	/* if we have a branch spec. for NO_RESPONSE_RECEIVED, we have to 
 	move it immediatly after the last parallel branch */
-	if (t_forks[NO_RPL_BRANCH].ip && T->nr_of_outgoings!=NO_RPL_BRANCH )
+	/* v6; -jiri 
+	if (t_forks[NO_RPL_BRANCH].ip && T->nr_of_outgoings!=NO_RPL_BRANCH ) */
+	if (!t_forks[NO_RPL_BRANCH].inactive && T->nr_of_outgoings!=NO_RPL_BRANCH )
 	{
 		branch = T->nr_of_outgoings;
+		/* v6; -jiri
 		T->uac[branch].request.to.sin_addr.s_addr = t_forks[NO_RPL_BRANCH].ip;
 		T->uac[branch].request.to.sin_port = t_forks[NO_RPL_BRANCH].port;
+		*/
+		T->uac[branch].request.to = t_forks[NO_RPL_BRANCH].to;
+
 		T->uac[branch].uri.s = t_forks[NO_RPL_BRANCH].uri.s;
 		T->uac[branch].uri.len = t_forks[NO_RPL_BRANCH].uri.len;
 	}
@@ -205,22 +274,17 @@ error:
 	p_msg->new_uri.s = backup_uri.s;
 	p_msg->new_uri.len = backup_uri.len;
 	t_clear_forks();
-	return -1;
+	return ret;
 }
 
 
+#ifdef _YOU_DONT_REALLY_WANT_THIS
 
-
-int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
-										unsigned int dest_port_param )
+int t_forward_ack( struct sip_msg* p_msg  )
 {
 	int branch;
 	unsigned int len;
 	char *buf, *ack;
-#ifdef _DONT_USE
-	struct sockaddr_in to_sock;
-#endif
-
 
 	/* drop local ACKs */
 	if (T->uas.status/100!=2 ) {
@@ -272,21 +336,9 @@ int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	SEND_PR_BUFFER( &(T->uac[branch].request), ack, len );
 	callback_event( TMCB_E2EACK, p_msg );
 	return attach_ack( T, branch, ack , len );
-
-#ifdef _DON_USE
-fwd_sl: /* some strange conditions occured; try statelessly */
-	LOG(L_ERR, "ERROR: fwd-ing a 2xx ACK with T-state failed; "
-		"trying statelessly\n");
-	memset( &to_sock, sizeof to_sock, 0 );
-	to_sock.sin_family = AF_INET;
-	to_sock.sin_port =  dest_port_param;
-	to_sock.sin_addr.s_addr = dest_ip_param;
-	udp_send( buf, len, (struct sockaddr*)(&to_sock), 
-		sizeof(struct sockaddr_in) );
-	free( buf );
-	return 1;
-#endif
 }
+
+#endif
 
 
 
@@ -298,6 +350,8 @@ int forward_serial_branch(struct cell* Trans,int branch)
 	unsigned int     len;
 	char             *buf=0, *shbuf=0;
 	str              backup_uri;
+	union sockaddr_union *to;
+	struct socket_info* send_sock;
 
 	backup_uri.s = p_msg->new_uri.s;
 	backup_uri.len = p_msg->new_uri.len;
@@ -324,7 +378,16 @@ int forward_serial_branch(struct cell* Trans,int branch)
 	/* updates the new uri*/
 	p_msg->new_uri.s = Trans->uac[branch].uri.s;
 	p_msg->new_uri.len = Trans->uac[branch].uri.len;
-	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
+
+	to=&Trans->uac[branch].request.to;
+	send_sock=get_send_socket(to);
+	if (send_sock==0) {
+		LOG(L_ERR, "ERROR: t_forward_nonack: can't fwd to af %d "
+		"no corresponding listening socket\n", to->s.sa_family );
+		ser_error=E_NO_SOCKET;
+		goto error;
+	}
+	if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len, send_sock )))
 		goto error;
 	shm_free(Trans->uac[branch].uri.s);
 
@@ -345,7 +408,7 @@ int forward_serial_branch(struct cell* Trans,int branch)
 		:(p_msg->first_line.u.request.uri.len);
 	Trans->nr_of_outgoings++ ;
 	/* send the request */
-	Trans->uac[branch].request.to.sin_family = AF_INET;
+	/* -v6; -jiri Trans->uac[branch].request.to.sin_family = AF_INET; */
 	SEND_BUFFER( &(T->uac[branch].request) );
 
 	pkg_free( buf ) ;

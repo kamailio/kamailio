@@ -17,12 +17,14 @@
 #include "../../timer.h"
 #include "../../forward.h"
 #include "../../mem/mem.h"
-
 #include "../../md5utils.h"
+#include "../../ip_addr.h"
 
 #include "config.h"
 #include "lock.h"
 #include "timer.h"
+#include "sh_malloc.h"
+#include "sip_msg.h"
 
 
 struct s_table;
@@ -30,27 +32,10 @@ struct timer;
 struct entry;
 struct cell;
 
-struct fork
-{
-	unsigned int  ip,port;
-	unsigned char free_flag;
-	str           uri;
-
-};
-
-
 extern struct cell      *T;
 extern unsigned int     global_msg_id;
 extern struct s_table*  hash_table;
-extern struct fork      t_forks[ NR_OF_CLIENTS ];
-extern unsigned int     nr_forks;
 
-
-#include "sh_malloc.h"
-
-#include "timer.h"
-#include "lock.h"
-#include "sip_msg.h"
 
 
 #define LOCK_REPLIES(_t) lock(&(_t)->reply_mutex )
@@ -66,17 +51,35 @@ extern unsigned int     nr_forks;
    for reducing time spend in REPLIES locks
 */
 
-#define SEND_PR_BUFFER(_rb,_bf,_le ) \
-	{\
-		if ((_bf) && (_le) && (_bf) ) {\
-			udp_send( (_bf), (_le), (struct sockaddr*)&((_rb)->to) , \
-				sizeof(struct sockaddr_in) ); \
-		}else{ \
-			LOG(L_CRIT,"ERROR: sending an empty buffer from %s (%d)\n",\
-				__FUNCTION__, __LINE__ );\
-		}\
+inline static int send_pr_buffer( struct retr_buf *rb,
+	void *buf, int len, char *function, int line )
+{
+	if (buf && len && rb )
+		return udp_send( rb->send_sock, buf, 
+			len, &rb->to,  sizeof(union sockaddr_union) ) ;
+	else {
+		LOG(L_CRIT, "ERROR: sending an empty buffer from %s (%d)\n",
+			function, line );
+		return -1;
 	}
+}
 
+#define SEND_PR_BUFFER(_rb,_bf,_le ) \
+	send_pr_buffer( (_rb), (_bf), (_le),  __FUNCTION__, __LINE__ )
+
+/*
+#define SEND_PR_BUFFER(_rb,_bf,_le ) \
+	( ((_bf) && (_le) && (_bf)) ? \
+	udp_send( (_bf), (_le), &((_rb)->to), sizeof(union sockaddr_union) ) : \
+	log_send_error( __FUNCTION__, __LINE__ ) )
+*/
+
+/* just for understanding of authors of the following macros, who did not
+   include 'PR' in macro names though they use 'PR' macro: PR stands for
+   PRIVATE and indicates usage of memory buffers in PRIVATE memory space,
+   where -- as opposed to SHARED memory space -- no concurrent memory
+   access can occur and thus no locking is needed ! -jiri
+*/
 #define SEND_ACK_BUFFER( _rb ) \
 	SEND_PR_BUFFER( (_rb) , (_rb)->ack , (_rb)->ack_len )
 
@@ -134,9 +137,10 @@ extern unsigned int     nr_forks;
 
 
 
-
+/*
 enum addifnew_status { AIN_ERROR, AIN_RETR, AIN_NEW, AIN_NEWACK,
 	AIN_OLDACK, AIN_RTRACK } ;
+*/
 
 
 int   tm_startup();
@@ -165,8 +169,10 @@ int t_check( struct sip_msg* , int *branch , int* is_cancel);
  *       1 - forward successfull
  *      -1 - error during forward
  */
+/* v6; -jiri
 int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
 										unsigned int dst_port);
+*/
 
 
 
@@ -175,7 +181,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
  *       1 - forward successfull
  *      -1 - error during forward
  */
+/* v6; -jiri
 int t_forward_uri( struct sip_msg* p_msg  );
+*/
 
 
 
@@ -239,11 +247,16 @@ int t_unref( /* struct sip_msg* p_msg */ );
 
 
 
-
+/* v6; -jiri
 int t_forward_nonack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param );
 int t_forward_ack( struct sip_msg* p_msg , unsigned int dest_ip_param ,
 	unsigned int dest_port_param );
+*/
+int t_forward_nonack( struct sip_msg* p_msg, struct proxy_l * p );
+int t_forward_ack( struct sip_msg* p_msg );
+
+
 int forward_serial_branch(struct cell* Trans,int branch);
 struct cell* t_lookupOriginalT(  struct s_table* hash_table,
 	struct sip_msg* p_msg );
@@ -264,10 +277,11 @@ int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 int t_build_and_send_CANCEL(struct cell *Trans, unsigned int branch);
 char *build_ack( struct sip_msg* rpl, struct cell *trans, int branch ,
 	int *ret_len);
-enum addifnew_status t_addifnew( struct sip_msg* p_msg );
-int t_add_fork( unsigned int ip , unsigned int port, char* uri_s,
-	unsigned int uri_len, enum fork_type type, unsigned char free_flag);
-int t_clear_forks( );
+
+int t_addifnew( struct sip_msg* p_msg );
+
+void timer_routine(unsigned int, void*);
+
 
 
 
@@ -356,7 +370,9 @@ static inline void reset_retr_timers( struct s_table *h_table,
 	DBG("DEBUG:stop_RETR_and_FR_timers : timers stopped\n");
 }
 
+void delete_cell( struct cell *p_cell );
 
+int t_newtran( struct sip_msg* p_msg );
 
 #endif
 

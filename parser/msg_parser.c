@@ -15,6 +15,8 @@
 #include "../dprint.h"
 #include "../data_lump_rpl.h"
 #include "../mem/mem.h"
+#include "../error.h"
+#include "../globals.h"
 
 #ifdef DEBUG_DMALLOC
 #include <mem/dmalloc.h>
@@ -422,13 +424,13 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	next=q_memchr(buf, ':',  len);
 	if ((next==0)||(strncmp(buf,"sip",next-buf)!=0)){
 		LOG(L_DBG, "ERROR: parse_uri: bad sip uri\n");
-		ret=E_UNSPEC;
+		ser_error=ret=E_BAD_URI;
 		goto error;
 	}
 	buf=next+1; /* next char after ':' */
 	if (buf>end){
 		LOG(L_DBG, "ERROR: parse_uri: uri too short\n");
-		ret=E_UNSPEC;
+		ser_error=ret=E_BAD_URI;
 		goto error;
 	}
 	/*look for '@' */
@@ -449,7 +451,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			uri->user.s=(char*)pkg_malloc(next-user+1);
 			if (uri->user.s==0){
 				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
-				ret=E_OUT_OF_MEM;
+				ser_error=ret=E_OUT_OF_MEM;
 				goto error;
 			}
 			memcpy(uri->user.s, user, next-user);
@@ -460,7 +462,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			uri->user.s=(char*)pkg_malloc(passwd-user+1);
 			if (uri->user.s==0){
 				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
-				ret=E_OUT_OF_MEM;
+				ser_error=ret=E_OUT_OF_MEM;
 				goto error;
 			}
 			memcpy(uri->user.s, user, passwd-user);
@@ -470,7 +472,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 			uri->passwd.s=(char*)pkg_malloc(next-passwd+1);
 			if (uri->passwd.s==0){
 				LOG(L_ERR,"ERROR:parse_uri: memory allocation failure\n");
-				ret=E_OUT_OF_MEM;
+				ser_error=ret=E_OUT_OF_MEM;
 				goto error;
 			}
 			memcpy(uri->passwd.s, passwd, next-passwd);
@@ -482,7 +484,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 	/* try to find the rest */
 	if(host>=end){
 		LOG(L_DBG, "ERROR: parse_uri: missing hostport\n");
-		ret=E_UNSPEC;
+		ser_error=ret=E_UNSPEC;
 		goto error;
 	}
 	next=host;
@@ -529,14 +531,14 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		if ( ((params) &&(params<port))||((headers) &&(headers<port)) ){
 			/* error -> invalid uri we found ';' or '?' before ':' */
 			LOG(L_DBG, "ERROR: parse_uri: malformed sip uri\n");
-			ret=E_UNSPEC;
+			ser_error=ret=E_BAD_URI;
 			goto error;
 		}
 		port_len=(params)?params-port:(headers)?headers-port:end-port;
 		uri->port.s=pkg_malloc(port_len+1);
 		if (uri->port.s==0){
 			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-			ret=E_OUT_OF_MEM;
+			ser_error=ret=E_OUT_OF_MEM;
 			goto error;
 		}
 		memcpy(uri->port.s, port, port_len);
@@ -549,14 +551,14 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		if ((headers) && (headers<params)){
 			/* error -> invalid uri we found '?' or '?' before ';' */
 			LOG(L_DBG, "ERROR: parse_uri: malformed sip uri\n");
-			ret=E_UNSPEC;
+			ser_error=ret=E_BAD_URI;
 			goto error;
 		}
 		params_len=(headers)?headers-params:end-params;
 		uri->params.s=pkg_malloc(params_len+1);
 		if (uri->params.s==0){
 			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-			ret=E_OUT_OF_MEM;
+			ser_error=ret=E_OUT_OF_MEM;
 			goto error;
 		}
 		memcpy(uri->params.s, params, params_len);
@@ -570,7 +572,7 @@ int parse_uri(char *buf, int len, struct sip_uri* uri)
 		uri->headers.s=pkg_malloc(headers_len+1);
 		if(uri->headers.s==0){
 			LOG(L_ERR, "ERROR: parse_uri: memory allocation error\n");
-			ret=E_OUT_OF_MEM;
+			ser_error=ret=E_OUT_OF_MEM;
 			goto error;
 		}
 		memcpy(uri->headers.s, headers, headers_len);
@@ -611,6 +613,7 @@ int parse_headers(struct sip_msg* msg, int flags)
 	while( tmp<end && (flags & msg->parsed_flag) != flags){
 		hf=pkg_malloc(sizeof(struct hdr_field));
 		if (hf==0){
+			ser_error=E_OUT_OF_MEM;
 			LOG(L_ERR, "ERROR:parse_headers: memory allocation error\n");
 			goto error;
 		}
@@ -710,6 +713,7 @@ skip:
 	return 0;
 
 error:
+	ser_error=E_BAD_REQ;
 	if (hf) pkg_free(hf);
 	return -1;
 }

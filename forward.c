@@ -73,6 +73,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	
 	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (to==0){
+		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
 		goto error;
 	}
@@ -96,6 +97,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	if (send_sock==0){
 		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d "
 				"no coresponding listening socket\n", to->s.sa_family);
+		ser_error=E_NO_SOCKET;
 		goto error;
 	}
 	
@@ -110,6 +112,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	
 	if (udp_send( send_sock, buf, len,  to, 
 							sizeof(union sockaddr_union))==-1){
+			ser_error=E_SEND;
 			p->errors++;
 			p->ok=0;
 			STATS_TX_DROPS;

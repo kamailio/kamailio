@@ -8,7 +8,7 @@
 #include "h_table.h"
 #include "t_funcs.h"
 
-typedef enum { TMCB_REPLY,  TMCB_E2EACK, TMCB_END } tmcb_type;
+typedef enum { TMCB_REPLY,  TMCB_E2EACK, TMCB_REPLY_IN, TMCB_REQUEST_OUT, TMCB_END } tmcb_type;
 
 typedef void (transaction_cb) ( struct cell* t, struct sip_msg* msg );
 

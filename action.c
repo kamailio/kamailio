@@ -16,6 +16,7 @@
 #include "ut.h"
 #include "sr_module.h"
 #include "mem/mem.h"
+#include "globals.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -48,6 +49,13 @@ int do_action(struct action* a, struct sip_msg* msg)
 	struct sip_uri uri;
 	unsigned short port;
 
+	/* reset the value of error to E_UNSPEC so avoid unknowledgable
+	   functions to return with errror (status<0) and not setting it
+	   leaving there previous error; cache the previous value though
+	   for functions which want to process it */
+	prev_ser_error=ser_error;
+	ser_error=E_UNSPEC;
+
 	ret=E_BUG;
 	switch (a->type){
 		case DROP_T:
@@ -63,10 +71,10 @@ int do_action(struct action* a, struct sip_msg* msg)
 						tmp=msg->first_line.u.request.uri.s;
 						len=msg->first_line.u.request.uri.len;
 				}
-				if (parse_uri(tmp, len, &uri)<0){
+				ret=parse_uri(tmp, len, &uri );
+				if (ret<0) {
 					LOG(L_ERR, "ERROR: do_action: forward: bad_uri <%s>,"
 								" dropping packet\n",tmp);
-					ret=E_UNSPEC;
 					break;
 				}
 				switch (a->p2_type){
@@ -80,7 +88,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 											LOG(L_ERR, "ERROR: do_action: "
 												"forward: bad port in "
 												"uri: <%s>\n", uri.port.s);
-											ret=E_UNSPEC;
+											ret=E_BAD_URI;
 											goto error_fwd_uri;
 										}
 									}else port=SIP_PORT;

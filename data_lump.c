@@ -5,6 +5,8 @@
 #include "data_lump.h"
 #include "dprint.h"
 #include "mem/mem.h"
+#include "globals.h"
+#include "error.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +14,6 @@
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
 #endif
-
 
 
 /* adds a header to the end
@@ -75,6 +76,7 @@ struct lump* insert_new_lump_after( struct lump* after, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: insert_new_lump_after: out of memory\n");
 		return 0;
 	}
@@ -99,6 +101,7 @@ struct lump* insert_new_lump_before( struct lump* before, char* new_hdr,
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR,"ERROR: insert_new_lump_before: out of memory\n");
 		return 0;
 	}
@@ -152,6 +155,7 @@ struct lump* anchor_lump(struct lump** list, int offset, int len, int type)
 
 	tmp=pkg_malloc(sizeof(struct lump));
 	if (tmp==0){
+		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: insert_new_lump_before: out of memory\n");
 		return 0;
 	}
