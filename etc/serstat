@@ -1,6 +1,12 @@
 #!/bin/sh
+#
+# $Id$
+#
+# check current status of ser: print running processes and
+# -- if in possession of MySql password -- dump USRLOC database
+# as well
 
-#ps -ef|grep '/sr'| grep -v grep
+
 PIDS=`ps --no-headers -o "pid" -C sr`
 for i in $PIDS ;  do
 	ps -o "pid,user,group,euser,egroup,fuser,fgroup,args" $i

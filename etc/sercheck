@@ -1,4 +1,11 @@
 #!/bin/sh
+#
+# $Id$
+#
+# use to check whether all ser processes are running; if not, restart
+# and issue an alert; run from cron daemon for best results :-)
+#
+
 
 NOTIFY=sr@iptel.org
 SERDIR=/home/srouter/sip_router
