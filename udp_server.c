@@ -234,6 +234,13 @@ int udp_rcv_loop()
 			len--;
 		}
 #endif
+#ifdef DBG_MSG_QA
+		if (!dbg_msg_qa(buf, len)) {
+			LOG(L_WARN, "WARNING: an incoming message didn't pass test, drop it: %.*s\n",
+				len, buf );
+			continue;
+		}
+#endif
 		
 		/* receive_msg must free buf too!*/
 		receive_msg(buf, len, from);
@@ -259,7 +266,7 @@ error:
    in generated messages; this debugging option aborts if
    any such message is sighted
 */
-void dbg_msg_qa(char *buf, int len)
+int dbg_msg_qa(char *buf, int len)
 {
 #define _DBG_WS_LEN 3
 #define _DBG_WS "   "
@@ -273,7 +280,7 @@ void dbg_msg_qa(char *buf, int len)
 	/* is there a zero character inthere ? */	
 	if (memchr(buf, 0, len)) {
 		LOG(L_CRIT, "BUG: message being sent with 0 in it\n");
-		abort();
+		return 0;
 	}
 
 	my_len=len;
@@ -288,7 +295,7 @@ void dbg_msg_qa(char *buf, int len)
 							if (space_cnt==4) {
 								LOG(L_CRIT, "BUG(propably): DBG_MSG_QA: "
 									"too many spaces\n");
-								abort();
+								return 0;
 							}
 						} else space_cnt=0;
 						state=QA_SPACE; 
@@ -314,7 +321,7 @@ void dbg_msg_qa(char *buf, int len)
 
 
 qa_passed:
-	return;
+	return 1;
 }
 
 #endif
@@ -328,7 +335,10 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 
 #ifdef DBG_MSG_QA
 	/* aborts on error, does nothing otherwise */
-	dbg_msg_qa( buf, len );
+	if (!dbg_msg_qa( buf, len )) {
+		LOG(L_ERR, "ERROR: udp_send: dbg_msg_qa failed\n");
+		abort();
+	}
 #endif
 
 
