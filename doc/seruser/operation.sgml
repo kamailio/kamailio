@@ -1157,7 +1157,7 @@ if (!lookup("location")) {
 			<para>
 				In some scenarios, it may be beneficial only to use only one
 				registered contact per user. If that is the case, setting
-				registar module's parameter <varname>append_branches</varname>
+				registrar module's parameter <varname>append_branches</varname>
 				to 1 will eliminate forking and forward all requests only
 				to a single contact. If there are multiple contacts, a contact
 				with highest priority is chosen. This can be changed to
