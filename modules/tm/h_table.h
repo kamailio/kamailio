@@ -13,9 +13,9 @@
 #include "../../msg_parser.h"
 
 struct s_table;
-struct timer;
 struct entry;
 struct cell;
+struct timer;
 
 #include "timer.h"
 #include "lock.h"
@@ -30,6 +30,15 @@ struct cell;
 #define TABLE_ENTRIES  256
 #define MAX_FORK           20
 
+
+/* timer list: includes head, tail and protection semaphore */
+typedef struct  timer
+{
+   struct timer_link *first_tl;
+   struct timer_link *last_tl;
+   ser_lock_t             mutex;
+   void                      (*timeout_handler)(void*);
+} timer_type;
 
 
 

@@ -30,17 +30,7 @@ typedef struct timer_link
    void                      *payload;
 }timer_link_type ;
 
-#include "lock.h"
-
-/* timer list: includes head, tail and protection semaphore */
-typedef struct  timer
-{
-   struct timer_link *first_tl;
-   struct timer_link *last_tl;
-   ser_lock_t             mutex;
-   void                      (*timeout_handler)(void*);
-} timer_type;
-
+#include "h_table.h"
 
 
 void                        add_to_tail_of_timer_list( struct s_table* hash_table , struct timer_link * tl , int list_id, unsigned int time_out );

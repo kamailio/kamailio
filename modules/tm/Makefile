@@ -39,7 +39,7 @@ dep: $(depends)
 
 .PHONY: clean
 clean:
-	-rm $(objs) $(NAME)
+	-rm -f $(objs) $(NAME)
 
 .PHONY: proper
 proper: clean
