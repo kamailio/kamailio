@@ -316,10 +316,10 @@ int parse_headers(struct sip_msg* msg, int flags)
 			msg->last_header->next=hf;
 			msg->last_header=hf;
 		}
-	#ifdef EXTRA_DEBUG
+#ifdef EXTRA_DEBUG
 		DBG("header field type %d, name=<%s>, body=<%s>\n",
 			hf->type, hf->name.s, hf->body.s);
-	#endif
+#endif
 		tmp=rest;
 	}
 skip:
