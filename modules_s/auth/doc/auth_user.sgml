@@ -75,9 +75,25 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 	    </example>
 	</section>
 	<section>
+	    <title><varname>rpid_prefix</varname> (string)</title>
+	    <para>
+		Prefix to be added to Remote-Party-ID header field just before the &uri; returned
+		from either radius or database.
+	    </para>
+	    <para>
+		Default value is <quote></quote>.
+	    </para>
+	    <example>
+		<title>rpid_prefix</title>
+		<programlisting format="linespecific">
+modparam("auth", "rpid_prefix", "Whatever <")
+</programlisting>
+	    </example>
+	</section>	
+	<section>
 	    <title><varname>rpid_suffix</varname> (string)</title>
 	    <para>
-		Suffix to be added to Remote-Party-ID header field after the URI returned from
+		Suffix to be added to Remote-Party-ID header field after the &uri; returned from
 		either radius or database.
 	    </para>
 	    <para>
@@ -86,7 +102,7 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 	    <example>
 		<title>rpid_suffix</title>
 		<programlisting format="linespecific">
-modparam("auth", "rpid_suffix", "whatever")
+modparam("auth", "rpid_suffix", "@1.2.3.4>")
 </programlisting>
 	    </example>
 	</section>
