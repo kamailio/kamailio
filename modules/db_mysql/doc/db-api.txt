@@ -363,7 +363,7 @@ This function implements SELECT SQL directive.
 
    int db_query(db_con_t* _h, db_key_t* _k,
                 db_val_t* _v, db_key_t* _c, 
-	        int _n, int _nc, db_res_t** _r);
+	        int _n, int _nc, db_key_t _o, db_res_t** _r);
 
 2.4.3 Parameters
 
@@ -374,6 +374,7 @@ _v: Array of values, columns specified in _k parameter must match these values
 _c: Array of column names that you are interested in
 _n: Number of key-value pairs to match in _k and _v parameters
 _nc: Number of columns in _c parameter
+_o: Order by
 _r: Address of variable where pointer to the result will be stored
 
 If _k and _v parameters are NULL and _n is zero, you will get the whole table.

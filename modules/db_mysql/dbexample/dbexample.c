@@ -197,7 +197,7 @@ struct module_exports* mod_register()
 	      * Last but not least, dump the result of db_query
 	      */
 
-	if (db_query(h, NULL, NULL, NULL, 0, 0, &res) == FALSE) {
+	if (db_query(h, NULL, NULL, NULL, 0, 0, NULL, &res) == FALSE) {
 		fprintf(stderr, "Error while querying table\n");
 		return &dbex_exports;
 	}
