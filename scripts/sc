@@ -37,6 +37,7 @@ fi
 GENHA1='gen_ha1'
 MYSQL='mysql'
 SER='sr'
+LAST_LINE='tail -1'
 
 # ACL name verification
 VERIFY_ACL=1
@@ -139,7 +140,11 @@ check_uri() {
 # output: PW
 prompt_pw() {
 	if [ -z "$PW" ] ; then
-    	read -s -p "MySql Password: " PW
+		savetty=`stty -g`
+		printf "MySql password: "
+		stty -echo
+    	read PW
+		stty $savetty
     	echo
 	fi
 }
@@ -261,8 +266,12 @@ wait
 sql_query() {
 	# if password not yet queried, query it now
 	if [ -z "$PW" ] ; then
-		read -s -p "MySql Password: " PW >&2
-		echo >&2
+		savetty=`stty -g`
+		printf "MySql password: "
+		stty -echo
+    	read PW >&2
+		stty $savetty
+    	echo >&2
 	fi
 	$MYSQL $2 -h $SQL_HOST -u $SQL_USER "-p$PW" -e "$1 ;" $SQL_DB
 }
@@ -426,7 +435,7 @@ acl() {
 is_user() {
 	QUERY="select count(*) from $TABLE \
 		where $SUBSCRIBER_COLUMN='$1' and $REALM_COLUMN='$SIP_DOMAIN';"
-	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | tail -n1`
+	CNT=`sql_ro_query "$QUERY" | grep -v ERROR | $LAST_LINE`
 	if [ "0$CNT" -eq 0 ] ; then
 		false
 	else
@@ -558,7 +567,7 @@ case $1 in
 		shift
 		QUERY="select $TABLE.$EMAIL_COLUMN from $TABLE where  \
 			$TABLE.$SUBSCRIBER_COLUMN='$1'"
-		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | tail -n1`
+		EA=`sql_ro_query "$QUERY" "-B" | grep -v ERROR | $LAST_LINE`
 		if [ $? -ne 0 ] ; then
 			echo "MySql query failed"
 			exit 1
