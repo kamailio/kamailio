@@ -34,6 +34,9 @@
   * 2003-03-06  aligned to request2response use of tag bookmarks (jiri)
   * 2003-04-04  modified sl_send_reply to use src_port if rport is present
   *              in the topmost via (andrei)
+  * 2003-09-11: updated to new build_lump_rpl() interface (bogdan)
+  * 2003-09-11: sl_tag converted to str to fit to the new
+  *               build_res_buf_from_sip_req() interface (bogdan)
   */
 
 
@@ -57,7 +60,8 @@
 
 
 /* to-tag including pre-calculated and fixed part */
-static char           sl_tag[TOTAG_VALUE_LEN];
+static char           sl_tag_buf[TOTAG_VALUE_LEN];
+static str            sl_tag = {sl_tag_buf,TOTAG_VALUE_LEN};
 /* from here, the variable prefix begins */
 static char           *tag_suffix;
 /* if we for this time did not send any stateless reply,
@@ -68,7 +72,7 @@ static unsigned int  *sl_timeout;
 int sl_startup()
 {
 
-	init_tags( sl_tag, &tag_suffix,
+	init_tags( sl_tag.s, &tag_suffix,
 			"SER-stateless",
 			SL_TOTAG_SEPARATOR );
 
@@ -145,7 +149,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 	if (code>=300 && code<400) {
 		dset=print_dset(msg, &dset_len);
 		if (dset) {
-			dset_lump=build_lump_rpl(dset, dset_len);
+			dset_lump=build_lump_rpl(dset, dset_len, LUMP_RPL_HDR);
 			add_lump_rpl(msg, dset_lump);
 		}
 	}
@@ -159,10 +163,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
 		calc_crc_suffix( msg, tag_suffix );
-		buf = build_res_buf_from_sip_req(code,text,sl_tag,TOTAG_VALUE_LEN,
-											msg ,&len, &dummy_bm);
+		buf = build_res_buf_from_sip_req(code,text,&sl_tag,msg,&len,&dummy_bm);
 	} else {
-		buf = build_res_buf_from_sip_req(code,text,0,0,msg ,&len, &dummy_bm);
+		buf = build_res_buf_from_sip_req(code,text,0,msg,&len,&dummy_bm);
 	}
 	if (!buf)
 	{
@@ -240,7 +243,7 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 			/* calculate the variable part of to-tag */	
 			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
-			if (memcmp(tag_str->s,sl_tag,TOTAG_VALUE_LEN)==0) {
+			if (memcmp(tag_str->s,sl_tag.s,sl_tag.len)==0) {
 				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
 				return 0;
 			}
