@@ -63,7 +63,7 @@
 # if requests URI is numerical and starts with
 # zero, forward statelessly to a static destination
 
-if (uri=~"^sip:0[0-9]*@iptel.org) {
+if (uri=~"^sip:0[0-9]*@iptel.org") {
     forward( 192.168.99.3, 5080 );
 } 
 		</programlisting>
