@@ -318,10 +318,14 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 				goto error;
 			}
 
+			t->len = _s->s - t->name.s;
+
 			trim_leading(_s);
 			if (_s->len == 0) {
 				goto ok;
 			}
+		} else {
+			t->len = _s-s - t->name.s;
 		}
 
 		if (_s->s[0] == ',') goto ok; /* To be able to parse header parameters */
@@ -394,7 +398,7 @@ static inline void print_param(param_t* _p)
 	printf("type: %s\n", type);
 	printf("name: \'%.*s\'\n", _p->name.len, _p->name.s);
 	printf("body: \'%.*s\'\n", _p->body.len, _p->body.s);
-	
+	printf("len : %d\n", _p->len);
 	printf("---/param---\n");
 }
 

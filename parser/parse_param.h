@@ -65,6 +65,7 @@ typedef struct param {
 	ptype_t type;         /* Type of the parameter */
 	str name;             /* Parameter name */
 	str body;             /* Parameter body */
+	int len;              /* Total lenght of the parameter including = and quotes */
 	struct param* next;   /* Next parameter in the list */
 } param_t;
 
