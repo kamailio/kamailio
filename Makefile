@@ -27,6 +27,8 @@
 #  2003-08-29  install-modules-doc split from install-doc, added 
 #               install-modules-all, removed README.cfg (andrei)
 #              added skip_cfg_install (andrei)
+#  2004-09-02  install-man will automatically "fix" the path of the files
+#               referred in the man pages
 #
 
 auto_gen=lex.yy.c cfg.tab.c   #lexx, yacc etc
@@ -328,8 +330,15 @@ install-modules-doc: $(doc-prefix)/$(doc-dir)
 
 
 install-man: $(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
-	$(INSTALL-TOUCH)  $(man-prefix)/$(man-dir)/man8/ser.8 
-	$(INSTALL-MAN)  ser.8 $(man-prefix)/$(man-dir)/man8/
-	$(INSTALL-TOUCH)  $(man-prefix)/$(man-dir)/man5/ser.cfg.5 
-	$(INSTALL-MAN)  ser.cfg.5 $(man-prefix)/$(man-dir)/man5
-
+		sed -e "s#/etc/ser/ser\.cfg#$(cfg-target)ser.cfg#g" \
+			-e "s#/usr/sbin/#$(bin-target)#g" \
+			-e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
+			-e "s#/usr/share/doc/ser/#$(doc-target)#g" \
+			< ser.8 >  $(man-prefix)/$(man-dir)/man8/ser.8
+		chmod 644  $(man-prefix)/$(man-dir)/man8/ser.8
+		sed -e "s#/etc/ser/ser\.cfg#$(cfg-target)ser.cfg#g" \
+			-e "s#/usr/sbin/#$(bin-target)#g" \
+			-e "s#/usr/lib/ser/modules/#$(modules-target)#g" \
+			-e "s#/usr/share/doc/ser/#$(doc-target)#g" \
+			< ser.cfg.5 >  $(man-prefix)/$(man-dir)/man5/ser.cfg.5
+		chmod 644  $(man-prefix)/$(man-dir)/man5/ser.cfg.5

@@ -1287,19 +1287,19 @@ int main(int argc, char** argv)
 	}
 
 	/* seed the prng */
-	/* try to use /dev/random if possible */
+	/* try to use /dev/urandom if possible */
 	seed=0;
-	if ((rfd=open("/dev/random", O_RDONLY))!=-1){
+	if ((rfd=open("/dev/urandom", O_RDONLY))!=-1){
 try_again:
 		if (read(rfd, (void*)&seed, sizeof(seed))==-1){
 			if (errno==EINTR) goto try_again; /* interrupted by signal */
-			LOG(L_WARN, "WARNING: could not read from /dev/random (%d)\n",
+			LOG(L_WARN, "WARNING: could not read from /dev/urandom (%d)\n",
 						errno);
 		}
-		DBG("read %u from /dev/random\n", seed);
+		DBG("read %u from /dev/urandom\n", seed);
 			close(rfd);
 	}else{
-		LOG(L_WARN, "WARNING: could not open /dev/random (%d)\n", errno);
+		LOG(L_WARN, "WARNING: could not open /dev/urandom (%d)\n", errno);
 	}
 	seed+=getpid()+time(0);
 	DBG("seeding PRNG with %u\n", seed);
