@@ -844,7 +844,7 @@ send_rtpp_command(const struct iovec *v, int vcnt, int getreply)
 {
 	struct sockaddr_un addr;
 	int fd, len;
-	static char buf[21];
+	static char buf[64];
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_LOCAL;
