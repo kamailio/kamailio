@@ -1,8 +1,3 @@
-/*
- * $Id$
- */
-
-
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../config.h"
@@ -161,14 +156,10 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
                if ( /*callid length*/ p_cell->inbound_request->callid->body.len == p_msg->callid->body.len )
                   if ( /*cseq length*/ p_cell->inbound_request->cseq->body.len == p_msg->cseq->body.len )
                      /* so far the lengths are the same -> let's check the contents */
-                        if ( /*from*/ !p_cell->inbound_request->from->body.s || !p_msg->from->body.s ||
-                           !memcmp( p_cell->inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
-                           if ( /*to*/ !p_cell->inbound_request->callid->body.s || !p_msg->callid->body.s   ||
-                               !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
-                               if ( /*callid*/  !p_cell->inbound_request->callid->body.s || !p_msg->callid->body.s ||
-                                  !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
-                                  if ( /*cseq*/  !p_cell->inbound_request->cseq->body.s || !p_msg->cseq->body.s  ||
-                                     !memcmp( p_cell->inbound_request->cseq->body.s , p_msg->cseq->body.s , p_msg->cseq->body.len ) )
+                        if ( /*from*/ !memcmp( p_cell->inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
+                           if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
+                               if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
+                                  if ( /*cseq*/ !memcmp( p_cell->inbound_request->cseq->body.s , p_msg->cseq->body.s , p_msg->cseq->body.len ) )
                                      { /* WE FOUND THE GOLDEN EGG !!!! */
                                         DBG("DEBUG: t_lookup_request: non-ACK found\n");
                                         T = p_cell;
@@ -186,14 +177,11 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
                       if ( /*cseq_method type*/ p_cell->inbound_request->first_line.u.request.method_value == METHOD_INVITE  )
                          //if ( /*tag length*/ p_cell->tag &&  p_cell->tag->len==p_msg->tag->body.len )
                             /* so far the lengths are the same -> let's check the contents */
-                            if ( /*from*/ !p_cell->inbound_request->from->body.s || !p_msg->from->body.s ||
-                                 !memcmp( p_cell->inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
+                            if ( /*from*/ !memcmp( p_cell->inbound_request->from->body.s , p_msg->from->body.s , p_msg->from->body.len ) )
                                //if ( /*to*/ !memcmp( p_cell->inbound_request->to->body.s , p_msg->to->body.s , p_msg->to->body.len)  )
                                   //if ( /*tag*/ !memcmp( p_cell->tag->s , p_msg->tag->body.s , p_msg->tag->body.len ) )
-                                     if ( /*callid*/ !p_cell->inbound_request->callid->body.s || !p_msg->callid->body.s ||
-                                        !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
-                                        if ( /*cseq_nr*/ !get_cseq(p_cell->inbound_request)->number.s || !get_cseq(p_msg)->number.s ||
-                                           !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
+                                     if ( /*callid*/ !memcmp( p_cell->inbound_request->callid->body.s , p_msg->callid->body.s , p_msg->callid->body.len ) )
+                                        if ( /*cseq_nr*/ !memcmp( get_cseq(p_cell->inbound_request)->number.s , get_cseq(p_msg)->number.s , get_cseq(p_msg)->number.len ) )
                                            { /* WE FOUND THE GOLDEN EGG !!!! */
                                               DBG("DEBUG: t_lookup_request: ACK found\n");
                                               T = p_cell;
