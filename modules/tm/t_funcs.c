@@ -90,9 +90,6 @@ int t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar )
    new_cell = build_cell( p_msg ) ;
    if  ( !new_cell )
       return -1;
-   /*init the links with the canceled / canceler transaction */
-   new_cell->T_canceled  = T_UNDEFINED;
-   new_cell->T_canceler  = T_UNDEFINED;
    /*insert the transaction into hash table*/
    insert_into_hash_table( hash_table , new_cell );
    DBG("DEBUG: t_add_transaction: new transaction inserted, hash: %d\n", new_cell->hash_index );
@@ -258,12 +255,14 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       {
          DBG("DEBUG: t_forward: it's CANCEL\n");
          /* find original cancelled transaction; if found, use its next-hops; otherwise use those passed by script */
-         if (!T->T_canceled)
+         if ( T->T_canceled==T_UNDEFINED )
             T->T_canceled = t_lookupOriginalT( hash_table , p_msg );
          /* if found */
-         if (T->T_canceled)
-         {  /* if in 1xx status, send to the same destination */
-          if ( (T->T_canceled->status/100)==1 )
+         if ( T->T_canceled!=T_NULL )
+         {
+            T->T_canceled->T_canceler = T;
+            /* if in 1xx status, send to the same destination */
+            if ( (T->T_canceled->status/100)==1 )
             {
                DBG("DEBUG: t_forward: it's CANCEL and I will send to the same place where INVITE went\n");
                dest_ip    = T->T_canceled->outbound_request[branch]->to.sin_addr.s_addr;
@@ -326,11 +325,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    {
        /* if no transaction to CANCEL */
       /* or if the canceled transaction has a final status -> drop the CANCEL*/
-      if ( !T->T_canceled || T->T_canceled->status>=200)
+      if ( T->T_canceled==T_NULL || T->T_canceled->status>=200)
        {
            remove_from_timer_list( hash_table , (&(T->outbound_request[branch]->tl[FR_TIMER_LIST])) , FR_TIMER_LIST);
            remove_from_timer_list( hash_table , (&(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST])), RETRASMISSIONS_LIST );
-         return 1;
+           return 1;
        }
    }
 
@@ -591,6 +590,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    }
 
    buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+   DBG("DEBUG: t_send_reply: buffer computed\n");
 
    if (!buf)
    {
@@ -611,8 +611,10 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    T->status = code;
 
    /* start/stops the proper timers*/
+   DBG("DEBUG: t_send_reply: update timers\n");
    t_update_timers_after_sending_reply( T->outbound_response );
 
+   DBG("DEBUG: t_send_reply: send reply\n");
    t_retransmit_reply( p_msg, 0 , 0);
 
    return 1;
@@ -1011,9 +1013,12 @@ int t_update_timers_after_sending_reply( struct retrans_buff *rb )
    }
    else if ( Trans->inbound_request->first_line.u.request.method_value==METHOD_CANCEL )
    {
-      if (!Trans->T_canceled)
+      if ( Trans->T_canceled==T_UNDEFINED )
             Trans->T_canceled = t_lookupOriginalT( hash_table , Trans->inbound_request );
-      if ( Trans->T_canceled && Trans->T_canceled->status>=200)
+      if ( Trans->T_canceled==T_NULL )
+            return 1;
+      Trans->T_canceled->T_canceler = Trans;
+     if ( Trans->T_canceled->status>=200)
             t_put_on_wait( Trans );
    }
    else if (Trans->status>=200)

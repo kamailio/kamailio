@@ -31,6 +31,10 @@ struct timer;
 #define MAX_FORK           20
 
 
+#define T_UNDEFINED 	( (struct cell*) -1 )
+#define T_NULL		( (struct cell*) 0 )
+
+
 /* timer list: includes head, tail and protection semaphore */
 typedef struct  timer
 {
