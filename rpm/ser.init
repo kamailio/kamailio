@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Startup script for SER
+#
+# chkconfig: 345 85 15
+# description: Ser is a fast SIP Proxy.
+#
+# processname: ser
+# pidfile: /var/run/ser.pid
+# config: /etc/ser/ser.cfg
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+ser=/usr/sbin/ser
+prog=ser
+RETVAL=0
+
+start() {
+        echo -n $"Starting $prog: "
+        daemon $ser $OPTIONS
+        RETVAL=$?
+        echo
+        [ $RETVAL = 0 ] && touch /var/lock/subsys/ser
+        return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	killproc $ser
+	RETVAL=$?
+	echo
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/ser /var/run/ser.pid
+}
+
+reload() {
+	echo -n $"Reloading $prog: "
+	killproc $ser -HUP
+	RETVAL=$?
+	echo
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+        status $ser
+	RETVAL=$?
+	;;
+  restart)
+	stop
+	start
+	;;
+  condrestart)
+	if [ -f /var/run/ser.pid ] ; then
+		stop
+		start
+	fi
+	;;
+  *)
+	echo $"Usage: $prog {start|stop|restart|condrestart|status|help}"
+	exit 1
+esac
+
+exit $RETVAL
