@@ -149,10 +149,12 @@ int t_retransmit_reply( /* struct sip_msg* p_msg    */ )
 	LOCK_REPLIES( T );
 
 #ifdef SRL
-	if (!(b=pkg_malloc( len=T->outbound_response.bufflen ))) {
+	len=T->outbound_response.bufflen;
+	b=pkg_malloc( len );
+	if (!b) {
 		UNLOCK_REPLIES( T );
 		return -1;
-	};
+	}
 	memcpy( b, T->outbound_response.retr_buffer, len );
 #else
 	SEND_BUFFER( & T->outbound_response );
@@ -418,7 +420,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 {
 	unsigned int branch,len, msg_status, msg_class, save_clone;
 	unsigned int local_cancel;
-	struct sip_msg *clone;
+	struct sip_msg *clone, *backup;
 	int relay;
 	int start_fr;
 	int is_invite;
@@ -435,6 +437,11 @@ int t_on_reply( struct sip_msg  *p_msg )
 	if (t_check( p_msg  , &branch , &local_cancel)==-1) return 1;
 	/* ... if there is no such, tell the core router to forward statelessly */
 	if ( T<=0 ) return 1;
+
+	/* by default, don't store incoming replies */
+	save_clone = 0;
+
+	backup = 0;
 
 	DBG("DEBUG: t_on_reply_received: Original status=%d (%d,%d)\n",
 		T->status,branch,local_cancel);
@@ -535,21 +542,25 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 		orp_rb->bufflen=orp_len;
 		memcpy( orp_rb->retr_buffer, buf, orp_len );
+
+		/* update the status ... */
+		if ((T->status = p_msg->REPLY_STATUS) >=200 &&
+		/* ... and dst for a possible ACK if we are sending final downstream */
+			T->relaied_reply_branch==-1 ) {
+				memcpy( & T->ack_to, & T->outbound_request[ branch ]->to,
+				sizeof( struct sockaddr_in ) );
+   				T->relaied_reply_branch = branch;
+		}
+
+
 	}; /* if relay ... */
 
 	if (save_clone) {
+		backup = T->inbound_response[branch];
 		T->inbound_response[branch]=clone;
 		T->tag=&(get_to(clone)->tag_value);
 	}
 
-	/* update the status ... */
-	if ((T->status = p_msg->REPLY_STATUS) >=200 &&
-	/* ... and dst for a possible ACK if we are sending final downstream */
-		T->relaied_reply_branch==-1 ) {
-			memcpy( & T->ack_to, & T->outbound_request[ branch ]->to,
-			sizeof( struct sockaddr_in ) );
-   			T->relaied_reply_branch = branch;
-	}
 
 cleanup:
 	UNLOCK_REPLIES( T );
@@ -588,6 +599,7 @@ cleanup:
 		orq_rb->retr_list = RT_T2;
 		set_timer( hash_table, &(orq_rb->retr_timer), RT_T2 );
 	}
+	if (backup) sip_msg_free( backup );
 error2:
 	if (start_fr) set_timer( hash_table, &(orq_rb->fr_timer), FR_INV_TIMER_LIST );
 	if (buf) free( buf );

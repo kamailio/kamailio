@@ -23,14 +23,6 @@
 /*static int test_f(struct sip_msg*, char*,char*);*/
 static int w_t_check(struct sip_msg* msg, char* str, char* str2);
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
-#ifdef _OBSOLETED_TM
-static int w_t_forward(struct sip_msg* msg, char* str, char* str2);
-static int w_t_on_request_received(struct sip_msg* msg, char* str, char* str2);
-static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str2);
-int w_t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  );
-//static int fixup_t_on_request_received(void** param, int param_no);
-static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2);
-#endif
 static int w_t_release(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
 static int fixup_t_forward_def(void** param, int param_no);
@@ -48,13 +40,6 @@ static void w_onbreak(struct sip_msg* msg) { t_unref(); }
 static struct module_exports nm_exports= {
 	"tm_module",
 	(char*[]){			
-#ifdef _OBSOLETED_TM
-				"t_forward",
-				"t_forward_def",
-				"t_forward_uri",
-				"t_on_request_receive_uri",
-				"t_on_request_receive_to",
-#endif
 				"t_add_transaction",
 				"t_lookup_request",
 				"t_send_reply",
@@ -67,14 +52,6 @@ static struct module_exports nm_exports= {
 				"t_forward_ack"
 			},
 	(cmd_function[]){
-#ifdef _OBSOLETED_TM
-					w_t_forward,
-					w_t_forward_def,
-					w_t_forward_uri,
-					w_t_on_request_received_uri,
-					w_t_on_request_received,
-#endif
-
 					w_t_add_transaction,
 					w_t_check,
 					w_t_send_reply,
@@ -87,13 +64,6 @@ static struct module_exports nm_exports= {
 					w_t_forward_ack
 					},
 	(int[]){
-#ifdef _OBSOLETED_TM
-				2, /* t_forward */
-				1, /* t_forward_def */
-				0, /* t_forward_uri */
-				0, /* t_on_request_receive_uri */
-				2, /* t_on_request_receive_to */
-#endif
 				0, /* t_add_transaction */
 				0, /* t_lookup_request */
 				2, /* t_send_reply */
@@ -106,13 +76,6 @@ static struct module_exports nm_exports= {
 				2  /* t_forward_ack */
 			},
 	(fixup_function[]){
-#ifdef _OBSOLETED_TM
-				fixup_t_forward,		/* t_forward */ 
-				fixup_t_forward_def,	/* t_forward_def */
-				0,						/* t_forward_uri */
-				0,						/* t_on_request_receive_uri */
-				fixup_t_forward,		/* t_on_request_receive_to */
-#endif
 				0,						/* t_add_transaction */
 				0,						/* t_lookup_request */
 				fixup_t_send_reply,		/* t_send_reply */
@@ -124,11 +87,7 @@ static struct module_exports nm_exports= {
 				fixup_t_forward, 		/* t_forward_nonack */
 				fixup_t_forward 		/* t_forward_ack */
 		},
-#ifdef _OBSOLETED_TM
-	15,
-#else
 	10,
-#endif
 #ifdef SRL
 	(response_function) t_on_reply,
 #else
@@ -269,47 +228,6 @@ static int w_t_check(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_check( msg , 0 , 0 ) ? 1 : -1;
 }
-
-#ifdef _OBSOLETED_TM
-static int w_t_forward(struct sip_msg* msg, char* str, char* str2)
-{
-	if (t_check( msg , 0 , 0 )==-1) return -1;
-	if (!T) {
-		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
-		return -1;
-	}
-	return t_forward(msg, (unsigned int) str, (unsigned int) str2);
-}
-static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2)
-{
-	if (t_check( msg , 0 , 0 )==-1) return -1;
-	if (!T) {
-		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
-		return -1;
-	}
-	return t_forward(msg, (unsigned int) str, 5060 );
-}
-
-int w_t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  ) {
-	if (t_check( p_msg , 0 , 0)==-1) return -1;
-	if (!T) {
-		DBG("DEBUG: t_forward: no transaction found for request forwarding\n");
-		return -1;
-	}
-	return t_forward_uri(p_msg  );
-}
-static int w_t_on_request_received(struct sip_msg* msg, char* str, char* str2)
-{
-	return t_on_request_received(msg, (unsigned int) str, (unsigned int) str2);
-}
-
-static int w_t_on_request_received_uri(struct sip_msg* msg, char* str, char* str2)
-{
-	return t_on_request_received_uri(msg);
-}
-
-
-#endif
 
 static int w_t_forward_ack(struct sip_msg* msg, char* str, char* str2)
 {
