@@ -41,4 +41,4 @@ inline static int is_empty_end(char* p, char* pend )
 }
 
 
-#endif
+#endif /* parser_f_h */
