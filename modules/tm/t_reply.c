@@ -45,6 +45,10 @@
  *  2003-04-14  local acks generated before reply processing to avoid
  *              delays in length reply processing (like opening TCP
  *              connection to an unavailable destination) (jiri)
+ *  2003-09-11  updates to new build_res_buf_from_sip_req() interface (bogdan)
+ *  2003-09-11  t_reply_with_body() reshaped to use reply_lumps +
+ *              build_res_buf_from_sip_req() instead of
+ *              build_res_buf_with_body_from_sip_req() (bogdan)
  */
 
 
@@ -66,6 +70,7 @@
 #include "../../dset.h"
 #include "../../tags.h"
 #include "../../data_lump.h"
+#include "../../data_lump_rpl.h"
 
 #include "t_hooks.h"
 #include "t_funcs.h"
@@ -83,6 +88,9 @@ enum route_mode rmode=MODE_REQUEST;
 /* private place where we create to-tags for replies */
 /* janakj: made public, I need to access this value to store it in dialogs */
 char tm_tags[TOTAG_VALUE_LEN];
+/* bogdan: pack tm_tag buffer and len into a str to pass them to
+ * build_res_buf_from_sip_req() */
+static str  tm_tag = {tm_tags,TOTAG_VALUE_LEN};
 char *tm_tag_suffix;
 
 /* where to go if there is no positive reply */
@@ -356,20 +364,15 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 				&& (get_to(p_msg)->tag_value.s==0 
 			    || get_to(p_msg)->tag_value.len==0)) {
 		calc_crc_suffix( p_msg, tm_tag_suffix );
-		buf = build_res_buf_from_sip_req(code,text, 
-				tm_tags, TOTAG_VALUE_LEN, 
-				p_msg,&len, &bm);
-
-		return _reply_light(trans,buf,len,code,text,
-				    tm_tags, TOTAG_VALUE_LEN,
-				    lock, &bm);
+		buf = build_res_buf_from_sip_req(code,text, &tm_tag, p_msg, &len, &bm);
+		return _reply_light( trans, buf, len, code, text,
+			tm_tag.s, TOTAG_VALUE_LEN, lock, &bm);
 	} else {
-		buf = build_res_buf_from_sip_req(code,text, 0,0, /* no to-tag */
-			p_msg,&len, &bm);
+		buf = build_res_buf_from_sip_req(code,text, 0 /*no to-tag*/,
+			p_msg, &len, &bm);
 
 		return _reply_light(trans,buf,len,code,text,
-				    0,0, /* no to-tag */
-				    lock, &bm);
+			0, 0, /* no to-tag */lock, &bm);
 	}
 }
 
@@ -867,11 +870,11 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				buf = build_res_buf_from_sip_req(
 						relayed_code,
 						error_text(relayed_code),
-						tm_tags, TOTAG_VALUE_LEN, 
+						&tm_tag,
 						t->uas.request, &res_len, &bm );
 			} else {
 				buf = build_res_buf_from_sip_req( relayed_code,
-					error_text(relayed_code), 0,0, /* no to-tag */
+					error_text(relayed_code), 0/* no to-tag */,
 					t->uas.request, &res_len, &bm );
 			}
 
@@ -1159,42 +1162,71 @@ done:
 int t_reply_with_body( struct cell *trans, unsigned int code, 
 		char * text, char * body, char * new_header, char * to_tag )
 {
-
-    str  s_to_tag,sb,snh;
-    char* res_buf;
-    unsigned int res_len;
-	int ret;
+	struct lump_rpl *hdr_lump;
+	struct lump_rpl *body_lump;
+	str  s_to_tag;
+	str  rpl;
+	int  ret;
 	struct bookmark bm;
 
-    s_to_tag.s = to_tag;
-    if(to_tag)
+	s_to_tag.s = to_tag;
+	if(to_tag)
 		s_to_tag.len = strlen(to_tag);
 
-    /* mark the transaction as replied */
-    if (code>=200) set_kr(REQ_RPLD);
+	/* mark the transaction as replied */
+	if (code>=200) set_kr(REQ_RPLD);
 
-    /* compute the response */
-    sb.s = body;
-    sb.len = strlen(body);
-    snh.s = new_header;
-    snh.len = strlen(new_header);
+	/* build the lumps for new_header and for body (by bogdan) */
+	hdr_lump = build_lump_rpl( new_header , strlen(new_header) , LUMP_RPL_HDR );
+	if (hdr_lump==0) {
+		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot create hdr lump\n");
+		goto error;
+	}
+	add_lump_rpl( trans->uas.request, hdr_lump);
+	/* body lump */
+	body_lump = build_lump_rpl( body , strlen(body) , LUMP_RPL_BODY );
+	if (body_lump==0) {
+		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot create body lump\n");
+		goto error_1;
+	}
+	if (add_lump_rpl( trans->uas.request, body_lump)==-1) {
+		LOG(L_ERR,"ERROR:tm:t_reply_with_body: cannot add body lump\n");
+		goto error_1;
+	}
 
-    res_buf = build_res_buf_with_body_from_sip_req(
-					code,text, s_to_tag.s, s_to_tag.len,
-		   			sb.s,sb.len,
-					snh.s,snh.len,
-					trans->uas.request,&res_len, &bm);
-    
-    DBG("t_reply_with_body: buffer computed\n");
-    // frees 'res_buf' ... no panic !
-    ret=_reply_light( trans, res_buf, res_len, code, text, 
+	rpl.s = build_res_buf_from_sip_req(
+			code, text, &s_to_tag,
+			trans->uas.request, &rpl.len, &bm);
+
+	/* since the msg (trans->uas.request) is a clone into shm memory, to avoid
+	 * memory leak or crashing (lumps are create in private memory) I will
+	 * remove the lumps by myself here (bogdan) */
+	unlink_lump_rpl( trans->uas.request, hdr_lump);
+	unlink_lump_rpl( trans->uas.request, body_lump);
+	pkg_free( hdr_lump );
+	pkg_free( body_lump );
+
+	if (rpl.s==0) {
+		LOG(L_ERR,"ERROR:tm:t_reply_with_body: failed in doing "
+			"build_res_buf_from_sip_req()\n");
+		goto error;
+	}
+
+	DBG("t_reply_with_body: buffer computed\n");
+	// frees 'res.s' ... no panic !
+	ret=_reply_light( trans, rpl.s, rpl.len, code, text, 
 		s_to_tag.s, s_to_tag.len, 1 /* lock replies */, &bm );
 	/* this is ugly hack -- the function caller may wish to continue with
 	 * transction and I unref; however, there is now only one use from
 	 * vm/fifo_vm_reply and I'm currently to lazy to export UNREF; -jiri
 	 */
 	UNREF(trans);
-	return ret;
 
+	return ret;
+error_1:
+	unlink_lump_rpl( trans->uas.request, hdr_lump);
+	pkg_free( hdr_lump );
+error:
+	return -1;
 }
 
