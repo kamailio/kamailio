@@ -61,6 +61,8 @@ bouquets and brickbats to farhan@hotfoon.com
 #include <arpa/inet.h>
 #include <sys/poll.h>
 
+#include <errno.h>
+
 /* this is the main function with the loops and modes */
 void shoot()
 {
@@ -76,6 +78,7 @@ void shoot()
 	fd_set	fd;
 	socklen_t slen;
 	regex_t redexp, proexp, okexp, tmhexp, errexp;
+	int bsd_compat, opt_size;
 
 	int nretries=3;
 	char *buff="MiniTest";
@@ -124,6 +127,12 @@ void shoot()
 		exit(2);
 	}
 #endif
+
+	if (getsockopt( sock, SOL_SOCKET, SO_BSDCOMPAT, &bsd_compat, &opt_size )==-1) {
+		perror("ERROR");
+		exit(1);
+	}
+	printf("BSD compat: %d\n", bsd_compat);
 
 	/* here we go for the number of nretries which healily depends on the 
 	   mode */
