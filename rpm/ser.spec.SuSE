@@ -144,7 +144,7 @@ sbin/insserv etc/init.d/
 * Wed Sep 25 2002 Andrei Pelinescu - Onciul  <pelinescu-onciul@fokus.gmd.de>
 - modified make install & make: added cfg-target & modules-target
 
-* Wen Sep 25 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
+* Wed Sep 25 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
 - Copyed mysql connectivity subpackage from orig rpm.spec.
 
 * Fri Sep 06 2002 Nils Ohlmeier <ohlmeier@fokus.fhg.de>
