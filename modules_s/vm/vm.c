@@ -83,7 +83,7 @@ MODULE_VERSION
 
 static str empty_param = {".",1};
 
-static int write_to_vm_fifo(char *fifo, str *lines, int cnt );
+static int write_to_vm_fifo(char *fifo, int cnt );
 static int init_tmb();
 static int vm_action_req(struct sip_msg*, char* fifo, char *action);
 static int vm_action_fld(struct sip_msg*, char* fifo, char *action);
@@ -94,7 +94,7 @@ static int vm_init_child(int rank);
 
 struct tm_binds _tmb;
 
-char* vm_db_url = "mysql://ser:heslo@localhost/ser";    /* Database URL */
+char* vm_db_url = 0;                     /* Database URL */
 char* email_column = "email_address";
 char* subscriber_table = "subscriber" ;
 
@@ -104,10 +104,12 @@ int use_domain = 0;
 
 /* #define EXTRA_DEBUG */
 
-db_con_t* db_handle = 0;
+static db_con_t* db_handle = 0;
+static str       lines_eol[2*VM_FIFO_PARAMS];
+static str       eol={"\n",1};
 
 #define get_from(p_msg)      ((struct to_body*)(p_msg)->from->parsed)
-
+#define eol_line(_i_)        ( lines_eol[2*(_i_)] )
 
 /*
  * Exported functions
@@ -148,41 +150,52 @@ struct module_exports exports = {
 
 static int vm_mod_init(void)
 {
-        fprintf(stderr, "voicemail - initializing\n");
+	int i;
 
-        if (register_fifo_cmd(fifo_vm_reply, "vm_reply", 0)<0) { 
-  		LOG(L_CRIT, "cannot register fifo vm_reply\n"); 
-  		return -1; 
-        } 
+	fprintf(stderr, "voicemail - initializing\n");
+
+	if (register_fifo_cmd(fifo_vm_reply, "vm_reply", 0)<0) {
+		LOG(L_CRIT, "cannot register fifo vm_reply\n");
+		return -1;
+	}
 
 	if (init_tmb()==-1) {
 		LOG(L_ERR, "Error: vm_mod_init: cann't load tm\n");
 		return -1;
 	}
 
-	if (bind_dbmod(vm_db_url)) {
+	/* init database support only if needed */
+	if (vm_db_url && bind_dbmod(vm_db_url)) {
 		LOG(L_ERR, "ERROR: vm_mod_init: unable to bind db\n");
 		return -1;
 	}
-    
-        return 0;
+
+	/* init the line_eol table */
+	for(i=0;i<VM_FIFO_PARAMS;i++) {
+		lines_eol[2*i].s = 0;
+		lines_eol[2*i].len = 0;
+		lines_eol[2*i+1] = eol;
+	}
+
+	return 0;
 }
 
 static int vm_init_child(int rank)
 {
-    LOG(L_INFO,"voicemail - initializing child %i\n",rank);
+	LOG(L_INFO,"voicemail - initializing child %i\n",rank);
 
-    assert(db_init);
+	if (vm_db_url) {
+		assert(db_init);
+		db_handle=db_init(vm_db_url);
 
-    db_handle=db_init(vm_db_url);
-
-    if(!db_handle) {
-		LOG(L_ERR, "ERROR; vm_init_child: could not init db %s\n", 
+		if(!db_handle) {
+			LOG(L_ERR, "ERROR; vm_init_child: could not init db %s\n", 
 						vm_db_url);
-		return -1;
-    }
+			return -1;
+		}
+	}
 
-    return 0;
+	return 0;
 }
 
 #ifdef _OBSO
@@ -300,7 +313,6 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
     str             email;
     str             domain;
     contact_t*      c=0;
-    str             lines[VM_FIFO_PARAMS];
     char            id_buf[IDBUF_LEN];
     int             int_buflen, l;
     char*           i2s;
@@ -321,6 +333,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 	str             tmp_s;
 
 	ret = -1;
+
 	DBG("DEBUG:vm:vm_action: mode is %d\n",mode);
 
 	if(msg->first_line.type != SIP_REQUEST){
@@ -500,8 +513,8 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 		/*body.len = strlen(body.s); (by bogdan) */
 		body.len = msg->len - (body.s - msg->buf);
 
-		if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,
-		&email) < 0) {
+		if(vm_db_url && vm_get_user_info(&msg->parsed_uri.user,
+		&msg->parsed_uri.host, &email) < 0) {
 			LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
 			goto error3;
 		}
@@ -544,40 +557,40 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 	append_str(s,".",1);
 	hdrs.len++;
 
-	lines[0].s=VM_FIFO_VERSION;
-	lines[0].len=strlen(VM_FIFO_VERSION);
+	eol_line(0).s=VM_FIFO_VERSION;
+	eol_line(0).len=strlen(VM_FIFO_VERSION);
 
-	lines[1].s = s = cmd_buf;
+	eol_line(1).s = s = cmd_buf;
 	if(strlen(action)+12 >= CMD_BUFFER_MAX){
 		LOG(L_ERR,"vm: buffer overflow while copying command name\n");
 		goto error3;
 	}
 	append_str(s,"sip_request.",12);
 	append_str(s,action,strlen(action));
-	lines[1].len = s-lines[1].s;
+	eol_line(1).len = s-eol_line(1).s;
 
-	lines[2]=REQ_LINE(msg).method;     /* method type */
-	lines[3]=msg->parsed_uri.user;     /* user from r-uri */
-	lines[4]=email;                    /* email address from db */
-	lines[5]=domain;                   /* domain */
+	eol_line(2)=REQ_LINE(msg).method;     /* method type */
+	eol_line(3)=msg->parsed_uri.user;     /* user from r-uri */
+	eol_line(4)=email;                    /* email address from db */
+	eol_line(5)=domain;                   /* domain */
 
-	lines[6]=msg->rcv.bind_address->address_str; /* dst ip */
+	eol_line(6)=msg->rcv.bind_address->address_str; /* dst ip */
 
-	lines[7]=msg->rcv.dst_port==SIP_PORT ?
+	eol_line(7)=msg->rcv.dst_port==SIP_PORT ?
 			empty_param : msg->rcv.bind_address->port_no_str; /* port */
 
 	/* r_uri ('Contact:' for next requests) */
-	lines[8]=msg->first_line.u.request.uri;
+	eol_line(8)=msg->first_line.u.request.uri;
 
 	/* r_uri for subsequent requests */
-	lines[9]=str_uri.len?str_uri:empty_param;
+	eol_line(9)=str_uri.len?str_uri:empty_param;
 
-	lines[10]=get_from(msg)->body;		/* from */
-	lines[11]=msg->to->body;			/* to */
-	lines[12]=msg->callid->body;		/* callid */
-	lines[13]=get_from(msg)->tag_value;	/* from tag */
-	lines[14]=get_to(msg)->tag_value;	/* to tag */
-	lines[15]=get_cseq(msg)->number;	/* cseq number */
+	eol_line(10)=get_from(msg)->body;		/* from */
+	eol_line(11)=msg->to->body;			/* to */
+	eol_line(12)=msg->callid->body;		/* callid */
+	eol_line(13)=get_from(msg)->tag_value;	/* from tag */
+	eol_line(14)=get_to(msg)->tag_value;	/* to tag */
+	eol_line(15)=get_cseq(msg)->number;	/* cseq number */
 
 	i2s=int2str(hash_index, &l);		/* hash:label */
 	if (l+1>=IDBUF_LEN) {
@@ -592,14 +605,14 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 		goto error3;
 	}
 	memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-	lines[16].s=id_buf;lines[16].len=int_buflen;
+	eol_line(16).s=id_buf;eol_line(16).len=int_buflen;
 
-	lines[17] = route.len ? route : empty_param;
-	lines[18] = next_hop;
-	lines[19] = hdrs;
-	lines[20] = body;
+	eol_line(17) = route.len ? route : empty_param;
+	eol_line(18) = next_hop;
+	eol_line(19) = hdrs;
+	eol_line(20) = body;
 
-	if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)==-1 ) {
+	if ( write_to_vm_fifo(vm_fifo, VM_FIFO_PARAMS)==-1 ) {
 		LOG(L_ERR, "ERROR: vm_start: write_to_fifo failed\n");
 		goto error3;
 	}
@@ -651,16 +664,9 @@ static int init_tmb()
 
 
 
-static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
+static int write_to_vm_fifo(char *fifo, int cnt )
 {
-	int   fd_fifo,i;
-	str   lines_eol[2*VM_FIFO_PARAMS];
-	str   eol={"\n",1};
-
-	for (i=0; i<cnt; i++ ) {
-		lines_eol[2*i] = lines[i];
-		lines_eol[2*i+1] = eol;
-	}
+	int   fd_fifo;
 
 	/* open FIFO file stream */
 	if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
