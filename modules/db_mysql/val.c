@@ -83,12 +83,20 @@ static inline int str2time(const char* _s, time_t* _v)
  */
 static inline int int2str(int _v, char* _s, int* _l)
 {
+	int ret;
+
 	if ((!_s) || (!_l) || (!*_l)) {
 		LOG(L_ERR, "int2str(): Invalid parameter value\n");
 		return -1;
 	}
 
-	*_l = snprintf(_s, *_l, "%-d", _v);
+	ret = snprintf(_s, *_l, "%-d", _v);
+	if (ret < 0 || ret >= *_l) {
+		LOG(L_ERR, "int2str: Error in sprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
 	return 0;
 }
 
@@ -98,12 +106,20 @@ static inline int int2str(int _v, char* _s, int* _l)
  */
 static inline int double2str(double _v, char* _s, int* _l)
 {
+	int ret;
+
 	if ((!_s) || (!_l) || (!*_l)) {
 		LOG(L_ERR, "double2str(): Invalid parameter value\n");
 		return -1;
 	}
 
-	*_l = snprintf(_s, *_l, "%-10.2f", _v);
+	ret = snprintf(_s, *_l, "%-10.2f", _v);
+	if (ret < 0 || ret >= *_l) {
+		LOG(L_ERR, "double2str: Error in snprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
 	return 0;
 }
 
@@ -221,6 +237,10 @@ int val2str(MYSQL* _c, db_val_t* _v, char* _s, int* _len)
 	}
 
 	if (VAL_NULL(_v)) {
+		if (*_len < sizeof("NULL")) {
+			LOG(L_ERR, "val2str: Buffer too small\n");
+			return -1;
+		}
 		*_len = snprintf(_s, *_len, "NULL");
 		return 0;
 	}

@@ -87,8 +87,9 @@ static int submit_query(db_con_t* _h, const char* _s)
 	 * iteration.
      */
 	for (i=0; i<(auto_reconnect ? 3 : 1); i++) {
-		if (mysql_query(CON_CONNECTION(_h), _s)==0)
+		if (mysql_query(CON_CONNECTION(_h), _s)==0) {
 			return 0;
+		}
 		code = mysql_errno(CON_CONNECTION(_h));
 		if (code != CR_SERVER_GONE_ERROR && code != CR_SERVER_LOST) {
 			break;
@@ -104,22 +105,34 @@ static int submit_query(db_con_t* _h, const char* _s)
  */
 static int print_columns(char* _b, int _l, db_key_t* _c, int _n)
 {
-	int i;
-	int res = 0;
+	int i, ret;
+	int len = 0;
 
 	if ((!_c) || (!_n) || (!_b) || (!_l)) {
 		LOG(L_ERR, "print_columns(): Invalid parameter value\n");
-		return 0;
+		return -1;
 	}
 
 	for(i = 0; i < _n; i++) {
 		if (i == (_n - 1)) {
-			res += snprintf(_b + res, _l - res, "%s ", _c[i]);
+			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
+
+			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
 		} else {
-			res += snprintf(_b + res, _l - res, "%s,", _c[i]);
+			ret = snprintf(_b + len, _l - len, "%s,", _c[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
 		}
 	}
-	return res;
+	return len;
+
+ error:
+	LOG(L_ERR, "print_columns: Error in snprintf\n");
+	return -1;
 }
 
 
@@ -132,14 +145,14 @@ static int print_values(MYSQL* _c, char* _b, int _l, db_val_t* _v, int _n)
 
 	if (!_c || !_b || !_l || !_v || !_n) {
 		LOG(L_ERR, "print_values(): Invalid parameter value\n");
-		return 0;
+		return -1;
 	}
 
 	for(i = 0; i < _n; i++) {
 		l = _l - res;
 		if (val2str(_c, _v + i, _b + res, &l) < 0) {
 			LOG(L_ERR, "print_values(): Error while converting value to string\n");
-			return 0;
+			return -1;
 		}
 		res += l;
 		if (i != (_n - 1)) {
@@ -157,28 +170,38 @@ static int print_values(MYSQL* _c, char* _b, int _l, db_val_t* _v, int _n)
 static int print_where(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
 	int i;
-	int res = 0;
+	int len = 0, ret;
 	int l;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
 		LOG(L_ERR, "print_where(): Invalid parameter value\n");
-		return 0;
+		return -1;
 	}
 
 	for(i = 0; i < _n; i++) {
 		if (_o) {
-			res += snprintf(_b + res, _l - res, "%s%s", _k[i], _o[i]);
+			ret = snprintf(_b + len, _l - len, "%s%s", _k[i], _o[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
 		} else {
-			res += snprintf(_b + res, _l - res, "%s=", _k[i]);
+			ret = snprintf(_b + len, _l - len, "%s=", _k[i]);
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
 		}
-		l = _l - res;
-		val2str(_c, &(_v[i]), _b + res, &l);
-		res += l;
+		l = _l - len;
+		val2str(_c, &(_v[i]), _b + len, &l);
+		len += l;
 		if (i != (_n - 1)) {
-			res += snprintf(_b + res, _l - res, " AND ");
+			ret = snprintf(_b + len, _l - len, " AND ");
+			if (ret < 0 || ret >= (_l - len)) goto error;
+			len += ret;
 		}
 	}
-	return res;
+	return len;
+
+ error:
+	LOG(L_ERR, "print_where: Error in snprintf\n");
+	return -1;
 }
 
 
@@ -188,26 +211,33 @@ static int print_where(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o, d
 static int print_set(MYSQL* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v, int _n)
 {
 	int i;
-	int res = 0;
+	int len = 0, ret;
 	int l;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
 		LOG(L_ERR, "print_set(): Invalid parameter value\n");
-		return 0;
+		return -1;
 	}
 
 	for(i = 0; i < _n; i++) {
-		res += snprintf(_b + res, _l - res, "%s=", _k[i]);
-		l = _l - res;
-		val2str(_c, &(_v[i]), _b + res, &l);
-		res += l;
+		ret = snprintf(_b + len, _l - len, "%s=", _k[i]);
+		if (ret < 0 || ret >= (_l - len)) goto error;
+		len += ret;
+
+		l = _l - len;
+		val2str(_c, &(_v[i]), _b + len, &l);
+		len += l;
 		if (i != (_n - 1)) {
-			if ((_l - res) >= 1) {
-				*(_b + res++) = ',';
+			if ((_l - len) >= 1) {
+				*(_b + len++) = ',';
 			}
 		}
 	}
-	return res;
+	return len;
+
+ error:
+	LOG(L_ERR, "print_set: Error in snprintf\n");
+	return -1;
 }
 
 
@@ -340,7 +370,7 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	     db_val_t* _v, db_key_t* _c, int _n, int _nc,
 	     db_key_t _o, db_res_t** _r)
 {
-	int off;
+	int off, ret;
 
 	if (!_h) {
 		LOG(L_ERR, "db_query(): Invalid parameter value\n");
@@ -348,26 +378,48 @@ int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	}
 
 	if (!_c) {
-		off = snprintf(sql_buf, SQL_BUF_LEN, "select * from %s ", CON_TABLE(_h));
+		ret = snprintf(sql_buf, SQL_BUF_LEN, "select * from %s ", CON_TABLE(_h));
+		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+		off = ret;
 	} else {
-		off = snprintf(sql_buf, SQL_BUF_LEN, "select ");
-		off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %s ", CON_TABLE(_h));
+		ret = snprintf(sql_buf, SQL_BUF_LEN, "select ");
+		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+		off = ret;
+
+		ret = print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
+		if (ret < 0) return -1;
+		off += ret;
+
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %s ", CON_TABLE(_h));
+		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		off += ret;
 	}
 	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		off += print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _op, _v, _n);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
+		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		off += ret;
+
+		ret = print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _op, _v, _n);
+		if (ret < 0) return -1;;
+		off += ret;
 	}
 	if (_o) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "order by %s", _o);
+		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		off += ret;
 	}
-
+	
+	*(sql_buf + off) = '\0';
 	if (submit_query(_h, sql_buf) < 0) {
 		LOG(L_ERR, "submit_query(): Error while submitting query\n");
 		return -2;
 	}
 
 	return store_result(_h, _r);
+
+ error:
+	LOG(L_ERR, "submit_query: Error in snprintf\n");
+	return -1;
 }
 
 
@@ -401,25 +453,41 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
  */
 int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
-	int off;
+	int off, ret;
 
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
 		LOG(L_ERR, "db_insert(): Invalid parameter value\n");
 		return -1;
 	}
 
-	off = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
-	off += print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
-	off += snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	off += print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
+	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	off = ret;
+
+	ret = print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
+	if (ret < 0) return -1;
+	off += ret;
+
+	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
+	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+	off += ret;
+
+	ret = print_values(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _v, _n);
+	if (ret < 0) return -1;
+	off += ret;
+
 	*(sql_buf + off++) = ')';
 	*(sql_buf + off) = '\0';
 
 	if (submit_query(_h, sql_buf) < 0) {
-	        LOG(L_ERR, "insert_row(): Error while submitting query\n");
+	        LOG(L_ERR, "db_insert: Error while submitting query\n");
 		return -2;
 	}
 	return 0;
+
+ error:
+	LOG(L_ERR, "db_insert: Error in snprintf\n");
+	return -1;
 }
 
 
@@ -433,23 +501,37 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
  */
 int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
-	int off;
+	int off, ret;
 
 	if (!_h) {
 		LOG(L_ERR, "db_delete(): Invalid parameter value\n");
 		return -1;
 	}
 
-	off = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
+	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	off = ret;
+
 	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
+		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		off += ret;
+
+		ret = print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		if (ret < 0) return -1;
+		off += ret;
 	}
+
+	*(sql_buf + off) = '\0';
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "delete_row(): Error while submitting query\n");
+		LOG(L_ERR, "db_delete: Error while submitting query\n");
 		return -2;
 	}
 	return 0;
+
+ error:
+	LOG(L_ERR, "db_delete: Error in snprintf\n");
+	return -1;
 }
 
 
@@ -467,24 +549,40 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
-	int off;
+	int off, ret;
 
 	if ((!_h) || (!_uk) || (!_uv) || (!_un)) {
 		LOG(L_ERR, "db_update(): Invalid parameter value\n");
 		return -1;
 	}
 
-	off = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
-	off += print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
+	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
+	off = ret;
+
+	ret = print_set(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un);
+	if (ret < 0) return -1;
+	off += ret;
+
 	if (_n) {
-		off += snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		off += print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
+		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
+		off += ret;
+
+		ret = print_where(CON_CONNECTION(_h), sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n);
+		if (ret < 0) return -1;
+		off += ret;
+
 		*(sql_buf + off) = '\0';
 	}
 
 	if (submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "update_row(): Error while submitting query\n");
+		LOG(L_ERR, "db_update: Error while submitting query\n");
 		return -2;
 	}
 	return 0;
+
+ error:
+	LOG(L_ERR, "db_update: Error in snprintf\n");
+	return -1;
 }
