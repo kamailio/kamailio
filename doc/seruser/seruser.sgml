@@ -1,14 +1,11 @@
-<!DOCTYPE Book SYSTEM "/usr/share/sgml/docbook/dtd-4.2/docbook.dtd" -->
 <!-- $Id$ -->
-<!-- DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" -->
-    
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
 
 <book label="seruser" id="seruser" lang="EN">
 <?dbhtml filename="index.html">
     <title>iptel.org SIP Express Router v0.8.8 -- User's Guide</title>
     <bookinfo>
 	<authorgroup>
-
 	    <author>
 		<firstname>Jiri</firstname>
 		<surname>Kuthan</surname>
@@ -18,9 +15,9 @@
 		<firstname>Yacine</firstname>
 		<surname>Rebahi</surname>
 		<email>rebahi@fokus.fhg.de</email>
-
 	    </author>
 	</authorgroup>
+
 	<copyright>
 	    <year>2001</year>
 	    <year>2002</year>
@@ -51,21 +48,21 @@
 	    
 	    <para>
 		For more details see the file COPYING in the source
-		distribution of SER.
+		distribution of <acronym>SER</acronym>.
 	    </para>	    
 	</legalnotice>
 
 	<abstract>
 	    <para>
-		The document describes the SIP Express Router and its use in
-		SIP networks. It is intended as an aid to server 
+		The document describes the <acronym>SIP</acronym> Express Router and its use in
+		<acronym>SIP</acronym> networks. It is intended as an aid to server 
 		administrators. 
 	    </para>
 	</abstract>
 	<releaseinfo>
 	    This is a pre-release documentation of the SER SIP Server.
 	    For the latest and most complete documentation, visit our
-	    site at http://www.iptel.org/ser/
+	    site at <ulink url="http://www.iptel.org/ser/">http://www.iptel.org/ser</ulink>
 	</releaseinfo>
     </bookinfo>
     
@@ -74,165 +71,216 @@
     <chapter id="general">
 	<title>General Information</title>
 	<section id="aboutser">
-	    <title>About SIP Express Router (ser)</title>
+	    <title>About <acronym>SIP</acronym> Express Router (<acronym>SER</acronym>)</title>
 	    <para>
- SIP Express Router (SER) is an industrial-strength, free VoIP 
-server based on the session initiation protocol (SIP RFC2543-bis). 
-It is engineered to power IP telephony infrastructures up to large 
-scale. The server keeps track of users, sets up VoIP sessions, 
-relays instant messages and creates space for new plug-in applications. 
-Its proven interoperability guarantees seamless integration with 
-components from other vendors, eliminating the risk of a single-vendor 
-trap. It has successfully participated in various interoperability 
-tests in which it worked with the products of other leading SIP vendors.
+		SIP Express Router (<acronym>SER</acronym>) is an industrial-strength, free VoIP 
+		server based on the session initiation protocol (<acronym>SIP</acronym> RFC2543-bis). 
+		It is engineered to power <acronym>IP</acronym> telephony infrastructures up to large 
+		scale. The server keeps track of users, sets up VoIP sessions, 
+		relays instant messages and creates space for new plug-in applications. 
+		Its proven interoperability guarantees seamless integration with 
+		components from other vendors, eliminating the risk of a single-vendor 
+		trap. It has successfully participated in various interoperability 
+		tests in which it worked with the products of other leading <acronym>SIP</acronym> vendors.
 	    </para>
 	    <para>
-The SIP Express Router enables a flexible plug-in model for new 
-applications: Third parties can easily link their plug-ins with 
-the server code and provide thereby advanced and customized services. 
-In this way, plug-ins such as SNMP support, RADIUS accounting,
-or SMS gateway have already been developed and are provided as 
-advanced features. Other modules are underway: Presence server,
-firewall control, and more.
-
+		The <acronym>SIP</acronym> Express Router enables a flexible plug-in model for new 
+		applications: Third parties can easily link their plug-ins with 
+		the server code and provide thereby advanced and customized services. 
+		In this way, plug-ins such as <acronym>SNMP</acronym> support, RADIUS accounting,
+		or SMS gateway have already been developed and are provided as 
+		advanced features. Other modules are underway: Presence server,
+		firewall control, and more.
 	    </para>
 	    <para>
-Its performance and robustness allows it to serve millions of users and accommodate needs of very large operators. With a $3000 dual-CPU, the 
-SIP Express Router is able to power IP telephony services in an area 
-as large as the Bay Area during peak hours. Even on an IPAQ PDA, the server 
-withstands 150 calls per second (CPS)! The server has been powering our 
-iptel.org free SIP site withstanding heavy daily load that is further 
-increasing with the popularity of Microsoft's Messenger.  
-	
+		Its performance and robustness allows it to serve millions of users 
+		and accommodate needs of very large operators. With a $3000 dual-CPU, the 
+		<acronym>SIP</acronym> Express Router is able to power <acronym>IP</acronym> telephony services in an area 
+		as large as the Bay Area during peak hours. Even on an IPAQ <acronym>PDA</acronym>, the server 
+		withstands 150 calls per second (<acronym>CPS</acronym>)! The server has been powering our 
+		iptel.org free <acronym>SIP</acronym> site withstanding heavy daily load that is further 
+		increasing with the popularity of Microsoft's Messenger.  
 	    </para>
 	    <para>
-The SIP Express Router is extremely configurable to allow the creation of 
-various routing and admission policies as well as setting up new and 
-customized services. Its configurability allows it to serve many roles: 
-network security barrier, application server, or PSTN gateway guard for 
-example.
-		</para>
-
-	    
+		The <acronym>SIP</acronym> Express Router is extremely configurable to allow the creation of 
+		various routing and admission policies as well as setting up new and 
+		customized services. Its configurability allows it to serve many roles: 
+		network security barrier, application server, or <acronym>PSTN</acronym> gateway guard for 
+		example.
+	    </para>
 	</section> 
 
-	
-		<section id="aboutiptel">
+	<section id="aboutiptel">
 	    <title>About iptel.org</title>
 	    <para>
 		iptel.org is a know-how company spun off from Germany's national 
-research company FhG Fokus. One of the first SIP implementations ever, 
-low-QoS enhancements, interoperability tests and VoIP-capable firewall 
-control concepts are examples of well-known FhG's work.
-
-		</para>
+		research company FhG Fokus. One of the first <acronym>SIP</acronym> implementations ever, 
+		low-QoS enhancements, interoperability tests and VoIP-capable firewall 
+		control concepts are examples of well-known FhG's work.
+	    </para>
 	    <para>
-		iptel.org continues to keep this know-how leadership in SIP. 
-The access rate of the company's site, a well-known source of 
-technological information, is a best proof of interest. Thousands 
-of hits come every day from the whole Internet.
-		</para>
-
+		iptel.org continues to keep this know-how leadership in <acronym>SIP</acronym>. 
+		The access rate of the company's site, a well-known source of 
+		technological information, is a best proof of interest. Thousands 
+		of hits come every day from the whole Internet.
+	    </para>
 	    
 	</section> <!-- iptel -->
 	<section id="serfeatures">
 	    <title>Feature List</title>
 	    <para>
-Based on the latest standards, the SIP Express Router (SER) includes 
-support for registrar, proxy and redirect mode. Further it acts as 
-an application server with support for CPL, instant messaging and 
-presence including a 2G/SMS gateway, a call control policy 
-language, call number translation, private dial plans and accounting, 
-authorization and authentication (AAA) services. SER runs on Sun/Solaris, 
-PC/Linux, IPAQ/Linux platforms and supports  both IPv4 and IPv6. 
-Hosting multiple domains and database redundancy is supported.
+		Based on the latest standards, the <acronym>SIP</acronym> Express Router (<acronym>SER</acronym>) includes 
+		support for registrar, proxy and redirect mode. Further it acts as 
+		an application server with support for <acronym>CPL</acronym>, instant messaging and 
+		presence including a <acronym>2G/SMS</acronym> gateway, a call control policy 
+		language, call number translation, private dial plans and accounting, 
+		authorization and authentication (<acronym>AAA</acronym>) services. <acronym>SER</acronym> runs on Sun/Solaris, 
+		PC/Linux, IPAQ/Linux platforms and supports  both <acronym>IPv4</acronym> and <acronym>IPv6</acronym>. 
+		Hosting multiple domains and database redundancy is supported.
 	    </para>
 	    <para>
-Other extensions are underway: presence server, firewall control and more.
-		</para>
+		Other extensions are underway: presence server, firewall control and more.
+	    </para>
 	    <para>
-ser has been carefuly engineered with the following design objectives in mind:
+		ser has been carefuly engineered with the following design objectives in mind:
 		<itemizedlist>
 		    <listitem>
 			<para>
-			    Speed. With ser, thousands of calls per seconds are achievable even on low-cost platforms. This competitive capacity allows setting up networks which are inexpensive and easy to manage due to low number of devices required. The speed has been achieved by extensive code optimization, usage of customized code, ANSI C combined with assembly instructions and leveraging latest SIP improvements.
+			    <emphasis>Speed</emphasis> - With SER, thousands of calls per seconds are achievable 
+			    even on low-cost platforms. This competitive capacity allows 
+			    setting up networks which are inexpensive and easy to manage 
+			    due to low number of devices required. The speed has been 
+			    achieved by extensive code optimization, usage of customized code, 
+			    <acronym>ANSI C</acronym> combined with assembly instructions and leveraging latest 
+			    <acronym>SIP</acronym> improvements.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			    Flexibility. Ser allows its users to define its behavior. Administrators may write textual scripts which determine SIP routing decisions, the main job of a proxy server. They may use the script to configure numerous parameters and introduce additional logic. For example, the scripts can determine for which destinations record routing should be performed, who will be authenticated, which transactions should be processed statefuly, which requests will be proxied or redirected, etc.
+			    <emphasis>Flexibility</emphasis> - <acronym>SER</acronym> allows its users to define its behavior. 
+			    Administrators may write textual scripts which determine <acronym>SIP</acronym> routing 
+			    decisions, the main job of a proxy server. They may use the script to 
+			    configure numerous parameters and introduce additional logic. For example, 
+			    the scripts can determine for which destinations record routing should be 
+			    performed, who will be authenticated, which transactions should be processed 
+			    statefuly, which requests will be proxied or redirected, etc.
 			</para>
 
 		    </listitem>
 		    <listitem>
 			<para>
-			    Extensibility. Ser's extensibility allows linking of new C code to ser to redefine or extend its logic. The new code can be developed independently on ser core and linked to it in run-time. The concept is similar to the module concept known for example in Apache Web server. Even such essential parts such as transaction management have been developed as modules to keep the ser kernel compact and fast.
+			    <acronym>Extensibility</acronym> - <acronym>SER</acronym>'s extensibility allows linking of 
+			    new C code to ser to 
+			    redefine or extend its logic. The new code can be developed independently 
+			    on <acronym>SER</acronym> core and linked to it in run-time. The concept is similar to 
+			    the module concept known for example in Apache Web server. Even such essential parts such 
+			    as transaction management have been developed as modules to keep the <acronym>SER</acronym> core 
+			    compact and fast.
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			   Portability. Ser has been written in ANSI C. It has been extensively tested on PC/Linux and Sun/Solaris. 
+			    Portability. Ser has been written in ANSI C. It has been extensively tested on PC/Linux and 
+			    Sun/Solaris. 
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			    
-			Interoperability. Ser is based on open SIP standard. It has undergone extensive testing with products of other vendors. It powers the public iptel.org site 24 hours a day, 356 days a year serving numerous SIP implementations using this site.
-
-			    </para>
+			    Interoperability. Ser is based on open SIP standard. It has undergone extensive testing with 
+			    products of other vendors. It powers the public iptel.org site 24 hours a day, 356 days a year 
+			    serving numerous SIP implementations using this site.
+			</para>
 		    </listitem>
 		</itemizedlist>
-	</para>
+	    </para>
 	</section> <!-- serfeatures -->
 
 	<section id="usecases">
-		<title>Use Cases
-		</title>
+	    <title>Use Cases
+	    </title>
 	    <para>
-This section illustrates the most frequent uses of SIP. In all these scenarios, the SIP Express Router (SER) can be easily deployed as the glue connecting all SIP components together, be it softphones, hardphones, PSTN gateways or any other SIP-compliant devices.
+		This section illustrates the most frequent uses of SIP. In all these scenarios, 
+		the SIP Express Router (SER) can be easily deployed as the glue connecting all 
+		SIP components together, be it softphones, hardphones, PSTN gateways or any other 
+		SIP-compliant devices.
 	    </para>
 	    <section>
 		<title>Added-Value ISP Services</title>
 		<para>
-		    To attract customers, ISPs frequently offer applications bundled with IP access. With SIP, the providers can conveniently offer a variety of services running on top of a single infrastructure. Particularly, deploying VoIP and instant messaging and presence services is as easy as setting up a SIP server and guiding customers to use Windows Messenger. Additionally, the ISPs may offer advanced services such as PSTN termination, user-driven call handling or unified messaging all using the same infrastructure.
+		    To attract customers, ISPs frequently offer applications bundled with IP access. 
+		    With SIP, the providers can conveniently offer a variety of services running on top 
+		    of a single infrastructure. Particularly, deploying VoIP and instant messaging and 
+		    presence services is as easy as setting up a SIP server and guiding customers to use 
+		    Windows Messenger. Additionally, the ISPs may offer advanced services such as PSTN 
+		    termination, user-driven call handling or unified messaging all using the same infrastructure.
 		</para>
 		<para>
-SIP Express Router has been engineered to power large scale networks: its capacity can deal with large number of customers under high load caused by modern applications. Premium performance allows deploying a low number of boxes while keeping investments and operational expenses extremely low. ISPs can start by providing instant messaging services on this standardized platform. This can be combined with the SIP-to-SMS gateway service also supported by SER. In a second step VoIP services can be added in addition to voicemail services and  UMS.
+		    SIP Express Router has been engineered to power large scale networks: its capacity can deal 
+		    with large number of customers under high load caused by modern applications. Premium 
+		    performance allows deploying a low number of boxes while keeping investments and operational 
+		    expenses extremely low. ISPs can start by providing instant messaging services on this 
+		    standardized platform. This can be combined with the SIP-to-SMS gateway service also supported 
+		    by SER. In a second step VoIP services can be added in addition to voicemail services and  UMS.
 		</para>
 	    </section> <!-- Added-value ISP -->
 	    <section>
 		<title>PC2Phone</title>
 		<para>
-		    Internet Telephony Service Providers (ITSPs) offer the service of interconnecting Internet telephony users using PC softphone or appliances to PSTN. Particularly with long-distance and international calls, substantial savings can be achieved by routing the calls over the Internet.
+		    Internet Telephony Service Providers (ITSPs) offer the service of interconnecting 
+		    Internet telephony users using PC softphone or appliances to PSTN. Particularly with 
+		    long-distance and international calls, substantial savings can be achieved by 
+		    routing the calls over the Internet.
 		</para>
 		<para>
-		    SIP Express Router can be easily configured to serve pc2phone users, distribute calls to geographically appropriate PSTN gateway, act as a security barrier and keep track of charging. 
+		    SIP Express Router can be easily configured to serve pc2phone users, distribute
+		    calls to geographically appropriate PSTN gateway, act as a security barrier and keep track of charging. 
 		</para>
 	    </section>
 	    <section>
 		<title>PBX Replacement</title>
 		<para>
-		    Replacing a traditional PBX in an enterprise can achieve reasonable savings. Enterprises can deploy a single infrastructure for both voice and data and bridge distant locations over the Internet. Additionally, they can benefit of integration of voice and data.
+		    Replacing a traditional PBX in an enterprise can achieve reasonable 
+		    savings. Enterprises can deploy a single infrastructure for both voice 
+		    and data and bridge distant locations over the Internet. Additionally, they can 
+		    benefit of integration of voice and data.
 		</para>
 		<para>
-		    The SIP Express Router scales from SOHOs to large, international enterprises. Even a single installation on a common PC is able to serve VoIP signaling of any world's enterprise.  Its policy-based routing language makes implementation of numbering plans of companies spread across the world very easy. ACL features allow for protection of PSTN gateway from unauthorized callers.
+		    The SIP Express Router scales from SOHOs to large, international enterprises. 
+		    Even a single installation on a common PC is able to serve VoIP signaling of any 
+		    world's enterprise. Its policy-based routing language makes implementation of numbering 
+		    plans of companies spread across the world very easy. ACL features allow for protection of 
+		    PSTN gateway from unauthorized callers.
 		</para>
 		<para>
-		    SIP Express Router's support for programmable routing and accounting efficiently allows for implementation of such a scenario.
+		    SIP Express Router's support for programmable routing and accounting efficiently allows for 
+		    implementation of such a scenario.
 		</para>
 	    </section>
 	</section> <!-- Use Cases -->
 	<section id="aboutsip">
 	    <title>About SIP Technology</title>
 	    <para>
-		The SIP protocol family is the technology which has succeeded in realizing the vision of the integrated services. With SIP, Internet users can easily contact each other; figure out willingness to have a conversation and couple different applications such as VoIP, video and instant messaging. Integration with added-value services is seamless and easy. Examples include integration with web (click-to-dial), E-mail (voice2email, UMS), and PSTN-like services (conditional forwarding).
-
+		The SIP protocol family is the technology which has succeeded in realizing the vision of the 
+		integrated services. With SIP, Internet users can easily contact each other; figure out 
+		willingness to have a conversation and couple different applications such as VoIP, video 
+		and instant messaging. Integration with added-value services is seamless and easy. Examples 
+		include integration with web (click-to-dial), E-mail (voice2email, UMS), and PSTN-like 
+		services (conditional forwarding).
 	    </para>
 	    <para>
-		The core piece of the technology is the Session Initiation Protocol (SIP) standardized by IETF. Its main function is to establish communication sessions between users connected to the public Internet and identified by e-mail-like addresses. One of SIP's greatest features is its transparent support for multiple applications: the same infrastructure may be used for voice, video, gaming or instant messaging as well as any other communication application.
+		The core piece of the technology is the Session Initiation Protocol (SIP) standardized by IETF. 
+		Its main function is to establish communication sessions between users connected to the public 
+		Internet and identified by e-mail-like addresses. One of SIP's greatest features is its transparent 
+		support for multiple applications: the same infrastructure may be used for voice, video, gaming 
+		or instant messaging as well as any other communication application.
 	    </para>
 	    <para>
-		There are numerous scenarios in which SIP is already deployed: PBX replacement allows for deployment of single inexpensive infrastructure in enterprises; PC-2-phone long-distance services (e.g., Deltathree) cut callers long-distance expenses; instant messaging offered by public severs (e.g., iptel.org) combines voice and text services with presence information. New deployment scenarios are underway: SIP is a part of UMTS networks and research publications suggest the use of SIP for virtual home environments or distributed network games.
+		There are numerous scenarios in which SIP is already deployed: PBX replacement allows for 
+		deployment of single inexpensive infrastructure in enterprises; PC-2-phone long-distance 
+		services (e.g., Deltathree) cut callers long-distance expenses; instant messaging offered 
+		by public severs (e.g., iptel.org) combines voice and text services with presence information. 
+		New deployment scenarios are underway: SIP is a part of UMTS networks and research publications 
+		suggest the use of SIP for virtual home environments or distributed network games.
 	    </para>
 	</section> <!-- about sip -->
 	<section id="serlimitations">
@@ -242,23 +290,23 @@ SIP Express Router has been engineered to power large scale networks: its capaci
 		<itemizedlist>
 		    <listitem>
 			<para>
-			TCP transport
+			    TCP transport
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			Loose routing
+			    Loose routing
 			</para>
 		    </listitem>
 		    <listitem>
 			<para>
-			Script processing of multiple branches on forking
+			    Script processing of multiple branches on forking
 			</para>
 
 			<warning>
-				<para>
-			    ser's request processing language allows to make request decisions based on current URI. When a request if forked to multiple destinations, only the first branch's URI is used as input for script processing. This might lead to unexpected results. Whenever a URI resolves to multiple different next-hop URIs, only the first is processed which may result in handling not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP address and PSTN gateway SIP address. If the IP phone address is the first, then script execution ignores the second branch and vice versa. That might result in ignoring of gateway admission control rules or applying them unnecessarily to non-gateway destinations.
-				</para>
+			    <para>
+				ser's request processing language allows to make request decisions based on current URI. When a request if forked to multiple destinations, only the first branch's URI is used as input for script processing. This might lead to unexpected results. Whenever a URI resolves to multiple different next-hop URIs, only the first is processed which may result in handling not appropriate for the other branch. For example, a URI might resolve to an IP phone SIP address and PSTN gateway SIP address. If the IP phone address is the first, then script execution ignores the second branch and vice versa. That might result in ignoring of gateway admission control rules or applying them unnecessarily to non-gateway destinations.
+			    </para>
 			</warning>
 		    </listitem>
 		</itemizedlist>
@@ -266,27 +314,27 @@ SIP Express Router has been engineered to power large scale networks: its capaci
 	</section> <!-- limitations -->
 	<section id="contact">
 	    <title>Contact and Licencing</title>
-		<para>
-For any additional information, send an inquiry to info@iptel.org. 
-Licensing conditions other than GPL are available on request. If
-you need a help with ser, send an email to serhelp@iptel.org.
-Report bugs at 
-<ulink url="http://developer.berlios.de/bugs/?group_id=480">
-http://developer.berlios.de/bugs/?group_id=480
-</ulink>
+	    <para>
+		For any additional information, send an inquiry to info@iptel.org. 
+		Licensing conditions other than GPL are available on request. If
+		you need a help with ser, send an email to serhelp@iptel.org.
+		Report bugs at 
+		<ulink url="http://developer.berlios.de/bugs/?group_id=480">
+		    http://developer.berlios.de/bugs/?group_id=480
+		</ulink>
 
-		</para>
+	    </para>
 	</section>
         
 	<section id="moreinfo">
 	    <title>More Information</title>
 	    <para>
-Most up-to-date information including latest and most complete version
-of this documentation is always available at our website,
-                 http://www.iptel.org/ser/
-For information on how to install ser, read INSTALL.
-SGML documentation is available in the 'doc' directory.
-A SIP tutorial (slide set) is available at http://www.iptel.org/sip/ .
+		Most up-to-date information including latest and most complete version
+		of this documentation is always available at our website,
+		http://www.iptel.org/ser/
+		For information on how to install ser, read INSTALL.
+		SGML documentation is available in the 'doc' directory.
+		A SIP tutorial (slide set) is available at http://www.iptel.org/sip/ .
 	    </para>
 	</section> <!-- info -->
     </chapter> <!-- general -->
@@ -296,109 +344,106 @@ A SIP tutorial (slide set) is available at http://www.iptel.org/sip/ .
 
 	<section id="requestrouting">
 	    <title>Request Routing and SER Scripts</title>
-	<para>
+	    <para>
+		The most important concept of every SIP server is that of
+		request routing. The request routing logic determines the next
+		hop of a request. It can be for example used to implement user 
+		location service or enforce static routing to a gateway. Real-world
+		deployments actually ask for quite complex routing logic, which
+		needs to reflex static routes to PSTN gateways, dynamic routes
+		to registered users, authentication policy, etc.
+	    </para>
+	    <para>
+		SER's answer to this need for routing flexibility is a routing
+		language, which allows administrators to define the SIP routing
+		logic in a detailed manner. The can for example easily
+		split SIP traffic by method or destination, perform user location, 
+		trigger authentication, verify access permissions, and so on.
+	    </para>
+	    <para>
+		The primary building block of the routing language are actions. There are 
+		built-in actions (like forward for stateless forwarding) as 
+		well as external actions supplied in shared library modules. The actions can be combined in composed statements 
+		({a1(); a2();}). The language includes conditional statements and jumps (recursive too). Condition expressions 
+		consist of operators and operands. Operands may include literals and well-known variables which 
+		relate to processed message (src_ip, method, uri, ...) . Operators include == (equality) and ~=(regexp).
+	    </para>
 
-The most important concept of every SIP server is that of
-request routing. The request routing logic determines the next
-hop of a request. It can be for example used to implement user 
-location service or enforce static routing to a gateway. Real-world
-deployments actually ask for quite complex routing logic, which
-needs to reflex static routes to PSTN gateways, dynamic routes
-to registered users, authentication policy, etc.
-	 </para>
-	<para>
-SER's answer to this need for routing flexibility is a routing
-language, which allows administrators to define the SIP routing
-logic in a detailed manner. The can for example easily
-split SIP traffic by method or destination, perform user location, 
-trigger authentication, verify access permissions, and so on.
-	</para>
-	<para>
-The primary building block of the routing language are actions. There are 
-built-in actions (like forward for stateless forwarding) as 
-well as external actions supplied in shared library modules. The actions can be combined in composed statements 
-({a1(); a2();}). The language includes conditional statements and jumps (recursive too). Condition expressions 
-consist of operators and operands. Operands may include literals and well-known variables which 
-relate to processed message (src_ip, method, uri, ...) . Operators include == (equality) and ~=(regexp).
-	</para>
+	    <para>
+		The routing script is executed for every received request in sequential order. Actions may return 
+		positive/negative/zero value. 
 
-	<para>
-The routing script is executed for every received request in sequential order. Actions may return 
-positive/negative/zero value. 
+		Positive values are considered success and evaluated as
+		TRUE in conditional expressions. Negative values are considered FALSE. 
+		Script processing may be explicitly exited 
+		by calling "break". 
 
-Positive values are considered success and evaluated as
-TRUE in conditional expressions. Negative values are considered FALSE. 
-Script processing may be explicitly exited 
-by calling "break". 
+		Zero value means error and stops processing the script. 
 
-Zero value means error and stops processing the script. 
+		One might jump to another route[x] block by calling route(x) (similar to function calling).
 
-One might jump to anouther route[x] block by calling route(x) (similar to "goto").
+	    </para>
+	    <para>
+		The easiest way for ser users to affect routing logic is
+		to determine next hop statically. A useful scenario is
+		routing to a gateway whose static IP address is well known.
+		To configure static routing, simply use the commands
+		forward_to( IP_address, port_number>) for stateless
+		forwarding or t_relay_to( IP_address, port_number )
+		for stateful forwarding.
+	    </para>
 
-	</para>
-	<para>
-The easiest way for ser users to affect routing logic is
-to determine next hop statically. A useful scenario is
-routing to a gateway whose static IP address is well known.
-To configure static routing, simply use the commands
-forward_to( IP_address, port_number>) for stateless
-forwarding or t_relay_to( IP_address, port_number )
-for stateful forwarding.
-			  </para>
-
-	<example>
-	    <title>Stateless versus stateful forwarding</title>
-	    <programlisting format="linespecific">
-	# if requests URI is nummerical and starts with
-	# zero, forward statelessly, otherwise forward 
-        # statefuly
-	if (uri=~"^sip:0[0-9]*@iptel.org) {
-		# statelessly
-		forward( 192.168.99.3, 5080 );
-	} else {
-		# statefully
-		t_relay_to( "192.168.99.3", "5080" );
-	}
+	    <example>
+		<title>Stateless versus stateful forwarding</title>
+		<programlisting format="linespecific">
+# if requests URI is nummerical and starts with
+# zero, forward statelessly, otherwise forward 
+# statefuly
+if (uri=~"^sip:0[0-9]*@iptel.org) {
+# statelessly
+    forward( 192.168.99.3, 5080 );
+} else {
+# statefully
+    t_relay_to( "192.168.99.3", "5080" );
+}
 		</programlisting>
-	</example>
-
+	    </example>
 	</section>
-
+	
 	<section>
 	    <title>URI Rewriting</title>
 
-	<para>
-A more powerful tool for affecting routing logic is changing
-request URI. This can be done with any of built-in commands
-rewriteuri, rewritehost, rewritehostport, 
-rewriteuser, rewriteuserpass and rewriteport. All these comands
-rewrite request URI or a part of it. When later in a ser script
-a forwarding command is encountered, the command forwards
-the request to address in the rewritten URI.
+	    <para>
+		A more powerful tool for affecting routing logic is changing
+		request URI. This can be done with any of built-in commands
+		rewriteuri, rewritehost, rewritehostport, 
+		rewriteuser, rewriteuserpass and rewriteport. All these comands
+		rewrite request URI or a part of it. When later in a ser script
+		a forwarding command is encountered, the command forwards
+		the request to address in the rewritten URI.
 	    </para>
-	<para>Two URI-rewriting commands are of special importance
-	    for implementation of dialing plans. "prefix(s)", inserts 
-	    a string "s" in front of SIP address and "strip(n)" takes
-	    away the first "n" characters of a SIP address.
-	</para>
-	
+	    <para>Two URI-rewriting commands are of special importance
+		for implementation of dialing plans. "prefix(s)", inserts 
+		a string "s" in front of SIP address and "strip(n)" takes
+		away the first "n" characters of a SIP address.
+	    </para>
+	    
 	    <example>
 		<title>Rewriting URIs</title>
 		<programlisting format="linespecific">
-	if (uri=~"dan@foo.bar") {
-		rewriteuri("bla@somewherelse.com")
-		# forward statelessly
-		forward( dst:uri, dst:port);
-	}
-		    </programlisting>
+if (uri=~"dan@foo.bar") {
+    rewriteuri("bla@somewherelse.com")
+    # forward statelessly
+    forward( dst:uri, dst:port);
+}
+		</programlisting>
 	    </example>
 
 	    <para>
-Commands exported by external modules can change URI too.
-The most important application is chaging URI using the
-user location database:
-	</para>
-
+		Commands exported by external modules can change URI too.
+		The most important application is changing URI using the
+		user location database:
+	    </para>
 	</section> <!-- URI rewriting -->
 
 	<section>
@@ -419,23 +464,25 @@ user location database:
 		    used to selectively authenticate REGISTER requests.
 		</para>
 		<programlisting format="linespecific">
-   # we want to authentication only registrations;
-   # is the request method REGISTER?
-   if (method=="REGISTER") {
-       # are authentication credential valid ? ...
-       if (!www_authorize("iptel.org", "subscriber")) {
-           # .... no, challange user and stop processing
-           www_challenge("iptel.org", "0");
-           break;
-       };
-       # ... credentials valid -> save a new entry
-       # in user location database
-       save("location");
-       break;
-   };
-		</programlisting>
+# we want to authentication only registrations;
+# is the request method REGISTER?
 
+if (method=="REGISTER") {
+    # are authentication credential valid ? ...
+    if (!www_authorize("iptel.org", "subscriber")) {
+        # .... no, challange user and stop processing
+        www_challenge("iptel.org", "0");
+        break;
+    };
+
+# ... credentials valid -> save a new entry
+# in user location database
+    save("location");
+    break;
+};
+		</programlisting>
 	    </example>
+	    
 	    <section>
 		<title>Operators and Operands</title>
 		<para>
@@ -458,10 +505,10 @@ user location database:
 				such as 
 				"sip:john.doe@foo.bar"
 				<note>
-				    <para>Note that "uri" always refers to 
-					current
-				    value of URI, which is subject to change
-				    be uri-rewriting actions.
+				    <para>
+					Note that "uri" always refers to current
+					value of URI, which is subject to change
+					be uri-rewriting actions.
 				    </para>
 				</note>
 			    </para>
@@ -469,7 +516,7 @@ user location database:
 			<listitem>
 			    <para>
 				scr_ip, which referes to IP address from 
-				which a request came
+				which a request came.
 			    </para>
 			</listitem>
 		    </itemizedlist>
@@ -481,7 +528,7 @@ user location database:
 			    <para>
 				== stands for equity
 			    </para>
-		
+			    
 			</listitem>
 			<listitem>
 			    <para>
@@ -490,15 +537,16 @@ user location database:
 			</listitem>
 			<listitem>
 			    <para>
-			    logical operators: and, or, negation
-			    (C-notation for the operators may be used too)
-				</para>
+				logical operators: and, or, negation
+				(C-notation for the operators may be used too)
+			    </para>
 			</listitem>
 		    </itemizedlist>
 		</para>
 		<example>
-		    <title>Use of ser operators and operands in conditional
-		    statements
+		    <title>
+			Use of ser operators and operands in conditional
+			statements
 		    </title>
 		    <programlisting format="linespecific">
 # using an action as condition input; in this
@@ -506,11 +554,12 @@ user location database:
 # with private IP address in requests; the condition
 # is processed if such a contact header field is
 # found
+
 if (search("^(Contact|m): .*@(192\.168\.|10\.|172\.16)")) {
 # .... 
 # this condition is true if request URI matches
 # the regular expression "@bat\.iptel\.org"
-if (uri=~"@bat\.iptel\.org") {
+    if (uri=~"@bat\.iptel\.org") {
 # ...
 # and this condition is true if a request came
 # from an IP addres (useful for example for
@@ -518,23 +567,23 @@ if (uri=~"@bat\.iptel\.org") {
 # supported) AND the request method is INVITE
 # if ( (src_ip==192.68.77.110 and method=="INVITE")
 # ...
-		    </programlisting>
+</programlisting>
 		</example>
 	    </section>
 	</section> <!-- conditional statements -->
-
+	
 	<section>
 	    <title>External Modules</title>
 	    <para>
-	    SER provides the ability to link the server with external
-	    third-party shared libraries. Lot of functionality which is
-	    included in the SER distribution is actually located in
-	    modules to keep the server "core" compact and clean.
-	    Among others, there are modules for checking max_forwards
-	    value in SIP requests (maxfwd), transactional processing (tm),
-	    record routing (rr), accounting (acc), authentication (auth),
-	    SMS gateway (sms), replying requests (sl), user location
-	    (usrloc, registrar) and more.
+		SER provides the ability to link the server with external
+		third-party shared libraries. Lot of functionality which is
+		included in the SER distribution is actually located in
+		modules to keep the server "core" compact and clean.
+		Among others, there are modules for checking max_forwards
+		value in SIP requests (maxfwd), transactional processing (tm),
+		record routing (rr), accounting (acc), authentication (auth),
+		SMS gateway (sms), replying requests (sl), user location
+		(usrloc, registrar) and more.
 	    </para>
 	    <para>
 		In order to utilize new actions exported by a module, 
@@ -558,22 +607,24 @@ if (uri=~"@bat\.iptel\.org") {
 		    user agent and reply incoming requests.
 		</para>
 		<programlisting format="linespecific">
-		    # first of all, load the module!
-		    loadmodule "/usr/lib/ser/modules/sl.so
-		    route{
-		       # when ser acts as stateless server, it must
-		       # consume acknowledgments
-		       sl_filter_ack();
-		       # now reply
-		       sl_send_reply("404", "Not Found");
-		    }
-		</programlisting>
+# first of all, load the module!
+loadmodule "/usr/lib/ser/modules/sl.so
+route{
+    # when ser acts as stateless server, it must
+    # consume acknowledgments
+    sl_filter_ack();
+    # now reply
+    sl_send_reply("404", "Not Found");
+}
+</programlisting>
 	    </example>
-	
+	    
 	</section>
+
 	<section>
 	    <title>Script Examples</title>
-	    <para>This section demostrates in easy-to-undestand examples
+	    <para>
+		This section demostrates in easy-to-undestand examples
 		how to configure server's behaviour using the embedded
 		scripting language. All scripts follow the ser language 
 		syntax, which dictates the following block ordering:
@@ -609,8 +660,8 @@ if (uri=~"@bat\.iptel\.org") {
 			</para>
 		    </listitem>
 		</itemizedlist>
-		
 	    </para>
+
 	    <para>
 		For more complex examples, see the etc directory in
 		ser distribution. In particular, it contains the default
@@ -619,16 +670,17 @@ if (uri=~"@bat\.iptel\.org") {
 		script implements a "quick-start" registrar and proxy
 		server. The second, really complex script, is in production
 		use at iptel.org and exploits all ser features.
-		</para>
+	    </para>
+
 	    <section>
 		<title>Stateful User Agent</title>
 		<para>
-		This examples shows how to make ser act as a stateful user
-		agent. Such an agent can process arbitrary logic, such
-		as accounting or SMS gateway. Benefit of running in
-		stateful mode is that request retransmissions are absorbed.
-		Otherwise, the logic (such as sending SMS messages to
-		GSM network) would be executed for each retransmission.
+		    This examples shows how to make ser act as a stateful user
+		    agent. Such an agent can process arbitrary logic, such
+		    as accounting or SMS gateway. Benefit of running in
+		    stateful mode is that request retransmissions are absorbed.
+		    Otherwise, the logic (such as sending SMS messages to
+		    GSM network) would be executed for each retransmission.
 		</para>
 		<example>
 		    <title>Stateful UA</title>
@@ -673,51 +725,52 @@ modparam("usrloc", "flush_interval", 3600)
 
 # main routing logic
 
-route{
-        # for testing purposes, simply okay all REGISTERs
-        if (method=="REGISTER") {
-                log("REGISTER");
-                sl_send_reply("200", "ok");
-                #t_replicate("localhost", "9");
-                break;
-        };
-        # print a message if a call was missed
+route {
+    # for testing purposes, simply okay all REGISTERs
+    if (method=="REGISTER") {
+        log("REGISTER");
+        sl_send_reply("200", "ok");
+        #t_replicate("localhost", "9");
+        break;
+    };
+		
+    # print a message if a call was missed
 
-        if ( t_newtran())
+    if ( t_newtran())
     {
-                if (method=="ACK") {
-                        log("oops--ACK to a non-existent transaction");
-                        drop;
-                };
-                log("New Transaction Arrived\n");
-        # do what you want to do as a sever
-                if (uri=~"a@") {
-                        if (!t_reply("409", "Bizzar Error")) {
-                                sl_reply_error();
-                        };
-                } else if (uri=~"b@") {
-                        if (!t_reply("979", "You did not expect this did you")) {
-                                sl_reply_error();
-                        };
-                } else {
-                        if (!t_reply("699", "I don't want to chat with you")) {
-                                sl_reply_error();
-                        };
-                } ;
-    } else {
-                sl_reply_error();
+        if (method=="ACK") {
+            log("oops--ACK to a non-existent transaction");
+            drop;
         };
+
+        log("New Transaction Arrived\n");
+        # do what you want to do as a sever
+        if (uri=~"a@") {
+            if (!t_reply("409", "Bizzar Error")) {
+                sl_reply_error();
+            };
+        } else if (uri=~"b@") {
+            if (!t_reply("979", "You did not expect this did you")) {
+                sl_reply_error();
+            };
+        } else {
+            if (!t_reply("699", "I don't want to chat with you")) {
+                sl_reply_error();
+            };
+        } ;
+    } else {
+        sl_reply_error();
+    };
 }
-
-
-		    </programlisting>
+</programlisting>
 		</example>
 	    </section> <!-- Stateful UAS -->
+
 	    <section>
 		<title>Redirect Server</title>
 		<para>
-		The redirect example show how to redirect a request
-		to multiple destination using 3xx reply.
+		    The redirect example show how to redirect a request
+		    to multiple destination using 3xx reply.
 		</para>
 		<example>
 		    <title>Redirect Server</title>
@@ -749,22 +802,20 @@ loadmodule "/usr/lib/ser/modules/print.so"
 # main routing logic
 
 route{
-        # for testing purposes, simply okay all REGISTERs
-        if (method=="REGISTER") {
-                log("REGISTER");
-                sl_send_reply("200", "ok");
-                break;
-        };
-        append_branch("sip:parallel@iptel.org:9");
-        append_branch("sip:redirect@iptel.org:9");
-        sl_send_reply("300", "Redirect");
+    # for testing purposes, simply okay all REGISTERs
+    if (method=="REGISTER") {
+        log("REGISTER");
+        sl_send_reply("200", "ok");
+        break;
+    };
+    append_branch("sip:parallel@iptel.org:9");
+    append_branch("sip:redirect@iptel.org:9");
+    sl_send_reply("300", "Redirect");
 }
-
-		    </programlisting>
+</programlisting>
 		</example>
-		
 	    </section> <!-- redirect server-->
-
+	    
 	    <section>
 		<title>Executing External Script</title>
 		<para>
@@ -775,6 +826,7 @@ route{
 		    ser's ability to execute shell commands to log
 		    source IP address of incoming SIP requests.
 		</para>
+		
 		<example>
 		    <title>Executing External Script</title>
 		    <programlisting format="linespecific">
@@ -807,35 +859,34 @@ loadmodule "/usr/lib/ser/modules/ext.so"
 # main routing logic
 
 route{
-        # for testing purposes, simply okay all REGISTERs
-        if (method=="REGISTER") {
-                log("REGISTER");
-                sl_send_reply("200", "ok");
-                break;
-        };
+    # for testing purposes, simply okay all REGISTERs
+    if (method=="REGISTER") {
+        log("REGISTER");
+        sl_send_reply("200", "ok");
+        break;
+    };
 
-        # obsoleted
-        #ext_rewriteuri("echo sip:jiri@iptel.org; echo >/dev/null");
-        #break;
+    # obsoleted
+    #ext_rewriteuri("echo sip:jiri@iptel.org; echo >/dev/null");
+    #break;
 
-        # first dump the message to a file using cat command
-        exec_msg("printenv SRCIP > /tmp/exectest.txt; cat >> /tmp/exectest.txt")
-        # and then rewrite URI using external utility
-        # note that the last echo command trashes input parameter
-        if (exec_uri("echo sip:mra@iptel.org;echo sip:mrb@iptel.org;echo>/dev/null")) {
+    # first dump the message to a file using cat command
+    exec_msg("printenv SRCIP > /tmp/exectest.txt; cat >> /tmp/exectest.txt")
+    # and then rewrite URI using external utility
+    # note that the last echo command trashes input parameter
+    if (exec_uri("echo sip:mra@iptel.org;echo sip:mrb@iptel.org;echo>/dev/null")) {
 
-        #if (exec_uri("/tmp/sh.sh")) {
-                sl_send_reply("300", "Redirect");
-        } else {
-                sl_reply_error();
-                log(1, "alas, rewriting failed\n");
-        };
+    if (exec_uri("/tmp/sh.sh")) {
+        sl_send_reply("300", "Redirect");
+    } else {
+        sl_reply_error();
+        log(1, "alas, rewriting failed\n");
+    };
 }
-
-		    </programlisting>
+</programlisting>
 		</example>
 	    </section> <!-- exec example -->
-
+	    
 	    <section>
 		<title>Reply Processing (Forward on Unavailable)</title>
 		<para>
@@ -887,111 +938,313 @@ modparam("tm", "fr_inv_timer", 5 )
 
 # main routing logic
 
-route{
-        # for testing purposes, simply okay all REGISTERs
-        if (method=="REGISTER") {
-                log("REGISTER");
-                sl_send_reply("200", "ok");
-                break;
-        };
-        # print a message if a call was missed
-        seturi("sip:nobody@iptel.org");
-        /* parallel branch to sink port -- that will make it
-           wait until timer hits
-        */
-        append_branch("sip:parallel@iptel.org:9");
-        t_on_negative("1");
-        # start parallel forking to nobody and wer.xmla 
-        log(1,"about to relay\n");
-        t_relay();
+route {
+    # for testing purposes, simply okay all REGISTERs
+    if (method=="REGISTER") {
+        log("REGISTER");
+        sl_send_reply("200", "ok");
+        break;
+    };
+    # print a message if a call was missed
+    seturi("sip:nobody@iptel.org");
+    /* parallel branch to sink port -- that will make it
+       wait until timer hits
+     */
+
+    append_branch("sip:parallel@iptel.org:9");
+    t_on_negative("1");
+    # start parallel forking to nobody and wer.xmla 
+    log(1,"about to relay\n");
+    t_relay();
 }
 
 reply_route[1] {
-        rewriteuri("sip:nonsense@iptel.org");
-        append_branch();
-        log(1,"first redirection\n");
-        t_on_negative("2");
+    rewriteuri("sip:nonsense@iptel.org");
+    append_branch();
+    log(1,"first redirection\n");
+    t_on_negative("2");
 }
 
 reply_route[2] {
-        rewriteuri("sip:foo@iptel.org");
-        log(1, "second redirection\n");
-        append_branch();
+    rewriteuri("sip:foo@iptel.org");
+    log(1, "second redirection\n");
+    append_branch();
 }
-
-		    </programlisting>
+</programlisting>
 
 		</example>
 	    </section> <!-- reply processing -->
-
-	    
-
 	</section> <!-- examples -->
-
     </chapter>
     
     <chapter>
 	<title>Reference</title>
 	<section>
 	    <title>Core Options</title>
-	    <para>
-		DEBUG   debug
-FORK    fork
-LOGSTDERROR     log_stderror
-LISTEN          listen
-ALIAS           alias
-DNS              dns
-REV_DNS  rev_dns
-PORT    port
-STAT    statistics
-MAXBUFFER maxbuffer
-CHILDREN children
-CHECK_VIA       check_via
-SYN_BRANCH syn_branch
-MEMLOG  memlog
-SIP_WARNING sip_warning
-FIFO fifo
-FIFO_MODE fifo_mode
-SERVER_SIGNATURE server_signature
-REPLY_TO_VIA reply_to_via
-USER            "user"|"uid"
-GROUP           "group"|"gid"
-
-LOADMODULE      loadmodule
-MODPARAM        modparam
-
-	    </para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>debug</emphasis> - Set log level, this is number between 0 and 9.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>fork</emphasis> - If set to yes, the server will spawn children. If set to no, the main
+			process will be processing all messages (this is mainly for debugging).
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>log_stderror</emphasis> - If set to yes, the server will print its debugging 
+			information to standard error output. If set to no, <command moreinfo="none">syslog</command> 
+			will be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			listen
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			alias
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			dns
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			rev_dns
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			port
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			statistics
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			maxbuffer
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>children</emphasis> - Specifies how many children should be created when fork is set to yes.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>check_via</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>syn_branch</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>mem_log</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>sip_warning</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>fifo</emphasis> - FIFO special file pathname, for example "/tmp/ser_fifo".
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>fifo_mode</emphasis> - Permissions of the FIFO special file.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			server_signature
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			reply_to_via
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>user | uid</emphasis> - uid to be used by the server. 
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>group | gid</emphasis> - gid to be used by the server.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>loadmodule</emphasis> - Specifies a module to be loaded (for example "/usr/lib/ser/modules/tm.so" 
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>modparam</emphasis> - Module parameter configuration. The commands takes three parameters:
+			<itemizedlist>
+			    <listitem>
+				<para>
+				    <emphasis>module</emphasis> - Module in which the parameter resides.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>parameter</emphasis> - Name of the parameter to be configured.
+				</para>
+			    </listitem>
+			    <listitem>
+				<para>
+				    <emphasis>value</emphasis> - New value of the parameter.
+				</para>
+			    </listitem>
+			</itemizedlist>
+		    </para>
+		</listitem>
+	    </itemizedlist>
 	</section>
 	<section>
 	    <title>Core Commands</title>
-	    <para>
-FORWARD forward
-DROP    "drop"|"break"
-SEND    send
-LOG             log
-ERROR   error
-ROUTE   route
-REPLY_ROUTE reply_route
-EXEC    exec
-SETFLAG         setflag
-RESETFLAG       resetflag
-ISFLAGSET       isflagset
-LEN_GT          len_gt
-SET_HOST                "rewritehost"|"sethost"|"seth"
-SET_HOSTPORT    "rewritehostport"|"sethostport"|"sethp"
-SET_USER                "rewriteuser"|"setuser"|"setu"
-SET_USERPASS    "rewriteuserpass"|"setuserpass"|"setup"
-SET_PORT                "rewriteport"|"setport"|"setp"
-SET_URI                 "rewriteuri"|"seturi"
-REVERT_URI              "revert_uri"
-PREFIX                  "prefix"
-STRIP                   "strip"
-APPEND_BRANCH   "append_branch"
-IF                              "if"
-ELSE                    "else"
-		</para>
-
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>forward</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>drop</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>send</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>log</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>error</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>route</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>reply_route</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>exec</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>setflag</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>resetflag</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>isflagset</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>len_gt</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>rewritehost | sethost | seth</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>rewritehostport | sethostport | sethp</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>rewriteuser | setuser | setu</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>rewriteuserpass | setuserpass | setup</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>rewriteport | setport | setp</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>rewriteuri | seturi</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>revert_uri</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>prefix</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>strip</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>append_branch</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>if</emphasis>
+		    </para>
+		</listitem>
+		<listitem>
+		    <para>
+			<emphasis>else</emphasis>
+		    </para>
+		</listitem>
+	    </itemizedlist>
 	</section>
+
 	<section>
 	    <title>serctl command</title>
 	    <para>
@@ -1000,87 +1253,88 @@ ELSE                    "else"
 		a server: adding users, changing their passwords,
 		watching server status, etc. Usage of utility is
 		as follows:
+
 		<example>
 		    <title>serctl usage</title>
 		    <programlisting format="linespecific">
 usage: 
-           < subscribers >
- sc add <name> <password> <email> ... add a new subscriber (*)
- sc mail <name> ..................... send an email to a user
- sc rm <name> ....................... delete a user (*)
- sc alias show [<alias>] ............ show aliases
- sc alias rm <alias> ................ remove an alias
- sc alias add <alias> <uri> ......... show aliases
-           < access control lists >
- sc acl show [<user>] ............... show user membership
- sc acl grant <user> <group> ........ grant user membership (*)
- sc acl revoke <user> [<group>] ..... grant user membership(s) (*)
-           < usrloc >
- sc dul <table> <name> .............. delete user's UsrLoc entries
- sc show ............................ show online users
- sc showdb [<name>] ................. show online users flushed in DB
- sc passwd <user> <passwd> .......... change user's password (*)
- sc perm <user> <uri> ............... introduce a permanent UrLoc entry
-           < server health >
- sc monitor ......................... show internal status
- sc ps .............................. show runnig processes 
- sc fifo ............................ send raw commands to FIFO
+&lt; subscribers &gt;
+sc add &lt;name&gt; &lt;password&gt; &lt;email&gt; ... add a new subscriber (*)
+sc mail &lt;name&gt; ..................... send an email to a user
+sc rm &lt;name&gt; ....................... delete a user (*)
+sc alias show [&lt;alias&gt;] ............ show aliases
+sc alias rm &lt;alias&gt; ................ remove an alias
+sc alias add &lt;alias&gt; &lt;uri&gt; ......... show aliases
 
-   commands labeled with (*) will prompt for a MySQL password
-   if the variable PW is set, the password will not be prompted"
+&lt; access control lists &gt;
+sc acl show [&lt;user&gt;] ............... show user membership
+sc acl grant &lt;user&gt; &lt;group&gt; ........ grant user membership (*)
+sc acl revoke &lt;user&gt; [&lt;group&gt;] ..... grant user membership(s) (*)
 
-     ACL privileges are: local ld int voicemail free-pstn
+&lt; usrloc &gt;
+sc dul &lt;table&gt; &lt;name&gt; .............. delete user's UsrLoc entries
+sc show ............................ show online users
+sc showdb [&lt;name&gt;] ................. show online users flushed in DB
+sc passwd &lt;user&gt; &lt;passwd&gt; .......... change user's password (*)
+sc perm &lt;user&gt; &lt;uri&gt; ............... introduce a permanent UrLoc entry
 
-		    </programlisting>
+&lt; server health &gt;
+sc monitor ......................... show internal status
+sc ps .............................. show runnig processes 
+sc fifo ............................ send raw commands to FIFO
+
+commands labeled with (*) will prompt for a MySQL password
+if the variable PW is set, the password will not be prompted"
+
+ACL privileges are: local ld int voicemail free-pstn
+ </programlisting>
 		</example>
 	    </para>
 	</section>
+
 	<section>
 	    <title>Modules</title>
-		<para>
-	    Module description is currently located in READMEs of
-	    respective module directories.
-		</para>
+	    <para>
+		Module description is currently located in READMEs of
+		respective module directories.
+	    </para>
 	</section>
     </chapter>
-	
+    
+    <!-- TODO
 
 
+    INCLUDING
+    - the examples and license should be better included
 
-<!-- TODO
+    MISSING
+    - route
+    - modules
+    - installation
 
+    FAQ: 
+    - bandwidth, FW/NATs
 
-INCLUDING
-- the examples and license should be better included
+    HOWTO
+    - implementing dialing plans
+    - serving multiple domains
+    - ACLs
+    - and other operational guidelines
+    - outbound hints
 
-MISSING
-- route
-- modules
-- installation
+    PROGRAMMING TM
 
-FAQ: 
-- bandwidth, FW/NATs
+    ACCOMPANYING utils:
+    - ngrep
+    - harvest
+    - nscd
+    - sipsak
+    - serweb
 
-HOWTO
-- implementing dialing plans
-- serving multiple domains
-- ACLs
-- and other operational guidelines
-- outbound hints
+    - FIFO and service creation
 
-PROGRAMMING TM
-
-ACCOMPANYING utils:
-- ngrep
-- harvest
-- nscd
-- sipsak
-- serweb
-
-- FIFO and service creation
-
-follow the mysql pattern, tehy have a very nice documentation
--->
+    follow the mysql pattern, tehy have a very nice documentation
+    -->
 
 </book>
 	
