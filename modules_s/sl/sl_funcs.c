@@ -40,11 +40,11 @@ int sl_startup()
 	src[2].s="I love you men!!!! (Jiri's idea :))";
 	src[2].len=35;
 	/*proxy's IP*/
-	src[3].s=(char*)addresses ;
-	src[3].len=4;
+	src[3].s=sock_info[0].address_str.s ;
+	src[3].len=sock_info[0].address_str.len;
 	/*proxy's port*/
-	src[4].s=port_no_str;
-	src[4].len=port_no_str_len;
+	src[4].s=sock_info[0].port_no_str.s;
+	src[4].len=sock_info[0].port_no_str.len;
 	MDStringArray ( sl_tag, src, 5 );
 
 	sl_tag[MD5_LEN]=TOTAG_SEPARATOR;
@@ -75,7 +75,9 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 */
 	union sockaddr_union to;
 	str suffix_source[3];
+	struct socket_info* send_sock;
 	int ss_nr;
+
 
 	if ( msg->first_line.u.request.method_value==METHOD_ACK)
 	{
@@ -119,11 +121,16 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		goto error;
 	}
 
-	udp_send(buf,len,
-		/* v6; -jiri (struct sockaddr*) */ &(to),
-		sizeof(struct sockaddr_in));
+	send_sock=get_send_socket(&to);
+	if (send_sock!=0)
+	{
+		udp_send(/* v6; -bogdan (struct socket_info*) */ send_sock,
+			buf, len,
+			/* v6; -jiri (struct sockaddr*) */ &(to),
+			sizeof(struct sockaddr_in));
+		*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
+	}
 	pkg_free(buf);
-	*(sl_timeout) = get_ticks() + SL_RPL_WAIT_TIME;
 
 	return 1;
 
