@@ -88,7 +88,8 @@ struct s_table* init_hash_table()
    int       i;
 
    /*allocs the table*/
-   hash_table = sh_malloc(  sizeof( struct s_table ) );
+   hash_table = (struct s_table*)sh_malloc(  sizeof( struct s_table ) );
+    printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
    if ( !hash_table )
       goto error;
 
@@ -131,7 +132,7 @@ struct cell*  build_cell( struct sip_msg* p_msg )
       return 0;
 
    /* allocs a new cell */
-   new_cell = sh_malloc( sizeof( struct cell ) );
+   new_cell = (struct cell*)sh_malloc( sizeof( struct cell ) );
    if  ( !new_cell )
       return 0;
 
