@@ -44,6 +44,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
 #include "../../parser/parse_nameaddr.h"
+#include "../../parser/parser_f.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../db/db.h"
 
@@ -335,8 +336,10 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 
 	if(cb && (c=cb->contacts)) {
 	    str_uri = c->uri;
-	    parse_nameaddr(&str_uri,&na);
-	    str_uri = na.uri;
+	    if (find_not_quoted(&str_uri,'<')) {
+		parse_nameaddr(&str_uri,&na);
+	        str_uri = na.uri;
+	    }
 #ifdef EXTRA_DEBUG
 	    /*print_contacts(c);*/
 	    for(; c; c=c->next)
@@ -348,9 +351,9 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 #endif
     }
 
-    /* str_uri is taken from caller's contact or from is missing
+    /* str_uri is taken from caller's contact or from header
      * for backwards compatibility with pre-3261 */
-    if(!str_uri.len)
+    if(!str_uri.len || !str_uri.s)
 	str_uri = get_from(msg)->uri;
 
     route.s = route_buffer; route.len = 0;
@@ -540,10 +543,15 @@ static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 
 	/* contruct buffer first */
 	len=0;
-	for (i=0; i<cnt; i++) len+=lines[i].len+1;
+	for (i=0; i<cnt; i++) {
+	    if (!lines[i].s)
+		lines[i]=empty_param;
+	    len+=lines[i].len+1;
+	}
+
 	buf=pkg_malloc(len+1);
 	if (!buf) {
-		LOG(L_ERR, "ERROR: write_to_vm_fifo: no mem\n");
+		LOG(L_ERR, "ERROR: write_to_vm_fifo: no mem (size=%i)\n",len+1);
 		return -1;
 	}
 	p=buf;
