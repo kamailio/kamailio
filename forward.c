@@ -134,13 +134,14 @@ error:
 int update_sock_struct_from_via( union sockaddr_union* to,
 								 struct via_body* via )
 {
-	int err;
 	struct hostent* he;
-	unsigned int ip;
 	char *host_copy;
 
 
 #ifdef DNS_IP_HACK
+	int err;
+	unsigned int ip;
+
 	ip=str2ip((unsigned char*)via->host.s,via->host.len,&err);
 	if (err==0){
 		to->sin.sin_family=AF_INET;
