@@ -23,8 +23,7 @@ int send_pr_buffer( struct retr_buf *rb,
 	void *buf, int len, char *function, int line )
 {
 	if (buf && len && rb )
-		return udp_send( rb->send_sock, buf,
-			len, &rb->to,  sizeof(union sockaddr_union) ) ;
+		return udp_send( rb->send_sock, buf, len, &rb->to) ;
 	else {
 		LOG(L_CRIT, "ERROR: sending an empty buffer from %s (%d)\n",
 			function, line );

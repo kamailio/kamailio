@@ -54,10 +54,23 @@ struct socket_info{
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
 	int is_ip; /* 1 if name is an ip address, 0 if not  -- optimization*/
+	union sockaddr_union su; 
 };
 
 
-
+/* len of the sockaddr */
+#ifdef __FreeBSD__
+#define sockaddru_len(su)	((su).s.sa_len)
+#else
+#ifdef USE_IPV6
+#define sockaddru_len(su)	\
+			(((su).s.sa_family==AF_INET6)?sizeof(struct sockaddr_in6):\
+					sizeof(struct sockaddr_in))
+#else
+#define sockaddru_len(su)	sizeof(struct sockaddr_in)
+#endif /*USE_IPV6*/
+#endif /*__FreeBSD__*/
+	
 /* inits an ip_addr with the addr. info from a hostent structure
  * ip = struct ip_addr*
  * he= struct hostent*

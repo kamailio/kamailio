@@ -152,8 +152,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				p->tx_bytes+=msg->len;
 				send_sock=get_send_socket(to);
 				if (send_sock!=0){
-					ret=udp_send(send_sock, msg->orig, msg->len, to,
-									sizeof(union sockaddr_union));
+					ret=udp_send(send_sock, msg->orig, msg->len, to);
 				}else{
 					ret=-1;
 				}

@@ -113,26 +113,20 @@ int probe_max_receive_buffer( int udp_sock )
 int udp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
-	int sock_len;
 	int optval;
 
-
+	addr=&sock_info->su;
+/*
 	addr=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
 	if (addr==0){
 		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
 		goto error;
 	}
-	
+*/
 	if (init_su(addr, &sock_info->address, htons(sock_info->port_no))<0){
 		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
 		goto error;
 	}
-	/*
-	addr->sin_family=AF_INET;
-	addr->sin_port=htons(port);
-	addr->sin_addr.s_addr=ip;
-	*/
-
 	
 	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_DGRAM, 0);
 	if (sock_info->socket==-1){
@@ -158,17 +152,11 @@ int udp_init(struct socket_info* sock_info)
 
 
 	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
-#ifdef __FreeBSD__
-	sock_len=addr->s.sa_len;
-#else
-	sock_len=sizeof(union sockaddr_union);
-#endif
 	
-
-	if (bind(sock_info->socket,  &addr->s, sock_len)==-1){
+	if (bind(sock_info->socket,  &addr->s, sockaddru_len(*addr))==-1){
 		LOG(L_ERR, "ERROR: udp_init: bind(%x, %p, %d) on %s: %s\n",
 				sock_info->socket, &addr->s, 
-				sock_len,
+				sockaddru_len(*addr),
 				sock_info->address_str.s,
 				strerror(errno));
 	#ifdef USE_IPV6
@@ -179,11 +167,11 @@ int udp_init(struct socket_info* sock_info)
 		goto error;
 	}
 
-	free(addr);
+/*	free(addr);*/
 	return 0;
 
 error:
-	if (addr) free(addr);
+/*	if (addr) free(addr);*/
 	return -1;
 }
 
@@ -207,6 +195,7 @@ int udp_rcv_loop()
 		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
 		goto error;
 	}
+	memset(from, 0 , sizeof(union sockaddr_union));
 
 	for(;;){
 #ifdef DYN_BUF
@@ -217,7 +206,7 @@ int udp_rcv_loop()
 			goto error;
 		}
 #endif
-		fromlen=sizeof(union sockaddr_union);
+		fromlen=sockaddru_len(bind_address->su);
 		len=recvfrom(bind_address->socket, buf, BUF_SIZE, 0, &from->s,
 											&fromlen);
 		if (len==-1){
@@ -335,10 +324,11 @@ qa_passed:
 
 /* which socket to use? main socket or new one? */
 int udp_send(struct socket_info *source, char *buf, unsigned len,
-				union sockaddr_union*  to, unsigned tolen)
+				union sockaddr_union*  to)
 {
 
 	int n;
+	int tolen;
 
 #ifdef DBG_MSG_QA
 	/* aborts on error, does nothing otherwise */
@@ -348,7 +338,7 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 	}
 #endif
 
-
+	tolen=sockaddru_len(*to);
 again:
 	n=sendto(source->socket, buf, len, 0, &to->s, tolen);
 #ifdef XL_DEBUG

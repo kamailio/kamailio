@@ -189,8 +189,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p)
 	DBG("Sending:\n%s.\n", buf);
 	DBG("orig. len=%d, new_len=%d\n", msg->len, len );
 	
-	if (udp_send(send_sock, buf, len,  to,
-							sizeof(union sockaddr_union))==-1){
+	if (udp_send(send_sock, buf, len,  to)==-1){
 			ser_error=E_SEND;
 			p->errors++;
 			p->ok=0;
@@ -335,8 +334,7 @@ int forward_reply(struct sip_msg* msg)
 		goto error;
 	}
 
-	if (udp_send(send_sock, new_buf,new_len,  to,
-				sizeof(union sockaddr_union))==-1)
+	if (udp_send(send_sock, new_buf,new_len,  to)==-1)
 	{
 		STATS_TX_DROPS;
 		goto error;
