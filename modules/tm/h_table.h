@@ -45,6 +45,7 @@ typedef struct  timer
    struct cell*    first_cell;
    struct cell*    last_cell;
    int                  sem;
+   lock_t   mutex;
 } timer_type;
 
 

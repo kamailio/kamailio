@@ -130,22 +130,23 @@ int init_cell_lock( struct cell *cell )
 	/* just advice which of the available semaphores to use;
 	   specifically, all cells in an entry use the same one
         */
-	cell->lock=cell->hash_index / sem_nr + NR_OF_TIMER_LISTS;
+	cell->mutex=cell->hash_index / sem_nr + NR_OF_TIMER_LISTS;
 }
 
-int init_entry_lock( struct entry *entry )
+int init_entry_lock( struct s_table* hash_table, struct entry *entry )
 {
 	/* just advice which of the available semaphores to use;
 	   specifically, all entries are partitioned into as
 	   many partitions as number of available semaphors allows
         */
-	entry->lock= (entry - hash_table ) / sizeof(struct entry) + NR_OF_TIMER_LISTS;
-
+	entry->mutex=  ((void *)entry - (void *)(hash_table->entrys ) )
+			/ sizeof(struct entry) + NR_OF_TIMER_LISTS;
 }
-int init_timerlist_lock( struct timer *timerlist )
+
+int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
 {
 	/* each timer list has its own semaphore */
-	entry->lock=timerlist->id;
+	hash_table->timers[timerlist_id].mutex = timerlist_id;
 }
 
 int release_cell_lock( struct cell *cell )
