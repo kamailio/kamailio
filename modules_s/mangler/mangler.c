@@ -1,5 +1,5 @@
 /*
- * Sdp mangler module
+ * mangler module
  *
  * $Id$
  *
@@ -160,8 +160,8 @@ static void func_invite(struct cell *t,struct sip_msg *msg,int code,void *param)
 	else
 		{
 			fprintf(stdout,"NOT INVITE(REGISTER?) received \n%s\n",msg->buf);fflush(stdout);
-			encode_contact(msg,"enc_prefix","100.200.100.200");
-			//decode_contact(msg,(char *)'*',NULL);
+			//encode_contact(msg,"enc_prefix","100.200.100.200");
+			decode_contact(msg,NULL,NULL);
 		}	
 	fflush(stdout);
 }

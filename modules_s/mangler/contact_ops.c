@@ -1,5 +1,5 @@
 /*
- * Sdp mangler module
+ * mangler module
  *
  * $Id$
  *
@@ -159,7 +159,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 	
 	
 #ifdef DEBUG
-	fprintf (stdout,"---START--------DECODE CONTACT TEXTOPS-----------------\n");
+	fprintf (stdout,"---START--------DECODE CONTACT-----------------\n");
 #endif
 
 	if ((msg->contact == NULL)||((parse_headers(msg,HDR_CONTACT,0) == -1)))
@@ -228,34 +228,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 			return -4;
 		}
 #ifdef DEBUG
-	fprintf (stdout,"---END--------DECODE CONTACT TEXTOPS-----------------\n");
-#endif
-	return 0;
-}
-
-
-
-
-
-int
-free_uri_format (struct uri_format *format)
-{
-#ifdef DEBUG
-	printf("Start of Dealocating format \n");
-#endif
-	if (format->username.len > 0)
-		pkg_free (format->username.s);
-	if (format->password.len > 0)
-		pkg_free (format->password.s);
-	if (format->ip.len > 0)
-		pkg_free (format->ip.s);
-	if (format->port.len > 0)
-		pkg_free (format->port.s);
-	if (format->protocol.len > 0)
-		pkg_free (format->protocol.s);
-	memset(format,0,sizeof(struct uri_format));
-#ifdef DEBUG
-	printf("End of Dealocating format \n");fflush(stdout);
+	fprintf (stdout,"---END--------DECODE CONTACT-----------------\n");
 #endif
 	return 0;
 }
@@ -296,8 +269,8 @@ encode2format (str uri, struct uri_format *format)
 		end = string + uri.len;
 	}
 	memset(format,0,sizeof(struct uri_format));
-	(*format).first = start - string + 4;	/*sip: */
-	(*format).second = end - string;
+	format->first = start - string + 4;	/*sip: */
+	format->second = end - string;
 	/* --------------------------testing ------------------------------- */
 	/* sip:gva@pass@10.0.0.1;;transport=udp>;expires=2 INCORECT BEHAVIOUR OF parse_uri,myfunction works good */
 	foo = parse_uri (start, end - start, &sipUri);
@@ -311,10 +284,10 @@ encode2format (str uri, struct uri_format *format)
 	}
 
 	/* fields are directly pointing to parts of the message.They must not be deallocated */
-	(*format).username = sipUri.user;
-	(*format).password = sipUri.passwd;
-	(*format).ip = sipUri.host;
-	(*format).port = sipUri.port;
+	format->username = sipUri.user;
+	format->password = sipUri.passwd;
+	format->ip = sipUri.host;
+	format->port = sipUri.port;
 	
 	/* locating protocol from transport=udp|tcp */
 	string = sipUri.params.s;
@@ -326,8 +299,8 @@ encode2format (str uri, struct uri_format *format)
 		{
 			if (strncasecmp (pos - 9, "transport=", 10) == 0)
 			{
-				(*format).protocol.s = pos + 1;
-				(*format).protocol.len = 3;
+				format->protocol.s = pos + 1;
+				format->protocol.len = 3;
 				break;
 			}
 #ifdef DEBUG
@@ -343,8 +316,8 @@ encode2format (str uri, struct uri_format *format)
 	}
 	
 #ifdef DEBUG	
-	fprintf (stdout, "protocol=%.*s\n", (*format).protocol.len,(*format).protocol.s);
-	fprintf (stdout, "first=%d second=%d\n", (*format).first,(*format).second);
+	fprintf (stdout, "protocol=%.*s\n", format->protocol.len,format->protocol.s);
+	fprintf (stdout, "first=%d second=%d\n", format->first,format->second);
 #endif
 	
 	return 0;
@@ -360,8 +333,8 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	int foo,res;
 
 	
-	(*result).s = NULL;
-	(*result).len = 0;
+	result->s = NULL;
+	result->len = 0;
 	if (uri.len <= 1)
 		return -1;	/* no contact or an invalid one */
 	if (public_ip == NULL) 
@@ -389,19 +362,19 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	 */
 
 	foo = 1;		/*strlen(separator); */
-	(*result).len = format.first + uri.len - format.second +	//ar trebui sa sterg 1
+	result->len = format.first + uri.len - format.second +	//ar trebui sa sterg 1
 		strlen (encoding_prefix) + foo +
 		format.username.len + foo +
 		format.password.len + foo +
 		format.ip.len + foo + format.port.len + foo +
 		format.protocol.len + 1 + strlen (public_ip);
 	/* adding one comes from @ */
-	(*result).s = pkg_malloc ((*result).len);
-	pos = (*result).s;
+	result->s = pkg_malloc (result->len);
+	pos = result->s;
 	if (pos == NULL)
 		{
 #ifdef DEBUG
-			fprintf (stdout, "Unable to alloc result [%d] end=%d\n",(*result).len, format.second);
+			fprintf (stdout, "Unable to alloc result [%d] end=%d\n",result->len, format.second);
 #endif
 			LOG(L_ERR,"ERROR: encode_uri:Unable to alloc memory\n");
 			return -3;
@@ -410,14 +383,14 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	fprintf (stdout, "[pass=%d][Alocated %d bytes][first=%d][lengthsec=%d]\nAdding [%d] ->%.*s\n",format.password.len,result->len,format.first,uri.len-format.second,format.first, format.first,uri.s);fflush (stdout);
 #endif
 	 	
-	res = snprintf(pos,(*result).len,"%.*s%s%c%.*s%c%.*s%c%.*s%c%.*s%c%.*s@",format.first,uri.s,encoding_prefix,separator,
+	res = snprintf(pos,result->len,"%.*s%s%c%.*s%c%.*s%c%.*s%c%.*s%c%.*s@",format.first,uri.s,encoding_prefix,separator,
 	format.username.len,format.username.s,separator,format.password.len,format.password.s,
 	separator,format.ip.len,format.ip.s,separator,format.port.len,format.port.s,separator,format.protocol.len,format.protocol.s);
 
-	if ((res < 0 )||(res>(*result).len)) 
+	if ((res < 0 )||(res>result->len)) 
 		{
 			LOG(L_ERR,"ERROR: encode_uri: Unable to construct new uri.\n");
-			if ((*result).s != NULL) pkg_free((*result).s);
+			if (result->s != NULL) pkg_free(result->s);
 			return -3;
 		}
 #ifdef DEBUG
@@ -430,7 +403,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 
 #ifdef DEBUG	
 	fprintf (stdout, "Adding2 [%d] ->%.*s\n", uri.len - format.second,uri.len - format.second, uri.s + format.second);
-	fprintf (stdout, "NEW NEW uri is->[%.*s]\n", (*result).len, (*result).s);
+	fprintf (stdout, "NEW NEW uri is->[%.*s]\n", result->len, result->s);
 #endif
 
 	/* Because called parse_uri format contains pointers to the inside of msg,must not deallocate */
@@ -443,150 +416,109 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 int
 decode2format (str uri, char separator, struct uri_format *format)
 {
-	char *start, *end, *string, *pos;
-	int foo;
-	int len;
+	char *start, *end, *pos,*lastpos;
+	str tmp;
+	enum {EX_PREFIX=0,EX_USER,EX_PASS,EX_IP,EX_PORT,EX_PROT,EX_FINAL} state;
 
-	memset (format, 0, sizeof ((*format)));
+	//memset (format, 0, sizeof ((struct uri_format)));
 
 	if (uri.s == NULL)
+		{
+		LOG(L_ERR,"ERROR: decode2format: Invalid parameter uri.It is NULL\n");
 		return -1;
+		}
 	/* sip:enc_pref*username*password*ip*port*protocol@public_ip */
-	len = 0;
-
-	string = uri.s;
-
-	start = q_memchr (string, ':', uri.len - len);
+	
+	start = q_memchr (uri.s, ':', uri.len);
 	if (start == NULL)
 	{
-		foo = -3;
-		goto error1;
+		LOG(L_ERR,"ERROR: decode2format: Invalid SIP uri.Missing :\n");
+		return -2;
 	}			/* invalid uri */
-	start = start + 1;	/* jumping over sip: */
-	(*format).first = start - string;
-	len = start - string;
-
-	/* jumping over encoding prefix */
-
-	start = q_memchr (start, separator, uri.len - len);
-	if (start == NULL)	/* should not be , wrong encoding or */
-	{
-		foo = -9;
-		goto error1;
-	}
-	if (uri.len - len > 0) start = start + 1;
-	len = (start - string);
-	/* username */
-	end = q_memchr (start, separator, uri.len - len);
-	if (end == NULL)	/* should not be , wrong encoding or */
-	{
-		foo = -4;
-		goto error1;
-	}
-	if ((end - start) != 0)
-	{
-		(*format).username.s = pkg_malloc (end - start);
-		(*format).username.len = end - start;
-		memcpy ((*format).username.s, start, end - start);
-#ifdef DEBUG
-		fprintf (stdout, "username=%.*s\n", (*format).username.len,(*format).username.s);
-#endif
-	}
-	if (uri.len - len > 0) start = end + 1;	/* now start is after * */
-	len = (start - string);
-
-	/* password */
-	end = q_memchr (start, separator, uri.len - len);
-	if (end == NULL)	/* should not be , wrong encoding or */
-	{
-		foo = -5;
-		goto error1;
-	}
-	if ((end - start) != 0)
-	{
-		(*format).password.s = pkg_malloc (end - start);
-		(*format).password.len = end - start;
-		memcpy ((*format).password.s, start, end - start);
-#ifdef DEBUG
-		fprintf (stdout, "password=%.*s\n", (*format).password.len,(*format).password.s);
-#endif
-	}
-	if (uri.len - len > 0) start = end + 1;	/* now start is after * */
-	len = (start - string);
-
-	/* ip */
-	end = q_memchr (start, separator, uri.len - len);
-	if (end == NULL)	/* should not be , wrong encoding or */
-	{
-		foo = -6;
-		goto error1;
-	}
-	if ((end - start) != 0)
-	{
-		(*format).ip.s = pkg_malloc (end - start);
-		(*format).ip.len = end - start;
-		memcpy ((*format).ip.s, start, end - start);
-#ifdef DEBUG
-		fprintf (stdout, "ip=%.*s\n", (*format).ip.len, (*format).ip.s);
-#endif
-	}
-	if (uri.len - len > 0) start = end + 1;	/* now start is after * */
-	len = (start - string);
-
-	/* port */
-	end = q_memchr (start, separator, uri.len - len);
-	if (end == NULL)	/* should not be , wrong encoding or */
-	{
-		foo = -7;
-		goto error1;
-	}
-	if ((end - start) != 0)
-	{
-		(*format).port.s = pkg_malloc (end - start);
-		(*format).port.len = end - start;
-		memcpy ((*format).port.s, start, end - start);
-#ifdef DEBUG
-		fprintf (stdout, "port=%.*s\n", (*format).port.len,(*format).port.s);
-#endif
-	}
-	if (uri.len - len > 0) start = end + 1;	/* now start is after * */
-	len = (start - string);
-
-	/* protocol */
-	end = q_memchr (start, '@', uri.len - len);	/* ...*udp@PUBLIC */
-	if (end == NULL)	/* should not be , wrong encoding or */
-	{
-		foo = -8;
-		goto error1;
-	}
-
-	if ((end - start) != 0)
-	{
-		(*format).protocol.s = pkg_malloc (end - start);
-		(*format).protocol.len = end - start;
-		memcpy ((*format).protocol.s, start, end - start);
-		start = end + 1;	/* now start is after @ */
-#ifdef DEBUG
-		fprintf (stdout, "protocol=%.*s\n", (*format).protocol.len,(*format).protocol.s);
-#endif
-	}
-	if (uri.len - len > 0) start = end + 1;	/* now start is after * looking for end */
-	len = (start - string);
-	end = q_memchr (start, '>', uri.len - len);
-	pos = q_memchr (start, ';', uri.len - len);
-	if ((end == NULL) && (pos == NULL))
-		end = string + uri.len;
-	else if (pos == NULL) ;
-	else if (end == NULL)
-		end = pos;
-
-	(*format).second = end - string;
-	return 0;
-error1:
+	start = start + 1;	/* jumping over sip: ATENTIE LA BUFFER OVERFLOW DACA E DOAR sip: */
+	format->first = start - uri.s;
 	
-	free_uri_format (format);
-	return foo;
+	//----------------------------------------------	
 
+	end = q_memchr(start,'@',uri.len-(start-uri.s));
+	if (end == NULL) 
+		{
+		LOG(L_ERR,"ERROR: decode2format: Invalid SIP uri.Missing @\n");
+		return -3;/* no host address found */
+		}
+
+#ifdef DEBUG
+		fprintf (stdout, "Decoding %.*s\n",end-start,start);
+#endif
+	
+	state = EX_PREFIX;
+	lastpos = start;
+	
+	for (pos = start;pos<end;pos++)
+		{
+			if (*pos == separator)
+				{
+					/* we copy between lastpos and pos */
+					tmp.len = pos - lastpos;
+					if (tmp.len>0) tmp.s = lastpos;
+						else tmp.s = NULL;
+					switch (state)
+						{
+							case EX_PREFIX: state = EX_USER;break;
+							case EX_USER:format->username = tmp;state = EX_PASS;break;
+							case EX_PASS:format->password = tmp;state = EX_IP;break;
+							case EX_IP:format->ip = tmp;state = EX_PORT;break;
+							case EX_PORT:format->port = tmp;state = EX_PROT;break;
+							default:
+								{
+								/* this should not happen, we should find @ not separator */
+								return -7;
+								break;
+								}
+						}
+						
+					lastpos = pos+1;
+				
+				}
+			else
+			if (((*pos) == '>')||(*pos == ';'))
+				{
+				//invalid chars inside username part
+				return -6;
+				}
+		}
+		
+		
+	/* we must be in state EX_PROT and protocol is between lastpos and end@ */
+	if (state != EX_PROT) return -8;
+	format->protocol.len = end - lastpos;
+	if (format->protocol.len>0) format->protocol.s = lastpos;
+		else format->protocol.s = NULL;
+	/* I should check perhaps that 	after @ there is something */
+		
+#ifdef DEBUG
+		fprintf (stdout, "username=%.*s\n", format->username.len,format->username.s);
+		fprintf (stdout, "password=%.*s\n", format->password.len,format->password.s);
+		fprintf (stdout, "ip=%.*s\n", format->ip.len, format->ip.s);
+		fprintf (stdout, "port=%.*s\n", format->port.len,format->port.s);
+		fprintf (stdout, "protocol=%.*s\n", format->protocol.len,format->protocol.s);
+#endif
+
+	/* looking for the end of public ip */
+	start = end;/*we are now at @ */
+	for(pos = start;pos<uri.s+uri.len;pos++)
+		{
+			if ((*pos == ';')||(*pos == '>'))
+				{
+				/* found end */
+				format->second = pos - uri.s;
+				return 0;
+				}
+		}
+	/* if we are here we did not find > or ; */
+	format->second = uri.len;
+	return 0;	
+	
 }
 
 
@@ -597,11 +529,14 @@ decode_uri (str uri, char separator, str * result)
 	struct uri_format format;
 	int foo;
 
-	(*result).s = NULL;
-	(*result).len = 0;
+	result->s = NULL;
+	result->len = 0;
 
 	if ((uri.len <= 0) || (uri.s == NULL))
+		{
+		LOG(L_ERR,"ERROR: decode_uri: Invalid value for uri\n");
 		return -1;
+		}
 
 	foo = decode2format (uri, separator, &format);
 	if (foo < 0)
@@ -609,33 +544,42 @@ decode_uri (str uri, char separator, str * result)
 		LOG(L_ERR,"ERROR: decode_uri: Error decoding Contact uri [%.*s].Error code %d\n",uri.len,uri.s,foo);
 		return foo - 20;
 		}
+	/* sanity check */
+	if (format.ip.len <= 0)
+		{
+			LOG(L_ERR,"ERROR: decode_uri: Unable to decode host address \n");
+			return -2;/* should I quit or ignore ? */
+		}			
 
+	if ((format.password.len > 0) && (format.username.len <= 0))
+		{
+			LOG(L_ERR,"ERROR: decode_uri: Password decoded but no username available\n");
+			return -3;
+		}
+		
 	/* a complete uri would be sip:username:password@ip:port;transport=protocol goes to
 	 * sip:enc_pref#username#password#ip#port#protocol@public_ip
 	 */
-	(*result).len = format.first + (uri.len - format.second);	/* not NULL terminated */
-	if (format.username.len > 0)
-		(*result).len += format.username.len + 1;	//: or @
-	if (format.password.len > 0)
-		(*result).len += format.password.len + 1;	//@
-	if (format.ip.len > 0)
-		(*result).len += format.ip.len;
-	else
-	{
-		foo = -3;
-		LOG(L_ERR,"ERROR: decode_uri: Unable to decode host address \n");
-		goto error3;
-	}			/* should I quit or ignore ? */
-	if (format.port.len > 0)
-		(*result).len += 1 + format.port.len;	//:
-	if (format.protocol.len > 0)
-		(*result).len += 1 + 10 + format.protocol.len;	//;transport=
+	result->len = format.first + (uri.len - format.second);	/* not NULL terminated */
+	if (format.username.len > 0) result->len += format.username.len + 1;	//: or @
+	if (format.password.len > 0) result->len += format.password.len + 1;	//@
+		
+	/* if (format.ip.len > 0) */	     result->len += format.ip.len;
+		
+	if (format.port.len > 0)     result->len += 1 + format.port.len;	//:
+	if (format.protocol.len > 0) result->len += 1 + 10 + format.protocol.len;	//;transport=
 #ifdef DEBUG
-	fprintf (stdout, "Result size is %d.Original Uri size is %d\n",(*result).len, uri.len);
+	fprintf (stdout, "Result size is %d.Original Uri size is %d\n",result->len, uri.len);
 #endif
+	
 	/* adding one comes from * */
-	(*result).s = pkg_malloc ((*result).len);
-	pos = (*result).s;
+	result->s = pkg_malloc (result->len);
+	if (result->s == NULL)
+		{
+			LOG(L_ERR,"ERROR: decode_contact: Unable to allocate memory\n");
+			return -3;
+		}
+	pos = result->s;
 #ifdef DEBUG
 	fprintf (stdout, "Adding [%d] ->%.*s\n", format.first, format.first,uri.s);fflush (stdout);
 #endif
@@ -654,22 +598,16 @@ decode_uri (str uri, char separator, str * result)
 	}
 	if (format.password.len > 0)
 	{
-		if (format.username.len <= 0)
-		{
-			foo = -4;
-			LOG(L_ERR,"ERROR: decode_uri: Password decoded but now username available\n");
-			goto error3;
-		}		/* error: this is going to look like a username */
 		memcpy (pos, format.password.s, format.password.len);
 		pos = pos + format.password.len;
 		memcpy (pos, "@", 1);
 		pos = pos + 1;
 	}
-	if (format.ip.len > 0)
-	{
+	/* if (format.ip.len > 0) */
+
 		memcpy (pos, format.ip.s, format.ip.len);
 		pos = pos + format.ip.len;
-	}
+	
 	if (format.port.len > 0)
 	{
 		memcpy (pos, ":", 1);
@@ -690,16 +628,11 @@ decode_uri (str uri, char separator, str * result)
 #endif
 
 	memcpy (pos, uri.s + format.second, uri.len - format.second);	/* till end: */
-	free_uri_format (&format);
 
 #ifdef DEBUG
-	fprintf (stdout, "New decoded uri is->[%.*s]\n", (*result).len,(*result).s);
+	fprintf (stdout, "New decoded uri is->[%.*s]\n", result->len,result->s);
 #endif
 
 	return 0;
-
-error3:
-	free_uri_format (&format);
-	return foo;
 }
 
