@@ -28,7 +28,7 @@ typedef  volatile int fl_lock_t;
 /*test and set lock, ret 1 if lock held by someone else, 0 otherwise*/
 inline static int tsl(fl_lock_t* lock)
 {
-	volatile int val;
+	int val;
 
 #ifdef __i386
 
