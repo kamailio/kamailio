@@ -235,31 +235,66 @@ int udp_send(struct socket_info *source, char *buf, unsigned len,
 
 	int n;
 
+/* message quality assurance -- frequently, bugs in ser have
+   been indicated by zero characters or long whitespaces
+   in generated messages; this debugging option aborts if
+   any such message is sighted
+*/
 #ifdef DBG_MSG_QA
 #define _DBG_WS_LEN 3
 #define _DBG_WS "   "
 
-	char *space;
+	char *scan;
 	int my_len;
+	int space_cnt;
+	enum { QA_ANY, QA_SPACE, QA_EOL1 } state;
 
+
+	/* is there a zero character inthere ? */	
 	if (memchr(buf, 0, len)) {
 		LOG(L_CRIT, "BUG: message being sent with 0 in it\n");
 		abort();
 	}
+
 	my_len=len;
-	space=buf;
-	while((space=memchr(space, ' ', my_len ))) {
-		/* how much we have after the space */
-		my_len=len-(space-buf)+1;
-		/* EoM -- stop checks */
-		if (my_len<_DBG_WS_LEN) break;
-		if (memcmp(space+1, _DBG_WS, _DBG_WS_LEN)==0) {
-			LOG(L_CRIT, "BUG(probably): "
-				"message with four spaces in it\n");
-			abort();
+	scan=buf;
+	state=QA_ANY;
+	space_cnt=0;
+
+	while(my_len) {
+		switch(*scan) {
+			case ' ':	if (state==QA_SPACE) {
+							space_cnt++;
+							if (space_cnt==4) {
+								LOG(L_CRIT, "BUG(propably): DBG_MSG_QA: "
+									"too many spaces\n");
+								abort();
+							}
+						} else space_cnt=0;
+						state=QA_SPACE; 
+						break;
+
+			case '\r':	/* ignore */
+						space_cnt=0;
+						break;
+
+			case '\n': /* don't proceed to body on EoH */
+						if (state==QA_EOL1) goto qa_passed;
+						space_cnt=0;
+						state=QA_EOL1;
+						break;
+
+			default:	space_cnt=0;
+						state=QA_ANY;
+						break;
 		}
-		space+=_DBG_WS_LEN;my_len-=_DBG_WS_LEN;
+		scan++;
+		my_len--;
 	}
+
+
+qa_passed:
+
 #endif
 
 again:
