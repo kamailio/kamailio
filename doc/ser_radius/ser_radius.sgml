@@ -63,9 +63,10 @@
 		</listitem>
 		<listitem>
 		    <simpara>
-			Radiusclient library, you can get it from <ulink
-			    url="http://www.mcs.de/~lf/radius">http://www.mcs.de/~lf/radius</ulink>.
-			    The howto describes installation and setup of version 0.3.2.
+			Radiusclient library. In version 0.8.14 we started to use the new version of
+			radiusclient library developed by Maxim Sobolev called radiusclient-ng. The 
+			homepage of the library is <ulink
+			    url="http://developer.berlios.de/projects/radiusclient-ng/">http://developer.berlios.de/projects/radiusclient-ng/</ulink>
 		    </simpara>
 		</listitem>
 		<listitem>
@@ -109,7 +110,7 @@
 	    Untar the source tarball.
 	</simpara>
 	<screen format="linespecific">
-root@localhost:/usr/local/src# tar xvfz radiusclient-0.3.2.tar.gz
+root@localhost:/usr/local/src# tar xvfz radiusclient-0.4.3.tar.gz
 </screen>
 	    <simpara>
 		Compile and install the library.
@@ -182,26 +183,15 @@ acctserver      localhost
 	<section>
 	    <title>File <filename moreinfo="none">dictionary</filename></title>
 	    <simpara>
-		&ser; uses some attributes that are not included in the dictionary of radiusclient
-		library, therefore it is necesarry to add them. Unfortunatelly the dictionary file
-		used by &ser is not included in the source tarball of &ser;, so far it is in
-		unstable branch of the <ulink url="http://iptel.org/ser/cvs">CVS</ulink> only, but
-		it will be included in one of future releases. Meanwhile you can get it from the <ulink
-		url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/sip_router/etc/dictionary.ser?rev=HEAD">CVS web interface</ulink>.
-	    </simpara>
-	    <simpara>
-		Download the file and put it into <filename
-		moreinfo="none">/usr/local/etc/radiusclient</filename> directory and then append it
-		to the main dictionary file:
+		Radiusclient library contains file called <filename
+		moreinfo="none">dictionary.ser</filename>. That file includes all the attributes
+		that are needed by &ser;. Include the file in the main <filename
+		moreinfo="none">dictionary</filename> file. To include the file, put the following
+		line at the end of <filename moreinfo="none">dictionary</filename> file:
 	    </simpara>
 	    <screen format="linespecific">
-root@localhost:/usr/local/etc/radiusclient# cat dictionary.ser &gt;&gt; dictionary
+$INCLUDE /usr/local/etc/radiuclient/dictionary.ser
 </screen>
-	    <simpara>
-		That will append contents of <filename moreinfo="none">dictionary.ser</filename>
-		file to <filename moreinfo="none">dictionary</filename> file which contains the
-		main dictionary for the radiusclient library.
-	    </simpara>
 	</section>
     </chapter>
 
