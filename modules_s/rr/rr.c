@@ -14,6 +14,9 @@
 #define RR_PREFIX "Record-Route: <"
 #define RR_PREFIX_LEN 15
 
+
+#define ALLOW_MALFORMED_ROUTE
+
 /*
  * Returns TRUE if there is a Route header
  * field in the message, FALSE otherwise
@@ -49,6 +52,7 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 {
 	char* uri, *uri_end;
 	struct hdr_field* r;
+	char c;
 #ifdef PARANOID
 	if (!_m) {
 		LOG(L_ERR, "parseRouteHF(): Invalid parameter _m");
@@ -61,16 +65,39 @@ int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 #endif
 	r = remove_crlf(_m->route);
 
-	uri = find_not_quoted(r->body.s, '<') + 1; /* We will skip < character */
+#ifdef ALLOW_MALFORMED_ROUTE
+	uri = eat_name(r->body.s) + 1;             /* Skip the name-part */
 	if (!uri) {
+		LOG(L_ERR, "parseRouteHF(): Malformed Route HF\n");
+		return FALSE;
+	}
+	if (*(uri - 1) == '<') {
+		uri_end = find_not_quoted(uri, '>');
+	} else {
+		uri_end = find_not_quoted(uri, ',');
+		if (!uri_end) {
+			uri_end = r->body.s + r->body.len;
+			*_next = uri_end;
+			*_s = uri;
+			return TRUE;
+		}
+	}
+#else
+	uri = find_not_quoted(r->body.s, '<'); 
+	if (uri) {
+		uri++; /* We will skip < character */
+	} else {
 		LOG(L_ERR, "parseRouteHF(): Malformed Route HF (no begining found)\n");
 		return FALSE;
 	}
 	uri_end = find_not_quoted(uri, '>');
+#endif
+
 	if (!uri_end) {
 		LOG(L_ERR, "parseRouteHF(): Malformed Route HF (no end found)\n");
 		return FALSE;
 	}
+
 	*uri_end = '\0';  /* Replace > with 0 */
 	*_next = ++uri_end;
 	*_s = uri;
@@ -123,7 +150,13 @@ int remFirstRoute(struct sip_msg* _m, char* _next)
 		return FALSE;
 	}
 #endif
+
+#ifdef ALLOW_MALFORMED_ROUTE
+	while ((*_next == ' ') || (*_next == '\t') || (*_next == ',')) _next++;
+	if ((*_next == '\0') || (*_next == '\n') || (*_next == '\r')) _next = NULL;
+#else
 	_next = find_not_quoted(_next, '<');
+#endif
 	if (_next) {
 		DBG("remFirstRoute(): next URI found: %s\n", _next);
 		offset = _m->route->body.s - _m->buf + 1; /* + 1 - keep the first white char */
@@ -188,7 +221,7 @@ int addRRLine(struct sip_msg* _m, char* _l)
 		return FALSE;
 	}
 #endif
-	anchor = anchor_lump(&_m->add_rm, _m->via1->hdr.s - _m->buf, 0 , 0);
+	anchor = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0 , 0);
 	if (anchor == NULL) {
 		LOG(L_ERR, "addRRLine(): Error, can't get anchor\n");
 		return FALSE;

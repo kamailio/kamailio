@@ -18,6 +18,8 @@
 char* find_not_quoted(char* _b, char _c)
 {
 	int quoted = 0;
+	
+	if (!_b) return NULL;
 
 	while (*_b) {
 		if (!quoted) {
@@ -124,6 +126,9 @@ char* eat_name(char* _b)
 	int quoted = 0;
 	char* b = _b;
 	char* last_ws;
+
+	if (!_b) return NULL;
+
 	_b = eat_lws(_b);
 	
 	     /* < means start of URI, : is URI scheme
