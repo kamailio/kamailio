@@ -53,7 +53,7 @@
 #define CONTACT_BEGIN "Contact: "
 #define CONTACT_BEGIN_LEN (sizeof(CONTACT_BEGIN) - 1)
 
-#define Q_PARAM ">;q="
+#define Q_PARAM ";q="
 #define Q_PARAM_LEN (sizeof(Q_PARAM) - 1)
 
 #define EXPIRES_PARAM ";expires="
@@ -142,7 +142,7 @@ int build_contact(ucontact_t* c)
 			*p++ = '<';
 			memcpy(p, c->c.s, c->c.len);
 			p += c->c.len;
-			*p++ = '<';
+			*p++ = '>';
 
 			len = len_q(c->q);
 			if (len) {
