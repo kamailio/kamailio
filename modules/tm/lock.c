@@ -135,7 +135,8 @@ static int init_semaphore_set( int size )
 
 	new_semaphore=semget ( IPC_PRIVATE, size, IPC_CREAT | IPC_PERMISSIONS );
 	if (new_semaphore==-1) {
-		DBG("DEBUG: init_semaphore_set:  failure to allocate a semaphore\n");
+		LOG(L_CRIT, "ERROR: init_semaphore_set:  failure to allocate a"
+					" semaphore: %s\n", strerror(errno));
 		return -1;
 	}
 	for (i=0; i<size; i++) {
@@ -147,9 +148,11 @@ static int init_semaphore_set( int size )
                 /* binary lock */
                 argument.val = +1;
                 if (semctl( new_semaphore, i , SETVAL , argument )==-1) {
-			DBG("DEBUG: init_semaphore_set:  failure to initialize a semaphore\n");
+			LOG(L_CRIT, "ERROR: init_semaphore_set:  failure to "
+						"initialize a semaphore: %s\n", strerror(errno));
 			if (semctl( entry_semaphore, 0 , IPC_RMID , 0 )==-1)
-				DBG("DEBUG: init_semaphore_set:  failure to release a semaphore\n");
+				DBG("DEBUG: init_semaphore_set:  failure to release"
+						" a semaphore\n");
 			return -2;
                 }
         }
