@@ -29,11 +29,13 @@
 	    processing latency.
 	</para>
 	<para>
-	    From user's perspective, there are two major functions : t_relay and t_relay_to. Both
+	    From user's perspective, there are these major functions : t_relay, t_relay_to_udp
+		and t_relay_to_tcp. All of them
 	    setup transaction state, absorb retransmissions from upstream, generate downstream
 	    retransmissions and correlate replies to requests. t_relay forwards to current &uri; (be
 	    it original request's &uri; or a &uri; changed by some of &uri;-modifying functions,
-	    such as sethost). t_relay_to forwards to a specific address.
+	    such as sethost). t_relay_to_udp and t_relay_to_tcp forward to a specific address
+		over UDP or TCP respectively.
 	</para>
 	<para>
 	    In general, if <acronym>TM</acronym> is used, it copies clones of received &sip;
@@ -289,7 +291,8 @@ modparam("tm", "noisy_ctimer", 1)
 	<title>Exported Functions</title>
 	<section>
 	    <title>
-		<function moreinfo="none">t_relay_to(ip, port)</function>
+		<function moreinfo="none">t_relay_to_udp(ip, port)</function>,
+		<function moreinfo="none">t_relay_to_tcp(ip, port)</function>
 	    </title>
 	    <para>
 		Relay a message statefuly to a fixed destination. This along with <function
@@ -310,10 +313,10 @@ modparam("tm", "noisy_ctimer", 1)
 		</listitem>
 	    </itemizedlist>
 	    <example>
-		<title><function>t_relay_to</function> usage</title>
+		<title><function>t_relay_to_udp</function> usage</title>
 		<programlisting format="linespecific">
 ...
-t_relay_to("1.2.3.4", "5060");
+t_relay_to_udp("1.2.3.4", "5060");
 ...
 </programlisting>
 	    </example>
