@@ -119,7 +119,7 @@ int udp_init(struct ip_addr* ip, unsigned short port)
 		goto error;
 	}
 	
-	if (init_su(addr, ip, htons(port)<0){
+	if (init_su(addr, ip, htons(port))<0){
 		LOG(L_ERR, "ERROR: udp_init: could not init sockaddr_union\n");
 		goto error;
 	}
