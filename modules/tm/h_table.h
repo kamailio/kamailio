@@ -19,7 +19,7 @@ struct cell;
 
 #include "timer.h"
 #include "lock.h"
-#include "msg_cloner.h"
+#include "sip_msg.h"
 
 #define sh_malloc( size )     malloc(size)
 #define sh_free( ptr )           free(ptr)
