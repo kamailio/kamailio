@@ -54,7 +54,7 @@
 #define RR_FROMTAG ";ftag="
 #define RR_FROMTAG_LEN (sizeof(RR_FROMTAG)-1)
 
-#define RR_R2 ";r2"
+#define RR_R2 ";r2=on"
 #define RR_R2_LEN (sizeof(RR_R2)-1)
 
 #define INBOUND  1  /* Insert inbound Record-Route */
