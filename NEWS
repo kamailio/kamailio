@@ -48,7 +48,7 @@ usrloc:
  - switched to radiusclient-ng, use at least version 0.4.1
   (http://developer.berlios.de/projects/radiusclient-ng)
 mediaproxy:
- - nathelper like nat traversal module
+ - nat traversal module with redundancy and load-balancing
 
 
 
