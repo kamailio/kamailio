@@ -79,7 +79,7 @@ static int cpl_run_script(struct sip_msg* msg, char* str, char* str2)
 	}
 
 	resp_code =executeCPLForSIPMessage( msg->orig, msg->len, CPL_SERVER,
-	  CPL_PORT, &resp_buf, &resp_len);
+	  CPL_PORT, &resp_buf, (int*) &resp_len);
 	if (!resp_code)
 	{
 		LOG( L_ERR ,  "ERROR : cpl_run_script : cpl running failed!\n");

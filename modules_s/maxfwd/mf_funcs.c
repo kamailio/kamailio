@@ -38,7 +38,7 @@ int  mf_hdr_value;
 		while( (_str)->len && ( (_c=(_str)->s[(_str)->len-1])==0||_c==' '\
 			||_c=='\n'||_c=='\r'||_c=='\t') ) \
 			(_str)->len--;\
-		*(_x) = str2s( (_str)->s,(_str)->len,(_err));\
+		*(_x) = str2s( (unsigned char*)(_str)->s,(_str)->len,(_err));\
 	}while(0);
 
 
@@ -55,7 +55,8 @@ int  mf_hdr_value;
 			*(_val) = mf_hdr_value;\
 			*(_err) = 0;\
 		}else{\
-			get_number_from_str( (_msg)->maxforwards->body, &(_foo), _val, (_err) );\
+			get_number_from_str( (_msg)->maxforwards->body, &(_foo), _val, \
+									(_err) );\
 			mf_hdr_value = *(_val);\
 			mf_global_id   = (_msg)->id;\
 		}\
