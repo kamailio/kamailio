@@ -108,5 +108,6 @@ unsigned int get_ticks()
 			", returning 0 (probably wrong)");
 	return 0;
 #endif
+	DBG("- get_ticks:returning %d\n", *jiffies);
 	return *jiffies;
 }
