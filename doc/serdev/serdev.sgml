@@ -4492,7 +4492,7 @@ for(i = 0; i < ROW_N(row); i++) {
 		    <para>
 			A variable of type <type>db_res_t</type> returned by <function moreinfo="none">db_query</function>
 			function uses dynamically allocated memory, don't forget to call 
-			<function moreinfo="none">db_free_query</function> if you don't need the variable anymore. 
+			<function moreinfo="none">db_free_result</function> if you don't need the variable anymore. 
 			You will encounter memory leaks if you fail to do this !
 		    </para>
 		</note>
@@ -4763,14 +4763,14 @@ int n = RES_ROW_N(res);
 		</para>
 		<para>
 		    _r will point to a dynamically allocated structure, it is necessary to call
-		    db_free_query function once you are finished with the result.
+		    db_free_result function once you are finished with the result.
 		</para>
 		<para>
 		    Strings in the result are not duplicated, they will be discarded if you call
-		    db_free_query, make a copy yourself if you need to keep it after db_free_query.
+		    db_free_result, make a copy yourself if you need to keep it after db_free_result.
 		</para>
 		<para>
-		    You must call db_free_query <emphasis>BEFORE</emphasis> you can call db_query again !
+		    You must call db_free_result <emphasis>BEFORE</emphasis> you can call db_query again !
 		</para>
 		<para>
 		    The function returns 0 if everything is OK, otherwise value &lt; 0 is returned.
@@ -4778,7 +4778,7 @@ int n = RES_ROW_N(res);
 	    </section> <!-- db-query -->
 
 	    <section id="db-free-query">
-		<title><function moreinfo="none">db_free_query</function></title>
+		<title><function moreinfo="none">db_free_result</function></title>
 		<para>
 		    This function frees all memory allocated previously in <function moreinfo="none">db_query</function>, 
 		    it is necessary to call this function for a <type>db_res_t</type> structure if you don't need the
@@ -4787,7 +4787,7 @@ int n = RES_ROW_N(res);
 		</para>
 		<funcsynopsis>
 		    <funcprototype>
-			<funcdef>int <function moreinfo="none">db_free_query</function></funcdef>
+			<funcdef>int <function moreinfo="none">db_free_result</function></funcdef>
 			<paramdef>db_con_t* <parameter moreinfo="none">_h</parameter></paramdef>
 			<paramdef>db_res_t* <parameter moreinfo="none">_r</parameter></paramdef>
 		    </funcprototype>

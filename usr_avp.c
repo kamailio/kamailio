@@ -293,7 +293,7 @@ int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 		DBG("DEBUG:load_avp: no avp found for %.*s@%.*s <%s>\n",
 			uri.user.len,uri.user.s,(use_dom!=0)*uri.host.len,uri.host.s,
 			attr?attr:"NULL");
-		avp_dbf.free_query( avp_db_con, res);
+		avp_dbf.free_result( avp_db_con, res);
 		/*no avp found*/
 		return 1;
 	}
@@ -336,7 +336,7 @@ int load_avp( struct sip_msg *msg, int uri_type, char *attr, int use_dom)
 		users_avps = avp;
 	}
 
-	avp_dbf.free_query( avp_db_con, res);
+	avp_dbf.free_result( avp_db_con, res);
 	return 0;
 error:
 	return -1;

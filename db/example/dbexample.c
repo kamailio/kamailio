@@ -263,7 +263,7 @@ struct module_exports* mod_register()
 	      * Free the result because we don't need it
 	      * anymore
 	      */
-	if (db_free_query(h, res) < 0) {
+	if (db_free_result(h, res) < 0) {
 		fprintf(stderr, "Error while freeing result of query\n");
 		return &dbex_exports;
 	}

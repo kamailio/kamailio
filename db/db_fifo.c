@@ -692,7 +692,7 @@ int db_fifo( FILE *fifo, char *response_file )
 			/* get all response and write them into reply fifo */
 			print_res( select_res, rpl);
 			/* free the query response */
-			fifo_dbf.free_query( fifo_db_con, select_res);
+			fifo_dbf.free_result( fifo_db_con, select_res);
 		}
 		/* done with success */
 		goto done;
@@ -730,7 +730,7 @@ int db_fifo( FILE *fifo, char *response_file )
 			/* get all response and write them into reply fifo */
 			print_res( select_res, rpl);
 			/* free the query response */
-			fifo_dbf.free_query( fifo_db_con, select_res);
+			fifo_dbf.free_result( fifo_db_con, select_res);
 			break;
 		case UPDATE_CMD:
 			if (nr1==0) {

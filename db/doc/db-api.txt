@@ -252,7 +252,7 @@ This type represents a result returned by db_query function (see below). The
 result can consist of zero or more rows (see db_row_t description).
 
 Note: A variable of type db_res_t returned by db_query function uses dynamicaly
-      allocated memory, don't forget to call db_free_query if you don't need 
+      allocated memory, don't forget to call db_free_result if you don't need 
       the variable anymore. You will encounter memory leaks if you fail to do 
       this !
 
@@ -442,21 +442,21 @@ If _k and _v parameters are NULL and _n is zero, you will get the whole table.
 if _c is NULL and _nc is zero, you will get all table columns in the result
 
 _r will point to a dynamically allocated structure, it is neccessary to call
-db_free_query function once you are finished with the result.
+db_free_result function once you are finished with the result.
 
 If _op is 0, equal (=) will be used for all key-value pairs.
 
 Strings in the result are not duplicated, they will be discarded if you call
-db_free_query, make a copy yourself if you need to keep it after db_free_query.
+db_free_result, make a copy yourself if you need to keep it after db_free_result.
 
-You must call db_free_query _BEFORE_ you can call db_query again !
+You must call db_free_result _BEFORE_ you can call db_query again !
 
 2.4.4 Return Value
 
 The function returns 0 if everything is OK, otherwise value < 0 is returned.
 
 
-2.5 Callback dbf.free_query
+2.5 Callback dbf.free_result
 
 2.5.1 Description
 
@@ -467,7 +467,7 @@ again !
 
 2.5.2 Prototype
 
-   int (*db_free_query_f)(db_con_t* _h, db_res_t* _r);
+   int (*db_free_result_f)(db_con_t* _h, db_res_t* _r);
 
 2.5.3 Parameters
 

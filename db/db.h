@@ -93,7 +93,7 @@ typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
  * _h: structure representing database connection
  * _r: db_res structure
  */
-typedef int (*db_free_query_f) (db_con_t* _h, db_res_t* _r);
+typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
 
 
 /*
@@ -134,15 +134,15 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
 
 
 typedef struct db_func {
-	db_use_table_f  use_table;   /* Specify table name */
-	db_init_f       init;        /* Initialize dabase connection */
-	db_close_f      close;       /* Close database connection */
-	db_query_f      query;       /* query a table */
-	db_raw_query_f  raw_query;   /* Raw query - SQL */
-	db_free_query_f free_query;  /* Free a query result */
-	db_insert_f     insert;      /* Insert into table */
-	db_delete_f     delete;      /* Delete from table */ 
-	db_update_f     update;      /* Update table */
+	db_use_table_f   use_table;    /* Specify table name */
+	db_init_f        init;         /* Initialize dabase connection */
+	db_close_f       close;        /* Close database connection */
+	db_query_f       query;        /* query a table */
+	db_raw_query_f   raw_query;    /* Raw query - SQL */
+	db_free_result_f free_result;  /* Free a query result */
+	db_insert_f      insert;       /* Insert into table */
+	db_delete_f      delete;       /* Delete from table */ 
+	db_update_f      update;       /* Update table */
 } db_func_t;
 
 

@@ -91,9 +91,9 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 	dbf.raw_query = (db_raw_query_f)find_mod_export(tmp, "db_raw_query", 2, 0);
 	if (dbf.raw_query == 0) goto err;
 
-	dbf.free_query = (db_free_query_f)find_mod_export(tmp, "db_free_query", 2,
+	dbf.free_result = (db_free_result_f)find_mod_export(tmp, "db_free_result", 2,
 														0);
-	if (dbf.free_query == 0) goto err;
+	if (dbf.free_result == 0) goto err;
 
 	dbf.insert = (db_insert_f)find_mod_export(tmp, "db_insert", 2, 0);
 	if (dbf.insert == 0) goto err;
@@ -154,11 +154,11 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 
 	if (RES_ROW_N(res) != 1) {
 		LOG(L_ERR, "table_version(): Invalid number of rows received: %d, %.*s\n", RES_ROW_N(res), table->len, ZSW(table->s));
-		dbf->free_query(connection, res);
+		dbf->free_result(connection, res);
 		return -1;
 	}
 
 	ret = VAL_INT(ROW_VALUES(RES_ROWS(res)));
-	dbf->free_query(connection, res);
+	dbf->free_result(connection, res);
 	return ret;
 }
