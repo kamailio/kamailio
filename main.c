@@ -127,8 +127,8 @@ Options:\n\
 \n\
     -r           Use dns to check if is necessary to add a \"received=\"\n\
                  field to a via\n\
-    -R           Same as `-r´ but use reverse dns;\n\
-                 (to use both use `-rR´)\n\
+    -R           Same as `-r` but use reverse dns;\n\
+                 (to use both use `-rR`)\n\
 \n\
     -v           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
