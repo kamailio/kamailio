@@ -25,6 +25,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-05-21  on sparc64 roundto 8 even in debugging mode (so malloc'ed
+ *               long longs will be 64 bit aligned) (andrei)
+ */
 
 
 #if !defined(q_malloc_h) && !defined(VQ_MALLOC) && !defined(F_MALLOC)
@@ -34,9 +40,16 @@
 
 /* defs*/
 #ifdef DBG_QM_MALLOC
+#ifdef __CPU_sparc64
+/* tricky, on sun in 32 bits mode long long must be 64 bits aligned
+ * but long can be 32 bits aligned => malloc should return long long
+ * aligned memory */
+	#define ROUNDTO		sizeof(long long)
+#else
 	#define ROUNDTO		sizeof(void*) /* minimum possible ROUNDTO ->heavy 
 										 debugging*/
-#else
+#endif 
+#else /* DBG_QM_MALLOC */
 	#define ROUNDTO		16 /* size we round to, must be = 2^n  and also
 							 sizeof(qm_frag)+sizeof(qm_frag_end)
 							 must be mutliple of ROUNDTO!
