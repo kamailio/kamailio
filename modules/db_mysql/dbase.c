@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include <mysql/mysql.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -38,6 +39,7 @@
 #include "my_con.h"
 #include "my_pool.h"
 #include "res.h"
+#include "db_mod.h"
 #include "dbase.h"
 
 
@@ -51,9 +53,20 @@ static char sql_buf[SQL_BUF_LEN];
  */
 static int submit_query(db_con_t* _h, const char* _s)
 {	
+	time_t t;
+
 	if ((!_h) || (!_s)) {
 		LOG(L_ERR, "submit_query(): Invalid parameter value\n");
 		return -1;
+	}
+
+	t = time(0);
+	if ((t - CON_TIMESTAMP(_h)) > ping_interval) {
+		if (mysql_ping(CON_CONNECTION(_h))) {
+			LOG(L_ERR, "submit_query(): mysql_ping failed\n");
+		} else {
+			CON_TIMESTAMP(_h) = t;
+		}
 	}
 
 	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)

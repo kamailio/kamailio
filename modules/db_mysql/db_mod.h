@@ -33,48 +33,9 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
-#include "../../sr_module.h"
-#include "dbase.h"
-#include "db_mod.h"
+#ifndef DB_MOD_H
+#define DB_MOD_H
 
-int ping_interval = 5 * 60; /* Default is 5 minutes */
+extern int ping_interval;
 
-MODULE_VERSION
-
-
-/*
- * MySQL database module interface
- */
-static cmd_export_t cmds[] = {
-	{"db_use_table",  (cmd_function)use_table,     2, 0, 0},
-	{"db_init",       (cmd_function)db_init,       1, 0, 0},
-	{"db_close",      (cmd_function)db_close,      2, 0, 0},
-	{"db_query",      (cmd_function)db_query,      2, 0, 0},
-	{"db_raw_query",  (cmd_function)db_raw_query,  2, 0, 0},
-	{"db_free_query", (cmd_function)db_free_query, 2, 0, 0},
-	{"db_insert",     (cmd_function)db_insert,     2, 0, 0},
-	{"db_delete",     (cmd_function)db_delete,     2, 0, 0},
-	{"db_update",     (cmd_function)db_update,     2, 0, 0},
-	{0, 0, 0, 0, 0}
-};
-
-
-/*
- * Exported parameters
- */
-static param_export_t params[] = {
-	{"ping_interval", INT_PARAM },
-	{0, 0, 0}
-};
-
-
-struct module_exports exports = {	
-	"mysql",
-	cmds,
-	params, /*  module paramers */
-	0,      /* module initialization function */
-	0,      /* response function*/
-	0,      /* destroy function */
-	0,      /* oncancel function */
-	0       /* per-child init function */
-};
+#endif /* DB_MOD_H */
