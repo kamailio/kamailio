@@ -104,7 +104,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url", STR_PARAM, &db_url},
+	{"db_url",            STR_PARAM, &db_url       },
 	{"user_column",       STR_PARAM, &user_column  },
 	{"domain_column",     STR_PARAM, &domain_column},
 	{"password_column",   STR_PARAM, &pass_column  },

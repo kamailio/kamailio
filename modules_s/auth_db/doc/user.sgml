@@ -1,0 +1,255 @@
+<!-- Auth_db Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module contains all authentication related functions that need the access to the
+	    database. This module should be used together with auth module, it cannot be used
+	    independently because it depends on the module. Select this module if you want to use
+	    database to store authentication information like subscriber usernames and passwords. If
+	    you want to use radius authentication, then use auth_radius instead.
+	</para>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the listed modules
+	    must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>auth</emphasis> -- Generic authentication functions</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>database</emphasis> -- Any database module (currently mysql,
+		    postgres, dbtext)</para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>sl</emphasis> -- Stateless replies</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		This is URL of the database to be used. Value of the parameter depends on the
+		database module used. For example for mysql and postgres modules this is something
+		like sql://username:password@host:port/database. For dbtext module (which stores
+		data in plaintex files) it is directory in which the database resides.
+	    </para>
+	    <para>
+		Default value is <quote>sql://serro:47serro11@localhost/ser</quote>.
+	    </para>
+	    <example>
+		<title><varname>db_url</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "db_url", "sql://foo:bar@foobar.org/ser")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>user_column</varname> (string)</title>
+	    <para>
+		This is the name of the column holding usernames. Default value is fine for most
+		people. Use the parameter if you really need to change it.
+	    </para>
+	    <para>
+		Default value is <quote>username</quote>.
+	    </para>
+	    <example>
+		<title><varname>user_column</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "user_column", "user")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>domain_column</varname> (string)</title>
+	    <para>
+		This is the name of the column holding domains of users. Default value is fine for
+		most people. Use the parameter if you really need to change it.
+	    </para>
+	    <para>
+		Default value is <quote>domain</quote>.
+	    </para>
+	    <example>
+		<title><varname>domain_column</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "domain_column", "domain")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>password_column</varname> (string)</title>
+	    <para>
+		This is the name of the column holding passwords. Passwords can be either stored as
+		plain text or pre-calculated HA1 strings. HA1 strings are MD5 hashes of username,
+		password, and realm. HA1 strings are more safe because the server doesn't need to
+		know plaintext passwords and they cannot be obtained from HA1 strings.
+	    </para>
+	    <para>
+		Default value is <quote>ha1</quote>.
+	    </para>
+	    <example>
+		<title><varname>password_column</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "password_column", "password")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>calculate_ha1</varname> (integer)</title>
+	    <para>
+		This parameter tells server whether it should expect plaintext passwords in the
+		database or HA1 string. If the parameter is set to 1 then the server will assume
+		that the column pointed to by <varname>password_column</varname> contains plaintext
+		passwords and it will calculate HA1 strings on the fly.
+	    </para>
+	    <para>
+		If the parameter is set to 0 then the server assumes that the database contains HA1
+		strings directly and will not calculate them. If username parameter of credentials
+		contains also @domain (some user agents put domain in username parameter), then
+		column pointed to by <varname>password_column_2</varname> parameter will be used
+		instead. This column should also contain HA1 strings but they should be calculated
+		including the domain in the username parameter (as opposed to
+		<varname>password_column</varname> which (when containing HA1 strings) should always
+		contains HA1 strings calculated without domain in username.
+	    </para>
+	    <para>
+		This ensures that the authentication will always work when using pre-calculated HA1
+		string, not depending on the presence of the domain in username.
+	    </para>
+	    <para>
+		Default value of this parameter is 0.
+	    </para>
+	    <example>
+		<title><varname>calculate_ha1</varname>usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "calculate_ha1", 1)
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>password_column_2</varname> (string)</title>
+	    <para>
+		As described in the previous section this parameter contains name of column holding
+		pre-calculated HA1 string that were calculated including the domain in the
+		username. This parameter is used only when <varname>calculate_ha1</varname> is set
+		to 0 and user agent send a credentials containing the domain in the username.
+	    </para>
+	    <para>
+		Default value of the parameter is ha1b.
+	    </para>
+	    <example>
+		<title><varname>password_column_2</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "password_column_2", "ha1_2")
+</programlisting>
+	    </example>
+	</section>
+    </section>
+
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title><function moreinfo="none">www_authorize(realm, table)</function></title>
+	    <para>
+		The function verifies credencials according to RFC2617. If the credentials are
+		verified sucessfully then the function will succeed and mark the credentials as
+		authorized (marked credentials can be later used by some other functions). If the
+		function was unable to verify the credentials for some reason then it will fail and
+		the script should call <function moreinfo="none">www_challenge</function> which will
+		challenge the user again.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
+		    should present to the user so he can decide what username and password to
+		    use. Usualy this is domain of the host the server is running on.
+		    </para>
+		    <para>
+			If an empty string <quote></quote> is used then the server will generate it
+			from the request. In case of REGISTER requests To header field domain will
+			be used (because this header field represents a user being registered), for
+			all other messages From header field domain will be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>table</emphasis> - Table to be used to lookup usernames and
+			passwords (usualy subscribers table).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function moreinfo="none">www_authorize</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (www_authorize("iptel.org", "subscriber")) {
+    www_challenge("iptel.org", "1");
+};
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">proxy_authorize(realm, table)</function></title>
+	    <para>
+		The function verifies credencials according to RFC2617. If the credentials are
+		verified sucessfully then the function will succeed and mark the credentials as
+		authorized (marked credentials can be later used by some other functions). If the
+		function was unable to verify the credentials for some reason then it will fail and
+		the script should call <function moreinfo="none">www_challenge</function> which will
+		challenge the user again.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
+		    should present to the user so he can decide what username and password to
+		    use. Usualy this is domain of the host the server is running on.
+		    </para>
+		    <para>
+			If an empty string <quote></quote> is used then the server will generate it
+			from the request. From header field domain will be used as realm.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>table</emphasis> - Table to be used to lookup usernames and
+			passwords (usualy subscribers table).
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>proxy_authorize usage</title>
+		<programlisting format="linespecific">
+...
+if (!proxy_authorize("", "subscriber)) {
+    proxy_challenge("", "1");  # Realm will be autogenerated
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("auth_db.sgml" "Book" "chapter")
+End:
+-->
