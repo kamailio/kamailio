@@ -410,11 +410,22 @@ void warning_extract(char *message)
 		server=malloc(srvsize);
 		memset(server, 0, srvsize);
 		server=strncpy(server, warning, srvsize - 1);
-		printf("%s\n", server);
+		printf("%s ", server);
 	}
 	else {
 		printf("no Warning header found\n");
 	}
+}
+
+/* this function is taken from traceroute-1.4_p12 
+   which is distributed under the GPL */
+double deltaT(struct timeval *t1p, struct timeval *t2p)
+{
+        register double dt;
+
+        dt = (double)(t2p->tv_sec - t1p->tv_sec) * 1000.0 +
+             (double)(t2p->tv_usec - t1p->tv_usec) / 1000.0;
+        return (dt);
 }
 
 /*
@@ -432,7 +443,8 @@ at 5 seconds (5000 milliseconds).
 void shoot(char *buff)
 {
 	struct sockaddr_in	addr, sockname;
-	struct timeval	tv;
+	struct timeval	tv, sendtime, recvtime, firstsendt;
+	struct timezone tz;
 	struct pollfd sockerr;
 	int ssock, redirected, retryAfter, nretries;
 	int sock, i, len, ret, usrlocstep, randretrys;
@@ -583,11 +595,12 @@ void shoot(char *buff)
 				printf("request:\n%s\n", buff);
 #endif
 			}
-			else if (!trace && !usrloc && !flood && !randtrash){
+			else if (!trace && !usrloc && !flood && !randtrash && verbose){
 				printf("** request **\n%s\n", buff);
 			}
 
 			ret = send(sock, buff, strlen(buff), 0);
+			(void)gettimeofday(&sendtime, &tz);
 			if (ret==-1) {
 				perror("send failure");
 				exit( 1 );
@@ -601,6 +614,7 @@ void shoot(char *buff)
 				FD_SET(ssock, &fd); 
 
 				ret = select(FD_SETSIZE, &fd, NULL, NULL, &tv);
+				(void)gettimeofday(&recvtime, &tz);
 				if (ret == 0)
 				{
 					sockerr.fd=sock;
@@ -616,6 +630,7 @@ void shoot(char *buff)
 						}
 					}
 					if (verbose) printf("** timeout **\n");
+					if (i==0) memcpy(&firstsendt, &sendtime, sizeof(struct timeval));
 					if (randtrash) {
 						printf("did not get a response on this request:\n%s\n", buff);
 						if (i+1 < nameend) {
@@ -656,6 +671,7 @@ void shoot(char *buff)
 						if (warning_ext) {
 							printf("from ");
 							warning_extract(reply);
+							printf("\n");
 						}
 						else printf("\n");
 						/* we'll try to handle 301 and 302 here, other 3xx are to complex */
@@ -726,6 +742,7 @@ void shoot(char *buff)
 						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
 							printf("* (483) ");
 							warning_extract(reply);
+							printf(" %.3f ms\n", deltaT(&sendtime, &recvtime));
 #ifdef DEBUG
 							printf("%s\n", reply);
 #endif
@@ -836,6 +853,7 @@ void shoot(char *buff)
 							if (warning_ext) {
 								printf ("from ");
 								warning_extract(reply);
+								printf("\n");
 							}
 							else printf("\n");
 						}
@@ -855,9 +873,12 @@ void shoot(char *buff)
 						else trash_random(buff);
 					}
 					else {
-						/* in the normal send and reply case anything other then 
-						   1xx will be treated as final response*/
-						printf("** reply **\n%s\n", reply);
+						/* in the normal send and reply case anything other 
+						   then 1xx will be treated as final response*/
+						printf("** reply received ");
+						if (i==0) printf("after %.3f ms **\n", deltaT(&sendtime, &recvtime));
+						else printf("%.3f ms after first send\n   and %.3f ms after last send **\n", deltaT(&firstsendt, &recvtime), deltaT(&sendtime, &recvtime));
+						if (verbose) printf("%s\n", reply);
 						if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
 							puts(" provisional received; still waiting for a final response\n ");
 							continue;
