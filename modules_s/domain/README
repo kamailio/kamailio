@@ -1,5 +1,5 @@
 #
-# README of domain module -- Juha Heinanen Dec 29, 2002
+# README of domain module -- Juha Heinanen April 1, 2003
 #
 
 Domain module implements checks that based on domain table determine if
