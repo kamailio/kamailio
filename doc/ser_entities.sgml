@@ -38,6 +38,8 @@
 <!ENTITY ip "<acronym>IP</acronym>">
 <!ENTITY udp "<acronym>UDP</acronym>">
 <!ENTITY ietf "<ulink url='http://www.ietf.org'>IETF</ulink>">
+<!ENTITY im "<acronym>IM</acronym>">
+<!ENTITY smtp "<acronym>SMTP</acronym>">
 
 <!-- Often used RFCs -->
 
