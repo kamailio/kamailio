@@ -117,6 +117,9 @@ static inline int is_myself(str* _uri)
 }
 
 
+/*
+ * Find and parse next Route header field
+ */
 static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 {
 	struct hdr_field* ptr;
@@ -151,7 +154,6 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 	}
 
 	*_hdr = ptr;
-
 	return 0;
 }
 
@@ -277,9 +279,9 @@ static inline int save_ruri(struct sip_msg* _m)
 	     /* Create new header field */
 	memcpy(s, "Route: <", 8);
 	memcpy(s + 8, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-	memcpy(s + 8 + _m->first_line.u.request.uri.len, ">\r\n", 4);
+	memcpy(s + 8 + _m->first_line.u.request.uri.len, ">\r\n", 3 + 1);
 
-	DBG("save_ruri(): New header: \'%s\'\n", s);
+	DBG("save_ruri(): New header: '%s'\n", s);
 
 	     /* Insert it */
 	if (insert_new_lump_before(anchor, s, 8 + _m->first_line.u.request.uri.len + 3, 0) == 0) {
@@ -324,6 +326,11 @@ static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hd
 }
 
 
+/*
+ * Find last route in the last Route header field,
+ * if there was a previous route in the last Route header
+ * field, it will be saved in _p parameter
+ */
 static inline int find_last_route(struct sip_msg* _m, struct hdr_field** _h, rr_t** _p, rr_t** _l)
 {
 	struct hdr_field* ptr, *last;
@@ -374,7 +381,7 @@ static inline int route_after_strict(struct sip_msg* _m)
 	rr_body = (rr_t*)_m->route->parsed;
 	uri = &rr_body->nameaddr.uri;
 
-	DBG("ras(): First URI \'%.*s\'\n", uri->len, uri->s);
+	DBG("ras(): First URI '%.*s'\n", uri->len, uri->s);
 
 	if (is_strict(&rr_body->nameaddr.uri)) {
 		DBG("ras(): Next hop is a strict router\n");
@@ -418,7 +425,7 @@ static inline int route_after_strict(struct sip_msg* _m)
 		     /* The first character if uri will be either '<' when it is the only URI in a
 		      * Route header field or ',' if there is more than one URI in the header field
 		      */
-		DBG("ras(): last: \'%.*s\'\n", last->nameaddr.uri.len, last->nameaddr.uri.s);
+		DBG("ras(): last: '%.*s'\n", last->nameaddr.uri.len, last->nameaddr.uri.s);
 
 		if (!prev) {
 			     /* Remove the whole header here */
@@ -484,15 +491,15 @@ static inline int route_after_loose(struct sip_msg* _m)
 				return 0;
 			}
 
-			rr_body = (rr_t*)_m->route->parsed;
+			rr_body = (rr_t*)hdr->parsed;
 			uri = &rr_body->nameaddr.uri;
 		}
 	} else {
 		DBG("ral(): Topmost URI is NOT myself\n");
 	}
 
-	DBG("ral(): URI to be processed: \'%.*s\'\n", uri->len, uri->s);
-	if (is_strict(&rr_body->nameaddr.uri)) {
+	DBG("ral(): URI to be processed: '%.*s'\n", uri->len, uri->s);
+	if (is_strict(uri)) {
 		DBG("ral(): Next URI is a strict router\n");
 		if (handle_strict_router(_m, hdr) < 0) {
 			LOG(L_ERR, "ral(): Error while handling strict router\n");

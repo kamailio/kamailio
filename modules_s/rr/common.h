@@ -95,9 +95,14 @@ int insert_RR(struct sip_msg* _m, str* _l);
 
 
 /*
- * Insert a new Record-Route header field
+ * Insert a new Record-Route header field with lr parameter
  */
 int record_route(struct sip_msg* _m, char* _s1, char* _s2);
 
+
+/*
+ * Insert a new Record-Route header field without lr parameter
+ */
+int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2);
 
 #endif /* COMMON_H */

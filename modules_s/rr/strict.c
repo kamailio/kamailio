@@ -49,8 +49,6 @@ int strict_route(struct sip_msg* _m, char* _s1, char* _s2)
 	}
 
 	if (!ret) {
-		print_rr(_m->route->parsed);
-
 		uri = &((rr_t*)_m->route->parsed)->nameaddr.uri;
 		if (rewrite_RURI(_m, uri) < 0) {
 			LOG(L_ERR, "strict_route(): Error while rewriting request URI\n");
@@ -66,4 +64,3 @@ int strict_route(struct sip_msg* _m, char* _s1, char* _s2)
 	DBG("strict_route(): There is no Route HF\n");
 	return -1;
 }
-

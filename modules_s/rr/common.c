@@ -49,12 +49,9 @@
 #include "rr_mod.h"
 
 
+static char rr_s[256];
+static str rr_suffix;
 char rr_hash[MD5_LEN];
-char rr_s[256];
-
-str rr_suffix;
-
-int append_fromtag;
 
 /*
  * Generate hash string that will be inserted in RR
@@ -215,7 +212,7 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	struct to_body *from;
 	struct sip_uri puri;
 
-	from=0; /* fool -Wall */
+	from = 0; /* fool -Wall */
 
 	/* calculate length first */
 	
@@ -241,35 +238,20 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 		}
 		user = puri.user;
 	}
-	len+=user.len+1 /* '@' */;
+	len += user.len + 1 /* '@' */;
 
-	switch(bind_address->address.af) {
-	case AF_INET:
-		len += bind_address->address_str.len;
-		break;
+	if (_lr && use_fast_cmp) len += MD5_LEN;
 
-	case AF_INET6:
-		len += bind_address->address_str.len + 2;
-		break;
-
-	default:
-		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", bind_address->address.af);
-	}
-	
-	if (_lr && use_fast_cmp) {
-		len+=MD5_LEN;
-	} 
-	len+=rr_suffix.len;
+	len += rr_suffix.len;
 	if (append_fromtag) {
-		if (parse_from_header(_m)<0) {
+		if (parse_from_header(_m) < 0) {
 			LOG(L_ERR, "build_RR: From parsing failed\n");
 			return 0;
 		}
 		from = (struct to_body*)_m->from->parsed;
 		if (from->tag_value.s) len += RR_FROMTAG_LEN + from->tag_value.len;
 	}
-	len+=_lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN;
-
+	len += _lr ? RR_LR_TERM_LEN : RR_SR_TERM_LEN;
 
 	rr = (char*)pkg_malloc(len);
 	if (!rr) {
@@ -279,41 +261,22 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 
 	/* fill the buffer now ... */
 
-	*_l=len;
-	p=rr;
+	*_l = len;
+	p = rr;
 
 	memcpy(p, RR_PREFIX, RR_PREFIX_LEN);
-	p+=RR_PREFIX_LEN;
+	p += RR_PREFIX_LEN;
 	
 	if (_lr && use_fast_cmp) {
 		memcpy(p, rr_hash, MD5_LEN);
-		p+=MD5_LEN;
+		p += MD5_LEN;
 	}
 	if (user.len) {
 		memcpy(p, user.s, user.len);
-		p+=user.len;
+		p += user.len;
 	}
-	*p='@';p++;
-
-	switch(bind_address->address.af) {
-	case AF_INET:
-		memcpy(p, bind_address->address_str.s, bind_address->address_str.len);
-		printf("!!!! '%.*s'\n", bind_address->address_str.len, bind_address->address_str.s);
-		p += bind_address->address_str.len;
-		break;
-
-	case AF_INET6:
-		*p = '[';
-		p++;
-		memcpy(p, bind_address->address_str.s, bind_address->address_str.len);
-		p += bind_address->address_str.len;
-		*p = ']';
-		p++;
-		break;
-
-	default:
-		LOG(L_ERR, "build_RR(): Unsupported PF type: %d\n", bind_address->address.af);
-	}
+	*p = '@';
+	p++;
 
 	memcpy(p, rr_suffix.s, rr_suffix.len);
 	p += rr_suffix.len;
@@ -326,9 +289,11 @@ static char *build_RR(struct sip_msg* _m, int* _l, int _lr)
 	}
 
 	if (_lr) {
-		memcpy(p, RR_LR_TERM,  RR_LR_TERM_LEN); p+= RR_LR_TERM_LEN;
+		memcpy(p, RR_LR_TERM, RR_LR_TERM_LEN); 
+		p += RR_LR_TERM_LEN;
 	} else {
-		memcpy(p, RR_SR_TERM,  RR_SR_TERM_LEN); p+= RR_SR_TERM_LEN;
+		memcpy(p, RR_SR_TERM, RR_SR_TERM_LEN); 
+		p += RR_SR_TERM_LEN;
 	}
 	
 	DBG("build_RR(): '%.*s'", len, rr);
@@ -346,12 +311,12 @@ int insert_RR(struct sip_msg* _m, str* _l)
 	struct lump* anchor;
 
 	anchor = anchor_lump(&_m->add_rm, _m->headers->name.s - _m->buf, 0 , 0);
-	if (anchor == NULL) {
+	if (!anchor) {
 		LOG(L_ERR, "insert_RR(): Can't get anchor\n");
 		return -1;
 	}
 	
-	if (insert_new_lump_before(anchor, _l->s, _l->len, 0) == 0) {
+	if (!insert_new_lump_before(anchor, _l->s, _l->len, 0)) {
 		
 		LOG(L_ERR, "insert_RR(): Can't insert Record-Route\n");
 		return -2;
@@ -363,28 +328,46 @@ int insert_RR(struct sip_msg* _m, str* _l)
 /*
  * Insert a new Record-Route header field
  */
-int record_route(struct sip_msg* _m, char* _s1, char* _s2)
+static inline int do_RR(struct sip_msg* _m, int _lr)
 {
 	str b;
 	static unsigned int last_rr_msg;
 
-	if (_m->id==last_rr_msg) {
-			LOG(L_ERR, "ERROR: record_route: double attempt to record-route\n");
+	if (_m->id == last_rr_msg) {
+			LOG(L_ERR, "record_route(): double attempt to record-route\n");
 			return -1;
 	}
 	
-	b.s = build_RR(_m, &b.len, 0);	
+	b.s = build_RR(_m, &b.len, _lr);	
 	if (!b.s) {
-		LOG(L_ERR, "add_rr(): Error while building Record-Route line\n");
+		LOG(L_ERR, "record_route(): Error while building Record-Route line\n");
 		return -2;
 	}
 
 	if (insert_RR(_m, &b) < 0) {
-		LOG(L_ERR, "add_rr(): Error while inserting Record-Route line\n");
+		LOG(L_ERR, "record_route(): Error while inserting Record-Route line\n");
 		pkg_free(b.s);
 		return -3;
 	}
 
 	last_rr_msg=_m->id;	
 	return 1;
+}
+
+
+/*
+ * Insert new Record-Route header field with lr parameter
+ */
+int record_route(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	return do_RR(_m, 1);
+}
+
+
+/*
+ * Insert new Record-Route header field without lr parameter
+ */
+int record_route_strict(struct sip_msg* _m, char* _s1, char* _s2)
+{
+	return do_RR(_m, 0);
 }
