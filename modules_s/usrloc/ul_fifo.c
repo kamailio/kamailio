@@ -164,7 +164,7 @@ int static ul_flush(FILE* pipe, char* response_file)
 }
 
 
-static inline void find_domain(str* _name, udomain_t** _d)
+static inline void fifo_find_domain(str* _name, udomain_t** _d)
 {
 	dlist_t* ptr;
 
@@ -293,7 +293,7 @@ static int ul_add(FILE* pipe, char* response_file)
 	expires.s = expires_s;
 	q.s = q_s;
 	
-	find_domain(&table, &d);
+	fifo_find_domain(&table, &d);
 	
 	if (d) {
 		if (atoi(&expires, &exp_i) < 0) {
@@ -354,7 +354,7 @@ int static ul_rm( FILE *pipe, char *response_file )
 	aor.s = user;
 	t.s = table;
 
-	find_domain(&t, &d);
+	fifo_find_domain(&t, &d);
 
 	LOG(L_INFO, "INFO: deleting user-loc (%s,%s)\n",
 	    table, user );
@@ -413,7 +413,7 @@ static int ul_rm_contact(FILE* pipe, char* response_file)
 	t.s = table;
 	c.s = contact;
 
-	find_domain(&t, &d);
+	fifo_find_domain(&t, &d);
 
 	LOG(L_INFO, "INFO: deleting user-loc contact (%s,%s,%s)\n",
 	    table, user, contact );
@@ -520,7 +520,7 @@ static inline int ul_show_contact(FILE* pipe, char* response_file)
 	aor.s = user;
 	t.s = table;
 	
-	find_domain(&t, &d);
+	fifo_find_domain(&t, &d);
 
 	if (d) {
 		lock_udomain(d);	

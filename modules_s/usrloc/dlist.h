@@ -81,4 +81,10 @@ int synchronize_all_udomains(void);
 int preload_all_udomains(void);
 
 
+/*
+ * Find a particular domain
+ */
+int find_domain(str* _d, udomain_t** _p);
+
+
 #endif /* UDLIST_H */

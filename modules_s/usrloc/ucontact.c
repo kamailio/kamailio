@@ -172,7 +172,7 @@ void st_update_ucontact(ucontact_t* _c)
 		break;
 
 	case CS_SYNC:
-		     /* Modified contact need to be updated also in
+		     /* Modified contact needs to be updated also in
 		      * the database, so transit into CS_DIRTY and
 		      * let the timer to do the update again
 		      */

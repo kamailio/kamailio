@@ -38,6 +38,7 @@
 #include "utime.h"
 #include "del_list.h"
 #include "ins_list.h"
+#include "notify.h"
 
 
 /*
@@ -123,6 +124,7 @@ int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q,
 		return -1;
 	}
 	
+	notify_record = _r;
 	
 	ptr = _r->contacts;
 	while(ptr) {
@@ -400,6 +402,8 @@ int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int 
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
+	notify_record = _r;
+
 	switch(db_mode) {
 	case NO_DB:
 		mem_delete_ucontact(_r, _c);

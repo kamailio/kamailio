@@ -37,6 +37,7 @@
 #include "hslot.h"
 #include "../../str.h"
 #include "ucontact.h"
+#include "notify.h"
 
 
 struct hslot;
@@ -59,6 +60,8 @@ typedef struct urecord {
 		struct urecord* prev;  /* Previous item in the list */
 		struct urecord* next;  /* Next item in the list */
 	} s_ll;
+
+	struct notify_cb* watchers;         /* List of watchers */
 } urecord_t;
 
 

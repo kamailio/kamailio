@@ -232,3 +232,19 @@ int preload_all_udomains(void)
 
 	return res;
 }
+
+
+/*
+ * Find a particular domain
+ */
+int find_domain(str* _d, udomain_t** _p)
+{
+	dlist_t* d;
+
+	if (find_dlist(_d, &d) == 0) {
+	        *_p = d->d;
+		return 0;
+	}
+
+	return 1;
+}

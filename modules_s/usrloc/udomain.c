@@ -256,7 +256,7 @@ int preload_udomain(udomain_t* _d)
 		}
 
 		     /* We have to do this, because insert_ucontact sets state to CS_NEW
-		      * and we have the contact in the dabase already
+		      * and we have the contact in the database already
 		      */
 		c->state = CS_SYNC;
 	}
@@ -292,10 +292,12 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
  */
 void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 {
-	udomain_remove(_d, _r);
-	slot_rem(_r->slot, _r);
-	free_urecord(_r);
-	_d->users--;
+	if (_r->watchers == 0) {
+		udomain_remove(_d, _r);
+		slot_rem(_r->slot, _r);
+		free_urecord(_r);
+		_d->users--; /* FIXME */
+	}
 }
 
 
@@ -401,6 +403,9 @@ int delete_urecord(udomain_t* _d, str* _aor)
 		return 0;
 	}
 	
+	     /* Save record pointer, watchers will be notified from post-script callback */
+	notify_record = r;
+
 	switch(db_mode) {
 	case WRITE_THROUGH:
 		if (db_delete_urecord(r) < 0) {

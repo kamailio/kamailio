@@ -39,6 +39,8 @@
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_fifo.h"
+#include "notify.h"
+#include "../../script_cb.h"
 
 
 static int mod_init(void);                          /* Module initialization function */
@@ -68,20 +70,23 @@ db_con_t* db; /* Database connection handle */
 struct module_exports exports = {
 	"usrloc",
 	(char*[]) {
-		"~ul_register_udomain", /* Create a new domain */
+		"~ul_register_udomain",  /* Create a new domain */
 
-		"~ul_insert_urecord",   /* Insert record into a domain */
-		"~ul_delete_urecord",   /* Delete record from a domain */
-		"~ul_get_urecord",      /* Get record from a domain */
-		"~ul_lock_udomain",     /* Lock domain */
-		"~ul_unlock_udomain",   /* Unlock domain */
+		"~ul_insert_urecord",    /* Insert record into a domain */
+		"~ul_delete_urecord",    /* Delete record from a domain */
+		"~ul_get_urecord",       /* Get record from a domain */
+		"~ul_lock_udomain",      /* Lock domain */
+		"~ul_unlock_udomain",    /* Unlock domain */
 
-		"~ul_release_urecord",  /* Release record obtained using get_record */
-		"~ul_insert_ucontact",  /* Insert a new contact into a record */
-		"~ul_delete_ucontact",  /* Remove a contact from a record */
-		"~ul_get_ucontact",     /* Return pointer to a contact */
+		"~ul_release_urecord",   /* Release record obtained using get_record */
+		"~ul_insert_ucontact",   /* Insert a new contact into a record */
+		"~ul_delete_ucontact",   /* Remove a contact from a record */
+		"~ul_get_ucontact",      /* Return pointer to a contact */
 
-		"~ul_update_ucontact"   /* Update a contact */
+		"~ul_update_ucontact",   /* Update a contact */
+
+		"~ul_register_watcher",  /* Register a watcher */
+		"~ul_unregister_watcher" /* Unregister a watcher */
 	},
 	(cmd_function[]) {
 		(cmd_function)register_udomain,
@@ -97,15 +102,18 @@ struct module_exports exports = {
 		(cmd_function)delete_ucontact,
 		(cmd_function)get_ucontact,
 
-		(cmd_function)update_ucontact
+		(cmd_function)update_ucontact,
+
+		(cmd_function)register_watcher,
+		(cmd_function)unregister_watcher
 	},
 	(int[]) {
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 	},
 	(fixup_function[]) {
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 	},
-	11,
+	13,
 
 	(char*[]) {
 		"user_col",
@@ -185,6 +193,11 @@ static int mod_init(void)
 		}
 	}
 
+	if (register_script_cb(post_script, POST_SCRIPT_CB, 0) != 1) {
+		LOG(L_ERR, "mod_init(): Error while initializing post-script callback\n");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -236,3 +249,4 @@ static void timer(unsigned int ticks, void* param)
 	}
 	DBG("Timer done\n");
 }
+
