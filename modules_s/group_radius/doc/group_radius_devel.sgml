@@ -1,0 +1,22 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Developer's Guide</title>
+    <para>
+	The module does not provide any sort of API to use in other SER modules.
+    </para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("group_radius.sgml" "book" "chapter")
+End:
+-->

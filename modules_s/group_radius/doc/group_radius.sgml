@@ -1,0 +1,60 @@
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+
+
+<!ENTITY user SYSTEM "group_radius_user.sgml">
+<!ENTITY devel SYSTEM "group_radius_devel.sgml">
+<!ENTITY faq SYSTEM "group_radius_faq.sgml">
+
+<!-- Include general SER documentation entities -->
+<!ENTITY % serentities SYSTEM "../../../doc/ser_entities.sgml">
+%serentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>group_radius Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		<affiliation><orgname>Song Networks</orgname></affiliation>
+		<address>
+		    <email>jh@tutpro.com</email>
+		</address>
+	    </author>
+	    <author>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<affiliation><orgname>FhG FOKUS</orgname></affiliation>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Jan</firstname>
+		<surname>Janak</surname>
+		<address>
+		    <email>jan@iptel.org</email>
+		</address>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2003</year>
+	    <holder>FhG FOKUS</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </bookinfo>
+    <toc></toc>
+    
+    &user;
+    &devel;
+    &faq;
+    
+</book>

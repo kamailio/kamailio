@@ -10,13 +10,13 @@
 	</revhistory>
     </chapterinfo>
     <title>User's Guide</title>
-    
+
     <section>
 	<title>Overview</title>
 	<para>
-	    This module export functions necesarry for group membership checking. There is a
-	    database table that contains list of users and groups they belong to. The table is used
-	    by functions of this module.
+	    This module export functions necesarry for group membership checking over radius. There
+	    is a database table that contains list of users and groups they belong to. The table is
+	    used by functions of this module.
 	</para>
     </section>
     <section>
@@ -28,7 +28,7 @@
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    A database module.
+			    None.
 			</para>
 		    </listitem>
 	    	</itemizedlist>
@@ -42,7 +42,7 @@
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>None</emphasis>.
+			    <emphasis>radiusclient library</emphasis>.
 			</para>
 		    </listitem>
 	    	</itemizedlist>
@@ -52,105 +52,24 @@
     <section>
 	<title>Exported Parameters</title>
 	<section>
-	    <title><varname>db_url</varname> (string)</title>
+	    <title><varname>radius_config</varname> (string)</title>
 	    <para>
-		&url; of the database table to be used.
+		Location of the configuration file of the radius client library.
 	    </para>
 	    <para>
 		<emphasis>
-		    Default value is <quote>sql://serro:47serro11@localhost/ser</quote>.
+		    Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
 		</emphasis>
 	    </para>
 	    <example>
-		<title>Set <varname>db_url</varname> parameter</title>
+		<title>Set <varname>radius_config</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "db_url", "sql://username:password@dbhost/ser")
+modparam("group", "radius_config", "/etc/radiusclient.conf")
 ...
 </programlisting>
 	    </example>
 	</section>
-
-	<section>
-	    <title><varname>table</varname> (string)</title>
-	    <para>
-		Name of the table holding groups and their members.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>grp</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>table</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("group", "table", "grp_table")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>user_column</varname> (string)</title>
-	    <para>
-		Name of the column holding usernames.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>username</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>user_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("group", "user_column", "user")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>domain_column</varname> (string)</title>
-	    <para>
-		Name of the column holding domains.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>domain</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>domain_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("group", "domain_column", "realm")
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
-	    <title><varname>group_column</varname> (string)</title>
-	    <para>
-		Name of the column holding groups.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is <quote>grp</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>group_column</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("group", "group_column", "grp")
-...
-</programlisting>
-	    </example>
-	</section>
-
 	<section>
 	    <title><varname>use_domain</varname> (integer)</title>
 	    <para>
@@ -166,7 +85,7 @@ modparam("group", "group_column", "grp")
 		<title>Set <varname>use_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("group", "use_domain", 1)
+modparam("group_radius", "use_domain", 1)
 ...
 </programlisting>
 	    </example>
@@ -177,7 +96,7 @@ modparam("group", "use_domain", 1)
 	<title>Exported Functions</title>
 	<section>
 	    <title>
-		<function moreinfo="none">is_user_in(URI, group)</function>
+		<function moreinfo="none">radius_is_user_in(URI, group)</function>
 	    </title>
 	    <para>
 		The function returns true if username in the given &uri; is member of the given
@@ -210,10 +129,10 @@ modparam("group", "use_domain", 1)
 		</listitem>
 	    </itemizedlist>
 	    <example>
-		<title><function>is_user_in</function> usage</title>
+		<title><function>radius_is_user_in</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (is_user_in("Request-URI", "ld")) {
+if (radius_is_user_in("Request-URI", "ld")) {
     ...
 };
 ...
@@ -225,6 +144,6 @@ if (is_user_in("Request-URI", "ld")) {
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("group.sgml" "Book" "chapter")
+sgml-parent-document: ("group_radius.sgml" "Book" "chapter")
 End:
 -->

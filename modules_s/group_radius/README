@@ -1,43 +1,162 @@
-#
-# $Id$
-#
-# Radius Group membership checking
-#
 
-Module depends on: -
+group_radius Module
 
-This module export functions necesarry for group membership
-checking over radius. There is a database table that contains list of 
-users and groups they belong to. The table is used by functions of 
-this module.
+Juha Heinanen
 
-Exported Parameters:
--------------------
+   Song Networks
 
-Name:    radius_config
-Type:    str
-Default: "/usr/local/etc/radiusclient/radiusclient.conf"
-Desc:    Location of the configuration file of the radius client
-         library
+Jan Janak
 
-Name:    use_domain
-Type:    int
-Default: 0 (no)
-Desc:    If set to 1 then username@domain will be
-         used for lookup, if set to 0 then only
-	 username will be used
+   FhG FOKUS
 
+Edited by
 
-Exported Functions:
-------------------
+Jan Janak
 
-Name:   radius_is_user_in
-Params: URI - URI whose username and optionally domain to be
-              used, this can be one of:
-	      Request-URI -- use Request-URI username and domain
-	      To -- Use To username and domain
-	      From -- Use From username and domain
-	      Credentials -- Use digest credentials username
-	group - Name of the group to check
-Desc:   The function returns true if username in the given URI is
-        member of the given group and false if not.
+   Copyright © 2003 FhG FOKUS
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. SER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. radius_config (string)
+              1.3.2. use_domain (integer)
+
+        1.4. Exported Functions
+
+              1.4.1. radius_is_user_in(URI, group)
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set radius_config parameter
+   1-2. Set use_domain parameter
+   1-3. radius_is_user_in usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This module export functions necesarry for group membership
+   checking over radius. There is a database table that contains
+   list of users and groups they belong to. The table is used by
+   functions of this module.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. SER Modules
+
+   The following modules must be loaded before this module:
+
+     * None.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running SER with this module loaded:
+
+     * radiusclient library.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. radius_config (string)
+
+   Location of the configuration file of the radius client
+   library.
+
+   Default value is
+   "/usr/local/etc/radiusclient/radiusclient.conf". 
+
+   Example 1-1. Set radius_config parameter
+...
+modparam("group", "radius_config", "/etc/radiusclient.conf")
+...
+     _________________________________________________________
+
+1.3.2. use_domain (integer)
+
+   If set to 1 then username@domain will be used for lookup, if
+   set to 0 then only username will be used.
+
+   Default value is 0 (no). 
+
+   Example 1-2. Set use_domain parameter
+...
+modparam("group_radius", "use_domain", 1)
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+1.4.1. radius_is_user_in(URI, group)
+
+   The function returns true if username in the given URI is
+   member of the given group and false if not.
+
+   Meaning of the parameters is as follows:
+
+     * URI - URI whose username and optionally domain to be used,
+       this can be one of:
+          + Request-URI - Use Request-URI username and
+            (optionally) domain.
+          + To - Use To username and (optionally) domain.
+          + From - Use From username and (optionally) domain.
+          + Credentials - Use digest credentials username.
+     * group - Name of the group to check.
+
+   Example 1-3. radius_is_user_in usage
+...
+if (radius_is_user_in("Request-URI", "ld")) {
+    ...
+};
+...
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any sort of API to use in other
+   SER modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about SER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about SER?
+
+   Take a look at http://iptel.org/ser.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
+
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
+
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs
