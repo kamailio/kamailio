@@ -21,6 +21,7 @@ f none lib/ser/modules/enum.so 0755 bin bin
 f none lib/ser/modules/exec.so 0755 bin bin
 f none lib/ser/modules/group.so 0755 bin bin
 f none lib/ser/modules/jabber.so 0755 bin bin
+f none lib/ser/modules/mangler.so 0755 bin bin
 f none lib/ser/modules/maxfwd.so 0755 bin bin
 f none lib/ser/modules/msilo.so 0755 bin bin
 f none lib/ser/modules/mysql.so 0755 bin bin
@@ -56,6 +57,7 @@ f none doc/ser/README.enum    0644 bin bin
 f none doc/ser/README.exec 0644 bin bin
 f none doc/ser/README.group 0644 bin bin
 f none doc/ser/README.jabber 0644 bin bin
+f none doc/ser/README.mangler 0644 bin bin
 f none doc/ser/README.maxfwd 0644 bin bin
 f none doc/ser/README.msilo 0644 bin bin
 f none doc/ser/README.nathelper 0644 bin bin
