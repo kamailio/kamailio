@@ -160,7 +160,7 @@ static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static void timer(unsigned int, void *);
 inline static int fixup_str2int(void**, int);
 static int mod_init(void);
-static int child_init(int rank);
+static int child_init(int);
 
 static usrloc_api_t ul;
 
