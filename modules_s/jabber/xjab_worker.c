@@ -31,9 +31,10 @@
  *
  * History
  * -------
- * 2003-02-28 send NOTIFYs even the connection is closed by user, (dcm)
- * 2003-01-20 xj_worker_precess function cleaning - some part of it moved to
- * xj_worker_check_jcons function, (dcm)
+ * 2003-02-28  send NOTIFYs even the connection is closed by user, (dcm)
+ * 2003-01-20  xj_worker_precess function cleaning - some part of it moved to
+ *              xj_worker_check_jcons function, (dcm)
+ * 2003-03-11  major locking changes - uses locking.h (andrei)
  *
  */
 
@@ -263,11 +264,17 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 	xj_pres_cell prc = NULL;
 	
 	db_key_t keys[] = {"sip_id", "type"};
-	db_val_t vals[] = { {DB_STRING, 0, {.string_val = buff}},
-						{DB_INT, 0, {.int_val = 0}} };
+	db_val_t vals[2];
 	db_key_t col[] = {"jab_id", "jab_passwd"};
 	db_res_t* res = NULL;
 
+	vals[0].type=DB_STRING;
+	vals[0].nul=0;
+	vals[0].val.string_val=buff;
+	vals[1].type=DB_INT;
+	vals[1].nul=0;
+	vals[1].val.int_val=0;
+		
 	_xj_pid = getpid();
 	
 	//signal(SIGTERM, xj_sig_handler);
@@ -1414,7 +1421,7 @@ int xj_wlist_clean_jobs(xj_wlist jwl, int idx, int fl)
 	xj_jkey p;
 	if(jwl==NULL || idx < 0 || idx >= jwl->len || !jwl->workers[idx].sip_ids)
 		return -1;
-	s_lock_at(jwl->sems, idx);
+	lock_set_get(jwl->sems, idx);
 	while((p=(xj_jkey)delpos234(jwl->workers[idx].sip_ids, 0))!=NULL)
 	{
 		if(fl)
@@ -1429,7 +1436,7 @@ int xj_wlist_clean_jobs(xj_wlist jwl, int idx, int fl)
 		jwl->workers[idx].nr--;
 		xj_jkey_free_p(p);
 	}
-	s_unlock_at(jwl->sems, idx);
+	lock_set_release(jwl->sems, idx);
 	return 0;
 }
 

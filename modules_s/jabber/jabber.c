@@ -341,7 +341,6 @@ static int child_init(int rank)
 				sleep(check_time);
 				xjab_check_workers(mpid);
 			}
-			exit(0);
 		}
 	}
 	

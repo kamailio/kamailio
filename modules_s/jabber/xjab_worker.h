@@ -26,6 +26,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-11  major locking changes - uses locking.h (andrei)
+ */
 
 
 #ifndef _XJAB_WORKER_H_
@@ -33,11 +38,11 @@
 
 #include "../../str.h"
 #include "../../db/db.h"
+#include "../../locking.h"
 #include "../tm/tm_load.h"
 
 #include "xjab_util.h"
 #include "tree234.h"
-#include "lock.h"
 
 /**********             ***/
 typedef struct _xj_jalias
@@ -66,7 +71,7 @@ typedef struct _xj_wlist
 	int cachet;
 	int delayt;
 	int sleept;
-	smart_lock	*sems;	 // semaphores
+	lock_set_t	 *sems;	 // semaphores
 	xj_jalias	aliases; // addess aliases
 	xj_worker	workers; // the list of workers
 } t_xj_wlist, *xj_wlist;

@@ -29,7 +29,8 @@
  *
  * History
  * -------
- * 2003-02-24 added 'xj_wlist_set_flag' function (dcm)
+ * 2003-02-24  added 'xj_wlist_set_flag' function (dcm)
+ * 2003-03-11  major locking changes - uses locking.h (andrei)
  *
  */
 
@@ -78,11 +79,21 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	jwl->aliases = NULL;
 	jwl->sems = NULL;
 	i = 0;
-	if((jwl->sems = create_semaphores(size)) == NULL)
+	/* alloc locks*/
+	if((jwl->sems = lock_set_alloc(size)) == NULL){
+		LOG(L_CRIT, "jabber: failed to alloc lock set\n");
 		goto clean;
+	};
+	/* init the locks*/
+	if (lock_set_init(jwl->sems)==0){
+		LOG(L_CRIT, "jabber: failed to intialize the locks\n");
+		goto clean;
+	};
 	jwl->workers = (xj_worker)_M_SHM_MALLOC(size*sizeof(t_xj_worker));
-	if(jwl->workers == NULL)
+	if(jwl->workers == NULL){
+		lock_set_destroy(jwl->sems);
 		goto clean;
+	}
 
 	for(i = 0; i < size; i++)
 	{
@@ -90,8 +101,10 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 		jwl->workers[i].pid = 0;
 		jwl->workers[i].wpipe = pipes[i][1];
 		jwl->workers[i].rpipe = pipes[i][0];
-		if((jwl->workers[i].sip_ids = newtree234(xj_jkey_cmp)) == NULL)
+		if((jwl->workers[i].sip_ids = newtree234(xj_jkey_cmp)) == NULL){
+			lock_set_destroy(jwl->sems);
 			goto clean;
+		}
 	}	
 
 	return jwl;
@@ -99,7 +112,7 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 clean:
 	DBG("XJAB:xj_wlist_init: error ocurred -> cleaning\n");
 	if(jwl->sems != NULL)
-		destroy_semaphores(jwl->sems);
+		lock_set_dealloc(jwl->sems);
 	if(jwl->workers != NULL)
 	{
 		while(i>=0)
@@ -126,9 +139,9 @@ int xj_wlist_set_pid(xj_wlist jwl, int pid, int idx)
 {
 	if(jwl == NULL || pid <= 0 || idx < 0 || idx >= jwl->len)
 		return -1;
-	s_lock_at(jwl->sems, idx);
+	lock_set_get(jwl->sems, idx);
 	jwl->workers[idx].pid = pid;
-	s_unlock_at(jwl->sems, idx);
+	lock_set_release(jwl->sems, idx);
 	return 0;
 }
 
@@ -177,9 +190,10 @@ void xj_wlist_free(xj_wlist jwl)
 		jwl->aliases = NULL;
 	}
 	
-	//rm_sem(jwl->semid);
-	if(jwl->sems != NULL)
-		destroy_semaphores(jwl->sems);
+	if(jwl->sems != NULL){
+		lock_set_destroy(jwl->sems);
+		lock_set_dealloc(jwl->sems);
+	}
 	
 	_M_SHM_FREE(jwl);
 }
@@ -202,16 +216,16 @@ int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 	*p = NULL;
 	while(i < jwl->len)
 	{
-		s_lock_at(jwl->sems, i);
+		lock_set_get(jwl->sems, i);
 		if(jwl->workers[i].pid <= 0)
 		{
-			s_unlock_at(jwl->sems, i);
+			lock_set_release(jwl->sems, i);
 			i++;
 			continue;
 		}
 		if((*p = find234(jwl->workers[i].sip_ids, (void*)jkey, NULL)) != NULL)
 		{
-			s_unlock_at(jwl->sems, i);
+			lock_set_release(jwl->sems, i);
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_check: entry exists for <%.*s> in the"
 				" pool of <%d> [%d]\n",jkey->id->len, jkey->id->s,
@@ -219,7 +233,7 @@ int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 #endif
 			return jwl->workers[i].wpipe;
 		}
-		s_unlock_at(jwl->sems, i);
+		lock_set_release(jwl->sems, i);
 		i++;
 	}
 #ifdef XJ_EXTRA_DEBUG
@@ -248,18 +262,18 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 	*p = NULL;
 	while(i < jwl->len)
 	{
-		s_lock_at(jwl->sems, i);
+		lock_set_get(jwl->sems, i);
 		if(jwl->workers[i].pid <= 0)
 		{
-			s_unlock_at(jwl->sems, i);
+			lock_set_release(jwl->sems, i);
 			i++;
 			continue;
 		}
 		if((*p = find234(jwl->workers[i].sip_ids, (void*)jkey, NULL))!=NULL)
 		{
 			if(pos >= 0)
-				s_unlock_at(jwl->sems, pos);
-			s_unlock_at(jwl->sems, i);
+				lock_set_release(jwl->sems, pos);
+				lock_set_release(jwl->sems, i);
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_get: entry already exists for <%.*s> in the"
 				" pool of <%d> [%d]\n",jkey->id->len, jkey->id->s,
@@ -270,12 +284,12 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 		if(min > jwl->workers[i].nr)
 		{
 			if(pos >= 0)
-				s_unlock_at(jwl->sems, pos);
+				lock_set_release(jwl->sems, pos);
 			pos = i;
 			min = jwl->workers[i].nr;
 		}
 		else
-			s_unlock_at(jwl->sems, i);
+			lock_set_release(jwl->sems, i);
 		i++;
 	}
 	if(pos >= 0 && jwl->workers[pos].nr < jwl->maxj)
@@ -306,7 +320,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 			memcpy(msid->id->s, jkey->id->s, jkey->id->len);
 			msid->hash = jkey->hash;
 			msid->flag = XJ_FLAG_OPEN;
-			s_unlock_at(jwl->sems, pos);
+			lock_set_release(jwl->sems, pos);
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_get: new entry for <%.*s> in the pool of"
 				" <%d> - [%d]\n", jkey->id->len, jkey->id->s,
@@ -321,7 +335,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 
 error:
 	if(pos >= 0)
-		s_unlock_at(jwl->sems, pos);
+		lock_set_release(jwl->sems, pos);
 	DBG("XJAB:xj_wlist_get: cannot create a new entry for <%.*s>\n",
 				jkey->id->len, jkey->id->s);
 	return -1;
@@ -346,24 +360,24 @@ int xj_wlist_set_flag(xj_wlist jwl, xj_jkey jkey, int fl)
 	i = 0;
 	while(i < jwl->len)
 	{
-		s_lock_at(jwl->sems, i);
+		lock_set_get(jwl->sems, i);
 		if(jwl->workers[i].pid <= 0)
 		{
-			s_unlock_at(jwl->sems, i);
+			lock_set_release(jwl->sems, i);
 			i++;
 			continue;
 		}
 		if((p=find234(jwl->workers[i].sip_ids, (void*)jkey, NULL)) != NULL)
 		{
 			p->flag = fl;
-			s_unlock_at(jwl->sems, i);
+			lock_set_release(jwl->sems, i);
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_wlist_set_flag: the connection for <%.*s>"
 				" marked with flag=%d", jkey->id->len, jkey->id->s, fl);
 #endif
 			return jwl->workers[i].wpipe;
 		}
-		s_unlock_at(jwl->sems, i);
+		lock_set_release(jwl->sems, i);
 		i++;
 	}
 #ifdef XJ_EXTRA_DEBUG
@@ -638,7 +652,7 @@ void xj_wlist_del(xj_wlist jwl, xj_jkey jkey, int _pid)
 	DBG("XJAB:xj_wlist_del:%d: trying to delete entry for <%.*s>...\n",
 		_pid, jkey->id->len, jkey->id->s);
 #endif
-	s_lock_at(jwl->sems, i);
+	lock_set_get(jwl->sems, i);
 	p = del234(jwl->workers[i].sip_ids, (void*)jkey);
 
 	if(p != NULL)
@@ -651,6 +665,6 @@ void xj_wlist_del(xj_wlist jwl, xj_jkey jkey, int _pid)
 		xj_jkey_free_p(p);
 	}
 
-	s_unlock_at(jwl->sems, i);
+	lock_set_release(jwl->sems, i);
 }
 
