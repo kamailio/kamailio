@@ -36,48 +36,48 @@
 int load_tm( struct tm_binds *tmb)
 {
 	if (!( tmb->register_tmcb=(register_tmcb_f) 
-		find_export("register_tmcb", NO_SCRIPT)) ) {
+		find_export("register_tmcb", NO_SCRIPT, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'register_tmcb' not found\n");
 		return -1;
 	}
 
-	if (!( tmb->t_relay_to=find_export(T_RELAY_TO, 2)) ) {
+	if (!( tmb->t_relay_to=find_export(T_RELAY_TO, 2, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'t_relay_to' not found\n");
 		return -1;
 	}
-	if (!( tmb->t_relay=find_export(T_RELAY, 0)) ) {
+	if (!( tmb->t_relay=find_export(T_RELAY, 0, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'t_relay' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_uac_dlg=(tuacdlg_f)find_export(T_UAC_DLG, NO_SCRIPT)) ) {
+	if (!(tmb->t_uac_dlg=(tuacdlg_f)find_export(T_UAC_DLG, NO_SCRIPT, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_uac_dlg' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_reply=(treply_f)find_export(T_REPLY, 2)) ) {
+	if (!(tmb->t_reply=(treply_f)find_export(T_REPLY, 2, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export(T_REPLY_WB, NO_SCRIPT)) ) {
+	if (!(tmb->t_reply_with_body=(treply_wb_f)find_export(T_REPLY_WB, NO_SCRIPT, 0)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_reply' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL, NO_SCRIPT)) ) {
+	if (!(tmb->t_is_local=(tislocal_f)find_export(T_IS_LOCAL, NO_SCRIPT, 0)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_get_trans_ident=(tget_ti_f)find_export(T_GET_TI, NO_SCRIPT)) ) {
+	if (!(tmb->t_get_trans_ident=(tget_ti_f)find_export(T_GET_TI, NO_SCRIPT, 0)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_get_trans_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export(T_LOOKUP_IDENT, NO_SCRIPT)) ) {
+	if (!(tmb->t_lookup_ident=(tlookup_ident_f)find_export(T_LOOKUP_IDENT, NO_SCRIPT, 0)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'t_lookup_ident' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_addblind=(taddblind_f)find_export(T_ADDBLIND, NO_SCRIPT)) ) {
+	if (!(tmb->t_addblind=(taddblind_f)find_export(T_ADDBLIND, NO_SCRIPT, 0)) ) {
 	        LOG( L_ERR, LOAD_ERROR "'addblind' not found\n");
 		return -1;
 	}
-	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK , 2)) ) {
+	if (!(tmb->t_forward_nonack=(tfwd_f)find_export(T_FORWARD_NONACK , 2, 0)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_forward_nonack' not found\n");
 		return -1;
 	}
