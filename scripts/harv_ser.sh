@@ -122,6 +122,8 @@ BEGIN {
 	ua_i3micro=0;
 	ua_act=0;
 	ua_ibm=0;
+	ua_xpro=0;
+	ua_hearme=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -360,6 +362,14 @@ ua==0 && /User-Agent:.*i3micro/ {
 }
 ua==0 && /User-Agent:.*ACT/ {
 	ua_act++
+	ua=1
+}
+ua==0 && /User-Agent:.*X-Pro/ {
+	ua_xpro++
+	ua=1
+}
+ua==0 && /User-Agent:.*HearMe/ {
+	ua_hearme++
 	ua=1
 }
 ua==0 && /User-Agent:.*X-Lite/ {
@@ -812,6 +822,8 @@ END {
 	print "IBM user agent: " ua_ibm
 	print "i3micro: " ua_i3micro
 	print "ACT: " ua_act
+	print "X-pro: " ua_xpro
+	print "Hearme: " ua_hearme
 	print "UFO: " ua_xx
 
 	print "## Servers"
