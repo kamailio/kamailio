@@ -467,6 +467,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
    int relay;
 
    global_msg_id = p_msg->id;
+   clone=NULL;
 
    /* parse_headers( p_msg , HDR_EOH ); */ /*????*/
    /* this might be good enough -- is not like with
@@ -542,12 +543,19 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    if ( p_msg->first_line.u.reply.statusclass>=3 && p_msg->first_line.u.reply.statusclass<=5 )
    {
-      if ( t_all_final(T) )
-           relay_lowest_reply_upstream( T , p_msg );
+      if ( t_all_final(T) && relay_lowest_reply_upstream( T , p_msg ) == -1 && clone ) {
+	T->inbound_response[branch]=NULL;
+        sip_msg_free( clone );
+        return -1;
+      }
    }
    else
    {
-      push_reply_from_uac_to_uas( T , branch );
+      if (push_reply_from_uac_to_uas( T , branch )==-1 && clone ) {
+	T->inbound_response[branch]=NULL;
+ 	sip_msg_free( clone );	
+	return -1;
+      }
    }
 
    /* nothing to do for the ser core */
@@ -998,8 +1006,8 @@ int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg )
 
    DBG("DEBUG: relay_lowest_reply_upstream: lowest reply [%d]=%d\n",lowest_i,lowest_v);
 
-   if ( lowest_i != -1 )
-      push_reply_from_uac_to_uas( T ,lowest_i );
+   if ( lowest_i != -1 && push_reply_from_uac_to_uas( T ,lowest_i ) != -1 )
+	return -1;
 
    return lowest_i;
 }
