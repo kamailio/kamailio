@@ -647,7 +647,7 @@ skip:
 #ifdef USE_TLS
 					if (con->type==PROTO_TLS){
 						/* we have to avoid to run in the same time 
-						 * with a tls_write becasue of the 
+						 * with a tls_write because of the 
 						 * update_fd stuff  (we don't want a write
 						 * stealing the fd under us or vice versa)
 						 * => lock on con->write_lock (ugly hack) */
@@ -656,9 +656,9 @@ skip:
 						resp=tcp_read_req(con);
 						lock_release(&con->write_lock);
 					}else
-#else
-						resp=tcp_read_req(con);
 #endif
+						resp=tcp_read_req(con);
+					
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
 						tcpconn_listrm(list, con, c_next, c_prev);
