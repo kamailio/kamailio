@@ -115,7 +115,7 @@ int parse_sql_url(char* _url, char** _user, char** _pass,
 
 
 /*
- * Remove any tabs and spaces from the begining and the end of
+ * Remove any tabs and spaces from the beginning and the end of
  * a string
  */
 char* trim(char* _s)
@@ -126,7 +126,7 @@ char* trim(char* _s)
 	     /* Null pointer, there is nothing to do */
 	if (!_s) return _s;
 
-	     /* Remove spaces and tabs from the begining of string */
+	     /* Remove spaces and tabs from the beginning of string */
 	while ((*_s == ' ') || (*_s == '\t')) _s++;
 
 	len = strlen(_s);

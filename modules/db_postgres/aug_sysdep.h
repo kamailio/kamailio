@@ -60,7 +60,7 @@
 #define AUG_SYSDEP_H
 
 /*
-**  As necessary, detect operating system, cpu, and compiler
+**  As necessary, detect operating system, CPU, and compiler
 **  combinations, and establish defines that describe the
 **  characteristics and requirements for the combination.
 **
@@ -73,7 +73,7 @@
 **	AUG_NO_xxxx	System doesn't have capability xxxx
 **	AUG_BAD_xxxx	System has xxxx, but it's broken
 **
-**  Every system gets AUG_CONFIGURATION so we can reject unconfigured
+**  Every system gets AUG_CONFIGURATION so we can reject misconfigured
 **  compiles.  This should be set to an os/cpu/compiler description.
 */
 #undef AUG_CONFIGURATION
