@@ -41,6 +41,9 @@
 #include "../../error.h"
 #include "authorize.h"
 #include "challenge.h"
+#include "../../mem/mem.h"
+
+#define RAND_SECRET_LEN 32
 
 
 /*
@@ -64,6 +67,7 @@ static int mod_init(void);
 static int challenge_fixup(void** param, int param_no);
 static int str_fixup(void** param, int param_no);
 static int hf_fixup(void** param, int param_no);
+static inline int generate_random_secret(void);
 
 
 /*
@@ -84,8 +88,10 @@ char* pass_column  = "ha1";
 char* pass_column_2 = "ha1b";
 #endif
 
-char* sec          = "4e9rhygt90ofw34e8hiof09tg"; /* Secret phrase used to generate nonce value */
-char* grp_table    = "grp";                       /* Table name where group definitions are stored */
+char* sec          = 0;        /* If the parameter was not used, the secret phrase
+				* will be auto-generated
+				*/                   
+char* grp_table    = "grp";    /* Table name where group definitions are stored */
 char* grp_user_col = "user";
 char* grp_grp_col  = "grp";
 int   calc_ha1     = 0;
@@ -238,10 +244,19 @@ static int mod_init(void)
 		return -2;
 	}
 
-	     /* Precalculate secret string length */
-	secret.s = sec;
-	secret.len = strlen(secret.s);
-
+	     /* If the parameter was not used */
+	if (sec == 0) {
+		     /* Generate secret using random generator */
+		if (generate_random_secret() < 0) {
+			LOG(L_ERR, "mod_init(): Error while generating random secret\n");
+			return -3;
+		}
+	} else {
+		     /* Otherwise use the parameter's value */
+		secret.s = sec;
+		secret.len = strlen(secret.s);
+	}
+	
 	return 0;
 }
 
@@ -337,6 +352,35 @@ static int hf_fixup(void** param, int param_no)
 		s->len = strlen(s->s);
 		*param = (void*)s;
 	}
+
+	return 0;
+}
+
+
+/*
+ * Secret parameter was not used so we generate
+ * a random value here
+ */
+static inline int generate_random_secret(void)
+{
+	int i;
+
+	sec = (char*)pkg_malloc(RAND_SECRET_LEN);
+	if (!sec) {
+		LOG(L_ERR, "generate_random_secret(): No memory left\n");		
+		return -1;
+	}
+
+	srandom(time(0));
+
+	for(i = 0; i < RAND_SECRET_LEN; i++) {
+		sec[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+	}
+
+	secret.s = sec;
+	secret.len = RAND_SECRET_LEN;
+
+	     /*	DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
 
 	return 0;
 }
