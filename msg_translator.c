@@ -279,9 +279,7 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 	struct ip_addr *source_ip;
 	char *tmp;
 	int  tmp_len;
-	int extra_len;
 
-	extra_len = 0;
 	source_ip=&msg->rcv.src_ip;
 
 	buf=pkg_malloc(sizeof(char)*MAX_RECEIVED_SIZE);
@@ -295,14 +293,8 @@ char* received_builder(struct sip_msg *msg, unsigned int *received_len)
 		return 0; /* error*/
 	tmp_len=strlen(tmp);
 	len=RECEIVED_LEN+tmp_len;
-	if(source_ip->af==AF_INET6){
-		len+=2;
-		buf[RECEIVED_LEN]='[';
-		buf[RECEIVED_LEN+tmp_len+1]=']';
-		extra_len=1;
-	}
 	
-	memcpy(buf+RECEIVED_LEN+extra_len, tmp, tmp_len);
+	memcpy(buf+RECEIVED_LEN, tmp, tmp_len);
 	buf[len]=0; /*null terminate it */
 
 	*received_len = len;
