@@ -216,7 +216,7 @@ static inline int is_myself(str* _host, unsigned short _port)
 		return 0;
 	}
 #endif
-	ret = check_self(_host, _port ? _port : SIP_PORT);
+	ret = check_self(_host, _port ? _port : SIP_PORT, 0);/* match all protos*/
 	if (ret < 0) return 0;
 	else return ret;
 }
