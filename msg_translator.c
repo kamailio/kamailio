@@ -293,78 +293,18 @@ char* received_builder(struct sip_msg *msg, int *received_len)
 
 
 
-
-char * build_req_buf_from_sip_req( struct sip_msg* msg,
-								unsigned int *returned_len,
-								struct socket_info* send_sock)
+/* computes the "unpacked" len of a lump list,
+   code moved from build_req_from_req */
+static inline int lumps_len(struct lump* l)
 {
-	unsigned int len, new_len, received_len, uri_len, via_len;
-	char* line_buf;
-	char* received_buf;
-	char* new_buf;
-	char* orig;
-	char* buf;
-	char  backup;
-	unsigned int offset, s_offset, size;
-	struct lump *t,*r;
-	struct lump* anchor;
+	int s_offset;
+	int new_len;
+	struct lump* t;
+	struct lump* r;
 
-	uri_len=0;
-	orig=msg->orig;
-	buf=msg->buf;
-	len=msg->len;
-	received_len=0;
-	new_buf=0;
-	received_buf=0;
-
-
-	line_buf = via_builder( msg, &via_len, send_sock);
-	if (!line_buf){
-		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
-		goto error1;
-	}
-	/* check if received needs to be added */
-	backup = msg->via1->host.s[msg->via1->host.len];
-	msg->via1->host.s[msg->via1->host.len] = 0;
-	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
-		if ((received_buf=received_builder(msg,&received_len))==0)
-			goto error;
-	}
-	msg->via1->host.s[msg->via1->host.len] = backup;
-
-	/* add via header to the list */
-	/* try to add it before msg. 1st via */
-	/* add first via, as an anchor for second via*/
-	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
-	if (anchor==0) goto error;
-	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
-		goto error;
-	/* if received needs to be added, add anchor after host and add it */
-	if (received_len){
-		if (msg->via1->params.s){
-				size= msg->via1->params.s-msg->via1->hdr.s-1; /*compensate
-															  for ';' */
-		}else{
-				size= msg->via1->host.s-msg->via1->hdr.s+msg->via1->host.len;
-				if (msg->via1->port!=0){
-					/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
-					size += msg->via1->port_str.len + 1; /* +1 for ':'*/
-				}
-			#ifdef USE_IPV6
-				if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
-			#endif
-		}
-		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
-				HDR_VIA);
-		if (anchor==0) goto error;
-		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
-				==0 ) goto error;
-	}
-
-	/* compute new msg len and fix overlapping zones*/
-	new_len=len;
 	s_offset=0;
-	for(t=msg->add_rm;t;t=t->next){
+	new_len=0;
+	for(t=l;t;t=t->next){
 		for(r=t->before;r;r=r->before){
 			switch(r->op){
 				case LUMP_ADD:
@@ -416,33 +356,28 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 			}
 		}
 	}
+	return new_len;
+}
 
-	if (msg->new_uri.s){
-		uri_len=msg->new_uri.len;
-		new_len=new_len-msg->first_line.u.request.uri.len+uri_len;
-	}
-	new_buf=(char*)local_malloc(new_len+1);
-	if (new_buf==0){
-		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
-		goto error;
-	}
 
-	offset=s_offset=0;
-	if (msg->new_uri.s){
-		/* copy message up to uri */
-		size=msg->first_line.u.request.uri.s-buf;
-		memcpy(new_buf, orig, size);
-		offset+=size;
-		s_offset+=size;
-		/* add our uri */
-		memcpy(new_buf+offset, msg->new_uri.s, uri_len);
-		offset+=uri_len;
-		s_offset+=msg->first_line.u.request.uri.len; /* skip original uri */
-	}
-	new_buf[new_len]=0;
-	/* copy msg adding/removing lumps */
-	for (t=msg->add_rm;t;t=t->next){
+
+/* another helper functions, adds/Removes the lump,
+	code moved form build_req_from_req  */
+
+static /*inline*/ void process_lumps(	struct lump* l,	char* new_buf, 
+									int* new_buf_offs, char* orig,
+									int* orig_offs)
+{
+	struct lump *t;
+	struct lump *r;
+	int size;
+	int offset;
+	int s_offset;
+	
+	offset=*new_buf_offs;
+	s_offset=*orig_offs;
+	
+	for (t=l;t;t=t->next){
 		switch(t->op){
 			case LUMP_ADD:
 				/* just add it here! */
@@ -533,6 +468,107 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 							"unknown op (%x)\n", t->op);
 		}
 	}
+	*new_buf_offs=offset;
+	*orig_offs=s_offset;
+}
+
+
+
+char * build_req_buf_from_sip_req( struct sip_msg* msg,
+								unsigned int *returned_len,
+								struct socket_info* send_sock)
+{
+	unsigned int len, new_len, received_len, uri_len, via_len;
+	char* line_buf;
+	char* received_buf;
+	char* new_buf;
+	char* orig;
+	char* buf;
+	char  backup;
+	unsigned int offset, s_offset, size;
+	struct lump* anchor;
+
+	uri_len=0;
+	orig=msg->orig;
+	buf=msg->buf;
+	len=msg->len;
+	received_len=0;
+	new_buf=0;
+	received_buf=0;
+
+
+	line_buf = via_builder( msg, &via_len, send_sock);
+	if (!line_buf){
+		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
+		goto error1;
+	}
+	/* check if received needs to be added */
+	backup = msg->via1->host.s[msg->via1->host.len];
+	msg->via1->host.s[msg->via1->host.len] = 0;
+	if (check_address(&msg->src_ip, msg->via1->host.s, received_dns)!=0){
+		if ((received_buf=received_builder(msg,&received_len))==0)
+			goto error;
+	}
+	msg->via1->host.s[msg->via1->host.len] = backup;
+
+	/* add via header to the list */
+	/* try to add it before msg. 1st via */
+	/* add first via, as an anchor for second via*/
+	anchor=anchor_lump(&(msg->add_rm), msg->via1->hdr.s-buf, 0, HDR_VIA);
+	if (anchor==0) goto error;
+	if (insert_new_lump_before(anchor, line_buf, via_len, HDR_VIA)==0)
+		goto error;
+	/* if received needs to be added, add anchor after host and add it */
+	if (received_len){
+		if (msg->via1->params.s){
+				size= msg->via1->params.s-msg->via1->hdr.s-1; /*compensate
+															  for ';' */
+		}else{
+				size= msg->via1->host.s-msg->via1->hdr.s+msg->via1->host.len;
+				if (msg->via1->port!=0){
+					/*size+=strlen(msg->via1->hdr.s+size+1)+1;*/
+					size += msg->via1->port_str.len + 1; /* +1 for ':'*/
+				}
+			#ifdef USE_IPV6
+				if(send_sock->address.af==AF_INET6) size+=1; /* +1 for ']'*/
+			#endif
+		}
+		anchor=anchor_lump(&(msg->add_rm),msg->via1->hdr.s-buf+size,0,
+				HDR_VIA);
+		if (anchor==0) goto error;
+		if (insert_new_lump_after(anchor, received_buf, received_len, HDR_VIA)
+				==0 ) goto error;
+	}
+
+	/* compute new msg len and fix overlapping zones*/
+	new_len=len+lumps_len(msg->add_rm);
+
+	if (msg->new_uri.s){
+		uri_len=msg->new_uri.len;
+		new_len=new_len-msg->first_line.u.request.uri.len+uri_len;
+	}
+	new_buf=(char*)local_malloc(new_len+1);
+	if (new_buf==0){
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: build_req_buf_from_sip_req: out of memory\n");
+		goto error;
+	}
+
+	offset=s_offset=0;
+	if (msg->new_uri.s){
+		/* copy message up to uri */
+		size=msg->first_line.u.request.uri.s-buf;
+		memcpy(new_buf, orig, size);
+		offset+=size;
+		s_offset+=size;
+		/* add our uri */
+		memcpy(new_buf+offset, msg->new_uri.s, uri_len);
+		offset+=uri_len;
+		s_offset+=msg->first_line.u.request.uri.len; /* skip original uri */
+	}
+	new_buf[new_len]=0;
+	/* copy msg adding/removing lumps */
+	process_lumps(msg->add_rm, new_buf, &offset, orig, &s_offset);
 	/* copy the rest of the message */
 	memcpy(new_buf+offset, orig+s_offset, len-s_offset);
 	new_buf[new_len]=0;
@@ -557,7 +593,7 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 {
 	unsigned int new_len, via_len;
 	char* new_buf;
-	unsigned offset, s_offset, size;
+	unsigned offset, s_offset, via_offset;
 	char* orig;
 	char* buf;
 	unsigned int len;
@@ -568,18 +604,24 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	new_buf=0;
 	/* we must remove the first via */
 	via_len=msg->via1->bsize;
-	size=msg->via1->hdr.s-buf;
-	DBG("via len: %d, initial size: %d\n", via_len, size);
+	via_offset=msg->via1->hdr.s-buf;
+	DBG("via len: %d, initial via offset: %d\n", via_len, via_offset);
 	if (msg->via1->next){
 		/* add hdr size*/
-		size+=msg->via1->hdr.len+1;
-	    DBG(" adjusted via len: %d, initial size: %d\n",
-				via_len, size);
+		via_offset+=msg->via1->hdr.len+1;
+	    DBG(" adjusted via len: %d, initial offset: %d\n",
+				via_len, via_offset);
 	}else{
 		/* add hdr size ("Via:")*/
 		via_len+=msg->via1->hdr.len+1;
 	}
-	new_len=len-via_len;
+	/* remove the first via*/
+	if (del_lump( &(msg->repl_add_rm), via_offset, via_len, 0)==0){
+		LOG(L_ERR, "build_res_buf_from_sip_res: error trying to remove first"
+					"via\n");
+		goto error;
+	}
+	new_len=len+lumps_len(msg->repl_add_rm);
 
 	DBG(" old size: %d, new size: %d\n", len, new_len);
 	new_buf=(char*)local_malloc(new_len+1);/* +1 is for debugging
@@ -589,9 +631,9 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 		goto error;
 	}
 	new_buf[new_len]=0; /* debug: print the message */
-	memcpy(new_buf, orig, size);
-	offset=size;
-	s_offset=size+via_len;
+	offset=s_offset=0;
+	process_lumps(msg->repl_add_rm, new_buf, &offset, orig, &s_offset);
+	/* copy the rest of the message */
 	memcpy(new_buf+offset,orig+s_offset, len-s_offset);
 	 /* send it! */
 	DBG(" copied size: orig:%d, new: %d, rest: %d\n",

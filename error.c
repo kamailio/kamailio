@@ -3,6 +3,7 @@
  *
  */
 
+#include <stdio.h>
 #include "error.h"
 
 /* current function's error; */
