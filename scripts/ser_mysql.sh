@@ -284,6 +284,7 @@ CREATE TABLE active_sessions (
 
 #
 # Table structure for table 'aliases' -- location-like table
+# (aliases_contact index makes lookup of missed calls much faster)
 #
 
 CREATE TABLE aliases (
@@ -298,7 +299,8 @@ CREATE TABLE aliases (
   replicate int(10) unsigned NOT NULL default '0',
   state tinyint(1) unsigned NOT NULL default '0',
   flags int(11) NOT NULL default '0',
-  PRIMARY KEY($USERCOL, domain, contact)
+  PRIMARY KEY($USERCOL, domain, contact),
+  INDEX aliases_contact (contact)
 ) $TABLE_TYPE;
 
 
