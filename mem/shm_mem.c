@@ -178,7 +178,7 @@ int shm_getmem()
 
 
 
-int shm_mem_init_mallocs(void* mempool, int pool_size)
+int shm_mem_init_mallocs(void* mempool, unsigned long pool_size)
 {
 	/* init it for malloc*/
 	shm_block=shm_malloc_init(mempool, pool_size);

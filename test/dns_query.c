@@ -47,7 +47,7 @@ int log_stderr=1;
 int debug=0;
 int pids[1];
 int process_no=0;
-int shm_mem_size=0;
+long shm_mem_size=0;
 char mem_pool[1024*1024];
 struct qm_block* mem_block;
 

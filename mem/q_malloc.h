@@ -32,6 +32,7 @@
  *               long longs will be 64 bit aligned) (andrei)
  *  2004-07-19  support for 64 bit (2^64 mem. block) and more info
  *               for the future de-fragmentation support (andrei)
+ *  2004-11-10  support for > 4Gb mem. (switched to long) (andrei)
  */
 
 
@@ -52,7 +53,7 @@
 										 debugging*/
 #endif 
 #else /* DBG_QM_MALLOC */
-	#define ROUNDTO		16 /* size we round to, must be = 2^n  and also
+	#define ROUNDTO		16UL /* size we round to, must be = 2^n  and also
 							 sizeof(qm_frag)+sizeof(qm_frag_end)
 							 must be multiple of ROUNDTO!
 						   */
@@ -61,8 +62,8 @@
 
 
 
-#define QM_MALLOC_OPTIMIZE_FACTOR 11 /*used below */
-#define QM_MALLOC_OPTIMIZE  ((unsigned long)(1<<QM_MALLOC_OPTIMIZE_FACTOR))
+#define QM_MALLOC_OPTIMIZE_FACTOR 11UL /*used below */
+#define QM_MALLOC_OPTIMIZE  ((unsigned long)(1UL<<QM_MALLOC_OPTIMIZE_FACTOR))
 								/* size to optimize for,
 									(most allocs <= this size),
 									must be 2^k */
@@ -124,13 +125,13 @@ struct qm_block{
 
 
 
-struct qm_block* qm_malloc_init(char* address, unsigned int size);
+struct qm_block* qm_malloc_init(char* address, unsigned long size);
 
 #ifdef DBG_QM_MALLOC
-void* qm_malloc(struct qm_block*, unsigned int size, char* file, char* func, 
+void* qm_malloc(struct qm_block*, unsigned long size, char* file, char* func, 
 					unsigned int line);
 #else
-void* qm_malloc(struct qm_block*, unsigned int size);
+void* qm_malloc(struct qm_block*, unsigned long size);
 #endif
 
 #ifdef DBG_QM_MALLOC
@@ -140,10 +141,10 @@ void  qm_free(struct qm_block*, void* p, char* file, char* func,
 void  qm_free(struct qm_block*, void* p);
 #endif
 #ifdef DBG_QM_MALLOC
-void* qm_realloc(struct qm_block*, void* p, unsigned int size,
+void* qm_realloc(struct qm_block*, void* p, unsigned long size,
 				char* file, char* func, unsigned int line);
 #else
-void* qm_realloc(struct qm_block*, void* p, unsigned int size);
+void* qm_realloc(struct qm_block*, void* p, unsigned long size);
 #endif
 
 void  qm_status(struct qm_block*);

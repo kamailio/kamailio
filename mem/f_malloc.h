@@ -32,6 +32,7 @@
  *               long longs will be 64 bit aligned) (andrei)
  *  2004-07-19  support for 64 bit (2^64 mem. block) and more info
  *               for the future de-fragmentation support (andrei)
+ *  2004-11-10  support for > 4Gb mem., switched to long (andrei)
  */
 
 
@@ -53,14 +54,14 @@
                       sizeof(fm_frag) must be multiple of ROUNDTO !*/
 #endif
 #else /* DBG_F_MALLOC */
-	#define ROUNDTO 8
+	#define ROUNDTO 8UL
 #endif
 #define MIN_FRAG_SIZE	ROUNDTO
 
 
 
-#define F_MALLOC_OPTIMIZE_FACTOR 11 /*used below */
-#define F_MALLOC_OPTIMIZE  (1<<F_MALLOC_OPTIMIZE_FACTOR)
+#define F_MALLOC_OPTIMIZE_FACTOR 11UL /*used below */
+#define F_MALLOC_OPTIMIZE  (1UL<<F_MALLOC_OPTIMIZE_FACTOR)
 								/* size to optimize for,
 									(most allocs <= this size),
 									must be 2^k */
@@ -108,13 +109,13 @@ struct fm_block{
 
 
 
-struct fm_block* fm_malloc_init(char* address, unsigned int size);
+struct fm_block* fm_malloc_init(char* address, unsigned long size);
 
 #ifdef DBG_F_MALLOC
-void* fm_malloc(struct fm_block*, unsigned int size, char* file, char* func, 
-					unsigned int line);
+void* fm_malloc(struct fm_block*, unsigned long size,
+					char* file, char* func, unsigned int line);
 #else
-void* fm_malloc(struct fm_block*, unsigned int size);
+void* fm_malloc(struct fm_block*, unsigned long size);
 #endif
 
 #ifdef DBG_F_MALLOC
@@ -125,10 +126,10 @@ void  fm_free(struct fm_block*, void* p);
 #endif
 
 #ifdef DBG_F_MALLOC
-void*  fm_realloc(struct fm_block*, void* p, unsigned int size, 
+void*  fm_realloc(struct fm_block*, void* p, unsigned long size, 
 					char* file, char* func, unsigned int line);
 #else
-void*  fm_realloc(struct fm_block*, void* p, unsigned int size);
+void*  fm_realloc(struct fm_block*, void* p, unsigned long size);
 #endif
 
 void  fm_status(struct fm_block*);

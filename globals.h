@@ -116,7 +116,7 @@ extern int mcast_ttl;
 extern int cfg_errors;
 extern unsigned int msg_no;
 
-extern unsigned int shm_mem_size;
+extern unsigned long shm_mem_size;
 
 /* FIFO server config */
 char extern *fifo; /* FIFO name */
