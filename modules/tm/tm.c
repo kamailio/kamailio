@@ -26,12 +26,34 @@ static struct module_exports nm_exports= {	"tm_module",
 
 struct module_exports* mod_register()
 {
+
+/* Jiri's testing playground
+
 	struct s_table *hash_table;
+	int p,i,j,k;
+
 	DBG("tm module registering\n");
 	DBG("tm init table\n");
 	hash_table = init_hash_table( );
+
+#define DELAY for(i=0,j=0;i<100000;i++) j=j+3*i+1;
+
+	p=fork();
+	sleep(2);
+	for(k=0;k<50;k++){	
+		DBG("DEBUG: trying to lock %d in\n", p );
+		lock( hash_table->entrys[1].mutex );
+		DBG("DEBUG: lock %d in\n", p );
+		DELAY; DELAY; DELAY; DELAY; DELAY;
+		DELAY; DELAY; DELAY; DELAY; DELAY;
+		unlock( hash_table->entrys[1].mutex );
+		DBG("DEBUG: lock %d out\n", p );
+		DELAY
+	}
+
 	DBG("tm free table\n");
 	free_hash_table( hash_table );
+*/
 	fprintf(stderr, "nm - registering...\n");
 	return &nm_exports;
 }
