@@ -77,6 +77,7 @@ static cmd_export_t cmds[] = {
 	{"save",         save,         1, domain_fixup, REQUEST_ROUTE                },
 	{"save_noreply", save_noreply, 1, domain_fixup, REQUEST_ROUTE                },
 	{"lookup",       lookup,       1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"registered",   registered,   1, domain_fixup, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 

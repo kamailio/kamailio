@@ -152,3 +152,39 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	if (nat) setflag(_m, nat_flag);
 	return 1;
 }
+
+
+/*
+ * Return true if the AOR in the Request-URI is registered,
+ * it is similar to lookup but registered neither rewrites
+ * the Request-URI nor appends branches
+ */
+int registered(struct sip_msg* _m, char* _t, char* _s)
+{
+	str uri, aor;
+	urecord_t* r;
+	int res;
+
+	if (_m->new_uri.s) uri = _m->new_uri;
+	else uri = _m->first_line.u.request.uri;
+	
+	if (extract_aor(&uri, &aor) < 0) {
+		LOG(L_ERR, "registered(): Error while extracting address of record\n");
+		return -1;
+	}
+	
+	ul.lock_udomain((udomain_t*)_t);
+	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
+	ul.unlock_udomain((udomain_t*)_t);
+
+	if (res < 0) {
+		LOG(L_ERR, "registered(): Error while querying usrloc\n");
+		return -1;
+	} else if (res == 0) {
+		DBG("registered(): '%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+		return 1;
+	} else {
+		DBG("registered(): '%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+		return -1;
+	}
+}

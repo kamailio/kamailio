@@ -35,6 +35,7 @@ Jan Janak
               1.4.1. save(domain)
               1.4.2. save_noreply(domain)
               1.4.3. lookup(domain)
+              1.4.4. registered(domain)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -49,6 +50,7 @@ Jan Janak
    1-7. save usage
    1-8. save_noreply usage
    1-9. lookup usage
+   1-10. registered usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -225,6 +227,26 @@ save_noreply("location");
    Example 1-9. lookup usage
 ...
 lookup("location");
+...
+     _________________________________________________________
+
+1.4.4. registered(domain)
+
+   The function returns true if the AOR in the Request-URI is
+   registered, false otherwise. The function does not modify the
+   message being process, it neither rewrites the Request-URI if
+   a contact is found not append branches.
+
+   Meaning of the parameters is as follows:
+
+     * domain - Name of table that should be used for the lookup.
+
+   Example 1-10. registered usage
+...
+if (registered("location")) {
+    sl_send_reply("100", "Trying");
+    ...
+};
 ...
      _________________________________________________________
 
