@@ -266,7 +266,7 @@ inline static void retransmission_handler( void *attr)
 
 	r_buf = (struct retr_buf*)attr;
 #ifdef EXTRA_DEBUG
-	if (r_buf->my_T->damocles==1) {
+	if (r_buf->my_T->damocles) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
 			" called from RETR timer\n",r_buf->my_T);
 		abort();
@@ -313,7 +313,7 @@ inline static void final_response_handler( void *attr)
 	t=r_buf->my_T;
 
 #	ifdef EXTRA_DEBUG
-	if (t->damocles==1) 
+	if (t->damocles) 
 	{
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
 			" called from FR timer\n",r_buf->my_T);
@@ -395,7 +395,7 @@ inline static void wait_handler( void *attr)
 	struct cell *p_cell = (struct cell*)attr;
 
 #ifdef EXTRA_DEBUG
-	if (p_cell->damocles==1) {
+	if (p_cell->damocles) {
 		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
 			" called from WAIT timer\n",p_cell);
 		abort();
