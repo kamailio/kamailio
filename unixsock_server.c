@@ -37,7 +37,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <stdarg.h>
+#include <time.h>
+#include "config.h"
 #include "ut.h"
 #include "globals.h"
 #include "trim.h"
@@ -57,12 +60,232 @@ static struct unixsock_cmd* cmd_list;
 static char reply_buf[UNIXSOCK_BUF_SIZE];
 static str reply_pos;
 static struct sockaddr_un reply_addr;
+static int reply_addr_len;
 
-#define CMD_NOT_FOUND "500 Command not found"
-#define CMD_NOT_FOUND_LEN (sizeof(CMD_NOT_FOUND) - 1)
+static time_t up_since;
+static char up_since_ctime[MAX_CTIME_LEN];
 
-#define FLINE_ERR "400 First line malformed"
-#define FLINE_ERR_LEN (sizeof(FLINE_ERR) - 1)
+
+#define PRINT_CMD "print"     /* Diagnostic command */
+#define VERSION_CMD "version" /* Print the version of the server */
+#define UPTIME_CMD "uptime"   /* Print server's uptime */
+#define WHICH_CMD "which"     /* Print available FIFO commands */
+#define PS_CMD "ps"           /* Print server's process table */
+#define ARG_CMD "arg"         /* Print server's command line arguments */
+#define PWD_CMD "pwd"         /* Get the current working directory */
+#define KILL_CMD "kill"       /* Kill the server */
+
+
+/* 
+ * Diagnostic and hello-world command 
+ */
+static int print_cmd(str* msg)
+{
+	str line;
+	int ret;
+
+	ret = 0;
+
+	if (unixsock_read_line(&line, msg) < 0) {
+		unixsock_reply_asciiz("500 Error while reading text\n");
+		ret = -1;
+		goto end;
+	}
+
+	if (unixsock_reply_printf("200 OK\n%.*s\n", line.len, ZSW(line.s)) < 0) {
+		unixsock_reply_reset();
+		unixsock_reply_asciiz("500 Error while sending reply\n");
+		ret = -1;
+	}
+
+ end:
+	if (unixsock_reply_send() < 0) ret = -1;
+	return ret;
+}
+
+
+/*
+ * Print the version of the server
+ */
+static int version_cmd(str* msg)
+{
+	int ret;
+
+	ret = 0;
+	if (unixsock_reply_asciiz("200 OK\n" SERVER_HDR CRLF) < 0) ret = -1;
+	if (unixsock_reply_send() < 0) ret = -1;
+	return ret;
+}
+
+
+static int uptime_cmd(str* msg)
+{
+	time_t now;
+	int ret;
+
+	time(&now);
+	ret = 0;
+	
+	if (unixsock_reply_printf("200 OK\nNow: %sUp Since: %sUp time: %.0f [sec]\n",
+				  ctime(&now), up_since_ctime, difftime(now, up_since)) < 0) {
+		unixsock_reply_reset();
+		unixsock_reply_asciiz("500 Error while printing reply\n");
+		ret = -1;
+	}
+	
+	if (unixsock_reply_send() < 0) {
+		ret = -1;
+	}
+	
+	return ret;
+}
+
+
+static int which_cmd(str* msg)
+{
+	struct unixsock_cmd* c;
+	int ret;
+
+	ret = 0;
+	unixsock_reply_asciiz("200 OK\n");
+
+	for(c = cmd_list; c; c = c->next) {
+		if (unixsock_reply_printf("%s\n", c->name) < 0) {
+			unixsock_reply_reset();
+			unixsock_reply_asciiz("500 Error while creating reply\n");
+			ret = -1;
+			break;
+		}
+	}
+	
+	if (unixsock_reply_send() < 0) {
+		ret = -1;
+	}
+	return ret;
+}
+
+
+static int ps_cmd(str* msg)
+{
+	int p, ret;
+
+	ret = 0;
+	unixsock_reply_asciiz("200 OK\n");
+	for (p = 0; p < process_count(); p++) {
+		if (unixsock_reply_printf("%d\t%d\t%s\n", p, pt[p].pid, pt[p].desc) < 0) {
+			unixsock_reply_reset();
+			unixsock_reply_asciiz("500 Error while printing reply\n");
+			ret = -1;
+			break;
+		}
+	}
+	
+	if (unixsock_reply_send() < 0) {
+		ret = -1;
+	}
+	return ret;
+}
+
+
+static int pwd_cmd(str* msg)
+{
+	char *cwd_buf;
+	int max_len, ret;
+
+	max_len = pathmax();
+	cwd_buf = pkg_malloc(max_len);
+	ret = 0;
+	if (!cwd_buf) {
+		LOG(L_ERR, "pwd_cmd: No memory left\n");
+		unixsock_reply_asciiz("500 No Memory Left\n");
+		ret = -1;
+	}
+
+	if (getcwd(cwd_buf, max_len)) {
+		if (unixsock_reply_printf("200 OK\n%s\n", cwd_buf) < 0) {
+			unixsock_reply_reset();
+			unixsock_reply_asciiz("500 Error while sending reply\n");
+			ret = -1;
+		}
+	} else {
+		unixsock_reply_asciiz("500 getcwd Failed\n");
+		ret = -1;
+	}
+
+	pkg_free(cwd_buf);
+	if (unixsock_reply_send() < 0) {
+		ret = -1;
+	}
+	return ret;
+}
+
+
+static int arg_cmd(str* msg)
+{
+	int p, ret;
+
+	ret = 0;
+	unixsock_reply_asciiz("200 OK\n");
+	for (p = 0; p < my_argc; p++) {
+		if (unixsock_reply_printf("%s\n", my_argv[p]) < 0) {
+			unixsock_reply_reset();
+			unixsock_reply_asciiz("500 Could not create reply\n");
+			ret = -1;
+			break;
+		}
+	}
+			
+	if (unixsock_reply_send() < 0) {
+		ret = -1;
+	}
+	return ret;
+}
+
+
+static int kill_cmd(str* msg)
+{
+	unixsock_reply_asciiz("200 Killing now\n");
+	unixsock_reply_send();
+	kill(0, SIGTERM);
+	return 0;
+}
+
+
+static int register_core_commands(void)
+{
+	if (unixsock_register_cmd(PRINT_CMD, print_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(VERSION_CMD, version_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(UPTIME_CMD, uptime_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(WHICH_CMD, which_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(PS_CMD, ps_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(PWD_CMD, pwd_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(ARG_CMD, arg_cmd) < 0) {
+		return -1;
+	}
+
+	if (unixsock_register_cmd(KILL_CMD, kill_cmd) < 0) {
+		return -1;
+	}
+	return 0;
+}
 
 
 /*
@@ -190,7 +413,7 @@ static void skip_line(str* buffer)
 
 static void unix_server_loop(void)
 {
-	int addr_len, ret;
+	int ret;
 	str cmd, buffer;
 	static char buf[UNIXSOCK_BUF_SIZE];
 	struct unixsock_cmd* c;
@@ -198,13 +421,10 @@ static void unix_server_loop(void)
 	buffer.s = buf;
 	buffer.len = 0;
 	
-	reply_pos.s = reply_buf;
-	reply_pos.len = UNIXSOCK_BUF_SIZE;
-
 	while(1) {
-		addr_len = sizeof(reply_addr);
+		reply_addr_len = sizeof(reply_addr);
 		ret = recvfrom(sock, buffer.s, UNIXSOCK_BUF_SIZE, 0, 
-			       (struct sockaddr*)&reply_addr, &addr_len);
+			       (struct sockaddr*)&reply_addr, &reply_addr_len);
 		if (ret == -1) {
 			LOG(L_ERR, "unix_server_loop: recvfrom: (%d) %s\n", 
 			    errno, strerror(errno));
@@ -219,10 +439,11 @@ static void unix_server_loop(void)
 		}
 
 		buffer.len = ret;
+		unixsock_reply_reset();
 
 		if (parse_cmd(&cmd, &buffer) < 0) {
-			unixsock_add_to_reply(FLINE_ERR, FLINE_ERR_LEN);
-			unixsock_send_reply();
+			unixsock_reply_asciiz("400 First line malformed\n");
+			unixsock_reply_send();
 			continue;
 		}
 
@@ -234,8 +455,8 @@ static void unix_server_loop(void)
 		if (c == 0) {
 			LOG(L_ERR, "unix_server_loop: Could not find "
 			    "command '%.*s'\n", cmd.len, ZSW(cmd.s));
-			unixsock_add_to_reply(CMD_NOT_FOUND, CMD_NOT_FOUND_LEN);
-			unixsock_send_reply();
+			unixsock_reply_printf("500 Command %.*s not found\n", cmd.len, ZSW(cmd.s));
+			unixsock_reply_send();
 			continue;
 		}
 
@@ -249,6 +470,21 @@ static void unix_server_loop(void)
 			      */
 		}
 	}
+}
+
+
+static int get_uptime(void)
+{
+	char* t;
+
+	time(&up_since);
+	t = ctime(&up_since);
+	if (strlen(t) + 1 >= MAX_CTIME_LEN) {
+		LOG(L_ERR, "get_uptime: Too long date %d\n", (int)strlen(t));
+		return -1;
+	}
+	memcpy(up_since_ctime, t, strlen(t) + 1);
+	return 0;
 }
 
 
@@ -271,6 +507,15 @@ int init_unixsock_server(void)
 		return -1;
 	} else if (ret > 0) {
 		return 1;
+	}
+
+	if (get_uptime() < 0) {
+		return -1;
+	}
+
+        if (register_core_commands() < 0) {
+		close(sock);
+		return -1;
 	}
 
 	for(i = 0; i < unixsock_children; i++) {
@@ -321,6 +566,7 @@ int init_unixsock_server(void)
 #endif
 
 	}
+
 	return 1;
 }
 
@@ -344,11 +590,15 @@ void close_unixsock_server(void)
 /*
  * Register a new command
  */
-int unixsock_register_cmd(str* cmd, unixsock_f* f)
+int unixsock_register_cmd(char* command, unixsock_f* f)
 {
+	str cmd;
 	struct unixsock_cmd* new_cmd;
 
-	if (lookup_cmd(cmd)) {
+	cmd.s = command;
+	cmd.len = strlen(command);
+
+	if (lookup_cmd(&cmd)) {
 		LOG(L_ERR, "unixsock_register_cmd: Function already exists\n");
 		return -1;
 	}
@@ -359,14 +609,14 @@ int unixsock_register_cmd(str* cmd, unixsock_f* f)
 		return -1;
 	}
 
-	new_cmd->name = *cmd;
+	new_cmd->name = cmd;
 	new_cmd->f = f;
 
 	new_cmd->next = cmd_list;
 	cmd_list = new_cmd;
 	
 	DBG("unixsock_register_cmd: New command (%.*s) registered\n", 
-	    cmd->len, ZSW(cmd->s));
+	    cmd.len, ZSW(cmd.s));
 	return 1;
 }
 
@@ -388,15 +638,15 @@ int unixsock_add_to_reply(const char* buf, size_t len)
 /*
  * Send a reply
  */
-ssize_t unixsock_send_reply(void)
+ssize_t unixsock_reply_send(void)
 {
 	int ret;
 
 	ret = sendto(sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
-		     (struct sockaddr*)&reply_addr, SUN_LEN(&reply_addr));
+		     (struct sockaddr*)&reply_addr, reply_addr_len);
 
 	if (ret == -1) {
-		LOG(L_ERR, "unixsock_send_reply: sendto: %s\n", 
+		LOG(L_ERR, "unixsock_reply_send: sendto: %s\n", 
 		    strerror(errno));
 	}
 
@@ -583,4 +833,91 @@ int unixsock_read_lineset(str* lineset, str* source)
 
 	LOG(L_ERR, "unixsock_read_body: Could not find the end of the body\n");
 	return -1;
+}
+
+
+/*
+ * Reset the reply buffer -- start to write
+ * at the beginning
+ */
+void unixsock_reply_reset(void)
+{
+	reply_pos.s = reply_buf;
+	reply_pos.len = UNIXSOCK_BUF_SIZE;
+}
+
+
+/*
+ * Add ASCIIZ to the reply buffer
+ */
+int unixsock_reply_asciiz(char* str)
+{
+	int len;
+	
+	if (!str) {
+		LOG(L_ERR, "unixsock_reply_asciiz: Invalid parameter value\n");
+		return -1;
+	}
+
+	len = strlen(str);
+
+	if (reply_pos.len < len) {
+		LOG(L_ERR, "unixsock_reply_asciiz: Buffer too small\n");
+		return -1;
+	}
+
+	memcpy(reply_pos.s, str, len);
+	reply_pos.s += len;
+	reply_pos.len -= len;
+	return 0;
+}
+
+
+/*
+ * Add a string represented by str structure
+ * to the reply buffer
+ */
+int unixsock_reply_str(str* s)
+{
+	if (!s) {
+		LOG(L_ERR, "unixsock_reply_str: Invalid parameter value\n");
+		return -1;
+	}
+
+	if (reply_pos.len < s->len) {
+		LOG(L_ERR, "unixsock_reply_str: Buffer too small\n");
+		return -1;
+	}
+	
+	memcpy(reply_pos.s, s->s, s->len);
+	reply_pos.s += s->len;
+	reply_pos.len -= s->len;
+	return 0;
+}
+
+
+/*
+ * Printf-like reply function
+ */
+int unixsock_reply_printf(char* fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	if (!fmt) {
+		LOG(L_ERR, "unixsock_reply_printf: Invalid parameter value\n");
+		return -1;
+	}
+
+	va_start(ap, fmt);
+	ret = vsnprintf(reply_pos.s, reply_pos.len, fmt, ap);
+	if ((ret == -1) || (ret >= reply_pos.len)) {
+		LOG(L_ERR, "unixsock_reply_printf: Buffer too small\n");
+		return -1;
+	}
+
+	va_end(ap);
+	reply_pos.s += ret;
+	reply_pos.len -= ret;
+	return 0;
 }
