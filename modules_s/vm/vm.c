@@ -190,11 +190,10 @@ static int vm_extract_body(struct sip_msg *msg, str *body );
 #endif
 
 static int vm_get_user_info( str* user,   /*[in]*/
-			     str* host,   /*[in]*/
-                             str* email   /*[out]*/)
+							str* host,   /*[in]*/
+							str* email   /*[out]*/)
 {
-        db_res_t*       email_res=0;
-    
+	db_res_t* email_res=0;
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t cols[1];
@@ -212,22 +211,21 @@ static int vm_get_user_info( str* user,   /*[in]*/
 
 	db_use_table(db_handle,subscriber_table);
 	if ((*db_query)(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1), 1, 0, &email_res))
-	  {
-	    
-	    LOG(L_ERR,"ERROR: vm: db_query() failed.");
-	    goto error;
-	  }
-	    
+	{
+		LOG(L_ERR,"ERROR: vm: db_query() failed.\n");
+		goto error;
+	}
+
 	if( email_res && (email_res->n == 1) ){
-	    email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
-	    email->len = strlen(email->s);
+		email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
+		email->len = strlen(email->s);
 	}
 
 	if(email_res)
-	    (*db_free_query)(db_handle,email_res);
-		
+		(*db_free_query)(db_handle,email_res);
+
 	return 0;
- error:
+error:
 	return -1;
 }
 
@@ -320,6 +318,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
     param_hooks_t     hooks;
 	int             parse_flags;
 	int             ret;
+	str             tmp_s;
 
 	ret = -1;
 	DBG("DEBUG:vm:vm_action: mode is %d\n",mode);
@@ -340,8 +339,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 	}
 
 	/* find index and hash; (the transaction can be safely used due 
-	 * to refcounting till script completes)
-	 */
+	 * to refcounting till script completes) */
 	if( (*_tmb.t_get_trans_ident)(msg,&hash_index,&label) == -1 ) {
 		LOG(L_ERR,"ERROR: vm: t_get_trans_ident failed\n");
 		goto error;
@@ -360,6 +358,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 	}
 
 	/* parse the RURI (doesn't make any malloc) */
+	msg->parsed_uri_ok = 0; /* force parsing */
 	if (parse_sip_msg_uri(msg)<0) {
 		LOG(L_ERR,"ERROR: %s : vm: uri has not been parsed\n",
 			exports.name);
@@ -426,9 +425,13 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 	}
 
 	if( record_route ) {
-		if(p_hdr->body.len){
+		if ( (tmp_s.s=find_not_quoted(&record_route->nameaddr.uri,';'))!=0 &&
+		tmp_s.s+1!=record_route->nameaddr.uri.s+
+		record_route->nameaddr.uri.len) {
 			/* Parse all parameters */
-			if (parse_params(&(record_route->nameaddr.uri), CLASS_URI, &hooks,
+			tmp_s.len = record_route->nameaddr.uri.len - (tmp_s.s-
+				record_route->nameaddr.uri.s);
+			if (parse_params( &tmp_s, CLASS_URI, &hooks, 
 			&record_route->params) < 0) {
 				LOG(L_ERR,"vm: Error while parsing record route uri params\n");
 				goto error3;
@@ -494,7 +497,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action,int mode)
 			goto error3;
 		}
 
-		//body.len = strlen(body.s);
+		/*body.len = strlen(body.s); (by bogdan) */
 		body.len = msg->len - (body.s - msg->buf);
 
 		if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,
@@ -650,7 +653,7 @@ static int init_tmb()
 
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 {
-	int   fd_fifo;
+	int   fd_fifo,i;
 #if 0
 	char *buf, *p;
 	int len;
@@ -679,6 +682,10 @@ static int write_to_vm_fifo(char *fifo, str *lines, int cnt )
 		p++;
 	}
 #endif
+	for (i=0; i<cnt; i++ ) {
+		DBG("vm param %d : len=%d <%.*s>\n",i,lines[i].len,
+				lines[i].len,lines[i].s);
+	}
 
 	/* open FIFO file stream */
 	if((fd_fifo = open(fifo,O_WRONLY | O_NONBLOCK)) == -1){
