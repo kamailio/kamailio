@@ -898,7 +898,7 @@ error:
 
 static int write_to_unixsock(char* sockname, int cnt)
 {
-	int len;
+	int len, e;
 	struct sockaddr_un dest;
 
 	if (!sockname) {
@@ -921,12 +921,23 @@ static int write_to_unixsock(char* sockname, int cnt)
 #ifdef HAVE_SOCKADDR_SA_LEN
 	dest.sun_len = len;
 #endif
-	
-	if (connect(sock, (struct sockaddr*)&dest, SUN_LEN(&dest)) == -1) {
+
+	e = connect(sock, (struct sockaddr*)&dest, SUN_LEN(&dest));
+#ifdef HAVE_CONNECT_ECONNRESET_BUG
+	/*
+	 * Workaround for a nasty bug in BSD kernels dated back
+	 * to the Berkeley days, so that can be found in many modern
+	 * BSD-derived kernels. Workaround should be pretty harmless since
+	 * in normal conditions connect(2) can never return ECONNRESET.
+	 */
+	if ((e == -1) && (errno == ECONNRESET))
+		e = 0;
+#endif
+	if (e == -1) {
 		LOG(L_ERR, "write_to_unixsock: Error in connect: %s\n", strerror(errno));
 		return -1;
 	}
-	
+
 	if (tsend_dgram_ev(sock, (struct iovec*)lines_eol, 2 * cnt, tm_unix_tx_timeout * 1000) < 0) {
 		LOG(L_ERR, "write_to_unixsock: writev failed: %s\n", strerror(errno));
 		return -1;
