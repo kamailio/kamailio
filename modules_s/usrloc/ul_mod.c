@@ -34,6 +34,7 @@
  * 2003-03-12 added replication and state columns (nils)
  * 2003-03-16 flags export parameter added (janakj)
  * 2003-04-05: default_uri #define used (jiri)
+ * 2003-04-21 failed fifo init stops init process (jiri)
  */
 
 
@@ -150,7 +151,10 @@ static int mod_init(void)
 	register_timer(timer, 0, timer_interval);
 
 	     /* Initialize fifo interface */
-	init_ul_fifo();
+	if (init_ul_fifo()<0) {
+		LOG(L_ERR, "ERROR: usrloc/fifo initialization failed\n");
+		return -1;
+	}
 
 	     /* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
