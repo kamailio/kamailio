@@ -123,6 +123,7 @@ char* eat_name(char* _b)
 {
 	int quoted = 0;
 	char* b = _b;
+	char* last_ws;
 	_b = eat_lws(_b);
 	
 	     /* < means start of URI, : is URI scheme
@@ -131,9 +132,13 @@ char* eat_name(char* _b)
 	      */
 	while(*b) {
 		if (!quoted) {
-			if (*b == '<') return b;  /* We will end here if there is a name */
-			if (*b == ':') return _b; /* There is no name in this case */
-			if (*b == '\"') quoted = 1;
+			if ((*b == ' ') || (*b == '\t')) {
+				last_ws = b;
+			} else {
+				if (*b == '<') return b;  /* We will end here if there is a name */
+				if (*b == ':') return last_ws; /* There is no name in this case */
+				if (*b == '\"') quoted = 1;
+			}
 		} else {
 			if ((*b == '\"') && (*(b-1) != '\\')) quoted = 0;
 		}

@@ -37,8 +37,9 @@ int findRouteHF(struct sip_msg* _m)
 /*
  * Gets the first URI from the first Route
  * header field in a message
+ * Returns pointer to next URI in next
  */
-int parseRouteHF(struct sip_msg* _m, const char** _s)
+int parseRouteHF(struct sip_msg* _m, char** _s, char** _next)
 {
 	char* uri, *uri_end;
 	struct hdr_field* r;
@@ -54,9 +55,14 @@ int parseRouteHF(struct sip_msg* _m, const char** _s)
 #endif
 	r = remove_crlf(_m->route);
 
-	uri = eat_name(r->body.s) + 1; /* We will skip < character */
+	uri = find_not_quoted(r->body.s, '<') + 1; /* We will skip < character */
 	uri_end = find_not_quoted(uri, '>');
+	if (!uri_end) {
+		LOG(L_ERR, "parseRouteHF(): Malformed Route HF\n");
+		return FALSE;
+	}
 	*uri_end = '\0';  /* Replace > with 0 */
+	*_next = ++uri_end;
 	*_s = uri;
 
 	return TRUE;
@@ -96,17 +102,33 @@ int rewriteReqURI(struct sip_msg* _m, char* _s)
  * field, if there is only one URI in the Route header
  * field, remove the whole header field
  */
-int remFirstRoute(struct sip_msg* _m)
+int remFirstRoute(struct sip_msg* _m, char* _next)
 {
 	struct hdr_field* r;
+	struct lump* dl;
+	int offset, len;
 #ifdef PARANOID
 	if (!_m) {
 		LOG(L_ERR, "remFirstRoute(): Invalid parameter _m");
-		return -2;
+		return FALSE;
 	}
 #endif
-
-	return 1;
+	_next = find_not_quoted(_next, '<');
+	if (_next) {
+		DBG("remFirstRoute(): next URI found: %s\n", _next);
+		offset = _m->route->body.s - _m->buf; /* + 1 - keep the first white char */
+		len = _next - _m->route->body.s;
+	} else {
+		DBG("remFirstRoute(): No next URI in Route found\n");
+		offset = _m->route->name.s - _m->buf;
+		len = _m->route->name.len + _m->route->body.len + 2;
+	}
+	
+	if (del_lump(&_m->add_rm, offset, len, 0) == 0) {
+		LOG(L_ERR, "remFirstRoute(): Can't remove Route HF\n");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 

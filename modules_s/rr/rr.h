@@ -14,7 +14,7 @@ int findRouteHF(struct sip_msg* _m);
  * Gets the first URI from the first Route
  * header field in a message
  */
-int parseRouteHF(struct sip_msg* _m, const char** _s);
+int parseRouteHF(struct sip_msg* _m, char** _s, char** _next);
 
 
 /*
@@ -28,7 +28,7 @@ int rewriteReqURI(struct sip_msg* _m, char* _s);
  * field, if there is only one URI in the Route header
  * field, remove the whole header field
  */
-int remFirstRoute(struct sip_msg* _m);
+int remFirstRoute(struct sip_msg* _m, char* _next);
 
 
 /*

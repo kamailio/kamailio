@@ -55,7 +55,8 @@ struct module_exports* mod_register()
 
 static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
 {
-	char* uri;
+	char* first_uri;
+	char* next_uri;
 #ifdef PARANOID
 	if (!_m) {
 		LOG(L_ERR, "rewriteFromRoute(): Invalid parameter _m\n");
@@ -64,15 +65,15 @@ static int rewriteFromRoute(struct sip_msg* _m, char* _s1, char* _s2)
 #endif
 
 	if (findRouteHF(_m) != FALSE) {
-		if (parseRouteHF(_m, &uri) == FALSE) {
+		if (parseRouteHF(_m, &first_uri, &next_uri) == FALSE) {
 			LOG(L_ERR, "rewriteFromRoute(): Error while parsing Route HF\n");
 			return -1;
 		}
-		if (rewriteReqURI(_m, uri) == FALSE) {
+		if (rewriteReqURI(_m, first_uri) == FALSE) {
 			LOG(L_ERR, "rewriteFromRoute(): Error while rewriting request URI\n");
 			return -1;
 		}
-		if (remFirstRoute(_m) == FALSE) {
+		if (remFirstRoute(_m, next_uri) == FALSE) {
 			LOG(L_ERR, "rewriteFromRoute(): Error while removing the first Route URI\n");
 			return -1;
 		}
