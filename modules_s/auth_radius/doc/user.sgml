@@ -1,0 +1,169 @@
+<!-- Auth_radius Module User's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>User's Guide</title>
+    
+    <section>
+	<title>Overview</title>
+	<para>
+	    This module contains functions that are used to perform authentication using a Radius
+	    server. Basically the proxy will pass along the credentials to the radius server which
+	    will in turn send a reply containing result of the authentication. So basically the
+	    whole authentication is done in the Radius server. Before sending the request to the
+	    radius server we perform some sanity checks over the credentials to make sure that only
+	    well formed credentials will get to the server. We have implemented radius
+	    authentication according to draft-sterman-aaa-sip-00
+	</para>
+	<para>How to configure radius server -- more detailed description -- TBD.</para>
+	<warning>
+	    <para>The detailed description of radius authentication setup is important since many
+	    people will use it and we want to make the setup painless.</para>
+	</warning>
+    </section>
+    <section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the listed modules
+	    must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>auth</emphasis> -- Generic authentication functions</para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+	    <title><varname>radius_config</varname> (string)</title>
+	    <para>
+		This is the location of the configuration file of radius client libraries.
+	    </para>
+	    <para>
+		Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf</quote>.
+	    </para>
+	    <example>
+		<title><varname>radius_config</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>service_type</varname> (integer)</title>
+	    <para>
+		This is the value of the Service-Type radius attribute to be used. The default
+		should be fine for most people. See your radius client include files for numbers to
+		be put in this parameter if you need to change it.
+	    </para>
+	    <para>
+		Default value is <quote>PW_SIP (15)</quote>.
+	    </para>
+	    <example>
+		<title><varname>radius_config</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "service_type", 15)
+</programlisting>
+	    </example>
+	</section>
+    </section>
+
+    <section>
+	<title>Exported Functions</title>
+	<section>
+	    <title><function moreinfo="none">radius_www_authorize(realm)</function></title>
+	    <para>
+		The function verifies credencials according to RFC2617. If the credentials are
+		verified sucessfully then the function will succeed and mark the credentials as
+		authorized (marked credentials can be later used by some other functions). If the
+		function was unable to verify the credentials for some reason then it will fail and
+		the script should call <function moreinfo="none">www_challenge</function> which will
+		challenge the user again.
+	    </para>
+	    <para>
+		This function will, in fact, perform sanity checks over the received credentials and
+		then pass them along to the radius server which will verify the credentials and
+		return whether they are valid or not.
+	    </para>
+	    <para>Meaning of the parameter is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
+		    should present to the user so he can decide what username and password to
+		    use. Usualy this is domain of the host the server is running on.
+		    </para>
+		    <para>
+			If an empty string <quote></quote> is used then the server will generate it
+			from the request. In case of REGISTER requests To header field domain will
+			be used (because this header field represents a user being registered), for
+			all other messages From header field domain will be used.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title><function moreinfo="none">radius_www_authorize</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (radius_www_authorize("iptel.org")) {
+    www_challenge("iptel.org", "1");
+};
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">radius_proxy_authorize(realm)</function></title>
+	    <para>
+		The function verifies credencials according to RFC2617. If the credentials are
+		verified sucessfully then the function will succeed and mark the credentials as
+		authorized (marked credentials can be later used by some other functions). If the
+		function was unable to verify the credentials for some reason then it will fail and
+		the script should call <function moreinfo="none">proxy_challenge</function> which will
+		challenge the user again.
+	    </para>
+	    <para>
+		This function will, in fact, perform sanity checks over the received credentials and
+		then pass them along to the radius server which will verify the credentials and
+		return whether they are valid or not.
+	    </para>
+	    <para>Meaning of the parameter is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>realm</emphasis> - Realm is a opaque string that the user agent
+		    should present to the user so he can decide what username and password to
+		    use. Usualy this is domain of the host the server is running on.
+		    </para>
+		    <para>
+			If an empty string <quote></quote> is used then the server will generate it
+			from the request. From header field domain will be used as realm.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	    <example>
+		<title>proxy_authorize usage</title>
+		<programlisting format="linespecific">
+...
+if (!radius_proxy_authorize("")) {
+    proxy_challenge("", "1");  # Realm will be autogenerated
+};
+...
+</programlisting>
+	    </example>
+	</section>
+    </section>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("auth_radius.sgml" "Book" "chapter")
+End:
+-->

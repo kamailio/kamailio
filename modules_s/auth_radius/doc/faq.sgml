@@ -1,0 +1,29 @@
+<!-- Auth_radius Module FAQ -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Frequently Asked Questions</title>
+    <qandaset>
+	<qandaentry>
+	    <question>
+		<para>What is the meaning of life ?</para>
+	    </question>
+	    <answer>
+		<para>42</para>
+	    </answer>
+	</qandaentry>
+    </qandaset>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("auth_radius.sgml" "Book" "chapter")
+End:
+-->
