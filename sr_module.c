@@ -160,17 +160,17 @@ static inline int version_control(void *handle, char *path)
 
 	m_ver=(char **)dlsym(handle, DLSYM_PREFIX "module_version");
 	if ((error=(char *)dlerror())!=0) {
-		LOG(L_WARN, "WARNING: no version info in module <%s>: %s\n",
+		LOG(L_ERR, "ERROR: no version info in module <%s>: %s\n",
 			path, error );
 		return 0;
 	}
 	if (!m_ver || !(*m_ver)) {
-		LOG(L_WARN, "WARNING: no version in module <%s>\n", path );
+		LOG(L_ERR, "ERROR: no version in module <%s>\n", path );
 		return 0;
 	}
 	if (strcmp(VERSION,*m_ver)==0)
 		return 1;
-	LOG(L_WARN, "WARNING: module version mismatch for %s; "
+	LOG(L_ERR, "ERRO: module version mismatch for %s; "
 		"core: %s; module: %s\n", path, VERSION, *m_ver );
 	return 0;
 }
@@ -202,7 +202,9 @@ int load_module(char* path)
 		}
 	}
 	/* version control */
-	version_control(handle, path);
+	if (!version_control(handle, path)) {
+		exit(0);
+	}
 	/* launch register */
 	exp = (struct module_exports*)dlsym(handle, DLSYM_PREFIX "exports");
 	if ( (error =(char*)dlerror())!=0 ){
