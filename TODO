@@ -2,17 +2,17 @@ $Id$
 
 ( - todo, x - done)
 
-- [fifo] fix fgets error handling (it does not set errno, ferror should be
-   be used, right now kills all ser if interrupted by a signal)
+- [fifo] fix fgets error handling (it does not set errno always,
+   , right now kills all ser if interrupted by a signal on ?solaris?)
 - [mem] make shm_realloc be fragmentation friendly: call shm_compact_frags
    for the small frags?, don't produce smaller frags -- be wastefull?
-- [mem] qm_comact_frags (compacts frags if possible)
+- [mem] qm_compact_frags (compacts frags if possible)
 - [timer] multiple timers? at least ticks should no be affected by the amount
    of work done in the timer handlers
 - [tcp] need to confirm fd receipt after send_fd, before closing it (this might
  happen in tcp_send new conn.) (see FreeBSD send BUGS for more info)
-- [tcp] make send_all, send  non-blocking ready ?
-- [tcp] tcp_send w/ timeout (to avoid waiting forever to send DOS)
+x [tcp] make send_all, send  non-blocking ready ?
+x [tcp] tcp_send w/ timeout (to avoid waiting forever to send DOS)
 
 - forward port fixes from testing
 - [udp] use recvmsg to get the dst ip address in udp_rcv_loop
@@ -174,7 +174,7 @@ optimizations:
 
 
 tcp stuff:
-- timeout on long sends
+x timeout on long sends
 x tcp disable nagle 
 x set TOS to minimize delay
 x tcp locking/atomic ops review

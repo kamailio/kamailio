@@ -51,8 +51,6 @@
  *  2003-11-17  handle_new_connect & tcp_connect will close the 
  *              new socket if tcpconn_new return 0 (e.g. out of mem) (andrei)
  *  2003-11-28  tcp_blocking_write & tcp_blocking_connect added (andrei)
- *   TODO: switch to non-blocking tcp sockets, replace send & connect
- *         with tcp_blocking_*
  */
 
 
