@@ -18,7 +18,6 @@ $SIP_DST
 12345-tag-12345
 100
 1234576098621
-Route: <sip:proxy2.rafhome.net;lr> ;<sip:proxy.rafhome.net>
 Content-Type: application/sdp
 Contact: <sip:c@192.168.0.11:5060>
 
