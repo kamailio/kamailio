@@ -232,13 +232,6 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       char               *buf;
 
       DBG("DEBUG: t_forward: first time forwarding\n");
-      /* allocates a new retrans_buff for the outbound request */
-      T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
-      memset( T->outbound_request[branch] , 0 , sizeof (struct retrans_buff) );
-      T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload = "cucu bau";// T->outbound_request[branch];
-      T->outbound_request[branch]->tl[FR_TIMER_LIST].payload =  T->outbound_request[branch];
-      DBG("DEBUG: t_forward: ************PAYLOAD=%p\n",T->outbound_request[branch]);
-      T->nr_of_outgoings = 1;
 
       /* special case : CANCEL */
       if ( p_msg->first_line.u.request.method_value==METHOD_CANCEL  )
@@ -265,10 +258,15 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
          }
       }/* end special case CANCEL*/
 
-      /* store */
+      /* allocates a new retrans_buff for the outbound request */
       DBG("DEBUG: t_forward: building outbound request\n");
-      T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload = &(T->outbound_request[branch]);
+      T->outbound_request[branch] = (struct retrans_buff*)sh_malloc( sizeof(struct retrans_buff) );
+      memset( T->outbound_request[branch] , 0 , sizeof (struct retrans_buff) );
+      T->outbound_request[branch]->tl[RETRASMISSIONS_LIST].payload =  T->outbound_request[branch];
+      T->outbound_request[branch]->tl[FR_TIMER_LIST].payload =  T->outbound_request[branch];
       T->outbound_request[branch]->to.sin_family = AF_INET;
+      T->outbound_request[branch]->my_T =  T;
+      T->nr_of_outgoings = 1;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
       DBG("DEBUG: XXX: branch_size after call to add_branch_label: %d\n", p_msg->add_to_branch_len );
@@ -286,7 +284,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
       DBG("DEBUG: t_forward: starting timers (retrans and FR)\n");
       /*sets and starts the FINAL RESPONSE timer */
-      //add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
+      add_to_tail_of_timer_list( hash_table , &(T->outbound_request[branch]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST, FR_TIME_OUT );
 
       /* sets and starts the RETRANS timer */
       T->outbound_request[branch]->timeout_ceiling  = RETR_T2;
@@ -473,10 +471,15 @@ int t_put_on_wait(  struct sip_msg  *p_msg  )
 
    /* make double-sure we have finished everything */
    /* remove from  retranssmision  and  final response   list */
-   remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
-   remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+   DBG("DEBUG: t_put_on_wait: remove inboud stuff from lists\n");
+   if ( T->inbound_response )
+   {
+      remove_from_timer_list( hash_table , &(T->inbound_response->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
+      remove_from_timer_list( hash_table , &(T->inbound_response->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
+   }
    for( i=0 ; i<T->nr_of_outgoings ; i++ )
    {
+      DBG("DEBUG: t_put_on_wait: remove outboud stuff[%d] from lists\n",i);
       remove_from_timer_list( hash_table , &(T->outbound_request[i]->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST );
       remove_from_timer_list( hash_table , &(T->outbound_request[i]->tl[FR_TIMER_LIST]) , FR_TIMER_LIST );
    }
@@ -521,7 +524,9 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
       unsigned int len;
       char * buf;
 
+         DBG("DEBUG: t_send_reply: before build\n");
       buf = build_res_buf_from_sip_req( code , text , T->inbound_request , &len );
+         DBG("DEBUG: t_send_reply: after build\n");
       if (!buf)
       {
          DBG("DEBUG: t_send_reply: response building failed\n");
@@ -1073,20 +1078,17 @@ void retransmission_handler( void *attr)
    struct retrans_buff* r_buf = (struct retrans_buff*)attr;
 
    /* the transaction is already removed from RETRANSMISSION_LIST by the timer */
-   DBG("DEBUG: retransmission_handler : payload received=%s\n",(char*)attr);
-   return;
+
    /* computs the new timeout. */
    if ( r_buf->timeout_value<r_buf->timeout_ceiling )
       r_buf->timeout_value *=2;
 
    /* retransmision */
    DBG("DEBUG: retransmission_handler : resending\n");
-   //udp_send( r_buf->buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
+   udp_send( r_buf->buffer, r_buf->bufflen, (struct sockaddr*)&(r_buf->to) , sizeof(struct sockaddr_in) );
 
    /* re-insert into RETRASMISSIONS_LIST */
-   DBG("DEBUG: retransmission_handler : before insert\n");
    insert_into_timer_list( hash_table , &(r_buf->tl[RETRASMISSIONS_LIST]) , RETRASMISSIONS_LIST , r_buf->timeout_value );
-   DBG("DEBUG: retransmission_handler : after insert\n");
 }
 
 
@@ -1094,14 +1096,14 @@ void retransmission_handler( void *attr)
 
 void final_response_handler( void *attr)
 {
-   struct cell *p_cell = (struct cell*)attr;
+   struct retrans_buff* r_buf = (struct retrans_buff*)attr;
 
    /* the transaction is already removed from FR_LIST by the timer */
    /* send a 408 */
    DBG("DEBUG: final_response_handler : sending 408\n");
-   t_send_reply( p_cell->inbound_request , 408 , "Request Timeout" );
+   t_send_reply( r_buf->my_T->inbound_request , 408 , "Request Timeout" );
    /* put it on WT_LIST - transaction is over */
-   t_put_on_wait(  p_cell->inbound_request );
+   t_put_on_wait(  r_buf->my_T->inbound_request );
 }
 
 
@@ -1161,7 +1163,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 		return -1;
 	} else {
 		p_msg->add_to_branch_len += n;
-		DBG("DEBUG: XXX branch label created now: %*s (%d)\n", p_msg->add_to_branch_len, 
+		DBG("DEBUG: XXX branch label created now: %*s (%d)\n", p_msg->add_to_branch_len,
 			p_msg->add_to_branch_s );
 		return 0;
 	}

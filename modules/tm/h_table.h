@@ -55,10 +55,14 @@ typedef struct retrans_buff
    socklen_t tolen;
    */
    size_t tolen;
+
    /* a message can be linked just to retransmission and FR list */
    struct timer_link tl[2];
    unsigned int timeout_ceiling;
    unsigned int timeout_value;
+
+   /*the cell that containes this retrans_buff*/
+   struct cell* my_T;
 }retrans_buff_type;
 
 

@@ -274,9 +274,11 @@ void clean_hdr_field(struct hdr_field* hf)
       switch(hf->type)
       {
          case HDR_VIA:
+   DBG("DEBUG: sip_msg_free : via headers\n");
                free_via_list(hf->parsed);
              break;
          case HDR_CSEQ:
+   DBG("DEBUG: sip_msg_free : cseq headers\n");
                 sh_free(hf->parsed);
              break;
          default:
@@ -291,9 +293,11 @@ void clean_hdr_field(struct hdr_field* hf)
 void free_hdr_field_lst(struct hdr_field* hf)
 {
    struct hdr_field* foo;
+  DBG("DEBUG: free_hdr_field_lst : \n");
 
    while(hf)
     {
+      DBG("DEBUG: free_hdr_field_lst : \n");
        foo=hf;
        hf=hf->next;
        clean_hdr_field(foo);
@@ -311,8 +315,10 @@ void sip_msg_free(struct sip_msg* msg)
       sh_free(msg->new_uri.s);
       msg->new_uri.len=0;
    }
-   if (msg->headers)
-      free_hdr_field_lst(msg->headers);
+   DBG("DEBUG: sip_msg_free : headers\n");
+   //if (msg->headers)
+    //  free_hdr_field_lst(msg->headers);
+   DBG("DEBUG: sip_msg_free : lump\n");
    if (msg->add_rm)
       free_lump_list(msg->add_rm);
    if (msg->repl_add_rm)

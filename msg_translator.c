@@ -516,12 +516,13 @@ error:
 
 char * build_res_buf_from_sip_req(	unsigned int code ,
 									char *text ,
-									struct sip_msg* msg, 
+									struct sip_msg* msg,
 									unsigned int *returned_len)
 {
 	char                    *buf=0, *p;
-	unsigned int       len,foo,i;
+	unsigned int       len,foo;
 	struct hdr_field  *hdr;
+	int                       i;
 
 	/*computes the lenght of the new response buffer*/
 	len = 0;
@@ -532,12 +533,13 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
 				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
 				hdr->type==HDR_CSEQ )
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) +1;
+			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) ;
 	/* end of message */
 	len += 1; /*new line*/
 
 	/*allocating mem*/
-	buf = (char*) malloc( len );
+	buf = (char*) malloc( len+1 );
+	p=buf;
 	if (!buf)
 	{
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_req: out of memory\n");
@@ -556,16 +558,16 @@ char * build_res_buf_from_sip_req(	unsigned int code ,
 	/* headers*/
 	for ( hdr=msg->headers ; hdr ; hdr=hdr->next )
 		if ( hdr->type==HDR_VIA || hdr->type==HDR_FROM ||
-				hdr->type==HDR_CALLID || hdr->type==HDR_TO ||
-				hdr->type==HDR_CSEQ )
+		hdr->type==HDR_CALLID || hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
 		{
-			memcpy( p , hdr->name.s ,  ((hdr->body.s+hdr->body.len ) -
-						hdr->name.s ) );
-			len += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
-			*(p++) = '\n';
+			memcpy( p , msg->orig+(hdr->name.s-msg->buf) ,
+					((hdr->body.s+hdr->body.len ) -
+					hdr->name.s ) );
+			p += ((hdr->body.s+hdr->body.len ) - hdr->name.s );
 		}
 
 	*(p++) = '\n';
+	*(p++) = 0;
 	*returned_len=len;
 	return buf;
 error:
