@@ -13,6 +13,10 @@
 #include "error.h"
 #include "dprint.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
 
 
 #define DEBUG

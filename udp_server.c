@@ -15,6 +15,9 @@
 #include "dprint.h"
 #include "receive.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
 
 int udp_sock;
 

@@ -21,6 +21,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
 
 /* ret= 0! if action -> end of list(e.g DROP), 
       > 0 to continue processing next actions

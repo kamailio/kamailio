@@ -12,6 +12,9 @@
 #include "forward.h"
 #include "action.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
 
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 {
@@ -78,9 +81,11 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 	}
 skip:
+	if (msg.new_uri) free(msg.new_uri);
 	free(msg.orig);
 	return 0;
 error:
+	if (msg.new_uri) free(msg.new_uri);
 	free(msg.orig);
 error1:
 	return -1;

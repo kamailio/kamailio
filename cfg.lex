@@ -9,6 +9,11 @@
 	#include "cfg.tab.h"
 	#include "dprint.h"
 	#include <string.h>
+	#include <stdlib.h>
+
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
 
 	/* states */
 	#define INITIAL_S		0

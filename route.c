@@ -19,6 +19,10 @@
 #include "dprint.h"
 #include "proxy.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
 /* main routing list */
 struct route_elem* rlist[RT_NO];
 
@@ -284,8 +288,13 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 								e->op, e->subtype);
 				break;
 		case URI_O:
-				ret=comp_str(msg->first_line.u.request.uri, e->r.param,
-								e->op, e->subtype);
+				if(msg->new_uri){
+					ret=comp_str(msg->new_uri, e->r.param,
+									e->op, e->subtype);
+				}else{
+					ret=comp_str(msg->first_line.u.request.uri, e->r.param,
+									e->op, e->subtype);
+				}
 				break;
 		case SRCIP_O:
 				ret=comp_ip(msg->src_ip, e->r.param, e->op, e->subtype);

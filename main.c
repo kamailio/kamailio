@@ -21,6 +21,11 @@
 #include "globals.h"
 
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
+
 static char id[]="@(#) $Id$";
 static char version[]="sip_router 0.6";
 static char help_msg[]= "\

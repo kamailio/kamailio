@@ -14,6 +14,10 @@
 
 #include "dprint.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 {
 	struct expr * e;

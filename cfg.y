@@ -17,6 +17,10 @@
 #include "route.h"
 #include "dprint.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
 void yyerror(char* s);
 char* tmp;
 

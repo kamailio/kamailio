@@ -20,6 +20,10 @@
 #include "udp_server.h"
 #include "globals.h"
 
+#ifdef DEBUG_DMALLOC
+#include <dmalloc.h>
+#endif
+
 #define MAX_VIA_LINE_SIZE      240
 #define MAX_RECEIVED_SIZE  57
 
