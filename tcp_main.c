@@ -48,6 +48,8 @@
  *              does not inc refcnt by itself anymore (andrei)
  *  2003-11-07  different unix sockets are used for fd passing
  *              to/from readers/writers (andrei)
+ *  2003-11-17  handle_new_connect & tcp_connect will close the 
+ *              new socket if tcpconn_new return 0 (e.g. out of mem) (andrei)
  */
 
 
@@ -209,12 +211,13 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 	union sockaddr_union my_name;
 	socklen_t my_name_len;
 	int optval;
+	struct tcp_connection* con;
 #ifdef DISABLE_NAGLE
 	int flag;
 #endif
 
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
-	if (s<0){
+	if (s==-1){
 		LOG(L_ERR, "ERROR: tcpconn_connect: socket: (%d) %s\n",
 				errno, strerror(errno));
 		goto error;
@@ -261,9 +264,16 @@ struct tcp_connection* tcpconn_connect(union sockaddr_union* server, int type)
 		else si=sendipv6_tcp;
 #endif
 	}
-	return tcpconn_new(s, server, si, type, S_CONN_CONNECT);
+	con=tcpconn_new(s, server, si, type, S_CONN_CONNECT);
+	if (con==0){
+		LOG(L_ERR, "ERROR: tcp_connect: tcpconn_new failed, closing the "
+				 " socket\n");
+		goto error;
+	}
+	return con;
 	/*FIXME: set sock idx! */
 error:
+	if (s!=-1) close(s); /* close the opened socket */
 	return 0;
 }
 
@@ -570,7 +580,7 @@ get_fd:
 						  tmp, tmp->id, tmp->refcnt, tmp->state, n
 				   );
 				n=-1; /* fail */
-				goto release_c;
+				goto end;
 			}
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
 		
@@ -808,7 +818,7 @@ static inline void handle_new_connect(struct socket_info* si,
 		su_len=sizeof(su);
 		new_sock=accept(si->socket, &(su.s), &su_len);
 		(*n)--;
-		if (new_sock<0){
+		if (new_sock==-1){
 			LOG(L_ERR,  "WARNING: tcp_main_loop: error while accepting"
 					" connection(%d): %s\n", errno, strerror(errno));
 			return;
@@ -834,6 +844,10 @@ static inline void handle_new_connect(struct socket_info* si,
 				}else tcpconn->timeout=0; /* force expire */
 				TCPCONN_UNLOCK;
 			}
+		}else{ /*tcpconn==0 */
+			LOG(L_ERR, "ERROR: tcp_main_loop: tcpconn_new failed, "
+					"closing socket\n");
+			close(new_sock);
 		}
 	}
 }
