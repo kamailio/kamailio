@@ -142,3 +142,22 @@ http://mailman.jabber.org/pipermail/jdev/2002-July/012327.html
 * capabilities
 - log into Yahoo Messenger server, and send/recv messages.
 * limitations
+
+
+-------------------------------------------------------
+I've been trying to make available the Yahoo! transport on Jabber server from 'bat.iptel.org', but Jabber does not connect to Yahoo server. The problem is that Yahoo! changed the protocol.
+
+
+http://mailman.jabber.org/pipermail/jadmin/2002-July/005987.html
+http://mailman.jabber.org/pipermail/jadmin/2002-July/006093.html
+
+
+Someone is working on the new version.
+
+
+http://mailman.jabber.org/pipermail/jadmin/2002-July/006087.html
+
+
+Best regards,
+  Daniel
+
