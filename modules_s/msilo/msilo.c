@@ -46,7 +46,9 @@
 #include "../../db/db.h"
 #include "../tm/t_funcs.h"
 #include "../tm/uac.h"
+
 #include "../tm/tm_load.h"
+#include "../im/im_load.h"
 
 #include "msfuncs.h"
 
@@ -101,6 +103,8 @@ db_con_t *db_con = NULL;
 
 /** TM bind */
 struct tm_binds tmb;
+/** IM binds */
+struct im_binds imb;
 
 /** parameters */
 
@@ -174,6 +178,7 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	load_tm_f  load_tm;
+	load_im_f  load_im;
 
 	DBG("MSILO: initializing ...\n");
 
@@ -191,6 +196,16 @@ static int mod_init(void)
 	}
 	/* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1)
+		return -1;
+
+	/** import the IM auto-loading function */
+	if ( !(load_im=(load_im_f)find_export("load_im", 1))) 
+	{
+		LOG(L_ERR, "ERROR: sms: global_init: cannot import load_im\n");
+		return -1;
+	}
+	/* let the auto-loading function load all IM stuff */
+	if (load_im( &imb )==-1)
 		return -1;
 
 	return 0;
@@ -231,7 +246,7 @@ static int m_store(struct sip_msg* msg, char* str1, char* str2)
 	DBG("MSILO: m_store: ------------ start ------------\n");
 		
 	// extract message body - after that whole SIP MESSAGE is parsed
-	if ( !im_extract_body(msg, &body) )
+	if(imb.im_extract_body(msg, &body) == -1)
 	{
 		DBG("MSILO: m_store: cannot extract body from sip msg!\n");
 		goto error;
