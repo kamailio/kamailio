@@ -563,9 +563,9 @@ static void fifo_callback( struct cell *t, int type, struct tmcb_params *ps )
 
 		f = open_reply_pipe(filename);
 		if (!f) return;
-		fprintf(f, "%d %.*s\n", reply->first_line.u.reply.statuscode, text.len, text.s);
-		print_uris(f, reply);
-		fprintf(f, "%s\n", reply->headers->name.s);
+		fprintf(f, "%d %.*s\n", ps->rpl->first_line.u.reply.statuscode, text.len, text.s);
+		print_uris(f, ps->rpl);
+		fprintf(f, "%s\n", ps->rpl->headers->name.s);
 		fclose(f);
 	}
 	DBG("DEBUG: fifo_callback sucesssfuly completed\n");
