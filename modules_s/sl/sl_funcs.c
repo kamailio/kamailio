@@ -40,6 +40,7 @@
 #include "../../data_lump_rpl.h"
 #include "../../action.h"
 #include "../../config.h"
+#include "../../tags.h"
 #include "sl_stats.h"
 #include "sl_funcs.h"
 
@@ -55,27 +56,10 @@ static unsigned int  *sl_timeout;
 
 int sl_startup()
 {
-	str  src[5];
 
-	/*some fix string*/
-	src[0].s="one two three four -> testing!" ;
-	src[0].len=30;
-	/*some fix string*/
-	src[1].s="Sip Express router - sex" ;
-	src[1].len=24;
-	/*some fix string*/
-	src[2].s="I love you men!!!! (Jiri's idea :))";
-	src[2].len=35;
-	/*proxy's IP*/
-	src[3].s=sock_info[0].address_str.s ;
-	src[3].len=sock_info[0].address_str.len;
-	/*proxy's port*/
-	src[4].s=sock_info[0].port_no_str.s;
-	src[4].len=sock_info[0].port_no_str.len;
-	MDStringArray ( sl_tag, src, 5 );
-
-	sl_tag[MD5_LEN]=TOTAG_SEPARATOR;
-	tag_suffix=sl_tag+MD5_LEN+1;
+	init_tags( sl_tag, &tag_suffix,
+			"SER-stateless",
+			SL_TOTAG_SEPARATOR );
 
 	/*timeout*/
 	sl_timeout = (unsigned int*)shm_malloc(sizeof(unsigned int));
@@ -99,6 +83,7 @@ int sl_shutdown()
 	return 1;
 }
 
+#ifdef _MOVED_TO_CORE
 static void calc_crc_suffix( struct sip_msg *msg )
 {
 	int ss_nr;
@@ -111,6 +96,7 @@ static void calc_crc_suffix( struct sip_msg *msg )
 		suffix_source[ss_nr++]=msg->via1->branch->value;
 	crcitt_string_array( tag_suffix, suffix_source, ss_nr );
 }
+#endif
 
 
 int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
@@ -161,7 +147,7 @@ int sl_send_reply(struct sip_msg *msg ,int code ,char *text )
 		(msg->to || (parse_headers(msg,HDR_TO, 0)!=-1 && msg->to))
 		&& (get_to(msg)->tag_value.s==0 || get_to(msg)->tag_value.len==0) ) 
 	{
-		calc_crc_suffix( msg );
+		calc_crc_suffix( msg, tag_suffix );
 		buf = build_res_buf_from_sip_req(code,text,sl_tag,TOTAG_LEN,msg ,&len);
 	} else {
 		buf = build_res_buf_from_sip_req(code,text,0,0,msg ,&len);
@@ -241,7 +227,7 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 		if ( tag_str->len==TOTAG_LEN )
 		{
 			/* calculate the variable part of to-tag */	
-			calc_crc_suffix(msg);
+			calc_crc_suffix(msg, tag_suffix);
 			/* test whether to-tag equal now */
 			if (memcmp(tag_str->s,sl_tag,TOTAG_LEN)==0) {
 				DBG("DEBUG: sl_filter_ACK : local ACK found -> dropping it! \n" );
