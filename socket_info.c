@@ -472,9 +472,20 @@ static int fix_socket_list(struct socket_info **list)
 						}
 				}
 		}
+
+#ifdef USE_MCAST
+		     /* Check if it is an multicast address and
+		      * set the flag if so
+		      */
+		if (is_mcast(&si->address)) {
+			si->flags |= SI_IS_MCAST;
+		}
+#endif /* USE_MCAST */
+
 #ifdef EXTRA_DEBUG
-		printf("              %.*s [%s]:%s\n", si->name.len, 
-				si->name.s, si->address_str.s, si->port_no_str.s);
+		printf("              %.*s [%s]:%s%s\n", si->name.len, 
+				si->name.s, si->address_str.s, si->port_no_str.s,
+		                si->flags & SI_IS_MCAST ? " mcast" : "");
 #endif
 	}
 	/* removing duplicate addresses*/
@@ -505,6 +516,30 @@ static int fix_socket_list(struct socket_info **list)
 			l=next;
 		}
 	}
+
+#ifdef USE_MCAST
+	     /* Remove invalid multicast entries */
+	si=*list;
+	while(si){
+		if ((si->flags & SI_IS_MCAST) && 
+		    ((si->proto == PROTO_TCP)
+#ifdef USE_TLS
+		    || (si->proto == PROTO_TLS)
+#endif /* USE_TLS */
+		    )){
+			LOG(L_WARN, "WARNING: removing entry %s:%s [%s]:%s\n",
+			    get_proto_name(si->proto), si->name.s, 
+			    si->address_str.s, si->port_no_str.s);
+			l = si;
+			si=si->next;
+			sock_listrm(list, l);
+			free_sock_info(l);
+		} else {
+			si=si->next;
+		}
+	}
+#endif /* USE_MCAST */
+
 	return 0;
 error:
 	return -1;
@@ -600,8 +635,9 @@ void print_all_socket_lists()
 	do{
 		list=get_sock_info_list(proto);
 		for(si=list?*list:0; si; si=si->next){
-			printf("             %s: %s [%s]:%s\n", get_proto_name(proto),
-						si->name.s, si->address_str.s, si->port_no_str.s);
+			printf("             %s: %s [%s]:%s%s\n", get_proto_name(proto),
+			       si->name.s, si->address_str.s, si->port_no_str.s, 
+			       si->flags & SI_IS_MCAST ? " mcast" : "");
 		}
 	}while((proto=next_proto(proto)));
 }

@@ -346,6 +346,10 @@ int open_files_limit=-1; /* don't touch it by default */
 */
 int reply_to_via=0;
 
+#ifdef USE_MCAST
+int mcast_loopback = 0;
+#endif /* USE_MCAST */
+
 #if 0
 char* names[MAX_LISTEN];              /* our names */
 int names_len[MAX_LISTEN];            /* lengths of the names*/

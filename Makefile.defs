@@ -278,6 +278,7 @@ DEFS+= $(extra_defs) \
 	 -DSHM_MEM  -DSHM_MMAP \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
+	 -DUSE_MCAST \
 	 -DUSE_TCP \
 	 -DDISABLE_NAGLE \
 	 -DF_MALLOC \

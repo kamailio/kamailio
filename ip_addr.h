@@ -78,7 +78,7 @@ union sockaddr_union{
 
 
 
-enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2 };
+enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2, SI_IS_MCAST=4 };
 
 struct socket_info{
 	int socket;
@@ -87,7 +87,7 @@ struct socket_info{
 	str address_str;        /* ip address converted to string -- optimization*/
 	unsigned short port_no;  /* port number */
 	str port_no_str; /* port number converted to string -- optimization*/
-	enum si_flags flags; /* SI_IS_IP | SI_IS_LO */
+	enum si_flags flags; /* SI_IS_IP | SI_IS_LO | SI_IS_MCAST */
 	union sockaddr_union su; 
 	int proto; /* tcp or udp*/
 	struct socket_info* next;
@@ -165,8 +165,10 @@ void print_ip(char* prefix, struct ip_addr* ip, char* suffix);
 void stdout_print_ip(struct ip_addr* ip);
 void print_net(struct net* net);
 
-
-
+#ifdef USE_MCAST
+/* Returns 1 if the given address is a multicast address */
+int is_mcast(struct ip_addr* ip);
+#endif /* USE_MCAST */
 
 /* returns 1 if ip & net.mask == net.ip ; 0 otherwise & -1 on error 
 	[ diff. adress fams ]) */

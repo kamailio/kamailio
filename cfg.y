@@ -242,7 +242,7 @@ static struct id_list* mk_listen_id(char*, int, int);
 %token ADVERTISED_PORT
 %token DISABLE_CORE
 %token OPEN_FD_LIMIT
-
+%token MCAST_LOOPBACK
 
 
 
@@ -658,6 +658,15 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 										open_files_limit=$3;
 									}
 		| OPEN_FD_LIMIT EQUAL error { yyerror("number expected"); }
+		| MCAST_LOOPBACK EQUAL NUMBER {
+								#ifdef USE_MCAST
+										mcast_loopback=$3;
+								#else
+									warn("no multicast support compiled in");
+								#endif
+		  }
+                | MCAST_LOOPBACK EQUAL error { yyerror("boolean value expected"); }
+
 		| error EQUAL { yyerror("unknown config variable"); }
 	;
 

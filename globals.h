@@ -102,6 +102,10 @@ extern int sock_mode;
 extern char* chroot_dir;
 extern char* working_dir;
 
+#ifdef USE_MCAST
+extern int mcast_loopback;
+#endif /* USE_MCAST */
+
 /*
  * debug & log_stderr moved to dprint.h*/
 

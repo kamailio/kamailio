@@ -206,11 +206,71 @@ int probe_max_receive_buffer( int udp_sock )
 	/* EoJKU */
 }
 
+
+#ifdef USE_MCAST
+
+/*
+ * Setup multicast receiver
+ */
+static int setup_mcast_rcvr(int sock, union sockaddr_union* addr)
+{
+	struct ip_mreq mreq;
+#ifdef USE_IPV6
+	struct ipv6_mreq mreq6;
+#endif /* USE_IPV6 */
+	
+	if (addr->s.sa_family==AF_INET){
+		memcpy(&mreq.imr_multiaddr, &addr->sin.sin_addr, 
+		       sizeof(struct in_addr));
+		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+		
+		if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP,&mreq,
+			       sizeof(mreq))==-1){
+			LOG(L_ERR, "ERROR: setup_mcast_rcvr: setsockopt: %s\n",
+			    strerror(errno));
+			return -1;
+		}
+		
+		if (setsockopt(sock, IPPROTO_IP, IP_MULTICAST_LOOP, 
+			       &mcast_loopback, sizeof(mcast_loopback))==-1){
+			LOG(L_ERR, "ERROR: setup_mcast_rcvr: setsockopt: %s\n",
+			    strerror(errno));
+			return -1;
+		}
+#ifdef USE_IPV6
+	} else if (addr->s.sa_family==AF_INET6){
+		memcpy(&mreq6.ipv6mr_multiaddr, &addr->sin6.sin6_addr, 
+		       sizeof(struct in6_addr));
+		mreq6.ipv6mr_interface = 0;
+		
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, &mreq6,
+			       sizeof(mreq6))==-1){
+			LOG(L_ERR, "ERROR: setup_mcast_rcvr: setsockopt:%s\n",
+			    strerror(errno));
+			return -1;
+		}
+		
+		if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, 
+			       &mcast_loopback, sizeof(mcast_loopback))==-1){
+			LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", 
+			    strerror(errno));
+			return -1;
+		}
+#endif /* USE_IPV6 */
+	} else {
+		LOG(L_ERR, "ERROR: udp_init: Unsupported protocol family\n");
+		return -1;
+	}
+	return 0;
+}
+
+#endif /* USE_MCAST */
+
+
 int udp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
 	int optval;
-
 	addr=&sock_info->su;
 /*
 	addr=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
@@ -254,6 +314,12 @@ int udp_init(struct socket_info* sock_info)
 	}
 #endif
 
+#ifdef USE_MCAST
+	if ((sock_info->flags & SI_IS_MCAST) 
+	    && (setup_mcast_rcvr(sock_info->socket, addr)<0)){
+			goto error;
+	}
+#endif /* USE_MCAST */
 
 	if ( probe_max_receive_buffer(sock_info->socket)==-1) goto error;
 	
