@@ -127,6 +127,7 @@ BEGIN {
 	server_edgeaccess=0;
 	server_mcet=0;
 	server_sjphone=0;
+	server_starsip=0;
 	server_xx=0
 
 }
@@ -373,6 +374,10 @@ server==0 && /Server:.*MCET/ {
 }
 server==0 && /Server:.*SJLabs-SJPhone/ {
 	server_sjphone++
+	server=1
+}
+server==0 && /Server:.*StarSIP/ {
+	server_starsip++
 	server=1
 }
 server==0 && /Server:/ {
@@ -714,6 +719,7 @@ END {
 	print "edgeAccess: " server_edgeaccess
 	print "mcet: " server_mcet 
 	print "sjphone: " server_sjphone
+	print "StarSIP: " server_starsip
 	print "UFO: " server_xx
 }
 '
