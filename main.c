@@ -767,6 +767,11 @@ int main_loop()
 #ifdef STATS
 		setstats( 0 );
 #endif
+		if (udp_listen==0){
+			LOG(L_ERR, "ERROR: no fork mode requires at least one"
+					" udp listen address, exiting...\n");
+			goto error;
+		}
 		/* only one address, we ignore all the others */
 		if (udp_init(udp_listen)==-1) goto error;
 		bind_address=udp_listen;
@@ -1380,8 +1385,10 @@ try_again:
 	
 	if (dont_fork){
 		fprintf(stderr, "WARNING: no fork mode %s\n", 
+				(udp_listen)?(
 				(udp_listen->next)?" and more than one listen address found"
-				"(will use only the the first one)":"");
+				"(will use only the the first one)":""
+				):"and no udp listen address found" );
 	}
 	if (config_check){
 		fprintf(stderr, "config file ok, exiting...\n");
