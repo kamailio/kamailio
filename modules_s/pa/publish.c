@@ -200,8 +200,11 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 		  contact_t *sip_contact = NULL;
 		  /* get contact from SIP Headers*/
 		  contact_iterator(&sip_contact, _m, NULL);
-		  if (sip_contact)
+		  if (sip_contact) {
+			  LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
+			      sip_contact->uri.len, sip_contact->uri.s);
 			  find_presence_tuple(&sip_contact->uri, presentity, &tuple);
+		  }
 	  }
 	  if (!tuple && new_tuple_on_publish) {
 	       new_presence_tuple(&contact, expires, presentity, &tuple);
@@ -210,6 +213,16 @@ static int publish_presentity_pidf(struct sip_msg* _m, struct pdomain* _d, struc
 	  }
      } else {
 	  tuple = presentity->tuples;
+     }
+     if (!tuple) {
+	     contact_t *sip_contact = NULL;
+	     /* get contact from SIP Headers*/
+	     contact_iterator(&sip_contact, _m, NULL);
+	     if (sip_contact) {
+		     LOG(L_ERR, "publish_presentity: find tuple for contact %.*s\n", 
+			 sip_contact->uri.len, sip_contact->uri.s);
+		     find_presence_tuple(&sip_contact->uri, presentity, &tuple);
+	     }
      }
      if (!tuple) {
 	  LOG(L_ERR, "publish_presentity: no tuple for %.*s\n", 
@@ -461,7 +474,6 @@ int fifo_pa_publish(FILE *stream, char *response_file)
 	return -1;
 }
 
-#warning change fifo_pa_presence to take pdomain, uri, contact, basic, priority, expires
 /*
  * FIFO function for publishing presence
  *
@@ -655,6 +667,11 @@ int fifo_pa_presence_contact(FILE *fifo, char *response_file)
      }
 
      find_presence_tuple(&p_contact, presentity, &tuple);
+     if (!tuple) {
+       LOG(L_ERR, "publish_presentity: no tuple for contact %.*s\n", 
+	   p_contact.len, p_contact.s);
+       find_presence_tuple(&p_uri, presentity, &tuple);
+     }
      if (!tuple && new_tuple_on_publish) {
        new_presence_tuple(&p_contact, expires, presentity, &tuple);
        add_presence_tuple(presentity, tuple);
