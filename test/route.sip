@@ -5,8 +5,8 @@ To: <sip:janakj2@megalith.sh.cvut.cz>
 Call-ID: b96b0300-88d30f-66da-63aa@195.37.78.190
 CSeq: 101 INVITE
 Expires: 180
-Route: <aa@mail.ok2rab.nextra.cz:5061>,
-       <bb@mail.ok2rab.nextra.cz:5062>
+Route: <sip:aa@mail.ok2rab.nextra.cz:5061>,
+       <sip:bb@mail.ok2rab.nextra.cz:5062>
 User-Agent: Cisco-SIP-IP-Phone/2
 Accept: application/sdp
 Contact: sip:jiri@195.37.78.190:5060
