@@ -28,12 +28,12 @@ NAME=ser
 # DEBUG compiles in some extra debugging code
 # OLD_PARSER uses the old and stable parser (from ser 8.3.2)
 # DNS_IP_HACK faster ip address resolver for ip strings (e.g "127.0.0.1")
-DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK #-DSTATS -DNO_DEBUG 
+DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK -DNO_DEBUG#-DSTATS -DNO_DEBUG 
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
-#mode=release
-mode=debug
+#mode = debug
+mode = release
 
 # platform dependent settings
 
@@ -43,7 +43,7 @@ ARCH = $(shell uname -s)
 CC=gcc
 LD=gcc
 
-ifeq ( mode, release )
+ifeq ($(mode), release)
 	CFLAGS=-O2 -Wcast-align $(PROFILE) -Winline#-Wmissing-prototypes 
 	LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
 else
