@@ -421,18 +421,16 @@ static int script_init( struct sip_msg *foo, void *bar)
 	 * private values left over from previous message will
 	 * not be used again */
 
-	if (foo->first_line.type==SIP_REQUEST){
-		/* make sure the new message will not inherit previous
-			message's t_on_negative value
-		*/
-		t_on_negative( 0 );
-		t_on_reply(0);
-		/* reset the kr status */
-		set_kr(0);
-		/* set request mode so that multiple-mode actions know
-		 * how to behave */
-		rmode=MODE_REQUEST;
-	}
+	/* make sure the new message will not inherit previous
+		message's t_on_negative value
+	*/
+	t_on_negative( 0 );
+	t_on_reply(0);
+	/* reset the kr status */
+	set_kr(0);
+	/* set request mode so that multiple-mode actions know
+	 * how to behave */
+	rmode=MODE_REQUEST;
 	return 1;
 }
 
@@ -540,10 +538,16 @@ static int mod_init(void)
 	}
 
 	/* register post-script clean-up function */
-	register_script_cb( w_t_unref, POST_SCRIPT_CB, 
-			0 /* empty param */ );
-	register_script_cb( script_init, PRE_SCRIPT_CB , 
-			0 /* empty param */ );
+	if (register_script_cb( w_t_unref, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to register POST request "
+			"callback\n");
+		return -1;
+	}
+	if (register_script_cb( script_init, PRE_SCRIPT_CB|REQ_TYPE_CB , 0)<0 ) {
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to register PRE request "
+			"callback\n");
+		return -1;
+	}
 
 	init_avp_params();
 

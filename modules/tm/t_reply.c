@@ -1342,6 +1342,9 @@ int reply_received( struct sip_msg  *p_msg )
 	} /* provisional replies */
 
 done:
+	/* we are done with the transaction, so unref it - the reference
+	 * was incremented by t_check() function -bogdan*/
+	t_unref(p_msg);
 	/* don't try to relay statelessly neither on success
        (we forwarded statefully) nor on error; on troubles, 
 	   simply do nothing; that will make the other party to 
