@@ -127,12 +127,21 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str)
 {
 	struct lump* l;
 	regmatch_t pmatch;
+	char* s;
+	int len;
 
 	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
 		if ((l=anchor_lump(&msg->add_rm, pmatch.rm_eo, 0, 0))==0)
 			return -1;
-		return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
+		len=strlen(str);
+		s=pkg_malloc(len);
+		if (s==0){
+			LOG(L_ERR, "ERROR: search_append_f: mem. allocation failure\n");
+			return -1;
+		}
+		memcpy(s, str, len); 
+		return insert_new_lump_after(l, s, len, 0)?1:-1;
 	}
 	return -1;
 }
@@ -143,13 +152,22 @@ static int replace_f(struct sip_msg* msg, char* key, char* str)
 {
 	struct lump* l;
 	regmatch_t pmatch;
+	char* s;
+	int len;
 
 	if (regexec((regex_t*) key, msg->orig, 1, &pmatch, 0)!=0) return -1;
 	if (pmatch.rm_so!=-1){
 		if ((l=del_lump(&msg->add_rm, pmatch.rm_so,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0)
 			return -1;
-		return insert_new_lump_after(l, str, strlen(str), 0)?1:-1;
+		len=strlen(str);
+		s=pkg_malloc(len);
+		if (s==0){
+			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
+			return -1;
+		}
+		memcpy(s, str, len); 
+		return insert_new_lump_after(l, s, strlen(str), 0)?1:-1;
 	}
 	return -1;
 }

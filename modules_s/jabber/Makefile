@@ -7,6 +7,8 @@
 
 auto_gen=
 NAME=jabber.so
-LIBS=-lexpat
+# expat.h location
+DEFS+=-I/usr/local/include
+LIBS=-L/usr/local/lib -lexpat
 
 include ../../Makefile.modules
