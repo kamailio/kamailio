@@ -49,6 +49,7 @@
 #include "mem/mem.h"
 #include "fifo_server.h" /* CMD_SEPARATOR */
 #include "unixsock_server.h"
+#include "tsend.h"
 
 #define UNIXSOCK_BUF_SIZE BUF_SIZE
 
@@ -669,8 +670,8 @@ int unixsock_read_line(str* line, str* source)
 	*line = *source;
 	skip_line(source);
 	line->len = source->s - line->s;
+	trim_trailing(line);
 	if (line->len) {
-		trim_trailing(line);
 		return 0;
 	} else {
 		return 1;
