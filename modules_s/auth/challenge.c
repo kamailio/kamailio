@@ -30,6 +30,7 @@
  * --------
  * 2003-01-20 snprintf in build_auth_hf replaced with memcpy to avoid
  *            possible issues with too small buffer
+ * 2003-01-26 consume_credentials no longer complains about ACK/CANCEL(jiri)
  */
 
 #include "../../data_lump.h"
@@ -209,8 +210,10 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 	get_authorized_cred(_m->authorization, &h);
 	if (!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
-		if (!h) {
-			LOG(L_ERR, "consume_credentials(): No authorized credentials found (error in scripts)\n");
+		if (!h && _m->REQ_METHOD != METHOD_ACK 
+					&&  _m->REQ_METHOD == METHOD_CANCEL) {
+			LOG(L_ERR, "consume_credentials(): No authorized "
+							"credentials found (error in scripts)\n");
 			return -1;
 		}
 	}
