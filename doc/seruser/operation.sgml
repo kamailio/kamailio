@@ -1442,6 +1442,42 @@ if (to me):
 			</para>
 		    </answer>
 		</qandaentry>
+
+		<qandaentry>
+			<question>
+			<para>
+				Windows Messenger Reponds with "400 Bad Request".
+			</para>
+			</question>
+			<answer>
+			<para>
+				That is most likely caused by a Messenger bug: it does not
+				like ";lr" record-routing parameter. Turn on the option
+				'modparam("rr", "enable_full_lr", 1)' to use ";lr=true"
+				instead -- Messenger will then process record routing.
+			</para>
+			</answer>
+		</qandaentry>
+
+		<qandaentry>
+			<question>
+			<para>
+				Multiple phones register with a single address of record. The server 
+				complains during processing of incoming requests for this address:
+				"ERROR: append_branch: max nr of branches exceeded".
+			</para>
+			</question>
+			<answer>
+			<para>
+				There is a compile-time limitation on number of contacts that may be
+				used for forking. To change the limit, update value of MAX_BRANCHES
+				in config.h and recompile <application>SER</application>.
+			</para>
+			</answer>
+		</qandaentry>
+
+
+
 		<qandaentry>
 		    <question>
 			<para>
