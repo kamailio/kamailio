@@ -164,18 +164,18 @@ void lock_cleanup()
 }
 
 /* lock sempahore s */
-int lock( lock_t s )
+int lock( ser_lock_t s )
 {
 	return change_semaphore( s, -1 );
 }
 	
-int unlock( lock_t s )
+int unlock( ser_lock_t s )
 {
 	return change_semaphore( s, +1 );
 }
 
 
-int change_semaphore( lock_t s  , int val )
+int change_semaphore( ser_lock_t s  , int val )
 {
    struct sembuf pbuf;
    int r;

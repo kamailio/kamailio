@@ -12,7 +12,7 @@
 typedef struct {
 	int semaphore_set;
 	int semaphore_index;
-} lock_t;
+} ser_lock_t;
 
 #include "h_table.h"
 
@@ -24,9 +24,9 @@ int lock_initialize();
 int init_semaphore_set( int size );
 void lock_cleanup();
 
-int lock( lock_t s );
-int unlock( lock_t s );
-int change_semaphore( lock_t s  , int val );
+int lock( ser_lock_t s );
+int unlock( ser_lock_t s );
+int change_semaphore( ser_lock_t s  , int val );
 
 int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* hash_table, struct entry *entry );

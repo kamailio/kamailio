@@ -46,7 +46,7 @@ typedef struct  timer
    struct cell*    first_cell;
    struct cell*    last_cell;
    /* int                  sem; */
-   lock_t   mutex;
+   ser_lock_t   mutex;
 } timer_type;
 
 
@@ -70,7 +70,7 @@ typedef struct cell
    struct cell*     prev_cell;
 
    /*sync data */
-   lock_t   mutex;
+   ser_lock_t   mutex;
    int       ref_counter;
 
    /* cell payload data */
@@ -114,7 +114,7 @@ typedef struct entry
    /* currently highest sequence number in a synonym list */
    unsigned int    next_label;
    /* sync mutex */
-   lock_t                 mutex;
+   ser_lock_t                 mutex;
 }entry_type;
 
 
