@@ -53,6 +53,7 @@ Chapter 1. User's Guide
 1.2. Implemented Specifiers
 
      * %% : '%'
+     * %br : request's first branch
      * %ci : call-id
      * %cs : cseq
      * %ct : contact header
@@ -68,6 +69,7 @@ Chapter 1. User's Guide
      * %ru : request's r-uri
      * %rr : reply's reason
      * %rs : reply's status
+     * %rt : 'Refer-To' uri
      * %tu : 'To' uri
      * %tt : 'To' tag
      * %Ts : unix time stamp

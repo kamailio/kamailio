@@ -43,10 +43,12 @@
 #include "../../mem/mem.h"
 #include "../../ut.h" 
 #include "../../trim.h" 
+#include "../../dset.h"
 
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_hname2.h"
+#include "../../parser/parse_refer_to.h"
 
 #include "xl_lib.h"
 
@@ -225,6 +227,30 @@ static int xl_get_ruri(struct sip_msg *msg, str *res, str *hp, int hi)
 				(msg->parsed_uri.port.len>0?1:0)+
 				(msg->parsed_uri.params.len>0?1:0)+
 				(msg->parsed_uri.headers.len>0?1:0);
+	return 0;
+}
+
+static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	str branch;
+	qvalue_t q;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(msg->first_line.type == SIP_REPLY)	/* REPLY doesnt have a branch */
+		return xl_get_null(msg, res, hp, hi);
+
+
+	init_branch_iterator();
+	branch.s = next_branch(&branch.len, &q, 0, 0);
+	if (!branch.s) {
+		return xl_get_null(msg, res, hp, hi);
+	}
+	
+	res->s = branch.s;
+	res->len = branch.len;
+
 	return 0;
 }
 
@@ -446,6 +472,26 @@ static int xl_get_useragent(struct sip_msg *msg, str *res, str *hp, int hi)
 	return 0;
 }
 
+static int xl_get_refer_to(struct sip_msg *msg, str *res, str *hp, int hi)
+{
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	if(parse_refer_to_header(msg)==-1)
+	{
+		LOG(L_ERR, "XLOG: xl_get_refer_to: ERROR cannot parse Refer-To header\n");
+		return xl_get_null(msg, res, hp, hi);
+	}
+	
+	if(msg->refer_to==NULL || get_refer_to(msg)==NULL)
+		return xl_get_null(msg, res, hp, hi);
+
+	res->s = get_refer_to(msg)->uri.s;
+	res->len = get_refer_to(msg)->uri.len; 
+	
+	return 0;
+}
+
 static int xl_get_header(struct sip_msg *msg, str *res, str *hp, int hi)
 {
 	struct hdr_field *hf, *hf0;
@@ -528,6 +574,17 @@ int xl_parse_format(char *s, xl_elog_p *el)
 		p++;
 		switch(*p)
 		{
+			case 'b':
+				p++;
+				switch(*p)
+				{
+					case 'r':
+						e->itf = xl_get_branch;
+					break;
+					default:
+						e->itf = xl_get_null;
+				}
+			break;
 			case 'c':
 				p++;
 				switch(*p)
@@ -616,6 +673,9 @@ int xl_parse_format(char *s, xl_elog_p *el)
 					break;
 					case 'r':
 						e->itf = xl_get_reason;
+					break;
+					case 't':
+						e->itf = xl_get_refer_to;
 					break;
 					default:
 						e->itf = xl_get_null;
