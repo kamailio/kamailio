@@ -41,6 +41,8 @@
 #include "subscribe.h"
 #include "publish.h"
 #include "dlist.h"
+#include "unixsock.h"
+#include "location.h"
 #include "pa_mod.h"
 
 
@@ -88,18 +90,18 @@ static cmd_export_t cmds[]={
  * Exported parameters
  */
 static param_export_t params[]={
-	{"default_expires", INT_PARAM, &default_expires   },
-	{"timer_interval",  INT_PARAM, &timer_interval    },
-	{"use_db",          INT_PARAM, &use_db            },
-	{"use_place_table", INT_PARAM, &use_place_table   },
-	{"use_bsearch",     INT_PARAM, &use_bsearch       },
+	{"default_expires",      INT_PARAM, &default_expires      },
+	{"timer_interval",       INT_PARAM, &timer_interval       },
+	{"use_db",               INT_PARAM, &use_db               },
+	{"use_place_table",      INT_PARAM, &use_place_table      },
+	{"use_bsearch",          INT_PARAM, &use_bsearch          },
 	{"use_location_package", INT_PARAM, &use_location_package },
-	{"db_url",          STR_PARAM, &db_url.s          },
-	{"pa_domain",       STR_PARAM, &pa_domain.s       },
-	{"presentity_table", STR_PARAM, &presentity_table },
-	{"watcherinfo_table", STR_PARAM, &watcherinfo_table },
-	{"place_table",     STR_PARAM, &place_table },
-	{"new_watcher_pending", INT_PARAM, &new_watcher_pending },
+	{"db_url",               STR_PARAM, &db_url.s             },
+	{"pa_domain",            STR_PARAM, &pa_domain.s          },
+	{"presentity_table",     STR_PARAM, &presentity_table     },
+	{"watcherinfo_table",    STR_PARAM, &watcherinfo_table    },
+	{"place_table",          STR_PARAM, &place_table          },
+	{"new_watcher_pending",  INT_PARAM, &new_watcher_pending  },
 	{0, 0, 0}
 };
 
@@ -150,6 +152,11 @@ static int pa_mod_init(void)
 
 	if (register_fifo_cmd(fifo_pa_location, "pa_location", 0) < 0) {
 		LOG(L_CRIT, "cannot register fifo pa_location\n");
+		return -1;
+	}
+
+	if (init_unixsock_iface() < 0) {
+		LOG(L_ERR, "pa_mod_init: Error while initializing unix socket interface\n");
 		return -1;
 	}
 
