@@ -36,7 +36,7 @@
 #include "../../sr_module.h"
 #include "urirad_mod.h"
 #include "checks.h"
-#include "ser_radius.h"
+#include "dict.h"
 #include <radiusclient.h>
 
 MODULE_VERSION

@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Group Membership - R
+ * Group Membership - RADIUS
  * Definitions not found in radiusclient.h
  *
  * Copyright (C) 2001-2003 Fhg Fokus
@@ -32,9 +32,13 @@
  * 2003-03-09: Based on ser_radius.h from radius_auth (janakj)
  */
 
-#ifndef SER_RADIUS_H
-#define SER_RADIUS_H
+/*
+ * WARNING: Don't forget to update the dictionary if you update this file !!!
+ */
+
+#ifndef DICT_H
+#define DICT_H
 
 #define PW_CALL_CHECK 10
 
-#endif /* SER_RADIUS_H */
+#endif /* DICT_H */

@@ -35,7 +35,7 @@
 #include "../../mem/mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../dprint.h"
-#include "ser_radius.h"
+#include "dict.h"
 #include "checks.h"
 #include "urirad_mod.h"
 #include <radiusclient.h>
