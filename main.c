@@ -1359,7 +1359,7 @@ try_again:
 		}
 	}
 	if (group){
-		gid=strtol(user, &tmp, 10);
+		gid=strtol(group, &tmp, 10);
 		if ((tmp==0) ||(*tmp)){
 			/* maybe it's a string */
 			gr_entry=getgrnam(group);
