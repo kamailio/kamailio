@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added replication mark and three zombie states (nils)
  */
 
 
@@ -36,11 +40,15 @@
 #include <time.h>
 #include "../../str.h"
 
-
 typedef enum cstate {
 	CS_NEW,        /* New contact - not flushed yet */
 	CS_SYNC,       /* Synchronized contact with the database */
-	CS_DIRTY       /* Update contact - not flushed yet */
+	CS_DIRTY,      /* Update contact - not flushed yet */
+	/* Attention the sequence of this entries is used in conditions.
+	 * Changes here can break things! */
+	CS_ZOMBIE_N,   /* Removed contact - not flushed yet */
+	CS_ZOMBIE_S,   /* Removed contact - synchronized with db */
+	CS_ZOMBIE_D    /* Removed contact - updated and not flushed yet */
 } cstate_t;
 
 
@@ -52,6 +60,7 @@ typedef struct ucontact {
 	float q;               /* q parameter */
 	str callid;            /* Call-ID header field */
         int cseq;              /* CSeq value */
+	unsigned int replicate;/* replication marker */
 	cstate_t state;        /* State of the contact */
 	struct ucontact* next; /* Next contact in the linked list */
 	struct ucontact* prev; /* Previous contact in the linked list */
@@ -62,7 +71,7 @@ typedef struct ucontact {
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q, 
-		 str* _callid, int _cseq, ucontact_t** _c);
+		 str* _callid, int _cseq, int _rep, ucontact_t** _c);
 
 
 /*
@@ -146,9 +155,14 @@ int db_delete_ucontact(ucontact_t* _c);
 
 
 /*
- * Update ucontact with new values
+ * Update ucontact with new values without replication
  */
 int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs);
+
+/*
+ * Update ucontact with new values with addtional replication argument
+ */
+int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep);
 
 
 #endif /* UCONTACT_H */

@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added replication mark support (nils)
  */
 
 
@@ -83,7 +87,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
  * Add a new contact
  */
 int mem_insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, 
-			str* _cid, int _cs, struct ucontact** _con);
+			str* _cid, int _cs, int _rep, struct ucontact** _con);
 
 
 
@@ -123,7 +127,13 @@ void release_urecord(urecord_t* _r);
 
 /*
  * Create and insert new contact
- * into urecord
+ * into urecord with additional replication argument
+ */
+int insert_ucontact_rep(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, int _rep, struct ucontact** _con);
+
+/*
+ * Create and insert new contact
+ * into urecord without replication
  */
 int insert_ucontact(urecord_t* _r, str* _c, time_t _e, float _q, str* _cid, int _cs, struct ucontact** _con);
 

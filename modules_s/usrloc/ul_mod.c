@@ -31,6 +31,7 @@
  * ---------
  * 2003-01-27 timer activity printing #ifdef-ed to EXTRA_DEBUG (jiri)
  * 2003-03-11 New module interface (janakj)
+ * 2003-03-12 added replication and state columns (nils)
  */
 
 
@@ -65,6 +66,8 @@ char* q_col          = "q";                                /* Name of column con
 char* callid_col     = "callid";                           /* Name of column containing callid string */
 char* cseq_col       = "cseq";                             /* Name of column containing cseq values */
 char* method_col     = "method";                           /* Name of column containing supported method */
+char* replicate_col  = "replicate";                        /* Name of column containing replication mark */
+char* state_col      = "state";                            /* Name of column containing contact state */
 char* db_url         = "sql://ser:heslo@localhost/ser";    /* Database URL */
 int   timer_interval = 60;                                 /* Timer interval in seconds */
 int   db_mode        = 0;                                  /* Database sync scheme: 0-no db, 1-write through, 2-write back */
@@ -106,6 +109,8 @@ static param_export_t params[] = {
 	{"callid_col",     STR_PARAM, &callid_col    },
 	{"cseq_col",       STR_PARAM, &cseq_col      },
 	{"method_col",     STR_PARAM, &method_col    },
+	{"replicate_col",  STR_PARAM, &replicate_col },
+	{"state_col",      STR_PARAM, &state_col     },
 	{"db_url",         STR_PARAM, &db_url        },
 	{"timer_interval", INT_PARAM, &timer_interval},
 	{"db_mode",        INT_PARAM, &db_mode       },

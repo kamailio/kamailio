@@ -24,6 +24,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added replicate mark and storing of state (nils)
  */
 
 
@@ -52,6 +56,8 @@ int put_on_ins_list(struct ucontact* _c)
 	p->expires = _c->expires;
 	p->q = _c->q;
 	p->cseq = _c->cseq;
+	p->replicate = _c->replicate;
+	p->state = _c->state;
 
 	p->user = _c->aor;
 	p->cont = &_c->c;
@@ -69,8 +75,8 @@ int process_ins_list(str* _d)
 {
 	struct ins_itm* p;
 	char b[256];
-	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col};
-	db_val_t vals[6];
+	db_key_t keys[] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, replicate_col, state_col};
+	db_val_t vals[8];
 
 	keys[0] = user_col;
 	keys[1] = contact_col;
@@ -78,6 +84,8 @@ int process_ins_list(str* _d)
 	keys[3] = q_col;
 	keys[4] = callid_col;
 	keys[5] = cseq_col;
+	keys[6] = replicate_col;
+	keys[7] = state_col;
 	
 	if (ins_root) {
 	     /* FIXME */
@@ -91,6 +99,8 @@ int process_ins_list(str* _d)
 		VAL_TYPE(vals + 3) = DB_DOUBLE;
 		VAL_TYPE(vals + 4) = DB_STR;
 		VAL_TYPE(vals + 5) = DB_INT;
+		VAL_TYPE(vals + 6) = DB_INT;
+		VAL_TYPE(vals + 7) = DB_INT;
 
 		VAL_NULL(vals) = 0;
 		VAL_NULL(vals + 1) = 0;
@@ -98,6 +108,8 @@ int process_ins_list(str* _d)
 		VAL_NULL(vals + 3) = 0;
 		VAL_NULL(vals + 4) = 0;
 		VAL_NULL(vals + 5) = 0;
+		VAL_NULL(vals + 6) = 0;
+		VAL_NULL(vals + 7) = 0;
 	}
 
 	while(ins_root) {
@@ -118,7 +130,11 @@ int process_ins_list(str* _d)
 
 		VAL_INT(vals + 5) = p->cseq;
 
-		if (db_insert(db, keys, vals, 6) < 0) {
+		VAL_INT(vals + 6) = p->replicate;
+
+		VAL_INT(vals + 7) = p->state;
+
+		if (db_insert(db, keys, vals, 8) < 0) {
 			LOG(L_ERR, "process_ins_list(): Error while inserting into database\n");
 			return -1;
 		}

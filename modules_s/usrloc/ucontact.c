@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added replication mark and three zombie states (nils)
  */
 
 
@@ -42,7 +46,7 @@
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q,
-		 str* _callid, int _cseq, ucontact_t** _c)
+		 str* _callid, int _cseq, int _rep, ucontact_t** _c)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!(*_c)) {
@@ -77,6 +81,7 @@ int new_ucontact(str* _dom, str* _aor, str* _contact, time_t _e, float _q,
 	(*_c)->callid.len = _callid->len;
 
 	(*_c)->cseq = _cseq;
+	(*_c)->replicate = _rep;
 	(*_c)->next = 0;
 	(*_c)->prev = 0;
 	(*_c)->state = CS_NEW;
@@ -108,6 +113,9 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	case CS_NEW:   st = "CS_NEW";     break;
 	case CS_SYNC:  st = "CS_SYNC";    break;
 	case CS_DIRTY: st = "CS_DIRTY";   break;
+	case CS_ZOMBIE_N: st = "CS_ZOMBIE_N"; break;
+	case CS_ZOMBIE_S: st = "CS_ZOMBIE_S"; break;
+	case CS_ZOMBIE_D: st = "CS_ZOMBIE_D"; break;
 	default:       st = "CS_UNKNOWN"; break;
 	}
 
@@ -122,6 +130,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "q      : %10.2f\n", _c->q);
 	fprintf(_f, "Call-ID: \'%.*s\'\n", _c->callid.len, _c->callid.s);
 	fprintf(_f, "CSeq   : %d\n", _c->cseq);
+	fprintf(_f, "replic : %u\n", _c->replicate);
 	fprintf(_f, "State  : %s\n", st);
 	fprintf(_f, "next   : %p\n", _c->next);
 	fprintf(_f, "prev   : %p\n", _c->prev);
@@ -163,7 +172,7 @@ int mem_update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
 
 
 /*
- * Update state of the contat if we are using write back scheme
+ * Update state of the contat
  */
 void st_update_ucontact(ucontact_t* _c)
 {
@@ -176,11 +185,14 @@ void st_update_ucontact(ucontact_t* _c)
 		break;
 
 	case CS_SYNC:
-		     /* Modified contact needs to be updated also in
-		      * the database, so transit into CS_DIRTY and
-		      * let the timer to do the update again
+		     /* For db mode 2 a modified contact needs to be 
+			  * updated also in the database, so transit into 
+			  * CS_DIRTY and let the timer to do the update 
+			  * again. For db mode 1 the db update is allready
+			  * done and we don't have to change the state.
 		      */
-		_c->state = CS_DIRTY;
+		if (db_mode == 2)
+			_c->state = CS_DIRTY;
 		break;
 
 	case CS_DIRTY:
@@ -188,13 +200,40 @@ void st_update_ucontact(ucontact_t* _c)
 		      * dirty contact again, don't change anything
 		      */
 		break;
+	case CS_ZOMBIE_N:
+			/* A ZOMBIE_N is only in memory so we turn it
+			 * into a new contact and let the timer do the
+			 * database synchronisation if needed.
+			 */
+		_c->state = CS_NEW;
+		break;
+	case CS_ZOMBIE_S:
+			/* A ZOMBIE_S has the same entry in memory and
+			 * in database. The memory is allready updated.
+			 * If we are in db mode 1 the database is also
+			 * allready updated, so we turn it into SYNC.
+			 * For db mode 2 we turn into DIRTY and let the
+			 * timer do the database update.
+			 */
+		if (db_mode == 1)
+			_c->state = CS_SYNC;
+		else
+			_c->state = CS_DIRTY;
+		break;
+	case CS_ZOMBIE_D:
+			/* A ZOMBIE_D has an old entry in the database 
+			 * and a dirty entry in memory, so the memory 
+			 * entry is still dirty and the database update 
+			 * will handled by the timer.
+			 */
+		_c->state = CS_DIRTY;
+		break;
 	}
 }
 
 
 /*
- * Update state of the contact if we
- * are using write-back scheme
+ * Update state of the contact
  * Returns 1 if the contact should be
  * delete from memory immediatelly,
  * 0 otherwise
@@ -205,20 +244,60 @@ int st_delete_ucontact(ucontact_t* _c)
 	case CS_NEW:
 		     /* Contact is new and isn't in the database
 		      * yet, we can delete it from the memory
-		      * safely
+		      * safely if it is not marked for replication.
+			  * If it is marked we turn it into a zombie
+			  * but do not remove it from memory
 		      */
-		return 1;
+		if (_c->replicate != 0) {
+			_c->state = CS_ZOMBIE_N;
+			return 0;
+		}
+		else
+			return 1;
 
 	case CS_SYNC:
+			/* If the contact is marked for replication we
+			 * turn it into zombie state, but because the
+			 * contact is in the DB we can not remove
+			 * it from memory anyway
+			 * because of the state change it is dirty
+			 */
+		_c->state = CS_ZOMBIE_D;
+			/* to synchronyse the state change in db mode 1
+			 * we need to update the db too
+			 */
+		if (db_mode == WRITE_THROUGH) {
+			if (db_update_ucontact(_c) < 0)
+				LOG(L_ERR, "st_delete_ucontact(): Error while updating contact"
+						" in db\n");
+			else
+				_c->state = CS_ZOMBIE_S;
+		}
+		return 0;
 	case CS_DIRTY:
 		     /* Contact is in the database,
 		      * we cannot remove it from the memory 
-		      * directly, but we can set expires to zero
+		      * directly, but we can turn it into a zombie
 		      * and the timer will take care of deleting 
 		      * the contact from the memory as well as 
 		      * from the database
 		      */
-		_c->expires = 0;
+		_c->state = CS_ZOMBIE_D;
+		return 0;
+	case CS_ZOMBIE_N:
+			/* If the removed contact in memory is still 
+			 * marked for replication keep it, otherwise
+			 * remove it
+			 */
+		if (_c->replicate != 0)
+			return 0;
+		else
+			return 1;
+	case CS_ZOMBIE_S:
+	case CS_ZOMBIE_D:
+			/* This allready removed contact is in the
+			 * DB so we can not remove it from memory
+			 */
 		return 0;
 	}
 
@@ -250,6 +329,14 @@ int st_expired_ucontact(ucontact_t* _c)
 	case CS_DIRTY:
 		     /* Remove from database here */
 		return 1;
+	case CS_ZOMBIE_N:
+			/* Allthough these are zombie it applys
+			 * the same rules as above
+			 */
+		return 0;
+	case CS_ZOMBIE_S:
+	case CS_ZOMBIE_D:
+		return 1;
 	}
 
 	return 0; /* Makes gcc happy */
@@ -259,7 +346,8 @@ int st_expired_ucontact(ucontact_t* _c)
 /*
  * Called when the timer is about flushing the contact,
  * updates contact state and returns 1 if the contact
- * should be inserted, 2 if updated and 0 otherwise
+ * should be inserted, 2 if update , 3 if delete 
+ * from memory, 4 if delete from database and 0 otherwise
  */
 int st_flush_ucontact(ucontact_t* _c)
 {
@@ -285,6 +373,40 @@ int st_flush_ucontact(ucontact_t* _c)
 		      */
 		_c->state = CS_SYNC;
 		return 2;
+	case CS_ZOMBIE_N:
+			/* Contact is a new zombie. If it is
+			 * still marked for replication we insert
+			 * into the database and change the state.
+			 * Otherwise we can remove it from memory.
+			 */
+		if (_c->replicate != 0) {
+			_c->state = CS_ZOMBIE_S;
+			return 1;
+		}
+		else
+			return 3;
+	case CS_ZOMBIE_S:
+			/* Contact is a synchronized zombie.
+			 * If it's not marked for replication any
+			 * more we delete it from database.
+			 * Otherwise we do nothing.
+			 */
+		if (_c->replicate != 0)
+			return 0;
+		else
+			return 4;
+	case CS_ZOMBIE_D:
+			/* Contact is a dirty zombie. If it's
+			 * marked for replication we update the
+			 * database entry and change the state.
+			 * Otherwise we remove it from db.
+			 */
+		if (_c->replicate != 0) {
+			_c->state = CS_ZOMBIE_S;
+			return 2;
+		}
+		else
+			return 4;
 	}
 
 	return 0; /* Makes gcc happy */
@@ -301,9 +423,9 @@ int db_insert_ucontact(ucontact_t* _c)
 {
 	char b[256];
 	char* dom;
-	db_key_t keys[7] = {user_col, contact_col, expires_col, q_col, callid_col,
-			   cseq_col, domain_col};
-	db_val_t vals[7];
+	db_key_t keys[9] = {user_col, contact_col, expires_col, q_col, callid_col,
+			   cseq_col, replicate_col, state_col, domain_col};
+	db_val_t vals[9];
 
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
@@ -332,14 +454,25 @@ int db_insert_ucontact(ucontact_t* _c)
 	vals[5].nul = 0;
 	vals[5].val.int_val = _c->cseq;
 
+	vals[6].type = DB_INT;
+	vals[6].nul = 0;
+	vals[6].val.int_val = _c->replicate;
+
+	vals[7].type = DB_INT;
+	vals[7].nul = 0;
+	if (_c->state < CS_ZOMBIE_N)
+		vals[7].val.int_val = 0;
+	else
+		vals[7].val.int_val = 1;
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals[0].val.str_val.len = dom - _c->aor->s;
 
-		vals[6].type = DB_STR;
-		vals[6].nul = 0;
-		vals[6].val.str_val.s = dom + 1;
-		vals[6].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		vals[8].type = DB_STR;
+		vals[8].nul = 0;
+		vals[8].val.str_val.s = dom + 1;
+		vals[8].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
 	}
 
 	     /* FIXME */
@@ -347,7 +480,7 @@ int db_insert_ucontact(ucontact_t* _c)
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_insert(db, keys, vals, (use_domain) ? (7) : (6)) < 0) {
+	if (db_insert(db, keys, vals, (use_domain) ? (9) : (8)) < 0) {
 		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
 		return -1;
 	}
@@ -366,8 +499,8 @@ int db_update_ucontact(ucontact_t* _c)
 	db_key_t keys1[3] = {user_col, contact_col, domain_col};
 	db_val_t vals1[3];
 
-	db_key_t keys2[4] = {expires_col, q_col, callid_col, cseq_col};
-	db_val_t vals2[4];
+	db_key_t keys2[6] = {expires_col, q_col, callid_col, cseq_col, replicate_col, state_col};
+	db_val_t vals2[6];
 
 	vals1[0].type = DB_STR;
 	vals1[0].nul = 0;
@@ -393,6 +526,17 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[3].nul = 0;
 	vals2[3].val.int_val = _c->cseq;
 
+	vals2[4].type = DB_INT;
+	vals2[4].nul = 0;
+	vals2[4].val.int_val = _c->replicate;
+
+	vals2[5].type = DB_INT;
+	vals2[5].nul = 0;
+	if (_c->state < CS_ZOMBIE_N)
+		vals2[5].val.int_val = 0;
+	else
+		vals2[5].val.int_val = 1;
+
 	if (use_domain) {
 		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
 		vals1[0].val.str_val.len = dom - _c->aor->s;
@@ -408,7 +552,7 @@ int db_update_ucontact(ucontact_t* _c)
 	b[_c->domain->len] = '\0';
 	db_use_table(db, b);
 
-	if (db_update(db, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 4) < 0) {
+	if (db_update(db, keys1, 0, vals1, keys2, vals2, (use_domain) ? (3) : (2), 6) < 0) {
 		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
 		return -1;
 	}
@@ -458,30 +602,33 @@ int db_delete_ucontact(ucontact_t* _c)
 	return 0;
 }
 
+/*
+ * Wrapper around update_ucontact which overwrites
+ * the replication mark.
+ * FIXME: i'm not sure if we need this...
+ */
+int update_ucontact_rep(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs, int _rep)
+{
+	_c->replicate = _rep;
+	return mem_update_ucontact(_c, _e, _q, _cid, _cs);
+}
 
 /*
  * Update ucontact with new values
  */
 int update_ucontact(ucontact_t* _c, time_t _e, float _q, str* _cid, int _cs)
 {
-	switch(db_mode) {
-	case NO_DB:
-		return mem_update_ucontact(_c, _e, _q, _cid, _cs);
-		
-	case WRITE_THROUGH:
-		if (mem_update_ucontact(_c, _e, _q, _cid, _cs) < 0) {
-			LOG(L_ERR, "update_ucontact(): Error while updating\n");
-			return -1;
-		}
-
+	/* we have to update memory in any case, but database directly
+	 * only in db_mode 1 */
+	if (mem_update_ucontact(_c, _e, _q, _cid, _cs) < 0) {
+		LOG(L_ERR, "update_ucontact(): Error while updating\n");
+		return -1;
+	}
+	st_update_ucontact(_c);
+	if (db_mode == WRITE_THROUGH) {
 		if (db_update_ucontact(_c) < 0) {
 			LOG(L_ERR, "update_ucontact(): Error while updating database\n");
 		}
-		return 0;
-
-	case WRITE_BACK:
-		st_update_ucontact(_c);
-		return mem_update_ucontact(_c, _e, _q, _cid, _cs);
 	}
 	return 0;
 }

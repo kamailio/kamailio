@@ -23,6 +23,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added replication mark and zombie state (nils)
  */
 /*
  * History:
@@ -204,10 +208,10 @@ void print_udomain(FILE* _f, udomain_t* _d)
 int preload_udomain(udomain_t* _d)
 {
 	char b[256];
-	db_key_t columns[7] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, domain_col};
+	db_key_t columns[9] = {user_col, contact_col, expires_col, q_col, callid_col, cseq_col, replicate_col, state_col, domain_col};
 	db_res_t* res;
 	db_row_t* row;
-	int i, cseq;
+	int i, cseq, rep, state;
 	
 	str user, contact, callid;
 	char* domain;
@@ -220,7 +224,7 @@ int preload_udomain(udomain_t* _d)
 	memcpy(b, _d->name->s, _d->name->len);
 	b[_d->name->len] = '\0';
 	db_use_table(db, b);
-	if (db_query(db, 0, 0, 0, columns, 0, (use_domain) ? (7) : (6), 0, &res) < 0) {
+	if (db_query(db, 0, 0, 0, columns, 0, (use_domain) ? (9) : (8), 0, &res) < 0) {
 		LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
 		return -1;
 	}
@@ -243,11 +247,13 @@ int preload_udomain(udomain_t* _d)
 		expires     = VAL_TIME  (ROW_VALUES(row) + 2);
 		q           = VAL_DOUBLE(ROW_VALUES(row) + 3);
 		cseq        = VAL_INT   (ROW_VALUES(row) + 5);
+		rep         = VAL_INT   (ROW_VALUES(row) + 6);
+		state       = VAL_INT   (ROW_VALUES(row) + 7);
 		callid.s    = (char*)VAL_STRING(ROW_VALUES(row) + 4);
 		callid.len  = strlen(callid.s);
 
 		if (use_domain) {
-			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 6);
+			domain    = (char*)VAL_STRING(ROW_VALUES(row) + 7);
 			snprintf(b, 256, "%.*s@%s", user.len, user.s, domain);
 			user.s = b;
 			user.len = strlen(b);
@@ -262,7 +268,7 @@ int preload_udomain(udomain_t* _d)
 			}
 		}
 		
-		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, &c) < 0) {
+		if (mem_insert_ucontact(r, &contact, expires, q, &callid, cseq, rep, &c) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			db_free_query(db, res);
 			unlock_udomain(_d);
@@ -271,8 +277,13 @@ int preload_udomain(udomain_t* _d)
 
 		     /* We have to do this, because insert_ucontact sets state to CS_NEW
 		      * and we have the contact in the database already
+			  * we also store zombies in database so we have to restore
+			  * the correct state
 		      */
-		c->state = CS_SYNC;
+		if (state == 1)
+			c->state = CS_ZOMBIE_S;
+		else
+			c->state = CS_SYNC;
 	}
 
 	db_free_query(db, res);

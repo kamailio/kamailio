@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added support for replication mark
  */
 
 
@@ -41,6 +45,7 @@
 #define MAX_CONTACT 128
 #define MAX_EXPIRES 20
 #define MAX_Q 20
+#define MAX_REPLICATE 12
 
 
 /*
@@ -185,7 +190,7 @@ static inline void fifo_find_domain(str* _name, udomain_t** _d)
 }
 
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float _q)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float _q, int _r)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -221,13 +226,13 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, float 
 	cid.len = FIFO_CALLID_LEN;
 
 	if (c) {
-		if (update_ucontact(c, _e + act_time, _q, &cid, FIFO_CSEQ) < 0) {
+		if (update_ucontact_rep(c, _e + act_time, _q, &cid, FIFO_CSEQ, _r) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
 		}
 	} else {
-		if (insert_ucontact(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, &c) < 0) {
+		if (insert_ucontact_rep(r, _c, _e + act_time, _q, &cid, FIFO_CSEQ, _r, &c) < 0) {
 			LOG(L_ERR, "fifo_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;
@@ -246,11 +251,12 @@ static int ul_add(FILE* pipe, char* response_file)
 	char contact_s[MAX_CONTACT];
 	char expires_s[MAX_EXPIRES];
 	char q_s[MAX_Q];
+	char rep_s[MAX_REPLICATE];
 	udomain_t* d;
 	float q_f;
-	int exp_i;
+	int exp_i, rep_i;
 
-	str table, user, contact, expires, q;
+	str table, user, contact, expires, q, rep;
 
 	if (!read_line(table_s, MAX_TABLE, pipe, &table.len) || table.len == 0) {
 		fifo_reply(response_file,
@@ -287,11 +293,19 @@ static int ul_add(FILE* pipe, char* response_file)
 		return 1;
 	}
 	
+	if (!read_line(rep_s, MAX_REPLICATE, pipe, &rep.len) || rep.len == 0) {
+		fifo_reply(response_file,
+			   "400 ul_add: replicate expected\n");
+		LOG(L_ERR, "ERROR: ul_add: replicate expected\n");
+		return 1;
+	}
+	
 	table.s = table_s;
 	user.s = user_s;
 	contact.s = contact_s;
 	expires.s = expires_s;
 	q.s = q_s;
+	rep.s = rep_s;
 	
 	fifo_find_domain(&table, &d);
 	
@@ -306,9 +320,14 @@ static int ul_add(FILE* pipe, char* response_file)
 			return 1;
 		}
 
+		if (atoi(&rep, &rep_i) < 0) {
+			fifo_reply(response_file, "400 Invalid replicate format\n");
+			return 1;
+		}
+		
 		lock_udomain(d);
 		
-		if (add_contact(d, &user, &contact, exp_i, q_f) < 0) {
+		if (add_contact(d, &user, &contact, exp_i, q_f, rep_i) < 0) {
 			unlock_udomain(d);
 			LOG(L_ERR, "ul_add(): Error while adding contact (\'%.*s\',\'%.*s\') in table \'%.*s\'\n",
 			    user.len, user.s, contact.len, contact.s, table.len, table.s);

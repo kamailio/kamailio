@@ -25,6 +25,10 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * ---------
+ * 2003-03-12 added support for zombie state (nils)
  */
 
 
@@ -105,7 +109,9 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	}
 
 	ptr = r->contacts;
-	while ((ptr) && (ptr->expires <= act_time)) ptr = ptr->next;
+	while ((ptr) && ((ptr->expires <= act_time) || 
+			(ptr->state >= CS_ZOMBIE_N)))
+		ptr = ptr->next;
 	
 	if (ptr) {
 		if (rwrite(_m, &ptr->c) < 0) {
@@ -128,16 +134,10 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				ul_unlock_udomain((udomain_t*)_t);
-				     /*
-				      * We return 1 here because at
-				      * least R-URI has been rewritten successfully and
-				      * we only issue a message in logs 
-				      */
-				return 1; 
-			} 
+				return -6;
+			}
 		} 
-		
-		ptr = ptr->next; 
+		ptr = ptr->next;
 	}
 	
  skip:
