@@ -632,14 +632,15 @@ int parse_headers(struct sip_msg* msg, int flags)
 				if (msg->route==0) msg->route=hf;
 				msg->parsed_flag|=HDR_ROUTE;
 				break;
-		        case HDR_RECORDROUTE:
+			case HDR_RECORDROUTE:
 				if (msg->record_route==0) msg->record_route = hf;
 				msg->parsed_flag|=HDR_RECORDROUTE;
 				break;
-		        case HDR_VIA:
+			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;
-				DBG("parse_headers: Via1 found, flags=%d\n", flags);
+				DBG("parse_headers: Via found, flags=%d\n", flags);
 				if (msg->via1==0) {
+					DBG("parse_headers: this is the first via\n");
 					msg->h_via1=hf;
 					msg->via1=hf->parsed;
 					if (msg->via1->next){
@@ -650,7 +651,7 @@ int parse_headers(struct sip_msg* msg, int flags)
 					msg->h_via2=hf;
 					msg->via2=hf->parsed;
 					msg->parsed_flag|=HDR_VIA2;
-				DBG("parse_headers: Via2 found, flags=%d\n", flags);
+					DBG("parse_headers: this is the second via\n");
 				}
 				break;
 			default:
