@@ -17,6 +17,7 @@
 #include <sys/mman.h>
 #include <sys/fcntl.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include "config.h"
 #include "dprint.h"
@@ -331,32 +332,30 @@ int main_loop()
 
 static void sig_usr(int signo)
 {
-	DPrint("INT received, program terminates\n");
-	if (signo==SIGINT || signo==SIGPIPE) {	/* exit gracefuly */
-#ifdef STATS
-		/* print statistics on exit only for the first process */
+	pid_t	chld;
+	int	chld_status;
 
+	if (signo==SIGINT || signo==SIGPIPE) {	/* exit gracefuly */
+		DPrint("INT received, program terminates\n");
+#		ifdef STATS
+		/* print statistics on exit only for the first process */
 		if (stats->process_index==0 && stat_file )
 			if (dump_all_statistic()==0)
 				printf("statistic dumped to %s\n", stat_file );
 			else
 				printf("statistics dump to %s failed\n", stat_file );
-#endif
+#		endif
 		/* WARNING: very dangerous, might be unsafe*/
 		if (is_main)
 			destroy_modules();
 #ifdef PKG_MALLOC
 		LOG(L_INFO, "Memory status (pkg):\n");
 		pkg_status();
-#endif
+#		endif
 #ifdef SHM_MEM
 		if (is_main){
 			LOG(L_INFO, "Memory status (shm):\n");
 			shm_status();
-		}
-#endif
-#ifdef SHM_MEM
-		if (is_main){
 			/*zero all shmem  alloc vars, that will still use*/
 			pids=0;
 			shm_mem_destroy();
@@ -376,6 +375,22 @@ static void sig_usr(int signo)
 		LOG(L_INFO, "Memory status (shm):\n");
 		shm_status();
 #endif
+	} else if (signo==SIGCHLD) {
+		while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
+			if (WIFEXITED(chld_status)) 
+				LOG(L_INFO, "child process %d exited normally, status=%d\n",
+					chld, WEXITSTATUS(chld_status));
+			else if (WIFSIGNALED(chld_status)) {
+				LOG(L_INFO, "child process %d exited by a signal %d\n",
+					chld, WTERMSIG(chld_status));
+#				ifdef WCOREDUMP
+				LOG(L_INFO, "core was %sgenerated\n", WCOREDUMP(chld_status) ?
+					"" : "not" );
+#				endif
+			} else if (WIFSTOPPED(chld_status)) 
+				LOG(L_INFO, "child process %d stopped by a signal %d\n",
+					chld, WSTOPSIG(chld_status));
+		}
 	}
 }
 
@@ -405,6 +420,10 @@ int main(int argc, char** argv)
 
 	if (signal(SIGUSR1, sig_usr)  == SIG_ERR ) {
 		DPrint("ERROR: no SIGUSR1 signal handler can be installed\n");
+		goto error;
+	}
+	if (signal(SIGCHLD , sig_usr)  == SIG_ERR ) {
+		DPrint("ERROR: no SIGCHLD signal handler can be installed\n");
 		goto error;
 	}
 
