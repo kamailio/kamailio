@@ -5,7 +5,7 @@
 #ifndef msg_parser_h
 #define msg_parser_h
 
-
+#include "str.h"
 #include "data_lump.h"
 
 #define SIP_REQUEST 1
@@ -13,51 +13,55 @@
 #define SIP_INVALID 0
 
 
-#define HDR_ERROR 0
-/* end of header */
-#define HDR_EOH   -1
-#define HDR_OTHER 1
-#define HDR_VIA   2
-#define HDR_TO    3
+enum {	HDR_EOH=-1, HDR_ERROR=0, HDR_OTHER,
+		HDR_VIA, HDR_TO, HDR_FROM, HDR_CSEQ, HDR_CALLID, HDR_CONTACT,
+		HDR_MAXFORWARDS, HDR_ROUTE
+	};
+
+
+
 
 #define VIA_PARSE_OK	1
 #define VIA_PARSE_ERROR -1
 
 #define SIP_VERSION	"SIP/2.0"
+#define SIP_VERSION_LEN 7
 
 
 struct msg_start{
 	int type;
 	union {
 		struct {
-			char* method;
-			char* uri;
-			char* version;
+			str method;
+			str uri;
+			str version;
 		}request;
 		struct {
-			char* version;
-			char* status;
-			char* reason;
+			str version;
+			str status;
+			str reason;
 		}reply;
 	}u;
 };
 
 struct hdr_field{   /* format: name':' body */
 	int type;
-	char* name;
-	char* body;
+	str name;
+	str body;
+	void* parsed;
 };
 
 struct via_body{  /* format: name/version/transport host:port;params comment */
 	int error;
-	char *hdr;   /* contains "Via" or "v" */
-	char* name;
-	char* version;
-	char* transport;
-	char* host;
+	str hdr;   /* contains "Via" or "v" */
+	str name;
+	str version;
+	str transport;
+	str host;
 	int port;
-	char* params;
-	char* comment;
+	str port_str;
+	str params;
+	str comment;
 	int size;    /* full size, including hdr */
 	char* next; /* pointer to next via body string if compact via or null */
 };
@@ -76,7 +80,7 @@ struct sip_msg{
 	unsigned int len; /* message len (orig) */
 
 	/* modifications */
-	char* new_uri; /* changed first line uri*/
+	str new_uri; /* changed first line uri*/
 
 	struct lump* add_rm;      /* used for all the forwarded messages */
 	struct lump* repl_add_rm; /* only for localy generated replies !!!*/
@@ -85,25 +89,35 @@ struct sip_msg{
 
 
 struct sip_uri{
-	char* user;
-	char* passwd;
-	char* host;
-	char* port;
-	char* params;
-	char* headers;
+	str user;
+	str passwd;
+	str host;
+	str port;
+	str params;
+	str headers;
 };
 
 
 
 char* parse_first_line(char* buffer, unsigned int len, struct msg_start * fl);
+#ifdef OLD_PARSER 
 char* get_hdr_field(char *buffer, unsigned int len, struct hdr_field*  hdr_f);
-int field_name(char *s);
-char* parse_hostport(char* buf, char** host, short int* port);
+int field_name(char *s, int len);
+#endif
+char* parse_hostport(char* buf, str* host, short int* port);
+
+#ifdef OLD_PARSER 
 char* parse_via_body(char* buffer,unsigned int len, struct via_body * vb);
+#endif
 int parse_msg(char* buf, unsigned int len, struct sip_msg* msg);
 int parse_uri(char *buf, int len, struct sip_uri* uri);
 void free_uri(struct sip_uri* u);
 
+
+#ifndef OLD_PARSER
+char* parse_hname(char* buf, char* end, struct hdr_field* hdr);
+char* parse_via(char* buffer, char* end, struct via_body *vb);
+#endif
 
 
 #endif

@@ -23,7 +23,13 @@ NAME=ser
 # recommanded: on (speed-up)
 # STATS allows to print out number of packets processed on CTRL-C; 
 # implementation still nasty and reports per-process
-DEFS=-DNOCR -DMACROEATER -DSTATS #-DNO_DEBUG #-DNO_LOG
+# NO_DEBUG turns off some of the debug messages (DBG(...)).
+# NO_LOG completely turns of all the logging (and DBG(...))
+# DEBUG compiles in some extra debugging code
+# OLD_PARSER uses the old and stable parser (from ser 8.3.2)
+DEFS=-DNOCR -DMACROEATER -DSTATS -DOLD_PARSER #-DNO_DEBUG #-DNO_LOG
+
+PROFILE=  # -pg #set this if you want profiling
 
 # platform dependent settings
 
@@ -32,8 +38,8 @@ ARCH = $(shell uname -s)
 #common
 CC=gcc
 LD=gcc
-CFLAGS=-O3 -Wcast-align #-Wmissing-prototypes 
-LDFLAGS=-Wl,-O2 -Wl,-E
+CFLAGS=-O2 -Wcast-align $(PROFILE)#-Wmissing-prototypes 
+LDFLAGS=-Wl,-O2 -Wl,-E $(PROFILE)
 LEX=flex
 YACC=bison
 YACC_FLAGS=-d -b cfg
@@ -49,7 +55,7 @@ ifeq  ($(ARCH), SunOS)
 
 MAKE=gmake
 YACC=yacc
-LDFLAGS=-O2
+LDFLAGS=-O2 $(PROFILE)
 LIBS+=-L/usr/local/lib -lxnet # or -lnsl -lsocket or -lglibc ?
 
 endif

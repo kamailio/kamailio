@@ -34,7 +34,7 @@
 
 
 static char id[]="@(#) $Id$";
-static char version[]="ser 0.8.3.2";
+static char version[]="ser 0.8.3.8";
 static char flags[]="NOCR:"
 #ifdef NOCR
 "On"
@@ -52,6 +52,18 @@ static char flags[]="NOCR:"
 "On"
 #else
 "Off"
+#endif
+#ifdef NO_DEBUG
+", NO_DEBUG"
+#endif
+#ifdef NO_LOG
+", NO_LOG"
+#endif
+#ifdef DEBUG
+", DEBUG"
+#endif
+#ifdef OLD_PARSER
+", OLD_PARSER"
 #endif
 ;
 

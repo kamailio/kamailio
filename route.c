@@ -292,15 +292,15 @@ static int eval_elem(struct expr* e, struct sip_msg* msg)
 	}
 	switch(e->l.operand){
 		case METHOD_O:
-				ret=comp_str(msg->first_line.u.request.method, e->r.param,
+				ret=comp_str(msg->first_line.u.request.method.s, e->r.param,
 								e->op, e->subtype);
 				break;
 		case URI_O:
-				if(msg->new_uri){
-					ret=comp_str(msg->new_uri, e->r.param,
+				if(msg->new_uri.s){
+					ret=comp_str(msg->new_uri.s, e->r.param,
 									e->op, e->subtype);
 				}else{
-					ret=comp_str(msg->first_line.u.request.uri, e->r.param,
+					ret=comp_str(msg->first_line.u.request.uri.s, e->r.param,
 									e->op, e->subtype);
 				}
 				break;

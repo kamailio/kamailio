@@ -51,9 +51,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 		case FORWARD_T:
 			if (a->p1_type==URIHOST_ST){
 				/*parse uri*/
-				tmp=(msg->new_uri)?msg->new_uri:
-						msg->first_line.u.request.uri;
-				if (parse_uri(tmp, strlen(tmp), &uri)<0){
+				if (msg->new_uri.s){
+						tmp=msg->new_uri.s;
+						len=msg->new_uri.len;
+				}else{
+						tmp=msg->first_line.u.request.uri.s;
+						len=msg->first_line.u.request.uri.len;
+				}
+				if (parse_uri(tmp, len, &uri)<0){
 					LOG(L_ERR, "ERROR: do_action: forward: bad_uri <%s>,"
 								" dropping packet\n",tmp);
 					ret=E_UNSPEC;
@@ -61,8 +66,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 				switch (a->p2_type){
 					case URIPORT_ST:
-									if (uri.port){
-										port=strtol(uri.port,&end,10);
+									if (uri.port.s){
+										port=strtol(uri.port.s,&end,10);
 										if ((end)&&(*end)){
 											LOG(L_ERR, "ERROR: do_action: "
 													"forward: bad port in "
@@ -83,7 +88,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 							goto skip;
 				}
 				/* create a temporary proxy*/
-				p=mk_proxy(uri.host, port);
+				p=mk_proxy(uri.host.s, port);
 				ret=forward_request(msg, p);
 				free_uri(&uri);
 				free_proxy(p); /* frees only p content, not p itself */
@@ -201,23 +206,33 @@ int do_action(struct action* a, struct sip_msg* msg)
 					break;
 				}
 				if (a->type==SET_URI_T){
-					if (msg->new_uri) free(msg->new_uri);
+					if (msg->new_uri.s) {
+							free(msg->new_uri.s);
+							msg->new_uri.len=0;
+					}
 					len=strlen(a->p1.string);
-					msg->new_uri=malloc(len+1);
-					if (msg->new_uri==0){
+					msg->new_uri.s=malloc(len+1);
+					if (msg->new_uri.s==0){
 						LOG(L_ERR, "ERROR: do_action: memory allocation"
 								" failure\n");
 						ret=E_OUT_OF_MEM;
 						break;
 					}
-					memcpy(msg->new_uri, a->p1.string, len);
-					msg->new_uri[len]=0;
+					memcpy(msg->new_uri.s, a->p1.string, len);
+					msg->new_uri.s[len]=0;
+					msg->new_uri.len=len;
+					
 					ret=1;
 					break;
 				}
-				if (msg->new_uri) tmp=msg->new_uri;
-				else tmp=msg->first_line.u.request.uri;
-				if (parse_uri(tmp, strlen(tmp), &uri)<0){
+				if (msg->new_uri.s) {
+					tmp=msg->new_uri.s;
+					len=msg->new_uri.len;
+				}else{
+					tmp=msg->first_line.u.request.uri.s;
+					len=msg->first_line.u.request.uri.len;
+				}
+				if (parse_uri(tmp, len, &uri)<0){
 					LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
 								" packet\n", tmp);
 					ret=E_UNSPEC;
@@ -241,14 +256,14 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if ((a->type==SET_USER_T)||(a->type==SET_USERPASS_T))
 					tmp=a->p1.string;
 				else 
-					tmp=uri.user;
+					tmp=uri.user.s;
 				if (tmp){
 					len=strlen(tmp); if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
 					user=1; /* we have an user field so mark it */
 				}
 				if (a->type==SET_USERPASS_T) tmp=0;
-				else tmp=uri.passwd;
+				else tmp=uri.passwd.s;
 				/* passwd */
 				if (tmp){
 					len=strlen(":"); if(crt+len>end) goto error_uri;
@@ -264,7 +279,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T))
 					tmp=a->p1.string;
 				else
-					tmp=uri.host;
+					tmp=uri.host.s;
 				if (tmp){
 					len=strlen(tmp); if(crt+len>end) goto error_uri;
 					memcpy(crt,tmp,len);crt+=len;
@@ -272,7 +287,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				/* port */
 				if (a->type==SET_HOSTPORT_T) tmp=0;
 				else if (a->type==SET_PORT_T) tmp=a->p1.string;
-				else tmp=uri.port;
+				else tmp=uri.port.s;
 				if (tmp){
 					len=strlen(":"); if(crt+len>end) goto error_uri;
 					memcpy(crt,":",len);crt+=len;
@@ -280,7 +295,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* params */
-				tmp=uri.params;
+				tmp=uri.params.s;
 				if (tmp){
 					len=strlen(";"); if(crt+len>end) goto error_uri;
 					memcpy(crt,";",len);crt+=len;
@@ -288,7 +303,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* headers */
-				tmp=uri.headers;
+				tmp=uri.headers.s;
 				if (tmp){
 					len=strlen("?"); if(crt+len>end) goto error_uri;
 					memcpy(crt,"?",len);crt+=len;
@@ -297,8 +312,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 				*crt=0; /* null terminate the thing */
 				/* copy it to the msg */
-				if (msg->new_uri) free(msg->new_uri);
-				msg->new_uri=new_uri;
+				if (msg->new_uri.s) free(msg->new_uri.s);
+				msg->new_uri.s=new_uri;
+				msg->new_uri.len=crt-new_uri;
 				free_uri(&uri);
 				ret=1;
 				break;

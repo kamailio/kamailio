@@ -46,16 +46,19 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 	if (parse_msg(buf,len, &msg)!=0){
 		goto error;
 	}
+	DBG("Ater parse_msg...\n");
 	
 	if (msg.first_line.type==SIP_REQUEST){
+		DBG("msg= request\n");
 		/* sanity checks */
 		if (msg.via1.error!=VIA_PARSE_OK){
 			/* no via, send back error ? */
 			goto skip;
 		}
-		/* check if neccesarry to add receive? */
+		/* check if neccesarry to add receive?->moved to forward_req */
 		
 		/* exec routing script */
+		DBG("preparing to run routing scripts...\n");
 		if (run_actions(rlist[0], &msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying script\n");
@@ -66,6 +69,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		else stats.ok_rx_rq++;	
 #endif
 	}else if (msg.first_line.type==SIP_REPLY){
+		DBG("msg= reply\n");
 		/* sanity checks */
 		if (msg.via1.error!=VIA_PARSE_OK){
 			/* no via, send back error ? */
@@ -90,13 +94,13 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		}
 	}
 skip:
-	if (msg.new_uri) free(msg.new_uri);
+	if (msg.new_uri.s) { free(msg.new_uri.s); msg.new_uri.len=0; }
 	if (msg.add_rm) free_lump_list(msg.add_rm);
 	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
 	return 0;
 error:
-	if (msg.new_uri) free(msg.new_uri);
+	if (msg.new_uri.s) free(msg.new_uri.s);
 	if (msg.add_rm) free_lump_list(msg.add_rm);
 	if (msg.repl_add_rm) free_lump_list(msg.repl_add_rm);
 	free(msg.orig);
