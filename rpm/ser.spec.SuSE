@@ -38,8 +38,7 @@ transaction module, registrar and user location.
 %package  mysql
 Summary:  MySQL connectivity for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
-Conflicts:   ser < %ver, ser-mysql < %ver
+Requires: ser = %ver
 BuildPrereq: mysql-devel zlib-devel
 
 %description mysql
@@ -50,8 +49,7 @@ entries.
 %package  jabber
 Summary:  sip jabber message translation support for the SIP Express Router.
 Group:    System Environment/Daemons
-Requires: ser
-Conflicts:   ser < %ver, ser-jabber < %ver
+Requires: ser = %ver
 BuildPrereq: expat
 
 %description jabber
@@ -60,8 +58,7 @@ The ser-jabber package contains a sip to jabber message translator.
 %package  radius
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
-Requires: ser
-Conflicts:    ser < %ver, ser-radius < %ver
+Requires: ser = %ver
 BuildPrereq:  radiusclient
 
 %description radius
@@ -84,22 +81,36 @@ make install skip_modules="%EXCLUDED_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-modules modules="modules/%MYSQL_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-modules modules="modules/%JABBER_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
 make install-modules modules="%RADIUS_MOD_PATH" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
-		cfg-target=/%{_sysconfdir}/ser/ 
+		cfg-target=/%{_sysconfdir}/ser/ \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
+make install-doc modules="modules/%JABBER_MODULES %RADIUS_MOD_PATH" \
+		basedir=$RPM_BUILD_ROOT \
+		prefix=/usr \
+		doc-prefix=$RPM_BUILD_ROOT \
+		doc-dir=/%{_docdir}/ser/
+
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
 install -m755 $RPM_SOURCE_DIR/ser.init.SuSE \
@@ -152,7 +163,6 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/ser/README.uri
 %doc %{_docdir}/ser/README.usrloc
 %doc %{_docdir}/ser/README.vm
-%doc %{_docdir}/ser/README.xlog
 
 %dir %{_sysconfdir}/ser
 %config(noreplace) %{_sysconfdir}/ser/*
@@ -203,15 +213,24 @@ sbin/insserv etc/init.d/
 %files jabber
 %defattr(-,root,root)
 %{_libdir}/ser/modules/jabber.so
+%doc %{_docdir}/ser/README.jabber
 
 %files radius
 %defattr(-,root,root)
 %{_libdir}/ser/modules/auth_radius.so
 %{_libdir}/ser/modules/group_radius.so
 %{_libdir}/ser/modules/uri_radius.so
+%doc %{_docdir}/ser/README.auth_radius
+%doc %{_docdir}/ser/README.group_radius
+%doc %{_docdir}/ser/README.uri_radius
 
 
 %changelog
+
+* Wed Aug 28 2003 Nils Ohlmeier <nils@iptel.org>
+- replaced modules Conflicts with required Ser version
+- fixed doc installation for SuSE pathes
+- added doc for jabber and radius
 
 * Wed Aug 28 2003 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.fraunhofer.de>
 - added doc (READMEs, NEWS, AUTHORS a.s.o)
