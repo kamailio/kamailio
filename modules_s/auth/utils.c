@@ -2,9 +2,15 @@
  * $Id$ 
  */
 
+#include <ctype.h>
 #include "utils.h"
 #include <string.h>
-#include <ctype.h>
+#include "../../dprint.h"
+
+
+/*
+ * Miscelaneous utilities
+ */
 
 
 /*
@@ -18,6 +24,8 @@
 char* find_not_quoted(char* _b, char _c)
 {
 	int quoted = 0;
+	
+	if (!_b) return NULL;
 
 	while (*_b) {
 		if (!quoted) {
@@ -33,20 +41,30 @@ char* find_not_quoted(char* _b, char _c)
 
 
 /*
- * Remove any tabs and spaces from the begining and the end of
- * a string
+ * Remove any leading spaces and tabs
  */
-char* trim(char* _s)
+inline char* trim_leading(char* _s)
+{
+#ifdef PARANOID
+	if (!_s) return NULL;
+#endif
+	     /* Remove spaces and tabs from the begining of string */
+	while ((*_s == ' ') || (*_s == '\t')) _s++;
+	return _s;
+}
+
+
+/*
+ * Remove any trailing spaces and tabs
+ */
+inline char* trim_trailing(char* _s)
 {
 	int len;
 	char* end;
 
-	     /* Null pointer, there is nothing to do */
-	if (!_s) return _s;
-
-	     /* Remove spaces and tabs from the begining of string */
-	while ((*_s == ' ') || (*_s == '\t')) _s++;
-
+#ifdef PARANOID
+	if (!_s) return NULL;
+#endif
 	len = strlen(_s);
 
         end = _s + len - 1;
@@ -56,8 +74,18 @@ char* trim(char* _s)
 	if (end != (_s + len - 1)) {
 		*(end+1) = '\0';
 	}
-
 	return _s;
+}
+
+
+/*
+ * Remove any tabs and spaces from the begining and the end of
+ * a string
+ */
+char* trim(char* _s)
+{
+	_s = trim_leading(_s);
+	return trim_trailing(_s);
 }
 
 
@@ -87,13 +115,9 @@ struct hdr_field* remove_crlf(struct hdr_field* _hf)
 }
 
 
-
 char* strlower(char* _s, int _len)
 {
 	int i;
-#ifdef PARANOID
-	if (!_s) return NULL;
-#endif
 
 	for(i = 0; i < _len; i++) {
 		_s[i] = tolower(_s[i]);
@@ -102,74 +126,54 @@ char* strlower(char* _s, int _len)
 }
 
 
-struct hdr_field* duplicate_hf(const struct hdr_field* _hf)
+char* strupper(char* _s, int _len)
 {
-	struct hf* res;
-#ifdef PARANOID
-	if (!_hf) return NULL;
-#endif
-	res = pkg_malloc(sizeof(struct hf));
-	if (!res) {
-		return NULL;
+	int i;
+
+	for(i = 0; i < _len; i++) {
+		_s[i] = toupper(_s[i]);
 	}
 
-
-	res->s = pkg_malloc(_hf->len + 1);
-	if (!res->s) {
-		pkg_free(res);
-		return NULL;
-	}
-
-	memcpy(res->s, _hf->s, _hf->len + 1);
-	res->len = _hf->len;
-	
-	return res;
-}
-
-
-
-void free_hf(struct hf* _hf)
-{
-#ifdef PARANOID
-	if (!_hf) return;
-#endif
-	pkg_free(_hf->s);
-	pkg_free(_hf);
-}
-
-/*
- * Find the firs occurence of a space, tab, CR or LF
- */
-char* find_lws(char* _s)
-{
-#ifdef PARANOID
-	if (!_s) return NULL;
-#endif
-	while ((*_s != ' ') &&  (*_s != '\t') && 
-	       (*_s != '\r') && (*_s != 'n') && (*_s)) _s++;
 	return _s;
 }
 
 
+
+
 /*
- * Find the first occurence of not quoted LWS
+ * This function returns pointer to the beginning of URI
+ *
+ * PARAMS : char* _b : input buffer
+ * RETURNS: char*    : points immediately after name part
+ *
  */
-char* find_not_quoted_lws(char* _s)
+char* eat_name(char* _b)
 {
 	int quoted = 0;
-#ifdef PARANOID
-	if (!_s) return NULL;
-#endif
-	while (((*_s != ' ') &&  (*_s != '\t') && (*_s != '\r') && (*_s != 'n')) || (level)) {
+	char* b = _b;
+	char* last_ws;
+
+	if (!_b) return NULL;
+
+	     /* < means start of URI, : is URI scheme
+	      * separator, these two characters cannot
+	      * occur in non-quoted name string
+	      */
+	while(*b) {
 		if (!quoted) {
-			if (*_s == '\"') {
-				quoted = 1;
-			} 
+			if ((*b == ' ') || (*b == '\t')) {
+				last_ws = b;
+			} else {
+				if (*b == '<') return b;  /* We will end here if there is a name */
+				if (*b == ':') return last_ws; /* There is no name in this case */
+				if (*b == '\"') quoted = 1;
+			}
 		} else {
-			if ((*_s == '\"') && (*(_s-1) != '\\')) quoted = 0;
+			if ((*b == '\"') && (*(b-1) != '\\')) quoted = 0;
 		}
-		_s++;
-		if (*_s == '\0') break;
+		b++;
 	}
-	return _s;
+
+	return _b;  /* Some error */
 }
+		
