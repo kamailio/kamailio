@@ -29,7 +29,7 @@ void get_to_username(str* _s)
 			/*	_s->s[_s->len] = '\0'; */
 	} else {
 		_s->len = 0;
-	} 
+	}
 	return;
 }
 

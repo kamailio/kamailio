@@ -193,7 +193,7 @@ c_elem_t* cache_get(cache_t* _c, str* _aor)
 	p[_aor->len] = '\0';
 	strlower(p, _aor->len);
 
-	printf("p=%s\n", p);
+	DBG("usr_loc: p=%s\n", p);
 
 	slot_num = hash_func(_c, p, _aor->len);
 	if (slot_num == -1) {
