@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "msg_parser.h"
 #include "parser_f.h"
@@ -351,7 +352,6 @@ int parse_msg(char* buf, unsigned int len, struct sip_msg* msg)
 	struct hdr_field hf;
 	struct via_body vb1, vb2;
 	int offset;
-	int r;
 
 	
 	/* eat crlf from the beginning */

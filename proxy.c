@@ -11,6 +11,7 @@
 #include "dprint.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 
 struct proxy_l* proxies=0;
@@ -19,7 +20,7 @@ struct proxy_l* proxies=0;
 
 /* searches for the proxy named 'name', on port 'port'
    returns: pointer to proxy_l on success or 0 if not found */ 
-struct proxy_l* find_proxy(char *name, unsigned short port)
+static struct proxy_l* find_proxy(char *name, unsigned short port)
 {
 	struct proxy_l* t;
 	for(t=proxies; t; t=t->next)
@@ -31,9 +32,10 @@ struct proxy_l* find_proxy(char *name, unsigned short port)
 
 
 /* copies a hostent structure*, returns 0 on success, <0 on error*/
-int hostent_cpy(struct hostent *dst, struct hostent* src)
+static int hostent_cpy(struct hostent *dst, struct hostent* src)
 {
-	int len, r,ret,i,len2;
+	unsigned len,len2;
+	int r,ret,i;
 
 	/* start copying the host entry.. */
 	/* copy h_name */

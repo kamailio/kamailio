@@ -5,6 +5,7 @@
  *
  */
  
+#include <stdlib.h>
 #include <sys/types.h>
 #include <regex.h>
 #include <netdb.h>
@@ -25,7 +26,7 @@ struct route_elem* rlist[RT_NO];
 
  void free_re(struct route_elem* r)
 {
-	int i;
+	/*int i;*/
 	if (r){
 		/*
 			regfree(&(r->method));
@@ -59,11 +60,10 @@ struct route_elem* init_re()
 }
 
 
-
+/* adds re list to head; re must be null terminated (last re->next=0))*/
 void push(struct route_elem* re, struct route_elem** head)
 {
 	struct route_elem *t;
-	re->next=0;
 	if (*head==0){
 		*head=re;
 		return;
@@ -90,7 +90,7 @@ void clear_rlist(struct route_elem** rl)
 
 /* traverses an expr tree and compiles the REs where necessary) 
  * returns: 0 for ok, <0 if errors */
-int fix_expr(struct expr* exp)
+static int fix_expr(struct expr* exp)
 {
 	regex_t* re;
 	int ret;
@@ -147,7 +147,7 @@ int fix_expr(struct expr* exp)
 
 
 /* adds the proxies in the proxy list & resolves the hostnames */
-int fix_actions(struct action* a)
+static int fix_actions(struct action* a)
 {
 	struct action *t;
 	struct proxy_l* p;
@@ -159,6 +159,7 @@ int fix_actions(struct action* a)
 			case SEND_T:
 					switch(t->p1_type){
 						case NUMBER_ST:
+						case IP_ST: /* for now ip_st==number_st*/
 							tmp=strdup(inet_ntoa(
 										*(struct in_addr*)&t->p1.number));
 							if (tmp==0){
@@ -177,7 +178,8 @@ int fix_actions(struct action* a)
 							break;
 						default:
 							LOG(L_CRIT, "BUG: fix_actions: invalid type"
-									" (should be string or number)\n");
+									"%d (should be string or number)\n",
+										t->type);
 							return E_BUG;
 					}
 					break;
@@ -189,7 +191,7 @@ int fix_actions(struct action* a)
 
 
 /* eval_elem helping function, returns str op param */
-int comp_str(char* str, void* param, int op, int subtype)
+static int comp_str(char* str, void* param, int op, int subtype)
 {
 	int ret;
 	
@@ -221,7 +223,7 @@ error:
 
 
 /* eval_elem helping function, returns a op param */
-int comp_ip(unsigned a, void* param, int op, int subtype)
+static int comp_ip(unsigned a, void* param, int op, int subtype)
 {
 	struct hostent* he;
 	char ** h;
@@ -266,7 +268,7 @@ error:
 
 
 /* returns: 0/1 (false/true) or -1 on error */
-int eval_elem(struct expr* e, struct sip_msg* msg)
+static int eval_elem(struct expr* e, struct sip_msg* msg)
 {
 
 	int ret;
@@ -304,7 +306,7 @@ error:
 
 
 
-int eval_expr(struct expr* e, struct sip_msg* msg)
+static int eval_expr(struct expr* e, struct sip_msg* msg)
 {
 	static int rec_lev=0;
 	int ret;
@@ -359,16 +361,14 @@ int add_rule(struct expr* e, struct action* a, struct route_elem** head)
 {
 	
 	struct route_elem* re;
-	struct hostent * he;
 	int ret;
-	int i,len, len2;
 
 	re=init_re();
 	if (re==0) return E_OUT_OF_MEM;
 	LOG(L_DBG, "add_rule: fixing expr...\n");
 	if ((ret=fix_expr(e))!=0) goto error;
 	LOG(L_DBG, "add_rule: fixing actions...\n");
-	if ((ret=fix_action(a))!=0) goto error;
+	if ((ret=fix_actions(a))!=0) goto error;
 	re->condition=e;
 	re->actions=a;
 	
@@ -404,18 +404,20 @@ void print_rl()
 	struct route_elem* t;
 	int i,j;
 
-	if (rlist==0){
-		printf("the routing table is empty\n");
-		return;
-	}
-	
-	for (t=rlist[0],i=0; t; i++, t=t->next){
-		printf("%2d.condition: ");
-		print_expr(t->condition);
-		printf("\n  -> ");
-		print_action(t->actions);
-		printf("\n    Statistics: tx=%d, errors=%d, tx_bytes=%d\n",
-				t->tx, t->errors, t->tx_bytes);
+	for(j=0; j<RT_NO; j++){
+		if (rlist[j]==0){
+			if (j==0) printf("WARNING: the main routing table is empty\n");
+			continue;
+		}
+		printf("routing table %d:\n",j);
+		for (t=rlist[j],i=0; t; i++, t=t->next){
+			printf("%2d.condition: ",i);
+			print_expr(t->condition);
+			printf("\n  -> ");
+			print_action(t->actions);
+			printf("\n    Statistics: tx=%d, errors=%d, tx_bytes=%d\n",
+					t->tx, t->errors, t->tx_bytes);
+		}
 	}
 
 }

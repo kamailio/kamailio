@@ -22,7 +22,10 @@
 #define CHILD_NO    8
 
 #define RT_NO 10 /* routing tables number */
+#define DEFAULT_RT 0 /* default routing table */
 
 #define MAX_REC_LEV 100 /* maximum number of recursive calls */
+#define ROUTE_MAX_REC_LEV 10 /* maximum number of recursive calls
+							   for route()*/
 
 #endif

@@ -6,7 +6,12 @@
 
 %{
 
+#include <stdlib.h>
 #include "route_struct.h"
+#include "globals.h"
+#include "route.h"
+
+void yyerror(char* s);
 
 %}
 
@@ -17,12 +22,13 @@
 	struct expr* expr;
 	struct action* action;
 	struct net* net;
+	struct route_elem* route_el;
 }
 
 /* terminals */
 
 
-/* keywors */
+/* keywords */
 %token FORWARD
 %token SEND
 %token DROP
@@ -78,6 +84,8 @@
 %type <uval> ipv4
 %type <net> net4
 %type <strval> host
+%type <route_el> rules;
+%type <route_el> rule;
 
 
 
@@ -87,9 +95,9 @@
 cfg:	statements
 	;
 
-statements:	statements statement {printf("got <> <>\n");}
-		| statement {printf("got a statement<>\n"); }
-		| statements error { yyerror(""); }
+statements:	statements statement {}
+		| statement {}
+		| statements error { yyerror(""); YYABORT;}
 	;
 
 statement:	assign_stm CR
@@ -125,20 +133,29 @@ ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 														"address");
 												$$=0;
 											}else{
-												$$=($1<<24)|($3<<16)|
-													($5<<8)|$7;
+												$$=htonl( ($1<<24)|
+													($3<<16)| ($5<<8)|$7 );
 											}
 												}
 	;
 
-route_stm:	ROUTE LBRACE rules RBRACE 
-		| ROUTE LBRACK NUMBER RBRACK LBRACE rules RBRACE
+route_stm:	ROUTE LBRACE rules RBRACE { push($3, &rlist[DEFAULT_RT]); }
+
+		| ROUTE LBRACK NUMBER RBRACK LBRACE rules RBRACE { 
+										if (($3<RT_NO) && ($3>=0)){
+											push($6, &rlist[$3]);
+										}else{
+											yyerror("invalid routing"
+													"table number");
+											YYABORT; }
+										}
 		| ROUTE error { yyerror("invalid  route  statement"); }
 	;
 
-rules:	rules rule
-	| rule
-	| rules error { yyerror("invalid rule"); }
+rules:	rules rule { push($2, &$1); $$=$1; 
+						printf(": rules->rules(%x) rule(%x)\n", $1,$2);}
+	| rule {$$=$1; printf(": rules->rule (%x)\n",$1) }
+	| rules error { $$=0; yyerror("invalid rule"); }
 	 ;
 
 rule:	condition	actions CR {
@@ -146,9 +163,16 @@ rule:	condition	actions CR {
 								printf("expr: "); print_expr($1);
 								printf("\n  -> actions: ");
 								print_action($2); printf("\n");
-							   }
-	| CR  /* null rule */
-	| condition error { yyerror("bad actions in rule"); }
+
+								$$=0;
+								if (add_rule($1, $2, &$$)<0) {
+									yyerror("error calling add_rule");
+									YYABORT;
+								}
+								printf(": rule -> condition actions CR\n");
+							  }
+	| CR  /* null rule */		{ $$=0; printf(": rule-> CR!\n"); }
+	| condition error { $$=0; yyerror("bad actions in rule"); }
 	;
 
 condition:	exp {$$=$1;}
@@ -242,7 +266,7 @@ net4:	ipv4 SLASH ipv4	{ $$=mk_net($1, $3); }
 								yyerror("invalid bit number in netmask");
 								$$=0;
 							}else{
-								$$=mk_net($1, (1<<$3)-1);
+								$$=mk_net($1, htonl((1<<$3)-1));
 							}
 						}
 	| ipv4				{ $$=mk_net($1, 0xffffffff); }
@@ -396,7 +420,7 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 extern int line;
 extern int column;
 extern int startcolumn;
-yyerror(char* s)
+void yyerror(char* s)
 {
 	fprintf(stderr, "parse error (%d,%d-%d): %s\n", line, startcolumn, 
 			column, s);

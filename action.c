@@ -9,6 +9,9 @@
 #include "error.h"
 #include "dprint.h"
 #include "proxy.h"
+#include "forward.h"
+#include "udp_server.h"
+#include "route.h"
 
 #include <netdb.h>
 #include <stdlib.h>
@@ -20,14 +23,17 @@ int do_action(struct action* a, struct sip_msg* msg)
 	int ret;
 	struct sockaddr_in* to;
 	struct proxy_l* p;
+	struct route_elem* re;
 
+	ret=E_BUG;
 	switch (a->type){
 		case DROP_T:
 				ret=0;
 			break;
 		case FORWARD_T:
-			if (a->p1_type!= PROXY_ST){
-				LOG(L_CRIT, "BUG: do_action: bad type %d\n", a->p1_type);
+			if ((a->p1_type!= PROXY_ST)|(a->p2_type!=NUMBER_ST)){
+				LOG(L_CRIT, "BUG: do_action: bad forward() types %d, %d\n",
+						a->p1_type, a->p2_type);
 				ret=E_BUG;
 				break;
 			}
@@ -42,8 +48,9 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_OUT_OF_MEM;
 				break;
 			}
-			if (a->p1_type!= PROXY_ST){
-				LOG(L_CRIT, "BUG: do_action: bad type %d\n", a->p1_type);
+			if ((a->p1_type!= PROXY_ST)|(a->p2_type!=NUMBER_ST)){
+				LOG(L_CRIT, "BUG: do_action: bad send() types %d, %d\n",
+						a->p1_type, a->p2_type);
 				ret=E_BUG;
 				break;
 			}
@@ -60,7 +67,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 			to->sin_addr.s_addr=*((long*)p->host.h_addr_list[p->addr_idx]);
 			p->tx++;
 			p->tx_bytes+=msg->len;
-			ret=udp_send(msg->orig, msg->len, to, sizeof(struct sockaddr));
+			ret=udp_send(msg->orig, msg->len, (struct sockaddr*)to,
+					sizeof(struct sockaddr_in));
 			free(to);
 			if (ret<0){
 				p->errors++;
@@ -69,20 +77,56 @@ int do_action(struct action* a, struct sip_msg* msg)
 			
 			break;
 		case LOG_T:
-			LOG(a->p2.number, a->p1.string);
+			if ((a->p1_type!=NUMBER_ST)|(a->p2_type!=STRING_ST)){
+				LOG(L_CRIT, "BUG: do_action: bad log() types %d, %d\n",
+						a->p1_type, a->p2_type);
+				ret=E_BUG;
+				break;
+			}
+			LOG(a->p1.number, a->p2.string);
 			ret=1;
 			break;
 		case ERROR_T:
+			if ((a->p1_type!=STRING_ST)|(a->p2_type!=STRING_ST)){
+				LOG(L_CRIT, "BUG: do_action: bad error() types %d, %d\n",
+						a->p1_type, a->p2_type);
+				ret=E_BUG;
+				break;
+			}
 			LOG(L_NOTICE, "WARNING: do_action: error(\"%s\", \"%s\") "
 					"not implemented yet\n", a->p1.string, a->p2.string);
 			ret=1;
 			break;
 		case ROUTE_T:
-			LOG(L_NOTICE, "WARNING: do_action: route(%d) not implemented "
-							"yet\n", a->p1.number);
+			if (a->p1_type!=NUMBER_ST){
+				LOG(L_CRIT, "BUG: do_action: bad route() type %d\n",
+						a->p1_type);
+				ret=E_BUG;
+				break;
+			}
+			if ((a->p1.number>RT_NO)||(a->p1.number<0)){
+				LOG(L_ERR, "ERROR: invalid routing table number in"
+							"route(%d)\n", a->p1.number);
+				ret=E_CFG;
+				break;
+			}
+			re=route_match(msg, &rlist[a->p1.number]);
+			if (re==0){
+				LOG(L_INFO, "WARNING: do_action: route(%d): no new route"
+						" found\n", a->p1.number);
+				ret=1;
+				break;
+			}
+			ret=((ret=run_actions(re->actions, msg))<0)?ret:1;
 			break;
 		case EXEC_T:
-			LOG(L_NOTICE, "WARNING: exec(\"%s\") not fully implemented,",
+			if (a->p1_type!=STRING_ST){
+				LOG(L_CRIT, "BUG: do_action: bad exec() type %d\n",
+						a->p1_type);
+				ret=E_BUG;
+				break;
+			}
+			LOG(L_NOTICE, "WARNING: exec(\"%s\") not fully implemented,"
 						" using dumb version...\n", a->p1.string);
 			ret=system(a->p1.string);
 			if (ret!=0){
@@ -103,7 +147,16 @@ int run_actions(struct action* a, struct sip_msg* msg)
 {
 	struct action* t;
 	int ret;
-	
+	static int rec_lev=0;
+
+	rec_lev++;
+	if (rec_lev>ROUTE_MAX_REC_LEV){
+		LOG(L_ERR, "WARNING: too many recursive routing table lookups (%d)"
+					" giving up!\n", rec_lev);
+		ret=E_UNSPEC;
+		goto error;
+	}
+		
 	if (a==0){
 		LOG(L_ERR, "WARNING: run_actions: null action list\n");
 		ret=0;
@@ -114,9 +167,13 @@ int run_actions(struct action* a, struct sip_msg* msg)
 		if(ret==0) break;
 		else if (ret<0){ ret=-1; goto error; }
 	}
-	ret=0;
+	
+	rec_lev--;
+	return 0;
+	
 
 error:
+	rec_lev--;
 	return ret;
 }
 

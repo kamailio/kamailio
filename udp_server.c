@@ -2,6 +2,8 @@
  * $Id$
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -11,6 +13,7 @@
 #include "udp_server.h"
 #include "config.h"
 #include "dprint.h"
+#include "receive.h"
 
 
 int udp_sock;
@@ -33,7 +36,7 @@ int udp_init(unsigned long ip, unsigned short port)
 
 	udp_sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (udp_sock==-1){
-		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_init: socket: %s\n", strerror(errno));
 		goto error;
 	}
 	/* set sock opts? */
@@ -41,12 +44,12 @@ int udp_init(unsigned long ip, unsigned short port)
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 					(void*)&optval, sizeof(optval)) ==-1)
 	{
-		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_init: setsockopt: %s\n", strerror(errno));
 		goto error;
 	}
 
 	if (bind(udp_sock, (struct sockaddr*) addr, sizeof(struct sockaddr))==-1){
-		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_init: bind: %s\n", strerror(errno));
 		goto error;
 	}
 
@@ -62,7 +65,7 @@ error:
 
 int udp_rcv_loop()
 {
-	int len;
+	unsigned len;
 	char buf[BUF_SIZE+1];
 	struct sockaddr* from;
 	int fromlen;
@@ -77,7 +80,8 @@ int udp_rcv_loop()
 		fromlen=sizeof(struct sockaddr);
 		len=recvfrom(udp_sock, buf, BUF_SIZE, 0, from, &fromlen);
 		if (len==-1){
-			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom: %s\n", strerror());
+			LOG(L_ERR, "ERROR: udp_rcv_loop:recvfrom: %s\n",
+						strerror(errno));
 			if (errno==EINTR)	goto skip;
 			else goto error;
 		}
@@ -101,14 +105,14 @@ error:
 
 
 /* which socket to use? main socket or new one? */
-int udp_send(char *buf, int len, struct sockaddr*  to, int tolen)
+int udp_send(char *buf, unsigned len, struct sockaddr*  to, unsigned tolen)
 {
 
 	int n;
 again:
 	n=sendto(udp_sock, buf, len, 0, to, tolen);
 	if (n==-1){
-		LOG(L_ERR, "ERROR: udp_send: sendto: %s\n", strerror());
+		LOG(L_ERR, "ERROR: udp_send: sendto: %s\n", strerror(errno));
 		if (errno==EINTR) goto again;
 	}
 	return n;

@@ -4,6 +4,8 @@
 
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -38,17 +40,18 @@ int check_address(unsigned long ip, char *name, int resolver)
 	if (resolver&DO_DNS){ 
 		/* try all names ips */
 		he=gethostbyname(name);
-		for(i=0; he->h_addr_list[i];i++){
+		for(i=0;he && he->h_addr_list[i];i++){
 			if (*(unsigned long*)he->h_addr_list[i]==ip)
 				return 0;
 		}
 	}
 	if (resolver&DO_REV_DNS){
+	print_ip(ip);
 		/* try reverse dns */
 		he=gethostbyaddr((char*)&ip, sizeof(ip), AF_INET);
-		if (strcmp(he->h_name, name)==0)
+		if (he && (strcmp(he->h_name, name)==0))
 			return 0;
-		for (i=0; he->h_aliases[i];i++){
+		for (i=0; he && he->h_aliases[i];i++){
 			if (strcmp(he->h_aliases[i],name)==0)
 				return 0;
 		}
@@ -58,9 +61,7 @@ int check_address(unsigned long ip, char *name, int resolver)
 
 
 
-int forward_request( struct sip_msg* msg,
-					 struct proxy_l * p,
-					 unsigned long source_ip)
+int forward_request( struct sip_msg* msg, struct proxy_l * p)
 {
 	unsigned int len, new_len, via_len, received_len;
 	char line_buf[MAX_VIA_LINE_SIZE];
@@ -68,12 +69,14 @@ int forward_request( struct sip_msg* msg,
 	char* new_buf;
 	char* orig;
 	char* buf;
-	int offset, s_offset, size;
+	unsigned int offset, s_offset, size;
 	struct sockaddr_in* to;
+	unsigned long source_ip;
 
 	orig=msg->orig;
 	buf=msg->buf;
 	len=msg->len;
+	source_ip=msg->src_ip;
 	received_len=0;
 	new_buf=0;
 	to=0;
@@ -146,7 +149,8 @@ int forward_request( struct sip_msg* msg,
 
 	p->tx++;
 	p->tx_bytes+=new_len;
-	if (udp_send(new_buf, new_len, to, sizeof(struct sockaddr))==-1){
+	if (udp_send(new_buf, new_len, (struct sockaddr*) to,
+				sizeof(struct sockaddr_in))==-1){
 			p->errors++;
 			p->ok=0;
 			goto error;
@@ -171,7 +175,7 @@ int forward_reply(struct sip_msg* msg)
 
 	unsigned int new_len, via_len,r;
 	char* new_buf;
-	int offset, s_offset, size;
+	unsigned offset, s_offset, size;
 	struct hostent* he;
 	struct sockaddr_in* to;
 	char* orig;
@@ -245,7 +249,8 @@ int forward_reply(struct sip_msg* msg)
 	to->sin_port = (msg->via2.port)?htons(msg->via2.port):htons(SIP_PORT);
 	to->sin_addr.s_addr=*((long*)he->h_addr_list[0]);
 	
-	if (udp_send(new_buf,new_len, to, sizeof(struct sockaddr))==-1)
+	if (udp_send(new_buf,new_len, (struct sockaddr*) to, 
+					sizeof(struct sockaddr_in))==-1)
 		goto error;
 	
 	free(new_buf);

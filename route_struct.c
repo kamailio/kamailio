@@ -8,6 +8,7 @@
 #include  "route_struct.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <netinet/in.h>
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
@@ -96,7 +97,6 @@ error:
 
 void print_ip(unsigned ip)
 {
-	ip=htonl(ip);
 	printf("%d.%d.%d.%d", ((unsigned char*)&ip)[0],
 						  ((unsigned char*)&ip)[1],
 						  ((unsigned char*)&ip)[2],
@@ -162,7 +162,7 @@ void print_expr(struct expr* exp)
 					print_ip(exp->r.intval);
 					break;
 			default:
-					printf("UNKNOWN");
+					printf("type<%d>", exp->subtype);
 		}
 	}else if (exp->type==EXP_T){
 		switch(exp->op){

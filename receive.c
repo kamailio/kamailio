@@ -3,12 +3,14 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "receive.h"
 #include "dprint.h"
 #include "route.h"
 #include "msg_parser.h"
 #include "forward.h"
+#include "action.h"
 
 
 int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
@@ -50,7 +52,7 @@ int receive_msg(char* buf, unsigned int len, unsigned long src_ip)
 		re->tx++;
 		/* send msg */
 		DBG(" found route \n");
-		if (run_actions(re->actions)<0){
+		if (run_actions(re->actions, &msg)<0){
 			LOG(L_WARN, "WARNING: receive_msg: "
 					"error while trying actions\n");
 			goto error;

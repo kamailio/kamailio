@@ -214,7 +214,7 @@ EAT_ABLE	[\ \t\b\r]
 static char* addstr(char * src, char ** dest)
 {
 	char *tmp;
-	int len1, len2;
+	unsigned len1, len2;
 	
 	if (*dest==0){
 		*dest=strdup(src);
