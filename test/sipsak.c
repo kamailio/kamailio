@@ -427,7 +427,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	}
 	if (trace & !fbool)
 		create_msg(buff, REQ_OPT, lport);
-	if(maxforw)
+	if(maxforw!=-1)
 		set_maxforw(buff, maxforw);
 	if(vbool)
 		add_via(buff, lport);
@@ -460,7 +460,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 		for (i = 0; i < nretries; i++)
 		{
 			if (trace) {
-				set_maxforw(buff, i+1);
+				set_maxforw(buff, i);
 			}
 			else if (usrloc && verbose) {
 				switch (usrlocstep) {
@@ -918,6 +918,7 @@ int main(int argc, char *argv[])
 			printf("warning: Via-Line is needed for tracing. Ignoring -i\n");
 			vbool=1;
 		}
+		if (maxforw==-1) maxforw=0;
 	}
 	else if (ubool) {
 		if (!username || !sbool || nameend==-1) {
@@ -936,8 +937,8 @@ int main(int argc, char *argv[])
 			namebeg=0;
 	}
 	else if (!fbool & !sbool)
-		printf("error: you have to give the file to send and the sip:uri at least.\n"
-			"       see 'sipsak -h' for more help.\n");
+		printf("error: you have to give the file to send and the sip:uri at least.\n");
+		print_help();
 	/* here we go...*/
 	shoot(buff, address, lport, rport, maxforw, tbool, vbool, fbool, ubool, dbool);
 
