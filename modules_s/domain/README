@@ -1,0 +1,40 @@
+#
+# README of domain module -- Juha Heinanen Dec 27, 2002
+#
+
+Domain module implements checks that based on domain table determine if
+a host part of an URI is "local" or not.  A "local" domain is one that
+the proxy is responsible of.
+
+Depends on:
+----------
+
+mysql
+
+Exported parameters:
+-------------------
+
+Name:	 domain_table
+Type:    string
+Default: "realm"
+Desc:    Name of table containing names of local realms that the proxy
+	 is responsible for.  Local users must have in their sip uri a
+	 host part that is equal to one of these realms.
+
+Name:	 domain_domain_column
+Type:	 string
+Default: "realm"
+Desc:	 Name of column containing realms in realm table
+
+Exported Functions:
+------------------
+
+Name:	is_from_local
+Params:	-
+Desc:	Checks based on realm table if host part of From header uri is
+	one of the local realms that the proxy is responsible for
+
+Name:	is_uri_host_local
+Params:	-
+Desc:	Checks based on realm table if request uri belongs to one of the
+	local realms
