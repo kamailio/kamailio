@@ -77,7 +77,7 @@ static int extract_mediaip(str *, str *);
 static int extract_mediaport(str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, str *, int *, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int *, int);
-static int get_rtpp_port(str *, int);
+static char *send_rtpp_command(str *, char, int);
 static int force_rtp_proxy_f(struct sip_msg *, char *, char *);
 
 static void timer(unsigned int, void *);
@@ -117,14 +117,15 @@ static int
 mod_init(void)
 {
 
-	get_all_ucontacts =
-	    (int (*)(void *, int))find_export("~ul_get_all_ucontacts", 1, 0);
-	if (!get_all_ucontacts) {
-		LOG(L_ERR, "This module requires usrloc module\n");
-		return -1;
-	}
-	if (natping_interval > 0)
+	if (natping_interval > 0) {
+		get_all_ucontacts =
+		    (int (*)(void *, int))find_export("~ul_get_all_ucontacts", 1, 0);
+		if (!get_all_ucontacts) {
+			LOG(L_ERR, "This module requires usrloc module\n");
+			return -1;
+		}
 		register_timer(timer, NULL, natping_interval);
+	}
 
 	return 0;
 }
@@ -171,7 +172,6 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	int offset, len, len1;
 	char *cp, *buf, temp[2];
 	contact_t* c;
-	enum {ST1, ST2, ST3, ST4, ST5};
 	struct lump* anchor;
 	struct sip_uri uri;
 
@@ -190,7 +190,8 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "fix_nated_contact: Error while parsing Contact URI\n");
 		return -1;
 	}
-
+	if (uri.proto != PROTO_UDP && uri.proto != PROTO_NONE)
+		return 0;
 	if (uri.port.len == 0)
 		uri.port.s = uri.host.s + uri.host.len;
 
@@ -200,7 +201,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 
 	cp = ip_addr2a(&msg->rcv.src_ip);
-	len = c->uri.len + strlen(cp) + 6 /* :port */ - (uri.host.len + uri.port.len) + 1;
+	len = c->uri.len + strlen(cp) + 6 /* :port */ - (uri.port.s + uri.port.len - uri.host.s) + 1;
 	buf = pkg_malloc(len);
 	if (buf == NULL) {
 		LOG(L_ERR, "ERROR: fix_nated_contact: out of memory\n");
@@ -250,7 +251,7 @@ fixup_str2int( void** param, int param_no)
 #define	FIX_MEDIAIP	0x02
 
 #define ADIRECTION	"a=direction:active\r\n"
-#define	ADIRECTION_LEN	21
+#define	ADIRECTION_LEN	20
 
 #define AOLDMEDIAIP	"a=oldmediaip:"
 #define AOLDMEDIAIP_LEN	13
@@ -289,12 +290,12 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			return -1;
 		}
 		memcpy(buf, ADIRECTION, ADIRECTION_LEN);
-		if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN - 1, 0) == NULL) {
+		if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0) == NULL) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
 			pkg_free(buf);
 			return -1;
 		}
-		added_len += ADIRECTION_LEN - 1;
+		added_len += ADIRECTION_LEN;
 	}
 
 	if (level & FIX_MEDIAIP) {
@@ -556,13 +557,14 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	return 0;
 }
 
-static int
-get_rtpp_port(str *callid, int create)
+static char *
+send_rtpp_command(str *callid, char command, int getreply)
 {
 	struct sockaddr_un addr;
 	int fd, len;
 	struct iovec v[3];
-	char buf[16];
+	static char buf[16];
+	char cmd[2] = {' ', ' '};
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_LOCAL;
@@ -574,19 +576,17 @@ get_rtpp_port(str *callid, int create)
 
 	fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (fd < 0) {
-		LOG(L_ERR, "ERROR: get_rtpp_port: can't create socket\n");
-		return -1;
+		LOG(L_ERR, "ERROR: send_rtpp_command: can't create socket\n");
+		return NULL;
 	}
 	if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 		close(fd);
-		LOG(L_ERR, "ERROR: get_rtpp_port: can't connect to RTP proxy\n");
-		return -1;
+		LOG(L_ERR, "ERROR: send_rtpp_command: can't connect to RTP proxy\n");
+		return NULL;
 	}
 
-	if (create == 0)
-		v[0].iov_base = "L ";
-	else
-		v[0].iov_base = "U ";
+	cmd[0] = command;
+	v[0].iov_base = cmd;
 	v[0].iov_len = 2;
 	v[1].iov_base = callid->s;
 	v[1].iov_len = callid->len;
@@ -597,21 +597,23 @@ get_rtpp_port(str *callid, int create)
 	} while (len == -1 && errno == EINTR);
 	if (len <= 0) {
 		close(fd);
-		LOG(L_ERR, "ERROR: get_rtpp_port: can't send command to a RTP proxy\n");
-		return -1;
+		LOG(L_ERR, "ERROR: send_rtpp_command: can't send command to a RTP proxy\n");
+		return NULL;
 	}
 
-	do {
-		len = read(fd, buf, sizeof(buf) - 1);
-	} while (len == -1 && errno == EINTR);
-	close(fd);
-	if (len <= 0) {
-		LOG(L_ERR, "ERROR: get_rtpp_port: can't read reply from a RTP proxy\n");
-		return -1;
+	if (getreply != 0) {
+		do {
+			len = read(fd, buf, sizeof(buf) - 1);
+		} while (len == -1 && errno == EINTR);
+		close(fd);
+		if (len <= 0) {
+			LOG(L_ERR, "ERROR: send_rtpp_command: can't read reply from a RTP proxy\n");
+			return NULL;
+		}
+		buf[len] = '\0';
 	}
-	buf[len] = '\0';
 
-	return atoi(buf);
+	return buf;
 }
 
 static int
@@ -620,6 +622,7 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	str body, body1, oldport, oldip, oldip1, newport, newip;
 	int create, port, cldelta;
 	char buf[16];
+	char *cp;
 
 	if (msg->first_line.type == SIP_REQUEST &&
 	    msg->first_line.u.request.method_value == METHOD_INVITE) {
@@ -648,7 +651,10 @@ force_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 		LOG(L_ERR, "ERROR: force_rtp_proxy: can't extract media port from the message\n");
 		return -1;
 	}
-	port = get_rtpp_port(&(msg->callid->body), create);
+	cp = send_rtpp_command(&(msg->callid->body), create ? 'U' : 'L', 1);
+	if (cp == NULL)
+		return -1;
+	port = atoi(cp);
 	if (port <= 0 || port > 65535)
 		return -1;
 
@@ -723,17 +729,17 @@ timer(unsigned int ticks, void *param)
 			LOG(L_ERR, "ERROR: nathelper::timer: can't parse contact uri\n");
 			continue;
 		}
-		if (curi.proto != PROTO_UDP)
+		if (curi.proto != PROTO_UDP && curi.proto != PROTO_NONE)
 			continue;
 		if (curi.port_no == 0)
 			curi.port_no = SIP_PORT;
-		he = sip_resolvehost(&curi.host, &curi.port_no, curi.proto);
+		he = sip_resolvehost(&curi.host, &curi.port_no, PROTO_UDP);
 		if (he == NULL){
 			LOG(L_ERR, "ERROR: nathelper::timer: can't resolve_hos\n");
 			continue;
 		}
 		hostent2su(&to, he, 0, curi.port_no);
-		send_sock = get_send_socket(&to, curi.proto);
+		send_sock = get_send_socket(&to, PROTO_UDP);
 		if (send_sock == NULL) {
 			LOG(L_ERR, "ERROR: nathelper::timer: can't get sending socket\n");
 			continue;
