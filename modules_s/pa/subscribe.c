@@ -295,7 +295,7 @@ int check_message(struct sip_msg* _m)
 			parse_event(_m->event);
 		event = (event_t*)(_m->event->parsed);
 
-		if (event->parsed != accepts_to_event_package[acc]) {
+		if (event && (event->parsed != accepts_to_event_package[acc])) {
 			char *accept_s = NULL;
 			int accept_len = 0;
 			if (_m->accept && _m->accept->body.len) {
@@ -527,7 +527,7 @@ int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
      struct pdomain* d = (struct pdomain*)_domain;
      struct presentity *presentity;
      str p_uri;
-     str from;
+     struct to_body *from = NULL;
      int e = 0;
 
 
@@ -542,8 +542,8 @@ int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
 	  return -1;
      }
 
-     from = get_from(_m)->uri;
-     if (pa_extract_aor(&from, &p_uri) < 0) {
+     from = get_from(_m);
+     if (!from || (pa_extract_aor(&from->uri, &p_uri) < 0)) {
 	  LOG(L_ERR, "pa_handle_registration(): Error while extracting Address Of Record\n");
 	  goto error;
      }
@@ -552,8 +552,9 @@ int pa_handle_registration(struct sip_msg* _m, char* _domain, char* _s2)
 	  e = ((exp_body_t*)_m->expires->parsed)->val;
      }
 
-     LOG(L_ERR, "pa_handle_registration: from=%.*s p_uri=%.*s expires=%d\n", 
-	 from.len, from.s, p_uri.len, p_uri.s, e);
+     if (from)
+       LOG(L_ERR, "pa_handle_registration: from=%.*s p_uri=%.*s expires=%d\n", 
+	   from->uri.len, from->uri.s, p_uri.len, p_uri.s, e);
 
      lock_pdomain(d);
 	
