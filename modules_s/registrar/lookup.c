@@ -93,22 +93,27 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	ptr = r->contacts;
 	while ((ptr) && (ptr->expires <= act_time)) ptr = ptr->next;
 	
-	if (ptr && (rwrite(_m, &ptr->c) < 0)) {
-		LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
-		ul_unlock_udomain((udomain_t*)_t);
-		return -6;
+	if (ptr) {
+		if (rwrite(_m, &ptr->c) < 0) {
+			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
+			ul_unlock_udomain((udomain_t*)_t);
+			return -6;
+		}
+		ptr = ptr->next;
+	} else {
+		     /* All contacts expired */
+		return -7;
 	}
 	
 	     /* Append branches if enabled */
 	if (!append_branches) goto skip;
 
-	if (ptr) ptr = ptr->next;
 	while(ptr) {
 		if (ptr->expires > act_time) {
 			if (append_branch(_m, ptr->c.s, ptr->c.len) == -1) {
 				LOG(L_ERR, "lookup(): Error while appending a branch\n");
 				ul_unlock_udomain((udomain_t*)_t);
-				return -7;
+				return -8;
 			}
 		} 
 		ptr = ptr->next;
