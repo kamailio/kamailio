@@ -47,17 +47,19 @@
 #define MESSAGE_500 "Server Internal Error"
 
 
-static inline int get_ha1(struct username* _username, str* _domain, char* _table, char* _ha1)
+static inline int get_ha1(struct username* _username, str* _domain, char* _table, char* _ha1, char* _rpid)
 {
 	db_key_t keys[2];
 	db_val_t vals[2];
-	db_key_t col[1];
+	db_key_t col[2];
 	db_res_t* res;
 	str result;
+	int n, nc;
 
 	keys[0] = user_column;
 	keys[1] = domain_column;
 	col[0] = (_username->domain.len && !calc_ha1) ? (pass_column_2) : (pass_column);	
+	col[1] = rpid_column;
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = 0;
@@ -68,8 +70,10 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 	VAL_STR(vals + 1).s = _domain->s;
 	VAL_STR(vals + 1).len = _domain->len;
 
+	n = (use_domain ? 2 : 1);
+	nc = (use_rpid ? 2 : 1);
 	db_use_table(db_handle, _table);
-	if (db_query(db_handle, keys, 0, vals, col, (use_domain ? 2 : 1), 1, 0, &res) < 0) {
+	if (db_query(db_handle, keys, 0, vals, col, n, nc, 0, &res) < 0) {
 		LOG(L_ERR, "get_ha1(): Error while querying database\n");
 		return -1;
 	}
@@ -94,10 +98,17 @@ static inline int get_ha1(struct username* _username, str* _domain, char* _table
 		_ha1[result.len] = '\0';
 	}
 
+	if (use_rpid && VAL_NULL(&(res->rows[0].values[1])) != 1) {
+		result.s = (char*)VAL_STRING(&(res->rows[0].values[1]));
+		result.len = strlen(result.s);
+		memcpy(_rpid, result.s, result.len);
+		_rpid[result.len] = '\0';
+		DBG("RPID: %s\n", _rpid);
+	}
+
 	db_free_query(db_handle, res);
 	return 0;
 }
-
 
 /*
  * Calculate the response and compare with the given response string
@@ -147,6 +158,7 @@ static inline int check_response(dig_cred_t* _cred, str* _method, char* _ha1)
 static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _hftype)
 {
 	char ha1[256];
+	char rpid_buffer[MAX_RPID_LEN];
 	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
@@ -166,7 +178,7 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username, &domain, _table, ha1);
+	res = get_ha1(&cred->digest.username, &domain, _table, ha1, rpid_buffer);
         if (res < 0) {
 		     /* Error while accessing the database */
 		if (sl_reply(_m, (char*)500, MESSAGE_500) == -1) {
@@ -178,12 +190,16 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 		return -1;
 	}
 
+	if (use_rpid) {
+		rpid.s = rpid_buffer;
+		rpid.len = strlen(rpid_buffer);
+	} else {
+		rpid.s = NULL;
+		rpid.len = 0;
+	}
+
 	     /* Recalculate response, it must be same to authorize sucessfully */
         if (!check_response(&(cred->digest), &_m->first_line.u.request.method, ha1)) {
-		     /* Not supported yet */
-		rpid.s = 0;
-		rpid.len = 0;
-
 		ret = post_auth_func(_m, h, &rpid);
 		switch(ret) {
 		case ERROR:          return 0;

@@ -108,6 +108,22 @@ modparam("auth_db", "password_column", "password")
 	    </example>
 	</section>
 	<section>
+	    <title><varname>rpid_column</varname> (string)</title>
+	    <para>
+		This is the name of the column holding information for the Remote-Party-ID header field. Default value is fine for most
+		people. Use the parameter if you really need to change it.
+	    </para>
+	    <para>
+		Default value is <quote>rpid</quote>.
+	    </para>
+	    <example>
+		<title><varname>rpid_column</varname> usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "rpid_column", "remote_party_id")
+</programlisting>
+	    </example>
+	</section>
+	<section>
 	    <title><varname>calculate_ha1</varname> (integer)</title>
 	    <para>
 		This parameter tells server whether it should expect plaintext passwords in the
@@ -154,6 +170,24 @@ modparam("auth_db", "calculate_ha1", 1)
 		<title><varname>password_column_2</varname> usage</title>
 		<programlisting format="linespecific">
 modparam("auth_db", "password_column_2", "ha1_2")
+</programlisting>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>use_rpid</varname> (integer)</title>
+	    <para>
+		This parameter specifies  whether the server should fetch a value for the Remote-Party-ID header field from the database.
+	    </para>
+	    <para>
+		If the parameter is set to 1 the server expects to find a value for this header in the column specified by the <varname>rpid_column</varname> parameter.
+	    </para>
+	    <para>
+		Default value of this parameter is 0.
+	    </para>
+	    <example>
+		<title><varname>use_rpid</varname>usage</title>
+		<programlisting format="linespecific">
+modparam("auth_db", "use_rpid", 1)
 </programlisting>
 	    </example>
 	</section>
