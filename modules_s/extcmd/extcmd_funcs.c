@@ -40,8 +40,8 @@
 #include "../../str.h"
 #include "../../data_lump_rpl.h"
 #include "../../mem/shm_mem.h"
+#include "../../parser/parse_content.h"
 #include "../tm/tm_load.h"
-#include "../im/im_load.h"
 
 
 #define NO_CMD   0
@@ -72,7 +72,6 @@ typedef struct anchor_struct
 
 /* global variable */
 struct tm_binds tmb;
-struct im_binds imb;
 int    rpl_pipe[2];
 int    req_pipe[2];
 
@@ -109,7 +108,7 @@ inline int extcmd_add_contact(struct sip_msg* msg , str* to_uri)
 
 	buf = pkg_malloc( len );
 	if(!buf) {
-		LOG(L_ERR,"ERROR:im_add_contact: out of memory! \n");
+		LOG(L_ERR,"ERROR:extcmd_add_contact: out of memory! \n");
 		return -1;
 	}
 
@@ -122,7 +121,7 @@ inline int extcmd_add_contact(struct sip_msg* msg , str* to_uri)
 
 	lump = build_lump_rpl( buf , len );
 	if(!lump) {
-		LOG(L_ERR,"ERROR:sms_add_contact: unable to build lump_rpl! \n");
+		LOG(L_ERR,"ERROR:extcmd_add_contact: unable to build lump_rpl! \n");
 		pkg_free( buf );
 		return -1;
 	}
@@ -147,20 +146,37 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	char   *p;
 
 	buf = 0;
-
-	if ( imb.im_extract_body(msg,&body)==-1 )
-	{
-		LOG(L_ERR,"ERROR:im_dump_msg_to_file:cannot extract body from msg!\n");
+	/* get th content-type and content-length headers */
+	if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
+	|| !msg->content_type || !msg->content_length) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: fetching content-lenght and "
+			"content_type failed! -> parse error or headers missing!\n");
 		goto error;
 	}
 
+	/* check the content-type value */
+	if ( (int)msg->content_type->parsed!=CONTENT_TYPE_TEXT_PLAIN
+	&& (int)msg->content_type->parsed!=CONTENT_TYPE_MESSAGE_CPIM ) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: invalid content-type for a "
+			"message request! type found=%d\n",(int)msg->content_type->parsed);
+		goto error;
+	}
+
+	/* get the message's body */
+	body.s = get_body( msg );
+	if (body.s==0) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot extract body from msg!\n");
+		goto error;
+	}
+	body.len = (int)msg->content_length->parsed;
+
 	if (!msg->from) {
-		LOG(L_ERR,"ERROR:im_dump_msg_to_file: no FROM header found!\n");
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: no FROM header found!\n");
 		goto error;
 	}
 
 	if (!msg->to) {
-		LOG(L_ERR,"ERROR:im_dump_msg_to_file: no TO header found!\n");
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: no TO header found!\n");
 		goto error;
 	}
 
@@ -169,13 +185,13 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 	p = translate_pointer(msg->orig,msg->buf,msg->from->body.s);
 	buf = (char*)pkg_malloc(msg->from->body.len+1);
 	if (!buf) {
-		LOG(L_ERR,"ERROR:im_dump_msg_to_file: no free pkg memory\n");
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: no free pkg memory\n");
 		goto error;
 	}
 	memcpy(buf,p,msg->from->body.len+1);
 	parse_to(buf,buf+msg->from->body.len+1,&from_parsed);
 	if (from_parsed.error!=PARSE_OK ) {
-		LOG(L_ERR,"ERROR:im_dump_msg_to_file: cannot parse from header\n");
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot parse from header\n");
 		goto error;
 	}
 	/* we are not intrested in from param-> le's free them now*/
@@ -186,7 +202,7 @@ int dump_request(struct sip_msg *msg, char *para1, char *para2)
 
 	/* adds contact header into reply */
 	if (extcmd_add_contact(msg,&(get_to(msg)->uri))==-1) {
-		LOG(L_ERR,"ERROR:im_dump_msg_to_file:can't build contact for reply\n");
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: can't build contact for reply\n");
 		goto error;
 	}
 

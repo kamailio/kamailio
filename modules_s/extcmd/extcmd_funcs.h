@@ -30,9 +30,9 @@
 #define _H_EXTERNAL_COMMANDS
 
 #include "../../parser/parse_uri.h"
+#include "../tm/tm_load.h"
 
 extern struct tm_binds tmb;
-extern struct im_binds imb;
 extern int    rpl_pipe[2];
 extern int    req_pipe[2];
 

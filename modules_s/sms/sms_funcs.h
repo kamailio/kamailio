@@ -33,7 +33,6 @@
 #include "../../str.h"
 #include <termios.h>
 #include "../tm/tm_load.h"
-#include "../im/im_load.h"
 
 
 #define MAX_MODEMS    5       /* max number of modems */
@@ -114,7 +113,6 @@ extern int    *queued_msgs;
 extern int    use_contact;
 extern int    sms_report_type;
 extern struct tm_binds tmb;
-extern struct im_binds imb;
 
 void modem_process(struct modem*);
 int  push_on_network(struct sip_msg*, int);

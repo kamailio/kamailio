@@ -36,8 +36,8 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_content.h"
 #include "../../data_lump_rpl.h"
-#include "../im/im_funcs.h"
 #include "../tm/t_hooks.h"
 #include "../tm/uac.h"
 #include "sms_funcs.h"
@@ -58,7 +58,6 @@ int *queued_msgs;
 int use_contact;
 int sms_report_type;
 struct tm_binds tmb;
-struct im_binds imb;
 
 
 #define ERR_NUMBER_TEXT " is an invalid number! Please resend your SMS "\
@@ -154,11 +153,30 @@ int push_on_network(struct sip_msg *msg, int net)
 	int    flag;
 	int    len;
 
-	if ( imb.im_extract_body(msg,&body)==-1 )
-	{
-		LOG(L_ERR,"ERROR:sms_push_on_net:cannot extract body from msg!\n");
-		goto error1;
+	buf = 0;
+	/* get th content-type and content-length headers */
+	if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
+	|| !msg->content_type || !msg->content_length) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: fetching content-lenght and "
+			"content_type failed! -> parse error or headers missing!\n");
+		goto error;
 	}
+
+	/* check the content-type value */
+	if ( (int)msg->content_type->parsed!=CONTENT_TYPE_TEXT_PLAIN
+	&& (int)msg->content_type->parsed!=CONTENT_TYPE_MESSAGE_CPIM ) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: invalid content-type for a "
+			"message request! type found=%d\n",(int)msg->content_type->parsed);
+		goto error;
+	}
+
+	/* get the message's body */
+	body.s = get_body( msg );
+	if (body.s==0) {
+		LOG(L_ERR,"ERROR:extcmd:dump_msg: cannot extract body from msg!\n");
+		goto error;
+	}
+	body.len = (int)msg->content_length->parsed;
 
 	if (!msg->from) {
 		LOG(L_ERR,"ERROR:sms_push_on_net: no FROM header found!\n");

@@ -47,7 +47,6 @@
 #include "../../mem/shm_mem.h"
 #include "../../parser/parse_uri.h"
 #include "../../data_lump_rpl.h"
-#include "../im/im_load.h"
 #include "../tm/tm_load.h"
 #include "extcmd_funcs.h"
 
@@ -69,7 +68,6 @@ int  my_port = 7890;
 
 /* global variables */
 struct tm_binds tmb;
-struct im_binds imb;
 int    server_sock;
 int    rpl_pipe[2];
 int    req_pipe[2];
@@ -118,7 +116,6 @@ struct module_exports exports= {
 static int extcmd_init(void)
 {
 	load_tm_f  load_tm;
-	load_im_f  load_im;
 	struct hostent* he;
 	union sockaddr_union me;
 
@@ -131,15 +128,6 @@ static int extcmd_init(void)
 	}
 	/* let the auto-loading function load all TM stuff */
 	if (load_tm( &tmb )==-1) 
-		goto error;
-
-	/* import the IM auto-loading function */
-	if ( !(load_im=(load_im_f)find_export("load_im", 1))) {
-		LOG(L_ERR, "ERROR: extcmd: global_init: cannot import load_im\n");
-		goto error;
-	}
-	/* let the auto-loading function load all TM stuff */
-	if (load_im( &imb )==-1) 
 		goto error;
 
 	/* check the parametre */
