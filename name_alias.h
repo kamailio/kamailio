@@ -57,7 +57,8 @@ static inline int grep_aliases(char* name, int len, unsigned short port)
 	
 	for(a=aliases;a;a=a->next)
 #ifdef USE_TLS
-		if ((a->alias.len==len) && ((a->port==0) || (port==0) || (port==tls_port_no) ||
+		if ((a->alias.len==len) && ((a->port==0) || (port==0) || 
+					(port==tls_port_no) ||
 #else
 		if ((a->alias.len==len) && ((a->port==0) || (port==0) || 
 #endif

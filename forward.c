@@ -41,6 +41,7 @@
  *               local replies  & "normal" replies (andrei)
  *  2003-04-12  update_sock_struct_form via uses also FL_FORCE_RPORT for
  *               local replies (andrei)
+ *  2003-08-21  check_self properly handles ipv6 addresses & refs   (andrei)
  */
 
 
@@ -220,21 +221,38 @@ struct socket_info* get_send_socket(union sockaddr_union* to, int proto)
 /* checks if the host:port is one of the address we listen on;
  * if port==0, the  port number is ignored
  * returns 1 if true, 0 if false, -1 on error
-*/
+ * WARNING: uses str2ip6 so it will overwrite any previous
+ *  unsaved result of this function (static buffer)
+ */
 int check_self(str* host, unsigned short port)
 {
 	int r;
+	char* hname;
+	int h_len;
+#ifdef USE_IPV6
+	struct ip_addr* ip6;
+#endif
 	
+	h_len=host->len;
+	hname=host->s;
+#ifdef USE_IPV6
+	if ((h_len>2)&&((*hname)=='[')&&(hname[h_len-1]==']')){
+		/* ipv6 reference, skip [] */
+		hname++;
+		h_len-=2;
+	}
+#endif
 	for (r=0; r<sock_no; r++){
 		DBG("check_self - checking if host==us: %d==%d && "
 				" [%.*s] == [%.*s]\n", 
-					host->len,
+					h_len,
 					sock_info[r].name.len,
-					host->len, host->s,
+					h_len, hname,
 					sock_info[r].name.len, sock_info[r].name.s
 			);
 		if (port) {
-			DBG("check_self - checking if port %d matches port %d\n", sock_info[r].port_no, port);
+			DBG("check_self - checking if port %d matches port %d\n", 
+					sock_info[r].port_no, port);
 #ifdef USE_TLS
 			if  ((sock_info[r].port_no!=port) && (tls_info[r].port_no!=port)) {
 #else
@@ -243,32 +261,31 @@ int check_self(str* host, unsigned short port)
 				continue;
 			}
 		}
-		if ( (host->len==sock_info[r].name.len) && 
-#ifdef USE_IPV6
-			(strncasecmp(host->s, sock_info[r].name.s,
-				     sock_info[r].name.len)==0) /*slower*/
-#else
-			(memcmp(host->s, sock_info[r].name.s, 
-				sock_info[r].name.len)==0)
-#endif
-			)
+		if ( (h_len==sock_info[r].name.len) && 
+			(strncasecmp(hname, sock_info[r].name.s,
+				     sock_info[r].name.len)==0) /*slower*/)
+			/* comp. must be case insensitive, host names
+			 * can be written in mixed case, it will also match
+			 * ipv6 addresses */
 			break;
 	/* check if host == ip address */
-		if ( 	(!sock_info[r].is_ip) &&
-				(host->len==sock_info[r].address_str.len) && 
 #ifdef USE_IPV6
-			(strncasecmp(host->s, sock_info[r].address_str.s,
-								 sock_info[r].address_str.len)==0) /*slower*/
-#else
-			(memcmp(host->s, sock_info[r].address_str.s, 
-								sock_info[r].address_str.len)==0)
+		/* ipv6 case is uglier, host can be [3ffe::1] */
+		ip6=str2ip6(host);
+		if ((ip6) && ip_addr_cmp(ip6, &sock_info[r].address))
+			break; /* match */
 #endif
+		/* ipv4 */
+		if ( 	(!sock_info[r].is_ip) &&
+				(h_len==sock_info[r].address_str.len) && 
+			(memcmp(hname, sock_info[r].address_str.s, 
+								sock_info[r].address_str.len)==0)
 			)
 			break;
 	}
 	if (r==sock_no){
 		/* try to look into the aliases*/
-		if (grep_aliases(host->s, host->len, port)==0){
+		if (grep_aliases(hname, h_len, port)==0){
 			DBG("check_self: host != me\n");
 			return 0;
 		}

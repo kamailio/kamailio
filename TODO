@@ -18,6 +18,7 @@ release:
 - backport: acc mem. leak fixes
 - backport: dns mem. leak fixes (resolve.[ch])
 - backport: id_builder receive_msg mem. leak (receive.c)
+- backport: check_self ipv6/case fixes (forward.c)
 - change tcp timeouts to 2 or 3 min?
 x check via ipv6 fixes and backport to stable
 x fix kill(0, SIGTERM) on startup error (will kill also the launching shell
