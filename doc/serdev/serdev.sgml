@@ -111,10 +111,12 @@
 	    </para>
 	</section> <!-- parser-init -->
 	
+<!--
 	<section id="hash-init">
 	    <title>Hash Table Initialization</title>
 	    <para>TBD.</para>
-	</section> <!-- hash-init -->
+	</section>
+-->
 	
 	<section id="malloc-init">
 	    <title>Malloc Initialization</title>
@@ -150,7 +152,7 @@
 	</section> <!-- timer-init -->
 
 	<section id="fifo-init">
-	    <title><acronym>FIFO</acronym> initialization</title>
+	    <title><acronym>FIFO</acronym> Initialization</title>
 	    <para>
 		<acronym>SER</acronym> has built-in support for <acronym>FIFO</acronym> control. It means that the 
 		running server can accept
@@ -159,7 +161,7 @@
 		itself. The function can be found in file <filename moreinfo="none">fifo_server.c</filename>.
 	    </para>
 	    <para>
-		The <acronym>FIFO</acronym> server will be described in <link linkend="fifo-server">another chapter</link>.
+		The <acronym>FIFO</acronym> server will be described in another chapter.
 	    </para>
 	</section> <!-- fifo-init -->
 	
@@ -674,7 +676,7 @@ module_stm = "loadmodule" STRING
 			<para>
 			    Initialize the <acronym>FIFO</acronym> server if enabled, this will fork another child.
 			    For more info about the <acronym>FIFO</acronym> server, 
-			    see section <link linkend="fifo-server">The <acronym>FIFO</acronym> server</link>.
+			    see section The <acronym>FIFO</acronym> server.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -1296,16 +1298,16 @@ struct msg_start {
     int type;                        /* Type of the Message - Request/Response */
     union {
         struct {
-	    str method;              /* Method string */
-	    str uri;                 /* Request URI */
-	    str version;             /* SIP version */
-	    int method_value;        /* Parsed method */
+            str method;              /* Method string */
+            str uri;                 /* Request URI */
+            str version;             /* SIP version */
+            int method_value;        /* Parsed method */
         } request;
 	struct {
-	    str version;             /* SIP version */
-	    str status;              /* Reply status */
-	    str reason;              /* Reply reason phrase */
-	    unsigned int statuscode; /* Status code */
+            str version;             /* SIP version */
+            str status;              /* Reply status */
+            str reason;              /* Reply reason phrase */
+            unsigned int statuscode; /* Status code */
         } reply;
     }u;
 };
@@ -1902,7 +1904,7 @@ struct sip_msg {
 			The server keeps an array of all destinations, that should be
 			used when forking. The array and related functions can be found
 			in file <filename moreinfo="none">dset.c</filename>. There is
-			function append_branch which adds a new destination to the set.
+			function <function moreinfo="none">append_branch</function> which adds a new destination to the set.
 		    </para>
 		    <para>
 			This command simply calls 
@@ -2164,13 +2166,15 @@ struct sip_msg {
 	</section> <!-- do-action -->
     </chapter> <!-- routing-engine -->
     
+<!--
     <chapter id="memory-management">
 	<title>Memory Management</title>
 	<para>
 	    This section should be written by somebody who really knows how it works. Any volunteers ?
 	    TBD.
 	</para>
-    </chapter> <!-- memory-management -->
+    </chapter>
+-->
 
     <chapter id="msg-parser">
 	<title>The Message Parser</title>
@@ -2214,8 +2218,10 @@ struct sip_msg {
 	    </para>
 	</section> <!-- sip-msg-structure -->
 	
-	<section>
-	    <title>TBD</title>
+
+	<section id="parser-organization">
+	    <title>The Parser Organization</title>
+
 	    <itemizedlist>
 		<listitem>
 		    <para>First Line Parser - Parses the first line of a <acronym>SIP</acronym> message.</para>
@@ -2267,10 +2273,7 @@ struct sip_msg {
 		    </listitem>
 		</itemizedlist>
 	    </para>
-	</section>
 	
-	<section id="parser-organization">
-	    <title>The Parser Organization</title>
 	    <section id="fline-parser">
 		<title>The First Line Parser</title>
 		<para>
@@ -2551,23 +2554,23 @@ struct sip_msg {
 			</para>
 			<para><emphasis>Structure Declaration:</emphasis></para>
 			<programlisting format="linespecific">
-			    struct to_param{
-			    int type;              /* Type of parameter */
-			    str name;              /* Name of parameter */
-			    str value;             /* Parameter value */
-			    struct to_param* next; /* Next parameter in the list */
-			    };
+struct to_param{
+    int type;              /* Type of parameter */
+    str name;              /* Name of parameter */
+    str value;             /* Parameter value */
+    struct to_param* next; /* Next parameter in the list */
+};
 
 
-			    struct to_body{
-			    int error;                    /* Error code */
-			    str body;                     /* The whole header field body */
-			    str uri;                      /* URI */
-			    str tag_value;                /* Value of tag */
-			    struct to_param *param_lst;   /* Linked list of parameters */
-			    struct to_param *last_param;  /* Last parameter in the list */
-			    };
-			</programlisting>
+struct to_body{
+    int error;                    /* Error code */
+    str body;                     /* The whole header field body */
+    str uri;                      /* URI */
+    str tag_value;                /* Value of tag */
+    struct to_param *param_lst;   /* Linked list of parameters */
+    struct to_param *last_param;  /* Last parameter in the list */
+};
+</programlisting>
 			<para>
 			    Structure <structname>to_param</structname> is a temporary structure representing
 			    a To <acronym>URI</acronym> parameter. Right now only TAG parameter will be marked
@@ -3590,17 +3593,17 @@ struct module_exports{
     char* name;                     /* null terminated module name */
     char** cmd_names;               /* cmd names registered 
                                      * by this modules */
-    cmd_function* cmd_pointers;     /* pointers to the corresponding 
-                                     * functions */
+    cmd_function* cmd_pointers;     /* pointers to the 
+                                     * corresponding functions */
     int* param_no;                  /* number of parameters used by 
                                      * the function */
     fixup_function* fixup_pointers; /* pointers to functions 
                                      * called to "fix"
-	                             * the params, e.g: precompile 
+                                     * the params, e.g: precompile 
                                      * a re */
     int cmd_no;                     /* number of registered commands
-		                     * (size of cmd_{names,pointers} 
-		                     */
+                                     * (size of cmd_{names,pointers} 
+                                     */
 
     char** param_names;      /* parameter names registered 
                               * by this modules */
@@ -3611,13 +3614,12 @@ struct module_exports{
 
     init_function init_f;         /* Initilization function */
     response_function response_f; /* function used for responses,
-		                   * returns yes or no; can be null 
-		                   */
+                                   * returns yes or no; can be null 
+                                   */
     destroy_function destroy_f;   /* function called when the module 
                                    * should be "destroyed", e.g: on 
                                    * ser exit;
-		                   * can be null 
-		                   */
+                                   * can be null */
     onbreak_function onbreak_f;
     child_init_function init_child_f;  /* function called by all 
                                         * processes after the fork */
@@ -5000,73 +5002,1900 @@ int n = RES_ROW_N(res);
 	</section> <!-- db-functions -->
     </chapter> <!-- db-interface -->
 
+<!--
     <chapter id="fifo-server">
 	<title>FIFO Server</title>
 	<para>
 	    TBD.
 	</para>
-    </chapter> <!-- fifo-server -->
+    </chapter>
+-->
     
     <chapter id="basic-modules">
 	<title>Basic Modules</title>
 	<section id="auth">
 	    <title>Digest Authentication</title>
-	    <para></para>
+	    <para>The module exports function needed for digest authentication.</para>
+	    <para>
+		The module depends on:
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <emphasis>mysql</emphasis> - Used as interface to database.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>sl</emphasis> - Used for stateless replies.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+
+	    <section>
+		<title>Exported Parameters</title>
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <varname>db_url</varname> - Database url string in form
+			    <quote>sql://&lt;user&gt;:&lt;pass&gt;@host/database</quote>.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>sql://serro:47serro11@localhost/ser</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>user_column</varname> - Name of column containing usernames in subscriber table.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>user_id</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>realm_column</varname> - Name of column containing realm in subscriber table.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>realm</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>password_column</varname> - Name of column containing 
+			    (plaintext passwords)/(ha1 strings) if calculate_ha1 parameter is set to true/false.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>ha1</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>password_column_2</varname> - The parameter can be used if and only if USER_DOMAIN_HACK 
+			    macro is set in defs.h header file. The column of this name contains
+			    alternate ha1 strings calculated from username containing also
+			    domain, for example username="jan@iptel.org". This hack is 
+			    neccessary for some broken user agents. The parameter has no
+			    meaning if "calculate_ha1" is set to true.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>ha1b</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>secret</varname> - Nonce secret phrase.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: Randomly generated string.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>group_table</varname> - Name of table containing group definitions.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>grp</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>group_user_column</varname> - Name of column containing usernames in group table.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>user</quote>
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<para>
+			    <varname>group_group_column</varname> - Name of column containing groups in group table.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>grp</quote>
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>calculate_ha1</varname> - If set to true, auth module assumes that 
+			    <quote>password_column</quote> contains plaintext passwords and ha1 string will be calculated
+			    at runtime. If set to false, "password_column" must contain precalculated ha1 strings.
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: false
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>nonce_expire</varname> - Every nonce is valid only for a limited amount of time. This
+			    parameter specifies nonce validity interval in seconds. 
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 300
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>retry_count</varname> - This parameter specifies how many times a user is allowed to
+			    retry authentication with incorrect credentials. After that 
+			    the user will receive 403 Forbidden and must retry with different 
+			    credentials. This should prevent DoS attacks from misconfigured
+			    user agents which try to authenticate with incorrect password 
+			    again and again and again.
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 5
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
+
+	    <section>
+		<title>Exported Functions</title>
+		<itemizedlist>
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">www_authorize</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">realm</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">table</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function checks credentials in Authorization header field.
+			</para>
+			<para>
+			    <varname>realm</varname> - Realm string
+			</para>
+			<para>
+			    <varname>table</varname> - Subscriber table name
+			</para>
+			<example>
+			    <title>www_authorize</title>
+			    <programlisting format="linespecific">
+if (!www_authorize( "iptel.org", "subscriber" )) {
+    www_challenge(  "iptel.org", "0"); 
+    break; 
+}
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">proxy_authorize</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">realm</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">table</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function checks credentials in Proxy-Authorization header field.
+			</para>
+			<para>
+			    <varname>realm</varname> - Realm string
+			</para>
+			<para>
+			    <varname>table</varname> - Subscriber table name
+			</para>
+			<example>
+			    <title>proxy_authorize</title>
+			    <programlisting format="linespecific">
+if (!proxy_authorize( "iptel.org", "subscriber" )) {
+    proxy_challenge(  "iptel.org", "0"); 
+    break; 
+}
+</programlisting>
+			</example>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">www_challenge</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">realm</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">qop</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Challenges a user agent using WWW-Authenticate header
+			    field. The second parameter specifies if qop parameter
+			    (according to rfc2617) should be used or not.
+			    (Turning off is useful primarly to make UAC happy, which
+			    have a brokn qop implementation, particularly M$ Messenger 4.6).
+			</para>
+			<para>
+			    <varname>realm</varname> - Realm string
+			</para>
+			<para>
+			    <varname>qop</varname> - Qop string, <quote>1</quote> means use qop parameter
+                            <quote>0</quote> means do not use qop parameter.
+			    
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">proxy_challenge</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">realm</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">qop</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Challenges a user agent using Proxy-Authenticate header
+			    field. The second parameter specifies if qop parameter
+			    (according to rfc2617) should be used or not.
+			    (Turning off is useful primarly to make UAC happy, which
+			    have a brokn qop implementation, particularly M$ Messenger 4.6).
+			</para>
+			<para>
+			    <varname>realm</varname> - Realm string
+			</para>
+			<para>
+			    <varname>qop</varname> - Qop string, <quote>1</quote> means use qop parameter
+                            <quote>0</quote> means do not use qop parameter.
+			    
+			</para>
+		    </listitem>
+		    
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">is_user</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">username</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Checks if the specified username and matches the username
+			    in credentials. 
+			    Call after *_authorize, otherwise an error will be issued.
+			</para>
+			<para>
+			    <varname>username</varname> - Username string.
+			</para>
+			<para>
+			    <varname>s</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">is_in_group</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">group</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Checks if the user specified in credentials is member of
+			    given group
+			    Call after *_authorize, otherwise an error will be issued.
+			</para>
+			<para>
+			    <varname>group</varname> - Group name.
+			</para>
+			<para>
+			    <varname>s</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">check_to</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Checks if the username given in credentials and username in
+			    To header field are equal
+			    Call after *_authorize, otherwise an error will be issued.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+			<example>
+			    <title>check_to</title>
+			    <programlisting format="linespecific">
+if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
+    if (!check_to) { 
+        sl_send_reply("403", "cheating: user!=to");
+        break;
+    }
+}
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">check_from</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Checks if the username given in credentials and username in
+			    From header field are equal
+			    Call after *_authorize, otherwise an error will be issued.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">consume_credentials</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Removes previously authorized credentials from the message.
+			    The function must be called after {www,proxy}_authorize.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">is_user_in</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">hf</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">group</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Checks, if the user is in specified table.
+			</para>
+			<para>
+			    <varname>hf</varname> - Use username in this header field, the following values
+			    are recognized:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					<quote>From</quote> - Extract username from From URI.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					<quote>To</quote> - Extract username from To URI.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					<quote>Request-URI</quote> - Extract username from Request-URI.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					<quote>credentials</quote> - Use username digest parameter.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+			<para>
+			    <varname>group</varname> - Group name.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
 	</section> <!-- auth -->
+
+
 	<section id="max-fwd">
 	    <title>Max Forwards</title>
-	    <para></para>
+	    <para>
+		Implements all the operations regarding MAX-Forward header, like adding it (if
+		not present) or decrementing and checking the value of the existent one.
+	    </para>
+	    <para>
+		Module dependencies: none.
+	    </para>
+	    <section>
+		<title>Exported Parameters</title>
+		<para>
+		    None.
+		</para>
+	    </section>
+	    <section>
+		<title>Exported Functions</title>
+		<funcsynopsis>
+		    <funcprototype>
+			<funcdef>int <function moreinfo="none">mf_process_maxfwd_header</function></funcdef>
+			<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+			<paramdef>char* <parameter moreinfo="none">max_value</parameter></paramdef>
+			<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+		    </funcprototype>
+		</funcsynopsis>
+		<para>
+		    If no Max-Forward header is present in the received request, a header will be
+		    added having the original value equal with "max_value". An OK code is returned
+		    by the function.
+		</para>
+		<para>
+		    If a Max-Forward header is already present, its value will be decremented. If
+		    after this operation its value will be positive non-zero, an OK code will be
+		    returned. Otherwise (for a zero value) an error code will be returned.
+		    Note that an error code will be also returned if the SIP message couldn't
+		    be parsed or if the Max-Forwrd header's body invalid (non numerical string or
+		    negative numerical value)
+		</para>
+		<para>
+		    Parameter s is not used.
+		</para>
+	    </section>
+
 	</section> <!-- max-fwd -->
-	<section id="mysql">
-	    <title>MySQL</title>
-	    <para></para>
-	</section> <!-- mysql -->
+
+
+
+
+
 	<section id="registrar">
 	    <title>Registrar</title>
-	    <para></para>
+	    <para>The module contains REGISTER processing logic.</para>
+	    <para>
+		The module depends on:
+		<itemizedlist>
+		    <listitem>
+			<para><emphasis>usrloc</emphasis> - User location module.</para>
+		    </listitem>
+		    <listitem>
+			<para><emphasis>sl</emphasis> - Used for stateless replies.</para>
+		    </listitem>
+		</itemizedlist>
+	    </para>
+	    <section>
+		<title>Exported Parameters</title>
+
+		<itemizedlist>
+		    <listitem>
+			<para>
+			    <varname>default_expires</varname> - If the processed message contains neither Expires HFs nor
+			    expires contact parameters, this value will be used
+			    for newly created usrloc records. The parameter contains
+			    number of second to expire (for example use 3600 for one hour).
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 3600
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<para>
+			    <varname>default_q</varname> - The parameter represents default q value for new contacts. Because
+			    ser doesn't support float parameter types, the value in the parameter
+			    is divided by 100 and stored as float. For example, if you want default_q
+			    to be 0.38, use value 38 here.
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 0
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<para>
+			    <varname>append_branches</varname> - The parameter controls how lookup function processes 
+			    multiple contacts. If there are multiple contacts for the given username in usrloc and this
+			    parametr is set to 1, Request-URI will be overwritten with the highest-q
+			    rated contact and the rest will be appended to sip_msg structure and can 
+			    be later used by tm for forking. If the parameter is set to 0, only 
+			    Request-URI will be overwritten with the highest-q rated contact and the 
+			    rest will be left unprocessed.  
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 1
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
+
+	    <section>
+		<title>Exported Functions</title>
+		<itemizedlist>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">save</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">table</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function processes a REGISTER message. It can add, remove or modify
+			    usrloc records depending on Contact and Expires HFs in the REGISTER message.
+			    On success, 200 OK will be returned listing all contacts that are currently
+			    in usrloc. On an error, error message will be send with a short description
+			    in reason phrase.
+			</para>
+			<para>
+			    <varname>table</varname> - Table name where contacts should be stored.
+			</para>
+			<para>
+			    <varname>s</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">lookup</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">table</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The functions extracts username from Request-URI and tries to find all contacts
+			    for the username in usrloc. If there are no such contacts, -1 will be returned.
+			    If there are such contacts, Request-URI will be overwritten with the contact that
+			    has the highest q value and optionally the rest will be appended to the message
+			    (depending on append_branches parameter value).
+			</para>
+			<para>
+			    <varname>table</varname> - Name of table that should be used for the lookup.
+			</para>
+			<para>
+			    <varname>s</varname> - Not used.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
 	</section> <!-- registrar -->
+
+
 	<section id="rr">
 	    <title>Record-Routing</title>
-	    <para></para>
+	    <para>Record Routing module.</para>
+	    <para>
+		The module depends on: None.
+	    </para>
+
+	    <section>
+		<title>Exported Parameters</title>
+		<para>
+		    None.
+		</para>
+	    </section>
+	    <section>
+		<title>Exported Functions</title>
+
+		<itemizedlist>
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">rewriteFromRoute</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    If there are any Route HFs in the message, the function
+			    takes the first one, rewrites Request-URI with it's value
+			    and removes the first URI from Route HFs.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">addRecordRoute</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function adds a new Record-Route header field. The
+			    header field will be inserted in the message before any
+			    other Record-Route header fields.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
 	</section> <!-- rr -->
+
+
 	<section id="sl">
 	    <title>Stateless Replies</title>
-	    <para></para>
+	    <para>
+		The SL module provide possibilities to send stateless replies for the current 
+		request. Additional, a filter function is available for checking the ACK
+		requests generated by sending a SL reply to a INVITE req. Also, offers the
+		possibility to send explanatory SL replies in case of an internal error.
+	    </para>
+
+	    <para>
+		For the SL module to be able to recognize the ACKs generated by INVITE's
+		replies sent by itself, all the sent replies will have attached to TO header
+		a "tag" param. having a unique value (that was random generated at ser 
+		startup).When an ACK is received, the TO tag param tag is checked if
+		corresponds - all UAS MUST copy the TO tag from replies into ACK requests!
+		TO speed up the filtering process, the module uses a timeout mechanism. When
+		a reply is sent, a timer us set. As time as the timer is valid, The incoming
+		ACK requests will be checked using TO tag value  Once the timer expires, all
+		the ACK are let through - a long time passed till it sent a reply, so it does
+		not expect any ACK that have to be blocked.
+	    </para>
+	    
+	    <section>
+		<title>Exported Parameters</title>
+		<para>None.</para>
+	    </section>
+
+
+	    <section>
+		<title>Exported Functions</title>
+		<itemizedlist>
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">sl_send_reply</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">code</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">text_reason</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    For the current request, a reply is sent back having the given code and text
+			    reason. The reply is sent stateless, totally independent of the Transaction
+			    module and with no retranssmision for the INVITE's replies.
+			</para>
+			<para>
+			    <varname>code</varname> - Reply code to be used.
+			</para>
+			<para>
+			    <varname>text_reason</varname> - Reason phrase to be used.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">sl_filter_ACK</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Identifies and blocks the ACK requests generated by INVITE's replies sent
+			    using the sl_send_reply() or sl_send_error() functions.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">sl_reply_error</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Identifies and blocks the ACK requests generated by INVITE's replies sent
+			    using the sl_send_reply() or sl_send_error() functions.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
 	</section> <!-- sl -->
+
 	<section id="tm">
 	    <title>Transaction Module</title>
 	    <para>
-		TBD.
+		The module implements logic necessary to manage SIP transactions.
 	    </para>
+	    <para>
+		The module depends on: None.
+	    </para>
+	    <para>
+		TM Module enables stateful processing of SIP transactions.
+		The main use of stateful logic, which is costly in terms of
+		memory and CPU, is some services inherently need state.
+		For example, transaction-based accounting (module acc) needs
+		to process transaction state as opposed to individual messages,
+		and any kinds of forking must be implemented statefuly.
+		Other use of stateful processing is it trading CPU caused by 
+		retransmission processing for memory. That makes however only
+		sense if CPU consumption per request is huge. For example,
+		if you want to avoid costly DNS resolution for every retransmission
+		of a request to an unresolveable destination, use stateful mode.
+		Then, only the initial message burdens server by DNS queries,
+		subsequent retranmissions will be dropped and will not result in
+		more processes blocked by DNS resolution. The price is more 
+		memory consumption and higher processing latency.
+	    </para>
+	    <para>
+		From user's perspective, there are two major functions :
+		t_relay and t_relay_to. Both setup transaction state,
+		absorb retransmissions from upstream, generate downstream
+		retransmissions and correlate replies to requests.
+		t_relay forwards to current uri (be it original request's
+		uri or a uri changed by some of uri-modifying functions,
+		such as sethost). t_relay_to forwards to a specific address.
+	    </para>
+	    <para>
+		In general, if TM is used, it copies clones of received SIP
+		messages in shared memory. That costs the memory and also CPU
+		time (memcpys, lookups, shmem locks, etc.) Note that non-TM
+		functions operate over the received message in private memory,
+		that means that any core operations will have no effect on
+		statefuly processed messages after creating the transactional
+		state. For example, calling addRecordRoute *after* t_relay
+		is pretty useless, as the RR is added to privately held message
+		whereas its TM clone is being forwarded.
+	    </para>
+	    <para>
+		TM is quite big and uneasy to programm -- lot of mutexes, shared
+		memory access, malloc & free, timers -- you really need to be careful
+		when you do anything. To simplify TM programming, there is the
+		instrument of callbacks. The callback mechanisms allow programmers
+		to register their functions to specific event. See t_hooks.h
+		for a list of possible events.
+	    </para>
+	    <para>
+		Other things programmers may want to know is UAC -- it is 
+		a very simplictic code which allows you to generate your own
+		transactions. Particularly useful for things like NOTIFYs or
+		IM gateways. The UAC takes care of all the transaction
+		machinery: retransmissions , FR timeouts, forking, etc.
+		See t_uac prototype in uac.h for more details. Who wants to
+		see the transaction result may register for a callback.
+	    </para>
+
+	    <section>
+		<title>External Usage of TM</title>
+		<para>
+		    There are applications which would like to generate SIP
+		    transactions without too big onvolvement in SIP stack, transaction
+		    management, etc. An example of such an application
+		    is sending instant messages from a website. To address needs
+		    of such apps, SER accepts requests for new transactions via
+		    fifo pipes too. If you want to enable this feature, statrt
+		    FIFO server by configuration option
+		    fifo=<quote>/tmp/filename</quote>
+		    Then, an application can easily launch a new transaction by
+		    writing a transaction request to this named pipe. The request
+		    must follow very simple format, which is
+		    <programlisting format="linespecific">
+:t_uac:[&lt;file_name&gt;]\n
+&lt;method&gt;\n
+&lt;dst uri&gt;\n
+&lt;CR_separated_headers&gt;\n
+&lt;body&gt;\n
+\n
+\n
+</programlisting>
+		    (Filename is to where a report will be dumped. ser assumes /tmp
+		    as file's directory.)
+		</para>
+
+		<para>
+		    A convenience library fifo_uac.c implements this simple functionality.
+		    Note the the request write must be atomic, otherwise the request
+		    might get intermixes with writes from other writers.
+		    You can easily use it via Unix command-line tools, see the following
+		    example:
+		    <example>
+			<title>UAC</title>
+			<screen format="linespecific">
+[jiri@bat jiri]$ cat &gt; /tmp/fifo
+:t_uac:xxx
+MESSAGE
+sip:mrx@iptel.org
+header:value
+foo:bar
+bznk:hjhjk
+p_header: p_value
+
+body body body
+yet body
+end of body
+</screen>
+		    </example>
+		    Or use an example file and call cat test/transaction.fifo &gt; /tmp/fifo
+		</para>
+	    </section>
+
+
+	    
+
+	    <section>
+		<title>Exported Parameters</title>
+		<itemizedlist>
+
+		    <listitem>
+			<para>
+			    <varname>fr_timer</varname> - Timer which hits if no final reply for a request or
+			    ACK for a negative INVITE reply arrives.
+			</para>
+			<para>
+			    Type: <type>integer</type> (seconds)
+			</para>
+			<para>
+			    Default: 30
+			</para>
+		    </listitem>		
+
+		    <listitem>
+			<para>
+			    <varname>fr_inv_timer</varname> - Timer which hits if no final reply for an INVITE
+			arrives after a provisional message was received.
+			</para>
+			<para>
+			    Type: <type>integer</type> (seconds)
+			</para>
+			<para>
+			    Default: 120
+			</para>
+		    </listitem>		
+
+		    <listitem>
+			<para>
+			    <varname>wt_timer</varname> - Time for which a transaction stays in memory to absorb
+			    delayed messages after it completed; also, when this
+			    timer hits, retransmission of local cancels is stopped
+			    (a puristic but complex behviour would be not to enter
+			    wait state until local branches are finished by a final
+			    reply or FR timer -- we simplified)
+			</para>
+			<para>
+			    Type: <type>integer</type> (seconds)
+			</para>
+			<para>
+			    Default: 5
+			</para>
+		    </listitem>		
+
+		    <listitem>
+			<para>
+			    <varname>delete_timer</varname> - Time after which a to-be-deleted transaction currently
+			    ref-ed by a process will be tried to be deleted again.
+			</para>
+			<para>
+			    Type: <type>integer</type> (seconds)
+			</para>
+			<para>
+			    Default: 2
+			</para>
+		    </listitem>		
+
+		    <listitem>
+			<para>
+			    <varname>retr_timer1p1, 2, 3</varname> - Retransmission period.
+			</para>
+			<para>
+			    Type: <type>integer</type> (seconds)
+			</para>
+			<para>
+			    Default: RETR_T1=1, 2*RETR_T1, 4*RETR_T1
+			</para>
+		    </listitem>		
+
+		    <listitem>
+			<para>
+			    <varname>retr_timer2</varname> - Maximum retransmission period.
+			</para>
+			<para>
+			    Type: <type>integer</type> (seconds)
+			</para>
+			<para>
+			    Default: RETR_T2=4
+			</para>
+		    </listitem>		
+
+		    <listitem>
+			<para>
+			    <varname>noisy_ctimer</varname> - If set, on FR timer INVITE transactions will be 
+			    explicitly cancelled if possible, silently dropped
+			    otherwise; preferably, it is turned off to allow
+			    very long ringing; this behaviour is overridden if
+			    a request is forked, or some functionality explicitly
+			    turned it off for a transaction (like acc does to avoid
+			    unaccounted transactions due to expired timer).
+			</para>
+			<para>
+			    Type: <type>integer</type> (boolean)
+			</para>
+			<para>
+			    Default: 0 (false)
+			</para>
+		    </listitem>		
+		</itemizedlist>
+	    </section>
+
+	    <section>
+		<title>Exported Functions</title>
+		
+		<itemizedlist>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_relay_to</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">ip_address</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">port_number</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Relay a message statefuly to a fixed destination; this along with
+			    t_relay is the function most users want to use -- all other are
+			    mostly for programming; programmers interested in writing TM
+			    logic should review how t_relay is implemented in tm.c and how
+			    TM callbacks work.
+			</para>
+			<para>
+			    <varname>ip_address</varname> - IP address of the destination.
+			</para>
+			<para>
+			    <varname>port_number</varname> - Port of the destination.
+			</para>
+			<example>
+			    <title>t_relay_to</title>
+			    <programlisting format="linespecific">
+if (!t_relay_to("1.2.3.4", "5060")) { 
+    sl_reply_error(); 
+    break; 
+};
+</programlisting>
+			</example>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_relay</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Relay a message statefuly to destination indicated in current URI;
+			    (if the original URI was rewritten by UsrLoc, RR, strip/prefix,
+			    etc., the new URI will be taken); returns a negative value on
+			    failure -- you may still want to send a negative reply upstream
+			    statelessly not to leave upstream UAC in lurch.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+			<example>
+			    <title>t_relay</title>
+			    <programlisting format="linespecific">
+if (!t_relay()) { 
+    sl_reply_error(); 
+    break; 
+};
+</programlisting>
+			</example>
+		    </listitem>
+
+
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_on_negative</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">reply_route</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Sets reply routing block, to which control is passed after
+			    a transaction completed with a negative result but before
+			    sending a final reply; In the refered block, you can
+			    either start a new branch (good for services such as
+			    forward_on_no_reply) or send a final reply on your own
+			    (good for example for message silo, which received 
+			    a negative reply from upstream and wants to tell
+			    upstream "202 I will take care of it"); Note that the
+			    set of command which are useable within reply_routes is
+			    strictly limited to rewriting URI, initiating new branches,
+			    logging, and sending 'unsafe' replies (t_reply_unsafe). Any 
+			    other commands may result in unpredictable behaviour and 
+			    possible server failure.
+			    Note that whenever reply_route is entered, uri is reset to
+			    value which it had on relaying. If it temporarily changed
+			    during a reply_route processing, subsequent reply_route
+			    will ignore the changed value and use again the original
+			    one.
+			</para>
+			<para>
+			    <varname>reply_route</varname> - Reply routing block.
+			</para>
+			<para>
+			    <varname>s</varname> - Not used.
+			</para>
+			<example>
+			    <title>t_on_negative</title>
+			    <programlisting format="linespecific">
+route { 
+    t_on_negative("1"); 
+    t_relay(); 
+} reply_route[1] {
+    revert_uri(); 
+    setuser("voicemail"); 
+    append_branch(); 
+}
+</programlisting>
+			</example>
+		    </listitem>
+
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_newtran</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Creates a new transaction, returns a negative value on 
+			    error; this is the only way a script can add a new transaction 
+			    in an atomic way; typically, it is used to deploy a UAS
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+			<example>
+			    <title>t_newtran</title>
+			    <programlisting format="linespecific">
+if (t_newtran()) { 
+    log("UAS logic"); 
+    t_reply("999","hello"); 
+} else sl_reply_error();
+</programlisting>
+			</example>
+		    </listitem>
+
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_reply</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">code</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">reason_phrase</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Sends a stateful reply after a transaction has been
+			    established; see t_newtran for usage; note: never use
+			    t_reply from within reply_route ... always use t_reply_unsafe
+			</para>
+			<para>
+			    <varname>code</varname> - Code of the response.
+			</para>
+			<para>
+			    <varname>reason_phrase</varname> - Reason phrase of the response.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_lookup_request</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Checks if a transaction exists; returns a positive value
+			    if so, negative otherwise; most likely you will not want
+			    to use it, as a typicall application of a looku-up is to
+			    introduce a new transaction if none was found; however
+			    this is safely (atomically) done using t_newtran.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+		    
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_retransmit_reply</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Retransmits a reply sent previously by UAS transaction.
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_release</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s1</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s2</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Remove transaction from memory (it will be first put on
+			    a wait timer to absorb delayed messages).
+			</para>
+			<para>
+			    <varname>s1</varname> - Not used.
+			</para>
+			<para>
+			    <varname>s2</varname> - Not used.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_forward_noack</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">ip</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">port</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Mainly for internal -- forward a non-ACK request statefuly.
+			</para>
+			<para>
+			    <varname>ip</varname> - IP address.
+			</para>
+			<para>
+			    <varname>port</varname> - Port number.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">register_tmcb</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">cb_type</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">cb_func</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    For programmatic use only -- register a function to be called
+			    back on an event; see t_hooks.h for more details.
+			</para>
+			<para>
+			    <varname>cb_type</varname> - Callback type.
+			</para>
+			<para>
+			    <varname>cb_func</varname> - Callback function.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">load_tm</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">import_structure</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">s</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    For programmatic use only -- import exported TM functions;
+			    see the acc module for an example of use.
+			</para>
+			<para>
+			    <varname>import_structure</varname> - Structure where pointers to tm functions will be stored.
+			</para>
+			<para>
+			    <varname>s</varname> - Not used.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">t_reply_unsafe</function></funcdef>
+				<paramdef>struct sip_msg* <parameter moreinfo="none">msg</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">code</parameter></paramdef>
+				<paramdef>char* <parameter moreinfo="none">reason_phrase</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Sends a stateful reply after a transaction has been
+			    established; it can only be used from reply processing;
+			    using it from regular processing will introduce erroneous
+			    conditions; using t_reply from reply_processing will
+			    introduce a deadlock.
+			</para>
+			<para>
+			    <varname>code</varname> - Code of the reply.
+			</para>
+			<para>
+			    <varname>reason_phrase</varname> - Reason phrase of the reply.
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
+
+	    <section>
+		<title>Known Issues</title>
+		<itemizedlist>
+		    <listitem>
+			<para>Need to revisit profiling again.</para>
+		    </listitem>
+		    <listitem>
+			<para>Review whether there is not potential for to-tag rewriting and ACK matching.</para>
+		    </listitem>
+		    <listitem>
+			<para>We don't have authentication merging on forking.</para>
+		    </listitem>
+		    <listitem>
+			<para>Branch tid is not used yet.</para>
+		    </listitem>
+		    <listitem>
+			<para>local ACK/CANCELs copy'n'pastes Route and ignores deleted Routes</para>
+		    </listitem>
+		    <listitem>
+			<para>6xx should be delayed.</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Possibly, performance could be improved by not parsing non-INVITEs,
+			    as they do not be replied with 100, and do not result in ACK/CANCELs,
+			    and other things which take parsing. However, we need to rethink
+			    whether we don't need parsed headers later for something else.
+			    Remember, when we now conserver a request in sh_mem, we can't apply
+			    any pkg_mem operations to it any more. (that might be redesigned too).
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    t_replicate should be done more cleanly -- Vias, Routes, etc. should
+			    be removed from a message prior to replicating it
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>SNMP support.</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Lookup fails to recognize subsequent requests which have additional 
+			    leading spaces in header field values.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    Make UAC session-aware (as opposed to just transaction aware) -- needed
+			    for keeing SUB-NOT dialog state, etc. Currently, there are only
+			    place-holders for in in TM.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>Places labeled with "HACK" strongly deserve beautification.</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
 	</section> <!-- tm -->
+
 	<section id="usrloc">
 	    <title>User Location Module</title>
-	    <para></para>
+	    <para>Support for location of users.</para>
+	    <para>Module depends on: Optionaly mysql (if configured for persistence)</para>
+
+	    <important>
+		<para>
+		    Usrloc is convenient module only. It's functions cannot
+		    be called from scripts directly (hence the ~ at the 
+		    beginning) but are used by registrar module internally.
+		    This module will be utilized by more modules in the future
+		    and therefore it is standalone. Use registrar module functions
+		    if you need usrloc support in your scripts.
+		</para>
+	    </important>
+
+	    <section>
+		<title>Exported Parameters</title>
+		<itemizedlist>
+
+		    <listitem>
+			<para>
+			    <varname>user_col</varname> - Name of column containing usernames.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>user</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>contact_col</varname> - Name of column containing contacts.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>contact</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>expires_col</varname> - Name of column containing expires.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>expires</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>q_col</varname> - Name of column containing q values.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>q</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>callid_col</varname> - Name of column containing callids.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>callid</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>cseq_col</varname> - Name of column containing cseq numbers.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>cseq</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>method_col</varname> - Name of column containing supported methods.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>method</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>db_url</varname> - URL of the database that should be used.
+			</para>
+			<para>
+			    Type: <type>string</type>
+			</para>
+			<para>
+			    Default: <quote>sql://ser:heslo@localhost/ser</quote>
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>timer_interval</varname> - Number of seconds between two timer runs. The
+			    module uses timer to delete expired contacts,
+			    synchronize with database and other tasks, that
+			    need to be run periodically.
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 60 seconds
+			</para>
+		    </listitem>				
+
+		    <listitem>
+			<para>
+			    <varname>db_mode</varname> - The usrloc module can utilize database for persistent
+			    contact storage. If you use database, your contacts
+			    will survive machine restarts or sw crashes. The
+			    disadvantage is that accessing database can be very
+			    time consuming. Therefore, usrloc module implements
+			    three database accessing modes:
+			    <itemizedlist>
+				<listitem>
+				    <para>
+					0 - This disables database completely. Only memory
+					will be used. Contacts will not survive restart.
+					Use this value if you need a really fast usrloc
+					and contact persistence is not necessarry or is
+					provided by other means.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					1 - <emphasis>Write-Through</emphasis> scheme. All changes to usrloc are
+					immediately reflected in database too. This is
+					very slow, but very reliable. Use this scheme
+					if speed is not your priority but need to make
+					sure that no registered contacts will be lost
+					during crash or reboot.
+				    </para>
+				</listitem>
+				<listitem>
+				    <para>
+					2 - <emphasis>Write-Back</emphasis> scheme. This is a combination of
+					previous two schemes. All changes are made to
+					memory and database synchronization is done
+					in the timer. The timer deletes all expired contacts
+					and flushes all modified or new contacts to database.
+					Use this scheme if you encounter high-load peaks and
+					want them to process as fast as possible. The mode
+					will not help at all if the load is high all the time.
+					Also, latency of this mode is much lower than latency
+					of mode 1, but slightly higher than latency of mode 0.
+				    </para>
+				</listitem>
+			    </itemizedlist>
+			</para>
+			<para>
+			    Type: <type>integer</type>
+			</para>
+			<para>
+			    Default: 0
+			</para>
+			<warning>
+			    <para>
+				In case of crash or restart contacts that
+				are in memory only and haven't been flushed
+				yet will get lost. If you want minimize the
+				risk, use shorter timer interval.
+			    </para>
+			</warning>
+		    </listitem>				
+		</itemizedlist>
+	    </section>
+
+	    <section>
+		<title>Exported Functions</title>
+		<itemizedlist>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_register_domain</function></funcdef>
+				<paramdef>const char* <parameter moreinfo="none">name</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function registers a new domain. Domain is just another name
+			    for table used in registrar. The function is called from fixups
+			    in registrar. It gets name of the domain as a parameter and returns
+			    pointer to a new domain structure. The fixup than 'fixes' the
+			    parametr in registrar so that it will pass the pointer instead of
+			    the name every time save() or lookup() is called. Some usrloc functions
+			    get the pointer as parameter when called. For more details see 
+			    implementation of save function in registrar.
+			</para>
+			<para>
+			    <varname>name</varname> - Name of the domain (also called table) to be
+                            registered.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_insert_urecord</function></funcdef>
+				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">aor</parameter></paramdef>
+				<paramdef>urecord_t** <parameter moreinfo="none">rec</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function creates a new record structure and inserts it in the specified
+			    domain. The record is structure that contains all the contacts for belonging
+			    to the specified username.			
+			</para>
+			<para>
+			    <varname>domain</varname> - Pointer to domain returned by ul_register_udomain.
+			</para>
+			<para>
+			    <varname>aor</varname> - Address of Record (aka username) of the new record
+                            (at this time the record will contain no contacts yet).
+			</para>
+			<para>
+			    <varname>rec</varname> - The newly created record structure.
+			</para>
+		    </listitem>
+
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_delete_urecord</function></funcdef>
+				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">aor</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function deletes all the contacts bound with the given Address Of Record.
+			</para>
+			<para>
+			    <varname>domain</varname> - Pointer to domain returned by ul_register_udomain.
+			</para>
+			<para>
+			    <varname>aor</varname> - Address of record (aka username) of the record, that should
+                            be deleted.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_get_urecord</function></funcdef>
+				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">aor</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function returns pointer to record with given Address of Record.
+			</para>
+			<para>
+			    <varname>domain</varname> - Pointer to domain returned by ul_register_udomain.
+			</para>
+			<para>
+			    <varname>aor</varname> - Address of Record of request record.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_lock_udomain</function></funcdef>
+				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function lock the specified domain, it means, that no other processes
+			    will be able to access during the time. This prevents race conditions. Scope
+			    of the lock is the specified domain, that means, that multiple domain can be
+			    accessed simultaneously, they don't block each other.
+			</para>
+			<para>
+			    <varname>domain</varname> - Domain to be locked.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_unlock_udomain</function></funcdef>
+				<paramdef>udomain_t* <parameter moreinfo="none">domain</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Unlock the specified domain previously locked by ul_lock_udomain.
+			</para>
+			<para>
+			    <varname>domain</varname> - Domain to be unlocked.
+			</para>
+		    </listitem>
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_release_urecord</function></funcdef>
+				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    Do some sanity checks - if all contacts have been removed, delete the entire
+			    record structure.
+			</para>
+			<para>
+			    <varname>record</varname> - Record to be released.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_insert_ucontact</function></funcdef>
+				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">contact</parameter></paramdef>
+				<paramdef>time_t <parameter moreinfo="none">expires</parameter></paramdef>
+				<paramdef>float <parameter moreinfo="none">q</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">callid</parameter></paramdef>
+				<paramdef>int <parameter moreinfo="none">cseq</parameter></paramdef>
+				<paramdef>ucontact_t <parameter moreinfo="none">cont</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function inserts a new contact in the given record with specified parameters.
+			</para>
+			<para>
+			    <varname>record</varname> - Record in which the contact should be inserted.
+			</para>
+			<para>
+			    <varname>contact</varname> - Contact URL.
+			</para>
+			<para>
+			    <varname>expires</varname> - Expires of the contact in absolute value.
+			</para>
+			<para>
+			    <varname>q</varname> - q value of the contact.
+			</para>
+			<para>
+			    <varname>callid</varname> - Call-ID of the REGISTER message that contained the contact.
+			</para>
+			<para>
+			    <varname>cseq</varname> - CSeq of the REGISTER message that contained the contact.
+			</para>
+			<para>
+			    <varname>cont</varname> - Pointer to newly created structure.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_delete_ucontact</function></funcdef>
+				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
+				<paramdef>ucontact_t* <parameter moreinfo="none">contact</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function deletes given contact from record.
+			</para>
+			<para>
+			    <varname>record</varname> - Record from which the contact should be removed.
+			</para>
+			<para>
+			    <varname>contact</varname> - Contact to be deleted.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_get_ucontact</function></funcdef>
+				<paramdef>urecord_t* <parameter moreinfo="none">record</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">contact</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function tries to find contact with given Contact URI and returns
+			    pointer to structure representing the contact.
+			</para>
+			<para>
+			    <varname>record</varname> - Record to be searched for the contact.
+			</para>
+			<para>
+			    <varname>contact</varname> - URI of the request contact.
+			</para>
+		    </listitem>
+
+
+		    <listitem>
+			<funcsynopsis>
+			    <funcprototype>
+				<funcdef>int <function moreinfo="none">~ul_update_ucontact</function></funcdef>
+				<paramdef>ucontact_t* <parameter moreinfo="none">contact</parameter></paramdef>
+				<paramdef>time_t <parameter moreinfo="none">expires</parameter></paramdef>
+				<paramdef>float <parameter moreinfo="none">q</parameter></paramdef>
+				<paramdef>str* <parameter moreinfo="none">callid</parameter></paramdef>
+				<paramdef>int <parameter moreinfo="none">cseq</parameter></paramdef>
+			    </funcprototype>
+			</funcsynopsis>
+			<para>
+			    The function updates contact with new values.
+			</para>
+			<para>
+			    <varname>contact</varname> - Contact to be updated.
+			</para>
+			<para>
+			    <varname>expires</varname> - New expires value.
+			</para>
+			<para>
+			    <varname>q</varname> - New q value.
+			</para>
+			<para>
+			    <varname>callid</varname> - New Call-ID
+			</para>
+			<para>
+			    <varname>cseq</varname> - New CSeq
+			</para>
+		    </listitem>
+		</itemizedlist>
+	    </section>
 	</section> <!-- usrloc -->
-	<section id="sms">
-	    <title>SMS Module</title>
-	    <para>
-		TBD.
-	    </para>
-	</section> <!-- sms -->
-	<section id="jabber">
-	    <title>Jabber Module</title>
-	    <para>
-		TBD.
-	    </para>
-	</section> <!-- jabber -->
-	<section id="im">
-	    <title>Instant Messaging Module</title>
-	    <para>
-		TBD.
-	    </para>
-	</section> <!-- im -->
-	<section id="ext">
-	    <title>External Module</title>
-	    <para>
-		TBD.
-	    </para>
-	</section> <!-- ext -->
     </chapter> <!-- basic-modules -->
 
     <chapter id="sip-msg-modif">
@@ -5078,10 +6907,9 @@ int n = RES_ROW_N(res);
 	<title>The Timer subsystem</title>
 	<para>TBD.</para>
     </chapter>
-    
-    <chapter id="tips">
-	<title>Tips And Tricks</title>
-	<para>
+
+<!--    
+
 	    jak se prochazi vsechny hlavicky daneho typu
 	    Jak vlozit header na konec hlavicky
 	    jak vlozit prvni header
@@ -5098,8 +6926,6 @@ int n = RES_ROW_N(res);
 	    builtin core commands -description
 	    popsat system proxy
 	    vsechno spravne prolinkovat
-	    Opravit dokumentaci k append_branch - pravdepodobne
-	    je tam spatne popis
 	    Popsat flagy
 	    Dopsat nekam poznamku ze vetsina field pri parsovani nejsou ukoncena
 	    0 a ze jsou to pouze pointery a delky do buf bufferu zpravy
@@ -5112,6 +6938,5 @@ int n = RES_ROW_N(res);
 	    Use command tag
 	    Use error code tag
 	    qandaset - FAQ
-	</para>
-    </chapter> <!-- tips -->
+-->
 </book>
