@@ -67,6 +67,7 @@ enum request_method { METHOD_UNDEF=0, METHOD_INVITE=1, METHOD_CANCEL=2, METHOD_A
 	METHOD_BYE=8, METHOD_OTHER=16 };
 
 #define FL_FORCE_RPORT 1 /* force rport */
+#define FL_FORCE_ACTIVE 2 /* force active SDP */
 
 
 #define IFISMETHOD(methodname,firstchar)                                  \
