@@ -89,7 +89,8 @@ typedef enum {
  *    value FAKED_REPLY (like other reply callbacks) which
  *    indicates a psedo_reply caused by a timer. Check for
  *    this value before derefing -- you will cause a segfault
- *    otherwise.
+ *    otherwise. Check for t->uas.request validity too if you
+ *    need it ... locally initiated UAC transactions set it to 0.
  *
  *    Also note, that reply callbacks are not called if a transaction
  *    is dropped silently. That's the case when noisy_ctimer is
