@@ -30,6 +30,8 @@
 #ifndef _TM_CONFIG_H
 #define _TM_CONFIG_H
 
+#include "defs.h"
+
 #ifdef _OBSOLETED
 /* moved to hash.h */
 /* always use a power of 2 for hash table size */

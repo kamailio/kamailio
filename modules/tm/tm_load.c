@@ -25,6 +25,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "defs.h"
+
 
 #include "tm_load.h"
 #include "uac.h"
@@ -47,10 +49,12 @@ int load_tm( struct tm_binds *tmb)
 		LOG(L_ERR, LOAD_ERROR "'t_relay' not found\n");
 		return -1;
 	}
+#ifndef DEPRECATE_OLD_STUFF
 	if (!(tmb->t_uac=(tuac_f)find_export(T_UAC, NO_SCRIPT)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_uac' not found\n");
 		return -1;
 	}
+#endif
 	if (!(tmb->t_uac_dlg=(tuacdlg_f)find_export(T_UAC_DLG, NO_SCRIPT)) ) {
 		LOG( L_ERR, LOAD_ERROR "'t_uac_dlg' not found\n");
 		return -1;

@@ -217,7 +217,7 @@ int read_line_set(char *buf, int max_len, FILE *fifo, int *len)
 			return 0;
 		}
 		/* end encountered ... return */
-		if (line_len==0) {
+		if (line_len==0 || (line_len==1 && c[0]=='.' )) {
 			*len=set_len;
 			return 1;
 		}
@@ -230,6 +230,7 @@ int read_line_set(char *buf, int max_len, FILE *fifo, int *len)
 		max_len-=CRLF_LEN; c+=CRLF_LEN; set_len+=CRLF_LEN;
 	}
 }
+
 
 /* read from input until line with only dot in it is encountered */
 int read_body(char *buf, int max_len, FILE *fifo, int *len)

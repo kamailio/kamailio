@@ -30,6 +30,9 @@
 #ifndef _CANCEL_H
 #define _CANCEL_H
 
+#include "defs.h"
+
+
 /* a buffer is empty but cannot be used by anyone else;
    particularly, we use this value in the buffer pointer
    in local_buffer to tell "a process is already scheduled

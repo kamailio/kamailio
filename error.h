@@ -47,6 +47,8 @@
 /* too many branches demanded */
 #define E_TOO_MANY_BRANCHES -12
 #define E_BAD_TO	-13
+/* invalid params */
+#define E_INVALID_PARAMS -14
 
 #define E_SEND		  -477
 /* unresolveable next-hop address */

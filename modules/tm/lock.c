@@ -26,6 +26,8 @@
  */
 
 
+#include "defs.h"
+
 
 #include <errno.h>
 

@@ -30,6 +30,9 @@
 #ifndef _MSGBUILDER_H
 #define _MSGBUILDER_H
 
+#include "defs.h"
+
+
 #define CSEQ "CSeq: "
 #define CSEQ_LEN (sizeof(CSEQ)-1)
 #define TO "To: "

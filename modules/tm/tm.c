@@ -53,6 +53,9 @@
  */
 
 
+#include "defs.h"
+
+
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
@@ -129,7 +132,9 @@ struct module_exports exports= {
 				/* not applicable from script ... */
 
 				"register_tmcb",
+#ifndef DEPRECATE_OLD_STUFF
 				T_UAC,
+#endif
 				T_UAC_DLG,
 				"load_tm",
 				"t_newdlg"
@@ -150,7 +155,9 @@ struct module_exports exports= {
 					w_t_on_negative,
 
 					(cmd_function) register_tmcb,
+#ifndef DEPRECATE_OLD_STUFF
 					(cmd_function) t_uac,
+#endif
 					(cmd_function) t_uac_dlg,
 					(cmd_function) load_tm,
 					w_t_newdlg,
@@ -170,7 +177,9 @@ struct module_exports exports= {
 				2, /* t_forward_nonack */
 				1, /* t_on_negative */
 				NO_SCRIPT /* register_tmcb */,
+#ifndef DEPRECATE_OLD_STUFF
 				NO_SCRIPT /* t_uac */,
+#endif
 				NO_SCRIPT /* t_uac_dlg */,
 				NO_SCRIPT /* load_tm */,
 				0 /* t_newdlg */
@@ -190,16 +199,21 @@ struct module_exports exports= {
 				fixup_hostport2proxy,	/* t_forward_nonack */
 				fixup_str2int,			/* t_on_negative */
 				0,						/* register_tmcb */
+#ifndef DEPRECATE_OLD_STUFF
 				0,						/* t_uac */
+#endif
 				0,                                              /* t_uac_dlg */
 				0,						/* load_tm */
 				0						/* t_newdlg */
 	
 		},
+#ifndef DEPRECATE_OLD_STUFF
+	1+
+#endif
 #ifdef _OBSO
-	16,
-#else
 	15,
+#else
+	14,
 #endif
 
 	/* ------------ exported variables ---------- */
@@ -212,8 +226,10 @@ struct module_exports exports= {
 		"retr_timer1p2",
 		"retr_timer1p3",
 		"retr_timer2",
-		"noisy_ctimer",
-		"uac_from"
+		"noisy_ctimer"
+#ifndef DEPRECATE_OLD_STUFF
+		,"uac_from"
+#endif
 	},
 	(modparam_t[]) { /* variable types */
 		INT_PARAM, /* fr_timer */
@@ -224,8 +240,10 @@ struct module_exports exports= {
 		INT_PARAM, /* retr_timer1p2 */
 		INT_PARAM, /* retr_timer1p3 */
 		INT_PARAM, /* retr_timer2 */
-		INT_PARAM, /* noisy_ctimer */
-		STR_PARAM, /* uac_from */
+		INT_PARAM /* noisy_ctimer */
+#ifndef DEPRECATE_OLD_STUFF
+		,STR_PARAM /* uac_from */
+#endif
 	},
 	(void *[]) { /* variable pointers */
 		&(timer_id2timeout[FR_TIMER_LIST]),
@@ -236,10 +254,15 @@ struct module_exports exports= {
 		&(timer_id2timeout[RT_T1_TO_2]),
 		&(timer_id2timeout[RT_T1_TO_3]),
 		&(timer_id2timeout[RT_T2]),
-		&noisy_ctimer,
-		&uac_from
+		&noisy_ctimer
+#ifndef DEPRECATE_OLD_STUFF
+		,&uac_from
+#endif
 	},
-	11,      /* Number of module paramers */
+#ifndef DEPRECATE_OLD_STUFF
+	1+
+#endif
+	10,      /* Number of module paramers */
 
 	mod_init, /* module initialization function */
 	(response_function) t_on_reply,
@@ -301,11 +324,17 @@ static int mod_init(void)
 	}
 
 
+#ifndef DEPRECATE_OLD_STUFF
 	if (register_fifo_cmd(fifo_uac, "t_uac", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo uac\n");
 		return -1;
 	}
 	if (register_fifo_cmd(fifo_uac_from, "t_uac_from", 0)<0) {
+		LOG(L_CRIT, "cannot register fifo uac\n");
+		return -1;
+	}
+#endif
+	if (register_fifo_cmd(fifo_uac_dlg, "t_uac_dlg", 0)<0) {
 		LOG(L_CRIT, "cannot register fifo uac\n");
 		return -1;
 	}

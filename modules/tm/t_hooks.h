@@ -29,6 +29,9 @@
 #ifndef _HOOKS_H
 #define _HOOKS_H
 
+#include "defs.h"
+
+
 struct sip_msg;
 struct cell;
 

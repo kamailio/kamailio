@@ -35,6 +35,9 @@
 #ifndef _FIX_LUMPS_H
 #define _FIX_LUMPS_H
 
+#include "defs.h"
+
+
 /* used to delete attached via lumps from msg; msg can
    be either an original pkg msg, whose Via lump I want
    to delete before generating next branch, or a shmem-stored

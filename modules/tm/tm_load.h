@@ -29,6 +29,9 @@
 #ifndef _TM_BIND_H
 #define _TM_BIND_H
 
+#include "defs.h"
+
+
 #include "../../sr_module.h"
 #include "t_hooks.h"
 #include "uac.h"
@@ -40,7 +43,9 @@
 
 #define T_RELAY_TO "t_relay_to"
 #define T_RELAY "t_relay"
-#define T_UAC "t_uac"
+#ifndef DEPRECATE_OLD_STUFF
+#	define T_UAC "t_uac"
+#endif
 #define T_UAC_DLG "t_uac_dlg"
 #define T_REPLY "t_reply"
 #define T_REPLY_UNSAFE "t_reply_unsafe"
@@ -52,7 +57,9 @@ struct tm_binds {
 	register_tmcb_f	register_tmcb;
 	cmd_function	t_relay_to;
 	cmd_function 	t_relay;
+#ifndef DEPRECATE_OLD_STUFF
 	tuac_f			t_uac;
+#endif
 	tuacdlg_f               t_uac_dlg;
 	treply_f		t_reply;
 	treply_f		t_reply_unsafe;

@@ -29,6 +29,8 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
+#include "defs.h"
+
 #include "lock.h"
 #include "t_funcs.h"
 

@@ -30,6 +30,7 @@
  * 2003-01-19 faked lump list created in on_reply handlers
  */
 
+#include "defs.h"
 
 
 #include "../../hash_func.h"

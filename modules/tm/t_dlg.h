@@ -30,6 +30,9 @@
 #ifndef _T_DLG_H
 #define _T_DLG_H
 
+#include "defs.h"
+
+
 #include "../../parser/msg_parser.h"
 
 struct dialog {

@@ -27,6 +27,8 @@
  */
 
 
+#include "defs.h"
+
 #include "t_dlg.h"
 
 dlg_t dlg=0;

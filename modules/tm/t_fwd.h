@@ -30,6 +30,8 @@
 #ifndef _T_FWD_H
 #define _T_FWD_H
 
+#include "defs.h"
+
 #include "../../proxy.h"
 
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );

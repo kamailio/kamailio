@@ -27,6 +27,8 @@
  */
 
 
+#include "defs.h"
+
 
 #include "t_funcs.h"
 #include "../../dprint.h"

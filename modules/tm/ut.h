@@ -32,6 +32,9 @@
 #ifndef _TM_UT_H
 #define _TM_UT_H
 
+#include "defs.h"
+
+
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../ut.h"

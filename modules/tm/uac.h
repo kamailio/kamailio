@@ -30,6 +30,9 @@
 #ifndef _UAC_H
 #define _UAC_H
 
+#include "defs.h"
+
+
 #include <stdio.h>
 #include "config.h"
 #include "t_dlg.h"
@@ -111,7 +114,12 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	      void* cbp                     /* Callback pointer */
 	      );
 
-
+#ifndef DEPRECATE_OLD_STUFF
 int fifo_uac( FILE *stream, char *response_file );
 int fifo_uac_from( FILE *stream, char *response_file );
+#endif
+
+int fifo_uac_dlg( FILE *stream, char *response_file );
+
+
 #endif

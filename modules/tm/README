@@ -322,3 +322,13 @@ Known Issues
   for keeing SUB-NOT dialog state, etc. Currently, there are only
   place-holders for in in TM.
 - places labeled with "HACK" strongly deserve beautification
+
+
+ * ***************************************************
+ *             IMPORTANT NOTE
+ *
+ *    All UACs but t_uac_dlg are being deprecated now
+ *    and will be removed from future versions of TM
+ *    module. Eliminate all dependancies on them asap.
+ *
+ * ****************************************************

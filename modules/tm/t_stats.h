@@ -31,6 +31,9 @@
 #ifndef _T_STATS_H
 #define _T_STATS_H
 
+#include "defs.h"
+
+
 #include "../../pt.h"
 
 

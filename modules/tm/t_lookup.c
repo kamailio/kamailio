@@ -51,6 +51,9 @@
  */
 
 
+#include "defs.h"
+
+
 #include <assert.h>
 #include "../../dprint.h"
 #include "../../config.h"

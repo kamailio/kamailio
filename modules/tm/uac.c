@@ -29,7 +29,22 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * ***************************************************
+ *             IMPORTANT NOTE
+ *
+ *    All UACs but t_uac_dlg are being deprecated now
+ *    and will be removed from future versions of TM
+ *    module. Eliminate all dependancies on them asap.
+ *    For backwards compatibility (NOT RECOMMENDED)
+ *    turn off DEPRECATE_OLD_STUFF in defs.h. Similarly,
+ *    there is a new FIFO UAC.
+ *
+ * ****************************************************
  */
+
+
+#include "defs.h"
 
 
 #include <stdlib.h>
@@ -82,9 +97,10 @@ static int callid_suffix_len;
 static int rand_len;	/* number of chars to display max rand */
 static char callid[CALLID_NR_LEN+CALLID_SUFFIX_LEN];
 
+#ifndef DEPRECATE_OLD_STUFF
 char *uac_from="\"UAC Account\" <sip:uac@dev.null:9>";
-
 str uac_from_str;
+#endif
 
 static char from_tag[ FROM_TAG_LEN+1 ];
 
@@ -147,8 +163,10 @@ int uac_init() {
 	MDStringArray( from_tag, src, 3 );
 	from_tag[MD5_LEN]=CID_SEP;
 
+#ifndef DEPRECATE_OLD_STUFF
 	uac_from_str.s = uac_from;
 	uac_from_str.len = strlen(uac_from);
+#endif
 
 	return 1;
 }
@@ -168,6 +186,7 @@ int uac_child_init( int rank )
 	return 1;
 }
 
+#ifndef DEPRECATE_OLD_STUFF
 int t_uac( str *msg_type, str *dst, 
 	str *headers, str *body, str *from, 
 	transaction_cb completion_cb, void *cbp, 
@@ -302,10 +321,59 @@ done:
 	if (cbp) shm_free(cbp);
 	return ser_error=ret;
 }
+#endif
 
 
 /*
  * Send a request within a dialog
+ * 
+ * Some parameters are required, some are optional (i.e., ephemeral
+ * or default values are created if 0 is passed as parameter). The
+ * optional parameters are typically used to set some header fields
+ * to dialog-related values (as opposed to having them set to
+ * ephemeral values).
+ *
+ * Required:
+ * - msg ..   specifies type of message, such as "OPTIONS"
+ * - ruri ..  specifies request URI; 
+ * - from ..  value of From header field (if it already includes from tag, 
+ *            the fromtag parameter MUST point to en empty string)
+ * - to ...   value of To header field (if it already includes to tag,
+ *            the totag parameter MUST point to an empty string)
+ * - totag .. to tag
+ * 
+ * Optional:
+ * - dst     transport destination (expressed as URI) -- if present,
+ *           request is physically forwarded to address indicated in it,
+ *           overriding the transport address in ruri; useful for use with 
+ *           outbound proxies or loose routers (that is where the first 
+ *           element of route set comes in)
+ * - fromtag from HF tag -- dialog-less applications do not to set it (==0),
+ *           in which case an ephemeral value is created; if fromtag present,
+ *           its appended to the From header field; it may be also present 
+ *           and point to an empty string -- that only makes sense if
+ *           application includes the tag in From and does not care to
+ *           separate the tag from the rest of header field
+ * - cid ..  callid; if 0, ephemeral value is created; transactions
+ *           within a dialog need to set this value to dialog's callid
+ * - cseq .. CSeq; if 0, default value (DEFAULT_CSEQ) is used; transactions
+ *           within a dialog need to set this value to current local cseq,
+ *           which grows continously with transactions sent
+ * - headers .. block of header fields that will be included in the
+ *           message. It MAY NOT include header fields already described
+ *           in other parameters (From, to, cid, cseq) or created 
+ *           automatically   (Content_length)   otherwise the parameter
+ *           would appear multiple times. It MUST include all additional
+ *           header fields required for a given SIP message, like Content-Type 
+ *           for any messages including a body or Contact for INVITEs.
+ * - body .. if present, body and Content-Length is appended to the 
+ *           SIP message; Content-Type then needs to be present inside
+ *           'headers' parameter
+ * - cb ..   callback to be called when transaction completes; if none
+ *           present, no callback will be called
+ * - cbp ..  callback parameter -- value passed to callback function
+ *           when called
+ *
  */
 int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OPTIONS etc. */
 	      str* dst,                     /* Real destination (can be different than R-URI) */
@@ -336,7 +404,18 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	/* make -Wall shut up */
 	ret=0;
 
-	proxy = uri2proxy((dst) ? (dst) : ((ruri) ? (ruri) : (to)));
+	/* check for invalid parameter */
+	if (!msg || !msg->s
+				|| !ruri || !ruri->s
+				|| !from || !from->s
+				|| !to || !to->s
+				|| !totag || !totag->s ) {
+		LOG(L_ERR, "ERROR: t_uac_dlg: invalud parameters\n");
+		ser_error = ret = E_INVALID_PARAMS;
+		goto done;
+	}
+
+	proxy = uri2proxy((dst) ? (dst) : ruri);
 	if (proxy == 0) {
 		ser_error = ret = E_BAD_ADDRESS;
 		LOG(L_ERR, "ERROR: t_uac_dlg: Can't create a dst proxy\n");
@@ -401,9 +480,9 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	}
 
 	buf = build_uac_request_dlg(msg, 
-				    (ruri) ? (ruri) : (to),
+				    ruri,
 				    to, 
-				    (from) ? (from) : (&uac_from_str), 
+				    from,
 				    totag,
 				    (fromtag) ? (fromtag) : (&ftag), 
 				    (cseq) ? (*cseq) : DEFAULT_CSEQ, 
@@ -431,10 +510,8 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	if (SEND_BUFFER(request) == -1) {
 		if (dst) {
 			tmp = *dst;
-		} else if (ruri) {
-			tmp = *ruri;
 		} else {
-			tmp = *to;
+			tmp = *ruri;
 		}
 		LOG(L_ERR, "ERROR: t_uac: UAC sending to \'%.*s\' failed\n", tmp.len, tmp.s);
 		proxy->errors++;
@@ -566,6 +643,8 @@ int fifo_uac( FILE *stream, char *response_file )
 	return 1;
 }
 
+#ifndef DEPRECATE_OLD_STUFF
+
 /* syntax:
 
 	:t_uac_from:[file] EOL
@@ -670,4 +749,226 @@ int fifo_uac_from( FILE *stream, char *response_file )
 	}
 	return 1;
 
+}
+
+#endif
+
+
+static void fifo_uac_error(char *reply_fifo, int code, char *msg)
+{
+	LOG(L_ERR, "ERROR: fifo_uac: %s\n", msg ); 
+	fifo_reply(reply_fifo, "%d fifo_uac: %s", code, msg);
+}
+
+/* syntax:
+
+	:t_uac_dlg:[file] EOL
+	method EOL
+	r-uri EOL 
+	dst EOL 				// ("." if no outbound server used)
+							// must be used with dialogs/lr
+	<EOL separated HFs>+	// From and To must be present at least;
+							// dialog-apps must include tag in From
+ 							// (an ephemeral is appended otherwise)
+							// and supply CSeq/CallId
+	.[EOL]
+	[body] 
+	.EOL
+
+*/
+
+int fifo_uac_dlg( FILE *stream, char *response_file ) 
+{
+	char method_buf[MAX_METHOD];
+	char ruri_buf[MAX_URI_SIZE];
+	char outbound_buf[MAX_URI_SIZE];
+	char header_buf[MAX_HEADER]; 
+	char body_buf[MAX_BODY]; 
+	str method, ruri, outbound, header, body;
+	struct sip_uri parsed_ruri, parsed_outbound;
+	str dummy_empty;
+	int fromtag;
+	int cseq;
+	struct cseq_body *parsed_cseq;
+	int i;
+	char c;
+	struct to_body *parsed_from;
+
+
+	char *shmem_file;
+	int fn_len;
+	int ret;
+	int sip_error;
+	char err_buf[MAX_REASON_LEN];
+	int err_ret;
+	struct sip_msg faked_msg;
+
+
+	if (!read_line(method_buf, MAX_METHOD, stream,&method.len)
+					||method.len==0) {
+		/* line breaking must have failed -- consume the rest
+		   and proceed to a new request
+		*/
+		fifo_uac_error(response_file, 400, "method expected");
+		return 1;
+	}
+	method.s=method_buf;
+	DBG("DEBUG: fifo_uac: method: %.*s\n", method.len, method.s );
+
+	if (!read_line(ruri_buf, MAX_URI_SIZE, stream, &ruri.len)
+					|| ruri.len==0) {
+		fifo_uac_error(response_file, 400, "ruri expected");
+		return 1;
+	}
+	if (!parse_uri(ruri_buf, ruri.len, &parsed_ruri) < 0 ) {
+		fifo_uac_error(response_file, 400, "ruri invalid\n");
+		return 1;
+	}
+	ruri.s=ruri_buf;
+	DBG("DEBUG: fifo_uac:  ruri: %.*s\n", ruri.len, ruri.s);
+
+	if (!read_line(outbound_buf, MAX_URI_SIZE, stream, &outbound.len)
+					||outbound.len==0) {
+		fifo_uac_error(response_file, 400, "outbound address expected");
+		return 1;
+	}
+	if (outbound.len==1 && outbound_buf[0]=='.' ) {
+		DBG("DEBUG: fifo_uac: outbound empty");
+		outbound.s=0; outbound.len=0;
+	} else if (!parse_uri(outbound_buf, outbound.len, 
+							&parsed_outbound) < 0 ) {
+		fifo_uac_error(response_file, 400, "outbound uri invalid\n");
+		return 1;
+	} else {
+		outbound.s=outbound_buf;
+		DBG("DEBUG: fifo_uac:  dst: %.*s\n", outbound.len, outbound.s);
+	}
+
+
+	/* now read and parse header fields */
+	if (!read_line_set(header_buf, MAX_HEADER, stream, &header.len)
+					|| header.len==0 ) {
+		fifo_uac_error(response_file, 400, "HFs expected");
+		return 1;
+	}
+	header.s=header_buf;
+	DBG("DEBUG: fifo_uac: header: %.*s\n", header.len, header.s );
+	/* use SIP parser to look at what is in the FIFO request */
+	memset(&faked_msg, 0, sizeof(struct sip_msg));
+	faked_msg.len=header.len; faked_msg.unparsed=header_buf;
+	if (parse_headers(&faked_msg, HDR_EOH, 0)==-1 ) {
+			fifo_uac_error(response_file, 400, "HFs unparseable");
+			goto error;
+	}
+
+	/* and eventually body */
+	if (!read_body(body_buf, MAX_BODY, stream, &body.len)) {
+		fifo_uac_error(response_file, 400, "body expected");
+		goto error;
+	}
+	body.s=body_buf;
+	DBG("DEBUG: fifo_uac: body: %.*s\n", body.len, body.s );
+
+
+	/* at this moment, we collected all the things we got, let's
+	 * verify user has not forgotten something */
+	if (body.len && !faked_msg.content_type) {
+		fifo_uac_error(response_file, 400, "Content_type missing");
+		goto error;
+	}
+	if (body.len && faked_msg.content_length) {
+		fifo_uac_error(response_file, 400, "Content_length disallowed");
+		goto error;
+	}
+	if (!faked_msg.to) {
+		fifo_uac_error(response_file, 400, "To missing");
+		goto error;
+	}
+	if (!faked_msg.from) {
+		fifo_uac_error(response_file, 400, "From missing");
+		goto error;
+	}
+	/* we also need to know if there is from-tag and add it otherwise */
+	if (parse_from_header(&faked_msg)<0) {
+		fifo_uac_error(response_file, 400, "Error in From");
+		goto error;
+	}
+	parsed_from=(struct to_body*)faked_msg.from->parsed;
+	fromtag=parsed_from->tag_value.s &&
+			parsed_from->tag_value.len;
+	cseq=0;
+	if (faked_msg.cseq && (parsed_cseq=get_cseq(&faked_msg))) {
+		for (i=0; i<parsed_cseq->number.len; i++ ) {
+			c=parsed_cseq->number.s[i];
+			if (c>='0' && c<'9' ) cseq=cseq*10+c-'0';
+			else {
+				fifo_uac_error(response_file, 400, "non-nummerical CSeq");
+				goto error;
+			}
+		}
+		if (parsed_cseq->method.len!=method.len 
+				|| memcmp(parsed_cseq->method.s, method.s, method.len)!=0) {
+			fifo_uac_error(response_file, 400, "CSeq method mismatch");
+			goto error;
+		}
+	}
+
+
+
+
+	DBG("DEBUG: fifo_uac: EoL -- proceeding to transaction creation\n");
+	/* we got it all, initiate transaction now! */
+	if (response_file) {
+		fn_len=strlen(response_file)+1;
+		shmem_file=shm_malloc(fn_len);
+		if (shmem_file==0) {
+			fifo_uac_error(response_file, 500, "no shmem");
+			goto error;
+		}
+		memcpy(shmem_file, response_file, fn_len );
+	} else {
+		shmem_file=0;
+	}
+	/* HACK: there is yet a shortcoming -- if t_uac fails, callback
+	   will not be triggered and no feedback will be printed
+	   to shmem_file
+	*/
+	dummy_empty.s=0; dummy_empty.len=0;
+	ret=t_uac_dlg( &method, 
+		outbound.len ? &outbound: 0,
+		&ruri, 
+		&faked_msg.to->body,	/* possibly w/to-tag in it */
+		&faked_msg.from->body,
+		&dummy_empty,			/* if present, to-tag passed in to */
+		fromtag ? 				/* if fromtag present, ... */
+			&dummy_empty: 		/* ... pass it in from ... */
+			0,					/* use ephemeral otherwise */
+		cseq ? &cseq : 0,
+		faked_msg.callid ?
+			&faked_msg.callid->body:
+			0,
+		0, 						/* headers -- TBD */
+		&body,
+		fifo_callback, shmem_file );
+
+
+	if (ret<=0) {
+		err_ret=err2reason_phrase(ret, &sip_error, err_buf,
+				sizeof(err_buf), "FIFO/UAC" ) ;
+		if (err_ret > 0 )
+		{
+
+			fifo_uac_error(response_file, sip_error, err_buf);
+		} else {
+			fifo_uac_error(response_file, 500, "FIFO/UAC error" );
+#ifdef _OBSO
+			fifo_reply(response_file, "500 FIFO/UAC error: %d\n",
+				ret );
+#endif
+		}
+	}
+
+error:
+	free_sip_msg(&faked_msg);
+	return 1;
 }

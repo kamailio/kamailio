@@ -27,6 +27,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "defs.h"
+
 
 #include "../../hash_func.h"
 #include "../../globals.h"
@@ -166,7 +168,7 @@ error:
 }
 
 
-
+#ifndef DEPRECATE_OLD_STUFF
 char *build_uac_request(  str msg_type, str dst, str from,
 	str fromtag, int cseq, str callid, str headers, 
 	str body, int branch, 
@@ -315,6 +317,7 @@ error:
 	return buf;
 	
 }
+#endif
 
 
 char *build_uac_request_dlg(str* msg,           /* Method */

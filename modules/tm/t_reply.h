@@ -30,6 +30,9 @@
 #ifndef _T_REPLY_H
 #define _T_REPLY_H
 
+#include "defs.h"
+
+
 #include "h_table.h"
 
 /* reply processing status */

@@ -28,6 +28,9 @@
  */
 
 
+#include "defs.h"
+
+
 #include <limits.h>
 #include "../../dprint.h"
 #include "../../config.h"

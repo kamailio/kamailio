@@ -93,6 +93,9 @@
 
 */
 
+#include "defs.h"
+
+
 
 #include "config.h"
 #include "h_table.h"
