@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #include "timer.h"
 #include "../../dprint.h"
 

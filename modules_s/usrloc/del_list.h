@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #ifndef DEL_LIST_H
 #define DEL_LIST_H
 

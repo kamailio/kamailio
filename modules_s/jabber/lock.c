@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #include <errno.h>
 
 #include "lock.h"

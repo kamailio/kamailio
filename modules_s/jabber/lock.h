@@ -1,3 +1,7 @@
+/* 
+ * $Id$
+ *
+ */
 
 #ifndef _SMART_LOCK_H_
 #define _SMART_LOCK_H_

@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #ifndef _PIKE_LOCK_H
 #define _PIKE_LOCK_H
 

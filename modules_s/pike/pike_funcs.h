@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #ifndef _PIKE_FUNCS_H
 #define PIKE_FUNCS_H
 

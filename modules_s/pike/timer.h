@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #ifndef _PIKE_TIMER_H
 #define _PIKE_TIMER_H
 

@@ -1,3 +1,8 @@
+/* 
+ * $Id$
+ *
+ */
+
 #include "del_list.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
