@@ -572,12 +572,13 @@ int timer_presentity(presentity_t* _p)
 	presence_tuple_t *tuple;
 
 	if (_p && _p->flags)
-	     LOG(L_ERR, "timer_presentity: _p=%p %s flags=%x watchers=%p\n", _p, _p->uri.s, _p->flags, _p->watchers);
+	     LOG(L_ERR, "timer_presentity: _p=%p %.*s flags=%x watchers=%p\n", 
+		 _p, _p->uri.len, _p->uri.s, _p->flags, _p->watchers);
 	if (_p->flags & PFLAG_WATCHERINFO_CHANGED) {
 		watcher_t *w = _p->watchers;
 		while (w) {
 		     if (w && w->flags)
-			  LOG(L_ERR, "\t w=%p %s flags=%x\n", w, w->uri.s, w->flags);
+			  LOG(L_ERR, "\t w=%p %.*s flags=%x\n", w, w->uri.len, w->uri.s, w->flags);
 		     if (w->flags & WFLAG_SUBSCRIPTION_CHANGED) {
 				if (send_notify(_p, w) < 0) {
 					LOG(L_ERR, "handle_subscription(): Error while sending notify\n");
