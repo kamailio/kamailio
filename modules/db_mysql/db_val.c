@@ -151,6 +151,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		VAL_NULL(_v) = 1;
 		return 0;
 	}
+	VAL_NULL(_v) = 0;
 
 	switch(_t) {
 	case DB_INT:
