@@ -33,6 +33,9 @@
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
+ * 2003-04-14 gmtime changed to localtime because mktime later
+ *            expects localtime, changed daylight saving bug
+ *            previously found in mysql module (janakj)
  *
  */
 
@@ -94,7 +97,15 @@ static inline int str2time(const char* _s, time_t* _v)
 	}
 #endif
 
+	memset(&t, '\0', sizeof(struct tm));
 	strptime(_s,"%Y-%m-%d %H:%M:%S %z",&t);
+
+	     /* Daylight saving information got lost in the database
+	      * so let mktime to guess it. This eliminates the bug when
+	      * contacts reloaded from the database have different time
+	      * of expiration by one hour when daylight saving is used
+	      */ 
+	t.tm_isdst = -1;   
 	*_v = mktime(&t);
 
 	return 0;
@@ -147,7 +158,7 @@ static inline int time2str(time_t _v, char* _s, int* _l)
 	}
 #endif
 
-	t = gmtime(&_v);
+	t = localtime(&_v);
 
 	if((bl=strftime(_s,(size_t)(*_l)-1,"'%Y-%m-%d %H:%M:%S %z'",t))>0)
 		*_l = bl;
