@@ -37,7 +37,7 @@
 #define ERASE_CELL 1
 #define NOT_ERASE_CELL 0
 
-typedef unsigned int code_t;
+typedef int code_t;
 
 typedef struct _dc {
     char* domain;

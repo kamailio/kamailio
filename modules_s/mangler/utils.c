@@ -44,7 +44,7 @@ int
 patch (struct sip_msg *msg, char *oldstr, unsigned int oldlen, char *newstr,
        unsigned int newlen)
 {
-	unsigned int off;
+	int off;
 	struct lump *anchor;
 
 	if (oldstr == NULL)

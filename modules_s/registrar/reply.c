@@ -104,7 +104,9 @@ void build_contact(ucontact_t* _c)
 	}
 
 	if (_c) {
-		DBG("build_contact(): Created Contact HF: %.*s\n", l, ZSW(b));
+		DBG("build_contact(): Created Contact HF: %.*s\n", l, /*ZSW*/(b));
+		/*b can never be 0; ZSW commented out to get rid of an icc warning
+		 * --andrei */
 	}
 }
 
