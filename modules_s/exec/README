@@ -6,7 +6,6 @@ Exec module allows to start an external command when
 from a ser script. The commands may be any valid
 shell commands -- the command string is passed to
 shell using 'popen' command. ser passes additionaly
-<<<<<<< README
 lot of information about request in environment
 variables:
 - SIP_HF_<hf_name> contains value of each header field
