@@ -30,6 +30,7 @@
  * History:
  * ---------
  * 2003-01-27 timer activity printing #ifdef-ed to EXTRA_DEBUG (jiri)
+ * 2003-03-11 New module interface (janakj)
  */
 
 
@@ -72,101 +73,51 @@ int   use_domain     = 0;                                  /* Whether usrloc sho
 
 db_con_t* db; /* Database connection handle */
 
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"~ul_register_udomain",   (cmd_function)register_udomain,   1, 0},
+	{"~ul_insert_urecord",     (cmd_function)insert_urecord,     1, 0},
+	{"~ul_delete_urecord",     (cmd_function)delete_urecord,     1, 0},
+	{"~ul_get_urecord",        (cmd_function)get_urecord,        1, 0},
+	{"~ul_lock_udomain",       (cmd_function)get_urecord,        1, 0},
+	{"~ul_unlock_udomain",     (cmd_function)unlock_udomain,     1, 0},
+	{"~ul_release_urecord",    (cmd_function)release_urecord,    1, 0},
+	{"~ul_insert_ucontact",    (cmd_function)insert_ucontact,    1, 0},
+	{"~ul_delete_ucontact",    (cmd_function)delete_ucontact,    1, 0},
+	{"~ul_get_ucontact",       (cmd_function)get_ucontact,       1, 0},
+	{"~ul_update_ucontact",    (cmd_function)update_ucontact,    1, 0},
+	{"~ul_register_watcher",   (cmd_function)register_watcher,   1, 0},
+	{"~ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0},
+	{0, 0, 0, 0}
+};
+
+
+/* 
+ * Exported parameters 
+ */
+static param_export_t params[] = {
+	{"user_col",       STR_PARAM, &user_col      },
+	{"domain_col",     STR_PARAM, &domain_col    },
+	{"contact_col",    STR_PARAM, &contact_col   },
+	{"expires_col",    STR_PARAM, &expires_col   },
+	{"q_col",          STR_PARAM, &q_col         },
+	{"callid_col",     STR_PARAM, &callid_col    },
+	{"cseq_col",       STR_PARAM, &cseq_col      },
+	{"method_col",     STR_PARAM, &method_col    },
+	{"db_url",         STR_PARAM, &db_url        },
+	{"timer_interval", INT_PARAM, &timer_interval},
+	{"db_mode",        INT_PARAM, &db_mode       },
+	{"use_domain",     INT_PARAM, &use_domain    },
+	{0, 0, 0}
+};
+
 
 struct module_exports exports = {
 	"usrloc",
-	(char*[]) {
-		"~ul_register_udomain",  /* Create a new domain */
-
-		"~ul_insert_urecord",    /* Insert record into a domain */
-		"~ul_delete_urecord",    /* Delete record from a domain */
-		"~ul_get_urecord",       /* Get record from a domain */
-		"~ul_lock_udomain",      /* Lock domain */
-		"~ul_unlock_udomain",    /* Unlock domain */
-
-		"~ul_release_urecord",   /* Release record obtained using get_record */
-		"~ul_insert_ucontact",   /* Insert a new contact into a record */
-		"~ul_delete_ucontact",   /* Remove a contact from a record */
-		"~ul_get_ucontact",      /* Return pointer to a contact */
-
-		"~ul_update_ucontact",   /* Update a contact */
-
-		"~ul_register_watcher",  /* Register a watcher */
-		"~ul_unregister_watcher" /* Unregister a watcher */
-	},
-	(cmd_function[]) {
-		(cmd_function)register_udomain,
-
-		(cmd_function)insert_urecord,
-		(cmd_function)delete_urecord,
-		(cmd_function)get_urecord,
-		(cmd_function)lock_udomain,
-		(cmd_function)unlock_udomain,
-		
-		(cmd_function)release_urecord,
-		(cmd_function)insert_ucontact,
-		(cmd_function)delete_ucontact,
-		(cmd_function)get_ucontact,
-
-		(cmd_function)update_ucontact,
-
-		(cmd_function)register_watcher,
-		(cmd_function)unregister_watcher
-	},
-	(int[]) {
-		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-	},
-	(fixup_function[]) {
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	},
-	13,
-
-	(char*[]) {
-		"user_col",
-		"domain_col",
-		"contact_col",
-		"expires_col",
-		"q_col",
-		"callid_col",
-		"cseq_col",
-		"method_col",
-		"db_url",
-		"timer_interval",
-		"db_mode",
-		"use_domain"
-	},
-
-	(modparam_t[]) {
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		STR_PARAM,
-		INT_PARAM,
-		INT_PARAM,
-		INT_PARAM
-	},
-
-	(void*[]) {
-		&user_col,
-		&domain_col,
-		&contact_col,
-		&expires_col,
-		&q_col,
-		&callid_col,
-		&cseq_col,
-		&method_col,
-		&db_url,
-		&timer_interval,
-		&db_mode,
-		&use_domain
-	},
-	12,          /* Number of parameters */
-
+	cmds,       /* Exported functions */
+	params,     /* Export parameters */
 	mod_init,   /* Module initialization function */
 	0,          /* Response function */
 	destroy,    /* Destroy function */
