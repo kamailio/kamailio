@@ -1146,7 +1146,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:x";
+	"f:cp:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:x:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1272,8 +1272,8 @@ int main(int argc, char** argv)
 			case 'i':
 					fifo=optarg;
 					break;
-		        case 'x':
-				        unixsock_name=optarg;
+			case 'x':
+					unixsock_name=optarg;
 					break;
 			case '?':
 					if (isprint(optopt))

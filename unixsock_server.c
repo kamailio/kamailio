@@ -26,6 +26,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ *              created by janakj
+ *  2004-03-03  added tcp init code (andrei)
+ */
 
 #include <unistd.h>
 #include <errno.h>
@@ -255,6 +259,10 @@ int init_unixsock_server(void)
 {
 	int ret, i;
 	pid_t pid;
+#ifdef USE_TCP
+	int sockfd[2];
+#endif
+	
 	
 	ret = create_unix_socket(unixsock_name);
 	if (ret < 0) {
@@ -267,6 +275,15 @@ int init_unixsock_server(void)
 
 	for(i = 0; i < unixsock_children; i++) {
 		process_no++;
+#ifdef USE_TCP
+		if(!tcp_disable){
+ 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+				LOG(L_ERR, "ERROR: init_unixsock_server: socketpair"
+						" failed: %s\n", strerror(errno));
+				return -1;
+			}
+		}
+#endif
 		pid = fork();
 		if (pid < 0) {
 			LOG(L_ERR, "init_unixsock_server: Unable to fork: %s\n",
@@ -274,6 +291,12 @@ int init_unixsock_server(void)
 			close(sock);
 			return -1;
 		} else if (pid == 0) { /* child */
+#ifdef USE_TCP
+			if (!tcp_disable){
+				close(sockfd[0]);
+				unix_tcp_sock=sockfd[1];
+			}
+#endif
 			if (init_child(PROC_UNIXSOCK) < 0) {
 				LOG(L_ERR, "init_unixsock_server: Error in "
 				    "init_child\n");
@@ -288,6 +311,15 @@ int init_unixsock_server(void)
 		pt[process_no].pid = pid;
 		strncpy(pt[process_no].desc, "unix domain socket server", 
 			MAX_PT_DESC);
+#ifdef USE_TCP
+		if (!tcp_disable){
+			close(sockfd[1]);
+			pt[process_no].unix_sock=sockfd[0];
+			pt[process_no].idx=-1; /* this is not a "tcp"
+									  process*/
+		}
+#endif
+
 	}
 	return 1;
 }
