@@ -40,7 +40,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   12
-EXTRAVERSION = dev-t05
+EXTRAVERSION = dev-t06
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -686,7 +686,7 @@ endif
 
 #add libssl if needed
 ifneq ($(TLS),)
-LIBS+= -lssl
+LIBS+= -lssl 
 endif
 
 ifneq ($(found_lock_method), yes)

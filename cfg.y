@@ -41,6 +41,7 @@
  * 2003-04-22  strip_tail added (jiri)
  * 2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
  *              require_certificate added (andrei)
+ * 2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
  */
 
 
@@ -64,6 +65,9 @@
 #include "name_alias.h"
 
 #include "config.h"
+#ifdef USE_TLS
+#include "tls/tls_config.h"
+#endif
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -84,6 +88,8 @@ char* tmp;
 void* f_tmp;
 struct id_list* lst_tmp;
 int rt;  /* Type of route block for find_export */
+
+void warn(char* s);
  
 
 %}
@@ -177,6 +183,13 @@ int rt;  /* Type of route block for find_export */
 %token DISABLE_TCP
 %token TCP_CHILDREN
 %token DISABLE_TLS
+%token TLSLOG
+%token TLS_PORT_NO
+%token TLS_METHOD
+%token SSLv23
+%token SSLv2
+%token SSLv3
+%token TLSv1
 %token TLS_VERIFY
 %token TLS_REQUIRE_CERTIFICATE
 %token TLS_CERTIFICATE
@@ -363,8 +376,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TCP
 										tcp_disable=$3;
 									#else
-										fprintf(stderr, "WARNING: tcp support"
-												"not compiled in\n");
+										warn("tcp support not compiled in");
 									#endif
 									}
 		| DISABLE_TCP EQUAL error { yyerror("boolean value expected"); }
@@ -372,8 +384,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TCP
 										tcp_children_no=$3;
 									#else
-										fprintf(stderr, "WARNING: tcp support"
-												"not compiled in\n");
+										warn("tcp support not compiled in");
 									#endif
 									}
 		| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
@@ -381,17 +392,68 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TLS
 										tls_disable=$3;
 									#else
-										fprintf(stderr, "WARNING: tls support"
-												"not compiled in\n");
+										warn("tls support not compiled in");
 									#endif
 									}
 		| DISABLE_TLS EQUAL error { yyerror("boolean value expected"); }
+		| TLSLOG EQUAL NUMBER 		{ 
+									#ifdef USE_TLS
+										tls_log=$3;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLSLOG EQUAL error { yyerror("int value expected"); }
+		| TLS_PORT_NO EQUAL NUMBER {
+									#ifdef USE_TLS
+										tls_port_no=$3;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_PORT_NO EQUAL error { yyerror("number expected"); }
+		| TLS_METHOD EQUAL SSLv23 {
+									#ifdef USE_TLS
+										tls_method=TLS_USE_SSLv23;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_METHOD EQUAL SSLv2 {
+									#ifdef USE_TLS
+										tls_method=TLS_USE_SSLv2;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_METHOD EQUAL SSLv3 {
+									#ifdef USE_TLS
+										tls_method=TLS_USE_SSLv3;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_METHOD EQUAL TLSv1 {
+									#ifdef USE_TLS
+										tls_method=TLS_USE_TLSv1;
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+		| TLS_METHOD EQUAL error {
+									#ifdef USE_TLS
+										yyerror("SSLv23, SSLv2, SSLv3 or TLSv1"
+													" expected");
+									#else
+										warn("tls support not compiled in");
+									#endif
+									}
+										
 		| TLS_VERIFY EQUAL NUMBER {
 									#ifdef USE_TLS
 										tls_verify_cert=$3;
 									#else
-										fprintf(stderr, "WARNING: tcp support"
-												"not compiled in\n");
+										warn("tls support not compiled in");
 									#endif
 									}
 		| TLS_VERIFY EQUAL error { yyerror("boolean value expected"); }
@@ -399,8 +461,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TLS
 										tls_require_cert=$3;
 									#else
-										fprintf(stderr, "WARNING: tcp support"
-												"not compiled in\n");
+										warn( "tls support not compiled in");
 									#endif
 									}
 		| TLS_REQUIRE_CERTIFICATE EQUAL error { yyerror("boolean value"
@@ -409,8 +470,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TLS
 											tls_cert_file=$3;
 									#else
-										fprintf(stderr, "WARNING: tls support"
-												"not compiled in\n");
+										warn("tls support not compiled in");
 									#endif
 									}
 		| TLS_CERTIFICATE EQUAL error { yyerror("string value expected"); }
@@ -418,8 +478,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TLS
 											tls_pkey_file=$3;
 									#else
-										fprintf(stderr, "WARNING: tls support"
-												"not compiled in\n");
+										warn("tls support not compiled in");
 									#endif
 									}
 		| TLS_PRIVATE_KEY EQUAL error { yyerror("string value expected"); }
@@ -427,8 +486,7 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 									#ifdef USE_TLS
 											tls_ca_file=$3;
 									#else
-										fprintf(stderr, "WARNING: tls support"
-												"not compiled in\n");
+										warn("tls support not compiled in");
 									#endif
 									}
 		| TLS_CA_LIST EQUAL error { yyerror("string value expected"); }
@@ -985,69 +1043,118 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 		| FORWARD_TCP error { $$=0; yyerror("missing '(' or ')' ?"); }
 		| FORWARD_TCP LPAREN error RPAREN { $$=0; yyerror("bad forward_tcp"
 										"argument"); }
-		| FORWARD_TLS LPAREN host RPAREN	{ $$=mk_action(	FORWARD_TLS_T,
+		| FORWARD_TLS LPAREN host RPAREN	{
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
 														STRING_ST,
 														NUMBER_ST,
 														$3,
 														0);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 										}
-		| FORWARD_TLS LPAREN STRING RPAREN	{ $$=mk_action(	FORWARD_TLS_T,
-														STRING_ST,
-														NUMBER_ST,
-														$3,
-														0);
+		| FORWARD_TLS LPAREN STRING RPAREN	{
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															STRING_ST,
+															NUMBER_ST,
+															$3,
+															0);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 										}
-		| FORWARD_TLS LPAREN ip RPAREN	{ $$=mk_action(	FORWARD_TLS_T,
-														IP_ST,
-														NUMBER_ST,
-														(void*)$3,
-														0);
+		| FORWARD_TLS LPAREN ip RPAREN	{ 
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															IP_ST,
+															NUMBER_ST,
+															(void*)$3,
+															0);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 										}
-		| FORWARD_TLS LPAREN host COMMA NUMBER RPAREN { $$=mk_action(
-																FORWARD_TLS_T,
-																 STRING_ST,
-																 NUMBER_ST,
-																$3,
-																(void*)$5);
+		| FORWARD_TLS LPAREN host COMMA NUMBER RPAREN { 
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															 STRING_ST,
+															 NUMBER_ST,
+															$3,
+															(void*)$5);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 												 }
-		| FORWARD_TLS LPAREN STRING COMMA NUMBER RPAREN {$$=mk_action(
-																FORWARD_TLS_T,
-																 STRING_ST,
-																 NUMBER_ST,
-																$3,
-																(void*)$5);
+		| FORWARD_TLS LPAREN STRING COMMA NUMBER RPAREN {
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															 STRING_ST,
+															 NUMBER_ST,
+															$3,
+															(void*)$5);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 													}
-		| FORWARD_TLS LPAREN ip COMMA NUMBER RPAREN { $$=mk_action(FORWARD_TLS_T,
-																 IP_ST,
-																 NUMBER_ST,
-																 (void*)$3,
-																(void*)$5);
+		| FORWARD_TLS LPAREN ip COMMA NUMBER RPAREN {
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															 IP_ST,
+															 NUMBER_ST,
+															 (void*)$3,
+															(void*)$5);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 												  }
 		| FORWARD_TLS LPAREN URIHOST COMMA URIPORT RPAREN {
-													$$=mk_action(FORWARD_TLS_T,
-																 URIHOST_ST,
-																 URIPORT_ST,
-																0,
-																0);
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															 URIHOST_ST,
+															 URIPORT_ST,
+															0,
+															0);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 													}
 													
 									
 		| FORWARD_TLS LPAREN URIHOST COMMA NUMBER RPAREN {
-													$$=mk_action(FORWARD_TLS_T,
-																 URIHOST_ST,
-																 NUMBER_ST,
-																0,
-																(void*)$5);
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															 URIHOST_ST,
+															 NUMBER_ST,
+															0,
+															(void*)$5);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 													}
 		| FORWARD_TLS LPAREN URIHOST RPAREN {
-													$$=mk_action(FORWARD_TLS_T,
-																 URIHOST_ST,
-																 NUMBER_ST,
-																0,
-																0);
+										#ifdef USE_TLS
+											$$=mk_action(	FORWARD_TLS_T,
+															 URIHOST_ST,
+															 NUMBER_ST,
+															0,
+															0);
+										#else
+											yyerror("tls support not "
+													"compiled in");
+										#endif
 										}
 		| FORWARD_TLS error { $$=0; yyerror("missing '(' or ')' ?"); }
-		| FORWARD_TLS LPAREN error RPAREN { $$=0; yyerror("bad forward_tcp"
+		| FORWARD_TLS LPAREN error RPAREN { $$=0; yyerror("bad forward_tls"
 										"argument"); }
 		
 		| SEND LPAREN host RPAREN	{ $$=mk_action(	SEND_T,
@@ -1301,6 +1408,13 @@ cmd:		FORWARD LPAREN host RPAREN	{ $$=mk_action(	FORWARD_T,
 extern int line;
 extern int column;
 extern int startcolumn;
+void warn(char* s)
+{
+	LOG(L_WARN, "cfg. warning: (%d,%d-%d): %s\n", line, startcolumn, 
+			column, s);
+	cfg_errors++;
+}
+
 void yyerror(char* s)
 {
 	LOG(L_CRIT, "parse error (%d,%d-%d): %s\n", line, startcolumn, 

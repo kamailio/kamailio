@@ -81,11 +81,7 @@ extern int tcp_disable;
 #endif
 #ifdef USE_TLS
 extern int tls_disable;
-extern int tls_verify_cert;
-extern int tls_require_cert;
-extern char* tls_cert_file;
-extern char* tls_pkey_file;
-extern char* tls_ca_file;
+extern unsigned short tls_port_no;
 #endif
 extern int dont_fork;
 extern int check_via;

@@ -37,6 +37,7 @@
  *  2003-04-22  strip_tail added (jiri)
  *  2003-07-03  tls* (disable, certificate, private_key, ca_list, verify, 
  *               require_certificate added (andrei)
+ *  2003-07-06  more tls config. vars added: tls_method, tls_port_no (andrei)
  */
 
 
@@ -149,7 +150,7 @@ MAXBUFFER maxbuffer
 CHILDREN children
 CHECK_VIA	check_via
 SYN_BRANCH syn_branch
-MEMLOG	memlog
+MEMLOG		"memlog"|"mem_log"
 SIP_WARNING sip_warning
 FIFO fifo
 FIFO_MODE fifo_mode
@@ -163,6 +164,9 @@ MHOMED		mhomed
 DISABLE_TCP		"disable_tcp"
 TCP_CHILDREN	"tcp_children"
 DISABLE_TLS		"disable_tls"
+TLSLOG			"tlslog"|"tls_log"
+TLS_PORT_NO		"tls_port_no"
+TLS_METHOD		"tls_method"
 TLS_VERIFY		"tls_verify"
 TLS_REQUIRE_CERTIFICATE "tls_require_certificate"
 TLS_CERTIFICATE	"tls_certificate"
@@ -175,11 +179,15 @@ MODPARAM        modparam
 /* values */
 YES			"yes"|"true"|"on"|"enable"
 NO			"no"|"false"|"off"|"disable"
-UDP			"udp"
-TCP			"tcp"
-TLS			"tls"
-INET		"inet"
-INET6		"inet6"
+UDP			"udp"|"UDP"
+TCP			"tcp"|"TCP"
+TLS			"tls"|"TLS"
+INET		"inet"|"INET"
+INET6		"inet6"|"INET6"
+SSLv23			"sslv23"|"SSLv23"|"SSLV23"
+SSLv2			"sslv2"|"SSLv2"|"SSLV2"
+SSLv3			"sslv3"|"SSLv3"|"SSLV3"
+TLSv1			"tlsv1"|"TLSv1"|"TLSV1"
 
 LETTER		[a-zA-Z]
 DIGIT		[0-9]
@@ -290,6 +298,9 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
 <INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
+<INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
+<INITIAL>{TLS_PORT_NO}	{ count(); yylval.strval=yytext; return TLS_PORT_NO; }
+<INITIAL>{TLS_METHOD}	{ count(); yylval.strval=yytext; return TLS_METHOD; }
 <INITIAL>{TLS_VERIFY}	{ count(); yylval.strval=yytext; return TLS_VERIFY; }
 <INITIAL>{TLS_REQUIRE_CERTIFICATE}	{ count(); yylval.strval=yytext;
 										return TLS_REQUIRE_CERTIFICATE; }
@@ -330,6 +341,10 @@ EAT_ABLE	[\ \t\b\r]
 						  yylval.intval=-1; /* no match*/
 						#endif
 						  return NUMBER; }
+<INITIAL>{SSLv23}		{ count(); yylval.strval=yytext; return SSLv23; }
+<INITIAL>{SSLv2}		{ count(); yylval.strval=yytext; return SSLv2; }
+<INITIAL>{SSLv3}		{ count(); yylval.strval=yytext; return SSLv3; }
+<INITIAL>{TLSv1}		{ count(); yylval.strval=yytext; return TLSv1; }
 
 <INITIAL>{COMMA}		{ count(); return COMMA; }
 <INITIAL>{SEMICOLON}	{ count(); return SEMICOLON; }
