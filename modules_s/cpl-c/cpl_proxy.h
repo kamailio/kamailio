@@ -444,7 +444,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 
 		/* as I am interested in getting the responses back - I need to install
 		 * some callback functions for replies  */
-		if (cpl_tmb.register_tmcb(intr->msg,TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,
+		if (cpl_tmb.register_tmcb(intr->msg,0,TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,
 		reply_callback, (void*)intr) <= 0 ) {
 			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
 				"TMCB_RESPONSE_OUT callback\n");
