@@ -8,6 +8,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#define MAX_RECV_BUFFER_SIZE	256*1024
+#define BUFFER_INCREMENT	2048
+
 extern int udp_sock;
 
 int udp_init(unsigned long ip, unsigned short port);
