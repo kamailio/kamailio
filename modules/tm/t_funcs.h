@@ -15,6 +15,8 @@ struct timer;
 struct entry;
 struct cell;
 
+#include "sh_malloc.h"
+
 #include "timer.h"
 #include "lock.h"
 #include "sip_msg.h"
@@ -22,8 +24,6 @@ struct cell;
 #define T_UNDEFINED 	( (struct cell*) -1 )
 #define T_NULL		( (struct cell*) 0 )
 
-#define sh_malloc( size )     malloc(size)
-#define sh_free( ptr )           free(ptr)
 /* already defined in msg_parser.h
 #define get_cseq( p_msg)    ((struct cseq_body*)p_msg->cseq->parsed)
 */

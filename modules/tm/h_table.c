@@ -1,5 +1,6 @@
 #include "h_table.h"
 #include "../../dprint.h"
+#include "sh_malloc.h"
 
 
 /*   Frees the all the containes of a cell and the cell's body itself
