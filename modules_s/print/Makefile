@@ -13,6 +13,7 @@ depends= $(sources:.c=.d)
 NAME=print.so
 
 LDFLAGS=-O2 -shared
+CFLAGS+= -fPIC -DPIC
 LIBS=
 
 ALLDEP=Makefile ../../Makefile

@@ -14,6 +14,7 @@ NAME=textops.so
 
 LDFLAGS=-O2 -shared
 LIBS=
+CFLAGS+= -fPIC -DPIC
 
 ALLDEP=Makefile ../../Makefile
 
