@@ -33,7 +33,7 @@ char* q_col          = "q";                                /* Name of column con
 char* callid_col     = "callid";                           /* Name of column containing callid string */
 char* cseq_col       = "cseq";                             /* Name of column containing cseq values */
 char* method_col     = "method";                           /* Name of column containing supported method */
-char* db_url         = "sql://janakj:heslo@localhost/ser"; /* Database URL */
+char* db_url         = "sql://ser:heslo@localhost/ser";    /* Database URL */
 int   timer_interval = 60;                                 /* Timer interval in seconds */
 int   db_mode        = 0;                                  /* Database sync scheme: 0-no db, 1-write through, 2-write back */
 
