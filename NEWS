@@ -107,6 +107,7 @@ tm module:
 - if you wish to do forward to another destination from 
   failure_route (reply_route formerly), you need to call t_relay
   or t_relay_to explicitely now
+- t_relay_to has been replaced with t_relay_to_udp and t_relay_to_tcp
 
 List of new modules:
 --------------------

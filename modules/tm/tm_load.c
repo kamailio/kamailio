@@ -26,7 +26,8 @@
  *
  * History:
  * --------
- * 2003-03-06  voicemail changes accepted
+ * 2003-03-06  voicemail changes accepted (jiri)
+ * 2003-04-14  t_relay_to split in udp and tcp (jiri)
  */
 
 #include "defs.h"
@@ -45,8 +46,12 @@ int load_tm( struct tm_binds *tmb)
 		return -1;
 	}
 
-	if (!( tmb->t_relay_to=find_export(T_RELAY_TO, 2, 0)) ) {
-		LOG(L_ERR, LOAD_ERROR "'t_relay_to' not found\n");
+	if (!( tmb->t_relay_to_tcp=find_export(T_RELAY_TO_TCP, 2, 0)) ) {
+		LOG(L_ERR, LOAD_ERROR "'t_relay_to_tcp' not found\n");
+		return -1;
+	}
+	if (!( tmb->t_relay_to_udp=find_export(T_RELAY_TO_UDP, 2, 0)) ) {
+		LOG(L_ERR, LOAD_ERROR "'t_relay_to_udp' not found\n");
 		return -1;
 	}
 	if (!( tmb->t_relay=find_export(T_RELAY, 0, 0)) ) {

@@ -42,6 +42,9 @@
  *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri)
  *  2003-03-31  removed msg->repl_add_rm (andrei)
  *  2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
+ *  2003-04-14  local acks generated before reply processing to avoid
+ *              delays in length reply processing (like opening TCP
+ *              connnection to an unavailable destination) (jiri)
  */
 
 
@@ -1093,6 +1096,17 @@ int reply_received( struct sip_msg  *p_msg )
 	/* stop final response timer only if I got a final response */
 	if ( msg_status >= 200 )
 		reset_timer( &uac->request.fr_timer);
+	/* acknowledge negative INVITE replies (do it before detailed
+	   on_reply processing, which may take very long, like if it
+	   is attempted to establish a TCP connection to a fail-over dst
+	*/
+	if (t->is_invite && (msg_status>=300 || (t->local && msg_status>=200))) {
+		ack = build_ack( p_msg, t, branch , &ack_len);
+		if (ack) {
+			SEND_PR_BUFFER( &uac->request, ack, ack_len );
+			shm_free(ack);
+		}
+	} /* ack-ing negative INVITE replies */
 
 	/* processing of on_reply block */
 	if (t->on_reply) {
@@ -1100,6 +1114,7 @@ int reply_received( struct sip_msg  *p_msg )
 	 	if (run_actions(onreply_rlist[t->on_reply], p_msg)<0) 
 			LOG(L_ERR, "ERROR: on_reply processing failed\n");
 	}
+
 
 	LOCK_REPLIES( t );
 	if (t->local) {
@@ -1112,14 +1127,6 @@ int reply_received( struct sip_msg  *p_msg )
 	if (reply_status==RPS_ERROR)
 		goto done;
 
-	/* acknowledge negative INVITE replies */	
-	if (t->is_invite && (msg_status>=300 || (t->local && msg_status>=200))) {
-		ack = build_ack( p_msg, t, branch , &ack_len);
-		if (ack) {
-			SEND_PR_BUFFER( &uac->request, ack, ack_len );
-			shm_free(ack);
-		}
-	} /* ack-ing negative INVITE replies */
 
 	/* clean-up the transaction when transaction completed */
 	if (reply_status==RPS_COMPLETED) {

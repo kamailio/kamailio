@@ -35,6 +35,7 @@
  *  2003-03-13  send_pr_buffer is called w/ file/function/line debugging
  *  2003-03-01  start_retr changed to retransmit only for UDP
  *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
+ *  2003-04-14  use protocol from uri (jiri)
  */
 
 
@@ -234,7 +235,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 					ret=E_BAD_ADDRESS;
 					goto done;
 			}
-			ret=forward_request( p_msg , proxy, proto) ;
+			ret=forward_request( p_msg , proxy, proxy->proto) ;
 			free_proxy( proxy );	
 			pkg_free( proxy );
 #ifdef ACK_FORKING_HACK
@@ -244,7 +245,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int proto,
 				p_msg->new_uri=ack_uri;
 				proxy=uri2proxy(&GET_NEXT_HOP(p_msg), proto);
 				if (proxy==0) continue;
-				forward_request(p_msg, proxy, proto);
+				forward_request(p_msg, proxy, proto->proto);
 				free_proxy( proxy );	
 				pkg_free( proxy );
 			}

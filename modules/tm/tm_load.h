@@ -71,7 +71,8 @@
 
 struct tm_binds {
 	register_tmcb_f	register_tmcb;
-	cmd_function	t_relay_to;
+	cmd_function	t_relay_to_udp;
+	cmd_function	t_relay_to_tcp;
 	cmd_function 	t_relay;
 	tuacdlg_f		t_uac_dlg;
 	treply_f		t_reply;

@@ -28,16 +28,17 @@
 /*
  * History:
  * -------
- *  2003-03-30  we now watch downstream delivery and if it fails, send an
- *              error message upstream (jiri)
- *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-02-13  proto support added (andrei)
+ *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
+ *              nameser_compat.h (andrei)
+ *  2003-03-01  kr set through a function now (jiri)
  *  2003-03-06  callbacks renamed; "blind UAC" introduced, which makes
  *              transaction behave as if it was forwarded even if it was
  *              not -- good for local UAS, like VM (jiri)
- *  2003-03-01  kr set through a function now (jiri)
- *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
- *              nameser_compat.h (andrei)
- *  2003-02-13  proto support added (andrei)
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-30  we now watch downstream delivery and if it fails, send an
+ *              error message upstream (jiri)
+ *  2003-04-14  use protocol from uri (jiri)
  */
 
 #include "defs.h"
@@ -64,7 +65,8 @@
 
 
 char *print_uac_request( struct cell *t, struct sip_msg *i_req,
-	int branch, str *uri, unsigned int *len, struct socket_info *send_sock )
+	int branch, str *uri, unsigned int *len, struct socket_info *send_sock,
+	enum sip_protos proto )
 {
 	char *buf, *shbuf;
 
@@ -85,7 +87,7 @@ char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 	callback_event( TMCB_REQUEST_FWDED, t, i_req, -i_req->REQ_METHOD);
 
 	/* ... and build it now */
-	buf=build_req_buf_from_sip_req( i_req, len, send_sock, i_req->rcv.proto );
+	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
 #ifdef DBG_MSG_QA
 	if (buf[*len-1]==0) {
 		LOG(L_ERR, "ERROR: print_uac_request: sanity check failed\n");
@@ -206,7 +208,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	hostent2su( &to, &proxy->host, proxy->addr_idx, 
 		proxy->port ? proxy->port:SIP_PORT);
 
-	send_sock=get_send_socket( &to , proto);
+	send_sock=get_send_socket( &to , proxy->proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d "
 			" (no corresponding listening socket)\n",
@@ -217,7 +219,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 
 	/* now message printing starts ... */
 	shbuf=print_uac_request( t, request, branch, uri, 
-		&len, send_sock );
+		&len, send_sock, proxy->proto);
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error01;
@@ -226,7 +228,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	/* things went well, move ahead and install new buffer! */
 	t->uac[branch].request.dst.to=to;
 	t->uac[branch].request.dst.send_sock=send_sock;
-	t->uac[branch].request.dst.proto=proto;
+	t->uac[branch].request.dst.proto=proxy->proto;
 	t->uac[branch].request.dst.proto_reserved1=0;
 	t->uac[branch].request.buffer=shbuf;
 	t->uac[branch].request.buffer_len=len;
@@ -271,7 +273,8 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	/* print */
 	shbuf=print_uac_request( t_cancel, cancel_msg, branch, 
 		&t_invite->uac[branch].uri, &len, 
-		t_invite->uac[branch].request.dst.send_sock);
+		t_invite->uac[branch].request.dst.send_sock,
+		t_invite->uac[branch].request.dst.proto);
 	if (!shbuf) {
 		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
 		ret=ser_error=E_OUT_OF_MEM;
