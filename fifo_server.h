@@ -31,6 +31,8 @@ int read_line( char *b, int max, FILE *stream, int *read );
 int read_eol( FILE *stream );
 /* consume a set of EoL-terminated lines terminated by an additional EoL */
 int read_line_set(char *buf, int max_len, FILE *fifo, int *len);
+/* consume a set of EoL-terminated lines terminated by a single dot line */
+int read_body(char *buf, int max_len, FILE *fifo, int *len);
 
 int open_fifo_server();
 

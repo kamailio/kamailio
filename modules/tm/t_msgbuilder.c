@@ -143,7 +143,7 @@ error:
 
 
 
-char *build_uac_request(  str msg_type, str dst,
+char *build_uac_request(  str msg_type, str dst, str from,
     	str headers, str body, int branch, 
 		struct cell *t, int *len)
 {
@@ -158,10 +158,18 @@ char *build_uac_request(  str msg_type, str dst,
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	int branch_len;
 
-	static int from_len=0;
+	int from_len;
+	char *from_str;
 
 	buf=0;
-	if (from_len==0) from_len=strlen(uac_from);
+
+	if (from.len) {
+		from_len=from.len;
+		from_str=from.s;
+	} else {
+		from_len=strlen(uac_from);
+		from_str=uac_from;
+	}
 	
 	*len=SIP_VERSION_LEN+msg_type.len+2/*spaces*/+CRLF_LEN+
 		dst.len;
@@ -231,7 +239,7 @@ char *build_uac_request(  str msg_type, str dst,
 			CRLF_LEN+FROM_LEN);
 	}
 	t->from.s=w-FROM_LEN; t->from.len=FROM_LEN+from_len+FROMTAG_LEN+MD5_LEN;
-	memapp( w, uac_from, from_len );
+	memapp( w, from_str, from_len );
 	memapp( w, FROMTAG, FROMTAG_LEN );
 	memapp( w, from_tag, MD5_LEN );
 	memapp( w, CRLF, CRLF_LEN );

@@ -14,9 +14,9 @@ SER_FIFO=/tmp/ser_fifo
 WATCH_PERIOD=2
 
 # SQL config
-SQL_DB=csps107
+SQL_DB=ser
 SQL_HOST=dbhost
-SQL_USER=csps
+SQL_USER=ser
 
 # the read-only user for whom password may be stored here
 RO_USER=serro
@@ -29,7 +29,12 @@ SER='sr'
 
 # ACL name verification
 VERIFY_ACL=1
-ACL_GROUPS="local ld int"
+ACL_GROUPS="local ld int voicemail free-pstn"
+
+# expiration time for alias table
+if [ -z "$FOREVER" ]; then 
+	FOREVER='2020-05-28 21:32:15'
+fi
 
 #### SQL names
 
@@ -187,7 +192,7 @@ ser_alias() {
 				($A_USER_COLUMN, $A_CONTACT_COLUMN, $A_EXPIRES_COLUMN, \
 				$A_Q_COLUMN, $A_CALLID_COLUMN, $A_CSEQ_COLUMN, \
 				$A_LAST_MODIFIED_COLUMN) \
-				values ( '$2', '$3', '2099-05-28 21:32:15', \
+				values ( '$2', '$3', '$FOREVER', \
 				'1.00', 'call-id-for-ever', '1',
 				now() );"
 			sql_query "$QUERY"

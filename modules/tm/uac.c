@@ -97,8 +97,9 @@ void generate_callid() {
 
 
 int t_uac( str *msg_type, str *dst, 
-	str *headers, str *body, transaction_cb completion_cb,
-	void *cbp, struct dialog *dlg)
+	str *headers, str *body, str *from, 
+	transaction_cb completion_cb, void *cbp, 
+	dlg_t dlg)
 {
 
 	struct cell *new_cell;
@@ -110,6 +111,7 @@ int t_uac( str *msg_type, str *dst,
 	union sockaddr_union to;
 	struct socket_info* send_sock;
 	struct retr_buf *request;
+	str dummy_from;
 
 	/* be optimist -- assume success for return value */
 	ret=1;
@@ -155,7 +157,8 @@ int t_uac( str *msg_type, str *dst,
 	request->to=to;
 	request->send_sock=send_sock;
 
-	buf=build_uac_request(  *msg_type, *dst, *headers, *body, branch,
+	if (from) dummy_from=*from; else { dummy_from.s=0; dummy_from.len=0; }
+	buf=build_uac_request(  *msg_type, *dst, dummy_from, *headers, *body, branch,
 		new_cell /* t carries hash_index, label, md5, uac[].send_sock and
 		     other pieces of information needed to print a message*/
 		, &req_len );
@@ -270,7 +273,7 @@ int fifo_uac( FILE *stream, char *response_file )
 		}
 		DBG("DEBUG: fifo_uac: header: %.*s\n", sh.len, header );
 		/* and eventually body */
-		if (!read_line_set(body, MAX_BODY, stream, &sb.len)) {
+		if (!read_body(body, MAX_BODY, stream, &sb.len)) {
 			LOG(L_ERR, "ERROR: fifo_uac: body expected\n");
 			return -1;
 		}
@@ -292,7 +295,8 @@ int fifo_uac( FILE *stream, char *response_file )
 		   will not be triggered and no feedback will be printed
 		   to shmem_file
 		*/
-		t_uac(&sm,&sd,&sh,&sb,fifo_callback,shmem_file,0 /* no dialog */);
+		t_uac(&sm,&sd,&sh,&sb, 0 /* default from */,
+			fifo_callback,shmem_file,0 /* no dialog */);
 		return 1;
 
 	}

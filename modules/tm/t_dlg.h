@@ -12,7 +12,9 @@ struct dialog {
 	int place_holder;
 };
 
+typedef struct dialog *dlg_t;
+
 int t_newdlg( struct sip_msg *msg );
-struct dialog *t_getdlg() ;
+dlg_t t_getdlg() ;
 
 #endif

@@ -1,11 +1,31 @@
 /*
  * $Id$
  *
- * simple UAC for things such as SUBSCRIBE or SMS gateway;
- * no authentication and other UAC features -- just send
- * a message, retransmit and await a reply; forking is not
- * supported during client generation, in all other places
- * it is -- adding it should be simple
+ * Fifo server is a very powerful tool used to access easily
+ * ser's internals via textual interface, similarly to
+ * how internals of many operating systems are accessible
+ * via the proc file system. This might be used for
+ * making ser do things for you (such as initiating new
+ * transaction from webpages) or inspect server's health.
+ * 
+ * FIFO server allows new functionality to be registered
+ * with it -- thats what register_fifo_cmd is good for.
+ * Remember, the initialization must take place before
+ * forking; best in init_module functions. When a function
+ * is registered, it can be always evoked by sending its
+ * name prefixed by colon to the FIFO.
+ *
+ * There are few commands already implemented in core.
+ * These are 'uptime' for looking at how long the server
+ * is alive and 'print' for debugging purposes.
+ *
+ * Every command sent to FIFO must be sent atomically to
+ * avoid intermixing with other commands and MUST be
+ * terminated by empty line so that the server is to able
+ * to find its end if it does not understand the command.
+ *
+ * File test/transaction.fifo illustrates example of use
+ * of t_uac command (part of TM module).
  */
 
 #include <stdlib.h>
@@ -29,7 +49,8 @@
 
 /* FIFO server vars */
 char *fifo=0; /* FIFO name */
-int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;
+int fifo_mode=S_IRUSR | S_IWUSR | S_IRGRP | 
+	S_IWGRP | S_IROTH | S_IWOTH;
 pid_t fifo_pid;
 /* file descriptors */
 static int fifo_read=0;
@@ -136,7 +157,8 @@ int read_eol( FILE *stream )
 	}
 	return 1;
 }
-	
+
+/* read from input until empty line is encountered */	
 int read_line_set(char *buf, int max_len, FILE *fifo, int *len)
 {
 	int set_len;
@@ -151,6 +173,34 @@ int read_line_set(char *buf, int max_len, FILE *fifo, int *len)
 		}
 		/* end encountered ... return */
 		if (line_len==0) {
+			*len=set_len;
+			return 1;
+		}
+		max_len-=line_len; c+=line_len; set_len+=line_len;
+		if (max_len<CRLF_LEN) {
+			LOG(L_ERR, "ERROR: fifo_server: no place for CRLF\n");
+			return 0;
+		}
+		memcpy(c, CRLF, CRLF_LEN);
+		max_len-=CRLF_LEN; c+=CRLF_LEN; set_len+=CRLF_LEN;
+	}
+}
+
+/* read from input until line with only dot in it is encountered */
+int read_body(char *buf, int max_len, FILE *fifo, int *len)
+{
+	int set_len;
+	char *c;
+	int line_len;
+
+	c=buf;set_len=0;
+	while(1) {
+		if (!read_line(c,max_len,fifo,&line_len)) {
+			LOG(L_ERR, "ERROR: fifo_server: line expected\n");
+			return 0;
+		}
+		/* end encountered ... return */
+		if (line_len==1 && *c=='.') {
 			*len=set_len;
 			return 1;
 		}
@@ -311,10 +361,12 @@ int open_fifo_server()
 	}
 	DBG("TM: open_uac_fifo: opening fifo...\n");
 	if ((mkfifo(fifo, fifo_mode)<0) && (errno!=EEXIST)) {
-		LOG(L_ERR, "ERROR: open_fifo_server; can't create FIFO: %s\n",
-			strerror(errno));
+		LOG(L_ERR, "ERROR: open_fifo_server; can't create FIFO: "
+			"%s (mode=%d)\n",
+			strerror(errno), fifo_mode);
 		return -1;
-	}
+	} 
+	DBG("DEBUG: fifo %s opened, mode=%d\n", fifo, fifo_mode );
 	time(&up_since);
 	process_no++;
 	fifo_pid=fork();
