@@ -1,0 +1,2 @@
+- "safety locks" against double use of nathelper use mistakenly
+  flags (script controlled) as opposed to msg_flags (SER controlled); -jiri
