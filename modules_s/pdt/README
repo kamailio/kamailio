@@ -1,0 +1,136 @@
+#
+#$Id$
+#
+
+ PDT - prefix-domain translation
+ ===============================
+
+1.Description
+-------------
+
+This module translates numerical codes into domains and update accordingly 
+the R-URI.
+
+The module looks up at the R-URI part of a message and if the user part begins 
+with an established prefix it will update the uri. Updating the uri consists 
+of: read the code after the prefix from the user part of the uri and keep the
+rest as the user part of the new uri. The host part will be the domain matched 
+for the leading code.
+
+    [<prefix>]<code><userid><:password>@<mydomain.com> ...
+    
+    and the result will be:
+    
+    <userid><:password>@<domain[:port]>...
+    
+Example:
+    prefix=2
+    code=3330
+    domain[3330]=iptel.org
+    
+    
+    2333091001@mydomain.com  => 91001@iptel.org    
+    
+The code is always ended with a special digit (a parameter of the module).
+This digit will not be inside the code at all.
+
+2.Exported symbols
+------------------
+Methods
+-------
+
+Name: 	prefix2domain
+Params:	none
+Desc:	build a new uri if it is necessary. Returns 1 when the translation was
+        made or there was nothing to translate (user part of the URI is empty
+		or it does not match the prefix parameter). Returns -1 in error cases.
+
+
+Parameters
+----------
+
+Name:		db_url
+Type:		string
+Default:	sql://root@127.0.0.1/pdt
+Desc:		SQL URL of database - username, password, host, port and 
+		database (ex: sql://username:password@hostname.com/database)
+
+
+Name:		db_table
+Type:		string
+Default:	domains
+Desc:		table name
+
+
+Name:		terminator
+Type:		int
+Default:	0
+Desc:		the digit ending a code
+
+
+Name:		start_range
+Type:		int
+Default:	10
+Desc:		default start value for allocating prefixes
+
+
+Name:		prefix
+Type:		string
+Default:	NULL
+Desc:		default prefix who denotes what uri needs to be translated
+            -- if it is NULL the module will not check the R-URI against it and
+            the code is considered starting from the first digit. Otherwise, the
+            module will check first if the R-URI starts with it and will skip it
+            to find the code
+
+Name:       	hsize_2pow
+Type:       	int
+Default:    	4
+Desc:       	number of the hash entries = 2^hash_size
+
+
+3.Module dependences
+-------------------
+- MYSQL
+
+
+4.Other information
+-------------------
+- see SQL script for creating databases and a sample of cfg file in './doc/'
+- the web interface is in doc/web/ and the SQL script for creating the database
+for user interface is './doc/admin.sql'.
+- sample shell script to use with fifo interface is './doc/fifo.sh'.
+
+Contacts
+--------
+- for any suggestion/bug contact:
+	<serhelp@iptel.org>
+
+
+5.Some details
+
+
+The module registers also a function that works with the fifo server
+( get_domaincode ). 
+That will provide support for a web user interface which will be used by admins
+to register new domains and by simple users to find the code for a domain.
+
+
+Registered domains are stored in a database and in tables in share memory. The 
+database is kept consistent with the tables in memory. When a new domain is 
+registered the information goes first in the database and only than in tables 
+in share memory.  
+        
+Data in share memory is kept in hashtables to have fast searches. Searches are 
+possible for domains, but also for codes. Searches for codes are necessary more 
+often, every time when a message that needs to be translated passes through SER.
+Searches for domains are requested by the user interface only.
+
+Through the web interface a normal user can find the code for a domain and a 
+privileged user (i.e., admins) can register new domains too.
+The web interface also encounters problems of mutual exclusion. Any user of the 
+interface posts a request to the fifo server and waits his response in a file. 
+The file must be unique per user to avoid interfering responses for different 
+simultaneous user. That problem is solved using session per user offered by 
+the PHP language.
+
