@@ -29,7 +29,9 @@
 
 /**
  * DBText module interface
- *  
+ * 2003-06-05 fixed bug: when comparing two values and the first was less than
+ *           the second one, the result of 'dbt_row_match' was always true,
+ *           thanks to Gabriel, (Daniel)
  * 2003-02-04 created by Daniel
  * 
  */
@@ -198,8 +200,6 @@ int dbt_row_match(dbt_table_p _dtp, dbt_row_p _drp, int* _lkey,
 	for(i=0; i<_n; i++)
 	{
 		res = dbt_cmp_val(&_drp->fields[_lkey[i]], &_v[i]);
-		if(res < -1)
-			return -1;
 		if(!_op || !strcmp(_op[i], OP_EQ))
 		{
 			if(res!=0)
@@ -225,7 +225,7 @@ int dbt_row_match(dbt_table_p _dtp, dbt_row_p _drp, int* _lkey,
 			if(res==-1)
 				return 0;
 		}else{
-			return -1;
+			return 0;
 		}}}}}		
 	}
 	return 1;
