@@ -17,7 +17,7 @@ Bug fixes
 Security updates
 ================
 
-todo:- fifo processing code will write responses only to other
+- fifo processing code will write responses only to other
  fifos and only if they are not hard-linked, also default
  ser fifo persmissions were changed to 0600.
 
