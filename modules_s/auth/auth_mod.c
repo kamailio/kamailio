@@ -118,7 +118,7 @@ static cmd_export_t cmds[] = {
 	{"consume_credentials", consume_credentials,     0, 0,               REQUEST_ROUTE},
 	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,               REQUEST_ROUTE},
         {"append_rpid_hf",      append_rpid_hf,          0, 0,               REQUEST_ROUTE},
-	{"appned_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE},
+	{"append_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,      REQUEST_ROUTE},
 	{"pre_auth",            (cmd_function)pre_auth,  0, 0,               0            },
 	{"post_auth",           (cmd_function)post_auth, 0, 0,               0            },
 	{0, 0, 0, 0, 0}
