@@ -16,15 +16,22 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 
     /* clones the sip_msg structure */
     new_msg = (struct sip_msg*)sh_malloc( sizeof( struct sip_msg) );
+    if (!new_msg) return NULL;
     memcpy( new_msg , org_msg , sizeof( struct sip_msg) );
 
     /* the original message - orig ( char*  type) */
     new_msg->orig = (char*)sh_malloc( new_msg->len+1 );
+    if (!new_msg->orig) {
+	goto error;
+    }
     memcpy( new_msg->orig , org_msg->orig, new_msg->len );
     new_msg->orig[ new_msg->len ] = 0;
 
     /* the scratch pad - buf ( char* type) */
     new_msg->buf = (char*)sh_malloc( new_msg->len+1 );
+    if (!new_msg->buf) {
+	goto error;
+    }
     memcpy( new_msg->buf , org_msg->buf, new_msg->len );
     new_msg->buf[ new_msg->len ] = 0;
 
@@ -54,19 +61,33 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 	new_msg->first_line.u.reply.reason.s =  translate_pointer( new_msg->buf , org_msg->buf , org_msg->first_line.u.reply.reason.s );
     }
 
+    /* new_uri  ( str type )*/
+    if (!(new_msg->new_uri.s = (char*)sh_malloc( org_msg->new_uri.len )))
+	goto error;
+    memcpy( new_msg->new_uri.s , org_msg->new_uri.s , org_msg->new_uri.len );
+
+    /* add_rm ( struct lump* )  -> have to be changed!!!!!!! */
+    new_msg->add_rm  = 0;
+    /* repl_add_rm ( struct lump* ) -> have to be changed!!!!!!!  */
+    new_msg->repl_add_rm  = 0;
+
     /* all the headers */
     new_msg->via1=0;
     new_msg->via2=0;
     for( header = org_msg->headers , last_hdr=0  ;  header ; header=header->next)
     {
+	new_hdr = header_cloner( new_msg , org_msg , header );
+	if (!new_hdr) 
+		goto error;
 	switch ( header->type )
 	{
 	    case HDR_VIA :
-		new_hdr = header_cloner( new_msg , org_msg , header );
 		if ( !new_msg->via1 )
 		{
 		    new_msg->h_via1 = new_hdr;
 		    new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
+		    if (!new_msg->via1) goto hf_error;
+		    
 		    new_hdr->parsed  = (void*)new_msg->via1;
 		     if ( new_msg->via1->next )
 		        new_msg->via2 = new_msg->via1->next;
@@ -78,23 +99,24 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		        new_hdr->parsed = (void*)new_msg->via1->next;
 		     else{
 		        new_msg->via2 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
+			if (!new_msg->via2) goto hf_error;
 		        new_hdr->parsed  = (void*)new_msg->via2;
 		     }
 		}
 		else if ( new_msg->via2 && new_msg->via1 )
 		{
 		    new_hdr->parsed  = new_msg->via1 = via_body_cloner( new_msg->buf , org_msg->buf , (struct via_body*)header->parsed );
+		    if (!new_hdr->parsed) goto hf_error;
 		}
 		break;
 	    case HDR_FROM :
-		new_hdr = header_cloner( new_msg , org_msg , header );
 		new_msg->from = new_hdr;
 		break;
 	    case HDR_CSEQ :
-		new_hdr = header_cloner( new_msg , org_msg , header );
 		if (header->parsed)
 		{
 		  new_hdr->parsed = (void*)sh_malloc( sizeof(struct cseq_body) );
+		  if (!new_hdr->parsed) goto hf_error;
 		  memcpy( new_hdr->parsed , header->parsed , sizeof(struct cseq_body) );
 		  ((struct cseq_body*)new_hdr->parsed)->number.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->number.s );
 		  ((struct cseq_body*)new_hdr->parsed)->method.s = translate_pointer( new_msg->buf , org_msg->buf , ((struct cseq_body*)header->parsed)->method.s );
@@ -102,15 +124,12 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 		new_msg->cseq = new_hdr;
 		break;
 	    case HDR_CALLID :
-		new_hdr = header_cloner( new_msg , org_msg , header );
 		new_msg->callid = new_hdr;
 		break;
 	    case HDR_CONTACT :
-		new_hdr = header_cloner( new_msg , org_msg , header );
 		new_msg->contact = new_hdr;
 		break;
 	    default :
-		new_hdr = header_cloner( new_msg , org_msg , header );
 		break;
 	}
 
@@ -124,22 +143,14 @@ struct sip_msg* sip_msg_cloner( struct sip_msg *org_msg )
 	    last_hdr=new_hdr;
 	    new_msg->headers =new_hdr;
 	}
+    	last_hdr->next = 0;
+    	new_msg->last_header = last_hdr;
     }
-
-    last_hdr->next = 0;
-    new_msg->last_header = last_hdr;
-
-    /* new_uri  ( str type )*/
-    new_msg->new_uri.s = (char*)sh_malloc( org_msg->new_uri.len );
-    memcpy( new_msg->new_uri.s , org_msg->new_uri.s , org_msg->new_uri.len );
-
-    /* add_rm ( struct lump* )  -> have to be changed!!!!!!! */
-    new_msg->add_rm  = 0;
-    /* repl_add_rm ( struct lump* ) -> have to be changed!!!!!!!  */
-    new_msg->repl_add_rm  = 0;
 
     return new_msg;
 
+hf_error:
+	sh_free( new_hdr );
 error:
 	sip_msg_free( new_msg );
 	sh_free( new_msg );
@@ -156,6 +167,7 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
 
     /* clones the via_body structure */
     new_via = (struct via_body*)sh_malloc( sizeof( struct via_body) );
+    if (!new_via) return NULL;
     memcpy( new_via , org_via , sizeof( struct via_body) );
 
     /* hdr (str type) */
@@ -175,12 +187,27 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
     /* comment (str type) */
     new_via->comment.s = translate_pointer( new_buf , org_buf , org_via->comment.s );
 
-    if ( new_via->param_lst )
+    if ( org_via->next ) {
+        new_via->next = via_body_cloner( new_buf , org_buf , org_via->next );
+	if (!new_via->next)
+		goto error;
+    }
+
+    new_via->param_lst = NULL;
+    if ( org_via->param_lst )
     {
-       struct via_param *vp, *new_vp, *last_new_vp;
+       struct via_param *vp, *new_vp, *last_new_vp, *delete_i, *dummy;
        for( vp=org_via->param_lst, last_new_vp=0 ; vp ; vp=vp->next )
        {
           new_vp = (struct via_param*)sh_malloc(sizeof(struct via_param));
+	  if (!new_vp) {
+		for (delete_i=new_via->param_lst; delete_i;  ) {
+			dummy=delete_i->next;
+			sh_free( delete_i );
+			delete_i = dummy;
+		}
+		goto error;
+	  }
           memcpy( new_vp , vp , sizeof(struct via_param));
           new_vp->name.s = translate_pointer( new_buf , org_buf , vp->name.s );
           new_vp->value.s = translate_pointer( new_buf , org_buf , vp->value.s );
@@ -194,15 +221,18 @@ struct via_body* via_body_cloner( char* new_buf , char *org_buf , struct via_bod
              new_via->param_lst = new_vp;
 
           last_new_vp = new_vp;
+	  last_new_vp->next = NULL;
        }
        new_via->last_param = new_vp;
     }
 
 
-    if ( org_via->next )
-        new_via->next = via_body_cloner( new_buf , org_buf , org_via->next );
 
    return new_via;
+
+error:
+	sh_free(new_via);
+	return NULL;
 }
 
 
@@ -213,6 +243,7 @@ struct hdr_field* header_cloner( struct sip_msg *new_msg , struct sip_msg *org_m
     struct hdr_field* new_hdr;
 
     new_hdr = (struct hdr_field*)sh_malloc( sizeof(struct hdr_field) );
+    if (!new_hdr) return NULL;
     memcpy( new_hdr , org_hdr , sizeof(struct hdr_field) );
 
     /* name */

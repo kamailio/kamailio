@@ -625,7 +625,6 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
    T->outbound_response->retr_buffer   = (char*)sh_malloc( len );
    if (!T->outbound_response->retr_buffer)
    {
-      T->outbound_response->retr_buffer = NULL;
       LOG(L_ERR, "ERROR: t_send_reply: cannot allocate shmem buffer\n");
      goto error;
    }
@@ -857,18 +856,22 @@ nomatch:
 int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
 {
    DBG("DEBUG: t_store_incoming_reply: starting [%d]....\n",branch);
-   /* if there is a previous reply, replace it */
-   if ( Trans->inbound_response[branch] )
-      sip_msg_free( Trans->inbound_response[branch] ) ;
-   DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
    /* force parsing all the needed headers*/
-   if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO )==-1 ||
-        !p_msg->via1 || !p_msg->via2 || !p_msg->to )
+   if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO|HDR_CSEQ )==-1 ||
+        !p_msg->via1 || !p_msg->via2 || !p_msg->to || !p_msg->cseq )
    {
       LOG( L_ERR , "ERROR: t_store_incoming_reply: unable to parse headers !\n"  );
       return -1;
    }
+   /* if there is a previous reply, replace it */
+   if ( Trans->inbound_response[branch] ) {
+      sip_msg_free( Trans->inbound_response[branch] ) ;
+      DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
+   }
+
    Trans->inbound_response[branch] = sip_msg_cloner( p_msg );
+   if (!Trans->inbound_response[branch])
+	return -1;
    Trans->status = p_msg->first_line.u.reply.statuscode;
    DBG("DEBUG: t_store_incoming_reply: reply stored\n");
    return 1;
