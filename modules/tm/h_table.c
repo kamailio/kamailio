@@ -52,6 +52,7 @@
 #include "../../globals.h"
 #include "../../error.h"
 #include "../../fifo_server.h"
+#include "../../unixsock_server.h"
 #include "defs.h"
 #include "t_reply.h"
 #include "t_cancel.h"
@@ -425,4 +426,30 @@ int fifo_hash( FILE *stream, char *response_file )
 	}
 	fclose(reply_file);
 	return 1;
+}
+
+
+int fifo_hash_unx(str* msg)
+{
+	unsigned int i, ret;
+
+	ret = 0;
+	unixsock_reply_asciiz( "200 OK\n\tcurrent\ttotal\n");
+
+	for (i = 0; i < TABLE_ENTRIES; i++) {
+		if (unixsock_reply_printf("%d.\t%lu\t%lu\n", 
+					  i, tm_table->entrys[i].cur_entries,
+					  tm_table->entrys[i].acc_entries
+					  ) < 0) {
+			unixsock_reply_reset();
+			unixsock_reply_asciiz("500 Error while creating reply\n");
+			ret = -1;
+			break;
+		}
+	}
+
+	if (unixsock_reply_send() < 0) {
+		ret = -1;
+	}
+	return ret;
 }

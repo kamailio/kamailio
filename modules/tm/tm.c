@@ -486,6 +486,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if (unixsock_register_cmd("t_hash", fifo_hash_unx) < 0) {
+		LOG(L_CRIT, "cannot register t_hash with the unix server\n");
+		return -1;
+	}
+
 
 	/* building the hash table*/
 	if (!init_hash_table()) {

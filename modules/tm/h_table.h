@@ -321,6 +321,9 @@ unsigned int transaction_count( void );
 
 int fifo_hash( FILE *stream, char *response_file );
 
+/* Unix socket variant */
+int fifo_hash_unx(str* msg);
+		    
 #endif
 
 
