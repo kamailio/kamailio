@@ -257,10 +257,10 @@ void create_msg(char *buff, int action, int lport){
 			sprintf(usern, "%s%i", username, namebeg);
 			/* build the register, message and the 200 we need in for 
 			   USRLOC on one function call*/
-			sprintf(buff, "%s sip:%s:%i%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, fqdn, lport, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, USRLOC_EXP_DEF);
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, USRLOC_EXP_DEF);
 			c=rand();
-			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
-			sprintf(mes_reply, "%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, MES_STR, CON_LEN_STR);
+			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
+			sprintf(mes_reply, "%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_LEN_STR);
 #ifdef DEBUG
 			printf("message:\n%s\n", message);
 			printf("message reply:\n%s\n", mes_reply);
@@ -500,7 +500,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 				sockerr.events=POLLERR;
 				if ((poll(&sockerr, 1, 10))==1) {
 					if (sockerr.revents && POLLERR) {
-						printf("send failure:\n");
+						printf("send failure: ");
 						recv(sock, reply, strlen(reply), 0);
 						perror("");
 						exit(1);
@@ -938,8 +938,8 @@ int main(int argc, char *argv[])
 		if (namebeg==-1)
 			namebeg=0;
 	}
-	else if (!fbool & !sbool) {
-		printf("error: you have to give the file to send and the sip:uri at least.\n");
+	else if (!(fbool && sbool)) {
+		printf("error: you have to give the file to send and the sip:uri at least.\n\n");
 		print_help();
 	}
 	/* here we go...*/
