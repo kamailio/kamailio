@@ -189,8 +189,12 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	}
 
 	/* check DNS resolution */
-	if (proxy) temp_proxy=0; else {
+	if (proxy){
+		temp_proxy=0;
+		proto=get_proto(proto, proxy->proto);
+	}else {
 		proxy=uri2proxy( next_hop ? next_hop : uri, proto );
+		proto=proxy->proto; /* uri2proxy will fix it for us */
 		if (proxy==0)  {
 			ret=E_BAD_ADDRESS;
 			goto error;
@@ -208,18 +212,18 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	hostent2su( &to, &proxy->host, proxy->addr_idx, 
 		proxy->port ? proxy->port:SIP_PORT);
 
-	send_sock=get_send_socket( &to , proxy->proto);
+	send_sock=get_send_socket( &to , proto);
 	if (send_sock==0) {
 		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
-			to.s.sa_family, proxy->proto );
+			to.s.sa_family, proto );
 		ret=ser_error=E_NO_SOCKET;
 		goto error01;
 	}
 
 	/* now message printing starts ... */
 	shbuf=print_uac_request( t, request, branch, uri, 
-		&len, send_sock, proxy->proto );
+		&len, send_sock, proto );
 	if (!shbuf) {
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error01;
@@ -228,7 +232,7 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 	/* things went well, move ahead and install new buffer! */
 	t->uac[branch].request.dst.to=to;
 	t->uac[branch].request.dst.send_sock=send_sock;
-	t->uac[branch].request.dst.proto=proxy->proto;
+	t->uac[branch].request.dst.proto=proto;
 	t->uac[branch].request.dst.proto_reserved1=0;
 	t->uac[branch].request.buffer=shbuf;
 	t->uac[branch].request.buffer_len=len;
