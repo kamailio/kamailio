@@ -13,27 +13,27 @@ void free_cell( struct cell* dead_cell )
    int i;
 
    /* inbound_request */
-   sh_free( dead_cell->inbound_request->orig );
-   sh_free( dead_cell->inbound_request->buf );
-   sh_free( dead_cell->inbound_request );
+   sh_free( dead_cell->transaction.inbound_request->orig );
+   sh_free( dead_cell->transaction.inbound_request->buf );
+   sh_free( dead_cell->transaction.inbound_request );
    /* inbound_response */
-   if ( dead_cell->inbound_response )
+   if ( dead_cell->transaction.inbound_response )
    {
-      sh_free( dead_cell->inbound_response->buffer );
-      sh_free( dead_cell->inbound_response );
+      sh_free( dead_cell->transaction.inbound_response->buffer );
+      sh_free( dead_cell->transaction.inbound_response );
    }
 
-   for ( i =0 ; i<dead_cell->nr_of_outgoings;  i++ )
+   for ( i =0 ; i<dead_cell->transaction.nr_of_outgoings;  i++ )
    {
       /* outbound requests*/
-      sh_free( dead_cell->outbound_request[i]->buffer );
-      sh_free( dead_cell->outbound_request[i] );
+      sh_free( dead_cell->transaction.outbound_request[i]->buffer );
+      sh_free( dead_cell->transaction.outbound_request[i] );
       /* outbound requests*/
-      if ( dead_cell -> outbound_response[i] )
+      if ( dead_cell -> transaction.outbound_response[i] )
       {
-         sh_free( dead_cell->outbound_response[i]->orig );
-         sh_free( dead_cell->outbound_response[i]->buf );
-         sh_free( dead_cell->outbound_response[i] );
+         sh_free( dead_cell->transaction.outbound_response[i]->orig );
+         sh_free( dead_cell->transaction.outbound_response[i]->buf );
+         sh_free( dead_cell->transaction.outbound_response[i] );
       }
    }
    /* mutex */
@@ -69,7 +69,7 @@ void free_hash_table( struct s_table *hash_table )
      /* delete all cells on the to-be-deleted list */
       for( p_cell = hash_table->timers[DELETE_LIST].first_cell; p_cell; p_cell = tmp_cell )
       {
-          tmp_cell = p_cell->tl[DELETE_LIST].timer_next_cell;
+          tmp_cell = p_cell->transaction.tl[DELETE_LIST].timer_next_cell;
           //remove_timer_from_head( hash_table, p_cell, DELETE_LIST );
           free_cell( p_cell );
       }
@@ -209,14 +209,14 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
    /* filling with 0 */
    memset( new_cell, 0, sizeof( struct cell ) );
    /* hash index of the entry */
-   new_cell->hash_index = hash_index;
+   new_cell->transaction.hash_index = hash_index;
    /* mutex */
    init_cell_lock(  new_cell );
    /* ref counter is 0 */
    /* all pointers from timers list tl are NULL */
 
    /* inbound request */
-   new_cell->inbound_request = p_msg;
+   new_cell->transaction.inbound_request = p_msg;
    /* inbound response is NULL*/
    /* status is 0 */
    /* nr of outbound requests is 0 */
@@ -226,7 +226,7 @@ int t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg )
 
    /* critical region - inserting the cell at the end of the list */
    lock( match_entry->mutex );
-   new_cell->label = match_entry->next_label++;
+   new_cell->transaction.label = match_entry->next_label++;
    if ( match_entry->last_cell )
    {
       match_entry->last_cell->next_cell = new_cell;
@@ -293,15 +293,3 @@ int t_lookup_request(  struct s_table* hash_table , struct sip_msg* p_msg )
    /* no transaction found */
    return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-

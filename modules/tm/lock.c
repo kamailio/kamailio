@@ -162,7 +162,7 @@ int init_cell_lock( struct cell *cell )
 	   shared with its entry lock
         */
 	cell->mutex.semaphore_set=entry_semaphore, 
-	cell->mutex.semaphore_index=cell->hash_index / sem_nr;
+	cell->mutex.semaphore_index=cell->transaction.hash_index / sem_nr;
 }
 
 int init_entry_lock( struct s_table* hash_table, struct entry *entry )

@@ -8,6 +8,8 @@
 #endif
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <sys/socket.h>
+
 #include "../../msg_parser.h"
 
 struct s_table;
@@ -37,10 +39,6 @@ typedef struct timer_link
 
 /* timer list: includes head, tail and protection semaphore */
 
-/* RETRANSMISSION: CONSIDER rewriting for more generality; particularly,
-   rertransmission timers will not point to cells but to
-   outbound messages
-*/
 typedef struct  timer
 {
    struct cell*    first_cell;
@@ -56,6 +54,10 @@ typedef struct retrans_buff
    int                  bufflen;
    unsigned int dest_ip;
    unsigned int dest_port;
+
+   struct sockaddr *to; 
+   socklen_t tolen;
+
 }retrans_buff_type;
 
 
@@ -65,28 +67,39 @@ typedef struct cell
    struct cell*     next_cell;
    struct cell*     prev_cell;
 
-   /* tells in which hash table entry the cell lives */
-   unsigned int  hash_index;
-   /* sequence number within hash collision slot */
-   unsigned int  label;
-
    /*sync data */
    lock_t   mutex;
    int       ref_counter;
 
-   /* bindings to all timer links in which a cell may be located */
-   struct timer_link tl[NR_OF_TIMER_LISTS];
+   /* cell payload data */
+   union {
+	/* transactions */
+	struct {
+   		/* tells in which hash table entry the cell lives */
+   		unsigned int  hash_index;
+   		/* sequence number within hash collision slot */
+   		unsigned int  label;
 
-   /* usefull data */
-   /* incoming request and its response*/
-   struct sip_msg         *inbound_request;
-   struct retrans_buff   *inbound_response;
-   unsigned int             status;
-   /* array of outgoing requests and its responses */
-   int                               nr_of_outgoings;
-   struct retrans_buff   *outbound_request[ MAX_FORK ];
-   struct sip_msg          *outbound_response[ MAX_FORK ];
+   		/* bindings to all timer links in which a cell may be located */
+   		struct timer_link tl[NR_OF_TIMER_LISTS];
 
+   		/* usefull data */
+   		/* incoming request and its response*/
+   		struct sip_msg         *inbound_request;
+   		struct retrans_buff   *inbound_response;
+   		unsigned int             status;
+   		/* array of outgoing requests and its responses */
+   		int                               nr_of_outgoings;
+   		struct retrans_buff   *outbound_request[ MAX_FORK ];
+   		struct sip_msg          *outbound_response[ MAX_FORK ];
+	} transaction;
+	/* retransmission buffer */
+	struct {
+		struct retrans_buffer* retr_buffer;
+		/* a message can be linked just to one retransmission list */
+		struct timer_link retransmission_timer_list;
+	} retransmission;
+   }; /* cell payload */
 }cell_type;
 
 
