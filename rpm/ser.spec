@@ -1,6 +1,6 @@
 %define name    ser
 %define ver     0.8.10
-%define rel     1
+%define rel     2
 %define exclude CVS radius_acc radius_auth snmp mysql jabber
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
@@ -94,6 +94,13 @@ install -m755 $RPM_SOURCE_DIR/ser.init \
               $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/ser
 
 
+mkdir -p $RPM_BUILD_ROOT/%{_bindir}
+install -m755 scripts/harv_ser.sh \
+              $RPM_BUILD_ROOT/%{_bindir}/harv_ser.sh
+
+mv $RPM_BUILD_ROOT/%{_sbindir}/gen_ha1 $RPM_BUILD_ROOT/%{_bindir}
+
+
 %clean
 rm -rf "$RPM_BUILD_ROOT"
 
@@ -135,7 +142,9 @@ fi
 
 %{_sbindir}/ser
 %{_sbindir}/serctl
-%{_sbindir}/gen_ha1
+
+%{_bindir}/harv_ser.sh
+%{_bindir}/gen_ha1
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -153,6 +162,11 @@ fi
 %{_libdir}/ser/modules/jabber.so
 
 %changelog
+* Thu Nov 14 2002 Jan Janak <J.Janak@sh.cvut.cz>
+- Installing harv_ser.sh again
+- quick hack to move gen_ha1 to bin directory instead of sbin (should
+  be done from the Makefile next time)
+
 * Tue Nov 12 2002 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>
 - added a separate rpm for the jabber modules
 - moved all the binaries to sbin
