@@ -1,7 +1,6 @@
 /*$Id$
  *
  * Ser module, it implements the following commands:
- * add_rport() - insert a rport parameter into the first Via field
  * fix_nated_contact() - replaces host:port in Contact field with host:port
  *			 we received this message from
  * fix_nated_sdp() - replaces IP address in the SDP with IP address
@@ -9,7 +8,7 @@
  *
  * Beware, those functions will only work correctly if the UA supports
  * symmetric signalling and media (not all do)!!!
- * 
+ *
  *
  * Copyright (C) 2003 Porta Software Ltd
  *
@@ -53,13 +52,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-static int fix_nated_contact_f(struct sip_msg*, char*, char*);
-static int fix_nated_sdp_f(struct sip_msg*, char*, char*);
+static int fix_nated_contact_f(struct sip_msg *, char *, char *);
+static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
+static int update_clen(struct sip_msg *, int);
+static int extract_mediaip(str *, str *);
 static void timer(unsigned int, void *);
-
 inline static int fixup_str2int(void**, int);
-
 static int mod_init(void);
 
 static int (*get_all_ucontacts)(void *buf, int len) = NULL;
@@ -139,7 +137,8 @@ ser_memmem(const void *b1, const void *b2, size_t len1, size_t len2)
 }
 
 /*
- * 
+ * Replaces ip:port pair in the Contact: field with the source address
+ * of the packet and/or adds direction=active option to the SDP.
  */
 static int
 fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
@@ -169,8 +168,10 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 		case ':':
 			switch (st) {
 			case ST1:
+				hostname.s = cp + 1;
 				st = ST2;
 				break;
+			case ST2:
 			case ST3:
 				hostname.len = cp - hostname.s + 1;
 				port.s = cp + 1;
@@ -269,16 +270,18 @@ fixup_str2int( void** param, int param_no)
 #define ADIRECTION	"a=direction:active\r\n"
 #define	ADIRECTION_LEN	21
 
+#define AOLDMEDIAIP	"a=oldmediaip:"
+#define AOLDMEDIAIP_LEN	13
+
 #define CLEN_LEN	10
 
 static int
 fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 {
-	str body;
-	int level, added_len, offset, len, nextisip;
-	char *buf, *cp, *cp1;
+	str body, mediaip;
+	int level, added_len, offset, len;
+	char *buf, *cp;
 	struct lump* anchor;
-	str mediaip;
 
 	level = (int)str1;
 	added_len = 0;
@@ -310,43 +313,41 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	if (level & FIX_MEDIAIP) {
-		for (cp = body.s; (len = body.s + body.len - cp) > 0;) {
-			cp1 = ser_memmem(cp, "c=", len, 2);
-			if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
-				break;
-			cp = cp1 + 2;
-		}
-		if (cp1 == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: no `c=' in SDP\n");
-			goto finalise;
-		}
-		mediaip.s = cp1 + 2;
-		mediaip.len = eat_line(mediaip.s, body.s + body.len - mediaip.s) - mediaip.s;
-		trim_len(mediaip.len, mediaip.s, mediaip);
-
-		nextisip = 0;
-		for (cp = mediaip.s; cp < mediaip.s + mediaip.len;) {
-			len = eat_token_end(cp, mediaip.s + mediaip.len) - cp;
-			if (nextisip == 1) {
-				mediaip.s = cp;
-				mediaip.len = len;
-				nextisip++;
-				break;
-			}
-			if (len == 3 && memcmp(cp, "IP4", 3) == 0)
-				nextisip = 1;
-			cp = eat_space_end(cp + len, mediaip.s + mediaip.len);
-		}
-		if (nextisip != 2 || mediaip.len == 0) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: no `IP4' in `c=' field\n");
+		if (extract_mediaip(&body, &mediaip) == -1) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract media IP from the SDP\n");
 			goto finalise;
 		}
 
+		/* check that updating mediaip is really necessary */
+		if (7 == mediaip.len && memcmp("0.0.0.0", mediaip.s, 7) == 0)
+			goto finalise;
 		cp = ip_addr2a(&msg->rcv.src_ip);
 		len = strlen(cp);
-		/* check that updating mediaip is really necessary */
 		if (len == mediaip.len && memcmp(cp, mediaip.s, len) == 0)
 			goto finalise;
+
+		anchor = anchor_lump(&(msg->add_rm),
+		    body.s + body.len - msg->buf, 0, 0);
+		if (anchor == NULL) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
+			return -1;
+		}
+		buf = pkg_malloc(AOLDMEDIAIP_LEN + mediaip.len + CRLF_LEN);
+		if (buf == NULL) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+			return -1;
+		}
+		memcpy(buf, AOLDMEDIAIP, AOLDMEDIAIP_LEN);
+		memcpy(buf + AOLDMEDIAIP_LEN, mediaip.s, mediaip.len);
+		memcpy(buf + AOLDMEDIAIP_LEN + mediaip.len, CRLF, CRLF_LEN);
+		if (insert_new_lump_after(anchor, buf,
+		    AOLDMEDIAIP_LEN + mediaip.len + CRLF_LEN, 0) == NULL) {
+			LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
+			pkg_free(buf);
+			return -1;
+		}
+		added_len += AOLDMEDIAIP_LEN + mediaip.len + CRLF_LEN;
+
 		buf = pkg_malloc(len);
 		if (buf == NULL) {
 			LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
@@ -371,29 +372,81 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 finalise:
 	/* Check that Content-Length needs to be updated */
 	if (added_len != 0) {
-		buf = pkg_malloc(CLEN_LEN * sizeof(char));
-		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
-			return -1;
-		}
-		offset = msg->content_length->body.s - msg->buf;
-		len = msg->content_length->body.len;
-		anchor = del_lump(&msg->add_rm, offset, len, HDR_CONTENTLENGTH);
-		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: del_lump failed\n");
-			pkg_free(buf);
-			return -1;
-		}
-		len = snprintf(buf, CLEN_LEN, "%d", body.len + added_len);
-		if (len >= CLEN_LEN)
-			len = CLEN_LEN - 1;
-		if (insert_new_lump_after(anchor, buf, len, HDR_CONTENTLENGTH) == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
-			pkg_free(buf);
-			return -1;
-		}
+		return (update_clen(msg, body.len + added_len));
+	}
+	return 1;
+}
+
+static int
+update_clen(struct sip_msg* msg, int newlen)
+{
+	char *buf;
+	int len, offset;
+	struct lump* anchor;
+
+	buf = pkg_malloc(CLEN_LEN * sizeof(char));
+	if (buf == NULL) {
+		LOG(L_ERR, "ERROR: update_clen: out of memory\n");
+		return -1;
+	}
+	offset = msg->content_length->body.s - msg->buf;
+	len = msg->content_length->body.len;
+	anchor = del_lump(&msg->add_rm, offset, len, HDR_CONTENTLENGTH);
+	if (anchor == NULL) {
+		LOG(L_ERR, "ERROR: update_clen: del_lump failed\n");
+		pkg_free(buf);
+		return -1;
+	}
+	len = snprintf(buf, CLEN_LEN, "%d", newlen);
+	if (len >= CLEN_LEN)
+		len = CLEN_LEN - 1;
+	if (insert_new_lump_after(anchor, buf, len, HDR_CONTENTLENGTH) == NULL) {
+		LOG(L_ERR, "ERROR: update_clen: insert_new_lump_after failed\n");
+		pkg_free(buf);
+		return -1;
 	}
 
+	return 1;
+}
+
+static int
+extract_mediaip(str *body, str *mediaip)
+{
+	char *cp, *cp1;
+	int len, nextisip;
+
+	cp1 = NULL;
+	for (cp = body->s; (len = body->s + body->len - cp) > 0;) {
+		cp1 = ser_memmem(cp, "c=", len, 2);
+		if (cp1 == NULL || cp1[-1] == '\n' || cp1[-1] == '\r')
+			break;
+		cp = cp1 + 2;
+	}
+	if (cp1 == NULL) {
+		LOG(L_ERR, "ERROR: extract_mediaip: no `c=' in SDP\n");
+		return -1;
+	}
+	mediaip->s = cp1 + 2;
+	mediaip->len = eat_line(mediaip->s, body->s + body->len - mediaip->s) - mediaip->s;
+	trim_len(mediaip->len, mediaip->s, *mediaip);
+
+	nextisip = 0;
+	for (cp = mediaip->s; cp < mediaip->s + mediaip->len;) {
+		len = eat_token_end(cp, mediaip->s + mediaip->len) - cp;
+		if (nextisip == 1) {
+			mediaip->s = cp;
+			mediaip->len = len;
+			nextisip++;
+			break;
+		}
+		if (len == 3 && memcmp(cp, "IP4", 3) == 0)
+			nextisip = 1;
+		cp = eat_space_end(cp + len, mediaip->s + mediaip->len);
+	}
+	if (nextisip != 2 || mediaip->len == 0) {
+		LOG(L_ERR, "ERROR: extract_mediaip: no `IP4' in `c=' field\n");
+		return -1;
+	}
 	return 1;
 }
 
