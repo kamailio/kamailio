@@ -26,8 +26,9 @@
  *
  * History:
  * -------
- * 2002-01-29 argc/argv globalized via my_{argc|argv} (jiri)
- * 2001-01-23 mhomed added (jiri)
+ * 2002-01-29  argc/argv globalized via my_{argc|argv} (jiri)
+ * 2003-01-23  mhomed added (jiri)
+ * 2003-03-19  replaced all malloc/frees w/ pkg_malloc/pkg_free (andrei)
  *
  */
 
@@ -947,7 +948,7 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 	ifc.ifc_req=0;
 	for (size=10; ; size*=2){
 		ifc.ifc_len=size*sizeof(struct ifreq);
-		ifc.ifc_req=(struct ifreq*) malloc(size*sizeof(struct ifreq));
+		ifc.ifc_req=(struct ifreq*) pkg_malloc(size*sizeof(struct ifreq));
 		if (ifc.ifc_req==0){
 			fprintf(stderr, "memory allocation failure\n");
 			goto error;
@@ -961,7 +962,7 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 														   len not changed*/
 		lastlen=ifc.ifc_len;
 		/* try a bigger array*/
-		free(ifc.ifc_req);
+		pkg_free(ifc.ifc_req);
 	}
 	
 	last=(char*)ifc.ifc_req+ifc.ifc_len;
@@ -1008,7 +1009,7 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 					(struct sockaddr*)(p+(long)&((struct ifreq*)0)->ifr_addr));
 				if ((tmp=ip_addr2a(&addr))==0) goto error;
 				/* fill the strings*/
-				sock_info[sock_no].name.s=(char*)malloc(strlen(tmp)+1);
+				sock_info[sock_no].name.s=(char*)pkg_malloc(strlen(tmp)+1);
 				if(sock_info[sock_no].name.s==0){
 					fprintf(stderr, "Out of memory.\n");
 					goto error;
@@ -1036,11 +1037,11 @@ int add_interfaces(char* if_name, int family, unsigned short port)
 			ls_ifflags(ifr->ifr_name, family, options);
 			printf("\n");*/
 	}
-	free(ifc.ifc_req); /*clean up*/
+	pkg_free(ifc.ifc_req); /*clean up*/
 	close(s);
 	return  ret;
 error:
-	if (ifc.ifc_req) free(ifc.ifc_req);
+	if (ifc.ifc_req) pkg_free(ifc.ifc_req);
 	close(s);
 	return -1;
 }
@@ -1159,7 +1160,7 @@ int main(int argc, char** argv)
 					/* add a new addr. to our address list */
 					if (sock_no < MAX_LISTEN){
 						sock_info[sock_no].name.s=
-										(char*)malloc(strlen(optarg)+1);
+										(char*)pkg_malloc(strlen(optarg)+1);
 						if (sock_info[sock_no].name.s==0){
 							fprintf(stderr, "Out of memory.\n");
 							goto error;
@@ -1377,7 +1378,8 @@ try_again:
 				fprintf(stderr, "cannot determine hostname, try -l address\n");
 				goto error;
 			}
-			sock_info[sock_no].name.s=(char*)malloc(strlen(myname.nodename)+1);
+			sock_info[sock_no].name.s=
+								(char*)pkg_malloc(strlen(myname.nodename)+1);
 			if (sock_info[sock_no].name.s==0){
 				fprintf(stderr, "Out of memory.\n");
 				goto error;
@@ -1395,7 +1397,7 @@ try_again:
 		if (add_interfaces(sock_info[r].name.s, AF_INET,
 					sock_info[r].port_no)!=-1){
 			/* success => remove current entry (shift the entire array)*/
-			free(sock_info[r].name.s);
+			pkg_free(sock_info[r].name.s);
 			memmove(&sock_info[r], &sock_info[r+1], 
 						(sock_no-r)*sizeof(struct socket_info));
 			sock_no--;
@@ -1427,7 +1429,7 @@ try_again:
 		  not have  enough space */
 		port_no_str_len=
 				(port_no_str_len<MAX_PORT_LEN)?port_no_str_len:MAX_PORT_LEN;
-		sock_info[r].port_no_str.s=(char*)malloc(strlen(port_no_str)+1);
+		sock_info[r].port_no_str.s=(char*)pkg_malloc(strlen(port_no_str)+1);
 		if (sock_info[r].port_no_str.s==0){
 			fprintf(stderr, "Out of memory.\n");
 			goto error;
@@ -1449,8 +1451,8 @@ try_again:
 				LOG(L_ERR, "ERROR: main: add_alias failed\n");
 			}
 			/* change the oficial name */
-			free(sock_info[r].name.s);
-			sock_info[r].name.s=(char*)malloc(strlen(he->h_name)+1);
+			pkg_free(sock_info[r].name.s);
+			sock_info[r].name.s=(char*)pkg_malloc(strlen(he->h_name)+1);
 			if (sock_info[r].name.s==0){
 				fprintf(stderr, "Out of memory.\n");
 				goto error;
@@ -1466,7 +1468,7 @@ try_again:
 		hostent2ip_addr(&sock_info[r].address, he, 0); /*convert to ip_addr 
 														 format*/
 		if ((tmp=ip_addr2a(&sock_info[r].address))==0) goto error;
-		sock_info[r].address_str.s=(char*)malloc(strlen(tmp)+1);
+		sock_info[r].address_str.s=(char*)pkg_malloc(strlen(tmp)+1);
 		if (sock_info[r].address_str.s==0){
 			fprintf(stderr, "Out of memory.\n");
 			goto error;
@@ -1527,9 +1529,9 @@ try_again:
 								sock_info[t].port_no);
 						
 				/* free space*/
-				free(sock_info[t].name.s);
-				free(sock_info[t].address_str.s);
-				free(sock_info[t].port_no_str.s);
+				pkg_free(sock_info[t].name.s);
+				pkg_free(sock_info[t].address_str.s);
+				pkg_free(sock_info[t].port_no_str.s);
 				/* shift the array*/
 				memmove(&sock_info[t], &sock_info[t+1], 
 							(sock_no-t)*sizeof(struct socket_info));
@@ -1575,7 +1577,7 @@ try_again:
 #ifdef SHM_MEM
 	pt=shm_malloc(sizeof(struct process_table)*process_count());
 #else
-	pt=malloc(sizeof(struct process_table)*process_count());
+	pt=pkg_malloc(sizeof(struct process_table)*process_count());
 #endif
 	if (pt==0){
 		fprintf(stderr, "ERROR: out  of memory\n");

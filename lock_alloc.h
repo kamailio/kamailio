@@ -60,7 +60,7 @@ Implements: (see also locking.h)
 #if defined(FAST_LOCK) || defined(USE_PTHREAD_MUTEX) || defined(USE_POSIX_SEM)
 /* simple locks*/
 #define lock_alloc() shm_malloc(sizeof(gen_lock_t))
-#define lock_dealloc(lock) shm_free(lock)
+#define lock_dealloc(lock) shm_free((void*)lock)
 /* lock sets */
 
 inline static lock_set_t* lock_set_alloc(int n)
@@ -82,7 +82,7 @@ inline static lock_set_t* lock_set_alloc(int n)
 
 /*simple locks*/
 #define lock_alloc() shm_malloc(sizeof(gen_lock_t))
-#define lock_dealloc(lock) shm_free(lock)
+#define lock_dealloc(lock) shm_free((void*)lock)
 /* lock sets */
 
 inline static lock_set_t* lock_set_alloc(int n)

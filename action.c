@@ -30,6 +30,7 @@
  * 2003-01-29  removed scratchpad (jiri)
  * 2003-03-19  fixed set* len calculation bug & simplified a little the code
  *              (should be a little faster now) (andrei)
+ *             replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -142,7 +143,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=forward_request(msg, p, proto);
 				/*free_uri(&uri); -- no longer needed, in sip_msg*/
 				free_proxy(p); /* frees only p content, not p itself */
-				free(p);
+				pkg_free(p);
 				if (ret>=0) ret=1;
 			}else if ((a->p1_type==PROXY_ST) && (a->p2_type==NUMBER_ST)){
 				ret=forward_request(msg,(struct proxy_l*)a->p1.data, proto);
@@ -161,7 +162,8 @@ int do_action(struct action* a, struct sip_msg* msg)
 				ret=E_BUG;
 				break;
 			}
-			to=(union sockaddr_union*) malloc(sizeof(union sockaddr_union));
+			to=(union sockaddr_union*)
+					pkg_malloc(sizeof(union sockaddr_union));
 			if (to==0){
 				LOG(L_ERR, "ERROR: do_action: "
 							"memory allocation failure\n");
@@ -199,7 +201,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				}
 #endif
 			}
-			free(to);
+			pkg_free(to);
 			if (ret<0){
 				p->errors++;
 				p->ok=0;

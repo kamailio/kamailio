@@ -27,6 +27,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free
+ */
 
 
 #include <stdlib.h>
@@ -34,6 +39,7 @@
 
 #include "ip_addr.h"
 #include "dprint.h"
+#include "mem/mem.h"
 
 
 struct net* mk_net(struct ip_addr* ip, struct ip_addr* mask)
@@ -45,7 +51,7 @@ struct net* mk_net(struct ip_addr* ip, struct ip_addr* mask)
 				" (eg. ipv4/ipv6mask or ipv6/ipv4mask)\n");
 		goto error;
 	}
-	n=(struct net*)malloc(sizeof(struct net));
+	n=(struct net*)pkg_malloc(sizeof(struct net));
 	if (n==0){ 
 		LOG(L_CRIT, "ERROR: mk_net: memory allocation failure\n");
 		goto error;
@@ -68,7 +74,7 @@ struct net* mk_net_bitlen(struct ip_addr* ip, unsigned int bitlen)
 		LOG(L_CRIT, "ERROR: mk_net_bitlen: bad bitlen number %d\n", bitlen);
 		goto error;
 	}
-	n=(struct net*)malloc(sizeof(struct net));
+	n=(struct net*)pkg_malloc(sizeof(struct net));
 	if (n==0){
 		LOG(L_CRIT, "ERROR: mk_net_bitlen: memory allocation failure\n"); 
 		goto error;

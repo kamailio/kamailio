@@ -24,6 +24,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ */
 
 
 #include "timer.h"
@@ -54,7 +58,7 @@ int init_timer()
 	/* in this case get_ticks won't work! */
 	LOG(L_INFO, "WARNING: no shared memory support compiled in"
 				" get_ticks won't work\n");
-	jiffies=malloc(sizeof(int));
+	jiffies=pkg_malloc(sizeof(int));
 #endif
 	if (jiffies==0){
 		LOG(L_CRIT, "ERROR: init_timer: could not init jiffies\n");
@@ -72,7 +76,7 @@ void destroy_timer()
 #ifdef SHM_MEM
 		shm_free(jiffies); jiffies=0;
 #else
-		free(jiffies); jiffies=0;
+		pkg_free(jiffies); jiffies=0;
 #endif
 	}
 }
@@ -85,7 +89,7 @@ int register_timer(timer_function f, void* param, unsigned int interval)
 {
 	struct sr_timer* t;
 
-	t=malloc(sizeof(struct sr_timer));
+	t=pkg_malloc(sizeof(struct sr_timer));
 	if (t==0){
 		LOG(L_ERR, "ERROR: register_timer: out of memory\n");
 		goto error;

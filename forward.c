@@ -26,14 +26,15 @@
  *
  * History:
  * -------
- * 2001-??-??  created by andrei
- * ????-??-??  lots of changes by a lot of people
- * 2003-01-23  support for determination of outbound interface added :
- *              get_out_socket (jiri)
- * 2003-01-24  reply to rport support added, contributed by
- *              Maxim Sobolev <sobomax@FreeBSD.org> and modified by andrei
- * 2003-02-11  removed calls to upd_send & tcp_send & replaced them with
- *              calls to msg_send (andrei)
+ *  2001-??-??  created by andrei
+ *  ????-??-??  lots of changes by a lot of people
+ *  2003-01-23  support for determination of outbound interface added :
+ *               get_out_socket (jiri)
+ *  2003-01-24  reply to rport support added, contributed by
+ *               Maxim Sobolev <sobomax@FreeBSD.org> and modified by andrei
+ *  2003-02-11  removed calls to upd_send & tcp_send & replaced them with
+ *               calls to msg_send (andrei)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -249,7 +250,7 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	buf=0;
 	id=0;
 	
-	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
+	to=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (to==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: forward_request: out of memory\n");
@@ -325,12 +326,12 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 	STATS_TX_REQUEST(  msg->first_line.u.request.method_value );
 	
 	pkg_free(buf);
-	free(to);
+	pkg_free(to);
 	/* received_buf & line_buf will be freed in receive_msg by free_lump_list*/
 	return 0;
 
 error1:
-	free(to);
+	pkg_free(to);
 error:
 	if (buf) pkg_free(buf);
 	return -1;
@@ -435,7 +436,7 @@ int forward_reply(struct sip_msg* msg)
 		goto error;
 	}
 
-	to=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
+	to=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (to==0){
 		LOG(L_ERR, "ERROR: forward_reply: out of memory\n");
 		goto error;
@@ -474,11 +475,11 @@ int forward_reply(struct sip_msg* msg)
 			(unsigned short) msg->via2->port);
 
 	pkg_free(new_buf);
-	free(to);
+	pkg_free(to);
 skip:
 	return 0;
 error:
 	if (new_buf) pkg_free(new_buf);
-	if (to) free(to);
+	if (to) pkg_free(to);
 	return -1;
 }

@@ -28,12 +28,14 @@
  * --------
  *  2003-03-10  switched to new module_exports format: updated find_export,
  *               find_export_param, find_module (andrei)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
 #include "sr_module.h"
 #include "dprint.h"
 #include "error.h"
+#include "mem/mem.h"
 
 #include <dlfcn.h>
 #include <strings.h>
@@ -127,7 +129,7 @@ int register_module(struct module_exports* e, char* path, void* handle)
 	ret=-1;
 
 	/* add module to the list */
-	if ((mod=malloc(sizeof(struct sr_module)))==0){
+	if ((mod=pkg_malloc(sizeof(struct sr_module)))==0){
 		LOG(L_ERR, "load_module: memory allocation failure\n");
 		ret=E_OUT_OF_MEM;
 		goto error;

@@ -28,8 +28,9 @@
  *
  * History:
  * -------
- * 2001-01-29 src_port added (jiri)
- * 2001-01-23 mhomed added (jiri)
+ *  2003-01-29  src_port added (jiri)
+ *  2003-01-23  mhomed added (jiri)
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -37,12 +38,10 @@
 	#include "cfg.tab.h"
 	#include "dprint.h"
 	#include "globals.h"
+	#include "mem/mem.h"
 	#include <string.h>
 	#include <stdlib.h>
 
-#ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
-#endif
 
 	/* states */
 	#define INITIAL_S		0
@@ -330,7 +329,7 @@ EAT_ABLE	[\ \t\b\r]
 										case STRING_S: 
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF in"
 														" unclosed string\n");
-											if (tstr) {free(tstr); tstr=0;}
+											if (tstr) {pkg_free(tstr);tstr=0;}
 											break;
 										case COMMENT_S:
 											LOG(L_CRIT, "ERROR: cfg. parser: unexpected EOF:"
@@ -356,12 +355,12 @@ static char* addstr(char * src, char ** dest)
 	}else{
 		len1=strlen(*dest);
 		len2=strlen(src);
-		tmp=malloc(len1+len2+1);
+		tmp=pkg_malloc(len1+len2+1);
 		if (tmp==0) goto error;
 		memcpy(tmp, *dest, len1);
 		memcpy(tmp+len1, src, len2);
 		tmp[len1+len2]=0;
-		free(*dest);
+		pkg_free(*dest);
 		*dest=tmp;
 	}
 	return *dest;

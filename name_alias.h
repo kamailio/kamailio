@@ -25,11 +25,17 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ */
 
 
 
 #include "str.h"
 #include "dprint.h"
+#include "mem/mem.h"
 
 
 
@@ -68,9 +74,9 @@ static inline int add_alias(char* name, int len, unsigned short port)
 	
 	if ((port) && grep_aliases(name,len, port)) return 0;
 	a=0;
-	a=(struct host_alias*)malloc(sizeof(struct host_alias));
+	a=(struct host_alias*)pkg_malloc(sizeof(struct host_alias));
 	if(a==0) goto error;
-	a->alias.s=(char*)malloc(len+1);
+	a->alias.s=(char*)pkg_malloc(len+1);
 	if (a->alias.s==0) goto error;
 	a->alias.len=len;
 	memcpy(a->alias.s, name, len);
@@ -81,7 +87,7 @@ static inline int add_alias(char* name, int len, unsigned short port)
 	return 1;
 error:
 	LOG(L_ERR, "ERROR: add_alias: memory allocation error\n");
-	if (a) free(a);
+	if (a) pkg_free(a);
 	return -1;
 }
 

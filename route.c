@@ -29,9 +29,10 @@
  *
  * History:
  * --------
- * 2003-02-28  scratchpad compatibility abandoned (jiri)
- * 2003-01-28  scratchpad removed, src_port introduced (jiri)
- * 2003-03-10  updated to the new module exports format (andrei)
+ *  2003-02-28  scratchpad compatibility abandoned (jiri)
+ *  2003-01-28  scratchpad removed, src_port introduced (jiri)
+ *  2003-03-10  updated to the new module exports format (andrei)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
  
@@ -54,10 +55,8 @@
 #include "ip_addr.h"
 #include "resolve.h"
 #include "parser/parse_uri.h"
+#include "mem/mem.h"
 
-#ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
-#endif
 
 /* main routing script table  */
 struct action* rlist[RT_NO];
@@ -98,7 +97,7 @@ static int fix_expr(struct expr* exp)
 	}else if (exp->type==ELEM_T){
 			if (exp->op==MATCH_OP){
 				if (exp->subtype==STRING_ST){
-					re=(regex_t*)malloc(sizeof(regex_t));
+					re=(regex_t*)pkg_malloc(sizeof(regex_t));
 					if (re==0){
 						LOG(L_CRIT, "ERROR: fix_expr: memory allocation"
 								" failure\n");
@@ -108,11 +107,11 @@ static int fix_expr(struct expr* exp)
 								REG_EXTENDED|REG_NOSUB|REG_ICASE) ){
 						LOG(L_CRIT, "ERROR: fix_expr : bad re \"%s\"\n",
 									(char*) exp->r.param);
-						free(re);
+						pkg_free(re);
 						return E_BAD_RE;
 					}
 					/* replace the string with the re */
-					free(exp->r.param);
+					pkg_free(exp->r.param);
 					exp->r.param=re;
 					exp->subtype=RE_ST;
 				}else if (exp->subtype!=RE_ST){

@@ -25,8 +25,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * 2003-01-29 src_port introduced (jiri)
+ */
+/* History:
+ * --------
+ *  2003-01-29  src_port introduced (jiri)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -39,15 +42,13 @@
 
 #include "dprint.h"
 #include "ip_addr.h"
+#include "mem/mem.h"
 
-#ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
-#endif
 
 struct expr* mk_exp(int op, struct expr* left, struct expr* right)
 {
 	struct expr * e;
-	e=(struct expr*)malloc(sizeof (struct expr));
+	e=(struct expr*)pkg_malloc(sizeof (struct expr));
 	if (e==0) goto error;
 	e->type=EXP_T;
 	e->op=op;
@@ -63,7 +64,7 @@ error:
 struct expr* mk_elem(int op, int subtype, int operand, void* param)
 {
 	struct expr * e;
-	e=(struct expr*)malloc(sizeof (struct expr));
+	e=(struct expr*)pkg_malloc(sizeof (struct expr));
 	if (e==0) goto error;
 	e->type=ELEM_T;
 	e->op=op;
@@ -82,7 +83,7 @@ struct action* mk_action(int type, int p1_type, int p2_type,
 											void* p1, void* p2)
 {
 	struct action* a;
-	a=(struct action*)malloc(sizeof(struct action));
+	a=(struct action*)pkg_malloc(sizeof(struct action));
 	if (a==0) goto  error;
 	memset(a,0,sizeof(struct action));
 	a->type=type;

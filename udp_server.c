@@ -26,8 +26,9 @@
  *
  * History
  * --------
- * 2003-01-28 packet zero-termination moved to receive_msg (jiri)
- * 2003-02-10 undoed the above changes (andrei)
+ *  2003-01-28  packet zero-termination moved to receive_msg (jiri)
+ *  2003-02-10  undoed the above changes (andrei)
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -52,9 +53,6 @@
 #include "mem/mem.h"
 #include "ip_addr.h"
 
-#ifdef DEBUG_DMALLOC
-#include <mem/dmalloc.h>
-#endif
 
 #ifdef DBG_MSG_QA
 /* message quality assurance -- frequently, bugs in ser have
@@ -212,7 +210,7 @@ int udp_init(struct socket_info* sock_info)
 
 	addr=&sock_info->su;
 /*
-	addr=(union sockaddr_union*)malloc(sizeof(union sockaddr_union));
+	addr=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (addr==0){
 		LOG(L_ERR, "ERROR: udp_init: out of memory\n");
 		goto error;
@@ -263,11 +261,11 @@ int udp_init(struct socket_info* sock_info)
 		goto error;
 	}
 
-/*	free(addr);*/
+/*	pkg_free(addr);*/
 	return 0;
 
 error:
-/*	if (addr) free(addr);*/
+/*	if (addr) pkg_free(addr);*/
 	return -1;
 }
 
@@ -287,7 +285,7 @@ int udp_rcv_loop()
 	struct receive_info ri;
 
 
-	from=(union sockaddr_union*) malloc(sizeof(union sockaddr_union));
+	from=(union sockaddr_union*) pkg_malloc(sizeof(union sockaddr_union));
 	if (from==0){
 		LOG(L_ERR, "ERROR: udp_rcv_loop: out of memory\n");
 		goto error;
@@ -350,12 +348,12 @@ int udp_rcv_loop()
 		
 	}
 	/*
-	if (from) free(from);
+	if (from) pkg_free(from);
 	return 0;
 	*/
 	
 error:
-	if (from) free(from);
+	if (from) pkg_free(from);
 	return -1;
 }
 

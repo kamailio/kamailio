@@ -31,6 +31,7 @@
   * History:
   * -------
   *  2003-02-13  all *proxy fucntions are now proto aware (andrei)
+  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
   */
 
 
@@ -39,6 +40,7 @@
 #include "proxy.h"
 #include "error.h"
 #include "dprint.h"
+#include "mem/mem.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -52,9 +54,6 @@
 #include "ip_addr.h"
 #include "globals.h"
 
-#ifdef DEBUG_DMALLOC
-#include <dmalloc.h>
-#endif
 
 struct proxy_l* proxies=0;
 
@@ -86,7 +85,7 @@ static int hostent_cpy(struct hostent *dst, struct hostent* src)
 	/* start copying the host entry.. */
 	/* copy h_name */
 	len=strlen(src->h_name)+1;
-	dst->h_name=(char*)malloc(sizeof(char) * len);
+	dst->h_name=(char*)pkg_malloc(sizeof(char) * len);
 	if (dst->h_name) strncpy(dst->h_name,src->h_name, len);
 	else{
 		ser_error=ret=E_OUT_OF_MEM;
@@ -97,21 +96,21 @@ static int hostent_cpy(struct hostent *dst, struct hostent* src)
 	len=0;
 	if (src->h_aliases)
 		for (;src->h_aliases[len];len++);
-	dst->h_aliases=(char**)malloc(sizeof(char*)*(len+1));
+	dst->h_aliases=(char**)pkg_malloc(sizeof(char*)*(len+1));
 	if (dst->h_aliases==0){
 		ser_error=ret=E_OUT_OF_MEM;
-		free(dst->h_name);
+		pkg_free(dst->h_name);
 		goto error;
 	}
 	memset((void*)dst->h_aliases, 0, sizeof(char*) * (len+1) );
 	for (i=0;i<len;i++){
 		len2=strlen(src->h_aliases[i])+1;
-		dst->h_aliases[i]=(char*)malloc(sizeof(char)*len2);
+		dst->h_aliases[i]=(char*)pkg_malloc(sizeof(char)*len2);
 		if (dst->h_aliases==0){
 			ser_error=ret=E_OUT_OF_MEM;
-			free(dst->h_name);
-			for(r=0; r<i; r++)	free(dst->h_aliases[r]);
-			free(dst->h_aliases);
+			pkg_free(dst->h_name);
+			for(r=0; r<i; r++)	pkg_free(dst->h_aliases[r]);
+			pkg_free(dst->h_aliases);
 			goto error;
 		}
 		strncpy(dst->h_aliases[i], src->h_aliases[i], len2);
@@ -120,26 +119,26 @@ static int hostent_cpy(struct hostent *dst, struct hostent* src)
 	len=0;
 	if (src->h_addr_list)
 		for (;src->h_addr_list[len];len++);
-	dst->h_addr_list=(char**)malloc(sizeof(char*)*(len+1));
+	dst->h_addr_list=(char**)pkg_malloc(sizeof(char*)*(len+1));
 	if (dst->h_addr_list==0){
 		ser_error=ret=E_OUT_OF_MEM;
-		free(dst->h_name);
-		for(r=0; dst->h_aliases[r]; r++)	free(dst->h_aliases[r]);
-		free(dst->h_aliases[r]);
-		free(dst->h_aliases);
+		pkg_free(dst->h_name);
+		for(r=0; dst->h_aliases[r]; r++)	pkg_free(dst->h_aliases[r]);
+		pkg_free(dst->h_aliases[r]);
+		pkg_free(dst->h_aliases);
 		goto error;
 	}
 	memset((void*)dst->h_addr_list, 0, sizeof(char*) * (len+1) );
 	for (i=0;i<len;i++){
-		dst->h_addr_list[i]=(char*)malloc(sizeof(char)*src->h_length);
+		dst->h_addr_list[i]=(char*)pkg_malloc(sizeof(char)*src->h_length);
 		if (dst->h_addr_list[i]==0){
 			ser_error=ret=E_OUT_OF_MEM;
-			free(dst->h_name);
-			for(r=0; dst->h_aliases[r]; r++)	free(dst->h_aliases[r]);
-			free(dst->h_aliases[r]);
-			free(dst->h_aliases);
-			for (r=0; r<i;r++) free(dst->h_addr_list[r]);
-			free(dst->h_addr_list);
+			pkg_free(dst->h_name);
+			for(r=0; dst->h_aliases[r]; r++)	pkg_free(dst->h_aliases[r]);
+			pkg_free(dst->h_aliases[r]);
+			pkg_free(dst->h_aliases);
+			for (r=0; r<i;r++) pkg_free(dst->h_addr_list[r]);
+			pkg_free(dst->h_addr_list);
 			goto error;
 		}
 		memcpy(dst->h_addr_list[i], src->h_addr_list[i], src->h_length);
@@ -162,16 +161,16 @@ error:
 void free_hostent(struct hostent *dst)
 {
 	int r;
-	if (dst->h_name) free(dst->h_name);
+	if (dst->h_name) pkg_free(dst->h_name);
 	if (dst->h_aliases){
-		for(r=0; dst->h_aliases[r]; r++)	free(dst->h_aliases[r]);
-		free(dst->h_aliases[r]);
-		free(dst->h_aliases);
+		for(r=0; dst->h_aliases[r]; r++)	pkg_free(dst->h_aliases[r]);
+		pkg_free(dst->h_aliases[r]);
+		pkg_free(dst->h_aliases);
 	}
 	if (dst->h_addr_list){
-		for (r=0; dst->h_addr_list[r];r++) free(dst->h_addr_list[r]);
-		free(dst->h_addr_list[r]);
-		free(dst->h_addr_list);
+		for (r=0; dst->h_addr_list[r];r++) pkg_free(dst->h_addr_list[r]);
+		pkg_free(dst->h_addr_list[r]);
+		pkg_free(dst->h_addr_list);
 	}
 }
 
@@ -204,7 +203,7 @@ struct proxy_l* mk_proxy(str* name, unsigned short port, int proto)
 	struct proxy_l* p;
 	struct hostent* he;
 
-	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
+	p=(struct proxy_l*) pkg_malloc(sizeof(struct proxy_l));
 	if (p==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_CRIT, "ERROR: mk_proxy: memory allocation failure\n");
@@ -221,11 +220,11 @@ struct proxy_l* mk_proxy(str* name, unsigned short port, int proto)
 		ser_error=E_BAD_ADDRESS;
 		LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
 					" \"%.*s\"\n", name->len, name->s);
-		free(p);
+		pkg_free(p);
 		goto error;
 	}
 	if (hostent_cpy(&(p->host), he)!=0){
-		free(p);
+		pkg_free(p);
 		goto error;
 	}
 	p->ok=1;
@@ -242,7 +241,7 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 {
 	struct proxy_l* p;
 
-	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
+	p=(struct proxy_l*) pkg_malloc(sizeof(struct proxy_l));
 	if (p==0){
 		LOG(L_CRIT, "ERROR: mk_proxy_from_ip: memory allocation failure\n");
 		goto error;
@@ -253,12 +252,12 @@ struct proxy_l* mk_proxy_from_ip(struct ip_addr* ip, unsigned short port,
 	p->proto=proto;
 	p->host.h_addrtype=ip->af;
 	p->host.h_length=ip->len;
-	p->host.h_addr_list=malloc(2*sizeof(char*));
+	p->host.h_addr_list=pkg_malloc(2*sizeof(char*));
 	if (p->host.h_addr_list==0) goto error;
 	p->host.h_addr_list[1]=0;
-	p->host.h_addr_list[0]=malloc(ip->len+1);
+	p->host.h_addr_list[0]=pkg_malloc(ip->len+1);
 	if (p->host.h_addr_list[0]==0){
-		free(p->host.h_addr_list);
+		pkg_free(p->host.h_addr_list);
 		goto error;
 	}
 

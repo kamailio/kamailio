@@ -53,7 +53,8 @@
  *
  * History:
  * --------
- * 2003-01-29 new built-in fifo commands: arg and pwd (jiri)
+ *  2003-01-29  new built-in fifo commands: arg and pwd (jiri)
+ *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -117,7 +118,7 @@ int register_fifo_cmd(fifo_cmd f, char *cmd_name, void *param)
 		LOG(L_ERR, "ERROR: register_fifo_cmd: attempt to register synonyms\n");
 		return E_BUG;
 	}
-	new_cmd=malloc(sizeof(struct fifo_command));
+	new_cmd=pkg_malloc(sizeof(struct fifo_command));
 	if (new_cmd==0) {
 		LOG(L_ERR, "ERROR: register_fifo_cmd: out of mem\n");
 		return E_OUT_OF_MEM;

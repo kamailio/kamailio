@@ -28,8 +28,9 @@
  *
  * History:
  * ---------
- * 2003-01-29 src_port added (jiri)
- * 2003-01-23 mhomed added (jiri)
+ * 2003-01-29  src_port added (jiri)
+ * 2003-01-23  mhomed added (jiri)
+ * 2003-03-19  replaced all mallocs/frees with pkg_malloc/pkg_free (andrei)
  */
 
 
@@ -222,7 +223,7 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 										"addresss.\n");
 								$$=0;
 							}else{
-								$$=malloc(strlen(tmp)+1);
+								$$=pkg_malloc(strlen(tmp)+1);
 								if ($$==0){
 									LOG(L_CRIT, "ERROR: cfg. parser: out of "
 											"memory.\n");
@@ -231,7 +232,7 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 								}
 							}
 						}
-		 |	ID			{	$$=malloc(strlen($1)+1);
+		 |	ID			{	$$=pkg_malloc(strlen($1)+1);
 		 					if ($$==0){
 									LOG(L_CRIT, "ERROR: cfg. parser: out of "
 											"memory.\n");
@@ -239,7 +240,7 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 									strncpy($$, $1, strlen($1)+1);
 							}
 						}
-		 |	STRING			{	$$=malloc(strlen($1)+1);
+		 |	STRING			{	$$=pkg_malloc(strlen($1)+1);
 		 					if ($$==0){
 									LOG(L_CRIT, "ERROR: cfg. parser: out of "
 											"memory.\n");
@@ -247,7 +248,7 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 									strncpy($$, $1, strlen($1)+1);
 							}
 						}
-		 |	host		{	$$=malloc(strlen($1)+1);
+		 |	host		{	$$=pkg_malloc(strlen($1)+1);
 		 					if ($$==0){
 									LOG(L_CRIT, "ERROR: cfg. parser: out of "
 											"memory.\n");
@@ -257,7 +258,7 @@ listen_id:	ip			{	tmp=ip_addr2a($1);
 						}
 	;
 
-id_lst:	  listen_id	{	$$=malloc(sizeof(struct id_list));
+id_lst:	  listen_id	{	$$=pkg_malloc(sizeof(struct id_list));
 						if ($$==0){
 							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
 						}else{
@@ -266,7 +267,7 @@ id_lst:	  listen_id	{	$$=malloc(sizeof(struct id_list));
 						}
 					}
 		| listen_id id_lst	{
-						$$=malloc(sizeof(struct id_list));
+						$$=pkg_malloc(sizeof(struct id_list));
 						if ($$==0){
 							LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
 						}else{
@@ -328,8 +329,8 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| LISTEN EQUAL id_lst {
 							for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
 								if (sock_no < MAX_LISTEN){
-									sock_info[sock_no].name.s=
-										(char*)malloc(strlen(lst_tmp->s)+1);
+									sock_info[sock_no].name.s=(char*)
+											pkg_malloc(strlen(lst_tmp->s)+1);
 									if (sock_info[sock_no].name.s==0){
 										LOG(L_CRIT, "ERROR: cfg. parser:"
 													" out of memory.\n");
@@ -386,7 +387,8 @@ ip:		 ipv4  { $$=$1; }
 		;
 
 ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER { 
-											$$=malloc(sizeof(struct ip_addr));
+											$$=pkg_malloc(
+													sizeof(struct ip_addr));
 											if ($$==0){
 												LOG(L_CRIT, "ERROR: cfg. "
 													"parser: out of memory.\n"
@@ -419,7 +421,7 @@ ipv4:	NUMBER DOT NUMBER DOT NUMBER DOT NUMBER {
 	;
 
 ipv6:	IPV6ADDR {
-					$$=malloc(sizeof(struct ip_addr));
+					$$=pkg_malloc(sizeof(struct ip_addr));
 					if ($$==0){
 						LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
 					}else{
@@ -611,7 +613,7 @@ ipnet:	ip SLASH ip	{ $$=mk_net($1, $3); }
 	;
 
 host:	ID				{ $$=$1; }
-	| host DOT ID		{ $$=(char*)malloc(strlen($1)+1+strlen($3)+1);
+	| host DOT ID		{ $$=(char*)pkg_malloc(strlen($1)+1+strlen($3)+1);
 						  if ($$==0){
 						  	LOG(L_CRIT, "ERROR: cfg. parser: memory allocation"
 										" failure while parsing host\n");
@@ -621,9 +623,9 @@ host:	ID				{ $$=$1; }
 						  	memcpy($$+strlen($1)+1, $3, strlen($3));
 						  	$$[strlen($1)+1+strlen($3)]=0;
 						  }
-						  free($1); free($3);
+						  pkg_free($1); pkg_free($3);
 						}
-	| host DOT error { $$=0; free($1); yyerror("invalid hostname"); }
+	| host DOT error { $$=0; pkg_free($1); yyerror("invalid hostname"); }
 	;
 
 
