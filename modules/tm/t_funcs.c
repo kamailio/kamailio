@@ -194,7 +194,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 	unsigned int len;
    	char               *buf, *shbuf;
 	struct retrans_buff *rb;
-	
+
 
 	buf=NULL;
 	shbuf = NULL;
@@ -219,7 +219,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
 
 	/* if it's forwarded for the first time ; else the request is retransmited
 	 * from the transaction buffer
-	 * when forwarding an ACK, this condition will br all the time false because
+	 * when forwarding an ACK, this condition will be all the time false because
 	 * the forwarded INVITE is in the retransmission buffer */
 	if ( T->outbound_request[branch]==NULL )
 	{
@@ -258,11 +258,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
          		}
       	}/* end special case CANCEL*/
 
-		if ( add_branch_label( T, T->inbound_request , branch )==-1) 
+		if ( add_branch_label( T, T->inbound_request , branch )==-1)
 			goto error;
-		if ( add_branch_label( T, p_msg , branch )==-1) 
+		if ( add_branch_label( T, p_msg , branch )==-1)
 			goto error;
-		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len))) 
+		if ( !(buf = build_req_buf_from_sip_req  ( p_msg, &len)))
 			goto error;
 
 		/* allocates a new retrans_buff for the outbound request */
@@ -977,6 +977,7 @@ int t_build_and_send_ACK( struct cell *Trans, unsigned int branch, struct sip_ms
                  len += ((hdr->body.s+hdr->body.len ) - hdr->name.s ) + CRLF_LEN ;
       else if ( hdr->type==HDR_TO )
                  len += ((r_msg->to->body.s+r_msg->to->body.len ) - r_msg->to->name.s ) + CRLF_LEN ;
+      /*else if ( hdr->type==HDR_)*/
 
    /* CSEQ method : from INVITE-> ACK */
    len -= 3  ;
