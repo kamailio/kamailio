@@ -121,7 +121,7 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 	struct tmcb_head_list *cb_list;
 
 	/* are the callback types valid?... */
-	if ( types<0 || types>=TMCB_MAX ) {
+	if ( types<0 || types>TMCB_MAX ) {
 		LOG(L_CRIT, "BUG:tm:register_tmcb: invalid callback types: mask=%d\n",
 			types);
 		return E_BUG;
