@@ -3,12 +3,15 @@ $Id$
 ( - todo, x - done)
 
 - backport tcp conn id fix to stable
+- change len_gt into and expr (e.g msg:len).
+- sipit: uri == myself doesn't match tls port = 5061
 - regex subst on uris?
 - port receive.c pre_script_cb fix from stable
 - extend alias to include port numbers :
     something like alias= foo1.bar:5080 foo2.bar foo3.bar:*
 
 release:
+- change tcp timeouts to 2 or 3 min?
 x check via ipv6 fixes and backport to stable
 x fix kill(0, SIGTERM) on startup error (will kill also the launching shell
  if non-interactive)

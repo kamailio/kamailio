@@ -198,12 +198,14 @@ struct sip_msg {
 
 	     /* modifications */
 	
-	str new_uri; /* changed first line uri*/
+	str new_uri; /* changed first line uri, when you change this
+	                don't forget to set parsed_uri_ok to 0*/
 
 	str dst_uri; /* Destination URI, must be forwarded to this URI if len != 0 */
 
 	/* current uri */
-	int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not */
+	int parsed_uri_ok; /* 1 if parsed_uri is valid, 0 if not, set if to 0
+	                      if you modify the uri (e.g change new_uri)*/
 	struct sip_uri parsed_uri; /* speed-up > keep here the parsed uri*/
 	/* the same for original uri */
 	int parsed_orig_ruri_ok;
