@@ -140,13 +140,33 @@ dbg: ser
 	gdb -command debug.gdb
 
 .PHONY: tar
-tar: mantainer-clean 
+.PHONY: dist
+
+dist: tar
+
+tar: 
 	$(TAR) -C .. \
 		--exclude=$(notdir $(CURDIR))/test* \
 		--exclude=$(notdir $(CURDIR))/tmp* \
 		--exclude=$(notdir $(CURDIR))/debian/ser* \
 		--exclude=CVS* \
-		 -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
+		--exclude=*.[do] \
+		--exclude=*.so \
+		--exclude=*.il \
+		--exclude=$(notdir $(CURDIR))/ser \
+		--exclude=*.gz \
+		--exclude=*.bz2 \
+		--exclude=*.tar \
+		-cf - $(notdir $(CURDIR)) | \
+			(mkdir -p tmp/_tar; \
+			    cd tmp/_tar; $(TAR) -xf - ) && \
+			    mv tmp/_tar/$(notdir $(CURDIR)) \
+			                  tmp/_tar/"$(NAME)-$(RELEASE)" && \
+			    (cd tmp/_tar && $(TAR) \
+			                    -zcf ../../"$(NAME)-$(RELEASE)_src".tar.gz \
+			                               "$(NAME)-$(RELEASE)" ) ; \
+			    rm -rf tmp/_tar
+#		 -zcf ../$(NAME)-$(RELEASE)_src.tar.gz  $(notdir $(CURDIR)) 
 
 # binary dist. tar.gz
 .PHONY: bin

@@ -2,13 +2,11 @@
 %define ver     0.8.11pre29
 %define rel     0
 
-%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius \
-							postgress snmp cpl cpl-c ext extcmd mangler pdt
+%define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgress snmp cpl cpl-c ext extcmd mangler pdt
 %define MYSQL_MODULES		mysql
 %define JABBER_MODULES		jabber
 %define RADIUS_MODULES		auth_radius group_radius uri_radius
-%define RADIUS_MOD_PATH		modules/auth_radius modules/group_radius \
-							modules/uri_radius
+%define RADIUS_MOD_PATH		modules/auth_radius modules/group_radius modules/uri_radius
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         %name
@@ -60,7 +58,7 @@ The ser-jabber package contains a sip to jabber message translator.
 Summary:  ser radius authentication, group and uri check modules.
 Group:    System Environment/Daemons
 Requires: ser
-BuildPrereq:  libradius1-dev
+BuildPrereq:  radiusclient-devel
 
 %description radius
 The ser-radius package contains modules for radius authentication, group
@@ -82,22 +80,22 @@ make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
 make install skip_modules="%EXCLUDED_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
-		cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
+		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/ser/ 
 make install-modules modules="modules/%MYSQL_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
-		cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
+		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/ser/ 
 make install-modules modules="modules/%JABBER_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
-		cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
+		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/ser/ 
 make install-modules modules="%RADIUS_MOD_PATH" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
-		cfg-prefix=$RPM_BUILD_ROOT/%{_sysconfdir} \
+		cfg-prefix=$RPM_BUILD_ROOT \
 		cfg-target=/%{_sysconfdir}/ser/ 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
@@ -187,10 +185,6 @@ fi
 %{_libdir}/ser/modules/auth_radius.so
 %{_libdir}/ser/modules/group_radius.so
 %{_libdir}/ser/modules/uri_radius.so
-* Tue Nov 12 2002 Andrei Pelinescu - Onciul <pelinescu-onciul@fokus.gmd.de>
-- added a separate rpm for the jabber modules
-- moved all the binaries to sbin
-- removed obsolete installs (make install installs everything now)
 
 
 %changelog
