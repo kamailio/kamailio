@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
@@ -62,6 +63,7 @@ int  cache_timeout = 5;
 cmd_function sl_send_rpl = 0;
 char *log_dir     = 0;    /*directory where the user log should be dumped*/
 int   cpl_cmd_pipe[2];
+static pid_t aux_process = 0;
 
 
 MODULE_VERSION
@@ -264,6 +266,11 @@ static int cpl_child_init(int rank)
 		} else if (pid==0) {
 			/* I'm the child */
 			cpl_aux_process( cpl_cmd_pipe[0], log_dir);
+		} else {
+			LOG(L_INFO,"INFO:cpl_child_init(%d): I just gave birth to a child!"
+				" I'm a PARENT!!\n",rank);
+			/* I'm the parent -> remember the pid */
+			aux_process = pid;
 		}
 	}
 
@@ -289,6 +296,25 @@ error:
 
 static int cpl_exit(void)
 {
+	if (!aux_process) {
+		LOG(L_INFO,"INFO:cpl_c:cpl_exit: aux process hasn't been created -> "
+			"nothing to kill :-(\n");
+	} else {
+		/* kill the auxiliary process */
+		if (kill( aux_process, SIGKILL)!=0) {
+			if (errno==ESRCH) {
+				LOG(L_INFO,"INFO:cpl_c:cpl_exit: seems that my child is "
+					"already dead! :-((\n");
+			} else {
+				LOG(L_ERR,"ERROR:cpl_c:cpl_exit: killing the aux. process "
+					"failed! kill said: %s\n",strerror(errno));
+				return -1;
+			}
+		} else {
+			LOG(L_INFO,"INFO:cl_c:cpl_exit: I have blood on my hands!! I just"
+				" killed my own child!");
+		}
+	}
 	return 0;
 }
 
