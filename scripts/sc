@@ -128,6 +128,12 @@ usage:
  $CMD ps ................................. show runnig processes 
  $CMD fifo ............................... send raw commands to FIFO
 
+           * server control *
+ $CMD start .............................. start ser
+ $CMD stop ............................... stop ser
+ $CMD restart ............................ restart ser
+
+
    Commands labeled with (*) will prompt for a MySQL password.
    If the variable PW is set, the password will not be prompted.
 
@@ -486,15 +492,18 @@ export PW
 case $1 in
 
 	start)
+		DIR=`dirname $0`
+		echo
+		echo "DIR is $DIR"
 		echo -n "Starting SER : "
 		if [ -r $PID_FILE ] ; then
 			echo "PID file exists! ($PID_FILE) already running?"
 			exit 1
 		else
 			if [ $SYSLOG = 1 ] ; then
-				ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+				$DIR/ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
 			else
-				ser -P $PID_FILE $STARTOPTIONS
+			 	$DIR/ser -P $PID_FILE -E $STARTOPTIONS
 			fi
 			sleep 1
 			echo "started pid(`cat $PID_FILE`)"
@@ -515,6 +524,7 @@ case $1 in
 	;;
 
 	restart)
+	        DIR=`dirname $0`
 		echo -n "Stopping SER : "
 		if [ -r $PID_FILE ] ; then
 			kill `cat $PID_FILE`
@@ -530,9 +540,9 @@ case $1 in
 			exit 1
 		else
 			if [ $SYSLOG = 1 ] ; then
-				ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
+			        $DIR/ser -P $PID_FILE $STARTOPTIONS 1>/dev/null 2>/dev/null
 			else
-				ser -P $PID_FILE $STARTOPTIONS
+			        $DIR/ser -P $PID_FILE -E $STARTOPTIONS
 			fi
 			sleep 1
 			echo "started pid(`cat $PID_FILE`)"
