@@ -500,7 +500,30 @@ error:
 
 int global_init()
 {
-	int i, net_pipe[2], foo;
+	int  i, net_pipe[2], foo;
+	char *p;
+
+	/*fix domain lenght*/
+	if (domain_str) {
+		domain.s = domain_str;
+		domain.len = strlen(domain_str);
+	} else {
+		/*do I have to add port?*/
+		i = (sock_info[0].port_no_str.len && sock_info[0].port_no!=5060);
+		domain.len = sock_info[0].name.len + i*sock_info[0].port_no_str.len;
+		domain.s = (char*)pkg_malloc(domain.len);
+		if (!domain.s) {
+			LOG(L_ERR,"ERROR:sms_init_child: no free pkg memory!\n");
+			goto error;
+		}
+		p = domain.s;
+		memcpy(p,sock_info[0].name.s,sock_info[0].name.len);
+		p += sock_info[0].name.len;
+		if (i) {
+			memcpy(p,sock_info[0].port_no_str.s,sock_info[0].port_no_str.len);
+			p += sock_info[0].port_no_str.len;
+		}
+	}
 
 	/* creats pipes for networks */
 	for(i=0;i<nr_of_networks;i++)
@@ -545,33 +568,10 @@ error:
 int sms_child_init(int rank)
 {
 	int  i, foo;
-	char *p;
 
 	/* only the child 0 will execut this */
 	if (rank)
 		goto done;
-
-	/*fix domain lenght*/
-	if (domain_str) {
-		domain.s = domain_str;
-		domain.len = strlen(domain_str);
-	} else {
-		/*do I have to add port?*/
-		i = (sock_info[0].port_no_str.len && sock_info[0].port_no!=5060);
-		domain.len = sock_info[0].name.len + i*sock_info[0].port_no_str.len;
-		domain.s = (char*)pkg_malloc(domain.len);
-		if (!domain.s) {
-			LOG(L_ERR,"ERROR:sms_init_child: no free pkg memeory!\n");
-			goto error;
-		}
-		p = domain.s;
-		memcpy(p,sock_info[0].name.s,sock_info[0].name.len);
-		p += sock_info[0].name.len;
-		if (i) {
-			memcpy(p,sock_info[0].port_no_str.s,sock_info[0].port_no_str.len);
-			p += sock_info[0].port_no_str.len;
-		}
-	}
 
 	/* creats processes for each modem */
 	for(i=0;i<nr_of_modems;i++)
