@@ -141,7 +141,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, int _lr, str* user
 	prefix = 0;
 	if (!(_l = insert_subst_lump_after(_l, _inbound ? SUBST_RCV_ALL : SUBST_SND_ALL, 0))) goto lump_err;
 	if (enable_double_rr) {
-		if (!(_l = insert_cond_lump_after(_l, COND_IF_DIFF_REALMS, 0))) goto lump_err;
+		if (!(_l = insert_cond_lump_after(_l, COND_TRUE, 0))) goto lump_err;
 		if (!(_l = insert_new_lump_after(_l, r2, RR_R2_LEN, 0))) goto lump_err;
 		r2 = 0;
 	} else {
@@ -198,8 +198,8 @@ static inline int insert_RR(struct sip_msg* _m, int _lr)
 			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
 			return -5;
 		}
-		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
-		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
+		l = insert_cond_lump_after(l, COND_TRUE, 0);
+		l2 = insert_cond_lump_before(l2, COND_TRUE, 0);
 		if (!l || !l2) {
 			LOG(L_ERR, "insert_RR(): Error while inserting conditional lump\n");
 			return -6;

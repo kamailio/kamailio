@@ -33,19 +33,16 @@
  */
 
 
-#include "loose.h"
 #include <string.h>
-#include <stdlib.h>
 #include "../../str.h"
+#include "../../action.h"
 #include "../../dprint.h"
-#include "../../parser/hf.h"
+#include "../../forward.h"
 #include "../../data_lump.h"
-#include "../../mem/mem.h"
-#include "../../parser/parse_uri.h"
-#include "../../globals.h"
-#include "../../parser/parser_f.h"
 #include "../../parser/parse_rr.h"
-#include "common.h"
+#include "../../parser/parse_uri.h"
+#include "../../mem/mem.h"
+#include "loose.h"
 #include "rr_mod.h"
 
 
@@ -57,26 +54,78 @@
 
 
 /*
+ * Parse the message and find first occurence of
+ * Route header field. The function returns -1 or -2 
+ * on a parser error, 0 if there is a Route HF and
+ * 1 if there is no Route HF.
+ */
+static inline int find_first_route(struct sip_msg* _m)
+{
+	if (parse_headers(_m, HDR_ROUTE, 0) == -1) {
+		LOG(L_ERR, "find_first_route(): Error while parsing headers\n");
+		return -1;
+	} else {
+		if (_m->route) {
+			if (parse_rr(_m->route) < 0) {
+				LOG(L_ERR, "find_first_route(): Error while parsing Route HF\n");
+				return -2;
+			}
+			return 0;
+		} else {
+			DBG("find_first_route(): No Route headers found\n");
+			return 1;
+		}
+	}
+}
+
+
+/*
+ * Remove route field given by _hdr and _r, if the route
+ * field is not first in it's header field, previous route
+ * URI in the same header must be given in _p
+ * Returns 0 on success, negative number on failure
+ */
+static inline int rewrite_RURI(struct sip_msg* _m, str* _s)
+{
+       struct action act;
+       char* buffer;
+       
+       buffer = (char*)pkg_malloc(_s->len + 1);
+       if (!buffer) {
+	       LOG(L_ERR, "rewrite_RURI(): No memory left\n");
+	       return -1;
+       }
+       
+       memcpy(buffer, _s->s, _s->len);
+       buffer[_s->len] = '\0';
+       
+       act.type = SET_URI_T;
+       act.p1_type = STRING_ST;
+       act.p1.string = buffer;
+       act.next = 0;
+       
+       if (do_action(&act, _m) < 0) {
+	       LOG(L_ERR, "rewrite_RURI(): Error in do_action\n");
+	       pkg_free(buffer);
+	       return -2;
+       }
+       
+       pkg_free(buffer);
+       return 0;
+}
+
+
+/*
  * Find out if a URI contains r2 parameter which indicates
  * that we put 2 record routes
  */
-static inline int is_2rr(str* _uri)
+static inline int is_2rr(str* _params)
 {
 	str s;
 	int i, state = 0;
-	struct sip_uri puri;
 
-	if (parse_uri(_uri->s, _uri->len, &puri) < 0) {
-		LOG(L_ERR, "is_2rr(): Error while parsing Request URI\n");
-		return 0;
-	}
-
-	if (puri.params.len == 0) return 0;
-
-	s = puri.params;
-
-	s.len--;
-	s.s++;
+	if (_params->len == 0) return 0;
+	s = *_params;
 
 	for(i = 0; i < s.len; i++) {
 		switch(state) {
@@ -147,55 +196,24 @@ static inline int is_2rr(str* _uri)
 
 
 /*
- * Ordinary URI comparison
+ * Check if URI is myself
  */
-/*
- * NOTE: We do not compare transport. This is because usualy both
- * transports (UDP and TCP) are handled by the same server and the spec
- * mandates that the request must reach the same element which is true
- * in this case.
- * 
- * A configuration where on UDP transport is listening a completely different
- * server that has nothing in common with the server listening on TCP socket
- * is highly unprobable and generaly makes no sense so we ignore it. (janakj)
- */
-static inline int is_myself(struct receive_info* rcv, str* _uri)
+static inline int is_myself(str* _host, unsigned short _port)
 {
-	struct sip_uri uri;
-	int port;
+	int ret;
 
-	if (parse_uri(_uri->s, _uri->len, &uri) != 0) {
-		LOG(L_ERR, "is_myself(): Error while parsing URI\n");
-		return 0;
-	}
-
-	port = (uri.port.s) ? (uri.port_no) : SIP_PORT;
-
-	if (rcv->bind_address->port_no == port) {
-		if (uri.host.len == rcv->bind_address->address_str.len) {
-			if (!memcmp(uri.host.s, rcv->bind_address->address_str.s, uri.host.len)) {
-				DBG("is_myself(): equal\n");
-				return 1;
-			} else DBG("is_myself(): hosts differ\n");
-		} else DBG("is_myself(): Host lengths differ\n");
-	} else DBG("is_myself(): Ports differ\n");
-	
-	return 0;
+	ret = check_self(_host, _port ? _port : SIP_PORT);
+	if (ret < 0) return 0;
+	else return ret;
 }
 
 
 /*
  * Find and parse next Route header field
  */
-static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr, rr_t** _r, rr_t** _p)
+static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr)
 {
 	struct hdr_field* ptr;
-
-	if ((*_r)->next) {
-		*_p = *_r;
-		*_r = (*_r)->next;
-		return 0;
-	}
 
 	ptr = (*_hdr)->next;
 
@@ -227,8 +245,6 @@ static inline int find_next_route(struct sip_msg* _m, struct hdr_field** _hdr, r
 	}
 
 	*_hdr = ptr;
-	*_r = ptr->parsed;
-	*_p = 0;
 	return 0;
 }
 
@@ -245,9 +261,6 @@ static inline int is_strict(str* _params)
 
 	s.s = _params->s;
 	s.len = _params->len;
-
-	s.len--;
-	s.s++;
 
 	for(i = 0; i < s.len; i++) {
 		switch(state) {
@@ -346,7 +359,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	}
 
 	     /* Create buffer for new lump */
-	len = ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len + ROUTE_SUFFIX_LEN + 1; /* Terminating zero */
+	len = ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len + ROUTE_SUFFIX_LEN;
 	s = (char*)pkg_malloc(len);
 	if (!s) {
 		LOG(L_ERR, "save_ruri(): No memory left\n");
@@ -356,7 +369,7 @@ static inline int save_ruri(struct sip_msg* _m)
 	     /* Create new header field */
 	memcpy(s, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
 	memcpy(s + ROUTE_PREFIX_LEN, _m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len);
-	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len, ROUTE_SUFFIX, ROUTE_SUFFIX_LEN + 1);
+	memcpy(s + ROUTE_PREFIX_LEN + _m->first_line.u.request.uri.len, ROUTE_SUFFIX, ROUTE_SUFFIX_LEN);
 
 	DBG("save_ruri(): New header: '%s'\n", s);
 
@@ -376,9 +389,11 @@ static inline int save_ruri(struct sip_msg* _m)
  *
  * Returns 0 on success, negative number on an error
  */
-static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r, rr_t* _p)
+static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hdr, rr_t* _r)
 {
 	str* uri;
+	char* rem_off;
+	int rem_len;
 
 	uri = &_r->nameaddr.uri;
 
@@ -393,12 +408,20 @@ static inline int handle_strict_router(struct sip_msg* _m, struct hdr_field* _hd
 		LOG(L_ERR, "hsr(): Error while rewriting request URI\n");
 		return -2;
 	}
-	
-	if (remove_route(_m, _hdr, _r, _p) < 0) {
-		LOG(L_ERR, "hsr(): Error while removing next Route URI\n");
-		return -3;
+
+	if (!_r->next) {
+		rem_off = _hdr->name.s;
+		rem_len = _hdr->len;
+	} else {
+		rem_off = _hdr->body.s;
+		rem_len = _r->next->nameaddr.name.s - _hdr->body.s;
 	}
-	
+
+	if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+		LOG(L_ERR, "hsr(): Can't remove Route HF\n");
+		return -9;
+	}			
+
 	return 0;
 }
 
@@ -446,61 +469,51 @@ static inline int find_last_route(struct sip_msg* _m, struct hdr_field** _h, rr_
 
 
 /*
- * Remove the 2nd route inserted by me.
- * The function returns position of the next route
- * in _r and _h and previous route in the same header field if any in _p
- * 
- * The function returns 1 if there is no route left and a negative
- * number on error. 0 is returned if everything went OK.
- */
-static inline int remove_2nd_route(struct sip_msg* _m, struct hdr_field** _h, rr_t** _r, rr_t** _p)
-{
-	int res;
-
-	if ((*_r)->next) {
-		*_p = *_r;
-		*_r = (*_r)->next;
-	} else {
-		res = find_next_route(_m, _h, _r, _p);
-		if (res < 0) {
-			LOG(L_ERR, "remove_2nd_route): Error while parsing headers\n");
-			return -2;
-		} else if (res > 0) return 1;  /* No next route header field found */
-	}
-	
-	if (remove_route(_m, *_h, *_r, 0) < 0) {
-		LOG(L_ERR, "remove_2nd_route(): Error while removing my 2nd route\n");
-		return -3;
-	}
-	return 0;
-}
-
-
-/*
  * Previous hop was a strict router, handle this case
  */
-static inline int route_after_strict(struct sip_msg* _m)
+static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 {
-	int res;
-	str* uri;
-	rr_t* rt, *prev;
+	int res, rem_len;
 	struct hdr_field* hdr;
+	struct sip_uri puri;
+	rr_t* rt, *prev;
+	char* rem_off;
+	str* uri;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
 
-	if (enable_double_rr && is_2rr(&_m->first_line.u.request.uri)) {
-		res = remove_2nd_route(_m, &hdr, &rt, &prev);
-		if (res < 0) return -2;  /* Error */
-		if (res > 0) return 0;   /* No next route found */
+	if (enable_double_rr && is_2rr(&_ruri->params)) {
+		DBG("ras(): Removing 2nd URI of mine: '%.*s'\n", rt->nameaddr.uri.len, rt->nameaddr.uri.s);
+ 		if (!rt->next) {
+			     /* No next route in the same header, remove the whole header
+			      * field immediately
+			      */
+			if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
+				LOG(L_ERR, "ras(): Can't remove Route HF\n");
+				return -1;
+			}
+			res = find_next_route(_m, &hdr);
+			if (res < 0) {
+				LOG(L_ERR, "ras(): Error while finding next route\n");
+				return -2;
+			}
+			if (res > 0) { /* No next route found */
+				DBG("ras(): No next URI found\n");
+				return 0;
+			}
+			rt = (rr_t*)hdr->parsed;
+		} else rt = rt->next;
 	}
 
 	uri = &rt->nameaddr.uri;
-	DBG("ras(): First URI '%.*s'\n", uri->len, uri->s);
+	if (parse_uri(uri->s, uri->len, &puri) == -1) {
+		LOG(L_ERR, "ras(): Error while parsing URI\n");
+		return -1;
+	}
 
-	if (is_strict(uri)) {
-		DBG("ras(): Next hop is a strict router\n");
-
+	if (is_strict(&puri.params)) {
+		DBG("ras(): Next hop: '%.*s' is strict router\n", uri->len, uri->s);
 		     /* Previous hop was a strict router and the next hop is strict
 		      * router too. There is no need to save R-URI again because it
 		      * is saved already. In fact, in this case we will behave exactly
@@ -516,38 +529,64 @@ static inline int route_after_strict(struct sip_msg* _m)
 			LOG(L_ERR, "ras(): Error while rewriting request URI\n");
 			return -4;
 		}
-		if (remove_route(_m, hdr, rt, prev) < 0) {
-			LOG(L_ERR, "ras(): Error while removing the topmost Route URI\n");
+		
+		if (rt->next) {
+			rem_off = hdr->body.s;
+			rem_len = rt->next->nameaddr.name.s - hdr->body.s;
+		} else {
+			rem_off = hdr->name.s;
+			rem_len = hdr->len;
+		}
+		if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+			LOG(L_ERR, "ras(): Can't remove Route HF\n");
 			return -5;
 		}
 	} else {
-		DBG("ras(): Next hop is a loose router\n");
-
-		_m->dst_uri.s = uri->s;
-		_m->dst_uri.len = uri->len;
+		DBG("ras(): Next hop: '%.*s' is loose router\n", uri->len, uri->s);
+		_m->dst_uri = *uri;
 
 		     /* Next hop is a loose router - Which means that is is not endpoint yet
 		      * In This case we have to recover from previous strict routing, that means we have
 		      * to find the last Route URI and put in in R-URI and remove the last Route URI.
 		      */
+		if (rt != hdr->parsed) {
+			     /* There is a previous route uri which was 2nd uri of mine
+			      * and must be removed here
+			      */
+			rem_off = hdr->body.s;
+			rem_len = rt->nameaddr.name.s - hdr->body.s;
+			if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+				LOG(L_ERR, "ras(): Can't remove Route HF\n");
+				return -6;
+			}			
+		}
+
 		if (find_last_route(_m, &hdr, &rt, &prev) < 0) {
 			LOG(L_ERR, "ras(): Error while looking for last Route URI\n");
-			return -6;
+			return -7;
+		}
+
+		uri = &rt->nameaddr.uri;
+		if (rewrite_RURI(_m, uri) < 0) {
+			LOG(L_ERR, "ras(): Can't rewrite R-URI\n");
+			return -8;
 		}
 		
 		     /* The first character if uri will be either '<' when it is the only URI in a
 		      * Route header field or ',' if there is more than one URI in the header field
 		      */
-		DBG("ras(): last: '%.*s'\n", rt->nameaddr.uri.len, rt->nameaddr.uri.s);
+		DBG("ras(): The last route URI: '%.*s'\n", rt->nameaddr.uri.len, rt->nameaddr.uri.s);
 
-		if (rewrite_RURI(_m, uri) < 0) {
-			LOG(L_ERR, "ras(): Can't rewrite R-URI\n");
-			return -7;
+		if (prev) {
+			rem_off = prev->nameaddr.name.s + prev->len;
+			rem_len = rt->nameaddr.name.s + rt->len - rem_off;
+		} else {
+			rem_off = hdr->name.s;
+			rem_len = hdr->len;
 		}
-
-		if (remove_route(_m, hdr, rt, prev) < 0) {
-			LOG(L_ERR, "ras(): Error while removing last route\n");
-			return -8;
+		if (!del_lump(&_m->add_rm, rem_off - _m->buf, rem_len, 0)) {
+			LOG(L_ERR, "ras(): Can't remove Route HF\n");
+			return -9;
 		}
 	}
 	
@@ -558,57 +597,96 @@ static inline int route_after_strict(struct sip_msg* _m)
 static inline int route_after_loose(struct sip_msg* _m)
 {
 	struct hdr_field* hdr;
+	struct sip_uri puri;
+	rr_t* rt;
 	int res;	
 	str* uri;
-	rr_t* rt, *prev;
 
 	hdr = _m->route;
 	rt = (rr_t*)hdr->parsed;
 	uri = &rt->nameaddr.uri;
 
+	if (parse_uri(uri->s, uri->len, &puri) < 0) {
+		LOG(L_ERR, "ral(): Error while parsing the first route URI\n");
+		return -1;
+	}
+
 	     /* IF the URI was added by me, remove it */
-	if (is_myself(&_m->rcv, uri)) {
-		DBG("ral(): Topmost URI is myself\n");
-
-		if (remove_route(_m, _m->route, rt, 0) < 0) {
-			LOG(L_ERR, "ral(): Error while removing the topmost Route URI\n");
-			return -2;
+	if (is_myself(&puri.host, puri.port_no)) {
+		DBG("ral(): Topmost route URI: '%.*s' is me\n", uri->len, uri->s);
+		if (!rt->next) {
+			     /* No next route in the same header, remove the whole header
+			      * field immediately
+			      */
+			if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
+				LOG(L_ERR, "ral(): Can't remove Route HF\n");
+				return -2;
+			}
+			res = find_next_route(_m, &hdr);
+			if (res < 0) {
+				LOG(L_ERR, "ral(): Error while finding next route\n");
+				return -3;
+			}
+			if (res > 0) { /* No next route found */
+				DBG("ral(): No next URI found\n");
+				return 0;
+			}
+			rt = (rr_t*)hdr->parsed;
+		} else rt = rt->next;
+		
+		if (enable_double_rr && is_2rr(&puri.params)) {
+			if (!rt->next) {
+				     /* No next route in the same header, remove the whole header
+				      * field immediately
+				      */
+				if (!del_lump(&_m->add_rm, hdr->name.s - _m->buf, hdr->len, 0)) {
+					LOG(L_ERR, "ral(): Can't remove Route HF\n");
+					return -4;
+				}
+				res = find_next_route(_m, &hdr);
+				if (res < 0) {
+					LOG(L_ERR, "ral(): Error while finding next route\n");
+					return -5;
+				}
+				if (res > 0) { /* No next route found */
+					DBG("ral(): No next URI found\n");
+					return 0;
+				}
+				rt = (rr_t*)hdr->parsed;
+			} else rt = rt->next;
 		}
-
-		res = find_next_route(_m, &hdr, &rt, &prev);
-		if (res < 0) {
-			LOG(L_ERR, "ral(): Error while trying to find next Route header field\n");
-			return -3;
-		}
-		     /* No next Route URI found */
-		if (res != 0) {
-			DBG("ral(): No next URI found\n");
-			return 0;
-		}
-
+		
 		uri = &rt->nameaddr.uri;
-		if (enable_double_rr && is_2rr(uri)) {
-			res = remove_2nd_route(_m, &hdr, &rt, &prev);
-			if (res < 0) return -2;  /* Error */
-			if (res > 0) return 0;   /* No next route found */
+		if (parse_uri(uri->s, uri->len, &puri) < 0) {
+			LOG(L_ERR, "ral(): Error while parsing the first route URI\n");
+			return -6;
 		}
-		uri = &rt->nameaddr.uri;
 	} else {
 		DBG("ral(): Topmost URI is NOT myself\n");
 	}
-
+	
 	DBG("ral(): URI to be processed: '%.*s'\n", uri->len, uri->s);
-	if (is_strict(uri)) {
+	if (is_strict(&puri.params)) {
 		DBG("ral(): Next URI is a strict router\n");
-		if (handle_strict_router(_m, hdr, rt, prev) < 0) {
+		if (handle_strict_router(_m, hdr, rt) < 0) {
 			LOG(L_ERR, "ral(): Error while handling strict router\n");
-			return -5;
+			return -7;
 		}
 	} else {
 		     /* Next hop is loose router */
 		DBG("ral(): Next URI is a loose router\n");
-		_m->dst_uri.s = uri->s;
-		_m->dst_uri.len = uri->len;
+		_m->dst_uri = *uri;
+
+		     /* There is a previous route uri which was 2nd uri of mine
+		      * and must be removed here
+		      */
+		if (rt != hdr->parsed) {
+			if (!del_lump(&_m->add_rm, hdr->body.s - _m->buf, rt->nameaddr.name.s - hdr->body.s, 0)) {
+				LOG(L_ERR, "ral(): Can't remove Route HF\n");
+				return -8;
+			}			
+		}
+		
 	}
 
 	return 0;
@@ -620,13 +698,20 @@ static inline int route_after_loose(struct sip_msg* _m)
  */
 int loose_route(struct sip_msg* _m, char* _s1, char* _s2)
 {
+	struct sip_uri puri;
+
 	if (find_first_route(_m) != 0) {
 		DBG("loose_route(): There is no Route HF\n");
 		return 1;
 	}
 		
-	if (is_myself(&_m->rcv, &(_m->first_line.u.request.uri))) {
-		if (route_after_strict(_m) < 0) {
+	if (parse_uri(_m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len, &puri) < 0) {
+		LOG(L_ERR, "loose_route(): Error while parsing Request URI\n");
+		return -1;
+	}
+
+	if (is_myself(&puri.host, puri.port_no)) {
+		if (route_after_strict(_m, &puri) < 0) {
 			LOG(L_ERR, "loose_route(): Error in route_after_strict\n");
 			return -1;
 		}
