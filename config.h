@@ -151,7 +151,8 @@
 /* buffer dimensions for FIFO server */
 #define MAX_CONSUME_BUFFER 1024
 /* where reply pipes may be opened */
-#define DEFAULT_FIFO_DIR "/tmp/"
+#define FIFO_DIR "/tmp/"
+#define FIFO_DIR_LEN 5
 /* max length of the text of fifo 'print' command */
 #define MAX_PRINT_TEXT 256
 
@@ -182,6 +183,10 @@
 
 #define DEFAULT_DB_URL "sql://ser:heslo@localhost/ser"
 #define DEFAULT_RODB_URL "sql://serro:47serro11@localhost/ser"
+
+
+/* minimum packet size; smaller packets will be dropped silently */
+#define MIN_UDP_PACKET        32
 
 
 #endif
