@@ -37,7 +37,8 @@ fl_lock_t lock;
 #include <sys/sem.h>
 
 
-#if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+#if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) || \
+	defined(__FreeBSD__)
 	/* union semun is defined by including <sys/sem.h> */
 #else
 	/* according to X/OPEN we have to define it ourselves */
