@@ -176,6 +176,7 @@ struct sip_msg {
 	struct hdr_field* unsupported;
 	struct hdr_field* allow;
 	struct hdr_field* event;
+	struct hdr_field* accept;
 
 	char* eoh;        /* pointer to the end of header (if found) or null */
 	char* unparsed;   /* here we stopped parsing*/

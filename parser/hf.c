@@ -128,4 +128,3 @@ void dump_hdr_field( struct hdr_field* hf )
 		hf->body.len, ZSW(hf->body.s),
 		hf->parsed, hf->next );
 }
-

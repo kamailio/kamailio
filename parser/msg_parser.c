@@ -34,6 +34,7 @@
  *  2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  *  2003-03-31  removed msg->repl_add_rm (andrei)
  *  2003-04-26 ZSW (jiri)
+ *  2003-05-01  parser extended to support Accept header field (janakj)
  */
 
 
@@ -195,6 +196,7 @@ char* get_hdr_field(char* buf, char* end, struct hdr_field* hdr)
 		case HDR_UNSUPPORTED:
 		case HDR_ALLOW:
 		case HDR_EVENT:
+	        case HDR_ACCEPT:
 		case HDR_OTHER:
 			/* just skip over it */
 			hdr->body.s=tmp;
@@ -365,6 +367,10 @@ int parse_headers(struct sip_msg* msg, int flags, int next)
 			case HDR_EVENT:
 				if (msg->allow==0) msg->event = hf;
 				msg->parsed_flag|=HDR_EVENT;
+				break;
+		        case HDR_ACCEPT:
+				if (msg->accept==0) msg->accept = hf;
+				msg->parsed_flag|=HDR_ACCEPT;
 				break;
 			case HDR_VIA:
 				msg->parsed_flag|=HDR_VIA;

@@ -30,6 +30,7 @@
  * --------
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-27 next baby-step to removing ZT - PRESERVE_ZT (jiri)
+ * 2003-05-01 added support for Accept HF (janakj)
  */
 
 
@@ -77,6 +78,7 @@ static inline char* skip_ws(char* p, unsigned int size)
 #include "case_supp.h"     /* Supported */
 #include "case_www.h"      /* WWW-Authenticate */
 #include "case_even.h"     /* Event */
+#include "case_acce.h"     /* Accept */
 
 
 #define READ(val) \
@@ -102,7 +104,8 @@ static inline char* skip_ws(char* p, unsigned int size)
 	case _requ_: requ_CASE; \
 	case _supp_: supp_CASE; \
         case _www__: www_CASE;  \
-        case _even_: even_CASE;
+        case _even_: even_CASE; \
+        case _acce_: acce_CASE;
 
 
 #define PARSE_COMPACT(id)          \
