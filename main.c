@@ -270,7 +270,7 @@ int tcp_disable = 0; /* 1 if tcp is disabled */
 struct process_table *pt=0;		/*array with childrens pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
 int sig_flag = 0;              /* last signal received */
-int debug = 0;
+int debug = L_NOTICE;
 int dont_fork = 0;
 int log_stderr = 0;
 /* check if reply first via host==us */
