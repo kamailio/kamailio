@@ -264,8 +264,10 @@ void shm_mem_destroy()
 		shm_shmid=-1;
 	}
 #endif
-	if (mem_lock) lock_destroy(mem_lock); /* we don't need to dealloc it*/
-	
+	if (mem_lock){
+		DBG("destroying the shared memory lock\n");
+		lock_destroy(mem_lock); /* we don't need to dealloc it*/
+	}
 }
 
 

@@ -26,9 +26,11 @@
  */
 
 /*
-    ser locking library
-    - created 16.12.2003 (andrei)
-
+ *   ser locking library
+ *
+ *  2002-12-16 created by andrei
+ *
+ *
 Implements:
 
 	lock_t* lock_alloc();                    - allocates a lock in shared mem.
@@ -100,7 +102,7 @@ typedef sem_t lock_t;
 
 inline static lock_t* lock_init(lock_t* lock)
 {
-	if (sem_init(lock, 0, 1)<0) return 0;
+	if (sem_init(lock, 1, 1)<0) return 0;
 	return lock;
 }
 
