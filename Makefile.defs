@@ -44,7 +44,7 @@ export makefile_defs
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   12
-EXTRAVERSION = -testing-24
+EXTRAVERSION = -testing-r0
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -52,7 +52,7 @@ ARCH = $(shell uname -m |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
 			-e s/armv4l/arm/)
 
 # TLS support
-TLS ?=
+TLS ?= 
 ifneq ($(TLS),)
 	RELEASE:=$(RELEASE)-tls
 endif
