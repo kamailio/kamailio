@@ -867,7 +867,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 
 		}
 #ifdef EXTRA_DEBUG
-		if ( T && T!=T_UNDEFINED && T->damocles) {
+		if ( T && T!=T_UNDEFINED && T->damocles==1) {
 			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion "
 				"and called from t_check\n", T);
 			abort();
