@@ -858,7 +858,11 @@ int register_core_fifo()
 			LOG(L_ERR, "ERROR: unable to register '%s' FIFO cmd\n", FIFO_DB);
 			return -1;
 		} else {
-			/* call db_init() */
+			if ( (fifo_db_con=db_init( fifo_db_url ))==0) {
+				/* connection failed */
+			LOG(L_ERR,"ERROR: unable to connect to database -> "
+				"fifo DB commands disabled!\n");
+			}
 		}
 	} else {
 		LOG(L_WARN,"WARNING: unable to find any db module - "
