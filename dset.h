@@ -32,6 +32,9 @@
 
 struct sip_msg;
 
+extern unsigned int nr_branches;
+
+
 /* 
  * Add a new branch to current transaction 
  */
