@@ -60,7 +60,7 @@ int init_trusted(void)
 		LOG(L_INFO, "db_url parameter of permissions module not set, disabling allow_trusted\n");
 		return 0;
 	} else {
-		if (!bind_dbmod(db_url)) {
+		if (bind_dbmod(db_url) < 0) {
 			LOG(L_ERR, "Load a database support module\n");
 			return -1;
 		}
