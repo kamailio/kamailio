@@ -24,19 +24,11 @@
 #
 # Limitations: 
 # ------------
-# it only works with UACs supporting REFER; it has been tested 
-# with Cisco 7960, Mitel 5055 and Pingtel; Windows Messenger does not
-# support REFER. Never tested on solaris. Dialog parser 
-# over-simplified (see inline) but  quite functional 
-# (if there is something to be fixed, it is richness of SIP 
-# syntax); an awk-only rewrite would be esthetically
-# nicer, imho. Another design alternative would be to
-# create all the dialog values (route set, outbound uri,
-# request uri) in ser, and similarly to vm module return
-# them through FIFO. The CTD app would just then mirror
-# them in subsequent requests and would not have to recompute 
-# everything. One would just compute dialog info, put it in 
-# beginning of FIFO reply, followed by the reply.
+# it only works with UAs supporting REFER; it has been tested 
+# with Cisco 7960, Mitel 5055, Grandstream and Pingtel; Windows 
+# Messenger does not support REFER. Never tested on solaris. 
+# Some cisco 7960 images don't work (in particular, POS30202
+# doesnt, POS3-03-8-21 does)
 #
 # History:
 # --------
