@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #ifndef __DBASE_H__
 #define __DBASE_H__
 

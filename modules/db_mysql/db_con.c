@@ -1,3 +1,9 @@
+/* 
+ * $Id$ 
+ */
+
+
+
 #include "db_con.h"
 #include "defs.h"
 #include "../../mem.h"

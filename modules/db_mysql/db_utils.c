@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #include "db_utils.h"
 #include <string.h>
 #include "utils.h"

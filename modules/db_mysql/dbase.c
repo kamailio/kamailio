@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #include "dbase.h"
 #include "../../mem.h"
 #include "../../dprint.h"

@@ -1,3 +1,7 @@
+/* 
+ * $Id$ 
+ */
+
 #include "db_row.h"
 #include "defs.h"
 #include <mysql/mysql.h>
