@@ -223,10 +223,10 @@ static inline void xlate_pointers(struct sip_msg* _m, rr_t* _r)
  */
 static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int _shm)
 {
-	int len;
+	int len, ret;
 	rr_t* res;
 
-	if (!_m || !_new || _r) {
+	if (!_m || !_new || !_r) {
 		LOG(L_ERR, "duplicate_rr(): Invalid parameter value\n");
 		return -1;
 	}
@@ -243,11 +243,18 @@ static inline int do_duplicate_rr(struct sip_msg* _m, rr_t** _new, rr_t* _r, int
 		LOG(L_ERR, "duplicate_rr(): No memory left\n");
 		return -2;
 	}
+	memset(res, 0, sizeof(rr_t));
 
         res->nameaddr.name.s = (char*)res + sizeof(rr_t);
 	memcpy(res->nameaddr.name.s, _r->nameaddr.name.s, len);
 
-	if (duplicate_params(&res->params, _r->params) < 0) {
+	if (_shm) {
+		ret = shm_duplicate_params(&res->params, _r->params);
+	} else {
+		ret = duplicate_params(&res->params, _r->params);
+	}
+
+	if (ret < 0) {
 		LOG(L_ERR, "Error while duplicating parameters\n");
 		if (_shm) shm_free(res);
 		else pkg_free(res);

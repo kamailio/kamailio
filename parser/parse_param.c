@@ -469,7 +469,7 @@ static inline int do_duplicate_params(param_t** _n, param_t* _p, int _shm)
 {
 	param_t* last, *ptr, *t;
 
-	if (!_n || !_p) {
+	if (!_n) {
 		LOG(L_ERR, "duplicate_params(): Invalid parameter value\n");
 		return -1;
 	}
@@ -496,10 +496,11 @@ static inline int do_duplicate_params(param_t** _n, param_t* _p, int _shm)
 
 		ptr = ptr->next;
 	}
+	return 0;
 
  err:
 	do_free_params(*_n, _shm);
-	return 0;
+	return -2;
 }
 
 
