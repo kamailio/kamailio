@@ -49,6 +49,7 @@ struct ins_itm {
 	cstate_t state;
 	str* user;
 	str* cont;
+	str* user_agent;
 	int cid_len;
 	char callid[1];
 };
