@@ -91,7 +91,7 @@ int jab_wlist_get(jab_wlist, str *, str **);
 void jab_wlist_del(jab_wlist, str *, int);
 void jab_wlist_free(jab_wlist);
 
-int worker_process(jab_wlist, char*, int, int, int, int, int, db_con_t*);
+int worker_process(jab_wlist, char*, int, int, int, int, int, int, db_con_t*);
 
 int jab_send_sip_msg(str *, str *, str *, str *);
 
@@ -108,7 +108,7 @@ int jc_pool_del_jmsg(jc_pool);
 
 /**********             ***/
 
-open_jc open_jc_create(str*, jbconnection, int);
+open_jc open_jc_create(str*, jbconnection, int, int);
 int open_jc_update(open_jc, int);
 void open_jc_free(open_jc);
 
