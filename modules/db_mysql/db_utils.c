@@ -51,7 +51,7 @@ int time2mysql(time_t _time, char* _result, int _res_len)
 	       }
 	     */
 
-	t = localtime(&_time);
+	t = gmtime(&_time);
 	return strftime(_result, _res_len, "%Y-%m-%d %H:%M:%S", t);
 }
 
@@ -66,7 +66,7 @@ time_t mysql2time(const char* _str)
 	     /* It is neccessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	strptime(_str, "%Y-%m-%d %H:%M:%S", &time);
-	return mktime(&time);
+	return timegm(&time);
 }
 
 
