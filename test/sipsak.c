@@ -79,9 +79,9 @@ bouquets and brickbats to farhan@hotfoon.com
 #define SIPSAK_MES_STR_LEN 41
 #define EXP_STR "Expires: "
 #define EXP_STR_LEN 9
-#define USRLOC_EXP_DEF 120
+#define USRLOC_EXP_DEF 15
 
-int verbose, nameend, namebeg;
+int verbose, nameend, namebeg, expires_t;
 char *username, *domainname;
 char fqdn[FQDN_SIZE];
 char message[BUFSIZE], mes_reply[BUFSIZE];
@@ -257,7 +257,7 @@ void create_msg(char *buff, int action, int lport){
 			sprintf(usern, "%s%i", username, namebeg);
 			/* build the register, message and the 200 we need in for 
 			   USRLOC on one function call*/
-			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, USRLOC_EXP_DEF);
+			sprintf(buff, "%s sip:%s%s%s%s:%i\r\n%s<sip:%s@%s>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s<sip:%s@%s:%i>\r\n%s%i\r\n\r\n", REG_STR, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, usern, domainname, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+1, REG_STR, CONT_STR, usern, fqdn, lport, EXP_STR, expires_t);
 			c=rand();
 			sprintf(message, "%s im:%s@%s%s%s%s:%i\r\n%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s%s%i\r\n\r\n%s%s%i.", MES_STR, usern, domainname, SIP20_STR, VIA_STR, fqdn, lport, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_TXT_STR, CON_LEN_STR, SIPSAK_MES_STR_LEN+strlen(usern), SIPSAK_MES_STR, username, namebeg);
 			sprintf(mes_reply, "%s%s<sip:sipsak@%s:%i>\r\n%s<sip:%s@%s>\r\n%s%u@%s\r\n%s%i %s\r\n%s 0\r\n\r\n", SIP200_STR, FROM_STR, fqdn, lport, TO_STR, usern, domainname, CALL_STR, c, fqdn, CSEQ_STR, 3*namebeg+2, MES_STR, CON_LEN_STR);
@@ -364,7 +364,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 	int ssock, redirected, retryAfter, nretries;
 	int sock, i, len, ret, usrlocstep;
 	char	*contact, *crlf, *foo, *bar;
-	char	reply[1600];
+	char	reply[BUFSIZE];
 	fd_set	fd;
 	socklen_t slen;
 	regex_t* regexp;
@@ -529,7 +529,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 
 			/* we are retrieving only the extend of a decent MSS = 1500 bytes */
 			len = sizeof(addr);
-			ret = recv(ssock, reply, 1500, 0);
+			ret = recv(ssock, reply, BUFSIZE, 0);
 			if(ret > 0)
 			{
 				reply[ret] = 0;
@@ -667,7 +667,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 							}
 							else {
 								if (verbose)
-									printf("received:\n%s", reply);
+									printf("\nreceived:\n%s", reply);
 								printf("error: didn't received the 'MESSAGE' we sended. aborting\n");
 								exit(1);
 							}
@@ -675,6 +675,10 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 						case 2:
 							/* finnaly we sended our reply on the message and 
 							   look if this is also forwarded to us*/
+							if (!strncmp(reply, MES_STR, MES_STR_LEN)){
+								printf("warning: received another 'MESSAGE'. retransmission?!\n");
+								ret = recv(ssock, reply, BUFSIZE, 0);
+							}
 							if (regexec((regex_t*)regexp, reply, 0, 0, 0)==0) {
 								if (verbose)
 									printf("   reply received\n\n");
@@ -690,7 +694,7 @@ void shoot(char *buff, long address, int lport, int rport, int maxforw, int trac
 							}
 							else {
 								if (verbose)
-									printf("received:\n%s\n", reply);
+									printf("\nreceived:\n%s\n", reply);
 								printf("error: didn't received the '200 OK' that we sended as the reply on the message\n");
 								exit(1);
 							}
@@ -728,10 +732,10 @@ void print_help() {
 #ifdef DEBUG
 	printf("(compiled with DEBUG) ");
 #endif
-	printf("modi:\n"
+	printf("\n\n"
 		" shoot : sipsak -f filename -s sip:uri\n"
-		" trace : sipsak [-f filename] -s sip:uri -t\n"
-		" USRLOC: sipsak [-b number] -e number -s sip:uri -u\n"
+		" trace : sipsak -t [-f filename] -s sip:uri\n"
+		" USRLOC: sipsak -u [-b number] -e number [-E number] -s sip:uri\n\n"
 		" additional parameter in every modus:\n"
 		"                [-d] [-i] [-l port] [-m number] [-r port] [-v]\n"
 		"   -h           displays this help message\n"
@@ -740,13 +744,16 @@ void print_help() {
 		"   -t           activates the traceroute modus\n"
 		"   -u           activates the USRLOC modus\n"
 		"   -b number    the starting number appendix to the user name in USRLOC modus\n"
-		"   -e number    the ending numer of the appendix to the user name in USRLOC modus\n"
-		"   -l port      the local port to use\n"
-		"   -r port      the remote port to use\n"
+		"                (default: 0)\n"
+		"   -e number    the ending numer of the appendix to the user name in USRLOC\n"
+		"                modus\n"
+		"   -E number    the expires header field value (default: 15)\n"
+		"   -l port      the local port to use (default: any)\n"
+		"   -r port      the remote port to use (default: 5060)\n"
 		"   -m number    the value for the max-forwards header field\n"
 		"   -i           deactivate the insertion of a Via-Line\n"
 		"   -d           ignore redirects\n"
-		"   -v           be more verbose\n"
+		"   -v           be more verbose\n\n"
 		"The manupulation function are only tested with nice RFC conform SIP-messages,\n"
 		"so don't expect them to work with ugly or malformed messages.\n");
 	exit(0);
@@ -769,6 +776,7 @@ int main(int argc, char *argv[])
 	fbool=sbool=tbool=lport=ubool=0;
 	vbool=dbool=1;
     rport=5060;
+	expires_t=USRLOC_EXP_DEF;
 	memset(buff, 0, BUFSIZE);
 	memset(message, 0, BUFSIZE);
 	memset(mes_reply, 0, BUFSIZE);
@@ -777,7 +785,7 @@ int main(int argc, char *argv[])
 	if (argc==1) print_help();
 
 	/* lots of command line switches to handle*/
-	while ((c=getopt(argc,argv,"b:de:f:hil:m:r:s:tuv")) != EOF){
+	while ((c=getopt(argc,argv,"b:dE:e:f:hil:m:r:s:tuv")) != EOF){
 		switch(c){
 			case 'b':
 				namebeg=atoi(optarg);
@@ -788,6 +796,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'd':
 				dbool=0;
+				break;
+			case 'E':
+				expires_t=atoi(optarg);
 				break;
 			case 'e':
 				nameend=atoi(optarg);
