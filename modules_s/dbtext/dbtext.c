@@ -30,6 +30,7 @@
  * DBText module interface
  *  
  * 2003-01-30 created by Daniel
+ * 2003-03-11 New module interface (janakj)
  * 
  */
 
@@ -47,43 +48,36 @@ void destroy(void);
 int make_demo();
 static int print_res(db_res_t* _r);
 
+
+/*
+ * Exported functions
+ */
+static cmd_export_t cmds[] = {
+	{"~db_use_table",  (cmd_function)use_table,      2, 0},
+	{"~db_init", 	   (cmd_function)dbt_init,       1, 0},
+	{"~db_close",	   (cmd_function)dbt_close,      2, 0},
+	{"~db_query",	   (cmd_function)dbt_query,      2, 0},
+	{"~db_raw_query",  (cmd_function)dbt_raw_query,  2, 0},
+	{"~db_free_query", (cmd_function)dbt_free_query, 2, 0},
+	{"~db_insert",	   (cmd_function)dbt_insert,     2, 0},
+	{"~db_delete",	   (cmd_function)dbt_delete,     2, 0},
+	{"~db_update",	   (cmd_function)dbt_update,     2, 0},
+	{0, 0, 0, 0}
+};
+
+
+/*
+ * Exported parameters
+ */
+static param_export_t params[] = {
+	{0, 0, 0}
+};
+
+
 struct module_exports exports = {	
-	"mysql",
-	(char*[]) {
-		"~db_use_table",
-		"~db_init",
-		"~db_close",
-		"~db_query",
-		"~db_raw_query",
-		"~db_free_query",
-		"~db_insert",
-		"~db_delete",
-		"~db_update"
-	},
-	(cmd_function[]) {
-		(cmd_function)use_table,
-		(cmd_function)dbt_init,
-		(cmd_function)dbt_close,
-		(cmd_function)dbt_query,
-		(cmd_function)dbt_raw_query,
-		(cmd_function)dbt_free_query,
-		(cmd_function)dbt_insert,
-		(cmd_function)dbt_delete,
-		(cmd_function)dbt_update
-	},
-	(int[]) {
-		2, 1, 2, 2, 2, 2, 2, 2, 2
-	},
-	(fixup_function[]) {
-		0, 0, 0, 0, 0, 0, 0, 0, 0
-	},
-	9, /* number of functions*/
-
-	0,   /* Module parameter names */
-	0,   /* Module parameter types */
-	0,   /* Module parameter variable pointers */
-	0,   /* Number of module paramers */
-
+	"dbtext",
+	cmds,     /* Exported functions */
+	params,   /* Exported parameters */
 	mod_init, /* module initialization function */
 	0,        /* response function*/
 	destroy,  /* destroy function */
