@@ -82,23 +82,17 @@ static inline int cmp_slow(str* _uri)
 		LOG(L_ERR, "cmp_slow(): Error while parsing URI\n");
 	}
 
-	if (uri->port.s) {
-		port = atoi(uri->port.s);
-	} else {
-		port = 5060;
-	}
+	port = (uri->port.s) ? (uri->port_no) : SIP_PORT;
 
 	if (bind_address->port_no == port) {
 		if (uri->host.len == bind_address->address_str.len) {
 			if (!memcmp(uri->host.s, bind_address->address_str.s, uri->host.len)) {
 				DBG("cmp_slow(): equal\n");
-				free_uri(uri);
 				return 0;
 			} else DBG("cmp_slow(): hosts differ\n");
 		} else DBG("cmp_slow(): Host length differs\n");
 	} else DBG("cmp_slow(): Ports differ\n");
 	
-	free_uri(uri);
 	return 1;
 }
 
