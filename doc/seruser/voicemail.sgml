@@ -3,5 +3,13 @@
 </para>
 <para>
 	It will include what it is good for, how to get it running, its
-	current technical limitations, etc.
+	current technical limitations, from where one can obtain latest
+	version, etc.
+
+	<example>
+		<title>Example Config File</title>
+		<programlisting>
+if (uri=...
+}
+		</programlisting>
 </para>
