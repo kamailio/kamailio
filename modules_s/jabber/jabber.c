@@ -47,8 +47,8 @@
 #include "../../globals.h"
 #include "../../timer.h"
 #include "../../parser/parse_uri.h"
+#include "../../parser/parse_content.h"
 
-#include "../im/im_load.h"
 #include "../tm/tm_load.h"
 
 #include "xjab_worker.h"
@@ -58,8 +58,6 @@
 
 /** TM bind */
 struct tm_binds tmb;
-/** IM binds */
-struct im_binds imb;
 
 /** workers list */
 xj_wlist jwl = NULL;
@@ -186,7 +184,7 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	load_tm_f load_tm;
-	load_im_f load_im;
+//	load_im_f load_im;
 	int  i;
 
 	DBG("XJAB:mod_init: initializing ...\n");
@@ -213,16 +211,6 @@ static int mod_init(void)
 	if (load_tm( &tmb )==-1)
 		return -1;
 
-	/** import the IM auto-loading function */
-	if ( !(load_im=(load_im_f)find_export("load_im", 1))) 
-	{
-		LOG(L_ERR, "ERROR: sms: global_init: cannot import load_im\n");
-		return -1;
-	}
-	/* let the auto-loading function load all IM stuff */
-	if (load_im( &imb )==-1)
-		return -1;
-	
 	pipes = (int**)pkg_malloc(nrw*sizeof(int*));
 	if (pipes == NULL)
 	{
@@ -419,13 +407,37 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	t_xj_jkey jkey, *p;
 
 	// extract message body - after that whole SIP MESSAGE is parsed
-	if (type==XJ_SEND_MESSAGE && imb.im_extract_body(msg,&body)==-1 )
+	if (type==XJ_SEND_MESSAGE)
 	{
-		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR:cannot extract body"
-				" from sip msg!\n");
-		goto error;
-	}
+		/* get th content-type and content-length headers */
+		if (parse_headers( msg, HDR_CONTENTLENGTH|HDR_CONTENTTYPE, 0)==-1
+		|| !msg->content_type || !msg->content_length) 
+		{
+			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR fetching content-lenght"
+				" and content_type failed! Parse error or headers missing!\n");
+                goto error;
+        }
 
+		/* check the content-type value */
+		if ( (int)msg->content_type->parsed!=CONTENT_TYPE_TEXT_PLAIN
+		&& (int)msg->content_type->parsed!=CONTENT_TYPE_MESSAGE_CPIM ) 
+		{
+			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR invalid content-type for"
+				" a message request! type found=%d\n",
+				(int)msg->content_type->parsed);
+			goto error;
+		}
+
+		/* get the message's body */
+		body.s = get_body( msg );
+		if (body.s==0) 
+		{
+			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot extract body from"
+				" msg\n");
+			goto error;
+		}
+		body.len = (int)msg->content_length->parsed;
+	}
 	
 	// check for FROM header
 	if(!msg->from)

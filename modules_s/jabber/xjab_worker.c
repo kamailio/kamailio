@@ -432,7 +432,7 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		DBG("XJAB:xj_worker:%d: new connection for <%s>.\n",
 			_xj_pid, buff);
 		
-		if(db_query(db_con, keys, vals, col, 2, 2, NULL, &res) != 0 ||
+		if(db_query(db_con, keys, 0, vals, col, 2, 2, NULL, &res) != 0 ||
 			RES_ROW_N(res) <= 0)
 		{
 			DBG("XJAB:xj_worker:%d: no database result\n", _xj_pid);
