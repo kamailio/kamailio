@@ -70,6 +70,7 @@
 #include "mem/mem.h"
 #include "mem/shm_mem.h"
 #include "timer.h"
+#include "sr_module.h"
 #include "tcp_server.h"
 #include "tcp_init.h"
 
@@ -453,13 +454,15 @@ int tcp_init(struct socket_info* sock_info)
 #ifdef DISABLE_NAGLE
 	int flag;
 	struct protoent* pe;
-	
-	pe=getprotobyname("tcp");
-	if (pe==0){
-		LOG(L_ERR, "ERROR: tcp_init: could not get TCP protocol number\n");
-		tcp_proto_no=-1;
-	}else{
-		tcp_proto_no=pe->p_proto;
+
+	if (tcp_proto_no==-1){ /* if not already set */
+		pe=getprotobyname("tcp");
+		if (pe==0){
+			LOG(L_ERR, "ERROR: tcp_init: could not get TCP protocol number\n");
+			tcp_proto_no=-1;
+		}else{
+			tcp_proto_no=pe->p_proto;
+		}
 	}
 #endif
 	
@@ -904,6 +907,13 @@ int tcp_init_children()
 			/* child */
 			close(sockfd[0]);
 			unix_tcp_sock=sockfd[1];
+			bind_address=0; /* force a SEGFAULT if someone uses a non-init.
+							   bind address on tcp */
+			bind_idx=0;
+			if (init_child(r+children_no) < 0) {
+				LOG(L_ERR, "init_child failed\n");
+				goto error;
+			}
 			tcp_receive_loop(sockfd[1]);
 		}
 	}

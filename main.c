@@ -26,10 +26,11 @@
  *
  * History:
  * -------
- * 2002-01-29  argc/argv globalized via my_{argc|argv} (jiri)
- * 2003-01-23  mhomed added (jiri)
- * 2003-03-19  replaced all malloc/frees w/ pkg_malloc/pkg_free (andrei)
- * 2003-03-29  pkg cleaners for fifo and script callbacks introduced (jiri)
+ *  2002-01-29  argc/argv globalized via my_{argc|argv} (jiri)
+ *  2003-01-23  mhomed added (jiri)
+ *  2003-03-19  replaced all malloc/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-29  pkg cleaners for fifo and script callbacks introduced (jiri)
+ *  2003-03-31  removed snmp part (obsolete & no place in core) (andrei)
  *
  */
 
@@ -597,15 +598,6 @@ int main_loop()
 	pid_t pid;
 #ifdef USE_TCP
 	int sockfd[2];
-#endif
-#ifdef WITH_SNMP_MOD
-	int (*snmp_start)();
-
-	/* initialize snmp module */
-	snmp_start = (int(*)())find_export("snmp_start", 0);
-	if(snmp_start)
-		if(snmp_start() == -1)
-			LOG(L_ERR, "ERROR: Couldn't start snmp agent\n");
 #endif
 		
 

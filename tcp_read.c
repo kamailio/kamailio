@@ -414,10 +414,14 @@ again:
 			}
 			/* if we are here everything is nice and ok*/
 			resp=CONN_RELEASE;
-			/* just for debugging use sendipv4 as receiving socket */
 			DBG("calling receive_msg(%p, %d, )\n",
 					req->start, (int)(req->parsed-req->start));
-			bind_address=sendipv4; /*&tcp_info[con->sock_idx];*/
+			/* just for debugging use sendipv4 as receiving socket  FIXME*/
+			if (con->rcv.dst_ip.af==AF_INET6){
+				bind_address=sendipv6_tcp;
+			}else{
+				bind_address=sendipv4_tcp;
+			}
 			con->rcv.proto_reserved1=con->id; /* copy the id */
 			c=*req->parsed; /* ugly hack: zero term the msg & save the
 							   previous char, req->parsed should be ok
