@@ -47,6 +47,21 @@ Example:
 		t_relay(); 	/* enter stateful mode now */
 	};
 
+Note on use: 
+1) an INVITE transaction may per SIP specification result in 
+   multiple positive replies, of which all will be relayed
+   upstream; then, an accounting record will be issued for
+   all of them
+2) ACKs may or may not be reported on; per SIP specification,
+   ACKs may take a different path from INVITEs to which they
+   belong; unless ser is configured to use record-routing,
+   ACKs will never visit the server; even when they do so,
+   they are per specification considered an independent
+   transaction (they have different branch Via parameter)
+   and may not match; We thus recommend that network operators
+   consider an INVITE transaction to complete when a 2xx
+   is received and ignore ACKs in accounting.
+
 
 Exported parameters:
 ------------------
