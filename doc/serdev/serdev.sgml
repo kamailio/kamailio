@@ -5016,7 +5016,7 @@ int n = RES_ROW_N(res);
 	<title>Basic Modules</title>
 	<section id="auth">
 	    <title>Digest Authentication</title>
-	    <para>The module exports function needed for digest authentication.</para>
+	    <para>The module exports functions needed for digest authentication.</para>
 	    <para>
 		The module depends on:
 		<itemizedlist>
@@ -5274,7 +5274,7 @@ if (!proxy_authorize( "iptel.org", "subscriber" )) {
 			    field. The second parameter specifies if qop parameter
 			    (according to rfc2617) should be used or not.
 			    (Turning off is useful primarly to make UAC happy, which
-			    have a brokn qop implementation, particularly M$ Messenger 4.6).
+			    have a broken qop implementation, particularly M$ Messenger 4.6).
 			</para>
 			<para>
 			    <varname>realm</varname> - Realm string
@@ -5300,7 +5300,7 @@ if (!proxy_authorize( "iptel.org", "subscriber" )) {
 			    field. The second parameter specifies if qop parameter
 			    (according to rfc2617) should be used or not.
 			    (Turning off is useful primarly to make UAC happy, which
-			    have a brokn qop implementation, particularly M$ Messenger 4.6).
+			    have a broken qop implementation, particularly M$ Messenger 4.6).
 			</para>
 			<para>
 			    <varname>realm</varname> - Realm string
@@ -5402,7 +5402,7 @@ if (method=="REGISTER" & proxy_authorize("iptel.org", "subscriber" ) {
 			</funcsynopsis>
 			<para>
 			    Checks if the username given in credentials and username in
-			    From header field are equal
+			    From header field are equal.
 			    Call after *_authorize, otherwise an error will be issued.
 			</para>
 			<para>
@@ -6214,7 +6214,7 @@ if (t_newtran()) {
 			<para>
 			    Sends a stateful reply after a transaction has been
 			    established; see t_newtran for usage; note: never use
-			    t_reply from within reply_route ... always use t_reply_unsafe
+			    t_reply from within reply_route ... always use t_reply_unsafe.
 			</para>
 			<para>
 			    <varname>code</varname> - Code of the response.
@@ -6416,7 +6416,7 @@ if (t_newtran()) {
 		    <listitem>
 			<para>
 			    t_replicate should be done more cleanly -- Vias, Routes, etc. should
-			    be removed from a message prior to replicating it
+			    be removed from a message prior to replicating it.
 			</para>
 		    </listitem>
 		    <listitem>
@@ -6793,7 +6793,7 @@ if (t_newtran()) {
 				<paramdef>float <parameter moreinfo="none">q</parameter></paramdef>
 				<paramdef>str* <parameter moreinfo="none">callid</parameter></paramdef>
 				<paramdef>int <parameter moreinfo="none">cseq</parameter></paramdef>
-				<paramdef>ucontact_t <parameter moreinfo="none">cont</parameter></paramdef>
+				<paramdef>ucontact_t* <parameter moreinfo="none">cont</parameter></paramdef>
 			    </funcprototype>
 			</funcsynopsis>
 			<para>
