@@ -68,9 +68,11 @@ void destroy_avp( struct usr_avp *avp);
 void destroy_avp_list( struct usr_avp **list );
 void destroy_avp_list_unsafe( struct usr_avp **list );
 
-/* get val func */
+/* get func */
 void get_avp_val(struct usr_avp *avp, int_str *val );
+str* get_avp_name(struct usr_avp *avp);
 struct usr_avp** set_avp_list( struct usr_avp **list );
+struct usr_avp** get_avp_list( );
 
 
 #endif
