@@ -48,6 +48,7 @@
 #include "urecord.h"         /* {insert,delete,get}_ucontact */
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_fifo.h"
+#include "ul_unixsock.h"
 #include "notify.h"
 #include "usrloc.h"
 
@@ -204,6 +205,11 @@ static int mod_init(void)
 	     /* Initialize fifo interface */
 	if (init_ul_fifo() < 0) {
 		LOG(L_ERR, "ERROR: usrloc/fifo initialization failed\n");
+		return -1;
+	}
+
+	if (init_ul_unixsock() < 0) {
+		LOG(L_ERR, "ERROR: usrloc/unixsock initialization failed\n");
 		return -1;
 	}
 
