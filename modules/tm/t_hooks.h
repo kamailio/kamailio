@@ -45,7 +45,7 @@ struct cell;
 #define TMCB_E2EACK TMCB_E2EACK_IN
 #define TMCB_REPLY_IN TMCB_RESPONSE_IN
 #define TMCB_REQUEST_OUT TMCB_REQUEST_FWDED
-#define TMCB_ON_NEGATIVE_TMCB_ON_FAILURE
+#define TMCB_ON_NEGATIVE TMCB_ON_FAILURE
 
 typedef enum { 
 		/* input events */
