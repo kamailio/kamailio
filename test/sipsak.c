@@ -388,7 +388,7 @@ void shoot(char *buff)
 	struct timeval	tv;
 	struct pollfd sockerr;
 	int ssock, redirected, retryAfter, nretries;
-	int sock, i, len, ret, usrlocstep;
+	int sock, i, len, ret, usrlocstep, randretrys;
 	char *contact, *crlf, *foo, *bar;
 	char reply[BUFSIZE];
 	fd_set	fd;
@@ -465,6 +465,7 @@ void shoot(char *buff)
 		create_msg(buff, REQ_FLOOD);
 	}
 	else if (randtrash){
+		randretrys=0;
 		namebeg=1;
 		create_msg(buff, REQ_RAND);
 		nameend=strlen(buff);
@@ -554,10 +555,10 @@ void shoot(char *buff)
 					sockerr.events=POLLERR;
 					if ((poll(&sockerr, 1, 10))==1) {
 						if (sockerr.revents && POLLERR) {
-							printf("send failure: ");
+//							printf("send failure: ");
 							recv(sock, reply, strlen(reply), 0);
-							perror("");
-							if (randtrash && verbose) 
+							perror("send failure: ");
+							if (randtrash) 
 								printf ("last message before send failure:\n%s\n", buff);
 							exit(1);
 						}
@@ -565,7 +566,16 @@ void shoot(char *buff)
 					if (verbose) printf("** timeout **\n");
 					if (randtrash) {
 						printf("did not get a response on this request:\n%s\n", buff);
-						if (i+1 < nameend) printf("resending it without additional random changes...\n\n");
+						if (i+1 < nameend) {
+							if (randretrys == 2) {
+								printf("sended the following message three times without getting a response:\n%s\ngive up further retransmissions...\n", buff);
+								exit(1);
+							}
+							else {
+								printf("resending it without additional random changes...\n\n");
+								randretrys++;
+							}
+						}
 					}
 					retryAfter = retryAfter * 2;
 					if (retryAfter > 5000)
@@ -770,7 +780,12 @@ void shoot(char *buff)
 							if (verbose) printf("sended:\n%s\nreceived:\n%s\n");
 						}
 						if (nameend==(i+1)) {
-							printf("random end reached. server survived :) respect!\n");
+							if (randretrys == 0) {
+								printf("random end reached. server survived :) respect!\n");
+							}
+							else {
+								printf("maximum sendings reached but did not get a response on this request:\n%s\n", buff);
+							}
 							exit(0);
 						}
 						else trash_random(buff);
