@@ -41,7 +41,8 @@
 #define EVENT_OTHER          0
 #define EVENT_PRESENCE       1
 #define EVENT_PRESENCE_WINFO 2
-
+#define EVENT_XCAP_CHANGE    3
+#define EVENT_LOCATION       4
 
 typedef struct event {
 	str text;       /* Original string representation */
