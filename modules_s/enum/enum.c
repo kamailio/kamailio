@@ -81,34 +81,6 @@ inline struct to_body *get_parsed_from_body(struct sip_msg *_msg)
 }
 
 
-/* 
- * Rewrites r-uri with the uri given as argument.  Returns 1
- * if replacement succeeds and -1 otherwise.
- */
-inline int rewrite_uri(struct sip_msg* _msg, char* uri, int len)
-{
-	if (_msg->new_uri.s) {
-		pkg_free(_msg->new_uri.s);
-		_msg->new_uri.len = 0;
-	}
-	if (_msg->parsed_uri_ok) {
-		_msg->parsed_uri_ok = 0;
-	}
-	_msg->new_uri.s = pkg_malloc(len + 1);
-	if (_msg->new_uri.s == 0) {
-		LOG(L_ERR, "ERROR: rewrite_uri(): memory allocation"
-		    " failure\n");
-		return -1;
-	}
-	memcpy(_msg->new_uri.s, uri, len);
-	_msg->new_uri.s[len] = 0;
-	_msg->new_uri.len = len;
-
-	DBG("rewrite_uri(): Rewriting Request-URI with '%.*s'\n", len, uri);
-
-	return 1;
-}
-
 
 /*
  * Checks if argument is an e164 number starting with +
@@ -459,7 +431,7 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 		}
 
 		if (first) {
-			if (rewrite_uri(_msg, result.s, result.len) == -1) {
+			if (rewrite_uri(_msg, &result) == -1) {
 				goto done;
 			}
 			set_ruri_q(q);
