@@ -24,7 +24,7 @@
 #
 
 
-LOGDIR=/var/log
+LOGDIR=/var/log/sip
 
 #####################
 
@@ -48,7 +48,7 @@ BEGIN {
     rpl300=0; rpl302=0; rpl3xx=0;
     rpl400=0; rpl401=0; rpl403=0; rpl404=0; rpl405=0;
         rpl406=0;rpl407=0;rpl408=0;rpl410=0; rpl415=0;
-        rpl476=0;rpl480=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
+        rpl476=0;rpl477=0;rpl480=0;rpl481=0;rpl483=0;rpl486=0;rpl478=0;rpl487=0;
 		rpl488=0;rpl489=0;
         rpl4xx=0;
 	rpl479=0;
@@ -117,6 +117,9 @@ BEGIN {
 	ua_gphone=0;
 	ua_xlite=0;
 	ua_edial=0;
+	ua_gs=0;
+	ua_sipps=0;
+	ua_ibm=0;
 	ua_xx=0;
 
 	server_cisco=0
@@ -137,6 +140,8 @@ BEGIN {
 	server_starsip=0;
 	server_ipdialog=0;
 	server_edial=0;
+	server_ma=0;
+	server_fwd=0;
 	server_xx=0
 
 }
@@ -331,6 +336,22 @@ ua==0 && /User-Agent:.*eDial/ {
 	ua_edial++
 	ua=1
 }
+ua==0 && /User-Agent:.*Grandstream/ {
+	ua_gs++
+	ua=1
+}
+ua==0 && /User-Agent:.*Ahead SIPPS/ {
+	ua_sipps++
+	ua=1
+}
+ua==0 && /User-Agent:.*IBM user agent/ {
+	ua_ibm++
+	ua=1
+}
+ua==0 && /User-Agent:.*Vega/ {
+	ua_vega++
+	ua=1
+}
 ua==0 && /User-Agent:.*X-Lite/ {
 	ua_xlite++
 	ua=1
@@ -423,6 +444,14 @@ server==0 && /Server:.*ipDialog/ {
 }
 server==0 && /Server:.*eDial/ {
 	server_edial++
+	server=1
+}
+server==0 && /Server:.*MA/ {
+	server_ma++
+	server=1
+}
+server==0 && /Server:.*Free World/ {
+	server_fwd++
 	server=1
 }
 server==0 && /Server:/ {
@@ -568,8 +597,8 @@ reply==0 && request=0 {
     rpl476++
     next
 }
-/SIP\/2\.0 480/ {
-    rpl480++
+/SIP\/2\.0 477/ {
+    rpl477++
     next
 }
 /SIP\/2\.0 481/ {
@@ -704,6 +733,7 @@ END {
 	print "410 (Gone): " rpl410
 	print "415 (Unsupported Media): " rpl415
 	print "476 (no recursive registrations): " rpl476 
+	print "477 (next hop error): " rpl477
 	print "478 (Unresolveable): " rpl478 
 	print "479 (private IP): " rpl479 
 	print "480 (Unavailable): " rpl480 
@@ -762,6 +792,10 @@ END {
 	print "D-link: " ua_dlink
 	print "gphone: " ua_gphone
 	print "X-lite: " ua_xlite
+	print "grandstream: " ua_gs
+	print "vegastream: " ua_vega
+	print "Ahead SIPPS: " ua_sipps
+	print "IBM user agent: " ua_ibm
 	print "UFO: " ua_xx
 
 	print "## Servers"
@@ -778,6 +812,8 @@ END {
 	print "StarSIP: " server_starsip
 	print "ipDialog: " server_ipdialog
 	print "eDial: " server_edial
+	print "FWD: " server_fwd
+	print "MA: " server_ma
 	print "UFO: " server_xx
 }
 '
