@@ -25,18 +25,23 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 #endif
 	n = mysql_field_count(CON_CONNECTION(_h));
 	if (!n) {
-		LOG(L_ERR, "get_names(): No columns\n");
+		LOG(L_ERR, "get_columns(): No columns\n");
 		return -2;
 	}
 	
         RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
-	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
-	if ((!RES_NAMES(_r)) || (!RES_TYPES(_r))) {
-		LOG(L_ERR, "get_names(): No memory left\n");
-		pkg_free(RES_NAMES(_r));
-		pkg_free(RES_TYPES(_r));
+	if (!RES_NAMES(_r)) {
+		LOG(L_ERR, "get_columns(): No memory left\n");
 		return -3;
 	}
+
+	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
+	if (!RES_TYPES(_r)) {
+		LOG(L_ERR, "get_columns(): No memory left\n");
+		pkg_free(RES_NAMES(_r));
+		return -4;
+	}
+
 	RES_COL_N(_r) = n;
 
 	fields = mysql_fetch_fields(CON_RESULT(_h));
@@ -98,7 +103,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	n = mysql_num_rows(CON_RESULT(_h));
 	RES_ROW_N(_r) = n;
 	if (!n) {
-		RES_ROWS(_r) = NULL;
+		RES_ROWS(_r) = 0;
 		return 0;
 	}
 	RES_ROWS(_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
@@ -149,12 +154,12 @@ db_res_t* new_result(void)
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r) {
 		LOG(L_ERR, "new_result(): No memory left\n");
-		return NULL;
+		return 0;
 	}
-	RES_NAMES(r) = NULL;
-	RES_TYPES(r) = NULL;
+	RES_NAMES(r) = 0;
+	RES_TYPES(r) = 0;
 	RES_COL_N(r) = 0;
-	RES_ROWS(r) = NULL;
+	RES_ROWS(r) = 0;
 	RES_ROW_N(r) = 0;
 	return r;
 }
