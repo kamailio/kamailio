@@ -4,30 +4,7 @@
 struct cell         *T;
 unsigned int     global_msg_id;
 struct s_table*  hash_table;
-
-
-struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
-int t_reply_matching( struct s_table* , struct sip_msg* , struct cell** , unsigned int*  );
-int t_store_incoming_reply( struct cell* , unsigned int , struct sip_msg* );
-int t_relay_reply( struct cell* , unsigned int , struct sip_msg* );
-int t_check( struct s_table* , struct sip_msg*  );
-int t_all_final( struct cell * );
-int t_build_and_send_ACK( struct cell *Trans , unsigned int brach );
-int relay_lowest_reply_upstream( struct cell *Trans , struct sip_msg *p_msg );
-int push_reply_from_uac_to_uas( struct sip_msg * , unsigned int );
-int t_cancel_branch(unsigned int branch); //TO DO
-
-int send_udp_to( char *buf, unsigned buflen, struct sockaddr_in*  to, unsigned tolen );
-
-void retransmission_handler( void *);
-void final_response_handler( void *);
-void wait_handler( void *);
-void delete_handler( void *);
-
-int add_branch_label( struct cell *Trans, struct sip_msg *p_msg , int branch );
-
-
-
+int                      sock_fd;
 
 
 
@@ -278,7 +255,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       T->outbound_request[branch]->to.sin_addr.s_addr = ntohl( dest_ip ) ;
 
       if (add_branch_label( T, p_msg , branch )==-1) return -1;
-      buf = build_req_buf_from_sip_req( p_msg, &len);
+      buf = build_buf_from_sip_request  ( p_msg, &len);
       if (!buf)
          return -1;
       T->outbound_request[branch]->bufflen = len ;
@@ -286,6 +263,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       memcpy( T->outbound_request[branch]->buffer , buf , len );
       free( buf ) ;
    }/* end for the first time */
+
 
    /* sets and starts the RETRANS timer */
    T->outbound_request[branch]->nr_retrans    = 0;
@@ -295,7 +273,7 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    T->outbound_request[branch]->timeout         = RETR_T1;
    /* send the request */
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen , 
-		(struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
+		&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
 }
 
 
@@ -529,19 +507,19 @@ int t_reply_matching( struct s_table *hash_table , struct sip_msg *p_msg , struc
    /* getting the hash_index from the brach param , via header*/
    begin = p_msg->via1->branch->value.s;
    for(  ; *begin!='.' ; begin++ );
-   hash_index = strtol( ++begin , &end , 16 );
+   hash_index = strtol( ++begin , &end , 10 );
    /*if the hash index is corect */
    if  ( *end=='.' && hash_index>=0 && hash_index<TABLE_ENTRIES-1 )
    {
       /* getting the entry label value */
       begin=end++ ;
-      entry_label = strtol( ++begin , &end , 16 );
+      entry_label = strtol( ++begin , &end , 10 );
       /* if the entry label also is corect */
       if  ( *end=='.' && entry_label>=0 )
       {
          /* getting the branch_id value */
          begin=end++ ;
-         branch_id = strtol( ++begin , &end , 16 );
+         branch_id = strtol( ++begin , &end , 10 );
          /* if the entry label also is corect */
           if  ( branch_id>=0 )
           {
@@ -896,8 +874,28 @@ void delete_handler( void *attr)
    to outgoing requests
 */
 int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
-{	trans->label;
+{
+	char *c;
+
+
+	/* check size now */
+/*
+	if (p_msg->add_to_branch.len+ .... > MAX_BRANCH_PARAM_LEN ) {
+		LOG(L_ERR, "ERROR: add_branch_label: too small branch buffer\n");
+		return -1;
+	}	
+*/
+
+	/* check if there already was something else -- if not, allocate */
+
+/*
+ = (char*)sh_malloc( MAX_BRANCH_PARAM_LEN );
+
+
+
+	trans->label;
 	trans->hash_index;
 	p_msg->add_to_branch;
 	branch;
+*/
 }
