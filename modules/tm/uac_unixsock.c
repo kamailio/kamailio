@@ -516,10 +516,6 @@ int unixsock_uac(str* msg)
 	dlg.hooks.request_uri = &ruri;
 	dlg.hooks.next_hop = (nexthop.len ? &nexthop : &ruri);
 
-#ifdef XL_DEBUG
-	print_dlg(stderr, &dlg);
-#endif
-
 	/* we got it all, initiate transaction now! */
 	if (unixsock_cbp(&shm_sockaddr, unixsock_sender_addr()) < 0) goto error01;
 
@@ -535,6 +531,8 @@ int unixsock_uac(str* msg)
 		}
 		unixsock_reply_send();
 	}
+
+	return 0;
 	
  error01:
 	pkg_free(hfb.s);
@@ -542,5 +540,5 @@ int unixsock_uac(str* msg)
  error:
 	     /* free_sip_msg(&faked_msg); */
 	if (faked_msg.headers) free_hdr_field_lst(faked_msg.headers);
-	return 1;
+	return -1;
 }
