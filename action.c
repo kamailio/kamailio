@@ -339,7 +339,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 			}
 			if ((a->p1.number>RT_NO)||(a->p1.number<0)){
 				LOG(L_ERR, "ERROR: invalid routing table number in"
-							"route(%d)\n", a->p1.number);
+							"route(%lu)\n", a->p1.number);
 				ret=E_CFG;
 				break;
 			}
@@ -457,7 +457,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				} else if (a->type==STRIP_T) {
 					if (a->p1.number>uri.user.len) {
 						LOG(L_WARN, "Error: too long strip asked; "
-									" deleting username: %d of <%.*s>\n",
+									" deleting username: %lu of <%.*s>\n",
 									a->p1.number, uri.user.len, uri.user.s );
 						len=0;
 					} else if (a->p1.number==uri.user.len) {
@@ -469,7 +469,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 				} else if (a->type==STRIP_TAIL_T) {
 					if (a->p1.number>uri.user.len) {
 						LOG(L_WARN, "WARNING: too long strip_tail asked; "
-									" deleting username: %d of <%.*s>\n",
+									" deleting username: %lu of <%.*s>\n",
 									a->p1.number, uri.user.len, uri.user.s );
 						len=0;
 					} else if (a->p1.number==uri.user.len) {

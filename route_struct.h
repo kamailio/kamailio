@@ -94,7 +94,7 @@ struct action{
 	int p2_type;
 	int p3_type;
 	union {
-		int number;
+		long number;
 		char* string;
 		void* data;
 	}p1, p2, p3;
