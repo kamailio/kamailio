@@ -31,7 +31,7 @@
  * 2003-03-06 vm_{start|stop} changed to use a single fifo 
  *            function; new module parameters introduced;
  *            db now initialized only on start-up; MULTI_DOMAIN
- *            support introduced; snprintf removed;
+ *            support introduced; snprintf removed; (rco)
  *
  */
 
@@ -43,6 +43,7 @@
 #include "../tm/tm_load.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_rr.h"
+#include "../../parser/parse_nameaddr.h"
 #include "../../parser/contact/parse_contact.h"
 #include "../../db/db.h"
 
@@ -89,7 +90,7 @@
 
 MODULE_VERSION
 
-static str empty_param={".",1};
+static str empty_param = {".",1};
 
 static int write_to_vm_fifo(char *fifo, str *lines, int cnt );
 static int init_tmb();
@@ -233,7 +234,8 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	  }
 	    
 	if( (!email_res) || (email_res->n != 1) ){
-	  
+
+#if 0	  
 	  if(email_res)
 	    (*db_free_query)(db_handle,email_res);
 		
@@ -241,16 +243,21 @@ static int vm_get_user_info( str* user,   /*[in]*/
 	       exports.name,
 	       user->len,user->s);
 	  goto error;
+#endif
 	}
-	    
-	email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
-	email->len = strlen(email->s);
+	else {   
+	    email->s = strdup(VAL_STRING(&(email_res->rows[0].values[0])));
+	    email->len = strlen(email->s);
 	
 #ifdef MULTI_DOMAIN
-	domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
-	domain->s = strlen(domain->s);
+	    domain->s = strdup(VAL_STRING(&(email_res->rows[0].values[1])));
+	    domain->s = strlen(domain->s);
 #endif	    
-	
+	}
+
+	if(email_res)
+	    (*db_free_query)(db_handle,email_res);
+		
 	return 0;
  error:
 	return -1;
@@ -258,103 +265,106 @@ static int vm_get_user_info( str* user,   /*[in]*/
 
 static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 {
-        str             body;
-        unsigned int    hash_index;
-        unsigned int    label;
-        contact_body_t* cb=0;
-        str             str_uri;
-        str             email;
-	str             domain;
-	contact_t*      c=0;
-	str             lines[VM_FIFO_PARAMS];
-	char            id_buf[IDBUF_LEN];
-	int             int_buflen, l;
-	char*           i2s;
-	char*           s;
-	rr_t*           record_route;
-	char            fproxy_lr;
-	char            route_buffer[ROUTE_BUFFER_MAX];
-	str             route;
-	struct hdr_field* rr_hdr;
-	param_hooks_t     hooks;
-	str               tmp_str;
+    str             body;
+    unsigned int    hash_index;
+    unsigned int    label;
+    contact_body_t* cb=0;
+    name_addr_t     na;
+    str             str_uri;
+    str             email;
+    str             domain;
+    contact_t*      c=0;
+    str             lines[VM_FIFO_PARAMS];
+    char            id_buf[IDBUF_LEN];
+    int             int_buflen, l;
+    char*           i2s;
+    char*           s;
+    rr_t*           record_route;
+    char            fproxy_lr;
+    char            route_buffer[ROUTE_BUFFER_MAX];
+    str             route;
+    struct hdr_field* rr_hdr;
+    param_hooks_t     hooks;
+    str               tmp_str;
 
-	if(msg->first_line.type != SIP_REQUEST){
-	    LOG(L_ERR, "ERROR: vm() has been passed something else as a SIP request\n");
+    if(msg->first_line.type != SIP_REQUEST){
+	LOG(L_ERR, "ERROR: vm() has been passed something else as a SIP request\n");
+	goto error;
+    }
+
+    /* parse all -- we will need every header field for a UAS */
+    if (parse_headers(msg, HDR_EOH, 0)==-1) {
+	LOG(L_ERR, "ERROR: vm: parse_headers failed\n");
+	goto error;
+    }
+
+    /* find index and hash; (the transaction can be safely used due 
+     * to refcounting till script completes)
+     */
+    if( (*_tmb.t_get_trans_ident)(msg,&hash_index,&label) == -1 ) {
+	LOG(L_ERR,"ERROR: vm: t_get_trans_ident failed\n");
+	goto error;
+    }
+
+    if(parse_from_header(msg) == -1){
+	LOG(L_ERR,"ERROR: %s : vm: "
+	    "while parsing <From:> header\n",exports.name);
+	goto error;
+    }
+
+    if (parse_sip_msg_uri(msg)<0) {
+	LOG(L_ERR,"ERROR: %s : vm: uri has not been parsed\n",
+	    exports.name);
+	goto error;
+    }
+
+    str_uri.s = 0; str_uri.len = 0;
+    if(msg->contact){
+
+	if(parse_contact(msg->contact) == -1){
+	    LOG(L_ERR,"ERROR: %s : vm: "
+		"while parsing <Contact:> header\n",exports.name);
 	    goto error;
 	}
-
-	/* parse all -- we will need every header field for a UAS */
-	if (parse_headers(msg, HDR_EOH, 0)==-1) {
-		LOG(L_ERR, "ERROR: vm: parse_headers failed\n");
-		goto error;
-	}
-
-	/* find index and hash; (the transaction can be safely used due 
-	 * to refcounting till script completes)
-	 */
-        if( (*_tmb.t_get_trans_ident)(msg,&hash_index,&label) == -1 ) {
-		LOG(L_ERR,"ERROR: vm: t_get_trans_ident failed\n");
-		goto error;
-        }
-
-        if(parse_from_header(msg) == -1){
-		LOG(L_ERR,"ERROR: %s : vm: "
-				"while parsing <From:> header\n",exports.name);
-		goto error;
-        }
-
-	if (parse_sip_msg_uri(msg)<0) {
-  		LOG(L_ERR,"ERROR: %s : vm: uri has not been parsed\n",
-				exports.name);
-  		goto error;
-        }
-
-	str_uri.s = 0; str_uri.len = 0;
-        if(msg->contact){
-
-		if(parse_contact(msg->contact) == -1){
-		    LOG(L_ERR,"ERROR: %s : vm: "
-			"while parsing <Contact:> header\n",exports.name);
-		    goto error;
-		}
 	
 #ifdef EXTRA_DEBUG
-		DBG("DEBUG: vm: ******* contacts: *******\n");
+	DBG("DEBUG: vm: ******* contacts: *******\n");
 #endif
-		cb = msg->contact->parsed;
+	cb = msg->contact->parsed;
 
-		if(cb && (c=cb->contacts)) {
-		    str_uri = c->uri;
+	if(cb && (c=cb->contacts)) {
+	    str_uri = c->uri;
+	    parse_nameaddr(&str_uri,&na);
+	    str_uri = na.uri;
 #ifdef EXTRA_DEBUG
-		    /*print_contacts(c);*/
-		    for(; c; c=c->next)
-			DBG("DEBUG:           %.*s\n",c->uri.len,c->uri.s);
+	    /*print_contacts(c);*/
+	    for(; c; c=c->next)
+		DBG("DEBUG:           %.*s\n",c->uri.len,c->uri.s);
 #endif
-		}
-#ifdef EXTRA_DEBUG
-		DBG("DEBUG: vm: **** end of contacts ****\n");
-#endif
-        }
-
-	/* str_uri is taken from caller's contact or from is missing
-	 * for backwards compatibility with pre-3261 */
-        if(!str_uri.len)
-	    str_uri = get_from(msg)->uri;
-
-	route.s = route_buffer; route.len = 0;
-	s = route_buffer;
-
-	rr_hdr = msg->record_route;
-	if(rr_hdr && (!rr_hdr->parsed && parse_rr(rr_hdr))){
-	    LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
-	    goto error;
 	}
-	    
-	record_route = rr_hdr ? rr_hdr->parsed : 0;
-	fproxy_lr = 0;
+#ifdef EXTRA_DEBUG
+	DBG("DEBUG: vm: **** end of contacts ****\n");
+#endif
+    }
 
-	if(rr_hdr && record_route){
+    /* str_uri is taken from caller's contact or from is missing
+     * for backwards compatibility with pre-3261 */
+    if(!str_uri.len)
+	str_uri = get_from(msg)->uri;
+
+    route.s = route_buffer; route.len = 0;
+    s = route_buffer;
+
+    rr_hdr = msg->record_route;
+    if(rr_hdr && (!rr_hdr->parsed && parse_rr(rr_hdr))){
+	LOG(L_ERR,"ERROR: vm: while parsing 'Record-Route:' header\n");
+	goto error;
+    }
+	    
+    record_route = rr_hdr ? rr_hdr->parsed : 0;
+    fproxy_lr = 0;
+
+    if(rr_hdr && record_route){
 
 #define copy_route(s,len,rs,rlen) \
    do {\
@@ -371,143 +381,145 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
      append_str(s,">",1);len++;\
    } while(0);
 
-	  if(rr_hdr->body.len){
+	if(rr_hdr->body.len){
 	      
 	    /* Parse all parameters */
 	    tmp_str = record_route->nameaddr.uri;
 	    if (parse_params(&tmp_str, CLASS_URI, &hooks, &record_route->params) < 0) {
-	      LOG(L_ERR, "vm: Error while parsing record route uri params\n");
-	      goto error;
+		LOG(L_ERR, "vm: Error while parsing record route uri params\n");
+		goto error;
 	    }
 	    
 	    fproxy_lr = (hooks.uri.lr != 0);
 	    
 	    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 	    if(fproxy_lr){
-	      copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
+		copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
 	    }
-	  }
-	  rr_hdr = rr_hdr->next;
+	}
+	rr_hdr = rr_hdr->next;
 
-	  for(;;rr_hdr = rr_hdr->next){
+	for(;;rr_hdr = rr_hdr->next){
 
 	    if(rr_hdr && (rr_hdr->type == HDR_RECORDROUTE) && rr_hdr->body.len){
 	      
-	      if(!rr_hdr->parsed && parse_rr(rr_hdr)){
-		LOG(L_ERR,"ERROR: %s : vm: "
-		  "while parsing <Record-route:> header\n",exports.name);
-		goto error;
-	      }
+		if(!rr_hdr->parsed && parse_rr(rr_hdr)){
+		    LOG(L_ERR,"ERROR: %s : vm: "
+			"while parsing <Record-route:> header\n",exports.name);
+		    goto error;
+		}
 	      
-	      for(record_route = rr_hdr->parsed; record_route; record_route = record_route->next){
-		DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
-		copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
-	      }
+		for(record_route = rr_hdr->parsed; record_route; record_route = record_route->next){
+		    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
+		    copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
+		}
 	    } 
 
 	    if(rr_hdr == msg->last_header)
-	      break;
-	  }
+		break;
+	}
 
-	  if(!fproxy_lr){
+	if(!fproxy_lr){
 	    copy_route(s,route.len,str_uri.s,str_uri.len);
 	    str_uri = ((rr_t*)msg->record_route->parsed)->nameaddr.uri;
-	  }
 	}
+    }
 
-	DBG("vm: calculated route: %.*s\n",route.len,route.s);
-	DBG("vm: next r-uri: %.*s\n",str_uri.len,str_uri.s);
+    DBG("vm: calculated route: %.*s\n",route.len,route.len ? route.s : "");
+
+    /*parse_uri();*/
+    DBG("vm: next r-uri: %.*s\n",str_uri.len,str_uri.len ? str_uri.s : "");
 	
-	body = empty_param;
-	email = empty_param;
-	domain = empty_param;
+    body = empty_param;
+    email = empty_param;
+    domain = empty_param;
 
-	if(strcmp(action,VM_BYE)){
+    if(strcmp(action,VM_BYE)){
 
-	    if( (body.s = get_body(msg)) == 0 ){
-		LOG(L_ERR, "ERROR: vm: get_body failed\n");
-		goto error;
-	    }
-
-	    body.len = strlen(body.s);
-	    
-	    if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,&email) < 0){
-		LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
-		goto error;
-	    }
-	    domain = msg->parsed_uri.host;
-	}
-
-	lines[0].s=action; lines[0].len=strlen(action);
-
-	lines[1]=msg->parsed_uri.user;		/* user from r-uri */
-	lines[2]=email;			        /* email address from db */
-	lines[3]=domain;                        /* domain */
-
-	lines[4]=msg->rcv.bind_address->address_str; /* dst ip */
-
-	lines[5]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
-	lines[6]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
-
-	lines[7]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
-
-	lines[8]=get_from(msg)->body;		/* from */
-	lines[9]=msg->to->body;			/* to */
-	lines[10]=msg->callid->body;		/* callid */
-	lines[11]=get_from(msg)->tag_value;	/* from tag */
-	lines[12]=get_to(msg)->tag_value;	/* to tag */
-	lines[13]=get_cseq(msg)->number;	/* cseq number */
-
-	i2s=int2str(hash_index, &l);		/* hash:label */
-	if (l+1>=IDBUF_LEN) {
-		LOG(L_ERR, "ERROR: vm_start: too big hash\n");
-		goto error;
-	}
-	memcpy(id_buf, i2s, l);id_buf[l]=':';int_buflen=l+1;
-	i2s=int2str(label, &l);
-	if (l+1+int_buflen>=IDBUF_LEN) {
-		LOG(L_ERR, "ERROR: vm_start: too big label\n");
-		goto error;
-	}
-	memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
-	lines[14].s=id_buf;lines[14].len=int_buflen;
-
-	lines[15]=route.len ? route : empty_param;
-	lines[16].s=body.s; lines[16].len=body.len;
-
-	if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
-	     ==-1 ) {
-
-	    LOG(L_ERR, "ERROR: vm_start: write_to_fifo failed\n");
+	if( (body.s = get_body(msg)) == 0 ){
+	    LOG(L_ERR, "ERROR: vm: get_body failed\n");
 	    goto error;
 	}
 
-	/* make sure that if voicemail does not initiate a reply
-	 * timely, a SIP timeout will be sent out */
-	if( (*_tmb.t_addblind)() == -1 ) {
-		LOG(L_ERR, "ERROR: vm_start: add_blind failed\n");
-		goto error;
+	body.len = strlen(body.s);
+	    
+	if(vm_get_user_info(&msg->parsed_uri.user,&msg->parsed_uri.host,&email) < 0){
+	    LOG(L_ERR, "ERROR: vm: vm_get_user_info failed\n");
+	    goto error;
 	}
-	return 1;
+	domain = msg->parsed_uri.host;
+    }
+
+    lines[0].s=action; lines[0].len=strlen(action);
+
+    lines[1]=msg->parsed_uri.user;		/* user from r-uri */
+    lines[2]=email;			        /* email address from db */
+    lines[3]=domain;                        /* domain */
+
+    lines[4]=msg->rcv.bind_address->address_str; /* dst ip */
+
+    lines[5]=msg->parsed_uri.port.len ? empty_param : msg->rcv.bind_address->port_no_str; /* port */
+    lines[6]=msg->first_line.u.request.uri;      /* r_uri ('Contact:' for next requests) */
+
+    lines[7]=str_uri.len?str_uri:empty_param; /* r_uri for subsequent requests */
+
+    lines[8]=get_from(msg)->body;		/* from */
+    lines[9]=msg->to->body;			/* to */
+    lines[10]=msg->callid->body;		/* callid */
+    lines[11]=get_from(msg)->tag_value;	/* from tag */
+    lines[12]=get_to(msg)->tag_value;	/* to tag */
+    lines[13]=get_cseq(msg)->number;	/* cseq number */
+
+    i2s=int2str(hash_index, &l);		/* hash:label */
+    if (l+1>=IDBUF_LEN) {
+	LOG(L_ERR, "ERROR: vm_start: too big hash\n");
+	goto error;
+    }
+    memcpy(id_buf, i2s, l);id_buf[l]=':';int_buflen=l+1;
+    i2s=int2str(label, &l);
+    if (l+1+int_buflen>=IDBUF_LEN) {
+	LOG(L_ERR, "ERROR: vm_start: too big label\n");
+	goto error;
+    }
+    memcpy(id_buf+int_buflen, i2s, l);int_buflen+=l;
+    lines[14].s=id_buf;lines[14].len=int_buflen;
+
+    lines[15]=route.len ? route : empty_param;
+    lines[16].s=body.s; lines[16].len=body.len;
+
+    if ( write_to_vm_fifo(vm_fifo, &lines[0],VM_FIFO_PARAMS)
+	 ==-1 ) {
+
+	LOG(L_ERR, "ERROR: vm_start: write_to_fifo failed\n");
+	goto error;
+    }
+
+    /* make sure that if voicemail does not initiate a reply
+     * timely, a SIP timeout will be sent out */
+    if( (*_tmb.t_addblind)() == -1 ) {
+	LOG(L_ERR, "ERROR: vm_start: add_blind failed\n");
+	goto error;
+    }
+    return 1;
 
  error:
-	/* 0 would lead to immediate script exit -- -1 returns
-		with 'false' to script processing */
-	return -1;
+    /* 0 would lead to immediate script exit -- -1 returns
+       with 'false' to script processing */
+    return -1;
 }
 
 static int init_tmb()
 {
-	load_tm_f _load_tm;
+    load_tm_f _load_tm;
 
-	if(!(_load_tm=(load_tm_f)find_export("load_tm",NO_SCRIPT, 0)) ){
-	    LOG(L_ERR,"ERROR: vm_start: could not find export `load_tm'\n");
-	    return -1;
-	}
-	if ( ((*_load_tm)(&_tmb)) == -1 ){
-	    LOG(L_ERR,"ERROR: vm_start: load_tm failed\n");
-	    return -1;
-	}
+    if(!(_load_tm=(load_tm_f)find_export("load_tm",NO_SCRIPT, 0)) ){
+	LOG(L_ERR,"ERROR: vm_start: could not find export `load_tm'\n");
+	return -1;
+    }
+    if ( ((*_load_tm)(&_tmb)) == -1 ){
+	LOG(L_ERR,"ERROR: vm_start: load_tm failed\n");
+	return -1;
+    }
     return 0;
 }
 
