@@ -526,7 +526,7 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 	switch(_t1)
 	{
 		case DB_INT:
-			if(_t0==DB_DATETIME || _t0==DB_DB_BITMAP)
+			if(_t0==DB_DATETIME || _t0==DB_BITMAP)
 				return 0;
 		case DB_BITMAP:
 			if(_t0==DB_INT)
@@ -543,7 +543,7 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 			if(_t0==DB_STRING || _t0==DB_BLOB)
 				return 0;
 		case DB_BLOB:
-			if(_t0==DB_STR || _to==DB_STRING)
+			if(_t0==DB_STR || _t0==DB_STRING)
 				return 0;
 	}
 	return 1;

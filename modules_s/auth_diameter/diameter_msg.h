@@ -319,7 +319,7 @@ AAAMessage *AAAInMessage(
 AAAReturnCode AAAFreeMessage(
 		AAAMessage **message);
 
-AAAResultCode AAASetMessageResultCode(
+AAAReturnCode AAASetMessageResultCode(
 		AAAMessage *message,
 		AAAResultCode resultCode);
 
