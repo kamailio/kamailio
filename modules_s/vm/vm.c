@@ -394,6 +394,7 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
 	    
 	    DBG("record_route->nameaddr.uri: %.*s\n",record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 	    if(fproxy_lr){
+		DBG("vm: first proxy has loose routing.\n");
 		copy_route(s,route.len,record_route->nameaddr.uri.s,record_route->nameaddr.uri.len);
 	    }
 	}
