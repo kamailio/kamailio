@@ -127,7 +127,7 @@ error1:
 static int pike_exit(void)
 {
 	/* lock the timer list */
-	lock( timer->sem );
+	lock( &locks[TIMER_LOCK] );
 	/* free the tmer list head */
 	shm_free(timer);
 	/* destroy the IP tree */
