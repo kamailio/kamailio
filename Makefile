@@ -36,7 +36,7 @@ skip_modules?=
 
 # if not set on the cmd. line or the env, exclude this modules:
 exclude_modules?= 			cpl cpl-c ext extcmd mangler pdt \
-							postgres snmp  \
+							postgres snmp xlog  \
 							im radius_acc radius_auth \
 							jabber mysql \
 							auth_radius group_radius uri_radius 
