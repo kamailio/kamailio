@@ -45,6 +45,10 @@ int load_tm( struct tm_binds *tmb)
 		LOG(L_ERR, LOAD_ERROR "'register_tmcb' not found\n");
 		return -1;
 	}
+	if (!( tmb->t_newtran=(tnewtran_f)find_export("t_newtran", 0, 0)) ) {
+		LOG(L_ERR, LOAD_ERROR "'t_newtran' not found\n");
+		return -1;
+	}
 	if (!( tmb->t_relay_to_tcp=find_export(T_RELAY_TO_TCP, 2, 0)) ) {
 		LOG(L_ERR, LOAD_ERROR "'t_relay_to_tcp' not found\n");
 		return -1;

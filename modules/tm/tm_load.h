@@ -78,6 +78,7 @@ struct tm_binds {
 	cmd_function     t_relay_to_udp;
 	cmd_function     t_relay_to_tcp;
 	cmd_function     t_relay;
+	tnewtran_f       t_newtran;
 	treply_f         t_reply;
 	treply_wb_f      t_reply_with_body;
 	tislocal_f       t_is_local;

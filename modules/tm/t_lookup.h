@@ -83,6 +83,7 @@ void set_t(struct cell *t);
 #define T_IS_LOCAL     "t_is_local"
 
 typedef int (*tislocal_f)(struct sip_msg*);
+typedef int (*tnewtran_f)(struct sip_msg*);
 typedef int (*tget_ti_f)(struct sip_msg*, unsigned int*, unsigned int*);
 typedef int (*tlookup_ident_f)(struct cell**, unsigned int, unsigned int);
 
