@@ -397,6 +397,7 @@ int t_on_reply_received( struct sip_msg  *p_msg )
 
    global_msg_id = p_msg->id;
 
+   parse_headers( p_msg , HDR_EOH ); /*????*/
    /* we use label-matching to lookup for T */
    t_reply_matching( hash_table , p_msg , &T , &branch  );
 
@@ -839,9 +840,11 @@ nomatch:
   */
 int t_store_incoming_reply( struct cell* Trans, unsigned int branch, struct sip_msg* p_msg )
 {
+   DBG("DEBUG: t_store_incoming_reply: starting [%d]....\n",branch);
    /* if there is a previous reply, replace it */
    if ( Trans->inbound_response[branch] )
-      free_sip_msg( Trans->inbound_response[branch] ) ;
+      sip_msg_free( Trans->inbound_response[branch] ) ;
+   DBG("DEBUG: t_store_incoming_reply: sip_msg_free done....\n");
    /* force parsing all the needed headers*/
    if ( parse_headers(p_msg, HDR_VIA1|HDR_VIA2|HDR_TO )==-1 ||
         !p_msg->via1 || !p_msg->via2 || !p_msg->to )

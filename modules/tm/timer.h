@@ -12,7 +12,7 @@ enum lists { RETRASMISSIONS_LIST, FR_TIMER_LIST, WT_TIMER_LIST, DELETE_LIST, NR_
 
 /* FINAL_RESPONSE_TIMER ... tells how long should the transaction engine
    wait if no final response comes back*/
-#define FR_TIME_OUT     8
+#define FR_TIME_OUT     64
 
 /* WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/

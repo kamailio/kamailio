@@ -334,7 +334,7 @@ void sh_clean_hdr_field(struct hdr_field* hf)
       switch(hf->type)
       {
          case HDR_VIA:
-   DBG("DEBUG: sh_clean_hdr_field : via headers\n");
+   DBG("DEBUG: sh_clean_hdr_field: sip_msg_free : via headers\n");
                sh_free_via_list(hf->parsed);
              break;
          case HDR_CSEQ:
@@ -357,7 +357,7 @@ void sh_free_hdr_field_lst(struct hdr_field* hf)
 
    while(hf)
     {
-      DBG("DEBUG: free_hdr_field_lst : %s [%d]\n",hf->name.s, hf->type);
+      DBG("DEBUG: free_hdr_field_lst : %s [%d] (adr=%x)\n",hf->name.s, hf->type,hf);
        foo=hf;
        hf=hf->next;
        sh_clean_hdr_field(foo);
