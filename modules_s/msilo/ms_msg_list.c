@@ -266,9 +266,9 @@ int msg_list_check(msg_list ml)
 	p0 = ml->lsent;
 	while(p0)
 	{
-		if(p0->flag & MS_MSG_DONE)
+		if(p0->flag & MS_MSG_DONE || p0->flag & MS_MSG_ERRO)
 		{
-			DBG("MSILO: msg_list_check: mid:%d is done\n", p0->msgid);
+			DBG("MSILO: msg_list_check: mid:%d got reply\n", p0->msgid);
 			if(p0->prev)
 				(p0->prev)->next = p0->next;
 			else

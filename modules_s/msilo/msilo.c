@@ -122,6 +122,7 @@ MODULE_VERSION
 /** database connection */
 db_con_t *db_con = NULL;
 
+
 /** precessed msg list - used for dumping the messages */
 msg_list ml = NULL;
 
@@ -284,14 +285,14 @@ static int m_store(struct sip_msg* msg, char* mode, char* str2)
 	// check if the body of message contains something
 	if(body.len <= 0)
 	{
-		DBG("MSILO: m_store: body of the message is empty!\n");
+		DBG("MSILO:m_store: body of the message is empty!\n");
 		goto error;
 	}
 	
 	// check TO header
 	if(!msg->to || !msg->to->body.s)
 	{
-		DBG("MSILO: m_store: cannot find 'to' header!\n");
+		DBG("MSILO:m_store: cannot find 'to' header!\n");
 		goto error;
 	}
 
@@ -617,7 +618,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			msg->to->body.s + msg->to->body.len + 1, &to);
 		if(to.uri.len <= 0) // || to.error != PARSE_OK)
 		{
-			DBG("MSILO: m_dump: 'To' header NOT parsed\n");
+			DBG("MSILO:m_dump: 'To' header NOT parsed\n");
 			goto error;
 		}
 		pto = &to;
@@ -634,18 +635,18 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			i = atoi(msg->expires->body.s);
 			if(i <= 0)
 			{ // user goes offline
-				DBG("MSILO: m_dump: user <%.*s> goes offline - expires=%d\n",
+				DBG("MSILO:m_dump: user <%.*s> goes offline - expires=%d\n",
 						pto->uri.len, pto->uri.s, i);
 				goto error;
 			}
 			else
-				DBG("MSILO: m_dump: user <%.*s> online - expires=%d\n",
+				DBG("MSILO:m_dump: user <%.*s> online - expires=%d\n",
 						pto->uri.len, pto->uri.s, i);
 		}
 	}
 	else
 	{
-		DBG("MSILO: m_store: 'exprires' threw error at parsing\n");
+		DBG("MSILO:m_dump: 'exprires' threw error at parsing\n");
 		goto error;
 	}
 
@@ -660,7 +661,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	if((db_query(db_con,db_keys,NULL,db_vals,db_cols,db_no_keys,db_no_cols,
 			NULL,&db_res)==0) && (RES_ROW_N(db_res) > 0))
 	{
-		DBG("MSILO: m_dump: dumping [%d] messages for <%.*s>!!!\n", 
+		DBG("MSILO:m_dump: dumping [%d] messages for <%.*s>!!!\n", 
 				RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
 
 		for(i = 0; i < RES_ROW_N(db_res); i++) 
@@ -668,7 +669,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			mid =  RES_ROWS(db_res)[i].values[DUMP_IDX_MID].val.int_val;
 			if(msg_list_check_msg(ml, mid))
 			{
-				DBG("MSILO: m_dump: message[%d] mid=%d already sent.\n", 
+				DBG("MSILO:m_dump: message[%d] mid=%d already sent.\n", 
 					i, mid);
 				continue;
 			}
@@ -684,25 +685,27 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			if(m_build_headers(&hdr_str, str_vals[STR_IDX_CTYPE],
 					str_vals[STR_IDX_FROM]) < 0)
 			{
-				DBG("MSILO: m_dump: headers bulding failed!!!\n");
+				DBG("MSILO:m_dump: headers bulding failed!!!\n");
 				if (db_free_query(db_con, db_res) < 0)
-					DBG("MSILO: Error while freeing result of"
+					DBG("MSILO:m_dump: Error while freeing result of"
 						" query\n");
+				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 				goto error;
 			}
 			
 			if((msg_id = shm_malloc(sizeof(int))) == 0)
 			{
-				DBG("MSILO: m_dump: no more share memory!");
+				DBG("MSILO:m_dump: no more share memory!");
 				if (db_free_query(db_con, db_res) < 0)
-					DBG("MSILO: Error while freeing result of"
+					DBG("MSILO:m_dump: Error while freeing result of"
 						" query\n");
+				msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 				goto error;
 			}
 						
 			*msg_id = mid;
 			
-			DBG("MSILO: m_dump: msg [%d-%d] for: %.*s\n", i+1, *msg_id,
+			DBG("MSILO:m_dump: msg [%d-%d] for: %.*s\n", i+1, *msg_id,
 					sp->len, sp->s);
 			
 			/** sending using TM function: t_uac */
@@ -733,9 +736,9 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 					RES_ROWS(db_res)[i].values[DUMP_IDX_INC_TIME].val.int_val,
 					str_vals[STR_IDX_BODY] );
 			if(n<0)
-				DBG("MSILO: m_dump: sending simple body\n");
+				DBG("MSILO:m_dump: sending simple body\n");
 			else
-				DBG("MSILO: m_dump: sending composed body\n");
+				DBG("MSILO:m_dump: sending composed body\n");
 			
 			//tmb.t_uac(&msg_type, &pto->uri, &hdr_str,
 			//	&body_str, &str_vals[STR_IDX_FROM],
@@ -760,14 +763,14 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 	else
-		DBG("MSILO: m_dump: no stored message for <%.*s>!\n", pto->uri.len,
+		DBG("MSILO:m_dump: no stored message for <%.*s>!\n", pto->uri.len,
 					pto->uri.s);
 	/**
 	 * Free the result because we don't need it
 	 * anymore
 	 */
 	if (db_free_query(db_con, db_res) < 0)
-		DBG("MSILO: m_dump: Error while freeing result of query\n");
+		DBG("MSILO:m_dump: Error while freeing result of query\n");
 
 	return 1;
 error:
@@ -775,7 +778,8 @@ error:
 }
 
 /**
- * delete expired messages from database - waiting foe new DB module
+ * - cleaning up the messages that got reply
+ * - delete expired messages from database
  */
 void m_clean_silo(unsigned int ticks, void *param)
 {
@@ -785,31 +789,34 @@ void m_clean_silo(unsigned int ticks, void *param)
 	db_op_t  db_ops[1] = { OP_LEQ };
 	int n;
 	
-	DBG("MSILO: clean_silo: cleaning stored messages - %d\n", ticks);
+	DBG("MSILO:clean_silo: cleaning stored messages - %d\n", ticks);
 	
 	msg_list_check(ml);
 	mle = p = msg_list_reset(ml);
 	n = 0;
 	while(p)
 	{
-		db_keys[n] = DB_KEY_MID;
-		db_vals[n].type = DB_INT;
-		db_vals[n].nul = 0;
-		db_vals[n].val.int_val = p->msgid;
-		DBG("MSILO: clean_silo: cleaning stored message [%d]\n", p->msgid);
-		n++;
-		if(n==MAX_DEL_KEYS)
+		if(p->flag & MS_MSG_DONE)
 		{
-			if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
-				DBG("MSILO: clean_silo: error cleaning %d messages.\n", n);
-			n = 0;
+			db_keys[n] = DB_KEY_MID;
+			db_vals[n].type = DB_INT;
+			db_vals[n].nul = 0;
+			db_vals[n].val.int_val = p->msgid;
+			DBG("MSILO:clean_silo: cleaning sent message [%d]\n", p->msgid);
+			n++;
+			if(n==MAX_DEL_KEYS)
+			{
+				if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
+					DBG("MSILO:clean_silo: error cleaning %d messages.\n",n);
+				n = 0;
+			}
 		}
 		p = p->next;
 	}
 	if(n>0)
 	{
 		if (db_delete(db_con, db_keys, NULL, db_vals, n) < 0) 
-			DBG("MSILO: clean_silo: error cleaning %d messages\n", n);
+			DBG("MSILO:clean_silo: error cleaning %d messages\n", n);
 		n = 0;
 	}
 
@@ -818,13 +825,13 @@ void m_clean_silo(unsigned int ticks, void *param)
 	// cleaning expired messages
 	if(ticks%(check_time*clean_period)<check_time)
 	{
-		DBG("MSILO: clean_silo: cleaning expired messages\n");
+		DBG("MSILO:clean_silo: cleaning expired messages\n");
 		db_keys[0] = DB_KEY_EXP_TIME;
 		db_vals[0].type = DB_INT;
 		db_vals[0].nul = 0;
 		db_vals[0].val.int_val = (int)time(NULL);
 		if (db_delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
-			DBG("MSILO: clean_silo: ERROR cleaning expired messages\n");
+			DBG("MSILO:clean_silo: ERROR cleaning expired messages\n");
 	}
 }
 
@@ -847,20 +854,20 @@ void destroy(void)
 void m_tm_callback( struct cell *t, struct sip_msg *msg,
 	int code, void *param)
 {
-	DBG("MSILO: m_tm_callback: completed with status %d\n", code);
+	DBG("MSILO:m_tm_callback: completed with status %d\n", code);
 	if(!t->cbp)
 	{
-		DBG("MSILO: m_tm_callback: message id not received\n");
+		DBG("MSILO m_tm_callback: message id not received\n");
 		goto done;
 	}
 	if(!db_con)
 	{
-		DBG("MSILO: m_tm_callback: db_con is NULL\n");
+		DBG("MSILO:m_tm_callback: db_con is NULL\n");
 		goto done;
 	}
 	if(code < 200 || code >= 300)
 	{
-		DBG("MSILO: m_tm_callback: message <%d> was not sent successfully\n",
+		DBG("MSILO:m_tm_callback: message <%d> was not sent successfully\n",
 				*((int*)t->cbp));
 		msg_list_set_flag(ml, *((int*)t->cbp), MS_MSG_ERRO);
 		goto done;
