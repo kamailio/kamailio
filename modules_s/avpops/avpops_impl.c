@@ -199,6 +199,8 @@ inline static str* get_source_uri(struct sip_msg* msg,int source)
 		}
 		return &(get_to(msg)->uri);
 	} else if (source&AVPOPS_USE_RURI) {  /* RURI */
+		if(msg->new_uri.s!=NULL && msg->new_uri.len>0)
+			return &(msg->new_uri);
 		return &(msg->first_line.u.request.uri);
 	} else {
 		LOG(L_CRIT,"BUG:avpops:get_source_uri: unknow source <%d>\n",
