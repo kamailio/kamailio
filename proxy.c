@@ -30,7 +30,7 @@
  /*
   * History:
   * -------
-  *  2003-02-13  all *proxy fucntions are now proto aware (andrei)
+  *  2003-02-13  all *proxy functions are now proto aware (andrei)
   *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
   */
 

@@ -26,6 +26,10 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/* History:
+ * --------
+ *  2003-04-12  support for resolving ipv6 address references added (andrei)
+ */
 
 
 
@@ -156,16 +160,13 @@ static inline struct ip_addr* str2ip(str* st)
 	ip.len=4;
 	
 	return &ip;
-
-
-	     /* FIXME: janakj - is this correct ?, we return always 0 here 
-	      * Also we could use different loglevels here
-	      */
 error_dots:
 	DBG("str2ip: ERROR: too many dots in [%.*s]\n", st->len, st->s);
 	return 0;
  error_char:
+	/*
 	DBG("str2ip: WARNING: unexpected char %c in [%.*s]\n", *s, st->len, st->s);
+	*/
 	return 0;
 }
 
@@ -187,7 +188,15 @@ static inline struct ip_addr* str2ip6(str* st)
 	unsigned char* s;
 	
 	/* init */
-	s=(unsigned char*)st->s;
+	if ((st->len) && (st->s[0]=='[')){
+		/* skip over [ ] */
+		if (st->s[st->len-1]!=']') goto error_char;
+		s=(unsigned char*)(st->s+1);
+		limit=(unsigned char*)(st->s+st->len-1);
+	}else{
+		s=(unsigned char*)st->s;
+		limit=(unsigned char*)(st->s+st->len);
+	}
 	i=idx1=rest=0;
 	double_colon=0;
 	no_colons=0;
@@ -195,7 +204,6 @@ static inline struct ip_addr* str2ip6(str* st)
 	ip.len=16;
 	addr_start=ip.u.addr16;
 	addr=addr_start;
-	limit=(unsigned char*)(st->s+st->len);
 	memset(addr_start, 0 , 8*sizeof(unsigned short));
 	memset(addr_end, 0 , 8*sizeof(unsigned short));
 	for (; s<limit; s++){
@@ -253,8 +261,9 @@ error_colons:
 	return 0;
 
 error_char:
+	/*
 	DBG("str2ip6: WARNING: unexpected char %c in  [%.*s]\n", *s, st->len,
-			st->s);
+			st->s);*/
 	return 0;
 }
 
@@ -267,12 +276,15 @@ struct hostent* sip_resolvehost(str* name, unsigned short* port, int proto);
 /* gethostbyname wrappers
  * use this, someday they will use a local cache */
 
-static inline struct hostent* resolvehost(const char* name)
+static inline struct hostent* resolvehost(char* name)
 {
 	static struct hostent* he=0;
 #ifdef HAVE_GETIPNODEBYNAME 
 	int err;
 	static struct hostent* he2=0;
+#endif
+#ifndef DNS_IP_HACK
+	int len;
 #endif
 #ifdef DNS_IP_HACK
 	struct ip_addr* ip;
@@ -291,11 +303,24 @@ static inline struct hostent* resolvehost(const char* name)
 		return ip_addr2he(&s, ip);
 	}
 	
+#else /* DNS_IP_HACK */
+	len=0;
+	if (*name=='['){
+		len=strlen(name);
+		if (len && (name[len-1]==']')){
+			name[len-1]=0; /* remove '[' */
+			name++; /* skip '[' */
+			goto skip_ipv4;
+		}
+	}
 #endif
 	/* ipv4 */
 	he=gethostbyname(name);
 #ifdef USE_IPV6
 	if(he==0){
+#ifndef DNS_IP_HACK
+skip_ipv4:
+#endif
 		/*try ipv6*/
 	#ifdef HAVE_GETHOSTBYNAME2
 		he=gethostbyname2(name, AF_INET6);
@@ -308,6 +333,9 @@ static inline struct hostent* resolvehost(const char* name)
 	#else
 		#error neither gethostbyname2 or getipnodebyname present
 	#endif
+#ifndef DNS_IP_HACK
+		if (len) name[len-2]=']'; /* restore */
+#endif
 	}
 #endif
 	return he;
