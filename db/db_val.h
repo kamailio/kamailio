@@ -50,8 +50,9 @@ typedef enum {
  * Column value structure
  */
 typedef struct {
-	db_type_t type;                  /* Type of the value */
-	int nul;                         /* Means that the column in database has no value */
+	db_type_t type;                /* Type of the value */
+	int nul;                       /* Means that the column in database
+									  has no value */
 	union {
 		int          int_val;    /* integer value */
 		double       double_val; /* double value */
@@ -59,7 +60,7 @@ typedef struct {
 		const char*  string_val; /* NULL terminated string */
 		str          str_val;    /* str string value */
 		str          blob_val;   /* Blob data */
-	} val;                           /* union of all possible types */
+	} val;                       /* union of all possible types */
 } db_val_t;
 
 

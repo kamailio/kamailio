@@ -93,7 +93,8 @@ int init_stats(int nr_of_processes)
 	stats_segments = nr_of_processes;
 
 	if(stats_register() == -1)
-		LOG(L_WARN, "init_stats(): Couldn't register stats with snmp module\n");
+		LOG(L_WARN, "init_stats(): Couldn't register stats"
+					" with snmp module\n");
 
 
 	return 0;

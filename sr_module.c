@@ -228,7 +228,8 @@ void* find_param_export(char* mod, char* name, modparam_t type)
 			}
 		}
 	}
-	DBG("find_param_export: parameter <%s> or module <%s> not found\n", name, mod);
+	DBG("find_param_export: parameter <%s> or module <%s> not found\n",
+			name, mod);
 	return 0;
 }
 
@@ -272,7 +273,8 @@ int init_modules(void)
 	for(t = modules; t; t = t->next) {
 		if ((t->exports) && (t->exports->init_f))
 			if (t->exports->init_f() != 0) {
-				LOG(L_ERR, "init_modules(): Error while initializing module %s\n", t->exports->name);
+				LOG(L_ERR, "init_modules(): Error while initializing"
+							" module %s\n", t->exports->name);
 				return -1;
 			}
 	}

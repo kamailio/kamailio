@@ -58,14 +58,16 @@
  * Horde has been heavily optimized for multi-processor machines
  *
  * References:
- *   - list of malloc implementations: http://www.cs.colorado.edu/~zorn/Malloc.html
+ *   - list of malloc implementations: 
+ *       http://www.cs.colorado.edu/~zorn/Malloc.html
  *   - a white-paper: http://g.oswego.edu/dl/html/malloc.html
  *   - Paul R. Wilson, Mark S. Johnstone, Michael Neely, and David Boles: 
-       ``Dynamic Storage Allocation: A Survey and Critical Review'' in International 
-       Workshop on Memory Management, September 1995, 
-       ftp://ftp.cs.utexas.edu/pub/garbage/allocsrv.ps
+ *      ``Dynamic Storage Allocation: A Survey and Critical Review'' in
+ *      International Workshop on Memory Management, September 1995, 
+ *      ftp://ftp.cs.utexas.edu/pub/garbage/allocsrv.ps
  *   - ptmalloc: http://www.malloc.de/en/
- *   - GNU C-lib malloc: http://www.gnu.org/manual/glibc-2.0.6/html_chapter/libc_3.html
+ *   - GNU C-lib malloc:
+ *      http://www.gnu.org/manual/glibc-2.0.6/html_chapter/libc_3.html
  *   - delorie malocs: http://www.delorie.com/djgpp/malloc/
  *
  */
@@ -92,7 +94,8 @@
 #endif
 
 #ifdef DBG_QM_MALLOC
-#	define MORE_CORE(_q,_b,_s) (more_core( (_q), (_b), (_s), file, func, line ))
+#	define MORE_CORE(_q,_b,_s)\
+				(more_core( (_q), (_b), (_s), file, func, line ))
 #else
 #	define MORE_CORE(_q,_b,_s) (more_core( (_q), (_b), (_s) ))
 #endif
@@ -100,7 +103,8 @@
 
 
 /* dimensioning buckets: define the step function constants for size2bucket */
-int s2b_step[] = {8, 16, 32, 64, 128, 256, 512, 1024, 1536, 2048, 2560, MAX_FIXED_BLOCK, EO_STEP };
+int s2b_step[] = {8, 16, 32, 64, 128, 256, 512, 1024, 1536, 2048, 2560,
+					MAX_FIXED_BLOCK, EO_STEP };
 
 void my_assert( int assertation, int line, char *file, char *function )
 {
@@ -202,8 +206,8 @@ struct vqm_block* vqm_malloc_init(char* address, unsigned int size)
 	for (s=0, b=0; s<MAX_FIXED_BLOCK ; s++) {
 		while (s>s2b_step[b]) b++;
 		if (b>MAX_BUCKET) {
-			LOG(L_CRIT, "CRIT: vqm_malloc_init: attempt to install too many buckets,"
-				"s2b_step > MAX_BUCKET\n");
+			LOG(L_CRIT, "CRIT: vqm_malloc_init: attempt to install too"
+					" many buckets, s2b_step > MAX_BUCKET\n");
 			return 0;
 		}
 		qm->s2b[s] = b;
@@ -257,7 +261,8 @@ struct vqm_frag *more_core(	struct vqm_block* qm,
 	return new_chunk;
 }
 
-static inline void vqm_detach_free( struct vqm_block* qm, struct vqm_frag* frag)
+static inline void vqm_detach_free( struct vqm_block* qm,
+									struct vqm_frag* frag)
 {
 
 	struct vqm_frag *prev, *next;
@@ -331,11 +336,12 @@ void* vqm_malloc(struct vqm_block* qm, unsigned int size)
 	new_chunk->line=line;
 	new_chunk->demanded_size=demanded_size;
 	qm->usage[ bucket ]++;
-	DBG("vqm_malloc( %p, %d ) returns address %p in bucket %d, real-size %d \n",
+	DBG("vqm_malloc( %p, %d ) returns address %p in bucket %d, real-size %d\n",
 		qm, demanded_size, (char*)new_chunk+sizeof(struct vqm_frag), 
 		bucket, size );
 
-	new_chunk->end_check=(char*)new_chunk+sizeof(struct vqm_frag)+demanded_size;
+	new_chunk->end_check=(char*)new_chunk+
+							sizeof(struct vqm_frag)+demanded_size;
 	memcpy(  new_chunk->end_check, END_CHECK_PATTERN, END_CHECK_PATTERN_LEN );
 	new_chunk->check=ST_CHECK_PATTERN;
 #endif

@@ -76,7 +76,8 @@ error:
 
 
 
-struct action* mk_action(int type, int p1_type, int p2_type, void* p1, void* p2)
+struct action* mk_action(int type, int p1_type, int p2_type,
+											void* p1, void* p2)
 {
 	struct action* a;
 	a=(struct action*)malloc(sizeof(struct action));

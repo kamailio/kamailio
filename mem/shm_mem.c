@@ -109,7 +109,8 @@ inline static void* sh_realloc(void* p, unsigned int size)
 */
 
 #ifdef DBG_QM_MALLOC
-void* _shm_resize( void* p, unsigned int s, char* file, char* func, unsigned int line)
+void* _shm_resize( void* p, unsigned int s, char* file, char* func,
+					unsigned int line)
 #else
 void* _shm_resize( void* p , unsigned int s)
 #endif
@@ -139,7 +140,8 @@ void* _shm_resize( void* p , unsigned int s)
 
 #ifdef _OBSOLETED
 #ifdef DBG_QM_MALLOC
-void* _shm_resize( void* p, unsigned int s, char* file, char* func, unsigned int line)
+void* _shm_resize( void* p, unsigned int s, char* file, char* func,
+					unsigned int line)
 #else
 void* _shm_resize( void* p , unsigned int s)
 #endif
@@ -217,8 +219,7 @@ int shm_mem_init()
 				strerror(errno));
 		return -1;
 	}
-	shm_mempool=mmap(0, /* SHM_MEM_SIZE */ shm_mem_size, PROT_READ|PROT_WRITE, MAP_SHARED,
-						fd ,0);
+	shm_mempool=mmap(0, shm_mem_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd ,0);
 	/* close /dev/zero */
 	close(fd);
 #else

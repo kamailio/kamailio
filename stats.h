@@ -42,32 +42,36 @@
 
 
 #define _update_request( method, dir )			\
-	{ if (stat_file!=NULL) switch( method ) {	\
+	do{ if (stat_file!=NULL) switch( method ) {	\
           	case METHOD_INVITE: stats->dir##_requests_inv++; break;	\
           	case METHOD_ACK: stats->dir##_requests_ack++; break;		\
           	case METHOD_CANCEL: stats->dir##_requests_cnc++; break;	\
           	case METHOD_BYE: stats->dir##_requests_bye++; break;		\
           	case METHOD_OTHER: stats->dir##_requests_other++; break;	\
-          	default: LOG(L_ERR, "ERROR: unknown method in rq stats (%s)\n", #dir);	\
+          	default: LOG(L_ERR, "ERROR: unknown method in rq stats (%s)\n", \
+							#dir);	\
 		}	\
-        }
+	}while(0)
 
 
 /*
 #define update_received_request( method ) _update_request( method, received )
 #define update_sent_request( method ) _update_request( method, sent )
 
-#define update_received_response( statusclass ) _update_response( statusclass, received )
-#define update_sent_response( statusclass ) _update_response( statusclass, sent )
+#define update_received_response( statusclass ) \
+									_update_response( statusclass, received )
+#define update_sent_response( statusclass ) \
+									_update_response( statusclass, sent )
 #define update_received_drops	{  stats->received_drops++; }
 #define update_fail_on_send	{  stats->failed_on_send++; }
 */
 
-#define         _statusline(class, dir )       case class: stats->dir##_responses_##class++; break;
+#define         _statusline(class, dir )\
+						case class: stats->dir##_responses_##class++; break;
 
 /* FIXME: Don't have case for _other (see received_responses_other) */
 #define _update_response( statusclass, dir )		\
-        { if (stat_file!=NULL)                          \
+        do{ if (stat_file!=NULL)                          \
                 switch( statusclass ) {                 \
                         _statusline(1, dir)                   \
                         _statusline(2, dir)                   \
@@ -75,9 +79,10 @@
                         _statusline(4, dir)                   \
                         _statusline(5, dir)                   \
                         _statusline(6, dir)                   \
-                        default: LOG(L_INFO, "ERROR: unusual status code received in stats (%s)\n", #dir);    \
+                        default: LOG(L_INFO, "ERROR: unusual status code"\
+										 " received in stats (%s)\n", #dir); \
                 }       \
-        }
+        }while(0)
 
 #ifdef STATS
 #	define STATS_RX_REQUEST(method) _update_request(method, received)

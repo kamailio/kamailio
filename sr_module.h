@@ -52,34 +52,30 @@ typedef enum {
 struct module_exports{
 	char* name;                     /* null terminated module name */
 	char** cmd_names;               /* cmd names registered by this modules */
-	cmd_function* cmd_pointers;     /* pointers to the corresponding functions */
-	int* param_no;                  /* number of parameters used by the function */
+	cmd_function* cmd_pointers;     /* pointers to the corresponding
+									   functions */
+	int* param_no;                  /* number of parameters used
+									   by the function */
 	fixup_function* fixup_pointers; /* pointers to functions called to "fix"
-					 * the params, e.g: precompile a re 
-					 */
-	int cmd_no;       /* number of registered commands
-			   * (size of cmd_{names,pointers}
-			   */
+										the params, e.g: precompile a re */
+	int cmd_no;                     /* number of registered commands
+										(size of cmd_{names,pointers} */
 
 	char** param_names;    /* parameter names registered by this modules */
 	modparam_t* param_types; /* Type of parameters */
 	void** param_pointers; /* Pointers to the corresponding memory locations */
-	int par_no;            /* Number of registered parameters */
+	int par_no;            /* number of registered parameters */
 
 
 	init_function init_f;         /* Initilization function */
 	response_function response_f; /* function used for responses,
-				       * returns yes or no;
-				       * can be null 
-				       */
+									returns yes or no; can be null */
 	destroy_function destroy_f;  /* function called when the module should
-				      * be "destroyed", e.g: on ser exit;
-				      * can be null 
-				      */
+									be "destroyed", e.g: on ser exit;
+									can be null */
 	onbreak_function onbreak_f;
-	child_init_function init_child_f;  /* Function will be called by all 
-					    * processes after the fork 
-					    */
+	child_init_function init_child_f;  /* function called by all processes
+										  after the fork */
 };
 
 struct sr_module{

@@ -549,7 +549,8 @@ char * build_res_buf_from_sip_res( struct sip_msg* msg,
 	new_len=len+lumps_len(msg->repl_add_rm);
 
 	DBG(" old size: %d, new size: %d\n", len, new_len);
-	new_buf=(char*)pkg_malloc(new_len+1); /* +1 is for debugging (\0 to print it )*/
+	new_buf=(char*)pkg_malloc(new_len+1); /* +1 is for debugging 
+											 (\0 to print it )*/
 	if (new_buf==0){
 		LOG(L_ERR, "ERROR: build_res_buf_from_sip_res: out of mem\n");
 		goto error;

@@ -259,9 +259,10 @@ int names_len[MAX_LISTEN];            /* lengths of the names*/
 struct ip_addr addresses[MAX_LISTEN]; /* our ips */
 int addresses_no=0;                   /* number of names/ips */
 #endif
-struct socket_info sock_info[MAX_LISTEN]; /* all addresses we listen/send from*/
+struct socket_info sock_info[MAX_LISTEN];/*all addresses we listen/send from*/
 int sock_no=0; /* number of addresses/open sockets*/
-struct socket_info* bind_address; /* pointer to the crt. proc. listening address */
+struct socket_info* bind_address; /* pointer to the crt. proc.
+									 listening address*/
 int bind_idx; /* same as above but index in the bound[] array */
 struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
 struct socket_info* sendipv6; /* same as above for ipv6 */
@@ -515,7 +516,8 @@ int main_loop()
 		bind_address=&sock_info[0];
 		bind_idx=0;
 		if (sock_no>1){
-			LOG(L_WARN, "WARNING: using only the first listen address (no fork)\n");
+			LOG(L_WARN, "WARNING: using only the first listen address"
+						" (no fork)\n");
 		}
 
 		/* process_no now initialized to zero -- increase from now on
@@ -601,7 +603,6 @@ int main_loop()
 						LOG(L_ERR, "init_child failed\n");
 						goto error;
 					}
-					/* process_bit = 1 << (i+r*children_no); */ /*or process_no-1*/
 #ifdef STATS
 					setstats( i+r*children_no );
 #endif
@@ -654,8 +655,9 @@ int main_loop()
 	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 	/*DEBUG- remove it*/
 #ifdef DEBUG
-	printf("\n% 3d processes, % 3d children * % 3d listening addresses + main + fifo %s\n",
-			process_no+1, children_no, sock_no, (timer_list)?"+ timer":"");
+	printf("\n% 3d processes, % 3d children * % 3d listening addresses + main"
+			" + fifo %s\n", process_no+1, children_no, sock_no,
+			(timer_list)?"+ timer":"");
 	for (r=0; r<=process_no; r++){
 		printf("% 3d   % 5d\n", r, pt[r].pid);
 	}
@@ -1274,8 +1276,8 @@ int main(int argc, char** argv)
 	}
 	if (dont_fork){
 		fprintf(stderr, "WARNING: no fork mode %s\n", 
-				(sock_no>1)?" and more than one listen address found (will use only the"
-				" the first one)":"");
+				(sock_no>1)?" and more than one listen address found (will"
+							" use only the the first one)":"");
 	}
 	
 	/* init_daemon? */

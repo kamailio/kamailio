@@ -62,7 +62,8 @@
 #	define ST_CHECK_PATTERN   	0xf0f0f0f0
 #	define END_CHECK_PATTERN  	"sExP"
 #	define END_CHECK_PATTERN_LEN 	4
-#	define VQM_OVERHEAD (sizeof(struct vqm_frag)+ sizeof(struct vqm_frag_end)+END_CHECK_PATTERN_LEN)
+#	define VQM_OVERHEAD (sizeof(struct vqm_frag)+ \
+							sizeof(struct vqm_frag_end)+END_CHECK_PATTERN_LEN)
 #	define VQM_DEBUG_FRAG(qm, f) vqm_debug_frag( (qm), (f))
 #else
 #	define VQM_DEBUG_FRAG(qm, f)
