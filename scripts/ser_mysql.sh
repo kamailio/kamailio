@@ -234,7 +234,7 @@ CREATE TABLE version (
 # Dumping data for table 'version'
 #
 
-INSERT INTO version VALUES ( 'subscriber', '4');
+INSERT INTO version VALUES ( 'subscriber', '5');
 INSERT INTO version VALUES ( 'reserved', '1');
 INSERT INTO version VALUES ( 'phonebook', '1');
 INSERT INTO version VALUES ( 'pending', '4');
@@ -439,6 +439,8 @@ CREATE TABLE pending (
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   rpid varchar(128) default NULL,
+  domn int(10) default NULL,
+  uuid varchar(64) default NULL,
   PRIMARY KEY ($USERCOL, domain),
   KEY user_2 ($USERCOL),
   UNIQUE KEY phplib_id (phplib_id)
@@ -504,6 +506,8 @@ CREATE TABLE subscriber (
   allow_find char(1) NOT NULL default '0',
   timezone varchar(128) default NULL,
   rpid varchar(128) default NULL,
+  domn int(10) default NULL,
+  uuid varchar(64) default NULL,
   UNIQUE KEY phplib_id (phplib_id),
   PRIMARY KEY ($USERCOL, domain),
   KEY user_2 ($USERCOL)
