@@ -18,7 +18,7 @@
 	$(CC) $(CFLAGS) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $< \
+	@set -e; $(MKDEP) $(DEFS) $< \
 	|  sed 's#\($*\)\.o[ :]*#\1.o $@ : #g' > $@; \
 	[ -s $@ ] || rm -f $@
 

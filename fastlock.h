@@ -35,10 +35,13 @@
 #ifndef fastlock_h
 #define fastlock_h
 
-
+#ifdef HAVE_SCHED_YIELD
 #include <sched.h>
-
-
+#else
+#include <unistd.h>
+	/* fake sched_yield */
+	#define sched_yield()	sleep(0)
+#endif
 
 
 typedef  volatile int fl_lock_t;

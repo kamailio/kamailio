@@ -32,7 +32,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 #include "../../parser/msg_parser.h"
 #include "../../types.h"

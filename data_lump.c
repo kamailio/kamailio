@@ -39,6 +39,9 @@
 #include <dmalloc.h>
 #endif
 
+/* WARNING: all lump add/insert operations excpect a pkg_malloc'ed char* 
+ * pointer the will be DEALLOCATED when the sip_msg is destroyed! */
+
 
 /* adds a header to the end
  * returns  pointer on success, 0 on error */

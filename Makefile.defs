@@ -7,7 +7,7 @@
 #version number
 VERSION = 0
 PATCHLEVEL = 8
-SUBLEVEL =   10-pre4
+SUBLEVEL =   10-pre5
 EXTRAVERSION = 
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
@@ -178,7 +178,7 @@ ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_VER=$(CC) $(shell $(CC) --version|head -1| \
 				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
 	# sun sed is a little brain damaged => this complicated expression
-	MKDEP=$(CC) -MM $(DEFS)
+	MKDEP=$(CC) -MM 
 	#transform gcc version into 2.9x or 3.0
 	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
 				 sed -e 's/[^0-9]*-\(.*\)/\1/'| \
@@ -191,7 +191,7 @@ ifneq (, $(findstring Sun, $(CC_LONGVER)))
 	CC_SHORTVER=$(shell echo "$(CC_LONGVER)"|head -1| \
 					sed -e 's/.*\([0-9]\.[0-9]\).*/\1/g' )
 	CC_VER=$(CC) $(CC_SHORTVER)
-	MKDEP=$(CC) -xM1 $(DEFS)
+	MKDEP=$(CC) -xM1 
 endif
 
 ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
@@ -201,7 +201,7 @@ ifneq (, $(findstring Intel(R) C++ Compiler, $(CC_LONGVER)))
 					sed -e 's/.*Version \([0-9]\.[0-9]\.[0-9]*\).*/\1/g' )
 	CC_SHORTVER=$(shell echo "$(CC_FULLVER)" | cut -d. -f1,2 )
 	CC_VER=$(CC) $(CC_FULLVER)
-	MKDEP=$(CC) -MM $(DEFS)
+	MKDEP=$(CC) -MM 
 endif
 
 
@@ -210,7 +210,7 @@ ifeq (,$(CC_NAME))
 	CC_NAME=$(CC)
 	CC_SHORTVER=unknown
 	CC_VER=unknown
-	MKDEP=gcc -MM $(DEFS)
+	MKDEP=gcc -MM 
 $(warning	Unknown compiler $(CC)\; supported compilers: \
 			gcc, sun cc, intel icc )
 endif
@@ -265,7 +265,7 @@ ifeq	($(ARCH), i386)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
+				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
 					-Wall   \
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
@@ -309,7 +309,7 @@ ifeq	($(ARCH), sparc)
 			#if gcc
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  $(PROFILE) -Winline\
+				CFLAGS=-O9 -funroll-loops  $(PROFILE) \
 					-Wall\
 					#-Wcast-align \
 					#-Wmissing-prototypes 
@@ -353,7 +353,7 @@ ifeq	($(ARCH), arm)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) -Winline\
+				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
 					-Wall   \
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
@@ -415,7 +415,7 @@ endif
 	# -andrei
 else	#mode,release
 ifeq	($(CC_NAME), gcc)
-		CFLAGS=-g -Wcast-align -Winline $(PROFILE)
+		CFLAGS=-g -Wcast-align $(PROFILE)
 ifeq		($(ARCH), sparc)
 			CFLAGS+= -mcpu=ultrasparc 
 endif
@@ -467,6 +467,9 @@ LIBS= -lfl -ldl -lresolv
 ifneq ($(OS), solaris)
 	DEFS+=-DHAVE_GETHOSTBYNAME2 -DHAVE_UNION_SEMUN
 endif
+ifneq ($(OS), openbsd)
+	DEFS+=-DHAVE_SCHED_YIELD
+endif
 
 
 #os specific stuff
@@ -501,9 +504,12 @@ ifeq ($(OS), freebsd)
 endif
 
 ifeq ($(OS), openbsd)
-	DEFS+=-DHAVE_SOCKADDR_SA_LEN
+	DEFS+=-DHAVE_SOCKADDR_SA_LEN -DDLSYM_PREFIX='"_"'
+	# (symbols on openbsd are prefixed by "_")
 	YACC=yacc
-	LIBS= -lfl  -lc_r
+	# no sched_yield on openbsd unless linking with c_r (not recommended)
+	LIBS= -lfl 
+	LDFLAGS=        # openbsd ld doesn't like -O2 or -E
 endif
 	
 ifeq ($(OS), netbsd)

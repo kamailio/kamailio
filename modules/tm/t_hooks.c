@@ -31,7 +31,8 @@
 #include "../../error.h"
 #include "t_hooks.h"
 
-static struct tm_callback_s* callback_array[ TMCB_END ] = { 0, 0 } ;
+/* strange things happen if callback_array is static on openbsd */
+struct tm_callback_s* callback_array[ TMCB_END ] = { 0, 0 } ;
 static int callback_id=0;
 
 /* register a callback function 'f' of type 'cbt'; will be called
