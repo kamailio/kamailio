@@ -127,13 +127,16 @@ void print_contact(FILE* _o, contact_body_t* _c)
  * Contact header field iterator, returns next contact if any, it doesn't
  * parse message header if not absolutely necessary
  */
-contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
+int contact_iterator(contact_t** c, struct sip_msg* msg, contact_t* prev)
 {
 	static struct hdr_field* hdr = 0;
 	struct hdr_field* last;
 	contact_body_t* cb;
 
-	if (!msg) return 0;
+	if (!msg) {
+		LOG(L_ERR, "contact_iterator: Invalid parameter value\n");
+		return -1;
+	}
 
 	if (!prev) {
 		     /* No pointer to previous contact given, find topmost
@@ -141,13 +144,36 @@ contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
 		      * inside that header field
 		      */
 		hdr = msg->contact;
+		if (!hdr) {
+			if (parse_headers(msg, HDR_CONTACT, 0) == -1) {
+				LOG(L_ERR, "contact_iterator: Error while parsing headers\n");
+				return -1;
+			}
+
+			hdr = msg->contact;
+		}
+
+		if (hdr) {
+			if (parse_contact(hdr) < 0) {
+				LOG(L_ERR, "contact_iterator: Error while parsing Contact\n");
+				return -1;
+			}
+		} else {
+			*c = 0;
+			return 1;
+		}
+
 		cb = (contact_body_t*)hdr->parsed;
-		return cb->contacts;
+		*c = cb->contacts;
+		return 0;
 	} else {
 		     /* Check if there is another contact in the
 		      * same header field and if so then return it
 		      */
-		if (prev->next) return prev->next;
+		if (prev->next) {
+			*c = prev->next;
+			return 0;
+		}
 
 		     /* Try to find and parse another Contact
 		      * header field
@@ -168,7 +194,7 @@ contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
 			      */
 			if (parse_headers(msg, HDR_CONTACT, 1) == -1) {
 				LOG(L_ERR, "contact_iterator: Error while parsing message header\n");
-				return 0;
+				return -1;
 			}
 			
 			     /* Check if last found header field is Contact
@@ -180,19 +206,21 @@ contact_t* contact_iterator(struct sip_msg* msg, contact_t* prev)
 			    (msg->last_header != last)) {
 				hdr = msg->last_header;
 			} else {
-				return 0;
+				*c = 0;
+				return 1;
 			}
 		}
 		
 		if (parse_contact(hdr) < 0) {
 			LOG(L_ERR, "contact_iterator: Error while parsing Contact HF body\n");
-			return 0;
+			return -1;
 		}
 		
 		     /* And return first contact within that
 		      * header field
 		      */
 		cb = (contact_body_t*)hdr->parsed;
-		return cb->contacts;
+		*c = cb->contacts;
+		return 0;
 	}
 }
