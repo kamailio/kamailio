@@ -41,8 +41,12 @@
 #include "../../data_lump.h"
 #include "../../data_lump_rpl.h"
 #include "../../error.h"
+#include "../../forward.h"
 #include "../../mem/mem.h"
+#include "../../parser/parse_uri.h"
 #include "../../parser/parser_f.h"
+#include "../../resolve.h"
+#include "../../timer.h"
 #include "../../ut.h"
 #include "../registrar/sip_msg.h"
 #include <stdio.h>
@@ -52,10 +56,17 @@
 
 static int fix_nated_contact_f(struct sip_msg*, char*, char*);
 static int fix_nated_sdp_f(struct sip_msg*, char*, char*);
+static void timer(unsigned int, void *);
 
 inline static int fixup_str2int(void**, int);
 
 static int mod_init(void);
+
+static int (*get_all_ucontacts)(void *buf, int len) = NULL;
+
+static int cblen = 0;
+static int natping_interval = 0;
+static const char sbuf[4] = {0, 0, 0, 0};
 
 static cmd_export_t cmds[]={
 		{"fix_nated_contact", fix_nated_contact_f, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -64,6 +75,7 @@ static cmd_export_t cmds[]={
 	};
 
 static param_export_t params[]={
+	{"natping_interval", INT_PARAM, &natping_interval},
 	{0,0,0}
 };
 
@@ -81,6 +93,16 @@ struct module_exports exports={
 static int
 mod_init(void)
 {
+
+	get_all_ucontacts =
+	    (int (*)(void *, int))find_export("~ul_get_all_ucontacts", 1, 0);
+	if (!get_all_ucontacts) {
+		LOG(L_ERR, "This module requires usrloc module\n");
+		return -1;
+	}
+	if (natping_interval > 0)
+		register_timer(timer, NULL, natping_interval);
+
 	return 0;
 }
 
@@ -373,4 +395,74 @@ finalise:
 	}
 
 	return 1;
+}
+
+static void
+timer(unsigned int ticks, void *param)
+{
+	int rval;
+	void *buf, *cp;
+	str c;
+	struct sip_uri curi;
+	union sockaddr_union to;
+	struct hostent* he;
+	struct socket_info* send_sock;
+
+	buf = NULL;
+	if (cblen > 0) {
+		buf = pkg_malloc(cblen);
+		if (buf == NULL) {
+			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
+			return;
+		}
+	}
+	rval = get_all_ucontacts(buf, cblen);
+	if (rval > 0) {
+		if (buf != NULL)
+			pkg_free(buf);
+		cblen = rval * 2;
+		buf = pkg_malloc(cblen);
+		if (buf == NULL) {
+			LOG(L_ERR, "ERROR: nathelper::timer: out of memory\n");
+			return;
+		}
+		rval = get_all_ucontacts(buf, cblen);
+		if (rval != 0) {
+			pkg_free(buf);
+			return;
+		}
+	}
+
+	if (buf == NULL)
+		return;
+
+	cp = buf;
+	while (1) {
+		memcpy(&(c.len), cp, sizeof(c.len));
+		if (c.len == 0)
+			break;
+		c.s = cp + sizeof(c.len);
+		cp += sizeof(c.len) + c.len;
+		if (parse_uri(c.s, c.len, &curi) < 0) {
+			LOG(L_ERR, "ERROR: nathelper::timer: can't parse contact uri\n");
+			continue;
+		}
+		if (curi.proto != PROTO_UDP)
+			continue;
+		if (curi.port_no == 0)
+			curi.port_no = SIP_PORT;
+		he = sip_resolvehost(&curi.host, &curi.port_no, curi.proto);
+		if (he == NULL){
+			LOG(L_ERR, "ERROR: nathelper::timer: can't resolve_hos\n");
+			continue;
+		}
+		hostent2su(&to, he, 0, htons(curi.port_no));
+		send_sock = get_send_socket(&to, curi.proto);
+		if (send_sock == NULL) {
+			LOG(L_ERR, "ERROR: nathelper::timer: can't get sending socket\n");
+			continue;
+		}
+		udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to);
+	}
+	pkg_free(buf);
 }
