@@ -19,7 +19,7 @@ YACC=bison
 YACC_FLAGS=-d
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl
+LIBS=-lfl -L/usr/local/lib
 ALLDEP=Makefile
 
 MKDEP=gcc -M

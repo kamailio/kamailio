@@ -241,7 +241,7 @@ static int comp_ip(unsigned a, void* param, int op, int subtype)
 			if (ret==1) break;
 			/* 2: (slow) rev dns the address
 			 * and compare with all the aliases */
-			he=gethostbyaddr(&a, sizeof(a), AF_INET);
+			he=gethostbyaddr((char*)&a, sizeof(a), AF_INET);
 			if (he==0){
 				LOG(L_DBG, "comp_ip: could not rev_resolve %x\n", a);
 				ret=0;

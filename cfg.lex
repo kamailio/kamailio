@@ -80,7 +80,7 @@ LBRACE		\{
 RBRACE		\}
 LBRACK		\[
 RBRACK		\]
-COMMA		,
+COMMA		","
 DOT			\.
 CR			\n
 
