@@ -87,6 +87,7 @@ REALM_COLUMN=domain
 HA1_COLUMN=HA1
 HA1B_COLUMN=HA1B
 PASSWORD_COLUMN=password
+RPID_COLUMN=rpid
 SUBSCRIBER_COLUMN='username'
 EMAIL_COLUMN=email_address
 SUB_CREATED_COLUMN=datetime_created
@@ -140,6 +141,9 @@ parameter usage:
  alias show [<alias>] ............... show aliases
  alias rm <alias> ................... remove an alias
  alias add <alias> <uri> ............ add an aliases 
+ rpid add <username> <rpid> ......... add rpid for a user (*)
+ rpid rm <username> ................. set rpid to NULL for a user (*)
+ rpid show <username> ............... show rpid of a user
 
            * access control lists *
  acl show [<username>] .............. show user membership
@@ -424,6 +428,80 @@ usrloc() {
 			fifo_cmd ul_rm $USRLOC_TABLE "$SERUSER@$SERDOMAIN"
 
             ;;
+
+		*)
+			usage
+			exit 1
+			;;
+	esac
+}
+
+rpid() {
+	if [ "$#" -lt 2 ] ; then
+		echo "rpid: too few parameters"
+		exit 1
+	fi
+        shift;
+
+	case $1 in
+		show)
+			if [ $# -eq 2 ] ; then
+				set_user $2
+				is_user 
+				if [ $? -ne 0 ] ; then
+					echo non-existent user
+					exit 1;
+				fi
+				CLAUSE=" WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN' "
+			elif [ $# -ne 1 ] ; then
+				usage
+				exit 1
+			fi
+			QUERY="select $SUBSCRIBER_COLUMN, $RPID_COLUMN FROM $SUB_TABLE $CLAUSE ; "
+			sql_ro_query "$QUERY"
+			;;
+
+		add|rm)
+		        MODE=$1;
+
+			if [ "$MODE" == "add" ] ; then
+			    ARG_NUM=3;
+			else
+			    ARG_NUM=2;
+			fi
+			
+			if [ $# -lt $ARG_NUM ] ; then
+				usage
+				exit 1
+			fi
+
+			prompt_pw
+			set_user $2
+			is_user 
+			if [ $? -ne 0 ] ; then
+				echo non-existent user
+				exit 1
+			fi
+			shift 2
+
+			if [ "$MODE" = "add" ] ; then
+			        RPID_VAL="'$1'";
+			else
+			        RPID_VAL=NULL;
+			fi
+
+			QUERY="UPDATE $SUB_TABLE \
+                	SET $RPID_COLUMN=$RPID_VAL \
+                	WHERE $SUBSCRIBER_COLUMN='$SERUSER' AND $REALM_COLUMN='$SERDOMAIN';"
+				sql_query "$QUERY"
+				if [ $? -ne 0 ] ; then
+					echo "SQL Error"
+					exit 1
+				fi
+
+			$0 rpid show $SERUSER@$SERDOMAIN
+
+			;;
 
 		*)
 			usage
@@ -763,6 +841,10 @@ case $1 in
 
 	alias|ul)
 		usrloc "$@"
+		;;
+
+        rpid)
+	        rpid "$@"
 		;;
 
 	online)
