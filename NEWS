@@ -3,6 +3,13 @@ Release notes for SIP Express Router (ser)
 
 $Id$
 
+0.8.12 changes
+
+texops:
+ - subst('s/re/repl/flags') support
+
+
+
 ***********************************************
 * Changes introduced in 0.8.11
 ***********************************************

@@ -451,7 +451,8 @@ error:
 
 
 
-/* return the substitution result in a str, input must be 0 term */ 
+/* returns the substitution result in a str, input must be 0 term
+ *  0 on no match or malloc error */ 
 str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
 {
 	str* res;
@@ -468,14 +469,23 @@ str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
 	len=strlen(input);
 	end=input+len;
 	lst=subst_run(se, input, msg);
-	for (l=lst; l; l=l->next)
+	if (lst==0){
+		DBG("subst_str: no match\n");
+		return 0;
+	}
+	DBG("subst_str: orig len: %d\n", len);
+	for (l=lst; l; l=l->next){
+		DBG("subst_str: len+=%d (size=%d)\n", l->rpl.len-l->size, l->size );
 		len+=(int)(l->rpl.len)-l->size;
+	}
+	DBG("subst_str: new len: %d\n", len);
 	res=pkg_malloc(sizeof(str));
 	if (res==0){
 		LOG(L_ERR, "ERROR: subst_str: mem. allocation error\n");
 		goto error;
 	}
-	res->s=pkg_malloc(len);
+	res->s=pkg_malloc(len+1); /* space for null termination */
+	res->s[len]=0;
 	if (res->s==0){
 		LOG(L_ERR, "ERROR: subst_str: mem. allocation error (res->s)\n");
 		goto error;
@@ -487,8 +497,8 @@ str* subst_str(char *input, struct sip_msg* msg, struct subst_expr* se)
 	p=input;
 	for(l=lst; l; l=l->next){
 		size=l->offset+input-p;
-		memcpy(dest, p, size);
-		p+=size;
+		memcpy(dest, p, size); /* copy till offset */
+		p+=size + l->size; /* skip l->size bytes */
 		dest+=size;
 		if (l->rpl.len){
 			memcpy(dest, l->rpl.s, l->rpl.len);
