@@ -492,7 +492,12 @@ static inline int
 get_callid(struct sip_msg* _m, str* _cid)
 {
 
-	if (_m->callid == 0) {
+	if ((parse_headers(_m, HDR_CALLID, 0) == -1)) {
+		LOG(L_ERR, "get_callid(): parse_headers() failed\n");
+		return -1;
+	}
+
+	if (_m->callid == NULL) {
 		LOG(L_ERR, "get_callid(): Call-ID not found\n");
 		return -1;
 	}
