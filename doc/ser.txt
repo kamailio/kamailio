@@ -1,0 +1,47 @@
+$Id$
+
+iptel.org SIP Express Router (SER) is a high-performance, 
+configurable, free server implementing Session Initiation 
+Protocol (SIP, RFC3216). SIP is a signaling protocol that 
+allows Internet users to establish VoIP calls, advertise 
+their presence status, send and receive instant messages,
+and maintain any kind of session including games and chats. 
+A major benefit of SIP is it creates an open framework for 
+composing services out of multiple components.
+
+SER features flexibility that allows it to act in many roles
+needed for implementation of such services. For example, it 
+can act as registrar and location server to provide mobility
+to users. It can also act as an access control element that 
+guards PSTN gateways or any other scare SIP resources. Its
+built-in configuration language along with use of "plug-in"
+modules allows to add more new functionality easily. Currently 
+available plug-ins implement messaging gateways to SMS and 
+Jabber, RADIUS accounting and authorization, message store, 
+SIMPLE presence agent and ENUM.
+
+There is also an application interface, that provides effective
+coupling with SIP-unaware applications. The applications, like web 
+interface or administrative tools, can easily watch and manipulate
+server status, initiate SIP transactions and build features
+such as "click-to-dial". The application-interface is language-
+independent and can be used along with a variety of effective
+programming languages.
+
+SER has been designed to be able to scale and deal with various
+stress conditions. These may include communication with broken 
+network components, signaling over NATs,  power-up reboot avalanches, 
+large user population, and any SIP applications generating high 
+volume of traffic. Currently, transactional throughput of the
+server reaches thousands of calls per second on an off the 
+shelf PC.
+
+--
+
+Technical information: ANSI C-Written. Ported to Linux, BSD and Solaris (Sun). 
+Support for both IPv4 and IPv6. Small footprint size: 300k core, all common 
+plug-ins (optional) up to 630k. Web-based user provisioning, serweb, available.
+
+More information: SER distribution and documentation is available from
+iptel.org's site at http://www.iptel.org/ser/. User forum is available
+at http://mail.iptel.org/mailman/listinfo/serusers/.
