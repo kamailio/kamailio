@@ -199,18 +199,20 @@ int t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  )
 int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int dest_port_param )
 {
    int	branch = 0;	/* we don't do any forking right now */
+
    /* it's about the same transaction or not? */
    if ( global_msg_id != p_msg->id )
    {
       T = (struct cell*)-1;
       global_msg_id = p_msg->id;
    }
-	DBG("t_forward: 1. T=%x\n", T);
+
+   DBG("t_forward: 1. T=%x\n", T);
    /* if  T hasn't been previous searched -> search for it */
    if ( (int)T ==-1 )
       t_lookup_request( p_msg, 0 , 0 );
 
-	DBG("t_forward: 2. T=%x\n", T);
+   DBG("t_forward: 2. T=%x\n", T);
    /*if T hasn't been found after all -> return not found (error) */
    if ( !T )
       return -1;
@@ -293,6 +295,62 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
    return 1;
+}
+
+
+
+
+/* Forwards the inbound request to dest. from via.  Returns:
+ *       1 - forward successfull
+ *      -1 - error during forward
+ */
+int t_forward_uri( struct sip_msg* p_msg, char* foo, char* bar  )
+{
+   struct hostent  *nhost;
+   unsigned int     ip, port;
+   char                  backup;
+   str                      uri;
+
+
+   /* it's about the same transaction or not? */
+   if ( global_msg_id != p_msg->id )
+   {
+      T = (struct cell*)-1;
+      global_msg_id = p_msg->id;
+   }
+
+   DBG("DEBUG: t_forward: 1. T=%x\n", T);
+   /* if  T hasn't been previous searched -> search for it */
+   if ( (int)T ==-1 )
+      t_lookup_request( p_msg, 0 , 0 );
+
+   DBG("DEBUG: t_forward: 2. T=%x\n", T);
+   /*if T hasn't been found after all -> return not found (error) */
+   if ( !T )
+      return -1;
+
+   /* the original uri has been changed? */
+   if (p_msg->new_uri.s==0 || p_msg->new_uri.len==0)
+     uri = p_msg->first_line.u.request.uri;
+   else
+     uri = p_msg->new_uri;
+
+   /*some dirty trick to get the port and ip of destination */
+   backup = *((uri.s)+(uri.len));
+   *((uri.s)+(uri.len)) = 0;
+   nhost = gethostbyname( uri.s );
+   *((uri.s)+(uri.len)) = backup;
+   if ( !nhost )
+   {
+      DBG("DEBUG: t_forward_uri: cannot resolve host\n");
+      return -1;
+   }
+   /*IP address*/
+   memcpy(&ip, nhost->h_addr_list[0], sizeof(unsigned int));
+   /* port */
+   port = 5060;
+
+   return t_forward( p_msg , ip , port );
 }
 
 
@@ -481,7 +539,7 @@ int t_send_reply(  struct sip_msg* p_msg , unsigned int code , char * text )
              return -1;
           memcpy( &(T->inbound_response->to.sin_addr) , &(nhost->h_addr) , nhost->h_length );
           T->inbound_response->dest_ip         = htonl(T->inbound_response->to.sin_addr.s_addr);
-          T->inbound_response->dest_port      = ntohl(T->inbound_response->to.sin_port);
+          T->inbound_response->dest_port      = htonl(T->inbound_response->to.sin_port);
           T->inbound_response->to.sin_family = AF_INET;
       }
       T->status = code;

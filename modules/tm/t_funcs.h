@@ -40,6 +40,8 @@ int tm_shutdown();
 int  t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar  );
 
 
+
+
 /* function returns:
  *      -1 - transaction wasn't found
  *       1 - transaction found
@@ -47,12 +49,23 @@ int  t_add_transaction( struct sip_msg* p_msg, char* foo, char* bar  );
 int  t_lookup_request( struct sip_msg* p_msg, char* foo, char* bar  );
 
 
-/* function returns:
+
+
+/* Forwards the inbound request to a given IP and port.  Returns:
  *       1 - forward successfull
  *      -1 - error during forward
  */
 int t_forward( struct sip_msg* p_msg , unsigned int dst_ip ,
 				unsigned int dst_port);
+
+
+
+
+/* Forwards the inbound request to dest. from via.  Returns:
+ *       1 - forward successfull
+ *      -1 - error during forward
+ */
+int t_forward_uri( struct sip_msg* p_msg , char* foo, char* bar );
 
 
 

@@ -23,15 +23,17 @@
 /*static int test_f(struct sip_msg*, char*,char*);*/
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2);
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2);
-static int t_forward_uri(struct sip_msg* msg, char* str, char* str2);
+static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2);
 static int fixup_t_forward(void** param, int param_no);
+static int fixup_t_forward_def(void** param, int param_no);
 static int fixup_t_send_reply(void** param, int param_no);
 
 static struct module_exports nm_exports= {
-	"tm_module", 
+	"tm_module",
 	(char*[]){	"t_add_transaction",
 				"t_lookup_request",
 				"t_forward",
+				"t_forward_def",
 				"t_forward_uri",
 				"t_send_reply",
 				"t_retransmit_reply"
@@ -40,6 +42,7 @@ static struct module_exports nm_exports= {
 					t_add_transaction,
 					t_lookup_request,
 					w_t_forward,
+					w_t_forward_def,
 					t_forward_uri,
 					w_t_send_reply,
 					t_retransmit_reply,
@@ -48,6 +51,7 @@ static struct module_exports nm_exports= {
 				0,
 				0,
 				2,
+				1,
 				0,
 				2,
 				0
@@ -56,11 +60,12 @@ static struct module_exports nm_exports= {
 				0,
 				0,
 				fixup_t_forward,
+				fixup_t_forward_def,
 				0,
 				fixup_t_send_reply,
 				0
 		},
-	6,
+	7,
 	(response_function) t_on_reply_received
 };
 
@@ -126,6 +131,44 @@ static int fixup_t_forward(void** param, int param_no)
 
 
 
+static int fixup_t_forward_def(void** param, int param_no)
+{
+	char* name;
+	struct hostent* he;
+	int err;
+#ifdef DNS_IP_HACK
+	unsigned int ip;
+	int len;
+#endif
+
+	DBG("TM module: fixup_t_forward_def(%s, %d)\n", (char*)*param, param_no);
+	if (param_no==1){
+		name=*param;
+#ifdef DNS_IP_HACK
+		len=strlen(name);
+		ip=str2ip(name, len, &err);
+		if (err==0){
+			goto copy;
+		}
+#endif
+		/* fail over to normal lookup */
+		he=gethostbyname(name);
+		if (he==0){
+			LOG(L_CRIT, "ERROR: mk_proxy: could not resolve hostname:"
+						" \"%s\"\n", name);
+			return E_BAD_ADDRESS;
+		}
+		memcpy(&ip, he->h_addr_list[0], sizeof(unsigned int));
+	copy:
+		free(*param);
+		*param=(void*)ip;
+		return 0;
+	}
+	return 0;
+}
+
+
+
 static int fixup_t_send_reply(void** param, int param_no)
 {
 	unsigned int code;
@@ -149,20 +192,16 @@ static int fixup_t_send_reply(void** param, int param_no)
 
 
 
-static int t_forward_uri(struct sip_msg* msg, char* str, char* str2)
-{
-
-	LOG(L_CRIT, "BUG: TM module: t_forwad_uri not implemented!");
-	return -1;
-}
-
-
-
 static int w_t_forward(struct sip_msg* msg, char* str, char* str2)
 {
 	return t_forward(msg, (unsigned int) str, (unsigned int) str2);
 }
 
+
+static int w_t_forward_def(struct sip_msg* msg, char* str, char* str2)
+{
+	return t_forward(msg, (unsigned int) str, 5060 );
+}
 
 
 static int w_t_send_reply(struct sip_msg* msg, char* str, char* str2)
