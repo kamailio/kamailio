@@ -22,7 +22,7 @@ Description: Sip Express Router, very fast and configurable SIP proxy
 
 Package: ser-mysql-module
 Architecture: any
-Depends: ${shlibs:Depends}, ser (= ${Source-Version}), mysql
+Depends: ${shlibs:Depends}, ser (= ${Source-Version})
 Description: contains the mysql database connectivity module
  This has been split out of the main ser package, so that ser will not
  depend upon mysql. This module will enable you to use the digest
