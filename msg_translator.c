@@ -712,6 +712,7 @@ skip_before:
 			}
 		}
 skip_after:
+		; /* to make gcc 3.* happy */
 	}
 	return new_len;
 }

@@ -24,6 +24,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  ????-??-??  created by andrei
+ *  2003-04-14  more debugging added in DBG_QM_MALLOC mode (andrei)
+ */
 
 
 #if !defined(q_malloc) && !(defined VQ_MALLOC) && !(defined F_MALLOC)
@@ -97,23 +103,29 @@ inline static int big_hash_idx(int s)
 static  void qm_debug_frag(struct qm_block* qm, struct qm_frag* f)
 {
 	if (f->check!=ST_CHECK_PATTERN){
-		LOG(L_CRIT, "BUG: qm_*: fragm. %p beginning overwritten(%lx)!\n",
-				f, f->check);
+		LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
+				"beginning overwritten(%lx)!\n",
+				f, (char*)f+sizeof(struct qm_frag),
+				f->check);
 		qm_status(qm);
 		abort();
 	};
 	if ((FRAG_END(f)->check1!=END_CHECK_PATTERN1)||
 		(FRAG_END(f)->check2!=END_CHECK_PATTERN2)){
-		LOG(L_CRIT, "BUG: qm_*: fragm. %p end overwritten(%lx, %lx)!\n",
-				f, FRAG_END(f)->check1, FRAG_END(f)->check2);
+		LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p)"
+					" end overwritten(%lx, %lx)!\n",
+				f, (char*)f+sizeof(struct qm_frag), 
+				FRAG_END(f)->check1, FRAG_END(f)->check2);
 		qm_status(qm);
 		abort();
 	}
 	if ((f>qm->first_frag)&&
 			((PREV_FRAG_END(f)->check1!=END_CHECK_PATTERN1) ||
 				(PREV_FRAG_END(f)->check2!=END_CHECK_PATTERN2) ) ){
-		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%lx, %lx)[%p]!\n"
-				,PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f);
+		LOG(L_CRIT, "BUG: qm_*: prev. fragm. tail overwritten(%lx, %lx)[%p:%p]!"
+					"\n",
+				PREV_FRAG_END(f)->check1, PREV_FRAG_END(f)->check2, f,
+				(char*)f+sizeof(struct qm_frag));
 		qm_status(qm);
 		abort();
 	}
@@ -227,9 +239,14 @@ static inline void qm_detach_free(struct qm_block* qm, struct qm_frag* frag)
 }
 
 
-
+#ifdef DBG_QM_MALLOC
 static inline struct qm_frag* qm_find_free(struct qm_block* qm, 
-										unsigned int size)
+											unsigned int size,
+											unsigned int *count)
+#else
+static inline struct qm_frag* qm_find_free(struct qm_block* qm, 
+											unsigned int size)
+#endif
 {
 	int hash;
 	struct qm_frag* f;
@@ -237,6 +254,9 @@ static inline struct qm_frag* qm_find_free(struct qm_block* qm,
 	for (hash=GET_HASH(size); hash<QM_HASH_SIZE; hash++){
 		for (f=qm->free_hash[hash].head.u.nxt_free; 
 					f!=&(qm->free_hash[hash].head); f=f->u.nxt_free){
+#ifdef DBG_QM_MALLOC
+			*count+=1; /* *count++ generates a warning with gcc 2.9* -Wall */
+#endif
 			if (f->size>=size) return f;
 		}
 	/*try in a bigger bucket*/
@@ -271,7 +291,11 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 	if (size>(qm->size-qm->real_used)) return 0;
 
 	/*search for a suitable free frag*/
+#ifdef DBG_QM_MALLOC
+	if ((f=qm_find_free(qm, size, &list_cntr))!=0){
+#else
 	if ((f=qm_find_free(qm, size))!=0){
+#endif
 		/* we found it!*/
 		/*detach it from the free list*/
 #ifdef DBG_QM_MALLOC
@@ -319,8 +343,9 @@ void* qm_malloc(struct qm_block* qm, unsigned int size)
 		f->check=ST_CHECK_PATTERN;
 		/*  FRAG_END(f)->check1=END_CHECK_PATTERN1;
 			FRAG_END(f)->check2=END_CHECK_PATTERN2;*/
-		DBG("qm_malloc(%p, %d) returns address %p on %d -th hit\n", qm, size,
-			(char*)f+sizeof(struct qm_frag), list_cntr );
+		DBG("qm_malloc(%p, %d) returns address %p frag. %p (size=%ld) on %d -th"
+				" hit\n",
+			 qm, size, (char*)f+sizeof(struct qm_frag), f, f->size, list_cntr );
 #endif
 		return (char*)f+sizeof(struct qm_frag);
 	}
@@ -363,8 +388,8 @@ void qm_free(struct qm_block* qm, void* p)
 				f->file, f->func, f->line);
 		abort();
 	}
-	DBG("qm_free: freeing block alloc'ed from %s: %s(%ld)\n", f->file, f->func,
-			f->line);
+	DBG("qm_free: freeing frag. %p alloc'ed from %s: %s(%ld)\n",
+			f, f->file, f->func, f->line);
 #endif
 	size=f->size;
 	qm->used-=size;
@@ -429,9 +454,9 @@ void qm_status(struct qm_block* qm)
 	for (f=qm->first_frag, i=0;(char*)f<(char*)qm->last_frag_end;f=FRAG_NEXT(f)
 			,i++){
 		if (! f->u.is_free){
-			LOG(memlog, "    %3d. %c  address=%p  size=%ld\n", i, 
+			LOG(memlog, "    %3d. %c  address=%p frag=%p size=%ld\n", i, 
 				(f->u.is_free)?'a':'N',
-				(char*)f+sizeof(struct qm_frag), f->size);
+				(char*)f+sizeof(struct qm_frag), f, f->size);
 #ifdef DBG_QM_MALLOC
 			LOG(memlog, "            %s from %s: %s(%ld)\n",
 				(f->u.is_free)?"freed":"alloc'd", f->file, f->func, f->line);

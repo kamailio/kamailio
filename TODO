@@ -3,10 +3,10 @@ $Id$
 ( - todo, x - done)
 
 release:
-- resolver should resolve [ipv6]
+x resolver should resolve [ipv6]
 - remove parse_uri debugging info
 - fix DBG("<%.*s>", len, _null_)
-- add -t, -w, -u -g equivalents to the config file
+x add -t, -w, -u -g equivalents to the config file
 x force add rport : force_rport()
 - kill all the fprintf
 see also tcp & tm
