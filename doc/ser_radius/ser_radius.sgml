@@ -186,8 +186,8 @@ acctserver      localhost
 		library, therefore it is necesarry to add them. Unfortunatelly the dictionary file
 		used by &ser is not included in the source tarball of &ser;, so far it is in
 		unstable branch of the <ulink url="http://iptel.org/ser/cvs">CVS</ulink> only, but
-		it will be included in one of future releases. Meanwhile you can get it from <ulink
-		url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/sip_router/etc/dictionary.ser?rev=HEAD">here</ulink>.
+		it will be included in one of future releases. Meanwhile you can get it from the <ulink
+		url="http://cvs.berlios.de/cgi-bin/viewcvs.cgi/ser/sip_router/etc/dictionary.ser?rev=HEAD">CVS web interface</ulink>.
 	    </simpara>
 	    <simpara>
 		Download the file and put it into <filename
