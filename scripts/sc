@@ -440,7 +440,8 @@ usrloc() {
 
 			check_alias "$SERUSER@$SERDOMAIN"
 
-			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "1"
+			# 128 means FL_PERSISTENT is on
+			fifo_cmd ul_add "$USRLOC_TABLE" "$SERUSER@$SERDOMAIN" "$2" "0" "1.00" "0" "128"
 			exit $?
 			;;
 		rm)
