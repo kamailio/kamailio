@@ -52,10 +52,38 @@ Maturity:   beta
 Depends on: auth
 Purpose:    Radius support for digest authentication
 
+Name:       avp
+Owner:      jiri
+Use:        regular
+Maturity:   beta
+Depends on: -
+Purpose:    Loads and checks avps per caller or callee
+
+Name:       avp_db
+Owner:      janakj
+Use:        regular
+Maturity:   beta
+Depends on: mysql avp
+Purpose:    Database support for avps
+
+Name:       avp_db
+Owner:      janakj
+Use:        regular
+Maturity:   beta
+Depends on: avp
+Purpose:    Radius support for avps
+
+Name:       avpops
+Owner:      ramona
+Use:        regular
+Maturity:   beta
+Depends on: 
+Purpose:    avp operations, pseudo-variable support
+
 Name:       cpl-c
 Owner:      bogdan
-Use:        experimental
-Maturity:   alpha
+Use:        regular
+Maturity:   beta
 Depends on: -
 Purpose:    Call Processing Language
 
@@ -66,6 +94,19 @@ Maturity:   alpha
 Depends on: -
 Purpose:    Database emulation in plaintext files
 
+Name:       dispatcher
+Owner:      dcm
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Implements a dispatcher for incoming requests using hashes
+
+Name:       diversion
+Owner:      janakj
+Use:        experimental
+Maturity:   alpha
+Depends on: -
+Purpose:    Support for the Diversion extensions (draft-levy-sip-diversion-08)
 
 Name:       exec
 Owner:      jiri
@@ -87,6 +128,20 @@ Use:        experimental
 Maturity:   alpha
 Depends on: -
 Purpose:    Execution of external commands
+
+Name:       flatstore
+Owner:      janakj
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Very fast accounting in flat text files
+
+Name:       gflags
+Owner:      jiri
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    global flags that can be changed by fifo commands
 
 Name:       group
 Owner:      janakj
@@ -129,6 +184,13 @@ Use:        regular
 Maturity:   stable
 Depends on: -
 Purpose:    MySQL database support
+
+Name:       options
+Owner:      calrissian
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Answers server options requests
 
 Name:       pa
 Owner:      janakj
@@ -181,10 +243,17 @@ Purpose:    SMS gateway
 
 Name:       snmp
 Owner:      ric
-Use:        experimental
-Maturity:   alpha
+Use:        removed
+Maturity:   removed
 Depends on: -
 Purpose:    SNMP Management
+
+Name:       speeddial
+Owner:      ramona
+Use:        regular
+Maturity:   beta
+Depends on: -
+Purpose:    On-server speed dial facilities
 
 Name:       textops
 Owner:      andrei
@@ -207,6 +276,13 @@ Maturity:   stable
 Depends on: database
 Purpose:    Various URI checks
 
+Name:       uri_db
+Owner:      janakj
+Use:        experimental
+Maturity:   beta
+Depends on: mysql uri
+Purpose:    URI checking using DB
+
 Name:       uri_radius
 Owner:      janakj
 Use:        experimental
@@ -223,8 +299,8 @@ Purpose:    User location support
 
 Name:       vm
 Owner:      rco
-Use:        experimental
-Maturity:   alpha
+Use:        removed (functionality moved in tm)
+Maturity:   removed
 Depends on: tm
 Purpose:    Voicemail interface
 
@@ -279,3 +355,9 @@ Maturity:	beta
 Depends on:	-
 Purpose:	hosts.allow-like ACLs
 
+Name:       postgress
+Owner:      lgfausak
+Use:        experimental
+Maturity:   beta
+Depends on: -
+Purpose:    Postgress DB support

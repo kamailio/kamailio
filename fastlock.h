@@ -36,6 +36,8 @@
  *  2003-01-16  added PPC locking code contributed by Dinos Dorkofikis
  *               <kdor@intranet.gr>
  *  2004-09-12  added MIPS locking for ISA>=2 (>r3000)  (andrei)
+ *  2004-12-16  for now use the same locking code for sparc32 as for sparc64
+ *               (it will work only if NOSMP is defined) (andrei)
  *
  */
 
@@ -80,7 +82,7 @@ inline static int tsl(fl_lock_t* lock)
 		" xchg %b1, %0" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"
 	);
 #endif /*NOSMP*/
-#elif defined __CPU_sparc64
+#elif defined(__CPU_sparc64) || defined(__CPU_sparc)
 	asm volatile(
 			"ldstub [%1], %0 \n\t"
 #ifndef NOSMP
@@ -161,7 +163,7 @@ inline static void release_lock(fl_lock_t* lock)
 		" movb $0, (%0)" : /*no output*/ : "r"(lock): "memory"
 		/*" xchg %b0, %1" : "=q" (val), "=m" (*lock) : "0" (val) : "memory"*/
 	); 
-#elif defined __CPU_sparc64
+#elif defined(__CPU_sparc64) || defined(__CPU_sparc)
 	asm volatile(
 #ifndef NOSMP
 			"membar #LoadStore | #StoreStore \n\t" /*is this really needed?*/

@@ -8,8 +8,9 @@ $Id$
 
 new archs:
  - mips2/cobalt experimental support
- - x86_64 experimental support
+ - x86_64 support
  - OS X (darwin) support
+ - sparc32 single cpu highly experimental support
 
 modules:
  - enum - support for more than one NAPTR
@@ -47,7 +48,7 @@ modules:
 
 new modules:
  - avp / avp_db / avp_radius - load and check avps per caller or callee
- - avopos - flexible module for operations with avps and database, introducing
+ - avpops - flexible module for operations with avps and database, introducing
    a pseudo-varible support in SER configuration file
  - cpl-c - implementation of Call Processing Language
  - dispatcher - implements a dispatcher for incoming requests using hashes

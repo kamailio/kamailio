@@ -13,9 +13,6 @@ ser \- very fast and configurable sip proxy
 .BI \-f " config\-file"
 ] [
 .BI \-l " address"
-[ 
-.BI \-p " port"
-] ]...
 ] [
 .BI \-n " processes\-no"
 ] [
@@ -36,6 +33,8 @@ ser \- very fast and configurable sip proxy
 .BI \-P " pid\-file"
 ] [
 .BI \-i " fifo\-path"
+] [
+.BI \-x " socket\-path"
 ]
 
 .SH DESCRIPTION
@@ -90,15 +89,13 @@ Reads the configuration from
 ).
 .TP
 .BI \-l " address"
-Listens on the specified address. Multiple 
+Listens on the specified address/interface. Multiple 
 .B \-l
-mean listening on multiple addresses. The default behaviour is to listen on all the ipv4 interfaces.
-.TP
-.BI \-p " port"
-Listens on the specified port (default 5060). It applies to the last address specified with
-.B \-l
-and to all the following that do not have a corresponding 
-.B \-p.
+mean listening on multiple addresses. The address format is 
+[proto:]address[:port], where proto = udp|tcp and
+address = host|ip_address|interface_name. Example: -l localhost, 
+-l udp:127.0.0.1:5080, -l eth0:5062.
+The default behaviour is to listen on all the ipv4 interfaces.
 .TP
 .BI \-n " processes\-no"
 Specifies the number of children processes forked per interface (default 8).
@@ -143,6 +140,13 @@ process.
 Creates a fifo, usefull for monitoring
 .B ser
 status.
+.TP
+.BI \-x " socket\-path"
+Creates a unix socket, usefull for monitoring
+.B ser
+status ( same as
+.BI \-i " fifo\-path" 
+but using instead unix sockets).
 
 
 .SH FILES
@@ -174,6 +178,3 @@ Mailing lists:
 serusers@iptel.org - ser user community
 .nf 
 serdev@iptel.org - ser development, new features and unstable version
-.PP
-For help/support, write an email to <serhelp@iptel.org>.
-

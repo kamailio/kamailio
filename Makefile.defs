@@ -52,7 +52,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL =   99
-EXTRAVERSION = -dev26
+EXTRAVERSION = -dev27
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -400,6 +400,12 @@ ifeq 	($(CC_NAME), gcc)
 endif
 endif
 
+ifeq ($(ARCH), sparc)
+	# smp no supported on sparc32
+	DEFS+= -DNOSMP 
+	use_fast_lock=yes
+endif
+
 ifeq ($(ARCH), arm)
 	use_fast_lock=yes
 endif
@@ -592,7 +598,7 @@ else
 $(error 			Unsupported compiler ($(CC):$(CC_NAME)), try gcc)
 endif		#CC_NAME, suncc
 endif		#CC_NAME, gcc
-endif	#ARCH, sparc
+endif	#ARCH, sparc64
 
 	#if ipaq/netwinder
 ifeq	($(ARCH), arm)
@@ -855,6 +861,15 @@ ifeq ($(OS), openbsd)
 	LIBS= -lfl 
 	OPENBSD_IS_AOUT= $(shell echo "$(OSREL)" | \
 				sed -e 's/^3\.[0-3][^0-9]*$$/yes/' |sed -e 's/^[0-2]\..*/yes/')
+# exception: on sparc openbsd 3.2 is elf and not aout
+ifeq ($(OSREL), 3.2)
+ifeq	($(ARCH), sparc)
+		OPENBSD_IS_AOUT:=no
+endif
+ifeq	($(ARCH), sparc64)
+		OPENBSD_IS_AOUT:=no
+endif
+endif
 	
 ifeq ($(OPENBSD_IS_AOUT), yes)
 		DEFS+=-DDLSYM_PREFIX='"_"'

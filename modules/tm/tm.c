@@ -269,7 +269,7 @@ static param_export_t params[]={
 	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
 	{"fr_timer_avp",        STR_PARAM, &fr_timer_param.s                     },
 	{"fr_inv_timer_avp",    STR_PARAM, &fr_inv_timer_param.s                 },
-	{"tw_append",           STR_PARAM|USE_FUNC_PARAM, parse_tw_append        },
+	{"tw_append",           STR_PARAM|USE_FUNC_PARAM, (void*)parse_tw_append },
 	{0,0,0}
 };
 

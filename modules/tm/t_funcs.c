@@ -360,7 +360,9 @@ int avp2timer(unsigned int* timer, int_str param)
 
 	avp = search_first_avp(AVP_VAL_STR | AVP_NAME_STR, param, &val_istr);
 	if (!avp) {
-		DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
+		/*
+		 DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
+		 */
 		return 1;
 	}
 	
