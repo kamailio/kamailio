@@ -305,7 +305,7 @@ int authorize(struct sip_msg* _msg, char* _realm, char* str2)
 	print_cred(&cred);
 
 	if (get_ha1(&cred.username, _realm, ha1) == -1) {
-		LOG(L_ERR, "authorize(): Error while getting A1 string for user %s\n", cred.username.s);
+		LOG(L_ERR, "authorize(): Error while getting A1 string for user \"%s\"\n", cred.username.s);
 		return -1;
 	}
 	
