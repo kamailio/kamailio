@@ -600,31 +600,30 @@ void tcp_receive_loop(int unix_sock)
 				if (n<0){
 					if (errno == EWOULDBLOCK || errno == EAGAIN ||
 							errno == EINTR){
-						continue;
+						goto skip;
 					}else{
 						LOG(L_CRIT,"BUG: tcp_receive_loop: read_fd: %s\n",
 							strerror(errno));
 						abort(); /* big error*/
 					}
 				}
+				DBG("received n=%d con=%p, fd=%d\n", n, con, s);
 				if (n==0){
 					LOG(L_ERR, "WARNING: tcp_receive_loop: 0 bytes read\n");
-					continue;
+					goto skip;
+				}
+				if (con==0){
+					LOG(L_CRIT, "BUG: tcp_receive_loop: null pointer\n");
+					goto skip;
 				}
 				con->fd=s;
-				DBG("received n=%d con=%p, fd=%d\n", n, con, s);
 				if (s==-1) {
 					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
 									"no fd read\n");
 					resp=CONN_ERROR;
 					con->state=S_CONN_BAD;
 					release_tcpconn(con, resp, unix_sock);
-				}
-				if (con==0){
-					LOG(L_ERR, "ERROR: tcp_receive_loop: null pointer\n");
-					resp=CONN_ERROR;
-					con->state=S_CONN_BAD;
-					release_tcpconn(con, resp, unix_sock);
+					goto skip;
 				}
 #ifdef USE_TLS
 				if (con->type==PROTO_TLS) tls_tcpconn_update_fd(con, s);
@@ -634,6 +633,7 @@ void tcp_receive_loop(int unix_sock)
 				if (maxfd<s) maxfd=s;
 				tcpconn_listadd(list, con, c_next, c_prev);
 			}
+skip:
 			ticks=get_ticks();
 			for (con=list; con ; con=c_next){
 				c_next=con->c_next; /* safe for removing*/

@@ -41,6 +41,7 @@
  *  2003-04-14  set sockopts to TOS low delay (andrei)
  *  2003-06-30  moved tcp new connect checking & handling to
  *               handle_new_connect (andrei)
+ *  2003-07-09  tls_close called before closing the tcp connection (andrei)
  */
 
 
@@ -520,6 +521,10 @@ void tcpconn_timeout(fd_set* set)
 				DBG("tcpconn_timeout: timeout for hash=%d - %p (%d > %d)\n",
 						h, c, ticks, c->timeout);
 				fd=c->s;
+#ifdef USE_TLS
+				if (c->type==PROTO_TLS)
+					tls_close(c, fd);
+#endif
 				_tcpconn_rm(c);
 				if (fd>0) {
 					FD_CLR(fd, set);
@@ -861,6 +866,10 @@ read_again:
 							if (tcpconn->refcnt==0){ 
 								DBG("tcp_main_loop: destroying connection\n");
 								fd=tcpconn->s;
+#ifdef USE_TLS
+								if (tcpconn->type==PROTO_TLS)
+									tls_close(tcpconn, fd);
+#endif
 								_tcpconn_rm(tcpconn);
 								close(fd);
 							}else{
