@@ -21,7 +21,6 @@
 # Requirements: 
 # -------------
 # - SER with FIFO server turned on and TM module loaded
-# - gawk >= 3.1
 #
 # Limitations: 
 # ------------
@@ -85,7 +84,7 @@ FIXED_DLG=`printf "From: $FROM;tag=$CALLIDNR\nCall-ID: $CALLID\nContact: <sip:ca
 filter_fl()
 {
 
-gawk -F ' ' '
+awk -F ' ' '
 BEGIN { IGNORECASE=1; line=0; eoh=0;ret=1 }
 END { exit ret; }
 
