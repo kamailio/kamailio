@@ -1,4 +1,4 @@
-# $Id$
+/* $Id$ */
 
 create database ser;
 use ser;
@@ -36,7 +36,6 @@ CREATE TABLE subscriber (
    REALM varchar(128) NOT NULL,
    ha1b varchar(128) NOT NULL,
    UNIQUE USER_ID (USER_ID),
-   KEY USER_ID_2 (USER_ID)
-   key(user_id,realm)
+   key(USER_ID,REALM)
 );
 
