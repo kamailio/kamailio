@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -1-almost_stable
+EXTRAVERSION = -2
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -72,8 +72,8 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK  -DPKG_MALLOC -DSHM_MEM  -DSHM_MMAP \
 	 -DF_MALLOC  -DUSE_SYNONIM\
 	 -DNO_DEBUG \
-	 -DNOSMP
-#	 -DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=1024 \
+	 #-DADAPTIVE_WAIT -DADAPTIVE_WAIT_LOOPS=0 \
+	 #-DNOSMP \
 	 #-DEXTRA_DEBUG 
 	 #-DVQ_MALLOC  -DDBG_LOCK  #-DSTATS
 	 #-DDBG_QM_MALLOC #-DNO_DEBUG
@@ -196,7 +196,7 @@ endif	#ARCH, sparc64
 
 
 # setting LDFLAGS
-	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE)
+	LDFLAGS+=-Wl,-O2 -Wl,-E $(PROFILE) 
 	# we need -fPIC -DPIC only for shared objects, we don't need them for
 	# the executable file, because it's always loaded at a fixed address
 	# -andrei
@@ -225,11 +225,11 @@ endif
 
 ifeq  ($(OS), SunOS)
 	ifeq ($(mode), release)
-		LDFLAGS=-O2 $(PROFILE)
-		MOD_LDFLAGS=-O2 -G
+		#LDFLAGS=-O2 $(PROFILE)
+		#MOD_LDFLAGS=-O2 -G
 	else
-		LDFLAGS=-g $(PROFILE)
-		MOD_LDFLAGS=-g -G
+		#LDFLAGS=-g $(PROFILE)
+		#MOD_LDFLAGS=-g -G
 	endif
 
 	YACC=yacc
