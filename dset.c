@@ -36,6 +36,7 @@
 #include "hash_func.h"
 #include "error.h"
 #include "dset.h"
+#include "mem/mem.h"
 
 #define CONTACT "Contact: "
 #define CONTACT_LEN (sizeof(CONTACT) - 1)
