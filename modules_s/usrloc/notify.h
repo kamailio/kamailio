@@ -23,6 +23,8 @@ typedef enum pres_state {
 
 typedef void (*notcb_t)(str* _user, pres_state_t _p, void* _d);
 
+typedef int (*register_watcher_t)(str* _f, str* _t, notcb_t _c, void* _data);
+typedef int (*unregister_watcher_t)(str* _f, str* _t, notcb_t _c, void* _data);
 
 typedef struct notify_cb {
 	notcb_t cb;

@@ -39,21 +39,24 @@
 
 
 typedef struct usrloc_api {
-	register_udomain_t  register_udomain;
-	get_all_ucontacts_t get_all_ucontacts;
+	register_udomain_t   register_udomain;
+	get_all_ucontacts_t  get_all_ucontacts;
 
-	insert_urecord_t    insert_urecord;
-	delete_urecord_t    delete_urecord;
-	get_urecord_t       get_urecord;
-	lock_udomain_t      lock_udomain;
-	unlock_udomain_t    unlock_udomain;
+	insert_urecord_t     insert_urecord;
+	delete_urecord_t     delete_urecord;
+	get_urecord_t        get_urecord;
+	lock_udomain_t       lock_udomain;
+	unlock_udomain_t     unlock_udomain;
 
-	release_urecord_t   release_urecord;
-	insert_ucontact_t   insert_ucontact;
-	delete_ucontact_t   delete_ucontact;
-	get_ucontact_t      get_ucontact;
+	release_urecord_t    release_urecord;
+	insert_ucontact_t    insert_ucontact;
+	delete_ucontact_t    delete_ucontact;
+	get_ucontact_t       get_ucontact;
 
-	update_ucontact_t   update_ucontact;
+	update_ucontact_t    update_ucontact;
+
+	register_watcher_t   register_watcher;
+	unregister_watcher_t unregister_watcher;
 } usrloc_api_t;
 
 

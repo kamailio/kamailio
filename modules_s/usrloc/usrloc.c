@@ -112,5 +112,19 @@ int bind_usrloc(usrloc_api_t* api)
 		return -1;
 	}
 
+	api->register_watcher = (register_watcher_t)
+		find_export("ul_register_watcher", 1, 0);
+	if (api->register_watcher == 0) {
+		LOG(L_ERR, "bind_usrloc(): Can't bind register_watcher\n");
+		return -1;
+	}
+
+	api->unregister_watcher = (unregister_watcher_t)
+		find_export("ul_unregister_watcher", 1, 0);
+	if (api->unregister_watcher == 0) {
+		LOG(L_ERR, "bind_usrloc(): Can't bind unregister_watcher\n");
+		return -1;
+	}
+
 	return 0;
 }
