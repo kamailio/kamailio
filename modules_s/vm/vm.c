@@ -154,7 +154,11 @@ static int vm_start(struct sip_msg* msg, char* str1, char* str2)
 	goto error;
     }
 
+#ifndef NOFIX
+	if (parse_sip_msg_uri(msg)<0) {
+#else
     if(!msg->parsed_uri_ok){
+#endif
   	LOG(L_ERR,"ERROR: %s : vm_start: uri has not been parsed\n",exports.name);
   	goto error;
     }
