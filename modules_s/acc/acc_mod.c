@@ -14,6 +14,7 @@
 #include "../../parser/msg_parser.h"
 
 #include "acc_mod.h"
+#include "acc.h"
 #include "../tm/tm_load.h"
 
 struct tm_binds tmb;
