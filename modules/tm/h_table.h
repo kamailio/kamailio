@@ -99,71 +99,29 @@ typedef struct entry
 struct s_table
 {
    /* table of hash entries; each of them is a list of synonyms  */
-   struct entry*   entrys;
+   struct entry   entrys[ TABLE_ENTRIES ];
    /* table of timer lists */
-   struct timer*   timers;
-   /* retransmission lists */
-   struct timer*   retr_timers;
-#ifdef THREADS
-   pthread_t         timer_thread_id;
-#endif
+   struct timer   timers[ NR_OF_TIMER_LISTS ];
    /* current time */
-  unsigned int   time;
+   unsigned int   time;
 };
 
 
 
-void free_cell( struct cell* dead_cell );                    
+
+
 struct s_table* init_hash_table();
+void                  free_hash_table( struct s_table* hash_table );
 
-void ref_transaction( struct cell* p_cell);
-void unref_transaction( struct cell* p_cell);
+void                free_cell( struct cell* dead_cell );
+struct cell*  build_cell( struct s_table* hash_table , struct sip_msg* p_msg );
 
-void free_hash_table( struct s_table* hash_table );
+void remove_from_hash_table( struct s_table *hash_table,  struct cell * p_cell );
+void    insert_into_hash_table( struct s_table *hash_table,  struct cell * p_cell );
 
+void      ref_cell( struct cell* p_cell);
+void unref_cell( struct cell* p_cell);
 
-/* function returns:
- *       0 - a new transaction was created
- *      -1 - retransmission
- *      -2 - error
- */
-int  t_add_transaction( struct s_table* hash_table , struct sip_msg* p_msg );
-
-
-/* function returns:
- *       0 - transaction wasn't found
- *       1 - transaction found
- */
-int  t_lookup_request( struct s_table* hash_table , struct sip_msg* p_msg );
-
-
-/* function returns:
- *       0 - transaction wasn't found
- *       T - transaction found
- */
-struct cell* t_lookupOriginalT(  struct s_table* hash_table , struct sip_msg* p_msg );
-
-
-/* function returns:
- *       0 - forward successfull
- *      -1 - error during forward
- */
-int t_forward( struct s_table* hash_table , struct sip_msg* p_msg , unsigned int dst_ip , unsigned int dst_port);
-
-
-
-/*  This function is called whenever a reply for our module is received; we need to register
-  *  this function on module initialization;
-  *  Returns :   1 - core router stops
-  *                    0 - core router relay statelessly
-  */
-int t_on_reply_received( struct s_table  *hash_table , struct sip_msg  *p_msg ) ;
-
-
-
-/* Retransmits the last sent inbound reply.
-  */
-int t_retransmit_reply( struct s_table * , struct sip_msg *  );
 
 
 #endif

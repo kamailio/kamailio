@@ -56,11 +56,11 @@ int lock_initialize()
 		goto error;
 	}
 
-	/* message retransmission timers */
+	/* message retransmission timers
         if ((retrasmission_timer_semaphore=init_semaphore_set( NR_OF_RT_LISTS) ) < 0) {
                 DBG("retransmission timer semaphore initialization failure\n");
                 goto error;
-        }
+        } */
 
 
 	i=SEM_MIN;
@@ -226,18 +226,18 @@ int init_timerlist_lock( struct s_table* hash_table, enum lists timerlist_id)
 	hash_table->timers[timerlist_id].mutex.semaphore_set=transaction_timer_semaphore;
 	hash_table->timers[timerlist_id].mutex.semaphore_index=timerlist_id;
 }
-
+/*
 int init_retr_timer_lock( struct s_table* hash_table, enum retransmission_lists list_id )
 {
 	hash_table->retr_timers[list_id].mutex.semaphore_set=retrasmission_timer_semaphore;
  	hash_table->retr_timers[list_id].mutex.semaphore_index=list_id;
 }
-
+*/
 
 int release_cell_lock( struct cell *cell )
 {
 	/* don't do anything here -- the init_*_lock procedures
-	   just advised on usage of shared semaphores but did not 
+	   just advised on usage of shared semaphores but did not
 	   generate them
 	*/
 }
@@ -250,7 +250,8 @@ release_timerlist_lock( struct timer *timerlist )
 {
 	/* the same as above */
 }
+/*
 int release_retr_timer_lock( struct timer *timerlist )
 {
-	
-}
+
+} */
