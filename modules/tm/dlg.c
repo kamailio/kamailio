@@ -225,7 +225,6 @@ static inline int get_contact_uri(struct sip_msg* _m, str* _uri)
 		return -3;
 	}
 
-	     /* FIXME: c->uri may contain name-addr !! */
 	_uri->s = c->uri.s;
 	_uri->len = c->uri.len;
 	return 0;

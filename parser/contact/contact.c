@@ -121,6 +121,65 @@ static inline int skip_uri(str* _s)
 }
 
 
+/*
+ * Skip name part
+ *
+ * _s will be adjusted to point at the beginning
+ * of URI
+ */
+static inline int skip_name(str* _s)
+{
+	char* last_wsp, *p;
+	int i, quoted = 0;
+	
+
+	if (!_s) {
+		LOG(L_ERR, "skip_name(): Invalid parameter value\n");
+		return -1;
+	}
+
+	p = _s->s;
+
+	last_wsp = 0;
+
+	for(i = 0; i < _s->len; i++) {
+		if (!quoted) {
+			if ((*p == ' ') || (*p == '\t')) {
+				last_wsp = p;
+			} else {
+				if (*p == '<') {
+					_s->s = p;
+					_s->len -= i;
+					return 0;
+				}
+				
+				if (*p == ':') {
+					if (last_wsp) {
+						_s->s = last_wsp;
+						_s->len -= last_wsp - _s->s + 1;
+					}
+					return 0;
+				}
+
+				if (*p == '\"') {
+					quoted = 1;
+				}
+			}
+		} else {
+			if ((*p == '\"') && (*(p-1) != '\\')) quoted = 0;
+		}
+		p++;
+	}
+
+	if (quoted) {
+		LOG(L_ERR, "skip_name(): Closing quote missing in name part of Contact\n");
+	} else {
+		LOG(L_ERR, "skip_name(): Error in contact, scheme separator not found\n");
+	}
+
+	return -1;
+}
+
 
 /*
  * Parse contacts in a Contact HF
@@ -139,8 +198,16 @@ int parse_contacts(str* _s, contact_t** _c)
 		}
 		memset(c, 0, sizeof(contact_t));
 		
-		     /* Save beginning of URI */
+		c->name.s = _s->s;
+
+		if (skip_name(_s) < 0) {
+			LOG(L_ERR, "parse_contacts(): Error while skipping name part\n");
+			goto error;
+		}
+
 		c->uri.s = _s->s;
+		c->name.len = _s->s - c->name.s;
+		trim_trailing(&c->name);
 		
 		     /* Find the end of the URI */
 		if (skip_uri(_s) < 0) {
@@ -151,6 +218,14 @@ int parse_contacts(str* _s, contact_t** _c)
 		c->uri.len = _s->s - c->uri.s; /* Calculate URI length */
 		trim_trailing(&(c->uri));      /* Remove any trailing spaces from URI */
 
+		     /* Remove <> if any */
+		if ((c->uri.len >= 2) && (c->uri.s[0] == '<') && (c->uri.s[c->uri.len - 1] == '>')) {
+			c->uri.s++;
+			c->uri.len -= 2;
+		}
+
+		trim(&c->uri);
+		
 		if (_s->len == 0) goto ok;
 		
 		if (_s->s[0] == ';') {         /* Contact parameter found */
@@ -231,7 +306,8 @@ void print_contacts(FILE* _o, contact_t* _c)
 
 	while(ptr) {
 		fprintf(_o, "---Contact---\n");
-		fprintf(_o, "URI    : \'%.*s\'\n", ptr->uri.len, ptr->uri.s);
+		fprintf(_o, "name   : '%.*s'\n", ptr->name.len, ptr->name.s);
+		fprintf(_o, "URI    : '%.*s'\n", ptr->uri.len, ptr->uri.s);
 		fprintf(_o, "q      : %p\n", ptr->q);
 		fprintf(_o, "expires: %p\n", ptr->expires);
 		fprintf(_o, "method : %p\n", ptr->method);
