@@ -73,7 +73,7 @@ void destroy_tmcb_lists()
 	for( cbp=req_in_tmcb_hl->first; cbp ; ) {
 		cbp_tmp = cbp;
 		cbp = cbp->next;
-		if (cbp->param) shm_free( cbp->param );
+		if (cbp_tmp->param) shm_free( cbp_tmp->param );
 		shm_free( cbp_tmp );
 	}
 
@@ -114,10 +114,10 @@ inline int insert_tmcb(struct tmcb_head_list *cb_list, int types,
  * will be called back whenever one of the events occurs in transaction module
  * (global or per transacation, depinding of event type)
 */
-int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
-																void *param )
+int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
+											transaction_cb f, void *param )
 {
-	struct cell* t;
+	//struct cell* t;
 	struct tmcb_head_list *cb_list;
 
 	/* are the callback types valid?... */
@@ -140,14 +140,22 @@ int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
 		}
 		cb_list = req_in_tmcb_hl;
 	} else {
-		/* look for the transaction */
-		if ( t_check(p_msg,0)!=1 ){
-			LOG(L_CRIT,"BUG:tm:register_tmcb: no transaction found\n");
-			return E_BUG;
-		}
-		if ( (t=get_t())==0 ) {
-			LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found is NULL\n");
-			return E_BUG;
+		if (!t) {
+			if (!p_msg) {
+				LOG(L_CRIT,"BUG:tm:register_tmcb: no sip_msg, nor transaction"
+					" given\n");
+				return E_BUG;
+			}
+			/* look for the transaction */
+			if ( t_check(p_msg,0)!=1 ){
+				LOG(L_CRIT,"BUG:tm:register_tmcb: no transaction found\n");
+				return E_BUG;
+			}
+			if ( (t=get_t())==0 ) {
+				LOG(L_CRIT,"BUG:tm:register_tmcb: transaction found "
+					"is NULL\n");
+				return E_BUG;
+			}
 		}
 		cb_list = &(t->tmcb_hl);
 	}

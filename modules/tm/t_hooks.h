@@ -171,8 +171,8 @@ struct tmcb_params {
 /* callback function prototype */
 typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
 /* register callback function prototype */
-typedef int (*register_tmcb_f)(struct sip_msg* p_msg, int cb_types,
-		transaction_cb f, void *param);
+typedef int (*register_tmcb_f)(struct sip_msg* p_msg, struct cell *t,
+		int cb_types, transaction_cb f, void *param);
 
 
 struct tm_callback {
@@ -204,8 +204,10 @@ void destroy_tmcb_lists();
 
 
 /* register a callback for several types of events */
-int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
-																void *param );
+int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
+											transaction_cb f, void *param );
+//int register_tmcb( struct sip_msg* p_msg, int types, transaction_cb f,
+//																void *param );
 
 /* inserts a callback into the a callback list */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types,

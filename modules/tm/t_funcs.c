@@ -106,7 +106,7 @@ void tm_shutdown()
 	/* destroy the hash table */
 	DBG("DEBUG: tm_shutdown : empting hash table\n");
 	free_hash_table( );
-	DBG("DEBUG: tm_shutdown: releasing timers\n");
+	DBG("DEBUG: tm_shutdown : releasing timers\n");
 	free_timer_table();
 	DBG("DEBUG: tm_shutdown : removing semaphores\n");
 	lock_cleanup();

@@ -158,7 +158,6 @@ void free_cell( struct cell* dead_cell )
 
 
 
-
 struct cell*  build_cell( struct sip_msg* p_msg )
 {
 	struct cell* new_cell;
