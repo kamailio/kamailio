@@ -46,7 +46,6 @@
 #include "sip_msg.h"
 #include "rerrno.h"
 #include "reply.h"
-#include "uri.h"
 #include "reg_mod.h"
 #include "regtime.h"
 
@@ -155,7 +154,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 	ucontact_t* c;
 	int e, cseq;
 	float q;
-	str uri, callid;
+	str callid;
 
 	while(_c) {
 		if (calc_contact_expires(_m, _c->expires, &e) < 0) {
@@ -180,10 +179,6 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 			return -3;
 		}
 
-		     /* Extract raw uri from contact, ie without name part and <> */
-		uri = _c->uri;
-		get_raw_uri(&uri);
-
 		     /* Get callid of the message */
 		callid = _m->callid->body;	
 		trim_trailing(&callid);
@@ -196,7 +191,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 			return -4;
 		}
 
-		if (ul_insert_ucontact(r, &uri, e, q, &callid, cseq, &c) < 0) {
+		if (ul_insert_ucontact(r, &_c->uri, e, q, &callid, cseq, &c) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
 			ul_delete_urecord(_d, _a);
@@ -233,7 +228,7 @@ static inline int insert(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* 
 static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 {
 	ucontact_t* c, *c2;
-	str uri, callid;
+	str callid;
 	int cseq, e;
 	float q;
 
@@ -245,10 +240,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 			return -1;
 		}
 
-		uri = _c->uri;
-		get_raw_uri(&uri);
-		
-		if (ul_get_ucontact(_r, &uri, &c) > 0) {
+		if (ul_get_ucontact(_r, &_c->uri, &c) > 0) {
 			     /* Contact not found */
 			if (e != 0) {
 				     /* Calculate q value of the contact */
@@ -269,7 +261,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
 					return -3;
 				}
 				
-				if (ul_insert_ucontact(_r, &uri, e, q, &callid, cseq, &c2) < 0) {
+				if (ul_insert_ucontact(_r, &_c->uri, e, q, &callid, cseq, &c2) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -327,6 +319,8 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 {
 	int res;
 	urecord_t* r;
+
+	print_contact(stdout, (contact_body_t*)_m->contact->parsed);
 
 	ul_lock_udomain(_d);
 	res = ul_get_urecord(_d, _a, &r);
