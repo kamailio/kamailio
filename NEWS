@@ -1,8 +1,3 @@
-XXX content of this file reflects a future release;
-    features described here may or may not be available
-    in the CVS tree
-    
-
 Release notes for SIP Express Router (ser)
 ***********************************************
 
@@ -85,7 +80,12 @@ auth module:
   group_radius, uri and uri_radius 
 - all the parameters that were part of former auth module are now 
   part of auth_db module
-XXX 
+- auth_db module contains all functions needed for database
+  authentication
+- auth_radius contains functions needed for radius authentication
+- group module contains group membership checking functions
+- group_radius contains radius group membeship checking functions
+ 
 
 im module:
 ----------
@@ -107,8 +107,8 @@ exec module:
 jabber module:
 --------------
 - presence support for Jabber users is enabled loading the PA
-  module and using subscribe("jabber") for SUBSCRIBE requests to
-  jabber user 
+  module and using handle_subscribe("jabber") for SUBSCRIBE 
+  requests to jabber user 
 
 msilo module:
 -------------
@@ -123,14 +123,19 @@ radius_acc module:
 
 registrar/usrloc modules:
 -------------------------
-XXX
-  
+- multi domain support, the modules user username@domain as AOR
+  if enabled
+- descent modification time ordering of contacts
+- case sensitive/insensitive comparison of URI can be enabled
+
 rr module:
 ----------
 - addRecordRoute has been replaced with record_route
 - rewriteFromRoute has been replaced with loose_route()
 - a new option, "enable_full_lr" can be set to make life
   with misimplemented UAs easier and put LR in from "lr=on"
+- rr module can insert two Record-Route header fields when
+  necesarry (disconnected networks, UDP->TCP and so on)
 
 tm module:
 ----------
