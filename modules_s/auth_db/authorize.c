@@ -183,7 +183,7 @@ static int generate_avps(db_res_t* result)
 			continue;
 		}
 		
-		iname.s = &credentials[i];
+		iname.s = &credentials[i - 1];
 		value.len = strlen(value.s);
 		ivalue.s = &value;
 
