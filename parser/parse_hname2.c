@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "msg_parser.h"
-#include "../strs.h"
+#include "strs.h"
 #include "../dprint.h"
 #include "../ut.h"  /* q_memchr */
 
@@ -25,9 +25,6 @@
  * a new header to be recognized
  */
 #define HASH_TABLE_SIZE 1471
-
-
-
 
 /*
  * Hash function
@@ -49,11 +46,6 @@ struct ht_entry {
 	unsigned int value;
 };
 
-/*
-hash_table = (struct ht_entry*)malloc(HASH_TABLE_SIZE 
-	* sizeof(struct ht_entry));
-*/
-
 static struct ht_entry hash_table[ HASH_TABLE_SIZE ];
 
 /*
@@ -68,7 +60,7 @@ static struct ht_entry *hash_table;
  * Declarations
  */
 static inline char* skip_ws     (char* p, unsigned int size);
-void         init_htable (void);
+void                init_htable (void);
 static void         set_entry   (unsigned int key, unsigned int val);
 static inline int   unify       (int key);
 
@@ -174,63 +166,6 @@ static inline int unify(int key)
      }                                 \
      break
 
-
-/* added by Bogdan - for Content-Type and -Length headers */
-#define Ent__CASE \
-	p += 4;\
-	val = READ(p);\
-	switch(val) {\
-	case xType:\
-		hdr->type = HDR_CONTENTTYPE;\
-		p += 4;\
-		goto dc_end;\
-	case Leng:\
-		p += 4;\
-		val = READ(p);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}\
-		val = unify(val);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}else\
-			goto other;\
-	}\
-	val = unify(val);\
-	switch(val) {\
-	case xType:\
-		hdr->type = HDR_CONTENTTYPE;\
-		p += 4;\
-		goto dc_end;\
-	case Leng:\
-		p += 4;\
-		val = READ(p);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}\
-		val = unify(val);\
-		if (val==th12){\
-			hdr->type = HDR_CONTENTLENGTH;\
-			hdr->name.len = 14;\
-			*(p + 2) = '\0';\
-			return (p + 3);\
-		}else\
-			goto other;\
-	default:\
-		goto other;\
-	}\
-	break
-
-
 #define Cont_CASE                     \
      p += 4;                          \
      val = READ(p);                   \
@@ -246,8 +181,6 @@ static inline int unify(int key)
 	     p += 4;                  \
 	     goto dc_end;             \
 	                              \
-     case ent_:                   \
-	     Ent__CASE;               \
      }                                \
                                       \
      val = unify(val);                \
@@ -262,8 +195,7 @@ static inline int unify(int key)
 	     hdr->type = HDR_CONTACT; \
 	     p += 4;                  \
 	     goto dc_end;             \
-                                  \
-                                  \
+                                      \
      default: goto other;             \
      }                                \
      break
@@ -578,11 +510,7 @@ void init_htable(void)
 	     /*
 	      * Create hash table array
 	      */
-
-/*
-	hash_table = (struct ht_entry*)malloc(HASH_TABLE_SIZE * sizeof(struct ht_entry));
-
-*/
+	
 	     /*
 	      * Mark all elements as empty
 	      */
@@ -816,61 +744,6 @@ void init_htable(void)
 	set_entry(OUtE, oute);
 	set_entry(OUTe, oute);
 	set_entry(OUTE, oute);
-
-	set_entry(ent_, ent_);
-    set_entry(enT_, ent_);
-	set_entry(eNt_, ent_);
-	set_entry(eNT_, ent_);
-	set_entry(Ent_, ent_);
-	set_entry(EnT_, ent_);
-	set_entry(ENt_, ent_);
-	set_entry(ENT_, ent_);
-
-	set_entry(xtype, xType);
-	set_entry(xtypE, xType);
-	set_entry(xtyPe, xType);
-	set_entry(xtyPE, xType);
-	set_entry(xtYpe, xType);
-	set_entry(xtYpE, xType);
-	set_entry(xtYPe, xType);
-	set_entry(xtYPE, xType);
-	set_entry(xType, xType);
-	set_entry(xTypE, xType);
-	set_entry(xTyPe, xType);
-	set_entry(xTyPE, xType);
-	set_entry(xTYpe, xType);
-	set_entry(xTYpE, xType);
-	set_entry(xTYPe, xType);
-	set_entry(xTYPE, xType);
-
-
-	set_entry(leng, Leng);
-	set_entry(lenG, Leng);
-	set_entry(leNg, Leng);
-	set_entry(leNG, Leng);
-	set_entry(lEng, Leng);
-	set_entry(lEnG, Leng);
-	set_entry(lENg, Leng);
-	set_entry(lENG, Leng);
-	set_entry(Leng, Leng);
-	set_entry(LenG, Leng);
-	set_entry(LeNg, Leng);
-	set_entry(LeNG, Leng);
-	set_entry(LEng, Leng);
-	set_entry(LEnG, Leng);
-	set_entry(LENg, Leng);
-	set_entry(LENG, Leng);
-
-	set_entry(th12, th12);
-	set_entry(tH12, th12);
-	set_entry(Th12, th12);
-	set_entry(TH12, th12);
-
-	set_entry(th21, th21);
-	set_entry(tH21, th21);
-	set_entry(Th21, th21);
-	set_entry(TH21, th21);
-	
 }
 
 
