@@ -39,8 +39,8 @@ DEFS=-DNOCR -DMACROEATER -DDNS_IP_HACK  -DSHM_MEM -DUSE_SHM_MEM #-DNO_DEBUG
 #-DNO_LOG
 
 PROFILE=  # -pg #set this if you want profiling
-mode = debug
-#mode = release
+#mode = debug
+mode = release
 
 # platform dependent settings
 

@@ -756,7 +756,7 @@ endofvalue:
 	*pstate=state;
 	*psaved_state=saved_state;
 	DBG("Found param type %d, <%s> = <%s>; state=%d\n", param->type, 
-			param->name, param->value, state);
+			param->name.s, param->value.s, state);
 	return tmp;
 	
 end_via:
