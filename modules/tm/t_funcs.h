@@ -65,18 +65,17 @@
 #include "h_table.h"
 #include "ut.h"
 
-extern str fr_timer_param; /* AVP containing the fr_timer */
-extern int_str fr_timer_avp;
-extern str fr_inv_timer_param; /* AVP containing the fr_inv_timer */
-extern int_str fr_inv_timer_avp;
-
-
 struct s_table;
 struct timer;
 struct entry;
 struct cell;
 
 extern int noisy_ctimer;
+
+
+/* default names for timer's AVPs  */
+#define FR_TIMER_AVP      "callee_fr_timer"
+#define FR_INV_TIMER_AVP  "callee_fr_inv_timer"
 
 
 /* send a private buffer: utilize a retransmission structure
@@ -113,9 +112,17 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
 /*
+ * Parse and fixup the fr_*_timer AVP specs
+ */
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
+
+
+/*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-int avp2timer(unsigned int* timer, int_str param);
+int fr_avp2timer(unsigned int* timer);
+int fr_inv_avp2timer(unsigned int* timer);
+
 
 
 static void inline _set_fr_retr( struct retr_buf *rb, int retr )
@@ -127,7 +134,7 @@ static void inline _set_fr_retr( struct retr_buf *rb, int retr )
 		set_timer( &rb->retr_timer, RT_T1_TO_1, 0 );
 	}
 
-	if (!avp2timer(&timer, fr_timer_avp)) {
+	if (!fr_avp2timer(&timer)) {
 		DBG("_set_fr_retr: FR_TIMER = %d\n", timer);
 		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
 		     /* Automatically enable noisy_ctimer for the
@@ -178,15 +185,6 @@ void cleanup_localcancel_timers( struct cell *t );
 
 int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;
-
-
-void init_avp_params(void);
-
-
-/*
- * Get the FR_TIMER from corresponding AVP
- */
-int avp2fr_timer(int* timer, struct sip_msg* msg);
 
 #endif
 

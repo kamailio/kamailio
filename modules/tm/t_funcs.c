@@ -40,6 +40,8 @@
  *  2003-04-26  do it (^) really really really everywhere (jiri)
  *  2003-07-07  added get_proto calls when proxy!=0 (andrei)
  *  2004-02-13  t->is_invite and t->local replaced with flags (bogdan)
+ *  2005-02-16  fr_*_timer acceps full AVP specifications; empty AVP
+ *              desable variable timer feature (bogdan)
  */
 
 #include <limits.h>
@@ -59,17 +61,13 @@
 #include "config.h"
 #include "t_stats.h"
 
-#define FR_TIMER_AVP "callee_fr_timer"
-#define FR_TIMER_AVP_LEN (sizeof(FR_TIMER_AVP) - 1)
-
-#define FR_INV_TIMER_AVP "callee_fr_inv_timer"
-#define FR_INV_TIMER_AVP_LEN (sizeof(FR_INV_TIMER_AVP) - 1)
-
-str fr_timer_param = {FR_TIMER_AVP, FR_TIMER_AVP_LEN};
-int_str fr_timer_avp;
-
-str fr_inv_timer_param = {FR_INV_TIMER_AVP, FR_INV_TIMER_AVP_LEN};
-int_str fr_inv_timer_avp;
+/* fr_timer AVP specs */
+static int     fr_timer_avp_type = 0;
+static int_str fr_timer_avp = (int_str)0;
+static str     fr_timer_str;
+static int     fr_inv_timer_avp_type = 0;
+static int_str fr_inv_timer_avp = (int_str)0;
+static str     fr_inv_timer_str;
 
 
 /* ----------------------------------------------------- */
@@ -145,7 +143,7 @@ int t_release_transaction( struct cell *trans )
 }
 
 
-/* ----------------------------HELPER FUNCTIONS-------------------------------- */
+/* -----------------------HELPER FUNCTIONS----------------------- */
 
 
 /*
@@ -329,36 +327,47 @@ done:
 
 
 
-
 /*
  * Initialize parameters containing the ID of
  * AVPs with variable timers
  */
-void init_avp_params(void)
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 {
-	fr_timer_avp.s = &fr_timer_param;
-	fr_inv_timer_avp.s = &fr_inv_timer_param;
+	if (fr_timer_param && *fr_timer_param) {
+		fr_timer_str.s = fr_timer_param;
+		fr_timer_str.len = strlen(fr_timer_str.s);
+		if (parse_avp_spec( &fr_timer_str, &fr_timer_avp_type,
+		&fr_timer_avp)<0) {
+			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_timer "
+				"AVP specs \"%s\"\n", fr_timer_param);
+			return -1;
+		}
+	}
 
-	fr_timer_param.len = strlen(fr_timer_param.s);
-	fr_inv_timer_param.len = strlen(fr_inv_timer_param.s);
+	if (fr_inv_timer_param && *fr_inv_timer_param) {
+		fr_inv_timer_str.s = fr_inv_timer_param;
+		fr_inv_timer_str.len = strlen(fr_inv_timer_str.s);
+		if (parse_avp_spec( &fr_inv_timer_str, &fr_inv_timer_avp_type, 
+		&fr_inv_timer_avp)<0) {
+			LOG(L_CRIT,"ERROR:tm:init_avp_params: invalid fr_inv_timer "
+				"AVP specs \"%s\"\n", fr_inv_timer_param);
+			return -1;
+		}
+	}
+	return 0;
 }
 
 
 /*
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
-int avp2timer(unsigned int* timer, int_str param)
+static inline int avp2timer(unsigned int* timer, int type, int_str name)
 {
 	struct usr_avp *avp;
 	int_str val_istr;
 	int err;
 
-	if (!timer) {
-		LOG(L_ERR, "avp2timer: Invalid parameter value\n");
-		return -1;
-	}
-
-	avp = search_first_avp(AVP_VAL_STR | AVP_NAME_STR, param, &val_istr);
+	avp = search_first_avp( type, name, &val_istr);
 	if (!avp) {
 		/*
 		 DBG("avp2timer: AVP '%.*s' not found\n", param.s->len, ZSW(param.s->s));
@@ -378,3 +387,23 @@ int avp2timer(unsigned int* timer, int_str param)
 
 	return 0;
 }
+
+
+int fr_avp2timer(unsigned int* timer)
+{
+	if (fr_timer_avp.n!=0)
+		return avp2timer( timer, fr_timer_avp_type, fr_timer_avp);
+	else
+		return 1;
+}
+
+
+int fr_inv_avp2timer(unsigned int* timer)
+{
+	if (fr_inv_timer_avp.n!=0)
+		return avp2timer( timer, fr_inv_timer_avp_type, fr_inv_timer_avp);
+	else
+		return 1;
+}
+
+

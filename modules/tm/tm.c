@@ -170,6 +170,10 @@ inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *regexp, char *foo);
 
 
+static char *fr_timer_param = FR_TIMER_AVP;
+static char *fr_inv_timer_param = FR_INV_TIMER_AVP;
+
+
 static cmd_export_t cmds[]={
 	{"t_newtran",          w_t_newtran,             0, 0,
 			REQUEST_ROUTE},
@@ -267,8 +271,8 @@ static param_export_t params[]={
 	{"uac_from",            STR_PARAM, &uac_from                             },
 	{"unix_tx_timeout",     INT_PARAM, &tm_unix_tx_timeout                   },
 	{"restart_fr_on_each_reply", INT_PARAM, &restart_fr_on_each_reply        },
-	{"fr_timer_avp",        STR_PARAM, &fr_timer_param.s                     },
-	{"fr_inv_timer_avp",    STR_PARAM, &fr_inv_timer_param.s                 },
+	{"fr_timer_avp",        STR_PARAM, &fr_timer_param                       },
+	{"fr_inv_timer_avp",    STR_PARAM, &fr_inv_timer_param                   },
 	{"tw_append",           STR_PARAM|USE_FUNC_PARAM, (void*)parse_tw_append },
 	{0,0,0}
 };
@@ -549,7 +553,10 @@ static int mod_init(void)
 		return -1;
 	}
 
-	init_avp_params();
+	if (init_avp_params( fr_timer_param, fr_inv_timer_param)<0 ){
+		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
+		return -1;
+	}
 
 	return 0;
 }
