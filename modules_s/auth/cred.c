@@ -160,9 +160,9 @@ static int parse_digest_param(char* _s, cred_t* _c)
 		break;
 		
 	case QOP_ID:
-		if (!strcasecmp(body, "auth")) {
+		if ((!strcasecmp(body, "auth")) || (!strcasecmp(body, "\"auth\""))) {
 			_c->qop = QOP_AUTH;
-		} else if (!strcasecmp(body, "auth-int")) {
+		} else if ((!strcasecmp(body, "auth-int")) || (!strcasecmp(body, "\"auth-int\""))) {
 			_c->qop = QOP_AUTH_INT;
 		} else {
 			_c->qop = QOP_UNKNOWN;
@@ -176,6 +176,8 @@ static int parse_digest_param(char* _s, cred_t* _c)
 
 	case ALGORITHM_ID:
 		if (!strcasecmp(body, "MD5")) {
+			_c->algorithm = ALG_MD5;
+		} else if (!strcasecmp(body, "\"MD5\"")) {  /* FIXME: MS Messenger workaround */
 			_c->algorithm = ALG_MD5;
 		} else {
 			_c->algorithm = ALG_UNKNOWN;

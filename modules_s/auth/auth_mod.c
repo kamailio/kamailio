@@ -31,14 +31,18 @@ static struct module_exports auth_exports = {"auth",
 					     3,
 					     NULL, /* response function */
 					     destroy, /* destroy function */
-					     NULL  /* oncancel function */
+					     NULL,  /* oncancel function */
+					     init_child /* Per child initialization */
 };
 
 
 db_con_t* db_handle;
 
-
+#ifdef STATIC_AUTH
+struct module_exports* auth_mod_register()
+#else
 struct module_exports* mod_register()
+#endif
 {
 	LOG(L_ERR, "auth module - registering\n");
 	auth_init();
@@ -47,16 +51,25 @@ struct module_exports* mod_register()
 	if (bind_dbmod()) {
 		LOG(L_ERR, "mod_register(): Unable to bind database module\n");
 	}
-
-	     /* Open a database connection */
 	db_handle = db_init(DB_URL);
 	if (!db_handle) {
-		LOG(L_ERR, "mod_register(): Unable to connect database\n");
+		LOG(L_ERR, "auth:init_child(): Unable to connect database\n");
+		return -1;
 	}
 
 	return &auth_exports;
 }
 
+
+int init_child(int rank)
+{
+	LOG(L_ERR, "auth: Initializing child with rank %d\n", rank);
+
+	     /* Open a database connection, each ser child will have
+	      * its own database connection
+	      */
+	return 0;
+}
 
 
 void destroy(void)

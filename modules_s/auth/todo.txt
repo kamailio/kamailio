@@ -4,3 +4,9 @@
 - Conside MD5-Sess support(will require to store passwords in clear text)
 - auth-int support
 - prepsat aby pouzivalo sl modul
+- Database cache
+- Option na databazi s heslama v plaintextu
+- Option na pouzivani databaze
+
+
+
