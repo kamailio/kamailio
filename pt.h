@@ -28,6 +28,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  2003-04-15  added tcp_disable support (andrei)
+ */
 
 
 #ifndef _PT_H
@@ -66,9 +71,10 @@ inline static int process_count()
 		/* fifo server */
 		+((fifo==NULL || strlen(fifo)==0) ? 0 : 1 )
 #ifdef USE_TCP
-		+ 1/* tcp main */ + tcp_children_no + 
-		(timer_list ? 0: 1) /* add the timer proc. if not already taken
-							   into account */
+		+ (!tcp_disable)?( 1/* tcp main */ + tcp_children_no + 
+							(timer_list ? 0: 1)):0 /* add the timer proc.
+													  if not already taken
+													  into account */
 #endif
 		
 		;

@@ -8,7 +8,7 @@ ser \- very fast and configurable sip proxy
 .SH SYNOPSIS
 .B ser
 [
-.B \-hcrRvdDEV
+.B \-hcrRvdDEVT
 ] [
 .BI \-f " config\-file"
 ] [
@@ -18,6 +18,8 @@ ser \- very fast and configurable sip proxy
 ] ]...
 ] [
 .BI \-n " processes\-no"
+] [
+.BI \-N " tcp processes\-no"
 ] [
 .BI \-b " max_rcv_buf_size"
 ] [
@@ -74,6 +76,9 @@ Runs ser in the foreground (it doesn't fork into daemon mode).
 .BI \-E
 Sends all the log messages to stderr.
 .TP
+.BI \-T
+Disables TCP support.
+.TP
 .BI \-V
 Displays the version number.
 .TP
@@ -97,6 +102,11 @@ and to all the following that do not have a corresponding
 .TP
 .BI \-n " processes\-no"
 Specifies the number of children processes forked per interface (default 8).
+.TP
+.BI \-N " tcp processes\-no"
+Specifies the number of children processes forked to handle tcp incoming connections (by default is equal to
+.BI \-n
+).
 .TP
 .BI \-b " max_rcv_buf_size"
 Maximum receive buffer size which will not be exceeded by the auto-probing procedure even if the OS allows.
@@ -171,4 +181,4 @@ Report bugs at
 .nf
 https://developer.berlios.de/bugs/?func=addbug&group_id=480 .
 .br
-For help/support, write an email to <serhelp@iptel.org>. 
+For help/support, write an email to <serhelp@iptel.org> or <seruser@iptel.org>.

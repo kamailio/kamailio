@@ -34,6 +34,7 @@
  *  2003-04-06  child_init called in all processes (janakj)
  *  2003-04-08  init_mallocs split into init_{pkg,shm}_mallocs and 
  *               init_shm_mallocs called after cmd. line parsing (andrei)
+ *  2003-04-15  added tcp_disable support (andrei)
  *
  */
 
@@ -180,35 +181,36 @@ Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
 Options:\n\
     -f file      Configuration file (default " CFG_FILE ")\n\
     -p port      Listen on the specified port (default: 5060)\n\
-                 applies to the last address in -l and to all \n\
-                 following that do not have a corespponding -p\n\
-    -l address   Listen on the specified address (multiple -l mean\n\
-                 listening on more addresses). The default behaviour\n\
-                 is to listen on the addresses returned by uname(2)\n\
-\n\
+                  applies to the last address in -l and to all \n\
+                  following that do not have a corespponding -p\n\
+    -l address   Listen on the specified address/interface (multiple -l\n\
+                  mean listening on more addresses). The default behaviour\n\
+                  is to listen on all the interfaces\n\
     -n processes Number of child processes to fork per interface\n\
-                 (default: 8)\n\
-\n\
+                  (default: 8)\n\
     -r           Use dns to check if is necessary to add a \"received=\"\n\
-                 field to a via\n\
+                  field to a via\n\
     -R           Same as `-r` but use reverse dns;\n\
-                 (to use both use `-rR`)\n\
-\n\
+                  (to use both use `-rR`)\n\
     -v           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
     -D           Do not fork into daemon mode\n\
-    -E           Log to stderr\n\
-    -V           Version number\n\
+    -E           Log to stderr\n"
+#ifdef USE_TCP
+"    -T           Disable tcp\n\
+    -N           Number of tcp child processes (default: equal to `-n`)\n"
+#endif
+"    -V           Version number\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                 auto-probing procedure even if  OS allows\n\
+                  auto-probing procedure even if  OS allows\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
-    -w  dir      change the working directory to \"dir\" (default \"/\")\n\
-    -t  dir      chroot to \"dir\"\n\
-    -u uid       change uid \n\
-    -g gid       change gid \n\
-    -P file      create a pid file\n\
-    -i fifo_path create a fifo (usefull for monitoring " NAME ") \n"
+    -w  dir      Change the working directory to \"dir\" (default \"/\")\n\
+    -t  dir      Chroot to \"dir\"\n\
+    -u uid       Change uid \n\
+    -g gid       Change gid \n\
+    -P file      Create a pid file\n\
+    -i fifo_path Create a fifo (usefull for monitoring " NAME ") \n"
 #ifdef STATS
 "    -s file     File to which statistics is dumped (disabled otherwise)\n"
 #endif
@@ -258,6 +260,7 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 int children_no = 0;			/* number of children processing requests */
 #ifdef USE_TCP
 int tcp_children_no = 0;
+int tcp_disable = 0; /* 1 if tcp is disabled */
 #endif
 struct process_table *pt=0;		/*array with childrens pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
@@ -518,10 +521,6 @@ void handle_sigs()
 			/* we end the program in all these cases */
 			if (sig_flag==SIGINT)
 				DBG("INT received, program terminates\n");
-#ifdef OBSOLETED
-			else if (sig_flag==SIGPIPE) 
-				DBG("SIGPIPE received, program terminates\n");
-#endif
 			else
 				DBG("SIGTERM received, program terminates\n");
 				
@@ -627,11 +626,13 @@ int main_loop()
 		*/
 
 		/* we need another process to act as the timer*/
-#ifndef USE_TCP
+#ifdef USE_TCP
 		/* if we are using tcp we always need a timer process,
 		 * we cannot count on select timeout to measure time
 		 * (it works only on linux)
 		 */
+		if ((!tcp_disable)||(timer_list))
+#else
 		if (timer_list)
 #endif
 		{
@@ -703,17 +704,19 @@ int main_loop()
 				sendipv6=&sock_info[r];
 	#endif
 #ifdef USE_TCP
-			tcp_info[r]=sock_info[r]; /* copy the sockets */
-			/* same thing for tcp */
-			if (tcp_init(&tcp_info[r])==-1)  goto error;
-			/* get first ipv4/ipv6 socket*/
-			if ((tcp_info[r].address.af==AF_INET)&&
-					((sendipv4_tcp==0)||(sendipv4_tcp->is_lo)))
-				sendipv4_tcp=&tcp_info[r];
-	#ifdef USE_IPV6
-			if((sendipv6_tcp==0)&&(tcp_info[r].address.af==AF_INET6))
-				sendipv6_tcp=&tcp_info[r];
-	#endif
+			if (!tcp_disable){
+				tcp_info[r]=sock_info[r]; /* copy the sockets */
+				/* same thing for tcp */
+				if (tcp_init(&tcp_info[r])==-1)  goto error;
+				/* get first ipv4/ipv6 socket*/
+				if ((tcp_info[r].address.af==AF_INET)&&
+						((sendipv4_tcp==0)||(sendipv4_tcp->is_lo)))
+					sendipv4_tcp=&tcp_info[r];
+		#ifdef USE_IPV6
+				if((sendipv6_tcp==0)&&(tcp_info[r].address.af==AF_INET6))
+					sendipv6_tcp=&tcp_info[r];
+		#endif
+			}
 #endif
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
@@ -722,10 +725,12 @@ int main_loop()
 			for(i=0;i<children_no;i++){
 				process_no++;
 #ifdef USE_TCP
-		 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-					LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
-						strerror(errno));
-					goto error;
+				if(!tcp_disable){
+		 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+						LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
+							strerror(errno));
+						goto error;
+					}
 				}
 #endif
 				if ((pid=fork())<0){
@@ -734,8 +739,10 @@ int main_loop()
 				}else if (pid==0){
 					     /* child */
 #ifdef USE_TCP
-					close(sockfd[0]);
-					unix_tcp_sock=sockfd[1];
+					if (!tcp_disable){
+						close(sockfd[0]);
+						unix_tcp_sock=sockfd[1];
+					}
 #endif
 					bind_address=&sock_info[r]; /* shortcut */
 					bind_idx=r;
@@ -753,9 +760,12 @@ int main_loop()
 							"receiver child=%d sock=%d @ %s:%s", i, r, 	
 							sock_info[r].name.s, sock_info[r].port_no_str.s );
 #ifdef USE_TCP
-						close(sockfd[1]);
-						pt[process_no].unix_sock=sockfd[0];
-						pt[process_no].idx=-1; /* this is not "tcp" process*/
+						if (!tcp_disable){
+							close(sockfd[1]);
+							pt[process_no].unix_sock=sockfd[0];
+							pt[process_no].idx=-1; /* this is not a "tcp"
+													  process*/
+						}
 #endif
 				}
 			}
@@ -775,16 +785,20 @@ int main_loop()
 		goto error;
 	}
 
-#ifndef USE_TCP
+#ifdef USE_TCP
 	/* if we are using tcp we always need the timer */
+	if ((!tcp_disable)||(timer_list))
+#else
 	if (timer_list)
 #endif
 	{
 #ifdef USE_TCP
- 		if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
-			LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
-				strerror(errno));
-			goto error;
+		if (!tcp_disable){
+ 			if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockfd)<0){
+				LOG(L_ERR, "ERROR: main_loop: socketpair failed: %s\n",
+					strerror(errno));
+				goto error;
+			}
 		}
 #endif
 		/* fork again for the attendant process*/
@@ -796,8 +810,10 @@ int main_loop()
 			/* child */
 			/* is_main=0; */
 #ifdef USE_TCP
-			close(sockfd[0]);
-			unix_tcp_sock=sockfd[1];
+			if (!tcp_disable){
+				close(sockfd[0]);
+				unix_tcp_sock=sockfd[1];
+			}
 #endif
 			if (init_child(PROC_TIMER) < 0) {
 				LOG(L_ERR, "timer: init_child failed\n");
@@ -815,43 +831,49 @@ int main_loop()
 			pt[process_no].pid=pid;
 			strncpy(pt[process_no].desc, "timer", MAX_PT_DESC );
 #ifdef USE_TCP
+			if(!tcp_disable){
 						close(sockfd[1]);
 						pt[process_no].unix_sock=sockfd[0];
 						pt[process_no].idx=-1; /* this is not a "tcp" process*/
+			}
 #endif
 		}
 	}
 #ifdef USE_TCP
-			/* start tcp receivers */
-		if (tcp_init_children()<0) goto error;
-			/* start tcp master proc */
-		process_no++;
-		if ((pid=fork())<0){
-			LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
-			goto error;
-		}else if (pid==0){
-			/* child */
-			/* is_main=0; */
-			if (init_child(PROC_TCP_MAIN) < 0) {
-				LOG(L_ERR, "tcp_main: error in init_child\n");
+		if (!tcp_disable){
+				/* start tcp receivers */
+			if (tcp_init_children()<0) goto error;
+				/* start tcp master proc */
+			process_no++;
+			if ((pid=fork())<0){
+				LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
 				goto error;
+			}else if (pid==0){
+				/* child */
+				/* is_main=0; */
+				if (init_child(PROC_TCP_MAIN) < 0) {
+					LOG(L_ERR, "tcp_main: error in init_child\n");
+					goto error;
+				}
+				tcp_main_loop();
+			}else{
+				pt[process_no].pid=pid;
+				strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
+				pt[process_no].unix_sock=-1;
+				pt[process_no].idx=-1; /* this is not a "tcp" process*/
+				unix_tcp_sock=-1;
 			}
-			tcp_main_loop();
-		}else{
-			pt[process_no].pid=pid;
-			strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
-			pt[process_no].unix_sock=-1;
-			pt[process_no].idx=-1; /* this is not a "tcp" process*/
-			unix_tcp_sock=-1;
 		}
 #endif
 	/* main */
 	pt[0].pid=getpid();
 	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 #ifdef USE_TCP
-	pt[process_no].unix_sock=-1;
-	pt[process_no].idx=-1; /* this is not a "tcp" process*/
-	unix_tcp_sock=-1;
+	if(!tcp_disable){
+		pt[process_no].unix_sock=-1;
+		pt[process_no].idx=-1; /* this is not a "tcp" process*/
+		unix_tcp_sock=-1;
+	}
 #endif
 	/*DEBUG- remove it*/
 #ifdef DEBUG
@@ -1140,7 +1162,7 @@ int main(int argc, char** argv)
 #ifdef STATS
 	"s:"
 #endif
-	"f:p:m:b:l:n:rRvdDEVhw:t:u:g:P:i:";
+	"f:p:m:b:l:n:N:rRvdDETVhw:t:u:g:P:i:";
 	
 	while((c=getopt(argc,argv,options))!=-1){
 		switch(c){
@@ -1226,6 +1248,25 @@ int main(int argc, char** argv)
 					break;
 			case 'E':
 					log_stderr=1;
+					break;
+			case 'T':
+#ifdef USE_TCP
+					tcp_disable=1;
+#else
+					fprintf(stderr,"WARNING: tcp support not compiled in\n");
+#endif
+					break;
+			case 'N':
+#ifdef USE_TCP
+					tcp_children_no=strtol(optarg, &tmp, 10);
+					if ((tmp==0) ||(*tmp)){
+						fprintf(stderr, "bad process number: -N %s\n",
+									optarg);
+						goto error;
+					}
+#else
+					fprintf(stderr,"WARNING: tcp support not compiled in\n");
+#endif
 					break;
 			case 'V':
 					printf("version: %s\n", version);
@@ -1324,13 +1365,6 @@ try_again:
 		LOG(L_CRIT, "could not initialize timer, exiting...\n");
 		goto error;
 	}
-#ifdef USE_TCP
-	/*init tcp*/
-	if (init_tcp()<0){
-		LOG(L_CRIT, "could not initialize tcp, exiting...\n");
-		goto error;
-	}
-#endif
 	
 	/* register a diagnostic FIFO command */
 	if (register_core_fifo()<0) {
@@ -1357,14 +1391,8 @@ try_again:
 	
 	if (children_no<=0) children_no=CHILD_NO;
 #ifdef USE_TCP
-	tcp_children_no=children_no;
-#endif
-#ifdef _OBSOLETED
-	else if (children_no >= MAX_PROCESSES ) {
-		fprintf(stderr, "ERROR: too many children processes configured;"
-				" maximum is %d\n",
-			MAX_PROCESSES-1 );
-		goto error;
+	if (!tcp_disable){
+		if (tcp_children_no<=0) tcp_children_no=children_no;
 	}
 #endif
 	
@@ -1592,6 +1620,15 @@ try_again:
 							" use only the the first one)":"");
 	}
 	
+#ifdef USE_TCP
+	if (!tcp_disable){
+		/*init tcp*/
+		if (init_tcp()<0){
+			LOG(L_CRIT, "could not initialize tcp, exiting...\n");
+			goto error;
+		}
+	}
+#endif
 	/* init_daemon? */
 	if (!dont_fork){
 		if ( daemonize(argv[0]) <0 ) goto error;

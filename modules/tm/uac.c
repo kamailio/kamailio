@@ -54,6 +54,9 @@
  *  2003-03-01  kr set through a function now (jiri)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  *  2003-04-02  port_no_str does not contain a leading ':' anymore (andrei)
+ *  2003-04-15  t_uac_dlg now uses get_send_socket(get_out_socket doesn't
+ *               work for tcp) (andrei)
+ *  
  */
 
 
@@ -218,10 +221,10 @@ static struct socket_info *uri2sock( str *uri, union sockaddr_union *to_su,
 
 	hostent2su(to_su, &proxy->host, proxy->addr_idx, 
 			(proxy->port) ? proxy->port : SIP_PORT);
-	send_sock=get_out_socket(to_su, proto);
+	send_sock=get_send_socket(to_su, proxy->proto);
 	if (send_sock == 0) {
-		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
-						to_su->s.sa_family );
+		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d,"
+				"proto %d\n", to_su->s.sa_family , proto);
 		ser_error = E_NO_SOCKET;
 	}
 
@@ -370,7 +373,7 @@ int t_uac_dlg(str* msg,                     /* Type of the message - MESSAGE, OP
 	request = &new_cell->uac[branch].request;
 	request->dst.to = to_su;
 	request->dst.send_sock = send_sock;
-	request->dst.proto = proto;
+	request->dst.proto = send_sock->proto;
 	request->dst.proto_reserved1 = 0;
 
 	/* need to put in table to calculate label which is needed for printing */

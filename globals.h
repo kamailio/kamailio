@@ -67,6 +67,7 @@ extern unsigned int maxbuffer;
 extern int children_no;
 #ifdef USE_TCP
 extern int tcp_children_no;
+extern int tcp_disable;
 #endif
 extern int dont_fork;
 extern int check_via;

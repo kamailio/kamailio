@@ -37,6 +37,7 @@
  * 2003-04-01  added dst_port, proto , af (andrei)
  * 2003-04-05  s/reply_route/failure_route, onreply_route introduced (jiri)
  * 2003-04-12  added force_rport, chroot and wdir (andrei)
+ * 2003-04-15  added tcp_children, disable_tcp (andrei)
  */
 
 
@@ -168,6 +169,9 @@ int rt;  /* Type of route block for find_export */
 %token CHROOT
 %token WDIR
 %token MHOMED
+%token DISABLE_TCP
+%token TCP_CHILDREN
+
 
 
 
@@ -344,6 +348,24 @@ assign_stm:	DEBUG EQUAL NUMBER { debug=$3; }
 		| WDIR EQUAL error      { yyerror("string value expected"); }
 		| MHOMED EQUAL NUMBER { mhomed=$3; }
 		| MHOMED EQUAL error { yyerror("boolean value expected"); }
+		| DISABLE_TCP EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_disable=$3;
+									#else
+										fprintf(stderr, "WARNING: tcp support"
+												"not compiled in\n");
+									#endif
+									}
+		| DISABLE_TCP EQUAL error { yyerror("boolean value expected"); }
+		| TCP_CHILDREN EQUAL NUMBER {
+									#ifdef USE_TCP
+										tcp_children_no=$3;
+									#else
+										fprintf(stderr, "WARNING: tcp support"
+												"not compiled in\n");
+									#endif
+									}
+		| TCP_CHILDREN EQUAL error { yyerror("number expected"); }
 		| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 		| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 		| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

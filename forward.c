@@ -289,8 +289,8 @@ int forward_request( struct sip_msg* msg, struct proxy_l * p, int proto)
 
 	send_sock=get_send_socket(to, proto);
 	if (send_sock==0){
-		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d "
-				"no coresponding listening socket\n", to->s.sa_family);
+		LOG(L_ERR, "forward_req: ERROR: cannot forward to af %d, proto %d "
+				"no coresponding listening socket\n", to->s.sa_family, proto);
 		ser_error=E_NO_SOCKET;
 		goto error1;
 	}

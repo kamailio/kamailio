@@ -42,7 +42,7 @@ TOC
 -------------------------------------------
 
 Supported arhitectures: Linux/i386, Linux/armv4l, FreeBSD/i386, OpenBSD/i386
-Solaris/sparc64 
+Solaris/sparc64, NetBSD/sparc64
 (for other arhitectures the Makefiles might need to be edited)
 
 There are various configuration options defined in the Makefile.
@@ -66,7 +66,7 @@ Requirements:
 
 OS Notes:
 
-- FreeBSD/OpenBSD: make sure gmake, bison or yacc & flex are installed
+- FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed
 - Solaris: as above; you can use Solaris's yacc instead of bison. You might
   need also gtar and ginstall.
 - Windows: it works in windows (only the core, w/o shared mem. support) but you
@@ -220,6 +220,8 @@ tar.gz:
      /usr/local/etc/ser/ser.cfg)
 Solaris:
     gunzip <package_name>.gz ; pkgadd -d <package_name>
+*BSD:
+    pkg_add package_name
     
 3) start the server
 RPM:

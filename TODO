@@ -3,6 +3,7 @@ $Id$
 ( - todo, x - done)
 
 release:
+- fix -march=..., or compile w/ i386 for the release
 x resolver should resolve [ipv6]
 - remove parse_uri debugging info
 - fix DBG("<%.*s>", len, _null_)
@@ -99,6 +100,7 @@ optimizations:
 
 
 tcp stuff:
+- timeout on long sends
 x tcp disable nagle 
 x set TOS to minimize delay
 - tcp locking/atomic ops review
@@ -110,5 +112,6 @@ tm optimizations:
 - replace snprintfs int build_uac_request, *_dlg
 - fix the huge param no. in this functions (use structs if neccessary):
   build_uac_request, build_uac_request_dlg, t_uac, t_uac_dlg
+- uri2proxy - t_uac_dlg => extra malloc/free (no üroxy needed here)
   
 

@@ -908,8 +908,8 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	rb->dst.proto_reserved1=msg->rcv.proto_reserved1;
 	send_sock=get_send_socket(&rb->dst.to, proto);
 	if (send_sock==0) {
-		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d "
-			"no socket\n", rb->dst.to.s.sa_family);
+		LOG(L_ERR, "ERROR: init_rb: cannot fwd to af %d, proto %d "
+			"no socket\n", rb->dst.to.s.sa_family, proto);
 		ser_error=E_BAD_VIA;
 		return 0;
 	}

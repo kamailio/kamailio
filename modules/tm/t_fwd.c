@@ -210,9 +210,9 @@ int add_uac( struct cell *t, struct sip_msg *request, str *uri, str* next_hop,
 
 	send_sock=get_send_socket( &to , proxy->proto);
 	if (send_sock==0) {
-		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d "
+		LOG(L_ERR, "ERROR: add_uac: can't fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
-			to.s.sa_family );
+			to.s.sa_family, proxy->proto );
 		ret=ser_error=E_NO_SOCKET;
 		goto error01;
 	}

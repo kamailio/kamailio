@@ -32,6 +32,7 @@
  *  2003-02-11 added inline msg_send (andrei)
  *  2003-04-07 changed all ports to host byte order (andrei)
  *  2003-04-12  FORCE_RPORT_T added (andrei)
+ *  2003-04-15  added tcp_disable support (andrei)
  */
 
 
@@ -39,6 +40,7 @@
 #ifndef forward_h
 #define forward_h
 
+#include "globals.h"
 #include "parser/msg_parser.h"
 #include "route.h"
 #include "proxy.h"
@@ -98,10 +100,17 @@ static inline int msg_send(	struct socket_info* send_sock, int proto,
 	}
 #ifdef USE_TCP
 	else if (proto==PROTO_TCP){
-		if (tcp_send(buf, len, to, id)<0){
+		if (tcp_disable){
 			STATS_TX_DROPS;
-			LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
+			LOG(L_WARN, "msg_send: WARNING: attempt to send on tcp and tcp"
+					" support is disabled\n");
 			goto error;
+		}else{
+			if (tcp_send(buf, len, to, id)<0){
+				STATS_TX_DROPS;
+				LOG(L_ERR, "msg_send: ERROR: tcp_send failed\n");
+				goto error;
+			}
 		}
 	}
 #endif

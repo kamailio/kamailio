@@ -155,6 +155,8 @@ GROUP		"group"|"gid"
 CHROOT		"chroot"
 WDIR		"workdir"|"wdir"
 MHOMED		mhomed
+DISABLE_TCP		"disable_tcp"
+TCP_CHILDREN	"tcp_children"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -272,6 +274,8 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{CHROOT}	{ count(); yylval.strval=yytext; return CHROOT; }
 <INITIAL>{WDIR}	{ count(); yylval.strval=yytext; return WDIR; }
 <INITIAL>{MHOMED}	{ count(); yylval.strval=yytext; return MHOMED; }
+<INITIAL>{DISABLE_TCP}	{ count(); yylval.strval=yytext; return DISABLE_TCP; }
+<INITIAL>{TCP_CHILDREN}	{ count(); yylval.strval=yytext; return TCP_CHILDREN; }
 <INITIAL>{FIFO}	{ count(); yylval.strval=yytext; return FIFO; }
 <INITIAL>{FIFO_MODE}	{ count(); yylval.strval=yytext; return FIFO_MODE; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
