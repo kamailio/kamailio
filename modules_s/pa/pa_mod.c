@@ -64,6 +64,7 @@ db_con_t* pa_db; /* Database connection handle */
 int use_db = 0;
 str db_url;
 char *presentity_table = "presentity";
+char *watcherinfo_table = "watcherinfo";
 
 
 /*
@@ -87,6 +88,7 @@ static param_export_t params[]={
 	{"use_db",          INT_PARAM, &use_db            },
 	{"db_url",          STR_PARAM, &db_url.s          },
 	{"presentity_table", STR_PARAM, &presentity_table },
+	{"watcherinfo_table", STR_PARAM, &watcherinfo_table },
 	{0, 0, 0}
 };
 

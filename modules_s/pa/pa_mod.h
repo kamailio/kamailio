@@ -39,5 +39,11 @@ extern int timer_interval;
 /* TM bind */
 extern struct tm_binds tmb;
 
+/* PA database */
+extern int use_db;
+extern str db_url;
+extern char *presentity_table;
+extern char *watcherinfo_table;
+
 
 #endif /* PA_MOD_H */
