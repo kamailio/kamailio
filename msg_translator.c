@@ -1175,7 +1175,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 			goto error01; /* free everything */
 		}
 		DBG("build_req_from_req: id added: <%.*s>, rcv proto=%d\n",
-				id_len, id_buf, msg->rcv.proto);
+				(int)id_len, id_buf, msg->rcv.proto);
 		extra_params.s=id_buf;
 		extra_params.len=id_len;
 	}
@@ -1185,8 +1185,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 			|| proto==PROTO_TLS
 #endif
 			){
-		DBG("build_req_from_req: checking for clen; proto=%d, rcv->proto=%d\n",
-				proto, msg->rcv.proto);
+		DBG("build_req_from_req: checking for clen; proto=%d,"
+			" rcv->proto=%d\n", proto, msg->rcv.proto);
 		/* first of all parse content-length */
 		if (parse_headers(msg, HDR_CONTENTLENGTH, 0)==-1){
 			LOG(L_ERR, "build_req_buf_from_sip_req:"
