@@ -119,6 +119,13 @@ A_LAST_MODIFIED_COLUMN=last_modified
 # domain table
 DOMAIN_TABLE=domain
 
+# URI table
+if [ -z "$URI_TABLE" ] ; then
+	URI_TABLE=uri
+fi
+URIUSER_COLUMN=uri_user
+MODIFIED_COLUMN=last_modified
+
 FIFO_DBG=0
 
 EGREP="egrep"
@@ -786,6 +793,16 @@ case $1 in
 			echo "new user added"
 		fi
 
+		QUERY="insert into $URI_TABLE \
+				($SUBSCRIBER_COLUMN,$REALM_COLUMN,$URIUSER_COLUMN,$MODIFIED_COLUMN) \
+				values ('$SERUSER','$SERDOMAIN','$SERUSER',now());";
+		sql_query "$QUERY"
+		if [ $? -ne 0 ] ; then
+			echo "introducing a new user into uri table failed"
+		else
+			echo "new user into uri table added"
+		fi
+
 		;;
 
 	monitor|console|moni|con)
@@ -803,13 +820,20 @@ case $1 in
 		fi
 		trap "rm $path;  clear; echo sc monitor ^C-ed; exit 1" 2
 		attempt=0
+		if [ "$2" == "" ]; then
+		    loops=-1;
+		else
+		    loops=$2;
+		fi
 		clear
-		while [ 1 -eq 1 ]; do
+		while [ $loops -gt $attempt ]; do
 			attempt=`expr $attempt + 1`
 			#clear
 			tput cup 0 0
 			print_stats $name $path $attempt
-			sleep $WATCH_PERIOD
+			if [ $loops -gt $attempt ]; then
+			    sleep $WATCH_PERIOD
+			fi
 		done
 		rm $path
 		exit 0
@@ -902,6 +926,10 @@ case $1 in
 
 		# begin with remove all user's privileges
 		$0 acl revoke $1  > /dev/null 2>&1
+
+        QUERY="delete from $URI_TABLE where $SUBSCRIBER_COLUMN='$SERUSER'"
+		sql_query "$QUERY"
+
 
 		# destroy the user now
         QUERY="delete from $SUB_TABLE where $SUB_TABLE.$SUBSCRIBER_COLUMN='$SERUSER' and $SUB_TABLE.$REALM_COLUMN='$SERDOMAIN'"
