@@ -592,6 +592,7 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 	char hdr_buf[1024], body_buf[1024];
 
 	str str_vals[IDX_NO], hdr_str , body_str;
+	time_t rtime;
 
 	DBG("MSILO:m_dump: ------------ start ------------\n");
 	hdr_str.s=hdr_buf;
@@ -711,9 +712,9 @@ static int m_dump(struct sip_msg* msg, char* str1, char* str2)
 			/** sending using TM function: t_uac */
 
 			body_str.len = 1024;
-			n = m_build_body(&body_str, 
-					RES_ROWS(db_res)[i].values[DUMP_IDX_INC_TIME].val.int_val,
-					str_vals[STR_IDX_BODY] );
+			rtime = 
+				(time_t)RES_ROWS(db_res)[i].values[DUMP_IDX_INC_TIME].val.int_val;
+			n = m_build_body(&body_str, rtime, str_vals[STR_IDX_BODY]);
 			if(n<0)
 				DBG("MSILO:m_dump: sending simple body\n");
 			else
