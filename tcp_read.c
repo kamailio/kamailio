@@ -399,20 +399,11 @@ int tcp_read_req(struct tcp_connection* con)
 		req=&con->req;
 #ifdef USE_TLS
 		if (con->type==PROTO_TLS){
-			if (con->state==S_CONN_ACCEPT){
-				if (tls_accept(con, 0)!=0){
-					resp=CONN_ERROR;
-					goto end_req;
-				}
-				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
+			if (tls_fix_read_conn(con)!=0){
+				resp=CONN_ERROR;
+				goto end_req;
 			}
-			if(con->state==S_CONN_CONNECT){
-				if (tls_connect(con, 0)!=0){
-					resp=CONN_ERROR;
-					goto end_req;
-				}
-				if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
-			}
+		if(con->state!=S_CONN_OK) goto end_req; /* not enough data */
 		}
 #endif
 
@@ -644,20 +635,7 @@ skip:
 					DBG("tcp receive: match, fd:isset\n");
 #endif
 					nfds--;
-#ifdef USE_TLS
-					if (con->type==PROTO_TLS){
-						/* we have to avoid to run in the same time 
-						 * with a tls_write because of the 
-						 * update_fd stuff  (we don't want a write
-						 * stealing the fd under us or vice versa)
-						 * => lock on con->write_lock (ugly hack) */
-						lock_get(&con->write_lock);
-						tls_tcpconn_update_fd(con, con->fd);
-						resp=tcp_read_req(con);
-						lock_release(&con->write_lock);
-					}else
-#endif
-						resp=tcp_read_req(con);
+					resp=tcp_read_req(con);
 					
 					if (resp<0){
 						FD_CLR(con->fd, &master_set);
