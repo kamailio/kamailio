@@ -699,6 +699,18 @@ int db_fifo( FILE *fifo, char *response_file )
 			db_free_query( fifo_db_con, select_res);
 			break;
 		case UPDATE_CMD:
+			if (nr1==0) {
+				double_log("No values for update (empty first AVP list)");
+				goto error;
+			}
+			/* all the operators must be '=' in the first avp list */
+			for(n=0;n<nr1;n++) {
+				if (ops1[n][0]!='=' || ops1[n][1]!='\0') {
+					double_log("Invalid operator in updated fileds "
+						"(expected = )");
+					goto error;
+				}
+			}/*end for*/
 			/* push the query */
 			n = db_update( fifo_db_con, nr2?keys2:0, nr2?ops2:0, nr2?vals2:0,
 				keys1, vals1, nr2, nr1 );
@@ -717,10 +729,14 @@ int db_fifo( FILE *fifo, char *response_file )
 			}
 			break;
 		case INSERT_CMD:
+			if (nr2==0) {
+				double_log("Nothing to insert (empty AVP list)");
+				goto error;
+			}
 			/* all the operators must be '=' */
 			for(n=0;n<nr2;n++) {
 				if (ops2[n][0]!='=' || ops2[n][1]!='\0') {
-					double_log("Invalid operatpr in inserted fileds "
+					double_log("Invalid operator in inserted fileds "
 						"(expected = )");
 					goto error;
 				}
