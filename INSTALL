@@ -314,7 +314,7 @@ proceed, you need to make sure MySQL is installed on your box.
 	 USE="mysql" emerge ser)
 3) create MySQL tables
 	- if you have a previously installed SER on your system, use
-    	/usr/sbin/ser_mysql.sh create
+    	/usr/sbin/ser_mysql.sh reinstall 
 	  to convert your SER database into new structures
 	- otherwise, if this is your very first installation, use
     	/usr/sbin/ser_mysql.sh create
