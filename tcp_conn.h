@@ -99,7 +99,7 @@ struct tcp_connection{
 #endif
 	struct tcp_req req; /* request data */
 	volatile int refcnt;
-	int state; /* connection state, only EOF and OK for now */
+	enum tcp_conn_states state;/* connection state, only EOF and OK for now */
 	int bad; /* if set this is a "bad" connection */
 	int timeout; /* connection timeout, after this it will be removed*/
 	unsigned addr_hash; /* hash indexes in the 2 tables */

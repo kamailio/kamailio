@@ -455,11 +455,13 @@ send_it:
 		response[0]=(long)c;
 		response[1]=CONN_ERROR;
 		n=write(unix_tcp_sock, response, sizeof(response));
+		/* CONN_ERROR wil auto-dec refcnt => we must not call tcpconn_put !!*/
 		if (n<0){
-			LOG(L_ERR, "BUG: tcp_send: failed to get fd(write):%s (%d)\n",
+			LOG(L_ERR, "BUG: tcp_send: error return failed (write):%s (%d)\n",
 					strerror(errno), errno);
-			goto release_c;
 		}
+		close(fd);
+		return n; /* error return, no tcpconn_put */
 	}
 end:
 	close(fd);
@@ -753,12 +755,14 @@ read_again:
 					/* don't listen on it any more */
 					FD_CLR(pt[r].unix_sock, &master_set);
 					/*exit(-1)*/;
+					continue;
 				}else if (bytes<0){
 					if (errno==EINTR) goto read_again;
 					else{
 						LOG(L_CRIT, "ERROR: tcp_main_loop: read from child: "
 								" %s\n", strerror(errno));
 						/* try to continue ? */
+						continue;
 					}
 				}
 					
@@ -787,6 +791,7 @@ read_again:
 					case CONN_ERROR:
 					case CONN_DESTROY:
 					case CONN_EOF:
+						/* WARNING: this will auto-dec. refcnt! */
 						if (pt[r].idx>=0){
 							tcp_children[pt[r].idx].busy--;
 						}else{
