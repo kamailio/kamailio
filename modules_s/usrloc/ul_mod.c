@@ -137,10 +137,10 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	printf("usrloc module - initializing\n");
+	DBG("usrloc - initializing\n");
 
 	     /* Register cache timer */
-	register_timer(timer, NULL, timer_interval);
+	register_timer(timer, 0, timer_interval);
 
 	     /* Initialize fifo interface */
 	init_ul_fifo();
