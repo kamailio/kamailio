@@ -33,7 +33,11 @@
 int k_cmp(void *a, void *b)
 {
 	int n;
-	DBG("JABBER: k_kmp: comparing <%.*s> / <%.*s>\n", ((str *)a)->len, ((str *)a)->s, ((str *)b)->len, ((str *)b)->s);
+	if(a == NULL)
+	    return -1;
+	if(a == NULL)
+	    return 1;
+	// DBG("JABBER: k_kmp: comparing <%.*s> / <%.*s>\n", ((str *)a)->len, ((str *)a)->s, ((str *)b)->len, ((str *)b)->s);
 	if(((str *)a)->len != ((str *)b)->len)
 		return -1;
 	n = strncmp(((str *)a)->s, ((str *)b)->s, ((str *)a)->len);
