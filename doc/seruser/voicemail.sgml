@@ -1,15 +1,134 @@
 <para>
-	This is a place-holder for user documentation of the voicemail system.
+	The voicemail system provides <application>ser</application>
+	with voice announcement and recording capabilities. Voice
+	messages may then be mailed to the called user. The system
+	relies on <application>ser</application> for implementating
+	the <acronym>SIP</acronym> stack and communicate with it
+	throught <acronym>FIFO</acronym>. It implements the dialog and media
+	handling as described in RFC 3264 (An Offer/Answer Model with
+	the Session Description Protocol) and RFC 1889 (Real time
+	transport protocol) to realize its goal.
+
+</para>
+<section>
+<title>Advantages</title>
+	<para>
+            Anyone deploying <application>ser</application> and
+	    <acronym>VoIP</acronym> should profit from this 'ready-to-run'
+	    application. It plugs into <application>ser</application> as
+	    easy as configuring the database location, announce file path
+	    and SMTP server address. 
+	</para>
+	<para>
+	    Further,
+	    <application>voicemail</application>
+	    integrates the most popular free codecs
+	    (G.711ulaw, G.711alaw and GSM 06.10) and
+	    its own SMTP client, which means that you
+	    don't need to install anything else as
+	    <application>ser</application> and
+	    <application>voicemail</application>. 
+	</para>
+	<para>
+	    If you want your voicemail system to support
+	    other codecs, a simple plugin system with
+	    SDK alows you to integrate them fast and
+	    simply (see the basis plugins for examples). 
+	</para>
+</section>
+<section>
+<title>Technical limitations</title>
+	<para>
+	    The sound conversion engine doesn't
+	    support yet resampling. It means that
+	    input and ouput files have to be
+	    compatible with the sampling rate of the
+	    codec. All codecs included with the
+	    distribution work at 8kHz, which means
+	    that all the input and output files MUST
+	    be sampled at the rate of 8kHz.
+	</para>
+	<para>
+	    At the moment, voicemail only support the
+	    Microsoft Wav file format with PCM 16 bit,
+	    Mu-law and A-law 8 bit encoding.
+	</para>
+</section>
+
+
+<section>
+<title>Compilation and installation</title>
+	<para>
+	    First, you need to compile Ser with voicemail
+	    support. Thatfor, you must edit Ser's
+	    Makefile.defs file and uncomment the line with
+	    '-DVOICE_MAIL' and '-D_TOTAG'.
+	</para>
+	<para>
+	    Then do 'make all' in Ser's root directory.
+	</para>
+	<para>
+	    Configure Ser to fit your needs. You can
+	    report to voicemail example config file to
+	    know what your configuration file should
+	    include. Note that voicemail
+	    only needs to know the user database location
+	    in order to work. Report to the README file in
+	    the vm module directory for description of the
+	    functions and variable that are used by
+	    voicemail and how they work.
+	</para>
+	<para>
+	    Finally, compile the voicemail application:
+	</para>
+	<para>
+	    <programlisting>
+		[~/voicemail]$ cd ortp-0.5.0
+		[~/voicemail/ortp-0.5.0]$ ./configure
+		[~/voicemail/ortp-0.5.0]$ make all
+		[~/voicemail/ortp-0.5.0]$ cd ..
+		[~/voicemail]$ cd plug-in/gsm/gsm-????
+		[~/voicemail/plug-in/gsm/gsm-????]$ make all
+		[~/voicemail/plug-in/gsm/gsm-????]$ cd ../..
+		[~/voicemail]$ make all
+	    </programlisting>
+	</para>
+	<para>
+		You can then start voicemail with following
+		command <command>ans_machine</command> and
+		look if the default fit your needs. If not,
+		type <command>ans_machine -h</command> to see
+		how to change the default parameters.
+	</para>
+	<para>
+		If <application>ans_machine</application> is
+		not started or can't be joined while
+		<application>ser</application> tries to
+		communicate with it, the caller will become
+		a '500 internal server error' with a comment
+		saying what the trouble is.
+	</para>
+	<example>
+                <title>Example ser Config File</title>
+		<programlisting>
+		... to be done ...
+		</programlisting>
+	</example>
+</section>
+<section>
+<title>Availabilty, report bugs, contact the author</title>
+<para>
+        Ser's Voicemail is hosted at
+	<ulink
+	url="http://developer.berlios.de/projects/sems">http://developer.berlios.de/projects/sems</ulink>.
+	A snapshot may be downloaded directly from the CVS tree. A
+	pre-configured version of <application>ser</application>
+	including <application>voicemail</application> will be soon
+	available (starting from version 0.8.11). 
 </para>
 <para>
-	It will include what it is good for, how to get it running, its
-	current technical limitations, from where one can obtain latest
-	version, etc.
-
-	<example>
-		<title>Example Config File</title>
-		<programlisting>
-if (uri=...
-}
-		</programlisting>
+        Bugs can be directly reported at the voicemail's project page. If you
+        want to contact the author, use the contact email at the
+        project's web page.
 </para>
+</section>
