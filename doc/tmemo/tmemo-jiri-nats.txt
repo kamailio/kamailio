@@ -1,0 +1,243 @@
+$Id$
+
+Deployment Experience with NAT Traversal
+========================================
+
+
+Jiri Kuthan, iptel.org, February 2002
+
+TOC
+----
+1. Summary
+2. Background
+3. Summary of NAT Traversal Methods
+   - using symmetric communication
+   - UPnP
+   - geek tweaks
+   - ALG
+   - STUN
+   - media relay 
+   - FCP
+4. Hints for SER Usage
+5. More references
+
+
+1. Summary
+----------
+
+We summarize currently deployed techniques for NAT traversal. This
+memo focuses on practical experience of users of SIP or/and SER have
+had with getting over NATs. It attempts to capture aspects like
+known configuration pitfalls, available devices, and known
+operational limitations. It also includes subjective, unverified
+user experience encountered on our mailing list to give readers
+rough feeling for how people tackle with NATs.
+
+2. Background
+-------------
+NAT is one of the most annoying issues that have ever happened to SIP.
+SIP communication is very dynamic -- it allows many parties to 
+participate in many sessions of various types and flavors. To address
+this dynamicity, transport addresses are dynamically negotiated using SIP.
+IP addresses and transport port numbers are advertised in SIP
+headers and SDP payloads. Unfortunately, all these addresses
+are invalid once they cross a NAT and leave an addressing realm.
+That means that signaling "as is" simply does not work with NATs. Many 
+techniques have been developed to deel with this ugly, ugly, really ugly
+problem. None of them is perfect -- it is all patchwork fixing
+what NATs have broken. Some of them better fit in some scenarios
+then others do, but there is no "best" method.  It will be probably
+affordability of the methods, easy of configuration and market who 
+will decide popularity ranking for the available methods.
+
+The problem is really big. Noone really knows how big, that is one of
+NAT properties -- they hide users. Many residential users use NATs
+to save money for IP addresses. GPRS networks are told to be NATted
+by 90%. Brian Carpenter (January 2001): “My hand waving estimate is 
+that 40% (160M) of users are behind a firewall and/or NAT, 50% (200M) 
+on dial-up, and 10% (40M) have direct always-on access. But there is 
+no way I can justify these numbers.”
+
+For sake of completeness: a straight-forward solution would be to
+deploy IPv6 and have so many addresses, that there would be need for
+NATs. However, as this memo is focused on practicability, issues
+related to IPv6 are not mentioned here.
+
+See the following link for a detailed discussion of NAT traversal scenarios:
+http://www.iptel.org/ietf/firewall/nat/#draft-ietf-sipping-nat-scenarios
+
+
+
+3. Summary of NAT Traversal Methods
+-----------------------------------
+
+
+----------------------------------------------------------------
+technique:    using symmetric communication
+description:  the method is based on limiting peer-to-peer communication
+              to client-server communication; server always sends to where
+              client is sending from
+requirements: phone devices that support symmetric communication;
+              existing species: Cisco's ATA
+configuration 
+practice:     ATAs need to be configured to advertise public address 
+              in signaling (Contacts, SDP), or learn it from REGISTER 
+              replies; alternatively, one can rewrite signaling using ser's
+              nethelper module; one needs to rewrite SIP anyway
+              because ATAs don't advertise their symmetricity;
+              http://www.cisco.com/univercd/cc/td/doc/product/voice/ata/atarn/186rn214.htm#xtocid17;
+              see more on use with ser in section 4
+limitations:  non-symmetric devices, like Messenger don't work;
+              servers need to be reachable -- it does not work if both 
+              devices are behind NAT
+comments:     jku: ATA is a very simple device, it has no display, I am 
+                anxiously waiting for more vendors to support symmetric signaling
+              jt, maxim: the "received" workaround in version 2.15 does not work
+references:   http://www.iptel.org/ietf/firewall/nat/#draft-ietf-sip-symmetric-response
+
+----------------------------------------------------------------
+technique:    UPnP
+description:  the method is based on controlling NATs from end-devices
+requirements: NATs and phones with UPnP support; Messenger and 
+              snom are known to support UPnP; there is linux
+              support for it
+configuration 
+practice:     of course, upnp requires by definition no configuration ;-)
+              (I'm not serious -- anyone actually tried it?)
+comments:     jh: but how many nat boxes support upnp?  last time i looked at 
+                ms upnp page, the list was very short.
+
+----------------------------------------------------------------
+technique:    geek tweaks
+description:  set-up port forwading manually
+configuration  
+practice:     you need to configure NATs to split its public-side port
+              numbers accross your private-side phones, and configure
+              the phones (if they allows so) to use these port numbers;
+              also, phones need to be configured to use publicly
+              reachable address in their payloads
+requriements: configurable NATs (many residental NATs are configurable)
+              and configurable phones (ATAs do that, I heard pingtel did
+              it too)
+----------------------------------------------------------------
+technique:    ALG
+description:  NATs need to have built-in application awareness which fixes
+              signaling and replaces private realm addresses with public
+              ones
+requirements: SIP-capable NAT 
+hardware:     we are currently aware of residential Intertex, bigger-scale
+              Ingate, enterprise Cisco/PIX
+comments:     jh: i like this one.  cisco ios nat that is built in every 
+                cisco router now has sip alg.  you must have very recent ios 
+                version though.
+              jdr (in a private chat): it requires too much application
+                awareness from router vendors
+              jku: when I use intertex, my ssh connections freeze after   
+                some time on-line, not all Ethernet devices work with it;
+                sometimes turning it off and on is needed
+
+----------------------------------------------------------------
+technique:    STUN
+description:  STUN is a simple protocol, with which phones can query the public
+              addresses with which they appear outside, and use them in signaling
+requirements: STUN-enabled phone (like k-phone, snom)
+limitations:  doesn't work over symmetric NATs 
+software:     - Maxim's working stund, which works on BSD too:
+                http://people.freebsd.org/~sobomax/stund_0.8.2.tgz.
+              - kphone from wirlabs supports Stun
+comments:     jh: we have tried kphone's stun in all mojor dsl providers in finland 
+                that nat their customers and haven't had problems with any.  in some 
+                cases you have to run stund in your outbound proxy and not in some 
+                other ip address. 
+              nils: kphone/stun is nicely working, except it expects replies on 
+                other port number than it sends from (i.e., it behaves like
+                a server rather than like a client); then, replies go to the
+                port advertised in Via, for which no association in NAT exists,
+                because the original request created one with another port
+                number
+              jku: many residential NATs are claimed NOT to be symmetric
+                (just jabber I heard)
+References:   http://www.iptel.org/ietf/firewall/nat/#draft-ietf-midcom-stun
+
+----------------------------------------------------------------
+technique:    media relay
+description:  make all communication go through a server; if the communication
+              is symmetric, this method works even if both parties are behind
+              symmetric NATs
+limitations:  scalability issues with bandwidth load put on the relay; RTT doubles
+hardware:     JAsomi has some, it is in use in FWD; other devices exist from
+              Kagoor Networks, and Newport Networks
+----------------------------------------------------------------
+technique:    FCP
+description:  Firewall Control Protocol allows proxy server to align NATs to needs
+              of applications; the technique is similar to ALG, except the application
+              logic is moved away from router builders to application builders
+limitations:  there is no standard -- the IETF/MIDCOM WG has failed to deliver 
+              reasonable output in reasonable time; no FCP client exists right now
+software:     FCP server for linux nats exist; FCP client for ser is still work
+              in progress
+References:   http://www.iptel.org/fcp/
+----------------------------------------------------------------
+
+
+4. Hints for SER USage
+----------------------
+
+ad symmetric communication -- how nathelper works)
+
+- It takes symmetric devices. ATAs are such, but they do not advertise their
+  capability. One needs to grant specil handling for devices claiming to be
+  ATA in their requests.
+- It takes fixing Contacts before they are stored or forwarded. That's what nathelper 
+  does. It replaces phones' contacts with requests' transport origin. It also
+  adds "symmetric ad" to SDP payload ('active')
+- Replies need to be checked too to see if UAS supports symmetric signaling.
+- UAS needs to understand the 'active' option. IOS does so.
+
+fone F: A:B     NAT N: X:Y       proxy/registrar D                       
+
+                  ~                                                /--------\
+/------\          ~            /-----------------\                 |        |
+|phone | -------->~----------->|ser w/nathelper  |<--------------->|other   |\
+\------/          ~            |as outbound      |                 |domains ||\
+                  ~            |proxy + registrar|                 \--------/||
+                               \-----------------/                    \------/|
+                                                                        \-----/  
+
+nathelper script example: (subject to ongoing changes, as ser is being refurbished)
+
+
+
+route {
+        if (search("User-Agent: Cisco ATA.*")) {
+                add_rport();
+                fix_nated_contact();
+        };
+        rewriteFromRoute();
+
+
+        [REGISTRATION STUFF STRIPPED]
+
+
+        if (method=="INVITE") {
+                addRecordRoute();
+        };
+
+
+        t_on_positive("1")
+        # forward to current uri now
+        if (!t_relay()) {
+                sl_reply_error();
+        };
+}
+
+
+reply_route[1] {
+        if (search("Server: Cisco ATA.*") {
+                fix_nated_contact();
+        }
+}
+
+Acknowledgments: nathelper module is courtesy of MAxim Sobolev.
+
+

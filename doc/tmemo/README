@@ -1,5 +1,5 @@
 This directory contains short technical memos documenting 
-best practices and technical decisions made or proposed
+operational practices and technical decisions made or proposed
 for ser or accompanying applications. The memos serve as 
 requests for comments in the literal sense (not to be confused
 with IETF's RFCs).
@@ -17,7 +17,3 @@ in plain ASCII. Their filenames consists of
 For example: tmemo-johndoe-backtobackua.txt
 No version numbers are used in filename -- these are displayed 
 in text and assigned by CVS server. 
-
---
-TODO: reasonable topics which I would like to be addressed here
-include NAT traversal and multidomain management. -jiri
