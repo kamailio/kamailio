@@ -1195,24 +1195,24 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	/* changhing method name*/
 	memcpy(cancel_buf,"CANCEL",6);
 	append_mem_block(p,CRLF,CRLF_LEN);
-	
-
 	/* insert our via */
-	memcpy( p , via , via_len );
-	p += via_len;
+	append_mem_block(p,via,via_len);
 
 	/*other headers*/
 	for ( hdr=p_msg->headers ; hdr ; hdr=hdr->next )
 	{
-		if ( hdr->type==HDR_FROM || hdr->type==HDR_CALLID ||
-			hdr->type==HDR_TO || hdr->type==HDR_CSEQ )
+		if(hdr->type==HDR_FROM||hdr->type==HDR_CALLID||hdr->type==HDR_TO)
 		{
 			append_mem_block(p,hdr->name.s,
 				((hdr->body.s+hdr->body.len)-hdr->name.s) );
 			append_mem_block(p, CRLF, CRLF_LEN );
-			p+=CRLF_LEN;
+		}else if ( hdr->type==HDR_CSEQ )
+		{
+			append_mem_block(p,hdr->name.s,
+				((((struct cseq_body*)hdr->parsed)->method.s)-hdr->name.s));
+			append_mem_block(p,"CANCEL" CRLF, 6+CRLF_LEN );
 		}
-	}
+}
 
 	/* User Agent header */
 	append_mem_block(p,USER_AGENT,USER_AGENT_LEN);
@@ -1222,6 +1222,10 @@ int t_build_and_send_CANCEL(struct cell *Trans,unsigned int branch)
 	append_mem_block(p,CRLF,CRLF_LEN);
 	/* end of message */
 	append_mem_block(p,CRLF,CRLF_LEN);
+	*p=0;
+	
+
+	DBG("LOCAL CANCEL = \n%s\n",cancel_buf);
 
 	pkg_free(via);
 	return 1;
@@ -1432,12 +1436,12 @@ void final_response_handler( void *attr)
 		DBG("DEBUG: final_response_handler:stop retransmission and"
 			" send 408 (t=%p)\n", r_buf->my_T);
 		reset_timer( hash_table, &(r_buf->retr_timer) );
+		t_build_and_send_CANCEL( r_buf->my_T ,0);
 		/* dirty hack:t_send_reply would increase ref_count which would indeed
 		result in refcount++ which would not -- until timer processe's
 		T changes again; currently only on next call to t_send_reply from
 		FR timer; thus I fake the values now to avoid recalculating T
-		and refcount++
-		jku */
+		and refcount++ JKU */
 		T=r_buf->my_T;
 		global_msg_id=T->inbound_request->id;
 
