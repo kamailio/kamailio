@@ -202,6 +202,7 @@ int t_on_reply( struct sip_msg  *p_msg )
 	unsigned int res_len, ack_len;
 	/* buffer length (might be somewhat larger than message size */
 	unsigned int alloc_len;
+	str *str_foo;
 
 
 	/* make sure we know the assosociated tranaction ... */
@@ -267,16 +268,29 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	if (save_clone)
 	{
-		if (T->uac[branch].tag.s)
-			T->uac[branch].tag.s = shm_resize(T->uac[branch].tag.s,
-				get_to(p_msg)->tag_value.len+TAG_OVERBUFFER_LEN);
-		else
-			T->uac[branch].tag.s = shm_malloc( get_to(p_msg)->tag_value.len );
-		if (!T->uac[branch].tag.s)
+		str_foo = &(T->uac[branch].tag);
+		str_foo->s = shm_resize(str_foo->s, (str_foo?0:TAG_OVERBUFFER_LEN) +
+			get_to(p_msg)->tag_value.len);
+		if (!str_foo->s)
 		{
 			LOG( L_ERR , "ERROR: t_on_reply: connot alocate memory!\n");
 			goto error1;
 		}
+		/* when forking, replies greater then 300 are saved */
+		if (T->nr_of_outgoings>1 && msg_status>=300 )
+		{
+			str_foo = &(T->uac[branch].rpl_buffer);
+			str_foo->s = shm_resize(str_foo->s, res_len+
+				(str_foo->s?0:REPLY_OVERBUFFER_LEN) );
+			if (!str_foo->s)
+			{
+				LOG( L_ERR , "ERROR: t_on_reply: connot alocate memory!\n");
+				goto error1;
+			}
+			memcpy(str_foo->s,buf,res_len);
+			str_foo->len = res_len;
+		}
+		/*copy the TO tag from reply*/
 		T->uac[branch].tag.len = get_to(p_msg)->tag_value.len;
 		memcpy( T->uac[branch].tag.s, get_to(p_msg)->tag_value.s,
 			T->uac[branch].tag.len );
@@ -286,6 +300,21 @@ int t_on_reply( struct sip_msg  *p_msg )
 
 	rb = & T->uas.response;
 	if (relay >= 0 ) {
+		if (relay!=branch)
+		{
+			str_foo = &(T->uac[relay].rpl_buffer);
+			if (buf) pkg_free(buf);
+			buf = (char*)pkg_malloc(str_foo->len);
+			if (!buf)
+			{
+				UNLOCK_REPLIES( T );
+				start_fr = 1;
+				LOG(L_ERR, "ERROR: t_on_reply: cannot alloc pkg mem\n");
+				goto error1;
+			}
+			memcpy( buf , str_foo->s , str_foo->len );
+			res_len = str_foo->len;
+		}
 		/* if there is no reply yet, initialize the structure */
 		if ( ! rb->buffer ) {
 			/*init retrans buffer*/
@@ -302,23 +331,23 @@ int t_on_reply( struct sip_msg  *p_msg )
 			   subsequent messages will be longer and buffer
 			   reusing will save us a malloc lock */
 			alloc_len = res_len + REPLY_OVERBUFFER_LEN ;
-		} else {
+		}else{
 			alloc_len = res_len;
 		}
 		/* puts the reply's buffer to uas.response */
-		if (! (rb->buffer = (char *)shm_resize( rb->buffer, alloc_len ))) {
+		if (! (rb->buffer = (char*)shm_resize( rb->buffer, alloc_len ))) {
 			UNLOCK_REPLIES( T );
 			start_fr = 1;
 			LOG(L_ERR, "ERROR: t_on_reply: cannot alloc shmem\n");
 			goto error1;
-		};
+		}
 		rb->buffer_len = res_len;
 		memcpy( rb->buffer, buf, res_len );
 		/* update the status ... */
 		T->uas.status = p_msg->REPLY_STATUS;
-		T->uas.tag=&(T->uac[branch].tag);
+		T->uas.tag=&(T->uac[relay].tag);
 		if (T->uas.status >=200 && T->relaied_reply_branch==-1 )
-				T->relaied_reply_branch = branch;
+				T->relaied_reply_branch = relay;
 	}; /* if relay ... */
 
 	UNLOCK_REPLIES( T );

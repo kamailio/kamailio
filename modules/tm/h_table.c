@@ -44,6 +44,11 @@ void free_cell( struct cell* dead_cell )
 			shm_free_unsafe( b );
 			b = 0;
 		}
+		if ( (b=dead_cell->uac[i].rpl_buffer.s) )
+		{
+			shm_free_unsafe( b );
+			b = 0;
+		}
 	}
 
 	/* the cell's body */

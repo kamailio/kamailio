@@ -130,12 +130,19 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 		{ /* it's a ACK request*/
 			/* first only the length are checked */
 			if ( t_msg->first_line.u.request.method_value==METHOD_INVITE
+			//&& (printf("------Method name OK ->testing callid len...\n"))
 			&& /*callid length*/ EQ_LEN(callid)
+			//&& (printf("------CallID OK -> testing cseq nr len\n"))
 			&& get_cseq(t_msg)->number.len==get_cseq(p_msg)->number.len
+			//&& (printf("------Cseq nr OK -> testing from len\n"))
 			&& /*from length*/ EQ_LEN(from)
+			//&& (printf("------from OK -> testing To uri len\n"))
 			&& /*to uri*/get_to(t_msg)->uri.len==get_to(p_msg)->uri.len
+			//&& (printf("------To uri OK -> testing To tag len\n"))
 			&& /*to tag*/p_cell->uas.tag->len==get_to(p_msg)->tag_value.len
+			//&& (printf("------To tag OK -> testing uri len\n"))
 			&& /*req URI*/(p_cell->uas.status==200 || EQ_REQ_URI_LEN )
+			//&& (printf("------uri OK -> testing via len\n"))
 			&& /*VIA*/(p_cell->uas.status==200 || EQ_VIA_LEN(via1)) )
 				/* so far the lengths are the same
 				-> let's check the contents */

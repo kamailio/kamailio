@@ -88,6 +88,7 @@ typedef struct ua_client
 	struct retr_buf  request;
 	unsigned int     status;
 	str              tag;
+	str              rpl_buffer;
 	unsigned int     rpl_received;
 }ua_client_type;
 
