@@ -31,7 +31,7 @@
 #define _T_REPLY_H
 
 #include "defs.h"
-
+#include "../../tags.h"
 
 #include "h_table.h"
 
@@ -50,6 +50,8 @@ enum rps {
 	/* provisional reply not affecting transaction state */
 	RPS_PROVISIONAL
 };
+
+extern char tm_tags[TOTAG_VALUE_LEN];
 
 enum route_mode { MODE_REQUEST=1, MODE_ONREPLY, MODE_ONFAILURE };
 extern enum route_mode rmode;
