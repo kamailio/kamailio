@@ -33,6 +33,7 @@
 #include "cpl_sig.h"
 
 extern struct tm_binds cpl_tmb;
+extern int    proxy_route;
 
 
 /* forwards the msg to the given location set; if flags has set the
@@ -87,6 +88,14 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		foo = (*locs)->next;
 		free_location( *locs );
 		*locs = foo;
+	}
+
+	/* run what proxy route is set */
+	if (proxy_route) {
+		if (run_actions( rlist[proxy_route], msg)<0) {
+			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: "
+				"Error in do_action for proxy_route\n");
+		}
 	}
 
 	/* do t_forward */

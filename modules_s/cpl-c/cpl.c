@@ -72,8 +72,9 @@ static char *DB_TABLE      = 0;  /* */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
 int    proxy_recurse       = 0;
-char   *log_dir            = 0;  /* dir where the user log should be dumped*/
-
+char   *log_dir            = 0;  /* dir where the user log should be dumped */
+int    proxy_route         = 0;  /* script route to be run before proxy */
+int    cpl_nat_flag        = 6;  /* flag for marking lookuped contact as NAT */
 
 static pid_t aux_process = 0;  /* pid of the private aux. process */
 int    cpl_cmd_pipe[2];
@@ -119,6 +120,8 @@ static param_export_t params[] = {
 	{"cpl_table",     STR_PARAM, &DB_TABLE      },
 	{"cpl_dtd_file",  STR_PARAM, &dtd_file      },
 	{"proxy_recurse", INT_PARAM, &proxy_recurse },
+	{"proxy_route",   INT_PARAM, &proxy_route   },
+	{"nat_flag",      INT_PARAM, &cpl_nat_flag  },
 	{"lookup_domain", STR_PARAM, &lookup_domain },
 	{"log_dir",       STR_PARAM, &log_dir       },
 	{0, 0, 0}

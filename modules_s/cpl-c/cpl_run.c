@@ -107,10 +107,11 @@
 	}while(0)
 
 
-extern char   *log_dir;
+extern char            *log_dir;
 extern struct tm_binds cpl_tmb;
-extern udomain_t*   cpl_domain;
-extern usrloc_api_t cpl_ulb;
+extern udomain_t*      cpl_domain;
+extern usrloc_api_t    cpl_ulb;
+extern int             cpl_nat_flag;
 
 
 struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
@@ -290,6 +291,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 			while ((contact) && ((contact->expires <= tc) ||
 			(contact->state >= CS_ZOMBIE_N)))
 				contact = contact->next;
+			/* any contacts left? */
 			if (contact) {
 				/* clear loc set if requested */
 				if (clear)
@@ -304,6 +306,9 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 					cpl_ulb.unlock_udomain( cpl_domain );
 					goto runtime_error;
 				}
+				/* mark as nated */
+				if (contact->flags & FL_NAT)
+					setflag( intr->msg, cpl_nat_flag);
 				/* set the flag for modifing the location set */
 				intr->flags |= CPL_LOC_SET_MODIFIED;
 				/* we found a valid contact */
