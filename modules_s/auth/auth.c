@@ -50,7 +50,7 @@ void auth_init(void)
  * FIXME
  * Calculate nonce value
  */
-static inline void calc_nonce(char* _realm, char* _nonce)
+static inline int calc_nonce(char* _realm, char* _nonce)
 {
 	memcpy(_nonce, "12345678901234567890123456789012", 32);
 	_nonce[32] = '\0';
