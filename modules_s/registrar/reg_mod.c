@@ -58,6 +58,8 @@ int append_branches = 1;    /* If set to 1, lookup will put all contacts found i
 int case_sensitive  = 0;    /* If set to 1, username in aor will be case sensitive */
 int desc_time_order = 0;    /* By default do not order according to the descending modification time */
 int nat_flag        = 4;    /* SER flag marking contacts behind NAT */
+int min_expires     = 60;   /* Minimum expires the phones are allowed to use in seconds,
+			     * use 0 to switch expires checking off */
 
 float def_q;                /* default_q converted to float in mod_init */
 
@@ -89,6 +91,7 @@ static param_export_t params[] = {
 	{"case_sensitive",  INT_PARAM, &case_sensitive },
 	{"desc_time_order", INT_PARAM, &desc_time_order},
 	{"nat_flag",        INT_PARAM, &nat_flag       },
+	{"min_expires",     INT_PARAM, &min_expires    },
 	{0, 0, 0}
 };
 
