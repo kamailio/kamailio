@@ -540,13 +540,7 @@ modparam (<quote>auth_db</quote>, <quote>password_column</quote>, <quote>passwor
 		password in the database.
 	    </para>
 	    <para>
-		Lastly we need to update the routing section to recognize our realm.
-	    </para>
-	    <para>
-		Change (uri==<quote>myself</quote>) to (uri=~<quote>mydomain.com</quote>)
-	    </para>
-	    <para>
-		Uncomment these lines and change all instances of iptel.org to mydomain.com
+		Uncomment these lines and change all instances of iptel.org to your domain
 	    </para>
 	    <para>
 		<screen format="linespecific">
