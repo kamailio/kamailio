@@ -27,6 +27,72 @@
 #include <mem/dmalloc.h>
 #endif
 
+#ifdef DBG_MSG_QA
+/* message quality assurance -- frequently, bugs in ser have
+   been indicated by zero characters or long whitespaces
+   in generated messages; this debugging option aborts if
+   any such message is sighted
+*/
+static int dbg_msg_qa(char *buf, int len)
+{
+#define _DBG_WS_LEN 3
+#define _DBG_WS "   "
+
+	char *scan;
+	int my_len;
+	int space_cnt;
+	enum { QA_ANY, QA_SPACE, QA_EOL1 } state;
+
+
+	/* is there a zero character inthere ? */	
+	if (memchr(buf, 0, len)) {
+		LOG(L_CRIT, "BUG: message being sent with 0 in it\n");
+		return 0;
+	}
+
+	my_len=len;
+	scan=buf;
+	state=QA_ANY;
+	space_cnt=0;
+
+	while(my_len) {
+		switch(*scan) {
+			case ' ':	if (state==QA_SPACE) {
+							space_cnt++;
+							if (space_cnt==4) {
+								LOG(L_CRIT, "BUG(propably): DBG_MSG_QA: "
+									"too many spaces\n");
+								return 0;
+							}
+						} else space_cnt=0;
+						state=QA_SPACE; 
+						break;
+
+			case '\r':	/* ignore */
+						space_cnt=0;
+						break;
+
+			case '\n': /* don't proceed to body on EoH */
+						if (state==QA_EOL1) goto qa_passed;
+						space_cnt=0;
+						state=QA_EOL1;
+						break;
+
+			default:	space_cnt=0;
+						state=QA_ANY;
+						break;
+		}
+		scan++;
+		my_len--;
+	}
+
+
+qa_passed:
+	return 1;
+}
+
+#endif
+
 
 int probe_max_receive_buffer( int udp_sock )
 {
@@ -256,71 +322,6 @@ error:
 
 
 
-#ifdef DBG_MSG_QA
-/* message quality assurance -- frequently, bugs in ser have
-   been indicated by zero characters or long whitespaces
-   in generated messages; this debugging option aborts if
-   any such message is sighted
-*/
-int dbg_msg_qa(char *buf, int len)
-{
-#define _DBG_WS_LEN 3
-#define _DBG_WS "   "
-
-	char *scan;
-	int my_len;
-	int space_cnt;
-	enum { QA_ANY, QA_SPACE, QA_EOL1 } state;
-
-
-	/* is there a zero character inthere ? */	
-	if (memchr(buf, 0, len)) {
-		LOG(L_CRIT, "BUG: message being sent with 0 in it\n");
-		return 0;
-	}
-
-	my_len=len;
-	scan=buf;
-	state=QA_ANY;
-	space_cnt=0;
-
-	while(my_len) {
-		switch(*scan) {
-			case ' ':	if (state==QA_SPACE) {
-							space_cnt++;
-							if (space_cnt==4) {
-								LOG(L_CRIT, "BUG(propably): DBG_MSG_QA: "
-									"too many spaces\n");
-								return 0;
-							}
-						} else space_cnt=0;
-						state=QA_SPACE; 
-						break;
-
-			case '\r':	/* ignore */
-						space_cnt=0;
-						break;
-
-			case '\n': /* don't proceed to body on EoH */
-						if (state==QA_EOL1) goto qa_passed;
-						space_cnt=0;
-						state=QA_EOL1;
-						break;
-
-			default:	space_cnt=0;
-						state=QA_ANY;
-						break;
-		}
-		scan++;
-		my_len--;
-	}
-
-
-qa_passed:
-	return 1;
-}
-
-#endif
 
 /* which socket to use? main socket or new one? */
 int udp_send(struct socket_info *source, char *buf, unsigned len, union sockaddr_union*  to)
