@@ -153,8 +153,10 @@ int load_file( char *filename, str *xml)
 	}
 	xml->s[xml->len] = 0;
 
+	close(fd);
 	return 1;
 error:
+	if (fd!=-1) close(fd);
 	if (xml->s) pkg_free( xml->s);
 	return -1;
 }
