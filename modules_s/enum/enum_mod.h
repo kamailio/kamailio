@@ -39,6 +39,7 @@
  * Internal module variables
  */
 extern str suffix;           /* str version of domain_suffix */
+extern str param;            /* str version of tel_uri_params */
 extern str service;          /* default (empty) service */
 
 

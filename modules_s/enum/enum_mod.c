@@ -60,12 +60,14 @@ static int enum_fixup(void** param, int param_no);
  * Module parameter variables
  */
 char* domain_suffix = "e164.arpa.";
+char* tel_uri_params = "";
 
 
 /*
  * Internal module variables
  */
 str suffix;
+str param;
 str service;
 
 
@@ -86,6 +88,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
         {"domain_suffix", STR_PARAM, &domain_suffix},
+        {"tel_uri_params", STR_PARAM, &tel_uri_params},
 	{0, 0, 0}
 };
 
@@ -111,7 +114,10 @@ static int mod_init(void)
 	
 	suffix.s = domain_suffix;
 	suffix.len = strlen(suffix.s);
-	
+
+	param.s = tel_uri_params;
+	param.len = strlen(param.s);
+
 	service.len = 0;
 
 	return 0;
