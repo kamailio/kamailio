@@ -1,3 +1,9 @@
+/*
+ * Route & Record-Route module
+ *
+ * $Id$
+ */
+
 #include "rr.h"
 #include "../../dprint.h"
 #include "utils.h"
@@ -116,8 +122,8 @@ int remFirstRoute(struct sip_msg* _m, char* _next)
 	_next = find_not_quoted(_next, '<');
 	if (_next) {
 		DBG("remFirstRoute(): next URI found: %s\n", _next);
-		offset = _m->route->body.s - _m->buf; /* + 1 - keep the first white char */
-		len = _next - _m->route->body.s;
+		offset = _m->route->body.s - _m->buf + 1; /* + 1 - keep the first white char */
+		len = _next - _m->route->body.s - 1;
 	} else {
 		DBG("remFirstRoute(): No next URI in Route found\n");
 		offset = _m->route->name.s - _m->buf;
