@@ -3,18 +3,21 @@
 #
 
 This is a collection of issues which have shown up
-since the version 0.8.8 was released.
+since the version 0.8.8 was released. The issues are
+ordered by numbers of ser versions to which they relate,
+beginning with the newest release. Issues related to
+operating systems are summarized in the bottom.
 
-----------------------------------------------------------------
-Desc:  ser won't run on linux kernels <2.4  (fails with EINVAL when
-      intializing the shared memory)
-BugId:  n/a
-Ser version: 0.8.8, 0.8.9, 0.8.10 
-Workaround: Upgrade to a 2.4.* kernel (older kernels don't support shared 
-            mmaping of /dev/zero ) or recompile ser with SYSV shm instead of
-            mmap (remove -DSHM_MMAP from Makefile.defs)
-CVS status: n/a
-----------------------------------------------------------------
+
+---------------------------------------------------------------
+Desc: ser 0.8.10 and earlier versions crash if contact list
+      excessively long
+BugId: n/a
+Ser version: 0.8.8, 0.8.9, 0.8.10
+Patch: http://www.iptel.org/ser/security/secalert-002-0_8_10.patch
+Workaround: apply the patch to 0.8.10 sources
+CVS status: not fixed yet
+---------------------------------------------------------------
 Desc:  ser 0.8.10 won't compile with bison 1.75
 BugId:  n/a
 Ser version: 0.8.8, 0.8.9, 0.8.10 
@@ -23,10 +26,13 @@ Patch:
  0.8.9  http://www.mobile-ip.de/~andrei/ser/0.8.9/ser-0.8.9-bison-1.75.patch
 Workaround: update from cvs,  apply the corresponding patch or downgrade bison
 CVS status: fixed
-----------------------------------------------------------------
-ser 0.8.10 released, all the issues below this are fixed in ser 0.8.10, all the
-issues above are not :-)
-----------------------------------------------------------------
+---------------------------------------------------------------
+
+=================================================================================
+* ser 0.8.10 released, all the issues below this are fixed in ser 0.8.10, all the
+* issues above are not :-)
+=================================================================================
+
 Desc:  ser 0.8.9 won't log to stderr or syslog unless dontfork is set
         (introduced when trying to fix bug 376)
 BugId:  n/a
@@ -34,14 +40,6 @@ Ser version: =0.8.9 (0.8.8 is ok)
 Patch: http://www.mobile-ip.de/~andrei/ser/0.8.9/ser-0.8.9_log.patch
 Workaround: update from cvs or apply the patch.
 CVS status: fixed
----------------------------------------------------------------
-Desc: Solaris resolver memory leak
-	  (getipnodebyname on Solaris has a memory leak. unpatched
-	  solaris 8 installations will fail after processing 
-	  ~ 360000 requests)
-BugId: n/a
-CVS status: n/a
-Workaround: patch your Solaris OS
 ---------------------------------------------------------------
 Desc: local domain mismatch resulting in infinite loops
       (With default configuration and domain names in a request
@@ -68,10 +66,12 @@ BugId: n/a
 Workaround: use ipv6 addresses w/ :: or compile ser without -DDNS_IP_HACK 
             (Makefile.defs).
 CVS status: fixed
-----------------------------------------------------------------
-ser 0.8.9 released, all the issues below this are fixed in ser 0.8.9, all the
-issues above are not :-)
----------------------------------------------------------------
+
+================================================================================
+* ser 0.8.9 released, all the issues below this are fixed in ser 0.8.9, all the
+* issues above are not :-)
+================================================================================
+
 Desc: in default configuration, SER prints '127.0.0.1' in
       Warning header field of all replies
 BugId: 372
@@ -114,3 +114,25 @@ BugId: 377
 Cvs status: not fixed
 
 
+================================================================================
+* OS-related issues
+================================================================================
+
+----------------------------------------------------------------
+Desc:  ser won't run on linux kernels <2.4  (fails with EINVAL when
+      intializing the shared memory)
+BugId:  n/a
+Ser version: 0.8.8, 0.8.9, 0.8.10 
+Workaround: Upgrade to a 2.4.* kernel (older kernels don't support shared 
+            mmaping of /dev/zero ) or recompile ser with SYSV shm instead of
+            mmap (remove -DSHM_MMAP from Makefile.defs)
+CVS status: n/a
+---------------------------------------------------------------
+Desc: Solaris resolver memory leak
+	  (getipnodebyname on Solaris has a memory leak. unpatched
+	  solaris 8 installations will fail after processing 
+	  ~ 360000 requests)
+BugId: n/a
+CVS status: n/a
+Workaround: patch your Solaris OS
+---------------------------------------------------------------
