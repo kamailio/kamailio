@@ -66,27 +66,12 @@
 		(_dest) += (_len) ;\
 	}while(0);
 
-#define IDBUF_LEN	128
+#define VM_FIFO_PARAMS   21
 
-#define SQL_SELECT     "SELECT "
-#define SQL_SELECT_LEN 7
-
-#define SQL_FROM       " FROM "
-#define SQL_FROM_LEN   6
-
-#define SQL_WHERE      " WHERE "
-#define SQL_WHERE_LEN  7
-
-#define SQL_AND        " AND "
-#define SQL_AND_LEN    5
-
-#define SQL_EQUAL      " = "
-#define SQL_EQUAL_LEN  3
-
-#define VM_FIFO_PARAMS 21
-
+#define IDBUF_LEN	 128
 #define ROUTE_BUFFER_MAX 512
 #define HDRS_BUFFER_MAX  512
+#define CMD_BUFFER_MAX   128
 
 MODULE_VERSION
 
@@ -286,6 +271,8 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     str             next_hop;
     char            hdrs_buf[HDRS_BUFFER_MAX];
     str             hdrs;
+    char            cmd_buf[CMD_BUFFER_MAX];
+    str             cmd;
     struct hdr_field* p_hdr;
     param_hooks_t     hooks;
     str               tmp_str;
@@ -486,7 +473,12 @@ static int vm_action(struct sip_msg* msg, char* vm_fifo, char* action)
     }
 
     lines[0].s=VM_FIFO_VERSION; lines[0].len=strlen(VM_FIFO_VERSION);
-    lines[1].s=action; lines[1].len=strlen(action);
+
+    s=cmd_buf; cmd.s=s;
+    append_str(s,"sip_request.",12);
+    append_str(s,action,strlen(action));
+    cmd.len = s-cmd.s;
+    lines[1]=cmd;
 
     lines[2]=REQ_LINE(msg).method;
     lines[3]=msg->parsed_uri.user;		/* user from r-uri */

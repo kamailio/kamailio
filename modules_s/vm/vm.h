@@ -34,6 +34,6 @@
 #define _VM_H
 
 extern struct tm_binds _tmb;
-#define VM_FIFO_VERSION "0.1"
+#define VM_FIFO_VERSION "0.2"
 
 #endif
