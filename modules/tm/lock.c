@@ -230,7 +230,11 @@ tryagain:
 		if (errno==EINTR) {
 			DBG("signal received in a semaphore\n");
 			goto tryagain;
-		} else LOG(L_CRIT, "ERROR: change_semaphore: %s\n", strerror(errno));
+		} else {
+			LOG(L_CRIT, "ERROR: change_semaphore(%x, %x, 1) : %s\n",
+					s.semaphore.set, &pbuf,
+					strerror(errno));
+			
 	}
 	return r;
 }
