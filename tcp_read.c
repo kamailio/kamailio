@@ -652,7 +652,7 @@ skip:
 						 * stealing the fd under us or vice versa)
 						 * => lock on con->write_lock (ugly hack) */
 						lock_get(&con->write_lock);
-						tls_tcpconn_update_fd(con, s);
+						tls_tcpconn_update_fd(con, con->fd);
 						resp=tcp_read_req(con);
 						lock_release(&con->write_lock);
 					}else
