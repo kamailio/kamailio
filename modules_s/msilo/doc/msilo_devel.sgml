@@ -11,12 +11,12 @@
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
-	The module does not provide any kind of API for external usage.
+	The module does not provide any sort of <acronym>API</acronym> to use in other &ser; modules.
     </para>
 </chapter>
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("&parentsgml;" "book" "chapter")
+sgml-parent-document: ("msilo.sgml" "book" "chapter")
 End:
 -->

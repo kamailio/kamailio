@@ -14,314 +14,304 @@
     <section>
 	<title>Overview</title>
 	<para>
-		This modules provide offline message storage for Sip Express Router
-		(SER). It stores received messages for an offline user and sends them
-		next time when the user became online.
+	    This modules provides offline message storage for the &sername;. It stores received
+	    messages for an offline user and sends them when the user becomes online.
 	</para>
 	<para>
-		For each message, the modules stores <quote>Request-URI</quote>
-		(<quote>R-URI</quote>) only if it is a complete address of record
-		(<quote>username@hostname</quote>), URI from <quote>To</quote> header,
-		URI from <quote>From</quote> header, incoming time, expiration time,
-		content type and body of the message. If <quote>R-URI</quote> is not
-		an address of record (it might be the contact address for current SIP
-		session) the URI from <quote>To</quote> header will be used as R-URI.
+	    For each message, the modules stores <quote>Request-URI</quote> (<quote>R-URI</quote>)
+	    only if it is a complete address of record (<quote>username@hostname</quote>), &uri;
+	    from <quote>To</quote> header, &uri; from <quote>From</quote> header, incoming time,
+	    expiration time, content type and body of the message. If <quote>R-URI</quote> is not an
+	    address of record (it might be the contact address for current &sip; session) the &uri;
+	    from <quote>To</quote> header will be used as <abbrev>R-URI</abbrev>.
 	</para>
 	<para>
-		When the expiration time passed, the message is discarded from database.
-		Expiration time is computed based on incoming time and one of the
-		module's parameters.
+	    When the expiration time passed, the message is discarded from database.  Expiration
+	    time is computed based on incoming time and one of the module's parameters.
 	</para>
 	<para>
-		Every time when a user registers with SER, the module is looking in
-		database for offline messages intended for that user. All of them will be
-		sent to contact address provided in REGISTER request.
+	    Every time when a user registers with &ser;, the module is looking in database for offline
+	    messages intended for that user. All of them will be sent to contact address provided in
+	    REGISTER request.
 	</para>
 	<para>
-		It may happen the SIP user to be registered but his SIP User Agent to
-		have no support for MESSAGE request. In this case it should be used the
-		<quote>failure_route</quote> to store the undelivered requests.
+	    It may happen the &sip; user to be registered but his &sip; User Agent to have no
+	    support for MESSAGE request. In this case it should be used the
+	    <quote>failure_route</quote> to store the undelivered requests.
 	</para>
     </section>
     <section>
 	<title>Dependencies</title>
-		<section>
-	    	<title>&ser; modules</title>
-		<para>
-		    The next modules must be loaded before this module:
+	<section>
+	    <title>&ser; modules</title>
+	    <para>
+		The following modules must be loaded before this module:
 	    	<itemizedlist>
-			<listitem>
-			    <para>
-				<emphasis>database module</emphasis> - mysql, dbtext
-				or other module that implements the <quote>db</quote> interface
-				and provides support for storing/receiving data to/from a
-				database system
-				</para>
-			</listitem>
-			<listitem>
-			    <para>
-				<emphasis>TM</emphasis> -- transaction module -- is used to
-				send SIP requests
-				</para>
-			</listitem>
+		    <listitem>
+			<para>
+			    <emphasis>database module</emphasis> - mysql, dbtext or other module
+			    that implements the <quote>db</quote> interface and provides support for
+			    storing/receiving data to/from a database system.
+			</para>
+		    </listitem>
+		    <listitem>
+			<para>
+			    <emphasis>TM</emphasis>--transaction module--is used to send &sip;
+			    requests.
+			</para>
+		    </listitem>
 	    	</itemizedlist>
-		</para>
-		</section>
-		<section>
-	    	<title>External libraries or applications</title>
-		<para>
-		    The next libraries or applications must be installed before running
-			&ser; with this module:
+	    </para>
+	</section>
+	<section>
+	    <title>External libraries or applications</title>
+	    <para>
+		The following libraries or applications must be installed before running &ser; with
+		this module:
 	    	<itemizedlist>
-			<listitem>
-			    <para>
-				<emphasis>none</emphasis>
-				</para>
-			</listitem>
+		    <listitem>
+			<para>
+			    <emphasis>none</emphasis>.
+			</para>
+		    </listitem>
 	    	</itemizedlist>
-		</para>
-		</section>
+	    </para>
+	</section>
     </section>
     <section>
 	<title>Exported Parameters</title>
-		<section>
-	    	<title><varname>db_url</varname> (string)</title>
-		    <para>
-				Database URL.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>sql://root@localhost/msilo</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>db_url</quote> parameter</title>
-<programlisting format="linespecific">
+	<section>
+	    <title><varname>db_url</varname> (string)</title>
+	    <para>
+		Database &url;.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>sql://root@localhost/msilo</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>db_url</quote> parameter</title>
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "db_url", "sql://user:passwd@host.com/dbname")
 ...
 </programlisting>
-		    </example>
-		</section>
-		<section>
-	    	<title><varname>db_table</varname> (string)</title>
-		    <para>
-				The name of table where to store the messages.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>silo</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>db_table</quote> parameter</title>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>db_table</varname> (string)</title>
+	    <para>
+		The name of table where to store the messages.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>silo</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>db_table</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("msilo", "db_table", "silo")
 ...
 </programlisting>
-		    </example>
-		</section>
-		<section>
-	    	<title><varname>registrar</varname> (string)</title>
-		    <para>
-				The SIP address used to inform users that destination of their
-				message is not online and the message will be delivered next
-				time when that user goes online. If the parameter is not set,
-				the module will not send any notification. All requests intended
-				for this SIP address will not be stored for lately delivery.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>NULL</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>registrar</quote> parameter</title>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>registrar</varname> (string)</title>
+	    <para>
+		The &sip; address used to inform users that destination of their message is not
+		online and the message will be delivered next time when that user goes online. If
+		the parameter is not set, the module will not send any notification. All requests
+		intended for this &sip; address will not be stored for lately delivery.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>NULL</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>registrar</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("msilo", "registrar", "sip:registrar@iptel.org")
 ...
 </programlisting>
-		    </example>
-		</section>
-		<section>
-	    	<title><varname>expire_time</varname> (int)</title>
-		    <para>
-				Expire time of stored messages - seconds. When this time passed,
-				the message is silently discarded from database.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>259200 (72 hours = 3 days)</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>expire_time</quote> parameter</title>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>expire_time</varname> (int)</title>
+	    <para>
+		Expire time of stored messages - seconds. When this time passed, the message is
+		silently discarded from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>259200 (72 hours = 3 days)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>expire_time</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("msilo", "expire_time", 36000)
 ...
 </programlisting>
-		    </example>
-		</section>
-		<section>
-	    	<title><varname>check_time</varname> (int)</title>
-		    <para>
-				Timer interval to check if dumped messages are sent OK -
-				seconds. The module keeps each request send by itself for 
-				a new online user and if the reply is 2xx then the message is
-				deleted from database
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>30</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>check_time</quote> parameter</title>
-<programlisting format="linespecific">
+	    </example>
+	</section>
+	<section>
+	    <title><varname>check_time</varname> (int)</title>
+	    <para>
+		Timer interval to check if dumped messages are sent OK - seconds. The module keeps
+		each request send by itself for a new online user and if the reply is 2xx then the
+		message is deleted from database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>30</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>check_time</quote> parameter</title>
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "check_time", 10)
 ...
 </programlisting>
-		    </example>
-		</section>
-		<section>
-	    	<title><varname>clean_period</varname> (int)</title>
-		    <para>
-				Number of <quote>check_time</quote> cycles when to check if
-				there are expired messages in database.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>5</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>clean_period</quote> parameter</title>
-<programlisting format="linespecific">
+	    </example>
+	</section>
+	<section>
+	    <title><varname>clean_period</varname> (int)</title>
+	    <para>
+		Number of <quote>check_time</quote> cycles when to check if
+		there are expired messages in database.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>5</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>clean_period</quote> parameter</title>
+		<programlisting format="linespecific">
 ...
 modparam("msilo", "clean_period", "3")
 ...
 </programlisting>
-		    </example>
-		</section>
-		<section>
-	    	<title><varname>use_contact</varname> (int)</title>
-		    <para>
-				Turns on/off the usage of the Contact address to send
-				notification back to sender whose message is stored by MSILO.
-		    </para>
-		    <para>
-				<emphasis>
-				Default value is <quote>1 (0 = off, 1 = on)</quote>.
-				</emphasis>
-	    	</para>
-		    <example>
-				<title>Set the <quote>param_name</quote> parameter</title>
+	    </example>
+	</section>
+	<section>
+	    <title><varname>use_contact</varname> (int)</title>
+	    <para>
+		Turns on/off the usage of the Contact address to send notification back to sender
+		whose message is stored by MSILO.
+	    </para>
+	    <para>
+		<emphasis>
+		    Default value is <quote>1 (0 = off, 1 = on)</quote>.
+		</emphasis>
+	    </para>
+	    <example>
+		<title>Set the <quote>param_name</quote> parameter</title>
 <programlisting format="linespecific">
 ...
 modparam("msilo", "use_contact", 0)
 ...
 </programlisting>
-		    </example>
-		</section>
+	    </example>
 	</section>
+    </section>
     <section>
 	<title>Exported Functions</title>
-		<section>
+	<section>
 	    <title><function moreinfo="none">m_store(mode)</function></title>
-	    	<para>
-				The method stores certain parts of the current SIP request (it
-				should be called when the request type is MESSAGE and the
-				destination user is offline or his UA does not support MESSAGE
-				requests). If the user is registered with a UA which does not
-				support MESSAGE requests you should not use mode="0" if you have
-				changed the request uri with the contact address of user's UA.
-	    	</para>
-		    <para>Meaning of the parameters is as follows:</para>
+	    <para>
+		The method stores certain parts of the current &sip; request (it should be called
+		when the request type is MESSAGE and the destination user is offline or his &ua does
+		not support MESSAGE requests). If the user is registered with a UA which does not
+		support MESSAGE requests you should not use mode=<quote>0</quote> if you have
+		changed the request uri with the contact address of user's &ua;.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para>
+			<emphasis>mode</emphasis> - specifies what to save as R-URI.
+		    </para>
 		    <itemizedlist>
 			<listitem>
-		    	<para>
-				<emphasis>mode</emphasis> - specifies what to save as R-URI.
-		    	</para>
-			    <itemizedlist>
-				<listitem>
-		    	<para>
+			    <para>
 				<quote>0</quote> - first check if new_uri is an address of
-				record. If yes, then use it and store it as R-URI, otherwise
-				look at R-URI and, if necessary, at URI from <quote>To</quote>
-				header
-		    	</para>
-				</listitem>
-				<listitem>
-		    	<para>
-				<quote>1</quote> - look first at R-URI and then at URI from
-				<quote>To</quote> header
-		    	</para>
-				</listitem>
-				<listitem>
-		    	<para>
-				<quote>2</quote> - look only at URI form <quote>To</quote> header
-		    	</para>
-				</listitem>
-			    </itemizedlist>
+				record. If yes, then use it and store it as R-URI, otherwise look at
+				R-URI and, if necessary, at &uri; from <quote>To</quote> header.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<quote>1</quote> - look first at R-URI and then at &uri; from
+				<quote>To</quote> header.
+			    </para>
+			</listitem>
+			<listitem>
+			    <para>
+				<quote>2</quote> - look only at &uri; form <quote>To</quote> header.
+			    </para>
 			</listitem>
 		    </itemizedlist>
-		</section>
-		<section>
+		</listitem>
+	    </itemizedlist>
+	</section>
+	<section>
 	    <title><function moreinfo="none">m_dump()</function></title>
-	    	<para>
-				The method sends stored messages for the SIP user that is going to
-				register to his actual contact address. The method should be
-				called when a REGISTER request is received and the
-				<quote>Expire</quote> header has a value greater than zero.
-	    	</para>
-		</section>
+	    <para>
+		The method sends stored messages for the &sip; user that is going to register to his
+		actual contact address. The method should be called when a REGISTER request is
+		received and the <quote>Expire</quote> header has a value greater than zero.
+	    </para>
+	</section>
     </section>
     <section>
 	<title>Installation & Running</title>
-	    <section>
-		<title>Database setup</title>
-		<para>
-		Before running SER with msilo, you have to setup the database table
-		where the module will store the message. For that, if the table was not
-		created by the installation script or you choose to install everything
-		by yourself you can use the following SQL script (good for MySQL) as
-		template. Database and table name can be set with module parameters so
-		they can be changed, but the name of the columns must be as they are in
-		the next SQL script.
-		</para>
-		<example>
+	<section>
+	    <title>Database setup</title>
+	    <para>
+		Before running &ser; with msilo, you have to setup the database table where the
+		module will store the message. For that, if the table was not created by the
+		installation script or you choose to install everything by yourself you can use the
+		following <acronym>SQL</acronym> script (good for MySQL) as template. Database and
+		table name can be set with module parameters so they can be changed, but the name of
+		the columns must be as they are in the next <acronym>SQL</acronym> script.
+	    </para>
+	    <example>
 		<title>msilo sql script</title>
-<programlisting format="linespecific">
+		<programlisting format="linespecific">
 ...
 &msilosql;
 ...
 </programlisting>
 		</example>
     	</section>
-
+	
     	<section>
-		<title>SER config file</title>
-		<para>
+	    <title>&ser; config file</title>
+	    <para>
 		Next picture displays a sample usage of msilo.
-		</para>
-		<example>
-		<title>SER config script - sample msilo usage</title>
-<programlisting format="linespecific">
+	    </para>
+	    <example>
+		<title>&ser; config script - sample msilo usage</title>
+		<programlisting format="linespecific">
 ...
 &msilocfg;
 ...
-</programlisting>
-		</example>
-		</section>
+		</programlisting>
+	    </example>
 	</section>
+    </section>
 </chapter>
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("&parentsgml;" "Book" "chapter")
+sgml-parent-document: ("msilo.sgml" "Book" "chapter")
 End:
 -->

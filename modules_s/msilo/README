@@ -9,7 +9,7 @@ Edited by
 
 Daniel-Constantin Mierla
 
-   Copyright © 2003, 2004 by FhG FOKUS
+   Copyright © 2003 FhG FOKUS
      _________________________________________________________
 
    Table of Contents
@@ -43,36 +43,47 @@ Daniel-Constantin Mierla
 
    2. Developer's Guide
    3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set the "db_url" parameter
+   1-2. Set the "db_table" parameter
+   1-3. Set the "registrar" parameter
+   1-4. Set the "expire_time" parameter
+   1-5. Set the "check_time" parameter
+   1-6. Set the "clean_period" parameter
+   1-7. Set the "param_name" parameter
+   1-8. msilo sql script
+   1-9. SER config script - sample msilo usage
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   This  modules  provide offline message storage for Sip Express
-   Router  (SER). It stores received messages for an offline user
-   and sends them next time when the user became online.
+   This modules provides offline message storage for the SIP
+   Express Router. It stores received messages for an offline
+   user and sends them when the user becomes online.
 
-   For  each  message, the modules stores "Request-URI" ("R-URI")
-   only    if    it    is    a   complete   address   of   record
-   ("username@hostname"),  URI  from "To" header, URI from "From"
-   header,  incoming time, expiration time, content type and body
-   of  the  message.  If  "R-URI" is not an address of record (it
-   might  be the contact address for current SIP session) the URI
+   For each message, the modules stores "Request-URI" ("R-URI")
+   only if it is a complete address of record
+   ("username@hostname"), URI from "To" header, URI from "From"
+   header, incoming time, expiration time, content type and body
+   of the message. If "R-URI" is not an address of record (it
+   might be the contact address for current SIP session) the URI
    from "To" header will be used as R-URI.
 
    When the expiration time passed, the message is discarded from
-   database.  Expiration  time is computed based on incoming time
+   database. Expiration time is computed based on incoming time
    and one of the module's parameters.
 
-   Every  time  when  a  user  registers  with SER, the module is
-   looking  in  database  for  offline messages intended for that
-   user.  All of them will be sent to contact address provided in
+   Every time when a user registers with SER, the module is
+   looking in database for offline messages intended for that
+   user. All of them will be sent to contact address provided in
    REGISTER request.
 
-   It  may  happen the SIP user to be registered but his SIP User
-   Agent  to have no support for MESSAGE request. In this case it
-   should  be  used  the "failure_route" to store the undelivered
+   It may happen the SIP user to be registered but his SIP User
+   Agent to have no support for MESSAGE request. In this case it
+   should be used the "failure_route" to store the undelivered
    requests.
      _________________________________________________________
 
@@ -80,20 +91,20 @@ Chapter 1. User's Guide
 
 1.2.1. SER modules
 
-   The next modules must be loaded before this module:
+   The following modules must be loaded before this module:
 
-     * database  module  -  mysql,  dbtext  or  other module that
-       implements  the  "db"  interface  and provides support for
-       storing/receiving data to/from a database system
-     * TM -- transaction module -- is used to send SIP requests
+     * database module - mysql, dbtext or other module that
+       implements the "db" interface and provides support for
+       storing/receiving data to/from a database system.
+     * TM--transaction module--is used to send SIP requests.
      _________________________________________________________
 
 1.2.2. External libraries or applications
 
-   The  next  libraries  or applications must be installed before
-   running SER with this module:
+   The following libraries or applications must be installed
+   before running SER with this module:
 
-     * none
+     * none.
      _________________________________________________________
 
 1.3. Exported Parameters
@@ -125,10 +136,10 @@ modparam("msilo", "db_table", "silo")
 1.3.3. registrar (string)
 
    The SIP address used to inform users that destination of their
-   message  is  not online and the message will be delivered next
-   time  when that user goes online. If the parameter is not set,
-   the  module  will  not  send  any  notification.  All requests
-   intended  for  this  SIP address will not be stored for lately
+   message is not online and the message will be delivered next
+   time when that user goes online. If the parameter is not set,
+   the module will not send any notification. All requests
+   intended for this SIP address will not be stored for lately
    delivery.
 
    Default value is "NULL". 
@@ -141,7 +152,7 @@ modparam("msilo", "registrar", "sip:registrar@iptel.org")
 
 1.3.4. expire_time (int)
 
-   Expire  time  of  stored  messages  -  seconds. When this time
+   Expire time of stored messages - seconds. When this time
    passed, the message is silently discarded from database.
 
    Default value is "259200 (72 hours = 3 days)". 
@@ -154,10 +165,10 @@ modparam("msilo", "expire_time", 36000)
 
 1.3.5. check_time (int)
 
-   Timer  interval  to  check  if  dumped  messages are sent OK -
-   seconds.  The  module  keeps each request send by itself for a
-   new  online  user  and if the reply is 2xx then the message is
-   deleted from database
+   Timer interval to check if dumped messages are sent OK -
+   seconds. The module keeps each request send by itself for a
+   new online user and if the reply is 2xx then the message is
+   deleted from database.
 
    Default value is "30". 
 
@@ -169,7 +180,7 @@ modparam("msilo", "check_time", 10)
 
 1.3.6. clean_period (int)
 
-   Number  of  "check_time"  cycles  when  to  check if there are
+   Number of "check_time" cycles when to check if there are
    expired messages in database.
 
    Default value is "5". 
@@ -182,7 +193,7 @@ modparam("msilo", "clean_period", "3")
 
 1.3.7. use_contact (int)
 
-   Turns  on/off  the  usage  of  the  Contact  address  to  send
+   Turns on/off the usage of the Contact address to send
    notification back to sender whose message is stored by MSILO.
 
    Default value is "1 (0 = off, 1 = on)". 
@@ -198,30 +209,30 @@ modparam("msilo", "use_contact", 0)
 1.4.1. m_store(mode)
 
    The method stores certain parts of the current SIP request (it
-   should  be  called  when  the  request type is MESSAGE and the
+   should be called when the request type is MESSAGE and the
    destination user is offline or his UA does not support MESSAGE
-   requests).  If the user is registered with a UA which does not
-   support  MESSAGE  requests  you should not use mode="0" if you
-   have  changed  the  request  uri  with  the contact address of
+   requests). If the user is registered with a UA which does not
+   support MESSAGE requests you should not use mode="0" if you
+   have changed the request uri with the contact address of
    user's UA.
 
    Meaning of the parameters is as follows:
 
      * mode - specifies what to save as R-URI.
           + "0" - first check if new_uri is an address of record.
-            If  yes, then use it and store it as R-URI, otherwise
-            look  at  R-URI  and,  if necessary, at URI from "To"
-            header
-          + "1"  -  look first at R-URI and then at URI from "To"
-            header
-          + "2" - look only at URI form "To" header
+            If yes, then use it and store it as R-URI, otherwise
+            look at R-URI and, if necessary, at URI from "To"
+            header.
+          + "1" - look first at R-URI and then at URI from "To"
+            header.
+          + "2" - look only at URI form "To" header.
      _________________________________________________________
 
 1.4.2. m_dump()
 
-   The  method  sends  stored  messages  for the SIP user that is
-   going  to  register  to his actual contact address. The method
-   should  be  called when a REGISTER request is received and the
+   The method sends stored messages for the SIP user that is
+   going to register to his actual contact address. The method
+   should be called when a REGISTER request is received and the
    "Expire" header has a value greater than zero.
      _________________________________________________________
 
@@ -229,12 +240,12 @@ modparam("msilo", "use_contact", 0)
 
 1.5.1. Database setup
 
-   Before  running SER with msilo, you have to setup the database
-   table  where  the  module will store the message. For that, if
-   the  table  was  not created by the installation script or you
-   choose  to  install  everything  by  yourself  you can use the
-   following  SQL  script  (good for MySQL) as template. Database
-   and  table  name can be set with module parameters so they can
+   Before running SER with msilo, you have to setup the database
+   table where the module will store the message. For that, if
+   the table was not created by the installation script or you
+   choose to install everything by yourself you can use the
+   following SQL script (good for MySQL) as template. Database
+   and table name can be set with module parameters so they can
    be changed, but the name of the columns must be as they are in
    the next SQL script.
 
@@ -433,8 +444,8 @@ failure_route[1] {
 
 Chapter 2. Developer's Guide
 
-   The  module  does  not  provide  any  kind of API for external
-   usage.
+   The module does not provide any sort of API to use in other
+   SER modules.
      _________________________________________________________
 
 Chapter 3. Frequently Asked Questions
@@ -445,27 +456,24 @@ Chapter 3. Frequently Asked Questions
 
    3.1. Where can I find more about SER?
 
-   Take a look at http://www.iptel.org/ser/.
+   Take a look at http://iptel.org/ser.
 
    3.2. Where can I post a question about this module?
 
-   First  at  all  check if your question was already answered on
-   one of our mailing lists: SER-Users
+   First at all check if your question was already answered on
+   one of our mailing lists:
 
-   (http://mail.iptel.org/mailman/listinfo/serusers/)
+     * http://mail.iptel.org/mailman/listinfo/serusers
+     * http://mail.iptel.org/mailman/listinfo/serdev
 
-   or SER-Developers
+   E-mails regarding any stable version should be sent to
+   <serusers@iptel.org> and e-mail regarding development versions
+   or CVS snapshots should be send to <serdev@iptel.org>.
 
-   (http://mail.iptel.org/mailman/listinfo/serdev/).
-
-   Any  mails  regarding  stable  SER  release  must  be  sent to
-   <serusers@iptel.org> while <serdev@iptel.org> must be used for
-   under-developing version.
-
-   If   you   want   to   keep  the  mail  private,  send  it  to
+   If you want to keep the mail private, send it to
    <serhelp@iptel.org>.
 
    3.3. How can I report a bug?
 
-   Please      follow     the     guidelines     provided     at:
-   http://www.iptel.org/ser/bugs/.
+   Please follow the guidelines provided at:
+   http://iptel.org/ser/bugs
