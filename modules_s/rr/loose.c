@@ -565,9 +565,14 @@ static inline int route_after_strict(struct sip_msg* _m, struct sip_uri* _ruri)
 			}			
 		}
 
-		if (find_last_route(_m, &hdr, &rt, &prev) < 0) {
+
+		res = find_last_route(_m, &hdr, &rt, &prev);
+		if (res < 0) {
 			LOG(L_ERR, "ras(): Error while looking for last Route URI\n");
 			return -7;
+		} else if (res > 0) {
+			LOG(L_ERR, "ras(): UAC screwed up the route set !\n");
+			return 0;
 		}
 
 		uri = &rt->nameaddr.uri;
