@@ -320,16 +320,16 @@ static int fixup_hostport2proxy(void** param, int param_no)
 	struct proxy_l *proxy;
 	str s;
 	
-	DBG("TM module: fixup_t_forward(%s, %d)\n", (char*)*param, param_no);
+	DBG("TM module: fixup_hostport2proxy(%s, %d)\n", (char*)*param, param_no);
 	if (param_no==1){
-		DBG("TM module: fixup_t_forward: param 1.. do nothing, wait for #2\n");
+		DBG("TM module: fixup_hostport2proxy: param 1.. do nothing, wait for #2\n");
 		return 0;
 	} else if (param_no==2) {
 
 		host=(char *) (*(param-1)); 
 		port=str2s(*param, strlen(*param), &err);
 		if (err!=0) {
-			LOG(L_ERR, "TM module:fixup_t_forward: bad port number <%s>\n",
+			LOG(L_ERR, "TM module:fixup_hostport2proxy: bad port number <%s>\n",
 				(char*)(*param));
 			 return E_UNSPEC;
 		}
@@ -337,7 +337,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		s.len = strlen(host);
 		proxy=mk_proxy(&s, port, 0); /* FIXME: udp or tcp? */
 		if (proxy==0) {
-			LOG(L_ERR, "ERROR: fixup_t_forwardv6: bad host name in URI <%s>\n",
+			LOG(L_ERR, "ERROR: fixup_hostport2proxy: bad host name in URI <%s>\n",
 				host );
 			return E_BAD_ADDRESS;
 		}
@@ -348,7 +348,7 @@ static int fixup_hostport2proxy(void** param, int param_no)
 		*(param-1)=proxy;
 		return 0;
 	} else {
-		LOG(L_ERR,"ERROR: fixup_t_forwardv6 called with parameter #<>{1,2}\n");
+		LOG(L_ERR,"ERROR: fixup_hostport2proxy called with parameter #<>{1,2}\n");
 		return E_BUG;
 	}
 }
