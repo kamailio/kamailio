@@ -138,7 +138,8 @@ MKTAGS=ctags -R .
 ifneq (,$(findstring gcc, $(CC_LONGVER)))
 	CC_NAME=gcc
 	CC_VER=$(CC) $(shell $(CC) --version|head -1| \
-				 sed -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\(\.[0-9][0-9]*\)\?\).*/\1/')
+				 sed -e 's/.*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/' -e 's/[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\).*/\1/')
+	# sun sed is a little brain damaged => this complicated expression
 	MKDEP=$(CC) -MM $(DEFS)
 	#transform gcc version into 2.9x or 3.0
 	CC_SHORTVER=$(shell echo "$(CC_VER)" | cut -d" " -f 2| \
