@@ -40,7 +40,8 @@
 
 #include "dprint.h"
 
-
+#define SOCKET_TCP	1
+#define SOCKET_UDP	0
 
 struct ip_addr{
 	unsigned int af; /* address family: AF_INET6 or AF_INET */
@@ -80,6 +81,7 @@ struct socket_info{
 	int is_ip; /* 1 if name is an ip address, 0 if not  -- optimization*/
 	int is_lo; /* 1 if is a loopback, 0 if not */
 	union sockaddr_union su; 
+	int proto; /* tcp or udp*/
 };
 
 
@@ -136,7 +138,7 @@ void print_net(struct net* net);
 	[ diff. adress fams ]) */
 inline static int matchnet(struct ip_addr* ip, struct net* net)
 {
-	int r;
+	unsigned int r;
 	int ret;
 	
 	ret=-1;

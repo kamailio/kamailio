@@ -94,6 +94,9 @@ static char flags[]=
 #ifdef USE_IPV6
 ", USE_IPV6"
 #endif
+#ifdef USE_TCP
+", USE_TCP"
+#endif
 #ifdef NO_DEBUG
 ", NO_DEBUG"
 #endif
@@ -225,6 +228,9 @@ unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  auto-probing procedure; may 
 												  be re-configured */
 int children_no = 0;			/* number of children processing requests */
+#ifdef USE_TCP
+int tcp_children_no = 0;
+#endif
 struct process_table *pt=0;		/*array with childrens pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
 int sig_flag = 0;              /* last signal received */
@@ -266,6 +272,9 @@ struct ip_addr addresses[MAX_LISTEN]; /* our ips */
 int addresses_no=0;                   /* number of names/ips */
 #endif
 struct socket_info sock_info[MAX_LISTEN];/*all addresses we listen/send from*/
+#ifdef USE_TCP
+struct socket_info tcp_info[MAX_LISTEN];/*all tcp addresses we listen on*/
+#endif
 int sock_no=0; /* number of addresses/open sockets*/
 struct socket_info* bind_address=0; /* pointer to the crt. proc.
 									 listening address*/
@@ -616,6 +625,21 @@ int main_loop()
 			/* all procs should have access to all the sockets (for sending)
 			 * so we open all first*/
 		}
+#ifdef USE_TCP
+			/* start tcp master proc */
+		process_no++;
+		if ((pid=fork())<0){
+			LOG(L_CRIT, "main_loop: cannot fork tcp main process\n");
+			goto error;
+		}else if (pid==0){
+			/* child */
+			/* is_main=0; */
+			tcp_main();
+		}else{
+			pt[process_no].pid=pid;
+			strncpy(pt[process_no].desc, "tcp main process", MAX_PT_DESC );
+		}
+#endif
 		for(r=0; r<sock_no;r++){
 			for(i=0;i<children_no;i++){
 				process_no++;
@@ -1165,6 +1189,9 @@ try_again:
 
 	
 	if (children_no<=0) children_no=CHILD_NO;
+#ifdef USE_TCP
+	tcp_children_no=children_no;
+#endif
 #ifdef _OBSOLETED
 	else if (children_no >= MAX_PROCESSES ) {
 		fprintf(stderr, "ERROR: too many children processes configured;"

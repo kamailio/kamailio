@@ -46,6 +46,7 @@
 extern char * cfg_file;
 extern char *stat_file;
 extern struct socket_info sock_info[]; /* all addresses we listen/send from*/
+extern struct socket_info tcp_info[]; /* all tcp sockets we listen on*/
 extern int sock_no; /* number of addresses/open sockets*/
 extern unsigned short port_no;
 /*
@@ -67,6 +68,9 @@ extern struct socket_info* sendipv6; /* same as above for ipv6 */
 
 extern unsigned int maxbuffer;
 extern int children_no;
+#ifdef USE_TCP
+extern int tcp_children_no;
+#endif
 extern int dont_fork;
 extern int check_via;
 extern int received_dns;

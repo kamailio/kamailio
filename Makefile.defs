@@ -131,6 +131,9 @@ YACC := $(shell echo "$${YACC}")
 #  		if enabled, allows forking of the snmp agent just before child
 #  		forking (done at the top of main_loop). Needed if you want
 #  		to use the snmp module.
+# -DUSE_TCP
+#		compiles in tcp support (highly experimental for now, it will probably
+#		not work, use it only if you really now what you are doing)
 DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH)\
 	 -DCFG_DIR='"$(cfg-target)"'\
@@ -140,6 +143,7 @@ DEFS+= -DNAME='"$(NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DDNS_IP_HACK \
 	 -DUSE_IPV6 \
 	 -DDBG_QM_MALLOC \
+	# -DUSE_TCP \
 	 #-DF_MALLOC \
 	 #-DNO_DEBUG \
 	 #-DNO_LOG
@@ -293,7 +297,7 @@ ifeq	($(ARCH), i386)
 		# if gcc 
 ifeq		($(CC_NAME), gcc)
 				#common stuff
-				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
+				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE) \
 					-Wall   \
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
