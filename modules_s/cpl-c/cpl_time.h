@@ -167,7 +167,7 @@ int tr_parse_byweekno(tmrec_p, char*);
 int tr_parse_wkst(tmrec_p, char*);
 
 int tr_print(tmrec_p);
-time_t ic_parse_datetime(char*);
+time_t ic_parse_datetime(char*,struct tm*);
 time_t ic_parse_duration(char*);
 
 tr_byxxx_p ic_parse_byday(char*);

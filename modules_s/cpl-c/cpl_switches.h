@@ -33,6 +33,7 @@
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_uri.c"
 
+extern char *cpl_orig_tz; /* pointer to the original TZ env. var. */
 
 
 /* UPDATED + CHECKED
@@ -678,41 +679,77 @@ script_error:
 
 
 
+inline static int set_TZ(char *tz_name)
+{
+	if (setenv( "TZ", tz_name, 1/*overwrite*/)==-1) {
+		LOG(L_ERR,"ERROR:cpl-c:set_TZ: setenv failed -> unable to "
+			"switch to \"%s\"TimeZone\n",tz_name);
+		return -1;
+	}
+	tzset(); /* just to be sure */
+	return 0;
+}
+
+
+
 /* UPDATED + CHECKED
  */
 inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 {
 	unsigned char  *p;
 	unsigned char  *kid;
-	unsigned char  attr_name;
+	unsigned short attr_name;
 	unsigned short attr_len;
 	unsigned char  *attr_str;
-	unsigned char  flags;
+	unsigned char  flags = 0;
 	int nr_attrs;
 	int i,j;
+	str user_tz = {0,0};
 	ac_tm_t att;
 	tmrec_t trt;
 
-	/* I'm totally ignoring any attributes in the time-switch node
-	 * let me make it work and I'll about this time zone, etc */
-	DBG("DEBUG:run_time_switch: checking recv. time stamp <%d>\n",
+	DBG("DEBUG:cpl-c:run_time_switch: checking recv. time stamp <%d>\n",
 		intr->recv_time);
+	switch (NR_OF_ATTR(intr->ip)) {
+		case 1:
+			p = ATTR_PTR(intr->ip);
+			get_basic_attr( p, attr_name, user_tz.len, intr, script_error);
+			if (attr_name!=TZID_ATTR) {
+				LOG(L_ERR,"ERROR:cpl-c:run_time_switch: bad attribute -> "
+					" expected=%d, found=%d\n",TZID_ATTR,attr_name);
+				goto script_error;
+			}
+			get_str_attr( p, user_tz.s, user_tz.len, intr, script_error, 1);
+		case 0:
+			break;
+		default:
+			LOG(L_ERR,"ERROR:cpl-c:run_time_switch: incorrect number of attr ->"
+				" found=%d expected=(0,1)\n",NR_OF_ATTR(intr->ip));
+			goto script_error;
+	}
+
+	if (user_tz.s && user_tz.len) {
+		if (set_TZ(user_tz.s)==-1)
+			goto runtime_error;
+		flags |= (1<<7);
+	}
 
 	for( i=0 ; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
 			case NOT_PRESENT_NODE:
-				DBG("DEBUG:run_time_switch: NOT_PRESENT node found ->"
+				DBG("DEBUG:cpl-c:run_time_switch: NOT_PRESENT node found ->"
 					"skipping (useless in this case)\n");
 				break;
 			case OTHERWISE_NODE :
 				if (i!=NR_OF_KIDS(intr->ip)-1) {
-					LOG(L_ERR,"ERROR:run_time_switch: OTHERWISE node "
+					LOG(L_ERR,"ERROR:cpl-c:run_time_switch: OTHERWISE node "
 						"not found as the last sub-node!\n");
 					goto script_error;
 				}
-				DBG("DEBUG:run_time_switch: matching on OTHERWISE node\n");
+				DBG("DEBUG:cpl-c:run_time_switch: matching on "
+					"OTHERWISE node\n");
 				return get_first_child(kid);
 			case TIME_NODE :
 				/* init structures */
@@ -724,7 +761,6 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 				nr_attrs = NR_OF_ATTR(kid);
 				/* get the attributes */
 				p = ATTR_PTR(kid);
-				flags = 0;
 				for(j=0;j<nr_attrs;j++) {
 					/* get the attribute */
 					get_basic_attr( p, attr_name, attr_len, intr, script_error);
@@ -792,15 +828,20 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 					} /* end attribute switch */
 				} /* end for*/
 				/* check the mandatory attributes */
-				if ( flags!=((1<<0)|(1<<1)) ) {
+				if ( (flags&0x03)!=((1<<0)|(1<<1)) ) {
 					LOG(L_ERR,"ERROR:cpl_c:run_time_switch: attribute DTSTART"
 						",DTEND,DURATION missing or multi-present\n");
 					goto script_error;
 				}
 				/* does the recv_time match the specified interval?  */
 				j = check_tmrec( &trt, &att, 0);
+				/* restore the orig TZ */
+				if (cpl_orig_tz && (flags&(1<<7)) )
+					set_TZ(cpl_orig_tz);
+				/* free structs that I don't need any more */
 				ac_tm_free( &att );
 				tmrec_free( &trt );
+				/* let's see the result ;-) */
 				switch  (j) {
 					case 0:
 						DBG("DEBUG:run_time_switch: matching current "
@@ -818,8 +859,8 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_priority_switch: unknown output node type"
-					" (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
+				LOG(L_ERR,"ERROR:cpl-c:run_priority_switch: unknown output node"
+					" type (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
 				goto script_error;
 		} /* end switch for NODE_TYPE */
 	} /* end for for all kids */
@@ -830,13 +871,17 @@ inline unsigned char *run_time_switch( struct cpl_interpreter *intr )
 	tmrec_free( &trt );
 	return DEFAULT_ACTION;
 runtime_error:
+	if (cpl_orig_tz && (flags&(1<<7)) )
+		set_TZ(cpl_orig_tz);
 	ac_tm_free( &att );
 	tmrec_free( &trt );
 	return CPL_RUNTIME_ERROR;
 parse_err:
-	LOG(L_ERR,"ERROR:run_priority_switch: error parsing attr [%d][%s]\n",
+	LOG(L_ERR,"ERROR:cpl-c:run_priority_switch: error parsing attr [%d][%s]\n",
 		attr_name,attr_str?(char*)attr_str:"NULL");
 script_error:
+	if (cpl_orig_tz && (flags&(1<<7)) )
+		set_TZ(cpl_orig_tz);
 	ac_tm_free( &att );
 	tmrec_free( &trt );
 	return CPL_SCRIPT_ERROR;

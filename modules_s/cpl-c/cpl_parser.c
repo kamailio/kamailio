@@ -1327,19 +1327,21 @@ inline int encode_time_switch_attr(xmlNodePtr  node, unsigned char *node_ptr,
 		switch(attr->name[2]) {
 			case 'I': case 'i':
 				set_attr_type(p, TZID_ATTR, buf_end, error);
+				/* attribute's encoded value */
+				get_attr_val( attr->name , val, error);
+				val.len++; /* grab also the \0 */
+				append_str_attr(p,val, buf_end, error);
 				break;
 			case 'U': case 'u':
-				set_attr_type(p, TZURL_ATTR, buf_end, error);
+				/* set_attr_type(p, TZURL_ATTR, buf_end, error);
+				 * is a waste of space to copy the url - the interpreter doesn't
+				 * use it at all ;-) */
 				break;
 			default:
 				LOG(L_ERR,"ERROR:cpl_c:encode_time_switch_attr: unknown "
 					"attribute <%s>\n",attr->name);
 				goto error;
 		}
-		/* attribute's encoded value */
-		get_attr_val( attr->name , val, error);
-		val.len++; /* grab also the \0 */
-		append_str_attr(p,val, buf_end, error);
 	}
 
 	return p-p_orig;
@@ -2154,7 +2156,7 @@ int encodeCPL( str *xml, str *bin)
 	xmlFreeDoc(doc);
 	if (list) delete_list(list);
 	bin->s = buf;
-	write_to_file("cpl.dat", bin); /* only for debugging */
+	/*write_to_file("cpl.dat", bin);  only for debugging */
 	return 1;
 error:
 	if (doc) xmlFreeDoc(doc);

@@ -137,7 +137,7 @@ int ac_tm_fill(ac_tm_p _atp, struct tm* _tm)
 	_atp->yweek = ac_get_yweek(_tm);
 	_atp->ywday = ac_get_wday_yr(_tm);
 	_atp->mwday = ac_get_wday_mr(_tm);
-	
+	DBG("---> fill = %s\n",asctime(&(_atp->t)) );
 	return 0;
 }
 
@@ -366,23 +366,11 @@ int tr_byxxx_free(tr_byxxx_p _bxp)
 tmrec_p tmrec_new()
 {
 	tmrec_p _trp = NULL;
-	struct tm *_tm;
 	_trp = (tmrec_p)pkg_malloc(sizeof(tmrec_t));
 	if(!_trp)
 		return NULL;
 	memset(_trp, 0, sizeof(tmrec_t));
-	
-	_tm = localtime(&_trp->dtstart);
-	_trp->ts.tm_sec = _tm->tm_sec;       /* seconds */
-	_trp->ts.tm_min = _tm->tm_min;       /* minutes */
-	_trp->ts.tm_hour = _tm->tm_hour;     /* hours */
-	_trp->ts.tm_mday = _tm->tm_mday;     /* day of the month */
-	_trp->ts.tm_mon = _tm->tm_mon;       /* month */
-	_trp->ts.tm_year = _tm->tm_year;     /* year */
-	_trp->ts.tm_wday = _tm->tm_wday;     /* day of the week */
-	_trp->ts.tm_yday = _tm->tm_yday;     /* day in the year */
-	_trp->ts.tm_isdst = _tm->tm_isdst;   /* daylight saving time */
-	
+	localtime_r(&_trp->dtstart,&(_trp->ts));
 	return _trp;
 }
 
@@ -403,31 +391,21 @@ int tmrec_free(tmrec_p _trp)
 
 int tr_parse_dtstart(tmrec_p _trp, char *_in)
 {
-	struct tm *_tm;
 	if(!_trp || !_in)
 		return -1;
-	_trp->dtstart = ic_parse_datetime(_in);
-	
-	_tm = localtime(&_trp->dtstart);
-	_trp->ts.tm_sec = _tm->tm_sec;        /* seconds */
-	_trp->ts.tm_min = _tm->tm_min;        /* minutes */
-	_trp->ts.tm_hour = _tm->tm_hour;      /* hours */
-	_trp->ts.tm_mday = _tm->tm_mday;      /* day of the month */
-	_trp->ts.tm_mon = _tm->tm_mon;        /* month */
-	_trp->ts.tm_year = _tm->tm_year;      /* year */
-	_trp->ts.tm_wday = _tm->tm_wday;      /* day of the week */
-	_trp->ts.tm_yday = _tm->tm_yday;      /* day in the year */
-	_trp->ts.tm_isdst = _tm->tm_isdst;    /* daylight saving time */
-
-	return 0;
+	_trp->dtstart = ic_parse_datetime(_in, &(_trp->ts));
+	DBG("----->dtstart = %d | %s\n",_trp->dtstart,ctime(&(_trp->dtstart)));
+	return (_trp->dtstart==0)?-1:0;
 }
 
 int tr_parse_dtend(tmrec_p _trp, char *_in)
 {
+	struct tm _tm;
 	if(!_trp || !_in)
 		return -1;
-	_trp->dtend = ic_parse_datetime(_in);
-	return 0;
+	_trp->dtend = ic_parse_datetime(_in,&_tm);
+	DBG("----->dtend = %d | %s\n",_trp->dtend,ctime(&(_trp->dtend)));
+	return (_trp->dtend==0)?-1:0;
 }
 
 int tr_parse_duration(tmrec_p _trp, char *_in)
@@ -435,15 +413,16 @@ int tr_parse_duration(tmrec_p _trp, char *_in)
 	if(!_trp || !_in)
 		return -1;
 	_trp->duration = ic_parse_duration(_in);
-	return 0;
+	return (_trp->duration==0)?-1:0;
 }
 
 int tr_parse_until(tmrec_p _trp, char *_in)
 {
+	struct tm _tm;
 	if(!_trp || !_in)
 		return -1;
-	_trp->until = ic_parse_datetime(_in);
-	return 0;
+	_trp->until = ic_parse_datetime(_in, &_tm);
+	return (_trp->until==0)?-1:0;
 }
 
 int tr_parse_freq(tmrec_p _trp, char *_in)
@@ -592,22 +571,21 @@ int tr_print(tmrec_p _trp)
 	return 0;
 }
 
-time_t ic_parse_datetime(char *_in)
+time_t ic_parse_datetime(char *_in, struct tm *_tm)
 {
-	struct tm _tm;
-	
-	if(!_in)
+	if(!_in || !_tm)
 		return 0;
 	
-	memset(&_tm, 0, sizeof(struct tm));
-	_tm.tm_year = _D(_in[0])*1000 + _D(_in[1])*100 
+	memset(_tm, 0, sizeof(struct tm));
+	_tm->tm_year = _D(_in[0])*1000 + _D(_in[1])*100 
 			+ _D(_in[2])*10 + _D(_in[3]) - 1900;
-	_tm.tm_mon = _D(_in[4])*10 + _D(_in[5]) - 1;
-	_tm.tm_mday = _D(_in[6])*10 + _D(_in[7]);
-	_tm.tm_hour = _D(_in[9])*10 + _D(_in[10]);
-	_tm.tm_min = _D(_in[11])*10 + _D(_in[12]);
-	_tm.tm_sec = _D(_in[13])*10 + _D(_in[14]);
-	return mktime(&_tm);
+	_tm->tm_mon = _D(_in[4])*10 + _D(_in[5]) - 1;
+	_tm->tm_mday = _D(_in[6])*10 + _D(_in[7]);
+	_tm->tm_hour = _D(_in[9])*10 + _D(_in[10]);
+	_tm->tm_min = _D(_in[11])*10 + _D(_in[12]);
+	_tm->tm_sec = _D(_in[13])*10 + _D(_in[14]);
+	_tm->tm_isdst = daylight;
+	return mktime(_tm);
 }
 
 time_t ic_parse_duration(char *_in)
@@ -982,23 +960,17 @@ int check_byxxx(tmrec_p, ac_tm_p);
  */
 int check_tmrec(tmrec_p _trp, ac_tm_p _atp, tr_res_p _tsw)
 {
-	DBG("1\n****** time=%d  start=%d  duration=%d\n",_atp->time,_trp->dtstart,
-			_trp->duration);
-
 	if(!_trp || !_atp || (!_IS_SET(_trp->duration) && !_IS_SET(_trp->dtend)))
 		return REC_ERR;
-	DBG("2\n");
-	DBG("****** time=%d  start=%d\n",_atp->time,_trp->dtstart);
 
 	// it is before start date
 	if(_atp->time < _trp->dtstart)
 		return REC_NOMATCH;
-	DBG("3\n");
+	
 	// compute the duration of the reccurence interval
 	if(!_IS_SET(_trp->duration))
 		_trp->duration = _trp->dtend - _trp->dtstart;
-	DBG("****** time=%d  start=%d  duration=%d\n",_atp->time,_trp->dtstart,
-		_trp->duration);
+	
 	if(_atp->time <= _trp->dtstart+_trp->duration)
 	{
 		if(_tsw)

@@ -69,6 +69,8 @@ char   *log_dir          = 0; /*directory where the user log should be dumped*/
 int    cpl_cmd_pipe[2];
 struct tm_binds cpl_tmb;
 
+char *cpl_orig_tz = 0; /* used only by run_time_switch */
+
 /* this vars are used outside only for loading scripts */
 db_con_t* db_hdl   = 0;   /* this should be static !!!!*/
 
@@ -262,6 +264,9 @@ static int cpl_init(void)
 		LOG(L_ERR,"ERROR:cpl_init: init_CPL_parser failed!\n");
 		goto error;
 	}
+
+	/* get a pointer to the original TZ env. variable */
+	cpl_orig_tz = getenv("TZ");
 
 	return 0;
 error:
