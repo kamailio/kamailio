@@ -151,6 +151,7 @@ static int mod_init(void)
 		}
 			
 		db_close(db_handle);
+		db_handle = 0;
 	}
 
 	return 0;
