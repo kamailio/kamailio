@@ -29,11 +29,12 @@
 /*
  * History:
  * -------
- *  2003-03-01  start_retr changed to retransmit only for UDP
- *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
- *  2003-03-13  send_pr_buffer is called w/ file/function/line debugging
+ *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri)
  *               info only if compiling w/ -DEXTRA_DEBUG (andrei)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-13  send_pr_buffer is called w/ file/function/line debugging
+ *  2003-03-01  start_retr changed to retransmit only for UDP
+ *  2003-02-13  modified send_pr_buffer to use msg_send & rb->dst (andrei)
  */
 
 
@@ -77,6 +78,7 @@ int send_pr_buffer(	struct retr_buf *rb, void *buf, int len
 	}
 }
 
+#ifdef _OBSOLETED
 void start_retr( struct retr_buf *rb )
 {
 	if (rb->dst.proto==PROTO_UDP) {
@@ -85,6 +87,7 @@ void start_retr( struct retr_buf *rb )
 	}
 	set_timer( &rb->fr_timer, FR_TIMER_LIST );
 }
+#endif
 
 
 

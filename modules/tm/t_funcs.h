@@ -31,6 +31,7 @@
   *               in a non-gcc specific way (andrei)
   *  2003-03-13  now send_pr_buffer will be called w/ function/line info
   *               only when compiling w/ -DEXTRA_DEBUG (andrei)
+  *  2003-03-31  200 for INVITE/UAS resent even for UDP (jiri) 
   */
 
 
@@ -106,6 +107,26 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
 
+static void inline _set_fr_retr( struct retr_buf *rb, int retr )
+{
+	if (retr) {
+		rb->retr_list=RT_T1_TO_1;
+		set_timer( &rb->retr_timer, RT_T1_TO_1 );
+	}
+	set_timer(&rb->fr_timer, FR_TIMER_LIST);
+}
+
+static void inline start_retr(struct retr_buf *rb)
+{
+	_set_fr_retr(rb, rb->dst.proto==PROTO_UDP);
+}
+
+static void inline force_retr(struct retr_buf *rb)
+{
+	_set_fr_retr(rb, 1);
+}
+
+
 int   tm_startup();
 void tm_shutdown();
 
@@ -127,7 +148,9 @@ int get_ip_and_port_from_uri( str* uri , unsigned int *param_ip,
 
 void put_on_wait(  struct cell  *Trans  );
 
+#ifdef _OBSOLETED
 void start_retr( struct retr_buf *rb );
+#endif
 
 void cleanup_localcancel_timers( struct cell *t );
 

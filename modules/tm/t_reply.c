@@ -27,6 +27,7 @@
  *
  * History:
  * --------
+ * 2003-03-31  200 for INVITE/UAS resent even for UDP (jiri)
  * 2003-03-16  removed _TOTAG (jiri)
  * 2003-03-10  fixed new to tag bug/typo (if w/o {})  (andrei)
  * 2003-03-06  saving of to-tags for ACK/200 matching introduced, 
@@ -712,13 +713,23 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 
 void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 {
-	if ( !t->local 
-		&& t->uas.request->REQ_METHOD==METHOD_INVITE 
-		&& (t->uas.status>=300 || 
-				(t->relaied_reply_branch==-2 && t->uas.status>=200) )) {
-			/* crank timers for negative replies */
-			start_retr( &t->uas.response );
-	} else put_on_wait(t);
+	if ( !t->local && t->uas.request->REQ_METHOD==METHOD_INVITE ) {
+		/* crank timers for negative replies */
+		if (t->uas.status>=300) {
+			start_retr(&t->uas.response);
+			return;
+		}
+		/* local UAS retransmits too */
+		if (t->relaied_reply_branch==-2 && t->uas.status>=200) {
+			/* we retransmit 200/INVs regardless of transport --
+			   even if TCP used, UDP could be used upstream and
+			   loose the 200, which is not retransmitted by proxies
+			*/
+			force_retr( &t->uas.response );
+			return;
+		}
+	} 
+	put_on_wait(t);
 }
 
 void cleanup_uac_timers( struct cell *t )

@@ -32,7 +32,6 @@
 #include "defs.h"
 
 #include "lock.h"
-#include "t_funcs.h"
 
 /* timer timestamp value indicating a timer has been 
    deactived and shall not be executed
