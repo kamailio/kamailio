@@ -39,6 +39,9 @@ echo "Log: $CURRENT"
 
 AWK_PG='
 BEGIN {
+
+	IGNORECASE=1;
+
     rpl100=0; rpl180=0; rpl183=0; rpl1xx=0;
     rpl200=0; rpl202=0; rpl2xx=0;
     rpl300=0; rpl302=0; rpl3xx=0;
