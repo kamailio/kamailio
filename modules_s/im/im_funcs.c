@@ -6,7 +6,7 @@
 
 
 
-int im_get_body_len( struct sip_msg* msg)
+int inline im_get_body_len( struct sip_msg* msg)
 {
 	int x,err;
 	str foo;
@@ -79,6 +79,25 @@ int im_extract_body(struct sip_msg *msg, str *body )
 	return 1;
 error:
 	return -1;
+}
+
+
+
+
+int im_get_user(struct sip_msg *msg, str *user, str *host)
+{
+	struct sip_uri uri;
+
+	if (parse_uri(msg->first_line.u.request.uri.s,
+		msg->first_line.u.request.uri.len, &uri) <0 )
+	{
+		LOG(L_ERR,"ERROR: im_get_user:unable to parse uri\n");
+		return -1;
+	}
+	user = &uri.user;
+	host = &uri.user;
+	return -1;
+
 }
 
 
