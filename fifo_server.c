@@ -46,6 +46,7 @@
 #include "globals.h"
 #include "fifo_server.h"
 #include "mem/mem.h"
+#include "sr_module.h"
 
 /* FIFO server vars */
 char *fifo=0; /* FIFO name */
