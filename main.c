@@ -759,11 +759,6 @@ int main_loop()
 #ifdef USE_TCP
 	int sockfd[2];
 #endif
-#ifdef USE_TLS
-	char* tmp;
-	int len;
-#endif
-		
 
 	/* one "main" process and n children handling i/o */
 

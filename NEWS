@@ -11,7 +11,11 @@ texops:
  - subst('s/re/repl/flags') support
 core:
  - added switch to check the config file (-c)
- - changes: removed len_gt() and replaced with if (msg:len op number|max_len)
+ - changes: 
+       removed len_gt() and replaced with if (msg:len op number|max_len)
+       protocol and port can be specified in the alias and listen lines, e.g.:
+        alias= tcp:foo.bar:* udp:test.bar:5080 foo.com
+        listen= eth0   tcp:eth0:5065 udp:127.0.0.1 [3ffe::1]
  - multiple operator support: ==, != for special operations (e.g myself, ip)
                               ==, !=, ~= for strings
                               ==, !=, >, <, >=, <= for integers
