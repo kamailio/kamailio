@@ -14,6 +14,7 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/mysql \
 # (Debian does the right thing and puts it in /usr/lib)
 LIBS=-L/usr/lib/mysql -L$(LOCALBASE)/lib -L$(LOCALBASE)/lib/mysql \
 		-L$(LOCALBASE)/mysql/lib/mysql/ -L/usr/pkg/lib/mysql \
+		-L$(LOCALBASE)/mysql/lib \
 		-lmysqlclient -lz
 
 include ../../Makefile.modules
