@@ -69,7 +69,7 @@ static int fixup_str2int( void** param, int param_no);
 
 static int mod_init(void);
 
-static int initial;
+static int initial=0;
 static int *gflags; 
 
 static cmd_export_t cmds[]={
@@ -240,6 +240,7 @@ static int mod_init(void)
 		LOG(L_ERR, "Error: gflags/mod_init: no shmem\n");
 		return -1;
 	}
+	*gflags=initial;
 	if (register_fifo_cmd(fifo_set_gflag, FIFO_SET_GFLAG, 0) < 0) {
 		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
 		return -1;
