@@ -285,7 +285,7 @@ int set_sock_struct( union sockaddr_union* to, str *to_str)
 		}
 	}
 
-#ifdef DNS_IP_HACK
+#if 0 /*#ifdef DNS_IP_HACK*/
 	ip=str2ip((unsigned char*)host.s,host.len,&err);
 	if (err==0){
 		to->sin.sin_family=AF_INET;
