@@ -44,7 +44,7 @@ static struct module_exports nm_exports= {
 			},
 	(cmd_function[]){
 					t_add_transaction,
-					t_check,
+					w_t_check,
 					w_t_forward,
 					w_t_forward_def,
 					t_forward_uri,
