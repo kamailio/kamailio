@@ -239,7 +239,7 @@ static int xl_get_branch(struct sip_msg *msg, str *res, str *hp, int hi)
 
 
 	init_branch_iterator();
-	branch.s = next_branch(&branch.len, &q, 0, 0);
+	branch.s = next_branch(&branch.len, &q, 0, 0, 0);
 	if (!branch.s) {
 		return xl_get_null(msg, res, hp, hi);
 	}

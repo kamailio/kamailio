@@ -823,7 +823,7 @@ int load_contacts(struct sip_msg* msg, char* key, char* value)
 	ruri_q = get_ruri_q();
 
 	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0))) {
+	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
 	    if (q != ruri_q) {
 		goto rest;
 	    }
@@ -845,7 +845,7 @@ rest:
 
 	/* Insert branch URIs to contact list in increasing q order */
 	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0))) {
+	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
 	    next = (struct contact *)pkg_malloc(sizeof(struct contact));
 	    if (!next) {
 		LOG(L_ERR, "ERROR: load_contacts(): No memory for branch URI\n");

@@ -335,7 +335,7 @@ static int check_routing(struct sip_msg* msg, int idx)
 
  check_branches:
 	init_branch_iterator();
-	while((branch.s = next_branch(&branch.len, &q, 0, 0))) {
+	while((branch.s = next_branch(&branch.len, &q, 0, 0, 0))) {
 		uri_str = get_plain_uri(&branch);
 		if (!uri_str) {
 			LOG(L_ERR, "check_uri(): Error while extracting plain URI\n");
