@@ -27,6 +27,9 @@
  * History
  * -------
  * 2003-03-16  removed _TOTAG (jiri)
+ * 2003-03-06  200/INV to-tag list deallocation added;
+ *             setting "kill_reason" moved in here -- it is moved
+ *             from transaction state to a static var(jiri)
  */
 
 #include "defs.h"

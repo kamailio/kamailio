@@ -27,6 +27,7 @@
  * History:
  * --------
  * 2003-03-16 backwards-compatibility callback names introduced (jiri)
+ * 2003-03-06 old callbacks renamed, new one introduced (jiri)
  */
 
 

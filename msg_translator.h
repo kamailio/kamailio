@@ -26,6 +26,9 @@
  *
  * History:
  * --------
+ * 2003-03-06  totags in outgoing replies bookmarked to enable
+ *             ACK/200 tag matching
+ *
  * 2003-03-01 VOICE_MAIL defs removed (jiri)
  */
 

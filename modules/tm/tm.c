@@ -57,6 +57,7 @@
  *  2003-02-18  added t_forward_nonack_{udp, tcp}, t_relay_to_{udp,tcp},
  *               t_replicate_{udp, tcp} (andrei)
  *  2003-02-19  added t_rely_{udp, tcp} (andrei)
+ *  2003-03-06  voicemail changes accepted (jiri)
  *  2003-03-10  module export interface updated to the new format (andrei)
  *  2003-03-16  flags export parameter added (janakj)
  *  2003-03-19  replaced all mallocs/frees w/ pkg_malloc/pkg_free (andrei)

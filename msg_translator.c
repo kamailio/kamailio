@@ -28,6 +28,9 @@
  *
  * History:
  * --------
+ * 2003-03-18  killed the build_warning snprintf (andrei)
+ * 2003-03-06  totags in outgoing replies bookmarked to enable
+ *             ACK/200 tag matching
  * 2003-03-01  VOICE_MAIL defs removed (jiri)
  * 2003-02-28  scratchpad compatibility abandoned (jiri)
  * 2003-01-20  bug_fix: use of return value of snprintf aligned to C99 (jiri)
@@ -39,7 +42,6 @@
  * 2003-01-27  more rport fixes (make use of new via_param->start)  (andrei)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-29  scratchpad removed (jiri)
- * 2003-03-18  killed the build_warning snprintf (andrei)
  *
  */
 

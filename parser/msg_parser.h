@@ -26,6 +26,8 @@
  *
  * History
  * -------
+ * 2003-03-06 enum_request_method changed to begin with 1;
+ *            0 reserved for invalid values; (jiri)
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-01-28 removed scratchpad (jiri)
  */

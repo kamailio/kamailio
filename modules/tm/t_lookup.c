@@ -51,6 +51,10 @@
  *
  * History:
  * ----------
+ * 2003-03-29  optimization: e2e ACK matching only if callback installed
+ *             (jiri)
+ * 2003-03-06  dialog matching introduced for ACKs -- that's important for 
+ *             INVITE UAS (like INVITE) and 200/ACK proxy matching (jiri)
  * 2003-03-01  kr set through a function now (jiri)
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-27  3261 ACK/200 consumption bug removed (jiri)
@@ -1022,12 +1026,24 @@ int t_newtran( struct sip_msg* p_msg )
 
 		/* was it an e2e ACK ? if so, trigger a callback */
 		if (lret==-2) {
-				REF_UNSAFE(t_ack);
-				UNLOCK_HASH(p_msg->hash_index);
-				if (unmatched_totag(t_ack, p_msg)) {
-						callback_event( TMCB_E2EACK_IN, t_ack, p_msg, p_msg->REQ_METHOD );
+				/* no callbacks? complete quickly */
+				if (!callback_array[TMCB_E2EACK_IN]) {
+					UNLOCK_HASH(p_msg->hash_index);
+				} else {
+					REF_UNSAFE(t_ack);
+					UNLOCK_HASH(p_msg->hash_index);
+					/* we don't call from within REPLY_LOCK -- that introduces
+				   	   a race condition; however, it is so unlikely and the
+				   	   impact is so small (callback called multiple times of
+			           multiple ACK/200s received in parallel), that we do not
+				   	    better waste time in locks
+					 */
+					if (unmatched_totag(t_ack, p_msg)) {
+						callback_event( TMCB_E2EACK_IN, t_ack, p_msg, 
+							p_msg->REQ_METHOD );
+					}
+					UNREF(t_ack);
 				}
-				UNREF(t_ack);
 		} else { /* not e2e ACK */
 			UNLOCK_HASH(p_msg->hash_index);
 			/* now, when the transaction state exists, check if

@@ -28,11 +28,14 @@
 /*
  * History:
  * -------
+ *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
+ *  2003-03-06  callbacks renamed; "blind UAC" introduced, which makes
+ *              transaction behave as if it was forwarded even if it was
+ *              not -- good for local UAS, like VM (jiri)
  *  2003-03-01  kr set through a function now (jiri)
  *  2003-02-24  s/T_NULL/T_NULL_CELL/ to avoid redefinition conflict w/
  *              nameser_compat.h (andrei)
  *  2003-02-13  proto support added (andrei)
- *  2003-03-19  replaced all the mallocs/frees w/ pkg_malloc/pkg_free (andrei)
  */
 
 #include "defs.h"

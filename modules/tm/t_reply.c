@@ -28,6 +28,10 @@
  * History:
  * --------
  * 2003-03-16  removed _TOTAG (jiri)
+ * 2003-03-10  fixed new to tag bug/typo (if w/o {})  (andrei)
+ * 2003-03-06  saving of to-tags for ACK/200 matching introduced, 
+ *             voicemail changes accepted, udpated to new callback
+ *             names (jiri)
  * 2003-03-01  kr set through a function now (jiri)
  * 2003-02-28 scratchpad compatibility abandoned (jiri)
  * 2003-02-18  replaced TOTAG_LEN w/ TOTAG_VALUE_LEN (TOTAG_LEN was defined
@@ -35,7 +39,6 @@
  * 2003-02-13  updated to use rb->dst (andrei)
  * 2003-01-27  next baby-step to removing ZT - PRESERVE_ZT (jiri)
  * 2003-01-19  faked lump list created in on_reply handlers
- * 2003-03-10  fixed new to tag bug/typo (if w/o {})  (andrei)
  */
 
 
