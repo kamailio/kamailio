@@ -255,5 +255,21 @@ xj_pres_cell xj_pres_list_check(xj_pres_list prl, str* uid)
 	return NULL;
 }
 
-
+/**
+ *
+ */
+void xj_pres_list_notifyall(xj_pres_list prl, int s)
+{
+	xj_pres_cell p;
+	if(!prl || prl->nr<=0 || prl->clist==NULL)
+		return;
+	p = prl->clist;
+	while(p)
+	{
+		if(p->cbf)
+			(*(p->cbf))(&(p->userid),(s==XJ_PRES_STATE_CHECK)?p->state:s,
+					p->cbp);
+		p = p->next;
+	}
+}
 

@@ -32,6 +32,7 @@
 #include "../../str.h"
 #include "xjab_base.h"
 
+#define XJ_PRES_STATE_CHECK		-1
 #define XJ_PRES_STATE_OFFLINE	0
 #define XJ_PRES_STATE_ONLINE	1
 #define XJ_PRES_STATE_REFUSED	2
@@ -70,7 +71,7 @@ void xj_pres_list_free(xj_pres_list);
 xj_pres_cell xj_pres_list_add(xj_pres_list, xj_pres_cell);
 int xj_pres_list_del(xj_pres_list, str*);
 xj_pres_cell xj_pres_list_check(xj_pres_list, str*);
-
+void xj_pres_list_notifyall(xj_pres_list,int);
 
 #endif
 
