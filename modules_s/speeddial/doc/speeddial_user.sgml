@@ -198,7 +198,8 @@ modparam("speeddial", "domain_prefix", "tel.")
 	    <title><varname>use_domain</varname> (int)</title>
 	    <para>
 		The parameter specifies wheter or not to use the domain when searching a
-		speed dial record (0 - false, 1 - true).
+		speed dial record (0 - no domain, 1 - use domain from From URI,
+		2 - use both domains, from From URI and from request URI).
 	    </para>
 	    <para>
 		<emphasis>

@@ -73,6 +73,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 {
 	str user_s;
+	int nr_keys;
 	struct sip_uri puri;
 	db_key_t db_keys[4];
 	db_val_t db_vals[4];
@@ -80,15 +81,10 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	db_res_t* db_res = NULL;
 
 	/* init */
-	db_keys[0]=user_column;
-	db_keys[1]=domain_column;
-	db_keys[2]=sd_user_column;
-	db_keys[3]=sd_domain_column;
-	
+	nr_keys = 0;
 	db_cols[0]=new_uri_column;
-
+	
 	/* take username@domain from From header */
-
 	if ( parse_from_header( _msg )==-1 )
 	{
 		LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
@@ -100,24 +96,30 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		goto err_badreq;
 	}
 		
-	db_vals[0].type = DB_STR;
-	db_vals[0].nul = 0;
-	db_vals[0].val.str_val.s = puri.user.s;
-	db_vals[0].val.str_val.len = puri.user.len;
+	db_keys[nr_keys]=user_column;
+	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val.s = puri.user.s;
+	db_vals[nr_keys].val.str_val.len = puri.user.len;
+	nr_keys++;
 
-	db_vals[1].type = DB_STR;
-	db_vals[1].nul = 0;
-	db_vals[1].val.str_val.s = puri.host.s;
-	db_vals[1].val.str_val.len = puri.host.len;
-	
-	if (dstrip_s.s!=NULL && dstrip_s.len>0
-		&& dstrip_s.len<puri.host.len
-		&& strncasecmp(puri.host.s,dstrip_s.s,dstrip_s.len)==0)
+	if(use_domain>=1)
 	{
-		db_vals[1].val.str_val.s   += dstrip_s.len;
-		db_vals[1].val.str_val.len -= dstrip_s.len;
+		db_keys[nr_keys]=domain_column;
+		db_vals[nr_keys].type = DB_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val.s = puri.host.s;
+		db_vals[nr_keys].val.str_val.len = puri.host.len;
+		nr_keys++;
+		
+		if (dstrip_s.s!=NULL && dstrip_s.len>0
+			&& dstrip_s.len<puri.host.len
+			&& strncasecmp(puri.host.s,dstrip_s.s,dstrip_s.len)==0)
+		{
+			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
+			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
+		}
 	}
-	
 	/* take sd from r-uri */
 	if (parse_sip_msg_uri(_msg) < 0)
 	{
@@ -125,30 +127,34 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		goto err_badreq;
 	}
 	
-	db_vals[2].type = DB_STR;
-	db_vals[2].nul = 0;
-	db_vals[2].val.str_val.s = _msg->parsed_uri.user.s;
-	db_vals[2].val.str_val.len = _msg->parsed_uri.user.len;
-
-	if (use_domain)
-	{
-		db_vals[3].type = DB_STR;
-		db_vals[3].nul = 0;
-		db_vals[3].val.str_val.s = _msg->parsed_uri.host.s;
-		db_vals[3].val.str_val.len = _msg->parsed_uri.host.len;
+	db_keys[nr_keys]=sd_user_column;
+	db_vals[nr_keys].type = DB_STR;
+	db_vals[nr_keys].nul = 0;
+	db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.user.s;
+	db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.user.len;
+	nr_keys++;
 	
+	if(use_domain>=2)
+	{
+		db_keys[nr_keys]=sd_domain_column;
+		db_vals[nr_keys].type = DB_STR;
+		db_vals[nr_keys].nul = 0;
+		db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.host.s;
+		db_vals[nr_keys].val.str_val.len = _msg->parsed_uri.host.len;
+		nr_keys++;
+		
 		if (dstrip_s.s!=NULL && dstrip_s.len>0
 			&& dstrip_s.len<_msg->parsed_uri.host.len
 			&& strncasecmp(_msg->parsed_uri.host.s,dstrip_s.s,dstrip_s.len)==0)
 		{
-			db_vals[3].val.str_val.s   += dstrip_s.len;
-			db_vals[3].val.str_val.len -= dstrip_s.len;
+			db_vals[nr_keys].val.str_val.s   += dstrip_s.len;
+			db_vals[nr_keys].val.str_val.len -= dstrip_s.len;
 		}
 	}
 	
 	db_funcs.use_table(db_handle, _table);
 	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
-		(use_domain)?4:3 /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
+		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
 	{
 		LOG(L_ERR, "sd_lookup: error querying database\n");
 		goto err_server;

@@ -184,7 +184,9 @@ modparam("speeddial", "domain_prefix", "tel.")
 1.3.8. use_domain (int)
 
    The parameter specifies wheter or not to use the domain when
-   searching a speed dial record (0 - false, 1 - true).
+   searching a speed dial record (0 - no domain, 1 - use domain
+   from From URI, 2 - use both domains, from From URI and from
+   request URI).
 
    Default value is 0. 
 
