@@ -397,27 +397,30 @@ This function implements SELECT SQL directive.
 
 2.4.2 Prototype
 
-   int db_query(db_con_t* _h, db_key_t* _k,
+   int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
                 db_val_t* _v, db_key_t* _c, 
 	        int _n, int _nc, db_key_t _o, db_res_t** _r);
 
 2.4.3 Parameters
 
 The function takes 7 parameters:
-_h: Database connection handle
-_k: Array of column names that will be compared and their values must match
-_v: Array of values, columns specified in _k parameter must match these values
-_c: Array of column names that you are interested in
-_n: Number of key-value pairs to match in _k and _v parameters
+_h:  Database connection handle
+_k:  Array of column names that will be compared and their values must match
+_op: Array of operators to be used with key-value pairs
+_v:  Array of values, columns specified in _k parameter must match these values
+_c:  Array of column names that you are interested in
+_n:  Number of key-value pairs to match in _k and _v parameters
 _nc: Number of columns in _c parameter
-_o: Order by
-_r: Address of variable where pointer to the result will be stored
+_o:  Order by
+_r:  Address of variable where pointer to the result will be stored
 
 If _k and _v parameters are NULL and _n is zero, you will get the whole table.
 if _c is NULL and _nc is zero, you will get all table columns in the result
 
 _r will point to a dynamically allocated structure, it is neccessary to call
 db_free_query function once you are finished with the result.
+
+If _op is 0, equal (=) will be used for all key-value pairs.
 
 Strings in the result are not duplicated, they will be discarded if you call
 db_free_query, make a copy yourself if you need to keep it after db_free_query.
@@ -488,18 +491,21 @@ more rows from a table.
 
 2.7.2 Prototype
 
-   int db_delete(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+   int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
 2.7.3 Parameters
 
 The function takes 4 parameters:
 _h: Database connection handle
 _k: Array of keys (column names) that will be matched
+_o: Array of operators to be used with key-value pairs
 _v: Array of values that the row must match to be deleted
 _n: Number of keys-value parameters in _k and _v parameters
 
 If _k is NULL and _v is NULL and _n is zero, all rows are deleted (table will
 be empty).
+
+If _o is NULL, equal operator (=) will be used everywhere.
 
 2.7.4 Return Value
 
@@ -516,7 +522,7 @@ or more rows in a table using this function.
 
 2.8.2 Prototype
 
-   int db_update(db_con_t* _h, db_key_t* _k, db_val_t* _v,
+   int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	         db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
 2.8.3 Parameters
@@ -524,6 +530,7 @@ or more rows in a table using this function.
 The function takes 7 parameters:
 _h: Database connection handle
 _k: Array of keys (column names) that will be matched
+_o: Array of operators to be used with key-value pairs
 _v: Array of values that the row must match to be modified
 _uk: Array of keys (column names) that will be modified
 _uv: New values for keys specified in _k parameter
