@@ -40,6 +40,7 @@
 typedef struct name_addr {
 	str name;   /* Display name part */
 	str uri;    /* Uri part without surrounding <> */
+	int len;    /* Total lenght of the field */
 } name_addr_t;
 
 

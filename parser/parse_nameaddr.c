@@ -35,6 +35,7 @@
 #include "parse_nameaddr.h"
 #include "parser_f.h"
 
+
 /*
  * Parse name-addr part, the given string can be longer,
  * it will be updated to point right behind the name-addr part
@@ -66,6 +67,9 @@ int parse_nameaddr(str* _s, name_addr_t* _a)
 		LOG(L_ERR, "parse_nameaddr(): No > found\n");
 		return -4;
 	}
+
+	     /* Totat length of the field including <> */
+	_a->len = uri_end - _a->name.s + 1;
 	
 	_a->uri.len = uri_end - _a->uri.s;
 	return 0;
