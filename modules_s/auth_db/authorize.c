@@ -215,7 +215,8 @@ static inline int authorize(struct sip_msg* _m, str* _realm, char* _table, int _
 			if (avps_str[i].len != 4 || memcmp(avps_str[i].s, "rpid", 4) != 0)
 				continue;
 			rpid.s = (char*)VAL_STRING(&(result->rows[0].values[1 + avps_int_n + i]));
-			rpid.len = strlen(rpid.s);
+			if(rpid.s!=NULL)
+				rpid.len = strlen(rpid.s);
 		}
 		ret = post_auth_func(_m, h, &rpid);
 		switch(ret) {
