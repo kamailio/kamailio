@@ -792,7 +792,7 @@ int xj_manage_jab(char *buf, int len, int *pos,
 		str *sct, xj_jalias als, xj_jcon jbc)
 {
 	int i, err=0;
-	char *p, *to, *from, *msg, *type, *emsg, lbuf[4096], fbuf[128];
+	char *p, *to, *from, *msg, *type, *emsg, *ecode, lbuf[4096], fbuf[128];
 	xj_jconf jcf = NULL;
 	str ts, tf;
 	xode x, y, z;
@@ -811,6 +811,7 @@ int xj_manage_jab(char *buf, int len, int *pos,
 		return -1;
 	
 	lbuf[0] = 0;
+	ecode = NULL;
 	
 	if(!strncasecmp(xode_get_name(x), "message", 7))
 	{
@@ -844,10 +845,11 @@ int xj_manage_jab(char *buf, int len, int *pos,
 			}
 			else
 			{
-				if(xode_get_attrib(y, "code") != NULL)
+				ecode = xode_get_attrib(y, "code");
+				if(ecode != NULL)
 					sprintf(lbuf, 
 						"{Error (%s/%s) when trying to send following messge}",
-						xode_get_attrib(y, "code"), emsg);
+						ecode, emsg);
 				else
 					sprintf(lbuf, 
 						"{Error (%s) when trying to send following messge}",
@@ -871,6 +873,11 @@ int xj_manage_jab(char *buf, int len, int *pos,
 						goto ready;
 					sprintf(lbuf, "[%s] ", p+1);
 				}
+			}
+			else
+			{
+				jcf->status = XJ_JCONF_NULL;
+				xj_jcon_jconf_presence(jbc,jcf,NULL,"online");
 			}
 			strcat(lbuf, msg);
 			ts.s = lbuf;
