@@ -225,8 +225,8 @@ char* rport_builder(struct sip_msg *msg, unsigned int *rport_len)
 	
 	tmp_len=0;
 	tmp=int2str(ntohs(msg->rcv.src_port), &tmp_len);
-	len=RPORT_LEN+tmp_len+1; /* space for null term */
-	buf=pkg_malloc(sizeof(char)*len);
+	len=RPORT_LEN+tmp_len; /* space for null term */
+	buf=pkg_malloc(sizeof(char)*(len+1));
 	if (buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: rport_builder: out of memory\n");
@@ -234,7 +234,7 @@ char* rport_builder(struct sip_msg *msg, unsigned int *rport_len)
 	}
 	memcpy(buf, RPORT, RPORT_LEN);
 	memcpy(buf+RPORT_LEN, tmp, tmp_len);
-	buf[len]=0; /*null terminate it*/
+	buf[len+1]=0; /*null terminate it*/
 	
 	*rport_len=len;
 	return buf;
@@ -257,8 +257,8 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 		return 0;
 	}
 	value_len=p-&revhex[0];
-	len=ID_PARAM_LEN+value_len+1; /* place for ending \0 */
-	buf=pkg_malloc(sizeof(char)*len);
+	len=ID_PARAM_LEN+value_len; /* place for ending \0 */
+	buf=pkg_malloc(sizeof(char)*(len+1));
 	if (buf==0){
 		ser_error=E_OUT_OF_MEM;
 		LOG(L_ERR, "ERROR: rport_builder: out of memory\n");
@@ -266,7 +266,7 @@ char* id_builder(struct sip_msg* msg, unsigned int *id_len)
 	}
 	memcpy(buf, ID_PARAM, ID_PARAM_LEN);
 	memcpy(buf+ID_PARAM_LEN, revhex, value_len);
-	buf[len]=0; /* null terminate it */
+	buf[len+1]=0; /* null terminate it */
 	*id_len=len;
 	return buf;
 }
@@ -567,7 +567,7 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	/* if rport needs to be updated, delete it and add it's value */
 	if (rport_len){
 		anchor=del_lump(&(msg->add_rm), msg->via1->rport->name.s-buf-1, /*';'*/
-							msg->via1->rport->name.len, HDR_VIA);
+							msg->via1->rport->size+1 /* ; */, HDR_VIA);
 		if (anchor==0) goto error03; /* free rport_buf*/
 		if (insert_new_lump_after(anchor, rport_buf, rport_len, HDR_VIA)==0)
 			goto error03; /* free rport_buf*/

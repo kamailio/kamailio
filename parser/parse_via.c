@@ -159,6 +159,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\n':
 				switch(state){
 					case FIN_HIDDEN:
+					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -169,7 +170,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_MADDR:
 					case FIN_RECEIVED:
-					case FIN_RPORT:
 					case FIN_I:
 						*tmp=0;
 						param->type=state;
@@ -201,6 +201,7 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 			case '\r':
 				switch(state){
 					case FIN_HIDDEN:
+					case FIN_RPORT:
 						*tmp=0;
 						param->type=state;
 						param->name.len=tmp-param->name.s;
@@ -211,7 +212,6 @@ static /*inline*/ char* parse_via_param(char* p, char* end,
 					case FIN_TTL:
 					case FIN_MADDR:
 					case FIN_RECEIVED:
-					case FIN_RPORT:
 					case FIN_I:
 						*tmp=0;
 						param->type=state;
@@ -1767,8 +1767,7 @@ parse_again:
 								break;
 							case END_OF_HEADER:
 								vb->params.len=tmp-vb->params.s;
-								state=saved_state;
-								goto endofheader;
+								break;
 							case PARAM_ERROR:
 								pkg_free(param);
 								goto error;
@@ -1791,6 +1790,11 @@ parse_again:
 							vb->rport=param;
 						else if (param->type==PARAM_I)
 							vb->i=param;
+						
+						if (state==END_OF_HEADER){
+							state=saved_state;
+							goto endofheader;
+						}
 						break;
 					case P_PARAM:
 						break;

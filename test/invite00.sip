@@ -1,5 +1,5 @@
 INVITE sip:7170@iptel.org SIP/2.0
-Via: SIP/2.0/UDP 195.37.77.100:5040
+Via: SIP/2.0/UDP 195.37.77.100:5040;  rport
 Max-Forwards: 10
 From: "jiri" <sip:jiri@iptel.org>;tag=76ff7a07-c091-4192-84a0-d56e91fe104f
 To: <sip:jiri@bat.iptel.org>
