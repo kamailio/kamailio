@@ -253,11 +253,11 @@ INSERT INTO version VALUES ( 'uri', '1');
 INSERT INTO version VALUES ( 'server_monitoring', '1');
 INSERT INTO version VALUES ( 'server_monitoring_agg', '1');
 INSERT INTO version VALUES ( 'trusted', '1');
-INSERT INTO version VALUES ( 'usr_preferences', '1');
+INSERT INTO version VALUES ( 'usr_preferences', '2');
 INSERT INTO version VALUES ( 'preferences_types', '1');
 INSERT INTO version VALUES ( 'admin_privileges', '1');
 INSERT INTO version VALUES ( 'calls_forwarding', '1');
-INSERT INTO version VALUES ( 'speed_dial', '1');
+INSERT INTO version VALUES ( 'speed_dial', '2');
 
 #
 # Table structure for table 'acc' -- accounted calls
@@ -587,6 +587,7 @@ CREATE TABLE usr_preferences (
   domain varchar(128) NOT NULL default '',
   attribute varchar(32) NOT NULL default '',
   value varchar(128) NOT NULL default '',
+  type integer NOT NULL default '0',
   modified timestamp(14) NOT NULL,
   PRIMARY KEY  (attribute,$USERCOL,domain)
 ) $TABLE_TYPE;
@@ -671,10 +672,11 @@ CREATE TABLE calls_forwarding (
 CREATE TABLE speed_dial (
   $USERCOL varchar(64) NOT NULL default '',
   domain varchar(128) NOT NULL default '',
-  username_from_req_uri varchar(128) NOT NULL default '',
-  domain_from_req_uri varchar(128) NOT NULL default '',
-  new_request_uri varchar(128) NOT NULL default '',
-  PRIMARY KEY  ($USERCOL,domain,domain_from_req_uri,username_from_req_uri)
+  sd_username varchar(64) NOT NULL default '',
+  sd_domain varchar(128) NOT NULL default '',
+  new_uri varchar(192) NOT NULL default '',
+  description varchar(64) NOT NULL default '',
+  PRIMARY KEY  ($USERCOL,domain,sd_username,sd_domain)
 ) $TABLE_TYPE;
 
 
