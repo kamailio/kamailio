@@ -292,16 +292,18 @@ struct cell* t_lookupOriginalT(  struct s_table* hash_table ,
 			continue;
 
 		/* found */
-		REF( p_cell );
-		UNLOCK_HASH(hash_index);
 		DBG("DEBUG: t_lookupOriginalT: canceled transaction"
 			" found (%p)! \n",p_cell );
+		REF_UNSAFE( p_cell );
+		UNLOCK_HASH(hash_index);
+		DBG("DEBUG: t_lookupOriginalT completed\n");
 		return p_cell;
 	}
 
 	/* no transaction found */
-	UNLOCK_HASH(hash_index);
 	DBG("DEBUG: t_lookupOriginalT: no CANCEL maching found! \n" );
+	UNLOCK_HASH(hash_index);
+	DBG("DEBUG: t_lookupOriginalT completed\n");
 	return 0;
 }
 
@@ -430,7 +432,12 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 			&& memcmp( cseq_method.s, req_method.s, cseq_method.len )==0)
 			/* or it is a local cancel */
 			|| (is_cancel && p_cell->is_invite 
-				&& p_cell->uac[branch_id].local_cancel.buffer )))
+				/* commented out -- should_cancel_branch set it to
+				   BUSY_BUFFER to avoid collisions with repliesl;
+				   thus, we test here by bbuffer size
+				*/
+				/* && p_cell->uac[branch_id].local_cancel.buffer ))) */
+				&& p_cell->uac[branch_id].local_cancel.buffer_len ))) 
 			continue;
 
 

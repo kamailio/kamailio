@@ -19,6 +19,7 @@
 #include "t_lookup.h"
 #include "t_fwd.h"
 #include "fix_lumps.h"
+#include "config.h"
 
 
 #ifdef _OBSOLETED
@@ -243,6 +244,9 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	backup_uri=cancel_msg->new_uri;
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
+	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
+	/* fix label -- it must be same for reply matching */
+	t_cancel->label=t_invite->label;
 	/* ... and install CANCEL UACs */
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
 		if (cancel_bm & (1<<i)) {
@@ -250,8 +254,6 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
 		}
-	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
-	t_cancel->label=t_invite->label;
 	cancel_msg->new_uri=backup_uri;
 
 	/* send them out */
@@ -276,14 +278,21 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	*/
 	} else if (cancel_bm) {
 		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
-		t_reply( t_cancel, cancel_msg, 100, "trying to cancel" );
+		t_reply( t_cancel, cancel_msg, 200, CANCELLING );
 	/* if the transaction exists, but there is no more pending
 	   branch, tell usptream we're done
 	*/
 	} else {
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
-		t_reply( t_cancel, cancel_msg, 200, "ok, no more pending branches" );
+		t_reply( t_cancel, cancel_msg, 200, CANCEL_DONE );
 	}
+	/* we could await downstream UAS's 487 replies; however,
+	   if some of the branches does not do that, we could wait
+	   long time and annoy upstream UAC which wants to see 
+	   a result of CANCEL quickly
+	*/
+	DBG("DEBUG: e2e_cancel: sending 487\n");
+	t_reply(t_invite, t_invite->uas.request, 487, CANCELLED );
 }
 
 

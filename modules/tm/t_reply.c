@@ -527,8 +527,10 @@ int t_on_reply( struct sip_msg  *p_msg )
 	msg_status=p_msg->REPLY_STATUS;
 
 	uac=&t->uac[branch];
-	DBG("DEBUG: t_on_reply: org. status uas=%d, uac[%d]=%d local=%d)\n",
-		t->uas.status, branch, uac->last_received, t->local);
+	DBG("DEBUG: t_on_reply: org. status uas=%d, "
+		"uac[%d]=%d local=%d is_invite=%d)\n",
+		t->uas.status, branch, uac->last_received, 
+		t->local, t->is_invite);
 
 	/* it's a cancel ... ? */
 	if (get_cseq(p_msg)->method.len==CANCEL_LEN 
