@@ -8,7 +8,7 @@
 VERSION = 0
 PATCHLEVEL = 8
 SUBLEVEL = 7
-EXTRAVERSION = -6-ipv6
+EXTRAVERSION = -7-srv
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s)
@@ -373,7 +373,7 @@ YACC=bison
 YACC_FLAGS=-d -b cfg
 # on linux and freebsd keep it empty (e.g. LIBS= )
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS=-lfl -ldl
+LIBS=-lfl -ldl -lresolv
 
 
 #os specific stuff

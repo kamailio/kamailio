@@ -9,14 +9,60 @@
 #define resolve_h
 
 #include <netdb.h>
+#include <arpa/nameser.h>
 
-#include "ip_addr.h"
+
+#define MAX_QUERY_SIZE 8192
+#define ANS_SIZE       8192
+#define DNS_HDR_SIZE     12
+#define MAX_DNS_NAME 256
+
+
+
+/* query union*/
+union dns_query{
+	HEADER hdr;
+	unsigned char buff[MAX_QUERY_SIZE];
+};
+
+
+/* rdata struct*/
+struct rdata {
+	unsigned short type;
+	unsigned short class;
+	unsigned int   ttl;
+	void* rdata;
+	struct rdata* next;
+};
+
+
+/* srv rec. struct*/
+struct srv_rdata {
+	unsigned short priority;
+	unsigned short weight;
+	unsigned short port;
+	unsigned int name_len;
+	char name[MAX_DNS_NAME];
+};
+
+
+/* A rec. struct */
+struct a_rdata {
+	unsigned char ip[4];
+};
+
+struct aaaa_rdata {
+	unsigned char ip6[16];
+};
+
+
+
+struct rdata* get_record(char* name, int type);
+void free_rdata_list(struct rdata* head);
 
 
 /* gethostbyname wrappers
  * use this, someday htey will use a local cache */
-
-
 
 static inline struct hostent* resolvehost(const char* name)
 {

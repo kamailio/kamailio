@@ -54,8 +54,11 @@
 #define CRLF "\r\n"
 #define CRLF_LEN 2
 
-#define RECEIVED ";received="
+#define RECEIVED   ";received="
 #define RECEIVED_LEN 10
+
+#define SRV_PREFIX "_sip._udp."
+#define SRV_PREFIX_LEN 10
 
 /*used only if PKG_MALLOC is defined*/
 #define PKG_MEM_POOL_SIZE 1024*1024

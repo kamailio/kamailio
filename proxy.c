@@ -6,6 +6,7 @@
  */
 
 
+#include "config.h"
 #include "proxy.h"
 #include "error.h"
 #include "dprint.h"
@@ -158,15 +159,21 @@ error:
 
 
 
-/* same as add_proxy, but it doesn't add the proxy to the list*/
+/* same as add_proxy, but it doesn't add the proxy to the list
+ * uses also SRV if possible (quick hack) */
+
 struct proxy_l* mk_proxy(char* name, unsigned short port)
 {
 	struct proxy_l* p;
 	struct hostent* he;
+	struct rdata* head;
+	struct rdata* l;
+	struct srv_rdata* srv;
+	static char tmp[MAX_DNS_NAME]; /* tmp buff. for SRV lookups*/
+	int len;
 #ifdef DNS_IP_HACK
 	int err;
 	unsigned int ip;
-	int len;
 #endif
 
 	p=(struct proxy_l*) malloc(sizeof(struct proxy_l));
@@ -177,7 +184,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 	}
 	memset(p,0,sizeof(struct proxy_l));
 	p->name=name;
-	p->port=port;
+	p->port=port?port:SIP_PORT;
 #ifdef DNS_IP_HACK
 	/* fast ipv4 string to address conversion*/
 	len=strlen(name);
@@ -219,6 +226,37 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 #endif
 	/* fail over to normal lookup */
 
+	/* try SRV if no port specified (draft-ietf-sip-srv-06) */
+	if (port==0){
+		len=strlen(name);
+		if ((len+SRV_PREFIX_LEN+1)>MAX_DNS_NAME){
+			LOG(L_WARN, "WARNING: domain name too long (%d), unable"
+					" to perform SRV lookup\n", len);
+		}else{
+			memcpy(tmp, SRV_PREFIX, SRV_PREFIX_LEN);
+			memcpy(tmp+SRV_PREFIX_LEN, name, len+1); /*include the ending 0*/
+			
+			head=get_record(tmp, T_SRV);
+			for(l=head; l; l=l->next){
+				if (l->type!=T_SRV) continue; /*should never happen*/
+				srv=(struct srv_rdata*) l->rdata;
+				if (srv==0){
+					LOG(L_CRIT, "mk_proxy: BUG: null rdata\n");
+					free_rdata_list(head);
+					break;
+				}
+				he=resolvehost(srv->name);
+				if (he!=0){
+					DBG("mk_proxy: SRV(%s) = %s:%d\n",
+							tmp, srv->name, srv->port);
+					p->port=srv->port;
+					free_rdata_list(head); /*clean up*/
+					goto copy_he;
+				}
+			}
+			DBG(" not SRV record found for %s\n", name);
+		}
+	}
 	he=resolvehost(name);
 	if (he==0){
 		ser_error=E_BAD_ADDRESS;
@@ -227,6 +265,7 @@ struct proxy_l* mk_proxy(char* name, unsigned short port)
 		free(p);
 		goto error;
 	}
+copy_he:
 	if (hostent_cpy(&(p->host), he)!=0){
 		free(p);
 		goto error;

@@ -91,7 +91,7 @@ int do_action(struct action* a, struct sip_msg* msg)
 											ret=E_BAD_URI;
 											goto error_fwd_uri;
 										}
-									}else port=SIP_PORT;
+									}else port=0;
 									break;
 					case NUMBER_ST:
 									port=a->p2.number;
