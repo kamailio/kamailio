@@ -48,6 +48,8 @@
 #define MAX_FLAG_LEN 12
 /* FIFO action protocol names */
 #define FIFO_SET_GFLAG "SET_GFLAG"
+#define FIFO_IS_GFLAG "RESET_GFLAG"
+#define FIFO_RESET_GFLAG "IS_GFLAG"
 
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -172,6 +174,37 @@ static int fifo_set_gflag( FILE* pipe, char* response_file )
 	return 1;
 }
 
+static int fifo_reset_gflag( FILE* pipe, char* response_file )
+{
+
+	unsigned int flag;
+
+	flag=read_flag(pipe, response_file);
+	if 	(!flag) {
+		LOG(L_ERR, "ERROR: fifo_reset_gflag: failed in read_flag\n");
+		return 1;
+	}
+
+	(*gflags) &= ~ (1 << flag);
+	fifo_reply (response_file, "200 OK\n");
+	return 1;
+}
+
+static int fifo_is_gflag( FILE* pipe, char* response_file )
+{
+
+	unsigned int flag;
+
+	flag=read_flag(pipe, response_file);
+	if 	(!flag) {
+		LOG(L_ERR, "ERROR: fifo_reset_gflag: failed in read_flag\n");
+		return 1;
+	}
+
+	fifo_reply (response_file, "200 OK\n%s\n", 
+			((*gflags) & (1<<flag)) ? "TRUE" : "FALSE" );
+	return 1;
+}
 
 static int set_gflag(struct sip_msg *bar, char *flag_par, char *foo) 
 {
@@ -208,6 +241,14 @@ static int mod_init(void)
 		return -1;
 	}
 	if (register_fifo_cmd(fifo_set_gflag, FIFO_SET_GFLAG, 0) < 0) {
+		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
+		return -1;
+	}
+	if (register_fifo_cmd(fifo_reset_gflag, FIFO_RESET_GFLAG, 0) < 0) {
+		LOG(L_CRIT, "Cannot register FIFO_RESET_GFLAG\n");
+		return -1;
+	}
+	if (register_fifo_cmd(fifo_is_gflag, FIFO_IS_GFLAG, 0) < 0) {
 		LOG(L_CRIT, "Cannot register FIFO_SET_GFLAG\n");
 		return -1;
 	}
