@@ -79,7 +79,7 @@ bouquets and brickbats to farhan@hotfoon.com
 #define SIPSAK_MES_STR_LEN 41
 #define EXP_STR "Expires: "
 #define EXP_STR_LEN 9
-#define USRLOC_EXP_DEF 16
+#define USRLOC_EXP_DEF 120
 
 int verbose, nameend, namebeg;
 char *username, *domainname;
