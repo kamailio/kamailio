@@ -40,8 +40,11 @@
 #include <unistd.h>
 
 
+#include "dprint.h"
 #include "tcp_conn.h"
 #include "pass_fd.h"
+#include "globals.h"
+#include "receive.h"
 
 
 #define q_memchr memchr
@@ -80,24 +83,76 @@ again:
 
 
 
-/* reads all headers (until double crlf),
+/* reads all headers (until double crlf), & parses the content-length header
+ * (WARNING: highly ineficient, tries to reuse receive_msg but will parse
+ *  all the header names twice [once here & once in receive_msg]; a more
+ *  speed eficient version will result in either major code duplication or
+ *  major changes to the receive code - TODO)
  * returns number of bytes read & sets r->state & r->body
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
 int tcp_read_headers(struct tcp_req *r)
 {
-	int bytes;
+	int bytes, remaining;
 	char *p;
+	
+	#define crlf_default_skip_case \
+					case '\n': \
+						r->state=H_LF; \
+						break; \
+					default: \
+						r->state=H_SKIP
+	
+	#define content_len_beg_case \
+					case ' ': \
+					case '\t': \
+						if (!r->has_content_len) r->state=H_STARTWS; \
+						else r->state=H_SKIP; \
+							/* not interested if we already found one */ \
+						break; \
+					case 'C': \
+					case 'c': \
+						if(!r->has_content_len) r->state=H_CONT_LEN1; \
+						else r->state=H_SKIP; \
+						break 
+						
+	#define change_state(upper, lower, newstate)\
+					switch(*p){ \
+						case upper: \
+						case lower: \
+							r->state=(newstate); break; \
+						crlf_default_skip_case; \
+					}
+	
+	#define change_state_case(state0, upper, lower, newstate)\
+					case state0: \
+							  change_state(upper, lower, newstate); \
+							  p++; \
+							  break
+
+
 	
 	bytes=tcp_read(r);
 	if (bytes<=0) return bytes;
 	p=r->parsed;
 	
-	while(p<r->pos && r->state!=H_BODY){
+	while(p<r->pos && r->error==TCP_REQ_OK){
 		switch(r->state){
-			case H_PARSING:
-				/* find lf */
+			case H_BODY: /* read the body*/
+				remaining=r->pos-p;
+				if (remaining>r->bytes_to_go) remaining=r->bytes_to_go;
+				r->bytes_to_go-=remaining;
+				p+=remaining;
+				if (r->bytes_to_go==0){
+					r->complete=1;
+					goto skip;
+				}
+				break;
+				
+			case H_SKIP:
+				/* find lf, we are in this state if we are not interested
+				 * in anything till end of line*/
 				p=q_memchr(p, '\n', r->pos-r->parsed);
 				if (p){
 					p++;
@@ -109,31 +164,146 @@ int tcp_read_headers(struct tcp_req *r)
 				
 			case H_LF:
 				/* terminate on LF CR LF or LF LF */
-				if (*p=='\r'){
-					r->state=H_LFCR;
-				}else if (*p=='\n'){
-					/* found LF LF */
-					r->state=H_BODY;
-					r->body=p+1;
-				}else r->state=H_PARSING;
+				switch (*p){
+					case '\r':
+						r->state=H_LFCR;
+						break;
+					case '\n':
+						/* found LF LF */
+						r->state=H_BODY;
+						if (r->has_content_len){
+							r->body=p+1;
+							r->bytes_to_go=r->content_len;
+							if (r->bytes_to_go==0){
+								r->complete=1;
+								goto skip;
+							}
+						}else{
+							r->error=TCP_REQ_BAD_LEN;
+						}
+						break;
+					content_len_beg_case;
+					default: 
+						r->state=H_SKIP;
+				}
 				p++;
 				break;
-			
 			case H_LFCR:
 				if (*p=='\n'){
 					/* found LF CR LF */
 					r->state=H_BODY;
-					r->body=p+1;
-				}else r->state=H_PARSING;
+					if (r->has_content_len){
+						r->body=p+1;
+						r->bytes_to_go=r->content_len;
+						if (r->bytes_to_go==0){
+							r->complete=1;
+							goto skip;
+						}
+					}else{
+						r->error=TCP_REQ_BAD_LEN;
+					}
+				}else r->state=H_SKIP;
 				p++;
 				break;
 				
+			case H_STARTWS:
+				switch (*p){
+					content_len_beg_case;
+					crlf_default_skip_case;
+				}
+				p++;
+				break;
+			
+			change_state_case(H_CONT_LEN1,  'O', 'o', H_CONT_LEN2);
+			change_state_case(H_CONT_LEN2,  'N', 'n', H_CONT_LEN3);
+			change_state_case(H_CONT_LEN3,  'T', 't', H_CONT_LEN4);
+			change_state_case(H_CONT_LEN4,  'E', 'e', H_CONT_LEN5);
+			change_state_case(H_CONT_LEN5,  'N', 'n', H_CONT_LEN6);
+			change_state_case(H_CONT_LEN6,  'T', 't', H_CONT_LEN7);
+			change_state_case(H_CONT_LEN7,  '-', '_', H_CONT_LEN8);
+			change_state_case(H_CONT_LEN8,  'L', 'l', H_CONT_LEN9);
+			change_state_case(H_CONT_LEN9,  'E', 'e', H_CONT_LEN10);
+			change_state_case(H_CONT_LEN10, 'N', 'n', H_CONT_LEN11);
+			change_state_case(H_CONT_LEN11, 'G', 'g', H_CONT_LEN12);
+			change_state_case(H_CONT_LEN12, 'T', 't', H_CONT_LEN13);
+			change_state_case(H_CONT_LEN13, 'H', 'h', H_L_COLON);
+			
+			case H_L_COLON:
+				switch(*p){
+					case ' ':
+					case '\t':
+						break; /* skip space */
+					case ':':
+						r->state=H_CONT_LEN_BODY;
+						break;
+					crlf_default_skip_case;
+				};
+				p++;
+				break;
+			
+			case  H_CONT_LEN_BODY:
+				switch(*p){
+					case ' ':
+					case '\t':
+						break; /* eat space */
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						r->state=H_CONT_LEN_BODY_PARSE;
+						r->content_len=(*p-'0');
+						break;
+					/*FIXME: content lenght on different lines ! */
+					crlf_default_skip_case;
+				}
+				p++;
+				break;
+				
+			case H_CONT_LEN_BODY_PARSE:
+				switch(*p){
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+						r->content_len=r->content_len*10+(*p-'0');
+						break;
+					case '\r':
+					case ' ':
+					case '\t': /* FIXME: check if line contains only WS */
+						r->state=H_SKIP;
+						r->has_content_len=1;
+						break;
+					case '\n':
+						/* end of line, parse succesfull */
+						r->state=H_LF;
+						r->has_content_len=1;
+						break;
+					default:
+						LOG(L_ERR, "ERROR: tcp_read_headers: bad "
+								"Content-Length header value, unexpected "
+								"char %c in state %d\n", *p, r->state);
+						r->state=H_SKIP; /* try to find another?*/
+				}
+				p++;
+				break;
+			
 			default:
 				fprintf(stderr, "BUG: unexpected state %d\n", r->state);
 				abort();
 		}
 	}
-	
+skip:
 	r->parsed=p;
 	return bytes;
 }
@@ -184,7 +354,7 @@ void tcp_receive_loop(int unix_sock)
 		
 		
 	again:
-		while(req.body==0){
+		while(req.complete==0 && req.error==TCP_REQ_OK){
 			bytes=tcp_read_headers(&req);
 			/* if timeout state=0; goto end__req; */
 			fprintf(stderr, "read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -201,17 +371,31 @@ void tcp_receive_loop(int unix_sock)
 			}
 
 		}
+		if (req.error!=TCP_REQ_OK){
+			fprintf(stderr, "bad request, state=%d, error=%d\n",
+					req.state, req.error);
+			state=-1;
+			goto end_req;
+		}
 		fprintf(stderr, "end of header part\n");
 		fprintf(stderr, "headers:\n%.*s.\n",req.body-req.buf, req.buf);
+		if (req.has_content_len){
+			fprintf(stderr, "content-length= %d\n", req.content_len);
+			fprintf(stderr, "body:\n%.*s\n", req.content_len, req.body);
+		}else{
+			req.error=TCP_REQ_BAD_LEN;
+			fprintf(stderr, "content length not present or unparsable\n");
+			state=-1;
+			goto end_req;
+		}
 
-		/* just debugging*/
+		/* if we are here everything is nice and ok*/
 		state=0;
-		goto end_req;
-		/* parse headers ... */
-		
-		/* get body */
-		
-		/* copy request */
+		/* just for debugging use sendipv4 as receiving socket */
+		DBG("calling receive_msg(%p, %d, %p)\n",
+				req.buf, (int)(req.parsed-req.buf), &sendipv4->su);
+		bind_address=sendipv4;
+		receive_msg(req.buf, req.parsed-req.buf, &sendipv4->su);
 
 		/* prepare for next request */
 		size=req.pos-req.body;
@@ -221,7 +405,9 @@ void tcp_receive_loop(int unix_sock)
 		req.parsed=req.buf;
 		req.body=0;
 		req.error=TCP_REQ_OK;
-		req.state=H_PARSING;
+		req.state=H_STARTWS;
+		req.complete=req.content_len=req.has_content_len=0;
+		req.bytes_to_go=0;
 	
 		/* process last req. */
 		

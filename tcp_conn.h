@@ -33,8 +33,14 @@
 
 
 #define TCP_BUF_SIZE 65535
-enum {TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR, TCP_REQ_OVERRUN };
-enum {H_PARSING, H_LF, H_LFCR,  H_BODY };
+enum {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR, TCP_REQ_OVERRUN, 
+	 	TCP_REQ_BAD_LEN };
+enum {	H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
+		H_CONT_LEN1, H_CONT_LEN2, H_CONT_LEN3, H_CONT_LEN4, H_CONT_LEN5,
+		H_CONT_LEN6, H_CONT_LEN7, H_CONT_LEN8, H_CONT_LEN9, H_CONT_LEN10,
+		H_CONT_LEN11, H_CONT_LEN12, H_CONT_LEN13, H_L_COLON, 
+		H_CONT_LEN_BODY, H_CONT_LEN_BODY_PARSE 
+	};
 
 struct tcp_req{
 	struct tcp_req* next;
@@ -44,6 +50,10 @@ struct tcp_req{
 	char* pos; /* current position in buf */
 	char* parsed; /* last parsed position */
 	char* body; /* body position */
+	int content_len;
+	int has_content_len; /* 1 if content_length was parsed ok*/
+	int complete; /* 1 if one req has been fully read, 0 otherwise*/
+	int bytes_to_go; /* how many bytes we have still to read from the body*/
 	int error;
 	int state;
 };
@@ -55,7 +65,7 @@ struct tcp_req{
 		(r)->fd=(f); \
 		(r)->parsed=(r)->pos=(r)->buf; \
 		(r)->error=TCP_REQ_OK;\
-		(r)->state=H_PARSING; \
+		(r)->state=H_STARTWS; \
 	}while(0)
 
 

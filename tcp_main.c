@@ -193,6 +193,7 @@ void tcp_main_loop()
 	struct tcp_connection* tcpconn;
 	long response[2];
 	int state;
+	int bytes;
 	socklen_t su_len;
 
 	/*init */
@@ -271,8 +272,23 @@ void tcp_main_loop()
 		for (r=0; r<tcp_children_no && n; r++){
 			if (FD_ISSET(tcp_children[r].s, &sel_set)){
 				n--;
-				/* errno==EINTR !!! todo*/
-				read(tcp_children[r].s, response, sizeof(response));
+				/* errno==EINTR !!! TODO*/
+read_again:
+				bytes=read(tcp_children[r].s, response, sizeof(response));
+				if (bytes==0){
+					/* EOF -> bad, chidl has died */
+					LOG(L_CRIT, "BUG: tcp_main_loop: dead child %d\n", r);
+					/* terminating everybody */
+					exit(-1);
+				}else if (bytes<0){
+					if (errno==EINTR) goto read_again;
+					else{
+						LOG(L_CRIT, "ERROR: tcp_main_loop: read from child: "
+								" %s\n", strerror(errno));
+						/* try to continue ? */
+					}
+				}
+					
 				DBG("tcp__main_loop: read response= %lx, %ld\n",
 						response[0], response[1]);
 				tcp_children[r].busy=0;
