@@ -276,7 +276,11 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       if (!buf)
          return -1;
       T->outbound_request[branch]->bufflen = len ;
-      T->outbound_request[branch]->buffer   = (char*)sh_malloc( len );
+      if ( !(T->outbound_request[branch]->buffer   = (char*)sh_malloc( len ))) {
+	LOG(L_ERR, "ERROR: t_forward: shmem allocation failed\n");
+	free( buf );
+	return -1;
+      }
       memcpy( T->outbound_request[branch]->buffer , buf , len );
       free( buf ) ;
 
@@ -290,7 +294,9 @@ int t_forward( struct sip_msg* p_msg , unsigned int dest_ip_param , unsigned int
       insert_into_timer_list( hash_table , &(T->outbound_request[branch]->tl[RETRASMISSIONS_LIST]), RETRASMISSIONS_LIST , RETR_T1 );
    }/* end for the first time */
 
-   DBG("DEBUG: t_forward: sending outbund request from buffer\n");
+   DBG("DEBUG: t_forward: sending outbund request from buffer (%d bytes):\n%*s\n", 
+	T->outbound_request[branch]->bufflen, T->outbound_request[branch]->bufflen,
+	 T->outbound_request[branch]->buffer);
    /* send the request */
    udp_send( T->outbound_request[branch]->buffer , T->outbound_request[branch]->bufflen ,
                     (struct sockaddr*)&(T->outbound_request[branch]->to) , sizeof(struct sockaddr_in) );
@@ -1131,7 +1137,7 @@ int add_branch_label( struct cell *trans, struct sip_msg *p_msg, int branch )
 		  MAX_BRANCH_PARAM_LEN - p_msg->add_to_branch_len,
 		 ".%x.%x.%x",
 		 trans->hash_index, trans->label, branch );
-	DBG("DEBUG: branch created now: %s (%d)\n", p_msg->add_to_branch_s, p_msg->add_to_branch_len );
+	DBG("DEBUG: branch created now: %*s (%d)\n", n, p_msg->add_to_branch_s+p_msg->add_to_branch_len );
 	if (n==-1) {
 		LOG(L_ERR, "ERROR: add_branch_label: too small branch buffer\n");
 		return -1;
