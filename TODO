@@ -146,6 +146,8 @@ x command line switch for checking the config file syntax
 0 loop detection
 - cfg. file reload
 - flags for using names or ip adresses in Via ?
+- escape char injection/printing fix (verify all log/printed messages
+ for terminal escapes and remove them)
 
 x handle SIGCHLD, SIGHUP
 - use a  standard lex compatible .lex format (instead of flex)
