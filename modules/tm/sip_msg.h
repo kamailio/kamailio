@@ -1,5 +1,5 @@
-#ifndef _MSG_CLONER_H
-#define _MSG_CLONER_H
+#ifndef _SIP_MSG_H
+#define _SIP_MSG_H
 
 #include "../../msg_parser.h"
 

@@ -8,7 +8,7 @@
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
-#include "msg_cloner.h"
+#include "sip_msg.h"
 #include <stdio.h>
 
 static int test_f(struct sip_msg*, char*,char*);
