@@ -40,6 +40,7 @@
 #include <signal.h>
 #include <stdarg.h>
 #include <time.h>
+#include <fcntl.h>
 #include "config.h"
 #include "ut.h"
 #include "globals.h"
@@ -56,7 +57,7 @@
 char* unixsock_name = 0;
 int unixsock_children = 1;
 
-static int sock;
+static int rx_sock, tx_sock;
 static struct unixsock_cmd* cmd_list;
 static char reply_buf[UNIXSOCK_BUF_SIZE];
 static str reply_pos;
@@ -295,7 +296,7 @@ static int register_core_commands(void)
 static int create_unix_socket(char* name)
 {
 	struct sockaddr_un addr;
-	int len;
+	int len, flags;
 
 	if (name == 0) {
 		DBG("create_unix_socket: No unix domain socket"
@@ -322,9 +323,9 @@ static int create_unix_socket(char* name)
 		}
 	}
 
-	sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
-	if (sock == -1) {
-		LOG(L_ERR, "create_unix_socket: Cannot create socket: %s\n", 
+	rx_sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
+	if (rx_sock == -1) {
+		LOG(L_ERR, "create_unix_socket: Cannot create RX socket: %s\n", 
 		    strerror(errno));
 		return -1;
 	}
@@ -333,13 +334,38 @@ static int create_unix_socket(char* name)
 	addr.sun_family = PF_LOCAL;
 	memcpy(addr.sun_path, name, len);
 
-	if (bind(sock, (struct sockaddr*)&addr, SUN_LEN(&addr)) == -1) {
+	if (bind(rx_sock, (struct sockaddr*)&addr, SUN_LEN(&addr)) == -1) {
 		LOG(L_ERR, "create_unix_socket: bind: %s\n", strerror(errno));
-		close(sock);
-		return -1;
+		goto err_rx;
 	}
 
+	tx_sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
+	if (tx_sock == -1) {
+		LOG(L_ERR, "create_unix_socket: Cannot create TX socket: %s\n",
+		    strerror(errno));
+		goto err_rx;
+	}
+
+	     /* Turn non-blocking mode on */
+	flags = fcntl(tx_sock, F_GETFL);
+	if (flags == -1){
+		LOG(L_ERR, "create_unix_socket: fcntl failed: %s\n",
+		    strerror(errno));
+		goto err_both;
+	}
+		
+	if (fcntl(tx_sock, F_SETFL, flags | O_NONBLOCK) == -1) {
+		LOG(L_ERR, "create_unix_socket: fcntl: set non-blocking failed:"
+		    " %s\n", strerror(errno));
+		goto err_both;
+	}
+	
 	return 0;
+ err_both:
+	close(tx_sock);
+ err_rx:
+	close(rx_sock);
+	return -1;
 }
 
 
@@ -424,7 +450,7 @@ static void unix_server_loop(void)
 	
 	while(1) {
 		reply_addr_len = sizeof(reply_addr);
-		ret = recvfrom(sock, buffer.s, UNIXSOCK_BUF_SIZE, 0, 
+		ret = recvfrom(rx_sock, buffer.s, UNIXSOCK_BUF_SIZE, 0, 
 			       (struct sockaddr*)&reply_addr, &reply_addr_len);
 		if (ret == -1) {
 			LOG(L_ERR, "unix_server_loop: recvfrom: (%d) %s\n", 
@@ -515,7 +541,8 @@ int init_unixsock_server(void)
 	}
 
         if (register_core_commands() < 0) {
-		close(sock);
+		close(rx_sock);
+		close(tx_sock);
 		return -1;
 	}
 
@@ -534,7 +561,8 @@ int init_unixsock_server(void)
 		if (pid < 0) {
 			LOG(L_ERR, "init_unixsock_server: Unable to fork: %s\n",
 			    strerror(errno));
-			close(sock);
+			close(rx_sock);
+			close(tx_sock);
 			return -1;
 		} else if (pid == 0) { /* child */
 #ifdef USE_TCP
@@ -546,7 +574,8 @@ int init_unixsock_server(void)
 			if (init_child(PROC_UNIXSOCK) < 0) {
 				LOG(L_ERR, "init_unixsock_server: Error in "
 				    "init_child\n");
-				close(sock);
+				close(rx_sock);
+				close(tx_sock);
 				return -1;
 			}
 
@@ -578,7 +607,8 @@ int init_unixsock_server(void)
 void close_unixsock_server(void)
 {
 	struct unixsock_cmd* c;
-	close(sock);
+	close(rx_sock);
+	close(tx_sock);
 
 	while(cmd_list) {
 		c = cmd_list;
@@ -643,7 +673,7 @@ ssize_t unixsock_reply_send(void)
 {
 	int ret;
 
-	ret = sendto(sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
+	ret = sendto(tx_sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
 		     (struct sockaddr*)&reply_addr, reply_addr_len);
 
 	if (ret == -1) {
@@ -667,7 +697,7 @@ ssize_t unixsock_reply_sendto(struct sockaddr_un* to)
 		return -1;
 	}
 
-	ret = sendto(sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
+	ret = sendto(tx_sock, reply_buf, reply_pos.s - reply_buf, MSG_DONTWAIT, 
 		     (struct sockaddr*)to, SUN_LEN(to));
 
 	if (ret == -1) {
@@ -951,7 +981,7 @@ int unixsock_reply_printf(char* fmt, ...)
 /*
  * Return the address of the sender
  */
-struct sockaddr_un* unix_sender_address(void)
+struct sockaddr_un* unix_sender_addr(void)
 {
 	return &reply_addr;
 }

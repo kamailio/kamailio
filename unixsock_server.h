@@ -129,7 +129,7 @@ int unixsock_read_lineset(str* lineset, str* source);
 /*
  * Return the address of the sender
  */
-struct sockaddr_un* unixsock_sender_address(void);
+struct sockaddr_un* unixsock_sender_addr(void);
 
 
 #endif /* _UNIXSOCK_SERVER_H */
