@@ -233,27 +233,36 @@ int check_self(str* host, unsigned short port)
 					host->len, host->s,
 					sock_info[r].name.len, sock_info[r].name.s
 			);
-		if  ((port)&&(sock_info[r].port_no!=port)) continue;
+		if (port) {
+			DBG("check_self - checking if port %d matches port %d\n", sock_info[r].port_no, port);
+#ifdef USE_TLS
+			if  ((sock_info[r].port_no!=port) && (tls_info[r].port_no!=port)) {
+#else
+			if (sock_info[r].port_no!=port) {
+#endif
+				continue;
+			}
+		}
 		if ( (host->len==sock_info[r].name.len) && 
-	#ifdef USE_IPV6
+#ifdef USE_IPV6
 			(strncasecmp(host->s, sock_info[r].name.s,
-								 sock_info[r].name.len)==0) /*slower*/
-	#else
+				     sock_info[r].name.len)==0) /*slower*/
+#else
 			(memcmp(host->s, sock_info[r].name.s, 
-								sock_info[r].name.len)==0)
-	#endif
+				sock_info[r].name.len)==0)
+#endif
 			)
 			break;
 	/* check if host == ip address */
 		if ( 	(!sock_info[r].is_ip) &&
 				(host->len==sock_info[r].address_str.len) && 
-	#ifdef USE_IPV6
+#ifdef USE_IPV6
 			(strncasecmp(host->s, sock_info[r].address_str.s,
 								 sock_info[r].address_str.len)==0) /*slower*/
-	#else
+#else
 			(memcmp(host->s, sock_info[r].address_str.s, 
 								sock_info[r].address_str.len)==0)
-	#endif
+#endif
 			)
 			break;
 	}
